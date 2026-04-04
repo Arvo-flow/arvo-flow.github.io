@@ -90,7 +90,7 @@ moss:{name:"Moss",nameEn:"Moss",bg:"#161c16",surface:"#1c241c",surfaceAlt:"#202a
 };
 const TDOTS = {light:"#3a7d6e",dark:"#888888",nordic:"#5a9ec8",moss:"#6aaa60"};
 
-const CONTACTS = [
+const INIT_CONTACTS = [
 {id:1,name:"Erik Johansson",company:"Johansson Konsult",email:"erik@johansson.se",phone:"070-123 45 67",status:"Kund",value:85000,daysSince:44,notes:"Ongoing advisory"},
 {id:2,name:"Emma Karlsson",company:"Karlsson Foto",email:"emma@karlssonfoto.se",phone:"073-987 65 43",status:"Lead",value:45000,daysSince:28,notes:"Interested in website"},
 {id:3,name:"Marcus Lindberg",company:"Lindberg Reklam",email:"marcus@lindbergreklam.se",phone:"076-555 12 34",status:"Kund",value:120000,daysSince:25,notes:"Key client, monthly retainer"},
@@ -98,13 +98,13 @@ const CONTACTS = [
 {id:5,name:"Johan Åberg",company:"Åberg & Partners",email:"johan@abergpartners.se",phone:"072-111 22 33",status:"Kund",value:210000,daysSince:3,notes:"VIP — strategic partnership"},
 {id:6,name:"Lisa Holm",company:"Holm Media",email:"lisa@holmmedia.se",phone:"070-222 44 55",status:"Lead",value:60000,daysSince:18,notes:"Wants quote on SoMe package"},
 ];
-const PROJECTS = [
+const INIT_PROJECTS = [
 {id:1,name:"Website Redesign",client:"Johansson Konsult",status:"Pågående",progress:65,deadline:"2026-04-15",budget:85000,spent:52000,tasks:[{t:"Wireframes",done:true},{t:"Design",done:true},{t:"Development",done:false},{t:"Testing",done:false},{t:"Launch",done:false}]},
 {id:2,name:"Brand Strategy",client:"Lindberg Reklam",status:"Pågående",progress:40,deadline:"2026-05-01",budget:120000,spent:42000,tasks:[{t:"Research",done:true},{t:"Positioning",done:true},{t:"Visual identity",done:false},{t:"Brand book",done:false}]},
 {id:3,name:"SoMe Campaign Q2",client:"Karlsson Foto",status:"Planering",progress:10,deadline:"2026-04-20",budget:45000,spent:4500,tasks:[{t:"Strategy",done:true},{t:"Content plan",done:false},{t:"Production",done:false},{t:"Publishing",done:false}]},
 {id:4,name:"Annual Report 2025",client:"Åberg & Partners",status:"Avslutad",progress:100,deadline:"2026-03-01",budget:35000,spent:33000,tasks:[{t:"Layout",done:true},{t:"Content",done:true},{t:"Print",done:true}]},
 ];
-const INVOICES = [
+const INIT_INVOICES = [
 {id:"F2026-001",client:"Johansson Konsult",amount:25000,status:"Betald",due:"2026-03-01"},
 {id:"F2026-002",client:"Lindberg Reklam",amount:42000,status:"Skickad",due:"2026-04-10"},
 {id:"F2026-003",client:"Åberg & Partners",amount:33000,status:"Betald",due:"2026-03-31"},
@@ -113,7 +113,7 @@ const INVOICES = [
 {id:"F2026-006",client:"Ekström Design",amount:12000,status:"Utkast",due:"2026-04-24"},
 {id:"F2026-007",client:"Holm Media",amount:18000,status:"Skickad",due:"2026-04-22"},
 ];
-const TIME_ENTRIES = [
+const INIT_TIME_ENTRIES = [
 {id:1,project:"Website Redesign",task:"Frontend dev",date:"2026-03-26",hours:5.0},
 {id:2,project:"Brand Strategy",task:"Client workshop",date:"2026-03-26",hours:2.5},
 {id:3,project:"Website Redesign",task:"Responsive CSS",date:"2026-03-25",hours:6.0},
@@ -153,6 +153,11 @@ const [dash,setDash]=useState({pipeline:true,won:true,awaiting:true,weekHours:tr
 const [scanState,setScanState]=useState("idle");
 const [scanResult,setScanResult]=useState(null);
 const [scanPreview,setScanPreview]=useState(null);
+const [contacts,setContacts]=useState(INIT_CONTACTS);
+const [projects,setProjects]=useState(INIT_PROJECTS);
+const [invoices,setInvoices]=useState(INIT_INVOICES);
+const [timeEntries,setTimeEntries]=useState(INIT_TIME_ENTRIES);
+const [formData,setFormData]=useState({});
 const tRef=useRef(null);
 const fileRef=useRef(null);
 const T=THEMES[theme], L=LANG[lang], CU=CURRENCIES[currency];
@@ -190,7 +195,7 @@ const sC=s=>({Kund:[T.success,T.successLight],Lead:[T.accent,T.accentLight],Pros
 const Badge=({status})=>{const[c,b]=sC(status);return <span style={badgeS(c,b)}>{sLabel(status)}</span>};
 
 const getTemp=c=>{
-const hasProject=PROJECTS.some(p=>p.client===c.company&&p.status!=="Avslutad");
+const hasProject=projects.some(p=>p.client===c.company&&p.status!=="Avslutad");
 if(c.daysSince<=7&&hasProject) return {level:"hot",color:T.success};
 if(c.daysSince<=20||(hasProject&&c.daysSince<=30)) return {level:"warm",color:T.accent};
 if(c.daysSince<=35) return {level:"cold",color:T.warn};
@@ -242,24 +247,24 @@ const Toggle=({on,onToggle})=>(<button onClick={onToggle} style={{width:40,heigh
 const computeHealth=()=>{
 const factors=[];
 let score=50;
-const coldPct=CONTACTS.filter(c=>c.daysSince>30).length/Math.max(CONTACTS.length,1);
+const coldPct=contacts.filter(c=>c.daysSince>30).length/Math.max(contacts.length,1);
 const contactScore=Math.round((1-coldPct)*25);
 score+=(contactScore-12);
 factors.push({label:L.factorContacts,value:contactScore,max:25,impact:coldPct<0.3?"boost":coldPct<0.5?"neutral":"drag"});
-const odAmt=INVOICES.filter(i=>i.status==="Förfallen").reduce((s,i)=>s+i.amount,0);
-const totAmt=INVOICES.reduce((s,i)=>s+i.amount,0);
+const odAmt=invoices.filter(i=>i.status==="Förfallen").reduce((s,i)=>s+i.amount,0);
+const totAmt=invoices.reduce((s,i)=>s+i.amount,0);
 const invScore=totAmt>0?Math.round((1-odAmt/totAmt)*20):20;
 score+=(invScore-10);
 factors.push({label:L.factorInvoices,value:invScore,max:20,impact:odAmt===0?"boost":"drag"});
-const active=PROJECTS.filter(p=>p.status==="Pågående").length;
+const active=projects.filter(p=>p.status==="Pågående").length;
 const projScore=Math.min(active*8,20);
 score+=(projScore-8);
 factors.push({label:L.factorProjects,value:projScore,max:20,impact:active>=2?"boost":active>=1?"neutral":"drag"});
-const wonRev=INVOICES.filter(i=>i.status==="Betald").reduce((s,i)=>s+i.amount,0);
+const wonRev=invoices.filter(i=>i.status==="Betald").reduce((s,i)=>s+i.amount,0);
 const revScore=wonRev>50000?20:wonRev>20000?12:5;
 score+=(revScore-10);
 factors.push({label:L.factorRevenue,value:revScore,max:20,impact:wonRev>50000?"boost":"neutral"});
-const wH=TIME_ENTRIES.reduce((s,e)=>s+e.hours,0);
+const wH=timeEntries.reduce((s,e)=>s+e.hours,0);
 const wlScore=wH>=20&&wH<=40?15:wH>40?8:5;
 score+=(wlScore-8);
 factors.push({label:L.factorWorkload,value:wlScore,max:15,impact:wH>=20&&wH<=40?"boost":wH>40?"drag":"neutral"});
@@ -267,10 +272,10 @@ return {score:Math.max(0,Math.min(100,score)),factors};
 };
 
 const computeForecast=()=>{
-const pipeLine=CONTACTS.filter(c=>c.status==="Lead"||c.status==="Prospekt").reduce((s,c)=>s+c.value,0);
-const wonAmt=INVOICES.filter(i=>i.status==="Betald").reduce((s,i)=>s+i.amount,0);
-const wonCount=INVOICES.filter(i=>i.status==="Betald").length;
-const allCount=INVOICES.length;
+const pipeLine=contacts.filter(c=>c.status==="Lead"||c.status==="Prospekt").reduce((s,c)=>s+c.value,0);
+const wonAmt=invoices.filter(i=>i.status==="Betald").reduce((s,i)=>s+i.amount,0);
+const wonCount=invoices.filter(i=>i.status==="Betald").length;
+const allCount=invoices.length;
 const winRate=allCount>0?Math.round((wonCount/allCount)*100):0;
 const avgDeal=wonCount>0?Math.round(wonAmt/wonCount):0;
 const expected=Math.round(pipeLine*(winRate/100));
@@ -281,23 +286,23 @@ return {pipeLine,wonAmt,winRate,avgDeal,expected,bestCase,worstCase};
 
 const computeInsights=()=>{
 const ins=[];
-const cold=CONTACTS.filter(c=>c.daysSince>25);
+const cold=contacts.filter(c=>c.daysSince>25);
 if(cold.length>0){const v=cold.reduce((s,c)=>s+c.value,0);ins.push({type:"warning",icon:"alert",title:lang==="sv"?`${cold.length} kontakter har blivit kalla`:`${cold.length} contacts going cold`,body:lang==="sv"?`${fmtMoney(v)} i pipeline riskerar att kallna.`:`${fmtMoney(v)} in pipeline at risk.`,action:()=>{setView("contacts");setCFilter("all")},actionLabel:L.sendFollowUp})}
-const od=INVOICES.filter(i=>i.status==="Förfallen");
+const od=invoices.filter(i=>i.status==="Förfallen");
 if(od.length>0){const t=od.reduce((s,i)=>s+i.amount,0);ins.push({type:"danger",icon:"alert",title:lang==="sv"?`${fmtMoney(t)} förfallet`:`${fmtMoney(t)} overdue`,body:lang==="sv"?`${od.length} faktura har passerat förfallodatum.`:`${od.length} invoice(s) past due.`,action:()=>{setView("invoices");setIFilter("Förfallen")},actionLabel:L.viewInvoice})}
-PROJECTS.filter(p=>p.status==="Pågående"&&(p.spent/p.budget)>0.8).forEach(p=>{const pct=Math.round((p.spent/p.budget)*100);ins.push({type:pct>95?"danger":"warning",icon:"trendUp",title:`${p.name} — ${pct}% ${lang==="sv"?"av budget":"of budget"}`,body:lang==="sv"?`${fmtMoney(p.budget-p.spent)} kvar.`:`${fmtMoney(p.budget-p.spent)} remaining.`,action:()=>{setDetail({type:"project",data:p});setView("projects")},actionLabel:L.viewProject})});
+projects.filter(p=>p.status==="Pågående"&&(p.spent/p.budget)>0.8).forEach(p=>{const pct=Math.round((p.spent/p.budget)*100);ins.push({type:pct>95?"danger":"warning",icon:"trendUp",title:`${p.name} — ${pct}% ${lang==="sv"?"av budget":"of budget"}`,body:lang==="sv"?`${fmtMoney(p.budget-p.spent)} kvar.`:`${fmtMoney(p.budget-p.spent)} remaining.`,action:()=>{setDetail({type:"project",data:p});setView("projects")},actionLabel:L.viewProject})});
 return ins;
 };
 
 // DASHBOARD
 const DashView=()=>{
-const pipe=CONTACTS.reduce((s,c)=>s+c.value,0);
-const wonAmt=INVOICES.filter(i=>i.status==="Betald").reduce((s,i)=>s+i.amount,0);
-const pendAmt=INVOICES.filter(i=>i.status==="Skickad"||i.status==="Förfallen").reduce((s,i)=>s+i.amount,0);
-const wH=TIME_ENTRIES.reduce((s,e)=>s+e.hours,0);
-const odC=CONTACTS.filter(c=>c.daysSince>20).sort((a,b)=>b.daysSince-a.daysSince);
-const actP=PROJECTS.filter(p=>p.status!=="Avslutad");
-const recInv=INVOICES.filter(i=>i.status!=="Betald").slice(0,4);
+const pipe=contacts.reduce((s,c)=>s+c.value,0);
+const wonAmt=invoices.filter(i=>i.status==="Betald").reduce((s,i)=>s+i.amount,0);
+const pendAmt=invoices.filter(i=>i.status==="Skickad"||i.status==="Förfallen").reduce((s,i)=>s+i.amount,0);
+const wH=timeEntries.reduce((s,e)=>s+e.hours,0);
+const odC=contacts.filter(c=>c.daysSince>20).sort((a,b)=>b.daysSince-a.daysSince);
+const actP=projects.filter(p=>p.status!=="Avslutad");
+const recInv=invoices.filter(i=>i.status!=="Betald").slice(0,4);
 const ins=computeInsights();
 const {score:hScore,factors}=computeHealth();
 const fc=computeForecast();
@@ -393,8 +398,8 @@ return (
           </div>
           <div style={{marginTop:14,fontSize:12,color:T.textMuted,lineHeight:1.6,padding:12,background:T.surfaceAlt,borderRadius:8}}>
             {lang==="sv"
-              ?`Prognosen baseras på ${fc.winRate}% win-rate (${INVOICES.filter(i=>i.status==="Betald").length} av ${INVOICES.length} affärer) multiplicerat med ${fmtMoney(fc.pipeLine)} i aktiv pipeline. Bästa fall antar 85% konvertering.`
-              :`Forecast based on ${fc.winRate}% win rate (${INVOICES.filter(i=>i.status==="Betald").length} of ${INVOICES.length} deals) × ${fmtMoney(fc.pipeLine)} active pipeline. Best case assumes 85% conversion.`}
+              ?`Prognosen baseras på ${fc.winRate}% win-rate (${invoices.filter(i=>i.status==="Betald").length} av ${invoices.length} affärer) multiplicerat med ${fmtMoney(fc.pipeLine)} i aktiv pipeline. Bästa fall antar 85% konvertering.`
+              :`Forecast based on ${fc.winRate}% win rate (${invoices.filter(i=>i.status==="Betald").length} of ${invoices.length} deals) × ${fmtMoney(fc.pipeLine)} active pipeline. Best case assumes 85% conversion.`}
           </div>
         </div>)}
       </div>
@@ -446,12 +451,12 @@ if(detail?.type==="contact"){const c=detail.data;const temp=getTemp(c);return (<
 {[{icon:"mail",text:c.email},{icon:"phone",text:c.phone},{icon:"tag",text:`${L.value}: ${fmtMoney(c.value)}`},{icon:"calendar",text:`${c.daysSince} ${L.daysSinceContact}`}].map((it,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<3?`1px solid ${T.border}`:"none"}}><Ic name={it.icon} size={16} color={T.textFaint}/><span style={{fontSize:14,color:T.textSub}}>{it.text}</span></div>))}
 </div>
 {c.notes&&<div style={{...card,background:T.surfaceAlt,borderStyle:"dashed"}}><div style={{fontSize:11,color:T.textFaint,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>{L.notes}</div><div style={{fontSize:14,color:T.textSub}}>{c.notes}</div></div>}
-<div style={{display:"flex",gap:8}}><button style={bSP}><Ic name="mail" size={14} color="#fff"/> {L.email}</button><button style={bSO}><Ic name="phone" size={14}/> {L.call}</button><button style={bSO}><Ic name="edit" size={14}/> {L.edit}</button></div>
+<div style={{display:"flex",gap:8}}><button style={bSP} onClick={()=>window.open(`mailto:${c.email}`)}><Ic name="mail" size={14} color="#fff"/> {L.email}</button><button style={bSO} onClick={()=>window.open(`tel:${c.phone.replace(/[^+\d]/g,"")}`)}><Ic name="phone" size={14}/> {L.call}</button><button style={bSO} onClick={()=>{setFormData({name:c.name,company:c.company,email:c.email,phone:c.phone,notes:c.notes||"",editId:c.id});setModal("editContact")}}><Ic name="edit" size={14}/> {L.edit}</button></div>
 </div>)}
 const fs=[{key:"all",label:L.all},{key:"Kund",label:L.customer},{key:"Lead",label:L.lead},{key:"Prospekt",label:L.prospect}];
-const list=CONTACTS.filter(c=>(cFilter==="all"||c.status===cFilter)&&(!search||c.name.toLowerCase().includes(search.toLowerCase())||c.company.toLowerCase().includes(search.toLowerCase())));
+const list=contacts.filter(c=>(cFilter==="all"||c.status===cFilter)&&(!search||c.name.toLowerCase().includes(search.toLowerCase())||c.company.toLowerCase().includes(search.toLowerCase())));
 return (<div>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><h1 style={hd}>{L.contactsTitle}</h1><p style={subS}>{CONTACTS.length} {L.inNetwork}</p></div><button style={bSP} onClick={()=>setModal("newContact")}><Ic name="plus" size={14} color="#fff"/> {L.newItem}</button></div>
+<div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><h1 style={hd}>{L.contactsTitle}</h1><p style={subS}>{contacts.length} {L.inNetwork}</p></div><button style={bSP} onClick={()=>setModal("newContact")}><Ic name="plus" size={14} color="#fff"/> {L.newItem}</button></div>
 <div style={{position:"relative",marginBottom:14}}><input style={{...ipS,paddingLeft:38}} placeholder={L.searchPlaceholder} value={search} onChange={e=>setSearch(e.target.value)}/><div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><Ic name="search" size={16} color={T.textFaint}/></div></div>
 <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>{fs.map(f=><button key={f.key} style={fB(cFilter===f.key)} onClick={()=>setCFilter(f.key)}>{f.label}</button>)}</div>
 <div style={{...card,padding:0,overflow:"hidden"}}>{list.map((c,i)=>(<div key={c.id} style={{...lr,borderBottom:i<list.length-1?`1px solid ${T.border}`:"none"}} onClick={()=>setDetail({type:"contact",data:c})}>
@@ -467,21 +472,21 @@ if(detail?.type==="project"){const p=detail.data;const bp=Math.round((p.spent/p.
 <div style={card}><div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}><div><div style={{...hd,fontSize:20}}>{p.name}</div><div style={{fontSize:13,color:T.textMuted,marginTop:2}}>{p.client}</div></div><Badge status={p.status}/></div>
 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>{[{l:L.budget,v:fmtMoney(p.budget),s:`${fmtMoney(p.spent)} ${L.used}`},{l:L.progress,v:`${p.progress}%`,s:`${L.deadline} ${p.deadline}`}].map((st,i)=>(<div key={i} style={{padding:14,background:T.surfaceAlt,borderRadius:10}}><div style={{fontSize:11,color:T.textFaint,textTransform:"uppercase",letterSpacing:"0.06em"}}>{st.l}</div><div style={{fontSize:18,fontWeight:700,fontFamily:serif,marginTop:4,color:T.accent}}>{st.v}</div><div style={{fontSize:12,color:T.textMuted}}>{st.s}</div></div>))}</div>
 <div style={{fontSize:11,color:T.textMuted,marginBottom:4,display:"flex",justifyContent:"space-between"}}><span>{L.budget}</span><span style={{color:bp>85?T.danger:T.textMuted}}>{bp}%</span></div><div style={progBar}><div style={progFill(bp,bp>85?T.danger:T.accent)}/></div></div>
-<div style={secS}>{L.tasks}</div><div style={{...card,padding:0,overflow:"hidden"}}>{p.tasks.map((task,i)=>(<div key={i} style={{...lr,display:"flex",alignItems:"center",gap:12,borderBottom:i<p.tasks.length-1?`1px solid ${T.border}`:"none"}}><div style={{width:22,height:22,borderRadius:6,border:`2px solid ${task.done?T.success:T.border}`,background:task.done?T.successLight:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{task.done&&<Ic name="check" size={12} color={T.success}/>}</div><span style={{fontSize:14,color:task.done?T.textFaint:T.text,textDecoration:task.done?"line-through":"none"}}>{task.t}</span></div>))}</div>
+<div style={secS}>{L.tasks}</div><div style={{...card,padding:0,overflow:"hidden"}}>{p.tasks.map((task,ti)=>(<div key={ti} style={{...lr,display:"flex",alignItems:"center",gap:12,borderBottom:ti<p.tasks.length-1?`1px solid ${T.border}`:"none",cursor:"pointer"}} onClick={()=>{const updated=projects.map(pr=>pr.id===p.id?{...pr,tasks:pr.tasks.map((tk,idx)=>idx===ti?{...tk,done:!tk.done}:tk),progress:Math.round(pr.tasks.map((tk,idx)=>idx===ti?{...tk,done:!tk.done}:tk).filter(tk=>tk.done).length/pr.tasks.length*100)}:pr);setProjects(updated);setDetail({type:"project",data:updated.find(pr=>pr.id===p.id)})}}><div style={{width:22,height:22,borderRadius:6,border:`2px solid ${task.done?T.success:T.border}`,background:task.done?T.successLight:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{task.done&&<Ic name="check" size={12} color={T.success}/>}</div><span style={{fontSize:14,color:task.done?T.textFaint:T.text,textDecoration:task.done?"line-through":"none"}}>{task.t}</span></div>))}</div>
 </div>)}
-return (<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><h1 style={hd}>{L.projectsTitle}</h1><p style={subS}>{PROJECTS.length} {L.totalProjects}</p></div><button style={bSP}><Ic name="plus" size={14} color="#fff"/> {L.newProject}</button></div>
-{PROJECTS.map(p=>(<div key={p.id} style={card} onClick={()=>setDetail({type:"project",data:p})}><div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><div><div style={{fontWeight:600,fontSize:14}}>{p.name}</div><div style={{fontSize:12,color:T.textMuted}}>{p.client}</div></div><Badge status={p.status}/></div><div style={progBar}><div style={progFill(p.progress)}/></div><div style={{display:"flex",justifyContent:"space-between",marginTop:8,fontSize:12,color:T.textMuted}}><span>{p.progress}%</span><span>{fmtMoney(p.spent)} / {fmtMoney(p.budget)}</span></div></div>))}
+return (<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}><div><h1 style={hd}>{L.projectsTitle}</h1><p style={subS}>{projects.length} {L.totalProjects}</p></div><button style={bSP} onClick={()=>setModal("newProject")}><Ic name="plus" size={14} color="#fff"/> {L.newProject}</button></div>
+{projects.map(p=>(<div key={p.id} style={card} onClick={()=>setDetail({type:"project",data:p})}><div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><div><div style={{fontWeight:600,fontSize:14}}>{p.name}</div><div style={{fontSize:12,color:T.textMuted}}>{p.client}</div></div><Badge status={p.status}/></div><div style={progBar}><div style={progFill(p.progress)}/></div><div style={{display:"flex",justifyContent:"space-between",marginTop:8,fontSize:12,color:T.textMuted}}><span>{p.progress}%</span><span>{fmtMoney(p.spent)} / {fmtMoney(p.budget)}</span></div></div>))}
 </div>);
 };
 
 // INVOICES VIEW
 const InvView=()=>{
 const fs=[{key:"all",label:L.all},{key:"Utkast",label:L.draft},{key:"Skickad",label:L.sent},{key:"Betald",label:L.paid},{key:"Förfallen",label:L.overdue}];
-const list=INVOICES.filter(inv=>iFilter==="all"||inv.status===iFilter);
-const tots={Betald:0,Skickad:0,"Förfallen":0};INVOICES.forEach(inv=>{if(tots[inv.status]!==undefined)tots[inv.status]+=inv.amount});
+const list=invoices.filter(inv=>iFilter==="all"||inv.status===iFilter);
+const tots={Betald:0,Skickad:0,"Förfallen":0};invoices.forEach(inv=>{if(tots[inv.status]!==undefined)tots[inv.status]+=inv.amount});
 return (<div>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-<div><h1 style={hd}>{L.invoicesTitle}</h1><p style={subS}>{INVOICES.length} {L.invoicesCount}</p></div>
+<div><h1 style={hd}>{L.invoicesTitle}</h1><p style={subS}>{invoices.length} {L.invoicesCount}</p></div>
 <div style={{display:"flex",gap:6}}>
 <button style={{...bSO,borderColor:T.accent,color:T.accent}} onClick={()=>setModal("scanInvoice")}>
 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -498,15 +503,15 @@ return (<div>
 
 // TIME VIEW
 const TimView=()=>{
-const tH=TIME_ENTRIES.filter(e=>e.date==="2026-03-26").reduce((s,e)=>s+e.hours,0);const wH=TIME_ENTRIES.reduce((s,e)=>s+e.hours,0);const byP={};TIME_ENTRIES.forEach(e=>{byP[e.project]=(byP[e.project]||0)+e.hours});
+const tH=timeEntries.filter(e=>e.date==="2026-03-26").reduce((s,e)=>s+e.hours,0);const wH=timeEntries.reduce((s,e)=>s+e.hours,0);const byP={};timeEntries.forEach(e=>{byP[e.project]=(byP[e.project]||0)+e.hours});
 return (<div><h1 style={hd}>{L.timeTitle}</h1><p style={subS}>{L.weekLabel}</p>
 <div style={{...card,borderColor:T.borderAccent,textAlign:"center"}}><div style={{fontFamily:"'DM Mono',monospace",fontSize:38,fontWeight:400,color:timerOn?T.accent:T.text,letterSpacing:"0.06em",padding:"12px 0"}}>{fmtT(timerSec)}</div>
-<div style={{marginBottom:10}}><select style={{...ipS,textAlign:"center",appearance:"none"}} value={timerProj} onChange={e=>setTimerProj(e.target.value)}>{PROJECTS.filter(p=>p.status!=="Avslutad").map(p=><option key={p.id}>{p.name}</option>)}</select></div>
+<div style={{marginBottom:10}}><select style={{...ipS,textAlign:"center",appearance:"none"}} value={timerProj} onChange={e=>setTimerProj(e.target.value)}>{projects.filter(p=>p.status!=="Avslutad").map(p=><option key={p.id}>{p.name}</option>)}</select></div>
 <div style={{marginBottom:16}}><input style={ipS} placeholder={L.whatWorking} value={timerTask} onChange={e=>setTimerTask(e.target.value)}/></div>
-<div style={{display:"flex",gap:8,justifyContent:"center"}}><button style={bP} onClick={()=>setTimerOn(!timerOn)}><Ic name={timerOn?"pause":"play"} size={15} color="#fff"/> {timerOn?L.pause:L.start}</button>{timerSec>0&&<button style={bO} onClick={()=>{setTimerOn(false);setTimerSec(0)}}>{L.reset}</button>}</div></div>
+<div style={{display:"flex",gap:8,justifyContent:"center"}}><button style={bP} onClick={()=>setTimerOn(!timerOn)}><Ic name={timerOn?"pause":"play"} size={15} color="#fff"/> {timerOn?L.pause:L.start}</button>{timerSec>0&&<button style={bO} onClick={()=>{const hrs=Math.round((timerSec/3600)*100)/100;if(hrs>=0.01){const today=new Date().toISOString().slice(0,10);setTimeEntries(prev=>[{id:Date.now(),project:timerProj,task:timerTask||timerProj,date:today,hours:hrs},...prev])}setTimerOn(false);setTimerSec(0);setTimerTask("")}}>{L.reset}</button>}</div></div>
 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>{[{l:L.today,v:`${tH}h`},{l:L.week,v:`${wH}h`}].map((s,i)=>(<div key={i} style={{...sCard,borderColor:T.borderAccent}}><div style={{fontSize:11,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.06em"}}>{s.l}</div><div style={{fontFamily:serif,fontSize:24,fontWeight:400,color:T.accent,marginTop:4}}>{s.v}</div></div>))}</div>
 <div style={secS}>{L.perProject}</div><div style={card}>{Object.entries(byP).sort((a,b)=>b[1]-a[1]).map(([proj,hrs])=>{const pc=Math.round((hrs/wH)*100);return (<div key={proj} style={{marginBottom:14}}><div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:5}}><span style={{fontWeight:500}}>{proj}</span><span style={{color:T.textMuted}}>{hrs}h ({pc}%)</span></div><div style={progBar}><div style={progFill(pc)}/></div></div>)})}</div>
-<div style={secS}>{L.recentEntries}</div><div style={{...card,padding:0,overflow:"hidden"}}>{TIME_ENTRIES.map((e,i)=>(<div key={e.id} style={{...lr,borderBottom:i<TIME_ENTRIES.length-1?`1px solid ${T.border}`:"none"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontWeight:600,fontSize:14}}>{e.task}</div><div style={{fontSize:12,color:T.textMuted}}>{e.project} · {e.date}</div></div><div style={{fontWeight:700,fontSize:16,fontFamily:serif,color:T.accent}}>{e.hours}h</div></div></div>))}</div>
+<div style={secS}>{L.recentEntries}</div><div style={{...card,padding:0,overflow:"hidden"}}>{timeEntries.map((e,i)=>(<div key={e.id} style={{...lr,borderBottom:i<timeEntries.length-1?`1px solid ${T.border}`:"none"}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontWeight:600,fontSize:14}}>{e.task}</div><div style={{fontSize:12,color:T.textMuted}}>{e.project} · {e.date}</div></div><div style={{fontWeight:700,fontSize:16,fontFamily:serif,color:T.accent}}>{e.hours}h</div></div></div>))}</div>
 </div>);
 };
 
@@ -580,7 +585,7 @@ const ScanModal=()=>(
         </div>))}
       </div>)}
       <div style={{display:"flex",gap:10}}>
-        <button style={{...bP,flex:1,justifyContent:"center"}} onClick={()=>{setModal(null);setScanState("idle");setScanPreview(null);setScanResult(null)}}>
+        <button style={{...bP,flex:1,justifyContent:"center"}} onClick={()=>{if(scanResult){setInvoices(prev=>[{id:`F${Date.now()}`,client:scanResult.client,amount:parseInt(scanResult.amount.replace(/\s/g,""),10),status:"Utkast",due:scanResult.due},...prev])}setModal(null);setScanState("idle");setScanPreview(null);setScanResult(null)}}>
           <Ic name="check" size={14} color="#fff"/> {L.confirm}
         </button>
         <button style={{...bO}} onClick={()=>{setScanState("idle");setScanPreview(null);setScanResult(null)}}>
@@ -596,15 +601,35 @@ const ScanModal=()=>(
 </div>
 );
 
+const closeModal=()=>{setModal(null);setFormData({})};
+const handleSave=()=>{
+if(modal==="newContact"){
+if(!formData.name)return;
+setContacts(prev=>[{id:Date.now(),name:formData.name,company:formData.company||"",email:formData.email||"",phone:formData.phone||"",status:"Lead",value:0,daysSince:0,notes:formData.notes||""},...prev]);
+}else if(modal==="editContact"){
+setContacts(prev=>prev.map(c=>c.id===formData.editId?{...c,name:formData.name||c.name,company:formData.company||c.company,email:formData.email||c.email,phone:formData.phone||c.phone,notes:formData.notes!==undefined?formData.notes:c.notes}:c));
+setDetail(null);
+}else if(modal==="newInvoice"){
+if(!formData.client||!formData.amount)return;
+setInvoices(prev=>[{id:`F${Date.now()}`,client:formData.client,amount:parseInt(formData.amount,10)||0,status:"Utkast",due:formData.due||""},...prev]);
+}else if(modal==="newProject"){
+if(!formData.name)return;
+setProjects(prev=>[{id:Date.now(),name:formData.name,client:formData.client||"",status:"Planering",progress:0,deadline:formData.deadline||"",budget:parseInt(formData.budget,10)||0,spent:0,tasks:[]},...prev]);
+}
+closeModal();
+};
 const ModalView=()=>{
 if(!modal)return null;
 if(modal==="scanInvoice") return <ScanModal />;
-const isCon=modal==="newContact";const title=isCon?L.newContact:L.newInvoice;const fields=isCon?[{l:L.name,p:"..."},{l:L.company,p:"..."},{l:L.email,p:"name@company.com"},{l:L.phone,p:"070-000 00 00"}]:[{l:L.client,p:"..."},{l:L.amount,p:"0"},{l:L.invoiceDate,p:"2026-03-26"},{l:L.dueBy,p:"2026-04-26"}];
-return (<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setModal(null)}><div style={{background:T.surface,borderRadius:"18px 18px 0 0",width:"100%",maxWidth:500,maxHeight:"85vh",overflowY:"auto",padding:"24px 20px 32px"}} onClick={e=>e.stopPropagation()}>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}><div style={{...hd,fontSize:20}}>{title}</div><button style={{background:"none",border:"none",cursor:"pointer",color:T.textMuted,padding:4}} onClick={()=>setModal(null)}><Ic name="x" size={22}/></button></div>
-{fields.map(({l,p})=>(<div key={l} style={{marginBottom:14}}><label style={{fontSize:11,color:T.textFaint,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:5,fontWeight:600}}>{l}</label><input style={ipS} placeholder={p}/></div>))}
-<div style={{marginBottom:14}}><label style={{fontSize:11,color:T.textFaint,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:5,fontWeight:600}}>{isCon?L.notes:L.description}</label><textarea style={{...ipS,minHeight:70,resize:"vertical"}} placeholder="..."/></div>
-<div style={{display:"flex",gap:10,marginTop:20}}><button style={bP}><Ic name="check" size={14} color="#fff"/> {L.save}</button><button style={bO} onClick={()=>setModal(null)}>{L.cancel}</button></div>
+const isCon=modal==="newContact"||modal==="editContact";
+const isProj=modal==="newProject";
+const title=modal==="editContact"?L.edit:isCon?L.newContact:isProj?L.newProject:L.newInvoice;
+const fields=isCon?[{k:"name",l:L.name,p:"..."},{k:"company",l:L.company,p:"..."},{k:"email",l:L.email,p:"name@company.com"},{k:"phone",l:L.phone,p:"070-000 00 00"}]:isProj?[{k:"name",l:L.name,p:"..."},{k:"client",l:L.client,p:"..."},{k:"budget",l:L.budget,p:"0"},{k:"deadline",l:L.deadline,p:"2026-06-01"}]:[{k:"client",l:L.client,p:"..."},{k:"amount",l:L.amount,p:"0"},{k:"date",l:L.invoiceDate,p:"2026-03-26"},{k:"due",l:L.dueBy,p:"2026-04-26"}];
+return (<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={closeModal}><div style={{background:T.surface,borderRadius:"18px 18px 0 0",width:"100%",maxWidth:500,maxHeight:"85vh",overflowY:"auto",padding:"24px 20px 32px"}} onClick={e=>e.stopPropagation()}>
+<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}><div style={{...hd,fontSize:20}}>{title}</div><button style={{background:"none",border:"none",cursor:"pointer",color:T.textMuted,padding:4}} onClick={closeModal}><Ic name="x" size={22}/></button></div>
+{fields.map(({k,l,p})=>(<div key={k} style={{marginBottom:14}}><label style={{fontSize:11,color:T.textFaint,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:5,fontWeight:600}}>{l}</label><input style={ipS} placeholder={p} value={formData[k]||""} onChange={e=>setFormData(prev=>({...prev,[k]:e.target.value}))}/></div>))}
+<div style={{marginBottom:14}}><label style={{fontSize:11,color:T.textFaint,textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:5,fontWeight:600}}>{isCon?L.notes:L.description}</label><textarea style={{...ipS,minHeight:70,resize:"vertical"}} placeholder="..." value={formData.notes||formData.description||""} onChange={e=>setFormData(prev=>({...prev,[isCon?"notes":"description"]:e.target.value}))}/></div>
+<div style={{display:"flex",gap:10,marginTop:20}}><button style={bP} onClick={handleSave}><Ic name="check" size={14} color="#fff"/> {L.save}</button><button style={bO} onClick={closeModal}>{L.cancel}</button></div>
 </div></div>);
 };
 
