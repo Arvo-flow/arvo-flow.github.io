@@ -39,6 +39,7 @@ showInsights:"Insikter",showForecast:"Prognos",showHealth:"Hälsopoäng",showWee
 showPipeline:"Pipeline",showWon:"Vunnet",showAwaiting:"Väntar betalning",
 showToDo:"Att göra",showRecentInv:"Senaste fakturor",showActiveProj:"Aktiva projekt",showDigest:"Veckosammanfattning",
 scanInvoice:"Skanna faktura",scanTitle:"Skanna in en faktura",scanDesc:"Ta ett foto eller ladda upp en bild av fakturan. AI:n extraherar kund, belopp och datum automatiskt.",scanning:"Analyserar faktura…",scanSuccess:"Faktura tolkad!",scanUpload:"Ladda upp bild",scanCamera:"Ta foto",extractedData:"Extraherad data",confirm:"Bekräfta",scanError:"Kunde inte tolka fakturan. Försök igen.",
+heyArvo:"Hey Arvo",heyArvoSub:"Prata eller skriv — jag sköter resten",heyArvoPlaceholder:"Skriv t.ex. 'Jobbade 3h med design för Karlsson'…",heyArvoListening:"Lyssnar…",heyArvoThinking:"Tänker…",heyArvoTapMic:"Tryck på mikrofonen och berätta",heyArvoWelcome:"Hej! Jag är Arvo, din digitala affärspartner. Berätta vad du gjort så loggar jag det åt dig.",heyArvoTimeLogged:"Tidsloggning sparad",heyArvoContactCreated:"Ny kontakt skapad",heyArvoInvoiceCreated:"Fakturautkast skapat",heyArvoExpenseLogged:"Utgift registrerad",heyArvoProjectUpdated:"Projekt uppdaterat",heyArvoNoMic:"Din webbläsare stöder inte röstinmatning",heyArvoCantParse:"Jag förstod inte riktigt. Kan du formulera om?",
 },
 en: {
 overview:"Overview",contacts:"Contacts",projects:"Projects",invoices:"Invoices",time:"Time",
@@ -78,6 +79,7 @@ showInsights:"Insights",showForecast:"Forecast",showHealth:"Health Score",showWe
 showPipeline:"Pipeline",showWon:"Won",showAwaiting:"Awaiting payment",
 showToDo:"To do",showRecentInv:"Recent invoices",showActiveProj:"Active projects",showDigest:"Weekly Digest",
 scanInvoice:"Scan invoice",scanTitle:"Scan an invoice",scanDesc:"Take a photo or upload an image of the invoice. AI will extract client, amount, and dates automatically.",scanning:"Analyzing invoice…",scanSuccess:"Invoice parsed!",scanUpload:"Upload image",scanCamera:"Take photo",extractedData:"Extracted data",confirm:"Confirm",scanError:"Could not parse invoice. Please try again.",
+heyArvo:"Hey Arvo",heyArvoSub:"Talk or type — I'll handle the rest",heyArvoPlaceholder:"E.g. 'Worked 3h on design for Karlsson'…",heyArvoListening:"Listening…",heyArvoThinking:"Thinking…",heyArvoTapMic:"Tap the mic and tell me",heyArvoWelcome:"Hi! I'm Arvo, your digital business partner. Tell me what you've done and I'll log it for you.",heyArvoTimeLogged:"Time entry saved",heyArvoContactCreated:"New contact created",heyArvoInvoiceCreated:"Invoice draft created",heyArvoExpenseLogged:"Expense logged",heyArvoProjectUpdated:"Project updated",heyArvoNoMic:"Your browser doesn't support voice input",heyArvoCantParse:"I didn't quite understand. Could you rephrase?",
 },
 };
 
@@ -158,13 +160,20 @@ const [projects,setProjects]=useState(INIT_PROJECTS);
 const [invoices,setInvoices]=useState(INIT_INVOICES);
 const [timeEntries,setTimeEntries]=useState(INIT_TIME_ENTRIES);
 const [formData,setFormData]=useState({});
+const [chatMsgs,setChatMsgs]=useState([]);
+const [chatInput,setChatInput]=useState("");
+const [isListening,setIsListening]=useState(false);
+const [arvoThinking,setArvoThinking]=useState(false);
 const tRef=useRef(null);
 const fileRef=useRef(null);
+const chatEndRef=useRef(null);
+const recognitionRef=useRef(null);
 const T=THEMES[theme], L=LANG[lang], CU=CURRENCIES[currency];
 const serif="'Playfair Display',Georgia,serif";
 const switchLang=l=>{setLang(l);setCurrency(l==="sv"?"SEK":"USD")};
 
 useEffect(()=>{if(timerOn){tRef.current=setInterval(()=>setTimerSec(s=>s+1),1000)}else clearInterval(tRef.current);return()=>clearInterval(tRef.current)},[timerOn]);
+useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMsgs,arvoThinking]);
 
 const fmtT=s=>`${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 const ini=n=>n.split(" ").map(w=>w[0]).join("");
@@ -230,6 +239,9 @@ right:<><polyline points="9 18 15 12 9 6"/></>,
 down:<><polyline points="6 9 12 15 18 9"/></>,
 up:<><polyline points="18 15 12 9 6 15"/></>,
 settings:<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+mic:<><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></>,
+send:<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>,
+arvo:<><path d="M12 2L4 20h4l4-8 4 8h4L12 2z"/></>,
 zap:<><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
 trendUp:<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>,
 alert:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
@@ -238,8 +250,8 @@ thermometer:<><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"
 return <svg {...p}>{d[name]}</svg>;
 };
 
-const NAV=[{id:"dashboard",icon:"overview"},{id:"contacts",icon:"contacts"},{id:"projects",icon:"projects"},{id:"invoices",icon:"invoices"},{id:"time",icon:"time"}];
-const nL=id=>({dashboard:L.overview,contacts:L.contacts,projects:L.projects,invoices:L.invoices,time:L.time}[id]);
+const NAV=[{id:"dashboard",icon:"overview"},{id:"heyarvo",icon:"arvo"},{id:"contacts",icon:"contacts"},{id:"projects",icon:"projects"},{id:"invoices",icon:"invoices"},{id:"time",icon:"time"}];
+const nL=id=>({dashboard:L.overview,heyarvo:L.heyArvo,contacts:L.contacts,projects:L.projects,invoices:L.invoices,time:L.time}[id]);
 const Flag=({code,active,onClick})=>(<button onClick={onClick} style={{width:28,height:20,borderRadius:4,border:active?`2px solid ${T.accent}`:`1.5px solid ${T.border}`,cursor:"pointer",overflow:"hidden",padding:0,background:T.surface,opacity:active?1:0.45}}>{code==="sv"?<svg viewBox="0 0 30 22" style={{display:"block",width:"100%",height:"100%"}}><rect width="30" height="22" fill="#005BAA"/><rect x="9" width="4" height="22" fill="#FECC00"/><rect y="9" width="30" height="4" fill="#FECC00"/></svg>:<svg viewBox="0 0 30 22" style={{display:"block",width:"100%",height:"100%"}}><rect width="30" height="22" fill="#012169"/><path d="M0,0 L30,22 M30,0 L0,22" stroke="#fff" strokeWidth="3.5"/><path d="M0,0 L30,22 M30,0 L0,22" stroke="#C8102E" strokeWidth="2"/><rect x="12" width="6" height="22" fill="#fff"/><rect y="8" width="30" height="6" fill="#fff"/><rect x="13" width="4" height="22" fill="#C8102E"/><rect y="9" width="30" height="4" fill="#C8102E"/></svg>}</button>);
 const Toggle=({on,onToggle})=>(<button onClick={onToggle} style={{width:40,height:22,borderRadius:11,background:on?T.accent:T.border,border:"none",cursor:"pointer",position:"relative",flexShrink:0}}><div style={{width:16,height:16,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:on?21:3,transition:"left 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/></button>);
 
@@ -633,9 +645,192 @@ return (<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zInd
 </div></div>);
 };
 
+// ── HEY ARVO: Smart extraction engine ───────────────────────────────
+const extractAction=(text)=>{
+const t=text.toLowerCase();
+const today=new Date().toISOString().slice(0,10);
+// Time log patterns
+const timeMatch=t.match(/(\d+(?:[.,]\d+)?)\s*(?:h|timm(?:e|ar)|hours?)/);
+const clientMatch=text.match(/(?:för|for|åt|hos|at|with)\s+([A-ZÅÄÖ][a-zåäö]+(?:\s+[A-ZÅÄÖ][a-zåäö]+)*)/);
+const projectMatch=text.match(/(?:projekt|project)\s+["']?([^"',]+)/i);
+if(timeMatch){
+const hours=parseFloat(timeMatch[1].replace(",","."));
+const client=clientMatch?clientMatch[1]:null;
+const proj=projectMatch?projectMatch[1].trim():client||null;
+const descWords=text.replace(timeMatch[0],"").replace(clientMatch?clientMatch[0]:"","").replace(/^[\s,.-]+|[\s,.-]+$/g,"").replace(/(?:jobbade?|worked|idag|today|igår|yesterday|med|with|på|on)\s*/gi,"").trim();
+return {type:"time_log",data:{hours,project:proj,task:descWords||null,client,date:t.includes("igår")||t.includes("yesterday")?new Date(Date.now()-86400000).toISOString().slice(0,10):today}};
+}
+// Invoice patterns
+const invMatch=t.match(/(?:faktur|invoice|skicka faktura|invoice draft)\w*/);
+const amtMatch=t.match(/(\d[\d\s]*(?:\d))\s*(?:kr|sek|:-|kronor)?/);
+if(invMatch&&(clientMatch||amtMatch)){
+const amount=amtMatch?parseInt(amtMatch[1].replace(/\s/g,""),10):0;
+return {type:"invoice_draft",data:{client:clientMatch?clientMatch[1]:"Okänd kund",amount,description:text,date:today}};
+}
+// Expense patterns
+const expMatch=t.match(/(?:köpte?|betalade?|utgift|expense|bought|paid|kvitto|receipt)/);
+if(expMatch&&amtMatch){
+const amount=parseInt(amtMatch[1].replace(/\s/g,""),10);
+const desc=text.replace(amtMatch[0],"").replace(expMatch[0],"").replace(/^[\s,.-]+|[\s,.-]+$/g,"").trim();
+return {type:"expense",data:{amount,description:desc||"Utgift",client:clientMatch?clientMatch[1]:null,date:today}};
+}
+// New contact patterns
+const conMatch=t.match(/(?:ny kontakt|new contact|lägg till|add contact)/);
+const emailMatch=text.match(/[\w.-]+@[\w.-]+\.\w+/);
+const phoneMatch=text.match(/(?:0\d{1,3}[-\s]?\d{2,3}[-\s]?\d{2}[-\s]?\d{2}|\+\d{8,15})/);
+const nameMatch=text.match(/(?:ny kontakt|new contact|lägg till|add)\s+([A-ZÅÄÖ][a-zåäö]+(?:\s+[A-ZÅÄÖ][a-zåäö]+)*)/i);
+if(conMatch){
+return {type:"new_contact",data:{name:nameMatch?nameMatch[1]:clientMatch?clientMatch[1]:"Okänd",company:clientMatch?clientMatch[1]:null,email:emailMatch?emailMatch[0]:null,phone:phoneMatch?phoneMatch[0]:null}};
+}
+// Project update patterns
+if(projectMatch||t.match(/(?:uppdatera|update|status|klar|done|färdig|finished)/)){
+const proj=projectMatch?projectMatch[1].trim():clientMatch?clientMatch[1]:null;
+if(proj) return {type:"project_update",data:{project:proj,status:t.match(/klar|done|färdig|finished|avslut/)?"Avslutad":t.match(/paus|hold|vänta/)?"Pausad":null,description:text}};
+}
+// Amount without other context = expense
+if(amtMatch&&!timeMatch){
+const amount=parseInt(amtMatch[1].replace(/\s/g,""),10);
+return {type:"expense",data:{amount,description:text,client:clientMatch?clientMatch[1]:null,date:today}};
+}
+return null;
+};
+
+const processArvoMessage=async(text)=>{
+if(!text.trim())return;
+setChatMsgs(prev=>[...prev,{role:"user",text,ts:Date.now()}]);
+setChatInput("");
+setArvoThinking(true);
+// Simulate slight delay for natural feel
+await new Promise(r=>setTimeout(r,600+Math.random()*400));
+const result=extractAction(text);
+if(!result){
+setChatMsgs(prev=>[...prev,{role:"arvo",text:L.heyArvoCantParse,ts:Date.now()}]);
+setArvoThinking(false);
+return;
+}
+let reply="";
+const d=result.data;
+switch(result.type){
+case "time_log":{
+const proj=d.project||"Projekt";
+setTimeEntries(prev=>[{id:Date.now(),project:proj,task:d.task||proj,date:d.date,hours:d.hours},...prev]);
+reply=`${L.heyArvoTimeLogged}\n${d.hours}h → ${proj}${d.task?` (${d.task})`:""}`;
+break;
+}
+case "invoice_draft":{
+const invNum=`F${new Date().getFullYear()}-${String(invoices.length+1).padStart(3,"0")}`;
+setInvoices(prev=>[{id:invNum,client:d.client,amount:d.amount,status:"Utkast",due:""},...prev]);
+reply=`${L.heyArvoInvoiceCreated}\n${invNum} → ${d.client} — ${fmtMoney(d.amount)}`;
+break;
+}
+case "expense":{
+reply=`${L.heyArvoExpenseLogged}\n${d.description} — ${fmtMoney(d.amount)}`;
+break;
+}
+case "new_contact":{
+setContacts(prev=>[{id:Date.now(),name:d.name,company:d.company||"",email:d.email||"",phone:d.phone||"",status:"Lead",value:0,daysSince:0,notes:""},...prev]);
+reply=`${L.heyArvoContactCreated}\n${d.name}${d.company?` (${d.company})`:""}${d.email?`\n${d.email}`:""}`;
+break;
+}
+case "project_update":{
+const projName=d.project;
+setProjects(prev=>prev.map(p=>p.name.toLowerCase().includes(projName.toLowerCase())?{...p,status:d.status||p.status}:p));
+reply=`${L.heyArvoProjectUpdated}\n${projName}${d.status?` → ${sLabel(d.status)}`:""}`;
+break;
+}
+default: break;
+}
+setChatMsgs(prev=>[...prev,{role:"arvo",text:reply,ts:Date.now(),type:result.type}]);
+setArvoThinking(false);
+};
+
+const startListening=()=>{
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){setChatMsgs(prev=>[...prev,{role:"arvo",text:L.heyArvoNoMic,ts:Date.now()}]);return}
+const rec=new SR();
+rec.lang=lang==="sv"?"sv-SE":"en-US";
+rec.interimResults=false;
+rec.maxAlternatives=1;
+rec.onresult=(e)=>{const t=e.results[0][0].transcript;setChatInput(t);processArvoMessage(t)};
+rec.onerror=()=>setIsListening(false);
+rec.onend=()=>setIsListening(false);
+recognitionRef.current=rec;
+rec.start();
+setIsListening(true);
+};
+const stopListening=()=>{if(recognitionRef.current)recognitionRef.current.stop();setIsListening(false)};
+
+// ── HEY ARVO VIEW ──────────────────────────────────────────────────
+const HeyArvoView=()=>{
+const actionIcon={time_log:"time",invoice_draft:"invoices",expense:"tag",new_contact:"contacts",project_update:"projects"};
+const actionColor={time_log:T.accent,invoice_draft:T.warn,expense:T.danger,new_contact:T.success,project_update:T.accent};
+return (
+<div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 152px)"}}>
+<div style={{textAlign:"center",marginBottom:16}}>
+<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:56,height:56,borderRadius:"50%",background:T.accentLight,marginBottom:10}}>
+<ArvoLogo size={32}/>
+</div>
+<h1 style={{...hd,fontSize:22}}>{L.heyArvo}</h1>
+<p style={{...subS,marginBottom:0,marginTop:4}}>{L.heyArvoSub}</p>
+</div>
+
+<div style={{flex:1,overflowY:"auto",paddingBottom:12}}>
+{chatMsgs.length===0&&(
+<div style={{textAlign:"center",padding:"32px 20px"}}>
+<div style={{...card,background:T.accentLight,borderColor:T.borderAccent,borderStyle:"dashed",padding:24}}>
+<div style={{fontSize:14,color:T.accent,lineHeight:1.7}}>{L.heyArvoWelcome}</div>
+<div style={{marginTop:16,display:"flex",flexDirection:"column",gap:8}}>
+{[lang==="sv"?"Jobbade 3h med design för Karlsson":"Worked 3h on design for Karlsson",lang==="sv"?"Ny kontakt Anna Svensson på AB Design":"New contact Anna Svensson at AB Design",lang==="sv"?"Faktura till Lindberg Reklam på 25000":"Invoice to Lindberg Reklam for 25000"].map((ex,i)=>(
+<button key={i} onClick={()=>processArvoMessage(ex)} style={{padding:"10px 14px",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:10,fontSize:13,color:T.textSub,cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>"{ex}"</button>
+))}
+</div>
+</div>
+</div>
+)}
+
+{chatMsgs.map((m,i)=>(
+<div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",marginBottom:10,padding:"0 4px"}}>
+{m.role==="arvo"&&<div style={{...avS(32),marginRight:8,marginTop:2,background:T.accentLight,fontSize:10}}><ArvoLogo size={18}/></div>}
+<div style={{maxWidth:"80%",padding:"12px 16px",borderRadius:m.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",background:m.role==="user"?T.accentGrad:T.surfaceAlt,color:m.role==="user"?"#fff":T.text,fontSize:14,lineHeight:1.5,whiteSpace:"pre-line",boxShadow:T.shadow}}>
+{m.role==="arvo"&&m.type&&<div style={{display:"inline-flex",alignItems:"center",gap:6,marginBottom:6,padding:"3px 8px",borderRadius:6,background:actionColor[m.type]+"18",fontSize:11,fontWeight:600,color:actionColor[m.type]}}><Ic name={actionIcon[m.type]} size={12} color={actionColor[m.type]}/> {m.type.replace("_"," ")}</div>}
+<div>{m.text}</div>
+<div style={{fontSize:10,color:m.role==="user"?"rgba(255,255,255,0.6)":T.textFaint,marginTop:4}}>{new Date(m.ts).toLocaleTimeString(lang==="sv"?"sv-SE":"en-US",{hour:"2-digit",minute:"2-digit"})}</div>
+</div>
+</div>
+))}
+
+{arvoThinking&&(
+<div style={{display:"flex",alignItems:"center",gap:8,padding:"0 4px",marginBottom:10}}>
+<div style={{...avS(32),background:T.accentLight,fontSize:10}}><ArvoLogo size={18}/></div>
+<div style={{padding:"12px 16px",borderRadius:"16px 16px 16px 4px",background:T.surfaceAlt,fontSize:14,color:T.textMuted,display:"flex",alignItems:"center",gap:8}}>
+<div style={{display:"flex",gap:4}}>{[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:"50%",background:T.accent,opacity:0.4,animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite`}}/>)}</div>
+{L.heyArvoThinking}
+</div>
+</div>
+)}
+<div ref={chatEndRef}/>
+</div>
+
+<div style={{padding:"12px 0 0",borderTop:`1.5px solid ${T.border}`}}>
+<div style={{display:"flex",gap:8,alignItems:"center"}}>
+<button onClick={isListening?stopListening:startListening} style={{width:48,height:48,borderRadius:"50%",border:"none",background:isListening?T.danger:T.accentGrad,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:isListening?"0 0 0 4px rgba(232,62,62,0.2)":"0 2px 8px rgba(58,125,110,0.3)",animation:isListening?"pulse 1.5s ease-in-out infinite":"none"}}>
+<Ic name="mic" size={22} color="#fff"/>
+</button>
+<div style={{flex:1,position:"relative"}}>
+<input style={{...ipS,paddingRight:44}} placeholder={isListening?L.heyArvoListening:L.heyArvoPlaceholder} value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&chatInput.trim()){processArvoMessage(chatInput)}}}/>
+{chatInput.trim()&&<button onClick={()=>processArvoMessage(chatInput)} style={{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:T.accentGrad,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="send" size={16} color="#fff"/></button>}
+</div>
+</div>
+{isListening&&<div style={{textAlign:"center",marginTop:8,fontSize:12,color:T.danger,fontWeight:500,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><div style={{width:8,height:8,borderRadius:"50%",background:T.danger,animation:"pulse 1s ease-in-out infinite"}}/>{L.heyArvoListening}</div>}
+</div>
+</div>
+);
+};
+
 const renderView=()=>{
 switch(view){
 case "dashboard": return <DashView />;
+case "heyarvo": return <HeyArvoView />;
 case "contacts": return <ConView />;
 case "projects": return <ProjView />;
 case "invoices": return <InvView />;
@@ -648,7 +843,7 @@ const dashToggles=[{key:"health",label:L.showHealth},{key:"pipeline",label:L.sho
 
 return (
 <div style={{minHeight:"100vh",background:T.bg,color:T.text,fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif",fontSize:14,lineHeight:1.5}}>
-<style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{margin:0}input,select,textarea,button{font-family:inherit}::selection{background:${T.accentLight};color:${T.accent}}::-webkit-scrollbar{width:0}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}option{background:${T.surface};color:${T.text}}`}</style>
+<style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{margin:0}input,select,textarea,button{font-family:inherit}::selection{background:${T.accentLight};color:${T.accent}}::-webkit-scrollbar{width:0}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.05)}}select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}option{background:${T.surface};color:${T.text}}`}</style>
 
   <header style={{position:"fixed",top:0,left:0,right:0,height:56,background:T.surface,borderBottom:`1.5px solid ${T.border}`,display:"flex",alignItems:"center",padding:"0 16px",gap:10,zIndex:100}}>
     <button style={{background:"none",border:"none",cursor:"pointer",padding:6,color:T.textMuted}} onClick={()=>setSideOpen(!sideOpen)}><Ic name={sideOpen?"x":"menu"} size={22}/></button>
