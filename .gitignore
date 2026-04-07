@@ -21,6 +21,8 @@
 
 # database
 *.db
+*.db-shm
+*.db-wal
 
 npm-debug.log*
 yarn-debug.log*
