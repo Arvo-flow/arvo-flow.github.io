@@ -4,6 +4,12 @@
   "private": true,
   "homepage": ".",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.82.0",
+    "axios": "^1.14.0",
+    "better-sqlite3": "^12.8.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-icons": "^5.6.0",
@@ -17,7 +23,10 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "server": "node server/index.js",
+    "seed": "node server/seed.js",
+    "test:webhook": "node server/test-webhook.js"
   },
   "eslintConfig": {
     "extends": "react-app"
