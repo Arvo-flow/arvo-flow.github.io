@@ -85,10 +85,10 @@ heyArvo:"Hey Arvo",heyArvoSub:"Talk or type — I'll handle the rest",heyArvoPla
 
 const CURRENCIES = { SEK:{symbol:"kr",rate:1,suffix:true},USD:{symbol:"$",rate:0.091,suffix:false},EUR:{symbol:"€",rate:0.084,suffix:false},GBP:{symbol:"£",rate:0.072,suffix:false} };
 const THEMES = {
-light:{name:"Ljus",nameEn:"Light",bg:"#ffffff",surface:"#ffffff",surfaceAlt:"#fafafa",border:"#e8e8e8",borderAccent:"#3a7d6e",text:"#1a1a1a",textSub:"#555550",textMuted:"#8a8780",textFaint:"#b0ada5",accent:"#3a7d6e",accentDark:"#2c5f54",accentLight:"#e8f2ef",accentGrad:"linear-gradient(135deg,#3a7d6e,#2c5f54)",danger:"#b83030",dangerLight:"#fdf0f0",success:"#2e7d4f",successLight:"#eef7f1",warn:"#c48820",warnLight:"#fdf6e8",cardBg:"#fff",cardBorder:"#e8e8e8",avatarBg:"#e0efeb",avatarText:"#3a7d6e",inputBg:"#f8f8f8",tagBg:"#f2f2f2",shadow:"0 1px 4px rgba(0,0,0,0.04)"},
-dark:{name:"Mörk",nameEn:"Dark",bg:"#111110",surface:"#1a1a18",surfaceAlt:"#222220",border:"#2e2e2a",borderAccent:"#4a9a88",text:"#e8e5df",textSub:"#aaa8a0",textMuted:"#787570",textFaint:"#4a4840",accent:"#4a9a88",accentDark:"#3a7d6e",accentLight:"rgba(74,154,136,0.12)",accentGrad:"linear-gradient(135deg,#4a9a88,#3a7d6e)",danger:"#d45050",dangerLight:"rgba(212,80,80,0.12)",success:"#4aaa6a",successLight:"rgba(74,170,106,0.12)",warn:"#d4a030",warnLight:"rgba(212,160,48,0.12)",cardBg:"#1a1a18",cardBorder:"#2e2e2a",avatarBg:"rgba(74,154,136,0.15)",avatarText:"#4a9a88",inputBg:"#161614",tagBg:"#252522",shadow:"0 1px 4px rgba(0,0,0,0.3)"},
-nordic:{name:"Nordic",nameEn:"Nordic",bg:"#171e2a",surface:"#1c2436",surfaceAlt:"#212a40",border:"#2a3450",borderAccent:"#5a9ec8",text:"#dce4f0",textSub:"#98a8c0",textMuted:"#6880a0",textFaint:"#3e5070",accent:"#5a9ec8",accentDark:"#4888b0",accentLight:"rgba(90,158,200,0.12)",accentGrad:"linear-gradient(135deg,#5a9ec8,#4888b0)",danger:"#d06060",dangerLight:"rgba(208,96,96,0.12)",success:"#50b080",successLight:"rgba(80,176,128,0.12)",warn:"#d0a040",warnLight:"rgba(208,160,64,0.12)",cardBg:"#1c2436",cardBorder:"#2a3450",avatarBg:"rgba(90,158,200,0.15)",avatarText:"#5a9ec8",inputBg:"#151c28",tagBg:"#222c42",shadow:"0 1px 4px rgba(0,0,0,0.3)"},
-moss:{name:"Moss",nameEn:"Moss",bg:"#161c16",surface:"#1c241c",surfaceAlt:"#202a20",border:"#2a362a",borderAccent:"#6aaa60",text:"#d8e0d4",textSub:"#98a890",textMuted:"#688060",textFaint:"#3e5038",accent:"#6aaa60",accentDark:"#589050",accentLight:"rgba(106,170,96,0.12)",accentGrad:"linear-gradient(135deg,#6aaa60,#589050)",danger:"#c85050",dangerLight:"rgba(200,80,80,0.12)",success:"#5aaa60",successLight:"rgba(90,170,96,0.12)",warn:"#c8a040",warnLight:"rgba(200,160,64,0.12)",cardBg:"#1c241c",cardBorder:"#2a362a",avatarBg:"rgba(106,170,96,0.15)",avatarText:"#6aaa60",inputBg:"#141a14",tagBg:"#243024",shadow:"0 1px 4px rgba(0,0,0,0.3)"},
+light:{name:"Ljus",nameEn:"Light",bg:"#f7f8fa",surface:"#ffffff",surfaceAlt:"#f0f2f5",border:"#e9ecf0",borderAccent:"#2a6d5e",text:"#1a1d23",textSub:"#4a5060",textMuted:"#7a8090",textFaint:"#a0a8b4",accent:"#2a6d5e",accentDark:"#1e5446",accentLight:"#e6f0ed",accentGrad:"linear-gradient(135deg,#2a6d5e 0%,#1e5446 100%)",danger:"#c0392b",dangerLight:"#fdf0ee",success:"#27855a",successLight:"#edf7f1",warn:"#d4940a",warnLight:"#fdf6e6",cardBg:"#ffffff",cardBorder:"#e9ecf0",avatarBg:"#e0ede9",avatarText:"#2a6d5e",inputBg:"#f4f5f7",tagBg:"#eef0f3",shadow:"0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.03)"},
+dark:{name:"Mörk",nameEn:"Dark",bg:"#0f1012",surface:"#18191c",surfaceAlt:"#1f2024",border:"#2a2b30",borderAccent:"#4a9a88",text:"#e8e9ed",textSub:"#a0a4b0",textMuted:"#6a6e7a",textFaint:"#44464e",accent:"#4a9a88",accentDark:"#3a7d6e",accentLight:"rgba(74,154,136,0.10)",accentGrad:"linear-gradient(135deg,#4a9a88 0%,#3a7d6e 100%)",danger:"#e05545",dangerLight:"rgba(224,85,69,0.10)",success:"#4aaa6a",successLight:"rgba(74,170,106,0.10)",warn:"#d4a030",warnLight:"rgba(212,160,48,0.10)",cardBg:"#18191c",cardBorder:"#2a2b30",avatarBg:"rgba(74,154,136,0.12)",avatarText:"#4a9a88",inputBg:"#131416",tagBg:"#222328",shadow:"0 1px 3px rgba(0,0,0,0.2),0 4px 12px rgba(0,0,0,0.15)"},
+nordic:{name:"Nordic",nameEn:"Nordic",bg:"#141a26",surface:"#1a2236",surfaceAlt:"#1f2840",border:"#283450",borderAccent:"#5a9ec8",text:"#dce4f0",textSub:"#98a8c0",textMuted:"#6880a0",textFaint:"#3e5070",accent:"#5a9ec8",accentDark:"#4888b0",accentLight:"rgba(90,158,200,0.10)",accentGrad:"linear-gradient(135deg,#5a9ec8 0%,#4888b0 100%)",danger:"#d06060",dangerLight:"rgba(208,96,96,0.10)",success:"#50b080",successLight:"rgba(80,176,128,0.10)",warn:"#d0a040",warnLight:"rgba(208,160,64,0.10)",cardBg:"#1a2236",cardBorder:"#283450",avatarBg:"rgba(90,158,200,0.12)",avatarText:"#5a9ec8",inputBg:"#131824",tagBg:"#202a42",shadow:"0 1px 3px rgba(0,0,0,0.2),0 4px 12px rgba(0,0,0,0.15)"},
+moss:{name:"Moss",nameEn:"Moss",bg:"#141a14",surface:"#1a221a",surfaceAlt:"#1f281f",border:"#283028",borderAccent:"#6aaa60",text:"#d8e0d4",textSub:"#98a890",textMuted:"#688060",textFaint:"#3e5038",accent:"#6aaa60",accentDark:"#589050",accentLight:"rgba(106,170,96,0.10)",accentGrad:"linear-gradient(135deg,#6aaa60 0%,#589050 100%)",danger:"#c85050",dangerLight:"rgba(200,80,80,0.10)",success:"#5aaa60",successLight:"rgba(90,170,96,0.10)",warn:"#c8a040",warnLight:"rgba(200,160,64,0.10)",cardBg:"#1a221a",cardBorder:"#283028",avatarBg:"rgba(106,170,96,0.12)",avatarText:"#6aaa60",inputBg:"#121812",tagBg:"#222c22",shadow:"0 1px 3px rgba(0,0,0,0.2),0 4px 12px rgba(0,0,0,0.15)"},
 };
 const TDOTS = {light:"#3a7d6e",dark:"#888888",nordic:"#5a9ec8",moss:"#6aaa60"};
 
@@ -181,24 +181,24 @@ const go=v=>{setView(v);setDetail(null);setSideOpen(false);setSearch("")};
 const fmtMoney=sek=>{const v=Math.round(sek*CU.rate);const f=new Intl.NumberFormat(lang==="sv"?"sv-SE":"en-US").format(v);return CU.suffix?`${f} ${CU.symbol}`:`${CU.symbol}${f}`};
 const sLabel=s=>{if(lang==="sv")return s;return{Kund:"Customer",Lead:"Lead",Prospekt:"Prospect","Pågående":"Ongoing",Planering:"Planning",Avslutad:"Completed",Betald:"Paid",Skickad:"Sent","Förfallen":"Overdue",Utkast:"Draft"}[s]||s};
 
-const card={background:T.cardBg,border:`1.5px solid ${T.cardBorder}`,borderRadius:14,padding:18,marginBottom:14,boxShadow:T.shadow};
-const cardA=c=>({...card,borderLeft:`3px solid ${c||T.borderAccent}`});
-const sCard={...card,padding:"18px 16px"};
-const hd={fontFamily:serif,fontWeight:700,fontSize:26,color:T.text,lineHeight:1.2,letterSpacing:"-0.02em"};
-const subS={fontSize:14,color:T.textSub,lineHeight:1.5,marginTop:6,marginBottom:22};
-const secS={fontFamily:serif,fontWeight:700,fontSize:15,color:T.accent,marginBottom:12};
-const badgeS=(co,bgc)=>({display:"inline-block",padding:"3px 10px",borderRadius:100,fontSize:11,fontWeight:600,color:co,background:bgc});
-const avS=(sz=40)=>({width:sz,height:sz,borderRadius:"50%",background:T.avatarBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:sz*0.35,fontWeight:700,color:T.avatarText,flexShrink:0});
-const ipS={width:"100%",padding:"11px 14px",background:T.inputBg,border:`1.5px solid ${T.border}`,borderRadius:10,color:T.text,fontSize:14,outline:"none",boxSizing:"border-box",fontFamily:"inherit"};
-const bP={padding:"12px 24px",background:T.accentGrad,color:"#fff",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8,fontFamily:"inherit"};
-const bO={padding:"12px 24px",background:"transparent",color:T.textSub,border:`1.5px solid ${T.border}`,borderRadius:10,fontSize:14,fontWeight:500,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8,fontFamily:"inherit"};
-const bSP={...bP,padding:"8px 16px",fontSize:13};
-const bSO={...bO,padding:"8px 16px",fontSize:13};
-const lr={padding:"14px 16px",cursor:"pointer"};
-const fB=a=>({padding:"6px 14px",borderRadius:100,fontSize:12,fontWeight:a?600:400,border:a?`1.5px solid ${T.accent}`:`1.5px solid ${T.border}`,background:a?T.accentLight:"transparent",color:a?T.accent:T.textMuted,cursor:"pointer",fontFamily:"inherit"});
-const progBar={height:5,borderRadius:3,background:T.border,overflow:"hidden"};
-const progFill=(pct,clr)=>({height:"100%",width:`${pct}%`,background:clr||T.accent,borderRadius:3,transition:"width 0.5s"});
-const bigNum=clr=>({fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:32,fontWeight:300,color:clr,letterSpacing:"-0.01em",lineHeight:1.1});
+const card={background:T.cardBg,border:`1px solid ${T.cardBorder}`,borderRadius:16,padding:20,marginBottom:16,boxShadow:T.shadow,transition:"box-shadow 0.2s"};
+const cardA=c=>({...card,borderLeft:`3.5px solid ${c||T.borderAccent}`});
+const sCard={...card,padding:"20px 18px"};
+const hd={fontFamily:serif,fontWeight:800,fontSize:28,color:T.text,lineHeight:1.15,letterSpacing:"-0.03em"};
+const subS={fontSize:14,color:T.textMuted,lineHeight:1.6,marginTop:8,marginBottom:24};
+const secS={fontFamily:serif,fontWeight:700,fontSize:14,color:T.accent,marginBottom:14,textTransform:"uppercase",letterSpacing:"0.04em"};
+const badgeS=(co,bgc)=>({display:"inline-block",padding:"4px 12px",borderRadius:100,fontSize:11,fontWeight:600,color:co,background:bgc,letterSpacing:"0.01em"});
+const avS=(sz=40)=>({width:sz,height:sz,borderRadius:"50%",background:T.avatarBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:sz*0.34,fontWeight:700,color:T.avatarText,flexShrink:0,letterSpacing:"0.02em"});
+const ipS={width:"100%",padding:"12px 16px",background:T.inputBg,border:`1px solid ${T.border}`,borderRadius:12,color:T.text,fontSize:14,outline:"none",boxSizing:"border-box",fontFamily:"inherit",transition:"border-color 0.2s"};
+const bP={padding:"12px 24px",background:T.accentGrad,color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8,fontFamily:"inherit",boxShadow:"0 2px 8px rgba(42,109,94,0.18)",transition:"transform 0.15s,box-shadow 0.15s"};
+const bO={padding:"12px 24px",background:"transparent",color:T.textSub,border:`1px solid ${T.border}`,borderRadius:12,fontSize:14,fontWeight:500,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:8,fontFamily:"inherit",transition:"border-color 0.2s"};
+const bSP={...bP,padding:"9px 18px",fontSize:13,boxShadow:"0 2px 6px rgba(42,109,94,0.15)"};
+const bSO={...bO,padding:"9px 18px",fontSize:13};
+const lr={padding:"15px 18px",cursor:"pointer",transition:"background 0.15s"};
+const fB=a=>({padding:"7px 16px",borderRadius:100,fontSize:12,fontWeight:a?600:500,border:a?"none":`1px solid ${T.border}`,background:a?T.accent:"transparent",color:a?"#fff":T.textMuted,cursor:"pointer",fontFamily:"inherit",transition:"all 0.2s"});
+const progBar={height:6,borderRadius:4,background:T.surfaceAlt,overflow:"hidden"};
+const progFill=(pct,clr)=>({height:"100%",width:`${pct}%`,background:clr||T.accentGrad,borderRadius:4,transition:"width 0.5s"});
+const bigNum=clr=>({fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:34,fontWeight:400,color:clr,letterSpacing:"-0.02em",lineHeight:1.1});
 
 const sC=s=>({Kund:[T.success,T.successLight],Lead:[T.accent,T.accentLight],Prospekt:[T.warn,T.warnLight],"Pågående":[T.accent,T.accentLight],Planering:[T.warn,T.warnLight],Avslutad:[T.success,T.successLight],Betald:[T.success,T.successLight],Skickad:[T.accent,T.accentLight],"Förfallen":[T.danger,T.dangerLight],Utkast:[T.textMuted,T.tagBg]}[s]||[T.textMuted,T.tagBg]);
 const Badge=({status})=>{const[c,b]=sC(status);return <span style={badgeS(c,b)}>{sLabel(status)}</span>};
@@ -842,14 +842,14 @@ default: return <DashView />;
 const dashToggles=[{key:"health",label:L.showHealth},{key:"pipeline",label:L.showPipeline},{key:"won",label:L.showWon},{key:"awaiting",label:L.showAwaiting},{key:"weekHours",label:L.showWeekHours},{key:"digest",label:L.showDigest},{key:"insights",label:L.showInsights},{key:"forecast",label:L.showForecast},{key:"toDo",label:L.showToDo},{key:"recentInv",label:L.showRecentInv},{key:"activeProj",label:L.showActiveProj}];
 
 return (
-<div style={{minHeight:"100vh",background:T.bg,color:T.text,fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif",fontSize:14,lineHeight:1.5}}>
+<div style={{minHeight:"100vh",background:T.bg,color:T.text,fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif",fontSize:14,lineHeight:1.5,WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale"}}>
 <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{margin:0}input,select,textarea,button{font-family:inherit}::selection{background:${T.accentLight};color:${T.accent}}::-webkit-scrollbar{width:0}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.05)}}select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}option{background:${T.surface};color:${T.text}}`}</style>
 
-  <header style={{position:"fixed",top:0,left:0,right:0,height:56,background:T.surface,borderBottom:`1.5px solid ${T.border}`,display:"flex",alignItems:"center",padding:"0 16px",gap:10,zIndex:100}}>
-    <button style={{background:"none",border:"none",cursor:"pointer",padding:6,color:T.textMuted}} onClick={()=>setSideOpen(!sideOpen)}><Ic name={sideOpen?"x":"menu"} size={22}/></button>
-    <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}><ArvoLogo size={24}/><span style={{fontFamily:serif,fontSize:20,fontWeight:700,color:T.text,letterSpacing:"-0.02em"}}>Arvo</span></div>
-    <div style={{display:"flex",gap:4,marginRight:4}}><Flag code="en" active={lang==="en"} onClick={()=>switchLang("en")}/><Flag code="sv" active={lang==="sv"} onClick={()=>switchLang("sv")}/></div>
-    <div style={{display:"flex",gap:5}}>{Object.entries(TDOTS).map(([k,c])=>(<button key={k} onClick={()=>setTheme(k)} style={{width:18,height:18,borderRadius:"50%",background:c,border:theme===k?`2.5px solid ${T.text}`:"2px solid transparent",cursor:"pointer",transform:theme===k?"scale(1.2)":"scale(1)",boxShadow:theme===k?`0 0 0 1px ${c}`:"none"}} title={lang==="sv"?THEMES[k].name:THEMES[k].nameEn}/>))}</div>
+  <header style={{position:"fixed",top:0,left:0,right:0,height:58,background:T.surface,borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",padding:"0 18px",gap:12,zIndex:100,boxShadow:"0 1px 8px rgba(0,0,0,0.03)"}}>
+    <button style={{background:"none",border:"none",cursor:"pointer",padding:6,color:T.textMuted,borderRadius:8}} onClick={()=>setSideOpen(!sideOpen)}><Ic name={sideOpen?"x":"menu"} size={22}/></button>
+    <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}><ArvoLogo size={26}/><span style={{fontFamily:serif,fontSize:21,fontWeight:800,color:T.text,letterSpacing:"-0.03em"}}>Arvo</span></div>
+    <div style={{display:"flex",gap:5,marginRight:6}}><Flag code="en" active={lang==="en"} onClick={()=>switchLang("en")}/><Flag code="sv" active={lang==="sv"} onClick={()=>switchLang("sv")}/></div>
+    <div style={{display:"flex",gap:6}}>{Object.entries(TDOTS).map(([k,c])=>(<button key={k} onClick={()=>setTheme(k)} style={{width:20,height:20,borderRadius:"50%",background:c,border:theme===k?`2.5px solid ${T.text}`:"2px solid transparent",cursor:"pointer",transform:theme===k?"scale(1.15)":"scale(1)",transition:"transform 0.2s",boxShadow:theme===k?`0 0 0 2px ${T.bg},0 0 0 4px ${c}`:"none"}} title={lang==="sv"?THEMES[k].name:THEMES[k].nameEn}/>))}</div>
   </header>
 
   {sideOpen&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:80}} onClick={()=>setSideOpen(false)}/>}
@@ -866,12 +866,12 @@ return (
     <div style={{padding:"16px 20px",borderTop:`1px solid ${T.border}`,marginTop:8}}><div style={{fontSize:11,color:T.textFaint,lineHeight:1.5}}>Arvo OS v3<br/>The OS for independents.</div></div>
   </nav>
 
-  <main style={{paddingTop:72,paddingBottom:80,paddingLeft:18,paddingRight:18,maxWidth:640,margin:"0 auto"}}>
+  <main style={{paddingTop:76,paddingBottom:88,paddingLeft:20,paddingRight:20,maxWidth:640,margin:"0 auto"}}>
     <div style={{animation:"fadeUp 0.3s ease"}} key={view+lang+currency+(detail?.data?.id||"")}>{renderView()}</div>
   </main>
 
-  <nav style={{position:"fixed",bottom:0,left:0,right:0,height:64,background:T.surface,borderTop:`1.5px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-around",zIndex:100}}>
-    {NAV.map(n=>{const active=view===n.id;return (<button key={n.id} onClick={()=>go(n.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 12px",background:"none",border:"none",cursor:"pointer",color:active?T.accent:T.textFaint,fontSize:10,fontWeight:active?600:400,fontFamily:"inherit",position:"relative"}}>{active&&<div style={{position:"absolute",top:-2,left:"50%",transform:"translateX(-50%)",width:22,height:3,borderRadius:2,background:T.accent}}/>}<Ic name={n.icon} size={22} color={active?T.accent:T.textFaint}/><span>{nL(n.id)}</span></button>)})}
+  <nav style={{position:"fixed",bottom:0,left:0,right:0,height:68,background:T.surface,borderTop:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-around",zIndex:100,boxShadow:"0 -1px 8px rgba(0,0,0,0.03)"}}>
+    {NAV.map(n=>{const active=view===n.id;const isArvo=n.id==="heyarvo";return (<button key={n.id} onClick={()=>go(n.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:isArvo?"4px 10px":"8px 10px",background:"none",border:"none",cursor:"pointer",color:active?T.accent:T.textFaint,fontSize:10,fontWeight:active?600:400,fontFamily:"inherit",position:"relative"}}>{active&&!isArvo&&<div style={{position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",width:24,height:3,borderRadius:2,background:T.accent}}/>}{isArvo?<div style={{width:40,height:40,borderRadius:"50%",background:active?T.accentGrad:T.surfaceAlt,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:active?"0 2px 10px rgba(42,109,94,0.25)":"none",border:active?"none":`1px solid ${T.border}`,transition:"all 0.2s",marginTop:-10}}><Ic name="arvo" size={20} color={active?"#fff":T.textFaint}/></div>:<Ic name={n.icon} size={22} color={active?T.accent:T.textFaint}/>}{!isArvo&&<span>{nL(n.id)}</span>}</button>)})}
   </nav>
 
   <ModalView/>
