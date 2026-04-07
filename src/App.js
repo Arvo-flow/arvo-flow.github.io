@@ -40,6 +40,7 @@ showPipeline:"Pipeline",showWon:"Vunnet",showAwaiting:"Väntar betalning",
 showToDo:"Att göra",showRecentInv:"Senaste fakturor",showActiveProj:"Aktiva projekt",showDigest:"Veckosammanfattning",
 scanInvoice:"Skanna faktura",scanTitle:"Skanna in en faktura",scanDesc:"Ta ett foto eller ladda upp en bild av fakturan. AI:n extraherar kund, belopp och datum automatiskt.",scanning:"Analyserar faktura…",scanSuccess:"Faktura tolkad!",scanUpload:"Ladda upp bild",scanCamera:"Ta foto",extractedData:"Extraherad data",confirm:"Bekräfta",scanError:"Kunde inte tolka fakturan. Försök igen.",
 heyArvo:"Hey Arvo",heyArvoSub:"Prata eller skriv — jag sköter resten",heyArvoPlaceholder:"Skriv t.ex. 'Jobbade 3h med design för Karlsson'…",heyArvoListening:"Lyssnar…",heyArvoThinking:"Tänker…",heyArvoTapMic:"Tryck på mikrofonen och berätta",heyArvoWelcome:"Hej! Jag är Arvo, din digitala affärspartner. Berätta vad du gjort så loggar jag det åt dig.",heyArvoTimeLogged:"Tidsloggning sparad",heyArvoContactCreated:"Ny kontakt skapad",heyArvoInvoiceCreated:"Fakturautkast skapat",heyArvoExpenseLogged:"Utgift registrerad",heyArvoProjectUpdated:"Projekt uppdaterat",heyArvoNoMic:"Din webbläsare stöder inte röstinmatning",heyArvoCantParse:"Jag förstod inte riktigt. Kan du formulera om?",
+cfoCashflow:"Kassaflöde",cfoBalance:"Saldo idag",cfoProjected:"Beräknat saldo",cfoVatDue:"Moms att betala",cfoIncoming:"Förväntat in",cfoOutgoing:"Beräknat ut",cfoDaysUntil:"dagar kvar",cfoWarning:"Likviditetsvarning",cfoAction:"Föreslagna åtgärder",cfoSendReminder:"Skicka påminnelse",cfoOfferDiscount:"Erbjud snabbrabatt",cfoSkip:"Hoppa över",cfoApprove:"Godkänn",cfoSent:"Skickat!",cfoReminderSent:"Påminnelse skickad till",cfoDiscountOffered:"Rabatterbjudande skickat till",cfoMonitoring:"Jag bevakar och meddelar dig när de betalar.",cfoCrisisNone:"Allt ser bra ut! Inga likviditetsproblem i sikte.",cfoHeadsUp:"Heads up",cfoBasedOn:"Baserat på dina snittkostnader",cfoNeed:"behöver du",cfoBy:"senast den",cfoYouHave:"Du har",cfoUnpaid:"obetalda fakturor på totalt",cfoSuggest:"Vill du att jag:",
 },
 en: {
 overview:"Overview",contacts:"Contacts",projects:"Projects",invoices:"Invoices",time:"Time",
@@ -80,6 +81,7 @@ showPipeline:"Pipeline",showWon:"Won",showAwaiting:"Awaiting payment",
 showToDo:"To do",showRecentInv:"Recent invoices",showActiveProj:"Active projects",showDigest:"Weekly Digest",
 scanInvoice:"Scan invoice",scanTitle:"Scan an invoice",scanDesc:"Take a photo or upload an image of the invoice. AI will extract client, amount, and dates automatically.",scanning:"Analyzing invoice…",scanSuccess:"Invoice parsed!",scanUpload:"Upload image",scanCamera:"Take photo",extractedData:"Extracted data",confirm:"Confirm",scanError:"Could not parse invoice. Please try again.",
 heyArvo:"Hey Arvo",heyArvoSub:"Talk or type — I'll handle the rest",heyArvoPlaceholder:"E.g. 'Worked 3h on design for Karlsson'…",heyArvoListening:"Listening…",heyArvoThinking:"Thinking…",heyArvoTapMic:"Tap the mic and tell me",heyArvoWelcome:"Hi! I'm Arvo, your digital business partner. Tell me what you've done and I'll log it for you.",heyArvoTimeLogged:"Time entry saved",heyArvoContactCreated:"New contact created",heyArvoInvoiceCreated:"Invoice draft created",heyArvoExpenseLogged:"Expense logged",heyArvoProjectUpdated:"Project updated",heyArvoNoMic:"Your browser doesn't support voice input",heyArvoCantParse:"I didn't quite understand. Could you rephrase?",
+cfoCashflow:"Cash Flow",cfoBalance:"Balance today",cfoProjected:"Projected balance",cfoVatDue:"VAT due",cfoIncoming:"Expected incoming",cfoOutgoing:"Estimated outgoing",cfoDaysUntil:"days left",cfoWarning:"Liquidity warning",cfoAction:"Suggested actions",cfoSendReminder:"Send reminder",cfoOfferDiscount:"Offer early-pay discount",cfoSkip:"Skip",cfoApprove:"Approve",cfoSent:"Sent!",cfoReminderSent:"Reminder sent to",cfoDiscountOffered:"Discount offer sent to",cfoMonitoring:"I'll monitor and notify you when they pay.",cfoCrisisNone:"All clear! No liquidity issues ahead.",cfoHeadsUp:"Heads up",cfoBasedOn:"Based on your average costs",cfoNeed:"you'll need",cfoBy:"by",cfoYouHave:"You have",cfoUnpaid:"unpaid invoices totaling",cfoSuggest:"Want me to:",
 },
 };
 
@@ -306,6 +308,69 @@ projects.filter(p=>p.status==="Pågående"&&(p.spent/p.budget)>0.8).forEach(p=>{
 return ins;
 };
 
+// ── CFO ENGINE: Cashflow Prediction & Proactive Actions ─────────────
+const computeCashflow=()=>{
+const paidAmt=invoices.filter(i=>i.status==="Betald").reduce((s,i)=>s+i.amount,0);
+const pendingInv=invoices.filter(i=>i.status==="Skickad");
+const overdueInv=invoices.filter(i=>i.status==="Förfallen");
+
+const pendingAmt=pendingInv.reduce((s,i)=>s+i.amount,0);
+const overdueAmt=overdueInv.reduce((s,i)=>s+i.amount,0);
+// Simulate monthly costs based on revenue pattern (30% of won revenue)
+const avgMonthlyCost=Math.round(paidAmt*0.35);
+// Current "balance" = paid - estimated costs so far
+const currentBalance=Math.round(paidAmt*0.65);
+// VAT liability (25% of revenue, due quarterly)
+const vatDue=Math.round(paidAmt*0.25);
+const vatDeadline="2026-04-12";
+const daysToVat=Math.max(0,Math.round((new Date(vatDeadline)-new Date())/(1000*60*60*24)));
+// Project 30-day cashflow
+const expectedIn=Math.round(pendingAmt*0.7+overdueAmt*0.4);
+const projectedBalance=currentBalance+expectedIn-avgMonthlyCost;
+const shortfall=vatDue>projectedBalance?vatDue-projectedBalance:0;
+// Build action suggestions
+const actions=[];
+overdueInv.forEach(inv=>{
+actions.push({id:`remind_${inv.id}`,type:"reminder",client:inv.client,amount:inv.amount,invId:inv.id,
+label:lang==="sv"?`${L.cfoSendReminder} till ${inv.client} (${fmtMoney(inv.amount)}, förfallen)`:`${L.cfoSendReminder} to ${inv.client} (${fmtMoney(inv.amount)}, overdue)`,
+done:false});
+});
+pendingInv.filter(i=>i.amount>=20000).forEach(inv=>{
+actions.push({id:`discount_${inv.id}`,type:"discount",client:inv.client,amount:inv.amount,invId:inv.id,discount:3,
+label:lang==="sv"?`${L.cfoOfferDiscount} 3% till ${inv.client} vid betalning inom 48h (${fmtMoney(inv.amount)})`:`${L.cfoOfferDiscount} 3% to ${inv.client} for payment within 48h (${fmtMoney(inv.amount)})`,
+done:false});
+});
+return {currentBalance,projectedBalance,vatDue,vatDeadline,daysToVat,expectedIn,avgMonthlyCost,shortfall,overdueAmt,pendingAmt,actions,overdueCount:overdueInv.length,pendingCount:pendingInv.length};
+};
+
+const generateCfoMessage=()=>{
+const cf=computeCashflow();
+const lines=[];
+if(cf.shortfall>0){
+lines.push(`${L.cfoHeadsUp} — ${L.cfoBasedOn}, ${L.cfoNeed} ${fmtMoney(cf.vatDue)} ${L.cfoBy} ${cf.vatDeadline} (${L.cfoCashflow}: ${L.cfoVatDue}).`);
+lines.push("");
+lines.push(`${L.cfoBalance}: ${fmtMoney(cf.currentBalance)}`);
+lines.push(`${L.cfoProjected}: ${fmtMoney(cf.projectedBalance)}`);
+lines.push(`${lang==="sv"?"Brist":"Shortfall"}: ${fmtMoney(cf.shortfall)}`);
+if(cf.overdueCount>0||cf.pendingCount>0){
+lines.push("");
+lines.push(`${L.cfoYouHave} ${cf.overdueCount+cf.pendingCount} ${L.cfoUnpaid} ${fmtMoney(cf.overdueAmt+cf.pendingAmt)}.`);
+}
+if(cf.actions.length>0){
+lines.push("");
+lines.push(L.cfoSuggest);
+}
+}else{
+lines.push(`${L.cfoCashflow}: ${L.cfoCrisisNone}`);
+lines.push("");
+lines.push(`${L.cfoBalance}: ${fmtMoney(cf.currentBalance)}`);
+lines.push(`${L.cfoIncoming}: ${fmtMoney(cf.expectedIn)}`);
+lines.push(`${L.cfoProjected}: ${fmtMoney(cf.projectedBalance)}`);
+lines.push(`${L.cfoVatDue} (${cf.vatDeadline}): ${fmtMoney(cf.vatDue)} — ${cf.daysToVat} ${L.cfoDaysUntil}`);
+}
+return {text:lines.join("\n"),actions:cf.actions,cashflow:cf};
+};
+
 // DASHBOARD
 const DashView=()=>{
 const pipe=contacts.reduce((s,c)=>s+c.value,0);
@@ -384,6 +449,20 @@ return (
         </div>
       </div>)})}
     </>)}
+    {(()=>{const cf=computeCashflow();return cf.shortfall>0?(
+    <div style={{...card,borderColor:T.warn,background:T.warnLight,cursor:"pointer"}} onClick={()=>go("heyarvo")}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+        <div style={{width:40,height:40,borderRadius:10,background:T.warn+"20",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="alert" size={20} color={T.warn}/></div>
+        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:T.text}}>{L.cfoWarning}</div><div style={{fontSize:12,color:T.textMuted,marginTop:2}}>{L.cfoBasedOn}</div></div>
+        <Ic name="right" size={16} color={T.textFaint}/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+        <div style={{textAlign:"center",padding:8,background:T.surface,borderRadius:8}}><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase"}}>{L.cfoBalance}</div><div style={{fontFamily:serif,fontSize:15,fontWeight:700,color:T.accent,marginTop:2}}>{fmtMoney(cf.currentBalance)}</div></div>
+        <div style={{textAlign:"center",padding:8,background:T.surface,borderRadius:8}}><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase"}}>{L.cfoVatDue}</div><div style={{fontFamily:serif,fontSize:15,fontWeight:700,color:T.danger,marginTop:2}}>{fmtMoney(cf.vatDue)}</div></div>
+        <div style={{textAlign:"center",padding:8,background:T.surface,borderRadius:8}}><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase"}}>{lang==="sv"?"Brist":"Gap"}</div><div style={{fontFamily:serif,fontSize:15,fontWeight:700,color:T.danger,marginTop:2}}>{fmtMoney(cf.shortfall)}</div></div>
+      </div>
+      <div style={{marginTop:10,fontSize:12,color:T.warn,fontWeight:600,textAlign:"center"}}>{lang==="sv"?"Tryck för att se Arvos förslag →":"Tap to see Arvo's suggestions →"}</div>
+    </div>):null})()}
     {dash.forecast&&(<>
       <div style={{display:"flex",alignItems:"center",gap:8,...secS,marginTop:8,cursor:"pointer"}} onClick={()=>setForecastOpen(!forecastOpen)}>
         <Ic name="trendUp" size={16} color={T.accent}/>{L.forecastTitle}
@@ -762,10 +841,32 @@ const stopListening=()=>{if(recognitionRef.current)recognitionRef.current.stop()
 
 // ── HEY ARVO VIEW ──────────────────────────────────────────────────
 const HeyArvoView=()=>{
-const actionIcon={time_log:"time",invoice_draft:"invoices",expense:"tag",new_contact:"contacts",project_update:"projects"};
-const actionColor={time_log:T.accent,invoice_draft:T.warn,expense:T.danger,new_contact:T.success,project_update:T.accent};
+const actionIcon={time_log:"time",invoice_draft:"invoices",expense:"tag",new_contact:"contacts",project_update:"projects",cfo:"trendUp"};
+const actionColor={time_log:T.accent,invoice_draft:T.warn,expense:T.danger,new_contact:T.success,project_update:T.accent,cfo:T.warn};
+const [cfoActions,setCfoActions]=useState([]);
+
+const triggerCfo=()=>{
+const cfo=generateCfoMessage();
+setChatMsgs(prev=>[...prev,{role:"arvo",text:cfo.text,ts:Date.now(),type:"cfo",actions:cfo.actions}]);
+setCfoActions(cfo.actions.map(a=>({...a,done:false})));
+};
+
+const handleCfoAction=(actionId,approved)=>{
+setCfoActions(prev=>prev.map(a=>a.id===actionId?{...a,done:true,approved}:a));
+const action=cfoActions.find(a=>a.id===actionId);
+if(!action)return;
+if(approved){
+const confirmText=action.type==="reminder"
+?`${L.cfoReminderSent} ${action.client}. ${L.cfoMonitoring}`
+:`${L.cfoDiscountOffered} ${action.client}. ${L.cfoMonitoring}`;
+setChatMsgs(prev=>[...prev,{role:"arvo",text:confirmText,ts:Date.now(),type:"cfo"}]);
+}else{
+setChatMsgs(prev=>[...prev,{role:"arvo",text:`${L.cfoSkip}: ${action.client}`,ts:Date.now()}]);
+}
+};
+
 return (
-<div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 152px)"}}>
+<div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 164px)"}}>
 <div style={{textAlign:"center",marginBottom:16}}>
 <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:56,height:56,borderRadius:"50%",background:T.accentLight,marginBottom:10}}>
 <ArvoLogo size={32}/>
@@ -776,12 +877,29 @@ return (
 
 <div style={{flex:1,overflowY:"auto",paddingBottom:12}}>
 {chatMsgs.length===0&&(
-<div style={{textAlign:"center",padding:"32px 20px"}}>
+<div style={{padding:"16px 4px"}}>
+{/* CFO Proactive Card */}
+<div style={{...card,background:T.warnLight,borderColor:T.warn,padding:20,marginBottom:16}} onClick={triggerCfo}>
+<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+<div style={{width:36,height:36,borderRadius:10,background:T.warn+"20",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="trendUp" size={18} color={T.warn}/></div>
+<div><div style={{fontWeight:700,fontSize:14,color:T.text}}>{L.cfoCashflow}</div><div style={{fontSize:12,color:T.textMuted}}>{lang==="sv"?"Tryck för likviditetsanalys":"Tap for liquidity analysis"}</div></div>
+</div>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+{(()=>{const cf=computeCashflow();return[{l:L.cfoBalance,v:fmtMoney(cf.currentBalance),c:T.accent},{l:L.cfoProjected,v:fmtMoney(cf.projectedBalance),c:cf.projectedBalance<cf.vatDue?T.danger:T.success},{l:L.cfoVatDue,v:fmtMoney(cf.vatDue),c:T.danger},{l:L.cfoIncoming,v:fmtMoney(cf.expectedIn),c:T.accent}]})().map((s,i)=>(
+<div key={i} style={{padding:10,background:T.surface,borderRadius:10,textAlign:"center"}}>
+<div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.06em"}}>{s.l}</div>
+<div style={{fontFamily:serif,fontSize:17,fontWeight:700,color:s.c,marginTop:3}}>{s.v}</div>
+</div>))}
+</div>
+{(()=>{const cf=computeCashflow();return cf.shortfall>0?<div style={{marginTop:10,padding:"8px 12px",background:T.dangerLight,borderRadius:8,fontSize:12,color:T.danger,fontWeight:600,display:"flex",alignItems:"center",gap:6}}><Ic name="alert" size={14} color={T.danger}/>{lang==="sv"?`Brist: ${fmtMoney(cf.shortfall)} — tryck för åtgärder`:`Shortfall: ${fmtMoney(cf.shortfall)} — tap for actions`}</div>:null})()}
+</div>
+
+{/* Welcome + examples */}
 <div style={{...card,background:T.accentLight,borderColor:T.borderAccent,borderStyle:"dashed",padding:24}}>
 <div style={{fontSize:14,color:T.accent,lineHeight:1.7}}>{L.heyArvoWelcome}</div>
 <div style={{marginTop:16,display:"flex",flexDirection:"column",gap:8}}>
 {[lang==="sv"?"Jobbade 3h med design för Karlsson":"Worked 3h on design for Karlsson",lang==="sv"?"Ny kontakt Anna Svensson på AB Design":"New contact Anna Svensson at AB Design",lang==="sv"?"Faktura till Lindberg Reklam på 25000":"Invoice to Lindberg Reklam for 25000"].map((ex,i)=>(
-<button key={i} onClick={()=>processArvoMessage(ex)} style={{padding:"10px 14px",background:T.surface,border:`1.5px solid ${T.border}`,borderRadius:10,fontSize:13,color:T.textSub,cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>"{ex}"</button>
+<button key={i} onClick={()=>processArvoMessage(ex)} style={{padding:"10px 14px",background:T.surface,border:`1px solid ${T.border}`,borderRadius:10,fontSize:13,color:T.textSub,cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>"{ex}"</button>
 ))}
 </div>
 </div>
@@ -791,10 +909,28 @@ return (
 {chatMsgs.map((m,i)=>(
 <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",marginBottom:10,padding:"0 4px"}}>
 {m.role==="arvo"&&<div style={{...avS(32),marginRight:8,marginTop:2,background:T.accentLight,fontSize:10}}><ArvoLogo size={18}/></div>}
-<div style={{maxWidth:"80%",padding:"12px 16px",borderRadius:m.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",background:m.role==="user"?T.accentGrad:T.surfaceAlt,color:m.role==="user"?"#fff":T.text,fontSize:14,lineHeight:1.5,whiteSpace:"pre-line",boxShadow:T.shadow}}>
-{m.role==="arvo"&&m.type&&<div style={{display:"inline-flex",alignItems:"center",gap:6,marginBottom:6,padding:"3px 8px",borderRadius:6,background:actionColor[m.type]+"18",fontSize:11,fontWeight:600,color:actionColor[m.type]}}><Ic name={actionIcon[m.type]} size={12} color={actionColor[m.type]}/> {m.type.replace("_"," ")}</div>}
+<div style={{maxWidth:"85%",padding:"12px 16px",borderRadius:m.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",background:m.role==="user"?T.accentGrad:m.type==="cfo"?T.warnLight:T.surfaceAlt,color:m.role==="user"?"#fff":T.text,fontSize:14,lineHeight:1.6,whiteSpace:"pre-line",boxShadow:T.shadow}}>
+{m.role==="arvo"&&m.type&&<div style={{display:"inline-flex",alignItems:"center",gap:6,marginBottom:8,padding:"4px 10px",borderRadius:8,background:(actionColor[m.type]||T.accent)+"18",fontSize:11,fontWeight:600,color:actionColor[m.type]||T.accent}}><Ic name={actionIcon[m.type]||"zap"} size={12} color={actionColor[m.type]||T.accent}/> {m.type==="cfo"?(lang==="sv"?"AI CFO":"AI CFO"):m.type.replace("_"," ")}</div>}
 <div>{m.text}</div>
-<div style={{fontSize:10,color:m.role==="user"?"rgba(255,255,255,0.6)":T.textFaint,marginTop:4}}>{new Date(m.ts).toLocaleTimeString(lang==="sv"?"sv-SE":"en-US",{hour:"2-digit",minute:"2-digit"})}</div>
+{/* Action buttons for CFO suggestions */}
+{m.actions&&m.actions.length>0&&(
+<div style={{marginTop:12,display:"flex",flexDirection:"column",gap:8}}>
+{m.actions.map((act,ai)=>{
+const done=cfoActions.find(a=>a.id===act.id);
+const isDone=done&&done.done;
+return (<div key={ai} style={{padding:"10px 14px",background:T.surface,borderRadius:10,border:`1px solid ${T.border}`}}>
+<div style={{fontSize:13,color:T.text,marginBottom:8,lineHeight:1.5}}>{ai+1}. {act.label}</div>
+{isDone?
+<div style={{fontSize:12,color:done.approved?T.success:T.textMuted,fontWeight:600,display:"flex",alignItems:"center",gap:4}}><Ic name={done.approved?"check":"x"} size={12} color={done.approved?T.success:T.textMuted}/>{done.approved?L.cfoSent:L.cfoSkip}</div>
+:<div style={{display:"flex",gap:8}}>
+<button onClick={()=>handleCfoAction(act.id,true)} style={{...bSP,padding:"6px 14px",fontSize:12}}><Ic name="check" size={12} color="#fff"/> {L.cfoApprove}</button>
+<button onClick={()=>handleCfoAction(act.id,false)} style={{...bSO,padding:"6px 14px",fontSize:12}}>{L.cfoSkip}</button>
+</div>}
+</div>);
+})}
+</div>
+)}
+<div style={{fontSize:10,color:m.role==="user"?"rgba(255,255,255,0.6)":T.textFaint,marginTop:6}}>{new Date(m.ts).toLocaleTimeString(lang==="sv"?"sv-SE":"en-US",{hour:"2-digit",minute:"2-digit"})}</div>
 </div>
 </div>
 ))}
