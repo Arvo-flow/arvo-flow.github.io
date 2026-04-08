@@ -151,7 +151,6 @@ const [timerSec,setTimerSec]=useState(0);
 const [timerProj,setTimerProj]=useState("Website Redesign");
 const [timerTask,setTimerTask]=useState("");
 const [healthOpen,setHealthOpen]=useState(false);
-const [forecastOpen,setForecastOpen]=useState(false);
 const [autoReminders,setAutoReminders]=useState(true);
 const [dash,setDash]=useState({pipeline:true,won:true,awaiting:true,weekHours:true,toDo:true,recentInv:true,activeProj:true,insights:true,forecast:true,health:true,digest:true});
 const [scanState,setScanState]=useState("idle");
@@ -184,7 +183,6 @@ const fmtMoney=sek=>{const v=Math.round(sek*CU.rate);const f=new Intl.NumberForm
 const sLabel=s=>{if(lang==="sv")return s;return{Kund:"Customer",Lead:"Lead",Prospekt:"Prospect","Pågående":"Ongoing",Planering:"Planning",Avslutad:"Completed",Betald:"Paid",Skickad:"Sent","Förfallen":"Overdue",Utkast:"Draft"}[s]||s};
 
 const card={background:T.cardBg,border:`1px solid ${T.cardBorder}`,borderRadius:16,padding:20,marginBottom:16,boxShadow:T.shadow,transition:"box-shadow 0.2s"};
-const cardA=c=>({...card,borderLeft:`3.5px solid ${c||T.borderAccent}`});
 const sCard={...card,padding:"20px 18px"};
 const hd={fontFamily:serif,fontWeight:800,fontSize:28,color:T.text,lineHeight:1.15,letterSpacing:"-0.03em"};
 const subS={fontSize:14,color:T.textMuted,lineHeight:1.6,marginTop:8,marginBottom:24};
@@ -200,7 +198,6 @@ const lr={padding:"15px 18px",cursor:"pointer",transition:"background 0.15s"};
 const fB=a=>({padding:"7px 16px",borderRadius:100,fontSize:12,fontWeight:a?600:500,border:a?"none":`1px solid ${T.border}`,background:a?T.accent:"transparent",color:a?"#fff":T.textMuted,cursor:"pointer",fontFamily:"inherit",transition:"all 0.2s"});
 const progBar={height:6,borderRadius:4,background:T.surfaceAlt,overflow:"hidden"};
 const progFill=(pct,clr)=>({height:"100%",width:`${pct}%`,background:clr||T.accentGrad,borderRadius:4,transition:"width 0.5s"});
-const bigNum=clr=>({fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:34,fontWeight:400,color:clr,letterSpacing:"-0.02em",lineHeight:1.1});
 
 const sC=s=>({Kund:[T.success,T.successLight],Lead:[T.accent,T.accentLight],Prospekt:[T.warn,T.warnLight],"Pågående":[T.accent,T.accentLight],Planering:[T.warn,T.warnLight],Avslutad:[T.success,T.successLight],Betald:[T.success,T.successLight],Skickad:[T.accent,T.accentLight],"Förfallen":[T.danger,T.dangerLight],Utkast:[T.textMuted,T.tagBg]}[s]||[T.textMuted,T.tagBg]);
 const Badge=({status})=>{const[c,b]=sC(status);return <span style={badgeS(c,b)}>{sLabel(status)}</span>};
@@ -252,8 +249,8 @@ thermometer:<><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"
 return <svg {...p}>{d[name]}</svg>;
 };
 
-const NAV=[{id:"dashboard",icon:"overview"},{id:"heyarvo",icon:"arvo"},{id:"contacts",icon:"contacts"},{id:"projects",icon:"projects"},{id:"invoices",icon:"invoices"},{id:"time",icon:"time"}];
-const nL=id=>({dashboard:L.overview,heyarvo:L.heyArvo,contacts:L.contacts,projects:L.projects,invoices:L.invoices,time:L.time}[id]);
+const NAV=[{id:"dashboard",icon:"overview"},{id:"contacts",icon:"contacts"},{id:"projects",icon:"projects"},{id:"invoices",icon:"invoices"},{id:"time",icon:"time"},{id:"heyarvo",icon:"arvo"}];
+const nL=id=>({dashboard:L.overview,heyarvo:"My Arvo",contacts:L.contacts,projects:L.projects,invoices:L.invoices,time:L.time}[id]);
 const Flag=({code,active,onClick})=>(<button onClick={onClick} style={{width:28,height:20,borderRadius:4,border:active?`2px solid ${T.accent}`:`1.5px solid ${T.border}`,cursor:"pointer",overflow:"hidden",padding:0,background:T.surface,opacity:active?1:0.45}}>{code==="sv"?<svg viewBox="0 0 30 22" style={{display:"block",width:"100%",height:"100%"}}><rect width="30" height="22" fill="#005BAA"/><rect x="9" width="4" height="22" fill="#FECC00"/><rect y="9" width="30" height="4" fill="#FECC00"/></svg>:<svg viewBox="0 0 30 22" style={{display:"block",width:"100%",height:"100%"}}><rect width="30" height="22" fill="#012169"/><path d="M0,0 L30,22 M30,0 L0,22" stroke="#fff" strokeWidth="3.5"/><path d="M0,0 L30,22 M30,0 L0,22" stroke="#C8102E" strokeWidth="2"/><rect x="12" width="6" height="22" fill="#fff"/><rect y="8" width="30" height="6" fill="#fff"/><rect x="13" width="4" height="22" fill="#C8102E"/><rect y="9" width="30" height="4" fill="#C8102E"/></svg>}</button>);
 const Toggle=({on,onToggle})=>(<button onClick={onToggle} style={{width:40,height:22,borderRadius:11,background:on?T.accent:T.border,border:"none",cursor:"pointer",position:"relative",flexShrink:0}}><div style={{width:16,height:16,borderRadius:"50%",background:"#fff",position:"absolute",top:3,left:on?21:3,transition:"left 0.2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/></button>);
 
@@ -383,8 +380,6 @@ const recInv=invoices.filter(i=>i.status!=="Betald").slice(0,4);
 const ins=computeInsights();
 const {score:hScore,factors}=computeHealth();
 const fc=computeForecast();
-const hColor=hScore>=75?T.success:hScore>=50?T.warn:T.danger;
-const hBg=hScore>=75?T.successLight:hScore>=50?T.warnLight:T.dangerLight;
 const visStats=[
   dash.pipeline&&{label:L.pipeline,value:fmtMoney(pipe),color:T.accentDark,bc:T.borderAccent},
   dash.won&&{label:L.won,value:fmtMoney(wonAmt),color:T.accentDark,bc:T.borderAccent},
@@ -395,130 +390,130 @@ const visStats=[
 return (
   <div>
     <h1 style={hd}>{L.dashTitle}</h1>
-    <p style={subS}>{L.dashSub}</p>
-    {dash.health&&(<div style={{...card,borderColor:hColor,cursor:"pointer"}} onClick={()=>setHealthOpen(!healthOpen)}>
-      <div style={{display:"flex",alignItems:"center",gap:16}}>
-        <div style={{width:56,height:56,borderRadius:"50%",background:hBg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-          <span style={{fontFamily:serif,fontSize:24,fontWeight:700,color:hColor}}>{hScore}</span>
+    <p style={{...subS,marginBottom:16}}>{L.dashSub}</p>
+
+    {/* ── Hero: Health + Score ── */}
+    {dash.health&&(<div style={{...card,padding:0,overflow:"hidden",marginBottom:20}}>
+      <div style={{background:T.accentGrad,padding:"20px 20px 16px",display:"flex",alignItems:"center",gap:16}}>
+        <div style={{width:52,height:52,borderRadius:"50%",background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <span style={{fontFamily:serif,fontSize:22,fontWeight:800,color:"#fff"}}>{hScore}</span>
         </div>
         <div style={{flex:1}}>
-          <div style={{fontSize:13,fontWeight:600,color:T.text}}>{L.healthLabel}</div>
-          <div style={{fontSize:12,color:T.textMuted,marginTop:2}}>{hScore>=75?(lang==="sv"?"Verksamheten mår bra!":"Business is healthy!"):(hScore>=50?(lang==="sv"?"Behöver uppmärksamhet":"Needs attention"):(lang==="sv"?"Kräver åtgärd nu":"Requires action now"))}</div>
+          <div style={{fontSize:14,fontWeight:600,color:"#fff"}}>{L.healthLabel}</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,0.7)",marginTop:2}}>{hScore>=75?(lang==="sv"?"Verksamheten mår bra!":"Business is healthy!"):(hScore>=50?(lang==="sv"?"Behöver uppmärksamhet":"Needs attention"):(lang==="sv"?"Kräver åtgärd nu":"Requires action now"))}</div>
         </div>
-        <Ic name={healthOpen?"up":"down"} size={18} color={T.textFaint}/>
+        <button style={{background:"none",border:"none",cursor:"pointer",padding:4}} onClick={()=>setHealthOpen(!healthOpen)}><Ic name={healthOpen?"up":"down"} size={18} color="rgba(255,255,255,0.7)"/></button>
       </div>
-      {healthOpen&&(<div style={{marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
-        <div style={{fontSize:12,fontWeight:600,color:T.textMuted,marginBottom:10}}>{L.healthDetail}</div>
+      {healthOpen&&(<div style={{padding:"16px 20px"}}>
         {factors.map((f,i)=>{
           const barColor=f.impact==="boost"?T.success:f.impact==="drag"?T.danger:T.warn;
-          const impactLabel=f.impact==="boost"?L.boosts:f.impact==="drag"?L.drags:L.neutral;
-          return (<div key={i} style={{marginBottom:12}}>
+          return (<div key={i} style={{marginBottom:i<factors.length-1?12:0}}>
             <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
               <span style={{color:T.textSub}}>{f.label}</span>
-              <span style={{color:barColor,fontWeight:600,fontSize:11}}>{impactLabel} · {f.value}/{f.max}</span>
+              <span style={{color:barColor,fontWeight:600,fontSize:11}}>{f.value}/{f.max}</span>
             </div>
             <div style={progBar}><div style={progFill(Math.round((f.value/f.max)*100),barColor)}/></div>
           </div>)
         })}
       </div>)}
     </div>)}
-    {visStats.length>0&&(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
-      {visStats.map((s,i)=>(<div key={i} style={{...sCard,borderColor:s.bc}}><div style={{fontSize:12,color:T.textSub,marginBottom:10,fontWeight:500}}>{s.label}</div><div style={bigNum(s.color)}>{s.value}</div></div>))}
+
+    {/* ── Stats Grid ── */}
+    {visStats.length>0&&(<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:20}}>
+      {visStats.map((s,i)=>(<div key={i} style={{background:T.cardBg,borderRadius:14,padding:"16px 16px 14px",boxShadow:T.shadow,border:`1px solid ${T.cardBorder}`}}>
+        <div style={{fontSize:11,color:T.textMuted,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:8}}>{s.label}</div>
+        <div style={{fontFamily:serif,fontSize:28,fontWeight:400,color:s.color,letterSpacing:"-0.02em",lineHeight:1}}>{s.value}</div>
+      </div>))}
     </div>)}
-    {dash.digest&&(<div style={{...card,borderColor:T.accent,background:T.accentLight}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-        <Ic name="zap" size={16} color={T.accent}/>
-        <span style={{fontFamily:serif,fontWeight:700,fontSize:14,color:T.accent}}>{L.weekDigest}</span>
+
+    {/* ── Alerts (insights + CFO) ── */}
+    {dash.insights&&ins.length>0&&ins.map((insItem,i)=>{const iC=insItem.type==="danger"?T.danger:T.warn;return (<div key={i} style={{...card,borderLeft:`3.5px solid ${iC}`,padding:"14px 16px",marginBottom:10}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{width:28,height:28,borderRadius:8,background:iC+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name={insItem.icon} size={14} color={iC}/></div>
+        <div style={{flex:1}}><div style={{fontWeight:600,fontSize:13,color:T.text}}>{insItem.title}</div><div style={{fontSize:12,color:T.textMuted,marginTop:2}}>{insItem.body}</div></div>
+        <button style={{background:"none",border:"none",cursor:"pointer",padding:4}} onClick={insItem.action}><Ic name="right" size={16} color={T.textFaint}/></button>
       </div>
-      <div style={{fontSize:13,color:T.textSub,lineHeight:1.6}}>
-        {L.weekDigestBody.replace("{hours}",wH.toString()).replace("{active}",actP.length.toString()).replace("{pipeline}",fmtMoney(pipe)).replace("{action}",ins.length>0?(lang==="sv"?`${ins.length} saker behöver din uppmärksamhet.`:`${ins.length} items need your attention.`):(lang==="sv"?"Allt ser bra ut!":"Everything looks good!"))}
-      </div>
-      {autoReminders&&(<div style={{display:"flex",alignItems:"center",gap:6,marginTop:10,fontSize:11,color:T.accent}}>
-        <div style={{width:6,height:6,borderRadius:"50%",background:T.success}}/>
-        {L.autopilot}: {L.autoReminders} {L.autoOn}
-      </div>)}
-    </div>)}
-    {dash.insights&&ins.length>0&&(<>
-      <div style={{display:"flex",alignItems:"center",gap:8,...secS}}><Ic name="zap" size={16} color={T.accent}/>{L.insights}</div>
-      {ins.map((insItem,i)=>{const iC=insItem.type==="danger"?T.danger:insItem.type==="warning"?T.warn:T.accent;const iB=insItem.type==="danger"?T.dangerLight:insItem.type==="warning"?T.warnLight:T.accentLight;return (<div key={i} style={cardA(iC)}>
-        <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-          <div style={{width:32,height:32,borderRadius:8,background:iB,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}}><Ic name={insItem.icon} size={16} color={iC}/></div>
-          <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14,color:T.text,marginBottom:4}}>{insItem.title}</div><div style={{fontSize:13,color:T.textMuted,lineHeight:1.5}}>{insItem.body}</div>
-            <button style={{...bSO,marginTop:10,borderColor:iC,color:iC,padding:"6px 14px",fontSize:12}} onClick={insItem.action}>{insItem.actionLabel} →</button>
-          </div>
-        </div>
-      </div>)})}
-    </>)}
+    </div>)})}
     {(()=>{const cf=computeCashflow();return cf.shortfall>0?(
-    <div style={{...card,borderColor:T.warn,background:T.warnLight,cursor:"pointer"}} onClick={()=>go("heyarvo")}>
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-        <div style={{width:40,height:40,borderRadius:10,background:T.warn+"20",display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="alert" size={20} color={T.warn}/></div>
-        <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:T.text}}>{L.cfoWarning}</div><div style={{fontSize:12,color:T.textMuted,marginTop:2}}>{L.cfoBasedOn}</div></div>
+    <div style={{...card,borderLeft:`3.5px solid ${T.warn}`,padding:"14px 16px",marginBottom:10,cursor:"pointer"}} onClick={()=>go("heyarvo")}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <div style={{width:28,height:28,borderRadius:8,background:T.warn+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="alert" size={14} color={T.warn}/></div>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:600,fontSize:13,color:T.text}}>{L.cfoWarning}</div>
+          <div style={{fontSize:12,color:T.textMuted,marginTop:2}}>{lang==="sv"?`Brist ${fmtMoney(cf.shortfall)} — tryck för förslag`:`Gap ${fmtMoney(cf.shortfall)} — tap for suggestions`}</div>
+        </div>
         <Ic name="right" size={16} color={T.textFaint}/>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-        <div style={{textAlign:"center",padding:8,background:T.surface,borderRadius:8}}><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase"}}>{L.cfoBalance}</div><div style={{fontFamily:serif,fontSize:15,fontWeight:700,color:T.accent,marginTop:2}}>{fmtMoney(cf.currentBalance)}</div></div>
-        <div style={{textAlign:"center",padding:8,background:T.surface,borderRadius:8}}><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase"}}>{L.cfoVatDue}</div><div style={{fontFamily:serif,fontSize:15,fontWeight:700,color:T.danger,marginTop:2}}>{fmtMoney(cf.vatDue)}</div></div>
-        <div style={{textAlign:"center",padding:8,background:T.surface,borderRadius:8}}><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase"}}>{lang==="sv"?"Brist":"Gap"}</div><div style={{fontFamily:serif,fontSize:15,fontWeight:700,color:T.danger,marginTop:2}}>{fmtMoney(cf.shortfall)}</div></div>
-      </div>
-      <div style={{marginTop:10,fontSize:12,color:T.warn,fontWeight:600,textAlign:"center"}}>{lang==="sv"?"Tryck för att se Arvos förslag →":"Tap to see Arvo's suggestions →"}</div>
     </div>):null})()}
-    {dash.forecast&&(<>
-      <div style={{display:"flex",alignItems:"center",gap:8,...secS,marginTop:8,cursor:"pointer"}} onClick={()=>setForecastOpen(!forecastOpen)}>
-        <Ic name="trendUp" size={16} color={T.accent}/>{L.forecastTitle}
-        <Ic name={forecastOpen?"up":"down"} size={14} color={T.textFaint}/>
-      </div>
-      <div style={{...card,borderColor:T.borderAccent}}>
-        <div style={{textAlign:"center",padding:"12px 0 16px",borderBottom:`1px solid ${T.border}`,marginBottom:14}}>
-          <div style={{fontSize:11,color:T.textFaint,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>{L.expected}</div>
-          <div style={bigNum(T.accent)}>{fmtMoney(fc.expected)}</div>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-          {[{l:L.winRate,v:`${fc.winRate}%`},{l:L.avgDeal,v:fmtMoney(fc.avgDeal)},{l:"Pipeline",v:fmtMoney(fc.pipeLine)}].map((st,i)=>(<div key={i} style={{textAlign:"center"}}><div style={{fontSize:16,fontWeight:600,fontFamily:serif,color:T.text}}>{st.v}</div><div style={{fontSize:10,color:T.textFaint,textTransform:"uppercase",letterSpacing:"0.06em",marginTop:2}}>{st.l}</div></div>))}
-        </div>
-        {forecastOpen&&(<div style={{marginTop:16,borderTop:`1px solid ${T.border}`,paddingTop:14}}>
-          <div style={{fontSize:12,fontWeight:600,color:T.textMuted,marginBottom:12}}>{lang==="sv"?"Scenarioanalys":"Scenario Analysis"}</div>
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            {[{l:L.bestCase,v:fmtMoney(fc.bestCase),c:T.success,pct:85},{l:L.expected,v:fmtMoney(fc.expected),c:T.accent,pct:fc.winRate},{l:L.worstCase,v:fmtMoney(fc.worstCase),c:T.danger,pct:Math.round(fc.winRate*0.5)}].map((sc,i)=>(<div key={i}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
-                <span style={{color:T.textSub}}>{sc.l}</span>
-                <span style={{fontWeight:600,color:sc.c}}>{sc.v}</span>
-              </div>
-              <div style={progBar}><div style={progFill(sc.pct,sc.c)}/></div>
-            </div>))}
+
+    {/* ── Forecast ── */}
+    {dash.forecast&&(<div style={{marginTop:20}}>
+      <div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10,paddingLeft:4}}>{L.forecastTitle}</div>
+      <div style={{...card,padding:"18px 20px",marginBottom:10}}>
+        <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:14}}>
+          <div>
+            <div style={{fontSize:11,color:T.textFaint,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>{L.expected}</div>
+            <div style={{fontFamily:serif,fontSize:30,fontWeight:400,color:T.accentDark,letterSpacing:"-0.02em",lineHeight:1}}>{fmtMoney(fc.expected)}</div>
           </div>
-          <div style={{marginTop:14,fontSize:12,color:T.textMuted,lineHeight:1.6,padding:12,background:T.surfaceAlt,borderRadius:8}}>
-            {lang==="sv"
-              ?`Prognosen baseras på ${fc.winRate}% win-rate (${invoices.filter(i=>i.status==="Betald").length} av ${invoices.length} affärer) multiplicerat med ${fmtMoney(fc.pipeLine)} i aktiv pipeline. Bästa fall antar 85% konvertering.`
-              :`Forecast based on ${fc.winRate}% win rate (${invoices.filter(i=>i.status==="Betald").length} of ${invoices.length} deals) × ${fmtMoney(fc.pipeLine)} active pipeline. Best case assumes 85% conversion.`}
-          </div>
-        </div>)}
+          <div style={{fontSize:12,fontWeight:600,color:T.success,background:T.successLight,padding:"5px 10px",borderRadius:100}}>{fc.winRate}% {lang==="sv"?"win":"win"}</div>
+        </div>
+        <div style={{display:"flex",gap:6,marginBottom:6}}>
+          <div style={{flex:fc.winRate,height:6,borderRadius:3,background:T.accent}}/>
+          <div style={{flex:100-fc.winRate,height:6,borderRadius:3,background:T.surfaceAlt}}/>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:T.textFaint}}>
+          <span>{L.avgDeal} {fmtMoney(fc.avgDeal)}</span>
+          <span>Pipeline {fmtMoney(fc.pipeLine)}</span>
+        </div>
       </div>
-    </>)}
-    {dash.toDo&&odC.length>0&&(<div style={cardA(T.danger)}>
-      <div style={{...secS,color:T.danger}}>{L.toDo}</div>
-      {odC.map((c,i)=>(<div key={c.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<odC.length-1?`1px solid ${T.border}`:"none",cursor:"pointer"}} onClick={()=>{setDetail({type:"contact",data:c});setView("contacts")}}>
-        <div style={avS(42)}>{ini(c.name)}</div>
-        <TempDot contact={c}/>
-        <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{c.name}</div><div style={{fontSize:12,color:T.textMuted}}>{c.company}</div></div>
-        <div style={{textAlign:"right"}}><div style={{fontSize:13,fontWeight:600,color:T.danger}}>{c.daysSince} {L.daysSince}</div><div style={{fontSize:11,color:T.textMuted}}>{L.sinceContact}</div></div>
+    </div>)}
+
+    {/* ── To-do contacts ── */}
+    {dash.toDo&&odC.length>0&&(<div style={{marginTop:20}}>
+      <div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10,paddingLeft:4}}>{L.toDo}</div>
+      <div style={{...card,padding:0,overflow:"hidden",marginBottom:10}}>
+        {odC.slice(0,3).map((c,i)=>(<div key={c.id} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderBottom:i<Math.min(odC.length,3)-1?`1px solid ${T.border}`:"none",cursor:"pointer"}} onClick={()=>{setDetail({type:"contact",data:c});setView("contacts")}}>
+          <div style={avS(38)}>{ini(c.name)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:600,fontSize:14,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.name}</div>
+            <div style={{fontSize:12,color:T.textMuted,marginTop:1}}>{c.daysSince} {L.daysSince}</div>
+          </div>
+          <Ic name="right" size={16} color={T.textFaint}/>
+        </div>))}
+      </div>
+    </div>)}
+
+    {/* ── Recent invoices ── */}
+    {dash.recentInv&&recInv.length>0&&(<div style={{marginTop:20}}>
+      <div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10,paddingLeft:4}}>{L.recentInvoices}</div>
+      <div style={{...card,padding:0,overflow:"hidden",marginBottom:10}}>
+        {recInv.slice(0,3).map((inv,i)=>(<div key={inv.id} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderBottom:i<Math.min(recInv.length,3)-1?`1px solid ${T.border}`:"none",cursor:"pointer"}} onClick={()=>go("invoices")}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+              <span style={{fontWeight:600,fontSize:14,color:T.text}}>{inv.id}</span>
+              <Badge status={inv.status}/>
+            </div>
+            <div style={{fontSize:12,color:T.textMuted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{inv.client}</div>
+          </div>
+          <div style={{fontFamily:serif,fontSize:16,fontWeight:500,color:T.text,letterSpacing:"-0.01em"}}>{fmtMoney(inv.amount)}</div>
+        </div>))}
+      </div>
+    </div>)}
+
+    {/* ── Active projects ── */}
+    {dash.activeProj&&actP.length>0&&(<div style={{marginTop:20}}>
+      <div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10,paddingLeft:4}}>{L.activeProjects}</div>
+      {actP.slice(0,3).map(p=>(<div key={p.id} style={{...card,padding:"16px 18px",marginBottom:10,cursor:"pointer"}} onClick={()=>{setDetail({type:"project",data:p});setView("projects")}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          <div style={{flex:1,minWidth:0,marginRight:12}}>
+            <div style={{fontWeight:600,fontSize:14,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</div>
+            <div style={{fontSize:12,color:T.textMuted,marginTop:1}}>{p.client}</div>
+          </div>
+          <div style={{fontFamily:serif,fontSize:18,fontWeight:500,color:T.accentDark,letterSpacing:"-0.01em"}}>{p.progress}<span style={{fontSize:12,color:T.textFaint}}>%</span></div>
+        </div>
+        <div style={progBar}><div style={progFill(p.progress)}/></div>
       </div>))}
     </div>)}
-    {dash.recentInv&&(<><div style={{...secS,marginTop:8}}>{L.recentInvoices}</div><div style={{...card,padding:0,overflow:"hidden"}}>
-      {recInv.map((inv,i)=>(<div key={inv.id} style={{...lr,borderBottom:i<recInv.length-1?`1px solid ${T.border}`:"none"}} onClick={()=>go("invoices")}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div><div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontWeight:600,fontSize:14}}>{inv.id}</span><Badge status={inv.status}/></div><div style={{fontSize:12,color:T.textMuted,marginTop:2}}>{inv.client}</div></div>
-          <div style={{textAlign:"right"}}><div style={{fontWeight:700,fontSize:15,fontFamily:serif}}>{fmtMoney(inv.amount)}</div><div style={{fontSize:11,color:T.textFaint}}>{L.dueDate} {inv.due}</div></div>
-        </div>
-      </div>))}
-    </div></>)}
-    {dash.activeProj&&(<><div style={{...secS,marginTop:8}}>{L.activeProjects}</div>
-      {actP.map(p=>(<div key={p.id} style={card} onClick={()=>{setDetail({type:"project",data:p});setView("projects")}}>
-        <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><div><div style={{fontWeight:600,fontSize:14}}>{p.name}</div><div style={{fontSize:12,color:T.textMuted}}>{p.client}</div></div><Badge status={p.status}/></div>
-        <div style={progBar}><div style={progFill(p.progress)}/></div>
-        <div style={{display:"flex",justifyContent:"space-between",marginTop:6,fontSize:11,color:T.textFaint}}><span>{p.progress}% {L.complete}</span><span>{p.deadline}</span></div>
-      </div>))}
-    </>)}
   </div>
 );
 };
@@ -975,7 +970,7 @@ default: return <DashView />;
 }
 };
 
-const dashToggles=[{key:"health",label:L.showHealth},{key:"pipeline",label:L.showPipeline},{key:"won",label:L.showWon},{key:"awaiting",label:L.showAwaiting},{key:"weekHours",label:L.showWeekHours},{key:"digest",label:L.showDigest},{key:"insights",label:L.showInsights},{key:"forecast",label:L.showForecast},{key:"toDo",label:L.showToDo},{key:"recentInv",label:L.showRecentInv},{key:"activeProj",label:L.showActiveProj}];
+const dashToggles=[{key:"health",label:L.showHealth},{key:"pipeline",label:L.showPipeline},{key:"won",label:L.showWon},{key:"awaiting",label:L.showAwaiting},{key:"weekHours",label:L.showWeekHours},{key:"insights",label:L.showInsights},{key:"forecast",label:L.showForecast},{key:"toDo",label:L.showToDo},{key:"recentInv",label:L.showRecentInv},{key:"activeProj",label:L.showActiveProj}];
 
 return (
 <div style={{minHeight:"100vh",background:T.bg,color:T.text,fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif",fontSize:14,lineHeight:1.5,WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale"}}>
@@ -1007,7 +1002,7 @@ return (
   </main>
 
   <nav style={{position:"fixed",bottom:0,left:0,right:0,height:68,background:T.surface,borderTop:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-around",zIndex:100,boxShadow:"0 -1px 8px rgba(0,0,0,0.03)"}}>
-    {NAV.map(n=>{const active=view===n.id;const isArvo=n.id==="heyarvo";return (<button key={n.id} onClick={()=>go(n.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:isArvo?"4px 10px":"8px 10px",background:"none",border:"none",cursor:"pointer",color:active?T.accent:T.textFaint,fontSize:10,fontWeight:active?600:400,fontFamily:"inherit",position:"relative"}}>{active&&!isArvo&&<div style={{position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",width:24,height:3,borderRadius:2,background:T.accent}}/>}{isArvo?<div style={{width:40,height:40,borderRadius:"50%",background:active?T.accentGrad:T.surfaceAlt,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:active?"0 2px 10px rgba(42,109,94,0.25)":"none",border:active?"none":`1px solid ${T.border}`,transition:"all 0.2s",marginTop:-10}}><Ic name="arvo" size={20} color={active?"#fff":T.textFaint}/></div>:<Ic name={n.icon} size={22} color={active?T.accent:T.textFaint}/>}{!isArvo&&<span>{nL(n.id)}</span>}</button>)})}
+    {NAV.map(n=>{const active=view===n.id;const isArvo=n.id==="heyarvo";return (<button key={n.id} onClick={()=>go(n.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:isArvo?2:3,padding:"6px 8px",background:"none",border:"none",cursor:"pointer",color:active?T.accent:T.textFaint,fontSize:10,fontWeight:active?600:400,fontFamily:"inherit",position:"relative"}}>{active&&<div style={{position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",width:24,height:3,borderRadius:2,background:T.accent}}/>}{isArvo?<div style={{width:32,height:32,borderRadius:"50%",background:active?T.accentGrad:T.surfaceAlt,display:"flex",alignItems:"center",justifyContent:"center",border:active?"none":`1px solid ${T.border}`,transition:"all 0.2s"}}><Ic name="arvo" size={16} color={active?"#fff":T.textFaint}/></div>:<Ic name={n.icon} size={22} color={active?T.accent:T.textFaint}/>}<span>{nL(n.id)}</span></button>)})}
   </nav>
 
   <ModalView/>
