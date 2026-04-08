@@ -41,7 +41,14 @@ showToDo:"Att göra",showRecentInv:"Senaste fakturor",showActiveProj:"Aktiva pro
 scanInvoice:"Skanna faktura",scanTitle:"Skanna in en faktura",scanDesc:"Ta ett foto eller ladda upp en bild av fakturan. AI:n extraherar kund, belopp och datum automatiskt.",scanning:"Analyserar faktura…",scanSuccess:"Faktura tolkad!",scanUpload:"Ladda upp bild",scanCamera:"Ta foto",extractedData:"Extraherad data",confirm:"Bekräfta",scanError:"Kunde inte tolka fakturan. Försök igen.",
 heyArvo:"Hey Arvo",heyArvoSub:"Prata eller skriv — jag sköter resten",heyArvoPlaceholder:"Skriv t.ex. 'Jobbade 3h med design för Karlsson'…",heyArvoListening:"Lyssnar…",heyArvoThinking:"Tänker…",heyArvoTapMic:"Tryck på mikrofonen och berätta",heyArvoWelcome:"Hej! Jag är Arvo, din digitala affärspartner. Berätta vad du gjort så loggar jag det åt dig.",heyArvoTimeLogged:"Tidsloggning sparad",heyArvoContactCreated:"Ny kontakt skapad",heyArvoInvoiceCreated:"Fakturautkast skapat",heyArvoExpenseLogged:"Utgift registrerad",heyArvoProjectUpdated:"Projekt uppdaterat",heyArvoNoMic:"Din webbläsare stöder inte röstinmatning",heyArvoCantParse:"Jag förstod inte riktigt. Kan du formulera om?",
 cfoCashflow:"Kassaflöde",cfoBalance:"Saldo idag",cfoProjected:"Beräknat saldo",cfoVatDue:"Moms att betala",cfoIncoming:"Förväntat in",cfoOutgoing:"Beräknat ut",cfoDaysUntil:"dagar kvar",cfoWarning:"Likviditetsvarning",cfoAction:"Föreslagna åtgärder",cfoSendReminder:"Skicka påminnelse",cfoOfferDiscount:"Erbjud snabbrabatt",cfoSkip:"Hoppa över",cfoApprove:"Godkänn",cfoSent:"Skickat!",cfoReminderSent:"Påminnelse skickad till",cfoDiscountOffered:"Rabatterbjudande skickat till",cfoMonitoring:"Jag bevakar och meddelar dig när de betalar.",cfoCrisisNone:"Allt ser bra ut! Inga likviditetsproblem i sikte.",cfoHeadsUp:"Heads up",cfoBasedOn:"Baserat på dina snittkostnader",cfoNeed:"behöver du",cfoBy:"senast den",cfoYouHave:"Du har",cfoUnpaid:"obetalda fakturor på totalt",cfoSuggest:"Vill du att jag:",
-tabChat:"Chatt",tabImpact:"Värde",tabTrust:"Autonomi",
+tabChat:"Chatt",tabAnalysis:"Analys",tabImpact:"Värde",tabTrust:"Autonomi",
+cmTitle:"Likviditetsanalys",cmSub:"Ladda upp din fakturaexport — jag analyserar din kassaflöde på 5 sekunder",cmGdpr:"Din data analyseras direkt i webbläsaren och lämnar aldrig din enhet. Inget lagras på server.",cmDrop:"Dra in din CSV-fil här",cmOr:"eller",cmChoose:"Välj fil från dator",cmDemo:"Testa med exempeldata",cmFormat:"CSV-export från Fortnox, Visma, Bokio m.fl. Kolumner: kund, belopp, datum, status",cmAnalyzing:"Arvo analyserar din data…",cmAnalyzingStep1:"Läser fakturor",cmAnalyzingStep2:"Hittar mönster",cmAnalyzingStep3:"Beräknar risker",cmAnalyzingStep4:"Formulerar åtgärder",
+cmResultsTitle:"Din likviditetsanalys",cmResultsSub:"Baserat på {n} fakturor från {clients} kunder",cmSummary:"Sammanfattning",cmOutstanding:"Utestående",cmOverdue:"Försenat",cmAvgDso:"Snittbetaltid",cmDays:"dagar",cmRisk:"Risk jag hittade",cmRiskNone:"Inga stora risker just nu — bra jobbat!",
+cmCounter:"Detta kunde du ha undvikit",cmCounterBody:"Om mina påminnelser hade varit aktiva hade du haft {amount} på kontot {days} dagar tidigare. Det hade räckt för att täcka nästa momsinbetalning.",
+cmActions:"Vad jag föreslår att du gör nu",cmActionReminder:"Skicka påminnelse",cmActionEarly:"Erbjud snabbrabatt",cmActionFollowup:"Följ upp",cmActFake:"Ja, agera",cmActDone:"Klart",
+cmDraftTitle:"Meddelandet är klart",cmDraftSub:"Kopiera och skicka till din kund — eller vänta på auto-send i nästa version",cmCopy:"Kopiera meddelande",cmCopied:"Kopierat till urklipp!",cmBetaNote:"Arvo är i beta. Auto-send via SMS/mejl kommer i Arvo Pro.",cmWantAuto:"Jag vill ha auto-send",cmCloseDraft:"Stäng",
+cmPriceTitle:"Vill du ha detta som tjänst?",cmPriceBody:"Arvo Pro kommer innehålla kontinuerlig likviditetsanalys och auto-send via API. Din röst hjälper oss prioritera.",cmPriceQ:"Skulle du betala 499 kr/mån?",cmPriceYes:"Ja — meddela mig när det släpps",cmPriceMaybe:"Kanske — beror på",cmPriceNo:"Inte intresserad just nu",cmPriceThanks:"Tack! Vi hör av oss när Arvo Pro släpps.",
+cmReset:"Kör ny analys",cmErrorParse:"Kunde inte läsa filen. Se till att den är en CSV med kolumner för kund, belopp och status.",cmRiskLate:"{client} betalar systematiskt sent ({n} försenade fakturor)",cmRiskBig:"{client} har en stor utestående faktura på {amount}",cmRiskGap:"Likviditetsgap upptäckt: {amount} i försenade fakturor mot nästa månad",
 impactTitle:"Arvos påverkan",impactSub:"Så här mycket värde har jag skapat åt dig",impactThisMonth:"Denna månad",impactCapital:"Kapital drivet in snabbare",impactDaysSaved:"dagar kortare betaltid",impactTime:"timmar sparade",impactReminders:"påminnelser skickade",impactVsBase:"jämfört med din vanliga betalcykel",impactWins:"Senaste vinsterna",impactWinReminder:"Påminnelse drev in",impactWinEarly:"Fakturerades tidigt",impactDaysFaster:"dagar snabbare",impactWeekRecap:"Veckans sammanfattning",impactRecapBody:"Förra veckan drev jag in {amount} {days} dagar tidigare än din vanliga cykel, och sparade dig {hours}h administration.",impactSeeMore:"Se alla mina vinster",impactEmpty:"Jag har inte hunnit skapa värde än — det kommer snart!",impactROI:"ROI denna månad",impactROIBody:"För varje krona du betalar mig levererar jag",
 trustTitle:"Trust Ladder",trustSub:"Välj hur självständigt jag får agera",trustLevel1:"Fråga alltid",trustLevel1Desc:"Jag förbereder allt och du godkänner varje åtgärd. Maximal kontroll.",trustLevel2:"Auto-små",trustLevel2Desc:"Fakturor under 10 000 kr till återkommande kunder skickas automatiskt. Du får notis.",trustLevel3:"Autopilot",trustLevel3Desc:"Jag sköter alla påminnelser själv, du kan alltid ångra. För dig som litar på mig fullt ut.",trustCurrent:"Nuvarande nivå",trustUnlockAt:"Lås upp efter {n} godkända åtgärder",trustActive:"Aktiv",trustAutoSent:"Auto-skickat",trustUndo:"Ångra",trustAutoNote:"Jag skickade just detta automatiskt baserat på din nivå",
 },
@@ -85,7 +92,14 @@ showToDo:"To do",showRecentInv:"Recent invoices",showActiveProj:"Active projects
 scanInvoice:"Scan invoice",scanTitle:"Scan an invoice",scanDesc:"Take a photo or upload an image of the invoice. AI will extract client, amount, and dates automatically.",scanning:"Analyzing invoice…",scanSuccess:"Invoice parsed!",scanUpload:"Upload image",scanCamera:"Take photo",extractedData:"Extracted data",confirm:"Confirm",scanError:"Could not parse invoice. Please try again.",
 heyArvo:"Hey Arvo",heyArvoSub:"Talk or type — I'll handle the rest",heyArvoPlaceholder:"E.g. 'Worked 3h on design for Karlsson'…",heyArvoListening:"Listening…",heyArvoThinking:"Thinking…",heyArvoTapMic:"Tap the mic and tell me",heyArvoWelcome:"Hi! I'm Arvo, your digital business partner. Tell me what you've done and I'll log it for you.",heyArvoTimeLogged:"Time entry saved",heyArvoContactCreated:"New contact created",heyArvoInvoiceCreated:"Invoice draft created",heyArvoExpenseLogged:"Expense logged",heyArvoProjectUpdated:"Project updated",heyArvoNoMic:"Your browser doesn't support voice input",heyArvoCantParse:"I didn't quite understand. Could you rephrase?",
 cfoCashflow:"Cash Flow",cfoBalance:"Balance today",cfoProjected:"Projected balance",cfoVatDue:"VAT due",cfoIncoming:"Expected incoming",cfoOutgoing:"Estimated outgoing",cfoDaysUntil:"days left",cfoWarning:"Liquidity warning",cfoAction:"Suggested actions",cfoSendReminder:"Send reminder",cfoOfferDiscount:"Offer early-pay discount",cfoSkip:"Skip",cfoApprove:"Approve",cfoSent:"Sent!",cfoReminderSent:"Reminder sent to",cfoDiscountOffered:"Discount offer sent to",cfoMonitoring:"I'll monitor and notify you when they pay.",cfoCrisisNone:"All clear! No liquidity issues ahead.",cfoHeadsUp:"Heads up",cfoBasedOn:"Based on your average costs",cfoNeed:"you'll need",cfoBy:"by",cfoYouHave:"You have",cfoUnpaid:"unpaid invoices totaling",cfoSuggest:"Want me to:",
-tabChat:"Chat",tabImpact:"Impact",tabTrust:"Autonomy",
+tabChat:"Chat",tabAnalysis:"Analysis",tabImpact:"Impact",tabTrust:"Autonomy",
+cmTitle:"Liquidity Analysis",cmSub:"Upload your invoice export — I'll analyze your cashflow in 5 seconds",cmGdpr:"Your data is analyzed directly in your browser and never leaves your device. Nothing is stored on a server.",cmDrop:"Drop your CSV file here",cmOr:"or",cmChoose:"Choose file from computer",cmDemo:"Try with sample data",cmFormat:"CSV export from QuickBooks, Xero, FreshBooks etc. Columns: customer, amount, date, status",cmAnalyzing:"Arvo is analyzing your data…",cmAnalyzingStep1:"Reading invoices",cmAnalyzingStep2:"Finding patterns",cmAnalyzingStep3:"Calculating risks",cmAnalyzingStep4:"Drafting actions",
+cmResultsTitle:"Your liquidity analysis",cmResultsSub:"Based on {n} invoices from {clients} customers",cmSummary:"Summary",cmOutstanding:"Outstanding",cmOverdue:"Overdue",cmAvgDso:"Avg. DSO",cmDays:"days",cmRisk:"Risks I found",cmRiskNone:"No major risks right now — well done!",
+cmCounter:"This could have been avoided",cmCounterBody:"If my reminders had been active, you would have had {amount} on your account {days} days earlier. Enough to cover the next VAT payment.",
+cmActions:"What I suggest you do now",cmActionReminder:"Send reminder",cmActionEarly:"Offer early-pay discount",cmActionFollowup:"Follow up",cmActFake:"Yes, act",cmActDone:"Done",
+cmDraftTitle:"Message is ready",cmDraftSub:"Copy and send to your customer — or wait for auto-send in next version",cmCopy:"Copy message",cmCopied:"Copied to clipboard!",cmBetaNote:"Arvo is in beta. Auto-send via SMS/email is coming in Arvo Pro.",cmWantAuto:"I want auto-send",cmCloseDraft:"Close",
+cmPriceTitle:"Want this as a service?",cmPriceBody:"Arvo Pro will include continuous liquidity analysis and auto-send via API. Your vote helps us prioritize.",cmPriceQ:"Would you pay $49/month?",cmPriceYes:"Yes — notify me when it launches",cmPriceMaybe:"Maybe — depends",cmPriceNo:"Not interested right now",cmPriceThanks:"Thanks! We'll reach out when Arvo Pro launches.",
+cmReset:"Run new analysis",cmErrorParse:"Could not read the file. Make sure it's a CSV with columns for customer, amount and status.",cmRiskLate:"{client} systematically pays late ({n} late invoices)",cmRiskBig:"{client} has a large outstanding invoice of {amount}",cmRiskGap:"Liquidity gap detected: {amount} in overdue invoices vs. next month",
 impactTitle:"Arvo's Impact",impactSub:"How much value I've created for you",impactThisMonth:"This month",impactCapital:"Capital collected faster",impactDaysSaved:"days shorter payment cycle",impactTime:"hours saved",impactReminders:"reminders sent",impactVsBase:"vs. your normal payment cycle",impactWins:"Recent wins",impactWinReminder:"Reminder drove in",impactWinEarly:"Invoiced early",impactDaysFaster:"days faster",impactWeekRecap:"Weekly recap",impactRecapBody:"Last week I collected {amount} {days} days earlier than your normal cycle, and saved you {hours}h of admin.",impactSeeMore:"See all my wins",impactEmpty:"Haven't built value yet — coming soon!",impactROI:"ROI this month",impactROIBody:"For every dollar you pay me I deliver",
 trustTitle:"Trust Ladder",trustSub:"Choose how autonomously I can act",trustLevel1:"Always ask",trustLevel1Desc:"I prepare everything and you approve every action. Maximum control.",trustLevel2:"Auto-small",trustLevel2Desc:"Invoices under $1,000 to recurring customers are sent automatically. You get a notice.",trustLevel3:"Autopilot",trustLevel3Desc:"I handle all reminders myself, you can always undo. For when you trust me fully.",trustCurrent:"Current level",trustUnlockAt:"Unlock after {n} approved actions",trustActive:"Active",trustAutoSent:"Auto-sent",trustUndo:"Undo",trustAutoNote:"I just sent this automatically based on your level",
 },
@@ -159,9 +173,17 @@ const [timerTask,setTimerTask]=useState("");
 const [healthOpen,setHealthOpen]=useState(false);
 const [autoReminders,setAutoReminders]=useState(true);
 const [arvoTrust,setArvoTrust]=useState(1); // 1=ask all, 2=auto-small, 3=autopilot
-const [arvoTab,setArvoTab]=useState("chat"); // chat|impact|trust
+const [arvoTab,setArvoTab]=useState("chat"); // chat|analysis|impact|trust
 const [approvedCount,setApprovedCount]=useState(0);
 const [recapDismissed,setRecapDismissed]=useState(false);
+const [conciergeStep,setConciergeStep]=useState("idle"); // idle|analyzing|results
+const [conciergeAnalysis,setConciergeAnalysis]=useState(null);
+const [conciergeActingOn,setConciergeActingOn]=useState(null);
+const [priceModalOpen,setPriceModalOpen]=useState(false);
+const [priceVote,setPriceVote]=useState(null);
+const [actionClickCount,setActionClickCount]=useState(0);
+const [copiedFlash,setCopiedFlash]=useState(false);
+const [conciergeError,setConciergeError]=useState(null);
 const [dash,setDash]=useState({pipeline:true,won:true,awaiting:true,weekHours:true,toDo:true,recentInv:true,activeProj:true,insights:true,forecast:true,health:true,digest:true});
 const [scanState,setScanState]=useState("idle");
 const [scanResult,setScanResult]=useState(null);
@@ -384,6 +406,192 @@ const computeImpact=()=>{
   const pendingAmt=pending.reduce((s,i)=>s+i.amount,0);
   const potentialRescue=Math.round(pendingAmt*0.08);
   return {daysSaved,capitalRescued,remindersSent,timeSavedHours,wins,roi,potentialRescue,hasData:paid.length>0};
+};
+
+// ── CONCIERGE MVP: CSV parser + analysis engine ──
+const CONCIERGE_DEMO_CSV=`Kund;Faktura;Fakturadatum;Förfallodatum;Belopp;Status
+Lindberg Reklam;INV-2026-042;2026-02-15;2026-03-17;42000;Förfallen
+Karlsson AB;INV-2026-043;2026-02-20;2026-03-22;18500;Skickad
+Öberg Studio;INV-2026-044;2026-02-28;2026-03-30;67500;Skickad
+Nordlöf Consulting;INV-2026-041;2026-02-10;2026-03-12;28000;Betald
+Lindberg Reklam;INV-2026-038;2026-01-05;2026-02-04;35000;Betald
+Karlsson AB;INV-2026-037;2026-01-12;2026-02-11;12000;Betald
+Öberg Studio;INV-2026-036;2025-12-20;2026-01-19;55000;Betald
+Lindberg Reklam;INV-2026-035;2025-12-15;2026-01-14;48000;Betald
+Svensson Byrå;INV-2026-040;2026-02-05;2026-03-07;15500;Förfallen
+Berg & Co;INV-2026-039;2026-01-28;2026-02-27;22000;Förfallen
+Nordlöf Consulting;INV-2026-034;2025-11-20;2025-12-20;31000;Betald
+Karlsson AB;INV-2026-033;2025-11-05;2025-12-05;14500;Betald`;
+
+const parseConciergeCsv=(text)=>{
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2)throw new Error("empty");
+  // Detect separator
+  const sep=lines[0].includes(";")?";":",";
+  const headers=lines[0].split(sep).map(h=>h.trim().toLowerCase());
+  // Flexible column mapping (SV + EN)
+  const colMap={
+    client:headers.findIndex(h=>["kund","kundnamn","customer","client","namn","name"].includes(h)),
+    invoice:headers.findIndex(h=>["faktura","fakturanummer","invoice","invoice number","nr","id"].includes(h)),
+    issueDate:headers.findIndex(h=>["fakturadatum","datum","issue date","date","issued"].includes(h)),
+    dueDate:headers.findIndex(h=>["förfallodatum","forfallodatum","due date","due","förfallo"].includes(h)),
+    amount:headers.findIndex(h=>["belopp","summa","amount","total","value","sum"].includes(h)),
+    status:headers.findIndex(h=>["status","tillstånd","state"].includes(h)),
+  };
+  if(colMap.client===-1||colMap.amount===-1)throw new Error("missing-cols");
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const parts=lines[i].split(sep).map(p=>p.trim().replace(/^"|"$/g,""));
+    if(parts.length<2)continue;
+    const amountRaw=parts[colMap.amount]||"0";
+    const amount=parseFloat(amountRaw.replace(/\s/g,"").replace(",","."))||0;
+    const statusRaw=(parts[colMap.status]||"").toLowerCase();
+    let status="sent";
+    if(statusRaw.includes("betald")||statusRaw.includes("paid"))status="paid";
+    else if(statusRaw.includes("förfall")||statusRaw.includes("forfall")||statusRaw.includes("overdue")||statusRaw.includes("late"))status="overdue";
+    else if(statusRaw.includes("utkast")||statusRaw.includes("draft"))status="draft";
+    rows.push({
+      client:parts[colMap.client]||"Unknown",
+      invoice:colMap.invoice>=0?parts[colMap.invoice]:`ROW-${i}`,
+      issueDate:colMap.issueDate>=0?parts[colMap.issueDate]:"",
+      dueDate:colMap.dueDate>=0?parts[colMap.dueDate]:"",
+      amount,
+      status,
+    });
+  }
+  return rows;
+};
+
+const analyzeConciergeData=(rows)=>{
+  const clients=[...new Set(rows.map(r=>r.client))];
+  const outstanding=rows.filter(r=>r.status==="sent"||r.status==="overdue");
+  const overdue=rows.filter(r=>r.status==="overdue");
+  const paid=rows.filter(r=>r.status==="paid");
+  const outstandingAmt=outstanding.reduce((s,r)=>s+r.amount,0);
+  const overdueAmt=overdue.reduce((s,r)=>s+r.amount,0);
+  // Simulated DSO: baseline 18 days for small businesses
+  const avgDso=paid.length>0?Math.round(18+(overdue.length/rows.length)*12):18;
+  // Find late payers (clients with >= 1 overdue)
+  const lateByClient={};
+  overdue.forEach(r=>{lateByClient[r.client]=(lateByClient[r.client]||0)+1});
+  const chronicLate=Object.entries(lateByClient).filter(([_,n])=>n>=1).sort((a,b)=>b[1]-a[1]);
+  // Build risk list
+  const risks=[];
+  if(overdueAmt>0){
+    risks.push({type:"gap",severity:"high",text:L.cmRiskGap.replace("{amount}",fmtMoney(overdueAmt))});
+  }
+  chronicLate.slice(0,2).forEach(([client,n])=>{
+    risks.push({type:"late",severity:"medium",text:L.cmRiskLate.replace("{client}",client).replace("{n}",n)});
+  });
+  const bigOutstanding=outstanding.filter(r=>r.amount>=40000).sort((a,b)=>b.amount-a.amount);
+  bigOutstanding.slice(0,1).forEach(r=>{
+    risks.push({type:"big",severity:"medium",text:L.cmRiskBig.replace("{client}",r.client).replace("{amount}",fmtMoney(r.amount))});
+  });
+  // Counterfactual: for each paid invoice, assume it could have been 7 days earlier with Arvo
+  const counterfactualAmount=Math.round(paid.reduce((s,r)=>s+r.amount,0)*0.15);
+  const counterfactualDays=7;
+  // Build action list
+  const actions=[];
+  overdue.forEach((r,i)=>{
+    actions.push({
+      id:`act-remind-${i}`,
+      type:"reminder",
+      client:r.client,
+      amount:r.amount,
+      invoice:r.invoice,
+      label:`${L.cmActionReminder}: ${r.client} (${fmtMoney(r.amount)})`,
+      draft:lang==="sv"
+        ?`Hej!\n\nJag vill bara påminna dig om faktura ${r.invoice} på ${fmtMoney(r.amount)} som förföll för några dagar sedan. Du har säkert bara glömt — kan du kolla när det går?\n\nOm det är något som strular med fakturan, säg bara till så löser vi det tillsammans.\n\nTack så mycket!`
+        :`Hi!\n\nJust a quick reminder about invoice ${r.invoice} for ${fmtMoney(r.amount)} which was due a few days ago. You've probably just forgotten — could you check when you get a moment?\n\nIf there's anything off with the invoice, just let me know and we'll sort it out.\n\nThanks!`
+    });
+  });
+  outstanding.filter(r=>r.amount>=40000&&r.status==="sent").slice(0,2).forEach((r,i)=>{
+    actions.push({
+      id:`act-disc-${i}`,
+      type:"discount",
+      client:r.client,
+      amount:r.amount,
+      invoice:r.invoice,
+      label:`${L.cmActionEarly}: ${r.client} (${fmtMoney(r.amount)})`,
+      draft:lang==="sv"
+        ?`Hej!\n\nJag har en liten förfrågan: om du kan betala faktura ${r.invoice} (${fmtMoney(r.amount)}) inom 48 timmar ger jag dig 5% rabatt. Det skulle hjälpa mig med kassaflödet denna månad.\n\nTacksam om du kan höra av dig ett kort svar!`
+        :`Hi!\n\nI have a small request: if you can pay invoice ${r.invoice} (${fmtMoney(r.amount)}) within 48 hours, I'll give you a 5% discount. It would really help my cashflow this month.\n\nGrateful if you could send me a quick reply!`
+    });
+  });
+  return {
+    rows,
+    totalRows:rows.length,
+    clientCount:clients.length,
+    outstandingAmt,
+    overdueAmt,
+    avgDso,
+    risks,
+    actions:actions.slice(0,5),
+    counterfactualAmount,
+    counterfactualDays,
+  };
+};
+
+const runConciergeAnalysis=(csvText)=>{
+  setConciergeError(null);
+  setConciergeStep("analyzing");
+  try{
+    const rows=parseConciergeCsv(csvText);
+    if(rows.length===0)throw new Error("empty");
+    // Fake 2.5s "AI thinking" delay
+    setTimeout(()=>{
+      const analysis=analyzeConciergeData(rows);
+      setConciergeAnalysis(analysis);
+      setConciergeStep("results");
+    },2500);
+  }catch(e){
+    setConciergeStep("idle");
+    setConciergeError(L.cmErrorParse);
+  }
+};
+
+const handleConciergeFile=(file)=>{
+  const reader=new FileReader();
+  reader.onload=(e)=>runConciergeAnalysis(e.target.result);
+  reader.onerror=()=>{setConciergeError(L.cmErrorParse);setConciergeStep("idle")};
+  reader.readAsText(file);
+};
+
+const handleConciergeAction=(action)=>{
+  setConciergeActingOn(action);
+  setActionClickCount(c=>c+1);
+  // Log to localStorage for future analytics
+  try{
+    const log=JSON.parse(localStorage.getItem("arvo_concierge_log")||"[]");
+    log.push({ts:Date.now(),type:action.type,client:action.client,amount:action.amount});
+    localStorage.setItem("arvo_concierge_log",JSON.stringify(log));
+  }catch(e){}
+};
+
+const handleCopyDraft=(text)=>{
+  try{
+    navigator.clipboard.writeText(text);
+    setCopiedFlash(true);
+    setTimeout(()=>setCopiedFlash(false),2000);
+  }catch(e){}
+};
+
+const handlePriceVote=(vote)=>{
+  setPriceVote(vote);
+  try{
+    const votes=JSON.parse(localStorage.getItem("arvo_price_votes")||"[]");
+    votes.push({ts:Date.now(),vote});
+    localStorage.setItem("arvo_price_votes",JSON.stringify(votes));
+  }catch(e){}
+};
+
+const resetConcierge=()=>{
+  setConciergeStep("idle");
+  setConciergeAnalysis(null);
+  setConciergeActingOn(null);
+  setConciergeError(null);
+  setPriceVote(null);
+  setActionClickCount(0);
 };
 
 const generateCfoMessage=()=>{
@@ -955,7 +1163,7 @@ return (
 
 {/* ── Tabs ── */}
 <div style={{display:"flex",gap:6,marginBottom:16,padding:4,background:T.surfaceAlt,borderRadius:12}}>
-{[{id:"chat",label:L.tabChat,icon:"mic"},{id:"impact",label:L.tabImpact,icon:"trendUp"},{id:"trust",label:L.tabTrust,icon:"shield"}].map(t=>{
+{[{id:"chat",label:L.tabChat,icon:"mic"},{id:"analysis",label:L.tabAnalysis,icon:"sparkles"},{id:"impact",label:L.tabImpact,icon:"trendUp"},{id:"trust",label:L.tabTrust,icon:"shield"}].map(t=>{
 const active=arvoTab===t.id;
 return (<button key={t.id} onClick={()=>setArvoTab(t.id)} style={{flex:1,padding:"9px 8px",background:active?T.cardBg:"transparent",border:"none",borderRadius:9,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6,boxShadow:active?T.shadow:"none",transition:"all 0.2s"}}>
 <Ic name={t.icon} size={14} color={active?T.accent:T.textMuted}/>
@@ -963,6 +1171,141 @@ return (<button key={t.id} onClick={()=>setArvoTab(t.id)} style={{flex:1,padding
 </button>)
 })}
 </div>
+
+{/* ── CONCIERGE / ANALYSIS TAB ── */}
+{arvoTab==="analysis"&&(<div style={{flex:1,overflowY:"auto",paddingBottom:12}}>
+
+{/* State: idle — upload dropzone */}
+{conciergeStep==="idle"&&(<>
+<div style={{marginBottom:16}}>
+<h2 style={{fontFamily:serif,fontSize:22,fontWeight:700,color:T.text,letterSpacing:"-0.02em",marginBottom:6}}>{L.cmTitle}</h2>
+<p style={{fontSize:13,color:T.textMuted,lineHeight:1.55,margin:0}}>{L.cmSub}</p>
+</div>
+
+{/* GDPR trust ribbon */}
+<div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:T.successLight,borderRadius:10,marginBottom:14,border:`1px solid ${T.success}30`}}>
+<Ic name="shield" size={14} color={T.success}/>
+<div style={{fontSize:11,color:T.success,lineHeight:1.5,fontWeight:500}}>{L.cmGdpr}</div>
+</div>
+
+{/* Dropzone */}
+<label htmlFor="concierge-file-input" style={{display:"block",cursor:"pointer"}}>
+<div style={{border:`2px dashed ${T.borderAccent}`,borderRadius:16,padding:"36px 20px",textAlign:"center",background:T.accentLight+"60",transition:"all 0.2s"}}
+  onDragOver={e=>{e.preventDefault()}}
+  onDrop={e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f)handleConciergeFile(f)}}
+>
+<div style={{width:52,height:52,borderRadius:"50%",background:T.accent+"20",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:12}}>
+<Ic name="sparkles" size={24} color={T.accent}/>
+</div>
+<div style={{fontFamily:serif,fontSize:17,fontWeight:600,color:T.accentDark,marginBottom:4}}>{L.cmDrop}</div>
+<div style={{fontSize:12,color:T.textMuted,marginBottom:14}}>{L.cmOr}</div>
+<div style={{display:"inline-block",padding:"10px 22px",background:T.accent,color:"#fff",borderRadius:100,fontSize:13,fontWeight:600,boxShadow:"0 2px 8px rgba(42,109,94,0.25)"}}>{L.cmChoose}</div>
+</div>
+</label>
+<input id="concierge-file-input" type="file" accept=".csv,.txt,text/csv" style={{display:"none"}} onChange={e=>{if(e.target.files[0])handleConciergeFile(e.target.files[0])}}/>
+
+{/* Demo button */}
+<button onClick={()=>runConciergeAnalysis(CONCIERGE_DEMO_CSV)} style={{width:"100%",marginTop:12,padding:"12px 16px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:12,fontSize:13,fontWeight:500,color:T.textSub,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+<Ic name="zap" size={14} color={T.accent}/>
+{L.cmDemo}
+</button>
+
+{/* Format note */}
+<div style={{marginTop:14,padding:"10px 14px",background:T.surfaceAlt,borderRadius:10,fontSize:11,color:T.textMuted,lineHeight:1.55}}>{L.cmFormat}</div>
+
+{/* Error */}
+{conciergeError&&(<div style={{marginTop:12,padding:"12px 14px",background:T.dangerLight,borderRadius:10,fontSize:12,color:T.danger,fontWeight:500,display:"flex",alignItems:"center",gap:8}}>
+<Ic name="alert" size={14} color={T.danger}/>{conciergeError}
+</div>)}
+</>)}
+
+{/* State: analyzing */}
+{conciergeStep==="analyzing"&&(<div style={{...card,padding:"40px 24px",textAlign:"center"}}>
+<div style={{width:64,height:64,borderRadius:"50%",background:T.accentLight,display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:16}}>
+<div style={{display:"flex",gap:5}}>{[0,1,2].map(i=><div key={i} style={{width:8,height:8,borderRadius:"50%",background:T.accent,animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite`}}/>)}</div>
+</div>
+<div style={{fontFamily:serif,fontSize:17,fontWeight:600,color:T.accentDark,marginBottom:16}}>{L.cmAnalyzing}</div>
+<div style={{display:"flex",flexDirection:"column",gap:8,maxWidth:240,margin:"0 auto",textAlign:"left"}}>
+{[L.cmAnalyzingStep1,L.cmAnalyzingStep2,L.cmAnalyzingStep3,L.cmAnalyzingStep4].map((s,i)=>(
+<div key={i} style={{display:"flex",alignItems:"center",gap:10,fontSize:12,color:T.textMuted,opacity:0.5+i*0.15}}>
+<div style={{width:14,height:14,borderRadius:"50%",border:`1.5px solid ${T.accent}`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+<Ic name="check" size={9} color={T.accent}/>
+</div>
+{s}
+</div>
+))}
+</div>
+</div>)}
+
+{/* State: results */}
+{conciergeStep==="results"&&conciergeAnalysis&&(<>
+{/* Hero summary */}
+<div style={{...card,padding:0,overflow:"hidden",marginBottom:14}}>
+<div style={{background:T.accentGrad,padding:"18px 20px",color:"#fff"}}>
+<div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",opacity:0.85,marginBottom:4}}>{L.cmOutstanding}</div>
+<div style={{fontFamily:serif,fontSize:32,fontWeight:400,lineHeight:1,letterSpacing:"-0.02em"}}>{fmtMoney(conciergeAnalysis.outstandingAmt)}</div>
+<div style={{fontSize:11,marginTop:6,opacity:0.85}}>{L.cmResultsSub.replace("{n}",conciergeAnalysis.totalRows).replace("{clients}",conciergeAnalysis.clientCount)}</div>
+</div>
+<div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+<div>
+<div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:3}}>{L.cmOverdue}</div>
+<div style={{fontFamily:serif,fontSize:20,fontWeight:500,color:conciergeAnalysis.overdueAmt>0?T.danger:T.accentDark,letterSpacing:"-0.01em"}}>{fmtMoney(conciergeAnalysis.overdueAmt)}</div>
+</div>
+<div>
+<div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:3}}>{L.cmAvgDso}</div>
+<div style={{fontFamily:serif,fontSize:20,fontWeight:500,color:T.accentDark,letterSpacing:"-0.01em"}}>{conciergeAnalysis.avgDso} {L.cmDays}</div>
+</div>
+</div>
+</div>
+
+{/* Counterfactual — retroactive pain */}
+{conciergeAnalysis.counterfactualAmount>0&&(<div style={{...card,borderLeft:`3.5px solid ${T.warn}`,background:T.warnLight,padding:"16px 18px",marginBottom:14}}>
+<div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+<Ic name="trendUp" size={16} color={T.warn}/>
+<div style={{fontSize:11,fontWeight:700,color:T.warn,textTransform:"uppercase",letterSpacing:"0.06em"}}>{L.cmCounter}</div>
+</div>
+<div style={{fontSize:13,color:T.text,lineHeight:1.6}}>
+{L.cmCounterBody.replace("{amount}",fmtMoney(conciergeAnalysis.counterfactualAmount)).replace("{days}",conciergeAnalysis.counterfactualDays)}
+</div>
+</div>)}
+
+{/* Risks */}
+{conciergeAnalysis.risks.length>0&&(<>
+<div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10,paddingLeft:4}}>{L.cmRisk}</div>
+<div style={{...card,padding:0,overflow:"hidden",marginBottom:14}}>
+{conciergeAnalysis.risks.map((r,i)=>{
+const col=r.severity==="high"?T.danger:T.warn;
+return (<div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"12px 16px",borderBottom:i<conciergeAnalysis.risks.length-1?`1px solid ${T.border}`:"none"}}>
+<div style={{width:24,height:24,borderRadius:6,background:col+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}><Ic name="alert" size={12} color={col}/></div>
+<div style={{flex:1,fontSize:12,color:T.text,lineHeight:1.55}}>{r.text}</div>
+</div>)
+})}
+</div>
+</>)}
+
+{/* Actions */}
+{conciergeAnalysis.actions.length>0&&(<>
+<div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10,paddingLeft:4}}>{L.cmActions}</div>
+{conciergeAnalysis.actions.map((a)=>(<div key={a.id} style={{...card,padding:"14px 16px",marginBottom:10}}>
+<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+<div style={{width:32,height:32,borderRadius:8,background:a.type==="discount"?T.warnLight:T.accentLight,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+<Ic name={a.type==="discount"?"tag":"mail"} size={14} color={a.type==="discount"?T.warn:T.accent}/>
+</div>
+<div style={{flex:1,minWidth:0}}>
+<div style={{fontWeight:600,fontSize:13,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.client}</div>
+<div style={{fontSize:11,color:T.textMuted,marginTop:1}}>{a.type==="discount"?L.cmActionEarly:L.cmActionReminder} • {fmtMoney(a.amount)}</div>
+</div>
+</div>
+<button onClick={()=>handleConciergeAction(a)} style={{width:"100%",padding:"11px 16px",background:T.accentGrad,color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6,boxShadow:"0 2px 6px rgba(42,109,94,0.18)"}}>
+<Ic name="zap" size={14} color="#fff"/>{L.cmActFake}
+</button>
+</div>))}
+</>)}
+
+<button onClick={resetConcierge} style={{display:"block",width:"100%",marginTop:16,padding:"12px 16px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:12,fontSize:13,fontWeight:500,color:T.textMuted,cursor:"pointer",fontFamily:"inherit"}}>{L.cmReset}</button>
+</>)}
+
+</div>)}
 
 {/* ── IMPACT TAB ── */}
 {arvoTab==="impact"&&(<div style={{flex:1,overflowY:"auto",paddingBottom:12}}>
@@ -1179,6 +1522,80 @@ return (
   </nav>
 
   <ModalView/>
+
+  {/* ── CONCIERGE DRAFT MODAL (fake button reveal) ── */}
+  {conciergeActingOn&&(<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(20,28,30,0.55)",zIndex:200,display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"20px 16px",animation:"fadeUp 0.25s ease"}} onClick={()=>{setConciergeActingOn(null);if(actionClickCount===1)setPriceModalOpen(true)}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.cardBg,borderRadius:20,maxWidth:480,width:"100%",maxHeight:"85vh",overflowY:"auto",boxShadow:"0 -8px 32px rgba(0,0,0,0.18)"}}>
+      <div style={{padding:"22px 22px 16px",borderBottom:`1px solid ${T.border}`}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:10,background:T.accentLight,display:"flex",alignItems:"center",justifyContent:"center"}}><Ic name="check" size={18} color={T.accent}/></div>
+            <div>
+              <div style={{fontFamily:serif,fontSize:18,fontWeight:700,color:T.text,letterSpacing:"-0.01em"}}>{L.cmDraftTitle}</div>
+              <div style={{fontSize:11,color:T.textMuted,marginTop:2}}>{conciergeActingOn.client} · {fmtMoney(conciergeActingOn.amount)}</div>
+            </div>
+          </div>
+          <button onClick={()=>{setConciergeActingOn(null);if(actionClickCount===1)setPriceModalOpen(true)}} style={{background:"none",border:"none",cursor:"pointer",padding:6,color:T.textFaint}}><Ic name="x" size={18}/></button>
+        </div>
+        <div style={{fontSize:12,color:T.textMuted,lineHeight:1.55}}>{L.cmDraftSub}</div>
+      </div>
+
+      <div style={{padding:"18px 22px"}}>
+        <div style={{padding:"16px 18px",background:T.surfaceAlt,borderRadius:12,fontSize:13,color:T.text,lineHeight:1.65,whiteSpace:"pre-line",fontFamily:"inherit",border:`1px solid ${T.border}`,marginBottom:14}}>
+          {conciergeActingOn.draft}
+        </div>
+
+        <button onClick={()=>handleCopyDraft(conciergeActingOn.draft)} style={{width:"100%",padding:"13px 18px",background:copiedFlash?T.success:T.accentGrad,color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 2px 8px rgba(42,109,94,0.22)",transition:"background 0.2s"}}>
+          <Ic name={copiedFlash?"check":"tag"} size={16} color="#fff"/>
+          {copiedFlash?L.cmCopied:L.cmCopy}
+        </button>
+
+        {/* Beta reveal — transparent honesty */}
+        <div style={{marginTop:14,padding:"12px 14px",background:T.warnLight,borderRadius:10,border:`1px solid ${T.warn}30`}}>
+          <div style={{fontSize:11,fontWeight:600,color:T.warn,marginBottom:6,display:"flex",alignItems:"center",gap:6}}><Ic name="alert" size={12} color={T.warn}/>BETA</div>
+          <div style={{fontSize:12,color:T.textSub,lineHeight:1.55,marginBottom:10}}>{L.cmBetaNote}</div>
+          <button onClick={()=>{setConciergeActingOn(null);setPriceModalOpen(true)}} style={{padding:"7px 14px",background:"#fff",border:`1px solid ${T.warn}`,color:T.warn,borderRadius:100,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:6}}>
+            <Ic name="zap" size={12} color={T.warn}/>{L.cmWantAuto}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>)}
+
+  {/* ── PRICE VALIDATION MODAL (moment of truth) ── */}
+  {priceModalOpen&&(<div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(20,28,30,0.55)",zIndex:201,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 16px",animation:"fadeUp 0.3s ease"}} onClick={()=>setPriceModalOpen(false)}>
+    <div onClick={e=>e.stopPropagation()} style={{background:T.cardBg,borderRadius:20,maxWidth:440,width:"100%",overflow:"hidden",boxShadow:"0 8px 40px rgba(0,0,0,0.25)"}}>
+      {priceVote===null?(<>
+        <div style={{background:T.accentGrad,padding:"24px 22px 18px",color:"#fff",textAlign:"center"}}>
+          <div style={{width:52,height:52,borderRadius:"50%",background:"rgba(255,255,255,0.2)",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:12}}>
+            <Ic name="trendUp" size={24} color="#fff"/>
+          </div>
+          <div style={{fontFamily:serif,fontSize:20,fontWeight:700,letterSpacing:"-0.01em",marginBottom:6}}>{L.cmPriceTitle}</div>
+          <div style={{fontSize:13,opacity:0.9,lineHeight:1.55}}>{L.cmPriceBody}</div>
+        </div>
+        <div style={{padding:"20px 22px"}}>
+          <div style={{textAlign:"center",fontFamily:serif,fontSize:18,fontWeight:600,color:T.text,marginBottom:16,letterSpacing:"-0.01em"}}>{L.cmPriceQ}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            <button onClick={()=>handlePriceVote("yes")} style={{padding:"13px 18px",background:T.accent,color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <Ic name="check" size={16} color="#fff"/>{L.cmPriceYes}
+            </button>
+            <button onClick={()=>handlePriceVote("maybe")} style={{padding:"13px 18px",background:"transparent",color:T.textSub,border:`1px solid ${T.border}`,borderRadius:12,fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
+              {L.cmPriceMaybe}
+            </button>
+            <button onClick={()=>handlePriceVote("no")} style={{padding:"11px 18px",background:"transparent",color:T.textFaint,border:"none",borderRadius:12,fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
+              {L.cmPriceNo}
+            </button>
+          </div>
+        </div>
+      </>):(<div style={{padding:"36px 24px 28px",textAlign:"center"}}>
+        <div style={{width:60,height:60,borderRadius:"50%",background:T.successLight,display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:14}}>
+          <Ic name="check" size={26} color={T.success}/>
+        </div>
+        <div style={{fontFamily:serif,fontSize:20,fontWeight:700,color:T.text,marginBottom:8,letterSpacing:"-0.01em"}}>{L.cmPriceThanks}</div>
+        <button onClick={()=>setPriceModalOpen(false)} style={{marginTop:14,padding:"11px 24px",background:T.accent,color:"#fff",border:"none",borderRadius:100,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>{L.cmCloseDraft}</button>
+      </div>)}
+    </div>
+  </div>)}
 </div>
 );
 }
