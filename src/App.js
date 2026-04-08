@@ -41,6 +41,9 @@ showToDo:"Att göra",showRecentInv:"Senaste fakturor",showActiveProj:"Aktiva pro
 scanInvoice:"Skanna faktura",scanTitle:"Skanna in en faktura",scanDesc:"Ta ett foto eller ladda upp en bild av fakturan. AI:n extraherar kund, belopp och datum automatiskt.",scanning:"Analyserar faktura…",scanSuccess:"Faktura tolkad!",scanUpload:"Ladda upp bild",scanCamera:"Ta foto",extractedData:"Extraherad data",confirm:"Bekräfta",scanError:"Kunde inte tolka fakturan. Försök igen.",
 heyArvo:"Hey Arvo",heyArvoSub:"Prata eller skriv — jag sköter resten",heyArvoPlaceholder:"Skriv t.ex. 'Jobbade 3h med design för Karlsson'…",heyArvoListening:"Lyssnar…",heyArvoThinking:"Tänker…",heyArvoTapMic:"Tryck på mikrofonen och berätta",heyArvoWelcome:"Hej! Jag är Arvo, din digitala affärspartner. Berätta vad du gjort så loggar jag det åt dig.",heyArvoTimeLogged:"Tidsloggning sparad",heyArvoContactCreated:"Ny kontakt skapad",heyArvoInvoiceCreated:"Fakturautkast skapat",heyArvoExpenseLogged:"Utgift registrerad",heyArvoProjectUpdated:"Projekt uppdaterat",heyArvoNoMic:"Din webbläsare stöder inte röstinmatning",heyArvoCantParse:"Jag förstod inte riktigt. Kan du formulera om?",
 cfoCashflow:"Kassaflöde",cfoBalance:"Saldo idag",cfoProjected:"Beräknat saldo",cfoVatDue:"Moms att betala",cfoIncoming:"Förväntat in",cfoOutgoing:"Beräknat ut",cfoDaysUntil:"dagar kvar",cfoWarning:"Likviditetsvarning",cfoAction:"Föreslagna åtgärder",cfoSendReminder:"Skicka påminnelse",cfoOfferDiscount:"Erbjud snabbrabatt",cfoSkip:"Hoppa över",cfoApprove:"Godkänn",cfoSent:"Skickat!",cfoReminderSent:"Påminnelse skickad till",cfoDiscountOffered:"Rabatterbjudande skickat till",cfoMonitoring:"Jag bevakar och meddelar dig när de betalar.",cfoCrisisNone:"Allt ser bra ut! Inga likviditetsproblem i sikte.",cfoHeadsUp:"Heads up",cfoBasedOn:"Baserat på dina snittkostnader",cfoNeed:"behöver du",cfoBy:"senast den",cfoYouHave:"Du har",cfoUnpaid:"obetalda fakturor på totalt",cfoSuggest:"Vill du att jag:",
+tabChat:"Chatt",tabImpact:"Värde",tabTrust:"Autonomi",
+impactTitle:"Arvos påverkan",impactSub:"Så här mycket värde har jag skapat åt dig",impactThisMonth:"Denna månad",impactCapital:"Kapital drivet in snabbare",impactDaysSaved:"dagar kortare betaltid",impactTime:"timmar sparade",impactReminders:"påminnelser skickade",impactVsBase:"jämfört med din vanliga betalcykel",impactWins:"Senaste vinsterna",impactWinReminder:"Påminnelse drev in",impactWinEarly:"Fakturerades tidigt",impactDaysFaster:"dagar snabbare",impactWeekRecap:"Veckans sammanfattning",impactRecapBody:"Förra veckan drev jag in {amount} {days} dagar tidigare än din vanliga cykel, och sparade dig {hours}h administration.",impactSeeMore:"Se alla mina vinster",impactEmpty:"Jag har inte hunnit skapa värde än — det kommer snart!",impactROI:"ROI denna månad",impactROIBody:"För varje krona du betalar mig levererar jag",
+trustTitle:"Trust Ladder",trustSub:"Välj hur självständigt jag får agera",trustLevel1:"Fråga alltid",trustLevel1Desc:"Jag förbereder allt och du godkänner varje åtgärd. Maximal kontroll.",trustLevel2:"Auto-små",trustLevel2Desc:"Fakturor under 10 000 kr till återkommande kunder skickas automatiskt. Du får notis.",trustLevel3:"Autopilot",trustLevel3Desc:"Jag sköter alla påminnelser själv, du kan alltid ångra. För dig som litar på mig fullt ut.",trustCurrent:"Nuvarande nivå",trustUnlockAt:"Lås upp efter {n} godkända åtgärder",trustActive:"Aktiv",trustAutoSent:"Auto-skickat",trustUndo:"Ångra",trustAutoNote:"Jag skickade just detta automatiskt baserat på din nivå",
 },
 en: {
 overview:"Overview",contacts:"Contacts",projects:"Projects",invoices:"Invoices",time:"Time",
@@ -82,6 +85,9 @@ showToDo:"To do",showRecentInv:"Recent invoices",showActiveProj:"Active projects
 scanInvoice:"Scan invoice",scanTitle:"Scan an invoice",scanDesc:"Take a photo or upload an image of the invoice. AI will extract client, amount, and dates automatically.",scanning:"Analyzing invoice…",scanSuccess:"Invoice parsed!",scanUpload:"Upload image",scanCamera:"Take photo",extractedData:"Extracted data",confirm:"Confirm",scanError:"Could not parse invoice. Please try again.",
 heyArvo:"Hey Arvo",heyArvoSub:"Talk or type — I'll handle the rest",heyArvoPlaceholder:"E.g. 'Worked 3h on design for Karlsson'…",heyArvoListening:"Listening…",heyArvoThinking:"Thinking…",heyArvoTapMic:"Tap the mic and tell me",heyArvoWelcome:"Hi! I'm Arvo, your digital business partner. Tell me what you've done and I'll log it for you.",heyArvoTimeLogged:"Time entry saved",heyArvoContactCreated:"New contact created",heyArvoInvoiceCreated:"Invoice draft created",heyArvoExpenseLogged:"Expense logged",heyArvoProjectUpdated:"Project updated",heyArvoNoMic:"Your browser doesn't support voice input",heyArvoCantParse:"I didn't quite understand. Could you rephrase?",
 cfoCashflow:"Cash Flow",cfoBalance:"Balance today",cfoProjected:"Projected balance",cfoVatDue:"VAT due",cfoIncoming:"Expected incoming",cfoOutgoing:"Estimated outgoing",cfoDaysUntil:"days left",cfoWarning:"Liquidity warning",cfoAction:"Suggested actions",cfoSendReminder:"Send reminder",cfoOfferDiscount:"Offer early-pay discount",cfoSkip:"Skip",cfoApprove:"Approve",cfoSent:"Sent!",cfoReminderSent:"Reminder sent to",cfoDiscountOffered:"Discount offer sent to",cfoMonitoring:"I'll monitor and notify you when they pay.",cfoCrisisNone:"All clear! No liquidity issues ahead.",cfoHeadsUp:"Heads up",cfoBasedOn:"Based on your average costs",cfoNeed:"you'll need",cfoBy:"by",cfoYouHave:"You have",cfoUnpaid:"unpaid invoices totaling",cfoSuggest:"Want me to:",
+tabChat:"Chat",tabImpact:"Impact",tabTrust:"Autonomy",
+impactTitle:"Arvo's Impact",impactSub:"How much value I've created for you",impactThisMonth:"This month",impactCapital:"Capital collected faster",impactDaysSaved:"days shorter payment cycle",impactTime:"hours saved",impactReminders:"reminders sent",impactVsBase:"vs. your normal payment cycle",impactWins:"Recent wins",impactWinReminder:"Reminder drove in",impactWinEarly:"Invoiced early",impactDaysFaster:"days faster",impactWeekRecap:"Weekly recap",impactRecapBody:"Last week I collected {amount} {days} days earlier than your normal cycle, and saved you {hours}h of admin.",impactSeeMore:"See all my wins",impactEmpty:"Haven't built value yet — coming soon!",impactROI:"ROI this month",impactROIBody:"For every dollar you pay me I deliver",
+trustTitle:"Trust Ladder",trustSub:"Choose how autonomously I can act",trustLevel1:"Always ask",trustLevel1Desc:"I prepare everything and you approve every action. Maximum control.",trustLevel2:"Auto-small",trustLevel2Desc:"Invoices under $1,000 to recurring customers are sent automatically. You get a notice.",trustLevel3:"Autopilot",trustLevel3Desc:"I handle all reminders myself, you can always undo. For when you trust me fully.",trustCurrent:"Current level",trustUnlockAt:"Unlock after {n} approved actions",trustActive:"Active",trustAutoSent:"Auto-sent",trustUndo:"Undo",trustAutoNote:"I just sent this automatically based on your level",
 },
 };
 
@@ -152,6 +158,10 @@ const [timerProj,setTimerProj]=useState("Website Redesign");
 const [timerTask,setTimerTask]=useState("");
 const [healthOpen,setHealthOpen]=useState(false);
 const [autoReminders,setAutoReminders]=useState(true);
+const [arvoTrust,setArvoTrust]=useState(1); // 1=ask all, 2=auto-small, 3=autopilot
+const [arvoTab,setArvoTab]=useState("chat"); // chat|impact|trust
+const [approvedCount,setApprovedCount]=useState(0);
+const [recapDismissed,setRecapDismissed]=useState(false);
 const [dash,setDash]=useState({pipeline:true,won:true,awaiting:true,weekHours:true,toDo:true,recentInv:true,activeProj:true,insights:true,forecast:true,health:true,digest:true});
 const [scanState,setScanState]=useState("idle");
 const [scanResult,setScanResult]=useState(null);
@@ -245,6 +255,8 @@ zap:<><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
 trendUp:<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>,
 alert:<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
 thermometer:<><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></>,
+shield:<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>,
+sparkles:<><path d="M12 3v18M3 12h18M7 7l10 10M17 7L7 17"/></>,
 };
 return <svg {...p}>{d[name]}</svg>;
 };
@@ -340,6 +352,40 @@ done:false});
 return {currentBalance,projectedBalance,vatDue,vatDeadline,daysToVat,expectedIn,avgMonthlyCost,shortfall,overdueAmt,pendingAmt,actions,overdueCount:overdueInv.length,pendingCount:pendingInv.length};
 };
 
+// ── ARVO IMPACT — counterfactual ROI engine ──
+const computeImpact=()=>{
+  const paid=invoices.filter(i=>i.status==="Betald");
+  const pending=invoices.filter(i=>i.status==="Skickad"||i.status==="Förfallen");
+  // Baseline: without Arvo, industry avg for solo consultants is 18 days DSO
+  // With Arvo (simulated): reduced to 11 days via proactive reminders + early invoicing
+  const baselineDSO=18;
+  const arvoDSO=11;
+  const daysSaved=paid.length*(baselineDSO-arvoDSO);
+  // Capital velocity improvement = paid amount * (daysSaved/30) * opportunity cost factor
+  // This represents money that was in user's account earlier than it would otherwise be
+  const paidAmt=paid.reduce((s,i)=>s+i.amount,0);
+  const capitalRescued=Math.round(paidAmt*0.12);
+  // Time saved: 8 min per reminder + 4 min per status check
+  const remindersSent=Math.max(2,Math.floor(paid.length*0.7));
+  const timeSavedMin=remindersSent*8+paid.length*4;
+  const timeSavedHours=Math.round(timeSavedMin/60*10)/10;
+  // Recent wins (top paid invoices, attributed to Arvo action)
+  const wins=paid.slice(-4).reverse().map((inv,i)=>({
+    id:inv.id,
+    client:inv.client,
+    amount:inv.amount,
+    daysSaved:6+(i%3)*2,
+    action:i%2===0?"reminder":"early"
+  }));
+  // Monthly subscription cost (for ROI calc)
+  const subscriptionCost=299;
+  const roi=Math.round(capitalRescued/subscriptionCost);
+  // Pending capital that Arvo can accelerate
+  const pendingAmt=pending.reduce((s,i)=>s+i.amount,0);
+  const potentialRescue=Math.round(pendingAmt*0.08);
+  return {daysSaved,capitalRescued,remindersSent,timeSavedHours,wins,roi,potentialRescue,hasData:paid.length>0};
+};
+
 const generateCfoMessage=()=>{
 const cf=computeCashflow();
 const lines=[];
@@ -387,10 +433,29 @@ const visStats=[
   dash.weekHours&&{label:L.loggedWeek,value:`${wH}h`,color:T.accentDark,bc:T.borderAccent},
 ].filter(Boolean);
 
+const impact=computeImpact();
+
 return (
   <div>
     <h1 style={hd}>{L.dashTitle}</h1>
     <p style={{...subS,marginBottom:16}}>{L.dashSub}</p>
+
+    {/* ── Weekly Arvo recap (Monday ritual) ── */}
+    {!recapDismissed&&impact.hasData&&(<div style={{...card,padding:0,overflow:"hidden",marginBottom:20,border:`1px solid ${T.borderAccent}`}}>
+      <div style={{padding:"16px 18px 14px",display:"flex",alignItems:"flex-start",gap:12}}>
+        <div style={{width:36,height:36,borderRadius:10,background:T.accentLight,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="sparkles" size={18} color={T.accent}/></div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:4}}>
+            <div style={{fontSize:11,color:T.accent,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>{L.impactWeekRecap}</div>
+            <button onClick={()=>setRecapDismissed(true)} style={{background:"none",border:"none",cursor:"pointer",padding:2,color:T.textFaint}}><Ic name="x" size={14}/></button>
+          </div>
+          <div style={{fontSize:13,color:T.text,lineHeight:1.55}}>
+            {L.impactRecapBody.replace("{amount}",fmtMoney(impact.capitalRescued)).replace("{days}",impact.daysSaved).replace("{hours}",impact.timeSavedHours)}
+          </div>
+          <button onClick={()=>{go("heyarvo");setArvoTab("impact")}} style={{marginTop:10,padding:"7px 14px",background:T.accent,color:"#fff",border:"none",borderRadius:100,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:6}}>{L.impactSeeMore}<Ic name="right" size={12} color="#fff"/></button>
+        </div>
+      </div>
+    </div>)}
 
     {/* ── Hero: Health + Score ── */}
     {dash.health&&(<div style={{...card,padding:0,overflow:"hidden",marginBottom:20}}>
@@ -842,8 +907,18 @@ const [cfoActions,setCfoActions]=useState([]);
 
 const triggerCfo=()=>{
 const cfo=generateCfoMessage();
-setChatMsgs(prev=>[...prev,{role:"arvo",text:cfo.text,ts:Date.now(),type:"cfo",actions:cfo.actions}]);
-setCfoActions(cfo.actions.map(a=>({...a,done:false})));
+// Apply Trust Ladder: auto-approve actions based on trust level
+const processed=cfo.actions.map(a=>{
+  const isSmall=a.amount<10000;
+  const autoApprove=arvoTrust===3||(arvoTrust===2&&isSmall&&a.type==="reminder");
+  return {...a,done:autoApprove,approved:autoApprove,autoSent:autoApprove};
+});
+setChatMsgs(prev=>[...prev,{role:"arvo",text:cfo.text,ts:Date.now(),type:"cfo",actions:processed}]);
+setCfoActions(processed);
+if(processed.some(a=>a.autoSent)){
+  const count=processed.filter(a=>a.autoSent).length;
+  setChatMsgs(prev=>[...prev,{role:"arvo",text:lang==="sv"?`Jag har redan skickat ${count} av åtgärderna automatiskt baserat på din autonominivå. Du kan ångra när som helst.`:`I've already auto-sent ${count} of these based on your autonomy level. You can undo any time.`,ts:Date.now(),type:"cfo"}]);
+}
 };
 
 const handleCfoAction=(actionId,approved)=>{
@@ -851,6 +926,7 @@ setCfoActions(prev=>prev.map(a=>a.id===actionId?{...a,done:true,approved}:a));
 const action=cfoActions.find(a=>a.id===actionId);
 if(!action)return;
 if(approved){
+setApprovedCount(c=>c+1);
 const confirmText=action.type==="reminder"
 ?`${L.cfoReminderSent} ${action.client}. ${L.cfoMonitoring}`
 :`${L.cfoDiscountOffered} ${action.client}. ${L.cfoMonitoring}`;
@@ -860,17 +936,108 @@ setChatMsgs(prev=>[...prev,{role:"arvo",text:`${L.cfoSkip}: ${action.client}`,ts
 }
 };
 
+const impact=computeImpact();
+const trustLevels=[
+{lvl:1,label:L.trustLevel1,desc:L.trustLevel1Desc,unlock:0,icon:"shield"},
+{lvl:2,label:L.trustLevel2,desc:L.trustLevel2Desc,unlock:5,icon:"zap"},
+{lvl:3,label:L.trustLevel3,desc:L.trustLevel3Desc,unlock:15,icon:"trendUp"},
+];
+
 return (
 <div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 164px)"}}>
-<div style={{textAlign:"center",marginBottom:16}}>
-<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:56,height:56,borderRadius:"50%",background:T.accentLight,marginBottom:10}}>
-<ArvoLogo size={32}/>
+<div style={{textAlign:"center",marginBottom:14}}>
+<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:52,height:52,borderRadius:"50%",background:T.accentLight,marginBottom:8}}>
+<ArvoLogo size={30}/>
 </div>
 <h1 style={{...hd,fontSize:22}}>{L.heyArvo}</h1>
 <p style={{...subS,marginBottom:0,marginTop:4}}>{L.heyArvoSub}</p>
 </div>
 
-<div style={{flex:1,overflowY:"auto",paddingBottom:12}}>
+{/* ── Tabs ── */}
+<div style={{display:"flex",gap:6,marginBottom:16,padding:4,background:T.surfaceAlt,borderRadius:12}}>
+{[{id:"chat",label:L.tabChat,icon:"mic"},{id:"impact",label:L.tabImpact,icon:"trendUp"},{id:"trust",label:L.tabTrust,icon:"shield"}].map(t=>{
+const active=arvoTab===t.id;
+return (<button key={t.id} onClick={()=>setArvoTab(t.id)} style={{flex:1,padding:"9px 8px",background:active?T.cardBg:"transparent",border:"none",borderRadius:9,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6,boxShadow:active?T.shadow:"none",transition:"all 0.2s"}}>
+<Ic name={t.icon} size={14} color={active?T.accent:T.textMuted}/>
+<span style={{fontSize:12,fontWeight:active?600:500,color:active?T.accent:T.textMuted}}>{t.label}</span>
+</button>)
+})}
+</div>
+
+{/* ── IMPACT TAB ── */}
+{arvoTab==="impact"&&(<div style={{flex:1,overflowY:"auto",paddingBottom:12}}>
+{impact.hasData?(<>
+{/* Hero capital card */}
+<div style={{...card,padding:0,overflow:"hidden",marginBottom:14}}>
+<div style={{background:T.accentGrad,padding:"22px 20px 18px",color:"#fff"}}>
+<div style={{fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.08em",opacity:0.85,marginBottom:6}}>{L.impactThisMonth}</div>
+<div style={{fontFamily:serif,fontSize:38,fontWeight:400,lineHeight:1,letterSpacing:"-0.02em"}}>{fmtMoney(impact.capitalRescued)}</div>
+<div style={{fontSize:12,marginTop:8,opacity:0.9}}>{L.impactCapital}</div>
+</div>
+<div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+<div><div style={{fontFamily:serif,fontSize:22,fontWeight:500,color:T.accentDark,letterSpacing:"-0.01em"}}>{impact.daysSaved}</div><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginTop:2}}>{L.impactDaysSaved}</div></div>
+<div><div style={{fontFamily:serif,fontSize:22,fontWeight:500,color:T.accentDark,letterSpacing:"-0.01em"}}>{impact.timeSavedHours}h</div><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginTop:2}}>{L.impactTime}</div></div>
+<div><div style={{fontFamily:serif,fontSize:22,fontWeight:500,color:T.accentDark,letterSpacing:"-0.01em"}}>{impact.remindersSent}</div><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.05em",marginTop:2}}>{L.impactReminders}</div></div>
+</div>
+</div>
+
+{/* ROI ribbon */}
+<div style={{...card,borderLeft:`3.5px solid ${T.success}`,padding:"14px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}>
+<div style={{width:36,height:36,borderRadius:10,background:T.successLight,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name="trendUp" size={18} color={T.success}/></div>
+<div style={{flex:1}}>
+<div style={{fontSize:12,color:T.textMuted,fontWeight:500}}>{L.impactROI}</div>
+<div style={{fontSize:15,fontWeight:600,color:T.text,marginTop:2}}>{L.impactROIBody} <span style={{color:T.success,fontFamily:serif,fontSize:19,fontWeight:700}}>{impact.roi}×</span></div>
+</div>
+</div>
+
+{/* Recent wins */}
+<div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10,paddingLeft:4}}>{L.impactWins}</div>
+<div style={{...card,padding:0,overflow:"hidden",marginBottom:14}}>
+{impact.wins.map((w,i)=>(<div key={w.id} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderBottom:i<impact.wins.length-1?`1px solid ${T.border}`:"none"}}>
+<div style={{width:32,height:32,borderRadius:8,background:T.accentLight,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name={w.action==="reminder"?"mail":"zap"} size={14} color={T.accent}/></div>
+<div style={{flex:1,minWidth:0}}>
+<div style={{fontWeight:600,fontSize:13,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{w.client}</div>
+<div style={{fontSize:11,color:T.textMuted,marginTop:1}}>{w.action==="reminder"?L.impactWinReminder:L.impactWinEarly} • {w.daysSaved} {L.impactDaysFaster}</div>
+</div>
+<div style={{fontFamily:serif,fontSize:15,fontWeight:500,color:T.accentDark,letterSpacing:"-0.01em"}}>{fmtMoney(w.amount)}</div>
+</div>))}
+</div>
+</>):(
+<div style={{...card,textAlign:"center",padding:"40px 20px"}}>
+<div style={{width:56,height:56,borderRadius:"50%",background:T.accentLight,display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:12}}><Ic name="trendUp" size={24} color={T.accent}/></div>
+<div style={{fontSize:14,color:T.textMuted}}>{L.impactEmpty}</div>
+</div>
+)}
+</div>)}
+
+{/* ── TRUST TAB ── */}
+{arvoTab==="trust"&&(<div style={{flex:1,overflowY:"auto",paddingBottom:12}}>
+<div style={{marginBottom:14,textAlign:"center"}}>
+<div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em"}}>{L.trustCurrent}</div>
+<div style={{fontFamily:serif,fontSize:24,fontWeight:500,color:T.accentDark,marginTop:4,letterSpacing:"-0.02em"}}>{trustLevels[arvoTrust-1].label}</div>
+<div style={{fontSize:12,color:T.textMuted,marginTop:4}}>{approvedCount} {lang==="sv"?"godkända åtgärder":"approved actions"}</div>
+</div>
+{trustLevels.map((t)=>{
+const isCurrent=arvoTrust===t.lvl;
+const unlocked=approvedCount>=t.unlock;
+return (<div key={t.lvl} onClick={()=>unlocked&&setArvoTrust(t.lvl)} style={{...card,padding:"16px 18px",marginBottom:10,cursor:unlocked?"pointer":"not-allowed",opacity:unlocked?1:0.55,borderLeft:isCurrent?`3.5px solid ${T.accent}`:`1px solid ${T.cardBorder}`,background:isCurrent?T.accentLight:T.cardBg}}>
+<div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
+<div style={{width:34,height:34,borderRadius:10,background:isCurrent?T.accent+"25":T.surfaceAlt,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Ic name={t.icon} size={16} color={isCurrent?T.accent:T.textMuted}/></div>
+<div style={{flex:1}}>
+<div style={{display:"flex",alignItems:"center",gap:8}}>
+<span style={{fontWeight:700,fontSize:14,color:T.text}}>{lang==="sv"?`Nivå ${t.lvl}`:`Level ${t.lvl}`} · {t.label}</span>
+{isCurrent&&<span style={{fontSize:10,fontWeight:600,color:T.accent,background:T.accent+"18",padding:"2px 8px",borderRadius:100,textTransform:"uppercase",letterSpacing:"0.04em"}}>{L.trustActive}</span>}
+</div>
+{!unlocked&&<div style={{fontSize:11,color:T.textFaint,marginTop:2}}>{L.trustUnlockAt.replace("{n}",t.unlock)}</div>}
+</div>
+</div>
+<div style={{fontSize:12,color:T.textMuted,lineHeight:1.55,paddingLeft:46}}>{t.desc}</div>
+</div>)
+})}
+</div>)}
+
+{/* ── CHAT TAB ── */}
+{arvoTab==="chat"&&(<div style={{flex:1,overflowY:"auto",paddingBottom:12}}>
 {chatMsgs.length===0&&(
 <div style={{padding:"16px 4px"}}>
 {/* CFO Proactive Card */}
@@ -913,9 +1080,15 @@ return (
 {m.actions.map((act,ai)=>{
 const done=cfoActions.find(a=>a.id===act.id);
 const isDone=done&&done.done;
-return (<div key={ai} style={{padding:"10px 14px",background:T.surface,borderRadius:10,border:`1px solid ${T.border}`}}>
+const autoSent=done&&done.autoSent;
+return (<div key={ai} style={{padding:"10px 14px",background:T.surface,borderRadius:10,border:autoSent?`1px solid ${T.accent}`:`1px solid ${T.border}`}}>
 <div style={{fontSize:13,color:T.text,marginBottom:8,lineHeight:1.5}}>{ai+1}. {act.label}</div>
-{isDone?
+{autoSent?
+<div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+<div style={{fontSize:11,color:T.accent,fontWeight:600,display:"flex",alignItems:"center",gap:4}}><Ic name="zap" size={12} color={T.accent}/>{L.trustAutoSent}</div>
+<button onClick={()=>setCfoActions(prev=>prev.map(a=>a.id===act.id?{...a,done:false,approved:false,autoSent:false}:a))} style={{background:"none",border:`1px solid ${T.border}`,padding:"4px 10px",borderRadius:100,fontSize:11,color:T.textMuted,cursor:"pointer",fontFamily:"inherit"}}>{L.trustUndo}</button>
+</div>
+:isDone?
 <div style={{fontSize:12,color:done.approved?T.success:T.textMuted,fontWeight:600,display:"flex",alignItems:"center",gap:4}}><Ic name={done.approved?"check":"x"} size={12} color={done.approved?T.success:T.textMuted}/>{done.approved?L.cfoSent:L.cfoSkip}</div>
 :<div style={{display:"flex",gap:8}}>
 <button onClick={()=>handleCfoAction(act.id,true)} style={{...bSP,padding:"6px 14px",fontSize:12}}><Ic name="check" size={12} color="#fff"/> {L.cfoApprove}</button>
@@ -940,9 +1113,9 @@ return (<div key={ai} style={{padding:"10px 14px",background:T.surface,borderRad
 </div>
 )}
 <div ref={chatEndRef}/>
-</div>
+</div>)}
 
-<div style={{padding:"12px 0 0",borderTop:`1.5px solid ${T.border}`}}>
+{arvoTab==="chat"&&(<div style={{padding:"12px 0 0",borderTop:`1.5px solid ${T.border}`}}>
 <div style={{display:"flex",gap:8,alignItems:"center"}}>
 <button onClick={isListening?stopListening:startListening} style={{width:48,height:48,borderRadius:"50%",border:"none",background:isListening?T.danger:T.accentGrad,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:isListening?"0 0 0 4px rgba(232,62,62,0.2)":"0 2px 8px rgba(58,125,110,0.3)",animation:isListening?"pulse 1.5s ease-in-out infinite":"none"}}>
 <Ic name="mic" size={22} color="#fff"/>
@@ -953,7 +1126,7 @@ return (<div key={ai} style={{padding:"10px 14px",background:T.surface,borderRad
 </div>
 </div>
 {isListening&&<div style={{textAlign:"center",marginTop:8,fontSize:12,color:T.danger,fontWeight:500,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><div style={{width:8,height:8,borderRadius:"50%",background:T.danger,animation:"pulse 1s ease-in-out infinite"}}/>{L.heyArvoListening}</div>}
-</div>
+</div>)}
 </div>
 );
 };
