@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 
 // ── VALIDATION CONFIG ──
-// Byt ut till din egen mejl innan du delar länken med testare.
+// 1. Byt ut till din egen mejl innan du delar länken med testare.
 const FOUNDER_EMAIL = "din@email.se";
+// 2. Skapa en Stripe Payment Link (99 kr) på https://dashboard.stripe.com/payment-links
+//    Sätt den som "återbetalbar reservation". Klistra in URL:en nedan.
+//    Lämna tom för att visa gamla price-polljen istället.
+const STRIPE_RESERVE_URL = "";
 
 const LANG = {
 sv: {
@@ -51,7 +55,7 @@ cmResultsTitle:"Din likviditetsanalys",cmResultsSub:"Baserat på {n} fakturor fr
 cmCounter:"Detta kunde du ha undvikit",cmCounterBody:"Om mina påminnelser hade varit aktiva hade du haft {amount} på kontot {days} dagar tidigare. Det hade räckt för att täcka nästa momsinbetalning.",
 cmActions:"Vad jag föreslår att du gör nu",cmActionReminder:"Skicka påminnelse",cmActionEarly:"Erbjud snabbrabatt",cmActionFollowup:"Följ upp",cmActFake:"Ja, agera",cmActDone:"Klart",
 cmDraftTitle:"Meddelandet är klart",cmDraftSub:"Kopiera och skicka till din kund — eller vänta på auto-send i nästa version",cmCopy:"Kopiera meddelande",cmCopied:"Kopierat till urklipp!",cmBetaNote:"Arvo är i beta. Auto-send via SMS/mejl kommer i Arvo Pro.",cmWantAuto:"Jag vill ha auto-send",cmCloseDraft:"Stäng",
-cmPriceTitle:"Vill du ha detta som tjänst?",cmPriceBody:"Arvo Pro kommer innehålla kontinuerlig likviditetsanalys och auto-send via API. Din röst hjälper oss prioritera.",cmPriceQ:"Skulle du betala 499 kr/mån?",cmPriceYes:"Ja — meddela mig när det släpps",cmPriceMaybe:"Kanske — beror på",cmPriceNo:"Inte intresserad just nu",cmPriceThanks:"Tack! Vi hör av oss när Arvo Pro släpps.",
+cmPriceTitle:"Reservera din plats i Arvo Pro",cmPriceBody:"Vi släpper auto-send och kontinuerlig övervakning inom kort. De första 50 reservationerna får 50% rabatt första året.",cmPriceQ:"Reservera med 99 kr (återbetalbar)",cmPriceYes:"Reservera nu — 99 kr",cmPriceMaybe:"Kanske senare",cmPriceNo:"Inte intresserad",cmPriceThanks:"Tack! Vi hör av oss när Arvo Pro släpps.",cmPriceRefund:"Pengarna återbetalas om du ångrar dig innan lansering.",
 cmReset:"Kör ny analys",cmErrorParse:"Kunde inte läsa filen. Se till att den är en CSV med kolumner för kund, belopp och status.",cmRiskLate:"{client} betalar systematiskt sent ({n} försenade fakturor)",cmRiskBig:"{client} har en stor utestående faktura på {amount}",cmRiskGap:"Likviditetsgap upptäckt: {amount} i försenade fakturor mot nästa månad",cmRiskCrunch:"Kassakris om {n} veckor om inget förändras — du behöver driva in pengar snabbare",cmRiskConcentration:"{pct}% av din omsättning kommer från {client}. Hög koncentrationsrisk — sprid riskerna.",
 cmVelocityTitle:"Så betalar dina kunder",cmVelocitySub:"Pålitlighet baserad på historik + försening",cmVelocityCol:"Kund",cmVelocityVol:"Volym",cmVelocityRel:"Pålitlighet",cmVelocityLate:"dagar sen",cmVelocityGood:"Pålitlig",cmVelocityOk:"Okej",cmVelocityBad:"Risk",cmVelocityInv:"fakturor",
 cmRunwayTitle:"Kassaprognos — 8 veckor framåt",cmRunwaySub:"Baserad på sannolikhetsviktade inbetalningar + dina snittkostnader",cmRunwaySafe:"Kassan håller — bra jobbat!",cmRunwayCrunch:"Varning: kassakris i vecka {n}",cmRunwayWeek:"V",cmRunwayStart:"Nu",cmRunwayBalance:"Saldo",cmRunwayVat:"Moms",cmRunwayIn:"In",cmRunwayOut:"Ut",
@@ -107,7 +111,7 @@ cmResultsTitle:"Your liquidity analysis",cmResultsSub:"Based on {n} invoices fro
 cmCounter:"This could have been avoided",cmCounterBody:"If my reminders had been active, you would have had {amount} on your account {days} days earlier. Enough to cover the next VAT payment.",
 cmActions:"What I suggest you do now",cmActionReminder:"Send reminder",cmActionEarly:"Offer early-pay discount",cmActionFollowup:"Follow up",cmActFake:"Yes, act",cmActDone:"Done",
 cmDraftTitle:"Message is ready",cmDraftSub:"Copy and send to your customer — or wait for auto-send in next version",cmCopy:"Copy message",cmCopied:"Copied to clipboard!",cmBetaNote:"Arvo is in beta. Auto-send via SMS/email is coming in Arvo Pro.",cmWantAuto:"I want auto-send",cmCloseDraft:"Close",
-cmPriceTitle:"Want this as a service?",cmPriceBody:"Arvo Pro will include continuous liquidity analysis and auto-send via API. Your vote helps us prioritize.",cmPriceQ:"Would you pay $49/month?",cmPriceYes:"Yes — notify me when it launches",cmPriceMaybe:"Maybe — depends",cmPriceNo:"Not interested right now",cmPriceThanks:"Thanks! We'll reach out when Arvo Pro launches.",
+cmPriceTitle:"Reserve your spot in Arvo Pro",cmPriceBody:"We're launching auto-send and continuous monitoring soon. First 50 reservations get 50% off the first year.",cmPriceQ:"Reserve with $9 (refundable)",cmPriceYes:"Reserve now — $9",cmPriceMaybe:"Maybe later",cmPriceNo:"Not interested",cmPriceThanks:"Thanks! We'll be in touch when Arvo Pro launches.",cmPriceRefund:"Fully refundable if you change your mind before launch.",
 cmReset:"Run new analysis",cmErrorParse:"Could not read the file. Make sure it's a CSV with columns for customer, amount and status.",cmRiskLate:"{client} systematically pays late ({n} late invoices)",cmRiskBig:"{client} has a large outstanding invoice of {amount}",cmRiskGap:"Liquidity gap detected: {amount} in overdue invoices vs. next month",cmRiskCrunch:"Cash crunch in {n} weeks unless something changes — you need to collect faster",cmRiskConcentration:"{pct}% of your revenue comes from {client}. High concentration risk — diversify.",
 cmVelocityTitle:"How your clients pay",cmVelocitySub:"Reliability based on history + delay",cmVelocityCol:"Client",cmVelocityVol:"Volume",cmVelocityRel:"Reliability",cmVelocityLate:"days late",cmVelocityGood:"Reliable",cmVelocityOk:"Okay",cmVelocityBad:"Risk",cmVelocityInv:"invoices",
 cmRunwayTitle:"Cash runway — 8 weeks ahead",cmRunwaySub:"Based on probability-weighted inflows + your average burn",cmRunwaySafe:"Runway holds — well done!",cmRunwayCrunch:"Warning: cash crunch at week {n}",cmRunwayWeek:"W",cmRunwayStart:"Now",cmRunwayBalance:"Balance",cmRunwayVat:"Tax",cmRunwayIn:"In",cmRunwayOut:"Out",
@@ -1846,15 +1850,16 @@ return (
           <div style={{fontSize:13,opacity:0.9,lineHeight:1.55}}>{L.cmPriceBody}</div>
         </div>
         <div style={{padding:"20px 22px"}}>
-          <div style={{textAlign:"center",fontFamily:serif,fontSize:18,fontWeight:600,color:T.text,marginBottom:16,letterSpacing:"-0.01em"}}>{L.cmPriceQ}</div>
+          <div style={{textAlign:"center",fontFamily:serif,fontSize:18,fontWeight:600,color:T.text,marginBottom:6,letterSpacing:"-0.01em"}}>{L.cmPriceQ}</div>
+          <div style={{textAlign:"center",fontSize:11,color:T.textMuted,marginBottom:16,lineHeight:1.5}}>{L.cmPriceRefund}</div>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            <button onClick={()=>handlePriceVote("yes")} style={{padding:"13px 18px",background:T.accent,color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              <Ic name="check" size={16} color="#fff"/>{L.cmPriceYes}
+            <button onClick={()=>{handlePriceVote("yes");if(STRIPE_RESERVE_URL){window.open(STRIPE_RESERVE_URL+(testerId?`?client_reference_id=${testerId}`:""),"_blank")}}} style={{padding:"14px 18px",background:T.accent,color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 3px 10px rgba(42,109,94,0.25)"}}>
+              <Ic name="zap" size={16} color="#fff"/>{L.cmPriceYes}
             </button>
-            <button onClick={()=>handlePriceVote("maybe")} style={{padding:"13px 18px",background:"transparent",color:T.textSub,border:`1px solid ${T.border}`,borderRadius:12,fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
+            <button onClick={()=>handlePriceVote("maybe")} style={{padding:"12px 18px",background:"transparent",color:T.textSub,border:`1px solid ${T.border}`,borderRadius:12,fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
               {L.cmPriceMaybe}
             </button>
-            <button onClick={()=>handlePriceVote("no")} style={{padding:"11px 18px",background:"transparent",color:T.textFaint,border:"none",borderRadius:12,fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
+            <button onClick={()=>handlePriceVote("no")} style={{padding:"10px 18px",background:"transparent",color:T.textFaint,border:"none",borderRadius:12,fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"inherit"}}>
               {L.cmPriceNo}
             </button>
           </div>
