@@ -1233,7 +1233,7 @@ const trustLevels=[
 ];
 
 return (
-<div style={{display:"flex",flexDirection:"column",height:"calc(100vh - 164px)"}}>
+<div style={{display:"flex",flexDirection:"column",minHeight:"calc(100vh - 164px)"}}>
 <div style={{textAlign:"center",marginBottom:14}}>
 <div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:52,height:52,borderRadius:"50%",background:T.accentLight,marginBottom:8}}>
 <ArvoLogo size={30}/>
