@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 
+// ── VALIDATION CONFIG ──
+// Byt ut till din egen mejl innan du delar länken med testare.
+const FOUNDER_EMAIL = "din@email.se";
+
 const LANG = {
 sv: {
 overview:"Översikt",contacts:"Kontakter",projects:"Projekt",invoices:"Fakturor",time:"Tid",
@@ -53,6 +57,7 @@ cmVelocityTitle:"Så betalar dina kunder",cmVelocitySub:"Pålitlighet baserad p�
 cmRunwayTitle:"Kassaprognos — 8 veckor framåt",cmRunwaySub:"Baserad på sannolikhetsviktade inbetalningar + dina snittkostnader",cmRunwaySafe:"Kassan håller — bra jobbat!",cmRunwayCrunch:"Varning: kassakris i vecka {n}",cmRunwayWeek:"V",cmRunwayStart:"Nu",cmRunwayBalance:"Saldo",cmRunwayVat:"Moms",cmRunwayIn:"In",cmRunwayOut:"Ut",
 cmTonePrio1:"Brådskande",cmTonePrio2:"Viktigt",cmTonePrio3:"Bonus",
 onbTitle:"60 sekunder till klarhet",onbSub:"Så fungerar Arvo — din AI-CFO",onbStep1:"Ladda upp din fakturaexport",onbStep1Desc:"CSV från Fortnox, Visma, Bokio — eller testa med exempeldata",onbStep2:"Arvo analyserar på 5 sekunder",onbStep2Desc:"Pålitlighet per kund, kassaprognos 8 veckor framåt, akuta risker",onbStep3:"Agera — jag skriver åt dig",onbStep3Desc:"Färdiga påminnelser och rabatterbjudanden att kopiera & skicka",onbCTA:"Kör exempeldata nu",onbSkip:"Jag har egen fil",onbDontShow:"Visa inte igen",
+fbTitle:"Hur kändes det här?",fbSub:"Ärligt — jag lär mig bara av tydlig feedback",fbHot:"Klockrent",fbOk:"Osäker",fbCold:"Inte för mig",fbPlaceholder:"Vad hände när du såg analysen? Vad skulle få dig att använda det?",fbSend:"Skicka till skaparen",fbThanks:"Tack — det betyder mycket.",fbEmailSubject:"Arvo-feedback",
 impactTitle:"Arvos påverkan",impactSub:"Så här mycket värde har jag skapat åt dig",impactThisMonth:"Denna månad",impactCapital:"Kapital drivet in snabbare",impactDaysSaved:"dagar kortare betaltid",impactTime:"timmar sparade",impactReminders:"påminnelser skickade",impactVsBase:"jämfört med din vanliga betalcykel",impactWins:"Senaste vinsterna",impactWinReminder:"Påminnelse drev in",impactWinEarly:"Fakturerades tidigt",impactDaysFaster:"dagar snabbare",impactWeekRecap:"Veckans sammanfattning",impactRecapBody:"Förra veckan drev jag in {amount} {days} dagar tidigare än din vanliga cykel, och sparade dig {hours}h administration.",impactSeeMore:"Se alla mina vinster",impactEmpty:"Jag har inte hunnit skapa värde än — det kommer snart!",impactROI:"ROI denna månad",impactROIBody:"För varje krona du betalar mig levererar jag",
 trustTitle:"Trust Ladder",trustSub:"Välj hur självständigt jag får agera",trustLevel1:"Fråga alltid",trustLevel1Desc:"Jag förbereder allt och du godkänner varje åtgärd. Maximal kontroll.",trustLevel2:"Auto-små",trustLevel2Desc:"Fakturor under 10 000 kr till återkommande kunder skickas automatiskt. Du får notis.",trustLevel3:"Autopilot",trustLevel3Desc:"Jag sköter alla påminnelser själv, du kan alltid ångra. För dig som litar på mig fullt ut.",trustCurrent:"Nuvarande nivå",trustUnlockAt:"Lås upp efter {n} godkända åtgärder",trustActive:"Aktiv",trustAutoSent:"Auto-skickat",trustUndo:"Ångra",trustAutoNote:"Jag skickade just detta automatiskt baserat på din nivå",
 },
@@ -108,6 +113,7 @@ cmVelocityTitle:"How your clients pay",cmVelocitySub:"Reliability based on histo
 cmRunwayTitle:"Cash runway — 8 weeks ahead",cmRunwaySub:"Based on probability-weighted inflows + your average burn",cmRunwaySafe:"Runway holds — well done!",cmRunwayCrunch:"Warning: cash crunch at week {n}",cmRunwayWeek:"W",cmRunwayStart:"Now",cmRunwayBalance:"Balance",cmRunwayVat:"Tax",cmRunwayIn:"In",cmRunwayOut:"Out",
 cmTonePrio1:"Urgent",cmTonePrio2:"Important",cmTonePrio3:"Bonus",
 onbTitle:"60 seconds to clarity",onbSub:"Here's how Arvo — your AI CFO — works",onbStep1:"Upload your invoice export",onbStep1Desc:"CSV from QuickBooks, Xero, FreshBooks — or try with sample data",onbStep2:"Arvo analyzes in 5 seconds",onbStep2Desc:"Per-client reliability, 8-week cash projection, urgent risks",onbStep3:"Act — I write the messages for you",onbStep3Desc:"Ready-to-send reminders and early-pay offers, copy & paste",onbCTA:"Try with sample data",onbSkip:"I have my own file",onbDontShow:"Don't show again",
+fbTitle:"How did this feel?",fbSub:"Honest answers only — I can only learn from real signal",fbHot:"Spot on",fbOk:"Unsure",fbCold:"Not for me",fbPlaceholder:"What happened when you saw the analysis? What would make you actually use it?",fbSend:"Send to the maker",fbThanks:"Thank you — this means a lot.",fbEmailSubject:"Arvo feedback",
 impactTitle:"Arvo's Impact",impactSub:"How much value I've created for you",impactThisMonth:"This month",impactCapital:"Capital collected faster",impactDaysSaved:"days shorter payment cycle",impactTime:"hours saved",impactReminders:"reminders sent",impactVsBase:"vs. your normal payment cycle",impactWins:"Recent wins",impactWinReminder:"Reminder drove in",impactWinEarly:"Invoiced early",impactDaysFaster:"days faster",impactWeekRecap:"Weekly recap",impactRecapBody:"Last week I collected {amount} {days} days earlier than your normal cycle, and saved you {hours}h of admin.",impactSeeMore:"See all my wins",impactEmpty:"Haven't built value yet — coming soon!",impactROI:"ROI this month",impactROIBody:"For every dollar you pay me I deliver",
 trustTitle:"Trust Ladder",trustSub:"Choose how autonomously I can act",trustLevel1:"Always ask",trustLevel1Desc:"I prepare everything and you approve every action. Maximum control.",trustLevel2:"Auto-small",trustLevel2Desc:"Invoices under $1,000 to recurring customers are sent automatically. You get a notice.",trustLevel3:"Autopilot",trustLevel3Desc:"I handle all reminders myself, you can always undo. For when you trust me fully.",trustCurrent:"Current level",trustUnlockAt:"Unlock after {n} approved actions",trustActive:"Active",trustAutoSent:"Auto-sent",trustUndo:"Undo",trustAutoNote:"I just sent this automatically based on your level",
 },
@@ -193,6 +199,10 @@ const [actionClickCount,setActionClickCount]=useState(0);
 const [copiedFlash,setCopiedFlash]=useState(false);
 const [conciergeError,setConciergeError]=useState(null);
 const [showOnboarding,setShowOnboarding]=useState(()=>{try{return !localStorage.getItem("arvo_onb_done")}catch(e){return true}});
+const [testerId]=useState(()=>{try{const u=new URLSearchParams(window.location.search).get("t");if(u){localStorage.setItem("arvo_tester_id",u);return u}return localStorage.getItem("arvo_tester_id")||""}catch(e){return""}});
+const [feedbackState,setFeedbackState]=useState("idle"); // idle|rated|sent
+const [feedbackRating,setFeedbackRating]=useState(null);
+const [feedbackText,setFeedbackText]=useState("");
 const [dash,setDash]=useState({pipeline:true,won:true,awaiting:true,weekHours:true,toDo:true,recentInv:true,activeProj:true,insights:true,forecast:true,health:true,digest:true});
 const [scanState,setScanState]=useState("idle");
 const [scanResult,setScanResult]=useState(null);
@@ -216,6 +226,8 @@ const switchLang=l=>{setLang(l);setCurrency(l==="sv"?"SEK":"USD")};
 
 useEffect(()=>{if(timerOn){tRef.current=setInterval(()=>setTimerSec(s=>s+1),1000)}else clearInterval(tRef.current);return()=>clearInterval(tRef.current)},[timerOn]);
 useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMsgs,arvoThinking]);
+// Tester session logger (localStorage only — founder asks tester to share on follow-up)
+useEffect(()=>{try{const k="arvo_tester_log";const log=JSON.parse(localStorage.getItem(k)||"[]");log.push({ts:Date.now(),tester:testerId||"anonymous",event:"view",view});localStorage.setItem(k,JSON.stringify(log.slice(-80)))}catch(e){}},[view,testerId]);
 
 const fmtT=s=>`${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 const ini=n=>n.split(" ").map(w=>w[0]).join("");
@@ -673,6 +685,23 @@ const dismissOnboarding=(runDemo=false)=>{
   try{localStorage.setItem("arvo_onb_done","1")}catch(e){}
   setShowOnboarding(false);
   if(runDemo)runConciergeAnalysis(CONCIERGE_DEMO_CSV);
+};
+
+const handleFeedbackRate=(rating)=>{
+  setFeedbackRating(rating);
+  setFeedbackState("rated");
+  try{
+    const log=JSON.parse(localStorage.getItem("arvo_feedback_log")||"[]");
+    log.push({ts:Date.now(),tester:testerId||"anonymous",rating});
+    localStorage.setItem("arvo_feedback_log",JSON.stringify(log));
+  }catch(e){}
+};
+
+const handleFeedbackSend=()=>{
+  const body=`Tester: ${testerId||"anonymous"}\nRating: ${feedbackRating}\n\nKommentar:\n${feedbackText||"(ingen kommentar)"}\n\n---\nSkickat från Arvo testversion`;
+  const mailto=`mailto:${FOUNDER_EMAIL}?subject=${encodeURIComponent(L.fbEmailSubject+" — "+(feedbackRating||"?"))}&body=${encodeURIComponent(body)}`;
+  try{window.location.href=mailto}catch(e){}
+  setFeedbackState("sent");
 };
 
 const generateCfoMessage=()=>{
@@ -1475,7 +1504,40 @@ return (<div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,paddi
 })}
 </>)}
 
-<button onClick={resetConcierge} style={{display:"block",width:"100%",marginTop:16,padding:"12px 16px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:12,fontSize:13,fontWeight:500,color:T.textMuted,cursor:"pointer",fontFamily:"inherit"}}>{L.cmReset}</button>
+{/* ── FEEDBACK WIDGET — validation signal capture ── */}
+<div style={{...card,padding:"18px 20px",marginTop:18,marginBottom:10,background:T.accentLight,borderColor:T.borderAccent}}>
+  {feedbackState==="idle"&&(<>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+      <Ic name="sparkles" size={15} color={T.accent}/>
+      <div style={{fontFamily:serif,fontSize:16,fontWeight:700,color:T.accentDark,letterSpacing:"-0.01em"}}>{L.fbTitle}</div>
+    </div>
+    <div style={{fontSize:12,color:T.textMuted,lineHeight:1.5,marginBottom:14}}>{L.fbSub}</div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+      {[{k:"hot",emoji:"🔥",lbl:L.fbHot,col:T.success},{k:"ok",emoji:"🤔",lbl:L.fbOk,col:T.warn},{k:"cold",emoji:"😕",lbl:L.fbCold,col:T.danger}].map(o=>(
+        <button key={o.k} onClick={()=>handleFeedbackRate(o.k)} style={{padding:"12px 8px",background:T.cardBg,border:`1.5px solid ${T.border}`,borderRadius:12,cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all 0.2s"}}>
+          <div style={{fontSize:22,lineHeight:1}}>{o.emoji}</div>
+          <div style={{fontSize:11,fontWeight:600,color:o.col}}>{o.lbl}</div>
+        </button>
+      ))}
+    </div>
+  </>)}
+  {feedbackState==="rated"&&(<>
+    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+      <div style={{fontSize:18,lineHeight:1}}>{feedbackRating==="hot"?"🔥":feedbackRating==="ok"?"🤔":"😕"}</div>
+      <div style={{fontFamily:serif,fontSize:15,fontWeight:700,color:T.accentDark}}>{feedbackRating==="hot"?L.fbHot:feedbackRating==="ok"?L.fbOk:L.fbCold}</div>
+    </div>
+    <textarea value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder={L.fbPlaceholder} rows={4} style={{...ipS,resize:"vertical",minHeight:72,marginBottom:10,fontFamily:"inherit"}}/>
+    <button onClick={handleFeedbackSend} style={{width:"100%",padding:"11px 16px",background:T.accentGrad,color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6,boxShadow:"0 2px 6px rgba(42,109,94,0.18)"}}>
+      <Ic name="send" size={14} color="#fff"/>{L.fbSend}
+    </button>
+  </>)}
+  {feedbackState==="sent"&&(<div style={{textAlign:"center",padding:"6px 0"}}>
+    <div style={{width:44,height:44,borderRadius:"50%",background:T.success+"22",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:8}}><Ic name="check" size={22} color={T.success}/></div>
+    <div style={{fontFamily:serif,fontSize:15,fontWeight:700,color:T.text}}>{L.fbThanks}</div>
+  </div>)}
+</div>
+
+<button onClick={resetConcierge} style={{display:"block",width:"100%",marginTop:10,padding:"12px 16px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:12,fontSize:13,fontWeight:500,color:T.textMuted,cursor:"pointer",fontFamily:"inherit"}}>{L.cmReset}</button>
 </>)}
 
 </div>)}
