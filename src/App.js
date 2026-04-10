@@ -60,7 +60,7 @@ cmReset:"Kör ny analys",cmErrorParse:"Kunde inte läsa filen. Se till att den �
 cmVelocityTitle:"Så betalar dina kunder",cmVelocitySub:"Pålitlighet baserad på historik + försening",cmVelocityCol:"Kund",cmVelocityVol:"Volym",cmVelocityRel:"Pålitlighet",cmVelocityLate:"dagar sen",cmVelocityGood:"Pålitlig",cmVelocityOk:"Okej",cmVelocityBad:"Risk",cmVelocityInv:"fakturor",
 cmRunwayTitle:"Kassaprognos — 8 veckor framåt",cmRunwaySub:"Baserad på sannolikhetsviktade inbetalningar + dina snittkostnader",cmRunwaySafe:"Kassan håller — bra jobbat!",cmRunwayCrunch:"Varning: kassakris i vecka {n}",cmRunwayWeek:"V",cmRunwayStart:"Nu",cmRunwayBalance:"Saldo",cmRunwayVat:"Moms",cmRunwayIn:"In",cmRunwayOut:"Ut",
 cmTonePrio1:"Brådskande",cmTonePrio2:"Viktigt",cmTonePrio3:"Bonus",
-onbTitle:"60 sekunder till klarhet",onbSub:"Så fungerar Arvo Flow",onbStep1:"Ladda upp din fakturaexport",onbStep1Desc:"CSV från Fortnox, Visma, Bokio — eller testa med exempeldata",onbStep2:"Arvo analyserar på 5 sekunder",onbStep2Desc:"Pålitlighet per kund, kassaprognos 8 veckor framåt, akuta risker",onbStep3:"Agera — jag skriver åt dig",onbStep3Desc:"Färdiga påminnelser och rabatterbjudanden att kopiera & skicka",onbCTA:"Kör exempeldata nu",onbSkip:"Jag har egen fil",onbDontShow:"Visa inte igen",
+onbTitle:"60 sekunder till klarhet",onbSub:"Så fungerar Arvo Flow",onbStep1:"Ladda upp din fakturaexport",onbStep1Desc:"CSV från Fortnox, Visma, Bokio — eller testa med exempeldata",onbStep2:"Arvo analyserar på 30 sekunder",onbStep2Desc:"Pålitlighet per kund, kassaprognos 8 veckor framåt, akuta risker",onbStep3:"Agera — jag skriver åt dig",onbStep3Desc:"Färdiga påminnelser och rabatterbjudanden att kopiera & skicka",onbCTA:"Kör exempeldata nu",onbSkip:"Jag har egen fil",onbDontShow:"Visa inte igen",
 fbTitle:"Hur kändes det här?",fbSub:"Ärligt — jag lär mig bara av tydlig feedback",fbHot:"Klockrent",fbOk:"Osäker",fbCold:"Inte för mig",fbPlaceholder:"Vad hände när du såg analysen? Vad skulle få dig att använda det?",fbSend:"Skicka till skaparen",fbThanks:"Tack — det betyder mycket.",fbEmailSubject:"Arvo-feedback",
 impactTitle:"Arvos påverkan",impactSub:"Så här mycket värde har jag skapat åt dig",impactThisMonth:"Denna månad",impactCapital:"Kapital drivet in snabbare",impactDaysSaved:"dagar kortare betaltid",impactTime:"timmar sparade",impactReminders:"påminnelser skickade",impactVsBase:"jämfört med din vanliga betalcykel",impactWins:"Senaste vinsterna",impactWinReminder:"Påminnelse drev in",impactWinEarly:"Fakturerades tidigt",impactDaysFaster:"dagar snabbare",impactWeekRecap:"Veckans sammanfattning",impactRecapBody:"Förra veckan drev jag in {amount} {days} dagar tidigare än din vanliga cykel, och sparade dig {hours}h administration.",impactSeeMore:"Se alla mina vinster",impactEmpty:"Jag har inte hunnit skapa värde än — det kommer snart!",impactROI:"ROI denna månad",impactROIBody:"För varje krona du betalar mig levererar jag",
 trustTitle:"Trust Ladder",trustSub:"Välj hur självständigt jag får agera",trustLevel1:"Fråga alltid",trustLevel1Desc:"Jag förbereder allt och du godkänner varje åtgärd. Maximal kontroll.",trustLevel2:"Auto-små",trustLevel2Desc:"Fakturor under 10 000 kr till återkommande kunder skickas automatiskt. Du får notis.",trustLevel3:"Autopilot",trustLevel3Desc:"Jag sköter alla påminnelser själv, du kan alltid ångra. För dig som litar på mig fullt ut.",trustCurrent:"Nuvarande nivå",trustUnlockAt:"Lås upp efter {n} godkända åtgärder",trustActive:"Aktiv",trustAutoSent:"Auto-skickat",trustUndo:"Ångra",trustAutoNote:"Jag skickade just detta automatiskt baserat på din nivå",
@@ -116,7 +116,7 @@ cmReset:"Run new analysis",cmErrorParse:"Could not read the file. Make sure it's
 cmVelocityTitle:"How your clients pay",cmVelocitySub:"Reliability based on history + delay",cmVelocityCol:"Client",cmVelocityVol:"Volume",cmVelocityRel:"Reliability",cmVelocityLate:"days late",cmVelocityGood:"Reliable",cmVelocityOk:"Okay",cmVelocityBad:"Risk",cmVelocityInv:"invoices",
 cmRunwayTitle:"Cash runway — 8 weeks ahead",cmRunwaySub:"Based on probability-weighted inflows + your average burn",cmRunwaySafe:"Runway holds — well done!",cmRunwayCrunch:"Warning: cash crunch at week {n}",cmRunwayWeek:"W",cmRunwayStart:"Now",cmRunwayBalance:"Balance",cmRunwayVat:"Tax",cmRunwayIn:"In",cmRunwayOut:"Out",
 cmTonePrio1:"Urgent",cmTonePrio2:"Important",cmTonePrio3:"Bonus",
-onbTitle:"60 seconds to clarity",onbSub:"Here's how Arvo Flow works",onbStep1:"Upload your invoice export",onbStep1Desc:"CSV from QuickBooks, Xero, FreshBooks — or try with sample data",onbStep2:"Arvo analyzes in 5 seconds",onbStep2Desc:"Per-client reliability, 8-week cash projection, urgent risks",onbStep3:"Act — I write the messages for you",onbStep3Desc:"Ready-to-send reminders and early-pay offers, copy & paste",onbCTA:"Try with sample data",onbSkip:"I have my own file",onbDontShow:"Don't show again",
+onbTitle:"60 seconds to clarity",onbSub:"Here's how Arvo Flow works",onbStep1:"Upload your invoice export",onbStep1Desc:"CSV from QuickBooks, Xero, FreshBooks — or try with sample data",onbStep2:"Arvo analyzes in 30 seconds",onbStep2Desc:"Per-client reliability, 8-week cash projection, urgent risks",onbStep3:"Act — I write the messages for you",onbStep3Desc:"Ready-to-send reminders and early-pay offers, copy & paste",onbCTA:"Try with sample data",onbSkip:"I have my own file",onbDontShow:"Don't show again",
 fbTitle:"How did this feel?",fbSub:"Honest answers only — I can only learn from real signal",fbHot:"Spot on",fbOk:"Unsure",fbCold:"Not for me",fbPlaceholder:"What happened when you saw the analysis? What would make you actually use it?",fbSend:"Send to the maker",fbThanks:"Thank you — this means a lot.",fbEmailSubject:"Arvo feedback",
 impactTitle:"Arvo's Impact",impactSub:"How much value I've created for you",impactThisMonth:"This month",impactCapital:"Capital collected faster",impactDaysSaved:"days shorter payment cycle",impactTime:"hours saved",impactReminders:"reminders sent",impactVsBase:"vs. your normal payment cycle",impactWins:"Recent wins",impactWinReminder:"Reminder drove in",impactWinEarly:"Invoiced early",impactDaysFaster:"days faster",impactWeekRecap:"Weekly recap",impactRecapBody:"Last week I collected {amount} {days} days earlier than your normal cycle, and saved you {hours}h of admin.",impactSeeMore:"See all my wins",impactEmpty:"Haven't built value yet — coming soon!",impactROI:"ROI this month",impactROIBody:"For every dollar you pay me I deliver",
 trustTitle:"Trust Ladder",trustSub:"Choose how autonomously I can act",trustLevel1:"Always ask",trustLevel1Desc:"I prepare everything and you approve every action. Maximum control.",trustLevel2:"Auto-small",trustLevel2Desc:"Invoices under $1,000 to recurring customers are sent automatically. You get a notice.",trustLevel3:"Autopilot",trustLevel3Desc:"I handle all reminders myself, you can always undo. For when you trust me fully.",trustCurrent:"Current level",trustUnlockAt:"Unlock after {n} approved actions",trustActive:"Active",trustAutoSent:"Auto-sent",trustUndo:"Undo",trustAutoNote:"I just sent this automatically based on your level",
@@ -174,9 +174,9 @@ const ArvoLogo = ({size=24}) => (
 );
 
 export default function ArvoOS() {
-const [lang,setLang]=useState("en");
+const [lang,setLang]=useState(()=>{try{const n=navigator.language||"";return n.startsWith("sv")?"sv":"en"}catch(e){return "en"}});
 const [theme,setTheme]=useState("light");
-const [currency,setCurrency]=useState("USD");
+const [currency,setCurrency]=useState(()=>{try{return (navigator.language||"").startsWith("sv")?"SEK":"USD"}catch(e){return "USD"}});
 const [view,setView]=useState("heyarvo");
 const [sideOpen,setSideOpen]=useState(false);
 const [detail,setDetail]=useState(null);
@@ -960,13 +960,7 @@ const tots={Betald:0,Skickad:0,"Förfallen":0};invoices.forEach(inv=>{if(tots[in
 return (<div>
 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
 <div><h1 style={hd}>{L.invoicesTitle}</h1><p style={subS}>{invoices.length} {L.invoicesCount}</p></div>
-<div style={{display:"flex",gap:6}}>
-<button style={{...bSO,borderColor:T.accent,color:T.accent}} onClick={()=>setModal("scanInvoice")}>
-<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={T.accent} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-{lang==="sv"?"Skanna":"Scan"}
-</button>
 <button style={bSP} onClick={()=>setModal("newInvoice")}><Ic name="plus" size={14} color="#fff"/> {L.newItem}</button>
-</div>
 </div>
 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:18}}>{[{l:L.paidTotal,v:fmtMoney(tots.Betald),c:T.success,bc:T.success},{l:L.pending,v:fmtMoney(tots.Skickad),c:T.accent,bc:T.borderAccent},{l:L.overdueTotal,v:fmtMoney(tots["Förfallen"]),c:T.danger,bc:T.danger}].map((s,i)=>(<div key={i} style={{...sCard,borderColor:s.bc,padding:"12px 10px"}}><div style={{fontSize:10,color:T.textMuted,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>{s.l}</div><div style={{fontFamily:serif,fontSize:15,fontWeight:700,color:s.c}}>{s.v}</div></div>))}</div>
 <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>{fs.map(f=><button key={f.key} style={fB(iFilter===f.key)} onClick={()=>setIFilter(f.key)}>{f.label}</button>)}</div>
@@ -1030,7 +1024,7 @@ const ScanModal=()=>(
         <div style={{width:20,height:20,border:`2.5px solid ${T.accent}`,borderTopColor:"transparent",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>
         <span style={{fontSize:14,fontWeight:500,color:T.accent}}>{L.scanning}</span>
       </div>
-      <div style={{fontSize:12,color:T.textMuted}}>AI-powered by Claude</div>
+      <div style={{fontSize:12,color:T.textMuted}}>{lang==="sv"?"Analyserar…":"Analyzing…"}</div>
     </div>)}
     {scanState==="done"&&scanResult&&(<div>
       {scanPreview&&<img src={scanPreview} style={{width:"100%",maxHeight:160,objectFit:"contain",borderRadius:10,marginBottom:16}} alt="invoice"/>}
@@ -1655,7 +1649,7 @@ return (<div key={t.lvl} onClick={()=>unlocked&&setArvoTrust(t.lvl)} style={{...
 <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",marginBottom:10,padding:"0 4px"}}>
 {m.role==="arvo"&&<div style={{...avS(32),marginRight:8,marginTop:2,background:T.accentLight,fontSize:10}}><ArvoLogo size={18}/></div>}
 <div style={{maxWidth:"85%",padding:"12px 16px",borderRadius:m.role==="user"?"16px 16px 4px 16px":"16px 16px 16px 4px",background:m.role==="user"?T.accentGrad:m.type==="cfo"?T.warnLight:T.surfaceAlt,color:m.role==="user"?"#fff":T.text,fontSize:14,lineHeight:1.6,whiteSpace:"pre-line",boxShadow:T.shadow}}>
-{m.role==="arvo"&&m.type&&<div style={{display:"inline-flex",alignItems:"center",gap:6,marginBottom:8,padding:"4px 10px",borderRadius:8,background:(actionColor[m.type]||T.accent)+"18",fontSize:11,fontWeight:600,color:actionColor[m.type]||T.accent}}><Ic name={actionIcon[m.type]||"zap"} size={12} color={actionColor[m.type]||T.accent}/> {m.type==="cfo"?(lang==="sv"?"AI CFO":"AI CFO"):m.type.replace("_"," ")}</div>}
+{m.role==="arvo"&&m.type&&<div style={{display:"inline-flex",alignItems:"center",gap:6,marginBottom:8,padding:"4px 10px",borderRadius:8,background:(actionColor[m.type]||T.accent)+"18",fontSize:11,fontWeight:600,color:actionColor[m.type]||T.accent}}><Ic name={actionIcon[m.type]||"zap"} size={12} color={actionColor[m.type]||T.accent}/> {m.type==="cfo"?L.cfoCashflow:m.type.replace("_"," ")}</div>}
 <div>{m.text}</div>
 {/* Action buttons for CFO suggestions */}
 {m.actions&&m.actions.length>0&&(
@@ -1734,7 +1728,7 @@ return (
 
   <header style={{position:"fixed",top:0,left:0,right:0,height:58,background:T.surface,borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",padding:"0 18px",gap:12,zIndex:100,boxShadow:"0 1px 8px rgba(0,0,0,0.03)"}}>
     <button style={{background:"none",border:"none",cursor:"pointer",padding:6,color:T.textMuted,borderRadius:8}} onClick={()=>setSideOpen(!sideOpen)}><Ic name={sideOpen?"x":"menu"} size={22}/></button>
-    <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}><ArvoLogo size={26}/><span style={{fontFamily:serif,fontSize:21,fontWeight:800,color:T.text,letterSpacing:"-0.03em"}}>Arvo</span></div>
+    <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}><ArvoLogo size={26}/><span style={{fontFamily:serif,fontSize:21,fontWeight:800,color:T.text,letterSpacing:"-0.03em"}}>Arvo Flow</span></div>
     <div style={{display:"flex",gap:5,marginRight:6}}><Flag code="en" active={lang==="en"} onClick={()=>switchLang("en")}/><Flag code="sv" active={lang==="sv"} onClick={()=>switchLang("sv")}/></div>
     <div style={{display:"flex",gap:6}}>{Object.entries(TDOTS).map(([k,c])=>(<button key={k} onClick={()=>setTheme(k)} style={{width:20,height:20,borderRadius:"50%",background:c,border:theme===k?`2.5px solid ${T.text}`:"2px solid transparent",cursor:"pointer",transform:theme===k?"scale(1.15)":"scale(1)",transition:"transform 0.2s",boxShadow:theme===k?`0 0 0 2px ${T.bg},0 0 0 4px ${c}`:"none"}} title={lang==="sv"?THEMES[k].name:THEMES[k].nameEn}/>))}</div>
   </header>
@@ -1750,7 +1744,7 @@ return (
       <div style={{marginBottom:16}}><div style={{fontSize:12,color:T.textMuted,marginBottom:8,fontWeight:500}}>{L.autopilot}</div><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"4px 0"}}><span style={{fontSize:13,color:T.textSub}}>{L.autoReminders}</span><Toggle on={autoReminders} onToggle={()=>setAutoReminders(!autoReminders)}/></div></div>
       <div><div style={{fontSize:12,color:T.textMuted,marginBottom:10,fontWeight:500}}>{L.dashboardCards}</div>{dashToggles.map(it=>(<div key={it.key} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 0"}}><span style={{fontSize:13,color:T.textSub}}>{it.label}</span><Toggle on={dash[it.key]} onToggle={()=>setDash(prev=>({...prev,[it.key]:!prev[it.key]}))}/></div>))}</div>
     </div>
-    <div style={{padding:"16px 20px",borderTop:`1px solid ${T.border}`,marginTop:8}}><div style={{fontSize:11,color:T.textFaint,lineHeight:1.5}}>Arvo AI CFO<br/>{lang==="sv"?"Ser kassakrisen innan du gör det.":"Sees the cash crunch before you do."}</div></div>
+    <div style={{padding:"16px 20px",borderTop:`1px solid ${T.border}`,marginTop:8}}><div style={{fontSize:11,color:T.textFaint,lineHeight:1.5}}>Arvo Flow<br/>{L.heyArvoTagline}</div></div>
   </nav>
 
   <main style={{paddingTop:76,paddingBottom:88,paddingLeft:20,paddingRight:20,maxWidth:640,margin:"0 auto"}}>
