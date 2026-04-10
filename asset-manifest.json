@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/arvo-os/static/js/main.4109ec7c.js",
+    "main.js": "/arvo-os/static/js/main.ec3d28e9.js",
     "index.html": "/arvo-os/index.html",
-    "main.4109ec7c.js.map": "/arvo-os/static/js/main.4109ec7c.js.map"
+    "main.ec3d28e9.js.map": "/arvo-os/static/js/main.ec3d28e9.js.map"
   },
   "entrypoints": [
-    "static/js/main.4109ec7c.js"
+    "static/js/main.ec3d28e9.js"
   ]
 }
