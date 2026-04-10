@@ -69,7 +69,7 @@ Då vet du exakt vilken kanal varje feedback kom från.
 > → En enda kund stod för 52% av min omsättning (koncentrationsrisk jag ignorerat i ett år).
 > → Om jag inte drev in något snabbare tog kassan slut i vecka 4 innan momsen — något jag aldrig hade sett med vanlig bokföring.
 >
-> Jag döpte det till Arvo. Det är en AI-CFO för ensamföretagare som:
+> Jag döpte det till Arvo Flow. Det frigör pengarna som redan är dina:
 > ✓ Visar din 8-veckors kassarunway med krasch-datum
 > ✓ Poängsätter varje kund på pålitlighet
 > ✓ Skriver påminnelserna åt dig med rätt ton (bestämd för kroniska, mjuk för första gången)
