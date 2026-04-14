@@ -26,7 +26,7 @@
 **Gör så här (5 min):**
 
 1. Gå till https://clarity.microsoft.com och logga in med Microsoft-konto (engångsgrej)
-2. Klicka "New project" → namn: `arvo-os` → URL: `https://mettan15079.github.io/arvo-os/`
+2. Klicka "New project" → namn: `arvo-os` → URL: `https://arvo-flow.github.io/`
 3. Kopiera ditt **Project ID** (ser ut som `abc123xyz`)
 4. Öppna `public/index.html` i din editor
 5. Hitta raden `"PASTE_YOUR_ID_HERE"` och byt ut mot ditt ID på båda ställena
@@ -55,7 +55,7 @@
 6. **VIKTIGT — Advanced options:**
    - ✅ "Allow customers to provide their email" (obligatorisk)
    - ✅ "Automatic refunds" aktiv
-   - Success URL: `https://mettan15079.github.io/arvo-os/?reserved=1`
+   - Success URL: `https://arvo-flow.github.io/?reserved=1`
 7. Spara. Kopiera länken (ser ut som `https://buy.stripe.com/xxx`)
 8. Öppna `src/App.js`, hitta raden `const STRIPE_RESERVE_URL = "";` (rad 9)
 9. Klistra in länken: `const STRIPE_RESERVE_URL = "https://buy.stripe.com/xxx";`
@@ -111,7 +111,7 @@ Se [community-posts.md](./community-posts.md). Du har 6 färdiga posts i 5 kanal
 1. Meta Ads Manager → ny kampanj → **Traffic**
 2. Målgrupp: Sverige, 28–55 år, jobbtitel ∈ {Freelancer, Egen företagare, Konsult, Self-employed, Founder}, intresse ∈ {Fortnox, Visma, bokföring}
 3. Budget: $10/dag i 5 dagar = $50
-4. Creative: ta en screenshot av runway-chartet i appen (det obehagliga ögonblicket där krasch-linjen dyker) + headline: *"Jag byggde ett verktyg som säger exakt när kassan tar slut. Prova din CSV på 30 sek."* + URL `https://mettan15079.github.io/arvo-os/?t=metaads`
+4. Creative: ta en screenshot av runway-chartet i appen (det obehagliga ögonblicket där krasch-linjen dyker) + headline: *"Jag byggde ett verktyg som säger exakt när kassan tar slut. Prova din CSV på 30 sek."* + URL `https://arvo-flow.github.io/?t=metaads`
 5. Klart. Meta skickar trafiken, Clarity spelar in, Stripe loggar betalningar.
 
 **Förväntat utfall på $50:** ~200 klick, 40 uploads, 8 🔥-ratings, 0–2 betalningar. Om du får **1 betalning från en total främling från annons** — produkten är valideringsgiltigt. Det är hög signal.
