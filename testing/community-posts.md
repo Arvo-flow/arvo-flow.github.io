@@ -1,11 +1,11 @@
 # Community Posts — kopiera, klistra, skicka
 
 **Användning:** Byt ut `{LÄNK}` mot en unik tracker-länk per plattform, t.ex:
-- Reddit: `https://mettan15079.github.io/arvo-os/?t=reddit`
-- LinkedIn: `https://mettan15079.github.io/arvo-os/?t=linkedin`
-- FB: `https://mettan15079.github.io/arvo-os/?t=fb`
-- IH: `https://mettan15079.github.io/arvo-os/?t=ih`
-- Twitter: `https://mettan15079.github.io/arvo-os/?t=twitter`
+- Reddit: `https://arvo-flow.github.io/?t=reddit`
+- LinkedIn: `https://arvo-flow.github.io/?t=linkedin`
+- FB: `https://arvo-flow.github.io/?t=fb`
+- IH: `https://arvo-flow.github.io/?t=ih`
+- Twitter: `https://arvo-flow.github.io/?t=twitter`
 
 Då vet du exakt vilken kanal varje feedback kom från.
 
