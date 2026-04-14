@@ -18,7 +18,7 @@ Skriv personligen till 15 personer i ditt nätverk. **Inte en listmejl. Personli
 
 > Hej {förnamn}, hoppas allt är bra. Jag vet att du driver {verksamhet} — jag bygger ett verktyg som tar in din CSV-fakturaexport och visar på 5 sekunder var dina pengar är låsta + vem som betalar sent. Ingen inloggning, allt körs lokalt i webbläsaren.
 >
-> Skulle du kunna prova den med din egen data i 5 min och säga vad du tycker? Länk: https://mettan15079.github.io/arvo-os/?t={testerkod}
+> Skulle du kunna prova den med din egen data i 5 min och säga vad du tycker? Länk: https://arvo-flow.github.io/?t={testerkod}
 >
 > Om du blir nyfiken bjuder jag på kaffe och 20 min där jag bara tittar på när du använder den.
 
