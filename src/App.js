@@ -62,6 +62,7 @@ cmRunwayTitle:"Kassaprognos — 8 veckor framåt",cmRunwaySub:"Baserad på sanno
 cmTonePrio1:"Brådskande",cmTonePrio2:"Viktigt",cmTonePrio3:"Bonus",
 onbTitle:"60 sekunder till klarhet",onbSub:"Så fungerar Arvo Flow",onbStep1:"Ladda upp din fakturaexport",onbStep1Desc:"CSV från Fortnox, Visma, Bokio — eller testa med exempeldata",onbStep2:"Arvo analyserar på 30 sekunder",onbStep2Desc:"Pålitlighet per kund, kassaprognos 8 veckor framåt, akuta risker",onbStep3:"Agera — jag skriver åt dig",onbStep3Desc:"Färdiga påminnelser och rabatterbjudanden att kopiera & skicka",onbCTA:"Kör exempeldata nu",onbSkip:"Jag har egen fil",onbDontShow:"Visa inte igen",
 fbTitle:"Hur kändes det här?",fbSub:"Ärligt — jag lär mig bara av tydlig feedback",fbHot:"Klockrent",fbOk:"Osäker",fbCold:"Inte för mig",fbPlaceholder:"Vad hände när du såg analysen? Vad skulle få dig att använda det?",fbSend:"Skicka till skaparen",fbThanks:"Tack — det betyder mycket.",fbEmailSubject:"Arvo-feedback",
+nextStepTitle:"Nästa steg — Arvo följer upp åt dig",nextStepSub:"Välj ett eller flera. Jag ser till att du inte behöver komma ihåg.",nextEmail:"Mejla rapporten till mig",nextEmailSub:"Hela analysen till din inbox — läs i lugn och ro",nextRemind:"Påminn mig om 7 dagar",nextRemindSub:"Kalenderhändelse som säger till när du bör köra en ny analys",nextCritical:"Agera på din mest kritiska kund",nextCriticalSub:"Bara denna enda fakturan kan vända kassan",nextDone:"Klart ✓",nextReportSubj:"Din Arvo-rapport",nextReportIntro:"Här är din 8-veckors likviditetsbild:",nextIcsTitle:"Kör Arvo-analys igen",nextIcsDesc:"Exportera din reskontra och kör https://arvo-flow.github.io/ för att se hur kassan rört sig den senaste veckan.",criticalBadge:"KRITISK",nextCriticalHeader:"Mest kritisk just nu",nextCriticalAction:"Skicka påminnelse nu",
 impactTitle:"Arvos påverkan",impactSub:"Så här mycket värde har jag skapat åt dig",impactThisMonth:"Denna månad",impactCapital:"Kapital drivet in snabbare",impactDaysSaved:"dagar kortare betaltid",impactTime:"timmar sparade",impactReminders:"påminnelser skickade",impactVsBase:"jämfört med din vanliga betalcykel",impactWins:"Senaste vinsterna",impactWinReminder:"Påminnelse drev in",impactWinEarly:"Fakturerades tidigt",impactDaysFaster:"dagar snabbare",impactWeekRecap:"Veckans sammanfattning",impactRecapBody:"Förra veckan drev jag in {amount} {days} dagar tidigare än din vanliga cykel, och sparade dig {hours}h administration.",impactSeeMore:"Se alla mina vinster",impactEmpty:"Jag har inte hunnit skapa värde än — det kommer snart!",impactROI:"ROI denna månad",impactROIBody:"För varje krona du betalar mig levererar jag",
 trustTitle:"Trust Ladder",trustSub:"Välj hur självständigt jag får agera",trustLevel1:"Fråga alltid",trustLevel1Desc:"Jag förbereder allt och du godkänner varje åtgärd. Maximal kontroll.",trustLevel2:"Auto-små",trustLevel2Desc:"Fakturor under 10 000 kr till återkommande kunder skickas automatiskt. Du får notis.",trustLevel3:"Autopilot",trustLevel3Desc:"Jag sköter alla påminnelser själv, du kan alltid ångra. För dig som litar på mig fullt ut.",trustCurrent:"Nuvarande nivå",trustUnlockAt:"Lås upp efter {n} godkända åtgärder",trustActive:"Aktiv",trustAutoSent:"Auto-skickat",trustUndo:"Ångra",trustAutoNote:"Jag skickade just detta automatiskt baserat på din nivå",
 },
@@ -118,6 +119,7 @@ cmRunwayTitle:"Cash runway — 8 weeks ahead",cmRunwaySub:"Based on probability-
 cmTonePrio1:"Urgent",cmTonePrio2:"Important",cmTonePrio3:"Bonus",
 onbTitle:"60 seconds to clarity",onbSub:"Here's how Arvo Flow works",onbStep1:"Upload your invoice export",onbStep1Desc:"CSV from QuickBooks, Xero, FreshBooks — or try with sample data",onbStep2:"Arvo analyzes in 30 seconds",onbStep2Desc:"Per-client reliability, 8-week cash projection, urgent risks",onbStep3:"Act — I write the messages for you",onbStep3Desc:"Ready-to-send reminders and early-pay offers, copy & paste",onbCTA:"Try with sample data",onbSkip:"I have my own file",onbDontShow:"Don't show again",
 fbTitle:"How did this feel?",fbSub:"Honest answers only — I can only learn from real signal",fbHot:"Spot on",fbOk:"Unsure",fbCold:"Not for me",fbPlaceholder:"What happened when you saw the analysis? What would make you actually use it?",fbSend:"Send to the maker",fbThanks:"Thank you — this means a lot.",fbEmailSubject:"Arvo feedback",
+nextStepTitle:"Next step — Arvo follows up for you",nextStepSub:"Pick one or more. I'll make sure you don't have to remember.",nextEmail:"Email the report to me",nextEmailSub:"Full analysis in your inbox — read it when you're ready",nextRemind:"Remind me in 7 days",nextRemindSub:"A calendar event telling you to run a fresh analysis",nextCritical:"Act on your most critical client",nextCriticalSub:"This one invoice alone can turn your cash around",nextDone:"Done ✓",nextReportSubj:"Your Arvo report",nextReportIntro:"Here is your 8-week liquidity snapshot:",nextIcsTitle:"Run Arvo analysis again",nextIcsDesc:"Export your invoice ledger and run https://arvo-flow.github.io/ to see how cash shifted over the week.",criticalBadge:"CRITICAL",nextCriticalHeader:"Most critical right now",nextCriticalAction:"Send reminder now",
 impactTitle:"Arvo's Impact",impactSub:"How much value I've created for you",impactThisMonth:"This month",impactCapital:"Capital collected faster",impactDaysSaved:"days shorter payment cycle",impactTime:"hours saved",impactReminders:"reminders sent",impactVsBase:"vs. your normal payment cycle",impactWins:"Recent wins",impactWinReminder:"Reminder drove in",impactWinEarly:"Invoiced early",impactDaysFaster:"days faster",impactWeekRecap:"Weekly recap",impactRecapBody:"Last week I collected {amount} {days} days earlier than your normal cycle, and saved you {hours}h of admin.",impactSeeMore:"See all my wins",impactEmpty:"Haven't built value yet — coming soon!",impactROI:"ROI this month",impactROIBody:"For every dollar you pay me I deliver",
 trustTitle:"Trust Ladder",trustSub:"Choose how autonomously I can act",trustLevel1:"Always ask",trustLevel1Desc:"I prepare everything and you approve every action. Maximum control.",trustLevel2:"Auto-small",trustLevel2Desc:"Invoices under $1,000 to recurring customers are sent automatically. You get a notice.",trustLevel3:"Autopilot",trustLevel3Desc:"I handle all reminders myself, you can always undo. For when you trust me fully.",trustCurrent:"Current level",trustUnlockAt:"Unlock after {n} approved actions",trustActive:"Active",trustAutoSent:"Auto-sent",trustUndo:"Undo",trustAutoNote:"I just sent this automatically based on your level",
 },
@@ -207,6 +209,7 @@ const [testerId]=useState(()=>{try{const u=new URLSearchParams(window.location.s
 const [feedbackState,setFeedbackState]=useState("idle"); // idle|rated|sent
 const [feedbackRating,setFeedbackRating]=useState(null);
 const [feedbackText,setFeedbackText]=useState("");
+const [nextStepDone,setNextStepDone]=useState({email:false,remind:false,critical:false});
 const [dash,setDash]=useState({pipeline:true,won:true,awaiting:true,weekHours:true,toDo:true,recentInv:true,activeProj:true,insights:true,forecast:true,health:true,digest:true});
 const [scanState,setScanState]=useState("idle");
 const [scanResult,setScanResult]=useState(null);
@@ -683,6 +686,91 @@ const resetConcierge=()=>{
   setConciergeError(null);
   setPriceVote(null);
   setActionClickCount(0);
+  setNextStepDone({email:false,remind:false,critical:false});
+};
+
+// ── PROACTIVE NEXT-STEP HELPERS ──
+const buildReportText=()=>{
+  const a=conciergeAnalysis;
+  if(!a)return "";
+  const lines=[];
+  lines.push(L.nextReportIntro);
+  lines.push("");
+  lines.push(`${L.cmOutstanding}: ${fmtMoney(a.outstandingAmt)}`);
+  lines.push(`${L.cmOverdue}: ${fmtMoney(a.overdueAmt)}`);
+  lines.push(`${L.cmAvgDso}: ${a.avgDso} ${L.cmDays}`);
+  if(a.crunchWeek){
+    lines.push("");
+    lines.push(`⚠ ${L.cmRunwayCrunch.replace("{n}",a.crunchWeek.week)}`);
+  }else{
+    lines.push("");
+    lines.push(`✓ ${L.cmRunwaySafe}`);
+  }
+  if(a.clientVelocity&&a.clientVelocity.length>0){
+    lines.push("");
+    lines.push(L.cmVelocityTitle+":");
+    a.clientVelocity.slice(0,5).forEach(c=>{
+      lines.push(`• ${c.client}: ${fmtMoney(c.totalAmt)} — ${c.reliability}%`);
+    });
+  }
+  if(a.actions&&a.actions.length>0){
+    lines.push("");
+    lines.push(L.cmActions+":");
+    a.actions.forEach(act=>{
+      lines.push(`• ${act.client||""} — ${fmtMoney(act.amount||0)}`);
+    });
+  }
+  lines.push("");
+  lines.push("—");
+  lines.push("https://arvo-flow.github.io/");
+  return lines.join("\n");
+};
+
+const handleEmailReport=()=>{
+  const body=buildReportText();
+  const mailto=`mailto:?subject=${encodeURIComponent(L.nextReportSubj)}&body=${encodeURIComponent(body)}`;
+  try{window.location.href=mailto}catch(e){}
+  setNextStepDone(p=>({...p,email:true}));
+};
+
+const handleRemind7Days=()=>{
+  const pad=n=>String(n).padStart(2,"0");
+  const fmt=d=>`${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+  const now=new Date();
+  const start=new Date(now.getTime()+7*24*60*60*1000);
+  start.setHours(9,0,0,0);
+  const end=new Date(start.getTime()+15*60*1000);
+  const uid=`arvo-${Date.now()}@arvo-flow.github.io`;
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Arvo Flow//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH","BEGIN:VEVENT",`UID:${uid}`,`DTSTAMP:${fmt(now)}`,`DTSTART:${fmt(start)}`,`DTEND:${fmt(end)}`,`SUMMARY:${L.nextIcsTitle}`,`DESCRIPTION:${L.nextIcsDesc}`,`URL:https://arvo-flow.github.io/`,"BEGIN:VALARM","TRIGGER:-PT0M","ACTION:DISPLAY",`DESCRIPTION:${L.nextIcsTitle}`,"END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+  try{
+    const blob=new Blob([ics],{type:"text/calendar;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download="arvo-reminder.ics";
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{try{document.body.removeChild(a);URL.revokeObjectURL(url)}catch(e){}},200);
+  }catch(e){}
+  setNextStepDone(p=>({...p,remind:true}));
+};
+
+const getCriticalClient=()=>{
+  const a=conciergeAnalysis;
+  if(!a||!a.clientVelocity||a.clientVelocity.length===0)return null;
+  const bad=a.clientVelocity.filter(c=>c.tier==="bad"&&c.outstandingAmt>0);
+  if(bad.length>0)return bad.sort((x,y)=>y.outstandingAmt-x.outstandingAmt)[0];
+  const ok=a.clientVelocity.filter(c=>c.outstandingAmt>0);
+  if(ok.length>0)return ok.sort((x,y)=>y.outstandingAmt-x.outstandingAmt)[0];
+  return null;
+};
+
+const handleCriticalAction=()=>{
+  setActionClickCount(c=>c+1);
+  setNextStepDone(p=>({...p,critical:true}));
+  try{
+    const log=JSON.parse(localStorage.getItem("arvo_concierge_log")||"[]");
+    log.push({ts:Date.now(),type:"critical-action",tester:testerId||"anonymous"});
+    localStorage.setItem("arvo_concierge_log",JSON.stringify(log));
+  }catch(e){}
 };
 
 const dismissOnboarding=(runDemo=false)=>{
@@ -1453,14 +1541,18 @@ return (<div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,paddi
 <div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:10,paddingLeft:4}}>{L.cmVelocityTitle}</div>
 <div style={{...card,padding:0,overflow:"hidden",marginBottom:14}}>
 <div style={{padding:"10px 16px 6px",borderBottom:`1px solid ${T.border}`,fontSize:10,color:T.textFaint,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em"}}>{L.cmVelocitySub}</div>
-{conciergeAnalysis.clientVelocity.slice(0,6).map((c,i)=>{
+{(()=>{const cc=getCriticalClient();return conciergeAnalysis.clientVelocity.slice(0,6).map((c,i)=>{
   const tierCol=c.tier==="good"?T.success:c.tier==="ok"?T.warn:T.danger;
   const tierLbl=c.tier==="good"?L.cmVelocityGood:c.tier==="ok"?L.cmVelocityOk:L.cmVelocityBad;
   const last=i===Math.min(conciergeAnalysis.clientVelocity.length,6)-1;
-  return (<div key={c.client} style={{padding:"12px 16px",borderBottom:last?"none":`1px solid ${T.border}`}}>
+  const isCritical=cc&&cc.client===c.client;
+  return (<div key={c.client} style={{padding:"12px 16px",borderBottom:last?"none":`1px solid ${T.border}`,background:isCritical?T.dangerLight:"transparent",borderLeft:isCritical?`3px solid ${T.danger}`:"none"}}>
     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:7}}>
       <div style={{flex:1,minWidth:0}}>
-        <div style={{fontWeight:600,fontSize:13,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.client}</div>
+        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+          <div style={{fontWeight:600,fontSize:13,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.client}</div>
+          {isCritical&&<div style={{padding:"2px 6px",borderRadius:100,fontSize:8,fontWeight:800,color:"#fff",background:T.danger,letterSpacing:"0.06em"}}>{L.criticalBadge}</div>}
+        </div>
         <div style={{fontSize:10,color:T.textMuted,marginTop:2}}>{fmtMoney(c.totalAmt)} · {c.total} {L.cmVelocityInv}{c.avgDaysLate>0?` · ⌀ ${c.avgDaysLate} ${L.cmVelocityLate}`:""}</div>
       </div>
       <div style={{padding:"3px 9px",borderRadius:100,fontSize:10,fontWeight:700,color:tierCol,background:tierCol+"18",letterSpacing:"0.02em",textTransform:"uppercase"}}>{tierLbl}</div>
@@ -1473,7 +1565,7 @@ return (<div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,paddi
       <div style={{fontSize:11,fontWeight:700,color:tierCol,minWidth:32,textAlign:"right"}}>{c.reliability}%</div>
     </div>
   </div>);
-})}
+})})()}
 </div>
 </>)}
 
@@ -1502,6 +1594,50 @@ return (<div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,paddi
 </div>);
 })}
 </>)}
+
+{/* ── NÄSTA STEG — proactive follow-up block ── */}
+{(()=>{
+  const critical=getCriticalClient();
+  return (<>
+    <div style={{fontSize:11,color:T.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em",marginTop:16,marginBottom:10,paddingLeft:4}}>{L.nextStepTitle}</div>
+    <div style={{...card,padding:"14px 16px",marginBottom:12}}>
+      <div style={{fontSize:12,color:T.textMuted,lineHeight:1.5,marginBottom:12}}>{L.nextStepSub}</div>
+      {/* C — Critical client highlight */}
+      {critical&&(<div style={{padding:"12px 14px",background:T.dangerLight,borderRadius:10,border:`1.5px solid ${T.danger}33`,marginBottom:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+          <div style={{padding:"2px 7px",borderRadius:100,fontSize:9,fontWeight:800,color:"#fff",background:T.danger,letterSpacing:"0.06em"}}>{L.criticalBadge}</div>
+          <div style={{fontSize:11,color:T.danger,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em"}}>{L.nextCriticalHeader}</div>
+        </div>
+        <div style={{fontFamily:serif,fontSize:17,fontWeight:600,color:T.text,letterSpacing:"-0.01em",marginBottom:2}}>{critical.client}</div>
+        <div style={{fontSize:12,color:T.textMuted,marginBottom:10}}>{fmtMoney(critical.outstandingAmt||critical.totalAmt)} · {critical.reliability}% {L.cmVelocityRel.toLowerCase()}{critical.avgDaysLate>0?` · ${critical.avgDaysLate} ${L.cmVelocityLate}`:""}</div>
+        <div style={{fontSize:12,color:T.text,lineHeight:1.5,marginBottom:10}}>{L.nextCriticalSub}</div>
+        <button onClick={handleCriticalAction} disabled={nextStepDone.critical} style={{width:"100%",padding:"11px 14px",background:nextStepDone.critical?T.success:T.danger,color:"#fff",border:"none",borderRadius:10,fontSize:13,fontWeight:700,cursor:nextStepDone.critical?"default":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6,opacity:nextStepDone.critical?0.9:1}}>
+          <Ic name={nextStepDone.critical?"check":"zap"} size={14} color="#fff"/>{nextStepDone.critical?L.nextDone:L.nextCriticalAction}
+        </button>
+      </div>)}
+      {/* A — Email report */}
+      <button onClick={handleEmailReport} disabled={nextStepDone.email} style={{width:"100%",padding:"12px 14px",background:nextStepDone.email?T.successLight:T.cardBg,color:T.text,border:`1.5px solid ${nextStepDone.email?T.success:T.border}`,borderRadius:10,fontSize:13,fontWeight:600,cursor:nextStepDone.email?"default":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,marginBottom:8,textAlign:"left"}}>
+        <div style={{width:32,height:32,borderRadius:8,background:nextStepDone.email?T.success+"22":T.accentLight,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <Ic name={nextStepDone.email?"check":"mail"} size={15} color={nextStepDone.email?T.success:T.accent}/>
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13,fontWeight:700,color:T.text}}>{nextStepDone.email?L.nextDone:L.nextEmail}</div>
+          <div style={{fontSize:11,color:T.textMuted,marginTop:1,fontWeight:500}}>{L.nextEmailSub}</div>
+        </div>
+      </button>
+      {/* B — Calendar reminder */}
+      <button onClick={handleRemind7Days} disabled={nextStepDone.remind} style={{width:"100%",padding:"12px 14px",background:nextStepDone.remind?T.successLight:T.cardBg,color:T.text,border:`1.5px solid ${nextStepDone.remind?T.success:T.border}`,borderRadius:10,fontSize:13,fontWeight:600,cursor:nextStepDone.remind?"default":"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+        <div style={{width:32,height:32,borderRadius:8,background:nextStepDone.remind?T.success+"22":T.accentLight,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <Ic name={nextStepDone.remind?"check":"calendar"} size={15} color={nextStepDone.remind?T.success:T.accent}/>
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13,fontWeight:700,color:T.text}}>{nextStepDone.remind?L.nextDone:L.nextRemind}</div>
+          <div style={{fontSize:11,color:T.textMuted,marginTop:1,fontWeight:500}}>{L.nextRemindSub}</div>
+        </div>
+      </button>
+    </div>
+  </>);
+})()}
 
 {/* ── FEEDBACK WIDGET — validation signal capture ── */}
 <div style={{...card,padding:"18px 20px",marginTop:18,marginBottom:10,background:T.accentLight,borderColor:T.borderAccent}}>
