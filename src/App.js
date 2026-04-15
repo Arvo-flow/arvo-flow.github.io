@@ -7,6 +7,8 @@ const FOUNDER_EMAIL = "arvoflow@gmail.com";
 //    Sätt den som "återbetalbar reservation". Klistra in URL:en nedan.
 //    Lämna tom för att visa gamla price-polljen istället.
 const STRIPE_RESERVE_URL = "";
+// Optional — paste a Payment Link for the recurring 99 kr/mån Pro subscription
+const STRIPE_PRO_URL = "";
 
 const LANG = {
 sv: {
@@ -47,10 +49,11 @@ showInsights:"Insikter",showForecast:"Prognos",showHealth:"Hälsopoäng",showWee
 showPipeline:"Pipeline",showWon:"Vunnet",showAwaiting:"Väntar betalning",
 showToDo:"Att göra",showRecentInv:"Senaste fakturor",showActiveProj:"Aktiva projekt",showDigest:"Veckosammanfattning",
 scanInvoice:"Skanna faktura",scanTitle:"Skanna in en faktura",scanDesc:"Ta ett foto eller ladda upp en bild av fakturan. AI:n extraherar kund, belopp och datum automatiskt.",scanning:"Analyserar faktura…",scanSuccess:"Faktura tolkad!",scanUpload:"Ladda upp bild",scanCamera:"Ta foto",extractedData:"Extraherad data",confirm:"Bekräfta",scanError:"Kunde inte tolka fakturan. Försök igen.",
-heyArvo:"Arvo Flow",heyArvoTagline:"Frigör pengarna som redan är dina.",heyArvoSub:"Se hela din kassa 8 veckor framåt — exakt när pengarna landar, från vem, och hur mycket lön du tryggt kan ta ut.",heyArvoPlaceholder:"Skriv t.ex. 'Jobbade 3h med design för Karlsson'…",heyArvoListening:"Lyssnar…",heyArvoThinking:"Tänker…",heyArvoTapMic:"Tryck på mikrofonen och berätta",heyArvoWelcome:"Hej! Jag är Arvo. Ladda upp dina fakturor så visar jag dig exakt var din kassa står och vad du behöver göra nu.",heyArvoTimeLogged:"Tidsloggning sparad",heyArvoContactCreated:"Ny kontakt skapad",heyArvoInvoiceCreated:"Fakturautkast skapat",heyArvoExpenseLogged:"Utgift registrerad",heyArvoProjectUpdated:"Projekt uppdaterat",heyArvoNoMic:"Din webbläsare stöder inte röstinmatning",heyArvoCantParse:"Jag förstod inte riktigt. Kan du formulera om?",
+heyArvo:"Arvo Flow",heyArvoTagline:"Vet exakt vilken vecka du kan ta ut lön.",heyArvoSub:"Ladda upp din reskontra. Arvo räknar ut på 30 sekunder exakt hur mycket lön du tryggt kan ta ut denna månad — och vilka fakturor som blockerar resten.",heyArvoPlaceholder:"Skriv t.ex. 'Jobbade 3h med design för Karlsson'…",heyArvoListening:"Lyssnar…",heyArvoThinking:"Tänker…",heyArvoTapMic:"Tryck på mikrofonen och berätta",heyArvoWelcome:"Hej! Jag är Arvo. Ladda upp dina fakturor så visar jag dig exakt var din kassa står och vad du behöver göra nu.",heyArvoTimeLogged:"Tidsloggning sparad",heyArvoContactCreated:"Ny kontakt skapad",heyArvoInvoiceCreated:"Fakturautkast skapat",heyArvoExpenseLogged:"Utgift registrerad",heyArvoProjectUpdated:"Projekt uppdaterat",heyArvoNoMic:"Din webbläsare stöder inte röstinmatning",heyArvoCantParse:"Jag förstod inte riktigt. Kan du formulera om?",
 cfoCashflow:"Kassaflöde",cfoBalance:"Saldo idag",cfoProjected:"Beräknat saldo",cfoVatDue:"Moms att betala",cfoIncoming:"Förväntat in",cfoOutgoing:"Beräknat ut",cfoDaysUntil:"dagar kvar",cfoWarning:"Likviditetsvarning",cfoAction:"Föreslagna åtgärder",cfoSendReminder:"Skicka påminnelse",cfoOfferDiscount:"Erbjud snabbrabatt",cfoSkip:"Hoppa över",cfoApprove:"Godkänn",cfoSent:"Skickat!",cfoReminderSent:"Påminnelse skickad till",cfoDiscountOffered:"Rabatterbjudande skickat till",cfoMonitoring:"Jag bevakar och meddelar dig när de betalar.",cfoCrisisNone:"Allt ser bra ut! Inga likviditetsproblem i sikte.",cfoHeadsUp:"Heads up",cfoBasedOn:"Baserat på dina snittkostnader",cfoNeed:"behöver du",cfoBy:"senast den",cfoYouHave:"Du har",cfoUnpaid:"obetalda fakturor på totalt",cfoSuggest:"Vill du att jag:",
 tabChat:"Chatt",tabAnalysis:"Analys",tabImpact:"Värde",tabTrust:"Autonomi",
-cmTitle:"Se hela din kassa 8 veckor framåt",cmSub:"Ladda upp din fakturaexport. På 30 sekunder ser du exakt när pengarna landar, från vem, och hur mycket lön du tryggt kan ta ut.",cmGdpr:"Din data analyseras direkt i webbläsaren och lämnar aldrig din enhet. Inget lagras på server.",cmDrop:"Dra in din CSV-fil här",cmOr:"eller",cmChoose:"Välj fil från dator",cmDemo:"Testa med exempeldata",cmFormat:"CSV-export från Fortnox, Visma, Bokio m.fl. Kolumner: kund, belopp, datum, status",cmAnalyzing:"Arvo analyserar din data…",cmAnalyzingStep1:"Läser fakturor",cmAnalyzingStep2:"Hittar mönster",cmAnalyzingStep3:"Beräknar risker",cmAnalyzingStep4:"Formulerar åtgärder",
+cmTitle:"Kassaflödes-Audit — hur mycket lön kan du tryggt ta ut?",cmSub:"Ladda upp din reskontra. På 30 sekunder vet du exakt hur mycket lön du kan ta ut denna månad — och vilka fakturor som blockerar resten.",cmGdpr:"Din data analyseras direkt i webbläsaren och lämnar aldrig din enhet. Inget lagras på server.",cmDrop:"Släpp din CSV här — börja din audit",cmOr:"eller",cmChoose:"Välj fil från datorn",cmDemo:"Testa med exempeldata",cmFormat:"CSV-export från Fortnox, Visma, Bokio m.fl. Kolumner: kund, belopp, datum, status, (email valfri)",cmAnalyzing:"Arvo gör din audit…",cmAnalyzingStep1:"Läser fakturor",cmAnalyzingStep2:"Hittar mönster",cmAnalyzingStep3:"Beräknar din säkra lön",cmAnalyzingStep4:"Skriver påminnelser",
+cmSalarySafe:"Säker lön denna månad",cmSalarySafeSub:"Så mycket kan du tryggt ta ut utan att kassan spricker",cmSalaryBlocked:"0 kr tryggt — din kassa tar slut innan lön kan tas ut",cmSalaryBlockedSub:"Driv in minst {amount} innan du kan betala dig själv",cmLocked:"Pengar som redan är dina",cmLockedSub:"Du har fakturerat detta — det ligger hos andra. Hämta hem det.",cmSendNow:"Skicka nu",cmSendNowNoEmail:"Öppna mejl",cmProCtaTitle:"Ta bort Arvo-arbetet helt",cmProCtaBody:"Auto-send, veckorapport och kassabevakning dygnet runt för 99 kr/mån. Första månaden gratis.",cmProCtaBtn:"Starta gratismånad",
 cmResultsTitle:"Din likviditetsanalys",cmResultsSub:"Baserat på {n} fakturor från {clients} kunder",cmSummary:"Sammanfattning",cmOutstanding:"Utestående",cmOverdue:"Försenat",cmAvgDso:"Snittbetaltid",cmDays:"dagar",cmRisk:"Risk jag hittade",cmRiskNone:"Inga stora risker just nu — bra jobbat!",
 cmCounter:"Detta kunde du ha undvikit",cmCounterBody:"Om mina påminnelser hade varit aktiva hade du haft {amount} på kontot {days} dagar tidigare. Det hade räckt för att täcka nästa momsinbetalning.",
 cmActions:"Vad jag föreslår att du gör nu",cmActionReminder:"Skicka påminnelse",cmActionEarly:"Erbjud snabbrabatt",cmActionFollowup:"Följ upp",cmActFake:"Ja, agera",cmActDone:"Klart",
@@ -104,10 +107,11 @@ showInsights:"Insights",showForecast:"Forecast",showHealth:"Health Score",showWe
 showPipeline:"Pipeline",showWon:"Won",showAwaiting:"Awaiting payment",
 showToDo:"To do",showRecentInv:"Recent invoices",showActiveProj:"Active projects",showDigest:"Weekly Digest",
 scanInvoice:"Scan invoice",scanTitle:"Scan an invoice",scanDesc:"Take a photo or upload an image of the invoice. AI will extract client, amount, and dates automatically.",scanning:"Analyzing invoice…",scanSuccess:"Invoice parsed!",scanUpload:"Upload image",scanCamera:"Take photo",extractedData:"Extracted data",confirm:"Confirm",scanError:"Could not parse invoice. Please try again.",
-heyArvo:"Arvo Flow",heyArvoTagline:"Unlock the money that's already yours.",heyArvoSub:"See your full cash picture 8 weeks ahead — exactly when payments land, from whom, and how much you can safely pay yourself.",heyArvoPlaceholder:"E.g. 'Worked 3h on design for Karlsson'…",heyArvoListening:"Listening…",heyArvoThinking:"Thinking…",heyArvoTapMic:"Tap the mic and tell me",heyArvoWelcome:"Hi! I'm Arvo. Upload your invoices and I'll show you exactly where your cash stands and what you need to do right now.",heyArvoTimeLogged:"Time entry saved",heyArvoContactCreated:"New contact created",heyArvoInvoiceCreated:"Invoice draft created",heyArvoExpenseLogged:"Expense logged",heyArvoProjectUpdated:"Project updated",heyArvoNoMic:"Your browser doesn't support voice input",heyArvoCantParse:"I didn't quite understand. Could you rephrase?",
+heyArvo:"Arvo Flow",heyArvoTagline:"Know exactly when you can pay yourself.",heyArvoSub:"Drop your invoice ledger. Arvo tells you in 30 seconds exactly how much salary you can safely pay yourself this month — and which invoices are blocking the rest.",heyArvoPlaceholder:"E.g. 'Worked 3h on design for Karlsson'…",heyArvoListening:"Listening…",heyArvoThinking:"Thinking…",heyArvoTapMic:"Tap the mic and tell me",heyArvoWelcome:"Hi! I'm Arvo. Upload your invoices and I'll show you exactly where your cash stands and what you need to do right now.",heyArvoTimeLogged:"Time entry saved",heyArvoContactCreated:"New contact created",heyArvoInvoiceCreated:"Invoice draft created",heyArvoExpenseLogged:"Expense logged",heyArvoProjectUpdated:"Project updated",heyArvoNoMic:"Your browser doesn't support voice input",heyArvoCantParse:"I didn't quite understand. Could you rephrase?",
 cfoCashflow:"Cash Flow",cfoBalance:"Balance today",cfoProjected:"Projected balance",cfoVatDue:"VAT due",cfoIncoming:"Expected incoming",cfoOutgoing:"Estimated outgoing",cfoDaysUntil:"days left",cfoWarning:"Liquidity warning",cfoAction:"Suggested actions",cfoSendReminder:"Send reminder",cfoOfferDiscount:"Offer early-pay discount",cfoSkip:"Skip",cfoApprove:"Approve",cfoSent:"Sent!",cfoReminderSent:"Reminder sent to",cfoDiscountOffered:"Discount offer sent to",cfoMonitoring:"I'll monitor and notify you when they pay.",cfoCrisisNone:"All clear! No liquidity issues ahead.",cfoHeadsUp:"Heads up",cfoBasedOn:"Based on your average costs",cfoNeed:"you'll need",cfoBy:"by",cfoYouHave:"You have",cfoUnpaid:"unpaid invoices totaling",cfoSuggest:"Want me to:",
 tabChat:"Chat",tabAnalysis:"Analysis",tabImpact:"Impact",tabTrust:"Autonomy",
-cmTitle:"See your full cash picture 8 weeks ahead",cmSub:"Drop your invoice export. In 30 seconds you'll know exactly when payments land, from whom, and how much you can safely pay yourself.",cmGdpr:"Your data is analyzed directly in your browser and never leaves your device. Nothing is stored on a server.",cmDrop:"Drop your CSV file here",cmOr:"or",cmChoose:"Choose file from computer",cmDemo:"Try with sample data",cmFormat:"CSV export from QuickBooks, Xero, FreshBooks etc. Columns: customer, amount, date, status",cmAnalyzing:"Arvo is analyzing your data…",cmAnalyzingStep1:"Reading invoices",cmAnalyzingStep2:"Finding patterns",cmAnalyzingStep3:"Calculating risks",cmAnalyzingStep4:"Drafting actions",
+cmTitle:"Cashflow Audit — how much salary can you safely pay yourself?",cmSub:"Drop your invoice ledger. In 30 seconds you'll know exactly how much salary you can pay yourself this month — and which invoices are blocking the rest.",cmGdpr:"Your data is analyzed directly in your browser and never leaves your device. Nothing is stored on a server.",cmDrop:"Drop your CSV here — start your audit",cmOr:"or",cmChoose:"Choose file from computer",cmDemo:"Try with sample data",cmFormat:"CSV export from QuickBooks, Xero, FreshBooks etc. Columns: customer, amount, date, status, (email optional)",cmAnalyzing:"Arvo is running your audit…",cmAnalyzingStep1:"Reading invoices",cmAnalyzingStep2:"Finding patterns",cmAnalyzingStep3:"Calculating your safe salary",cmAnalyzingStep4:"Drafting reminders",
+cmSalarySafe:"Safe salary this month",cmSalarySafeSub:"This is how much you can safely pay yourself without breaking the bank",cmSalaryBlocked:"0 — your cash runs out before payday",cmSalaryBlockedSub:"Collect at least {amount} before you can pay yourself",cmLocked:"Money that's already yours",cmLockedSub:"You've invoiced this — it's sitting with others. Bring it home.",cmSendNow:"Send now",cmSendNowNoEmail:"Open mail",cmProCtaTitle:"Let me do this for you",cmProCtaBody:"Auto-send, weekly report and 24/7 cash watch for $9/mo. First month free.",cmProCtaBtn:"Start free month",
 cmResultsTitle:"Your liquidity analysis",cmResultsSub:"Based on {n} invoices from {clients} customers",cmSummary:"Summary",cmOutstanding:"Outstanding",cmOverdue:"Overdue",cmAvgDso:"Avg. DSO",cmDays:"days",cmRisk:"Risks I found",cmRiskNone:"No major risks right now — well done!",
 cmCounter:"This could have been avoided",cmCounterBody:"If my reminders had been active, you would have had {amount} on your account {days} days earlier. Enough to cover the next VAT payment.",
 cmActions:"What I suggest you do now",cmActionReminder:"Send reminder",cmActionEarly:"Offer early-pay discount",cmActionFollowup:"Follow up",cmActFake:"Yes, act",cmActDone:"Done",
@@ -300,6 +304,7 @@ up:<><polyline points="18 15 12 9 6 15"/></>,
 settings:<><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
 mic:<><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></>,
 send:<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>,
+lock:<><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
 arvo:<><path d="M12 2L4 20h4l4-8 4 8h4L12 2z"/></>,
 zap:<><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
 trendUp:<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>,
@@ -437,19 +442,19 @@ const computeImpact=()=>{
 };
 
 // ── CONCIERGE MVP: CSV parser + analysis engine ──
-const CONCIERGE_DEMO_CSV=`Kund;Faktura;Fakturadatum;Förfallodatum;Belopp;Status
-Lindberg Reklam;INV-2026-042;2026-02-15;2026-03-17;42000;Förfallen
-Karlsson AB;INV-2026-043;2026-02-20;2026-03-22;18500;Skickad
-Öberg Studio;INV-2026-044;2026-02-28;2026-03-30;67500;Skickad
-Nordlöf Consulting;INV-2026-041;2026-02-10;2026-03-12;28000;Betald
-Lindberg Reklam;INV-2026-038;2026-01-05;2026-02-04;35000;Betald
-Karlsson AB;INV-2026-037;2026-01-12;2026-02-11;12000;Betald
-Öberg Studio;INV-2026-036;2025-12-20;2026-01-19;55000;Betald
-Lindberg Reklam;INV-2026-035;2025-12-15;2026-01-14;48000;Betald
-Svensson Byrå;INV-2026-040;2026-02-05;2026-03-07;15500;Förfallen
-Berg & Co;INV-2026-039;2026-01-28;2026-02-27;22000;Förfallen
-Nordlöf Consulting;INV-2026-034;2025-11-20;2025-12-20;31000;Betald
-Karlsson AB;INV-2026-033;2025-11-05;2025-12-05;14500;Betald`;
+const CONCIERGE_DEMO_CSV=`Kund;Email;Faktura;Fakturadatum;Förfallodatum;Belopp;Status
+Lindberg Reklam;ekonomi@lindbergreklam.se;INV-2026-042;2026-02-15;2026-03-17;42000;Förfallen
+Karlsson AB;faktura@karlssonab.se;INV-2026-043;2026-02-20;2026-03-22;18500;Skickad
+Öberg Studio;hello@obergstudio.se;INV-2026-044;2026-02-28;2026-03-30;67500;Skickad
+Nordlöf Consulting;info@nordlof.se;INV-2026-041;2026-02-10;2026-03-12;28000;Betald
+Lindberg Reklam;ekonomi@lindbergreklam.se;INV-2026-038;2026-01-05;2026-02-04;35000;Betald
+Karlsson AB;faktura@karlssonab.se;INV-2026-037;2026-01-12;2026-02-11;12000;Betald
+Öberg Studio;hello@obergstudio.se;INV-2026-036;2025-12-20;2026-01-19;55000;Betald
+Lindberg Reklam;ekonomi@lindbergreklam.se;INV-2026-035;2025-12-15;2026-01-14;48000;Betald
+Svensson Byrå;anna@svenssonbyra.se;INV-2026-040;2026-02-05;2026-03-07;15500;Förfallen
+Berg & Co;post@bergco.se;INV-2026-039;2026-01-28;2026-02-27;22000;Förfallen
+Nordlöf Consulting;info@nordlof.se;INV-2026-034;2025-11-20;2025-12-20;31000;Betald
+Karlsson AB;faktura@karlssonab.se;INV-2026-033;2025-11-05;2025-12-05;14500;Betald`;
 
 const parseConciergeCsv=(text)=>{
   const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
@@ -465,6 +470,7 @@ const parseConciergeCsv=(text)=>{
     dueDate:headers.findIndex(h=>["förfallodatum","forfallodatum","due date","due","förfallo"].includes(h)),
     amount:headers.findIndex(h=>["belopp","summa","amount","total","value","sum"].includes(h)),
     status:headers.findIndex(h=>["status","tillstånd","state"].includes(h)),
+    email:headers.findIndex(h=>["email","mejl","epost","e-post","e-mail","mail","kundemail","customer email"].includes(h)),
   };
   if(colMap.client===-1||colMap.amount===-1)throw new Error("missing-cols");
   const rows=[];
@@ -485,6 +491,7 @@ const parseConciergeCsv=(text)=>{
       dueDate:colMap.dueDate>=0?parts[colMap.dueDate]:"",
       amount,
       status,
+      email:colMap.email>=0?(parts[colMap.email]||"").trim():"",
     });
   }
   return rows;
@@ -598,7 +605,7 @@ const analyzeConciergeData=(rows)=>{
   overdueSorted.forEach((r,i)=>{
     actions.push({
       id:`act-remind-${i}`,type:"reminder",tone:r.tone,priority:r.chronic?1:2,
-      client:r.client,amount:r.amount,invoice:r.invoice,
+      client:r.client,amount:r.amount,invoice:r.invoice,email:r.email||"",
       label:`${L.cmActionReminder}: ${r.client} (${fmtMoney(r.amount)})`,
       draft:makeReminderDraft(r,r.tone)
     });
@@ -609,12 +616,24 @@ const analyzeConciergeData=(rows)=>{
   }).sort((a,b)=>b.amount-a.amount).slice(0,2).forEach((r,i)=>{
     actions.push({
       id:`act-disc-${i}`,type:"discount",tone:"warm",priority:3,
-      client:r.client,amount:r.amount,invoice:r.invoice,
+      client:r.client,amount:r.amount,invoice:r.invoice,email:r.email||"",
       label:`${L.cmActionEarly}: ${r.client} (${fmtMoney(r.amount)})`,
       draft:makeDiscountDraft(r)
     });
   });
   actions.sort((a,b)=>a.priority-b.priority);
+
+  // ── SALARY-SAFE: how much can you safely pay yourself per month? ──
+  const next4=runway.slice(0,4);
+  const safetyBuffer=Math.max(10000,Math.round(weeklyBurn*2)); // 2 weeks burn as buffer
+  // Monthly salary-safe = (inflow over 4 weeks - weeklyBurn*4 - vat due - buffer), floored at 0
+  const next4Inflow=next4.reduce((s,r)=>s+r.inflow,0);
+  const next4Outflow=next4.reduce((s,r)=>s+r.outflow,0);
+  const salarySafeMonth=Math.max(0,Math.round(startingBalance+next4Inflow-next4Outflow-safetyBuffer));
+  // If crunch week exists, salary-safe is 0
+  const salaryBlocked=!!crunchWeek;
+  // "Pengar som redan är dina" = outstanding total
+  const lockedCapital=outstandingAmt;
 
   return {
     rows,totalRows:rows.length,clientCount:clients.length,
@@ -623,6 +642,7 @@ const analyzeConciergeData=(rows)=>{
     counterfactualAmount,counterfactualDays,
     clientVelocity,runway,crunchWeek,
     startingBalance,expectedInflowTotal,weeklyBurn,vatLiability,
+    salarySafeMonth,salaryBlocked,lockedCapital,
   };
 };
 
@@ -667,6 +687,22 @@ const handleCopyDraft=(text)=>{
     navigator.clipboard.writeText(text);
     setCopiedFlash(true);
     setTimeout(()=>setCopiedFlash(false),2000);
+  }catch(e){}
+};
+
+// ── One-click send: open the user's mail client with recipient + draft pre-filled ──
+const handleSendNow=(action)=>{
+  if(!action)return;
+  const subj=action.type==="discount"
+    ?(lang==="sv"?`Faktura ${action.invoice} — snabbrabatt`:`Invoice ${action.invoice} — early-pay discount`)
+    :(lang==="sv"?`Påminnelse: faktura ${action.invoice}`:`Reminder: invoice ${action.invoice}`);
+  const to=action.email||"";
+  const mailto=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(action.draft||"")}`;
+  try{window.location.href=mailto}catch(e){}
+  try{
+    const log=JSON.parse(localStorage.getItem("arvo_concierge_log")||"[]");
+    log.push({ts:Date.now(),type:"send-now",client:action.client,amount:action.amount,hasEmail:!!to});
+    localStorage.setItem("arvo_concierge_log",JSON.stringify(log));
   }catch(e){}
 };
 
@@ -1436,6 +1472,34 @@ return (<button key={t.id} onClick={()=>setArvoTab(t.id)} style={{flex:1,padding
 
 {/* State: results */}
 {conciergeStep==="results"&&conciergeAnalysis&&(<>
+{/* ── SALARY-SAFE HERO — the one number a freelancer cares about ── */}
+<div style={{...card,padding:0,overflow:"hidden",marginBottom:14,border:`1.5px solid ${conciergeAnalysis.salaryBlocked?T.danger:T.accent}`}}>
+  <div style={{background:conciergeAnalysis.salaryBlocked?`linear-gradient(135deg,${T.danger} 0%,#8c2418 100%)`:T.accentGrad,padding:"22px 22px 20px",color:"#fff"}}>
+    <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",opacity:0.85,marginBottom:6,display:"flex",alignItems:"center",gap:6}}>
+      <Ic name={conciergeAnalysis.salaryBlocked?"alert":"check"} size={12} color="#fff"/>
+      {conciergeAnalysis.salaryBlocked?L.cmSalaryBlocked:L.cmSalarySafe}
+    </div>
+    <div style={{fontFamily:serif,fontSize:40,fontWeight:500,lineHeight:1,letterSpacing:"-0.025em",marginBottom:8}}>
+      {conciergeAnalysis.salaryBlocked?"0":fmtMoney(conciergeAnalysis.salarySafeMonth)}
+    </div>
+    <div style={{fontSize:12,opacity:0.9,lineHeight:1.5}}>
+      {conciergeAnalysis.salaryBlocked
+        ?L.cmSalaryBlockedSub.replace("{amount}",fmtMoney(Math.abs(conciergeAnalysis.runway[conciergeAnalysis.runway.length-1].balance||0)+10000))
+        :L.cmSalarySafeSub}
+    </div>
+  </div>
+</div>
+
+{/* ── MONEY THAT'S ALREADY YOURS — emotional reframe of outstanding AR ── */}
+{conciergeAnalysis.lockedCapital>0&&(<div style={{...card,padding:"16px 18px",marginBottom:14,borderLeft:`4px solid ${T.warn}`,background:T.warnLight}}>
+  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+    <Ic name="lock" size={14} color={T.warn}/>
+    <div style={{fontSize:11,fontWeight:700,color:T.warn,textTransform:"uppercase",letterSpacing:"0.06em"}}>{L.cmLocked}</div>
+  </div>
+  <div style={{fontFamily:serif,fontSize:26,fontWeight:500,color:T.text,letterSpacing:"-0.015em",marginBottom:4}}>{fmtMoney(conciergeAnalysis.lockedCapital)}</div>
+  <div style={{fontSize:12,color:T.textSub,lineHeight:1.5}}>{L.cmLockedSub}</div>
+</div>)}
+
 {/* Hero summary */}
 <div style={{...card,padding:0,overflow:"hidden",marginBottom:14}}>
 <div style={{background:T.accentGrad,padding:"18px 20px",color:"#fff"}}>
@@ -1517,8 +1581,16 @@ return (<button key={t.id} onClick={()=>setArvoTab(t.id)} style={{flex:1,padding
 <Ic name="trendUp" size={16} color={T.warn}/>
 <div style={{fontSize:11,fontWeight:700,color:T.warn,textTransform:"uppercase",letterSpacing:"0.06em"}}>{L.cmCounter}</div>
 </div>
-<div style={{fontSize:13,color:T.text,lineHeight:1.6}}>
+<div style={{fontSize:13,color:T.text,lineHeight:1.6,marginBottom:12}}>
 {L.cmCounterBody.replace("{amount}",fmtMoney(conciergeAnalysis.counterfactualAmount)).replace("{days}",conciergeAnalysis.counterfactualDays)}
+</div>
+{/* Pro CTA — inline conversion moment */}
+<div style={{padding:"12px 14px",background:"#fff",borderRadius:10,border:`1px solid ${T.warn}40`}}>
+  <div style={{fontSize:12,fontWeight:700,color:T.text,marginBottom:4}}>{L.cmProCtaTitle}</div>
+  <div style={{fontSize:11,color:T.textMuted,lineHeight:1.5,marginBottom:10}}>{L.cmProCtaBody}</div>
+  <button onClick={()=>{if(STRIPE_PRO_URL){window.open(STRIPE_PRO_URL+(testerId?`?client_reference_id=${testerId}`:""),"_blank")}else{setPriceModalOpen(true)}}} style={{padding:"9px 14px",background:T.warn,color:"#fff",border:"none",borderRadius:100,fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"inline-flex",alignItems:"center",gap:6}}>
+    <Ic name="zap" size={12} color="#fff"/>{L.cmProCtaBtn}
+  </button>
 </div>
 </div>)}
 
@@ -1915,8 +1987,14 @@ return (
           {conciergeActingOn.draft}
         </div>
 
-        <button onClick={()=>handleCopyDraft(conciergeActingOn.draft)} style={{width:"100%",padding:"13px 18px",background:copiedFlash?T.success:T.accentGrad,color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 2px 8px rgba(42,109,94,0.22)",transition:"background 0.2s"}}>
-          <Ic name={copiedFlash?"check":"tag"} size={16} color="#fff"/>
+        {/* PRIMARY — Send now (opens user's mail client) */}
+        <button onClick={()=>handleSendNow(conciergeActingOn)} style={{width:"100%",padding:"14px 18px",background:T.accentGrad,color:"#fff",border:"none",borderRadius:12,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8,boxShadow:"0 3px 10px rgba(42,109,94,0.28)",marginBottom:10}}>
+          <Ic name="send" size={16} color="#fff"/>
+          {conciergeActingOn.email?`${L.cmSendNow} → ${conciergeActingOn.email}`:L.cmSendNowNoEmail}
+        </button>
+        {/* SECONDARY — Copy to clipboard */}
+        <button onClick={()=>handleCopyDraft(conciergeActingOn.draft)} style={{width:"100%",padding:"11px 16px",background:copiedFlash?T.successLight:"transparent",color:copiedFlash?T.success:T.textMuted,border:`1px solid ${copiedFlash?T.success:T.border}`,borderRadius:12,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all 0.2s"}}>
+          <Ic name={copiedFlash?"check":"tag"} size={14} color={copiedFlash?T.success:T.textMuted}/>
           {copiedFlash?L.cmCopied:L.cmCopy}
         </button>
 
