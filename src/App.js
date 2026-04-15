@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 // ── VALIDATION CONFIG ──
 // 1. Byt ut till din egen mejl innan du delar länken med testare.
-const FOUNDER_EMAIL = "din@email.se";
+const FOUNDER_EMAIL = "arvoflow@gmail.com";
 // 2. Skapa en Stripe Payment Link (99 kr) på https://dashboard.stripe.com/payment-links
 //    Sätt den som "återbetalbar reservation". Klistra in URL:en nedan.
 //    Lämna tom för att visa gamla price-polljen istället.
