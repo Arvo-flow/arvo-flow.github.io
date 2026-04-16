@@ -3,7 +3,7 @@
 # Run from the repo root inside your Codespace:  bash _patches/apply.sh
 set -euo pipefail
 
-EXPECTED_MD5="3db83ea67b2b8e0f3ba7ccc0b7e54f72"  # md5(all-patches.tar.gz)
+EXPECTED_MD5="5707179407c0d07c79504ac3a4d2f5ad"  # md5(all-patches.tar.gz)
 CHUNK_DIR="_patches/chunks"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -15,9 +15,11 @@ cat "$CHUNK_DIR"/chunk_00.txt "$CHUNK_DIR"/chunk_01.txt "$CHUNK_DIR"/chunk_02.tx
 
 base64 -d "$WORK/all.b64" > "$WORK/all-patches.tar.gz"
 ACTUAL_MD5=$(md5sum "$WORK/all-patches.tar.gz" | awk '{print $1}')
-echo "     md5: $ACTUAL_MD5"
+echo "     md5 actual:   $ACTUAL_MD5"
+echo "     md5 expected: $EXPECTED_MD5"
 if [ "$ACTUAL_MD5" != "$EXPECTED_MD5" ]; then
-  echo "     NOTE: md5 mismatch — continuing anyway since chunks may have been updated."
+  echo "     ERROR: md5 mismatch — chunks corrupted. Aborting."
+  exit 1
 fi
 
 echo "[2/7] Extracting patches…"
@@ -34,8 +36,7 @@ echo "[4/7] Applying patches via git am…"
 git am "$WORK"/0001-*.patch "$WORK"/0002-*.patch "$WORK"/0003-*.patch
 
 echo "[5/7] Removing chunks + this script from tree…"
-git rm -rf "$CHUNK_DIR" _patches/apply.sh _patches/README.md 2>/dev/null || true
-# leave the 3 .patch copies under _patches/ as history record
+git rm -rf "$CHUNK_DIR" _patches/apply.sh 2>/dev/null || true
 git commit -m "Clean up patch transport artifacts" 2>/dev/null || true
 
 echo "[6/7] Pushing branch…"
