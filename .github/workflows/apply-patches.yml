@@ -1,0 +1,72 @@
+name: Apply queued patches and deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/build-arvo-os-app-8Ybsd]
+    paths:
+      - '_patches/trigger'
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Configure git
+        run: |
+          git config user.email "arvoflow@gmail.com"
+          git config user.name "Arvo Flow CI"
+
+      - name: Reassemble patches
+        run: |
+          set -euo pipefail
+          EXPECTED_MD5="5707179407c0d07c79504ac3a4d2f5ad"
+          WORK="$(mktemp -d)"
+          echo "WORK=$WORK" >> "$GITHUB_ENV"
+          cat _patches/chunks/chunk_*.txt > "$WORK/all.b64"
+          base64 -d "$WORK/all.b64" > "$WORK/all-patches.tar.gz"
+          ACTUAL_MD5=$(md5sum "$WORK/all-patches.tar.gz" | awk '{print $1}')
+          if [ "$ACTUAL_MD5" != "$EXPECTED_MD5" ]; then
+            echo "md5 mismatch: $ACTUAL_MD5 vs $EXPECTED_MD5"
+            exit 1
+          fi
+          tar xzf "$WORK/all-patches.tar.gz" -C "$WORK"
+
+      - name: Apply patches
+        run: |
+          git am "$WORK"/0001-*.patch "$WORK"/0002-*.patch "$WORK"/0003-*.patch
+
+      - name: Clean up transport artifacts
+        run: |
+          git rm -rf _patches 2>/dev/null || true
+          git rm -f .github/workflows/apply-patches.yml 2>/dev/null || true
+          git commit -m "Clean up patch transport artifacts" || true
+
+      - name: Push commits
+        run: git push origin HEAD
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          npx gh-pages -d build \
+            -u "Arvo Flow CI <arvoflow@gmail.com>" \
+            -r "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
