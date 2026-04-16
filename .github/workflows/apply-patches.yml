@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [claude/build-arvo-os-app-8Ybsd]
-    paths:
-      - '_patches/trigger'
 
 jobs:
   apply:
@@ -18,17 +16,30 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
+      - name: Skip if no pending patches
+        id: check
+        run: |
+          if [ -d _patches/chunks ]; then
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "No _patches/chunks/ directory; nothing to do."
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.check.outputs.proceed == 'true'
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Configure git
+        if: steps.check.outputs.proceed == 'true'
         run: |
           git config user.email "arvoflow@gmail.com"
           git config user.name "Arvo Flow CI"
 
       - name: Reassemble patches
+        if: steps.check.outputs.proceed == 'true'
         run: |
           set -euo pipefail
           EXPECTED_MD5="5707179407c0d07c79504ac3a4d2f5ad"
@@ -44,25 +55,31 @@ jobs:
           tar xzf "$WORK/all-patches.tar.gz" -C "$WORK"
 
       - name: Apply patches
+        if: steps.check.outputs.proceed == 'true'
         run: |
           git am "$WORK"/0001-*.patch "$WORK"/0002-*.patch "$WORK"/0003-*.patch
 
       - name: Clean up transport artifacts
+        if: steps.check.outputs.proceed == 'true'
         run: |
           git rm -rf _patches 2>/dev/null || true
           git rm -f .github/workflows/apply-patches.yml 2>/dev/null || true
           git commit -m "Clean up patch transport artifacts" || true
 
       - name: Push commits
+        if: steps.check.outputs.proceed == 'true'
         run: git push origin HEAD
 
       - name: Install deps
+        if: steps.check.outputs.proceed == 'true'
         run: npm ci
 
       - name: Build
+        if: steps.check.outputs.proceed == 'true'
         run: npm run build
 
       - name: Deploy to gh-pages
+        if: steps.check.outputs.proceed == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
