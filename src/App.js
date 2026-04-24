@@ -239,6 +239,7 @@ const serif="'Playfair Display',Georgia,serif";
 const switchLang=l=>{setLang(l);setCurrency(l==="sv"?"SEK":"USD")};
 
 useEffect(()=>{if(variant==="2"){setView("heyarvo");setArvoTab("analysis")}if(variant==="3"&&theme!=="dark"){setTheme("dark")}},[variant]);// eslint-disable-line react-hooks/exhaustive-deps
+useEffect(()=>{const read=()=>{try{const v=new URLSearchParams(window.location.search).get("v");return v==="1"||v==="2"||v==="3"?v:null}catch(e){return null}};const check=()=>{if(read()!==variant)window.location.reload()};const onShow=e=>{if(e.persisted)check()};window.addEventListener("pageshow",onShow);window.addEventListener("popstate",check);return()=>{window.removeEventListener("pageshow",onShow);window.removeEventListener("popstate",check)}},[variant]);
 useEffect(()=>{if(timerOn){tRef.current=setInterval(()=>setTimerSec(s=>s+1),1000)}else clearInterval(tRef.current);return()=>clearInterval(tRef.current)},[timerOn]);
 useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMsgs,arvoThinking]);
 // Tester session logger (localStorage only — founder asks tester to share on follow-up)
