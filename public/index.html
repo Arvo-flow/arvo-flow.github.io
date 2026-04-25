@@ -32,6 +32,22 @@
     <meta property="og:title" content="Arvo Flow — AI-inköpschefen för svenska småföretag" />
     <meta property="og:description" content="Koppla Fortnox på 60 sekunder. Vi hittar pengarna du blöder på fel leverantör. Du betalar bara när du sparar." />
     <title>Arvo Flow — Vi hittar pengarna du blöder på fel leverantör</title>
+    <!-- SPA path recovery: if the user landed here via a /flow/* deep link
+         that was redirected by the root 404.html, restore the original path
+         in history.state before BrowserRouter mounts. See spa-github-pages. -->
+    <script type="text/javascript">
+      (function(l) {
+        if (l.search && l.search.charAt(1) === '/') {
+          var decoded = l.search.slice(1).split('&').map(function(s) {
+            return s.replace(/~and~/g, '&');
+          }).join('?');
+          window.history.replaceState(
+            null, null,
+            l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location));
+    </script>
     <!-- Microsoft Clarity — gratis session-recordings + heatmaps.
          1. Skapa konto på https://clarity.microsoft.com (1 min, gratis)
          2. Skapa ett projekt, kopiera ditt "Project ID"
