@@ -2,11 +2,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
+import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { COMPANY, SUMMARY, OPPORTUNITIES, TIMELINE, formatKr } from '../../data/mockData';
 import {
-  Page, Container, Greeting, Headline, HeadlineGrid, BigNumber, StatList,
-  Section, OppGrid, OppCard, OppHead, OppSaving, OppFooter, Compare,
+  Page, Container, Greeting, Headline, HeadlineGrid, BigNumber, HeadlineSplit,
+  Section, SectionHeader, OppGrid, OppCard, OppHead, OppSaving, OppFooter, Compare,
+  LockedCard, LockedHead, LockedSaving, LockedNote, LockedFooter,
+  VipModal, VipModalCard,
   TimelineWrap, TimelineList, TimelineItem, SkeletonOverlay,
 } from './styles';
 
@@ -50,11 +53,30 @@ const Insights = () => {
     return () => cancelAnimationFrame(raf);
   }, [showSkeleton]);
 
-  const opps = useMemo(() => {
+  const [vipFor, setVipFor] = useState(null);
+  const [vipState, setVipState] = useState('idle');
+
+  const filtered = useMemo(() => {
     if (filter === 'high') return OPPORTUNITIES.filter((o) => o.confidence === 'high');
     if (filter === 'urgent') return OPPORTUNITIES.filter((o) => o.contractEndsIn < 60);
     return OPPORTUNITIES;
   }, [filter]);
+
+  const activeOpps = filtered.filter((o) => !o.licensePending);
+  const lockedOpps = filtered.filter((o) => o.licensePending);
+
+  const totalActive = activeOpps.reduce((s, o) => s + o.savingPerYear, 0);
+  const totalLocked = lockedOpps.reduce((s, o) => s + o.savingPerYear, 0);
+
+  const openVip = (opp) => {
+    setVipFor(opp);
+    setVipState('idle');
+  };
+  const confirmVip = () => setVipState('confirmed');
+  const closeVip = () => {
+    setVipFor(null);
+    setVipState('idle');
+  };
 
   return (
     <Page>
@@ -95,24 +117,22 @@ const Insights = () => {
                 separat med BankID — ingen leverantör byts utan din signatur.
               </p>
             </BigNumber>
-            <StatList>
+            <HeadlineSplit>
               <div>
-                <dt>Total leverantörskostnad / år</dt>
-                <dd>{formatKr(SUMMARY.totalAnnualSpend)}</dd>
+                <span className="lbl">Redo nu <em className="live">Live</em></span>
+                <div className="value">
+                  {totalActive.toLocaleString('sv-SE')}
+                  <small>kr · {activeOpps.length} möjligheter</small>
+                </div>
               </div>
               <div>
-                <dt>Andel av kostnad du sparar</dt>
-                <dd>{Math.round((SUMMARY.identifiedSavings / SUMMARY.totalAnnualSpend) * 100)} %</dd>
+                <span className="lbl">Beta <em className="beta">Väntar på FI</em></span>
+                <div className="value">
+                  ~{totalLocked.toLocaleString('sv-SE')}
+                  <small>kr · {lockedOpps.length} möjligheter</small>
+                </div>
               </div>
-              <div>
-                <dt>Fakturor analyserade</dt>
-                <dd>{SUMMARY.invoicesAnalysed}</dd>
-              </div>
-              <div>
-                <dt>Leverantörer scannade</dt>
-                <dd>{SUMMARY.suppliersAnalysed}</dd>
-              </div>
-            </StatList>
+            </HeadlineSplit>
           </HeadlineGrid>
         </Headline>
 
@@ -135,8 +155,14 @@ const Insights = () => {
             </div>
           </header>
 
+          <SectionHeader>
+            <h3>Redo att aktiveras idag</h3>
+            <span className="badge">Live</span>
+            <span className="subtle">{activeOpps.length} möjligheter · {totalActive.toLocaleString('sv-SE')} kr/år</span>
+          </SectionHeader>
+
           <OppGrid>
-            {opps.map((o) => (
+            {activeOpps.map((o) => (
               <OppCard key={o.id} onClick={() => navigate(`/opportunity/${o.id}`)}>
                 <OppHead $high={o.confidence === 'high'}>
                   <div className="icon"><Icon name={o.icon} size={22} /></div>
@@ -179,6 +205,50 @@ const Insights = () => {
               </OppCard>
             ))}
           </OppGrid>
+
+          {lockedOpps.length > 0 && (
+            <div style={{ marginTop: 48 }}>
+              <SectionHeader>
+                <h3>Snart tillgängligt</h3>
+                <span className="badge warning">Beta · Väntar på FI</span>
+                <span className="subtle">{lockedOpps.length} möjligheter · ~{totalLocked.toLocaleString('sv-SE')} kr/år</span>
+              </SectionHeader>
+
+              <OppGrid>
+                {lockedOpps.map((o) => (
+                  <LockedCard key={o.id} onClick={() => openVip(o)}>
+                    <LockedHead>
+                      <div className="icon"><Icon name={o.icon} size={22} /></div>
+                      <div className="text">
+                        <span className="cat">{o.category}</span>
+                        <strong>{o.currentSupplier}</strong>
+                      </div>
+                      <span className="beta">Beta</span>
+                    </LockedHead>
+
+                    <LockedSaving>
+                      <div className="amount">~<em>{o.savingPerYear.toLocaleString('sv-SE')}</em> kr</div>
+                      <div className="unit">
+                        estimerad överbetalning · <strong>{o.overpaymentPercent} % över branschsnittet</strong>
+                      </div>
+                    </LockedSaving>
+
+                    <LockedNote>
+                      <Icon name="lock" size={16} stroke={2} />
+                      <span>Vi väntar på godkännande från Finansinspektionen för att få byta din försäkring åt dig. Estimat baserat på din premie + branschindex.</span>
+                    </LockedNote>
+
+                    <LockedFooter>
+                      <div className="delta">Lansering Q4 2026</div>
+                      <div className="cta">
+                        Ställ mig i VIP-kön <Icon name="arrow" size={14} />
+                      </div>
+                    </LockedFooter>
+                  </LockedCard>
+                ))}
+              </OppGrid>
+            </div>
+          )}
         </Section>
 
         <Section>
@@ -202,6 +272,56 @@ const Insights = () => {
           </TimelineWrap>
         </Section>
       </Container>
+
+      {vipFor && (
+        <VipModal onClick={(e) => { if (e.target === e.currentTarget) closeVip(); }}>
+          <VipModalCard>
+            {vipState === 'idle' ? (
+              <>
+                <div className="crown"><Icon name="spark" size={28} stroke={2} /></div>
+                <span className="tag">Beta · VIP-kö</span>
+                <h3>Vi byter din {vipFor.category.toLowerCase()} när FI är klart.</h3>
+                <p>
+                  Din nuvarande premie hos {vipFor.currentSupplier} ligger
+                  <strong> {vipFor.overpaymentPercent} % över branschsnittet</strong> — en estimerad
+                  överbetalning på cirka <strong>{vipFor.savingPerYear.toLocaleString('sv-SE')} kr/år</strong>.
+                  Vi får inte teckna det nya avtalet åt dig förrän vi är registrerade
+                  försäkringsförmedlare hos Finansinspektionen (FI).
+                </p>
+                <ul className="benefits">
+                  <li><Icon name="check" size={16} stroke={2.2} /> Din plats i kön reserveras med Fortnox-data redan analyserad</li>
+                  <li><Icon name="check" size={16} stroke={2.2} /> Du får mejl när vi går live — bytet utförs samma dag</li>
+                  <li><Icon name="check" size={16} stroke={2.2} /> Garanterad placering före öppen lansering</li>
+                </ul>
+                <div className="actions">
+                  <Button onClick={confirmVip} $variant="gradient" $size="lg" $full>
+                    Reservera min plats — gratis
+                  </Button>
+                  <Button onClick={closeVip} $variant="ghost" $size="md" $full>
+                    Stäng
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="confirmed">
+                <div className="checkmark"><Icon name="check" size={36} stroke={2.5} /></div>
+                <h3>Din plats är reserverad.</h3>
+                <p>
+                  Vi har märkt din {vipFor.category.toLowerCase()} med VIP-flagga och hör av oss
+                  så fort vi får grönt ljus från FI. Tills dess fortsätter vi optimera dina
+                  övriga leverantörsavtal.
+                </p>
+                <div style={{ marginTop: 24 }}>
+                  <Button onClick={closeVip} $variant="primary" $size="md" $full>
+                    Tillbaka till insikter
+                  </Button>
+                </div>
+              </div>
+            )}
+          </VipModalCard>
+        </VipModal>
+      )}
+
       <Footer />
     </Page>
   );

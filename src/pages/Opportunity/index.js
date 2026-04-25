@@ -19,6 +19,10 @@ const Opportunity = () => {
   const opp = OPPORTUNITIES.find((o) => o.id === id);
   const [stage, setStage] = useState('idle'); // idle | signing | done
 
+  React.useEffect(() => {
+    if (opp && opp.licensePending) navigate('/insights', { replace: true });
+  }, [opp, navigate]);
+
   if (!opp) {
     return (
       <Page>
@@ -30,6 +34,8 @@ const Opportunity = () => {
       </Page>
     );
   }
+
+  if (opp.licensePending) return null;
 
   const startSign = () => {
     setStage('signing');

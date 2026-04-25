@@ -390,6 +390,327 @@ export const Compare = styled.div`
   div.right strong { color: ${({ theme }) => theme.color.success}; }
 `;
 
+export const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+
+  h3 {
+    font-size: 22px;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    font-family: ${({ theme }) => theme.font.display};
+    font-weight: 500;
+  }
+  span.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: ${({ theme }) => theme.color.brandSoft};
+    color: ${({ theme }) => theme.color.brand};
+  }
+  span.badge.warning {
+    background: ${({ theme }) => theme.color.warningSoft};
+    color: ${({ theme }) => theme.color.warning};
+  }
+  span.subtle {
+    margin-left: auto;
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    font-feature-settings: "tnum";
+  }
+`;
+
+export const LockedCard = styled.button`
+  text-align: left;
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px dashed ${({ theme }) => theme.color.borderStrong};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 24px;
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.motion.base};
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle at top right, rgba(168, 118, 26, 0.08), transparent 70%);
+    pointer-events: none;
+  }
+
+  &:hover {
+    border-color: ${({ theme }) => theme.color.warning};
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadow.sm};
+  }
+`;
+
+export const LockedHead = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+
+  div.icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    color: ${({ theme }) => theme.color.muted};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+  div.icon::after {
+    content: '';
+    position: absolute;
+    bottom: -3px; right: -3px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.warning};
+    border: 2px solid ${({ theme }) => theme.color.surface};
+  }
+  div.text { flex: 1; min-width: 0; }
+  span.cat {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 16.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+  }
+  span.beta {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    background: ${({ theme }) => theme.color.warningSoft};
+    color: ${({ theme }) => theme.color.warning};
+    text-transform: uppercase;
+  }
+`;
+
+export const LockedSaving = styled.div`
+  div.amount {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 36px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: ${({ theme }) => theme.color.warning};
+    font-feature-settings: "tnum";
+    em { font-style: italic; font-weight: 400; }
+  }
+  div.unit {
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: ${({ theme }) => theme.color.muted};
+  }
+  div.unit strong { color: ${({ theme }) => theme.color.ink}; font-weight: 600; }
+`;
+
+export const LockedNote = styled.div`
+  padding: 14px 16px;
+  background: ${({ theme }) => theme.color.surfaceAlt};
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  font-size: 13px;
+  color: ${({ theme }) => theme.color.inkSoft};
+  line-height: 1.5;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  svg { flex-shrink: 0; margin-top: 2px; color: ${({ theme }) => theme.color.warning}; }
+`;
+
+export const LockedFooter = styled.div`
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+  padding-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  div.delta {
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+  }
+  div.cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.warning};
+  }
+`;
+
+export const VipModal = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 26, 23, 0.55);
+  backdrop-filter: blur(6px);
+  z-index: ${({ theme }) => theme.z.modal};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadein 0.25s ease;
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+`;
+
+export const VipModalCard = styled.div`
+  width: 100%;
+  max-width: 480px;
+  background: ${({ theme }) => theme.color.surface};
+  border-radius: ${({ theme }) => theme.size.radius.xl};
+  padding: 40px 36px;
+  box-shadow: ${({ theme }) => theme.shadow.lg};
+
+  div.crown {
+    width: 64px; height: 64px;
+    border-radius: 18px;
+    background: ${({ theme }) => theme.color.warningSoft};
+    color: ${({ theme }) => theme.color.warning};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  span.tag {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.warning};
+    background: ${({ theme }) => theme.color.warningSoft};
+    padding: 4px 10px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+  h3 {
+    font-size: 26px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+  p {
+    margin-top: 12px;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: ${({ theme }) => theme.color.muted};
+  }
+  ul.benefits {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  ul.benefits li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 14px;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+  ul.benefits li svg { flex-shrink: 0; margin-top: 2px; color: ${({ theme }) => theme.color.brand}; }
+  div.actions {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  div.confirmed {
+    text-align: center;
+    padding: 24px 0 12px;
+    div.checkmark {
+      width: 64px; height: 64px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: ${({ theme }) => theme.color.brandSoft};
+      color: ${({ theme }) => theme.color.brand};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+`;
+
+export const HeadlineSplit = styled.div`
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(250, 250, 247, 0.12);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  @media (max-width: 600px) { grid-template-columns: 1fr; gap: 16px; }
+
+  div { position: relative; }
+  div + div { padding-left: 24px; border-left: 1px solid rgba(250, 250, 247, 0.12);
+    @media (max-width: 600px) { padding-left: 0; border-left: 0; padding-top: 16px; border-top: 1px solid rgba(250, 250, 247, 0.12); }
+  }
+  span.lbl {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(250, 250, 247, 0.65);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  span.lbl em {
+    font-style: normal;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+  span.lbl em.live {
+    background: rgba(93, 214, 202, 0.18);
+    color: #5DD6CA;
+  }
+  span.lbl em.beta {
+    background: rgba(245, 213, 152, 0.18);
+    color: #F5D598;
+  }
+  div.value {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 34px;
+    line-height: 1;
+    color: #FAFAF7;
+    font-feature-settings: "tnum";
+    letter-spacing: -0.02em;
+  }
+  div.value small {
+    font-size: 13px;
+    color: rgba(250, 250, 247, 0.6);
+    margin-left: 8px;
+    font-family: ${({ theme }) => theme.font.sans};
+    font-feature-settings: "tnum";
+  }
+`;
+
 export const TimelineWrap = styled.div`
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
