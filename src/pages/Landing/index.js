@@ -80,7 +80,7 @@ const Landing = () => {
             <Lede>
               Snittkunden hittar 187 340 kr i onödiga leverantörskostnader varje år.
               Arvo Flow föreslår byten — du godkänner med BankID och vi sköter resten.
-              Inga fasta avgifter — du betalar oss bara när du faktiskt sparat pengar.
+              Inga fasta avgifter — vi tjänar pengar bara när du gör det.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/connect" $variant="gradient" $size="lg">
