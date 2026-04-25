@@ -10,7 +10,7 @@ import {
   Card, SideCol, CompareGrid, CompareCol, BenchBar, Reasoning, Coverage,
   Steps, StepItem,
   ApproveCard, KeyValue, ApproveActions, ApproveBtn, Note,
-  Modal, ModalCard,
+  MailMeBtn, Modal, ModalCard,
 } from './styles';
 
 const Opportunity = () => {
@@ -41,9 +41,11 @@ const Opportunity = () => {
     navigate('/insights');
   };
 
-  const youPos = 95;
-  const medianPos = ((opp.benchmark.industryMedian - opp.benchmark.industryLow) / (opp.benchmark.yourCost - opp.benchmark.industryLow)) * 100;
-  const newPos = 5;
+  const range = opp.benchmark.yourCost - opp.benchmark.industryLow;
+  const pct = (val) => Math.max(2, Math.min(98, ((val - opp.benchmark.industryLow) / range) * 100));
+  const youPos = pct(opp.benchmark.yourCost);
+  const medianPos = pct(opp.benchmark.industryMedian);
+  const newPos = pct(opp.suggestedAnnualCost);
 
   return (
     <Page>
@@ -153,7 +155,7 @@ const Opportunity = () => {
                   <Icon name="bankid" size={20} stroke={2} color="#FAFAF7" />
                   Signera med BankID
                 </ApproveBtn>
-                <Button as="a" href="#" $variant="ghost" $size="md" style={{ color: '#FAFAF7' }}>
+                <Button as="a" href="#" $variant="ghostInverse" $size="md">
                   Spara till senare
                 </Button>
               </ApproveActions>
@@ -166,9 +168,9 @@ const Opportunity = () => {
                 Vi mejlar dig sammanfattningen så du kan stämma av med din bokförings­konsult eller
                 styrelse. Bytet utförs aldrig utan din BankID-signatur.
               </p>
-              <Button as="a" href="#" $variant="secondary" $size="md" style={{ marginTop: 16 }}>
+              <MailMeBtn as="a" href="#" $variant="secondary" $size="md">
                 Mejla mig sammanfattningen
-              </Button>
+              </MailMeBtn>
             </Card>
           </SideCol>
         </Layout>

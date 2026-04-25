@@ -10,6 +10,7 @@ import Connect from './pages/Connect';
 import Scanning from './pages/Scanning';
 import Insights from './pages/Insights';
 import Opportunity from './pages/Opportunity';
+import Bias from './pages/Bias';
 
 const ArvoFlow = () => (
   <ThemeProvider theme={theme}>
@@ -21,6 +22,7 @@ const ArvoFlow = () => (
         <Route path="/scanning" element={<Scanning />} />
         <Route path="/insights" element={<Insights />} />
         <Route path="/opportunity/:id" element={<Opportunity />} />
+        <Route path="/bias" element={<Bias />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

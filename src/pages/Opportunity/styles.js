@@ -406,6 +406,23 @@ export const Note = styled.p`
   text-align: center;
 `;
 
+export const MailMeBtn = styled.a`
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 18px;
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.ink};
+  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  font-size: 14.5px;
+  font-weight: 500;
+  transition: background ${({ theme }) => theme.motion.fast};
+  &:hover { background: ${({ theme }) => theme.color.surfaceAlt}; }
+`;
+
 export const Modal = styled.div`
   position: fixed;
   inset: 0;

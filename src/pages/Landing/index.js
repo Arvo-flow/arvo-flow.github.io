@@ -44,7 +44,7 @@ const FAQ = [
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
-    a: 'Vår rankningsalgoritm är publik (se /bias). Affiliate-intäkter är kapade till 500 kr/byte oavsett leverantör — överskott läggs i en kundbonus-pool. Du kan också välja en helt affiliate-fri modell vid onboarding.',
+    a: 'Vår rankningsalgoritm är publik och deterministisk — du hittar hela vår rankningspolicy under /bias. Affiliate-intäkter är kapade per kategori och överskott rabatteras tillbaka till kunderna. Du kan också välja en helt affiliate-fri modell vid onboarding.',
   },
   {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',

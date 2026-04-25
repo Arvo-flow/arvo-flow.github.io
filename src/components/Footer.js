@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 import Logo from './Logo';
 
 const Wrap = styled.footer`
@@ -94,7 +95,7 @@ const Footer = () => (
           <li><a href="#villkor">Villkor</a></li>
           <li><a href="#integritet">Integritet (GDPR)</a></li>
           <li><a href="#cookies">Cookies</a></li>
-          <li><a href="#bias">Rankningspolicy</a></li>
+          <li><Link to="/bias">Rankningspolicy</Link></li>
         </ul>
       </Col>
     </Inner>

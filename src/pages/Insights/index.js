@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
@@ -19,6 +19,22 @@ const FILTERS = [
 const Insights = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
+  const [animatedSavings, setAnimatedSavings] = useState(0);
+
+  useEffect(() => {
+    const total = SUMMARY.identifiedSavings;
+    const dur = 1400;
+    const start = performance.now();
+    let raf;
+    const tick = (t) => {
+      const p = Math.min(1, (t - start) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setAnimatedSavings(Math.round(eased * total));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   const opps = useMemo(() => {
     if (filter === 'high') return OPPORTUNITIES.filter((o) => o.confidence === 'high');
@@ -44,8 +60,8 @@ const Insights = () => {
           <HeadlineGrid>
             <BigNumber>
               <span className="kicker">Identifierad besparing år 1</span>
-              <div className="amount">
-                <em>{SUMMARY.identifiedSavings.toLocaleString('sv-SE')}</em>
+              <div className="amount tabular">
+                <em>{animatedSavings.toLocaleString('sv-SE')}</em>
                 <span className="unit">kr</span>
               </div>
               <p>

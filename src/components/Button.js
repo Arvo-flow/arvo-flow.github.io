@@ -29,6 +29,12 @@ const variants = {
     border: 1px solid transparent;
     &:hover { background: ${({ theme }) => theme.color.surfaceAlt}; }
   `,
+  ghostInverse: css`
+    background: transparent;
+    color: rgba(250, 250, 247, 0.85);
+    border: 1px solid rgba(250, 250, 247, 0.18);
+    &:hover { background: rgba(250, 250, 247, 0.08); color: #FAFAF7; }
+  `,
 };
 
 const sizes = {
