@@ -75,12 +75,12 @@ const Landing = () => {
           <div>
             <Eyebrow><span className="dot" /> Ingen risk. Ingen fast avgift. Bara resultat.</Eyebrow>
             <Headline>
-              Vi hittar pengarna<br />du blöder på <em>fel leverantör.</em>
+              Sluta betala överpris<br />för dina <em>leverantörsavtal.</em>
             </Headline>
             <Lede>
               Snittkunden hittar 187 340 kr i onödiga leverantörskostnader varje år.
+              Arvo Flow föreslår byten — du godkänner med BankID och vi sköter resten.
               Inga fasta avgifter — du betalar oss bara när du faktiskt sparat pengar.
-              Hittar vi inget kostar det inget.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/connect" $variant="gradient" $size="lg">
