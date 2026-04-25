@@ -37,8 +37,8 @@ export const HeroBackdrop = styled.div`
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 18% 30%, rgba(15, 81, 50, 0.08), transparent 50%),
-    radial-gradient(circle at 82% 12%, rgba(200, 128, 74, 0.10), transparent 55%);
+    radial-gradient(circle at 18% 30%, rgba(27, 122, 110, 0.10), transparent 50%),
+    radial-gradient(circle at 82% 12%, rgba(93, 214, 202, 0.14), transparent 55%);
   z-index: 0;
 `;
 
@@ -472,7 +472,7 @@ export const PricingCard = styled.div`
     top: -40%; right: -20%;
     width: 60%;
     height: 200%;
-    background: radial-gradient(circle, rgba(200, 128, 74, 0.18), transparent 60%);
+    background: radial-gradient(circle, rgba(93, 214, 202, 0.20), transparent 60%);
     pointer-events: none;
   }
 `;

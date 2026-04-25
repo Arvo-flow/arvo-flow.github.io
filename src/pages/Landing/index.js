@@ -83,7 +83,7 @@ const Landing = () => {
               Du betalar oss bara när du faktiskt sparar pengar.
             </Lede>
             <HeroActions>
-              <Button as={Link} to="/connect" $variant="primary" $size="lg">
+              <Button as={Link} to="/connect" $variant="gradient" $size="lg">
                 Koppla Fortnox <Icon name="arrow" size={18} />
               </Button>
               <Button as="a" href="#hur" $variant="secondary" $size="lg">
@@ -272,7 +272,7 @@ const Landing = () => {
         <h2>Hur mycket blöder du just nu?</h2>
         <p>Snittet bland våra kunder är 187 340 kr/år. Du vet inte förrän vi har scannat. 60 sekunder med Fortnox och du har svaret.</p>
         <div className="actions">
-          <Button as={Link} to="/connect" $variant="brand" $size="lg">
+          <Button as={Link} to="/connect" $variant="gradient" $size="lg">
             Koppla Fortnox — gratis scanning <Icon name="arrow" size={18} />
           </Button>
         </div>

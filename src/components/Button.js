@@ -17,6 +17,27 @@ const variants = {
     &:hover { transform: translateY(-1px); box-shadow: ${({ theme }) => theme.shadow.md}; background: ${({ theme }) => theme.color.brandInk}; }
     &:active { transform: translateY(0); }
   `,
+  gradient: css`
+    background: ${({ theme }) => theme.color.brandGradient};
+    color: #FFFFFF;
+    border: 1px solid transparent;
+    box-shadow: ${({ theme }) => theme.shadow.brand};
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: ${({ theme }) => theme.color.brandGradientHover};
+      opacity: 0;
+      transition: opacity ${({ theme }) => theme.motion.fast};
+    }
+    & > * { position: relative; z-index: 1; }
+    &:hover { transform: translateY(-1px); box-shadow: 0 16px 40px rgba(27, 122, 110, 0.36); }
+    &:hover::after { opacity: 1; }
+    &:active { transform: translateY(0); }
+  `,
   secondary: css`
     background: ${({ theme }) => theme.color.surface};
     color: ${({ theme }) => theme.color.ink};

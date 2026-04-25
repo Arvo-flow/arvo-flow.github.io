@@ -338,7 +338,7 @@ export const ApproveCard = styled(Card)`
     position: absolute;
     top: -50%; right: -30%;
     width: 80%; height: 200%;
-    background: radial-gradient(circle, rgba(200, 128, 74, 0.15), transparent 60%);
+    background: radial-gradient(circle, rgba(93, 214, 202, 0.18), transparent 60%);
     pointer-events: none;
   }
   h3 { color: #FAFAF7; position: relative; }
@@ -387,15 +387,16 @@ export const ApproveBtn = styled.button`
   gap: 12px;
   height: 56px;
   border-radius: ${({ theme }) => theme.size.radius.md};
-  background: ${({ theme }) => theme.color.brand};
-  color: #FAFAF7;
+  background: ${({ theme }) => theme.color.brandGradient};
+  color: #FFFFFF;
   font-size: 15.5px;
   font-weight: 600;
   border: none;
   cursor: pointer;
   animation: ${pulse} 2.4s ease-in-out infinite;
-  transition: transform ${({ theme }) => theme.motion.fast};
-  &:hover { transform: translateY(-1px); }
+  transition: transform ${({ theme }) => theme.motion.fast}, box-shadow ${({ theme }) => theme.motion.fast};
+  box-shadow: ${({ theme }) => theme.shadow.brand};
+  &:hover { transform: translateY(-1px); box-shadow: 0 16px 40px rgba(27, 122, 110, 0.36); }
 `;
 
 export const Note = styled.p`

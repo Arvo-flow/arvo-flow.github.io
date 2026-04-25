@@ -51,7 +51,7 @@ const Connect = () => {
           </Trust>
 
           <Actions>
-            <Button $variant="primary" $size="lg" onClick={start} disabled={connecting} $full>
+            <Button $variant="gradient" $size="lg" onClick={start} disabled={connecting} $full>
               {connecting ? (
                 <>
                   <Spinner /> Ansluter till {provider === 'fortnox' ? 'Fortnox' : 'Visma'}…

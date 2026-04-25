@@ -79,7 +79,7 @@ export const Headline = styled.section`
     position: absolute;
     top: -30%; right: -10%;
     width: 60%; height: 180%;
-    background: radial-gradient(circle, rgba(200, 128, 74, 0.18), transparent 60%);
+    background: radial-gradient(circle, rgba(93, 214, 202, 0.22), transparent 60%);
     pointer-events: none;
   }
 `;

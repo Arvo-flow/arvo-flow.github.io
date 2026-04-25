@@ -73,7 +73,7 @@ const Nav = ({ variant = 'public' }) => {
           {variant === 'public' ? (
             <>
               <Button as={Link} to="/connect" $variant="ghost" $size="sm">Logga in</Button>
-              <Button as={Link} to="/connect" $variant="primary" $size="sm">Koppla Fortnox →</Button>
+              <Button as={Link} to="/connect" $variant="gradient" $size="sm">Koppla Fortnox →</Button>
             </>
           ) : (
             <Button as={Link} to="/" $variant="ghost" $size="sm">Logga ut</Button>
