@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8">
+    <title>Arvo Flow — laddar…</title>
+    <!-- spa-github-pages 404 redirect.
+         Captures any /flow/* deep link that GitHub Pages 404'd on,
+         encodes the path as a query string and redirects to /flow/.
+         The unwrap script in /flow/index.html restores the original
+         URL via history.replaceState before BrowserRouter mounts. -->
+    <script type="text/javascript">
+      (function() {
+        var pathSegmentsToKeep = 1;
+        var l = window.location;
+        if (l.pathname.indexOf('/flow') !== 0) {
+          // Not a /flow deep link — fall through to default 404 markup.
+          return;
+        }
+        l.replace(
+          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+          l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash
+        );
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Sidan kunde inte hittas. <a href="/flow/">Tillbaka till Arvo Flow</a>.</p>
+  </body>
+</html>
