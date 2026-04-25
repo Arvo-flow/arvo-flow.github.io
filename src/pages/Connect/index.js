@@ -5,7 +5,8 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import {
   Page, Wrap, Card, Step, Title, Lede,
-  ProviderRow, ProviderBtn, Trust, Actions, SmallNote, Spinner,
+  TrustBanner, BadgeStrip, Badge,
+  ProviderRow, ProviderBtn, Actions, SmallNote, Spinner,
 } from './styles';
 
 const Connect = () => {
@@ -25,9 +26,17 @@ const Connect = () => {
         <Card>
           <Step><span className="dot" /> Steg 1 av 3 · Anslut bokföring</Step>
           <Title>Koppla din bokföring</Title>
+
+          <TrustBanner>
+            <div className="lock"><Icon name="lock" size={18} stroke={2.2} color="#FFFFFF" /></div>
+            <div>
+              <strong>Vi får bara läsrättigheter till dina leverantörsfakturor. Ingenting annat.</strong>
+              <span>Vi kan inte ändra, skicka eller radera något i din bokföring. Du kan koppla bort i ett klick — då raderas all data inom 24 h.</span>
+            </div>
+          </TrustBanner>
+
           <Lede>
-            Vi läser endast leverantörsfakturor — inget annat. Det tar 60 sekunder och du kan
-            koppla bort när som helst i ett klick.
+            60 sekunders koppling via Fortnox eller Visma — och du kan stänga av den lika snabbt.
           </Lede>
 
           <ProviderRow>
@@ -44,11 +53,28 @@ const Connect = () => {
             </ProviderBtn>
           </ProviderRow>
 
-          <Trust>
-            <li><Icon name="lock" size={16} stroke={2} /> Endast läs-rättigheter — vi kan inte ändra eller skicka något i din bokföring.</li>
-            <li><Icon name="check" size={16} stroke={2} /> All data krypteras och lagras i Sverige (Bahnhof Stockholm).</li>
-            <li><Icon name="check" size={16} stroke={2} /> Du kan koppla bort i ett klick — då raderas all data inom 24 h.</li>
-          </Trust>
+          <BadgeStrip>
+            <Badge>
+              <div className="icon"><Icon name="bankid" size={16} stroke={2} /></div>
+              <strong>BankID</strong>
+              <span>Säker identifiering</span>
+            </Badge>
+            <Badge>
+              <div className="icon"><Icon name="shield" size={16} stroke={2} /></div>
+              <strong>GDPR</strong>
+              <span>Fullt regelefterlevnad</span>
+            </Badge>
+            <Badge>
+              <div className="icon"><Icon name="lock" size={16} stroke={2} /></div>
+              <strong>AES-256</strong>
+              <span>Krypterad i vila & i transport</span>
+            </Badge>
+            <Badge>
+              <div className="icon"><Icon name="check" size={16} stroke={2.2} /></div>
+              <strong>Sverige</strong>
+              <span>Data hos Bahnhof, Stockholm</span>
+            </Badge>
+          </BadgeStrip>
 
           <Actions>
             <Button $variant="gradient" $size="lg" onClick={start} disabled={connecting} $full>

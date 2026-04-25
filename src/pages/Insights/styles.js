@@ -5,6 +5,77 @@ const fadeUp = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
+const shimmer = keyframes`
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+`;
+
+const fadeOut = keyframes`
+  0% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+`;
+
+export const SkeletonOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: ${({ theme }) => theme.color.bg};
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  animation: ${fadeOut} 0.4s ease forwards 1.8s;
+
+  div.spinner {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 3px solid ${({ theme }) => theme.color.brandSoft};
+    border-top-color: ${({ theme }) => theme.color.brand};
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 24px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  h2 {
+    font-size: 24px;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    max-width: 480px;
+  }
+  p {
+    margin-top: 10px;
+    font-size: 14.5px;
+    color: ${({ theme }) => theme.color.muted};
+    max-width: 400px;
+  }
+
+  ul.skeletonRows {
+    margin-top: 32px;
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  ul.skeletonRows li {
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(90deg,
+      ${({ theme }) => theme.color.surfaceAlt} 0%,
+      ${({ theme }) => theme.color.surface} 50%,
+      ${({ theme }) => theme.color.surfaceAlt} 100%);
+    background-size: 800px 100%;
+    animation: ${shimmer} 1.4s ease-in-out infinite;
+  }
+  ul.skeletonRows li:nth-child(1) { width: 100%; }
+  ul.skeletonRows li:nth-child(2) { width: 88%; }
+  ul.skeletonRows li:nth-child(3) { width: 76%; }
+  ul.skeletonRows li:nth-child(4) { width: 92%; }
+`;
+
 export const Page = styled.main`
   min-height: 100vh;
   background: ${({ theme }) => theme.color.bg};

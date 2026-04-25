@@ -49,7 +49,10 @@ const Scanning = () => {
         }, 1100 + i * 1200)
       );
     });
-    timers.push(setTimeout(() => navigate('/insights'), 6200));
+    timers.push(setTimeout(() => {
+      try { sessionStorage.setItem('arvo:scanCompleted', '1'); } catch (e) {}
+      navigate('/insights');
+    }, 6200));
     return () => timers.forEach(clearTimeout);
   }, [navigate]);
 

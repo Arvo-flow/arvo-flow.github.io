@@ -7,7 +7,7 @@ import { COMPANY, SUMMARY, OPPORTUNITIES, TIMELINE, formatKr } from '../../data/
 import {
   Page, Container, Greeting, Headline, HeadlineGrid, BigNumber, StatList,
   Section, OppGrid, OppCard, OppHead, OppSaving, OppFooter, Compare,
-  TimelineWrap, TimelineList, TimelineItem,
+  TimelineWrap, TimelineList, TimelineItem, SkeletonOverlay,
 } from './styles';
 
 const FILTERS = [
@@ -20,8 +20,22 @@ const Insights = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
   const [animatedSavings, setAnimatedSavings] = useState(0);
+  const [showSkeleton, setShowSkeleton] = useState(() => {
+    try { return sessionStorage.getItem('arvo:scanCompleted') !== '1'; }
+    catch (e) { return false; }
+  });
 
   useEffect(() => {
+    if (!showSkeleton) return;
+    const t = setTimeout(() => {
+      setShowSkeleton(false);
+      try { sessionStorage.setItem('arvo:scanCompleted', '1'); } catch (e) {}
+    }, 2200);
+    return () => clearTimeout(t);
+  }, [showSkeleton]);
+
+  useEffect(() => {
+    if (showSkeleton) return;
     const total = SUMMARY.identifiedSavings;
     const dur = 1400;
     const start = performance.now();
@@ -34,7 +48,7 @@ const Insights = () => {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [showSkeleton]);
 
   const opps = useMemo(() => {
     if (filter === 'high') return OPPORTUNITIES.filter((o) => o.confidence === 'high');
@@ -44,6 +58,16 @@ const Insights = () => {
 
   return (
     <Page>
+      {showSkeleton && (
+        <SkeletonOverlay>
+          <div className="spinner" />
+          <h2>Analyserar 412 leverantörsfakturor…</h2>
+          <p>Jämför mot 50 000+ andra svenska SMB:er för att hitta var du betalar över marknadspris.</p>
+          <ul className="skeletonRows">
+            <li /><li /><li /><li />
+          </ul>
+        </SkeletonOverlay>
+      )}
       <Nav variant="app" />
       <Container>
         <Greeting>

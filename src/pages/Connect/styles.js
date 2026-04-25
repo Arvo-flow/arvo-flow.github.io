@@ -65,6 +65,86 @@ export const Lede = styled.p`
   color: ${({ theme }) => theme.color.muted};
 `;
 
+export const TrustBanner = styled.div`
+  margin-top: 22px;
+  padding: 18px 20px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.brandSoft};
+  border: 1px solid ${({ theme }) => theme.color.brand};
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 14px;
+  align-items: center;
+
+  div.lock {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: ${({ theme }) => theme.color.brand};
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  strong {
+    display: block;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.brandInk};
+    line-height: 1.4;
+  }
+  span {
+    display: block;
+    margin-top: 4px;
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.brandInk};
+    opacity: 0.78;
+    line-height: 1.45;
+  }
+`;
+
+export const BadgeStrip = styled.div`
+  margin-top: 22px;
+  padding: 14px 16px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.surfaceAlt};
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  @media (max-width: 480px) { grid-template-columns: repeat(2, 1fr); }
+`;
+
+export const Badge = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+
+  div.icon {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.surface};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: ${({ theme }) => theme.color.brand};
+  }
+  strong {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+  }
+  span {
+    font-size: 10.5px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.25;
+  }
+`;
+
 export const ProviderRow = styled.div`
   margin-top: 32px;
   display: grid;

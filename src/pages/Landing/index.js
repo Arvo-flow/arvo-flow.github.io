@@ -73,14 +73,14 @@ const Landing = () => {
         <HeroBackdrop />
         <HeroInner>
           <div>
-            <Eyebrow><span className="dot" /> AI-inköpschef · För svenska småföretag</Eyebrow>
+            <Eyebrow><span className="dot" /> Snittkund sparar 187 340 kr · Ingen risk, ingen fast avgift</Eyebrow>
             <Headline>
               Vi hittar pengarna<br />du blöder på <em>fel leverantör.</em>
             </Headline>
             <Lede>
-              Koppla Fortnox på 60 sekunder. Arvo Flow analyserar dina leverantörsavtal,
-              jämför mot tusentals andra svenska SMB:er och hittar var du betalar över marknadspris.
-              Du betalar oss bara när du faktiskt sparar pengar.
+              Snittkunden hittar 187 340 kr i onödiga leverantörskostnader varje år.
+              Inga fasta avgifter — du betalar oss bara när du faktiskt sparat pengar.
+              Hittar vi inget kostar det inget.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/connect" $variant="gradient" $size="lg">

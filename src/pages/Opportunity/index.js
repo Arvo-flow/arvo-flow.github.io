@@ -152,14 +152,14 @@ const Opportunity = () => {
               </KeyValue>
               <ApproveActions>
                 <ApproveBtn onClick={startSign}>
-                  <Icon name="bankid" size={20} stroke={2} color="#FAFAF7" />
-                  Signera med BankID
+                  <Icon name="bankid" size={20} stroke={2} color="#FFFFFF" />
+                  Godkänn byte med BankID
                 </ApproveBtn>
                 <Button as="a" href="#" $variant="ghostInverse" $size="md">
                   Spara till senare
                 </Button>
               </ApproveActions>
-              <Note>14 dagars ångerrätt. Prisgaranti 12 månader. Du kan koppla bort Arvo Flow när som helst.</Note>
+              <Note>Vi sköter all onboarding hos {opp.suggestedSupplier} åt dig. 14 dagars ångerrätt. Prisgaranti 12 månader.</Note>
             </ApproveCard>
 
             <Card>
@@ -181,7 +181,7 @@ const Opportunity = () => {
           <ModalCard>
             <div className="bankid">B</div>
             <h3>Öppna BankID-appen</h3>
-            <p>Vi har skickat en signeringsbegäran till ditt BankID. Öppna appen och bekräfta.</p>
+            <p>Bekräfta för att godkänna bytet till {opp.suggestedSupplier}. Du behöver bara signera en gång — vi sköter resten.</p>
             <div className="dots"><span /><span /><span /></div>
           </ModalCard>
         </Modal>
@@ -191,15 +191,16 @@ const Opportunity = () => {
         <Modal>
           <ModalCard>
             <div className="success">
-              <Icon name="check" size={36} stroke={2.5} color="#0F5132" />
+              <Icon name="check" size={36} stroke={2.5} color="#1B7A6E" />
             </div>
             <h3>Bytet är igångsatt.</h3>
             <p>
-              Vi har skickat uppsägningen till {opp.currentSupplier} och tecknat det nya avtalet hos
-              {' '}{opp.suggestedSupplier}. Du får en bekräftelse på mejl inom kort.
+              <strong>Du behöver inte göra något mer.</strong> Vi förhandlar uppsägningen
+              med {opp.currentSupplier} och tecknar det nya avtalet med {opp.suggestedSupplier}
+              {' '}åt dig. Du får bekräftelse på mejl när bytet är aktiverat.
             </p>
             <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Button onClick={finish} $variant="primary" $size="md" $full>
+              <Button onClick={finish} $variant="gradient" $size="md" $full>
                 Tillbaka till insikter
               </Button>
             </div>
