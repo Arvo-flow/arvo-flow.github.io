@@ -73,7 +73,7 @@ const Landing = () => {
         <HeroBackdrop />
         <HeroInner>
           <div>
-            <Eyebrow><span className="dot" /> Snittkund sparar 187 340 kr · Ingen risk, ingen fast avgift</Eyebrow>
+            <Eyebrow><span className="dot" /> Ingen risk. Ingen fast avgift. Bara resultat.</Eyebrow>
             <Headline>
               Vi hittar pengarna<br />du blöder på <em>fel leverantör.</em>
             </Headline>
