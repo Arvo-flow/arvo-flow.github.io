@@ -2,7 +2,7 @@
   "name": "arvo-os",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://arvo-flow.github.io",
+  "homepage": "https://arvo-flow.github.io/flow",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",
     "axios": "^1.14.0",
@@ -20,10 +20,11 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "postbuild": "cp build/index.html build/404.html",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
+    "deploy": "gh-pages -d build -e flow",
     "server": "node server/index.js",
     "seed": "node server/seed.js",
     "test:webhook": "node server/test-webhook.js"
