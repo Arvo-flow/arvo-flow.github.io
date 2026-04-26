@@ -103,6 +103,125 @@ export const TrustBanner = styled.div`
   }
 `;
 
+export const DataContract = styled.div`
+  margin-top: 22px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+`;
+
+export const DataCol = styled.div`
+  padding: 16px 18px;
+  background: ${({ theme, $allow }) => ($allow ? theme.color.brandSoft : theme.color.surfaceSunken)};
+  border-right: 1px solid ${({ theme }) => theme.color.borderStrong};
+  &:last-child { border-right: none; border-left: none; }
+
+  @media (max-width: 480px) {
+    border-right: none;
+    border-bottom: 1px solid ${({ theme }) => theme.color.borderStrong};
+    &:last-child { border-bottom: none; }
+  }
+
+  span.head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: ${({ theme, $allow }) => ($allow ? theme.color.brand : theme.color.muted)};
+    margin-bottom: 12px;
+  }
+  span.head div.dot {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: ${({ theme, $allow }) => ($allow ? theme.color.brand : '#9F3B22')};
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  ul { display: flex; flex-direction: column; gap: 6px; }
+  ul li {
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.inkSoft};
+    line-height: 1.4;
+  }
+`;
+
+export const NoWaste = styled.div`
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px dashed ${({ theme }) => theme.color.brand};
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  align-items: center;
+
+  div.icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brandSoft};
+    color: ${({ theme }) => theme.color.brand};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  strong {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    line-height: 1.4;
+  }
+  span {
+    display: block;
+    margin-top: 2px;
+    font-size: 12.5px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.45;
+  }
+`;
+
+export const ScanCounter = styled.div`
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.surfaceAlt};
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: ${({ theme }) => theme.color.muted};
+
+  div.live {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brand};
+    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
+    flex-shrink: 0;
+    animation: livepulse 2.4s ease-in-out infinite;
+  }
+  strong {
+    color: ${({ theme }) => theme.color.ink};
+    font-weight: 600;
+    font-feature-settings: "tnum";
+  }
+  @keyframes livepulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+`;
+
 export const BadgeStrip = styled.div`
   margin-top: 22px;
   padding: 14px 16px;

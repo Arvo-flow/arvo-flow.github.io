@@ -5,7 +5,8 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import {
   Page, Wrap, Card, Step, Title, Lede,
-  TrustBanner, BadgeStrip, Badge,
+  DataContract, DataCol, NoWaste, ScanCounter,
+  BadgeStrip, Badge,
   ProviderRow, ProviderBtn, Actions, SmallNote, Spinner,
 } from './styles';
 
@@ -27,17 +28,36 @@ const Connect = () => {
           <Step><span className="dot" /> Steg 1 av 3 · Anslut bokföring</Step>
           <Title>Koppla din bokföring</Title>
 
-          <TrustBanner>
-            <div className="lock"><Icon name="lock" size={18} stroke={2.2} color="#FFFFFF" /></div>
-            <div>
-              <strong>Vi får bara läsrättigheter till dina leverantörsfakturor. Ingenting annat.</strong>
-              <span>Vi kan inte ändra, skicka eller radera något i din bokföring. Du kan koppla bort i ett klick — då raderas all data inom 24 h.</span>
-            </div>
-          </TrustBanner>
-
           <Lede>
             60 sekunders koppling via Fortnox eller Visma — och du kan stänga av den lika snabbt.
           </Lede>
+
+          <DataContract>
+            <DataCol $allow>
+              <span className="head"><div className="dot">✓</div> Vi läser</span>
+              <ul>
+                <li>Leverantörsfakturor (konton 4xxx–7xxx)</li>
+                <li>Avtalskategorier &amp; förfallodatum</li>
+                <li>Belopp &amp; betalningshistorik</li>
+              </ul>
+            </DataCol>
+            <DataCol>
+              <span className="head"><div className="dot">✗</div> Vi läser inte</span>
+              <ul>
+                <li>Kundfakturor &amp; intäkter</li>
+                <li>Lönedata &amp; personnummer</li>
+                <li>Bankkonton &amp; kassaflöde</li>
+              </ul>
+            </DataCol>
+          </DataContract>
+
+          <NoWaste>
+            <div className="icon"><Icon name="check" size={16} stroke={2.4} /></div>
+            <div>
+              <strong>No Waste Promise — hittar vi inga överpriser på 30 dagar?</strong>
+              <span>Då är ditt bolag redan optimerat. Vi raderar Fortnox-kopplingen och all din data automatiskt — du har inte betalat en krona.</span>
+            </div>
+          </NoWaste>
 
           <ProviderRow>
             <ProviderBtn $active={provider === 'fortnox'} onClick={() => setProvider('fortnox')}>
@@ -75,6 +95,11 @@ const Connect = () => {
               <span>Data hos Bahnhof, Stockholm</span>
             </Badge>
           </BadgeStrip>
+
+          <ScanCounter>
+            <div className="live" />
+            <span><strong>1 247</strong> leverantörsfakturor analyserade denna vecka</span>
+          </ScanCounter>
 
           <Actions>
             <Button $variant="gradient" $size="lg" onClick={start} disabled={connecting} $full>

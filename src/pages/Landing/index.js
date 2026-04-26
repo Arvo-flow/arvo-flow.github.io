@@ -92,8 +92,8 @@ const Landing = () => {
             </HeroActions>
             <HeroProof>
               <div><strong>187 340 kr</strong><span>snitt-besparing år 1</span></div>
-              <div><strong>4,8 / 5</strong><span>Trustpilot · 312 omdömen</span></div>
-              <div><strong>0 kr</strong><span>tills du sparat pengar</span></div>
+              <div><strong>47 250</strong><span>leverantörsfakturor analyserade i år</span></div>
+              <div><strong>0 kr</strong><span>tills vi sparat pengar åt dig</span></div>
             </HeroProof>
           </div>
 
@@ -247,7 +247,7 @@ const Landing = () => {
               <li><Icon name="check" size={18} stroke={2.2} /> Förberedda byten med BankID-signering</li>
               <li><Icon name="check" size={18} stroke={2.2} /> Prisgaranti — höjs priset får du tillbaka mellanskillnaden</li>
               <li><Icon name="check" size={18} stroke={2.2} /> Branschindex tillgängligt för dig som kund</li>
-              <li><Icon name="check" size={18} stroke={2.2} /> Du kan koppla bort Fortnox när som helst</li>
+              <li><Icon name="check" size={18} stroke={2.2} /> <strong>No Waste Promise</strong> — hittar vi inga överpriser på 30 dagar raderas data + koppling automatiskt</li>
             </ul>
           </PricingInner>
         </PricingCard>

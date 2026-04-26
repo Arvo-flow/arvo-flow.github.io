@@ -51,11 +51,40 @@ const Col = styled.div`
   }
 `;
 
-const Bottom = styled.div`
+const TrustRow = styled.div`
   max-width: ${({ theme }) => theme.size.container};
   margin: 56px auto 0;
-  padding-top: 24px;
+  padding: 18px 20px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: ${({ theme }) => theme.color.muted};
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  span div.dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brand};
+    opacity: 0.55;
+  }
+  strong {
+    color: ${({ theme }) => theme.color.inkSoft};
+    font-weight: 600;
+  }
+`;
+
+const Bottom = styled.div`
+  max-width: ${({ theme }) => theme.size.container};
+  margin: 24px auto 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -69,7 +98,7 @@ const Footer = () => (
     <Inner>
       <Brand>
         <Logo />
-        <p>AI-inköpschefen för svenska småföretag. Vi hittar pengarna du blöder på leverantörsavtal — du betalar bara när du sparar.</p>
+        <p>Vi sänker svenska småföretags leverantörskostnader. Inga fasta avgifter — vi tjänar pengar bara när du gör det.</p>
       </Brand>
       <Col>
         <h4>Produkt</h4>
@@ -99,6 +128,11 @@ const Footer = () => (
         </ul>
       </Col>
     </Inner>
+    <TrustRow>
+      <span><div className="dot" /> Ansvars- och cyberförsäkrade via <strong>Hiscox</strong></span>
+      <span><div className="dot" /> GDPR-säkrad infrastruktur i <strong>Sverige</strong></span>
+      <span><div className="dot" /> Krypterad data <strong>AES-256</strong></span>
+    </TrustRow>
     <Bottom>
       <span>© 2026 Arvo Flow AB · Org.nr 559500-0000</span>
       <span>Stockholm · Made with care in Sweden</span>
