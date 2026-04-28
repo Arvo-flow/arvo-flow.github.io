@@ -5,7 +5,7 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import {
   Page, Wrap, Card, Step, Title, Lede,
-  DataContract, DataCol, NoWaste, ScanCounter,
+  DataContract, DataCol, NoWaste, ScanCounter, Reassurance,
   BadgeStrip, Badge,
   ProviderRow, ProviderBtn, Actions, SmallNote, Spinner,
 } from './styles';
@@ -36,17 +36,17 @@ const Connect = () => {
             <DataCol $allow>
               <span className="head"><div className="dot">✓</div> Vi läser</span>
               <ul>
-                <li>Leverantörsfakturor (konton 4xxx–7xxx)</li>
-                <li>Avtalskategorier &amp; förfallodatum</li>
-                <li>Belopp &amp; betalningshistorik</li>
+                <li><Icon name="check" size={14} stroke={2.4} /> Leverantörsfakturor (konton 4xxx–7xxx)</li>
+                <li><Icon name="check" size={14} stroke={2.4} /> Avtalskategorier &amp; förfallodatum</li>
+                <li><Icon name="check" size={14} stroke={2.4} /> Belopp &amp; betalningshistorik</li>
               </ul>
             </DataCol>
             <DataCol>
               <span className="head"><div className="dot">✗</div> Vi läser inte</span>
               <ul>
-                <li>Kundfakturor &amp; intäkter</li>
-                <li>Lönedata &amp; personnummer</li>
-                <li>Bankkonton &amp; kassaflöde</li>
+                <li><Icon name="lock" size={14} stroke={2} /> Kundfakturor &amp; intäkter</li>
+                <li><Icon name="lock" size={14} stroke={2} /> Lönedata &amp; personnummer</li>
+                <li><Icon name="lock" size={14} stroke={2} /> Bankkonton &amp; kassaflöde</li>
               </ul>
             </DataCol>
           </DataContract>
@@ -113,6 +113,10 @@ const Connect = () => {
                 </>
               )}
             </Button>
+            <Reassurance>
+              <Icon name="lock" size={12} stroke={2.2} />
+              Du skickas nu till {provider === 'fortnox' ? 'Fortnox' : 'Visma'} för att godkänna läsåtkomst. Inga ändringar görs i din bokföring.
+            </Reassurance>
             <Button $variant="ghost" $size="md" onClick={() => navigate('/')}>
               Tillbaka
             </Button>

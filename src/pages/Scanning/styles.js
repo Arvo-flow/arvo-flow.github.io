@@ -136,23 +136,40 @@ export const StepItem = styled.li`
   gap: 14px;
   padding: 14px 18px;
   border-radius: ${({ theme }) => theme.size.radius.md};
-  background: ${({ theme, $state }) =>
-    $state === 'active' ? theme.color.surface : 'transparent'};
-  border: 1px solid ${({ theme, $state }) =>
-    $state === 'active' ? theme.color.borderStrong : 'transparent'};
+  background: ${({ theme, $state, $type }) => {
+    if ($state === 'pending') return 'transparent';
+    if ($type === 'skip') return theme.color.surfaceSunken;
+    return theme.color.surface;
+  }};
+  border: 1px solid ${({ theme, $state, $type }) => {
+    if ($state === 'pending') return 'transparent';
+    if ($type === 'skip') return theme.color.borderStrong;
+    return theme.color.borderStrong;
+  }};
   text-align: left;
   animation: ${fadeIn} 0.4s ease both;
+  opacity: ${({ $state }) => ($state === 'pending' ? 0.55 : 1)};
+  transition: opacity ${({ theme }) => theme.motion.base},
+              background ${({ theme }) => theme.motion.base};
 
   div.idx {
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    background: ${({ theme, $state }) => {
+    background: ${({ theme, $state, $type }) => {
+      if ($type === 'skip') {
+        if ($state === 'pending') return theme.color.surfaceAlt;
+        return theme.color.muted;
+      }
       if ($state === 'done') return theme.color.brand;
       if ($state === 'active') return theme.color.brandSoft;
       return theme.color.surfaceAlt;
     }};
-    color: ${({ theme, $state }) => ($state === 'done' ? '#FAFAF7' : theme.color.muted)};
+    color: ${({ theme, $state, $type }) => {
+      if ($type === 'skip') return '#FFFFFF';
+      if ($state === 'done') return '#FAFAF7';
+      return theme.color.muted;
+    }};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -164,11 +181,20 @@ export const StepItem = styled.li`
     flex: 1;
     font-size: 14.5px;
     font-weight: 500;
-    color: ${({ theme, $state }) => ($state === 'pending' ? theme.color.muted : theme.color.ink)};
+    color: ${({ theme, $state, $type }) => {
+      if ($type === 'skip') return theme.color.muted;
+      if ($state === 'pending') return theme.color.muted;
+      return theme.color.ink;
+    }};
+    font-style: ${({ $type }) => ($type === 'skip' ? 'italic' : 'normal')};
   }
   div.detail {
     font-size: 12.5px;
-    color: ${({ theme }) => theme.color.muted};
+    color: ${({ theme, $type }) => ($type === 'skip' ? theme.color.mutedSoft : theme.color.muted)};
     font-feature-settings: "tnum";
+    font-weight: ${({ $type }) => ($type === 'skip' ? 500 : 400)};
+    text-transform: ${({ $type }) => ($type === 'skip' ? 'uppercase' : 'none')};
+    letter-spacing: ${({ $type }) => ($type === 'skip' ? '0.06em' : '0')};
+    font-size: ${({ $type }) => ($type === 'skip' ? '11px' : '12.5px')};
   }
 `;

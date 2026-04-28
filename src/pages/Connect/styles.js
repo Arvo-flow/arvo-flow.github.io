@@ -147,12 +147,34 @@ export const DataCol = styled.div`
     font-size: 11px;
     font-weight: 800;
   }
-  ul { display: flex; flex-direction: column; gap: 6px; }
+  ul { display: flex; flex-direction: column; gap: 8px; }
   ul li {
     font-size: 13px;
-    color: ${({ theme }) => theme.color.inkSoft};
+    color: ${({ theme, $allow }) => ($allow ? theme.color.inkSoft : theme.color.muted)};
     line-height: 1.4;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
   }
+  ul li svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: ${({ theme, $allow }) => ($allow ? theme.color.brand : theme.color.muted)};
+    opacity: ${({ $allow }) => ($allow ? 1 : 0.6)};
+  }
+`;
+
+export const Reassurance = styled.p`
+  margin-top: 12px;
+  font-size: 12px;
+  text-align: center;
+  color: ${({ theme }) => theme.color.muted};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  svg { color: ${({ theme }) => theme.color.brand}; opacity: 0.7; }
 `;
 
 export const NoWaste = styled.div`

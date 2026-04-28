@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
@@ -8,10 +8,23 @@ import { COMPANY, SUMMARY, OPPORTUNITIES, TIMELINE, formatKr } from '../../data/
 import {
   Page, Container, Greeting, Headline, HeadlineGrid, BigNumber, HeadlineSplit,
   Section, SectionHeader, OppGrid, OppCard, OppHead, OppSaving, OppFooter, Compare,
+  BiasLink,
   LockedCard, LockedHead, LockedSaving, LockedNote, LockedFooter,
-  VipModal, VipModalCard,
+  VipModal, VipModalCard, ConfettiLayer, ConfettiPiece,
   TimelineWrap, TimelineList, TimelineItem, SkeletonOverlay,
 } from './styles';
+
+const CONFETTI_COLORS = ['#5DD6CA', '#1B7A6E', '#C8804A', '#F5D598', '#1B6E66'];
+const buildConfetti = () => Array.from({ length: 36 }).map((_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  size: 6 + Math.random() * 8,
+  drift: (Math.random() - 0.5) * 240,
+  spin: 360 + Math.random() * 540 * (Math.random() > 0.5 ? 1 : -1),
+  dur: 1.4 + Math.random() * 1.0,
+  delay: Math.random() * 0.25,
+  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+}));
 
 const FILTERS = [
   { id: 'all', label: 'Alla' },
@@ -27,15 +40,31 @@ const Insights = () => {
     try { return sessionStorage.getItem('arvo:scanCompleted') !== '1'; }
     catch (e) { return false; }
   });
+  const [skeletonStep, setSkeletonStep] = useState(0);
 
   useEffect(() => {
     if (!showSkeleton) return;
-    const t = setTimeout(() => {
+    const stepTimers = [
+      setTimeout(() => setSkeletonStep(1), 1000),
+      setTimeout(() => setSkeletonStep(2), 2000),
+      setTimeout(() => setSkeletonStep(3), 3000),
+    ];
+    const finishTimer = setTimeout(() => {
       setShowSkeleton(false);
       try { sessionStorage.setItem('arvo:scanCompleted', '1'); } catch (e) {}
-    }, 2200);
-    return () => clearTimeout(t);
+    }, 4200);
+    return () => {
+      stepTimers.forEach(clearTimeout);
+      clearTimeout(finishTimer);
+    };
   }, [showSkeleton]);
+
+  const SKELETON_LINES = [
+    'Hämtar data via krypterad anslutning…',
+    'Skannar 412 leverantörsfakturor från senaste 12 månaderna…',
+    'Jämför avtal mot branschindex (50 000+ SMB)…',
+    'Identifierar överbetalningar…',
+  ];
 
   useEffect(() => {
     if (showSkeleton) return;
@@ -55,6 +84,7 @@ const Insights = () => {
 
   const [vipFor, setVipFor] = useState(null);
   const [vipState, setVipState] = useState('idle');
+  const [confetti, setConfetti] = useState([]);
 
   const filtered = useMemo(() => {
     if (filter === 'high') return OPPORTUNITIES.filter((o) => o.confidence === 'high');
@@ -71,11 +101,16 @@ const Insights = () => {
   const openVip = (opp) => {
     setVipFor(opp);
     setVipState('idle');
+    setConfetti([]);
   };
-  const confirmVip = () => setVipState('confirmed');
+  const confirmVip = () => {
+    setVipState('confirmed');
+    setConfetti(buildConfetti());
+  };
   const closeVip = () => {
     setVipFor(null);
     setVipState('idle');
+    setConfetti([]);
   };
 
   return (
@@ -83,8 +118,10 @@ const Insights = () => {
       {showSkeleton && (
         <SkeletonOverlay>
           <div className="spinner" />
-          <h2>Analyserar 412 leverantörsfakturor…</h2>
-          <p>Jämför mot 50 000+ andra svenska SMB:er för att hitta var du betalar över marknadspris.</p>
+          <h2>Analyserar din leverantörsdata</h2>
+          <div className="lineTrack">
+            <p key={skeletonStep}>{SKELETON_LINES[skeletonStep]}</p>
+          </div>
           <ul className="skeletonRows">
             <li /><li /><li /><li />
           </ul>
@@ -202,6 +239,12 @@ const Insights = () => {
                     Granska <Icon name="arrow" size={14} />
                   </div>
                 </OppFooter>
+                <BiasLink>
+                  <Icon name="check" size={12} stroke={2} />
+                  <span onClick={(e) => e.stopPropagation()}>
+                    Hur räknas detta? <Link to="/bias">Bias-policy</Link>
+                  </span>
+                </BiasLink>
               </OppCard>
             ))}
           </OppGrid>
@@ -241,9 +284,15 @@ const Insights = () => {
                     <LockedFooter>
                       <div className="delta">Lansering Q4 2026</div>
                       <div className="cta">
-                        Ställ mig i VIP-kön <Icon name="arrow" size={14} />
+                        Prioritera mitt bolag <Icon name="arrow" size={14} />
                       </div>
                     </LockedFooter>
+                    <BiasLink>
+                      <Icon name="check" size={12} stroke={2} />
+                      <span onClick={(e) => e.stopPropagation()}>
+                        Hur räknas detta? <Link to="/bias">Bias-policy</Link>
+                      </span>
+                    </BiasLink>
                   </LockedCard>
                 ))}
               </OppGrid>
@@ -276,6 +325,22 @@ const Insights = () => {
       {vipFor && (
         <VipModal onClick={(e) => { if (e.target === e.currentTarget) closeVip(); }}>
           <VipModalCard>
+            {vipState === 'confirmed' && (
+              <ConfettiLayer>
+                {confetti.map((p) => (
+                  <ConfettiPiece
+                    key={p.id}
+                    $x={p.x}
+                    $size={p.size}
+                    $drift={p.drift}
+                    $spin={p.spin}
+                    $dur={p.dur}
+                    $delay={p.delay}
+                    $color={p.color}
+                  />
+                ))}
+              </ConfettiLayer>
+            )}
             {vipState === 'idle' ? (
               <>
                 <div className="crown"><Icon name="spark" size={28} stroke={2} /></div>
@@ -295,7 +360,7 @@ const Insights = () => {
                 </ul>
                 <div className="actions">
                   <Button onClick={confirmVip} $variant="gradient" $size="lg" $full>
-                    Reservera min plats — gratis
+                    Prioritera mitt bolag
                   </Button>
                   <Button onClick={closeVip} $variant="ghost" $size="md" $full>
                     Stäng
@@ -305,14 +370,14 @@ const Insights = () => {
             ) : (
               <div className="confirmed">
                 <div className="checkmark"><Icon name="check" size={36} stroke={2.5} /></div>
-                <h3>Din plats är reserverad.</h3>
+                <h3>Du står först i kön.</h3>
                 <p>
-                  Vi har märkt din {vipFor.category.toLowerCase()} med VIP-flagga och hör av oss
-                  så fort vi får grönt ljus från FI. Tills dess fortsätter vi optimera dina
-                  övriga leverantörsavtal.
+                  Vi hör av oss direkt när vi aktiverar försäkringsbyten — då får du
+                  mellanskillnaden tillbaka utan att lyfta ett finger.
+                  Tills dess fortsätter vi optimera dina övriga leverantörsavtal.
                 </p>
                 <div style={{ marginTop: 24 }}>
-                  <Button onClick={closeVip} $variant="primary" $size="md" $full>
+                  <Button onClick={closeVip} $variant="gradient" $size="md" $full>
                     Tillbaka till insikter
                   </Button>
                 </div>

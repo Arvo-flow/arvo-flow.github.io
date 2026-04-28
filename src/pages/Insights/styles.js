@@ -15,6 +15,12 @@ const fadeOut = keyframes`
   100% { opacity: 0; visibility: hidden; }
 `;
 
+const fadeLine = keyframes`
+  0% { opacity: 0; transform: translateY(4px); }
+  20%, 80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+`;
+
 export const SkeletonOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -26,7 +32,7 @@ export const SkeletonOverlay = styled.div`
   justify-content: center;
   text-align: center;
   padding: 24px;
-  animation: ${fadeOut} 0.4s ease forwards 1.8s;
+  animation: ${fadeOut} 0.5s ease forwards 3.8s;
 
   div.spinner {
     width: 56px;
@@ -45,11 +51,21 @@ export const SkeletonOverlay = styled.div`
     letter-spacing: -0.015em;
     max-width: 480px;
   }
-  p {
-    margin-top: 10px;
+
+  div.lineTrack {
+    margin-top: 14px;
+    height: 22px;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+  }
+  div.lineTrack p {
+    position: absolute;
+    inset: 0;
+    margin: 0;
     font-size: 14.5px;
     color: ${({ theme }) => theme.color.muted};
-    max-width: 400px;
+    animation: ${fadeLine} 1s ease-in-out forwards;
   }
 
   ul.skeletonRows {
@@ -369,6 +385,26 @@ export const OppFooter = styled.div`
   }
 `;
 
+export const BiasLink = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.color.muted};
+  transition: color ${({ theme }) => theme.motion.fast};
+
+  a {
+    color: ${({ theme }) => theme.color.muted};
+    text-decoration: underline;
+    text-decoration-color: ${({ theme }) => theme.color.borderStrong};
+    text-underline-offset: 2px;
+    transition: color ${({ theme }) => theme.motion.fast};
+  }
+  a:hover { color: ${({ theme }) => theme.color.brand}; }
+  svg { color: ${({ theme }) => theme.color.mutedSoft}; flex-shrink: 0; }
+`;
+
 export const Compare = styled.div`
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -564,6 +600,32 @@ export const LockedFooter = styled.div`
   }
 `;
 
+const confettiFall = keyframes`
+  0% { transform: translate3d(0, -40px, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate3d(var(--drift, 0px), 480px, 0) rotate(var(--spin, 720deg)); opacity: 0; }
+`;
+
+export const ConfettiLayer = styled.div`
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+`;
+
+export const ConfettiPiece = styled.span`
+  position: absolute;
+  top: 0;
+  left: ${({ $x }) => $x}%;
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size * 0.4}px;
+  background: ${({ $color }) => $color};
+  border-radius: 1px;
+  --drift: ${({ $drift }) => $drift}px;
+  --spin: ${({ $spin }) => $spin}deg;
+  animation: ${confettiFall} ${({ $dur }) => $dur}s cubic-bezier(0.2, 0.6, 0.4, 1) ${({ $delay }) => $delay}s forwards;
+`;
+
 export const VipModal = styled.div`
   position: fixed;
   inset: 0;
@@ -579,6 +641,8 @@ export const VipModal = styled.div`
 `;
 
 export const VipModalCard = styled.div`
+  position: relative;
+  overflow: hidden;
   width: 100%;
   max-width: 480px;
   background: ${({ theme }) => theme.color.surface};
