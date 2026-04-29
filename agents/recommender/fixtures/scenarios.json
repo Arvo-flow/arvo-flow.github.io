@@ -1,0 +1,194 @@
+[
+  {
+    "id": "r-001",
+    "label": "Klart byte: byrå med dyrt el-avtal",
+    "input": {
+      "customer": { "industry": "byraer", "employees": 14, "revenue": 24000000 },
+      "invoice": { "annualCost": 84000 },
+      "categorized": {
+        "category": "el",
+        "subType": "fast",
+        "normalizedSupplier": "Vattenfall (Företag)",
+        "confidence": 0.97
+      }
+    },
+    "expected": {
+      "shouldSwitch": true,
+      "vipQueue": false,
+      "minSavingPerYear": 15000,
+      "overpaymentPositive": true
+    }
+  },
+  {
+    "id": "r-002",
+    "label": "Inget byte: kunden ligger under median",
+    "input": {
+      "customer": { "industry": "hantverkare", "employees": 8, "revenue": 12000000 },
+      "invoice": { "annualCost": 6900 },
+      "categorized": {
+        "category": "bredband",
+        "subType": "fiber",
+        "normalizedSupplier": "Bahnhof",
+        "confidence": 0.96
+      }
+    },
+    "expected": {
+      "shouldSwitch": false,
+      "vipQueue": false,
+      "overpaymentPositive": false
+    }
+  },
+  {
+    "id": "r-003",
+    "label": "License-pending: försäkring → VIP-kö, ingen namngiven leverantör",
+    "input": {
+      "customer": { "industry": "hantverkare", "employees": 12, "revenue": 18500000 },
+      "invoice": { "annualCost": 84600 },
+      "categorized": {
+        "category": "forsakring-foretag",
+        "subType": "paket",
+        "normalizedSupplier": "Trygg-Hansa",
+        "confidence": 0.98
+      }
+    },
+    "expected": {
+      "shouldSwitch": false,
+      "vipQueue": true,
+      "noSupplierNamed": true,
+      "overpaymentPositive": true
+    }
+  },
+  {
+    "id": "r-004",
+    "label": "License-pending: yrkesansvar med liten överpris → fortfarande VIP-kö",
+    "input": {
+      "customer": { "industry": "byraer", "employees": 6, "revenue": 8000000 },
+      "invoice": { "annualCost": 22000 },
+      "categorized": {
+        "category": "forsakring-ansvar",
+        "subType": "konsult",
+        "normalizedSupplier": "Länsförsäkringar",
+        "confidence": 0.94
+      }
+    },
+    "expected": {
+      "shouldSwitch": false,
+      "vipQueue": true,
+      "noSupplierNamed": true
+    }
+  },
+  {
+    "id": "r-005",
+    "label": "Klart byte: hantverkare betalar premium för dyrt mobilavtal",
+    "input": {
+      "customer": { "industry": "hantverkare", "employees": 14, "revenue": 22000000 },
+      "invoice": { "annualCost": 38400 },
+      "categorized": {
+        "category": "mobil",
+        "subType": "företag",
+        "normalizedSupplier": "Telia Företag",
+        "confidence": 0.97
+      }
+    },
+    "expected": {
+      "shouldSwitch": true,
+      "vipQueue": false,
+      "minSavingPerYear": 8000,
+      "overpaymentPositive": true
+    }
+  },
+  {
+    "id": "r-006",
+    "label": "Marginal överpris (~10%) → confidence medium",
+    "input": {
+      "customer": { "industry": "byraer", "employees": 5, "revenue": 7000000 },
+      "invoice": { "annualCost": 8400 },
+      "categorized": {
+        "category": "bredband",
+        "subType": "fiber",
+        "normalizedSupplier": "Telenor Business",
+        "confidence": 0.93
+      }
+    },
+    "expected": {
+      "vipQueue": false,
+      "confidenceNotHigh": true
+    }
+  },
+  {
+    "id": "r-007",
+    "label": "Premium-bredband för 4-personers byrå → klart byte (extrem överpris)",
+    "input": {
+      "customer": { "industry": "byraer", "employees": 4, "revenue": 5500000 },
+      "invoice": { "annualCost": 22000 },
+      "categorized": {
+        "category": "bredband",
+        "subType": "fiber",
+        "normalizedSupplier": "GlobalConnect",
+        "confidence": 0.92
+      }
+    },
+    "expected": {
+      "shouldSwitch": true,
+      "vipQueue": false,
+      "minSavingPerYear": 12000,
+      "overpaymentPositive": true
+    }
+  },
+  {
+    "id": "r-008",
+    "label": "Kortterminal för byrå-volym, modest överpris",
+    "input": {
+      "customer": { "industry": "byraer", "employees": 6, "revenue": 9000000 },
+      "invoice": { "annualCost": 7200 },
+      "categorized": {
+        "category": "kortterminal",
+        "subType": "fysisk",
+        "normalizedSupplier": "Worldline (Bambora)",
+        "confidence": 0.91
+      }
+    },
+    "expected": {
+      "vipQueue": false,
+      "overpaymentPositive": true
+    }
+  },
+  {
+    "id": "r-009",
+    "label": "Leasing-bilar: tillverkningsbolag betalar branschsnitt → inget byte",
+    "input": {
+      "customer": { "industry": "tillverkning", "employees": 32, "revenue": 65000000 },
+      "invoice": { "annualCost": 540000 },
+      "categorized": {
+        "category": "leasing-bil",
+        "subType": "operationell",
+        "normalizedSupplier": "ALD Automotive",
+        "confidence": 0.96
+      }
+    },
+    "expected": {
+      "shouldSwitch": false,
+      "vipQueue": false
+    }
+  },
+  {
+    "id": "r-010",
+    "label": "Faktura-tjänst: redundant kostnad (Fortnox e-faktura ingår) → byte rekommenderas",
+    "input": {
+      "customer": { "industry": "byraer", "employees": 8, "revenue": 11000000 },
+      "invoice": { "annualCost": 8940 },
+      "categorized": {
+        "category": "faktura-tjanst",
+        "subType": "kivra",
+        "normalizedSupplier": "Kivra Företag",
+        "confidence": 0.97
+      }
+    },
+    "expected": {
+      "shouldSwitch": true,
+      "vipQueue": false,
+      "minSavingPerYear": 4000,
+      "overpaymentPositive": true
+    }
+  }
+]
