@@ -1,0 +1,97 @@
+[
+  {
+    "id": "d-001",
+    "label": "LIVE event — celebratory but restrained",
+    "input": {
+      "eventType": "live",
+      "switchRecord": {
+        "id": "sw_001",
+        "context": {
+          "customer": { "orgName": "Lindberg VVS AB", "signerName": "Johan" },
+          "recommendation": {
+            "currentSupplier": "Vattenfall (Företag)",
+            "suggestedSupplier": "Tibber",
+            "savingPerYear": 55600
+          },
+          "application": { "expectedActivation": "2026-05-15" }
+        }
+      }
+    },
+    "expected": {
+      "subjectMentionsSaving": true,
+      "bodyMaxWords": 130,
+      "smsMaxChars": 160,
+      "tone": ["celebratory", "warm"]
+    }
+  },
+  {
+    "id": "d-002",
+    "label": "GUARDIAN_ALERT — urgent, actionable, mentions delta",
+    "input": {
+      "eventType": "guardian_alert",
+      "alertContext": {
+        "alertId": "alert_001",
+        "supplierName": "Telia Företag",
+        "agreedPrice": 1890,
+        "billedPrice": 2350,
+        "deltaPercent": 24,
+        "deltaAmount": 460,
+        "reason": "Indexuppräkning utan avtalsstöd"
+      }
+    },
+    "expected": {
+      "bodyMaxWords": 130,
+      "tone": ["urgent"],
+      "ctaPresent": true
+    }
+  },
+  {
+    "id": "d-003",
+    "label": "SCHEDULED_FUTURE — reassuring, no pressure",
+    "input": {
+      "eventType": "scheduled_future",
+      "switchRecord": {
+        "id": "sw_003",
+        "context": {
+          "customer": { "orgName": "Café Konvent AB", "signerName": "Karl" },
+          "recommendation": {
+            "currentSupplier": "Worldline (Bambora)",
+            "suggestedSupplier": "Zettle by PayPal",
+            "savingPerYear": 14160
+          },
+          "scheduling": {
+            "reactivateAt": "2026-09-15",
+            "originalContractEnd": "2026-12-15",
+            "reason": "bindningstid"
+          }
+        }
+      }
+    },
+    "expected": {
+      "bodyMaxWords": 130,
+      "tone": ["reassuring", "neutral"]
+    }
+  },
+  {
+    "id": "d-004",
+    "label": "BANKID_SIGNED — warm confirming, no CTA needed",
+    "input": {
+      "eventType": "bankid_signed",
+      "switchRecord": {
+        "id": "sw_004",
+        "context": {
+          "customer": { "orgName": "Stockholm Reklambyrå AB", "signerName": "Anna" },
+          "recommendation": {
+            "currentSupplier": "Telenor Business",
+            "suggestedSupplier": "Bahnhof",
+            "savingPerYear": 6600
+          }
+        }
+      }
+    },
+    "expected": {
+      "bodyMaxWords": 130,
+      "tone": ["warm", "reassuring"]
+    }
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "name": "@arvo/comm-drafter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Layer 2 worker #4: draft customer-facing comms (email + SMS) per state transition.",
+  "main": "index.js",
+  "scripts": {
+    "demo": "node cli.js --demo",
+    "eval": "node eval.js"
+  }
+}
