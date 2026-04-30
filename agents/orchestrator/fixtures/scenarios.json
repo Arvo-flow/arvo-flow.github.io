@@ -139,5 +139,119 @@
     "expected": {
       "createSwitchThrows": true
     }
+  },
+  {
+    "id": "o-005",
+    "label": "Idempotent webhook — duplicate Scrive signed-event handled cleanly",
+    "input": {
+      "customer": {
+        "orgName": "Idempotent Demo AB",
+        "orgNumber": "556555-5555",
+        "address": "Testvägen 1, 100 00 Stockholm",
+        "signerName": "Ida Testsson",
+        "signerEmail": "ida@idempotent.test",
+        "signerSsn": "19800101-2222",
+        "signerTitle": "VD",
+        "fortnoxCustomerId": "fnx_idem_001"
+      },
+      "invoice": {
+        "category": "el",
+        "normalizedSupplier": "Vattenfall (Företag)",
+        "annualCost": 84000
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "Vattenfall (Företag)",
+        "suggestedSupplier": "Tibber",
+        "suggestedProductName": "Tibber Pulse Företag",
+        "suggestedAnnualCost": 47000,
+        "savingPerYear": 37000,
+        "overpaymentPercent": 29,
+        "confidence": "high",
+        "vipQueue": false,
+        "cancellationNotice": 30
+      }
+    },
+    "scenario": "duplicateSignedEvent",
+    "expected": {
+      "finalState": "bankid_signed",
+      "secondCallIdempotent": true
+    }
+  },
+  {
+    "id": "o-006",
+    "label": "Bindningstid kvar — gamla leverantören parkerar oss till framtiden",
+    "input": {
+      "customer": {
+        "orgName": "Café Konvent AB",
+        "orgNumber": "556777-7777",
+        "address": "Storgatan 5, 411 38 Göteborg",
+        "signerName": "Karl Konvent",
+        "signerEmail": "karl@konvent.test",
+        "signerSsn": "19750405-3333",
+        "signerTitle": "VD",
+        "fortnoxCustomerId": "fnx_konvent_001"
+      },
+      "invoice": {
+        "category": "kortterminal",
+        "normalizedSupplier": "Worldline (Bambora)",
+        "annualCost": 27360
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "Worldline (Bambora)",
+        "suggestedSupplier": "Zettle by PayPal",
+        "suggestedProductName": "Zettle Företag",
+        "suggestedAnnualCost": 13200,
+        "savingPerYear": 14160,
+        "overpaymentPercent": 75,
+        "confidence": "medium",
+        "vipQueue": false,
+        "cancellationNotice": 90
+      }
+    },
+    "scenario": "bindningstidKvar",
+    "expected": {
+      "intermediateState": "scheduled_future",
+      "reactivatesCorrectly": true
+    }
+  },
+  {
+    "id": "o-007",
+    "label": "Proaktiv sniper — schemalägg uppsägning från PROPOSED (idé #3)",
+    "input": {
+      "customer": {
+        "orgName": "Sniper Test AB",
+        "orgNumber": "556888-8888",
+        "address": "Fältvägen 1, 100 00 Stockholm",
+        "signerName": "Sara Sniper",
+        "signerEmail": "sara@sniper.test",
+        "signerSsn": "19820606-4444",
+        "signerTitle": "VD",
+        "fortnoxCustomerId": "fnx_sniper_001"
+      },
+      "invoice": {
+        "category": "leasing-bil",
+        "normalizedSupplier": "ALD Automotive",
+        "annualCost": 412800,
+        "contractEnd": "2027-08-15"
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "ALD Automotive",
+        "suggestedSupplier": "Arval Sverige",
+        "suggestedProductName": "Arval Operationell",
+        "suggestedAnnualCost": 363200,
+        "savingPerYear": 49600,
+        "overpaymentPercent": 14,
+        "confidence": "medium",
+        "vipQueue": false,
+        "cancellationNotice": 90
+      }
+    },
+    "scenario": "proactiveSniper",
+    "expected": {
+      "intermediateState": "scheduled_future"
+    }
   }
 ]

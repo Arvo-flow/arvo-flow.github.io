@@ -68,38 +68,84 @@ node agents/orchestrator/eval.js --json   # machine-readable for CI
 The lifecycle is **append-only** — backward transitions are not allowed. You can audit every switch by reading its `history[]` array.
 
 ```
-                        proposed
-                            │
-                            ▼
-                  awaiting_approval
-                            │
-                            ▼
-                  fullmakt_prepared
-                            │
-                            ▼
-                   bankid_pending
-                            │
-        ┌───────────────────┼───────────────────┐
-        ▼                   ▼                   ▼
-  bankid_signed     signing_expired     customer_cancelled (terminal)
-        │                                       (terminal)
-        ▼
-  terminated_old ───┐
-        │           │
-        ▼           ▼
-   applied_new   supplier_rejected (terminal)
-        │
-        ▼
-       live
-        │
-        ▼
-  success_fee_due
-        │
-        ▼
-    completed (terminal)
+                        proposed ──────────────┐
+                            │                  │
+                            ▼                  ▼
+                  awaiting_approval     scheduled_future ◀──┐
+                            ▲                  │            │
+                            └──────────────────┘ (cron)     │
+                            │                               │
+                            ▼                               │
+                  fullmakt_prepared                         │
+                            │                               │
+                            ▼                               │
+                   bankid_pending                           │
+                            │                               │
+        ┌───────────────────┼───────────────────┐           │
+        ▼                   ▼                   ▼           │
+  bankid_signed     signing_expired     customer_cancelled  │
+        │                  (terminal)        (terminal)     │
+        ▼                                                   │
+  terminated_old ───────────┬───────────────────────────────┤
+        │                   │                               │
+        ▼                   ▼                               │
+   applied_new   supplier_rejected (terminal)               │
+        │                                                   │
+        ▼                                                   │
+       live                                                 │
+        │                                                   │
+        ▼                                                   │
+  success_fee_due                                           │
+        │                                                   │
+        ▼                                                   │
+    completed (terminal)                                    │
+                                                            │
+   bindningstid kvar OR proactive sniper ─────────────► scheduled_future
 ```
 
 `failed` is reachable from any non-terminal state for unexpected runtime errors.
+
+### SCHEDULED_FUTURE — the bindningstid pattern
+
+A switch enters `scheduled_future` when **either**:
+
+1. **Reactive (bindningstid kvar):** the old supplier acknowledges our termination but says "you have N months bindningstid left, contract ends X". We park the switch via `orch.scheduleFuture(switchId, { reason: 'bindningstid', reactivateAt: contractEnd - 91d })` and the cron picks it up later.
+2. **Proactive (idé #3 — Bindningstid-Sniper):** we detect at recommendation time that the customer's existing contract has bindningstid kvar. Instead of starting the byte-flow today, we schedule it for T-91 days before contract end so the customer never gets auto-renewed. Same `scheduleFuture()` call from the `proposed` state.
+
+The cron loop is the consumer:
+
+```js
+import { findDueSwitches } from './agents/orchestrator/index.js';
+
+// Run every hour from your job runner (Inngest, Temporal, vanilla setInterval)
+const all = await orch.list();
+const due = findDueSwitches(all, new Date());
+for (const r of due) {
+  await orch.reactivateScheduled(r.id);
+}
+```
+
+`reactivateScheduled` returns the switch to `awaiting_approval` and clears stale `fullmakt` + `signing` context — the customer gets a fresh prompt and signs new BankID at activation time. This is intentional: fullmakter have 6-month max validity, and the recommendation may have changed (different supplier may now be best).
+
+### Idempotent webhook handlers
+
+Scrive, Fortnox, and Stripe all retry webhooks on failure — sometimes delivering the same event multiple times. The following methods are **idempotent** by design:
+
+- `handleSigned(switchId, { scriveDocId })` — returns existing record if already `bankid_signed` with same `scriveDocId`. Throws if same state but different `scriveDocId` (data integrity violation).
+- `handleCancelled(switchId)` / `handleSigningExpired(switchId)` — return existing record if already at the target terminal state.
+- `markLive(switchId, { firstInvoice })` — idempotent on `firstInvoice.id`.
+- `markSuccessFeeDue(switchId, { paidInvoice })` — idempotent on `paidInvoice.id`.
+
+Idempotent calls return the record with `_idempotent: true` flag so the webhook handler can log them differently (`200 OK noop`) but doesn't need to handle them as errors.
+
+### Webhook customer-routing
+
+`buildScriveWebhookHandler` reads the switch identifier in this order:
+
+1. **Primary:** `event.metadata.switchId` (or `event.metadata.switch_id`) — set by us at `createDocument` time. Single record lookup, fastest path.
+2. **Fallback:** scan all switches by `context.signing.documentId` for a match. Used only when metadata is missing (older documents, malformed event, manually triggered events).
+
+If the metadata switchId is set but doesn't match the documentId we have stored, the handler logs a warning and falls through to the docId scan — defends against client-side metadata corruption.
 
 ---
 

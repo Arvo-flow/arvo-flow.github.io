@@ -12,6 +12,7 @@ export const STATES = Object.freeze({
   BANKID_PENDING:     'bankid_pending',     // Sent to Scrive, customer is signing
   BANKID_SIGNED:      'bankid_signed',      // Customer signed, fullmakt is legally valid
   TERMINATED_OLD:     'terminated_old',     // Old supplier received our termination
+  SCHEDULED_FUTURE:   'scheduled_future',   // Parked: bindningstid kvar (reactive) OR proactive future-cancel (idé #3)
   APPLIED_NEW:        'applied_new',        // New supplier received our application
   LIVE:               'live',               // First invoice from new supplier seen in Fortnox
   SUCCESS_FEE_DUE:    'success_fee_due',    // Paid invoice from new supplier triggers our fee
@@ -20,7 +21,7 @@ export const STATES = Object.freeze({
   // Terminal failure states
   CUSTOMER_CANCELLED: 'customer_cancelled', // Customer rejected or cancelled
   SIGNING_EXPIRED:    'signing_expired',    // Scrive signing timed out (default 14 days)
-  SUPPLIER_REJECTED:  'supplier_rejected',  // New supplier rejected the application
+  SUPPLIER_REJECTED:  'supplier_rejected',  // New supplier rejected the application (truly impossible to switch)
   FAILED:             'failed',             // Catch-all for unexpected errors
 });
 
@@ -34,13 +35,33 @@ export const TERMINAL_STATES = new Set([
 
 // Valid forward transitions. If a transition isn't here, it's invalid.
 // Backward transitions are NOT allowed — this is an append-only state machine.
+//
+// NOTE: re-entering the same state (idempotency) is NOT a valid transition
+// and is handled at the orchestrator level, not here. The state machine
+// stays strict; the orchestrator's webhook-driven methods check current
+// state first and return a no-op if already at the target.
 export const TRANSITIONS = Object.freeze({
-  [STATES.PROPOSED]: [STATES.AWAITING_APPROVAL, STATES.CUSTOMER_CANCELLED, STATES.FAILED],
+  [STATES.PROPOSED]: [
+    STATES.AWAITING_APPROVAL,
+    STATES.SCHEDULED_FUTURE,    // proactive: idé #3 — schedule a future cancellation upfront
+    STATES.CUSTOMER_CANCELLED,
+    STATES.FAILED,
+  ],
   [STATES.AWAITING_APPROVAL]: [STATES.FULLMAKT_PREPARED, STATES.CUSTOMER_CANCELLED, STATES.FAILED],
   [STATES.FULLMAKT_PREPARED]: [STATES.BANKID_PENDING, STATES.CUSTOMER_CANCELLED, STATES.FAILED],
   [STATES.BANKID_PENDING]: [STATES.BANKID_SIGNED, STATES.SIGNING_EXPIRED, STATES.CUSTOMER_CANCELLED, STATES.FAILED],
   [STATES.BANKID_SIGNED]: [STATES.TERMINATED_OLD, STATES.SUPPLIER_REJECTED, STATES.FAILED],
-  [STATES.TERMINATED_OLD]: [STATES.APPLIED_NEW, STATES.SUPPLIER_REJECTED, STATES.FAILED],
+  [STATES.TERMINATED_OLD]: [
+    STATES.APPLIED_NEW,
+    STATES.SCHEDULED_FUTURE,    // reactive: old supplier acknowledges termination but bindningstid kvar
+    STATES.SUPPLIER_REJECTED,
+    STATES.FAILED,
+  ],
+  [STATES.SCHEDULED_FUTURE]: [
+    STATES.AWAITING_APPROVAL,   // reactivate when reactivateAt date arrives — fresh BankID required
+    STATES.CUSTOMER_CANCELLED,
+    STATES.FAILED,
+  ],
   [STATES.APPLIED_NEW]: [STATES.LIVE, STATES.SUPPLIER_REJECTED, STATES.FAILED],
   [STATES.LIVE]: [STATES.SUCCESS_FEE_DUE, STATES.FAILED],
   [STATES.SUCCESS_FEE_DUE]: [STATES.COMPLETED, STATES.FAILED],
@@ -114,6 +135,7 @@ export const STATE_LABELS = Object.freeze({
   [STATES.BANKID_PENDING]:     'BankID-signering pågår',
   [STATES.BANKID_SIGNED]:      'Fullmakt signerad',
   [STATES.TERMINATED_OLD]:     'Uppsägning skickad',
+  [STATES.SCHEDULED_FUTURE]:   'Schemalagt för framtiden',
   [STATES.APPLIED_NEW]:        'Ny ansökan skickad',
   [STATES.LIVE]:               'Bytet är aktiverat',
   [STATES.SUCCESS_FEE_DUE]:    'Success-fee redo att fakturera',
@@ -123,3 +145,30 @@ export const STATE_LABELS = Object.freeze({
   [STATES.SUPPLIER_REJECTED]:  'Leverantör avvisade',
   [STATES.FAILED]:             'Misslyckades',
 });
+
+/**
+ * Find SCHEDULED_FUTURE switches whose `reactivateAt` is in the past.
+ * Pure function — caller persists any state transitions it triggers.
+ *
+ * Used by the cron loop:
+ *
+ *   const all = await orch.list();           // returns lightweight status records
+ *   const due = findDueSwitches(all, new Date());
+ *   for (const r of due) await orch.reactivateScheduled(r.id);
+ *
+ * @param {Array<{state: string, scheduling?: {reactivateAt?: string}}>} records
+ * @param {Date} [asOfDate=new Date()]
+ * @returns {Array} subset of records that are due
+ */
+export function findDueSwitches(records, asOfDate = new Date()) {
+  if (!Array.isArray(records)) return [];
+  const cutoff = asOfDate.getTime();
+  return records.filter((r) => {
+    if (!r || r.state !== STATES.SCHEDULED_FUTURE) return false;
+    const at = r.scheduling?.reactivateAt ?? r.context?.scheduling?.reactivateAt;
+    if (!at) return false;
+    const ts = Date.parse(at);
+    if (Number.isNaN(ts)) return false;
+    return ts <= cutoff;
+  });
+}

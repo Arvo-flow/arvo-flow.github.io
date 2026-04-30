@@ -98,13 +98,14 @@ async function runDemo() {
   printStep('executeTermination',    await orch.executeTermination(sw.id));
   printStep('executeNewApplication', await orch.executeNewApplication(sw.id));
 
-  // Seed an invoice that matches the new supplier
+  // Seed an invoice that matches the new supplier — use the application's
+  // expectedActivation as the invoice date.
+  const record = await orch.getRecord(sw.id);
   fortnox.__seedInvoice(DEMO.customer.fortnoxCustomerId, {
     supplierName: DEMO.recommendation.suggestedSupplier,
     amount: DEMO.recommendation.suggestedAnnualCost / 12,
-    date: new Date().toISOString().slice(0, 10),
+    date: record.context.application.expectedActivation,
   });
-  const record = await orch.getRecord(sw.id);
   const matched = await fortnox.pollForNewSupplierInvoice({ switchRecord: record });
   printStep('markLive', await orch.markLive(sw.id, { firstInvoice: matched }));
 

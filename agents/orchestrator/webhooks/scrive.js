@@ -85,11 +85,29 @@ export function buildScriveWebhookHandler({ orchestrator, scrive, logger = conso
     }
 
     try {
-      // Find the switch this document belongs to
-      const switchRecord = await orchestrator.findBySigningDocId(event.document_id);
+      // Find the switch this document belongs to.
+      // Primary path: read switchId from metadata that we attached at
+      // createDocument time. This is faster (single record lookup) and more
+      // robust than searching every record by document_id.
+      // Fallback: if metadata is missing (older documents, malformed event),
+      // fall back to scanning by document_id.
+      let switchRecord = null;
+      const metadataSwitchId = event.metadata?.switchId ?? event.metadata?.switch_id;
+      if (metadataSwitchId) {
+        switchRecord = await orchestrator.getRecord(metadataSwitchId);
+        if (switchRecord && switchRecord.context?.signing?.documentId !== event.document_id) {
+          logger.warn(
+            `[scrive-webhook] metadata switchId=${metadataSwitchId} does not match scriveDocId=${event.document_id}; falling back to docId lookup`
+          );
+          switchRecord = null;
+        }
+      }
+      if (!switchRecord) {
+        switchRecord = await orchestrator.findBySigningDocId(event.document_id);
+      }
       if (!switchRecord) {
         logger.warn(`[scrive-webhook] no switch found for document ${event.document_id}`);
-        // 200 anyway — Scrive doesn't need to retry
+        // 200 anyway — Scrive doesn't need to retry an unrouteable event
         return res.status(200).json({ ok: true, ignored: true });
       }
 

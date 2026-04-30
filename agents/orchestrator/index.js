@@ -17,6 +17,7 @@ export {
   isValidTransition,
   isTerminal,
   buildEvent,
+  findDueSwitches,
 } from './state-machine.js';
 export {
   verifyScriveSignature,

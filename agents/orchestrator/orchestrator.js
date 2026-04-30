@@ -16,7 +16,7 @@
 import { randomBytes } from 'node:crypto';
 import {
   STATES, TERMINAL_STATES, isValidTransition, assertTransition,
-  buildEvent, isTerminal,
+  buildEvent, isTerminal, findDueSwitches,
 } from './state-machine.js';
 import { FileStore } from './store.js';
 import { generateFullmakt } from './fullmakt/generate.js';
@@ -231,8 +231,28 @@ export class Orchestrator {
 
   /**
    * Webhook-driven (or poll-driven). Customer signed with BankID.
+   *
+   * IDEMPOTENT: Scrive may deliver the same signed-event multiple times
+   * (network retries, webhook redelivery). If the switch is already in
+   * BANKID_SIGNED with the same scriveDocId, this method returns the
+   * existing record marked with `_idempotent: true` and writes nothing.
+   * If the docId differs, it throws — that's a data integrity issue.
    */
   async handleSigned(switchId, { signedPdfBytes, scriveDocId, signedSsn, signedAt }) {
+    const record = await this.store.load(switchId);
+    if (!record) throw new OrchestratorError('Switch not found', { switchId });
+
+    if (record.state === STATES.BANKID_SIGNED) {
+      const existingDocId = record.context?.signing?.documentId;
+      if (!scriveDocId || existingDocId === scriveDocId) {
+        return { ...record, _idempotent: true };
+      }
+      throw new OrchestratorError(
+        `Already BANKID_SIGNED with a different scriveDocId. existing=${existingDocId} incoming=${scriveDocId}`,
+        { switchId, state: record.state }
+      );
+    }
+
     return this._transition(switchId, STATES.BANKID_SIGNED, {
       actor: 'scrive',
       payload: {
@@ -322,9 +342,25 @@ export class Orchestrator {
 
   /**
    * Triggered by Fortnox watchdog when the first invoice from the new
-   * supplier shows up in the customer's bookkeeping.
+   * supplier shows up in the customer's bookkeeping. IDEMPOTENT on
+   * fortnoxInvoiceId — the watchdog runs every 30 min and may match
+   * the same invoice on consecutive polls.
    */
   async markLive(switchId, { firstInvoice }) {
+    const record = await this.store.load(switchId);
+    if (!record) throw new OrchestratorError('Switch not found', { switchId });
+
+    if (record.state === STATES.LIVE) {
+      const existingInvId = record.context?.firstInvoice?.fortnoxInvoiceId;
+      if (!firstInvoice?.id || existingInvId === firstInvoice.id) {
+        return { ...record, _idempotent: true };
+      }
+      throw new OrchestratorError(
+        `Already LIVE with different invoice. existing=${existingInvId} incoming=${firstInvoice.id}`,
+        { switchId, state: record.state }
+      );
+    }
+
     return this._transition(switchId, STATES.LIVE, {
       actor: 'fortnox',
       payload: {
@@ -342,11 +378,22 @@ export class Orchestrator {
 
   /**
    * Triggered by Fortnox watchdog when the live invoice is marked paid.
-   * Computes the success fee.
+   * Computes the success fee. IDEMPOTENT on paidInvoiceId.
    */
   async markSuccessFeeDue(switchId, { paidInvoice }) {
     const record = await this.store.load(switchId);
     if (!record) throw new OrchestratorError('Switch not found', { switchId });
+
+    if (record.state === STATES.SUCCESS_FEE_DUE) {
+      const existingPaidId = record.context?.successFee?.paidInvoiceId;
+      if (!paidInvoice?.id || existingPaidId === paidInvoice.id) {
+        return { ...record, _idempotent: true };
+      }
+      throw new OrchestratorError(
+        `Already SUCCESS_FEE_DUE with different paidInvoice. existing=${existingPaidId} incoming=${paidInvoice.id}`,
+        { switchId, state: record.state }
+      );
+    }
 
     const yearOneSaving = record.context.recommendation.savingPerYear;
     const successFeeAmount = Math.round(yearOneSaving * this.successFeeRate);
@@ -367,6 +414,83 @@ export class Orchestrator {
     });
   }
 
+  // === Scheduled future / bindningstid handling ===
+
+  /**
+   * Park a switch for future reactivation. Two trigger paths:
+   *
+   *   a) REACTIVE: from TERMINATED_OLD when the old supplier acknowledges
+   *      our termination but says "you have N months bindningstid kvar".
+   *      Set reactivateAt = contractEnd - 91 days, reason = 'bindningstid'.
+   *
+   *   b) PROACTIVE (idé #3 — Bindningstid-Sniper): from PROPOSED when we
+   *      already know the contract has bindningstid kvar (e.g. detected
+   *      from invoice metadata). Schedule the cancellation flow ahead of
+   *      time so the customer never gets auto-renewed.
+   *
+   * @param {string} switchId
+   * @param {object} args
+   * @param {string} args.reason                  - 'bindningstid' | 'planned-renewal' | string
+   * @param {string} args.reactivateAt            - ISO date when cron should reactivate
+   * @param {string} [args.originalContractEnd]   - ISO date of the actual contract expiry (for ref)
+   * @param {object} [args.supplierResponse]      - structured rejection payload if reactive path
+   */
+  async scheduleFuture(switchId, { reason, reactivateAt, originalContractEnd, supplierResponse } = {}) {
+    if (!reason || !reactivateAt) {
+      throw new OrchestratorError('scheduleFuture requires reason + reactivateAt');
+    }
+    const reactivateMs = Date.parse(reactivateAt);
+    if (Number.isNaN(reactivateMs)) {
+      throw new OrchestratorError(`Invalid reactivateAt: ${reactivateAt}`);
+    }
+    if (reactivateMs <= Date.now()) {
+      throw new OrchestratorError('reactivateAt must be in the future');
+    }
+
+    return this._transition(switchId, STATES.SCHEDULED_FUTURE, {
+      actor: 'system',
+      payload: {
+        scheduling: {
+          reason,
+          reactivateAt,
+          originalContractEnd: originalContractEnd ?? null,
+          supplierResponse: supplierResponse ?? null,
+          scheduledAt: new Date().toISOString(),
+        },
+      },
+      note: `Scheduled future reactivation at ${reactivateAt} (${reason})`,
+    });
+  }
+
+  /**
+   * Triggered by the cron loop when a SCHEDULED_FUTURE switch hits its
+   * reactivateAt date. Returns the lifecycle to AWAITING_APPROVAL — the
+   * customer gets a fresh prompt and signs a new BankID, because the
+   * original fullmakt may have expired (6-month max validity) and the
+   * recommendation may have changed.
+   *
+   * Use findDueSwitches() from state-machine.js to discover candidates.
+   */
+  async reactivateScheduled(switchId) {
+    const record = await this.store.load(switchId);
+    if (!record) throw new OrchestratorError('Switch not found', { switchId });
+    const prior = record.context?.scheduling ?? {};
+
+    return this._transition(switchId, STATES.AWAITING_APPROVAL, {
+      actor: 'system',
+      payload: {
+        scheduling: {
+          ...prior,
+          reactivatedAt: new Date().toISOString(),
+        },
+        // Clear stale context so next pass regenerates fresh
+        fullmakt: null,
+        signing: null,
+      },
+      note: `Reactivated from SCHEDULED_FUTURE — fresh BankID + fullmakt required`,
+    });
+  }
+
   /**
    * Mark the lifecycle as completed — success fee was invoiced + paid by us.
    */
@@ -378,9 +502,14 @@ export class Orchestrator {
     });
   }
 
-  // === Failure paths ===
+  // === Failure paths (all idempotent on terminal states) ===
 
   async handleCancelled(switchId, { reason, scriveDocId } = {}) {
+    const record = await this.store.load(switchId);
+    if (!record) throw new OrchestratorError('Switch not found', { switchId });
+    if (record.state === STATES.CUSTOMER_CANCELLED) {
+      return { ...record, _idempotent: true };
+    }
     return this._transition(switchId, STATES.CUSTOMER_CANCELLED, {
       actor: 'customer',
       payload: { reason, scriveDocId, cancelledAt: new Date().toISOString() },
@@ -389,6 +518,11 @@ export class Orchestrator {
   }
 
   async handleSigningExpired(switchId, { scriveDocId } = {}) {
+    const record = await this.store.load(switchId);
+    if (!record) throw new OrchestratorError('Switch not found', { switchId });
+    if (record.state === STATES.SIGNING_EXPIRED) {
+      return { ...record, _idempotent: true };
+    }
     return this._transition(switchId, STATES.SIGNING_EXPIRED, {
       actor: 'scrive',
       payload: { scriveDocId, expiredAt: new Date().toISOString() },
@@ -427,6 +561,8 @@ export class Orchestrator {
       currentSupplier: record.context.recommendation.currentSupplier ?? record.context.invoice.normalizedSupplier,
       newSupplier: record.context.recommendation.suggestedSupplier,
       savingPerYear: record.context.recommendation.savingPerYear,
+      // Top-level scheduling for findDueSwitches()
+      scheduling: record.context.scheduling ?? null,
       historyLength: record.history.length,
     };
   }
@@ -449,6 +585,16 @@ export class Orchestrator {
       }
     }
     return null;
+  }
+
+  /**
+   * Find all SCHEDULED_FUTURE switches whose reactivateAt is in the past.
+   * Convenience wrapper around the pure findDueSwitches helper. The cron
+   * loop calls this and then iterates calling reactivateScheduled().
+   */
+  async findDueScheduled(asOfDate = new Date()) {
+    const all = await this.list();
+    return findDueSwitches(all, asOfDate);
   }
 
   // === Helpers ===
