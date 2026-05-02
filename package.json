@@ -2,7 +2,7 @@
   "name": "arvo-os",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://arvo-flow.github.io/flow/",
+  "homepage": "https://arvo-flow.github.io/",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",
     "axios": "^1.14.0",
