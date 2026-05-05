@@ -112,17 +112,22 @@ A switch enters `scheduled_future` when **either**:
 1. **Reactive (bindningstid kvar):** the old supplier acknowledges our termination but says "you have N months bindningstid left, contract ends X". We park the switch via `orch.scheduleFuture(switchId, { reason: 'bindningstid', reactivateAt: contractEnd - 91d })` and the cron picks it up later.
 2. **Proactive (idé #3 — Bindningstid-Sniper):** we detect at recommendation time that the customer's existing contract has bindningstid kvar. Instead of starting the byte-flow today, we schedule it for T-91 days before contract end so the customer never gets auto-renewed. Same `scheduleFuture()` call from the `proposed` state.
 
-The cron loop is the consumer:
+The cron loop ships as `cron.js`. Two ways to wire it up:
 
 ```js
-import { findDueSwitches } from './agents/orchestrator/index.js';
+// As a function — preferred for programmatic schedulers (Inngest, Temporal)
+import { runCron } from './agents/orchestrator/index.js';
+const result = await runCron({ orchestrator });
+// → { asOfDate, totalActive, dueCount, reactivated, errors, reactivatedIds }
 
-// Run every hour from your job runner (Inngest, Temporal, vanilla setInterval)
-const all = await orch.list();
-const due = findDueSwitches(all, new Date());
-for (const r of due) {
-  await orch.reactivateScheduled(r.id);
-}
+// As a script — schedule via OS cron / GitHub Actions / similar
+// node agents/orchestrator/cron.js
+```
+
+`runCron` is **safe to over-run**. It uses `findDueSwitches` to find every `scheduled_future` switch with `reactivateAt <= asOfDate`, calls `reactivateScheduled(id)` on each, and reports a structured summary. If a transition fails for one switch, the others still run. There's a full integration test in `cron.test.js`:
+
+```bash
+node agents/orchestrator/cron.test.js
 ```
 
 `reactivateScheduled` returns the switch to `awaiting_approval` and clears stale `fullmakt` + `signing` context — the customer gets a fresh prompt and signs new BankID at activation time. This is intentional: fullmakter have 6-month max validity, and the recommendation may have changed (different supplier may now be best).
