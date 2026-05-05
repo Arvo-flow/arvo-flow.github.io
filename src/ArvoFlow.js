@@ -15,7 +15,7 @@ import Bias from './pages/Bias';
 const ArvoFlow = () => (
   <ThemeProvider theme={theme}>
     <GlobalStyle />
-    <BrowserRouter basename="/flow">
+    <BrowserRouter basename={process.env.PUBLIC_URL || '/'}>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/connect" element={<Connect />} />

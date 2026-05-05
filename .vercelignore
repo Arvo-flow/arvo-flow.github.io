@@ -1,0 +1,22 @@
+# Backend agents — Node scripts, not part of the React build
+agents/
+
+# Tooling that doesn't belong in deployment
+make-blueprints/
+server/
+testing/
+_patches/
+_scripts/
+
+# Old standalone build artifact
+arvo-os.html
+
+# Local data
+**/data/
+
+# Standard
+node_modules/
+build/
+.env*
+.git
+.github
