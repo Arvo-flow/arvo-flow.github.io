@@ -372,6 +372,40 @@ export const KeyValue = styled.dl`
   }
 `;
 
+export const NetSaving = styled.div`
+  position: relative;
+  margin-top: 22px;
+  padding: 18px 0 16px;
+  border-top: 1px solid rgba(250, 250, 247, 0.12);
+  border-bottom: 1px solid rgba(250, 250, 247, 0.12);
+  display: flex;
+  flex-direction: column;
+
+  span.kicker {
+    font-size: 12px;
+    color: rgba(250, 250, 247, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  span.amount {
+    margin-top: 6px;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 38px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: ${({ theme }) => theme.color.accent};
+    font-feature-settings: "tnum";
+  }
+  span.fineprint {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: rgba(250, 250, 247, 0.55);
+    line-height: 1.5;
+    font-feature-settings: "tnum";
+  }
+`;
+
 export const ApproveActions = styled.div`
   position: relative;
   margin-top: 22px;

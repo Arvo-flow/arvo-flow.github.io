@@ -1,4 +1,5 @@
 # Backend agents — Node scripts, not part of the React build
+# (this also covers agents/**/data/, so no need for a separate **/data/ rule)
 agents/
 
 # Tooling that doesn't belong in deployment
@@ -10,9 +11,6 @@ _scripts/
 
 # Old standalone build artifact
 arvo-os.html
-
-# Local data
-**/data/
 
 # Standard
 node_modules/

@@ -9,7 +9,7 @@ import {
   Page, Container, BackLink, Head, HeadLeft, HeadSaving, Layout,
   Card, SideCol, CompareGrid, CompareCol, BenchBar, Reasoning, Coverage,
   Steps, StepItem,
-  ApproveCard, KeyValue, ApproveActions, ApproveBtn, Note,
+  ApproveCard, NetSaving, KeyValue, ApproveActions, ApproveBtn, Note,
   MailMeBtn, Modal, ModalCard,
 } from './styles';
 
@@ -150,11 +150,16 @@ const Opportunity = () => {
             <ApproveCard>
               <h3>Godkänn bytet</h3>
               <p>Vi förbereder allt och hanterar övergången. Du signerar med BankID och kan ångra inom 14 dagar utan kostnad.</p>
+              <NetSaving>
+                <span className="kicker">Din nettobesparing år 1</span>
+                <span className="amount">{formatKr(opp.savingPerYear - Math.round(opp.savingPerYear * 0.2))}</span>
+                <span className="fineprint">
+                  Bruttobesparing {formatKr(opp.savingPerYear)} − Arvos success-fee {formatKr(Math.round(opp.savingPerYear * 0.2))} (20 %)
+                </span>
+              </NetSaving>
               <KeyValue>
-                <div><dt>Besparing år 1</dt><dd>{formatKr(opp.savingPerYear)}</dd></div>
                 <div><dt>Avtalstid kvar</dt><dd>{opp.contractEndsIn === 0 ? 'Kan sägas upp nu' : `${opp.contractEndsIn} dagar`}</dd></div>
                 <div><dt>Uppsägningstid</dt><dd>{opp.cancellationNotice} dagar</dd></div>
-                <div><dt>Vår avgift</dt><dd>{formatKr(Math.round(opp.savingPerYear * 0.2))}</dd></div>
               </KeyValue>
               <ApproveActions>
                 <ApproveBtn onClick={startSign}>
