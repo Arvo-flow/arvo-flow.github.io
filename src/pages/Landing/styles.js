@@ -294,6 +294,96 @@ export const TickerText = styled.div`
   }
 `;
 
+export const TrustStrip = styled.section`
+  max-width: ${({ theme }) => theme.size.container};
+  margin: 0 auto;
+  padding: 80px 28px 40px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+    padding: 56px 20px 24px;
+  }
+`;
+
+export const TrustPillar = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform ${({ theme }) => theme.motion.base},
+              box-shadow ${({ theme }) => theme.motion.base};
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.shadow.sm};
+  }
+
+  div.icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: ${({ theme }) => theme.color.brandSoft};
+    color: ${({ theme }) => theme.color.brand};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+
+  h3 {
+    font-size: 20px;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: ${({ theme }) => theme.color.ink};
+  }
+
+  p {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+
+  > strong {
+    margin-top: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.brand};
+    line-height: 1.4;
+  }
+
+  ul {
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+  }
+  ul li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: ${({ theme }) => theme.color.ink};
+    font-weight: 500;
+  }
+  ul li svg {
+    color: ${({ theme }) => theme.color.brand};
+    flex-shrink: 0;
+  }
+  ul li.no {
+    color: ${({ theme }) => theme.color.muted};
+    font-weight: 500;
+  }
+  ul li.no svg {
+    color: ${({ theme }) => theme.color.muted};
+    opacity: 0.55;
+  }
+`;
+
 export const SectionHead = styled.div`
   max-width: 720px;
   margin: 0 auto 64px;

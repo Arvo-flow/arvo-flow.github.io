@@ -7,10 +7,10 @@ import Icon from '../../components/Icon';
 import { OPPORTUNITIES, formatKr } from '../../data/mockData';
 import {
   Page, Container, BackLink, Head, HeadLeft, HeadSaving, Layout,
-  Card, SideCol, CompareGrid, CompareCol, BenchBar, Reasoning, Coverage,
+  Card, SideCol, CompareGrid, CompareCol, BenchCompact, Reasoning, Coverage,
   Steps, StepItem,
-  ApproveCard, NetSaving, KeyValue, ApproveActions, ApproveBtn, Note,
-  MailMeBtn, Modal, ModalCard,
+  ApproveCard, NetSaving, KeyValue, ApproveActions, ApproveBtn, Note, ConsiderLink,
+  Modal, ModalCard,
 } from './styles';
 
 const Opportunity = () => {
@@ -99,22 +99,23 @@ const Opportunity = () => {
                 </CompareCol>
               </CompareGrid>
 
-              <BenchBar>
-                <div className="legend">
-                  <span>Branschens lägsta</span>
-                  <span>Du betalar idag</span>
+              <BenchCompact>
+                <div className="hero">
+                  <span className="kicker">Du betalar idag</span>
+                  <strong className="overpay">{Math.round(((opp.benchmark.yourCost - opp.benchmark.industryMedian) / opp.benchmark.industryMedian) * 100)} %</strong>
+                  <span className="overpayLabel">över branschsnittet</span>
                 </div>
                 <div className="track">
                   <div className="suggested" style={{ left: `${newPos}%` }} />
                   <div className="median" style={{ left: `${Math.max(20, Math.min(80, medianPos))}%` }} />
-                  <div className="you" style={{ left: `${youPos}%` }}>!</div>
+                  <div className="you" style={{ left: `${youPos}%` }} />
                 </div>
-                <div className="labels">
-                  <span>Lägsta<strong>{formatKr(opp.benchmark.industryLow)}</strong></span>
-                  <span>Branschsnitt<strong>{formatKr(opp.benchmark.industryMedian)}</strong></span>
-                  <span>Du<strong>{formatKr(opp.benchmark.yourCost)}</strong></span>
+                <div className="legend">
+                  <span><div className="dot suggested" /> Med Arvo {formatKr(opp.suggestedAnnualCost)}</span>
+                  <span><div className="dot median" /> Snitt {formatKr(opp.benchmark.industryMedian)}</span>
+                  <span><div className="dot you" /> Du {formatKr(opp.benchmark.yourCost)}</span>
                 </div>
-              </BenchBar>
+              </BenchCompact>
 
               <Reasoning>
                 <span>Varför Arvo rekommenderar bytet</span>
@@ -166,23 +167,15 @@ const Opportunity = () => {
                   <Icon name="bankid" size={20} stroke={2} color="#FFFFFF" />
                   Godkänn byte med BankID
                 </ApproveBtn>
-                <Button as="a" href="#" $variant="ghostInverse" $size="md">
-                  Spara till senare
-                </Button>
               </ApproveActions>
-              <Note>Vi sköter all onboarding hos {opp.suggestedSupplier} åt dig. 14 dagars ångerrätt. Prisgaranti 12 månader.</Note>
+              <Note>
+                Vi sköter all onboarding hos {opp.suggestedSupplier} åt dig.
+                14 dagars ångerrätt — bytet aktiveras inte förrän det nya avtalet är på plats.
+              </Note>
+              <ConsiderLink>
+                <a href="#" onClick={(e) => e.preventDefault()}>Mejla mig sammanfattningen istället</a>
+              </ConsiderLink>
             </ApproveCard>
-
-            <Card>
-              <h3>Behöver du fundera?</h3>
-              <p>
-                Vi mejlar dig sammanfattningen så du kan stämma av med din bokförings­konsult eller
-                styrelse. Bytet utförs aldrig utan din BankID-signatur.
-              </p>
-              <MailMeBtn as="a" href="#" $variant="secondary" $size="md">
-                Mejla mig sammanfattningen
-              </MailMeBtn>
-            </Card>
           </SideCol>
         </Layout>
       </Container>

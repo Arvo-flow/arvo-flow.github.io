@@ -9,6 +9,7 @@ import {
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
   PreviewCard, PreviewHead, SavingBig, PreviewList, PreviewRow, PreviewFloat,
   TickerBand, TickerText,
+  TrustStrip, TrustPillar,
   SectionHead, HowGrid, HowCard,
   ProofGrid, Quote, Stats,
   PricingCard, PricingInner,
@@ -171,6 +172,43 @@ const Landing = () => {
           ])}
         </TickerText>
       </TickerBand>
+
+      <TrustStrip>
+        <TrustPillar>
+          <div className="icon"><Icon name="lock" size={22} stroke={2} /></div>
+          <h3>Vi får bara läsa, aldrig ändra</h3>
+          <p>
+            Endast leverantörsfakturor — kundfakturor, lönedata, bankkonton och personnummer
+            ligger utanför vad vi kommer åt.
+          </p>
+          <ul>
+            <li><Icon name="check" size={14} stroke={2.4} /> Leverantörsfakturor</li>
+            <li><Icon name="check" size={14} stroke={2.4} /> Avtal &amp; förfallodatum</li>
+            <li className="no"><Icon name="lock" size={14} stroke={2} /> Lön &amp; personnummer</li>
+            <li className="no"><Icon name="lock" size={14} stroke={2} /> Kundfakturor</li>
+          </ul>
+        </TrustPillar>
+
+        <TrustPillar>
+          <div className="icon"><Icon name="check" size={22} stroke={2.4} /></div>
+          <h3>No Waste Promise</h3>
+          <p>
+            Hittar vi inga överpriser på 30 dagar är ditt bolag redan optimerat.
+            Vi raderar Fortnox-kopplingen och all data automatiskt.
+          </p>
+          <strong>Du har inte betalat en krona.</strong>
+        </TrustPillar>
+
+        <TrustPillar>
+          <div className="icon"><Icon name="trend" size={22} stroke={2} /></div>
+          <h3>Inga fasta avgifter</h3>
+          <p>
+            Vi tjänar pengar bara när du gör det. 20 % av faktiska besparingar år 1,
+            fakturerat kvartalsvis i takt med att pengarna landar.
+          </p>
+          <strong>Hittar vi inget kostar det inget.</strong>
+        </TrustPillar>
+      </TrustStrip>
 
       <Section id="hur">
         <SectionHead>

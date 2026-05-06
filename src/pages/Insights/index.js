@@ -142,11 +142,16 @@ const Insights = () => {
         <Headline>
           <HeadlineGrid>
             <BigNumber>
-              <span className="kicker">Identifierad besparing år 1</span>
+              <span className="kicker">Din nettobesparing år 1</span>
               <div className="amount tabular">
-                <em>{animatedSavings.toLocaleString('sv-SE')}</em>
+                <em>{Math.round(animatedSavings * 0.8).toLocaleString('sv-SE')}</em>
                 <span className="unit">kr</span>
               </div>
+              <p className="netMath">
+                Bruttobesparing {animatedSavings.toLocaleString('sv-SE')} kr
+                <span className="dash"> − </span>
+                Arvos success-fee {Math.round(animatedSavings * 0.2).toLocaleString('sv-SE')} kr (20 %)
+              </p>
               <p>
                 Vi gick igenom {SUMMARY.invoicesAnalysed} leverantörsfakturor från
                 {' '}{SUMMARY.suppliersAnalysed} olika leverantörer det senaste året och hittade
@@ -236,7 +241,7 @@ const Insights = () => {
                       : <>Avtal löper i <span>{o.contractEndsIn} dgr</span></>}
                   </div>
                   <div className="cta">
-                    Granska <Icon name="arrow" size={14} />
+                    Granska bytet <Icon name="arrow" size={14} stroke={2.4} color="#FFFFFF" />
                   </div>
                 </OppFooter>
                 <BiasLink>

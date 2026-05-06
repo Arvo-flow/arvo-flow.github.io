@@ -203,10 +203,22 @@ export const BigNumber = styled.div`
     color: rgba(250, 250, 247, 0.78);
     margin-left: 12px;
   }
+  p.netMath {
+    margin-top: 14px;
+    font-size: 13px;
+    color: rgba(250, 250, 247, 0.65);
+    font-feature-settings: "tnum";
+    letter-spacing: 0.005em;
+    max-width: 480px;
+  }
+  p.netMath span.dash {
+    color: rgba(250, 250, 247, 0.4);
+    margin: 0 2px;
+  }
   p {
-    margin-top: 18px;
+    margin-top: 14px;
     font-size: 15px;
-    color: rgba(250, 250, 247, 0.75);
+    color: rgba(250, 250, 247, 0.78);
     line-height: 1.55;
     max-width: 400px;
   }
@@ -302,6 +314,10 @@ export const OppCard = styled.button`
     box-shadow: ${({ theme }) => theme.shadow.md};
     border-color: ${({ theme }) => theme.color.borderStrong};
   }
+  &:hover div.cta {
+    background: ${({ theme }) => theme.color.brandInk};
+    box-shadow: ${({ theme }) => theme.shadow.brand};
+  }
 `;
 
 export const OppHead = styled.div`
@@ -379,9 +395,14 @@ export const OppFooter = styled.div`
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 13.5px;
+    padding: 8px 14px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    background: ${({ theme }) => theme.color.brand};
+    color: #FFFFFF;
+    font-size: 13px;
     font-weight: 600;
-    color: ${({ theme }) => theme.color.brand};
+    letter-spacing: 0.005em;
+    transition: transform ${({ theme }) => theme.motion.fast}, background ${({ theme }) => theme.motion.fast}, box-shadow ${({ theme }) => theme.motion.fast};
   }
 `;
 

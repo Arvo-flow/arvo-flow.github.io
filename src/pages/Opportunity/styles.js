@@ -188,64 +188,111 @@ export const CompareCol = styled.div`
   }
 `;
 
-export const BenchBar = styled.div`
-  margin-top: 20px;
+export const BenchCompact = styled.div`
+  margin-top: 22px;
+  padding: 18px 20px;
+  background: ${({ theme }) => theme.color.surfaceAlt};
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  border: 1px solid ${({ theme }) => theme.color.border};
 
-  div.legend {
+  div.hero {
     display: flex;
-    justify-content: space-between;
-    font-size: 12px;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  span.kicker {
+    font-size: 12.5px;
     color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
   }
+  strong.overpay {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: ${({ theme }) => theme.color.danger};
+    font-feature-settings: "tnum";
+  }
+  span.overpayLabel {
+    font-size: 13.5px;
+    color: ${({ theme }) => theme.color.inkSoft};
+    font-weight: 500;
+  }
+
   div.track {
+    margin-top: 14px;
     position: relative;
-    height: 8px;
-    background: ${({ theme }) => theme.color.surfaceAlt};
+    height: 6px;
+    background: ${({ theme }) => theme.color.surface};
     border-radius: ${({ theme }) => theme.size.radius.pill};
-  }
-  div.median {
-    position: absolute;
-    top: -5px;
-    width: 2px;
-    height: 18px;
-    background: ${({ theme }) => theme.color.muted};
-  }
-  div.you {
-    position: absolute;
-    top: -8px;
-    width: 14px; height: 24px;
-    border-radius: 6px;
-    background: ${({ theme }) => theme.color.danger};
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #FAFAF7;
-    font-size: 10px;
-    font-weight: 700;
   }
   div.suggested {
     position: absolute;
-    top: -8px;
-    width: 14px; height: 24px;
-    border-radius: 6px;
+    top: -3px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
     background: ${({ theme }) => theme.color.brand};
     transform: translateX(-50%);
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.color.brandSoft};
   }
-  div.labels {
+  div.median {
+    position: absolute;
+    top: -2px;
+    width: 2px; height: 10px;
+    background: ${({ theme }) => theme.color.muted};
+    transform: translateX(-50%);
+  }
+  div.you {
+    position: absolute;
+    top: -3px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.danger};
+    transform: translateX(-50%);
+  }
+
+  div.legend {
     margin-top: 14px;
     display: flex;
-    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
     font-size: 12px;
-    color: ${({ theme }) => theme.color.muted};
-  }
-  div.labels strong {
-    color: ${({ theme }) => theme.color.ink};
-    display: block;
-    margin-top: 2px;
-    font-size: 13px;
+    color: ${({ theme }) => theme.color.inkSoft};
     font-feature-settings: "tnum";
+  }
+  div.legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  div.dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  div.dot.suggested { background: ${({ theme }) => theme.color.brand}; }
+  div.dot.median { background: ${({ theme }) => theme.color.muted}; }
+  div.dot.you { background: ${({ theme }) => theme.color.danger}; }
+`;
+
+export const ConsiderLink = styled.div`
+  position: relative;
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12.5px;
+
+  a {
+    color: rgba(250, 250, 247, 0.55);
+    text-decoration: underline;
+    text-decoration-color: rgba(250, 250, 247, 0.25);
+    text-underline-offset: 3px;
+    transition: color ${({ theme }) => theme.motion.fast};
+  }
+  a:hover {
+    color: rgba(250, 250, 247, 0.85);
   }
 `;
 
