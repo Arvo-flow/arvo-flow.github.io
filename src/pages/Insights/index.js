@@ -4,7 +4,7 @@ import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
-import { COMPANY, SUMMARY, OPPORTUNITIES, TIMELINE, formatKr } from '../../data/mockData';
+import { COMPANY, SUMMARY, OPPORTUNITIES, TIMELINE, formatKr, netSaving, sumNetSaving, TOTALS } from '../../data/mockData';
 import {
   Page, Container, Greeting, Headline, HeadlineGrid, BigNumber, HeadlineSplit,
   Section, SectionHeader, OppGrid, OppCard, OppHead, OppSaving, OppFooter, Compare,
@@ -68,7 +68,7 @@ const Insights = () => {
 
   useEffect(() => {
     if (showSkeleton) return;
-    const total = SUMMARY.identifiedSavings;
+    const total = TOTALS.activeNet;
     const dur = 1400;
     const start = performance.now();
     let raf;
@@ -95,8 +95,8 @@ const Insights = () => {
   const activeOpps = filtered.filter((o) => !o.licensePending);
   const lockedOpps = filtered.filter((o) => o.licensePending);
 
-  const totalActive = activeOpps.reduce((s, o) => s + o.savingPerYear, 0);
-  const totalLocked = lockedOpps.reduce((s, o) => s + o.savingPerYear, 0);
+  const totalActiveNet = sumNetSaving(activeOpps);
+  const totalLockedOverpayment = lockedOpps.reduce((s, o) => s + o.savingPerYear, 0);
 
   const openVip = (opp) => {
     setVipFor(opp);
@@ -148,29 +148,29 @@ const Insights = () => {
                 <span className="unit">kr</span>
               </div>
               <p className="netMath">
-                Bruttobesparing {animatedSavings.toLocaleString('sv-SE')} kr
+                Bruttobesparing {TOTALS.activeGross.toLocaleString('sv-SE')} kr
                 <span className="dash"> − </span>
-                Arvos success-fee {Math.round(animatedSavings * 0.2).toLocaleString('sv-SE')} kr (20 %)
+                Arvos success-fee {TOTALS.activeFee.toLocaleString('sv-SE')} kr (20 %)
               </p>
               <p>
                 Vi gick igenom {SUMMARY.invoicesAnalysed} leverantörsfakturor från
                 {' '}{SUMMARY.suppliersAnalysed} olika leverantörer det senaste året och hittade
-                {' '}{OPPORTUNITIES.length} tydliga bytesmöjligheter. Du kan godkänna varje ett
-                separat med BankID — ingen leverantör byts utan din signatur.
+                {' '}{OPPORTUNITIES.length} tydliga bytesmöjligheter. Försäkring (2 möjligheter)
+                kan inte aktiveras än — vi väntar på FI-godkännande och tar ingen avgift för dem.
               </p>
             </BigNumber>
             <HeadlineSplit>
               <div>
-                <span className="lbl">Redo nu <em className="live">Live</em></span>
+                <span className="lbl">Redo nu — netto <em className="live">Live</em></span>
                 <div className="value">
-                  {totalActive.toLocaleString('sv-SE')}
+                  {totalActiveNet.toLocaleString('sv-SE')}
                   <small>kr · {activeOpps.length} möjligheter</small>
                 </div>
               </div>
               <div>
-                <span className="lbl">Beta <em className="beta">Väntar på FI</em></span>
+                <span className="lbl">Estimerad överbetalning <em className="beta">Väntar på FI</em></span>
                 <div className="value">
-                  ~{totalLocked.toLocaleString('sv-SE')}
+                  ~{totalLockedOverpayment.toLocaleString('sv-SE')}
                   <small>kr · {lockedOpps.length} möjligheter</small>
                 </div>
               </div>
@@ -199,8 +199,8 @@ const Insights = () => {
 
           <SectionHeader>
             <h3>Redo att aktiveras idag</h3>
-            <span className="badge">Live</span>
-            <span className="subtle">{activeOpps.length} möjligheter · {totalActive.toLocaleString('sv-SE')} kr/år</span>
+            <span className="badge">Live · netto efter Arvos avgift</span>
+            <span className="subtle">{activeOpps.length} möjligheter · {totalActiveNet.toLocaleString('sv-SE')} kr/år</span>
           </SectionHeader>
 
           <OppGrid>
@@ -218,8 +218,8 @@ const Insights = () => {
                 </OppHead>
 
                 <OppSaving>
-                  <div className="amount">+{o.savingPerYear.toLocaleString('sv-SE')} kr</div>
-                  <div className="unit">årlig besparing · {Math.round((o.savingPerYear / o.currentAnnualCost) * 100)} % lägre kostnad</div>
+                  <div className="amount">+{netSaving(o).toLocaleString('sv-SE')} kr</div>
+                  <div className="unit">netto år 1 efter Arvos avgift · {Math.round((netSaving(o) / o.currentAnnualCost) * 100)} % lägre kostnad</div>
                 </OppSaving>
 
                 <Compare>
@@ -259,7 +259,7 @@ const Insights = () => {
               <SectionHeader>
                 <h3>Snart tillgängligt</h3>
                 <span className="badge warning">Beta · Väntar på FI</span>
-                <span className="subtle">{lockedOpps.length} möjligheter · ~{totalLocked.toLocaleString('sv-SE')} kr/år</span>
+                <span className="subtle">{lockedOpps.length} möjligheter · ~{totalLockedOverpayment.toLocaleString('sv-SE')} kr/år estimerad överbetalning</span>
               </SectionHeader>
 
               <OppGrid>

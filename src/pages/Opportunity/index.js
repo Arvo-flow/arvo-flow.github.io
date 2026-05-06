@@ -52,6 +52,8 @@ const Opportunity = () => {
   const youPos = pct(opp.benchmark.yourCost);
   const medianPos = pct(opp.benchmark.industryMedian);
   const newPos = pct(opp.suggestedAnnualCost);
+  const oppNetSaving = netSaving(opp);
+  const oppArvoFee = arvoFee(opp);
 
   return (
     <Page>
@@ -72,9 +74,9 @@ const Opportunity = () => {
             <p className="lede">{opp.why}</p>
           </HeadLeft>
           <HeadSaving>
-            <div className="kicker">Besparing år 1</div>
-            <div className="amount">+{opp.savingPerYear.toLocaleString('sv-SE')}</div>
-            <div className="unit">kr · {Math.round((opp.savingPerYear / opp.currentAnnualCost) * 100)} % lägre kostnad</div>
+            <div className="kicker">Din nettobesparing år 1</div>
+            <div className="amount">+{oppNetSaving.toLocaleString('sv-SE')}</div>
+            <div className="unit">kr · efter Arvos avgift {oppArvoFee.toLocaleString('sv-SE')} kr (20 %)</div>
           </HeadSaving>
         </Head>
 
@@ -95,7 +97,7 @@ const Opportunity = () => {
                   <span className="lbl">Med Arvo Flow</span>
                   <strong className="name">{opp.suggestedSupplier}</strong>
                   <div className="cost">{formatKr(opp.suggestedAnnualCost)}</div>
-                  <div className="unit">per år · spara {formatKr(opp.savingPerYear)}</div>
+                  <div className="unit">per år · spara {formatKr(oppNetSaving)} netto</div>
                 </CompareCol>
               </CompareGrid>
 
@@ -153,9 +155,9 @@ const Opportunity = () => {
               <p>Vi förbereder allt och hanterar övergången. Du signerar med BankID och kan ångra inom 14 dagar utan kostnad.</p>
               <NetSaving>
                 <span className="kicker">Din nettobesparing år 1</span>
-                <span className="amount">{formatKr(opp.savingPerYear - Math.round(opp.savingPerYear * 0.2))}</span>
+                <span className="amount">{formatKr(oppNetSaving)}</span>
                 <span className="fineprint">
-                  Bruttobesparing {formatKr(opp.savingPerYear)} − Arvos success-fee {formatKr(Math.round(opp.savingPerYear * 0.2))} (20 %)
+                  Bruttobesparing {formatKr(opp.savingPerYear)} − Arvos success-fee {formatKr(oppArvoFee)} (20 %)
                 </span>
               </NetSaving>
               <KeyValue>

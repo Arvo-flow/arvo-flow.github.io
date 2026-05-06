@@ -4,6 +4,7 @@ import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
+import { TOTALS } from '../../data/mockData';
 import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
@@ -79,9 +80,9 @@ const Landing = () => {
               Sluta betala överpris<br />för dina <em>leverantörsavtal.</em>
             </Headline>
             <Lede>
-              Snittkunden hittar 187 340 kr i onödiga leverantörskostnader varje år.
-              Arvo Flow föreslår byten — du godkänner med BankID och vi sköter resten.
-              Inga fasta avgifter — vi tjänar pengar bara när du gör det.
+              Snittkunden hittar {TOTALS.activeNet.toLocaleString('sv-SE')} kr/år i nettobesparing
+              efter Arvos avgift. Arvo Flow föreslår byten — du godkänner med BankID och vi
+              sköter resten. Inga fasta avgifter — vi tjänar pengar bara när du gör det.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/connect" $variant="gradient" $size="lg">
@@ -92,7 +93,7 @@ const Landing = () => {
               </Button>
             </HeroActions>
             <HeroProof>
-              <div><strong>187 340 kr</strong><span>snitt-besparing år 1</span></div>
+              <div><strong>{TOTALS.activeNet.toLocaleString('sv-SE')} kr</strong><span>snittkundens nettobesparing år 1</span></div>
               <div><strong>47 250</strong><span>leverantörsfakturor analyserade i år</span></div>
               <div><strong>0 kr</strong><span>tills vi sparat pengar åt dig</span></div>
             </HeroProof>
@@ -105,9 +106,9 @@ const Landing = () => {
                 <span>● Aktiv</span>
               </PreviewHead>
               <SavingBig>
-                <small>Identifierad besparing år 1</small>
+                <small>Din nettobesparing år 1</small>
                 <div className="amount">
-                  <em>187 340</em>
+                  <em>{TOTALS.activeNet.toLocaleString('sv-SE')}</em>
                   <span className="unit">kr</span>
                 </div>
               </SavingBig>
@@ -118,15 +119,15 @@ const Landing = () => {
                     <div className="label">Elavtal · Tibber</div>
                     <div className="sub">vs Vattenfall (rörligt)</div>
                   </div>
-                  <div className="amount">+55 600 kr</div>
+                  <div className="amount">+44 480 kr</div>
                 </PreviewRow>
                 <PreviewRow>
-                  <div className="icon"><Icon name="shield" size={18} /></div>
+                  <div className="icon"><Icon name="truck" size={18} /></div>
                   <div>
-                    <div className="label">Företagsförsäkring · If</div>
-                    <div className="sub">vs Trygg-Hansa</div>
+                    <div className="label">Leasing · Arval</div>
+                    <div className="sub">8 servicebilar vs ALD</div>
                   </div>
-                  <div className="amount">+32 200 kr</div>
+                  <div className="amount">+39 680 kr</div>
                 </PreviewRow>
                 <PreviewRow>
                   <div className="icon"><Icon name="phone" size={18} /></div>
@@ -134,7 +135,7 @@ const Landing = () => {
                     <div className="label">Mobil · Tele2</div>
                     <div className="sub">14 abonnemang vs Telia</div>
                   </div>
-                  <div className="amount">+15 600 kr</div>
+                  <div className="amount">+12 480 kr</div>
                 </PreviewRow>
               </PreviewList>
             </PreviewCard>
@@ -308,7 +309,7 @@ const Landing = () => {
 
       <FinalCta>
         <h2>Hur mycket betalar du för mycket just nu?</h2>
-        <p>Snittet bland våra kunder är 187 340 kr/år i identifierade överbetalningar. Du vet inte förrän vi har scannat. 60 sekunder med Fortnox och du har svaret.</p>
+        <p>Snittet bland våra kunder är {TOTALS.activeNet.toLocaleString('sv-SE')} kr/år i nettobesparing efter vår avgift. Du vet inte förrän vi har scannat. 60 sekunder med Fortnox och du har svaret.</p>
         <div className="actions">
           <Button as={Link} to="/connect" $variant="gradient" $size="lg">
             Analysera mina fakturor — gratis <Icon name="arrow" size={18} />

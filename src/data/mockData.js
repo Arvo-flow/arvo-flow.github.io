@@ -202,3 +202,44 @@ export const formatKr = (n) => {
 };
 
 export const formatPercent = (n) => `${Math.round(n)} %`;
+
+// Arvo Flow's success-fee model: 20 % of year-1 saving, only on switches we
+// actually execute. License-pending categories (försäkring) are NOT yet
+// switched by us — those amounts represent estimated overpayment, not a
+// realized saving for the customer, and there is no fee.
+export const ARVO_FEE_RATE = 0.20;
+
+/**
+ * Net saving the customer keeps after Arvo's success-fee.
+ * - Active categories: gross × (1 − fee rate)
+ * - License-pending categories: gross (no fee yet because no switch occurs)
+ */
+export const netSaving = (opp) =>
+  opp.licensePending
+    ? opp.savingPerYear
+    : Math.round(opp.savingPerYear * (1 - ARVO_FEE_RATE));
+
+/** Arvo's success-fee amount for an opportunity. Zero for license-pending. */
+export const arvoFee = (opp) =>
+  opp.licensePending ? 0 : Math.round(opp.savingPerYear * ARVO_FEE_RATE);
+
+/** Sum net savings across an array of opportunities. */
+export const sumNetSaving = (opps) => opps.reduce((s, o) => s + netSaving(o), 0);
+
+/** Sum gross (overpayment) for license-pending opps — these are NOT savings. */
+export const sumLockedOverpayment = (opps) =>
+  opps.filter((o) => o.licensePending).reduce((s, o) => s + o.savingPerYear, 0);
+
+// Pre-computed totals for the Lindberg VVS demo, used in marketing copy
+// on the landing page so all numbers reconcile with the dashboard.
+const ACTIVE_OPPS = OPPORTUNITIES.filter((o) => !o.licensePending);
+const LOCKED_OPPS = OPPORTUNITIES.filter((o) => o.licensePending);
+
+export const TOTALS = Object.freeze({
+  activeNet: sumNetSaving(ACTIVE_OPPS),                   // What the customer keeps from switches
+  activeFee: ACTIVE_OPPS.reduce((s, o) => s + arvoFee(o), 0),
+  activeGross: ACTIVE_OPPS.reduce((s, o) => s + o.savingPerYear, 0),
+  lockedOverpayment: sumLockedOverpayment(LOCKED_OPPS),   // Estimated försäkring overpayment, not yet realized
+  activeCount: ACTIVE_OPPS.length,
+  lockedCount: LOCKED_OPPS.length,
+});
