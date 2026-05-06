@@ -400,7 +400,7 @@ export const NetSaving = styled.div`
   span.fineprint {
     margin-top: 10px;
     font-size: 11.5px;
-    color: rgba(250, 250, 247, 0.55);
+    color: rgba(250, 250, 247, 0.72);
     line-height: 1.5;
     font-feature-settings: "tnum";
   }
@@ -436,7 +436,7 @@ export const ApproveBtn = styled.button`
 export const Note = styled.p`
   position: relative;
   font-size: 12px;
-  color: rgba(250, 250, 247, 0.6);
+  color: rgba(250, 250, 247, 0.75);
   margin-top: 8px;
   text-align: center;
 `;

@@ -6,8 +6,8 @@ const theme = {
     surfaceSunken: '#D8E6E0',
     ink: '#0E1A17',
     inkSoft: '#1F2E2A',
-    muted: '#5C6E68',
-    mutedSoft: '#8A988F',
+    muted: '#3F4B47',         // bumped from #5C6E68 — ~7.8:1 on bg (was ~4.85:1)
+    mutedSoft: '#5C6E68',     // bumped from #8A988F — ~5.0:1 on bg (was ~3.0:1, failed AA)
     border: '#D5E2DC',
     borderStrong: '#BACBC2',
 

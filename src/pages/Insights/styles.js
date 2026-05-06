@@ -200,7 +200,7 @@ export const BigNumber = styled.div`
   }
   span.unit {
     font-size: 18px;
-    color: rgba(250, 250, 247, 0.6);
+    color: rgba(250, 250, 247, 0.78);
     margin-left: 12px;
   }
   p {
@@ -222,7 +222,7 @@ export const StatList = styled.dl`
   div { }
   dt {
     font-size: 12px;
-    color: rgba(250, 250, 247, 0.6);
+    color: rgba(250, 250, 247, 0.78);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 8px;
@@ -737,7 +737,7 @@ export const HeadlineSplit = styled.div`
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    color: rgba(250, 250, 247, 0.65);
+    color: rgba(250, 250, 247, 0.78);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 8px;
@@ -768,7 +768,7 @@ export const HeadlineSplit = styled.div`
   }
   div.value small {
     font-size: 13px;
-    color: rgba(250, 250, 247, 0.6);
+    color: rgba(250, 250, 247, 0.78);
     margin-left: 8px;
     font-family: ${({ theme }) => theme.font.sans};
     font-feature-settings: "tnum";
