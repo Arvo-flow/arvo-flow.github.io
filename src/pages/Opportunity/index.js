@@ -4,7 +4,7 @@ import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
-import { OPPORTUNITIES, formatKr } from '../../data/mockData';
+import { OPPORTUNITIES, formatKr, netSaving, arvoFee } from '../../data/mockData';
 import {
   Page, Container, BackLink, Head, HeadLeft, HeadSaving, Layout,
   Card, SideCol, CompareGrid, CompareCol, BenchCompact, Reasoning, Coverage,
