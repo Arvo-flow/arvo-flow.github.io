@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
@@ -14,6 +14,7 @@ import {
   SectionHead, HowGrid, HowCard,
   ProofGrid, Quote, Stats,
   PricingCard, PricingInner,
+  FoundingCard, FoundingLeft, FoundingForm, FoundingSuccess,
   FaqWrap, FaqItem,
   FinalCta,
 } from './styles';
@@ -66,7 +67,52 @@ const FAQ = [
   },
 ];
 
+const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
+
+const validateFoundingForm = (form) => {
+  const errors = {};
+  if (!form.company.trim()) errors.company = 'Företagsnamn saknas.';
+  if (!form.name.trim()) errors.name = 'Namn saknas.';
+  if (!form.email.trim()) {
+    errors.email = 'E-post saknas.';
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+    errors.email = 'E-postadressen ser inte rätt ut.';
+  }
+  return errors;
+};
+
 const Landing = () => {
+  const [form, setForm] = useState({ company: '', name: '', email: '' });
+  const [errors, setErrors] = useState({});
+  const [state, setState] = useState('idle'); // idle | submitting | success | error
+
+  const submitFounding = async (e) => {
+    e.preventDefault();
+    const validation = validateFoundingForm(form);
+    setErrors(validation);
+    if (Object.keys(validation).length > 0) return;
+
+    setState('submitting');
+    try {
+      const res = await fetch(FOUNDING_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          'Företagsnamn': form.company.trim(),
+          'Namn': form.name.trim(),
+          'E-post': form.email.trim(),
+          source: 'arvoflow.se.founding-member',
+          referrer: typeof document !== 'undefined' ? document.referrer || null : null,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      if (!res.ok) throw new Error('Webhook ' + res.status);
+      setState('success');
+    } catch (err) {
+      setState('error');
+    }
+  };
+
   return (
     <Page>
       <Nav variant="public" />
@@ -290,6 +336,90 @@ const Landing = () => {
             </ul>
           </PricingInner>
         </PricingCard>
+      </Section>
+
+      <Section id="founding-members">
+        <SectionHead>
+          <span className="kicker">Founding Members · Begränsade platser</span>
+          <h2>Vill du vara först ut?</h2>
+          <p>Vi tar in 50 svenska småföretag innan publik lansering. Du får personlig onboarding direkt med grundarna, prislåst första 12 månader, och påverkan över vilka kategorier vi prioriterar härnäst.</p>
+        </SectionHead>
+        <FoundingCard>
+          <FoundingLeft>
+            <span className="kicker">Founding Member</span>
+            <h2>50 platser. Du får påverkan.</h2>
+            <p className="lede">Vi släpper Arvo Flow stegvis. Founding Members får tillgång först, betalar success-fee enligt samma transparenta modell, och hjälper oss prioritera vilka leverantörskategorier som ska in härnäst.</p>
+            <ul className="benefits">
+              <li><Icon name="check" size={16} stroke={2.4} /> Personlig onboarding direkt med grundarna — 30 min Teams</li>
+              <li><Icon name="check" size={16} stroke={2.4} /> Prislåst success-fee på 20 % i 12 mån (mot fluktuerande efter lansering)</li>
+              <li><Icon name="check" size={16} stroke={2.4} /> Du röstar på vilka kategorier vi öppnar nästa kvartal</li>
+              <li><Icon name="check" size={16} stroke={2.4} /> Garanterad förtur till försäkrings­byten när FI-licensen är klar</li>
+            </ul>
+          </FoundingLeft>
+          {state === 'success' ? (
+            <FoundingSuccess>
+              <div className="check"><Icon name="check" size={28} stroke={2.5} /></div>
+              <h3>Tack — du står på listan.</h3>
+              <p>Vi hör av oss inom 48 timmar för att boka en kort onboarding och hjälpa dig komma igång.</p>
+            </FoundingSuccess>
+          ) : (
+            <FoundingForm onSubmit={submitFounding} noValidate>
+              <label>
+                Företagsnamn
+                <input
+                  type="text"
+                  name="company"
+                  required
+                  autoComplete="organization"
+                  placeholder="t.ex. Lindberg VVS AB"
+                  value={form.company}
+                  onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
+                  aria-invalid={!!errors.company || undefined}
+                  disabled={state === 'submitting'}
+                />
+                {errors.company && <span className="error">{errors.company}</span>}
+              </label>
+              <label>
+                Namn
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  autoComplete="name"
+                  placeholder="t.ex. Johan Lindberg"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  aria-invalid={!!errors.name || undefined}
+                  disabled={state === 'submitting'}
+                />
+                {errors.name && <span className="error">{errors.name}</span>}
+              </label>
+              <label>
+                E-post
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  autoComplete="email"
+                  placeholder="johan@lindbergvvs.se"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  aria-invalid={!!errors.email || undefined}
+                  disabled={state === 'submitting'}
+                />
+                {errors.email && <span className="error">{errors.email}</span>}
+              </label>
+              <Button type="submit" $variant="gradient" $size="lg" disabled={state === 'submitting'}>
+                {state === 'submitting' ? 'Skickar…' : 'Reservera min plats'}
+                {state !== 'submitting' && <Icon name="arrow" size={18} />}
+              </Button>
+              {state === 'error' && (
+                <span className="error">Något gick fel — försök igen eller mejla hej@arvoflow.se.</span>
+              )}
+              <p className="fineprint">Vi använder dina uppgifter enbart för att kontakta dig om Founding Member-platsen och raderar dem om du tackar nej. Inga utskick utan ditt godkännande.</p>
+            </FoundingForm>
+          )}
+        </FoundingCard>
       </Section>
 
       <Section id="faq">

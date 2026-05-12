@@ -609,6 +609,167 @@ export const PricingInner = styled.div`
   ul li svg { color: ${({ theme }) => theme.color.accent}; flex-shrink: 0; margin-top: 3px; }
 `;
 
+export const FoundingCard = styled.div`
+  max-width: 960px;
+  margin: 0 auto;
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.xl};
+  padding: 48px;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 48px;
+  align-items: start;
+  position: relative;
+  overflow: hidden;
+  box-shadow: ${({ theme }) => theme.shadow.md};
+
+  @media (max-width: 820px) {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 32px 24px;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -40%; right: -25%;
+    width: 60%; height: 200%;
+    background: radial-gradient(circle, rgba(93, 214, 202, 0.12), transparent 60%);
+    pointer-events: none;
+  }
+`;
+
+export const FoundingLeft = styled.div`
+  position: relative;
+
+  span.kicker {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: ${({ theme }) => theme.color.brand};
+    padding: 4px 12px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    background: ${({ theme }) => theme.color.brandSoft};
+    margin-bottom: 18px;
+  }
+  h2 {
+    font-size: clamp(28px, 3.6vw, 40px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  p.lede {
+    margin-top: 16px;
+    font-size: 16px;
+    line-height: 1.55;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+  ul.benefits {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  ul.benefits li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 14.5px;
+    line-height: 1.45;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+  ul.benefits li svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+    color: ${({ theme }) => theme.color.brand};
+  }
+`;
+
+export const FoundingForm = styled.form`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+  input {
+    height: 46px;
+    padding: 0 14px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    border: 1.5px solid ${({ theme }) => theme.color.borderStrong};
+    background: ${({ theme }) => theme.color.surface};
+    font-family: inherit;
+    font-size: 14.5px;
+    color: ${({ theme }) => theme.color.ink};
+    transition: border-color ${({ theme }) => theme.motion.fast},
+                box-shadow ${({ theme }) => theme.motion.fast};
+  }
+  input::placeholder {
+    color: ${({ theme }) => theme.color.mutedSoft};
+  }
+  input:focus {
+    border-color: ${({ theme }) => theme.color.brand};
+    outline: none;
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.color.brandSoft};
+  }
+  input[aria-invalid="true"] {
+    border-color: ${({ theme }) => theme.color.danger};
+  }
+  span.error {
+    font-size: 12.5px;
+    color: ${({ theme }) => theme.color.danger};
+    margin-top: 2px;
+  }
+  p.fineprint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.5;
+  }
+`;
+
+export const FoundingSuccess = styled.div`
+  position: relative;
+  text-align: center;
+  padding: 24px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+
+  div.check {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brandSoft};
+    color: ${({ theme }) => theme.color.brand};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 6px;
+  }
+  h3 {
+    font-size: 22px;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+  p {
+    font-size: 14.5px;
+    color: ${({ theme }) => theme.color.inkSoft};
+    line-height: 1.55;
+    max-width: 360px;
+  }
+`;
+
 export const FaqWrap = styled.div`
   max-width: 820px;
   margin: 0 auto;
