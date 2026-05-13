@@ -1,6 +1,7 @@
-# Backend agents — Node scripts, not part of the React build
-# (this also covers agents/**/data/, so no need for a separate **/data/ rule)
-agents/
+# Backend agents are imported by /api/test-invoice.mjs (Vercel Serverless Function),
+# so the agents/ tree must be deployed. We only exclude local data/ caches.
+agents/**/data/
+agents/orchestrator/
 
 # Tooling that doesn't belong in deployment
 make-blueprints/
