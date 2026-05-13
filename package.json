@@ -26,7 +26,8 @@
     "deploy": "gh-pages -d build -e flow",
     "server": "node server/index.js",
     "seed": "node server/seed.js",
-    "test:webhook": "node server/test-webhook.js"
+    "test:webhook": "node server/test-webhook.js",
+    "test:invoice": "node agents/test-invoice/cli.js"
   },
   "eslintConfig": {
     "extends": "react-app"
