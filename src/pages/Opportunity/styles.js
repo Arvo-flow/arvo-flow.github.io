@@ -584,3 +584,35 @@ export const ModalCard = styled.div`
     40% { opacity: 1; transform: translateY(-4px); }
   }
 `;
+
+export const RegretBox = styled.div`
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.brandSoft};
+  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 12px;
+  text-align: left;
+
+  svg { color: ${({ theme }) => theme.color.brand}; margin-top: 2px; flex-shrink: 0; }
+
+  strong {
+    display: block;
+    font-size: 14px;
+    color: ${({ theme }) => theme.color.brandInk};
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  span.body {
+    font-size: 13px;
+    line-height: 1.55;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+  span.body a {
+    color: ${({ theme }) => theme.color.brand};
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+`;

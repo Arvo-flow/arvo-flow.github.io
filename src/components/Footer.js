@@ -121,9 +121,9 @@ const Footer = () => (
       <Col>
         <h4>Juridik</h4>
         <ul>
-          <li><a href="#villkor">Villkor</a></li>
-          <li><a href="#integritet">Integritet (GDPR)</a></li>
-          <li><a href="#cookies">Cookies</a></li>
+          <li><Link to="/villkor">Villkor</Link></li>
+          <li><Link to="/integritet">Integritet (GDPR)</Link></li>
+          <li><Link to="/cookies">Cookies</Link></li>
           <li><Link to="/bias">Rankningspolicy</Link></li>
         </ul>
       </Col>

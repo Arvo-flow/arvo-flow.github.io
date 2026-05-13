@@ -10,7 +10,7 @@ import {
   Card, SideCol, CompareGrid, CompareCol, BenchCompact, Reasoning, Coverage,
   Steps, StepItem,
   ApproveCard, NetSaving, KeyValue, ApproveActions, ApproveBtn, Note, ConsiderLink,
-  Modal, ModalCard,
+  Modal, ModalCard, RegretBox,
 } from './styles';
 
 const Opportunity = () => {
@@ -152,7 +152,7 @@ const Opportunity = () => {
           <SideCol>
             <ApproveCard>
               <h3>Godkänn bytet</h3>
-              <p>Vi förbereder allt och hanterar övergången. Du signerar med BankID och kan ångra inom 14 dagar utan kostnad.</p>
+              <p>Vi förbereder allt och hanterar övergången. Du signerar med BankID och har 24 timmars ångerrätt innan vi påbörjar uppsägning hos {opp.currentSupplier}.</p>
               <NetSaving>
                 <span className="kicker">Din nettobesparing år 1</span>
                 <span className="amount">{formatKr(oppNetSaving)}</span>
@@ -172,7 +172,7 @@ const Opportunity = () => {
               </ApproveActions>
               <Note>
                 Vi sköter all onboarding hos {opp.suggestedSupplier} åt dig.
-                14 dagars ångerrätt — bytet aktiveras inte förrän det nya avtalet är på plats.
+                24h ångerrätt på fullmakten — bytet aktiveras inte förrän det nya avtalet är på plats.
               </Note>
               <ConsiderLink>
                 <a href="#" onClick={(e) => e.preventDefault()}>Mejla mig sammanfattningen istället</a>
@@ -205,7 +205,19 @@ const Opportunity = () => {
               med {opp.currentSupplier} och tecknar det nya avtalet med {opp.suggestedSupplier}
               {' '}åt dig. Du får bekräftelse på mejl när bytet är aktiverat.
             </p>
-            <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <RegretBox>
+              <Icon name="lock" size={16} stroke={2.2} />
+              <div>
+                <strong>Du har 24 timmar att ångra.</strong>
+                <span className="body">
+                  Vi påbörjar ingen uppsägning eller nytt avtal förrän ångerfristen löpt ut.
+                  Vill du avbryta — svara &quot;ÅNGRA&quot; på bekräftelsemejlet eller mejla{' '}
+                  <a href="mailto:support@arvo.flow">support@arvo.flow</a>. Mer i{' '}
+                  <a href="/villkor" target="_blank" rel="noopener noreferrer">allmänna villkoren §2.2</a>.
+                </span>
+              </div>
+            </RegretBox>
+            <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <Button onClick={finish} $variant="gradient" $size="md" $full>
                 Tillbaka till insikter
               </Button>

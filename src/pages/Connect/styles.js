@@ -363,6 +363,74 @@ export const SmallNote = styled.p`
   color: ${({ theme }) => theme.color.mutedSoft};
 `;
 
+export const ConsentRow = styled.label`
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 14px 16px;
+  border: 1px solid ${({ theme, $error }) => ($error ? theme.color.danger : theme.color.borderStrong)};
+  background: ${({ theme, $error }) => ($error ? theme.color.dangerSoft : theme.color.surface)};
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  cursor: pointer;
+  transition: border-color ${({ theme }) => theme.motion.fast},
+              background ${({ theme }) => theme.motion.fast};
+
+  input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 1.5px solid ${({ theme }) => theme.color.borderStrong};
+    background: ${({ theme }) => theme.color.surface};
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    margin-top: 1px;
+    transition: all ${({ theme }) => theme.motion.fast};
+  }
+  input[type="checkbox"]::before {
+    content: '';
+    width: 11px;
+    height: 11px;
+    transform: scale(0);
+    transition: transform ${({ theme }) => theme.motion.fast};
+    background: #FAFAF7;
+    clip-path: polygon(14% 44%, 0 58%, 38% 100%, 100% 24%, 84% 10%, 38% 65%);
+  }
+  input[type="checkbox"]:checked {
+    background: ${({ theme }) => theme.color.brand};
+    border-color: ${({ theme }) => theme.color.brand};
+  }
+  input[type="checkbox"]:checked::before { transform: scale(1); }
+  input[type="checkbox"]:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.brand};
+    outline-offset: 2px;
+  }
+
+  span.text {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+  span.text a {
+    color: ${({ theme }) => theme.color.brand};
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+`;
+
+export const ConsentError = styled.p`
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: ${({ theme }) => theme.color.danger};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
 const spin = keyframes`
   to { transform: rotate(360deg); }
 `;

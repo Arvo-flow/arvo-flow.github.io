@@ -11,6 +11,9 @@ import Scanning from './pages/Scanning';
 import Insights from './pages/Insights';
 import Opportunity from './pages/Opportunity';
 import Bias from './pages/Bias';
+import Villkor from './pages/Villkor';
+import Integritet from './pages/Integritet';
+import Cookies from './pages/Cookies';
 
 const ArvoFlow = () => (
   <ThemeProvider theme={theme}>
@@ -23,6 +26,9 @@ const ArvoFlow = () => (
         <Route path="/insights" element={<Insights />} />
         <Route path="/opportunity/:id" element={<Opportunity />} />
         <Route path="/bias" element={<Bias />} />
+        <Route path="/villkor" element={<Villkor />} />
+        <Route path="/integritet" element={<Integritet />} />
+        <Route path="/cookies" element={<Cookies />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
@@ -8,14 +8,21 @@ import {
   DataContract, DataCol, NoWaste, ScanCounter, Reassurance,
   BadgeStrip, Badge,
   ProviderRow, ProviderBtn, Actions, SmallNote, Spinner,
+  ConsentRow, ConsentError,
 } from './styles';
 
 const Connect = () => {
   const navigate = useNavigate();
   const [provider, setProvider] = useState('fortnox');
   const [connecting, setConnecting] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [showConsentError, setShowConsentError] = useState(false);
 
   const start = () => {
+    if (!consent) {
+      setShowConsentError(true);
+      return;
+    }
     setConnecting(true);
     setTimeout(() => navigate('/scanning'), 900);
   };
@@ -101,6 +108,28 @@ const Connect = () => {
             <span><strong>1 247</strong> leverantörsfakturor analyserade denna vecka</span>
           </ScanCounter>
 
+          <ConsentRow $error={showConsentError && !consent}>
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => {
+                setConsent(e.target.checked);
+                if (e.target.checked) setShowConsentError(false);
+              }}
+              aria-describedby="consent-text"
+            />
+            <span className="text" id="consent-text">
+              Jag accepterar <Link to="/villkor">de allmänna villkoren</Link> och bekräftar att jag
+              har behörighet att utfärda fullmakt för företaget.
+            </span>
+          </ConsentRow>
+          {showConsentError && !consent && (
+            <ConsentError>
+              <Icon name="lock" size={12} stroke={2.4} />
+              Du måste godkänna villkoren innan du går vidare.
+            </ConsentError>
+          )}
+
           <Actions>
             <Button $variant="gradient" $size="lg" onClick={start} disabled={connecting} $full>
               {connecting ? (
@@ -123,7 +152,9 @@ const Connect = () => {
           </Actions>
 
           <SmallNote>
-            Genom att fortsätta godkänner du våra <a href="#villkor" style={{ textDecoration: 'underline' }}>villkor</a> och vår <a href="#integritet" style={{ textDecoration: 'underline' }}>integritetspolicy</a>.
+            Läs <Link to="/villkor" style={{ textDecoration: 'underline' }}>allmänna villkoren</Link>,
+            vår <Link to="/integritet" style={{ textDecoration: 'underline' }}>integritetspolicy</Link>{' '}
+            och <Link to="/cookies" style={{ textDecoration: 'underline' }}>cookie-policy</Link>.
           </SmallNote>
         </Card>
       </Wrap>
