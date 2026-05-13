@@ -1,0 +1,373 @@
+{
+  "name": "Arvo — Triage Engine (4-category reply classifier)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "google-email:TriggerWatchEmails",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": "GMAIL_CONNECTION",
+        "folder": "INBOX",
+        "criteria": {
+          "subject": "Re:",
+          "from": "",
+          "query": "is:unread label:^all"
+        },
+        "labels": [],
+        "maxResults": 10,
+        "markSeen": false
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 }
+      }
+    },
+    {
+      "id": 2,
+      "module": "airtable:SearchRecords",
+      "version": 4,
+      "parameters": {
+        "__IMTCONN__": "AIRTABLE_CONNECTION"
+      },
+      "mapper": {
+        "base": "AIRTABLE_BASE_ID",
+        "table": "Leads",
+        "formula": "FIND(LOWER({{1.from.address}}), LOWER({E-postadress})) > 0",
+        "limit": 1
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 }
+      }
+    },
+    {
+      "id": 3,
+      "module": "anthropic-claude:CreateMessage",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": "ANTHROPIC_CONNECTION"
+      },
+      "mapper": {
+        "model": "claude-haiku-4-5",
+        "max_tokens": 300,
+        "system": "Du är Arvo Flows triage-motor för säljmejl. Du klassificerar inkommande svar på vår kalla outreach.\n\nLäs mejlet och returnera ENDAST en JSON med exakt detta format:\n{\n  \"intent\": 1 | 2 | 3 | 4,\n  \"confidence\": 0.0-1.0,\n  \"reasoning\": \"max 20 ord — varför du klassade så här\"\n}\n\nKLASSIFICERINGAR:\n\n1 = HOT LEAD\n   Personen visar köpintresse. Frågar om demo, möte, pris, hur det fungerar, om vi kan boka samtal, etc. Använder positivt språk: 'intressant', 'gärna', 'när kan vi'.\n\n2 = NEJ\n   Personen avböjer tydligt. 'Inte intresserad', 'tack men nej', 'ta bort mig från listan', 'we are not in market'. Innehåller också 'unsubscribe' eller liknande.\n\n3 = FRÅGA\n   Personen är intresserad men har specifik fråga som kräver mänskligt svar — om FI-licens, juridik, integrationer, säkerhet, försäkringskategorier, prismodell-detaljer. INTE en generell 'hur fungerar det' (det är 1 = hot lead).\n\n4 = AUTO-SVAR / OUT OF OFFICE\n   Mejlet är ett auto-svar: 'Jag är på semester', 'OOO until X', 'Tack för ditt mejl, jag återkommer', 'Vacation reply'. Innehåller ofta datum-frasering eller alternativ kontakt.\n\nVid tvekan mellan 1 och 3: välj 3 (säkrare att människa svarar än att vi pushar säljmaterial på en specifik fråga).\nVid tvekan mellan 1 och 4: läs efter datum-fraser ('tillbaka 5 maj', 'until June 1') — det är tecken på 4.\n\nReturnera ENDAST JSON, ingen brödtext.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Avsändare: {{1.from.name}} <{{1.from.address}}>\nÄmne: {{1.subject}}\nMejl-text:\n\n{{1.text}}\n\nKlassificera enligt instruktionerna. Returnera JSON."
+          }
+        ]
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 }
+      }
+    },
+    {
+      "id": 4,
+      "module": "json:ParseJSON",
+      "version": 1,
+      "parameters": {
+        "type": "object"
+      },
+      "mapper": {
+        "json": "{{3.content[].text}}"
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": 0 }
+      }
+    },
+    {
+      "id": 5,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "mapper": null,
+      "metadata": {
+        "designer": { "x": 1200, "y": 0 }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 6,
+              "module": "slack:CreateMessage",
+              "version": 8,
+              "parameters": {
+                "__IMTCONN__": "SLACK_CONNECTION"
+              },
+              "filter": {
+                "name": "intent = 1 (Hot Lead)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.intent}}",
+                      "o": "number:equal",
+                      "b": "1"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "channel": "#sales-leads",
+                "text": ":fire: *VARMT LEAD!*\n\n*{{2.`Bolagsnamn`}}* — {{2.`VD Namn`}} <{{1.from.address}}>\n*Confidence:* {{4.confidence}}\n*AI-resonemang:* {{4.reasoning}}\n\n*Deras svar:*\n>>>{{1.text}}\n\n<https://mail.google.com/mail/u/0/#inbox/{{1.id}}|Öppna i Gmail>",
+                "asUser": true
+              },
+              "metadata": {
+                "designer": { "x": 1500, "y": -300 }
+              }
+            },
+            {
+              "id": 7,
+              "module": "google-email:CreateDraft",
+              "version": 2,
+              "parameters": {
+                "__IMTCONN__": "GMAIL_CONNECTION"
+              },
+              "filter": {
+                "name": "intent = 1 (Hot Lead)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.intent}}",
+                      "o": "number:equal",
+                      "b": "1"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "to": [{ "address": "{{1.from.address}}" }],
+                "subject": "Re: {{1.subject}}",
+                "html": "<p>Hej {{2.`VD Namn`}},</p><p>Tack för svaret — jag hittade en tid hos mig nästa vecka:</p><p><a href=\"YOUR_CALENDAR_LINK\">Boka 15 min här</a></p><p>Du behöver inte förbereda något — jag visar Arvo i ditt Fortnox och vi tittar på de 2-3 största besparingarna.</p><p>Hälsningar,<br>Anders</p>",
+                "threadId": "{{1.threadId}}"
+              },
+              "metadata": {
+                "designer": { "x": 1500, "y": -150 }
+              }
+            },
+            {
+              "id": 8,
+              "module": "airtable:UpdateRecord",
+              "version": 4,
+              "parameters": {
+                "__IMTCONN__": "AIRTABLE_CONNECTION"
+              },
+              "filter": {
+                "name": "intent = 1 (Hot Lead)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.intent}}",
+                      "o": "number:equal",
+                      "b": "1"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "base": "AIRTABLE_BASE_ID",
+                "table": "Leads",
+                "id": "{{2.id}}",
+                "values": {
+                  "Status": "Svarat Positivt",
+                  "Senaste Svar": "{{1.text}}",
+                  "Triage Confidence": "{{4.confidence}}"
+                }
+              },
+              "metadata": {
+                "designer": { "x": 1500, "y": 0 }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 9,
+              "module": "airtable:UpdateRecord",
+              "version": 4,
+              "parameters": {
+                "__IMTCONN__": "AIRTABLE_CONNECTION"
+              },
+              "filter": {
+                "name": "intent = 2 (Nej)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.intent}}",
+                      "o": "number:equal",
+                      "b": "2"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "base": "AIRTABLE_BASE_ID",
+                "table": "Leads",
+                "id": "{{2.id}}",
+                "values": {
+                  "Status": "Svarat Negativt",
+                  "Senaste Svar": "{{1.text}}"
+                }
+              },
+              "metadata": {
+                "designer": { "x": 1500, "y": 200 }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 10,
+              "module": "slack:CreateMessage",
+              "version": 8,
+              "parameters": {
+                "__IMTCONN__": "SLACK_CONNECTION"
+              },
+              "filter": {
+                "name": "intent = 3 (Fråga — kräver människa)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.intent}}",
+                      "o": "number:equal",
+                      "b": "3"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "channel": "#sales-leads",
+                "text": ":raised_hand: *Fråga från lead — kräver svar*\n\n*{{2.`Bolagsnamn`}}* — {{2.`VD Namn`}}\n*AI-resonemang:* {{4.reasoning}}\n\n*Deras fråga:*\n>>>{{1.text}}\n\n_⚠️ Svara själv — agenten ska inte hallucinera kring juridik/integrationer/försäkring._",
+                "asUser": true
+              },
+              "metadata": {
+                "designer": { "x": 1500, "y": 400 }
+              }
+            },
+            {
+              "id": 11,
+              "module": "airtable:UpdateRecord",
+              "version": 4,
+              "parameters": {
+                "__IMTCONN__": "AIRTABLE_CONNECTION"
+              },
+              "filter": {
+                "name": "intent = 3 (Fråga — kräver människa)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.intent}}",
+                      "o": "number:equal",
+                      "b": "3"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "base": "AIRTABLE_BASE_ID",
+                "table": "Leads",
+                "id": "{{2.id}}",
+                "values": {
+                  "Status": "Behöver Svar",
+                  "Senaste Svar": "{{1.text}}"
+                }
+              },
+              "metadata": {
+                "designer": { "x": 1500, "y": 550 }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 12,
+              "module": "util:Sleep",
+              "version": 1,
+              "parameters": {},
+              "filter": {
+                "name": "intent = 4 (Auto-svar — vänta 5 dagar)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.intent}}",
+                      "o": "number:equal",
+                      "b": "4"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "duration": 1
+              },
+              "metadata": {
+                "designer": { "x": 1500, "y": 750 }
+              }
+            },
+            {
+              "id": 13,
+              "module": "airtable:UpdateRecord",
+              "version": 4,
+              "parameters": {
+                "__IMTCONN__": "AIRTABLE_CONNECTION"
+              },
+              "filter": {
+                "name": "intent = 4 (Auto-svar)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.intent}}",
+                      "o": "number:equal",
+                      "b": "4"
+                    }
+                  ]
+                ]
+              },
+              "mapper": {
+                "base": "AIRTABLE_BASE_ID",
+                "table": "Leads",
+                "id": "{{2.id}}",
+                "values": {
+                  "Status": "Auto-svar — Återförsök 5 dgr",
+                  "Senaste Svar": "{{1.text}}",
+                  "Återförsök Datum": "{{addDays(now; 5)}}"
+                }
+              },
+              "metadata": {
+                "designer": { "x": 1500, "y": 850 }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "eu1.make.com",
+    "notes": [
+      {
+        "moduleIds": [3],
+        "content": "Haiku 4.5 — perfekt för enkel klassificering till JSON. Sonnet vore overkill, Opus skulle vara skandalöst dyrt."
+      },
+      {
+        "moduleIds": [5],
+        "content": "Router-grenar mappar 1:1 till klassificeringarna 1-4. Auto-svar (4) sätter ett 'Återförsök Datum' så ett separat scenario kan re-trigga outreach efter 5 dagar."
+      }
+    ]
+  }
+}

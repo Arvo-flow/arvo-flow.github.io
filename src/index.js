@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import ArvoOS from './App';
+import ArvoFlow from './ArvoFlow';
 
 const root = createRoot(document.getElementById('root'));
-root.render(<ArvoOS />);
+root.render(<ArvoFlow />);

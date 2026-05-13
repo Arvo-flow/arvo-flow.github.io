@@ -1,0 +1,318 @@
+[
+  {
+    "id": "f-001",
+    "expectedCategory": "el",
+    "invoice": {
+      "supplier": "VATTENFALL FÖRETAG AB",
+      "amount": 18234,
+      "date": "2025-03-15",
+      "account": "5310",
+      "description": "ELFÖRBRUKNING MARS 2025 - ANL.NR 735999",
+      "recurring": true
+    }
+  },
+  {
+    "id": "f-002",
+    "expectedCategory": "el",
+    "invoice": {
+      "supplier": "Tibber AB",
+      "amount": 12450,
+      "date": "2025-03-31",
+      "account": "5320",
+      "description": "Spotpris timme 02-2025"
+    }
+  },
+  {
+    "id": "f-003",
+    "expectedCategory": "el",
+    "invoice": {
+      "supplier": "fortum.se",
+      "amount": 8900,
+      "date": "2025-02-28",
+      "account": "5311",
+      "description": "Elhandel februari"
+    }
+  },
+  {
+    "id": "f-004",
+    "expectedCategory": "el",
+    "invoice": {
+      "supplier": "Mälarenergi AB",
+      "amount": 15600,
+      "date": "2025-03-01",
+      "description": "Förbrukning kontor V13-V16"
+    }
+  },
+  {
+    "id": "f-005",
+    "expectedCategory": "uncategorized",
+    "invoice": {
+      "supplier": "Vattenfall Värme Stockholm AB",
+      "amount": 22300,
+      "date": "2025-02-15",
+      "description": "Fjärrvärme leverans januari"
+    }
+  },
+  {
+    "id": "f-006",
+    "expectedCategory": "forsakring-foretag",
+    "invoice": {
+      "supplier": "Trygg-Hansa Försäkring AB",
+      "amount": 7050,
+      "date": "2025-01-15",
+      "account": "6310",
+      "description": "Premie företagsförsäkring kvartal 1 2025",
+      "recurring": true
+    }
+  },
+  {
+    "id": "f-007",
+    "expectedCategory": "forsakring-foretag",
+    "invoice": {
+      "supplier": "If Skadeförsäkring AB",
+      "amount": 14200,
+      "date": "2025-04-01",
+      "account": "6310",
+      "description": "Egendoms- och avbrottsförsäkring"
+    }
+  },
+  {
+    "id": "f-008",
+    "expectedCategory": "forsakring-ansvar",
+    "invoice": {
+      "supplier": "Länsförsäkringar Stockholm",
+      "amount": 6600,
+      "date": "2025-01-01",
+      "account": "6321",
+      "description": "Yrkesansvarsförsäkring konsult"
+    }
+  },
+  {
+    "id": "f-009",
+    "expectedCategory": "forsakring-ansvar",
+    "invoice": {
+      "supplier": "Gjensidige Företag",
+      "amount": 4950,
+      "date": "2025-03-01",
+      "description": "Konsultansvar 12 mån premium"
+    }
+  },
+  {
+    "id": "f-010",
+    "expectedCategory": "mobil",
+    "invoice": {
+      "supplier": "Telia Sverige AB",
+      "amount": 3206,
+      "date": "2025-03-31",
+      "account": "6212",
+      "description": "Mobilabonnemang 14 användare mars",
+      "recurring": true
+    }
+  },
+  {
+    "id": "f-011",
+    "expectedCategory": "mobil",
+    "invoice": {
+      "supplier": "Tele2 Företag",
+      "amount": 1890,
+      "date": "2025-03-01",
+      "account": "6210",
+      "description": "Mobil obegränsad x14"
+    }
+  },
+  {
+    "id": "f-012",
+    "expectedCategory": "mobil",
+    "invoice": {
+      "supplier": "Tre / Hi3G Access AB",
+      "amount": 2400,
+      "date": "2025-02-28",
+      "description": "Mobiltelefoni feb"
+    }
+  },
+  {
+    "id": "f-013",
+    "expectedCategory": "bredband",
+    "invoice": {
+      "supplier": "Bahnhof AB",
+      "amount": 699,
+      "date": "2025-04-01",
+      "account": "6230",
+      "description": "Företagsfiber 1 Gbit/s april",
+      "recurring": true
+    }
+  },
+  {
+    "id": "f-014",
+    "expectedCategory": "bredband",
+    "invoice": {
+      "supplier": "Telenor Business Sweden AB",
+      "amount": 1249,
+      "date": "2025-03-15",
+      "description": "Bredband 1000 + statisk IPv4"
+    }
+  },
+  {
+    "id": "f-015",
+    "expectedCategory": "kortterminal",
+    "invoice": {
+      "supplier": "Worldline Sweden AB",
+      "amount": 2280,
+      "date": "2025-03-31",
+      "account": "6390",
+      "description": "Kortavgifter Bambora terminal mars"
+    }
+  },
+  {
+    "id": "f-016",
+    "expectedCategory": "kortterminal",
+    "invoice": {
+      "supplier": "Zettle by PayPal",
+      "amount": 1100,
+      "date": "2025-03-15",
+      "description": "Transaktionsavgifter mars 1.25%"
+    }
+  },
+  {
+    "id": "f-017",
+    "expectedCategory": "faktura-tjanst",
+    "invoice": {
+      "supplier": "Kivra AB",
+      "amount": 745,
+      "date": "2025-03-01",
+      "description": "Kivra Företag Premium - utskick mars"
+    }
+  },
+  {
+    "id": "f-018",
+    "expectedCategory": "leasing-bil",
+    "invoice": {
+      "supplier": "ALD Automotive AB",
+      "amount": 34400,
+      "date": "2025-04-01",
+      "account": "5611",
+      "description": "Leasing 8 servicebilar månad 14/36",
+      "recurring": true
+    }
+  },
+  {
+    "id": "f-019",
+    "expectedCategory": "leasing-bil",
+    "invoice": {
+      "supplier": "Arval Sverige AB",
+      "amount": 28900,
+      "date": "2025-03-01",
+      "description": "Operationell leasing inkl service"
+    }
+  },
+  {
+    "id": "f-020",
+    "expectedCategory": "uncategorized",
+    "invoice": {
+      "supplier": "Konsultfirman V. Falk",
+      "amount": 45000,
+      "date": "2025-02-28",
+      "description": "Strategikonsultation Q1"
+    }
+  },
+  {
+    "id": "f-021",
+    "expectedCategory": "uncategorized",
+    "invoice": {
+      "supplier": "Ahlsell Sverige AB",
+      "amount": 87340,
+      "date": "2025-03-12",
+      "description": "VVS-material projekt 2025-114"
+    }
+  },
+  {
+    "id": "f-022",
+    "expectedCategory": "uncategorized",
+    "invoice": {
+      "supplier": "Office Depot",
+      "amount": 1240,
+      "date": "2025-03-05",
+      "description": "Kontorsmaterial: papper, kuvert"
+    }
+  },
+  {
+    "id": "f-023",
+    "expectedCategory": "el",
+    "invoice": {
+      "supplier": "EON Energidistribution",
+      "amount": 4200,
+      "date": "2025-03-31",
+      "description": "Elnätsavgift mars"
+    }
+  },
+  {
+    "id": "f-024",
+    "expectedCategory": "mobil",
+    "invoice": {
+      "supplier": "Halebop",
+      "amount": 396,
+      "date": "2025-03-01",
+      "description": "Mobil 30 GB företag"
+    }
+  },
+  {
+    "id": "f-025",
+    "expectedCategory": "kortterminal",
+    "invoice": {
+      "supplier": "Nets Denmark A/S",
+      "amount": 3120,
+      "date": "2025-03-31",
+      "description": "Kortinlösen mars + månadsavgift"
+    }
+  },
+  {
+    "id": "f-026",
+    "expectedCategory": "forsakring-foretag",
+    "invoice": {
+      "supplier": "Folksam Företag",
+      "amount": 11400,
+      "date": "2025-04-01",
+      "description": "Premie egendomsförsäkring + paketsskydd"
+    }
+  },
+  {
+    "id": "f-027",
+    "expectedCategory": "uncategorized",
+    "invoice": {
+      "supplier": "Skandia Liv",
+      "amount": 18000,
+      "date": "2025-03-01",
+      "description": "Tjänstepension mars"
+    }
+  },
+  {
+    "id": "f-028",
+    "expectedCategory": "bredband",
+    "invoice": {
+      "supplier": "Tele2 Företag Bredband",
+      "amount": 1199,
+      "date": "2025-03-15",
+      "description": "Fiber 500/500 Mbit/s"
+    }
+  },
+  {
+    "id": "f-029",
+    "expectedCategory": "el",
+    "invoice": {
+      "supplier": "Bixia AB",
+      "amount": 9800,
+      "date": "2025-02-28",
+      "description": "Förnybar el feb 2025"
+    }
+  },
+  {
+    "id": "f-030",
+    "expectedCategory": "uncategorized",
+    "invoice": {
+      "supplier": "Spotify AB",
+      "amount": 169,
+      "date": "2025-03-01",
+      "description": "Spotify Premium företag"
+    }
+  }
+]

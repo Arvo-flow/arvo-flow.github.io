@@ -1,54 +1,80 @@
 import { createGlobalStyle } from 'styled-components';
 
 export default createGlobalStyle`
-  * {
+  *, *::before, *::after {
     margin: 0;
     padding: 0;
-    outline: 0;
     box-sizing: border-box;
   }
 
-  html,
-  body,
-  #root {
-    height: 100%;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: ${({ theme }) => theme.bg};
-    color: ${({ theme }) => theme.text};
-    transition: background 0.3s ease, color 0.3s ease;
+  :root {
+    --bg: ${({ theme }) => theme.color.bg};
+    --surface: ${({ theme }) => theme.color.surface};
+    --ink: ${({ theme }) => theme.color.ink};
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  html, body, #root {
+    min-height: 100%;
+    background: ${({ theme }) => theme.color.bg};
+    color: ${({ theme }) => theme.color.ink};
   }
 
   body {
+    font-family: ${({ theme }) => theme.font.sans};
+    font-size: 16px;
+    line-height: 1.55;
+    font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  body,
-  input,
-  button {
-    font: 14px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-
-  *:focus {
-    outline: 0;
-  }
-
-  a {
-    text-decoration: none;
-    color: inherit;
-  }
-
-  ul {
-    list-style: none;
-  }
-
-  button {
-    cursor: pointer;
-    border: none;
-    background: none;
+    text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', Georgia, serif;
+    font-family: ${({ theme }) => theme.font.display};
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    color: ${({ theme }) => theme.color.ink};
   }
+
+  p { color: ${({ theme }) => theme.color.inkSoft}; }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: inherit;
+  }
+
+  input, textarea, select {
+    font-family: inherit;
+    color: inherit;
+  }
+
+  ul { list-style: none; }
+
+  *:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.brand};
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: ${({ theme }) => theme.color.brand};
+    color: #FFFFFF;
+  }
+
+  .tabular { font-variant-numeric: tabular-nums; }
 `;

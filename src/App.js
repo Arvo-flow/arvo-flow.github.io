@@ -1202,6 +1202,7 @@ const handleSave=()=>{
 if(modal==="newContact"){
 if(!formData.name)return;
 setContacts(prev=>[{id:Date.now(),name:formData.name,company:formData.company||"",email:formData.email||"",phone:formData.phone||"",status:"Lead",value:0,daysSince:0,notes:formData.notes||""},...prev]);
+fetch("https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({"Företagsnamn":formData.company||"","Kontaktperson":formData.name,"E-post":formData.email||"",source:"arvo-os.newContact",timestamp:new Date().toISOString()})}).catch(()=>{});
 }else if(modal==="editContact"){
 setContacts(prev=>prev.map(c=>c.id===formData.editId?{...c,name:formData.name||c.name,company:formData.company||c.company,email:formData.email||c.email,phone:formData.phone||c.phone,notes:formData.notes!==undefined?formData.notes:c.notes}:c));
 setDetail(null);

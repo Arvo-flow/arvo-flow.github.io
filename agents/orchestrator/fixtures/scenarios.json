@@ -1,0 +1,257 @@
+[
+  {
+    "id": "o-001",
+    "label": "Happy path — full lifecycle to COMPLETED",
+    "input": {
+      "customer": {
+        "orgName": "Lindberg VVS AB",
+        "orgNumber": "556789-1234",
+        "address": "Industrigatan 12, 121 45 Stockholm",
+        "signerName": "Johan Lindberg",
+        "signerEmail": "johan@lindbergvvs.se",
+        "signerSsn": "19710203-1234",
+        "signerTitle": "VD",
+        "fortnoxCustomerId": "fnx_lindberg_001"
+      },
+      "invoice": {
+        "category": "el",
+        "normalizedSupplier": "Vattenfall (Företag)",
+        "accountReference": "ANL-735999",
+        "annualCost": 218400
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "Vattenfall (Företag)",
+        "suggestedSupplier": "Tibber",
+        "suggestedProductName": "Tibber Pulse Företag",
+        "suggestedAnnualCost": 162800,
+        "savingPerYear": 55600,
+        "overpaymentPercent": 25,
+        "confidence": "high",
+        "vipQueue": false,
+        "cancellationNotice": 30
+      }
+    },
+    "expected": {
+      "finalState": "completed"
+    }
+  },
+  {
+    "id": "o-002",
+    "label": "Customer cancellation during signing",
+    "input": {
+      "customer": {
+        "orgName": "Stockholm Reklambyrå AB",
+        "orgNumber": "556111-2222",
+        "address": "Storgatan 1, 111 51 Stockholm",
+        "signerName": "Anna Karlsson",
+        "signerEmail": "anna@stockholmreklam.se",
+        "signerSsn": "19850717-5678",
+        "signerTitle": "VD"
+      },
+      "invoice": {
+        "category": "bredband",
+        "normalizedSupplier": "Telenor Business",
+        "annualCost": 14988
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "Telenor Business",
+        "suggestedSupplier": "Bahnhof",
+        "suggestedProductName": "Bahnhof Företag 1000",
+        "suggestedAnnualCost": 8388,
+        "savingPerYear": 6600,
+        "overpaymentPercent": 79,
+        "confidence": "high",
+        "vipQueue": false,
+        "cancellationNotice": 30
+      }
+    },
+    "scenario": "cancelDuringSigning",
+    "expected": {
+      "finalState": "customer_cancelled"
+    }
+  },
+  {
+    "id": "o-003",
+    "label": "Signing expires without signature",
+    "input": {
+      "customer": {
+        "orgName": "Norrtälje Bygg AB",
+        "orgNumber": "556222-3333",
+        "address": "Verkstadsvägen 5, 761 41 Norrtälje",
+        "signerName": "Erik Norrgård",
+        "signerEmail": "erik@norrtaljebygg.se",
+        "signerSsn": "19620514-9876",
+        "signerTitle": "VD"
+      },
+      "invoice": {
+        "category": "mobil",
+        "normalizedSupplier": "Telia Företag",
+        "annualCost": 38400
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "Telia Företag",
+        "suggestedSupplier": "Tele2 Företag",
+        "suggestedProductName": "Tele2 Obegränsad",
+        "suggestedAnnualCost": 22800,
+        "savingPerYear": 15600,
+        "overpaymentPercent": 68,
+        "confidence": "high",
+        "vipQueue": false,
+        "cancellationNotice": 30
+      }
+    },
+    "scenario": "signingExpires",
+    "expected": {
+      "finalState": "signing_expired"
+    }
+  },
+  {
+    "id": "o-004",
+    "label": "Reject license-pending category at createSwitch boundary",
+    "input": {
+      "customer": {
+        "orgName": "Test AB",
+        "orgNumber": "556999-9999",
+        "address": "Provgatan 1, 100 00 Stockholm",
+        "signerName": "Test Testsson",
+        "signerEmail": "test@test.se",
+        "signerSsn": "19800101-0000"
+      },
+      "invoice": {
+        "category": "forsakring-foretag",
+        "normalizedSupplier": "Trygg-Hansa",
+        "annualCost": 84600
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "Trygg-Hansa",
+        "suggestedSupplier": "If",
+        "suggestedAnnualCost": 52400,
+        "savingPerYear": 32200,
+        "vipQueue": false,
+        "confidence": "high"
+      }
+    },
+    "scenario": "rejectLicensePending",
+    "expected": {
+      "createSwitchThrows": true
+    }
+  },
+  {
+    "id": "o-005",
+    "label": "Idempotent webhook — duplicate Scrive signed-event handled cleanly",
+    "input": {
+      "customer": {
+        "orgName": "Idempotent Demo AB",
+        "orgNumber": "556555-5555",
+        "address": "Testvägen 1, 100 00 Stockholm",
+        "signerName": "Ida Testsson",
+        "signerEmail": "ida@idempotent.test",
+        "signerSsn": "19800101-2222",
+        "signerTitle": "VD",
+        "fortnoxCustomerId": "fnx_idem_001"
+      },
+      "invoice": {
+        "category": "el",
+        "normalizedSupplier": "Vattenfall (Företag)",
+        "annualCost": 84000
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "Vattenfall (Företag)",
+        "suggestedSupplier": "Tibber",
+        "suggestedProductName": "Tibber Pulse Företag",
+        "suggestedAnnualCost": 47000,
+        "savingPerYear": 37000,
+        "overpaymentPercent": 29,
+        "confidence": "high",
+        "vipQueue": false,
+        "cancellationNotice": 30
+      }
+    },
+    "scenario": "duplicateSignedEvent",
+    "expected": {
+      "finalState": "bankid_signed",
+      "secondCallIdempotent": true
+    }
+  },
+  {
+    "id": "o-006",
+    "label": "Bindningstid kvar — gamla leverantören parkerar oss till framtiden",
+    "input": {
+      "customer": {
+        "orgName": "Café Konvent AB",
+        "orgNumber": "556777-7777",
+        "address": "Storgatan 5, 411 38 Göteborg",
+        "signerName": "Karl Konvent",
+        "signerEmail": "karl@konvent.test",
+        "signerSsn": "19750405-3333",
+        "signerTitle": "VD",
+        "fortnoxCustomerId": "fnx_konvent_001"
+      },
+      "invoice": {
+        "category": "kortterminal",
+        "normalizedSupplier": "Worldline (Bambora)",
+        "annualCost": 27360
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "Worldline (Bambora)",
+        "suggestedSupplier": "Zettle by PayPal",
+        "suggestedProductName": "Zettle Företag",
+        "suggestedAnnualCost": 13200,
+        "savingPerYear": 14160,
+        "overpaymentPercent": 75,
+        "confidence": "medium",
+        "vipQueue": false,
+        "cancellationNotice": 90
+      }
+    },
+    "scenario": "bindningstidKvar",
+    "expected": {
+      "intermediateState": "scheduled_future",
+      "reactivatesCorrectly": true
+    }
+  },
+  {
+    "id": "o-007",
+    "label": "Proaktiv sniper — schemalägg uppsägning från PROPOSED (idé #3)",
+    "input": {
+      "customer": {
+        "orgName": "Sniper Test AB",
+        "orgNumber": "556888-8888",
+        "address": "Fältvägen 1, 100 00 Stockholm",
+        "signerName": "Sara Sniper",
+        "signerEmail": "sara@sniper.test",
+        "signerSsn": "19820606-4444",
+        "signerTitle": "VD",
+        "fortnoxCustomerId": "fnx_sniper_001"
+      },
+      "invoice": {
+        "category": "leasing-bil",
+        "normalizedSupplier": "ALD Automotive",
+        "annualCost": 412800,
+        "contractEnd": "2027-08-15"
+      },
+      "recommendation": {
+        "shouldSwitch": true,
+        "currentSupplier": "ALD Automotive",
+        "suggestedSupplier": "Arval Sverige",
+        "suggestedProductName": "Arval Operationell",
+        "suggestedAnnualCost": 363200,
+        "savingPerYear": 49600,
+        "overpaymentPercent": 14,
+        "confidence": "medium",
+        "vipQueue": false,
+        "cancellationNotice": 90
+      }
+    },
+    "scenario": "proactiveSniper",
+    "expected": {
+      "intermediateState": "scheduled_future"
+    }
+  }
+]

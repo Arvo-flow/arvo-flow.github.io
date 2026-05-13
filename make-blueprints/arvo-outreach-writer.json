@@ -1,0 +1,148 @@
+{
+  "name": "Arvo — Outreach Writer (cohort-aware)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "airtable:SearchRecords",
+      "version": 4,
+      "parameters": {
+        "__IMTCONN__": "AIRTABLE_CONNECTION"
+      },
+      "mapper": {
+        "base": "AIRTABLE_BASE_ID",
+        "table": "Leads",
+        "view": "",
+        "formula": "AND({Status} = 'Ny', {Cohort} != '')",
+        "limit": 10,
+        "sortField": "Created",
+        "sortDirection": "asc"
+      },
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {},
+        "expect": [
+          { "name": "base", "label": "Base", "type": "select" },
+          { "name": "table", "label": "Table", "type": "select" }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "{{1.`Hemsida URL`}}",
+        "method": "GET",
+        "timeout": "30",
+        "useMtls": false,
+        "followRedirect": true,
+        "useQuerystring": false,
+        "rejectUnauthorized": true,
+        "shareCookies": false,
+        "ca": "",
+        "parseResponse": false
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": {},
+        "expect": [{ "name": "method", "type": "select" }]
+      }
+    },
+    {
+      "id": 3,
+      "module": "text-parser:HTMLToText",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "html": "{{2.data}}",
+        "stripTags": true,
+        "decodeEntities": true,
+        "stripScripts": true,
+        "stripStyles": true,
+        "stripComments": true,
+        "preserveLineBreaks": false,
+        "maxLength": 4000
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 }
+      }
+    },
+    {
+      "id": 4,
+      "module": "anthropic-claude:CreateMessage",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": "ANTHROPIC_CONNECTION"
+      },
+      "mapper": {
+        "model": "claude-haiku-4-5",
+        "max_tokens": 800,
+        "system": "Du är Anders, en av grundarna av Arvo Flow — ett svenskt AI-verktyg som hjälper småföretag att sänka leverantörskostnader genom att jämföra mot branschindex. Inga fasta avgifter, success-fee.\n\nDu skriver första-kontakt-mejl i kall outreach. Mejlet ska:\n- Vara personligt baserat på prospektets bolag och bransch (input nedan)\n- Använda kohort-specifik smärtpunkt (se nedan)\n- Vara max 90 ord\n- Sluta med EN konkret fråga, inte ett pitch\n- Aldrig nämna AI som säljargument — kunden bryr sig om sista raden\n- Inte använda emojis, utropstecken eller jargong som 'leverage', 'unlock', 'best-in-class'\n- Inte vara säljigt — det ska låta som ett mejl mellan två företagare\n\nKohort-specifika smärtpunkter:\n- byraer (Tjänstebolag & Byråer): SaaS-licenser, dyrt bredband, tjänstepensioner — ofta 25-35% överpris\n- hantverkare (Hantverkare & Bygg): drivmedelsavtal, leasing, grossistfakturor — ofta 20-30% överpris\n- ehandel (E-handel & Fysisk handel): kortterminal-avgifter (Nets/Zettle), fraktavtal — ofta 15-25% överpris\n\nReturnera ENDAST mejlets brödtext (utan ämnesrad, utan signatur). Vi lägger till de delarna automatiskt.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "Skriv ett första-kontakt-mejl till:\n\nMottagare: {{1.`VD Namn`}}\nBolag: {{1.`Bolagsnamn`}}\nKohort: {{1.Cohort}}\nBransch (om känd): {{1.Bransch}}\n\nVad bolagets hemsida säger om dem:\n{{3.text}}\n\nSkriv mejlet nu (max 90 ord, en konkret fråga på slutet)."
+          }
+        ]
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": 0 },
+        "restore": {},
+        "expect": [
+          { "name": "model", "type": "select" },
+          { "name": "messages", "type": "array", "spec": [] }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "module": "airtable:UpdateRecord",
+      "version": 4,
+      "parameters": {
+        "__IMTCONN__": "AIRTABLE_CONNECTION"
+      },
+      "mapper": {
+        "base": "AIRTABLE_BASE_ID",
+        "table": "Leads",
+        "id": "{{1.id}}",
+        "values": {
+          "Claude Utkast": "{{4.content[].text}}",
+          "Status": "Utkast Skapat",
+          "Utkast Skapat At": "{{now}}"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 1200, "y": 0 }
+      }
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "eu1.make.com",
+    "notes": [
+      {
+        "moduleIds": [4],
+        "content": "Modell: Haiku 4.5 (~5 kr per 1000 mejl) — använd INTE Opus 4.7 här (10× dyrare för samma resultat på outreach)."
+      },
+      {
+        "moduleIds": [1],
+        "content": "Filter på Status='Ny' AND Cohort != '' säkerställer att vi bara skickar till leads med definierad kohort. Lägg till Cohort manuellt eller via separat enrichment-flöde."
+      }
+    ]
+  }
+}

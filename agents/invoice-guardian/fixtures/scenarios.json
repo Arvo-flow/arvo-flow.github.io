@@ -1,0 +1,110 @@
+[
+  {
+    "id": "g-001",
+    "label": "Tydlig smyghöjning — Telia +24% utan KPI-klausul",
+    "input": {
+      "invoice": {
+        "amount": 2350,
+        "date": "2026-04-30",
+        "supplierName": "Telia Företag",
+        "category": "mobil",
+        "lineItems": [
+          { "description": "Mobilabonnemang 14 användare", "amount": 1890 },
+          { "description": "Indexuppräkning KPI 2025", "amount": 460 }
+        ]
+      },
+      "agreement": {
+        "agreedAnnualCost": 22680,
+        "supplierName": "Telia Företag",
+        "signedAt": "2025-06-15",
+        "kpiClause": null,
+        "invoiceFrequency": "monthly",
+        "category": "mobil"
+      }
+    },
+    "expected": {
+      "needsAssessment": true,
+      "classifications": ["suspicious", "clear_violation"]
+    }
+  },
+  {
+    "id": "g-002",
+    "label": "Legitim säsongsvariation — el i januari +35%",
+    "input": {
+      "invoice": {
+        "amount": 24800,
+        "date": "2026-01-31",
+        "supplierName": "Tibber",
+        "category": "el",
+        "lineItems": [
+          { "description": "Elförbrukning januari 2026 (28 MWh)", "amount": 24800 }
+        ]
+      },
+      "agreement": {
+        "agreedAnnualCost": 218400,
+        "supplierName": "Tibber",
+        "signedAt": "2025-04-01",
+        "kpiClause": "Spotpris timme för timme enligt Nord Pool",
+        "invoiceFrequency": "monthly",
+        "category": "el"
+      }
+    },
+    "expected": {
+      "severityIn": ["none", "minor"],
+      "classifications": ["legitimate"]
+    }
+  },
+  {
+    "id": "g-003",
+    "label": "Inom tolerans — bredband identiskt med avtal, ingen LLM-körning",
+    "input": {
+      "invoice": {
+        "amount": 699,
+        "date": "2026-04-01",
+        "supplierName": "Bahnhof",
+        "category": "bredband"
+      },
+      "agreement": {
+        "agreedAnnualCost": 8388,
+        "supplierName": "Bahnhof",
+        "signedAt": "2025-09-01",
+        "invoiceFrequency": "monthly",
+        "category": "bredband"
+      }
+    },
+    "expected": {
+      "needsAssessment": false,
+      "llmInvoked": false,
+      "classifications": ["legitimate"]
+    }
+  },
+  {
+    "id": "g-004",
+    "label": "Klar avtalskränkning — ny etableringsavgift på återkommande faktura",
+    "input": {
+      "invoice": {
+        "amount": 4200,
+        "date": "2026-03-15",
+        "supplierName": "Bahnhof",
+        "category": "bredband",
+        "lineItems": [
+          { "description": "Företagsfiber 1 Gbit april", "amount": 699 },
+          { "description": "Etableringsavgift", "amount": 2500 },
+          { "description": "Servicepaket Plus", "amount": 1001 }
+        ]
+      },
+      "agreement": {
+        "agreedAnnualCost": 8388,
+        "supplierName": "Bahnhof",
+        "signedAt": "2025-09-01",
+        "kpiClause": null,
+        "invoiceFrequency": "monthly",
+        "category": "bredband"
+      }
+    },
+    "expected": {
+      "needsAssessment": true,
+      "classifications": ["clear_violation", "suspicious"]
+    }
+  }
+]
