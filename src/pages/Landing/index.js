@@ -134,8 +134,8 @@ const Landing = () => {
               <Button as={Link} to="/connect" $variant="gradient" $size="lg">
                 Se mina besparingar — gratis <Icon name="arrow" size={18} />
               </Button>
-              <Button as="a" href="#hur" $variant="secondary" $size="lg">
-                Så fungerar det
+              <Button as={Link} to="/testa-faktura" $variant="secondary" $size="lg">
+                Testa med en faktura
               </Button>
             </HeroActions>
             <HeroProof>

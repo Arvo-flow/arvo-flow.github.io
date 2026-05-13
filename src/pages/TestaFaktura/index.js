@@ -1,0 +1,365 @@
+import React, { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import Nav from '../../components/Nav';
+import Footer from '../../components/Footer';
+import Button from '../../components/Button';
+import Icon from '../../components/Icon';
+import { formatKr } from '../../data/mockData';
+import {
+  Page, Hero, Eyebrow, Headline, Lede, Body, Card,
+  Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
+  ProgressList, ProgressItem,
+  ResultHead, SavingsBlock, NoSwitchBlock, KV, Reasoning, NextSteps,
+} from './styles';
+
+const MAX_PDF_SIZE = 3 * 1024 * 1024;
+
+const INDUSTRY_LABELS = {
+  byraer: 'Konsultbyrå / Reklam / IT',
+  hantverkare: 'Hantverkare / Bygg',
+  ehandel: 'E-handel',
+  tillverkning: 'Tillverkning / Industri',
+};
+
+const CATEGORY_LABELS = {
+  el: 'Elavtal',
+  mobil: 'Mobilabonnemang',
+  bredband: 'Företagsbredband',
+  'forsakring-foretag': 'Företagsförsäkring',
+  'forsakring-ansvar': 'Yrkesansvarsförsäkring',
+  leasing: 'Företagsleasing',
+  kortterminal: 'Kortterminal',
+  fakturatjanst: 'Fakturatjänst',
+  uncategorized: 'Okategoriserad',
+};
+
+const PHASES = [
+  { id: 'extract', label: 'Läser fakturan' },
+  { id: 'categorize', label: 'Identifierar leverantör & kategori' },
+  { id: 'recommend', label: 'Jämför mot branschindex' },
+];
+
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = String(reader.result || '');
+    const base64 = result.includes(',') ? result.split(',')[1] : result;
+    resolve(base64);
+  };
+  reader.onerror = () => reject(new Error('Kunde inte läsa filen'));
+  reader.readAsDataURL(file);
+});
+
+const TestaFaktura = () => {
+  const fileInputRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [industry, setIndustry] = useState('byraer');
+  const [employees, setEmployees] = useState(5);
+  const [revenue, setRevenue] = useState('');
+  const [phase, setPhase] = useState(null);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  const validateAndSetFile = (f) => {
+    setError(null);
+    if (!f) return;
+    if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
+      setError('Endast PDF-filer stöds.');
+      return;
+    }
+    if (f.size > MAX_PDF_SIZE) {
+      setError(`PDF är för stor (${(f.size / 1024 / 1024).toFixed(1)} MB). Max: 3 MB.`);
+      return;
+    }
+    setFile(f);
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    if (e.dataTransfer.files?.[0]) validateAndSetFile(e.dataTransfer.files[0]);
+  };
+
+  const onDragOver = (e) => { e.preventDefault(); setDragActive(true); };
+  const onDragLeave = (e) => { e.preventDefault(); setDragActive(false); };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!file) {
+      setError('Välj en PDF-faktura först.');
+      return;
+    }
+
+    setError(null);
+    setResult(null);
+    setPhase('uploading');
+
+    try {
+      const pdfBase64 = await fileToBase64(file);
+      setPhase('extract');
+
+      const res = await fetch('/api/test-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pdfBase64,
+          industry,
+          employees: Number(employees),
+          revenue: revenue === '' ? null : Number(revenue),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || `Servern returnerade ${res.status}`);
+      }
+
+      setPhase('done');
+      setResult(data);
+    } catch (err) {
+      setPhase(null);
+      setError(err.message || 'Något gick fel. Försök igen.');
+    }
+  };
+
+  const reset = () => {
+    setFile(null);
+    setResult(null);
+    setPhase(null);
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const phaseState = (id) => {
+    if (!phase) return 'pending';
+    if (phase === 'done') return 'done';
+    const order = ['uploading', 'extract', 'categorize', 'recommend'];
+    const currentIdx = order.indexOf(phase);
+    const myIdx = order.indexOf(id);
+    if (myIdx < currentIdx) return 'done';
+    if (myIdx === currentIdx) return 'active';
+    return 'pending';
+  };
+
+  const loading = phase && phase !== 'done';
+
+  return (
+    <Page>
+      <Nav variant="public" />
+
+      <Hero>
+        <Eyebrow><span className="dot" /> Testa själv · Gratis · 10 sekunder</Eyebrow>
+        <Headline>Ladda upp <em>en</em> leverantörsfaktura — få svar direkt.</Headline>
+        <Lede>
+          Vi visar exakt vad du betalar, hur du ligger mot branschsnittet och vad du kan
+          spara om du byter. Inget Fortnox-konto behövs, ingen signering, ingen kostnad.
+        </Lede>
+      </Hero>
+
+      <Body>
+        {!result && (
+          <Card>
+            <form onSubmit={onSubmit}>
+              <Dropzone
+                $active={dragActive}
+                $hasFile={!!file}
+                onClick={() => fileInputRef.current?.click()}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={(e) => validateAndSetFile(e.target.files?.[0])}
+                />
+                <div className="icon">
+                  <Icon name={file ? 'check' : 'arrow'} size={26} stroke={2} />
+                </div>
+                {file ? (
+                  <>
+                    <strong className="primary">PDF vald</strong>
+                    <span className="filename">{file.name} · {(file.size / 1024).toFixed(0)} kB</span>
+                  </>
+                ) : (
+                  <>
+                    <strong className="primary">Dra hit din faktura — eller klicka för att välja</strong>
+                    <span className="secondary">PDF, max 3 MB. Vi sparar inte filen.</span>
+                  </>
+                )}
+              </Dropzone>
+
+              <FormRow>
+                <Field>
+                  <span className="label">Bransch</span>
+                  <select value={industry} onChange={(e) => setIndustry(e.target.value)}>
+                    {Object.entries(INDUSTRY_LABELS).map(([id, label]) => (
+                      <option key={id} value={id}>{label}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field>
+                  <span className="label">Antal anställda</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="5000"
+                    value={employees}
+                    onChange={(e) => setEmployees(e.target.value)}
+                  />
+                </Field>
+              </FormRow>
+
+              {error && <ErrorBox>{error}</ErrorBox>}
+
+              <SubmitRow>
+                <Button
+                  type="submit"
+                  $variant="gradient"
+                  $size="lg"
+                  $full
+                  disabled={loading || !file}
+                >
+                  {loading ? (
+                    <>
+                      <Spinner /> Analyserar… (~10 sekunder)
+                    </>
+                  ) : (
+                    <>
+                      Analysera fakturan <Icon name="arrow" size={18} />
+                    </>
+                  )}
+                </Button>
+              </SubmitRow>
+
+              {loading && (
+                <ProgressList>
+                  {PHASES.map((p) => {
+                    const state = phaseState(p.id);
+                    return (
+                      <ProgressItem key={p.id} $state={state}>
+                        <div className="bullet">
+                          {state === 'done'
+                            ? <Icon name="check" size={14} stroke={2.5} />
+                            : <span>{PHASES.findIndex((x) => x.id === p.id) + 1}</span>}
+                        </div>
+                        <div className="label">{p.label}</div>
+                        <div className="time">
+                          {state === 'done' ? '✓' : state === 'active' ? '…' : ''}
+                        </div>
+                      </ProgressItem>
+                    );
+                  })}
+                </ProgressList>
+              )}
+
+              <Disclaimer>
+                Genom att fortsätta godkänner du våra <Link to="/villkor">villkor</Link>{' '}
+                och vår <Link to="/integritet">integritetspolicy</Link>. Fakturan analyseras
+                via AI och raderas omedelbart efter analysen.
+              </Disclaimer>
+            </form>
+          </Card>
+        )}
+
+        {result && (
+          <Card>
+            <ResultHead>
+              <div>
+                <h2>{result.extracted.supplier}</h2>
+                <span className="subtitle">
+                  {CATEGORY_LABELS[result.categorized.category] || result.categorized.category}
+                  {result.categorized.subType ? ` · ${result.categorized.subType}` : ''}
+                </span>
+              </div>
+              <Button onClick={reset} $variant="secondary" $size="md">
+                Testa en till
+              </Button>
+            </ResultHead>
+
+            {result.recommendation.shouldSwitch && result.recommendation.netSaving > 0 ? (
+              <SavingsBlock>
+                <span className="kicker">
+                  {result.categorized.licensePending
+                    ? 'Möjlig årlig besparing'
+                    : 'Din nettobesparing år 1'}
+                </span>
+                <span className="amount">+{formatKr(result.recommendation.netSaving)}</span>
+                <span className="unit">
+                  {result.categorized.licensePending
+                    ? 'Försäkring kräver FI-licens — vi byter inte själva ännu, men visar gapet.'
+                    : (
+                      <>
+                        Bruttobesparing {formatKr(result.recommendation.grossSaving)} −
+                        Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
+                        {result.recommendation.suggestedSupplier && (
+                          <><br />Föreslagen leverantör: <strong>{result.recommendation.suggestedSupplier}</strong></>
+                        )}
+                      </>
+                    )}
+                </span>
+              </SavingsBlock>
+            ) : (
+              <NoSwitchBlock>
+                <strong>Inget byte föreslås just nu.</strong>
+                <p>{result.recommendation.reasoning}</p>
+              </NoSwitchBlock>
+            )}
+
+            <KV>
+              <div>
+                <dt>Du betalar idag</dt>
+                <dd>{formatKr(result.extracted.annualCost)} / år</dd>
+              </div>
+              <div>
+                <dt>Fakturadatum</dt>
+                <dd>{result.extracted.date}</dd>
+              </div>
+              <div>
+                <dt>Belopp på fakturan (ex moms)</dt>
+                <dd>{formatKr(result.extracted.amount)}</dd>
+              </div>
+              <div>
+                <dt>Återkommande</dt>
+                <dd>{result.extracted.recurring ? 'Ja (abonnemang / premie)' : 'Nej'}</dd>
+              </div>
+            </KV>
+
+            {result.recommendation.reasoning && result.recommendation.shouldSwitch && (
+              <Reasoning>
+                <span className="kicker">Varför vi tror du kan spara</span>
+                <p>{result.recommendation.reasoning}</p>
+              </Reasoning>
+            )}
+
+            <NextSteps>
+              <h3>Vill du att vi byter åt dig?</h3>
+              <p>
+                Med Arvo Flow kopplar du Fortnox en gång och vi sköter hela bytet
+                — uppsägning, nytt avtal, signering. Du betalar bara 20 % av faktisk
+                realiserad besparing.
+              </p>
+              <div className="actions">
+                <Button as={Link} to="/connect" $variant="primary" $size="lg">
+                  Koppla Fortnox <Icon name="arrow" size={18} />
+                </Button>
+                <Button as={Link} to="/" $variant="ghost" $size="lg">
+                  Läs mer
+                </Button>
+              </div>
+            </NextSteps>
+          </Card>
+        )}
+      </Body>
+
+      <Footer />
+    </Page>
+  );
+};
+
+export default TestaFaktura;
