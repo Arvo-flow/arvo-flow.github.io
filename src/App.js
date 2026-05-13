@@ -210,6 +210,7 @@ const [copiedFlash,setCopiedFlash]=useState(false);
 const [conciergeError,setConciergeError]=useState(null);
 const [showOnboarding,setShowOnboarding]=useState(()=>{try{return !localStorage.getItem("arvo_onb_done")}catch(e){return true}});
 const [testerId]=useState(()=>{try{const u=new URLSearchParams(window.location.search).get("t");if(u){localStorage.setItem("arvo_tester_id",u);return u}return localStorage.getItem("arvo_tester_id")||""}catch(e){return""}});
+const [variant]=useState(()=>{try{const v=new URLSearchParams(window.location.search).get("v");return v==="1"||v==="2"||v==="3"?v:null}catch(e){return null}});
 const [feedbackState,setFeedbackState]=useState("idle"); // idle|rated|sent
 const [feedbackRating,setFeedbackRating]=useState(null);
 const [feedbackText,setFeedbackText]=useState("");
@@ -231,10 +232,14 @@ const tRef=useRef(null);
 const fileRef=useRef(null);
 const chatEndRef=useRef(null);
 const recognitionRef=useRef(null);
-const T=THEMES[theme], L=LANG[lang], CU=CURRENCIES[currency];
+const baseT=THEMES[theme];
+const T=variant==="3"?{...baseT,bg:"#07080b",surface:"rgba(22,26,34,0.55)",surfaceAlt:"rgba(32,38,50,0.45)",cardBg:"rgba(22,26,34,0.55)",cardBorder:"rgba(255,255,255,0.08)",border:"rgba(255,255,255,0.08)",inputBg:"rgba(16,20,28,0.5)",tagBg:"rgba(255,255,255,0.06)",avatarBg:"rgba(74,154,136,0.18)",shadow:"0 8px 32px rgba(0,0,0,0.45),0 2px 8px rgba(0,0,0,0.25)"}:baseT;
+const L=LANG[lang], CU=CURRENCIES[currency];
 const serif="'Playfair Display',Georgia,serif";
 const switchLang=l=>{setLang(l);setCurrency(l==="sv"?"SEK":"USD")};
 
+useEffect(()=>{if(variant==="2"){setView("heyarvo");setArvoTab("analysis")}if(variant==="3"&&theme!=="dark"){setTheme("dark")}},[variant]);// eslint-disable-line react-hooks/exhaustive-deps
+useEffect(()=>{const read=()=>{try{const v=new URLSearchParams(window.location.search).get("v");return v==="1"||v==="2"||v==="3"?v:null}catch(e){return null}};const check=()=>{if(read()!==variant)window.location.reload()};const onShow=e=>{if(e.persisted)check()};window.addEventListener("pageshow",onShow);window.addEventListener("popstate",check);return()=>{window.removeEventListener("pageshow",onShow);window.removeEventListener("popstate",check)}},[variant]);
 useEffect(()=>{if(timerOn){tRef.current=setInterval(()=>setTimerSec(s=>s+1),1000)}else clearInterval(tRef.current);return()=>clearInterval(tRef.current)},[timerOn]);
 useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatMsgs,arvoThinking]);
 // Tester session logger (localStorage only — founder asks tester to share on follow-up)
@@ -246,7 +251,7 @@ const go=v=>{setView(v);setDetail(null);setSideOpen(false);setSearch("")};
 const fmtMoney=sek=>{const v=Math.round(sek*CU.rate);const f=new Intl.NumberFormat(lang==="sv"?"sv-SE":"en-US").format(v);return CU.suffix?`${f} ${CU.symbol}`:`${CU.symbol}${f}`};
 const sLabel=s=>{if(lang==="sv")return s;return{Kund:"Customer",Lead:"Lead",Prospekt:"Prospect","Pågående":"Ongoing",Planering:"Planning",Avslutad:"Completed",Betald:"Paid",Skickad:"Sent","Förfallen":"Overdue",Utkast:"Draft"}[s]||s};
 
-const card={background:T.cardBg,border:`1px solid ${T.cardBorder}`,borderRadius:16,padding:20,marginBottom:16,boxShadow:T.shadow,transition:"box-shadow 0.2s"};
+const card={background:T.cardBg,border:`1px solid ${T.cardBorder}`,borderRadius:16,padding:20,marginBottom:16,boxShadow:T.shadow,transition:"box-shadow 0.2s",...(variant==="3"?{backdropFilter:"blur(22px) saturate(1.2)",WebkitBackdropFilter:"blur(22px) saturate(1.2)"}:{})};
 const sCard={...card,padding:"20px 18px"};
 const hd={fontFamily:serif,fontWeight:800,fontSize:28,color:T.text,lineHeight:1.15,letterSpacing:"-0.03em"};
 const subS={fontSize:14,color:T.textMuted,lineHeight:1.6,marginTop:8,marginBottom:24};
@@ -1197,6 +1202,7 @@ const handleSave=()=>{
 if(modal==="newContact"){
 if(!formData.name)return;
 setContacts(prev=>[{id:Date.now(),name:formData.name,company:formData.company||"",email:formData.email||"",phone:formData.phone||"",status:"Lead",value:0,daysSince:0,notes:formData.notes||""},...prev]);
+fetch("https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({"Företagsnamn":formData.company||"","Kontaktperson":formData.name,"E-post":formData.email||"",source:"arvo-os.newContact",timestamp:new Date().toISOString()})}).catch(()=>{});
 }else if(modal==="editContact"){
 setContacts(prev=>prev.map(c=>c.id===formData.editId?{...c,name:formData.name||c.name,company:formData.company||c.company,email:formData.email||c.email,phone:formData.phone||c.phone,notes:formData.notes!==undefined?formData.notes:c.notes}:c));
 setDetail(null);
@@ -1395,7 +1401,7 @@ return (
 </div>
 
 {/* ── Tabs ── */}
-<div style={{display:"flex",gap:6,marginBottom:16,padding:4,background:T.surfaceAlt,borderRadius:12}}>
+{variant!=="2"&&(<div style={{display:"flex",gap:6,marginBottom:16,padding:4,background:T.surfaceAlt,borderRadius:12}}>
 {[{id:"chat",label:L.tabChat,icon:"mic"},{id:"analysis",label:L.tabAnalysis,icon:"sparkles"},{id:"impact",label:L.tabImpact,icon:"trendUp"},{id:"trust",label:L.tabTrust,icon:"shield"}].map(t=>{
 const active=arvoTab===t.id;
 return (<button key={t.id} onClick={()=>setArvoTab(t.id)} style={{flex:1,padding:"9px 8px",background:active?T.cardBg:"transparent",border:"none",borderRadius:9,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:6,boxShadow:active?T.shadow:"none",transition:"all 0.2s"}}>
@@ -1403,7 +1409,7 @@ return (<button key={t.id} onClick={()=>setArvoTab(t.id)} style={{flex:1,padding
 <span style={{fontSize:12,fontWeight:active?600:500,color:active?T.accent:T.textMuted}}>{t.label}</span>
 </button>)
 })}
-</div>
+</div>)}
 
 {/* ── CONCIERGE / ANALYSIS TAB ── */}
 {arvoTab==="analysis"&&(<div style={{flex:1,overflowY:"auto",paddingBottom:12}}>
@@ -1930,19 +1936,26 @@ default: return <DashView />;
 
 const dashToggles=[{key:"health",label:L.showHealth},{key:"pipeline",label:L.showPipeline},{key:"won",label:L.showWon},{key:"awaiting",label:L.showAwaiting},{key:"weekHours",label:L.showWeekHours},{key:"insights",label:L.showInsights},{key:"forecast",label:L.showForecast},{key:"toDo",label:L.showToDo},{key:"recentInv",label:L.showRecentInv},{key:"activeProj",label:L.showActiveProj}];
 
+const hideChrome=variant==="2";
+const isV1=variant==="1";
+const isV3=variant==="3";
+const rootBg=isV3?"radial-gradient(1200px 800px at 15% -10%,#1b3247 0%,#0e1624 35%,#07080b 70%,#05060a 100%)":T.bg;
+const headerBg=isV3?"rgba(10,14,20,0.55)":T.surface;
+const navBg=isV3?"rgba(10,14,20,0.60)":T.surface;
+const glassBorder=isV3?"1px solid rgba(255,255,255,0.06)":`1px solid ${T.border}`;
 return (
-<div style={{minHeight:"100vh",background:T.bg,color:T.text,fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif",fontSize:14,lineHeight:1.5,WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale"}}>
-<style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{margin:0}input,select,textarea,button{font-family:inherit}::selection{background:${T.accentLight};color:${T.accent}}::-webkit-scrollbar{width:0}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.05)}}select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}option{background:${T.surface};color:${T.text}}`}</style>
+<div data-variant={variant||"0"} style={{minHeight:"100vh",background:rootBg,color:T.text,fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif",fontSize:14,lineHeight:1.5,WebkitFontSmoothing:"antialiased",MozOsxFontSmoothing:"grayscale"}}>
+<style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}body{margin:0}input,select,textarea,button{font-family:inherit}::selection{background:${T.accentLight};color:${T.accent}}::-webkit-scrollbar{width:0}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.05)}}@keyframes floatGlow{0%,100%{opacity:0.45;transform:translate(0,0) scale(1)}50%{opacity:0.7;transform:translate(10px,-8px) scale(1.04)}}select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}option{background:${T.surface};color:${T.text}}[data-variant="1"] header{box-shadow:none!important}[data-variant="3"] header,[data-variant="3"] nav{backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3)}[data-variant="3"]::before{content:"";position:fixed;inset:-20%;pointer-events:none;z-index:0;background:radial-gradient(600px 600px at 85% 20%,rgba(74,154,136,0.18),transparent 60%),radial-gradient(500px 500px at 10% 85%,rgba(90,158,200,0.14),transparent 60%);animation:floatGlow 14s ease-in-out infinite}[data-variant="3"] main{position:relative;z-index:1}`}</style>
 
-  <header style={{position:"fixed",top:0,left:0,right:0,height:58,background:T.surface,borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",padding:"0 18px",gap:12,zIndex:100,boxShadow:"0 1px 8px rgba(0,0,0,0.03)"}}>
+  {!hideChrome&&(<header style={{position:"fixed",top:0,left:0,right:0,height:58,background:headerBg,borderBottom:glassBorder,display:"flex",alignItems:"center",padding:"0 18px",gap:12,zIndex:100,boxShadow:isV1||isV3?"none":"0 1px 8px rgba(0,0,0,0.03)"}}>
     <button style={{background:"none",border:"none",cursor:"pointer",padding:6,color:T.textMuted,borderRadius:8}} onClick={()=>setSideOpen(!sideOpen)}><Ic name={sideOpen?"x":"menu"} size={22}/></button>
     <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}><ArvoLogo size={26}/><span style={{fontFamily:serif,fontSize:21,fontWeight:800,color:T.text,letterSpacing:"-0.03em"}}>Arvo Flow</span></div>
     <div style={{display:"flex",gap:5,marginRight:6}}><Flag code="en" active={lang==="en"} onClick={()=>switchLang("en")}/><Flag code="sv" active={lang==="sv"} onClick={()=>switchLang("sv")}/></div>
-    <div style={{display:"flex",gap:6}}>{Object.entries(TDOTS).map(([k,c])=>(<button key={k} onClick={()=>setTheme(k)} style={{width:20,height:20,borderRadius:"50%",background:c,border:theme===k?`2.5px solid ${T.text}`:"2px solid transparent",cursor:"pointer",transform:theme===k?"scale(1.15)":"scale(1)",transition:"transform 0.2s",boxShadow:theme===k?`0 0 0 2px ${T.bg},0 0 0 4px ${c}`:"none"}} title={lang==="sv"?THEMES[k].name:THEMES[k].nameEn}/>))}</div>
-  </header>
+    {!isV1&&!isV3&&(<div style={{display:"flex",gap:6}}>{Object.entries(TDOTS).map(([k,c])=>(<button key={k} onClick={()=>setTheme(k)} style={{width:20,height:20,borderRadius:"50%",background:c,border:theme===k?`2.5px solid ${T.text}`:"2px solid transparent",cursor:"pointer",transform:theme===k?"scale(1.15)":"scale(1)",transition:"transform 0.2s",boxShadow:theme===k?`0 0 0 2px ${T.bg},0 0 0 4px ${c}`:"none"}} title={lang==="sv"?THEMES[k].name:THEMES[k].nameEn}/>))}</div>)}
+  </header>)}
 
-  {sideOpen&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:80}} onClick={()=>setSideOpen(false)}/>}
-  <nav style={{position:"fixed",top:56,left:sideOpen?0:-300,width:300,bottom:0,background:T.surface,borderRight:`1.5px solid ${T.border}`,zIndex:90,transition:"left 0.28s cubic-bezier(0.4,0,0.2,1)",overflowY:"auto"}}>
+  {!hideChrome&&sideOpen&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:80}} onClick={()=>setSideOpen(false)}/>}
+  {!hideChrome&&(<nav style={{position:"fixed",top:56,left:sideOpen?0:-300,width:300,bottom:0,background:navBg,borderRight:isV3?"1px solid rgba(255,255,255,0.06)":`1.5px solid ${T.border}`,zIndex:90,transition:"left 0.28s cubic-bezier(0.4,0,0.2,1)",overflowY:"auto"}}>
     <div style={{padding:"16px 0 8px"}}>{NAV.map(n=>(<div key={n.id} onClick={()=>go(n.id)} style={{display:"flex",alignItems:"center",gap:14,padding:"12px 24px",cursor:"pointer",color:view===n.id?T.accent:T.textMuted,background:view===n.id?T.accentLight:"transparent",borderRight:view===n.id?`3px solid ${T.accent}`:"3px solid transparent",fontWeight:view===n.id?600:400,fontSize:14}}><Ic name={n.icon} size={20} color={view===n.id?T.accent:T.textMuted}/> {nL(n.id)}</div>))}</div>
     <div style={{height:1,background:T.border,margin:"8px 20px"}}/>
     <div style={{padding:"12px 20px"}}>
@@ -1953,15 +1966,15 @@ return (
       <div><div style={{fontSize:12,color:T.textMuted,marginBottom:10,fontWeight:500}}>{L.dashboardCards}</div>{dashToggles.map(it=>(<div key={it.key} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"7px 0"}}><span style={{fontSize:13,color:T.textSub}}>{it.label}</span><Toggle on={dash[it.key]} onToggle={()=>setDash(prev=>({...prev,[it.key]:!prev[it.key]}))}/></div>))}</div>
     </div>
     <div style={{padding:"16px 20px",borderTop:`1px solid ${T.border}`,marginTop:8}}><div style={{fontSize:11,color:T.textFaint,lineHeight:1.5}}>Arvo Flow<br/>{L.heyArvoTagline}</div></div>
-  </nav>
+  </nav>)}
 
-  <main style={{paddingTop:76,paddingBottom:88,paddingLeft:20,paddingRight:20,maxWidth:640,margin:"0 auto"}}>
-    <div style={{animation:"fadeUp 0.3s ease"}} key={view+lang+currency+(detail?.data?.id||"")}>{renderView()}</div>
+  <main style={{paddingTop:hideChrome?28:76,paddingBottom:hideChrome?40:88,paddingLeft:20,paddingRight:20,maxWidth:hideChrome?560:640,margin:"0 auto"}}>
+    <div style={{animation:"fadeUp 0.3s ease"}} key={view+lang+currency+(detail?.data?.id||"")+(variant||"")}>{renderView()}</div>
   </main>
 
-  <nav style={{position:"fixed",bottom:0,left:0,right:0,height:68,background:T.surface,borderTop:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-around",zIndex:100,boxShadow:"0 -1px 8px rgba(0,0,0,0.03)"}}>
+  {!hideChrome&&(<nav style={{position:"fixed",bottom:0,left:0,right:0,height:68,background:navBg,borderTop:glassBorder,display:"flex",alignItems:"center",justifyContent:"space-around",zIndex:100,boxShadow:isV1||isV3?"none":"0 -1px 8px rgba(0,0,0,0.03)"}}>
     {NAV.map(n=>{const active=view===n.id;const isArvo=n.id==="heyarvo";return (<button key={n.id} onClick={()=>go(n.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:isArvo?2:3,padding:"6px 8px",background:"none",border:"none",cursor:"pointer",color:active?T.accent:T.textFaint,fontSize:10,fontWeight:active?600:400,fontFamily:"inherit",position:"relative"}}>{active&&<div style={{position:"absolute",top:-1,left:"50%",transform:"translateX(-50%)",width:24,height:3,borderRadius:2,background:T.accent}}/>}{isArvo?<div style={{width:32,height:32,borderRadius:"50%",background:active?T.accentGrad:T.surfaceAlt,display:"flex",alignItems:"center",justifyContent:"center",border:active?"none":`1px solid ${T.border}`,transition:"all 0.2s"}}><Ic name="arvo" size={16} color={active?"#fff":T.textFaint}/></div>:<Ic name={n.icon} size={22} color={active?T.accent:T.textFaint}/>}<span>{nL(n.id)}</span></button>)})}
-  </nav>
+  </nav>)}
 
   <ModalView/>
 
