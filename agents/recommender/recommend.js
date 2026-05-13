@@ -41,10 +41,21 @@ function getClient() {
   return _client;
 }
 
-function formatBenchmark(benchmark) {
+function formatBenchmark(benchmark, employees) {
   if (!benchmark) {
     return '(Inget branschindex finns för denna kombination — modellen ska sätta confidence: low och shouldSwitch: false.)';
   }
+
+  // Per-user categories must be scaled to total cost before comparing against
+  // the invoice's annual total. Pre-computing this prevents LLM arithmetic errors.
+  const isPerUser = benchmark.note.toLowerCase().includes('per användare');
+  const scale = isPerUser && employees > 0 ? employees : 1;
+  const totalMedian = benchmark.median * scale;
+  const totalP25 = benchmark.p25 * scale;
+  const scaleNote = isPerUser
+    ? ` (${benchmark.median.toLocaleString('sv-SE')} kr/användare × ${employees} anställda)`
+    : '';
+
   const altList = benchmark.alternatives
     .map(
       (a) =>
@@ -52,9 +63,8 @@ function formatBenchmark(benchmark) {
     )
     .join('\n');
   return `Bransch: ${benchmark.industry}, storlek: ${benchmark.size}
-Median: ${benchmark.median.toLocaleString('sv-SE')} ${benchmark.unit}
-P25 (bästa 25 %): ${benchmark.p25.toLocaleString('sv-SE')} ${benchmark.unit}
-Notering: ${benchmark.note}
+Median (total, per år): ${totalMedian.toLocaleString('sv-SE')} ${benchmark.unit}${scaleNote}
+P25 (bästa 25 %, per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${employees} anställda)` : ''}
 
 Alternativa leverantörer:
 ${altList}
@@ -63,20 +73,31 @@ Källa: ${SOURCE} — ${SOURCE_NOTE}`;
 }
 
 function formatPrompt({ customer, invoice, categorized, benchmark }) {
+  const annualCost = invoice.annualCost ?? invoice.amount;
+  const employees = customer.employees ?? 1;
+  const bm = benchmark;
+  const isPerUser = bm && bm.note.toLowerCase().includes('per användare');
+  const scale = isPerUser && employees > 0 ? employees : 1;
+  const totalMedian = bm ? bm.median * scale : null;
+  const overpaymentPct =
+    totalMedian && totalMedian > 0
+      ? Math.round(((annualCost - totalMedian) / totalMedian) * 100)
+      : null;
+
   return `Kunden:
   Bolagstyp: ${customer.industry}
-  Anställda: ${customer.employees}
+  Anställda: ${employees}
   Omsättning: ${customer.revenue ? customer.revenue.toLocaleString('sv-SE') + ' kr' : '(okänt)'}
 
 Kategoriserad faktura:
   Kategori: ${categorized.category}
   Sub-typ: ${categorized.subType || '(okänd)'}
   Nuvarande leverantör: ${categorized.normalizedSupplier}
-  Årskostnad: ${(invoice.annualCost ?? invoice.amount).toLocaleString('sv-SE')} kr
+  Årskostnad (totalt): ${annualCost.toLocaleString('sv-SE')} kr${overpaymentPct !== null ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER medianen' : Math.abs(overpaymentPct) + ' % UNDER medianen'}` : ''}
   Confidence från Categorizer: ${categorized.confidence}
 
 Branschindex för segmentet:
-${formatBenchmark(benchmark)}
+${formatBenchmark(benchmark, employees)}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }
