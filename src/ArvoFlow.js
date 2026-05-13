@@ -14,11 +14,13 @@ import Bias from './pages/Bias';
 import Villkor from './pages/Villkor';
 import Integritet from './pages/Integritet';
 import Cookies from './pages/Cookies';
+import ScrollToTop from './components/ScrollToTop';
 
 const ArvoFlow = () => (
   <ThemeProvider theme={theme}>
     <GlobalStyle />
     <BrowserRouter basename={process.env.PUBLIC_URL || '/'}>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/connect" element={<Connect />} />
