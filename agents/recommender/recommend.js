@@ -7,9 +7,7 @@
 // Haiku. Categorization was a simple labelling task; recommending is a
 // judgment task.
 //
-// Adaptive thinking: yes — Sonnet 4.6 supports it and the scoring across
-// alternatives + the license-pending check is exactly the kind of reasoning
-// adaptive thinking helps with.
+// Thinking: disabled — tool_choice forces tool use which is incompatible.
 //
 // Caching: system prompt is ~6k chars (~1700 tokens). Sonnet 4.6's cache
 // minimum is 2048 tokens, so the marker is a no-op until the prompt grows
@@ -113,8 +111,6 @@ export async function recommend(input, opts = {}) {
     response = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'medium' },
       system: [
         {
           type: 'text',

@@ -140,8 +140,6 @@ export async function extractInvoice(input, opts = {}) {
     response = await client.messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'medium' },
       system: [
         {
           type: 'text',
