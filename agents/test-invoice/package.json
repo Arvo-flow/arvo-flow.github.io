@@ -1,0 +1,8 @@
+{
+  "name": "@arvo/test-invoice",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PDF invoice extraction via Claude Opus 4.7 — end-to-end algorithm test against real supplier invoices.",
+  "main": "index.js"
+}
