@@ -290,6 +290,56 @@ export const Badge = styled.div`
   }
 `;
 
+export const ProfileSection = styled.div`
+  margin-top: 24px;
+`;
+
+export const ProfileHeading = styled.p`
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.color.muted};
+  margin-bottom: 10px;
+`;
+
+export const ProfileRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+`;
+
+export const ProfileField = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  span.label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.muted};
+  }
+
+  select, input[type="number"] {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid ${({ theme }) => theme.color.border};
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    background: ${({ theme }) => theme.color.surface};
+    color: ${({ theme }) => theme.color.ink};
+    font-size: 14px;
+    font-family: inherit;
+    appearance: auto;
+    transition: border-color ${({ theme }) => theme.motion.fast};
+    &:focus {
+      outline: none;
+      border-color: ${({ theme }) => theme.color.brand};
+      box-shadow: 0 0 0 3px ${({ theme }) => theme.color.brandSoft};
+    }
+  }
+`;
+
 export const ProviderRow = styled.div`
   margin-top: 32px;
   display: grid;

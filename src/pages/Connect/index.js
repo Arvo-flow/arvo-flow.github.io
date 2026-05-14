@@ -7,6 +7,7 @@ import {
   Page, Wrap, Card, Step, Title, Lede,
   DataContract, DataCol, NoWaste, ScanCounter, Reassurance,
   BadgeStrip, Badge,
+  ProfileSection, ProfileHeading, ProfileRow, ProfileField,
   ProviderRow, ProviderBtn, Actions, SmallNote, Spinner,
   ConsentRow, ConsentError,
 } from './styles';
@@ -17,6 +18,8 @@ const Connect = () => {
   const [connecting, setConnecting] = useState(false);
   const [consent, setConsent] = useState(false);
   const [showConsentError, setShowConsentError] = useState(false);
+  const [industry, setIndustry] = useState('byraer');
+  const [employees, setEmployees] = useState(5);
 
   const start = () => {
     if (!consent) {
@@ -24,7 +27,11 @@ const Connect = () => {
       return;
     }
     if (provider === 'fortnox') {
-      window.location.href = '/api/fortnox/auth';
+      const params = new URLSearchParams({
+        industry,
+        employees: String(employees),
+      });
+      window.location.href = `/api/fortnox/auth?${params}`;
       return;
     }
     // Visma OAuth not yet implemented — placeholder
@@ -70,6 +77,31 @@ const Connect = () => {
               <span>Då är ditt bolag redan optimerat. Vi raderar Fortnox-kopplingen och all din data automatiskt — du har inte betalat en krona.</span>
             </div>
           </NoWaste>
+
+          <ProfileSection>
+            <ProfileHeading>Berätta lite om bolaget</ProfileHeading>
+            <ProfileRow>
+              <ProfileField>
+                <span className="label">Bransch</span>
+                <select value={industry} onChange={(e) => setIndustry(e.target.value)}>
+                  <option value="byraer">Konsultbyrå / Reklam / IT</option>
+                  <option value="hantverkare">Hantverkare / Bygg</option>
+                  <option value="ehandel">E-handel</option>
+                  <option value="tillverkning">Tillverkning / Industri</option>
+                </select>
+              </ProfileField>
+              <ProfileField>
+                <span className="label">Antal anställda</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="5000"
+                  value={employees}
+                  onChange={(e) => setEmployees(Number(e.target.value))}
+                />
+              </ProfileField>
+            </ProfileRow>
+          </ProfileSection>
 
           <ProviderRow>
             <ProviderBtn $active={provider === 'fortnox'} onClick={() => setProvider('fortnox')}>
