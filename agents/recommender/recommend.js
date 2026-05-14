@@ -89,13 +89,15 @@ function formatPrompt({ customer, invoice, categorized, benchmark }) {
   // Skip benchmark % comparison for accounting systems — the median is for
   // e-faktura sending services (Kivra/Billogram) and comparing an ERP
   // subscription against that is misleading and damages credibility.
+  // Keep the full benchmark data so the AI can still reason about what
+  // functionality is included vs. separately purchased.
   const overpaymentPct =
     !isAccountingSystem && totalMedian && totalMedian > 0
       ? Math.round(((annualCost - totalMedian) / totalMedian) * 100)
       : null;
 
   const benchmarkNote = isAccountingSystem
-    ? '(Affärssystem — ingen procentuell benchmark-jämförelse. Fokusera på om inbyggda funktioner redan täcker behovet och om kostnaden är rimlig för ett affärssystem av denna typ. Nämn INTE procentjämförelse mot median.)'
+    ? formatBenchmark(benchmark, employees) + '\n\nOBS: Detta är ett affärssystem (ERP/bokföring). Jämför INTE kostnaden procentuellt mot medianen — affärssystem är inte jämförbara med fristående fakturatjänster. Undersök istället om den fakturerade tjänsten redan ingår i befintlig licens och ge en konkret åtgärdsrekommendation om så är fallet.'
     : formatBenchmark(benchmark, employees);
 
   return `Kunden:
