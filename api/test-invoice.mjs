@@ -14,7 +14,10 @@ export const config = {
   maxDuration: 60,
 };
 
-const ALLOWED_INDUSTRIES = ['byraer', 'hantverkare', 'ehandel', 'tillverkning'];
+const ALLOWED_INDUSTRIES = [
+  'ehandel', 'tillverkning', 'it-tech', 'bygg',
+  'hotell', 'konsult', 'transport', 'vard', 'ovrigt',
+];
 // 3 MB ger ~4 MB JSON-body efter base64 — håller sig under Vercel Hobbys 4.5 MB.
 // Höj till 5 MB om du är på Pro och vill ta större fakturor.
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
