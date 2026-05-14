@@ -146,7 +146,8 @@ const TestaFaktura = () => {
     try {
       await fetch(ANALYS_WEBHOOK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
           type: 'analys_pdf',
           email,
