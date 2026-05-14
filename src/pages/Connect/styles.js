@@ -25,7 +25,7 @@ export const Wrap = styled.div`
 
 export const Card = styled.div`
   width: 100%;
-  max-width: 540px;
+  max-width: 640px;
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
   border-radius: ${({ theme }) => theme.size.radius.xl};
