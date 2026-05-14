@@ -104,63 +104,67 @@ export const TrustBanner = styled.div`
 `;
 
 export const DataContract = styled.div`
-  margin-top: 22px;
-  border-radius: ${({ theme }) => theme.size.radius.md};
-  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  margin-top: 24px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
   overflow: hidden;
   display: grid;
   grid-template-columns: 1fr 1fr;
+  box-shadow:
+    0 0 0 1px rgba(27, 122, 110, 0.10),
+    0 4px 16px rgba(14, 26, 23, 0.07);
   @media (max-width: 480px) { grid-template-columns: 1fr; }
 `;
 
 export const DataCol = styled.div`
-  padding: 16px 18px;
-  background: ${({ theme, $allow }) => ($allow ? theme.color.brandSoft : theme.color.surfaceSunken)};
-  border-right: 1px solid ${({ theme }) => theme.color.borderStrong};
-  &:last-child { border-right: none; border-left: none; }
+  padding: 20px 22px;
+  background: ${({ theme, $allow }) =>
+    $allow ? 'rgba(27, 122, 110, 0.05)' : theme.color.surface};
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  &:last-child { border-bottom: none; }
 
-  @media (max-width: 480px) {
-    border-right: none;
-    border-bottom: 1px solid ${({ theme }) => theme.color.borderStrong};
-    &:last-child { border-bottom: none; }
+  @media (min-width: 481px) {
+    border-bottom: none;
+    border-right: 1px solid ${({ theme }) => theme.color.border};
+    &:last-child { border-right: none; }
   }
 
   span.head {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 11.5px;
+    gap: 10px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: ${({ theme, $allow }) => ($allow ? theme.color.brand : theme.color.muted)};
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
   span.head div.dot {
-    width: 18px; height: 18px;
+    width: 24px; height: 24px;
     border-radius: 50%;
-    background: ${({ theme, $allow }) => ($allow ? theme.color.brand : '#9F3B22')};
-    color: #FFFFFF;
+    background: ${({ theme, $allow }) =>
+      $allow ? theme.color.brand : 'rgba(14, 26, 23, 0.12)'};
+    color: ${({ $allow }) => ($allow ? '#fff' : 'rgba(14,26,23,0.45)')};
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 800;
+    flex-shrink: 0;
   }
-  ul { display: flex; flex-direction: column; gap: 8px; }
+  ul { display: flex; flex-direction: column; gap: 10px; }
   ul li {
-    font-size: 13px;
-    color: ${({ theme, $allow }) => ($allow ? theme.color.inkSoft : theme.color.muted)};
-    line-height: 1.4;
+    font-size: 13.5px;
+    color: ${({ theme, $allow }) => ($allow ? theme.color.ink : theme.color.muted)};
+    line-height: 1.35;
     display: flex;
-    align-items: flex-start;
-    gap: 8px;
+    align-items: center;
+    gap: 10px;
   }
   ul li svg {
     flex-shrink: 0;
-    margin-top: 2px;
     color: ${({ theme, $allow }) => ($allow ? theme.color.brand : theme.color.muted)};
-    opacity: ${({ $allow }) => ($allow ? 1 : 0.6)};
+    opacity: ${({ $allow }) => ($allow ? 1 : 0.45)};
   }
 `;
 
