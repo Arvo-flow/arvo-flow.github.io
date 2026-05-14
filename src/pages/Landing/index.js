@@ -11,6 +11,7 @@ import {
   PreviewCard, PreviewHead, SavingBig, PreviewList, PreviewRow, PreviewFloat,
   TickerBand, TickerText,
   TrustStrip, TrustPillar,
+  AlgoTrust,
   SectionHead, HowGrid, HowCard,
   ProofGrid, Quote, Stats,
   PricingCard, PricingInner,
@@ -43,11 +44,11 @@ const HOW_STEPS = [
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Inget i förskott. Vi tar 20 % av den faktiska besparing som materialiseras under år 1, fakturerat kvartalsvis. Hittar vi inget — kostar det inget. Du kan välja en alternativ modell där vi rabatterar vår affiliate-intäkt mot 30 % success-fee, helt transparent.',
+    a: 'Inget i förskott. Vi tar 20 % av den faktiska besparing som materialiseras under år 1, fakturerat kvartalsvis. Hittar vi inget — kostar det inget.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
-    a: 'Vår rankningsalgoritm är publik och deterministisk — du hittar hela vår rankningspolicy under /bias. Affiliate-intäkter är kapade per kategori och överskott rabatteras tillbaka till kunderna. Du kan också välja en helt affiliate-fri modell vid onboarding.',
+    a: 'Vår rankningsalgoritm är publik och deterministisk — du hittar hela vår rankningspolicy under /bias. Affiliate-intäkter är hårt kapade per kategori och eventuellt överskott krediteras automatiskt tillbaka till dig.',
   },
   {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',
@@ -258,6 +259,23 @@ const Landing = () => {
           <strong>Hittar vi inget kostar det inget.</strong>
         </TrustPillar>
       </TrustStrip>
+
+      <AlgoTrust>
+        <div className="inner">
+          <div className="eyebrow"><Icon name="shield" size={13} stroke={2} /> Rankningspolicy</div>
+          <h2>100 % oberoende. Vår algoritm styrs av din besparing, inte provisioner.</h2>
+          <p>
+            Affiliate-ersättningar från leverantörer är hårt kapade per kategori — ett fast tak som
+            aldrig kan överskridas oavsett vad en leverantör är villig att betala. Om intäkten ändå
+            överstiger taket krediteras överskottet automatiskt tillbaka till dig. Det gör vår
+            rankningsalgoritm matematiskt och ekonomiskt objektiv: det finns inget scenario där det
+            lönar sig för oss att rekommendera fel leverantör.
+          </p>
+          <Link to="/bias" className="cta-link">
+            Läs hur vår algoritm rankar <Icon name="arrow" size={15} />
+          </Link>
+        </div>
+      </AlgoTrust>
 
       <Section id="hur">
         <SectionHead>

@@ -6,7 +6,7 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import {
   Page, Hero, Eyebrow, Headline, Lede,
-  Section, RuleCard, ChoiceTable, ChoiceCol,
+  Section, RuleCard,
   KickerH2, Kicker, SubLede, PolicyTable, PolicyRow,
   Cta,
 } from './styles';
@@ -81,34 +81,16 @@ const Bias = () => (
       <RuleCard>
         <div className="num">3</div>
         <div>
-          <h3>Du väljer modell vid onboarding.</h3>
+          <h3>Ett erbjudande. Inga val, inga krångel.</h3>
           <p>
-            Vi tror på radikal transparens, men vi vill inte heller att du behöver lita på oss
-            blint. Därför erbjuder vi två modeller där du själv väljer hur mycket vi får tjäna
-            från affiliate-sidan.
+            Vi tar <strong>20 % av den faktiska besparing</strong> som materialiseras under år 1,
+            fakturerat kvartalsvis. Det är det enda du behöver godkänna.
           </p>
-          <ChoiceTable>
-            <ChoiceCol>
-              <span className="tag">Standard</span>
-              <h4>20 % av besparing</h4>
-              <p>Vi behåller affiliate-intäkten upp till kapad gräns. Lägre fee för dig.</p>
-              <ul>
-                <li><Icon name="check" size={15} stroke={2.2} /> Affiliate kapad enligt tabell</li>
-                <li><Icon name="check" size={15} stroke={2.2} /> Överskott rabatteras till alla kunder</li>
-                <li><Icon name="check" size={15} stroke={2.2} /> Vi publicerar utbetalning per kvartal</li>
-              </ul>
-            </ChoiceCol>
-            <ChoiceCol $highlight>
-              <span className="tag">Affiliate-fri</span>
-              <h4>30 % av besparing</h4>
-              <p>All affiliate-intäkt rabatteras direkt till dig. Vi tjänar bara på success-fee.</p>
-              <ul>
-                <li><Icon name="check" size={15} stroke={2.2} /> Noll affiliate-intäkt till oss</li>
-                <li><Icon name="check" size={15} stroke={2.2} /> Helt symmetrisk incitamentstruktur</li>
-                <li><Icon name="check" size={15} stroke={2.2} /> Du kan byta modell när som helst</li>
-              </ul>
-            </ChoiceCol>
-          </ChoiceTable>
+          <p>
+            Om affiliate-intäkter från leverantörer överstiger de tak som anges i tabellen nedan,
+            krediteras överskottet automatiskt tillbaka till dig — du behöver inte välja, begära
+            eller ens hålla koll. Systemet sköter det.
+          </p>
         </div>
       </RuleCard>
 

@@ -86,6 +86,8 @@ export const RuleCard = styled.div`
     font-weight: 500;
     font-style: italic;
   }
+  /* min-width: 0 lets the 1fr column shrink so overflow-x: auto works on pre */
+  > div:not(.num) { min-width: 0; }
   h3 {
     font-size: 24px;
     line-height: 1.2;

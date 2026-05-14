@@ -422,6 +422,76 @@ export const TrustPillar = styled.div`
   }
 `;
 
+export const AlgoTrust = styled.section`
+  position: relative;
+  padding: 72px 28px;
+  text-align: center;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: calc(-50vw + 50%);
+    right: calc(-50vw + 50%);
+    background: linear-gradient(160deg,
+      ${({ theme }) => theme.color.brandSoft} 0%,
+      ${({ theme }) => theme.color.bg} 65%);
+    z-index: -1;
+  }
+
+  .inner {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    border: 1px solid ${({ theme }) => theme.color.brand};
+    background: ${({ theme }) => theme.color.brandSoft};
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.brand};
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: clamp(26px, 3.5vw, 40px);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    margin-top: 16px;
+    font-size: 16.5px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.65;
+  }
+
+  .cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 28px;
+    font-size: 15px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.brand};
+    text-decoration: none;
+    border-bottom: 1.5px solid ${({ theme }) => theme.color.brand};
+    padding-bottom: 2px;
+    transition: opacity ${({ theme }) => theme.motion.fast};
+    &:hover { opacity: 0.72; }
+  }
+
+  @media (max-width: 600px) { padding: 56px 20px; }
+`;
+
 export const SectionHead = styled.div`
   max-width: 720px;
   margin: 0 auto 64px;
