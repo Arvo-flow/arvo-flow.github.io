@@ -2,9 +2,13 @@
 // Usage: node --env-file=.env scripts/migrate.mjs
 import { neon } from '@neondatabase/serverless';
 
-const url = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
+const url =
+  process.env.DATABASE_URL ??
+  process.env.POSTGRES_URL ??
+  process.env.POSTGRES_URL_DATABASE_URL ??
+  process.env.POSTGRES_PRISMA_URL;
 if (!url) {
-  console.error('DATABASE_URL (eller POSTGRES_URL) saknas. Kör: vercel env pull .env.local');
+  console.error('Ingen databas-URL hittad. Kör: vercel env pull .env.local');
   process.exit(1);
 }
 
