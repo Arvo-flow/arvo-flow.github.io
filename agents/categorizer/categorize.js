@@ -25,13 +25,16 @@ export class CategorizerError extends Error {
 // Strong description signals that unambiguously identify a category.
 // Keyed by category ID → array of lowercase substrings to scan for.
 const STRONG_DESC_SIGNALS = {
-  mobil:          ['mobilabonnemang', 'mobiltelefoni', 'telefonabonnemang', 'företagstelefoni', 'mobildata'],
-  el:             ['elförbrukning', 'elavtal', 'elhandel', 'elcertifikat', 'spotpris timme', 'elenergi'],
-  bredband:       ['företagsfiber', 'bredbandsabonnemang', 'fiberabonnemang'],
-  kortterminal:   ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
+  mobil:            ['mobilabonnemang', 'mobiltelefoni', 'telefonabonnemang', 'företagstelefoni', 'mobildata'],
+  el:               ['elförbrukning', 'elavtal', 'elhandel', 'elcertifikat', 'spotpris timme', 'elenergi'],
+  bredband:         ['företagsfiber', 'bredbandsabonnemang', 'fiberabonnemang'],
+  kortterminal:     ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
   'faktura-tjanst': ['fakturatjänst', 'e-faktura utskick', 'fakturautskick'],
-  'leasing-bil':  ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
+  'leasing-bil':    ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
 };
+
+// Known SaaS accounting/ERP suppliers → faktura-tjanst.
+const ACCOUNTING_SAAS_SUPPLIERS = ['fortnox', 'visma', 'pe accounting', 'speedledger', 'bokio'];
 
 // Telecom supplier keywords — when combined with any subscription signal → mobil.
 const TELECOM_SUPPLIER_SIGNALS = ['telekom', 'telecom', 'tele2', 'telia', 'telenor', ' tre ', 'comviq', 'halebop', 'vimla'];
@@ -68,6 +71,19 @@ function deterministicMatch(invoice) {
       normalizedSupplier: invoice.supplier ?? '',
       confidence: 0.88,
       reasoning: `Deterministisk matchning: telecomleverantör + abonnemangsbeskrivning`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 3: known accounting SaaS supplier → faktura-tjanst
+  const isAccountingSaas = ACCOUNTING_SAAS_SUPPLIERS.some((s) => supplier.includes(s));
+  if (isAccountingSaas) {
+    return {
+      category: 'faktura-tjanst',
+      subType: 'affärssystem',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.87,
+      reasoning: `Deterministisk matchning: känd bokförings-SaaS-leverantör`,
       licensePending: false,
     };
   }
