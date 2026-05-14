@@ -417,3 +417,111 @@ export const NextSteps = styled.div`
     flex-wrap: wrap;
   }
 `;
+
+export const FrictionBlock = styled.div`
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.color.border};
+  @media (max-width: 540px) { grid-template-columns: 1fr; }
+`;
+
+export const FrictionCol = styled.div`
+  padding: 20px 22px;
+  background: ${({ $variant, theme }) =>
+    $variant === 'bad' ? theme.color.dangerSoft : theme.color.brandSoft};
+
+  h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: ${({ $variant, theme }) =>
+      $variant === 'bad' ? theme.color.danger : theme.color.brand};
+    margin-bottom: 14px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  li {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: ${({ theme }) => theme.color.inkSoft};
+
+    span.icon {
+      flex-shrink: 0;
+      margin-top: 1px;
+      font-style: normal;
+    }
+  }
+`;
+
+export const EmailGate = styled.div`
+  margin-top: 20px;
+  padding: 20px 24px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+
+  p.label {
+    font-size: 15px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    margin-bottom: 12px;
+  }
+
+  div.row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  input[type="email"] {
+    flex: 1;
+    min-width: 200px;
+    padding: 11px 14px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    background: ${({ theme }) => theme.color.surface};
+    font-family: inherit;
+    font-size: 15px;
+    color: ${({ theme }) => theme.color.ink};
+    transition: border-color ${({ theme }) => theme.motion.fast};
+
+    &:focus {
+      outline: none;
+      border-color: ${({ theme }) => theme.color.brand};
+      box-shadow: 0 0 0 3px ${({ theme }) => theme.color.brandSoft};
+    }
+    &::placeholder { color: ${({ theme }) => theme.color.mutedSoft}; }
+  }
+
+  p.note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.mutedSoft};
+    line-height: 1.5;
+  }
+
+  div.sent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: ${({ theme }) => theme.color.brand};
+    font-size: 14.5px;
+    font-weight: 500;
+    padding: 4px 0;
+  }
+`;

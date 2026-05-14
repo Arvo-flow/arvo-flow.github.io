@@ -10,7 +10,10 @@ import {
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, NoSwitchBlock, KV, Reasoning, NextSteps,
+  FrictionBlock, FrictionCol, EmailGate,
 } from './styles';
+
+const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
 
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
@@ -60,6 +63,8 @@ const TestaFaktura = () => {
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailState, setEmailState] = useState('idle'); // idle | submitting | sent
 
   const validateAndSetFile = (f) => {
     setError(null);
@@ -128,7 +133,31 @@ const TestaFaktura = () => {
     setResult(null);
     setPhase(null);
     setError(null);
+    setEmail('');
+    setEmailState('idle');
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const submitEmail = async (e) => {
+    e.preventDefault();
+    if (!email || emailState !== 'idle') return;
+    setEmailState('submitting');
+    try {
+      await fetch(FOUNDING_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'analys_pdf',
+          email,
+          supplier: result?.extracted?.supplier,
+          category: result?.categorized?.category,
+          annual_cost: result?.extracted?.annualCost,
+          net_saving: result?.recommendation?.netSaving,
+          suggested_supplier: result?.recommendation?.suggestedSupplier,
+        }),
+      });
+    } catch { /* non-fatal */ }
+    setEmailState('sent');
   };
 
   const phaseState = (id) => {
@@ -337,6 +366,27 @@ const TestaFaktura = () => {
               </Reasoning>
             )}
 
+            {result.recommendation.shouldSwitch && result.recommendation.netSaving > 0 && (
+              <FrictionBlock>
+                <FrictionCol $variant="bad">
+                  <h4>Att byta på egen hand</h4>
+                  <ul>
+                    <li><span className="icon">✕</span> Telefonkö till din nuvarande leverantör för att säga upp</li>
+                    <li><span className="icon">✕</span> Kall förfrågan till ny leverantör — du förhandlar utan volymmakt</li>
+                    <li><span className="icon">✕</span> Uppsägningstider, portering, ny signering — 2–4 timmar bortslösade</li>
+                  </ul>
+                </FrictionCol>
+                <FrictionCol $variant="good">
+                  <h4>Med Arvo Flow</h4>
+                  <ul>
+                    <li><span className="icon">✓</span> Vi säger upp åt dig — inga samtal, inga väntetider</li>
+                    <li><span className="icon">✓</span> Vi förhandlar med volymmakt och når p25-priset</li>
+                    <li><span className="icon">✓</span> Du betalar 20 % av det vi sparar. Inget annat.</li>
+                  </ul>
+                </FrictionCol>
+              </FrictionBlock>
+            )}
+
             <NextSteps>
               <h3>Vill du att vi byter åt dig?</h3>
               <p>
@@ -353,6 +403,37 @@ const TestaFaktura = () => {
                 </Button>
               </div>
             </NextSteps>
+
+            <EmailGate>
+              <p className="label">📄 Ladda ner analysen som PDF</p>
+              {emailState === 'sent' ? (
+                <div className="sent">
+                  <Icon name="check" size={16} stroke={2.5} />
+                  Vi skickar analysen till {email} inom några minuter.
+                </div>
+              ) : (
+                <form onSubmit={submitEmail}>
+                  <div className="row">
+                    <input
+                      type="email"
+                      placeholder="din@epost.se"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                    <Button
+                      type="submit"
+                      $variant="secondary"
+                      $size="md"
+                      disabled={emailState === 'submitting'}
+                    >
+                      {emailState === 'submitting' ? 'Skickar…' : 'Skicka analysen'}
+                    </Button>
+                  </div>
+                  <p className="note">Ingen spam. Vi skickar ett e-postmeddelande med din analys och hur vi kan hjälpa till.</p>
+                </form>
+              )}
+            </EmailGate>
           </Card>
         )}
       </Body>
