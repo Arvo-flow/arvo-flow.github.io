@@ -80,14 +80,23 @@ Källa: ${sourceStr}`;
 function formatPrompt({ customer, invoice, categorized, benchmark }) {
   const annualCost = invoice.annualCost ?? invoice.amount;
   const employees = customer.employees ?? 1;
+  const isAccountingSystem = categorized.subType === 'affärssystem';
   const bm = benchmark;
   const isPerUser = bm && bm.note.toLowerCase().includes('per användare');
   const scale = isPerUser && employees > 0 ? employees : 1;
   const totalMedian = bm ? bm.median * scale : null;
+
+  // Skip benchmark % comparison for accounting systems — the median is for
+  // e-faktura sending services (Kivra/Billogram) and comparing an ERP
+  // subscription against that is misleading and damages credibility.
   const overpaymentPct =
-    totalMedian && totalMedian > 0
+    !isAccountingSystem && totalMedian && totalMedian > 0
       ? Math.round(((annualCost - totalMedian) / totalMedian) * 100)
       : null;
+
+  const benchmarkNote = isAccountingSystem
+    ? '(Affärssystem — ingen procentuell benchmark-jämförelse. Fokusera på om inbyggda funktioner redan täcker behovet och om kostnaden är rimlig för ett affärssystem av denna typ. Nämn INTE procentjämförelse mot median.)'
+    : formatBenchmark(benchmark, employees);
 
   return `Kunden:
   Bolagstyp: ${customer.industry}
@@ -102,7 +111,7 @@ Kategoriserad faktura:
   Confidence från Categorizer: ${categorized.confidence}
 
 Branschindex för segmentet:
-${formatBenchmark(benchmark, employees)}
+${benchmarkNote}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }
