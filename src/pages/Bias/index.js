@@ -83,8 +83,8 @@ const Bias = () => (
         <div>
           <h3>Ett erbjudande. Inga val, inga krångel.</h3>
           <p>
-            Vi tar <strong>20 % av den faktiska besparing</strong> som materialiseras under år 1,
-            fakturerat kvartalsvis. Det är det enda du behöver godkänna.
+            Vi tar <strong>20 % av din faktiska besparing</strong>, fakturerat kvartalsvis i takt
+            med att pengarna landar på ditt konto. Det är det enda du behöver godkänna.
           </p>
           <p>
             Om affiliate-intäkter från leverantörer överstiger de tak som anges i tabellen nedan,

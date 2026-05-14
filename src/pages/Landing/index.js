@@ -44,7 +44,7 @@ const HOW_STEPS = [
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Inget i förskott. Vi tar 20 % av den faktiska besparing som materialiseras under år 1, fakturerat kvartalsvis. Hittar vi inget — kostar det inget.',
+    a: 'Inget i förskott. Vi tar 20 % av din faktiska besparing, fakturerat kvartalsvis i takt med att pengarna landar. Hittar vi inget — kostar det inget.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
@@ -253,7 +253,7 @@ const Landing = () => {
           <div className="icon"><Icon name="trend" size={22} stroke={2} /></div>
           <h3>Inga fasta avgifter</h3>
           <p>
-            Vi tjänar pengar bara när du gör det. 20 % av faktiska besparingar år 1,
+            Vi tjänar pengar bara när du gör det. 20 % av din faktiska besparing,
             fakturerat kvartalsvis i takt med att pengarna landar.
           </p>
           <strong>Hittar vi inget kostar det inget.</strong>
@@ -343,7 +343,7 @@ const Landing = () => {
           <PricingInner>
             <div>
               <span className="kicker">Success-baserat</span>
-              <h3>20 % av faktisk besparing år 1.</h3>
+              <h3>20 % av din faktiska besparing.</h3>
               <p>Inga månadsavgifter. Inga uppstartskostnader. Vi mäter besparingen via Fortnox och fakturerar kvartalsvis i takt med att du faktiskt sparar pengarna. Hittar vi inget — kostar det inget.</p>
             </div>
             <ul>
