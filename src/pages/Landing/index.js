@@ -229,8 +229,10 @@ const Landing = () => {
             ligger utanför vad vi kommer åt.
           </p>
           <ul>
+            <li className="group-label">Vad vi läser</li>
             <li><Icon name="check" size={14} stroke={2.4} /> Leverantörsfakturor</li>
             <li><Icon name="check" size={14} stroke={2.4} /> Avtal &amp; förfallodatum</li>
+            <li className="group-label blocked">Utanför vår räckvidd</li>
             <li className="no"><Icon name="lock" size={14} stroke={2} /> Lön &amp; personnummer</li>
             <li className="no"><Icon name="lock" size={14} stroke={2} /> Kundfakturor</li>
           </ul>

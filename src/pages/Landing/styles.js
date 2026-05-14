@@ -295,56 +295,75 @@ export const TickerText = styled.div`
 `;
 
 export const TrustStrip = styled.section`
+  position: relative;
   max-width: ${({ theme }) => theme.size.container};
   margin: 0 auto;
-  padding: 80px 28px 40px;
+  padding: 88px 28px 80px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: calc(-50vw + 50%);
+    right: calc(-50vw + 50%);
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    z-index: -1;
+  }
+
   @media (max-width: 860px) {
     grid-template-columns: 1fr;
-    padding: 56px 20px 24px;
+    padding: 64px 20px 56px;
   }
 `;
 
 export const TrustPillar = styled.div`
   background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  padding: 28px 24px;
+  border-radius: ${({ theme }) => theme.size.radius.xl};
+  padding: 36px 32px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  box-shadow:
+    0 0 0 1px rgba(27, 122, 110, 0.07),
+    0 2px 4px rgba(14, 26, 23, 0.04),
+    0 8px 28px rgba(14, 26, 23, 0.07);
   transition: transform ${({ theme }) => theme.motion.base},
               box-shadow ${({ theme }) => theme.motion.base};
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.shadow.sm};
+    transform: translateY(-3px);
+    box-shadow:
+      0 0 0 1px rgba(27, 122, 110, 0.10),
+      0 4px 8px rgba(14, 26, 23, 0.06),
+      0 20px 48px rgba(14, 26, 23, 0.10);
   }
 
   div.icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: ${({ theme }) => theme.color.brandSoft};
-    color: ${({ theme }) => theme.color.brand};
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brandGradient};
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    flex-shrink: 0;
   }
 
   h3 {
-    font-size: 20px;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
+    font-size: 19px;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
     color: ${({ theme }) => theme.color.ink};
   }
 
   p {
-    font-size: 14.5px;
-    line-height: 1.55;
+    font-size: 14px;
+    line-height: 1.6;
     color: ${({ theme }) => theme.color.inkSoft};
   }
 
@@ -357,18 +376,37 @@ export const TrustPillar = styled.div`
   }
 
   ul {
-    margin-top: 6px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 14px;
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  ul li.group-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: ${({ theme }) => theme.color.brand};
+    padding: 14px 0 8px;
+    border-top: 1px solid ${({ theme }) => theme.color.border};
+    margin-top: 2px;
+  }
+  ul li.group-label:first-child {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+  }
+  ul li.group-label.blocked {
+    color: ${({ theme }) => theme.color.muted};
   }
   ul li {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12.5px;
+    gap: 10px;
+    font-size: 13.5px;
     color: ${({ theme }) => theme.color.ink};
     font-weight: 500;
+    padding: 5px 0;
   }
   ul li svg {
     color: ${({ theme }) => theme.color.brand};
@@ -376,11 +414,11 @@ export const TrustPillar = styled.div`
   }
   ul li.no {
     color: ${({ theme }) => theme.color.muted};
-    font-weight: 500;
+    font-weight: 400;
   }
   ul li.no svg {
     color: ${({ theme }) => theme.color.muted};
-    opacity: 0.55;
+    opacity: 0.5;
   }
 `;
 
