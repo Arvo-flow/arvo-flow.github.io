@@ -342,16 +342,16 @@ const Landing = () => {
         <SectionHead>
           <span className="kicker">Founding Members · Begränsade platser</span>
           <h2>Vill du vara först ut?</h2>
-          <p>Vi tar in 50 svenska småföretag innan publik lansering. Du får personlig onboarding direkt med grundarna, prislåst första 12 månader, och påverkan över vilka kategorier vi prioriterar härnäst.</p>
+          <p>Vi tar in 50 svenska småföretag innan publik lansering. Du får personlig onboarding direkt med grundarna, tjänsten gratis de första 6 månaderna, och påverkan över vilka kategorier vi prioriterar härnäst.</p>
         </SectionHead>
         <FoundingCard>
           <FoundingLeft>
             <span className="kicker">Founding Member</span>
             <h2>50 platser. Du får påverkan.</h2>
-            <p className="lede">Vi släpper Arvo Flow stegvis. Founding Members får tillgång först, betalar success-fee enligt samma transparenta modell, och hjälper oss prioritera vilka leverantörskategorier som ska in härnäst.</p>
+            <p className="lede">Vi släpper Arvo Flow stegvis. Founding Members får tillgång först, tjänsten helt gratis de första 6 månaderna, och hjälper oss prioritera vilka leverantörskategorier som ska in härnäst.</p>
             <ul className="benefits">
               <li><Icon name="check" size={16} stroke={2.4} /> Personlig onboarding direkt med grundarna — 30 min Teams</li>
-              <li><Icon name="check" size={16} stroke={2.4} /> Prislåst success-fee på 20 % i 12 mån (mot fluktuerande efter lansering)</li>
+              <li><Icon name="check" size={16} stroke={2.4} /> Tjänsten är helt gratis de första 6 månaderna — ingen success-fee, inga avgifter</li>
               <li><Icon name="check" size={16} stroke={2.4} /> Du röstar på vilka kategorier vi öppnar nästa kvartal</li>
               <li><Icon name="check" size={16} stroke={2.4} /> Garanterad förtur till försäkrings­byten när FI-licensen är klar</li>
             </ul>
