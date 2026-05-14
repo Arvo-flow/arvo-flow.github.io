@@ -15,7 +15,7 @@ const Integritet = () => (
     <Nav variant="public" />
 
     <Hero>
-      <Eyebrow><span className="dot" /> Integritetspolicy & DPA · Version 1.2 · Senast uppdaterad 2026-05-13</Eyebrow>
+      <Eyebrow><span className="dot" /> Integritetspolicy & DPA · Version 1.3 · Senast uppdaterad 2026-05-14</Eyebrow>
       <Headline>Du <em>äger</em> din data. Vi förvaltar den.</Headline>
       <Lede>
         Vi läser bara den fakturadata vi behöver för att hitta överpriser — inget annat.
@@ -100,7 +100,10 @@ const Integritet = () => (
           <TableRow>
             <div className="k">Leverantörsfakturor</div>
             <div className="v">Belopp, leverantör, kategori, förfallodatum, fakturarader.
-              Rättslig grund: <em>fullgörande av avtal</em>.</div>
+              Rättslig grund: <em>fullgörande av avtal</em>.{' '}
+              Anonymiserade uppgifter (belopp, leverantör, kategori) används även för att bygga
+              Arvo Flows branschindex — se § 4 nedan.
+              Rättslig grund för indexanvändning: <em>berättigat intresse</em>.</div>
           </TableRow>
           <TableRow>
             <div className="k">Tekniska data</div>
@@ -131,7 +134,11 @@ const Integritet = () => (
           <li><strong>Vid uppsägning:</strong> Transaktionsdata raderas inom 24 timmar.</li>
           <li><strong>Bokföringsunderlag:</strong> 7 år enligt bokföringslagen (2 kap. 1 § BFL).</li>
           <li><strong>Marknadsföringssamtycke:</strong> Tills du återkallar samtycket.</li>
-          <li><strong>Anonymiserad statistik:</strong> Sparas obegränsat för produkt- och branschanalys.</li>
+          <li><strong>Anonymiserad statistik (branschindex):</strong> Belopp, leverantör och kategori
+            från leverantörsfakturor anonymiseras och används för att beräkna marknadsmedian och
+            prispercentiler per bransch och bolagsstorlek. Detta aggregerade index är grunden för
+            Tjänstens jämförelser och rekommendationer. Inga uppgifter kan härledas till ett
+            enskilt bolag. Sparas obegränsat.</li>
         </ul>
       </Clause>
 
@@ -214,9 +221,10 @@ const Integritet = () => (
 
       <Clause>
         <h3>3. Instruktion</h3>
-        <p>Biträdet får endast behandla uppgifter för att optimera avtal och fakturera enligt
-          de <Link to="/villkor">Allmänna villkoren</Link>. Ytterligare instruktioner från
-          Kunden ska vara skriftliga.</p>
+        <p>Biträdet får behandla uppgifter för att (i) optimera avtal och fakturera enligt
+          de <Link to="/villkor">Allmänna villkoren</Link>, samt (ii) anonymisera och aggregera
+          fakturauppgifter (belopp, leverantör, kategori) för Tjänstens branschindex enligt § 4
+          i Integritetspolicyn. Ytterligare instruktioner från Kunden ska vara skriftliga.</p>
       </Clause>
 
       <Clause>
@@ -249,8 +257,8 @@ const Integritet = () => (
       </Clause>
 
       <FineprintBar>
-        <strong>Arvo Flow AB</strong> · Org.nr 559500-0000 · Stockholm · Integritetspolicy &amp; DPA v1.2 ·
-        Senast uppdaterad 2026-05-13. <br />
+        <strong>Arvo Flow AB</strong> · Org.nr 559500-0000 · Stockholm · Integritetspolicy &amp; DPA v1.3 ·
+        Senast uppdaterad 2026-05-14. <br />
         Frågor: <a href="mailto:gdpr@arvo.flow" style={{ color: 'inherit', textDecoration: 'underline' }}>gdpr@arvo.flow</a>.
       </FineprintBar>
     </Body>
