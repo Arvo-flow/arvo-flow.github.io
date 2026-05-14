@@ -14,7 +14,7 @@ import {
 } from './styles';
 
 const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
-const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/ko4luxd9r36ora2qg2diy8wlfq1ke4fa';
+const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/x1fvf45rfk9aqmqxjpyj9q7rggrnixc2';
 
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
