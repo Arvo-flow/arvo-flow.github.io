@@ -106,9 +106,14 @@ const TestaFaktura = () => {
     setResult(null);
     setPhase('uploading');
 
+    // Advance progress phases on a timer so all 3 steps are visible.
+    // Timers are cleared immediately if the real response arrives early.
+    let t1, t2;
     try {
       const pdfBase64 = await fileToBase64(file);
       setPhase('extract');
+      t1 = setTimeout(() => setPhase('categorize'), 3500);
+      t2 = setTimeout(() => setPhase('recommend'),  6500);
 
       const res = await fetch('/api/test-invoice', {
         method: 'POST',
@@ -121,6 +126,9 @@ const TestaFaktura = () => {
         }),
       });
 
+      clearTimeout(t1);
+      clearTimeout(t2);
+
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) {
         throw new Error(data.error || `Servern returnerade ${res.status}`);
@@ -129,6 +137,8 @@ const TestaFaktura = () => {
       setPhase('done');
       setResult(data);
     } catch (err) {
+      clearTimeout(t1);
+      clearTimeout(t2);
       setPhase(null);
       setError(err.message || 'Något gick fel. Försök igen.');
     }
