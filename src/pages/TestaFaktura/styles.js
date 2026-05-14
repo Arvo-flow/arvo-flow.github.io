@@ -418,52 +418,32 @@ export const NextSteps = styled.div`
   }
 `;
 
-export const FrictionBlock = styled.div`
-  margin-top: 24px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  overflow: hidden;
-  border: 1px solid ${({ theme }) => theme.color.border};
-  @media (max-width: 540px) { grid-template-columns: 1fr; }
-`;
-
-export const FrictionCol = styled.div`
-  padding: 20px 22px;
-  background: ${({ $variant, theme }) =>
-    $variant === 'bad' ? theme.color.dangerSoft : theme.color.brandSoft};
-
-  h4 {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: ${({ $variant, theme }) =>
-      $variant === 'bad' ? theme.color.danger : theme.color.brand};
-    margin-bottom: 14px;
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 11px;
-  }
+export const ServiceList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 28px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 
   li {
     display: flex;
-    gap: 9px;
-    align-items: flex-start;
-    font-size: 13.5px;
-    line-height: 1.5;
+    align-items: center;
+    gap: 10px;
+    font-size: 14.5px;
     color: ${({ theme }) => theme.color.inkSoft};
+    line-height: 1.5;
 
-    span.icon {
+    span.check {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
-      margin-top: 1px;
-      font-style: normal;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: ${({ theme }) => theme.color.brandSoft};
+      color: ${({ theme }) => theme.color.brand};
     }
   }
 `;
