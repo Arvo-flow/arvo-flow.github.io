@@ -33,27 +33,45 @@ const STRONG_DESC_SIGNALS = {
   'leasing-bil':  ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
 };
 
-// Returns { category, confidence, reasoning } if a strong deterministic match
-// is found, otherwise null. Called before the AI to short-circuit obvious cases.
+// Telecom supplier keywords — when combined with any subscription signal → mobil.
+const TELECOM_SUPPLIER_SIGNALS = ['telekom', 'telecom', 'tele2', 'telia', 'telenor', ' tre ', 'comviq', 'halebop', 'vimla'];
+const SUBSCRIPTION_DESC_SIGNALS = ['abonnemang', 'abonnement', 'subscription', 'månadsavgift telefon', 'telefonitjänst'];
+
+// Returns a result object if a strong deterministic match is found, otherwise null.
 function deterministicMatch(invoice) {
   const desc = (invoice.description ?? '').toLowerCase();
   const supplier = (invoice.supplier ?? '').toLowerCase();
   const combined = `${desc} ${supplier}`;
 
+  // Rule 1: explicit service description anywhere in combined text
   for (const [category, signals] of Object.entries(STRONG_DESC_SIGNALS)) {
     const hit = signals.find((s) => combined.includes(s));
     if (hit) {
-      const def = CATEGORIES[category];
       return {
         category,
         subType: '',
         normalizedSupplier: invoice.supplier ?? '',
         confidence: 0.92,
         reasoning: `Deterministisk matchning: "${hit}" hittades i fakturatexten`,
-        licensePending: def?.licensePending ?? false,
+        licensePending: CATEGORIES[category]?.licensePending ?? false,
       };
     }
   }
+
+  // Rule 2: telecom supplier + any subscription signal → mobil
+  const isTelesupplier = TELECOM_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  const isSubscription = SUBSCRIPTION_DESC_SIGNALS.some((s) => desc.includes(s));
+  if (isTelesupplier && isSubscription) {
+    return {
+      category: 'mobil',
+      subType: 'företag',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.88,
+      reasoning: `Deterministisk matchning: telecomleverantör + abonnemangsbeskrivning`,
+      licensePending: false,
+    };
+  }
+
   return null;
 }
 
