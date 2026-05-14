@@ -8,7 +8,26 @@ export const SOURCE = 'mock';
 export const SOURCE_NOTE =
   'Estimat från publika listpriser 2026. Ersätts med riktig aggregerad data när vi har ≥10 datapunkter per segment.';
 
-export const INDUSTRIES = ['byraer', 'hantverkare', 'ehandel', 'tillverkning'];
+// User-facing industry keys (what the UI collects and the DB stores)
+export const INDUSTRIES = [
+  'ehandel', 'tillverkning', 'it-tech', 'bygg',
+  'hotell', 'konsult', 'transport', 'vard', 'ovrigt',
+];
+
+// Maps user-facing keys → the benchmark segment that has real mock/DB data.
+// Segments with dedicated data keep their own key; others fall back to the
+// nearest segment until enough invoice datapoints accumulate.
+export const INDUSTRY_SEGMENT_MAP = {
+  ehandel:     'ehandel',
+  tillverkning:'tillverkning',
+  'it-tech':   'byraer',
+  bygg:        'hantverkare',
+  hotell:      'byraer',
+  konsult:     'byraer',
+  transport:   'hantverkare',
+  vard:        'byraer',
+  ovrigt:      'byraer',
+};
 
 export const SIZE_BUCKETS = [
   { id: 'micro', label: '1–9 anställda',   min: 1,  max: 9   },
@@ -170,7 +189,7 @@ export function getBenchmark({ category, industry, employees }) {
   const cat = BRANCHINDEX[category];
   if (!cat) return null;
 
-  const ind = INDUSTRIES.includes(industry) ? industry : 'byraer';
+  const ind = INDUSTRY_SEGMENT_MAP[industry] ?? 'byraer';
   const size = bucketForSize(employees ?? 5);
   const cell = cat.matrix[ind]?.[size];
   if (!cell) return null;
