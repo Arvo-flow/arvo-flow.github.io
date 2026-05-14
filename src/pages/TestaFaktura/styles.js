@@ -372,24 +372,24 @@ export const KV = styled.dl`
 `;
 
 export const Reasoning = styled.div`
-  margin-top: 20px;
-  padding: 16px 18px;
-  border-radius: ${({ theme }) => theme.size.radius.md};
-  background: ${({ theme }) => theme.color.surfaceAlt};
-  border: 1px solid ${({ theme }) => theme.color.border};
+  margin-top: 24px;
+  padding-left: 20px;
+  border-left: 3px solid ${({ theme }) => theme.color.brand};
 
   span.kicker {
     display: block;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 6px;
+    letter-spacing: 0.09em;
+    color: ${({ theme }) => theme.color.brand};
+    margin-bottom: 8px;
   }
   p {
-    font-size: 14px;
-    line-height: 1.6;
+    font-family: ${({ theme }) => theme.font.display};
+    font-style: italic;
+    font-size: 16px;
+    line-height: 1.65;
     color: ${({ theme }) => theme.color.inkSoft};
   }
 `;
