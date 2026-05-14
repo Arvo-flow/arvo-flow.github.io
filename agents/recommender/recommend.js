@@ -15,7 +15,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, RECOMMEND_TOOL } from './prompt.js';
-import { getBenchmark, SOURCE, SOURCE_NOTE } from './branchindex.js';
+import { getBenchmark } from '../../lib/benchmark.js';
 import { CATEGORIES } from '../categorizer/categories.js';
 
 const MODEL = 'claude-sonnet-4-6';
@@ -56,12 +56,17 @@ function formatBenchmark(benchmark, employees) {
     ? ` (${benchmark.median.toLocaleString('sv-SE')} kr/användare × ${employees} anställda)`
     : '';
 
-  const altList = benchmark.alternatives
+  const altList = (benchmark.alternatives ?? [])
     .map(
       (a) =>
         `  - ${a.supplier} (reliability ${a.reliability})\n    ${a.positioning}`
     )
     .join('\n');
+
+  const sourceStr = benchmark.source === 'real'
+    ? `Arvo Flow branschindex — ${benchmark.n} verkliga datapunkter`
+    : 'Estimat från publika listpriser (ersätts med riktig kunddata)';
+
   return `Bransch: ${benchmark.industry}, storlek: ${benchmark.size}
 Median (total, per år): ${totalMedian.toLocaleString('sv-SE')} ${benchmark.unit}${scaleNote}
 P25 (bästa 25 %, per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${employees} anställda)` : ''}
@@ -69,7 +74,7 @@ P25 (bästa 25 %, per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit
 Alternativa leverantörer:
 ${altList}
 
-Källa: ${SOURCE} — ${SOURCE_NOTE}`;
+Källa: ${sourceStr}`;
 }
 
 function formatPrompt({ customer, invoice, categorized, benchmark }) {
@@ -119,7 +124,7 @@ export async function recommend(input, opts = {}) {
     );
   }
 
-  const benchmark = getBenchmark({
+  const benchmark = await getBenchmark({
     category: input.categorized.category,
     industry: input.customer.industry,
     employees: input.customer.employees,

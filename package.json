@@ -5,6 +5,8 @@
   "homepage": "https://arvo-flow.github.io/flow",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "@vercel/kv": "^3.0.0",
     "axios": "^1.14.0",
     "better-sqlite3": "^12.8.0",
     "cors": "^2.8.6",
@@ -27,7 +29,8 @@
     "server": "node server/index.js",
     "seed": "node server/seed.js",
     "test:webhook": "node server/test-webhook.js",
-    "test:invoice": "node agents/test-invoice/cli.js"
+    "test:invoice": "node agents/test-invoice/cli.js",
+    "db:migrate": "node --env-file=.env scripts/migrate.mjs"
   },
   "eslintConfig": {
     "extends": "react-app"
