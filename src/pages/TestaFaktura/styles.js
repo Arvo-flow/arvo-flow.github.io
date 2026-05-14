@@ -387,10 +387,9 @@ export const Reasoning = styled.div`
   }
   p {
     font-family: ${({ theme }) => theme.font.display};
-    font-style: italic;
-    font-size: 16px;
+    font-size: 15.5px;
     line-height: 1.65;
-    color: ${({ theme }) => theme.color.inkSoft};
+    color: ${({ theme }) => theme.color.ink};
   }
 `;
 
