@@ -240,7 +240,7 @@ const Landing = () => {
 
         <TrustPillar>
           <div className="icon"><Icon name="check" size={22} stroke={2.4} /></div>
-          <h3>Besparingsgarantin</h3>
+          <h3>Vårt löfte</h3>
           <p>
             Hittar vi inga överpriser på 30 dagar är ditt bolag redan optimerat.
             Vi raderar Fortnox-kopplingen och all data automatiskt.
@@ -334,7 +334,7 @@ const Landing = () => {
               <li><Icon name="check" size={18} stroke={2.2} /> Förberedda byten med BankID-signering</li>
               <li><Icon name="check" size={18} stroke={2.2} /> Prisgaranti — höjs priset får du tillbaka mellanskillnaden</li>
               <li><Icon name="check" size={18} stroke={2.2} /> Branschindex tillgängligt för dig som kund</li>
-              <li><Icon name="check" size={18} stroke={2.2} /> <strong>Besparingsgarantin</strong> — hittar vi inga överpriser på 30 dagar raderas data + koppling automatiskt</li>
+              <li><Icon name="check" size={18} stroke={2.2} /> <strong>Vårt löfte</strong> — hittar vi inga överpriser på 30 dagar raderas data + koppling automatiskt</li>
             </ul>
           </PricingInner>
         </PricingCard>
