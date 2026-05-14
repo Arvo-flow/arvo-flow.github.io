@@ -23,6 +23,11 @@ const Connect = () => {
       setShowConsentError(true);
       return;
     }
+    if (provider === 'fortnox') {
+      window.location.href = '/api/fortnox/auth';
+      return;
+    }
+    // Visma OAuth not yet implemented — placeholder
     setConnecting(true);
     setTimeout(() => navigate('/scanning'), 900);
   };
@@ -119,7 +124,8 @@ const Connect = () => {
               aria-describedby="consent-text"
             />
             <span className="text" id="consent-text">
-              Jag accepterar <Link to="/villkor">de allmänna villkoren</Link> och bekräftar att jag
+              Jag accepterar <Link to="/villkor">de allmänna villkoren</Link> och{' '}
+              <Link to="/integritet">integritetspolicyn</Link> och bekräftar att jag
               har behörighet att utfärda fullmakt för företaget.
             </span>
           </ConsentRow>
