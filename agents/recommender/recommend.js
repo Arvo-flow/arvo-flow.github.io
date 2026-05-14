@@ -220,6 +220,22 @@ export async function recommend(input, opts = {}) {
     result.switchSteps = [];
   }
 
+  // Deterministic financial overrides — AI provides reasoning only.
+  // All SEK figures are locked to benchmark.p25 so results never vary
+  // between runs. The model must not be trusted for financial arithmetic.
+  if (result.shouldSwitch && benchmark) {
+    const annualCost = input.invoice.annualCost ?? input.invoice.amount ?? 0;
+    const employees = input.customer.employees ?? 1;
+    const isPerUser = benchmark.note.toLowerCase().includes('per användare');
+    const scale = isPerUser && employees > 0 ? employees : 1;
+
+    result.suggestedAnnualCost = Math.round(benchmark.p25 * scale);
+    result.savingPerYear = Math.max(0, Math.round(annualCost - result.suggestedAnnualCost));
+    result.overpaymentPercent = benchmark.median > 0
+      ? Math.round(((annualCost - benchmark.median * scale) / (benchmark.median * scale)) * 100)
+      : (result.overpaymentPercent ?? 0);
+  }
+
   return {
     ...result,
     suggestedSupplier: result.suggestedSupplier ?? null,
