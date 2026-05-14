@@ -109,7 +109,7 @@ export default async function handler(req, res) {
     timing.totalMs = Date.now() - t0;
 
     // Räkna netto/fee enligt samma modell som resten av appen
-    const grossSaving = recommendation.estimatedAnnualSaving ?? 0;
+    const grossSaving = recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0;
     const arvoFee = categorized.licensePending ? 0 : Math.round(grossSaving * 0.20);
     const netSaving = categorized.licensePending ? grossSaving : grossSaving - arvoFee;
 
