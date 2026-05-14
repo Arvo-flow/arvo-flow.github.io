@@ -323,7 +323,7 @@ const Landing = () => {
             </div>
             <div>
               <strong>500+</strong>
-              <span>småföretag i Sverige som låter Arvo bevaka sina kostnader</span>
+              <span>företag i Sverige som låter Arvo bevaka sina kostnader</span>
             </div>
             <div>
               <strong>0 kr</strong>
@@ -361,7 +361,7 @@ const Landing = () => {
         <SectionHead>
           <span className="kicker">Founding Members · Begränsade platser</span>
           <h2>Vill du vara först ut?</h2>
-          <p>Vi tar in 50 svenska småföretag innan publik lansering. Du får personlig onboarding direkt med grundarna, tjänsten gratis de första 6 månaderna, och påverkan över vilka kategorier vi prioriterar härnäst.</p>
+          <p>Vi tar in 50 svenska företag innan publik lansering. Du får personlig onboarding direkt med grundarna, tjänsten gratis de första 6 månaderna, och påverkan över vilka kategorier vi prioriterar härnäst.</p>
         </SectionHead>
         <FoundingCard>
           <FoundingLeft>
