@@ -265,11 +265,10 @@ const Landing = () => {
           <div className="eyebrow"><Icon name="shield" size={13} stroke={2} /> Rankningspolicy</div>
           <h2>100 % oberoende. Vår algoritm styrs av din besparing, inte provisioner.</h2>
           <p>
-            Affiliate-ersättningar från leverantörer är hårt kapade per kategori — ett fast tak som
-            aldrig kan överskridas oavsett vad en leverantör är villig att betala. Om intäkten ändå
-            överstiger taket krediteras överskottet automatiskt tillbaka till dig. Det gör vår
-            rankningsalgoritm matematiskt och ekonomiskt objektiv: det finns inget scenario där det
-            lönar sig för oss att rekommendera fel leverantör.
+            Vi står på din sida, inte leverantörens. Genom fasta tak för ersättningar säkerställer
+            vi att vår algoritm alltid är objektiv och enbart prioriterar din besparing. Om en
+            leverantör erbjuder mer än vårt tak, krediteras överskottet direkt till dig. Det är
+            matematisk transparens – inga dolda agendor, bara lägre kostnader.
           </p>
           <Link to="/bias" className="cta-link">
             Läs hur vår algoritm rankar <Icon name="arrow" size={15} />
