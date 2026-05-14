@@ -8,6 +8,7 @@
 import { extractInvoice, ExtractorError } from '../agents/test-invoice/extract.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
+import { storeDatapoint } from '../lib/benchmark.js';
 
 export const config = {
   maxDuration: 60,
@@ -107,6 +108,16 @@ export default async function handler(req, res) {
     });
     timing.recommendMs = Date.now() - t2;
     timing.totalMs = Date.now() - t0;
+
+    // Fire-and-forget — lagrar anonymiserad datapunkt för branschindex.
+    // Felet får aldrig blockera svaret till kunden.
+    storeDatapoint({
+      category: categorized.category,
+      supplier: categorized.normalizedSupplier,
+      annualCost: extracted.annualCost ?? extracted.amount,
+      industry,
+      employees: employeesNum,
+    }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
     // Räkna netto/fee enligt samma modell som resten av appen
     const grossSaving = recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0;
