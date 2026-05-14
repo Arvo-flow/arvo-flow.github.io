@@ -44,4 +44,15 @@ await sql`
   )
 `;
 
-console.log('Migration klar — invoice_datapoints och fortnox_connections är redo.');
+await sql`
+  CREATE TABLE IF NOT EXISTS customers (
+    id            UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    industry      TEXT        NOT NULL,
+    employees     INTEGER     NOT NULL,
+    fortnox_id    UUID        REFERENCES fortnox_connections(id) ON DELETE SET NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+
+console.log('Migration klar — invoice_datapoints, fortnox_connections och customers är redo.');
