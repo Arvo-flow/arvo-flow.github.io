@@ -85,19 +85,32 @@ function formatPrompt({ customer, invoice, categorized, benchmark }) {
   const isPerUser = bm && bm.note.toLowerCase().includes('per användare');
   const scale = isPerUser && employees > 0 ? employees : 1;
   const totalMedian = bm ? bm.median * scale : null;
+  const isRealData = bm?.source === 'real';
+  const dataPoints = bm?.n ?? 0;
 
-  // Skip benchmark % comparison for accounting systems — the median is for
-  // e-faktura sending services (Kivra/Billogram) and comparing an ERP
-  // subscription against that is misleading and damages credibility.
-  // Keep the full benchmark data so the AI can still reason about what
-  // functionality is included vs. separately purchased.
+  // Skip benchmark % comparison for accounting systems.
   const overpaymentPct =
     !isAccountingSystem && totalMedian && totalMedian > 0
       ? Math.round(((annualCost - totalMedian) / totalMedian) * 100)
       : null;
 
-  const benchmarkNote = isAccountingSystem
-    ? formatBenchmark(benchmark, employees) + '\n\nOBS: Detta är ett affärssystem (ERP/bokföring). Jämför INTE kostnaden procentuellt mot medianen — affärssystem är inte jämförbara med fristående fakturatjänster. Undersök istället om den fakturerade tjänsten redan ingår i befintlig licens och ge en konkret åtgärdsrekommendation om så är fallet.'
+  // Annotation injected next to the annual cost — controls what the AI echoes
+  // back in its reasoning. Real data → "medianen". Mock → "marknadens referenspriser".
+  const overpaymentAnnotation = overpaymentPct !== null
+    ? isRealData
+      ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER medianen' : Math.abs(overpaymentPct) + ' % UNDER medianen'} (${dataPoints} analyserade fakturor i databasen)`
+      : `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER marknadens referenspriser' : Math.abs(overpaymentPct) + ' % UNDER marknadens referenspriser'}`
+    : '';
+
+  // Explicit phrasing instruction so the AI uses the right language in reasoning.
+  const phrasingRule = isAccountingSystem
+    ? 'OBS: Detta är ett affärssystem. Jämför INTE kostnaden procentuellt mot medianen. Undersök om inbyggda funktioner täcker behovet och ge konkret åtgärdsrekommendation.'
+    : isRealData
+      ? `OBS: Benchmarkdatan är baserad på ${dataPoints} verkliga kundfakturor i Arvo Flows databas. I din reasoning, skriv "X % över medianen, baserat på ${dataPoints} analyserade fakturor i er bransch." — använd ALDRIG "referenspriser".`
+      : 'OBS: Benchmarkdatan är estimat från offentliga listpriser — INTE från verkliga kundfakturor. I din reasoning, skriv "X % över marknadens referenspriser" — ALDRIG "medianen" eller "verkliga datapunkter".';
+
+  const benchmarkBlock = isAccountingSystem
+    ? formatBenchmark(benchmark, employees) + '\n\n' + phrasingRule
     : formatBenchmark(benchmark, employees);
 
   return `Kunden:
@@ -109,11 +122,13 @@ Kategoriserad faktura:
   Kategori: ${categorized.category}
   Sub-typ: ${categorized.subType || '(okänd)'}
   Nuvarande leverantör: ${categorized.normalizedSupplier}
-  Årskostnad (totalt): ${annualCost.toLocaleString('sv-SE')} kr${overpaymentPct !== null ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER medianen' : Math.abs(overpaymentPct) + ' % UNDER medianen'}` : ''}
+  Årskostnad (totalt): ${annualCost.toLocaleString('sv-SE')} kr${overpaymentAnnotation}
   Confidence från Categorizer: ${categorized.confidence}
 
 Branschindex för segmentet:
-${benchmarkNote}
+${benchmarkBlock}
+
+${phrasingRule}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }
