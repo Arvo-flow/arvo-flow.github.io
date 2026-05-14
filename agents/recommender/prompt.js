@@ -150,6 +150,9 @@ REGLER FÖR REASONING
 - Om vipQueue: true, förklara *varför* det inte kan bytas än ("vi väntar på FI-tillstånd").
 - Förklara *varför just denna alternativ* — inte bara att den är billigare. T.ex. "Tibber matchar p25 och har bäst app-stöd för månadsuppföljning."
 
+FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
+suggestedAnnualCost och savingPerYear låses i kod mot benchmark.p25. Fyll i p25-värdet exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
+
 OUTPUTFORMAT
 Anropa alltid verktyget "recommend" med exakt en gång. Skriv ingen brödtext utanför verktygsanropet.
 
