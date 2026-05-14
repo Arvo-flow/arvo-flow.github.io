@@ -32,4 +32,16 @@ await sql`
     ON invoice_datapoints (category, industry, size_bucket)
 `;
 
-console.log('Migration klar — invoice_datapoints-tabellen är redo.');
+await sql`
+  CREATE TABLE IF NOT EXISTS fortnox_connections (
+    id            UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    access_token  TEXT        NOT NULL,
+    refresh_token TEXT,
+    expires_at    TIMESTAMPTZ,
+    scope         TEXT        NOT NULL DEFAULT 'supplierinvoice',
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+
+console.log('Migration klar — invoice_datapoints och fortnox_connections är redo.');
