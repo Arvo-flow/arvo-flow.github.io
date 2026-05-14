@@ -14,6 +14,7 @@ import {
 } from './styles';
 
 const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
+const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/eeaax2i1k03cycl39zqlpdt9ixlu4o2x';
 
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
@@ -143,9 +144,10 @@ const TestaFaktura = () => {
     if (!email || emailState !== 'idle') return;
     setEmailState('submitting');
     try {
-      await fetch(FOUNDING_WEBHOOK_URL, {
+      await fetch(ANALYS_WEBHOOK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({
           type: 'analys_pdf',
           email,

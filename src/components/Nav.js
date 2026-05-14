@@ -50,6 +50,15 @@ const Right = styled.div`
 
 const Nav = ({ variant = 'public' }) => {
   const { pathname } = useLocation();
+
+  const scrollTo = (e, id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <Bar>
       <Inner>
@@ -57,9 +66,9 @@ const Nav = ({ variant = 'public' }) => {
         {variant === 'public' && (
           <Links>
             <Item to="/" $active={pathname === '/'}>Hem</Item>
-            <Item to="/#hur" $active={false}>Så fungerar det</Item>
-            <Item to="/#priser" $active={false}>Pris</Item>
-            <Item to="/#faq" $active={false}>FAQ</Item>
+            <Item to="/#hur" $active={false} onClick={(e) => scrollTo(e, 'hur')}>Så fungerar det</Item>
+            <Item to="/#priser" $active={false} onClick={(e) => scrollTo(e, 'priser')}>Pris</Item>
+            <Item to="/#faq" $active={false} onClick={(e) => scrollTo(e, 'faq')}>FAQ</Item>
           </Links>
         )}
         {variant === 'app' && (

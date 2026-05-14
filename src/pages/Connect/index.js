@@ -66,7 +66,7 @@ const Connect = () => {
           <NoWaste>
             <div className="icon"><Icon name="check" size={16} stroke={2.4} /></div>
             <div>
-              <strong>No Waste Promise — hittar vi inga överpriser på 30 dagar?</strong>
+              <strong>Besparingsgarantin — hittar vi inga överpriser på 30 dagar?</strong>
               <span>Då är ditt bolag redan optimerat. Vi raderar Fortnox-kopplingen och all din data automatiskt — du har inte betalat en krona.</span>
             </div>
           </NoWaste>
