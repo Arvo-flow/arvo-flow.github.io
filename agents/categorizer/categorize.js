@@ -22,6 +22,59 @@ export class CategorizerError extends Error {
   }
 }
 
+// Strong description signals that unambiguously identify a category.
+// Keyed by category ID → array of lowercase substrings to scan for.
+const STRONG_DESC_SIGNALS = {
+  mobil:          ['mobilabonnemang', 'mobiltelefoni', 'telefonabonnemang', 'företagstelefoni', 'mobildata'],
+  el:             ['elförbrukning', 'elavtal', 'elhandel', 'elcertifikat', 'spotpris timme', 'elenergi'],
+  bredband:       ['företagsfiber', 'bredbandsabonnemang', 'fiberabonnemang'],
+  kortterminal:   ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
+  'faktura-tjanst': ['fakturatjänst', 'e-faktura utskick', 'fakturautskick'],
+  'leasing-bil':  ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
+};
+
+// Telecom supplier keywords — when combined with any subscription signal → mobil.
+const TELECOM_SUPPLIER_SIGNALS = ['telekom', 'telecom', 'tele2', 'telia', 'telenor', ' tre ', 'comviq', 'halebop', 'vimla'];
+const SUBSCRIPTION_DESC_SIGNALS = ['abonnemang', 'abonnement', 'subscription', 'månadsavgift telefon', 'telefonitjänst'];
+
+// Returns a result object if a strong deterministic match is found, otherwise null.
+function deterministicMatch(invoice) {
+  const desc = (invoice.description ?? '').toLowerCase();
+  const supplier = (invoice.supplier ?? '').toLowerCase();
+  const combined = `${desc} ${supplier}`;
+
+  // Rule 1: explicit service description anywhere in combined text
+  for (const [category, signals] of Object.entries(STRONG_DESC_SIGNALS)) {
+    const hit = signals.find((s) => combined.includes(s));
+    if (hit) {
+      return {
+        category,
+        subType: '',
+        normalizedSupplier: invoice.supplier ?? '',
+        confidence: 0.92,
+        reasoning: `Deterministisk matchning: "${hit}" hittades i fakturatexten`,
+        licensePending: CATEGORIES[category]?.licensePending ?? false,
+      };
+    }
+  }
+
+  // Rule 2: telecom supplier + any subscription signal → mobil
+  const isTelesupplier = TELECOM_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  const isSubscription = SUBSCRIPTION_DESC_SIGNALS.some((s) => desc.includes(s));
+  if (isTelesupplier && isSubscription) {
+    return {
+      category: 'mobil',
+      subType: 'företag',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.88,
+      reasoning: `Deterministisk matchning: telecomleverantör + abonnemangsbeskrivning`,
+      licensePending: false,
+    };
+  }
+
+  return null;
+}
+
 function formatInvoice(invoice) {
   const lines = [
     'Klassificera denna leverantörsfaktura:',
@@ -79,6 +132,16 @@ export async function categorize(invoice, opts = {}) {
   }
   if (!invoice.supplier) {
     throw new CategorizerError('invoice.supplier är obligatorisk');
+  }
+
+  // Short-circuit for unambiguous cases — avoids AI non-determinism on clear signals.
+  const fast = deterministicMatch(invoice);
+  if (fast) {
+    return {
+      ...fast,
+      usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      raw: fast,
+    };
   }
 
   const client = opts.client ?? getClient();

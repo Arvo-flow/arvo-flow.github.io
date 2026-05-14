@@ -195,7 +195,36 @@ Klassificering:
   subType: ""
   normalizedSupplier: "Energi Sverige"
   confidence: 0.55
-  reasoning: "Namnet antyder energi men beskrivning saknas — för osäkert för el-kategori"`;
+  reasoning: "Namnet antyder energi men beskrivning saknas — för osäkert för el-kategori"
+
+Exempel 13: Okänd leverantör, men beskrivning är entydig (VIKTIGT)
+Input:
+  Leverantör: TeleKom B2B AB
+  Belopp: 3788 kr
+  Datum: 2026-05-14
+  Konto: 6212
+  Beskrivning: Mobilabonnemang 12 användare maj
+Klassificering:
+  category: "mobil"
+  subType: "företag"
+  normalizedSupplier: "TeleKom B2B"
+  confidence: 0.91
+  reasoning: "'Mobilabonnemang' i beskrivning + konto 6212 ger tydlig mobil, leverantörsnamnet är okänt men irrelevant"
+
+Exempel 14: "Telekom" i leverantörsnamnet är stark mobil-signal
+Input:
+  Leverantör: Nordic Telecom Solutions AB
+  Belopp: 5200 kr
+  Datum: 2026-04-01
+  Konto: 6210
+  Beskrivning: Företagstelefoni april
+Klassificering:
+  category: "mobil"
+  subType: "företag"
+  normalizedSupplier: "Nordic Telecom Solutions"
+  confidence: 0.88
+  reasoning: "'Telecom' i leverantörsnamn + 'företagstelefoni' i beskrivning + konto 6210"`;
+
 
 export const SYSTEM_PROMPT = `Du är Arvo Flow Categorizer — en specialiserad klassificerare av leverantörsfakturor från svenska småföretags bokföring (Fortnox/Visma).
 

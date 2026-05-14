@@ -88,6 +88,12 @@ export default async function handler(req, res) {
     const t0 = Date.now();
     const extracted = await extractInvoice({ pdfBytes });
     timing.extractMs = Date.now() - t0;
+    console.log('[test-invoice] extracted:', JSON.stringify({
+      supplier: extracted.supplier,
+      description: extracted.description,
+      account: extracted.account,
+      amount: extracted.amount,
+    }));
 
     const t1 = Date.now();
     const categorized = await categorize({
@@ -99,6 +105,11 @@ export default async function handler(req, res) {
       recurring: extracted.recurring,
     });
     timing.categorizeMs = Date.now() - t1;
+    console.log('[test-invoice] categorized:', JSON.stringify({
+      category: categorized.category,
+      confidence: categorized.confidence,
+      normalizedSupplier: categorized.normalizedSupplier,
+    }));
 
     const t2 = Date.now();
     const recommendation = await recommend({
