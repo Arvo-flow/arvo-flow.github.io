@@ -2,12 +2,13 @@
 // Usage: node --env-file=.env scripts/migrate.mjs
 import { neon } from '@neondatabase/serverless';
 
-if (!process.env.POSTGRES_URL) {
-  console.error('POSTGRES_URL saknas. Sätt den i .env eller exportera variabeln.');
+const url = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
+if (!url) {
+  console.error('DATABASE_URL (eller POSTGRES_URL) saknas. Kör: vercel env pull .env.local');
   process.exit(1);
 }
 
-const sql = neon(process.env.POSTGRES_URL);
+const sql = neon(url);
 
 await sql`
   CREATE TABLE IF NOT EXISTS invoice_datapoints (
