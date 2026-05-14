@@ -7,7 +7,10 @@
 // GET /api/fortnox/auth?industry=byraer&employees=10
 // Required env vars: FORTNOX_CLIENT_ID
 
-const ALLOWED_INDUSTRIES = ['byraer', 'hantverkare', 'ehandel', 'tillverkning'];
+const ALLOWED_INDUSTRIES = [
+  'ehandel', 'tillverkning', 'it-tech', 'bygg',
+  'hotell', 'konsult', 'transport', 'vard', 'ovrigt',
+];
 
 export default function handler(req, res) {
   const clientId = process.env.FORTNOX_CLIENT_ID;

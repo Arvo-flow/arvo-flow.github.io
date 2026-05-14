@@ -19,10 +19,15 @@ const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/eeaax2i1k03cycl39zqlpdt9
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
 const INDUSTRY_LABELS = {
-  byraer: 'Konsultbyrå / Reklam / IT',
-  hantverkare: 'Hantverkare / Bygg',
-  ehandel: 'E-handel',
-  tillverkning: 'Tillverkning / Industri',
+  ehandel:     'E-handel & Detaljhandel',
+  tillverkning:'Industri & Tillverkning',
+  'it-tech':   'IT, Tech & Mjukvara',
+  bygg:        'Bygg, Hantverk & Fastighet',
+  hotell:      'Hotell, Restaurang & Event',
+  konsult:     'Konsult & Företagstjänster',
+  transport:   'Transport & Logistik',
+  vard:        'Vård, Omsorg & Hälsa',
+  ovrigt:      'Övrigt / Annan bransch',
 };
 
 const CATEGORY_LABELS = {
@@ -57,7 +62,7 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
 const TestaFaktura = () => {
   const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
-  const [industry, setIndustry] = useState('byraer');
+  const [industry, setIndustry] = useState('konsult');
   const [employees, setEmployees] = useState(5);
   const [revenue, setRevenue] = useState('');
   const [phase, setPhase] = useState(null);

@@ -18,7 +18,7 @@ const Connect = () => {
   const [connecting, setConnecting] = useState(false);
   const [consent, setConsent] = useState(false);
   const [showConsentError, setShowConsentError] = useState(false);
-  const [industry, setIndustry] = useState('byraer');
+  const [industry, setIndustry] = useState('konsult');
   const [employees, setEmployees] = useState(5);
 
   const start = () => {
@@ -84,10 +84,15 @@ const Connect = () => {
               <ProfileField>
                 <span className="label">Bransch</span>
                 <select value={industry} onChange={(e) => setIndustry(e.target.value)}>
-                  <option value="byraer">Konsultbyrå / Reklam / IT</option>
-                  <option value="hantverkare">Hantverkare / Bygg</option>
-                  <option value="ehandel">E-handel</option>
-                  <option value="tillverkning">Tillverkning / Industri</option>
+                  <option value="ehandel">E-handel &amp; Detaljhandel</option>
+                  <option value="tillverkning">Industri &amp; Tillverkning</option>
+                  <option value="it-tech">IT, Tech &amp; Mjukvara</option>
+                  <option value="bygg">Bygg, Hantverk &amp; Fastighet</option>
+                  <option value="hotell">Hotell, Restaurang &amp; Event</option>
+                  <option value="konsult">Konsult &amp; Företagstjänster</option>
+                  <option value="transport">Transport &amp; Logistik</option>
+                  <option value="vard">Vård, Omsorg &amp; Hälsa</option>
+                  <option value="ovrigt">Övrigt / Annan bransch</option>
                 </select>
               </ProfileField>
               <ProfileField>
