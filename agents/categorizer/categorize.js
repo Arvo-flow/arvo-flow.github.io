@@ -22,6 +22,41 @@ export class CategorizerError extends Error {
   }
 }
 
+// Strong description signals that unambiguously identify a category.
+// Keyed by category ID → array of lowercase substrings to scan for.
+const STRONG_DESC_SIGNALS = {
+  mobil:          ['mobilabonnemang', 'mobiltelefoni', 'telefonabonnemang', 'företagstelefoni', 'mobildata'],
+  el:             ['elförbrukning', 'elavtal', 'elhandel', 'elcertifikat', 'spotpris timme', 'elenergi'],
+  bredband:       ['företagsfiber', 'bredbandsabonnemang', 'fiberabonnemang'],
+  kortterminal:   ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
+  'faktura-tjanst': ['fakturatjänst', 'e-faktura utskick', 'fakturautskick'],
+  'leasing-bil':  ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
+};
+
+// Returns { category, confidence, reasoning } if a strong deterministic match
+// is found, otherwise null. Called before the AI to short-circuit obvious cases.
+function deterministicMatch(invoice) {
+  const desc = (invoice.description ?? '').toLowerCase();
+  const supplier = (invoice.supplier ?? '').toLowerCase();
+  const combined = `${desc} ${supplier}`;
+
+  for (const [category, signals] of Object.entries(STRONG_DESC_SIGNALS)) {
+    const hit = signals.find((s) => combined.includes(s));
+    if (hit) {
+      const def = CATEGORIES[category];
+      return {
+        category,
+        subType: '',
+        normalizedSupplier: invoice.supplier ?? '',
+        confidence: 0.92,
+        reasoning: `Deterministisk matchning: "${hit}" hittades i fakturatexten`,
+        licensePending: def?.licensePending ?? false,
+      };
+    }
+  }
+  return null;
+}
+
 function formatInvoice(invoice) {
   const lines = [
     'Klassificera denna leverantörsfaktura:',
@@ -79,6 +114,16 @@ export async function categorize(invoice, opts = {}) {
   }
   if (!invoice.supplier) {
     throw new CategorizerError('invoice.supplier är obligatorisk');
+  }
+
+  // Short-circuit for unambiguous cases — avoids AI non-determinism on clear signals.
+  const fast = deterministicMatch(invoice);
+  if (fast) {
+    return {
+      ...fast,
+      usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      raw: fast,
+    };
   }
 
   const client = opts.client ?? getClient();
