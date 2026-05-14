@@ -42,7 +42,7 @@ export const CATEGORIES = {
     subTypes: ['anställd', 'företag', 'data'],
     keywords: [
       'mobil', 'mobilabonnemang', 'telefoni', 'telia', 'tele2', 'telenor',
-      'tre', 'halebop', 'vimla', 'comviq',
+      'tre', 'halebop', 'vimla', 'comviq', 'telekom', 'telecom', 'b2b mobil',
     ],
     accountHints: ['6210', '6212'],
   },
