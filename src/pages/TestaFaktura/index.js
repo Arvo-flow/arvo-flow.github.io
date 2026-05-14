@@ -33,7 +33,7 @@ const CATEGORY_LABELS = {
   'forsakring-ansvar': 'Yrkesansvarsförsäkring',
   leasing: 'Företagsleasing',
   kortterminal: 'Kortterminal',
-  fakturatjanst: 'Fakturatjänst',
+  'faktura-tjanst': 'Fakturatjänst / Affärssystem',
   uncategorized: 'Okategoriserad',
 };
 

@@ -67,14 +67,14 @@ export const CATEGORIES = {
     accountHints: ['6390', '6991', '6800'],
   },
   'faktura-tjanst': {
-    label: 'Fakturatjänst',
+    label: 'Fakturatjänst / Affärssystem',
     licensePending: false,
-    subTypes: ['kivra', 'efaktura', 'utskick'],
+    subTypes: ['kivra', 'efaktura', 'utskick', 'affärssystem'],
     keywords: [
       'fakturatjänst', 'kivra', 'e-faktura', 'utskickstjänst',
-      'billogram', 'fortnox e-faktura', 'visma e-faktura',
+      'billogram', 'fortnox', 'visma', 'bokföringsprogram', 'affärssystem',
     ],
-    accountHints: ['6110', '6230'],
+    accountHints: ['6110', '6230', '6540'],
   },
   'leasing-bil': {
     label: 'Företagsleasing',
