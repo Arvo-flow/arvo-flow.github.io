@@ -10,7 +10,7 @@ import {
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, KV,
-  Reasoning, LockedReasoning, NextSteps, ServiceList, EmailGate,
+  Reasoning, NextSteps, ServiceList, EmailGate,
 } from './styles';
 
 const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
@@ -20,6 +20,24 @@ const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
 // Categories with verified public list prices — show supplier name proudly.
 const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+
+// Scrub the suggested supplier name from reasoning text so the tier/price
+// analysis stays visible but the specific alternative brand stays hidden.
+function redactSupplier(text, supplier) {
+  if (!text || !supplier) return text;
+  const words = supplier.split(/\s+/);
+  const terms = [supplier];
+  if (words[0].length >= 4) terms.push(words[0]);
+  if (words.length >= 2) terms.push(`${words[0]} ${words[1]}`);
+  let out = text;
+  for (const term of [...new Set(terms)]) {
+    out = out.replace(
+      new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
+      'Arvo-verifierad partner',
+    );
+  }
+  return out;
+}
 
 // Category 2: contract-based benchmark prices — hide supplier, show verified partner.
 const CATEGORY_PARTNER_LABEL = {
@@ -386,20 +404,25 @@ const TestaFaktura = () => {
                         isRealPrice ? (
                           <PriceNote>Baserat på verifierade publika listpriser (maj 2026).</PriceNote>
                         ) : (
-                          <PartnerBlock>
-                            <div className="left">
-                              <span className="verified-badge">
-                                <Icon name="check" size={12} stroke={2.5} />
-                              </span>
-                              <div>
-                                <p className="partner-name">{partnerLabel}</p>
-                                <p className="price-label">Arvos kalkylerade riktpris</p>
+                          <>
+                            <PartnerBlock>
+                              <div className="left">
+                                <span className="verified-badge">
+                                  <Icon name="check" size={12} stroke={2.5} />
+                                </span>
+                                <div>
+                                  <p className="partner-name">{partnerLabel}</p>
+                                  <p className="price-label">Arvos kalkylerade riktpris</p>
+                                </div>
                               </div>
-                            </div>
-                            <Button as={Link} to="/connect" $variant="primary" $size="sm">
-                              Aktivera förhandling <Icon name="arrow" size={14} />
-                            </Button>
-                          </PartnerBlock>
+                              <Button as={Link} to="/connect" $variant="primary" $size="sm">
+                                Aktivera förhandling <Icon name="arrow" size={14} />
+                              </Button>
+                            </PartnerBlock>
+                            <PriceNote>
+                              Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
+                            </PriceNote>
+                          </>
                         )
                       )}
                     </>
@@ -433,17 +456,17 @@ const TestaFaktura = () => {
             </KV>
 
             {result.recommendation.reasoning && result.recommendation.shouldSwitch && (
-              REAL_PRICE_CATEGORIES.has(result.categorized.category) ? (
-                <Reasoning>
-                  <span className="kicker">Varför vi tror du kan spara</span>
-                  <p>{result.recommendation.reasoning}</p>
-                </Reasoning>
-              ) : (
-                <LockedReasoning>
-                  <span className="kicker">Fullständig analys</span>
-                  <p>Aktivera Arvo Flow för att se leverantörsidentitet, avtalsjämförelse och rekommenderade bytesteg.</p>
-                </LockedReasoning>
-              )
+              <Reasoning>
+                <span className="kicker">Varför vi tror du kan spara</span>
+                <p>
+                  {REAL_PRICE_CATEGORIES.has(result.categorized.category)
+                    ? result.recommendation.reasoning
+                    : redactSupplier(
+                        result.recommendation.reasoning,
+                        result.recommendation.suggestedSupplier,
+                      )}
+                </p>
+              </Reasoning>
             )}
 
             {result.recommendation.shouldSwitch && result.recommendation.netSaving > 0 && (

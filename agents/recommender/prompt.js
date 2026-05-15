@@ -208,6 +208,7 @@ REGLER FÖR REASONING
 - **Tier-overkill-regel:** Om kunden betalar för en Enterprise-, premium- eller storföretags-produkt — namnge specifikt vad som är overkill för deras storlek och vilken tier/produkt som faktiskt matchar deras behov. "M365 E5 är byggt för storföretag med SIEM-krav — Business Standard täcker allt ett 10-personers bolag behöver."
 - Om vipQueue: true, förklara *varför* det inte kan bytas än ("vi väntar på FI-tillstånd").
 - Förklara *varför just denna alternativ* — inte bara att den är billigare. T.ex. "Tibber matchar p25 och har bäst app-stöd för månadsuppföljning."
+- **Skrivarleasing / Managed Print:** Nämn ALLTID (1) maskintypen — säg specifikt att det är en A3 Enterprise-maskin byggd för tryckerier/advokatbyråer, inte för kundens bransch, (2) klickpriset i kr/sida och jämför med marknadssnittet 0,06–0,09 kr/sida S/V. Klickpriset är nästan alltid den största kostnadsdrivaren och MÅSTE kvantifieras i reasoning.
 
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
 suggestedAnnualCost och savingPerYear låses i kod mot Arvo-volympriset. Fyll i Arvo-volympriset exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
