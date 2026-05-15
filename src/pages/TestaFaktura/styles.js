@@ -704,16 +704,29 @@ export const NextSteps = styled.div`
     font-size: 14.5px;
     color: ${({ theme }) => theme.color.muted};
     line-height: 1.65;
-    margin: 0 auto 22px;
-    max-width: 520px;
+    margin: 0 0 22px;
   }
   div.actions {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 14px;
-    max-width: 300px;
+    max-width: 420px;
     margin: 0 auto;
+  }
+  span.f-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    flex-shrink: 0;
   }
   a.read-more {
     font-size: 13.5px;
