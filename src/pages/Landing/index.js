@@ -124,13 +124,13 @@ const Landing = () => {
           <div>
             <Eyebrow><span className="dot" /> Fattar beslut. Genomför byten. Noll kronor i förskott.</Eyebrow>
             <Headline>
-              Andra verktyg visar grafer.<br />Arvo Flow fattar <em>beslut.</em>
+              Du betalar överpris.<br />Vår algoritm visar dig <em>exakt var.</em>
             </Headline>
             <Lede>
-              Din bokföring visar vad du betalar — inte om du betalar rätt. Arvo Flow
-              läser dina leverantörsfakturor, identifierar vad som är fel och levererar
-              ett färdigt beslut: rätt leverantör, rätt tier, exakt vad du sparar.
-              Du godkänner med BankID. Vi sköter resten. Inga fasta avgifter.
+              Din bokföring visar vad du betalar, inte om du betalar rätt. Arvo Flow
+              granskar dina leverantörsfakturor och tar fram färdiga avtalsbyten.
+              Vi gör grovjobbet — du behåller kontrollen och godkänner med BankID.
+              Inga fasta avgifter.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/connect" $variant="gradient" $size="lg">
