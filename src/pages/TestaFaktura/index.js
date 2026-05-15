@@ -11,7 +11,7 @@ import {
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, KV,
   Reasoning, NextSteps, ServiceList, EmailGate,
-  ModalOverlay, ModalCard, FortnoxButton,
+  ModalOverlay, ModalCard,
 } from './styles';
 
 const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
@@ -535,9 +535,8 @@ const TestaFaktura = () => {
                 Du betalar bara 20 % av faktiskt realiserad besparing. Inga fasta avgifter.
               </p>
               <div className="actions">
-                <Button as={Link} to="/connect" $variant="gradient" $size="lg" $full>
-                  <span className="f-badge">F</span>
-                  Koppla Fortnox
+                <Button as={Link} to="/connect" $variant="primary" $size="lg" $full>
+                  Koppla Fortnox <Icon name="arrow" size={16} />
                 </Button>
                 <Link to="/" className="read-more">Läs mer om hur det fungerar →</Link>
               </div>
@@ -603,10 +602,9 @@ const TestaFaktura = () => {
                 <div className="context-badge">
                   {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
                 </div>
-                <FortnoxButton as={Link} to="/connect" onClick={() => setModalOpen(false)}>
-                  <span className="f-badge">F</span>
-                  Koppla Fortnox säkert
-                </FortnoxButton>
+                <Button as={Link} to="/connect" $variant="primary" $size="lg" $full onClick={() => setModalOpen(false)}>
+                  Koppla Fortnox <Icon name="arrow" size={16} />
+                </Button>
                 <button className="manual-link" type="button" onClick={() => setModalView('email')}>
                   Jag använder inte Fortnox, fortsätt manuellt via e-post.
                 </button>

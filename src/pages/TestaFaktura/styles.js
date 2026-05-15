@@ -714,21 +714,7 @@ export const NextSteps = styled.div`
     max-width: 420px;
     margin: 0 auto;
   }
-  span.f-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.22);
-    color: #fff;
-    font-size: 13px;
-    font-weight: 900;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-  a.read-more {
+a.read-more {
     font-size: 13.5px;
     color: ${({ theme }) => theme.color.muted};
     text-decoration: none;
