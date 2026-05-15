@@ -379,7 +379,7 @@ const TestaFaktura = () => {
                   <dt>Arvo-volympris hos {result.recommendation.suggestedSupplier}</dt>
                   <dd>
                     {formatKr(result.recommendation.suggestedAnnualCost)} / år
-                    <small>Baseras på Arvos samlade databas av förhandlade volymrabatter som sällan är tillgängliga för enskilda bolag vid direktkontakt.</small>
+                    <small>Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.</small>
                   </dd>
                 </div>
               )}
