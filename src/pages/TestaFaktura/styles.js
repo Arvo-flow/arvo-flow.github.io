@@ -328,9 +328,10 @@ export const PriceNote = styled.p`
   margin-top: 10px;
   margin-bottom: 24px;
   font-size: 12px;
-  color: ${({ theme }) => theme.color.muted};
-  line-height: 1.55;
-  font-style: italic;
+  color: ${({ theme, $variant }) =>
+    $variant === 'mandate' ? theme.color.inkSoft : theme.color.muted};
+  line-height: 1.6;
+  font-style: ${({ $variant }) => $variant === 'mandate' ? 'normal' : 'italic'};
   text-align: center;
 `;
 

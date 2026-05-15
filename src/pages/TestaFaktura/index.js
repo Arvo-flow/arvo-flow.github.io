@@ -18,6 +18,10 @@ const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/eeaax2i1k03cycl39zqlpdt9
 
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
+// Categories where we have verified public list prices (not contract estimates).
+// Used to decide whether to show a real-price note or the Arvo mandate CTA.
+const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+
 const INDUSTRY_LABELS = {
   ehandel:     'E-handel & Detaljhandel',
   tillverkning:'Industri & Tillverkning',
@@ -336,29 +340,44 @@ const TestaFaktura = () => {
 
             {result.recommendation.shouldSwitch && result.recommendation.netSaving > 0 ? (
               <>
-                <SavingsBlock>
-                  <span className="kicker">
-                    {result.categorized.licensePending
-                      ? 'Möjlig årlig besparing'
-                      : 'Din nettobesparing'}
-                  </span>
-                  <span className="amount">+{formatKr(result.recommendation.netSaving)}</span>
-                  <span className="unit">
-                    {result.categorized.licensePending
-                      ? 'Försäkring kräver FI-licens — vi byter inte själva ännu, men visar gapet.'
-                      : (
-                        <>
-                          {formatKr(result.extracted.annualCost)} → {formatKr(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
-                          {' '}· Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
-                        </>
+                {(() => {
+                  const isRealPrice = REAL_PRICE_CATEGORIES.has(result.categorized.category);
+                  const isLicensePending = result.categorized.licensePending;
+                  return (
+                    <>
+                      <SavingsBlock>
+                        <span className="kicker">
+                          {isLicensePending ? 'Möjlig årlig besparing' : 'Din nettobesparing'}
+                        </span>
+                        <span className="amount">+{formatKr(result.recommendation.netSaving)}</span>
+                        <span className="unit">
+                          {isLicensePending
+                            ? 'Försäkring kräver FI-licens — vi byter inte själva ännu, men visar gapet.'
+                            : isRealPrice
+                              ? (
+                                <>
+                                  {formatKr(result.extracted.annualCost)} → {formatKr(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
+                                  {' '}· Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
+                                </>
+                              )
+                              : (
+                                <>
+                                  {formatKr(result.extracted.annualCost)} → {formatKr(result.recommendation.suggestedAnnualCost)} kr/år (Arvo kalkylerat riktpris)
+                                  {' '}· Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
+                                </>
+                              )}
+                        </span>
+                      </SavingsBlock>
+                      {result.recommendation.suggestedAnnualCost && !isLicensePending && (
+                        <PriceNote $variant={isRealPrice ? 'default' : 'mandate'}>
+                          {isRealPrice
+                            ? 'Baserat på verifierade publika listpriser (maj 2026).'
+                            : 'Aktivera Arvo Flow för att ge oss mandat att förhandla ner ditt avtal till denna målnivå.'}
+                        </PriceNote>
                       )}
-                  </span>
-                </SavingsBlock>
-                {result.recommendation.suggestedAnnualCost && !result.categorized.licensePending && (
-                  <PriceNote>
-                    Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
-                  </PriceNote>
-                )}
+                    </>
+                  );
+                })()}
               </>
             ) : (
               <NoSwitchBlock>

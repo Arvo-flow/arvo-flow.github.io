@@ -1,12 +1,18 @@
 // agents/recommender/branchindex.js
-// Mock benchmark index used by the Recommender.
-// Source: public list prices (2026) — operator websites, Elpriskollen, Prisguiden.
-// Replaced automatically with real aggregated Postgres data once ≥10 invoice
-// datapoints exist per segment (see lib/benchmark.js). Shape is stable.
+// Benchmark index used by the Recommender.
+// Two source tiers:
+//   'real-public'  — verified public list prices (operator/vendor websites, 2026).
+//   'mock'         — market estimates; replaced with real aggregated Postgres data
+//                    once ≥10 invoice datapoints per segment (see lib/benchmark.js).
+// Shape is stable across both tiers.
 
-export const SOURCE = 'mock';
+export const SOURCE = 'mixed';
 export const SOURCE_NOTE =
-  'Estimat från publika listpriser 2026. Ersätts med riktig aggregerad data när vi har ≥10 datapunkter per segment.';
+  'Blandat: "real-public" kategorier använder verifierade listpriser 2026; övriga är estimat som ersätts med riktig aggregerad data (≥10 datapunkter/segment).';
+
+// Categories with verified public list prices (operator/vendor websites).
+// Frontend uses this set to decide whether to show real-price note or mandate CTA.
+export const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
 
 // User-facing industry keys (what the UI collects and the DB stores)
 export const INDUSTRIES = [
@@ -59,21 +65,24 @@ export const BRANCHINDEX = {
   },
 
   mobil: {
+    source: 'real-public',
     unit: 'kr/år',
     // Prices are per user/year — lib/benchmark.js scales by employee count before the LLM sees it.
-    note: 'Per användare/år. Vi multiplicerar med antal anställda när vi gör jämförelsen. Källa: operatörernas listpriser 2026, obegränsad data + EU-roaming.',
+    // Real Tele2 Företag listpriser maj 2026 (exkl. moms): Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth.
+    // Median = Plus (349×12 = 4 188 kr/år). p25 = Bas (299×12 = 3 588 kr/år).
+    // Volume discounts ~5 % at small, ~10 % at mid reduce both columns proportionally.
+    note: 'Per användare/år (exkl. moms). Vi multiplicerar med antal anställda. Källa: Tele2 Företag listpriser maj 2026 — Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth. Obegränsad data + EU-roaming.',
     alternatives: [
       { supplier: 'Tele2 Företag',   positioning: 'Obegränsad data + EU-roaming, ofta 10–30 % under Telia — marknadsledare bland SMF', reliability: 0.93 },
       { supplier: 'Tre Företag',     positioning: 'Stark datakapacitet, lägst listpris för basabonnemang',                              reliability: 0.91 },
       { supplier: 'Telia Företag',   positioning: 'Störst nättäckning i Sverige, premium med bra support',                              reliability: 0.96 },
       { supplier: 'Telenor Företag', positioning: 'God täckning, flexibla volymavtal, konkurrenskraftig prissättning',                  reliability: 0.92 },
     ],
-    // micro: 349 kr/mth median, 299 kr/mth p25. Volume discounts ~5 % small, ~10 % mid.
     matrix: {
-      byraer:      { micro: { median: 4188, p25: 3588 }, small: { median: 3948, p25: 3348 }, mid: { median: 3708, p25: 3108 } },
-      hantverkare: { micro: { median: 4188, p25: 3588 }, small: { median: 3948, p25: 3348 }, mid: { median: 3708, p25: 3108 } },
-      ehandel:     { micro: { median: 4188, p25: 3588 }, small: { median: 3948, p25: 3348 }, mid: { median: 3708, p25: 3108 } },
-      tillverkning:{ micro: { median: 4188, p25: 3588 }, small: { median: 3948, p25: 3348 }, mid: { median: 3708, p25: 3108 } },
+      byraer:      { micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
+      hantverkare: { micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
+      ehandel:     { micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
+      tillverkning:{ micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
     },
   },
 
@@ -164,8 +173,12 @@ export const BRANCHINDEX = {
   },
 
   'mjukvara-saas': {
+    source: 'real-public',
     unit: 'kr/år',
-    note: 'Per användare/år. Referensprodukt: M365 Business Standard / Google Workspace Business Standard via volymavtal. Källa: CSP-listpriser 2026.',
+    // p25 = M365 Business Standard listpris maj 2026: 142 kr/mth × 12 = 1 704 kr/år/user (exkl. moms).
+    // Källa: Senetic/Microsoft CSP publika listpriser. Nästa prisändring aviserad juli 2026.
+    // Median = typisk SMF-betalning via CSP med standardpåslag (~220–240 kr/mth).
+    note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard. Källa: Microsoft CSP listpris maj 2026 — 142 kr/mth = 1 704 kr/år/user. Median = typisk CSP-pris med standardpåslag.',
     alternatives: [
       { supplier: 'Microsoft 365 Business Standard (Arvo CSP)',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
       { supplier: 'Google Workspace Business Standard',          positioning: 'Starkaste alternativet till M365 — 2 TB Drive, Meet, Docs. Ofta 30–40 % billigare än M365.',            reliability: 0.96 },
@@ -173,10 +186,10 @@ export const BRANCHINDEX = {
       { supplier: 'Zoho Workplace',                              positioning: 'Budgetalternativ med e-post, docs och CRM-integration — lägst TCO för enkla behov.',                  reliability: 0.89 },
     ],
     matrix: {
-      byraer:      { micro: { median: 2520, p25: 1920 }, small: { median: 3000, p25: 2160 }, mid: { median: 3600, p25: 2520 } },
-      hantverkare: { micro: { median: 1800, p25: 1440 }, small: { median: 2160, p25: 1680 }, mid: { median: 2520, p25: 1920 } },
-      ehandel:     { micro: { median: 2160, p25: 1680 }, small: { median: 2640, p25: 2040 }, mid: { median: 3120, p25: 2280 } },
-      tillverkning:{ micro: { median: 1800, p25: 1440 }, small: { median: 2160, p25: 1680 }, mid: { median: 2520, p25: 1920 } },
+      byraer:      { micro: { median: 2880, p25: 1704 }, small: { median: 2640, p25: 1704 }, mid: { median: 2400, p25: 1704 } },
+      hantverkare: { micro: { median: 2400, p25: 1704 }, small: { median: 2160, p25: 1704 }, mid: { median: 1920, p25: 1704 } },
+      ehandel:     { micro: { median: 2640, p25: 1704 }, small: { median: 2400, p25: 1704 }, mid: { median: 2160, p25: 1704 } },
+      tillverkning:{ micro: { median: 2400, p25: 1704 }, small: { median: 2160, p25: 1704 }, mid: { median: 1920, p25: 1704 } },
     },
   },
 
