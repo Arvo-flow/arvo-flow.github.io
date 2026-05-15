@@ -158,40 +158,38 @@ export async function recommend(input, opts = {}) {
 
   const client = opts.client ?? getClient();
 
+  const requestParams = {
+    model: MODEL,
+    max_tokens: MAX_TOKENS,
+    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+    tools: [RECOMMEND_TOOL],
+    tool_choice: { type: 'tool', name: 'recommend' },
+    messages: [{ role: 'user', content: formatPrompt({ ...input, benchmark }) }],
+  };
+
   let response;
-  try {
-    response = await client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: [
-        {
-          type: 'text',
-          text: SYSTEM_PROMPT,
-          cache_control: { type: 'ephemeral' },
-        },
-      ],
-      tools: [RECOMMEND_TOOL],
-      tool_choice: { type: 'tool', name: 'recommend' },
-      messages: [
-        {
-          role: 'user',
-          content: formatPrompt({ ...input, benchmark }),
-        },
-      ],
-    });
-  } catch (err) {
-    if (err instanceof Anthropic.RateLimitError) {
-      throw new RecommenderError('Rate limit hit — backa av och försök igen', {
-        cause: err,
-      });
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      response = await client.messages.create(requestParams);
+      break;
+    } catch (err) {
+      const overloaded = err instanceof Anthropic.APIError && err.status === 529;
+      if (overloaded && attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, attempt * 1500));
+        continue;
+      }
+      if (err instanceof Anthropic.RateLimitError) {
+        throw new RecommenderError('Tjänsten är tillfälligt överbelastad — försök igen om en stund.', { cause: err });
+      }
+      if (err instanceof Anthropic.APIError && err.status === 529) {
+        throw new RecommenderError('Tjänsten är tillfälligt överbelastad — försök igen om en stund.', { cause: err });
+      }
+      if (err instanceof Anthropic.APIError) {
+        throw new RecommenderError('Analysen misslyckades — försök igen.', { cause: err });
+      }
+      throw err;
     }
-    if (err instanceof Anthropic.APIError) {
-      throw new RecommenderError(
-        `Anthropic API fel ${err.status}: ${err.message}`,
-        { cause: err }
-      );
-    }
-    throw err;
   }
 
   const toolUse = response.content.find((b) => b.type === 'tool_use');

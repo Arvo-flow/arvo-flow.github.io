@@ -135,42 +135,40 @@ export async function extractInvoice(input, opts = {}) {
   const pdfBase64 = pdfBytes.toString('base64');
   const client = opts.client ?? getClient();
 
+  const requestParams = {
+    model: MODEL,
+    max_tokens: MAX_TOKENS,
+    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+    tools: [EXTRACT_TOOL],
+    tool_choice: { type: 'tool', name: 'extract_invoice' },
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
+          { type: 'text', text: 'Extrahera fakturadatan via verktyget extract_invoice.' },
+        ],
+      },
+    ],
+  };
+
   let response;
-  try {
-    response = await client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: [
-        {
-          type: 'text',
-          text: SYSTEM_PROMPT,
-          cache_control: { type: 'ephemeral' },
-        },
-      ],
-      tools: [EXTRACT_TOOL],
-      tool_choice: { type: 'tool', name: 'extract_invoice' },
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'document',
-              source: {
-                type: 'base64',
-                media_type: 'application/pdf',
-                data: pdfBase64,
-              },
-            },
-            {
-              type: 'text',
-              text: 'Extrahera fakturadatan via verktyget extract_invoice.',
-            },
-          ],
-        },
-      ],
-    });
-  } catch (err) {
-    throw new ExtractorError(`Anthropic API-anrop misslyckades: ${err.message}`, { cause: err });
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      response = await client.messages.create(requestParams);
+      break;
+    } catch (err) {
+      const overloaded = err.status === 529;
+      if (overloaded && attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, attempt * 1500));
+        continue;
+      }
+      throw new ExtractorError(
+        overloaded ? 'Tjänsten är tillfälligt överbelastad — försök igen om en stund.' : 'Analysen misslyckades — försök igen.',
+        { cause: err }
+      );
+    }
   }
 
   const toolUseBlock = response.content.find((b) => b.type === 'tool_use' && b.name === 'extract_invoice');
