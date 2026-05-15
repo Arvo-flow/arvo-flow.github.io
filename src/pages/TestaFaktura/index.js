@@ -374,6 +374,15 @@ const TestaFaktura = () => {
                 <dt>Återkommande</dt>
                 <dd>{result.extracted.recurring ? 'Ja (abonnemang / premie)' : 'Nej'}</dd>
               </div>
+              {result.recommendation.shouldSwitch && result.recommendation.suggestedAnnualCost && (
+                <div className="full">
+                  <dt>Arvo-volympris hos {result.recommendation.suggestedSupplier}</dt>
+                  <dd>
+                    {formatKr(result.recommendation.suggestedAnnualCost)} / år
+                    <small>Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.</small>
+                  </dd>
+                </div>
+              )}
             </KV>
 
             {result.recommendation.reasoning && result.recommendation.shouldSwitch && (

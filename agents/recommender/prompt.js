@@ -15,7 +15,7 @@ Categorized invoice:
   normalizedSupplier: Vattenfall (Företag)
   currentAnnualCost: 84000 kr
 Benchmark (byrå × small):
-  median: 65000, p25: 47000
+  median: 65000, Arvo-volympris: 47000
   alternativ: Tibber, Bixia, Telge Energi, Mälarenergi
 Rekommendation:
   shouldSwitch: true
@@ -24,7 +24,7 @@ Rekommendation:
   savingPerYear: 37000
   overpaymentPercent: 29
   confidence: "high"
-  reasoning: "Du betalar 29 % över medianen för byråer med din storlek. Tibber spotpris matchar p25 och har bäst app-stöd för månadsuppföljning."
+  reasoning: "Du betalar 29 % över medianen för byråer med din storlek. Tibber matchar Arvos volympris och har bäst app-stöd för månadsuppföljning."
   switchSteps: [
     "Vi förbereder uppsägning av Vattenfall (30 dagars varsel)",
     "Du signerar Tibber-avtalet med BankID",
@@ -38,7 +38,7 @@ Categorized invoice:
   normalizedSupplier: Bahnhof
   currentAnnualCost: 6900 kr
 Benchmark (hantverkare × micro):
-  median: 8400, p25: 6000
+  median: 8400, Arvo-volympris: 6000
 Rekommendation:
   shouldSwitch: false
   suggestedSupplier: null
@@ -56,7 +56,7 @@ Categorized invoice:
   normalizedSupplier: Trygg-Hansa
   currentAnnualCost: 84600 kr
 Benchmark (hantverkare × small):
-  median: 56800, p25: 42000
+  median: 56800, Arvo-volympris: 42000
 Rekommendation:
   shouldSwitch: false
   suggestedSupplier: null   // ALDRIG namnge alternativ för license-pending
@@ -75,7 +75,7 @@ Categorized invoice:
   normalizedSupplier: Worldline (Bambora)
   currentAnnualCost: 7200 kr
 Benchmark (byrå × micro):
-  median: 6000, p25: 3600
+  median: 6000, Arvo-volympris: 3600
 Rekommendation:
   shouldSwitch: true
   suggestedSupplier: "Zettle by PayPal"
@@ -97,7 +97,7 @@ Categorized invoice:
   normalizedSupplier: GlobalConnect
   currentAnnualCost: 22000 kr
 Benchmark (byrå × micro):
-  median: 7800, p25: 5400
+  median: 7800, Arvo-volympris: 5400
 Rekommendation:
   shouldSwitch: true
   suggestedSupplier: "Bahnhof"
@@ -105,7 +105,7 @@ Rekommendation:
   savingPerYear: 16600
   overpaymentPercent: 182
   confidence: "high"
-  reasoning: "GlobalConnect är ett premium-bredband byggt för datacenter-trafik. För en 4-personers byrå är det kraftig överkill. Bahnhof Företag ger samma 1 Gbit till en bråkdel av priset."
+  reasoning: "GlobalConnect är ett premium-bredband byggt för datacenter-trafik. För en 4-personers byrå är det kraftig överkill. Bahnhof Företag ger samma 1 Gbit till Arvos volympris."
   switchSteps: [
     "Vi beställer porting av befintlig fiber till Bahnhof",
     "Du signerar med BankID",
@@ -151,7 +151,8 @@ REGLER FÖR REASONING
 - Förklara *varför just denna alternativ* — inte bara att den är billigare. T.ex. "Tibber matchar p25 och har bäst app-stöd för månadsuppföljning."
 
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
-suggestedAnnualCost och savingPerYear låses i kod mot benchmark.p25. Fyll i p25-värdet exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
+suggestedAnnualCost och savingPerYear låses i kod mot Arvo-volympriset. Fyll i Arvo-volympriset exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
+I din reasoning: hänvisa alltid till "marknadsbenchmark" — aldrig till "p25", "25:e percentilen" eller "Arvo-volympris".
 
 OUTPUTFORMAT
 Anropa alltid verktyget "recommend" med exakt en gång. Skriv ingen brödtext utanför verktygsanropet.

@@ -161,6 +161,7 @@ export default async function handler(req, res) {
       recommendation: {
         shouldSwitch: recommendation.shouldSwitch,
         suggestedSupplier: recommendation.suggestedSupplier ?? null,
+        suggestedAnnualCost: recommendation.suggestedAnnualCost ?? null,
         grossSaving,
         arvoFee,
         netSaving,
