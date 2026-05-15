@@ -142,7 +142,7 @@ const Landing = () => {
             </HeroActions>
             <HeroProof>
               <div><strong>Faktisk prisdata</strong><span>från tusentals volymavtal</span></div>
-              <div><strong>Publik &amp; objektiv</strong><span>rankningsalgoritm</span></div>
+              <div><strong>100 % oberoende</strong><span>och objektiv algoritm</span></div>
               <div><strong>0 kr</strong><span>tills vi bevisat din besparing</span></div>
             </HeroProof>
           </div>
@@ -154,7 +154,7 @@ const Landing = () => {
                 <span>● Aktiv</span>
               </PreviewHead>
               <SavingBig>
-                <small>Din nettobesparing år 1</small>
+                <small>Din nettobesparing / år</small>
                 <div className="amount">
                   <em>{TOTALS.activeNet.toLocaleString('sv-SE')}</em>
                   <span className="unit">kr</span>
