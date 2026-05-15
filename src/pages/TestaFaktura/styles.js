@@ -560,6 +560,39 @@ export const ModalCard = styled.div`
     line-height: 1.5;
   }
 
+  button.manual-link {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    text-align: center;
+    line-height: 1.5;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    &:hover { color: ${({ theme }) => theme.color.inkSoft}; }
+  }
+
+  button.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    margin-bottom: 16px;
+    &:hover { color: ${({ theme }) => theme.color.ink}; }
+  }
+
   div.sent-state {
     display: flex;
     flex-direction: column;
@@ -590,6 +623,42 @@ export const ModalCard = styled.div`
       margin: 0;
       line-height: 1.5;
     }
+  }
+`;
+
+export const FortnoxButton = styled.a`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  border: none;
+  background: #0055CC;
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+
+  &:hover { background: #0047B0; }
+
+  span.f-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: #fff;
+    color: #0055CC;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    flex-shrink: 0;
   }
 `;
 
