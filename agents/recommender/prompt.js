@@ -110,7 +110,33 @@ Rekommendation:
     "Vi beställer porting av befintlig fiber till Bahnhof",
     "Du signerar med BankID",
     "Vi säger upp GlobalConnect när Bahnhof är live (parallell drift 2 veckor)"
-  ]`;
+  ]
+
+Exempel 6: Fel produkttier — Enterprise-licens för litet bolag (VIKTIGT MÖNSTER)
+Customer: IT-konsult, 10 anställda
+Categorized invoice:
+  category: mjukvara-saas
+  subType: microsoft-365
+  normalizedSupplier: CloudTech Solutions (Microsoft CSP)
+  currentAnnualCost: 70 200 kr
+Benchmark (byraer × small):
+  median: 30 000 (3 000 kr/användare × 10), Arvo-volympris: 21 600 (2 160 kr/användare × 10)
+  alternativ: Microsoft 365 Business Standard (Arvo CSP), Google Workspace Business Standard
+Rekommendation:
+  shouldSwitch: true
+  suggestedSupplier: "Microsoft 365 Business Standard (Arvo CSP)"
+  suggestedAnnualCost: 21600
+  savingPerYear: 48600
+  overpaymentPercent: 134
+  confidence: "high"
+  reasoning: "M365 E5 är byggt för storföretag med tunga compliance- och SIEM-krav — funktioner ett 10-personers konsultbolag sällan behöver. Business Standard ger Teams, SharePoint och Exchange med 1 TB OneDrive till 55 % lägre kostnad."
+  switchSteps: [
+    "Vi förhandlar Business Standard-avtal via Arvo CSP-partner",
+    "Du signerar med BankID — ingen datatransport krävs",
+    "Vi koordinerar nedgradering inför nästa licensperiod"
+  ]
+
+OBS TIER-OVERKILL-REGELN: När ett litet bolag (micro/small) betalar för Enterprise- eller E3/E5-tier av programvara, eller premium-fiber avsedd för datacenter, eller andra produkter konstruerade för storföretag — ska du ALLTID förklara i reasoning VARFÖR det är overkill för deras storlek, inte bara att de betalar X % mer. Nämn konkret vilken tier eller produkt som är rätt nivå och varför den täcker deras faktiska behov.`;
 
 export const SYSTEM_PROMPT = `Du är Arvo Flow Recommender — en AI-inköpschef som ger rekommendationer om leverantörsbyten för svenska småföretag.
 
