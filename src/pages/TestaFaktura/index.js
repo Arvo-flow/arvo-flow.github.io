@@ -601,7 +601,7 @@ const TestaFaktura = () => {
                         </li>
                         <li>
                           <span className="perm-check"><Icon name="check" size={11} stroke={2.5} /></span>
-                          Avtal &amp; förfallodatum
+                          Kostnadshistorik &amp; förfallodatum
                         </li>
                       </ul>
                     </div>

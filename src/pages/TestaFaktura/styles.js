@@ -65,7 +65,7 @@ export const Lede = styled.p`
 `;
 
 export const Body = styled.section`
-  max-width: 760px;
+  max-width: 860px;
   margin: 0 auto;
   padding: 16px 28px 64px;
   @media (max-width: 740px) { padding: 12px 20px 48px; }
@@ -420,7 +420,7 @@ export const KV = styled.dl`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px 20px;
-  margin: 0;
+  margin: 32px 0 0;
   @media (max-width: 540px) { grid-template-columns: 1fr; }
 
   div {
