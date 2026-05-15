@@ -442,37 +442,37 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
+                      {!isLicensePending && (
+                        <PriceNote $compact>
+                          Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
+                        </PriceNote>
+                      )}
                       {result.recommendation.suggestedAnnualCost && !isLicensePending && (
-                        <>
-                          <PartnerBlock>
-                            <div className="left">
-                              <span className="verified-badge">
-                                <Icon name="check" size={12} stroke={2.5} />
-                              </span>
-                              <div>
-                                <p className="partner-name">
-                                  {isRealPrice
-                                    ? result.recommendation.suggestedSupplier
-                                    : partnerLabel}
-                                </p>
-                                <p className="price-label">
-                                  {isRealPrice ? 'Verifierat marknadspris' : 'Arvos kalkylerade riktpris'}
-                                </p>
-                              </div>
+                        <PartnerBlock>
+                          <div className="left">
+                            <span className="verified-badge">
+                              <Icon name="check" size={12} stroke={2.5} />
+                            </span>
+                            <div>
+                              <p className="partner-name">
+                                {isRealPrice
+                                  ? result.recommendation.suggestedSupplier
+                                  : partnerLabel}
+                              </p>
+                              <p className="price-label">
+                                {isRealPrice ? 'Verifierat marknadspris' : 'Arvos kalkylerade riktpris'}
+                              </p>
                             </div>
-                            <Button
-                              type="button"
-                              $variant="gradient"
-                              $size="sm"
-                              onClick={() => setModalOpen(true)}
-                            >
-                              {isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen'} <Icon name="arrow" size={14} />
-                            </Button>
-                          </PartnerBlock>
-                          <PriceNote>
-                            Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
-                          </PriceNote>
-                        </>
+                          </div>
+                          <Button
+                            type="button"
+                            $variant="gradient"
+                            $size="sm"
+                            onClick={() => setModalOpen(true)}
+                          >
+                            {isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen'} <Icon name="arrow" size={14} />
+                          </Button>
+                        </PartnerBlock>
                       )}
                     </>
                   );
