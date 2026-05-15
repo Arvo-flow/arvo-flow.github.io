@@ -163,6 +163,26 @@ export const BRANCHINDEX = {
     },
   },
 
+  'mjukvara-saas': {
+    unit: 'kr/år',
+    // Prices are per user/year — lib/benchmark.js scales by employee count before the LLM sees it.
+    // Reference product: Microsoft 365 Business Standard via CSP or Google Workspace Business Standard.
+    // Source: Microsoft CSP-listpriser + Google Workspace-listpriser 2026.
+    note: 'Per användare/år. Referensprodukt: M365 Business Standard / Google Workspace Business Standard via volymavtal. Källa: CSP-listpriser 2026.',
+    alternatives: [
+      { supplier: 'Microsoft 365 Business Standard (Arvo CSP)',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
+      { supplier: 'Google Workspace Business Standard',          positioning: 'Starkaste alternativet till M365 — 2 TB Drive, Meet, Docs. Ofta 30–40 % billigare än M365.',            reliability: 0.96 },
+      { supplier: 'Microsoft 365 Business Premium',              positioning: 'För bolag med säkerhetskrav (Intune, Defender) utan behov av E5-compliance-funktioner.',               reliability: 0.97 },
+      { supplier: 'Zoho Workplace',                              positioning: 'Budgetalternativ med e-post, docs och CRM-integration — lägst TCO för enkla behov.',                  reliability: 0.89 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 2520, p25: 1920 }, small: { median: 3000, p25: 2160 }, mid: { median: 3600, p25: 2520 } },
+      hantverkare: { micro: { median: 1800, p25: 1440 }, small: { median: 2160, p25: 1680 }, mid: { median: 2520, p25: 1920 } },
+      ehandel:     { micro: { median: 2160, p25: 1680 }, small: { median: 2640, p25: 2040 }, mid: { median: 3120, p25: 2280 } },
+      tillverkning:{ micro: { median: 1800, p25: 1440 }, small: { median: 2160, p25: 1680 }, mid: { median: 2520, p25: 1920 } },
+    },
+  },
+
   'forsakring-ansvar': {
     unit: 'kr/år',
     note: 'License-pending — Recommender markerar dessa för VIP-kö.',

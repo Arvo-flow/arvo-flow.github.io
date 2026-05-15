@@ -31,10 +31,17 @@ const STRONG_DESC_SIGNALS = {
   kortterminal:     ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
   'faktura-tjanst': ['fakturatjänst', 'e-faktura utskick', 'fakturautskick'],
   'leasing-bil':    ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
+  'mjukvara-saas':  ['microsoft 365', 'office 365', 'google workspace', 'adobe creative cloud',
+                     'programvarulicens', 'programvarulicenser', 'saas-licens', 'saas-prenumeration',
+                     'microsoft teams', 'google workspace business'],
 };
 
 // Known SaaS accounting/ERP suppliers → faktura-tjanst.
 const ACCOUNTING_SAAS_SUPPLIERS = ['fortnox', 'visma', 'pe accounting', 'speedledger', 'bokio'];
+
+// Known software/cloud suppliers — when combined with a license/subscription signal → mjukvara-saas.
+const SOFTWARE_SUPPLIER_SIGNALS = ['microsoft', 'adobe', 'google', 'zoom video', 'slack technologies', 'atlassian', 'salesforce'];
+const LICENSE_DESC_SIGNALS = ['licens', 'license', 'prenumeration', 'subscription', 'licenser'];
 
 // Telecom supplier keywords — when combined with any subscription signal → mobil.
 const TELECOM_SUPPLIER_SIGNALS = ['telekom', 'telecom', 'tele2', 'telia', 'telenor', ' tre ', 'comviq', 'halebop', 'vimla'];
@@ -84,6 +91,20 @@ function deterministicMatch(invoice) {
       normalizedSupplier: invoice.supplier ?? '',
       confidence: 0.87,
       reasoning: `Deterministisk matchning: känd bokförings-SaaS-leverantör`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 4: known software/cloud supplier + license description → mjukvara-saas
+  const isSoftwareSupplier = SOFTWARE_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  const isLicenseDesc = LICENSE_DESC_SIGNALS.some((s) => desc.includes(s));
+  if (isSoftwareSupplier && isLicenseDesc) {
+    return {
+      category: 'mjukvara-saas',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.88,
+      reasoning: `Deterministisk matchning: känd programvaruleverantör + licens/prenumerationsbeskrivning`,
       licensePending: false,
     };
   }

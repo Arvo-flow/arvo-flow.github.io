@@ -39,6 +39,7 @@ const CATEGORY_LABELS = {
   leasing: 'Företagsleasing',
   kortterminal: 'Kortterminal',
   'faktura-tjanst': 'Fakturatjänst / Affärssystem',
+  'mjukvara-saas': 'Programvarulicenser / SaaS',
   uncategorized: 'Okategoriserad',
 };
 
