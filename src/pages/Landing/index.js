@@ -141,9 +141,9 @@ const Landing = () => {
               </Button>
             </HeroActions>
             <HeroProof>
-              <div><strong>{TOTALS.activeNet.toLocaleString('sv-SE')} kr</strong><span>snittkundens nettobesparing år 1</span></div>
-              <div><strong>47 250</strong><span>leverantörsfakturor analyserade i år</span></div>
-              <div><strong>0 kr</strong><span>tills vi sparat pengar åt dig</span></div>
+              <div><strong>Tränad på tusentals</strong><span>svenska volymavtal</span></div>
+              <div><strong>Publik &amp; objektiv</strong><span>rankningsalgoritm</span></div>
+              <div><strong>0 kr</strong><span>tills vi bevisat din besparing</span></div>
             </HeroProof>
           </div>
 
