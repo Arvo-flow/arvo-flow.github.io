@@ -86,6 +86,17 @@ export const CATEGORIES = {
     ],
     accountHints: ['5611', '5612', '5615'],
   },
+  'mjukvara-saas': {
+    label: 'Programvarulicenser / SaaS',
+    licensePending: false,
+    subTypes: ['microsoft-365', 'google-workspace', 'adobe', 'kommunikation', 'ovrigt-saas'],
+    keywords: [
+      'microsoft 365', 'office 365', 'm365', 'google workspace', 'adobe',
+      'programvarulicens', 'saas', 'molntjänst', 'slack', 'zoom', 'teams',
+      'onedrive', 'sharepoint', 'cloudtech', 'csp', 'licens', 'prenumeration',
+    ],
+    accountHints: ['6540', '5460', '6230'],
+  },
   uncategorized: {
     label: 'Okategoriserat',
     licensePending: false,

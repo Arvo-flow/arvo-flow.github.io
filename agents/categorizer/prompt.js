@@ -223,7 +223,61 @@ Klassificering:
   subType: "företag"
   normalizedSupplier: "Nordic Telecom Solutions"
   confidence: 0.88
-  reasoning: "'Telecom' i leverantörsnamn + 'företagstelefoni' i beskrivning + konto 6210"`;
+  reasoning: "'Telecom' i leverantörsnamn + 'företagstelefoni' i beskrivning + konto 6210"
+
+Exempel 15: Microsoft 365-licenser via CSP-reseller
+Input:
+  Leverantör: CloudTech Solutions AB
+  Belopp: 5850 kr
+  Datum: 2026-05-15
+  Beskrivning: Microsoft 365 E5 - Månadslicens 10 st + Premium Onboarding Support (Löpande)
+Klassificering:
+  category: "mjukvara-saas"
+  subType: "microsoft-365"
+  normalizedSupplier: "CloudTech Solutions (Microsoft CSP)"
+  confidence: 0.92
+  reasoning: "'Microsoft 365 E5 Månadslicens' i beskrivning är entydig SaaS-licens — CloudTech är CSP-partner"
+
+Exempel 16: Adobe Creative Cloud (direkt SaaS-faktura)
+Input:
+  Leverantör: Adobe Systems Software Ireland
+  Belopp: 3200 kr
+  Datum: 2026-04-01
+  Konto: 6540
+  Beskrivning: Adobe Creative Cloud for Teams - 4 licenser april
+Klassificering:
+  category: "mjukvara-saas"
+  subType: "adobe"
+  normalizedSupplier: "Adobe"
+  confidence: 0.97
+  reasoning: "Adobe Creative Cloud for Teams + konto 6540 är direkt programvarulicens"
+
+Exempel 17: Google Workspace via fakturarad
+Input:
+  Leverantör: Google Ireland Ltd
+  Belopp: 1560 kr
+  Datum: 2026-03-01
+  Konto: 6540
+  Beskrivning: Google Workspace Business Standard - 12 användare mars
+Klassificering:
+  category: "mjukvara-saas"
+  subType: "google-workspace"
+  normalizedSupplier: "Google Workspace"
+  confidence: 0.98
+  reasoning: "Google Workspace Business Standard + konto 6540 är SaaS-prenumeration"
+
+Exempel 18: Zoom / kommunikationsverktyg
+Input:
+  Leverantör: Zoom Video Communications
+  Belopp: 890 kr
+  Datum: 2026-02-01
+  Beskrivning: Zoom Pro 5 licenser februari
+Klassificering:
+  category: "mjukvara-saas"
+  subType: "kommunikation"
+  normalizedSupplier: "Zoom"
+  confidence: 0.95
+  reasoning: "Zoom + 'licenser' i beskrivning är SaaS-kommunikationsverktyg"`;
 
 
 export const SYSTEM_PROMPT = `Du är Arvo Flow Categorizer — en specialiserad klassificerare av leverantörsfakturor från svenska småföretags bokföring (Fortnox/Visma).
