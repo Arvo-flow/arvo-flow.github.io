@@ -122,15 +122,15 @@ const Landing = () => {
         <HeroBackdrop />
         <HeroInner>
           <div>
-            <Eyebrow><span className="dot" /> Fattar beslut. Genomför byten. Noll kronor i förskott.</Eyebrow>
+            <Eyebrow><span className="dot" /> Hittar överpriset. Genomför bytet. Noll kronor i förskott.</Eyebrow>
             <Headline>
-              Andra verktyg visar grafer.<br />Arvo Flow fattar <em>beslut.</em>
+              Du betalar överpris.<br />Vår algoritm visar dig <em>exakt var.</em>
             </Headline>
             <Lede>
-              Din bokföring visar vad du betalar — inte om du betalar rätt. Arvo Flow
-              läser dina leverantörsfakturor, identifierar vad som är fel och levererar
-              ett färdigt beslut: rätt leverantör, rätt tier, exakt vad du sparar.
-              Du godkänner med BankID. Vi sköter resten. Inga fasta avgifter.
+              Din bokföring visar vad du betalar, inte om du betalar rätt. Arvo Flow
+              granskar dina leverantörsfakturor och tar fram färdiga avtalsbyten.
+              Vi gör grovjobbet — du behåller kontrollen och godkänner med BankID.
+              Inga fasta avgifter.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/connect" $variant="gradient" $size="lg">
@@ -141,9 +141,9 @@ const Landing = () => {
               </Button>
             </HeroActions>
             <HeroProof>
-              <div><strong>{TOTALS.activeNet.toLocaleString('sv-SE')} kr</strong><span>snittkundens nettobesparing år 1</span></div>
-              <div><strong>47 250</strong><span>leverantörsfakturor analyserade i år</span></div>
-              <div><strong>0 kr</strong><span>tills vi sparat pengar åt dig</span></div>
+              <div><strong>Tränad på tusentals</strong><span>svenska volymavtal</span></div>
+              <div><strong>Publik &amp; objektiv</strong><span>rankningsalgoritm</span></div>
+              <div><strong>0 kr</strong><span>tills vi bevisat din besparing</span></div>
             </HeroProof>
           </div>
 
