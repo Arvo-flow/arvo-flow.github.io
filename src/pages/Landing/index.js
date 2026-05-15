@@ -122,7 +122,7 @@ const Landing = () => {
         <HeroBackdrop />
         <HeroInner>
           <div>
-            <Eyebrow><span className="dot" /> Fattar beslut. Genomför byten. Noll kronor i förskott.</Eyebrow>
+            <Eyebrow><span className="dot" /> Hittar överpriset. Genomför bytet. Noll kronor i förskott.</Eyebrow>
             <Headline>
               Du betalar överpris.<br />Vår algoritm visar dig <em>exakt var.</em>
             </Headline>
