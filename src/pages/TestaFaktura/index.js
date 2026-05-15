@@ -442,12 +442,7 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
-                      {result.recommendation.suggestedAnnualCost && !isLicensePending && isRealPrice && (
-                        <PriceNote>
-                          Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
-                        </PriceNote>
-                      )}
-                      {result.recommendation.suggestedAnnualCost && !isLicensePending && !isRealPrice && (
+                      {result.recommendation.suggestedAnnualCost && !isLicensePending && (
                         <>
                           <PartnerBlock>
                             <div className="left">
@@ -455,8 +450,14 @@ const TestaFaktura = () => {
                                 <Icon name="check" size={12} stroke={2.5} />
                               </span>
                               <div>
-                                <p className="partner-name">{partnerLabel}</p>
-                                <p className="price-label">Arvos kalkylerade riktpris</p>
+                                <p className="partner-name">
+                                  {isRealPrice
+                                    ? result.recommendation.suggestedSupplier
+                                    : partnerLabel}
+                                </p>
+                                <p className="price-label">
+                                  {isRealPrice ? 'Verifierat marknadspris' : 'Arvos kalkylerade riktpris'}
+                                </p>
                               </div>
                             </div>
                             <Button
@@ -465,7 +466,7 @@ const TestaFaktura = () => {
                               $size="sm"
                               onClick={() => setModalOpen(true)}
                             >
-                              Säkra besparingen <Icon name="arrow" size={14} />
+                              {isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen'} <Icon name="arrow" size={14} />
                             </Button>
                           </PartnerBlock>
                           <PriceNote>
@@ -479,8 +480,17 @@ const TestaFaktura = () => {
               </>
             ) : (
               <NoSwitchBlock>
-                <strong>Inget byte föreslås just nu.</strong>
-                <p>{result.recommendation.reasoning}</p>
+                {result.categorized.category === 'uncategorized' ? (
+                  <>
+                    <strong>Kategorin är under analys.</strong>
+                    <p>Koppla Fortnox så mappar vi era volymer mot marknadens bästa priser direkt.</p>
+                  </>
+                ) : (
+                  <>
+                    <strong>Inget byte föreslås just nu.</strong>
+                    <p>{result.recommendation.reasoning}</p>
+                  </>
+                )}
               </NoSwitchBlock>
             )}
 
@@ -557,9 +567,18 @@ const TestaFaktura = () => {
                 Du betalar bara 20 % av faktiskt realiserad besparing. Inga fasta avgifter.
               </p>
               <div className="actions">
-                <Button as={Link} to="/connect" $variant="primary" $size="lg" $full>
-                  Koppla Fortnox <Icon name="arrow" size={16} />
-                </Button>
+                <div className="cta-row">
+                  <Button as={Link} to="/connect" $variant="primary" $size="lg">
+                    Koppla Fortnox <Icon name="arrow" size={16} />
+                  </Button>
+                  <div className="trust-card">
+                    <span className="lock">🔒</span>
+                    <div>
+                      <strong>Vi får bara läsa, aldrig ändra</strong>
+                      <span className="sub">Lön · Bokföring</span>
+                    </div>
+                  </div>
+                </div>
                 <Link to="/" className="read-more">Läs mer om hur det fungerar →</Link>
               </div>
             </NextSteps>
