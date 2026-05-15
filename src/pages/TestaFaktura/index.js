@@ -434,7 +434,9 @@ const TestaFaktura = () => {
                       </SavingsBlock>
                       {result.recommendation.suggestedAnnualCost && !isLicensePending && (
                         isRealPrice ? (
-                          <PriceNote>Baserat på verifierade publika listpriser (maj 2026).</PriceNote>
+                          <PriceNote>
+                            Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
+                          </PriceNote>
                         ) : (
                           <>
                             <PartnerBlock>
