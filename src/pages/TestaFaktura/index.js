@@ -584,15 +584,42 @@ const TestaFaktura = () => {
                   <Button as={Link} to="/connect" $variant="primary" $size="lg">
                     Koppla Fortnox <Icon name="arrow" size={16} />
                   </Button>
-                  <div className="trust-card">
-                    <span className="lock">🔒</span>
+                  <Link to="/" className="read-more">Läs mer →</Link>
+                </div>
+                <div className="permission-card">
+                  <div className="perm-header">
+                    <span className="perm-icon"><Icon name="lock" size={16} stroke={2} /></span>
+                    <strong>Vi får bara läsa, aldrig ändra</strong>
+                  </div>
+                  <div className="perm-cols">
                     <div>
-                      <strong>Vi får bara läsa, aldrig ändra</strong>
-                      <span className="sub">Lön · Bokföring</span>
+                      <span className="perm-label">VAD VI LÄSER</span>
+                      <ul>
+                        <li>
+                          <span className="perm-check"><Icon name="check" size={11} stroke={2.5} /></span>
+                          Leverantörsfakturor
+                        </li>
+                        <li>
+                          <span className="perm-check"><Icon name="check" size={11} stroke={2.5} /></span>
+                          Avtal &amp; förfallodatum
+                        </li>
+                      </ul>
+                    </div>
+                    <div>
+                      <span className="perm-label">UTANFÖR VÅR RÄCKVIDD</span>
+                      <ul>
+                        <li>
+                          <span className="perm-lock"><Icon name="lock" size={11} stroke={2} /></span>
+                          Lön &amp; personnummer
+                        </li>
+                        <li>
+                          <span className="perm-lock"><Icon name="lock" size={11} stroke={2} /></span>
+                          Kundfakturor
+                        </li>
+                      </ul>
                     </div>
                   </div>
                 </div>
-                <Link to="/" className="read-more">Läs mer om hur det fungerar →</Link>
               </div>
             </NextSteps>
 
