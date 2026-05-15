@@ -33,6 +33,7 @@ Din enda uppgift är att läsa en PDF-faktura och extrahera följande fält som 
 - **recurring**: true om det är en månads-/årsfaktura som tydligt återkommer (abonnemang, premie, hyra), false om det är en engångsfaktura.
 - **recurringAmount**: Summan ENBART av de återkommande raderna (abonnemang, hyra, fasta månadsavgifter) exkl. moms. Uteslut engångsavgifter, rörliga förbruknings- och trafikavgifter (t.ex. roaming, övertrafik, leveransavgifter). Heltal.
 - **variableCharges**: Summan av alla ICKE-återkommande rader exkl. moms (t.ex. roaming utanför EU, övertrafik, engångsavgifter, utlägg). 0 om inga sådana rader finns. Heltal.
+- **seatCount**: För prenumerationstjänster med per-användarpris (SaaS, M365, programlicenser): totalt antal seats/licenser på fakturan — summera ALLA licensrader oavsett tier (t.ex. 45 Premium + 12 Basic = 57). null om fakturan inte avser per-användarlicenser.
 - **annualCost**: Basera ALLTID på recurringAmount, aldrig på amount. Månadsfaktura: recurringAmount × 12. Kvartalsfaktura: recurringAmount × 4. Årsfaktura: recurringAmount. Okänt mönster: recurringAmount.
 
 KRITISKT:
@@ -84,6 +85,10 @@ const EXTRACT_TOOL = {
       annualCost: {
         type: 'integer',
         description: 'Årskostnad i SEK baserad på recurringAmount: månad × 12, kvartal × 4, år × 1',
+      },
+      seatCount: {
+        type: ['integer', 'null'],
+        description: 'Totalt antal seats/licenser på fakturan. Summera alla licensrader oavsett tier (t.ex. 45 Premium + 12 Basic = 57). null om fakturan inte avser per-användarlicenser.',
       },
       confidence: {
         type: 'number',

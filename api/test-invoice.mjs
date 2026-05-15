@@ -117,7 +117,7 @@ export default async function handler(req, res) {
     const t2 = Date.now();
     const recommendation = await recommend({
       customer: { industry, employees: employeesNum, revenue: revenueNum },
-      invoice: { amount: extracted.amount, annualCost: extracted.annualCost },
+      invoice: { amount: extracted.amount, annualCost: extracted.annualCost, seatCount: extracted.seatCount ?? null },
       categorized,
     });
     timing.recommendMs = Date.now() - t2;
@@ -151,6 +151,7 @@ export default async function handler(req, res) {
         recurring: extracted.recurring,
         confidence: extracted.confidence,
         notes: extracted.notes,
+        seatCount: extracted.seatCount ?? null,
       },
       categorized: {
         category: categorized.category,
@@ -170,6 +171,8 @@ export default async function handler(req, res) {
         confidence: recommendation.confidence,
         reasoning: recommendation.reasoning,
         switchSteps: recommendation.switchSteps ?? [],
+        licenseOverage: recommendation.licenseOverage ?? null,
+        overageSavings: recommendation.overageSavings ?? null,
       },
       timing,
     });

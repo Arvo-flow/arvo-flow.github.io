@@ -41,19 +41,21 @@ function getClient() {
   return _client;
 }
 
-function formatBenchmark(benchmark, employees) {
+function formatBenchmark(benchmark, seatCount, employees) {
   if (!benchmark) {
     return '(Inget branschindex finns för denna kombination — modellen ska sätta confidence: low och shouldSwitch: false.)';
   }
 
-  // Per-user categories must be scaled to total cost before comparing against
-  // the invoice's annual total. Pre-computing this prevents LLM arithmetic errors.
+  // Per-user categories: use actual seat count from invoice when available,
+  // fall back to employee count. Ensures apples-to-apples comparison.
   const isPerUser = benchmark.note.toLowerCase().includes('per användare');
-  const scale = isPerUser && employees > 0 ? employees : 1;
+  const effectiveSeats = seatCount ?? employees;
+  const scale = isPerUser && effectiveSeats > 0 ? effectiveSeats : 1;
   const totalMedian = benchmark.median * scale;
   const totalP25 = benchmark.p25 * scale;
+  const scaleLabel = seatCount != null ? `${seatCount} licenser` : `${employees} anställda`;
   const scaleNote = isPerUser
-    ? ` (${benchmark.median.toLocaleString('sv-SE')} kr/användare × ${employees} anställda)`
+    ? ` (${benchmark.median.toLocaleString('sv-SE')} kr/användare × ${scaleLabel})`
     : '';
 
   const altList = (benchmark.alternatives ?? [])
@@ -69,7 +71,7 @@ function formatBenchmark(benchmark, employees) {
 
   return `Bransch: ${benchmark.industry}, storlek: ${benchmark.size}
 Median (total, per år): ${totalMedian.toLocaleString('sv-SE')} ${benchmark.unit}${scaleNote}
-Arvo-volympris (förhandlat, per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${employees} anställda)` : ''}
+Arvo-volympris (förhandlat, per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${scaleLabel})` : ''}
 
 Alternativa leverantörer:
 ${altList}
@@ -80,10 +82,12 @@ Källa: ${sourceStr}`;
 function formatPrompt({ customer, invoice, categorized, benchmark }) {
   const annualCost = invoice.annualCost ?? invoice.amount;
   const employees = customer.employees ?? 1;
+  const seatCount = invoice.seatCount ?? null;
   const isAccountingSystem = categorized.subType === 'affärssystem';
   const bm = benchmark;
   const isPerUser = bm && bm.note.toLowerCase().includes('per användare');
-  const scale = isPerUser && employees > 0 ? employees : 1;
+  const effectiveSeats = seatCount ?? employees;
+  const scale = isPerUser && effectiveSeats > 0 ? effectiveSeats : 1;
   const totalMedian = bm ? bm.median * scale : null;
   const isRealData = bm?.source === 'real';
   const dataPoints = bm?.n ?? 0;
@@ -110,8 +114,8 @@ function formatPrompt({ customer, invoice, categorized, benchmark }) {
       : 'OBS: Benchmarkdatan är estimat från offentliga listpriser — INTE från verkliga kundfakturor. I din reasoning, skriv "X % över marknadens referenspriser" — ALDRIG "medianen" eller "verkliga datapunkter".';
 
   const benchmarkBlock = isAccountingSystem
-    ? formatBenchmark(benchmark, employees) + '\n\n' + phrasingRule
-    : formatBenchmark(benchmark, employees);
+    ? formatBenchmark(benchmark, seatCount, employees) + '\n\n' + phrasingRule
+    : formatBenchmark(benchmark, seatCount, employees);
 
   return `Kunden:
   Bolagstyp: ${customer.industry}
@@ -224,14 +228,24 @@ export async function recommend(input, opts = {}) {
   if (result.shouldSwitch && benchmark) {
     const annualCost = input.invoice.annualCost ?? input.invoice.amount ?? 0;
     const employees = input.customer.employees ?? 1;
+    const seatCount = input.invoice.seatCount ?? null;
     const isPerUser = benchmark.note.toLowerCase().includes('per användare');
-    const scale = isPerUser && employees > 0 ? employees : 1;
+    const effectiveSeats = seatCount ?? employees;
+    const scale = isPerUser && effectiveSeats > 0 ? effectiveSeats : 1;
 
     result.suggestedAnnualCost = Math.round(benchmark.p25 * scale);
     result.savingPerYear = Math.max(0, Math.round(annualCost - result.suggestedAnnualCost));
     result.overpaymentPercent = benchmark.median > 0
       ? Math.round(((annualCost - benchmark.median * scale) / (benchmark.median * scale)) * 100)
       : (result.overpaymentPercent ?? 0);
+
+    if (seatCount != null && seatCount > employees) {
+      result.licenseOverage = seatCount - employees;
+      result.overageSavings = Math.round(result.licenseOverage * benchmark.p25);
+    } else {
+      result.licenseOverage = null;
+      result.overageSavings = null;
+    }
   }
 
   return {
