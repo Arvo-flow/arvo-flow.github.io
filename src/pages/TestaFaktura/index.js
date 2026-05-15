@@ -535,7 +535,7 @@ const TestaFaktura = () => {
                 Du betalar bara 20 % av faktiskt realiserad besparing. Inga fasta avgifter.
               </p>
               <div className="actions">
-                <Button as={Link} to="/connect" $variant="gradient" $size="lg" $full>
+                <Button as={Link} to="/connect" $variant="primary" $size="lg" $full>
                   <span className="f-badge">F</span>
                   Koppla Fortnox
                 </Button>

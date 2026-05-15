@@ -721,7 +721,7 @@ export const NextSteps = styled.div`
     width: 22px;
     height: 22px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
     font-size: 13px;
     font-weight: 900;
