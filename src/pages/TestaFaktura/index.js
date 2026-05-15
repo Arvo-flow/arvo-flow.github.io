@@ -437,7 +437,6 @@ const TestaFaktura = () => {
                       {result.recommendation.suggestedAnnualCost && !isLicensePending && (
                         isRealPrice ? (
                           <>
-                            <PriceNote $compact>Baserat på verifierade publika listpriser (maj 2026).</PriceNote>
                             <SwitchCTARow>
                               <Button
                                 type="button"
@@ -449,6 +448,9 @@ const TestaFaktura = () => {
                                 Verkställ bytet <Icon name="arrow" size={16} />
                               </Button>
                             </SwitchCTARow>
+                            <PriceNote>
+                              Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
+                            </PriceNote>
                           </>
                         ) : (
                           <>
