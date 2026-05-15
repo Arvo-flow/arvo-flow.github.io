@@ -31,15 +31,16 @@ Din enda uppgift är att läsa en PDF-faktura och extrahera följande fält som 
 - **account**: Bokföringskontot om det syns på fakturan eller framgår av kategorin (t.ex. "5310" för el, "6310" för försäkring). Lämna null om osäker.
 - **description**: En kort fritextbeskrivning som sammanfattar vad fakturan avser (t.ex. "Elförbrukning mars 2025 - anl.nr 735999", "Företagsförsäkring årspremie").
 - **recurring**: true om det är en månads-/årsfaktura som tydligt återkommer (abonnemang, premie, hyra), false om det är en engångsfaktura.
-- **recurringAmount**: Summan ENBART av de återkommande raderna (abonnemang, hyra, fasta månadsavgifter) exkl. moms. Uteslut engångsavgifter, rörliga förbruknings- och trafikavgifter (t.ex. roaming, övertrafik, leveransavgifter). Heltal.
-- **variableCharges**: Summan av alla ICKE-återkommande rader exkl. moms (t.ex. roaming utanför EU, övertrafik, engångsavgifter, utlägg). 0 om inga sådana rader finns. Heltal.
+- **recurringAmount**: Summan ENBART av de återkommande raderna (abonnemang, hyra, fasta månadsavgifter) exkl. moms. Uteslut engångsavgifter och rörliga mobiltrafikavgifter (roaming, övertrafik). OBS: Klickkostnader för skrivare/kopiatorer (kostnad per utskriven sida i klickavtal) räknas som återkommande och ingår i recurringAmount — de är INTE variableCharges. Heltal.
+- **variableCharges**: Summan av ICKE-återkommande rörliga mobilavgifter exkl. moms (roaming utanför EU, övertrafik, engångsavgifter, utlägg). 0 om inga sådana rader finns. OBS: Klickkostnader för skrivare är INTE variableCharges. Heltal.
 - **seatCount**: För prenumerationstjänster med per-användarpris (SaaS, M365, programlicenser): totalt antal seats/licenser på fakturan — summera ALLA licensrader oavsett tier (t.ex. 45 Premium + 12 Basic = 57). null om fakturan inte avser per-användarlicenser.
 - **annualCost**: Basera ALLTID på recurringAmount, aldrig på amount. Månadsfaktura: recurringAmount × 12. Kvartalsfaktura: recurringAmount × 4. Årsfaktura: recurringAmount. Okänt mönster: recurringAmount.
 
 KRITISKT:
 - Belopp ska vara EXKLUSIVE moms (svensk standard för B2B-bokföring).
 - annualCost ska ALDRIG inkludera variableCharges — rörliga avgifter är inte strukturella kostnader.
-- Roaming, övertrafik och liknande trafikavgifter är alltid variableCharges, aldrig recurring.
+- Roaming och övertrafik (mobiltelefoni) är alltid variableCharges, aldrig recurring.
+- Klickkostnader för skrivare/kopiatorer räknas alltid som recurring (ingår i recurringAmount) — de är förhandlingsbara avtalskostnader, INTE roaming.
 - Fakturaavgifter räknas som återkommande (ingår i recurringAmount) om de syns varje månad.
 - Returnera ALDRIG text utöver verktygsanropet — extract_invoice är obligatoriskt.
 - Om du verkligen inte kan utläsa ett fält, returnera null för det fältet (men supplier och amount är obligatoriska).`;

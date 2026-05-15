@@ -616,6 +616,10 @@ const TestaFaktura = () => {
                           <span className="perm-lock"><Icon name="lock" size={11} stroke={2} /></span>
                           Kundfakturor
                         </li>
+                        <li>
+                          <span className="perm-lock"><Icon name="lock" size={11} stroke={2} /></span>
+                          Bokföring &amp; huvudbok
+                        </li>
                       </ul>
                     </div>
                   </div>
