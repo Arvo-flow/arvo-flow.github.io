@@ -11,7 +11,7 @@ import {
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, KV,
   Reasoning, NextSteps, ServiceList, EmailGate,
-  ModalOverlay, ModalCard,
+  ModalOverlay, ModalCard, FortnoxButton,
 } from './styles';
 
 const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
@@ -116,6 +116,7 @@ const TestaFaktura = () => {
   const [email, setEmail] = useState('');
   const [emailState, setEmailState] = useState('idle'); // idle | submitting | sent
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalView, setModalView] = useState('fortnox'); // fortnox | email
   const [modalEmail, setModalEmail] = useState('');
   const [modalEmailState, setModalEmailState] = useState('idle'); // idle | submitting | sent
 
@@ -199,6 +200,7 @@ const TestaFaktura = () => {
     setEmail('');
     setEmailState('idle');
     setModalOpen(false);
+    setModalView('fortnox');
     setModalEmail('');
     setModalEmailState('idle');
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -579,25 +581,45 @@ const TestaFaktura = () => {
       <Footer />
 
       {modalOpen && result && (
-        <ModalOverlay onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
+        <ModalOverlay onClick={(e) => { if (e.target === e.currentTarget) { setModalOpen(false); setModalView('fortnox'); } }}>
           <ModalCard>
-            <button className="close" onClick={() => setModalOpen(false)} aria-label="Stäng">×</button>
+            <button className="close" onClick={() => { setModalOpen(false); setModalView('fortnox'); }} aria-label="Stäng">×</button>
 
             {modalEmailState === 'sent' ? (
               <div className="sent-state">
                 <span className="sent-icon"><Icon name="check" size={20} stroke={2.5} /></span>
                 <p className="sent-title">Vi hör av oss inom 24 timmar.</p>
                 <p className="sent-sub">
-                  Leverantörsidentiteten skickas till {modalEmail} tillsammans
-                  med nästa steg för att säkra besparingen.
+                  Analysen och nästa steg skickas till {modalEmail}.
                 </p>
               </div>
+            ) : modalView === 'fortnox' ? (
+              <>
+                <h3>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></h3>
+                <p className="sub">
+                  För att verkställa detta byte och automatiskt identifiera liknande
+                  överdebiteringar i resten av er leverantörsreskontra, behöver
+                  Arvo Flow anslutas till ert affärssystem.
+                </p>
+                <div className="context-badge">
+                  {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
+                </div>
+                <FortnoxButton as={Link} to="/connect" onClick={() => setModalOpen(false)}>
+                  <span className="f-badge">F</span>
+                  Koppla Fortnox säkert
+                </FortnoxButton>
+                <button className="manual-link" type="button" onClick={() => setModalView('email')}>
+                  Jag använder inte Fortnox, fortsätt manuellt via e-post.
+                </button>
+              </>
             ) : (
               <>
-                <h3>Säkra <em>+{formatKr(result.recommendation.netSaving)}</em></h3>
+                <button className="back-link" type="button" onClick={() => setModalView('fortnox')}>
+                  ← Tillbaka
+                </button>
+                <h3>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></h3>
                 <p className="sub">
-                  Ange din e-post för att låsa upp leverantörsidentiteten och
-                  starta bytet. Vi hör av oss inom 24 timmar — inget bindande.
+                  Vi skickar analysen och leverantörsidentiteten direkt till er inkorg.
                 </p>
                 <div className="context-badge">
                   {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
@@ -618,9 +640,7 @@ const TestaFaktura = () => {
                     $full
                     disabled={modalEmailState === 'submitting'}
                   >
-                    {modalEmailState === 'submitting'
-                      ? 'Skickar…'
-                      : <>Säkra besparingen <Icon name="arrow" size={16} /></>}
+                    {modalEmailState === 'submitting' ? 'Skickar…' : <>Skicka analysen <Icon name="arrow" size={16} /></>}
                   </Button>
                   <p className="fine-print">Ingen spam. Inga fasta avgifter. Du betalar 20 % av faktisk realiserad besparing.</p>
                 </form>
