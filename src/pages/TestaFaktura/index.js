@@ -447,7 +447,7 @@ const TestaFaktura = () => {
                               </div>
                               <Button
                                 type="button"
-                                $variant="primary"
+                                $variant="gradient"
                                 $size="sm"
                                 onClick={() => setModalOpen(true)}
                               >
@@ -590,7 +590,7 @@ const TestaFaktura = () => {
               </div>
             ) : (
               <>
-                <h3>Säkra <em>+{formatKr(result.recommendation.netSaving)} kr</em></h3>
+                <h3>Säkra <em>+{formatKr(result.recommendation.netSaving)}</em></h3>
                 <p className="sub">
                   Ange din e-post för att låsa upp leverantörsidentiteten och
                   starta bytet. Vi hör av oss inom 24 timmar — inget bindande.

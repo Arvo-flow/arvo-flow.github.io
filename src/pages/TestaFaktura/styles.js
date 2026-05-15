@@ -339,16 +339,20 @@ export const PartnerBlock = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin: 10px 0 24px;
-  padding: 14px 16px;
-  border-radius: ${({ theme }) => theme.size.radius.md};
-  border: 1px solid ${({ theme }) => theme.color.brand}33;
-  background: ${({ theme }) => theme.color.brandSoft};
+  margin: 10px 0 4px;
+  padding: 18px 20px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  border: 1.5px solid ${({ theme }) => theme.color.brand}55;
+  background: linear-gradient(
+    135deg,
+    ${({ theme }) => theme.color.brandSoft} 0%,
+    ${({ theme }) => theme.color.surface} 100%
+  );
 
   div.left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     min-width: 0;
   }
 
@@ -356,35 +360,35 @@ export const PartnerBlock = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: ${({ theme }) => theme.color.brand};
     color: #FAFAF7;
     flex-shrink: 0;
+    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
   }
 
   p.partner-name {
     margin: 0;
-    font-size: 13.5px;
-    font-weight: 600;
+    font-size: 14.5px;
+    font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
   }
 
   p.price-label {
-    margin: 2px 0 0;
-    font-size: 11.5px;
+    margin: 3px 0 0;
+    font-size: 12px;
     color: ${({ theme }) => theme.color.brand};
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
 
   @media (max-width: 540px) {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
   }
 `;
 
