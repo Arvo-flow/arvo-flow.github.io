@@ -709,15 +709,53 @@ export const NextSteps = styled.div`
   div.actions {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: 14px;
-    max-width: 420px;
+    max-width: 560px;
     margin: 0 auto;
   }
-a.read-more {
+  div.cta-row {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+
+    a, button { flex: 1; }
+  }
+  div.trust-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    flex-shrink: 0;
+    width: 148px;
+
+    span.lock { font-size: 18px; line-height: 1; flex-shrink: 0; }
+    strong {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: ${({ theme }) => theme.color.ink};
+      line-height: 1.35;
+    }
+    span.sub {
+      display: block;
+      font-size: 10.5px;
+      color: ${({ theme }) => theme.color.mutedSoft};
+      margin-top: 3px;
+    }
+  }
+  @media (max-width: 540px) {
+    div.cta-row { flex-direction: column; }
+    div.trust-card { width: auto; }
+  }
+  a.read-more {
     font-size: 13.5px;
     color: ${({ theme }) => theme.color.muted};
     text-decoration: none;
+    text-align: center;
     transition: color 0.15s;
     &:hover { color: ${({ theme }) => theme.color.ink}; }
   }
