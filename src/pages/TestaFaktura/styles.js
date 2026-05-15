@@ -331,6 +331,7 @@ export const PriceNote = styled.p`
   color: ${({ theme }) => theme.color.muted};
   line-height: 1.55;
   font-style: italic;
+  text-align: center;
 `;
 
 export const NoSwitchBlock = styled.div`

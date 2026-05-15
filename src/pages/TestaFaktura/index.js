@@ -350,7 +350,7 @@ const TestaFaktura = () => {
                 </SavingsBlock>
                 {result.recommendation.suggestedAnnualCost && !result.categorized.licensePending && (
                   <PriceNote>
-                    Arvo-priset bygger på förhandlade volymavtal — en prisnivå utanför leverantörens ordinarie listpris.
+                    Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
                   </PriceNote>
                 )}
               </>
