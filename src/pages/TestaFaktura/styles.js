@@ -326,12 +326,16 @@ export const SavingsBlock = styled.div`
 
 export const PriceNote = styled.p`
   margin-top: 10px;
-  margin-bottom: 24px;
+  margin-bottom: ${({ $compact }) => $compact ? '10px' : '24px'};
   font-size: 12px;
   color: ${({ theme }) => theme.color.muted};
   line-height: 1.6;
   font-style: italic;
   text-align: center;
+`;
+
+export const SwitchCTARow = styled.div`
+  margin-bottom: 24px;
 `;
 
 export const PartnerBlock = styled.div`

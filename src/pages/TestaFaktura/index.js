@@ -9,7 +9,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, KV,
+  ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, SwitchCTARow, KV,
   Reasoning, NextSteps, ServiceList, EmailGate,
   ModalOverlay, ModalCard, FortnoxButton,
 } from './styles';
@@ -436,9 +436,20 @@ const TestaFaktura = () => {
                       </SavingsBlock>
                       {result.recommendation.suggestedAnnualCost && !isLicensePending && (
                         isRealPrice ? (
-                          <PriceNote>
-                            Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
-                          </PriceNote>
+                          <>
+                            <PriceNote $compact>Baserat på verifierade publika listpriser (maj 2026).</PriceNote>
+                            <SwitchCTARow>
+                              <Button
+                                type="button"
+                                $variant="gradient"
+                                $size="lg"
+                                $full
+                                onClick={() => setModalOpen(true)}
+                              >
+                                Verkställ bytet <Icon name="arrow" size={16} />
+                              </Button>
+                            </SwitchCTARow>
+                          </>
                         ) : (
                           <>
                             <PartnerBlock>
@@ -597,9 +608,9 @@ const TestaFaktura = () => {
               <>
                 <h3>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></h3>
                 <p className="sub">
-                  För att verkställa detta byte och automatiskt identifiera liknande
-                  överdebiteringar i resten av er leverantörsreskontra, behöver
-                  Arvo Flow anslutas till ert affärssystem.
+                  {REAL_PRICE_CATEGORIES.has(result.categorized.category)
+                    ? <>För att vi ska kunna verkställa bytet till <strong>{result.recommendation.suggestedSupplier}</strong> – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox. Snabbt, tryggt och du har alltid full kontroll.</>
+                    : 'För att vi ska få rätt underlag att vinna förhandlingen åt er – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox. Snabbt, tryggt och du har alltid full kontroll.'}
                 </p>
                 <div className="context-badge">
                   {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
