@@ -10,7 +10,7 @@ import {
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, KV,
-  Reasoning, NextSteps, ServiceList, EmailGate,
+  Reasoning, LicenseOverageNote, NextSteps, ServiceList, EmailGate,
   ModalOverlay, ModalCard,
 } from './styles';
 
@@ -539,6 +539,19 @@ const TestaFaktura = () => {
                       )}
                 </p>
               </Reasoning>
+            )}
+
+            {result.recommendation.licenseOverage > 0 && result.extracted.seatCount != null && (
+              <LicenseOverageNote>
+                <span className="kicker">Notering om licenser</span>
+                <p>
+                  Kalkylen ovan bygger på att vi behåller era {result.extracted.seatCount} licenser,
+                  men sänker styckpriset genom att flytta er till rätt avtalsnivå. Vi noterar dock
+                  att ni enligt uppgift är {employees} anställda. Om man dessutom hade städat bort
+                  dessa {result.recommendation.licenseOverage} överflödiga licenser, hade er kostnad
+                  sänkts ytterligare.
+                </p>
+              </LicenseOverageNote>
             )}
 
             {result.recommendation.shouldSwitch && result.recommendation.netSaving > 0 && (

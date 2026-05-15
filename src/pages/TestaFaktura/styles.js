@@ -688,6 +688,29 @@ export const Reasoning = styled.div`
   }
 `;
 
+export const LicenseOverageNote = styled.div`
+  margin-top: 16px;
+  padding: 18px 20px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  border: 1.5px solid ${({ theme }) => theme.color.warning}88;
+  background: ${({ theme }) => theme.color.warningSoft};
+
+  span.kicker {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: ${({ theme }) => theme.color.warning};
+    margin-bottom: 8px;
+  }
+  p {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: ${({ theme }) => theme.color.ink};
+    margin: 0;
+  }
+`;
 
 export const NextSteps = styled.div`
   margin-top: 28px;
