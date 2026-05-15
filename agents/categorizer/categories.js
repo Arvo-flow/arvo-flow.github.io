@@ -1,7 +1,6 @@
 // agents/categorizer/categories.js
-// The 8 leverantörskategorier som Arvo Flow kan optimera idag.
-// Försäkring är "license-pending" — vi kategoriserar den men byter den inte
-// förrän FI-licensen är klar.
+// Leverantörskategorier som Arvo Flow kan optimera.
+// Försäkring är "license-pending" — kategoriseras men byts inte förrän FI-licensen är klar.
 
 export const CATEGORIES = {
   el: {
@@ -96,6 +95,61 @@ export const CATEGORIES = {
       'onedrive', 'sharepoint', 'cloudtech', 'csp', 'licens', 'prenumeration',
     ],
     accountHints: ['6540', '5460', '6230'],
+  },
+  skrivarleasing: {
+    label: 'Skrivare & Managed Print',
+    licensePending: false,
+    subTypes: ['a3-mfp', 'a4-mfp', 'klickavtal', 'managed-print'],
+    keywords: [
+      'skrivarhyra', 'kopiatorrhyra', 'multifunktionsskrivare', 'managed print',
+      'klickavgift', 'klickavtal', 'skrivarleasing', 'kopieringsavgift',
+      'konica minolta', 'ricoh', 'xerox', 'sharp', 'kyocera', 'canon',
+      'officeprint', 'toner', 'serviceavtal skrivare',
+    ],
+    accountHints: ['5610', '6570', '6900'],
+  },
+  loneadmin: {
+    label: 'Löneadministration',
+    licensePending: false,
+    subTypes: ['program', 'outsourcad', 'hybrid'],
+    keywords: [
+      'löneadministration', 'löneprogram', 'lönesystem', 'löneutbetalning',
+      'hogia lön', 'hogia', 'azets', 'lön och hr', 'payroll',
+      'lönekörning', 'lönehantering',
+    ],
+    accountHints: ['7699', '6540', '7690'],
+  },
+  'larm-bevakning': {
+    label: 'Larm & Bevakning',
+    licensePending: false,
+    subTypes: ['inbrott', 'brand', 'kamera', 'bevakning'],
+    keywords: [
+      'larmövervakning', 'larmabonnemang', 'säkerhetsövervakning',
+      'inbrottsalarm', 'brandlarm', 'bevakningsavtal',
+      'sector alarm', 'verisure', 'safemore', 'securitas', 'teleguard',
+    ],
+    accountHints: ['6530', '6900', '6991'],
+  },
+  foretagshalsovard: {
+    label: 'Företagshälsovård',
+    licensePending: false,
+    subTypes: ['bas', 'standard', 'premium'],
+    keywords: [
+      'företagshälsovård', 'friskvårdsavtal', 'hälsovårdsavtal',
+      'arbetspsykolog', 'previa', 'feelgood', 'falck', 'avonova',
+      'hälsoundersökning', 'rehab', 'friskvård',
+    ],
+    accountHints: ['7620', '7622', '6900'],
+  },
+  bankavgifter: {
+    label: 'Bankavgifter & Betaltjänster',
+    licensePending: false,
+    subTypes: ['kontoavgift', 'betaltjänst', 'valuta'],
+    keywords: [
+      'bankavgift', 'kontoavgift företag', 'banktjänster', 'betalningsförmedling',
+      'lunar', 'qred', 'företagskonto', 'bankpaket', 'kontohavare avgift',
+    ],
+    accountHints: ['6570', '6980', '6900'],
   },
   uncategorized: {
     label: 'Okategoriserat',

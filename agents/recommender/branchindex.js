@@ -165,9 +165,6 @@ export const BRANCHINDEX = {
 
   'mjukvara-saas': {
     unit: 'kr/år',
-    // Prices are per user/year — lib/benchmark.js scales by employee count before the LLM sees it.
-    // Reference product: Microsoft 365 Business Standard via CSP or Google Workspace Business Standard.
-    // Source: Microsoft CSP-listpriser + Google Workspace-listpriser 2026.
     note: 'Per användare/år. Referensprodukt: M365 Business Standard / Google Workspace Business Standard via volymavtal. Källa: CSP-listpriser 2026.',
     alternatives: [
       { supplier: 'Microsoft 365 Business Standard (Arvo CSP)',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
@@ -180,6 +177,91 @@ export const BRANCHINDEX = {
       hantverkare: { micro: { median: 1800, p25: 1440 }, small: { median: 2160, p25: 1680 }, mid: { median: 2520, p25: 1920 } },
       ehandel:     { micro: { median: 2160, p25: 1680 }, small: { median: 2640, p25: 2040 }, mid: { median: 3120, p25: 2280 } },
       tillverkning:{ micro: { median: 1800, p25: 1440 }, small: { median: 2160, p25: 1680 }, mid: { median: 2520, p25: 1920 } },
+    },
+  },
+
+  skrivarleasing: {
+    unit: 'kr/år',
+    note: 'Totalt per år: skrivarhyra + klickavtal S/V + serviceavtal. Referens: A4 MFP mid-range med klickpris 0,06–0,09 kr/sida S/V. Källa: marknadspriser 2026.',
+    alternatives: [
+      { supplier: 'Konica Minolta SMB Solutions', positioning: 'Stark SMF-portfölj, konkurrenskraftiga klickavtal, rikstäckande service',       reliability: 0.95 },
+      { supplier: 'Ricoh Sverige',                positioning: 'Bäst total cost of ownership för mellanstor printvolym, stark SLA',              reliability: 0.94 },
+      { supplier: 'Canon Business Solutions',     positioning: 'Bred modellflora, bra för blandad A3/A4-volym, stark support',                  reliability: 0.93 },
+      { supplier: 'Kyocera Document Solutions',   positioning: 'Lägst klickpris i klassen, lång livslängd på hardware — lägst TCO totalt',      reliability: 0.92 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 18000, p25: 12600 }, small: { median: 30000, p25: 21600 }, mid: { median:  48000, p25:  33600 } },
+      hantverkare: { micro: { median: 12000, p25:  8400 }, small: { median: 24000, p25: 16800 }, mid: { median:  42000, p25:  28800 } },
+      ehandel:     { micro: { median: 15000, p25: 10200 }, small: { median: 30000, p25: 21000 }, mid: { median:  48000, p25:  33600 } },
+      tillverkning:{ micro: { median: 18000, p25: 12600 }, small: { median: 48000, p25: 33600 }, mid: { median: 120000, p25:  84000 } },
+    },
+  },
+
+  loneadmin: {
+    unit: 'kr/år',
+    note: 'Per anställd/år. Löneadministrationsprogram eller outsourcad lönekörning. Källa: leverantörers listpriser 2026.',
+    alternatives: [
+      { supplier: 'Fortnox Lön',   positioning: 'Integrerat i Fortnox-paketet — ingen extra kostnad om kunden redan har Fortnox', reliability: 0.96 },
+      { supplier: 'Hogia Lön',     positioning: 'Marknadsledare för mid-size, starka kollektivavtalsregler inbyggda',              reliability: 0.95 },
+      { supplier: 'Visma Lön',     positioning: 'Stark integration med Visma eEkonomi, bred support',                             reliability: 0.94 },
+      { supplier: 'Azets Sverige', positioning: 'Outsourcad lönekörning — rätt om kunden vill slippa systemansvar helt',          reliability: 0.93 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
+      hantverkare: { micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
+      ehandel:     { micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
+      tillverkning:{ micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
+    },
+  },
+
+  'larm-bevakning': {
+    unit: 'kr/år',
+    note: 'Per driftsställe/år. Inkluderar larmövervakning + larmcentral + utrustningshyra. Källa: operatörernas listpriser 2026.',
+    alternatives: [
+      { supplier: 'Sector Alarm Företag', positioning: 'Lägst månadsavgift, stark app-integration, snabb utryckning',        reliability: 0.94 },
+      { supplier: 'Safemore',             positioning: 'Konkurrenskraftigt pris, stark för SMF utan komplex säkerhetsinfra', reliability: 0.92 },
+      { supplier: 'Verisure Företag',     positioning: 'Rikstäckande, välkänt varumärke, bra för multi-site',               reliability: 0.95 },
+      { supplier: 'Securitas Sverige',    positioning: 'Premium-alternativ med bemannad bevakning om det behövs',           reliability: 0.96 },
+    ],
+    matrix: {
+      byraer:      { micro: { median:  9600, p25: 6720 }, small: { median: 18000, p25: 12600 }, mid: { median:  42000, p25: 29400 } },
+      hantverkare: { micro: { median: 12000, p25: 8400 }, small: { median: 24000, p25: 16800 }, mid: { median:  54000, p25: 37800 } },
+      ehandel:     { micro: { median:  9600, p25: 6720 }, small: { median: 18000, p25: 12600 }, mid: { median:  42000, p25: 29400 } },
+      tillverkning:{ micro: { median: 14400, p25: 9600 }, small: { median: 30000, p25: 21000 }, mid: { median:  84000, p25: 58800 } },
+    },
+  },
+
+  foretagshalsovard: {
+    unit: 'kr/år',
+    note: 'Per anställd/år. Grundpaket med hälsoundersökning, rehab-koordinering och krissamtal. Källa: leverantörers listpriser 2026.',
+    alternatives: [
+      { supplier: 'Feelgood Företagshälsa', positioning: 'Störst i Sverige, digitalt primärt, konkurrenskraftigt grundpris',        reliability: 0.95 },
+      { supplier: 'Avonova',               positioning: 'Stark digitalt + fysiskt, bra för bolag med blandade arbetsplatser',      reliability: 0.94 },
+      { supplier: 'Falck Health',          positioning: 'Internationell aktör, stark för multi-site och internationella bolag',    reliability: 0.93 },
+      { supplier: 'Previa',               positioning: 'Premium-aktör, bred specialistkompetens, bäst för komplexa rehabbehov',   reliability: 0.95 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 3600, p25: 2520 }, small: { median: 3000, p25: 2040 }, mid: { median: 2400, p25: 1680 } },
+      hantverkare: { micro: { median: 4200, p25: 2940 }, small: { median: 3600, p25: 2520 }, mid: { median: 2880, p25: 2016 } },
+      ehandel:     { micro: { median: 3600, p25: 2520 }, small: { median: 3000, p25: 2040 }, mid: { median: 2400, p25: 1680 } },
+      tillverkning:{ micro: { median: 4200, p25: 2940 }, small: { median: 3600, p25: 2520 }, mid: { median: 2880, p25: 2016 } },
+    },
+  },
+
+  bankavgifter: {
+    unit: 'kr/år',
+    note: 'Totalt per år: månadsavgift + transaktionsavgifter + kortavgifter. Källa: bankernas listpriser 2026.',
+    alternatives: [
+      { supplier: 'Lunar Business',              positioning: 'Ingen månadsavgift, API-first, bäst för digitala bolag utan kontanthantering', reliability: 0.91 },
+      { supplier: 'Qred Företagskonto',          positioning: 'Låg månadsavgift, stark för SMF med enkel transaktionsprofil',                reliability: 0.90 },
+      { supplier: 'Länsförsäkringar Bank Företag', positioning: 'Bra prissättning för traditionellt SMF, personlig rådgivning',             reliability: 0.93 },
+      { supplier: 'SEB Företagskonto',           positioning: 'Fullsortiment, bäst om kunden behöver valuta eller exporttjänster',          reliability: 0.95 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 4800, p25: 2400 }, small: { median:  9600, p25:  5400 }, mid: { median: 24000, p25: 13200 } },
+      hantverkare: { micro: { median: 5400, p25: 2640 }, small: { median: 10800, p25:  6000 }, mid: { median: 27000, p25: 15000 } },
+      ehandel:     { micro: { median: 6000, p25: 3000 }, small: { median: 12000, p25:  6600 }, mid: { median: 30000, p25: 16800 } },
+      tillverkning:{ micro: { median: 6000, p25: 3000 }, small: { median: 12000, p25:  6600 }, mid: { median: 30000, p25: 16800 } },
     },
   },
 

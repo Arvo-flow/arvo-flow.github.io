@@ -38,9 +38,14 @@ const CATEGORY_LABELS = {
   'forsakring-ansvar': 'Yrkesansvarsförsäkring',
   leasing: 'Företagsleasing',
   kortterminal: 'Kortterminal',
-  'faktura-tjanst': 'Fakturatjänst / Affärssystem',
-  'mjukvara-saas': 'Programvarulicenser / SaaS',
-  uncategorized: 'Okategoriserad',
+  'faktura-tjanst':   'Fakturatjänst / Affärssystem',
+  'mjukvara-saas':    'Programvarulicenser / SaaS',
+  skrivarleasing:     'Skrivare & Managed Print',
+  loneadmin:          'Löneadministration',
+  'larm-bevakning':   'Larm & Bevakning',
+  foretagshalsovard:  'Företagshälsovård',
+  bankavgifter:       'Bankavgifter & Betaltjänster',
+  uncategorized:      'Okategoriserad',
 };
 
 const PHASES = [

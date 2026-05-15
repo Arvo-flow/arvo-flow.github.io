@@ -31,9 +31,17 @@ const STRONG_DESC_SIGNALS = {
   kortterminal:     ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
   'faktura-tjanst': ['fakturatjänst', 'e-faktura utskick', 'fakturautskick'],
   'leasing-bil':    ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
-  'mjukvara-saas':  ['microsoft 365', 'office 365', 'google workspace', 'adobe creative cloud',
-                     'programvarulicens', 'programvarulicenser', 'saas-licens', 'saas-prenumeration',
-                     'microsoft teams', 'google workspace business'],
+  'mjukvara-saas':    ['microsoft 365', 'office 365', 'google workspace', 'adobe creative cloud',
+                       'programvarulicens', 'programvarulicenser', 'saas-licens', 'saas-prenumeration',
+                       'microsoft teams', 'google workspace business'],
+  skrivarleasing:     ['skrivarhyra', 'kopiatorrhyra', 'multifunktionsskrivare', 'managed print',
+                       'klickavgift', 'klickavtal', 'skrivarleasing', 'kopieringsavgift'],
+  loneadmin:          ['löneadministration', 'löneprogram', 'lönesystem', 'lönekörning', 'löneutbetalning'],
+  'larm-bevakning':   ['larmövervakning', 'larmabonnemang', 'säkerhetsövervakning', 'inbrottsalarm',
+                       'brandlarm abonnemang', 'bevakningsavtal'],
+  foretagshalsovard:  ['företagshälsovård', 'friskvårdsavtal', 'hälsovårdsavtal', 'arbetspsykolog',
+                       'hälsoundersökning företag'],
+  bankavgifter:       ['bankavgift', 'kontoavgift företag', 'bankpaket företag', 'betalningsförmedling'],
 };
 
 // Known SaaS accounting/ERP suppliers → faktura-tjanst.
@@ -42,6 +50,24 @@ const ACCOUNTING_SAAS_SUPPLIERS = ['fortnox', 'visma', 'pe accounting', 'speedle
 // Known software/cloud suppliers — when combined with a license/subscription signal → mjukvara-saas.
 const SOFTWARE_SUPPLIER_SIGNALS = ['microsoft', 'adobe', 'google', 'zoom video', 'slack technologies', 'atlassian', 'salesforce'];
 const LICENSE_DESC_SIGNALS = ['licens', 'license', 'prenumeration', 'subscription', 'licenser'];
+
+// Known print/copier suppliers → skrivarleasing.
+const PRINT_SUPPLIER_SIGNALS = ['konica minolta', 'ricoh', 'xerox', 'kyocera', 'officeprint', 'sharp document'];
+const PRINT_DESC_SIGNALS = ['skrivare', 'kopiator', 'mfp', 'klickavgift', 'klickavtal', 'toner'];
+
+// Known alarm/security suppliers → larm-bevakning.
+const ALARM_SUPPLIER_SIGNALS = ['sector alarm', 'verisure', 'safemore', 'securitas', 'teleguard'];
+
+// Known payroll suppliers → loneadmin.
+const PAYROLL_SUPPLIER_SIGNALS = ['hogia', 'azets'];
+const PAYROLL_DESC_SIGNALS = ['lönekörning', 'löneutbetalning', 'löneadministration'];
+
+// Known occupational health suppliers → foretagshalsovard.
+const HEALTH_SUPPLIER_SIGNALS = ['previa', 'feelgood', 'falck health', 'avonova'];
+
+// Known banking suppliers → bankavgifter.
+const BANK_SUPPLIER_SIGNALS = ['lunar business', 'qred'];
+const BANK_DESC_SIGNALS = ['bankavgift', 'kontoavgift', 'bankpaket'];
 
 // Telecom supplier keywords — when combined with any subscription signal → mobil.
 const TELECOM_SUPPLIER_SIGNALS = ['telekom', 'telecom', 'tele2', 'telia', 'telenor', ' tre ', 'comviq', 'halebop', 'vimla'];
@@ -105,6 +131,74 @@ function deterministicMatch(invoice) {
       normalizedSupplier: invoice.supplier ?? '',
       confidence: 0.88,
       reasoning: `Deterministisk matchning: känd programvaruleverantör + licens/prenumerationsbeskrivning`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 5: known print/copier supplier + printer description → skrivarleasing
+  const isPrintSupplier = PRINT_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  const isPrintDesc = PRINT_DESC_SIGNALS.some((s) => combined.includes(s));
+  if (isPrintSupplier || (isPrintDesc && combined.includes('hyra'))) {
+    return {
+      category: 'skrivarleasing',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.88,
+      reasoning: `Deterministisk matchning: känd skrivar-/kopiatortillverkare eller skrivarhyra i fakturatexten`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 6: known alarm supplier → larm-bevakning
+  const isAlarmSupplier = ALARM_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  if (isAlarmSupplier) {
+    return {
+      category: 'larm-bevakning',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.90,
+      reasoning: `Deterministisk matchning: känd larm-/bevakningsleverantör`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 7: known payroll supplier + payroll description → loneadmin
+  const isPayrollSupplier = PAYROLL_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  const isPayrollDesc = PAYROLL_DESC_SIGNALS.some((s) => desc.includes(s));
+  if (isPayrollSupplier || isPayrollDesc) {
+    return {
+      category: 'loneadmin',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.88,
+      reasoning: `Deterministisk matchning: känd löneadministrationsleverantör eller lönebeskrivning`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 8: known occupational health supplier → foretagshalsovard
+  const isHealthSupplier = HEALTH_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  if (isHealthSupplier) {
+    return {
+      category: 'foretagshalsovard',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.91,
+      reasoning: `Deterministisk matchning: känd företagshälsovårdsleverantör`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 9: known bank supplier + bank description → bankavgifter
+  const isBankSupplier = BANK_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  const isBankDesc = BANK_DESC_SIGNALS.some((s) => combined.includes(s));
+  if (isBankSupplier || isBankDesc) {
+    return {
+      category: 'bankavgifter',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.87,
+      reasoning: `Deterministisk matchning: bankavgift/kontoavgift identifierad`,
       licensePending: false,
     };
   }
