@@ -404,20 +404,25 @@ const TestaFaktura = () => {
                         isRealPrice ? (
                           <PriceNote>Baserat på verifierade publika listpriser (maj 2026).</PriceNote>
                         ) : (
-                          <PartnerBlock>
-                            <div className="left">
-                              <span className="verified-badge">
-                                <Icon name="check" size={12} stroke={2.5} />
-                              </span>
-                              <div>
-                                <p className="partner-name">{partnerLabel}</p>
-                                <p className="price-label">Arvos kalkylerade riktpris</p>
+                          <>
+                            <PartnerBlock>
+                              <div className="left">
+                                <span className="verified-badge">
+                                  <Icon name="check" size={12} stroke={2.5} />
+                                </span>
+                                <div>
+                                  <p className="partner-name">{partnerLabel}</p>
+                                  <p className="price-label">Arvos kalkylerade riktpris</p>
+                                </div>
                               </div>
-                            </div>
-                            <Button as={Link} to="/connect" $variant="primary" $size="sm">
-                              Aktivera förhandling <Icon name="arrow" size={14} />
-                            </Button>
-                          </PartnerBlock>
+                              <Button as={Link} to="/connect" $variant="primary" $size="sm">
+                                Aktivera förhandling <Icon name="arrow" size={14} />
+                              </Button>
+                            </PartnerBlock>
+                            <PriceNote>
+                              Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
+                            </PriceNote>
+                          </>
                         )
                       )}
                     </>
