@@ -588,6 +588,8 @@ export const ModalCard = styled.div`
     }
   }
 `;
+
+export const Reasoning = styled.div`
   margin-top: 24px;
   padding-left: 20px;
   border-left: 3px solid ${({ theme }) => theme.color.brand};
