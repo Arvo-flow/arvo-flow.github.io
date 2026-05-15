@@ -266,7 +266,62 @@ Klassificering:
   confidence: 0.98
   reasoning: "Google Workspace Business Standard + konto 6540 är SaaS-prenumeration"
 
-Exempel 18: Zoom / kommunikationsverktyg
+Exempel 19: Skrivarhyra + klickavtal (Managed Print)
+Input:
+  Leverantör: OfficePrint Nordic AB
+  Belopp: 5765 kr
+  Datum: 2026-05-10
+  Beskrivning: Hyra Multifunktionsskrivare Enterprise Pro A3 + Klickavgift S/V + Serviceavtal
+Klassificering:
+  category: "skrivarleasing"
+  subType: "a3-mfp"
+  normalizedSupplier: "OfficePrint Nordic"
+  confidence: 0.95
+  reasoning: "'Hyra Multifunktionsskrivare' + 'Klickavgift' är klassisk managed print-struktur"
+
+Exempel 20: Löneadministration
+Input:
+  Leverantör: Hogia AB
+  Belopp: 2100 kr
+  Datum: 2026-04-01
+  Konto: 6540
+  Beskrivning: Hogia Lön+ - 15 anställda april
+Klassificering:
+  category: "loneadmin"
+  subType: "program"
+  normalizedSupplier: "Hogia Lön"
+  confidence: 0.97
+  reasoning: "Hogia är ledande lönesystemleverantör + 'Hogia Lön' i beskrivning"
+
+Exempel 21: Larmövervakning
+Input:
+  Leverantör: Sector Alarm AB
+  Belopp: 695 kr
+  Datum: 2026-03-01
+  Konto: 6530
+  Beskrivning: Larmövervakning + utryckning mars
+Klassificering:
+  category: "larm-bevakning"
+  subType: "inbrott"
+  normalizedSupplier: "Sector Alarm"
+  confidence: 0.97
+  reasoning: "Sector Alarm är känd larmleverantör + 'larmövervakning' bekräftar"
+
+Exempel 22: Företagshälsovård
+Input:
+  Leverantör: Feelgood Företagshälsa AB
+  Belopp: 4500 kr
+  Datum: 2026-01-01
+  Konto: 7620
+  Beskrivning: Hälsovårdsavtal bas 15 anställda Q1 2026
+Klassificering:
+  category: "foretagshalsovard"
+  subType: "bas"
+  normalizedSupplier: "Feelgood"
+  confidence: 0.97
+  reasoning: "Feelgood är känd FHV-leverantör + 'hälsovårdsavtal' + konto 7620"
+
+Exempel 23: Zoom / kommunikationsverktyg
 Input:
   Leverantör: Zoom Video Communications
   Belopp: 890 kr
