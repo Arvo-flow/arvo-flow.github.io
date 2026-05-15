@@ -328,11 +328,64 @@ export const PriceNote = styled.p`
   margin-top: 10px;
   margin-bottom: 24px;
   font-size: 12px;
-  color: ${({ theme, $variant }) =>
-    $variant === 'mandate' ? theme.color.inkSoft : theme.color.muted};
+  color: ${({ theme }) => theme.color.muted};
   line-height: 1.6;
-  font-style: ${({ $variant }) => $variant === 'mandate' ? 'normal' : 'italic'};
+  font-style: italic;
   text-align: center;
+`;
+
+export const PartnerBlock = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 10px 0 24px;
+  padding: 14px 16px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  border: 1px solid ${({ theme }) => theme.color.brand}33;
+  background: ${({ theme }) => theme.color.brandSoft};
+
+  div.left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  span.verified-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brand};
+    color: #FAFAF7;
+    flex-shrink: 0;
+  }
+
+  p.partner-name {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  p.price-label {
+    margin: 2px 0 0;
+    font-size: 11.5px;
+    color: ${({ theme }) => theme.color.brand};
+    font-weight: 500;
+  }
+
+  @media (max-width: 540px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 `;
 
 export const NoSwitchBlock = styled.div`
@@ -414,6 +467,29 @@ export const Reasoning = styled.div`
     font-size: 15.5px;
     line-height: 1.65;
     color: ${({ theme }) => theme.color.ink};
+  }
+`;
+
+export const LockedReasoning = styled.div`
+  margin-top: 24px;
+  padding-left: 20px;
+  border-left: 3px solid ${({ theme }) => theme.color.borderStrong};
+
+  span.kicker {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: ${({ theme }) => theme.color.muted};
+    margin-bottom: 8px;
+  }
+  p {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 15px;
+    line-height: 1.65;
+    color: ${({ theme }) => theme.color.muted};
+    font-style: italic;
   }
 `;
 

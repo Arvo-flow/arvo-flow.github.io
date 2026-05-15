@@ -9,8 +9,8 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, KV, Reasoning, NextSteps,
-  ServiceList, EmailGate,
+  ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, KV,
+  Reasoning, LockedReasoning, NextSteps, ServiceList, EmailGate,
 } from './styles';
 
 const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
@@ -18,9 +18,22 @@ const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/eeaax2i1k03cycl39zqlpdt9
 
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
-// Categories where we have verified public list prices (not contract estimates).
-// Used to decide whether to show a real-price note or the Arvo mandate CTA.
+// Categories with verified public list prices — show supplier name proudly.
 const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+
+// Category 2: contract-based benchmark prices — hide supplier, show verified partner.
+const CATEGORY_PARTNER_LABEL = {
+  el:                'Kvalificerad Elleverantör',
+  bredband:          'Kvalificerad Bredbandsoperatör',
+  kortterminal:      'Kvalificerad Betaltjänstleverantör',
+  'faktura-tjanst':  'Kvalificerad Affärssystemsleverantör',
+  'leasing-bil':     'Kvalificerad Leasingpartner',
+  skrivarleasing:    'Kvalificerad Print-leverantör',
+  loneadmin:         'Kvalificerad Lönesystemleverantör',
+  'larm-bevakning':  'Kvalificerad Säkerhetsleverantör',
+  foretagshalsovard: 'Kvalificerad Hälsovårdspartner',
+  bankavgifter:      'Kvalificerad Bankpartner',
+};
 
 const INDUSTRY_LABELS = {
   ehandel:     'E-handel & Detaljhandel',
@@ -343,6 +356,7 @@ const TestaFaktura = () => {
                 {(() => {
                   const isRealPrice = REAL_PRICE_CATEGORIES.has(result.categorized.category);
                   const isLicensePending = result.categorized.licensePending;
+                  const partnerLabel = CATEGORY_PARTNER_LABEL[result.categorized.category] ?? 'Arvo-verifierad Partner';
                   return (
                     <>
                       <SavingsBlock>
@@ -362,18 +376,31 @@ const TestaFaktura = () => {
                               )
                               : (
                                 <>
-                                  {formatKr(result.extracted.annualCost)} → {formatKr(result.recommendation.suggestedAnnualCost)} kr/år (Arvo kalkylerat riktpris)
+                                  {formatKr(result.extracted.annualCost)} → {formatKr(result.recommendation.suggestedAnnualCost)} kr/år (Arvos kalkylerade riktpris)
                                   {' '}· Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
                                 </>
                               )}
                         </span>
                       </SavingsBlock>
                       {result.recommendation.suggestedAnnualCost && !isLicensePending && (
-                        <PriceNote $variant={isRealPrice ? 'default' : 'mandate'}>
-                          {isRealPrice
-                            ? 'Baserat på verifierade publika listpriser (maj 2026).'
-                            : 'Aktivera Arvo Flow för att ge oss mandat att förhandla ner ditt avtal till denna målnivå.'}
-                        </PriceNote>
+                        isRealPrice ? (
+                          <PriceNote>Baserat på verifierade publika listpriser (maj 2026).</PriceNote>
+                        ) : (
+                          <PartnerBlock>
+                            <div className="left">
+                              <span className="verified-badge">
+                                <Icon name="check" size={12} stroke={2.5} />
+                              </span>
+                              <div>
+                                <p className="partner-name">{partnerLabel}</p>
+                                <p className="price-label">Arvos kalkylerade riktpris</p>
+                              </div>
+                            </div>
+                            <Button as={Link} to="/connect" $variant="primary" $size="sm">
+                              Aktivera förhandling <Icon name="arrow" size={14} />
+                            </Button>
+                          </PartnerBlock>
+                        )
                       )}
                     </>
                   );
@@ -406,10 +433,17 @@ const TestaFaktura = () => {
             </KV>
 
             {result.recommendation.reasoning && result.recommendation.shouldSwitch && (
-              <Reasoning>
-                <span className="kicker">Varför vi tror du kan spara</span>
-                <p>{result.recommendation.reasoning}</p>
-              </Reasoning>
+              REAL_PRICE_CATEGORIES.has(result.categorized.category) ? (
+                <Reasoning>
+                  <span className="kicker">Varför vi tror du kan spara</span>
+                  <p>{result.recommendation.reasoning}</p>
+                </Reasoning>
+              ) : (
+                <LockedReasoning>
+                  <span className="kicker">Fullständig analys</span>
+                  <p>Aktivera Arvo Flow för att se leverantörsidentitet, avtalsjämförelse och rekommenderade bytesteg.</p>
+                </LockedReasoning>
+              )
             )}
 
             {result.recommendation.shouldSwitch && result.recommendation.netSaving > 0 && (
