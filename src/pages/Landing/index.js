@@ -122,14 +122,15 @@ const Landing = () => {
         <HeroBackdrop />
         <HeroInner>
           <div>
-            <Eyebrow><span className="dot" /> Ingen risk. Ingen fast avgift. Bara resultat.</Eyebrow>
+            <Eyebrow><span className="dot" /> Fattar beslut. Genomför byten. Noll kronor i förskott.</Eyebrow>
             <Headline>
-              Sluta betala överpris<br />för dina <em>leverantörsavtal.</em>
+              Andra verktyg visar grafer.<br />Arvo Flow fattar <em>beslut.</em>
             </Headline>
             <Lede>
-              Snittkunden hittar {TOTALS.activeNet.toLocaleString('sv-SE')} kr/år i nettobesparing
-              efter Arvos avgift. Arvo Flow föreslår byten — du godkänner med BankID och vi
-              sköter resten. Inga fasta avgifter — vi tjänar pengar bara när du gör det.
+              Din bokföring visar vad du betalar — inte om du betalar rätt. Arvo Flow
+              läser dina leverantörsfakturor, identifierar vad som är fel och levererar
+              ett färdigt beslut: rätt leverantör, rätt tier, exakt vad du sparar.
+              Du godkänner med BankID. Vi sköter resten. Inga fasta avgifter.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/connect" $variant="gradient" $size="lg">
