@@ -470,28 +470,6 @@ export const Reasoning = styled.div`
   }
 `;
 
-export const LockedReasoning = styled.div`
-  margin-top: 24px;
-  padding-left: 20px;
-  border-left: 3px solid ${({ theme }) => theme.color.borderStrong};
-
-  span.kicker {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 8px;
-  }
-  p {
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: 15px;
-    line-height: 1.65;
-    color: ${({ theme }) => theme.color.muted};
-    font-style: italic;
-  }
-`;
 
 export const NextSteps = styled.div`
   margin-top: 28px;
