@@ -448,6 +448,147 @@ export const KV = styled.dl`
   }
 `;
 
+export const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 8, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: ${fadeUp} 0.2s ease both;
+`;
+
+export const ModalCard = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+
+  button.close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    color: ${({ theme }) => theme.color.muted};
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+    transition: background ${({ theme }) => theme.motion.fast};
+    &:hover { background: ${({ theme }) => theme.color.border}; }
+  }
+
+  h3 {
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin: 0 0 8px;
+    padding-right: 32px;
+    em {
+      font-style: normal;
+      color: ${({ theme }) => theme.color.brand};
+    }
+  }
+
+  p.sub {
+    font-size: 14.5px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.55;
+    margin: 0 0 20px;
+  }
+
+  div.context-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    background: ${({ theme }) => theme.color.brandSoft};
+    border: 1px solid ${({ theme }) => theme.color.brand}33;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.brandInk};
+    margin-bottom: 20px;
+  }
+
+  div.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  input[type="email"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    background: ${({ theme }) => theme.color.surface};
+    font-family: inherit;
+    font-size: 15px;
+    color: ${({ theme }) => theme.color.ink};
+    transition: border-color ${({ theme }) => theme.motion.fast};
+    &:focus {
+      outline: none;
+      border-color: ${({ theme }) => theme.color.brand};
+      box-shadow: 0 0 0 3px ${({ theme }) => theme.color.brandSoft};
+    }
+    &::placeholder { color: ${({ theme }) => theme.color.mutedSoft}; }
+  }
+
+  p.fine-print {
+    margin: 4px 0 0;
+    font-size: 11.5px;
+    color: ${({ theme }) => theme.color.mutedSoft};
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  div.sent-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 0 4px;
+    text-align: center;
+
+    span.sent-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: ${({ theme }) => theme.color.brandSoft};
+      color: ${({ theme }) => theme.color.brand};
+    }
+    p.sent-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: ${({ theme }) => theme.color.ink};
+      margin: 0;
+    }
+    p.sent-sub {
+      font-size: 13.5px;
+      color: ${({ theme }) => theme.color.muted};
+      margin: 0;
+      line-height: 1.5;
+    }
+  }
+`;
+
 export const Reasoning = styled.div`
   margin-top: 24px;
   padding-left: 20px;
