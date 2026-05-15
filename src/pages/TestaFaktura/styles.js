@@ -369,6 +369,19 @@ export const KV = styled.dl`
     font-weight: 500;
     margin: 0;
   }
+  dd small {
+    display: block;
+    margin-top: 4px;
+    font-size: 11.5px;
+    font-weight: 400;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.5;
+  }
+  div.full {
+    grid-column: 1 / -1;
+    border-top: 1px solid ${({ theme }) => theme.color.border};
+    padding-top: 14px;
+  }
 `;
 
 export const Reasoning = styled.div`

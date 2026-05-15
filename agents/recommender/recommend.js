@@ -69,7 +69,7 @@ function formatBenchmark(benchmark, employees) {
 
   return `Bransch: ${benchmark.industry}, storlek: ${benchmark.size}
 Median (total, per år): ${totalMedian.toLocaleString('sv-SE')} ${benchmark.unit}${scaleNote}
-P25 (bästa 25 %, per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${employees} anställda)` : ''}
+Arvo-volympris (förhandlat, per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${employees} anställda)` : ''}
 
 Alternativa leverantörer:
 ${altList}
