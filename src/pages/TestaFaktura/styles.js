@@ -740,43 +740,41 @@ export const NextSteps = styled.div`
   div.cta-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-
-    button { flex: 1; }
+    justify-content: center;
+    gap: 16px;
 
     a.read-more {
-      flex-shrink: 0;
       font-size: 13.5px;
       font-weight: 500;
       color: ${({ theme }) => theme.color.muted};
       text-decoration: none;
       white-space: nowrap;
-      padding: 0 4px;
       transition: color 0.15s;
       &:hover { color: ${({ theme }) => theme.color.ink}; }
     }
   }
   div.permission-card {
     text-align: left;
-    padding: 16px 20px;
+    padding: 14px 18px;
     border-radius: ${({ theme }) => theme.size.radius.lg};
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.bg};
+    border: 1.5px solid ${({ theme }) => theme.color.brand}55;
+    box-shadow: 0 2px 12px ${({ theme }) => theme.color.brand}14;
 
     .perm-header {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 14px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid ${({ theme }) => theme.color.border};
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid ${({ theme }) => theme.color.brand}22;
 
       .perm-icon {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         background: ${({ theme }) => theme.color.brand};
         color: #FAFAF7;
@@ -784,7 +782,7 @@ export const NextSteps = styled.div`
       }
 
       strong {
-        font-size: 14px;
+        font-size: 13.5px;
         font-weight: 700;
         color: ${({ theme }) => theme.color.ink};
         letter-spacing: -0.01em;
@@ -850,7 +848,7 @@ export const NextSteps = styled.div`
     }
   }
   @media (max-width: 540px) {
-    div.cta-row { flex-direction: column; align-items: stretch; }
+    div.cta-row { flex-direction: column; align-items: center; }
     div.permission-card .perm-cols { grid-template-columns: 1fr; gap: 12px; }
   }
 `;
