@@ -326,6 +326,7 @@ export const SavingsBlock = styled.div`
 
 export const PriceNote = styled.p`
   margin-top: 10px;
+  margin-bottom: 24px;
   font-size: 12px;
   color: ${({ theme }) => theme.color.muted};
   line-height: 1.55;
