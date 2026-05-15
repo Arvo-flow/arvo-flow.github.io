@@ -11,6 +11,7 @@ import {
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, KV,
   Reasoning, NextSteps, ServiceList, EmailGate,
+  ModalOverlay, ModalCard,
 } from './styles';
 
 const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
@@ -112,6 +113,9 @@ const TestaFaktura = () => {
   const [dragActive, setDragActive] = useState(false);
   const [email, setEmail] = useState('');
   const [emailState, setEmailState] = useState('idle'); // idle | submitting | sent
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalEmail, setModalEmail] = useState('');
+  const [modalEmailState, setModalEmailState] = useState('idle'); // idle | submitting | sent
 
   const validateAndSetFile = (f) => {
     setError(null);
@@ -192,7 +196,33 @@ const TestaFaktura = () => {
     setError(null);
     setEmail('');
     setEmailState('idle');
+    setModalOpen(false);
+    setModalEmail('');
+    setModalEmailState('idle');
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const submitModalEmail = async (e) => {
+    e.preventDefault();
+    if (!modalEmail || modalEmailState !== 'idle') return;
+    setModalEmailState('submitting');
+    try {
+      await fetch(ANALYS_WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          type: 'unlock_supplier',
+          email: modalEmail,
+          supplier: result?.extracted?.supplier,
+          category: result?.categorized?.category,
+          annual_cost: result?.extracted?.annualCost,
+          net_saving: result?.recommendation?.netSaving,
+          suggested_annual_cost: result?.recommendation?.suggestedAnnualCost,
+        }),
+      });
+    } catch { /* non-fatal */ }
+    setModalEmailState('sent');
   };
 
   const submitEmail = async (e) => {
@@ -415,8 +445,13 @@ const TestaFaktura = () => {
                                   <p className="price-label">Arvos kalkylerade riktpris</p>
                                 </div>
                               </div>
-                              <Button as={Link} to="/connect" $variant="primary" $size="sm">
-                                Aktivera förhandling <Icon name="arrow" size={14} />
+                              <Button
+                                type="button"
+                                $variant="primary"
+                                $size="sm"
+                                onClick={() => setModalOpen(true)}
+                              >
+                                Säkra besparingen <Icon name="arrow" size={14} />
                               </Button>
                             </PartnerBlock>
                             <PriceNote>
@@ -538,6 +573,58 @@ const TestaFaktura = () => {
       </Body>
 
       <Footer />
+
+      {modalOpen && result && (
+        <ModalOverlay onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
+          <ModalCard>
+            <button className="close" onClick={() => setModalOpen(false)} aria-label="Stäng">×</button>
+
+            {modalEmailState === 'sent' ? (
+              <div className="sent-state">
+                <span className="sent-icon"><Icon name="check" size={20} stroke={2.5} /></span>
+                <p className="sent-title">Vi hör av oss inom 24 timmar.</p>
+                <p className="sent-sub">
+                  Leverantörsidentiteten skickas till {modalEmail} tillsammans
+                  med nästa steg för att säkra besparingen.
+                </p>
+              </div>
+            ) : (
+              <>
+                <h3>Säkra <em>+{formatKr(result.recommendation.netSaving)} kr</em></h3>
+                <p className="sub">
+                  Ange din e-post för att låsa upp leverantörsidentiteten och
+                  starta bytet. Vi hör av oss inom 24 timmar — inget bindande.
+                </p>
+                <div className="context-badge">
+                  {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
+                </div>
+                <form className="modal-form" onSubmit={submitModalEmail}>
+                  <input
+                    type="email"
+                    placeholder="din@epost.se"
+                    value={modalEmail}
+                    onChange={(e) => setModalEmail(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                  <Button
+                    type="submit"
+                    $variant="gradient"
+                    $size="lg"
+                    $full
+                    disabled={modalEmailState === 'submitting'}
+                  >
+                    {modalEmailState === 'submitting'
+                      ? 'Skickar…'
+                      : <>Säkra besparingen <Icon name="arrow" size={16} /></>}
+                  </Button>
+                  <p className="fine-print">Ingen spam. Inga fasta avgifter. Du betalar 20 % av faktisk realiserad besparing.</p>
+                </form>
+              </>
+            )}
+          </ModalCard>
+        </ModalOverlay>
+      )}
     </Page>
   );
 };
