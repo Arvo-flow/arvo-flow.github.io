@@ -44,6 +44,21 @@ const STRONG_DESC_SIGNALS = {
   bankavgifter:       ['bankavgift', 'kontoavgift företag', 'bankpaket företag', 'betalningsförmedling'],
 };
 
+// Known office supply suppliers + description signals → kontorsmaterial.
+const OFFICE_SUPPLY_SUPPLIER_SIGNALS = ['staples', 'lyreco', 'viking', 'papyrus', 'office depot', 'grossisten'];
+const OFFICE_SUPPLY_DESC_SIGNALS = ['kopieringspapper', 'kontorsmaterial', 'papper a4', 'gevalia', 'nespresso', 'förbrukningsvaror', 'office supply'];
+
+// Known cleaning suppliers + description signals → städ-rengöring.
+const CLEANING_SUPPLIER_SIGNALS = ['hemfrid', 'servicemaster', 'sodexo', 'iss facility', 'städa.se'];
+const CLEANING_DESC_SIGNALS = ['städtjänst', 'lokalvård', 'städabonnemang', 'kontorsstäd', 'fönsterputs', 'rengöringstjänst'];
+
+// Known freight suppliers + description signals → transport-frakt.
+const FREIGHT_SUPPLIER_SIGNALS = ['postnord', 'dhl', 'fedex', 'ups', 'bring', 'schenker', 'db schenker', 'tnt express'];
+const FREIGHT_DESC_SIGNALS = ['fraktavgift', 'fraktkostnad', 'godsfrakt', 'paketfrakt', 'leveransavgift frakt'];
+
+// IT support description signals → it-support.
+const IT_SUPPORT_DESC_SIGNALS = ['it-support abonnemang', 'driftavtal it', 'managed services', 'nätverksövervakning', 'it-drift abonnemang'];
+
 // Known SaaS accounting/ERP suppliers → faktura-tjanst.
 const ACCOUNTING_SAAS_SUPPLIERS = ['fortnox', 'visma', 'pe accounting', 'speedledger', 'bokio'];
 
@@ -199,6 +214,63 @@ function deterministicMatch(invoice) {
       normalizedSupplier: invoice.supplier ?? '',
       confidence: 0.87,
       reasoning: `Deterministisk matchning: bankavgift/kontoavgift identifierad`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 10: known office supply supplier OR office supply description → kontorsmaterial
+  const isOfficeSupplier = OFFICE_SUPPLY_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  const isOfficeDesc = OFFICE_SUPPLY_DESC_SIGNALS.some((s) => combined.includes(s));
+  if (isOfficeSupplier || isOfficeDesc) {
+    const subType = combined.includes('kaffe') || combined.includes('gevalia') || combined.includes('nespresso')
+      ? 'kaffe-fika' : 'förbrukningsvaror';
+    return {
+      category: 'kontorsmaterial',
+      subType,
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: isOfficeSupplier && isOfficeDesc ? 0.92 : 0.85,
+      reasoning: `Deterministisk matchning: kontorsmaterial/förbrukningsvaror identifierad`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 11: known cleaning supplier OR cleaning description → städ-rengöring
+  const isCleaningSupplier = CLEANING_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  const isCleaningDesc = CLEANING_DESC_SIGNALS.some((s) => combined.includes(s));
+  if (isCleaningSupplier || isCleaningDesc) {
+    return {
+      category: 'städ-rengöring',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: isCleaningSupplier ? 0.92 : 0.87,
+      reasoning: `Deterministisk matchning: städ/rengöringstjänst identifierad`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 12: known freight supplier OR freight description → transport-frakt
+  const isFreightSupplier = FREIGHT_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  const isFreightDesc = FREIGHT_DESC_SIGNALS.some((s) => combined.includes(s));
+  if (isFreightSupplier || isFreightDesc) {
+    return {
+      category: 'transport-frakt',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: isFreightSupplier ? 0.93 : 0.85,
+      reasoning: `Deterministisk matchning: transport/fraktleverantör identifierad`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 13: IT support description → it-support
+  const isItSupportDesc = IT_SUPPORT_DESC_SIGNALS.some((s) => combined.includes(s));
+  if (isItSupportDesc) {
+    return {
+      category: 'it-support',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.87,
+      reasoning: `Deterministisk matchning: IT-drift/supporttjänst identifierad`,
       licensePending: false,
     };
   }

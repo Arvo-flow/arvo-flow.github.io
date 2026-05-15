@@ -44,16 +44,20 @@ function redactSupplier(text, supplier) {
 
 // Category 2: contract-based benchmark prices — hide supplier, show verified partner.
 const CATEGORY_PARTNER_LABEL = {
-  el:                'Kvalificerad Elleverantör',
-  bredband:          'Kvalificerad Bredbandsoperatör',
-  kortterminal:      'Kvalificerad Betaltjänstleverantör',
-  'faktura-tjanst':  'Kvalificerad Affärssystemsleverantör',
-  'leasing-bil':     'Kvalificerad Leasingpartner',
-  skrivarleasing:    'Kvalificerad Print-leverantör',
-  loneadmin:         'Kvalificerad Lönesystemleverantör',
-  'larm-bevakning':  'Kvalificerad Säkerhetsleverantör',
-  foretagshalsovard: 'Kvalificerad Hälsovårdspartner',
-  bankavgifter:      'Kvalificerad Bankpartner',
+  el:                 'Kvalificerad Elleverantör',
+  bredband:           'Kvalificerad Bredbandsoperatör',
+  kortterminal:       'Kvalificerad Betaltjänstleverantör',
+  'faktura-tjanst':   'Kvalificerad Affärssystemsleverantör',
+  'leasing-bil':      'Kvalificerad Leasingpartner',
+  skrivarleasing:     'Kvalificerad Print-leverantör',
+  loneadmin:          'Kvalificerad Lönesystemleverantör',
+  'larm-bevakning':   'Kvalificerad Säkerhetsleverantör',
+  foretagshalsovard:  'Kvalificerad Hälsovårdspartner',
+  bankavgifter:       'Kvalificerad Bankpartner',
+  kontorsmaterial:    'Kvalificerad Förbrukningsleverantör',
+  'städ-rengöring':   'Kvalificerad Städleverantör',
+  'transport-frakt':  'Kvalificerad Fraktleverantör',
+  'it-support':       'Kvalificerad IT-partner',
 };
 
 const INDUSTRY_LABELS = {
@@ -69,21 +73,25 @@ const INDUSTRY_LABELS = {
 };
 
 const CATEGORY_LABELS = {
-  el: 'Elavtal',
-  mobil: 'Mobilabonnemang',
-  bredband: 'Företagsbredband',
-  'forsakring-foretag': 'Företagsförsäkring',
+  el:                  'Elavtal',
+  mobil:               'Mobilabonnemang',
+  bredband:            'Företagsbredband',
+  'forsakring-foretag':'Företagsförsäkring',
   'forsakring-ansvar': 'Yrkesansvarsförsäkring',
-  leasing: 'Företagsleasing',
-  kortterminal: 'Kortterminal',
-  'faktura-tjanst':   'Fakturatjänst / Affärssystem',
-  'mjukvara-saas':    'Programvarulicenser / SaaS',
-  skrivarleasing:     'Skrivare & Managed Print',
-  loneadmin:          'Löneadministration',
-  'larm-bevakning':   'Larm & Bevakning',
-  foretagshalsovard:  'Företagshälsovård',
-  bankavgifter:       'Bankavgifter & Betaltjänster',
-  uncategorized:      'Okategoriserad',
+  leasing:             'Företagsleasing',
+  kortterminal:        'Kortterminal',
+  'faktura-tjanst':    'Fakturatjänst / Affärssystem',
+  'mjukvara-saas':     'Programvarulicenser / SaaS',
+  skrivarleasing:      'Skrivare & Managed Print',
+  loneadmin:           'Löneadministration',
+  'larm-bevakning':    'Larm & Bevakning',
+  foretagshalsovard:   'Företagshälsovård',
+  bankavgifter:        'Bankavgifter & Betaltjänster',
+  kontorsmaterial:     'Kontorsmaterial & Förbrukning',
+  'städ-rengöring':    'Städ & Rengöring',
+  'transport-frakt':   'Transport & Frakt',
+  'it-support':        'IT-drift & Support',
+  uncategorized:       'Okategoriserad',
 };
 
 const PHASES = [

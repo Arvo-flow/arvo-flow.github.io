@@ -151,6 +151,49 @@ export const CATEGORIES = {
     ],
     accountHints: ['6570', '6980', '6900'],
   },
+  kontorsmaterial: {
+    label: 'Kontorsmaterial & Förbrukning',
+    licensePending: false,
+    subTypes: ['förbrukningsvaror', 'papper', 'kaffe-fika', 'städmaterial'],
+    keywords: [
+      'kopieringspapper', 'kontorsmaterial', 'papper a4', 'kuvert', 'pärm',
+      'pennor', 'kaffe', 'te', 'gevalia', 'nespresso', 'staples', 'lyreco',
+      'viking', 'papyrus', 'förbrukningsvaror', 'office supply',
+    ],
+    accountHints: ['6110', '5410', '5411'],
+  },
+  'städ-rengöring': {
+    label: 'Städ & Rengöring',
+    licensePending: false,
+    subTypes: ['kontorsstäd', 'industristäd', 'fönsterputs', 'storstäd'],
+    keywords: [
+      'städning', 'städtjänst', 'lokalvård', 'rengöring', 'fönsterputs',
+      'hemfrid', 'servicemaster', 'sodexo', 'iss facility', 'städabonnemang',
+    ],
+    accountHints: ['6960', '6900'],
+  },
+  'transport-frakt': {
+    label: 'Transport & Frakt',
+    licensePending: false,
+    subTypes: ['paket', 'pall', 'express', 'kyla', 'bulk'],
+    keywords: [
+      'frakt', 'transport', 'postnord', 'dhl', 'fedex', 'ups', 'bring',
+      'schenker', 'db schenker', 'tnt', 'fraktavgift', 'leveransavgift',
+      'paketfrakt', 'godsfrakt',
+    ],
+    accountHints: ['5800', '5820', '7320'],
+  },
+  'it-support': {
+    label: 'IT-drift & Support',
+    licensePending: false,
+    subTypes: ['supportavtal', 'hosting', 'nätverk', 'backup', 'drift'],
+    keywords: [
+      'it-support', 'it-drift', 'driftavtal', 'hostingavgift', 'serviceavtal it',
+      'managed services', 'nätverksövervakning', 'it-konsult', 'it-tjänster',
+      'infrastruktur', 'server',
+    ],
+    accountHints: ['6540', '6230', '6900'],
+  },
   uncategorized: {
     label: 'Okategoriserat',
     licensePending: false,

@@ -278,6 +278,74 @@ export const BRANCHINDEX = {
     },
   },
 
+  kontorsmaterial: {
+    unit: 'kr/år',
+    note: 'Totalt per år: papper, förbrukningsvaror, kaffe och kontorsartiklar. Källa: leverantörers listepriser och ramavtalsjämförelser 2026.',
+    alternatives: [
+      { supplier: 'Staples Business',  positioning: 'Volymrabatter upp till 30 % med företagskonto, brett sortiment, leverans nästa dag',  reliability: 0.90 },
+      { supplier: 'Lyreco',            positioning: 'Starka ramavtalspriser, fokus på hållbarhet, dedikerad kundansvarig',                  reliability: 0.92 },
+      { supplier: 'Viking (RAJA)',      positioning: 'Lägst listpris på papper och förbrukningsvaror, bra lojalitetsprogram',               reliability: 0.88 },
+      { supplier: 'Office Depot',       positioning: 'Brett sortiment, leveransgaranti, flexibla betalvillkor',                             reliability: 0.89 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 18000, p25: 11000 }, small: { median:  55000, p25:  33000 }, mid: { median: 190000, p25: 115000 } },
+      hantverkare: { micro: { median: 12000, p25:  7500 }, small: { median:  35000, p25:  21000 }, mid: { median: 120000, p25:  72000 } },
+      ehandel:     { micro: { median: 20000, p25: 12000 }, small: { median:  65000, p25:  39000 }, mid: { median: 225000, p25: 135000 } },
+      tillverkning:{ micro: { median: 22000, p25: 14000 }, small: { median:  75000, p25:  45000 }, mid: { median: 270000, p25: 162000 } },
+    },
+  },
+
+  'städ-rengöring': {
+    unit: 'kr/år',
+    note: 'Städ och rengöringstjänster för företagslokaler. Timbaserat eller fast abonnemang per driftsställe.',
+    alternatives: [
+      { supplier: 'Hemfrid Företag',        positioning: 'Marknadsledare, digitalt bokningssystem, transparent prissättning',               reliability: 0.91 },
+      { supplier: 'ISS Facility Services',  positioning: 'Storskalig aktör med brett tjänsteutbud, hög tillförlitlighet och SLA',           reliability: 0.95 },
+      { supplier: 'Sodexo',                 positioning: 'Integrerade fastighetstjänster, certifierade processer, stark för industri',       reliability: 0.93 },
+      { supplier: 'Lokal städfirma',        positioning: 'Lägst pris, flexiblare avtal, snabb respons och personlig relation',              reliability: 0.85 },
+    ],
+    matrix: {
+      byraer:      { micro: { median:  36000, p25:  24000 }, small: { median:  96000, p25:  63000 }, mid: { median: 280000, p25: 185000 } },
+      hantverkare: { micro: { median:  18000, p25:  12000 }, small: { median:  54000, p25:  36000 }, mid: { median: 160000, p25: 105000 } },
+      ehandel:     { micro: { median:  42000, p25:  28000 }, small: { median: 115000, p25:  76000 }, mid: { median: 330000, p25: 218000 } },
+      tillverkning:{ micro: { median:  52000, p25:  34000 }, small: { median: 160000, p25: 105000 }, mid: { median: 480000, p25: 316000 } },
+    },
+  },
+
+  'transport-frakt': {
+    unit: 'kr/år',
+    note: 'Frakt och transport. Kostnaden varierar kraftigt med volym och branschtypisk godsstruktur. Källa: operatörernas volumenprislistor 2026.',
+    alternatives: [
+      { supplier: 'PostNord Företag', positioning: 'Störst täckning i Sverige, volymrabatter, digitalt orderhanteringssystem',         reliability: 0.89 },
+      { supplier: 'DHL Freight',      positioning: 'Marknadsledande internationellt, snabba leveranstider, spårning i realtid',       reliability: 0.93 },
+      { supplier: 'Bring',            positioning: 'Starka på Norden, konkurrenskraftiga paket- och pallpriser, hållbarhetsprofil',   reliability: 0.91 },
+      { supplier: 'DB Schenker',      positioning: 'Pålitlig för tunggods och pall, brett europeiskt nätverk, stark SLA',            reliability: 0.94 },
+    ],
+    matrix: {
+      byraer:      { micro: { median:   12000, p25:   7500 }, small: { median:   36000, p25:   22000 }, mid: { median:  110000, p25:   68000 } },
+      hantverkare: { micro: { median:   45000, p25:  28000 }, small: { median:  150000, p25:   94000 }, mid: { median:  450000, p25:  282000 } },
+      ehandel:     { micro: { median:  120000, p25:  75000 }, small: { median:  480000, p25:  300000 }, mid: { median: 1800000, p25: 1125000 } },
+      tillverkning:{ micro: { median:   85000, p25:  53000 }, small: { median:  320000, p25:  200000 }, mid: { median:  960000, p25:  600000 } },
+    },
+  },
+
+  'it-support': {
+    unit: 'kr/år',
+    note: 'IT-drift, support och managed services per år. Abonnemangsbaserat eller per timme. Källa: leverantörers offertpriser 2026.',
+    alternatives: [
+      { supplier: 'Atea',             positioning: 'Marknadsledande, bred kompetens, enterprise-grade SLA och rikstäckning',         reliability: 0.95 },
+      { supplier: 'Advania',          positioning: 'SMF-fokuserad, personlig service, rimliga priser, stark i Nordens-städer',      reliability: 0.91 },
+      { supplier: 'Dustin IT-tjänst', positioning: 'God prissättning, snabb leverans av hårdvara + integrerade supportavtal',      reliability: 0.90 },
+      { supplier: 'Lokal IT-partner', positioning: 'Snabbast responstid, personlig kontakt, flexibla villkor — lägst kostnad SMF', reliability: 0.87 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 24000, p25: 15000 }, small: { median:  72000, p25:  45000 }, mid: { median: 240000, p25: 150000 } },
+      hantverkare: { micro: { median: 15000, p25:  9500 }, small: { median:  48000, p25:  30000 }, mid: { median: 144000, p25:  90000 } },
+      ehandel:     { micro: { median: 36000, p25: 22000 }, small: { median: 120000, p25:  75000 }, mid: { median: 420000, p25: 262000 } },
+      tillverkning:{ micro: { median: 30000, p25: 19000 }, small: { median:  96000, p25:  60000 }, mid: { median: 320000, p25: 200000 } },
+    },
+  },
+
   'forsakring-ansvar': {
     unit: 'kr/år',
     note: 'License-pending — Recommender markerar dessa för VIP-kö.',
