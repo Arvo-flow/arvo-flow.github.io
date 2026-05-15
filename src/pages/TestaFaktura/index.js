@@ -14,6 +14,8 @@ import {
   ModalOverlay, ModalCard,
 } from './styles';
 
+const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
+
 const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
 const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/eeaax2i1k03cycl39zqlpdt9ixlu4o2x';
 
@@ -418,13 +420,13 @@ const TestaFaktura = () => {
                             : isRealPrice
                               ? (
                                 <>
-                                  {formatKr(result.extracted.annualCost)} → {formatKr(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
+                                  {formatNum(result.extracted.annualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
                                   {' '}· Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
                                 </>
                               )
                               : (
                                 <>
-                                  {formatKr(result.extracted.annualCost)} → {formatKr(result.recommendation.suggestedAnnualCost)} kr/år (Arvos kalkylerade riktpris)
+                                  {formatNum(result.extracted.annualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år (Arvos kalkylerade riktpris)
                                   {' '}· Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
                                 </>
                               )}
