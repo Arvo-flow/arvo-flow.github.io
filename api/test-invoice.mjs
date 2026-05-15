@@ -143,6 +143,8 @@ export default async function handler(req, res) {
       extracted: {
         supplier: extracted.supplier,
         amount: extracted.amount,
+        recurringAmount: extracted.recurringAmount ?? extracted.amount,
+        variableCharges: extracted.variableCharges ?? 0,
         annualCost: extracted.annualCost,
         date: extracted.date,
         description: extracted.description,

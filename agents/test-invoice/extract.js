@@ -31,11 +31,15 @@ Din enda uppgift är att läsa en PDF-faktura och extrahera följande fält som 
 - **account**: Bokföringskontot om det syns på fakturan eller framgår av kategorin (t.ex. "5310" för el, "6310" för försäkring). Lämna null om osäker.
 - **description**: En kort fritextbeskrivning som sammanfattar vad fakturan avser (t.ex. "Elförbrukning mars 2025 - anl.nr 735999", "Företagsförsäkring årspremie").
 - **recurring**: true om det är en månads-/årsfaktura som tydligt återkommer (abonnemang, premie, hyra), false om det är en engångsfaktura.
-- **annualCost**: Om fakturan är en månadsfaktura, multiplicera amount × 12. Om det är en kvartalsfaktura, × 4. Om det är en årsfaktura, samma som amount. Om okänt återkommandemönster, sätt samma som amount.
+- **recurringAmount**: Summan ENBART av de återkommande raderna (abonnemang, hyra, fasta månadsavgifter) exkl. moms. Uteslut engångsavgifter, rörliga förbruknings- och trafikavgifter (t.ex. roaming, övertrafik, leveransavgifter). Heltal.
+- **variableCharges**: Summan av alla ICKE-återkommande rader exkl. moms (t.ex. roaming utanför EU, övertrafik, engångsavgifter, utlägg). 0 om inga sådana rader finns. Heltal.
+- **annualCost**: Basera ALLTID på recurringAmount, aldrig på amount. Månadsfaktura: recurringAmount × 12. Kvartalsfaktura: recurringAmount × 4. Årsfaktura: recurringAmount. Okänt mönster: recurringAmount.
 
 KRITISKT:
 - Belopp ska vara EXKLUSIVE moms (svensk standard för B2B-bokföring).
-- Om PDF:en innehåller flera fakturarader, summera till ett totalbelopp.
+- annualCost ska ALDRIG inkludera variableCharges — rörliga avgifter är inte strukturella kostnader.
+- Roaming, övertrafik och liknande trafikavgifter är alltid variableCharges, aldrig recurring.
+- Fakturaavgifter räknas som återkommande (ingår i recurringAmount) om de syns varje månad.
 - Returnera ALDRIG text utöver verktygsanropet — extract_invoice är obligatoriskt.
 - Om du verkligen inte kan utläsa ett fält, returnera null för det fältet (men supplier och amount är obligatoriska).`;
 
@@ -51,7 +55,7 @@ const EXTRACT_TOOL = {
       },
       amount: {
         type: 'integer',
-        description: 'Belopp exkl. moms i SEK, heltal',
+        description: 'Totalt belopp exkl. moms i SEK, heltal',
       },
       date: {
         type: 'string',
@@ -69,9 +73,17 @@ const EXTRACT_TOOL = {
         type: 'boolean',
         description: 'true om återkommande abonnemang/premie, false annars',
       },
+      recurringAmount: {
+        type: 'integer',
+        description: 'Summan av enbart återkommande rader exkl. moms — uteslut roaming, övertrafik, engångsavgifter',
+      },
+      variableCharges: {
+        type: 'integer',
+        description: 'Summan av icke-återkommande rader exkl. moms (roaming, övertrafik, engångsavgifter). 0 om inga.',
+      },
       annualCost: {
         type: 'integer',
-        description: 'Årskostnad i SEK — månadsfaktura × 12, kvartal × 4, år samma som amount',
+        description: 'Årskostnad i SEK baserad på recurringAmount: månad × 12, kvartal × 4, år × 1',
       },
       confidence: {
         type: 'number',
@@ -79,10 +91,10 @@ const EXTRACT_TOOL = {
       },
       notes: {
         type: ['string', 'null'],
-        description: 'Eventuella varningar eller noteringar (t.ex. "Kunde inte fastställa moms-status, antog 25%")',
+        description: 'Varningar, noteringar om variableCharges eller antaganden (t.ex. "Roaming 1 245 kr exkluderad från annualCost")',
       },
     },
-    required: ['supplier', 'amount', 'date', 'description', 'recurring', 'annualCost', 'confidence'],
+    required: ['supplier', 'amount', 'date', 'description', 'recurring', 'recurringAmount', 'variableCharges', 'annualCost', 'confidence'],
   },
 };
 
@@ -113,6 +125,8 @@ function getClient() {
  *   account: string|null,
  *   description: string,
  *   recurring: boolean,
+ *   recurringAmount: number,
+ *   variableCharges: number,
  *   annualCost: number,
  *   confidence: number,
  *   notes: string|null,

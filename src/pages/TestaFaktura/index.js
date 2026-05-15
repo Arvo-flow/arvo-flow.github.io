@@ -487,7 +487,12 @@ const TestaFaktura = () => {
             <KV>
               <div>
                 <dt>Du betalar idag</dt>
-                <dd>{formatKr(result.extracted.annualCost)} / år</dd>
+                <dd>
+                  {formatKr(result.extracted.annualCost)} / år
+                  {result.extracted.variableCharges > 0 && (
+                    <small>Varav fasta abonnemang. Exkl. rörliga avgifter ({formatKr(result.extracted.variableCharges)}/mån).</small>
+                  )}
+                </dd>
               </div>
               <div>
                 <dt>Fakturadatum</dt>
@@ -501,6 +506,15 @@ const TestaFaktura = () => {
                 <dt>Återkommande</dt>
                 <dd>{result.extracted.recurring ? 'Ja (abonnemang / premie)' : 'Nej'}</dd>
               </div>
+              {result.extracted.variableCharges > 0 && (
+                <div>
+                  <dt>Rörliga avgifter denna period</dt>
+                  <dd>
+                    {formatKr(result.extracted.variableCharges)}
+                    <small>Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.</small>
+                  </dd>
+                </div>
+              )}
             </KV>
 
             {result.recommendation.reasoning && result.recommendation.shouldSwitch && (
