@@ -434,6 +434,11 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
+                      {result.recommendation.suggestedAnnualCost && !isLicensePending && isRealPrice && (
+                        <PriceNote>
+                          Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
+                        </PriceNote>
+                      )}
                       {result.recommendation.suggestedAnnualCost && !isLicensePending && !isRealPrice && (
                         <>
                           <PartnerBlock>
@@ -530,10 +535,10 @@ const TestaFaktura = () => {
                 Du betalar bara 20 % av faktiskt realiserad besparing. Inga fasta avgifter.
               </p>
               <div className="actions">
-                <FortnoxButton as={Link} to="/connect">
+                <Button as={Link} to="/connect" $variant="gradient" $size="lg" $full>
                   <span className="f-badge">F</span>
                   Koppla Fortnox
-                </FortnoxButton>
+                </Button>
                 <Link to="/" className="read-more">Läs mer om hur det fungerar →</Link>
               </div>
             </NextSteps>
