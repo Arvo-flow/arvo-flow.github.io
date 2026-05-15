@@ -155,9 +155,9 @@ Rekommendation:
   savingPerYear: 35580
   overpaymentPercent: 44
   confidence: "high"
-  reasoning: "Enterprise Pro A3 är byggd för tunga printvolymer på advokatbyråer och tryckerier — inte e-handel. Klickpriset på 0,15 kr/sida S/V är 2–3× marknadssnittet (0,06–0,09 kr). En A4 MFP från Kyocera med volymanpassat klickavtal ger samma kapacitet till rätt pris."
+  reasoning: "Enterprise Pro A3 är byggd för tunga printvolymer på advokatbyråer och tryckerier — inte e-handel. Klickpriset på 0,15 kr/sida S/V är 2–3× marknadssnittet (0,06–0,09 kr). Arvo-verifierad partner levererar en A4 MFP med volymanpassat klickavtal — rätt maskin, rätt pris."
   switchSteps: [
-    "Vi begär in offerter från Kyocera och Konica Minolta för A4 MFP med klickavtal",
+    "Vi begär in offerter från kvalificerade print-partners för A4 MFP med klickavtal",
     "Du signerar nytt avtal med BankID",
     "Vi koordinerar uppsägning av OfficePrint-avtalet vid kontraktstidens slut"
   ]`;
@@ -203,12 +203,13 @@ REGLER FÖR ATT VÄLJA ALTERNATIV
 REGLER FÖR REASONING
 
 - Max 60 ord. Skriv på svenska.
+- **SEKRETESSREGEL — OBLIGATORISK:** Namnge ALDRIG ett specifikt alternativt varumärke eller leverantör i reasoning-fältet. Skriv istället "Arvo-verifierad partner", "rätt leverantör för er storlek" eller "rätt produktnivå". Kundens NUVARANDE leverantör (som de redan känner till) är det enda undantaget. Varumärket visas separat i gränssnittet och ska INTE upprepas i reasoning.
 - **Skriv som en inhyrd inköpschef med full insyn — inte som ett analysverktyg som presenterar data.** Du ska inte beskriva vad som är fel — du ska förklara VARFÖR det är fel och säga exakt vad kunden ska göra åt det. Undvik passiva fraser som "priset är högt" eller "det finns billigare alternativ". Var direkt: "Ni betalar för X ni inte behöver. Y ger samma nytta."
 - Hänvisa till konkreta siffror: "Du betalar X kr över medianen", "kategorin är 49 % över branschsnittet".
 - **Tier-overkill-regel:** Om kunden betalar för en Enterprise-, premium- eller storföretags-produkt — namnge specifikt vad som är overkill för deras storlek och vilken tier/produkt som faktiskt matchar deras behov. "M365 E5 är byggt för storföretag med SIEM-krav — Business Standard täcker allt ett 10-personers bolag behöver."
 - Om vipQueue: true, förklara *varför* det inte kan bytas än ("vi väntar på FI-tillstånd").
 - Förklara *varför just denna alternativ* — inte bara att den är billigare. T.ex. "Tibber matchar p25 och har bäst app-stöd för månadsuppföljning."
-- **Skrivarleasing / Managed Print:** Nämn ALLTID (1) maskintypen — säg specifikt att det är en A3 Enterprise-maskin byggd för tryckerier/advokatbyråer, inte för kundens bransch, (2) klickpriset i kr/sida och jämför med marknadssnittet 0,06–0,09 kr/sida S/V. Klickpriset är nästan alltid den största kostnadsdrivaren och MÅSTE kvantifieras i reasoning.
+- **Skrivarleasing / Managed Print:** Nämn ALLTID (1) maskintypen — säg specifikt att det är en A3 Enterprise-maskin byggd för tryckerier/advokatbyråer, inte för kundens bransch, (2) klickpriset i kr/sida och jämför med marknadssnittet 0,06–0,09 kr/sida S/V. Klickpriset är nästan alltid den största kostnadsdrivaren och MÅSTE kvantifieras i reasoning. Hänvisa till alternativet som "Arvo-verifierad partner" — namnge ALDRIG specifika märken (Kyocera, Canon, Konica Minolta, HP osv.) i reasoning.
 
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
 suggestedAnnualCost och savingPerYear låses i kod mot Arvo-volympriset. Fyll i Arvo-volympriset exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
