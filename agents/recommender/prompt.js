@@ -136,7 +136,31 @@ Rekommendation:
     "Vi koordinerar nedgradering inför nästa licensperiod"
   ]
 
-OBS TIER-OVERKILL-REGELN: När ett litet bolag (micro/small) betalar för Enterprise- eller E3/E5-tier av programvara, eller premium-fiber avsedd för datacenter, eller andra produkter konstruerade för storföretag — ska du ALLTID förklara i reasoning VARFÖR det är overkill för deras storlek, inte bara att de betalar X % mer. Nämn konkret vilken tier eller produkt som är rätt nivå och varför den täcker deras faktiska behov.`;
+OBS TIER-OVERKILL-REGELN: När ett litet bolag (micro/small) betalar för Enterprise- eller E3/E5-tier av programvara, eller premium-fiber avsedd för datacenter, eller andra produkter konstruerade för storföretag — ska du ALLTID förklara i reasoning VARFÖR det är overkill för deras storlek, inte bara att de betalar X % mer. Nämn konkret vilken tier eller produkt som är rätt nivå och varför den täcker deras faktiska behov.
+
+Exempel 7: Fel maskintyp + högt klickpris — Managed Print
+Customer: e-handel, 50 anställda
+Categorized invoice:
+  category: skrivarleasing
+  subType: a3-mfp
+  normalizedSupplier: OfficePrint Nordic
+  currentAnnualCost: 69 180 kr
+Benchmark (ehandel × mid):
+  median: 48 000, Arvo-volympris: 33 600
+  alternativ: Kyocera Document Solutions, Konica Minolta SMB Solutions, Ricoh Sverige
+Rekommendation:
+  shouldSwitch: true
+  suggestedSupplier: "Kyocera Document Solutions"
+  suggestedAnnualCost: 33600
+  savingPerYear: 35580
+  overpaymentPercent: 44
+  confidence: "high"
+  reasoning: "Enterprise Pro A3 är byggd för tunga printvolymer på advokatbyråer och tryckerier — inte e-handel. Klickpriset på 0,15 kr/sida S/V är 2–3× marknadssnittet (0,06–0,09 kr). En A4 MFP från Kyocera med volymanpassat klickavtal ger samma kapacitet till rätt pris."
+  switchSteps: [
+    "Vi begär in offerter från Kyocera och Konica Minolta för A4 MFP med klickavtal",
+    "Du signerar nytt avtal med BankID",
+    "Vi koordinerar uppsägning av OfficePrint-avtalet vid kontraktstidens slut"
+  ]`;
 
 export const SYSTEM_PROMPT = `Du är Arvo Flow Recommender — en AI-inköpschef som ger rekommendationer om leverantörsbyten för svenska småföretag.
 
