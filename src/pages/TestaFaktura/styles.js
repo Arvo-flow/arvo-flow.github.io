@@ -696,20 +696,31 @@ export const NextSteps = styled.div`
   text-align: center;
 
   h3 {
-    font-size: 18px;
-    margin-bottom: 8px;
+    font-size: 20px;
+    letter-spacing: -0.015em;
+    margin-bottom: 10px;
   }
   p {
     font-size: 14.5px;
     color: ${({ theme }) => theme.color.muted};
-    line-height: 1.6;
-    margin-bottom: 18px;
+    line-height: 1.65;
+    margin: 0 auto 22px;
+    max-width: 520px;
   }
   div.actions {
     display: flex;
-    gap: 10px;
-    justify-content: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+  a.read-more {
+    font-size: 13.5px;
+    color: ${({ theme }) => theme.color.muted};
+    text-decoration: none;
+    transition: color 0.15s;
+    &:hover { color: ${({ theme }) => theme.color.ink}; }
   }
 `;
 

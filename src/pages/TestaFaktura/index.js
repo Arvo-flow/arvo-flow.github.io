@@ -9,7 +9,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, SwitchCTARow, KV,
+  ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, KV,
   Reasoning, NextSteps, ServiceList, EmailGate,
   ModalOverlay, ModalCard, FortnoxButton,
 } from './styles';
@@ -434,50 +434,31 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
-                      {result.recommendation.suggestedAnnualCost && !isLicensePending && (
-                        isRealPrice ? (
-                          <>
-                            <SwitchCTARow>
-                              <Button
-                                type="button"
-                                $variant="gradient"
-                                $size="lg"
-                                $full
-                                onClick={() => setModalOpen(true)}
-                              >
-                                Verkställ bytet <Icon name="arrow" size={16} />
-                              </Button>
-                            </SwitchCTARow>
-                            <PriceNote>
-                              Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
-                            </PriceNote>
-                          </>
-                        ) : (
-                          <>
-                            <PartnerBlock>
-                              <div className="left">
-                                <span className="verified-badge">
-                                  <Icon name="check" size={12} stroke={2.5} />
-                                </span>
-                                <div>
-                                  <p className="partner-name">{partnerLabel}</p>
-                                  <p className="price-label">Arvos kalkylerade riktpris</p>
-                                </div>
+                      {result.recommendation.suggestedAnnualCost && !isLicensePending && !isRealPrice && (
+                        <>
+                          <PartnerBlock>
+                            <div className="left">
+                              <span className="verified-badge">
+                                <Icon name="check" size={12} stroke={2.5} />
+                              </span>
+                              <div>
+                                <p className="partner-name">{partnerLabel}</p>
+                                <p className="price-label">Arvos kalkylerade riktpris</p>
                               </div>
-                              <Button
-                                type="button"
-                                $variant="gradient"
-                                $size="sm"
-                                onClick={() => setModalOpen(true)}
-                              >
-                                Säkra besparingen <Icon name="arrow" size={14} />
-                              </Button>
-                            </PartnerBlock>
-                            <PriceNote>
-                              Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
-                            </PriceNote>
-                          </>
-                        )
+                            </div>
+                            <Button
+                              type="button"
+                              $variant="gradient"
+                              $size="sm"
+                              onClick={() => setModalOpen(true)}
+                            >
+                              Säkra besparingen <Icon name="arrow" size={14} />
+                            </Button>
+                          </PartnerBlock>
+                          <PriceNote>
+                            Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
+                          </PriceNote>
+                        </>
                       )}
                     </>
                   );
@@ -541,19 +522,19 @@ const TestaFaktura = () => {
             )}
 
             <NextSteps>
-              <h3>Vill du att vi byter åt dig?</h3>
+              <h3>Låt Arvo sköta hela bytet</h3>
               <p>
-                Med Arvo Flow kopplar du Fortnox en gång och vi sköter hela bytet
-                — uppsägning, nytt avtal, signering. Du betalar bara 20 % av faktisk
-                realiserad besparing.
+                Med Arvo Flow kopplar du Fortnox en gång så sköter vi hela bytet – från
+                uppsägning till nytt avtal och signering. Samtidigt identifierar vi
+                automatiskt fler onödiga kostnader i resten av er leverantörsreskontra.
+                Du betalar bara 20 % av faktiskt realiserad besparing. Inga fasta avgifter.
               </p>
               <div className="actions">
-                <Button as={Link} to="/connect" $variant="primary" $size="lg">
-                  Koppla Fortnox <Icon name="arrow" size={18} />
-                </Button>
-                <Button as={Link} to="/" $variant="ghost" $size="lg">
-                  Läs mer
-                </Button>
+                <FortnoxButton as={Link} to="/connect">
+                  <span className="f-badge">F</span>
+                  Koppla Fortnox
+                </FortnoxButton>
+                <Link to="/" className="read-more">Läs mer om hur det fungerar →</Link>
               </div>
             </NextSteps>
 
