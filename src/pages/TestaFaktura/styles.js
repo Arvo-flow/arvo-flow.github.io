@@ -324,6 +324,14 @@ export const SavingsBlock = styled.div`
   }
 `;
 
+export const PriceNote = styled.p`
+  margin-top: 10px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.color.muted};
+  line-height: 1.55;
+  font-style: italic;
+`;
+
 export const NoSwitchBlock = styled.div`
   padding: 24px;
   border-radius: ${({ theme }) => theme.size.radius.lg};

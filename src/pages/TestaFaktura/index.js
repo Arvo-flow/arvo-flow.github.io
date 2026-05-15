@@ -9,7 +9,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, NoSwitchBlock, KV, Reasoning, NextSteps,
+  ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, KV, Reasoning, NextSteps,
   ServiceList, EmailGate,
 } from './styles';
 
@@ -329,27 +329,31 @@ const TestaFaktura = () => {
             </ResultHead>
 
             {result.recommendation.shouldSwitch && result.recommendation.netSaving > 0 ? (
-              <SavingsBlock>
-                <span className="kicker">
-                  {result.categorized.licensePending
-                    ? 'Möjlig årlig besparing'
-                    : 'Din nettobesparing år 1'}
-                </span>
-                <span className="amount">+{formatKr(result.recommendation.netSaving)}</span>
-                <span className="unit">
-                  {result.categorized.licensePending
-                    ? 'Försäkring kräver FI-licens — vi byter inte själva ännu, men visar gapet.'
-                    : (
-                      <>
-                        Bruttobesparing {formatKr(result.recommendation.grossSaving)} −
-                        Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
-                        {result.recommendation.suggestedSupplier && (
-                          <><br />Föreslagen leverantör: <strong>{result.recommendation.suggestedSupplier}</strong></>
-                        )}
-                      </>
-                    )}
-                </span>
-              </SavingsBlock>
+              <>
+                <SavingsBlock>
+                  <span className="kicker">
+                    {result.categorized.licensePending
+                      ? 'Möjlig årlig besparing'
+                      : 'Din nettobesparing'}
+                  </span>
+                  <span className="amount">+{formatKr(result.recommendation.netSaving)}</span>
+                  <span className="unit">
+                    {result.categorized.licensePending
+                      ? 'Försäkring kräver FI-licens — vi byter inte själva ännu, men visar gapet.'
+                      : (
+                        <>
+                          {formatKr(result.extracted.annualCost)} → {formatKr(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
+                          {' '}· Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
+                        </>
+                      )}
+                  </span>
+                </SavingsBlock>
+                {result.recommendation.suggestedAnnualCost && !result.categorized.licensePending && (
+                  <PriceNote>
+                    Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
+                  </PriceNote>
+                )}
+              </>
             ) : (
               <NoSwitchBlock>
                 <strong>Inget byte föreslås just nu.</strong>
@@ -374,15 +378,6 @@ const TestaFaktura = () => {
                 <dt>Återkommande</dt>
                 <dd>{result.extracted.recurring ? 'Ja (abonnemang / premie)' : 'Nej'}</dd>
               </div>
-              {result.recommendation.shouldSwitch && result.recommendation.suggestedAnnualCost && (
-                <div className="full">
-                  <dt>Arvo-volympris hos {result.recommendation.suggestedSupplier}</dt>
-                  <dd>
-                    {formatKr(result.recommendation.suggestedAnnualCost)} / år
-                    <small>Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.</small>
-                  </dd>
-                </div>
-              )}
             </KV>
 
             {result.recommendation.reasoning && result.recommendation.shouldSwitch && (
