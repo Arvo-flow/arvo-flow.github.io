@@ -21,6 +21,10 @@ import { CATEGORIES } from '../categorizer/categories.js';
 const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 1024;
 
+// Mirrors REAL_PRICE_CATEGORIES in the frontend — categories with public list
+// prices where naming the suggested supplier in reasoning is fine.
+const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+
 export class RecommenderError extends Error {
   constructor(message, { cause } = {}) {
     super(message);
@@ -117,6 +121,10 @@ function formatPrompt({ customer, invoice, categorized, benchmark }) {
     ? formatBenchmark(benchmark, seatCount, employees) + '\n\n' + phrasingRule
     : formatBenchmark(benchmark, seatCount, employees);
 
+  const secretOverride = REAL_PRICE_CATEGORIES.has(categorized.category)
+    ? `\nOVERRIDE SEKRETESSREGEL: Kategorin "${categorized.category}" har offentliga listpriser. Du FÅR och SKA namnge den föreslagna leverantören i reasoning-fältet för denna faktura.`
+    : '';
+
   return `Kunden:
   Bolagstyp: ${customer.industry}
   Anställda: ${employees}
@@ -132,7 +140,7 @@ Kategoriserad faktura:
 Branschindex för segmentet:
 ${benchmarkBlock}
 
-${phrasingRule}
+${phrasingRule}${secretOverride}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }
