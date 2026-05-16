@@ -54,6 +54,14 @@ one_time_fee
   Engångskostnader som inte återkommer regelbundet.
   Exempel: installationsavgift, uppstartsavgift, aktiveringsavgift,
   påminnelseavgift, konsultarvode, reparation.
+  SAMT krediteringar och minusposter för avslutade, uppsagda eller justerade
+  licenser/avtal — dessa är historiska korrigeringar som inte återkommer och
+  ska ALDRIG klassificeras som recurring_subscription. Kundens framtida
+  run-rate påverkas inte av sådana engångsjusteringar.
+  SAMT pro-rata-avgifter för licenser eller abonnemang som TILLKOMMIT mitt i
+  en period (t.ex. "Pro-rata: Tillagd 16 maj", "delsperiod"). Dessa är
+  periodjusteringar som inte återkommer — nästa period debiteras full avgift.
+  Klassificera ALLTID sådana rader som one_time_fee.
 
 hardware
   Köpt hårdvara eller utrustning (ej leasing eller hyra).
