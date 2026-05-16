@@ -41,14 +41,14 @@ KLASSIFICERA VARJE RAD I EXAKT EN AV FYRA TYPER:
 recurring_subscription
   Fasta, återkommande kostnader som gäller per period oavsett förbrukning.
   Exempel: månadsabonnemang, maskinleasing, fasta licensavgifter,
-  klickkostnader i Managed Print-avtal (dessa är förhandlingsbara
-  kontraktsrader — INTE roaming), fakturaavgifter som återkommer varje period,
-  fasta paketavgifter, supportavtal, serviceavtal.
+  fakturaavgifter som återkommer varje period, fasta paketavgifter,
+  supportavtal, serviceavtal.
+  SAMT klickkostnader för skrivare i Managed Print-avtal (förhandlingsbara kontraktsrader).
 
 variable_usage
   Rörliga kostnader som varierar med faktisk förbrukning. ENBART för mobiltelefoni.
   Exempel: roaming utanför EU, övertrafik, extra datapåslag, SMS-paket utanför plan.
-  OBS: Klickkostnader för skrivare/kopiatorer är ALDRIG variable_usage — se ovan.
+  OBS: Klickkostnader för skrivare är INTE variable_usage — klassificera dem som recurring_subscription.
 
 one_time_fee
   Engångskostnader som inte återkommer regelbundet.
