@@ -413,12 +413,25 @@ const TestaFaktura = () => {
 
             {result.route === 'review_queue' ? (
               <NoSwitchBlock>
-                <strong>Fakturan behöver djupare analys.</strong>
-                <p>
-                  Vår algoritm är inte tillräckligt säker på klassificeringen för att
-                  visa automatiska besparingssiffror. Koppla Fortnox för en komplett,
-                  felfri analys av hela er leverantörsreskontra.
-                </p>
+                {result.reason === 'volume_data_required' ? (
+                  <>
+                    <strong>Kräver offert — vi kontaktar er.</strong>
+                    <p>
+                      Den här kategorin kräver faktisk förbrukningsdata (kWh, kvm eller
+                      fraktvolym) för en korrekt analys. Vi har skickat fakturadatan till
+                      vårt team som kontaktar er med en skräddarsydd genomgång.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <strong>Fakturan behöver djupare analys.</strong>
+                    <p>
+                      Vår algoritm är inte tillräckligt säker på klassificeringen för att
+                      visa automatiska besparingssiffror. Koppla Fortnox för en komplett,
+                      felfri analys av hela er leverantörsreskontra.
+                    </p>
+                  </>
+                )}
               </NoSwitchBlock>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>

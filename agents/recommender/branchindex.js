@@ -48,6 +48,8 @@ export function bucketForSize(employees) {
 // All values SEK/year unless the note says "per användare/år".
 export const BRANCHINDEX = {
   el: {
+    requiresVolumeData: true,
+    volumeDataNote: 'Elkostnad drivs av kWh-förbrukning, inte antal anställda. Kräver årsförbrukning (kWh) för korrekt analys.',
     unit: 'kr/år',
     note: 'Rörlig spotavtal + nätavgift + energiskatt (exkl. moms, SE3). Typisk förbrukning: micro ~10–20 MWh, small ~30–60 MWh, mid ~80–200 MWh.',
     alternatives: [
@@ -139,6 +141,8 @@ export const BRANCHINDEX = {
   },
 
   'leasing-bil': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Leasingkostnad beror på antal fordon, bilmodell och löptid — inte antal anställda.',
     unit: 'kr/år',
     note: 'Per leasad servicebil. Restvärde + service inräknat.',
     alternatives: [
@@ -279,6 +283,8 @@ export const BRANCHINDEX = {
   },
 
   kontorsmaterial: {
+    requiresVolumeData: true,
+    volumeDataNote: 'Förbrukningskostnad beror på inköpsvolym och sortiment — inte direkt på antal anställda.',
     unit: 'kr/år',
     note: 'Totalt per år: papper, förbrukningsvaror, kaffe och kontorsartiklar. Källa: leverantörers listepriser och ramavtalsjämförelser 2026.',
     alternatives: [
@@ -296,6 +302,8 @@ export const BRANCHINDEX = {
   },
 
   'städ-rengöring': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Städkostnad beror på lokalyta (kvm) och frekvens — inte antal anställda.',
     unit: 'kr/år',
     note: 'Städ och rengöringstjänster för företagslokaler. Timbaserat eller fast abonnemang per driftsställe.',
     alternatives: [
@@ -313,6 +321,8 @@ export const BRANCHINDEX = {
   },
 
   'transport-frakt': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Fraktkostnad beror på volym (kg/kolli/km) och godstyp — inte antal anställda.',
     unit: 'kr/år',
     note: 'Frakt och transport. Kostnaden varierar kraftigt med volym och branschtypisk godsstruktur. Källa: operatörernas volumenprislistor 2026.',
     alternatives: [
