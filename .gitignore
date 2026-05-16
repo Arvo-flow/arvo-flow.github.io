@@ -29,3 +29,9 @@ yarn-debug.log*
 yarn-error.log*
 agents/orchestrator/data/*
 !agents/orchestrator/data/.gitkeep
+
+# Test invoices — binary files, may contain sensitive business data
+test-pdfs/*.pdf
+
+# Local env
+.env
