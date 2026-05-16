@@ -37,7 +37,8 @@ const STRONG_DESC_SIGNALS = {
   'saas-creative':     ['adobe creative cloud', 'creative cloud for teams', 'figma organization',
                         'canva for teams', 'adobe cc licens'],
   'saas-crm':          ['salesforce licens', 'hubspot licens', 'pipedrive prenumeration',
-                        'zoho crm', 'dynamics 365 sales', 'crm-licens'],
+                        'zoho crm', 'dynamics 365 sales', 'crm-licens',
+                        'crm licens', 'crm prenumeration', 'crm abonnemang'],
   'saas-finance':      ['bokföringsprogram licens', 'affärssystem licens', 'erp-licens',
                         'business central licens', 'björn lundén licens'],
   skrivarleasing:     ['skrivarhyra', 'kopiatorrhyra', 'multifunktionsskrivare', 'managed print',
@@ -71,7 +72,7 @@ const ACCOUNTING_SAAS_SUPPLIERS = ['fortnox', 'visma', 'pe accounting', 'speedle
 // SaaS supplier → sub-category mapping (checked in order, first match wins).
 const SAAS_SUPPLIER_MAP = [
   { signals: ['adobe', 'figma', 'canva'],                                                   category: 'saas-creative'     },
-  { signals: ['salesforce', 'hubspot', 'pipedrive', 'zoho crm', 'freshsales'],              category: 'saas-crm'          },
+  { signals: ['salesforce', 'hubspot', 'pipedrive', 'zoho crm', 'freshsales', 'crm'],       category: 'saas-crm'          },
   { signals: ['microsoft', 'google', 'zoom video', 'slack technologies', 'atlassian',
               'dropbox', 'box.com', 'webex'],                                                category: 'saas-productivity' },
 ];
