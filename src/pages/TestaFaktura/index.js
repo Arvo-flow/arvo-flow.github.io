@@ -242,22 +242,20 @@ const TestaFaktura = () => {
     if (!email || emailState !== 'idle') return;
     setEmailState('submitting');
     try {
-      await fetch(ANALYS_WEBHOOK_URL, {
+      const res = await fetch('/api/send-analysis', {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          type: 'analys_pdf',
-          email,
-          supplier: result?.extracted?.supplier,
-          category: result?.categorized?.category,
-          annual_cost: result?.extracted?.annualCost,
-          net_saving: result?.recommendation?.netSaving,
-          suggested_supplier: result?.recommendation?.suggestedSupplier,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, result }),
       });
-    } catch { /* non-fatal */ }
-    setEmailState('sent');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Något gick fel');
+      }
+      setEmailState('sent');
+    } catch (err) {
+      console.error('[submitEmail]', err.message);
+      setEmailState('idle');
+    }
   };
 
   const phaseState = (id) => {
