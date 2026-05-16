@@ -91,8 +91,11 @@ OUT OF SCOPE — sätt outOfScope: true om fakturan avser tjänster utan
 KRITISKT:
   — Alla belopp EXKLUSIVE moms (svensk B2B-standard). Om bara ink. moms: dividera med 1.25.
   — Returnera VARJE synlig kostnadsrad — utelämna inga rader.
-  — seatCount: summera ALLA licensrader oavsett tier (t.ex. 45 Premium + 12 Basic = 57).
-    Sätt null om fakturan inte avser per-användarlicenser.
+  — seatCount: Antal UNIKA ANVÄNDARE som licensieras. Summera rader med OLIKA TIERS av SAMMA
+    produkt (t.ex. 45 Premium + 12 Basic = 57 unika användare). Räkna INTE ihop add-on-tjänster
+    (backup, säkerhet, arkiv, e-signatur) med bastjänsten — om 57 M365-licenser + 57
+    molnbackup-licenser är seatCount = 57, inte 114. Sätt null om fakturan inte avser
+    per-användarlicenser.
   — projectedRecurringAmount: Det belopp som faktiskt kommer att debiteras nästa FULLA period,
     efter att engångsjusteringar (pro-rata, krediteringar) är normaliserade.
     Exempel: Faktura visar 20 licenser × 500 kr (recurring) + 5 licenser × 250 kr (pro-rata tillagda
@@ -228,20 +231,45 @@ export function aggregateLineItems(raw) {
   };
 }
 
+
 /**
  * Triagera extraktionsresultatet.
  * Returnerar route: 'auto' | 'review_queue' | 'unsupported'
+ *
+ * Kontroller körs i två lager:
+ *   1. Sanity checks — fångar "confident wrong" oberoende av AI:ns self-reported confidence
+ *   2. Confidence threshold — fångar fall där AI:n själv signalerar osäkerhet
  */
 export function routeExtraction(extracted) {
   if (extracted.outOfScope) {
     return { route: 'unsupported' };
   }
+
+  // ── Lager 1: Sanity checks ────────────────────────────────────────────────
+  if (!extracted.supplier || extracted.supplier.trim() === '') {
+    return { route: 'review_queue', reason: 'Leverantörsnamn saknas' };
+  }
+
+  if ((extracted.lineItems ?? []).length === 0) {
+    return { route: 'review_queue', reason: 'Inga kostnadsrader extraherades' };
+  }
+
+  if (extracted.billingPeriod === 'unknown') {
+    return { route: 'review_queue', reason: 'Faktureringsperiod okänd — annualisering otillförlitlig' };
+  }
+
+  if (extracted.annualCost === 0 && extracted.billingPeriod !== 'one_time') {
+    return { route: 'review_queue', reason: 'Beräknad årskostnad är 0 kr trots återkommande fakturering' };
+  }
+
+  // ── Lager 2: AI:ns self-reported confidence ───────────────────────────────
   if (extracted.confidenceScore < CONFIDENCE_THRESHOLD) {
     return {
       route:  'review_queue',
       reason: `Confidence ${extracted.confidenceScore.toFixed(2)} under tröskel ${CONFIDENCE_THRESHOLD}`,
     };
   }
+
   return { route: 'auto' };
 }
 

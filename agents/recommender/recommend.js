@@ -21,6 +21,10 @@ import { CATEGORIES } from '../categorizer/categories.js';
 const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 1024;
 
+// Mirrors REAL_PRICE_CATEGORIES in the frontend — categories with public list
+// prices where naming the suggested supplier in reasoning is fine.
+const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+
 export class RecommenderError extends Error {
   constructor(message, { cause } = {}) {
     super(message);
@@ -123,6 +127,10 @@ function formatPrompt({ customer, invoice, categorized, benchmark }) {
     ? formatBenchmark(benchmark, seatCount, employees) + '\n\n' + phrasingRule
     : formatBenchmark(benchmark, seatCount, employees);
 
+  const secretOverride = REAL_PRICE_CATEGORIES.has(categorized.category)
+    ? `\nOVERRIDE SEKRETESSREGEL: Kategorin "${categorized.category}" har offentliga listpriser. Du FÅR och SKA namnge den föreslagna leverantören i reasoning-fältet för denna faktura.`
+    : '';
+
   return `Kunden:
   Bolagstyp: ${customer.industry}
   Anställda: ${employees}
@@ -138,7 +146,7 @@ Kategoriserad faktura:
 Branschindex för segmentet:
 ${benchmarkBlock}
 
-${phrasingRule}
+${phrasingRule}${secretOverride}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }
@@ -226,6 +234,25 @@ export async function recommend(input, opts = {}) {
     result.shouldSwitch = false;
     result.vipQueue = true;
     result.switchSteps = [];
+  }
+
+  // Deterministic shouldSwitch override: if the customer pays >15 % over p25,
+  // always recommend a switch regardless of what the model decided.
+  // This eliminates AI flip-flopping on clear-cut overpayment cases.
+  if (!categoryDef?.licensePending && benchmark) {
+    const _annualCost = input.invoice.annualCost ?? input.invoice.amount ?? 0;
+    const _employees  = input.customer.employees ?? 1;
+    const _seatCount  = input.invoice.seatCount ?? null;
+    const _isPerUser  = benchmark.note.toLowerCase().includes('per användare');
+    const _seats      = _isPerUser ? (_seatCount ?? _employees) : 1;
+    // Take the minimum of seat-based and employee-based p25 so the override still
+    // triggers even when seatCount is inflated by add-on licenses (e.g. 57+57=114).
+    const _p25BySeat  = Math.round(benchmark.p25 * _seats);
+    const _p25ByEmp   = _isPerUser ? Math.round(benchmark.p25 * _employees) : _p25BySeat;
+    const _p25Total   = Math.min(_p25BySeat, _p25ByEmp);
+    if (_p25Total > 0 && _annualCost > _p25Total * 1.15) {
+      result.shouldSwitch = true;
+    }
   }
 
   // Deterministic financial overrides — AI provides reasoning only.
