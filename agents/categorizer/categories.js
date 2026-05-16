@@ -183,14 +183,25 @@ export const CATEGORIES = {
     ],
     accountHints: ['5800', '5820', '7320'],
   },
+  serverhosting: {
+    label: 'Serverhosting & Cloud-infrastruktur',
+    licensePending: false,
+    subTypes: ['dedikerad server', 'vps', 'colocation', 'cloud hosting', 'managed hosting'],
+    keywords: [
+      'dedicated server', 'dedikerad server', 'vps', 'virtual private server',
+      'colocation', 'colo', 'serverhosting', 'cloud server', 'cloud infrastructure',
+      'bandwidth overage', 'bandbreddsöverdrag', 'managed hosting',
+    ],
+    accountHints: ['6540', '6230'],
+  },
   'it-support': {
     label: 'IT-drift & Support',
     licensePending: false,
-    subTypes: ['supportavtal', 'hosting', 'nätverk', 'backup', 'drift'],
+    subTypes: ['supportavtal', 'nätverk', 'backup', 'drift'],
     keywords: [
-      'it-support', 'it-drift', 'driftavtal', 'hostingavgift', 'serviceavtal it',
+      'it-support', 'it-drift', 'driftavtal', 'serviceavtal it',
       'managed services', 'nätverksövervakning', 'it-konsult', 'it-tjänster',
-      'infrastruktur', 'server',
+      'infrastruktur',
     ],
     accountHints: ['6540', '6230', '6900'],
   },

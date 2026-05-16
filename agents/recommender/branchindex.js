@@ -52,6 +52,8 @@ export function bucketForSize(employees) {
 // All values SEK/year unless the note says "per användare/år".
 export const BRANCHINDEX = {
   el: {
+    requiresVolumeData: true,
+    volumeDataNote: 'Elkostnader styrs av faktisk förbrukning i kWh och nätavgift — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Rörlig spotavtal + nätavgift + energiskatt (exkl. moms, SE3). Typisk förbrukning: micro ~10–20 MWh, small ~30–60 MWh, mid ~80–200 MWh.',
     alternatives: [
@@ -169,6 +171,8 @@ export const BRANCHINDEX = {
   },
 
   'leasing-bil': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Billeasingkostnader styrs av antal fordon, modell och avtalsvillkor — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Per leasad servicebil. Restvärde + service inräknat.',
     alternatives: [
@@ -317,7 +321,22 @@ export const BRANCHINDEX = {
     },
   },
 
+  serverhosting: {
+    requiresVolumeData: true,
+    volumeDataNote: 'Serverkostnader styrs av specifikationer (CPU, RAM, bandbredd) och antal servrar — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
+    unit: 'kr/år',
+    note: 'Dedikerade servrar, VPS, colocation och cloud-infrastruktur. Kostnaden beror på serverspecifikationer — per-anställd-benchmark är inte tillämpbar.',
+    alternatives: [
+      { supplier: 'Hetzner',           positioning: 'Bäst pris/prestanda i Europa — dedikerade servrar och VPS, tyskt datacenter, GDPR-compliant', reliability: 0.94 },
+      { supplier: 'OVHcloud',          positioning: 'Bred portfölj VPS → dedikerat, europeisk aktör, konkurrenskraftiga priser',                    reliability: 0.92 },
+      { supplier: 'Telenor Datacenter', positioning: 'Svensk colocation med garanterat SLA — bra för känslig data med krav på lokalt datacenter',   reliability: 0.93 },
+      { supplier: 'AWS Lightsail',     positioning: 'Enkel entry-point till AWS, fast månadspris, skalbar till full AWS-portfölj vid behov',         reliability: 0.95 },
+    ],
+  },
+
   kontorsmaterial: {
+    requiresVolumeData: true,
+    volumeDataNote: 'Kontorsmaterialkostnader styrs av faktisk förbrukning och sortiment — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Totalt per år: papper, förbrukningsvaror, kaffe och kontorsartiklar. Källa: leverantörers listepriser och ramavtalsjämförelser 2026.',
     alternatives: [
@@ -335,6 +354,8 @@ export const BRANCHINDEX = {
   },
 
   'städ-rengöring': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Städkostnader styrs av lokalyta (kvm) och städfrekvens — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Städ och rengöringstjänster för företagslokaler. Timbaserat eller fast abonnemang per driftsställe.',
     alternatives: [
@@ -352,6 +373,8 @@ export const BRANCHINDEX = {
   },
 
   'transport-frakt': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Fraktkostnader styrs av godsvikt, volym och antal leveranser — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Frakt och transport. Kostnaden varierar kraftigt med volym och branschtypisk godsstruktur. Källa: operatörernas volumenprislistor 2026.',
     alternatives: [
@@ -410,6 +433,7 @@ export const BRANCHINDEX = {
 export function getBenchmark({ category, industry, employees }) {
   const cat = BRANCHINDEX[category];
   if (!cat) return null;
+  if (cat.requiresVolumeData) return null;
 
   const ind = INDUSTRY_SEGMENT_MAP[industry] ?? 'byraer';
   const size = bucketForSize(employees ?? 5);
