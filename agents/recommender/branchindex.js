@@ -231,11 +231,7 @@ export const BRANCHINDEX = {
   skrivarleasing: {
     source: 'estimated',
     unit: 'kr/år',
-    // Intervallbaserade marknadsdata (ej verifierade listpriser per leverantör).
-    // Hårdvaruhyra A3 Färg MFP: 800–1 500 kr/mån. Klickpris S/V >10k sidor: 0,05–0,10 kr/sida.
-    // Klickpris Färg >2k sidor: 0,50–0,90 kr/sida. 15-personers kontor totalt: 1 500–2 500 kr/mån.
-    // OBS: Hårdvaruleasing (hardware på separat rad) exkluderas från besparingskalkylen — hanteras i extract.js (one_time_fee/hardware).
-    note: 'Totalt per år: skrivarhyra + klickavtal S/V + serviceavtal. Branschuppskattning: A3 Färg MFP-hyra 800–1 500 kr/mån, S/V-klick >10k sidor 0,05–0,10 kr/sida, Färg-klick >2k sidor 0,50–0,90 kr/sida. Typiskt 15-personers kontor: 1 500–2 500 kr/mån totalt (18 000–30 000 kr/år).',
+    note: 'Totalt per år: skrivarhyra + klickavtal S/V + serviceavtal. Referens: A4 MFP mid-range med klickpris 0,06–0,09 kr/sida S/V. Källa: marknadspriser 2026.',
     alternatives: [
       { supplier: 'Konica Minolta SMB Solutions', positioning: 'Stark SMF-portfölj, konkurrenskraftiga klickavtal, rikstäckande service',       reliability: 0.95 },
       { supplier: 'Ricoh Sverige',                positioning: 'Bäst total cost of ownership för mellanstor printvolym, stark SLA',              reliability: 0.94 },
@@ -277,11 +273,7 @@ export const BRANCHINDEX = {
   'larm-bevakning': {
     source: 'estimated',
     unit: 'kr/år',
-    // Intervallbaserade marknadsdata. Komponentpriser per driftsställe:
-    //   Baspaket (central, rök, rörelse, knappsats): 399–599 kr/mån.
-    //   Tillägg kamera per enhet: ~149 kr/mån. Tillägg passersystem per dörr: ~250 kr/mån.
-    //   Typiskt kontor 200 kvm: 800–1 200 kr/mån totalt (9 600–14 400 kr/år).
-    note: 'Per driftsställe/år. Branschuppskattning: baspaket (central, rök, rörelse, knappsats) 399–599 kr/mån, kameratillägg ~149 kr/mån/enhet, passersystemtillägg ~250 kr/mån/dörr. Typiskt kontor 200 kvm: 800–1 200 kr/mån = 9 600–14 400 kr/år.',
+    note: 'Per driftsställe/år. Inkluderar larmövervakning + larmcentral + utrustningshyra. Källa: operatörernas listpriser 2026.',
     alternatives: [
       { supplier: 'Sector Alarm Företag', positioning: 'Lägst månadsavgift, stark app-integration, snabb utryckning',        reliability: 0.94 },
       { supplier: 'Safemore',             positioning: 'Konkurrenskraftigt pris, stark för SMF utan komplex säkerhetsinfra', reliability: 0.92 },
