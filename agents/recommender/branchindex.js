@@ -366,6 +366,19 @@ export const BRANCHINDEX = {
     },
   },
 
+  utrustningsleasing: {
+    requiresVolumeData: true,
+    volumeDataNote: 'IT-leasingkostnaden styrs av antal enheter, specifikation (processor, RAM, lagring) och avtalslängd — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er ett korrekt erbjudande.',
+    unit: 'kr/år',
+    note: 'Leasing av laptops, datorer, skärmar och annan IT-utrustning. Månadsavgift × enheter × 12. Källa: operatörernas offertlistor 2026.',
+    alternatives: [
+      { supplier: 'Dustin Leasing',    positioning: 'Marknadsledande IT-återförsäljare, flexibla leasingavtal, brett sortiment laptops och datorer', reliability: 0.93 },
+      { supplier: 'Atea Finansiering', positioning: 'Stark på volymer, dedikerad kundansvarig, kombineras med serviceavtal',                           reliability: 0.94 },
+      { supplier: 'Ingram Micro',      positioning: 'Distributörspriser utan mellanhand, bra för standardkonfigurationer i volym',                     reliability: 0.91 },
+      { supplier: 'Lokal IT-partner',  positioning: 'Flexibla avtal, snabb service, personlig relation — kan slå de stora på smal volym',              reliability: 0.88 },
+    ],
+  },
+
   serverhosting: {
     requiresVolumeData: true,
     volumeDataNote: 'Serverkostnader styrs av specifikationer (CPU, RAM, bandbredd) och antal servrar — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',

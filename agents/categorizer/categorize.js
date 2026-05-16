@@ -41,6 +41,9 @@ const STRONG_DESC_SIGNALS = {
                         'crm licens', 'crm prenumeration', 'crm abonnemang'],
   'saas-finance':      ['bokföringsprogram licens', 'affärssystem licens', 'erp-licens',
                         'business central licens', 'björn lundén licens'],
+  utrustningsleasing: ['laptop leasing', 'datorleasing', 'it-leasing', 'hårdvaruleasing',
+                       'utrustningsleasing', 'it-utrustning leasing', 'laptops leasing',
+                       'notebook leasing', 'datorer leasing', 'leasing it'],
   skrivarleasing:     ['skrivarhyra', 'kopiatorrhyra', 'multifunktionsskrivare', 'managed print',
                        'klickavgift', 'klickavtal', 'skrivarleasing', 'kopieringsavgift'],
   loneadmin:          ['löneadministration', 'löneprogram', 'lönesystem', 'lönekörning', 'löneutbetalning'],
@@ -144,6 +147,22 @@ function deterministicMatch(invoice) {
       normalizedSupplier: invoice.supplier ?? '',
       confidence: 0.87,
       reasoning: `Deterministisk matchning: känd bokförings-SaaS-leverantör`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 3b: leasing supplier + IT hardware description → utrustningsleasing.
+  // Runs before Rule 4 so "FinansPartner Leasing AB + laptops" doesn't fall into saas-other.
+  const IT_HARDWARE_DESC = ['laptop', 'notebook', 'dator', 'hårdvara', 'surfplatta', 'it-utrustning', 'chromebook'];
+  const isLeasingSupplier = supplier.includes('leasing') || supplier.includes('finans');
+  const isItHardwareDesc  = IT_HARDWARE_DESC.some((s) => combined.includes(s));
+  if (isLeasingSupplier && isItHardwareDesc) {
+    return {
+      category: 'utrustningsleasing',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.88,
+      reasoning: `Deterministisk matchning: leasingleverantör + IT-hårdvarubeskrivning`,
       licensePending: false,
     };
   }

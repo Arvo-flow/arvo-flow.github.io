@@ -237,6 +237,17 @@ export const CATEGORIES = {
     ],
     accountHints: ['6540', '6230'],
   },
+  utrustningsleasing: {
+    label: 'IT-utrustningsleasing',
+    licensePending: false,
+    subTypes: ['laptop', 'dator', 'skärm', 'surfplatta', 'blandad it-utrustning'],
+    keywords: [
+      'laptop leasing', 'datorleasing', 'it-leasing', 'hårdvaruleasing',
+      'utrustningsleasing', 'it-utrustning leasing', 'laptops leasing',
+      'notebook leasing', 'datorer leasing', 'leasing it',
+    ],
+    accountHints: ['5612', '5615', '6570'],
+  },
   'it-support': {
     label: 'IT-drift & Support',
     licensePending: false,
