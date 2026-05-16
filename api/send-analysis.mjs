@@ -130,8 +130,10 @@ function generatePdf(result) {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    const PW = 595.28;
-    const W  = PW - PAD * 2;  // 483pt usable width
+    const PW       = 595.28;
+    const W        = PW - PAD * 2;  // 483pt usable width
+    const PAGE_H   = doc.page.height; // 841.89pt A4
+    const FOOTER_TOP = PAGE_H - PAD - 60; // fixed footer zone: last ~60pt of page
     let y = PAD;
 
     // ── Header: logo mark + wordmark ─────────────────────────────────────────
@@ -240,12 +242,14 @@ function generatePdf(result) {
     doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brand)
       .text('VARFÖR VI TROR DU KAN SPARA', PAD, y, { characterSpacing: 0.9 });
     y += 14;
+    // height cap prevents reasoning from flowing past the footer zone
+    const reasoningMaxH = Math.max(20, FOOTER_TOP - 24 - y);
     doc.fontSize(10.5).font('Helvetica').fillColor(T.inkSoft)
-      .text(r.reasoning ?? '', PAD, y, { width: W, lineGap: 3 });
+      .text(r.reasoning ?? '', PAD, y, { width: W, lineGap: 3, height: reasoningMaxH });
 
     // ── Footer ────────────────────────────────────────────────────────────────
-    // Position footer after content (doc.y is updated by pdfkit after text flows)
-    const FY = doc.y + 32;
+    // Fixed position anchored to page bottom — never pushed to page 2
+    const FY = FOOTER_TOP;
     doc.moveTo(PAD, FY).lineTo(PW - PAD, FY).strokeColor(T.border).lineWidth(0.5).stroke();
 
     const FMARK = 14;
@@ -442,7 +446,7 @@ export default async function handler(req, res) {
     const resend    = new Resend(process.env.RESEND_API_KEY);
     const net       = result.recommendation?.netSaving ?? 0;
     const subject   = net > 0
-      ? `Din analys: Spara ${formatKr(net)} / ar pa ${result.extracted.supplier}`
+      ? `Du kan spara ${formatKr(net)}/år på ${result.extracted.supplier} – Arvo`
       : `Din Arvo-analys: ${result.extracted.supplier}`;
 
     await resend.emails.send({
