@@ -388,7 +388,7 @@ function htmlEmail(result) {
     <td style="padding:4px 40px 36px;text-align:center">
       <a href="https://arvo-flow.github.io/flow/testa-faktura"
          style="display:inline-block;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);color:#ffffff;font-weight:600;font-size:15px;padding:15px 38px;border-radius:10px;text-decoration:none;font-family:'Inter',Arial,sans-serif">
-        Aktivera bytet &rarr;
+        ${REAL_PRICE_CATEGORIES.has(cat?.category) ? 'Aktivera bytet' : 'Säkra besparingen'} &rarr;
       </a>
       <p style="margin:14px 0 0;font-size:12px;color:#5C6E68;font-family:'Inter',Arial,sans-serif">Du betalar 20 % av faktiskt realiserad besparing. Inga fasta avgifter.</p>
     </td>
