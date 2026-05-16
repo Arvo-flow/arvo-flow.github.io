@@ -198,20 +198,55 @@ export function aggregateLineItems(raw) {
   };
 }
 
+// Övre gräns för rimlig årskostnad i SEK (exkl. moms) för SMB-segment.
+// Fakturor som överstiger detta är troligtvis felutlästa belopp.
+const MAX_PLAUSIBLE_ANNUAL_COST = 500_000;
+
 /**
  * Triagera extraktionsresultatet.
  * Returnerar route: 'auto' | 'review_queue' | 'unsupported'
+ *
+ * Kontroller körs i två lager:
+ *   1. Sanity checks — fångar "confident wrong" oberoende av AI:ns self-reported confidence
+ *   2. Confidence threshold — fångar fall där AI:n själv signalerar osäkerhet
  */
 export function routeExtraction(extracted) {
   if (extracted.outOfScope) {
     return { route: 'unsupported' };
   }
+
+  // ── Lager 1: Sanity checks ────────────────────────────────────────────────
+  if (!extracted.supplier || extracted.supplier.trim() === '') {
+    return { route: 'review_queue', reason: 'Leverantörsnamn saknas' };
+  }
+
+  if ((extracted.lineItems ?? []).length === 0) {
+    return { route: 'review_queue', reason: 'Inga kostnadsrader extraherades' };
+  }
+
+  if (extracted.billingPeriod === 'unknown') {
+    return { route: 'review_queue', reason: 'Faktureringsperiod okänd — annualisering otillförlitlig' };
+  }
+
+  if (extracted.annualCost === 0 && extracted.billingPeriod !== 'one_time') {
+    return { route: 'review_queue', reason: 'Beräknad årskostnad är 0 kr trots återkommande fakturering' };
+  }
+
+  if (extracted.annualCost > MAX_PLAUSIBLE_ANNUAL_COST) {
+    return {
+      route:  'review_queue',
+      reason: `Beräknad årskostnad ${extracted.annualCost.toLocaleString('sv-SE')} kr överstiger rimlig gräns (${MAX_PLAUSIBLE_ANNUAL_COST.toLocaleString('sv-SE')} kr)`,
+    };
+  }
+
+  // ── Lager 2: AI:ns self-reported confidence ───────────────────────────────
   if (extracted.confidenceScore < CONFIDENCE_THRESHOLD) {
     return {
       route:  'review_queue',
       reason: `Confidence ${extracted.confidenceScore.toFixed(2)} under tröskel ${CONFIDENCE_THRESHOLD}`,
     };
   }
+
   return { route: 'auto' };
 }
 
