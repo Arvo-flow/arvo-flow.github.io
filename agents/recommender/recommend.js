@@ -239,7 +239,11 @@ export async function recommend(input, opts = {}) {
     const _seatCount  = input.invoice.seatCount ?? null;
     const _isPerUser  = benchmark.note.toLowerCase().includes('per användare');
     const _seats      = _isPerUser ? (_seatCount ?? _employees) : 1;
-    const _p25Total   = Math.round(benchmark.p25 * _seats);
+    // Take the minimum of seat-based and employee-based p25 so the override still
+    // triggers even when seatCount is inflated by add-on licenses (e.g. 57+57=114).
+    const _p25BySeat  = Math.round(benchmark.p25 * _seats);
+    const _p25ByEmp   = _isPerUser ? Math.round(benchmark.p25 * _employees) : _p25BySeat;
+    const _p25Total   = Math.min(_p25BySeat, _p25ByEmp);
     if (_p25Total > 0 && _annualCost > _p25Total * 1.15) {
       result.shouldSwitch = true;
     }
