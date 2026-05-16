@@ -26,7 +26,9 @@ export class CategorizerError extends Error {
 // Keyed by category ID → array of lowercase substrings to scan for.
 const STRONG_DESC_SIGNALS = {
   mobil:            ['mobilabonnemang', 'mobiltelefoni', 'telefonabonnemang', 'företagstelefoni', 'mobildata'],
-  el:               ['elförbrukning', 'elavtal', 'elhandel', 'elcertifikat', 'spotpris timme', 'elenergi'],
+  el:               ['elförbrukning', 'elavtal', 'elhandel', 'elcertifikat', 'spotpris timme', 'elenergi',
+                     'spotpris el', 'elräkning', 'elkostnad', 'elabonnemang', 'spotprisavtal', 'strömkostnad',
+                     'elförb', 'kwh', 'rörligt el'],
   bredband:         ['företagsfiber', 'bredbandsabonnemang', 'fiberabonnemang'],
   kortterminal:     ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
   'faktura-tjanst': ['fakturatjänst', 'e-faktura utskick', 'fakturautskick'],
@@ -99,6 +101,12 @@ const HEALTH_SUPPLIER_SIGNALS = ['previa', 'feelgood', 'falck health', 'avonova'
 const BANK_SUPPLIER_SIGNALS = ['lunar business', 'qred'];
 const BANK_DESC_SIGNALS = ['bankavgift', 'kontoavgift', 'bankpaket'];
 
+// Known electricity supplier name fragments → el.
+const ELECTRICITY_SUPPLIER_SIGNALS = [
+  'elhandel', 'elenergi', 'elbolag', 'krafthandel', 'energihandel',
+  'vattenfall', 'fortum', 'tibber', 'jämtkraft', 'bixia', 'mälarenergi',
+];
+
 // Telecom supplier keywords — when combined with any subscription signal → mobil.
 const TELECOM_SUPPLIER_SIGNALS = ['telekom', 'telecom', 'tele2', 'telia', 'telenor', ' tre ', 'comviq', 'halebop', 'vimla'];
 const SUBSCRIPTION_DESC_SIGNALS = ['abonnemang', 'abonnement', 'subscription', 'månadsavgift telefon', 'telefonitjänst'];
@@ -122,6 +130,19 @@ function deterministicMatch(invoice) {
         licensePending: CATEGORIES[category]?.licensePending ?? false,
       };
     }
+  }
+
+  // Rule 1b: electricity supplier name → el (catches cases where description is generic)
+  const isElectricitySupplier = ELECTRICITY_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
+  if (isElectricitySupplier) {
+    return {
+      category: 'el',
+      subType: 'spotpris',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.85,
+      reasoning: `Deterministisk matchning: elleverantör identifierad i leverantörsnamnet`,
+      licensePending: false,
+    };
   }
 
   // Rule 2: telecom supplier + any subscription signal → mobil

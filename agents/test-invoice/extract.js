@@ -83,6 +83,9 @@ CONFIDENCE SCORE (0.0–1.0):
 OUT OF SCOPE — sätt outOfScope: true om fakturan avser tjänster utan
   förhandlingsbar volymstruktur: redovisningstjänster, juridik, restaurang/mat,
   rekrytering, marknadsföring, bemanning, utbildning, myndighetsavgifter.
+  ALDRIG out of scope: elavtal (spotpris, rörligt el), mobilabonnemang, bredband,
+  leasing (bil, IT, skrivare), SaaS-licenser, kortterminaler, larm & bevakning,
+  löneadministration, städ, frakt — dessa har alltid förhandlingsbara volymer.
   Fakturan kan fortfarande extraheras men flaggas.
 
 KRITISKT:

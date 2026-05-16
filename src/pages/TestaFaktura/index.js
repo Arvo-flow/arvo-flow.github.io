@@ -419,7 +419,16 @@ const TestaFaktura = () => {
               </Button>
             </ResultHead>
 
-            {result.route === 'review_queue' ? (
+            {result.route === 'unsupported' ? (
+              <NoSwitchBlock>
+                <strong>Utanför analysräckvidden.</strong>
+                <p>
+                  Denna faktura avser en tjänst vi inte optimerar (t.ex. juridik, redovisning,
+                  bemanning eller myndighetsavgifter). Koppla Fortnox för att analysera era
+                  övriga leverantörer.
+                </p>
+              </NoSwitchBlock>
+            ) : result.route === 'review_queue' ? (
               <NoSwitchBlock>
                 {result.reason === 'volume_data_required' ? (
                   <>
@@ -531,7 +540,7 @@ const TestaFaktura = () => {
               </NoSwitchBlock>
             )}
 
-            {result.route !== 'review_queue' && <KV>
+            {result.route === 'auto' && <KV>
               <div>
                 <dt>Du betalar idag</dt>
                 <dd>
