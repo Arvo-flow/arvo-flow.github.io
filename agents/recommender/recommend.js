@@ -93,7 +93,9 @@ function formatPrompt({ customer, invoice, categorized, benchmark }) {
   const effectiveSeats = seatCount ?? employees;
   const scale = isPerUser && effectiveSeats > 0 ? effectiveSeats : 1;
   const totalMedian = bm ? bm.median * scale : null;
-  const isRealData = bm?.source === 'real';
+  const isRealData      = bm?.source === 'real';
+  const isVerifiedPublic = bm?.source === 'real-public';
+  const isEstimated      = bm?.source === 'estimated';
   const dataPoints = bm?.n ?? 0;
 
   // Skip benchmark % comparison for accounting systems.
@@ -102,12 +104,14 @@ function formatPrompt({ customer, invoice, categorized, benchmark }) {
       ? Math.round(((annualCost - totalMedian) / totalMedian) * 100)
       : null;
 
-  // Annotation injected next to the annual cost — controls what the AI echoes
-  // back in its reasoning. Real data → "medianen". Mock → "marknadens referenspriser".
+  // Annotation injected next to the annual cost — controls what the AI echoes back.
+  // Three tiers: real DB data, verified public prices, range-based estimates.
   const overpaymentAnnotation = overpaymentPct !== null
     ? isRealData
       ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER medianen' : Math.abs(overpaymentPct) + ' % UNDER medianen'} (${dataPoints} analyserade fakturor i databasen)`
-      : `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER marknadens referenspriser' : Math.abs(overpaymentPct) + ' % UNDER marknadens referenspriser'}`
+      : isVerifiedPublic
+        ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER verifierat listpris' : Math.abs(overpaymentPct) + ' % UNDER verifierat listpris'}`
+        : `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER branschstandarden' : Math.abs(overpaymentPct) + ' % UNDER branschstandarden'}`
     : '';
 
   // Explicit phrasing instruction so the AI uses the right language in reasoning.
@@ -115,7 +119,9 @@ function formatPrompt({ customer, invoice, categorized, benchmark }) {
     ? 'OBS: Detta är ett affärssystem. Jämför INTE kostnaden procentuellt mot medianen. Undersök om inbyggda funktioner täcker behovet och ge konkret åtgärdsrekommendation.'
     : isRealData
       ? `OBS: Benchmarkdatan är baserad på ${dataPoints} verkliga kundfakturor i Arvo Flows databas. I din reasoning, skriv "X % över medianen, baserat på ${dataPoints} analyserade fakturor i er bransch." — använd ALDRIG "referenspriser".`
-      : 'OBS: Benchmarkdatan är estimat från offentliga listpriser — INTE från verkliga kundfakturor. I din reasoning, skriv "X % över marknadens referenspriser" — ALDRIG "medianen" eller "verkliga datapunkter".';
+      : isVerifiedPublic
+        ? 'OBS: Benchmarkdatan är verifierade offentliga listpriser — INTE aggregerade kundfakturor. I din reasoning, skriv "X % över verifierat marknadspris" eller "listpriset hos billigaste leverantör är Y kr" — ALDRIG "medianen" eller "verkliga datapunkter".'
+        : 'OBS: Benchmarkdatan är intervallbaserade branschuppskattningar — INTE exakta priser. I din reasoning, skriv "Vår data visar att branschstandarden för detta ligger på ca X–Y kr. Ni betalar idag Z kr, vilket indikerar en potentiell överdebitering." — ALDRIG "exakta priser", "garanterade" eller "medianen".';
 
   const benchmarkBlock = isAccountingSystem
     ? formatBenchmark(benchmark, seatCount, employees) + '\n\n' + phrasingRule

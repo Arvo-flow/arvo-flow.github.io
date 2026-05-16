@@ -22,7 +22,7 @@ const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/eeaax2i1k03cycl39zqlpdt9
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
 // Categories with verified public list prices — show supplier name proudly.
-const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+const REAL_PRICE_CATEGORIES = new Set(['saas-productivity', 'mobil']);
 
 // Scrub the suggested supplier name from reasoning text so the tier/price
 // analysis stays visible but the specific alternative brand stays hidden.
@@ -81,7 +81,12 @@ const CATEGORY_LABELS = {
   leasing:             'Företagsleasing',
   kortterminal:        'Kortterminal',
   'faktura-tjanst':    'Fakturatjänst / Affärssystem',
-  'mjukvara-saas':     'Programvarulicenser / SaaS',
+  'saas-productivity': 'Programvarulicenser / SaaS',
+  'saas-creative':     'Kreativ mjukvara / Design',
+  'saas-crm':          'CRM-system',
+  'saas-finance':      'Affärssystem / Bokföring',
+  'saas-other':        'Programvarulicenser / SaaS · övrigt',
+  serverhosting:       'Serverhosting & Cloud-infrastruktur',
   skrivarleasing:      'Skrivare & Managed Print',
   loneadmin:           'Löneadministration',
   'larm-bevakning':    'Larm & Bevakning',
@@ -242,20 +247,22 @@ const TestaFaktura = () => {
     if (!email || emailState !== 'idle') return;
     setEmailState('submitting');
     try {
-      const res = await fetch('/api/send-analysis', {
+      await fetch(ANALYS_WEBHOOK_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, result }),
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          type: 'analys_pdf',
+          email,
+          supplier: result?.extracted?.supplier,
+          category: result?.categorized?.category,
+          annual_cost: result?.extracted?.annualCost,
+          net_saving: result?.recommendation?.netSaving,
+          suggested_supplier: result?.recommendation?.suggestedSupplier,
+        }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Något gick fel');
-      }
-      setEmailState('sent');
-    } catch (err) {
-      console.error('[submitEmail]', err.message);
-      setEmailState('idle');
-    }
+    } catch { /* non-fatal */ }
+    setEmailState('sent');
   };
 
   const phaseState = (id) => {
@@ -415,11 +422,18 @@ const TestaFaktura = () => {
               <NoSwitchBlock>
                 {result.reason === 'volume_data_required' ? (
                   <>
-                    <strong>Kräver offert — vi kontaktar er.</strong>
+                    <strong>Kräver offert — våra experter kikar på detta.</strong>
                     <p>
-                      Den här kategorin kräver faktisk förbrukningsdata (kWh, kvm eller
-                      fraktvolym) för en korrekt analys. Vi har skickat fakturadatan till
-                      vårt team som kontaktar er med en skräddarsydd genomgång.
+                      {result.volumeDataNote ||
+                        'Kostnaden för denna kategori styrs av specifika volymer och specifikationer, inte antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.'}
+                    </p>
+                  </>
+                ) : result.reason === 'no_benchmark' ? (
+                  <>
+                    <strong>Utanför vår nuvarande täckning.</strong>
+                    <p>
+                      Vi har ännu inte benchmarkdata för denna leverantörskategori.
+                      Vi noterar fakturan och återkommer när vi kan göra en fullständig analys.
                     </p>
                   </>
                 ) : (
@@ -516,7 +530,7 @@ const TestaFaktura = () => {
               </NoSwitchBlock>
             )}
 
-            {result.route === 'auto' && <KV>
+            {result.route !== 'review_queue' && <KV>
               <div>
                 <dt>Du betalar idag</dt>
                 <dd>
@@ -655,13 +669,6 @@ const TestaFaktura = () => {
                 <div className="sent">
                   <Icon name="check" size={16} stroke={2.5} />
                   Vi skickar analysen till {email} inom några minuter.
-                  <button
-                    type="button"
-                    onClick={() => { setEmailState('idle'); setEmail(''); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 8, fontSize: 12, color: 'inherit', opacity: 0.6, textDecoration: 'underline' }}
-                  >
-                    Skicka igen
-                  </button>
                 </div>
               ) : (
                 <form onSubmit={submitEmail}>

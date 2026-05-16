@@ -294,6 +294,22 @@ export default async function handler(req, res) {
       });
     }
 
+    // Ingen benchmark — kategori finns ej i branschindex. Skicka till review_queue
+    // istället för att låta rekommenderaren hitta på siffror utan underlag.
+    if (!catDef) {
+      notifyReviewQueue(extracted, `[Ingen benchmark] Kategori '${categorized.category}' saknas i branschindex`).catch((e) =>
+        console.error('[test-invoice] alert failed:', e.message)
+      );
+      return send(res, 200, {
+        ok:     true,
+        route:  'review_queue',
+        reason: 'no_benchmark',
+        extracted: { supplier: extracted.supplier, date: extracted.date, amount: extracted.amount, annualCost: extracted.annualCost, confidenceScore: extracted.confidenceScore, lineItems: extracted.lineItems },
+        categorized: { category: categorized.category, normalizedSupplier: categorized.normalizedSupplier },
+        timing: { extractMs: timing.extractMs, categorizeMs: timing.categorizeMs },
+      });
+    }
+
     const t2 = Date.now();
     const recommendation = await recommend({
       customer: { industry, employees: employeesNum, revenue: revenueNum },

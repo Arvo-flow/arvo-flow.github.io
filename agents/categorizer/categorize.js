@@ -31,9 +31,15 @@ const STRONG_DESC_SIGNALS = {
   kortterminal:     ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
   'faktura-tjanst': ['fakturatjänst', 'e-faktura utskick', 'fakturautskick'],
   'leasing-bil':    ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
-  'mjukvara-saas':    ['microsoft 365', 'office 365', 'google workspace', 'adobe creative cloud',
-                       'programvarulicens', 'programvarulicenser', 'saas-licens', 'saas-prenumeration',
-                       'microsoft teams', 'google workspace business'],
+  'saas-productivity': ['microsoft 365', 'office 365', 'm365 licens', 'google workspace business',
+                        'zoom workplace', 'slack business', 'microsoft teams licens',
+                        'programvarulicens microsoft', 'csp licens'],
+  'saas-creative':     ['adobe creative cloud', 'creative cloud for teams', 'figma organization',
+                        'canva for teams', 'adobe cc licens'],
+  'saas-crm':          ['salesforce licens', 'hubspot licens', 'pipedrive prenumeration',
+                        'zoho crm', 'dynamics 365 sales', 'crm-licens'],
+  'saas-finance':      ['bokföringsprogram licens', 'affärssystem licens', 'erp-licens',
+                        'business central licens', 'björn lundén licens'],
   skrivarleasing:     ['skrivarhyra', 'kopiatorrhyra', 'multifunktionsskrivare', 'managed print',
                        'klickavgift', 'klickavtal', 'skrivarleasing', 'kopieringsavgift'],
   loneadmin:          ['löneadministration', 'löneprogram', 'lönesystem', 'lönekörning', 'löneutbetalning'],
@@ -62,9 +68,14 @@ const IT_SUPPORT_DESC_SIGNALS = ['it-support abonnemang', 'driftavtal it', 'mana
 // Known SaaS accounting/ERP suppliers → faktura-tjanst.
 const ACCOUNTING_SAAS_SUPPLIERS = ['fortnox', 'visma', 'pe accounting', 'speedledger', 'bokio'];
 
-// Known software/cloud suppliers — when combined with a license/subscription signal → mjukvara-saas.
-const SOFTWARE_SUPPLIER_SIGNALS = ['microsoft', 'adobe', 'google', 'zoom video', 'slack technologies', 'atlassian', 'salesforce'];
-const LICENSE_DESC_SIGNALS = ['licens', 'license', 'prenumeration', 'subscription', 'licenser'];
+// SaaS supplier → sub-category mapping (checked in order, first match wins).
+const SAAS_SUPPLIER_MAP = [
+  { signals: ['adobe', 'figma', 'canva'],                                                   category: 'saas-creative'     },
+  { signals: ['salesforce', 'hubspot', 'pipedrive', 'zoho crm', 'freshsales'],              category: 'saas-crm'          },
+  { signals: ['microsoft', 'google', 'zoom video', 'slack technologies', 'atlassian',
+              'dropbox', 'box.com', 'webex'],                                                category: 'saas-productivity' },
+];
+const LICENSE_DESC_SIGNALS = ['licens', 'license', 'prenumeration', 'subscription', 'licenser', 'saas'];
 
 // Known print/copier suppliers → skrivarleasing.
 const PRINT_SUPPLIER_SIGNALS = ['konica minolta', 'ricoh', 'xerox', 'kyocera', 'officeprint', 'sharp document'];
@@ -136,16 +147,20 @@ function deterministicMatch(invoice) {
     };
   }
 
-  // Rule 4: known software/cloud supplier + license description → mjukvara-saas
-  const isSoftwareSupplier = SOFTWARE_SUPPLIER_SIGNALS.some((s) => supplier.includes(s));
-  const isLicenseDesc = LICENSE_DESC_SIGNALS.some((s) => desc.includes(s));
-  if (isSoftwareSupplier && isLicenseDesc) {
+  // Rule 4: known SaaS supplier + license signal → route to correct saas sub-category.
+  // Unknown supplier with license signal → saas-other (manual review).
+  const isLicenseDesc = LICENSE_DESC_SIGNALS.some((s) => desc.includes(s) || supplier.includes(s));
+  if (isLicenseDesc) {
+    const match = SAAS_SUPPLIER_MAP.find(({ signals }) => signals.some((s) => supplier.includes(s)));
+    const category = match?.category ?? 'saas-other';
     return {
-      category: 'mjukvara-saas',
+      category,
       subType: '',
       normalizedSupplier: invoice.supplier ?? '',
-      confidence: 0.88,
-      reasoning: `Deterministisk matchning: känd programvaruleverantör + licens/prenumerationsbeskrivning`,
+      confidence: match ? 0.88 : 0.78,
+      reasoning: match
+        ? `Deterministisk matchning: känd SaaS-leverantör → ${category}`
+        : `Licens/prenumerationssignal utan känd leverantörsmatchning → saas-other (manuell granskning)`,
       licensePending: false,
     };
   }

@@ -1,10 +1,14 @@
 // agents/recommender/branchindex.js
 // Benchmark index used by the Recommender.
-// Two source tiers:
+// Three source tiers:
 //   'real-public'  — verified public list prices (operator/vendor websites, 2026).
-//   'mock'         — market estimates; replaced with real aggregated Postgres data
-//                    once ≥10 invoice datapoints per segment (see lib/benchmark.js).
-// Shape is stable across both tiers.
+//                    AI may use exact language: "Listpriset är X kr."
+//   'estimated'    — range-based market data from trade sources, not a single price.
+//                    AI must hedge: "Branschstandarden ligger på ca X–Y kr."
+//   'mock'         — internally modelled estimates; replaced with real aggregated
+//                    Postgres data once ≥10 invoice datapoints per segment.
+//                    AI must hedge: "Baserat på branschdata betalar jämförbara bolag..."
+// Shape is stable across all tiers.
 
 export const SOURCE = 'mixed';
 export const SOURCE_NOTE =
@@ -12,7 +16,7 @@ export const SOURCE_NOTE =
 
 // Categories with verified public list prices (operator/vendor websites).
 // Frontend uses this set to decide whether to show real-price note or mandate CTA.
-export const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+export const REAL_PRICE_CATEGORIES = new Set(['saas-productivity', 'mobil']);
 
 // User-facing industry keys (what the UI collects and the DB stores)
 export const INDUSTRIES = [
@@ -49,7 +53,7 @@ export function bucketForSize(employees) {
 export const BRANCHINDEX = {
   el: {
     requiresVolumeData: true,
-    volumeDataNote: 'Elkostnad drivs av kWh-förbrukning, inte antal anställda. Kräver årsförbrukning (kWh) för korrekt analys.',
+    volumeDataNote: 'Elkostnader styrs av faktisk förbrukning i kWh och nätavgift — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Rörlig spotavtal + nätavgift + energiskatt (exkl. moms, SE3). Typisk förbrukning: micro ~10–20 MWh, small ~30–60 MWh, mid ~80–200 MWh.',
     alternatives: [
@@ -73,7 +77,7 @@ export const BRANCHINDEX = {
     // Real Tele2 Företag listpriser maj 2026 (exkl. moms): Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth.
     // Median = Plus (349×12 = 4 188 kr/år). p25 = Bas (299×12 = 3 588 kr/år).
     // Volume discounts ~5 % at small, ~10 % at mid reduce both columns proportionally.
-    note: 'Per användare/år (exkl. moms). Vi multiplicerar med antal anställda. Källa: Tele2 Företag listpriser maj 2026 — Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth. Obegränsad data + EU-roaming.',
+    note: 'Per användare/år (exkl. moms). Vi multiplicerar med antal anställda. Källa: Tele2 Företag listpriser maj 2026 — Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth. Obegränsad data + EU-roaming. OBS: Hårdvaruhyra (telefon ~450 kr/mth) klassificeras som hardware i extract.js och ingår INTE i besparingskalkylen.',
     alternatives: [
       { supplier: 'Tele2 Företag',   positioning: 'Obegränsad data + EU-roaming, ofta 10–30 % under Telia — marknadsledare bland SMF', reliability: 0.93 },
       { supplier: 'Tre Företag',     positioning: 'Stark datakapacitet, lägst listpris för basabonnemang',                              reliability: 0.91 },
@@ -88,14 +92,38 @@ export const BRANCHINDEX = {
     },
   },
 
-  bredband: {
+  vaxel: {
+    source: 'estimated',
     unit: 'kr/år',
-    note: 'Företagsfiber per kontorsadress, 1 000 Mbit symmetrisk, SLA-avtal, statisk IP. Källa: operatörernas listpriser 2026.',
+    // Intervallbaserade marknadsdata för molnväxel (UCaaS), per användarlicens.
+    // Typiska priser maj 2026: 49–149 kr/mth/user.
+    // p25 = 49×12 = 588 kr/user/år (basprodukt utan extras, t.ex. 3CX/Teams Phone Entry).
+    // Median = ~99×12 = 1 188 kr/user/år (standard molnväxel med röstsvar, IVR, app).
+    // OBS: Hårdvaruleasing (IP-telefoner) exkluderas — klassificeras som hardware i extract.js.
+    // Snittkostnad per anställd abonnemang + växel: ~450 kr/mth (5 400 kr/år) per Telekom-kategoridata.
+    note: 'Per användare/år (exkl. moms). Branschuppskattning: molnväxellicens 49–149 kr/mth/user. p25 = basprodukt ~49 kr/mth. Median = standard UCaaS ~99 kr/mth. Hårdvara (IP-telefoner) ingår ej — exkluderas ur kalkylen.',
     alternatives: [
-      { supplier: 'Bahnhof Företag',        positioning: 'Svensk support, statisk IP, stark SLA — prisledare för kontorsfiber',    reliability: 0.96 },
-      { supplier: 'Tele2 Företag Bredband', positioning: 'Konkurrenskraftigt pris, ingår i bundle med mobilabonnemang',            reliability: 0.92 },
-      { supplier: 'Telenor Business',       positioning: 'Bred täckning, marknadsledande SLA, bra för multi-site',                 reliability: 0.94 },
-      { supplier: 'GlobalConnect',          positioning: 'Premium dedikerad fiber, bäst för datacenter-trafik och hög redundans',  reliability: 0.97 },
+      { supplier: 'Microsoft Teams Phone',  positioning: 'Tillägg till befintlig M365-licens — billigast om kunden redan har M365',              reliability: 0.94 },
+      { supplier: '3CX',                    positioning: 'Open-source-baserad molnväxel, lägst TCO för upp till 20 interna användare',             reliability: 0.91 },
+      { supplier: 'Telenor LINK',           positioning: 'Stark för bolag som vill ha mobil + växel i ett avtal, rikstäckande support',            reliability: 0.92 },
+      { supplier: 'Telia Touchpoint',       positioning: 'Störst i Sverige, bra för multi-site med komplex samtalsstyrning',                       reliability: 0.95 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 1188, p25:  588 }, small: { median: 1128, p25:  588 }, mid: { median: 1068, p25:  588 } },
+      hantverkare: { micro: { median: 1188, p25:  588 }, small: { median: 1128, p25:  588 }, mid: { median: 1068, p25:  588 } },
+      ehandel:     { micro: { median: 1188, p25:  588 }, small: { median: 1128, p25:  588 }, mid: { median: 1068, p25:  588 } },
+      tillverkning:{ micro: { median: 1188, p25:  588 }, small: { median: 1128, p25:  588 }, mid: { median: 1068, p25:  588 } },
+    },
+  },
+
+  bredband: {
+    source: 'real-public',
+    unit: 'kr/år',
+    note: 'Företagsfiber per kontorsadress. Verifierade listpriser maj 2026 (exkl. moms): Tele2 Företag 1200 Mbit 849 kr/mån (reguljärt), Bahnhof Företag 1 Gbit från 995 kr/mån. Priser adressberoende. Matrisen inkluderar 100–1 000 Mbit och speglar faktisk betald premie, inte lägsta tekniskt möjliga.',
+    alternatives: [
+      { supplier: 'Tele2 Företag Bredband', positioning: 'Verifierat 849 kr/mån (1200 Mbit, 24 mån) — stark bundle med mobilabonnemang', reliability: 0.93 },
+      { supplier: 'Bahnhof Företag',        positioning: 'Verifierat från 995 kr/mån (1 Gbit) — svensk support, statisk IP, stark SLA',  reliability: 0.96 },
+      { supplier: 'GlobalConnect',          positioning: 'Premium dedikerad fiber, bäst för datacenter-trafik och hög redundans — offert krävs', reliability: 0.97 },
     ],
     matrix: {
       byraer:      { micro: { median: 9000,  p25: 6500  }, small: { median: 13200, p25:  9600 }, mid: { median: 28800, p25: 19200 } },
@@ -106,15 +134,17 @@ export const BRANCHINDEX = {
   },
 
   kortterminal: {
+    source: 'real-public',
     unit: 'kr/år',
-    // Volumes: micro ~500 kkr/yr, small ~2 Mkr/yr, mid ~8 Mkr/yr.
-    // Median = Zettle 1.85 %, P25 = SumUp Lite 1.49 %. Tillverkning halved (mostly B2B invoicing).
-    note: 'Transaktionsavgifter + månadsavgifter. Antagen kortvolym: micro ~500 kkr/år, small ~2 Mkr/år, mid ~8 Mkr/år. SumUp Lite 1,49 %, Zettle 1,85 %.',
+    // Verifierade transaktionsavgifter maj 2026: SumUp 1,49 %, Zettle 1,85 %, Stripe Terminal 1,4 % + ~1,10 kr/köp.
+    // Kortvolymer uppskattade (ingen offentlig källa): micro ~500 kkr/år, small ~2 Mkr/år, mid ~8 Mkr/år.
+    // Tillverkning halverad (mestadels B2B-fakturering, låg kortandel).
+    note: 'Transaktionsavgifter. Verifierade listpriser maj 2026: SumUp 1,49 % (ingen månadsavgift), Zettle 1,85 % (ingen månadsavgift), Stripe Terminal 1,4 % + ~1,10 kr/transaktion EEA-kort. Kortvolym uppskattad per segment.',
     alternatives: [
-      { supplier: 'SumUp Lite',       positioning: '1,49 % per transaktion, ingen månadsavgift — lägst kostnad för låg-volym',     reliability: 0.91 },
-      { supplier: 'Zettle by PayPal', positioning: '1,85 % per transaktion, ingen månadsavgift, stark app-integration',             reliability: 0.93 },
-      { supplier: 'Stripe Terminal',  positioning: '1,4 % + 1,80 kr per köp, API-first — bäst om kunden redan har Stripe online',  reliability: 0.97 },
-      { supplier: 'Klarna Checkout',  positioning: 'Bäst för e-handel: integrerad checkout med bnpl och kortbetalning',            reliability: 0.96 },
+      { supplier: 'SumUp',            positioning: 'Verifierat 1,49 % per transaktion, ingen månadsavgift — lägst kostnad för låg-volym', reliability: 0.91 },
+      { supplier: 'Zettle by PayPal', positioning: 'Verifierat 1,85 % per transaktion, ingen månadsavgift, stark app-integration',        reliability: 0.93 },
+      { supplier: 'Stripe Terminal',  positioning: 'Verifierat 1,4 % + ~1,10 kr/köp EEA-kort — bäst om kunden redan har Stripe online',   reliability: 0.97 },
+      { supplier: 'Klarna Checkout',  positioning: 'Bäst för e-handel: integrerad checkout med bnpl och kortbetalning',                   reliability: 0.96 },
     ],
     matrix: {
       byraer:      { micro: { median:  9250, p25:  7450 }, small: { median:  37000, p25:  29800 }, mid: { median: 148000, p25: 119200 } },
@@ -142,7 +172,7 @@ export const BRANCHINDEX = {
 
   'leasing-bil': {
     requiresVolumeData: true,
-    volumeDataNote: 'Leasingkostnad beror på antal fordon, bilmodell och löptid — inte antal anställda.',
+    volumeDataNote: 'Billeasingkostnader styrs av antal fordon, modell och avtalsvillkor — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Per leasad servicebil. Restvärde + service inräknat.',
     alternatives: [
@@ -176,12 +206,13 @@ export const BRANCHINDEX = {
     },
   },
 
-  'mjukvara-saas': {
+  'saas-productivity': {
     source: 'real-public',
     unit: 'kr/år',
     // p25 = M365 Business Standard listpris maj 2026: 142 kr/mth × 12 = 1 704 kr/år/user (exkl. moms).
     // Källa: Senetic/Microsoft CSP publika listpriser. Nästa prisändring aviserad juli 2026.
     // Median = typisk SMF-betalning via CSP med standardpåslag (~220–240 kr/mth).
+    // Gäller: M365, Google Workspace, Zoom, Slack — produktivitetsverktyg med jämförbar per-user-prissättning.
     note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard. Källa: Microsoft CSP listpris maj 2026 — 142 kr/mth = 1 704 kr/år/user. Median = typisk CSP-pris med standardpåslag.',
     alternatives: [
       { supplier: 'Microsoft 365 Business Standard (Arvo CSP)',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
@@ -197,7 +228,52 @@ export const BRANCHINDEX = {
     },
   },
 
+  'saas-creative': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Kreativ mjukvara (Adobe CC, Figma, Canva) prissätts per produkt och tier — inte jämförbar med produktivitetsverktyg. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
+    unit: 'kr/år',
+    note: 'Per användare/år. Designverktyg och kreativ mjukvara — prisnivå beror starkt på produktval och tier.',
+    alternatives: [
+      { supplier: 'Adobe Creative Cloud for Teams', positioning: 'Branschstandard för kreativa team — offert via Arvo CSP ger volymrabatt',     reliability: 0.95 },
+      { supplier: 'Figma Organization',             positioning: 'Designplattform med starka samarbetsfunktioner, konkurrenskraftigt vs Adobe', reliability: 0.93 },
+      { supplier: 'Canva for Teams',                positioning: 'Lägst kostnad för enklare grafik utan avancerade redigeringsbehov',           reliability: 0.88 },
+    ],
+  },
+
+  'saas-crm': {
+    requiresVolumeData: true,
+    volumeDataNote: 'CRM-system prissätts ofta utifrån antalet kontakter i databasen och specifika säljverktyg. Våra experter kikar på detta för en rättvis kalkyl.',
+    unit: 'kr/år',
+    note: 'CRM-licenser. Prissättning beror på kontaktvolym, pipeline-moduler och avtalslängd.',
+    alternatives: [
+      { supplier: 'HubSpot CRM (Starter/Pro)',  positioning: 'Ledande för SMF — skalbar från gratis till avancerad automatisering',         reliability: 0.94 },
+      { supplier: 'Pipedrive',                  positioning: 'Enkelt och effektivt för säljfokuserade bolag, lägst TCO för rena CRM-behov', reliability: 0.92 },
+      { supplier: 'Zoho CRM',                   positioning: 'Bredaste funktionsuppsättningen till lägst kostnad — bäst pris/prestanda',    reliability: 0.90 },
+    ],
+  },
+
+  'saas-finance': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Affärs- och bokföringssystem styrs ofta av antalet verifikationer, moduler och transaktioner, inte bara antalet anställda. Vi analyserar detta manuellt.',
+    unit: 'kr/år',
+    note: 'Bokföringssystem och affärssystem (ERP). Prissättning beror på modulval, transaktionsvolym och antal bolag.',
+    alternatives: [
+      { supplier: 'Fortnox',        positioning: 'Lägst grundkostnad för SMF — modulbaserat, skalbart, stark integration mot banker',  reliability: 0.96 },
+      { supplier: 'Visma eEkonomi', positioning: 'Bredare funktionalitet, stark för bolag med komplexa rapporteringsbehov',            reliability: 0.94 },
+      { supplier: 'Bokio',          positioning: 'Enklast och billigast för solobolag och mikroföretag utan komplex redovisning',       reliability: 0.88 },
+    ],
+  },
+
+  'saas-other': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Specialiserad mjukvara kräver en djupare analys av era specifika funktionskrav och avtalsvillkor. Vi tar hand om detta manuellt.',
+    unit: 'kr/år',
+    note: 'Nischad eller okategoriserad SaaS. Kräver manuell analys — per-anställd-benchmark är inte tillämpbar.',
+    alternatives: [],
+  },
+
   skrivarleasing: {
+    source: 'estimated',
     unit: 'kr/år',
     note: 'Totalt per år: skrivarhyra + klickavtal S/V + serviceavtal. Referens: A4 MFP mid-range med klickpris 0,06–0,09 kr/sida S/V. Källa: marknadspriser 2026.',
     alternatives: [
@@ -215,23 +291,31 @@ export const BRANCHINDEX = {
   },
 
   loneadmin: {
+    source: 'real-public',
     unit: 'kr/år',
-    note: 'Per anställd/år. Löneadministrationsprogram eller outsourcad lönekörning. Källa: leverantörers listpriser 2026.',
+    // Verifierat: Fortnox Lön listpris maj 2026 (exkl. moms): 199 kr/mån fast + 25 kr/anställd/mån.
+    // p25 = Fortnox-priset per anställd/år vid representativt anställningsantal per bucket:
+    //   micro  (n=5):   (199 + 5×25)×12/5   =  780 kr/anst/år
+    //   small  (n=20):  (199 + 20×25)×12/20 =  420 kr/anst/år
+    //   mid    (n=100): (199 + 100×25)×12/100= 324 kr/anst/år
+    // Median = vad marknaden faktiskt betalar (Visma, Hogia, Azets-nivå).
+    note: 'Per anställd/år. Källa p25: Fortnox Lön verifierat listpris maj 2026 — 199 kr/mån fast + 25 kr/anst/mån. Median = typisk marknadspremie för system utan Fortnox-integration.',
     alternatives: [
-      { supplier: 'Fortnox Lön',   positioning: 'Integrerat i Fortnox-paketet — ingen extra kostnad om kunden redan har Fortnox', reliability: 0.96 },
-      { supplier: 'Hogia Lön',     positioning: 'Marknadsledare för mid-size, starka kollektivavtalsregler inbyggda',              reliability: 0.95 },
-      { supplier: 'Visma Lön',     positioning: 'Stark integration med Visma eEkonomi, bred support',                             reliability: 0.94 },
+      { supplier: 'Fortnox Lön',   positioning: 'Verifierat lägst — 199 kr/mån + 25 kr/anst/mån. Direkt integrerat i Fortnox.',  reliability: 0.96 },
+      { supplier: 'Visma Lön',     positioning: 'Stark integration med Visma eEkonomi, bred support — offert krävs',              reliability: 0.94 },
+      { supplier: 'Hogia Lön',     positioning: 'Marknadsledare för mid-size, starka kollektivavtalsregler — offert krävs',       reliability: 0.95 },
       { supplier: 'Azets Sverige', positioning: 'Outsourcad lönekörning — rätt om kunden vill slippa systemansvar helt',          reliability: 0.93 },
     ],
     matrix: {
-      byraer:      { micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
-      hantverkare: { micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
-      ehandel:     { micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
-      tillverkning:{ micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
+      byraer:      { micro: { median: 2400, p25:  780 }, small: { median: 1800, p25: 420 }, mid: { median: 1200, p25: 324 } },
+      hantverkare: { micro: { median: 2400, p25:  780 }, small: { median: 1800, p25: 420 }, mid: { median: 1200, p25: 324 } },
+      ehandel:     { micro: { median: 2400, p25:  780 }, small: { median: 1800, p25: 420 }, mid: { median: 1200, p25: 324 } },
+      tillverkning:{ micro: { median: 2400, p25:  780 }, small: { median: 1800, p25: 420 }, mid: { median: 1200, p25: 324 } },
     },
   },
 
   'larm-bevakning': {
+    source: 'estimated',
     unit: 'kr/år',
     note: 'Per driftsställe/år. Inkluderar larmövervakning + larmcentral + utrustningshyra. Källa: operatörernas listpriser 2026.',
     alternatives: [
@@ -282,9 +366,22 @@ export const BRANCHINDEX = {
     },
   },
 
+  serverhosting: {
+    requiresVolumeData: true,
+    volumeDataNote: 'Serverkostnader styrs av specifikationer (CPU, RAM, bandbredd) och antal servrar — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
+    unit: 'kr/år',
+    note: 'Dedikerade servrar, VPS, colocation och cloud-infrastruktur. Kostnaden beror på serverspecifikationer — per-anställd-benchmark är inte tillämpbar.',
+    alternatives: [
+      { supplier: 'Hetzner',           positioning: 'Bäst pris/prestanda i Europa — dedikerade servrar och VPS, tyskt datacenter, GDPR-compliant', reliability: 0.94 },
+      { supplier: 'OVHcloud',          positioning: 'Bred portfölj VPS → dedikerat, europeisk aktör, konkurrenskraftiga priser',                    reliability: 0.92 },
+      { supplier: 'Telenor Datacenter', positioning: 'Svensk colocation med garanterat SLA — bra för känslig data med krav på lokalt datacenter',   reliability: 0.93 },
+      { supplier: 'AWS Lightsail',     positioning: 'Enkel entry-point till AWS, fast månadspris, skalbar till full AWS-portfölj vid behov',         reliability: 0.95 },
+    ],
+  },
+
   kontorsmaterial: {
     requiresVolumeData: true,
-    volumeDataNote: 'Förbrukningskostnad beror på inköpsvolym och sortiment — inte direkt på antal anställda.',
+    volumeDataNote: 'Kontorsmaterialkostnader styrs av faktisk förbrukning och sortiment — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Totalt per år: papper, förbrukningsvaror, kaffe och kontorsartiklar. Källa: leverantörers listepriser och ramavtalsjämförelser 2026.',
     alternatives: [
@@ -303,7 +400,7 @@ export const BRANCHINDEX = {
 
   'städ-rengöring': {
     requiresVolumeData: true,
-    volumeDataNote: 'Städkostnad beror på lokalyta (kvm) och frekvens — inte antal anställda.',
+    volumeDataNote: 'Städkostnader styrs av lokalyta (kvm) och städfrekvens — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Städ och rengöringstjänster för företagslokaler. Timbaserat eller fast abonnemang per driftsställe.',
     alternatives: [
@@ -322,7 +419,7 @@ export const BRANCHINDEX = {
 
   'transport-frakt': {
     requiresVolumeData: true,
-    volumeDataNote: 'Fraktkostnad beror på volym (kg/kolli/km) och godstyp — inte antal anställda.',
+    volumeDataNote: 'Fraktkostnader styrs av godsvikt, volym och antal leveranser — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Frakt och transport. Kostnaden varierar kraftigt med volym och branschtypisk godsstruktur. Källa: operatörernas volumenprislistor 2026.',
     alternatives: [
@@ -381,6 +478,7 @@ export const BRANCHINDEX = {
 export function getBenchmark({ category, industry, employees }) {
   const cat = BRANCHINDEX[category];
   if (!cat) return null;
+  if (cat.requiresVolumeData) return null;
 
   const ind = INDUSTRY_SEGMENT_MAP[industry] ?? 'byraer';
   const size = bucketForSize(employees ?? 5);
@@ -391,6 +489,7 @@ export function getBenchmark({ category, industry, employees }) {
     category,
     industry: ind,
     size,
+    source: cat.source ?? 'mock',
     unit: cat.unit,
     note: cat.note,
     median: cell.median,
