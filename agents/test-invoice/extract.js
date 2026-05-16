@@ -54,6 +54,10 @@ one_time_fee
   Engångskostnader som inte återkommer regelbundet.
   Exempel: installationsavgift, uppstartsavgift, aktiveringsavgift,
   påminnelseavgift, konsultarvode, reparation.
+  SAMT krediteringar och minusposter för avslutade, uppsagda eller justerade
+  licenser/avtal — dessa är historiska korrigeringar som inte återkommer och
+  ska ALDRIG klassificeras som recurring_subscription. Kundens framtida
+  run-rate påverkas inte av sådana engångsjusteringar.
 
 hardware
   Köpt hårdvara eller utrustning (ej leasing eller hyra).
