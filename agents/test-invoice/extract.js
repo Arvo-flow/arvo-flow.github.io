@@ -199,8 +199,9 @@ export function aggregateLineItems(raw) {
 }
 
 // Övre gräns för rimlig årskostnad i SEK (exkl. moms) för SMB-segment.
-// Fakturor som överstiger detta är troligtvis felutlästa belopp.
-const MAX_PLAUSIBLE_ANNUAL_COST = 500_000;
+// Fakturor som överstiger detta flaggas för manuell granskning — antingen
+// felutläst belopp eller ett kontrakt stort nog att förtjäna personlig uppföljning.
+const MAX_PLAUSIBLE_ANNUAL_COST = 2_000_000;
 
 /**
  * Triagera extraktionsresultatet.
