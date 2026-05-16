@@ -562,6 +562,14 @@ const TestaFaktura = () => {
                 <dt>Återkommande</dt>
                 <dd>{result.extracted.recurring ? 'Ja (abonnemang / premie)' : 'Nej'}</dd>
               </div>
+              {result.extracted.elUncertaintyNote && (
+                <div>
+                  <dt>Årsuppskattning</dt>
+                  <dd>
+                    <small>{result.extracted.elUncertaintyNote}</small>
+                  </dd>
+                </div>
+              )}
               {result.extracted.variableCharges > 0 && (
                 <div>
                   <dt>Rörliga avgifter denna period</dt>

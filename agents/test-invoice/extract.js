@@ -103,7 +103,18 @@ KRITISKT:
     projectedRecurringAmount = 12 500.
     Om inga pro-rata-justeringar eller krediteringar förekommer: sätt samma värde som summan
     av recurring_subscription-rader.
-  — Returnera ALDRIG text utanför verktygsanropet.`;
+  — Returnera ALDRIG text utanför verktygsanropet.
+
+ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
+  el_kwh: Total förbrukning i kWh denna faktureringsperiod.
+  el_billing_month: Månaden förbrukningen avser, t.ex. "maj", "februari".
+  el_omrade: Elområde SE1, SE2, SE3 eller SE4. Identifiera från anläggnings-ID,
+    ort eller adress. Defaulta till "SE3" om osäker. null om ej elfaktura.
+  el_fast_avgift_kr: Leverantörens fasta månadsavgift (abonnemangsavgift) i kr exkl. moms.
+    null om saknas eller ej elfaktura.
+  el_energipris_per_kwh: Leverantörens rörliga energiavgift i kr/kWh exkl. moms
+    och exkl. nätavgift, energiskatt och elcertifikat. Vid fastprisavtal: det fasta
+    kWh-priset. null om ej elfaktura.`;
 
 const EXTRACT_TOOL = {
   name: 'extract_invoice',
@@ -175,6 +186,26 @@ const EXTRACT_TOOL = {
         type: ['string', 'null'],
         description: 'Bokföringskonto om det framgår, t.ex. "5310". null om osäker.',
       },
+      el_kwh: {
+        type: ['integer', 'null'],
+        description: 'Total elförbrukning i kWh för perioden. null om ej elfaktura.',
+      },
+      el_billing_month: {
+        type: ['string', 'null'],
+        description: 'Månaden förbrukningen avser, t.ex. "maj". null om ej elfaktura.',
+      },
+      el_omrade: {
+        type: ['string', 'null'],
+        description: 'Elområde SE1/SE2/SE3/SE4. Default SE3 om osäker. null om ej elfaktura.',
+      },
+      el_fast_avgift_kr: {
+        type: ['integer', 'null'],
+        description: 'Fast månadsavgift hos elleverantören i kr exkl. moms. null om saknas/ej elfaktura.',
+      },
+      el_energipris_per_kwh: {
+        type: ['number', 'null'],
+        description: 'Rörlig energiavgift kr/kWh exkl. moms, nätavgift och skatter. null om ej elfaktura.',
+      },
     },
     required: [
       'supplier', 'date', 'description', 'billingPeriod',
@@ -228,6 +259,11 @@ export function aggregateLineItems(raw) {
     outOfScope:               raw.outOfScope ?? false,
     seatCount:                raw.seatCount ?? null,
     notes:                    raw.confidenceNotes ?? null,
+    elKwh:            raw.el_kwh != null ? Number(raw.el_kwh) : null,
+    elBillingMonth:   raw.el_billing_month ?? null,
+    elOmrade:         raw.el_omrade ?? null,
+    elFastAvgiftKr:   raw.el_fast_avgift_kr != null ? Number(raw.el_fast_avgift_kr) : null,
+    elEnergiPerKwh:   raw.el_energipris_per_kwh != null ? Number(raw.el_energipris_per_kwh) : null,
   };
 }
 

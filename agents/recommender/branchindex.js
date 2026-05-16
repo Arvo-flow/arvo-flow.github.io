@@ -52,7 +52,6 @@ export function bucketForSize(employees) {
 // All values SEK/year unless the note says "per användare/år".
 export const BRANCHINDEX = {
   el: {
-    requiresVolumeData: true,
     volumeDataNote: 'Elkostnader styrs av faktisk förbrukning i kWh och nätavgift — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
     note: 'Rörlig spotavtal + nätavgift + energiskatt (exkl. moms, SE3). Typisk förbrukning: micro ~10–20 MWh, small ~30–60 MWh, mid ~80–200 MWh.',
