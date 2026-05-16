@@ -1,9 +1,10 @@
 // agents/test-invoice/extract.js
-// PDF → strukturerad fakturadata via Claude Opus 4.7 (native PDF-support).
-// Output-formen matchar exakt vad categorize.js förväntar sig som input.
+// PDF → semantiskt klassificerade raddata via Claude Opus 4.7.
+// Varje kostnadsrad klassificeras: recurring_subscription | variable_usage |
+// one_time_fee | hardware. aggregateLineItems() summerar per typ och
+// beräknar annualCost = recurringAmount × periodMultiplier.
 //
-// Model: claude-opus-4-7 — verbatim per claude-api skill.
-// Caching: system prompt har cache_control (no-op tills den växer förbi 4096 tokens).
+// Model: claude-opus-4-7 — native PDF-support + högst tolkningsnoggrannhet.
 // Output: tool_use + tool_choice för deterministisk strukturerad output.
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -11,7 +12,17 @@ import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 
 const MODEL = 'claude-opus-4-7';
-const MAX_TOKENS = 1024;
+const MAX_TOKENS = 2048;
+
+export const CONFIDENCE_THRESHOLD = 0.70;
+
+const PERIOD_MULTIPLIER = {
+  monthly:   12,
+  quarterly:  4,
+  annual:     1,
+  one_time:   0,
+  unknown:   12,
+};
 
 export class ExtractorError extends Error {
   constructor(message, { cause } = {}) {
@@ -23,86 +34,183 @@ export class ExtractorError extends Error {
 
 const SYSTEM_PROMPT = `Du är en datauttagsexpert för svenska leverantörsfakturor.
 
-Din enda uppgift är att läsa en PDF-faktura och extrahera följande fält som strukturerad data via verktyget "extract_invoice":
+Din uppgift är att läsa en PDF-faktura och returnera VARJE identifierad kostnadsrad som strukturerad data via verktyget "extract_invoice".
 
-- **supplier**: Leverantörens fullständiga registrerade namn såsom det står på fakturan (t.ex. "Vattenfall Företag AB", "Telia Sverige AB"). Inkludera bolagsformen om den finns.
-- **amount**: Det totala beloppet EXKLUSIVE moms i SEK. Heltal. Om bara totalt belopp inkl. moms anges, räkna baklänges från 25 % moms (totalt / 1.25 = belopp ex. moms).
-- **date**: Fakturadatum i ISO-format YYYY-MM-DD.
-- **account**: Bokföringskontot om det syns på fakturan eller framgår av kategorin (t.ex. "5310" för el, "6310" för försäkring). Lämna null om osäker.
-- **description**: En kort fritextbeskrivning som sammanfattar vad fakturan avser (t.ex. "Elförbrukning mars 2025 - anl.nr 735999", "Företagsförsäkring årspremie").
-- **recurring**: true om det är en månads-/årsfaktura som tydligt återkommer (abonnemang, premie, hyra), false om det är en engångsfaktura.
-- **recurringAmount**: Summan ENBART av de återkommande raderna (abonnemang, hyra, fasta månadsavgifter) exkl. moms. Uteslut engångsavgifter och rörliga mobiltrafikavgifter (roaming, övertrafik). OBS: Klickkostnader för skrivare/kopiatorer (kostnad per utskriven sida i klickavtal) räknas som återkommande och ingår i recurringAmount — de är INTE variableCharges. Heltal.
-- **variableCharges**: Summan av ICKE-återkommande rörliga mobilavgifter exkl. moms (roaming utanför EU, övertrafik, engångsavgifter, utlägg). 0 om inga sådana rader finns. OBS: Klickkostnader för skrivare är INTE variableCharges. Heltal.
-- **seatCount**: För prenumerationstjänster med per-användarpris (SaaS, M365, programlicenser): totalt antal seats/licenser på fakturan — summera ALLA licensrader oavsett tier (t.ex. 45 Premium + 12 Basic = 57). null om fakturan inte avser per-användarlicenser.
-- **annualCost**: Basera ALLTID på recurringAmount, aldrig på amount. Månadsfaktura: recurringAmount × 12. Kvartalsfaktura: recurringAmount × 4. Årsfaktura: recurringAmount. Okänt mönster: recurringAmount.
+KLASSIFICERA VARJE RAD I EXAKT EN AV FYRA TYPER:
+
+recurring_subscription
+  Fasta, återkommande kostnader som gäller per period oavsett förbrukning.
+  Exempel: månadsabonnemang, maskinleasing, fasta licensavgifter,
+  klickkostnader i Managed Print-avtal (dessa är förhandlingsbara
+  kontraktsrader — INTE roaming), fakturaavgifter som återkommer varje period,
+  fasta paketavgifter, supportavtal, serviceavtal.
+
+variable_usage
+  Rörliga kostnader som varierar med faktisk förbrukning. ENBART för mobiltelefoni.
+  Exempel: roaming utanför EU, övertrafik, extra datapåslag, SMS-paket utanför plan.
+  OBS: Klickkostnader för skrivare/kopiatorer är ALDRIG variable_usage — se ovan.
+
+one_time_fee
+  Engångskostnader som inte återkommer regelbundet.
+  Exempel: installationsavgift, uppstartsavgift, aktiveringsavgift,
+  påminnelseavgift, konsultarvode, reparation.
+
+hardware
+  Köpt hårdvara eller utrustning (ej leasing eller hyra).
+  Exempel: köp av telefon, skrivare, server, nätverksutrustning.
+
+FAKTURERINGSPERIOD — välj exakt ett värde baserat på fakturans rader:
+  monthly   = faktureras månadsvis (vanligast för abonnemang)
+  quarterly = faktureras kvartalsvis
+  annual    = faktureras årsvis (t.ex. försäkringspremie, årslicens)
+  one_time  = engångsfaktura utan löpande abonnemang
+  unknown   = kan ej avgöras med säkerhet
+
+CONFIDENCE SCORE (0.0–1.0):
+  1.0 = alla rader är tydligt beskrivna, period är otvetydig, inga antaganden krävdes.
+  Sänk vid: otydliga radbeskrivningar, saknad periodinfo, blandade perioder,
+  faktura på utländskt språk, skannad/handskriven faktura, antaganden som krävdes.
+  Sänk alltid om du är osäker på klassificeringen av någon rad.
+
+OUT OF SCOPE — sätt outOfScope: true om fakturan avser tjänster utan
+  förhandlingsbar volymstruktur: redovisningstjänster, juridik, restaurang/mat,
+  rekrytering, marknadsföring, bemanning, utbildning, myndighetsavgifter.
+  Fakturan kan fortfarande extraheras men flaggas.
 
 KRITISKT:
-- Belopp ska vara EXKLUSIVE moms (svensk standard för B2B-bokföring).
-- annualCost ska ALDRIG inkludera variableCharges — rörliga avgifter är inte strukturella kostnader.
-- Roaming och övertrafik (mobiltelefoni) är alltid variableCharges, aldrig recurring.
-- Klickkostnader för skrivare/kopiatorer räknas alltid som recurring (ingår i recurringAmount) — de är förhandlingsbara avtalskostnader, INTE roaming.
-- Fakturaavgifter räknas som återkommande (ingår i recurringAmount) om de syns varje månad.
-- Returnera ALDRIG text utöver verktygsanropet — extract_invoice är obligatoriskt.
-- Om du verkligen inte kan utläsa ett fält, returnera null för det fältet (men supplier och amount är obligatoriska).`;
+  — Alla belopp EXKLUSIVE moms (svensk B2B-standard). Om bara ink. moms: dividera med 1.25.
+  — Returnera VARJE synlig kostnadsrad — utelämna inga rader.
+  — seatCount: summera ALLA licensrader oavsett tier (t.ex. 45 Premium + 12 Basic = 57).
+    Sätt null om fakturan inte avser per-användarlicenser.
+  — Returnera ALDRIG text utanför verktygsanropet.`;
 
 const EXTRACT_TOOL = {
   name: 'extract_invoice',
-  description: 'Extrahera strukturerad data från en svensk leverantörsfaktura.',
+  description: 'Extrahera semantiskt klassificerade raddata från en svensk leverantörsfaktura.',
   input_schema: {
     type: 'object',
     properties: {
       supplier: {
         type: 'string',
-        description: 'Leverantörens fullständiga registrerade namn',
-      },
-      amount: {
-        type: 'integer',
-        description: 'Totalt belopp exkl. moms i SEK, heltal',
+        description: 'Leverantörens fullständiga registrerade namn som det står på fakturan',
       },
       date: {
         type: 'string',
         description: 'Fakturadatum i ISO-format YYYY-MM-DD',
       },
-      account: {
-        type: ['string', 'null'],
-        description: 'Bokföringskonto, t.ex. "5310" — null om osäker',
-      },
       description: {
         type: 'string',
-        description: 'Kort fritextbeskrivning av vad fakturan avser',
+        description: 'Kort övergripande beskrivning av fakturans huvudändamål, t.ex. "Mobilabonnemang mars 2025" eller "Skrivarleasing Q2 2025"',
       },
-      recurring: {
+      billingPeriod: {
+        type: 'string',
+        enum: ['monthly', 'quarterly', 'annual', 'one_time', 'unknown'],
+        description: 'Faktureringsperiod baserat på radernas karaktär',
+      },
+      lineItems: {
+        type: 'array',
+        description: 'Varje identifierad kostnadsrad på fakturan',
+        items: {
+          type: 'object',
+          properties: {
+            description: {
+              type: 'string',
+              description: 'Radbeskrivning exakt som på fakturan',
+            },
+            amount: {
+              type: 'integer',
+              description: 'Belopp exkl. moms i SEK, heltal',
+            },
+            type: {
+              type: 'string',
+              enum: ['recurring_subscription', 'variable_usage', 'one_time_fee', 'hardware'],
+              description: 'Semantisk klassificering av raden',
+            },
+          },
+          required: ['description', 'amount', 'type'],
+        },
+      },
+      confidenceScore: {
+        type: 'number',
+        description: 'Extraktionssäkerhet 0.0–1.0',
+      },
+      confidenceNotes: {
+        type: ['string', 'null'],
+        description: 'Förklaring om confidence understiger 0.85, annars null',
+      },
+      outOfScope: {
         type: 'boolean',
-        description: 'true om återkommande abonnemang/premie, false annars',
-      },
-      recurringAmount: {
-        type: 'integer',
-        description: 'Summan av enbart återkommande rader exkl. moms — uteslut roaming, övertrafik, engångsavgifter',
-      },
-      variableCharges: {
-        type: 'integer',
-        description: 'Summan av icke-återkommande rader exkl. moms (roaming, övertrafik, engångsavgifter). 0 om inga.',
-      },
-      annualCost: {
-        type: 'integer',
-        description: 'Årskostnad i SEK baserad på recurringAmount: månad × 12, kvartal × 4, år × 1',
+        description: 'true om fakturan avser en kategori utan förhandlingsbar volymstruktur',
       },
       seatCount: {
         type: ['integer', 'null'],
-        description: 'Totalt antal seats/licenser på fakturan. Summera alla licensrader oavsett tier (t.ex. 45 Premium + 12 Basic = 57). null om fakturan inte avser per-användarlicenser.',
+        description: 'Totalt antal seats/licenser. Summera alla licensrader oavsett tier. null om inte per-användarprenumeration.',
       },
-      confidence: {
-        type: 'number',
-        description: 'Hur säker du är på extraktionen (0.0–1.0)',
-      },
-      notes: {
+      account: {
         type: ['string', 'null'],
-        description: 'Varningar, noteringar om variableCharges eller antaganden (t.ex. "Roaming 1 245 kr exkluderad från annualCost")',
+        description: 'Bokföringskonto om det framgår, t.ex. "5310". null om osäker.',
       },
     },
-    required: ['supplier', 'amount', 'date', 'description', 'recurring', 'recurringAmount', 'variableCharges', 'annualCost', 'confidence'],
+    required: [
+      'supplier', 'date', 'description', 'billingPeriod',
+      'lineItems', 'confidenceScore', 'outOfScope',
+    ],
   },
 };
+
+/**
+ * Summera lineItems per typ och beräkna annualCost deterministiskt.
+ * Alla aggregerade fält som categorize.js och recommend.js förväntar sig
+ * genereras här — modellen räknar aldrig ut dem själv.
+ */
+export function aggregateLineItems(raw) {
+  const sum = (type) =>
+    (raw.lineItems ?? [])
+      .filter((l) => l.type === type)
+      .reduce((s, l) => s + l.amount, 0);
+
+  const recurringAmount = sum('recurring_subscription');
+  const variableCharges = sum('variable_usage');
+  const oneTimeFees     = sum('one_time_fee') + sum('hardware');
+  const multiplier      = PERIOD_MULTIPLIER[raw.billingPeriod] ?? 12;
+
+  return {
+    supplier:        raw.supplier,
+    date:            raw.date,
+    description:     raw.description,
+    account:         raw.account ?? null,
+    billingPeriod:   raw.billingPeriod,
+    lineItems:       raw.lineItems ?? [],
+    amount:          (raw.lineItems ?? []).reduce((s, l) => s + l.amount, 0),
+    recurringAmount,
+    variableCharges,
+    oneTimeFees,
+    annualCost:      recurringAmount * multiplier,
+    recurring:       recurringAmount > 0,
+    confidenceScore: raw.confidenceScore,
+    confidenceNotes: raw.confidenceNotes ?? null,
+    outOfScope:      raw.outOfScope ?? false,
+    seatCount:       raw.seatCount ?? null,
+    notes:           raw.confidenceNotes ?? null,
+  };
+}
+
+/**
+ * Triagera extraktionsresultatet.
+ * Returnerar route: 'auto' | 'review_queue' | 'unsupported'
+ */
+export function routeExtraction(extracted) {
+  if (extracted.outOfScope) {
+    return { route: 'unsupported' };
+  }
+  if (extracted.confidenceScore < CONFIDENCE_THRESHOLD) {
+    return {
+      route:  'review_queue',
+      reason: `Confidence ${extracted.confidenceScore.toFixed(2)} under tröskel ${CONFIDENCE_THRESHOLD}`,
+    };
+  }
+  return { route: 'auto' };
+}
 
 let _client;
 function getClient() {
@@ -117,27 +225,11 @@ function getClient() {
 }
 
 /**
- * Extrahera strukturerad fakturadata från en PDF.
+ * Extrahera och aggregera fakturadata från en PDF.
  *
- * @param {object} input
- * @param {string} [input.pdfPath]           - Sökväg till PDF-fil
- * @param {Buffer} [input.pdfBytes]          - Eller PDF som Buffer direkt
- * @param {object} [opts]
- * @param {Anthropic} [opts.client]
- * @returns {Promise<{
- *   supplier: string,
- *   amount: number,
- *   date: string,
- *   account: string|null,
- *   description: string,
- *   recurring: boolean,
- *   recurringAmount: number,
- *   variableCharges: number,
- *   annualCost: number,
- *   confidence: number,
- *   notes: string|null,
- *   usage: object,
- * }>}
+ * @param {{ pdfPath?: string, pdfBytes?: Buffer }} input
+ * @param {{ client?: Anthropic }} [opts]
+ * @returns {Promise<ReturnType<aggregateLineItems> & { usage: object }>}
  */
 export async function extractInvoice(input, opts = {}) {
   let pdfBytes;
@@ -153,20 +245,26 @@ export async function extractInvoice(input, opts = {}) {
   }
 
   const pdfBase64 = pdfBytes.toString('base64');
-  const client = opts.client ?? getClient();
+  const client    = opts.client ?? getClient();
 
   const requestParams = {
-    model: MODEL,
+    model:      MODEL,
     max_tokens: MAX_TOKENS,
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-    tools: [EXTRACT_TOOL],
+    tools:      [EXTRACT_TOOL],
     tool_choice: { type: 'tool', name: 'extract_invoice' },
     messages: [
       {
         role: 'user',
         content: [
-          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
-          { type: 'text', text: 'Extrahera fakturadatan via verktyget extract_invoice.' },
+          {
+            type:   'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 },
+          },
+          {
+            type: 'text',
+            text: 'Extrahera alla kostnadsrader med semantisk klassificering via verktyget extract_invoice.',
+          },
         ],
       },
     ],
@@ -185,21 +283,23 @@ export async function extractInvoice(input, opts = {}) {
         continue;
       }
       throw new ExtractorError(
-        overloaded ? 'Tjänsten är tillfälligt överbelastad — försök igen om en stund.' : 'Analysen misslyckades — försök igen.',
+        overloaded
+          ? 'Tjänsten är tillfälligt överbelastad — försök igen om en stund.'
+          : 'Analysen misslyckades — försök igen.',
         { cause: err }
       );
     }
   }
 
-  const toolUseBlock = response.content.find((b) => b.type === 'tool_use' && b.name === 'extract_invoice');
+  const toolUseBlock = response.content.find(
+    (b) => b.type === 'tool_use' && b.name === 'extract_invoice'
+  );
   if (!toolUseBlock) {
     throw new ExtractorError(
       `Modellen returnerade inget verktygsanrop. stop_reason=${response.stop_reason}`
     );
   }
 
-  return {
-    ...toolUseBlock.input,
-    usage: response.usage,
-  };
+  const aggregated = aggregateLineItems(toolUseBlock.input);
+  return { ...aggregated, usage: response.usage };
 }

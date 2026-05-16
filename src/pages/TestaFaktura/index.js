@@ -401,17 +401,28 @@ const TestaFaktura = () => {
             <ResultHead>
               <div>
                 <h2>{result.extracted.supplier}</h2>
-                <span className="subtitle">
-                  {CATEGORY_LABELS[result.categorized.category] || result.categorized.category}
-                  {result.categorized.subType ? ` · ${result.categorized.subType}` : ''}
-                </span>
+                {result.categorized && (
+                  <span className="subtitle">
+                    {CATEGORY_LABELS[result.categorized.category] || result.categorized.category}
+                    {result.categorized.subType ? ` · ${result.categorized.subType}` : ''}
+                  </span>
+                )}
               </div>
               <Button onClick={reset} $variant="secondary" $size="md">
                 Testa en till
               </Button>
             </ResultHead>
 
-            {result.recommendation.shouldSwitch && result.recommendation.netSaving > 0 ? (
+            {result.route === 'review_queue' ? (
+              <NoSwitchBlock>
+                <strong>Fakturan behöver djupare analys.</strong>
+                <p>
+                  Vår algoritm är inte tillräckligt säker på klassificeringen för att
+                  visa automatiska besparingssiffror. Koppla Fortnox för en komplett,
+                  felfri analys av hela er leverantörsreskontra.
+                </p>
+              </NoSwitchBlock>
+            ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
                 {(() => {
                   const isRealPrice = REAL_PRICE_CATEGORIES.has(result.categorized.category);
@@ -488,13 +499,13 @@ const TestaFaktura = () => {
                 ) : (
                   <>
                     <strong>Inget byte föreslås just nu.</strong>
-                    <p>{result.recommendation.reasoning}</p>
+                    <p>{result.recommendation?.reasoning}</p>
                   </>
                 )}
               </NoSwitchBlock>
             )}
 
-            <KV>
+            {result.route !== 'review_queue' && <KV>
               <div>
                 <dt>Du betalar idag</dt>
                 <dd>
@@ -525,9 +536,9 @@ const TestaFaktura = () => {
                   </dd>
                 </div>
               )}
-            </KV>
+            </KV>}
 
-            {result.recommendation.reasoning && result.recommendation.shouldSwitch && (
+            {result.recommendation?.reasoning && result.recommendation?.shouldSwitch && (
               <Reasoning>
                 <span className="kicker">Varför vi tror du kan spara</span>
                 <p>
@@ -541,7 +552,7 @@ const TestaFaktura = () => {
               </Reasoning>
             )}
 
-            {result.recommendation.licenseOverage > 0 && result.extracted.seatCount != null && (
+            {result.recommendation?.licenseOverage > 0 && result.extracted.seatCount != null && (
               <LicenseOverageNote>
                 <span className="kicker">Notering om licenser</span>
                 <p>
@@ -554,7 +565,7 @@ const TestaFaktura = () => {
               </LicenseOverageNote>
             )}
 
-            {result.recommendation.shouldSwitch && result.recommendation.netSaving > 0 && (
+            {result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 && (
               <ServiceList>
                 <li>
                   <span className="check"><Icon name="check" size={11} stroke={2.8} /></span>

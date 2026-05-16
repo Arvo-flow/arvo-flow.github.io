@@ -5,7 +5,7 @@
 // Vercel-konfig (vercel.json): maxDuration: 60. På Hobby-plan är gränsen 10s
 // vilket sannolikt inte räcker — Pro krävs för publik exponering.
 
-import { extractInvoice, ExtractorError } from '../agents/test-invoice/extract.js';
+import { extractInvoice, routeExtraction, ExtractorError } from '../agents/test-invoice/extract.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
 import { storeDatapoint } from '../lib/benchmark.js';
@@ -92,11 +92,51 @@ export default async function handler(req, res) {
     const extracted = await extractInvoice({ pdfBytes });
     timing.extractMs = Date.now() - t0;
     console.log('[test-invoice] extracted:', JSON.stringify({
-      supplier: extracted.supplier,
-      description: extracted.description,
-      account: extracted.account,
-      amount: extracted.amount,
+      supplier:        extracted.supplier,
+      description:     extracted.description,
+      billingPeriod:   extracted.billingPeriod,
+      lineItems:       extracted.lineItems?.length,
+      recurringAmount: extracted.recurringAmount,
+      variableCharges: extracted.variableCharges,
+      annualCost:      extracted.annualCost,
+      confidenceScore: extracted.confidenceScore,
+      outOfScope:      extracted.outOfScope,
     }));
+
+    // Triage — review_queue eller unsupported avbryter pipeline
+    const routing = routeExtraction(extracted);
+
+    if (routing.route === 'review_queue') {
+      return send(res, 200, {
+        ok:     true,
+        route:  'review_queue',
+        reason: routing.reason,
+        extracted: {
+          supplier:        extracted.supplier,
+          date:            extracted.date,
+          amount:          extracted.amount,
+          confidenceScore: extracted.confidenceScore,
+          confidenceNotes: extracted.confidenceNotes,
+          lineItems:       extracted.lineItems,
+        },
+        timing: { extractMs: timing.extractMs },
+      });
+    }
+
+    if (routing.route === 'unsupported') {
+      return send(res, 200, {
+        ok:    true,
+        route: 'unsupported',
+        extracted: {
+          supplier:   extracted.supplier,
+          date:       extracted.date,
+          outOfScope: true,
+        },
+        categorized:    { category: 'uncategorized' },
+        recommendation: { shouldSwitch: false, reasoning: '' },
+        timing: { extractMs: timing.extractMs },
+      });
+    }
 
     const t1 = Date.now();
     const categorized = await categorize({
@@ -139,19 +179,23 @@ export default async function handler(req, res) {
     const netSaving = categorized.licensePending ? grossSaving : grossSaving - arvoFee;
 
     return send(res, 200, {
-      ok: true,
+      ok:    true,
+      route: 'auto',
       extracted: {
-        supplier: extracted.supplier,
-        amount: extracted.amount,
-        recurringAmount: extracted.recurringAmount ?? extracted.amount,
-        variableCharges: extracted.variableCharges ?? 0,
-        annualCost: extracted.annualCost,
-        date: extracted.date,
-        description: extracted.description,
-        recurring: extracted.recurring,
-        confidence: extracted.confidence,
-        notes: extracted.notes,
-        seatCount: extracted.seatCount ?? null,
+        supplier:        extracted.supplier,
+        amount:          extracted.amount,
+        recurringAmount: extracted.recurringAmount,
+        variableCharges: extracted.variableCharges,
+        oneTimeFees:     extracted.oneTimeFees,
+        annualCost:      extracted.annualCost,
+        date:            extracted.date,
+        description:     extracted.description,
+        billingPeriod:   extracted.billingPeriod,
+        lineItems:       extracted.lineItems,
+        recurring:       extracted.recurring,
+        confidenceScore: extracted.confidenceScore,
+        notes:           extracted.notes,
+        seatCount:       extracted.seatCount ?? null,
       },
       categorized: {
         category: categorized.category,
