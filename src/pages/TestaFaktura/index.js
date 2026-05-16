@@ -503,7 +503,7 @@ const TestaFaktura = () => {
               </NoSwitchBlock>
             )}
 
-            {result.route !== 'review_queue' && <KV>
+            {result.route === 'auto' && <KV>
               <div>
                 <dt>Du betalar idag</dt>
                 <dd>
