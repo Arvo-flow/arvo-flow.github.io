@@ -90,6 +90,13 @@ KRITISKT:
   — Returnera VARJE synlig kostnadsrad — utelämna inga rader.
   — seatCount: summera ALLA licensrader oavsett tier (t.ex. 45 Premium + 12 Basic = 57).
     Sätt null om fakturan inte avser per-användarlicenser.
+  — projectedRecurringAmount: Det belopp som faktiskt kommer att debiteras nästa FULLA period,
+    efter att engångsjusteringar (pro-rata, krediteringar) är normaliserade.
+    Exempel: Faktura visar 20 licenser × 500 kr (recurring) + 5 licenser × 250 kr (pro-rata tillagda
+    16 maj). Nästa månads fulla debitering = 25 × 500 = 12 500 kr.
+    projectedRecurringAmount = 12 500.
+    Om inga pro-rata-justeringar eller krediteringar förekommer: sätt samma värde som summan
+    av recurring_subscription-rader.
   — Returnera ALDRIG text utanför verktygsanropet.`;
 
 const EXTRACT_TOOL = {
@@ -154,6 +161,10 @@ const EXTRACT_TOOL = {
         type: ['integer', 'null'],
         description: 'Totalt antal seats/licenser. Summera alla licensrader oavsett tier. null om inte per-användarprenumeration.',
       },
+      projectedRecurringAmount: {
+        type: 'integer',
+        description: 'Beräknat recurring-belopp nästa fulla period i SEK, efter normalisering av pro-rata och krediteringar. Identisk med summan av recurring_subscription-rader om inga justeringar förekommer.',
+      },
       account: {
         type: ['string', 'null'],
         description: 'Bokföringskonto om det framgår, t.ex. "5310". null om osäker.',
@@ -182,24 +193,30 @@ export function aggregateLineItems(raw) {
   const oneTimeFees     = sum('one_time_fee') + sum('hardware');
   const multiplier      = PERIOD_MULTIPLIER[raw.billingPeriod] ?? 12;
 
+  // projectedRecurringAmount: AI:ns beräkning av vad som faktiskt debiteras nästa fulla
+  // period, normaliserat för pro-rata och krediteringar. Styr annualCost-beräkningen.
+  // Faller tillbaka på recurringAmount om AI:n inte skickar med fältet.
+  const projected = raw.projectedRecurringAmount ?? recurringAmount;
+
   return {
-    supplier:        raw.supplier,
-    date:            raw.date,
-    description:     raw.description,
-    account:         raw.account ?? null,
-    billingPeriod:   raw.billingPeriod,
-    lineItems:       raw.lineItems ?? [],
-    amount:          (raw.lineItems ?? []).reduce((s, l) => s + l.amount, 0),
+    supplier:                 raw.supplier,
+    date:                     raw.date,
+    description:              raw.description,
+    account:                  raw.account ?? null,
+    billingPeriod:            raw.billingPeriod,
+    lineItems:                raw.lineItems ?? [],
+    amount:                   (raw.lineItems ?? []).reduce((s, l) => s + l.amount, 0),
     recurringAmount,
+    projectedRecurringAmount: projected,
     variableCharges,
     oneTimeFees,
-    annualCost:      recurringAmount * multiplier,
-    recurring:       recurringAmount > 0,
-    confidenceScore: raw.confidenceScore,
-    confidenceNotes: raw.confidenceNotes ?? null,
-    outOfScope:      raw.outOfScope ?? false,
-    seatCount:       raw.seatCount ?? null,
-    notes:           raw.confidenceNotes ?? null,
+    annualCost:               projected * multiplier,
+    recurring:                recurringAmount > 0,
+    confidenceScore:          raw.confidenceScore,
+    confidenceNotes:          raw.confidenceNotes ?? null,
+    outOfScope:               raw.outOfScope ?? false,
+    seatCount:                raw.seatCount ?? null,
+    notes:                    raw.confidenceNotes ?? null,
   };
 }
 
