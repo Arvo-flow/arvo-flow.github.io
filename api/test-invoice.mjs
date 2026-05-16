@@ -136,10 +136,6 @@ function send(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-async function notifyReviewQueue(extracted, reason) {
-  console.warn('[test-invoice] review_queue:', reason, { supplier: extracted?.supplier });
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return send(res, 405, { error: 'Endast POST stöds' });
