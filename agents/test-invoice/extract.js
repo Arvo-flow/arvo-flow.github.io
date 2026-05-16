@@ -173,6 +173,7 @@ const EXTRACT_TOOL = {
     required: [
       'supplier', 'date', 'description', 'billingPeriod',
       'lineItems', 'confidenceScore', 'outOfScope',
+      'projectedRecurringAmount',
     ],
   },
 };
@@ -195,8 +196,12 @@ export function aggregateLineItems(raw) {
 
   // projectedRecurringAmount: AI:ns beräkning av vad som faktiskt debiteras nästa fulla
   // period, normaliserat för pro-rata och krediteringar. Styr annualCost-beräkningen.
-  // Faller tillbaka på recurringAmount om AI:n inte skickar med fältet.
-  const projected = raw.projectedRecurringAmount ?? recurringAmount;
+  // Sanity check: värdet måste vara ett positivt heltal. Annars fallback till recurringAmount
+  // och sänkt confidence signaleras implicit via att annualCost matchar recurring-summan.
+  const projected =
+    typeof raw.projectedRecurringAmount === 'number' && raw.projectedRecurringAmount > 0
+      ? raw.projectedRecurringAmount
+      : recurringAmount;
 
   return {
     supplier:                 raw.supplier,
