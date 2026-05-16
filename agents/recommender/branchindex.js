@@ -87,13 +87,13 @@ export const BRANCHINDEX = {
   },
 
   bredband: {
+    source: 'real-public',
     unit: 'kr/år',
-    note: 'Företagsfiber per kontorsadress, 1 000 Mbit symmetrisk, SLA-avtal, statisk IP. Källa: operatörernas listpriser 2026.',
+    note: 'Företagsfiber per kontorsadress. Verifierade listpriser maj 2026 (exkl. moms): Tele2 Företag 1200 Mbit 849 kr/mån (reguljärt), Bahnhof Företag 1 Gbit från 995 kr/mån. Priser adressberoende. Matrisen inkluderar 100–1 000 Mbit och speglar faktisk betald premie, inte lägsta tekniskt möjliga.',
     alternatives: [
-      { supplier: 'Bahnhof Företag',        positioning: 'Svensk support, statisk IP, stark SLA — prisledare för kontorsfiber',    reliability: 0.96 },
-      { supplier: 'Tele2 Företag Bredband', positioning: 'Konkurrenskraftigt pris, ingår i bundle med mobilabonnemang',            reliability: 0.92 },
-      { supplier: 'Telenor Business',       positioning: 'Bred täckning, marknadsledande SLA, bra för multi-site',                 reliability: 0.94 },
-      { supplier: 'GlobalConnect',          positioning: 'Premium dedikerad fiber, bäst för datacenter-trafik och hög redundans',  reliability: 0.97 },
+      { supplier: 'Tele2 Företag Bredband', positioning: 'Verifierat 849 kr/mån (1200 Mbit, 24 mån) — stark bundle med mobilabonnemang', reliability: 0.93 },
+      { supplier: 'Bahnhof Företag',        positioning: 'Verifierat från 995 kr/mån (1 Gbit) — svensk support, statisk IP, stark SLA',  reliability: 0.96 },
+      { supplier: 'GlobalConnect',          positioning: 'Premium dedikerad fiber, bäst för datacenter-trafik och hög redundans — offert krävs', reliability: 0.97 },
     ],
     matrix: {
       byraer:      { micro: { median: 9000,  p25: 6500  }, small: { median: 13200, p25:  9600 }, mid: { median: 28800, p25: 19200 } },
@@ -104,15 +104,17 @@ export const BRANCHINDEX = {
   },
 
   kortterminal: {
+    source: 'real-public',
     unit: 'kr/år',
-    // Volumes: micro ~500 kkr/yr, small ~2 Mkr/yr, mid ~8 Mkr/yr.
-    // Median = Zettle 1.85 %, P25 = SumUp Lite 1.49 %. Tillverkning halved (mostly B2B invoicing).
-    note: 'Transaktionsavgifter + månadsavgifter. Antagen kortvolym: micro ~500 kkr/år, small ~2 Mkr/år, mid ~8 Mkr/år. SumUp Lite 1,49 %, Zettle 1,85 %.',
+    // Verifierade transaktionsavgifter maj 2026: SumUp 1,49 %, Zettle 1,85 %, Stripe Terminal 1,4 % + ~1,10 kr/köp.
+    // Kortvolymer uppskattade (ingen offentlig källa): micro ~500 kkr/år, small ~2 Mkr/år, mid ~8 Mkr/år.
+    // Tillverkning halverad (mestadels B2B-fakturering, låg kortandel).
+    note: 'Transaktionsavgifter. Verifierade listpriser maj 2026: SumUp 1,49 % (ingen månadsavgift), Zettle 1,85 % (ingen månadsavgift), Stripe Terminal 1,4 % + ~1,10 kr/transaktion EEA-kort. Kortvolym uppskattad per segment.',
     alternatives: [
-      { supplier: 'SumUp Lite',       positioning: '1,49 % per transaktion, ingen månadsavgift — lägst kostnad för låg-volym',     reliability: 0.91 },
-      { supplier: 'Zettle by PayPal', positioning: '1,85 % per transaktion, ingen månadsavgift, stark app-integration',             reliability: 0.93 },
-      { supplier: 'Stripe Terminal',  positioning: '1,4 % + 1,80 kr per köp, API-first — bäst om kunden redan har Stripe online',  reliability: 0.97 },
-      { supplier: 'Klarna Checkout',  positioning: 'Bäst för e-handel: integrerad checkout med bnpl och kortbetalning',            reliability: 0.96 },
+      { supplier: 'SumUp',            positioning: 'Verifierat 1,49 % per transaktion, ingen månadsavgift — lägst kostnad för låg-volym', reliability: 0.91 },
+      { supplier: 'Zettle by PayPal', positioning: 'Verifierat 1,85 % per transaktion, ingen månadsavgift, stark app-integration',        reliability: 0.93 },
+      { supplier: 'Stripe Terminal',  positioning: 'Verifierat 1,4 % + ~1,10 kr/köp EEA-kort — bäst om kunden redan har Stripe online',   reliability: 0.97 },
+      { supplier: 'Klarna Checkout',  positioning: 'Bäst för e-handel: integrerad checkout med bnpl och kortbetalning',                   reliability: 0.96 },
     ],
     matrix: {
       byraer:      { micro: { median:  9250, p25:  7450 }, small: { median:  37000, p25:  29800 }, mid: { median: 148000, p25: 119200 } },
@@ -211,19 +213,26 @@ export const BRANCHINDEX = {
   },
 
   loneadmin: {
+    source: 'real-public',
     unit: 'kr/år',
-    note: 'Per anställd/år. Löneadministrationsprogram eller outsourcad lönekörning. Källa: leverantörers listpriser 2026.',
+    // Verifierat: Fortnox Lön listpris maj 2026 (exkl. moms): 199 kr/mån fast + 25 kr/anställd/mån.
+    // p25 = Fortnox-priset per anställd/år vid representativt anställningsantal per bucket:
+    //   micro  (n=5):   (199 + 5×25)×12/5   =  780 kr/anst/år
+    //   small  (n=20):  (199 + 20×25)×12/20 =  420 kr/anst/år
+    //   mid    (n=100): (199 + 100×25)×12/100= 324 kr/anst/år
+    // Median = vad marknaden faktiskt betalar (Visma, Hogia, Azets-nivå).
+    note: 'Per anställd/år. Källa p25: Fortnox Lön verifierat listpris maj 2026 — 199 kr/mån fast + 25 kr/anst/mån. Median = typisk marknadspremie för system utan Fortnox-integration.',
     alternatives: [
-      { supplier: 'Fortnox Lön',   positioning: 'Integrerat i Fortnox-paketet — ingen extra kostnad om kunden redan har Fortnox', reliability: 0.96 },
-      { supplier: 'Hogia Lön',     positioning: 'Marknadsledare för mid-size, starka kollektivavtalsregler inbyggda',              reliability: 0.95 },
-      { supplier: 'Visma Lön',     positioning: 'Stark integration med Visma eEkonomi, bred support',                             reliability: 0.94 },
+      { supplier: 'Fortnox Lön',   positioning: 'Verifierat lägst — 199 kr/mån + 25 kr/anst/mån. Direkt integrerat i Fortnox.',  reliability: 0.96 },
+      { supplier: 'Visma Lön',     positioning: 'Stark integration med Visma eEkonomi, bred support — offert krävs',              reliability: 0.94 },
+      { supplier: 'Hogia Lön',     positioning: 'Marknadsledare för mid-size, starka kollektivavtalsregler — offert krävs',       reliability: 0.95 },
       { supplier: 'Azets Sverige', positioning: 'Outsourcad lönekörning — rätt om kunden vill slippa systemansvar helt',          reliability: 0.93 },
     ],
     matrix: {
-      byraer:      { micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
-      hantverkare: { micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
-      ehandel:     { micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
-      tillverkning:{ micro: { median: 2400, p25: 1680 }, small: { median: 1800, p25: 1200 }, mid: { median: 1200, p25:  840 } },
+      byraer:      { micro: { median: 2400, p25:  780 }, small: { median: 1800, p25: 420 }, mid: { median: 1200, p25: 324 } },
+      hantverkare: { micro: { median: 2400, p25:  780 }, small: { median: 1800, p25: 420 }, mid: { median: 1200, p25: 324 } },
+      ehandel:     { micro: { median: 2400, p25:  780 }, small: { median: 1800, p25: 420 }, mid: { median: 1200, p25: 324 } },
+      tillverkning:{ micro: { median: 2400, p25:  780 }, small: { median: 1800, p25: 420 }, mid: { median: 1200, p25: 324 } },
     },
   },
 
