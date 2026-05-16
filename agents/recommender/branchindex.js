@@ -16,7 +16,7 @@ export const SOURCE_NOTE =
 
 // Categories with verified public list prices (operator/vendor websites).
 // Frontend uses this set to decide whether to show real-price note or mandate CTA.
-export const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+export const REAL_PRICE_CATEGORIES = new Set(['saas-productivity', 'mobil']);
 
 // User-facing industry keys (what the UI collects and the DB stores)
 export const INDUSTRIES = [
@@ -206,12 +206,13 @@ export const BRANCHINDEX = {
     },
   },
 
-  'mjukvara-saas': {
+  'saas-productivity': {
     source: 'real-public',
     unit: 'kr/år',
     // p25 = M365 Business Standard listpris maj 2026: 142 kr/mth × 12 = 1 704 kr/år/user (exkl. moms).
     // Källa: Senetic/Microsoft CSP publika listpriser. Nästa prisändring aviserad juli 2026.
     // Median = typisk SMF-betalning via CSP med standardpåslag (~220–240 kr/mth).
+    // Gäller: M365, Google Workspace, Zoom, Slack — produktivitetsverktyg med jämförbar per-user-prissättning.
     note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard. Källa: Microsoft CSP listpris maj 2026 — 142 kr/mth = 1 704 kr/år/user. Median = typisk CSP-pris med standardpåslag.',
     alternatives: [
       { supplier: 'Microsoft 365 Business Standard (Arvo CSP)',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
@@ -225,6 +226,50 @@ export const BRANCHINDEX = {
       ehandel:     { micro: { median: 2640, p25: 1704 }, small: { median: 2400, p25: 1704 }, mid: { median: 2160, p25: 1704 } },
       tillverkning:{ micro: { median: 2400, p25: 1704 }, small: { median: 2160, p25: 1704 }, mid: { median: 1920, p25: 1704 } },
     },
+  },
+
+  'saas-creative': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Kreativ mjukvara (Adobe CC, Figma, Canva) prissätts per produkt och tier — inte jämförbar med produktivitetsverktyg. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
+    unit: 'kr/år',
+    note: 'Per användare/år. Designverktyg och kreativ mjukvara — prisnivå beror starkt på produktval och tier.',
+    alternatives: [
+      { supplier: 'Adobe Creative Cloud for Teams', positioning: 'Branschstandard för kreativa team — offert via Arvo CSP ger volymrabatt',     reliability: 0.95 },
+      { supplier: 'Figma Organization',             positioning: 'Designplattform med starka samarbetsfunktioner, konkurrenskraftigt vs Adobe', reliability: 0.93 },
+      { supplier: 'Canva for Teams',                positioning: 'Lägst kostnad för enklare grafik utan avancerade redigeringsbehov',           reliability: 0.88 },
+    ],
+  },
+
+  'saas-crm': {
+    requiresVolumeData: true,
+    volumeDataNote: 'CRM-system prissätts ofta utifrån antalet kontakter i databasen och specifika säljverktyg. Våra experter kikar på detta för en rättvis kalkyl.',
+    unit: 'kr/år',
+    note: 'CRM-licenser. Prissättning beror på kontaktvolym, pipeline-moduler och avtalslängd.',
+    alternatives: [
+      { supplier: 'HubSpot CRM (Starter/Pro)',  positioning: 'Ledande för SMF — skalbar från gratis till avancerad automatisering',         reliability: 0.94 },
+      { supplier: 'Pipedrive',                  positioning: 'Enkelt och effektivt för säljfokuserade bolag, lägst TCO för rena CRM-behov', reliability: 0.92 },
+      { supplier: 'Zoho CRM',                   positioning: 'Bredaste funktionsuppsättningen till lägst kostnad — bäst pris/prestanda',    reliability: 0.90 },
+    ],
+  },
+
+  'saas-finance': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Affärs- och bokföringssystem styrs ofta av antalet verifikationer, moduler och transaktioner, inte bara antalet anställda. Vi analyserar detta manuellt.',
+    unit: 'kr/år',
+    note: 'Bokföringssystem och affärssystem (ERP). Prissättning beror på modulval, transaktionsvolym och antal bolag.',
+    alternatives: [
+      { supplier: 'Fortnox',        positioning: 'Lägst grundkostnad för SMF — modulbaserat, skalbart, stark integration mot banker',  reliability: 0.96 },
+      { supplier: 'Visma eEkonomi', positioning: 'Bredare funktionalitet, stark för bolag med komplexa rapporteringsbehov',            reliability: 0.94 },
+      { supplier: 'Bokio',          positioning: 'Enklast och billigast för solobolag och mikroföretag utan komplex redovisning',       reliability: 0.88 },
+    ],
+  },
+
+  'saas-other': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Specialiserad mjukvara kräver en djupare analys av era specifika funktionskrav och avtalsvillkor. Vi tar hand om detta manuellt.',
+    unit: 'kr/år',
+    note: 'Nischad eller okategoriserad SaaS. Kräver manuell analys — per-anställd-benchmark är inte tillämpbar.',
+    alternatives: [],
   },
 
   skrivarleasing: {

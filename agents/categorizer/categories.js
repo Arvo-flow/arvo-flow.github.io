@@ -85,16 +85,59 @@ export const CATEGORIES = {
     ],
     accountHints: ['5611', '5612', '5615'],
   },
-  'mjukvara-saas': {
+  'saas-productivity': {
     label: 'Programvarulicenser / SaaS',
     licensePending: false,
-    subTypes: ['microsoft-365', 'google-workspace', 'adobe', 'kommunikation', 'ovrigt-saas'],
+    subTypes: ['microsoft-365', 'google-workspace', 'zoom', 'slack', 'teams'],
     keywords: [
-      'microsoft 365', 'office 365', 'm365', 'google workspace', 'adobe',
-      'programvarulicens', 'saas', 'molntjänst', 'slack', 'zoom', 'teams',
-      'onedrive', 'sharepoint', 'cloudtech', 'csp', 'licens', 'prenumeration',
+      'microsoft 365', 'office 365', 'm365', 'google workspace', 'g suite',
+      'zoom', 'slack', 'microsoft teams', 'onedrive', 'sharepoint', 'exchange online',
+      'dropbox business', 'box enterprise', 'webex', 'atlassian', 'confluence', 'jira',
+      'csp', 'programvarulicens',
     ],
     accountHints: ['6540', '5460', '6230'],
+  },
+  'saas-creative': {
+    label: 'Kreativ mjukvara / Design',
+    licensePending: false,
+    subTypes: ['adobe', 'figma', 'canva', 'design'],
+    keywords: [
+      'adobe', 'creative cloud', 'adobe cc', 'figma', 'canva', 'sketch',
+      'invision', 'affinity', 'corel', 'clip studio', 'procreate',
+    ],
+    accountHints: ['6540', '6230'],
+  },
+  'saas-crm': {
+    label: 'CRM-system',
+    licensePending: false,
+    subTypes: ['salesforce', 'hubspot', 'pipedrive', 'zoho-crm'],
+    keywords: [
+      'salesforce', 'hubspot', 'pipedrive', 'zoho crm', 'microsoft dynamics crm',
+      'sugar crm', 'freshsales', 'copper crm', 'crm licens', 'crm prenumeration',
+      'customer relationship', 'säljsystem', 'sälj-crm',
+    ],
+    accountHints: ['6540', '6230'],
+  },
+  'saas-finance': {
+    label: 'Affärssystem / Bokföring',
+    licensePending: false,
+    subTypes: ['fortnox', 'visma', 'erp', 'bokforing'],
+    keywords: [
+      'bokföringsprogram', 'affärssystem', 'erp licens', 'business central',
+      'björn lundén', 'wolters kluwer', 'unit4', 'monitor erp',
+      'visma business', 'fortnox licens', 'bokföringssystem',
+    ],
+    accountHints: ['6540', '6230', '5460'],
+  },
+  'saas-other': {
+    label: 'Programvarulicenser / SaaS · övrigt',
+    licensePending: false,
+    subTypes: ['ovrigt-saas'],
+    keywords: [
+      'saas', 'molntjänst', 'cloud', 'prenumeration', 'licens', 'license',
+      'subscription', 'programvara', 'mjukvara', 'software',
+    ],
+    accountHints: ['6540', '6230'],
   },
   skrivarleasing: {
     label: 'Skrivare & Managed Print',

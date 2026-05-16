@@ -232,7 +232,7 @@ Input:
   Datum: 2026-05-15
   Beskrivning: Microsoft 365 E5 - Månadslicens 10 st + Premium Onboarding Support (Löpande)
 Klassificering:
-  category: "mjukvara-saas"
+  category: "saas-productivity"
   subType: "microsoft-365"
   normalizedSupplier: "CloudTech Solutions (Microsoft CSP)"
   confidence: 0.92
@@ -246,11 +246,11 @@ Input:
   Konto: 6540
   Beskrivning: Adobe Creative Cloud for Teams - 4 licenser april
 Klassificering:
-  category: "mjukvara-saas"
+  category: "saas-creative"
   subType: "adobe"
   normalizedSupplier: "Adobe"
   confidence: 0.97
-  reasoning: "Adobe Creative Cloud for Teams + konto 6540 är direkt programvarulicens"
+  reasoning: "Adobe Creative Cloud for Teams + konto 6540 är kreativ mjukvarulicens"
 
 Exempel 17: Google Workspace via fakturarad
 Input:
@@ -260,7 +260,7 @@ Input:
   Konto: 6540
   Beskrivning: Google Workspace Business Standard - 12 användare mars
 Klassificering:
-  category: "mjukvara-saas"
+  category: "saas-productivity"
   subType: "google-workspace"
   normalizedSupplier: "Google Workspace"
   confidence: 0.98
@@ -328,11 +328,11 @@ Input:
   Datum: 2026-02-01
   Beskrivning: Zoom Pro 5 licenser februari
 Klassificering:
-  category: "mjukvara-saas"
-  subType: "kommunikation"
+  category: "saas-productivity"
+  subType: "zoom"
   normalizedSupplier: "Zoom"
   confidence: 0.95
-  reasoning: "Zoom + 'licenser' i beskrivning är SaaS-kommunikationsverktyg"`;
+  reasoning: "Zoom + 'licenser' i beskrivning är SaaS-produktivitetsverktyg"`;
 
 
 export const SYSTEM_PROMPT = `Du är Arvo Flow Categorizer — en specialiserad klassificerare av leverantörsfakturor från svenska småföretags bokföring (Fortnox/Visma).

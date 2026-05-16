@@ -22,7 +22,7 @@ const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/eeaax2i1k03cycl39zqlpdt9
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
 // Categories with verified public list prices — show supplier name proudly.
-const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+const REAL_PRICE_CATEGORIES = new Set(['saas-productivity', 'mobil']);
 
 // Scrub the suggested supplier name from reasoning text so the tier/price
 // analysis stays visible but the specific alternative brand stays hidden.
@@ -81,7 +81,12 @@ const CATEGORY_LABELS = {
   leasing:             'Företagsleasing',
   kortterminal:        'Kortterminal',
   'faktura-tjanst':    'Fakturatjänst / Affärssystem',
-  'mjukvara-saas':     'Programvarulicenser / SaaS',
+  'saas-productivity': 'Programvarulicenser / SaaS',
+  'saas-creative':     'Kreativ mjukvara / Design',
+  'saas-crm':          'CRM-system',
+  'saas-finance':      'Affärssystem / Bokföring',
+  'saas-other':        'Programvarulicenser / SaaS · övrigt',
+  serverhosting:       'Serverhosting & Cloud-infrastruktur',
   skrivarleasing:      'Skrivare & Managed Print',
   loneadmin:           'Löneadministration',
   'larm-bevakning':    'Larm & Bevakning',

@@ -115,7 +115,7 @@ Rekommendation:
 Exempel 6: Fel produkttier — Enterprise-licens för litet bolag (VIKTIGT MÖNSTER)
 Customer: IT-konsult, 10 anställda
 Categorized invoice:
-  category: mjukvara-saas
+  category: saas-productivity
   subType: microsoft-365
   normalizedSupplier: CloudTech Solutions (Microsoft CSP)
   currentAnnualCost: 70 200 kr
