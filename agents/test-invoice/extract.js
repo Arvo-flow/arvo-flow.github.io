@@ -198,10 +198,6 @@ export function aggregateLineItems(raw) {
   };
 }
 
-// Övre gräns för rimlig årskostnad i SEK (exkl. moms) för SMB-segment.
-// Fakturor som överstiger detta flaggas för manuell granskning — antingen
-// felutläst belopp eller ett kontrakt stort nog att förtjäna personlig uppföljning.
-const MAX_PLAUSIBLE_ANNUAL_COST = 2_000_000;
 
 /**
  * Triagera extraktionsresultatet.
@@ -231,13 +227,6 @@ export function routeExtraction(extracted) {
 
   if (extracted.annualCost === 0 && extracted.billingPeriod !== 'one_time') {
     return { route: 'review_queue', reason: 'Beräknad årskostnad är 0 kr trots återkommande fakturering' };
-  }
-
-  if (extracted.annualCost > MAX_PLAUSIBLE_ANNUAL_COST) {
-    return {
-      route:  'review_queue',
-      reason: `Beräknad årskostnad ${extracted.annualCost.toLocaleString('sv-SE')} kr överstiger rimlig gräns (${MAX_PLAUSIBLE_ANNUAL_COST.toLocaleString('sv-SE')} kr)`,
-    };
   }
 
   // ── Lager 2: AI:ns self-reported confidence ───────────────────────────────
