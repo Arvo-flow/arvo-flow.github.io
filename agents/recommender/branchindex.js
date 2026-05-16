@@ -208,12 +208,7 @@ export const BRANCHINDEX = {
     // p25 = M365 Business Standard listpris maj 2026: 142 kr/mth × 12 = 1 704 kr/år/user (exkl. moms).
     // Källa: Senetic/Microsoft CSP publika listpriser. Nästa prisändring aviserad juli 2026.
     // Median = typisk SMF-betalning via CSP med standardpåslag (~220–240 kr/mth).
-    // Andra verifierade referenspunkter (per licens/mth, exkl. moms):
-    //   M365 Business Premium: 245–265 kr/mth (Intune + Defender)
-    //   Google Workspace Business Standard: 135–150 kr/mth
-    //   Adobe Creative Cloud All Apps B2B: 900–1 000 kr/mth
-    //   Zoom Workplace Pro B2B: ~160 kr/mth
-    note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard 142 kr/mth = 1 704 kr/år/user (Microsoft CSP, maj 2026). Övriga listpriser: M365 Business Premium 245–265 kr/mth, Google Workspace Standard 135–150 kr/mth, Adobe CC All Apps 900–1 000 kr/mth, Zoom Pro ~160 kr/mth. Snittkostnad per anställd i basmjukvara: 500–800 kr/mth.',
+    note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard. Källa: Microsoft CSP listpris maj 2026 — 142 kr/mth = 1 704 kr/år/user. Median = typisk CSP-pris med standardpåslag.',
     alternatives: [
       { supplier: 'Microsoft 365 Business Standard (Arvo CSP)',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
       { supplier: 'Google Workspace Business Standard',          positioning: 'Starkaste alternativet till M365 — 2 TB Drive, Meet, Docs. Ofta 30–40 % billigare än M365.',            reliability: 0.96 },
