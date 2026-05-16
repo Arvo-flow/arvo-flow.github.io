@@ -5,10 +5,116 @@
 // Vercel-konfig (vercel.json): maxDuration: 60. På Hobby-plan är gränsen 10s
 // vilket sannolikt inte räcker — Pro krävs för publik exponering.
 
+import { Resend } from 'resend';
 import { extractInvoice, routeExtraction, ExtractorError } from '../agents/test-invoice/extract.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
 import { storeDatapoint } from '../lib/benchmark.js';
+
+const FROM_ALERT = process.env.RESEND_FROM        ?? 'Arvo Flow <analys@arvo-flow.se>';
+const ALERT_TO   = process.env.ARVO_ALERT_EMAIL   ?? 'team@arvo-flow.se';
+
+// ── Internt larm för review_queue ─────────────────────────────────────────────
+
+function buildAlertHtml(extracted, reason) {
+  const pct   = extracted.confidenceScore != null
+    ? `${Math.round(extracted.confidenceScore * 100)} %` : '–';
+  const total = extracted.amount != null
+    ? extracted.amount.toLocaleString('sv-SE') + ' kr' : '–';
+  const ts    = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm' });
+
+  const rows = (extracted.lineItems ?? []).map((l) => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #E8F0EC;font-size:13px;color:#1F2E2A;font-family:Arial,sans-serif">${l.description ?? ''}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #E8F0EC;font-size:13px;color:#1F2E2A;text-align:right;white-space:nowrap;font-family:Arial,sans-serif">${(l.amount ?? 0).toLocaleString('sv-SE')} kr</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #E8F0EC;font-size:11px;color:#5C6E68;font-family:Arial,sans-serif">${l.type ?? ''}</td>
+    </tr>`).join('');
+
+  const notesBlock = extracted.confidenceNotes ? `
+  <tr><td style="padding:0 32px 20px">
+    <div style="background:#F4DAD0;border-left:3px solid #9F3B22;padding:12px 16px;border-radius:0 6px 6px 0">
+      <p style="margin:0;font-size:13px;color:#6B2516;font-family:Arial,sans-serif">${extracted.confidenceNotes}</p>
+    </div>
+  </td></tr>` : '';
+
+  const itemsBlock = rows ? `
+  <tr><td style="padding:0 32px 28px">
+    <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#5C6E68;text-transform:uppercase;letter-spacing:.08em;font-family:Arial,sans-serif">Extraherade rader</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #E8F0EC">
+      <tr style="background:#F1F6F3">
+        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#5C6E68;font-weight:600;font-family:Arial,sans-serif">Beskrivning</th>
+        <th style="padding:8px 12px;text-align:right;font-size:10px;color:#5C6E68;font-weight:600;font-family:Arial,sans-serif">Belopp</th>
+        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#5C6E68;font-weight:600;font-family:Arial,sans-serif">Typ</th>
+      </tr>
+      ${rows}
+    </table>
+  </td></tr>` : '';
+
+  return `<!DOCTYPE html>
+<html lang="sv">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#F1F6F3">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F1F6F3;padding:32px 16px">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;max-width:600px;width:100%">
+
+  <tr>
+    <td style="background:#9F3B22;padding:22px 32px">
+      <p style="margin:0 0 4px;font-size:10px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:.12em;font-family:Arial,sans-serif">Arvo intern — manuell granskning</p>
+      <p style="margin:0;font-size:22px;font-weight:700;color:#fff;font-family:Arial,sans-serif">${extracted.supplier ?? 'Okänd leverantör'}</p>
+    </td>
+  </tr>
+
+  <tr><td style="padding:24px 32px 20px">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="width:33%;padding-right:16px">
+          <p style="margin:0 0 4px;font-size:10px;color:#5C6E68;text-transform:uppercase;letter-spacing:.08em;font-family:Arial,sans-serif">Confidence</p>
+          <p style="margin:0;font-size:26px;font-weight:700;color:#9F3B22;font-family:Arial,sans-serif">${pct}</p>
+        </td>
+        <td style="width:33%;padding:0 16px">
+          <p style="margin:0 0 4px;font-size:10px;color:#5C6E68;text-transform:uppercase;letter-spacing:.08em;font-family:Arial,sans-serif">Fakturadatum</p>
+          <p style="margin:0;font-size:16px;font-weight:600;color:#0E1A17;font-family:Arial,sans-serif">${extracted.date ?? '–'}</p>
+        </td>
+        <td style="width:33%;padding-left:16px">
+          <p style="margin:0 0 4px;font-size:10px;color:#5C6E68;text-transform:uppercase;letter-spacing:.08em;font-family:Arial,sans-serif">Fakturerat (exkl. moms)</p>
+          <p style="margin:0;font-size:16px;font-weight:600;color:#0E1A17;font-family:Arial,sans-serif">${total}</p>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  ${notesBlock}
+  ${itemsBlock}
+
+  <tr>
+    <td style="border-top:1px solid #D5E2DC;padding:14px 32px;background:#F1F6F3">
+      <p style="margin:0;font-size:11px;color:#5C6E68;font-family:Arial,sans-serif">Arvo Flow &nbsp;·&nbsp; ${ts}</p>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>`;
+}
+
+async function notifyReviewQueue(extracted, reason) {
+  if (!process.env.RESEND_API_KEY) return;
+  const pct = extracted.confidenceScore != null
+    ? `${Math.round(extracted.confidenceScore * 100)} %` : '–';
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from:    FROM_ALERT,
+      to:      ALERT_TO,
+      subject: `[Review Queue] ${extracted.supplier ?? 'Okänd'} — confidence ${pct}`,
+      html:    buildAlertHtml(extracted, reason),
+    });
+  } catch (err) {
+    console.error('[test-invoice] notifyReviewQueue failed:', err.message);
+  }
+}
 
 export const config = {
   maxDuration: 60,
@@ -107,6 +213,10 @@ export default async function handler(req, res) {
     const routing = routeExtraction(extracted);
 
     if (routing.route === 'review_queue') {
+      // Fire-and-forget — skickar internt larm utan att blockera kundsvaret
+      notifyReviewQueue(extracted, routing.reason).catch(
+        (err) => console.error('[test-invoice] notifyReviewQueue threw:', err.message)
+      );
       return send(res, 200, {
         ok:     true,
         route:  'review_queue',
