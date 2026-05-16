@@ -155,7 +155,7 @@ function generatePdf(result) {
     y += 20;
 
     // ── Supplier + category ───────────────────────────────────────────────────
-    doc.fontSize(20).font('Times-Bold').fillColor(T.ink).text(ex.supplier ?? '', PAD, y);
+    doc.fontSize(20).font('Helvetica-Bold').fillColor(T.ink).text(ex.supplier ?? '', PAD, y);
     y += 26;
     doc.fontSize(10).font('Helvetica').fillColor(T.mutedSoft).text(catLabel, PAD, y);
     y += 28;
@@ -170,7 +170,7 @@ function generatePdf(result) {
 
     doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.60)')
       .text('DIN NETTOBESPARING', PAD, y + 16, { characterSpacing: 1.4 });
-    doc.fontSize(40).font('Times-Bold').fillColor(T.surface)
+    doc.fontSize(40).font('Helvetica-Bold').fillColor(T.surface)
       .text('+' + formatKr(r.netSaving), PAD, y + 30);
 
     const costLine =
@@ -193,7 +193,7 @@ function generatePdf(result) {
       doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft)
         .text(label.toUpperCase(), LC, y + 8, { width: 200, characterSpacing: 0.5 });
       doc.fontSize(10.5)
-        .font(opts.bold ? 'Times-Bold' : 'Helvetica')
+        .font(opts.bold ? 'Helvetica-Bold' : 'Helvetica')
         .fillColor(opts.color ?? (opts.bold ? T.brand : T.inkSoft))
         .text(value ?? '–', RC, y + 7, { width: W - 210 });
       y += ROW_H;
@@ -213,7 +213,7 @@ function generatePdf(result) {
     doc.rect(LC, y, 2.5, ROW_H).fill(T.brand);
     doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brandInk)
       .text('DIN NETTOBESPARING', LC + 8, y + 8, { characterSpacing: 0.5 });
-    doc.fontSize(12).font('Times-Bold').fillColor(T.brand)
+    doc.fontSize(12).font('Helvetica-Bold').fillColor(T.brand)
       .text('+' + formatKr(r.netSaving), RC, y + 7);
     y += ROW_H;
     // Bottom border of table
@@ -244,7 +244,8 @@ function generatePdf(result) {
       .text(r.reasoning ?? '', PAD, y, { width: W, lineGap: 3 });
 
     // ── Footer ────────────────────────────────────────────────────────────────
-    const FY = 806;
+    // Position footer after content (doc.y is updated by pdfkit after text flows)
+    const FY = doc.y + 32;
     doc.moveTo(PAD, FY).lineTo(PW - PAD, FY).strokeColor(T.border).lineWidth(0.5).stroke();
 
     const FMARK = 14;
