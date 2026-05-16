@@ -1,10 +1,14 @@
 // agents/recommender/branchindex.js
 // Benchmark index used by the Recommender.
-// Two source tiers:
+// Three source tiers:
 //   'real-public'  — verified public list prices (operator/vendor websites, 2026).
-//   'mock'         — market estimates; replaced with real aggregated Postgres data
-//                    once ≥10 invoice datapoints per segment (see lib/benchmark.js).
-// Shape is stable across both tiers.
+//                    AI may use exact language: "Listpriset är X kr."
+//   'estimated'    — range-based market data from trade sources, not a single price.
+//                    AI must hedge: "Branschstandarden ligger på ca X–Y kr."
+//   'mock'         — internally modelled estimates; replaced with real aggregated
+//                    Postgres data once ≥10 invoice datapoints per segment.
+//                    AI must hedge: "Baserat på branschdata betalar jämförbara bolag..."
+// Shape is stable across all tiers.
 
 export const SOURCE = 'mixed';
 export const SOURCE_NOTE =
@@ -71,7 +75,7 @@ export const BRANCHINDEX = {
     // Real Tele2 Företag listpriser maj 2026 (exkl. moms): Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth.
     // Median = Plus (349×12 = 4 188 kr/år). p25 = Bas (299×12 = 3 588 kr/år).
     // Volume discounts ~5 % at small, ~10 % at mid reduce both columns proportionally.
-    note: 'Per användare/år (exkl. moms). Vi multiplicerar med antal anställda. Källa: Tele2 Företag listpriser maj 2026 — Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth. Obegränsad data + EU-roaming.',
+    note: 'Per användare/år (exkl. moms). Vi multiplicerar med antal anställda. Källa: Tele2 Företag listpriser maj 2026 — Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth. Obegränsad data + EU-roaming. OBS: Hårdvaruhyra (telefon ~450 kr/mth) klassificeras som hardware i extract.js och ingår INTE i besparingskalkylen.',
     alternatives: [
       { supplier: 'Tele2 Företag',   positioning: 'Obegränsad data + EU-roaming, ofta 10–30 % under Telia — marknadsledare bland SMF', reliability: 0.93 },
       { supplier: 'Tre Företag',     positioning: 'Stark datakapacitet, lägst listpris för basabonnemang',                              reliability: 0.91 },
@@ -83,6 +87,30 @@ export const BRANCHINDEX = {
       hantverkare: { micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
       ehandel:     { micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
       tillverkning:{ micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
+    },
+  },
+
+  vaxel: {
+    source: 'estimated',
+    unit: 'kr/år',
+    // Intervallbaserade marknadsdata för molnväxel (UCaaS), per användarlicens.
+    // Typiska priser maj 2026: 49–149 kr/mth/user.
+    // p25 = 49×12 = 588 kr/user/år (basprodukt utan extras, t.ex. 3CX/Teams Phone Entry).
+    // Median = ~99×12 = 1 188 kr/user/år (standard molnväxel med röstsvar, IVR, app).
+    // OBS: Hårdvaruleasing (IP-telefoner) exkluderas — klassificeras som hardware i extract.js.
+    // Snittkostnad per anställd abonnemang + växel: ~450 kr/mth (5 400 kr/år) per Telekom-kategoridata.
+    note: 'Per användare/år (exkl. moms). Branschuppskattning: molnväxellicens 49–149 kr/mth/user. p25 = basprodukt ~49 kr/mth. Median = standard UCaaS ~99 kr/mth. Hårdvara (IP-telefoner) ingår ej — exkluderas ur kalkylen.',
+    alternatives: [
+      { supplier: 'Microsoft Teams Phone',  positioning: 'Tillägg till befintlig M365-licens — billigast om kunden redan har M365',              reliability: 0.94 },
+      { supplier: '3CX',                    positioning: 'Open-source-baserad molnväxel, lägst TCO för upp till 20 interna användare',             reliability: 0.91 },
+      { supplier: 'Telenor LINK',           positioning: 'Stark för bolag som vill ha mobil + växel i ett avtal, rikstäckande support',            reliability: 0.92 },
+      { supplier: 'Telia Touchpoint',       positioning: 'Störst i Sverige, bra för multi-site med komplex samtalsstyrning',                       reliability: 0.95 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 1188, p25:  588 }, small: { median: 1128, p25:  588 }, mid: { median: 1068, p25:  588 } },
+      hantverkare: { micro: { median: 1188, p25:  588 }, small: { median: 1128, p25:  588 }, mid: { median: 1068, p25:  588 } },
+      ehandel:     { micro: { median: 1188, p25:  588 }, small: { median: 1128, p25:  588 }, mid: { median: 1068, p25:  588 } },
+      tillverkning:{ micro: { median: 1188, p25:  588 }, small: { median: 1128, p25:  588 }, mid: { median: 1068, p25:  588 } },
     },
   },
 
@@ -180,7 +208,12 @@ export const BRANCHINDEX = {
     // p25 = M365 Business Standard listpris maj 2026: 142 kr/mth × 12 = 1 704 kr/år/user (exkl. moms).
     // Källa: Senetic/Microsoft CSP publika listpriser. Nästa prisändring aviserad juli 2026.
     // Median = typisk SMF-betalning via CSP med standardpåslag (~220–240 kr/mth).
-    note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard. Källa: Microsoft CSP listpris maj 2026 — 142 kr/mth = 1 704 kr/år/user. Median = typisk CSP-pris med standardpåslag.',
+    // Andra verifierade referenspunkter (per licens/mth, exkl. moms):
+    //   M365 Business Premium: 245–265 kr/mth (Intune + Defender)
+    //   Google Workspace Business Standard: 135–150 kr/mth
+    //   Adobe Creative Cloud All Apps B2B: 900–1 000 kr/mth
+    //   Zoom Workplace Pro B2B: ~160 kr/mth
+    note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard 142 kr/mth = 1 704 kr/år/user (Microsoft CSP, maj 2026). Övriga listpriser: M365 Business Premium 245–265 kr/mth, Google Workspace Standard 135–150 kr/mth, Adobe CC All Apps 900–1 000 kr/mth, Zoom Pro ~160 kr/mth. Snittkostnad per anställd i basmjukvara: 500–800 kr/mth.',
     alternatives: [
       { supplier: 'Microsoft 365 Business Standard (Arvo CSP)',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
       { supplier: 'Google Workspace Business Standard',          positioning: 'Starkaste alternativet till M365 — 2 TB Drive, Meet, Docs. Ofta 30–40 % billigare än M365.',            reliability: 0.96 },
@@ -196,8 +229,13 @@ export const BRANCHINDEX = {
   },
 
   skrivarleasing: {
+    source: 'estimated',
     unit: 'kr/år',
-    note: 'Totalt per år: skrivarhyra + klickavtal S/V + serviceavtal. Referens: A4 MFP mid-range med klickpris 0,06–0,09 kr/sida S/V. Källa: marknadspriser 2026.',
+    // Intervallbaserade marknadsdata (ej verifierade listpriser per leverantör).
+    // Hårdvaruhyra A3 Färg MFP: 800–1 500 kr/mån. Klickpris S/V >10k sidor: 0,05–0,10 kr/sida.
+    // Klickpris Färg >2k sidor: 0,50–0,90 kr/sida. 15-personers kontor totalt: 1 500–2 500 kr/mån.
+    // OBS: Hårdvaruleasing (hardware på separat rad) exkluderas från besparingskalkylen — hanteras i extract.js (one_time_fee/hardware).
+    note: 'Totalt per år: skrivarhyra + klickavtal S/V + serviceavtal. Branschuppskattning: A3 Färg MFP-hyra 800–1 500 kr/mån, S/V-klick >10k sidor 0,05–0,10 kr/sida, Färg-klick >2k sidor 0,50–0,90 kr/sida. Typiskt 15-personers kontor: 1 500–2 500 kr/mån totalt (18 000–30 000 kr/år).',
     alternatives: [
       { supplier: 'Konica Minolta SMB Solutions', positioning: 'Stark SMF-portfölj, konkurrenskraftiga klickavtal, rikstäckande service',       reliability: 0.95 },
       { supplier: 'Ricoh Sverige',                positioning: 'Bäst total cost of ownership för mellanstor printvolym, stark SLA',              reliability: 0.94 },
@@ -237,8 +275,13 @@ export const BRANCHINDEX = {
   },
 
   'larm-bevakning': {
+    source: 'estimated',
     unit: 'kr/år',
-    note: 'Per driftsställe/år. Inkluderar larmövervakning + larmcentral + utrustningshyra. Källa: operatörernas listpriser 2026.',
+    // Intervallbaserade marknadsdata. Komponentpriser per driftsställe:
+    //   Baspaket (central, rök, rörelse, knappsats): 399–599 kr/mån.
+    //   Tillägg kamera per enhet: ~149 kr/mån. Tillägg passersystem per dörr: ~250 kr/mån.
+    //   Typiskt kontor 200 kvm: 800–1 200 kr/mån totalt (9 600–14 400 kr/år).
+    note: 'Per driftsställe/år. Branschuppskattning: baspaket (central, rök, rörelse, knappsats) 399–599 kr/mån, kameratillägg ~149 kr/mån/enhet, passersystemtillägg ~250 kr/mån/dörr. Typiskt kontor 200 kvm: 800–1 200 kr/mån = 9 600–14 400 kr/år.',
     alternatives: [
       { supplier: 'Sector Alarm Företag', positioning: 'Lägst månadsavgift, stark app-integration, snabb utryckning',        reliability: 0.94 },
       { supplier: 'Safemore',             positioning: 'Konkurrenskraftigt pris, stark för SMF utan komplex säkerhetsinfra', reliability: 0.92 },
@@ -390,6 +433,7 @@ export function getBenchmark({ category, industry, employees }) {
     category,
     industry: ind,
     size,
+    source: cat.source ?? 'mock',
     unit: cat.unit,
     note: cat.note,
     median: cell.median,
