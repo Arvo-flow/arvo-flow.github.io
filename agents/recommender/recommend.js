@@ -125,17 +125,6 @@ function formatPrompt({ customer, invoice, categorized, benchmark }) {
     ? `\nOVERRIDE SEKRETESSREGEL: Kategorin "${categorized.category}" har offentliga listpriser. Du FÅR och SKA namnge den föreslagna leverantören i reasoning-fältet för denna faktura.`
     : '';
 
-  // Pre-compute net saving (gross × 0.80) so AI echoes the customer-facing figure, not gross.
-  let netSavingNote = '';
-  if (bm && !isAccountingSystem) {
-    const suggestedCost = Math.round(bm.p25 * scale);
-    const grossSaving = Math.max(0, annualCost - suggestedCost);
-    const netSaving = Math.round(grossSaving * 0.80);
-    if (netSaving > 0) {
-      netSavingNote = `\nNettobesparing efter Arvos 20 % arvode: ${netSaving.toLocaleString('sv-SE')} kr — om du nämner besparing i kronor i reasoning, använd ENBART detta belopp.`;
-    }
-  }
-
   return `Kunden:
   Bolagstyp: ${customer.industry}
   Anställda: ${employees}
@@ -151,7 +140,7 @@ Kategoriserad faktura:
 Branschindex för segmentet:
 ${benchmarkBlock}
 
-${phrasingRule}${secretOverride}${netSavingNote}
+${phrasingRule}${secretOverride}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }
