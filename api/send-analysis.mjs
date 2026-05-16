@@ -339,7 +339,7 @@ function htmlEmail(result) {
   <tr>
     <td style="background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);padding:34px 40px 30px">
       <p style="margin:0 0 10px;font-size:9px;font-weight:700;color:rgba(255,255,255,0.60);text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Din nettobesparing</p>
-      <p style="margin:0 0 14px;font-size:54px;font-weight:700;color:#ffffff;line-height:1;letter-spacing:-2px;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</p>
+      <p style="margin:0 0 14px;font-size:40px;font-weight:700;color:#ffffff;line-height:1;letter-spacing:-1px;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</p>
       <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;font-family:'Inter',Arial,sans-serif">
         ${formatKr(ex.annualCost)} &rarr; ${formatKr(r.suggestedAnnualCost)} / år
         ${suppDisplay ? `hos <strong style="color:#ffffff">${suppDisplay}</strong>` : ''}
@@ -361,7 +361,7 @@ function htmlEmail(result) {
         <!-- Net saving — only accent row -->
         <tr style="background:#DCEEEA">
           <td style="padding:14px 16px 14px 19px;color:#0E4F47;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-left:2.5px solid #1B7A6E;font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
-          <td style="padding:14px 16px;color:#1B7A6E;font-weight:700;font-size:20px;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</td>
+          <td style="padding:14px 16px;color:#1B7A6E;font-weight:700;font-size:15px;white-space:nowrap;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</td>
         </tr>
       </table>
     </td>
