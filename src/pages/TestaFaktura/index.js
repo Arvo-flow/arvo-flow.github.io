@@ -642,6 +642,13 @@ const TestaFaktura = () => {
                 <div className="sent">
                   <Icon name="check" size={16} stroke={2.5} />
                   Vi skickar analysen till {email} inom några minuter.
+                  <button
+                    type="button"
+                    onClick={() => { setEmailState('idle'); setEmail(''); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 8, fontSize: 12, color: 'inherit', opacity: 0.6, textDecoration: 'underline' }}
+                  >
+                    Skicka igen
+                  </button>
                 </div>
               ) : (
                 <form onSubmit={submitEmail}>
