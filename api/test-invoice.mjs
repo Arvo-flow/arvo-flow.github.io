@@ -170,17 +170,19 @@ function computeElRecommendation(extracted) {
   const benchmarkAnnual = Math.round(benchmarkKwh * annualKwh);
   const grossSaving    = Math.max(0, currentAnnual - benchmarkAnnual);
   const shouldSwitch   = grossSaving >= 500;
+  const arvoFee        = Math.round(grossSaving * 0.20);
+  const netSaving      = grossSaving - arvoFee;
 
   const seasonLabel  = { winter: 'vinter', spring_fall: 'vår/höst', summer: 'sommar' }[season];
   const monthLabel   = extracted.elBillingMonth ?? 'fakturamånad';
   const mwhEstimate  = Math.round(annualKwh / 100) / 10; // en decimal MWh
 
   return {
-    annualKwh, currentAnnual, benchmarkAnnual, grossSaving, shouldSwitch,
+    annualKwh, currentAnnual, benchmarkAnnual, grossSaving, arvoFee, netSaving, shouldSwitch,
     omrade, season: seasonLabel, billingMonth: monthLabel, energiPerKwh, benchmarkKwh,
     suggestedAnnualCost: shouldSwitch ? benchmarkAnnual : null,
     reasoning: shouldSwitch
-      ? `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}. Arvo estimerar att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en potentiell besparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år.`
+      ? `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}. Arvo estimerar att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos 20 % fee: ${netSaving.toLocaleString('sv-SE')} kr/år.`
       : `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}, vilket är i linje med ett välförhandlat spotprisavtal i ${omrade} (benchmark ${seasonLabel}: ${benchmarkKwh.toFixed(2)} kr/kWh). Ert nuvarande avtal verkar konkurrenskraftigt.`,
     uncertaintyNote: `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh med säsongskorrigering (${seasonLabel}, ×${multiplier}). Faktisk årsförbrukning kan avvika ±30–40 %.`,
   };
@@ -405,8 +407,7 @@ export default async function handler(req, res) {
         annualCost: elRec.currentAnnual, industry, employees: employeesNum,
       }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
-      const arvoFee  = Math.round(elRec.grossSaving * 0.20);
-      const netSaving = elRec.grossSaving - arvoFee;
+      const { arvoFee, netSaving } = elRec;
 
       return send(res, 200, {
         ok: true, route: 'auto',
