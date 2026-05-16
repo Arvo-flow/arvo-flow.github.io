@@ -214,6 +214,7 @@ REGLER FÖR REASONING
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
 suggestedAnnualCost och savingPerYear låses i kod mot Arvo-volympriset. Fyll i Arvo-volympriset exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
 I din reasoning: hänvisa alltid till "marknadsbenchmark" — aldrig till "p25", "25:e percentilen" eller "Arvo-volympris".
+Om du nämner besparing i kronor i reasoning, ange ALLTID nettobeloppet (efter Arvos 20 % arvode) som uppges i kundinformationen under "Nettobesparing" — ALDRIG bruttobesparingen.
 
 OUTPUTFORMAT
 Anropa alltid verktyget "recommend" med exakt en gång. Skriv ingen brödtext utanför verktygsanropet.
