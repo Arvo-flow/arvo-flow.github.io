@@ -230,6 +230,21 @@ export async function recommend(input, opts = {}) {
     result.switchSteps = [];
   }
 
+  // Deterministic shouldSwitch override: if the customer pays >15 % over p25,
+  // always recommend a switch regardless of what the model decided.
+  // This eliminates AI flip-flopping on clear-cut overpayment cases.
+  if (!categoryDef?.licensePending && benchmark) {
+    const _annualCost = input.invoice.annualCost ?? input.invoice.amount ?? 0;
+    const _employees  = input.customer.employees ?? 1;
+    const _seatCount  = input.invoice.seatCount ?? null;
+    const _isPerUser  = benchmark.note.toLowerCase().includes('per användare');
+    const _seats      = _isPerUser ? (_seatCount ?? _employees) : 1;
+    const _p25Total   = Math.round(benchmark.p25 * _seats);
+    if (_p25Total > 0 && _annualCost > _p25Total * 1.15) {
+      result.shouldSwitch = true;
+    }
+  }
+
   // Deterministic financial overrides — AI provides reasoning only.
   // All SEK figures are locked to benchmark.p25 so results never vary
   // between runs. The model must not be trusted for financial arithmetic.
