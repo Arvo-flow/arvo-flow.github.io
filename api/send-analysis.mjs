@@ -13,7 +13,7 @@ const PDFDocument = require('pdfkit');
 
 const FROM = process.env.RESEND_FROM ?? 'Arvo Flow <analys@arvo-flow.se>';
 
-// ── Brand tokens (from theme.js) ──────────────────────────────────────────────
+// ── Brand tokens ──────────────────────────────────────────────────────────────
 const T = {
   bg:        '#F1F6F3',
   surface:   '#FFFFFF',
@@ -32,7 +32,7 @@ const T = {
   warnBdr:   '#D4A940',
 };
 
-// ── Supplier display rules — mirrors frontend REAL_PRICE_CATEGORIES ───────────
+// ── Supplier display rules ────────────────────────────────────────────────────
 const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
 
 const CATEGORY_PARTNER_LABEL = {
@@ -53,21 +53,21 @@ const CATEGORY_PARTNER_LABEL = {
 };
 
 const CATEGORY_LABELS = {
-  el:                  'Elavtal',
-  mobil:               'Mobilabonnemang',
-  bredband:            'Företagsbredband',
-  'mjukvara-saas':     'Programvarulicenser / SaaS',
-  skrivarleasing:      'Skrivare & Managed Print',
-  kortterminal:        'Betaltjänster',
-  'faktura-tjanst':    'Fakturatjänst / Affärssystem',
-  loneadmin:           'Löneadministration',
-  'larm-bevakning':    'Larm & Bevakning',
-  foretagshalsovard:   'Företagshälsovård',
-  bankavgifter:        'Bankavgifter',
-  kontorsmaterial:     'Kontorsmaterial',
-  'städ-rengöring':    'Städ & Rengöring',
-  'transport-frakt':   'Transport & Frakt',
-  'it-support':        'IT-drift & Support',
+  el:               'Elavtal',
+  mobil:            'Mobilabonnemang',
+  bredband:         'Företagsbredband',
+  'mjukvara-saas':  'Programvarulicenser / SaaS',
+  skrivarleasing:   'Skrivare & Managed Print',
+  kortterminal:     'Betaltjänster',
+  'faktura-tjanst': 'Fakturatjänst / Affärssystem',
+  loneadmin:        'Löneadministration',
+  'larm-bevakning': 'Larm & Bevakning',
+  foretagshalsovard:'Företagshälsovård',
+  bankavgifter:     'Bankavgifter',
+  kontorsmaterial:  'Kontorsmaterial',
+  'städ-rengöring': 'Städ & Rengöring',
+  'transport-frakt':'Transport & Frakt',
+  'it-support':     'IT-drift & Support',
 };
 
 function displayedSupplier(cat, r) {
@@ -88,9 +88,6 @@ function send(res, status, body) {
 }
 
 // ── Logo mark ─────────────────────────────────────────────────────────────────
-// Recreates the brand SVG "A" (viewBox 0 0 40 40) using pdfkit primitives
-// with a top→bottom linear gradient (#5DD6CA → #1B6E66), even-odd fill rule.
-
 function drawLogoMark(doc, ox, oy, size) {
   const S = size / 40;
   const grad = doc.linearGradient(ox + 20 * S, oy, ox + 20 * S, oy + 36 * S);
@@ -114,110 +111,120 @@ function drawLogoMark(doc, ox, oy, size) {
 }
 
 // ── PDF ────────────────────────────────────────────────────────────────────────
+// Design principles:
+//  - Proper page margins (56pt each side) so content feels contained
+//  - No alternating row colors — clean white with hairline borders only
+//  - Only the net-saving row and savings block carry brand color
+//  - Logo mark and wordmark share exact vertical center
 
 function generatePdf(result) {
   return new Promise((resolve, reject) => {
     const { extracted: ex, categorized: cat, recommendation: r } = result;
     const suppDisplay = displayedSupplier(cat, r);
-    const catLabel = CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '';
+    const catLabel    = CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '';
 
-    const doc = new PDFDocument({ margin: 0, size: 'A4' });
+    const PAD = 56;
+    const doc = new PDFDocument({ margin: PAD, size: 'A4' });
     const chunks = [];
     doc.on('data', (c) => chunks.push(c));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    const PW  = 595.28;
-    const PAD = 48;
-    const W   = PW - PAD * 2;
+    const PW = 595.28;
+    const W  = PW - PAD * 2;  // 483pt usable width
+    let y = PAD;
 
-    // ── Header: logo + brand on #F1F6F3 ──────────────────────────────────────
-    const HDR_H = 70;
-    doc.rect(0, 0, PW, HDR_H).fill(T.bg);
+    // ── Header: logo mark + wordmark ─────────────────────────────────────────
+    const MARK = 32;
+    drawLogoMark(doc, PAD, y, MARK);
 
-    const MARK = 34;
-    const MARK_Y = (HDR_H - MARK) / 2;
-    drawLogoMark(doc, PAD, MARK_Y, MARK);
-
-    const TX = PAD + MARK + 10;
-    const TY = MARK_Y + 4;
-    doc.fontSize(18).font('Times-Bold').fillColor(T.ink).text('Arvo', TX, TY, { continued: true });
+    // Wordmark vertically centered with the mark
+    const WX   = PAD + MARK + 10;
+    const WY   = y + (MARK - 18) / 2 + 1; // center 18pt text within 32pt mark
+    doc.fontSize(18).font('Times-Bold').fillColor(T.ink).text('Arvo', WX, WY, { continued: true });
     doc.font('Times-Italic').fillColor(T.mutedSoft).text(' Flow');
 
+    // Subtitle right-aligned, same vertical center
     doc.fontSize(9).font('Helvetica').fillColor(T.mutedSoft)
-      .text('Din leverantörsanalys', 0, MARK_Y + 8, { align: 'right', width: PW - PAD });
+      .text('Din leverantörsanalys', PAD, WY + 1, { width: W, align: 'right' });
 
-    doc.moveTo(0, HDR_H).lineTo(PW, HDR_H).strokeColor(T.border).lineWidth(0.5).stroke();
+    y += MARK + 20;
 
-    // ── Supplier strip ────────────────────────────────────────────────────────
-    const SUP_Y = HDR_H;
-    const SUP_H = 52;
-    doc.rect(0, SUP_Y, PW, SUP_H).fill(T.surface);
+    // Hairline rule
+    doc.moveTo(PAD, y).lineTo(PW - PAD, y).strokeColor(T.border).lineWidth(0.5).stroke();
+    y += 20;
 
-    doc.fontSize(17).font('Times-Bold').fillColor(T.ink)
-      .text(ex.supplier ?? '', PAD, SUP_Y + 10);
-    doc.fontSize(10).font('Helvetica').fillColor(T.mutedSoft)
-      .text(catLabel, PAD, SUP_Y + 33);
+    // ── Supplier + category ───────────────────────────────────────────────────
+    doc.fontSize(20).font('Times-Bold').fillColor(T.ink).text(ex.supplier ?? '', PAD, y);
+    y += 26;
+    doc.fontSize(10).font('Helvetica').fillColor(T.mutedSoft).text(catLabel, PAD, y);
+    y += 28;
 
-    // ── Gradient savings block ────────────────────────────────────────────────
-    const BLK_Y = SUP_Y + SUP_H;
-    const BLK_H = 108;
-    const blkGrad = doc.linearGradient(0, BLK_Y, PW, BLK_Y + BLK_H);
+    // ── Savings block (full-bleed gradient) ───────────────────────────────────
+    // Temporarily leave margins to draw full-width
+    const BLK_H = 104;
+    const blkGrad = doc.linearGradient(0, y, PW, y + BLK_H);
     blkGrad.stop(0, T.gradTop);
     blkGrad.stop(1, T.gradBot);
-    doc.rect(0, BLK_Y, PW, BLK_H).fill(blkGrad);
+    doc.rect(0, y, PW, BLK_H).fill(blkGrad);
 
-    doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.65)')
-      .text('DIN NETTOBESPARING', PAD, BLK_Y + 16, { characterSpacing: 1.4 });
-    doc.fontSize(42).font('Times-Bold').fillColor(T.surface)
-      .text('+' + formatKr(r.netSaving), PAD, BLK_Y + 30);
+    doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.60)')
+      .text('DIN NETTOBESPARING', PAD, y + 16, { characterSpacing: 1.4 });
+    doc.fontSize(40).font('Times-Bold').fillColor(T.surface)
+      .text('+' + formatKr(r.netSaving), PAD, y + 30);
 
     const costLine =
       formatKr(ex.annualCost) + ' till ' + formatKr(r.suggestedAnnualCost) + ' / ar' +
       (suppDisplay ? '  hos  ' + suppDisplay : '') +
       '   ·   Arvos arvode ' + formatKr(r.arvoFee) + ' (20 %)';
-    doc.fontSize(9.5).font('Helvetica').fillColor('rgba(255,255,255,0.80)')
-      .text(costLine, PAD, BLK_Y + 80, { width: W });
+    doc.fontSize(9.5).font('Helvetica').fillColor('rgba(255,255,255,0.78)')
+      .text(costLine, PAD, y + 78, { width: W });
 
-    // ── Details table ─────────────────────────────────────────────────────────
-    let y = BLK_Y + BLK_H + 20;
-    const ROW_H = 26;
-    const LC = PAD, RC = PAD + 230;
+    y += BLK_H + 28;
+
+    // ── Details table — white rows, hairline borders only ────────────────────
+    const ROW_H = 28;
+    const LC = PAD;
+    const RC = PAD + 210;
 
     const row = (label, value, opts = {}) => {
-      if (opts.bg) doc.rect(0, y - 4, PW, ROW_H).fill(opts.bg);
-      doc.fontSize(8.5).font('Helvetica').fillColor(T.mutedSoft)
-        .text(label.toUpperCase(), LC, y, { width: 220, characterSpacing: 0.5 });
-      doc.fontSize(10)
+      // Just a top hairline — no background colors
+      doc.moveTo(LC, y).lineTo(PW - LC, y).strokeColor(T.border).lineWidth(0.3).stroke();
+      doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft)
+        .text(label.toUpperCase(), LC, y + 8, { width: 200, characterSpacing: 0.5 });
+      doc.fontSize(10.5)
         .font(opts.bold ? 'Times-Bold' : 'Helvetica')
         .fillColor(opts.color ?? (opts.bold ? T.brand : T.inkSoft))
-        .text(value ?? '–', RC, y - 0.5, { width: W - 230 });
+        .text(value ?? '–', RC, y + 7, { width: W - 210 });
       y += ROW_H;
     };
 
     row('Nuvarande leverantör', ex.supplier);
-    row('Du betalar idag',     formatKr(ex.annualCost) + ' / ar', { bg: T.bg });
-    row('Fakturadatum',        ex.date ?? '–');
-    if (suppDisplay) row('Föreslagen leverantör', suppDisplay, { bold: true, bg: T.bg });
-    row('Arvo-pris',           formatKr(r.suggestedAnnualCost) + ' / ar', { bold: true });
-    row('Bruttobesparing',     formatKr(r.grossSaving), { bg: T.bg });
-    row('Arvos arvode (20 %)', formatKr(r.arvoFee));
+    row('Du betalar idag',      formatKr(ex.annualCost) + ' / ar');
+    row('Fakturadatum',         ex.date ?? '–');
+    if (suppDisplay) row('Föreslagen leverantör', suppDisplay, { bold: true });
+    row('Arvo-pris',            formatKr(r.suggestedAnnualCost) + ' / ar', { bold: true });
+    row('Bruttobesparing',      formatKr(r.grossSaving));
+    row('Arvos arvode (20 %)',  formatKr(r.arvoFee));
 
-    // Net saving highlight row
-    doc.rect(0, y - 4, PW, ROW_H + 2).fill(T.brandSoft);
-    doc.rect(0, y - 4, 3, ROW_H + 2).fill(T.brand);
-    doc.fontSize(8.5).font('Helvetica-Bold').fillColor(T.brandInk)
-      .text('DIN NETTOBESPARING', LC + 8, y, { characterSpacing: 0.5 });
-    doc.fontSize(11).font('Times-Bold').fillColor(T.brand)
-      .text('+' + formatKr(r.netSaving), RC, y - 0.5);
-    y += ROW_H + 6;
+    // Net saving row — brand soft background, left accent line
+    doc.moveTo(LC, y).lineTo(PW - LC, y).strokeColor(T.border).lineWidth(0.3).stroke();
+    doc.rect(LC, y, W, ROW_H).fill(T.brandSoft);
+    doc.rect(LC, y, 2.5, ROW_H).fill(T.brand);
+    doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brandInk)
+      .text('DIN NETTOBESPARING', LC + 8, y + 8, { characterSpacing: 0.5 });
+    doc.fontSize(12).font('Times-Bold').fillColor(T.brand)
+      .text('+' + formatKr(r.netSaving), RC, y + 7);
+    y += ROW_H;
+    // Bottom border of table
+    doc.moveTo(LC, y).lineTo(PW - LC, y).strokeColor(T.border).lineWidth(0.3).stroke();
 
     // License overage
     if (r.licenseOverage > 0) {
-      y += 6;
+      y += 16;
       const OH = 44;
       doc.rect(LC, y, W, OH).fill(T.warnSoft);
-      doc.rect(LC, y, 3, OH).fill(T.warnBdr);
+      doc.rect(LC, y, 2.5, OH).fill(T.warnBdr);
       doc.fontSize(8).font('Helvetica-Bold').fillColor(T.warning)
         .text('NOTERING OM LICENSER', LC + 10, y + 9, { characterSpacing: 0.5 });
       doc.fontSize(9).font('Helvetica').fillColor(T.inkSoft)
@@ -225,36 +232,42 @@ function generatePdf(result) {
           r.licenseOverage + ' överflödiga licenser — ytterligare ' + formatKr(r.overageSavings) + ' att spara.',
           LC + 10, y + 23, { width: W - 20 }
         );
-      y += OH + 10;
+      y += OH;
     }
 
     // ── Reasoning ─────────────────────────────────────────────────────────────
-    y += 14;
-    doc.moveTo(PAD, y).lineTo(PW - PAD, y).strokeColor(T.border).lineWidth(0.5).stroke();
-    y += 14;
-
+    y += 24;
     doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brand)
       .text('VARFÖR VI TROR DU KAN SPARA', PAD, y, { characterSpacing: 0.9 });
     y += 14;
     doc.fontSize(10.5).font('Helvetica').fillColor(T.inkSoft)
       .text(r.reasoning ?? '', PAD, y, { width: W, lineGap: 3 });
 
-    // ── Footer ─────────────────────────────────────────────────────────────────
-    doc.moveTo(0, 802).lineTo(PW, 802).strokeColor(T.border).lineWidth(0.5).stroke();
-    doc.rect(0, 803, PW, 39).fill(T.bg);
-    drawLogoMark(doc, (PW - 16) / 2 - 60, 812, 16);
-    doc.fontSize(9.5).font('Times-Bold').fillColor(T.ink).text('Arvo', (PW - 16) / 2 - 38, 815, { continued: true });
-    doc.font('Times-Italic').fillColor(T.mutedSoft).text(' Flow', { continued: false });
+    // ── Footer ────────────────────────────────────────────────────────────────
+    const FY = 806;
+    doc.moveTo(PAD, FY).lineTo(PW - PAD, FY).strokeColor(T.border).lineWidth(0.5).stroke();
+
+    const FMARK = 14;
+    const FTX   = PW / 2 - 28;
+    const FTY   = FY + 10;
+    drawLogoMark(doc, FTX, FTY, FMARK);
+    doc.fontSize(10).font('Times-Bold').fillColor(T.ink)
+      .text('Arvo', FTX + FMARK + 5, FTY + 1, { continued: true });
+    doc.font('Times-Italic').fillColor(T.mutedSoft).text(' Flow');
     doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft)
-      .text('arvo-flow.se  ·  20 % av realiserad besparing. Inga fasta avgifter.', 0, 828, { width: PW, align: 'center' });
+      .text('arvo-flow.se  ·  20 % av realiserad besparing. Inga fasta avgifter.', PAD, FY + 24, { width: W, align: 'center' });
 
     doc.end();
   });
 }
 
 // ── HTML email ─────────────────────────────────────────────────────────────────
+// Design principles:
+//  - No alternating row colors — clean white table with hairline borders
+//  - Only "Din nettobesparing" row gets the brand-soft accent
+//  - Footer: light #F1F6F3 with logo, no dark block
 
-const LOGO_SVG = `<svg width="32" height="32" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DD6CA"/><stop offset="100%" stop-color="#1B6E66"/></linearGradient></defs><path fill="url(#lg)" fill-rule="evenodd" d="M20 3 L37 36 L27.5 36 L20 21.5 L12.5 36 L3 36 Z M20 12.5 L24 21 L16 21 Z"/></svg>`;
+const LOGO_SVG = `<svg width="30" height="30" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DD6CA"/><stop offset="100%" stop-color="#1B6E66"/></linearGradient></defs><path fill="url(#lg)" fill-rule="evenodd" d="M20 3 L37 36 L27.5 36 L20 21.5 L12.5 36 L3 36 Z M20 12.5 L24 21 L16 21 Z"/></svg>`;
 
 function htmlEmail(result) {
   const { extracted: ex, categorized: cat, recommendation: r } = result;
@@ -262,22 +275,27 @@ function htmlEmail(result) {
   const suppDisplay = displayedSupplier(cat, r);
 
   const licenseBlock = r.licenseOverage > 0
-    ? `<tr><td style="padding:0 36px 24px">
-        <div style="border-left:3px solid #D4A940;background:#F3E5C7;border-radius:0 8px 8px 0;padding:14px 18px">
-          <p style="margin:0 0 5px;font-size:10px;font-weight:700;color:#A8761A;letter-spacing:.09em;text-transform:uppercase;font-family:'Inter',Arial,sans-serif">Notering om licenser</p>
-          <p style="margin:0;font-size:13px;color:#1F2E2A;line-height:1.6;font-family:'Inter',Arial,sans-serif">
-            ${r.licenseOverage} överflödiga licenser — ytterligare ${formatKr(r.overageSavings)} att spara.
-          </p>
+    ? `<tr><td style="padding:0 40px 24px">
+        <div style="border-left:2px solid #D4A940;background:#F3E5C7;padding:14px 18px;border-radius:0 6px 6px 0">
+          <p style="margin:0 0 4px;font-size:10px;font-weight:700;color:#A8761A;letter-spacing:.09em;text-transform:uppercase;font-family:'Inter',Arial,sans-serif">Notering om licenser</p>
+          <p style="margin:0;font-size:13px;color:#1F2E2A;line-height:1.65;font-family:'Inter',Arial,sans-serif">${r.licenseOverage} överflödiga licenser — ytterligare ${formatKr(r.overageSavings)} att spara.</p>
         </div>
       </td></tr>`
     : '';
 
   const suppRow = suppDisplay
     ? `<tr>
-        <td style="padding:11px 14px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;width:46%;font-family:'Inter',Arial,sans-serif">Föreslagen leverantör</td>
-        <td style="padding:11px 14px;color:#1B7A6E;font-weight:700;border-bottom:1px solid #E8F0EC;font-size:14px;font-family:'Inter',Arial,sans-serif">${suppDisplay}</td>
+        <td style="padding:13px 16px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;width:44%;font-family:'Inter',Arial,sans-serif">Föreslagen leverantör</td>
+        <td style="padding:13px 16px;color:#1B7A6E;font-weight:700;border-bottom:1px solid #E8F0EC;font-size:15px;font-family:'Inter',Arial,sans-serif">${suppDisplay}</td>
       </tr>`
     : '';
+
+  // Simple white row helper (inline to keep template readable)
+  const wr = (label, val, bold = false, color = '#1F2E2A') =>
+    `<tr>
+      <td style="padding:13px 16px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;width:44%;font-family:'Inter',Arial,sans-serif">${label}</td>
+      <td style="padding:13px 16px;color:${color};font-weight:${bold ? 700 : 500};border-bottom:1px solid #E8F0EC;font-size:${bold ? 15 : 14}px;font-family:'Inter',Arial,sans-serif">${val}</td>
+    </tr>`;
 
   return `<!DOCTYPE html>
 <html lang="sv">
@@ -292,19 +310,19 @@ function htmlEmail(result) {
 <body style="margin:0;padding:0;background:#F1F6F3;-webkit-font-smoothing:antialiased">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#F1F6F3;padding:40px 16px">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 4px 24px rgba(14,26,23,0.08)">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 2px 16px rgba(14,26,23,0.07)">
 
   <!-- Logo header -->
   <tr>
-    <td style="background:#F1F6F3;padding:22px 36px 20px;border-bottom:1px solid #D5E2DC">
+    <td style="padding:24px 40px;border-bottom:1px solid #D5E2DC;background:#F1F6F3">
       <table cellpadding="0" cellspacing="0" width="100%"><tr>
         <td style="vertical-align:middle">
           ${LOGO_SVG}
-          <span style="margin-left:9px;font-family:'Playfair Display',Georgia,serif;font-size:19px;font-weight:600;color:#0E1A17;vertical-align:middle;letter-spacing:-.2px">Arvo</span>
-          <em style="margin-left:4px;font-family:'Playfair Display',Georgia,serif;font-size:19px;font-weight:400;color:#5C6E68;vertical-align:middle"> Flow</em>
+          <span style="margin-left:9px;font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:600;color:#0E1A17;vertical-align:middle">Arvo</span>
+          <em style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:400;color:#5C6E68;vertical-align:middle"> Flow</em>
         </td>
         <td style="text-align:right;vertical-align:middle">
-          <p style="margin:0;font-size:11px;color:#5C6E68;font-family:'Inter',Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;font-weight:600">${catLabel}</p>
+          <span style="font-size:10px;color:#5C6E68;font-family:'Inter',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-weight:600">${catLabel}</span>
         </td>
       </tr></table>
     </td>
@@ -312,52 +330,38 @@ function htmlEmail(result) {
 
   <!-- Supplier name -->
   <tr>
-    <td style="padding:22px 36px 18px;border-bottom:1px solid #E8F0EC">
-      <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:600;color:#0E1A17;letter-spacing:-.2px">${ex.supplier}</p>
+    <td style="padding:24px 40px 20px;border-bottom:1px solid #E8F0EC">
+      <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:600;color:#0E1A17;letter-spacing:-.3px;line-height:1.2">${ex.supplier}</p>
     </td>
   </tr>
 
   <!-- Savings block -->
   <tr>
-    <td style="background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);padding:32px 36px 28px">
-      <p style="margin:0 0 8px;font-size:10px;font-weight:700;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:.16em;font-family:'Inter',Arial,sans-serif">Din nettobesparing</p>
-      <p style="margin:0 0 12px;font-size:52px;font-weight:700;color:#ffffff;line-height:1;letter-spacing:-2px;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</p>
-      <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.80);line-height:1.6;font-family:'Inter',Arial,sans-serif">
+    <td style="background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);padding:34px 40px 30px">
+      <p style="margin:0 0 10px;font-size:9px;font-weight:700;color:rgba(255,255,255,0.60);text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Din nettobesparing</p>
+      <p style="margin:0 0 14px;font-size:54px;font-weight:700;color:#ffffff;line-height:1;letter-spacing:-2px;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</p>
+      <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;font-family:'Inter',Arial,sans-serif">
         ${formatKr(ex.annualCost)} &rarr; ${formatKr(r.suggestedAnnualCost)} / år
-        ${suppDisplay ? `hos <strong style="color:#ffffff;font-weight:700">${suppDisplay}</strong>` : ''}
+        ${suppDisplay ? `hos <strong style="color:#ffffff">${suppDisplay}</strong>` : ''}
         &nbsp;&middot;&nbsp; Arvos fee ${formatKr(r.arvoFee)} (20&nbsp;%)
       </p>
     </td>
   </tr>
 
-  <!-- Details table -->
+  <!-- Details table — white rows only, hairline borders -->
   <tr>
-    <td style="padding:28px 36px 8px">
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
-        <tr>
-          <td style="padding:11px 14px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;width:46%;font-family:'Inter',Arial,sans-serif">Nuvarande leverantör</td>
-          <td style="padding:11px 14px;color:#0E1A17;font-weight:600;border-bottom:1px solid #E8F0EC;font-size:14px;font-family:'Inter',Arial,sans-serif">${ex.supplier}</td>
-        </tr>
-        <tr style="background:#F7FAF8">
-          <td style="padding:11px 14px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Inter',Arial,sans-serif">Du betalar idag</td>
-          <td style="padding:11px 14px;color:#0E1A17;font-weight:600;border-bottom:1px solid #E8F0EC;font-size:14px;font-family:'Inter',Arial,sans-serif">${formatKr(ex.annualCost)} / år</td>
-        </tr>
+    <td style="padding:28px 40px 8px">
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid #E8F0EC">
+        ${wr('Nuvarande leverantör', ex.supplier)}
+        ${wr('Du betalar idag', formatKr(ex.annualCost) + ' / år')}
         ${suppRow}
-        <tr${suppDisplay ? ' style="background:#F7FAF8"' : ''}>
-          <td style="padding:11px 14px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Inter',Arial,sans-serif">Arvo-pris</td>
-          <td style="padding:11px 14px;color:#1B7A6E;font-weight:700;border-bottom:1px solid #E8F0EC;font-size:14px;font-family:'Inter',Arial,sans-serif">${formatKr(r.suggestedAnnualCost)} / år</td>
-        </tr>
-        <tr${!suppDisplay ? ' style="background:#F7FAF8"' : ''}>
-          <td style="padding:11px 14px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Inter',Arial,sans-serif">Bruttobesparing</td>
-          <td style="padding:11px 14px;color:#0E1A17;font-weight:600;border-bottom:1px solid #E8F0EC;font-size:14px;font-family:'Inter',Arial,sans-serif">${formatKr(r.grossSaving)}</td>
-        </tr>
-        <tr${suppDisplay ? ' style="background:#F7FAF8"' : ''}>
-          <td style="padding:11px 14px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:'Inter',Arial,sans-serif">Arvos arvode (20&nbsp;%)</td>
-          <td style="padding:11px 14px;color:#3F4B47;border-bottom:1px solid #E8F0EC;font-size:14px;font-family:'Inter',Arial,sans-serif">${formatKr(r.arvoFee)}</td>
-        </tr>
+        ${wr('Arvo-pris', formatKr(r.suggestedAnnualCost) + ' / år', true, '#1B7A6E')}
+        ${wr('Bruttobesparing', formatKr(r.grossSaving))}
+        ${wr('Arvos arvode (20&nbsp;%)', formatKr(r.arvoFee))}
+        <!-- Net saving — only accent row -->
         <tr style="background:#DCEEEA">
-          <td style="padding:13px 14px 13px 17px;color:#0E4F47;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid #1B7A6E;font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
-          <td style="padding:13px 14px;color:#1B7A6E;font-weight:700;font-size:18px;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</td>
+          <td style="padding:14px 16px 14px 19px;color:#0E4F47;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-left:2.5px solid #1B7A6E;font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
+          <td style="padding:14px 16px;color:#1B7A6E;font-weight:700;font-size:20px;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</td>
         </tr>
       </table>
     </td>
@@ -368,17 +372,17 @@ function htmlEmail(result) {
 
   <!-- Reasoning -->
   <tr>
-    <td style="padding:28px 36px 24px">
-      <p style="margin:0 0 10px;font-size:10px;font-weight:700;color:#1B7A6E;text-transform:uppercase;letter-spacing:.12em;font-family:'Inter',Arial,sans-serif">Varför vi tror du kan spara</p>
-      <p style="margin:0;font-size:14px;color:#1F2E2A;line-height:1.78;font-family:'Inter',Arial,sans-serif">${r.reasoning ?? ''}</p>
+    <td style="padding:28px 40px 24px">
+      <p style="margin:0 0 10px;font-size:9px;font-weight:700;color:#1B7A6E;text-transform:uppercase;letter-spacing:.14em;font-family:'Inter',Arial,sans-serif">Varför vi tror du kan spara</p>
+      <p style="margin:0;font-size:14px;color:#1F2E2A;line-height:1.8;font-family:'Inter',Arial,sans-serif">${r.reasoning ?? ''}</p>
     </td>
   </tr>
 
   <!-- CTA -->
   <tr>
-    <td style="padding:4px 36px 36px;text-align:center">
+    <td style="padding:4px 40px 36px;text-align:center">
       <a href="https://arvo-flow.github.io/flow/testa-faktura"
-         style="display:inline-block;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);color:#ffffff;font-weight:600;font-size:15px;padding:15px 36px;border-radius:10px;text-decoration:none;font-family:'Inter',Arial,sans-serif;letter-spacing:.01em">
+         style="display:inline-block;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);color:#ffffff;font-weight:600;font-size:15px;padding:15px 38px;border-radius:10px;text-decoration:none;font-family:'Inter',Arial,sans-serif">
         Aktivera bytet &rarr;
       </a>
       <p style="margin:14px 0 0;font-size:12px;color:#5C6E68;font-family:'Inter',Arial,sans-serif">Du betalar 20 % av faktiskt realiserad besparing. Inga fasta avgifter.</p>
@@ -387,16 +391,12 @@ function htmlEmail(result) {
 
   <!-- Footer -->
   <tr>
-    <td style="border-top:1px solid #D5E2DC;padding:20px 36px;text-align:center;background:#F1F6F3">
-      <table cellpadding="0" cellspacing="0" style="margin:0 auto 8px">
-        <tr>
-          <td style="padding-right:8px;vertical-align:middle">${LOGO_SVG}</td>
-          <td style="vertical-align:middle">
-            <span style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:600;color:#0E1A17">Arvo</span>
-            <em style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:400;color:#5C6E68"> Flow</em>
-          </td>
-        </tr>
-      </table>
+    <td style="border-top:1px solid #D5E2DC;padding:22px 40px;text-align:center;background:#F1F6F3">
+      <div style="margin-bottom:8px">
+        ${LOGO_SVG}
+        <span style="margin-left:8px;font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:600;color:#0E1A17;vertical-align:middle">Arvo</span>
+        <em style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:400;color:#5C6E68;vertical-align:middle"> Flow</em>
+      </div>
       <p style="margin:0;font-size:11px;color:#5C6E68;font-family:'Inter',Arial,sans-serif">
         <a href="https://arvo-flow.se" style="color:#1B7A6E;text-decoration:none">arvo-flow.se</a>
         &nbsp;&middot;&nbsp; Du betalar 20 % av faktiskt realiserad besparing.
