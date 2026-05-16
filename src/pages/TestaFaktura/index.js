@@ -87,6 +87,7 @@ const CATEGORY_LABELS = {
   'saas-finance':      'Affärssystem / Bokföring',
   'saas-other':        'Programvarulicenser / SaaS · övrigt',
   serverhosting:       'Serverhosting & Cloud-infrastruktur',
+  utrustningsleasing:  'IT-utrustningsleasing',
   skrivarleasing:      'Skrivare & Managed Print',
   loneadmin:           'Löneadministration',
   'larm-bevakning':    'Larm & Bevakning',
