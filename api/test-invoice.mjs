@@ -538,6 +538,8 @@ export default async function handler(req, res) {
         licensePending: categorized.licensePending,
       },
       recommendation: {
+        recommendationType: recommendation.recommendationType ?? (recommendation.shouldSwitch ? 'switch' : 'no_action'),
+        optimizationSaving: recommendation.optimizationSaving ?? null,
         shouldSwitch: recommendation.shouldSwitch,
         suggestedSupplier: recommendation.suggestedSupplier ?? null,
         suggestedAnnualCost: recommendation.suggestedAnnualCost ?? null,

@@ -9,7 +9,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, NoSwitchBlock, CreditAlert, PriceNote, PartnerBlock, KV,
+  ResultHead, SavingsBlock, OptimizeBlock, NoSwitchBlock, CreditAlert, PriceNote, PartnerBlock, KV,
   Reasoning, LicenseOverageNote, NextSteps, ServiceList, EmailGate,
   ModalOverlay, ModalCard,
 } from './styles';
@@ -263,6 +263,12 @@ const TestaFaktura = () => {
 
   const loading = phase && phase !== 'done';
 
+  const isOptimize = result?.recommendation?.recommendationType === 'optimize'
+    && (result?.recommendation?.optimizationSaving ?? 0) > 0;
+  const optSaving = result?.recommendation?.optimizationSaving ?? 0;
+  const optArvoFee = isOptimize ? Math.round(optSaving * 0.20) : 0;
+  const optNet = isOptimize ? optSaving - optArvoFee : 0;
+
   return (
     <Page>
       <Nav variant="public" />
@@ -453,6 +459,39 @@ const TestaFaktura = () => {
                   </>
                 )}
               </NoSwitchBlock>
+            ) : isOptimize ? (
+              <>
+                <OptimizeBlock>
+                  <span className="kicker">Dold kostnad hittad</span>
+                  <span className="amount">+{formatKr(optNet)}</span>
+                  <span className="unit">
+                    nettobesparing · Arvos fee {formatKr(optArvoFee)} (20 %)
+                  </span>
+                </OptimizeBlock>
+                <Reasoning>
+                  <span className="kicker">Vad vi hittade</span>
+                  <p>{result.recommendation.reasoning}</p>
+                </Reasoning>
+                <PartnerBlock>
+                  <div className="left">
+                    <span className="verified-badge">
+                      <Icon name="check" size={12} stroke={2.5} />
+                    </span>
+                    <div>
+                      <p className="partner-name">Avveckling av dubblad kostnad</p>
+                      <p className="price-label">Arvo sköter hela avvecklingen åt dig</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    $variant="gradient"
+                    $size="sm"
+                    onClick={() => setModalOpen(true)}
+                  >
+                    Säkra besparingen <Icon name="arrow" size={14} />
+                  </Button>
+                </PartnerBlock>
+              </>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
                 {(() => {
@@ -749,11 +788,17 @@ const TestaFaktura = () => {
               </div>
             ) : modalView === 'fortnox' ? (
               <>
-                <h3>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></h3>
+                <h3>
+                  {isOptimize
+                    ? <>Avveckla <em>dubbla avgiften</em></>
+                    : <>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></>}
+                </h3>
                 <p className="sub">
-                  {REAL_PRICE_CATEGORIES.has(result.categorized.category)
-                    ? <>För att vi ska kunna verkställa bytet till <strong>{result.recommendation.suggestedSupplier}</strong> – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.</>
-                    : 'För att vi ska få rätt underlag att vinna förhandlingen åt er – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.'}
+                  {isOptimize
+                    ? `Vi hjälper er aktivera den inbyggda modulen och avveckla det separata abonnemanget — utan att ni behöver kontakta leverantören. Ni sparar ${formatNum(optNet)} kr/år netto efter Arvos fee.`
+                    : REAL_PRICE_CATEGORIES.has(result.categorized.category)
+                      ? <>För att vi ska kunna verkställa bytet till <strong>{result.recommendation.suggestedSupplier}</strong> – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.</>
+                      : 'För att vi ska få rätt underlag att vinna förhandlingen åt er – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.'}
                 </p>
                 <div className="context-badge">
                   {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}

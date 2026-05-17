@@ -416,6 +416,43 @@ export const NoSwitchBlock = styled.div`
   }
 `;
 
+export const OptimizeBlock = styled.div`
+  padding: 24px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  background: ${({ theme }) => theme.color.brandSoft};
+  border: 1.5px solid ${({ theme }) => theme.color.brand}55;
+  margin-bottom: 20px;
+
+  .kicker {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: ${({ theme }) => theme.color.brand};
+    margin-bottom: 10px;
+  }
+  .amount {
+    display: block;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: clamp(42px, 7vw, 64px);
+    font-weight: 500;
+    line-height: 1.0;
+    letter-spacing: -0.025em;
+    color: ${({ theme }) => theme.color.brand};
+    font-feature-settings: "tnum";
+  }
+  .unit {
+    display: block;
+    margin-top: 8px;
+    font-size: 14px;
+    color: ${({ theme }) => theme.color.brandInk};
+    opacity: 0.85;
+    line-height: 1.5;
+    font-feature-settings: "tnum";
+  }
+`;
+
 export const CreditAlert = styled.div`
   margin-top: 16px;
   padding: 16px 20px;

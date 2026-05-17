@@ -287,6 +287,8 @@ export async function recommend(input, opts = {}) {
 
   return {
     ...result,
+    recommendationType: result.recommendationType ?? (result.shouldSwitch ? 'switch' : 'no_action'),
+    optimizationSaving: result.optimizationSaving ?? null,
     suggestedSupplier: result.suggestedSupplier ?? null,
     suggestedAnnualCost: result.suggestedAnnualCost ?? null,
     benchmark,

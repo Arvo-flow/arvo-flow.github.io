@@ -138,6 +138,26 @@ Rekommendation:
 
 OBS TIER-OVERKILL-REGELN: När ett litet bolag (micro/small) betalar för Enterprise- eller E3/E5-tier av programvara, eller premium-fiber avsedd för datacenter, eller andra produkter konstruerade för storföretag — ska du ALLTID förklara i reasoning VARFÖR det är overkill för deras storlek, inte bara att de betalar X % mer. Nämn konkret vilken tier eller produkt som är rätt nivå och varför den täcker deras faktiska behov.
 
+Exempel 8: Redundant tjänst — kunden betalar dubbelt hos SAMMA leverantör
+Customer: e-handel, 8 anställda
+Categorized invoice:
+  category: faktura-tjanst
+  subType: affärssystem
+  normalizedSupplier: Fortnox AB
+  currentAnnualCost: 17 400 kr
+Branschindex: Inte relevant — detta är INTE ett överprisfall utan ett redundansfall.
+Rekommendation:
+  recommendationType: 'optimize'
+  shouldSwitch: false
+  suggestedSupplier: null
+  suggestedAnnualCost: null
+  optimizationSaving: 17400
+  savingPerYear: 17400
+  overpaymentPercent: 0
+  confidence: "high"
+  reasoning: "Ni betalar 17 400 kr/år för en separat fakturatjänst — men Fortnox e-faktura är redan inbyggd i er licens utan extra kostnad. Det är samma leverantör ni redan betalar för. Byt inte system, aktivera rätt modul."
+  switchSteps: []
+
 Exempel 7: Fel maskintyp + högt klickpris — Managed Print
 Customer: e-handel, 50 anställda
 Categorized invoice:
@@ -216,6 +236,15 @@ REGLER FÖR REASONING
 - Förklara *varför just denna alternativ* — inte bara att den är billigare. T.ex. "Tibber matchar p25 och har bäst app-stöd för månadsuppföljning."
 - **Skrivarleasing / Managed Print:** Nämn ALLTID (1) maskintypen — säg specifikt att det är en A3 Enterprise-maskin byggd för tryckerier/advokatbyråer, inte för kundens bransch, (2) klickpriset i kr/sida och jämför med marknadssnittet 0,06–0,09 kr/sida S/V. Klickpriset är nästan alltid den största kostnadsdrivaren och MÅSTE kvantifieras i reasoning. Hänvisa till alternativet som "Arvo-verifierad partner" — namnge ALDRIG specifika märken (Kyocera, Canon, Konica Minolta, HP osv.) i reasoning.
 
+OPTIMIZE-REGELN (redundanta tjänster)
+Om kunden betalar för en tjänst som REDAN INGÅR i en annan licens eller produkt de har hos SAMMA leverantör (t.ex. Fortnox e-faktura ingår i Fortnox-licensen, Microsoft Planner ingår i M365):
+- Sätt recommendationType: 'optimize'
+- Sätt shouldSwitch: false (inget leverantörsbyte)
+- Sätt optimizationSaving = kostnaden för den redundanta tjänsten per år (det belopp kunden slösar bort)
+- Sätt savingPerYear = optimizationSaving
+- I reasoning: förklara EXAKT vad som är redundant och vilken modul kunden ska aktivera istället.
+I alla andra fall: recommendationType = 'switch' (shouldSwitch: true) eller 'no_action' (shouldSwitch: false).
+
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
 suggestedAnnualCost och savingPerYear låses i kod mot Arvo-volympriset. Fyll i Arvo-volympriset exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
 I din reasoning: hänvisa alltid till "marknadsbenchmark" — aldrig till "p25", "25:e percentilen" eller "Arvo-volympris".
@@ -235,6 +264,17 @@ export const RECOMMEND_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
+      recommendationType: {
+        type: 'string',
+        enum: ['switch', 'optimize', 'no_action'],
+        description:
+          'switch = leverantörsbyte rekommenderas. optimize = kunden betalar för en redundant/dubblerad tjänst hos SAMMA leverantör — ingen switch men avveckling ger besparing. no_action = inget att göra.',
+      },
+      optimizationSaving: {
+        type: ['number', 'null'],
+        description:
+          'Årsbelopp (SEK) kunden betalar för en redundant tjänst. Sätt bara om recommendationType är "optimize" — annars null.',
+      },
       shouldSwitch: {
         type: 'boolean',
         description:
@@ -282,6 +322,7 @@ export const RECOMMEND_TOOL = {
       },
     },
     required: [
+      'recommendationType',
       'shouldSwitch',
       'savingPerYear',
       'overpaymentPercent',
