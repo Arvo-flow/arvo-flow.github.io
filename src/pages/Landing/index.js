@@ -300,7 +300,7 @@ const Landing = () => {
         <ProofGrid>
           <Quote>
             <blockquote>
-              På sex veckor identifierade Arvo 134 000 kr i potentiella besparingar bara på el och försäkring. Jag hade trott att jag redan hade förhandlat klart.
+              På sex veckor identifierade Arvo 134 000 kr i potentiella besparingar bara på el och mobilabonnemang. Jag hade trott att jag redan hade förhandlat klart.
             </blockquote>
             <figcaption>
               <div className="avatar" style={{ fontSize: '11px', letterSpacing: '0.01em' }}>ex.</div>
