@@ -64,11 +64,9 @@ const FAQ = [
   },
   {
     q: 'Vad händer med min data?',
-    a: 'Vi läser endast leverantörsfakturor från Fortnox via läs-rättigheter. Datan lagras krypterad i Sverige (Bahnhof Stockholm). Vi säljer aldrig identifierbar data — anonymiserade branschindex är vår enda dataprodukt utöver tjänsten.',
+    a: 'Vi läser endast leverantörsfakturor från Fortnox / Visma via läs-rättigheter. Datan lagras krypterad i Sverige (Bahnhof Stockholm). Vi säljer aldrig identifierbar data — anonymiserade branschindex är vår enda dataprodukt utöver tjänsten.',
   },
 ];
-
-const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
 
 const validateFoundingForm = (form) => {
   const errors = {};
@@ -95,19 +93,18 @@ const Landing = () => {
 
     setState('submitting');
     try {
-      const res = await fetch(FOUNDING_WEBHOOK_URL, {
+      const res = await fetch('/api/founding-member', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          'Företagsnamn': form.company.trim(),
-          'Namn': form.name.trim(),
-          'E-post': form.email.trim(),
-          source: 'arvoflow.se.founding-member',
-          referrer: typeof document !== 'undefined' ? document.referrer || null : null,
+          company:   form.company.trim(),
+          name:      form.name.trim(),
+          email:     form.email.trim(),
+          referrer:  typeof document !== 'undefined' ? document.referrer || null : null,
           timestamp: new Date().toISOString(),
         }),
       });
-      if (!res.ok) throw new Error('Webhook ' + res.status);
+      if (!res.ok) throw new Error('API ' + res.status);
       setState('success');
     } catch (err) {
       setState('error');
@@ -459,7 +456,7 @@ const Landing = () => {
 
       <FinalCta>
         <h2>Hur mycket betalar du för mycket just nu?</h2>
-        <p>Snittet bland våra kunder är {TOTALS.activeNet.toLocaleString('sv-SE')} kr/år i nettobesparing efter vår avgift. Du vet inte förrän vi har scannat. 60 sekunder med Fortnox och du har svaret.</p>
+        <p>Snittet bland våra kunder är {TOTALS.activeNet.toLocaleString('sv-SE')} kr/år i nettobesparing efter vår avgift. Du vet inte förrän vi har scannat. 60 sekunder med Fortnox / Visma och du har svaret.</p>
         <div className="actions">
           <Button as={Link} to="/connect" $variant="gradient" $size="lg">
             Analysera mina fakturor — gratis <Icon name="arrow" size={18} />
