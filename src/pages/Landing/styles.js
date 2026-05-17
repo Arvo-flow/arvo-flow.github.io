@@ -725,6 +725,17 @@ export const PricingInner = styled.div`
     font-size: 14.5px;
   }
   ul li svg { color: ${({ theme }) => theme.color.accent}; flex-shrink: 0; margin-top: 3px; }
+  ul li.promise {
+    color: #FAFAF7;
+    padding: 12px 14px;
+    margin-top: 8px;
+    border-radius: ${({ theme }) => theme.size.radius.sm};
+    border: 1px solid ${({ theme }) => theme.color.accent}44;
+    background: ${({ theme }) => theme.color.accent}12;
+  }
+  ul li.promise strong {
+    color: ${({ theme }) => theme.color.accent};
+  }
 `;
 
 export const FoundingCard = styled.div`
