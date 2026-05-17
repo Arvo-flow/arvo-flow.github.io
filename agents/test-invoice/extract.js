@@ -44,16 +44,21 @@ recurring_subscription
   fakturaavgifter som återkommer varje period, fasta paketavgifter,
   supportavtal, serviceavtal.
   SAMT klickkostnader för skrivare i Managed Print-avtal (förhandlingsbara kontraktsrader).
+  SAMT bas-fraktavgifter i transport/frakt-fakturor (pallfrakt, styckegods, fraktavgift per pall/paket/kg)
+  — dessa representerar en löpande månatlig tjänsterelation oavsett att volymen varierar.
 
 variable_usage
   Rörliga kostnader som varierar med faktisk förbrukning. ENBART för mobiltelefoni.
   Exempel: roaming utanför EU, övertrafik, extra datapåslag, SMS-paket utanför plan.
   OBS: Klickkostnader för skrivare är INTE variable_usage — klassificera dem som recurring_subscription.
+  OBS: Frakttillägg och bränslebaserade avgifter (DMT, drivmedelstillägg) är INTE variable_usage — klassificera dem som one_time_fee.
 
 one_time_fee
   Engångskostnader som inte återkommer regelbundet.
   Exempel: installationsavgift, uppstartsavgift, aktiveringsavgift,
   påminnelseavgift, konsultarvode, reparation.
+  SAMT bränsle- och frakttillägg (DMT, drivmedelstillägg, bränslerelaterat tillägg,
+  bomkörning, terminalavgift) — dessa varierar med bränslepriser och är ej förhandlingsbara avtalsposter.
   SAMT krediteringar och minusposter för avslutade, uppsagda eller justerade
   licenser/avtal — dessa är historiska korrigeringar som inte återkommer och
   ska ALDRIG klassificeras som recurring_subscription. Kundens framtida
