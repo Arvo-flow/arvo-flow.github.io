@@ -159,11 +159,12 @@ function computeElRecommendation(extracted) {
 
   // Energipris per kWh — föredrar explicit extraktion, fallback till härlett
   let energiPerKwh = extracted.elEnergiPerKwh;
-  const elPriceDerived = !(energiPerKwh > 0);
-  if (elPriceDerived && extracted.recurringAmount > 0) {
+  if (!(energiPerKwh > 0) && extracted.recurringAmount > 0) {
     energiPerKwh = extracted.recurringAmount / kwh;
   }
   if (!(energiPerKwh > 0)) return null;
+  // elPriceExplicit = null/false → priset beräknat, inte tryckt på fakturan → brasklapp
+  const elPriceDerived = extracted.elPriceExplicit !== true;
 
   const fastAvgift     = extracted.elFastAvgiftKr ?? 0;
   const currentAnnual  = Math.round(energiPerKwh * annualKwh) + fastAvgift * 12;

@@ -139,7 +139,10 @@ ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
     kWh-priset. null om ej elfaktura.
   el_skatter_kr: Summan av energiskatt och elcertifikatsavgifter för perioden i kr exkl. moms.
     Energiskatt och elcertifikat är lagstadgade avgifter som alltid syns explicit på elfakturan.
-    null om saknas eller ej elfaktura.`;
+    null om saknas eller ej elfaktura.
+  el_price_explicit: true ENBART om fakturan explicit visar ett pris per kWh (t.ex. "0,85 kr/kWh"
+    eller en prisrad med kr/kWh). Sätt false om priset måste beräknas från totalbelopp / kWh.
+    null om ej elfaktura.`;
 
 const EXTRACT_TOOL = {
   name: 'extract_invoice',
@@ -231,6 +234,10 @@ const EXTRACT_TOOL = {
         type: ['number', 'null'],
         description: 'Rörlig energiavgift kr/kWh exkl. moms, nätavgift och skatter. null om ej elfaktura.',
       },
+      el_price_explicit: {
+        type: ['boolean', 'null'],
+        description: 'true ENBART om fakturan explicit visar ett pris per kWh (t.ex. "0,85 kr/kWh" eller "Energipris: 0,85 kr/kWh"). false om priset beräknats från totalbelopp / förbrukning. null om ej elfaktura.',
+      },
       el_skatter_kr: {
         type: ['integer', 'null'],
         description: 'Summa energiskatt + elcertifikat för perioden i kr exkl. moms. null om ej elfaktura.',
@@ -310,6 +317,7 @@ export function aggregateLineItems(raw) {
     elFastAvgiftKr:   raw.el_fast_avgift_kr != null ? Number(raw.el_fast_avgift_kr) : null,
     elEnergiPerKwh:   raw.el_energipris_per_kwh != null ? Number(raw.el_energipris_per_kwh) : null,
     elSkatterKr:      raw.el_skatter_kr != null ? Number(raw.el_skatter_kr) : null,
+    elPriceExplicit:  raw.el_price_explicit ?? null,
     mobileAddonMonthly:        raw.mobile_addon_monthly != null ? Number(raw.mobile_addon_monthly) : null,
     startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
     startupCreditMonthlyBurn:  raw.startup_credit_monthly_burn != null ? Number(raw.startup_credit_monthly_burn) : null,
