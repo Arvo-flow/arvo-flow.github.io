@@ -89,6 +89,8 @@ function printResult(file, extracted, routing, elapsedMs) {
   console.log(`  Beräknad årskostand : ${SEK(extracted.annualCost)}`);
   if (extracted.seatCount != null)
     console.log(`  Seats/licenser   : ${extracted.seatCount}`);
+  if (extracted.mobileAddonMonthly != null)
+    console.log(`  Mobil-tillägg    : ${SEK(extracted.mobileAddonMonthly)}/mån (molnväxel m.m. — exkl. bas-abonnemang)`);
   if (extracted.startupCreditBalance != null) {
     const cur = extracted.startupCreditCurrency ?? '';
     console.log(`  Startup-kredit   : ${cur} ${extracted.startupCreditBalance?.toLocaleString('sv-SE')} kvar / ${cur} ${extracted.startupCreditMonthlyBurn?.toLocaleString('sv-SE')}/mån burn`);

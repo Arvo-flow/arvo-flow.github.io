@@ -85,6 +85,7 @@ Källa: ${sourceStr}`;
 
 function formatPrompt({ customer, invoice, categorized, benchmark }) {
   const annualCost = invoice.annualCost ?? invoice.amount;
+  const mobileAddonAnnual = (invoice.mobileAddonMonthly > 0) ? invoice.mobileAddonMonthly * 12 : null;
   const employees = customer.employees ?? 1;
   const seatCount = invoice.seatCount ?? null;
   const isAccountingSystem = categorized.subType === 'affärssystem';
@@ -140,7 +141,10 @@ Kategoriserad faktura:
   Kategori: ${categorized.category}
   Sub-typ: ${categorized.subType || '(okänd)'}
   Nuvarande leverantör: ${categorized.normalizedSupplier}
-  Årskostnad (totalt): ${annualCost.toLocaleString('sv-SE')} kr${overpaymentAnnotation}
+  Årskostnad (totalt): ${annualCost.toLocaleString('sv-SE')} kr${overpaymentAnnotation}${mobileAddonAnnual ? `
+  Varav mobilabonnemang: ${(annualCost - mobileAddonAnnual).toLocaleString('sv-SE')} kr/år
+  Varav tilläggstjänster (molnväxel/cloud PBX): ${mobileAddonAnnual.toLocaleString('sv-SE')} kr/år
+  OBS: Prissätt ett KOMPLETT ersättningspaket inkl. motsvarande tilläggstjänst — jämförelsen ska vara total mot total.` : ''}
   Confidence från Categorizer: ${categorized.confidence}
 
 Branschindex för segmentet:

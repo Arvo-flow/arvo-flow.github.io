@@ -57,6 +57,8 @@ one_time_fee
   Engångskostnader som inte återkommer regelbundet.
   Exempel: installationsavgift, uppstartsavgift, aktiveringsavgift,
   påminnelseavgift, konsultarvode, reparation.
+  SAMT administrativ avgift för pappersfaktura/fakturaavgift — dessa är valfria avgifter,
+  inte abonnemangstjänster, och ska ALDRIG klassificeras som recurring_subscription.
   SAMT bränsle- och frakttillägg (DMT, drivmedelstillägg, bränslerelaterat tillägg,
   bomkörning, terminalavgift) — dessa varierar med bränslepriser och är ej förhandlingsbara avtalsposter.
   SAMT krediteringar och minusposter för avslutade, uppsagda eller justerade
@@ -109,6 +111,14 @@ KRITISKT:
     Om inga pro-rata-justeringar eller krediteringar förekommer: sätt samma värde som summan
     av recurring_subscription-rader.
   — Returnera ALDRIG text utanför verktygsanropet.
+
+MOBILFAKTUROR MED TILLÄGGSTJÄNSTER — om en mobilfaktura innehåller BÅDE bas-abonnemang
+  (data, röst, SMS) OCH tilläggstjänster (molnväxel, cloud PBX, Microsoft Teams-integration,
+  växellösning, lokal telefonilösning):
+  mobile_addon_monthly: Summan av ENBART tilläggstjänsternas månadsbelopp (ex moms).
+  Bas-abonnemangen ingår INTE i detta fält — de utgör recurring_subscription som vanligt.
+  Exempel: 20 molnväxellicenser × 99 kr = 1 980 kr → mobile_addon_monthly: 1980.
+  Sätt null om fakturan saknar sådana tilläggstjänster.
 
 STARTUP-KREDITER — om fakturan visar att ett startup-program, promotional credit eller
   liknande kreditpost reducerar totalsumman:
@@ -225,6 +235,10 @@ const EXTRACT_TOOL = {
         type: ['integer', 'null'],
         description: 'Summa energiskatt + elcertifikat för perioden i kr exkl. moms. null om ej elfaktura.',
       },
+      mobile_addon_monthly: {
+        type: ['integer', 'null'],
+        description: 'Månadsbelopp för tilläggstjänster på mobilfaktura (molnväxel, cloud PBX, Teams-integration m.m.) exkl. bas-abonnemang. null om ej tillämpligt.',
+      },
       startup_credit_balance: {
         type: ['number', 'null'],
         description: 'Kvarvarande kreditbalans från startup-/kampanjprogram som visas på fakturan. null om ej tillämpligt.',
@@ -296,6 +310,7 @@ export function aggregateLineItems(raw) {
     elFastAvgiftKr:   raw.el_fast_avgift_kr != null ? Number(raw.el_fast_avgift_kr) : null,
     elEnergiPerKwh:   raw.el_energipris_per_kwh != null ? Number(raw.el_energipris_per_kwh) : null,
     elSkatterKr:      raw.el_skatter_kr != null ? Number(raw.el_skatter_kr) : null,
+    mobileAddonMonthly:        raw.mobile_addon_monthly != null ? Number(raw.mobile_addon_monthly) : null,
     startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
     startupCreditMonthlyBurn:  raw.startup_credit_monthly_burn != null ? Number(raw.startup_credit_monthly_burn) : null,
     startupCreditCurrency:     raw.startup_credit_currency ?? null,
