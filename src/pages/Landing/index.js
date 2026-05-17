@@ -219,7 +219,7 @@ const Landing = () => {
         </TickerText>
       </TickerBand>
 
-      <TrustStrip>
+      <TrustStrip id="sakerhet">
         <TrustPillar>
           <div className="icon"><Icon name="lock" size={22} stroke={2} /></div>
           <h3>Vi får bara läsa, aldrig ändra</h3>

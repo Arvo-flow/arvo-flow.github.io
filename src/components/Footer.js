@@ -103,19 +103,18 @@ const Footer = () => (
       <Col>
         <h4>Produkt</h4>
         <ul>
-          <li><a href="#hur">Så fungerar det</a></li>
-          <li><a href="#priser">Pris</a></li>
-          <li><a href="#integrationer">Integrationer</a></li>
-          <li><a href="#sakerhet">Säkerhet</a></li>
+          <li><a href="/#hur">Så fungerar det</a></li>
+          <li><a href="/#priser">Pris</a></li>
+          <li><a href="/#hur">Integrationer</a></li>
+          <li><a href="/#sakerhet">Säkerhet</a></li>
         </ul>
       </Col>
       <Col>
         <h4>Företag</h4>
         <ul>
-          <li><a href="#om">Om oss</a></li>
-          <li><a href="#partners">Partners</a></li>
-          <li><a href="#kontakt">Kontakt</a></li>
-          <li><a href="#blog">Blog</a></li>
+          <li><Link to="/">Om oss</Link></li>
+          <li><Link to="/bias">Partners</Link></li>
+          <li><a href="mailto:hej@arvoflow.se">Kontakt</a></li>
         </ul>
       </Col>
       <Col>
