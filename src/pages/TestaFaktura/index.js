@@ -469,7 +469,7 @@ const TestaFaktura = () => {
                         <span className="kicker">
                           {isLicensePending ? 'Möjlig årlig besparing' : 'Din nettobesparing'}
                         </span>
-                        <span className="amount">+{formatKr(result.recommendation.netSaving)}<span className="yr"> /år</span></span>
+                        <span className="amount">+{formatKr(result.recommendation.netSaving)}</span>
                         <span className="unit">
                           {isLicensePending
                             ? 'Försäkring kräver FI-licens — vi byter inte själva ännu, men visar gapet.'
@@ -629,7 +629,11 @@ const TestaFaktura = () => {
                 </li>
                 <li>
                   <span className="check"><Icon name="check" size={11} stroke={2.8} /></span>
-                  Du betalar 20 % av det vi faktiskt sparar — inget annat, inga fasta avgifter
+                  Du betalar 20 % av identifierad besparing — en engångsavgift, inget annat
+                </li>
+                <li>
+                  <span className="check"><Icon name="check" size={11} stroke={2.8} /></span>
+                  Fr.o.m. år 2 tillfaller hela besparingen er
                 </li>
               </ServiceList>
             )}

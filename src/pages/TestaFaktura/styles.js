@@ -314,14 +314,6 @@ export const SavingsBlock = styled.div`
     line-height: 1.0;
     letter-spacing: -0.025em;
     font-feature-settings: "tnum";
-    span.yr {
-      font-size: 0.35em;
-      font-weight: 400;
-      opacity: 0.75;
-      letter-spacing: 0;
-      font-family: ${({ theme }) => theme.font.body};
-      margin-left: 2px;
-    }
   }
   span.unit {
     display: block;
