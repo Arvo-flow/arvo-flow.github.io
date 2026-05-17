@@ -67,10 +67,15 @@ export const BRANCHINDEX = {
       { supplier: 'Telge Energi', positioning: 'Lågt påslag, direktavtal med producenter',                                      reliability: 0.91 },
       { supplier: 'Mälarenergi',  positioning: 'Stabil regional aktör, god service, något högre påslag',                        reliability: 0.96 },
     ],
+    // Metodologi mid-korrektion (byraer):
+    // 100-personers kontor ~1 000 kvm × 100 kWh/kvm (Energimyndigheten normtal) = 100 000 kWh.
+    // Median: 100 000 × 1,57 kr = 157 000 → 165 000 kr (inkl. gemensamma utrymmen).
+    // p25: 900 kvm × 80 kWh × 1,45 kr = 104 400 → 108 000 kr (nybyggt, spotavtal).
+    // Övriga segment (hantverkare/ehandel/tillverkning) inom ±15 % av kalkyl — oförändrade.
     matrix: {
-      byraer:      { micro: { median: 18000,  p25: 13000  }, small: { median: 52000,  p25: 38000  }, mid: { median: 130000, p25:  96000 } },
-      hantverkare: { micro: { median: 32000,  p25: 24000  }, small: { median: 98000,  p25: 72000  }, mid: { median: 248000, p25: 182000 } },
-      ehandel:     { micro: { median: 28000,  p25: 21000  }, small: { median: 98000,  p25: 72000  }, mid: { median: 248000, p25: 182000 } },
+      byraer:      { micro: { median: 18000,  p25: 13000  }, small: { median:  52000, p25:  38000 }, mid: { median: 165000, p25: 108000 } },
+      hantverkare: { micro: { median: 32000,  p25: 24000  }, small: { median:  98000, p25:  72000 }, mid: { median: 248000, p25: 182000 } },
+      ehandel:     { micro: { median: 28000,  p25: 21000  }, small: { median:  98000, p25:  72000 }, mid: { median: 248000, p25: 182000 } },
       tillverkning:{ micro: { median: 62000,  p25: 45000  }, small: { median: 248000, p25: 182000 }, mid: { median: 744000, p25: 550000 } },
     },
   },
@@ -521,11 +526,20 @@ export const BRANCHINDEX = {
       { supplier: 'Dustin IT-tjänst', positioning: 'God prissättning, snabb leverans av hårdvara + integrerade supportavtal',      reliability: 0.90 },
       { supplier: 'Lokal IT-partner', positioning: 'Snabbast responstid, personlig kontakt, flexibla villkor — lägst kostnad SMF', reliability: 0.87 },
     ],
+    // Metodologi:
+    // Micro: nuv. byraer median 24 000 = 400 kr/anst/mån × 5 anst — matchar reaktivt helpdesk-golv. Oförändrat.
+    // Small: reaktivt helpdesk 400 kr/anst/mån × 20 anst × 12 = 96 000. Median sätts till 90 % av golvet
+    //   (viss del break-fix/self-service) = 86 400 → 90 000. p25 = 60 % täckning × 400 × 20 × 12 = 57 600 → 54 000.
+    // Mid: 60 % täckning × 400 kr × anst-antal × 12.
+    //   Byraer: 60 × 400 × 12 = 288 000 → median 330 000 (proaktiv uppgradering), p25 200 000 (reaktiv bas).
+    //   Hantverkare −40 % (enklare IT-miljö, fler fältanställda utan IT-stöd).
+    //   Ehandel +75 % vs byraer (uptime-kritisk, 24/7-krav, komplex tech-stack).
+    //   Tillverkning +33 % vs byraer (OT/SCADA-tillägg, men fler produktionsarbetare utan IT-avtal).
     matrix: {
-      byraer:      { micro: { median: 24000, p25: 15000 }, small: { median:  72000, p25:  45000 }, mid: { median: 240000, p25: 150000 } },
-      hantverkare: { micro: { median: 15000, p25:  9500 }, small: { median:  48000, p25:  30000 }, mid: { median: 144000, p25:  90000 } },
-      ehandel:     { micro: { median: 36000, p25: 22000 }, small: { median: 120000, p25:  75000 }, mid: { median: 420000, p25: 262000 } },
-      tillverkning:{ micro: { median: 30000, p25: 19000 }, small: { median:  96000, p25:  60000 }, mid: { median: 320000, p25: 200000 } },
+      byraer:      { micro: { median:  24000, p25: 15000 }, small: { median:  90000, p25:  54000 }, mid: { median: 330000, p25: 200000 } },
+      hantverkare: { micro: { median:  15000, p25:  9500 }, small: { median:  60000, p25:  36000 }, mid: { median: 198000, p25: 120000 } },
+      ehandel:     { micro: { median:  36000, p25: 22000 }, small: { median: 150000, p25:  90000 }, mid: { median: 580000, p25: 345000 } },
+      tillverkning:{ micro: { median:  30000, p25: 19000 }, small: { median: 120000, p25:  72000 }, mid: { median: 440000, p25: 264000 } },
     },
   },
 
