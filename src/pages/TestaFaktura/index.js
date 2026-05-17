@@ -9,7 +9,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, NoSwitchBlock, PriceNote, PartnerBlock, KV,
+  ResultHead, SavingsBlock, NoSwitchBlock, CreditAlert, PriceNote, PartnerBlock, KV,
   Reasoning, LicenseOverageNote, NextSteps, ServiceList, EmailGate,
   ModalOverlay, ModalCard,
 } from './styles';
@@ -437,6 +437,18 @@ const TestaFaktura = () => {
                       {result.volumeDataNote ||
                         'Kostnaden för denna kategori styrs av specifika volymer och specifikationer, inte antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.'}
                     </p>
+                    {result.creditExpiryMonths != null && (
+                      <CreditAlert>
+                        <strong>
+                          Era startup-krediter räcker ca {result.creditExpiryMonths} {result.creditExpiryMonths === 1 ? 'månad' : 'månader'} till
+                        </strong>
+                        <p>
+                          Ni förbrukar {result.startupCreditCurrency} {result.startupCreditMonthlyBurn?.toLocaleString('sv-SE')}/mån men
+                          betalar ingenting tack vare kvarvarande kredit ({result.startupCreditCurrency} {result.startupCreditBalance?.toLocaleString('sv-SE')}).
+                          Nu är rätt tid att planera ert molnavtal — vi hjälper er att förhandla rätt pris innan fakturorna börjar landa.
+                        </p>
+                      </CreditAlert>
+                    )}
                   </>
                 ) : result.reason === 'no_benchmark' ? (
                   <>

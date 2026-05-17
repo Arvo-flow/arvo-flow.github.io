@@ -344,11 +344,20 @@ export default async function handler(req, res) {
       notifyReviewQueue(extracted, `[Volymdata] ${reason}`).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue (volume) threw:', err.message)
       );
+      const creditBalance = extracted.startupCreditBalance;
+      const creditBurn    = extracted.startupCreditMonthlyBurn;
+      const creditExpiryMonths = (creditBalance > 0 && creditBurn > 0)
+        ? Math.round(creditBalance / creditBurn)
+        : null;
       return send(res, 200, {
         ok:     true,
         route:  'review_queue',
         reason: 'volume_data_required',
         volumeDataNote: reason,
+        creditExpiryMonths,
+        startupCreditBalance:     creditBalance ?? null,
+        startupCreditMonthlyBurn: creditBurn ?? null,
+        startupCreditCurrency:    extracted.startupCreditCurrency ?? null,
         extracted: {
           supplier:        extracted.supplier,
           date:            extracted.date,

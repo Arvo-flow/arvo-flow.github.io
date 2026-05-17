@@ -110,6 +110,13 @@ KRITISKT:
     av recurring_subscription-rader.
   — Returnera ALDRIG text utanför verktygsanropet.
 
+STARTUP-KREDITER — om fakturan visar att ett startup-program, promotional credit eller
+  liknande kreditpost reducerar totalsumman:
+  startup_credit_balance: Kvarvarande kreditbalans som visas explicit på fakturan (positivt tal).
+  startup_credit_monthly_burn: Faktisk månadsförbrukning INNAN krediten applicerades (summan av alla tjänstrader).
+  startup_credit_currency: Valutakod, t.ex. "USD" eller "SEK".
+  Sätt alla tre till null om inga startup-/programkrediter förekommer på fakturan.
+
 ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
   el_kwh: Total förbrukning i kWh denna faktureringsperiod.
   el_billing_month: Månaden förbrukningen avser, t.ex. "maj", "februari".
@@ -218,6 +225,18 @@ const EXTRACT_TOOL = {
         type: ['integer', 'null'],
         description: 'Summa energiskatt + elcertifikat för perioden i kr exkl. moms. null om ej elfaktura.',
       },
+      startup_credit_balance: {
+        type: ['number', 'null'],
+        description: 'Kvarvarande kreditbalans från startup-/kampanjprogram som visas på fakturan. null om ej tillämpligt.',
+      },
+      startup_credit_monthly_burn: {
+        type: ['number', 'null'],
+        description: 'Faktisk månadsförbrukning INNAN startup-kredit applicerades (summan av alla tjänstrader). null om ej tillämpligt.',
+      },
+      startup_credit_currency: {
+        type: ['string', 'null'],
+        description: 'Valutakod för krediten, t.ex. "USD" eller "SEK". null om ej tillämpligt.',
+      },
     },
     required: [
       'supplier', 'date', 'description', 'billingPeriod',
@@ -277,6 +296,9 @@ export function aggregateLineItems(raw) {
     elFastAvgiftKr:   raw.el_fast_avgift_kr != null ? Number(raw.el_fast_avgift_kr) : null,
     elEnergiPerKwh:   raw.el_energipris_per_kwh != null ? Number(raw.el_energipris_per_kwh) : null,
     elSkatterKr:      raw.el_skatter_kr != null ? Number(raw.el_skatter_kr) : null,
+    startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
+    startupCreditMonthlyBurn:  raw.startup_credit_monthly_burn != null ? Number(raw.startup_credit_monthly_burn) : null,
+    startupCreditCurrency:     raw.startup_credit_currency ?? null,
   };
 }
 

@@ -416,6 +416,28 @@ export const NoSwitchBlock = styled.div`
   }
 `;
 
+export const CreditAlert = styled.div`
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.warningSoft};
+  border-left: 3px solid ${({ theme }) => theme.color.warning};
+
+  strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.warning};
+    margin-bottom: 6px;
+  }
+  p {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: ${({ theme }) => theme.color.inkSoft};
+    margin: 0;
+  }
+`;
+
 export const KV = styled.dl`
   display: grid;
   grid-template-columns: 1fr 1fr;
