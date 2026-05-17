@@ -48,7 +48,7 @@ const FAQ = [
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
-    a: 'Vår rankningsalgoritm är publik och deterministisk — du hittar hela vår rankningspolicy under /bias. Affiliate-intäkter är hårt kapade per kategori och eventuellt överskott krediteras automatiskt tillbaka till dig.',
+    a: 'Vi tjänar pengar bara när du sparar — det är beviset på opartiskhet. Leverantörer kan inte köpa sig en högre placering; vi sätter tak för vad de får betala oss och krediterar dig direkt om någon försöker gå över. Policyn är öppet publicerad under /bias.',
   },
   {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',
