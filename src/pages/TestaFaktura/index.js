@@ -644,12 +644,12 @@ const TestaFaktura = () => {
                 Med Arvo Flow kopplar du Fortnox en gång så sköter vi hela bytet – från
                 uppsägning till nytt avtal och signering. Samtidigt identifierar vi
                 automatiskt fler onödiga kostnader i resten av er leverantörsreskontra.
-                Du betalar bara 20 % av faktiskt realiserad besparing. Inga fasta avgifter.
+                Du betalar bara 20 % av identifierad besparing. Inga fasta avgifter.
               </p>
               <div className="actions">
                 <div className="cta-row">
                   <Button as={Link} to="/connect" $variant="primary" $size="lg">
-                    Koppla Fortnox <Icon name="arrow" size={16} />
+                    Koppla Fortnox / Visma <Icon name="arrow" size={16} />
                   </Button>
                   <Link to="/" className="read-more">Läs mer →</Link>
                 </div>
@@ -755,7 +755,7 @@ const TestaFaktura = () => {
                   {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
                 </div>
                 <Button as={Link} to="/connect" $variant="primary" $size="lg" $full onClick={() => setModalOpen(false)}>
-                  Koppla Fortnox <Icon name="arrow" size={16} />
+                  Koppla Fortnox / Visma <Icon name="arrow" size={16} />
                 </Button>
                 <button className="manual-link" type="button" onClick={() => setModalView('email')}>
                   Jag använder inte Fortnox, fortsätt manuellt via e-post.
