@@ -51,6 +51,10 @@ const FAQ = [
     a: <>Vi tjänar pengar bara när du sparar — det är beviset på opartiskhet. Leverantörer kan inte köpa sig en högre placering; vi sätter tak för vad de får betala oss och krediterar dig direkt om någon försöker gå över. Policyn är öppet publicerad under <Link to="/bias">vår rankningspolicy</Link>.</>,
   },
   {
+    q: 'Varför ska jag lita på era besparingskalkyler?',
+    a: 'Vi bygger på verifierade marknadsdata — offentliga listpriser, ramavtalsdata och faktiska operatörspriser. Och eftersom vi tar 20 % av realiserad besparing har vi inget att vinna på att överdriva: en projektion som inte håller kostar oss förtroendet, inte bara provisionen. Vi tjänar mer på att lova lite och leverera fullt ut.',
+  },
+  {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',
     a: 'Vår fee baseras på kontrakterade priser vid avtalssignering. Förändras marknadsläget efter bytet hjälper vi er med en ny analys — utan extra kostnad.',
   },
@@ -343,6 +347,7 @@ const Landing = () => {
               <span className="kicker">Success-baserat</span>
               <h3>20 % av identifierad besparing.</h3>
               <p>Inga månadsavgifter. Inga uppstartskostnader. En engångsavgift som faktureras 3 månader efter aktiverat avtal. Fr.o.m. år 2 tillfaller hela besparingen er. Hittar vi inget — kostar det inget.</p>
+              <p><em>Vi tar hellre lägre provision på en säker besparing än hög provision på en osäker.</em></p>
             </div>
             <ul>
               <li><Icon name="check" size={18} stroke={2.2} /> Skanning av alla leverantörsfakturor varje kvartal</li>
