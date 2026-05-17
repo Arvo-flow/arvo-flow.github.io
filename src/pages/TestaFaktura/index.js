@@ -16,9 +16,6 @@ import {
 
 const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 
-const FOUNDING_WEBHOOK_URL = 'https://hook.eu1.make.com/39vtq7yfxeyojg2acnmmjxsq5a9gi3fb';
-const ANALYS_WEBHOOK_URL   = 'https://hook.eu1.make.com/eeaax2i1k03cycl39zqlpdt9ixlu4o2x';
-
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
 // Categories with verified public list prices — show supplier name proudly.
@@ -220,27 +217,25 @@ const TestaFaktura = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const sendAnalysisMail = async (emailAddr) => {
+    const res = await fetch('/api/send-analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailAddr, result }),
+    });
+    if (!res.ok) throw new Error('send-analysis ' + res.status);
+  };
+
   const submitModalEmail = async (e) => {
     e.preventDefault();
     if (!modalEmail || modalEmailState !== 'idle') return;
     setModalEmailState('submitting');
     try {
-      await fetch(ANALYS_WEBHOOK_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          type: 'unlock_supplier',
-          email: modalEmail,
-          supplier: result?.extracted?.supplier,
-          category: result?.categorized?.category,
-          annual_cost: result?.extracted?.annualCost,
-          net_saving: result?.recommendation?.netSaving,
-          suggested_annual_cost: result?.recommendation?.suggestedAnnualCost,
-        }),
-      });
-    } catch { /* non-fatal */ }
-    setModalEmailState('sent');
+      await sendAnalysisMail(modalEmail);
+      setModalEmailState('sent');
+    } catch {
+      setModalEmailState('idle');
+    }
   };
 
   const submitEmail = async (e) => {
@@ -248,22 +243,11 @@ const TestaFaktura = () => {
     if (!email || emailState !== 'idle') return;
     setEmailState('submitting');
     try {
-      await fetch(ANALYS_WEBHOOK_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          type: 'analys_pdf',
-          email,
-          supplier: result?.extracted?.supplier,
-          category: result?.categorized?.category,
-          annual_cost: result?.extracted?.annualCost,
-          net_saving: result?.recommendation?.netSaving,
-          suggested_supplier: result?.recommendation?.suggestedSupplier,
-        }),
-      });
-    } catch { /* non-fatal */ }
-    setEmailState('sent');
+      await sendAnalysisMail(email);
+      setEmailState('sent');
+    } catch {
+      setEmailState('error');
+    }
   };
 
   const phaseState = (id) => {
@@ -716,7 +700,7 @@ const TestaFaktura = () => {
               {emailState === 'sent' ? (
                 <div className="sent">
                   <Icon name="check" size={16} stroke={2.5} />
-                  Vi skickar analysen till {email} inom några minuter.
+                  Analysen är skickad till {email}.
                 </div>
               ) : (
                 <form onSubmit={submitEmail}>
@@ -737,7 +721,10 @@ const TestaFaktura = () => {
                       {emailState === 'submitting' ? 'Skickar…' : 'Skicka analysen'}
                     </Button>
                   </div>
-                  <p className="note">Ingen spam. Vi skickar ett e-postmeddelande med din analys och hur vi kan hjälpa till.</p>
+                  {emailState === 'error' && (
+                    <p className="note" style={{ color: 'red' }}>Något gick fel — försök igen eller kontakta hej@arvoflow.se.</p>
+                  )}
+                  <p className="note">Ingen spam. Vi skickar analysen direkt till din inkorg.</p>
                 </form>
               )}
             </EmailGate>
