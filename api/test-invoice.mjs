@@ -176,8 +176,13 @@ function computeElRecommendation(extracted) {
   const netSaving      = grossSaving - arvoFee;
 
   const seasonLabel  = { winter: 'vinter', spring_fall: 'vår/höst', summer: 'sommar' }[season];
+  const seasonContext = {
+    winter:      'vinterförbrukning är normalt högre än årsgenomsnittet',
+    spring_fall: 'vår/höst-förbrukning speglar årsgenomsnittet väl',
+    summer:      'sommarförbrukning är normalt lägre än årsgenomsnittet',
+  }[season];
   const monthLabel   = extracted.elBillingMonth ?? 'fakturamånad';
-  const mwhEstimate  = Math.round(annualKwh / 100) / 10; // en decimal MWh
+  const mwhEstimate  = Math.round(annualKwh / 100) / 10;
 
   return {
     annualKwh, currentAnnual, benchmarkAnnual, grossSaving, arvoFee, netSaving, shouldSwitch,
@@ -187,7 +192,7 @@ function computeElRecommendation(extracted) {
       ? `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}. Arvo estimerar att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos 20 % fee: ${netSaving.toLocaleString('sv-SE')} kr/år.`
       : `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}, vilket är i linje med ett välförhandlat spotprisavtal i ${omrade} (benchmark ${seasonLabel}: ${benchmarkKwh.toFixed(2)} kr/kWh). Ert nuvarande avtal verkar konkurrenskraftigt.`,
     uncertaintyNote: [
-      `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh med säsongskorrigering (${seasonLabel}, ×${multiplier}). Faktisk årsförbrukning kan avvika ±30–40 %.`,
+      `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh, justerat för att ${seasonContext}. Faktisk årsförbrukning kan avvika ±30–40 %.`,
       elPriceDerived ? 'Elpriset är beräknat som fakturabelopp / kWh. Om fakturan innehåller energiskatt eller nätavgift kan besparingen vara annorlunda.' : null,
     ].filter(Boolean).join(' '),
   };
