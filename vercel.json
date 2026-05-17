@@ -6,6 +6,12 @@
   "functions": {
     "api/test-invoice.mjs": {
       "maxDuration": 60
+    },
+    "api/founding-member.mjs": {
+      "maxDuration": 15
+    },
+    "api/send-analysis.mjs": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
