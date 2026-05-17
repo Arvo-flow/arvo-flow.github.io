@@ -300,28 +300,28 @@ const Landing = () => {
         <ProofGrid>
           <Quote>
             <blockquote>
-              På sex veckor hittade Arvo 134 000 kr i besparingar bara på el och försäkring. Jag hade trott att jag redan hade förhandlat klart — det stämde uppenbarligen inte.
+              På sex veckor identifierade Arvo 134 000 kr i potentiella besparingar bara på el och försäkring. Jag hade trott att jag redan hade förhandlat klart.
             </blockquote>
             <figcaption>
-              <div className="avatar">JL</div>
+              <div className="avatar" style={{ fontSize: '11px', letterSpacing: '0.01em' }}>ex.</div>
               <div>
-                <strong>Johan Lindberg</strong>
-                <span>VD, Lindberg VVS · 14 anställda</span>
+                <strong>Illustrativt scenario</strong>
+                <span>Konsultbolag · 14 anställda</span>
               </div>
             </figcaption>
           </Quote>
           <Stats>
             <div>
-              <strong>23 %</strong>
-              <span>genomsnittlig besparing per leverantörskategori vi hittar</span>
+              <strong>20 %</strong>
+              <span>av identifierad besparing — vår enda avgift</span>
             </div>
             <div>
-              <strong>11 dgr</strong>
-              <span>median­tid från första skanning till första byte aktiverat</span>
+              <strong>8</strong>
+              <span>leverantörskategorier täckta idag</span>
             </div>
             <div>
-              <strong>500+</strong>
-              <span>företag i Sverige som låter Arvo bevaka sina kostnader</span>
+              <strong>50</strong>
+              <span>Founding Member-platser · begränsat antal</span>
             </div>
             <div>
               <strong>0 kr</strong>
