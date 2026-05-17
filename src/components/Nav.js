@@ -22,6 +22,10 @@ const Inner = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    gap: 12px;
+  }
 `;
 
 const Links = styled.nav`
@@ -46,6 +50,10 @@ const Right = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
+`;
+
+const LoginLink = styled(Button)`
+  @media (max-width: 480px) { display: none; }
 `;
 
 const Nav = ({ variant = 'public' }) => {
@@ -81,7 +89,7 @@ const Nav = ({ variant = 'public' }) => {
         <Right>
           {variant === 'public' ? (
             <>
-              <Button as={Link} to="/connect" $variant="ghost" $size="sm">Logga in</Button>
+              <LoginLink as={Link} to="/connect" $variant="ghost" $size="sm">Logga in</LoginLink>
               <Button as={Link} to="/connect" $variant="gradient" $size="sm">Se mina besparingar →</Button>
             </>
           ) : (
