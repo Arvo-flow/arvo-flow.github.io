@@ -638,10 +638,11 @@ export const Stats = styled.div`
   }
   strong {
     display: block;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 44px;
+    font-weight: 800;
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     color: ${({ theme }) => theme.color.ink};
     font-feature-settings: "tnum";
   }

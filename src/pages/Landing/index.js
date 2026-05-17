@@ -305,7 +305,7 @@ const Landing = () => {
             <figcaption>
               <div className="avatar" style={{ fontSize: '11px', letterSpacing: '0.01em' }}>ex.</div>
               <div>
-                <strong>Illustrativt scenario</strong>
+                <strong>Exempelkund</strong>
                 <span>Konsultbolag · 14 anställda</span>
               </div>
             </figcaption>
