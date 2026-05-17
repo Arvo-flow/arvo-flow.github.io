@@ -431,6 +431,7 @@ export default async function handler(req, res) {
           elOmrade:             elRec.omrade,
           elAnnualKwhEstimated: elRec.annualKwh,
           elUncertaintyNote:    elRec.uncertaintyNote,
+          elSkatterKr:          extracted.elSkatterKr,
         },
         categorized: {
           category:           categorized.category,

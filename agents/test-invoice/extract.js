@@ -114,7 +114,10 @@ ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
     null om saknas eller ej elfaktura.
   el_energipris_per_kwh: Leverantörens rörliga energiavgift i kr/kWh exkl. moms
     och exkl. nätavgift, energiskatt och elcertifikat. Vid fastprisavtal: det fasta
-    kWh-priset. null om ej elfaktura.`;
+    kWh-priset. null om ej elfaktura.
+  el_skatter_kr: Summan av energiskatt och elcertifikatsavgifter för perioden i kr exkl. moms.
+    Energiskatt och elcertifikat är lagstadgade avgifter som alltid syns explicit på elfakturan.
+    null om saknas eller ej elfaktura.`;
 
 const EXTRACT_TOOL = {
   name: 'extract_invoice',
@@ -206,6 +209,10 @@ const EXTRACT_TOOL = {
         type: ['number', 'null'],
         description: 'Rörlig energiavgift kr/kWh exkl. moms, nätavgift och skatter. null om ej elfaktura.',
       },
+      el_skatter_kr: {
+        type: ['integer', 'null'],
+        description: 'Summa energiskatt + elcertifikat för perioden i kr exkl. moms. null om ej elfaktura.',
+      },
     },
     required: [
       'supplier', 'date', 'description', 'billingPeriod',
@@ -264,6 +271,7 @@ export function aggregateLineItems(raw) {
     elOmrade:         raw.el_omrade ?? null,
     elFastAvgiftKr:   raw.el_fast_avgift_kr != null ? Number(raw.el_fast_avgift_kr) : null,
     elEnergiPerKwh:   raw.el_energipris_per_kwh != null ? Number(raw.el_energipris_per_kwh) : null,
+    elSkatterKr:      raw.el_skatter_kr != null ? Number(raw.el_skatter_kr) : null,
   };
 }
 

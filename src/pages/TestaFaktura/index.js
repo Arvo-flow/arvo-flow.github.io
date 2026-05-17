@@ -469,7 +469,7 @@ const TestaFaktura = () => {
                         <span className="kicker">
                           {isLicensePending ? 'Möjlig årlig besparing' : 'Din nettobesparing'}
                         </span>
-                        <span className="amount">+{formatKr(result.recommendation.netSaving)}</span>
+                        <span className="amount">+{formatKr(result.recommendation.netSaving)}<span className="yr"> /år</span></span>
                         <span className="unit">
                           {isLicensePending
                             ? 'Försäkring kräver FI-licens — vi byter inte själva ännu, men visar gapet.'
@@ -570,12 +570,21 @@ const TestaFaktura = () => {
                   </dd>
                 </div>
               )}
+              {result.extracted.elSkatterKr > 0 && (
+                <div>
+                  <dt>Skatter &amp; lagstadgade avgifter</dt>
+                  <dd>
+                    {formatKr(result.extracted.elSkatterKr)}
+                    <small>Energiskatt, elcertifikat m.m. — ej förhandlingsbara, ingår ej i besparingskalkylen.</small>
+                  </dd>
+                </div>
+              )}
               {result.extracted.variableCharges > 0 && (
                 <div>
                   <dt>Rörliga avgifter denna period</dt>
                   <dd>
                     {formatKr(result.extracted.variableCharges)}
-                    <small>Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.</small>
+                    <small>{result.categorized?.category === 'el' ? 'Rörliga elkostnader — ej inkluderat i årsberäkningen.' : 'Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.'}</small>
                   </dd>
                 </div>
               )}
