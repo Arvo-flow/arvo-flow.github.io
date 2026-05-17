@@ -141,7 +141,7 @@ const Bias = () => (
       </p>
       <div className="actions">
         <Button as={Link} to="/connect" $variant="primary" $size="lg">
-          Koppla Fortnox <Icon name="arrow" size={18} />
+          Koppla Fortnox / Visma <Icon name="arrow" size={18} />
         </Button>
         <Button as={Link} to="/" $variant="secondary" $size="lg">
           Tillbaka till startsidan

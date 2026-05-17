@@ -424,7 +424,7 @@ const TestaFaktura = () => {
                 <strong>Utanför analysräckvidden.</strong>
                 <p>
                   Denna faktura avser en tjänst vi inte optimerar (t.ex. juridik, redovisning,
-                  bemanning eller myndighetsavgifter). Koppla Fortnox för att analysera era
+                  bemanning eller myndighetsavgifter). Koppla Fortnox / Visma för att analysera era
                   övriga leverantörer.
                 </p>
               </NoSwitchBlock>
@@ -451,7 +451,7 @@ const TestaFaktura = () => {
                     <strong>Fakturan behöver djupare analys.</strong>
                     <p>
                       Vår algoritm är inte tillräckligt säker på klassificeringen för att
-                      visa automatiska besparingssiffror. Koppla Fortnox för en komplett,
+                      visa automatiska besparingssiffror. Koppla Fortnox / Visma för en komplett,
                       felfri analys av hela er leverantörsreskontra.
                     </p>
                   </>
@@ -529,7 +529,7 @@ const TestaFaktura = () => {
                 {result.categorized.category === 'uncategorized' ? (
                   <>
                     <strong>Kategorin är under analys.</strong>
-                    <p>Koppla Fortnox så mappar vi era volymer mot marknadens bästa priser direkt.</p>
+                    <p>Koppla Fortnox / Visma så mappar vi era volymer mot marknadens bästa priser direkt.</p>
                   </>
                 ) : (
                   <>

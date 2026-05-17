@@ -23,7 +23,7 @@ import {
 const HOW_STEPS = [
   {
     step: 'Steg 01',
-    title: 'Koppla Fortnox på 60 sek',
+    title: 'Koppla Fortnox / Visma på 60 sek',
     body: 'Säker OAuth-anslutning till ditt befintliga bokföringssystem. Vi läser leverantörsfakturor — inget annat. Du kan koppla bort när som helst.',
     bullets: ['Endast läs-rättigheter', 'BankID-verifierat', 'GDPR-säkrad infrastruktur i Sverige'],
   },
