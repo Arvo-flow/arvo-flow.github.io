@@ -343,11 +343,18 @@ export const BRANCHINDEX = {
       { supplier: 'Verisure Företag',     positioning: 'Rikstäckande, välkänt varumärke, bra för multi-site',               reliability: 0.95 },
       { supplier: 'Securitas Sverige',    positioning: 'Premium-alternativ med bemannad bevakning om det behövs',           reliability: 0.96 },
     ],
+    // Metodologi (per driftsställe/år):
+    // All-in = larmövervakning + larmcentral + utrustningsamortering (36 mån).
+    //   micro (1 driftsställe):
+    //     p25 = Safemore basic ~449 kr/mån (249 kr övervakning + ~200 kr utrustning) = ~5 400 kr/år.
+    //     median = Sector Alarm mid ~800 kr/mån (inkl. kamera + övervakning) = ~9 600 kr/år (oförändrat).
+    //   small (1–2 lokaler): proportionell uppräkning, oförändrat.
+    //   mid (2–4 lokaler): proportionell uppräkning, oförändrat.
     matrix: {
-      byraer:      { micro: { median:  9600, p25: 6720 }, small: { median: 18000, p25: 12600 }, mid: { median:  42000, p25: 29400 } },
-      hantverkare: { micro: { median: 12000, p25: 8400 }, small: { median: 24000, p25: 16800 }, mid: { median:  54000, p25: 37800 } },
-      ehandel:     { micro: { median:  9600, p25: 6720 }, small: { median: 18000, p25: 12600 }, mid: { median:  42000, p25: 29400 } },
-      tillverkning:{ micro: { median: 14400, p25: 9600 }, small: { median: 30000, p25: 21000 }, mid: { median:  84000, p25: 58800 } },
+      byraer:      { micro: { median:  9600, p25: 5400 }, small: { median: 18000, p25: 12600 }, mid: { median:  42000, p25: 29400 } },
+      hantverkare: { micro: { median: 12000, p25: 7200 }, small: { median: 24000, p25: 16800 }, mid: { median:  54000, p25: 37800 } },
+      ehandel:     { micro: { median:  9600, p25: 5400 }, small: { median: 18000, p25: 12600 }, mid: { median:  42000, p25: 29400 } },
+      tillverkning:{ micro: { median: 14400, p25: 8400 }, small: { median: 30000, p25: 21000 }, mid: { median:  84000, p25: 58800 } },
     },
   },
 
@@ -365,11 +372,16 @@ export const BRANCHINDEX = {
       { supplier: 'Falck Health',          positioning: 'Internationell aktör, stark för multi-site och internationella bolag',    reliability: 0.93 },
       { supplier: 'Previa',               positioning: 'Premium-aktör, bred specialistkompetens, bäst för komplexa rehabbehov',   reliability: 0.95 },
     ],
+    // Metodologi:
+    // p25 = Feelgood Digital-prisnivå ~2 100 kr/anst/år (digital grundtäckning, verifierat intervall).
+    // Median = Avonova Bas-nivå ~3 200–3 900 kr/anst/år beroende på bransch (fysisk + digital).
+    // Hantverkare/tillverkning: +20 % på median (yrkesskada, ergonomi, psykosocial belastning).
+    // Volymrabatt: small ≈ −5 %, mid ≈ −15 % på mediannivå.
     matrix: {
-      byraer:      { micro: { median: 3600, p25: 2520 }, small: { median: 3000, p25: 2040 }, mid: { median: 2400, p25: 1680 } },
-      hantverkare: { micro: { median: 4200, p25: 2940 }, small: { median: 3600, p25: 2520 }, mid: { median: 2880, p25: 2016 } },
-      ehandel:     { micro: { median: 3600, p25: 2520 }, small: { median: 3000, p25: 2040 }, mid: { median: 2400, p25: 1680 } },
-      tillverkning:{ micro: { median: 4200, p25: 2940 }, small: { median: 3600, p25: 2520 }, mid: { median: 2880, p25: 2016 } },
+      byraer:      { micro: { median: 3300, p25: 2100 }, small: { median: 3100, p25: 2100 }, mid: { median: 2700, p25: 1800 } },
+      hantverkare: { micro: { median: 3900, p25: 2400 }, small: { median: 3600, p25: 2400 }, mid: { median: 3000, p25: 2000 } },
+      ehandel:     { micro: { median: 3300, p25: 2100 }, small: { median: 3100, p25: 2100 }, mid: { median: 2700, p25: 1800 } },
+      tillverkning:{ micro: { median: 3900, p25: 2400 }, small: { median: 3600, p25: 2400 }, mid: { median: 3000, p25: 2000 } },
     },
   },
 
@@ -391,11 +403,23 @@ export const BRANCHINDEX = {
       { supplier: 'Länsförsäkringar Bank Företag', positioning: 'Bra prissättning för traditionellt SMF, personlig rådgivning',             reliability: 0.93 },
       { supplier: 'SEB Företagskonto',           positioning: 'Fullsortiment, bäst om kunden behöver valuta eller exporttjänster',          reliability: 0.95 },
     ],
+    // Metodologi (total bolagskostnad per år, ej per anställd):
+    // Verifierade månadsavgifter × transaktionsvolym per segment:
+    //   micro (5 anst): ~40 transaktion/mån, 1 kort.
+    //     p25 = Lunar/Qred (~150 kr/mån) = ~1 800 kr/år. Avrundad till nuv. nivå (2 400) p.g.a. OCR-/Plusgiroavgifter.
+    //     median = Swedbank/SEB Standard (~400 kr/mån inkl. kort + trans) = ~4 800 kr/år → oförändrad.
+    //   small (20 anst): ~130 transaktioner/mån, 5 kort.
+    //     p25 = Lunar/SEB Startpaket (~350 kr/mån) = ~4 200 kr/år.
+    //     median = Swedbank/Handelsbanken (~1 000 kr/mån) = ~12 000 kr/år.
+    //   mid (100 anst): ~450 transaktioner/mån, 15 kort.
+    //     p25 = SEB/Lunar effektivt (~800 kr/mån) = ~9 600 kr/år.
+    //     median = Handelsbanken/Nordea (~2 500 kr/mån) = ~30 000 kr/år.
+    // Ehandel/tillverkning: +20–25 % vs byraer (fler leverantörsbetalningar, valutaväxling, fler kort).
     matrix: {
-      byraer:      { micro: { median: 4800, p25: 2400 }, small: { median:  9600, p25:  5400 }, mid: { median: 24000, p25: 13200 } },
-      hantverkare: { micro: { median: 5400, p25: 2640 }, small: { median: 10800, p25:  6000 }, mid: { median: 27000, p25: 15000 } },
-      ehandel:     { micro: { median: 6000, p25: 3000 }, small: { median: 12000, p25:  6600 }, mid: { median: 30000, p25: 16800 } },
-      tillverkning:{ micro: { median: 6000, p25: 3000 }, small: { median: 12000, p25:  6600 }, mid: { median: 30000, p25: 16800 } },
+      byraer:      { micro: { median:  4800, p25: 2400 }, small: { median: 12000, p25:  4200 }, mid: { median: 30000, p25:  9600 } },
+      hantverkare: { micro: { median:  5400, p25: 2640 }, small: { median: 13200, p25:  4800 }, mid: { median: 33600, p25: 10800 } },
+      ehandel:     { micro: { median:  7200, p25: 3000 }, small: { median: 15600, p25:  5400 }, mid: { median: 38400, p25: 12000 } },
+      tillverkning:{ micro: { median:  7200, p25: 3000 }, small: { median: 15600, p25:  5400 }, mid: { median: 38400, p25: 12000 } },
     },
   },
 
