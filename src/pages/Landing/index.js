@@ -52,7 +52,7 @@ const FAQ = [
   },
   {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',
-    a: 'Vi mäter faktisk besparing över 12 månader via Fortnox. Höjs priset så att din besparing blir lägre än vad vi lovat — får du mellanskillnaden tillbaka. Det står i avtalet.',
+    a: 'Vår fee baseras på kontrakterade priser vid avtalssignering. Förändras marknadsläget efter bytet hjälper vi er med en ny analys — utan extra kostnad.',
   },
   {
     q: 'Säger ni upp avtal autonomt utan min godkännande?',
@@ -350,7 +350,7 @@ const Landing = () => {
             <ul>
               <li><Icon name="check" size={18} stroke={2.2} /> Skanning av alla leverantörsfakturor varje kvartal</li>
               <li><Icon name="check" size={18} stroke={2.2} /> Förberedda byten med BankID-signering</li>
-              <li><Icon name="check" size={18} stroke={2.2} /> Prisgaranti — höjs priset får du tillbaka mellanskillnaden</li>
+              <li><Icon name="check" size={18} stroke={2.2} /> Förändras marknadsläget hjälper vi er med ny analys — utan extra kostnad</li>
               <li><Icon name="check" size={18} stroke={2.2} /> Branschindex tillgängligt för dig som kund</li>
               <li><Icon name="check" size={18} stroke={2.2} /> <strong>Vårt löfte</strong> — hittar vi inga överpriser på 30 dagar raderas data + koppling automatiskt</li>
             </ul>
