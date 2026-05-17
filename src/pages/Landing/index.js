@@ -347,7 +347,7 @@ const Landing = () => {
               <span className="kicker">Success-baserat</span>
               <h3>20 % av identifierad besparing.</h3>
               <p>Inga månadsavgifter. Inga uppstartskostnader. En engångsavgift som faktureras 3 månader efter aktiverat avtal. Fr.o.m. år 2 tillfaller hela besparingen er. Hittar vi inget — kostar det inget.</p>
-              <p><em>Vi tar hellre lägre provision på en säker besparing än hög provision på en osäker.</em></p>
+              <p className="tagline">Vi tar hellre lägre provision på en säker besparing än hög provision på en osäker.</p>
             </div>
             <ul>
               <li><Icon name="check" size={18} stroke={2.2} /> Skanning av alla leverantörsfakturor varje kvartal</li>

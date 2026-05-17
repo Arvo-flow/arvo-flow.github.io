@@ -703,6 +703,15 @@ export const PricingInner = styled.div`
     font-size: 15.5px;
     line-height: 1.55;
   }
+  p.tagline {
+    color: ${({ theme }) => theme.color.accent};
+    font-size: 14.5px;
+    font-style: italic;
+    border-left: 2px solid ${({ theme }) => theme.color.accent};
+    padding-left: 12px;
+    margin-top: 20px;
+    opacity: 0.9;
+  }
   ul {
     display: flex;
     flex-direction: column;
