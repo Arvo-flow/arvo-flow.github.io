@@ -567,8 +567,13 @@ const TestaFaktura = () => {
                 <dd>{result.extracted.date}</dd>
               </div>
               <div>
-                <dt>Belopp på fakturan (ex moms)</dt>
-                <dd>{formatKr(result.extracted.amount)}</dd>
+                <dt>Fakturerat denna period (ex moms)</dt>
+                <dd>
+                  {formatKr(result.extracted.amount)}
+                  {result.extracted.oneTimeFees > 0 && (
+                    <small>Inkl. {formatKr(result.extracted.oneTimeFees)} engångskostnader — ingår ej i årsberäkningen ovan.</small>
+                  )}
+                </dd>
               </div>
               <div>
                 <dt>Återkommande</dt>
