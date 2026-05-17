@@ -60,7 +60,7 @@ const FAQ = [
   },
   {
     q: 'Vilka kategorier täcker ni idag?',
-    a: 'Företagsförsäkring, elavtal, mobilabonnemang, bredband, kortterminaler, fakturatjänster, yrkesansvarsförsäkring och företagsleasing. Fler kategorier läggs till varje kvartal baserat på var vi ser störst besparingar i kunddatan.',
+    a: 'Elavtal, mobilabonnemang, företagsbredband, programvarulicenser / SaaS, skrivare & Managed Print, kortterminaler, fakturatjänster och företagsleasing — åtta kategorier där vi kan genomföra hela bytesprocessen idag. Företags- och yrkesansvarsförsäkringar analyserar vi redan, men byten genomförs när vår FI-licens är klar. Fler kategorier läggs till varje kvartal baserat på var vi ser störst besparingar i kunddatan.',
   },
   {
     q: 'Vad händer med min data?',
@@ -446,7 +446,7 @@ const Landing = () => {
         </SectionHead>
         <FaqWrap>
           {FAQ.map((f, i) => (
-            <FaqItem key={f.q} open={i === 0}>
+            <FaqItem key={f.q}>
               <summary>{f.q}</summary>
               <p>{f.a}</p>
             </FaqItem>
