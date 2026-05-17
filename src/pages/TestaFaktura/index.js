@@ -641,7 +641,7 @@ const TestaFaktura = () => {
             <NextSteps>
               <h3>Låt Arvo sköta hela bytet</h3>
               <p>
-                Med Arvo Flow kopplar du Fortnox en gång så sköter vi hela bytet – från
+                Med Arvo Flow kopplar du Fortnox / Visma en gång så sköter vi hela bytet – från
                 uppsägning till nytt avtal och signering. Samtidigt identifierar vi
                 automatiskt fler onödiga kostnader i resten av er leverantörsreskontra.
                 Du betalar bara 20 % av identifierad besparing. Inga fasta avgifter.
@@ -748,8 +748,8 @@ const TestaFaktura = () => {
                 <h3>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></h3>
                 <p className="sub">
                   {REAL_PRICE_CATEGORIES.has(result.categorized.category)
-                    ? <>För att vi ska kunna verkställa bytet till <strong>{result.recommendation.suggestedSupplier}</strong> – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox. Snabbt, tryggt och du har alltid full kontroll.</>
-                    : 'För att vi ska få rätt underlag att vinna förhandlingen åt er – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox. Snabbt, tryggt och du har alltid full kontroll.'}
+                    ? <>För att vi ska kunna verkställa bytet till <strong>{result.recommendation.suggestedSupplier}</strong> – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.</>
+                    : 'För att vi ska få rätt underlag att vinna förhandlingen åt er – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.'}
                 </p>
                 <div className="context-badge">
                   {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
@@ -791,7 +791,7 @@ const TestaFaktura = () => {
                   >
                     {modalEmailState === 'submitting' ? 'Skickar…' : <>Skicka analysen <Icon name="arrow" size={16} /></>}
                   </Button>
-                  <p className="fine-print">Ingen spam. Inga fasta avgifter. Du betalar 20 % av faktisk realiserad besparing.</p>
+                  <p className="fine-print">Ingen spam. Inga fasta avgifter. Du betalar 20 % av identifierad besparing.</p>
                 </form>
               </>
             )}
