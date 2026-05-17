@@ -300,11 +300,18 @@ export const BRANCHINDEX = {
       { supplier: 'Canon Business Solutions',     positioning: 'Bred modellflora, bra för blandad A3/A4-volym, stark support',                  reliability: 0.93 },
       { supplier: 'Kyocera Document Solutions',   positioning: 'Lägst klickpris i klassen, lång livslängd på hardware — lägst TCO totalt',      reliability: 0.92 },
     ],
+    // Metodologi (total MPS-kostnad per år, ej per anställd):
+    // Antal MFPs: micro=1, small=2–3, mid=5–6 (baserat på 1 per 10–15 anst, modern papperslös trend).
+    // p25-pris/MFP/mån: Kyocera-klass 480 kr (200 kr lease + 3 000 S/V×0,06 + 300 färg×0,45).
+    // Median-pris/MFP/mån: Ricoh/Konica-klass 850–1 000 kr (300 kr lease + 4 000×0,075 + 400×0,65).
+    // mid-korrektion: nuv. 48 000 kr = 4 MFPs × 1 000 kr. 5 MFPs × 1 000–1 200 kr = 60 000–72 000 → 60 000.
+    // Hantverkare micro/small: lägre volym (fältarbete, färre kontorsutskrifter) → 70 % av byraer.
+    // Tillverkning mid: hög volym (ritningar, arbetsberedningar) → egna värden behålls med +25 % korrektion.
     matrix: {
-      byraer:      { micro: { median: 18000, p25: 12600 }, small: { median: 30000, p25: 21600 }, mid: { median:  48000, p25:  33600 } },
-      hantverkare: { micro: { median: 12000, p25:  8400 }, small: { median: 24000, p25: 16800 }, mid: { median:  42000, p25:  28800 } },
-      ehandel:     { micro: { median: 15000, p25: 10200 }, small: { median: 30000, p25: 21000 }, mid: { median:  48000, p25:  33600 } },
-      tillverkning:{ micro: { median: 18000, p25: 12600 }, small: { median: 48000, p25: 33600 }, mid: { median: 120000, p25:  84000 } },
+      byraer:      { micro: { median: 16800, p25: 11400 }, small: { median: 28800, p25: 19200 }, mid: { median:  60000, p25:  42000 } },
+      hantverkare: { micro: { median: 11400, p25:  7800 }, small: { median: 22800, p25: 15600 }, mid: { median:  54000, p25:  36000 } },
+      ehandel:     { micro: { median: 14400, p25:  9600 }, small: { median: 28800, p25: 19200 }, mid: { median:  60000, p25:  42000 } },
+      tillverkning:{ micro: { median: 18000, p25: 12600 }, small: { median: 48000, p25: 33600 }, mid: { median: 150000, p25: 105000 } },
     },
   },
 
@@ -352,14 +359,16 @@ export const BRANCHINDEX = {
     // All-in = larmövervakning + larmcentral + utrustningsamortering (36 mån).
     //   micro (1 driftsställe):
     //     p25 = Safemore basic ~449 kr/mån (249 kr övervakning + ~200 kr utrustning) = ~5 400 kr/år.
-    //     median = Sector Alarm mid ~800 kr/mån (inkl. kamera + övervakning) = ~9 600 kr/år (oförändrat).
-    //   small (1–2 lokaler): proportionell uppräkning, oförändrat.
-    //   mid (2–4 lokaler): proportionell uppräkning, oförändrat.
+    //     median = Sector Alarm mid ~800 kr/mån (inkl. kamera + övervakning) = ~9 600 kr/år.
+    //   small (1–2 lokaler):
+    //     p25 = 2 × Safemore 449 kr/mån = 898 kr/mån = ~10 800 kr/år.
+    //     median = 2 × Sector Alarm 750 kr/mån = 1 500 kr/mån = ~18 000 kr/år (oförändrat byraer/ehandel).
+    //   mid (2–4 lokaler): befintliga värden verifierade mot Sector Alarm multi-site — oförändrade.
     matrix: {
-      byraer:      { micro: { median:  9600, p25: 5400 }, small: { median: 18000, p25: 12600 }, mid: { median:  42000, p25: 29400 } },
-      hantverkare: { micro: { median: 12000, p25: 7200 }, small: { median: 24000, p25: 16800 }, mid: { median:  54000, p25: 37800 } },
-      ehandel:     { micro: { median:  9600, p25: 5400 }, small: { median: 18000, p25: 12600 }, mid: { median:  42000, p25: 29400 } },
-      tillverkning:{ micro: { median: 14400, p25: 8400 }, small: { median: 30000, p25: 21000 }, mid: { median:  84000, p25: 58800 } },
+      byraer:      { micro: { median:  9600, p25: 5400 }, small: { median: 18000, p25: 10800 }, mid: { median:  42000, p25: 29400 } },
+      hantverkare: { micro: { median: 12000, p25: 7200 }, small: { median: 24000, p25: 14400 }, mid: { median:  54000, p25: 37800 } },
+      ehandel:     { micro: { median:  9600, p25: 5400 }, small: { median: 18000, p25: 10800 }, mid: { median:  42000, p25: 29400 } },
+      tillverkning:{ micro: { median: 14400, p25: 8400 }, small: { median: 30000, p25: 18000 }, mid: { median:  84000, p25: 58800 } },
     },
   },
 
