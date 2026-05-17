@@ -44,7 +44,7 @@ const HOW_STEPS = [
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Inget i förskott. Vi tar 20 % av din faktiska besparing, fakturerat kvartalsvis i takt med att pengarna landar. Hittar vi inget — kostar det inget.',
+    a: 'Inget i förskott. Vi tar 20 % av identifierad besparing — en engångsavgift som faktureras 3 månader efter aktiverat avtal. Hittar vi inget — kostar det inget.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
@@ -254,8 +254,8 @@ const Landing = () => {
           <div className="icon"><Icon name="trend" size={22} stroke={2} /></div>
           <h3>Inga fasta avgifter</h3>
           <p>
-            Vi tjänar pengar bara när du gör det. 20 % av din faktiska besparing,
-            fakturerat kvartalsvis i takt med att pengarna landar.
+            Vi tjänar pengar bara när du gör det. 20 % av identifierad besparing —
+            en engångsavgift, inget annat.
           </p>
           <strong>Hittar vi inget kostar det inget.</strong>
         </TrustPillar>
@@ -344,8 +344,8 @@ const Landing = () => {
           <PricingInner>
             <div>
               <span className="kicker">Success-baserat</span>
-              <h3>20 % av din faktiska besparing.</h3>
-              <p>Inga månadsavgifter. Inga uppstartskostnader. Vi mäter besparingen via Fortnox och fakturerar kvartalsvis i takt med att du faktiskt sparar pengarna. Hittar vi inget — kostar det inget.</p>
+              <h3>20 % av identifierad besparing.</h3>
+              <p>Inga månadsavgifter. Inga uppstartskostnader. En engångsavgift som faktureras 3 månader efter aktiverat avtal. Fr.o.m. år 2 tillfaller hela besparingen er. Hittar vi inget — kostar det inget.</p>
             </div>
             <ul>
               <li><Icon name="check" size={18} stroke={2.2} /> Skanning av alla leverantörsfakturor varje kvartal</li>

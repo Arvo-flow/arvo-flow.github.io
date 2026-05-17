@@ -72,8 +72,8 @@ const Bias = () => (
           <p>
             Vi accepterar en fast, kapad affiliate-avgift per leverantörskategori (se tabellen
             nedan). Om en leverantör vill betala mer för att vinna oftare — då har vi inte rätten
-            att tjäna mer på det. Överskottet läggs i en kundbonus-pool och rabatteras tillbaka
-            som lägre success-fee nästa kvartal.
+            att tjäna mer på det. Överskottet läggs i en kundbonus-pool och krediteras tillbaka
+            på din Besparingsavgift.
           </p>
         </div>
       </RuleCard>
@@ -83,8 +83,8 @@ const Bias = () => (
         <div>
           <h3>Ett erbjudande. Inga val, inga krångel.</h3>
           <p>
-            Vi tar <strong>20 % av din faktiska besparing</strong>, fakturerat kvartalsvis i takt
-            med att pengarna landar på ditt konto. Det är det enda du behöver godkänna.
+            Vi tar <strong>20 % av identifierad besparing</strong> — en engångsavgift som
+            faktureras 3 månader efter aktiverat avtal. Det är det enda du behöver godkänna.
           </p>
           <p>
             Om affiliate-intäkter från leverantörer överstiger de tak som anges i tabellen nedan,

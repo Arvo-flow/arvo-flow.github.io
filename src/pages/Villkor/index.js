@@ -85,15 +85,14 @@ const Villkor = () => (
 
       <Clause>
         <h3>3. Arvode och Betalning</h3>
-        <p><strong>3.1</strong> Tjänsten baseras på realiserad besparing. Inga fasta avgifter,
+        <p><strong>3.1</strong> Tjänsten baseras på identifierad besparing. Inga fasta avgifter,
           uppstartsavgifter eller licensavgifter utgår.</p>
-        <p><strong>3.2</strong> Besparingsavgiften faktureras kvartalsvis i efterskott, baserat
-          på den besparing som faktiskt realiserats för Kunden under perioden.</p>
+        <p><strong>3.2</strong> Besparingsavgiften faktureras som en engångsavgift, 3 månader
+          efter att det nya avtalet aktiverats. Fr.o.m. år 2 tillfaller hela besparingen Kunden.</p>
         <p><strong>3.3 Förtida avslut av leverantörsavtal.</strong> Om Kunden väljer att avsluta
           ett av Arvo Flow tecknat leverantörsavtal i förtid, eller på annat sätt förhindrar
-          Tjänstens utförande, debiteras Besparingsavgiften proportionellt för resterande del av
-          12-månadersperioden enligt ordinarie kvartalsrutin. Detta gäller ej om Kunden avbryter
-          samarbetet på grund av väsentligt avtalsbrott från Arvo Flows sida.</p>
+          Tjänstens utförande, förfaller Besparingsavgiften i sin helhet. Detta gäller ej om
+          Kunden avbryter samarbetet på grund av väsentligt avtalsbrott från Arvo Flows sida.</p>
       </Clause>
 
       <Clause>
