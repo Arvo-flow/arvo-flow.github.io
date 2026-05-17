@@ -48,7 +48,7 @@ const FAQ = [
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
-    a: 'Vi tjänar pengar bara när du sparar — det är beviset på opartiskhet. Leverantörer kan inte köpa sig en högre placering; vi sätter tak för vad de får betala oss och krediterar dig direkt om någon försöker gå över. Policyn är öppet publicerad under /bias.',
+    a: <>Vi tjänar pengar bara när du sparar — det är beviset på opartiskhet. Leverantörer kan inte köpa sig en högre placering; vi sätter tak för vad de får betala oss och krediterar dig direkt om någon försöker gå över. Policyn är öppet publicerad under <Link to="/bias">vår rankningspolicy</Link>.</>,
   },
   {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',
