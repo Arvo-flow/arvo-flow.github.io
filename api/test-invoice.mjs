@@ -159,7 +159,8 @@ function computeElRecommendation(extracted) {
 
   // Energipris per kWh — föredrar explicit extraktion, fallback till härlett
   let energiPerKwh = extracted.elEnergiPerKwh;
-  if (!(energiPerKwh > 0) && extracted.recurringAmount > 0) {
+  const elPriceDerived = !(energiPerKwh > 0);
+  if (elPriceDerived && extracted.recurringAmount > 0) {
     energiPerKwh = extracted.recurringAmount / kwh;
   }
   if (!(energiPerKwh > 0)) return null;
@@ -184,7 +185,10 @@ function computeElRecommendation(extracted) {
     reasoning: shouldSwitch
       ? `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}. Arvo estimerar att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos 20 % fee: ${netSaving.toLocaleString('sv-SE')} kr/år.`
       : `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}, vilket är i linje med ett välförhandlat spotprisavtal i ${omrade} (benchmark ${seasonLabel}: ${benchmarkKwh.toFixed(2)} kr/kWh). Ert nuvarande avtal verkar konkurrenskraftigt.`,
-    uncertaintyNote: `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh med säsongskorrigering (${seasonLabel}, ×${multiplier}). Faktisk årsförbrukning kan avvika ±30–40 %.`,
+    uncertaintyNote: [
+      `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh med säsongskorrigering (${seasonLabel}, ×${multiplier}). Faktisk årsförbrukning kan avvika ±30–40 %.`,
+      elPriceDerived ? 'Elpriset är beräknat som fakturabelopp / kWh. Om fakturan innehåller energiskatt eller nätavgift kan besparingen vara annorlunda.' : null,
+    ].filter(Boolean).join(' '),
   };
 }
 
