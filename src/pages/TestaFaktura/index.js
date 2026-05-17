@@ -9,7 +9,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, OptimizeBlock, NoSwitchBlock, CreditAlert, PriceNote, PartnerBlock, KV,
+  ResultHead, SavingsBlock, NoSwitchBlock, CreditAlert, PriceNote, PartnerBlock, KV,
   Reasoning, LicenseOverageNote, NextSteps, ServiceList, EmailGate,
   ModalOverlay, ModalCard,
 } from './styles';
@@ -461,17 +461,14 @@ const TestaFaktura = () => {
               </NoSwitchBlock>
             ) : isOptimize ? (
               <>
-                <OptimizeBlock>
+                <SavingsBlock>
                   <span className="kicker">Dold kostnad hittad</span>
                   <span className="amount">+{formatKr(optNet)}</span>
                   <span className="unit">
-                    nettobesparing · Arvos fee {formatKr(optArvoFee)} (20 %)
+                    Du betalar {formatNum(optSaving)} kr/år för en tjänst som redan ingår i er licens
+                    {' '}· Arvos fee {formatKr(optArvoFee)} (20 %)
                   </span>
-                </OptimizeBlock>
-                <Reasoning>
-                  <span className="kicker">Vad vi hittade</span>
-                  <p>{result.recommendation.reasoning}</p>
-                </Reasoning>
+                </SavingsBlock>
                 <PartnerBlock>
                   <div className="left">
                     <span className="verified-badge">
@@ -630,9 +627,9 @@ const TestaFaktura = () => {
               )}
             </KV>}
 
-            {result.recommendation?.reasoning && result.recommendation?.shouldSwitch && (
+            {result.recommendation?.reasoning && (result.recommendation?.shouldSwitch || isOptimize) && (
               <Reasoning>
-                <span className="kicker">Varför vi tror du kan spara</span>
+                <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Varför vi tror du kan spara'}</span>
                 <p>
                   {REAL_PRICE_CATEGORIES.has(result.categorized.category)
                     ? result.recommendation.reasoning
