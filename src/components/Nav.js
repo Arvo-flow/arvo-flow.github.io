@@ -52,8 +52,12 @@ const Right = styled.div`
   gap: 10px;
 `;
 
-const LoginLink = styled(Button)`
-  @media (max-width: 480px) { display: none; }
+const CtaText = styled.span`
+  .short { display: none; }
+  @media (max-width: 480px) {
+    .full  { display: none; }
+    .short { display: inline; }
+  }
 `;
 
 const Nav = ({ variant = 'public' }) => {
@@ -89,8 +93,10 @@ const Nav = ({ variant = 'public' }) => {
         <Right>
           {variant === 'public' ? (
             <>
-              <LoginLink as={Link} to="/connect" $variant="ghost" $size="sm">Logga in</LoginLink>
-              <Button as={Link} to="/connect" $variant="gradient" $size="sm">Se mina besparingar →</Button>
+              <Button as={Link} to="/connect" $variant="ghost" $size="sm">Logga in</Button>
+              <Button as={Link} to="/connect" $variant="gradient" $size="sm">
+                <CtaText><span className="full">Se mina besparingar →</span><span className="short">Se besparingar →</span></CtaText>
+              </Button>
             </>
           ) : (
             <Button as={Link} to="/" $variant="ghost" $size="sm">Logga ut</Button>
