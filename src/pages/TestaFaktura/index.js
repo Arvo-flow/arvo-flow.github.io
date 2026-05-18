@@ -226,12 +226,24 @@ const TestaFaktura = () => {
     if (!res.ok) throw new Error('send-analysis ' + res.status);
   };
 
+  const sendConfirmationMail = async (emailAddr) => {
+    const res = await fetch('/api/send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailAddr, result }),
+    });
+    if (!res.ok) throw new Error('send-confirmation ' + res.status);
+  };
+
   const submitModalEmail = async (e) => {
     e.preventDefault();
     if (!modalEmail || modalEmailState !== 'idle') return;
     setModalEmailState('submitting');
     try {
-      await sendAnalysisMail(modalEmail);
+      await Promise.all([
+        sendConfirmationMail(modalEmail),
+        sendAnalysisMail(modalEmail),
+      ]);
       setModalEmailState('sent');
     } catch {
       setModalEmailState('idle');
@@ -778,9 +790,12 @@ const TestaFaktura = () => {
             {modalEmailState === 'sent' ? (
               <div className="sent-state">
                 <span className="sent-icon"><Icon name="check" size={20} stroke={2.5} /></span>
-                <p className="sent-title">Vi hör av oss inom 24 timmar.</p>
+                <p className="sent-title">
+                  {isOptimize ? 'Avvecklingen är igångsatt.' : 'Bytet är igångsatt.'}
+                </p>
                 <p className="sent-sub">
-                  Analysen och nästa steg skickas till {modalEmail}.
+                  Bekräftelse med nästa steg skickad till {modalEmail}.
+                  {' '}Du har 24 timmars ångerrätt.
                 </p>
               </div>
             ) : modalView === 'fortnox' ? (
@@ -812,9 +827,15 @@ const TestaFaktura = () => {
                 <button className="back-link" type="button" onClick={() => setModalView('fortnox')}>
                   ← Tillbaka
                 </button>
-                <h3>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></h3>
+                <h3>
+                  {isOptimize
+                    ? <>Avveckla <em>dubbla avgiften</em></>
+                    : <>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></>}
+                </h3>
                 <p className="sub">
-                  Vi skickar analysen och leverantörsidentiteten direkt till er inkorg.
+                  {isOptimize
+                    ? 'Vi skickar bekräftelse och nästa steg direkt till er inkorg.'
+                    : 'Vi skickar analysen och leverantörsidentiteten direkt till er inkorg.'}
                 </p>
                 <div className="context-badge">
                   {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
