@@ -17,9 +17,10 @@ import { getDb } from '../lib/db.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
-const FREE_ANALYSES  = 3;
-const PDF_CACHE_TTL  = 24 * 60 * 60;       // 24 h
-const GATE_WINDOW_TTL = 30 * 24 * 60 * 60; // 30 dagar
+const FREE_ANALYSES      = 3;
+const PDF_CACHE_TTL      = 24 * 60 * 60;       // 24 h
+const GATE_WINDOW_TTL    = 30 * 24 * 60 * 60;  // 30 dagar
+const PIPELINE_TIMEOUT_MS = 55_000;             // 5 s marginal mot Vercels 60 s hard kill
 
 // ── HMAC-tokenvalidering ──────────────────────────────────────────────────────
 function validateToken(token) {
@@ -255,6 +256,7 @@ const ALLOWED_INDUSTRIES = [
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
 function send(res, status, body) {
+  if (res.headersSent) return; // guard mot dubbel-send vid timeout-race
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'no-store');
@@ -362,6 +364,16 @@ export default async function handler(req, res) {
       }
     }
   }
+
+  // Timeout-skydd: om Anthropic API hänger skickas ett kontrollerat JSON-svar
+  // 5 s innan Vercel dödar funktionen med en kal 504-sida.
+  const timeoutHandle = setTimeout(() => {
+    send(res, 504, {
+      ok:      false,
+      error:   'Analysen tog för lång tid — försök igen om en stund.',
+      timeout: true,
+    });
+  }, PIPELINE_TIMEOUT_MS);
 
   const timing = {};
   try {
@@ -756,5 +768,7 @@ export default async function handler(req, res) {
         : err instanceof RecommenderError ? 'recommend'
         : 'unknown',
     });
+  } finally {
+    clearTimeout(timeoutHandle);
   }
 }

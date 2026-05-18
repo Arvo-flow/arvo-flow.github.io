@@ -249,6 +249,13 @@ const TestaFaktura = () => {
         return;
       }
 
+      // Pipeline-timeout — visa vänlig retry-uppmaning
+      if (data.timeout) {
+        setPhase(null);
+        setError('Analysen tog lite för lång tid just nu. Vänta ett ögonblick och försök igen — det brukar gå snabbare vid andra försöket.');
+        return;
+      }
+
       if (!res.ok || !data.ok) {
         throw new Error(data.error || `Servern returnerade ${res.status}`);
       }
