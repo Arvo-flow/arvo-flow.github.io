@@ -346,6 +346,51 @@ export default async function handler(req, res) {
       normalizedSupplier: categorized.normalizedSupplier,
     }));
 
+    // ── Avtalslås-detektering (körs före alla tidiga exits) ───────────────────
+    if (extracted.servicePeriodStart && extracted.cancellationNoticeDays != null) {
+      const periodStart  = new Date(extracted.servicePeriodStart);
+      const periodEnd    = extracted.servicePeriodEnd ? new Date(extracted.servicePeriodEnd) : null;
+      const lockDeadline = new Date(periodStart);
+      lockDeadline.setDate(lockDeadline.getDate() - extracted.cancellationNoticeDays);
+      const today        = new Date();
+
+      if (today > lockDeadline && (!periodEnd || today <= periodEnd)) {
+        const monitoringDate = periodEnd ? new Date(periodEnd) : null;
+        if (monitoringDate) monitoringDate.setDate(monitoringDate.getDate() - 90);
+
+        timing.totalMs = Date.now() - t0;
+        return send(res, 200, {
+          ok:    true,
+          route: 'monitoring',
+          contractLocked:         true,
+          servicePeriodEnd:       extracted.servicePeriodEnd,
+          cancellationNoticeDays: extracted.cancellationNoticeDays,
+          monitoringDate:         monitoringDate ? monitoringDate.toISOString().slice(0, 10) : null,
+          extracted: {
+            supplier:           extracted.supplier,
+            amount:             extracted.amount,
+            annualCost:         extracted.annualCost,
+            recurringAmount:    extracted.recurringAmount,
+            variableCharges:    extracted.variableCharges,
+            oneTimeFees:        extracted.oneTimeFees,
+            date:               extracted.date,
+            recurring:          extracted.recurring,
+            seatCount:          extracted.seatCount ?? null,
+            servicePeriodStart: extracted.servicePeriodStart,
+            servicePeriodEnd:   extracted.servicePeriodEnd,
+          },
+          categorized: {
+            category:           categorized.category,
+            subType:            categorized.subType,
+            normalizedSupplier: categorized.normalizedSupplier,
+            confidence:         categorized.confidence,
+            licensePending:     categorized.licensePending ?? false,
+          },
+          timing,
+        });
+      }
+    }
+
     // Proxy-skydd: kategorier där antal anställda inte är en giltig kostnadsdrivare
     // ska aldrig få en automatisk besparingsberäkning — det vore vilseledande.
     const catDef = BRANCHINDEX[categorized.category];
@@ -479,55 +524,6 @@ export default async function handler(req, res) {
         },
         timing,
       });
-    }
-
-    // ── Avtalslås-detektering ──────────────────────────────────────────────────
-    // Om kunden redan passerat cancellation deadline för innevarande period
-    // finns ingen möjlighet att agera förrän vid nästa förnyelse.
-    // Hoppa över recommend-anropet och returnera 'monitoring'-state direkt.
-    if (extracted.servicePeriodStart && extracted.cancellationNoticeDays != null) {
-      const periodStart    = new Date(extracted.servicePeriodStart);
-      const periodEnd      = extracted.servicePeriodEnd ? new Date(extracted.servicePeriodEnd) : null;
-      const lockDeadline   = new Date(periodStart);
-      lockDeadline.setDate(lockDeadline.getDate() - extracted.cancellationNoticeDays);
-      const today          = new Date();
-
-      if (today > lockDeadline && (!periodEnd || today <= periodEnd)) {
-        const monitoringDate = periodEnd ? new Date(periodEnd) : null;
-        if (monitoringDate) monitoringDate.setDate(monitoringDate.getDate() - 90);
-
-        timing.recommendMs = 0;
-        timing.totalMs = Date.now() - t0;
-        return send(res, 200, {
-          ok:    true,
-          route: 'monitoring',
-          contractLocked: true,
-          servicePeriodEnd:       extracted.servicePeriodEnd,
-          cancellationNoticeDays: extracted.cancellationNoticeDays,
-          monitoringDate:         monitoringDate ? monitoringDate.toISOString().slice(0, 10) : null,
-          extracted: {
-            supplier:        extracted.supplier,
-            amount:          extracted.amount,
-            annualCost:      extracted.annualCost,
-            recurringAmount: extracted.recurringAmount,
-            variableCharges: extracted.variableCharges,
-            oneTimeFees:     extracted.oneTimeFees,
-            date:            extracted.date,
-            recurring:       extracted.recurring,
-            seatCount:       extracted.seatCount ?? null,
-            servicePeriodStart: extracted.servicePeriodStart,
-            servicePeriodEnd:   extracted.servicePeriodEnd,
-          },
-          categorized: {
-            category:           categorized.category,
-            subType:            categorized.subType,
-            normalizedSupplier: categorized.normalizedSupplier,
-            confidence:         categorized.confidence,
-            licensePending:     categorized.licensePending ?? false,
-          },
-          timing,
-        });
-      }
     }
 
     const t2 = Date.now();
