@@ -136,6 +136,12 @@ function generatePdf(result) {
     const FOOTER_TOP = PAGE_H - PAD - 60; // fixed footer zone: last ~60pt of page
     let y = PAD;
 
+    // Top gradient accent bar
+    const topBar = doc.linearGradient(0, 0, PW, 0);
+    topBar.stop(0, T.gradTop);
+    topBar.stop(1, T.gradBot);
+    doc.rect(0, 0, PW, 4).fill(topBar);
+
     // ── Header: logo mark + wordmark ─────────────────────────────────────────
     const MARK = 32;
     drawLogoMark(doc, PAD, y, MARK);
@@ -176,9 +182,9 @@ function generatePdf(result) {
       .text('+' + formatKr(r.netSaving), PAD, y + 30);
 
     const costLine =
-      formatKr(ex.annualCost) + ' till ' + formatKr(r.suggestedAnnualCost) + ' / ar' +
+      formatKr(ex.annualCost) + ' → ' + formatKr(r.suggestedAnnualCost) + ' / år' +
       (suppDisplay ? '  hos  ' + suppDisplay : '') +
-      '   ·   Arvos arvode ' + formatKr(r.arvoFee) + ' (20 %)';
+      '   ·   Arvos besparingsarvode ' + formatKr(r.arvoFee) + ' (20 %)';
     doc.fontSize(9.5).font('Helvetica').fillColor('rgba(255,255,255,0.78)')
       .text(costLine, PAD, y + 78, { width: W });
 
@@ -202,12 +208,12 @@ function generatePdf(result) {
     };
 
     row('Nuvarande leverantör', ex.supplier);
-    row('Du betalar idag',      formatKr(ex.annualCost) + ' / ar');
+    row('Du betalar idag',      formatKr(ex.annualCost) + ' / år');
     row('Fakturadatum',         ex.date ?? '–');
     if (suppDisplay) row('Föreslagen leverantör', suppDisplay, { bold: true });
-    row('Arvo-pris',            formatKr(r.suggestedAnnualCost) + ' / ar', { bold: true });
+    row('Arvo-pris',            formatKr(r.suggestedAnnualCost) + ' / år', { bold: true });
     row('Bruttobesparing',      formatKr(r.grossSaving));
-    row('Arvos arvode (20 %)',  formatKr(r.arvoFee));
+    row('Arvos besparingsarvode (20 %)', formatKr(r.arvoFee));
 
     // Net saving row — brand soft background, left accent line
     doc.moveTo(LC, y).lineTo(PW - LC, y).strokeColor(T.border).lineWidth(0.3).stroke();
@@ -267,40 +273,37 @@ function generatePdf(result) {
 }
 
 // ── HTML email ─────────────────────────────────────────────────────────────────
-// Design principles:
-//  - No alternating row colors — clean white table with hairline borders
-//  - Only "Din nettobesparing" row gets the brand-soft accent
-//  - Footer: light #F1F6F3 with logo, no dark block
-
-const LOGO_SVG = `<svg width="30" height="30" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DD6CA"/><stop offset="100%" stop-color="#1B6E66"/></linearGradient></defs><path fill="url(#lg)" fill-rule="evenodd" d="M20 3 L37 36 L27.5 36 L20 21.5 L12.5 36 L3 36 Z M20 12.5 L24 21 L16 21 Z"/></svg>`;
+function logo(size, id) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DD6CA"/><stop offset="100%" stop-color="#1B6E66"/></linearGradient></defs><path fill="url(#${id})" fill-rule="evenodd" d="M20 3 L37 36 L27.5 36 L20 21.5 L12.5 36 L3 36 Z M20 12.5 L24 21 L16 21 Z"/></svg>`;
+}
 
 function htmlEmail(result) {
   const { extracted: ex, categorized: cat, recommendation: r } = result;
   const catLabel    = CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '';
   const suppDisplay = displayedSupplier(cat, r);
+  const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
 
-  const licenseBlock = r.licenseOverage > 0
-    ? `<tr><td style="padding:0 40px 24px">
-        <div style="border-left:2px solid #D4A940;background:#F3E5C7;padding:14px 18px;border-radius:0 6px 6px 0">
-          <p style="margin:0 0 4px;font-size:10px;font-weight:700;color:#A8761A;letter-spacing:.09em;text-transform:uppercase;font-family:'Inter',Arial,sans-serif">Notering om licenser</p>
-          <p style="margin:0;font-size:13px;color:#1F2E2A;line-height:1.65;font-family:'Inter',Arial,sans-serif">${r.licenseOverage} överflödiga licenser — ytterligare ${formatKr(r.overageSavings)} att spara.</p>
-        </div>
-      </td></tr>`
-    : '';
+  const wr = (label, val, bold = false, color = T.inkSoft) =>
+    `<tr>
+      <td style="padding:14px 16px;color:#8FA8A0;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:44%;font-family:'Inter',Arial,sans-serif">${label}</td>
+      <td style="padding:14px 16px;color:${color};font-weight:${bold ? 600 : 500};border-top:1px solid ${T.bg};font-size:${bold ? 15 : 14}px;font-family:'Inter',Arial,sans-serif">${val}</td>
+    </tr>`;
 
   const suppRow = suppDisplay
     ? `<tr>
-        <td style="padding:13px 16px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;width:44%;font-family:'Inter',Arial,sans-serif">Föreslagen leverantör</td>
-        <td style="padding:13px 16px;color:#1B7A6E;font-weight:700;border-bottom:1px solid #E8F0EC;font-size:15px;font-family:'Inter',Arial,sans-serif">${suppDisplay}</td>
+        <td style="padding:14px 16px;color:#8FA8A0;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:44%;font-family:'Inter',Arial,sans-serif">Föreslagen leverantör</td>
+        <td style="padding:14px 16px;color:${T.brand};font-weight:600;border-top:1px solid ${T.bg};font-size:15px;font-family:'Inter',Arial,sans-serif">${suppDisplay}</td>
       </tr>`
     : '';
 
-  // Simple white row helper (inline to keep template readable)
-  const wr = (label, val, bold = false, color = '#1F2E2A') =>
-    `<tr>
-      <td style="padding:13px 16px;color:#5C6E68;border-bottom:1px solid #E8F0EC;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;width:44%;font-family:'Inter',Arial,sans-serif">${label}</td>
-      <td style="padding:13px 16px;color:${color};font-weight:${bold ? 700 : 500};border-bottom:1px solid #E8F0EC;font-size:${bold ? 15 : 14}px;font-family:'Inter',Arial,sans-serif">${val}</td>
-    </tr>`;
+  const licenseBlock = r.licenseOverage > 0
+    ? `<tr><td style="padding:0 44px 28px">
+        <div style="border-left:3px solid ${T.warnBdr};background:${T.warnSoft};border-radius:0 8px 8px 0;padding:16px 22px">
+          <p style="margin:0 0 5px;font-size:9px;font-weight:700;color:${T.warning};letter-spacing:.1em;text-transform:uppercase;font-family:'Inter',Arial,sans-serif">Notering om licenser</p>
+          <p style="margin:0;font-size:13px;color:${T.inkSoft};line-height:1.65;font-family:'Inter',Arial,sans-serif">${r.licenseOverage} överflödiga licenser — ytterligare ${formatKr(r.overageSavings)} att spara.</p>
+        </div>
+      </td></tr>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="sv">
@@ -312,100 +315,112 @@ function htmlEmail(result) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background:#F1F6F3;-webkit-font-smoothing:antialiased">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#F1F6F3;padding:40px 16px">
+<body style="margin:0;padding:0;background:${T.bg};-webkit-font-smoothing:antialiased">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg};padding:48px 16px">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 2px 16px rgba(14,26,23,0.07)">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 4px 32px rgba(14,26,23,0.10)">
 
-  <!-- Logo header -->
+  <!-- Top accent bar -->
+  <tr><td style="height:4px;background:linear-gradient(90deg,#5DD6CA 0%,#1B6E66 100%);font-size:0;line-height:0">&nbsp;</td></tr>
+
+  <!-- Header -->
   <tr>
-    <td style="padding:24px 40px;border-bottom:1px solid #D5E2DC;background:#F1F6F3">
+    <td style="padding:24px 44px;border-bottom:1px solid ${T.bg};background:#FAFCFB">
       <table cellpadding="0" cellspacing="0" width="100%"><tr>
         <td style="vertical-align:middle">
-          ${LOGO_SVG}
-          <span style="margin-left:9px;font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:600;color:#0E1A17;vertical-align:middle">Arvo</span>
-          <em style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:400;color:#5C6E68;vertical-align:middle"> Flow</em>
+          ${logo(32, 'hlg')}
+          <span style="margin-left:9px;font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:600;color:${T.ink};vertical-align:middle">Arvo</span>
+          <em style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:400;font-style:italic;color:${T.mutedSoft};vertical-align:middle"> Flow</em>
         </td>
         <td style="text-align:right;vertical-align:middle">
-          <span style="font-size:10px;color:#5C6E68;font-family:'Inter',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-weight:600">${catLabel}</span>
+          <span style="display:inline-block;font-size:10px;color:${T.brand};font-family:'Inter',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;font-weight:600;background:${T.brandSoft};padding:5px 12px;border-radius:100px">${catLabel}</span>
         </td>
       </tr></table>
     </td>
   </tr>
 
-  <!-- Supplier name -->
+  <!-- Supplier -->
   <tr>
-    <td style="padding:24px 40px 20px;border-bottom:1px solid #E8F0EC">
-      <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:600;color:#0E1A17;letter-spacing:-.3px;line-height:1.2">${ex.supplier}</p>
+    <td style="padding:32px 44px 28px;border-bottom:1px solid ${T.bg}">
+      <p style="margin:0 0 8px;font-size:10px;font-weight:600;color:${T.mutedSoft};letter-spacing:.1em;text-transform:uppercase;font-family:'Inter',Arial,sans-serif">Leverantörsanalys</p>
+      <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:700;color:${T.ink};letter-spacing:-.5px;line-height:1.2">${ex.supplier}</p>
     </td>
   </tr>
 
-  <!-- Savings block -->
+  <!-- Savings hero -->
   <tr>
-    <td style="background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);padding:34px 40px 30px">
-      <p style="margin:0 0 10px;font-size:9px;font-weight:700;color:rgba(255,255,255,0.60);text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Din nettobesparing</p>
-      <p style="margin:0 0 14px;font-size:40px;font-weight:700;color:#ffffff;line-height:1;letter-spacing:-1px;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</p>
-      <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;font-family:'Inter',Arial,sans-serif">
-        ${formatKr(ex.annualCost)} &rarr; ${formatKr(r.suggestedAnnualCost)} / år
-        ${suppDisplay ? `hos <strong style="color:#ffffff">${suppDisplay}</strong>` : ''}
-        &nbsp;&middot;&nbsp; Arvos fee ${formatKr(r.arvoFee)} (20&nbsp;%)
+    <td style="background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);padding:40px 44px 36px">
+      <p style="margin:0 0 12px;font-size:9px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.22em;font-family:'Inter',Arial,sans-serif">Din nettobesparing</p>
+      <p style="margin:0 0 18px;font-family:'Playfair Display',Georgia,serif;font-size:52px;font-weight:700;color:#ffffff;line-height:1;letter-spacing:-2px">+${formatKr(r.netSaving)}</p>
+      <p style="margin:0;font-size:13.5px;color:rgba(255,255,255,0.72);line-height:1.65;font-family:'Inter',Arial,sans-serif">
+        ${formatKr(ex.annualCost)} &rarr; ${formatKr(r.suggestedAnnualCost)}/år
+        ${suppDisplay ? `&thinsp;hos&thinsp;<strong style="color:rgba(255,255,255,0.92);font-weight:600">${suppDisplay}</strong>` : ''}
+        &thinsp;&middot;&thinsp; Arvos besparingsarvode ${formatKr(r.arvoFee)} (20&nbsp;%)
       </p>
     </td>
   </tr>
 
-  <!-- Details table — white rows only, hairline borders -->
+  <!-- Details table -->
   <tr>
-    <td style="padding:28px 40px 8px">
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid #E8F0EC">
+    <td style="padding:32px 44px 4px">
+      <table width="100%" cellpadding="0" cellspacing="0">
         ${wr('Nuvarande leverantör', ex.supplier)}
-        ${wr('Du betalar idag', formatKr(ex.annualCost) + ' / år')}
+        ${wr('Du betalar idag', formatKr(ex.annualCost) + '&thinsp;/&thinsp;år')}
         ${suppRow}
-        ${wr('Arvo-pris', formatKr(r.suggestedAnnualCost) + ' / år', true, '#1B7A6E')}
+        ${wr('Arvo-pris', formatKr(r.suggestedAnnualCost) + '&thinsp;/&thinsp;år', true, T.brand)}
         ${wr('Bruttobesparing', formatKr(r.grossSaving))}
-        ${wr('Arvos arvode (20&nbsp;%)', formatKr(r.arvoFee))}
-        <!-- Net saving — only accent row -->
-        <tr style="background:#DCEEEA">
-          <td style="padding:14px 16px 14px 19px;color:#0E4F47;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-left:2.5px solid #1B7A6E;font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
-          <td style="padding:14px 16px;color:#1B7A6E;font-weight:700;font-size:15px;white-space:nowrap;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</td>
+        ${wr('Arvos besparingsarvode (20&nbsp;%)', formatKr(r.arvoFee))}
+        <tr style="background:${T.brandSoft}">
+          <td style="padding:16px 16px 16px 19px;color:${T.brandInk};font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-top:1px solid #B8D9D1;border-left:3px solid ${T.brand};font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
+          <td style="padding:16px 16px;color:${T.brand};font-size:20px;font-weight:700;border-top:1px solid #B8D9D1;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</td>
         </tr>
       </table>
     </td>
   </tr>
 
-  <!-- License overage -->
   ${licenseBlock}
 
   <!-- Reasoning -->
   <tr>
-    <td style="padding:28px 40px 24px">
-      <p style="margin:0 0 10px;font-size:9px;font-weight:700;color:#1B7A6E;text-transform:uppercase;letter-spacing:.14em;font-family:'Inter',Arial,sans-serif">Varför vi tror du kan spara</p>
-      <p style="margin:0;font-size:14px;color:#1F2E2A;line-height:1.8;font-family:'Inter',Arial,sans-serif">${r.reasoning ?? ''}</p>
+    <td style="padding:28px 44px 28px">
+      <div style="border-left:3px solid ${T.brand};background:#F4F9F7;border-radius:0 10px 10px 0;padding:20px 24px">
+        <p style="margin:0 0 10px;font-size:9px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Varför vi tror du kan spara</p>
+        <p style="margin:0;font-size:14px;color:${T.inkSoft};line-height:1.85;font-family:'Inter',Arial,sans-serif">${r.reasoning ?? ''}</p>
+      </div>
     </td>
   </tr>
 
   <!-- CTA -->
   <tr>
-    <td style="padding:4px 40px 36px;text-align:center">
-      <a href="https://arvo-flow.github.io/flow/testa-faktura"
-         style="display:inline-block;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);color:#ffffff;font-weight:600;font-size:15px;padding:15px 38px;border-radius:10px;text-decoration:none;font-family:'Inter',Arial,sans-serif">
-        ${REAL_PRICE_CATEGORIES.has(cat?.category) ? 'Aktivera bytet' : 'Säkra besparingen'} &rarr;
-      </a>
-      <p style="margin:14px 0 0;font-size:12px;color:#5C6E68;font-family:'Inter',Arial,sans-serif">20 % av identifierad besparing — inga fasta avgifter.</p>
+    <td style="padding:0 44px 48px;text-align:center">
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto 16px">
+        <tr>
+          <td style="border-radius:12px;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);box-shadow:0 6px 20px rgba(27,110,102,0.28)">
+            <a href="https://arvoflow.se/flow/testa-faktura"
+               style="display:inline-block;color:#ffffff;font-weight:600;font-size:15px;padding:17px 48px;text-decoration:none;font-family:'Inter',Arial,sans-serif;letter-spacing:.02em">
+              ${isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen'} &rarr;
+            </a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:0;font-size:12px;color:#9DAAA5;font-family:'Inter',Arial,sans-serif">20 % av identifierad besparing — en gång. Inga fasta avgifter.</p>
     </td>
   </tr>
 
   <!-- Footer -->
   <tr>
-    <td style="border-top:1px solid #D5E2DC;padding:22px 40px;text-align:center;background:#F1F6F3">
-      <div style="margin-bottom:8px">
-        ${LOGO_SVG}
-        <span style="margin-left:8px;font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:600;color:#0E1A17;vertical-align:middle">Arvo</span>
-        <em style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:400;color:#5C6E68;vertical-align:middle"> Flow</em>
+    <td style="border-top:1px solid ${T.bg};padding:28px 44px;text-align:center;background:#FAFCFB">
+      <div style="margin-bottom:10px">
+        ${logo(22, 'flg')}
+        <span style="margin-left:7px;font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:600;color:${T.ink};vertical-align:middle">Arvo</span>
+        <em style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:400;font-style:italic;color:${T.mutedSoft};vertical-align:middle"> Flow</em>
       </div>
-      <p style="margin:0;font-size:11px;color:#5C6E68;font-family:'Inter',Arial,sans-serif">
-        <a href="https://arvo-flow.se" style="color:#1B7A6E;text-decoration:none">arvo-flow.se</a>
-        &nbsp;&middot;&nbsp; Du betalar 20 % av identifierad besparing.
+      <p style="margin:0 0 5px;font-size:11px;color:${T.mutedSoft};line-height:1.6;font-family:'Inter',Arial,sans-serif">
+        <a href="https://arvoflow.se" style="color:${T.brand};text-decoration:none">arvoflow.se</a>
+        &nbsp;&middot;&nbsp;
+        <a href="mailto:hej@arvoflow.se" style="color:${T.brand};text-decoration:none">hej@arvoflow.se</a>
       </p>
+      <p style="margin:0;font-size:10px;color:#B0C4BE;line-height:1.6;font-family:'Inter',Arial,sans-serif">Besparingsarvode 20 % av identifierad besparing, faktureras en gång. Inga fasta avgifter.</p>
     </td>
   </tr>
 

@@ -72,27 +72,26 @@ function send(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-const LOGO_SVG = `<svg width="28" height="28" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DD6CA"/><stop offset="100%" stop-color="#1B6E66"/></linearGradient></defs><path fill="url(#lg)" fill-rule="evenodd" d="M20 3 L37 36 L27.5 36 L20 21.5 L12.5 36 L3 36 Z M20 12.5 L24 21 L16 21 Z"/></svg>`;
+function logo(size, id) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DD6CA"/><stop offset="100%" stop-color="#1B6E66"/></linearGradient></defs><path fill="url(#${id})" fill-rule="evenodd" d="M20 3 L37 36 L27.5 36 L20 21.5 L12.5 36 L3 36 Z M20 12.5 L24 21 L16 21 Z"/></svg>`;
+}
 
 function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
-  const isOptimize   = r.recommendationType === 'optimize';
-  const catLabel     = CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '';
-  const suppDisplay  = REAL_PRICE_CATEGORIES.has(cat?.category)
+  const isOptimize  = r.recommendationType === 'optimize';
+  const catLabel    = CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '';
+  const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
+  const suppDisplay = isRealPrice
     ? r.suggestedSupplier
     : (CATEGORY_PARTNER_LABEL[cat?.category] ?? 'Arvo-verifierad Partner');
 
-  const saving      = isOptimize ? (r.optimizationSaving ?? 0) : (r.grossSaving ?? 0);
-  const arvoFee     = Math.round(saving * 0.20);
-  const netSaving   = saving - arvoFee;
+  const saving    = isOptimize ? (r.optimizationSaving ?? 0) : (r.grossSaving ?? 0);
+  const arvoFee   = Math.round(saving * 0.20);
+  const netSaving = saving - arvoFee;
 
-  const heroTitle   = isOptimize
-    ? 'Avvecklingen är igångsatt.'
-    : 'Bytet är igångsatt.';
-  const heroSub     = isOptimize
+  const heroTitle = isOptimize ? 'Avvecklingen är igångsatt.' : 'Bytet är igångsatt.';
+  const heroSub   = isOptimize
     ? `Vi hjälper er aktivera den inbyggda modulen och avveckla det separata abonnemanget hos ${ex.supplier}. Du behöver inte göra något mer.`
     : `Vi förbereder uppsägning hos ${ex.supplier} och tecknar nytt avtal med ${suppDisplay ?? 'den nya leverantören'}. Du behöver inte göra något mer.`;
-
-  const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
 
   const steps = isOptimize ? [
     `Vi kontaktar ${ex.supplier} och initierar avveckling av det separata abonnemanget.`,
@@ -110,15 +109,21 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
 
   const stepsHtml = steps.map((s, i) => `
     <tr>
-      <td style="padding:14px 0;border-bottom:1px solid #E8F0EC;vertical-align:top">
+      <td style="padding:16px 0;border-top:1px solid #EDF3EF;vertical-align:top">
         <table cellpadding="0" cellspacing="0"><tr>
-          <td style="width:32px;vertical-align:top;padding-top:1px">
-            <div style="width:24px;height:24px;border-radius:50%;background:#DCEEEA;color:#0E4F47;font-size:12px;font-weight:700;text-align:center;line-height:24px;font-family:'Inter',Arial,sans-serif">${i + 1}</div>
+          <td style="width:36px;vertical-align:top;padding-top:1px">
+            <div style="width:26px;height:26px;border-radius:50%;background:#DCEEEA;color:#0E4F47;font-size:12px;font-weight:700;text-align:center;line-height:26px;font-family:'Inter',Arial,sans-serif">${i + 1}</div>
           </td>
-          <td style="padding-left:12px;font-size:13.5px;color:#1F2E2A;line-height:1.6;font-family:'Inter',Arial,sans-serif">${s}</td>
+          <td style="padding-left:12px;font-size:14px;color:#1F2E2A;line-height:1.7;font-family:'Inter',Arial,sans-serif">${s}</td>
         </tr></table>
       </td>
     </tr>`).join('');
+
+  const T = {
+    bg: '#F1F6F3', ink: '#0E1A17', inkSoft: '#1F2E2A', mutedSoft: '#5C6E68',
+    brand: '#1B7A6E', brandSoft: '#DCEEEA', brandInk: '#0E4F47',
+    warning: '#A8761A', warnSoft: '#F3E5C7', warnBdr: '#D4A940',
+  };
 
   return `<!DOCTYPE html>
 <html lang="sv">
@@ -130,54 +135,67 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body style="margin:0;padding:0;background:#F1F6F3;-webkit-font-smoothing:antialiased">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#F1F6F3;padding:40px 16px">
+<body style="margin:0;padding:0;background:${T.bg};-webkit-font-smoothing:antialiased">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg};padding:48px 16px">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 2px 16px rgba(14,26,23,0.07)">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 4px 32px rgba(14,26,23,0.10)">
 
-  <!-- Logo header -->
+  <!-- Top accent bar -->
+  <tr><td style="height:4px;background:linear-gradient(90deg,#5DD6CA 0%,#1B6E66 100%);font-size:0;line-height:0">&nbsp;</td></tr>
+
+  <!-- Header -->
   <tr>
-    <td style="padding:22px 40px;border-bottom:1px solid #D5E2DC;background:#F1F6F3">
+    <td style="padding:24px 44px;border-bottom:1px solid ${T.bg};background:#FAFCFB">
       <table cellpadding="0" cellspacing="0" width="100%"><tr>
         <td style="vertical-align:middle">
-          ${LOGO_SVG}
-          <span style="margin-left:9px;font-family:'Playfair Display',Georgia,serif;font-size:17px;font-weight:600;color:#0E1A17;vertical-align:middle">Arvo</span>
-          <em style="font-family:'Playfair Display',Georgia,serif;font-size:17px;font-weight:400;color:#5C6E68;vertical-align:middle"> Flow</em>
+          ${logo(32, 'hlg')}
+          <span style="margin-left:9px;font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:600;color:${T.ink};vertical-align:middle">Arvo</span>
+          <em style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:400;font-style:italic;color:${T.mutedSoft};vertical-align:middle"> Flow</em>
         </td>
         <td style="text-align:right;vertical-align:middle">
-          <span style="font-size:10px;color:#5C6E68;font-family:'Inter',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-weight:600">${catLabel}</span>
+          <span style="display:inline-block;font-size:10px;color:${T.brand};font-family:'Inter',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;font-weight:600;background:${T.brandSoft};padding:5px 12px;border-radius:100px">${catLabel}</span>
         </td>
       </tr></table>
     </td>
   </tr>
 
+  <!-- Supplier -->
+  <tr>
+    <td style="padding:32px 44px 28px;border-bottom:1px solid ${T.bg}">
+      <p style="margin:0 0 8px;font-size:10px;font-weight:600;color:${T.mutedSoft};letter-spacing:.1em;text-transform:uppercase;font-family:'Inter',Arial,sans-serif">${isOptimize ? 'Optimering' : 'Leverantörsbyte'}</p>
+      <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:700;color:${T.ink};letter-spacing:-.5px;line-height:1.2">${ex.supplier}</p>
+    </td>
+  </tr>
+
   <!-- Hero -->
   <tr>
-    <td style="background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);padding:36px 40px 32px">
-      <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.18);display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <p style="margin:0 0 8px;font-family:'Playfair Display',Georgia,serif;font-size:26px;font-weight:700;color:#ffffff;line-height:1.2;letter-spacing:-.3px">${heroTitle}</p>
-      <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.82);line-height:1.65;font-family:'Inter',Arial,sans-serif;max-width:460px">${heroSub}</p>
+    <td style="background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);padding:40px 44px 36px">
+      <table cellpadding="0" cellspacing="0"><tr>
+        <td style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.18);text-align:center;vertical-align:middle;padding-bottom:18px" valign="middle">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:13px auto 0"><polyline points="20 6 9 17 4 12"/></svg>
+        </td>
+      </tr></table>
+      <p style="margin:0 0 10px;font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:#ffffff;line-height:1.2;letter-spacing:-.4px">${heroTitle}</p>
+      <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.80);line-height:1.7;font-family:'Inter',Arial,sans-serif;max-width:460px">${heroSub}</p>
     </td>
   </tr>
 
   <!-- Saving summary -->
   <tr>
-    <td style="padding:28px 40px 4px">
-      <p style="margin:0 0 16px;font-size:10px;font-weight:700;color:#1B7A6E;text-transform:uppercase;letter-spacing:.12em;font-family:'Inter',Arial,sans-serif">Din besparing</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #E8F0EC;border-radius:10px;overflow:hidden">
+    <td style="padding:32px 44px 4px">
+      <p style="margin:0 0 14px;font-size:9px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Din besparing</p>
+      <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding:14px 18px;border-bottom:1px solid #E8F0EC;color:#5C6E68;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;width:44%;font-family:'Inter',Arial,sans-serif">Nuvarande leverantör</td>
-          <td style="padding:14px 18px;border-bottom:1px solid #E8F0EC;color:#1F2E2A;font-size:14px;font-weight:500;font-family:'Inter',Arial,sans-serif">${ex.supplier}</td>
+          <td style="padding:14px 16px;color:#8FA8A0;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:44%;font-family:'Inter',Arial,sans-serif">Nuvarande leverantör</td>
+          <td style="padding:14px 16px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;font-family:'Inter',Arial,sans-serif">${ex.supplier}</td>
         </tr>
         <tr>
-          <td style="padding:14px 18px;border-bottom:1px solid #E8F0EC;color:#5C6E68;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;font-family:'Inter',Arial,sans-serif">Du betalar idag</td>
-          <td style="padding:14px 18px;border-bottom:1px solid #E8F0EC;color:#1F2E2A;font-size:14px;font-weight:500;font-family:'Inter',Arial,sans-serif">${formatKr(ex.annualCost)}&thinsp;/&thinsp;år</td>
+          <td style="padding:14px 16px;color:#8FA8A0;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:44%;font-family:'Inter',Arial,sans-serif">Du betalar idag</td>
+          <td style="padding:14px 16px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;font-family:'Inter',Arial,sans-serif">${formatKr(ex.annualCost)}&thinsp;/&thinsp;år</td>
         </tr>
-        <tr style="background:#DCEEEA">
-          <td style="padding:15px 18px 15px 21px;color:#0E4F47;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-left:3px solid #1B7A6E;font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
-          <td style="padding:15px 18px;color:#1B7A6E;font-size:17px;font-weight:700;font-family:'Playfair Display',Georgia,serif">+${formatKr(netSaving)}</td>
+        <tr style="background:${T.brandSoft}">
+          <td style="padding:16px 16px 16px 19px;color:${T.brandInk};font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-top:1px solid #B8D9D1;border-left:3px solid ${T.brand};font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
+          <td style="padding:16px 16px;color:${T.brand};font-size:20px;font-weight:700;border-top:1px solid #B8D9D1;font-family:'Playfair Display',Georgia,serif">+${formatKr(netSaving)}</td>
         </tr>
       </table>
     </td>
@@ -185,8 +203,8 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
 
   <!-- Steps -->
   <tr>
-    <td style="padding:28px 40px 8px">
-      <p style="margin:0 0 4px;font-size:10px;font-weight:700;color:#1B7A6E;text-transform:uppercase;letter-spacing:.12em;font-family:'Inter',Arial,sans-serif">Vad händer nu</p>
+    <td style="padding:28px 44px 8px">
+      <p style="margin:0 0 4px;font-size:9px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Vad händer nu</p>
       <table width="100%" cellpadding="0" cellspacing="0">
         ${stepsHtml}
       </table>
@@ -195,46 +213,43 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
 
   <!-- Ångerrätt -->
   <tr>
-    <td style="padding:20px 40px">
-      <table width="100%" cellpadding="0" cellspacing="0" style="border-left:3px solid #D4A940;background:#F3E5C7;border-radius:0 8px 8px 0">
-        <tr>
-          <td style="padding:16px 20px">
-            <p style="margin:0 0 5px;font-size:10px;font-weight:700;color:#A8761A;text-transform:uppercase;letter-spacing:.09em;font-family:'Inter',Arial,sans-serif">24 timmars ångerrätt</p>
-            <p style="margin:0;font-size:13px;color:#1F2E2A;line-height:1.6;font-family:'Inter',Arial,sans-serif">
-              Vi påbörjar ingen uppsägning eller nytt avtal förrän ångerfristen löpt ut.
-              Vill du avbryta — svara <strong>"ÅNGRA"</strong> på det här mejlet eller kontakta oss på
-              <a href="mailto:hej@arvoflow.se" style="color:#A8761A">hej@arvoflow.se</a>.
-            </p>
-          </td>
-        </tr>
-      </table>
+    <td style="padding:24px 44px">
+      <div style="border-left:3px solid ${T.warnBdr};background:${T.warnSoft};border-radius:0 8px 8px 0;padding:16px 22px">
+        <p style="margin:0 0 6px;font-size:9px;font-weight:700;color:${T.warning};text-transform:uppercase;letter-spacing:.1em;font-family:'Inter',Arial,sans-serif">24 timmars ångerrätt</p>
+        <p style="margin:0;font-size:13px;color:${T.inkSoft};line-height:1.65;font-family:'Inter',Arial,sans-serif">
+          Vi påbörjar ingen uppsägning eller nytt avtal förrän ångerfristen löpt ut.
+          Svara <strong>"ÅNGRA"</strong> på det här mejlet eller kontakta
+          <a href="mailto:hej@arvoflow.se" style="color:${T.warning}">hej@arvoflow.se</a>.
+        </p>
+      </div>
     </td>
   </tr>
 
   <!-- Fee note -->
   <tr>
-    <td style="padding:4px 40px 32px">
-      <p style="margin:0;font-size:12px;color:#5C6E68;line-height:1.6;font-family:'Inter',Arial,sans-serif">
-        <strong style="color:#1F2E2A">Besparingsarvode:</strong> ${formatKr(arvoFee)} (20&nbsp;% av ${formatKr(saving)}) —
+    <td style="padding:0 44px 40px">
+      <p style="margin:0;font-size:12px;color:#8FA8A0;line-height:1.65;font-family:'Inter',Arial,sans-serif">
+        <strong style="color:${T.inkSoft}">Besparingsarvode:</strong> ${formatKr(arvoFee)} (20&nbsp;% av ${formatKr(saving)}) —
         faktureras efter din första ${isOptimize ? 'period utan den dubbla kostnaden' : 'faktura från den nya leverantören'}.
-        Inga fasta avgifter. Fr.o.m. år 2 tillfaller hela besparingen er.
+        Inga fasta avgifter. Fr.o.m. år&nbsp;2 tillfaller hela besparingen er.
       </p>
     </td>
   </tr>
 
   <!-- Footer -->
   <tr>
-    <td style="border-top:1px solid #D5E2DC;padding:22px 40px;text-align:center;background:#F1F6F3">
-      <div style="margin-bottom:8px">
-        ${LOGO_SVG}
-        <span style="margin-left:8px;font-family:'Playfair Display',Georgia,serif;font-size:14px;font-weight:600;color:#0E1A17;vertical-align:middle">Arvo</span>
-        <em style="font-family:'Playfair Display',Georgia,serif;font-size:14px;font-weight:400;color:#5C6E68;vertical-align:middle"> Flow</em>
+    <td style="border-top:1px solid ${T.bg};padding:28px 44px;text-align:center;background:#FAFCFB">
+      <div style="margin-bottom:10px">
+        ${logo(22, 'flg')}
+        <span style="margin-left:7px;font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:600;color:${T.ink};vertical-align:middle">Arvo</span>
+        <em style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:400;font-style:italic;color:${T.mutedSoft};vertical-align:middle"> Flow</em>
       </div>
-      <p style="margin:0;font-size:11px;color:#5C6E68;line-height:1.8;font-family:'Inter',Arial,sans-serif">
-        <a href="https://arvoflow.se" style="color:#1B7A6E;text-decoration:none">arvoflow.se</a>
+      <p style="margin:0 0 5px;font-size:11px;color:${T.mutedSoft};line-height:1.6;font-family:'Inter',Arial,sans-serif">
+        <a href="https://arvoflow.se" style="color:${T.brand};text-decoration:none">arvoflow.se</a>
         &nbsp;&middot;&nbsp;
-        <a href="mailto:hej@arvoflow.se" style="color:#1B7A6E;text-decoration:none">hej@arvoflow.se</a>
+        <a href="mailto:hej@arvoflow.se" style="color:${T.brand};text-decoration:none">hej@arvoflow.se</a>
       </p>
+      <p style="margin:0;font-size:10px;color:#B0C4BE;line-height:1.6;font-family:'Inter',Arial,sans-serif">Besparingsarvode 20 % av identifierad besparing, faktureras en gång. Inga fasta avgifter.</p>
     </td>
   </tr>
 
