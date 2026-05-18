@@ -16,7 +16,27 @@ import {
 
 const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 
-const MAX_PDF_SIZE = 3 * 1024 * 1024;
+const MAX_PDF_SIZE   = 3 * 1024 * 1024;
+const FREE_ANALYSES  = 3; // speglar serverns konstant
+
+async function getBrowserFingerprint() {
+  const raw = [
+    navigator.userAgent,
+    navigator.language,
+    `${screen.width}x${screen.height}`,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    String(navigator.hardwareConcurrency ?? ''),
+  ].join('|');
+  try {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+    return Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+      .slice(0, 24);
+  } catch {
+    return Math.random().toString(36).slice(2, 14);
+  }
+}
 
 // Categories with verified public list prices — show supplier name proudly.
 const REAL_PRICE_CATEGORIES = new Set(['saas-productivity', 'mobil']);
@@ -132,6 +152,24 @@ const TestaFaktura = () => {
   const [modalView, setModalView] = useState('fortnox'); // fortnox | email
   const [modalEmail, setModalEmail] = useState('');
   const [modalEmailState, setModalEmailState] = useState('idle'); // idle | submitting | sent
+  const [apiToken, setApiToken] = useState(null);
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateEmail, setGateEmail] = useState('');
+  const [gateSubmitting, setGateSubmitting] = useState(false);
+
+  // Token + bypass-setup vid mount
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const bypassParam = params.get('bypass');
+    if (bypassParam) {
+      sessionStorage.setItem('arvo_bypass', bypassParam);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    fetch('/api/token', { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => setApiToken(d.token ?? null))
+      .catch(() => {});
+  }, []);
 
   const validateAndSetFile = (f) => {
     setError(null);
@@ -156,22 +194,30 @@ const TestaFaktura = () => {
   const onDragOver = (e) => { e.preventDefault(); setDragActive(true); };
   const onDragLeave = (e) => { e.preventDefault(); setDragActive(false); };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    if (!file) {
-      setError('Välj en PDF-faktura först.');
-      return;
-    }
-
+  const runAnalysis = async (overrideEmail = null) => {
+    if (!file) { setError('Välj en PDF-faktura först.'); return; }
     setError(null);
     setResult(null);
+    setGateOpen(false);
     setPhase('uploading');
 
-    // Advance progress phases on a timer so all 3 steps are visible.
-    // Timers are cleared immediately if the real response arrives early.
     let t1, t2;
     try {
-      const pdfBase64 = await fileToBase64(file);
+      const pdfBase64    = await fileToBase64(file);
+      const fingerprint  = await getBrowserFingerprint();
+      const bypass       = sessionStorage.getItem('arvo_bypass')
+                        ?? localStorage.getItem('arvo_bypass')
+                        ?? undefined;
+
+      // Hämta alltid ett färskt token precis innan submit (undviker 1h-expiry)
+      let freshToken = apiToken;
+      try {
+        const tr = await fetch('/api/token', { method: 'POST' });
+        const td = await tr.json();
+        freshToken = td.token ?? apiToken;
+        setApiToken(freshToken);
+      } catch { /* använd befintligt token */ }
+
       setPhase('extract');
       t1 = setTimeout(() => setPhase('categorize'), 3500);
       t2 = setTimeout(() => setPhase('recommend'),  6500);
@@ -184,6 +230,10 @@ const TestaFaktura = () => {
           industry,
           employees: Number(employees),
           revenue: revenue === '' ? null : Number(revenue),
+          token: freshToken,
+          fingerprint,
+          bypass: bypass || undefined,
+          email: overrideEmail || undefined,
         }),
       });
 
@@ -191,6 +241,14 @@ const TestaFaktura = () => {
       clearTimeout(t2);
 
       const data = await res.json().catch(() => ({}));
+
+      // E-postgate aktiverad av servern
+      if (data.gate) {
+        setPhase(null);
+        setGateOpen(true);
+        return;
+      }
+
       if (!res.ok || !data.ok) {
         throw new Error(data.error || `Servern returnerade ${res.status}`);
       }
@@ -205,6 +263,19 @@ const TestaFaktura = () => {
     }
   };
 
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    await runAnalysis();
+  };
+
+  const submitGate = async (e) => {
+    e.preventDefault();
+    if (!gateEmail || gateSubmitting) return;
+    setGateSubmitting(true);
+    await runAnalysis(gateEmail);
+    setGateSubmitting(false);
+  };
+
   const reset = () => {
     setFile(null);
     setResult(null);
@@ -216,6 +287,9 @@ const TestaFaktura = () => {
     setModalView('fortnox');
     setModalEmail('');
     setModalEmailState('idle');
+    setGateOpen(false);
+    setGateEmail('');
+    setGateSubmitting(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -863,6 +937,43 @@ const TestaFaktura = () => {
       </Body>
 
       <Footer />
+
+      {gateOpen && (
+        <ModalOverlay>
+          <ModalCard>
+            <h3>Få tillgång till <em>obegränsade</em> analyser</h3>
+            <p className="sub">
+              Du har använt dina {FREE_ANALYSES} gratisanalyser. Ange din e-post för att fortsätta
+              — vi skickar även en sammanfattning av analysen direkt till din inkorg.
+            </p>
+            <form className="modal-form" onSubmit={submitGate}>
+              <input
+                type="email"
+                placeholder="din@epost.se"
+                value={gateEmail}
+                onChange={(e) => setGateEmail(e.target.value)}
+                required
+                autoFocus
+              />
+              <Button
+                type="submit"
+                $variant="gradient"
+                $size="lg"
+                $full
+                disabled={gateSubmitting || !gateEmail}
+              >
+                {gateSubmitting
+                  ? <><Spinner /> Analyserar…</>
+                  : <>Fortsätt analysen <Icon name="arrow" size={16} /></>}
+              </Button>
+              <p className="fine-print">
+                Ingen spam. Inga fasta avgifter.
+                Vi kontaktar dig bara om det finns besparingar att hämta.
+              </p>
+            </form>
+          </ModalCard>
+        </ModalOverlay>
+      )}
 
       {modalOpen && result && (
         <ModalOverlay onClick={(e) => { if (e.target === e.currentTarget) { setModalOpen(false); setModalView('fortnox'); } }}>

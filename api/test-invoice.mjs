@@ -6,14 +6,58 @@
 // vilket sannolikt inte räcker — Pro krävs för publik exponering.
 
 import { Resend } from 'resend';
+import { createHmac, createHash } from 'node:crypto';
 import { extractInvoice, routeExtraction, ExtractorError } from '../agents/test-invoice/extract.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
 import { storeDatapoint } from '../lib/benchmark.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
+import { getKv } from '../lib/kv.js';
+import { getDb } from '../lib/db.js';
 
-const FROM_ALERT = process.env.RESEND_FROM        ?? 'Arvo Flow <analys@arvo-flow.se>';
-const ALERT_TO   = process.env.ARVO_ALERT_EMAIL   ?? 'team@arvo-flow.se';
+const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
+const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
+const FREE_ANALYSES  = 3;
+const PDF_CACHE_TTL  = 24 * 60 * 60;       // 24 h
+const GATE_WINDOW_TTL = 30 * 24 * 60 * 60; // 30 dagar
+
+// ── HMAC-tokenvalidering ──────────────────────────────────────────────────────
+function validateToken(token) {
+  const secret = process.env.ARVO_HMAC_SECRET;
+  if (!secret || token === 'dev') return true; // dev-läge
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  const [ts, nonce, sig] = parts;
+  const age = Date.now() - Number(ts);
+  if (!Number.isFinite(age) || age < 0 || age > 3_600_000) return false;
+  const expected = createHmac('sha256', secret).update(`${ts}.${nonce}`).digest('hex');
+  return sig === expected;
+}
+
+// ── E-postlagring (gate) ──────────────────────────────────────────────────────
+async function storeGateEmail(email, fingerprint) {
+  const db = getDb();
+  if (!db) return;
+  try {
+    await db`
+      CREATE TABLE IF NOT EXISTS gate_emails (
+        id          SERIAL PRIMARY KEY,
+        email       TEXT NOT NULL,
+        fingerprint TEXT,
+        created_at  TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (email, fingerprint)
+      )
+    `;
+    await db`
+      INSERT INTO gate_emails (email, fingerprint)
+      VALUES (${email}, ${fingerprint})
+      ON CONFLICT DO NOTHING
+    `;
+  } catch (err) {
+    console.error('[gate] storeGateEmail error:', err.message);
+  }
+}
 
 // ── Internt larm för review_queue ─────────────────────────────────────────────
 
@@ -235,7 +279,7 @@ export default async function handler(req, res) {
     return send(res, 400, { error: 'Ogiltig JSON i request body' });
   }
 
-  const { pdfBase64, industry, employees, revenue } = body;
+  const { pdfBase64, industry, employees, revenue, token, fingerprint, bypass, email } = body;
 
   if (!pdfBase64 || typeof pdfBase64 !== 'string') {
     return send(res, 400, { error: 'pdfBase64 är obligatoriskt' });
@@ -272,6 +316,51 @@ export default async function handler(req, res) {
     return send(res, 400, {
       error: 'Filen verkar inte vara en PDF (saknar %PDF-header)',
     });
+  }
+
+  // ── Säkerhetslager ───────────────────────────────────────────────────────────
+  const pdfHash  = createHash('sha256').update(pdfBytes).digest('hex');
+  const isBypass = !!(bypass && typeof bypass === 'string'
+    && process.env.ARVO_BYPASS_SECRET
+    && bypass === process.env.ARVO_BYPASS_SECRET);
+
+  if (!isBypass) {
+    if (!validateToken(token)) {
+      return send(res, 401, { error: 'Ogiltig session — ladda om sidan och försök igen.' });
+    }
+
+    // PDF-fingerprintcache: identisk faktura inom 24h → returnera cachat svar
+    const kv = getKv();
+    if (kv) {
+      try {
+        const cached = await kv.get(`pdf:result:${pdfHash}`);
+        if (cached) return send(res, 200, { ...cached, cached: true });
+      } catch { /* non-fatal */ }
+    }
+
+    // E-postgate: max FREE_ANALYSES fria analyser per webbläsarfingeravtryck
+    if (kv) {
+      const fp = typeof fingerprint === 'string' ? fingerprint.slice(0, 64) : 'anon';
+      try {
+        const isRegistered = await kv.get(`gate:reg:${fp}`);
+        if (!isRegistered) {
+          const count = await kv.incr(`gate:count:${fp}`);
+          if (count === 1) await kv.expire(`gate:count:${fp}`, GATE_WINDOW_TTL);
+          if (count > FREE_ANALYSES) {
+            const gateEmail = typeof email === 'string' && email.includes('@')
+              ? email.trim().toLowerCase() : null;
+            if (!gateEmail) return send(res, 200, { ok: false, gate: true });
+            storeGateEmail(gateEmail, fp).catch(
+              (err) => console.error('[gate] storeGateEmail threw:', err.message)
+            );
+            await kv.set(`gate:reg:${fp}`, '1');
+          }
+        }
+      } catch (err) {
+        console.error('[gate] gate check error:', err.message);
+        // Non-fatal: låt anropet gå igenom om KV failar
+      }
+    }
   }
 
   const timing = {};
@@ -599,7 +688,7 @@ export default async function handler(req, res) {
     const arvoFee = categorized.licensePending ? 0 : Math.round(grossSaving * 0.20);
     const netSaving = categorized.licensePending ? grossSaving : grossSaving - arvoFee;
 
-    return send(res, 200, {
+    const autoResponse = {
       ok:    true,
       route: 'auto',
       extracted: {
@@ -644,7 +733,16 @@ export default async function handler(req, res) {
         overageSavings: recommendation.overageSavings ?? null,
       },
       timing,
-    });
+    };
+
+    // PDF-fingerprintcache: lagra resultatet för 24h så identiska fakturor
+    // returneras direkt utan att köra AI-pipelinen igen.
+    if (!isBypass) {
+      const kv = getKv();
+      if (kv) kv.set(`pdf:result:${pdfHash}`, autoResponse, { ex: PDF_CACHE_TTL }).catch(() => {});
+    }
+
+    return send(res, 200, autoResponse);
   } catch (err) {
     const isKnown =
       err instanceof ExtractorError
