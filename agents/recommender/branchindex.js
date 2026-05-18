@@ -524,17 +524,25 @@ export const BRANCHINDEX = {
     requiresVolumeData: true,
     volumeDataNote: 'Avfallskostnader styrs av tömningsfrekvens, vikt och fraktioner. Fakturan innehåller även lagstadgad miljöskatt som inte kan förhandlas. Våra experter behöver granska ert tömningsschema för att ta fram en rättvis offert.',
     unit: 'kr/år',
-    note: 'Avfall & återvinning. Kostnad varierar med containertyp, tömningsfrekvens, avfallsfraktioner och lagstadgade avgifter.',
+    // Kalibrering maj 2026:
+    // Kommunal taxa-data: Skaraborg 2023 (lägst) — 660L-kärl 3 310 kr/år grundnivå,
+    // tät tömning 6 950 kr/år. Stockholm 2026 ~40 % dyrare (220 kr/tömning + 110 kr/kärl/vecka).
+    // Avfallsskatt 2026: 750 kr/ton (lagstadgad, Skatteverket). Sysav +15 % feb 2025, +4 % jan 2026.
+    // B2B-kontrakt inkluderar normalt: kärlhyra (20-30 %), tömningsavgift (40-50 %),
+    // behandling/deponering (15-25 %) samt lagstadgad avfallsskatt (10-20 % av totalen).
+    // p25 = välförhandlat volymavtal med rikstäckande aktör (Ragn-Sells / SUEZ / Stena).
+    // Byrå micro-p25 kalibrerad mot Skaraborg-basscenariot + 30 % (regionjusterat).
+    note: 'Avfall & återvinning. Kostnad varierar med containertyp, tömningsfrekvens, avfallsfraktioner och lagstadgade avgifter. Källa: kommunal taxa-data (Skaraborg 2023, Stockholm 2026, Sysav 2025-2026) + Avfallsskatt Skatteverket 2026.',
     alternatives: [
       { supplier: 'Ragn-Sells',      positioning: 'Rikstäckande, starka volymmavtal, bred tjänsteportfölj för B2B',         reliability: 0.91 },
-      { supplier: 'SUEZ Sverige',    positioning: 'Konkurrenskraftiga volymmpriser, certifierad återvinning',                reliability: 0.90 },
+      { supplier: 'PreZero (SUEZ)',   positioning: 'Konkurrenskraftiga volymmpriser, certifierad återvinning, 42 el-bilar Stockholm 2026', reliability: 0.90 },
       { supplier: 'Stena Recycling', positioning: 'Miljöfokus, stark på källsortering och cirkulär ekonomi',                reliability: 0.92 },
     ],
     matrix: {
-      byraer:      { micro: { median: 18000, p25: 12000 }, small: { median:  48000, p25:  32000 }, mid: { median: 120000, p25:  80000 } },
-      hantverkare: { micro: { median: 28000, p25: 18000 }, small: { median:  72000, p25:  48000 }, mid: { median: 180000, p25: 120000 } },
-      ehandel:     { micro: { median: 24000, p25: 16000 }, small: { median:  60000, p25:  40000 }, mid: { median: 150000, p25: 100000 } },
-      tillverkning:{ micro: { median: 48000, p25: 32000 }, small: { median: 120000, p25:  80000 }, mid: { median: 300000, p25: 200000 } },
+      byraer:      { micro: { median: 16000, p25:  9500 }, small: { median:  42000, p25:  26000 }, mid: { median: 110000, p25:  70000 } },
+      hantverkare: { micro: { median: 28000, p25: 18000 }, small: { median:  72000, p25:  46000 }, mid: { median: 180000, p25: 115000 } },
+      ehandel:     { micro: { median: 24000, p25: 15000 }, small: { median:  60000, p25:  38000 }, mid: { median: 150000, p25:  95000 } },
+      tillverkning:{ micro: { median: 48000, p25: 30000 }, small: { median: 125000, p25:  78000 }, mid: { median: 310000, p25: 195000 } },
     },
   },
 
