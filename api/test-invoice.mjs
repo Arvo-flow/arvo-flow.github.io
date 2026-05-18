@@ -485,9 +485,11 @@ export default async function handler(req, res) {
     const recommendation = await recommend({
       customer: { industry, employees: employeesNum, revenue: revenueNum },
       invoice: {
-        amount:            extracted.amount,
-        annualCost:        extracted.annualCost,
-        seatCount:         extracted.seatCount ?? null,
+        amount:             extracted.amount,
+        annualCost:         extracted.annualCost,
+        recurringAmount:    extracted.recurringAmount,
+        variableCharges:    extracted.variableCharges,
+        seatCount:          extracted.seatCount ?? null,
         mobileAddonMonthly: extracted.mobileAddonMonthly ?? null,
       },
       categorized,
