@@ -285,14 +285,14 @@ function htmlEmail(result) {
 
   const wr = (label, val, bold = false, color = T.inkSoft, nowrap = false) =>
     `<tr>
-      <td style="padding:18px 14px 18px 16px;color:#7A9A93;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:38%;font-family:'Inter',Arial,sans-serif">${label}</td>
+      <td style="padding:18px 14px 18px 16px;color:#3F5550;border-top:1px solid ${T.bg};font-size:13px;font-weight:500;width:40%;font-family:'Inter',Arial,sans-serif">${label}</td>
       <td style="padding:18px 16px 18px 14px;color:${color};font-weight:${bold ? 600 : 500};border-top:1px solid ${T.bg};font-size:${bold ? 15 : 14}px;font-family:'Inter',Arial,sans-serif;${nowrap ? 'white-space:nowrap' : ''}">${val}</td>
     </tr>`;
 
   const suppRow = suppDisplay
     ? `<tr>
-        <td style="padding:13px 14px 13px 16px;color:#7A9A93;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:38%;font-family:'Inter',Arial,sans-serif">Föreslagen leverantör</td>
-        <td style="padding:13px 16px 13px 14px;color:${T.brand};font-weight:600;border-top:1px solid ${T.bg};font-size:15px;font-family:'Inter',Arial,sans-serif">${suppDisplay}</td>
+        <td style="padding:18px 14px 18px 16px;color:#3F5550;border-top:1px solid ${T.bg};font-size:13px;font-weight:500;width:40%;font-family:'Inter',Arial,sans-serif">Föreslagen leverantör</td>
+        <td style="padding:18px 16px 18px 14px;color:${T.brand};font-weight:600;border-top:1px solid ${T.bg};font-size:15px;font-family:'Inter',Arial,sans-serif">${suppDisplay}</td>
       </tr>`
     : '';
 

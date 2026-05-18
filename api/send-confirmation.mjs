@@ -186,11 +186,11 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
       <p style="margin:0 0 14px;font-size:9px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Din besparing</p>
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding:13px 14px 13px 16px;color:#7A9A93;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:38%;font-family:'Inter',Arial,sans-serif">Nuvarande leverantör</td>
+          <td style="padding:18px 14px 18px 16px;color:#3F5550;border-top:1px solid ${T.bg};font-size:13px;font-weight:500;width:40%;font-family:'Inter',Arial,sans-serif">Nuvarande leverantör</td>
           <td style="padding:13px 16px 13px 14px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;font-family:'Inter',Arial,sans-serif">${ex.supplier}</td>
         </tr>
         <tr>
-          <td style="padding:13px 14px 13px 16px;color:#7A9A93;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:38%;font-family:'Inter',Arial,sans-serif">Du betalar idag</td>
+          <td style="padding:18px 14px 18px 16px;color:#3F5550;border-top:1px solid ${T.bg};font-size:13px;font-weight:500;width:40%;font-family:'Inter',Arial,sans-serif">Du betalar idag</td>
           <td style="padding:13px 16px 13px 14px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;white-space:nowrap;font-family:'Inter',Arial,sans-serif">${formatKr(ex.annualCost)}/år</td>
         </tr>
         <tr style="background:${T.brandSoft}">
