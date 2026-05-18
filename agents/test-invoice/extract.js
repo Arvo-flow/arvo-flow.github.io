@@ -77,6 +77,15 @@ hardware
   Köpt hårdvara eller utrustning (ej leasing eller hyra).
   Exempel: köp av telefon, skrivare, server, nätverksutrustning.
 
+AVTALSTID & UPPSÄGNING — extrahera om fakturan innehåller explicit periodinfo:
+  service_period_start: Startdatum för fakturans tjänsteperiod i ISO-format (YYYY-MM-DD).
+    Exempel: "Period: 2026-06-01 – 2027-05-31" → "2026-06-01". null om ej angivet.
+  service_period_end: Slutdatum för tjänsteperioden i ISO-format (YYYY-MM-DD).
+    Exempel: "Period: 2026-06-01 – 2027-05-31" → "2027-05-31". null om ej angivet.
+  cancellation_notice_days: Uppsägningstid i antal dagar som heltal.
+    Exempel: "60 dagars uppsägningstid", "60 days notice", "notice period: 60 days" → 60.
+    Exempel: "3 månaders uppsägningstid" → 90. null om ej angivet.
+
 FAKTURERINGSPERIOD — välj exakt ett värde baserat på fakturans rader:
   monthly   = faktureras månadsvis (vanligast för abonnemang)
   quarterly = faktureras kvartalsvis
@@ -261,6 +270,18 @@ const EXTRACT_TOOL = {
         type: ['string', 'null'],
         description: 'Valutakod för krediten, t.ex. "USD" eller "SEK". null om ej tillämpligt.',
       },
+      service_period_start: {
+        type: ['string', 'null'],
+        description: 'Startdatum för fakturans tjänsteperiod i ISO-format YYYY-MM-DD. null om ej angivet.',
+      },
+      service_period_end: {
+        type: ['string', 'null'],
+        description: 'Slutdatum för fakturans tjänsteperiod i ISO-format YYYY-MM-DD. null om ej angivet.',
+      },
+      cancellation_notice_days: {
+        type: ['integer', 'null'],
+        description: 'Uppsägningstid i hela dagar. Konvertera månader till dagar (3 mån = 90). null om ej angivet.',
+      },
     },
     required: [
       'supplier', 'date', 'description', 'billingPeriod',
@@ -325,6 +346,9 @@ export function aggregateLineItems(raw) {
     startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
     startupCreditMonthlyBurn:  raw.startup_credit_monthly_burn != null ? Number(raw.startup_credit_monthly_burn) : null,
     startupCreditCurrency:     raw.startup_credit_currency ?? null,
+    servicePeriodStart:        raw.service_period_start ?? null,
+    servicePeriodEnd:          raw.service_period_end ?? null,
+    cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,
   };
 }
 

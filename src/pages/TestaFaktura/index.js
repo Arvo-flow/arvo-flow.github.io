@@ -9,7 +9,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, NoSwitchBlock, CreditAlert, PriceNote, PartnerBlock, KV,
+  ResultHead, SavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
   Reasoning, LicenseOverageNote, NextSteps, ServiceList, EmailGate,
   ModalOverlay, ModalCard,
 } from './styles';
@@ -421,7 +421,45 @@ const TestaFaktura = () => {
               </Button>
             </ResultHead>
 
-            {result.route === 'unsupported' ? (
+            {result.route === 'monitoring' ? (
+              <>
+                <MonitoringBlock>
+                  <div className="monitoring-kicker">
+                    <span className="monitoring-dot" />
+                    Bevakning aktiverad
+                  </div>
+                  <strong>Avtalet är låst — vi lägger det på bevakning.</strong>
+                  <p>
+                    {(() => {
+                      const end  = result.servicePeriodEnd;
+                      const days = result.cancellationNoticeDays;
+                      const mon  = result.monitoringDate;
+                      const endFmt = end  ? new Date(end).toLocaleDateString('sv-SE', { year:'numeric', month:'long', day:'numeric' }) : null;
+                      const monFmt = mon  ? new Date(mon).toLocaleDateString('sv-SE', { year:'numeric', month:'long', day:'numeric' }) : null;
+                      return `Denna licens sträcker sig till ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo Flow har automatiskt lagt in en bevakning och kommer att initiera en omförhandling med leverantören ${monFmt ?? '90 dagar innan nästa förnyelse'}.`;
+                    })()}
+                  </p>
+                </MonitoringBlock>
+                <KV>
+                  <div>
+                    <dt>Du betalar idag</dt>
+                    <dd>{formatKr(result.extracted.annualCost)} / år</dd>
+                  </div>
+                  <div>
+                    <dt>Fakturadatum</dt>
+                    <dd>{result.extracted.date}</dd>
+                  </div>
+                  <div>
+                    <dt>Fakturerat denna period (ex moms)</dt>
+                    <dd>{formatKr(result.extracted.amount)}</dd>
+                  </div>
+                  <div>
+                    <dt>Avtalstid</dt>
+                    <dd>{result.extracted.servicePeriodStart} → {result.extracted.servicePeriodEnd}</dd>
+                  </div>
+                </KV>
+              </>
+            ) : result.route === 'unsupported' ? (
               <NoSwitchBlock>
                 <strong>Utanför analysräckvidden.</strong>
                 <p>

@@ -416,6 +416,50 @@ export const NoSwitchBlock = styled.div`
   }
 `;
 
+export const MonitoringBlock = styled.div`
+  padding: 24px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  background: #FFFBEB;
+  border: 1.5px solid #D97706;
+  margin-bottom: 20px;
+
+  .monitoring-kicker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #B45309;
+    margin-bottom: 10px;
+  }
+
+  .monitoring-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #D97706;
+    box-shadow: 0 0 0 3px #FDE68A;
+    flex-shrink: 0;
+  }
+
+  strong {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    color: #92400E;
+    margin-bottom: 10px;
+  }
+
+  p {
+    font-size: 14px;
+    line-height: 1.65;
+    color: #78350F;
+    margin: 0;
+  }
+`;
+
 export const OptimizeBlock = styled.div`
   padding: 24px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
