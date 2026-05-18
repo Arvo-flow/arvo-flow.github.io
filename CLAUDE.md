@@ -25,14 +25,16 @@ Svensk B2B SaaS-produkt. Kunden laddar upp en leverantörsfaktura (PDF) och får
 ### 1. Extract (`agents/test-invoice/extract.js`)
 - Modell: Claude Opus 4.7 med native PDF-support
 - **Semantisk rad-för-rad-klassificering** (Universal Semantic Extractor):
-  - `recurring_subscription` — fasta abonnemang, leasing, klickkostnader för skrivare
-  - `variable_usage` — ENBART roaming/övertrafik för mobiltelefoni
+  - `recurring_subscription` — fasta abonnemang, leasing, fasta licensavgifter. Fast maskinhyra i Managed Print = recurring_subscription.
+  - `variable_usage` — mobilroaming/övertrafik OCH klickkostnader (kr/sida) i Managed Print-avtal. Annualiseras ej.
   - `one_time_fee` — engångskostnader
   - `hardware` — köpt hårdvara
 - `aggregateLineItems()` summerar per typ i kod (AI räknar aldrig ut totaler)
+- `annualCost = projectedRecurringAmount × multiplier` — inkluderar INTE variable_usage
 - `routeExtraction()` returnerar `auto | review_queue | unsupported`
 - `CONFIDENCE_THRESHOLD = 0.70`
-- Viktigt: klickkostnader för skrivare = `recurring_subscription`, INTE `variable_usage`
+- Skrivarleasing: fast maskinhyra = `recurring_subscription`, klickkostnader = `variable_usage`
+- Managed Print-guard i recommend.js: om klick-ratio > 35 % → `requiresQuote: true`, ingen AI-rekommendation
 
 ### 2. Categorize (`agents/categorizer/`)
 - Modell: Claude Haiku 4.5

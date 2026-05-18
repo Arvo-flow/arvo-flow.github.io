@@ -469,6 +469,41 @@ const TestaFaktura = () => {
                   </>
                 )}
               </NoSwitchBlock>
+            ) : result.recommendation?.requiresQuote ? (
+              <NoSwitchBlock>
+                <strong>Kräver offert — volymdata behövs.</strong>
+                <p>{result.recommendation.reasoning}</p>
+              </NoSwitchBlock>
+            ) : isOptimize ? (
+              <>
+                <SavingsBlock>
+                  <span className="kicker">Dold kostnad hittad</span>
+                  <span className="amount">+{formatKr(optNet)}</span>
+                  <span className="unit">
+                    Du betalar {formatNum(optSaving)} kr/år för en tjänst som redan ingår i er licens
+                    {' '}· Arvos besparingsarvode {formatKr(optArvoFee)} (20 %)
+                  </span>
+                </SavingsBlock>
+                <PartnerBlock>
+                  <div className="left">
+                    <span className="verified-badge">
+                      <Icon name="check" size={12} stroke={2.5} />
+                    </span>
+                    <div>
+                      <p className="partner-name">Avveckling av dubblad kostnad</p>
+                      <p className="price-label">Arvo sköter hela avvecklingen åt dig</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    $variant="gradient"
+                    $size="sm"
+                    onClick={() => setModalOpen(true)}
+                  >
+                    Säkra besparingen <Icon name="arrow" size={14} />
+                  </Button>
+                </PartnerBlock>
+              </>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
                 {(() => {
@@ -601,7 +636,13 @@ const TestaFaktura = () => {
                   <dt>Rörliga avgifter denna period</dt>
                   <dd>
                     {formatKr(result.extracted.variableCharges)}
-                    <small>{result.categorized?.category === 'el' ? 'Rörliga elkostnader — ej inkluderat i årsberäkningen.' : 'Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.'}</small>
+                    <small>
+                      {result.categorized?.category === 'el'
+                        ? 'Rörliga elkostnader — ej inkluderat i årsberäkningen.'
+                        : result.categorized?.category === 'skrivarleasing'
+                          ? 'Rörliga utskriftskostnader (volymbaserat) — ej inkluderat i årsberäkningen.'
+                          : 'Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.'}
+                    </small>
                   </dd>
                 </div>
               )}
