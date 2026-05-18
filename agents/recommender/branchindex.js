@@ -520,6 +520,24 @@ export const BRANCHINDEX = {
     },
   },
 
+  'avfall-atervinning': {
+    requiresVolumeData: true,
+    volumeDataNote: 'Avfallskostnader styrs av tömningsfrekvens, vikt och fraktioner. Fakturan innehåller även lagstadgad miljöskatt som inte kan förhandlas. Våra experter behöver granska ert tömningsschema för att ta fram en rättvis offert.',
+    unit: 'kr/år',
+    note: 'Avfall & återvinning. Kostnad varierar med containertyp, tömningsfrekvens, avfallsfraktioner och lagstadgade avgifter.',
+    alternatives: [
+      { supplier: 'Ragn-Sells',      positioning: 'Rikstäckande, starka volymmavtal, bred tjänsteportfölj för B2B',         reliability: 0.91 },
+      { supplier: 'SUEZ Sverige',    positioning: 'Konkurrenskraftiga volymmpriser, certifierad återvinning',                reliability: 0.90 },
+      { supplier: 'Stena Recycling', positioning: 'Miljöfokus, stark på källsortering och cirkulär ekonomi',                reliability: 0.92 },
+    ],
+    matrix: {
+      byraer:      { micro: { median: 18000, p25: 12000 }, small: { median:  48000, p25:  32000 }, mid: { median: 120000, p25:  80000 } },
+      hantverkare: { micro: { median: 28000, p25: 18000 }, small: { median:  72000, p25:  48000 }, mid: { median: 180000, p25: 120000 } },
+      ehandel:     { micro: { median: 24000, p25: 16000 }, small: { median:  60000, p25:  40000 }, mid: { median: 150000, p25: 100000 } },
+      tillverkning:{ micro: { median: 48000, p25: 32000 }, small: { median: 120000, p25:  80000 }, mid: { median: 300000, p25: 200000 } },
+    },
+  },
+
   'it-support': {
     source: 'estimated',
     unit: 'kr/år',

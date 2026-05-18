@@ -64,6 +64,8 @@ one_time_fee
   inte abonnemangstjänster, och ska ALDRIG klassificeras som recurring_subscription.
   SAMT bränsle- och frakttillägg (DMT, drivmedelstillägg, bränslerelaterat tillägg,
   bomkörning, terminalavgift) — dessa varierar med bränslepriser och är ej förhandlingsbara avtalsposter.
+  SAMT lagstadgade miljö- och avfallsskatter (Miljö- och Avfallsskatt, miljöavgift, avfallsskatt)
+  på avfalls- och återvinningsfakturor — dessa är lagstadgade och ej förhandlingsbara.
   SAMT krediteringar och minusposter för avslutade, uppsagda eller justerade
   licenser/avtal — dessa är historiska korrigeringar som inte återkommer och
   ska ALDRIG klassificeras som recurring_subscription. Kundens framtida

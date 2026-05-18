@@ -259,6 +259,19 @@ export const CATEGORIES = {
     ],
     accountHints: ['6540', '6230', '6900'],
   },
+  'avfall-atervinning': {
+    label: 'Avfall & Återvinning',
+    licensePending: false,
+    subTypes: ['container', 'tömning', 'sortering', 'farligt-avfall'],
+    keywords: [
+      'avfall', 'återvinning', 'renhållning', 'sophantering', 'containertömning',
+      'sopkärl', 'kärlhyra', 'tömningsavgift', 'miljöstation', 'källsortering',
+      'ragn-sells', 'suez', 'stena recycling', 'renova', 'sysav', 'envac',
+      'avfallshantering', 'restavfall', 'brännbart', 'organiskt avfall',
+      'tömning', 'kärlhyra', 'avfallsskatt', 'miljöavgift',
+    ],
+    accountHints: ['6991', '6990', '5900'],
+  },
   uncategorized: {
     label: 'Okategoriserat',
     licensePending: false,

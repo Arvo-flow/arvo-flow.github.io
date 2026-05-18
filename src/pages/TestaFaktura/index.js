@@ -54,6 +54,7 @@ const CATEGORY_PARTNER_LABEL = {
   kontorsmaterial:    'Kvalificerad Förbrukningsleverantör',
   'städ-rengöring':   'Kvalificerad Städleverantör',
   'transport-frakt':  'Kvalificerad Fraktleverantör',
+  'avfall-atervinning': 'Kvalificerad Avfallsleverantör',
   'it-support':       'Kvalificerad IT-partner',
 };
 
@@ -94,6 +95,7 @@ const CATEGORY_LABELS = {
   'städ-rengöring':    'Städ & Rengöring',
   'transport-frakt':   'Transport & Frakt',
   'it-support':        'IT-drift & Support',
+  'avfall-atervinning': 'Avfall & Återvinning',
   uncategorized:       'Okategoriserad',
 };
 
@@ -627,7 +629,7 @@ const TestaFaktura = () => {
               </NoSwitchBlock>
             )}
 
-            {result.route === 'auto' && <KV>
+            {result.extracted?.annualCost != null && result.route !== 'monitoring' && result.route !== 'unsupported' && <KV>
               <div>
                 <dt>Du betalar idag</dt>
                 <dd>
