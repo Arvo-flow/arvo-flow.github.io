@@ -189,7 +189,7 @@ function computeElRecommendation(extracted) {
     omrade, season: seasonLabel, billingMonth: monthLabel, energiPerKwh, benchmarkKwh,
     suggestedAnnualCost: shouldSwitch ? benchmarkAnnual : null,
     reasoning: shouldSwitch
-      ? `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}. Arvo estimerar att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos 20 % fee: ${netSaving.toLocaleString('sv-SE')} kr/år.`
+      ? `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}. Arvo estimerar att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos framgångsarvode (20 %): ${netSaving.toLocaleString('sv-SE')} kr/år.`
       : `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}, vilket är i linje med ett välförhandlat spotprisavtal i ${omrade} (benchmark ${seasonLabel}: ${benchmarkKwh.toFixed(2)} kr/kWh). Ert nuvarande avtal verkar konkurrenskraftigt.`,
     uncertaintyNote: [
       `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh, justerat för att ${seasonContext}. Faktisk årsförbrukning kan avvika ±30–40 %.`,

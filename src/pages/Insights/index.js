@@ -150,7 +150,7 @@ const Insights = () => {
               <p className="netMath">
                 Bruttobesparing {TOTALS.activeGross.toLocaleString('sv-SE')} kr
                 <span className="dash"> − </span>
-                Arvos success-fee {TOTALS.activeFee.toLocaleString('sv-SE')} kr (20 %)
+                Arvos framgångsarvode {TOTALS.activeFee.toLocaleString('sv-SE')} kr (20 %)
               </p>
               <p>
                 Vi gick igenom {SUMMARY.invoicesAnalysed} leverantörsfakturor från

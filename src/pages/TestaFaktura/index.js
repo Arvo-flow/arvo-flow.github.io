@@ -466,7 +466,7 @@ const TestaFaktura = () => {
                   <span className="amount">+{formatKr(optNet)}</span>
                   <span className="unit">
                     Du betalar {formatNum(optSaving)} kr/år för en tjänst som redan ingår i er licens
-                    {' '}· Arvos fee {formatKr(optArvoFee)} (20 %)
+                    {' '}· Arvos framgångsarvode {formatKr(optArvoFee)} (20 %)
                   </span>
                 </SavingsBlock>
                 <PartnerBlock>
@@ -509,13 +509,13 @@ const TestaFaktura = () => {
                               ? (
                                 <>
                                   {formatNum(result.extracted.annualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
-                                  {' '}· Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
+                                  {' '}· Arvos framgångsarvode {formatKr(result.recommendation.arvoFee)} (20 %)
                                 </>
                               )
                               : (
                                 <>
                                   {formatNum(result.extracted.annualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år (Arvos kalkylerade riktpris)
-                                  {' '}· Arvos fee {formatKr(result.recommendation.arvoFee)} (20 %)
+                                  {' '}· Arvos framgångsarvode {formatKr(result.recommendation.arvoFee)} (20 %)
                                 </>
                               )}
                         </span>

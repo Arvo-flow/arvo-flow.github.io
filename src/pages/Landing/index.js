@@ -44,7 +44,7 @@ const HOW_STEPS = [
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Inget i förskott. Vi tar 20 % av identifierad besparing — en engångsavgift som faktureras 3 månader efter aktiverat avtal. Hittar vi inget — kostar det inget.',
+    a: 'Inget i förskott. Vi tar 20 % av identifierad besparing — ett framgångsarvode som faktureras efter din första faktura från den nya leverantören. Hittar vi inget — kostar det inget.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
@@ -52,7 +52,7 @@ const FAQ = [
   },
   {
     q: 'Varför ska jag lita på era besparingskalkyler?',
-    a: 'Vi bygger på verifierade marknadsdata — offentliga listpriser, ramavtalsdata och faktiska operatörspriser. Och eftersom vi tar 20 % av realiserad besparing har vi inget att vinna på att överdriva: en projektion som inte håller kostar oss förtroendet, inte bara provisionen. Vi tjänar mer på att lova lite och leverera fullt ut.',
+    a: 'Vi bygger på verifierade marknadsdata — offentliga listpriser, ramavtalsdata och faktiska operatörspriser. Och eftersom vi tar 20 % av realiserad besparing har vi inget att vinna på att överdriva: en projektion som inte håller kostar oss förtroendet, inte bara framgångsarvodet. Vi tjänar mer på att lova lite och leverera fullt ut.',
   },
   {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',

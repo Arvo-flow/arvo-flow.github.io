@@ -35,7 +35,7 @@ const Villkor = () => (
           </li>
           <li>
             <Icon name="check" size={16} stroke={2.4} />
-            <div><strong>Success-fee.</strong> Vi tar ingen fast avgift. Vårt arvode är
+            <div><strong>Framgångsarvode.</strong> Vi tar ingen fast avgift. Vårt arvode är
               20 % av besparingsunderlaget (skillnaden mellan ditt nya och ditt gamla avtal)
               under de första 12 månaderna efter ett byte.</div>
           </li>
@@ -69,8 +69,8 @@ const Villkor = () => (
         <p><strong>1.2 Besparingsunderlag.</strong> Det belopp som ligger till grund för Besparingsavgiften,
           motsvarande skillnaden i avtalskostnad exkl. moms över en 12-månadersperiod mellan Kundens
           tidigare avtal och det nya avtalet.</p>
-        <p><strong>1.3 Besparingsavgift.</strong> Det rörliga arvode om 20 % av Besparingsunderlaget
-          som tillfaller Arvo Flow.</p>
+        <p><strong>1.3 Framgångsarvode.</strong> Det rörliga arvode om 20 % av Besparingsunderlaget
+          som tillfaller Arvo Flow, fakturerat efter Kundens första faktura från den nya leverantören.</p>
       </Clause>
 
       <Clause>
