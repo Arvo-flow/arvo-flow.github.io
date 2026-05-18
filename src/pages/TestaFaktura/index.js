@@ -463,12 +463,24 @@ const TestaFaktura = () => {
               </>
             ) : result.route === 'unsupported' ? (
               <NoSwitchBlock>
-                <strong>Utanför analysräckvidden.</strong>
-                <p>
-                  Denna faktura avser en tjänst vi inte optimerar (t.ex. juridik, redovisning,
-                  bemanning eller myndighetsavgifter). Koppla Fortnox / Visma för att analysera era
-                  övriga leverantörer.
-                </p>
+                {result.reason === 'credit_note' ? (
+                  <>
+                    <strong>Kreditnota — ingen analys möjlig.</strong>
+                    <p>
+                      Filen verkar vara en kreditnota med negativt belopp. Ladda upp den ordinarie
+                      fakturan för en korrekt analys.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <strong>Utanför analysräckvidden.</strong>
+                    <p>
+                      Denna faktura avser en tjänst vi inte optimerar (t.ex. juridik, redovisning,
+                      bemanning eller myndighetsavgifter). Koppla Fortnox / Visma för att analysera era
+                      övriga leverantörer.
+                    </p>
+                  </>
+                )}
               </NoSwitchBlock>
             ) : result.route === 'review_queue' ? (
               <NoSwitchBlock>
@@ -491,6 +503,14 @@ const TestaFaktura = () => {
                         </p>
                       </CreditAlert>
                     )}
+                  </>
+                ) : result.reason === 'foreign_currency' ? (
+                  <>
+                    <strong>Fakturan är i {result.currency} — inte SEK.</strong>
+                    <p>
+                      Vår prisanalys är kalibrerad mot svenska kronor. Ladda upp en SEK-faktura,
+                      eller kontakta oss om ni har leverantörer som fakturerar i utländsk valuta.
+                    </p>
                   </>
                 ) : result.reason === 'no_benchmark' ? (
                   <>
@@ -626,6 +646,17 @@ const TestaFaktura = () => {
                     <p>{result.recommendation?.reasoning}</p>
                   </>
                 )}
+              </NoSwitchBlock>
+            )}
+
+            {result.extracted?.potentialMixedCategories && (
+              <NoSwitchBlock style={{ background: '#FFFBEB', borderColor: '#D97706', marginBottom: 16 }}>
+                <strong style={{ color: '#92400E' }}>Kombinerad faktura — vi analyserar den dominerande tjänsten.</strong>
+                <p style={{ color: '#78350F' }}>
+                  Fakturan verkar innehålla tjänster från flera kategorier (t.ex. mobil och bredband
+                  på samma faktura). Analysen nedan gäller den huvudsakliga tjänsten. För en komplett
+                  bild, koppla Fortnox / Visma så att vi kan se hela er leverantörsbild.
+                </p>
               </NoSwitchBlock>
             )}
 

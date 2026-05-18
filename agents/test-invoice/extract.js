@@ -90,8 +90,10 @@ AVTALSTID & UPPSÄGNING — extrahera om fakturan innehåller explicit periodinf
 
 FAKTURERINGSPERIOD — välj exakt ett värde baserat på fakturans rader:
   monthly   = faktureras månadsvis (vanligast för abonnemang)
-  quarterly = faktureras kvartalsvis
-  annual    = faktureras årsvis (t.ex. försäkringspremie, årslicens)
+  quarterly = faktureras kvartalsvis. Välj detta om fakturan explicit markeras "Q1", "Q2", "Q3",
+              "Q4", "kvartal", "quarter", "3 månader" ELLER om perioddatumet täcker ≥ 60 dagar
+              av löpande abonnemangstjänst. Multiplikatorn quarterly × 4 = årskostnad.
+  annual    = faktureras årsvis (t.ex. försäkringspremie, årslicens, 12-månadersfaktura)
   one_time  = engångsfaktura utan löpande abonnemang
   unknown   = kan ej avgöras med säkerhet
 
@@ -111,6 +113,11 @@ OUT OF SCOPE — sätt outOfScope: true om fakturan avser tjänster utan
 
 KRITISKT:
   — Alla belopp EXKLUSIVE moms (svensk B2B-standard). Om bara ink. moms: dividera med 1.25.
+  — currency: Valuta som fakturan är utfärdad i. Ange ISO-kod: "SEK", "EUR", "USD", "GBP" o.s.v.
+    Default "SEK" om valuta inte framgår explicit. Ange ALDRIG null.
+  — potentialMixedCategories: Sätt true om fakturan innehåller kostnader som tydligt tillhör FLERA
+    olika tjänstekategorier (t.ex. mobilabonnemang OCH bredband på samma faktura, eller
+    SaaS-licenser OCH hårdvara på separata rader). false i övriga fall.
   — Returnera VARJE synlig kostnadsrad — utelämna inga rader.
   — seatCount: Antal UNIKA ANVÄNDARE som licensieras. Summera rader med OLIKA TIERS av SAMMA
     produkt (t.ex. 45 Premium + 12 Basic = 57 unika användare). Räkna INTE ihop add-on-tjänster
@@ -284,6 +291,14 @@ const EXTRACT_TOOL = {
         type: ['integer', 'null'],
         description: 'Uppsägningstid i hela dagar. Konvertera månader till dagar (3 mån = 90). null om ej angivet.',
       },
+      currency: {
+        type: 'string',
+        description: 'Valutakod som fakturan är utfärdad i, t.ex. "SEK", "EUR", "USD". Default "SEK".',
+      },
+      potential_mixed_categories: {
+        type: 'boolean',
+        description: 'true om fakturan tydligt innehåller tjänster från flera kategorier (t.ex. mobil + bredband). false annars.',
+      },
     },
     required: [
       'supplier', 'date', 'description', 'billingPeriod',
@@ -351,6 +366,8 @@ export function aggregateLineItems(raw) {
     servicePeriodStart:        raw.service_period_start ?? null,
     servicePeriodEnd:          raw.service_period_end ?? null,
     cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,
+    currency:                  raw.currency ?? 'SEK',
+    potentialMixedCategories:  raw.potential_mixed_categories ?? false,
   };
 }
 

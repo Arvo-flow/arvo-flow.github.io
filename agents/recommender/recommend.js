@@ -313,6 +313,12 @@ export async function recommend(input, opts = {}) {
       result.licenseOverage = null;
       result.overageSavings = null;
     }
+
+    // Minimigräns: ett leverantörsbyte under 500 kr nettobesparing per år är
+    // operationellt orimligt — byteskostnad i tid överstiger vinsten.
+    if ((result.savingPerYear ?? 0) < 500) {
+      result.shouldSwitch = false;
+    }
   }
 
   return {

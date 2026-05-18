@@ -291,6 +291,35 @@ export default async function handler(req, res) {
       outOfScope:      extracted.outOfScope,
     }));
 
+    // Guard: kreditnotor (negativt totalt fakturabelopp)
+    if (extracted.amount < 0) {
+      return send(res, 200, {
+        ok: true, route: 'unsupported', reason: 'credit_note',
+        extracted: { supplier: extracted.supplier, date: extracted.date },
+        categorized: { category: 'uncategorized' },
+        recommendation: { shouldSwitch: false, reasoning: '' },
+        timing: { extractMs: timing.extractMs },
+      });
+    }
+
+    // Guard: utländsk valuta — systemet är kalibrerat mot SEK-fakturor
+    if (extracted.currency && extracted.currency !== 'SEK') {
+      notifyReviewQueue(extracted, `[Utländsk valuta] ${extracted.currency}`).catch(
+        (err) => console.error('[test-invoice] notifyReviewQueue (currency) threw:', err.message)
+      );
+      return send(res, 200, {
+        ok: true, route: 'review_queue', reason: 'foreign_currency',
+        currency: extracted.currency,
+        extracted: {
+          supplier:        extracted.supplier,
+          date:            extracted.date,
+          amount:          extracted.amount,
+          confidenceScore: extracted.confidenceScore,
+        },
+        timing: { extractMs: timing.extractMs },
+      });
+    }
+
     // Triage — review_queue eller unsupported avbryter pipeline
     const routing = routeExtraction(extracted);
 
@@ -347,7 +376,9 @@ export default async function handler(req, res) {
     }));
 
     // ── Avtalslås-detektering (körs före alla tidiga exits) ───────────────────
-    if (extracted.servicePeriodStart && extracted.cancellationNoticeDays != null) {
+    // Hoppas över för licensePending-kategorier — vi kan inte byta ändå, så
+    // "låst avtal" skulle vara vilseledande för t.ex. försäkringskunder.
+    if (extracted.servicePeriodStart && extracted.cancellationNoticeDays != null && !categorized.licensePending) {
       const periodStart  = new Date(extracted.servicePeriodStart);
       const periodEnd    = extracted.servicePeriodEnd ? new Date(extracted.servicePeriodEnd) : null;
       const lockDeadline = new Date(periodStart);
@@ -583,9 +614,10 @@ export default async function handler(req, res) {
         billingPeriod:   extracted.billingPeriod,
         lineItems:       extracted.lineItems,
         recurring:       extracted.recurring,
-        confidenceScore: extracted.confidenceScore,
-        notes:           extracted.notes,
-        seatCount:       extracted.seatCount ?? null,
+        confidenceScore:           extracted.confidenceScore,
+        notes:                     extracted.notes,
+        seatCount:                 extracted.seatCount ?? null,
+        potentialMixedCategories:  extracted.potentialMixedCategories ?? false,
       },
       categorized: {
         category: categorized.category,
