@@ -92,13 +92,19 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
     ? `Vi hjälper er aktivera den inbyggda modulen och avveckla det separata abonnemanget hos ${ex.supplier}. Du behöver inte göra något mer.`
     : `Vi förbereder uppsägning hos ${ex.supplier} och tecknar nytt avtal med ${suppDisplay ?? 'den nya leverantören'}. Du behöver inte göra något mer.`;
 
+  const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
+
   const steps = isOptimize ? [
     `Vi kontaktar ${ex.supplier} och initierar avveckling av det separata abonnemanget.`,
     'Du får bekräftelse när abonnemanget är avslutat och modulen är aktiverad.',
     `Arvo skickar besparingsarvodet ${formatKr(arvoFee)} (20&nbsp;%) efter din första period utan den dubbla kostnaden.`,
-  ] : [
+  ] : isRealPrice ? [
     `Vi skickar uppsägning till ${ex.supplier} och hanterar all kommunikation.`,
-    `Vi tecknar nytt avtal med ${suppDisplay ?? 'den nya leverantören'} — förväntat aktivt inom 2–4 veckor.`,
+    `Vi tecknar nytt avtal med ${suppDisplay} — förväntat aktivt inom 2–4 veckor.`,
+    `Arvo skickar besparingsarvodet ${formatKr(arvoFee)} (20&nbsp;%) efter din första faktura från den nya leverantören.`,
+  ] : [
+    `Vi kartlägger ert nuvarande avtal hos ${ex.supplier}, inklusive uppsägningstid och avtalsvillkor.`,
+    `Arvo kontaktar kvalificerade leverantörer inom ${catLabel.toLowerCase()} och presenterar det starkaste budet baserat på er volym. Du väljer sedan om du vill gå vidare.`,
     `Arvo skickar besparingsarvodet ${formatKr(arvoFee)} (20&nbsp;%) efter din första faktura från den nya leverantören.`,
   ];
 
