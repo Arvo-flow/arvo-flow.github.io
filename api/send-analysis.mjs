@@ -283,16 +283,16 @@ function htmlEmail(result) {
   const suppDisplay = displayedSupplier(cat, r);
   const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
 
-  const wr = (label, val, bold = false, color = T.inkSoft) =>
+  const wr = (label, val, bold = false, color = T.inkSoft, nowrap = false) =>
     `<tr>
-      <td style="padding:14px 16px;color:#8FA8A0;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:44%;font-family:'Inter',Arial,sans-serif">${label}</td>
-      <td style="padding:14px 16px;color:${color};font-weight:${bold ? 600 : 500};border-top:1px solid ${T.bg};font-size:${bold ? 15 : 14}px;font-family:'Inter',Arial,sans-serif">${val}</td>
+      <td style="padding:13px 14px 13px 16px;color:#7A9A93;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:38%;font-family:'Inter',Arial,sans-serif">${label}</td>
+      <td style="padding:13px 16px 13px 14px;color:${color};font-weight:${bold ? 600 : 500};border-top:1px solid ${T.bg};font-size:${bold ? 15 : 14}px;font-family:'Inter',Arial,sans-serif;${nowrap ? 'white-space:nowrap' : ''}">${val}</td>
     </tr>`;
 
   const suppRow = suppDisplay
     ? `<tr>
-        <td style="padding:14px 16px;color:#8FA8A0;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:44%;font-family:'Inter',Arial,sans-serif">Föreslagen leverantör</td>
-        <td style="padding:14px 16px;color:${T.brand};font-weight:600;border-top:1px solid ${T.bg};font-size:15px;font-family:'Inter',Arial,sans-serif">${suppDisplay}</td>
+        <td style="padding:13px 14px 13px 16px;color:#7A9A93;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:38%;font-family:'Inter',Arial,sans-serif">Föreslagen leverantör</td>
+        <td style="padding:13px 16px 13px 14px;color:${T.brand};font-weight:600;border-top:1px solid ${T.bg};font-size:15px;font-family:'Inter',Arial,sans-serif">${suppDisplay}</td>
       </tr>`
     : '';
 
@@ -350,8 +350,8 @@ function htmlEmail(result) {
   <!-- Savings hero -->
   <tr>
     <td style="background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);padding:40px 44px 36px">
-      <p style="margin:0 0 12px;font-size:9px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.22em;font-family:'Inter',Arial,sans-serif">Din nettobesparing</p>
-      <p style="margin:0 0 18px;font-family:'Playfair Display',Georgia,serif;font-size:52px;font-weight:700;color:#ffffff;line-height:1;letter-spacing:-2px">+${formatKr(r.netSaving)}</p>
+      <p style="margin:0 0 12px;font-size:10px;font-weight:700;color:rgba(255,255,255,0.60);text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Din nettobesparing</p>
+      <p style="margin:0 0 16px;font-family:'Playfair Display',Georgia,serif;font-size:42px;font-weight:700;color:#ffffff;line-height:1.1;letter-spacing:-1px">+${formatKr(r.netSaving)}</p>
       <p style="margin:0;font-size:13.5px;color:rgba(255,255,255,0.72);line-height:1.65;font-family:'Inter',Arial,sans-serif">
         ${formatKr(ex.annualCost)} &rarr; ${formatKr(r.suggestedAnnualCost)}/år
         ${suppDisplay ? `&thinsp;hos&thinsp;<strong style="color:rgba(255,255,255,0.92);font-weight:600">${suppDisplay}</strong>` : ''}
@@ -365,11 +365,11 @@ function htmlEmail(result) {
     <td style="padding:32px 44px 4px">
       <table width="100%" cellpadding="0" cellspacing="0">
         ${wr('Nuvarande leverantör', ex.supplier)}
-        ${wr('Du betalar idag', formatKr(ex.annualCost) + '&thinsp;/&thinsp;år')}
+        ${wr('Du betalar idag', formatKr(ex.annualCost) + '/år', false, T.inkSoft, true)}
         ${suppRow}
-        ${wr('Arvo-pris', formatKr(r.suggestedAnnualCost) + '&thinsp;/&thinsp;år', true, T.brand)}
-        ${wr('Bruttobesparing', formatKr(r.grossSaving))}
-        ${wr('Arvos besparingsarvode (20&nbsp;%)', formatKr(r.arvoFee))}
+        ${wr('Arvo-pris', formatKr(r.suggestedAnnualCost) + '/år', true, T.brand, true)}
+        ${wr('Bruttobesparing', formatKr(r.grossSaving), false, T.inkSoft, true)}
+        ${wr('Arvos besparingsarvode (20 %)', formatKr(r.arvoFee), false, T.inkSoft, true)}
         <tr style="background:${T.brandSoft}">
           <td style="padding:16px 16px 16px 19px;color:${T.brandInk};font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-top:1px solid #B8D9D1;border-left:3px solid ${T.brand};font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
           <td style="padding:16px 16px;color:${T.brand};font-size:20px;font-weight:700;border-top:1px solid #B8D9D1;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</td>

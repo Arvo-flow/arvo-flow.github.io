@@ -175,7 +175,7 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:13px auto 0"><polyline points="20 6 9 17 4 12"/></svg>
         </td>
       </tr></table>
-      <p style="margin:0 0 10px;font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:#ffffff;line-height:1.2;letter-spacing:-.4px">${heroTitle}</p>
+      <p style="margin:0 0 10px;font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;color:#ffffff;line-height:1.2;letter-spacing:-.3px">${heroTitle}</p>
       <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.80);line-height:1.7;font-family:'Inter',Arial,sans-serif;max-width:460px">${heroSub}</p>
     </td>
   </tr>
@@ -186,12 +186,12 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
       <p style="margin:0 0 14px;font-size:9px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Din besparing</p>
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="padding:14px 16px;color:#8FA8A0;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:44%;font-family:'Inter',Arial,sans-serif">Nuvarande leverantör</td>
-          <td style="padding:14px 16px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;font-family:'Inter',Arial,sans-serif">${ex.supplier}</td>
+          <td style="padding:13px 14px 13px 16px;color:#7A9A93;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:38%;font-family:'Inter',Arial,sans-serif">Nuvarande leverantör</td>
+          <td style="padding:13px 16px 13px 14px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;font-family:'Inter',Arial,sans-serif">${ex.supplier}</td>
         </tr>
         <tr>
-          <td style="padding:14px 16px;color:#8FA8A0;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:44%;font-family:'Inter',Arial,sans-serif">Du betalar idag</td>
-          <td style="padding:14px 16px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;font-family:'Inter',Arial,sans-serif">${formatKr(ex.annualCost)}&thinsp;/&thinsp;år</td>
+          <td style="padding:13px 14px 13px 16px;color:#7A9A93;border-top:1px solid ${T.bg};font-size:10px;font-weight:500;width:38%;font-family:'Inter',Arial,sans-serif">Du betalar idag</td>
+          <td style="padding:13px 16px 13px 14px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;white-space:nowrap;font-family:'Inter',Arial,sans-serif">${formatKr(ex.annualCost)}/år</td>
         </tr>
         <tr style="background:${T.brandSoft}">
           <td style="padding:16px 16px 16px 19px;color:${T.brandInk};font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-top:1px solid #B8D9D1;border-left:3px solid ${T.brand};font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
