@@ -76,7 +76,7 @@ const CATEGORY_LABELS = {
   bredband:            'Företagsbredband',
   'forsakring-foretag':'Företagsförsäkring',
   'forsakring-ansvar': 'Yrkesansvarsförsäkring',
-  leasing:             'Företagsleasing',
+  'leasing-bil':       'Företagsleasing',
   kortterminal:        'Kortterminal',
   'faktura-tjanst':    'Fakturatjänst / Affärssystem',
   'saas-productivity': 'Programvarulicenser / SaaS',

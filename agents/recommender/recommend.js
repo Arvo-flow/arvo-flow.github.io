@@ -23,7 +23,7 @@ const MAX_TOKENS = 1024;
 
 // Mirrors REAL_PRICE_CATEGORIES in the frontend — categories with public list
 // prices where naming the suggested supplier in reasoning is fine.
-const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
+const REAL_PRICE_CATEGORIES = new Set(['saas-productivity', 'mobil']);
 
 export class RecommenderError extends Error {
   constructor(message, { cause } = {}) {
@@ -318,6 +318,8 @@ export async function recommend(input, opts = {}) {
     // operationellt orimligt — byteskostnad i tid överstiger vinsten.
     if ((result.savingPerYear ?? 0) < 500) {
       result.shouldSwitch = false;
+      result.licenseOverage = null;
+      result.overageSavings = null;
     }
   }
 
