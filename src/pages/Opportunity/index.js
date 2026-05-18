@@ -76,7 +76,7 @@ const Opportunity = () => {
           <HeadSaving>
             <div className="kicker">Din nettobesparing år 1</div>
             <div className="amount">+{oppNetSaving.toLocaleString('sv-SE')}</div>
-            <div className="unit">kr · efter Arvos framgångsarvode {oppArvoFee.toLocaleString('sv-SE')} kr (20 %)</div>
+            <div className="unit">kr · efter Arvos besparingsarvode {oppArvoFee.toLocaleString('sv-SE')} kr (20 %)</div>
           </HeadSaving>
         </Head>
 
@@ -157,7 +157,7 @@ const Opportunity = () => {
                 <span className="kicker">Din nettobesparing år 1</span>
                 <span className="amount">{formatKr(oppNetSaving)}</span>
                 <span className="fineprint">
-                  Bruttobesparing {formatKr(opp.savingPerYear)} − Arvos framgångsarvode {formatKr(oppArvoFee)} (20 %)
+                  Bruttobesparing {formatKr(opp.savingPerYear)} − Arvos besparingsarvode {formatKr(oppArvoFee)} (20 %)
                 </span>
               </NetSaving>
               <KeyValue>
