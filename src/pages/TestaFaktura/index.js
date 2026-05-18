@@ -471,6 +471,11 @@ const TestaFaktura = () => {
                   </>
                 )}
               </NoSwitchBlock>
+            ) : result.recommendation?.requiresQuote ? (
+              <NoSwitchBlock>
+                <strong>Kräver offert — volymdata behövs.</strong>
+                <p>{result.recommendation.reasoning}</p>
+              </NoSwitchBlock>
             ) : isOptimize ? (
               <>
                 <SavingsBlock>
@@ -633,7 +638,13 @@ const TestaFaktura = () => {
                   <dt>Rörliga avgifter denna period</dt>
                   <dd>
                     {formatKr(result.extracted.variableCharges)}
-                    <small>{result.categorized?.category === 'el' ? 'Rörliga elkostnader — ej inkluderat i årsberäkningen.' : 'Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.'}</small>
+                    <small>
+                      {result.categorized?.category === 'el'
+                        ? 'Rörliga elkostnader — ej inkluderat i årsberäkningen.'
+                        : result.categorized?.category === 'skrivarleasing'
+                          ? 'Rörliga utskriftskostnader (volymbaserat) — ej inkluderat i årsberäkningen.'
+                          : 'Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.'}
+                    </small>
                   </dd>
                 </div>
               )}

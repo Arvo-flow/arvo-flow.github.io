@@ -540,6 +540,7 @@ export default async function handler(req, res) {
       recommendation: {
         recommendationType: recommendation.recommendationType ?? (recommendation.shouldSwitch ? 'switch' : 'no_action'),
         optimizationSaving: recommendation.optimizationSaving ?? null,
+        requiresQuote: recommendation.requiresQuote ?? false,
         shouldSwitch: recommendation.shouldSwitch,
         suggestedSupplier: recommendation.suggestedSupplier ?? null,
         suggestedAnnualCost: recommendation.suggestedAnnualCost ?? null,

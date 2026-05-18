@@ -178,6 +178,36 @@ export async function recommend(input, opts = {}) {
     employees: input.customer.employees,
   });
 
+  // Managed Print guard: if click costs dominate (>35 % of invoice), one month's
+  // data is too volatile to annualise. Return a requires_quote state immediately,
+  // skipping the AI call entirely.
+  if (input.categorized.category === 'skrivarleasing') {
+    const fixed    = input.invoice.recurringAmount   ?? 0;
+    const clicks   = input.invoice.variableCharges   ?? 0;
+    const total    = fixed + clicks;
+    const clickRatio = total > 0 ? clicks / total : 0;
+    if (clickRatio > 0.35) {
+      return {
+        shouldSwitch:       false,
+        requiresQuote:      true,
+        recommendationType: 'requires_quote',
+        reasoning:          'Era utskriftskostnader drivs av hög volym på färgutskrifter, inte bara maskinhyran. Arvo behöver analysera ert snitt över 3–6 månader för att förhandla fram ett rättvist klick-avtal.',
+        suggestedSupplier:  null,
+        suggestedAnnualCost: null,
+        grossSaving:        null,
+        arvoFee:            null,
+        netSaving:          null,
+        confidence:         'low',
+        switchSteps:        [],
+        licenseOverage:     null,
+        overageSavings:     null,
+        optimizationSaving: null,
+        benchmark,
+        usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      };
+    }
+  }
+
   const client = opts.client ?? getClient();
 
   const requestParams = {
