@@ -138,6 +138,7 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
 
 const TestaFaktura = () => {
   const fileInputRef = useRef(null);
+  const resultRef    = useRef(null);
   const [file, setFile] = useState(null);
   const [industry, setIndustry] = useState('konsult');
   const [employees, setEmployees] = useState(5);
@@ -292,6 +293,7 @@ const TestaFaktura = () => {
     e.preventDefault();
     if (!quoteEmail || !quoteMandateAccepted || quoteState !== 'idle') return;
     setQuoteState('sent');
+    resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     fetch('/api/quote-request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -516,7 +518,7 @@ const TestaFaktura = () => {
         )}
 
         {result && (
-          <Card>
+          <Card ref={resultRef}>
             <ResultHead>
               <div>
                 <h2>{result.extracted.supplier}</h2>
