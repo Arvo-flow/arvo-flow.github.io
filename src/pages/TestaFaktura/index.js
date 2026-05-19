@@ -159,6 +159,7 @@ const TestaFaktura = () => {
   const [quoteName, setQuoteName] = useState('');
   const [quoteCompany, setQuoteCompany] = useState('');
   const [quoteEmail, setQuoteEmail] = useState('');
+  const [quoteMandateAccepted, setQuoteMandateAccepted] = useState(false);
   const [quoteState, setQuoteState] = useState('idle'); // idle | submitting | sent
 
   // Token + bypass-setup vid mount
@@ -289,18 +290,19 @@ const TestaFaktura = () => {
 
   const submitQuoteLead = async (e) => {
     e.preventDefault();
-    if (!quoteEmail || quoteState === 'submitting') return;
+    if (!quoteEmail || !quoteMandateAccepted || quoteState === 'submitting') return;
     setQuoteState('submitting');
     try {
       await fetch('/api/quote-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contactEmail:   quoteEmail.trim().toLowerCase(),
-          contactName:    quoteName.trim() || undefined,
-          contactCompany: quoteCompany.trim() || undefined,
-          extractedData:  result?.extracted,
-          categorized:    result?.categorized,
+          contactEmail:     quoteEmail.trim().toLowerCase(),
+          contactName:      quoteName.trim() || undefined,
+          contactCompany:   quoteCompany.trim() || undefined,
+          mandateAccepted:  true,
+          extractedData:    result?.extracted,
+          categorized:      result?.categorized,
         }),
       });
     } catch {
@@ -326,6 +328,7 @@ const TestaFaktura = () => {
     setQuoteName('');
     setQuoteCompany('');
     setQuoteEmail('');
+    setQuoteMandateAccepted(false);
     setQuoteState('idle');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -676,11 +679,22 @@ const TestaFaktura = () => {
                           onChange={(e) => setQuoteEmail(e.target.value)}
                         />
                       </div>
+                      <label className="qlf-mandate">
+                        <input
+                          type="checkbox"
+                          checked={quoteMandateAccepted}
+                          onChange={(e) => setQuoteMandateAccepted(e.target.checked)}
+                        />
+                        <span>
+                          Jag ger <em>Arvo Flow</em> fullmakt att begära in, sammanställa och
+                          presentera offerter från leverantörer å mitt bolags vägnar.
+                        </span>
+                      </label>
                       <Button
                         type="submit"
                         $variant="gradient"
                         $size="sm"
-                        disabled={quoteState === 'submitting'}
+                        disabled={quoteState === 'submitting' || !quoteMandateAccepted}
                         style={{ width: '100%', justifyContent: 'center' }}
                       >
                         {quoteState === 'submitting' ? 'Startar...' : 'Starta offertprocessen →'}

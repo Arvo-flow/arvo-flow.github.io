@@ -430,7 +430,7 @@ export const QuoteLeadForm = styled.form`
   }
   .qlf-full { grid-column: 1 / -1; }
 
-  input {
+  input[type="text"], input[type="email"] {
     width: 100%;
     box-sizing: border-box;
     padding: 11px 13px;
@@ -442,6 +442,33 @@ export const QuoteLeadForm = styled.form`
     outline: none;
     &:focus { border-color: ${({ theme }) => theme.color.accent}; }
     &::placeholder { color: ${({ theme }) => theme.color.muted}; }
+  }
+
+  .qlf-mandate {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 12px 0 14px;
+    padding: 12px 14px;
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    cursor: pointer;
+
+    input[type="checkbox"] {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      accent-color: ${({ theme }) => theme.color.brand};
+      cursor: pointer;
+    }
+    span {
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: ${({ theme }) => theme.color.inkSoft};
+      em { font-style: normal; font-weight: 600; color: ${({ theme }) => theme.color.ink}; }
+    }
   }
 
   .qlf-sent {

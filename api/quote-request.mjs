@@ -84,6 +84,35 @@ Avslutningsdatum för svar: ${new Date(Date.now() + 5 * 86400000).toLocaleDateSt
   return msg.content[0].text.trim();
 }
 
+// ── Fullmakts-version (bumpa vid textändring) ─────────────────────────────────
+const FULLMAKT_VERSION = 'v1-2026-05-19';
+const FULLMAKT_TEXT    = 'Jag ger Arvo Flow fullmakt att begära in, sammanställa och presentera offerter från leverantörer å mitt bolags vägnar.';
+
+// ── Mandate-loggning ──────────────────────────────────────────────────────────
+async function storeMandateLog({ email, company, ipAddress }) {
+  const db = getDb();
+  if (!db) return;
+  try {
+    await db`
+      CREATE TABLE IF NOT EXISTS mandate_log (
+        id               SERIAL PRIMARY KEY,
+        email            TEXT NOT NULL,
+        company          TEXT,
+        ip_address       TEXT,
+        fullmakt_version TEXT NOT NULL,
+        fullmakt_text    TEXT NOT NULL,
+        created_at       TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+    await db`
+      INSERT INTO mandate_log (email, company, ip_address, fullmakt_version, fullmakt_text)
+      VALUES (${email}, ${company ?? null}, ${ipAddress ?? null}, ${FULLMAKT_VERSION}, ${FULLMAKT_TEXT})
+    `;
+  } catch (err) {
+    console.error('[quote-request] storeMandateLog error:', err.message);
+  }
+}
+
 // ── Postgres-lagring ──────────────────────────────────────────────────────────
 async function storeQuoteRequest({ contactEmail, contactName, contactCompany, supplier, annualCost, variableCharges, rfqDraft }) {
   const db = getDb();
@@ -369,11 +398,17 @@ export default async function handler(req, res) {
     return send(res, 400, { error: 'Ogiltig JSON' });
   }
 
-  const { contactEmail, contactName, contactCompany, extractedData, categorized } = body;
+  const { contactEmail, contactName, contactCompany, mandateAccepted, extractedData, categorized } = body;
 
   if (!contactEmail || typeof contactEmail !== 'string' || !contactEmail.includes('@')) {
     return send(res, 400, { error: 'contactEmail krävs' });
   }
+  if (mandateAccepted !== true) {
+    return send(res, 400, { error: 'Fullmakt krävs för att starta offertprocessen.' });
+  }
+
+  // Klientens IP — Vercel sätter x-forwarded-for, ta första adressen
+  const ipAddress = (req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || null;
 
   const supplier        = extractedData?.supplier ?? 'Okänd leverantör';
   const annualCost      = extractedData?.annualCost      ?? null;
@@ -388,9 +423,11 @@ export default async function handler(req, res) {
     rfqDraft = `Till: [ange leverantörens e-postadress]\nÄmne: Offertförfrågan — skrivarleasing\n\n[RFQ-generering misslyckades — fyll i manuellt]\n\nMed vänliga hälsningar,\nArvo Flow — Inköpsavdelningen`;
   }
 
-  // Lagra lead (fire-and-forget)
+  // Lagra lead + fullmaktslogg parallellt (fire-and-forget)
   storeQuoteRequest({ contactEmail, contactName, contactCompany, supplier, annualCost, variableCharges, rfqDraft })
-    .catch((err) => console.error('[quote-request] store error:', err.message));
+    .catch((err) => console.error('[quote-request] storeQuoteRequest error:', err.message));
+  storeMandateLog({ email: contactEmail, company: contactCompany, ipAddress })
+    .catch((err) => console.error('[quote-request] storeMandateLog error:', err.message));
 
   // Skicka båda emails parallellt
   if (process.env.RESEND_API_KEY) {
