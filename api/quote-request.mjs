@@ -176,10 +176,10 @@ function buildCustomerEmail({ contactName, supplier, annualCost, variableCharges
 
   <!-- Hero -->
   <tr><td style="background:linear-gradient(145deg,#0E4F47 0%,#1B7A6E 100%);padding:36px 32px 32px">
-    <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:rgba(93,214,202,0.90);text-transform:uppercase;letter-spacing:.13em">Offertprocess startad</p>
+    <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:.13em">Offertprocess startad</p>
     <h1 style="margin:0 0 14px;font-size:26px;font-weight:700;color:#ffffff;line-height:1.22;letter-spacing:-.015em">${heroLine}</h1>
     <p style="margin:0;font-size:15px;color:rgba(255,255,255,0.82);line-height:1.55">
-      Er faktura från <strong style="color:#5DD6CA;font-weight:600">${supplier}</strong> är mottagen.<br>
+      Er faktura från <strong style="color:#ffffff;font-weight:600">${supplier}</strong> är mottagen.<br>
       Arvo initierar nu offertprocessen hos kvalificerade Print-leverantörer.
     </p>
   </td></tr>
