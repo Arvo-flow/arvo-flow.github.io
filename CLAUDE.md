@@ -1,5 +1,20 @@
 # Arvo Flow — Projektbeskrivning för Claude Code
 
+## Git-workflow (OBLIGATORISK REGEL)
+
+**Efter varje push till feature-branch: merga alltid till `main` och pusha `main`.**
+
+```bash
+git checkout main
+git merge claude/fix-invoice-ai-deployment-OFyG2 --no-edit
+git push -u origin main
+git checkout claude/fix-invoice-ai-deployment-OFyG2
+```
+
+Denna regel gäller alltid, utan undantag, direkt efter varje `git push` till feature-branchen.
+
+---
+
 ## Vad är Arvo Flow?
 
 Svensk B2B SaaS-produkt. Kunden laddar upp en leverantörsfaktura (PDF) och får direkt:
