@@ -18,7 +18,7 @@ import { getDb } from '../lib/db.js';
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
 const FREE_ANALYSES      = 3;
-const PDF_CACHE_TTL      = 24 * 60 * 60;       // 24 h
+const PDF_CACHE_TTL      = 6 * 60 * 60;        // 6 h (GDPR-avvägning: kortare retain)
 const GATE_WINDOW_TTL    = 30 * 24 * 60 * 60;  // 30 dagar
 const PIPELINE_TIMEOUT_MS = 55_000;             // 5 s marginal mot Vercels 60 s hard kill
 

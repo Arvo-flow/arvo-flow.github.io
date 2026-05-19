@@ -15,7 +15,7 @@ const Integritet = () => (
     <Nav variant="public" />
 
     <Hero>
-      <Eyebrow><span className="dot" /> Integritetspolicy & DPA · Version 1.3 · Senast uppdaterad 2026-05-14</Eyebrow>
+      <Eyebrow><span className="dot" /> Integritetspolicy & DPA · Version 1.4 · Senast uppdaterad 2026-05-19</Eyebrow>
       <Headline>Du <em>äger</em> din data. Vi förvaltar den.</Headline>
       <Lede>
         Vi läser bara den fakturadata vi behöver för att hitta överpriser — inget annat.
@@ -35,8 +35,13 @@ const Integritet = () => (
           </li>
           <li>
             <Icon name="check" size={16} stroke={2.4} />
-            <div><strong>Data lagras i EU/EES</strong> hos Bahnhof, Stockholm. Krypterad i vila (AES-256)
-              och i transport (TLS 1.3).</div>
+            <div><strong>Faktura-PDF:er lagras aldrig.</strong> Vi extraherar den data vi behöver och
+              kastar filen direkt — noll persistent lagring av PDF-innehåll hos Arvo Flow. By design.</div>
+          </li>
+          <li>
+            <Icon name="check" size={16} stroke={2.4} />
+            <div><strong>Data lagras i EU/EES</strong> eller under EU-godkända överföringsmekanismer
+              (Standard Contractual Clauses). Krypterad i vila (AES-256) och i transport (TLS 1.3).</div>
           </li>
           <li>
             <Icon name="check" size={16} stroke={2.4} />
@@ -106,6 +111,14 @@ const Integritet = () => (
               Rättslig grund för indexanvändning: <em>berättigat intresse</em>.</div>
           </TableRow>
           <TableRow>
+            <div className="k">Faktura-PDF (uppladdning)</div>
+            <div className="v">PDF-filen konverteras till text i realtid via Anthropic API och
+              raderas omedelbart — den lagras <strong>aldrig</strong> på Arvo Flows
+              infrastruktur. Analysresultatet (extraherade siffror, inte PDF-innehållet)
+              cachas i 6 timmar för att undvika onödiga API-anrop.
+              Rättslig grund: <em>berättigat intresse</em> för Tjänstens leverans.</div>
+          </TableRow>
+          <TableRow>
             <div className="k">Tekniska data</div>
             <div className="v">IP-adress, webbläsare, sidvisningar (anonymiserat).
               Rättslig grund: <em>berättigat intresse</em> för säkerhet och drift.</div>
@@ -134,11 +147,15 @@ const Integritet = () => (
           <li><strong>Vid uppsägning:</strong> Transaktionsdata raderas inom 24 timmar.</li>
           <li><strong>Bokföringsunderlag:</strong> 7 år enligt bokföringslagen (2 kap. 1 § BFL).</li>
           <li><strong>Marknadsföringssamtycke:</strong> Tills du återkallar samtycket.</li>
+          <li><strong>Faktura-PDF:</strong> Lagras aldrig — raderas direkt efter AI-extraktering.
+            Analysresultatet (JSON med siffror) cachas i 6 timmar, därefter auto-raderats.</li>
           <li><strong>Anonymiserad statistik (branschindex):</strong> Belopp, leverantör och kategori
             från leverantörsfakturor anonymiseras och används för att beräkna marknadsmedian och
             prispercentiler per bransch och bolagsstorlek. Detta aggregerade index är grunden för
             Tjänstens jämförelser och rekommendationer. Inga uppgifter kan härledas till ett
             enskilt bolag. Sparas obegränsat.</li>
+          <li><strong>Anthropic API (AI-behandling):</strong> Data behandlas via Anthropic API
+            med 30 dagars radering för Trust &amp; Safety, utan att användas för modellträning.</li>
         </ul>
       </Clause>
 
@@ -176,27 +193,41 @@ const Integritet = () => (
         <Table>
           <TableRow className="header">
             <div>Leverantör</div>
-            <div>Funktion</div>
+            <div>Funktion &amp; överföringsmekanism</div>
+          </TableRow>
+          <TableRow>
+            <div className="k">Anthropic PBC</div>
+            <div className="v">AI-analys av faktura-PDF — USA. SCC. 30 dagars radering,
+              tränar ej modeller på API-data.</div>
+          </TableRow>
+          <TableRow>
+            <div className="k">Vercel Inc.</div>
+            <div className="v">Serverless funktioner &amp; KV-cache — USA/EU. SCC.
+              Analysresultat cachas max 6 timmar.</div>
+          </TableRow>
+          <TableRow>
+            <div className="k">Neon Inc.</div>
+            <div className="v">Postgres-databas (leads, offertförfrågningar, branschindex) — USA. SCC.</div>
+          </TableRow>
+          <TableRow>
+            <div className="k">Resend Inc.</div>
+            <div className="v">Transaktionell e-post (bekräftelser, interna larm) — USA. SCC.</div>
           </TableRow>
           <TableRow>
             <div className="k">Bahnhof AB</div>
-            <div className="v">Hosting / databas — Sverige</div>
+            <div className="v">Hosting / databas (planerad, full produkt) — Sverige</div>
           </TableRow>
           <TableRow>
             <div className="k">Scrive AB</div>
-            <div className="v">BankID-signering — Sverige</div>
+            <div className="v">BankID-signering (planerad) — Sverige</div>
           </TableRow>
           <TableRow>
             <div className="k">Fortnox / Visma</div>
-            <div className="v">OAuth-koppling till bokföring — Sverige</div>
+            <div className="v">OAuth-koppling till bokföring (planerad) — Sverige</div>
           </TableRow>
           <TableRow>
             <div className="k">Stripe Payments Europe</div>
-            <div className="v">Betalningar &amp; fakturering — Irland</div>
-          </TableRow>
-          <TableRow>
-            <div className="k">Bolagsverket</div>
-            <div className="v">Verifiering av firmateckningsrätt — Sverige</div>
+            <div className="v">Betalningar &amp; fakturering (planerad) — Irland</div>
           </TableRow>
         </Table>
       </Clause>
@@ -257,8 +288,8 @@ const Integritet = () => (
       </Clause>
 
       <FineprintBar>
-        <strong>Arvo Flow AB</strong> · Org.nr 559500-0000 · Stockholm · Integritetspolicy &amp; DPA v1.3 ·
-        Senast uppdaterad 2026-05-14. <br />
+        <strong>Arvo Flow AB</strong> · Org.nr 559500-0000 · Stockholm · Integritetspolicy &amp; DPA v1.4 ·
+        Senast uppdaterad 2026-05-19. <br />
         Frågor: <a href="mailto:gdpr@arvo.flow" style={{ color: 'inherit', textDecoration: 'underline' }}>gdpr@arvo.flow</a>.
       </FineprintBar>
     </Body>
