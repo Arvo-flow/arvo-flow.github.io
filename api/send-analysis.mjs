@@ -314,9 +314,12 @@ function htmlEmail(result) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light}</style>
 </head>
-<body style="margin:0;padding:0;background:${T.bg};-webkit-font-smoothing:antialiased">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg};padding:48px 16px">
+<body style="margin:0;padding:0;background:${T.bg};-webkit-font-smoothing:antialiased;color-scheme:light">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg};padding:48px 16px;color-scheme:light">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 4px 32px rgba(14,26,23,0.10)">
 

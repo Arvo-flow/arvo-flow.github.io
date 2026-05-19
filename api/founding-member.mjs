@@ -63,9 +63,12 @@ function confirmationHtml(company, name) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>:root{color-scheme:light}</style>
 </head>
-<body style="margin:0;padding:0;background:${T.bg};-webkit-font-smoothing:antialiased">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg};padding:40px 16px">
+<body style="margin:0;padding:0;background:${T.bg};-webkit-font-smoothing:antialiased;color-scheme:light">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg};padding:40px 16px;color-scheme:light">
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:${T.surface};border-radius:16px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 2px 16px rgba(14,26,23,0.07)">
 
@@ -142,8 +145,8 @@ function confirmationHtml(company, name) {
 function notifyHtml(company, name, email, referrer, timestamp) {
   return `<!DOCTYPE html>
 <html lang="sv">
-<head><meta charset="UTF-8"><title>Ny Founding Member</title></head>
-<body style="margin:0;padding:32px 16px;background:#F1F6F3;font-family:Arial,sans-serif">
+<head><meta charset="UTF-8"><title>Ny Founding Member</title><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light}</style></head>
+<body style="margin:0;padding:32px 16px;background:#F1F6F3;font-family:Arial,sans-serif;color-scheme:light">
 <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;max-width:560px;border:1px solid #D5E2DC">
   <tr><td style="padding:20px 32px;background:#0E4F47">
     <span style="font-size:15px;font-weight:700;color:#fff">Ny Founding Member-anmälan</span>
