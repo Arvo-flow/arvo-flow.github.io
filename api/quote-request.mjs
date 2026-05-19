@@ -160,7 +160,7 @@ function buildCustomerEmail({ contactName, supplier, annualCost, variableCharges
     `<table cellpadding="0" cellspacing="0"><tr><td style="width:28px;height:28px;border-radius:50%;background:linear-gradient(160deg,#5DD6CA 0%,#1B7A6E 100%);text-align:center;vertical-align:middle;font-size:12px;font-weight:700;color:#fff;font-family:Arial,sans-serif">${n}</td></tr></table>`;
 
   return `<!DOCTYPE html>
-<html lang="sv"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light}</style></head>
+<html lang="sv"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light!important}html,body{background-color:#EEF4F1!important;color:#0E1A17!important}@media(prefers-color-scheme:dark){:root{color-scheme:light!important}html,body{background-color:#EEF4F1!important;color:#0E1A17!important}}</style></head>
 <body style="margin:0;padding:0;background:#EEF4F1;font-family:Arial,Helvetica,sans-serif;color-scheme:light">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#EEF4F1;padding:36px 16px;color-scheme:light">
 <tr><td align="center">
@@ -287,7 +287,7 @@ function buildInternalEmail({ contactName, contactEmail, contactCompany, supplie
     .replace(/\n/g, '<br>');
 
   return `<!DOCTYPE html>
-<html lang="sv"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light}</style></head>
+<html lang="sv"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light!important}html,body{background-color:#EEF4F1!important;color:#0E1A17!important}@media(prefers-color-scheme:dark){:root{color-scheme:light!important}html,body{background-color:#EEF4F1!important;color:#0E1A17!important}}</style></head>
 <body style="margin:0;padding:0;background:#EEF4F1;font-family:Arial,Helvetica,sans-serif;color-scheme:light">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#EEF4F1;padding:36px 16px;color-scheme:light">
 <tr><td align="center">

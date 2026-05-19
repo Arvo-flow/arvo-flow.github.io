@@ -316,7 +316,7 @@ function htmlEmail(result) {
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <meta name="color-scheme" content="light">
   <meta name="supported-color-schemes" content="light">
-  <style>:root{color-scheme:light}</style>
+  <style>:root{color-scheme:light!important}html,body{background-color:#EEF4F1!important;color:#0E1A17!important}@media(prefers-color-scheme:dark){:root{color-scheme:light!important}html,body{background-color:#EEF4F1!important;color:#0E1A17!important}}</style>
 </head>
 <body style="margin:0;padding:0;background:${T.bg};-webkit-font-smoothing:antialiased;color-scheme:light">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg};padding:48px 16px;color-scheme:light">
