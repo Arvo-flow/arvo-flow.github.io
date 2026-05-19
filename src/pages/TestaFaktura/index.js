@@ -938,12 +938,12 @@ const TestaFaktura = () => {
             )}
 
             <NextSteps>
-              <h3>Låt Arvo sköta hela bytet</h3>
+              <h3>Er Arvo Score är halvfärdig.</h3>
               <p>
-                Med Arvo Flow kopplar du Fortnox / Visma en gång så sköter vi hela bytet – från
-                uppsägning till nytt avtal och signering. Samtidigt identifierar vi
-                automatiskt fler onödiga kostnader i resten av er leverantörsreskontra.
-                Du betalar bara 20 % av identifierad besparing. Inga fasta avgifter.
+                Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen
+                på hela er reskontra och levererar en komplett Leverantörsrapport automatiskt.
+                Vi sköter varje byte från uppsägning till nytt avtal. Du betalar 20 % av
+                identifierad besparing. Inga fasta avgifter.
               </p>
               <div className="actions">
                 <div className="cta-row">
