@@ -26,6 +26,16 @@ export default createGlobalStyle`
     color: ${({ theme }) => theme.color.ink};
   }
 
+  @media (prefers-color-scheme: dark) {
+    html, body, #root {
+      background: ${({ theme }) => theme.color.bg} !important;
+      color: ${({ theme }) => theme.color.ink} !important;
+    }
+    * {
+      forced-color-adjust: none;
+    }
+  }
+
   body {
     font-family: ${({ theme }) => theme.font.sans};
     font-size: 16px;

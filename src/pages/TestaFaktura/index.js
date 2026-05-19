@@ -648,7 +648,7 @@ const TestaFaktura = () => {
                   {quoteState === 'sent' ? (
                     <div className="qlf-sent">
                       <Icon name="check" size={16} stroke={2.5} />
-                      Klart! Arvo initierar offertprocessen — du hör av oss inom 1–2 arbetsdagar.
+                      Tack! Bekräftelse är skickad till din e-post. Vi återkommer med offerter inom 1–2 arbetsdagar.
                     </div>
                   ) : (
                     <>
