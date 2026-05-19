@@ -8,6 +8,7 @@ export default createGlobalStyle`
   }
 
   :root {
+    color-scheme: light;
     --bg: ${({ theme }) => theme.color.bg};
     --surface: ${({ theme }) => theme.color.surface};
     --ink: ${({ theme }) => theme.color.ink};

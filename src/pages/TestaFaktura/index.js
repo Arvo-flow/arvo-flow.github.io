@@ -288,27 +288,22 @@ const TestaFaktura = () => {
     setGateSubmitting(false);
   };
 
-  const submitQuoteLead = async (e) => {
+  const submitQuoteLead = (e) => {
     e.preventDefault();
-    if (!quoteEmail || !quoteMandateAccepted || quoteState === 'submitting') return;
-    setQuoteState('submitting');
-    try {
-      await fetch('/api/quote-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contactEmail:     quoteEmail.trim().toLowerCase(),
-          contactName:      quoteName.trim() || undefined,
-          contactCompany:   quoteCompany.trim() || undefined,
-          mandateAccepted:  true,
-          extractedData:    result?.extracted,
-          categorized:      result?.categorized,
-        }),
-      });
-    } catch {
-      // Non-fatal — vi visar ändå "sent" för att inte frustrera kunden
-    }
+    if (!quoteEmail || !quoteMandateAccepted || quoteState !== 'idle') return;
     setQuoteState('sent');
+    fetch('/api/quote-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contactEmail:     quoteEmail.trim().toLowerCase(),
+        contactName:      quoteName.trim() || undefined,
+        contactCompany:   quoteCompany.trim() || undefined,
+        mandateAccepted:  true,
+        extractedData:    result?.extracted,
+        categorized:      result?.categorized,
+      }),
+    }).catch((err) => console.error('[quote-request]', err));
   };
 
   const reset = () => {
@@ -653,7 +648,7 @@ const TestaFaktura = () => {
                   {quoteState === 'sent' ? (
                     <div className="qlf-sent">
                       <Icon name="check" size={16} stroke={2.5} />
-                      Klart! Arvo initierar offertprocessen — du hör av dig inom 1–2 arbetsdagar.
+                      Klart! Arvo initierar offertprocessen — du hör av oss inom 1–2 arbetsdagar.
                     </div>
                   ) : (
                     <>
