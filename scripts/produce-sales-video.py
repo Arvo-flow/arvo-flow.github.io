@@ -197,7 +197,7 @@ demo(f'{TMP}/d04.mp4', 30.0, 7.0)
 
 # S06 — "+18 240 kr" hero   4.5s
 slate(f'{TMP}/s06.mp4', 4.5, [
-    dt('+18 240 kr', PLAYFAIR, 92, 'white',      CX, above(36), 0.45, 3.6, 0.55, 0.40),
+    dt('+24 960 kr', PLAYFAIR, 92, 'white',      CX, above(36), 0.45, 3.6, 0.55, 0.40),
     dt('nettobesparing per år', INTER_S, 20, TEAL,     CX, below(52), 0.80, 3.1, 0.35, 0.30),
     teal_bar(0.8, 3.2, H//2 + 44, 220),
 ])
@@ -206,8 +206,8 @@ slate(f'{TMP}/s06.mp4', 4.5, [
 slate(f'{TMP}/s07.mp4', 3.5, [
     dt('81 600 kr',      INTER_M,  44, 'white@0.38', '(w/2)-260-text_w', above(8), 0.35, 2.7, 0.35, 0.30),
     dt('→',              INTER_M,  44, TEAL,          '(w-text_w)/2',     above(8), 0.35, 2.7, 0.35, 0.30),
-    dt('58 800 kr/år',   INTER_M,  44, 'white',       '(w/2)+260',        above(8), 0.35, 2.7, 0.35, 0.30),
-    dt('Telia → Hallon  ·  Arvo sköter bytet', INTER, 18, 'white@0.48', CX, below(52), 0.65, 2.4, 0.30, 0.28),
+    dt('50 400 kr/år',   INTER_M,  44, 'white',       '(w/2)+260',        above(8), 0.35, 2.7, 0.35, 0.30),
+    dt('Telia → Tele2  ·  Arvo sköter bytet', INTER, 18, 'white@0.68', CX, below(52), 0.65, 2.4, 0.30, 0.28),
 ])
 
 # D05 — PartnerBlock + modal   7s (t=37–44)
@@ -239,7 +239,7 @@ slate(f'{TMP}/s11.mp4', 4.0, [
 
 # S12 — URL   7s
 slate(f'{TMP}/s12.mp4', 7.0, [
-    dt('arvo-flow.github.io', INTER_S, 30, TEAL, CX, CY, 0.65, 5.7, 0.55, 0.55),
+    dt('arvoflow.se', INTER_S, 30, TEAL, CX, CY, 0.65, 5.7, 0.55, 0.55),
     teal_bar(0.65, 5.7, H//2 + 28, 320),
 ])
 

@@ -32,17 +32,17 @@ const TELIA_MOCK = {
   },
   recommendation: {
     shouldSwitch: true, requiresQuote: false,
-    suggestedSupplier: 'Hallon',
-    suggestedAnnualCost: 58800,
-    grossSaving: 22800,
-    arvoFee: 4560,
-    netSaving: 18240,
-    confidence: 0.93,
+    suggestedSupplier: 'Tele2',
+    suggestedAnnualCost: 50400,
+    grossSaving: 31200,
+    arvoFee: 6240,
+    netSaving: 24960,
+    confidence: 0.94,
     reasoning:
-      'Hallon erbjuder jämförbar täckning och datastyrka via Tre-nätet till ' +
-      'markant lägre kostnad. Typisk porterings-tid 3–5 arbetsdagar.',
+      'Tele2 erbjuder jämförbar rikstäckning och datastyrka till markant lägre ' +
+      'kostnad. Typisk porterings-tid 3–5 arbetsdagar.',
     switchSteps: [
-      'Arvo begär offert från Hallon',
+      'Arvo begär offert från Tele2',
       'Du godkänner priset och ger porterings-fullmakt',
       'Arvo sköter hela bytet — du behöver inte ringa',
     ],
