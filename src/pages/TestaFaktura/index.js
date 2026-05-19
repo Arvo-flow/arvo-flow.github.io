@@ -11,7 +11,7 @@ import {
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
   Reasoning, LicenseOverageNote, NextSteps, ServiceList, EmailGate,
-  ModalOverlay, ModalCard,
+  ModalOverlay, ModalCard, QuoteLeadForm,
 } from './styles';
 
 const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
@@ -23,7 +23,7 @@ async function getBrowserFingerprint() {
   const raw = [
     navigator.userAgent,
     navigator.language,
-    `${screen.width}x${screen.height}`,
+    `${window.screen.width}x${window.screen.height}`,
     Intl.DateTimeFormat().resolvedOptions().timeZone,
     String(navigator.hardwareConcurrency ?? ''),
   ].join('|');
@@ -156,6 +156,10 @@ const TestaFaktura = () => {
   const [gateOpen, setGateOpen] = useState(false);
   const [gateEmail, setGateEmail] = useState('');
   const [gateSubmitting, setGateSubmitting] = useState(false);
+  const [quoteName, setQuoteName] = useState('');
+  const [quoteCompany, setQuoteCompany] = useState('');
+  const [quoteEmail, setQuoteEmail] = useState('');
+  const [quoteState, setQuoteState] = useState('idle'); // idle | submitting | sent
 
   // Token + bypass-setup vid mount
   React.useEffect(() => {
@@ -283,6 +287,28 @@ const TestaFaktura = () => {
     setGateSubmitting(false);
   };
 
+  const submitQuoteLead = async (e) => {
+    e.preventDefault();
+    if (!quoteEmail || quoteState === 'submitting') return;
+    setQuoteState('submitting');
+    try {
+      await fetch('/api/quote-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contactEmail:   quoteEmail.trim().toLowerCase(),
+          contactName:    quoteName.trim() || undefined,
+          contactCompany: quoteCompany.trim() || undefined,
+          extractedData:  result?.extracted,
+          categorized:    result?.categorized,
+        }),
+      });
+    } catch {
+      // Non-fatal — vi visar ändå "sent" för att inte frustrera kunden
+    }
+    setQuoteState('sent');
+  };
+
   const reset = () => {
     setFile(null);
     setResult(null);
@@ -297,6 +323,10 @@ const TestaFaktura = () => {
     setGateOpen(false);
     setGateEmail('');
     setGateSubmitting(false);
+    setQuoteName('');
+    setQuoteCompany('');
+    setQuoteEmail('');
+    setQuoteState('idle');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -616,6 +646,48 @@ const TestaFaktura = () => {
               <NoSwitchBlock>
                 <strong>Kräver offert — volymdata behövs.</strong>
                 <p>{result.recommendation.reasoning}</p>
+                <QuoteLeadForm onSubmit={submitQuoteLead}>
+                  {quoteState === 'sent' ? (
+                    <div className="qlf-sent">
+                      <Icon name="check" size={16} stroke={2.5} />
+                      Klart! Arvo initierar offertprocessen — du hör av dig inom 1–2 arbetsdagar.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="qlf-fields">
+                        <input
+                          type="text"
+                          placeholder="Ditt namn"
+                          value={quoteName}
+                          onChange={(e) => setQuoteName(e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Företag"
+                          value={quoteCompany}
+                          onChange={(e) => setQuoteCompany(e.target.value)}
+                        />
+                        <input
+                          className="qlf-full"
+                          type="email"
+                          placeholder="Din e-post (dit skickar vi offertsammanställningen)"
+                          required
+                          value={quoteEmail}
+                          onChange={(e) => setQuoteEmail(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        $variant="gradient"
+                        $size="sm"
+                        disabled={quoteState === 'submitting'}
+                        style={{ width: '100%', justifyContent: 'center' }}
+                      >
+                        {quoteState === 'submitting' ? 'Startar...' : 'Starta offertprocessen →'}
+                      </Button>
+                    </>
+                  )}
+                </QuoteLeadForm>
               </NoSwitchBlock>
             ) : isOptimize ? (
               <>

@@ -416,6 +416,48 @@ export const NoSwitchBlock = styled.div`
   }
 `;
 
+export const QuoteLeadForm = styled.form`
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid ${({ theme }) => theme.color.borderStrong};
+
+  .qlf-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+    @media (max-width: 480px) { grid-template-columns: 1fr; }
+  }
+  .qlf-full { grid-column: 1 / -1; }
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 13px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    font-size: 14px;
+    color: ${({ theme }) => theme.color.ink};
+    background: ${({ theme }) => theme.color.surface};
+    outline: none;
+    &:focus { border-color: ${({ theme }) => theme.color.accent}; }
+    &::placeholder { color: ${({ theme }) => theme.color.muted}; }
+  }
+
+  .qlf-sent {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #ECFDF5;
+    border: 1px solid #6EE7B7;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    font-size: 14px;
+    color: #065F46;
+    font-weight: 500;
+  }
+`;
+
 export const MonitoringBlock = styled.div`
   padding: 24px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
