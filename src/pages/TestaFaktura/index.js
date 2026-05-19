@@ -293,7 +293,11 @@ const TestaFaktura = () => {
     e.preventDefault();
     if (!quoteEmail || !quoteMandateAccepted || quoteState !== 'idle') return;
     setQuoteState('sent');
-    resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      if (!resultRef.current) return;
+      const top = resultRef.current.getBoundingClientRect().top + window.pageYOffset - 16;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }, 50);
     fetch('/api/quote-request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
