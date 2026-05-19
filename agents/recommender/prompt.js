@@ -138,24 +138,26 @@ Rekommendation:
 
 OBS TIER-OVERKILL-REGELN: När ett litet bolag (micro/small) betalar för Enterprise- eller E3/E5-tier av programvara, eller premium-fiber avsedd för datacenter, eller andra produkter konstruerade för storföretag — ska du ALLTID förklara i reasoning VARFÖR det är overkill för deras storlek, inte bara att de betalar X % mer. Nämn konkret vilken tier eller produkt som är rätt nivå och varför den täcker deras faktiska behov.
 
-Exempel 8: Redundant tjänst — kunden betalar dubbelt hos SAMMA leverantör
+Exempel 8: Redundant TILLÄGGSMODUL — kunden betalar dubbelt hos SAMMA leverantör
+OBS: optimize gäller ENBART fristående tilläggsmoduler (subType: efaktura, kivra, utskick).
+     Om subType är 'affärssystem' är det HUVUDLICENSEN — optimize är ALDRIG rätt där.
 Customer: e-handel, 8 anställda
 Categorized invoice:
   category: faktura-tjanst
-  subType: affärssystem
+  subType: efaktura          ← tilläggsmodul, INTE huvudlicensen (affärssystem)
   normalizedSupplier: Fortnox AB
-  currentAnnualCost: 17 400 kr
+  currentAnnualCost: 4 200 kr
 Branschindex: Inte relevant — detta är INTE ett överprisfall utan ett redundansfall.
 Rekommendation:
   recommendationType: 'optimize'
   shouldSwitch: false
   suggestedSupplier: null
   suggestedAnnualCost: null
-  optimizationSaving: 17400
-  savingPerYear: 17400
+  optimizationSaving: 4200
+  savingPerYear: 4200
   overpaymentPercent: 0
   confidence: "high"
-  reasoning: "Ni betalar 17 400 kr/år för en separat fakturatjänst — men Fortnox e-faktura är redan inbyggd i er licens utan extra kostnad. Det är samma leverantör ni redan betalar för. Byt inte system, aktivera rätt modul."
+  reasoning: "Ni betalar separat för Fortnox e-faktura-modulen — men funktionen är redan inbyggd i er befintliga Fortnox-licens. Aktivera modulen direkt i era kontoinställningar, avveckla det separata abonnemanget."
   switchSteps: []
 
 Exempel 7: Fel maskintyp + högt klickpris — Managed Print
@@ -237,12 +239,19 @@ REGLER FÖR REASONING
 - **Skrivarleasing / Managed Print:** Nämn ALLTID (1) maskintypen — säg specifikt att det är en A3 Enterprise-maskin byggd för tryckerier/advokatbyråer, inte för kundens bransch, (2) klickpriset i kr/sida och jämför med marknadssnittet 0,06–0,09 kr/sida S/V. Klickpriset är nästan alltid den största kostnadsdrivaren och MÅSTE kvantifieras i reasoning. Hänvisa till alternativet som "Arvo-verifierad partner" — namnge ALDRIG specifika märken (Kyocera, Canon, Konica Minolta, HP osv.) i reasoning.
 
 OPTIMIZE-REGELN (redundanta tjänster)
-Om kunden betalar för en tjänst som REDAN INGÅR i en annan licens eller produkt de har hos SAMMA leverantör (t.ex. Fortnox e-faktura ingår i Fortnox-licensen, Microsoft Planner ingår i M365):
+Om kunden betalar för en tjänst som REDAN INGÅR i en annan licens eller produkt de har hos SAMMA leverantör (t.ex. Fortnox e-faktura-modul ingår i Fortnox-licensen, Microsoft Planner ingår i M365):
 - Sätt recommendationType: 'optimize'
 - Sätt shouldSwitch: false (inget leverantörsbyte)
 - Sätt optimizationSaving = kostnaden för den redundanta tjänsten per år (det belopp kunden slösar bort)
 - Sätt savingPerYear = optimizationSaving
 - I reasoning: förklara EXAKT vad som är redundant och vilken modul kunden ska aktivera istället.
+
+OPTIMIZE-FÖRBUDET — OBLIGATORISKT:
+Om subType är 'affärssystem' är fakturan ett FULLSTÄNDIGT AFFÄRSSYSTEM (Fortnox, Visma, Bokio m.fl.) — inte en fristående tilläggsmodul.
+Ett affärssystem kan ALDRIG vara "redundant" — det är kundens primära bokföringsprogram.
+Använd ALDRIG recommendationType: 'optimize' när subType = 'affärssystem'.
+Tillåtna subTypes för optimize: 'efaktura', 'kivra', 'utskick'.
+
 I alla andra fall: recommendationType = 'switch' (shouldSwitch: true) eller 'no_action' (shouldSwitch: false).
 
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR

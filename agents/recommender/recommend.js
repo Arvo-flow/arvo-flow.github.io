@@ -253,6 +253,25 @@ export async function recommend(input, opts = {}) {
 
   const result = toolUse.input;
 
+  // Accounting-system guard: 'optimize' is never valid when subType is
+  // 'affärssystem'. The main accounting license (Fortnox, Visma…) IS the
+  // primary product — classifying it as a redundant add-on is logically wrong.
+  // The few-shot example for Fortnox e-faktura uses subType 'efaktura'; if the
+  // model pattern-matches on supplier name alone and fires optimize for the main
+  // license, we strip it here before any financial overrides run.
+  if (
+    result.recommendationType === 'optimize' &&
+    input.categorized.subType === 'affärssystem'
+  ) {
+    console.warn(
+      `[Recommender] Stripped optimize route: subType=affärssystem (${input.categorized.normalizedSupplier}). ` +
+      'Main accounting license cannot be classified as redundant add-on.'
+    );
+    result.recommendationType = 'no_action';
+    result.optimizationSaving = null;
+    result.shouldSwitch = false;
+  }
+
   // Belt-and-suspenders: enforce license-pending guard at the code level too,
   // not just trust the model. If the category is license-pending and the model
   // somehow returned a suggested supplier, strip it and force VIP queue.
