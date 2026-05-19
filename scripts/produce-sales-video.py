@@ -1,24 +1,30 @@
 #!/usr/bin/env python3
 """
-Arvo Flow — Apple-style Sales Video (no voice, text + music only)
-~2:20 total, black background, teal accents, dramatic music build.
+Arvo Flow — Premium Sales Video, Apple-style, no voice.
+~1:45 total. Fast cuts. Playfair Display + Inter. Dark bg.
 
 Output: /tmp/arvo-sales.mp4
 """
 
-import subprocess, os, math
+import subprocess, os
 
-SRC        = '/tmp/arvo-demo.webm'
-OUT        = '/tmp/arvo-sales.mp4'
-TMP        = '/tmp/arvo_sales_build'
-FONT_BOLD  = '/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf'
-FONT_LIGHT = '/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf'
+SRC   = '/tmp/arvo-demo-switch.webm'
+OUT   = '/tmp/arvo-sales.mp4'
+TMP   = '/tmp/arvo_sales_build'
 
-W, H   = 1280, 720
-FPS    = 30
-DARK   = '0x0A1210'   # near-black brand bg
-TEAL   = '0x5DD6CA'
-WHITE  = 'white'
+# Brand fonts (downloaded from Google Fonts)
+PLAYFAIR_BOLD   = '/tmp/fonts/Playfair-Bold.ttf'
+PLAYFAIR_MED    = '/tmp/fonts/Playfair-Medium.ttf'
+INTER_REG       = '/tmp/fonts/Inter-Regular.ttf'
+INTER_MED       = '/tmp/fonts/Inter-Medium.ttf'
+INTER_SEMI      = '/tmp/fonts/Inter-SemiBold.ttf'
+
+W, H  = 1280, 720
+FPS   = 30
+BG    = '0x0E1A17'   # brand ink — exact match to theme.color.ink
+TEAL  = '0x5DD6CA'
+TEAL2 = '0x1B7A6E'
+WHITE = 'white'
 
 os.makedirs(TMP, exist_ok=True)
 
@@ -29,342 +35,341 @@ def run(cmd, label=''):
         print('STDERR:', r.stderr[-800:])
         raise RuntimeError(f'ffmpeg failed: {label}')
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── Text helper ───────────────────────────────────────────────────────────────
 
-def esc(text):
-    return text.replace("'", "’").replace(':', r'\:').replace(',', r'\,')
+def esc(t):
+    return t.replace("'", "’").replace(':', r'\:').replace(',', r'\,')
 
-def dt(text, font, size, color, x, y, t0, dur, fadein=0.4, fadeout=0.4, shadow=False):
-    t1 = t0 + fadein
-    t2 = t0 + dur - fadeout
+def dt(text, font, size, color, x, y, t0, dur, fi=0.3, fo=0.3):
+    """drawtext with smooth fade."""
+    t1 = t0 + fi
+    t2 = t0 + dur - fo
     t3 = t0 + dur
     alpha = (
         f"if(lt(t,{t0:.3f}),0,"
-        f"if(lt(t,{t1:.3f}),(t-{t0:.3f})/{fadein:.3f},"
+        f"if(lt(t,{t1:.3f}),(t-{t0:.3f})/{fi:.3f},"
         f"if(lt(t,{t2:.3f}),1,"
-        f"if(lt(t,{t3:.3f}),({t3:.3f}-t)/{fadeout:.3f},0))))"
+        f"if(lt(t,{t3:.3f}),({t3:.3f}-t)/{fo:.3f},0))))"
     )
-    shadow_str = ':shadowcolor=black@0.6:shadowx=2:shadowy=2' if shadow else ''
     return (
         f"drawtext=fontfile='{font}':text='{esc(text)}'"
         f":fontsize={size}:fontcolor={color}"
         f":x={x}:y={y}"
         f":alpha='{alpha}':enable='between(t,{t0:.3f},{t3:.3f})'"
-        f"{shadow_str}"
     )
 
-def cx():   return '(w-text_w)/2'
-def cy():   return '(h-text_h)/2'
-def cy_up(offset=0):  return f'(h-text_h)/2-{offset}'
-def cy_dn(offset=0):  return f'(h-text_h)/2+{offset}'
-
-def teal_line(t0, dur, y_expr, w=200):
-    """Teal accent underline."""
-    fade_in, fade_out = 0.3, 0.3
-    t1 = t0 + fade_in
-    t2 = t0 + dur - fade_out
-    t3 = t0 + dur
+def line(t0, dur, y_px, w_px=180, fi=0.2, fo=0.2):
+    """Teal accent horizontal line."""
+    t1 = t0 + fi; t2 = t0 + dur - fo; t3 = t0 + dur
     alpha = (
         f"if(lt(t,{t0:.3f}),0,"
-        f"if(lt(t,{t1:.3f}),(t-{t0:.3f})/{fade_in:.2f},"
+        f"if(lt(t,{t1:.3f}),(t-{t0:.3f})/{fi:.3f},"
         f"if(lt(t,{t2:.3f}),1,"
-        f"if(lt(t,{t3:.3f}),({t3:.3f}-t)/{fade_out:.2f},0))))"
+        f"if(lt(t,{t3:.3f}),({t3:.3f}-t)/{fo:.3f},0))))"
     )
     return (
-        f"drawbox=x=(w-{w})/2:y={y_expr}:w={w}:h=3:"
+        f"drawbox=x=(w-{w_px})/2:y={y_px}:w={w_px}:h=3:"
         f"color=0x5DD6CA@1.0:t=fill:"
         f"enable='between(t,{t0:.3f},{t3:.3f})'"
     )
 
-def make_slate(filename, duration, vf_filters):
-    filters = ','.join(vf_filters)
+def cx(): return '(w-text_w)/2'
+def cy(): return '(h-text_h)/2'
+def above(n): return f'(h-text_h)/2-{n}'
+def below(n): return f'(h-text_h)/2+{n}'
+
+def slate(fname, dur, filters):
+    vf = ','.join(filters)
     run(
         f"ffmpeg -y "
-        f"-f lavfi -i \"color=c={DARK}:size={W}x{H}:rate={FPS}\" "
-        f"-vf \"{filters}\" "
-        f"-t {duration} -c:v libx264 -preset fast -crf 16 {filename}",
-        f'slate {os.path.basename(filename)}'
+        f"-f lavfi -i \"color=c={BG}:size={W}x{H}:rate={FPS}\" "
+        f"-vf \"{vf}\" "
+        f"-t {dur} -c:v libx264 -preset fast -crf 15 {fname}",
+        f'slate {os.path.basename(fname)}'
+    )
+
+def demo_clip(fname, t_start, dur, extra_vf=''):
+    """Cut a segment from the demo recording."""
+    vf = f"scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color={BG}"
+    if extra_vf:
+        vf += ',' + extra_vf
+    run(
+        f"ffmpeg -y -ss {t_start} -t {dur} -i {SRC} "
+        f"-vf \"{vf}\" "
+        f"-c:v libx264 -preset fast -crf 15 -an {fname}",
+        f'demo {os.path.basename(fname)} (t={t_start}–{t_start+dur})'
     )
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# MUSIC — Three-act dynamic score
-# Act 1 (0–30s):   Sparse, low, unsettling. Minor drone + distant pulses.
-# Act 2 (30–90s):  Build. Arpeggio in Am adds energy.
-# Act 3 (90–140s): Resolution. Major lift, warmth, confident tone.
+# MUSIC — 3-act dynamic score, 110s
 # ═══════════════════════════════════════════════════════════════════════════════
-TOTAL_DUR = 142.0
-print('\n[1/9] Genererar musik (3-akt)…')
+print('\n[MUSIK] Genererar 3-akt score…')
 
-act1_len = 30
-act2_len = 60
-act3_len = 52  # 30+60+52 = 142
-
-# Act 1 — dark sparse drone
-act1_filter = (
-    "aevalsrc="
-    "0.18*sin(2*PI*110*t)*exp(-0.008*t)"   # A2 sub drone
-    "+0.12*sin(2*PI*220*t)*exp(-0.012*t)"  # A3
-    "+0.06*sin(2*PI*165*t)*exp(-0.010*t)"  # E3 minor colour
-    "+0.04*sin(2*PI*277*t)*exp(-0.018*t)"  # C#4 tension
-    "+0.03*sin(2*PI*440*t)*exp(-0.025*t)"  # ghost A4
-    ":s=44100:c=stereo"
-)
+# Act 1 (0–35s): Sparse, dark, minor. Establishes tension.
 run(
-    f"ffmpeg -y "
-    f"-f lavfi -i \"{act1_filter}\" "
-    f"-af \"aecho=0.7:0.5:400:0.5,aecho=0.6:0.3:900:0.3,"
-    f"afade=t=in:st=0:d=3,afade=t=out:st={act1_len-4}:d=4,"
-    f"highpass=f=55,lowpass=f=7000,volume=0.55\" "
-    f"-t {act1_len} {TMP}/act1.wav",
+    "ffmpeg -y -f lavfi "
+    "-i \"aevalsrc="
+    "0.20*sin(2*PI*110*t)*exp(-0.006*t)"
+    "+0.13*sin(2*PI*220*t)*exp(-0.009*t)"
+    "+0.08*sin(2*PI*165*t)*exp(-0.008*t)"
+    "+0.05*sin(2*PI*277*t)*exp(-0.014*t)"
+    ":s=44100:c=stereo\" "
+    "-af \"aecho=0.72:0.55:500:0.55,"
+    "aecho=0.5:0.3:1100:0.3,"
+    "afade=t=in:st=0:d=2.5,"
+    "afade=t=out:st=31:d=4,"
+    "highpass=f=50,volume=0.58\" "
+    f"-t 35 {TMP}/m1.wav",
     'musik akt 1'
 )
 
-# Act 2 — building arpeggio in Am
-arp_notes = [220, 261, 330, 440, 330, 261]  # Am arpeggio
-
-def sine_pulse(freq, step, n, total_n, amp=0.2, gate_duty=0.5):
-    period = 1.0 / (n / 2.0)  # 2-beat period
-    phase  = step * period
-    envelope = f"(between(mod(t,{period:.4f}),{phase:.4f},{phase + period*gate_duty:.4f})?1:0)"
-    return f"{amp}*sin(2*PI*{freq}*t)*{envelope}"
-
-# Simpler arpeggio via repeating sine bursts
+# Act 2 (0–40s): Rhythmic Am arpeggio builds energy.
 run(
-    f"ffmpeg -y "
-    f"-f lavfi -i \"aevalsrc="
-    f"0.22*sin(2*PI*220*t)"
-    f"+0.18*sin(2*PI*330*t)"
-    f"+0.15*sin(2*PI*440*t)"
-    f"+0.10*sin(2*PI*261*t)"
-    f"+0.08*sin(2*PI*659*t)"
-    f"+0.05*sin(2*PI*880*t)"
-    f"+0.14*sin(2*PI*110*t)"
-    f":s=44100:c=stereo\" "
-    f"-af \"aecho=0.65:0.45:250:0.45,aecho=0.5:0.3:600:0.25,"
-    f"afade=t=in:st=0:d=5,afade=t=out:st={act2_len-5}:d=5,"
-    f"highpass=f=60,lowpass=f=9000,"
-    f"volume=0.72\" "
-    f"-t {act2_len} {TMP}/act2.wav",
+    "ffmpeg -y -f lavfi "
+    "-i \"aevalsrc="
+    "0.22*sin(2*PI*220*t)*exp(-0.004*t)"
+    "+0.17*sin(2*PI*330*t)*exp(-0.005*t)"
+    "+0.14*sin(2*PI*440*t)*exp(-0.007*t)"
+    "+0.10*sin(2*PI*261*t)*exp(-0.006*t)"
+    "+0.07*sin(2*PI*659*t)*exp(-0.010*t)"
+    "+0.12*sin(2*PI*110*t)*exp(-0.003*t)"
+    ":s=44100:c=stereo\" "
+    "-af \"aecho=0.60:0.40:220:0.40,"
+    "aecho=0.45:0.25:550:0.25,"
+    "afade=t=in:st=0:d=4,"
+    "afade=t=out:st=36:d=4,"
+    "highpass=f=55,volume=0.70\" "
+    f"-t 40 {TMP}/m2.wav",
     'musik akt 2'
 )
 
-# Act 3 — hopeful resolution (A major lift)
+# Act 3 (0–40s): A-major lift — resolution, warmth, confidence.
 run(
-    f"ffmpeg -y "
-    f"-f lavfi -i \"aevalsrc="
-    f"0.25*sin(2*PI*220*t)*exp(-0.003*t)"   # A2
-    f"+0.20*sin(2*PI*330*t)*exp(-0.004*t)"  # E3
-    f"+0.18*sin(2*PI*440*t)*exp(-0.005*t)"  # A3
-    f"+0.14*sin(2*PI*554*t)*exp(-0.006*t)"  # C#4 — major!
-    f"+0.12*sin(2*PI*659*t)*exp(-0.008*t)"  # E4
-    f"+0.08*sin(2*PI*880*t)*exp(-0.010*t)"  # A4
-    f"+0.05*sin(2*PI*1109*t)*exp(-0.012*t)" # C#5 shimmer
-    f":s=44100:c=stereo\" "
-    f"-af \"aecho=0.6:0.4:280:0.4,aecho=0.45:0.25:700:0.2,"
-    f"afade=t=in:st=0:d=6,"
-    f"afade=t=out:st={act3_len-6}:d=6,"
-    f"highpass=f=65,lowpass=f=10000,"
-    f"volume=0.80\" "
-    f"-t {act3_len} {TMP}/act3.wav",
+    "ffmpeg -y -f lavfi "
+    "-i \"aevalsrc="
+    "0.24*sin(2*PI*220*t)*exp(-0.003*t)"
+    "+0.19*sin(2*PI*330*t)*exp(-0.004*t)"
+    "+0.17*sin(2*PI*440*t)*exp(-0.005*t)"
+    "+0.13*sin(2*PI*554*t)*exp(-0.006*t)"
+    "+0.10*sin(2*PI*659*t)*exp(-0.008*t)"
+    "+0.07*sin(2*PI*880*t)*exp(-0.011*t)"
+    "+0.04*sin(2*PI*1109*t)*exp(-0.014*t)"
+    ":s=44100:c=stereo\" "
+    "-af \"aecho=0.58:0.38:260:0.38,"
+    "aecho=0.42:0.22:650:0.20,"
+    "afade=t=in:st=0:d=5,"
+    "afade=t=out:st=35:d=5,"
+    "highpass=f=60,volume=0.78\" "
+    f"-t 40 {TMP}/m3.wav",
     'musik akt 3'
 )
 
-# Concatenate music acts
+# Concat music (35 + 40 + 40 = 115s total)
 run(
     f"ffmpeg -y "
-    f"-i {TMP}/act1.wav -i {TMP}/act2.wav -i {TMP}/act3.wav "
+    f"-i {TMP}/m1.wav -i {TMP}/m2.wav -i {TMP}/m3.wav "
     f"-filter_complex \"[0:a][1:a][2:a]concat=n=3:v=0:a=1[aout]\" "
     f"-map '[aout]' -c:a pcm_s16le {TMP}/music.wav",
     'musik concat'
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# VIDEO SECTIONS
-# ─────────────────────────────────────────────────────────────────────────────
-# S01  0.0 – 6.0s   "Du betalar överpris."                           6s
-# S02  6.0 – 16.0s  Problem: fakturor staplas / branscher            10s
-# S03  16.0 – 26.0s "Priserna är dolda."                             10s
-# S04  26.0 – 36.0s Solution reveal: "Arvo Flow."                    10s
-# S05  36.0 – 56.0s Hur det funkar — 3 steg                          20s
-# S06  56.0 – 86.0s DEMO CLIP (30s ur inspelade demot)               30s
-# S07  86.0 – 106.0s Siffror: "156 000 kr / år."                    20s
-# S08  106.0 – 124.0s "Noll kronor i förskott." / avgiftsmodell      18s
-# S09  124.0 – 142.0s CTA + URL                                      18s
-# ─────────────────────────────────────────────────────────────────────────────
+# SECTION DEFINITIONS
+# Each entry: (type, filename, duration, *args)
+#   type='s'  → slate (slate fn args)
+#   type='d'  → demo clip (t_start, dur, [extra_vf])
+# ═══════════════════════════════════════════════════════════════════════════════
 
-# ── S01: Hook ──────────────────────────────────────────────────────────────────
-print('[2/9] S01 — Hook…')
-make_slate(f'{TMP}/s01.mp4', 6.0, [
-    dt('Du betalar överpris.', FONT_BOLD, 56, WHITE, cx(), cy(), 0.5, 5.0, 0.6, 0.5),
+print('\n[SLATES] Bygger sektioner…')
+
+# ── ACT 1: PROBLEM ─────────────────────────────────────────────────────────────
+
+# S01 — "Du betalar överpris."  3s
+slate(f'{TMP}/s01.mp4', 3.0, [
+    dt('Du betalar överpris.', PLAYFAIR_BOLD, 80, WHITE, cx(), cy(), 0.4, 2.2, 0.5, 0.4),
 ])
 
-# ── S02: Problem — kategorier ──────────────────────────────────────────────────
-print('[3/9] S02 — Problem…')
-make_slate(f'{TMP}/s02.mp4', 10.0, [
-    dt('Bredband.',              FONT_LIGHT, 40, f'0x5DD6CA', cx(), '(h-200)/2',       0.4, 9.0, 0.4, 0.5),
-    dt('Mobilabonnemang.',       FONT_LIGHT, 40, f'0x5DD6CA', cx(), '(h-200)/2+68',    0.9, 8.5, 0.4, 0.5),
-    dt('Skrivarleasing.',        FONT_LIGHT, 40, f'0x5DD6CA', cx(), '(h-200)/2+136',   1.4, 8.0, 0.4, 0.5),
-    dt('Mjukvaruavtal.',         FONT_LIGHT, 40, f'0x5DD6CA', cx(), '(h-200)/2+204',   1.9, 7.5, 0.4, 0.5),
-    dt('Du betalar för mycket.', FONT_BOLD,  36, WHITE,        cx(), '(h-200)/2+296',   3.5, 5.5, 0.5, 0.5),
+# S02 — category cascade  4.5s
+slate(f'{TMP}/s02.mp4', 4.5, [
+    dt('Bredband.',          INTER_MED,  40, TEAL, cx(), above(80), 0.2, 4.0, 0.25, 0.3),
+    dt('Mobilabonnemang.',   INTER_MED,  40, TEAL, cx(), above(28), 0.6, 3.6, 0.25, 0.3),
+    dt('Skrivarleasing.',    INTER_MED,  40, TEAL, cx(), below(24), 1.0, 3.2, 0.25, 0.3),
+    dt('Mjukvaruavtal.',     INTER_MED,  40, TEAL, cx(), below(76), 1.4, 2.8, 0.25, 0.3),
 ])
 
-# ── S03: Insight ───────────────────────────────────────────────────────────────
-print('[4/9] S03 — Insight…')
-make_slate(f'{TMP}/s03.mp4', 10.0, [
-    dt('Priserna är dolda.',        FONT_BOLD,  52, WHITE,  cx(), cy_up(50), 0.5, 4.5, 0.5, 0.4),
-    dt('Marknaden är ogenomskinlig.', FONT_LIGHT, 30, f'white@0.7', cx(), cy_up(-20), 1.2, 3.8, 0.4, 0.4),
-    dt('Du har inte tid att jämföra.', FONT_LIGHT, 30, f'white@0.7', cx(), cy_up(-60), 2.0, 3.0, 0.4, 0.4),
-    dt('Tills nu.', FONT_BOLD, 44, f'0x5DD6CA', cx(), '(h-text_h)/2+120', 4.8, 4.5, 0.6, 0.4),
+# S03 — number stat  3s
+slate(f'{TMP}/s03.mp4', 3.0, [
+    dt('30–40 %', PLAYFAIR_BOLD, 100, WHITE, cx(), above(20), 0.3, 2.3, 0.4, 0.3),
+    dt('mer än nödvändigt.', INTER_REG, 26, f'white@0.65', cx(), below(60), 0.6, 2.0, 0.3, 0.3),
 ])
 
-# ── S04: Solution reveal ───────────────────────────────────────────────────────
-print('[5/9] S04 — Solution…')
-make_slate(f'{TMP}/s04.mp4', 10.0, [
-    dt('Arvo Flow.',                  FONT_BOLD,  80, WHITE,         cx(), cy_up(40),  0.6, 9.0, 0.8, 0.4),
-    dt('AI som analyserar dina fakturor.', FONT_LIGHT, 28, f'white@0.65', cx(), cy_up(-50), 1.6, 7.5, 0.5, 0.4),
-    teal_line(0.6, 9.0, '(h+60)/2', 240),
+# S04 — "Varje år."  2.5s
+slate(f'{TMP}/s04.mp4', 2.5, [
+    dt('Varje år.', PLAYFAIR_MED, 72, WHITE, cx(), cy(), 0.3, 1.8, 0.35, 0.3),
 ])
 
-# ── S05: Hur det funkar ───────────────────────────────────────────────────────
-print('[6/9] S05 — Steg…')
-make_slate(f'{TMP}/s05.mp4', 20.0, [
-    # Step 1
-    dt('1',                        FONT_BOLD,  80, f'0x5DD6CA@0.25', cx(), cy_up(20), 0.3, 6.0, 0.4, 0.4),
-    dt('Ladda upp en faktura.',    FONT_BOLD,  42, WHITE,            cx(), cy_up(20), 0.5, 5.5, 0.4, 0.4),
-    dt('PDF från vilken leverantör som helst.', FONT_LIGHT, 26, f'white@0.6', cx(), cy_up(-40), 1.0, 4.5, 0.4, 0.4),
-    # Step 2
-    dt('2',                        FONT_BOLD,  80, f'0x5DD6CA@0.25', cx(), cy_up(20), 7.0, 6.0, 0.4, 0.4),
-    dt('Arvo analyserar.',         FONT_BOLD,  42, WHITE,            cx(), cy_up(20), 7.2, 5.5, 0.4, 0.4),
-    dt('AI extraherar vad du faktiskt betalar.', FONT_LIGHT, 26, f'white@0.6', cx(), cy_up(-40), 7.7, 4.5, 0.4, 0.4),
-    # Step 3
-    dt('3',                        FONT_BOLD,  80, f'0x5DD6CA@0.25', cx(), cy_up(20), 14.0, 5.5, 0.4, 0.4),
-    dt('Du sparar.',               FONT_BOLD,  42, WHITE,            cx(), cy_up(20), 14.2, 5.2, 0.4, 0.4),
-    dt('Vi förhandlar. Du tar pengarna.', FONT_LIGHT, 26, f'white@0.6', cx(), cy_up(-40), 14.7, 4.5, 0.4, 0.4),
+# D01 — Landing page  7s (t=0–7)
+demo_clip(f'{TMP}/d01.mp4', 0.0, 7.0)
+
+# S05 — "Priserna är dolda."  2.5s
+slate(f'{TMP}/s05.mp4', 2.5, [
+    dt('Priserna är dolda.', PLAYFAIR_BOLD, 72, WHITE, cx(), cy(), 0.3, 1.8, 0.4, 0.3),
 ])
 
-# ── S06: Demo clip — cut from recorded demo (14s–44s) ────────────────────────
-print('[7/9] S06 — Demo-klipp…')
-# Use 30s of the demo: from t=9s (testa-faktura loads) to t=39s
-demo_start = 9.0
-demo_len   = 30.0
-demo_out   = f'{TMP}/s06.mp4'
-
-# Scale demo to 1280×720, add subtle dark vignette + overlays
-overlays_demo = [
-    dt('Testa med en riktig faktura.',  FONT_BOLD,  32, WHITE,        cx(), f'h-{160}', 1.0, 5.0,  0.4, 0.4, True),
-    dt('Analysen tar under 10 sekunder.', FONT_LIGHT, 24, f'white@0.7', cx(), f'h-{120}', 1.5, 4.5, 0.4, 0.4),
-    dt('156 000 kr / år.',             FONT_BOLD,  44, f'0x5DD6CA',  cx(), f'h-{155}', 16.0, 7.0, 0.5, 0.5, True),
-    dt('Arvo hittar besparingen åt dig.', FONT_LIGHT, 24, f'white@0.7', cx(), f'h-{108}', 16.5, 6.0, 0.4, 0.4),
-]
-demo_vf = ','.join(overlays_demo)
-
-run(
-    f"ffmpeg -y -ss {demo_start} -t {demo_len} -i {SRC} "
-    f"-vf \"scale={W}:{H}:force_original_aspect_ratio=decrease,"
-    f"pad={W}:{H}:(ow-iw)/2:(oh-ih)/2:color={DARK},"
-    f"{demo_vf}\" "
-    f"-c:v libx264 -preset fast -crf 16 -an {demo_out}",
-    'demo-klipp'
-)
-
-# ── S07: Siffror ───────────────────────────────────────────────────────────────
-print('[8/9] S07 — Siffror…')
-make_slate(f'{TMP}/s07.mp4', 20.0, [
-    dt('156 000 kr / år.',   FONT_BOLD,  84, WHITE,         cx(), cy_up(60), 0.8, 8.5, 0.7, 0.5),
-    dt('Skrivarleasing — ett verkligt kundexempel.', FONT_LIGHT, 22, f'white@0.55', cx(), cy_up(-40), 1.5, 7.5, 0.4, 0.4),
-    teal_line(0.8, 8.5, '(h+80)/2', 300),
-    # Second stat
-    dt('30–40 %',  FONT_BOLD,  72, WHITE, cx(), cy_up(60), 10.5, 8.5, 0.6, 0.5),
-    dt('mer än nödvändigt betalas av svenska SMB-företag varje år.', FONT_LIGHT, 22, f'white@0.6', cx(), cy_up(-40), 11.2, 7.5, 0.4, 0.4),
-    teal_line(10.5, 8.5, '(h+80)/2', 200),
+# S06 — "Du vet det inte."  2.5s
+slate(f'{TMP}/s06.mp4', 2.5, [
+    dt('Du vet det inte.', INTER_MED, 48, f'white@0.80', cx(), cy(), 0.3, 1.8, 0.35, 0.3),
 ])
 
-# ── S08: Avgiftsmodell ─────────────────────────────────────────────────────────
-print('[8b/9] S08 — Avgiftsmodell…')
-make_slate(f'{TMP}/s08.mp4', 18.0, [
-    dt('Noll kronor i förskott.',    FONT_BOLD,  60, WHITE,  cx(), cy_up(80), 0.6, 9.5, 0.7, 0.5),
-    dt('Arvo tar 20 % av realiserad besparing.', FONT_LIGHT, 28, f'white@0.65', cx(), cy_up(-10), 1.4, 8.5, 0.4, 0.4),
-    dt('Ingen besparing — ingen kostnad.',       FONT_LIGHT, 28, f'white@0.65', cx(), cy_up(-55), 2.2, 7.5, 0.4, 0.4),
-    teal_line(0.6, 9.5, '(h+100)/2', 260),
-    dt('Vi är på din sida.',         FONT_BOLD,  36, f'0x5DD6CA',  cx(), cy_up(-120), 10.5, 7.0, 0.6, 0.5),
+# D02 — Navigate + upload  8s (t=7–15)
+demo_clip(f'{TMP}/d02.mp4', 7.0, 8.0)
+
+# ── ACT 2: REVEAL ──────────────────────────────────────────────────────────────
+
+# S07 — "Arvo Flow." brand reveal  4s
+slate(f'{TMP}/s07.mp4', 4.0, [
+    dt('Arvo Flow.', PLAYFAIR_BOLD, 96, WHITE, cx(), above(18), 0.5, 3.1, 0.6, 0.4),
+    line(0.8, 2.5, H//2 + 48, 220),
 ])
 
-# ── S09: CTA ───────────────────────────────────────────────────────────────────
-print('[9/9] S09 — CTA…')
-make_slate(f'{TMP}/s09.mp4', 18.0, [
-    dt('Ladda upp din första faktura.',  FONT_BOLD,  52, WHITE,       cx(), cy_up(50), 0.7, 12.0, 0.7, 0.5),
-    dt('Gratis. Ingen registrering. Direkt svar.', FONT_LIGHT, 26, f'white@0.65', cx(), cy_up(-20), 1.4, 11.0, 0.4, 0.4),
-    teal_line(0.7, 12.0, '(h+70)/2', 220),
-    dt('arvo-flow.github.io',           FONT_LIGHT, 28, f'0x5DD6CA', cx(), cy_up(-90), 3.5, 10.0, 0.5, 0.5),
+# S08 — tagline  2.5s
+slate(f'{TMP}/s08.mp4', 2.5, [
+    dt('AI-driven besparingsmotor.', INTER_MED, 32, f'white@0.80', cx(), cy(), 0.3, 1.8, 0.3, 0.3),
+])
+
+# D03 — Analysera + spinner + results  9s (t=19–28)
+demo_clip(f'{TMP}/d03.mp4', 19.0, 9.0)
+
+# S09 — "Hittade det."  2s
+slate(f'{TMP}/s09.mp4', 2.0, [
+    dt('Hittade det.', PLAYFAIR_MED, 68, TEAL, cx(), cy(), 0.25, 1.5, 0.3, 0.25),
+])
+
+# D04 — SavingsBlock + PartnerBlock  7s (t=30–37)
+demo_clip(f'{TMP}/d04.mp4', 30.0, 7.0)
+
+# ── ACT 3: THE NUMBER ──────────────────────────────────────────────────────────
+
+# S10 — "+18 240 kr" HERO MOMENT  4s
+slate(f'{TMP}/s10.mp4', 4.0, [
+    dt('+18 240 kr', PLAYFAIR_BOLD, 108, WHITE, cx(), above(22), 0.4, 3.2, 0.5, 0.4),
+    dt('nettobesparing per år', INTER_SEMI, 22,
+       f'0x5DD6CA', cx(), below(64), 0.8, 2.6, 0.3, 0.3),
+    line(0.8, 2.8, H//2 + 46, 260),
+])
+
+# S11 — breakdown  3.5s
+slate(f'{TMP}/s11.mp4', 3.5, [
+    dt('81 600', INTER_SEMI, 52, f'white@0.45', '(w-text_w)/2-160', cy(), 0.3, 2.8, 0.35, 0.3),
+    dt('→', INTER_REG, 40, f'0x5DD6CA', cx(), cy(), 0.3, 2.8, 0.35, 0.3),
+    dt('58 800 kr/år', INTER_SEMI, 52, WHITE, '(w-text_w)/2+80', cy(), 0.3, 2.8, 0.35, 0.3),
+    dt('Telia → Hallon. Arvo sköter bytet.', INTER_REG, 20, f'white@0.55', cx(), below(56), 0.6, 2.4, 0.3, 0.3),
+])
+
+# D05 — PartnerBlock + Aktivera bytet modal  7s (t=37–44)
+demo_clip(f'{TMP}/d05.mp4', 37.0, 7.0)
+
+# S12 — confirmation  2.5s
+slate(f'{TMP}/s12.mp4', 2.5, [
+    dt('Bytet igångsatt.', PLAYFAIR_MED, 68, TEAL, cx(), cy(), 0.3, 1.8, 0.35, 0.3),
+])
+
+# ── ACT 4: MODEL ───────────────────────────────────────────────────────────────
+
+# S13 — "Noll kronor i förskott."  3s
+slate(f'{TMP}/s13.mp4', 3.0, [
+    dt('Noll kronor i förskott.', PLAYFAIR_BOLD, 72, WHITE, cx(), cy(), 0.35, 2.2, 0.4, 0.3),
+])
+
+# S14 — fee model  3s
+slate(f'{TMP}/s14.mp4', 3.0, [
+    dt('20 % av realiserad besparing.', INTER_MED, 36, f'white@0.82', cx(), above(22), 0.3, 2.2, 0.3, 0.3),
+    dt('Ingen besparing — ingen kostnad.', INTER_REG, 24, f'white@0.55', cx(), below(30), 0.6, 1.9, 0.3, 0.3),
+])
+
+# ── ACT 5: CTA ─────────────────────────────────────────────────────────────────
+
+# S15 — CTA  3.5s
+slate(f'{TMP}/s15.mp4', 3.5, [
+    dt('Ladda upp din faktura.', PLAYFAIR_BOLD, 76, WHITE, cx(), above(20), 0.4, 2.7, 0.45, 0.35),
+    dt('Gratis. Svar på 10 sekunder.', INTER_REG, 24, f'white@0.60', cx(), below(44), 0.7, 2.3, 0.3, 0.3),
+])
+
+# S16 — URL  6s
+slate(f'{TMP}/s16.mp4', 6.0, [
+    dt('arvo-flow.github.io', INTER_SEMI, 34, TEAL, cx(), cy(), 0.6, 4.8, 0.5, 0.5),
+    line(0.6, 4.8, H//2 + 30, 340),
 ])
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# CONCAT all sections with crossfades
+# CONCAT — xfade all sections
 # ═══════════════════════════════════════════════════════════════════════════════
-print('\n[concat] Konkatenerar med crossfades…')
+print('\n[CONCAT] Konkatenerar…')
 
 sections = [
-    (f'{TMP}/s01.mp4', 6.0),
-    (f'{TMP}/s02.mp4', 10.0),
-    (f'{TMP}/s03.mp4', 10.0),
-    (f'{TMP}/s04.mp4', 10.0),
-    (f'{TMP}/s05.mp4', 20.0),
-    (f'{TMP}/s06.mp4', 30.0),
-    (f'{TMP}/s07.mp4', 20.0),
-    (f'{TMP}/s08.mp4', 18.0),
-    (f'{TMP}/s09.mp4', 18.0),
+    (f'{TMP}/s01.mp4', 3.0),   # Du betalar överpris.
+    (f'{TMP}/s02.mp4', 4.5),   # Categories
+    (f'{TMP}/s03.mp4', 3.0),   # 30-40%
+    (f'{TMP}/s04.mp4', 2.5),   # Varje år.
+    (f'{TMP}/d01.mp4', 7.0),   # Demo: landing
+    (f'{TMP}/s05.mp4', 2.5),   # Priserna är dolda.
+    (f'{TMP}/s06.mp4', 2.5),   # Du vet det inte.
+    (f'{TMP}/d02.mp4', 8.0),   # Demo: upload
+    (f'{TMP}/s07.mp4', 4.0),   # Arvo Flow. reveal
+    (f'{TMP}/s08.mp4', 2.5),   # AI-driven besparingsmotor.
+    (f'{TMP}/d03.mp4', 9.0),   # Demo: Analysera → results
+    (f'{TMP}/s09.mp4', 2.0),   # Hittade det.
+    (f'{TMP}/d04.mp4', 7.0),   # Demo: SavingsBlock
+    (f'{TMP}/s10.mp4', 4.0),   # +18 240 kr HERO
+    (f'{TMP}/s11.mp4', 3.5),   # 81 600 → 58 800
+    (f'{TMP}/d05.mp4', 7.0),   # Demo: Aktivera bytet
+    (f'{TMP}/s12.mp4', 2.5),   # Bytet igångsatt.
+    (f'{TMP}/s13.mp4', 3.0),   # Noll kronor i förskott.
+    (f'{TMP}/s14.mp4', 3.0),   # 20% modell
+    (f'{TMP}/s15.mp4', 3.5),   # CTA
+    (f'{TMP}/s16.mp4', 6.0),   # URL
 ]
 
-xf  = 0.5  # crossfade duration
+XF  = 0.4  # crossfade duration
 n   = len(sections)
+total_dur = sum(d for _, d in sections) - XF * (n - 1)
 
 inputs = ' '.join(f'-i {p}' for p, _ in sections)
 
-# Build normalise chain
-norm_parts = []
-for i in range(n):
-    norm_parts.append(f'[{i}:v]fps={FPS},format=yuv420p,setpts=PTS-STARTPTS[v{i}]')
-
-# Build xfade chain
+norm  = ';'.join(f'[{i}:v]fps={FPS},format=yuv420p,setpts=PTS-STARTPTS[v{i}]' for i in range(n))
 xf_parts = []
-cur_offset = 0.0
-prev_out = 'v0'
+offset = 0.0
+prev = 'v0'
 for i in range(1, n):
-    cur_offset += sections[i-1][1] - xf
-    next_out = f'vx{i}'
-    xf_parts.append(
-        f'[{prev_out}][v{i}]xfade=transition=fade:duration={xf}:offset={cur_offset:.3f}[{next_out}]'
-    )
-    prev_out = next_out
+    offset += sections[i-1][1] - XF
+    nxt = f'vx{i}'
+    xf_parts.append(f'[{prev}][v{i}]xfade=transition=fade:duration={XF}:offset={offset:.3f}[{nxt}]')
+    prev = nxt
 
-total_video_dur = sum(d for _, d in sections) - xf * (n - 1)
-
-filter_complex = ';'.join(norm_parts + xf_parts)
+fc = norm + ';' + ';'.join(xf_parts)
 
 run(
     f"ffmpeg -y {inputs} "
-    f"-filter_complex \"{filter_complex}\" "
-    f"-map '[{prev_out}]' "
-    f"-c:v libx264 -preset fast -crf 16 {TMP}/video_noa.mp4",
+    f"-filter_complex \"{fc}\" "
+    f"-map '[{prev}]' "
+    f"-c:v libx264 -preset fast -crf 15 {TMP}/video_noa.mp4",
     'concat xfade'
 )
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# FINAL MIX — video + music
-# ═══════════════════════════════════════════════════════════════════════════════
-print('\n[final] Mixar musik + video…')
+# ── Final mix ─────────────────────────────────────────────────────────────────
+print('\n[FINAL] Mixar musik + video…')
 run(
     f"ffmpeg -y "
     f"-i {TMP}/video_noa.mp4 -i {TMP}/music.wav "
-    f"-filter_complex \"[1:a]afade=t=out:st={total_video_dur-5:.2f}:d=5,volume=0.82[a]\" "
+    f"-filter_complex \"[1:a]afade=t=out:st={total_dur-5:.2f}:d=5,volume=0.80[a]\" "
     f"-map 0:v -map '[a]' "
     f"-c:v copy -c:a aac -b:a 192k "
     f"-movflags +faststart "
-    f"-t {total_video_dur:.2f} "
+    f"-t {total_dur:.2f} "
     f"{OUT}",
     'final mix'
 )
 
 size = os.path.getsize(OUT) / 1024 / 1024
 print(f'\n✅  Klar: {OUT}  ({size:.1f} MB)')
-print(f'   Total längd: {total_video_dur:.1f}s ({total_video_dur/60:.1f} min)')
+print(f'   Längd: {total_dur:.1f}s = {int(total_dur//60)}:{int(total_dur%60):02d}')
