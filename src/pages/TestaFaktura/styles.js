@@ -947,20 +947,23 @@ export const ScoreDiag = styled.div`
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 0 14px 0;
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.surfaceAlt};
+  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  border-left: 3px solid var(--diag-accent, ${({ theme }) => theme.color.brand});
   margin-bottom: 16px;
 
   .diag-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
     flex-shrink: 0;
   }
   .diag-dot {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
     display: inline-block;
@@ -973,34 +976,34 @@ export const ScoreDiag = styled.div`
     color: ${({ theme }) => theme.color.mutedSoft};
   }
   .diag-num {
-    font-size: 15px;
+    font-size: 21px;
     font-weight: 800;
     letter-spacing: -0.03em;
     font-feature-settings: "tnum";
-    margin-left: 6px;
+    margin-left: 8px;
+    line-height: 1;
   }
   .diag-den {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     margin-left: 1px;
-    opacity: 0.65;
+    opacity: 0.6;
   }
   .diag-sep {
-    color: ${({ theme }) => theme.color.border};
-    margin: 0 4px;
-    font-size: 12px;
+    color: ${({ theme }) => theme.color.borderStrong};
+    margin: 0 2px;
+    font-size: 13px;
     flex-shrink: 0;
   }
   .diag-label {
     font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     flex-shrink: 0;
-    padding: 2px 8px;
+    padding: 3px 9px;
     border-radius: 20px;
-    border: 1px solid currentColor;
-    opacity: 0.9;
+    border: 1.5px solid currentColor;
   }
   .diag-text {
     font-size: 13px;

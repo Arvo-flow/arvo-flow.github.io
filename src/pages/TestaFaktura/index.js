@@ -756,7 +756,7 @@ const TestaFaktura = () => {
               </>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
-                <ScoreDiag>
+                <ScoreDiag style={{ '--diag-accent': diagC.dot }}>
                   <span className="diag-left">
                     <span className="diag-dot" style={{ background: diagC.dot }} />
                     <span className="diag-score-label">Arvo Score</span>
