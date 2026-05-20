@@ -129,7 +129,7 @@ Rekommendation:
   savingPerYear: 48600
   overpaymentPercent: 134
   confidence: "high"
-  reasoning: "M365 E5 är byggt för storföretag med tunga compliance- och SIEM-krav — funktioner ett 10-personers konsultbolag sällan behöver. Business Standard ger Teams, SharePoint och Exchange med 1 TB OneDrive till 55 % lägre kostnad."
+  reasoning: "M365 E5 är byggt för storföretag med tunga compliance- och SIEM-krav — funktioner ett 10-personers konsultbolag sällan behöver. Business Standard ger Teams, SharePoint och Exchange med 1 TB OneDrive — exakt samma vardag, väsentligt lägre kostnad."
   switchSteps: [
     "Vi förhandlar Business Standard-avtal via Arvo CSP-partner",
     "Du signerar med BankID — ingen datatransport krävs",
@@ -177,7 +177,7 @@ Rekommendation:
   savingPerYear: 35580
   overpaymentPercent: 44
   confidence: "high"
-  reasoning: "Enterprise Pro A3 är byggd för tunga printvolymer på advokatbyråer och tryckerier — inte e-handel. Klickpriset på 0,15 kr/sida S/V är 2–3× marknadssnittet (0,06–0,09 kr). Arvo-verifierad partner levererar en A4 MFP med volymanpassat klickavtal — rätt maskin, rätt pris."
+  reasoning: "Enterprise Pro A3 är byggd för tunga printvolymer på advokatbyråer och tryckerier — inte e-handel. Klickpriset 0,15 kr/sida S/V är den dyrare halvan av marknaden — marknadsnivån för motsvarande maskin ligger på 0,06–0,09 kr/sida. Arvo-verifierad partner levererar en A4 MFP med volymanpassat klickavtal — rätt maskin, rätt pris."
   switchSteps: [
     "Vi begär in offerter från kvalificerade print-partners för A4 MFP med klickavtal",
     "Du signerar nytt avtal med BankID",
