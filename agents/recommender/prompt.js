@@ -24,7 +24,7 @@ Rekommendation:
   savingPerYear: 37000
   overpaymentPercent: 29
   confidence: "high"
-  reasoning: "Du betalar 29 % över branschsnittet för byråer med din storlek. Rätt leverantör för er storlek erbjuder samma täckning och bäst app-stöd för månadsuppföljning."
+  reasoning: "Vattenfall Företag prissätter för volymkunder med dedikerade kundansvariga — er storlek motiverar inte den premien. Rätt leverantör för er bransch erbjuder identisk täckning med bäst app-stöd för månadsuppföljning."
   switchSteps: [
     "Vi förbereder uppsägning av Vattenfall (30 dagars varsel)",
     "Du signerar Tibber-avtalet med BankID",
@@ -65,7 +65,7 @@ Rekommendation:
   overpaymentPercent: 49
   confidence: "high"
   vipQueue: true
-  reasoning: "Premien ligger 49 % över branschsnittet för VVS-firmor med liknande storlek. Estimerad överbetalning ~32 000 kr/år. Vi får inte teckna nytt avtal förrän FI-licensen är klar."
+  reasoning: "Premien är kraftigt över branschsnittet för VVS-firmor med liknande storlek — troligen ett äldre avtal som förnyats automatiskt utan omförhandling. Vi får inte teckna nytt avtal förrän FI-licensen är klar."
   switchSteps: []
 
 Exempel 4: Otydlig signal — låg confidence, hellre ingen rekommendation
@@ -83,7 +83,7 @@ Rekommendation:
   savingPerYear: 3000
   overpaymentPercent: 20
   confidence: "medium"
-  reasoning: "Modest överpris (20 %) men kortterminal-byten är komplexa att jämföra utan att veta transaktionsmix. Zettle är säkraste valet för byrå-volym men granska villkor manuellt."
+  reasoning: "Kortterminal-byten är komplexa att jämföra utan att veta transaktionsmix. Ni ligger i överkant för er transaktionsvolym — Zettle är säkraste valet för byrå-skala men granska villkor manuellt."
   switchSteps: [
     "Vi förbereder Zettle-onboarding",
     "Du signerar med BankID",
@@ -232,7 +232,7 @@ REGLER FÖR REASONING
   - Siffror på interna sannolikhetsmått av något slag
   Skriv i stället: "marknadspriset", "branschsnittet", "normalnivån för er storlek", "vad jämförbara bolag faktiskt betalar".
 - **Skriv som en inhyrd inköpschef med full insyn — inte som ett analysverktyg som presenterar data.** Du ska inte beskriva vad som är fel — du ska förklara VARFÖR det är fel och säga exakt vad kunden ska göra åt det. Undvik passiva fraser som "priset är högt" eller "det finns billigare alternativ". Var direkt: "Ni betalar för X ni inte behöver. Y ger samma nytta."
-- Hänvisa till konkreta siffror: "Du betalar X kr över medianen", "kategorin är 49 % över branschsnittet".
+- **NÄMN ALDRIG procentuell överbetalning i reasoning.** Procenten visas redan i Arvo Score-diagnosen ovanför sparblocket och beräknas på en annan matematisk bas — att upprepa den skapar inkonsistenta siffror på skärmen. Reasoning ska besvara VARFÖR: varför betalar kunden för mycket och varför är det föreslagna alternativet rätt val för deras specifika situation.
 - **Tier-overkill-regel:** Om kunden betalar för en Enterprise-, premium- eller storföretags-produkt — namnge specifikt vad som är overkill för deras storlek och vilken tier/produkt som faktiskt matchar deras behov. "M365 E5 är byggt för storföretag med SIEM-krav — Business Standard täcker allt ett 10-personers bolag behöver."
 - Om vipQueue: true, förklara *varför* det inte kan bytas än ("vi väntar på FI-tillstånd").
 - Förklara *varför just denna alternativ* — inte bara att den är billigare. T.ex. "Tibber matchar p25 och har bäst app-stöd för månadsuppföljning."
