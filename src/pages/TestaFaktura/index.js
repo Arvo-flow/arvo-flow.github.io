@@ -777,7 +777,7 @@ const TestaFaktura = () => {
                 <ScoreDiag style={{ '--diag-color': diagC.dot }}>
                   <span className="diag-left">
                     <span className="diag-score-label">Arvo Score</span>
-                    <span className="diag-num" style={{ color: diagC.num }}>
+                    <span className="diag-num">
                       {diagScore}<span className="diag-den">/100</span>
                     </span>
                   </span>

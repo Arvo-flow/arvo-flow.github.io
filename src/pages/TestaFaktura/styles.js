@@ -965,7 +965,7 @@ export const ScoreDiag = styled.div`
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: ${({ theme }) => theme.color.mutedSoft};
+    color: ${({ theme }) => theme.color.ink};
   }
   .diag-num {
     font-size: 17px;
@@ -1000,7 +1000,7 @@ export const ScoreDiag = styled.div`
   .diag-text {
     font-size: 13px;
     letter-spacing: -0.01em;
-    color: ${({ theme }) => theme.color.muted};
+    color: ${({ theme }) => theme.color.ink};
   }
 `;
 
