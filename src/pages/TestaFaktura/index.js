@@ -1110,8 +1110,9 @@ const TestaFaktura = () => {
               <>
                 <h3>Vi hittade <em>en besparing</em></h3>
                 <p className="sub">
-                  Vi skickar analysen direkt till er inkorg — kostnadsfritt. Arvo kontaktar er
-                  enbart om det finns besparingar att realisera.
+                  Ange din e-post så skickar vi analysen direkt till din inkorg.
+                  Arvo sköter bytet åt er — ni betalar 20&nbsp;% av realiserad besparing.
+                  Inga fasta avgifter.
                 </p>
               </>
             ) : (
@@ -1146,8 +1147,9 @@ const TestaFaktura = () => {
                     : <>Kom igång <Icon name="arrow" size={16} /></>}
               </Button>
               <p className="fine-print">
-                Ingen spam. Inga fasta avgifter.
-                Vi kontaktar dig bara om det finns besparingar att hämta.
+                {gateReason === 'saving'
+                  ? 'Ingen spam. Inga bindningstider. Ni betalar 20 % av realiserad besparing.'
+                  : 'Ingen spam. Inga fasta avgifter. Vi kontaktar dig bara om det finns besparingar att hämta.'}
               </p>
             </form>
           </ModalCard>
