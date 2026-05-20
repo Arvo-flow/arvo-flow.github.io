@@ -1154,7 +1154,7 @@ const TestaFaktura = () => {
               </Button>
               <p className="fine-print">
                 {gateReason === 'saving'
-                  ? 'Ingen spam. Inga bindningstider. Ni betalar 20 % av realiserad besparing.'
+                  ? 'Ingen spam. Inga bindningstider. Ni betalar 20 % av identifierad besparing.'
                   : 'Ingen spam. Inga fasta avgifter. Vi kontaktar dig bara om det finns besparingar att hämta.'}
               </p>
             </form>
