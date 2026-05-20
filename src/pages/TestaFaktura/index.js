@@ -16,6 +16,24 @@ import {
 
 const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 
+function useCountUp(target, duration = 1600) {
+  const [val, setVal] = React.useState(0);
+  React.useEffect(() => {
+    if (!target) { setVal(0); return; }
+    const t0 = performance.now();
+    let raf;
+    const tick = (now) => {
+      const p = Math.min((now - t0) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      setVal(Math.round(target * ease));
+      if (p < 1) { raf = requestAnimationFrame(tick); } else { setVal(target); }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { if (raf) cancelAnimationFrame(raf); };
+  }, [target, duration]);
+  return val;
+}
+
 const MAX_PDF_SIZE   = 3 * 1024 * 1024;
 const FREE_ANALYSES  = 3; // speglar serverns konstant
 
@@ -435,6 +453,12 @@ const TestaFaktura = () => {
     : diagScore < 80 ? 'Ni betalar ungefär branschsnitt. Marginalförbättringar möjliga.'
     : 'Ni har ett kostnadsoptimerat leverantörsnätverk.';
 
+  const GAUGE_R = 26;
+  const GAUGE_C = 2 * Math.PI * GAUGE_R;
+  const gaugeDash = (diagScore / 100) * GAUGE_C;
+
+  const animatedNet = useCountUp(result?.recommendation?.netSaving ?? 0);
+
   return (
     <Page>
       <Nav variant="public" />
@@ -775,19 +799,32 @@ const TestaFaktura = () => {
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
                 <ScoreDiag style={{ '--diag-color': diagC.dot }}>
-                  <span className="diag-left">
-                    <span className="diag-score-label">Arvo Score</span>
-                    <span className="diag-num">
-                      {diagScore}<span className="diag-den">/100</span>
-                    </span>
-                  </span>
-                  <span className="diag-sep">·</span>
-                  <span className="diag-status">
-                    <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
-                    <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
-                  </span>
-                  <span className="diag-sep">·</span>
-                  <span className="diag-text">{diagInsight}</span>
+                  <div className="gauge-wrap">
+                    <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
+                      <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
+                      <circle
+                        cx="30" cy="30" r={GAUGE_R} fill="none"
+                        stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
+                        strokeDasharray={`${gaugeDash} ${GAUGE_C}`}
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1s ease' }}
+                      />
+                    </svg>
+                    <div className="gauge-num" style={{ color: diagC.dot }}>
+                      <span className="gauge-val">{diagScore}</span>
+                      <span className="gauge-denom">/100</span>
+                    </div>
+                  </div>
+                  <div className="diag-body">
+                    <div className="diag-top">
+                      <span className="diag-score-label">Arvo Score</span>
+                      <span className="diag-sep">·</span>
+                      <span className="diag-status">
+                        <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
+                        <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                      </span>
+                    </div>
+                    <p className="diag-text">{diagInsight}</p>
+                  </div>
                 </ScoreDiag>
                 {(() => {
                   const isRealPrice = REAL_PRICE_CATEGORIES.has(result.categorized.category);
@@ -799,7 +836,7 @@ const TestaFaktura = () => {
                         <span className="kicker">
                           {isLicensePending ? 'Möjlig årlig besparing' : 'Din nettobesparing'}
                         </span>
-                        <span className="amount">+{formatKr(result.recommendation.netSaving)}</span>
+                        <span className="amount">+{formatKr(animatedNet)}</span>
                         <span className="unit">
                           {isLicensePending
                             ? 'Försäkring kräver FI-licens — vi byter inte själva ännu, men visar gapet.'
@@ -839,6 +876,10 @@ const TestaFaktura = () => {
                                 {isRealPrice ? 'Verifierat marknadspris' : 'Arvos kalkylerade riktpris'}
                               </p>
                             </div>
+                          </div>
+                          <div className="price-offer">
+                            <span className="offer-price">{formatKr(result.recommendation.suggestedAnnualCost)}/år</span>
+                            <span className="offer-label">↓ från {formatKr(result.extracted.annualCost)}</span>
                           </div>
                           <Button
                             type="button"
@@ -977,12 +1018,37 @@ const TestaFaktura = () => {
           </Card>
           <NextSteps>
             <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
-            <p>
+            <p className="sub">
               Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen
               på hela er reskontra och levererar en komplett Leverantörsrapport automatiskt.
-              Vi sköter varje byte från uppsägning till nytt avtal. Du betalar 20 % av
-              identifierad besparing. Inga fasta avgifter.
             </p>
+            <div className="preview-list">
+              <div className="preview-header">
+                <span>Leverantör</span>
+                <span>Kategori</span>
+                <span>Kostnad/år</span>
+                <span>Score</span>
+              </div>
+              <div className="preview-row preview-real">
+                <span>{result.extracted.supplier}</span>
+                <span>{CATEGORY_LABELS[result.categorized?.category] || '—'}</span>
+                <span className="preview-cost">{formatKr(result.extracted.annualCost)}</span>
+                <span style={{ color: diagC.dot, fontWeight: 700, fontSize: 12 }}>{diagC.label}</span>
+              </div>
+              <div className="preview-row preview-blur">
+                <span><span className="ph" style={{ width: 110 }} /></span>
+                <span><span className="ph" style={{ width: 70 }} /></span>
+                <span><span className="ph" style={{ width: 80 }} /></span>
+                <span><span className="ph" style={{ width: 55 }} /></span>
+              </div>
+              <div className="preview-row preview-blur">
+                <span><span className="ph" style={{ width: 90 }} /></span>
+                <span><span className="ph" style={{ width: 60 }} /></span>
+                <span><span className="ph" style={{ width: 75 }} /></span>
+                <span><span className="ph" style={{ width: 50 }} /></span>
+              </div>
+              <div className="preview-fade" />
+            </div>
             <Button as={Link} to="/connect" $variant="gradient" $size="lg">
               Koppla Fortnox / Visma →
             </Button>

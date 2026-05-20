@@ -388,6 +388,26 @@ export const PartnerBlock = styled.div`
     font-weight: 600;
     letter-spacing: 0.02em;
   }
+  div.price-offer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    margin-right: 16px;
+    @media (max-width: 540px) { display: none; }
+  }
+  span.offer-price {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-feature-settings: "tnum";
+    color: ${({ theme }) => theme.color.ink};
+  }
+  span.offer-label {
+    font-size: 11px;
+    color: ${({ theme }) => theme.color.muted};
+    margin-top: 1px;
+  }
 
   @media (max-width: 540px) {
     flex-direction: column;
@@ -840,23 +860,26 @@ export const FortnoxButton = styled.a`
 
 export const Reasoning = styled.div`
   margin-top: 24px;
-  padding-left: 20px;
-  border-left: 3px solid ${({ theme }) => theme.color.brand};
+  padding: 20px 22px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.surfaceAlt};
+  border: 1px solid ${({ theme }) => theme.color.border};
 
   span.kicker {
     display: block;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.09em;
+    letter-spacing: 0.1em;
     color: ${({ theme }) => theme.color.brand};
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
   p {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 15.5px;
-    line-height: 1.65;
+    font-size: 16.5px;
+    line-height: 1.7;
     color: ${({ theme }) => theme.color.ink};
+    margin: 0;
   }
 `;
 
@@ -896,7 +919,7 @@ export const NextSteps = styled.div`
     font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.015em;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     sup {
       font-size: 9px;
       font-weight: 700;
@@ -904,12 +927,69 @@ export const NextSteps = styled.div`
       vertical-align: super;
     }
   }
-  p {
+  p.sub {
     font-size: 14.5px;
     color: ${({ theme }) => theme.color.muted};
     line-height: 1.65;
-    margin: 0 0 22px;
+    margin: 0 0 20px;
   }
+
+  .preview-list {
+    position: relative;
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .preview-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 12px;
+    padding: 8px 14px;
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: ${({ theme }) => theme.color.mutedSoft};
+  }
+  .preview-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 12px;
+    padding: 11px 14px;
+    align-items: center;
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
+    font-size: 13.5px;
+    color: ${({ theme }) => theme.color.ink};
+    &:last-child { border-bottom: none; }
+  }
+  .preview-real {
+    background: ${({ theme }) => theme.color.surface};
+    .preview-cost { font-weight: 600; font-feature-settings: "tnum"; }
+  }
+  .preview-blur {
+    filter: blur(4px);
+    pointer-events: none;
+    user-select: none;
+    background: ${({ theme }) => theme.color.surface};
+  }
+  .preview-fade {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 72px;
+    background: linear-gradient(to bottom, transparent, ${({ theme }) => theme.color.surface});
+    pointer-events: none;
+  }
+  .ph {
+    display: inline-block;
+    height: 12px;
+    border-radius: 3px;
+    background: ${({ theme }) => theme.color.borderStrong};
+    opacity: 0.6;
+  }
+
   @media (max-width: 600px) { padding: 22px 20px; }
 `;
 
@@ -946,19 +1026,55 @@ export const ServiceList = styled.ul`
 export const ScoreDiag = styled.div`
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0;
-  padding: 11px 16px;
+  gap: 18px;
+  padding: 14px 18px;
   border-radius: ${({ theme }) => theme.size.radius.md};
   background: ${({ theme }) => theme.color.surface};
   border: 1.5px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
   margin-bottom: 16px;
 
-  .diag-left {
+  .gauge-wrap {
+    flex-shrink: 0;
+    position: relative;
+    width: 60px;
+    height: 60px;
+  }
+  .gauge-svg {
+    position: absolute;
+    inset: 0;
+  }
+  .gauge-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    gap: 2px;
+  }
+  .gauge-val {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    font-feature-settings: "tnum";
+  }
+  .gauge-denom {
+    font-size: 8px;
+    font-weight: 600;
+    opacity: 0.5;
+    letter-spacing: 0;
+  }
+  .diag-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .diag-top {
     display: flex;
     align-items: center;
-    gap: 9px;
-    flex-shrink: 0;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
   }
   .diag-score-label {
     font-size: 11px;
@@ -967,23 +1083,9 @@ export const ScoreDiag = styled.div`
     letter-spacing: 0.07em;
     color: ${({ theme }) => theme.color.ink};
   }
-  .diag-num {
-    font-size: 17px;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    font-feature-settings: "tnum";
-    margin-left: 7px;
-  }
-  .diag-den {
-    font-size: 11px;
-    font-weight: 600;
-    margin-left: 1px;
-    opacity: 0.65;
-  }
   .diag-sep {
     color: ${({ theme }) => theme.color.borderStrong};
-    margin: 0 10px;
-    font-size: 13px;
+    font-size: 12px;
     flex-shrink: 0;
   }
   .diag-status {
@@ -1001,6 +1103,8 @@ export const ScoreDiag = styled.div`
     font-size: 13px;
     letter-spacing: -0.01em;
     color: ${({ theme }) => theme.color.ink};
+    margin: 0;
+    line-height: 1.45;
   }
 `;
 
