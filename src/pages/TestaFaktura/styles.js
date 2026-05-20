@@ -889,58 +889,25 @@ export const NextSteps = styled.div`
   padding-top: 24px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
 
-  .ns-cta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 18px 20px;
-    border-radius: ${({ theme }) => theme.size.radius.lg};
-    background: linear-gradient(135deg, rgba(93, 214, 202, .08) 0%, rgba(27, 110, 102, .06) 100%);
-    border: 1.5px solid rgba(27, 122, 110, .2);
-    @media (max-width: 540px) {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 14px;
-    }
-  }
-
   h3 {
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing: -.01em;
+    letter-spacing: -0.015em;
+    margin-bottom: 10px;
     color: ${({ theme }) => theme.color.ink};
-    margin: 0 0 4px;
     sup {
-      font-size: 8px;
+      font-size: 9px;
       font-weight: 700;
       color: ${({ theme }) => theme.color.brand};
       vertical-align: super;
     }
   }
 
-  p.sub {
-    font-size: 13px;
-    color: ${({ theme }) => theme.color.inkSoft};
-    line-height: 1.5;
-    margin: 0;
-  }
-
-  .ns-right {
-    flex-shrink: 0;
-    @media (max-width: 540px) {
-      width: 100%;
-      a, button { width: 100%; justify-content: center; }
-    }
-  }
-
-  p.methodology {
-    margin-top: 14px;
-    font-size: 11px;
-    color: ${({ theme }) => theme.color.mutedSoft};
-    line-height: 1.6;
-    font-style: italic;
-    text-align: center;
+  p {
+    font-size: 14.5px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.65;
+    margin: 0 0 20px;
   }
 `;
 

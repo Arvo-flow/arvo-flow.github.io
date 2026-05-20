@@ -949,20 +949,16 @@ const TestaFaktura = () => {
             )}
 
             <NextSteps>
-              <div className="ns-cta">
-                <div>
-                  <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
-                  <p className="sub">Koppla Fortnox / Visma — vi skannar alla 8 segment och beräknar er verkliga score.</p>
-                </div>
-                <div className="ns-right">
-                  <Button as={Link} to="/connect" $variant="gradient" $size="sm">
-                    Koppla Fortnox / Visma →
-                  </Button>
-                </div>
-              </div>
-              <p className="methodology">
-                Arvo Score™ beräknas utifrån faktisk överprisnivå i analyserade segment vägd mot branschsnitt för oanalyserade segment. Scoren uppdateras automatiskt för varje ny faktura.
+              <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
+              <p>
+                Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen
+                på hela er reskontra och levererar en komplett Leverantörsrapport automatiskt.
+                Vi sköter varje byte från uppsägning till nytt avtal. Du betalar 20 % av
+                identifierad besparing. Inga fasta avgifter.
               </p>
+              <Button as={Link} to="/connect" $variant="gradient" $size="lg">
+                Koppla Fortnox / Visma →
+              </Button>
             </NextSteps>
 
             <EmailGate>
