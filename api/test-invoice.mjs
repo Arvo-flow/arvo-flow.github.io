@@ -740,7 +740,7 @@ export default async function handler(req, res) {
         arvoFee,
         netSaving,
         confidence: recommendation.confidence,
-        reasoning: recommendation.reasoning,
+        reasoning: (recommendation.reasoning ?? '').replace(/\s*\}\}+\s*$/, '').trim(),
         switchSteps: recommendation.switchSteps ?? [],
         licenseOverage: (extracted.seatCount != null && extracted.seatCount > employeesNum)
           ? extracted.seatCount - employeesNum
