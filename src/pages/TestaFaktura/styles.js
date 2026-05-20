@@ -755,6 +755,40 @@ export const ModalCard = styled.div`
     &::placeholder { color: ${({ theme }) => theme.color.mutedSoft}; }
   }
 
+  div.gate-saving {
+    background: ${({ theme }) => theme.color.brandSoft};
+    border: 1px solid ${({ theme }) => theme.color.brand}28;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    padding: 18px 20px;
+    margin-bottom: 20px;
+
+    span.gate-saving-label {
+      display: block;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: ${({ theme }) => theme.color.brand};
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+
+    span.gate-saving-amount {
+      display: block;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: ${({ theme }) => theme.color.brand};
+      line-height: 1.05;
+      margin-bottom: 6px;
+    }
+
+    span.gate-saving-context {
+      display: block;
+      font-size: 12.5px;
+      color: ${({ theme }) => theme.color.muted};
+    }
+  }
+
   p.fine-print {
     margin: 4px 0 0;
     font-size: 11.5px;

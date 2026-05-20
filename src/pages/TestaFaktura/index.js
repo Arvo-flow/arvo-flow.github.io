@@ -1108,11 +1108,17 @@ const TestaFaktura = () => {
           <ModalCard>
             {gateReason === 'saving' ? (
               <>
-                <h3>Vi hittade <em>en besparing</em></h3>
+                <div className="gate-saving">
+                  <span className="gate-saving-label">Identifierad nettobesparing</span>
+                  <span className="gate-saving-amount">+{formatKr(result?.recommendation?.netSaving ?? 0)}</span>
+                  <span className="gate-saving-context">
+                    {result?.extracted?.supplier}
+                    {result?.categorized?.category ? ` · ${CATEGORY_LABELS[result.categorized.category] ?? result.categorized.category}` : ''}
+                  </span>
+                </div>
                 <p className="sub">
-                  Vi skickar analysen direkt till din inkorg. En Arvo-rådgivare kontaktar
-                  dig för att starta bytet — ni betalar 20&nbsp;% av realiserad besparing,
-                  inga fasta avgifter.
+                  Ange din e-post — vi skickar analysen direkt och en rådgivare kontaktar
+                  dig för att realisera besparingen.
                 </p>
               </>
             ) : (
