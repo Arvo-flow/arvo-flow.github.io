@@ -1108,7 +1108,7 @@ const TestaFaktura = () => {
           <ModalCard>
             {gateReason === 'saving' ? (
               <>
-                <h3>Ni har <em>pengar att hämta</em></h3>
+                <h3>Vi hittade <em>en besparing</em></h3>
                 <p className="sub">
                   Vi skickar analysen direkt till er inkorg — kostnadsfritt. Arvo kontaktar er
                   enbart om det finns besparingar att realisera.
