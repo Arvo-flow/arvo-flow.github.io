@@ -756,7 +756,7 @@ const TestaFaktura = () => {
               </>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
-                <ScoreDiag style={{ background: diagC.bg, borderColor: diagC.border }}>
+                <ScoreDiag>
                   <span className="diag-left">
                     <span className="diag-dot" style={{ background: diagC.dot }} />
                     <span className="diag-score-label">Arvo Score</span>
@@ -767,7 +767,7 @@ const TestaFaktura = () => {
                   <span className="diag-sep">·</span>
                   <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
                   <span className="diag-sep">·</span>
-                  <span className="diag-text" style={{ color: diagC.txt }}>{diagInsight}</span>
+                  <span className="diag-text">{diagInsight}</span>
                 </ScoreDiag>
                 {(() => {
                   const isRealPrice = REAL_PRICE_CATEGORIES.has(result.categorized.category);
