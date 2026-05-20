@@ -860,10 +860,8 @@ export const FortnoxButton = styled.a`
 
 export const Reasoning = styled.div`
   margin-top: 24px;
-  padding: 20px 22px;
-  border-radius: ${({ theme }) => theme.size.radius.md};
-  background: ${({ theme }) => theme.color.surfaceAlt};
-  border: 1px solid ${({ theme }) => theme.color.border};
+  padding-left: 16px;
+  border-left: 3px solid ${({ theme }) => theme.color.brand}55;
 
   span.kicker {
     display: block;
@@ -872,13 +870,13 @@ export const Reasoning = styled.div`
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: ${({ theme }) => theme.color.brand};
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   p {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 16.5px;
-    line-height: 1.7;
-    color: ${({ theme }) => theme.color.ink};
+    font-size: 15px;
+    line-height: 1.65;
+    color: ${({ theme }) => theme.color.inkSoft};
     margin: 0;
   }
 `;

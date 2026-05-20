@@ -1019,8 +1019,10 @@ const TestaFaktura = () => {
           <NextSteps>
             <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
             <p className="sub">
-              Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen
-              på hela er reskontra och levererar en komplett Leverantörsrapport automatiskt.
+              Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen på hela
+              er reskontra och levererar en komplett Leverantörsrapport automatiskt. Vi sköter varje
+              byte från uppsägning till nytt avtal. Du betalar 20&nbsp;% av identifierad besparing.
+              Inga fasta avgifter.
             </p>
             <div className="preview-list">
               <div className="preview-header">
