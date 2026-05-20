@@ -162,6 +162,9 @@ const TestaFaktura = () => {
   const [quoteEmail, setQuoteEmail] = useState('');
   const [quoteMandateAccepted, setQuoteMandateAccepted] = useState(false);
   const [quoteState, setQuoteState] = useState('idle'); // idle | submitting | sent
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
+  const [downloadEmail, setDownloadEmail] = useState('');
+  const [downloadEmailState, setDownloadEmailState] = useState('idle'); // idle | submitting | sent
 
   // Token + bypass-setup vid mount
   React.useEffect(() => {
@@ -331,6 +334,9 @@ const TestaFaktura = () => {
     setQuoteEmail('');
     setQuoteMandateAccepted(false);
     setQuoteState('idle');
+    setDownloadModalOpen(false);
+    setDownloadEmail('');
+    setDownloadEmailState('idle');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -341,6 +347,18 @@ const TestaFaktura = () => {
       body: JSON.stringify({ email: emailAddr, result }),
     });
     if (!res.ok) throw new Error('send-analysis ' + res.status);
+  };
+
+  const submitDownload = async (e) => {
+    e.preventDefault();
+    if (!downloadEmail || downloadEmailState !== 'idle') return;
+    setDownloadEmailState('submitting');
+    try {
+      await sendAnalysisMail(downloadEmail);
+      setDownloadEmailState('sent');
+    } catch {
+      setDownloadEmailState('error');
+    }
   };
 
   const sendConfirmationMail = async (emailAddr) => {
@@ -553,8 +571,8 @@ const TestaFaktura = () => {
                   </span>
                 )}
               </div>
-              <Button onClick={reset} $variant="secondary" $size="md">
-                Testa en till
+              <Button onClick={() => setDownloadModalOpen(true)} $variant="secondary" $size="md">
+                Ladda ner analys
               </Button>
             </ResultHead>
 
@@ -1115,6 +1133,54 @@ const TestaFaktura = () => {
                     {modalEmailState === 'submitting' ? 'Skickar…' : <>Skicka analysen <Icon name="arrow" size={16} /></>}
                   </Button>
                   <p className="fine-print">Ingen spam. Inga fasta avgifter. Du betalar 20 % av identifierad besparing.</p>
+                </form>
+              </>
+            )}
+          </ModalCard>
+        </ModalOverlay>
+      )}
+
+      {downloadModalOpen && result && (
+        <ModalOverlay onClick={(e) => { if (e.target === e.currentTarget) { setDownloadModalOpen(false); setDownloadEmailState('idle'); } }}>
+          <ModalCard>
+            <button className="close" onClick={() => { setDownloadModalOpen(false); setDownloadEmailState('idle'); }} aria-label="Stäng">×</button>
+            {downloadEmailState === 'sent' ? (
+              <div className="sent-state">
+                <span className="sent-icon"><Icon name="check" size={20} stroke={2.5} /></span>
+                <p className="sent-title">Analysen är skickad!</p>
+                <p className="sent-sub">Vi har skickat analysen till {downloadEmail}.</p>
+              </div>
+            ) : (
+              <>
+                <h3>Ladda ner er <em>analys</em></h3>
+                <p className="sub">
+                  Ange er e-post så skickar vi en sammanfattning av analysen direkt till er inkorg.
+                </p>
+                <div className="context-badge">
+                  {result.extracted.supplier} · {CATEGORY_LABELS[result.categorized?.category] || ''}
+                </div>
+                <form className="modal-form" onSubmit={submitDownload}>
+                  <input
+                    type="email"
+                    placeholder="din@epost.se"
+                    value={downloadEmail}
+                    onChange={(e) => setDownloadEmail(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                  <Button
+                    type="submit"
+                    $variant="gradient"
+                    $size="lg"
+                    $full
+                    disabled={downloadEmailState === 'submitting'}
+                  >
+                    {downloadEmailState === 'submitting' ? 'Skickar…' : <>Skicka analysen <Icon name="arrow" size={16} /></>}
+                  </Button>
+                  {downloadEmailState === 'error' && (
+                    <p className="fine-print" style={{ color: 'red' }}>Något gick fel — försök igen.</p>
+                  )}
+                  <p className="fine-print">Ingen spam. Vi skickar analysen direkt till din inkorg.</p>
                 </form>
               </>
             )}
