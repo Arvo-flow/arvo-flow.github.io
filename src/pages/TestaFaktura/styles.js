@@ -943,33 +943,37 @@ export const NextSteps = styled.div`
   .segment-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 22px;
     @media (max-width: 580px) { grid-template-columns: repeat(2, 1fr); }
   }
   .segment-tile {
     position: relative;
-    padding: 14px 14px 13px;
+    padding: 16px 14px 15px;
     border-radius: ${({ theme }) => theme.size.radius.md};
-    border: 1.5px solid ${({ theme }) => theme.color.borderStrong};
-    background: ${({ theme }) => theme.color.surface};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.surfaceAlt};
     display: flex;
     flex-direction: column;
     gap: 4px;
-    transition: border-color 0.15s;
   }
   .tile-active {
-    border-color: ${({ theme }) => theme.color.brand};
-    background: ${({ theme }) => theme.color.brandSoft};
+    border: 1.5px solid ${({ theme }) => theme.color.brand};
+    background: linear-gradient(
+      145deg,
+      ${({ theme }) => theme.color.brandSoft} 0%,
+      ${({ theme }) => theme.color.surface} 100%
+    );
+    box-shadow: 0 2px 12px ${({ theme }) => theme.color.brand}1A;
   }
   .tile-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: ${({ theme }) => theme.color.surfaceAlt};
+    background: ${({ theme }) => theme.color.surface};
     border: 1px solid ${({ theme }) => theme.color.borderStrong};
     color: ${({ theme }) => theme.color.muted};
     margin-bottom: 8px;
@@ -977,16 +981,19 @@ export const NextSteps = styled.div`
   }
   .icon-active {
     background: ${({ theme }) => theme.color.brand};
-    border-color: ${({ theme }) => theme.color.brand};
+    border-color: transparent;
     color: #FAFAF7;
-    box-shadow: 0 2px 8px ${({ theme }) => theme.color.brand}44;
+    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
   }
   .tile-name {
     font-size: 12.5px;
     font-weight: 700;
-    color: ${({ theme }) => theme.color.ink};
     letter-spacing: -0.015em;
     line-height: 1.25;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+  .tile-active .tile-name {
+    color: ${({ theme }) => theme.color.ink};
   }
   .tile-status {
     font-size: 11px;
@@ -998,7 +1005,7 @@ export const NextSteps = styled.div`
     font-weight: 600;
   }
   .tile-metric {
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 800;
     color: ${({ theme }) => theme.color.ink};
     font-feature-settings: "tnum";
@@ -1010,7 +1017,6 @@ export const NextSteps = styled.div`
     top: 10px;
     right: 10px;
     color: ${({ theme }) => theme.color.borderStrong};
-    opacity: 0.7;
   }
 
   @media (max-width: 600px) { padding: 22px 20px; }

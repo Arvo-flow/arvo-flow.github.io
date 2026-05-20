@@ -1043,7 +1043,7 @@ const TestaFaktura = () => {
                 return (
                   <div key={seg.label} className={`segment-tile${isActive ? ' tile-active' : ''}`}>
                     <div className={`tile-icon${isActive ? ' icon-active' : ''}`}>
-                      <Icon name={seg.icon} size={14} stroke={2} />
+                      <Icon name={seg.icon} size={16} stroke={isActive ? 2 : 1.8} />
                     </div>
                     <span className="tile-name">{seg.label}</span>
                     <span className={`tile-status${isActive ? ' status-active' : ''}`}>
