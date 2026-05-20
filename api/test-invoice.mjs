@@ -322,6 +322,7 @@ export default async function handler(req, res) {
 
   // ── Säkerhetslager ───────────────────────────────────────────────────────────
   const pdfHash  = createHash('sha256').update(pdfBytes).digest('hex');
+  const cacheKey = `pdf:result:${pdfHash}:e${employeesNum}`;
   const isBypass = !!(bypass && typeof bypass === 'string'
     && process.env.ARVO_BYPASS_SECRET
     && bypass === process.env.ARVO_BYPASS_SECRET);
@@ -335,7 +336,7 @@ export default async function handler(req, res) {
     const kv = getKv();
     if (kv) {
       try {
-        const cached = await kv.get(`pdf:result:${pdfHash}`);
+        const cached = await kv.get(cacheKey);
         if (cached) return send(res, 200, { ...cached, cached: true });
       } catch { /* non-fatal */ }
     }
@@ -753,7 +754,7 @@ export default async function handler(req, res) {
     // returneras direkt utan att köra AI-pipelinen igen.
     if (!isBypass) {
       const kv = getKv();
-      if (kv) kv.set(`pdf:result:${pdfHash}`, autoResponse, { ex: PDF_CACHE_TTL }).catch(() => {});
+      if (kv) kv.set(cacheKey, autoResponse, { ex: PDF_CACHE_TTL }).catch(() => {});
     }
 
     return send(res, 200, autoResponse);

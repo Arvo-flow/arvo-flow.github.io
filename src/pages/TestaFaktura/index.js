@@ -956,17 +956,22 @@ const TestaFaktura = () => {
               </Reasoning>
             )}
 
-            {result.recommendation?.licenseOverage > 0 && result.extracted.seatCount != null && (
-              <LicenseOverageNote>
-                <span className="kicker">Notering om licenser</span>
-                <p>
-                  Kalkylen ovan bygger på att vi behåller era {result.extracted.seatCount} licenser,
-                  men sänker styckpriset genom att flytta er till rätt avtalsnivå. Vi noterar dock
-                  att ni enligt uppgift är {employees} anställda. Om man dessutom hade städat bort
-                  dessa {result.recommendation.licenseOverage} överflödiga licenser, hade er kostnad
-                  sänkts ytterligare.
-                </p>
-              </LicenseOverageNote>
+            {(() => {
+              const sc = result.extracted?.seatCount;
+              const emp = Number(employees);
+              const overage = sc != null && sc > emp ? sc - emp : 0;
+              return overage > 0 ? (
+                <LicenseOverageNote>
+                  <span className="kicker">Notering om licenser</span>
+                  <p>
+                    Kalkylen ovan bygger på att vi behåller era {sc} licenser,
+                    men sänker styckpriset genom att flytta er till rätt avtalsnivå. Vi noterar dock
+                    att ni enligt uppgift är {emp} anställda. Om man dessutom hade städat bort
+                    dessa {overage} överflödiga licenser, hade er kostnad sänkts ytterligare.
+                  </p>
+                </LicenseOverageNote>
+              ) : null;
+            })()}
             )}
 
           </Card>
