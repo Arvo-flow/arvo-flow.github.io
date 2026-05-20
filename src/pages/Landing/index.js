@@ -149,7 +149,7 @@ const Landing = () => {
                 Se mina besparingar — gratis <Icon name="arrow" size={18} />
               </Button>
               <Button as={Link} to="/testa-faktura" $variant="secondary" $size="lg">
-                Testa med en faktura
+              Se vad en faktura avslöjar
               </Button>
             </HeroActions>
             <HeroProof>

@@ -234,6 +234,14 @@ const TestaFaktura = () => {
 
   const runAnalysis = async (overrideEmail = null) => {
     if (!file) { setError('Välj en PDF-faktura först.'); return; }
+    const isUnlocked = !!(sessionStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_gate_passed'));
+    if (!overrideEmail && !isUnlocked && localStorage.getItem('arvo_had_saving')) {
+      setGateOpen(true);
+      return;
+    }
+    if (overrideEmail) {
+      localStorage.setItem('arvo_gate_passed', '1');
+    }
     setError(null);
     setResult(null);
     setGateOpen(false);
@@ -243,9 +251,7 @@ const TestaFaktura = () => {
     try {
       const pdfBase64    = await fileToBase64(file);
       const fingerprint  = await getBrowserFingerprint();
-      const bypass       = sessionStorage.getItem('arvo_bypass')
-                        ?? localStorage.getItem('arvo_bypass')
-                        ?? undefined;
+      const bypass = sessionStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_gate_passed') ?? undefined;
 
       // Hämta alltid ett färskt token precis innan submit (undviker 1h-expiry)
       let freshToken = apiToken;
@@ -300,6 +306,9 @@ const TestaFaktura = () => {
 
       setPhase('done');
       setResult(data);
+      if (data.recommendation?.netSaving > 0) {
+        localStorage.setItem('arvo_had_saving', '1');
+      }
     } catch (err) {
       clearTimeout(t1);
       clearTimeout(t2);
