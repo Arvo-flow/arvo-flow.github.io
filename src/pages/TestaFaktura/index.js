@@ -923,7 +923,7 @@ const TestaFaktura = () => {
 
             {result.recommendation?.reasoning && (result.recommendation?.shouldSwitch || isOptimize) && (
               <Reasoning>
-                <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Varför vi tror du kan spara'}</span>
+                <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Vad analysen visar'}</span>
                 <p>
                   {REAL_PRICE_CATEGORIES.has(result.categorized.category)
                     ? result.recommendation.reasoning
@@ -949,59 +949,20 @@ const TestaFaktura = () => {
             )}
 
             <NextSteps>
-              <h3>Lås upp er fullständiga Arvo Score™</h3>
-              <p>
-                Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen
-                på hela er reskontra och levererar en komplett Leverantörsrapport automatiskt.
-                Vi sköter varje byte från uppsägning till nytt avtal. Du betalar 20 % av
-                identifierad besparing. Inga fasta avgifter.
-              </p>
-              <div className="actions">
-                <div className="cta-row">
-                  <Button as={Link} to="/connect" $variant="primary" $size="lg">
-                    Koppla Fortnox / Visma <Icon name="arrow" size={16} />
-                  </Button>
-                  <Link to="/" className="read-more">Läs mer →</Link>
+              <div className="ns-cta">
+                <div>
+                  <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
+                  <p className="sub">Koppla Fortnox / Visma — vi skannar alla 8 segment och beräknar er verkliga score.</p>
                 </div>
-                <div className="permission-card">
-                  <div className="perm-header">
-                    <span className="perm-icon"><Icon name="lock" size={16} stroke={2} /></span>
-                    <strong>Vi får bara läsa, aldrig ändra</strong>
-                  </div>
-                  <div className="perm-cols">
-                    <div>
-                      <span className="perm-label">VAD VI LÄSER</span>
-                      <ul>
-                        <li>
-                          <span className="perm-check"><Icon name="check" size={11} stroke={2.5} /></span>
-                          Leverantörsfakturor
-                        </li>
-                        <li>
-                          <span className="perm-check"><Icon name="check" size={11} stroke={2.5} /></span>
-                          Kostnadshistorik &amp; förfallodatum
-                        </li>
-                      </ul>
-                    </div>
-                    <div>
-                      <span className="perm-label">UTANFÖR VÅR RÄCKVIDD</span>
-                      <ul>
-                        <li>
-                          <span className="perm-lock"><Icon name="lock" size={11} stroke={2} /></span>
-                          Lön &amp; personnummer
-                        </li>
-                        <li>
-                          <span className="perm-lock"><Icon name="lock" size={11} stroke={2} /></span>
-                          Kundfakturor
-                        </li>
-                        <li>
-                          <span className="perm-lock"><Icon name="lock" size={11} stroke={2} /></span>
-                          Bokföring &amp; huvudbok
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                <div className="ns-right">
+                  <Button as={Link} to="/connect" $variant="gradient" $size="sm">
+                    Koppla Fortnox / Visma →
+                  </Button>
                 </div>
               </div>
+              <p className="methodology">
+                Arvo Score™ beräknas utifrån faktisk överprisnivå i analyserade segment vägd mot branschsnitt för oanalyserade segment. Scoren uppdateras automatiskt för varje ny faktura.
+              </p>
             </NextSteps>
 
             <EmailGate>

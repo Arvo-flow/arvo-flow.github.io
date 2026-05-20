@@ -888,140 +888,59 @@ export const NextSteps = styled.div`
   margin-top: 28px;
   padding-top: 24px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
-  text-align: center;
 
-  h3 {
-    font-size: 20px;
-    letter-spacing: -0.015em;
-    margin-bottom: 10px;
-  }
-  p {
-    font-size: 14.5px;
-    color: ${({ theme }) => theme.color.muted};
-    line-height: 1.65;
-    margin: 0 0 22px;
-  }
-  div.actions {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
-    max-width: 560px;
-    margin: 0 auto;
-  }
-  div.cta-row {
+  .ns-cta {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 16px;
-
-    a.read-more {
-      font-size: 13.5px;
-      font-weight: 500;
-      color: ${({ theme }) => theme.color.muted};
-      text-decoration: none;
-      white-space: nowrap;
-      transition: color 0.15s;
-      &:hover { color: ${({ theme }) => theme.color.ink}; }
-    }
-  }
-  div.permission-card {
-    text-align: left;
-    padding: 14px 18px;
+    padding: 18px 20px;
     border-radius: ${({ theme }) => theme.size.radius.lg};
-    background: ${({ theme }) => theme.color.bg};
-    border: 1.5px solid ${({ theme }) => theme.color.brand}55;
-    box-shadow: 0 2px 12px ${({ theme }) => theme.color.brand}14;
-
-    .perm-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid ${({ theme }) => theme.color.brand}22;
-
-      .perm-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: ${({ theme }) => theme.color.brand};
-        color: #FAFAF7;
-        flex-shrink: 0;
-      }
-
-      strong {
-        font-size: 13.5px;
-        font-weight: 700;
-        color: ${({ theme }) => theme.color.ink};
-        letter-spacing: -0.01em;
-      }
-    }
-
-    .perm-cols {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .perm-label {
-      display: block;
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: ${({ theme }) => theme.color.muted};
-      margin-bottom: 8px;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
+    background: linear-gradient(135deg, rgba(93, 214, 202, .08) 0%, rgba(27, 110, 102, .06) 100%);
+    border: 1.5px solid rgba(27, 122, 110, .2);
+    @media (max-width: 540px) {
       flex-direction: column;
-      gap: 6px;
-    }
-
-    li {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      color: ${({ theme }) => theme.color.ink};
-    }
-
-    .perm-check {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: ${({ theme }) => theme.color.brandSoft};
-      color: ${({ theme }) => theme.color.brand};
-      flex-shrink: 0;
-    }
-
-    .perm-lock {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: ${({ theme }) => theme.color.surfaceSunken};
-      color: ${({ theme }) => theme.color.muted};
-      flex-shrink: 0;
+      align-items: flex-start;
+      gap: 14px;
     }
   }
-  @media (max-width: 540px) {
-    div.cta-row { flex-direction: column; align-items: center; }
-    div.permission-card .perm-cols { grid-template-columns: 1fr; gap: 12px; }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: ${({ theme }) => theme.color.ink};
+    margin: 0 0 4px;
+    sup {
+      font-size: 8px;
+      font-weight: 700;
+      color: ${({ theme }) => theme.color.brand};
+      vertical-align: super;
+    }
+  }
+
+  p.sub {
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.inkSoft};
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .ns-right {
+    flex-shrink: 0;
+    @media (max-width: 540px) {
+      width: 100%;
+      a, button { width: 100%; justify-content: center; }
+    }
+  }
+
+  p.methodology {
+    margin-top: 14px;
+    font-size: 11px;
+    color: ${({ theme }) => theme.color.mutedSoft};
+    line-height: 1.6;
+    font-style: italic;
+    text-align: center;
   }
 `;
 
