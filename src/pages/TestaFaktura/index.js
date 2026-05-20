@@ -5,6 +5,7 @@ import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr } from '../../data/mockData';
+import ArvoScore from './ArvoScore';
 import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
@@ -936,6 +937,8 @@ const TestaFaktura = () => {
                 </li>
               </ServiceList>
             )}
+
+            {result.route === 'auto' && <ArvoScore result={result} />}
 
             <NextSteps>
               <h3>Er Arvo Score är halvfärdig.</h3>
