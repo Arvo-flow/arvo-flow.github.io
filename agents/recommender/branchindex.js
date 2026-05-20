@@ -148,23 +148,27 @@ export const BRANCHINDEX = {
   },
 
   kortterminal: {
-    source: 'real-public',
+    source: 'estimated',
     unit: 'kr/år',
-    // Verifierade transaktionsavgifter maj 2026: SumUp 1,49 %, Zettle 1,85 %, Stripe Terminal 1,4 % + ~1,10 kr/köp.
+    // Transaktionsavgifter maj 2026 (Sverige, exkl. moms). OBS: Exakta priser varierar med avtalsvolym.
+    // SumUp Sverige: ~1,75 % per transaktion (startpriset 1,49 % höjt; verifierad av abonnemang.se maj 2026).
+    // Zettle by PayPal: 1,75 % per transaktion (verifierat för kort-i-present, EU-marknader).
+    // Stripe Terminal EEA: ~1,50 % + ~1,50 kr/transaktion (europeisk card-present-rate, ej US-priser).
     // Kortvolymer uppskattade (ingen offentlig källa): micro ~500 kkr/år, small ~2 Mkr/år, mid ~8 Mkr/år.
     // Tillverkning halverad (mestadels B2B-fakturering, låg kortandel).
-    note: 'Transaktionsavgifter. Verifierade listpriser maj 2026: SumUp 1,49 % (ingen månadsavgift), Zettle 1,85 % (ingen månadsavgift), Stripe Terminal 1,4 % + ~1,10 kr/transaktion EEA-kort. Kortvolym uppskattad per segment.',
+    // p25 = Stripe/billigaste spotavtal ~1,50 %. Median = SumUp/Zettle standardrate ~1,75 %.
+    note: 'Transaktionsavgifter per år (uppskattad kortvolym × rate). Priser maj 2026: SumUp ~1,75 %, Zettle ~1,75 %, Stripe Terminal EEA ~1,5 % + ~1,50 kr/köp. OBS: Exakta rates varierar med avtalslängd och volym — denna källa är "estimated" (inte "real-public") eftersom kortvolym per segment är uppskattad.',
     alternatives: [
-      { supplier: 'SumUp',            positioning: 'Verifierat 1,49 % per transaktion, ingen månadsavgift — lägst kostnad för låg-volym', reliability: 0.91 },
-      { supplier: 'Zettle by PayPal', positioning: 'Verifierat 1,85 % per transaktion, ingen månadsavgift, stark app-integration',        reliability: 0.93 },
-      { supplier: 'Stripe Terminal',  positioning: 'Verifierat 1,4 % + ~1,10 kr/köp EEA-kort — bäst om kunden redan har Stripe online',   reliability: 0.97 },
+      { supplier: 'Stripe Terminal',  positioning: 'Lägst EEA-rate: ~1,5 % + ~1,50 kr/köp — bäst om kunden redan har Stripe online', reliability: 0.97 },
+      { supplier: 'SumUp',            positioning: '~1,75 % per transaktion, ingen månadsavgift — enkel setup, lägst kostnad för låg-volym', reliability: 0.91 },
+      { supplier: 'Zettle by PayPal', positioning: '~1,75 % per transaktion, ingen månadsavgift, stark app-integration och rapportering', reliability: 0.93 },
       { supplier: 'Klarna Checkout',  positioning: 'Bäst för e-handel: integrerad checkout med bnpl och kortbetalning',                   reliability: 0.96 },
     ],
     matrix: {
-      byraer:      { micro: { median:  9250, p25:  7450 }, small: { median:  37000, p25:  29800 }, mid: { median: 148000, p25: 119200 } },
-      hantverkare: { micro: { median:  9250, p25:  7450 }, small: { median:  37000, p25:  29800 }, mid: { median: 148000, p25: 119200 } },
-      ehandel:     { micro: { median:  9250, p25:  7450 }, small: { median:  37000, p25:  29800 }, mid: { median: 148000, p25: 119200 } },
-      tillverkning:{ micro: { median:  4625, p25:  3725 }, small: { median:  18500, p25:  14900 }, mid: { median:  74000, p25:  59600 } },
+      byraer:      { micro: { median:  8750, p25:  7500 }, small: { median:  35000, p25:  30000 }, mid: { median: 140000, p25: 120000 } },
+      hantverkare: { micro: { median:  8750, p25:  7500 }, small: { median:  35000, p25:  30000 }, mid: { median: 140000, p25: 120000 } },
+      ehandel:     { micro: { median:  8750, p25:  7500 }, small: { median:  35000, p25:  30000 }, mid: { median: 140000, p25: 120000 } },
+      tillverkning:{ micro: { median:  4375, p25:  3750 }, small: { median:  17500, p25:  15000 }, mid: { median:  70000, p25:  60000 } },
     },
   },
 
@@ -189,6 +193,7 @@ export const BRANCHINDEX = {
   },
 
   'leasing-bil': {
+    source: 'estimated',
     requiresVolumeData: true,
     volumeDataNote: 'Billeasingkostnader styrs av antal fordon, modell och avtalsvillkor — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
@@ -208,6 +213,7 @@ export const BRANCHINDEX = {
   },
 
   'forsakring-foretag': {
+    source: 'mock',
     unit: 'kr/år',
     note: 'License-pending — Recommender markerar dessa för VIP-kö, inte direkt byte.',
     alternatives: [
@@ -293,11 +299,13 @@ export const BRANCHINDEX = {
   skrivarleasing: {
     source: 'estimated',
     unit: 'kr/år',
-    // Kammarkollegiet ramavtal "Kopiatorer och Skrivare" (offentlig upphandling, representativ proxy för SMB):
-    // A4 MFP leasingavgift: 150–350 kr/mån. Klickpris S/V: 0,05–0,08 kr/sida. Klickpris färg: 0,45–0,80 kr/sida.
+    // Kommersiella SMF-priser maj 2026 (privat sektor, ej offentlig upphandling):
+    // A4 MFP leasingavgift: 200–400 kr/mån. Klickpris S/V: 0,08–0,15 kr/sida. Klickpris färg: 0,55–1,00 kr/sida.
+    // OBS: Kammarkollegiets ramavtal (offentlig sektor) = 0,05–0,08 kr/sida S/V. SMF betalar 40–80 % mer
+    //   utan offentligupphandlad volym och centraliserade avtal.
     // Serviceavtal ingår i de flesta managed print-avtal.
     // p25 = Kyocera/Brother-klass (lägst TCO). Median = Ricoh/Konica Minolta-klass (marknadsledare).
-    note: 'Totalt per år: skrivarhyra + klickavtal S/V + serviceavtal. Källa: Kammarkollegiet ramavtal "Kopiatorer och Skrivare" maj 2026 + operatörernas publika startpriser. A4 MFP lease 150–350 kr/mån, klick S/V 0,05–0,08 kr/sida, klick färg 0,45–0,80 kr/sida.',
+    note: 'Totalt per år: skrivarhyra + klickavtal S/V + serviceavtal (per driftsställe). Kommersiella SMF-priser maj 2026 (privat sektor): A4 MFP lease 200–400 kr/mån, klick S/V 0,08–0,15 kr/sida, klick färg 0,55–1,00 kr/sida. OBS: Kammarkollegiets offentligupphandlade priser (0,05–0,08 kr/sida) gäller INTE SMF utan offentligupphandlad volym.',
     alternatives: [
       { supplier: 'Konica Minolta SMB Solutions', positioning: 'Stark SMF-portfölj, konkurrenskraftiga klickavtal, rikstäckande service',       reliability: 0.95 },
       { supplier: 'Ricoh Sverige',                positioning: 'Bäst total cost of ownership för mellanstor printvolym, stark SLA',              reliability: 0.94 },
@@ -305,12 +313,15 @@ export const BRANCHINDEX = {
       { supplier: 'Kyocera Document Solutions',   positioning: 'Lägst klickpris i klassen, lång livslängd på hardware — lägst TCO totalt',      reliability: 0.92 },
     ],
     // Metodologi (total MPS-kostnad per år, ej per anställd):
-    // Antal MFPs: micro=1, small=2–3, mid=5–6 (baserat på 1 per 10–15 anst, modern papperslös trend).
-    // p25-pris/MFP/mån: Kyocera-klass 480 kr (200 kr lease + 3 000 S/V×0,06 + 300 färg×0,45).
-    // Median-pris/MFP/mån: Ricoh/Konica-klass 850–1 000 kr (300 kr lease + 4 000×0,075 + 400×0,65).
-    // mid-korrektion: nuv. 48 000 kr = 4 MFPs × 1 000 kr. 5 MFPs × 1 000–1 200 kr = 60 000–72 000 → 60 000.
+    // Kommersiella SMF-klickpriser: S/V 0,10–0,13 kr/sida, färg 0,60–0,90 kr/sida.
+    // Antal MFPs: micro=1, small=2–3, mid=5–6 (1 per 10–15 anst, modern papperslös trend).
+    // p25 (Kyocera-klass, lågkostnad): 200 kr lease + 3 500 S/V×0,10 + 300 färg×0,60 + 150 service = 930 kr/mån.
+    //   micro p25: 930×12 = 11 160 → 11 400 kr/år.
+    // Median (Ricoh/Konica-klass): 350 kr lease + 4 000 S/V×0,12 + 400 färg×0,80 + 200 service = 1 390 kr/mån.
+    //   micro median: 1 390×12 = 16 680 → 16 800 kr/år.
+    // small (2 MFPs p25, 3 MFPs median), mid (5–6 MFPs): skalade proportionellt.
     // Hantverkare micro/small: lägre volym (fältarbete, färre kontorsutskrifter) → 70 % av byraer.
-    // Tillverkning mid: hög volym (ritningar, arbetsberedningar) → egna värden behålls med +25 % korrektion.
+    // Tillverkning mid: hög volym (ritningar, arbetsberedningar) → +25 % korrektion mot ehandel.
     matrix: {
       byraer:      { micro: { median: 16800, p25: 11400 }, small: { median: 28800, p25: 19200 }, mid: { median:  60000, p25:  42000 } },
       hantverkare: { micro: { median: 11400, p25:  7800 }, small: { median: 22800, p25: 15600 }, mid: { median:  54000, p25:  36000 } },
@@ -328,7 +339,7 @@ export const BRANCHINDEX = {
     //   small  (n=20):  (199 + 20×25)×12/20 =  420 kr/anst/år
     //   mid    (n=100): (199 + 100×25)×12/100= 324 kr/anst/år
     // Median = vad marknaden faktiskt betalar (Visma, Hogia, Azets-nivå).
-    note: 'Per anställd/år. Källa p25: Fortnox Lön verifierat listpris maj 2026 — 199 kr/mån fast + 25 kr/anst/mån. Median = typisk marknadspremie för system utan Fortnox-integration.',
+    note: 'Per anställd/år. Källa p25: Fortnox Lön verifierat listpris maj 2026 — 199 kr/mån fast + 25 kr/anst/mån + 5 kr/lönebesked (Kivra-utskick). Median = typisk marknadspremie för system utan Fortnox-integration.',
     alternatives: [
       { supplier: 'Fortnox Lön',   positioning: 'Verifierat lägst — 199 kr/mån + 25 kr/anst/mån. Direkt integrerat i Fortnox.',  reliability: 0.96 },
       { supplier: 'Visma Lön',     positioning: 'Stark integration med Visma eEkonomi, bred support — offert krävs',              reliability: 0.94 },
@@ -583,6 +594,7 @@ export const BRANCHINDEX = {
   },
 
   'forsakring-ansvar': {
+    source: 'mock',
     unit: 'kr/år',
     note: 'License-pending — Recommender markerar dessa för VIP-kö.',
     alternatives: [
