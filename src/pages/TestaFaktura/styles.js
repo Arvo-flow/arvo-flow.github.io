@@ -1055,6 +1055,66 @@ export const ServiceList = styled.ul`
   }
 `;
 
+export const ScoreDiag = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 11px 16px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  border: 1px solid transparent;
+  margin-bottom: 16px;
+
+  .diag-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-shrink: 0;
+  }
+  .diag-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+  .diag-score-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: ${({ theme }) => theme.color.mutedSoft};
+  }
+  .diag-num {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-feature-settings: "tnum";
+    margin-left: 7px;
+  }
+  .diag-den {
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 1px;
+    opacity: 0.7;
+  }
+  .diag-sep {
+    color: ${({ theme }) => theme.color.borderStrong};
+    margin: 0 10px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .diag-label {
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .diag-text {
+    font-size: 13px;
+    letter-spacing: -0.01em;
+  }
+`;
+
 export const EmailGate = styled.div`
   margin-top: 20px;
   padding: 20px 24px;

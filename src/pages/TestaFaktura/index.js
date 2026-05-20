@@ -5,13 +5,12 @@ import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr } from '../../data/mockData';
-import ArvoScore from './ArvoScore';
 import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
-  Reasoning, LicenseOverageNote, NextSteps, ServiceList, EmailGate,
+  Reasoning, LicenseOverageNote, NextSteps, ScoreDiag, EmailGate,
   ModalOverlay, ModalCard, QuoteLeadForm,
 } from './styles';
 
@@ -399,6 +398,25 @@ const TestaFaktura = () => {
   const optArvoFee = isOptimize ? Math.round(optSaving * 0.20) : 0;
   const optNet = isOptimize ? optSaving - optArvoFee : 0;
 
+  const diagAnnual  = result?.extracted?.annualCost ?? 0;
+  const diagSugg    = result?.recommendation?.suggestedAnnualCost ?? 0;
+  const diagOvPct   = diagAnnual > 0 && diagSugg < diagAnnual
+    ? Math.round((diagAnnual - diagSugg) / diagAnnual * 100)
+    : 0;
+  const diagScore   = Math.max(0, Math.round(100 - diagOvPct * 1.5));
+  const diagC       = diagScore < 45
+    ? { dot: '#DC2626', num: '#DC2626', label: 'Kritisk',         labelClr: '#991B1B', txt: '#7F1D1D', bg: '#FEF2F2', border: 'rgba(220,38,38,.18)' }
+    : diagScore < 65
+    ? { dot: '#D97706', num: '#D97706', label: 'Suboptimerat',    labelClr: '#92400E', txt: '#78350F', bg: '#FFFBEB', border: 'rgba(217,119,6,.18)' }
+    : diagScore < 80
+    ? { dot: '#16A34A', num: '#16A34A', label: 'Marknadsmässigt', labelClr: '#166534', txt: '#14532D', bg: '#F0FDF4', border: 'rgba(22,163,74,.18)' }
+    : { dot: '#1B7A6E', num: '#1B7A6E', label: 'Optimalt',        labelClr: '#0E4F47', txt: '#0E4F47', bg: '#DCEEEA', border: 'rgba(27,122,110,.18)' };
+  const diagInsight = diagScore < 45
+    ? `Ni betalar ${diagOvPct} % mer än marknadspriset`
+    : diagScore < 65 ? 'Besparingspotential finns — ni ligger något över marknadssnitt.'
+    : diagScore < 80 ? 'Ni betalar ungefär branschsnitt. Marginalförbättringar möjliga.'
+    : 'Ni har ett kostnadsoptimerat leverantörsnätverk.';
+
   return (
     <Page>
       <Nav variant="public" />
@@ -737,6 +755,19 @@ const TestaFaktura = () => {
               </>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
+                <ScoreDiag style={{ background: diagC.bg, borderColor: diagC.border }}>
+                  <span className="diag-left">
+                    <span className="diag-dot" style={{ background: diagC.dot }} />
+                    <span className="diag-score-label">Arvo Score</span>
+                    <span className="diag-num" style={{ color: diagC.num }}>
+                      {diagScore}<span className="diag-den">/100</span>
+                    </span>
+                  </span>
+                  <span className="diag-sep">·</span>
+                  <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                  <span className="diag-sep">·</span>
+                  <span className="diag-text" style={{ color: diagC.txt }}>{diagInsight}</span>
+                </ScoreDiag>
                 {(() => {
                   const isRealPrice = REAL_PRICE_CATEGORIES.has(result.categorized.category);
                   const isLicensePending = result.categorized.licensePending;
@@ -917,31 +948,8 @@ const TestaFaktura = () => {
               </LicenseOverageNote>
             )}
 
-            {result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 && (
-              <ServiceList>
-                <li>
-                  <span className="check"><Icon name="check" size={11} stroke={2.8} /></span>
-                  Vi säger upp ditt nuvarande avtal — inga samtal, inga väntetider
-                </li>
-                <li>
-                  <span className="check"><Icon name="check" size={11} stroke={2.8} /></span>
-                  Vi förhandlar med volymmakt och säkrar marknadens bästa pris åt dig
-                </li>
-                <li>
-                  <span className="check"><Icon name="check" size={11} stroke={2.8} /></span>
-                  Du betalar 20 % av identifierad besparing — en engångsavgift, inget annat
-                </li>
-                <li>
-                  <span className="check"><Icon name="check" size={11} stroke={2.8} /></span>
-                  Fr.o.m. år 2 tillfaller hela besparingen er
-                </li>
-              </ServiceList>
-            )}
-
-            {result.route === 'auto' && <ArvoScore result={result} />}
-
             <NextSteps>
-              <h3>Er Arvo Score är halvfärdig.</h3>
+              <h3>Lås upp er fullständiga Arvo Score™</h3>
               <p>
                 Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen
                 på hela er reskontra och levererar en komplett Leverantörsrapport automatiskt.
