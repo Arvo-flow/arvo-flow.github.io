@@ -969,39 +969,6 @@ const TestaFaktura = () => {
               </LicenseOverageNote>
             )}
 
-            <EmailGate>
-              <p className="label">📄 Ladda ner analysen som PDF</p>
-              {emailState === 'sent' ? (
-                <div className="sent">
-                  <Icon name="check" size={16} stroke={2.5} />
-                  Analysen är skickad till {email}.
-                </div>
-              ) : (
-                <form onSubmit={submitEmail}>
-                  <div className="row">
-                    <input
-                      type="email"
-                      placeholder="din@epost.se"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                    <Button
-                      type="submit"
-                      $variant="secondary"
-                      $size="md"
-                      disabled={emailState === 'submitting'}
-                    >
-                      {emailState === 'submitting' ? 'Skickar…' : 'Skicka analysen'}
-                    </Button>
-                  </div>
-                  {emailState === 'error' && (
-                    <p className="note" style={{ color: 'red' }}>Något gick fel — försök igen eller kontakta hej@arvoflow.se.</p>
-                  )}
-                  <p className="note">Ingen spam. Vi skickar analysen direkt till din inkorg.</p>
-                </form>
-              )}
-            </EmailGate>
           </Card>
           <NextSteps>
             <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
