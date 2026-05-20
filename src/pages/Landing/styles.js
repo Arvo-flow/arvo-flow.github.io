@@ -5,6 +5,11 @@ const fadeUp = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
+const ticker = keyframes`
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+`;
+
 
 export const Page = styled.main`
   background: ${({ theme }) => theme.color.bg};
@@ -263,29 +268,17 @@ export const PreviewFloat = styled.div`
 `;
 
 export const CoverageStrip = styled.section`
-  padding: 22px 28px 26px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  padding: 18px 0;
   background: ${({ theme }) => theme.color.surface};
-  text-align: center;
+  overflow: hidden;
 
-  .kicker {
-    display: inline-block;
-    font-size: 10.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 14px;
-  }
-
-  .grid {
+  .track {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 7px;
-    max-width: 820px;
-    margin: 0 auto;
+    white-space: nowrap;
+    gap: 10px;
+    animation: ${ticker} 36s linear infinite;
   }
 `;
 
@@ -654,63 +647,53 @@ export const Quote = styled.figure`
 `;
 
 export const Stats = styled.section`
-  position: relative;
-  padding: 64px 28px;
-  text-align: center;
-  overflow: visible;
+  max-width: ${({ theme }) => theme.size.container};
+  margin: 0 auto;
+  padding: 0 28px 80px;
+  @media (max-width: 740px) { padding: 0 20px 64px; }
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0;
-    left: calc(-50vw + 50%);
-    right: calc(-50vw + 50%);
+  .card {
     background: ${({ theme }) => theme.color.ink};
-    z-index: -1;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -40%;
-    right: 8%;
-    width: 40%;
-    height: 180%;
-    background: radial-gradient(circle, rgba(93, 214, 202, 0.13), transparent 60%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .inner {
-    position: relative;
-    z-index: 1;
-    max-width: ${({ theme }) => theme.size.container};
-    margin: 0 auto;
+    border-radius: ${({ theme }) => theme.size.radius.xl};
+    padding: 52px 40px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    @media (max-width: 740px) { grid-template-columns: repeat(2, 1fr); }
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    @media (max-width: 740px) {
+      grid-template-columns: repeat(2, 1fr);
+      padding: 36px 28px;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: -50%; right: 0;
+      width: 50%; height: 200%;
+      background: radial-gradient(circle, rgba(93, 214, 202, 0.14), transparent 60%);
+      pointer-events: none;
+    }
   }
 
   .stat {
-    padding: 20px 28px;
+    position: relative;
+    z-index: 1;
+    padding: 20px 20px;
     border-right: 1px solid rgba(255, 255, 255, 0.09);
     &:last-child { border-right: none; }
-  }
-
-  @media (max-width: 740px) {
-    padding: 48px 0;
-    .stat {
-      padding: 20px 24px;
-      border-right: none;
+    @media (max-width: 740px) {
+      padding: 18px 16px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      border-right: none;
+      &:nth-child(odd) { border-right: 1px solid rgba(255, 255, 255, 0.09); }
+      &:nth-last-child(-n+2) { border-bottom: none; }
     }
-    .stat:nth-child(odd) { border-right: 1px solid rgba(255, 255, 255, 0.09); }
-    .stat:nth-last-child(-n+2) { border-bottom: none; }
   }
 
   strong {
     display: block;
-    font-size: clamp(48px, 5.5vw, 68px);
+    font-size: clamp(40px, 5vw, 60px);
     font-weight: 800;
     letter-spacing: -0.04em;
     line-height: 1;
@@ -720,11 +703,11 @@ export const Stats = styled.section`
 
   span {
     display: block;
-    margin-top: 12px;
-    font-size: 13.5px;
-    color: rgba(250, 250, 247, 0.50);
+    margin-top: 10px;
+    font-size: 13px;
+    color: rgba(250, 250, 247, 0.48);
     line-height: 1.45;
-    max-width: 150px;
+    max-width: 140px;
     margin-left: auto;
     margin-right: auto;
   }

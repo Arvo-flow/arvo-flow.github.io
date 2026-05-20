@@ -218,10 +218,9 @@ const Landing = () => {
       </Hero>
 
       <CoverageStrip>
-        <span className="kicker">Vi analyserar</span>
-        <div className="grid">
-          {COVERAGE_CLUSTERS.map((c) => (
-            <CategoryPill key={c.label}>
+        <div className="track">
+          {[...COVERAGE_CLUSTERS, ...COVERAGE_CLUSTERS].map((c, i) => (
+            <CategoryPill key={`${c.label}-${i}`}>
               <span className="icon"><Icon name={c.icon} size={14} stroke={1.8} /></span>
               {c.label}
             </CategoryPill>
@@ -307,7 +306,7 @@ const Landing = () => {
       </Section>
 
       <Stats>
-        <div className="inner">
+        <div className="card">
           <div className="stat">
             <strong>20 %</strong>
             <span>av identifierad besparing — vår enda avgift</span>
