@@ -541,6 +541,7 @@ const TestaFaktura = () => {
         )}
 
         {result && (
+          <>
           <Card ref={resultRef}>
             <ResultHead>
               <div>
@@ -948,19 +949,6 @@ const TestaFaktura = () => {
               </LicenseOverageNote>
             )}
 
-            <NextSteps>
-              <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
-              <p>
-                Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen
-                på hela er reskontra och levererar en komplett Leverantörsrapport automatiskt.
-                Vi sköter varje byte från uppsägning till nytt avtal. Du betalar 20 % av
-                identifierad besparing. Inga fasta avgifter.
-              </p>
-              <Button as={Link} to="/connect" $variant="gradient" $size="lg">
-                Koppla Fortnox / Visma →
-              </Button>
-            </NextSteps>
-
             <EmailGate>
               <p className="label">📄 Ladda ner analysen som PDF</p>
               {emailState === 'sent' ? (
@@ -995,6 +983,19 @@ const TestaFaktura = () => {
               )}
             </EmailGate>
           </Card>
+          <NextSteps>
+            <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
+            <p>
+              Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen
+              på hela er reskontra och levererar en komplett Leverantörsrapport automatiskt.
+              Vi sköter varje byte från uppsägning till nytt avtal. Du betalar 20 % av
+              identifierad besparing. Inga fasta avgifter.
+            </p>
+            <Button as={Link} to="/connect" $variant="gradient" $size="lg">
+              Koppla Fortnox / Visma →
+            </Button>
+          </NextSteps>
+          </>
         )}
       </Body>
 

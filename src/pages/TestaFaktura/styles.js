@@ -885,16 +885,18 @@ export const LicenseOverageNote = styled.div`
 `;
 
 export const NextSteps = styled.div`
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 28px 32px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(14,26,23,.05), 0 1px 2px rgba(14,26,23,.04);
 
   h3 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.015em;
     margin-bottom: 10px;
-    color: ${({ theme }) => theme.color.ink};
     sup {
       font-size: 9px;
       font-weight: 700;
@@ -902,13 +904,13 @@ export const NextSteps = styled.div`
       vertical-align: super;
     }
   }
-
   p {
     font-size: 14.5px;
     color: ${({ theme }) => theme.color.muted};
     line-height: 1.65;
-    margin: 0 0 20px;
+    margin: 0 0 22px;
   }
+  @media (max-width: 600px) { padding: 22px 20px; }
 `;
 
 export const ServiceList = styled.ul`
