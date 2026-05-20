@@ -185,6 +185,7 @@ const TestaFaktura = () => {
   const [modalEmailState, setModalEmailState] = useState('idle'); // idle | submitting | sent
   const [apiToken, setApiToken] = useState(null);
   const [gateOpen, setGateOpen] = useState(false);
+  const [gateReason, setGateReason] = useState('quota'); // 'saving' | 'quota'
   const [gateEmail, setGateEmail] = useState('');
   const [gateSubmitting, setGateSubmitting] = useState(false);
   const [quoteName, setQuoteName] = useState('');
@@ -240,6 +241,7 @@ const TestaFaktura = () => {
       const hadSaving     = localStorage.getItem('arvo_had_saving');
       const successCount  = parseInt(localStorage.getItem('arvo_successful_count') ?? '0');
       if (hadSaving || successCount >= FREE_SUCCESSFUL) {
+        setGateReason('quota');
         setGateOpen(true);
         return;
       }
@@ -317,6 +319,7 @@ const TestaFaktura = () => {
         localStorage.setItem('arvo_successful_count', String(count));
         if (data.recommendation?.netSaving > 0) {
           localStorage.setItem('arvo_had_saving', '1');
+          setGateReason('saving');
           setGateOpen(true);
         }
       }
@@ -337,8 +340,17 @@ const TestaFaktura = () => {
     e.preventDefault();
     if (!gateEmail || gateSubmitting) return;
     setGateSubmitting(true);
-    await runAnalysis(gateEmail);
-    setGateSubmitting(false);
+    const addr = gateEmail.trim().toLowerCase();
+    localStorage.setItem('arvo_gate_email', addr);
+
+    if (gateReason === 'saving') {
+      try { if (result) await sendAnalysisMail(addr); } catch { /* non-fatal */ }
+      setGateOpen(false);
+      setGateSubmitting(false);
+    } else {
+      setGateSubmitting(false);
+      window.location.href = '/connect';
+    }
   };
 
   const submitQuoteLead = (e) => {
@@ -1094,11 +1106,23 @@ const TestaFaktura = () => {
       {gateOpen && (
         <ModalOverlay>
           <ModalCard>
-            <h3>Få tillgång till <em>obegränsade</em> analyser</h3>
-            <p className="sub">
-              Du har använt dina {FREE_ANALYSES} gratisanalyser. Ange din e-post för att fortsätta
-              — vi skickar även en sammanfattning av analysen direkt till din inkorg.
-            </p>
+            {gateReason === 'saving' ? (
+              <>
+                <h3>Ni har <em>pengar att hämta</em></h3>
+                <p className="sub">
+                  Vi skickar analysen direkt till er inkorg — kostnadsfritt. Arvo kontaktar er
+                  enbart om det finns besparingar att realisera.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3>Redo att <em>gå vidare</em>?</h3>
+                <p className="sub">
+                  Koppla Fortnox / Visma för en komplett analys av hela er leverantörsreskontra
+                  — Arvo sköter varje byte från uppsägning till nytt avtal.
+                </p>
+              </>
+            )}
             <form className="modal-form" onSubmit={submitGate}>
               <input
                 type="email"
@@ -1116,8 +1140,10 @@ const TestaFaktura = () => {
                 disabled={gateSubmitting || !gateEmail}
               >
                 {gateSubmitting
-                  ? <><Spinner /> Analyserar…</>
-                  : <>Fortsätt analysen <Icon name="arrow" size={16} /></>}
+                  ? <><Spinner /> Skickar…</>
+                  : gateReason === 'saving'
+                    ? <>Skicka analysen <Icon name="arrow" size={16} /></>
+                    : <>Kom igång <Icon name="arrow" size={16} /></>}
               </Button>
               <p className="fine-print">
                 Ingen spam. Inga fasta avgifter.
