@@ -9,7 +9,7 @@ import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
   PreviewCard, PreviewHead, SavingBig, PreviewList, PreviewRow, PreviewFloat,
-  CoverageStrip, CategoryPill,
+  CoverageStrip,
   TrustStrip, TrustPillar,
   AlgoTrust,
   SectionHead, HowGrid, HowCard,
@@ -220,10 +220,7 @@ const Landing = () => {
       <CoverageStrip>
         <div className="track">
           {[...COVERAGE_CLUSTERS, ...COVERAGE_CLUSTERS].map((c, i) => (
-            <CategoryPill key={`${c.label}-${i}`}>
-              <span className="icon"><Icon name={c.icon} size={14} stroke={1.8} /></span>
-              {c.label}
-            </CategoryPill>
+            <span key={`${c.label}-${i}`}>{c.label} <em>·</em></span>
           ))}
         </div>
       </CoverageStrip>

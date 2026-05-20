@@ -270,49 +270,31 @@ export const PreviewFloat = styled.div`
 export const CoverageStrip = styled.section`
   border-top: 1px solid ${({ theme }) => theme.color.border};
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
-  padding: 18px 0;
+  padding: 22px 0;
   background: ${({ theme }) => theme.color.surface};
   overflow: hidden;
 
   .track {
     display: flex;
     white-space: nowrap;
-    gap: 10px;
-    animation: ${ticker} 36s linear infinite;
+    gap: 64px;
+    animation: ${ticker} 50s linear infinite;
+    color: ${({ theme }) => theme.color.muted};
+    font-size: 14px;
+    letter-spacing: 0.02em;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+    em {
+      font-style: normal;
+      color: ${({ theme }) => theme.color.borderStrong};
+    }
   }
 `;
 
-export const CategoryPill = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 13px 6px 7px;
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-radius: ${({ theme }) => theme.size.radius.pill};
-  background: ${({ theme }) => theme.color.bg};
-  font-size: 12.5px;
-  font-weight: 500;
-  color: ${({ theme }) => theme.color.inkSoft};
-  transition: border-color ${({ theme }) => theme.motion.fast},
-              background ${({ theme }) => theme.motion.fast};
-
-  &:hover {
-    border-color: ${({ theme }) => theme.color.brand}66;
-    background: ${({ theme }) => theme.color.brandSoft};
-  }
-
-  .icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: ${({ theme }) => theme.color.brandSoft};
-    color: ${({ theme }) => theme.color.brand};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-`;
 
 export const TrustStrip = styled.section`
   position: relative;
