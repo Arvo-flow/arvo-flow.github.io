@@ -55,28 +55,32 @@ export const BRANCHINDEX = {
     source: 'estimated',
     volumeDataNote: 'Elkostnader styrs av faktisk förbrukning i kWh och nätavgift — inte av antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
-    // Nordpool SE3 snittpris 2025: ~64 öre/kWh spot. Nätavgift: ~28–35 öre/kWh (region-beroende).
-    // Energiskatt 2026: 53,50 öre/kWh (Skatteverket). Elbolags påslag: ~8–15 öre/kWh.
-    // All-in rörligt spotavtal: ~1,45–1,65 kr/kWh exkl. moms.
-    // p25 = effektivt spotavtal (t.ex. Tibber/Bixia): ~1,45 kr/kWh.
-    // Median = traditionellt rörligt avtal: ~1,60 kr/kWh.
-    note: 'Rörlig spotavtal + nätavgift + energiskatt (exkl. moms, SE3). Källa: Nordpool SE3 snittpris 2025 ~64 öre/kWh spot + nätavgift ~30 öre/kWh + energiskatt 53,5 öre/kWh (Skatteverket 2026) = ~1,47–1,65 kr/kWh all-in. Typisk förbrukning: micro ~10–20 MWh/år, small ~30–60 MWh/år, mid ~80–200 MWh/år.',
+    // Kalibrering jan 2026 — verifierade komponenter (exkl. moms, SE3):
+    //   Nordpool SE3 årssnitt 2025: 51,25 öre/kWh (källa: Elbruk/Elmarknad, Nord Pool).
+    //   Nätavgift rörlig del (Ellevio SE3): ~26–39 öre/kWh (region-beroende).
+    //   Energiskatt 2026: 36,0 öre/kWh (Skatteverket, sänkt 1 jan 2026 från 43,9 öre; Riksdagen nov 2025).
+    //   Elhandlare påslag rörligt: ~5–10 öre/kWh (p25 = Tibber ~5, median ~8).
+    //   All-in p25 (effektivt spotavtal, låg nätavgift): 51,25+5+26+36,0 = ~118 öre → ~1,18 kr/kWh.
+    //   All-in median (standard rörligt): 51,25+8+32+36,0 = ~127 öre → ~1,27 kr/kWh.
+    //   Kunder på äldre fast avtal betalar mer (~1,35–1,55 kr/kWh) — de ligger ovan median.
+    note: 'Rörligt spotavtal + nätavgift + energiskatt (exkl. moms, SE3). Källa: Nordpool SE3 årssnitt 2025: 51,25 öre/kWh + nätavgift ~26–39 öre/kWh (Ellevio) + energiskatt 36,0 öre/kWh (Skatteverket 2026, sänkt 1 jan 2026) + elhandlare påslag ~5–10 öre = ~1,18–1,35 kr/kWh all-in exkl. moms. Typisk förbrukning: micro ~10–15 MWh/år, small ~25–35 MWh/år, mid ~80–120 MWh/år.',
     alternatives: [
       { supplier: 'Tibber',       positioning: 'Spotpris per timme, ~5 öre/kWh påslag, app-drivet — lägst rörligt pris',        reliability: 0.92 },
       { supplier: 'Bixia',        positioning: '100 % förnybar el, transparent prissättning, konkurrenskraftigt rörligt avtal',  reliability: 0.94 },
       { supplier: 'Telge Energi', positioning: 'Lågt påslag, direktavtal med producenter',                                      reliability: 0.91 },
       { supplier: 'Mälarenergi',  positioning: 'Stabil regional aktör, god service, något högre påslag',                        reliability: 0.96 },
     ],
-    // Metodologi mid-korrektion (byraer):
-    // 100-personers kontor ~1 000 kvm × 100 kWh/kvm (Energimyndigheten normtal) = 100 000 kWh.
-    // Median: 100 000 × 1,57 kr = 157 000 → 165 000 kr (inkl. gemensamma utrymmen).
-    // p25: 900 kvm × 80 kWh × 1,45 kr = 104 400 → 108 000 kr (nybyggt, spotavtal).
-    // Övriga segment (hantverkare/ehandel/tillverkning) inom ±15 % av kalkyl — oförändrade.
+    // Metodologi (kalibrerad jan 2026):
+    // Priser: median ~1,27 kr/kWh, p25 ~1,18 kr/kWh (se not ovan).
+    // Byraer mid: 105 000 kWh (100-pers kontor, ~1 000 kvm × 105 kWh/kvm Energimyndigheten normtal).
+    //   median = 105 000 × 1,27 = 133 350 → 131 000 kr.
+    //   p25 = 75 000 kWh (nytt effektivt kontor) × 1,18 = 88 500 → 88 000 kr.
+    // Övriga segment skalade proportionellt från original (±15 % av kalkyl).
     matrix: {
-      byraer:      { micro: { median: 18000,  p25: 13000  }, small: { median:  52000, p25:  38000 }, mid: { median: 165000, p25: 108000 } },
-      hantverkare: { micro: { median: 32000,  p25: 24000  }, small: { median:  98000, p25:  72000 }, mid: { median: 248000, p25: 182000 } },
-      ehandel:     { micro: { median: 28000,  p25: 21000  }, small: { median:  98000, p25:  72000 }, mid: { median: 248000, p25: 182000 } },
-      tillverkning:{ micro: { median: 62000,  p25: 45000  }, small: { median: 248000, p25: 182000 }, mid: { median: 744000, p25: 550000 } },
+      byraer:      { micro: { median: 14500, p25: 10500 }, small: { median:  41500, p25:  31000 }, mid: { median: 131000, p25:  88000 } },
+      hantverkare: { micro: { median: 25500, p25: 19500 }, small: { median:  78000, p25:  58500 }, mid: { median: 198000, p25: 148000 } },
+      ehandel:     { micro: { median: 22500, p25: 17000 }, small: { median:  78000, p25:  58500 }, mid: { median: 198000, p25: 148000 } },
+      tillverkning:{ micro: { median: 49500, p25: 36500 }, small: { median: 198000, p25: 148000 }, mid: { median: 592000, p25: 448000 } },
     },
   },
 
