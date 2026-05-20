@@ -73,6 +73,13 @@ const ICONS = {
       <path d="M14 7h7v7" />
     </>
   ),
+  'alert-circle': (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 8v4" />
+      <path d="M12 16h.01" />
+    </>
+  ),
 };
 
 const Icon = ({ name, size = 20, stroke = 1.6, color = 'currentColor', fill = 'none', ...rest }) => {

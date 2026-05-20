@@ -774,16 +774,18 @@ const TestaFaktura = () => {
               </>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
-                <ScoreDiag>
+                <ScoreDiag style={{ '--diag-color': diagC.dot }}>
                   <span className="diag-left">
-                    <span className="diag-dot" style={{ background: diagC.dot }} />
                     <span className="diag-score-label">Arvo Score</span>
                     <span className="diag-num" style={{ color: diagC.num }}>
                       {diagScore}<span className="diag-den">/100</span>
                     </span>
                   </span>
                   <span className="diag-sep">·</span>
-                  <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                  <span className="diag-status">
+                    <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
+                    <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                  </span>
                   <span className="diag-sep">·</span>
                   <span className="diag-text">{diagInsight}</span>
                 </ScoreDiag>

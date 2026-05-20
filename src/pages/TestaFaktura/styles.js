@@ -951,7 +951,7 @@ export const ScoreDiag = styled.div`
   padding: 11px 16px;
   border-radius: ${({ theme }) => theme.size.radius.md};
   background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  border: 1.5px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
   margin-bottom: 16px;
 
   .diag-left {
@@ -959,13 +959,6 @@ export const ScoreDiag = styled.div`
     align-items: center;
     gap: 9px;
     flex-shrink: 0;
-  }
-  .diag-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    display: inline-block;
   }
   .diag-score-label {
     font-size: 11px;
@@ -993,6 +986,12 @@ export const ScoreDiag = styled.div`
     font-size: 13px;
     flex-shrink: 0;
   }
+  .diag-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
   .diag-label {
     font-size: 13px;
     font-weight: 700;
@@ -1001,6 +1000,7 @@ export const ScoreDiag = styled.div`
   .diag-text {
     font-size: 13px;
     letter-spacing: -0.01em;
+    color: ${({ theme }) => theme.color.muted};
   }
 `;
 
