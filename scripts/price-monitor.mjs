@@ -3,12 +3,15 @@
  * Nightly price monitor for Arvo Flow benchmarks.
  *
  * Uses Playwright (headless Chromium) to render each supplier page and verify
- * that the expected price strings are still present. Simple regex patterns
- * match against the fully-rendered page text.
+ * that the expected price strings are still present. When a pattern is missing,
+ * Claude Haiku is called to extract the actual current price.
+ *
+ * Writes /tmp/price-monitor-report.json with Haiku analysis for each alert.
+ * The GitHub Actions workflow reads this file to create a PR with proposed changes.
  *
  * Exit codes:
  *   0  – all checks passed or inconclusive (no action needed)
- *   1  – at least one price string no longer found → GitHub Actions creates issue
+ *   1  – at least one price string no longer found → workflow creates a PR
  *
  * Run locally: node scripts/price-monitor.mjs [--headed]
  * In CI:       node scripts/price-monitor.mjs   (headless, auto-installed Chromium)
@@ -16,6 +19,7 @@
 
 import { writeFileSync } from 'fs';
 import { chromium } from 'playwright';
+import Anthropic from '@anthropic-ai/sdk';
 
 const HEADED = process.argv.includes('--headed');
 const PAGE_TIMEOUT = 30_000;
@@ -23,7 +27,7 @@ const NAV_TIMEOUT  = 25_000;
 
 // ── Price checks ────────────────────────────────────────────────────────────
 // pattern: regex that SHOULD be present in the fully-rendered page text.
-// If the pattern disappears → possible price change → alert (exit 1).
+// If the pattern disappears → possible price change → Haiku extraction → PR.
 // Pages that time out or return errors → warning (inconclusive, exit 0).
 const PRICE_CHECKS = [
   // Mobil — real-public, verified
@@ -91,7 +95,6 @@ const PRICE_CHECKS = [
     supplier: 'Microsoft 365 Business Standard (sv)',
     url: 'https://www.microsoft.com/sv-se/microsoft-365/business/compare-all-plans',
     checks: [
-      // Letar efter 14x kr i SEK-kontext (p25 = ~142 kr/user/mth)
       { name: '~142 kr/user/mth', pattern: /14[0-9]\s*kr/ },
     ],
   },
@@ -102,7 +105,6 @@ const PRICE_CHECKS = [
     supplier: 'Skatteverket energiskatt 2026',
     url: 'https://www.skatteverket.se/foretag/skatterochavdrag/punktskatter/energiskatter.4.html',
     checks: [
-      // 36,0 öre/kWh, sänkt 1 jan 2026
       { name: 'Energiskatt 36 öre/kWh', pattern: /36[,.]0|360\s*öre|36\s*öre/ },
     ],
   },
@@ -118,16 +120,64 @@ const PRICE_CHECKS = [
   },
 ];
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ── Haiku price extraction ──────────────────────────────────────────────────
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+
+async function extractPriceWithHaiku(pageText, source, check) {
+  if (!anthropic) return null;
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      system: `Du är en prisextraktionsassistent för Arvo Flow, en svensk B2B SaaS-plattform.
+Du letar ENBART efter permanenta ordinarie B2B-listpriser — INTE kampanjpriser, introduktionserbjudanden eller tidsbegränsade rabatter.
+Svara ALLTID i giltig JSON, utan annan text.`,
+      messages: [
+        {
+          role: 'user',
+          content: `Leverantör: ${source.supplier}
+URL: ${source.url}
+Förväntad prissträng vi letade efter: "${check.name}" (mönster: /${check.pattern.source}/)
+
+Sidans text (utdrag, max 4 000 tecken):
+${pageText.slice(0, 4000)}
+
+Extrahera det aktuella ordinarie B2B-listpriset för denna produkt. Svara i exakt detta JSON-format:
+{
+  "extractedPrice": "t.ex. '349 kr/mth' eller null om ej hittad",
+  "isPermanent": true,
+  "isCampaign": false,
+  "confidence": 0.90,
+  "actionRequired": "update",
+  "reasoning": "kort förklaring (max 80 ord)"
+}
+
+Möjliga värden för actionRequired:
+- "update" — priset har ändrats permanent, automatisk uppdatering kan föreslås
+- "verify_manually" — oklar situation (kampanj? layout-ändring?), manuell koll krävs
+- "false_positive" — sidan har förändrats men priset verkar detsamma`,
+        },
+      ],
+    });
+
+    const raw = response.content[0]?.text ?? '';
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    return JSON.parse(match[0]);
+  } catch (err) {
+    console.warn(`  ⚠️  Haiku-fel: ${err.message.split('\n')[0]}`);
+    return null;
+  }
+}
+
+// ── Page check ───────────────────────────────────────────────────────────────
 async function checkSource(page, source) {
-  const results = { passed: [], alerts: [], warning: null };
+  const results = { passed: [], alerts: [], warning: null, pageText: '' };
 
   try {
-    await page.goto(source.url, {
-      waitUntil: 'networkidle',
-      timeout: NAV_TIMEOUT,
-    });
-    // Give dynamic content a moment to settle
+    await page.goto(source.url, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT });
     await page.waitForTimeout(2000);
   } catch (err) {
     results.warning = `Navigeringsfel: ${err.message.split('\n')[0]}`;
@@ -141,16 +191,20 @@ async function checkSource(page, source) {
     return results;
   }
 
+  results.pageText = text;
+
   for (const check of source.checks) {
     if (check.pattern.test(text)) {
       results.passed.push(check.name);
     } else {
       results.alerts.push({
-        category: source.category,
-        supplier:  source.supplier,
-        check:     check.name,
-        url:       source.url,
-        message:   `"${check.name}" hittades inte längre på ${source.url}`,
+        category:      source.category,
+        supplier:      source.supplier,
+        check:         check.name,
+        patternSource: check.pattern.source,
+        url:           source.url,
+        message:       `"${check.name}" hittades inte längre på ${source.url}`,
+        // haiku field added below in main loop
       });
     }
   }
@@ -182,7 +236,7 @@ page.setDefaultTimeout(PAGE_TIMEOUT);
 for (const source of PRICE_CHECKS) {
   console.log(`\nKontrollerar [${source.category}] ${source.supplier}…`);
 
-  const { passed, alerts, warning } = await checkSource(page, source);
+  const { passed, alerts, warning, pageText } = await checkSource(page, source);
 
   if (warning) {
     console.log(`  ⚠️  Oavgörlig: ${warning}`);
@@ -194,8 +248,26 @@ for (const source of PRICE_CHECKS) {
     console.log(`  ✅  Hittad: ${name}`);
     report.passed.push({ category: source.category, supplier: source.supplier, check: name });
   }
+
   for (const alert of alerts) {
     console.log(`  ❌  INTE HITTAD: ${alert.check} — möjlig prisändring!`);
+
+    if (anthropic) {
+      console.log(`  🤖  Anropar Haiku för prisextraktion…`);
+      const checkObj = source.checks.find(c => c.name === alert.check);
+      const haiku = await extractPriceWithHaiku(pageText, source, checkObj);
+      if (haiku) {
+        alert.haiku = haiku;
+        const action = haiku.actionRequired;
+        const price  = haiku.extractedPrice ?? '(ej hittad)';
+        const pct    = Math.round((haiku.confidence ?? 0) * 100);
+        console.log(`  📊  Haiku: ${price} (${pct}% säker, åtgärd: ${action})`);
+        if (haiku.reasoning) console.log(`  💬  ${haiku.reasoning}`);
+      } else {
+        console.log(`  📊  Haiku returnerade inget svar`);
+      }
+    }
+
     report.alerts.push(alert);
     exitCode = 1;
   }
@@ -217,7 +289,11 @@ if (report.warnings.length) {
 }
 if (report.alerts.length) {
   console.log('\n🚨 Möjliga prisändringar:');
-  report.alerts.forEach(a => console.log(`  • [${a.category}] ${a.supplier}: ${a.check}`));
+  report.alerts.forEach(a => {
+    const haiku = a.haiku;
+    const suffix = haiku ? ` → AI: ${haiku.extractedPrice ?? 'ej hittad'} (${haiku.actionRequired})` : '';
+    console.log(`  • [${a.category}] ${a.supplier}: ${a.check}${suffix}`);
+  });
 }
 
 writeFileSync('/tmp/price-monitor-report.json', JSON.stringify(report, null, 2));
