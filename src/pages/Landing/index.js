@@ -9,11 +9,11 @@ import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
   PreviewCard, PreviewHead, SavingBig, PreviewList, PreviewRow, PreviewFloat,
-  TickerBand, TickerText,
+  CoverageStrip, CategoryPill,
   TrustStrip, TrustPillar,
   AlgoTrust,
   SectionHead, HowGrid, HowCard,
-  ProofGrid, Quote, Stats,
+  Stats,
   PricingCard, PricingInner,
   FoundingCard, FoundingLeft, FoundingForm, FoundingSuccess,
   FaqWrap, FaqItem,
@@ -70,6 +70,17 @@ const FAQ = [
     q: 'Vad händer med min data?',
     a: 'Vi läser endast leverantörsfakturor från Fortnox / Visma via läs-rättigheter. Datan lagras krypterad i Sverige (Bahnhof Stockholm). Vi säljer aldrig identifierbar data — anonymiserade branschindex är vår enda dataprodukt utöver tjänsten.',
   },
+];
+
+const COVERAGE_CLUSTERS = [
+  { label: 'Hårdvara & Print', icon: 'file' },
+  { label: 'Energi',           icon: 'bolt' },
+  { label: 'Kommunikation',    icon: 'phone' },
+  { label: 'Mjukvara / SaaS',  icon: 'spark' },
+  { label: 'IT-tjänster',      icon: 'wifi' },
+  { label: 'Fordon & Frakt',   icon: 'truck' },
+  { label: 'Kontor & Facility',icon: 'briefcase' },
+  { label: 'HR & Hälsa',       icon: 'shield' },
 ];
 
 const validateFoundingForm = (form) => {
@@ -206,22 +217,17 @@ const Landing = () => {
         </HeroInner>
       </Hero>
 
-      <TickerBand>
-        <TickerText>
-          {Array.from({ length: 2 }).flatMap((_, i) => [
-            <span key={`a${i}`}>Fortnox <em>·</em></span>,
-            <span key={`b${i}`}>Visma <em>·</em></span>,
-            <span key={`c${i}`}>Tibber <em>·</em></span>,
-            <span key={`d${i}`}>If Skadeförsäkring <em>·</em></span>,
-            <span key={`e${i}`}>Tele2 Företag <em>·</em></span>,
-            <span key={`f${i}`}>Bahnhof <em>·</em></span>,
-            <span key={`g${i}`}>Zettle <em>·</em></span>,
-            <span key={`h${i}`}>Länsförsäkringar <em>·</em></span>,
-            <span key={`i${i}`}>Vattenfall <em>·</em></span>,
-            <span key={`j${i}`}>Worldline <em>·</em></span>,
-          ])}
-        </TickerText>
-      </TickerBand>
+      <CoverageStrip>
+        <span className="kicker">Vi analyserar</span>
+        <div className="grid">
+          {COVERAGE_CLUSTERS.map((c) => (
+            <CategoryPill key={c.label}>
+              <span className="icon"><Icon name={c.icon} size={14} stroke={1.8} /></span>
+              {c.label}
+            </CategoryPill>
+          ))}
+        </div>
+      </CoverageStrip>
 
       <TrustStrip id="sakerhet">
         <TrustPillar>
@@ -300,40 +306,26 @@ const Landing = () => {
         </HowGrid>
       </Section>
 
-      <Section $tight>
-        <ProofGrid>
-          <Quote>
-            <blockquote>
-              På sex veckor identifierade Arvo 134 000 kr i potentiella besparingar bara på el, mobilabonnemang och mjukvarulicenser. Jag hade trott att jag redan hade förhandlat klart.
-            </blockquote>
-            <figcaption>
-              <div className="avatar" style={{ fontSize: '11px', letterSpacing: '0.01em' }}>ex.</div>
-              <div>
-                <strong>Exempelkund</strong>
-                <span>Konsultbolag · 14 anställda</span>
-              </div>
-            </figcaption>
-          </Quote>
-          <Stats>
-            <div>
-              <strong>20 %</strong>
-              <span>av identifierad besparing — vår enda avgift</span>
-            </div>
-            <div>
-              <strong>8</strong>
-              <span>leverantörskategorier täckta idag</span>
-            </div>
-            <div>
-              <strong>50</strong>
-              <span>Founding Member-platser · begränsat antal</span>
-            </div>
-            <div>
-              <strong>0 kr</strong>
-              <span>fasta avgifter — vi tjänar bara pengar när du sparar pengar</span>
-            </div>
-          </Stats>
-        </ProofGrid>
-      </Section>
+      <Stats>
+        <div className="inner">
+          <div className="stat">
+            <strong>20 %</strong>
+            <span>av identifierad besparing — vår enda avgift</span>
+          </div>
+          <div className="stat">
+            <strong>8</strong>
+            <span>leverantörskategorier täckta idag</span>
+          </div>
+          <div className="stat">
+            <strong>50</strong>
+            <span>Founding Member-platser · begränsat antal</span>
+          </div>
+          <div className="stat">
+            <strong>0 kr</strong>
+            <span>fasta avgifter — vi tjänar pengar när du sparar</span>
+          </div>
+        </div>
+      </Stats>
 
       <Section id="priser">
         <SectionHead>

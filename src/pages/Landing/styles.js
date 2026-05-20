@@ -1,14 +1,10 @@
-import styled, { keyframes, css } from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
-const ticker = keyframes`
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-`;
 
 export const Page = styled.main`
   background: ${({ theme }) => theme.color.bg};
@@ -266,31 +262,62 @@ export const PreviewFloat = styled.div`
   span { font-size: 12px; color: ${({ theme }) => theme.color.muted}; }
 `;
 
-export const TickerBand = styled.div`
+export const CoverageStrip = styled.section`
+  padding: 22px 28px 26px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
-  padding: 22px 0;
   background: ${({ theme }) => theme.color.surface};
-  overflow: hidden;
+  text-align: center;
+
+  .kicker {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: ${({ theme }) => theme.color.muted};
+    margin-bottom: 14px;
+  }
+
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 7px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
 `;
 
-export const TickerText = styled.div`
-  display: flex;
-  white-space: nowrap;
-  gap: 64px;
-  animation: ${ticker} 50s linear infinite;
-  color: ${({ theme }) => theme.color.muted};
-  font-size: 14px;
-  letter-spacing: 0.02em;
+export const CategoryPill = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 13px 6px 7px;
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.pill};
+  background: ${({ theme }) => theme.color.bg};
+  font-size: 12.5px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.color.inkSoft};
+  transition: border-color ${({ theme }) => theme.motion.fast},
+              background ${({ theme }) => theme.motion.fast};
 
-  span {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
+  &:hover {
+    border-color: ${({ theme }) => theme.color.brand}66;
+    background: ${({ theme }) => theme.color.brandSoft};
   }
-  em {
-    font-style: normal;
-    color: ${({ theme }) => theme.color.borderStrong};
+
+  .icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brandSoft};
+    color: ${({ theme }) => theme.color.brand};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 `;
 
@@ -626,31 +653,80 @@ export const Quote = styled.figure`
   figcaption span { display: block; font-size: 13px; color: ${({ theme }) => theme.color.muted}; }
 `;
 
-export const Stats = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-  @media (max-width: 520px) { grid-template-columns: 1fr; }
+export const Stats = styled.section`
+  position: relative;
+  padding: 64px 28px;
+  text-align: center;
+  overflow: visible;
 
-  div {
-    border-left: 2px solid ${({ theme }) => theme.color.brand};
-    padding-left: 18px;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: calc(-50vw + 50%);
+    right: calc(-50vw + 50%);
+    background: ${({ theme }) => theme.color.ink};
+    z-index: -1;
   }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: 8%;
+    width: 40%;
+    height: 180%;
+    background: radial-gradient(circle, rgba(93, 214, 202, 0.13), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .inner {
+    position: relative;
+    z-index: 1;
+    max-width: ${({ theme }) => theme.size.container};
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    @media (max-width: 740px) { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .stat {
+    padding: 20px 28px;
+    border-right: 1px solid rgba(255, 255, 255, 0.09);
+    &:last-child { border-right: none; }
+  }
+
+  @media (max-width: 740px) {
+    padding: 48px 0;
+    .stat {
+      padding: 20px 24px;
+      border-right: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    }
+    .stat:nth-child(odd) { border-right: 1px solid rgba(255, 255, 255, 0.09); }
+    .stat:nth-last-child(-n+2) { border-bottom: none; }
+  }
+
   strong {
     display: block;
-    font-family: ${({ theme }) => theme.font.sans};
-    font-size: 44px;
+    font-size: clamp(48px, 5.5vw, 68px);
     font-weight: 800;
+    letter-spacing: -0.04em;
     line-height: 1;
-    letter-spacing: -0.03em;
-    color: ${({ theme }) => theme.color.ink};
+    color: ${({ theme }) => theme.color.brand};
     font-feature-settings: "tnum";
   }
+
   span {
     display: block;
-    margin-top: 10px;
-    font-size: 14px;
-    color: ${({ theme }) => theme.color.muted};
+    margin-top: 12px;
+    font-size: 13.5px;
+    color: rgba(250, 250, 247, 0.50);
+    line-height: 1.45;
+    max-width: 150px;
+    margin-left: auto;
+    margin-right: auto;
   }
 `;
 
