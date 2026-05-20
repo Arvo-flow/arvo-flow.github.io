@@ -756,36 +756,38 @@ export const ModalCard = styled.div`
   }
 
   div.gate-saving {
-    background: ${({ theme }) => theme.color.brandSoft};
-    border: 1px solid ${({ theme }) => theme.color.brand}28;
-    border-radius: ${({ theme }) => theme.size.radius.md};
-    padding: 18px 20px;
+    background: ${({ theme }) => theme.color.brandGradient};
+    border-radius: ${({ theme }) => theme.size.radius.lg};
+    padding: 22px 24px;
     margin-bottom: 20px;
+    color: #FAFAF7;
 
     span.gate-saving-label {
       display: block;
       font-size: 10.5px;
-      font-weight: 700;
-      color: ${({ theme }) => theme.color.brand};
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      margin-bottom: 6px;
+      opacity: 0.8;
+      margin-bottom: 8px;
     }
 
     span.gate-saving-amount {
       display: block;
-      font-size: 36px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      color: ${({ theme }) => theme.color.brand};
-      line-height: 1.05;
-      margin-bottom: 6px;
+      font-family: ${({ theme }) => theme.font.display};
+      font-size: clamp(36px, 9vw, 52px);
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      font-feature-settings: "tnum";
+      line-height: 1.0;
+      margin-bottom: 8px;
     }
 
     span.gate-saving-context {
       display: block;
-      font-size: 12.5px;
-      color: ${({ theme }) => theme.color.muted};
+      font-size: 13px;
+      opacity: 0.8;
+      line-height: 1.4;
     }
   }
 
