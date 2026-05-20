@@ -13,7 +13,7 @@ import {
   TrustStrip, TrustPillar,
   AlgoTrust,
   SectionHead, HowGrid, HowCard,
-  Stats,
+
   PricingCard, PricingInner,
   FoundingCard, FoundingLeft, FoundingForm, FoundingSuccess,
   FaqWrap, FaqItem,
@@ -302,26 +302,6 @@ const Landing = () => {
         </HowGrid>
       </Section>
 
-      <Stats>
-        <div className="card">
-          <div className="stat">
-            <strong>20 %</strong>
-            <span>av identifierad besparing — vår enda avgift</span>
-          </div>
-          <div className="stat">
-            <strong>8</strong>
-            <span>leverantörskategorier täckta idag</span>
-          </div>
-          <div className="stat">
-            <strong>50</strong>
-            <span>Founding Member-platser · begränsat antal</span>
-          </div>
-          <div className="stat">
-            <strong>0 kr</strong>
-            <span>fasta avgifter — vi tjänar pengar när du sparar</span>
-          </div>
-        </div>
-      </Stats>
 
       <Section id="priser">
         <SectionHead>
