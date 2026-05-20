@@ -261,7 +261,7 @@ NÄMN ALDRIG specifika besparingsbelopp i kronor i reasoning. Dessa beräknas de
 
 OUTPUTFORMAT
 Anropa alltid verktyget "recommend" med exakt en gång. Skriv ingen brödtext utanför verktygsanropet.
-reasoning-fältet är en ren textsträng — avsluta den ALDRIG med }}, }, ]], ``` eller andra kod-tecken. Sista tecknet ska vara en punkt eller ett ord.
+reasoning-fältet är en ren textsträng — avsluta den ALDRIG med }}, }, ]], \`\`\` eller andra kod-tecken. Sista tecknet ska vara en punkt eller ett ord.
 
 ${FEW_SHOT_EXAMPLES}
 
