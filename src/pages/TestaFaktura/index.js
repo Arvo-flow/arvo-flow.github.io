@@ -430,7 +430,7 @@ const TestaFaktura = () => {
     ? { dot: '#16A34A', num: '#16A34A', label: 'Marknadsmässigt', labelClr: '#166534', txt: '#14532D', bg: '#F0FDF4', border: 'rgba(22,163,74,.18)' }
     : { dot: '#1B7A6E', num: '#1B7A6E', label: 'Optimalt',        labelClr: '#0E4F47', txt: '#0E4F47', bg: '#DCEEEA', border: 'rgba(27,122,110,.18)' };
   const diagInsight = diagScore < 45
-    ? `Ni betalar ${diagOvPct} % mer än marknadspriset`
+    ? 'Ni betalar markant mer än marknadspriset — stor besparingspotential.'
     : diagScore < 65 ? 'Besparingspotential finns — ni ligger något över marknadssnitt.'
     : diagScore < 80 ? 'Ni betalar ungefär branschsnitt. Marginalförbättringar möjliga.'
     : 'Ni har ett kostnadsoptimerat leverantörsnätverk.';
