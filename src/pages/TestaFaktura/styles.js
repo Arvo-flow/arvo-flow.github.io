@@ -949,40 +949,44 @@ export const NextSteps = styled.div`
   }
   .segment-tile {
     position: relative;
-    padding: 13px 13px 11px;
+    padding: 14px 14px 13px;
     border-radius: ${({ theme }) => theme.size.radius.md};
     border: 1.5px solid ${({ theme }) => theme.color.borderStrong};
-    background: ${({ theme }) => theme.color.surfaceAlt};
+    background: ${({ theme }) => theme.color.surface};
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
+    transition: border-color 0.15s;
   }
   .tile-active {
     border-color: ${({ theme }) => theme.color.brand};
     background: ${({ theme }) => theme.color.brandSoft};
   }
   .tile-icon {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: ${({ theme }) => theme.color.surface};
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
     color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     flex-shrink: 0;
   }
   .icon-active {
     background: ${({ theme }) => theme.color.brand};
+    border-color: ${({ theme }) => theme.color.brand};
     color: #FAFAF7;
+    box-shadow: 0 2px 8px ${({ theme }) => theme.color.brand}44;
   }
   .tile-name {
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
-    letter-spacing: -0.01em;
-    line-height: 1.3;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
   }
   .tile-status {
     font-size: 11px;
@@ -994,18 +998,19 @@ export const NextSteps = styled.div`
     font-weight: 600;
   }
   .tile-metric {
-    font-size: 11.5px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 800;
     color: ${({ theme }) => theme.color.ink};
     font-feature-settings: "tnum";
-    letter-spacing: -0.02em;
-    margin-top: 2px;
+    letter-spacing: -0.03em;
+    margin-top: 3px;
   }
   .tile-lock {
     position: absolute;
-    top: 9px;
-    right: 9px;
+    top: 10px;
+    right: 10px;
     color: ${({ theme }) => theme.color.borderStrong};
+    opacity: 0.7;
   }
 
   @media (max-width: 600px) { padding: 22px 20px; }

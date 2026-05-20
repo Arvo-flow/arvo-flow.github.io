@@ -1024,7 +1024,6 @@ const TestaFaktura = () => {
                 </LicenseOverageNote>
               ) : null;
             })()}
-            )}
 
           </Card>
           <NextSteps>
