@@ -741,7 +741,9 @@ export default async function handler(req, res) {
         confidence: recommendation.confidence,
         reasoning: recommendation.reasoning,
         switchSteps: recommendation.switchSteps ?? [],
-        licenseOverage: recommendation.licenseOverage ?? null,
+        licenseOverage: (extracted.seatCount != null && extracted.seatCount > employeesNum)
+          ? extracted.seatCount - employeesNum
+          : null,
         overageSavings: recommendation.overageSavings ?? null,
       },
       timing,
