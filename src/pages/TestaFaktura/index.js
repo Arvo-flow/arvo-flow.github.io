@@ -137,6 +137,17 @@ const CATEGORY_LABELS = {
   uncategorized:       'Okategoriserad',
 };
 
+const SEGMENTS = [
+  { label: 'Hårdvara & Print', icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
+  { label: 'Energi',           icon: 'bolt',      cats: ['el'] },
+  { label: 'Kommunikation',    icon: 'phone',     cats: ['mobil', 'bredband'] },
+  { label: 'Mjukvara / SaaS',  icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
+  { label: 'IT-tjänster',      icon: 'wifi',      cats: ['it-support'] },
+  { label: 'Fordon & Frakt',   icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
+  { label: 'Kontor & Facility',icon: 'briefcase', cats: ['kontorsmaterial', 'städ-rengöring', 'larm-bevakning', 'kortterminal', 'avfall-atervinning', 'bankavgifter'] },
+  { label: 'HR & Hälsa',       icon: 'shield',    cats: ['foretagshalsovard', 'loneadmin', 'forsakring-foretag', 'forsakring-ansvar'] },
+];
+
 const PHASES = [
   { id: 'extract', label: 'Läser fakturan' },
   { id: 'categorize', label: 'Identifierar leverantör & kategori' },
@@ -1019,37 +1030,35 @@ const TestaFaktura = () => {
           <NextSteps>
             <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
             <p className="sub">
-              Du har analyserat 1 leverantör. Koppla Fortnox / Visma — vi räknar ut poängen på hela
-              er reskontra och levererar en komplett Leverantörsrapport automatiskt. Vi sköter varje
-              byte från uppsägning till nytt avtal. Du betalar 20&nbsp;% av identifierad besparing.
-              Inga fasta avgifter.
+              Koppla Fortnox / Visma — vi räknar ut poängen på hela er reskontra och levererar en
+              komplett Leverantörsrapport automatiskt. Vi sköter varje byte från uppsägning till nytt
+              avtal. Du betalar 20&nbsp;% av identifierad besparing. Inga fasta avgifter.
             </p>
-            <div className="preview-list">
-              <div className="preview-header">
-                <span>Leverantör</span>
-                <span>Kategori</span>
-                <span>Kostnad/år</span>
-                <span>Score</span>
-              </div>
-              <div className="preview-row preview-real">
-                <span>{result.extracted.supplier}</span>
-                <span>{CATEGORY_LABELS[result.categorized?.category] || '—'}</span>
-                <span className="preview-cost">{formatKr(result.extracted.annualCost)}</span>
-                <span style={{ color: diagC.dot, fontWeight: 700, fontSize: 12 }}>{diagC.label}</span>
-              </div>
-              <div className="preview-row preview-blur">
-                <span><span className="ph" style={{ width: 110 }} /></span>
-                <span><span className="ph" style={{ width: 70 }} /></span>
-                <span><span className="ph" style={{ width: 80 }} /></span>
-                <span><span className="ph" style={{ width: 55 }} /></span>
-              </div>
-              <div className="preview-row preview-blur">
-                <span><span className="ph" style={{ width: 90 }} /></span>
-                <span><span className="ph" style={{ width: 60 }} /></span>
-                <span><span className="ph" style={{ width: 75 }} /></span>
-                <span><span className="ph" style={{ width: 50 }} /></span>
-              </div>
-              <div className="preview-fade" />
+            <p className="seg-count">
+              Segment — 1 av {SEGMENTS.length} analyserade
+            </p>
+            <div className="segment-grid">
+              {SEGMENTS.map((seg) => {
+                const isActive = seg.cats.includes(result.categorized?.category);
+                const netSaving = result.recommendation?.netSaving ?? 0;
+                return (
+                  <div key={seg.label} className={`segment-tile${isActive ? ' tile-active' : ''}`}>
+                    <div className={`tile-icon${isActive ? ' icon-active' : ''}`}>
+                      <Icon name={seg.icon} size={14} stroke={2} />
+                    </div>
+                    <span className="tile-name">{seg.label}</span>
+                    <span className={`tile-status${isActive ? ' status-active' : ''}`}>
+                      {isActive ? 'Analyserat' : 'Ej analyserat'}
+                    </span>
+                    {isActive && netSaving > 0 && (
+                      <span className="tile-metric">−{formatKr(netSaving)}/år</span>
+                    )}
+                    {!isActive && (
+                      <span className="tile-lock"><Icon name="lock" size={11} stroke={2} /></span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <Button as={Link} to="/connect" $variant="gradient" $size="lg">
               Koppla Fortnox / Visma →

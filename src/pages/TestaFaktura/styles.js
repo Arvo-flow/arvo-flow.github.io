@@ -929,63 +929,83 @@ export const NextSteps = styled.div`
     font-size: 14.5px;
     color: ${({ theme }) => theme.color.muted};
     line-height: 1.65;
-    margin: 0 0 20px;
+    margin: 0 0 16px;
   }
-
-  .preview-list {
-    position: relative;
-    border: 1px solid ${({ theme }) => theme.color.borderStrong};
-    border-radius: ${({ theme }) => theme.size.radius.md};
-    overflow: hidden;
-    margin-bottom: 20px;
-  }
-  .preview-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
-    gap: 12px;
-    padding: 8px 14px;
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
-    font-size: 10px;
+  p.seg-count {
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: ${({ theme }) => theme.color.mutedSoft};
+    letter-spacing: 0.07em;
+    color: ${({ theme }) => theme.color.muted};
+    margin: 0 0 10px;
   }
-  .preview-row {
+
+  .segment-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
-    gap: 12px;
-    padding: 11px 14px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+    @media (max-width: 580px) { grid-template-columns: repeat(2, 1fr); }
+  }
+  .segment-tile {
+    position: relative;
+    padding: 13px 13px 11px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    border: 1.5px solid ${({ theme }) => theme.color.borderStrong};
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .tile-active {
+    border-color: ${({ theme }) => theme.color.brand};
+    background: ${({ theme }) => theme.color.brandSoft};
+  }
+  .tile-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: flex;
     align-items: center;
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
-    font-size: 13.5px;
+    justify-content: center;
+    background: ${({ theme }) => theme.color.surface};
+    color: ${({ theme }) => theme.color.muted};
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  .icon-active {
+    background: ${({ theme }) => theme.color.brand};
+    color: #FAFAF7;
+  }
+  .tile-name {
+    font-size: 12px;
+    font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
-    &:last-child { border-bottom: none; }
+    letter-spacing: -0.01em;
+    line-height: 1.3;
   }
-  .preview-real {
-    background: ${({ theme }) => theme.color.surface};
-    .preview-cost { font-weight: 600; font-feature-settings: "tnum"; }
+  .tile-status {
+    font-size: 11px;
+    color: ${({ theme }) => theme.color.mutedSoft};
+    font-weight: 500;
   }
-  .preview-blur {
-    filter: blur(4px);
-    pointer-events: none;
-    user-select: none;
-    background: ${({ theme }) => theme.color.surface};
+  .status-active {
+    color: ${({ theme }) => theme.color.brand};
+    font-weight: 600;
   }
-  .preview-fade {
+  .tile-metric {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.ink};
+    font-feature-settings: "tnum";
+    letter-spacing: -0.02em;
+    margin-top: 2px;
+  }
+  .tile-lock {
     position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 72px;
-    background: linear-gradient(to bottom, transparent, ${({ theme }) => theme.color.surface});
-    pointer-events: none;
-  }
-  .ph {
-    display: inline-block;
-    height: 12px;
-    border-radius: 3px;
-    background: ${({ theme }) => theme.color.borderStrong};
-    opacity: 0.6;
+    top: 9px;
+    right: 9px;
+    color: ${({ theme }) => theme.color.borderStrong};
   }
 
   @media (max-width: 600px) { padding: 22px 20px; }
