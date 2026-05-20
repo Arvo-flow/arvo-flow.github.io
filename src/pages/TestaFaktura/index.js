@@ -1110,9 +1110,9 @@ const TestaFaktura = () => {
               <>
                 <h3>Vi hittade <em>en besparing</em></h3>
                 <p className="sub">
-                  Ange din e-post så skickar vi analysen direkt till din inkorg.
-                  Arvo sköter bytet åt er — ni betalar 20&nbsp;% av realiserad besparing.
-                  Inga fasta avgifter.
+                  Vi skickar analysen direkt till din inkorg. En Arvo-rådgivare kontaktar
+                  dig för att starta bytet — ni betalar 20&nbsp;% av realiserad besparing,
+                  inga fasta avgifter.
                 </p>
               </>
             ) : (
