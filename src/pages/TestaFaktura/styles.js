@@ -149,7 +149,7 @@ export const FormRow = styled.div`
 export const Field = styled.label`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 
   span.label {
     font-size: 12.5px;
@@ -157,6 +157,13 @@ export const Field = styled.label`
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: ${({ theme }) => theme.color.muted};
+  }
+
+  span.hint {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.4;
+    margin-bottom: 2px;
   }
 
   select, input {

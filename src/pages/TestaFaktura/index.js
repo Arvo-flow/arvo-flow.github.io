@@ -35,7 +35,8 @@ function useCountUp(target, duration = 1600) {
 }
 
 const MAX_PDF_SIZE   = 3 * 1024 * 1024;
-const FREE_ANALYSES  = 3; // speglar serverns konstant
+const FREE_ANALYSES    = 3; // speglar serverns konstant
+const FREE_SUCCESSFUL  = 2; // max lyckade auto-analyser innan gate
 
 async function getBrowserFingerprint() {
   const raw = [
@@ -235,9 +236,13 @@ const TestaFaktura = () => {
   const runAnalysis = async (overrideEmail = null) => {
     if (!file) { setError('Välj en PDF-faktura först.'); return; }
     const isUnlocked = !!(sessionStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_gate_passed'));
-    if (!overrideEmail && !isUnlocked && localStorage.getItem('arvo_had_saving')) {
-      setGateOpen(true);
-      return;
+    if (!overrideEmail && !isUnlocked) {
+      const hadSaving     = localStorage.getItem('arvo_had_saving');
+      const successCount  = parseInt(localStorage.getItem('arvo_successful_count') ?? '0');
+      if (hadSaving || successCount >= FREE_SUCCESSFUL) {
+        setGateOpen(true);
+        return;
+      }
     }
     if (overrideEmail) {
       localStorage.setItem('arvo_gate_passed', '1');
@@ -306,8 +311,14 @@ const TestaFaktura = () => {
 
       setPhase('done');
       setResult(data);
-      if (data.recommendation?.netSaving > 0) {
-        localStorage.setItem('arvo_had_saving', '1');
+
+      if (data.route === 'auto') {
+        const count = parseInt(localStorage.getItem('arvo_successful_count') ?? '0') + 1;
+        localStorage.setItem('arvo_successful_count', String(count));
+        if (data.recommendation?.netSaving > 0) {
+          localStorage.setItem('arvo_had_saving', '1');
+          setGateOpen(true);
+        }
       }
     } catch (err) {
       clearTimeout(t1);
@@ -532,6 +543,7 @@ const TestaFaktura = () => {
               <FormRow>
                 <Field>
                   <span className="label">Bransch</span>
+                  <span className="hint">Vi anpassar jämförelsetalen mot bolag som liknar er.</span>
                   <select value={industry} onChange={(e) => setIndustry(e.target.value)}>
                     {Object.entries(INDUSTRY_LABELS).map(([id, label]) => (
                       <option key={id} value={id}>{label}</option>
@@ -540,6 +552,7 @@ const TestaFaktura = () => {
                 </Field>
                 <Field>
                   <span className="label">Antal anställda</span>
+                  <span className="hint">Påverkar vilket prisintervall vi jämför mot.</span>
                   <input
                     type="number"
                     min="1"
