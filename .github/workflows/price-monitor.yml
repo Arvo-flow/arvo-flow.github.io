@@ -1,0 +1,142 @@
+name: Nightly Price Monitor
+
+# Körs kl. 22:00 CET (21:00 UTC vintertid) / 23:00 CEST (sommartid).
+# Syftet: verifiera att referenspriser i branchindex.js fortfarande stämmer
+# mot leverantörernas publika sidor. Vid avvikelse skapas ett GitHub-ärende.
+
+on:
+  schedule:
+    - cron: '0 21 * * *'   # 21:00 UTC = 22:00 CET / 23:00 CEST
+  workflow_dispatch:        # Manuell körning för test
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  monitor:
+    name: Check benchmark prices
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install playwright
+          npx playwright install chromium --with-deps
+
+      - name: Run price monitor
+        id: monitor
+        run: node scripts/price-monitor.mjs
+        # exit 0 = allt ok, exit 1 = avvikelse
+        continue-on-error: true
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: price-monitor-report
+          path: /tmp/price-monitor-report.json
+          retention-days: 90
+
+      - name: Create alert issue on price discrepancy
+        if: steps.monitor.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Säkerställ att price-alert-etiketten finns
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner,
+                repo:  context.repo.repo,
+                name:  'price-alert',
+                color: 'e11d48',
+                description: 'Prisvarning: möjlig prisändring i branchindex.js',
+              });
+            } catch (e) {
+              if (!e.message?.includes('already_exists') && e.status !== 422) {
+                console.log('Label-fel (icke-kritiskt):', e.message);
+              }
+            }
+
+            const report = JSON.parse(fs.readFileSync('/tmp/price-monitor-report.json', 'utf8'));
+
+            const date = new Date().toLocaleDateString('sv-SE', {
+              timeZone: 'Europe/Stockholm', year: 'numeric', month: '2-digit', day: '2-digit'
+            });
+
+            const alertRows = report.alerts.map(a =>
+              `| ${a.category} | ${a.supplier} | ${a.check} | [Kontrollera](${a.url}) |`
+            ).join('\n');
+
+            const warnRows = report.warnings.length
+              ? report.warnings.map(w => `- **${w.supplier}**: ${w.message}`).join('\n')
+              : '_Inga_';
+
+            const body = [
+              '## 🚨 Möjliga prisändringar detekterade',
+              '',
+              `**Kördes:** ${new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm' })} (svensk tid)`,
+              '',
+              '### Avvikelser — pris ej längre synligt på sidan',
+              '',
+              '| Kategori | Leverantör | Förväntad prissträng | Länk |',
+              '|----------|------------|----------------------|------|',
+              alertRows,
+              '',
+              '### Oavgörliga sidor (JS-renderade / omdirigerade)',
+              '',
+              warnRows,
+              '',
+              '### Åtgärd',
+              '',
+              '1. Besök länkarna ovan och verifiera aktuellt pris',
+              '2. Uppdatera `agents/recommender/branchindex.js` vid behov',
+              '3. Stäng detta ärende när priser är verifierade och incheckade',
+              '',
+              '---',
+              '_Skapad automatiskt av [Nightly Price Monitor](.github/workflows/price-monitor.yml)_',
+            ].join('\n');
+
+            // Kolla om det redan finns ett öppet prisvarningsärende (undvik dubbletter)
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'price-alert',
+              per_page: 5,
+            });
+
+            if (existing.data.length > 0) {
+              // Kommentera på befintligt ärende istället för att skapa nytt
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: `### Uppdatering ${date}\n\n${body}`,
+              });
+              console.log(`Kommenterade på befintligt ärende #${existing.data[0].number}`);
+            } else {
+              // Skapa nytt ärende
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Prisvarning: möjlig prisändring (${date})`,
+                body,
+                labels: ['price-alert'],
+              });
+              console.log(`Skapade ärende #${issue.number}: ${issue.html_url}`);
+            }
+
+      - name: All checks passed
+        if: steps.monitor.outcome == 'success'
+        run: echo "✅ Alla priskontroller godkända — inga åtgärder behövs."
