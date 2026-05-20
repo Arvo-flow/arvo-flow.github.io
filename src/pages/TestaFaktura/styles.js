@@ -957,6 +957,13 @@ export const NextSteps = styled.div`
     flex-direction: column;
     gap: 3px;
     opacity: 0.6;
+    cursor: default;
+    transition: opacity 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    &:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(14,26,23,.07);
+    }
   }
   .tile-active {
     border: 1.5px solid ${({ theme }) => theme.color.brand};
@@ -967,6 +974,11 @@ export const NextSteps = styled.div`
     );
     box-shadow: 0 2px 12px ${({ theme }) => theme.color.brand}1A;
     opacity: 1;
+    &:hover {
+      opacity: 1;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px ${({ theme }) => theme.color.brand}2A;
+    }
   }
   .tile-icon {
     width: 30px;
