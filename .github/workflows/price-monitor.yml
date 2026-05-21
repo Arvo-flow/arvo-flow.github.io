@@ -1,5 +1,9 @@
 name: Nightly Price Monitor
 
+# Körs kl. 22:00 CET (21:00 UTC vintertid) / 23:00 CEST (sommartid).
+# Vid avvikelse: Haiku extraherar nytt pris → PR skapas → larmmail skickas.
+# Ingen kod pushas till main utan mänsklig granskning och merge.
+
 on:
   schedule:
     - cron: '0 21 * * *'
@@ -75,6 +79,7 @@ jobs:
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             echo "branch="           >> "$GITHUB_OUTPUT"
+            echo "Inga filändringar att committa — alla alerts kräver manuell koll"
           fi
 
       - name: Create Pull Request
@@ -83,69 +88,174 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            const report = JSON.parse(fs.readFileSync('/tmp/price-monitor-report.json', 'utf8'));
-            let summary = { applied: [], skipped: [] };
+            const fs   = require('fs');
+            const report  = JSON.parse(fs.readFileSync('/tmp/price-monitor-report.json', 'utf8'));
+            let   summary = { applied: [], skipped: [] };
             try { summary = JSON.parse(fs.readFileSync('/tmp/apply-summary.json', 'utf8')); } catch {}
 
             const branch = '${{ steps.apply.outputs.branch }}';
-            const date = new Date().toLocaleDateString('sv-SE', {
-              timeZone: 'Europe/Stockholm', year: 'numeric', month: '2-digit', day: '2-digit',
+            const date   = new Date().toLocaleDateString('sv-SE', {
+              timeZone: 'Europe/Stockholm',
+              year: 'numeric', month: '2-digit', day: '2-digit',
             });
 
             const alertRows = (report.alerts || []).map(a => {
-              const h = a.haiku || {};
-              const wasApplied = summary.applied.some(ap => ap.oldCheck === a.check && ap.supplier === a.supplier);
-              return '| ' + [a.category, a.supplier, a.check,
-                h.extractedPrice || '(okänd)', h.confidence != null ? Math.round(h.confidence * 100) + ' %' : '-',
-                wasApplied ? 'Auto-föreslagen' : 'Manuell koll', '[Verifiera](' + a.url + ')'].join(' | ') + ' |';
+              const h          = a.haiku || {};
+              const newPrice   = h.extractedPrice  || '(okänd)';
+              const action     = h.actionRequired  || 'verify_manually';
+              const pct        = h.confidence != null ? Math.round(h.confidence * 100) + ' %' : '—';
+              const wasApplied = summary.applied.some(
+                ap => ap.oldCheck === a.check && ap.supplier === a.supplier
+              );
+              const status = wasApplied ? '✅ Auto-föreslagen' : '⚠️ Manuell koll';
+              return '| ' + [a.category, a.supplier, a.check, newPrice, pct, action, status,
+                '[Verifiera](' + a.url + ')'].join(' | ') + ' |';
             }).join('\n');
 
+            const skippedList = summary.skipped.length
+              ? summary.skipped.map(s => '- **' + s.supplier + ' / ' + s.check + '**: ' + s.reason).join('\n')
+              : '_Inga_';
+
+            const mobilSuggestions = summary.applied
+              .filter(a => a.category === 'mobil')
+              .map(a => {
+                const n = parseInt(a.newNumber, 10);
+                const microP25 = n * 12;
+                return '- **' + a.oldCheck + ' → ' + a.newCheck + '**: '
+                  + 'micro.p25 → ' + microP25
+                  + ', small.p25 → ' + Math.round(microP25 * 0.95)
+                  + ', mid.p25 → '  + Math.round(microP25 * 0.90);
+              }).join('\n');
+
+            const matrixSection = mobilSuggestions
+              ? '### Föreslagna matrisuppdateringar (granska manuellt)\n\n' + mobilSuggestions + '\n'
+              : '';
+
             const body = [
-              '## Prisuppdatering ' + date,
-              '', '> Granska, verifiera mot leverantör, merga om korrekt.',
-              '', '| Kategori | Leverantör | Gammalt | Nytt | Säkerhet | Status | Länk |',
-              '|---|---|---|---|---|---|---|', alertRows, '',
-              '- [ ] Verifiera priser', '- [ ] Kontrollera att ej kampanjpris', '- [ ] Merga om korrekt',
+              '## 🚨 Möjliga prisändringar — ' + date,
+              '',
+              '> **Human-in-the-loop:** Granska diff, verifiera mot leverantörens webbplats, merga om korrekt. Vercel deployar automatiskt.',
+              '',
+              '### Detekterade avvikelser',
+              '',
+              '| Kategori | Leverantör | Gammalt pris | AI-förslag | Säkerhet | Åtgärd | Status | Länk |',
+              '|----------|------------|--------------|------------|----------|--------|--------|------|',
+              alertRows,
+              '',
+              '### Inkluderade filändringar',
+              '',
+              '- `scripts/price-monitor.mjs` — uppdaterade checknamn och regex-mönster',
+              '- `agents/recommender/branchindex.js` — uppdaterade `note`-fält',
+              '',
+              matrixSection,
+              '### Kräver manuell verifiering (ej i PRen)',
+              '',
+              skippedList,
+              '',
+              '### Checklista före merge',
+              '',
+              '- [ ] Verifiera varje pris via länkarna ovan',
+              '- [ ] Kontrollera att det är ordinarie B2B-pris (inte kampanj)',
+              '- [ ] Uppdatera matrisvärden i `branchindex.js` vid behov',
+              '',
+              '---',
+              '_Skapad av [Nightly Price Monitor](.github/workflows/price-monitor.yml). AI-priser är indikativa — verifiera alltid manuellt._',
             ].join('\n');
 
             const pr = await github.rest.pulls.create({
-              owner: context.repo.owner, repo: context.repo.repo,
-              title: 'Prisuppdatering ' + date,
-              head: branch, base: 'main', body,
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: '🚨 Prisuppdatering: ' + (report.alerts || []).length + ' ändring(ar) (' + date + ')',
+              head:  branch,
+              base:  'main',
+              body,
             });
-            core.setOutput('pr_url', pr.data.html_url);
+
+            console.log('Skapade PR #' + pr.data.number + ': ' + pr.data.html_url);
+            core.setOutput('pr_url',    pr.data.html_url);
             core.setOutput('pr_number', String(pr.data.number));
 
       - name: Send alert email
-        if: steps.monitor.outcome == 'failure' && steps.apply.outputs.has_changes == 'true'
+        if: steps.monitor.outcome == 'failure' && steps.apply.outputs.has_changes == 'true' && steps.create_pr.outputs.pr_url != ''
         run: node scripts/send-alert-email.mjs --pr-url "${{ steps.create_pr.outputs.pr_url }}"
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
 
-      - name: Create issue if no auto-fix
+      - name: Create issue (no auto-applicable changes)
         if: steps.monitor.outcome == 'failure' && steps.apply.outputs.has_changes != 'true'
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
+            const fs     = require('fs');
             const report = JSON.parse(fs.readFileSync('/tmp/price-monitor-report.json', 'utf8'));
-            const date = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' });
-            try {
-              await github.rest.issues.createLabel({ owner: context.repo.owner, repo: context.repo.repo,
-                name: 'price-alert', color: 'e11d48', description: 'Prisvarning' });
-            } catch {}
-            const rows = (report.alerts || []).map(a =>
-              '| ' + [a.category, a.supplier, a.check,
-                (a.haiku || {}).extractedPrice || '-', '[Kontrollera](' + a.url + ')'].join(' | ') + ' |'
-            ).join('\n');
-            await github.rest.issues.create({
-              owner: context.repo.owner, repo: context.repo.repo,
-              title: 'Prisvarning ' + date,
-              body: '| Kategori | Leverantör | Pris | Nytt | Länk |\n|---|---|---|---|---|\n' + rows,
-              labels: ['price-alert'],
+            const date   = new Date().toLocaleDateString('sv-SE', {
+              timeZone: 'Europe/Stockholm',
+              year: 'numeric', month: '2-digit', day: '2-digit',
             });
+
+            try {
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner, repo: context.repo.repo,
+                name: 'price-alert', color: 'e11d48',
+                description: 'Prisvarning: möjlig prisändring kräver manuell koll',
+              });
+            } catch (e) {
+              if (!e.message?.includes('already_exists') && e.status !== 422) {
+                console.log('Label-fel:', e.message);
+              }
+            }
+
+            const alertRows = (report.alerts || []).map(a => {
+              const h = a.haiku || {};
+              return '| ' + [
+                a.category, a.supplier, a.check,
+                h.extractedPrice || '(Haiku ej tillgänglig)',
+                h.actionRequired || 'verify_manually',
+                '[Kontrollera](' + a.url + ')',
+              ].join(' | ') + ' |';
+            }).join('\n');
+
+            const body = [
+              '## 🚨 Prisvarning — manuell koll krävs',
+              '',
+              '**Kördes:** ' + new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm' }),
+              '',
+              '_Automatisk uppdatering kunde inte tillämpas. Verifiera manuellt._',
+              '',
+              '| Kategori | Leverantör | Förväntad prissträng | AI-förslag | Åtgärd | Länk |',
+              '|----------|------------|----------------------|------------|--------|------|',
+              alertRows,
+              '',
+              '### Åtgärd',
+              '1. Besök länkarna och verifiera aktuellt pris',
+              '2. Uppdatera `branchindex.js` och `price-monitor.mjs` manuellt',
+              '3. Stäng ärendet efter verifiering',
+              '',
+              '---',
+              '_Skapad av [Nightly Price Monitor](.github/workflows/price-monitor.yml)_',
+            ].join('\n');
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'price-alert', per_page: 5,
+            });
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: '### Uppdatering ' + date + '\n\n' + body,
+              });
+              console.log('Kommenterade på ärende #' + existing.data[0].number);
+            } else {
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: '🚨 Prisvarning: manuell koll krävs (' + date + ')',
+                body, labels: ['price-alert'],
+              });
+              console.log('Skapade ärende #' + issue.number);
+            }
 
       - name: All checks passed
         if: steps.monitor.outcome == 'success'
-        run: echo "All checks passed"
+        run: echo "✅ Alla priskontroller godkända — inga åtgärder behövs."
