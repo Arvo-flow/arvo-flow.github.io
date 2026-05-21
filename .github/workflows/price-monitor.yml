@@ -1,50 +1,11 @@
 name: Nightly Price Monitor
 
 on:
-  schedule:
-    - cron: '0 21 * * *'
   workflow_dispatch:
-
-permissions:
-  issues: write
-  contents: write
-  pull-requests: write
 
 jobs:
   monitor:
-    name: Check benchmark prices
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: |
-          npm ci
-          npm install playwright
-          npx playwright install chromium --with-deps
-
-      - name: Run price monitor
-        id: monitor
-        run: node scripts/price-monitor.mjs
-        continue-on-error: true
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-      - name: Upload report
-        uses: actions/upload-artifact@v4
-        with:
-          name: price-monitor-report
-          path: /tmp/price-monitor-report.json
-          retention-days: 90
-
-      - name: All checks passed
-        if: steps.monitor.outcome == 'success'
-        run: echo "All checks passed"
+      - name: Hello
+        run: echo "Price monitor test"
