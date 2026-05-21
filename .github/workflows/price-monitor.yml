@@ -78,7 +78,7 @@ jobs:
           fi
 
       - name: Create Pull Request
-        id: create-pr
+        id: create_pr
         if: steps.monitor.outcome == 'failure' && steps.apply.outputs.has_changes == 'true'
         uses: actions/github-script@v7
         with:
@@ -171,8 +171,8 @@ jobs:
             core.setOutput('pr_number', String(pr.data.number));
 
       - name: Send alert email
-        if: steps.monitor.outcome == 'failure' && steps.apply.outputs.has_changes == 'true' && steps.create-pr.outputs.pr_url != ''
-        run: node scripts/send-alert-email.mjs --pr-url "${{ steps.create-pr.outputs.pr_url }}"
+        if: steps.monitor.outcome == 'failure' && steps.apply.outputs.has_changes == 'true' && steps.create_pr.outputs.pr_url != ''
+        run: node scripts/send-alert-email.mjs --pr-url "${{ steps.create_pr.outputs.pr_url }}"
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
 
