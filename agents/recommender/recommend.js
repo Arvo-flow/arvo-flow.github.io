@@ -17,6 +17,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, RECOMMEND_TOOL } from './prompt.js';
 import { getBenchmark } from '../../lib/benchmark.js';
 import { CATEGORIES } from '../categorizer/categories.js';
+import { getElIntelligence } from '../../lib/el-intelligence.js';
 
 const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 1024;
@@ -83,7 +84,52 @@ ${altList}
 Källa: ${sourceStr}`;
 }
 
-function formatPrompt({ customer, invoice, categorized, benchmark }) {
+/**
+ * Berikar el-kategorifakturor med realtids Nordpool-spotpris och
+ * leverantörsjämförelse. Returnerar en formaterad svensk sträng som
+ * injiceras i user-meddelandet till rekommenderaren.
+ *
+ * @param {object} params
+ * @param {number} params.annualCost              - fakturans beräknade årskostnad kr
+ * @param {object} params.categorized             - output från Categorizer
+ * @returns {Promise<string|null>}
+ */
+async function enrichElContext({ annualCost, categorized }) {
+  try {
+    // Estimera kWh och kr/kWh från årskostnaden.
+    // Mediankr/kWh all-in för svenska SMB (energi + nät + skatt) ≈ 1.27 kr/kWh.
+    const annualKwh      = Math.round(annualCost / 1.27);
+    const currentPriceKwh = annualKwh > 0 ? annualCost / annualKwh : 1.27;
+
+    const intel = await getElIntelligence({
+      annualKwh,
+      currentPriceKwh,
+      supplierName: categorized.normalizedSupplier,
+    });
+
+    const { zone, spot, spotSource, best, ranked, saving, savingPct } = intel;
+    const spotLabel = spotSource === 'live'
+      ? `${spot.toFixed(4)} kr/kWh (Nordpool live)`
+      : `${spot.toFixed(4)} kr/kWh (årsmedel 2025, API otillgängligt)`;
+
+    const top3 = ranked.slice(0, 3).map((s, i) =>
+      `  ${i + 1}. ${s.name}: ${s.energyPerKwh.toFixed(4)} kr/kWh energi + ${s.annualFee.toLocaleString('sv-SE')} kr/år avgift = ${s.totalAnnual.toLocaleString('sv-SE')} kr/år totalt`
+    ).join('\n');
+
+    return `\nEl-prisintelligens (Nordpool ${zone}):
+  Dagens spotpris: ${spotLabel}
+  Bästa leverantör: ${best.name} — ${best.energyPerKwh.toFixed(4)} kr/kWh energipris, ${best.totalAnnual.toLocaleString('sv-SE')} kr/år totalt (inkl. nät + skatt)
+  Uppskattad besparing vs kund: ${saving.toLocaleString('sv-SE')} kr/år (${savingPct} %)
+  Topp 3 alternativ:
+${top3}
+  OBS: Använd dessa siffror i din reasoning. Namnge leverantören (el är offentliga spotpriser).`;
+  } catch (err) {
+    console.warn('[Recommender] enrichElContext misslyckades (non-fatal):', err.message);
+    return null;
+  }
+}
+
+function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) {
   const annualCost = invoice.annualCost ?? invoice.amount;
   const mobileAddonAnnual = (invoice.mobileAddonMonthly > 0) ? invoice.mobileAddonMonthly * 12 : null;
   const employees = customer.employees ?? 1;
@@ -150,7 +196,7 @@ Kategoriserad faktura:
 Branschindex för segmentet:
 ${benchmarkBlock}
 
-${phrasingRule}${secretOverride}
+${phrasingRule}${secretOverride}${elContext ? elContext : ''}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }
