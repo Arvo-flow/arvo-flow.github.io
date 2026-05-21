@@ -52,6 +52,10 @@ const Right = styled.div`
   gap: 10px;
 `;
 
+const FoundingBtn = styled.span`
+  @media (max-width: 600px) { display: none; }
+`;
+
 const CtaText = styled.span`
   .short { display: none; }
   @media (max-width: 480px) {
@@ -284,7 +288,7 @@ const Nav = ({ variant = 'public' }) => {
           <Right>
             {variant === 'public' ? (
               <>
-                <Button $variant="ghost" $size="sm" onClick={openModal}>Bli Founding Member</Button>
+                <FoundingBtn><Button $variant="ghost" $size="sm" onClick={openModal}>Bli Founding Member</Button></FoundingBtn>
                 <Button as={Link} to="/testa-faktura" $variant="gradient" $size="sm">
                   <CtaText><span className="full">Se mina besparingar →</span><span className="short">Se besparingar →</span></CtaText>
                 </Button>
