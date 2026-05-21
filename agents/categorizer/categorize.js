@@ -393,8 +393,22 @@ export async function categorize(invoice, opts = {}) {
     throw new CategorizerError('invoice.supplier är obligatorisk');
   }
 
+  // For mixed-category invoices, use the highest-cost recurring line item's
+  // description as the primary signal — not the aggregated invoice description.
+  // This ensures a bredband-heavy invoice isn't mis-categorized as mobil just
+  // because a mobile line happens to appear first in the description.
+  let effectiveInvoice = invoice;
+  if (invoice.potentialMixedCategories && Array.isArray(invoice.lineItems) && invoice.lineItems.length > 0) {
+    const dominant = invoice.lineItems
+      .filter((l) => l.type === 'recurring_subscription')
+      .sort((a, b) => b.amount - a.amount)[0];
+    if (dominant) {
+      effectiveInvoice = { ...invoice, description: dominant.description, amount: dominant.amount };
+    }
+  }
+
   // Short-circuit for unambiguous cases — avoids AI non-determinism on clear signals.
-  const fast = deterministicMatch(invoice);
+  const fast = deterministicMatch(effectiveInvoice);
   if (fast) {
     return {
       ...fast,
@@ -419,7 +433,7 @@ export async function categorize(invoice, opts = {}) {
       ],
       tools: [CATEGORIZE_TOOL],
       tool_choice: { type: 'tool', name: 'categorize' },
-      messages: [{ role: 'user', content: formatInvoice(invoice) }],
+      messages: [{ role: 'user', content: formatInvoice(effectiveInvoice) }],
     });
   } catch (err) {
     if (err instanceof Anthropic.RateLimitError) {
