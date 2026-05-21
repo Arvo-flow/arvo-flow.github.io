@@ -284,7 +284,7 @@ const Nav = ({ variant = 'public' }) => {
           <Right>
             {variant === 'public' ? (
               <>
-                <Button $variant="ghost" $size="sm" onClick={openModal}>Få tidig access</Button>
+                <Button $variant="ghost" $size="sm" onClick={openModal}>Bli Founding Member</Button>
                 <Button as={Link} to="/testa-faktura" $variant="gradient" $size="sm">
                   <CtaText><span className="full">Se mina besparingar →</span><span className="short">Se besparingar →</span></CtaText>
                 </Button>
