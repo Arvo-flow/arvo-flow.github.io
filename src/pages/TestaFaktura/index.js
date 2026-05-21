@@ -662,21 +662,41 @@ const TestaFaktura = () => {
                     <span className="monitoring-dot" />
                     Bevakning aktiverad
                   </div>
-                  <strong>Avtalet är låst — vi lägger det på bevakning.</strong>
-                  <p>
-                    {(() => {
-                      const end  = result.servicePeriodEnd;
-                      const days = result.cancellationNoticeDays;
-                      const mon  = result.monitoringDate;
-                      const endFmt = end  ? new Date(end).toLocaleDateString('sv-SE', { year:'numeric', month:'long', day:'numeric' }) : null;
-                      const monFmt = mon  ? new Date(mon).toLocaleDateString('sv-SE', { year:'numeric', month:'long', day:'numeric' }) : null;
-                      return `Denna licens sträcker sig till ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo Flow har automatiskt lagt in en bevakning och kommer att initiera en omförhandling med leverantören ${monFmt ?? '90 dagar innan nästa förnyelse'}.`;
-                    })()}
-                  </p>
+                  {result.contractType === 'fixed_price' ? (
+                    <>
+                      <strong>Fastprisavtal — bundet t.o.m. {result.servicePeriodEnd ? new Date(result.servicePeriodEnd).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : result.servicePeriodEnd}.</strong>
+                      <p>
+                        Fastprisavtal kan inte avslutas i förtid. Arvo bevakar avtalet och
+                        påminner er {result.monitoringDate ? new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : '3 månader'} innan slutdatum
+                        så ni hinner förhandla fram ett nytt avtal i rätt tid.
+                      </p>
+                      {result.potentialSavingNote && (
+                        <p style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(27,122,110,0.08)', borderRadius: 8, fontSize: 13.5 }}>
+                          <strong>Potentiell besparing vid avtalets slut:</strong> {result.potentialSavingNote}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <strong>Avtalet är låst — vi lägger det på bevakning.</strong>
+                      <p>
+                        {(() => {
+                          const end  = result.servicePeriodEnd;
+                          const days = result.cancellationNoticeDays;
+                          const mon  = result.monitoringDate;
+                          const endFmt = end ? new Date(end).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+                          const monFmt = mon ? new Date(mon).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+                          return days != null
+                            ? `Avtalet löper till ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo initierar omförhandling ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
+                            : `Avtalet löper till ${endFmt ?? end}. Arvo bevakar och påminner er ${monFmt ?? '90 dagar'} innan slutdatum.`;
+                        })()}
+                      </p>
+                    </>
+                  )}
                 </MonitoringBlock>
                 <KV>
                   <div>
-                    <dt>Du betalar idag</dt>
+                    <dt>Du betalar idag (energidel)</dt>
                     <dd>{formatKr(result.extracted.annualCost)} / år</dd>
                   </div>
                   <div>
@@ -687,10 +707,18 @@ const TestaFaktura = () => {
                     <dt>Fakturerat denna period (ex moms)</dt>
                     <dd>{formatKr(result.extracted.amount)}</dd>
                   </div>
-                  <div>
-                    <dt>Avtalstid</dt>
-                    <dd>{result.extracted.servicePeriodStart} → {result.extracted.servicePeriodEnd}</dd>
-                  </div>
+                  {result.extracted.servicePeriodEnd && (
+                    <div>
+                      <dt>Avtalstid t.o.m.</dt>
+                      <dd>{new Date(result.extracted.servicePeriodEnd).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
+                    </div>
+                  )}
+                  {result.monitoringDate && (
+                    <div>
+                      <dt>Arvo påminner er</dt>
+                      <dd>{new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' })}</dd>
+                    </div>
+                  )}
                 </KV>
               </>
             ) : result.route === 'unsupported' ? (

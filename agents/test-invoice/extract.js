@@ -154,13 +154,27 @@ STARTUP-KREDITER — om fakturan visar att ett startup-program, promotional cred
 ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
   el_kwh: Total förbrukning i kWh denna faktureringsperiod.
   el_billing_month: Månaden förbrukningen avser, t.ex. "maj", "februari".
-  el_omrade: Elområde SE1, SE2, SE3 eller SE4. Identifiera från anläggnings-ID,
-    ort eller adress. Defaulta till "SE3" om osäker. null om ej elfaktura.
+  el_omrade: Elområde SE1, SE2, SE3 eller SE4. Identifiera i första hand från anläggnings-ID
+    eller explicit ort/adress. Defaulta till "SE3" om osäker. null om ej elfaktura.
+    Zon per stad (OBS — memorera dessa):
+      SE1: Luleå, Skellefteå, Piteå, Umeå, Kiruna, Gällivare, Arvidsjaur, Boden, Haparanda
+      SE2: Sundsvall, Östersund, Härnösand, Örnsköldsvik, Kramfors, Sollefteå, Ånge, Ljusdal
+      SE3: Stockholm, Göteborg, Jönköping, Uppsala, Linköping, Norrköping, Örebro, Västerås,
+           Eskilstuna, Borås, Gävle, Karlstad, Kalmar, Växjö, Halmstad, Skövde, Falun, Borlänge
+      SE4: Malmö, Lund, Helsingborg, Kristianstad, Karlskrona, Ystad, Trelleborg, Landskrona,
+           Ängelholm, Karlshamn, Sölvesborg, Ronneby — hela Skåne och Blekinge
+    KRITISKT: Jönköping = SE3. Göteborg = SE3. Helsingborg = SE4. Borås = SE3.
+  el_contract_type: Typ av elavtal — avgör om kunden är bunden och om byte är möjligt.
+    'fixed'   = fastprisavtal / bundet pris: "Fastprisavtal", "Fast pris X år", "Bunden",
+                "fixed price", garanterat pris med angiven giltighetstid.
+    'spot'    = rörligt spotprisavtal: "Spotpris", "Rörligt elpris", "Variabelt", "spot".
+    'unknown' = ej fastställbart från fakturan.
+    null      = ej elfaktura.
   el_fast_avgift_kr: Leverantörens fasta månadsavgift (abonnemangsavgift) i kr exkl. moms.
     null om saknas eller ej elfaktura.
-  el_energipris_per_kwh: Leverantörens rörliga energiavgift i kr/kWh exkl. moms
-    och exkl. nätavgift, energiskatt och elcertifikat. Vid fastprisavtal: det fasta
-    kWh-priset. null om ej elfaktura.
+  el_energipris_per_kwh: Leverantörens energiavgift i kr/kWh exkl. moms
+    och exkl. nätavgift, energiskatt och elcertifikat. Gäller oavsett avtalstyp
+    (spot eller fast pris). null om ej elfaktura.
   el_skatter_kr: Summan av energiskatt och elcertifikatsavgifter för perioden i kr exkl. moms.
     Energiskatt och elcertifikat är lagstadgade avgifter som alltid syns explicit på elfakturan.
     null om saknas eller ej elfaktura.
@@ -261,6 +275,10 @@ const EXTRACT_TOOL = {
       el_price_explicit: {
         type: ['boolean', 'null'],
         description: 'true ENBART om fakturan explicit visar ett pris per kWh (t.ex. "0,85 kr/kWh" eller "Energipris: 0,85 kr/kWh"). false om priset beräknats från totalbelopp / förbrukning. null om ej elfaktura.',
+      },
+      el_contract_type: {
+        type: ['string', 'null'],
+        description: 'Elavtalstyp: "fixed" för fastprisavtal/bundet pris, "spot" för spotpris/rörligt avtal, "unknown" om ej fastställbart. null om ej elfaktura.',
       },
       el_skatter_kr: {
         type: ['integer', 'null'],
@@ -366,6 +384,7 @@ export function aggregateLineItems(raw) {
     elEnergiPerKwh:   raw.el_energipris_per_kwh != null ? Number(raw.el_energipris_per_kwh) : null,
     elSkatterKr:      raw.el_skatter_kr != null ? Number(raw.el_skatter_kr) : null,
     elPriceExplicit:  raw.el_price_explicit ?? null,
+    elContractType:   raw.el_contract_type ?? null,
     mobileAddonMonthly:        raw.mobile_addon_monthly != null ? Number(raw.mobile_addon_monthly) : null,
     startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
     startupCreditMonthlyBurn:  raw.startup_credit_monthly_burn != null ? Number(raw.startup_credit_monthly_burn) : null,

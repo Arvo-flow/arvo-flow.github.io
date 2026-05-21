@@ -520,18 +520,23 @@ export default async function handler(req, res) {
     // ── Avtalslås-detektering (körs före alla tidiga exits) ───────────────────
     // Hoppas över för licensePending-kategorier — vi kan inte byta ändå, så
     // "låst avtal" skulle vara vilseledande för t.ex. försäkringskunder.
-    if (extracted.servicePeriodStart && extracted.cancellationNoticeDays != null && !categorized.licensePending) {
-      const periodStart  = new Date(extracted.servicePeriodStart);
-      const periodEnd    = extracted.servicePeriodEnd ? new Date(extracted.servicePeriodEnd) : null;
-      const lockDeadline = new Date(periodStart);
-      lockDeadline.setDate(lockDeadline.getDate() - extracted.cancellationNoticeDays);
-      const today        = new Date();
+    // Trigger: antingen (start + cancellationDays inom lock-window) ELLER
+    //          (periodEnd i framtid + cancellationDays passerat).
+    const _today = new Date();
+    const _periodEnd = extracted.servicePeriodEnd ? new Date(extracted.servicePeriodEnd) : null;
+    const _hasActivePeriod = _periodEnd && _periodEnd > _today;
+    const _lockDeadline = (() => {
+      if (!extracted.servicePeriodStart || extracted.cancellationNoticeDays == null) return null;
+      const d = new Date(extracted.servicePeriodStart);
+      d.setDate(d.getDate() - extracted.cancellationNoticeDays);
+      return d;
+    })();
+    const _isPastLockDeadline = _lockDeadline ? _today > _lockDeadline : false;
 
-      if (today > lockDeadline && (!periodEnd || today <= periodEnd)) {
-        const monitoringDate = periodEnd ? new Date(periodEnd) : null;
-        if (monitoringDate) monitoringDate.setDate(monitoringDate.getDate() - 90);
-
-        timing.totalMs = Date.now() - t0;
+    if (!categorized.licensePending && _hasActivePeriod && _isPastLockDeadline) {
+      const monitoringDate = new Date(_periodEnd);
+      monitoringDate.setDate(monitoringDate.getDate() - 90);
+      timing.totalMs = Date.now() - t0;
         return send(res, 200, {
           ok:    true,
           route: 'monitoring',
@@ -561,7 +566,6 @@ export default async function handler(req, res) {
           },
           timing,
         });
-      }
     }
 
     // Proxy-skydd: kategorier där antal anställda inte är en giltig kostnadsdrivare
@@ -631,6 +635,52 @@ export default async function handler(req, res) {
 
     // El-specifik deterministisk rekommendation — hoppar över AI-rekommenderaren
     if (categorized.category === 'el') {
+      // ── Fastprisavtal-lås: bundet elavtal med framtida slutdatum ─────────────
+      // Fastprisavtal kan inte sägas upp i förtid — kunden är låst oavsett
+      // uppsägningstid. Visa potentiell besparing men erbjud ej omedelbart byte.
+      if (extracted.elContractType === 'fixed' && extracted.servicePeriodEnd) {
+        const elEnd = new Date(extracted.servicePeriodEnd);
+        if (elEnd > new Date()) {
+          const elRec = computeElRecommendation(extracted);
+          const monDate = new Date(elEnd);
+          monDate.setMonth(monDate.getMonth() - 3);
+          const potentialSaving = elRec ? Math.max(0, elRec.grossSaving) : null;
+          timing.totalMs = Date.now() - t0;
+          return send(res, 200, {
+            ok: true, route: 'monitoring',
+            contractLocked:         true,
+            contractType:           'fixed_price',
+            servicePeriodEnd:       extracted.servicePeriodEnd,
+            cancellationNoticeDays: null,
+            monitoringDate:         monDate.toISOString().slice(0, 10),
+            potentialAnnualSaving:  potentialSaving,
+            potentialSavingNote: elRec && potentialSaving > 0
+              ? `Nuvarande fastpris: ${elRec.energiPerKwh.toFixed(3)} kr/kWh. Marknadens spotprisavtal i ${elRec.omrade} under ${elRec.season}: ca ${elRec.benchmarkKwh.toFixed(2)} kr/kWh. Potentiell besparing när avtalet löper ut: ${potentialSaving.toLocaleString('sv-SE')} kr/år (netto ${Math.round(potentialSaving * 0.80).toLocaleString('sv-SE')} kr efter Arvos arvode).`
+              : null,
+            extracted: {
+              supplier:        extracted.supplier,
+              amount:          extracted.amount,
+              annualCost:      elRec ? elRec.currentAnnual : extracted.annualCost,
+              recurringAmount: extracted.recurringAmount,
+              date:            extracted.date,
+              lineItems:       extracted.lineItems,
+              confidenceScore: extracted.confidenceScore,
+              elKwh:           extracted.elKwh,
+              elBillingMonth:  extracted.elBillingMonth,
+              elOmrade:        elRec?.omrade ?? extracted.elOmrade,
+              servicePeriodEnd: extracted.servicePeriodEnd,
+            },
+            categorized: {
+              category:           categorized.category,
+              subType:            categorized.subType,
+              normalizedSupplier: categorized.normalizedSupplier,
+              confidence:         categorized.confidence,
+            },
+            timing: { extractMs: timing.extractMs, categorizeMs: timing.categorizeMs },
+          });
+        }
+      }
+
       const elRec = computeElRecommendation(extracted);
       if (!elRec) {
         return send(res, 200, {
