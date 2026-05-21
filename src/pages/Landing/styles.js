@@ -605,33 +605,67 @@ export const ScoreLevelCard = styled.div`
   border: 1px solid ${({ theme }) => theme.color.border};
   border-left: 4px solid ${({ $color }) => $color};
   border-radius: ${({ theme }) => theme.size.radius.md};
-  padding: 24px 24px 24px 22px;
+  padding: 24px 20px;
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 18px;
+  align-items: center;
 
-  div.header {
+  div.text {
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  span.range {
-    font-family: ${({ theme }) => theme.font.display};
-    font-style: italic;
-    font-size: 26px;
-    font-weight: 500;
-    color: ${({ $color }) => $color};
-    font-feature-settings: "tnum";
-    line-height: 1;
+    flex-direction: column;
+    gap: 6px;
   }
   strong.level {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
+    letter-spacing: -0.01em;
+    line-height: 1.2;
   }
   p {
-    font-size: 13.5px;
+    font-size: 13px;
     line-height: 1.55;
     color: ${({ theme }) => theme.color.muted};
     margin: 0;
+  }
+`;
+
+export const ScoreGauge = styled.div`
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+
+  svg {
+    width: 72px;
+    height: 72px;
+    transform: rotate(-90deg);
+    display: block;
+  }
+`;
+
+export const ScoreGaugeCenter = styled.div`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+
+  .num {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-feature-settings: "tnum";
+    color: ${({ $color }) => $color};
+  }
+  .den {
+    font-size: 10px;
+    color: ${({ theme }) => theme.color.muted};
+    font-weight: 500;
   }
 `;
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
@@ -13,7 +13,7 @@ import {
   TrustStrip, TrustPillar,
   AlgoTrust,
   SectionHead, HowGrid, HowCard,
-  ScoreSubHead, ScoreGrid, ScoreLevelCard,
+  ScoreSubHead, ScoreGrid, ScoreLevelCard, ScoreGauge, ScoreGaugeCenter,
 
   PricingCard, PricingInner,
   FoundingCard, FoundingLeft, FoundingForm, FoundingSuccess,
@@ -42,29 +42,64 @@ const HOW_STEPS = [
   },
 ];
 
+const CIRC_SM = 175.93; // 2π × 28
+
+const ScoreCircleMini = ({ score, color }) => {
+  const trackRef = useRef(null);
+  const offset = parseFloat((CIRC_SM * (1 - score / 100)).toFixed(2));
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      if (trackRef.current) trackRef.current.style.strokeDashoffset = offset;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [offset]);
+  return (
+    <ScoreGauge>
+      <svg viewBox="0 0 72 72">
+        <circle fill="none" stroke="#E5EFEA" strokeWidth="6" cx="36" cy="36" r="28" />
+        <circle
+          ref={trackRef}
+          fill="none"
+          stroke={color}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={CIRC_SM}
+          strokeDashoffset={CIRC_SM}
+          cx="36" cy="36" r="28"
+          style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)' }}
+        />
+      </svg>
+      <ScoreGaugeCenter $color={color}>
+        <span className="num">{score}</span>
+        <span className="den">/100</span>
+      </ScoreGaugeCenter>
+    </ScoreGauge>
+  );
+};
+
 const SCORE_LEVELS = [
   {
-    range: '80–100',
     label: 'Optimalt',
     color: '#1B7A6E',
+    score: 91,
     desc: 'Ni har ett kostnadsoptimerat leverantörsnätverk. Ni betalar under eller i nivå med branschsnittet.',
   },
   {
-    range: '65–79',
     label: 'Marknadsmässigt',
     color: '#16A34A',
+    score: 72,
     desc: 'Ni betalar ungefär branschsnitt. Marginella förbättringar är möjliga men ni förlorar inte pengar.',
   },
   {
-    range: '45–64',
     label: 'Suboptimerat',
     color: '#D97706',
+    score: 54,
     desc: 'Besparingspotential finns — ni ligger något över marknadssnitt och Arvo kan realisera skillnaden.',
   },
   {
-    range: '0–44',
     label: 'Kritisk',
     color: '#DC2626',
+    score: 28,
     desc: 'Ni betalar klart mer än marknadspriset. Arvo identifierar, förhandlar och genomför bytet med garanterad besparing.',
   },
 ];
@@ -327,11 +362,11 @@ const Landing = () => {
         <ScoreGrid>
           {SCORE_LEVELS.map((lvl) => (
             <ScoreLevelCard key={lvl.label} $color={lvl.color}>
-              <div className="header">
-                <span className="range">{lvl.range}</span>
+              <ScoreCircleMini score={lvl.score} color={lvl.color} />
+              <div className="text">
                 <strong className="level">{lvl.label}</strong>
+                <p>{lvl.desc}</p>
               </div>
-              <p>{lvl.desc}</p>
             </ScoreLevelCard>
           ))}
         </ScoreGrid>
