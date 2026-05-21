@@ -9,7 +9,6 @@ import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
   PreviewCard, PreviewHead, SavingBig, PreviewList, PreviewRow, PreviewFloat,
-  CategoryRow,
   TrustStrip, TrustPillar,
   AlgoTrust,
   SectionHead, HowGrid, HowCard,
@@ -72,16 +71,6 @@ const FAQ = [
   },
 ];
 
-const COVERAGE_CLUSTERS = [
-  'El',
-  'Telefoni och bredband',
-  'Programvara',
-  'Fordon och frakt',
-  'Kontor och städ',
-  'Skrivare',
-  'IT',
-  'Personal och hälsa',
-];
 
 const validateFoundingForm = (form) => {
   const errors = {};
@@ -216,24 +205,6 @@ const Landing = () => {
           </HeroVisual>
         </HeroInner>
       </Hero>
-
-      <CategoryRow>
-        <div className="inner">
-          {COVERAGE_CLUSTERS.map((label, i) => (
-            <React.Fragment key={label}>
-              {i > 0 && <span className="sep" aria-hidden="true">·</span>}
-              <span className="cat">
-                <span className="ck" aria-hidden="true">
-                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
-                    <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </span>
-                {label}
-              </span>
-            </React.Fragment>
-          ))}
-        </div>
-      </CategoryRow>
 
       <TrustStrip id="sakerhet">
         <TrustPillar>

@@ -262,55 +262,6 @@ export const PreviewFloat = styled.div`
   span { font-size: 12px; color: ${({ theme }) => theme.color.muted}; }
 `;
 
-export const CategoryRow = styled.section`
-  border-top: 1px solid ${({ theme }) => theme.color.border};
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
-  padding: 18px 28px;
-  background: ${({ theme }) => theme.color.surface};
-
-  .inner {
-    max-width: ${({ theme }) => theme.size.container};
-    margin: 0 auto;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-  }
-
-  .cat {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12.5px;
-    color: ${({ theme }) => theme.color.muted};
-    font-weight: 400;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-    padding: 2px 10px;
-  }
-
-  .ck {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: ${({ theme }) => theme.color.brand};
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    svg { display: block; }
-  }
-
-  .sep {
-    font-size: 11px;
-    color: ${({ theme }) => theme.color.borderStrong};
-    user-select: none;
-    line-height: 1;
-  }
-`;
-
-
 export const TrustStrip = styled.section`
   position: relative;
   max-width: ${({ theme }) => theme.size.container};
