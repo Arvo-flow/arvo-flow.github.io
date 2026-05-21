@@ -488,7 +488,7 @@ const TestaFaktura = () => {
 
   const diagAnnual  = result?.extracted?.annualCost ?? 0;
   const diagSugg    = result?.recommendation?.suggestedAnnualCost ?? 0;
-  const diagOvPct   = diagAnnual > 0 && diagSugg < diagAnnual
+  const diagOvPct   = diagAnnual > 0 && diagSugg > 0 && diagSugg < diagAnnual
     ? Math.round((diagAnnual - diagSugg) / diagAnnual * 100)
     : 0;
   const diagScore   = Math.max(0, Math.round(100 - diagOvPct * 1.5));
@@ -949,25 +949,53 @@ const TestaFaktura = () => {
                   );
                 })()}
               </>
-            ) : (
+            ) : result.categorized?.category === 'uncategorized' ? (
               <NoSwitchBlock>
-                {result.categorized.category === 'uncategorized' ? (
-                  <>
-                    <strong>Kategorin är under analys.</strong>
-                    <p>Koppla Fortnox / Visma så mappar vi era volymer mot marknadens bästa priser direkt.</p>
-                  </>
-                ) : (
-                  <>
-                    <strong>Inget byte föreslås just nu.</strong>
-                    <p>{result.recommendation?.reasoning}</p>
-                    {result.recommendation?.monitoringNote && (
-                      <p style={{ marginTop: 8, fontSize: 13, color: '#5C6E68', borderTop: '1px solid #E5E7EB', paddingTop: 8 }}>
-                        {result.recommendation.monitoringNote}
-                      </p>
-                    )}
-                  </>
-                )}
+                <strong>Kategorin är under analys.</strong>
+                <p>Koppla Fortnox / Visma så mappar vi era volymer mot marknadens bästa priser direkt.</p>
               </NoSwitchBlock>
+            ) : (
+              <>
+                <ScoreDiag style={{ '--diag-color': diagC.dot }}>
+                  <div className="gauge-wrap">
+                    <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
+                      <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
+                      <circle
+                        cx="30" cy="30" r={GAUGE_R} fill="none"
+                        stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
+                        strokeDasharray={`${gaugeDash} ${GAUGE_C}`}
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1s ease' }}
+                      />
+                    </svg>
+                    <div className="gauge-num" style={{ color: diagC.dot }}>
+                      <span className="gauge-val">{diagScore}</span>
+                      <span className="gauge-denom">/100</span>
+                    </div>
+                  </div>
+                  <div className="diag-body">
+                    <div className="diag-top">
+                      <span className="diag-score-label">Arvo Score</span>
+                      <span className="diag-sep">·</span>
+                      <span className="diag-status">
+                        <Icon name="check" size={13} color={diagC.dot} stroke={2} />
+                        <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                      </span>
+                    </div>
+                    <p className="diag-text">{diagInsight}</p>
+                  </div>
+                </ScoreDiag>
+                {result.recommendation?.reasoning && (
+                  <Reasoning>
+                    <span className="kicker">Vad analysen visar</span>
+                    <p>{result.recommendation.reasoning}</p>
+                  </Reasoning>
+                )}
+                {result.recommendation?.monitoringNote && (
+                  <NoSwitchBlock style={{ marginTop: 0 }}>
+                    {result.recommendation.monitoringNote}
+                  </NoSwitchBlock>
+                )}
+              </>
             )}
 
             {result.extracted?.potentialMixedCategories && (
