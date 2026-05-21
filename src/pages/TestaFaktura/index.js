@@ -491,7 +491,8 @@ const TestaFaktura = () => {
   const diagOvPct   = diagAnnual > 0 && diagSugg > 0 && diagSugg < diagAnnual
     ? Math.round((diagAnnual - diagSugg) / diagAnnual * 100)
     : 0;
-  const diagScore   = Math.max(0, Math.round(100 - diagOvPct * 1.5));
+  const diagScoreRaw = Math.max(0, Math.round(100 - diagOvPct * 1.5));
+  const diagScore    = !result?.recommendation?.shouldSwitch ? Math.min(diagScoreRaw, 85) : diagScoreRaw;
   const diagC       = diagScore < 45
     ? { dot: '#DC2626', num: '#DC2626', label: 'Kritisk',         labelClr: '#991B1B', txt: '#7F1D1D', bg: '#FEF2F2', border: 'rgba(220,38,38,.18)' }
     : diagScore < 65
