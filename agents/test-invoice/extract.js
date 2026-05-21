@@ -299,6 +299,10 @@ const EXTRACT_TOOL = {
         type: 'boolean',
         description: 'true om fakturan tydligt innehåller tjänster från flera kategorier (t.ex. mobil + bredband). false annars.',
       },
+      customer_org_number: {
+        type: ['string', 'null'],
+        description: 'Kundens (fakturamottagarens) organisationsnummer, t.ex. "556777-1111". null om ej angivet på fakturan.',
+      },
     },
     required: [
       'supplier', 'date', 'description', 'billingPeriod',
@@ -368,6 +372,7 @@ export function aggregateLineItems(raw) {
     cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,
     currency:                  raw.currency ?? 'SEK',
     potentialMixedCategories:  raw.potential_mixed_categories ?? false,
+    customerOrgNumber:         raw.customer_org_number ?? null,
   };
 }
 

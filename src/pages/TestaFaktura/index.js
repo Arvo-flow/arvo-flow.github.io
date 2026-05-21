@@ -293,7 +293,16 @@ const TestaFaktura = () => {
 
       const data = await res.json().catch(() => ({}));
 
-      // E-postgate aktiverad av servern
+      // Sparande-kvot nådd — visa resultatet men öppna konverterings-CTA direkt
+      if (data.gate && data.gateType === 'saving_limit') {
+        setPhase('done');
+        setResult(data);
+        setGateReason('saving_limit');
+        setGateOpen(true);
+        return;
+      }
+
+      // E-postgate aktiverad av servern (legacy fingerprint-gate)
       if (data.gate) {
         setPhase(null);
         setGateOpen(true);
@@ -1106,7 +1115,16 @@ const TestaFaktura = () => {
       {gateOpen && (
         <ModalOverlay>
           <ModalCard>
-            {gateReason === 'saving' ? (
+            {gateReason === 'saving_limit' ? (
+              <>
+                <h3>Ni har hittat er besparing — nu är det dags att <em>realisera</em> den.</h3>
+                <p className="sub">
+                  Arvo har identifierat besparingar i era fakturor. Koppla Fortnox eller Visma
+                  så analyserar vi hela er leverantörsreskontra och sköter varje byte —
+                  från uppsägning till nytt avtal.
+                </p>
+              </>
+            ) : gateReason === 'saving' ? (
               <>
                 <div className="gate-saving">
                   <span className="gate-saving-label">Identifierad nettobesparing</span>
@@ -1150,13 +1168,18 @@ const TestaFaktura = () => {
                   ? <><Spinner /> Skickar…</>
                   : gateReason === 'saving'
                     ? <>Skicka analysen <Icon name="arrow" size={16} /></>
-                    : <>Kom igång <Icon name="arrow" size={16} /></>}
+                    : <>Koppla Fortnox / Visma <Icon name="arrow" size={16} /></>}
               </Button>
               <p className="fine-print">
                 {gateReason === 'saving'
                   ? 'Ingen spam. Inga bindningstider. Ni betalar 20 % av identifierad besparing.'
                   : 'Ingen spam. Inga fasta avgifter. Vi kontaktar dig bara om det finns besparingar att hämta.'}
               </p>
+              {gateReason === 'saving_limit' && (
+                <p className="fine-print" style={{ marginTop: '8px', fontStyle: 'italic' }}>
+                  Ni har provat Arvo. Nu låter vi siffrorna tala — utan kostnad tills ni sparar.
+                </p>
+              )}
             </form>
           </ModalCard>
         </ModalOverlay>

@@ -17,9 +17,10 @@ import { getDb } from '../lib/db.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
-const FREE_ANALYSES      = 3;
-const PDF_CACHE_TTL      = 6 * 60 * 60;        // 6 h (GDPR-avvägning: kortare retain)
-const GATE_WINDOW_TTL    = 30 * 24 * 60 * 60;  // 30 dagar
+const PDF_CACHE_TTL         = 6 * 60 * 60;       // 6 h (GDPR-avvägning: kortare retain)
+const GATE_WINDOW_TTL       = 30 * 24 * 60 * 60; // 30 dagar
+const FREE_SAVING_ANALYSES  = 2;                  // Alltid fria analyser med besparing
+const SAVING_GATE_THRESHOLD = 25_000;             // Kr kumulativ nettobesparing
 const PIPELINE_TIMEOUT_MS = 55_000;             // 5 s marginal mot Vercels 60 s hard kill
 
 // ── HMAC-tokenvalidering ──────────────────────────────────────────────────────
@@ -255,6 +256,48 @@ const ALLOWED_INDUSTRIES = [
 // Höj till 5 MB om du är på Pro och vill ta större fakturor.
 const MAX_PDF_SIZE = 3 * 1024 * 1024;
 
+// ── Saving gate ───────────────────────────────────────────────────────────────
+// Returnerar true om kunden nått sin kvot (ska visas konverteringsmeddelande).
+// Uppdaterar KV-räknarna om kvoten INTE är nådd.
+// Räknar bara analyser med faktisk nettobesparing (netSaving > 0).
+async function checkSavingGate(kv, { orgNumber, email, netSaving }) {
+  if (!kv || !(netSaving > 0)) return false;
+
+  const hashKey = (s) => createHash('sha256').update(s).digest('hex').slice(0, 32);
+  const keys = [];
+  if (orgNumber && typeof orgNumber === 'string') {
+    keys.push(`savegate:org:${hashKey(orgNumber.replace(/\s/g, ''))}`);
+  }
+  const cleanEmail = typeof email === 'string' && email.includes('@')
+    ? email.trim().toLowerCase() : null;
+  if (cleanEmail) keys.push(`savegate:email:${hashKey(cleanEmail)}`);
+
+  if (keys.length === 0) return false;
+
+  try {
+    // Kontrollera om antingen org eller email nått gränsen
+    for (const key of keys) {
+      const data = (await kv.get(key)) ?? { count: 0, total: 0 };
+      if (data.count >= FREE_SAVING_ANALYSES && data.total >= SAVING_GATE_THRESHOLD) {
+        return true;
+      }
+    }
+    // Uppdatera räknarna
+    for (const key of keys) {
+      const data = (await kv.get(key)) ?? { count: 0, total: 0 };
+      await kv.set(
+        key,
+        { count: data.count + 1, total: data.total + netSaving },
+        { ex: GATE_WINDOW_TTL }
+      );
+    }
+  } catch (err) {
+    console.error('[savegate] error:', err.message);
+    // Non-fatal — låt analysen gå igenom om KV failar
+  }
+  return false;
+}
+
 function send(res, status, body) {
   if (res.headersSent) return; // guard mot dubbel-send vid timeout-race
   res.statusCode = status;
@@ -341,29 +384,7 @@ export default async function handler(req, res) {
       } catch { /* non-fatal */ }
     }
 
-    // E-postgate: max FREE_ANALYSES fria analyser per webbläsarfingeravtryck
-    if (kv) {
-      const fp = typeof fingerprint === 'string' ? fingerprint.slice(0, 64) : 'anon';
-      try {
-        const isRegistered = await kv.get(`gate:reg:${fp}`);
-        if (!isRegistered) {
-          const count = await kv.incr(`gate:count:${fp}`);
-          if (count === 1) await kv.expire(`gate:count:${fp}`, GATE_WINDOW_TTL);
-          if (count > FREE_ANALYSES) {
-            const gateEmail = typeof email === 'string' && email.includes('@')
-              ? email.trim().toLowerCase() : null;
-            if (!gateEmail) return send(res, 200, { ok: false, gate: true });
-            storeGateEmail(gateEmail, fp).catch(
-              (err) => console.error('[gate] storeGateEmail threw:', err.message)
-            );
-            await kv.set(`gate:reg:${fp}`, '1');
-          }
-        }
-      } catch (err) {
-        console.error('[gate] gate check error:', err.message);
-        // Non-fatal: låt anropet gå igenom om KV failar
-      }
-    }
+    // Saving gate körs efter analysen — se checkSavingGate() nedan.
   }
 
   // Timeout-skydd: om Anthropic API hänger skickas ett kontrollerat JSON-svar
@@ -750,10 +771,23 @@ export default async function handler(req, res) {
       timing,
     };
 
-    // PDF-fingerprintcache: lagra resultatet för 24h så identiska fakturor
-    // returneras direkt utan att köra AI-pipelinen igen.
+    // Saving gate: kontrollera kvot efter analysen (vi behöver netSaving och orgNumber).
     if (!isBypass) {
       const kv = getKv();
+      const gateHit = await checkSavingGate(kv, {
+        orgNumber: extracted.customerOrgNumber,
+        email: typeof email === 'string' ? email : null,
+        netSaving,
+      });
+      if (gateHit) {
+        return send(res, 200, {
+          ...autoResponse,
+          gate: true,
+          gateType: 'saving_limit',
+        });
+      }
+      // PDF-fingerprintcache: lagra resultatet för 24h så identiska fakturor
+      // returneras direkt utan att köra AI-pipelinen igen.
       if (kv) kv.set(cacheKey, autoResponse, { ex: PDF_CACHE_TTL }).catch(() => {});
     }
 
