@@ -20,11 +20,6 @@ const T = { brand: '#1B7A6E', ink: '#0E1A17', muted: '#5C6E68', bg: '#F1F6F3', b
 const prUrlIdx = process.argv.indexOf('--pr-url');
 const prUrl    = prUrlIdx !== -1 ? process.argv[prUrlIdx + 1] : null;
 
-if (!prUrl) {
-  console.error('Saknar --pr-url argument');
-  process.exit(1);
-}
-
 if (!process.env.RESEND_API_KEY) {
   console.error('RESEND_API_KEY saknas');
   process.exit(1);
@@ -104,6 +99,7 @@ const html = `<!DOCTYPE html>
           : 'Alla kräver manuell verifiering.'}
       </p>
 
+      ${prUrl ? `
       <!-- PR CTA -->
       <table cellpadding="0" cellspacing="0" style="margin-bottom:24px">
         <tr>
@@ -115,14 +111,23 @@ const html = `<!DOCTYPE html>
           </td>
         </tr>
       </table>
-
       <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.08em">Åtgärder</p>
       <ol style="margin:0 0 24px;padding-left:20px;font-size:13px;color:${T.ink};line-height:1.7">
         <li>Klicka på länken ovan och granska ändringarna i PRen</li>
         <li>Verifiera priser mot leverantörens webbplats</li>
         <li>Om korrekt: <strong>merga</strong> — Vercel deployar automatiskt</li>
         <li>Uppdatera matrisvärdena i <code>branchindex.js</code> om prisnivån förändrats markant</li>
-      </ol>
+      </ol>` : `
+      <div style="margin-bottom:24px;padding:16px;background:#fefce8;border:1px solid #fde68a;border-radius:8px">
+        <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#92400e">Manuell verifiering krävs</p>
+        <p style="margin:0;font-size:13px;color:${T.ink}">AI-analysen var inte tillräckligt säker för att skapa en automatisk PR. Verifiera priserna manuellt via länkarna i tabellen nedan.</p>
+      </div>
+      <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.08em">Åtgärder</p>
+      <ol style="margin:0 0 24px;padding-left:20px;font-size:13px;color:${T.ink};line-height:1.7">
+        <li>Besök länkarna i tabellen och kontrollera aktuellt pris</li>
+        <li>Uppdatera <code>price-monitor.mjs</code> och <code>branchindex.js</code> manuellt vid prisändring</li>
+        <li>Stäng issue #72 efter verifiering</li>
+      </ol>`}
 
       <!-- Alert table -->
       <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.08em">Detekterade avvikelser</p>
@@ -150,8 +155,7 @@ const html = `<!DOCTYPE html>
   <tr>
     <td style="padding:20px 40px;border-top:1px solid ${T.border};text-align:center">
       <p style="margin:0;font-size:11px;color:${T.muted}">
-        Arvo Flow Nightly Price Monitor ·
-        <a href="${prUrl}" style="color:${T.brand};text-decoration:none">Visa PR</a>
+        Arvo Flow Nightly Price Monitor${prUrl ? ` · <a href="${prUrl}" style="color:${T.brand};text-decoration:none">Visa PR</a>` : ''}
       </p>
       <p style="margin:4px 0 0;font-size:10px;color:#aaa">AI-extraherade priser är indikativa — verifiera alltid manuellt innan merge.</p>
     </td>
@@ -165,7 +169,9 @@ const html = `<!DOCTYPE html>
 
 // ── Send ──────────────────────────────────────────────────────────────────────
 const resend  = new Resend(process.env.RESEND_API_KEY);
-const subject = `🚨 Arvo: ${alerts.length} prisändring(ar) detekterade — PR kräver granskning`;
+const subject = prUrl
+  ? `🚨 Arvo: ${alerts.length} prisändring(ar) detekterade — PR kräver granskning`
+  : `🚨 Arvo: ${alerts.length} prisändring(ar) detekterade — manuell verifiering krävs`;
 
 try {
   const { error } = await resend.emails.send({ from: FROM, to: TO, subject, html });
