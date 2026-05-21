@@ -5,11 +5,6 @@ const fadeUp = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
-const ticker = keyframes`
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-`;
-
 
 export const Page = styled.main`
   background: ${({ theme }) => theme.color.bg};
@@ -267,31 +262,34 @@ export const PreviewFloat = styled.div`
   span { font-size: 12px; color: ${({ theme }) => theme.color.muted}; }
 `;
 
-export const CoverageStrip = styled.section`
+export const CategoryRow = styled.section`
   border-top: 1px solid ${({ theme }) => theme.color.border};
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
-  padding: 22px 0;
+  padding: 20px 28px;
   background: ${({ theme }) => theme.color.surface};
-  overflow: hidden;
 
-  .track {
+  .inner {
+    max-width: ${({ theme }) => theme.size.container};
+    margin: 0 auto;
     display: flex;
-    white-space: nowrap;
-    gap: 64px;
-    animation: ${ticker} 50s linear infinite;
-    color: ${({ theme }) => theme.color.muted};
-    font-size: 14px;
-    letter-spacing: 0.02em;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
 
-    span {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-    }
-    em {
-      font-style: normal;
-      color: ${({ theme }) => theme.color.borderStrong};
-    }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid ${({ theme }) => theme.color.border};
+    border-radius: 100px;
+    font-size: 12.5px;
+    color: ${({ theme }) => theme.color.muted};
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    background: transparent;
+    white-space: nowrap;
   }
 `;
 
