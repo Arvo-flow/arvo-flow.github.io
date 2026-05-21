@@ -265,7 +265,7 @@ export const PreviewFloat = styled.div`
 export const CategoryRow = styled.section`
   border-top: 1px solid ${({ theme }) => theme.color.border};
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
-  padding: 20px 28px;
+  padding: 18px 28px;
   background: ${({ theme }) => theme.color.surface};
 
   .inner {
@@ -273,23 +273,25 @@ export const CategoryRow = styled.section`
     margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 0;
   }
 
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border: 1px solid ${({ theme }) => theme.color.border};
-    border-radius: 100px;
+  .cat {
     font-size: 12.5px;
     color: ${({ theme }) => theme.color.muted};
-    font-weight: 500;
+    font-weight: 400;
     letter-spacing: 0.01em;
-    background: transparent;
     white-space: nowrap;
+    padding: 2px 10px;
+  }
+
+  .sep {
+    font-size: 11px;
+    color: ${({ theme }) => theme.color.borderStrong};
+    user-select: none;
+    line-height: 1;
   }
 `;
 

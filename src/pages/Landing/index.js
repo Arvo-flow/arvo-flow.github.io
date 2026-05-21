@@ -73,14 +73,14 @@ const FAQ = [
 ];
 
 const COVERAGE_CLUSTERS = [
-  { label: 'Hårdvara & Print', icon: 'file' },
-  { label: 'Energi',           icon: 'bolt' },
-  { label: 'Kommunikation',    icon: 'phone' },
-  { label: 'Mjukvara / SaaS',  icon: 'spark' },
-  { label: 'IT-tjänster',      icon: 'wifi' },
-  { label: 'Fordon & Frakt',   icon: 'truck' },
-  { label: 'Kontor & Facility',icon: 'briefcase' },
-  { label: 'HR & Hälsa',       icon: 'shield' },
+  'El',
+  'Telefoni',
+  'Programvara',
+  'Fordon',
+  'Kontor och städ',
+  'Skrivare',
+  'IT',
+  'Personal och hälsa',
 ];
 
 const validateFoundingForm = (form) => {
@@ -219,11 +219,11 @@ const Landing = () => {
 
       <CategoryRow>
         <div className="inner">
-          {COVERAGE_CLUSTERS.map((c) => (
-            <span key={c.label} className="chip">
-              <Icon name={c.icon} size={13} stroke={2} />
-              {c.label}
-            </span>
+          {COVERAGE_CLUSTERS.map((label, i) => (
+            <React.Fragment key={label}>
+              {i > 0 && <span className="sep" aria-hidden="true">·</span>}
+              <span className="cat">{label}</span>
+            </React.Fragment>
           ))}
         </div>
       </CategoryRow>
