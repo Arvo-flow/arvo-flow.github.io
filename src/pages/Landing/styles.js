@@ -35,23 +35,23 @@ export const HeroDivider = styled.hr`
 `;
 
 export const VerdictStrip = styled.section`
-  background: ${({ theme }) => theme.color.ink};
-  padding: 36px 28px;
+  background: ${({ theme }) => theme.color.surface};
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  padding: 18px 28px;
   text-align: center;
 
   p {
     margin: 0;
-    font-family: ${({ theme }) => theme.font.display};
-    font-style: italic;
-    font-weight: 500;
-    font-size: clamp(14px, 1.4vw, 17px);
-    line-height: 1.8;
-    letter-spacing: -0.005em;
-    color: rgba(250, 250, 247, 0.65);
+    font-size: 12.5px;
+    color: ${({ theme }) => theme.color.muted};
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.6;
 
-    em {
-      font-style: italic;
-      color: ${({ theme }) => theme.color.brandLight};
+    strong {
+      color: ${({ theme }) => theme.color.inkSoft};
+      font-weight: 500;
     }
   }
 `;

@@ -210,9 +210,8 @@ const Landing = () => {
 
       <VerdictStrip>
         <p>
-          Era leverantörer satte priset.<br />
-          Ni betalade det.<br />
-          <em>Arvo Score dömer.</em>
+          Med <strong>Arvo Score</strong> kan ni bedöma om ni betalar rätt pris för{' '}
+          el · telefoni och bredband · programvara · fordon och frakt · kontor och städ · skrivare · IT · personal och hälsa
         </p>
       </VerdictStrip>
 
