@@ -42,7 +42,7 @@ export const VerdictStrip = styled.section`
     ${({ theme }) => theme.color.surface} 70%,
     ${({ theme }) => theme.color.bg} 100%
   );
-  padding: 32px 28px;
+  padding: 44px 28px;
   text-align: center;
 
   p {
