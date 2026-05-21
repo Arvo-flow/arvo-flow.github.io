@@ -279,12 +279,27 @@ export const CategoryRow = styled.section`
   }
 
   .cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 12.5px;
     color: ${({ theme }) => theme.color.muted};
     font-weight: 400;
     letter-spacing: 0.01em;
     white-space: nowrap;
     padding: 2px 10px;
+  }
+
+  .ck {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brand};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    svg { display: block; }
   }
 
   .sep {

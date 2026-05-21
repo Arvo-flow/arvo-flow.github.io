@@ -222,7 +222,14 @@ const Landing = () => {
           {COVERAGE_CLUSTERS.map((label, i) => (
             <React.Fragment key={label}>
               {i > 0 && <span className="sep" aria-hidden="true">·</span>}
-              <span className="cat">{label}</span>
+              <span className="cat">
+                <span className="ck" aria-hidden="true">
+                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                    <polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+                {label}
+              </span>
             </React.Fragment>
           ))}
         </div>
