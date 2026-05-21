@@ -181,15 +181,18 @@ const MONTH_TO_SEASON = {
 // annual_kwh = monthly_kwh × multiplier
 const SEASON_MULTIPLIER = { winter: 9, spring_fall: 12, summer: 18 };
 
-// Benchmark: välförhandlat spotprisavtal energipris (kr/kWh) per elområde + säsong
-// Exkluderar nätavgift, energiskatt, elcertifikat (ej förhandlingsbara)
-// Interna MVP-estimat — uppdateras med riktig aggregerad faktурadata
+// Benchmark: marknadsgenomsnittet för välförhandlade spotprisavtal (kr/kWh, energidel).
+// Exkluderar nätavgift, energiskatt, elcertifikat (ej förhandlingsbara).
+// Interna MVP-estimat — uppdateras med riktig aggregerad fakturadata.
 const EL_BENCHMARK_KWH = {
   SE1: { winter: 0.82, spring_fall: 0.55, summer: 0.34 },
   SE2: { winter: 0.88, spring_fall: 0.58, summer: 0.37 },
   SE3: { winter: 0.95, spring_fall: 0.63, summer: 0.40 },
   SE4: { winter: 1.05, spring_fall: 0.70, summer: 0.44 },
 };
+
+// Matchar nätägarens avgifter på elfakturan (inte förhandlingsbara — beror på elnätsleverantör).
+const NATAVGIFT_RE = /nätavg|elnät|överföringsavg|nätabon|kapacitetsavg|effektavg|nätoperatör/i;
 
 function computeElRecommendation(extracted) {
   const kwh    = extracted.elKwh;
@@ -203,14 +206,24 @@ function computeElRecommendation(extracted) {
   const multiplier = SEASON_MULTIPLIER[season];
   const annualKwh  = Math.round(kwh * multiplier);
 
-  // Energipris per kWh — föredrar explicit extraktion, fallback till härlett
+  // Identifiera nätavgift från radposter — den är inte valbar och ska inte
+  // ingå i energiprisjämförelsen.
+  const lineItems = extracted.lineItems ?? [];
+  const natavgiftMonthly = lineItems
+    .filter(li => li.type === 'recurring_subscription' && NATAVGIFT_RE.test(li.description))
+    .reduce((sum, li) => sum + (li.amount ?? 0), 0);
+  const elNatavgiftAnnual = Math.round(natavgiftMonthly * multiplier);
+
+  // Energipris per kWh (energidel exkl. nätavgift och skatter).
+  // Föredrar explicit extraktion. Fallbacken subtraherar nätavgift ur
+  // recurringAmount för att undvika att nätägarens avgifter räknas med.
   let energiPerKwh = extracted.elEnergiPerKwh;
+  const elPriceDerived = extracted.elPriceExplicit !== true;
   if (!(energiPerKwh > 0) && extracted.recurringAmount > 0) {
-    energiPerKwh = extracted.recurringAmount / kwh;
+    const switchableRecurring = Math.max(0, extracted.recurringAmount - natavgiftMonthly);
+    energiPerKwh = (switchableRecurring > 0 ? switchableRecurring : extracted.recurringAmount) / kwh;
   }
   if (!(energiPerKwh > 0)) return null;
-  // elPriceExplicit = null/false → priset beräknat, inte tryckt på fakturan → brasklapp
-  const elPriceDerived = extracted.elPriceExplicit !== true;
 
   const fastAvgift     = extracted.elFastAvgiftKr ?? 0;
   const currentAnnual  = Math.round(energiPerKwh * annualKwh) + fastAvgift * 12;
@@ -230,16 +243,22 @@ function computeElRecommendation(extracted) {
   const monthLabel   = extracted.elBillingMonth ?? 'fakturamånad';
   const mwhEstimate  = Math.round(annualKwh / 100) / 10;
 
+  const monitoringNote = !shouldSwitch
+    ? `Arvo rekommenderar kvartalsmässig genomgång av ert elavtal — spotpriset varierar säsongsvis och ett byte kan bli lönsamt om marknadsläget förändras.`
+    : null;
+
   return {
     annualKwh, currentAnnual, benchmarkAnnual, grossSaving, arvoFee, netSaving, shouldSwitch,
     omrade, season: seasonLabel, billingMonth: monthLabel, energiPerKwh, benchmarkKwh,
+    elNatavgiftAnnual,
+    monitoringNote,
     suggestedAnnualCost: shouldSwitch ? benchmarkAnnual : null,
     reasoning: shouldSwitch
-      ? `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}. Arvo estimerar att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos besparingsarvode (20 %): ${netSaving.toLocaleString('sv-SE')} kr/år.`
-      : `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel}, vilket är i linje med ett välförhandlat spotprisavtal i ${omrade} (benchmark ${seasonLabel}: ${benchmarkKwh.toFixed(2)} kr/kWh). Ert nuvarande avtal verkar konkurrenskraftigt.`,
+      ? `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel} (energidel exkl. nätavgift och energiskatt). Arvo bedömer att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos besparingsarvode (20 %): ${netSaving.toLocaleString('sv-SE')} kr/år.`
+      : `Er faktura visar ${energiPerKwh.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel} (energidel exkl. nätavgift och energiskatt). Marknadsgenomsnittet för välförhandlade spotprisavtal i ${omrade} under ${seasonLabel} är ca ${benchmarkKwh.toFixed(2)} kr/kWh. Ni ligger redan under marknadsgenomsnittet — ert nuvarande avtal verkar konkurrenskraftigt.`,
     uncertaintyNote: [
       `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh, justerat för att ${seasonContext}. Faktisk årsförbrukning kan avvika ±30–40 %.`,
-      elPriceDerived ? 'Elpriset är beräknat som fakturabelopp / kWh. Om fakturan innehåller energiskatt eller nätavgift kan besparingen vara annorlunda.' : null,
+      elPriceDerived ? 'Elpriset är beräknat som fakturabelopp / kWh — en explicit kr/kWh-rad saknas på fakturan.' : null,
     ].filter(Boolean).join(' '),
   };
 }
@@ -661,6 +680,7 @@ export default async function handler(req, res) {
           elAnnualKwhEstimated: elRec.annualKwh,
           elUncertaintyNote:    elRec.uncertaintyNote,
           elSkatterKr:          extracted.elSkatterKr,
+          elNatavgiftAnnual:    elRec.elNatavgiftAnnual > 0 ? elRec.elNatavgiftAnnual : null,
         },
         categorized: {
           category:           categorized.category,
@@ -686,6 +706,7 @@ export default async function handler(req, res) {
           ] : [],
           licenseOverage:  null,
           overageSavings:  null,
+          monitoringNote:  elRec.monitoringNote ?? null,
         },
         timing,
       });

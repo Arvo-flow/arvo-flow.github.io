@@ -960,6 +960,11 @@ const TestaFaktura = () => {
                   <>
                     <strong>Inget byte föreslås just nu.</strong>
                     <p>{result.recommendation?.reasoning}</p>
+                    {result.recommendation?.monitoringNote && (
+                      <p style={{ marginTop: 8, fontSize: 13, color: '#5C6E68', borderTop: '1px solid #E5E7EB', paddingTop: 8 }}>
+                        {result.recommendation.monitoringNote}
+                      </p>
+                    )}
                   </>
                 )}
               </NoSwitchBlock>
@@ -1017,6 +1022,15 @@ const TestaFaktura = () => {
                   <dd>
                     {formatKr(result.extracted.elSkatterKr)}
                     <small>Energiskatt, elcertifikat m.m. — ej förhandlingsbara, ingår ej i besparingskalkylen.</small>
+                  </dd>
+                </div>
+              )}
+              {result.extracted.elNatavgiftAnnual > 0 && (
+                <div>
+                  <dt>Nätavgift (ej valbar)</dt>
+                  <dd>
+                    {formatKr(result.extracted.elNatavgiftAnnual)} / år
+                    <small>Elnätsavgiften bestäms av din regionala nätoperatör och kan inte bytas via elleverantörsbyte — ingår ej i besparingskalkylen.</small>
                   </dd>
                 </div>
               )}
