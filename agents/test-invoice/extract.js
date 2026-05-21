@@ -83,10 +83,15 @@ hardware
   Exempel: köp av telefon, skrivare, server, nätverksutrustning.
 
 AVTALSTID & UPPSÄGNING — extrahera om fakturan innehåller explicit periodinfo:
-  service_period_start: Startdatum för fakturans tjänsteperiod i ISO-format (YYYY-MM-DD).
-    Exempel: "Period: 2026-06-01 – 2027-05-31" → "2026-06-01". null om ej angivet.
-  service_period_end: Slutdatum för tjänsteperioden i ISO-format (YYYY-MM-DD).
-    Exempel: "Period: 2026-06-01 – 2027-05-31" → "2027-05-31". null om ej angivet.
+  KRITISKT: service_period_start och service_period_end avser AVTALETS löptid — INTE
+  faktureringsperioden (den period fakturan täcker). Faktureringsperioden hanteras av billingPeriod.
+  service_period_start: Startdatum för AVTALET i ISO-format (YYYY-MM-DD).
+    Exempel: "Avtal: 2024-01-01 – 2026-12-31" → "2024-01-01". null om ej angivet.
+    OBS: Faktureringsperiod som "Period 260401-260430" är INTE avtalstid — sätt null.
+  service_period_end: Slutdatum för AVTALET i ISO-format (YYYY-MM-DD).
+    Exempel: "Fast Pris 3 år (Gäller t.o.m 2027-12-31)" → "2027-12-31".
+    Exempel: "Avtal gäller t.o.m. 2026-06-30" → "2026-06-30". null om ej angivet.
+    OBS: Faktureringsperiod som "Period 260401-260430" är INTE avtalstid — sätt null.
   cancellation_notice_days: Uppsägningstid i antal dagar som heltal.
     Exempel: "60 dagars uppsägningstid", "60 days notice", "notice period: 60 days" → 60.
     Exempel: "3 månaders uppsägningstid" → 90. null om ej angivet.
