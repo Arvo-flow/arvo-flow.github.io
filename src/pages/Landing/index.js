@@ -9,10 +9,11 @@ import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
   PreviewCard, PreviewHead, SavingBig, PreviewList, PreviewRow, PreviewFloat,
-  VerdictStrip,
+  WaveDivider,
   TrustStrip, TrustPillar,
   AlgoTrust,
   SectionHead, HowGrid, HowCard,
+  ScoreSubHead, ScoreGrid, ScoreLevelCard,
 
   PricingCard, PricingInner,
   FoundingCard, FoundingLeft, FoundingForm, FoundingSuccess,
@@ -38,6 +39,33 @@ const HOW_STEPS = [
     title: 'Godkänn med BankID — vi byter åt dig',
     body: 'Du ser exakt vad du sparar och vad som måste signeras. Arvo förbereder uppsägning + nytt avtal. Du klickar igenom — vi sköter resten.',
     bullets: ['Du behåller full kontroll', 'Ingen leverantör byts utan din signatur', 'Garanti om priset höjs inom 12 mån'],
+  },
+];
+
+const SCORE_LEVELS = [
+  {
+    range: '80–100',
+    label: 'Optimalt',
+    color: '#1B7A6E',
+    desc: 'Ni har ett kostnadsoptimerat leverantörsnätverk. Ni betalar under eller i nivå med branschsnittet.',
+  },
+  {
+    range: '65–79',
+    label: 'Marknadsmässigt',
+    color: '#16A34A',
+    desc: 'Ni betalar ungefär branschsnitt. Marginella förbättringar är möjliga men ni förlorar inte pengar.',
+  },
+  {
+    range: '45–64',
+    label: 'Suboptimerat',
+    color: '#D97706',
+    desc: 'Besparingspotential finns — ni ligger något över marknadssnitt och Arvo kan realisera skillnaden.',
+  },
+  {
+    range: '0–44',
+    label: 'Kritisk',
+    color: '#DC2626',
+    desc: 'Ni betalar klart mer än marknadspriset. Arvo identifierar, förhandlar och genomför bytet med garanterad besparing.',
   },
 ];
 
@@ -207,10 +235,11 @@ const Landing = () => {
         </HeroInner>
       </Hero>
 
-      <VerdictStrip>
-        <p className="lead">Med <strong>Arvo Score</strong> kan ni bedöma om ni betalar rätt pris för:</p>
-        <p className="segments">El · telefoni och bredband · programvara · fordon och frakt · kontor och städ · skrivare · IT · personal och hälsa</p>
-      </VerdictStrip>
+      <WaveDivider aria-hidden="true">
+        <svg viewBox="0 0 1440 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0,0 C480,56 960,56 1440,0 L1440,56 L0,56 Z" />
+        </svg>
+      </WaveDivider>
 
       <TrustStrip id="sakerhet">
         <TrustPillar>
@@ -287,6 +316,25 @@ const Landing = () => {
             </HowCard>
           ))}
         </HowGrid>
+
+        <ScoreSubHead>
+          <span className="kicker">Arvo Score™</span>
+          <h3>Vad berättar ert Score om era leverantörsavtal?</h3>
+          <p>
+            Varje kategori i er bokföring får ett Score mellan 0–100. Scoren baseras på hur ert avtalspris förhåller sig till branschsnittet — fyra nivåer avgör om ni är optimala eller betalar för mycket.
+          </p>
+        </ScoreSubHead>
+        <ScoreGrid>
+          {SCORE_LEVELS.map((lvl) => (
+            <ScoreLevelCard key={lvl.label} $color={lvl.color}>
+              <div className="header">
+                <span className="range">{lvl.range}</span>
+                <strong className="level">{lvl.label}</strong>
+              </div>
+              <p>{lvl.desc}</p>
+            </ScoreLevelCard>
+          ))}
+        </ScoreGrid>
       </Section>
 
 

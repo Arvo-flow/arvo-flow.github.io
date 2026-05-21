@@ -34,39 +34,15 @@ export const HeroDivider = styled.hr`
   margin: 0;
 `;
 
-export const VerdictStrip = styled.section`
-  background: linear-gradient(
-    to bottom,
-    ${({ theme }) => theme.color.bg} 0%,
-    ${({ theme }) => theme.color.surface} 30%,
-    ${({ theme }) => theme.color.surface} 70%,
-    ${({ theme }) => theme.color.bg} 100%
-  );
-  padding: 50px 28px;
-  text-align: center;
+export const WaveDivider = styled.div`
+  position: relative;
+  width: 100%;
+  line-height: 0;
+  overflow: hidden;
+  background: ${({ theme }) => theme.color.bg};
 
-  p {
-    margin: 0;
-    font-size: 13.5px;
-    letter-spacing: 0.01em;
-    line-height: 1.6;
-  }
-
-  p.lead {
-    color: ${({ theme }) => theme.color.muted};
-    font-weight: 500;
-    margin-bottom: 6px;
-
-    strong {
-      color: ${({ theme }) => theme.color.inkSoft};
-      font-weight: 600;
-    }
-  }
-
-  p.segments {
-    color: ${({ theme }) => theme.color.inkSoft};
-    font-weight: 600;
-  }
+  svg { display: block; width: 100%; height: 56px; }
+  path { fill: ${({ theme }) => theme.color.surfaceAlt}; }
 `;
 
 export const HeroBackdrop = styled.div`
@@ -586,6 +562,76 @@ export const HowCard = styled.div`
     flex-shrink: 0;
     margin-top: 2px;
     color: ${({ theme }) => theme.color.brand};
+  }
+`;
+
+export const ScoreSubHead = styled.div`
+  max-width: 680px;
+  margin: 80px auto 0;
+  text-align: center;
+
+  span.kicker {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: ${({ theme }) => theme.color.brand};
+    margin-bottom: 12px;
+  }
+  h3 {
+    font-size: clamp(28px, 3.5vw, 40px);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+  }
+  p {
+    margin-top: 14px;
+    font-size: 16.5px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.55;
+  }
+`;
+
+export const ScoreGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 40px;
+  @media (max-width: 620px) { grid-template-columns: 1fr; }
+`;
+
+export const ScoreLevelCard = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-left: 4px solid ${({ $color }) => $color};
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  padding: 24px 24px 24px 22px;
+
+  div.header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  span.range {
+    font-family: ${({ theme }) => theme.font.display};
+    font-style: italic;
+    font-size: 26px;
+    font-weight: 500;
+    color: ${({ $color }) => $color};
+    font-feature-settings: "tnum";
+    line-height: 1;
+  }
+  strong.level {
+    font-size: 15px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+  }
+  p {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: ${({ theme }) => theme.color.muted};
+    margin: 0;
   }
 `;
 
