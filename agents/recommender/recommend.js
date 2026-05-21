@@ -256,13 +256,20 @@ export async function recommend(input, opts = {}) {
 
   const client = opts.client ?? getClient();
 
+  // Berika el-fakturor med realtids spotpris och leverantörsjämförelse (non-fatal).
+  let elContext = null;
+  if (input.categorized.category === 'el') {
+    const annualCost = input.invoice.annualCost ?? input.invoice.amount ?? 0;
+    elContext = await enrichElContext({ annualCost, categorized: input.categorized });
+  }
+
   const requestParams = {
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     tools: [RECOMMEND_TOOL],
     tool_choice: { type: 'tool', name: 'recommend' },
-    messages: [{ role: 'user', content: formatPrompt({ ...input, benchmark }) }],
+    messages: [{ role: 'user', content: formatPrompt({ ...input, benchmark, elContext }) }],
   };
 
   let response;
