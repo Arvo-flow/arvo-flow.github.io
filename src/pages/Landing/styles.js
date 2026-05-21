@@ -42,20 +42,20 @@ export const VerdictStrip = styled.section`
     ${({ theme }) => theme.color.surface} 70%,
     ${({ theme }) => theme.color.bg} 100%
   );
-  padding: 18px 28px;
+  padding: 32px 28px;
   text-align: center;
 
   p {
     margin: 0;
-    font-size: 12.5px;
+    font-size: 13.5px;
     color: ${({ theme }) => theme.color.muted};
-    font-weight: 400;
+    font-weight: 500;
     letter-spacing: 0.01em;
     line-height: 1.6;
 
     strong {
       color: ${({ theme }) => theme.color.inkSoft};
-      font-weight: 500;
+      font-weight: 600;
     }
   }
 `;
