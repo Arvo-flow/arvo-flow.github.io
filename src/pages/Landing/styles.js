@@ -28,6 +28,12 @@ export const Hero = styled.section`
   @media (max-width: 740px) { padding: 56px 20px 48px; }
 `;
 
+export const HeroDivider = styled.hr`
+  border: none;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+  margin: 0;
+`;
+
 export const HeroBackdrop = styled.div`
   position: absolute;
   inset: 0;
