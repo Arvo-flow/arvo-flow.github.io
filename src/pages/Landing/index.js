@@ -74,9 +74,9 @@ const FAQ = [
 
 const COVERAGE_CLUSTERS = [
   'El',
-  'Telefoni',
+  'Telefoni och bredband',
   'Programvara',
-  'Fordon',
+  'Fordon och frakt',
   'Kontor och städ',
   'Skrivare',
   'IT',

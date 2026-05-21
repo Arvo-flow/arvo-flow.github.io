@@ -98,8 +98,8 @@ const SvgUsers = ({ size = 19 }) => (
 const CLUSTER_ICONS = [SvgPrint, SvgZap, SvgPhone, SvgMonitor, SvgServer, SvgTruck, SvgHome, SvgUsers];
 
 const CLUSTER_NAMES = [
-  'Skrivare', 'El', 'Telefoni', 'Programvara',
-  'IT', 'Fordon', 'Kontor och städ', 'Personal och hälsa',
+  'Skrivare', 'El', 'Telefoni och bredband', 'Programvara',
+  'IT', 'Fordon och frakt', 'Kontor och städ', 'Personal och hälsa',
 ];
 
 const SvgAlert = () => (

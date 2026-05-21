@@ -141,10 +141,10 @@ const CATEGORY_LABELS = {
 const SEGMENTS = [
   { label: 'Skrivare',          icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
   { label: 'El',               icon: 'bolt',      cats: ['el'] },
-  { label: 'Telefoni',         icon: 'phone',     cats: ['mobil', 'bredband'] },
+  { label: 'Telefoni och bredband', icon: 'phone', cats: ['mobil', 'bredband'] },
   { label: 'Programvara',      icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
   { label: 'IT',               icon: 'wifi',      cats: ['it-support'] },
-  { label: 'Fordon',           icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
+  { label: 'Fordon och frakt',  icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
   { label: 'Kontor och städ',  icon: 'briefcase', cats: ['kontorsmaterial', 'städ-rengöring', 'larm-bevakning', 'kortterminal', 'avfall-atervinning', 'bankavgifter'] },
   { label: 'Personal och hälsa', icon: 'shield',  cats: ['foretagshalsovard', 'loneadmin', 'forsakring-foretag', 'forsakring-ansvar'] },
 ];
