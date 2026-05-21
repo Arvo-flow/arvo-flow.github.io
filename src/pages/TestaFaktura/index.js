@@ -139,14 +139,14 @@ const CATEGORY_LABELS = {
 };
 
 const SEGMENTS = [
-  { label: 'Hårdvara & Print', icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
-  { label: 'Energi',           icon: 'bolt',      cats: ['el'] },
-  { label: 'Kommunikation',    icon: 'phone',     cats: ['mobil', 'bredband'] },
-  { label: 'Mjukvara / SaaS',  icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
-  { label: 'IT-tjänster',      icon: 'wifi',      cats: ['it-support'] },
-  { label: 'Fordon & Frakt',   icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
-  { label: 'Kontor & Facility',icon: 'briefcase', cats: ['kontorsmaterial', 'städ-rengöring', 'larm-bevakning', 'kortterminal', 'avfall-atervinning', 'bankavgifter'] },
-  { label: 'HR & Hälsa',       icon: 'shield',    cats: ['foretagshalsovard', 'loneadmin', 'forsakring-foretag', 'forsakring-ansvar'] },
+  { label: 'Skrivare',          icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
+  { label: 'El',               icon: 'bolt',      cats: ['el'] },
+  { label: 'Telefoni',         icon: 'phone',     cats: ['mobil', 'bredband'] },
+  { label: 'Programvara',      icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
+  { label: 'IT',               icon: 'wifi',      cats: ['it-support'] },
+  { label: 'Fordon',           icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
+  { label: 'Kontor och städ',  icon: 'briefcase', cats: ['kontorsmaterial', 'städ-rengöring', 'larm-bevakning', 'kortterminal', 'avfall-atervinning', 'bankavgifter'] },
+  { label: 'Personal och hälsa', icon: 'shield',  cats: ['foretagshalsovard', 'loneadmin', 'forsakring-foretag', 'forsakring-ansvar'] },
 ];
 
 const PHASES = [

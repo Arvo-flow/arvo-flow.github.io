@@ -98,8 +98,8 @@ const SvgUsers = ({ size = 19 }) => (
 const CLUSTER_ICONS = [SvgPrint, SvgZap, SvgPhone, SvgMonitor, SvgServer, SvgTruck, SvgHome, SvgUsers];
 
 const CLUSTER_NAMES = [
-  'Hårdvara & Print', 'Energi', 'Kommunikation', 'Mjukvara / SaaS',
-  'IT-tjänster', 'Fordon & Frakt', 'Kontor & Facility', 'HR & Hälsa',
+  'Skrivare', 'El', 'Telefoni', 'Programvara',
+  'IT', 'Fordon', 'Kontor och städ', 'Personal och hälsa',
 ];
 
 const SvgAlert = () => (
@@ -514,7 +514,7 @@ const ArvoScore = ({ result }) => {
             <BdIcon><SvgLayers /></BdIcon>
             <div>
               <BdLabel>7 övriga segment</BdLabel>
-              <BdSub>Energi, Mjukvara, Kommunikation…</BdSub>
+              <BdSub>El, Programvara, Telefoni…</BdSub>
             </div>
             <BdScore>—</BdScore>
             <BdBadge>Ej analyserat</BdBadge>
