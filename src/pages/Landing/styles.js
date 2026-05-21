@@ -34,6 +34,29 @@ export const HeroDivider = styled.hr`
   margin: 0;
 `;
 
+export const VerdictStrip = styled.section`
+  background: ${({ theme }) => theme.color.surface};
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  padding: 72px 28px;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-family: ${({ theme }) => theme.font.display};
+    font-style: italic;
+    font-weight: 500;
+    font-size: clamp(22px, 2.8vw, 36px);
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    color: ${({ theme }) => theme.color.inkSoft};
+
+    em {
+      font-style: italic;
+      color: ${({ theme }) => theme.color.brand};
+    }
+  }
+`;
+
 export const HeroBackdrop = styled.div`
   position: absolute;
   inset: 0;

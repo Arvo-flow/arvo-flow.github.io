@@ -9,7 +9,7 @@ import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
   PreviewCard, PreviewHead, SavingBig, PreviewList, PreviewRow, PreviewFloat,
-  HeroDivider,
+  HeroDivider, VerdictStrip,
   TrustStrip, TrustPillar,
   AlgoTrust,
   SectionHead, HowGrid, HowCard,
@@ -207,6 +207,14 @@ const Landing = () => {
         </HeroInner>
       </Hero>
       <HeroDivider />
+
+      <VerdictStrip>
+        <p>
+          Era leverantörer satte priset.<br />
+          Ni betalade det.<br />
+          <em>Arvo Score dömer.</em>
+        </p>
+      </VerdictStrip>
 
       <TrustStrip id="sakerhet">
         <TrustPillar>
