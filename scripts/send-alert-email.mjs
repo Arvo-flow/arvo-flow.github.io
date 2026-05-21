@@ -21,8 +21,8 @@ const prUrlIdx = process.argv.indexOf('--pr-url');
 const prUrl    = prUrlIdx !== -1 ? process.argv[prUrlIdx + 1] : null;
 
 if (!process.env.RESEND_API_KEY) {
-  console.error('RESEND_API_KEY saknas');
-  process.exit(1);
+  console.error('⚠️  RESEND_API_KEY saknas — mail kan inte skickas. Kontrollera GitHub Secret.');
+  process.exit(0);
 }
 
 // ── Load data ─────────────────────────────────────────────────────────────────
