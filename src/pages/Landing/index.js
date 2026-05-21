@@ -9,7 +9,7 @@ import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
   PreviewCard, PreviewHead, SavingBig, PreviewList, PreviewRow, PreviewFloat,
-  HeroDivider, VerdictStrip,
+  VerdictStrip,
   TrustStrip, TrustPillar,
   AlgoTrust,
   SectionHead, HowGrid, HowCard,
@@ -206,7 +206,6 @@ const Landing = () => {
           </HeroVisual>
         </HeroInner>
       </Hero>
-      <HeroDivider />
 
       <VerdictStrip>
         <p>

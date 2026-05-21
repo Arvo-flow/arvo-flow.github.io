@@ -35,9 +35,13 @@ export const HeroDivider = styled.hr`
 `;
 
 export const VerdictStrip = styled.section`
-  background: ${({ theme }) => theme.color.surface};
-  border-top: 1px solid ${({ theme }) => theme.color.border};
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  background: linear-gradient(
+    to bottom,
+    ${({ theme }) => theme.color.bg} 0%,
+    ${({ theme }) => theme.color.surface} 30%,
+    ${({ theme }) => theme.color.surface} 70%,
+    ${({ theme }) => theme.color.bg} 100%
+  );
   padding: 18px 28px;
   text-align: center;
 
