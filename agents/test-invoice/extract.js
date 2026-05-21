@@ -45,6 +45,9 @@ recurring_subscription
   supportavtal, serviceavtal.
   SAMT bas-fraktavgifter i transport/frakt-fakturor (pallfrakt, styckegods, fraktavgift per pall/paket/kg)
   — dessa representerar en löpande månatlig tjänsterelation oavsett att volymen varierar.
+  SAMT elförbrukning / elhandel (kWh × pris) — el är en månadsvis återkommande kostnad även om
+  förbrukningsvolymen varierar. Klassificera ALLTID rader som "Elhandel", "Elförbrukning",
+  "Förbrukning X kWh", "Rörligt elpris", "Spotpris el" som recurring_subscription.
   OBS: Fast maskinhyra / leasingavgift för skrivare i Managed Print-avtal = recurring_subscription.
   OBS: Klickkostnader (kr/sida) i samma avtal = variable_usage (se nedan).
 

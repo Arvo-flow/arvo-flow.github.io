@@ -259,7 +259,12 @@ export async function recommend(input, opts = {}) {
   // Berika el-fakturor med realtids spotpris och leverantörsjämförelse (non-fatal).
   let elContext = null;
   if (input.categorized.category === 'el') {
-    const annualCost = input.invoice.annualCost ?? input.invoice.amount ?? 0;
+    // Om annualCost = 0 (elförbrukning felklassificerad som variable_usage),
+    // estimera från fakturabeloppet × 12 för att ändå kunna berika med spotdata.
+    let annualCost = input.invoice.annualCost ?? 0;
+    if (annualCost === 0 && (input.invoice.amount ?? 0) > 0) {
+      annualCost = Math.round(input.invoice.amount * 12);
+    }
     elContext = await enrichElContext({ annualCost, categorized: input.categorized });
   }
 
