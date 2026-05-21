@@ -208,10 +208,8 @@ const Landing = () => {
       </Hero>
 
       <VerdictStrip>
-        <p>
-          Med <strong>Arvo Score</strong> kan ni bedöma om ni betalar rätt pris för{' '}
-          el · telefoni och bredband · programvara · fordon och frakt · kontor och städ · skrivare · IT · personal och hälsa
-        </p>
+        <p className="lead">Med <strong>Arvo Score</strong> kan ni bedöma om ni betalar rätt pris för:</p>
+        <p className="segments">El · telefoni och bredband · programvara · fordon och frakt · kontor och städ · skrivare · IT · personal och hälsa</p>
       </VerdictStrip>
 
       <TrustStrip id="sakerhet">

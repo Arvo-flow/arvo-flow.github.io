@@ -42,21 +42,30 @@ export const VerdictStrip = styled.section`
     ${({ theme }) => theme.color.surface} 70%,
     ${({ theme }) => theme.color.bg} 100%
   );
-  padding: 44px 28px;
+  padding: 50px 28px;
   text-align: center;
 
   p {
     margin: 0;
     font-size: 13.5px;
-    color: ${({ theme }) => theme.color.muted};
-    font-weight: 500;
     letter-spacing: 0.01em;
     line-height: 1.6;
+  }
+
+  p.lead {
+    color: ${({ theme }) => theme.color.muted};
+    font-weight: 500;
+    margin-bottom: 6px;
 
     strong {
       color: ${({ theme }) => theme.color.inkSoft};
       font-weight: 600;
     }
+  }
+
+  p.segments {
+    color: ${({ theme }) => theme.color.inkSoft};
+    font-weight: 600;
   }
 `;
 
