@@ -13,7 +13,7 @@ import { readFileSync } from 'fs';
 import { Resend } from 'resend';
 
 const TO        = 'met.sogojeva@gmail.com';
-const FROM      = 'Arvo Flow <hej@arvoflow.se>';
+const FROM      = 'Arvo Flow <onboarding@resend.dev>';
 const T = { brand: '#1B7A6E', ink: '#0E1A17', muted: '#5C6E68', bg: '#F1F6F3', border: '#D5E2DC' };
 
 // ── Args ──────────────────────────────────────────────────────────────────────
