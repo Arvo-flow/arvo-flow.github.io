@@ -37,7 +37,7 @@ export const HeroDivider = styled.hr`
 export const VerdictStrip = styled.section`
   background: ${({ theme }) => theme.color.surface};
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
-  padding: 72px 28px;
+  padding: 20px 28px;
   text-align: center;
 
   p {
@@ -45,9 +45,9 @@ export const VerdictStrip = styled.section`
     font-family: ${({ theme }) => theme.font.display};
     font-style: italic;
     font-weight: 500;
-    font-size: clamp(22px, 2.8vw, 36px);
-    line-height: 1.5;
-    letter-spacing: -0.01em;
+    font-size: clamp(13px, 1.2vw, 15px);
+    line-height: 1.7;
+    letter-spacing: -0.005em;
     color: ${({ theme }) => theme.color.inkSoft};
 
     em {
