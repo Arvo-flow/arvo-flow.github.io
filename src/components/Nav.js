@@ -304,16 +304,16 @@ const Nav = ({ variant = 'public' }) => {
             {submitState === 'success' ? (
               <ModalSuccess>
                 <SuccessIcon>✓</SuccessIcon>
-                <SuccessTitle>Ni är med på listan.</SuccessTitle>
+                <SuccessTitle>Er plats är reserverad.</SuccessTitle>
                 <SuccessBody>
-                  Vi hör av oss när Arvo är redo att koppla upp er mot Fortnox och Visma. Förvänta er ett mejl inom kort.
+                  En av grundarna hör av sig inom 48 timmar för att boka er onboarding. Kolla inkorgen — mejlet är på väg.
                 </SuccessBody>
               </ModalSuccess>
             ) : (
               <form onSubmit={handleSubmit} noValidate>
-                <ModalTitle id="early-access-title">Få tidig access</ModalTitle>
+                <ModalTitle id="early-access-title">Bli Founding Member</ModalTitle>
                 <ModalSub>
-                  Koppla Fortnox / Visma och lås upp automatiska besparingsanalyser — ni betalar först när ni sparar.
+                  Reservera er plats och få personlig onboarding, 6 månader gratis och förtur till Fortnox / Visma-kopplingen när den öppnar.
                 </ModalSub>
 
                 <Field>
@@ -370,7 +370,7 @@ const Nav = ({ variant = 'public' }) => {
                   $full
                   disabled={submitState === 'submitting'}
                 >
-                  {submitState === 'submitting' ? 'Skickar…' : 'Koppla Fortnox / Visma →'}
+                  {submitState === 'submitting' ? 'Skickar…' : 'Reservera min plats →'}
                 </Button>
               </form>
             )}
