@@ -503,8 +503,14 @@ const TestaFaktura = () => {
     : diagScore < 80
     ? { dot: '#16A34A', num: '#16A34A', label: 'Marknadsmässigt', labelClr: '#166534', txt: '#14532D', bg: '#F0FDF4', border: 'rgba(22,163,74,.18)' }
     : { dot: '#1B7A6E', num: '#1B7A6E', label: 'Optimalt',        labelClr: '#0E4F47', txt: '#0E4F47', bg: '#DCEEEA', border: 'rgba(27,122,110,.18)' };
+  const monitoringDatePast = result?.monitoringDate && new Date(result.monitoringDate) < new Date();
+  const daysUntilEnd = result?.servicePeriodEnd
+    ? Math.ceil((new Date(result.servicePeriodEnd) - new Date()) / (1000 * 60 * 60 * 24))
+    : null;
   const diagInsight = result?.route === 'monitoring'
-    ? 'Avtalet är bevakat — Arvo påminner er inför kommande förnyelse.'
+    ? monitoringDatePast
+      ? `Avtalslåset lossnar snart${daysUntilEnd != null ? ` — ${daysUntilEnd} dagar kvar` : ''}. Arvo förbereder omförhandling.`
+      : 'Avtalet är bevakat — Arvo påminner er inför kommande förnyelse.'
     : diagScore < 45
       ? 'Ni betalar markant mer än marknadspriset — stor besparingspotential.'
       : diagScore < 65 ? 'Besparingspotential finns — ni ligger något över marknadssnitt.'
@@ -699,9 +705,10 @@ const TestaFaktura = () => {
                     <>
                       <strong>Fastprisavtal — bundet t.o.m. {result.servicePeriodEnd ? new Date(result.servicePeriodEnd).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : result.servicePeriodEnd}.</strong>
                       <p>
-                        Fastprisavtal kan inte avslutas i förtid. Arvo bevakar avtalet och
-                        påminner er {result.monitoringDate ? new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : '3 månader'} innan slutdatum
-                        så ni hinner förhandla fram ett nytt avtal i rätt tid.
+                        {monitoringDatePast
+                          ? `Fastprisavtal kan inte avslutas i förtid. Avtalet löper ut om ${daysUntilEnd != null ? `${daysUntilEnd} dagar` : 'kort tid'} — Arvo initierar nu förhandling om nytt avtal.`
+                          : `Fastprisavtal kan inte avslutas i förtid. Arvo bevakar avtalet och påminner er ${result.monitoringDate ? new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : '3 månader'} innan slutdatum så ni hinner förhandla fram ett nytt avtal i rätt tid.`
+                        }
                       </p>
                       {result.potentialSavingNote && (
                         <p style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(27,122,110,0.08)', borderRadius: 8, fontSize: 13.5 }}>
@@ -711,7 +718,7 @@ const TestaFaktura = () => {
                     </>
                   ) : (
                     <>
-                      <strong>Avtalet är låst — vi lägger det på bevakning.</strong>
+                      <strong>{monitoringDatePast ? 'Avtalet löper ut snart — Arvo agerar nu.' : 'Avtalet är låst — vi lägger det på bevakning.'}</strong>
                       <p>
                         {(() => {
                           const end  = result.servicePeriodEnd;
@@ -719,6 +726,9 @@ const TestaFaktura = () => {
                           const mon  = result.monitoringDate;
                           const endFmt = end ? new Date(end).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
                           const monFmt = mon ? new Date(mon).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+                          if (monitoringDatePast) {
+                            return `Avtalet löper till ${endFmt ?? end}${daysUntilEnd != null ? ` (${daysUntilEnd} dagar kvar)` : ''}. Arvo initierar omförhandling och säkrar bästa villkor innan förnyelse.`;
+                          }
                           return days != null
                             ? `Avtalet löper till ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo initierar omförhandling ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
                             : `Avtalet löper till ${endFmt ?? end}. Arvo bevakar och påminner er ${monFmt ?? '90 dagar'} innan slutdatum.`;
@@ -748,8 +758,11 @@ const TestaFaktura = () => {
                   )}
                   {result.monitoringDate && (
                     <div>
-                      <dt>Arvo påminner er</dt>
-                      <dd>{new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' })}</dd>
+                      <dt>{monitoringDatePast ? 'Bevakning' : 'Arvo påminner er'}</dt>
+                      <dd>{monitoringDatePast
+                        ? (daysUntilEnd != null ? `Aktiv — avtal löper ut om ${daysUntilEnd} dagar` : 'Aktiv')
+                        : new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' })
+                      }</dd>
                     </div>
                   )}
                 </KV>
