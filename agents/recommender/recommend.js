@@ -209,15 +209,21 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
     if (tierBm) {
       lines.push(`\n  Tier-benchmarks (${isDevtools ? 'Atlassian publikt listpris' : 'Arvo CSP'} maj 2026, ${seats} seats):`);
       lines.push(`    MSRP månadsvis  : ${tierBm.msrpMonthly} kr/seat/mån  = ${(tierBm.msrpMonthly * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
-      lines.push(`    MSRP årsavtal   : ${tierBm.msrpAnnual} kr/seat/mån  = ${(tierBm.msrpAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
-      if (!isDevtools) lines.push(`    Arvo årsavtal   : ${tierBm.arvoAnnual} kr/seat/mån  = ${(tierBm.arvoAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
-      lines.push(`    → Målpris (${targetLabel}): ${targetPrice} kr/seat/mån = ${(targetPrice * 12 * seats).toLocaleString('sv-SE')} kr/år  ← DETTA ÄR ERT MÅL`);
-
-      if (pps != null && bc === 'monthly') {
-        const annualBilling = Math.round((pps - tierBm.msrpAnnual) * 12 * seats);
-        const cspSaving     = Math.round((tierBm.msrpAnnual - tierBm.arvoAnnual) * 12 * seats);
-        if (annualBilling > 0) lines.push(`    → Byta till årsavtal (same tier): ${annualBilling.toLocaleString('sv-SE')} kr/år`);
-        if (cspSaving > 0)    lines.push(`    → Arvo CSP vs. MSRP årsavtal: ${cspSaving.toLocaleString('sv-SE')} kr/år`);
+      if (tierBm.msrpAnnual != null) {
+        lines.push(`    MSRP årsavtal   : ${tierBm.msrpAnnual} kr/seat/mån  = ${(tierBm.msrpAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
+        if (!isDevtools) lines.push(`    Arvo årsavtal   : ${tierBm.arvoAnnual} kr/seat/mån  = ${(tierBm.arvoAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
+        lines.push(`    → Målpris (${targetLabel}): ${targetPrice} kr/seat/mån = ${(targetPrice * 12 * seats).toLocaleString('sv-SE')} kr/år  ← DETTA ÄR ERT MÅL`);
+        if (pps != null && bc === 'monthly') {
+          const annualBilling = Math.round((pps - tierBm.msrpAnnual) * 12 * seats);
+          const cspSaving     = Math.round((tierBm.msrpAnnual - tierBm.arvoAnnual) * 12 * seats);
+          if (annualBilling > 0) lines.push(`    → Byta till årsavtal (same tier): ${annualBilling.toLocaleString('sv-SE')} kr/år`);
+          if (cspSaving > 0)    lines.push(`    → Arvo CSP vs. MSRP årsavtal: ${cspSaving.toLocaleString('sv-SE')} kr/år`);
+        }
+      } else {
+        // Atlassian tier-bucket: årsavtal är en fast summa per tier (101-200 users: $32 000 Jira + $23 000 Confluence).
+        // För 110 users kostar årsavtal MER än månadsavtal — rekommendera INTE byte till årsavtal.
+        lines.push(`    MSRP årsavtal   : Tier-bucket (fast summa per user-spann, ej per-user-pris — årsavtal är DYRARE vid ${seats} seats)`);
+        lines.push(`    → Rekommendera ALDRIG byte till årsavtal för denna kund — licensrensning är enda lönsamma åtgärden`);
       }
 
       // Downsell note for enterprise tiers with SMF-sized companies
@@ -410,8 +416,9 @@ export async function recommend(input, opts = {}) {
       if (rawTierBm.currency === 'USD') {
         saasTierBm = {
           ...rawTierBm,
-          msrpMonthly: usdToSek(rawTierBm.usdMonthly,  sekPerUsd),
-          msrpAnnual:  usdToSek(rawTierBm.usdAnnual,   sekPerUsd),
+          msrpMonthly: usdToSek(rawTierBm.usdMonthly, sekPerUsd),
+          // Atlassian: usdAnnual === null (tier-bucket, inte per-user). Behåll null.
+          msrpAnnual:  rawTierBm.usdAnnual != null ? usdToSek(rawTierBm.usdAnnual, sekPerUsd) : null,
           arvoAnnual:  rawTierBm.usdArvoAnnual ? usdToSek(rawTierBm.usdArvoAnnual, sekPerUsd) : null,
           fxRate: sekPerUsd, fxSource: fxResult.source, fxDate: fxResult.date,
         };
@@ -420,21 +427,25 @@ export async function recommend(input, opts = {}) {
       }
 
       const targetP25 = isSaasDevtools
-        ? saasTierBm.msrpAnnual                              // devtools: publik direktpris
+        ? saasTierBm.msrpAnnual                              // devtools: publik direktpris (null för Atlassian tier-bucket)
         : (saasTierBm.arvoAnnual ?? saasTierBm.msrpAnnual); // productivity: Arvo CSP
-      // Bygg benchmark från tier-data (fungerar även om rawBenchmark är null)
-      benchmark = {
-        ...(rawBenchmark ?? {}),
-        p25:    targetP25 * 12,
-        median: saasTierBm.msrpMonthly * 12,
-        note:   saasTierBm.note + ' Per användare/år.',
-      };
+      // Bygg benchmark bara om targetP25 finns.
+      // Atlassian (tier-bucket annual): targetP25 är null → benchmark förblir null.
+      // Licensrensningssparande beräknas från fakturapris i Atlassian-override nedan.
+      if (targetP25 != null) {
+        benchmark = {
+          ...(rawBenchmark ?? {}),
+          p25:    targetP25 * 12,
+          median: saasTierBm.msrpMonthly * 12,
+          note:   saasTierBm.note + ' Per användare/år.',
+        };
+      }
     }
   }
 
   // Always compute annual billing saving (informational, independent of switch decision)
   let annualBillingSaving = null;
-  if (billingCycleType === 'monthly' && saasTierBm) {
+  if (billingCycleType === 'monthly' && saasTierBm && saasTierBm.msrpAnnual != null) {
     const _seats = input.invoice?.seatCount ?? input.customer?.employees ?? 1;
     const sav = Math.round((saasTierBm.msrpMonthly - saasTierBm.msrpAnnual) * 12 * _seats);
     annualBillingSaving = sav > 0 ? sav : null;
@@ -632,7 +643,7 @@ export async function recommend(input, opts = {}) {
     // Savings breakdown — decompose total saving by channel
     result.savingsBreakdown = {
       cspDiscount:         Math.max(0, annualCost - result.suggestedAnnualCost),
-      billingOptimization: (billingCycleType === 'monthly' && saasTierBm && effectiveSeats > 0)
+      billingOptimization: (billingCycleType === 'monthly' && saasTierBm && saasTierBm.msrpAnnual != null && effectiveSeats > 0)
         ? Math.max(0, Math.round((saasTierBm.msrpMonthly - saasTierBm.msrpAnnual) * 12 * effectiveSeats))
         : null,
       tierOptimization:    tierOptimizationSaving,
@@ -645,6 +656,35 @@ export async function recommend(input, opts = {}) {
       result.shouldSwitch = false;
       result.licenseOverage = null;
       result.overageSavings = null;
+    }
+  }
+
+  // Atlassian / saas-devtools licensrensnings-override:
+  // Årsavtal är tier-bucket (usdAnnual === null) → ingen traditionell prisjämförelse möjlig.
+  // Beräkna istället licensrensningssparande direkt från fakturapriset per seat.
+  if (isSaasDevtools && saasTierBm?.msrpAnnual == null) {
+    const _sc  = input.invoice?.seatCount ?? null;
+    const _emp = input.customer?.employees ?? 1;
+    const _pps = input.invoice?.pricePerSeatMonthly ?? null;
+    if (_sc != null && _sc > _emp && _pps != null) {
+      const overage    = _sc - _emp;
+      const overageSav = Math.round(overage * _pps * 12);
+      if (overageSav > 500) {
+        result.licenseOverage    = overage;
+        result.overageSavings    = overageSav;
+        result.shouldSwitch      = true;
+        result.suggestedSupplier = result.suggestedSupplier
+          ?? `${input.categorized.normalizedSupplier ?? 'Atlassian'} (licensrensning)`;
+        result.suggestedAnnualCost = Math.round(_emp * _pps * 12);
+        result.savingPerYear       = overageSav;
+        result.grossSaving         = overageSav;
+        result.arvoFee             = Math.round(overageSav * 0.20);
+        result.netSaving           = overageSav - result.arvoFee;
+        result.savingsBreakdown    = {
+          cspDiscount: null, billingOptimization: null, tierOptimization: null,
+          licenseCleanup: overageSav,
+        };
+      }
     }
   }
 
