@@ -19,6 +19,7 @@ import { getBenchmark } from '../../lib/benchmark.js';
 import { CATEGORIES } from '../categorizer/categories.js';
 import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX } from './branchindex.js';
+import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 
 const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 1024;
@@ -130,7 +131,7 @@ ${top3}
   }
 }
 
-function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) {
+function formatPrompt({ customer, invoice, categorized, benchmark, elContext, convertedTierBm }) {
   const annualCost = invoice.annualCost ?? invoice.amount;
   const mobileAddonAnnual = (invoice.mobileAddonMonthly > 0) ? invoice.mobileAddonMonthly * 12 : null;
   const employees = customer.employees ?? 1;
@@ -189,9 +190,12 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) 
     const lt  = invoice.licenseType;
     const bc  = invoice.billingCycleType;
     const pps = invoice.pricePerSeatMonthly;
-    const tierKey = getSaasLicenseTierKey(lt, invoice.saasProductFamily ?? null);
-    const _bmSource = isDevtools ? 'saas-productivity' : 'saas-productivity'; // both stored same place
-    const tierBm  = tierKey ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[tierKey] : null;
+    // Använd konverterade SEK-värden (convertedTierBm) om tillgängliga,
+    // annars fallback till rådata från branchindex (Microsoft SEK-tiers).
+    const _saasNoteKey = getSaasLicenseTierKey(lt, invoice.saasProductFamily ?? null);
+    const tierBm  = convertedTierBm ?? (_saasNoteKey
+      ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[_saasNoteKey]
+      : null);
     const seats   = (invoice.seatCount ?? customer.employees) || 1;
     // For devtools: target is msrpAnnual (public direct price). For productivity: arvoAnnual (CSP).
     const targetPrice = isDevtools ? tierBm?.msrpAnnual : tierBm?.arvoAnnual;
@@ -217,14 +221,14 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) 
       }
 
       // Downsell note for enterprise tiers with SMF-sized companies
-      if ((tierKey === 'e3' || tierKey === 'e5') && seats <= 300) {
+      if ((_saasNoteKey === 'e3' || _saasNoteKey === 'e5') && seats <= 300) {
         const bpTier = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.['business-premium'];
         if (bpTier) {
           const downsellSav = Math.round((tierBm.arvoAnnual - bpTier.arvoAnnual) * 12 * seats);
-          lines.push(`\n  TIERANALYS — ${tierKey.toUpperCase()} för ${seats} seats:`);
-          lines.push(`    ${tierKey.toUpperCase()} motiveras av: eDiscovery, avancerat auditlogg, Purview compliance, SIEM.`);
+          lines.push(`\n  TIERANALYS — ${_saasNoteKey.toUpperCase()} för ${seats} seats:`);
+          lines.push(`    ${_saasNoteKey.toUpperCase()} motiveras av: eDiscovery, avancerat auditlogg, Purview compliance, SIEM.`);
           lines.push(`    Saknas dessa krav: Business Premium (Intune + Defender) räcker för säkerhetsfokuserade SMF.`);
-          lines.push(`    Möjlig tier-besparing (${tierKey.toUpperCase()} → Business Premium, Arvo CSP): ${downsellSav.toLocaleString('sv-SE')} kr/år`);
+          lines.push(`    Möjlig tier-besparing (${_saasNoteKey.toUpperCase()} → Business Premium, Arvo CSP): ${downsellSav.toLocaleString('sv-SE')} kr/år`);
           lines.push(`    OBS: Nämn alltid tier-alternativet i reasoning om kunden troligen saknar E3-specifika behov.`);
         }
       }
@@ -354,6 +358,14 @@ export async function recommend(input, opts = {}) {
     );
   }
 
+  // Hämta live SEK/USD-kurs för USD-prissatta produkter (Atlassian, Slack, Zoom, Google).
+  // Microsoft-priser är SEK-satta av Microsoft SE och behöver ingen konvertering.
+  const fxResult = await getSekRate(opts.kvStore ?? null);
+  const sekPerUsd = fxResult.rate ?? FALLBACK_RATE_USD_SEK;
+  if (fxResult.source === 'fallback') {
+    console.warn(`[recommend] Använder fallback FX-kurs ${sekPerUsd} SEK/USD`);
+  }
+
   const rawBenchmark = await getBenchmark({
     category: input.categorized.category,
     industry: input.customer.industry,
@@ -384,15 +396,35 @@ export async function recommend(input, opts = {}) {
   let   saasLicenseTierKey = null;
   let   saasTierBm         = null;
 
-  if (['saas-productivity', 'saas-devtools'].includes(input.categorized.category) && rawBenchmark) {
+  // OBS: rawBenchmark kan vara null för saas-devtools (ingen matrix i branchindex).
+  // Tier-override bygger benchmark från grunden om tier hittas — rawBenchmark krävs EJ.
+  if (['saas-productivity', 'saas-devtools'].includes(input.categorized.category)) {
     saasLicenseTierKey = getSaasLicenseTierKey(licenseType, input.invoice?.saasProductFamily ?? null);
-    saasTierBm = saasLicenseTierKey
+    const rawTierBm = saasLicenseTierKey
       ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[saasLicenseTierKey]
       : null;
-    if (saasTierBm) {
-      const targetP25 = isSaasDevtools ? saasTierBm.msrpAnnual : saasTierBm.arvoAnnual;
+
+    if (rawTierBm) {
+      // Konvertera USD-tiers till SEK med live-kurs. Microsoft-tiers har currency:'SEK' och
+      // lagrar SEK-priser direkt — konvertering ej nödvändig/möjlig.
+      if (rawTierBm.currency === 'USD') {
+        saasTierBm = {
+          ...rawTierBm,
+          msrpMonthly: usdToSek(rawTierBm.usdMonthly,  sekPerUsd),
+          msrpAnnual:  usdToSek(rawTierBm.usdAnnual,   sekPerUsd),
+          arvoAnnual:  rawTierBm.usdArvoAnnual ? usdToSek(rawTierBm.usdArvoAnnual, sekPerUsd) : null,
+          fxRate: sekPerUsd, fxSource: fxResult.source, fxDate: fxResult.date,
+        };
+      } else {
+        saasTierBm = rawTierBm; // SEK — Microsoft, direkt användbart
+      }
+
+      const targetP25 = isSaasDevtools
+        ? saasTierBm.msrpAnnual                              // devtools: publik direktpris
+        : (saasTierBm.arvoAnnual ?? saasTierBm.msrpAnnual); // productivity: Arvo CSP
+      // Bygg benchmark från tier-data (fungerar även om rawBenchmark är null)
       benchmark = {
-        ...rawBenchmark,
+        ...(rawBenchmark ?? {}),
         p25:    targetP25 * 12,
         median: saasTierBm.msrpMonthly * 12,
         note:   saasTierBm.note + ' Per användare/år.',
@@ -458,7 +490,7 @@ export async function recommend(input, opts = {}) {
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     tools: [RECOMMEND_TOOL],
     tool_choice: { type: 'tool', name: 'recommend' },
-    messages: [{ role: 'user', content: formatPrompt({ ...input, benchmark, elContext }) }],
+    messages: [{ role: 'user', content: formatPrompt({ ...input, benchmark, elContext, convertedTierBm: saasTierBm }) }],
   };
 
   let response;

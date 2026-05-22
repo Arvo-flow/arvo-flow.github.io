@@ -3,6 +3,9 @@
   "buildCommand": "PUBLIC_URL=/ DISABLE_ESLINT_PLUGIN=true react-scripts build",
   "outputDirectory": "build",
   "framework": null,
+  "crons": [
+    { "path": "/api/cron/update-fx-rate", "schedule": "0 6 * * *" }
+  ],
   "functions": {
     "api/test-invoice.mjs": {
       "maxDuration": 60
@@ -12,6 +15,9 @@
     },
     "api/send-analysis.mjs": {
       "maxDuration": 30
+    },
+    "api/cron/update-fx-rate.mjs": {
+      "maxDuration": 15
     }
   },
   "rewrites": [

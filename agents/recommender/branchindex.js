@@ -256,77 +256,119 @@ export const BRANCHINDEX = {
       { supplier: 'Zoho Workplace',                              positioning: 'Budgetalternativ med e-post, docs och CRM-integration — lägst TCO för enkla behov.',                  reliability: 0.89 },
     ],
     licenseTierBenchmarks: {
-      // Microsoft 365 — CSP-listpriser maj 2026 (SEK/user/mån exkl. moms)
-      // Källa: Senetic, Crayon, Pricerunner CSP-kanalen maj 2026.
-      // msrpMonthly = Microsoft MSRP vid månadsdebitering
-      // msrpAnnual  = Microsoft MSRP vid årsåtagande (~15–17 % rabatt vs monthly)
-      // arvoAnnual  = Arvos volympris via CSP-kanal (~13 % under msrpAnnual)
+      // ─────────────────────────────────────────────────────────────────────
+      // PRISSTRATEGI:
+      //   Microsoft 365  → SEK-priser satta av Microsoft SE via Partner Center.
+      //                    Uppdateras INTE automatiskt med valutan — Microsoft
+      //                    annonserar prisrevision separat (typiskt 1–2 ggr/år).
+      //                    Källa: Microsoft Partner Center prislista maj 2026.
+      //                    NÄSTA VERIFIERING: 2026-09-01
+      //
+      //   Google/Slack/   → USD-baspris × live SEK/USD (Riksbanken/ECB dagligen).
+      //   Zoom/Atlassian    usdMonthly/usdAnnual anger publik MSRP i USD.
+      //                    Källa: respektive prissida, verifierad nedan.
+      //                    SEK-värdena (msrpMonthly/msrpAnnual) beräknas runtime
+      //                    av recommend() via pricing.js — sparas EJ här.
+      // ─────────────────────────────────────────────────────────────────────
+
+      // Microsoft 365 — SEK-priser direkt från Microsoft SE, ej USD-konverterade.
+      // Källa: Microsoft Partner Center prislista maj 2026 (manuellt verifierad).
+      // arvoAnnual = Arvo CSP-volympris (~13 % under msrpAnnual, Partner Center).
       'business-basic': {
         msrpMonthly: 63,  msrpAnnual: 54,  arvoAnnual: 46,
+        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
         note: 'M365 Business Basic — Teams, Exchange, webb-appar, 1 TB OneDrive. Ingen desktop Office-suite.',
       },
       'business-standard': {
         msrpMonthly: 142, msrpAnnual: 122, arvoAnnual: 104,
+        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
         note: 'M365 Business Standard — full desktop Office, Teams, SharePoint, 1 TB OneDrive. Vanligast bland svenska SMF.',
       },
       'business-premium': {
         msrpMonthly: 231, msrpAnnual: 199, arvoAnnual: 169,
+        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
         note: 'M365 Business Premium — inkl. Intune MDM + Microsoft Defender for Business. Rätt val vid säkerhetskrav.',
       },
       'e3': {
         msrpMonthly: 378, msrpAnnual: 325, arvoAnnual: 276,
+        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
         note: 'M365 E3 — enterprise compliance, eDiscovery, avancerat auditlogg. Sällan motiverat under 100 users.',
       },
       'e5': {
         msrpMonthly: 599, msrpAnnual: 516, arvoAnnual: 439,
+        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
         note: 'M365 E5 — full SIEM, Defender for Endpoint, avancerad SIEM. Överkurs för de flesta SMF.',
       },
-      // Google Workspace — listpriser maj 2026 (SEK/user/mån exkl. moms)
+
+      // Google Workspace — USD-baspris, konverteras runtime via pricing.js.
+      // Källa: workspace.google.com/pricing — BEHÖVER MANUELL VERIFIERING.
+      // TODO: Verifiera mot workspace.google.com/intl/sv/pricing innan go-live.
       'google-starter': {
-        msrpMonthly: 65,  msrpAnnual: 56,  arvoAnnual: 47,
+        usdMonthly: 7.20,  usdAnnual: 6.00,  usdArvoAnnual: 5.10,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Google Workspace Business Starter — 30 GB Drive/user, Meet, Docs, Sheets, Slides.',
       },
       'google-standard': {
-        msrpMonthly: 135, msrpAnnual: 116, arvoAnnual: 98,
+        usdMonthly: 14.40, usdAnnual: 12.00, usdArvoAnnual: 10.20,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Google Workspace Business Standard — 2 TB poolad Drive, Meet 150 deltagare + inspelning.',
       },
       'google-plus': {
-        msrpMonthly: 200, msrpAnnual: 172, arvoAnnual: 146,
+        usdMonthly: 21.60, usdAnnual: 18.00, usdArvoAnnual: 15.30,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Google Workspace Business Plus — 5 TB poolad Drive, utökad säkerhet, eDiscovery.',
       },
-      // Slack — listpriser maj 2026 (SEK/user/mån exkl. moms)
+
+      // Slack — USD-baspris, konverteras runtime.
+      // Källa: slack.com/intl/sv-se/pricing — BEHÖVER MANUELL VERIFIERING.
+      // TODO: Verifiera mot slack.com/pricing innan go-live.
       'slack-pro': {
-        msrpMonthly: 85,  msrpAnnual: 73,  arvoAnnual: 62,
+        usdMonthly: 8.75,  usdAnnual: 7.25,  usdArvoAnnual: 6.15,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Slack Pro — obegränsat meddelandehistorik, video-huddles, obegränsade integrationer.',
       },
       'slack-business-plus': {
-        msrpMonthly: 148, msrpAnnual: 127, arvoAnnual: 108,
+        usdMonthly: 15.00, usdAnnual: 12.50, usdArvoAnnual: 10.63,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Slack Business+ — SSO/SAML, kompliansexport, DLP, prioriterad support.',
       },
-      // Zoom — listpriser maj 2026 (SEK/user/mån exkl. moms)
+
+      // Zoom — USD-baspris, konverteras runtime.
+      // Källa: zoom.us/pricing — BEHÖVER MANUELL VERIFIERING.
+      // TODO: Verifiera mot zoom.us/pricing innan go-live.
       'zoom-pro': {
-        msrpMonthly: 98,  msrpAnnual: 83,  arvoAnnual: 71,
+        usdMonthly: 13.33, usdAnnual: 10.83, usdArvoAnnual: 9.21,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Zoom Pro — obegränsade möten, 1 GB moln-inspelning, schemaläggning.',
       },
       'zoom-business': {
-        msrpMonthly: 162, msrpAnnual: 138, arvoAnnual: 117,
+        usdMonthly: 18.33, usdAnnual: 15.83, usdArvoAnnual: 13.46,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Zoom Business — SSO, inspelningsutskrifter, branding, 300 deltagare.',
       },
-      // Atlassian — listpriser maj 2026 (SEK/user/mån exkl. moms)
+
+      // Atlassian — USD-baspris, konverteras runtime.
+      // Källa: atlassian.com/software/jira/pricing — BEHÖVER MANUELL VERIFIERING.
+      // TODO: Verifiera mot atlassian.com/pricing innan go-live.
+      // OBS: Atlassian prissätter i USD globalt; ingen lokal SEK-prislista.
       'atlassian-jira-standard': {
-        msrpMonthly: 65,  msrpAnnual: 55,  arvoAnnual: 47,
+        usdMonthly: 8.15,  usdAnnual: 7.75,  usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Jira Software Cloud Standard — agile boards, backlog, roadmaps.',
       },
       'atlassian-jira-premium': {
-        msrpMonthly: 130, msrpAnnual: 110, arvoAnnual: 94,
+        usdMonthly: 16.00, usdAnnual: 15.25, usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Jira Software Cloud Premium — avancerade roadmaps, sandbox, 24/7-support.',
       },
       'atlassian-confluence-standard': {
-        msrpMonthly: 55,  msrpAnnual: 47,  arvoAnnual: 40,
+        usdMonthly: 5.75,  usdAnnual: 5.50,  usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Confluence Cloud Standard — wiki, templates, Teams/Slack-integrationer.',
       },
       'atlassian-confluence-premium': {
-        msrpMonthly: 110, msrpAnnual: 94,  arvoAnnual: 80,
+        usdMonthly: 11.00, usdAnnual: 10.50, usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
         note: 'Confluence Cloud Premium — analytics, sandbox, 24/7-support.',
       },
     },
