@@ -114,7 +114,9 @@ for (const file of FILES) {
     d.setDate(d.getDate() - extracted.cancellationNoticeDays);
     return d;
   })();
-  const isPastLock = lockDeadline ? today > lockDeadline : hasActive;
+  const isPastLock = lockDeadline
+    ? today > lockDeadline
+    : extracted.cancellationNoticeDays != null && hasActive;
 
   if (!categorized.licensePending && hasActive && isPastLock) {
     console.log(`\n${YELLOW}${BOLD}→ MONITORING-ROUTE (avtalslås)${RESET}`);

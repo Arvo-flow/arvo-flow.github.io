@@ -82,16 +82,30 @@ hardware
   Köpt hårdvara eller utrustning (ej leasing eller hyra).
   Exempel: köp av telefon, skrivare, server, nätverksutrustning.
 
-AVTALSTID & UPPSÄGNING — extrahera om fakturan innehåller explicit periodinfo:
-  KRITISKT: service_period_start och service_period_end avser AVTALETS löptid — INTE
-  faktureringsperioden (den period fakturan täcker). Faktureringsperioden hanteras av billingPeriod.
-  service_period_start: Startdatum för AVTALET i ISO-format (YYYY-MM-DD).
+AVTALSTID & UPPSÄGNING — extrahera BARA om fakturan innehåller ett explicit bindande avtal:
+  KRITISKT: service_period_start och service_period_end avser AVTALETS bindningstid — INTE
+  faktureringsperioden och INTE nästa förnyelsedag för ett löpande abonnemang.
+  service_period_start: Startdatum för BINDNINGSPERIODEN i ISO-format (YYYY-MM-DD).
     Exempel: "Avtal: 2024-01-01 – 2026-12-31" → "2024-01-01". null om ej angivet.
-    OBS: Faktureringsperiod som "Period 260401-260430" är INTE avtalstid — sätt null.
-  service_period_end: Slutdatum för AVTALET i ISO-format (YYYY-MM-DD).
+    Sätt null om: fakturan är ett löpande månadsabonnemang, en SaaS-licens utan angiven
+    bindningstid, eller om det enda datumet är nästa faktureringsdatum/förnyelsedag.
+  service_period_end: Slutdatum för BINDNINGSPERIODEN i ISO-format (YYYY-MM-DD).
     Exempel: "Fast Pris 3 år (Gäller t.o.m 2027-12-31)" → "2027-12-31".
     Exempel: "Avtal gäller t.o.m. 2026-06-30" → "2026-06-30". null om ej angivet.
-    OBS: Faktureringsperiod som "Period 260401-260430" är INTE avtalstid — sätt null.
+    Sätt ALLTID null om:
+      - Fakturan är ett löpande månadsabonnemang (SaaS, mobil, bredband utan avtalstid).
+      - Det enda "slutdatumet" är nästa faktureringsdatum (t.ex. 30 dagar fram).
+      - Faktureringsperiod som "Period 260401-260430", "May 8 – Jun 7", "Renewal: Jun 7".
+      - Ingen explicit text om bindningsperiod, avtalstid, eller kontraktstid finns.
+    KONKRETA EXEMPEL på null:
+      "Atlassian Jira Premium 110 users, period 2026-05-08 to 2026-06-07" → null (billing period)
+      "Microsoft 365 Business Premium ×57, maj 2026" → null (ingen bindningstid angiven)
+      "Telia Mobil 12 abonnemang, period 26-05-01–26-05-31" → null (faktureringsperiod)
+    KONKRETA EXEMPEL på korrekt datum:
+      "Fastprisavtal el, gäller t.o.m. 2027-12-31" → "2027-12-31"
+      "Bredband Business 24 månader, avtal t.o.m. 2027-06-01" → "2027-06-01"
+    Tumregel: om texten inte innehåller ord som "bindningstid", "avtalstid", "contract term",
+    "fixed term", "gäller t.o.m." i kombination med ett datum som är >3 månader fram → null.
   cancellation_notice_days: Uppsägningstid i antal dagar som heltal.
     Exempel: "60 dagars uppsägningstid", "60 days notice", "notice period: 60 days" → 60.
     Exempel: "3 månaders uppsägningstid" → 90. null om ej angivet.

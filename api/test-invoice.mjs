@@ -534,10 +534,13 @@ export default async function handler(req, res) {
       d.setDate(d.getDate() - extracted.cancellationNoticeDays);
       return d;
     })();
-    // Om vi inte kan beräkna lock-deadline (saknar start eller uppsägningstid) men avtalet
-    // har ett framtida slutdatum → behandla som förbi lock-deadline. Det är det vanliga
-    // fallet för mobil/bredband-kontrakt som inte visar start-/uppsägningstid explicit.
-    const _isPastLockDeadline = _lockDeadline ? _today > _lockDeadline : _hasActivePeriod;
+    // Monitoring triggar BARA om vi har ett explicit avtalsslutt OCH antingen:
+    // (a) beräknad lock-deadline passerat, ELLER (b) cancellationNoticeDays är känd men
+    // start saknas. Vi antar INTE avtalslås om uppsägningstid saknas — det skulle
+    // felaktigt låsa in löpande månadsabonnemang (SaaS, mobil utan angiven bindningstid).
+    const _isPastLockDeadline = _lockDeadline
+      ? _today > _lockDeadline
+      : extracted.cancellationNoticeDays != null && _hasActivePeriod;
 
     if (!categorized.licensePending && _hasActivePeriod && _isPastLockDeadline) {
       const monitoringDate = new Date(_periodEnd);
