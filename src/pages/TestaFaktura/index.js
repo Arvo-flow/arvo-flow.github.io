@@ -494,7 +494,7 @@ const TestaFaktura = () => {
   const diagOvPct   = diagAnnual > 0 && diagSugg > 0 && diagSugg < diagAnnual
     ? Math.round((diagAnnual - diagSugg) / diagAnnual * 100)
     : 0;
-  const diagScoreRaw = Math.max(0, Math.round(100 - diagOvPct * 1.5));
+  const diagScoreRaw = Math.max(5, Math.round(100 - diagOvPct * 1.5));
   const diagScore    = !result?.recommendation?.shouldSwitch ? Math.min(diagScoreRaw, 85) : diagScoreRaw;
   const diagC       = diagScore < 45
     ? { dot: '#DC2626', num: '#DC2626', label: 'Kritisk',         labelClr: '#991B1B', txt: '#7F1D1D', bg: '#FEF2F2', border: 'rgba(220,38,38,.18)' }
@@ -969,11 +969,17 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
-                      {!isLicensePending && (
-                        <PriceNote $compact>
-                          Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.
-                        </PriceNote>
-                      )}
+                      {!isLicensePending && (() => {
+                        const cat = result?.categorized?.category;
+                        const isRealPublic = cat === 'mobil' || cat === 'bredband' || cat === 'saas-productivity';
+                        return (
+                          <PriceNote $compact>
+                            {isRealPublic
+                              ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
+                              : 'Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.'}
+                          </PriceNote>
+                        );
+                      })()}
                       {result.recommendation.suggestedAnnualCost && !isLicensePending && (
                         <PartnerBlock>
                           <div className="left">
