@@ -220,7 +220,7 @@ for (const file of FILES) {
   if (rec.savingsBreakdown) {
     const bd = rec.savingsBreakdown;
     console.log(`  ${DIM}Besparing per kanal:${RESET}`);
-    if (bd.cspDiscount > 0)         console.log(`    ${DIM}Partnerrabatt     : ${SEK(bd.cspDiscount)}${RESET}`);
+    if (bd.cspDiscount > 0)         console.log(`    ${DIM}Marknadsgap       : ${SEK(bd.cspDiscount)}${RESET}`);
     if (bd.tierOptimization > 0)    console.log(`    ${DIM}Tier-optimering   : ${SEK(bd.tierOptimization)} (advisory)${RESET}`);
     if (bd.licenseCleanup > 0)      console.log(`    ${DIM}Licensrensning    : ${SEK(bd.licenseCleanup)}${RESET}`);
   }

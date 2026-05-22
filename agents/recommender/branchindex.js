@@ -245,7 +245,7 @@ export const BRANCHINDEX = {
     source: 'real-public',
     unit: 'kr/år',
     // p25 = M365 Business Standard listpris maj 2026: 142 kr/mth × 12 = 1 704 kr/år/user (exkl. moms).
-    // Källa: Senetic/Microsoft CSP publika listpriser. Nästa prisändring aviserad juli 2026.
+    // Källa: Senetic/Microsoft CSP publika listpriser. ⚠ Prisjustering aviserad juli 2026 — uppdatera per 2026-07-01.
     // Median = typisk SMF-betalning via CSP med standardpåslag (~220–240 kr/mth).
     // Gäller: M365, Google Workspace, Zoom, Slack — produktivitetsverktyg med jämförbar per-user-prissättning.
     note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard. Källa: Microsoft CSP listpris maj 2026 — 142 kr/mth = 1 704 kr/år/user. Median = typisk CSP-pris med standardpåslag.',
@@ -262,7 +262,7 @@ export const BRANCHINDEX = {
       //                    Uppdateras INTE automatiskt med valutan — Microsoft
       //                    annonserar prisrevision separat (typiskt 1–2 ggr/år).
       //                    Källa: Microsoft Partner Center prislista maj 2026.
-      //                    NÄSTA VERIFIERING: 2026-09-01
+      //                    NÄSTA VERIFIERING: 2026-07-01 (prisjustering aviserad juli 2026)
       //
       //   Google/Slack/   → USD-baspris × live SEK/USD (Riksbanken/ECB dagligen).
       //   Zoom/Atlassian    usdMonthly/usdAnnual anger publik MSRP i USD.
