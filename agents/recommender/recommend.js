@@ -25,7 +25,7 @@ const MAX_TOKENS = 1024;
 
 // Mirrors REAL_PRICE_CATEGORIES in the frontend — categories with public list
 // prices where naming the suggested supplier in reasoning is fine.
-const REAL_PRICE_CATEGORIES = new Set(['saas-productivity', 'mobil']);
+const REAL_PRICE_CATEGORIES = new Set(['saas-productivity', 'saas-devtools', 'mobil']);
 
 export class RecommenderError extends Error {
   constructor(message, { cause } = {}) {
@@ -184,13 +184,18 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) 
     : '';
 
   const saasNote = (() => {
-    if (categorized.category !== 'saas-productivity') return '';
+    if (!['saas-productivity', 'saas-devtools'].includes(categorized.category)) return '';
+    const isDevtools = categorized.category === 'saas-devtools';
     const lt  = invoice.licenseType;
     const bc  = invoice.billingCycleType;
     const pps = invoice.pricePerSeatMonthly;
     const tierKey = getSaasLicenseTierKey(lt, invoice.saasProductFamily ?? null);
+    const _bmSource = isDevtools ? 'saas-productivity' : 'saas-productivity'; // both stored same place
     const tierBm  = tierKey ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[tierKey] : null;
     const seats   = (invoice.seatCount ?? customer.employees) || 1;
+    // For devtools: target is msrpAnnual (public direct price). For productivity: arvoAnnual (CSP).
+    const targetPrice = isDevtools ? tierBm?.msrpAnnual : tierBm?.arvoAnnual;
+    const targetLabel = isDevtools ? 'Direktavtal årsavtal (Atlassian.com)' : 'Arvo årsavtal';
 
     const lines = [];
     if (lt) lines.push(`  Licensplan            : ${lt}`);
@@ -198,10 +203,11 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) 
     if (pps != null) lines.push(`  Aktuellt pris/seat    : ${pps.toFixed(0)} kr/mån`);
 
     if (tierBm) {
-      lines.push(`\n  Tier-benchmarks (Arvo CSP maj 2026, ${seats} seats):`);
+      lines.push(`\n  Tier-benchmarks (${isDevtools ? 'Atlassian publikt listpris' : 'Arvo CSP'} maj 2026, ${seats} seats):`);
       lines.push(`    MSRP månadsvis  : ${tierBm.msrpMonthly} kr/seat/mån  = ${(tierBm.msrpMonthly * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
       lines.push(`    MSRP årsavtal   : ${tierBm.msrpAnnual} kr/seat/mån  = ${(tierBm.msrpAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
-      lines.push(`    Arvo årsavtal   : ${tierBm.arvoAnnual} kr/seat/mån  = ${(tierBm.arvoAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt  ← DETTA ÄR ERT MÅL`);
+      if (!isDevtools) lines.push(`    Arvo årsavtal   : ${tierBm.arvoAnnual} kr/seat/mån  = ${(tierBm.arvoAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
+      lines.push(`    → Målpris (${targetLabel}): ${targetPrice} kr/seat/mån = ${(targetPrice * 12 * seats).toLocaleString('sv-SE')} kr/år  ← DETTA ÄR ERT MÅL`);
 
       if (pps != null && bc === 'monthly') {
         const annualBilling = Math.round((pps - tierBm.msrpAnnual) * 12 * seats);
@@ -367,26 +373,27 @@ export async function recommend(input, opts = {}) {
     }
   }
 
-  // License tier override for saas-productivity: use tier-specific CSP prices
-  // instead of generic flat p25. arvoAnnual per seat (×12) becomes the new p25
-  // so savings reflect what Arvo can actually deliver.
+  // License tier override for saas-productivity / saas-devtools: swap generic p25
+  // for tier-specific pricing so savings reflect what Arvo can actually deliver.
+  // saas-productivity → arvoAnnual (CSP price)
+  // saas-devtools     → msrpAnnual (public direct price — Arvo facilitates, not resells)
   const licenseType       = input.invoice?.licenseType ?? null;
   const billingCycleType  = input.invoice?.billingCycleType ?? null;
   const pricePerSeatMonthly = input.invoice?.pricePerSeatMonthly ?? null;
+  const isSaasDevtools    = input.categorized.category === 'saas-devtools';
   let   saasLicenseTierKey = null;
   let   saasTierBm         = null;
 
-  if (input.categorized.category === 'saas-productivity' && rawBenchmark) {
+  if (['saas-productivity', 'saas-devtools'].includes(input.categorized.category) && rawBenchmark) {
     saasLicenseTierKey = getSaasLicenseTierKey(licenseType, input.invoice?.saasProductFamily ?? null);
     saasTierBm = saasLicenseTierKey
       ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[saasLicenseTierKey]
       : null;
     if (saasTierBm) {
-      // p25 = arvoAnnual per seat × 12 (best realistic annual price via Arvo CSP)
-      // median = msrpMonthly × 12 (what most customers currently pay on monthly billing)
+      const targetP25 = isSaasDevtools ? saasTierBm.msrpAnnual : saasTierBm.arvoAnnual;
       benchmark = {
         ...rawBenchmark,
-        p25:    saasTierBm.arvoAnnual * 12,
+        p25:    targetP25 * 12,
         median: saasTierBm.msrpMonthly * 12,
         note:   saasTierBm.note + ' Per användare/år.',
       };
@@ -524,16 +531,16 @@ export async function recommend(input, opts = {}) {
     result.switchSteps = [];
   }
 
-  // Hard block: saas-devtools and saas-other cannot produce a cross-product
-  // switch recommendation. Arvo has no reseller relationship for these tools
-  // (e.g. Atlassian, niche SaaS) so we must never promise a price we can't deliver.
-  if (['saas-devtools', 'saas-other'].includes(input.categorized.category)) {
-    result.shouldSwitch    = false;
+  // Hard block: saas-other cannot produce a switch recommendation.
+  // saas-devtools (Atlassian etc.) is allowed — target price is msrpAnnual
+  // (public direct pricing), Arvo facilitates the channel switch.
+  if (input.categorized.category === 'saas-other') {
+    result.shouldSwitch      = false;
     result.suggestedSupplier = null;
     result.suggestedAnnualCost = null;
-    result.grossSaving     = null;
-    result.arvoFee         = null;
-    result.netSaving       = null;
+    result.grossSaving       = null;
+    result.arvoFee           = null;
+    result.netSaving         = null;
     result.recommendationType = 'advisory';
   }
 
