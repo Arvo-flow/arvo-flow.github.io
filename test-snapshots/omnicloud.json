@@ -1,0 +1,88 @@
+{
+  "_fixture": "omnicloud",
+  "_description": "OmniCloud Hosting (AWS Partner) — serverhosting",
+  "extracted": {
+    "supplier": "OmniCloud Hosting (AWS Partner)",
+    "date": "2026-05-31",
+    "description": "Cloud hosting (EC2 + RDS) maj 2026 med startup-kredit",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Compute Instances (EC2) 3,450 Hrs",
+        "amount": 2800,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Relational Database Service (RDS) 744 Hrs",
+        "amount": 1400,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Startup Program Credit Applied",
+        "amount": -4200,
+        "type": "one_time_fee",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 0,
+    "recurringAmount": 0,
+    "projectedRecurringAmount": 4200,
+    "variableCharges": 4200,
+    "oneTimeFees": -4200,
+    "annualCost": 50400,
+    "recurring": false,
+    "confidenceScore": 0.9,
+    "confidenceNotes": "Cloud hosting med förbrukningsbaserad debitering. Klassificerat som variable_usage. Startup-kredit täcker hela månadsförbrukningen; projectedRecurringAmount satt till bruttoförbrukning (4 200 USD) som representerar den faktiska tjänstekostnaden innan kredit.",
+    "outOfScope": false,
+    "seatCount": null,
+    "notes": "Cloud hosting med förbrukningsbaserad debitering. Klassificerat som variable_usage. Startup-kredit täcker hela månadsförbrukningen; projectedRecurringAmount satt till bruttoförbrukning (4 200 USD) som representerar den faktiska tjänstekostnaden innan kredit.",
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": 12400,
+    "startupCreditMonthlyBurn": 4200,
+    "startupCreditCurrency": "USD",
+    "servicePeriodStart": "2026-05-01",
+    "servicePeriodEnd": "2026-05-31",
+    "cancellationNoticeDays": null,
+    "currency": "USD",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": {
+      "input_tokens": 2384,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 10338,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 790,
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  },
+  "category": "serverhosting",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}

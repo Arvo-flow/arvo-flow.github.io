@@ -1,0 +1,74 @@
+{
+  "_fixture": "bredband-1-baseline",
+  "_description": "Företagsfiber Götaland AB — bredband",
+  "extracted": {
+    "supplier": "Företagsfiber Götaland AB",
+    "date": "2026-05-03",
+    "description": "Företagsfiber 500/500 Mbit/s maj 2026",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Företagsfiber 500/500 Mbit/s (Tillsvidare)",
+        "amount": 799,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 799,
+    "recurringAmount": 799,
+    "projectedRecurringAmount": 799,
+    "variableCharges": 0,
+    "oneTimeFees": 0,
+    "annualCost": 9588,
+    "recurring": true,
+    "confidenceScore": 0.97,
+    "confidenceNotes": null,
+    "outOfScope": false,
+    "seatCount": null,
+    "notes": null,
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": 500,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": "2026-05-01",
+    "servicePeriodEnd": "2026-05-31",
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": {
+      "input_tokens": 2464,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 10338,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 495,
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  },
+  "category": "bredband",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}

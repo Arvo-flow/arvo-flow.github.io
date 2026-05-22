@@ -1,0 +1,81 @@
+{
+  "_fixture": "faktura-4",
+  "_description": "Okänd leverantör — okänd",
+  "extracted": {
+    "supplier": "Okänd leverantör",
+    "date": "2026-05-16",
+    "description": "Konsulttjänster, serverdrift och licenshantering Q1-Q2",
+    "account": null,
+    "billingPeriod": "unknown",
+    "lineItems": [
+      {
+        "description": "Konsulttjänster, serverdrift och licenshantering Q1-Q2",
+        "amount": 650000,
+        "type": "one_time_fee",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Övriga utlägg",
+        "amount": 12500,
+        "type": "one_time_fee",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 662500,
+    "recurringAmount": 0,
+    "projectedRecurringAmount": 0,
+    "variableCharges": 0,
+    "oneTimeFees": 662500,
+    "annualCost": 0,
+    "recurring": false,
+    "confidenceScore": 0.35,
+    "confidenceNotes": "Leverantörsinformation saknas helt, organisationsnummer saknas, ingen specifikation av enskilda tjänster eller volymer, blandade kategorier (konsult + drift + licens) klumpade ihop i en enda rad. Omöjligt att avgöra faktureringsperiod, klassificering av enskilda komponenter, eller om delar är återkommande.",
+    "outOfScope": true,
+    "seatCount": null,
+    "notes": "Leverantörsinformation saknas helt, organisationsnummer saknas, ingen specifikation av enskilda tjänster eller volymer, blandade kategorier (konsult + drift + licens) klumpade ihop i en enda rad. Omöjligt att avgöra faktureringsperiod, klassificering av enskilda komponenter, eller om delar är återkommande.",
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": null,
+    "servicePeriodEnd": null,
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": true,
+    "customerOrgNumber": null,
+    "usage": {
+      "input_tokens": 2348,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 10338,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 557,
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  },
+  "category": "okänd",
+  "expected": {
+    "route": "unsupported",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}

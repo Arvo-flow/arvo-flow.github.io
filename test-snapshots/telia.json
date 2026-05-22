@@ -1,0 +1,88 @@
+{
+  "_fixture": "telia",
+  "_description": "Telia Sverige AB — mobil",
+  "extracted": {
+    "supplier": "Telia Sverige AB",
+    "date": "2026-05-15",
+    "description": "Mobilabonnemang april 2026 - 45 st Jobbmobil Obegränsad",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Telia Jobbmobil Obegränsad (Fasta abonnemang)",
+        "amount": 22455,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Dataroaming Utanför EU/EES (Datatrafik Zon 2)",
+        "amount": 3450,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Samtal till betalnummer & nummerupplysning",
+        "amount": 485,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 26390,
+    "recurringAmount": 22455,
+    "projectedRecurringAmount": 22455,
+    "variableCharges": 3935,
+    "oneTimeFees": 0,
+    "annualCost": 269460,
+    "recurring": true,
+    "confidenceScore": 0.96,
+    "confidenceNotes": null,
+    "outOfScope": false,
+    "seatCount": 45,
+    "notes": null,
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": 499,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": null,
+    "servicePeriodEnd": null,
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": {
+      "input_tokens": 2529,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 10338,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 554,
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  },
+  "category": "mobil",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}

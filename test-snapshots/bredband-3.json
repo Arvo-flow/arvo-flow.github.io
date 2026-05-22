@@ -1,0 +1,81 @@
+{
+  "_fixture": "bredband-3",
+  "_description": "Bredbandsgruppen — bredband",
+  "extracted": {
+    "supplier": "Bredbandsgruppen",
+    "date": "2026-05-01",
+    "description": "Bredband Fiber 100/100 Mbit/s maj 2026",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Bredband via Fiber 100/100 Mbit/s (Ordinarie pris 899 kr)",
+        "amount": 899,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Kampanjrabatt Nyteckning 36 månader",
+        "amount": -500,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 399,
+    "recurringAmount": 399,
+    "projectedRecurringAmount": 399,
+    "variableCharges": 0,
+    "oneTimeFees": 0,
+    "annualCost": 4788,
+    "recurring": true,
+    "confidenceScore": 0.95,
+    "confidenceNotes": null,
+    "outOfScope": false,
+    "seatCount": null,
+    "notes": null,
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": 100,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": "2026-05-01",
+    "servicePeriodEnd": "2027-10-31",
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": {
+      "input_tokens": 2582,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 10338,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 515,
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  },
+  "category": "bredband",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}

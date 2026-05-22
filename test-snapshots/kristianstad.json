@@ -1,0 +1,109 @@
+{
+  "_fixture": "kristianstad",
+  "_description": "Kristianstad Energi & Nät AB — el",
+  "extracted": {
+    "supplier": "Kristianstad Energi & Nät AB",
+    "date": "2026-05-02",
+    "description": "Elnät och elhandel (rörligt lokalpris) – samlingsfaktura",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Abonnemang 25A (Fast avgift) - Elnät",
+        "amount": 345,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Överföringsavgift Nät - 1 800 kWh",
+        "amount": 396,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Energiskatt - 1 800 kWh",
+        "amount": 770,
+        "type": "one_time_fee",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Spotpris inkl. volymvägning - 1 800 kWh",
+        "amount": 792,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Lokalt Påslag Elhandel - 1 800 kWh",
+        "amount": 108,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Månadsavgift Elhandel",
+        "amount": 45,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 2456,
+    "recurringAmount": 1686,
+    "projectedRecurringAmount": 1686,
+    "variableCharges": 0,
+    "oneTimeFees": 770,
+    "annualCost": 20232,
+    "recurring": true,
+    "confidenceScore": 0.95,
+    "confidenceNotes": null,
+    "outOfScope": false,
+    "seatCount": null,
+    "notes": null,
+    "elKwh": 1800,
+    "elBillingMonth": "april",
+    "elOmrade": "SE4",
+    "elFastAvgiftKr": 45,
+    "elEnergiPerKwh": 0.5,
+    "elSkatterKr": 770,
+    "elPriceExplicit": true,
+    "elContractType": "spot",
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": null,
+    "servicePeriodEnd": null,
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": {
+      "input_tokens": 2189,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 10338,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 946,
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  },
+  "category": "el",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}

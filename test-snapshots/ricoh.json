@@ -1,0 +1,88 @@
+{
+  "_fixture": "ricoh",
+  "_description": "Ricoh Sverige AB — skrivarleasing",
+  "extracted": {
+    "supplier": "Ricoh Sverige AB",
+    "date": "2026-05-01",
+    "description": "Managed Print maj 2026 - MFP IM C5500A med klickkostnader",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Grundhyra MFP IM C5500A (Fast avgift)",
+        "amount": 1500,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Svartvita klickutskrifter enl. serviceavtal",
+        "amount": 1000,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Färgutskrifter klick enl. serviceavtal",
+        "amount": 1890,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 4390,
+    "recurringAmount": 1500,
+    "projectedRecurringAmount": 1500,
+    "variableCharges": 2890,
+    "oneTimeFees": 0,
+    "annualCost": 18000,
+    "recurring": true,
+    "confidenceScore": 0.95,
+    "confidenceNotes": null,
+    "outOfScope": false,
+    "seatCount": null,
+    "notes": null,
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": "2026-05-01",
+    "servicePeriodEnd": "2026-05-31",
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": {
+      "input_tokens": 2537,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 10338,
+      "cache_creation": {
+        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_1h_input_tokens": 0
+      },
+      "output_tokens": 528,
+      "service_tier": "standard",
+      "inference_geo": "global"
+    }
+  },
+  "category": "skrivarleasing",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}
