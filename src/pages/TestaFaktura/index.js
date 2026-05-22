@@ -328,8 +328,11 @@ const TestaFaktura = () => {
         localStorage.setItem('arvo_successful_count', String(count));
         if (data.recommendation?.netSaving > 0) {
           localStorage.setItem('arvo_had_saving', '1');
-          setGateReason('saving');
-          setGateOpen(true);
+          const stillUnlocked = !!(sessionStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_gate_passed'));
+          if (!stillUnlocked) {
+            setGateReason('saving');
+            setGateOpen(true);
+          }
         }
       }
     } catch (err) {
