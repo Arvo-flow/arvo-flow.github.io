@@ -1145,6 +1145,32 @@ const TestaFaktura = () => {
                   </dd>
                 </div>
               )}
+              {result.categorized?.category === 'saas-productivity' && result.extracted?.licenseType && (
+                <div>
+                  <dt>Licensplan</dt>
+                  <dd>
+                    {result.extracted.licenseType}
+                    {result.extracted.billingCycleType === 'monthly' && (
+                      <span style={{ marginLeft: '6px', fontSize: '11px', color: '#A8761A', fontWeight: 600 }}>
+                        Månadsvis
+                      </span>
+                    )}
+                    {result.extracted.billingCycleType === 'annual' && (
+                      <span style={{ marginLeft: '6px', fontSize: '11px', color: '#1B7A6E', fontWeight: 600 }}>
+                        Årsavtal
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              )}
+              {result.categorized?.category === 'saas-productivity' && result.recommendation?.annualBillingSaving > 0 && (
+                <div>
+                  <dt>Möjlighet — årsavtal</dt>
+                  <dd style={{ color: '#1B7A6E', fontWeight: 600 }}>
+                    +{formatKr(result.recommendation.annualBillingSaving)}/år utan leverantörsbyte
+                  </dd>
+                </div>
+              )}
             </KV>}
 
             {result.recommendation?.reasoning && (result.recommendation?.shouldSwitch || isOptimize) && (

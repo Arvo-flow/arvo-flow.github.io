@@ -786,6 +786,9 @@ export default async function handler(req, res) {
         seatCount:           extracted.seatCount ?? null,
         mobileAddonMonthly:  extracted.mobileAddonMonthly ?? null,
         connectionSpeedMbit: extracted.connectionSpeedMbit ?? null,
+        licenseType:         extracted.licenseType ?? null,
+        billingCycleType:    extracted.billingCycleType ?? null,
+        pricePerSeatMonthly: extracted.pricePerSeatMonthly ?? null,
       },
       categorized,
     });
@@ -827,6 +830,9 @@ export default async function handler(req, res) {
         seatCount:                 extracted.seatCount ?? null,
         connectionSpeedMbit:       extracted.connectionSpeedMbit ?? null,
         potentialMixedCategories:  extracted.potentialMixedCategories ?? false,
+        licenseType:               extracted.licenseType ?? null,
+        billingCycleType:          extracted.billingCycleType ?? null,
+        pricePerSeatMonthly:       extracted.pricePerSeatMonthly ?? null,
       },
       categorized: {
         category: categorized.category,
@@ -853,6 +859,7 @@ export default async function handler(req, res) {
           ? extracted.seatCount - employeesNum
           : null,
         overageSavings: recommendation.overageSavings ?? null,
+        annualBillingSaving: recommendation.annualBillingSaving ?? null,
       },
       timing,
     };

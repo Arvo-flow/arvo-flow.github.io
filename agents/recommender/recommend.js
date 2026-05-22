@@ -183,6 +183,52 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) 
     ? `\n  Nuvarande hastighet: ${invoice.connectionSpeedMbit} Mbit/s — benchmarken ovan gäller för EXAKT denna hastighets-tier. Jämför mot motsvarande produkt (${invoice.connectionSpeedMbit} Mbit/s eller bättre till samma pris). Nämn ALDRIG en annan hastighet i reasoning utan att explicit förklara att det är ett uppgrade.`
     : '';
 
+  const saasNote = (() => {
+    if (categorized.category !== 'saas-productivity') return '';
+    const lt  = invoice.licenseType;
+    const bc  = invoice.billingCycleType;
+    const pps = invoice.pricePerSeatMonthly;
+    const tierKey = getSaasLicenseTierKey(lt);
+    const tierBm  = tierKey ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[tierKey] : null;
+    const seats   = (invoice.seatCount ?? customer.employees) || 1;
+
+    const lines = [];
+    if (lt) lines.push(`  Licensplan            : ${lt}`);
+    lines.push(`  Faktureringsmodell    : ${bc === 'monthly' ? 'Månadsvis — kunden betalar löpande utan årsåtagande' : bc === 'annual' ? 'Årsavtal — kunden har redan åtagit sig 12 månader' : 'Okänt'}`);
+    if (pps != null) lines.push(`  Aktuellt pris/seat    : ${pps.toFixed(0)} kr/mån`);
+
+    if (tierBm) {
+      lines.push(`\n  Tier-benchmarks (Arvo CSP maj 2026, ${seats} seats):`);
+      lines.push(`    MSRP månadsvis  : ${tierBm.msrpMonthly} kr/seat/mån  = ${(tierBm.msrpMonthly * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
+      lines.push(`    MSRP årsavtal   : ${tierBm.msrpAnnual} kr/seat/mån  = ${(tierBm.msrpAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
+      lines.push(`    Arvo årsavtal   : ${tierBm.arvoAnnual} kr/seat/mån  = ${(tierBm.arvoAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt  ← DETTA ÄR ERT MÅL`);
+
+      if (pps != null && bc === 'monthly') {
+        const annualBilling = Math.round((pps - tierBm.msrpAnnual) * 12 * seats);
+        const cspSaving     = Math.round((tierBm.msrpAnnual - tierBm.arvoAnnual) * 12 * seats);
+        if (annualBilling > 0) lines.push(`    → Byta till årsavtal (same tier): ${annualBilling.toLocaleString('sv-SE')} kr/år`);
+        if (cspSaving > 0)    lines.push(`    → Arvo CSP vs. MSRP årsavtal: ${cspSaving.toLocaleString('sv-SE')} kr/år`);
+      }
+
+      // Downsell note for enterprise tiers with SMF-sized companies
+      if ((tierKey === 'e3' || tierKey === 'e5') && seats <= 300) {
+        const bpTier = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.['business-premium'];
+        if (bpTier) {
+          const downsellSav = Math.round((tierBm.arvoAnnual - bpTier.arvoAnnual) * 12 * seats);
+          lines.push(`\n  TIERANALYS — ${tierKey.toUpperCase()} för ${seats} seats:`);
+          lines.push(`    ${tierKey.toUpperCase()} motiveras av: eDiscovery, avancerat auditlogg, Purview compliance, SIEM.`);
+          lines.push(`    Saknas dessa krav: Business Premium (Intune + Defender) räcker för säkerhetsfokuserade SMF.`);
+          lines.push(`    Möjlig tier-besparing (${tierKey.toUpperCase()} → Business Premium, Arvo CSP): ${downsellSav.toLocaleString('sv-SE')} kr/år`);
+          lines.push(`    OBS: Nämn alltid tier-alternativet i reasoning om kunden troligen saknar E3-specifika behov.`);
+        }
+      }
+    }
+
+    return lines.length > 0
+      ? `\n\nSaaS-licensintelligens:\n${lines.join('\n')}`
+      : '';
+  })();
+
   return `Kunden:
   Bolagstyp: ${customer.industry}
   Anställda: ${employees}
@@ -201,7 +247,7 @@ Kategoriserad faktura:
 Branschindex för segmentet:
 ${benchmarkBlock}
 
-${phrasingRule}${secretOverride}${speedNote}${elContext ? elContext : ''}
+${phrasingRule}${secretOverride}${saasNote}${speedNote}${elContext ? elContext : ''}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }
@@ -480,6 +526,7 @@ export async function recommend(input, opts = {}) {
     optimizationSaving: result.optimizationSaving ?? null,
     suggestedSupplier: result.suggestedSupplier ?? null,
     suggestedAnnualCost: result.suggestedAnnualCost ?? null,
+    annualBillingSaving,
     benchmark,
     usage: {
       input_tokens: response.usage.input_tokens,
