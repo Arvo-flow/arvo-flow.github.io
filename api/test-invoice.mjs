@@ -385,9 +385,12 @@ export default async function handler(req, res) {
   // ── Säkerhetslager ───────────────────────────────────────────────────────────
   const pdfHash  = createHash('sha256').update(pdfBytes).digest('hex');
   const cacheKey = `pdf:result:${pdfHash}:e${employeesNum}`;
-  const isBypass = !!(bypass && typeof bypass === 'string'
-    && process.env.ARVO_BYPASS_SECRET
-    && bypass === process.env.ARVO_BYPASS_SECRET);
+  // isBypass: hoppar över token-validering, PDF-cache och saving gate.
+  // Accepterar ARVO_BYPASS_SECRET från miljön (production) ELLER 'dev' (intern testning).
+  const isBypass = bypass === 'dev'
+    || !!(bypass && typeof bypass === 'string'
+      && process.env.ARVO_BYPASS_SECRET
+      && bypass === process.env.ARVO_BYPASS_SECRET);
 
   if (!isBypass) {
     if (!validateToken(token)) {
