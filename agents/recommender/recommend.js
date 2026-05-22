@@ -188,7 +188,7 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) 
     const lt  = invoice.licenseType;
     const bc  = invoice.billingCycleType;
     const pps = invoice.pricePerSeatMonthly;
-    const tierKey = getSaasLicenseTierKey(lt);
+    const tierKey = getSaasLicenseTierKey(lt, invoice.saasProductFamily ?? null);
     const tierBm  = tierKey ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[tierKey] : null;
     const seats   = (invoice.seatCount ?? customer.employees) || 1;
 
@@ -222,6 +222,32 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) 
           lines.push(`    OBS: Nämn alltid tier-alternativet i reasoning om kunden troligen saknar E3-specifika behov.`);
         }
       }
+    }
+
+    // Feature overlap detection (M365 / Google Workspace only)
+    const features = invoice.saasIncludedFeatures ?? null;
+    if (features?.length > 0) {
+      lines.push(`\n  INKLUDERADE TJÄNSTER: ${features.join(', ')}`);
+      const overlaps = [];
+      if (features.includes('Microsoft Teams'))
+        overlaps.push('Zoom eller Google Meet (videokonferens ingår redan i Teams)');
+      if (features.includes('OneDrive'))
+        overlaps.push('Dropbox, Box eller Google Drive (molnlagring ingår redan)');
+      if (features.includes('SharePoint'))
+        overlaps.push('Confluence eller Notion (wiki/intranät ingår redan i SharePoint)');
+      if (overlaps.length > 0) {
+        lines.push(`  MÖJLIG DUPLICERAD KOSTNAD: Kunden kanske betalar separat för: ${overlaps.join('; ')}.`);
+        lines.push(`  → Om du ser tecken på överlapp i fakturabeskrivningen: nämn det i reasoning.`);
+      }
+    }
+
+    // Shadow IT / underage detection
+    const _sc  = invoice.seatCount ?? null;
+    const _emp = customer.employees || 1;
+    if (_sc != null && _sc < _emp) {
+      const unlic = _emp - _sc;
+      lines.push(`\n  SHADOW IT-RISK: ${_sc} licenser men ${_emp} anst. → ${unlic} anst saknar troligen formell licens.`);
+      lines.push(`  → Nämn compliance-risk och shadow IT i reasoning — det är ett argument för rätt licensantal.`);
     }
 
     return lines.length > 0
@@ -270,17 +296,48 @@ function closestSpeedTier(speedMbit) {
 }
 
 // Maps an extracted license type string to a branchindex tier key.
-function getSaasLicenseTierKey(licenseType) {
-  if (!licenseType) return null;
-  const lt = licenseType.toLowerCase();
-  if (lt.includes('business basic'))                              return 'business-basic';
+function getSaasLicenseTierKey(licenseType, productFamily) {
+  const lt = (licenseType   || '').toLowerCase();
+  const pf = (productFamily || '').toLowerCase();
+  if (!lt && !pf) return null;
+
+  // Microsoft 365
+  if (lt.includes('business basic'))                                    return 'business-basic';
   if (lt.includes('business standard') || lt.includes('apps for business')) return 'business-standard';
-  if (lt.includes('business premium'))                           return 'business-premium';
-  if (lt === 'e3' || lt.includes(' e3') || lt.includes('enterprise e3')) return 'e3';
-  if (lt === 'e5' || lt.includes(' e5') || lt.includes('enterprise e5')) return 'e5';
-  if (lt.includes('google') && lt.includes('starter'))           return 'google-starter';
-  if (lt.includes('google') && lt.includes('standard'))          return 'google-standard';
-  if (lt.includes('google') && lt.includes('plus'))              return 'google-plus';
+  if (lt.includes('business premium'))                                  return 'business-premium';
+  if (lt === 'e3' || lt.includes(' e3') || lt.includes('enterprise e3'))  return 'e3';
+  if (lt === 'e5' || lt.includes(' e5') || lt.includes('enterprise e5'))  return 'e5';
+
+  // Google Workspace
+  if (pf.includes('google') || lt.includes('google workspace') || lt.includes('google workspace')) {
+    if (lt.includes('starter'))  return 'google-starter';
+    if (lt.includes('plus'))     return 'google-plus';
+    if (lt.includes('standard')) return 'google-standard';
+    return 'google-standard';
+  }
+
+  // Slack
+  if (pf === 'slack' || lt.includes('slack')) {
+    if (lt.includes('business')) return 'slack-business-plus';
+    return 'slack-pro';
+  }
+
+  // Zoom
+  if (pf === 'zoom' || lt.includes('zoom')) {
+    if (lt.includes('business')) return 'zoom-business';
+    return 'zoom-pro';
+  }
+
+  // Atlassian
+  if (lt.includes('confluence') || pf === 'atlassian-confluence') {
+    if (lt.includes('premium')) return 'atlassian-confluence-premium';
+    return 'atlassian-confluence-standard';
+  }
+  if (lt.includes('jira') || pf === 'atlassian-jira' || pf.includes('atlassian')) {
+    if (lt.includes('premium')) return 'atlassian-jira-premium';
+    return 'atlassian-jira-standard';
+  }
+
   return null;
 }
 
@@ -320,7 +377,7 @@ export async function recommend(input, opts = {}) {
   let   saasTierBm         = null;
 
   if (input.categorized.category === 'saas-productivity' && rawBenchmark) {
-    saasLicenseTierKey = getSaasLicenseTierKey(licenseType);
+    saasLicenseTierKey = getSaasLicenseTierKey(licenseType, input.invoice?.saasProductFamily ?? null);
     saasTierBm = saasLicenseTierKey
       ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[saasLicenseTierKey]
       : null;
@@ -511,6 +568,25 @@ export async function recommend(input, opts = {}) {
       result.overageSavings = null;
     }
 
+    // Tier optimization potential — advisory saving if on E3/E5 and could downgrade
+    let tierOptimizationSaving = null;
+    if ((saasLicenseTierKey === 'e3' || saasLicenseTierKey === 'e5') && saasTierBm) {
+      const bpTier = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.['business-premium'];
+      if (bpTier && effectiveSeats > 0) {
+        tierOptimizationSaving = Math.round((saasTierBm.arvoAnnual - bpTier.arvoAnnual) * 12 * effectiveSeats);
+      }
+    }
+
+    // Savings breakdown — decompose total saving by channel
+    result.savingsBreakdown = {
+      cspDiscount:         Math.max(0, annualCost - result.suggestedAnnualCost),
+      billingOptimization: (billingCycleType === 'monthly' && saasTierBm && effectiveSeats > 0)
+        ? Math.max(0, Math.round((saasTierBm.msrpMonthly - saasTierBm.msrpAnnual) * 12 * effectiveSeats))
+        : null,
+      tierOptimization:    tierOptimizationSaving,
+      licenseCleanup:      result.overageSavings ?? null,
+    };
+
     // Minimigräns: ett leverantörsbyte under 500 kr nettobesparing per år är
     // operationellt orimligt — byteskostnad i tid överstiger vinsten.
     if ((result.savingPerYear ?? 0) < 500) {
@@ -527,6 +603,7 @@ export async function recommend(input, opts = {}) {
     suggestedSupplier: result.suggestedSupplier ?? null,
     suggestedAnnualCost: result.suggestedAnnualCost ?? null,
     annualBillingSaving,
+    savingsBreakdown: result.savingsBreakdown ?? null,
     benchmark,
     usage: {
       input_tokens: response.usage.input_tokens,

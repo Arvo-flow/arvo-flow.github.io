@@ -177,6 +177,17 @@ SAAS-LICENSER — extrahera dessa fält om fakturan avser mjukvarulicenser eller
     Kvartal: recurring_total / seatCount / 3.
     Årsperiod: recurring_total / seatCount / 12.
     null om seatCount är null eller ej per-användarlicenser.
+  saas_product_family: Standardiserad produktfamiljidentifierare. Ange en av:
+    "microsoft-365", "google-workspace", "slack", "zoom",
+    "atlassian-jira", "atlassian-confluence", "adobe-creative-cloud",
+    "salesforce", "hubspot", "docusign".
+    null om okänt eller ej SaaS-faktura.
+  saas_included_features: Array med plattformstjänster som INGÅR i den licenserade produkten.
+    Fyll i ENBART för Microsoft 365 och Google Workspace.
+    M365 Business Basic/Standard/Premium/E3/E5: alltid ["Microsoft Teams", "OneDrive", "SharePoint", "Exchange Online"]
+    Lägg DESSUTOM till för Business Premium, E3, E5: "Microsoft Intune", "Microsoft Defender"
+    Google Workspace (alla tiers): ["Google Meet", "Google Drive", "Gmail", "Google Docs", "Google Chat"]
+    null för alla andra produkter.
 
 STARTUP-KREDITER — om fakturan visar att ett startup-program, promotional credit eller
   liknande kreditpost reducerar totalsumman:
@@ -338,6 +349,15 @@ const EXTRACT_TOOL = {
         type: ['number', 'null'],
         description: 'Genomsnittskostnad per licens och månad i SEK exkl. moms. Beräknat från recurring-total / seatCount / periodMonths. null om seatCount saknas.',
       },
+      saas_product_family: {
+        type: ['string', 'null'],
+        description: 'Produktfamilj: "microsoft-365", "google-workspace", "slack", "zoom", "atlassian-jira", "atlassian-confluence", "adobe-creative-cloud", "salesforce", "hubspot". null om okänt.',
+      },
+      saas_included_features: {
+        type: ['array', 'null'],
+        items: { type: 'string' },
+        description: 'Inkluderade plattformstjänster för M365 och Google Workspace. null för alla andra produkter.',
+      },
       startup_credit_balance: {
         type: ['number', 'null'],
         description: 'Kvarvarande kreditbalans från startup-/kampanjprogram som visas på fakturan. null om ej tillämpligt.',
@@ -440,6 +460,8 @@ export function aggregateLineItems(raw) {
     licenseType:               raw.license_type ?? null,
     billingCycleType:          raw.billing_cycle_type ?? null,
     pricePerSeatMonthly:       raw.price_per_seat_monthly != null ? Number(raw.price_per_seat_monthly) : null,
+    saasProductFamily:    raw.saas_product_family ?? null,
+    saasIncludedFeatures: raw.saas_included_features ?? null,
     startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
     startupCreditMonthlyBurn:  raw.startup_credit_monthly_burn != null ? Number(raw.startup_credit_monthly_burn) : null,
     startupCreditCurrency:     raw.startup_credit_currency ?? null,

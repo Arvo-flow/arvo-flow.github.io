@@ -294,6 +294,41 @@ export const BRANCHINDEX = {
         msrpMonthly: 200, msrpAnnual: 172, arvoAnnual: 146,
         note: 'Google Workspace Business Plus — 5 TB poolad Drive, utökad säkerhet, eDiscovery.',
       },
+      // Slack — listpriser maj 2026 (SEK/user/mån exkl. moms)
+      'slack-pro': {
+        msrpMonthly: 85,  msrpAnnual: 73,  arvoAnnual: 62,
+        note: 'Slack Pro — obegränsat meddelandehistorik, video-huddles, obegränsade integrationer.',
+      },
+      'slack-business-plus': {
+        msrpMonthly: 148, msrpAnnual: 127, arvoAnnual: 108,
+        note: 'Slack Business+ — SSO/SAML, kompliansexport, DLP, prioriterad support.',
+      },
+      // Zoom — listpriser maj 2026 (SEK/user/mån exkl. moms)
+      'zoom-pro': {
+        msrpMonthly: 98,  msrpAnnual: 83,  arvoAnnual: 71,
+        note: 'Zoom Pro — obegränsade möten, 1 GB moln-inspelning, schemaläggning.',
+      },
+      'zoom-business': {
+        msrpMonthly: 162, msrpAnnual: 138, arvoAnnual: 117,
+        note: 'Zoom Business — SSO, inspelningsutskrifter, branding, 300 deltagare.',
+      },
+      // Atlassian — listpriser maj 2026 (SEK/user/mån exkl. moms)
+      'atlassian-jira-standard': {
+        msrpMonthly: 65,  msrpAnnual: 55,  arvoAnnual: 47,
+        note: 'Jira Software Cloud Standard — agile boards, backlog, roadmaps.',
+      },
+      'atlassian-jira-premium': {
+        msrpMonthly: 130, msrpAnnual: 110, arvoAnnual: 94,
+        note: 'Jira Software Cloud Premium — avancerade roadmaps, sandbox, 24/7-support.',
+      },
+      'atlassian-confluence-standard': {
+        msrpMonthly: 55,  msrpAnnual: 47,  arvoAnnual: 40,
+        note: 'Confluence Cloud Standard — wiki, templates, Teams/Slack-integrationer.',
+      },
+      'atlassian-confluence-premium': {
+        msrpMonthly: 110, msrpAnnual: 94,  arvoAnnual: 80,
+        note: 'Confluence Cloud Premium — analytics, sandbox, 24/7-support.',
+      },
     },
     matrix: {
       byraer:      { micro: { median: 2880, p25: 1704 }, small: { median: 2640, p25: 1704 }, mid: { median: 2400, p25: 1704 } },
