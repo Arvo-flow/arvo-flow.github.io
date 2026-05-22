@@ -1,135 +1,334 @@
 #!/usr/bin/env node
 // scripts/stress-test.mjs
-// Kör extract-steget mot alla PDF:er i test-pdfs/ och skriver ut en tydlig rapport.
-// Testar INTE categorize/recommend — fokus är på klassificering och routing.
+// Kör extract-steget mot alla PDF:er i test-pdfs/ och jämför mot kända
+// förväntade värden (GOLDEN MASTER). Verifierar även att is_addon och
+// addon_type är korrekt satta efter refaktorn.
 //
 // Användning:
-//   node scripts/stress-test.mjs              # alla PDF:er i test-pdfs/
+//   node scripts/stress-test.mjs              # alla PDF:er
 //   node scripts/stress-test.mjs ricoh.pdf    # enskild fil
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { resolve, join, basename } from 'node:path';
+import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT      = resolve(__dirname, '..');
 
-// Ladda .env om den finns (ANTHROPIC_API_KEY)
 dotenv.config({ path: join(ROOT, '.env') });
 
 const { extractInvoice, routeExtraction } = await import(
   join(ROOT, 'agents/test-invoice/extract.js')
 );
 
-// ── Hjälpfunktioner ───────────────────────────────────────────────────────────
+// ── Färger ────────────────────────────────────────────────────────────────────
+const R = '\x1b[0m';
+const BOLD = '\x1b[1m';
+const DIM  = '\x1b[2m';
+const RED  = '\x1b[31m';
+const GRN  = '\x1b[32m';
+const YEL  = '\x1b[33m';
+const GRY  = '\x1b[90m';
+const CYA  = '\x1b[36m';
 
-const SEK = (n) => (n == null ? '—' : `${n.toLocaleString('sv-SE')} kr`);
-const PCT = (n) => (n == null ? '—' : `${(n * 100).toFixed(0)} %`);
-
-const TYPE_LABEL = {
-  recurring_subscription: 'Återkommande',
-  variable_usage:         'Rörlig',
-  one_time_fee:           'Engång',
-  hardware:               'Hårdvara',
-};
-
-const ROUTE_COLOR = {
-  auto:         '\x1b[32m',  // grön
-  review_queue: '\x1b[33m',  // gul
-  unsupported:  '\x1b[90m',  // grå
-};
-const RESET = '\x1b[0m';
-const BOLD  = '\x1b[1m';
-const DIM   = '\x1b[2m';
-const RED   = '\x1b[31m';
+const SEK = (n) => n == null ? '—' : `${n.toLocaleString('sv-SE')} kr`;
+const PCT = (n) => n == null ? '—' : `${(n * 100).toFixed(0)} %`;
 
 function routeTag(route) {
-  const color = ROUTE_COLOR[route] ?? '';
-  return `${color}${BOLD}[${route.toUpperCase()}]${RESET}`;
+  const colors = { auto: GRN, review_queue: YEL, unsupported: GRY };
+  return `${colors[route] ?? ''}${BOLD}[${route.toUpperCase()}]${R}`;
 }
 
-function printResult(file, extracted, routing, elapsedMs) {
-  const sep = '─'.repeat(64);
+const TYPE_SHORT = {
+  recurring_subscription: 'ÅTER',
+  variable_usage:         'RÖRLIG',
+  one_time_fee:           'ENGÅNG',
+  hardware:               'HW',
+};
+
+// ── Golden master — förväntade värden per känd PDF ────────────────────────────
+// Baserat på CLAUDE.md verifierade testresultat + nya is_addon-assertions.
+// Filnamn-matchning är case-insensitive prefix (telia → telia.pdf, telia_maj.pdf osv.)
+const GOLDEN = [
+  {
+    match: /telia/i,
+    route:           'auto',
+    minConfidence:   0.90,
+    checks: [
+      {
+        label: 'Roaming/övertrafik klassas som variable_usage',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'variable_usage' && /roaming|övertrafik|extra data/i.test(l.description)
+        ),
+      },
+      {
+        label: 'Bas-abonnemang klassas som recurring_subscription',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'recurring_subscription' && /abonnemang|mobilplan|jobbmobil/i.test(l.description)
+        ),
+      },
+      {
+        label: 'Inga rader felaktigt märkta is_addon på ren mobilfaktura',
+        fn: (e) => !(e.lineItems ?? []).some(
+          (l) => l.is_addon === true && /abonnemang|mobilplan|jobbmobil/i.test(l.description)
+        ),
+      },
+    ],
+  },
+  {
+    match: /ricoh|konica|managed.?print|skrivar/i,
+    route:           'auto',
+    minConfidence:   0.90,
+    checks: [
+      {
+        label: 'Klickkostnader (sida) klassas som variable_usage',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'variable_usage' && /klic|sida|page|svart|färg|color/i.test(l.description)
+        ),
+      },
+      {
+        label: 'Fast maskinhyra klassas som recurring_subscription',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'recurring_subscription' && /hyra|leasing|maskin|service/i.test(l.description)
+        ),
+      },
+      {
+        label: 'Klickkostnader är INTE märkta is_addon (de är rörliga, inte addons)',
+        fn: (e) => !(e.lineItems ?? []).some(
+          (l) => l.is_addon === true && /klic|sida|page/i.test(l.description)
+        ),
+      },
+    ],
+  },
+  {
+    match: /microsoft|m365|365/i,
+    route:           'auto',
+    minConfidence:   0.90,
+    seatCount:       57,
+    checks: [
+      {
+        label: 'seatCount = 57',
+        fn: (e) => e.seatCount === 57,
+      },
+      {
+        label: 'Licensrader klassas som recurring_subscription',
+        fn: (e) => (e.lineItems ?? []).every(
+          (l) => l.type === 'recurring_subscription' || l.type === 'one_time_fee'
+        ),
+      },
+      {
+        label: 'Licensrader har is_addon: false (licenser är bastjänst)',
+        fn: (e) => !(e.lineItems ?? []).some(
+          (l) => l.is_addon === true && /business|premium|basic|e3|e5/i.test(l.description)
+        ),
+      },
+      {
+        label: 'pricePerSeatMonthly beräknat (ej null)',
+        fn: (e) => e.pricePerSeatMonthly != null && e.pricePerSeatMonthly > 0,
+      },
+    ],
+  },
+  {
+    match: /advokatfirman|jurist|juridik|unclear|suddig/i,
+    route:           'review_queue',
+    checks: [],
+  },
+  {
+    match: /kalles|alltjänst|städ|restaurang|mat|outofscope|out.of.scope/i,
+    route:           'unsupported',
+    checks: [],
+  },
+  // TeleKom B2B kombinerad faktura — om den finns i test-pdfs/
+  {
+    match: /telekom|tele2.*b2b|b2b.*tele|kombinerad/i,
+    route:           'auto',
+    minConfidence:   0.85,
+    checks: [
+      {
+        label: 'potentialMixedCategories = true',
+        fn: (e) => e.potentialMixedCategories === true,
+      },
+      {
+        label: 'Molnväxel märkt is_addon: true',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === true && /molnväxel|pbx|cloud.?pbx/i.test(l.description)
+        ),
+      },
+      {
+        label: 'Molnväxel har addon_type: "pbx"',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.addon_type === 'pbx' && /molnväxel|pbx/i.test(l.description)
+        ),
+      },
+      {
+        label: 'Bredband-rad märkt is_addon: false (det är en bastjänst, inte tillägg)',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === false && /bredband|fiber|internet/i.test(l.description)
+        ),
+      },
+    ],
+  },
+];
+
+function findGolden(filename) {
+  return GOLDEN.find((g) => g.match.test(filename)) ?? null;
+}
+
+// ── Skriv ut resultat för en faktura ──────────────────────────────────────────
+function printResult(file, extracted, routing, elapsedMs, golden) {
+  const sep = '─'.repeat(70);
   console.log(`\n${sep}`);
-  console.log(`${BOLD}${file}${RESET}  ${routeTag(routing.route)}  ${DIM}(${elapsedMs} ms)${RESET}`);
+  console.log(`${BOLD}${file}${R}  ${routeTag(routing.route)}  ${DIM}(${elapsedMs} ms)${R}`);
   console.log(sep);
 
   if (routing.route === 'unsupported') {
     console.log(`  Leverantör : ${extracted.supplier}`);
     console.log(`  outOfScope : true`);
-    return;
+  } else {
+    console.log(`  Leverantör   : ${extracted.supplier}`);
+    console.log(`  Datum        : ${extracted.date}`);
+    console.log(`  Period       : ${extracted.billingPeriod}`);
+    console.log(`  Confidence   : ${PCT(extracted.confidenceScore)}${extracted.confidenceNotes ? `  ${DIM}(${extracted.confidenceNotes})${R}` : ''}`);
+    if (routing.route === 'review_queue')
+      console.log(`  ${YEL}Orsak        : ${routing.reason}${R}`);
+    if (extracted.seatCount != null)
+      console.log(`  Seats        : ${extracted.seatCount}`);
+    if (extracted.potentialMixedCategories)
+      console.log(`  ${CYA}Kombinerad faktura (potentialMixedCategories: true)${R}`);
+
+    // Rad-tabell med is_addon-kolumn
+    console.log('');
+    console.log(`  ${'RAD'.padEnd(38)} ${'TYP'.padEnd(8)} ${'ADDON'.padEnd(12)} ${'BELOPP'.padStart(10)}`);
+    console.log(`  ${'─'.repeat(72)}`);
+    for (const item of extracted.lineItems ?? []) {
+      const typeTag  = TYPE_SHORT[item.type] ?? item.type;
+      const typeColor = item.type === 'variable_usage' ? RED : '';
+      const addonTag  = item.is_addon
+        ? `${CYA}✓ ${item.addon_type ?? 'addon'}${R}`
+        : `${GRY}—${R}`;
+      const desc = item.description.length > 37
+        ? item.description.slice(0, 34) + '...'
+        : item.description;
+      console.log(`  ${typeColor}${desc.padEnd(38)} ${typeTag.padEnd(8)}${R} ${addonTag.padEnd(20)} ${SEK(item.amount).padStart(10)}`);
+    }
+
+    console.log('');
+    console.log(`  Totalt faktura    : ${SEK(extracted.amount)}`);
+    console.log(`  Återkommande      : ${SEK(extracted.recurringAmount)}`);
+    if (extracted.variableCharges > 0)
+      console.log(`  ${RED}Rörliga           : ${SEK(extracted.variableCharges)}${R}`);
+    if (extracted.oneTimeFees > 0)
+      console.log(`  Engång/hårdvara   : ${SEK(extracted.oneTimeFees)}`);
+    console.log(`  Beräknad årkostnad: ${SEK(extracted.annualCost)}`);
+    if (extracted.pricePerSeatMonthly != null)
+      console.log(`  Pris/licens/mån   : ${SEK(extracted.pricePerSeatMonthly)}`);
   }
 
-  console.log(`  Leverantör     : ${extracted.supplier}`);
-  console.log(`  Datum          : ${extracted.date}`);
-  console.log(`  Beskrivning    : ${extracted.description}`);
-  console.log(`  Period         : ${extracted.billingPeriod}`);
-  console.log(`  Confidence     : ${PCT(extracted.confidenceScore)}${extracted.confidenceNotes ? `  ${DIM}(${extracted.confidenceNotes})${RESET}` : ''}`);
-  if (routing.route === 'review_queue') {
-    console.log(`  ${ROUTE_COLOR.review_queue}Orsak          : ${routing.reason}${RESET}`);
+  // ── Golden master assertions ───────────────────────────────────────────────
+  if (!golden) {
+    console.log(`\n  ${YEL}ⓘ Ingen golden master definierad för denna fil.${R}`);
+    return { passed: true, checks: 0 };
+  }
+
+  const failures = [];
+  let checkCount = 0;
+
+  // Route
+  checkCount++;
+  if (routing.route !== golden.route) {
+    failures.push(`Route: förväntade ${golden.route}, fick ${routing.route}`);
+  }
+
+  // Confidence
+  if (golden.minConfidence != null && routing.route !== 'unsupported') {
+    checkCount++;
+    if ((extracted.confidenceScore ?? 0) < golden.minConfidence) {
+      failures.push(`Confidence: ${PCT(extracted.confidenceScore)} under minimum ${PCT(golden.minConfidence)}`);
+    }
+  }
+
+  // Custom checks
+  for (const check of golden.checks ?? []) {
+    checkCount++;
+    let passed = false;
+    try { passed = check.fn(extracted); } catch { passed = false; }
+    if (!passed) failures.push(check.label);
   }
 
   console.log('');
-  console.log(`  ${'RAD'.padEnd(40)} ${'TYP'.padEnd(22)} ${'BELOPP'.padStart(10)}`);
-  console.log(`  ${'─'.repeat(76)}`);
-  for (const item of extracted.lineItems ?? []) {
-    const label = TYPE_LABEL[item.type] ?? item.type;
-    const color = item.type === 'variable_usage' ? RED : '';
-    console.log(`  ${color}${item.description.padEnd(40)} ${label.padEnd(22)} ${SEK(item.amount).padStart(10)}${RESET}`);
+  if (failures.length === 0) {
+    console.log(`  ${GRN}${BOLD}✓ PASS${R}  (${checkCount} kontroller)`);
+  } else {
+    console.log(`  ${RED}${BOLD}✗ FAIL${R}  (${failures.length}/${checkCount} kontroller misslyckades)`);
+    for (const f of failures)
+      console.log(`    ${RED}✗${R} ${f}`);
   }
 
-  console.log('');
-  console.log(`  Totalt faktura   : ${SEK(extracted.amount)}`);
-  console.log(`  Återkommande     : ${SEK(extracted.recurringAmount)}`);
-  if (extracted.variableCharges > 0)
-    console.log(`  ${RED}Rörliga avgifter : ${SEK(extracted.variableCharges)}${RESET}`);
-  if (extracted.oneTimeFees > 0)
-    console.log(`  Engång/hårdvara  : ${SEK(extracted.oneTimeFees)}`);
-  console.log(`  Beräknad årskostand : ${SEK(extracted.annualCost)}`);
-  if (extracted.seatCount != null)
-    console.log(`  Seats/licenser   : ${extracted.seatCount}`);
-  if (extracted.mobileAddonMonthly != null)
-    console.log(`  Mobil-tillägg    : ${SEK(extracted.mobileAddonMonthly)}/mån (molnväxel m.m. — exkl. bas-abonnemang)`);
-  if (extracted.startupCreditBalance != null) {
-    const cur = extracted.startupCreditCurrency ?? '';
-    console.log(`  Startup-kredit   : ${cur} ${extracted.startupCreditBalance?.toLocaleString('sv-SE')} kvar / ${cur} ${extracted.startupCreditMonthlyBurn?.toLocaleString('sv-SE')}/mån burn`);
-  }
+  return { passed: failures.length === 0, checks: checkCount, failures };
 }
 
+// ── Sammanfattning ────────────────────────────────────────────────────────────
 function printSummary(results) {
-  const sep = '═'.repeat(64);
+  const sep = '═'.repeat(70);
   console.log(`\n${sep}`);
-  console.log(`${BOLD}SAMMANFATTNING${RESET}  (${results.length} faktura${results.length !== 1 ? 'r' : ''})`);
+  console.log(`${BOLD}SAMMANFATTNING${R}  (${results.length} faktura${results.length !== 1 ? 'r' : ''})`);
   console.log(sep);
 
-  const counts = { auto: 0, review_queue: 0, unsupported: 0, error: 0 };
-  for (const r of results) counts[r.route ?? 'error']++;
+  const routeCounts = { auto: 0, review_queue: 0, unsupported: 0, error: 0 };
+  let totalPassed = 0, totalFailed = 0;
 
-  console.log(`  ${ROUTE_COLOR.auto}${BOLD}auto${RESET}          : ${counts.auto}`);
-  console.log(`  ${ROUTE_COLOR.review_queue}${BOLD}review_queue${RESET}  : ${counts.review_queue}`);
-  console.log(`  ${ROUTE_COLOR.unsupported}${BOLD}unsupported${RESET}   : ${counts.unsupported}`);
-  if (counts.error > 0)
-    console.log(`  ${RED}${BOLD}error${RESET}         : ${counts.error}`);
+  for (const r of results) {
+    routeCounts[r.route ?? 'error']++;
+    if (r.assertPassed === true)  totalPassed++;
+    if (r.assertPassed === false) totalFailed++;
+  }
 
-  const failed = results.filter((r) => r.route === 'error');
-  if (failed.length > 0) {
+  console.log(`  ${GRN}${BOLD}auto${R}          : ${routeCounts.auto}`);
+  console.log(`  ${YEL}${BOLD}review_queue${R}  : ${routeCounts.review_queue}`);
+  console.log(`  ${GRY}${BOLD}unsupported${R}   : ${routeCounts.unsupported}`);
+  if (routeCounts.error > 0)
+    console.log(`  ${RED}${BOLD}error${R}         : ${routeCounts.error}`);
+
+  const withGolden = results.filter((r) => r.assertPassed != null);
+  if (withGolden.length > 0) {
     console.log('');
-    console.log(`${RED}Fel:${RESET}`);
-    for (const r of failed)
+    console.log(`${BOLD}Golden master assertions:${R}`);
+    for (const r of results) {
+      if (r.assertPassed == null) continue;
+      const icon = r.assertPassed ? `${GRN}✓${R}` : `${RED}✗${R}`;
+      console.log(`  ${icon} ${r.file}`);
+      if (!r.assertPassed && r.failures?.length) {
+        for (const f of r.failures)
+          console.log(`      ${RED}→ ${f}${R}`);
+      }
+    }
+    console.log('');
+    const allPassed = totalFailed === 0 && totalPassed === withGolden.length;
+    if (allPassed) {
+      console.log(`  ${GRN}${BOLD}ALLA ${totalPassed} GOLDEN MASTER TESTS PASSERADE${R}`);
+    } else {
+      console.log(`  ${RED}${BOLD}${totalFailed} AV ${withGolden.length} GOLDEN MASTER TESTS MISSLYCKADES${R}`);
+    }
+  }
+
+  const errors = results.filter((r) => r.route === 'error');
+  if (errors.length > 0) {
+    console.log('');
+    console.log(`${RED}Fel:${R}`);
+    for (const r of errors)
       console.log(`  ${r.file}: ${r.error}`);
   }
 
   console.log('');
 }
 
-// ── Main ─────────────────────────────────────────────────────────────────────
-
+// ── Main ──────────────────────────────────────────────────────────────────────
 const PDF_DIR = join(ROOT, 'test-pdfs');
 const filter  = process.argv[2];
 
 if (!existsSync(PDF_DIR)) {
-  console.error(`Mappen test-pdfs/ saknas. Skapa den och lägg dit dina PDF:er.`);
+  console.error('Mappen test-pdfs/ saknas. Skapa den och lägg dit dina PDF:er.');
   process.exit(1);
 }
 
@@ -146,7 +345,7 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-console.log(`\n${BOLD}Arvo Flow — Invoice Stress Test${RESET}`);
+console.log(`\n${BOLD}Arvo Flow — Invoice Stress Test${R}`);
 console.log(`Testar ${files.length} faktura${files.length !== 1 ? 'r' : ''} mot den semantiska extraktorn...\n`);
 
 const results = [];
@@ -159,15 +358,19 @@ for (const file of files) {
     const extracted = await extractInvoice({ pdfBytes });
     const routing   = routeExtraction(extracted);
     const elapsed   = Date.now() - t0;
-    printResult(file, extracted, routing, elapsed);
-    results.push({ file, route: routing.route });
+    const golden    = findGolden(file);
+    const { passed, failures } = printResult(file, extracted, routing, elapsed, golden);
+    results.push({ file, route: routing.route, assertPassed: golden ? passed : null, failures });
   } catch (err) {
     const elapsed = Date.now() - t0;
-    console.log(`\n${'─'.repeat(64)}`);
-    console.log(`${BOLD}${file}${RESET}  ${RED}${BOLD}[ERROR]${RESET}  ${DIM}(${elapsed} ms)${RESET}`);
-    console.log(`  ${RED}${err.message}${RESET}`);
-    results.push({ file, route: 'error', error: err.message });
+    console.log(`\n${'─'.repeat(70)}`);
+    console.log(`${BOLD}${file}${R}  ${RED}${BOLD}[ERROR]${R}  ${DIM}(${elapsed} ms)${R}`);
+    console.log(`  ${RED}${err.message}${R}`);
+    results.push({ file, route: 'error', error: err.message, assertPassed: false });
   }
 }
 
 printSummary(results);
+
+const anyFailed = results.some((r) => r.assertPassed === false || r.route === 'error');
+process.exit(anyFailed ? 1 : 0);
