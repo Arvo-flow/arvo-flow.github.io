@@ -57,7 +57,9 @@ variable_usage
   För Managed Print-avtal: klickkostnader (svart/vit-utskrift kr/sida, färgutskrift kr/sida).
   Klickkostnader beror på periodens utskriftsvolym — de ska ALDRIG läggas ihop med
   den fasta maskinhyran för annualisering.
-  OBS: Frakttillägg och bränslebaserade avgifter (DMT, drivmedelstillägg) är INTE variable_usage — klassificera dem som one_time_fee.
+  SAMT bränslebaserade transporttillägg som återkommer varje period: DMT (Drivmedelstillägg),
+  drivmedelstillägg, bränslerelaterat tillägg, dieselindex-tillägg — dessa varierar med
+  bränsleprisindex och debiteras på varje fraktfaktura. Klassificera dem som variable_usage.
 
 one_time_fee
   Engångskostnader som inte återkommer regelbundet.
@@ -65,8 +67,8 @@ one_time_fee
   påminnelseavgift, konsultarvode, reparation.
   SAMT administrativ avgift för pappersfaktura/fakturaavgift — dessa är valfria avgifter,
   inte abonnemangstjänster, och ska ALDRIG klassificeras som recurring_subscription.
-  SAMT bränsle- och frakttillägg (DMT, drivmedelstillägg, bränslerelaterat tillägg,
-  bomkörning, terminalavgift) — dessa varierar med bränslepriser och är ej förhandlingsbara avtalsposter.
+  SAMT oregelbundna fraktrelaterade avgifter (bomkörning, terminalavgift för misslyckad
+  leverans, returfrakt engång) — dessa uppstår sporadiskt och är inte avtalade månadsposters.
   SAMT lagstadgade miljö- och avfallsskatter (Miljö- och Avfallsskatt, miljöavgift, avfallsskatt)
   på avfalls- och återvinningsfakturor — dessa är lagstadgade och ej förhandlingsbara.
   SAMT krediteringar och minusposter för avslutade, uppsagda eller justerade

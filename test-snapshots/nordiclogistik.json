@@ -4,7 +4,7 @@
   "extracted": {
     "supplier": "NordicLogistik AB",
     "date": "2026-06-10",
-    "description": "Frakttjänster maj 2026 (pallfrakt och styckegods)",
+    "description": "Fraktfaktura maj 2026 (pallfrakt, styckegods, DMT, bomkörning)",
     "account": null,
     "billingPeriod": "monthly",
     "lineItems": [
@@ -25,7 +25,7 @@
       {
         "description": "DMT (Drivmedelstillägg) Maj 2026 28,4 %",
         "amount": 7640,
-        "type": "one_time_fee",
+        "type": "variable_usage",
         "is_addon": false,
         "addon_type": null
       },
@@ -40,11 +40,11 @@
     "amount": 35390,
     "recurringAmount": 26900,
     "projectedRecurringAmount": 26900,
-    "variableCharges": 0,
-    "oneTimeFees": 8490,
+    "variableCharges": 7640,
+    "oneTimeFees": 850,
     "annualCost": 322800,
     "recurring": true,
-    "confidenceScore": 0.92,
+    "confidenceScore": 0.95,
     "confidenceNotes": null,
     "outOfScope": false,
     "seatCount": null,
@@ -74,13 +74,13 @@
     "customerOrgNumber": null,
     "usage": {
       "input_tokens": 2436,
-      "cache_creation_input_tokens": 0,
-      "cache_read_input_tokens": 10338,
+      "cache_creation_input_tokens": 10391,
+      "cache_read_input_tokens": 0,
       "cache_creation": {
-        "ephemeral_5m_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 10391,
         "ephemeral_1h_input_tokens": 0
       },
-      "output_tokens": 532,
+      "output_tokens": 542,
       "service_tier": "standard",
       "inference_geo": "global"
     }
