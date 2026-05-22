@@ -130,12 +130,12 @@ const GOLDEN = [
     ],
   },
   {
-    match: /advokatfirman|jurist|juridik|unclear|suddig/i,
+    match: /advokatfirman|jurist|juridik|suddig/i,
     route:           'review_queue',
     checks: [],
   },
   {
-    match: /kalles|alltjänst|städ|restaurang|mat|outofscope|out.of.scope/i,
+    match: /kalles|alltjänst|städ|restaurang|mat|outofscope|out.of.scope|unclear/i,
     route:           'unsupported',
     checks: [],
   },
