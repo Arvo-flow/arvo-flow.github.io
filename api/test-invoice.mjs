@@ -676,6 +676,13 @@ export default async function handler(req, res) {
               normalizedSupplier: categorized.normalizedSupplier,
               confidence:         categorized.confidence,
             },
+            recommendation: {
+              shouldSwitch:        potentialSaving > 0,
+              suggestedAnnualCost: elRec ? elRec.benchmarkAnnual : null,
+              grossSaving:         potentialSaving,
+              arvoFee:             potentialSaving ? Math.round(potentialSaving * 0.20) : null,
+              netSaving:           potentialSaving ? Math.round(potentialSaving * 0.80) : null,
+            },
             timing: { extractMs: timing.extractMs, categorizeMs: timing.categorizeMs },
           });
         }

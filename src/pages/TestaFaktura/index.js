@@ -657,6 +657,34 @@ const TestaFaktura = () => {
 
             {result.route === 'monitoring' ? (
               <>
+                <ScoreDiag style={{ '--diag-color': diagC.dot }}>
+                  <div className="gauge-wrap">
+                    <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
+                      <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
+                      <circle
+                        cx="30" cy="30" r={GAUGE_R} fill="none"
+                        stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
+                        strokeDasharray={`${gaugeDash} ${GAUGE_C}`}
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1s ease' }}
+                      />
+                    </svg>
+                    <div className="gauge-num" style={{ color: diagC.dot }}>
+                      <span className="gauge-val">{diagScore}</span>
+                      <span className="gauge-denom">/100</span>
+                    </div>
+                  </div>
+                  <div className="diag-body">
+                    <div className="diag-top">
+                      <span className="diag-score-label">Arvo Score</span>
+                      <span className="diag-sep">·</span>
+                      <span className="diag-status">
+                        <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
+                        <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                      </span>
+                    </div>
+                    <p className="diag-text">{diagInsight}</p>
+                  </div>
+                </ScoreDiag>
                 <MonitoringBlock>
                   <div className="monitoring-kicker">
                     <span className="monitoring-dot" />
