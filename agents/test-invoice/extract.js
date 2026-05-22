@@ -142,12 +142,15 @@ KRITISKT:
     SaaS-licenser OCH hårdvara på separata rader). false i övriga fall.
     OBS: En enskild leverantörs produktsvit är INTE mixed — t.ex. "Atlassian Jira & Confluence",
     "Microsoft 365 + Teams", "Adobe Creative Cloud + Acrobat" är EN kategori, sätt false.
-  — primary_component_monthly: Sätt KUN när potential_mixed_categories är true. Summera ENBART
-    raderna för den dominerande (kostnadsmässigt störst) kategorin, exklusive tilläggstjänster
-    (de fångas av mobile_addon_monthly / broadband_addon_monthly).
-    Exempel: faktura med 5 SIM à 349 kr + molnväxel 994 kr + bredband 899 kr + fast IP 150 kr:
-    → primary_component_monthly: 1745 (enbart SIM-raderna; molnväxel, bredband och IP ingår EJ).
-    Sätt null om potential_mixed_categories är false.
+  — primary_component_monthly: OBLIGATORISKT när potential_mixed_categories är true — lämna ALDRIG
+    null i det fallet. Summera ENBART fakturarader som tillhör den dominerande kategorin.
+    Gör så här: 1) Hitta den dyraste tjänstekategorin (t.ex. mobil = 1 745 kr, bredband = 1 049 kr).
+    2) Addera ENBART de raderna. 3) Tilläggstjänster (molnväxel, fast IP, IT-support) ingår INTE.
+    EXEMPEL: 5 SIM à 349 kr + molnväxel 994 kr + bredband 899 kr + fast IP 150 kr:
+    → mobil är dominerande (1 745 kr). primary_component_monthly: 1745.
+    → molnväxel (994 kr) fångas separat av mobile_addon_monthly — ingår EJ här.
+    → bredband (899 kr) + fast IP (150 kr) är övriga tjänster — ingår EJ här.
+    Sätt null ENBART om potential_mixed_categories är false.
   — Returnera VARJE synlig kostnadsrad — utelämna inga rader.
   — seatCount: Antal UNIKA ANVÄNDARE som licensieras. Summera rader med OLIKA TIERS av SAMMA
     produkt (t.ex. 45 Premium + 12 Basic = 57 unika användare). Räkna INTE ihop add-on-tjänster
@@ -168,13 +171,16 @@ MOBILFAKTUROR — extrahera dessa fält om fakturan innehåller mobilabonnemang:
     Räkna INTE med eventuell molnväxel- eller tilläggstjänst — räkna bara aktiva SIM-linjer.
     Exempel: "Telia Företag, 8 abonnemang" → seatCount: 8.
     Exempel: Faktura visar 12 Tele2-abonnemang med tre datatiernivåer → seatCount: 12.
-  OBS MED TILLÄGGSTJÄNSTER — om en mobilfaktura innehåller BÅDE bas-abonnemang
-  (data, röst, SMS) OCH tilläggstjänster (molnväxel, cloud PBX, Microsoft Teams-integration,
-  växellösning, lokal telefonilösning):
-  mobile_addon_monthly: Summan av ENBART tilläggstjänsternas månadsbelopp (ex moms).
+  OBS MED TILLÄGGSTJÄNSTER — om fakturan innehåller mobilabonnemang (data, röst, SMS)
+  OCH tilläggstjänster (molnväxel, cloud PBX, Microsoft Teams-integration, växellösning,
+  lokal telefonilösning): mobile_addon_monthly är OBLIGATORISKT — lämna ALDRIG null
+  när sådana tjänster finns, oavsett om fakturan är renodlad mobilfaktura eller kombinerad
+  (potential_mixed_categories: true).
+  Summera ENBART tilläggstjänsternas månadsbelopp (ex moms).
   Bas-abonnemangen ingår INTE i detta fält — de utgör recurring_subscription som vanligt.
-  Exempel: 20 molnväxellicenser × 99 kr = 1 980 kr → mobile_addon_monthly: 1980.
-  Sätt null om fakturan saknar sådana tilläggstjänster.
+  EXEMPEL: 5 SIM à 349 kr + molnväxel 994 kr → mobile_addon_monthly: 994 (enbart molnväxeln).
+  EXEMPEL: 20 molnväxellicenser × 99 kr = 1 980 kr → mobile_addon_monthly: 1980.
+  Sätt null BARA om fakturan inte innehåller några sådana tilläggstjänster alls.
 
 BREDBANDSFAKTUROR — extrahera dessa fält om fakturan är från en bredbandsleverantör:
   connection_speed_mbit: Anslutningshastighet i Mbit/s som heltal.

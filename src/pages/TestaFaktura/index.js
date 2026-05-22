@@ -1102,19 +1102,16 @@ const TestaFaktura = () => {
             )}
 
             {result.extracted?.potentialMixedCategories && (
-              <NoSwitchBlock style={{ background: '#FFFBEB', borderColor: '#D97706', marginBottom: 16 }}>
-                <strong style={{ color: '#92400E' }}>Kombinerad faktura — vi analyserar den dominerande tjänsten.</strong>
-                <p style={{ color: '#78350F' }}>
-                  Fakturan innehåller tjänster från flera kategorier. Besparingsanalysen avser enbart{' '}
-                  <strong>{CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}</strong>
-                  {result.extracted?.primaryComponentMonthly != null
-                    ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
-                    : ''}.
-                  {(result.recommendation?.nonPrimaryAnnual ?? 0) > 0
-                    ? ` Övriga tjänster (${formatKr(result.recommendation.nonPrimaryAnnual)}/år) analyseras när du kopplar Fortnox / Visma.`
-                    : ' Koppla Fortnox / Visma för en komplett analys av hela er leverantörsbild.'}
-                </p>
-              </NoSwitchBlock>
+              <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 14, lineHeight: 1.5, fontStyle: 'italic' }}>
+                Kombinerad faktura — analysen avser{' '}
+                {CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}
+                {result.extracted?.primaryComponentMonthly != null
+                  ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
+                  : ''}
+                {(result.recommendation?.nonPrimaryAnnual ?? 0) > 0
+                  ? `. Övriga tjänster (${formatKr(result.recommendation.nonPrimaryAnnual)}/år) analyseras via Fortnox/Visma.`
+                  : '.'}
+              </p>
             )}
 
             {result.extracted?.annualCost != null && result.route !== 'monitoring' && result.route !== 'unsupported' && <KV>

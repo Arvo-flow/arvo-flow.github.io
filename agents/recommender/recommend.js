@@ -625,21 +625,26 @@ export async function recommend(input, opts = {}) {
     // For combined invoices: compare only the primary component (not bundled unrelated services)
     const _isCombined = input.invoice.potentialMixedCategories ?? false;
     const _primaryMonthly = input.invoice.primaryComponentMonthly ?? null;
-    const _addonMonthly = (input.invoice.mobileAddonMonthly ?? 0) + (input.invoice.broadbandAddonMonthly ?? 0);
-    const _annualCost = (_isCombined && _primaryMonthly != null)
-      ? Math.round((_primaryMonthly + _addonMonthly) * 12)
-      : (input.invoice.annualCost ?? input.invoice.amount ?? 0);
-    const _employees  = input.customer.employees ?? 1;
-    const _seatCount  = input.invoice.seatCount ?? null;
-    const _isPerUser  = benchmark.note.toLowerCase().includes('per användare');
-    const _seats      = _isPerUser ? (_seatCount ?? _employees) : 1;
-    // Take the minimum of seat-based and employee-based p25 so the override still
-    // triggers even when seatCount is inflated by add-on licenses (e.g. 57+57=114).
-    const _p25BySeat  = Math.round(benchmark.p25 * _seats);
-    const _p25ByEmp   = _isPerUser ? Math.round(benchmark.p25 * _employees) : _p25BySeat;
-    const _p25Total   = Math.min(_p25BySeat, _p25ByEmp);
-    if (_p25Total > 0 && _annualCost > _p25Total * 1.15) {
-      result.shouldSwitch = true;
+    // Guard: skip the override when combined+primaryComponentMonthly missing.
+    // Comparing the full invoice cost against a single-category benchmark would
+    // produce absurdly overstated savings (e.g. 45 k total vs 1.5 k mobile p25).
+    if (!_isCombined || _primaryMonthly != null) {
+      const _addonMonthly = (input.invoice.mobileAddonMonthly ?? 0) + (input.invoice.broadbandAddonMonthly ?? 0);
+      const _annualCost = (_isCombined && _primaryMonthly != null)
+        ? Math.round((_primaryMonthly + _addonMonthly) * 12)
+        : (input.invoice.annualCost ?? input.invoice.amount ?? 0);
+      const _employees  = input.customer.employees ?? 1;
+      const _seatCount  = input.invoice.seatCount ?? null;
+      const _isPerUser  = benchmark.note.toLowerCase().includes('per användare');
+      const _seats      = _isPerUser ? (_seatCount ?? _employees) : 1;
+      // Take the minimum of seat-based and employee-based p25 so the override still
+      // triggers even when seatCount is inflated by add-on licenses (e.g. 57+57=114).
+      const _p25BySeat  = Math.round(benchmark.p25 * _seats);
+      const _p25ByEmp   = _isPerUser ? Math.round(benchmark.p25 * _employees) : _p25BySeat;
+      const _p25Total   = Math.min(_p25BySeat, _p25ByEmp);
+      if (_p25Total > 0 && _annualCost > _p25Total * 1.15) {
+        result.shouldSwitch = true;
+      }
     }
   }
 
@@ -674,6 +679,15 @@ export async function recommend(input, opts = {}) {
     const primaryComponentAnnual = isCombined && primaryComponentMonthly != null
       ? Math.round(primaryComponentMonthly * 12)
       : null;
+
+    // Guard: for combined invoices where AI failed to return primaryComponentMonthly,
+    // the full annualCost cannot reliably be compared against a single-category benchmark.
+    // Skip the deterministic override (AI values stand) and mark nonPrimaryAnnual = 0.
+    if (isCombined && primaryComponentAnnual == null) {
+      result.nonPrimaryAnnual = 0;
+      // Exit the financial override block — use AI-provided values as-is.
+    } else {
+
     const comparableAnnualCost = primaryComponentAnnual != null
       ? primaryComponentAnnual                 // bare primary only, addons excluded
       : annualCost - addonAnnual;              // full invoice minus addon pass-throughs
@@ -723,6 +737,8 @@ export async function recommend(input, opts = {}) {
       result.licenseOverage = null;
       result.overageSavings = null;
     }
+
+    } // end else (combined+null guard)
   }
 
   return {
