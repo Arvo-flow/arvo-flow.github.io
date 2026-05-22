@@ -1186,32 +1186,6 @@ const TestaFaktura = () => {
               komplett Leverantörsrapport automatiskt. Vi sköter varje byte från uppsägning till nytt
               avtal. Du betalar 20&nbsp;% av identifierad besparing. Inga fasta avgifter.
             </p>
-            <p className="seg-count">
-              Segment — 1 av {SEGMENTS.length} analyserade
-            </p>
-            <div className="segment-grid">
-              {SEGMENTS.map((seg) => {
-                const isActive = seg.cats.includes(result.categorized?.category);
-                const netSaving = result.recommendation?.netSaving ?? 0;
-                return (
-                  <div key={seg.label} className={`segment-tile${isActive ? ' tile-active' : ''}`}>
-                    <div className={`tile-icon${isActive ? ' icon-active' : ''}`}>
-                      <Icon name={seg.icon} size={16} stroke={isActive ? 2 : 1.8} />
-                    </div>
-                    <span className="tile-name">{seg.label}</span>
-                    <span className={`tile-status${isActive ? ' status-active' : ''}`}>
-                      {isActive ? 'Analyserat' : 'Ej analyserat'}
-                    </span>
-                    {isActive && netSaving > 0 && (
-                      <span className="tile-metric">−{formatKr(netSaving)}/år</span>
-                    )}
-                    {!isActive && (
-                      <span className="tile-lock"><Icon name="lock" size={11} stroke={2} /></span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
             <Button as={Link} to="/connect" $variant="gradient" $size="lg">
               Koppla Fortnox / Visma →
             </Button>
