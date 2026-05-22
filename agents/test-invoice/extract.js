@@ -142,6 +142,12 @@ KRITISKT:
     SaaS-licenser OCH hårdvara på separata rader). false i övriga fall.
     OBS: En enskild leverantörs produktsvit är INTE mixed — t.ex. "Atlassian Jira & Confluence",
     "Microsoft 365 + Teams", "Adobe Creative Cloud + Acrobat" är EN kategori, sätt false.
+  — primary_component_monthly: Sätt KUN när potential_mixed_categories är true. Summera ENBART
+    raderna för den dominerande (kostnadsmässigt störst) kategorin, exklusive tilläggstjänster
+    (de fångas av mobile_addon_monthly / broadband_addon_monthly).
+    Exempel: faktura med 5 SIM à 349 kr + molnväxel 994 kr + bredband 899 kr + fast IP 150 kr:
+    → primary_component_monthly: 1745 (enbart SIM-raderna; molnväxel, bredband och IP ingår EJ).
+    Sätt null om potential_mixed_categories är false.
   — Returnera VARJE synlig kostnadsrad — utelämna inga rader.
   — seatCount: Antal UNIKA ANVÄNDARE som licensieras. Summera rader med OLIKA TIERS av SAMMA
     produkt (t.ex. 45 Premium + 12 Basic = 57 unika användare). Räkna INTE ihop add-on-tjänster
@@ -415,6 +421,10 @@ const EXTRACT_TOOL = {
         type: 'boolean',
         description: 'true om fakturan tydligt innehåller tjänster från flera kategorier (t.ex. mobil + bredband). false annars.',
       },
+      primary_component_monthly: {
+        type: ['integer', 'null'],
+        description: 'Enbart den dominerande tjänstekategorins rena månadsbelopp (ex moms) när potential_mixed_categories är true — exkl. tilläggstjänster som fångas av mobile_addon_monthly/broadband_addon_monthly. null om potential_mixed_categories är false.',
+      },
       customer_org_number: {
         type: ['string', 'null'],
         description: 'Kundens (fakturamottagarens) organisationsnummer, t.ex. "556777-1111". null om ej angivet på fakturan.',
@@ -496,6 +506,7 @@ export function aggregateLineItems(raw) {
     cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,
     currency:                  raw.currency ?? 'SEK',
     potentialMixedCategories:  raw.potential_mixed_categories ?? false,
+    primaryComponentMonthly:   raw.primary_component_monthly != null ? Number(raw.primary_component_monthly) : null,
     customerOrgNumber:         raw.customer_org_number ?? null,
   };
 }

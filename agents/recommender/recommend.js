@@ -622,7 +622,13 @@ export async function recommend(input, opts = {}) {
   // always recommend a switch regardless of what the model decided.
   // This eliminates AI flip-flopping on clear-cut overpayment cases.
   if (!categoryDef?.licensePending && benchmark) {
-    const _annualCost = input.invoice.annualCost ?? input.invoice.amount ?? 0;
+    // For combined invoices: compare only the primary component (not bundled unrelated services)
+    const _isCombined = input.invoice.potentialMixedCategories ?? false;
+    const _primaryMonthly = input.invoice.primaryComponentMonthly ?? null;
+    const _addonMonthly = (input.invoice.mobileAddonMonthly ?? 0) + (input.invoice.broadbandAddonMonthly ?? 0);
+    const _annualCost = (_isCombined && _primaryMonthly != null)
+      ? Math.round((_primaryMonthly + _addonMonthly) * 12)
+      : (input.invoice.annualCost ?? input.invoice.amount ?? 0);
     const _employees  = input.customer.employees ?? 1;
     const _seatCount  = input.invoice.seatCount ?? null;
     const _isPerUser  = benchmark.note.toLowerCase().includes('per användare');
@@ -659,7 +665,23 @@ export async function recommend(input, opts = {}) {
       ? Math.round(input.invoice.broadbandAddonMonthly * 12)
       : 0;
     const addonAnnual = mobileAddonAnnual + broadbandAddonAnnual;
-    const comparableAnnualCost = annualCost - addonAnnual;
+
+    // For combined invoices: benchmark only the primary component so we never
+    // claim savings on bundled services (e.g. bredband on a mobil invoice) that
+    // the category benchmark doesn't cover.
+    const isCombined = input.invoice.potentialMixedCategories ?? false;
+    const primaryComponentMonthly = input.invoice.primaryComponentMonthly ?? null;
+    const primaryComponentAnnual = isCombined && primaryComponentMonthly != null
+      ? Math.round(primaryComponentMonthly * 12)
+      : null;
+    const comparableAnnualCost = primaryComponentAnnual != null
+      ? primaryComponentAnnual                 // bare primary only, addons excluded
+      : annualCost - addonAnnual;              // full invoice minus addon pass-throughs
+
+    // Non-primary: portion of the invoice outside the benchmarked component (shown in UI)
+    result.nonPrimaryAnnual = primaryComponentAnnual != null
+      ? Math.max(0, Math.round(annualCost - primaryComponentAnnual - addonAnnual))
+      : 0;
 
     result.suggestedAnnualCost = Math.round(benchmark.p25 * scale) + addonAnnual;
     result.savingPerYear = Math.max(0, Math.round(comparableAnnualCost - Math.round(benchmark.p25 * scale)));

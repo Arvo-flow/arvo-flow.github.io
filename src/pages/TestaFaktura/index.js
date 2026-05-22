@@ -141,7 +141,7 @@ const CATEGORY_LABELS = {
 const SEGMENTS = [
   { label: 'Skrivare',          icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
   { label: 'El',               icon: 'bolt',      cats: ['el'] },
-  { label: 'Telefoni och bredband', icon: 'phone', cats: ['mobil', 'bredband'] },
+  { label: 'Telefoni och bredband', icon: 'phone', cats: ['mobil', 'bredband', 'vaxel'] },
   { label: 'Programvara',      icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
   { label: 'IT',               icon: 'wifi',      cats: ['it-support'] },
   { label: 'Fordon och frakt',  icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
@@ -1105,9 +1105,14 @@ const TestaFaktura = () => {
               <NoSwitchBlock style={{ background: '#FFFBEB', borderColor: '#D97706', marginBottom: 16 }}>
                 <strong style={{ color: '#92400E' }}>Kombinerad faktura — vi analyserar den dominerande tjänsten.</strong>
                 <p style={{ color: '#78350F' }}>
-                  Fakturan verkar innehålla tjänster från flera kategorier (t.ex. mobil och bredband
-                  på samma faktura). Analysen nedan gäller den huvudsakliga tjänsten. För en komplett
-                  bild, koppla Fortnox / Visma så att vi kan se hela er leverantörsbild.
+                  Fakturan innehåller tjänster från flera kategorier. Besparingsanalysen avser enbart{' '}
+                  <strong>{CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}</strong>
+                  {result.extracted?.primaryComponentMonthly != null
+                    ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
+                    : ''}.
+                  {(result.recommendation?.nonPrimaryAnnual ?? 0) > 0
+                    ? ` Övriga tjänster (${formatKr(result.recommendation.nonPrimaryAnnual)}/år) analyseras när du kopplar Fortnox / Visma.`
+                    : ' Koppla Fortnox / Visma för en komplett analys av hela er leverantörsbild.'}
                 </p>
               </NoSwitchBlock>
             )}
@@ -1270,6 +1275,36 @@ const TestaFaktura = () => {
               komplett Leverantörsrapport automatiskt. Vi sköter varje byte från uppsägning till nytt
               avtal. Du betalar 20&nbsp;% av identifierad besparing. Inga fasta avgifter.
             </p>
+            <p className="seg-count">SEGMENT — 1 AV {SEGMENTS.length} ANALYSERADE</p>
+            <div className="segment-grid">
+              {SEGMENTS.map((seg) => {
+                const isActive = seg.cats.includes(result?.categorized?.category);
+                const netSav = result?.recommendation?.netSaving;
+                return (
+                  <div key={seg.label} className={`segment-tile${isActive ? ' tile-active' : ''}`}>
+                    {!isActive && (
+                      <span className="tile-lock">
+                        <Icon name="lock" size={11} stroke={1.8} />
+                      </span>
+                    )}
+                    <div className={`tile-icon${isActive ? ' icon-active' : ''}`}>
+                      <Icon name={seg.icon} size={15} stroke={isActive ? 2.5 : 1.8} />
+                    </div>
+                    <span className="tile-name">{seg.label}</span>
+                    {isActive ? (
+                      <>
+                        <span className="tile-status status-active">Analyserat</span>
+                        {netSav > 0 && (
+                          <span className="tile-metric">–{formatNum(netSav)}&nbsp;kr/år</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="tile-status">Ej analyserat</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
             <Button as={Link} to="/connect" $variant="gradient" $size="lg">
               Koppla Fortnox / Visma →
             </Button>
