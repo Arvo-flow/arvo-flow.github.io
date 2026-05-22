@@ -69,6 +69,10 @@ for (const file of FILES) {
   console.log(`  Mobil-tillägg  : ${extracted.mobileAddonMonthly != null ? `${SEK(extracted.mobileAddonMonthly)}/mån` : '—'}`);
   console.log(`  Återkommande   : ${SEK(extracted.recurringAmount)}/mån`);
   console.log(`  Beräknad årskostand: ${SEK(extracted.annualCost)}`);
+  if (extracted.licenseType)        console.log(`  Licensplan     : ${extracted.licenseType}${extracted.billingCycleType ? ` (${extracted.billingCycleType})` : ''}`);
+  if (extracted.pricePerSeatMonthly) console.log(`  Pris/seat/mån  : ${extracted.pricePerSeatMonthly.toFixed(0)} kr`);
+  if (extracted.saasProductFamily)  console.log(`  Produktfamilj  : ${extracted.saasProductFamily}`);
+  if (extracted.saasIncludedFeatures?.length) console.log(`  Inkl. tjänster : ${extracted.saasIncludedFeatures.join(', ')}`);
 
   const routing = routeExtraction(extracted);
   if (routing.route !== 'auto') {
@@ -128,13 +132,18 @@ for (const file of FILES) {
     rec = await recommend({
       customer: { ...CUSTOMER },
       invoice: {
-        amount:              extracted.amount,
-        annualCost:          extracted.annualCost,
-        recurringAmount:     extracted.recurringAmount,
-        variableCharges:     extracted.variableCharges,
-        seatCount:           extracted.seatCount ?? null,
-        mobileAddonMonthly:  extracted.mobileAddonMonthly ?? null,
-        connectionSpeedMbit: extracted.connectionSpeedMbit ?? null,
+        amount:               extracted.amount,
+        annualCost:           extracted.annualCost,
+        recurringAmount:      extracted.recurringAmount,
+        variableCharges:      extracted.variableCharges,
+        seatCount:            extracted.seatCount ?? null,
+        mobileAddonMonthly:   extracted.mobileAddonMonthly ?? null,
+        connectionSpeedMbit:  extracted.connectionSpeedMbit ?? null,
+        licenseType:          extracted.licenseType ?? null,
+        billingCycleType:     extracted.billingCycleType ?? null,
+        pricePerSeatMonthly:  extracted.pricePerSeatMonthly ?? null,
+        saasProductFamily:    extracted.saasProductFamily ?? null,
+        saasIncludedFeatures: extracted.saasIncludedFeatures ?? null,
       },
       categorized,
     });
@@ -152,9 +161,19 @@ for (const file of FILES) {
   console.log(`  Bruttobesparing  : ${SEK(rec.grossSaving ?? rec.savingPerYear)}`);
   console.log(`  Nettobesparing   : ${SEK(rec.netSaving ?? (rec.grossSaving ? Math.round(rec.grossSaving * 0.80) : null))}`);
   if (rec.licenseOverage > 0)
-    console.log(`  ${YELLOW}SIM-överskott    : ${rec.licenseOverage} oanvända SIM${RESET}`);
+    console.log(`  ${YELLOW}Licensöverskott  : ${rec.licenseOverage} oanvända licenser${RESET}`);
   if (rec.overageSavings > 0)
     console.log(`  Överskottsbesparing: ${SEK(rec.overageSavings)}`);
+  if (rec.annualBillingSaving > 0)
+    console.log(`  Årsavtal-saving  : ${SEK(rec.annualBillingSaving)} (utan leverantörsbyte)`);
+  if (rec.savingsBreakdown) {
+    const bd = rec.savingsBreakdown;
+    console.log(`  ${DIM}Besparing per kanal:${RESET}`);
+    if (bd.cspDiscount > 0)         console.log(`    ${DIM}CSP-rabatt        : ${SEK(bd.cspDiscount)}${RESET}`);
+    if (bd.billingOptimization > 0) console.log(`    ${DIM}Årsavtal          : ${SEK(bd.billingOptimization)}${RESET}`);
+    if (bd.tierOptimization > 0)    console.log(`    ${DIM}Tier-optimering   : ${SEK(bd.tierOptimization)} (advisory)${RESET}`);
+    if (bd.licenseCleanup > 0)      console.log(`    ${DIM}Licensrensning    : ${SEK(bd.licenseCleanup)}${RESET}`);
+  }
   console.log(`  Confidence       : ${rec.confidence}`);
   console.log(`  Reasoning        : ${DIM}${(rec.reasoning ?? '').slice(0, 200)}...${RESET}`);
   console.log(`  Totaltid         : ${Date.now() - t0} ms`);
