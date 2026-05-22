@@ -789,6 +789,8 @@ export default async function handler(req, res) {
         licenseType:         extracted.licenseType ?? null,
         billingCycleType:    extracted.billingCycleType ?? null,
         pricePerSeatMonthly: extracted.pricePerSeatMonthly ?? null,
+        saasProductFamily:    extracted.saasProductFamily ?? null,
+        saasIncludedFeatures: extracted.saasIncludedFeatures ?? null,
       },
       categorized,
     });
@@ -833,6 +835,8 @@ export default async function handler(req, res) {
         licenseType:               extracted.licenseType ?? null,
         billingCycleType:          extracted.billingCycleType ?? null,
         pricePerSeatMonthly:       extracted.pricePerSeatMonthly ?? null,
+        saasProductFamily:         extracted.saasProductFamily ?? null,
+        saasIncludedFeatures:      extracted.saasIncludedFeatures ?? null,
       },
       categorized: {
         category: categorized.category,
@@ -860,6 +864,7 @@ export default async function handler(req, res) {
           : null,
         overageSavings: recommendation.overageSavings ?? null,
         annualBillingSaving: recommendation.annualBillingSaving ?? null,
+        savingsBreakdown:    recommendation.savingsBreakdown ?? null,
       },
       timing,
     };

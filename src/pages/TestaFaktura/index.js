@@ -1171,6 +1171,30 @@ const TestaFaktura = () => {
                   </dd>
                 </div>
               )}
+              {result.categorized?.category === 'saas-productivity' && (() => {
+                const bd = result.recommendation?.savingsBreakdown;
+                if (!bd) return null;
+                const rows = [
+                  { label: 'Arvo CSP-pris (same tier)', value: bd.cspDiscount },
+                  { label: 'Årsavtal istf månadsvis', value: bd.billingOptimization },
+                  { label: 'Tier-optimering (advisory)', value: bd.tierOptimization },
+                  { label: 'Licensrensning', value: bd.licenseCleanup },
+                ].filter(r => r.value > 0);
+                if (rows.length < 2) return null;
+                return (
+                  <>
+                    <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #D5E2DC', marginTop: '4px', paddingTop: '10px' }}>
+                      <dt style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#5C6E68', marginBottom: '6px' }}>Besparing per kanal</dt>
+                    </div>
+                    {rows.map(r => (
+                      <div key={r.label}>
+                        <dt>{r.label}</dt>
+                        <dd style={{ color: '#1B7A6E', fontWeight: 600 }}>+{formatKr(r.value)}/år</dd>
+                      </div>
+                    ))}
+                  </>
+                );
+              })()}
             </KV>}
 
             {result.recommendation?.reasoning && (result.recommendation?.shouldSwitch || isOptimize) && (
