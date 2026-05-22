@@ -146,6 +146,8 @@ for (const file of FILES) {
         pricePerSeatMonthly:  extracted.pricePerSeatMonthly ?? null,
         saasProductFamily:    extracted.saasProductFamily ?? null,
         saasIncludedFeatures: extracted.saasIncludedFeatures ?? null,
+        description:          extracted.description ?? null,
+        lineItems:            extracted.lineItems ?? null,
       },
       categorized,
     });

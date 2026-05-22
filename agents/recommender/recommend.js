@@ -221,9 +221,34 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
         }
       } else {
         // Atlassian tier-bucket: årsavtal är en fast summa per tier (101-200 users: $32 000 Jira + $23 000 Confluence).
-        // För 110 users kostar årsavtal MER än månadsavtal — rekommendera INTE byte till årsavtal.
-        lines.push(`    MSRP årsavtal   : Tier-bucket (fast summa per user-spann, ej per-user-pris — årsavtal är DYRARE vid ${seats} seats)`);
-        lines.push(`    → Rekommendera ALDRIG byte till årsavtal för denna kund — licensrensning är enda lönsamma åtgärden`);
+        // För 110 users kostar årsavtal MER än månadsavtal. Arvo har inget Atlassian-återförsäljaravtal.
+        lines.push(`    MSRP årsavtal   : Tier-bucket (fast summa per user-spann — årsavtal kostar MER vid ${seats} seats)`);
+
+        // Visa kombinerat listpris om fakturan innehåller Confluence-produkt
+        const invoiceText = [
+          invoice.description ?? '',
+          ...(invoice.lineItems ?? []).map((li) => li.description ?? ''),
+        ].join(' ').toLowerCase();
+        if (invoiceText.includes('confluence') && convertedTierBm) {
+          const ltLower = (lt ?? '').toLowerCase();
+          const confKey = ltLower.includes('premium') ? 'atlassian-confluence-premium' : 'atlassian-confluence-standard';
+          const rawConf = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[confKey];
+          if (rawConf?.usdMonthly) {
+            const confMonthly = usdToSek(rawConf.usdMonthly, convertedTierBm.fxRate ?? FALLBACK_RATE_USD_SEK);
+            const combinedMonthly = tierBm.msrpMonthly + confMonthly;
+            lines.push(`    Confluence ${ltLower.includes('premium') ? 'Premium' : 'Standard'}: ${confMonthly} kr/seat/mån`);
+            lines.push(`    → Kombinerat listpris (Jira + Confluence): ${combinedMonthly} kr/seat/mån = ${(combinedMonthly * 12 * seats).toLocaleString('sv-SE')} kr/år`);
+            if (pps != null) {
+              const vsListPct = Math.round(((pps - combinedMonthly) / combinedMonthly) * 100);
+              if (vsListPct <= 0) {
+                lines.push(`    → Kunden betalar ${pps} kr vs ${combinedMonthly} kr kombinerat listpris — KUNDEN ÄR UNDER LISTPRIS. Inget bytespotential.`);
+              } else {
+                lines.push(`    → Kunden betalar ${pps} kr vs ${combinedMonthly} kr kombinerat listpris — ${vsListPct}% över listpris.`);
+              }
+            }
+          }
+        }
+        lines.push(`    → Arvo saknar Atlassian-återförsäljaravtal — rekommendera advisory med uppmaning att koppla Fortnox/Visma`);
       }
 
       // Downsell note for enterprise tiers with SMF-sized companies
@@ -574,17 +599,23 @@ export async function recommend(input, opts = {}) {
     result.switchSteps = [];
   }
 
-  // Hard block: saas-other cannot produce a switch recommendation.
-  // saas-devtools (Atlassian etc.) is allowed — target price is msrpAnnual
-  // (public direct pricing), Arvo facilitates the channel switch.
-  if (input.categorized.category === 'saas-other') {
-    result.shouldSwitch      = false;
-    result.suggestedSupplier = null;
+  // Hard block: saas-other och saas-devtools kan inte producera bytesrekommendation.
+  // saas-other: inget branschindex.
+  // saas-devtools (Atlassian): inget återförsäljaravtal, årsavtal är tier-bucket och
+  // ofta dyrare, faktisk licensanvändning okänd utan Fortnox/Visma-integration.
+  if (input.categorized.category === 'saas-other' ||
+      input.categorized.category === 'saas-devtools') {
+    result.shouldSwitch        = false;
+    result.suggestedSupplier   = null;
     result.suggestedAnnualCost = null;
-    result.grossSaving       = null;
-    result.arvoFee           = null;
-    result.netSaving         = null;
-    result.recommendationType = 'advisory';
+    result.grossSaving         = null;
+    result.savingPerYear       = null;
+    result.arvoFee             = null;
+    result.netSaving           = null;
+    result.licenseOverage      = null;
+    result.overageSavings      = null;
+    result.savingsBreakdown    = null;
+    result.recommendationType  = 'advisory';
   }
 
   // Deterministic shouldSwitch override: if the customer pays >15 % over p25,
@@ -656,35 +687,6 @@ export async function recommend(input, opts = {}) {
       result.shouldSwitch = false;
       result.licenseOverage = null;
       result.overageSavings = null;
-    }
-  }
-
-  // Atlassian / saas-devtools licensrensnings-override:
-  // Årsavtal är tier-bucket (usdAnnual === null) → ingen traditionell prisjämförelse möjlig.
-  // Beräkna istället licensrensningssparande direkt från fakturapriset per seat.
-  if (isSaasDevtools && saasTierBm?.msrpAnnual == null) {
-    const _sc  = input.invoice?.seatCount ?? null;
-    const _emp = input.customer?.employees ?? 1;
-    const _pps = input.invoice?.pricePerSeatMonthly ?? null;
-    if (_sc != null && _sc > _emp && _pps != null) {
-      const overage    = _sc - _emp;
-      const overageSav = Math.round(overage * _pps * 12);
-      if (overageSav > 500) {
-        result.licenseOverage    = overage;
-        result.overageSavings    = overageSav;
-        result.shouldSwitch      = true;
-        result.suggestedSupplier = result.suggestedSupplier
-          ?? `${input.categorized.normalizedSupplier ?? 'Atlassian'} (licensrensning)`;
-        result.suggestedAnnualCost = Math.round(_emp * _pps * 12);
-        result.savingPerYear       = overageSav;
-        result.grossSaving         = overageSav;
-        result.arvoFee             = Math.round(overageSav * 0.20);
-        result.netSaving           = overageSav - result.arvoFee;
-        result.savingsBreakdown    = {
-          cspDiscount: null, billingOptimization: null, tierOptimization: null,
-          licenseCleanup: overageSav,
-        };
-      }
     }
   }
 
