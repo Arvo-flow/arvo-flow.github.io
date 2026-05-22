@@ -301,74 +301,76 @@ export const BRANCHINDEX = {
       },
 
       // Google Workspace — USD-baspris, konverteras runtime via pricing.js.
-      // Källa: workspace.google.com/pricing — BEHÖVER MANUELL VERIFIERING.
-      // TODO: Verifiera mot workspace.google.com/intl/sv/pricing innan go-live.
+      // Källa: workspace.google.com/pricing (via softwarepricingguide.com maj 2026).
+      // OBS: Google höjde alla priser ~17-22% i 2025 (Gemini AI inkluderat).
+      // NÄSTA VERIFIERING: 2026-09-01
       'google-starter': {
-        usdMonthly: 7.20,  usdAnnual: 6.00,  usdArvoAnnual: 5.10,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
-        note: 'Google Workspace Business Starter — 30 GB Drive/user, Meet, Docs, Sheets, Slides.',
+        usdMonthly: 8.40,  usdAnnual: 7.00,  usdArvoAnnual: 5.95,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'softwarepricingguide.com',
+        note: 'Google Workspace Business Starter — 30 GB Drive/user, Meet, Docs, Gemini AI.',
       },
       'google-standard': {
-        usdMonthly: 14.40, usdAnnual: 12.00, usdArvoAnnual: 10.20,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        usdMonthly: 16.80, usdAnnual: 14.00, usdArvoAnnual: 11.90,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'softwarepricingguide.com',
         note: 'Google Workspace Business Standard — 2 TB poolad Drive, Meet 150 deltagare + inspelning.',
       },
       'google-plus': {
-        usdMonthly: 21.60, usdAnnual: 18.00, usdArvoAnnual: 15.30,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        usdMonthly: 26.40, usdAnnual: 22.00, usdArvoAnnual: 18.70,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'softwarepricingguide.com',
         note: 'Google Workspace Business Plus — 5 TB poolad Drive, utökad säkerhet, eDiscovery.',
       },
 
       // Slack — USD-baspris, konverteras runtime.
-      // Källa: slack.com/intl/sv-se/pricing — BEHÖVER MANUELL VERIFIERING.
-      // TODO: Verifiera mot slack.com/pricing innan go-live.
+      // Källa: slack.com/pricing (bekräftat via tech.co maj 2026).
+      // NÄSTA VERIFIERING: 2026-09-01
       'slack-pro': {
         usdMonthly: 8.75,  usdAnnual: 7.25,  usdArvoAnnual: 6.15,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        currency: 'USD', lastVerified: '2026-05-22', source: 'slack.com/pricing',
         note: 'Slack Pro — obegränsat meddelandehistorik, video-huddles, obegränsade integrationer.',
       },
       'slack-business-plus': {
-        usdMonthly: 15.00, usdAnnual: 12.50, usdArvoAnnual: 10.63,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        usdMonthly: 18.00, usdAnnual: 15.00, usdArvoAnnual: 12.75,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'slack.com/pricing',
         note: 'Slack Business+ — SSO/SAML, kompliansexport, DLP, prioriterad support.',
       },
 
       // Zoom — USD-baspris, konverteras runtime.
-      // Källa: zoom.us/pricing — BEHÖVER MANUELL VERIFIERING.
-      // TODO: Verifiera mot zoom.us/pricing innan go-live.
+      // Källa: zoom.us/pricing (bekräftat via tech.co maj 2026).
+      // NÄSTA VERIFIERING: 2026-09-01
       'zoom-pro': {
-        usdMonthly: 13.33, usdAnnual: 10.83, usdArvoAnnual: 9.21,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        usdMonthly: 15.99, usdAnnual: 13.33, usdArvoAnnual: 11.33,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'zoom.us/pricing',
         note: 'Zoom Pro — obegränsade möten, 1 GB moln-inspelning, schemaläggning.',
       },
       'zoom-business': {
-        usdMonthly: 18.33, usdAnnual: 15.83, usdArvoAnnual: 13.46,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        usdMonthly: 19.99, usdAnnual: 18.33, usdArvoAnnual: 15.58,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'zoom.us/pricing',
         note: 'Zoom Business — SSO, inspelningsutskrifter, branding, 300 deltagare.',
       },
 
       // Atlassian — USD-baspris, konverteras runtime.
-      // Källa: atlassian.com/software/jira/pricing — BEHÖVER MANUELL VERIFIERING.
-      // TODO: Verifiera mot atlassian.com/pricing innan go-live.
+      // Källa: softwarepricingguide.com / featurebase.app (Q1 2025-priser, +5-8% vs 2024).
+      // OBS: Atlassian höjde Standard +5.2%, Premium +8.4% i Q1 2025.
       // OBS: Atlassian prissätter i USD globalt; ingen lokal SEK-prislista.
+      // NÄSTA VERIFIERING: 2026-09-01
       'atlassian-jira-standard': {
-        usdMonthly: 8.15,  usdAnnual: 7.75,  usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        usdMonthly: 8.60,  usdAnnual: 7.53,  usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'softwarepricingguide.com',
         note: 'Jira Software Cloud Standard — agile boards, backlog, roadmaps.',
       },
       'atlassian-jira-premium': {
-        usdMonthly: 16.00, usdAnnual: 15.25, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        usdMonthly: 16.24, usdAnnual: 13.53, usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'softwarepricingguide.com',
         note: 'Jira Software Cloud Premium — avancerade roadmaps, sandbox, 24/7-support.',
       },
       'atlassian-confluence-standard': {
-        usdMonthly: 5.75,  usdAnnual: 5.50,  usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        usdMonthly: 6.50,  usdAnnual: 5.42,  usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'featurebase.app',
         note: 'Confluence Cloud Standard — wiki, templates, Teams/Slack-integrationer.',
       },
       'atlassian-confluence-premium': {
-        usdMonthly: 11.00, usdAnnual: 10.50, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'NEEDS_VERIFICATION',
+        usdMonthly: 12.53, usdAnnual: 10.44, usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-05-22', source: 'featurebase.app',
         note: 'Confluence Cloud Premium — analytics, sandbox, 24/7-support.',
       },
     },
