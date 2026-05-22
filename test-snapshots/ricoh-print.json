@@ -1,0 +1,26 @@
+{
+  "_fixture": "ricoh-print",
+  "_description": "Ricoh skrivarleasing: fast maskinhyra + klickkostnader",
+  "extracted": {
+    "supplier": "Ricoh Sverige AB",
+    "date": "2026-04-01",
+    "billingPeriod": "quarterly",
+    "confidenceScore": 0.95,
+    "outOfScope": false,
+    "seatCount": null,
+    "projectedRecurringAmount": 7200,
+    "potentialMixedCategories": false,
+    "lineItems": [
+      { "description": "Fast maskinhyra Ricoh IM C3000 Q2 2026", "amount": 7200, "type": "recurring_subscription", "is_addon": false, "addon_type": null },
+      { "description": "Klickkostnad svartvit (5240 sidor × 0.08)", "amount": 419, "type": "variable_usage", "is_addon": false, "addon_type": null },
+      { "description": "Klickkostnad färg (880 sidor × 0.65)", "amount": 572, "type": "variable_usage", "is_addon": false, "addon_type": null }
+    ]
+  },
+  "category": "skrivarleasing",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}

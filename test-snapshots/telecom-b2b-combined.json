@@ -1,0 +1,27 @@
+{
+  "_fixture": "telecom-b2b-combined",
+  "_description": "TeleKom B2B: 5 SIM + molnväxel + bredband + statisk IP",
+  "extracted": {
+    "supplier": "TeleKom B2B AB",
+    "date": "2026-05-01",
+    "billingPeriod": "monthly",
+    "confidenceScore": 0.91,
+    "outOfScope": false,
+    "seatCount": 5,
+    "projectedRecurringAmount": 3788,
+    "potentialMixedCategories": true,
+    "lineItems": [
+      { "description": "Mobilabonnemang Business × 5", "amount": 1745, "type": "recurring_subscription", "is_addon": false, "addon_type": null },
+      { "description": "Molnväxel Business", "amount": 994, "type": "recurring_subscription", "is_addon": true, "addon_type": "pbx" },
+      { "description": "Bredband 500 Mbit", "amount": 899, "type": "recurring_subscription", "is_addon": false, "addon_type": null },
+      { "description": "Statisk IP-adress", "amount": 150, "type": "recurring_subscription", "is_addon": true, "addon_type": "static_ip" }
+    ]
+  },
+  "category": "mobil",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": 994,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": 1745
+  }
+}

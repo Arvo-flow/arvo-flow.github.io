@@ -1,0 +1,25 @@
+{
+  "_fixture": "microsoft-365",
+  "_description": "Microsoft 365 Business Premium × 57 licenser",
+  "extracted": {
+    "supplier": "Microsoft Ireland Operations Limited",
+    "date": "2026-05-08",
+    "billingPeriod": "monthly",
+    "confidenceScore": 0.97,
+    "outOfScope": false,
+    "seatCount": 57,
+    "projectedRecurringAmount": 18126,
+    "potentialMixedCategories": false,
+    "lineItems": [
+      { "description": "Microsoft 365 Business Premium × 45", "amount": 14265, "type": "recurring_subscription", "is_addon": false, "addon_type": null },
+      { "description": "Microsoft 365 Business Basic × 12", "amount": 3864, "type": "recurring_subscription", "is_addon": false, "addon_type": null }
+    ]
+  },
+  "category": "saas-productivity",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}

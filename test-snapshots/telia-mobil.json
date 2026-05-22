@@ -1,0 +1,24 @@
+{
+  "_fixture": "telia-mobil",
+  "_description": "Telia 12 mobilabonnemang, ren mobilfaktura utan addons",
+  "extracted": {
+    "supplier": "Telia Sverige AB",
+    "date": "2026-05-01",
+    "billingPeriod": "monthly",
+    "confidenceScore": 0.97,
+    "outOfScope": false,
+    "seatCount": 12,
+    "projectedRecurringAmount": 4788,
+    "potentialMixedCategories": false,
+    "lineItems": [
+      { "description": "Telia Jobbmobil 12 GB × 12", "amount": 4788, "type": "recurring_subscription", "is_addon": false, "addon_type": null }
+    ]
+  },
+  "category": "mobil",
+  "expected": {
+    "route": "auto",
+    "mobileAddonMonthly": null,
+    "broadbandAddonMonthly": null,
+    "primaryComponentMonthly": null
+  }
+}

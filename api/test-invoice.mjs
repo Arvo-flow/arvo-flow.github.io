@@ -8,6 +8,7 @@
 import { Resend } from 'resend';
 import { createHmac, createHash } from 'node:crypto';
 import { extractInvoice, routeExtraction, ExtractorError } from '../agents/test-invoice/extract.js';
+import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
 import { storeDatapoint } from '../lib/benchmark.js';
@@ -520,6 +521,15 @@ export default async function handler(req, res) {
       normalizedSupplier: categorized.normalizedSupplier,
     }));
 
+    // ── Deterministisk beräkning av addon- och primärkomponent-kostnader ────────
+    // Sker efter kategorisering (category behövs) men före recommendation.
+    // Ersätter AI-beräknade fält som returnerade null för ofta.
+    const metrics = computeInvoiceMetrics(
+      extracted.lineItems,
+      categorized.category,
+      extracted.potentialMixedCategories ?? false,
+    );
+
     // ── Avtalslås-detektering (körs före alla tidiga exits) ───────────────────
     // Hoppas över för licensePending-kategorier — vi kan inte byta ändå, så
     // "låst avtal" skulle vara vilseledande för t.ex. försäkringskunder.
@@ -789,9 +799,9 @@ export default async function handler(req, res) {
         recurringAmount:     extracted.recurringAmount,
         variableCharges:     extracted.variableCharges,
         seatCount:           extracted.seatCount ?? null,
-        mobileAddonMonthly:      extracted.mobileAddonMonthly ?? null,
-        broadbandAddonMonthly:   extracted.broadbandAddonMonthly ?? null,
-        primaryComponentMonthly: extracted.primaryComponentMonthly ?? null,
+        mobileAddonMonthly:       metrics.mobileAddonMonthly,
+        broadbandAddonMonthly:    metrics.broadbandAddonMonthly,
+        primaryComponentMonthly:  metrics.primaryComponentMonthly,
         potentialMixedCategories: extracted.potentialMixedCategories ?? false,
         connectionSpeedMbit: extracted.connectionSpeedMbit ?? null,
         licenseType:         extracted.licenseType ?? null,
@@ -842,7 +852,7 @@ export default async function handler(req, res) {
         seatCount:                 extracted.seatCount ?? null,
         connectionSpeedMbit:       extracted.connectionSpeedMbit ?? null,
         potentialMixedCategories:  extracted.potentialMixedCategories ?? false,
-        primaryComponentMonthly:   extracted.primaryComponentMonthly ?? null,
+        primaryComponentMonthly:   metrics.primaryComponentMonthly,
         licenseType:               extracted.licenseType ?? null,
         billingCycleType:          extracted.billingCycleType ?? null,
         pricePerSeatMonthly:       extracted.pricePerSeatMonthly ?? null,

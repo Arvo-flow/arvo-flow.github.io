@@ -82,6 +82,26 @@ hardware
   Köpt hårdvara eller utrustning (ej leasing eller hyra).
   Exempel: köp av telefon, skrivare, server, nätverksutrustning.
 
+TILLÄGGSTJÄNSTER — sätt på varje kostnadsrad:
+  is_addon: true om raden är en kompletterande tjänst UTÖVER bastjänsten, INTE bastjänsten själv.
+  addon_type: klassificera typen av tillägg (se värden nedan). null om is_addon är false.
+
+  is_addon: true — klassificering:
+    Molnväxel, cloud PBX, IP-PBX, Teams Direct Routing, PSTN-integration → addon_type: "pbx"
+    Statisk IP-adress, fast IP → addon_type: "static_ip"
+    Managed firewall, brandvägg-som-tjänst, UTM → addon_type: "firewall"
+    Extra SLA-uppgradering, premium-support-avtal → addon_type: "sla"
+    Molnbackup, säkerhetskopiering som tilläggsprodukt → addon_type: "cloud_backup"
+    VOIP-tjänst (ej PBX) → addon_type: "voip"
+    Övriga tilläggstjänster som inte passar ovan → addon_type: "other"
+
+  is_addon: false (addon_type: null) för bastjänster:
+    SIM-kort, mobilabonnemang, datapaketsplan
+    Fiberanslutning, bredbandsabonnemang, internet
+    SaaS-licenser (Microsoft 365, Google Workspace, Slack osv.)
+    Maskinleasing, skrivarleasing
+    Elavtal, elnät, distributionskostnad
+
 AVTALSTID & UPPSÄGNING — extrahera BARA om fakturan innehåller ett explicit bindande avtal:
   KRITISKT: service_period_start och service_period_end avser AVTALETS bindningstid — INTE
   faktureringsperioden och INTE nästa förnyelsedag för ett löpande abonnemang.
@@ -142,15 +162,6 @@ KRITISKT:
     SaaS-licenser OCH hårdvara på separata rader). false i övriga fall.
     OBS: En enskild leverantörs produktsvit är INTE mixed — t.ex. "Atlassian Jira & Confluence",
     "Microsoft 365 + Teams", "Adobe Creative Cloud + Acrobat" är EN kategori, sätt false.
-  — primary_component_monthly: OBLIGATORISKT när potential_mixed_categories är true — lämna ALDRIG
-    null i det fallet. Summera ENBART fakturarader som tillhör den dominerande kategorin.
-    Gör så här: 1) Hitta den dyraste tjänstekategorin (t.ex. mobil = 1 745 kr, bredband = 1 049 kr).
-    2) Addera ENBART de raderna. 3) Tilläggstjänster (molnväxel, fast IP, IT-support) ingår INTE.
-    EXEMPEL: 5 SIM à 349 kr + molnväxel 994 kr + bredband 899 kr + fast IP 150 kr:
-    → mobil är dominerande (1 745 kr). primary_component_monthly: 1745.
-    → molnväxel (994 kr) fångas separat av mobile_addon_monthly — ingår EJ här.
-    → bredband (899 kr) + fast IP (150 kr) är övriga tjänster — ingår EJ här.
-    Sätt null ENBART om potential_mixed_categories är false.
   — Returnera VARJE synlig kostnadsrad — utelämna inga rader.
   — seatCount: Antal UNIKA ANVÄNDARE som licensieras. Summera rader med OLIKA TIERS av SAMMA
     produkt (t.ex. 45 Premium + 12 Basic = 57 unika användare). Räkna INTE ihop add-on-tjänster
@@ -171,16 +182,7 @@ MOBILFAKTUROR — extrahera dessa fält om fakturan innehåller mobilabonnemang:
     Räkna INTE med eventuell molnväxel- eller tilläggstjänst — räkna bara aktiva SIM-linjer.
     Exempel: "Telia Företag, 8 abonnemang" → seatCount: 8.
     Exempel: Faktura visar 12 Tele2-abonnemang med tre datatiernivåer → seatCount: 12.
-  OBS MED TILLÄGGSTJÄNSTER — om fakturan innehåller mobilabonnemang (data, röst, SMS)
-  OCH tilläggstjänster (molnväxel, cloud PBX, Microsoft Teams-integration, växellösning,
-  lokal telefonilösning): mobile_addon_monthly är OBLIGATORISKT — lämna ALDRIG null
-  när sådana tjänster finns, oavsett om fakturan är renodlad mobilfaktura eller kombinerad
-  (potential_mixed_categories: true).
-  Summera ENBART tilläggstjänsternas månadsbelopp (ex moms).
-  Bas-abonnemangen ingår INTE i detta fält — de utgör recurring_subscription som vanligt.
-  EXEMPEL: 5 SIM à 349 kr + molnväxel 994 kr → mobile_addon_monthly: 994 (enbart molnväxeln).
-  EXEMPEL: 20 molnväxellicenser × 99 kr = 1 980 kr → mobile_addon_monthly: 1980.
-  Sätt null BARA om fakturan inte innehåller några sådana tilläggstjänster alls.
+  OBS: Molnväxel och liknande tilläggstjänster ska märkas is_addon: true, addon_type: "pbx" (se TILLÄGGSTJÄNSTER ovan).
 
 BREDBANDSFAKTUROR — extrahera dessa fält om fakturan är från en bredbandsleverantör:
   connection_speed_mbit: Anslutningshastighet i Mbit/s som heltal.
@@ -188,11 +190,7 @@ BREDBANDSFAKTUROR — extrahera dessa fält om fakturan är från en bredbandsle
     Exempel: "1 Gbit", "1000/1000 Mbit", "1 Gbit/s symmetrisk" → 1000.
     Exempel: "500 Mbit", "500/500 Mbit" → 500. "250 Mbit" → 250. "100 Mbit" → 100.
     null om ej bredbandsfaktura eller hastighet ej angiven.
-  broadband_addon_monthly: Summan av ENBART tilläggstjänsternas månadsbelopp (ex moms)
-    på en bredbandsfaktura — t.ex. statisk IP-adress, extra SLA, molnväxel, IT-support,
-    brandvägg-som-tjänst, filtrering. Basanslutningen ingår INTE i detta fält.
-    Exempel: fiber 799 kr + statisk IP 99 kr + managed firewall 250 kr → broadband_addon_monthly: 349.
-    Sätt null om fakturan saknar separata tilläggstjänster eller belopp ej kan identifieras.
+  OBS: Statisk IP, managed firewall, extra SLA och liknande tillägg ska märkas is_addon: true med rätt addon_type (se TILLÄGGSTJÄNSTER ovan).
 
 SAAS-LICENSER — extrahera dessa fält om fakturan avser mjukvarulicenser eller SaaS:
   license_type: Det specifika licensplanets namn som det framgår av fakturan. Normalisera
@@ -204,12 +202,7 @@ SAAS-LICENSER — extrahera dessa fält om fakturan avser mjukvarulicenser eller
     "annual"   = årsdebitering (annuell licens, 12-månadersfaktura, eller kvartalsvis mot årsavtal)
     "unknown"  = kan ej fastställas
     null       = ej SaaS/licensfaktura
-  price_per_seat_monthly: Genomsnittlig kostnad per licens och månad i SEK (exkl. moms).
-    Beräkna: (summa recurring_subscription-rader) / seatCount / billingPeriodMonths.
-    Månadsperiod: recurring_total / seatCount / 1.
-    Kvartal: recurring_total / seatCount / 3.
-    Årsperiod: recurring_total / seatCount / 12.
-    null om seatCount är null eller ej per-användarlicenser.
+
   saas_product_family: Standardiserad produktfamiljidentifierare. Ange en av:
     "microsoft-365", "google-workspace", "slack", "zoom",
     "atlassian-jira", "atlassian-confluence", "adobe-creative-cloud",
@@ -302,8 +295,17 @@ const EXTRACT_TOOL = {
               enum: ['recurring_subscription', 'variable_usage', 'one_time_fee', 'hardware'],
               description: 'Semantisk klassificering av raden',
             },
+            is_addon: {
+              type: 'boolean',
+              description: 'true om raden är en tilläggstjänst utöver bastjänsten (molnväxel, statisk IP, managed firewall osv.). false för bastjänster.',
+            },
+            addon_type: {
+              type: ['string', 'null'],
+              enum: ['pbx', 'static_ip', 'firewall', 'sla', 'cloud_backup', 'voip', 'other', null],
+              description: 'Typ av tilläggstjänst. Obligatoriskt när is_addon är true. null annars.',
+            },
           },
-          required: ['description', 'amount', 'type'],
+          required: ['description', 'amount', 'type', 'is_addon'],
         },
       },
       confidenceScore: {
@@ -362,14 +364,7 @@ const EXTRACT_TOOL = {
         type: ['integer', 'null'],
         description: 'Summa energiskatt + elcertifikat för perioden i kr exkl. moms. null om ej elfaktura.',
       },
-      mobile_addon_monthly: {
-        type: ['integer', 'null'],
-        description: 'Månadsbelopp för tilläggstjänster på mobilfaktura (molnväxel, cloud PBX, Teams-integration m.m.) exkl. bas-abonnemang. null om ej tillämpligt.',
-      },
-      broadband_addon_monthly: {
-        type: ['integer', 'null'],
-        description: 'Månadsbelopp för tilläggstjänster på bredbandsfaktura (statisk IP, extra SLA, managed firewall, molnväxel m.m.) exkl. basanslutningen. null om ej tillämpligt.',
-      },
+
       connection_speed_mbit: {
         type: ['integer', 'null'],
         description: 'Anslutningshastighet i Mbit/s för bredbandsfakturor. Standardnivåer: 100, 250, 500, 1000. null om ej bredbandsfaktura.',
@@ -382,10 +377,7 @@ const EXTRACT_TOOL = {
         type: ['string', 'null'],
         description: 'Faktureringsmodell: "monthly" (månadsvis), "annual" (årsvis), "unknown". null om ej SaaS-faktura.',
       },
-      price_per_seat_monthly: {
-        type: ['number', 'null'],
-        description: 'Genomsnittskostnad per licens och månad i SEK exkl. moms. Beräknat från recurring-total / seatCount / periodMonths. null om seatCount saknas.',
-      },
+
       saas_product_family: {
         type: ['string', 'null'],
         description: 'Produktfamilj: "microsoft-365", "google-workspace", "slack", "zoom", "atlassian-jira", "atlassian-confluence", "adobe-creative-cloud", "salesforce", "hubspot". null om okänt.',
@@ -427,10 +419,7 @@ const EXTRACT_TOOL = {
         type: 'boolean',
         description: 'true om fakturan tydligt innehåller tjänster från flera kategorier (t.ex. mobil + bredband). false annars.',
       },
-      primary_component_monthly: {
-        type: ['integer', 'null'],
-        description: 'Enbart den dominerande tjänstekategorins rena månadsbelopp (ex moms) när potential_mixed_categories är true — exkl. tilläggstjänster som fångas av mobile_addon_monthly/broadband_addon_monthly. null om potential_mixed_categories är false.',
-      },
+
       customer_org_number: {
         type: ['string', 'null'],
         description: 'Kundens (fakturamottagarens) organisationsnummer, t.ex. "556777-1111". null om ej angivet på fakturan.',
@@ -475,7 +464,13 @@ export function aggregateLineItems(raw) {
     description:              raw.description,
     account:                  raw.account ?? null,
     billingPeriod:            raw.billingPeriod,
-    lineItems:                raw.lineItems ?? [],
+    lineItems: (raw.lineItems ?? []).map((li) => ({
+      description: li.description,
+      amount:      li.amount,
+      type:        li.type,
+      is_addon:    li.is_addon ?? false,
+      addon_type:  li.addon_type ?? null,
+    })),
     amount:                   (raw.lineItems ?? []).reduce((s, l) => s + l.amount, 0),
     recurringAmount,
     projectedRecurringAmount: projected,
@@ -496,12 +491,18 @@ export function aggregateLineItems(raw) {
     elSkatterKr:      raw.el_skatter_kr != null ? Number(raw.el_skatter_kr) : null,
     elPriceExplicit:  raw.el_price_explicit ?? null,
     elContractType:   raw.el_contract_type ?? null,
-    mobileAddonMonthly:        raw.mobile_addon_monthly != null ? Number(raw.mobile_addon_monthly) : null,
-    broadbandAddonMonthly:     raw.broadband_addon_monthly != null ? Number(raw.broadband_addon_monthly) : null,
+
     connectionSpeedMbit:       raw.connection_speed_mbit != null ? Number(raw.connection_speed_mbit) : null,
     licenseType:               raw.license_type ?? null,
     billingCycleType:          raw.billing_cycle_type ?? null,
-    pricePerSeatMonthly:       raw.price_per_seat_monthly != null ? Number(raw.price_per_seat_monthly) : null,
+    // Compute price per seat in code — more reliable than asking AI to do the arithmetic
+    pricePerSeatMonthly: (() => {
+      const periodMonths = { monthly: 1, quarterly: 3, annual: 12, one_time: 1, unknown: 1 }[raw.billingPeriod] ?? 1;
+      const seats = raw.seatCount > 0 ? raw.seatCount : null;
+      return (seats && periodMonths > 0 && recurringAmount > 0)
+        ? Math.round(recurringAmount / seats / periodMonths * 100) / 100
+        : null;
+    })(),
     saasProductFamily:    raw.saas_product_family ?? null,
     saasIncludedFeatures: raw.saas_included_features ?? null,
     startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
@@ -512,7 +513,7 @@ export function aggregateLineItems(raw) {
     cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,
     currency:                  raw.currency ?? 'SEK',
     potentialMixedCategories:  raw.potential_mixed_categories ?? false,
-    primaryComponentMonthly:   raw.primary_component_monthly != null ? Number(raw.primary_component_monthly) : null,
+
     customerOrgNumber:         raw.customer_org_number ?? null,
   };
 }
