@@ -179,6 +179,10 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext }) 
     ? `\nOVERRIDE SEKRETESSREGEL: Kategorin "${categorized.category}" har offentliga listpriser. Du FÅR och SKA namnge den föreslagna leverantören i reasoning-fältet för denna faktura.`
     : '';
 
+  const speedNote = (categorized.category === 'bredband' && invoice.connectionSpeedMbit > 0)
+    ? `\n  Nuvarande hastighet: ${invoice.connectionSpeedMbit} Mbit/s — benchmarken ovan gäller för EXAKT denna hastighets-tier. Jämför mot motsvarande produkt (${invoice.connectionSpeedMbit} Mbit/s eller bättre till samma pris). Nämn ALDRIG en annan hastighet i reasoning utan att explicit förklara att det är ett uppgrade.`
+    : '';
+
   return `Kunden:
   Bolagstyp: ${customer.industry}
   Anställda: ${employees}
@@ -197,7 +201,7 @@ Kategoriserad faktura:
 Branschindex för segmentet:
 ${benchmarkBlock}
 
-${phrasingRule}${secretOverride}${elContext ? elContext : ''}
+${phrasingRule}${secretOverride}${speedNote}${elContext ? elContext : ''}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }
