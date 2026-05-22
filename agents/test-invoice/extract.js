@@ -10,6 +10,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
+import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
 
 const MODEL = 'claude-opus-4-7';
 const MAX_TOKENS = 2048;
@@ -253,7 +254,7 @@ ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
     null om saknas eller ej elfaktura.
   el_price_explicit: true ENBART om fakturan explicit visar ett pris per kWh (t.ex. "0,85 kr/kWh"
     eller en prisrad med kr/kWh). Sätt false om priset måste beräknas från totalbelopp / kWh.
-    null om ej elfaktura.`;
+    null om ej elfaktura.${FEWSHOT_EXAMPLES ? '\n\n' + FEWSHOT_EXAMPLES : ''}`;
 
 const EXTRACT_TOOL = {
   name: 'extract_invoice',
