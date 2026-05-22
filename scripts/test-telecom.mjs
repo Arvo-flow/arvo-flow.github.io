@@ -131,9 +131,12 @@ for (const file of FILES) {
     d.setDate(d.getDate() - extracted.cancellationNoticeDays);
     return d;
   })();
+  const MS_180_DAYS = 180 * 24 * 60 * 60 * 1000;
   const isPastLock = lockDeadline
     ? today > lockDeadline
-    : extracted.cancellationNoticeDays != null && hasActive;
+    : extracted.cancellationNoticeDays != null && hasActive
+      ? true
+      : hasActive && periodEnd && (periodEnd - today) > MS_180_DAYS;
 
   if (!categorized.licensePending && hasActive && isPastLock) {
     console.log(`\n${YELLOW}${BOLD}→ MONITORING-ROUTE (avtalslås)${RESET}`);
@@ -141,6 +144,7 @@ for (const file of FILES) {
     monDate.setDate(monDate.getDate() - 90);
     console.log(`  Avtal löper till : ${periodEnd.toLocaleDateString('sv-SE')}`);
     console.log(`  Påminnelsedatum  : ${monDate.toLocaleDateString('sv-SE')}`);
+    if (!extracted.cancellationNoticeDays) console.log(`  OBS: Uppsägningstid okänd — antar bundet avtal (>180 dagar kvar).`);
     continue;
   }
 

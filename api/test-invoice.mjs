@@ -534,13 +534,15 @@ export default async function handler(req, res) {
       d.setDate(d.getDate() - extracted.cancellationNoticeDays);
       return d;
     })();
-    // Monitoring triggar BARA om vi har ett explicit avtalsslutt OCH antingen:
-    // (a) beräknad lock-deadline passerat, ELLER (b) cancellationNoticeDays är känd men
-    // start saknas. Vi antar INTE avtalslås om uppsägningstid saknas — det skulle
-    // felaktigt låsa in löpande månadsabonnemang (SaaS, mobil utan angiven bindningstid).
+    // Monitoring triggar om vi har ett explicit avtalsslutt OCH något av:
+    // (a) beräknad lock-deadline passerat, ELLER (b) cancellationNoticeDays är känd,
+    // ELLER (c) avtalsslutt är >180 dagar bort (troligen bindningsavtal, ej faktureringsperiod).
+    const _MS_180_DAYS = 180 * 24 * 60 * 60 * 1000;
     const _isPastLockDeadline = _lockDeadline
       ? _today > _lockDeadline
-      : extracted.cancellationNoticeDays != null && _hasActivePeriod;
+      : extracted.cancellationNoticeDays != null && _hasActivePeriod
+        ? true
+        : _hasActivePeriod && _periodEnd && (_periodEnd - _today) > _MS_180_DAYS;
 
     if (!categorized.licensePending && _hasActivePeriod && _isPastLockDeadline) {
       const monitoringDate = new Date(_periodEnd);
