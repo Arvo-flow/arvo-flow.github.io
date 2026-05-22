@@ -524,6 +524,19 @@ export async function recommend(input, opts = {}) {
     result.switchSteps = [];
   }
 
+  // Hard block: saas-devtools and saas-other cannot produce a cross-product
+  // switch recommendation. Arvo has no reseller relationship for these tools
+  // (e.g. Atlassian, niche SaaS) so we must never promise a price we can't deliver.
+  if (['saas-devtools', 'saas-other'].includes(input.categorized.category)) {
+    result.shouldSwitch    = false;
+    result.suggestedSupplier = null;
+    result.suggestedAnnualCost = null;
+    result.grossSaving     = null;
+    result.arvoFee         = null;
+    result.netSaving       = null;
+    result.recommendationType = 'advisory';
+  }
+
   // Deterministic shouldSwitch override: if the customer pays >15 % over p25,
   // always recommend a switch regardless of what the model decided.
   // This eliminates AI flip-flopping on clear-cut overpayment cases.

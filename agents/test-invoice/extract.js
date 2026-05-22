@@ -140,6 +140,8 @@ KRITISKT:
   — potentialMixedCategories: Sätt true om fakturan innehåller kostnader som tydligt tillhör FLERA
     olika tjänstekategorier (t.ex. mobilabonnemang OCH bredband på samma faktura, eller
     SaaS-licenser OCH hårdvara på separata rader). false i övriga fall.
+    OBS: En enskild leverantörs produktsvit är INTE mixed — t.ex. "Atlassian Jira & Confluence",
+    "Microsoft 365 + Teams", "Adobe Creative Cloud + Acrobat" är EN kategori, sätt false.
   — Returnera VARJE synlig kostnadsrad — utelämna inga rader.
   — seatCount: Antal UNIKA ANVÄNDARE som licensieras. Summera rader med OLIKA TIERS av SAMMA
     produkt (t.ex. 45 Premium + 12 Basic = 57 unika användare). Räkna INTE ihop add-on-tjänster

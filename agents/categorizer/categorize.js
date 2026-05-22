@@ -81,8 +81,9 @@ const ACCOUNTING_SAAS_SUPPLIERS = ['fortnox', 'visma', 'pe accounting', 'speedle
 const SAAS_SUPPLIER_MAP = [
   { signals: ['adobe', 'figma', 'canva'],                                                   category: 'saas-creative'     },
   { signals: ['salesforce', 'hubspot', 'pipedrive', 'zoho crm', 'freshsales', 'crm'],       category: 'saas-crm'          },
-  { signals: ['microsoft', 'google', 'zoom video', 'slack technologies', 'atlassian',
+  { signals: ['microsoft', 'google', 'zoom video', 'slack technologies',
               'dropbox', 'box.com', 'webex'],                                                category: 'saas-productivity' },
+  { signals: ['atlassian', 'jira', 'confluence', 'trello', 'bitbucket'],                   category: 'saas-devtools'     },
 ];
 const LICENSE_DESC_SIGNALS = ['licens', 'license', 'prenumeration', 'subscription', 'licenser', 'saas'];
 
@@ -175,7 +176,23 @@ function deterministicMatch(invoice) {
     };
   }
 
-  // Rule 3b: leasing supplier + IT hardware description → utrustningsleasing.
+  // Rule 3b: known devtools supplier → saas-devtools (no license signal required).
+  // Atlassian invoices rarely contain words like "licens/subscription" — the product
+  // name alone is sufficient to classify with high confidence.
+  const DEVTOOLS_SUPPLIERS = ['atlassian', 'jira', 'confluence', 'trello', 'bitbucket', 'github', 'gitlab'];
+  const isDevtools = DEVTOOLS_SUPPLIERS.some((s) => combined.includes(s));
+  if (isDevtools) {
+    return {
+      category: 'saas-devtools',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.90,
+      reasoning: `Deterministisk matchning: känd devtools-leverantör → saas-devtools`,
+      licensePending: false,
+    };
+  }
+
+  // Rule 3c: leasing supplier + IT hardware description → utrustningsleasing.
   // Runs before Rule 4 so "FinansPartner Leasing AB + laptops" doesn't fall into saas-other.
   const IT_HARDWARE_DESC = ['laptop', 'notebook', 'dator', 'hårdvara', 'surfplatta', 'it-utrustning', 'chromebook'];
   const isLeasingSupplier = supplier.includes('leasing') || supplier.includes('finans');
