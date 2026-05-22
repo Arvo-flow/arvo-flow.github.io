@@ -255,6 +255,46 @@ export const BRANCHINDEX = {
       { supplier: 'Microsoft 365 Business Premium',              positioning: 'För bolag med säkerhetskrav (Intune, Defender) utan behov av E5-compliance-funktioner.',               reliability: 0.97 },
       { supplier: 'Zoho Workplace',                              positioning: 'Budgetalternativ med e-post, docs och CRM-integration — lägst TCO för enkla behov.',                  reliability: 0.89 },
     ],
+    licenseTierBenchmarks: {
+      // Microsoft 365 — CSP-listpriser maj 2026 (SEK/user/mån exkl. moms)
+      // Källa: Senetic, Crayon, Pricerunner CSP-kanalen maj 2026.
+      // msrpMonthly = Microsoft MSRP vid månadsdebitering
+      // msrpAnnual  = Microsoft MSRP vid årsåtagande (~15–17 % rabatt vs monthly)
+      // arvoAnnual  = Arvos volympris via CSP-kanal (~13 % under msrpAnnual)
+      'business-basic': {
+        msrpMonthly: 63,  msrpAnnual: 54,  arvoAnnual: 46,
+        note: 'M365 Business Basic — Teams, Exchange, webb-appar, 1 TB OneDrive. Ingen desktop Office-suite.',
+      },
+      'business-standard': {
+        msrpMonthly: 142, msrpAnnual: 122, arvoAnnual: 104,
+        note: 'M365 Business Standard — full desktop Office, Teams, SharePoint, 1 TB OneDrive. Vanligast bland svenska SMF.',
+      },
+      'business-premium': {
+        msrpMonthly: 231, msrpAnnual: 199, arvoAnnual: 169,
+        note: 'M365 Business Premium — inkl. Intune MDM + Microsoft Defender for Business. Rätt val vid säkerhetskrav.',
+      },
+      'e3': {
+        msrpMonthly: 378, msrpAnnual: 325, arvoAnnual: 276,
+        note: 'M365 E3 — enterprise compliance, eDiscovery, avancerat auditlogg. Sällan motiverat under 100 users.',
+      },
+      'e5': {
+        msrpMonthly: 599, msrpAnnual: 516, arvoAnnual: 439,
+        note: 'M365 E5 — full SIEM, Defender for Endpoint, avancerad SIEM. Överkurs för de flesta SMF.',
+      },
+      // Google Workspace — listpriser maj 2026 (SEK/user/mån exkl. moms)
+      'google-starter': {
+        msrpMonthly: 65,  msrpAnnual: 56,  arvoAnnual: 47,
+        note: 'Google Workspace Business Starter — 30 GB Drive/user, Meet, Docs, Sheets, Slides.',
+      },
+      'google-standard': {
+        msrpMonthly: 135, msrpAnnual: 116, arvoAnnual: 98,
+        note: 'Google Workspace Business Standard — 2 TB poolad Drive, Meet 150 deltagare + inspelning.',
+      },
+      'google-plus': {
+        msrpMonthly: 200, msrpAnnual: 172, arvoAnnual: 146,
+        note: 'Google Workspace Business Plus — 5 TB poolad Drive, utökad säkerhet, eDiscovery.',
+      },
+    },
     matrix: {
       byraer:      { micro: { median: 2880, p25: 1704 }, small: { median: 2640, p25: 1704 }, mid: { median: 2400, p25: 1704 } },
       hantverkare: { micro: { median: 2400, p25: 1704 }, small: { median: 2160, p25: 1704 }, mid: { median: 1920, p25: 1704 } },

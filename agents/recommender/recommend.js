@@ -223,6 +223,21 @@ function closestSpeedTier(speedMbit) {
   return 1000;
 }
 
+// Maps an extracted license type string to a branchindex tier key.
+function getSaasLicenseTierKey(licenseType) {
+  if (!licenseType) return null;
+  const lt = licenseType.toLowerCase();
+  if (lt.includes('business basic'))                              return 'business-basic';
+  if (lt.includes('business standard') || lt.includes('apps for business')) return 'business-standard';
+  if (lt.includes('business premium'))                           return 'business-premium';
+  if (lt === 'e3' || lt.includes(' e3') || lt.includes('enterprise e3')) return 'e3';
+  if (lt === 'e5' || lt.includes(' e5') || lt.includes('enterprise e5')) return 'e5';
+  if (lt.includes('google') && lt.includes('starter'))           return 'google-starter';
+  if (lt.includes('google') && lt.includes('standard'))          return 'google-standard';
+  if (lt.includes('google') && lt.includes('plus'))              return 'google-plus';
+  return null;
+}
+
 export async function recommend(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(
@@ -247,6 +262,40 @@ export async function recommend(input, opts = {}) {
     if (speedBm) {
       benchmark = { ...rawBenchmark, median: speedBm.median, p25: speedBm.p25, note: speedBm.note };
     }
+  }
+
+  // License tier override for saas-productivity: use tier-specific CSP prices
+  // instead of generic flat p25. arvoAnnual per seat (×12) becomes the new p25
+  // so savings reflect what Arvo can actually deliver.
+  const licenseType       = input.invoice?.licenseType ?? null;
+  const billingCycleType  = input.invoice?.billingCycleType ?? null;
+  const pricePerSeatMonthly = input.invoice?.pricePerSeatMonthly ?? null;
+  let   saasLicenseTierKey = null;
+  let   saasTierBm         = null;
+
+  if (input.categorized.category === 'saas-productivity' && rawBenchmark) {
+    saasLicenseTierKey = getSaasLicenseTierKey(licenseType);
+    saasTierBm = saasLicenseTierKey
+      ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[saasLicenseTierKey]
+      : null;
+    if (saasTierBm) {
+      // p25 = arvoAnnual per seat × 12 (best realistic annual price via Arvo CSP)
+      // median = msrpMonthly × 12 (what most customers currently pay on monthly billing)
+      benchmark = {
+        ...rawBenchmark,
+        p25:    saasTierBm.arvoAnnual * 12,
+        median: saasTierBm.msrpMonthly * 12,
+        note:   saasTierBm.note + ' Per användare/år.',
+      };
+    }
+  }
+
+  // Always compute annual billing saving (informational, independent of switch decision)
+  let annualBillingSaving = null;
+  if (billingCycleType === 'monthly' && saasTierBm) {
+    const _seats = input.invoice?.seatCount ?? input.customer?.employees ?? 1;
+    const sav = Math.round((saasTierBm.msrpMonthly - saasTierBm.msrpAnnual) * 12 * _seats);
+    annualBillingSaving = sav > 0 ? sav : null;
   }
 
   // Managed Print guard: if click costs dominate (>35 % of invoice), one month's

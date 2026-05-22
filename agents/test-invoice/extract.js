@@ -161,6 +161,23 @@ BREDBANDSFAKTUROR — extrahera dessa fält om fakturan är från en bredbandsle
     Exempel: "500 Mbit", "500/500 Mbit" → 500. "250 Mbit" → 250. "100 Mbit" → 100.
     null om ej bredbandsfaktura eller hastighet ej angiven.
 
+SAAS-LICENSER — extrahera dessa fält om fakturan avser mjukvarulicenser eller SaaS:
+  license_type: Det specifika licensplanets namn som det framgår av fakturan. Normalisera
+    till kortform, t.ex. "Business Standard", "Business Premium", "E3", "E5",
+    "Business Basic", "Google Workspace Business Starter", "Google Workspace Business Standard",
+    "Google Workspace Business Plus". null om plannamnet inte framgår.
+  billing_cycle_type: Faktureringsmodell för licensdelen:
+    "monthly"  = månadsdebitering (löpande per månad)
+    "annual"   = årsdebitering (annuell licens, 12-månadersfaktura, eller kvartalsvis mot årsavtal)
+    "unknown"  = kan ej fastställas
+    null       = ej SaaS/licensfaktura
+  price_per_seat_monthly: Genomsnittlig kostnad per licens och månad i SEK (exkl. moms).
+    Beräkna: (summa recurring_subscription-rader) / seatCount / billingPeriodMonths.
+    Månadsperiod: recurring_total / seatCount / 1.
+    Kvartal: recurring_total / seatCount / 3.
+    Årsperiod: recurring_total / seatCount / 12.
+    null om seatCount är null eller ej per-användarlicenser.
+
 STARTUP-KREDITER — om fakturan visar att ett startup-program, promotional credit eller
   liknande kreditpost reducerar totalsumman:
   startup_credit_balance: Kvarvarande kreditbalans som visas explicit på fakturan (positivt tal).
@@ -309,6 +326,18 @@ const EXTRACT_TOOL = {
         type: ['integer', 'null'],
         description: 'Anslutningshastighet i Mbit/s för bredbandsfakturor. Standardnivåer: 100, 250, 500, 1000. null om ej bredbandsfaktura.',
       },
+      license_type: {
+        type: ['string', 'null'],
+        description: 'Normaliserat licensplanets namn, t.ex. "Business Standard", "E3", "Google Workspace Business Starter". null om ej per-användarlicenser eller plannamn saknas.',
+      },
+      billing_cycle_type: {
+        type: ['string', 'null'],
+        description: 'Faktureringsmodell: "monthly" (månadsvis), "annual" (årsvis), "unknown". null om ej SaaS-faktura.',
+      },
+      price_per_seat_monthly: {
+        type: ['number', 'null'],
+        description: 'Genomsnittskostnad per licens och månad i SEK exkl. moms. Beräknat från recurring-total / seatCount / periodMonths. null om seatCount saknas.',
+      },
       startup_credit_balance: {
         type: ['number', 'null'],
         description: 'Kvarvarande kreditbalans från startup-/kampanjprogram som visas på fakturan. null om ej tillämpligt.',
@@ -408,6 +437,9 @@ export function aggregateLineItems(raw) {
     elContractType:   raw.el_contract_type ?? null,
     mobileAddonMonthly:        raw.mobile_addon_monthly != null ? Number(raw.mobile_addon_monthly) : null,
     connectionSpeedMbit:       raw.connection_speed_mbit != null ? Number(raw.connection_speed_mbit) : null,
+    licenseType:               raw.license_type ?? null,
+    billingCycleType:          raw.billing_cycle_type ?? null,
+    pricePerSeatMonthly:       raw.price_per_seat_monthly != null ? Number(raw.price_per_seat_monthly) : null,
     startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
     startupCreditMonthlyBurn:  raw.startup_credit_monthly_burn != null ? Number(raw.startup_credit_monthly_burn) : null,
     startupCreditCurrency:     raw.startup_credit_currency ?? null,
