@@ -541,7 +541,7 @@ export default async function handler(req, res) {
 
     if (!categorized.licensePending && _hasActivePeriod && _isPastLockDeadline) {
       const monitoringDate = new Date(_periodEnd);
-      monitoringDate.setDate(monitoringDate.getDate() - 90);
+      monitoringDate.setMonth(monitoringDate.getMonth() - 3);
       timing.totalMs = Date.now() - t0;
         return send(res, 200, {
           ok:    true,
