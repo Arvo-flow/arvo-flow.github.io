@@ -157,8 +157,21 @@ for (const file of FILES) {
   }
   const recommendMs = Date.now() - t2;
 
+  // Arvo Score — samma logik som frontend (index.js diagScore)
+  const _diagSugg    = rec.suggestedAnnualCost ?? 0;
+  const _diagAnnual  = extracted.annualCost ?? 0;
+  const _diagOvPct   = _diagAnnual > 0 && _diagSugg > 0 && _diagSugg < _diagAnnual
+    ? Math.round((_diagAnnual - _diagSugg) / _diagAnnual * 100) : 0;
+  const _diagRaw     = Math.max(5, Math.round(100 - _diagOvPct * 1.5));
+  const _diagScore   = !rec.shouldSwitch ? Math.min(_diagRaw, 85) : _diagRaw;
+  const _diagLabel   = _diagScore < 45 ? 'Kritisk'
+    : _diagScore < 65 ? 'Suboptimerat'
+    : _diagScore < 80 ? 'Marknadsmässigt'
+    : 'Optimalt';
+
   const switchColor = rec.shouldSwitch ? GREEN : YELLOW;
   console.log(`\n${BOLD}RECOMMEND${RESET}  (${recommendMs} ms)`);
+  console.log(`  Arvo Score       : ${BOLD}${_diagScore}/100${RESET} (${_diagLabel})`);
   console.log(`  shouldSwitch     : ${switchColor}${BOLD}${rec.shouldSwitch}${RESET}`);
   console.log(`  Föreslagen lev.  : ${rec.suggestedSupplier ?? '—'}`);
   console.log(`  Föreslagen årskostand: ${SEK(rec.suggestedAnnualCost)}`);
