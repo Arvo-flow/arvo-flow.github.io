@@ -25,7 +25,11 @@ export class CategorizerError extends Error {
 // Strong description signals that unambiguously identify a category.
 // Keyed by category ID → array of lowercase substrings to scan for.
 const STRONG_DESC_SIGNALS = {
-  mobil:            ['mobilabonnemang', 'mobiltelefoni', 'telefonabonnemang', 'företagstelefoni', 'mobildata'],
+  mobil:            ['mobilabonnemang', 'mobiltelefoni', 'telefonabonnemang', 'företagstelefoni', 'mobildata',
+                     'sim-kort', 'sim kort', 'jobbmobil', 'företagsmobil', 'mobilplan'],
+  serverhosting:    ['microsoft azure', 'azure förbrukning', 'aws ec2', 'amazon web services',
+                     'google cloud platform', 'azure csp', 'compute instances', 'molnhosting',
+                     'vps hosting', 'dedikerad server', 'cloud computing'],
   el:               ['elförbrukning', 'elavtal', 'elhandel', 'elcertifikat', 'spotpris timme', 'elenergi',
                      'spotpris el', 'elräkning', 'elkostnad', 'elabonnemang', 'spotprisavtal', 'strömkostnad',
                      'elförb', 'kwh', 'rörligt el'],
@@ -112,7 +116,7 @@ const ELECTRICITY_SUPPLIER_SIGNALS = [
 ];
 
 // Telecom supplier keywords — when combined with any subscription signal → mobil.
-const TELECOM_SUPPLIER_SIGNALS = ['telekom', 'telecom', 'tele2', 'telia', 'telenor', ' tre ', 'comviq', 'halebop', 'vimla'];
+const TELECOM_SUPPLIER_SIGNALS = ['telekom', 'telecom', 'tele2', 'telia', 'telenor', ' tre ', 'hi3g', 'comviq', 'halebop', 'vimla', 'globalcom', 'connectsverige'];
 const SUBSCRIPTION_DESC_SIGNALS = ['abonnemang', 'abonnement', 'subscription', 'månadsavgift telefon', 'telefonitjänst'];
 
 // Returns a result object if a strong deterministic match is found, otherwise null.
