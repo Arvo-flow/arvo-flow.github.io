@@ -648,10 +648,19 @@ export async function recommend(input, opts = {}) {
     const effectiveSeats = seatCount ?? employees;
     const scale = isPerUser && effectiveSeats > 0 ? effectiveSeats : 1;
 
-    result.suggestedAnnualCost = Math.round(benchmark.p25 * scale);
-    result.savingPerYear = Math.max(0, Math.round(annualCost - result.suggestedAnnualCost));
+    // For mobile invoices with a cloud PBX/switchboard add-on, the benchmark
+    // covers bare SIM only. Exclude the add-on from the saving calculation and
+    // pass it through to suggestedAnnualCost so we don't claim savings on a
+    // component the benchmark doesn't price.
+    const mobileAddonAnnual = (input.categorized.category === 'mobil' && (input.invoice.mobileAddonMonthly ?? 0) > 0)
+      ? Math.round(input.invoice.mobileAddonMonthly * 12)
+      : 0;
+    const comparableAnnualCost = annualCost - mobileAddonAnnual;
+
+    result.suggestedAnnualCost = Math.round(benchmark.p25 * scale) + mobileAddonAnnual;
+    result.savingPerYear = Math.max(0, Math.round(comparableAnnualCost - Math.round(benchmark.p25 * scale)));
     result.overpaymentPercent = benchmark.median > 0
-      ? Math.round(((annualCost - benchmark.median * scale) / (benchmark.median * scale)) * 100)
+      ? Math.round(((comparableAnnualCost - benchmark.median * scale) / (benchmark.median * scale)) * 100)
       : (result.overpaymentPercent ?? 0);
 
     if (seatCount != null && seatCount > employees) {
@@ -673,7 +682,7 @@ export async function recommend(input, opts = {}) {
 
     // Savings breakdown — decompose total saving by channel
     result.savingsBreakdown = {
-      cspDiscount:         Math.max(0, annualCost - result.suggestedAnnualCost),
+      cspDiscount:         Math.max(0, comparableAnnualCost - (result.suggestedAnnualCost - mobileAddonAnnual)),
       billingOptimization: (billingCycleType === 'monthly' && saasTierBm && saasTierBm.msrpAnnual != null && effectiveSeats > 0)
         ? Math.max(0, Math.round((saasTierBm.msrpMonthly - saasTierBm.msrpAnnual) * 12 * effectiveSeats))
         : null,

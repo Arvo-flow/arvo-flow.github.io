@@ -73,11 +73,28 @@ for (const file of FILES) {
   if (extracted.pricePerSeatMonthly) console.log(`  Pris/seat/mån  : ${extracted.pricePerSeatMonthly.toFixed(0)} kr`);
   if (extracted.saasProductFamily)  console.log(`  Produktfamilj  : ${extracted.saasProductFamily}`);
   if (extracted.saasIncludedFeatures?.length) console.log(`  Inkl. tjänster : ${extracted.saasIncludedFeatures.join(', ')}`);
+  if (extracted.elContractType)     console.log(`  Elavtalstyp    : ${extracted.elContractType}`);
+  if (extracted.elKwh != null)      console.log(`  Förbrukning    : ${extracted.elKwh.toLocaleString('sv-SE')} kWh`);
+  if (extracted.elOmrade)           console.log(`  Elområde       : ${extracted.elOmrade}`);
 
   const routing = routeExtraction(extracted);
   if (routing.route !== 'auto') {
     console.log(`\n${YELLOW}Route: ${routing.route}${routing.reason ? ` — ${routing.reason}` : ''}${RESET}`);
     continue;
+  }
+
+  // El fastprisavtal: kunden är låst — speglar API:ets deterministiska check
+  if (extracted.elContractType === 'fixed' && extracted.servicePeriodEnd) {
+    const elEnd = new Date(extracted.servicePeriodEnd);
+    if (elEnd > new Date()) {
+      const monDate = new Date(elEnd);
+      monDate.setMonth(monDate.getMonth() - 3);
+      console.log(`\n${YELLOW}${BOLD}→ MONITORING-ROUTE (el fastprisavtal)${RESET}`);
+      console.log(`  Avtal löper till : ${elEnd.toLocaleDateString('sv-SE')}`);
+      console.log(`  Påminnelsedatum  : ${monDate.toLocaleDateString('sv-SE')}`);
+      console.log(`  OBS: Fastprisavtal kan ej sägas upp i förtid.`);
+      continue;
+    }
   }
 
   // ── 2. Categorize ───────────────────────────────────────────────────────
@@ -169,14 +186,20 @@ for (const file of FILES) {
     : _diagScore < 80 ? 'Marknadsmässigt'
     : 'Optimalt';
 
+  // Mirror api/test-invoice.mjs lines 816-818: savingPerYear → grossSaving → netSaving
+  const _gross = rec.grossSaving ?? rec.savingPerYear ?? null;
+  const _arvoFee = _gross != null ? Math.round(_gross * 0.20) : null;
+  const _net = rec.netSaving ?? (_gross != null ? _gross - _arvoFee : null);
+
   const switchColor = rec.shouldSwitch ? GREEN : YELLOW;
   console.log(`\n${BOLD}RECOMMEND${RESET}  (${recommendMs} ms)`);
   console.log(`  Arvo Score       : ${BOLD}${_diagScore}/100${RESET} (${_diagLabel})`);
   console.log(`  shouldSwitch     : ${switchColor}${BOLD}${rec.shouldSwitch}${RESET}`);
   console.log(`  Föreslagen lev.  : ${rec.suggestedSupplier ?? '—'}`);
   console.log(`  Föreslagen årskostand: ${SEK(rec.suggestedAnnualCost)}`);
-  console.log(`  Bruttobesparing  : ${SEK(rec.grossSaving ?? rec.savingPerYear)}`);
-  console.log(`  Nettobesparing   : ${SEK(rec.netSaving ?? (rec.grossSaving ? Math.round(rec.grossSaving * 0.80) : null))}`);
+  console.log(`  Bruttobesparing  : ${SEK(_gross)}`);
+  console.log(`  Arvos arvode     : ${SEK(_arvoFee)} (20 %)`);
+  console.log(`  Nettobesparing   : ${SEK(_net)}`);
   if (rec.licenseOverage > 0)
     console.log(`  ${YELLOW}Licensöverskott  : ${rec.licenseOverage} oanvända licenser${RESET}`);
   if (rec.overageSavings > 0)
@@ -187,7 +210,6 @@ for (const file of FILES) {
     const bd = rec.savingsBreakdown;
     console.log(`  ${DIM}Besparing per kanal:${RESET}`);
     if (bd.cspDiscount > 0)         console.log(`    ${DIM}CSP-rabatt        : ${SEK(bd.cspDiscount)}${RESET}`);
-    if (bd.billingOptimization > 0) console.log(`    ${DIM}Årsavtal          : ${SEK(bd.billingOptimization)}${RESET}`);
     if (bd.tierOptimization > 0)    console.log(`    ${DIM}Tier-optimering   : ${SEK(bd.tierOptimization)} (advisory)${RESET}`);
     if (bd.licenseCleanup > 0)      console.log(`    ${DIM}Licensrensning    : ${SEK(bd.licenseCleanup)}${RESET}`);
   }

@@ -1211,7 +1211,6 @@ const TestaFaktura = () => {
                 if (!bd) return null;
                 const rows = [
                   { label: 'Arvo CSP-pris (same tier)', value: bd.cspDiscount },
-                  { label: 'Årsavtal istf månadsvis', value: bd.billingOptimization },
                   { label: 'Tier-optimering (advisory)', value: bd.tierOptimization },
                   { label: 'Licensrensning', value: bd.licenseCleanup },
                 ].filter(r => r.value > 0);
