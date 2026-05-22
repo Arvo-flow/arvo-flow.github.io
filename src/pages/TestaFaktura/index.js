@@ -1231,6 +1231,23 @@ const TestaFaktura = () => {
                   </>
                 );
               })()}
+              {result.route === 'auto' && result.extracted?.confidenceScore != null && (
+                <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #E5EFEA', paddingTop: '14px', marginTop: '4px' }}>
+                  <dt style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#5C6E68' }}>
+                    Extraktionskvalitet
+                  </dt>
+                  <dd style={{ fontSize: '15px', fontWeight: 600, margin: '4px 0 0', color: result.extracted.confidenceScore >= 0.90 ? '#0E4F47' : result.extracted.confidenceScore >= 0.70 ? '#92400E' : '#7F1D1D' }}>
+                    {Math.round(result.extracted.confidenceScore * 100)} %
+                    <small style={{ display: 'block', marginTop: '3px', fontSize: '11.5px', fontWeight: 400, color: '#5C6E68', lineHeight: 1.5 }}>
+                      {result.extracted.confidenceScore >= 0.90
+                        ? 'AI-modellen är mycket säker på klassificering och beloppsextraktion.'
+                        : result.extracted.confidenceScore >= 0.70
+                        ? 'AI-modellen är säker — kontrollera gärna rörliga avgifter mot fakturan.'
+                        : 'Lägre säkerhet — Arvo rekommenderar manuell granskning av beloppen.'}
+                    </small>
+                  </dd>
+                </div>
+              )}
             </KV>}
 
             {result.recommendation?.reasoning && (result.recommendation?.shouldSwitch || isOptimize) && (
