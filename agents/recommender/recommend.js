@@ -18,6 +18,7 @@ import { SYSTEM_PROMPT, RECOMMEND_TOOL } from './prompt.js';
 import { getBenchmark } from '../../lib/benchmark.js';
 import { CATEGORIES } from '../categorizer/categories.js';
 import { getElIntelligence } from '../../lib/el-intelligence.js';
+import { BRANCHINDEX } from './branchindex.js';
 
 const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 1024;
@@ -211,6 +212,13 @@ Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend"
  * @param {object} [opts]
  * @param {Anthropic} [opts.client]
  */
+function closestSpeedTier(speedMbit) {
+  for (const t of [100, 250, 500, 1000]) {
+    if (speedMbit <= t) return t;
+  }
+  return 1000;
+}
+
 export async function recommend(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(
@@ -218,11 +226,24 @@ export async function recommend(input, opts = {}) {
     );
   }
 
-  const benchmark = await getBenchmark({
+  const rawBenchmark = await getBenchmark({
     category: input.categorized.category,
     industry: input.customer.industry,
     employees: input.customer.employees,
   });
+
+  // Speed-tier override för bredband: ersätt median/p25 med hastighetsspecifika värden
+  // när connection_speed_mbit är känt. Fiberpriser beror på hastighet, inte bolagets storlek.
+  const connectionSpeedMbit = input.invoice?.connectionSpeedMbit ?? null;
+  let benchmark = rawBenchmark;
+  if (input.categorized.category === 'bredband' && connectionSpeedMbit > 0 && rawBenchmark) {
+    const speedTiers = BRANCHINDEX.bredband?.speedTierBenchmarks;
+    const tier = closestSpeedTier(connectionSpeedMbit);
+    const speedBm = speedTiers?.[tier];
+    if (speedBm) {
+      benchmark = { ...rawBenchmark, median: speedBm.median, p25: speedBm.p25, note: speedBm.note };
+    }
+  }
 
   // Managed Print guard: if click costs dominate (>35 % of invoice), one month's
   // data is too volatile to annualise. Return a requires_quote state immediately,

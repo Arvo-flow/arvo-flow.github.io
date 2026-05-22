@@ -141,13 +141,25 @@ KRITISKT:
     av recurring_subscription-rader.
   — Returnera ALDRIG text utanför verktygsanropet.
 
-MOBILFAKTUROR MED TILLÄGGSTJÄNSTER — om en mobilfaktura innehåller BÅDE bas-abonnemang
+MOBILFAKTUROR — extrahera dessa fält om fakturan innehåller mobilabonnemang:
+  seatCount: Sätt seatCount till antalet aktiva SIM-kort / mobilabonnemang på fakturan.
+    Räkna INTE med eventuell molnväxel- eller tilläggstjänst — räkna bara aktiva SIM-linjer.
+    Exempel: "Telia Företag, 8 abonnemang" → seatCount: 8.
+    Exempel: Faktura visar 12 Tele2-abonnemang med tre datatiernivåer → seatCount: 12.
+  OBS MED TILLÄGGSTJÄNSTER — om en mobilfaktura innehåller BÅDE bas-abonnemang
   (data, röst, SMS) OCH tilläggstjänster (molnväxel, cloud PBX, Microsoft Teams-integration,
   växellösning, lokal telefonilösning):
   mobile_addon_monthly: Summan av ENBART tilläggstjänsternas månadsbelopp (ex moms).
   Bas-abonnemangen ingår INTE i detta fält — de utgör recurring_subscription som vanligt.
   Exempel: 20 molnväxellicenser × 99 kr = 1 980 kr → mobile_addon_monthly: 1980.
   Sätt null om fakturan saknar sådana tilläggstjänster.
+
+BREDBANDSFAKTUROR — extrahera dessa fält om fakturan är från en bredbandsleverantör:
+  connection_speed_mbit: Anslutningshastighet i Mbit/s som heltal.
+    Runda till närmaste standardnivå: 100, 250, 500, 1000.
+    Exempel: "1 Gbit", "1000/1000 Mbit", "1 Gbit/s symmetrisk" → 1000.
+    Exempel: "500 Mbit", "500/500 Mbit" → 500. "250 Mbit" → 250. "100 Mbit" → 100.
+    null om ej bredbandsfaktura eller hastighet ej angiven.
 
 STARTUP-KREDITER — om fakturan visar att ett startup-program, promotional credit eller
   liknande kreditpost reducerar totalsumman:
@@ -293,6 +305,10 @@ const EXTRACT_TOOL = {
         type: ['integer', 'null'],
         description: 'Månadsbelopp för tilläggstjänster på mobilfaktura (molnväxel, cloud PBX, Teams-integration m.m.) exkl. bas-abonnemang. null om ej tillämpligt.',
       },
+      connection_speed_mbit: {
+        type: ['integer', 'null'],
+        description: 'Anslutningshastighet i Mbit/s för bredbandsfakturor. Standardnivåer: 100, 250, 500, 1000. null om ej bredbandsfaktura.',
+      },
       startup_credit_balance: {
         type: ['number', 'null'],
         description: 'Kvarvarande kreditbalans från startup-/kampanjprogram som visas på fakturan. null om ej tillämpligt.',
@@ -391,6 +407,7 @@ export function aggregateLineItems(raw) {
     elPriceExplicit:  raw.el_price_explicit ?? null,
     elContractType:   raw.el_contract_type ?? null,
     mobileAddonMonthly:        raw.mobile_addon_monthly != null ? Number(raw.mobile_addon_monthly) : null,
+    connectionSpeedMbit:       raw.connection_speed_mbit != null ? Number(raw.connection_speed_mbit) : null,
     startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
     startupCreditMonthlyBurn:  raw.startup_credit_monthly_burn != null ? Number(raw.startup_credit_monthly_burn) : null,
     startupCreditCurrency:     raw.startup_credit_currency ?? null,

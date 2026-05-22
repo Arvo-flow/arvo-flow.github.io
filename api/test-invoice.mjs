@@ -531,7 +531,10 @@ export default async function handler(req, res) {
       d.setDate(d.getDate() - extracted.cancellationNoticeDays);
       return d;
     })();
-    const _isPastLockDeadline = _lockDeadline ? _today > _lockDeadline : false;
+    // Om vi inte kan beräkna lock-deadline (saknar start eller uppsägningstid) men avtalet
+    // har ett framtida slutdatum → behandla som förbi lock-deadline. Det är det vanliga
+    // fallet för mobil/bredband-kontrakt som inte visar start-/uppsägningstid explicit.
+    const _isPastLockDeadline = _lockDeadline ? _today > _lockDeadline : _hasActivePeriod;
 
     if (!categorized.licensePending && _hasActivePeriod && _isPastLockDeadline) {
       const monitoringDate = new Date(_periodEnd);
@@ -773,12 +776,13 @@ export default async function handler(req, res) {
     const recommendation = await recommend({
       customer: { industry, employees: employeesNum, revenue: revenueNum },
       invoice: {
-        amount:             extracted.amount,
-        annualCost:         extracted.annualCost,
-        recurringAmount:    extracted.recurringAmount,
-        variableCharges:    extracted.variableCharges,
-        seatCount:          extracted.seatCount ?? null,
-        mobileAddonMonthly: extracted.mobileAddonMonthly ?? null,
+        amount:              extracted.amount,
+        annualCost:          extracted.annualCost,
+        recurringAmount:     extracted.recurringAmount,
+        variableCharges:     extracted.variableCharges,
+        seatCount:           extracted.seatCount ?? null,
+        mobileAddonMonthly:  extracted.mobileAddonMonthly ?? null,
+        connectionSpeedMbit: extracted.connectionSpeedMbit ?? null,
       },
       categorized,
     });
@@ -818,6 +822,7 @@ export default async function handler(req, res) {
         confidenceScore:           extracted.confidenceScore,
         notes:                     extracted.notes,
         seatCount:                 extracted.seatCount ?? null,
+        connectionSpeedMbit:       extracted.connectionSpeedMbit ?? null,
         potentialMixedCategories:  extracted.potentialMixedCategories ?? false,
       },
       categorized: {

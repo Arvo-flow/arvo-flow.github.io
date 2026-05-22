@@ -724,7 +724,7 @@ const TestaFaktura = () => {
                 </MonitoringBlock>
                 <KV>
                   <div>
-                    <dt>Du betalar idag (energidel)</dt>
+                    <dt>Du betalar idag{result.categorized?.category === 'el' ? ' (energidel)' : ''}</dt>
                     <dd>{formatKr(result.extracted.annualCost)} / år</dd>
                   </div>
                   <div>
