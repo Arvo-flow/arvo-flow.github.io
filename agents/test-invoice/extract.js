@@ -176,6 +176,11 @@ BREDBANDSFAKTUROR — extrahera dessa fält om fakturan är från en bredbandsle
     Exempel: "1 Gbit", "1000/1000 Mbit", "1 Gbit/s symmetrisk" → 1000.
     Exempel: "500 Mbit", "500/500 Mbit" → 500. "250 Mbit" → 250. "100 Mbit" → 100.
     null om ej bredbandsfaktura eller hastighet ej angiven.
+  broadband_addon_monthly: Summan av ENBART tilläggstjänsternas månadsbelopp (ex moms)
+    på en bredbandsfaktura — t.ex. statisk IP-adress, extra SLA, molnväxel, IT-support,
+    brandvägg-som-tjänst, filtrering. Basanslutningen ingår INTE i detta fält.
+    Exempel: fiber 799 kr + statisk IP 99 kr + managed firewall 250 kr → broadband_addon_monthly: 349.
+    Sätt null om fakturan saknar separata tilläggstjänster eller belopp ej kan identifieras.
 
 SAAS-LICENSER — extrahera dessa fält om fakturan avser mjukvarulicenser eller SaaS:
   license_type: Det specifika licensplanets namn som det framgår av fakturan. Normalisera
@@ -349,6 +354,10 @@ const EXTRACT_TOOL = {
         type: ['integer', 'null'],
         description: 'Månadsbelopp för tilläggstjänster på mobilfaktura (molnväxel, cloud PBX, Teams-integration m.m.) exkl. bas-abonnemang. null om ej tillämpligt.',
       },
+      broadband_addon_monthly: {
+        type: ['integer', 'null'],
+        description: 'Månadsbelopp för tilläggstjänster på bredbandsfaktura (statisk IP, extra SLA, managed firewall, molnväxel m.m.) exkl. basanslutningen. null om ej tillämpligt.',
+      },
       connection_speed_mbit: {
         type: ['integer', 'null'],
         description: 'Anslutningshastighet i Mbit/s för bredbandsfakturor. Standardnivåer: 100, 250, 500, 1000. null om ej bredbandsfaktura.',
@@ -472,6 +481,7 @@ export function aggregateLineItems(raw) {
     elPriceExplicit:  raw.el_price_explicit ?? null,
     elContractType:   raw.el_contract_type ?? null,
     mobileAddonMonthly:        raw.mobile_addon_monthly != null ? Number(raw.mobile_addon_monthly) : null,
+    broadbandAddonMonthly:     raw.broadband_addon_monthly != null ? Number(raw.broadband_addon_monthly) : null,
     connectionSpeedMbit:       raw.connection_speed_mbit != null ? Number(raw.connection_speed_mbit) : null,
     licenseType:               raw.license_type ?? null,
     billingCycleType:          raw.billing_cycle_type ?? null,

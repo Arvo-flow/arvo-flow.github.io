@@ -67,6 +67,7 @@ for (const file of FILES) {
   console.log(`  Avtalsslutt    : ${extracted.servicePeriodEnd ?? '—'}`);
   console.log(`  Uppsägningstid : ${extracted.cancellationNoticeDays != null ? `${extracted.cancellationNoticeDays} dagar` : '—'}`);
   console.log(`  Mobil-tillägg  : ${extracted.mobileAddonMonthly != null ? `${SEK(extracted.mobileAddonMonthly)}/mån` : '—'}`);
+  console.log(`  BB-tillägg     : ${extracted.broadbandAddonMonthly != null ? `${SEK(extracted.broadbandAddonMonthly)}/mån` : '—'}`);
   console.log(`  Återkommande   : ${SEK(extracted.recurringAmount)}/mån`);
   console.log(`  Beräknad årskostand: ${SEK(extracted.annualCost)}`);
   if (extracted.licenseType)        console.log(`  Licensplan     : ${extracted.licenseType}${extracted.billingCycleType ? ` (${extracted.billingCycleType})` : ''}`);
@@ -121,6 +122,11 @@ for (const file of FILES) {
   console.log(`  Confidence     : ${categorized.confidence}`);
   console.log(`  Reasoning      : ${DIM}${(categorized.reasoning ?? '').slice(0, 120)}${RESET}`);
 
+  // El-spotvarning: rörliga elpriser ger osäkra besparingsestimat
+  if (categorized.category === 'el' && extracted.elContractType !== 'fixed') {
+    console.log(`\n${YELLOW}⚠  OBS (el-spot): Spotpris ger dagslägesbesparing — belopp osäkra vid framtida spot-rörelser.${RESET}`);
+  }
+
   // Avtalslås-check (speglar logiken i api/test-invoice.mjs)
   const today      = new Date();
   const periodEnd  = extracted.servicePeriodEnd ? new Date(extracted.servicePeriodEnd) : null;
@@ -159,9 +165,10 @@ for (const file of FILES) {
         annualCost:           extracted.annualCost,
         recurringAmount:      extracted.recurringAmount,
         variableCharges:      extracted.variableCharges,
-        seatCount:            extracted.seatCount ?? null,
-        mobileAddonMonthly:   extracted.mobileAddonMonthly ?? null,
-        connectionSpeedMbit:  extracted.connectionSpeedMbit ?? null,
+        seatCount:              extracted.seatCount ?? null,
+        mobileAddonMonthly:     extracted.mobileAddonMonthly ?? null,
+        broadbandAddonMonthly:  extracted.broadbandAddonMonthly ?? null,
+        connectionSpeedMbit:    extracted.connectionSpeedMbit ?? null,
         licenseType:          extracted.licenseType ?? null,
         billingCycleType:     extracted.billingCycleType ?? null,
         pricePerSeatMonthly:  extracted.pricePerSeatMonthly ?? null,
@@ -205,7 +212,7 @@ for (const file of FILES) {
   console.log(`  Arvos arvode     : ${SEK(_arvoFee)} (20 %)`);
   console.log(`  Nettobesparing   : ${SEK(_net)}`);
   if (rec.licenseOverage > 0)
-    console.log(`  ${YELLOW}Licensöverskott  : ${rec.licenseOverage} oanvända licenser${RESET}`);
+    console.log(`  ${YELLOW}Licensöverskott  : ${rec.licenseOverage} oanvända licenser ${DIM}(TESTDATA: employees=${CUSTOMER.employees})${RESET}`);
   if (rec.overageSavings > 0)
     console.log(`  Överskottsbesparing: ${SEK(rec.overageSavings)}`);
   if (rec.annualBillingSaving > 0)
@@ -213,7 +220,7 @@ for (const file of FILES) {
   if (rec.savingsBreakdown) {
     const bd = rec.savingsBreakdown;
     console.log(`  ${DIM}Besparing per kanal:${RESET}`);
-    if (bd.cspDiscount > 0)         console.log(`    ${DIM}CSP-rabatt        : ${SEK(bd.cspDiscount)}${RESET}`);
+    if (bd.cspDiscount > 0)         console.log(`    ${DIM}Partnerrabatt     : ${SEK(bd.cspDiscount)}${RESET}`);
     if (bd.tierOptimization > 0)    console.log(`    ${DIM}Tier-optimering   : ${SEK(bd.tierOptimization)} (advisory)${RESET}`);
     if (bd.licenseCleanup > 0)      console.log(`    ${DIM}Licensrensning    : ${SEK(bd.licenseCleanup)}${RESET}`);
   }
