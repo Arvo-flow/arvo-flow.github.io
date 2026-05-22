@@ -248,10 +248,33 @@ function generatePdf(result) {
     doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brand)
       .text('VARFÖR VI TROR DU KAN SPARA', PAD, y, { characterSpacing: 0.9 });
     y += 14;
-    // height cap prevents reasoning from flowing past the footer zone
-    const reasoningMaxH = Math.max(20, FOOTER_TOP - 24 - y);
+    // Reserve space below reasoning for FOMO box + CTA line
+    const FOMO_H  = 54;
+    const CTA_H   = 28;
+    const reasoningMaxH = Math.max(20, FOOTER_TOP - 24 - y - FOMO_H - 12 - CTA_H - 12);
     doc.fontSize(10.5).font('Helvetica').fillColor(T.inkSoft)
       .text(r.reasoning ?? '', PAD, y, { width: W, lineGap: 3, height: reasoningMaxH });
+    y += reasoningMaxH;
+
+    // ── FOMO box ──────────────────────────────────────────────────────────────
+    y += 12;
+    doc.rect(LC, y, W, FOMO_H).fill(T.brandSoft);
+    doc.rect(LC, y, 2.5, FOMO_H).fill(T.brand);
+    doc.fontSize(7.5).font('Helvetica-Bold').fillColor(T.brand)
+      .text('TÄCKNING AV ANALYSEN', LC + 10, y + 9, { characterSpacing: 0.8 });
+    doc.fontSize(9).font('Helvetica').fillColor(T.inkSoft)
+      .text(
+        'Denna analys täcker 1 av 8 möjliga kostnadsområden. En fullständig Arvo-skanning identifierar i snitt 12–18 % i dolda överpriser över hela reskontran.',
+        LC + 10, y + 23, { width: W - 20, lineGap: 2 }
+      );
+    y += FOMO_H;
+
+    // ── CTA ───────────────────────────────────────────────────────────────────
+    y += 12;
+    doc.fontSize(9.5).font('Helvetica-Bold').fillColor(T.brand)
+      .text('Lås upp företagets totala besparingspotential.  ', LC, y, { continued: true });
+    doc.font('Helvetica').fillColor(T.mutedSoft)
+      .text('Koppla ert affärssystem på 60 sekunder: arvoflow.se', { width: W });
 
     // ── Footer ────────────────────────────────────────────────────────────────
     // Fixed position anchored to page bottom — never pushed to page 2
@@ -391,6 +414,16 @@ function htmlEmail(result) {
     </td>
   </tr>
 
+  <!-- FOMO box -->
+  <tr>
+    <td style="padding:0 44px 28px">
+      <div style="border-left:3px solid ${T.brand};background:${T.brandSoft};border-radius:0 10px 10px 0;padding:18px 22px">
+        <p style="margin:0 0 7px;font-size:9px;font-weight:700;color:${T.brand};letter-spacing:.14em;text-transform:uppercase;font-family:'Inter',Arial,sans-serif">T&auml;ckning av analysen</p>
+        <p style="margin:0;font-size:13px;color:${T.inkSoft};line-height:1.65;font-family:'Inter',Arial,sans-serif">Denna analys t&auml;cker <strong>1 av 8 m&ouml;jliga kostnadsomr&aring;den</strong>. En fullst&auml;ndig Arvo-skanning identifierar i snitt <strong>12&ndash;18&nbsp;%</strong> i dolda &ouml;verpriser &ouml;ver hela reskontran.</p>
+      </div>
+    </td>
+  </tr>
+
   <!-- CTA -->
   <tr>
     <td style="padding:0 44px 48px;text-align:center">
@@ -399,12 +432,12 @@ function htmlEmail(result) {
           <td style="border-radius:12px;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);box-shadow:0 6px 20px rgba(27,110,102,0.28)">
             <a href="https://arvoflow.se/flow/testa-faktura"
                style="display:inline-block;color:#ffffff;font-weight:600;font-size:15px;padding:17px 48px;text-decoration:none;font-family:'Inter',Arial,sans-serif;letter-spacing:.02em">
-              ${isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen'} &rarr;
+              ${isRealPrice ? 'Aktivera bytet' : 'S&auml;kra besparingen'} &rarr;
             </a>
           </td>
         </tr>
       </table>
-      <p style="margin:0;font-size:12px;color:#9DAAA5;font-family:'Inter',Arial,sans-serif">20 % av identifierad besparing — en gång. Inga fasta avgifter.</p>
+      <p style="margin:0;font-size:12px;color:#9DAAA5;font-family:'Inter',Arial,sans-serif">L&aring;s upp f&ouml;retagets totala besparingspotential. Koppla ert aff&auml;rssystem p&aring; 60 sekunder.</p>
     </td>
   </tr>
 
