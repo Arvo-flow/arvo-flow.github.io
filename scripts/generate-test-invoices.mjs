@@ -688,6 +688,21 @@ invoices.push(invoice('mixad-it-frakt.pdf', (doc) => {
   note(doc, y + 60, 'Kombinerad leverantör: IT-system + logistiktjänster. Specifikation per tjänstepost i bilaga 1-4. Kontakta kundansvarig för separata avtal per kategori.');
 }));
 
+// 51. Telenor — mobil-PRIMÄR + bredband-SEKUNDÄR (EDGE: mobile-first combined)
+// Täcker blindsteget: mobil dominerar kostnaden, bredband är tillägg på fakturan.
+// potentialMixedCategories MÅSTE vara true — detta var felet som missades i batch.
+invoices.push(invoice('telenor-mobil-bredband-kombinerad.pdf', (doc) => {
+  let y = header(doc, 'Telenor Sverige AB', '556421-0309', 'Isafjordsgatan 10, 164 40 Kista', 'TEL-2026-05-KOMB-0078', today, due, 'Kreativa Konsulter IT AB\nBox 101, 111 22 Stockholm');
+  y = tableHeader(doc, y);
+  y = row(doc, y, 'Telenor Business Smart (10 abonnemang) Maj 2026', '10', 'st', 349, 3490);
+  y = row(doc, y, 'Telenor One Talk Molnväxel — 10 användarlicenser', '10', 'lic', 89, 890);
+  y = row(doc, y, 'Telenor Fiber Företag 500/500 Mbit/s — Maj 2026', '1', 'mån', 749, 749);
+  y = row(doc, y, 'Statisk IP-adress (Telenor Business) — Maj 2026', '1', 'mån', 149, 149);
+  y = row(doc, y, 'Roaming Europa — Datatrafik 3,2 GB (utanför plan)', '3.2', 'GB', 29, 92.8);
+  totals(doc, y + 10, [3490, 890, 749, 149, 92.8]);
+  note(doc, y + 60, 'Kombinerad faktura: Mobilabonnemang (primär tjänst) + Molnväxel (tillägg) + Bredband Fiber (separat basabonnemang) + Statisk IP. Mobil och bredband är separata avtal med olika löptider.');
+}));
+
 // 50. Leasing servicebilar (EDGE: out-of-scope leasing)
 invoices.push(invoice('ald-billeasing-outofscope.pdf', (doc) => {
   let y = header(doc, 'ALD Automotive AB', '556052-2003', 'Johanneslundsvägen 3–5, 194 81 Upplands Väsby', 'ALD-2026-05-SE-441123', today, due, 'Servicebolaget Mellansverige AB\nIndustrivägen 4, 641 46 Katrineholm');
@@ -701,7 +716,7 @@ invoices.push(invoice('ald-billeasing-outofscope.pdf', (doc) => {
 }));
 
 // ── Kör allt ──────────────────────────────────────────────────────────────────
-console.log(`\n\x1b[1mArvo Flow — Genererar 50 test-fakturor\x1b[0m`);
+console.log(`\n\x1b[1mArvo Flow — Genererar 51 test-fakturor\x1b[0m`);
 console.log(`Destination: ${OUT_DIR}\n`);
 
 let done = 0;

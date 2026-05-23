@@ -139,32 +139,41 @@ const GOLDEN = [
     route:           'unsupported',
     checks: [],
   },
-  // TeleKom B2B kombinerad faktura — om den finns i test-pdfs/
+  // Kombinerade telekom-fakturor — täcker BÅDA kategori-riktningarna:
+  //   bredband-primär (comhem, tele2-bredband) — redan fungerande
+  //   mobil-primär + bredband-sekundär (telenor-mobil-bredband-kombinerad) — blindsteg som fixades
+  // Alla fyra checks MÅSTE passera för VARJE kombinerad faktura oavsett vilken kategori som är primär.
   {
-    match: /telekom|tele2.*b2b|b2b.*tele|kombinerad/i,
+    match: /kombinerad/i,
     route:           'auto',
     minConfidence:   0.85,
     checks: [
       {
-        label: 'potentialMixedCategories = true',
+        label: 'potentialMixedCategories = true (kritisk: oavsett om mobil eller bredband är primär)',
         fn: (e) => e.potentialMixedCategories === true,
       },
       {
-        label: 'Molnväxel märkt is_addon: true',
+        label: 'PBX/Molnväxel märkt is_addon:true addon_type:"pbx"',
         fn: (e) => (e.lineItems ?? []).some(
-          (l) => l.is_addon === true && /molnväxel|pbx|cloud.?pbx/i.test(l.description)
+          (l) => l.is_addon === true && l.addon_type === 'pbx'
         ),
       },
       {
-        label: 'Molnväxel har addon_type: "pbx"',
+        label: 'Bredband-rad är bastjänst (is_addon: false)',
         fn: (e) => (e.lineItems ?? []).some(
-          (l) => l.addon_type === 'pbx' && /molnväxel|pbx/i.test(l.description)
+          (l) => l.is_addon === false && /bredband|fiber|internet/i.test(l.description ?? '')
         ),
       },
       {
-        label: 'Bredband-rad märkt is_addon: false (det är en bastjänst, inte tillägg)',
+        label: 'Statisk IP är tillägg (is_addon:true addon_type:"static_ip")',
         fn: (e) => (e.lineItems ?? []).some(
-          (l) => l.is_addon === false && /bredband|fiber|internet/i.test(l.description)
+          (l) => l.is_addon === true && l.addon_type === 'static_ip'
+        ),
+      },
+      {
+        label: 'Minst en mobilrad som bastjänst (is_addon: false)',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === false && /mobil|abonnemang|sim|jobbmobil/i.test(l.description ?? '')
         ),
       },
     ],
