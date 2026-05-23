@@ -12,7 +12,7 @@ import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
 import { storeDatapoint } from '../lib/benchmark.js';
-import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
+import { BRANCHINDEX, INDUSTRY_SEGMENT_MAP, bucketForSize } from '../agents/recommender/branchindex.js';
 import { getKv } from '../lib/kv.js';
 import { getDb } from '../lib/db.js';
 
@@ -551,6 +551,56 @@ export default async function handler(req, res) {
       extracted.potentialMixedCategories ?? false,
     );
 
+    // ── Sekundär kategori-besparing (kombinerade fakturor) ───────────────────
+    // Benchmarkar den andra kategorin deterministiskt innan AI-anropet.
+    // primary=mobil → secondary=bredband (speed-tier lookup)
+    // primary=bredband → secondary=mobil (per-seat lookup)
+    let secondarySaving = null;
+    if (
+      extracted.potentialMixedCategories === true &&
+      metrics.secondaryComponentMonthly != null &&
+      ['mobil', 'bredband'].includes(categorized.category)
+    ) {
+      const secAnnual = Math.round(metrics.secondaryComponentMonthly * 12);
+
+      if (categorized.category === 'mobil' && metrics.secondaryConnectionSpeedMbit != null) {
+        const tier    = metrics.secondaryConnectionSpeedMbit;
+        const speedBm = BRANCHINDEX.bredband?.speedTierBenchmarks?.[tier];
+        if (speedBm) {
+          const gross = Math.max(0, secAnnual - speedBm.p25);
+          if (gross >= 500) {
+            secondarySaving = {
+              category:        'bredband',
+              speedMbit:       tier,
+              currentAnnual:   secAnnual,
+              suggestedAnnual: speedBm.p25,
+              grossSaving:     gross,
+              netSaving:       Math.round(gross * 0.80),
+            };
+          }
+        }
+      } else if (categorized.category === 'bredband' && metrics.secondarySeatCount != null) {
+        const segment = INDUSTRY_SEGMENT_MAP[industry] ?? 'byraer';
+        const bucket  = bucketForSize(employeesNum);
+        const mobilBm = BRANCHINDEX.mobil?.matrix?.[segment]?.[bucket];
+        if (mobilBm) {
+          const seats    = metrics.secondarySeatCount;
+          const p25Total = Math.round(mobilBm.p25 * seats);
+          const gross    = Math.max(0, secAnnual - p25Total);
+          if (gross >= 500) {
+            secondarySaving = {
+              category:        'mobil',
+              seatCount:       seats,
+              currentAnnual:   secAnnual,
+              suggestedAnnual: p25Total,
+              grossSaving:     gross,
+              netSaving:       Math.round(gross * 0.80),
+            };
+          }
+        }
+      }
+    }
+
     // ── Avtalslås-detektering (körs före alla tidiga exits) ───────────────────
     // Hoppas över för licensePending-kategorier — vi kan inte byta ändå, så
     // "låst avtal" skulle vara vilseledande för t.ex. försäkringskunder.
@@ -820,10 +870,14 @@ export default async function handler(req, res) {
         recurringAmount:     extracted.recurringAmount,
         variableCharges:     extracted.variableCharges,
         seatCount:           extracted.seatCount ?? null,
-        mobileAddonMonthly:       metrics.mobileAddonMonthly,
-        broadbandAddonMonthly:    metrics.broadbandAddonMonthly,
-        primaryComponentMonthly:  metrics.primaryComponentMonthly,
-        potentialMixedCategories: extracted.potentialMixedCategories ?? false,
+        mobileAddonMonthly:          metrics.mobileAddonMonthly,
+        broadbandAddonMonthly:       metrics.broadbandAddonMonthly,
+        primaryComponentMonthly:     metrics.primaryComponentMonthly,
+        secondaryComponentMonthly:   metrics.secondaryComponentMonthly,
+        secondaryConnectionSpeedMbit: metrics.secondaryConnectionSpeedMbit,
+        secondarySeatCount:          metrics.secondarySeatCount,
+        secondarySaving,
+        potentialMixedCategories:    extracted.potentialMixedCategories ?? false,
         connectionSpeedMbit: extracted.connectionSpeedMbit ?? null,
         licenseType:         extracted.licenseType ?? null,
         billingCycleType:    extracted.billingCycleType ?? null,
@@ -848,10 +902,17 @@ export default async function handler(req, res) {
       employees: employeesNum,
     }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
-    // Räkna netto/fee enligt samma modell som resten av appen
-    const grossSaving = recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0;
-    const arvoFee = categorized.licensePending ? 0 : Math.round(grossSaving * 0.20);
-    const netSaving = categorized.licensePending ? grossSaving : grossSaving - arvoFee;
+    // Kombinera primär och sekundär besparing till en samlad nettosiffra.
+    const primaryGross   = recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0;
+    const secondaryGross = secondarySaving?.grossSaving ?? 0;
+    const grossSaving    = primaryGross + secondaryGross;
+    const arvoFee        = categorized.licensePending ? 0 : Math.round(grossSaving * 0.20);
+    const netSaving      = categorized.licensePending ? grossSaving : grossSaving - arvoFee;
+
+    // Broadband-tillägg (statisk IP etc.) på mobil-primär faktura — pass-through i suggestedAnnualCost.
+    const _bbAddonPassthrough = categorized.category === 'mobil'
+      ? Math.round((metrics.broadbandAddonMonthly ?? 0) * 12)
+      : 0;
 
     const autoResponse = {
       ok:    true,
@@ -894,7 +955,10 @@ export default async function handler(req, res) {
         requiresQuote: recommendation.requiresQuote ?? false,
         shouldSwitch: recommendation.shouldSwitch,
         suggestedSupplier: recommendation.suggestedSupplier ?? null,
-        suggestedAnnualCost: recommendation.suggestedAnnualCost ?? null,
+        suggestedAnnualCost: secondarySaving
+          ? (recommendation.suggestedAnnualCost ?? 0) + secondarySaving.suggestedAnnual + _bbAddonPassthrough
+          : recommendation.suggestedAnnualCost ?? null,
+        secondarySaving: secondarySaving ?? null,
         grossSaving,
         arvoFee,
         netSaving,

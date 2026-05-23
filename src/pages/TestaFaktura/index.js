@@ -523,6 +523,16 @@ const TestaFaktura = () => {
 
   const animatedNet = useCountUp(result?.recommendation?.netSaving ?? 0);
 
+  const _secSaving   = result?.recommendation?.secondarySaving ?? null;
+  const _primGross   = _secSaving
+    ? (result?.recommendation?.grossSaving ?? 0) - _secSaving.grossSaving
+    : null;
+  const _secLabel = _secSaving
+    ? _secSaving.category === 'bredband'
+      ? `Bredband${_secSaving.speedMbit ? ` ${_secSaving.speedMbit} Mbit` : ''}`
+      : `Mobil${_secSaving.seatCount ? ` (${_secSaving.seatCount} st)` : ''}`
+    : null;
+
   return (
     <Page>
       <Nav variant="public" />
@@ -1103,14 +1113,31 @@ const TestaFaktura = () => {
 
             {result.extracted?.potentialMixedCategories && (
               <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 14, lineHeight: 1.5, fontStyle: 'italic' }}>
-                Kombinerad faktura — analysen avser{' '}
-                {CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}
-                {result.extracted?.primaryComponentMonthly != null
-                  ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
-                  : ''}
-                {(result.recommendation?.nonPrimaryAnnual ?? 0) > 0
-                  ? `. Övriga tjänster (${formatKr(result.recommendation.nonPrimaryAnnual)}/år) analyseras via Fortnox/Visma.`
-                  : '.'}
+                {_secSaving ? (
+                  <>
+                    Kombinerad faktura —{' '}
+                    {CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}
+                    {result.extracted?.primaryComponentMonthly != null
+                      ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
+                      : ''}
+                    {' '}+ {_secLabel} ({formatKr(_secSaving.currentAnnual)}/år).
+                    {' '}Besparing:{' '}
+                    {CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}
+                    {' '}−{formatKr(_primGross)}/år{' '}|{' '}
+                    {_secLabel} −{formatKr(_secSaving.grossSaving)}/år.
+                  </>
+                ) : (
+                  <>
+                    Kombinerad faktura — analysen avser{' '}
+                    {CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}
+                    {result.extracted?.primaryComponentMonthly != null
+                      ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
+                      : ''}
+                    {(result.recommendation?.nonPrimaryAnnual ?? 0) > 0
+                      ? `. Övriga tjänster (${formatKr(result.recommendation.nonPrimaryAnnual)}/år) analyseras via Fortnox/Visma.`
+                      : '.'}
+                  </>
+                )}
               </p>
             )}
 
