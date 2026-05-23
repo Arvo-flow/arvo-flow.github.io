@@ -134,6 +134,18 @@ ${top3}
 function formatPrompt({ customer, invoice, categorized, benchmark, elContext, convertedTierBm }) {
   const annualCost = invoice.annualCost ?? invoice.amount;
   const mobileAddonAnnual = (invoice.mobileAddonMonthly > 0) ? invoice.mobileAddonMonthly * 12 : null;
+
+  // For combined invoices: compute the exact primary-component annual cost in code
+  // so the AI echoes the correct figure in reasoning (not an approximation from total - addons).
+  const _primaryMonthly = invoice.primaryComponentMonthly ?? null;
+  const _isCombined     = invoice.potentialMixedCategories === true;
+  const primaryAnnualForPrompt = (_isCombined && _primaryMonthly != null)
+    ? Math.round(_primaryMonthly * 12)
+    : null;
+  const nonPrimaryAnnualForPrompt = (_isCombined && primaryAnnualForPrompt != null)
+    ? Math.max(0, Math.round(annualCost - primaryAnnualForPrompt - (mobileAddonAnnual ?? 0)))
+    : null;
+
   const employees = customer.employees ?? 1;
   const seatCount = invoice.seatCount ?? null;
   const isAccountingSystem = categorized.subType === 'affärssystem';
@@ -305,7 +317,14 @@ Kategoriserad faktura:
   Kategori: ${categorized.category}
   Sub-typ: ${categorized.subType || '(okänd)'}
   Nuvarande leverantör: ${categorized.normalizedSupplier}
-  Årskostnad (totalt): ${annualCost.toLocaleString('sv-SE')} kr${overpaymentAnnotation}${mobileAddonAnnual ? `
+  Årskostnad (totalt): ${annualCost.toLocaleString('sv-SE')} kr${overpaymentAnnotation}${
+  _isCombined && primaryAnnualForPrompt != null ? `
+  OBS KOMBINERAT FAKTURA — fakturan innehåller tjänster i FLERA kategorier:
+    Primär komponent (${categorized.category}): ${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år ← DETTA är jämförelsebasen för besparingen${mobileAddonAnnual ? `
+    Tilläggstjänster (molnväxel/PBX): ${mobileAddonAnnual.toLocaleString('sv-SE')} kr/år` : ''}
+    Sekundär komponent (ej benchmarkad): ${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år
+  KRITISKT: Ange i reasoning EXAKT "Kombinerat faktura — analysen avser ${categorized.category}abonnemang (${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år). Övriga tjänster (${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr+) analyseras via Fortnox/Visma." — använd INGA andra siffror för primärkomponenten.` :
+  mobileAddonAnnual ? `
   Varav mobilabonnemang: ${(annualCost - mobileAddonAnnual).toLocaleString('sv-SE')} kr/år
   Varav tilläggstjänster (molnväxel/cloud PBX): ${mobileAddonAnnual.toLocaleString('sv-SE')} kr/år
   OBS: Prissätt ett KOMPLETT ersättningspaket inkl. motsvarande tilläggstjänst — jämförelsen ska vara total mot total.` : ''}
