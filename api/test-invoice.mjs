@@ -15,6 +15,7 @@ import { storeDatapoint } from '../lib/benchmark.js';
 import { BRANCHINDEX, INDUSTRY_SEGMENT_MAP, bucketForSize } from '../agents/recommender/branchindex.js';
 import { getKv } from '../lib/kv.js';
 import { getDb } from '../lib/db.js';
+import { computeSecondarySaving } from '../lib/secondary-savings.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
@@ -553,54 +554,14 @@ export default async function handler(req, res) {
     );
 
     // ── Sekundär kategori-besparing (kombinerade fakturor) ───────────────────
-    // Benchmarkar den andra kategorin deterministiskt innan AI-anropet.
-    // primary=mobil → secondary=bredband (speed-tier lookup)
-    // primary=bredband → secondary=mobil (per-seat lookup)
-    let secondarySaving = null;
-    if (
-      extracted.potentialMixedCategories === true &&
-      metrics.secondaryComponentMonthly != null &&
-      ['mobil', 'bredband'].includes(categorized.category)
-    ) {
-      const secAnnual = Math.round(metrics.secondaryComponentMonthly * 12);
-
-      if (categorized.category === 'mobil' && metrics.secondaryConnectionSpeedMbit != null) {
-        const tier    = metrics.secondaryConnectionSpeedMbit;
-        const speedBm = BRANCHINDEX.bredband?.speedTierBenchmarks?.[tier];
-        if (speedBm) {
-          const gross = Math.max(0, secAnnual - speedBm.p25);
-          if (gross >= 500) {
-            secondarySaving = {
-              category:        'bredband',
-              speedMbit:       tier,
-              currentAnnual:   secAnnual,
-              suggestedAnnual: speedBm.p25,
-              grossSaving:     gross,
-              netSaving:       Math.round(gross * 0.80),
-            };
-          }
-        }
-      } else if (categorized.category === 'bredband' && metrics.secondarySeatCount != null) {
-        const segment = INDUSTRY_SEGMENT_MAP[industry] ?? 'byraer';
-        const bucket  = bucketForSize(employeesNum);
-        const mobilBm = BRANCHINDEX.mobil?.matrix?.[segment]?.[bucket];
-        if (mobilBm) {
-          const seats    = metrics.secondarySeatCount;
-          const p25Total = Math.round(mobilBm.p25 * seats);
-          const gross    = Math.max(0, secAnnual - p25Total);
-          if (gross >= 500) {
-            secondarySaving = {
-              category:        'mobil',
-              seatCount:       seats,
-              currentAnnual:   secAnnual,
-              suggestedAnnual: p25Total,
-              grossSaving:     gross,
-              netSaving:       Math.round(gross * 0.80),
-            };
-          }
-        }
-      }
-    }
+    const metrics_with_mixed = { ...metrics, secondaryComponentMonthly: metrics.secondaryComponentMonthly };
+    const secondarySaving = computeSecondarySaving({
+      metrics,
+      category:                 categorized.category,
+      potentialMixedCategories: extracted.potentialMixedCategories ?? false,
+      industry,
+      employees:                employeesNum,
+    });
 
     // ── Avtalslås-detektering (körs före alla tidiga exits) ───────────────────
     // Hoppas över för licensePending-kategorier — vi kan inte byta ändå, så

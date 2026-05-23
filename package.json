@@ -32,7 +32,9 @@
     "seed": "node server/seed.js",
     "test:webhook": "node server/test-webhook.js",
     "test:invoice": "node agents/test-invoice/cli.js",
-    "db:migrate": "node --env-file=.env scripts/migrate.mjs"
+    "db:migrate": "node --env-file=.env scripts/migrate.mjs",
+    "test:algo": "node --test tests/run.mjs",
+    "test:prop": "node tests/property.mjs"
   },
   "eslintConfig": {
     "extends": "react-app"
