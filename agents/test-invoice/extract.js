@@ -49,6 +49,11 @@ recurring_subscription
   SAMT elförbrukning / elhandel (kWh × pris) — el är en månadsvis återkommande kostnad även om
   förbrukningsvolymen varierar. Klassificera ALLTID rader som "Elhandel", "Elförbrukning",
   "Förbrukning X kWh", "Rörligt elpris", "Spotpris el" som recurring_subscription.
+  OBS ELFAKTUROR — Energiskatt och elcertifikatsavgifter är INTE recurring_subscription.
+  Klassificera ALLTID "Energiskatt", "Energiskatt (X kWh × Y kr/kWh)", "Elcertifikat",
+  "elcertifikatsavgift" som one_time_fee. De är lagstadgade avgifter som är identiska
+  oavsett elleverantör och ska ALDRIG ingå i jämförelsebasen (annualCost). Populera
+  dessutom el_skatter_kr med deras sammanlagda belopp.
   OBS: Fast maskinhyra / leasingavgift för skrivare i Managed Print-avtal = recurring_subscription.
   OBS: Klickkostnader (kr/sida) i samma avtal = variable_usage (se nedan).
 
