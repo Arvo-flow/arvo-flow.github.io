@@ -270,7 +270,6 @@ export const fixtures = [
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
       primaryComponentMonthly:      null,
-      secondaryComponentSpeedMbit:  null,
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           null,
     },

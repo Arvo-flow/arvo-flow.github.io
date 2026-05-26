@@ -555,7 +555,8 @@ export const fixtures = [
   },
 
   // ── comb-17 ──────────────────────────────────────────────────────────────────
-  // Mobil + bredband "Hastighetsprestanda 300/300 Mbit" 599
+  // Mobil + bredband "Bredband 300/300 Mbit" 599
+  //   CROSS_CATEGORY_RX[mobil]=/bredband|.../i → "Bredband" matches → secondaryLine
   //   speed: "300/300 Mbit" → n=300, mbit=300, snap: 300>250, 300≤500 → 500
   //   secAnnual=Math.round(599*12)=7188, p25=7200, gross=max(0,7188-7200)=0 → secondary=null
   {
@@ -563,7 +564,7 @@ export const fixtures = [
     name: 'Bredband 300 Mbit snappas till 500 — under p25 exakt → secondary=null',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (5 st)', amount: 1745 },
-      { type: 'recurring_subscription', description: 'Hastighetsprestanda 300/300 Mbit', amount: 599 },
+      { type: 'recurring_subscription', description: 'Bredband 300/300 Mbit', amount: 599 },
     ],
     category: 'mobil',
     mixed: true,
@@ -752,16 +753,18 @@ export const fixtures = [
   },
 
   // ── comb-24 ──────────────────────────────────────────────────────────────────
-  // Mobil + bredband "Fiber 1.0 Gbit" 995
-  //   regex /(\d+)(?:\/\d+)?\s*(gbit|gbps|mbit)/i på "1.0 Gbit": m[1]="1", isGbit=true → mbit=1000
+  // Mobil + bredband "Fiber 1 Gbit" 995
+  //   CROSS_CATEGORY_RX[mobil]=/fiber|.../i → "Fiber" matches → secondaryLine
+  //   regex /(\d+)(?:\/\d+)?\s*(gbit|gbps|mbit)/i på "1 Gbit": m[1]="1", isGbit=true → mbit=1000
   //   snap 1000≤1000 → 1000
   //   secAnnual=Math.round(995*12)=11940, p25=9000, gross=2940, net=2352
+  //   NOTE: "1.0 Gbit" would NOT work — regex matches "0 Gbit" (decimal part) → mbit=0→100
   {
     id: 'comb-24',
-    name: '"Fiber 1.0 Gbit" — regex kräver siffra, m[1]="1" → mbit=1000',
+    name: '"Fiber 1 Gbit" — m[1]="1", isGbit=true → mbit=1000',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (5 st)', amount: 1745 },
-      { type: 'recurring_subscription', description: 'Fiber 1.0 Gbit', amount: 995 },
+      { type: 'recurring_subscription', description: 'Fiber 1 Gbit', amount: 995 },
     ],
     category: 'mobil',
     mixed: true,
@@ -812,16 +815,17 @@ export const fixtures = [
   },
 
   // ── comb-26 ──────────────────────────────────────────────────────────────────
-  // Mobil + bredband "GlobalConnect 10 Gbit dedikerad" 4995
+  // Mobil + bredband "GlobalConnect fiber 10 Gbit dedikerad" 4995
+  //   CROSS_CATEGORY_RX[mobil]=/fiber|.../i → "fiber" matches → secondaryLine
   //   speed: "10 Gbit" → n=10, isGbit=true, mbit=10*1000=10000
-  //   snap: 10000>1000 → default 1000
+  //   snap: 10000>1000 → default 1000 (cap)
   //   secAnnual=Math.round(4995*12)=59940, p25=9000, gross=50940, net=Math.round(50940*0.80)=40752
   {
     id: 'comb-26',
-    name: 'GlobalConnect 10 Gbit dedikerad — mbit=10000 > 1000 snappas till 1000',
+    name: 'GlobalConnect fiber 10 Gbit — mbit=10000 > 1000 snappas till 1000 (cap)',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (5 st)', amount: 1745 },
-      { type: 'recurring_subscription', description: 'GlobalConnect 10 Gbit dedikerad', amount: 4995 },
+      { type: 'recurring_subscription', description: 'GlobalConnect fiber 10 Gbit dedikerad', amount: 4995 },
     ],
     category: 'mobil',
     mixed: true,
