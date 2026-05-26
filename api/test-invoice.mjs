@@ -3,6 +3,7 @@
 // Frontend POSTar JSON { pdfBase64, industry, employees, revenue? }.
 //
 // Vercel-konfig (vercel.json): maxDuration: 60. På Hobby-plan är gränsen 10s
+// Deploy: 2026-05-26 — saas tier detection fix + M365-priser från microsoft.com
 // vilket sannolikt inte räcker — Pro krävs för publik exponering.
 
 import { Resend } from 'resend';
