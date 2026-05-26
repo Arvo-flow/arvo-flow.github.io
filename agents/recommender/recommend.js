@@ -226,9 +226,9 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
       ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[_saasNoteKey]
       : null);
     const seats   = (invoice.seatCount ?? customer.employees) || 1;
-    // For devtools: target is msrpAnnual (public direct price). For productivity: arvoAnnual (CSP).
-    const targetPrice = isDevtools ? tierBm?.msrpAnnual : tierBm?.arvoAnnual;
-    const targetLabel = isDevtools ? 'Direktavtal årsavtal (Atlassian.com)' : 'Arvo årsavtal';
+    // For devtools: target is msrpAnnual (public direct price). For productivity: msrpAnnual (Microsoft annual list).
+    const targetPrice = tierBm?.msrpAnnual;
+    const targetLabel = isDevtools ? 'Direktavtal årsavtal (Atlassian.com)' : 'Microsoft årsavtal';
 
     const lines = [];
     if (lt) lines.push(`  Licensplan            : ${lt}`);
@@ -236,17 +236,14 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
     if (pps != null) lines.push(`  Aktuellt pris/seat    : ${pps.toFixed(0)} kr/mån`);
 
     if (tierBm) {
-      lines.push(`\n  Tier-benchmarks (${isDevtools ? 'Atlassian publikt listpris' : 'Arvo CSP'} maj 2026, ${seats} seats):`);
+      lines.push(`\n  Tier-benchmarks (${isDevtools ? 'Atlassian publikt listpris' : 'Microsoft publikt listpris'} maj 2026, ${seats} seats):`);
       lines.push(`    MSRP månadsvis  : ${tierBm.msrpMonthly} kr/seat/mån  = ${(tierBm.msrpMonthly * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
       if (tierBm.msrpAnnual != null) {
         lines.push(`    MSRP årsavtal   : ${tierBm.msrpAnnual} kr/seat/mån  = ${(tierBm.msrpAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
-        if (!isDevtools) lines.push(`    Arvo årsavtal   : ${tierBm.arvoAnnual} kr/seat/mån  = ${(tierBm.arvoAnnual * 12 * seats).toLocaleString('sv-SE')} kr/år totalt`);
         lines.push(`    → Målpris (${targetLabel}): ${targetPrice} kr/seat/mån = ${(targetPrice * 12 * seats).toLocaleString('sv-SE')} kr/år  ← DETTA ÄR ERT MÅL`);
         if (pps != null && bc === 'monthly') {
           const annualBilling = Math.round((pps - tierBm.msrpAnnual) * 12 * seats);
-          const cspSaving     = Math.round((tierBm.msrpAnnual - tierBm.arvoAnnual) * 12 * seats);
           if (annualBilling > 0) lines.push(`    → Byta till årsavtal (same tier): ${annualBilling.toLocaleString('sv-SE')} kr/år`);
-          if (cspSaving > 0)    lines.push(`    → Arvo CSP vs. MSRP årsavtal: ${cspSaving.toLocaleString('sv-SE')} kr/år`);
         }
       } else {
         // Atlassian tier-bucket: årsavtal är en fast summa per tier (101-200 users: $32 000 Jira + $23 000 Confluence).
@@ -284,11 +281,11 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
       if ((_saasNoteKey === 'e3' || _saasNoteKey === 'e5') && seats <= 300) {
         const bpTier = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.['business-premium'];
         if (bpTier) {
-          const downsellSav = Math.round((tierBm.arvoAnnual - bpTier.arvoAnnual) * 12 * seats);
+          const downsellSav = Math.round((tierBm.msrpAnnual - bpTier.msrpAnnual) * 12 * seats);
           lines.push(`\n  TIERANALYS — ${_saasNoteKey.toUpperCase()} för ${seats} seats:`);
           lines.push(`    ${_saasNoteKey.toUpperCase()} motiveras av: eDiscovery, avancerat auditlogg, Purview compliance, SIEM.`);
           lines.push(`    Saknas dessa krav: Business Premium (Intune + Defender) räcker för säkerhetsfokuserade SMF.`);
-          lines.push(`    Möjlig tier-besparing (${_saasNoteKey.toUpperCase()} → Business Premium, Arvo CSP): ${downsellSav.toLocaleString('sv-SE')} kr/år`);
+          lines.push(`    Möjlig tier-besparing (${_saasNoteKey.toUpperCase()} → Business Premium): ${downsellSav.toLocaleString('sv-SE')} kr/år`);
           lines.push(`    OBS: Nämn alltid tier-alternativet i reasoning om kunden troligen saknar E3-specifika behov.`);
         }
       }
@@ -498,8 +495,8 @@ export async function recommend(input, opts = {}) {
   }
 
   // License tier override for saas-productivity / saas-devtools: swap generic p25
-  // for tier-specific pricing so savings reflect what Arvo can actually deliver.
-  // saas-productivity → arvoAnnual (CSP price)
+  // for tier-specific pricing so savings reflect what customers can actually achieve.
+  // saas-productivity → msrpAnnual (Microsoft public annual list price)
   // saas-devtools     → msrpAnnual (public direct price — Arvo facilitates, not resells)
   const licenseType       = input.invoice?.licenseType ?? null;
   const billingCycleType  = input.invoice?.billingCycleType ?? null;
@@ -552,7 +549,7 @@ export async function recommend(input, opts = {}) {
 
       const targetP25 = isSaasDevtools
         ? saasTierBm.msrpAnnual                              // devtools: publik direktpris (null för Atlassian tier-bucket)
-        : (saasTierBm.arvoAnnual ?? saasTierBm.msrpAnnual); // productivity: Arvo CSP
+        : saasTierBm.msrpAnnual; // productivity: Microsoft public annual list price
       // Bygg benchmark bara om targetP25 finns.
       // Atlassian (tier-bucket annual): targetP25 är null → benchmark förblir null.
       // Licensrensningssparande beräknas från fakturapris i Atlassian-override nedan.

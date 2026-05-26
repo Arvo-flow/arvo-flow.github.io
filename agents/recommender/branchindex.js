@@ -244,13 +244,13 @@ export const BRANCHINDEX = {
   'saas-productivity': {
     source: 'real-public',
     unit: 'kr/år',
-    // p25 = M365 Business Standard listpris maj 2026: 142 kr/mth × 12 = 1 704 kr/år/user (exkl. moms).
-    // Källa: Senetic/Microsoft CSP publika listpriser. ⚠ Prisjustering aviserad juli 2026 — uppdatera per 2026-07-01.
-    // Median = typisk SMF-betalning via CSP med standardpåslag (~220–240 kr/mth).
+    // p25 = M365 Business Standard Microsoft årsavtal maj 2026: 119 kr/mth × 12 = 1 428 kr/år/user (exkl. moms).
+    // Källa: microsoft.com/sv-se direkt, verifierat 2026-05-26.
+    // Median = typisk SMF-betalning via återförsäljare med standardpåslag (~220–240 kr/mth).
     // Gäller: M365, Google Workspace, Zoom, Slack — produktivitetsverktyg med jämförbar per-user-prissättning.
-    note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard. Källa: Microsoft CSP listpris maj 2026 — 142 kr/mth = 1 704 kr/år/user. Median = typisk CSP-pris med standardpåslag.',
+    note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard. Källa: microsoft.com maj 2026 — 119 kr/mth årsavtal = 1 428 kr/år/user. Median = typisk återförsäljarpris med standardpåslag.',
     alternatives: [
-      { supplier: 'Microsoft 365 Business Standard (Arvo CSP)',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
+      { supplier: 'Microsoft 365 Business Standard',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
       { supplier: 'Google Workspace Business Standard',          positioning: 'Starkaste alternativet till M365 — 2 TB Drive, Meet, Docs. Ofta 30–40 % billigare än M365.',            reliability: 0.96 },
       { supplier: 'Microsoft 365 Business Premium',              positioning: 'För bolag med säkerhetskrav (Intune, Defender) utan behov av E5-compliance-funktioner.',               reliability: 0.97 },
       { supplier: 'Zoho Workplace',                              positioning: 'Budgetalternativ med e-post, docs och CRM-integration — lägst TCO för enkla behov.',                  reliability: 0.89 },
@@ -258,11 +258,13 @@ export const BRANCHINDEX = {
     licenseTierBenchmarks: {
       // ─────────────────────────────────────────────────────────────────────
       // PRISSTRATEGI:
-      //   Microsoft 365  → SEK-priser satta av Microsoft SE via Partner Center.
-      //                    Uppdateras INTE automatiskt med valutan — Microsoft
-      //                    annonserar prisrevision separat (typiskt 1–2 ggr/år).
-      //                    Källa: Microsoft Partner Center prislista maj 2026.
-      //                    NÄSTA VERIFIERING: 2026-07-01 (prisjustering aviserad juli 2026)
+      //   Microsoft 365  → SEK-priser från microsoft.com/sv-se (publik prissida).
+      //                    Uppdateras INTE automatiskt — verifiera manuellt vid
+      //                    prisrevision (Microsoft aviserar typiskt 1–2 ggr/år).
+      //                    Källa: microsoft.com direktverifierat 2026-05-26.
+      //                    NÄSTA VERIFIERING: 2026-09-01
+      //                    OBS: arvoAnnual = msrpAnnual (inget Microsoft-partnerskap
+      //                    aktivt ännu — uppdatera när partneravtal tecknas).
       //
       //   Google/Slack/   → USD-baspris × live SEK/USD (Riksbanken/ECB dagligen).
       //   Zoom/Atlassian    usdMonthly/usdAnnual anger publik MSRP i USD.
@@ -271,33 +273,33 @@ export const BRANCHINDEX = {
       //                    av recommend() via pricing.js — sparas EJ här.
       // ─────────────────────────────────────────────────────────────────────
 
-      // Microsoft 365 — SEK-priser direkt från Microsoft SE, ej USD-konverterade.
-      // Källa: Microsoft Partner Center prislista maj 2026 (manuellt verifierad).
-      // arvoAnnual = Arvo CSP-volympris (~13 % under msrpAnnual, Partner Center).
+      // Microsoft 365 — SEK-priser från microsoft.com/sv-se (publik prissida).
+      // Källa: direktverifierat mot microsoft.com 2026-05-26.
+      // arvoAnnual = msrpAnnual (inget partneravtal aktivt — uppdatera när avtal tecknas).
       'business-basic': {
-        msrpMonthly: 63,  msrpAnnual: 54,  arvoAnnual: 46,
-        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
+        msrpMonthly: 69,  msrpAnnual: 57,  arvoAnnual: 57,
+        currency: 'SEK', lastVerified: '2026-05-26', source: 'microsoft.com',
         note: 'M365 Business Basic — Teams, Exchange, webb-appar, 1 TB OneDrive. Ingen desktop Office-suite.',
       },
       'business-standard': {
-        msrpMonthly: 142, msrpAnnual: 122, arvoAnnual: 104,
-        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
+        msrpMonthly: 143, msrpAnnual: 119, arvoAnnual: 119,
+        currency: 'SEK', lastVerified: '2026-05-26', source: 'microsoft.com',
         note: 'M365 Business Standard — full desktop Office, Teams, SharePoint, 1 TB OneDrive. Vanligast bland svenska SMF.',
       },
       'business-premium': {
-        msrpMonthly: 231, msrpAnnual: 199, arvoAnnual: 169,
-        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
+        msrpMonthly: 252, msrpAnnual: 210, arvoAnnual: 210,
+        currency: 'SEK', lastVerified: '2026-05-26', source: 'microsoft.com',
         note: 'M365 Business Premium — inkl. Intune MDM + Microsoft Defender for Business. Rätt val vid säkerhetskrav.',
       },
       'e3': {
-        msrpMonthly: 378, msrpAnnual: 325, arvoAnnual: 276,
-        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
-        note: 'M365 E3 — enterprise compliance, eDiscovery, avancerat auditlogg. Sällan motiverat under 100 users.',
+        msrpMonthly: 378, msrpAnnual: 325, arvoAnnual: 325,
+        currency: 'SEK', lastVerified: '2026-05-22', source: 'ej-verifierat',
+        note: 'M365 E3 — enterprise compliance, eDiscovery, avancerat auditlogg. Sällan motiverat under 100 users. ⚠ Pris ej verifierat mot microsoft.com — uppdatera manuellt.',
       },
       'e5': {
-        msrpMonthly: 599, msrpAnnual: 516, arvoAnnual: 439,
-        currency: 'SEK', lastVerified: '2026-05-22', source: 'microsoft-partner-center',
-        note: 'M365 E5 — full SIEM, Defender for Endpoint, avancerad SIEM. Överkurs för de flesta SMF.',
+        msrpMonthly: 599, msrpAnnual: 516, arvoAnnual: 516,
+        currency: 'SEK', lastVerified: '2026-05-22', source: 'ej-verifierat',
+        note: 'M365 E5 — full SIEM, Defender for Endpoint, avancerad SIEM. Överkurs för de flesta SMF. ⚠ Pris ej verifierat mot microsoft.com — uppdatera manuellt.',
       },
 
       // Google Workspace — USD-baspris, konverteras runtime via pricing.js.
