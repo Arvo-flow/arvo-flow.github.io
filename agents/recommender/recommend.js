@@ -429,6 +429,40 @@ function getSaasLicenseTierKey(licenseType, productFamily) {
   return null;
 }
 
+// Maps detected dominant M365 tier to the recommended (downgrade) tier for benchmarking.
+// Standard/Basic are already entry-level: no downgrade — benchmark at the same tier.
+export const SAAS_DOWNGRADE_TARGET = {
+  'business-premium':  'business-standard',
+  'e3':                'business-premium',
+  'e5':                'e3',
+  'business-standard': 'business-standard',
+  'business-basic':    'business-basic',
+};
+
+// Returns the tier key for the dominant (highest-spend) M365 license tier on a mixed-tier invoice.
+// Scans recurring_subscription line items, maps each description to a tier via getSaasLicenseTierKey,
+// and returns the tier with the largest total amount.
+// Falls back to getSaasLicenseTierKey(fallbackLicenseType, fallbackProductFamily) when no tier
+// descriptions are found in line items.
+export function getDominantSaasTierKey(lineItems, fallbackLicenseType, fallbackProductFamily) {
+  if (!Array.isArray(lineItems) || lineItems.length === 0) {
+    return getSaasLicenseTierKey(fallbackLicenseType, fallbackProductFamily);
+  }
+  const tierAmounts = {};
+  for (const item of lineItems) {
+    if (item.type !== 'recurring_subscription') continue;
+    const tierKey = getSaasLicenseTierKey(item.description ?? '', null);
+    if (!tierKey) continue;
+    const amt = item.amount ?? 0;
+    tierAmounts[tierKey] = (tierAmounts[tierKey] ?? 0) + amt;
+  }
+  const entries = Object.entries(tierAmounts);
+  if (entries.length === 0) {
+    return getSaasLicenseTierKey(fallbackLicenseType, fallbackProductFamily);
+  }
+  return entries.reduce((best, cur) => cur[1] > best[1] ? cur : best)[0];
+}
+
 export async function recommend(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(
@@ -473,13 +507,31 @@ export async function recommend(input, opts = {}) {
   const isSaasDevtools    = input.categorized.category === 'saas-devtools';
   let   saasLicenseTierKey = null;
   let   saasTierBm         = null;
+  let   saasNonLicenseAddonAnnual = 0;  // recurring add-ons that aren't an M365 tier (backup, security…)
 
   // OBS: rawBenchmark kan vara null för saas-devtools (ingen matrix i branchindex).
   // Tier-override bygger benchmark från grunden om tier hittas — rawBenchmark krävs EJ.
   if (['saas-productivity', 'saas-devtools'].includes(input.categorized.category)) {
-    saasLicenseTierKey = getSaasLicenseTierKey(licenseType, input.invoice?.saasProductFamily ?? null);
-    const rawTierBm = saasLicenseTierKey
-      ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[saasLicenseTierKey]
+    const _lineItems = input.invoice?.lineItems ?? [];
+    const dominantTierKey = getDominantSaasTierKey(_lineItems, licenseType, input.invoice?.saasProductFamily ?? null);
+    const recommendedTierKey = dominantTierKey ? (SAAS_DOWNGRADE_TARGET[dominantTierKey] ?? dominantTierKey) : null;
+    saasLicenseTierKey = dominantTierKey;  // dominant tier — used for tierOptimizationSaving guard
+
+    // Non-license add-ons (backup, security, etc.) are pass-throughs:
+    // excluded from the savings calculation but added back to suggestedAnnualCost.
+    if (input.categorized.category === 'saas-productivity') {
+      let _nonTierMonthly = 0;
+      for (const item of _lineItems) {
+        if (item.type !== 'recurring_subscription') continue;
+        if (!getSaasLicenseTierKey(item.description ?? '', null)) {
+          _nonTierMonthly += item.amount ?? 0;
+        }
+      }
+      saasNonLicenseAddonAnnual = Math.round(_nonTierMonthly * 12);
+    }
+
+    const rawTierBm = recommendedTierKey
+      ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[recommendedTierKey]
       : null;
 
     if (rawTierBm) {
@@ -707,7 +759,12 @@ export async function recommend(input, opts = {}) {
     const seatCount = input.invoice.seatCount ?? null;
     const isPerUser = benchmark.note.toLowerCase().includes('per användare');
     const effectiveSeats = seatCount ?? employees;
-    const scale = isPerUser && effectiveSeats > 0 ? effectiveSeats : 1;
+    // For saas-productivity: scale against employees (the correct headcount), not seatCount
+    // (which may be inflated by add-on/overage licenses on the invoice).
+    const isSaasProductivity = input.categorized.category === 'saas-productivity';
+    const scale = isPerUser && effectiveSeats > 0
+      ? (isSaasProductivity ? employees : effectiveSeats)
+      : 1;
 
     // For mobile/broadband invoices with add-on services, the benchmark covers
     // the base product only (bare SIM / bare fiber). Exclude the add-on from the
@@ -719,7 +776,9 @@ export async function recommend(input, opts = {}) {
     const broadbandAddonAnnual = (input.categorized.category === 'bredband' && (input.invoice.broadbandAddonMonthly ?? 0) > 0)
       ? Math.round(input.invoice.broadbandAddonMonthly * 12)
       : 0;
-    const addonAnnual = mobileAddonAnnual + broadbandAddonAnnual;
+    // saas-productivity non-license add-ons (backup, security…) are passed through identically
+    // to mobile/bredband add-ons: excluded from savings base, added back to suggestedAnnualCost.
+    const addonAnnual = mobileAddonAnnual + broadbandAddonAnnual + saasNonLicenseAddonAnnual;
 
     // For combined invoices: benchmark only the primary component so we never
     // claim savings on bundled services (e.g. bredband on a mobil invoice) that
@@ -761,20 +820,15 @@ export async function recommend(input, opts = {}) {
       result.overageSavings = null;
     }
 
-    // Tier optimization potential — advisory saving if on E3/E5 and could downgrade
-    let tierOptimizationSaving = null;
-    if ((saasLicenseTierKey === 'e3' || saasLicenseTierKey === 'e5') && saasTierBm) {
-      const bpTier = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.['business-premium'];
-      if (bpTier && effectiveSeats > 0) {
-        tierOptimizationSaving = Math.round((saasTierBm.arvoAnnual - bpTier.arvoAnnual) * 12 * effectiveSeats);
-      }
-    }
+    // Tier optimization: saasTierBm now holds the RECOMMENDED tier (already downgraded).
+    // The tier saving is embedded in the primary savingPerYear — no separate advisory needed.
+    const tierOptimizationSaving = null;
 
     // Savings breakdown — decompose total saving by channel
     result.savingsBreakdown = {
       cspDiscount:         Math.max(0, comparableAnnualCost - (result.suggestedAnnualCost - addonAnnual)),
-      billingOptimization: (billingCycleType === 'monthly' && saasTierBm && saasTierBm.msrpAnnual != null && effectiveSeats > 0)
-        ? Math.max(0, Math.round((saasTierBm.msrpMonthly - saasTierBm.msrpAnnual) * 12 * effectiveSeats))
+      billingOptimization: (billingCycleType === 'monthly' && saasTierBm && saasTierBm.msrpAnnual != null && scale > 0)
+        ? Math.max(0, Math.round((saasTierBm.msrpMonthly - saasTierBm.msrpAnnual) * 12 * scale))
         : null,
       tierOptimization:    tierOptimizationSaving,
       licenseCleanup:      result.overageSavings ?? null,
