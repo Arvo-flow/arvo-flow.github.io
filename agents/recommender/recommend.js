@@ -96,29 +96,40 @@ Källa: ${sourceStr}`;
  * @param {object} params.categorized             - output från Categorizer
  * @returns {Promise<string|null>}
  */
-async function enrichElContext({ annualCost, categorized }) {
+async function enrichElContext({ annualCost, elKwh, categorized }) {
   try {
-    // Estimera kWh och kr/kWh från årskostnaden.
-    // Mediankr/kWh all-in för svenska SMB (energi + nät + skatt) ≈ 1.27 kr/kWh.
-    const annualKwh      = Math.round(annualCost / 1.27);
-    const currentPriceKwh = annualKwh > 0 ? annualCost / annualKwh : 1.27;
+    // Use extracted kWh from invoice when available — avoids the calibration error
+    // where annualCost/1.27 overestimates kWh for above-average-priced invoices
+    // (e.g. TryggEl fixed 1.85 kr/kWh → kWh underestimated by 1.85/1.27 = 1.46×,
+    // inflating supplier costs and compressing apparent saving to near-zero).
+    const invoicePeriodMonths = 1; // enrichElContext always receives monthly/annual cost
+    const factualAnnualKwh = elKwh != null && elKwh > 0
+      ? Math.round(elKwh * 12)   // scale monthly kWh to annual
+      : null;
+    const kwhIsEstimated   = factualAnnualKwh == null;
+    const annualKwh        = factualAnnualKwh ?? Math.round(annualCost / 1.27);
+    const currentPriceKwh  = annualKwh > 0 ? annualCost / annualKwh : 1.27;
 
     const intel = await getElIntelligence({
       annualKwh,
       currentPriceKwh,
       supplierName: categorized.normalizedSupplier,
+      kwhIsEstimated,
     });
 
     const { zone, spot, spotSource, best, ranked, saving, savingPct } = intel;
     const spotLabel = spotSource === 'live'
       ? `${spot.toFixed(4)} kr/kWh (Nordpool live)`
       : `${spot.toFixed(4)} kr/kWh (årsmedel 2025, API otillgängligt)`;
+    const kwhNote = kwhIsEstimated
+      ? ` (kWh estimerat — saknas på fakturan)`
+      : ` (${annualKwh.toLocaleString('sv-SE')} kWh/år från fakturan)`;
 
     const top3 = ranked.slice(0, 3).map((s, i) =>
       `  ${i + 1}. ${s.name}: ${s.energyPerKwh.toFixed(4)} kr/kWh energi + ${s.annualFee.toLocaleString('sv-SE')} kr/år avgift = ${s.totalAnnual.toLocaleString('sv-SE')} kr/år totalt`
     ).join('\n');
 
-    return `\nEl-prisintelligens (Nordpool ${zone}):
+    return `\nEl-prisintelligens (Nordpool ${zone})${kwhNote}:
   Dagens spotpris: ${spotLabel}
   Bästa leverantör: ${best.name} — ${best.energyPerKwh.toFixed(4)} kr/kWh energipris, ${best.totalAnnual.toLocaleString('sv-SE')} kr/år totalt (inkl. nät + skatt)
   Uppskattad besparing vs kund: ${saving.toLocaleString('sv-SE')} kr/år (${savingPct} %)
@@ -553,7 +564,10 @@ export async function recommend(input, opts = {}) {
     if (annualCost === 0 && (input.invoice.amount ?? 0) > 0) {
       annualCost = Math.round(input.invoice.amount * 12);
     }
-    elContext = await enrichElContext({ annualCost, categorized: input.categorized });
+    // Pass extracted elKwh (monthly period) so enrichElContext can derive accurate
+    // annual kWh instead of falling back on the 1.27 kr/kWh average estimate.
+    const elKwh = input.invoice.elKwh ?? null;
+    elContext = await enrichElContext({ annualCost, elKwh, categorized: input.categorized });
   }
 
   const requestParams = {
