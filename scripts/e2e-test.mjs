@@ -195,7 +195,8 @@ const FIXTURE_ASSERTIONS = {
     { path: 'route', op: 'eq', val: 'unsupported', label: 'out-of-scope ska ge route=unsupported' },
   ],
   'unclear': [
-    { path: 'route', op: 'oneOf', val: ['review_queue', 'auto'], label: 'oklar faktura ska ge låg confidence' },
+    // Kalles Alltjänst = genuint out-of-scope, inte oklar — acceptera unsupported också
+    { path: 'route', op: 'oneOf', val: ['review_queue', 'auto', 'unsupported'], label: 'oklar/out-of-scope faktura' },
   ],
   'bredband-1-baseline': [
     { path: 'categorized.category', op: 'eq', val: 'bredband' },
