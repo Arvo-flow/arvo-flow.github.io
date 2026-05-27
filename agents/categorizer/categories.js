@@ -58,10 +58,12 @@ export const CATEGORIES = {
   kortterminal: {
     label: 'Kortterminal',
     licensePending: false,
-    subTypes: ['fysisk', 'mobil', 'integrerad'],
+    subTypes: ['fysisk', 'mobil', 'integrerad', 'ehandel'],
     keywords: [
       'kortterminal', 'kortavgift', 'transaktionsavgift',
       'worldline', 'bambora', 'nets', 'zettle', 'sumup', 'iyzico',
+      'checkout', 'betalväxel', 'payment gateway', 'betalgateway',
+      'förmedlad volym', 'månadsavgift checkout', 'online betalning',
     ],
     accountHints: ['6390', '6991', '6800'],
   },

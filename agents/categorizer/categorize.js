@@ -38,7 +38,7 @@ const STRONG_DESC_SIGNALS = {
                      'företagsbredband', 'bredband fiber', 'bredband koaxial',
                      'fiber internet', 'fiberanslutning', 'stadsnät bredband',
                      'kabel-tv internet', 'fibertjänst'],
-  kortterminal:     ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
+  kortterminal:     ['kortavgifter', 'transaktionsavgift', 'kortterminal', 'checkout', 'betalväxel', 'förmedlad volym', 'månadsavgift checkout'],
   'faktura-tjanst': ['fakturatjänst', 'e-faktura utskick', 'fakturautskick'],
   'leasing-bil':    ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
   // managed-workplace MÅSTE ligga före saas-productivity — bundlade WaaS-paket

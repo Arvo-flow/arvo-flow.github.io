@@ -1349,10 +1349,16 @@ const TestaFaktura = () => {
                     {formatKr(result.extracted.variableCharges)}
                     <small>
                       {result.categorized?.category === 'el'
-                        ? 'Rörliga elkostnader — ej inkluderat i årsberäkningen.'
+                        ? 'Rörliga energikostnader (spotpris, nätavgift) — ej inkluderat i årsberäkningen.'
                         : result.categorized?.category === 'skrivarleasing'
-                          ? 'Rörliga utskriftskostnader (volymbaserat) — ej inkluderat i årsberäkningen.'
-                          : 'Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.'}
+                          ? 'Klickkostnader per utskrift (volymbaserat) — ej inkluderat i årsberäkningen.'
+                          : result.categorized?.category === 'kortterminal'
+                            ? 'Transaktionsavgifter och volymbaserade procentavgifter — ej inkluderat i årsberäkningen.'
+                            : result.categorized?.category === 'mobil'
+                              ? 'Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.'
+                              : result.categorized?.category === 'bredband'
+                                ? 'Datatrafik och överskottsavgifter — ej inkluderat i årsberäkningen.'
+                                : 'Rörliga avgifter denna period — ej inkluderat i årsberäkningen.'}
                     </small>
                   </dd>
                 </div>
