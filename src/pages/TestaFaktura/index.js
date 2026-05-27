@@ -777,20 +777,20 @@ const TestaFaktura = () => {
                     </>
                   ) : (
                     <>
-                      <strong>{monitoringDatePast ? 'Avtalet löper ut snart — Arvo agerar nu.' : result.cancellationNoticeDays != null ? 'Avtalet är låst — vi lägger det på bevakning.' : 'Årsavtal bevakas inför förnyelse.'}</strong>
+                      <strong>{monitoringDatePast ? 'Avtalet löper ut snart — Arvo agerar nu.' : result.cancellationNoticeDays != null ? 'Avtalet är låst — vi lägger det på bevakning.' : 'Årsavtal — Arvo bevakar inför förnyelse.'}</strong>
                       <p>
                         {(() => {
                           const end  = result.servicePeriodEnd;
                           const days = result.cancellationNoticeDays;
                           const mon  = result.monitoringDate;
                           const endFmt = end ? new Date(end).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
-                          const monFmt = mon ? new Date(mon).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+                          const monFmt = mon ? new Date(mon).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : null;
                           if (monitoringDatePast) {
-                            return `Avtalet löper till ${endFmt ?? end}${daysUntilEnd != null ? ` (${daysUntilEnd} dagar kvar)` : ''}. Arvo initierar omförhandling och säkrar bästa villkor innan förnyelse.`;
+                            return `Fakturan avser perioden till ${endFmt ?? end}${daysUntilEnd != null ? ` (${daysUntilEnd} dagar kvar)` : ''}. Arvo initierar omförhandling och säkrar bästa villkor innan förnyelse.`;
                           }
                           return days != null
-                            ? `Avtalet löper till ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo initierar omförhandling ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
-                            : `Avtalet löper till ${endFmt ?? end}. Vi ser ingen explicit uppsägningstid på fakturan — kontakta leverantören för att bekräfta om förtidslösen är möjlig. Arvo påminner er ${monFmt ?? '90 dagar'} innan slutdatum.`;
+                            ? `Fakturan avser perioden till ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo initierar omförhandling ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
+                            : `Fakturan avser perioden till ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera oavsett om avtalet förlängs automatiskt eller kräver aktiv uppsägning. Vi ser inga uppsägningstider på fakturan; fråga leverantören om ni vill veta om förtidslösen är möjlig.`;
                         })()}
                       </p>
                     </>
