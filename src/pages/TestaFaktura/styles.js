@@ -908,7 +908,7 @@ export const Reasoning = styled.div`
 
   span.kicker {
     display: block;
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -939,8 +939,9 @@ export const LicenseOverageNote = styled.div`
     margin-bottom: 5px;
   }
   p {
-    font-size: 13.5px;
-    line-height: 1.6;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 14px;
+    line-height: 1.65;
     color: ${({ theme }) => theme.color.inkSoft};
     margin: 0;
   }
@@ -948,7 +949,7 @@ export const LicenseOverageNote = styled.div`
 
 export const TierOptAccordion = styled.div`
   margin-top: 16px;
-  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  border: 1.5px solid ${({ theme }) => theme.color.brand}66;
   border-radius: ${({ theme }) => theme.size.radius.md};
   overflow: hidden;
 
@@ -956,39 +957,38 @@ export const TierOptAccordion = styled.div`
     display: flex;
     align-items: center;
     width: 100%;
-    padding: 12px 16px;
-    background: transparent;
+    padding: 13px 16px;
+    background: ${({ theme }) => theme.color.surface};
     cursor: pointer;
     border: none;
     text-align: left;
-    gap: 10px;
+    gap: 8px;
     transition: background 0.12s ease;
-    &:hover { background: ${({ theme }) => theme.color.surfaceAlt}; }
+    &:hover { background: ${({ theme }) => theme.color.brandSoft}; }
   }
-  .acc-left {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  .acc-icon {
+    flex-shrink: 0;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .acc-label {
     flex: 1;
-    min-width: 0;
-  }
-  .acc-kicker {
-    font-size: 10.5px;
+    font-size: 13px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: ${({ theme }) => theme.color.muted};
+    color: ${({ theme }) => theme.color.ink};
+    letter-spacing: -0.01em;
   }
   .acc-amount {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
-    letter-spacing: -0.01em;
-    font-feature-settings: "tnum";
     color: ${({ theme }) => theme.color.brand};
+    font-feature-settings: "tnum";
+    letter-spacing: -0.01em;
   }
   .acc-chevron {
     flex-shrink: 0;
-    color: ${({ theme }) => theme.color.muted};
+    margin-left: 6px;
+    color: ${({ theme }) => theme.color.brand};
     transition: transform 0.2s ease;
     display: flex;
     align-items: center;
@@ -997,8 +997,8 @@ export const TierOptAccordion = styled.div`
 
   .acc-body {
     padding: 14px 16px 18px;
-    border-top: 1px solid ${({ theme }) => theme.color.border};
-    background: ${({ theme }) => theme.color.surfaceAlt};
+    border-top: 1px solid ${({ theme }) => theme.color.brand}22;
+    background: ${({ theme }) => theme.color.surface};
   }
   .acc-intro {
     font-size: 14.5px;

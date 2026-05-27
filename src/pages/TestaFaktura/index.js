@@ -1307,12 +1307,11 @@ const TestaFaktura = () => {
                   onClick={() => setTierOptOpen(o => !o)}
                   aria-expanded={tierOptOpen}
                 >
-                  <div className="acc-left">
-                    <span className="acc-kicker">⚡ Licensoptimering · valfri extraoptimering</span>
-                    <span className="acc-amount">+{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto</span>
-                  </div>
+                  <span className="acc-icon">⚡</span>
+                  <span className="acc-label">Licensoptimering</span>
+                  <span className="acc-amount">+{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto</span>
                   <span className={`acc-chevron${tierOptOpen ? ' open' : ''}`}>
-                    <Icon name="chevron-right" size={20} stroke={2.5} />
+                    <Icon name="chevron-right" size={16} stroke={2.5} />
                   </span>
                 </button>
                 {tierOptOpen && (
