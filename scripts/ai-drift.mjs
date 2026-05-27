@@ -4,30 +4,38 @@
  *
  * Jämför aktuella categorize + recommend outputs mot sparade "golden" fixtures.
  * Fångar upp tyst modell-drift när Anthropic uppdaterar Haiku/Sonnet (eller vi
- * ändrar system-prompten) och affärskritiska fält börjar bete sig annorlunda.
+ * ändrar system-prompten) och affärskritiska STRUKTURELLA fält ändras.
+ *
+ * Vad vi testar (modellbeteende, inte priser):
+ *   categorized.category          — exakt (fel kategori = fel benchmark)
+ *   categorized.normalizedSupplier — exakt (syns i PR-text mot kund)
+ *   categorized.subType           — exakt (styr tier-val)
+ *   categorized.confidence        — aldrig under 0.70 (routing-tröskel)
+ *   recommendation.shouldSwitch   — exakt (kärnbeslutet)
+ *   recommendation.requiresQuote  — exakt (Managed Print-gate)
+ *   recommendation.recommendationType — exakt
+ *   recommendation.licenseOverage — exakt (M365-regel)
+ *
+ * Vad vi INTE testar (prisdriven data — bevakas av price-monitor.mjs Layer 3):
+ *   suggestedAnnualCost, grossSaving, netSaving, overageSavings
+ *   → Dessa ändras vid varje branchindex.js-uppdatering och skapar
+ *     falska larm som tränar teamet att ignorera notifikationer.
  *
  * Kräver ANTHROPIC_API_KEY i .env (eller miljövariabel i CI).
  *
- * Läge 1 — Jämför (standard):
+ * Läge 1 — Jämför (standard, nattlig CI):
  *   node scripts/ai-drift.mjs
- *   node scripts/ai-drift.mjs microsoft telia
  *   node scripts/ai-drift.mjs --fixtures microsoft,ricoh,telia
  *
- * Läge 2 — Uppdatera golden-data (kör när du medvetet ändrat logik/prompt):
+ * Läge 2 — Initiera/uppdatera golden-data (lokalt, efter medveten ändring):
  *   node scripts/ai-drift.mjs --update
- *   node scripts/ai-drift.mjs --update microsoft
+ *   node scripts/ai-drift.mjs --update --fixtures microsoft
  *
- * npm-alias: npm run test:ai-drift
- *            npm run test:ai-drift -- --update
+ * npm-alias:
+ *   npm run test:ai-drift
+ *   npm run capture:golden
  *
- * Kostnad per körning: ~0,003 USD per fixture (Haiku + Sonnet, 4 fixtures ≈ 0,012 USD/natt).
- *
- * Affärskritiska fält (exakt match):
- *   categorized.category, .normalizedSupplier, .subType, .confidence≥0.70
- *   recommendation.shouldSwitch, .requiresQuote, .recommendationType, .licenseOverage
- *
- * Numeriska fält (±5 % tolerans):
- *   recommendation.suggestedAnnualCost, .grossSaving, .netSaving
+ * Kostnad: ~0,002 USD per fixture (Haiku + Sonnet). 4 fixtures ≈ 0,008 USD/natt.
  */
 
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
@@ -44,18 +52,16 @@ if (!process.env.ANTHROPIC_API_KEY) {
   process.exit(1);
 }
 
-const { categorize }           = await import(join(ROOT, 'agents/categorizer/categorize.js'));
-const { recommend }            = await import(join(ROOT, 'agents/recommender/recommend.js'));
-const { computeInvoiceMetrics} = await import(join(ROOT, 'lib/invoice-metrics.js'));
+const { categorize }            = await import(join(ROOT, 'agents/categorizer/categorize.js'));
+const { recommend }             = await import(join(ROOT, 'agents/recommender/recommend.js'));
+const { computeInvoiceMetrics } = await import(join(ROOT, 'lib/invoice-metrics.js'));
 
 // ── CLI-argument ───────────────────────────────────────────────────────────────
 const args       = process.argv.slice(2);
 const UPDATE     = args.includes('--update');
-const fixtureArg = args.find(a => a.startsWith('--fixtures'))?.split('=')[1]
-               ?? args.find(a => a.startsWith('--fixtures='))?.split('=')[1];
+const fixtureArg = args.find(a => a.startsWith('--fixtures='))?.slice('--fixtures='.length);
 const positional = args.filter(a => !a.startsWith('--'));
 
-// Vilka fixtures att köra (positional args → namn utan .json)
 const requestedSlugs = fixtureArg
   ? fixtureArg.split(',').map(s => s.trim())
   : positional.length > 0
@@ -73,21 +79,11 @@ const allFixtures = readdirSync(SNAPSHOTS_DIR)
   });
 
 const fixtures = allFixtures.filter(fx => {
-  if (!fx.extracted) return false;            // kräver extracted-data
-  if (!UPDATE && !fx.golden) return false;    // i jämförelseläge: kräver golden-block
+  if (!fx.extracted) return false;
+  if (!UPDATE && !fx.golden) return false;  // jämförelseläge kräver golden-block
   if (requestedSlugs) return requestedSlugs.includes(fx.slug);
   return true;
 });
-
-if (fixtures.length === 0) {
-  if (UPDATE) {
-    console.error('Inga fixtures hittades. Skapa fixtures med node scripts/capture-snapshots.mjs.');
-  } else {
-    console.error('Inga fixtures med golden-block hittades.');
-    console.error('Kör: node scripts/ai-drift.mjs --update  för att skapa golden-data.');
-  }
-  process.exit(1);
-}
 
 // ── Färger ─────────────────────────────────────────────────────────────────────
 const R    = '\x1b[0m';
@@ -97,14 +93,38 @@ const RED  = '\x1b[31m';
 const GRN  = '\x1b[32m';
 const YEL  = '\x1b[33m';
 
-// ── Kör pipeline (categorize + recommend) ─────────────────────────────────────
-const NUMERIC_TOLERANCE = 0.05;  // ±5 %
+// ── Tidigt avbryt: inga fixtures att köra ─────────────────────────────────────
+console.log(`\n${BOLD}Arvo Flow — AI Drift Detector${R}  (Layer 5)`);
+console.log(`${DIM}Testar: category · normalizedSupplier · subType · shouldSwitch · requiresQuote · licenseOverage${R}`);
+if (UPDATE) console.log(`${YEL}Läge: --update — skriver över golden-data${R}`);
+console.log('');
 
+if (fixtures.length === 0) {
+  if (UPDATE) {
+    console.error(`${RED}Inga fixtures med extracted-data hittades.${R}`);
+    console.error('Kör: node scripts/capture-snapshots.mjs  för att skapa fixtures från PDF:er.');
+    process.exit(1);
+  } else {
+    // Inte ett fel — golden-data har aldrig initierats ännu.
+    console.log(`${YEL}${BOLD}⚠  GOLDEN DATA EJ INITIALISERAD${R}`);
+    console.log('');
+    console.log('Ingen fixture har ett "golden"-block ännu. Drift-bevakning är inaktiv.');
+    console.log('');
+    console.log('Initiera med (kräver ANTHROPIC_API_KEY och ~2 min):');
+    console.log(`  ${DIM}node scripts/ai-drift.mjs --update --fixtures microsoft,telia,ricoh,bredband-1-baseline${R}`);
+    console.log('  git add test-snapshots/');
+    console.log('  git commit -m "init: golden snapshots for AI drift detection"');
+    console.log('');
+    process.exit(0);  // exit 0 — systemet saknar setup, men är inte trasigt
+  }
+}
+
+// ── Kör pipeline (categorize + recommend) ─────────────────────────────────────
 async function runPipeline(extracted, testCustomer) {
   const categorized = await categorize({
-    supplier:    extracted.supplier ?? '',
+    supplier:    extracted.supplier    ?? '',
     description: (extracted.lineItems ?? []).map(l => l.description).join(', '),
-    amount:      extracted.amount ?? 0,
+    amount:      extracted.amount      ?? 0,
   });
 
   const metrics = computeInvoiceMetrics(
@@ -119,24 +139,24 @@ async function runPipeline(extracted, testCustomer) {
       amount:                       extracted.amount,
       annualCost:                   extracted.annualCost,
       recurringAmount:              extracted.recurringAmount,
-      variableCharges:              extracted.variableCharges ?? 0,
-      seatCount:                    extracted.seatCount ?? null,
+      variableCharges:              extracted.variableCharges              ?? 0,
+      seatCount:                    extracted.seatCount                    ?? null,
       mobileAddonMonthly:           metrics.mobileAddonMonthly,
       broadbandAddonMonthly:        metrics.broadbandAddonMonthly,
       primaryComponentMonthly:      metrics.primaryComponentMonthly,
-      secondaryComponentMonthly:    metrics.secondaryComponentMonthly   ?? null,
-      secondaryConnectionSpeedMbit: metrics.secondaryConnectionSpeedMbit ?? null,
-      secondarySeatCount:           metrics.secondarySeatCount           ?? null,
+      secondaryComponentMonthly:    metrics.secondaryComponentMonthly      ?? null,
+      secondaryConnectionSpeedMbit: metrics.secondaryConnectionSpeedMbit   ?? null,
+      secondarySeatCount:           metrics.secondarySeatCount             ?? null,
       secondarySaving:              null,
-      potentialMixedCategories:     extracted.potentialMixedCategories ?? false,
-      connectionSpeedMbit:          extracted.connectionSpeedMbit       ?? null,
-      licenseType:                  extracted.licenseType               ?? null,
-      billingCycleType:             extracted.billingCycleType          ?? null,
-      pricePerSeatMonthly:          extracted.pricePerSeatMonthly       ?? null,
-      saasProductFamily:            extracted.saasProductFamily         ?? null,
-      saasIncludedFeatures:         extracted.saasIncludedFeatures      ?? null,
-      description:                  extracted.description               ?? null,
-      lineItems:                    extracted.lineItems                  ?? null,
+      potentialMixedCategories:     extracted.potentialMixedCategories     ?? false,
+      connectionSpeedMbit:          extracted.connectionSpeedMbit           ?? null,
+      licenseType:                  extracted.licenseType                   ?? null,
+      billingCycleType:             extracted.billingCycleType              ?? null,
+      pricePerSeatMonthly:          extracted.pricePerSeatMonthly           ?? null,
+      saasProductFamily:            extracted.saasProductFamily             ?? null,
+      saasIncludedFeatures:         extracted.saasIncludedFeatures          ?? null,
+      description:                  extracted.description                   ?? null,
+      lineItems:                    extracted.lineItems                     ?? null,
       likeForLikeTarget:            null,
     },
     categorized,
@@ -145,25 +165,10 @@ async function runPipeline(extracted, testCustomer) {
   return { categorized, recommendation };
 }
 
-// ── Fältjämförelse ────────────────────────────────────────────────────────────
-function compareField(failures, label, expected, actual, tolerance = 0) {
-  if (expected === undefined) return;  // fält ej i golden → hoppa
+// ── Fältjämförelse (alltid exakt — inga numeriska toleranser) ─────────────────
+function compareField(failures, label, expected, actual) {
+  if (expected === undefined) return;
   if (expected === null && actual === null) return;
-
-  if (tolerance > 0 && typeof expected === 'number' && typeof actual === 'number') {
-    const base = Math.abs(expected) || 1;
-    const pct  = Math.abs(expected - actual) / base;
-    if (pct > tolerance) {
-      failures.push({
-        field: label,
-        expected,
-        actual,
-        note: `drift ${(pct * 100).toFixed(1)} % (gräns ${(tolerance * 100).toFixed(0)} %)`,
-      });
-    }
-    return;
-  }
-
   if (expected !== actual) {
     failures.push({ field: label, expected, actual });
   }
@@ -172,94 +177,80 @@ function compareField(failures, label, expected, actual, tolerance = 0) {
 function compareOutputs(golden, categorized, recommendation) {
   const failures = [];
 
-  // Kategorisering — alla exakta
-  compareField(failures, 'categorized.category',           golden.categorized.category,           categorized.category);
-  compareField(failures, 'categorized.normalizedSupplier', golden.categorized.normalizedSupplier, categorized.normalizedSupplier);
-  compareField(failures, 'categorized.subType',            golden.categorized.subType,            categorized.subType);
+  compareField(failures, 'categorized.category',            golden.categorized.category,            categorized.category);
+  compareField(failures, 'categorized.normalizedSupplier',  golden.categorized.normalizedSupplier,  categorized.normalizedSupplier);
+  compareField(failures, 'categorized.subType',             golden.categorized.subType,             categorized.subType);
 
-  // Konfidens-tröskel: aldrig under 0.70 (oavsett golden)
+  // Konfidens-tröskel: routing-regel, oberoende av golden-värde
   if ((categorized.confidence ?? 1) < 0.70) {
     failures.push({ field: 'categorized.confidence', expected: '≥0.70', actual: categorized.confidence });
   }
 
-  // Rekommendation — booleanska och enum-fält: exakta
-  compareField(failures, 'recommendation.shouldSwitch',      golden.recommendation.shouldSwitch,      recommendation.shouldSwitch);
-  compareField(failures, 'recommendation.requiresQuote',     golden.recommendation.requiresQuote,     recommendation.requiresQuote     ?? false);
-  compareField(failures, 'recommendation.recommendationType', golden.recommendation.recommendationType, recommendation.recommendationType);
-  compareField(failures, 'recommendation.licenseOverage',    golden.recommendation.licenseOverage,    recommendation.licenseOverage     ?? null);
+  compareField(failures, 'recommendation.shouldSwitch',        golden.recommendation.shouldSwitch,        recommendation.shouldSwitch);
+  compareField(failures, 'recommendation.requiresQuote',       golden.recommendation.requiresQuote,       recommendation.requiresQuote      ?? false);
+  compareField(failures, 'recommendation.recommendationType',  golden.recommendation.recommendationType,  recommendation.recommendationType);
+  compareField(failures, 'recommendation.licenseOverage',      golden.recommendation.licenseOverage,      recommendation.licenseOverage      ?? null);
 
-  // Numeriska fält — ±5 % tolerans
-  compareField(failures, 'recommendation.suggestedAnnualCost', golden.recommendation.suggestedAnnualCost, recommendation.suggestedAnnualCost, NUMERIC_TOLERANCE);
-  compareField(failures, 'recommendation.grossSaving',         golden.recommendation.grossSaving,         recommendation.grossSaving,         NUMERIC_TOLERANCE);
-  compareField(failures, 'recommendation.netSaving',           golden.recommendation.netSaving,           recommendation.netSaving,           NUMERIC_TOLERANCE);
+  // suggestedAnnualCost / grossSaving / netSaving: INTE JÄMFÖRDA HÄR.
+  // De är prisdrivna (beror på branchindex.js) — varje prisuppdatering
+  // skulle trigga falskt alarm och träna teamet att ignorera notifikationer.
+  // Prisriktighet bevakas av price-monitor.mjs (Layer 3).
 
   return failures;
 }
 
-// ── Bygg golden-block från pipeline-output ────────────────────────────────────
+// ── Bygg golden-block (sparas i fixture) ──────────────────────────────────────
 function buildGoldenBlock(testCustomer, categorized, recommendation) {
   return {
     testCustomer,
     capturedAt: new Date().toISOString().slice(0, 10),
+    // Bara de fält vi faktiskt jämför — håller golden-data minimal och stabil.
     categorized: {
       category:           categorized.category,
-      subType:            categorized.subType           ?? null,
+      subType:            categorized.subType            ?? null,
       normalizedSupplier: categorized.normalizedSupplier ?? null,
       confidence:         categorized.confidence,
-      licensePending:     categorized.licensePending     ?? false,
+      licensePending:     categorized.licensePending      ?? false,
     },
     recommendation: {
       shouldSwitch:       recommendation.shouldSwitch,
       recommendationType: recommendation.recommendationType ?? null,
-      requiresQuote:      recommendation.requiresQuote      ?? false,
-      licenseOverage:     recommendation.licenseOverage      ?? null,
-      overageSavings:     recommendation.overageSavings      ?? null,
-      suggestedAnnualCost: recommendation.suggestedAnnualCost,
-      grossSaving:        recommendation.grossSaving,
-      netSaving:          recommendation.netSaving,
+      requiresQuote:      recommendation.requiresQuote       ?? false,
+      licenseOverage:     recommendation.licenseOverage       ?? null,
+      // Beloppsfält utelämnade: se kommentar i compareOutputs()
     },
   };
 }
 
 // ── Standardvärden för testkund ───────────────────────────────────────────────
-// Överskrivs om fixture.golden.testCustomer finns.
 const DEFAULT_CUSTOMER = { industry: null, employees: 50, revenue: null };
 
-// ── Huvud: kör alla valda fixtures ────────────────────────────────────────────
-console.log(`\n${BOLD}Arvo Flow — AI Drift Detector${R}  (Layer 5)`);
-console.log(`${DIM}Modell: categorize (Haiku) + recommend (Sonnet/Opus)${R}`);
-if (UPDATE) {
-  console.log(`${YEL}Läge: --update — skriver över golden-data${R}`);
-}
+// ── Huvud: kör fixtures ───────────────────────────────────────────────────────
 console.log(`${DIM}Fixtures: ${fixtures.length} st${R}\n`);
 
-let passed = 0;
-let failed = 0;
+let passed  = 0;
+let failed  = 0;
 let updated = 0;
 
 for (const fx of fixtures) {
-  const t0 = Date.now();
+  const t0           = Date.now();
   const { slug, extracted, file } = fx;
-
   const testCustomer = fx.golden?.testCustomer ?? DEFAULT_CUSTOMER;
 
-  process.stdout.write(`  ${slug.padEnd(30)} `);
+  process.stdout.write(`  ${slug.padEnd(32)} `);
 
   try {
     const { categorized, recommendation } = await runPipeline(extracted, testCustomer);
     const elapsed = Date.now() - t0;
 
     if (UPDATE) {
-      // ── Uppdatera-läge ────────────────────────────────────────────────────
       const fixturePath = join(SNAPSHOTS_DIR, file);
       const raw = JSON.parse(readFileSync(fixturePath, 'utf8'));
       raw.golden = buildGoldenBlock(testCustomer, categorized, recommendation);
       writeFileSync(fixturePath, JSON.stringify(raw, null, 2) + '\n');
-
-      console.log(`${GRN}✓ uppdaterad${R}  cat=${YEL}${categorized.category}${R}  switch=${categorized.category ? recommendation.shouldSwitch : '—'}  ${DIM}(${elapsed} ms)${R}`);
+      console.log(`${GRN}✓ uppdaterad${R}  cat=${YEL}${categorized.category}${R}  switch=${recommendation.shouldSwitch}  ${DIM}(${elapsed} ms)${R}`);
       updated++;
     } else {
-      // ── Jämförelse-läge ───────────────────────────────────────────────────
       const failures = compareOutputs(fx.golden, categorized, recommendation);
 
       if (failures.length === 0) {
@@ -268,8 +259,7 @@ for (const fx of fixtures) {
       } else {
         console.log(`${RED}✗ DRIFT (${failures.length} fält)${R}  ${DIM}(${elapsed} ms)${R}`);
         for (const f of failures) {
-          const note = f.note ? `  ${DIM}${f.note}${R}` : '';
-          console.log(`      ${RED}${f.field}${R}: förväntade ${BOLD}${JSON.stringify(f.expected)}${R} → fick ${BOLD}${JSON.stringify(f.actual)}${R}${note}`);
+          console.log(`      ${RED}${f.field}${R}: förväntade ${BOLD}${JSON.stringify(f.expected)}${R} → fick ${BOLD}${JSON.stringify(f.actual)}${R}`);
         }
         failed++;
       }
@@ -285,16 +275,20 @@ for (const fx of fixtures) {
 console.log('\n' + '═'.repeat(60));
 
 if (UPDATE) {
-  console.log(`${GRN}${BOLD}Golden-data uppdaterad:${R} ${updated} fixtures`);
-  console.log(`${DIM}Commit test-snapshots/ för att spara de nya golden-värdena.${R}\n`);
-  process.exit(failed > 0 ? 1 : 0);
-} else {
-  const total = passed + failed;
   if (failed === 0) {
-    console.log(`${GRN}${BOLD}INGEN DRIFT — ${passed}/${total} fixtures OK${R}\n`);
+    console.log(`${GRN}${BOLD}Golden-data uppdaterad:${R} ${updated} fixtures`);
+    console.log(`${DIM}Commit test-snapshots/ för att aktivera nattlig drift-bevakning.${R}\n`);
     process.exit(0);
   } else {
-    console.log(`${RED}${BOLD}DRIFT DETEKTERAD — ${failed}/${total} fixtures misslyckades${R}`);
+    console.log(`${RED}${BOLD}${failed} fixtures misslyckades — se fel ovan.${R}\n`);
+    process.exit(1);
+  }
+} else {
+  if (failed === 0) {
+    console.log(`${GRN}${BOLD}INGEN DRIFT — ${passed}/${passed + failed} fixtures OK${R}\n`);
+    process.exit(0);
+  } else {
+    console.log(`${RED}${BOLD}DRIFT DETEKTERAD — ${failed}/${passed + failed} fixtures avvek${R}`);
     console.log(`${DIM}Om ändringen är avsedd: kör  node scripts/ai-drift.mjs --update${R}\n`);
     process.exit(1);
   }
