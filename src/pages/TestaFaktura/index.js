@@ -777,7 +777,7 @@ const TestaFaktura = () => {
                     </>
                   ) : (
                     <>
-                      <strong>{monitoringDatePast ? 'Avtalet löper ut snart — Arvo agerar nu.' : 'Avtalet är låst — vi lägger det på bevakning.'}</strong>
+                      <strong>{monitoringDatePast ? 'Avtalet löper ut snart — Arvo agerar nu.' : result.cancellationNoticeDays != null ? 'Avtalet är låst — vi lägger det på bevakning.' : 'Årsavtal bevakas inför förnyelse.'}</strong>
                       <p>
                         {(() => {
                           const end  = result.servicePeriodEnd;
@@ -790,7 +790,7 @@ const TestaFaktura = () => {
                           }
                           return days != null
                             ? `Avtalet löper till ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo initierar omförhandling ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
-                            : `Avtalet löper till ${endFmt ?? end}. Arvo bevakar och påminner er ${monFmt ?? '90 dagar'} innan slutdatum.`;
+                            : `Avtalet löper till ${endFmt ?? end}. Vi ser ingen explicit uppsägningstid på fakturan — kontakta leverantören för att bekräfta om förtidslösen är möjlig. Arvo påminner er ${monFmt ?? '90 dagar'} innan slutdatum.`;
                         })()}
                       </p>
                     </>
