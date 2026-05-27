@@ -769,6 +769,32 @@ export async function recommend(input, opts = {}) {
     }
   }
 
+  // Managed Workplace / WaaS guard: bundled PC + licens + helpdesk kan inte
+  // benchmarkas automatiskt — priset beror på hårdvaruspec, SLA och avtalslängd.
+  // Falskt larm på ett bra WaaS-avtal är mer skadligt än att be om offert.
+  if (input.categorized.category === 'managed-workplace') {
+    return {
+      shouldSwitch:        false,
+      requiresQuote:       true,
+      recommendationType:  'requires_quote',
+      reasoning:           'Det här är ett bundlat WaaS-avtal (dator + licenser + support). ' +
+                           'Rättvisande benchmarking kräver komponentspecifikation — ' +
+                           'Arvo gör en kostnadsfri manuell genomgång.',
+      suggestedSupplier:   null,
+      suggestedAnnualCost: null,
+      grossSaving:         null,
+      arvoFee:             null,
+      netSaving:           null,
+      confidence:          'low',
+      switchSteps:         [],
+      licenseOverage:      null,
+      overageSavings:      null,
+      optimizationSaving:  null,
+      benchmark,
+      usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+    };
+  }
+
   const client = opts.client ?? getClient();
 
   // Berika el-fakturor med realtids spotpris och leverantörsjämförelse (non-fatal).

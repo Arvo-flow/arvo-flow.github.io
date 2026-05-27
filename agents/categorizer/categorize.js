@@ -41,6 +41,11 @@ const STRONG_DESC_SIGNALS = {
   kortterminal:     ['kortavgifter', 'transaktionsavgift', 'kortterminal'],
   'faktura-tjanst': ['fakturatjänst', 'e-faktura utskick', 'fakturautskick'],
   'leasing-bil':    ['leasing servicebilar', 'fordonsleasing', 'billeasing'],
+  // managed-workplace MÅSTE ligga före saas-productivity — bundlade WaaS-paket
+  // innehåller ofta "Microsoft 365" i beskrivningen men är INTE rena licens-fakturor.
+  'managed-workplace': ['modern arbetsplats', 'workplace as a service', 'arbetsplats som tjänst',
+                        'pc som tjänst', 'dator som tjänst', 'managed workplace',
+                        'device as a service'],
   'saas-productivity': ['microsoft 365', 'office 365', 'm365 licens', 'google workspace business',
                         'zoom workplace', 'slack business', 'microsoft teams licens',
                         'programvarulicens microsoft', 'csp licens'],

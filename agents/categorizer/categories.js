@@ -248,6 +248,17 @@ export const CATEGORIES = {
     ],
     accountHints: ['5612', '5615', '6570'],
   },
+  'managed-workplace': {
+    label: 'Managed Workplace / WaaS',
+    licensePending: false,
+    subTypes: ['waas', 'daas', 'modern-arbetsplats', 'bundled-msp'],
+    keywords: [
+      'modern arbetsplats', 'workplace as a service', 'waas', 'daas',
+      'device as a service', 'managed workplace', 'arbetsplats som tjänst',
+      'pc som tjänst', 'dator som tjänst',
+    ],
+    accountHints: ['6540', '5612', '6230'],
+  },
   'it-support': {
     label: 'IT-drift & Support',
     licensePending: false,

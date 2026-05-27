@@ -236,6 +236,13 @@ const FIXTURE_ASSERTIONS = {
     { path: 'categorized.category', op: 'eq', val: 'mobil',
       label: 'Molnväxel + mobilabonnemang ska klassas som mobil, inte saas-productivity' },
   ],
+  'lokal-it-partner-waas': [
+    { path: 'categorized.category',         op: 'eq', val: 'managed-workplace',
+      label: 'WaaS-paket ska kategoriseras managed-workplace, inte it-support' },
+    { path: 'recommendation.requiresQuote', op: 'eq', val: true,
+      label: 'WaaS-paket kan inte benchmarkas automatiskt → requiresQuote=true (förhindrar falskt Kritisk-larm)' },
+    { path: 'recommendation.shouldSwitch',  op: 'eq', val: false },
+  ],
 };
 
 // ── Hjälpfunktioner ────────────────────────────────────────────────────────────
