@@ -925,25 +925,23 @@ export const Reasoning = styled.div`
 `;
 
 export const LicenseOverageNote = styled.div`
-  margin-top: 16px;
-  padding: 18px 20px;
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1.5px solid ${({ theme }) => theme.color.warning}88;
-  background: ${({ theme }) => theme.color.warningSoft};
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-left: 2px solid ${({ theme }) => theme.color.border};
 
   span.kicker {
     display: block;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.09em;
-    color: ${({ theme }) => theme.color.warning};
-    margin-bottom: 8px;
+    color: #8FA89E;
+    margin-bottom: 4px;
   }
   p {
-    font-size: 14.5px;
-    line-height: 1.65;
-    color: ${({ theme }) => theme.color.ink};
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #8FA89E;
     margin: 0;
   }
 `;
