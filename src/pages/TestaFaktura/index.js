@@ -1327,8 +1327,8 @@ const TestaFaktura = () => {
                   <span className="acc-dot">⚡</span>
                   <span className="acc-label">Spara ännu mer</span>
                   <span className="acc-amount">
-                    +{formatNum(result.recommendation.tierOptimizationSaving)}&nbsp;kr/år
-                    <span className="acc-sub">valfri extraoptimering</span>
+                    +{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år
+                    <span className="acc-sub">netto · valfri extraoptimering</span>
                   </span>
                   <span className={`acc-chevron${tierOptOpen ? ' open' : ''}`}>
                     <Icon name="chevron-right" size={20} stroke={2.5} />
@@ -1338,8 +1338,8 @@ const TestaFaktura = () => {
                   <div className="acc-body">
                     <p className="acc-intro">
                       Ni kan spara ytterligare{' '}
-                      <strong>{formatNum(result.recommendation.tierOptimizationSaving)}&nbsp;kr/år</strong>{' '}
-                      (brutto, innan Arvos arvode) genom att byta{' '}
+                      <strong>{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto</strong>{' '}
+                      (efter Arvos arvode om {formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.20))}&nbsp;kr) genom att byta{' '}
                       från&nbsp;<strong>{TIER_DISPLAY[result.recommendation.tierOptimizationFromTier] ?? result.recommendation.tierOptimizationFromTier}</strong>{' '}
                       till&nbsp;<strong>{TIER_DISPLAY[result.recommendation.tierOptimizationToTier] ?? result.recommendation.tierOptimizationToTier}</strong>.
                     </p>
