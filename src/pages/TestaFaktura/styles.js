@@ -426,9 +426,10 @@ export const PartnerBlock = styled.div`
 export const NoSwitchBlock = styled.div`
   padding: 24px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  background: ${({ theme }) => theme.color.surfaceAlt};
-  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
   margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(14,26,23,.05), 0 1px 2px rgba(14,26,23,.04);
 
   strong {
     display: block;
@@ -443,35 +444,35 @@ export const NoSwitchBlock = styled.div`
   }
 
   .estimate-banner {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    background: ${({ theme }) => theme.color.brandSoft};
-    border: 1.5px solid ${({ theme }) => theme.color.brand}44;
-    border-radius: ${({ theme }) => theme.size.radius.md};
-    padding: 16px 20px;
-    margin: 12px 0 16px;
+    margin: 0 0 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
   }
   .est-kicker {
+    display: block;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: ${({ theme }) => theme.color.brand};
+    margin-bottom: 8px;
   }
   .est-amount {
+    display: block;
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: ${({ theme }) => theme.color.brand};
-    line-height: 1.1;
+    font-size: clamp(36px, 6vw, 52px);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.0;
+    color: ${({ theme }) => theme.color.ink};
+    font-feature-settings: "tnum";
+    margin-bottom: 6px;
   }
   .est-note {
+    display: block;
     font-size: 12px;
     color: ${({ theme }) => theme.color.inkSoft};
     line-height: 1.5;
-    margin-top: 2px;
   }
 `;
 

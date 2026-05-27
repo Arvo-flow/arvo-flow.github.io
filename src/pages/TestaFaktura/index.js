@@ -919,23 +919,22 @@ const TestaFaktura = () => {
                   </>
                 )}
                 <NoSwitchBlock>
-                  <strong>
-                    {result.recommendation?.clickRateAnalysis?.estimatedAnnualSavingsGross > 0
-                      ? 'Lås upp er exakta besparing'
-                      : result.recommendation?.clickRateAnalysis
-                        ? 'Beräkna exakt besparing per år'
-                        : 'Kräver offert — volymdata behövs.'}
-                  </strong>
-                  {result.recommendation?.clickRateAnalysis?.estimatedAnnualSavingsGross > 0 && (
+                  {result.recommendation?.clickRateAnalysis?.estimatedAnnualSavingsGross > 0 ? (
                     <div className="estimate-banner">
                       <span className="est-kicker">Uppskattad nettobesparing på klickpriser</span>
                       <span className="est-amount">
-                        ca {formatNum(Math.round(result.recommendation.clickRateAnalysis.estimatedAnnualSavingsGross * 0.80))} kr/år
+                        ca {formatNum(Math.round(result.recommendation.clickRateAnalysis.estimatedAnnualSavingsGross * 0.80))}&nbsp;kr/år
                       </span>
                       <span className="est-note">
-                        Baserat på er faktiska klickkostnad × 12 månader — bekräftas med er faktiska printvolym
+                        Baserat på er faktiska klickkostnad × 12 månader · bekräftas med er faktiska printvolym
                       </span>
                     </div>
+                  ) : (
+                    <strong>
+                      {result.recommendation?.clickRateAnalysis
+                        ? 'Beräkna exakt besparing per år'
+                        : 'Kräver offert — volymdata behövs.'}
+                    </strong>
                   )}
                   <p>
                     {result.recommendation?.clickRateAnalysis
@@ -993,7 +992,7 @@ const TestaFaktura = () => {
                           {quoteState === 'submitting' ? 'Startar...' : 'Starta offertprocessen →'}
                         </Button>
                         <p className="qlf-zero-risk">
-                          Ni betalar ingenting om vi inte hittar besparingar — 20&nbsp;% av realiserat resultat.
+                          Ni betalar ingenting om vi inte hittar besparingar — 20&nbsp;% av identifierad besparing.
                         </p>
                       </>
                     )}
