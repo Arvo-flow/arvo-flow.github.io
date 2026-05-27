@@ -37,7 +37,7 @@ export default createGlobalStyle`
   }
 
   body {
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 16px;
     line-height: 1.55;
     font-feature-settings: "ss01", "cv11";

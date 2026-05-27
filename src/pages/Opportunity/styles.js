@@ -85,7 +85,7 @@ export const HeadSaving = styled.aside`
   }
   div.amount {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(40px, 6vw, 60px);
+    font-size: 56px;
     line-height: 1;
     letter-spacing: -0.025em;
     color: ${({ theme }) => theme.color.success};

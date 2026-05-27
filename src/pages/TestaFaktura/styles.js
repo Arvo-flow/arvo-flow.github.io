@@ -460,9 +460,9 @@ export const NoSwitchBlock = styled.div`
   .est-amount {
     display: block;
     font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(32px, 5vw, 44px);
+    font-size: clamp(36px, 6vw, 52px);
     font-weight: 500;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
     line-height: 1.0;
     color: ${({ theme }) => theme.color.ink};
     font-feature-settings: "tnum";
@@ -818,7 +818,7 @@ export const ModalCard = styled.div`
       font-family: ${({ theme }) => theme.font.display};
       font-size: clamp(36px, 9vw, 52px);
       font-weight: 500;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.025em;
       font-feature-settings: "tnum";
       line-height: 1.0;
       margin-bottom: 8px;

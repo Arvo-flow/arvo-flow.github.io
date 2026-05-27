@@ -193,7 +193,7 @@ export const BigNumber = styled.div`
     font-family: ${({ theme }) => theme.font.display};
     font-size: clamp(56px, 9vw, 96px);
     line-height: 1;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
     font-weight: 500;
     font-feature-settings: "tnum";
     em { font-style: italic; color: ${({ theme }) => theme.color.accent}; font-weight: 400; }
@@ -791,7 +791,7 @@ export const HeadlineSplit = styled.div`
     font-size: 13px;
     color: rgba(250, 250, 247, 0.78);
     margin-left: 8px;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-feature-settings: "tnum";
   }
 `;

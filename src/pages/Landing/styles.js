@@ -167,7 +167,7 @@ export const PreviewHead = styled.div`
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
   h4 {
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 13px;
     font-weight: 600;
     color: ${({ theme }) => theme.color.muted};
@@ -195,10 +195,10 @@ export const SavingBig = styled.div`
   }
   div.amount {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(40px, 6vw, 60px);
+    font-size: 56px;
     font-weight: 500;
     line-height: 1;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
     color: ${({ theme }) => theme.color.ink};
     font-feature-settings: "tnum";
     em { font-style: italic; color: ${({ theme }) => theme.color.brand}; font-weight: 400; }
@@ -687,9 +687,8 @@ export const Quote = styled.figure`
   blockquote {
     font-family: ${({ theme }) => theme.font.display};
     font-size: 26px;
-    font-weight: 500;
     line-height: 1.35;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
     color: ${({ theme }) => theme.color.ink};
 
     &::before { content: '“'; color: ${({ theme }) => theme.color.brand}; font-size: 60px; line-height: 0; vertical-align: -22px; margin-right: 4px; }
@@ -1058,15 +1057,14 @@ export const FaqItem = styled.details`
     gap: 24px;
     font-family: ${({ theme }) => theme.font.display};
     font-size: 22px;
-    font-weight: 600;
     line-height: 1.3;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
     color: ${({ theme }) => theme.color.ink};
     &::-webkit-details-marker { display: none; }
   }
   summary::after {
     content: '+';
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 24px;
     color: ${({ theme }) => theme.color.muted};
     transition: transform ${({ theme }) => theme.motion.base};
