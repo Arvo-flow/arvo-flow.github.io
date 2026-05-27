@@ -546,7 +546,7 @@ const TestaFaktura = () => {
       <Nav variant="public" />
 
       <Hero>
-        <Eyebrow><span className="dot" /> Testa själv · Gratis · 10 sekunder</Eyebrow>
+        <Eyebrow><span className="dot" /> Testa själv · Gratis · Resultat direkt</Eyebrow>
         <Headline>Ladda upp <em>en</em> leverantörsfaktura — få svar direkt.</Headline>
         <Lede>
           Vi visar exakt vad du betalar, hur du ligger mot branschsnittet och vad du kan
