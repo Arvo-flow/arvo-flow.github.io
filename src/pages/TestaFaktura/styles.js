@@ -917,7 +917,7 @@ export const Reasoning = styled.div`
   }
   p {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 15px;
+    font-size: 17px;
     line-height: 1.65;
     color: ${({ theme }) => theme.color.inkSoft};
     margin: 0;
@@ -925,67 +925,70 @@ export const Reasoning = styled.div`
 `;
 
 export const LicenseOverageNote = styled.div`
-  margin-top: 14px;
-  padding: 10px 14px;
-  border-left: 2px solid ${({ theme }) => theme.color.border};
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-left: 2px solid ${({ theme }) => theme.color.borderStrong};
 
   span.kicker {
     display: block;
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.09em;
-    color: #8FA89E;
-    margin-bottom: 4px;
+    letter-spacing: 0.08em;
+    color: ${({ theme }) => theme.color.muted};
+    margin-bottom: 5px;
   }
   p {
-    font-size: 12.5px;
+    font-size: 13.5px;
     line-height: 1.6;
-    color: #8FA89E;
+    color: ${({ theme }) => theme.color.inkSoft};
     margin: 0;
   }
 `;
 
 export const TierOptAccordion = styled.div`
-  margin-top: 20px;
-  border-top: 1px solid ${({ theme }) => theme.color.border};
+  margin-top: 16px;
+  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  overflow: hidden;
 
   .acc-trigger {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     width: 100%;
-    padding: 16px 0 12px;
+    padding: 12px 16px;
     background: transparent;
     cursor: pointer;
     border: none;
     text-align: left;
-    gap: 12px;
+    gap: 10px;
+    transition: background 0.12s ease;
+    &:hover { background: ${({ theme }) => theme.color.surfaceAlt}; }
   }
   .acc-left {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
     flex: 1;
     min-width: 0;
   }
   .acc-kicker {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.07em;
     color: ${({ theme }) => theme.color.muted};
   }
   .acc-amount {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.025em;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     font-feature-settings: "tnum";
     color: ${({ theme }) => theme.color.brand};
   }
   .acc-chevron {
     flex-shrink: 0;
-    color: ${({ theme }) => theme.color.brand};
+    color: ${({ theme }) => theme.color.muted};
     transition: transform 0.2s ease;
     display: flex;
     align-items: center;
@@ -993,7 +996,9 @@ export const TierOptAccordion = styled.div`
   }
 
   .acc-body {
-    padding: 4px 0 22px;
+    padding: 14px 16px 18px;
+    border-top: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.surfaceAlt};
   }
   .acc-intro {
     font-size: 14.5px;
