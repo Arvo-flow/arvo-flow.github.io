@@ -2,7 +2,8 @@
 // The Categorizer — Layer 2 worker that turns a raw Fortnox invoice into
 // a structured classification.
 //
-// Model: claude-haiku-4-5 (cheap, fast, deterministic enough for this task).
+// Model: claude-sonnet-4-6 — upgraded from Haiku 4.5 for better handling of
+// edge cases where deterministicMatch() doesn't fire (unknown/regional suppliers).
 // Caching: system prompt is sent with cache_control so the ~2k-token rules block
 // is only paid for once per cache window.
 // Output: structured via tool_use + tool_choice forcing the categorize tool.
@@ -11,7 +12,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, CATEGORIZE_TOOL } from './prompt.js';
 import { CATEGORIES } from './categories.js';
 
-const MODEL = 'claude-haiku-4-5';
+const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 512;
 
 export class CategorizerError extends Error {

@@ -2,16 +2,15 @@
 // Layer 2 worker: take a categorized invoice + customer profile → return a
 // recommendation (switch or don't, which alternative, savings, switch steps).
 //
-// Model: claude-sonnet-4-6 — the multi-criteria reasoning (TCO, reliability,
-// switching cost, license-pending guard) genuinely benefits from Sonnet over
-// Haiku. Categorization was a simple labelling task; recommending is a
-// judgment task.
+// Model: claude-opus-4-7 — upgraded from Sonnet 4.6 for richer reasoning
+// quality. The recommendation text ("Vad analysen visar") is customer-facing
+// and benefits from Opus's more nuanced judgment on Swedish market context,
+// tier-fit analysis, and business rationale.
 //
 // Thinking: disabled — tool_choice forces tool use which is incompatible.
 //
-// Caching: system prompt is ~6k chars (~1700 tokens). Sonnet 4.6's cache
-// minimum is 2048 tokens, so the marker is a no-op until the prompt grows
-// (more categories, more few-shot). Same documented pattern as Categorizer.
+// Caching: system prompt is ~6k chars (~1700 tokens). Cache minimum is
+// 1024 tokens for Opus 4.7, so the marker is effective.
 
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, RECOMMEND_TOOL } from './prompt.js';
@@ -21,7 +20,7 @@ import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = 'claude-opus-4-7';
 const MAX_TOKENS = 1024;
 
 // Mirrors REAL_PRICE_CATEGORIES in the frontend — categories with public list
