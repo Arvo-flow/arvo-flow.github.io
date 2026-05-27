@@ -522,8 +522,7 @@ const TestaFaktura = () => {
       : 'Avtalet är bevakat — Arvo påminner er inför kommande förnyelse.'
     : diagScore < 45
       ? 'Ni betalar markant mer än marknadspriset — stor besparingspotential.'
-      : diagScore < 65 ? 'Besparingspotential finns — ni ligger något över marknadssnitt.'
-      : diagScore < 80 ? 'Ni betalar ungefär branschsnitt. Marginalförbättringar möjliga.'
+      : diagScore < 80 ? 'Besparingspotential finns — ni betalar något över marknadssnitt.'
       : 'Ni har ett kostnadsoptimerat leverantörsnätverk.';
 
   const GAUGE_R = 26;
@@ -627,7 +626,7 @@ const TestaFaktura = () => {
                 >
                   {loading ? (
                     <>
-                      <Spinner /> Analyserar… (~10 sekunder)
+                      <Spinner /> Analyserar… (~20–30 sekunder)
                     </>
                   ) : (
                     <>

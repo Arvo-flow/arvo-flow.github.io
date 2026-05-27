@@ -824,6 +824,38 @@ export default async function handler(req, res) {
       });
     }
 
+    // Pre-compute like-for-like target so recommend() can give the AI correct
+    // pricing context before generating reasoning (price gap, not tier change).
+    let _lflTarget = null;
+    if (categorized.category === 'saas-productivity') {
+      const _LFL_TIER_RE = [
+        { key: 'e5',               re: /\bE5\b/i },
+        { key: 'e3',               re: /\bE3\b/i },
+        { key: 'business-premium', re: /business[\s-]premium/i },
+        { key: 'business-standard',re: /business[\s-]standard/i },
+        { key: 'business-basic',   re: /business[\s-]basic/i },
+      ];
+      const _lflTierBm    = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {};
+      const _lflLines     = (extracted.lineItems ?? []).filter(l => l.type === 'recurring_subscription');
+      const _lflPeriodTot = _lflLines.reduce((s, l) => s + (l.amount ?? 0), 0);
+      const _lflMult      = _lflPeriodTot > 0 ? extracted.annualCost / _lflPeriodTot : 12;
+      let _lflSuggested = 0, _lflOk = true, _lflDomKey = null, _lflDomAmt = 0;
+      for (const item of _lflLines) {
+        const m = _LFL_TIER_RE.find(p => p.re.test(item.description ?? ''));
+        if (m && _lflTierBm[m.key]) {
+          if (item.quantity == null) { _lflOk = false; break; }
+          const bm = _lflTierBm[m.key].arvoAnnual ?? _lflTierBm[m.key].msrpAnnual;
+          _lflSuggested += Math.round(bm * item.quantity * 12);
+          if ((item.amount ?? 0) > _lflDomAmt) { _lflDomAmt = item.amount; _lflDomKey = m.key; }
+        } else {
+          _lflSuggested += Math.round((item.amount ?? 0) * _lflMult);
+        }
+      }
+      if (_lflOk && _lflSuggested > 0) {
+        _lflTarget = { suggestedAnnualCost: _lflSuggested, dominantTierKey: _lflDomKey };
+      }
+    }
+
     const t2 = Date.now();
     const recommendation = await recommend({
       customer: { industry, employees: employeesNum, revenue: revenueNum },
@@ -849,6 +881,7 @@ export default async function handler(req, res) {
         saasIncludedFeatures: extracted.saasIncludedFeatures ?? null,
         description:          extracted.description ?? null,
         lineItems:            extracted.lineItems ?? null,
+        likeForLikeTarget:    _lflTarget,
       },
       categorized,
     });
@@ -1025,7 +1058,6 @@ export default async function handler(req, res) {
           : null,
         overageSavings: recommendation.overageSavings ?? null,
         annualBillingSaving: recommendation.annualBillingSaving ?? null,
-        savingsBreakdown:    recommendation.savingsBreakdown ?? null,
         nonPrimaryAnnual:    recommendation.nonPrimaryAnnual ?? 0,
         tierOptimizationSaving:   recommendation.tierOptimizationSaving   ?? null,
         tierOptimizationFromTier: recommendation.tierOptimizationFromTier ?? null,

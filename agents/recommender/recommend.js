@@ -290,6 +290,22 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
       }
     }
 
+    // Like-for-like context: pre-computed deterministic target passed from test-invoice.
+    // Tells the AI exactly what the override will set so reasoning matches the numbers shown.
+    if (invoice.likeForLikeTarget) {
+      const lfl = invoice.likeForLikeTarget;
+      const _LFL_TIER_LABELS = {
+        'business-premium': 'Business Premium', 'business-standard': 'Business Standard',
+        'business-basic': 'Business Basic', 'e3': 'E3', 'e5': 'E5',
+      };
+      const tierLabel = _LFL_TIER_LABELS[lfl.dominantTierKey] ?? lfl.dominantTierKey ?? 'nuvarande tier';
+      lines.push(`\n  LIKE-FOR-LIKE PRISSÄTTNING (deterministisk beräkning):`);
+      lines.push(`    Marknadspris SAMMA licenser (${tierLabel}-tier behålls): ${lfl.suggestedAnnualCost.toLocaleString('sv-SE')} kr/år`);
+      lines.push(`    → HELA besparingen kommer från PRISGAPET — kunden överprisas av sin nuvarande återförsäljare för exakt samma licenser.`);
+      lines.push(`    → KRITISKT: Nämn INTE tier-byte eller nedgradering i main reasoning. Tier-alternativ är valfri extraoptimering som visas separat i gränssnittet.`);
+      lines.push(`    → Reasoning ska förklara: Varför betalar kunden markant mer än marknadspriset för ${tierLabel}-licenser? Återförsäljarens marginal? Månadsavtal vs årsavtal?`);
+    }
+
     // Feature overlap detection (M365 / Google Workspace only)
     const features = invoice.saasIncludedFeatures ?? null;
     if (features?.length > 0) {
