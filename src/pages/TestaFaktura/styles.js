@@ -315,11 +315,11 @@ export const SavingsBlock = styled.div`
   }
   span.amount {
     display: block;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: clamp(42px, 7vw, 64px);
-    font-weight: 500;
+    font-weight: 700;
     line-height: 1.0;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
     font-feature-settings: "tnum";
   }
   span.unit {
@@ -459,10 +459,10 @@ export const NoSwitchBlock = styled.div`
   }
   .est-amount {
     display: block;
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(36px, 6vw, 52px);
-    font-weight: 500;
-    letter-spacing: -0.025em;
+    font-family: ${({ theme }) => theme.font.sans};
+    font-size: clamp(32px, 5vw, 44px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
     line-height: 1.0;
     color: ${({ theme }) => theme.color.ink};
     font-feature-settings: "tnum";
@@ -615,11 +615,11 @@ export const OptimizeBlock = styled.div`
   }
   .amount {
     display: block;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: clamp(42px, 7vw, 64px);
-    font-weight: 500;
+    font-weight: 700;
     line-height: 1.0;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
     color: ${({ theme }) => theme.color.brand};
     font-feature-settings: "tnum";
   }
@@ -815,10 +815,10 @@ export const ModalCard = styled.div`
 
     span.gate-saving-amount {
       display: block;
-      font-family: ${({ theme }) => theme.font.display};
+      font-family: ${({ theme }) => theme.font.sans};
       font-size: clamp(36px, 9vw, 52px);
-      font-weight: 500;
-      letter-spacing: -0.025em;
+      font-weight: 700;
+      letter-spacing: -0.03em;
       font-feature-settings: "tnum";
       line-height: 1.0;
       margin-bottom: 8px;
@@ -957,7 +957,7 @@ export const Reasoning = styled.div`
     margin-bottom: 8px;
   }
   p {
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 17px;
     line-height: 1.65;
     color: ${({ theme }) => theme.color.inkSoft};
@@ -980,7 +980,7 @@ export const LicenseOverageNote = styled.div`
     margin-bottom: 5px;
   }
   p {
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 14px;
     line-height: 1.65;
     color: ${({ theme }) => theme.color.inkSoft};
