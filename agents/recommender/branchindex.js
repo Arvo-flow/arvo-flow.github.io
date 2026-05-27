@@ -757,6 +757,18 @@ export const BRANCHINDEX = {
       tillverkning:{ micro: { median: 7200, p25: 4800 }, small: { median: 24000, p25: 15000 }, mid: { median:  72000, p25: 48000 } },
     },
   },
+
+  // Managed Workplace / WaaS: bundlat avtal (dator + licenser + helpdesk).
+  // recommend.js:s WaaS-gate returnerar requiresQuote:true innan benchmark används.
+  // Posten + tom matrix krävs för att getBenchmark() inte kastar TypeError och
+  // för att undvika no_benchmark-flödet i API:t.
+  'managed-workplace': {
+    source: 'requires_quote',
+    unit: 'kr/år',
+    note: 'Bundlat WaaS-avtal — automatisk benchmarking ej möjlig. Manuell genomgång av Arvo.',
+    alternatives: [],
+    matrix: {},
+  },
 };
 
 /**
