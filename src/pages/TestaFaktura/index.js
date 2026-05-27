@@ -1324,12 +1324,10 @@ const TestaFaktura = () => {
                   onClick={() => setTierOptOpen(o => !o)}
                   aria-expanded={tierOptOpen}
                 >
-                  <span className="acc-dot">⚡</span>
-                  <span className="acc-label">Spara ännu mer</span>
-                  <span className="acc-amount">
-                    +{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år
-                    <span className="acc-sub">netto · valfri extraoptimering</span>
-                  </span>
+                  <div className="acc-left">
+                    <span className="acc-kicker">⚡ Tier-optimering · valfri extraoptimering</span>
+                    <span className="acc-amount">+{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto</span>
+                  </div>
                   <span className={`acc-chevron${tierOptOpen ? ' open' : ''}`}>
                     <Icon name="chevron-right" size={20} stroke={2.5} />
                   </span>
@@ -1367,7 +1365,7 @@ const TestaFaktura = () => {
                     </div>
                     <p className="acc-disclaimer">
                       Passar bolag utan aktiv MDM-policy eller externt hanterat säkerhetsansvar.
-                      Är ni osäkra — behåll Premium och spara ändå {formatKr(result.recommendation.netSaving ?? 0)}&nbsp;kr/år.
+                      Är ni osäkra — behåll Premium och spara ändå {formatNum(result.recommendation.netSaving ?? 0)}&nbsp;kr/år.
                     </p>
                     <div className="acc-cta">
                       <Button as={Link} to="/connect" $variant="gradient" $size="sm">

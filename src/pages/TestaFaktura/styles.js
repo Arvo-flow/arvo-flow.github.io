@@ -947,72 +947,53 @@ export const LicenseOverageNote = styled.div`
 `;
 
 export const TierOptAccordion = styled.div`
-  margin-top: 16px;
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1.5px solid ${({ theme }) => theme.color.brand}44;
-  overflow: hidden;
+  margin-top: 20px;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
 
   .acc-trigger {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
     width: 100%;
-    padding: 13px 16px;
-    background: ${({ theme }) => theme.color.brandSoft};
+    padding: 16px 0 12px;
+    background: transparent;
     cursor: pointer;
     border: none;
     text-align: left;
-    transition: background 0.15s ease;
-    &:hover { background: ${({ theme }) => theme.color.brand}22; }
+    gap: 12px;
   }
-  .acc-dot {
-    flex-shrink: 0;
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: ${({ theme }) => theme.color.brand}22;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px;
-  }
-  .acc-label {
+  .acc-left {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
     flex: 1;
     min-width: 0;
-    font-size: 11.5px;
-    font-weight: 700;
+  }
+  .acc-kicker {
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: ${({ theme }) => theme.color.brand};
+    letter-spacing: 0.07em;
+    color: ${({ theme }) => theme.color.muted};
   }
   .acc-amount {
-    font-size: 13.5px;
+    font-size: 20px;
     font-weight: 700;
+    letter-spacing: -0.025em;
+    font-feature-settings: "tnum";
     color: ${({ theme }) => theme.color.brand};
-    white-space: nowrap;
-  }
-  .acc-sub {
-    display: block;
-    font-size: 10.5px;
-    font-weight: 400;
-    color: ${({ theme }) => theme.color.brandInk};
-    margin-top: 1px;
-    @media (min-width: 400px) {
-      display: inline;
-      margin-top: 0;
-      margin-left: 5px;
-    }
   }
   .acc-chevron {
     flex-shrink: 0;
-    margin-left: 10px;
     color: ${({ theme }) => theme.color.brand};
     transition: transform 0.2s ease;
-    display: flex; align-items: center;
+    display: flex;
+    align-items: center;
     &.open { transform: rotate(90deg); }
   }
 
   .acc-body {
-    padding: 20px 20px 22px;
-    background: ${({ theme }) => theme.color.surface};
-    border-top: 1px solid ${({ theme }) => theme.color.brand}22;
+    padding: 4px 0 22px;
   }
   .acc-intro {
     font-size: 14.5px;
