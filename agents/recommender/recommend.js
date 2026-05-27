@@ -551,6 +551,57 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
   };
 }
 
+// Managed Print click-rate benchmarks — Arvo-verifierade profilkontraktspriser (svensk marknad)
+const PRINT_BENCHMARKS = { bw: 0.065, color: 0.275 };
+
+function analyzeClickRates(lineItems, supplierName) {
+  const varItems = (lineItems ?? []).filter(l => l.type === 'variable_usage');
+  let bwRate = null, bwAmount = 0;
+  let colorRate = null, colorAmount = 0;
+
+  for (const item of varItems) {
+    if (!item.quantity || item.quantity === 0) continue;
+    const rate = (item.amount ?? 0) / item.quantity;
+    const desc = (item.description ?? '').toLowerCase();
+    if (/svartvit|bw|b&w|mono|svart|black/.test(desc)) {
+      bwRate = Math.round(rate * 10000) / 10000;
+      bwAmount = item.amount ?? 0;
+    } else if (/färg|color|colour/.test(desc)) {
+      colorRate = Math.round(rate * 10000) / 10000;
+      colorAmount = item.amount ?? 0;
+    }
+  }
+
+  if (!bwRate && !colorRate) return null;
+
+  const totalClick  = bwAmount + colorAmount;
+  const colorShare  = totalClick > 0 ? colorAmount / totalClick : 0;
+  const bwGapPct    = bwRate    && bwRate    > PRINT_BENCHMARKS.bw
+    ? Math.round((bwRate    - PRINT_BENCHMARKS.bw)    / bwRate    * 100) : null;
+  const colorGapPct = colorRate && colorRate > PRINT_BENCHMARKS.color
+    ? Math.round((colorRate - PRINT_BENCHMARKS.color) / colorRate * 100) : null;
+
+  const weightedGapPct = colorShare * (colorGapPct ?? 0) + (1 - colorShare) * (bwGapPct ?? 0);
+  const priceGapScore  = Math.max(5, Math.round(100 - weightedGapPct * 1.5));
+
+  const supplier = supplierName || 'Leverantören';
+  const parts = [];
+  if (colorRate && colorGapPct > 0) {
+    const rFmt  = colorRate.toFixed(2).replace('.', ',');
+    const bmFmt = PRINT_BENCHMARKS.color.toFixed(2).replace('.', ',');
+    const hiEnd = (PRINT_BENCHMARKS.color * 1.15).toFixed(2).replace('.', ',');
+    parts.push(`${supplier} fakturerar er ${rFmt} kr/sida för färgutskrifter — Arvo-verifierat marknadspris för professionella avtal är ${bmFmt}–${hiEnd} kr/sida. Ni betalar ${colorGapPct} % mer per färgsida än jämförbara bolag.`);
+  }
+  if (bwRate && bwGapPct > 0) {
+    const rFmt  = bwRate.toFixed(2).replace('.', ',');
+    const bmFmt = PRINT_BENCHMARKS.bw.toFixed(2).replace('.', ',');
+    parts.push(`Svartvita sidor kostar er ${rFmt} kr/sida — marknadspriset är ${bmFmt} kr/sida.`);
+  }
+  parts.push(`Klickpriset är ett kontraktspris och gäller oberoende av volym. Koppla Fortnox/Visma eller ladda upp fler månaders fakturor för att beräkna er exakta besparing per år.`);
+
+  return { bwRate, bwBenchmark: PRINT_BENCHMARKS.bw, bwGapPct, colorRate, colorBenchmark: PRINT_BENCHMARKS.color, colorGapPct, colorSharePct: Math.round(colorShare * 100), priceGapScore, reasoning: parts.join(' ') };
+}
+
 export async function recommend(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(
@@ -669,26 +720,33 @@ export async function recommend(input, opts = {}) {
   // data is too volatile to annualise. Return a requires_quote state immediately,
   // skipping the AI call entirely.
   if (input.categorized.category === 'skrivarleasing') {
-    const fixed    = input.invoice.recurringAmount   ?? 0;
-    const clicks   = input.invoice.variableCharges   ?? 0;
-    const total    = fixed + clicks;
+    const fixed      = input.invoice.recurringAmount ?? 0;
+    const clicks     = input.invoice.variableCharges ?? 0;
+    const total      = fixed + clicks;
     const clickRatio = total > 0 ? clicks / total : 0;
     if (clickRatio > 0.35) {
+      const clickRateAnalysis = analyzeClickRates(
+        input.invoice.lineItems,
+        input.categorized.normalizedSupplier,
+      );
+      const reasoning = clickRateAnalysis?.reasoning ??
+        'Era utskriftskostnader drivs av klickvolymer — Arvo behöver er printhistorik för att förhandla rätt klick-avtal.';
       return {
-        shouldSwitch:       false,
-        requiresQuote:      true,
-        recommendationType: 'requires_quote',
-        reasoning:          'Era utskriftskostnader drivs av hög volym på färgutskrifter, inte bara maskinhyran. Arvo behöver analysera ert snitt över 3–6 månader för att förhandla fram ett rättvist klick-avtal.',
-        suggestedSupplier:  null,
+        shouldSwitch:        false,
+        requiresQuote:       true,
+        recommendationType:  'requires_quote',
+        reasoning,
+        clickRateAnalysis:   clickRateAnalysis ?? null,
+        suggestedSupplier:   null,
         suggestedAnnualCost: null,
-        grossSaving:        null,
-        arvoFee:            null,
-        netSaving:          null,
-        confidence:         'low',
-        switchSteps:        [],
-        licenseOverage:     null,
-        overageSavings:     null,
-        optimizationSaving: null,
+        grossSaving:         null,
+        arvoFee:             null,
+        netSaving:           null,
+        confidence:          'low',
+        switchSteps:         [],
+        licenseOverage:      null,
+        overageSavings:      null,
+        optimizationSaving:  null,
         benchmark,
         usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
       };

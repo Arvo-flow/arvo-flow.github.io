@@ -503,8 +503,11 @@ const TestaFaktura = () => {
   const diagOvPct   = diagAnnual > 0 && diagSugg > 0 && diagSugg < diagAnnual
     ? Math.round((diagAnnual - diagSugg) / diagAnnual * 100)
     : 0;
-  const diagScoreRaw = Math.max(5, Math.round(100 - diagOvPct * 1.5));
-  const diagScore    = !result?.recommendation?.shouldSwitch ? Math.min(diagScoreRaw, 85) : diagScoreRaw;
+  const _clickPriceScore = result?.recommendation?.clickRateAnalysis?.priceGapScore ?? null;
+  const diagScoreRaw = _clickPriceScore ?? Math.max(5, Math.round(100 - diagOvPct * 1.5));
+  const diagScore    = _clickPriceScore != null
+    ? _clickPriceScore
+    : (!result?.recommendation?.shouldSwitch ? Math.min(diagScoreRaw, 85) : diagScoreRaw);
   const diagC       = diagScore < 45
     ? { dot: '#DC2626', num: '#DC2626', label: 'Kritisk',         labelClr: '#991B1B', txt: '#7F1D1D', bg: '#FEF2F2', border: 'rgba(220,38,38,.18)' }
     : diagScore < 65
@@ -878,63 +881,109 @@ const TestaFaktura = () => {
                 )}
               </NoSwitchBlock>
             ) : result.recommendation?.requiresQuote ? (
-              <NoSwitchBlock>
-                <strong>Kräver offert — volymdata behövs.</strong>
-                <p>{result.recommendation.reasoning}</p>
-                <QuoteLeadForm onSubmit={submitQuoteLead}>
-                  {quoteState === 'sent' ? (
-                    <div className="qlf-sent">
-                      <Icon name="check" size={16} stroke={2.5} />
-                      Tack! Bekräftelse är skickad till din e-post. Vi återkommer med offerter inom 1–2 arbetsdagar.
-                    </div>
-                  ) : (
-                    <>
-                      <div className="qlf-fields">
-                        <input
-                          type="text"
-                          placeholder="Ditt namn"
-                          value={quoteName}
-                          onChange={(e) => setQuoteName(e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Företag"
-                          value={quoteCompany}
-                          onChange={(e) => setQuoteCompany(e.target.value)}
-                        />
-                        <input
-                          className="qlf-full"
-                          type="email"
-                          placeholder="Din e-post (dit skickar vi offertsammanställningen)"
-                          required
-                          value={quoteEmail}
-                          onChange={(e) => setQuoteEmail(e.target.value)}
-                        />
+              <>
+                {result.recommendation?.clickRateAnalysis && (
+                  <>
+                    <ScoreDiag style={{ '--diag-color': diagC.dot }}>
+                      <div className="gauge-wrap">
+                        <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
+                          <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
+                          <circle
+                            cx="30" cy="30" r={GAUGE_R} fill="none"
+                            stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
+                            strokeDasharray={`${gaugeDash} ${GAUGE_C}`}
+                            style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1s ease' }}
+                          />
+                        </svg>
+                        <div className="gauge-num" style={{ color: diagC.dot }}>
+                          <span className="gauge-val">{diagScore}</span>
+                          <span className="gauge-denom">/100</span>
+                        </div>
                       </div>
-                      <label className="qlf-mandate">
-                        <input
-                          type="checkbox"
-                          checked={quoteMandateAccepted}
-                          onChange={(e) => setQuoteMandateAccepted(e.target.checked)}
-                        />
-                        <span>
-                          Jag ger <em>Arvo Flow</em> fullmakt att begära in, sammanställa och
-                          presentera offerter från leverantörer å mitt bolags vägnar.
-                        </span>
-                      </label>
-                      <Button
-                        type="submit"
-                        $variant="gradient"
-                        $size="sm"
-                        disabled={quoteState === 'submitting' || !quoteMandateAccepted}
-                        style={{ width: '100%', justifyContent: 'center' }}
-                      >
-                        {quoteState === 'submitting' ? 'Startar...' : 'Starta offertprocessen →'}
-                      </Button>
-                    </>
-                  )}
-                </QuoteLeadForm>
-              </NoSwitchBlock>
+                      <div className="diag-body">
+                        <div className="diag-top">
+                          <span className="diag-score-label">Arvo Score</span>
+                          <span className="diag-sep">·</span>
+                          <span className="diag-status">
+                            <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
+                            <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                          </span>
+                        </div>
+                        <p className="diag-text">{diagInsight}</p>
+                      </div>
+                    </ScoreDiag>
+                    <Reasoning>
+                      <span className="kicker">Vad analysen visar</span>
+                      <p>{result.recommendation.reasoning}</p>
+                    </Reasoning>
+                  </>
+                )}
+                <NoSwitchBlock>
+                  <strong>
+                    {result.recommendation?.clickRateAnalysis
+                      ? 'Beräkna exakt besparing per år'
+                      : 'Kräver offert — volymdata behövs.'}
+                  </strong>
+                  <p>
+                    {result.recommendation?.clickRateAnalysis
+                      ? 'Klickpriset är fastslaget. För att räkna ut vad ni sparar per år behöver Arvo er faktiska printvolym — ladda upp ytterligare fakturor eller koppla Fortnox/Visma.'
+                      : result.recommendation.reasoning}
+                  </p>
+                  <QuoteLeadForm onSubmit={submitQuoteLead}>
+                    {quoteState === 'sent' ? (
+                      <div className="qlf-sent">
+                        <Icon name="check" size={16} stroke={2.5} />
+                        Tack! Bekräftelse är skickad till din e-post. Vi återkommer med offerter inom 1–2 arbetsdagar.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="qlf-fields">
+                          <input
+                            type="text"
+                            placeholder="Ditt namn"
+                            value={quoteName}
+                            onChange={(e) => setQuoteName(e.target.value)}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Företag"
+                            value={quoteCompany}
+                            onChange={(e) => setQuoteCompany(e.target.value)}
+                          />
+                          <input
+                            className="qlf-full"
+                            type="email"
+                            placeholder="Din e-post (dit skickar vi offertsammanställningen)"
+                            required
+                            value={quoteEmail}
+                            onChange={(e) => setQuoteEmail(e.target.value)}
+                          />
+                        </div>
+                        <label className="qlf-mandate">
+                          <input
+                            type="checkbox"
+                            checked={quoteMandateAccepted}
+                            onChange={(e) => setQuoteMandateAccepted(e.target.checked)}
+                          />
+                          <span>
+                            Jag ger <em>Arvo Flow</em> fullmakt att begära in, sammanställa och
+                            presentera offerter från leverantörer å mitt bolags vägnar.
+                          </span>
+                        </label>
+                        <Button
+                          type="submit"
+                          $variant="gradient"
+                          $size="sm"
+                          disabled={quoteState === 'submitting' || !quoteMandateAccepted}
+                          style={{ width: '100%', justifyContent: 'center' }}
+                        >
+                          {quoteState === 'submitting' ? 'Startar...' : 'Starta offertprocessen →'}
+                        </Button>
+                      </>
+                    )}
+                  </QuoteLeadForm>
+                </NoSwitchBlock>
+              </>
             ) : isOptimize ? (
               <>
                 <SavingsBlock>
