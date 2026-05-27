@@ -1,8 +1,19 @@
 name: Nightly Price Monitor
 
-# Körs kl. 22:00 CET (21:00 UTC vintertid) / 23:00 CEST (sommartid).
-# Vid avvikelse: Haiku extraherar nytt pris → PR skapas → larmmail skickas.
-# Ingen kod pushas till main utan mänsklig granskning och merge.
+# ── Två jobb ───────────────────────────────────────────────────────────────────
+#
+#  1. price-audit  (varje push till main + feature-branches)
+#     Statisk analys, ingen nätverksåtkomst, kör på <5s.
+#     Blockerar merge om:
+#       - real-public pris i branchindex.js saknar price-monitor.mjs-check
+#       - source:'ej-verifierat' finns kvar i produktionskod
+#     → Fångar E3/E5-typen av bugg INNAN den når kunder.
+#
+#  2. monitor  (nattligt kl. 22:00 CET + manuell dispatch)
+#     Playwright-baserad live-kontroll mot leverantörssidor.
+#     Skapar PR + larmmail vid prisändring.
+#
+# ──────────────────────────────────────────────────────────────────────────────
 
 on:
   schedule:
@@ -11,7 +22,11 @@ on:
   push:
     branches:
       - main
+      - 'claude/**'
     paths:
+      - 'agents/recommender/branchindex.js'
+      - 'scripts/price-monitor.mjs'
+      - 'scripts/price-audit.mjs'
       - '.github/workflows/price-monitor.yml'
 
 permissions:
@@ -20,6 +35,29 @@ permissions:
   pull-requests: write
 
 jobs:
+  # ── Jobb 1: Statisk audit — kör på varje push ──────────────────────────────
+  price-audit:
+    name: Price data coverage audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run price audit (no network required)
+        run: node scripts/price-audit.mjs
+        # exit 1 om täckningslucka eller ej-verifierat-entry finns
+
+  # ── Jobb 2: Nattlig live-kontroll med Playwright ───────────────────────────
   monitor:
     name: Check benchmark prices
     runs-on: ubuntu-latest

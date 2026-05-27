@@ -158,6 +158,108 @@ const PRICE_CHECKS = [
     ],
   },
 
+  // Google Workspace — USD-priser, konverteras runtime (~10.42 SEK/USD maj 2026)
+  // Källa: workspace.google.com/pricing (verifierat via softwarepricingguide.com 2026-05-22)
+  // Starter $7, Standard $14, Plus $22 årsavtal
+  {
+    category: 'saas-productivity',
+    supplier: 'Google Workspace Business Starter',
+    url: 'https://workspace.google.com/pricing/',
+    checks: [
+      { name: 'Starter $7/user/mth annual', pattern: /\$\s*7[.,]0{0,2}\b|\b7\.00\s*\//  },
+    ],
+  },
+  {
+    category: 'saas-productivity',
+    supplier: 'Google Workspace Business Standard',
+    url: 'https://workspace.google.com/pricing/',
+    checks: [
+      { name: 'Standard $14/user/mth annual', pattern: /\$\s*14[.,]0{0,2}\b|\b14\.00\s*\// },
+    ],
+  },
+  {
+    category: 'saas-productivity',
+    supplier: 'Google Workspace Business Plus',
+    url: 'https://workspace.google.com/pricing/',
+    checks: [
+      { name: 'Plus $22/user/mth annual', pattern: /\$\s*22[.,]0{0,2}\b|\b22\.00\s*\// },
+    ],
+  },
+
+  // Slack — USD-priser (verifierat via slack.com/pricing 2026-05-22)
+  // Pro $7.25, Business+ $15 årsavtal
+  {
+    category: 'saas-productivity',
+    supplier: 'Slack Pro',
+    url: 'https://slack.com/pricing',
+    checks: [
+      { name: 'Pro $7.25/user/mth annual', pattern: /\$\s*7[.,][0-9]{1,2}\b/ },
+    ],
+  },
+  {
+    category: 'saas-productivity',
+    supplier: 'Slack Business+',
+    url: 'https://slack.com/pricing',
+    checks: [
+      { name: 'Business+ $15/user/mth annual', pattern: /\$\s*1[45][.,]?\d*\s*(?:\/|\bper\b)/ },
+    ],
+  },
+
+  // Zoom — USD-priser (verifierat via zoom.us/pricing 2026-05-22)
+  // Pro $13.33, Business $18.33 årsavtal
+  {
+    category: 'saas-productivity',
+    supplier: 'Zoom Pro',
+    url: 'https://zoom.us/pricing',
+    checks: [
+      { name: 'Pro $13.33/user/mth annual', pattern: /\$\s*1[23][.,]\d{1,2}\b/ },
+    ],
+  },
+  {
+    category: 'saas-productivity',
+    supplier: 'Zoom Business',
+    url: 'https://zoom.us/pricing',
+    checks: [
+      { name: 'Business $18.33/user/mth annual', pattern: /\$\s*1[78][.,]\d{1,2}\b/ },
+    ],
+  },
+
+  // Atlassian Jira — USD-priser (verifierat via atlassian.com/software/jira/pricing 2026-05-22)
+  // Jira Standard $8.15, Premium $16.18 (per user/mth, 1-10 users; skalar ned vid fler)
+  {
+    category: 'saas-productivity',
+    supplier: 'Atlassian Jira Standard',
+    url: 'https://www.atlassian.com/software/jira/pricing',
+    checks: [
+      { name: 'Jira Standard $8-9/user/mth', pattern: /\$\s*[89][.,]\d{1,2}/ },
+    ],
+  },
+  {
+    category: 'saas-productivity',
+    supplier: 'Atlassian Jira Premium',
+    url: 'https://www.atlassian.com/software/jira/pricing',
+    checks: [
+      { name: 'Jira Premium $15-18/user/mth', pattern: /\$\s*1[5-9][.,]\d{1,2}/ },
+    ],
+  },
+  // Atlassian Confluence — USD-priser (2026-05-22)
+  {
+    category: 'saas-productivity',
+    supplier: 'Atlassian Confluence Standard',
+    url: 'https://www.atlassian.com/software/confluence/pricing',
+    checks: [
+      { name: 'Confluence Standard $5-7/user/mth', pattern: /\$\s*[456][.,]\d{1,2}/ },
+    ],
+  },
+  {
+    category: 'saas-productivity',
+    supplier: 'Atlassian Confluence Premium',
+    url: 'https://www.atlassian.com/software/confluence/pricing',
+    checks: [
+      { name: 'Confluence Premium $10-13/user/mth', pattern: /\$\s*1[012][.,]\d{1,2}/ },
+    ],
+  },
+
   // Energiskatt — källverifiering, Skatteverket
   {
     category: 'el',

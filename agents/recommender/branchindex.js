@@ -86,6 +86,8 @@ export const BRANCHINDEX = {
 
   mobil: {
     source: 'real-public',
+    lastVerified: '2026-05-22',
+    verifiedVia: 'playwright',
     unit: 'kr/år',
     // Prices are per user/year — lib/benchmark.js scales by employee count before the LLM sees it.
     // Real Tele2 Företag listpriser maj 2026 (exkl. moms): Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth.
@@ -132,6 +134,8 @@ export const BRANCHINDEX = {
 
   bredband: {
     source: 'real-public',
+    lastVerified: '2026-05-22',
+    verifiedVia: 'playwright',
     unit: 'kr/år',
     note: 'Företagsfiber per kontorsadress. Verifierade listpriser maj 2026 (exkl. moms): Tele2 Företag 1200 Mbit 849 kr/mån (reguljärt), Bahnhof Företag 1 Gbit från 995 kr/mån. Priser adressberoende. Matrisen inkluderar 100–1 000 Mbit och speglar faktisk betald premie, inte lägsta tekniskt möjliga.',
     alternatives: [
@@ -473,6 +477,8 @@ export const BRANCHINDEX = {
 
   loneadmin: {
     source: 'real-public',
+    lastVerified: '2026-05-22',
+    verifiedVia: 'playwright',
     unit: 'kr/år',
     // Verifierat: Fortnox Lön listpris maj 2026 (exkl. moms): 199 kr/mån fast + 25 kr/anställd/mån.
     // p25 = Fortnox-priset per anställd/år vid representativt anställningsantal per bucket:
