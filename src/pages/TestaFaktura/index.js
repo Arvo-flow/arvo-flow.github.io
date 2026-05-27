@@ -279,8 +279,8 @@ const TestaFaktura = () => {
       } catch { /* använd befintligt token */ }
 
       setPhase('extract');
-      t1 = setTimeout(() => setPhase('categorize'), 3500);
-      t2 = setTimeout(() => setPhase('recommend'),  6500);
+      t1 = setTimeout(() => setPhase('categorize'), 6000);
+      t2 = setTimeout(() => setPhase('recommend'),  14000);
 
       const res = await fetch('/api/test-invoice', {
         method: 'POST',
@@ -626,7 +626,10 @@ const TestaFaktura = () => {
                 >
                   {loading ? (
                     <>
-                      <Spinner /> Analyserar… (~20–30 sekunder)
+                      <Spinner />{' '}
+                      {phase === 'extract'    ? 'Läser fakturan…'
+                       : phase === 'categorize' ? 'Identifierar leverantör…'
+                       : 'Jämför mot branschindex…'}
                     </>
                   ) : (
                     <>
