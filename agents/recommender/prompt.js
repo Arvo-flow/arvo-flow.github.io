@@ -117,21 +117,21 @@ Customer: IT-konsult, 10 anställda
 Categorized invoice:
   category: saas-productivity
   subType: microsoft-365
-  normalizedSupplier: CloudTech Solutions (Microsoft CSP)
+  normalizedSupplier: CloudTech Solutions (Microsoft-återförsäljare)
   currentAnnualCost: 70 200 kr
 Benchmark (byraer × small):
   median: 30 000 (3 000 kr/användare × 10), Arvo-volympris: 21 600 (2 160 kr/användare × 10)
-  alternativ: Microsoft 365 Business Standard (Arvo CSP), Google Workspace Business Standard
+  alternativ: Microsoft 365 Business Standard, Google Workspace Business Standard
 Rekommendation:
   shouldSwitch: true
-  suggestedSupplier: "Microsoft 365 Business Standard (Arvo CSP)"
+  suggestedSupplier: "Microsoft 365 Business Standard"
   suggestedAnnualCost: 21600
   savingPerYear: 48600
   overpaymentPercent: 134
   confidence: "high"
   reasoning: "M365 E5 är byggt för storföretag med tunga compliance- och SIEM-krav — funktioner ett 10-personers konsultbolag sällan behöver. Business Standard ger Teams, SharePoint och Exchange med 1 TB OneDrive — exakt samma vardag, väsentligt lägre kostnad."
   switchSteps: [
-    "Vi förhandlar Business Standard-avtal via Arvo CSP-partner",
+    "Vi förhandlar Microsoft årsavtal för Business Standard",
     "Du signerar med BankID — ingen datatransport krävs",
     "Vi koordinerar nedgradering inför nästa licensperiod"
   ]

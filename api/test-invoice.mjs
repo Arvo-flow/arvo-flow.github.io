@@ -948,6 +948,15 @@ export default async function handler(req, res) {
       }
     }
 
+    // Strip any residual "Arvo CSP" language from AI-generated reasoning.
+    if (recommendation.reasoning) {
+      recommendation.reasoning = recommendation.reasoning
+        .replace(/\bArvo\s+CSP[-\s]?partner\b/gi, 'Microsoft årsavtal')
+        .replace(/\bArvo\s+CSP\b/gi, 'Microsoft årsavtal')
+        .replace(/\bvia\s+CSP\b/gi, 'via Microsoft årsavtal')
+        .replace(/\bCSP[-\s]?avtal\b/gi, 'Microsoft årsavtal');
+    }
+
     // Kombinera primär och sekundär besparing till en samlad nettosiffra.
     const primaryGross   = recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0;
     const secondaryGross = secondarySaving?.grossSaving ?? 0;

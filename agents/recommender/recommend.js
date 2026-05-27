@@ -587,8 +587,10 @@ export async function recommend(input, opts = {}) {
   if (['saas-productivity', 'saas-devtools'].includes(input.categorized.category)) {
     const _lineItems = input.invoice?.lineItems ?? [];
     const dominantTierKey = getDominantSaasTierKey(_lineItems, licenseType, input.invoice?.saasProductFamily ?? null);
-    const recommendedTierKey = dominantTierKey ? (SAAS_DOWNGRADE_TARGET[dominantTierKey] ?? dominantTierKey) : null;
-    saasLicenseTierKey = dominantTierKey;  // dominant tier — used for tierOptimizationSaving guard
+    // AI context uses dominant tier (like-for-like): benchmarks the customer against the SAME tier
+    // at Microsoft public list price. No downgrade in the AI's pricing context.
+    // SAAS_DOWNGRADE_TARGET is only used for the advisory tierOptimizationSaving calculation.
+    saasLicenseTierKey = dominantTierKey;
 
     // Non-license add-ons (backup, security, etc.) are pass-throughs:
     // excluded from the savings calculation but added back to suggestedAnnualCost.
@@ -603,8 +605,8 @@ export async function recommend(input, opts = {}) {
       saasNonLicenseAddonAnnual = Math.round(_nonTierMonthly * 12);
     }
 
-    const rawTierBm = recommendedTierKey
-      ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[recommendedTierKey]
+    const rawTierBm = dominantTierKey
+      ? BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.[dominantTierKey]
       : null;
 
     if (rawTierBm) {
