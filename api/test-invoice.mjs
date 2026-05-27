@@ -1062,6 +1062,7 @@ export default async function handler(req, res) {
         tierOptimizationSaving:   recommendation.tierOptimizationSaving   ?? null,
         tierOptimizationFromTier: recommendation.tierOptimizationFromTier ?? null,
         tierOptimizationToTier:   recommendation.tierOptimizationToTier   ?? null,
+        clickRateAnalysis:        recommendation.clickRateAnalysis        ?? null,
       },
       timing,
     };
