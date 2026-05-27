@@ -1,0 +1,149 @@
+name: Nightly AI Drift Monitor
+
+# ── Layer 5 i Defense-in-Depth ────────────────────────────────────────────────
+#
+# Kör varje natt mot RIKTIGA Anthropic-modeller.
+# Fångar upp tyst modell-drift: Haiku/Sonnet beter sig annorlunda utan att
+# vi ändrat något i koden, eller vår system-prompt-ändring gav oväntad effekt.
+#
+# Kostnad: ~0,012 USD/natt (4 fixtures × Haiku + Sonnet, ej Opus).
+#
+# Kör INTE på varje push — det är CI-jobbet (Layer 1) som gäller för snabb
+# feedback. Drift-testet kräver verkliga API-anrop och är för dyrt/långsamt
+# att köra vid varje commit.
+#
+# Fixtures som testas (konfigureras i job-steget nedan):
+#   microsoft   — saas-productivity, licenseOverage, seatCount
+#   telia       — mobil, shouldSwitch
+#   ricoh       — skrivarleasing, requiresQuote
+#   bredband-1-baseline — bredband, speed-tier
+#
+# ── Uppdatera golden-data ─────────────────────────────────────────────────────
+# Kör manuellt lokalt:  node scripts/ai-drift.mjs --update
+# Commita sedan:        git add test-snapshots/ && git commit -m "update golden"
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: '0 2 * * *'    # 02:00 UTC = 03:00/04:00 Stockholm (lågtrafik)
+  workflow_dispatch:
+    inputs:
+      fixtures:
+        description: 'Kommaseparerade fixture-namn (tomt = alla med golden-block)'
+        required: false
+        default: 'microsoft,telia,ricoh,bredband-1-baseline'
+
+permissions:
+  issues: write
+
+jobs:
+  drift-check:
+    name: AI drift detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run AI drift check
+        id: drift
+        run: |
+          FIXTURES="${{ github.event.inputs.fixtures }}"
+          if [ -n "$FIXTURES" ]; then
+            node scripts/ai-drift.mjs --fixtures="$FIXTURES"
+          else
+            node scripts/ai-drift.mjs --fixtures="microsoft,telia,ricoh,bredband-1-baseline"
+          fi
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Create or update drift issue
+        if: steps.drift.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toLocaleString('sv-SE', {
+              timeZone: 'Europe/Stockholm',
+            });
+
+            // Säkerställ etikett
+            await github.rest.issues.createLabel({
+              owner: context.repo.owner, repo: context.repo.repo,
+              name: 'ai-drift',
+              color: 'f59e0b',
+              description: 'AI-modellens beteende avviker från golden snapshots',
+            }).catch(e => {
+              if (!e.message?.includes('already_exists') && e.status !== 422)
+                console.log('Label-fel:', e.message);
+            });
+
+            const body = [
+              '## ⚠️ AI Drift detekterad — ' + date,
+              '',
+              '> Categorize- eller recommend-modellen returnerar värden som avviker',
+              '> från sparade golden snapshots på affärskritiska fält.',
+              '',
+              '### Berörda fält',
+              '',
+              '_Se Actions-loggen för exakta fält och värden._',
+              '',
+              '| Logg | Länk |',
+              '|------|------|',
+              '| GitHub Actions-körning | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |',
+              '',
+              '### Möjliga orsaker',
+              '',
+              '- Anthropic har uppdaterat Haiku 4.5 eller Sonnet 4.6 (kolla release notes)',
+              '- En system-prompt-ändring gav oväntad bieffekt',
+              '- branchindex.js ändrades och påverkar beräknade besparingar (>5 %)',
+              '',
+              '### Åtgärd',
+              '',
+              '1. Granska Actions-loggen ovan — identifiera vilket fält som driftade',
+              '2. Verifiera om beteendet är korrekt eller ett modellfel',
+              '3. **Om korrekt nytt beteende:** uppdatera golden-data:',
+              '   ```bash',
+              '   node scripts/ai-drift.mjs --update',
+              '   git add test-snapshots/',
+              '   git commit -m "update golden: <förklaring>"',
+              '   ```',
+              '4. **Om modellfel:** rapportera till Anthropic och ev. lås modell-version',
+              '',
+              '---',
+              '_Skapad av [Nightly AI Drift Monitor](.github/workflows/ai-drift.yml)_',
+            ].join('\n');
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'ai-drift', per_page: 5,
+            });
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: '### Fortfarande aktiv — ' + date + '\n\nSe [Actions-körning](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) för detaljer.',
+              });
+              console.log('Uppdaterade ärende #' + existing.data[0].number);
+            } else {
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: '⚠️ AI Drift: ' + date,
+                body, labels: ['ai-drift'],
+              });
+              console.log('Skapade ärende #' + issue.number);
+            }
+
+      - name: Drift check passed
+        if: steps.drift.outcome == 'success'
+        run: echo "✅ Ingen AI-drift — alla golden snapshots matchar"

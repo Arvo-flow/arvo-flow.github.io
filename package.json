@@ -35,7 +35,9 @@
     "test:invoice": "node agents/test-invoice/cli.js",
     "db:migrate": "node --env-file=.env scripts/migrate.mjs",
     "test:algo": "node --test tests/run.mjs",
-    "test:prop": "node tests/property.mjs"
+    "test:prop": "node tests/property.mjs",
+    "test:ai-drift": "node scripts/ai-drift.mjs",
+    "capture:golden": "node scripts/ai-drift.mjs --update"
   },
   "eslintConfig": {
     "extends": "react-app"
