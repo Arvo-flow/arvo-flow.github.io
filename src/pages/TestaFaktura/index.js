@@ -10,9 +10,17 @@ import {
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
-  Reasoning, LicenseOverageNote, NextSteps, ScoreDiag, EmailGate,
+  Reasoning, LicenseOverageNote, TierOptAccordion, NextSteps, ScoreDiag, EmailGate,
   ModalOverlay, ModalCard, QuoteLeadForm,
 } from './styles';
+
+const TIER_DISPLAY = {
+  'business-premium':  'Business Premium',
+  'business-standard': 'Business Standard',
+  'business-basic':    'Business Basic',
+  'e3': 'E3',
+  'e5': 'E5',
+};
 
 const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 
@@ -185,6 +193,7 @@ const TestaFaktura = () => {
   const [modalEmailState, setModalEmailState] = useState('idle'); // idle | submitting | sent
   const [apiToken, setApiToken] = useState(null);
   const [gateOpen, setGateOpen] = useState(false);
+  const [tierOptOpen, setTierOptOpen] = useState(false);
   const [gateReason, setGateReason] = useState('quota'); // 'saving' | 'quota'
   const [gateEmail, setGateEmail] = useState('');
   const [gateSubmitting, setGateSubmitting] = useState(false);
@@ -1307,6 +1316,68 @@ const TestaFaktura = () => {
                 </LicenseOverageNote>
               ) : null;
             })()}
+
+            {result.categorized?.category === 'saas-productivity' &&
+             (result.recommendation?.tierOptimizationSaving ?? 0) > 0 && (
+              <TierOptAccordion>
+                <button
+                  className="acc-trigger"
+                  onClick={() => setTierOptOpen(o => !o)}
+                  aria-expanded={tierOptOpen}
+                >
+                  <span className="acc-dot">⚡</span>
+                  <span className="acc-label">Tier-optimering (valfritt)</span>
+                  <span className="acc-amount">
+                    +{formatKr(result.recommendation.tierOptimizationSaving)}&nbsp;kr/år extra
+                  </span>
+                  <span className={`acc-chevron${tierOptOpen ? ' open' : ''}`}>
+                    <Icon name="chevron-down" size={15} stroke={2.2} />
+                  </span>
+                </button>
+                {tierOptOpen && (
+                  <div className="acc-body">
+                    <p className="acc-intro">
+                      Ni kan spara ytterligare{' '}
+                      <strong>{formatKr(result.recommendation.tierOptimizationSaving)}&nbsp;kr/år</strong>{' '}
+                      (brutto, innan Arvos arvode) genom att byta{' '}
+                      från&nbsp;<strong>{TIER_DISPLAY[result.recommendation.tierOptimizationFromTier] ?? result.recommendation.tierOptimizationFromTier}</strong>{' '}
+                      till&nbsp;<strong>{TIER_DISPLAY[result.recommendation.tierOptimizationToTier] ?? result.recommendation.tierOptimizationToTier}</strong>.
+                    </p>
+                    <div className="acc-row">
+                      <span className="acc-row-icon" style={{ color: '#1B7A6E' }}>
+                        <Icon name="check-circle" size={15} stroke={2.5} />
+                      </span>
+                      <div className="acc-row-content">
+                        <div className="acc-row-head keeps">Vad ni behåller</div>
+                        <p className="acc-row-text">
+                          Teams, Exchange, desktop Office, SharePoint, 1&nbsp;TB&nbsp;OneDrive/användare
+                        </p>
+                      </div>
+                    </div>
+                    <div className="acc-row">
+                      <span className="acc-row-icon" style={{ color: '#A8761A' }}>
+                        <Icon name="alert-triangle" size={15} stroke={2.5} />
+                      </span>
+                      <div className="acc-row-content">
+                        <div className="acc-row-head loses">Vad ni tappar</div>
+                        <p className="acc-row-text">
+                          Intune MDM (centraliserad enhetshantering) och Defender for Business (endpoint-säkerhet)
+                        </p>
+                      </div>
+                    </div>
+                    <p className="acc-disclaimer">
+                      Passar bolag utan aktiv MDM-policy eller externt hanterat säkerhetsansvar.
+                      Är ni osäkra — behåll Premium och spara ändå {formatKr(result.recommendation.netSaving ?? 0)}&nbsp;kr/år.
+                    </p>
+                    <div className="acc-cta">
+                      <Button as={Link} to="/connect" $variant="gradient" $size="sm">
+                        Inkludera i bytet →
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </TierOptAccordion>
+            )}
 
           </Card>
           <NextSteps>

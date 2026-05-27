@@ -948,6 +948,106 @@ export const LicenseOverageNote = styled.div`
   }
 `;
 
+export const TierOptAccordion = styled.div`
+  margin-top: 16px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  border: 1.5px solid ${({ theme }) => theme.color.warning}44;
+  overflow: hidden;
+
+  .acc-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 13px 16px;
+    background: ${({ theme }) => theme.color.warningSoft}66;
+    cursor: pointer;
+    border: none;
+    text-align: left;
+    transition: background 0.15s ease;
+    &:hover { background: ${({ theme }) => theme.color.warningSoft}99; }
+  }
+  .acc-dot {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.warning}1A;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .acc-label {
+    flex: 1;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: ${({ theme }) => theme.color.warning};
+  }
+  .acc-amount {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.warning};
+    margin-right: 6px;
+  }
+  .acc-chevron {
+    flex-shrink: 0;
+    color: ${({ theme }) => theme.color.warning}AA;
+    transition: transform 0.2s ease;
+    display: flex; align-items: center;
+    &.open { transform: rotate(180deg); }
+  }
+
+  .acc-body {
+    padding: 20px 20px 22px;
+    background: #fff;
+    border-top: 1px solid ${({ theme }) => theme.color.warning}22;
+  }
+  .acc-intro {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: ${({ theme }) => theme.color.ink};
+    margin: 0 0 18px;
+  }
+  .acc-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .acc-row-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .acc-row-content {}
+  .acc-row-head {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    margin-bottom: 3px;
+    &.keeps { color: ${({ theme }) => theme.color.brand}; }
+    &.loses { color: ${({ theme }) => theme.color.warning}; }
+  }
+  .acc-row-text {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: ${({ theme }) => theme.color.inkSoft};
+    margin: 0;
+  }
+  .acc-disclaimer {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid ${({ theme }) => theme.color.warning}1A;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #7A8F89;
+    font-style: italic;
+  }
+  .acc-cta {
+    margin-top: 18px;
+    text-align: center;
+  }
+`;
+
 export const NextSteps = styled.div`
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};

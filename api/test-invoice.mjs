@@ -917,6 +917,34 @@ export default async function handler(req, res) {
         if (_dominantKey && _tierLabels[_dominantKey]) {
           recommendation.suggestedSupplier = _tierLabels[_dominantKey];
         }
+
+        // Advisory: how much more could they save by also downgrading tier?
+        const _DG_MAP = { 'business-premium': 'business-standard', 'e3': 'business-premium', 'e5': 'e3' };
+        const _dgToKey = _dominantKey ? _DG_MAP[_dominantKey] : null;
+        if (_dgToKey && _dgToKey !== _dominantKey) {
+          let _dgSuggested = 0;
+          let _dgOk = true;
+          for (const item of _lines) {
+            const m = _TIER_RE.find(p => p.re.test(item.description ?? ''));
+            if (m && _tierBm[m.key]) {
+              const dgKey = _DG_MAP[m.key] ?? m.key;
+              const dgBm  = _tierBm[dgKey];
+              if (!dgBm) { _dgOk = false; break; }
+              _dgSuggested += Math.round((dgBm.arvoAnnual ?? dgBm.msrpAnnual) * item.quantity * 12);
+            } else {
+              _dgSuggested += Math.round((item.amount ?? 0) * _billMult);
+            }
+          }
+          if (_dgOk && _dgSuggested > 0) {
+            const _dgTotal    = Math.max(0, _annualCost - _dgSuggested);
+            const _additional = Math.max(0, _dgTotal - recommendation.savingPerYear);
+            if (_additional > 0) {
+              recommendation.tierOptimizationSaving   = _additional;
+              recommendation.tierOptimizationFromTier = _dominantKey;
+              recommendation.tierOptimizationToTier   = _dgToKey;
+            }
+          }
+        }
       }
     }
 
@@ -990,6 +1018,9 @@ export default async function handler(req, res) {
         annualBillingSaving: recommendation.annualBillingSaving ?? null,
         savingsBreakdown:    recommendation.savingsBreakdown ?? null,
         nonPrimaryAnnual:    recommendation.nonPrimaryAnnual ?? 0,
+        tierOptimizationSaving:   recommendation.tierOptimizationSaving   ?? null,
+        tierOptimizationFromTier: recommendation.tierOptimizationFromTier ?? null,
+        tierOptimizationToTier:   recommendation.tierOptimizationToTier   ?? null,
       },
       timing,
     };
