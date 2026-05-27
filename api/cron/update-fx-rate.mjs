@@ -1,11 +1,10 @@
 // api/cron/update-fx-rate.mjs
 // Vercel Cron Job — kör dagligen kl 06:00 UTC.
-// Hämtar live SEK/USD-kurs och sparar i Vercel KV så att
-// recommend() alltid har en färsk kurs att läsa (< 1 ms KV-lookup).
+// Hämtar live SEK/USD och SEK/EUR och sparar i Vercel KV.
 //
 // vercel.json: { "crons": [{ "path": "/api/cron/update-fx-rate", "schedule": "0 6 * * *" }] }
 
-import { fetchLiveSekRate } from '../../agents/recommender/pricing.js';
+import { fetchLiveSekRate, fetchLiveEurSekRate } from '../../agents/recommender/pricing.js';
 
 export const config = { maxDuration: 15 };
 
@@ -20,17 +19,15 @@ export default async function handler(req, res) {
 
   try {
     const { kv } = await import('@vercel/kv');
-    const result = await fetchLiveSekRate();
+    const [usd, eur] = await Promise.all([fetchLiveSekRate(), fetchLiveEurSekRate()]);
 
-    await kv.set('fx:USD:SEK', {
-      rate:      result.rate,
-      source:    result.source,
-      date:      result.date,
-      fetchedAt: new Date().toISOString(),
-    });
+    await Promise.all([
+      kv.set('fx:USD:SEK', { rate: usd.rate, source: usd.source, date: usd.date, fetchedAt: new Date().toISOString() }),
+      kv.set('fx:EUR:SEK', { rate: eur.rate, source: eur.source, date: eur.date, fetchedAt: new Date().toISOString() }),
+    ]);
 
-    console.log(`[cron/update-fx-rate] SEK/USD = ${result.rate} (${result.source}, ${result.date})`);
-    return res.status(200).json({ ok: true, rate: result.rate, source: result.source });
+    console.log(`[cron/update-fx-rate] SEK/USD = ${usd.rate} (${usd.source})  SEK/EUR = ${eur.rate} (${eur.source})`);
+    return res.status(200).json({ ok: true, usd: usd.rate, eur: eur.rate });
   } catch (err) {
     console.error('[cron/update-fx-rate] Fel:', err.message);
     return res.status(500).json({ ok: false, error: err.message });

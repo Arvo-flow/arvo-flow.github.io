@@ -870,10 +870,9 @@ const TestaFaktura = () => {
                   </>
                 ) : result.reason === 'foreign_currency' ? (
                   <>
-                    <strong>Fakturan är i {result.currency} — inte SEK.</strong>
+                    <strong>Fakturan är i {result.currency} — kontakta oss.</strong>
                     <p>
-                      Vår prisanalys är kalibrerad mot svenska kronor. Ladda upp en SEK-faktura,
-                      eller kontakta oss om ni har leverantörer som fakturerar i utländsk valuta.
+                      Vi stödjer SEK och EUR. För övriga valutor, kontakta oss så hjälper vi er manuellt.
                     </p>
                   </>
                 ) : result.reason === 'no_benchmark' ? (
@@ -1255,6 +1254,20 @@ const TestaFaktura = () => {
                 <dt>Återkommande</dt>
                 <dd>{result.extracted.recurring ? 'Ja (abonnemang / premie)' : 'Nej'}</dd>
               </div>
+              {result.extracted.originalCurrency === 'EUR' && (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <dt>Valutakonvertering</dt>
+                  <dd>
+                    <small>
+                      Fakturan är i EUR — konverterad till SEK med kursen {result.extracted.fxRate?.toFixed(2)} SEK/EUR
+                      {result.extracted.fxSource && result.extracted.fxSource !== 'fallback'
+                        ? ` (Riksbanken/ECB ${result.extracted.fxDate ?? ''})`
+                        : ' (fallback-kurs)'}.
+                      Alla belopp ovan är i SEK.
+                    </small>
+                  </dd>
+                </div>
+              )}
               {(() => {
                 const hw = detectHardwareInstallments(result.extracted?.lineItems);
                 if (!hw.length) return null;

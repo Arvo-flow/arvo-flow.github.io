@@ -17,6 +17,7 @@ import { BRANCHINDEX, INDUSTRY_SEGMENT_MAP, bucketForSize } from '../agents/reco
 import { getKv } from '../lib/kv.js';
 import { getDb } from '../lib/db.js';
 import { computeSecondarySaving } from '../lib/secondary-savings.js';
+import { getEurSekRate, FALLBACK_RATE_EUR_SEK } from '../agents/recommender/pricing.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
@@ -472,8 +473,32 @@ export default async function handler(req, res) {
       });
     }
 
-    // Guard: utländsk valuta — systemet är kalibrerat mot SEK-fakturor
-    if (extracted.currency && extracted.currency !== 'SEK') {
+    // Guard: utländsk valuta
+    // EUR → konverteras till SEK med live Riksbanken/ECB-kurs och fortsätter pipeline.
+    // USD → hanteras redan av recommend.js via live-kurs (Atlassian, Zoom, Slack etc.).
+    // Övriga valutor → review_queue.
+    if (extracted.currency === 'EUR') {
+      const kv = getKv();
+      const eurFx = await getEurSekRate(kv).catch(() => ({ rate: FALLBACK_RATE_EUR_SEK, source: 'fallback', date: null }));
+      const sekPerEur = eurFx.rate ?? FALLBACK_RATE_EUR_SEK;
+      const cvt = (v) => (v != null ? Math.round(v * sekPerEur) : null);
+      extracted.originalCurrency    = 'EUR';
+      extracted.fxRate              = sekPerEur;
+      extracted.fxSource            = eurFx.source;
+      extracted.fxDate              = eurFx.date;
+      extracted.currency            = 'SEK';
+      extracted.amount              = cvt(extracted.amount);
+      extracted.recurringAmount     = cvt(extracted.recurringAmount);
+      extracted.variableCharges     = cvt(extracted.variableCharges);
+      extracted.oneTimeFees         = cvt(extracted.oneTimeFees);
+      extracted.annualCost          = cvt(extracted.annualCost);
+      extracted.pricePerSeatMonthly = extracted.pricePerSeatMonthly != null ? Math.round(extracted.pricePerSeatMonthly * sekPerEur) : null;
+      extracted.lineItems           = (extracted.lineItems ?? []).map(li => ({
+        ...li,
+        amount: li.amount != null ? Math.round(li.amount * sekPerEur) : null,
+      }));
+      console.log(`[test-invoice] EUR→SEK konvertering: rate=${sekPerEur} source=${eurFx.source}`);
+    } else if (extracted.currency && !['SEK', 'USD'].includes(extracted.currency)) {
       notifyReviewQueue(extracted, `[Utländsk valuta] ${extracted.currency}`).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue (currency) threw:', err.message)
       );

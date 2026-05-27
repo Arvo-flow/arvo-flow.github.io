@@ -243,6 +243,10 @@ const FIXTURE_ASSERTIONS = {
       label: 'WaaS-paket kan inte benchmarkas automatiskt → requiresQuote=true (förhindrar falskt Kritisk-larm)' },
     { path: 'recommendation.shouldSwitch',  op: 'eq', val: false },
   ],
+  'global-crm-eur': [
+    { path: 'categorized.category', op: 'eq', val: 'saas-crm',
+      label: 'EUR-faktura från irländsk CRM-leverantör ska kategoriseras saas-crm' },
+  ],
 };
 
 // ── Hjälpfunktioner ────────────────────────────────────────────────────────────
