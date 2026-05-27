@@ -1,0 +1,127 @@
+name: E2E Pipeline Test
+
+# ── Kör categorize + recommend mot committade JSON-fixtures ───────────────────
+#
+# Testar att pipelinen ger rätt affärskritiska svar för 24 kända fakturor.
+# Inga PDF:er behövs — fungerar direkt från GitHub Actions UI på mobilen.
+#
+# Kostnad: ~0,02 USD per körning (Haiku + Sonnet, ej Opus).
+#
+# Triggas:
+#   - Manuellt från GitHub Actions UI (workflow_dispatch)
+#   - Automatiskt varje måndag 07:00 UTC
+#
+# Kör från mobilen:
+#   GitHub → Actions → "E2E Pipeline Test" → Run workflow → Run
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'    # Varje måndag 07:00 UTC = 08:00/09:00 Stockholm
+  workflow_dispatch:
+    inputs:
+      filter:
+        description: 'Filtrera fixtures (t.ex. "microsoft" eller "ricoh", tomt = alla)'
+        required: false
+        default: ''
+
+permissions:
+  issues: write
+
+jobs:
+  e2e-fixture-test:
+    name: E2E pipeline test (fixtures)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run e2e fixture test
+        id: e2e
+        run: |
+          FILTER="${{ github.event.inputs.filter }}"
+          if [ -n "$FILTER" ]; then
+            node scripts/e2e-test.mjs --from-fixtures "$FILTER"
+          else
+            node scripts/e2e-test.mjs --from-fixtures
+          fi
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Create or update issue on failure
+        if: steps.e2e.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm' });
+
+            await github.rest.issues.createLabel({
+              owner: context.repo.owner, repo: context.repo.repo,
+              name: 'pipeline-regression', color: 'dc2626',
+              description: 'E2E pipeline-test misslyckades på affärskritisk assertion',
+            }).catch(e => {
+              if (!e.message?.includes('already_exists') && e.status !== 422)
+                console.log('Label-fel:', e.message);
+            });
+
+            const body = [
+              '## 🔴 E2E Pipeline-regression — ' + date,
+              '',
+              '> En eller flera affärskritiska assertions misslyckades.',
+              '> Det kan betyda att categorize- eller recommend-modellen',
+              '> returnerar fel kategori, fel shouldSwitch eller fel requiresQuote.',
+              '',
+              '| Logg | Länk |',
+              '|------|------|',
+              '| GitHub Actions-körning | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |',
+              '',
+              '### Möjliga orsaker',
+              '- AI-modellen ger fel kategori för en känd faktura',
+              '- `requiresQuote`-logiken är bruten (Managed Print-gate)',
+              '- `shouldSwitch` returneras fel för känd leverantör',
+              '- Regression i recommend.js eller categorize.js',
+              '',
+              '### Åtgärd',
+              '1. Granska Actions-loggen — se vilket assertion som failade',
+              '2. Kör lokalt: `node scripts/e2e-test.mjs --from-fixtures <fixture-namn>`',
+              '3. Fixa koden eller uppdatera assertion om beteendet är korrekt',
+              '',
+              '---',
+              '_Skapad av [E2E Pipeline Test](.github/workflows/e2e.yml)_',
+            ].join('\n');
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'pipeline-regression', per_page: 5,
+            });
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: '### Fortfarande aktiv — ' + date + '\n\nSe [Actions-körning](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).',
+              });
+              console.log('Uppdaterade ärende #' + existing.data[0].number);
+            } else {
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: '🔴 E2E Pipeline-regression: ' + date,
+                body, labels: ['pipeline-regression'],
+              });
+              console.log('Skapade ärende #' + issue.number);
+            }
+
+      - name: All assertions passed
+        if: steps.e2e.outcome == 'success'
+        run: echo "✅ Alla E2E pipeline-assertions godkända"
