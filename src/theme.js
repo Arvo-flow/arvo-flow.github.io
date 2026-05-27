@@ -30,7 +30,7 @@ const theme = {
   },
 
   font: {
-    display: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    display: "'Playfair Display', Georgia, 'Times New Roman', serif",
     sans: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
   },

@@ -167,7 +167,7 @@ export const PreviewHead = styled.div`
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
   h4 {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 13px;
     font-weight: 600;
     color: ${({ theme }) => theme.color.muted};
@@ -194,11 +194,11 @@ export const SavingBig = styled.div`
     margin-bottom: 4px;
   }
   div.amount {
-    font-family: ${({ theme }) => theme.font.sans};
-    font-size: 56px;
-    font-weight: 700;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: clamp(40px, 6vw, 60px);
+    font-weight: 500;
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
     color: ${({ theme }) => theme.color.ink};
     font-feature-settings: "tnum";
     em { font-style: italic; color: ${({ theme }) => theme.color.brand}; font-weight: 400; }
@@ -527,7 +527,7 @@ export const HowCard = styled.div`
   }
 
   span.step {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 15px;
     font-style: italic;
     color: ${({ theme }) => theme.color.brand};
@@ -685,7 +685,7 @@ export const Quote = styled.figure`
   position: relative;
 
   blockquote {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 26px;
     font-weight: 500;
     line-height: 1.35;
@@ -1056,7 +1056,7 @@ export const FaqItem = styled.details`
     justify-content: space-between;
     align-items: center;
     gap: 24px;
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 22px;
     font-weight: 600;
     line-height: 1.3;
@@ -1066,7 +1066,7 @@ export const FaqItem = styled.details`
   }
   summary::after {
     content: '+';
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 24px;
     color: ${({ theme }) => theme.color.muted};
     transition: transform ${({ theme }) => theme.motion.base};

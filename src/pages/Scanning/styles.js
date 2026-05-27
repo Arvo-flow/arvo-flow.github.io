@@ -98,7 +98,7 @@ export const Core = styled.div`
   animation: ${pulse} 2.4s ease-in-out infinite;
 
   span {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 38px;
     font-weight: 500;
     letter-spacing: -0.02em;

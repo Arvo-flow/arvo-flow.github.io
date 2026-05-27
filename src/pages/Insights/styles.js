@@ -190,11 +190,11 @@ export const BigNumber = styled.div`
   }
   div.amount {
     margin-top: 14px;
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: clamp(56px, 9vw, 96px);
     line-height: 1;
-    letter-spacing: -0.03em;
-    font-weight: 700;
+    letter-spacing: -0.025em;
+    font-weight: 500;
     font-feature-settings: "tnum";
     em { font-style: italic; color: ${({ theme }) => theme.color.accent}; font-weight: 400; }
   }
@@ -240,9 +240,9 @@ export const StatList = styled.dl`
     margin-bottom: 8px;
   }
   dd {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 24px;
-    font-weight: 700;
+    font-weight: 500;
     color: #FAFAF7;
     font-feature-settings: "tnum";
   }
@@ -365,11 +365,10 @@ export const OppHead = styled.div`
 
 export const OppSaving = styled.div`
   div.amount {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 36px;
-    font-weight: 700;
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     color: ${({ theme }) => theme.color.success};
     font-feature-settings: "tnum";
   }
@@ -459,7 +458,7 @@ export const SectionHeader = styled.div`
     font-size: 22px;
     line-height: 1.2;
     letter-spacing: -0.015em;
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-weight: 500;
   }
   span.badge {
@@ -572,14 +571,13 @@ export const LockedHead = styled.div`
 
 export const LockedSaving = styled.div`
   div.amount {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 36px;
-    font-weight: 700;
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     color: ${({ theme }) => theme.color.warning};
     font-feature-settings: "tnum";
-    em { font-style: normal; font-weight: 400; }
+    em { font-style: italic; font-weight: 400; }
   }
   div.unit {
     margin-top: 6px;
@@ -782,19 +780,18 @@ export const HeadlineSplit = styled.div`
     color: #F5D598;
   }
   div.value {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 34px;
-    font-weight: 700;
     line-height: 1;
     color: #FAFAF7;
     font-feature-settings: "tnum";
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
   }
   div.value small {
     font-size: 13px;
     color: rgba(250, 250, 247, 0.78);
     margin-left: 8px;
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-feature-settings: "tnum";
   }
 `;

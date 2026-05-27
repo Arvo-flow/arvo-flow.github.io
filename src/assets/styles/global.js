@@ -37,7 +37,7 @@ export default createGlobalStyle`
   }
 
   body {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-size: 16px;
     line-height: 1.55;
     font-feature-settings: "ss01", "cv11";
@@ -47,7 +47,7 @@ export default createGlobalStyle`
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: ${({ theme }) => theme.font.sans};
+    font-family: ${({ theme }) => theme.font.display};
     font-weight: 500;
     letter-spacing: -0.02em;
     line-height: 1.08;
