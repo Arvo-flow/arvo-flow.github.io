@@ -24,6 +24,21 @@ const TIER_DISPLAY = {
 
 const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 
+function detectHardwareInstallments(lineItems) {
+  if (!Array.isArray(lineItems)) return [];
+  const re = /[Mm]ånad\s+(\d+)\s+av\s+(\d+)|[Mm]onth\s+(\d+)\s+of\s+(\d+)/;
+  return lineItems.flatMap(li => {
+    const isHw = li.type === 'hardware' || li.description?.toLowerCase().includes('delbetalning');
+    if (!isHw) return [];
+    const m = re.exec(li.description ?? '');
+    if (!m) return [];
+    const current = parseInt(m[1] ?? m[3]);
+    const total   = parseInt(m[2] ?? m[4]);
+    if (isNaN(current) || isNaN(total) || total <= current) return [];
+    return [{ description: li.description, monthlyCost: li.amount ?? 0, monthsRemaining: total - current, remainingCost: (total - current) * (li.amount ?? 0) }];
+  });
+}
+
 function useCountUp(target, duration = 1600) {
   const [val, setVal] = React.useState(0);
   React.useEffect(() => {
@@ -1240,6 +1255,31 @@ const TestaFaktura = () => {
                 <dt>Återkommande</dt>
                 <dd>{result.extracted.recurring ? 'Ja (abonnemang / premie)' : 'Nej'}</dd>
               </div>
+              {(() => {
+                const hw = detectHardwareInstallments(result.extracted?.lineItems);
+                if (!hw.length) return null;
+                const totalRemaining = hw.reduce((s, h) => s + h.remainingCost, 0);
+                return (
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <CreditAlert>
+                      <strong>⚠ Aktiv hårdvaruleasing — kontrollera innan ni byter</strong>
+                      <p>
+                        {hw.map((h, i) => (
+                          <span key={i} style={{ display: 'block', marginBottom: hw.length > 1 && i < hw.length - 1 ? '6px' : 0 }}>
+                            {h.description} — {h.monthsRemaining} månader kvar ({formatNum(h.monthlyCost)} kr/mån = <strong>{formatNum(h.remainingCost)} kr totalt</strong>)
+                          </span>
+                        ))}
+                        {hw.length > 1 && (
+                          <span style={{ display: 'block', marginTop: '6px', fontWeight: 700 }}>
+                            Totalt kvar att betala: {formatNum(totalRemaining)} kr
+                          </span>
+                        )}
+                        {' '}Kontrollera med {result.extracted?.supplier} om delbetalningsplanen löper vidare vid leverantörsbyte, eller om förtidslösen krävs.
+                      </p>
+                    </CreditAlert>
+                  </div>
+                );
+              })()}
               {result.extracted.elUncertaintyNote && (
                 <div>
                   <dt>Årsuppskattning</dt>
