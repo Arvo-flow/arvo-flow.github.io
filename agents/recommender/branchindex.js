@@ -277,18 +277,18 @@ export const BRANCHINDEX = {
       // Källa: direktverifierat mot microsoft.com 2026-05-26.
       // arvoAnnual = msrpAnnual (inget partneravtal aktivt — uppdatera när avtal tecknas).
       'business-basic': {
-        msrpMonthly: 69,  msrpAnnual: 57,  arvoAnnual: 57,
-        currency: 'SEK', lastVerified: '2026-05-26', source: 'microsoft.com',
+        msrpMonthly: 68.88, msrpAnnual: 57.40, arvoAnnual: 57.40,
+        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
         note: 'M365 Business Basic — Teams, Exchange, webb-appar, 1 TB OneDrive. Ingen desktop Office-suite.',
       },
       'business-standard': {
-        msrpMonthly: 143, msrpAnnual: 119, arvoAnnual: 119,
-        currency: 'SEK', lastVerified: '2026-05-26', source: 'microsoft.com',
+        msrpMonthly: 143.38, msrpAnnual: 119.48, arvoAnnual: 119.48,
+        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
         note: 'M365 Business Standard — full desktop Office, Teams, SharePoint, 1 TB OneDrive. Vanligast bland svenska SMF.',
       },
       'business-premium': {
-        msrpMonthly: 252, msrpAnnual: 210, arvoAnnual: 210,
-        currency: 'SEK', lastVerified: '2026-05-26', source: 'microsoft.com',
+        msrpMonthly: 252.35, msrpAnnual: 210.29, arvoAnnual: 210.29,
+        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
         note: 'M365 Business Premium — inkl. Intune MDM + Microsoft Defender for Business. Rätt val vid säkerhetskrav.',
       },
       'e3': {

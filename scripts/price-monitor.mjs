@@ -28,6 +28,12 @@ const NAV_TIMEOUT  = 25_000;
 // ── Price checks ────────────────────────────────────────────────────────────
 // pattern: regex that SHOULD be present in the fully-rendered page text.
 // If the pattern disappears → possible price change → Haiku extraction → PR.
+//
+// Verifieringsstatus (2026-05-27):
+//   ✅ VERIFIERAT via fetch  : Microsoft 365 Business Basic/Standard/Premium
+//   ⚠️ KRÄVER PLAYWRIGHT    : Tele2, Bahnhof, SumUp, Sector Alarm, Skatteverket, Fortnox
+//      (Dessa sidor returnerar 403 på vanliga HTTP-anrop — kör price-monitor.mjs lokalt.)
+//   ❌ GAMMAL URL (404 fixad): microsoft.com/sv-se/microsoft-365/business/compare-all-plans
 // Pages that time out or return errors → warning (inconclusive, exit 0).
 const PRICE_CHECKS = [
   // Mobil — real-public, verified
@@ -90,12 +96,35 @@ const PRICE_CHECKS = [
   },
 
   // SaaS-produktivitet — real-public
+  // Verifierat 2026-05-27: Standard årsavtal 119,48 kr | månadsvis 143,38 kr
+  // URL uppdaterad: compare-all-plans returnerade 404 (sidan togs bort av Microsoft)
   {
     category: 'saas-productivity',
     supplier: 'Microsoft 365 Business Standard (sv)',
-    url: 'https://www.microsoft.com/sv-se/microsoft-365/business/compare-all-plans',
+    url: 'https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-business-standard',
     checks: [
-      { name: '~142 kr/user/mth', pattern: /14[0-9]\s*kr/ },
+      { name: 'Standard årsavtal 119 kr/user/mth',  pattern: /119[,.]?\d*\s*(?:kr|SEK)/i },
+      { name: 'Standard månadsvis 143 kr/user/mth', pattern: /143[,.]?\d*\s*(?:kr|SEK)/i },
+    ],
+  },
+  // Verifierat 2026-05-27: Basic årsavtal 57,40 kr | månadsvis 68,88 kr
+  {
+    category: 'saas-productivity',
+    supplier: 'Microsoft 365 Business Basic (sv)',
+    url: 'https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-business-basic',
+    checks: [
+      { name: 'Basic årsavtal 57 kr/user/mth',  pattern: /5[67][,.]?\d*\s*(?:kr|SEK)/i },
+      { name: 'Basic månadsvis 69 kr/user/mth',  pattern: /6[89][,.]?\d*\s*(?:kr|SEK)/i },
+    ],
+  },
+  // Verifierat 2026-05-27: Premium årsavtal 210,29 kr | månadsvis 252,35 kr
+  {
+    category: 'saas-productivity',
+    supplier: 'Microsoft 365 Business Premium (sv)',
+    url: 'https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-business-premium',
+    checks: [
+      { name: 'Premium årsavtal 210 kr/user/mth',  pattern: /21[0-9][,.]?\d*\s*(?:kr|SEK)/i },
+      { name: 'Premium månadsvis 252 kr/user/mth', pattern: /25[0-9][,.]?\d*\s*(?:kr|SEK)/i },
     ],
   },
 
