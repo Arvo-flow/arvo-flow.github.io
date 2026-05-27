@@ -1328,10 +1328,11 @@ const TestaFaktura = () => {
                   <span className="acc-dot">⚡</span>
                   <span className="acc-label">Spara ännu mer</span>
                   <span className="acc-amount">
-                    +{formatKr(result.recommendation.tierOptimizationSaving)}&nbsp;kr/år extra
+                    +{formatKr(result.recommendation.tierOptimizationSaving)}&nbsp;kr/år
+                    <span className="acc-sub">valfri extraoptimering</span>
                   </span>
                   <span className={`acc-chevron${tierOptOpen ? ' open' : ''}`}>
-                    <Icon name="chevron-down" size={15} stroke={2.2} />
+                    <Icon name="chevron-right" size={16} stroke={2.2} />
                   </span>
                 </button>
                 {tierOptOpen && (

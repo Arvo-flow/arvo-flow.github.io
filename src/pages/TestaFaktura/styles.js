@@ -949,7 +949,7 @@ export const LicenseOverageNote = styled.div`
 export const TierOptAccordion = styled.div`
   margin-top: 16px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1.5px solid #5C4FCE33;
+  border: 1.5px solid ${({ theme }) => theme.color.warning}66;
   overflow: hidden;
 
   .acc-trigger {
@@ -958,18 +958,18 @@ export const TierOptAccordion = styled.div`
     gap: 10px;
     width: 100%;
     padding: 13px 16px;
-    background: #F2F0FB;
+    background: transparent;
     cursor: pointer;
     border: none;
     text-align: left;
     transition: background 0.15s ease;
-    &:hover { background: #EAE7F7; }
+    &:hover { background: ${({ theme }) => theme.color.warningSoft}33; }
   }
   .acc-dot {
     flex-shrink: 0;
     width: 26px; height: 26px;
     border-radius: 50%;
-    background: #5C4FCE1A;
+    background: ${({ theme }) => theme.color.warning}18;
     display: flex; align-items: center; justify-content: center;
     font-size: 13px;
   }
@@ -979,26 +979,32 @@ export const TierOptAccordion = styled.div`
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #5C4FCE;
+    color: ${({ theme }) => theme.color.warning};
   }
   .acc-amount {
     font-size: 13.5px;
     font-weight: 700;
-    color: #5C4FCE;
-    margin-right: 6px;
+    color: ${({ theme }) => theme.color.warning};
+  }
+  .acc-sub {
+    font-size: 11px;
+    font-weight: 400;
+    color: ${({ theme }) => theme.color.warning}BB;
+    margin-left: 5px;
   }
   .acc-chevron {
     flex-shrink: 0;
-    color: #5C4FCEAA;
+    margin-left: 8px;
+    color: ${({ theme }) => theme.color.warning};
     transition: transform 0.2s ease;
     display: flex; align-items: center;
-    &.open { transform: rotate(180deg); }
+    &.open { transform: rotate(90deg); }
   }
 
   .acc-body {
     padding: 20px 20px 22px;
     background: #fff;
-    border-top: 1px solid #5C4FCE18;
+    border-top: 1px solid ${({ theme }) => theme.color.warning}22;
   }
   .acc-intro {
     font-size: 14.5px;
