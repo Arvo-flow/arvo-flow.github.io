@@ -1,0 +1,52 @@
+{
+  "_comment": "IT-8821: Svensk Bygg & Montage AB — Microsoft 365 mixed-tier + backup add-on",
+  "_source": "IT-Partner Sverige AB faktura 2026-05-01",
+  "supplier": "IT-Partner Sverige AB",
+  "date": "2026-05-01",
+  "billingPeriod": "monthly",
+  "seatCount": 57,
+  "employees": 45,
+  "industry": "bygg",
+  "annualCost": 184680,
+  "lineItems": [
+    {
+      "type": "recurring_subscription",
+      "description": "Microsoft 365 Business Premium",
+      "amount": 11925,
+      "quantity": 45,
+      "unitPrice": 265,
+      "is_addon": false,
+      "addon_type": null
+    },
+    {
+      "type": "recurring_subscription",
+      "description": "Microsoft 365 Business Basic",
+      "amount": 900,
+      "quantity": 12,
+      "unitPrice": 75,
+      "is_addon": false,
+      "addon_type": null
+    },
+    {
+      "type": "recurring_subscription",
+      "description": "Utökad molnbackup (Add-on)",
+      "amount": 2565,
+      "quantity": 57,
+      "unitPrice": 45,
+      "is_addon": true,
+      "addon_type": "cloud_backup"
+    }
+  ],
+  "expected": {
+    "dominantTierKey": "business-premium",
+    "suggestedAnnualCost": 152388,
+    "savingPerYear": 32292,
+    "arvoFee": 6458,
+    "netSaving": 25834,
+    "addonPassthroughAnnual": 30780,
+    "tierBreakdown": {
+      "business-premium": { "quantity": 45, "benchmarkMonthly": 210, "tierAnnual": 113400 },
+      "business-basic":   { "quantity": 12, "benchmarkMonthly": 57,  "tierAnnual": 8208  }
+    }
+  }
+}

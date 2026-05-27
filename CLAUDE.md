@@ -134,6 +134,15 @@ PDF-filer i `test-pdfs/` (gitignorerade): ricoh.pdf, telia.pdf, microsoft.pdf, u
 
 ---
 
+## Live-domän
+
+```
+https://arvoflow.se/testa-faktura?bypass=dev
+```
+(utan bindestreck — `arvoflow.se` inte `arvo-flow.se`)
+
+---
+
 ## Nästa steg (planerat)
 
 1. **CLAUDE.md** — skapad (denna fil)

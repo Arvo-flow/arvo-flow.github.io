@@ -865,70 +865,58 @@ export default async function handler(req, res) {
       employees: employeesNum,
     }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
-    // ── SAAS-TIER INLINE OVERRIDE ─────────────────────────────────────────────
-    // Recomputes tier pricing from BRANCHINDEX (imported above, line 16) so that
-    // correct M365 prices and dominant-tier logic always reach Vercel regardless
-    // of how the serverless bundle is cached from agents/recommender/.
+    // ── SAAS-PRODUCTIVITY LIKE-FOR-LIKE OVERRIDE ─────────────────────────────
+    // Guarantees correct M365 pricing reaches Vercel regardless of bundle cache.
+    // Rule: mirror the customer's license mix exactly — never downgrade a tier.
+    // Premium stays Premium, Basic stays Basic. Add-ons pass through at invoice price.
+    // Falls back gracefully when lineItems lack quantity (older extractions).
     if (categorized.category === 'saas-productivity' && recommendation?.shouldSwitch) {
       const _TIER_RE = [
-        { key: 'e5',                re: /\bE5\b/i },
-        { key: 'e3',                re: /\bE3\b/i },
-        { key: 'business-premium',  re: /business[\s-]premium/i },
-        { key: 'business-standard', re: /business[\s-]standard/i },
-        { key: 'business-basic',    re: /business[\s-]basic/i },
+        { key: 'e5',               re: /\bE5\b/i },
+        { key: 'e3',               re: /\bE3\b/i },
+        { key: 'business-premium', re: /business[\s-]premium/i },
+        { key: 'business-standard',re: /business[\s-]standard/i },
+        { key: 'business-basic',   re: /business[\s-]basic/i },
       ];
-      const _DG = {
-        'business-premium':  'business-standard',
-        'e3':                'business-premium',
-        'e5':                'e3',
-        'business-standard': 'business-standard',
-        'business-basic':    'business-basic',
-      };
-      const _tierBm = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {};
-      const _lines  = (extracted.lineItems ?? []).filter(l => l.type === 'recurring_subscription');
+      const _tierBm      = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {};
+      const _lines       = (extracted.lineItems ?? []).filter(l => l.type === 'recurring_subscription');
+      const _annualCost  = extracted.annualCost ?? 0;
+      const _periodTotal = _lines.reduce((s, l) => s + (l.amount ?? 0), 0);
+      const _billMult    = _periodTotal > 0 ? _annualCost / _periodTotal : 12;
 
-      const _tierPeriodic = {};
-      let _nonLicensePeriodic = 0;
+      let _suggestedAnnual   = 0;
+      let _allQtyKnown       = true;
+      let _dominantKey       = null;
+      let _dominantAmt       = 0;
+
       for (const item of _lines) {
         const match = _TIER_RE.find(p => p.re.test(item.description ?? ''));
-        if (match) {
-          _tierPeriodic[match.key] = (_tierPeriodic[match.key] ?? 0) + (item.amount ?? 0);
+        if (match && _tierBm[match.key]) {
+          const qty = item.quantity;
+          if (qty == null) { _allQtyKnown = false; break; }
+          const benchMonthly = _tierBm[match.key].arvoAnnual ?? _tierBm[match.key].msrpAnnual;
+          const tierAnnual   = Math.round(benchMonthly * qty * 12);
+          _suggestedAnnual  += tierAnnual;
+          if ((item.amount ?? 0) > _dominantAmt) { _dominantAmt = item.amount; _dominantKey = match.key; }
         } else {
-          _nonLicensePeriodic += (item.amount ?? 0);
+          _suggestedAnnual += Math.round((item.amount ?? 0) * _billMult);
         }
       }
 
-      const _tierEntries = Object.entries(_tierPeriodic);
-      const _dominantKey = _tierEntries.length > 0
-        ? _tierEntries.reduce((a, b) => b[1] > a[1] ? b : a)[0]
-        : null;
-      const _recKey = _dominantKey ? (_DG[_dominantKey] ?? _dominantKey) : null;
-      const _recBm  = _recKey ? _tierBm[_recKey] : null;
-
-      if (_recBm) {
-        const _periodicTotal = _tierEntries.reduce((s, e) => s + e[1], 0) + _nonLicensePeriodic;
-        const _annualCost    = extracted.annualCost ?? 0;
-        const _mult          = _periodicTotal > 0 ? _annualCost / _periodicTotal : 12;
-
-        const _saasNonLicenseAnn = Math.round(_nonLicensePeriodic * _mult);
-        const _p25PerSeatYear    = (_recBm.arvoAnnual ?? _recBm.msrpAnnual) * 12;
-        const _scale             = employeesNum > 0 ? employeesNum : (extracted.seatCount ?? 1);
-
-        const _suggestedAnnual = Math.round(_p25PerSeatYear * _scale) + _saasNonLicenseAnn;
-        const _comparableAnn   = _annualCost - _saasNonLicenseAnn;
-        const _saving          = Math.max(0, Math.round(_comparableAnn - Math.round(_p25PerSeatYear * _scale)));
-
+      if (_allQtyKnown && _suggestedAnnual > 0) {
         recommendation.suggestedAnnualCost = _suggestedAnnual;
-        recommendation.savingPerYear       = _saving;
+        recommendation.savingPerYear       = Math.max(0, _annualCost - _suggestedAnnual);
 
         const _tierLabels = {
+          'business-premium':  'Microsoft 365 Business Premium',
           'business-standard': 'Microsoft 365 Business Standard',
           'business-basic':    'Microsoft 365 Business Basic',
-          'business-premium':  'Microsoft 365 Business Premium',
           'e3':                'Microsoft 365 E3',
           'e5':                'Microsoft 365 E5',
         };
-        if (_tierLabels[_recKey]) recommendation.suggestedSupplier = _tierLabels[_recKey];
+        if (_dominantKey && _tierLabels[_dominantKey]) {
+          recommendation.suggestedSupplier = _tierLabels[_dominantKey];
+        }
       }
     }
 

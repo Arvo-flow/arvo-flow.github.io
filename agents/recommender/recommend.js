@@ -460,6 +460,82 @@ export function getDominantSaasTierKey(lineItems, fallbackLicenseType, fallbackP
   return entries.reduce((best, cur) => cur[1] > best[1] ? cur : best)[0];
 }
 
+// Tier patterns reused for like-for-like calculation.
+const LFL_TIER_RE = [
+  { key: 'e5',               re: /\bE5\b/i },
+  { key: 'e3',               re: /\bE3\b/i },
+  { key: 'business-premium', re: /business[\s-]premium/i },
+  { key: 'business-standard',re: /business[\s-]standard/i },
+  { key: 'business-basic',   re: /business[\s-]basic/i },
+];
+
+/**
+ * Like-for-like SaaS cost calculation: mirrors the customer's actual license mix.
+ * Each tier is benchmarked at its own price (no downgrade). Non-tier add-ons
+ * (backup, security) are passed through at invoice price.
+ *
+ * Returns null when quantity is missing on any tier line (can't compute accurately).
+ *
+ * @param {Array}  lineItems      - extracted lineItems (must include quantity per tier line)
+ * @param {Object} tierBenchmarks - BRANCHINDEX['saas-productivity'].licenseTierBenchmarks
+ * @param {number} annualCost     - extracted.annualCost (used to derive billing multiplier)
+ * @returns {{ suggestedAnnualCost, savingPerYear, dominantTierKey, tierLines, addonLines } | null}
+ */
+export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCost) {
+  if (!Array.isArray(lineItems) || lineItems.length === 0) return null;
+
+  const lines = lineItems.filter(l => l.type === 'recurring_subscription');
+  if (lines.length === 0) return null;
+
+  const periodicTotal = lines.reduce((s, l) => s + (l.amount ?? 0), 0);
+  const billMult = periodicTotal > 0 ? annualCost / periodicTotal : 12;
+
+  const tierLines  = [];
+  const addonLines = [];
+  let suggestedAnnualCost = 0;
+
+  for (const item of lines) {
+    const match = LFL_TIER_RE.find(p => p.re.test(item.description ?? ''));
+    if (match && tierBenchmarks[match.key]) {
+      const qty = item.quantity;
+      if (qty == null) return null;  // can't compute like-for-like without seat count
+
+      const bm = tierBenchmarks[match.key];
+      const benchmarkMonthly = bm.arvoAnnual ?? bm.msrpAnnual;
+      const tierAnnual = Math.round(benchmarkMonthly * qty * 12);
+      suggestedAnnualCost += tierAnnual;
+      tierLines.push({ key: match.key, quantity: qty, benchmarkMonthly, tierAnnual });
+    } else {
+      // Add-on / unrecognised: pass through at invoice price
+      const addonAnnual = Math.round((item.amount ?? 0) * billMult);
+      suggestedAnnualCost += addonAnnual;
+      addonLines.push({
+        description: item.description,
+        amount:      item.amount,
+        addonAnnual,
+        is_addon:    item.is_addon  ?? false,
+        addon_type:  item.addon_type ?? null,
+      });
+    }
+  }
+
+  if (suggestedAnnualCost === 0) return null;
+
+  // Dominant tier = the tier with the highest total invoice amount (for supplier label).
+  const dominantEntry = tierLines.reduce(
+    (best, t) => t.tierAnnual > (best?.tierAnnual ?? 0) ? t : best,
+    null
+  );
+
+  return {
+    suggestedAnnualCost,
+    savingPerYear: Math.max(0, annualCost - suggestedAnnualCost),
+    dominantTierKey: dominantEntry?.key ?? null,
+    tierLines,
+    addonLines,
+  };
+}
+
 export async function recommend(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(

@@ -308,6 +308,14 @@ const EXTRACT_TOOL = {
               enum: ['recurring_subscription', 'variable_usage', 'one_time_fee', 'hardware'],
               description: 'Semantisk klassificering av raden',
             },
+            quantity: {
+              type: ['integer', 'null'],
+              description: 'Antal enheter/licenser/abonnemang på raden. null om ej angivet på fakturan.',
+            },
+            unitPrice: {
+              type: ['integer', 'null'],
+              description: 'Enhetspris exkl. moms i SEK, heltal. null om ej angivet.',
+            },
             is_addon: {
               type: 'boolean',
               description: 'true om raden är en tilläggstjänst utöver bastjänsten (molnväxel, statisk IP, managed firewall osv.). false för bastjänster.',
@@ -481,7 +489,9 @@ export function aggregateLineItems(raw) {
       description: li.description,
       amount:      li.amount,
       type:        li.type,
-      is_addon:    li.is_addon ?? false,
+      quantity:    li.quantity  ?? null,
+      unitPrice:   li.unitPrice ?? null,
+      is_addon:    li.is_addon  ?? false,
       addon_type:  li.addon_type ?? null,
     })),
     amount:                   (raw.lineItems ?? []).reduce((s, l) => s + l.amount, 0),
