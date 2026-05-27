@@ -194,9 +194,9 @@ export const SavingBig = styled.div`
     margin-bottom: 4px;
   }
   div.amount {
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 56px;
-    font-weight: 500;
+    font-weight: 700;
     line-height: 1;
     letter-spacing: -0.03em;
     color: ${({ theme }) => theme.color.ink};
@@ -527,7 +527,7 @@ export const HowCard = styled.div`
   }
 
   span.step {
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 15px;
     font-style: italic;
     color: ${({ theme }) => theme.color.brand};
@@ -685,10 +685,11 @@ export const Quote = styled.figure`
   position: relative;
 
   blockquote {
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 26px;
+    font-weight: 500;
     line-height: 1.35;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
     color: ${({ theme }) => theme.color.ink};
 
     &::before { content: '“'; color: ${({ theme }) => theme.color.brand}; font-size: 60px; line-height: 0; vertical-align: -22px; margin-right: 4px; }
@@ -1055,10 +1056,11 @@ export const FaqItem = styled.details`
     justify-content: space-between;
     align-items: center;
     gap: 24px;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 22px;
+    font-weight: 600;
     line-height: 1.3;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     color: ${({ theme }) => theme.color.ink};
     &::-webkit-details-marker { display: none; }
   }

@@ -5,7 +5,7 @@ const Wrap = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  font-family: ${({ theme }) => theme.font.display};
+  font-family: ${({ theme }) => theme.font.sans};
   font-weight: 600;
   font-size: 22px;
   letter-spacing: -0.025em;

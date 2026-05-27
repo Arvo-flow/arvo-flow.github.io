@@ -81,7 +81,7 @@ export const RuleCard = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 26px;
     font-weight: 500;
     font-style: italic;
@@ -145,7 +145,7 @@ export const ChoiceCol = styled.div`
   h4 {
     margin-top: 14px;
     font-size: 22px;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     color: inherit;
   }
   p {

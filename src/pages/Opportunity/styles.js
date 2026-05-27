@@ -84,10 +84,11 @@ export const HeadSaving = styled.aside`
     letter-spacing: 0.06em;
   }
   div.amount {
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 56px;
+    font-weight: 700;
     line-height: 1;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
     color: ${({ theme }) => theme.color.success};
     font-feature-settings: "tnum";
     margin-top: 6px;
@@ -162,12 +163,13 @@ export const CompareCol = styled.div`
   }
   div.cost {
     margin-top: 14px;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 28px;
+    font-weight: 700;
     line-height: 1;
     color: ${({ theme }) => theme.color.ink};
     font-feature-settings: "tnum";
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
   }
   div.unit {
     margin-top: 4px;
@@ -209,10 +211,11 @@ export const BenchCompact = styled.div`
     font-weight: 500;
   }
   strong.overpay {
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 32px;
+    font-weight: 700;
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     color: ${({ theme }) => theme.color.danger};
     font-feature-settings: "tnum";
   }
@@ -437,10 +440,11 @@ export const NetSaving = styled.div`
   }
   span.amount {
     margin-top: 6px;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 38px;
+    font-weight: 700;
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     color: ${({ theme }) => theme.color.accent};
     font-feature-settings: "tnum";
   }
@@ -550,7 +554,7 @@ export const ModalCard = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: ${({ theme }) => theme.font.display};
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 38px;
     font-weight: 700;
   }
