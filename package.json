@@ -37,7 +37,8 @@
     "test:algo": "node --test tests/run.mjs",
     "test:prop": "node tests/property.mjs",
     "test:ai-drift": "node scripts/ai-drift.mjs",
-    "capture:golden": "node scripts/ai-drift.mjs --update"
+    "capture:golden": "node scripts/ai-drift.mjs --update",
+    "test:e2e": "node scripts/e2e-test.mjs"
   },
   "eslintConfig": {
     "extends": "react-app"
