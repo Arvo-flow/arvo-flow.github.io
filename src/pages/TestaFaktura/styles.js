@@ -949,7 +949,7 @@ export const LicenseOverageNote = styled.div`
 export const TierOptAccordion = styled.div`
   margin-top: 16px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1.5px solid ${({ theme }) => theme.color.warning}44;
+  border: 1.5px solid #5C4FCE33;
   overflow: hidden;
 
   .acc-trigger {
@@ -958,18 +958,18 @@ export const TierOptAccordion = styled.div`
     gap: 10px;
     width: 100%;
     padding: 13px 16px;
-    background: ${({ theme }) => theme.color.warningSoft}66;
+    background: #F2F0FB;
     cursor: pointer;
     border: none;
     text-align: left;
     transition: background 0.15s ease;
-    &:hover { background: ${({ theme }) => theme.color.warningSoft}99; }
+    &:hover { background: #EAE7F7; }
   }
   .acc-dot {
     flex-shrink: 0;
     width: 26px; height: 26px;
     border-radius: 50%;
-    background: ${({ theme }) => theme.color.warning}1A;
+    background: #5C4FCE1A;
     display: flex; align-items: center; justify-content: center;
     font-size: 13px;
   }
@@ -979,17 +979,17 @@ export const TierOptAccordion = styled.div`
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: ${({ theme }) => theme.color.warning};
+    color: #5C4FCE;
   }
   .acc-amount {
     font-size: 13.5px;
     font-weight: 700;
-    color: ${({ theme }) => theme.color.warning};
+    color: #5C4FCE;
     margin-right: 6px;
   }
   .acc-chevron {
     flex-shrink: 0;
-    color: ${({ theme }) => theme.color.warning}AA;
+    color: #5C4FCEAA;
     transition: transform 0.2s ease;
     display: flex; align-items: center;
     &.open { transform: rotate(180deg); }
@@ -998,7 +998,7 @@ export const TierOptAccordion = styled.div`
   .acc-body {
     padding: 20px 20px 22px;
     background: #fff;
-    border-top: 1px solid ${({ theme }) => theme.color.warning}22;
+    border-top: 1px solid #5C4FCE18;
   }
   .acc-intro {
     font-size: 14.5px;

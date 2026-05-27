@@ -1326,7 +1326,7 @@ const TestaFaktura = () => {
                   aria-expanded={tierOptOpen}
                 >
                   <span className="acc-dot">⚡</span>
-                  <span className="acc-label">Tier-optimering (valfritt)</span>
+                  <span className="acc-label">Spara ännu mer</span>
                   <span className="acc-amount">
                     +{formatKr(result.recommendation.tierOptimizationSaving)}&nbsp;kr/år extra
                   </span>
