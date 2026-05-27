@@ -125,3 +125,9 @@ jobs:
       - name: All assertions passed
         if: steps.e2e.outcome == 'success'
         run: echo "✅ Alla E2E pipeline-assertions godkända"
+
+      - name: Fail job if assertions failed
+        if: steps.e2e.outcome == 'failure'
+        run: |
+          echo "❌ E2E-assertions misslyckades — se logg och Issues-fliken ovan"
+          exit 1
