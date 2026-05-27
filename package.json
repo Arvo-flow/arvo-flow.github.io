@@ -28,6 +28,7 @@
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build -e flow",
+    "prepare": "node scripts/setup-hooks.mjs",
     "server": "node server/index.js",
     "seed": "node server/seed.js",
     "test:webhook": "node server/test-webhook.js",

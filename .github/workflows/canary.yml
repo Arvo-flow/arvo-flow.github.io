@@ -1,0 +1,132 @@
+name: Production Canary
+
+# ── Bevakar arvoflow.se/api/health varje timme ────────────────────────────────
+#
+# Om endpointen svarar med något annat än HTTP 200 + "ok":true skapas ett
+# GitHub-ärende med etiketten production-down.
+# Befintligt öppet ärende? Lägger till en kommentar istället (undviker spam).
+#
+# Manuell testning: Actions → Production Canary → Run workflow
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # varje hel timme UTC
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL att testa (lämna tomt för prod)'
+        required: false
+        default: ''
+
+permissions:
+  issues: write
+
+jobs:
+  canary:
+    name: Health check arvoflow.se
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Ping /api/health
+        id: ping
+        run: |
+          TARGET="${{ github.event.inputs.url }}"
+          URL="${TARGET:-https://arvoflow.se/api/health}"
+          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+
+          HTTP_CODE=$(curl -s -o /tmp/health-body.txt -w "%{http_code}" \
+            --max-time 15 --connect-timeout 10 "$URL" 2>/tmp/health-err.txt)
+          CURL_EXIT=$?
+
+          echo "http_code=${HTTP_CODE}" >> "$GITHUB_OUTPUT"
+          echo "curl_exit=${CURL_EXIT}"  >> "$GITHUB_OUTPUT"
+
+          BODY=$(cat /tmp/health-body.txt 2>/dev/null | head -c 2000)
+          echo "body<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$BODY"     >> "$GITHUB_OUTPUT"
+          echo "EOF"       >> "$GITHUB_OUTPUT"
+
+          # Kontrollera att svaret är JSON med ok:true
+          if [ $CURL_EXIT -ne 0 ]; then
+            echo "status=down" >> "$GITHUB_OUTPUT"
+          elif [ "$HTTP_CODE" != "200" ]; then
+            echo "status=error_${HTTP_CODE}" >> "$GITHUB_OUTPUT"
+          else
+            OK=$(echo "$BODY" | python3 -c \
+              "import json,sys; d=json.load(sys.stdin); print('true' if d.get('ok') else 'false'" \
+              2>/dev/null || echo "false")
+            echo "status=$( [ \"$OK\" = 'true' ] && echo ok || echo bad_response )" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update issue on failure
+        if: steps.ping.outputs.status != 'ok'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status   = '${{ steps.ping.outputs.status }}';
+            const httpCode = '${{ steps.ping.outputs.http_code }}';
+            const body     = `${{ steps.ping.outputs.body }}`;
+            const url      = '${{ steps.ping.outputs.url }}';
+            const date     = new Date().toLocaleString('sv-SE', {
+              timeZone: 'Europe/Stockholm',
+            });
+
+            // Säkerställ att etiketten finns
+            await github.rest.issues.createLabel({
+              owner: context.repo.owner, repo: context.repo.repo,
+              name: 'production-down', color: 'b91c1c',
+              description: 'Produktionsmiljön svarar inte korrekt',
+            }).catch(e => {
+              if (!e.message?.includes('already_exists') && e.status !== 422)
+                console.log('Label-fel:', e.message);
+            });
+
+            const issueBody = [
+              '## 🔴 Produktionen nere — ' + date,
+              '',
+              '| Fält | Värde |',
+              '|------|-------|',
+              '| Endpoint | ' + url + ' |',
+              '| HTTP-kod | ' + httpCode + ' |',
+              '| Status   | ' + status + ' |',
+              '',
+              '**Respons:**',
+              '```json',
+              body.slice(0, 1500) || '(ingen respons)',
+              '```',
+              '',
+              '### Åtgärdslista',
+              '1. Kontrollera [Vercel dashboard](https://vercel.com/arvo-flow)',
+              '2. Verifiera att `ANTHROPIC_API_KEY` är satt i Vercel-miljön',
+              '3. Granska senaste deployment-loggar',
+              '4. Om löst: stäng detta ärende',
+              '',
+              '---',
+              '_Skapad av [Production Canary](.github/workflows/canary.yml)_',
+            ].join('\n');
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'production-down', per_page: 5,
+            });
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: '### Fortfarande nere — ' + date + '\n\n' + issueBody,
+              });
+              console.log('Uppdaterade ärende #' + existing.data[0].number);
+            } else {
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: '🔴 Produktion nere — ' + date,
+                body: issueBody, labels: ['production-down'],
+              });
+              console.log('Skapade ärende #' + issue.number);
+            }
+
+      - name: Canary passed
+        if: steps.ping.outputs.status == 'ok'
+        run: echo "✅ arvoflow.se/api/health — OK (HTTP ${{ steps.ping.outputs.http_code }})"
