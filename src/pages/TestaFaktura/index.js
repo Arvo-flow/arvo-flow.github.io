@@ -626,10 +626,7 @@ const TestaFaktura = () => {
                 >
                   {loading ? (
                     <>
-                      <Spinner />{' '}
-                      {phase === 'extract'    ? 'Läser fakturan…'
-                       : phase === 'categorize' ? 'Identifierar leverantör…'
-                       : 'Jämför mot branschindex…'}
+                      <Spinner /> Analyserar…
                     </>
                   ) : (
                     <>
