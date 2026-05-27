@@ -441,6 +441,38 @@ export const NoSwitchBlock = styled.div`
     line-height: 1.6;
     color: ${({ theme }) => theme.color.muted};
   }
+
+  .estimate-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: ${({ theme }) => theme.color.brandSoft};
+    border: 1.5px solid ${({ theme }) => theme.color.brand}44;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    padding: 16px 20px;
+    margin: 12px 0 16px;
+  }
+  .est-kicker {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.brand};
+  }
+  .est-amount {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: ${({ theme }) => theme.color.brand};
+    line-height: 1.1;
+  }
+  .est-note {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.inkSoft};
+    line-height: 1.5;
+    margin-top: 2px;
+  }
 `;
 
 export const QuoteLeadForm = styled.form`
@@ -509,6 +541,14 @@ export const QuoteLeadForm = styled.form`
     font-size: 14px;
     color: #065F46;
     font-weight: 500;
+  }
+
+  .qlf-zero-risk {
+    margin-top: 10px;
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.inkSoft};
+    text-align: center;
+    line-height: 1.5;
   }
 `;
 

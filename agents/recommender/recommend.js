@@ -554,7 +554,7 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
 // Managed Print click-rate benchmarks — Arvo-verifierade profilkontraktspriser (svensk marknad)
 const PRINT_BENCHMARKS = { bw: 0.065, color: 0.275 };
 
-function analyzeClickRates(lineItems, supplierName) {
+function analyzeClickRates(lineItems, supplierName, invoiceData = null) {
   const varItems = (lineItems ?? []).filter(l => l.type === 'variable_usage');
   let bwRate = null, bwAmount = 0;
   let colorRate = null, colorAmount = 0;
@@ -599,7 +599,18 @@ function analyzeClickRates(lineItems, supplierName) {
   }
   parts.push(`Klickpriset är ett kontraktspris och gäller oberoende av volym. Koppla Fortnox/Visma eller ladda upp fler månaders fakturor för att beräkna er exakta besparing per år.`);
 
-  return { bwRate, bwBenchmark: PRINT_BENCHMARKS.bw, bwGapPct, colorRate, colorBenchmark: PRINT_BENCHMARKS.color, colorGapPct, colorSharePct: Math.round(colorShare * 100), priceGapScore, reasoning: parts.join(' ') };
+  // Estimate annual savings based on actual invoice variable charges.
+  // billingMult inferred from annualCost / recurringAmount (e.g. 18000/1500 = 12 for monthly).
+  let estimatedAnnualSavingsGross = null;
+  const { variableCharges, annualCost, recurringAmount } = invoiceData ?? {};
+  if (variableCharges > 0 && recurringAmount > 0 && annualCost > 0 && weightedGapPct > 0) {
+    const billingMult   = annualCost / recurringAmount;
+    const annualVariable = variableCharges * billingMult;
+    const gross          = Math.round(annualVariable * weightedGapPct / 100);
+    if (gross > 2000) estimatedAnnualSavingsGross = gross;
+  }
+
+  return { bwRate, bwBenchmark: PRINT_BENCHMARKS.bw, bwGapPct, colorRate, colorBenchmark: PRINT_BENCHMARKS.color, colorGapPct, colorSharePct: Math.round(colorShare * 100), priceGapScore, estimatedAnnualSavingsGross, reasoning: parts.join(' ') };
 }
 
 export async function recommend(input, opts = {}) {
@@ -728,6 +739,11 @@ export async function recommend(input, opts = {}) {
       const clickRateAnalysis = analyzeClickRates(
         input.invoice.lineItems,
         input.categorized.normalizedSupplier,
+        {
+          variableCharges: input.invoice.variableCharges,
+          annualCost:      input.invoice.annualCost,
+          recurringAmount: input.invoice.recurringAmount,
+        },
       );
       const reasoning = clickRateAnalysis?.reasoning ??
         'Era utskriftskostnader drivs av klickvolymer — Arvo behöver er printhistorik för att förhandla rätt klick-avtal.';
