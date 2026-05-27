@@ -949,7 +949,7 @@ export const LicenseOverageNote = styled.div`
 export const TierOptAccordion = styled.div`
   margin-top: 16px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1.5px solid ${({ theme }) => theme.color.warning}66;
+  border: 1.5px solid ${({ theme }) => theme.color.brand}44;
   overflow: hidden;
 
   .acc-trigger {
@@ -958,44 +958,52 @@ export const TierOptAccordion = styled.div`
     gap: 10px;
     width: 100%;
     padding: 13px 16px;
-    background: transparent;
+    background: ${({ theme }) => theme.color.brandSoft};
     cursor: pointer;
     border: none;
     text-align: left;
     transition: background 0.15s ease;
-    &:hover { background: ${({ theme }) => theme.color.warningSoft}33; }
+    &:hover { background: ${({ theme }) => theme.color.brand}22; }
   }
   .acc-dot {
     flex-shrink: 0;
     width: 26px; height: 26px;
     border-radius: 50%;
-    background: ${({ theme }) => theme.color.warning}18;
+    background: ${({ theme }) => theme.color.brand}22;
     display: flex; align-items: center; justify-content: center;
     font-size: 13px;
   }
   .acc-label {
     flex: 1;
+    min-width: 0;
     font-size: 11.5px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: ${({ theme }) => theme.color.warning};
+    color: ${({ theme }) => theme.color.brand};
   }
   .acc-amount {
     font-size: 13.5px;
     font-weight: 700;
-    color: ${({ theme }) => theme.color.warning};
+    color: ${({ theme }) => theme.color.brand};
+    white-space: nowrap;
   }
   .acc-sub {
-    font-size: 11px;
+    display: block;
+    font-size: 10.5px;
     font-weight: 400;
-    color: ${({ theme }) => theme.color.warning}BB;
-    margin-left: 5px;
+    color: ${({ theme }) => theme.color.brandInk};
+    margin-top: 1px;
+    @media (min-width: 400px) {
+      display: inline;
+      margin-top: 0;
+      margin-left: 5px;
+    }
   }
   .acc-chevron {
     flex-shrink: 0;
-    margin-left: 8px;
-    color: ${({ theme }) => theme.color.warning};
+    margin-left: 10px;
+    color: ${({ theme }) => theme.color.brand};
     transition: transform 0.2s ease;
     display: flex; align-items: center;
     &.open { transform: rotate(90deg); }
@@ -1003,8 +1011,8 @@ export const TierOptAccordion = styled.div`
 
   .acc-body {
     padding: 20px 20px 22px;
-    background: #fff;
-    border-top: 1px solid ${({ theme }) => theme.color.warning}22;
+    background: ${({ theme }) => theme.color.surface};
+    border-top: 1px solid ${({ theme }) => theme.color.brand}22;
   }
   .acc-intro {
     font-size: 14.5px;
@@ -1040,7 +1048,7 @@ export const TierOptAccordion = styled.div`
   .acc-disclaimer {
     margin-top: 16px;
     padding-top: 14px;
-    border-top: 1px solid ${({ theme }) => theme.color.warning}1A;
+    border-top: 1px solid ${({ theme }) => theme.color.border};
     font-size: 12.5px;
     line-height: 1.6;
     color: #7A8F89;
