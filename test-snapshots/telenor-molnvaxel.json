@@ -1,0 +1,70 @@
+{
+  "_fixture": "telenor-molnvaxel",
+  "_description": "Telenor Bedrift — molnväxel (cloud PBX) + 8 mobilabonnemang, ska klassas som mobil",
+  "extracted": {
+    "supplier": "Telenor Sverige AB",
+    "date": "2026-05-01",
+    "description": "Telenor One Business — molnväxel + 8 mobilabonnemang maj 2026",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Telenor One Business molnväxel — 20 anknytningar",
+        "amount": 1800,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Mobilabonnemang Business S × 8 (tal + 10 GB data)",
+        "amount": 2440,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": "mobile_subscription"
+      },
+      {
+        "description": "Internationella samtal (roaming EU)",
+        "amount": 340,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 4580,
+    "recurringAmount": 4240,
+    "projectedRecurringAmount": 4240,
+    "variableCharges": 340,
+    "oneTimeFees": 0,
+    "annualCost": 50880,
+    "recurring": true,
+    "confidenceScore": 0.89,
+    "confidenceNotes": "Molnväxel + mobil kombinerat — primärt mobil med telefonitjänst",
+    "outOfScope": false,
+    "seatCount": 8,
+    "notes": "Molnväxel klassas som mobil-kategori (telefonitjänst) — inte saas-productivity",
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": 305,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": "2026-05-01",
+    "servicePeriodEnd": "2026-05-31",
+    "cancellationNoticeDays": 30,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": null
+  }
+}

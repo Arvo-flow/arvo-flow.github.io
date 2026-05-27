@@ -1,0 +1,70 @@
+{
+  "_fixture": "konica-lag-klick",
+  "_description": "Konica Minolta — skrivarleasing med LÅG klick-ratio (12 %), ska INTE ge requiresQuote",
+  "extracted": {
+    "supplier": "Konica Minolta Business Solutions Sweden AB",
+    "date": "2026-05-01",
+    "description": "Managed Print maj 2026 - bizhub C368, låg klickvolym",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Fast maskinhyra MFP bizhub C368",
+        "amount": 3800,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Svartvita klickutskrifter (3 200 sidor × 0,06 kr/sida)",
+        "amount": 192,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Färgutskrifter (800 sidor × 0,45 kr/sida)",
+        "amount": 360,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 4352,
+    "recurringAmount": 3800,
+    "projectedRecurringAmount": 3800,
+    "variableCharges": 552,
+    "oneTimeFees": 0,
+    "annualCost": 45600,
+    "recurring": true,
+    "confidenceScore": 0.95,
+    "confidenceNotes": null,
+    "outOfScope": false,
+    "seatCount": null,
+    "notes": "Klick-ratio: 552 / (3800 + 552) = 12,7 % — UNDER 35 %-gränsen → ska ge requiresQuote=false",
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": "2026-05-01",
+    "servicePeriodEnd": "2026-05-31",
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": null
+  }
+}

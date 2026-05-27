@@ -1,0 +1,70 @@
+{
+  "_fixture": "eon-el-spot",
+  "_description": "E.ON Energi — spotprisavtal el med variabel energikostnad och fast nätavgift",
+  "extracted": {
+    "supplier": "E.ON Energi Sverige AB",
+    "date": "2026-05-01",
+    "description": "Elförbrukning maj 2026 — spotprisavtal SE3, 4 200 kWh",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Fast nätavgift (elnät)",
+        "amount": 890,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Elenergi spot SE3 — 4 200 kWh × 0,82 kr/kWh (snitt maj)",
+        "amount": 3444,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Elcertifikat & energiskatt",
+        "amount": 1323,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 5657,
+    "recurringAmount": 890,
+    "projectedRecurringAmount": 890,
+    "variableCharges": 4767,
+    "oneTimeFees": 0,
+    "annualCost": 10680,
+    "recurring": true,
+    "confidenceScore": 0.88,
+    "confidenceNotes": "Spotpris — variabel energikostnad varierar per månad, annualCost baseras på fast nätavgift",
+    "outOfScope": false,
+    "seatCount": null,
+    "notes": "Spotprisavtal: variabla elkostnader ska inte annualiseras (de ändras varje månad)",
+    "elKwh": 4200,
+    "elBillingMonth": "2026-05",
+    "elOmrade": "SE3",
+    "elFastAvgiftKr": 890,
+    "elEnergiPerKwh": 0.82,
+    "elSkatterKr": 1323,
+    "elPriceExplicit": true,
+    "elContractType": "spot",
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": "2026-05-01",
+    "servicePeriodEnd": "2026-05-31",
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": null
+  }
+}

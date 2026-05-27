@@ -1,0 +1,63 @@
+{
+  "_fixture": "tele2-kreditfaktura",
+  "_description": "Tele2 kreditfaktura (negativt belopp) — ska inte krascha pipelinen",
+  "extracted": {
+    "supplier": "Tele2 Sverige AB",
+    "date": "2026-05-01",
+    "description": "Kreditfaktura — rättelse abonnemang april 2026",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Kreditering: feldebiterad trafikavgift apr 2026",
+        "amount": -1890,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Kreditering: abonnemangsavgift apr 2026 (2 abonnemang)",
+        "amount": -578,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": -2468,
+    "recurringAmount": -2468,
+    "projectedRecurringAmount": -2468,
+    "variableCharges": 0,
+    "oneTimeFees": 0,
+    "annualCost": 0,
+    "recurring": false,
+    "confidenceScore": 0.55,
+    "confidenceNotes": "Kreditfaktura — negativt belopp, confidence under tröskel → review_queue",
+    "outOfScope": false,
+    "seatCount": null,
+    "notes": "Negativt belopp → confidenceScore < 0.70 → route=review_queue förväntat",
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": null,
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": "2026-04-01",
+    "servicePeriodEnd": "2026-04-30",
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": null
+  }
+}

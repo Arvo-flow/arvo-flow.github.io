@@ -1,0 +1,63 @@
+{
+  "_fixture": "salesforce-enterprise",
+  "_description": "Salesforce Nordic — saas-crm, 20 Sales Cloud Enterprise-licenser",
+  "extracted": {
+    "supplier": "Salesforce Nordic ApS",
+    "date": "2026-05-01",
+    "description": "Salesforce Sales Cloud Enterprise — 20 licenser maj 2026",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Sales Cloud Enterprise Edition × 20 licenser",
+        "amount": 12300,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Salesforce Shield (kryptering & revision) × 20",
+        "amount": 2460,
+        "type": "recurring_subscription",
+        "is_addon": true,
+        "addon_type": "security_addon"
+      }
+    ],
+    "amount": 14760,
+    "recurringAmount": 14760,
+    "projectedRecurringAmount": 14760,
+    "variableCharges": 0,
+    "oneTimeFees": 0,
+    "annualCost": 177120,
+    "recurring": true,
+    "confidenceScore": 0.95,
+    "confidenceNotes": null,
+    "outOfScope": false,
+    "seatCount": 20,
+    "notes": null,
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": null,
+    "licenseType": "Sales Cloud Enterprise",
+    "billingCycleType": "monthly",
+    "pricePerSeatMonthly": 615,
+    "saasProductFamily": "Salesforce Sales Cloud",
+    "saasIncludedFeatures": ["pipeline management", "forecasting", "Einstein AI", "Shield"],
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": "2026-05-01",
+    "servicePeriodEnd": "2026-05-31",
+    "cancellationNoticeDays": 90,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": null
+  }
+}

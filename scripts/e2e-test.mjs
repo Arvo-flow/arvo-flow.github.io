@@ -208,6 +208,34 @@ const FIXTURE_ASSERTIONS = {
   'connectsverige': [
     { path: 'categorized.category', op: 'eq', val: 'mobil' },
   ],
+
+  // ── Nya edge case fixtures ────────────────────────────────────────────────────
+
+  'konica-lag-klick': [
+    { path: 'categorized.category',         op: 'eq', val: 'skrivarleasing' },
+    { path: 'recommendation.requiresQuote', op: 'eq', val: false,
+      label: 'klick-ratio 12 % UNDER 35 %-gränsen → ska INTE ge requiresQuote=true' },
+  ],
+  'salesforce-enterprise': [
+    { path: 'categorized.category', op: 'eq', val: 'saas-crm',
+      label: 'Salesforce ska kategoriseras som saas-crm, inte saas-other' },
+    { path: 'recommendation.requiresQuote', op: 'eq', val: false },
+  ],
+  'adobe-arsbetalning': [
+    { path: 'categorized.category', op: 'eq', val: 'saas-creative',
+      label: 'Adobe Creative Cloud ska kategoriseras som saas-creative' },
+  ],
+  'tele2-kreditfaktura': [
+    { path: 'route', op: 'eq', val: 'review_queue',
+      label: 'Kreditfaktura (negativt belopp, confidence 0.55) ska gå till review_queue' },
+  ],
+  'eon-el-spot': [
+    { path: 'categorized.category', op: 'eq', val: 'el' },
+  ],
+  'telenor-molnvaxel': [
+    { path: 'categorized.category', op: 'eq', val: 'mobil',
+      label: 'Molnväxel + mobilabonnemang ska klassas som mobil, inte saas-productivity' },
+  ],
 };
 
 // ── Hjälpfunktioner ────────────────────────────────────────────────────────────
