@@ -30,10 +30,21 @@ const NAV_TIMEOUT  = 25_000;
 // If the pattern disappears → possible price change → Haiku extraction → PR.
 //
 // Verifieringsstatus (2026-05-27):
-//   ✅ VERIFIERAT via fetch  : Microsoft 365 Business Basic/Standard/Premium
-//   ⚠️ KRÄVER PLAYWRIGHT    : Tele2, Bahnhof, SumUp, Sector Alarm, Skatteverket, Fortnox
-//      (Dessa sidor returnerar 403 på vanliga HTTP-anrop — kör price-monitor.mjs lokalt.)
-//   ❌ GAMMAL URL (404 fixad): microsoft.com/sv-se/microsoft-365/business/compare-all-plans
+//
+//   ✅ VERIFIERAT via fetch (exakta priser bekräftade):
+//      M365 Business Basic:    57,40 kr (år) / 68,88 kr (mth)
+//      M365 Business Standard: 119,48 kr (år) / 143,38 kr (mth)
+//      M365 Business Premium:  210,29 kr (år) / 252,35 kr (mth)
+//      M365 E3:                384,70 kr (år)   ← KORRIGERAT från 325 kr
+//      M365 E5:                609,10 kr (år)   ← KORRIGERAT från 516 kr
+//
+//   ⚠️ KRÄVER PLAYWRIGHT (returnerar 403 på HTTP-fetch):
+//      Tele2 mobil/bredband, Bahnhof, SumUp, Zettle, Sector Alarm,
+//      Fortnox Lön, Skatteverket, Google Workspace, Slack, Zoom, Atlassian
+//      → Kör: node scripts/price-monitor.mjs --headed
+//
+//   ❌ GAMMAL URL (404 fixad):
+//      microsoft.com/sv-se/microsoft-365/business/compare-all-plans
 // Pages that time out or return errors → warning (inconclusive, exit 0).
 const PRICE_CHECKS = [
   // Mobil — real-public, verified
@@ -125,6 +136,25 @@ const PRICE_CHECKS = [
     checks: [
       { name: 'Premium årsavtal 210 kr/user/mth',  pattern: /21[0-9][,.]?\d*\s*(?:kr|SEK)/i },
       { name: 'Premium månadsvis 252 kr/user/mth', pattern: /25[0-9][,.]?\d*\s*(?:kr|SEK)/i },
+    ],
+  },
+  // Verifierat 2026-05-27: E3 = 384,70 kr årsavtal | E5 = 609,10 kr årsavtal
+  // OBS: Dessa är Microsoft 365 E3/E5 — INTE Office 365 E3/E5 (256/424 kr).
+  // Källa: microsoft.com/sv-se/microsoft-365/enterprise/microsoft365-plans-and-pricing
+  {
+    category: 'saas-productivity',
+    supplier: 'Microsoft 365 E3 (sv)',
+    url: 'https://www.microsoft.com/sv-se/microsoft-365/enterprise/microsoft365-plans-and-pricing',
+    checks: [
+      { name: 'E3 årsavtal 384 kr/user/mth', pattern: /38[0-9][,.]?\d*\s*(?:kr|SEK)/i },
+    ],
+  },
+  {
+    category: 'saas-productivity',
+    supplier: 'Microsoft 365 E5 (sv)',
+    url: 'https://www.microsoft.com/sv-se/microsoft-365/enterprise/microsoft365-plans-and-pricing',
+    checks: [
+      { name: 'E5 årsavtal 609 kr/user/mth', pattern: /60[0-9][,.]?\d*\s*(?:kr|SEK)/i },
     ],
   },
 

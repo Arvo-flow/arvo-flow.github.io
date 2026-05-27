@@ -291,15 +291,21 @@ export const BRANCHINDEX = {
         currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
         note: 'M365 Business Premium — inkl. Intune MDM + Microsoft Defender for Business. Rätt val vid säkerhetskrav.',
       },
+      // OBS: Microsoft 365 E3/E5 ≠ Office 365 E3/E5 (separata produkter).
+      // Dessa priser avser Microsoft 365 E3/E5 — den fullständiga sviten med
+      // Intune MDM, Defender for Business och Purview compliance.
+      // Office 365 E3 (äldre, utan säkerhetspaketet) kostar 256,34 kr/user/mth.
+      // Månadsvis flex estimerat: årsavtal × 1,20 (konsekvent med Business-tiers).
+      // Källa: microsoft.com/sv-se/microsoft-365/enterprise (enterprise plans page).
       'e3': {
-        msrpMonthly: 378, msrpAnnual: 325, arvoAnnual: 325,
-        currency: 'SEK', lastVerified: '2026-05-22', source: 'ej-verifierat',
-        note: 'M365 E3 — enterprise compliance, eDiscovery, avancerat auditlogg. Sällan motiverat under 100 users. ⚠ Pris ej verifierat mot microsoft.com — uppdatera manuellt.',
+        msrpMonthly: 462, msrpAnnual: 384.70, arvoAnnual: 384.70,
+        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
+        note: 'M365 E3 — enterprise compliance, eDiscovery, avancerat auditlogg, Purview. Sällan motiverat under 100 users. Förväxla ej med Office 365 E3 (256 kr).',
       },
       'e5': {
-        msrpMonthly: 599, msrpAnnual: 516, arvoAnnual: 516,
-        currency: 'SEK', lastVerified: '2026-05-22', source: 'ej-verifierat',
-        note: 'M365 E5 — full SIEM, Defender for Endpoint, avancerad SIEM. Överkurs för de flesta SMF. ⚠ Pris ej verifierat mot microsoft.com — uppdatera manuellt.',
+        msrpMonthly: 731, msrpAnnual: 609.10, arvoAnnual: 609.10,
+        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
+        note: 'M365 E5 — full SIEM, Defender for Endpoint, Power BI Pro, avancerad analys. Förväxla ej med Office 365 E5 (424 kr).',
       },
 
       // Google Workspace — USD-baspris, konverteras runtime via pricing.js.
