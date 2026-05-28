@@ -850,7 +850,20 @@ const TestaFaktura = () => {
               </>
             ) : result.route === 'unsupported' ? (
               <NoSwitchBlock>
-                {result.reason === 'credit_note' ? (
+                {result.reason === 'natavgift' ? (
+                  <>
+                    <strong>Nätavgift — reglerat monopol, kan inte förhandlas.</strong>
+                    <p>
+                      Denna faktura är från er lokala nätägare ({result.extracted?.supplier ?? 'nätbolaget'}) och
+                      avser elnätets distributionskostnad. Nätavgiften bestäms av Energimarknadsinspektionen
+                      och är geografiskt bunden — den kan inte påverkas genom ett elleverantörsbyte.
+                    </p>
+                    <p>
+                      Ladda upp er <strong>elhandelsfaktura</strong> (från er elleverantör) för att se
+                      om ni betalar rätt pris för själva elen.
+                    </p>
+                  </>
+                ) : result.reason === 'credit_note' ? (
                   <>
                     <strong>Kreditnota — ingen analys möjlig.</strong>
                     <p>

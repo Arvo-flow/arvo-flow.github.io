@@ -760,6 +760,28 @@ export default async function handler(req, res) {
 
     // El-specifik deterministisk rekommendation — hoppar över AI-rekommenderaren
     if (categorized.category === 'el') {
+      // ── Nätfaktura-guard: distributionsfaktura från nätägare (ej förhandlingsbar) ──
+      // Nätavgiften är ett reglerat geografiskt monopol — ingen elleverantör kan påverka den.
+      // Returnera specifikt unsupported-svar istället för att köra el-analysen.
+      if (extracted.elInvoiceType === 'natavgift') {
+        timing.totalMs = Date.now() - t0;
+        return send(res, 200, {
+          ok:     true,
+          route:  'unsupported',
+          reason: 'natavgift',
+          extracted: {
+            supplier: extracted.supplier,
+            date:     extracted.date,
+            amount:   extracted.amount,
+          },
+          categorized: {
+            category:           categorized.category,
+            normalizedSupplier: categorized.normalizedSupplier,
+          },
+          timing,
+        });
+      }
+
       // ── Fastprisavtal-lås: bundet elavtal med framtida slutdatum ─────────────
       // Fastprisavtal kan inte sägas upp i förtid — kunden är låst oavsett
       // uppsägningstid. Visa potentiell besparing men erbjud ej omedelbart byte.

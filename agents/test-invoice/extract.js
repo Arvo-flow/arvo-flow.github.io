@@ -236,6 +236,16 @@ STARTUP-KREDITER — om fakturan visar att ett startup-program, promotional cred
   Sätt alla tre till null om inga startup-/programkrediter förekommer på fakturan.
 
 ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
+  el_invoice_type: Fakturatyp för elrelaterade fakturor — avgörande för om Arvo kan hjälpa.
+    'elhandel'  = elleverantörens handelsfaktura. Innehåller spotpris, fastpris eller rörligt elpris
+                  (förhandlingsbar — elleverantör kan bytas). Typiska signaler: rubriken "ELFAKTURA",
+                  rader med "Förbrukning Spotpris", "Elhandel Fastprisavtal", "Handelspåslag", "Nord Pool".
+    'natavgift' = nätägarens distributionsfaktura. Innehåller överföringsavgift, nättariff, effektavgift
+                  (EJ förhandlingsbar — reglerat geografiskt monopol, kan inte bytas). Typiska signaler:
+                  rubriken "NÄTFAKTURA", rader med "Överföringsavgift Elnät", "Nättariff", "Effektavgift",
+                  leverantörsnamn som innehåller "Elnätet", "Nät AB", "Elnät".
+    'kombinerad' = fakturan innehåller BÅDE elhandel och nätavgift på samma räkning.
+    null         = ej elfaktura.
   el_kwh: Total förbrukning i kWh denna faktureringsperiod.
   el_billing_month: Månaden förbrukningen avser, t.ex. "maj", "februari".
   el_omrade: Elområde SE1, SE2, SE3 eller SE4. Identifiera i första hand från anläggnings-ID
@@ -392,6 +402,11 @@ const EXTRACT_TOOL = {
         type: ['integer', 'null'],
         description: 'Summa energiskatt + elcertifikat för perioden i kr exkl. moms. null om ej elfaktura.',
       },
+      el_invoice_type: {
+        type: ['string', 'null'],
+        enum: ['elhandel', 'natavgift', 'kombinerad', null],
+        description: '"elhandel" = elleverantörsfaktura (förhandlingsbar). "natavgift" = nätägarens distributionsfaktura (ej förhandlingsbar). "kombinerad" = båda. null om ej elfaktura.',
+      },
       el_spot_price_kwh: {
         type: ['number', 'null'],
         description: 'Nordpool spotpris i kr/kWh om det är tydligt separerat från handelspåslag på fakturan. null om ej explicit, okänt eller fastprisavtal.',
@@ -525,6 +540,7 @@ export function aggregateLineItems(raw) {
     elSkatterKr:      raw.el_skatter_kr != null ? Number(raw.el_skatter_kr) : null,
     elPriceExplicit:  raw.el_price_explicit ?? null,
     elContractType:   raw.el_contract_type ?? null,
+    elInvoiceType:    raw.el_invoice_type ?? null,
     elSpotPriceKwh:   raw.el_spot_price_kwh != null ? Number(raw.el_spot_price_kwh) : null,
 
     connectionSpeedMbit:       raw.connection_speed_mbit != null ? Number(raw.connection_speed_mbit) : null,
