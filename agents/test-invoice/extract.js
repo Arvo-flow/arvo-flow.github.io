@@ -264,7 +264,14 @@ ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
     null om saknas eller ej elfaktura.
   el_price_explicit: true ENBART om fakturan explicit visar ett pris per kWh (t.ex. "0,85 kr/kWh"
     eller en prisrad med kr/kWh). Sätt false om priset måste beräknas från totalbelopp / kWh.
-    null om ej elfaktura.${FEWSHOT_EXAMPLES ? '\n\n' + FEWSHOT_EXAMPLES : ''}`;
+    null om ej elfaktura.
+  el_spot_price_kwh: Nordpool spotpris (råpris/inköpspris) i kr/kWh, ENBART om det framgår
+    som en separat rad eller kolumn skild från handelspåslag/marginalavgift.
+    Extrahera ENBART om spotpriset är tydligt identifierat — t.ex. "Spotpris (Vägt snitt): 0,42 kr/kWh",
+    "Nord Pool Spot: 0,38 kr/kWh", "Inköpspris el: 0,41 kr". Sätts till null om:
+    – Fakturan visar ett kombinerat energipris utan separation av spot vs. påslag.
+    – Det är ett fastprisavtal (el_contract_type = 'fixed').
+    – Spotpriset inte framgår explicit med ord som "spot", "inköp", "Nord Pool" o.d.${FEWSHOT_EXAMPLES ? '\n\n' + FEWSHOT_EXAMPLES : ''}`;
 
 const EXTRACT_TOOL = {
   name: 'extract_invoice',
@@ -384,6 +391,10 @@ const EXTRACT_TOOL = {
       el_skatter_kr: {
         type: ['integer', 'null'],
         description: 'Summa energiskatt + elcertifikat för perioden i kr exkl. moms. null om ej elfaktura.',
+      },
+      el_spot_price_kwh: {
+        type: ['number', 'null'],
+        description: 'Nordpool spotpris i kr/kWh om det är tydligt separerat från handelspåslag på fakturan. null om ej explicit, okänt eller fastprisavtal.',
       },
 
       connection_speed_mbit: {
@@ -514,6 +525,7 @@ export function aggregateLineItems(raw) {
     elSkatterKr:      raw.el_skatter_kr != null ? Number(raw.el_skatter_kr) : null,
     elPriceExplicit:  raw.el_price_explicit ?? null,
     elContractType:   raw.el_contract_type ?? null,
+    elSpotPriceKwh:   raw.el_spot_price_kwh != null ? Number(raw.el_spot_price_kwh) : null,
 
     connectionSpeedMbit:       raw.connection_speed_mbit != null ? Number(raw.connection_speed_mbit) : null,
     licenseType:               raw.license_type ?? null,

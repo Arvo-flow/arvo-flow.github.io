@@ -247,7 +247,18 @@ function computeElRecommendation(extracted) {
 
   const fastAvgift     = extracted.elFastAvgiftKr ?? 0;
   const currentAnnual  = Math.round(energiPerKwhNet * annualKwh) + fastAvgift * 12;
-  const benchmarkKwh   = (EL_BENCHMARK_KWH[omrade] ?? EL_BENCHMARK_KWH.SE3)[season];
+  const benchmarkKwhRaw = (EL_BENCHMARK_KWH[omrade] ?? EL_BENCHMARK_KWH.SE3)[season];
+
+  // Sanity-check: benchmark får aldrig understiga fakturans spotpris + minimalt
+  // handelspåslag. Skyddar mot omöjliga besparings­löften vid ovanligt höga
+  // spotpriser (t.ex. kalla vintrar i SE1–SE2).
+  const MIN_VIABLE_MARGIN = 0.020; // 2 öre/kWh — lägsta rimliga handelspåslag
+  const invoiceSpotPrice = extracted.elSpotPriceKwh;
+  const benchmarkKwh = (invoiceSpotPrice != null && invoiceSpotPrice > 0)
+    ? Math.max(benchmarkKwhRaw, invoiceSpotPrice + MIN_VIABLE_MARGIN)
+    : benchmarkKwhRaw;
+  const spotCapApplied = benchmarkKwh > benchmarkKwhRaw;
+
   const benchmarkAnnual = Math.round(benchmarkKwh * annualKwh);
   const grossSaving    = Math.max(0, currentAnnual - benchmarkAnnual);
   const shouldSwitch   = grossSaving >= 500;
@@ -278,7 +289,7 @@ function computeElRecommendation(extracted) {
     monitoringNote,
     suggestedAnnualCost: shouldSwitch ? benchmarkAnnual : null,
     reasoning: shouldSwitch
-      ? `Er faktura visar ${energiPerKwhNet.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel} (energidel exkl. nätavgift och energiskatt). Arvo bedömer att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos besparingsarvode (20 %): ${netSaving.toLocaleString('sv-SE')} kr/år.`
+      ? `Er faktura visar ${energiPerKwhNet.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel} (energidel exkl. nätavgift och energiskatt). Arvo bedömer att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh${spotCapApplied ? ` (justerat uppåt från säsongsindex pga. högt spotpris denna period — besparingen avser leverantörens påslag och fasta avgifter)` : ''}. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos besparingsarvode (20 %): ${netSaving.toLocaleString('sv-SE')} kr/år.`
       : `Er faktura visar ${energiPerKwhNet.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel} (energidel exkl. nätavgift och energiskatt). Marknadsgenomsnittet för välförhandlade spotprisavtal i ${omrade} under ${seasonLabel} är ca ${benchmarkKwh.toFixed(2)} kr/kWh. Ni ligger redan under marknadsgenomsnittet — ert nuvarande avtal verkar konkurrenskraftigt.`,
     uncertaintyNote: [
       `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh, justerat för att ${seasonContext}. Faktisk årsförbrukning kan avvika ±30–40 %.`,

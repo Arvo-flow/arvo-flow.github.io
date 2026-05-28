@@ -1269,7 +1269,7 @@ const TestaFaktura = () => {
                 <dd>
                   {formatKr(result.extracted.amount)}
                   {result.extracted.oneTimeFees > 0 && (
-                    <small>Inkl. {formatKr(result.extracted.oneTimeFees)} engångskostnader — ingår ej i årsberäkningen ovan.</small>
+                    <small>Inkl. {formatKr(result.extracted.oneTimeFees)} {result.extracted.elSkatterKr > 0 ? 'lagstadgade avgifter' : 'engångskostnader'} — ingår ej i årsberäkningen ovan.</small>
                   )}
                 </dd>
               </div>
