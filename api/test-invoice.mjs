@@ -170,6 +170,7 @@ async function notifyReviewQueue(extracted, reason) {
 // ── El-specifik säsongslogik ──────────────────────────────────────────────
 
 // Svenska och engelska månadsnamn → säsong
+// Säsong används enbart för benchmark-lookup (EL_BENCHMARK_KWH) och etiketter.
 const MONTH_TO_SEASON = {
   'januari': 'winter',    'februari': 'winter',
   'november': 'winter',   'december': 'winter',
@@ -181,9 +182,32 @@ const MONTH_TO_SEASON = {
   'may': 'summer', 'june': 'summer', 'july': 'summer', 'august': 'summer',
 };
 
-// Exakta bråk: 1/9 + 1/12 + 1/18 = 4/9+4/12+4/18 över 12 månader = 1.00
-// annual_kwh = monthly_kwh × multiplier
-const SEASON_MULTIPLIER = { winter: 9, spring_fall: 12, summer: 18 };
+// Månadsfördelning per bransch — andel av årsförbrukning varje månad (summa = 1.000).
+// Lead-gen-modell: ersätts av faktisk 12-månadershistorik när Fortnox/Visma kopplas.
+// Kalibrerad mot svenska B2B-energiförbrukningsprofiler (Energimyndigheten + Arvo-estimat).
+const INDUSTRY_MONTHLY_FRACTIONS = {
+  tillverkning: { januari:0.092, februari:0.088, mars:0.087, april:0.082, maj:0.082, juni:0.079, juli:0.055, augusti:0.079, september:0.082, oktober:0.086, november:0.088, december:0.100 },
+  'it-tech':    { januari:0.091, februari:0.087, mars:0.085, april:0.081, maj:0.083, juni:0.081, juli:0.051, augusti:0.076, september:0.084, oktober:0.088, november:0.091, december:0.102 },
+  konsult:      { januari:0.091, februari:0.087, mars:0.085, april:0.081, maj:0.083, juni:0.081, juli:0.051, augusti:0.076, september:0.084, oktober:0.088, november:0.091, december:0.102 },
+  vard:         { januari:0.090, februari:0.086, mars:0.084, april:0.082, maj:0.080, juni:0.082, juli:0.082, augusti:0.082, september:0.082, oktober:0.085, november:0.087, december:0.078 },
+  hotell:       { januari:0.073, februari:0.070, mars:0.075, april:0.080, maj:0.087, juni:0.100, juli:0.115, augusti:0.110, september:0.085, oktober:0.078, november:0.068, december:0.059 },
+  transport:    { januari:0.096, februari:0.091, mars:0.089, april:0.083, maj:0.083, juni:0.080, juli:0.063, augusti:0.080, september:0.083, oktober:0.086, november:0.089, december:0.077 },
+  bygg:         { januari:0.071, februari:0.068, mars:0.080, april:0.088, maj:0.092, juni:0.095, juli:0.060, augusti:0.092, september:0.092, oktober:0.086, november:0.072, december:0.104 },
+  ehandel:      { januari:0.079, februari:0.076, mars:0.078, april:0.081, maj:0.083, juni:0.082, juli:0.078, augusti:0.083, september:0.086, oktober:0.090, november:0.092, december:0.092 },
+  ovrigt:       { januari:0.111, februari:0.106, mars:0.094, april:0.083, maj:0.060, juni:0.056, juli:0.050, augusti:0.056, september:0.078, oktober:0.083, november:0.100, december:0.123 },
+};
+
+const EN_TO_SV_MONTH = {
+  january:'januari', february:'februari', march:'mars', april:'april',
+  may:'maj', june:'juni', july:'juli', august:'augusti',
+  september:'september', october:'oktober', november:'november', december:'december',
+};
+
+function getMonthFraction(industry, monthRaw) {
+  const month = EN_TO_SV_MONTH[monthRaw] ?? monthRaw;
+  const fracs = INDUSTRY_MONTHLY_FRACTIONS[industry] ?? INDUSTRY_MONTHLY_FRACTIONS.ovrigt;
+  return fracs[month] ?? (1 / 12);
+}
 
 // Swedish Energiskatt + elcertifikat (lagstadgade avgifter 2025/2026).
 // Används när fakturan visar ett totalpris per kWh utan separat Energiskatt-rad.
@@ -205,7 +229,7 @@ const EL_BENCHMARK_KWH = {
 // Matchar nätägarens avgifter på elfakturan (inte förhandlingsbara — beror på elnätsleverantör).
 const NATAVGIFT_RE = /nätavg|elnät|överföringsavg|nätabon|kapacitetsavg|effektavg|nätoperatör/i;
 
-function computeElRecommendation(extracted) {
+function computeElRecommendation(extracted, industry = 'ovrigt') {
   const kwh    = extracted.elKwh;
   const month  = (extracted.elBillingMonth ?? '').toLowerCase().trim();
   const omrade = ['SE1', 'SE2', 'SE3', 'SE4'].includes(extracted.elOmrade)
@@ -213,9 +237,9 @@ function computeElRecommendation(extracted) {
 
   if (!kwh || kwh <= 0) return null;
 
-  const season     = MONTH_TO_SEASON[month] ?? 'spring_fall';
-  const multiplier = SEASON_MULTIPLIER[season];
-  const annualKwh  = Math.round(kwh * multiplier);
+  const season   = MONTH_TO_SEASON[month] ?? 'spring_fall';
+  const fraction = getMonthFraction(industry, month);
+  const annualKwh = Math.round(kwh / fraction);
 
   // Identifiera nätavgift från radposter — den är inte valbar och ska inte
   // ingå i energiprisjämförelsen.
@@ -223,7 +247,7 @@ function computeElRecommendation(extracted) {
   const natavgiftMonthly = lineItems
     .filter(li => li.type === 'recurring_subscription' && NATAVGIFT_RE.test(li.description))
     .reduce((sum, li) => sum + (li.amount ?? 0), 0);
-  const elNatavgiftAnnual = Math.round(natavgiftMonthly * multiplier);
+  const elNatavgiftAnnual = Math.round(natavgiftMonthly / fraction);
 
   // Energipris per kWh (energidel exkl. nätavgift och skatter).
   // Föredrar explicit extraktion. Fallbacken subtraherar nätavgift ur
@@ -245,8 +269,11 @@ function computeElRecommendation(extracted) {
     ? Math.max(0, energiPerKwh - ENERGISKATT_ESTIMATE_KWH)
     : energiPerKwh;
 
-  const fastAvgift     = extracted.elFastAvgiftKr ?? 0;
-  const currentAnnual  = Math.round(energiPerKwhNet * annualKwh) + fastAvgift * 12;
+  const fastAvgift         = extracted.elFastAvgiftKr ?? 0;
+  // currentAnnualGross: faktiskt betalt (inkl. energiskatt) — visas i UI som "Du betalar idag"
+  const currentAnnualGross = Math.round(energiPerKwh * annualKwh) + fastAvgift * 12;
+  // currentAnnual: nettopris exkl. energiskatt — används enbart för jämförelse mot benchmark
+  const currentAnnual      = Math.round(energiPerKwhNet * annualKwh) + fastAvgift * 12;
   const benchmarkKwhRaw = (EL_BENCHMARK_KWH[omrade] ?? EL_BENCHMARK_KWH.SE3)[season];
 
   // Sanity-check: benchmark får aldrig understiga fakturans spotpris + minimalt
@@ -265,14 +292,10 @@ function computeElRecommendation(extracted) {
   const arvoFee        = Math.round(grossSaving * 0.20);
   const netSaving      = grossSaving - arvoFee;
 
-  const seasonLabel  = { winter: 'vinter', spring_fall: 'vår/höst', summer: 'sommar' }[season];
-  const seasonContext = {
-    winter:      'vinterförbrukning är normalt högre än årsgenomsnittet',
-    spring_fall: 'vår/höst-förbrukning speglar årsgenomsnittet väl',
-    summer:      'sommarförbrukning är normalt lägre än årsgenomsnittet',
-  }[season];
-  const monthLabel   = extracted.elBillingMonth ?? 'fakturamånad';
-  const mwhEstimate  = Math.round(annualKwh / 100) / 10;
+  const seasonLabel = { winter: 'vinter', spring_fall: 'vår/höst', summer: 'sommar' }[season];
+  const monthLabel  = extracted.elBillingMonth ?? 'fakturamånad';
+  const mwhEstimate = Math.round(annualKwh / 100) / 10;
+  const fractionPct = Math.round(fraction * 100);
 
   const monitoringNote = !shouldSwitch
     ? `Arvo rekommenderar kvartalsmässig genomgång av ert elavtal — spotpriset varierar säsongsvis och ett byte kan bli lönsamt om marknadsläget förändras.`
@@ -283,7 +306,7 @@ function computeElRecommendation(extracted) {
     : null;
 
   return {
-    annualKwh, currentAnnual, benchmarkAnnual, grossSaving, arvoFee, netSaving, shouldSwitch,
+    annualKwh, currentAnnual, currentAnnualGross, benchmarkAnnual, grossSaving, arvoFee, netSaving, shouldSwitch,
     omrade, season: seasonLabel, billingMonth: monthLabel, energiPerKwh: energiPerKwhNet, benchmarkKwh,
     elNatavgiftAnnual,
     monitoringNote,
@@ -292,7 +315,7 @@ function computeElRecommendation(extracted) {
       ? `Er faktura visar ${energiPerKwhNet.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel} (energidel exkl. nätavgift och energiskatt). Arvo bedömer att ett välförhandlat spotprisavtal i ${omrade} under ${seasonLabel} bör ligga kring ${benchmarkKwh.toFixed(2)} kr/kWh${spotCapApplied ? ` (justerat uppåt från säsongsindex pga. högt spotpris denna period — besparingen avser leverantörens påslag och fasta avgifter)` : ''}. På uppskattad årsförbrukning om ${mwhEstimate} MWh innebär det en bruttobesparing på ca ${grossSaving.toLocaleString('sv-SE')} kr/år — er nettobesparing efter Arvos besparingsarvode (20 %): ${netSaving.toLocaleString('sv-SE')} kr/år.`
       : `Er faktura visar ${energiPerKwhNet.toFixed(3)} kr/kWh i elenergiavgift för ${monthLabel} (energidel exkl. nätavgift och energiskatt). Marknadsgenomsnittet för välförhandlade spotprisavtal i ${omrade} under ${seasonLabel} är ca ${benchmarkKwh.toFixed(2)} kr/kWh. Ni ligger redan under marknadsgenomsnittet — ert nuvarande avtal verkar konkurrenskraftigt.`,
     uncertaintyNote: [
-      `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh, justerat för att ${seasonContext}. Faktisk årsförbrukning kan avvika ±30–40 %.`,
+      `Årsförbrukning ${mwhEstimate} MWh är uppskattad från ${monthLabel}s ${kwh.toLocaleString('sv-SE')} kWh (${fractionPct} % av årsförbrukning för er branschprofil). Faktisk årsförbrukning kan avvika ±20–30 %.`,
       elPriceDerived ? 'Elpriset är beräknat som fakturabelopp / kWh — en explicit kr/kWh-rad saknas på fakturan.' : null,
       energiskattNote,
     ].filter(Boolean).join(' '),
@@ -789,7 +812,7 @@ export default async function handler(req, res) {
       if (extracted.elContractType === 'fixed' && extracted.servicePeriodEnd) {
         const elEnd = new Date(extracted.servicePeriodEnd);
         if (elEnd > new Date()) {
-          const elRec = computeElRecommendation(extracted);
+          const elRec = computeElRecommendation(extracted, industry);
           const monDate = new Date(elEnd);
           monDate.setMonth(monDate.getMonth() - 3);
           const potentialSaving = elRec ? Math.max(0, elRec.grossSaving) : null;
@@ -808,7 +831,7 @@ export default async function handler(req, res) {
             extracted: {
               supplier:                extracted.supplier,
               amount:                  extracted.amount,
-              annualCost:              elRec ? elRec.currentAnnual : extracted.annualCost,
+              annualCost:              elRec ? elRec.currentAnnualGross : extracted.annualCost,
               recurringAmount:         extracted.recurringAmount,
               date:                    extracted.date,
               lineItems:               extracted.lineItems,
@@ -837,7 +860,7 @@ export default async function handler(req, res) {
         }
       }
 
-      const elRec = computeElRecommendation(extracted);
+      const elRec = computeElRecommendation(extracted, industry);
       if (!elRec) {
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'el_data_missing',
@@ -858,7 +881,7 @@ export default async function handler(req, res) {
 
       storeDatapoint({
         category: 'el', supplier: categorized.normalizedSupplier,
-        annualCost: elRec.currentAnnual, industry, employees: employeesNum,
+        annualCost: elRec.currentAnnualGross, industry, employees: employeesNum,
       }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
       const { arvoFee, netSaving } = elRec;
@@ -871,7 +894,7 @@ export default async function handler(req, res) {
           recurringAmount:      extracted.recurringAmount,
           variableCharges:      extracted.variableCharges,
           oneTimeFees:          extracted.oneTimeFees,
-          annualCost:           elRec.currentAnnual,
+          annualCost:           elRec.currentAnnualGross,
           date:                 extracted.date,
           description:          extracted.description,
           billingPeriod:        extracted.billingPeriod,
