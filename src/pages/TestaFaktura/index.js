@@ -776,6 +776,11 @@ const TestaFaktura = () => {
                           <strong>Potentiell besparing vid avtalets slut:</strong> {result.potentialSavingNote}
                         </p>
                       )}
+                      {result.extracted?.cancellationFeeExplicit && (
+                        <p style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.22)', borderRadius: 8, fontSize: 13.5 }}>
+                          <strong style={{ color: '#DC2626' }}>⚠ VARNING FÖR LÖSENAVGIFT:</strong>{' '}Avtalet innehåller en explicit straffavgift vid förtida uppsägning: <em>"{result.extracted.cancellationFeeExplicit}"</em>. Bryt inte detta avtal i förtid utan att noga räkna på kostnaden.
+                        </p>
+                      )}
                     </>
                   ) : (
                     <>
@@ -795,6 +800,11 @@ const TestaFaktura = () => {
                             : `Fakturan avser perioden till ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera oavsett om avtalet förlängs automatiskt eller kräver aktiv uppsägning. Vi ser inga uppsägningstider på fakturan; fråga leverantören om ni vill veta om förtidslösen är möjlig.`;
                         })()}
                       </p>
+                      {result.extracted?.cancellationFeeExplicit && (
+                        <p style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.22)', borderRadius: 8, fontSize: 13.5 }}>
+                          <strong style={{ color: '#DC2626' }}>⚠ VARNING FÖR LÖSENAVGIFT:</strong>{' '}Avtalet innehåller en explicit straffavgift vid förtida uppsägning: <em>"{result.extracted.cancellationFeeExplicit}"</em>. Bryt inte detta avtal i förtid utan att noga räkna på kostnaden.
+                        </p>
+                      )}
                     </>
                   )}
                 </MonitoringBlock>

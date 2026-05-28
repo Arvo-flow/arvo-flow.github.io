@@ -137,6 +137,11 @@ AVTALSTID & UPPSÄGNING — extrahera BARA om fakturan innehåller ett explicit 
   cancellation_notice_days: Uppsägningstid i antal dagar som heltal.
     Exempel: "60 dagars uppsägningstid", "60 days notice", "notice period: 60 days" → 60.
     Exempel: "3 månaders uppsägningstid" → 90. null om ej angivet.
+  cancellation_fee_explicit: Explicit text om lösenavgift / förtidsavgift om den framgår på
+    fakturan eller i bilagda avtalsvillkor. Extrahera den EXAKTA formuleringen utan att förkorta.
+    Exempel: "lösenavgift motsvarande 30 % av det fasta elpriset multiplicerat med den uppskattade
+    återstående förbrukningen för avtalsperioden"
+    null om ingen explicit lösenavgiftstext förekommer.
 
 FAKTURERINGSPERIOD — välj exakt ett värde baserat på fakturans rader:
   monthly   = faktureras månadsvis (vanligast för abonnemang)
@@ -247,7 +252,14 @@ ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
     'kombinerad' = fakturan innehåller BÅDE elhandel och nätavgift på samma räkning.
     null         = ej elfaktura.
   el_kwh: Total förbrukning i kWh denna faktureringsperiod.
-  el_billing_month: Månaden förbrukningen avser, t.ex. "maj", "februari".
+  el_billing_month: Månaden förbrukningen avser — extrahera ENBART månadsnamnet i gemener.
+    Identifiera från alla förekommande format:
+      "Elförbrukning Maj 2026" → "maj"
+      "Avräkning Maj 2026" → "maj"
+      "Period: 2026-05-01 – 2026-05-31" → "maj"
+      Månadskolumnen "05" eller "2026-05" → "maj"
+    KRITISKT: returnera ENBART månadsnamnet ("maj", "februari" osv.), ALDRIG med år eller annan text.
+    null om ej elfaktura.
   el_omrade: Elområde SE1, SE2, SE3 eller SE4. Identifiera i första hand från anläggnings-ID
     eller explicit ort/adress. Defaulta till "SE3" om osäker. null om ej elfaktura.
     Zon per stad (OBS — memorera dessa):
@@ -376,7 +388,7 @@ const EXTRACT_TOOL = {
       },
       el_billing_month: {
         type: ['string', 'null'],
-        description: 'Månaden förbrukningen avser, t.ex. "maj". null om ej elfaktura.',
+        description: 'Månaden förbrukningen avser — enbart månadsnamnet i gemener ("maj", "februari" osv.), ALDRIG med år. Identifieras från t.ex. "Elförbrukning Maj 2026" → "maj", period "2026-05-01" → "maj". null om ej elfaktura.',
       },
       el_omrade: {
         type: ['string', 'null'],
@@ -457,6 +469,10 @@ const EXTRACT_TOOL = {
       cancellation_notice_days: {
         type: ['integer', 'null'],
         description: 'Uppsägningstid i hela dagar. Konvertera månader till dagar (3 mån = 90). null om ej angivet.',
+      },
+      cancellation_fee_explicit: {
+        type: ['string', 'null'],
+        description: 'Explicit text om lösenavgift / förtidsavgift från fakturan. Extrahera exakt formulering. null om ej angivet.',
       },
       currency: {
         type: 'string',
@@ -562,6 +578,7 @@ export function aggregateLineItems(raw) {
     servicePeriodStart:        raw.service_period_start ?? null,
     servicePeriodEnd:          raw.service_period_end ?? null,
     cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,
+    cancellationFeeExplicit:   raw.cancellation_fee_explicit ?? null,
     currency:                  raw.currency ?? 'SEK',
     potentialMixedCategories:  raw.potential_mixed_categories ?? false,
 
