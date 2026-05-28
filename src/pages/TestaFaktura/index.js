@@ -777,8 +777,8 @@ const TestaFaktura = () => {
                         </p>
                       )}
                       {result.extracted?.cancellationFeeExplicit && (
-                        <p style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.22)', borderRadius: 8, fontSize: 13.5 }}>
-                          <strong style={{ color: '#DC2626' }}>⚠ Lösenavgift i avtalet:</strong>{' '}<em>"{result.extracted.cancellationFeeExplicit}"</em> — räkna på kostnaden innan ni säger upp förtida. Arvo hjälper er göra kalkylen.
+                        <p style={{ marginTop: 10, paddingLeft: 12, borderLeft: '3px solid #D97706', fontSize: 13.5 }}>
+                          <strong style={{ color: '#92400E' }}>⚠ Lösenavgift i avtalet:</strong>{' '}<em>"{result.extracted.cancellationFeeExplicit}"</em> — räkna på kostnaden innan ni säger upp förtida. Arvo hjälper er göra kalkylen.
                         </p>
                       )}
                     </>
@@ -801,8 +801,8 @@ const TestaFaktura = () => {
                         })()}
                       </p>
                       {result.extracted?.cancellationFeeExplicit && (
-                        <p style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(220,38,38,0.07)', border: '1px solid rgba(220,38,38,0.22)', borderRadius: 8, fontSize: 13.5 }}>
-                          <strong style={{ color: '#DC2626' }}>⚠ Lösenavgift i avtalet:</strong>{' '}<em>"{result.extracted.cancellationFeeExplicit}"</em> — räkna på kostnaden innan ni säger upp förtida. Arvo hjälper er göra kalkylen.
+                        <p style={{ marginTop: 10, paddingLeft: 12, borderLeft: '3px solid #D97706', fontSize: 13.5 }}>
+                          <strong style={{ color: '#92400E' }}>⚠ Lösenavgift i avtalet:</strong>{' '}<em>"{result.extracted.cancellationFeeExplicit}"</em> — räkna på kostnaden innan ni säger upp förtida. Arvo hjälper er göra kalkylen.
                         </p>
                       )}
                     </>
