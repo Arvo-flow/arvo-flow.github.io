@@ -17,6 +17,8 @@ import { fixtures as f06 } from './fixtures/06-skrivarleasing.mjs';
 import { fixtures as f07 } from './fixtures/07-edge-cases.mjs';
 import { fixtures as f08 } from './fixtures/08-realistic.mjs';
 import './el-recommendation.mjs';
+import './branchindex.mjs';
+import './recommend-deterministic.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,
