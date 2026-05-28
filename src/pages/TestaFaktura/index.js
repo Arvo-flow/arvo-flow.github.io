@@ -692,8 +692,10 @@ const TestaFaktura = () => {
                 <h2>{result.extracted.supplier}</h2>
                 {result.categorized && (
                   <span className="subtitle">
-                    {CATEGORY_LABELS[result.categorized.category] || result.categorized.category}
-                    {result.categorized.subType ? ` · ${result.categorized.subType}` : ''}
+                    {result.reason === 'natavgift'
+                      ? 'Nätavgift'
+                      : (CATEGORY_LABELS[result.categorized.category] || result.categorized.category)}
+                    {result.categorized.subType && result.reason !== 'natavgift' ? ` · ${result.categorized.subType}` : ''}
                   </span>
                 )}
               </div>
