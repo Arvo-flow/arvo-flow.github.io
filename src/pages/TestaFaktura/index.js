@@ -513,7 +513,23 @@ const TestaFaktura = () => {
   const optArvoFee = isOptimize ? Math.round(optSaving * 0.20) : 0;
   const optNet = isOptimize ? optSaving - optArvoFee : 0;
 
-  const diagAnnual  = result?.extracted?.annualCost ?? 0;
+  // Hårdvarujustering: subtrahera delbetalningar ur besparingsbasen (beräknas först — används i diagAnnual)
+  const _hwItems        = detectHardwareInstallments(result?.extracted?.lineItems ?? []);
+  const _hwAnnualCost   = _hwItems.reduce((s, h) => s + h.monthlyCost * 12, 0);
+  const _hwTotalRemain  = _hwItems.reduce((s, h) => s + h.remainingCost, 0);
+  const hasHwAdj        = _hwAnnualCost > 0 && result?.recommendation?.shouldSwitch;
+  const adjAnnualCost   = hasHwAdj
+    ? Math.max(0, (result?.extracted?.annualCost ?? 0) - _hwAnnualCost)
+    : (result?.extracted?.annualCost ?? 0);
+  const adjGrossSaving  = hasHwAdj
+    ? Math.max(0, adjAnnualCost - (result?.recommendation?.suggestedAnnualCost ?? 0))
+    : (result?.recommendation?.grossSaving ?? 0);
+  const adjArvoFee      = Math.round(adjGrossSaving * 0.20);
+  const adjNetSaving    = adjGrossSaving - adjArvoFee;
+
+  const animatedNet = useCountUp(hasHwAdj ? adjNetSaving : (result?.recommendation?.netSaving ?? 0));
+
+  const diagAnnual  = adjAnnualCost;
   const diagSugg    = result?.recommendation?.suggestedAnnualCost ?? 0;
   const diagOvPct   = diagAnnual > 0 && diagSugg > 0 && diagSugg < diagAnnual
     ? Math.round((diagAnnual - diagSugg) / diagAnnual * 100)
@@ -546,22 +562,6 @@ const TestaFaktura = () => {
   const GAUGE_R = 26;
   const GAUGE_C = 2 * Math.PI * GAUGE_R;
   const gaugeDash = (diagScore / 100) * GAUGE_C;
-
-  // Hårdvarujustering: subtrahera delbetalningar ur besparingsbasen
-  const _hwItems        = detectHardwareInstallments(result?.extracted?.lineItems ?? []);
-  const _hwAnnualCost   = _hwItems.reduce((s, h) => s + h.monthlyCost * 12, 0);
-  const _hwTotalRemain  = _hwItems.reduce((s, h) => s + h.remainingCost, 0);
-  const hasHwAdj        = _hwAnnualCost > 0 && result?.recommendation?.shouldSwitch;
-  const adjAnnualCost   = hasHwAdj
-    ? Math.max(0, (result?.extracted?.annualCost ?? 0) - _hwAnnualCost)
-    : (result?.extracted?.annualCost ?? 0);
-  const adjGrossSaving  = hasHwAdj
-    ? Math.max(0, adjAnnualCost - (result?.recommendation?.suggestedAnnualCost ?? 0))
-    : (result?.recommendation?.grossSaving ?? 0);
-  const adjArvoFee      = Math.round(adjGrossSaving * 0.20);
-  const adjNetSaving    = adjGrossSaving - adjArvoFee;
-
-  const animatedNet = useCountUp(hasHwAdj ? adjNetSaving : (result?.recommendation?.netSaving ?? 0));
 
   const _secSaving   = result?.recommendation?.secondarySaving ?? null;
   const _primGross   = _secSaving
@@ -1340,12 +1340,12 @@ const TestaFaktura = () => {
                       )}
                     </p>
                     {hasHwAdj && adjGrossSaving > 0 && (() => {
-                      const breakEvenYears = (_hwTotalRemain / adjGrossSaving).toFixed(1);
+                      const breakEvenYears = (_hwTotalRemain / adjGrossSaving).toFixed(1).replace('.', ',');
                       return (
                         <p style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                           <strong>Break-even om skulden löses kontant:</strong>{' '}
-                          {formatNum(_hwTotalRemain)} kr ÷ {formatNum(adjGrossSaving)} kr/år = <strong>{breakEvenYears} år</strong>.{' '}
-                          Fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering — om ja är besparingen {formatKr(result.recommendation.netSaving)} kr/år netto från dag ett.
+                          {formatNum(_hwTotalRemain)} kr ÷ {formatNum(adjGrossSaving)} kr/år = <strong>{breakEvenYears} år</strong>{' '}—{' '}
+                          fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering. Om ja är besparingen {formatKr(result.recommendation.netSaving)} kr/år netto från dag ett.
                         </p>
                       );
                     })()}
