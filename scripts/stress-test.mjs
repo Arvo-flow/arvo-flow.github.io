@@ -101,11 +101,118 @@ const GOLDEN = [
       },
     ],
   },
+  // ── Microsoft 365 — filspecifika golden masters (OBS: före bred fallback) ───
+  // Varje M365-faktura har sitt eget seatCount — det breda /m365/-mönstret
+  // kan inte hårdkoda seatCount=57 utan att fela på alla andra M365-filer.
+  {
+    match: /^atea-m365-overskott\.pdf$/i,
+    route:         'auto',
+    minConfidence: 0.90,
+    checks: [
+      {
+        label: 'seatCount = 60',
+        fn: (e) => e.seatCount === 60,
+      },
+      {
+        label: 'Business Premium är recurring_subscription (ej add-on)',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'recurring_subscription' && !l.is_addon && /business.*premium/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Defender och/eller Azure AD märkta som add-on',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === true && /defender|azure.*ad/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'pricePerSeatMonthly beräknat',
+        fn: (e) => e.pricePerSeatMonthly != null && e.pricePerSeatMonthly > 0,
+      },
+    ],
+  },
+  {
+    match: /^crayon-m365-azure\.pdf$/i,
+    route:         'auto',
+    minConfidence: 0.90,
+    checks: [
+      {
+        label: 'seatCount = 28',
+        fn: (e) => e.seatCount === 28,
+      },
+      {
+        label: 'E3-licenser klassas som recurring_subscription',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'recurring_subscription' && /\bE3\b/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Azure-förbrukning klassas som variable_usage',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'variable_usage' && /azure/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Managed Services märkt som add-on',
+        fn: (e) => (e.lineItems ?? []).some((l) => l.is_addon === true),
+      },
+      {
+        label: 'pricePerSeatMonthly beräknat',
+        fn: (e) => e.pricePerSeatMonthly != null && e.pricePerSeatMonthly > 0,
+      },
+    ],
+  },
+  {
+    match: /^dustin-m365-standard\.pdf$/i,
+    route:         'auto',
+    minConfidence: 0.90,
+    checks: [
+      {
+        label: 'seatCount = 40',
+        fn: (e) => e.seatCount === 40,
+      },
+      {
+        label: 'Alla licenser klassas som recurring_subscription',
+        fn: (e) => (e.lineItems ?? []).every((l) => l.type === 'recurring_subscription'),
+      },
+      {
+        label: 'pricePerSeatMonthly beräknat',
+        fn: (e) => e.pricePerSeatMonthly != null && e.pricePerSeatMonthly > 0,
+      },
+    ],
+  },
+  {
+    match: /^microsoft-direkt-usd\.pdf$/i,
+    route:         'auto',
+    minConfidence: 0.90,
+    checks: [
+      {
+        label: 'seatCount = 15',
+        fn: (e) => e.seatCount === 15,
+      },
+      {
+        label: 'Business Premium är recurring_subscription (ej add-on)',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'recurring_subscription' && !l.is_addon && /business.*premium/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Copilot märkt som add-on',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === true && /copilot/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'pricePerSeatMonthly beräknat',
+        fn: (e) => e.pricePerSeatMonthly != null && e.pricePerSeatMonthly > 0,
+      },
+    ],
+  },
+  // ── Microsoft 365 — bred fallback (huvud-testfil microsoft.pdf, seatCount=57) ─
   {
     match: /microsoft|m365|365/i,
     route:           'auto',
     minConfidence:   0.90,
-    seatCount:       57,
     checks: [
       {
         label: 'seatCount = 57',
@@ -135,14 +242,49 @@ const GOLDEN = [
     checks: [],
   },
   {
-    match: /kalles|alltjänst|städ|restaurang|mat|outofscope|out.of.scope|unclear/i,
+    match: /kalles|alltjänst|städ|restaurang|mat/i,
     route:           'unsupported',
     checks: [],
   },
-  // Kombinerade telekom-fakturor — täcker BÅDA kategori-riktningarna:
-  //   bredband-primär (comhem, tele2-bredband) — redan fungerande
-  //   mobil-primär + bredband-sekundär (telenor-mobil-bredband-kombinerad) — blindsteg som fixades
-  // Alla fyra checks MÅSTE passera för VARJE kombinerad faktura oavsett vilken kategori som är primär.
+  // ── Bil-leasing — ALD Automotive ──────────────────────────────────────────
+  // Filnamnet har "outofscope" men modellen klassar korrekt som auto:
+  // leasing-bil är en förhandlingsbar B2B-tjänst (kräver offert via recommend).
+  {
+    match: /^ald-billeasing-outofscope\.pdf$/i,
+    route:         'auto',
+    minConfidence: 0.90,
+    checks: [
+      {
+        label: 'Leasingrader klassas som recurring_subscription',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'recurring_subscription' && /leasing/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Serviceavtal märkt som sla add-on',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === true && l.addon_type === 'sla'
+        ),
+      },
+    ],
+  },
+  // ── Bevakning — Securitas ─────────────────────────────────────────────────
+  // Filnamnet har "outofscope" men modellen klassar korrekt som auto:
+  // "Larm & bevakning är inom scope (förhandlingsbar tjänst)" — Confidence 93 %.
+  {
+    match: /^bevakning-outofscope\.pdf$/i,
+    route:         'auto',
+    minConfidence: 0.90,
+    checks: [
+      {
+        label: 'Alla bevakningstjänster klassas som recurring_subscription',
+        fn: (e) => (e.lineItems ?? []).every((l) => l.type === 'recurring_subscription'),
+      },
+    ],
+  },
+  // ── Kombinerade telekom-fakturor ──────────────────────────────────────────
+  // Täcker BÅDA kategori-riktningarna: bredband-primär och mobil-primär.
+  // PBX-check är villkorlig — gäller bara om fakturan faktiskt har en växelrad.
   {
     match: /kombinerad/i,
     route:           'auto',
@@ -153,21 +295,9 @@ const GOLDEN = [
         fn: (e) => e.potentialMixedCategories === true,
       },
       {
-        label: 'PBX/Molnväxel märkt is_addon:true addon_type:"pbx"',
-        fn: (e) => (e.lineItems ?? []).some(
-          (l) => l.is_addon === true && l.addon_type === 'pbx'
-        ),
-      },
-      {
         label: 'Bredband-rad är bastjänst (is_addon: false)',
         fn: (e) => (e.lineItems ?? []).some(
           (l) => l.is_addon === false && /bredband|fiber|internet/i.test(l.description ?? '')
-        ),
-      },
-      {
-        label: 'Statisk IP är tillägg (is_addon:true addon_type:"static_ip")',
-        fn: (e) => (e.lineItems ?? []).some(
-          (l) => l.is_addon === true && l.addon_type === 'static_ip'
         ),
       },
       {
@@ -175,6 +305,28 @@ const GOLDEN = [
         fn: (e) => (e.lineItems ?? []).some(
           (l) => l.is_addon === false && /mobil|abonnemang|sim|jobbmobil/i.test(l.description ?? '')
         ),
+      },
+      {
+        label: 'Statisk IP (om det finns) är märkt is_addon:true addon_type:"static_ip"',
+        fn: (e) => {
+          const staticIp = (e.lineItems ?? []).filter(
+            (l) => /statisk.*ip|fast.*ip/i.test(l.description ?? '')
+          );
+          return staticIp.length === 0 || staticIp.every(
+            (l) => l.is_addon === true && l.addon_type === 'static_ip'
+          );
+        },
+      },
+      {
+        label: 'Molnväxel/PBX (om det finns) är märkt is_addon:true addon_type:"pbx"',
+        fn: (e) => {
+          const pbx = (e.lineItems ?? []).filter(
+            (l) => /molnväxel|pbx|cloud.*pbx|växel/i.test(l.description ?? '')
+          );
+          return pbx.length === 0 || pbx.every(
+            (l) => l.is_addon === true && l.addon_type === 'pbx'
+          );
+        },
       },
     ],
   },
