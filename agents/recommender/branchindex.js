@@ -341,17 +341,17 @@ export const BRANCHINDEX = {
         note: 'Slack Pro — obegränsat meddelandehistorik, video-huddles, obegränsade integrationer.',
       },
       'slack-business-plus': {
-        usdMonthly: 18.00, usdAnnual: 15.00, usdArvoAnnual: 12.75,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'slack.com/pricing',
-        note: 'Slack Business+ — SSO/SAML, kompliansexport, DLP, prioriterad support.',
+        usdMonthly: 18.00, usdAnnual: 18.00, usdArvoAnnual: 15.30,
+        currency: 'USD', lastVerified: '2026-05-28', source: 'slack.com/pricing',
+        note: 'Slack Business+ — SSO/SAML, kompliansexport, DLP, prioriterad support. OBS: Årsrabatten togs bort maj 2026 — månads- och årsplan kostar nu samma.',
       },
 
       // Zoom — USD-baspris, konverteras runtime.
       // Källa: zoom.us/pricing (bekräftat via tech.co maj 2026).
       // NÄSTA VERIFIERING: 2026-09-01
       'zoom-pro': {
-        usdMonthly: 15.99, usdAnnual: 13.33, usdArvoAnnual: 11.33,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'zoom.us/pricing',
+        usdMonthly: 15.99, usdAnnual: 14.16, usdArvoAnnual: 12.04,
+        currency: 'USD', lastVerified: '2026-05-28', source: 'zoom.us/pricing',
         note: 'Zoom Pro — obegränsade möten, 1 GB moln-inspelning, schemaläggning.',
       },
       'zoom-business': {
