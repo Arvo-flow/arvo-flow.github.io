@@ -1,0 +1,70 @@
+{
+  "_fixture": "nordic-paytech-checkout",
+  "_description": "Nordic PayTech Bank AB — Checkout e-handel med volymbaserade avgifter (93% rörliga). Ska ge requiresQuote=true, inte Optimalt-score.",
+  "extracted": {
+    "supplier": "Nordic PayTech Bank AB",
+    "date": "2026-05-28",
+    "description": "Fast Månadsavgift Checkout + Rörlig avgift 2,10% på förmedlad volym + Transaktionsavgift 3,00 SEK/st",
+    "account": null,
+    "billingPeriod": "monthly",
+    "lineItems": [
+      {
+        "description": "Fast Månadsavgift Checkout",
+        "amount": 599,
+        "type": "recurring_subscription",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Rörlig avgift (2,10% på förmedlad volym 320 000 SEK)",
+        "amount": 6720,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      },
+      {
+        "description": "Transaktionsavgift (3,00 SEK per st x 450 transaktioner)",
+        "amount": 1350,
+        "type": "variable_usage",
+        "is_addon": false,
+        "addon_type": null
+      }
+    ],
+    "amount": 8669,
+    "recurringAmount": 599,
+    "projectedRecurringAmount": 599,
+    "variableCharges": 8070,
+    "oneTimeFees": 0,
+    "annualCost": 7188,
+    "recurring": true,
+    "confidenceScore": 0.95,
+    "confidenceNotes": "Tydlig uppdelning: fast abonnemang + rörlig volymavgift + transaktionsavgift per styck.",
+    "outOfScope": false,
+    "seatCount": null,
+    "notes": "Finansiell tjänst — momsfri. Förmedlad volym april 2026: 320 000 SEK. 450 transaktioner.",
+    "elKwh": null,
+    "elBillingMonth": null,
+    "elOmrade": null,
+    "elFastAvgiftKr": null,
+    "elEnergiPerKwh": null,
+    "elSkatterKr": null,
+    "elPriceExplicit": null,
+    "elContractType": null,
+    "connectionSpeedMbit": null,
+    "licenseType": null,
+    "billingCycleType": "monthly",
+    "pricePerSeatMonthly": null,
+    "saasProductFamily": null,
+    "saasIncludedFeatures": null,
+    "startupCreditBalance": null,
+    "startupCreditMonthlyBurn": null,
+    "startupCreditCurrency": null,
+    "servicePeriodStart": "2026-04-01",
+    "servicePeriodEnd": "2026-04-30",
+    "cancellationNoticeDays": null,
+    "currency": "SEK",
+    "potentialMixedCategories": false,
+    "customerOrgNumber": null,
+    "usage": null
+  }
+}

@@ -769,6 +769,41 @@ export async function recommend(input, opts = {}) {
     }
   }
 
+  // Kortterminal guard: om fakturan innehåller volymbaserade avgifter (% på omsättning
+  // eller per-transaktion) kan den fasta månadsavgiften ensam inte benchmarkas rättvist.
+  // Benchmarken är byggd på total transaktionskostnad; pipelinen annualiserar bara det fasta.
+  // Rätt jämförelse kräver GMV, kortmix och avtalslängd — Arvo gör manuell genomgång.
+  if (input.categorized.category === 'kortterminal') {
+    const variableCharges = input.invoice.variableCharges ?? 0;
+    if (variableCharges > 0) {
+      const fixed    = input.invoice.recurringAmount ?? 0;
+      const total    = fixed + variableCharges;
+      const varRatio = total > 0 ? variableCharges / total : 0;
+      const varPct   = Math.round(varRatio * 100);
+      return {
+        shouldSwitch:        false,
+        requiresQuote:       true,
+        recommendationType:  'requires_quote',
+        reasoning:           `Fakturan innehåller volymbaserade avgifter (${varPct} % av total). ` +
+                             'Rättvis benchmarking av betaltjänster kräver er transaktionsvolym, kortmix ' +
+                             'och avtalslängd — Arvo gör en kostnadsfri manuell genomgång och jämför mot ' +
+                             'aktuella rater från Stripe, Adyen och Klarna Checkout.',
+        suggestedSupplier:   null,
+        suggestedAnnualCost: null,
+        grossSaving:         null,
+        arvoFee:             null,
+        netSaving:           null,
+        confidence:          'low',
+        switchSteps:         [],
+        licenseOverage:      null,
+        overageSavings:      null,
+        optimizationSaving:  null,
+        benchmark,
+        usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      };
+    }
+  }
+
   // Managed Workplace / WaaS guard: bundled PC + licens + helpdesk kan inte
   // benchmarkas automatiskt — priset beror på hårdvaruspec, SLA och avtalslängd.
   // Falskt larm på ett bra WaaS-avtal är mer skadligt än att be om offert.

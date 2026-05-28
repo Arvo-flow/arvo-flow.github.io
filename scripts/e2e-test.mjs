@@ -247,6 +247,13 @@ const FIXTURE_ASSERTIONS = {
     { path: 'categorized.category', op: 'eq', val: 'saas-crm',
       label: 'EUR-faktura från irländsk CRM-leverantör ska kategoriseras saas-crm' },
   ],
+  'nordic-paytech-checkout': [
+    { path: 'categorized.category',         op: 'eq', val: 'kortterminal',
+      label: 'Checkout med volymavgift ska kategoriseras kortterminal' },
+    { path: 'recommendation.requiresQuote', op: 'eq', val: true,
+      label: '93% rörliga avgifter → benchmarken är ej jämförbar med bara fast abonnemang → requiresQuote=true' },
+    { path: 'recommendation.shouldSwitch',  op: 'eq', val: false },
+  ],
 };
 
 // ── Hjälpfunktioner ────────────────────────────────────────────────────────────
