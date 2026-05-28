@@ -845,7 +845,7 @@ const TestaFaktura = () => {
                       </p>
                     )}
                     {result.potentialSavingNote && (
-                      <p style={{ marginTop: result.categorized?.reasoning ? 10 : 0 }}><strong>Potentiell besparing vid avtalets slut:</strong> {result.potentialSavingNote}</p>
+                      <p style={{ marginTop: result.categorized?.reasoning ? 10 : 0 }}><strong>Potentiell nettobesparing vid avtalets slut:</strong> {result.potentialSavingNote}</p>
                     )}
                   </Reasoning>
                 )}
