@@ -20,7 +20,7 @@ import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 
-const MODEL = 'claude-opus-4-7';
+const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
 
 // Mirrors REAL_PRICE_CATEGORIES in the frontend — categories with public list

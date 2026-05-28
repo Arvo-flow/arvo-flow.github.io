@@ -4,7 +4,7 @@
 // one_time_fee | hardware. aggregateLineItems() summerar per typ och
 // beräknar annualCost = recurringAmount × periodMultiplier.
 //
-// Model: claude-opus-4-7 — native PDF-support + högst tolkningsnoggrannhet.
+// Model: claude-opus-4-8 — native PDF-support + högst tolkningsnoggrannhet.
 // Output: tool_use + tool_choice för deterministisk strukturerad output.
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
 
-const MODEL = 'claude-opus-4-7';
+const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 2048;
 
 export const CONFIDENCE_THRESHOLD = 0.70;
