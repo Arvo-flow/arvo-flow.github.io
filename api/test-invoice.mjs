@@ -307,7 +307,7 @@ function computeElRecommendation(extracted, industry = 'ovrigt') {
 
   return {
     annualKwh, currentAnnual, currentAnnualGross, benchmarkAnnual, grossSaving, arvoFee, netSaving, shouldSwitch,
-    omrade, season: seasonLabel, billingMonth: monthLabel, energiPerKwh: energiPerKwhNet, benchmarkKwh,
+    omrade, season: seasonLabel, billingMonth: monthLabel, energiPerKwh: energiPerKwhNet, energiPerKwhGross: energiPerKwh, benchmarkKwh,
     elNatavgiftAnnual,
     monitoringNote,
     suggestedAnnualCost: shouldSwitch ? benchmarkAnnual : null,
@@ -826,7 +826,7 @@ export default async function handler(req, res) {
             monitoringDate:         monDate.toISOString().slice(0, 10),
             potentialAnnualSaving:  potentialSaving,
             potentialSavingNote: elRec && potentialSaving > 0
-              ? `Nuvarande fastpris: ${elRec.energiPerKwh.toFixed(3)} kr/kWh. Marknadens spotprisavtal i ${elRec.omrade} under ${elRec.season}: ca ${elRec.benchmarkKwh.toFixed(2)} kr/kWh. Potentiell besparing när avtalet löper ut: ${potentialSaving.toLocaleString('sv-SE')} kr/år (netto ${Math.round(potentialSaving * 0.80).toLocaleString('sv-SE')} kr efter Arvos arvode).`
+              ? `Ert avtalspris: ${elRec.energiPerKwhGross.toFixed(2)} kr/kWh (jämförs mot marknadsindex exkl. energiskatt). Marknadens spotprisavtal i ${elRec.omrade} under ${elRec.season}: ca ${elRec.benchmarkKwh.toFixed(2)} kr/kWh. Potentiell nettobesparing när avtalet löper ut: ${Math.round(potentialSaving * 0.80).toLocaleString('sv-SE')} kr/år.`
               : null,
             extracted: {
               supplier:                extracted.supplier,

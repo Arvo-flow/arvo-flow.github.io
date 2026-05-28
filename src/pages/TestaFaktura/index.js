@@ -771,11 +771,6 @@ const TestaFaktura = () => {
                           : `Fastprisavtal kan inte avslutas i förtid. Arvo bevakar avtalet och påminner er ${result.monitoringDate ? new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : '3 månader'} innan slutdatum så ni hinner förhandla fram ett nytt avtal i rätt tid.`
                         }
                       </p>
-                      {result.extracted?.cancellationFeeExplicit && (
-                        <p style={{ marginTop: 10, paddingLeft: 12, borderLeft: '3px solid #D97706', fontSize: 13.5 }}>
-                          <strong style={{ color: '#92400E' }}>⚠ Lösenavgift i avtalet:</strong>{' '}<em>"{result.extracted.cancellationFeeExplicit}"</em> — räkna på kostnaden innan ni säger upp förtida. Arvo hjälper er göra kalkylen.
-                        </p>
-                      )}
                     </>
                   ) : (
                     <>
@@ -792,16 +787,9 @@ const TestaFaktura = () => {
                           }
                           return days != null
                             ? `Avtalet löper t.o.m. ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo initierar omförhandling ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
-                            : result.extracted?.cancellationFeeExplicit
-                              ? `Avtalet löper t.o.m. ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera när avtalet löper ut.`
-                              : `Avtalet löper t.o.m. ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera oavsett om avtalet förlängs automatiskt eller kräver aktiv uppsägning. Vi ser inga uppsägningstider på fakturan; fråga leverantören om ni vill veta om förtidslösen är möjlig.`;
+                            : `Avtalet löper t.o.m. ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera när avtalet löper ut.`;
                         })()}
                       </p>
-                      {result.extracted?.cancellationFeeExplicit && (
-                        <p style={{ marginTop: 10, paddingLeft: 12, borderLeft: '3px solid #D97706', fontSize: 13.5 }}>
-                          <strong style={{ color: '#92400E' }}>⚠ Lösenavgift i avtalet:</strong>{' '}<em>"{result.extracted.cancellationFeeExplicit}"</em> — räkna på kostnaden innan ni säger upp förtida. Arvo hjälper er göra kalkylen.
-                        </p>
-                      )}
                     </>
                   )}
                 </MonitoringBlock>
