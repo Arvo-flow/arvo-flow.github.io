@@ -793,13 +793,13 @@ const TestaFaktura = () => {
                           const endFmt = end ? new Date(end).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
                           const monFmt = mon ? new Date(mon).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : null;
                           if (monitoringDatePast) {
-                            return `Fakturan avser perioden till ${endFmt ?? end}${daysUntilEnd != null ? ` (${daysUntilEnd} dagar kvar)` : ''}. Arvo initierar omförhandling och säkrar bästa villkor innan förnyelse.`;
+                            return `Avtalet löper t.o.m. ${endFmt ?? end}${daysUntilEnd != null ? ` (${daysUntilEnd} dagar kvar)` : ''}. Arvo initierar omförhandling och säkrar bästa villkor innan förnyelse.`;
                           }
                           return days != null
-                            ? `Fakturan avser perioden till ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo initierar omförhandling ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
+                            ? `Avtalet löper t.o.m. ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo initierar omförhandling ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
                             : result.extracted?.cancellationFeeExplicit
-                              ? `Fakturan avser perioden till ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera när avtalet löper ut.`
-                              : `Fakturan avser perioden till ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera oavsett om avtalet förlängs automatiskt eller kräver aktiv uppsägning. Vi ser inga uppsägningstider på fakturan; fråga leverantören om ni vill veta om förtidslösen är möjlig.`;
+                              ? `Avtalet löper t.o.m. ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera när avtalet löper ut.`
+                              : `Avtalet löper t.o.m. ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera oavsett om avtalet förlängs automatiskt eller kräver aktiv uppsägning. Vi ser inga uppsägningstider på fakturan; fråga leverantören om ni vill veta om förtidslösen är möjlig.`;
                         })()}
                       </p>
                       {result.extracted?.cancellationFeeExplicit && (
