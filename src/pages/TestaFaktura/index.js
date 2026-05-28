@@ -834,28 +834,30 @@ const TestaFaktura = () => {
                     </div>
                   )}
                 </KV>
-                {result.categorized?.reasoning && (
+                {(result.categorized?.reasoning || result.potentialSavingNote) && (
                   <Reasoning>
                     <span className="kicker">Vad analysen visar</span>
-                    <p>
-                      {result.categorized.normalizedSupplier || result.extracted?.supplier} fakturerar{' '}
-                      {formatKr(result.extracted?.annualCost)} per år för{' '}
-                      {result.categorized.category === 'el' ? 'el (energidel)'
-                        : result.categorized.category === 'mobil' ? 'mobilabonnemang'
-                        : result.categorized.category === 'bredband' ? 'bredband'
-                        : result.categorized.category?.startsWith('saas') ? 'programvarulicenser'
-                        : result.categorized.category === 'skrivarleasing' ? 'skrivarlösning'
-                        : 'denna tjänst'}.
-                      {' '}Avtalet är bevakat — Arvo tar kontakt{' '}
-                      {daysUntilEnd != null && daysUntilEnd <= 90
-                        ? 'nu inför förestående förnyelse'
-                        : result.monitoringDate && !monitoringDatePast
-                          ? `från ${new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' })}`
-                          : 'inför avtalets förnyelse'
-                      }{' '}och säkrar bästa villkor utan att ni behöver lägga tid på det.
-                    </p>
+                    {result.categorized?.reasoning && (
+                      <p>
+                        {result.categorized.normalizedSupplier || result.extracted?.supplier} fakturerar{' '}
+                        {formatKr(result.extracted?.annualCost)} per år för{' '}
+                        {result.categorized.category === 'el' ? 'el (energidel)'
+                          : result.categorized.category === 'mobil' ? 'mobilabonnemang'
+                          : result.categorized.category === 'bredband' ? 'bredband'
+                          : result.categorized.category?.startsWith('saas') ? 'programvarulicenser'
+                          : result.categorized.category === 'skrivarleasing' ? 'skrivarlösning'
+                          : 'denna tjänst'}.
+                        {' '}Avtalet är bevakat — Arvo tar kontakt{' '}
+                        {daysUntilEnd != null && daysUntilEnd <= 90
+                          ? 'nu inför förestående förnyelse'
+                          : result.monitoringDate && !monitoringDatePast
+                            ? `från ${new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' })}`
+                            : 'inför avtalets förnyelse'
+                        }{' '}och säkrar bästa villkor utan att ni behöver lägga tid på det.
+                      </p>
+                    )}
                     {result.potentialSavingNote && (
-                      <p style={{ marginTop: 10 }}><strong>Potentiell besparing vid avtalets slut:</strong> {result.potentialSavingNote}</p>
+                      <p style={{ marginTop: result.categorized?.reasoning ? 10 : 0 }}><strong>Potentiell besparing vid avtalets slut:</strong> {result.potentialSavingNote}</p>
                     )}
                   </Reasoning>
                 )}
