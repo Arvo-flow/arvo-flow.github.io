@@ -17,7 +17,7 @@ import { BRANCHINDEX, INDUSTRY_SEGMENT_MAP, bucketForSize } from '../agents/reco
 import { getKv } from '../lib/kv.js';
 import { getDb } from '../lib/db.js';
 import { computeSecondarySaving } from '../lib/secondary-savings.js';
-import { getEurSekRate, FALLBACK_RATE_EUR_SEK } from '../agents/recommender/pricing.js';
+import { getEurSekRate, FALLBACK_RATE_EUR_SEK, getSekRate, FALLBACK_RATE_USD_SEK } from '../agents/recommender/pricing.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
@@ -526,7 +526,8 @@ export default async function handler(req, res) {
 
     // Guard: utländsk valuta
     // EUR → konverteras till SEK med live Riksbanken/ECB-kurs och fortsätter pipeline.
-    // USD → hanteras redan av recommend.js via live-kurs (Atlassian, Zoom, Slack etc.).
+    // USD → SaaS-priser (Atlassian, Zoom, Slack) konverteras av recommend.js. Kategorier som
+    //       träffar requiresVolumeData (cloud-infra) konverteras separat i det blocket nedan.
     // Övriga valutor → review_queue.
     if (extracted.currency === 'EUR') {
       const kv = getKv();
@@ -725,8 +726,32 @@ export default async function handler(req, res) {
       notifyReviewQueue(extracted, `[Volymdata] ${reason}`).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue (volume) threw:', err.message)
       );
-      const creditBalance = extracted.startupCreditBalance;
-      const creditBurn    = extracted.startupCreditMonthlyBurn;
+
+      // Spara kredit-fält i originalvaluta innan eventuell konvertering (visas med USD-etikett i UI).
+      const creditBalance  = extracted.startupCreditBalance;
+      const creditBurn     = extracted.startupCreditMonthlyBurn;
+      const creditCurrency = extracted.startupCreditCurrency;
+
+      // USD-konvertering: requiresVolumeData-routen når aldrig recommend.js som normalt hanterar detta.
+      // Cloud-fakturor med startup-krediter: annualCost = creditBurn × 12 är mer representativt
+      // än recurringAmount × 12 (som bara fångar fast supportavgift, inte compute/lagring/DB).
+      if (extracted.currency === 'USD') {
+        const kv = getKv();
+        const usdFx = await getSekRate(kv).catch(() => ({ rate: FALLBACK_RATE_USD_SEK, source: 'fallback', date: null }));
+        const sekPerUsd = usdFx.rate ?? FALLBACK_RATE_USD_SEK;
+        const cvt = (v) => (v != null ? Math.round(v * sekPerUsd) : null);
+        extracted.currency        = 'SEK';
+        extracted.fxRate          = sekPerUsd;
+        extracted.annualCost      = creditBurn > 0
+          ? Math.round(creditBurn * 12 * sekPerUsd)
+          : cvt(extracted.annualCost);
+        extracted.amount          = cvt(extracted.amount);
+        extracted.recurringAmount = cvt(extracted.recurringAmount);
+        extracted.variableCharges = cvt(extracted.variableCharges);
+        extracted.oneTimeFees     = cvt(extracted.oneTimeFees);
+        console.log(`[test-invoice] USD→SEK (requiresVolumeData): rate=${sekPerUsd} source=${usdFx.source} creditBurn=${creditBurn}`);
+      }
+
       const creditExpiryMonths = (creditBalance > 0 && creditBurn > 0)
         ? Math.round(creditBalance / creditBurn)
         : null;
@@ -738,7 +763,7 @@ export default async function handler(req, res) {
         creditExpiryMonths,
         startupCreditBalance:     creditBalance ?? null,
         startupCreditMonthlyBurn: creditBurn ?? null,
-        startupCreditCurrency:    extracted.startupCreditCurrency ?? null,
+        startupCreditCurrency:    creditCurrency ?? null,
         extracted: {
           supplier:        extracted.supplier,
           date:            extracted.date,
