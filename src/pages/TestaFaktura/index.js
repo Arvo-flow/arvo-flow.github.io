@@ -948,7 +948,7 @@ const TestaFaktura = () => {
               </NoSwitchBlock>
             ) : result.recommendation?.requiresQuote ? (
               <>
-                {result.recommendation?.clickRateAnalysis && (
+                {(result.recommendation?.clickRateAnalysis || (result.recommendation?.shouldSwitch && (result.recommendation?.netSaving ?? 0) > 0)) && (
                   <>
                     <ScoreDiag style={{ '--diag-color': diagC.dot }}>
                       <div className="gauge-wrap">
@@ -995,6 +995,16 @@ const TestaFaktura = () => {
                         Baserat på er faktiska klickkostnad × 12 månader · bekräftas med er faktiska printvolym
                       </span>
                     </div>
+                  ) : (result.recommendation?.netSaving ?? 0) > 0 ? (
+                    <div className="estimate-banner">
+                      <span className="est-kicker">Uppskattad nettobesparing</span>
+                      <span className="est-amount">
+                        ca {formatNum(result.recommendation.netSaving)}&nbsp;kr/år
+                      </span>
+                      <span className="est-note">
+                        Jämfört mot välförhandlat B2B-avtal · bekräftas med faktisk offert
+                      </span>
+                    </div>
                   ) : (
                     <strong>
                       {result.recommendation?.clickRateAnalysis
@@ -1005,7 +1015,9 @@ const TestaFaktura = () => {
                   <p>
                     {result.recommendation?.clickRateAnalysis
                       ? 'Klickpriset är fastslaget. Fyll i nedan så beräknar Arvo det exakta beloppet inklusive maskinleasing.'
-                      : result.recommendation.reasoning}
+                      : (result.recommendation?.netSaving ?? 0) > 0
+                        ? 'Fyll i era uppgifter — Arvo begär in och sammanställer offerter från rikstäckande avfallspartners.'
+                        : result.recommendation.reasoning}
                   </p>
                   <QuoteLeadForm onSubmit={submitQuoteLead}>
                     {quoteState === 'sent' ? (

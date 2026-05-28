@@ -830,6 +830,63 @@ export async function recommend(input, opts = {}) {
     };
   }
 
+  // Avfall-guard: deterministisk bedömning mot branschindex — kräver offert för exakt anbud
+  // men ger ändå riktningsbedömning (dyr/rimlig) baserat på kr/år vs benchmark.
+  if (input.categorized.category === 'avfall-atervinning') {
+    const annualCost = input.invoice?.annualCost ?? 0;
+    const bm = benchmark;
+    const alts = (bm?.alternatives ?? []).slice(0, 3).map(a => a.supplier).join(', ');
+
+    let shouldSwitch = false;
+    let reasoning;
+    let suggestedAnnualCost = null;
+    let grossSaving = null;
+    let arvoFee = null;
+    let netSaving = null;
+
+    if (bm && annualCost > 0) {
+      shouldSwitch = annualCost > bm.p25 * 1.10;
+      const overMedianPct = Math.round(((annualCost - bm.median) / bm.median) * 100);
+      if (shouldSwitch) {
+        const comparison = overMedianPct > 0
+          ? `${overMedianPct} % över mediankostnaden (${bm.median.toLocaleString('sv-SE')} kr/år)`
+          : `i linje med mediankostnaden (${bm.median.toLocaleString('sv-SE')} kr/år) men över välförhandlat nivå`;
+        reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år ligger ${comparison} för er verksamhetsstorlek. Välförhandlade B2B-avtal med rikstäckande aktörer ligger typiskt på ${bm.p25.toLocaleString('sv-SE')}–${bm.median.toLocaleString('sv-SE')} kr/år. Arvo begär offert från ${alts} baserat på ert tömningsschema och fraktionsfördelning.`;
+        suggestedAnnualCost = bm.p25;
+        grossSaving = Math.max(0, annualCost - bm.p25);
+        arvoFee = Math.round(grossSaving * 0.20);
+        netSaving = grossSaving - arvoFee;
+      } else {
+        reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år är inom marknadsnormen för er verksamhetsstorlek (branschindex undre kvartil: ${bm.p25.toLocaleString('sv-SE')} kr/år, median: ${bm.median.toLocaleString('sv-SE')} kr/år). En offertförfrågan kan ändå ge bekräftelse — avfallspriser varierar med tömningsfrekvens, container och fraktioner.`;
+      }
+    } else {
+      reasoning = 'Avfallskostnader styrs av tömningsfrekvens, vikt och fraktioner — Arvo begär offert för att ge er en rättvis jämförelse.';
+    }
+
+    return {
+      shouldSwitch,
+      requiresQuote:      true,
+      recommendationType: 'requires_quote',
+      reasoning,
+      suggestedSupplier:   shouldSwitch ? 'Arvo-verifierad avfallspartner' : null,
+      suggestedAnnualCost,
+      grossSaving,
+      arvoFee,
+      netSaving,
+      confidence:          bm ? 'medium' : 'low',
+      switchSteps:         shouldSwitch ? [
+        'Arvo sammanställer ert tömningsschema och fraktionsfördelning',
+        'Offertförfrågan skickas till rikstäckande avfallspartners',
+        'Arvo presenterar bästa erbjudandet — ni behöver inte göra något',
+      ] : [],
+      licenseOverage:      null,
+      overageSavings:      null,
+      optimizationSaving:  null,
+      benchmark,
+      usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+    };
+  }
+
   const client = opts.client ?? getClient();
 
   // Berika el-fakturor med realtids spotpris och leverantörsjämförelse (non-fatal).

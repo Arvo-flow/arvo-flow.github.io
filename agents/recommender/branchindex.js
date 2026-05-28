@@ -683,8 +683,7 @@ export const BRANCHINDEX = {
   },
 
   'avfall-atervinning': {
-    requiresVolumeData: true,
-    volumeDataNote: 'Avfallskostnader styrs av tömningsfrekvens, vikt och fraktioner. Fakturan innehåller även lagstadgad miljöskatt som inte kan förhandlas. Våra experter behöver granska ert tömningsschema för att ta fram en rättvis offert.',
+    source: 'estimated',
     unit: 'kr/år',
     // Kalibrering maj 2026:
     // Kommunal taxa-data: Skaraborg 2023 (lägst) — 660L-kärl 3 310 kr/år grundnivå,
