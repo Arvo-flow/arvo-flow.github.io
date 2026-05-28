@@ -829,7 +829,7 @@ const TestaFaktura = () => {
                       <dt>{monitoringDatePast ? 'Bevakning' : 'Arvo påminner er'}</dt>
                       <dd>{monitoringDatePast
                         ? (daysUntilEnd != null ? `Aktiv — avtal löper ut om ${daysUntilEnd} dagar` : 'Aktiv')
-                        : new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' })
+                        : (() => { const s = new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }); return s.charAt(0).toUpperCase() + s.slice(1); })()
                       }</dd>
                     </div>
                   )}
