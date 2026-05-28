@@ -461,6 +461,23 @@ export default async function handler(req, res) {
       confidenceScore: extracted.confidenceScore,
       outOfScope:      extracted.outOfScope,
     }));
+    {
+      const u = extracted.usage ?? {};
+      // Opus 4.7: $15/MTok in, $75/MTok out, $18.75/MTok cache-write, $1.50/MTok cache-read
+      const cost = (
+        (u.input_tokens ?? 0) * 15 +
+        (u.output_tokens ?? 0) * 75 +
+        (u.cache_creation_input_tokens ?? 0) * 18.75 +
+        (u.cache_read_input_tokens ?? 0) * 1.5
+      ) / 1_000_000;
+      console.log('[tokens] extract:', JSON.stringify({
+        input: u.input_tokens,
+        output: u.output_tokens,
+        cache_write: u.cache_creation_input_tokens ?? 0,
+        cache_read: u.cache_read_input_tokens ?? 0,
+        cost_usd: cost.toFixed(4),
+      }));
+    }
 
     // Guard: kreditnotor (negativt totalt fakturabelopp)
     if (extracted.amount < 0) {
@@ -569,6 +586,23 @@ export default async function handler(req, res) {
       confidence: categorized.confidence,
       normalizedSupplier: categorized.normalizedSupplier,
     }));
+    {
+      const u = categorized.usage ?? {};
+      // Haiku 4.5: $0.80/MTok in, $4/MTok out
+      const cost = (
+        (u.input_tokens ?? 0) * 0.8 +
+        (u.output_tokens ?? 0) * 4 +
+        (u.cache_creation_input_tokens ?? 0) * 1.0 +
+        (u.cache_read_input_tokens ?? 0) * 0.08
+      ) / 1_000_000;
+      console.log('[tokens] categorize:', JSON.stringify({
+        input: u.input_tokens,
+        output: u.output_tokens,
+        cache_write: u.cache_creation_input_tokens ?? 0,
+        cache_read: u.cache_read_input_tokens ?? 0,
+        cost_usd: cost.toFixed(4),
+      }));
+    }
 
     // ── Deterministisk beräkning av addon- och primärkomponent-kostnader ────────
     // Sker efter kategorisering (category behövs) men före recommendation.
@@ -912,6 +946,23 @@ export default async function handler(req, res) {
     });
     timing.recommendMs = Date.now() - t2;
     timing.totalMs = Date.now() - t0;
+    {
+      const u = recommendation.usage ?? {};
+      // Opus 4.7: $15/MTok in, $75/MTok out, $18.75/MTok cache-write, $1.50/MTok cache-read
+      const cost = (
+        (u.input_tokens ?? 0) * 15 +
+        (u.output_tokens ?? 0) * 75 +
+        (u.cache_creation_input_tokens ?? 0) * 18.75 +
+        (u.cache_read_input_tokens ?? 0) * 1.5
+      ) / 1_000_000;
+      console.log('[tokens] recommend:', JSON.stringify({
+        input: u.input_tokens,
+        output: u.output_tokens,
+        cache_write: u.cache_creation_input_tokens ?? 0,
+        cache_read: u.cache_read_input_tokens ?? 0,
+        cost_usd: cost.toFixed(4),
+      }));
+    }
 
     // Fire-and-forget — lagrar anonymiserad datapunkt för branschindex.
     // Felet får aldrig blockera svaret till kunden.
