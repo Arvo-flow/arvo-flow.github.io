@@ -771,11 +771,6 @@ const TestaFaktura = () => {
                           : `Fastprisavtal kan inte avslutas i förtid. Arvo bevakar avtalet och påminner er ${result.monitoringDate ? new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : '3 månader'} innan slutdatum så ni hinner förhandla fram ett nytt avtal i rätt tid.`
                         }
                       </p>
-                      {result.potentialSavingNote && (
-                        <p style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(27,122,110,0.08)', borderRadius: 8, fontSize: 13.5 }}>
-                          <strong>Potentiell besparing vid avtalets slut:</strong> {result.potentialSavingNote}
-                        </p>
-                      )}
                       {result.extracted?.cancellationFeeExplicit && (
                         <p style={{ marginTop: 10, paddingLeft: 12, borderLeft: '3px solid #D97706', fontSize: 13.5 }}>
                           <strong style={{ color: '#92400E' }}>⚠ Lösenavgift i avtalet:</strong>{' '}<em>"{result.extracted.cancellationFeeExplicit}"</em> — räkna på kostnaden innan ni säger upp förtida. Arvo hjälper er göra kalkylen.
@@ -859,6 +854,9 @@ const TestaFaktura = () => {
                           : 'inför avtalets förnyelse'
                       }{' '}och säkrar bästa villkor utan att ni behöver lägga tid på det.
                     </p>
+                    {result.potentialSavingNote && (
+                      <p style={{ marginTop: 10 }}><strong>Potentiell besparing vid avtalets slut:</strong> {result.potentialSavingNote}</p>
+                    )}
                   </Reasoning>
                 )}
               </>
