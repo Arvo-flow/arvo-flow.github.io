@@ -277,7 +277,12 @@ ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
     'spot'    = rörligt spotprisavtal: "Spotpris", "Rörligt elpris", "Variabelt", "spot".
     'unknown' = ej fastställbart från fakturan.
     null      = ej elfaktura.
-  el_fast_avgift_kr: Leverantörens fasta månadsavgift (abonnemangsavgift) i kr exkl. moms.
+  el_fast_avgift_kr: ELHANDLARENS fasta månadsavgift (abonnemangsavgift) i kr exkl. moms.
+    Enbart elhandlarens/elleverantörens avgift — ALDRIG nätägarens abonnemangsavgift/elnätsavgift.
+    Typiskt 0–100 kr/mån. null om saknas eller ej elfaktura.
+  el_nat_fast_avgift_kr: Nätägarens fasta månadsabonnemang i kr exkl. moms.
+    Avser elnätets fasta kapacitets-/abonnemangsavgift (t.ex. "Elnät fast abonnemangsavgift",
+    "Fast avgift elnät", "Kapacitetsavgift"). Ej förhandlingsbar — bestäms av regional nätoperatör.
     null om saknas eller ej elfaktura.
   el_energipris_per_kwh: Leverantörens energiavgift i kr/kWh exkl. moms
     och exkl. nätavgift, energiskatt och elcertifikat. Gäller oavsett avtalstyp
@@ -397,7 +402,11 @@ const EXTRACT_TOOL = {
       },
       el_fast_avgift_kr: {
         type: ['integer', 'null'],
-        description: 'Fast månadsavgift hos elleverantören i kr exkl. moms. null om saknas/ej elfaktura.',
+        description: 'ELHANDLARENS fasta månadsavgift i kr exkl. moms — ALDRIG nätägarens avgift. Typiskt 0–100 kr/mån. null om saknas/ej elfaktura.',
+      },
+      el_nat_fast_avgift_kr: {
+        type: ['integer', 'null'],
+        description: 'Nätägarens fasta månadsabonnemang i kr exkl. moms (t.ex. "Elnät fast abonnemangsavgift"). Ej förhandlingsbar. null om saknas/ej elfaktura.',
       },
       el_energipris_per_kwh: {
         type: ['number', 'null'],
@@ -556,7 +565,8 @@ export function aggregateLineItems(raw) {
     elKwh:            raw.el_kwh != null ? Number(raw.el_kwh) : null,
     elBillingMonth:   raw.el_billing_month ?? null,
     elOmrade:         raw.el_omrade ?? null,
-    elFastAvgiftKr:   raw.el_fast_avgift_kr != null ? Number(raw.el_fast_avgift_kr) : null,
+    elFastAvgiftKr:    raw.el_fast_avgift_kr != null ? Number(raw.el_fast_avgift_kr) : null,
+    elNatFastAvgiftKr: raw.el_nat_fast_avgift_kr != null ? Number(raw.el_nat_fast_avgift_kr) : null,
     elEnergiPerKwh:   raw.el_energipris_per_kwh != null ? Number(raw.el_energipris_per_kwh) : null,
     elSkatterKr:      raw.el_skatter_kr != null ? Number(raw.el_skatter_kr) : null,
     elPriceExplicit:  raw.el_price_explicit ?? null,

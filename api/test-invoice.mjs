@@ -244,9 +244,12 @@ function computeElRecommendation(extracted, industry = 'ovrigt') {
   // Identifiera nätavgift från radposter — den är inte valbar och ska inte
   // ingå i energiprisjämförelsen.
   const lineItems = extracted.lineItems ?? [];
-  const natavgiftMonthly = lineItems
+  const natavgiftFromLines = lineItems
     .filter(li => li.type === 'recurring_subscription' && NATAVGIFT_RE.test(li.description))
     .reduce((sum, li) => sum + (li.amount ?? 0), 0);
+  // Fallback: använd explicit extraherad nätägaravgift om radposter inte fångade den.
+  const natFastAvgift = extracted.elNatFastAvgiftKr ?? 0;
+  const natavgiftMonthly = natavgiftFromLines > 0 ? natavgiftFromLines : natFastAvgift;
   const elNatavgiftAnnual = Math.round(natavgiftMonthly / fraction);
 
   // Energipris per kWh (energidel exkl. nätavgift och skatter).
@@ -269,6 +272,7 @@ function computeElRecommendation(extracted, industry = 'ovrigt') {
     ? Math.max(0, energiPerKwh - ENERGISKATT_ESTIMATE_KWH)
     : energiPerKwh;
 
+  // fastAvgift = ENBART elhandlarens fasta avgift (aldrig nätägarens, som ingår i natavgiftMonthly).
   const fastAvgift         = extracted.elFastAvgiftKr ?? 0;
   // currentAnnualGross: faktiskt betalt (inkl. energiskatt) — visas i UI som "Du betalar idag"
   const currentAnnualGross = Math.round(energiPerKwh * annualKwh) + fastAvgift * 12;
