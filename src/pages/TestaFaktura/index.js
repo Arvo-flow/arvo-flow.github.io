@@ -1256,7 +1256,7 @@ const TestaFaktura = () => {
                 <dd>
                   {formatKr(result.extracted.annualCost)} / år
                   {result.extracted.variableCharges > 0 && (
-                    <small>Varav fasta abonnemang. Exkl. rörliga avgifter ({formatKr(result.extracted.variableCharges)}/mån).</small>
+                    <small>Varav fasta abonnemang. Exkl. rörliga avgifter ({formatKr(result.extracted.variableCharges)} denna period).</small>
                   )}
                 </dd>
               </div>
