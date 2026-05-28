@@ -248,9 +248,16 @@ function computeElRecommendation(extracted, industry = 'ovrigt') {
     .filter(li => li.type === 'recurring_subscription' && NATAVGIFT_RE.test(li.description))
     .reduce((sum, li) => sum + (li.amount ?? 0), 0);
   // Fallback: använd explicit extraherad nätägaravgift om radposter inte fångade den.
-  const natFastAvgift = extracted.elNatFastAvgiftKr ?? 0;
-  const natavgiftMonthly = natavgiftFromLines > 0 ? natavgiftFromLines : natFastAvgift;
-  const elNatavgiftAnnual = Math.round(natavgiftMonthly / fraction);
+  const natFastMonthly = extracted.elNatFastAvgiftKr ?? 0;
+  const natavgiftMonthly = natavgiftFromLines > 0 ? natavgiftFromLines : natFastMonthly;
+  // Fast abonnemangsavgift är säsongsoberoende → × 12.
+  // Rörlig överföringsavgift (kr/kWh) skalas med säsongsfraktionen → / fraction.
+  // Om elNatFastAvgiftKr saknas: hela summan behandlas som rörlig (konservativ fallback).
+  const natFixedAnnual   = natFastMonthly * 12;
+  const natVarMonthly    = Math.max(0, natavgiftMonthly - natFastMonthly);
+  const elNatavgiftAnnual = natFastMonthly > 0
+    ? natFixedAnnual + Math.round(natVarMonthly / fraction)
+    : Math.round(natavgiftMonthly / fraction);
 
   // Energipris per kWh (energidel exkl. nätavgift och skatter).
   // Föredrar explicit extraktion. Fallbacken subtraherar nätavgift ur
