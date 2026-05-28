@@ -547,7 +547,21 @@ const TestaFaktura = () => {
   const GAUGE_C = 2 * Math.PI * GAUGE_R;
   const gaugeDash = (diagScore / 100) * GAUGE_C;
 
-  const animatedNet = useCountUp(result?.recommendation?.netSaving ?? 0);
+  // Hårdvarujustering: subtrahera delbetalningar ur besparingsbasen
+  const _hwItems        = detectHardwareInstallments(result?.extracted?.lineItems ?? []);
+  const _hwAnnualCost   = _hwItems.reduce((s, h) => s + h.monthlyCost * 12, 0);
+  const _hwTotalRemain  = _hwItems.reduce((s, h) => s + h.remainingCost, 0);
+  const hasHwAdj        = _hwAnnualCost > 0 && result?.recommendation?.shouldSwitch;
+  const adjAnnualCost   = hasHwAdj
+    ? Math.max(0, (result?.extracted?.annualCost ?? 0) - _hwAnnualCost)
+    : (result?.extracted?.annualCost ?? 0);
+  const adjGrossSaving  = hasHwAdj
+    ? Math.max(0, adjAnnualCost - (result?.recommendation?.suggestedAnnualCost ?? 0))
+    : (result?.recommendation?.grossSaving ?? 0);
+  const adjArvoFee      = Math.round(adjGrossSaving * 0.20);
+  const adjNetSaving    = adjGrossSaving - adjArvoFee;
+
+  const animatedNet = useCountUp(hasHwAdj ? adjNetSaving : (result?.recommendation?.netSaving ?? 0));
 
   const _secSaving   = result?.recommendation?.secondarySaving ?? null;
   const _primGross   = _secSaving
@@ -1128,14 +1142,15 @@ const TestaFaktura = () => {
                             : isRealPrice
                               ? (
                                 <>
-                                  {formatNum(result.extracted.annualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
-                                  {' '}· Arvos besparingsarvode {formatKr(result.recommendation.arvoFee)} (20 %)
+                                  {formatNum(adjAnnualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
+                                  {' '}· Arvos besparingsarvode {formatKr(adjArvoFee)} (20 %)
+                                  {hasHwAdj && <><br /><small style={{ opacity: 0.85 }}>Avser abonnemang och licenser. Om {result.recommendation.suggestedSupplier} absorberar er hårdvaruskuld ({formatNum(_hwTotalRemain)} kr) uppgår nettobesparing till {formatKr(result.recommendation.netSaving)} kr/år.</small></>}
                                 </>
                               )
                               : (
                                 <>
-                                  {formatNum(result.extracted.annualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år (Arvos kalkylerade riktpris)
-                                  {' '}· Arvos besparingsarvode {formatKr(result.recommendation.arvoFee)} (20 %)
+                                  {formatNum(adjAnnualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år (Arvos kalkylerade riktpris)
+                                  {' '}· Arvos besparingsarvode {formatKr(adjArvoFee)} (20 %)
                                 </>
                               )}
                         </span>
@@ -1170,7 +1185,7 @@ const TestaFaktura = () => {
                           </div>
                           <div className="price-offer">
                             <span className="offer-price">{formatKr(result.recommendation.suggestedAnnualCost)}/år</span>
-                            <span className="offer-label">↓ från {formatKr(result.extracted.annualCost)}</span>
+                            <span className="offer-label">↓ från {formatKr(adjAnnualCost)}</span>
                           </div>
                           <Button
                             type="button"
@@ -1269,10 +1284,12 @@ const TestaFaktura = () => {
               <div>
                 <dt>Du betalar idag</dt>
                 <dd>
-                  {formatKr(result.extracted.annualCost)} / år
-                  {result.extracted.variableCharges > 0 && (
-                    <small>Varav fasta abonnemang. Exkl. rörliga avgifter ({formatKr(result.extracted.variableCharges)} denna period).</small>
-                  )}
+                  {formatKr(adjAnnualCost)} / år
+                  {hasHwAdj
+                    ? <small>Abonnemang och licenser. Exkl. hårdvaruavbetalningar ({formatKr(_hwAnnualCost)}/år){result.extracted.variableCharges > 0 ? ` och rörliga avgifter (${formatKr(result.extracted.variableCharges)} denna period)` : ''}.</small>
+                    : result.extracted.variableCharges > 0 && (
+                      <small>Varav fasta abonnemang. Exkl. rörliga avgifter ({formatKr(result.extracted.variableCharges)} denna period).</small>
+                    )}
                 </dd>
               </div>
               <div>
@@ -1306,31 +1323,35 @@ const TestaFaktura = () => {
                   </dd>
                 </div>
               )}
-              {(() => {
-                const hw = detectHardwareInstallments(result.extracted?.lineItems);
-                if (!hw.length) return null;
-                const totalRemaining = hw.reduce((s, h) => s + h.remainingCost, 0);
-                return (
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <CreditAlert>
-                      <strong>⚠ Aktiv hårdvaruleasing — kontrollera innan ni byter</strong>
-                      <p>
-                        {hw.map((h, i) => (
-                          <span key={i} style={{ display: 'block', marginBottom: hw.length > 1 && i < hw.length - 1 ? '6px' : 0 }}>
-                            {h.description} — {h.monthsRemaining} månader kvar ({formatNum(h.monthlyCost)} kr/mån = <strong>{formatNum(h.remainingCost)} kr totalt</strong>)
-                          </span>
-                        ))}
-                        {hw.length > 1 && (
-                          <span style={{ display: 'block', marginTop: '6px', fontWeight: 700 }}>
-                            Totalt kvar att betala: {formatNum(totalRemaining)} kr
-                          </span>
-                        )}
-                        {' '}Kontrollera med {result.extracted?.supplier} om delbetalningsplanen löper vidare vid leverantörsbyte, eller om förtidslösen krävs.
-                      </p>
-                    </CreditAlert>
-                  </div>
-                );
-              })()}
+              {_hwItems.length > 0 && (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <CreditAlert>
+                    <strong>⚠ Aktiv hårdvaruleasing — kontrollera innan ni byter</strong>
+                    <p>
+                      {_hwItems.map((h, i) => (
+                        <span key={i} style={{ display: 'block', marginBottom: _hwItems.length > 1 && i < _hwItems.length - 1 ? '6px' : 0 }}>
+                          {h.description} — {h.monthsRemaining} månader kvar ({formatNum(h.monthlyCost)} kr/mån = <strong>{formatNum(h.remainingCost)} kr totalt</strong>)
+                        </span>
+                      ))}
+                      {_hwItems.length > 1 && (
+                        <span style={{ display: 'block', marginTop: '6px', fontWeight: 700 }}>
+                          Totalt kvar att betala: {formatNum(_hwTotalRemain)} kr
+                        </span>
+                      )}
+                    </p>
+                    {hasHwAdj && adjGrossSaving > 0 && (() => {
+                      const breakEvenYears = (_hwTotalRemain / adjGrossSaving).toFixed(1);
+                      return (
+                        <p style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+                          <strong>Break-even om skulden löses kontant:</strong>{' '}
+                          {formatNum(_hwTotalRemain)} kr ÷ {formatNum(adjGrossSaving)} kr/år = <strong>{breakEvenYears} år</strong>.{' '}
+                          Fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering — om ja är besparingen {formatKr(result.recommendation.netSaving)} kr/år netto från dag ett.
+                        </p>
+                      );
+                    })()}
+                  </CreditAlert>
+                </div>
+              )}
               {result.extracted.elUncertaintyNote && (
                 <div>
                   <dt>Årsuppskattning</dt>
