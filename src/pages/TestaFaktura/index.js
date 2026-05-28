@@ -908,14 +908,18 @@ const TestaFaktura = () => {
                         'Kostnaden för denna kategori styrs av specifika volymer och specifikationer, inte antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.'}
                     </p>
                     {result.creditExpiryMonths != null && (
-                      <CreditAlert>
+                      <CreditAlert style={result.creditWillExpireUnused ? { background: '#FEF3C7', borderColor: 'rgba(217,119,6,.25)' } : undefined}>
                         <strong>
-                          Era startup-krediter räcker ca {result.creditExpiryMonths} {result.creditExpiryMonths === 1 ? 'månad' : 'månader'} till
+                          {result.creditWillExpireUnused
+                            ? `⚠ Krediter förfaller ${result.creditExpiryDate} — ${result.creditExpiryMonths} ${result.creditExpiryMonths === 1 ? 'månad' : 'månader'} kvar`
+                            : `Era startup-krediter räcker ca ${result.creditExpiryMonths} ${result.creditExpiryMonths === 1 ? 'månad' : 'månader'} till`}
                         </strong>
                         <p>
                           Ni förbrukar {result.startupCreditCurrency} {result.startupCreditMonthlyBurn?.toLocaleString('sv-SE')}/mån men
                           betalar ingenting tack vare kvarvarande kredit ({result.startupCreditCurrency} {result.startupCreditBalance?.toLocaleString('sv-SE')}).
-                          Nu är rätt tid att planera ert molnavtal — vi hjälper er att förhandla rätt pris innan fakturorna börjar landa.
+                          {result.creditWillExpireUnused
+                            ? ` Vid nuvarande förbrukningstakt förfaller ca ${result.startupCreditCurrency} ${result.creditUnusedAmount?.toLocaleString('sv-SE')} oanvänt. Överväg att skala upp era resurser eller kontakta leverantören om förlängning — sedan hjälper Arvo er att förhandla rätt pris.`
+                            : ' Nu är rätt tid att planera ert molnavtal — vi hjälper er att förhandla rätt pris innan fakturorna börjar landa.'}
                         </p>
                       </CreditAlert>
                     )}

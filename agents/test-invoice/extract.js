@@ -238,7 +238,8 @@ STARTUP-KREDITER — om fakturan visar att ett startup-program, promotional cred
   startup_credit_balance: Kvarvarande kreditbalans som visas explicit på fakturan (positivt tal).
   startup_credit_monthly_burn: Faktisk månadsförbrukning INNAN krediten applicerades (summan av alla tjänstrader).
   startup_credit_currency: Valutakod, t.ex. "USD" eller "SEK".
-  Sätt alla tre till null om inga startup-/programkrediter förekommer på fakturan.
+  startup_credit_expiry_date: Datum då krediterna förfaller, i ISO-format YYYY-MM-DD. Extrahera från text som "expire on August 31, 2026" eller "gäller t.o.m. 2026-08-31". null om ej angivet.
+  Sätt alla fyra till null om inga startup-/programkrediter förekommer på fakturan.
 
 ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
   el_invoice_type: Fakturatyp för elrelaterade fakturor — avgörande för om Arvo kan hjälpa.
@@ -458,6 +459,10 @@ const EXTRACT_TOOL = {
         type: ['string', 'null'],
         description: 'Valutakod för krediten, t.ex. "USD" eller "SEK". null om ej tillämpligt.',
       },
+      startup_credit_expiry_date: {
+        type: ['string', 'null'],
+        description: 'Datum då startup-krediterna förfaller, ISO-format YYYY-MM-DD. Extrahera från text som "expire on August 31, 2026". null om ej angivet.',
+      },
       service_period_start: {
         type: ['string', 'null'],
         description: 'Startdatum för fakturans tjänsteperiod i ISO-format YYYY-MM-DD. null om ej angivet.',
@@ -575,6 +580,7 @@ export function aggregateLineItems(raw) {
     startupCreditBalance:      raw.startup_credit_balance != null ? Number(raw.startup_credit_balance) : null,
     startupCreditMonthlyBurn:  raw.startup_credit_monthly_burn != null ? Number(raw.startup_credit_monthly_burn) : null,
     startupCreditCurrency:     raw.startup_credit_currency ?? null,
+    startupCreditExpiryDate:   raw.startup_credit_expiry_date ?? null,
     servicePeriodStart:        raw.service_period_start ?? null,
     servicePeriodEnd:          raw.service_period_end ?? null,
     cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,

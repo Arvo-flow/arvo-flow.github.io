@@ -728,9 +728,10 @@ export default async function handler(req, res) {
       );
 
       // Spara kredit-fält i originalvaluta innan eventuell konvertering (visas med USD-etikett i UI).
-      const creditBalance  = extracted.startupCreditBalance;
-      const creditBurn     = extracted.startupCreditMonthlyBurn;
-      const creditCurrency = extracted.startupCreditCurrency;
+      const creditBalance    = extracted.startupCreditBalance;
+      const creditBurn       = extracted.startupCreditMonthlyBurn;
+      const creditCurrency   = extracted.startupCreditCurrency;
+      const creditExpiryDate = extracted.startupCreditExpiryDate ?? null;
 
       // USD-konvertering: requiresVolumeData-routen når aldrig recommend.js som normalt hanterar detta.
       // Cloud-fakturor med startup-krediter: annualCost = creditBurn × 12 är mer representativt
@@ -752,15 +753,35 @@ export default async function handler(req, res) {
         console.log(`[test-invoice] USD→SEK (requiresVolumeData): rate=${sekPerUsd} source=${usdFx.source} creditBurn=${creditBurn}`);
       }
 
-      const creditExpiryMonths = (creditBalance > 0 && creditBurn > 0)
-        ? Math.round(creditBalance / creditBurn)
+      // Beräkna runway som det LÄGSTA av burn-rate och hårt utgångsdatum.
+      // Om krediterna förfaller innan pengarna hinner förbrukas → varna om oanvänt belopp.
+      const burnRateMonths = (creditBalance > 0 && creditBurn > 0)
+        ? creditBalance / creditBurn
         : null;
+      let creditExpiryMonths = burnRateMonths != null ? Math.round(burnRateMonths) : null;
+      let creditWillExpireUnused = false;
+      let creditUnusedAmount = null;
+
+      if (creditExpiryDate && creditBalance > 0 && creditBurn > 0) {
+        const msToExpiry   = new Date(creditExpiryDate) - new Date();
+        const monthsToExpiry = msToExpiry / (1000 * 60 * 60 * 24 * 30.44);
+        if (monthsToExpiry < burnRateMonths) {
+          creditExpiryMonths   = Math.round(monthsToExpiry);
+          const consumed       = Math.round(creditBurn * monthsToExpiry);
+          creditUnusedAmount   = Math.max(0, Math.round(creditBalance - consumed));
+          creditWillExpireUnused = creditUnusedAmount > 0;
+        }
+      }
+
       return send(res, 200, {
         ok:     true,
         route:  'review_queue',
         reason: 'volume_data_required',
         volumeDataNote: reason,
         creditExpiryMonths,
+        creditExpiryDate,
+        creditWillExpireUnused,
+        creditUnusedAmount,
         startupCreditBalance:     creditBalance ?? null,
         startupCreditMonthlyBurn: creditBurn ?? null,
         startupCreditCurrency:    creditCurrency ?? null,
