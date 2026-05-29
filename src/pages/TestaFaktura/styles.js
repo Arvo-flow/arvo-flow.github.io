@@ -704,6 +704,24 @@ export const CreditAlert = styled.div`
   }
 `;
 
+export const RoamingInsight = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ $type }) => $type === 'satellite' ? '#F8F9FA' : '#EFF9F7'};
+  border: 1px solid ${({ theme, $type }) => $type === 'satellite' ? theme.color.border : theme.color.brand + '33'};
+
+  svg { flex-shrink: 0; margin-top: 2px; color: ${({ theme, $type }) => $type === 'satellite' ? theme.color.muted : theme.color.brand}; }
+  span {
+    font-size: 13px;
+    line-height: 1.55;
+    color: ${({ theme, $type }) => $type === 'satellite' ? theme.color.muted : theme.color.inkSoft};
+  }
+`;
+
 export const KV = styled.dl`
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -12,7 +12,7 @@ import {
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
   Reasoning, LicenseOverageNote, TierOptAccordion, NextSteps, ScoreDiag, EmailGate,
-  ModalOverlay, ModalCard, QuoteLeadForm,
+  ModalOverlay, ModalCard, QuoteLeadForm, RoamingInsight,
 } from './styles';
 
 const TIER_DISPLAY = {
@@ -1342,6 +1342,24 @@ const TestaFaktura = () => {
                       {getCategoryMeta(result.categorized?.category).variableChargeNote
                         ?? 'Rörliga avgifter denna period — ej inkluderat i årsberäkningen.'}
                     </small>
+                    {result.categorized?.category === 'mobil' && (() => {
+                      const zone = result.extracted.roamingZone;
+                      const recurring = result.extracted.recurringAmount ?? 0;
+                      const variable = result.extracted.variableCharges ?? 0;
+                      if (variable < Math.max(recurring * 0.3, 1000)) return null;
+                      if (zone >= 4) return (
+                        <RoamingInsight $type="satellite">
+                          <Icon name="globe" size={14} />
+                          <span>Satellit- och maritim datatrafik (Zon 4) är teknikberoende — kan inte optimeras via operatörsbyte och ingår inte i Arvos besparing.</span>
+                        </RoamingInsight>
+                      );
+                      return (
+                        <RoamingInsight>
+                          <Icon name="info" size={14} />
+                          <span>Roamingkostnader på {formatKr(variable)} denna period. Om detta är återkommande kan ett mobilavtal med bättre EU-datapaket minska kostnaden — Arvo tittar på detta vid ett leverantörsbyte.</span>
+                        </RoamingInsight>
+                      );
+                    })()}
                   </dd>
                 </div>
               )}

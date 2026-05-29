@@ -206,6 +206,14 @@ MOBILFAKTUROR — extrahera dessa fält om fakturan innehåller mobilabonnemang:
     Räkna INTE med eventuell molnväxel- eller tilläggstjänst — räkna bara aktiva SIM-linjer.
     Exempel: "Telia Företag, 8 abonnemang" → seatCount: 8.
     Exempel: Faktura visar 12 Tele2-abonnemang med tre datatiernivåer → seatCount: 12.
+    Exempel tabellrad med Antal-kolumn: "Företag Bas 50GB (Månadsavgift) | 5 | 349,00 | 1 745,00" → seatCount: 5.
+    OBS: Antal-kolumnen i en fakturarad för mobilabonnemang anger antalet SIM-kort — extrahera alltid detta som seatCount.
+  roaming_zone: Roamingzon för rörliga datatrafikkostnader på fakturan. Extrahera från radbeskrivning:
+    1 = "Zon 1", "EU", "Norden", "Europa" — standard EU-roaming.
+    2 = "Zon 2", "Europa+" — utökat europeiskt.
+    3 = "Zon 3", "Världen", "Global" — globalt roaming.
+    4 = "Zon 4", "Satellit", "Sjöfart" — satellit- eller maritim datatrafik.
+    null om inga rörliga datatrafikkostnader förekommer eller zon ej kan fastställas.
   OBS: Molnväxel och liknande tilläggstjänster ska märkas is_addon: true, addon_type: "pbx" (se TILLÄGGSTJÄNSTER ovan).
 
 BREDBANDSFAKTUROR — extrahera dessa fält om fakturan är från en bredbandsleverantör:
@@ -389,6 +397,10 @@ const EXTRACT_TOOL = {
       seatCount: {
         type: ['integer', 'null'],
         description: 'Totalt antal seats/licenser. Summera alla licensrader oavsett tier. null om inte per-användarprenumeration.',
+      },
+      roaming_zone: {
+        type: ['integer', 'null'],
+        description: 'Roamingzon för rörliga datatrafikkostnader: 1=EU, 2=Europa+, 3=Global, 4=Satellit/Sjöfart. null om ej tillämpligt.',
       },
       projectedRecurringAmount: {
         type: 'integer',
@@ -585,6 +597,7 @@ export function aggregateLineItems(raw) {
     confidenceNotes:          raw.confidenceNotes ?? null,
     outOfScope:               raw.outOfScope ?? false,
     seatCount:                raw.seatCount ?? null,
+    roamingZone:              raw.roaming_zone != null ? Number(raw.roaming_zone) : null,
     notes:                    raw.confidenceNotes ?? null,
     elKwh:            raw.el_kwh != null ? Number(raw.el_kwh) : null,
     elBillingMonth:   raw.el_billing_month ?? null,
