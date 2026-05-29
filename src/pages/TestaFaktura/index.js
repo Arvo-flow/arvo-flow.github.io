@@ -794,6 +794,14 @@ const TestaFaktura = () => {
                     )}
                   </Reasoning>
                 )}
+                <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #D5E2DC' }}>
+                  <p style={{ margin: '0 0 14px', fontSize: 15, fontWeight: 600, color: '#0E1A17', lineHeight: 1.5 }}>
+                    Ni har bara sett 1 av {SEGMENTS.length} kostnadssegment — vad gömmer sig i de övriga {SEGMENTS.length - 1}?
+                  </p>
+                  <Button as={Link} to="/connect" $variant="gradient" $size="sm">
+                    Kartlägg hela er kostnadsbild →
+                  </Button>
+                </div>
               </>
             ) : result.route === 'unsupported' ? (
               <NoSwitchBlock>
