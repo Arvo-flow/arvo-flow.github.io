@@ -13,16 +13,16 @@ function calcSegmentScore(overpaymentPct, shouldSwitch) {
 }
 
 function getScoreStyle(score) {
-  if (score < 45) return { stroke: '#DC2626', label: 'Kritisk',         isAlert: true  };
-  if (score < 65) return { stroke: '#D97706', label: 'Suboptimerat',    isAlert: true  };
-  if (score < 80) return { stroke: '#16A34A', label: 'Marknadsmässigt', isAlert: false };
-  return                 { stroke: '#1B7A6E', label: 'Optimalt',        isAlert: false };
+  if (score < 45) return { stroke: '#DC2626', label: 'Kritisk',           isAlert: true  };
+  if (score < 65) return { stroke: '#D97706', label: 'Suboptimerat',      isAlert: true  };
+  if (score < 80) return { stroke: '#D97706', label: 'Förbättringsläge',  isAlert: true  };
+  return                 { stroke: '#1B7A6E', label: 'Optimalt',          isAlert: false };
 }
 
 function insightText(score, pct) {
   if (score < 45) return `Ni betalar ${pct} % mer än marknadspriset — en konkret besparing Arvo kan realisera åt er.`;
-  if (score < 65) return 'Besparingspotential finns — ni ligger något över marknadssnitt.';
-  if (score < 80) return 'Ni betalar ungefär branschsnitt. Marginalförbättringar möjliga.';
+  if (score < 65) return `Ni betalar ${pct} % över marknadspriset — en konkret besparing Arvo kan realisera.`;
+  if (score < 80) return `Ni betalar ${pct} % mer än marknadspriset — Arvo kan sänka den kostnaden åt er.`;
   return 'Ni har ett kostnadsoptimerat leverantörsnätverk.';
 }
 
@@ -207,8 +207,7 @@ const Badge = styled.div`
   padding: 7px 14px 7px 8px; border-radius: 100px;
   font-size: 13px; font-weight: 700; align-self: flex-start; background: #fff;
   ${p => p.$score < 45  && css`color: #7F1D1D; border: 2px solid #EF4444;`}
-  ${p => p.$score >= 45 && p.$score < 65 && css`color: #78350F; border: 2px solid #F59E0B;`}
-  ${p => p.$score >= 65 && p.$score < 80 && css`color: #166534; border: 2px solid #16A34A;`}
+  ${p => p.$score >= 45 && p.$score < 80 && css`color: #78350F; border: 2px solid #F59E0B;`}
   ${p => p.$score >= 80 && css`color: #0E4F47; border: 2px solid #1B7A6E;`}
   @media (max-width: 540px) { align-self: center; font-size: 12px; padding: 6px 12px 6px 7px; }
 `;
@@ -217,8 +216,7 @@ const BadgeIcon = styled.span`
   width: 22px; height: 22px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff;
   ${p => p.$score < 45  && css`background: #EF4444;`}
-  ${p => p.$score >= 45 && p.$score < 65 && css`background: #F59E0B;`}
-  ${p => p.$score >= 65 && p.$score < 80 && css`background: #16A34A;`}
+  ${p => p.$score >= 45 && p.$score < 80 && css`background: #F59E0B;`}
   ${p => p.$score >= 80 && css`background: #1B7A6E;`}
   svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   @media (max-width: 540px) { width: 20px; height: 20px; }

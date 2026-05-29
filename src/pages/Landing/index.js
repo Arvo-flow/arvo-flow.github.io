@@ -85,16 +85,16 @@ const SCORE_LEVELS = [
     desc: 'Ni har ett kostnadsoptimerat leverantörsnätverk. Ni betalar under eller i nivå med branschsnittet.',
   },
   {
-    label: 'Marknadsmässigt',
-    color: '#16A34A',
+    label: 'Förbättringsläge',
+    color: '#D97706',
     score: 72,
-    desc: 'Ni betalar ungefär branschsnitt. Marginella förbättringar är möjliga men ni förlorar inte pengar.',
+    desc: 'Ni betalar mer än marknadspriset — en meningsfull besparing som Arvo kan realisera åt er utan byråkrati.',
   },
   {
     label: 'Suboptimerat',
     color: '#D97706',
     score: 54,
-    desc: 'Besparingspotential finns — ni ligger något över marknadssnitt och Arvo kan realisera skillnaden.',
+    desc: 'Ni betalar klart mer än branschsnittet. Arvo kan göra ett byte som betalar sig från dag ett.',
   },
   {
     label: 'Kritisk',
