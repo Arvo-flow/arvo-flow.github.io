@@ -1002,6 +1002,23 @@ export async function recommend(input, opts = {}) {
     result.recommendationType  = 'advisory';
   }
 
+  // Deterministic shouldSwitch override for saas-productivity with a like-for-like target.
+  // The generic benchmark uses dominant-tier × total seats — wrong for mixed-tier invoices
+  // (e.g. 50 BP + 23 BS: benchmark would price all 73 as BP, masking the real saving).
+  // The LFL target already accounts for tier mix; use it directly.
+  const _lflInvoice = input.invoice?.likeForLikeTarget;
+  if (
+    input.categorized.category === 'saas-productivity' &&
+    _lflInvoice?.suggestedAnnualCost > 0 &&
+    !categoryDef?.licensePending
+  ) {
+    const _lflAnnualCost = input.invoice.annualCost ?? 0;
+    const _lflOverpayPct = (_lflAnnualCost - _lflInvoice.suggestedAnnualCost) / _lflInvoice.suggestedAnnualCost;
+    if (_lflOverpayPct > 0.05) {
+      result.shouldSwitch = true;
+    }
+  }
+
   // Deterministic shouldSwitch override: if the customer pays >15 % over p25,
   // always recommend a switch regardless of what the model decided.
   // This eliminates AI flip-flopping on clear-cut overpayment cases.
@@ -1088,8 +1105,16 @@ export async function recommend(input, opts = {}) {
       ? Math.max(0, Math.round(annualCost - primaryComponentAnnual - addonAnnual))
       : 0;
 
-    result.suggestedAnnualCost = Math.round(benchmark.p25 * scale) + addonAnnual;
-    result.savingPerYear = Math.max(0, Math.round(comparableAnnualCost - Math.round(benchmark.p25 * scale)));
+    // For saas-productivity with a like-for-like target: use LFL suggestedAnnualCost
+    // (tier-mix-aware) rather than benchmark.p25 × scale (dominant tier only, wrong for mixed).
+    const _lflTarget = input.invoice?.likeForLikeTarget;
+    const _useLfl = isSaasProductivity && _lflTarget?.suggestedAnnualCost > 0;
+    const _benchBase = _useLfl
+      ? _lflTarget.suggestedAnnualCost
+      : Math.round(benchmark.p25 * scale);
+
+    result.suggestedAnnualCost = _benchBase + addonAnnual;
+    result.savingPerYear = Math.max(0, Math.round(comparableAnnualCost - _benchBase));
     result.overpaymentPercent = benchmark.median > 0
       ? Math.round(((comparableAnnualCost - benchmark.median * scale) / (benchmark.median * scale)) * 100)
       : (result.overpaymentPercent ?? 0);
