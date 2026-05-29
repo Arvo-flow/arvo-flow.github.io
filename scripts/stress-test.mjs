@@ -51,6 +51,45 @@ const TYPE_SHORT = {
 // Baserat på CLAUDE.md verifierade testresultat + nya is_addon-assertions.
 // Filnamn-matchning är case-insensitive prefix (telia → telia.pdf, telia_maj.pdf osv.)
 const GOLDEN = [
+  // ── GlobalCom Networks — tabellformat seatCount + Zon 4 roaming ────────────────────────────
+  // Testar att extraktorn läser "Antal"-kolumnen i mobilfaktura (5 × 349 kr).
+  // Om seatCount tappar bort faller benchmarken mot employees=25 och vi missar besparingen.
+  {
+    match: /Faktura_1/i,
+    route:         'auto',
+    minConfidence: 0.90,
+    checks: [
+      {
+        label: 'seatCount === 5 (läst från Antal-kolumn i tabellrad)',
+        fn: (e) => e.seatCount === 5,
+      },
+      {
+        label: 'recurringAmount === 1 745 kr (5 × 349 kr)',
+        fn: (e) => e.recurringAmount === 1_745,
+      },
+      {
+        label: 'annualCost === 20 940 kr (1 745 × 12)',
+        fn: (e) => e.annualCost === 20_940,
+      },
+      {
+        label: 'Hårdvara (iPhone) klassas som hardware, ej recurring',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'hardware' && /iphone|apple/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Satellit/Sjöfart klassas som variable_usage',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'variable_usage' && /satellit|sjöfart|zon.?4/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'roamingZone === 4 (Zon 4 - Satellit/Sjöfart)',
+        fn: (e) => e.roamingZone === 4,
+      },
+    ],
+  },
+
   // ── Telia fiber + statisk IP (fil-specifik — måste stå FÖRE den breda /telia/i-matchningen) ─
   {
     match: /telia-fiber-statisk-ip/i,
