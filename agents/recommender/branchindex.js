@@ -152,7 +152,7 @@ export const BRANCHINDEX = {
       100:  { median: 5400,  p25: 4200,  note: 'Fiber 100 Mbit/s per adress/år — estimerat maj 2026 (~350–449 kr/mån)' },
       250:  { median: 6600,  p25: 5400,  note: 'Fiber 250 Mbit/s per adress/år — estimerat maj 2026 (~450–549 kr/mån)' },
       500:  { median: 8400,  p25: 7200,  note: 'Fiber 500 Mbit/s per adress/år — estimerat maj 2026 (~600–699 kr/mån)' },
-      1000: { median: 10800, p25: 9000,  note: 'Fiber 1 Gbit/s per adress/år — verifierat: Tele2 849 kr/mån, Bahnhof 995 kr/mån maj 2026' },
+      1000: { median: 10800, p25: 10200, note: 'Fiber 1 Gbit/s per adress/år — verifierat: Tele2 849 kr/mån, Bahnhof 995 kr/mån maj 2026. p25 = 849×12 = 10 188 ≈ 10 200 — understiger ej dokumenterat listpris.' },
     },
     matrix: {
       byraer:      { micro: { median: 9000,  p25: 6500  }, small: { median: 13200, p25:  9600 }, mid: { median: 28800, p25: 19200 } },

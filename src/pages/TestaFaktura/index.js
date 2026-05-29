@@ -1487,14 +1487,17 @@ const TestaFaktura = () => {
               const sc = result.extracted?.seatCount;
               const emp = Number(employees);
               const overage = sc != null && sc > emp ? sc - emp : 0;
+              const isMobil = result.categorized?.category === 'mobil';
+              const term = isMobil ? 'abonnemang' : 'licenser';
+              const kicker = isMobil ? 'Notering om abonnemang' : 'Notering om licenser';
               return overage > 0 ? (
                 <LicenseOverageNote>
-                  <span className="kicker">Notering om licenser</span>
+                  <span className="kicker">{kicker}</span>
                   <p>
-                    Kalkylen ovan bygger på att vi behåller era {sc} licenser,
+                    Kalkylen ovan bygger på att vi behåller era {sc} {term},
                     men sänker styckpriset genom att flytta er till rätt avtalsnivå. Vi noterar dock
                     att ni enligt uppgift är {emp} anställda. Om man dessutom hade städat bort
-                    dessa {overage} överflödiga licenser, hade er kostnad sänkts ytterligare.
+                    {overage === 1 ? ` detta ${overage} överflödiga ${isMobil ? 'abonnemang' : 'licens'}` : ` dessa ${overage} överflödiga ${term}`}, hade er kostnad sänkts ytterligare.
                   </p>
                 </LicenseOverageNote>
               ) : null;
