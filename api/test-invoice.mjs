@@ -19,6 +19,8 @@ import { getDb } from '../lib/db.js';
 import { computeSecondarySaving } from '../lib/secondary-savings.js';
 import { getEurSekRate, FALLBACK_RATE_EUR_SEK, getSekRate, FALLBACK_RATE_USD_SEK } from '../agents/recommender/pricing.js';
 import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.js';
+import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
+import { verifySanity } from '../lib/sanity-verifier.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
@@ -535,6 +537,36 @@ export default async function handler(req, res) {
         cache_read: u.cache_read_input_tokens ?? 0,
         cost_usd: cost.toFixed(4),
       }));
+    }
+
+    // ── LAGER 1: SUPPLIER FINGERPRINT VALIDATION ──────────────────────────────────
+    // Kontrollerar att AI:ns kategori stämmer för kända leverantörer.
+    // Vid mismatch → review_queue med intern alert. Vid match → confidence boostad.
+    {
+      const fp = checkSupplierFingerprint(
+        categorized.normalizedSupplier,
+        extracted.supplier,
+        categorized.category,
+      );
+      if (fp.matched && !fp.categoryOk) {
+        console.error(`[fingerprint] MISMATCH key=${fp.key} ai_category='${categorized.category}' expected=[${fp.expectedCategories.join(', ')}]`);
+        notifyReviewQueue(extracted, `[Fingerprint] ${fp.key}: AI gav '${categorized.category}', förväntat [${fp.expectedCategories.join(', ')}]`).catch(() => {});
+        return send(res, 200, {
+          ok: true, route: 'review_queue', reason: 'fingerprint_mismatch',
+          extracted: {
+            supplier:        extracted.supplier,
+            date:            extracted.date,
+            amount:          extracted.amount,
+            confidenceScore: extracted.confidenceScore,
+          },
+          timing: { extractMs: timing.extractMs, categorizeMs: timing.categorizeMs },
+        });
+      }
+      if (fp.matched && fp.categoryOk) {
+        const boosted = Math.max(categorized.confidence ?? 0, 0.95);
+        console.log(`[fingerprint] MATCH key=${fp.key} category='${categorized.category}' confidence ${categorized.confidence?.toFixed(2)} → ${boosted}`);
+        categorized.confidence = boosted;
+      }
     }
 
     // ── Deterministisk beräkning av addon- och primärkomponent-kostnader ────────
@@ -1090,6 +1122,39 @@ export default async function handler(req, res) {
       if (_primGross + _secGross <= 0) {
         console.error(`[guard:finansiell] Ingen positiv besparing (prim=${_primGross} sek=${_secGross}) — override shouldSwitch=false`);
         recommendation.shouldSwitch = false;
+      }
+    }
+
+    // ── LAGER 3: ADVERSARIAL HAIKU SANITY CHECK ──────────────────────────────────
+    // En AI kontrollerar en annan AI. Fångar orimliga besparingssiffror som
+    // passerat extraktorn och rekommenderaren men inte håller i verkligheten.
+    // Fail-open: infrastrukturfel blockerar aldrig en korrekt analys.
+    if (recommendation.shouldSwitch && (extracted.annualCost ?? 0) > 0) {
+      const _savingPct = Math.round(
+        ((recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0)
+          / extracted.annualCost) * 100
+      );
+      const sanity = await verifySanity({
+        category:  categorized.category,
+        annualCost: extracted.annualCost,
+        savingPct: _savingPct,
+        supplier:  categorized.normalizedSupplier ?? extracted.supplier,
+      });
+      if (!sanity.pass) {
+        console.error(`[sanity] BLOCKED method=${sanity.method} reason=${sanity.reason}`);
+        notifyReviewQueue(extracted, `[Sanity ${sanity.method}] ${categorized.category}: saving=${_savingPct}% flaggad som orimlig — reason=${sanity.reason}`).catch(() => {});
+        timing.totalMs = Date.now() - t0;
+        return send(res, 200, {
+          ok: true, route: 'review_queue', reason: 'sanity_check_failed',
+          sanityMethod: sanity.method,
+          extracted: {
+            supplier:        extracted.supplier,
+            date:            extracted.date,
+            amount:          extracted.amount,
+            confidenceScore: extracted.confidenceScore,
+          },
+          timing,
+        });
       }
     }
 
