@@ -4,7 +4,8 @@
   "outputDirectory": "build",
   "framework": null,
   "crons": [
-    { "path": "/api/cron/update-fx-rate", "schedule": "0 6 * * *" }
+    { "path": "/api/cron/update-fx-rate",   "schedule": "0 6 * * *"   },
+    { "path": "/api/cron/batch-process",    "schedule": "*/2 * * * *" }
   ],
   "functions": {
     "api/test-invoice.mjs": {
@@ -18,6 +19,15 @@
     },
     "api/cron/update-fx-rate.mjs": {
       "maxDuration": 15
+    },
+    "api/batch-upload.mjs": {
+      "maxDuration": 30
+    },
+    "api/batch-status.mjs": {
+      "maxDuration": 15
+    },
+    "api/cron/batch-process.mjs": {
+      "maxDuration": 300
     }
   },
   "rewrites": [

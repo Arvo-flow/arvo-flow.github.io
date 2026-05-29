@@ -1497,3 +1497,164 @@ export const EmailGate = styled.div`
     padding: 4px 0;
   }
 `;
+
+// ── Batch mode UI ─────────────────────────────────────────────────────────────
+
+export const BatchHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: ${({ theme }) => theme.color.brandSoft};
+    color: ${({ theme }) => theme.color.brand};
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 100px;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    margin: 0;
+  }
+
+  .sub {
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    margin-top: 1px;
+  }
+`;
+
+export const BatchProgressBar = styled.div`
+  height: 6px;
+  background: ${({ theme }) => theme.color.borderSoft};
+  border-radius: 3px;
+  margin-bottom: 24px;
+  overflow: hidden;
+
+  .fill {
+    height: 100%;
+    background: ${({ theme }) => theme.color.brand};
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    width: ${({ $pct }) => $pct ?? 0}%;
+  }
+`;
+
+export const BatchInvoiceList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+`;
+
+export const BatchInvoiceCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ $status, theme }) =>
+    $status === 'done'       ? theme.color.brand + '33' :
+    $status === 'failed'     ? '#E5383B33' :
+    $status === 'processing' ? theme.color.brand + '22' :
+    theme.color.border};
+  transition: border-color 0.2s;
+
+  .icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: ${({ $status, theme }) =>
+      $status === 'done'       ? theme.color.brandSoft :
+      $status === 'failed'     ? '#FFE8E8' :
+      $status === 'processing' ? theme.color.brandSoft + '88' :
+      theme.color.borderSoft};
+    color: ${({ $status, theme }) =>
+      $status === 'done'       ? theme.color.brand :
+      $status === 'failed'     ? '#C0392B' :
+      $status === 'processing' ? theme.color.brand :
+      theme.color.muted};
+  }
+
+  .name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.ink};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .status-label {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: ${({ $status, theme }) =>
+      $status === 'done'       ? theme.color.brand :
+      $status === 'failed'     ? '#C0392B' :
+      $status === 'processing' ? theme.color.brand :
+      theme.color.muted};
+    white-space: nowrap;
+  }
+
+  .saving {
+    font-size: 13px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.brand};
+    white-space: nowrap;
+    margin-left: 4px;
+  }
+`;
+
+export const BatchSummary = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat {
+    background: ${({ theme }) => theme.color.surface};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    padding: 14px;
+    text-align: center;
+
+    .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: ${({ theme }) => theme.color.ink};
+      line-height: 1.1;
+    }
+    .label {
+      font-size: 11px;
+      color: ${({ theme }) => theme.color.muted};
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    &.highlight .value {
+      color: ${({ theme }) => theme.color.brand};
+    }
+  }
+`;
+

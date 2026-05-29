@@ -13,6 +13,7 @@ import {
   ResultHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
   Reasoning, LicenseOverageNote, TierOptAccordion, NextSteps, ScoreDiag, EmailGate,
   ModalOverlay, ModalCard, QuoteLeadForm, RoamingInsight,
+  BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
 } from './styles';
 
 const TIER_DISPLAY = {
@@ -173,6 +174,15 @@ const TestaFaktura = () => {
   const [downloadEmail, setDownloadEmail] = useState('');
   const [downloadEmailState, setDownloadEmailState] = useState('idle'); // idle | submitting | sent
 
+  // Batch mode — activated when multiple PDFs are dropped / selected
+  const [batchFiles, setBatchFiles] = useState([]);
+  const [batchJobId, setBatchJobId] = useState(null);
+  const [batchJob, setBatchJob] = useState(null);
+  const [batchInvoices, setBatchInvoices] = useState([]);
+  const [batchError, setBatchError] = useState(null);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const batchMode = batchFiles.length > 1;
+
   // Token + bypass-setup vid mount
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -201,14 +211,121 @@ const TestaFaktura = () => {
     setFile(f);
   };
 
+  const validateAndSetFiles = (fileList) => {
+    setError(null);
+    setBatchError(null);
+    const pdfs = Array.from(fileList).filter(
+      (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+    );
+    const oversized = pdfs.filter((f) => f.size > MAX_PDF_SIZE);
+    if (oversized.length > 0) {
+      setError(`${oversized.length} fil(er) är för stora (max 3 MB per faktura).`);
+    }
+    const valid = pdfs.filter((f) => f.size <= MAX_PDF_SIZE);
+    if (valid.length === 1) {
+      setFile(valid[0]);
+      setBatchFiles([]);
+    } else if (valid.length > 1) {
+      setBatchFiles(valid);
+      setFile(null);
+      setResult(null);
+    } else if (fileList.length > 0) {
+      setError('Endast PDF-filer stöds.');
+    }
+  };
+
   const onDrop = (e) => {
     e.preventDefault();
     setDragActive(false);
-    if (e.dataTransfer.files?.[0]) validateAndSetFile(e.dataTransfer.files[0]);
+    const files = e.dataTransfer.files;
+    if (files?.length > 1) {
+      validateAndSetFiles(files);
+    } else if (files?.[0]) {
+      validateAndSetFile(files[0]);
+    }
   };
 
   const onDragOver = (e) => { e.preventDefault(); setDragActive(true); };
   const onDragLeave = (e) => { e.preventDefault(); setDragActive(false); };
+
+  const runBatchAnalysis = async () => {
+    if (batchFiles.length < 2) return;
+    setBatchError(null);
+    setBatchJobId(null);
+    setBatchJob(null);
+    setBatchInvoices([]);
+    setBatchLoading(true);
+
+    try {
+      const invoices = await Promise.all(
+        batchFiles.map(async (f) => ({
+          filename: f.name,
+          pdfBase64: await fileToBase64(f),
+        }))
+      );
+
+      let freshToken = apiToken;
+      try {
+        const tr = await fetch('/api/token', { method: 'POST' });
+        const td = await tr.json();
+        freshToken = td.token ?? apiToken;
+        setApiToken(freshToken);
+      } catch { /* keep existing token */ }
+
+      const res = await fetch('/api/batch-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoices,
+          customer: { industry, employees: parseInt(employees, 10) || 5 },
+          token: freshToken ?? 'dev',
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setBatchError(data.error ?? 'Uppladdning misslyckades');
+        setBatchLoading(false);
+        return;
+      }
+
+      setBatchJobId(data.jobId);
+      // Polling starts via useEffect below
+    } catch (err) {
+      setBatchError(err.message ?? 'Något gick fel');
+      setBatchLoading(false);
+    }
+  };
+
+  // Poll batch status while a job is in-flight
+  React.useEffect(() => {
+    if (!batchJobId) return;
+    let cancelled = false;
+    let timer;
+
+    const poll = async () => {
+      if (cancelled) return;
+      try {
+        const r = await fetch(`/api/batch-status?jobId=${batchJobId}&size=100`);
+        const d = await r.json();
+        if (cancelled || !d.ok) return;
+        setBatchJob(d.job);
+        setBatchInvoices(d.invoices ?? []);
+        if (d.job.status === 'done' || d.job.status === 'failed') {
+          setBatchLoading(false);
+        } else {
+          timer = setTimeout(poll, 5000);
+        }
+      } catch {
+        if (!cancelled) timer = setTimeout(poll, 10000);
+      }
+    };
+
+    poll();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [batchJobId]);
 
   const runAnalysis = async (overrideEmail = null) => {
     if (!file) { setError('Välj en PDF-faktura först.'); return; }
@@ -576,20 +693,30 @@ const TestaFaktura = () => {
                   ref={fileInputRef}
                   type="file"
                   accept="application/pdf,.pdf"
-                  onChange={(e) => validateAndSetFile(e.target.files?.[0])}
+                  multiple
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files?.length > 1) validateAndSetFiles(files);
+                    else if (files?.[0]) validateAndSetFile(files[0]);
+                  }}
                 />
                 <div className="icon">
                   <Icon name={file ? 'check' : 'arrow'} size={26} stroke={2} />
                 </div>
-                {file ? (
+                {batchMode ? (
+                  <>
+                    <strong className="primary">{batchFiles.length} fakturor valda</strong>
+                    <span className="secondary">{batchFiles.map((f) => f.name).join(', ').slice(0, 80)}{batchFiles.map((f) => f.name).join(', ').length > 80 ? '…' : ''}</span>
+                  </>
+                ) : file ? (
                   <>
                     <strong className="primary">PDF vald</strong>
                     <span className="filename">{file.name} · {(file.size / 1024).toFixed(0)} kB</span>
                   </>
                 ) : (
                   <>
-                    <strong className="primary">Dra hit din faktura — eller klicka för att välja</strong>
-                    <span className="secondary">PDF, max 3 MB. Vi sparar inte filen.</span>
+                    <strong className="primary">Dra hit fakturor — eller klicka för att välja</strong>
+                    <span className="secondary">En eller flera PDF:er, max 3 MB styck. Vi sparar inte filen.</span>
                   </>
                 )}
               </Dropzone>
@@ -620,23 +747,36 @@ const TestaFaktura = () => {
               {error && <ErrorBox>{error}</ErrorBox>}
 
               <SubmitRow>
-                <Button
-                  type="submit"
-                  $variant="gradient"
-                  $size="lg"
-                  $full
-                  disabled={loading || !file}
-                >
-                  {loading ? (
-                    <>
-                      <Spinner /> Analyserar…
-                    </>
-                  ) : (
-                    <>
-                      Analysera fakturan <Icon name="arrow" size={18} />
-                    </>
-                  )}
-                </Button>
+                {batchMode ? (
+                  <Button
+                    type="button"
+                    $variant="gradient"
+                    $size="lg"
+                    $full
+                    disabled={batchLoading}
+                    onClick={runBatchAnalysis}
+                  >
+                    {batchLoading ? (
+                      <><Spinner /> Analyserar {batchFiles.length} fakturor…</>
+                    ) : (
+                      <>Analysera {batchFiles.length} fakturor <Icon name="arrow" size={18} /></>
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    $variant="gradient"
+                    $size="lg"
+                    $full
+                    disabled={loading || !file}
+                  >
+                    {loading ? (
+                      <><Spinner /> Analyserar…</>
+                    ) : (
+                      <>Analysera fakturan <Icon name="arrow" size={18} /></>
+                    )}
+                  </Button>
+                )}
               </SubmitRow>
 
               {loading && (
@@ -666,6 +806,94 @@ const TestaFaktura = () => {
                 via AI och raderas omedelbart efter analysen.
               </Disclaimer>
             </form>
+          </Card>
+        )}
+
+        {/* ── Batch mode results ─────────────────────────────────────────── */}
+        {batchMode && (batchJobId || batchError) && (
+          <Card style={{ marginTop: 20 }}>
+            <BatchHeader>
+              <div>
+                <span className="badge"><Icon name="spark" size={10} /> Batch-analys</span>
+                <h3>
+                  {batchJob?.status === 'done'
+                    ? 'Analys klar'
+                    : batchJob?.status === 'failed'
+                    ? 'Analys misslyckades'
+                    : 'Analyserar fakturor…'}
+                </h3>
+                <div className="sub">
+                  {batchJob
+                    ? `${batchJob.done ?? 0} av ${batchJob.total} klara${batchJob.failed ? ` · ${batchJob.failed} misslyckades` : ''}`
+                    : batchError ? batchError : `${batchFiles.length} fakturor köade`}
+                </div>
+              </div>
+            </BatchHeader>
+
+            {batchJob && (
+              <BatchProgressBar $pct={batchJob.total > 0 ? Math.round(((batchJob.done ?? 0) + (batchJob.failed ?? 0)) / batchJob.total * 100) : 0}>
+                <div className="fill" />
+              </BatchProgressBar>
+            )}
+
+            {batchError && <ErrorBox style={{ marginBottom: 16 }}>{batchError}</ErrorBox>}
+
+            {/* Aggregate summary when done */}
+            {batchJob?.status === 'done' && (() => {
+              const withSwitch = batchInvoices.filter((inv) => inv?.recommendation?.shouldSwitch);
+              const totalNetSaving = withSwitch.reduce((s, inv) => s + (inv.recommendation?.netSaving ?? 0), 0);
+              const inReview = batchInvoices.filter((inv) => inv?.route === 'review_queue').length;
+              return (
+                <BatchSummary>
+                  <div className="stat highlight">
+                    <div className="value">{formatKr(Math.round(totalNetSaving / 1000))}k</div>
+                    <div className="label">Nettobesparing/år</div>
+                  </div>
+                  <div className="stat">
+                    <div className="value">{withSwitch.length}</div>
+                    <div className="label">Rekommenderar byte</div>
+                  </div>
+                  <div className="stat">
+                    <div className="value">{inReview}</div>
+                    <div className="label">Kräver granskning</div>
+                  </div>
+                </BatchSummary>
+              );
+            })()}
+
+            {/* Per-invoice cards */}
+            <BatchInvoiceList>
+              {(batchInvoices.length > 0 ? batchInvoices : batchFiles.map((f, i) => ({ index: i, filename: f.name, status: 'pending' }))).map((inv, i) => {
+                const st = inv?.status ?? 'pending';
+                const netSaving = inv?.recommendation?.netSaving ?? null;
+                const iconName = st === 'done' ? 'check' : st === 'failed' ? 'x' : st === 'processing' ? 'spark' : 'file';
+                const statusLabel =
+                  st === 'done'       ? (inv.route === 'review_queue' ? 'Kräver granskning' : inv.route === 'unsupported' ? 'Utanför scope' : 'Klar') :
+                  st === 'failed'     ? 'Misslyckades' :
+                  st === 'processing' ? 'Kategoriserar…' :
+                  st === 'extracting' ? 'Läser faktura…' :
+                                        'Väntar…';
+
+                return (
+                  <BatchInvoiceCard key={inv?.index ?? i} $status={st}>
+                    <div className="icon-wrap">
+                      <Icon name={iconName} size={14} stroke={2} />
+                    </div>
+                    <span className="name">{inv?.filename ?? batchFiles[i]?.name ?? `Faktura ${i + 1}`}</span>
+                    <span className="status-label">{statusLabel}</span>
+                    {netSaving > 0 && (
+                      <span className="saving">−{formatKr(netSaving)} kr/år</span>
+                    )}
+                  </BatchInvoiceCard>
+                );
+              })}
+            </BatchInvoiceList>
+
+            {batchJob?.status !== 'done' && batchJob?.status !== 'failed' && (
+              <p style={{ fontSize: 12, color: '#888', textAlign: 'center', margin: 0 }}>
+                Batch-analys körs asynkront via Anthropic Batch API. Uppdateras var 5:e sekund.
+              </p>
+            )}
           </Card>
         )}
 
