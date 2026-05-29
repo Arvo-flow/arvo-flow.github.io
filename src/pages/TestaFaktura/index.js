@@ -490,7 +490,11 @@ const TestaFaktura = () => {
   const diagScoreRaw = _clickPriceScore ?? Math.max(5, Math.round(100 - diagOvPct * 1.5));
   const diagScore    = _clickPriceScore != null
     ? _clickPriceScore
-    : (!result?.recommendation?.shouldSwitch ? Math.min(diagScoreRaw, 85) : diagScoreRaw);
+    : (!result?.recommendation?.shouldSwitch
+        ? Math.min(diagScoreRaw, 85)
+        : (result?.recommendation?.netSaving ?? 0) > 0
+          ? Math.min(diagScoreRaw, 79)  // cap vid 79 → "Förbättringsläge" när vi rekommenderar byte
+          : diagScoreRaw);
   const diagC       = diagScore < 45
     ? { dot: '#DC2626', num: '#DC2626', label: 'Kritisk',         labelClr: '#991B1B', txt: '#7F1D1D', bg: '#FEF2F2', border: 'rgba(220,38,38,.18)' }
     : diagScore < 65
@@ -1074,9 +1078,18 @@ const TestaFaktura = () => {
                 </ScoreDiag>
                 {(() => {
                   const _catMeta = getCategoryMeta(result.categorized.category);
-                  const isRealPrice = _catMeta.isRealPrice;
+                  // Sekundär-only switch: bytet drivs av sekundär besparing (t.ex. bredband på
+                  // kombinerad faktura). Primären (mobil) har inget förslag → suggestedSupplier=null.
+                  // Använd sekundärens kategorimeta för partnerLabel, isRealPrice och knaptext.
+                  const _isSecondaryOnlySwitch = result.recommendation?.shouldSwitch
+                    && !result.recommendation?.suggestedSupplier
+                    && _secSaving != null;
+                  const _effectiveMeta = _isSecondaryOnlySwitch
+                    ? getCategoryMeta(_secSaving.category)
+                    : _catMeta;
+                  const isRealPrice = _effectiveMeta.isRealPrice;
                   const isLicensePending = result.categorized.licensePending;
-                  const partnerLabel = _catMeta.partnerLabel;
+                  const partnerLabel = _effectiveMeta.partnerLabel;
                   return (
                     <>
                       <SavingsBlock>
@@ -1087,7 +1100,7 @@ const TestaFaktura = () => {
                         <span className="unit">
                           {isLicensePending
                             ? 'Försäkring kräver FI-licens — vi byter inte själva ännu, men visar gapet.'
-                            : isRealPrice
+                            : isRealPrice && result.recommendation.suggestedSupplier
                               ? (
                                 <>
                                   {formatNum(adjAnnualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
