@@ -1117,6 +1117,18 @@ export default async function handler(req, res) {
     // Förhindrar logiskt inkonsekvent rekommendation från att nå frontend:
     //   (1) shouldSwitch=true kräver att föreslagen kostnad är strikt lägre än nuläget.
     //   (2) shouldSwitch=true kräver positiv sammanslagen bruttobesparing.
+    // Kombinerad faktura: primär säger "ingen åtgärd" men sekundär har besparing.
+    // Utan denna override stannar shouldSwitch=false → "Optimalt" trots att
+    // bredbandskomponenten kan spara t.ex. 7 788 kr/år.
+    // suggestedAnnualCost sätts till primärkomponentens nuvarande kostnad
+    // (ingen förändring där) — sekundärens suggestedAnnual adderas nedan.
+    if (!recommendation.shouldSwitch && (secondarySaving?.grossSaving ?? 0) > 0) {
+      recommendation.shouldSwitch        = true;
+      recommendation.savingPerYear       = 0;
+      recommendation.suggestedAnnualCost = Math.round((metrics.primaryComponentMonthly ?? 0) * 12);
+      console.log(`[secondary-override] shouldSwitch=true via sekundär besparing ${secondarySaving.grossSaving} kr/år (${secondarySaving.category})`);
+    }
+
     // Körs EFTER alla deterministiska overrides (saas-productivity, el) så att vi
     // validerar de slutliga värdena, inte mellantillståndet från AI:n.
     if (recommendation.shouldSwitch) {
