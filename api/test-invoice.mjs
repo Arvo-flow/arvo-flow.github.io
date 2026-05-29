@@ -8,7 +8,7 @@
 
 import { Resend } from 'resend';
 import { createHmac, createHash } from 'node:crypto';
-import { extractInvoice, routeExtraction, ExtractorError } from '../agents/test-invoice/extract.js';
+import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
@@ -464,6 +464,19 @@ export default async function handler(req, res) {
           },
           timing: { extractMs: timing.extractMs },
         });
+      }
+    }
+
+    // Pre-routing fingerprint boost: kända leverantörer med confidence >= 0.70 ska aldrig
+    // fastna på review_queue pga threshold. Telia-kombinationsfakturor (mobil + bredband)
+    // har naturligt ~0.75 confidence men är korrekt extraherade — utan boost missar de 0.85.
+    // Kategorin är inte känd ännu — vi boostar enbart baserat på leverantörsnamn.
+    {
+      const _preRoute = checkSupplierFingerprint(null, extracted.supplier, null);
+      if (_preRoute.matched && (extracted.confidenceScore ?? 0) >= 0.70) {
+        const boosted = Math.max(extracted.confidenceScore, CONFIDENCE_THRESHOLD);
+        console.log(`[fingerprint:pre-route] ${_preRoute.key}: confidence ${extracted.confidenceScore?.toFixed(2)} → ${boosted}`);
+        extracted.confidenceScore = boosted;
       }
     }
 
