@@ -398,7 +398,33 @@ export default async function handler(req, res) {
         amount: li.amount != null ? Math.round(li.amount * sekPerEur) : null,
       }));
       console.log(`[test-invoice] EUR→SEK konvertering: rate=${sekPerEur} source=${eurFx.source}`);
-    } else if (extracted.currency && !['SEK', 'USD'].includes(extracted.currency)) {
+    } else if (extracted.currency === 'USD') {
+      // USD-fakturor (Salesforce, HubSpot, övriga SaaS i USD) konverteras här till SEK.
+      // recommend.js konverterar bara benchmark-tier-priser (USD-kolumner i branchindex) —
+      // det berör inte input-beloppen, så ingen dubbelkonvertering sker.
+      const kv = getKv();
+      const usdFx = await getSekRate(kv).catch(() => ({ rate: FALLBACK_RATE_USD_SEK, source: 'fallback', date: null }));
+      const sekPerUsd = usdFx.rate ?? FALLBACK_RATE_USD_SEK;
+      const cvt = (v) => (v != null ? Math.round(v * sekPerUsd) : null);
+      extracted.originalCurrency    = 'USD';
+      extracted.fxRate              = sekPerUsd;
+      extracted.fxSource            = usdFx.source;
+      extracted.fxDate              = usdFx.date;
+      extracted.currency            = 'SEK';
+      extracted.amount              = cvt(extracted.amount);
+      extracted.recurringAmount     = cvt(extracted.recurringAmount);
+      extracted.variableCharges     = cvt(extracted.variableCharges);
+      extracted.oneTimeFees         = cvt(extracted.oneTimeFees);
+      extracted.annualCost          = cvt(extracted.annualCost);
+      extracted.pricePerSeatMonthly = extracted.pricePerSeatMonthly != null
+        ? Math.round(extracted.pricePerSeatMonthly * sekPerUsd) : null;
+      extracted.lineItems = (extracted.lineItems ?? []).map(li => ({
+        ...li,
+        amount:    li.amount    != null ? Math.round(li.amount    * sekPerUsd) : null,
+        unitPrice: li.unitPrice != null ? Math.round(li.unitPrice * sekPerUsd) : null,
+      }));
+      console.log(`[test-invoice] USD→SEK konvertering: rate=${sekPerUsd} source=${usdFx.source}`);
+    } else if (extracted.currency && !['SEK'].includes(extracted.currency)) {
       notifyReviewQueue(extracted, `[Utländsk valuta] ${extracted.currency}`).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue (currency) threw:', err.message)
       );

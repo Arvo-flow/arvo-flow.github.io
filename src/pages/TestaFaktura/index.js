@@ -496,7 +496,7 @@ const TestaFaktura = () => {
     : diagScore < 65
     ? { dot: '#D97706', num: '#D97706', label: 'Suboptimerat',    labelClr: '#92400E', txt: '#78350F', bg: '#FFFBEB', border: 'rgba(217,119,6,.18)' }
     : diagScore < 80
-    ? { dot: '#16A34A', num: '#16A34A', label: 'Marknadsmässigt', labelClr: '#166534', txt: '#14532D', bg: '#F0FDF4', border: 'rgba(22,163,74,.18)' }
+    ? { dot: '#65A30D', num: '#65A30D', label: 'Förbättringsläge', labelClr: '#365314', txt: '#365314', bg: '#F7FEE7', border: 'rgba(101,163,13,.18)' }
     : { dot: '#1B7A6E', num: '#1B7A6E', label: 'Optimalt',        labelClr: '#0E4F47', txt: '#0E4F47', bg: '#DCEEEA', border: 'rgba(27,122,110,.18)' };
   const monitoringDatePast = result?.monitoringDate && new Date(result.monitoringDate) < new Date();
   const daysUntilEnd = result?.servicePeriodEnd
@@ -505,7 +505,9 @@ const TestaFaktura = () => {
   const diagInsight = result?.route === 'monitoring'
     ? monitoringDatePast
       ? `Avtalslåset lossnar snart${daysUntilEnd != null ? ` — ${daysUntilEnd} dagar kvar` : ''}. Arvo förbereder omförhandling.`
-      : 'Avtalet är bevakat — Arvo påminner er inför kommande förnyelse.'
+      : diagScore >= 80
+        ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
+        : `Ni betalar ${diagOvPct} % mer än marknadspriset — Arvo förhandlar rätt pris vid förnyelsen.`
     : diagScore < 45
       ? 'Ni betalar markant mer än marknadspriset — stor besparingspotential.'
       : diagScore < 80 ? 'Besparingspotential finns — ni betalar något över marknadssnitt.'
@@ -672,57 +674,34 @@ const TestaFaktura = () => {
 
             {result.route === 'monitoring' ? (
               <>
-                {diagSugg > 0 ? (
-                  <ScoreDiag style={{ '--diag-color': diagC.dot }}>
-                    <div className="gauge-wrap">
-                      <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
-                        <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
-                        <circle
-                          cx="30" cy="30" r={GAUGE_R} fill="none"
-                          stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
-                          strokeDasharray={`${gaugeDash} ${GAUGE_C}`}
-                          style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1s ease' }}
-                        />
-                      </svg>
-                      <div className="gauge-num" style={{ color: diagC.dot }}>
-                        <span className="gauge-val">{diagScore}</span>
-                        <span className="gauge-denom">/100</span>
-                      </div>
+                <ScoreDiag style={{ '--diag-color': diagC.dot }}>
+                  <div className="gauge-wrap">
+                    <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
+                      <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
+                      <circle
+                        cx="30" cy="30" r={GAUGE_R} fill="none"
+                        stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
+                        strokeDasharray={`${gaugeDash} ${GAUGE_C}`}
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1s ease' }}
+                      />
+                    </svg>
+                    <div className="gauge-num" style={{ color: diagC.dot }}>
+                      <span className="gauge-val">{diagScore}</span>
+                      <span className="gauge-denom">/100</span>
                     </div>
-                    <div className="diag-body">
-                      <div className="diag-top">
-                        <span className="diag-score-label">Arvo Score</span>
-                        <span className="diag-sep">·</span>
-                        <span className="diag-status">
-                          <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
-                          <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
-                        </span>
-                      </div>
-                      <p className="diag-text">{diagInsight}</p>
+                  </div>
+                  <div className="diag-body">
+                    <div className="diag-top">
+                      <span className="diag-score-label">Arvo Score</span>
+                      <span className="diag-sep">·</span>
+                      <span className="diag-status">
+                        <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
+                        <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                      </span>
                     </div>
-                  </ScoreDiag>
-                ) : (
-                  <ScoreDiag style={{ '--diag-color': '#6B7280' }}>
-                    <div className="gauge-wrap">
-                      <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
-                        <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
-                      </svg>
-                      <div className="gauge-num" style={{ color: '#9CA3AF' }}>
-                        <span className="gauge-val" style={{ fontSize: 14 }}>—</span>
-                      </div>
-                    </div>
-                    <div className="diag-body">
-                      <div className="diag-top">
-                        <span className="diag-score-label">Arvo Score</span>
-                        <span className="diag-sep">·</span>
-                        <span className="diag-status">
-                          <span className="diag-label" style={{ color: '#6B7280' }}>Bevakat avtal</span>
-                        </span>
-                      </div>
-                      <p className="diag-text">Avtalet är bevakat — Arvo påminner er inför kommande förnyelse.</p>
-                    </div>
-                  </ScoreDiag>
-                )}
+                    <p className="diag-text">{diagInsight}</p>
+                  </div>
+                </ScoreDiag>
                 <MonitoringBlock>
                   <div className="monitoring-kicker">
                     <span className="monitoring-dot" />
@@ -764,7 +743,9 @@ const TestaFaktura = () => {
                     <dt>Du betalar idag{getCategoryMeta(result.categorized?.category).elSuffix ? ' (energidel)' : ''}</dt>
                     <dd>
                       {formatKr(result.extracted.annualCost)} / år
-                      <small style={{ fontStyle: 'italic' }}>Projicerat från abonnemangsradernas listpris</small>
+                      {result.extracted.billingPeriod !== 'annual' && (
+                        <small style={{ fontStyle: 'italic' }}>Projicerat från abonnemangsradernas listpris</small>
+                      )}
                     </dd>
                   </div>
                   <div>
