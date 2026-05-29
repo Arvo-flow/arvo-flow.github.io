@@ -82,9 +82,11 @@ one_time_fee
   ska ALDRIG klassificeras som recurring_subscription. Kundens framtida
   run-rate påverkas inte av sådana engångsjusteringar.
   SAMT pro-rata-avgifter för licenser eller abonnemang som TILLKOMMIT mitt i
-  en period (t.ex. "Pro-rata: Tillagd 16 maj", "delsperiod"). Dessa är
-  periodjusteringar som inte återkommer — nästa period debiteras full avgift.
-  Klassificera ALLTID sådana rader som one_time_fee.
+  en period (t.ex. "Pro-rata: Tillagd 16 maj", "delsperiod", "Prorata tillägg").
+  Dessa är periodjusteringar som inte återkommer — nästa period debiteras full avgift.
+  Klassificera ALLTID sådana rader som one_time_fee OCH sätt is_prorata: true.
+  Sätt ALLTID quantity och unitPrice korrekt på pro-rata-rader — koden beräknar
+  framtida run-rate som quantity × unitPrice (inte det fakturerade deltidsbeloppet).
 
 hardware
   Köpt hårdvara eller utrustning (ej leasing eller hyra).
@@ -360,8 +362,12 @@ const EXTRACT_TOOL = {
               enum: ['pbx', 'static_ip', 'firewall', 'sla', 'cloud_backup', 'voip', 'other', null],
               description: 'Typ av tilläggstjänst. Obligatoriskt när is_addon är true. null annars.',
             },
+            is_prorata: {
+              type: 'boolean',
+              description: 'true om raden är en pro-rata-debitering för licenser/abonnemang som tillkommit under pågående period (t.ex. "Prorata tillägg", "delsperiod", "aktiverad X datum"). Kräver att quantity och unitPrice är korrekt ifyllda — koden beräknar då framtida run-rate deterministiskt som quantity × unitPrice. false i övriga fall.',
+            },
           },
-          required: ['description', 'amount', 'type', 'is_addon'],
+          required: ['description', 'amount', 'type', 'is_addon', 'is_prorata'],
         },
       },
       confidenceScore: {
@@ -526,14 +532,27 @@ export function aggregateLineItems(raw) {
   const oneTimeFees     = sum('one_time_fee') + sum('hardware');
   const multiplier      = PERIOD_MULTIPLIER[raw.billingPeriod] ?? 12;
 
-  // projectedRecurringAmount: AI:ns beräkning av vad som faktiskt debiteras nästa fulla
-  // period, normaliserat för pro-rata och krediteringar. Styr annualCost-beräkningen.
-  // Sanity check: värdet måste vara ett positivt heltal. Annars fallback till recurringAmount
-  // och sänkt confidence signaleras implicit via att annualCost matchar recurring-summan.
+  // projectedRecurringAmount: beräknas deterministiskt om is_prorata-rader finns.
+  // Pro-rata-rader representerar nya licenser som nästa period debiteras fullt —
+  // koden räknar quantity × unitPrice per rad (inte det fakturerade deltidsbeloppet).
+  // AI-aritmetik är opålitlig för detta steg; kodberäkning garanterar korrekt baseline.
+  const proRataLines = (raw.lineItems ?? []).filter(
+    (l) => l.type === 'one_time_fee' && l.is_prorata === true,
+  );
+  const proRataProjected = proRataLines.reduce((s, l) => {
+    const fullMonthly =
+      l.quantity != null && l.unitPrice != null
+        ? l.quantity * l.unitPrice
+        : l.amount;
+    return s + fullMonthly;
+  }, 0);
+
   const projected =
-    typeof raw.projectedRecurringAmount === 'number' && raw.projectedRecurringAmount > 0
-      ? raw.projectedRecurringAmount
-      : recurringAmount;
+    proRataLines.length > 0
+      ? recurringAmount + proRataProjected
+      : typeof raw.projectedRecurringAmount === 'number' && raw.projectedRecurringAmount > 0
+        ? raw.projectedRecurringAmount
+        : recurringAmount;
 
   return {
     supplier:                 raw.supplier,
@@ -547,8 +566,9 @@ export function aggregateLineItems(raw) {
       type:        li.type,
       quantity:    li.quantity  ?? null,
       unitPrice:   li.unitPrice ?? null,
-      is_addon:    li.is_addon  ?? false,
-      addon_type:  li.addon_type ?? null,
+      is_addon:    li.is_addon   ?? false,
+      addon_type:  li.addon_type  ?? null,
+      is_prorata:  li.is_prorata  ?? false,
     })),
     amount:                   (raw.lineItems ?? []).reduce((s, l) => s + l.amount, 0),
     recurringAmount,
