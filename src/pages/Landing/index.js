@@ -86,7 +86,7 @@ const SCORE_LEVELS = [
   },
   {
     label: 'Förbättringsläge',
-    color: '#D97706',
+    color: '#65A30D',
     score: 72,
     desc: 'Ni betalar mer än marknadspriset — en meningsfull besparing som Arvo kan realisera åt er utan byråkrati.',
   },
