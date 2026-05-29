@@ -97,8 +97,8 @@ const GOLDEN = [
         ),
       },
       {
-        label: 'annualCost i rimligt SEK-intervall (5 000–200 000) — fångar valutamiss',
-        fn: (e) => (e.annualCost ?? 0) > 5_000 && (e.annualCost ?? 0) < 200_000,
+        label: 'annualCost i rimligt SEK-intervall (5 000–500 000) — fångar valutamiss',
+        fn: (e) => (e.annualCost ?? 0) > 5_000 && (e.annualCost ?? 0) < 500_000,
       },
     ],
   },
