@@ -703,7 +703,22 @@ invoices.push(invoice('telenor-mobil-bredband-kombinerad.pdf', (doc) => {
   note(doc, y + 60, 'Kombinerad faktura: Mobilabonnemang (primär tjänst) + Molnväxel (tillägg) + Bredband Fiber (separat basabonnemang) + Statisk IP. Mobil och bredband är separata avtal med olika löptider.');
 }));
 
-// 50. Leasing servicebilar (EDGE: out-of-scope leasing)
+// 50. Telia — kombinerad mobil + bredband + roaming (REGRESSION: confidence-threshold-bug)
+// Denna faktura exponerade en bugg där CONFIDENCE_THRESHOLD 0.85 fick kombinationsfakturor
+// att hamna i review_queue. Regressionstest: ska alltid routa till auto med confidence ≥ 0.90.
+invoices.push(invoice('telia-mobil-bredband-kombinerad.pdf', (doc) => {
+  let y = header(doc, 'Telia Sverige AB', '556103-4249', 'Stjärntorget 1, 169 79 Solna', 'TEL-2026-05-KOMB-SE-0091', today, due, 'Handelskompaniet Svensson AB\nStorgatan 18, 503 38 Borås');
+  y = tableHeader(doc, y);
+  y = row(doc, y, 'Telia Jobbmobil Plus 20GB (6 abonnemang) Maj 2026', '6', 'st', 399, 2394);
+  y = row(doc, y, 'Telia Fiber Företag 1000/1000 Mbit/s — Maj 2026', '1', 'mån', 849, 849);
+  y = row(doc, y, 'Statisk IP-adress (Telia Business) — Maj 2026', '1', 'mån', 149, 149);
+  y = row(doc, y, 'Roaming Europa Zon 1 — Datatrafik 4,3 GB', '4.3', 'GB', 29, 124.7);
+  y = row(doc, y, 'Roaming Övriga Världen — Datatrafik 0,8 GB', '0.8', 'GB', 89, 71.2);
+  totals(doc, y + 10, [2394, 849, 149, 124.7, 71.2]);
+  note(doc, y + 60, 'Kombinerad faktura: Mobilabonnemang (6 st) + Bredband Fiber 1 Gbit + Statisk IP. Roaming Europa och Övriga Världen är rörliga avgifter. Mobil och bredband är separata avtal.');
+}));
+
+// 51. Leasing servicebilar (EDGE: out-of-scope leasing)
 invoices.push(invoice('ald-billeasing-outofscope.pdf', (doc) => {
   let y = header(doc, 'ALD Automotive AB', '556052-2003', 'Johanneslundsvägen 3–5, 194 81 Upplands Väsby', 'ALD-2026-05-SE-441123', today, due, 'Servicebolaget Mellansverige AB\nIndustrivägen 4, 641 46 Katrineholm');
   y = tableHeader(doc, y);

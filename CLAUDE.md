@@ -1,5 +1,24 @@
 # Arvo Flow — Projektbeskrivning för Claude Code
 
+## Testprotokoll (OBLIGATORISK REGEL)
+
+**Innan varje ändring av följande måste `node scripts/stress-test.mjs` köras och passera:**
+- `CONFIDENCE_THRESHOLD` i `agents/test-invoice/extract.js`
+- `routeExtraction()` — routing-logik
+- `SYSTEM_PROMPT` i `agents/test-invoice/extract.js`
+- Finansiella guards i `api/test-invoice.mjs`
+
+**Varför:** En ändring av CONFIDENCE_THRESHOLD 0.70 → 0.85 fick Telia-kombinationsfakturor
+(mobil + bredband) att hamna i review_queue. Stress-testet hade fångat detta OM det körts.
+Golden master i `scripts/stress-test.mjs` definierar förväntad route + minConfidence per faktura.
+
+```bash
+# Kör ALLTID detta innan push av ovanstående filer:
+node scripts/stress-test.mjs
+```
+
+---
+
 ## Git-workflow (OBLIGATORISK REGEL)
 
 **Efter varje push till feature-branch: merga alltid till `main` och pusha `main`.**

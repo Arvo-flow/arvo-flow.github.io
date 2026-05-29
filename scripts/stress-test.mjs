@@ -329,6 +329,50 @@ const GOLDEN = [
       },
     ],
   },
+  // ── Telia kombinerad — explicit regressionstest ───────────────────────────
+  // Rotorsak: CONFIDENCE_THRESHOLD 0.85 fick kombinationsfakturor att hamna i
+  // review_queue. Telia mobil + bredband + roaming → naturligt ~0.75 confidence
+  // utan instruktion. Fixt via prompt-regel + pre-routing fingerprint boost.
+  // Confidence-krav: ≥ 0.90 (inte bara 0.85) — kombinerade rader ska inte sänka.
+  {
+    match: /^telia-mobil-bredband-kombinerad\.pdf$/i,
+    route:           'auto',
+    minConfidence:   0.90,
+    checks: [
+      {
+        label: 'potentialMixedCategories = true',
+        fn: (e) => e.potentialMixedCategories === true,
+      },
+      {
+        label: 'Bredband-rad är bastjänst (is_addon: false)',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === false && /bredband|fiber|internet/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Minst en mobilrad som bastjänst (is_addon: false)',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === false && /mobil|abonnemang|jobbmobil/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Roaming klassas som variable_usage',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'variable_usage' && /roaming/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Statisk IP märkt is_addon:true addon_type:"static_ip"',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === true && l.addon_type === 'static_ip'
+        ),
+      },
+      {
+        label: 'annualCost i rimligt SEK-intervall (30 000–60 000)',
+        fn: (e) => (e.annualCost ?? 0) > 30_000 && (e.annualCost ?? 0) < 60_000,
+      },
+    ],
+  },
   // ── Kombinerade telekom-fakturor ──────────────────────────────────────────
   // Täcker BÅDA kategori-riktningarna: bredband-primär och mobil-primär.
   // PBX-check är villkorlig — gäller bara om fakturan faktiskt har en växelrad.
