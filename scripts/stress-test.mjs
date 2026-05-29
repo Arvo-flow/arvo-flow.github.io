@@ -51,6 +51,28 @@ const TYPE_SHORT = {
 // Baserat på CLAUDE.md verifierade testresultat + nya is_addon-assertions.
 // Filnamn-matchning är case-insensitive prefix (telia → telia.pdf, telia_maj.pdf osv.)
 const GOLDEN = [
+  // ── Telia fiber + statisk IP (fil-specifik — måste stå FÖRE den breda /telia/i-matchningen) ─
+  {
+    match: /telia-fiber-statisk-ip/i,
+    route:           'auto',
+    minConfidence:   0.90,
+    checks: [
+      {
+        label: 'Bredband-rad klassas som recurring_subscription (ej addon)',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.type === 'recurring_subscription' && l.is_addon === false &&
+                 /bredband|fiber|internet/i.test(l.description ?? '')
+        ),
+      },
+      {
+        label: 'Statisk IP klassas som recurring_subscription med is_addon:true addon_type:"static_ip"',
+        fn: (e) => (e.lineItems ?? []).some(
+          (l) => l.is_addon === true && l.addon_type === 'static_ip' &&
+                 /statisk.*ip|fast.*ip/i.test(l.description ?? '')
+        ),
+      },
+    ],
+  },
   {
     match: /telia/i,
     route:           'auto',
