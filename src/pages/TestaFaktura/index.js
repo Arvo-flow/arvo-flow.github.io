@@ -10,7 +10,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
+  ResultHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
   Reasoning, LicenseOverageNote, TierOptAccordion, NextSteps, ScoreDiag, EmailGate,
   ModalOverlay, ModalCard, QuoteLeadForm,
 } from './styles';
@@ -939,17 +939,23 @@ const TestaFaktura = () => {
                   </>
                 )}
                 {result.recommendation?.clickRateAnalysis?.estimatedAnnualSavingsGross > 0 ? (
-                  <SavingsBlock>
-                    <span className="kicker">Uppskattad nettobesparing på klickpriser</span>
-                    <span className="amount">ca +{formatNum(Math.round(result.recommendation.clickRateAnalysis.estimatedAnnualSavingsGross * 0.80))}&nbsp;kr/år</span>
-                    <span className="unit">Baserat på er faktiska klickkostnad × 12 månader · bekräftas med er faktiska printvolym</span>
-                  </SavingsBlock>
+                  <EstimateSavingsBlock>
+                    <div className="estimate-header">
+                      <span className="kicker">Identifierat besparingsgap</span>
+                      <span className="estimate-badge">Uppskattning</span>
+                    </div>
+                    <span className="amount">≈ +{formatNum(Math.round(result.recommendation.clickRateAnalysis.estimatedAnnualSavingsGross * 0.80))}&nbsp;kr/år</span>
+                    <span className="unit">Baserat på er faktiska klickkostnad × 12 månader · exakt belopp bekräftas med offert</span>
+                  </EstimateSavingsBlock>
                 ) : (result.recommendation?.netSaving ?? 0) > 0 ? (
-                  <SavingsBlock>
-                    <span className="kicker">Uppskattad nettobesparing</span>
-                    <span className="amount">ca +{formatNum(result.recommendation.netSaving)}&nbsp;kr/år</span>
+                  <EstimateSavingsBlock>
+                    <div className="estimate-header">
+                      <span className="kicker">Identifierat besparingsgap</span>
+                      <span className="estimate-badge">Uppskattning</span>
+                    </div>
+                    <span className="amount">≈ +{formatNum(result.recommendation.netSaving)}&nbsp;kr/år</span>
                     <span className="unit">Jämfört mot välförhandlat B2B-avtal · bekräftas med faktisk offert</span>
-                  </SavingsBlock>
+                  </EstimateSavingsBlock>
                 ) : null}
                 <NoSwitchBlock>
                   <strong>

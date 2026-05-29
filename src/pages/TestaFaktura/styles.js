@@ -330,6 +330,55 @@ export const SavingsBlock = styled.div`
   }
 `;
 
+export const EstimateSavingsBlock = styled.div`
+  padding: 24px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+  border: 1.5px dashed ${({ theme }) => theme.color.brand}99;
+  margin-bottom: 20px;
+
+  .estimate-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  span.kicker {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: ${({ theme }) => theme.color.brand};
+  }
+  span.estimate-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: ${({ theme }) => theme.color.brand};
+    background: ${({ theme }) => theme.color.brandSoft};
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+  span.amount {
+    display: block;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: clamp(42px, 7vw, 64px);
+    font-weight: 500;
+    line-height: 1.0;
+    letter-spacing: -0.025em;
+    font-feature-settings: "tnum";
+    color: ${({ theme }) => theme.color.brand};
+  }
+  span.unit {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.5;
+  }
+`;
+
 export const PriceNote = styled.p`
   margin-top: 10px;
   margin-bottom: ${({ $compact }) => $compact ? '10px' : '24px'};
