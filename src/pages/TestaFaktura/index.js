@@ -812,9 +812,7 @@ const TestaFaktura = () => {
                     <dt>Du betalar idag{result.categorized?.category === 'el' ? ' (energidel)' : ''}</dt>
                     <dd>
                       {formatKr(result.extracted.annualCost)} / år
-                      <span style={{ display: 'block', fontSize: '11px', color: '#7A8F89', marginTop: '2px', fontStyle: 'italic', fontWeight: 400 }}>
-                        Projicerat från abonnemangsradernas listpris
-                      </span>
+                      <small style={{ fontStyle: 'italic' }}>Projicerat från abonnemangsradernas listpris</small>
                     </dd>
                   </div>
                   <div>
@@ -1555,6 +1553,12 @@ const TestaFaktura = () => {
                       Passar bolag utan aktiv MDM-policy eller externt hanterat säkerhetsansvar.
                       Är ni osäkra — behåll Premium och spara ändå {formatNum(result.recommendation.netSaving ?? 0)}&nbsp;kr/år.
                     </p>
+                    <div className="acc-combined">
+                      <span className="acc-combined-label">Totalt om ni gör båda åtgärderna</span>
+                      <span className="acc-combined-amount">
+                        ca +{formatNum((result.recommendation.netSaving ?? 0) + Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto
+                      </span>
+                    </div>
                     <div className="acc-cta">
                       <Button as={Link} to="/connect" $variant="gradient" $size="sm">
                         Inkludera i bytet →

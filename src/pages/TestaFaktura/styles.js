@@ -1000,16 +1000,13 @@ export const TierOptAccordion = styled.div`
     align-items: center;
     width: 100%;
     padding: 15px 18px;
-    background: ${({ theme }) => theme.color.brandSoft};
+    background: ${({ theme }) => theme.color.surface};
     cursor: pointer;
     border: none;
     text-align: left;
     gap: 10px;
-    transition: background 0.14s ease, box-shadow 0.14s ease;
-    &:hover {
-      background: ${({ theme }) => theme.color.brand}18;
-      box-shadow: inset 0 0 0 1px ${({ theme }) => theme.color.brand}33;
-    }
+    transition: background 0.14s ease;
+    &:hover { background: ${({ theme }) => theme.color.brandSoft}; }
   }
   .acc-icon {
     flex-shrink: 0;
@@ -1095,6 +1092,29 @@ export const TierOptAccordion = styled.div`
     line-height: 1.6;
     color: #7A8F89;
     font-style: italic;
+  }
+  .acc-combined {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: ${({ theme }) => theme.size.radius.sm};
+    background: ${({ theme }) => theme.color.brandSoft};
+    border: 1px solid ${({ theme }) => theme.color.brand}33;
+  }
+  .acc-combined-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    letter-spacing: -0.01em;
+  }
+  .acc-combined-amount {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.brand};
+    font-feature-settings: "tnum";
+    letter-spacing: -0.015em;
   }
   .acc-cta {
     margin-top: 18px;
