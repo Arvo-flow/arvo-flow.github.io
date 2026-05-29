@@ -354,15 +354,25 @@ Kategoriserad faktura:
     const _secBenchmarkNote = _secondarySaving
       ? ` ← BENCHMARKAD: p25 = ${_secondarySaving.suggestedAnnual.toLocaleString('sv-SE')} kr/år, bruttobesparing ${_secondarySaving.grossSaving.toLocaleString('sv-SE')} kr/år`
       : ' ← ej benchmarkad separat';
+    const _hasSavingBoth   = _secondarySaving?.grossSaving > 0;
     const _reasoningSecFrag = _secondarySaving
-      ? `Dessutom ingår ${_secLabel} (${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år), benchmarkat till p25 = ${_secondarySaving.suggestedAnnual.toLocaleString('sv-SE')} kr/år. Arvo förhandlar bort merkostnaden för båda kategorierna.`
+      ? (() => {
+          const _secCostFmt  = nonPrimaryAnnualForPrompt.toLocaleString('sv-SE');
+          const _action = _hasSavingBoth
+            ? `Arvo förhandlar ned bredbandskostnaden mot marknadsbenchmark.`
+            : `Bredbandskomponenten är marknadsmässig.`;
+          return `Fakturan innehåller även ${_secLabel} (${_secCostFmt} kr/år) — ${_action}`;
+        })()
       : `Övriga tjänster (${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr+) analyseras via Fortnox/Visma.`;
+    const _secActionInstruction = _hasSavingBoth
+      ? `KRITISKT: Bredbandskomponenten har en identifierad besparing mot marknadsbenchmark. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en aktiv åtgärd ("Arvo förhandlar ned bredbandskostnaden"), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `
+      : `KRITISKT: Ange i reasoning EXAKT `;
     return `
   OBS KOMBINERAT FAKTURA — fakturan innehåller tjänster i FLERA kategorier:
     Primär komponent (${categorized.category}): ${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år ← DETTA är jämförelsebasen för primärbesparingen${mobileAddonAnnual ? `
     Tilläggstjänster (molnväxel/PBX): ${mobileAddonAnnual.toLocaleString('sv-SE')} kr/år` : ''}
     Sekundär komponent (${_secLabel}): ${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år${_secBenchmarkNote}
-  KRITISKT: Ange i reasoning EXAKT "Kombinerat faktura — analysen avser ${categorized.category}abonnemang (${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år). ${_reasoningSecFrag}" — använd INGA andra siffror för primärkomponenten.`;
+  ${_secActionInstruction}"Kombinerat faktura — analysen avser ${categorized.category}abonnemang (${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år). ${_reasoningSecFrag}" — fortsätt sedan med din analys av primärkomponenten. Använd INGA interna mätvärden (p25, percentil, procentsatser) i reasoning.`;
   })() :
   mobileAddonAnnual ? `
   Varav mobilabonnemang: ${(annualCost - mobileAddonAnnual).toLocaleString('sv-SE')} kr/år
