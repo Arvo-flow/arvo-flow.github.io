@@ -680,7 +680,7 @@ const TestaFaktura = () => {
             <form onSubmit={onSubmit}>
               <Dropzone
                 $active={dragActive}
-                $hasFile={!!file}
+                $hasFile={!!file || batchMode}
                 onClick={() => fileInputRef.current?.click()}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
@@ -701,7 +701,7 @@ const TestaFaktura = () => {
                   }}
                 />
                 <div className="icon">
-                  <Icon name={file ? 'check' : 'arrow'} size={26} stroke={2} />
+                  <Icon name={(file || batchMode) ? 'check' : 'arrow'} size={26} stroke={2} />
                 </div>
                 {batchMode ? (
                   <>
