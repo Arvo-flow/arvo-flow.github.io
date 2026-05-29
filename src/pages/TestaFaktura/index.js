@@ -667,7 +667,7 @@ const TestaFaktura = () => {
                   </span>
                 )}
               </div>
-              <Button onClick={() => setDownloadModalOpen(true)} $variant="secondary" $size="md">
+              <Button onClick={() => setDownloadModalOpen(true)} $variant="secondary" $size="sm">
                 Ladda ner analys
               </Button>
             </ResultHead>

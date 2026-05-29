@@ -279,10 +279,9 @@ export const ProgressItem = styled.li`
 export const ResultHead = styled.div`
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 20px;
-  align-items: end;
+  gap: 12px;
+  align-items: start;
   margin-bottom: 24px;
-  @media (max-width: 540px) { grid-template-columns: 1fr; }
 
   h2 {
     font-size: 22px;
