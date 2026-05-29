@@ -81,6 +81,7 @@ export const Card = styled.div`
 `;
 
 export const Dropzone = styled.div`
+  position: relative;
   border: 2px dashed ${({ theme, $active, $hasFile }) => {
     if ($active) return theme.color.brand;
     if ($hasFile) return theme.color.brand;
@@ -135,7 +136,14 @@ export const Dropzone = styled.div`
     word-break: break-all;
   }
 
-  input[type="file"] { display: none; }
+  input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
 `;
 
 export const FormRow = styled.div`
