@@ -334,7 +334,7 @@ export const EstimateSavingsBlock = styled.div`
   padding: 24px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
   background: ${({ theme }) => theme.color.surface};
-  border: 1.5px dashed ${({ theme }) => theme.color.brand}99;
+  border: 1.5px solid ${({ theme }) => theme.color.brand}99;
   margin-bottom: 20px;
 
   .estimate-header {
