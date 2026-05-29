@@ -100,7 +100,7 @@ const SCORE_LEVELS = [
     label: 'Kritisk',
     color: '#DC2626',
     score: 28,
-    desc: 'Ni betalar klart mer än marknadspriset. Arvo identifierar, förhandlar och genomför bytet med garanterad besparing.',
+    desc: 'Ni betalar kraftigt mer än marknadspriset och förlorar pengar varje faktura. Arvo identifierar, förhandlar och genomför bytet åt er.',
   },
 ];
 
