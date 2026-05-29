@@ -159,6 +159,10 @@ CONFIDENCE SCORE (0.0–1.0):
   Sänk vid: otydliga radbeskrivningar, saknad periodinfo, blandade perioder,
   faktura på utländskt språk, skannad/handskriven faktura, antaganden som krävdes.
   Sänk alltid om du är osäker på klassificeringen av någon rad.
+  KRITISKT: Sänk INTE confidence enbart för att fakturan har potentialMixedCategories: true.
+  Om varje rad är tydligt beskriven och klassificerad utan antaganden, ska confidence
+  spegla radkvaliteten — inte fakturans komplexitet. En Telia-faktura med mobil + bredband
+  + roaming där alla rader är otvetydiga ska ha confidence ≥ 0.90.
 
 OUT OF SCOPE — sätt outOfScope: true om fakturan avser tjänster utan
   förhandlingsbar volymstruktur: redovisningstjänster, juridik, restaurang/mat,
