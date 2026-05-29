@@ -506,21 +506,6 @@ const TestaFaktura = () => {
   const daysUntilEnd = result?.servicePeriodEnd
     ? Math.ceil((new Date(result.servicePeriodEnd) - new Date()) / (1000 * 60 * 60 * 24))
     : null;
-  const diagInsight = result?.route === 'monitoring'
-    ? monitoringDatePast
-      ? `Avtalslåset lossnar snart${daysUntilEnd != null ? ` — ${daysUntilEnd} dagar kvar` : ''}. Arvo förbereder omförhandling.`
-      : diagScore >= 80
-        ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
-        : `Ni betalar ${diagOvPct} % mer än marknadspriset — Arvo förhandlar rätt pris vid förnyelsen.`
-    : diagScore < 45
-      ? 'Ni betalar markant mer än marknadspriset — stor besparingspotential.'
-      : diagScore < 80 ? 'Besparingspotential finns — ni betalar något över marknadssnitt.'
-      : 'Ni har ett kostnadsoptimerat leverantörsnätverk.';
-
-  const GAUGE_R = 26;
-  const GAUGE_C = 2 * Math.PI * GAUGE_R;
-  const gaugeDash = (diagScore / 100) * GAUGE_C;
-
   const _secSaving   = result?.recommendation?.secondarySaving ?? null;
   const _primGross   = _secSaving
     ? (result?.recommendation?.grossSaving ?? 0) - _secSaving.grossSaving
@@ -530,6 +515,34 @@ const TestaFaktura = () => {
       ? `Bredband${_secSaving.speedMbit ? ` ${_secSaving.speedMbit} Mbit` : ''}`
       : `Mobil${_secSaving.seatCount ? ` (${_secSaving.seatCount} st)` : ''}`
     : null;
+
+  // Sekundär-only switch: primären (t.ex. mobil) har inget byte att göra men
+  // sekundären (t.ex. bredband) har besparing. Används för meta, kickers och diagInsight.
+  const _isSecondaryOnlySwitch = !!(
+    result?.recommendation?.shouldSwitch
+    && !result?.recommendation?.suggestedSupplier
+    && _secSaving != null
+  );
+  const _effectiveMeta = _isSecondaryOnlySwitch
+    ? getCategoryMeta(_secSaving.category)
+    : getCategoryMeta(result?.categorized?.category ?? 'uncategorized');
+
+  const diagInsight = _isSecondaryOnlySwitch
+    ? `Ert ${getCategoryMeta(result?.categorized?.category ?? 'uncategorized').label.toLowerCase()} är konkurrenskraftigt — ${_secLabel ?? 'sekundärtjänsten'} kan optimeras.`
+    : result?.route === 'monitoring'
+      ? monitoringDatePast
+        ? `Avtalslåset lossnar snart${daysUntilEnd != null ? ` — ${daysUntilEnd} dagar kvar` : ''}. Arvo förbereder omförhandling.`
+        : diagScore >= 80
+          ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
+          : `Ni betalar ${diagOvPct} % mer än marknadspriset — Arvo förhandlar rätt pris vid förnyelsen.`
+      : diagScore < 45
+        ? 'Ni betalar markant mer än marknadspriset — stor besparingspotential.'
+        : diagScore < 80 ? 'Besparingspotential finns — ni betalar något över marknadssnitt.'
+        : 'Ni har ett kostnadsoptimerat leverantörsnätverk.';
+
+  const GAUGE_R = 26;
+  const GAUGE_C = 2 * Math.PI * GAUGE_R;
+  const gaugeDash = (diagScore / 100) * GAUGE_C;
 
   return (
     <Page>
@@ -666,8 +679,10 @@ const TestaFaktura = () => {
                   <span className="subtitle">
                     {result.reason === 'natavgift'
                       ? 'Nätavgift'
-                      : (getCategoryMeta(result.categorized.category).label || result.categorized.category)}
-                    {result.categorized.subType && result.reason !== 'natavgift' ? ` · ${result.categorized.subType}` : ''}
+                      : _secSaving != null
+                        ? `${getCategoryMeta(result.categorized.category).label} & ${_secLabel}`
+                        : (getCategoryMeta(result.categorized.category).label || result.categorized.category)}
+                    {result.categorized.subType && result.reason !== 'natavgift' && _secSaving == null ? ` · ${result.categorized.subType}` : ''}
                   </span>
                 )}
               </div>
@@ -744,7 +759,7 @@ const TestaFaktura = () => {
                 </MonitoringBlock>
                 <KV>
                   <div>
-                    <dt>Du betalar idag{getCategoryMeta(result.categorized?.category).elSuffix ? ' (energidel)' : ''}</dt>
+                    <dt>Ni betalar idag{getCategoryMeta(result.categorized?.category).elSuffix ? ' (energidel)' : ''}</dt>
                     <dd>
                       {formatKr(result.extracted.annualCost)} / år
                       {result.extracted.billingPeriod !== 'annual' && (
@@ -778,7 +793,7 @@ const TestaFaktura = () => {
                 </KV>
                 {(result.categorized?.reasoning || result.potentialSavingNote) && (
                   <Reasoning>
-                    <span className="kicker">Vad analysen visar</span>
+                    <span className="kicker">Avtalsöversikt</span>
                     {result.categorized?.reasoning && (
                       <p>
                         {result.categorized.normalizedSupplier || result.extracted?.supplier} fakturerar{' '}
@@ -1022,7 +1037,7 @@ const TestaFaktura = () => {
                   <span className="kicker">Dold kostnad hittad</span>
                   <span className="amount">+{formatKr(optNet)}</span>
                   <span className="unit">
-                    Du betalar {formatNum(optSaving)} kr/år för en tjänst som redan ingår i er licens
+                    Ni betalar {formatNum(optSaving)} kr/år för en tjänst som redan ingår i er licens
                     {' '}· Arvos besparingsarvode {formatKr(optArvoFee)} (20 %)
                   </span>
                 </SavingsBlock>
@@ -1077,16 +1092,6 @@ const TestaFaktura = () => {
                   </div>
                 </ScoreDiag>
                 {(() => {
-                  const _catMeta = getCategoryMeta(result.categorized.category);
-                  // Sekundär-only switch: bytet drivs av sekundär besparing (t.ex. bredband på
-                  // kombinerad faktura). Primären (mobil) har inget förslag → suggestedSupplier=null.
-                  // Använd sekundärens kategorimeta för partnerLabel, isRealPrice och knaptext.
-                  const _isSecondaryOnlySwitch = result.recommendation?.shouldSwitch
-                    && !result.recommendation?.suggestedSupplier
-                    && _secSaving != null;
-                  const _effectiveMeta = _isSecondaryOnlySwitch
-                    ? getCategoryMeta(_secSaving.category)
-                    : _catMeta;
                   const isRealPrice = _effectiveMeta.isRealPrice;
                   const isLicensePending = result.categorized.licensePending;
                   const partnerLabel = _effectiveMeta.partnerLabel;
@@ -1116,16 +1121,13 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
-                      {!isLicensePending && (() => {
-                        const _meta = getCategoryMeta(result?.categorized?.category);
-                        return (
-                          <PriceNote $compact>
-                            {_meta.benchmarkType === 'list-verified'
-                              ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
-                              : (_meta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
-                          </PriceNote>
-                        );
-                      })()}
+                      {!isLicensePending && (
+                        <PriceNote $compact>
+                          {_effectiveMeta.benchmarkType === 'list-verified'
+                            ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
+                            : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
+                        </PriceNote>
+                      )}
                       {result.recommendation.suggestedAnnualCost && !isLicensePending && (
                         <PartnerBlock>
                           <div className="left">
@@ -1236,7 +1238,7 @@ const TestaFaktura = () => {
 
             {result.extracted?.annualCost != null && result.route !== 'monitoring' && result.route !== 'unsupported' && <KV>
               <div>
-                <dt>Du betalar idag</dt>
+                <dt>Ni betalar idag</dt>
                 <dd>
                   {formatKr(adjAnnualCost)} / år
                   {hasHwAdj
@@ -1397,7 +1399,7 @@ const TestaFaktura = () => {
 
             {result.recommendation?.reasoning && (result.recommendation?.shouldSwitch || isOptimize) && (
               <Reasoning>
-                <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Vad analysen visar'}</span>
+                <span className="kicker">{isOptimize ? 'Vad vi hittade' : _isSecondaryOnlySwitch ? 'Kombinerad analys' : 'Arvo rekommenderar'}</span>
                 <p>
                   {getCategoryMeta(result.categorized.category).isRealPrice
                     ? result.recommendation.reasoning
