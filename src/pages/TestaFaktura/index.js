@@ -534,11 +534,11 @@ const TestaFaktura = () => {
         ? `Avtalslåset lossnar snart${daysUntilEnd != null ? ` — ${daysUntilEnd} dagar kvar` : ''}. Arvo förbereder omförhandling.`
         : diagScore >= 80
           ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
-          : `Ni betalar ${diagOvPct} % mer än marknadspriset — Arvo förhandlar rätt pris vid förnyelsen.`
+          : `Ni betalar ${diagOvPct} % sämre än branschsnittet — Arvo förhandlar välförhandlat avtalspris vid förnyelsen.`
       : diagScore < 45
-        ? 'Ni betalar markant mer än marknadspriset — stor besparingspotential.'
-        : diagScore < 80 ? 'Besparingspotential finns — ni betalar något över marknadssnitt.'
-        : 'Ni har ett kostnadsoptimerat leverantörsnätverk.';
+        ? 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.'
+        : diagScore < 80 ? 'Ni betalar något sämre än branschsnittet — välförhandlat avtalspris finns att hämta.'
+        : 'Ni har ett välförhandlat avtal — bättre än branschsnittet.';
 
   const GAUGE_R = 26;
   const GAUGE_C = 2 * Math.PI * GAUGE_R;

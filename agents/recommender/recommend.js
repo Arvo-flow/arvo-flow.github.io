@@ -193,12 +193,12 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
 
   // Explicit phrasing instruction so the AI uses the right language in reasoning.
   const phrasingRule = isAccountingSystem
-    ? 'OBS: Detta är ett affärssystem. Jämför INTE kostnaden procentuellt mot medianen. Undersök om inbyggda funktioner täcker behovet och ge konkret åtgärdsrekommendation.'
+    ? 'OBS: Detta är ett affärssystem. Jämför INTE kostnaden procentuellt mot branschsnittet. Undersök om inbyggda funktioner täcker behovet och ge konkret åtgärdsrekommendation.'
     : isRealData
-      ? `OBS: Benchmarkdatan är baserad på ${dataPoints} verkliga kundfakturor i Arvo Flows databas. I din reasoning, skriv "X % över medianen, baserat på ${dataPoints} analyserade fakturor i er bransch." — använd ALDRIG "referenspriser".`
+      ? `OBS: Benchmarkdatan är baserad på ${dataPoints} verkliga kundfakturor i Arvo Flows databas. I din reasoning, jämför mot "branschsnittet" — skriv t.ex. "Ni betalar mer än jämförbara bolag i er bransch" eller "Välförhandlat avtalspris för er storlek är väsentligt lägre." — ALDRIG "medianen", "referenspriser" eller interna procentsatser.`
       : isVerifiedPublic
-        ? 'OBS: Benchmarkdatan är verifierade offentliga listpriser — INTE aggregerade kundfakturor. I din reasoning, skriv "X % över verifierat marknadspris" eller "listpriset hos billigaste leverantör är Y kr" — ALDRIG "medianen" eller "verkliga datapunkter".'
-        : 'OBS: Benchmarkdatan är intervallbaserade branschuppskattningar — INTE exakta priser. I din reasoning, skriv "Vår data visar att branschstandarden för detta ligger på ca X–Y kr. Ni betalar idag Z kr, vilket indikerar en potentiell överdebitering." — ALDRIG "exakta priser", "garanterade" eller "medianen".';
+        ? 'OBS: Benchmarkdatan är verifierade offentliga listpriser — INTE aggregerade kundfakturor. I din reasoning, skriv "mer än det verifierade marknadspriset" eller "välförhandlat avtalspris finns tillgängligt" — ALDRIG "medianen" eller interna procentsatser.'
+        : 'OBS: Benchmarkdatan är intervallbaserade branschuppskattningar — INTE exakta priser. I din reasoning, jämför mot "branschsnittet" och skriv "välförhandlat avtalspris är lägre" — ALDRIG "exakta priser", "garanterade" eller "medianen".';
 
   const benchmarkBlock = isAccountingSystem
     ? formatBenchmark(benchmark, seatCount, employees) + '\n\n' + phrasingRule
@@ -858,10 +858,7 @@ export async function recommend(input, opts = {}) {
       shouldSwitch = annualCost > bm.p25 * 1.10;
       const overMedianPct = Math.round(((annualCost - bm.median) / bm.median) * 100);
       if (shouldSwitch) {
-        const comparison = overMedianPct > 0
-          ? `${overMedianPct} % över mediankostnaden (${bm.median.toLocaleString('sv-SE')} kr/år)`
-          : `i linje med mediankostnaden (${bm.median.toLocaleString('sv-SE')} kr/år) men över välförhandlat nivå`;
-        reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år ligger ${comparison} för er verksamhetsstorlek. Välförhandlade B2B-avtal med rikstäckande aktörer ligger typiskt på ${bm.p25.toLocaleString('sv-SE')}–${bm.median.toLocaleString('sv-SE')} kr/år. Arvo begär offert från ${alts} baserat på ert tömningsschema och fraktionsfördelning.`;
+        reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år är sämre än branschsnittet för er verksamhetsstorlek. Välförhandlat avtalspris med rikstäckande aktörer är väsentligt lägre. Arvo begär offert från ${alts} baserat på ert tömningsschema och fraktionsfördelning.`;
         suggestedAnnualCost = bm.p25;
         grossSaving = Math.max(0, annualCost - bm.p25);
         arvoFee = Math.round(grossSaving * 0.20);
