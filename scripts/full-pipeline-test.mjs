@@ -195,7 +195,7 @@ async function runPipeline(pdfPath) {
       filename, route: 'review_queue', category: categorized.category, supplier: extracted.supplier,
       routeReason: `no_benchmark (kategori '${categorized.category}' saknas i branschindex)`,
       shouldSwitch: false, reasoning: '',
-      issues: [`INGEN BENCHMARK för kategori '${categorized.category}'`], warnings: [],
+      issues: [], warnings: [`Ingen benchmark för kategori '${categorized.category}' — avsiktligt, manuell hantering`],
       extractMs, categorizeMs, totalMs: Date.now() - t0,
     };
   }
@@ -361,12 +361,17 @@ async function runPipeline(pdfPath) {
 
   const reasoningIssues = checkReasoning(recommendation.reasoning);
 
-  // Sekretesscheck för Kategori 2
+  // Sekretesscheck för Kategori 2: reasoning-texten får INTE namnge konkurrenter
   const REAL_PRICE_CATS = new Set(['mjukvara-saas', 'mobil', 'saas-productivity']);
   const isRealPrice = REAL_PRICE_CATS.has(categorized.category);
   const secrecyIssues = [];
-  if (!isRealPrice && recommendation.suggestedSupplier) {
-    secrecyIssues.push(`SEKRETESSBROTT: suggestedSupplier='${recommendation.suggestedSupplier}' för Kat 2 (${categorized.category})`);
+  if (!isRealPrice && recommendation.reasoning) {
+    // Kända alternativa varumärken som inte ska namnges för Kat 2
+    const KAT2_BRANDS = [/\btele2\b/i, /\btelenor\b/i, /\btre\b/i, /\bcomviq\b/i, /\bbahnhof\b/i, /\bip.?only\b/i, /\bsveakom\b/i, /\bricoh\b/i, /\bkonica\b/i, /\bxerox\b/i, /\bcanon\b/i];
+    const namedBrand = KAT2_BRANDS.find(re => re.test(recommendation.reasoning));
+    if (namedBrand) {
+      secrecyIssues.push(`SEKRETESSBROTT: Kategori-2-reasoning namnger konkurrent (${namedBrand})`);
+    }
   }
 
   // Konsistenscheck: shouldSwitch=true men ingen positiv nettobesparing

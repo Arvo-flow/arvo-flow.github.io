@@ -943,6 +943,7 @@ export const FortnoxButton = styled.a`
 
 export const Reasoning = styled.div`
   margin-top: 24px;
+  margin-bottom: 28px;
   padding-left: 16px;
   border-left: 3px solid ${({ theme }) => theme.color.brand}55;
 

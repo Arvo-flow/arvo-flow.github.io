@@ -938,34 +938,27 @@ const TestaFaktura = () => {
                     </Reasoning>
                   </>
                 )}
+                {result.recommendation?.clickRateAnalysis?.estimatedAnnualSavingsGross > 0 ? (
+                  <SavingsBlock>
+                    <span className="kicker">Uppskattad nettobesparing på klickpriser</span>
+                    <span className="amount">ca +{formatNum(Math.round(result.recommendation.clickRateAnalysis.estimatedAnnualSavingsGross * 0.80))}&nbsp;kr/år</span>
+                    <span className="unit">Baserat på er faktiska klickkostnad × 12 månader · bekräftas med er faktiska printvolym</span>
+                  </SavingsBlock>
+                ) : (result.recommendation?.netSaving ?? 0) > 0 ? (
+                  <SavingsBlock>
+                    <span className="kicker">Uppskattad nettobesparing</span>
+                    <span className="amount">ca +{formatNum(result.recommendation.netSaving)}&nbsp;kr/år</span>
+                    <span className="unit">Jämfört mot välförhandlat B2B-avtal · bekräftas med faktisk offert</span>
+                  </SavingsBlock>
+                ) : null}
                 <NoSwitchBlock>
-                  {result.recommendation?.clickRateAnalysis?.estimatedAnnualSavingsGross > 0 ? (
-                    <div className="estimate-banner">
-                      <span className="est-kicker">Uppskattad nettobesparing på klickpriser</span>
-                      <span className="est-amount">
-                        ca {formatNum(Math.round(result.recommendation.clickRateAnalysis.estimatedAnnualSavingsGross * 0.80))}&nbsp;kr/år
-                      </span>
-                      <span className="est-note">
-                        Baserat på er faktiska klickkostnad × 12 månader · bekräftas med er faktiska printvolym
-                      </span>
-                    </div>
-                  ) : (result.recommendation?.netSaving ?? 0) > 0 ? (
-                    <div className="estimate-banner">
-                      <span className="est-kicker">Uppskattad nettobesparing</span>
-                      <span className="est-amount">
-                        ca {formatNum(result.recommendation.netSaving)}&nbsp;kr/år
-                      </span>
-                      <span className="est-note">
-                        Jämfört mot välförhandlat B2B-avtal · bekräftas med faktisk offert
-                      </span>
-                    </div>
-                  ) : (
-                    <strong>
-                      {result.recommendation?.clickRateAnalysis
-                        ? 'Beräkna exakt besparing per år'
+                  <strong>
+                    {result.recommendation?.clickRateAnalysis
+                      ? 'Beräkna exakt besparing per år'
+                      : (result.recommendation?.netSaving ?? 0) > 0
+                        ? 'Säkra besparingen — kräver offert'
                         : 'Kräver offert — volymdata behövs.'}
-                    </strong>
-                  )}
+                  </strong>
                   <p>
                     {result.recommendation?.clickRateAnalysis
                       ? 'Klickpriset är fastslaget. Fyll i nedan så beräknar Arvo det exakta beloppet inklusive maskinleasing.'

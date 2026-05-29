@@ -600,12 +600,12 @@ function analyzeClickRates(lineItems, supplierName, invoiceData = null) {
     const rFmt  = colorRate.toFixed(2).replace('.', ',');
     const bmFmt = PRINT_BENCHMARKS.color.toFixed(2).replace('.', ',');
     const hiEnd = (PRINT_BENCHMARKS.color * 1.15).toFixed(2).replace('.', ',');
-    parts.push(`${supplier} fakturerar er ${rFmt} kr/sida för färgutskrifter — Arvo-verifierat marknadspris för professionella avtal är ${bmFmt}–${hiEnd} kr/sida. Ni betalar ${colorGapPct} % mer per färgsida än jämförbara bolag.`);
+    parts.push(`${supplier} fakturerar er ${rFmt} kr/sida för färgutskrifter — välförhandlat avtalspris för professionella B2B-avtal är ${bmFmt}–${hiEnd} kr/sida. Ni betalar ${colorGapPct} % mer per färgsida än jämförbara bolag.`);
   }
   if (bwRate && bwGapPct > 0) {
     const rFmt  = bwRate.toFixed(2).replace('.', ',');
     const bmFmt = PRINT_BENCHMARKS.bw.toFixed(2).replace('.', ',');
-    parts.push(`Svartvita sidor kostar er ${rFmt} kr/sida — marknadspriset är ${bmFmt} kr/sida.`);
+    parts.push(`Svartvita sidor kostar er ${rFmt} kr/sida — välförhandlat avtalspris är ${bmFmt} kr/sida.`);
   }
   parts.push(`Klickpriset är ett kontraktspris och gäller oberoende av volym. Koppla Fortnox/Visma eller ladda upp fler månaders fakturor för att beräkna er exakta besparing per år.`);
 
