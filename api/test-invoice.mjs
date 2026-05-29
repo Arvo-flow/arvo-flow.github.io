@@ -441,6 +441,30 @@ export default async function handler(req, res) {
       });
     }
 
+    // ── BELOPPSVALIDERING ─────────────────────────────────────────────────────────
+    // Orimligt stora belopp indikerar ett valutakonverteringsfel (t.ex. USD→SEK-steget
+    // hoppades över och dollarbelopp passerade som kronor med 10× magnitud).
+    // Felsäker routing till review_queue istället för att visa nonsens-rekommendation.
+    {
+      const _MAX_ANNUAL_SEK = 100_000_000; // 100 MSEK — övre rimlighetsgräns för svenska SME
+      const _implausible = (extracted.annualCost ?? 0) > _MAX_ANNUAL_SEK
+                        || (extracted.amount      ?? 0) > _MAX_ANNUAL_SEK;
+      if (_implausible) {
+        console.error(`[guard:belopp] Orimliga belopp — annualCost=${extracted.annualCost} amount=${extracted.amount} currency=${extracted.currency}`);
+        notifyReviewQueue(extracted, `[Beloppsvalidering] Orimliga belopp (annualCost=${(extracted.annualCost ?? 0).toLocaleString('sv-SE')} kr) — troligt valutatransformationsfel`).catch(() => {});
+        return send(res, 200, {
+          ok: true, route: 'review_queue', reason: 'implausible_amounts',
+          extracted: {
+            supplier:        extracted.supplier,
+            date:            extracted.date,
+            amount:          extracted.amount,
+            confidenceScore: extracted.confidenceScore,
+          },
+          timing: { extractMs: timing.extractMs },
+        });
+      }
+    }
+
     // Triage — review_queue eller unsupported avbryter pipeline
     const routing = routeExtraction(extracted);
 
@@ -1042,6 +1066,31 @@ export default async function handler(req, res) {
         .replace(/\bArvo\s+CSP\b/gi, 'Microsoft årsavtal')
         .replace(/\bvia\s+CSP\b/gi, 'via Microsoft årsavtal')
         .replace(/\bCSP[-\s]?avtal\b/gi, 'Microsoft årsavtal');
+    }
+
+    // ── FINANSIELL SANITY-GUARD ───────────────────────────────────────────────────
+    // Förhindrar logiskt inkonsekvent rekommendation från att nå frontend:
+    //   (1) shouldSwitch=true kräver att föreslagen kostnad är strikt lägre än nuläget.
+    //   (2) shouldSwitch=true kräver positiv sammanslagen bruttobesparing.
+    // Körs EFTER alla deterministiska overrides (saas-productivity, el) så att vi
+    // validerar de slutliga värdena, inte mellantillståndet från AI:n.
+    if (recommendation.shouldSwitch) {
+      const _annCost  = extracted.annualCost ?? 0;
+      const _suggCost = recommendation.suggestedAnnualCost ?? 0;
+      if (_annCost > 0 && _suggCost > 0 && _suggCost >= _annCost) {
+        console.error(`[guard:finansiell] suggestedAnnualCost(${_suggCost}) >= annualCost(${_annCost}) — override shouldSwitch=false`);
+        recommendation.shouldSwitch        = false;
+        recommendation.suggestedAnnualCost = null;
+        recommendation.savingPerYear       = 0;
+      }
+    }
+    if (recommendation.shouldSwitch) {
+      const _primGross = recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0;
+      const _secGross  = secondarySaving?.grossSaving ?? 0;
+      if (_primGross + _secGross <= 0) {
+        console.error(`[guard:finansiell] Ingen positiv besparing (prim=${_primGross} sek=${_secGross}) — override shouldSwitch=false`);
+        recommendation.shouldSwitch = false;
+      }
     }
 
     // Kombinera primär och sekundär besparing till en samlad nettosiffra.

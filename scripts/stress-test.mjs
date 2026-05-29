@@ -96,6 +96,10 @@ const GOLDEN = [
           (l) => l.is_addon === true && /abonnemang|mobilplan|jobbmobil/i.test(l.description)
         ),
       },
+      {
+        label: 'annualCost i rimligt SEK-intervall (5 000–200 000) — fångar valutamiss',
+        fn: (e) => (e.annualCost ?? 0) > 5_000 && (e.annualCost ?? 0) < 200_000,
+      },
     ],
   },
   {
@@ -120,6 +124,10 @@ const GOLDEN = [
         fn: (e) => !(e.lineItems ?? []).some(
           (l) => l.is_addon === true && /klic|sida|page/i.test(l.description)
         ),
+      },
+      {
+        label: 'annualCost i rimligt SEK-intervall (10 000–350 000) — fångar valutamiss',
+        fn: (e) => (e.annualCost ?? 0) > 10_000 && (e.annualCost ?? 0) < 350_000,
       },
     ],
   },
@@ -228,6 +236,19 @@ const GOLDEN = [
         label: 'pricePerSeatMonthly beräknat',
         fn: (e) => e.pricePerSeatMonthly != null && e.pricePerSeatMonthly > 0,
       },
+      // ── Valuta- och beloppskontrakt ─────────────────────────────────────────
+      // USD-fakturor ska lämna extraktorn med currency=USD — konverteringen sker
+      // sedan i API-lagret. Om extraktorn plötsligt returnerar SEK har vi en regression.
+      {
+        label: 'Valuta identifieras som USD (krävs för konverteringskedjan i API)',
+        fn: (e) => e.currency === 'USD',
+      },
+      // annualCost ska vara i USD-magnitud (inte konverterat × 10). Om USD→SEK-steget
+      // oavsiktligt sker INNE i extraktorn kommer värdet bli ~10× för stort här.
+      {
+        label: 'annualCost i rimligt USD-intervall (500–25 000) — fångar dubbel-konvertering',
+        fn: (e) => (e.annualCost ?? 0) > 500 && (e.annualCost ?? 0) < 25_000,
+      },
     ],
   },
   // ── Microsoft 365 — bred fallback (huvud-testfil microsoft.pdf, seatCount=57) ─
@@ -255,6 +276,10 @@ const GOLDEN = [
       {
         label: 'pricePerSeatMonthly beräknat (ej null)',
         fn: (e) => e.pricePerSeatMonthly != null && e.pricePerSeatMonthly > 0,
+      },
+      {
+        label: 'annualCost i rimligt SEK-intervall (50 000–700 000) — fångar valutamiss',
+        fn: (e) => (e.annualCost ?? 0) > 50_000 && (e.annualCost ?? 0) < 700_000,
       },
     ],
   },
