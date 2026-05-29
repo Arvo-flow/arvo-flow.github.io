@@ -989,46 +989,61 @@ export const LicenseOverageNote = styled.div`
 `;
 
 export const TierOptAccordion = styled.div`
-  margin-top: 16px;
-  border: 1.5px solid ${({ theme }) => theme.color.brand}66;
+  margin-top: 20px;
+  border: 2px solid ${({ theme }) => theme.color.brand};
   border-radius: ${({ theme }) => theme.size.radius.md};
   overflow: hidden;
+  box-shadow: 0 2px 8px ${({ theme }) => theme.color.brand}22;
 
   .acc-trigger {
     display: flex;
     align-items: center;
     width: 100%;
-    padding: 13px 16px;
-    background: ${({ theme }) => theme.color.surface};
+    padding: 15px 18px;
+    background: ${({ theme }) => theme.color.brandSoft};
     cursor: pointer;
     border: none;
     text-align: left;
-    gap: 8px;
-    transition: background 0.12s ease;
-    &:hover { background: ${({ theme }) => theme.color.brandSoft}; }
+    gap: 10px;
+    transition: background 0.14s ease, box-shadow 0.14s ease;
+    &:hover {
+      background: ${({ theme }) => theme.color.brand}18;
+      box-shadow: inset 0 0 0 1px ${({ theme }) => theme.color.brand}33;
+    }
   }
   .acc-icon {
     flex-shrink: 0;
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1;
   }
-  .acc-label {
+  .acc-label-group {
     flex: 1;
-    font-size: 13px;
-    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .acc-label {
+    font-size: 14px;
+    font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
     letter-spacing: -0.01em;
   }
+  .acc-hint {
+    font-size: 11px;
+    color: ${({ theme }) => theme.color.brand};
+    font-weight: 500;
+    letter-spacing: 0;
+  }
   .acc-amount {
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 700;
     color: ${({ theme }) => theme.color.brand};
     font-feature-settings: "tnum";
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
   }
   .acc-chevron {
     flex-shrink: 0;
-    margin-left: 6px;
+    margin-left: 4px;
     color: ${({ theme }) => theme.color.brand};
     transition: transform 0.2s ease;
     display: flex;
@@ -1037,8 +1052,8 @@ export const TierOptAccordion = styled.div`
   }
 
   .acc-body {
-    padding: 14px 16px 18px;
-    border-top: 1px solid ${({ theme }) => theme.color.brand}22;
+    padding: 16px 18px 20px;
+    border-top: 1.5px solid ${({ theme }) => theme.color.brand}33;
     background: ${({ theme }) => theme.color.surface};
   }
   .acc-intro {

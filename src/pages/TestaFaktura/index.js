@@ -810,7 +810,12 @@ const TestaFaktura = () => {
                 <KV>
                   <div>
                     <dt>Du betalar idag{result.categorized?.category === 'el' ? ' (energidel)' : ''}</dt>
-                    <dd>{formatKr(result.extracted.annualCost)} / år</dd>
+                    <dd>
+                      {formatKr(result.extracted.annualCost)} / år
+                      <span style={{ display: 'block', fontSize: '11px', color: '#7A8F89', marginTop: '2px', fontStyle: 'italic', fontWeight: 400 }}>
+                        Projicerat från abonnemangsradernas listpris
+                      </span>
+                    </dd>
                   </div>
                   <div>
                     <dt>Fakturadatum</dt>
@@ -1506,8 +1511,11 @@ const TestaFaktura = () => {
                   aria-expanded={tierOptOpen}
                 >
                   <span className="acc-icon">⚡</span>
-                  <span className="acc-label">Licensoptimering</span>
-                  <span className="acc-amount">+{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto</span>
+                  <span className="acc-label-group">
+                    <span className="acc-label">Licensoptimering</span>
+                    {!tierOptOpen && <span className="acc-hint">Klicka för att se detaljer →</span>}
+                  </span>
+                  <span className="acc-amount">ytterligare +{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto</span>
                   <span className={`acc-chevron${tierOptOpen ? ' open' : ''}`}>
                     <Icon name="chevron-right" size={16} stroke={2.5} />
                   </span>
