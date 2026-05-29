@@ -176,7 +176,6 @@ const TestaFaktura = () => {
 
   // Batch mode — activated when multiple PDFs are dropped / selected
   const [batchFiles, setBatchFiles] = useState([]);
-  const [batchJobId, setBatchJobId] = useState(null);
   const [batchJob, setBatchJob] = useState(null);
   const [batchInvoices, setBatchInvoices] = useState([]);
   const [batchError, setBatchError] = useState(null);
@@ -251,81 +250,70 @@ const TestaFaktura = () => {
   const runBatchAnalysis = async () => {
     if (batchFiles.length < 2) return;
     setBatchError(null);
-    setBatchJobId(null);
-    setBatchJob(null);
-    setBatchInvoices([]);
+    setBatchJob({ status: 'processing', total: batchFiles.length, done: 0, failed: 0 });
+    setBatchInvoices(batchFiles.map((f, i) => ({ index: i, filename: f.name, status: 'pending' })));
     setBatchLoading(true);
 
+    let freshToken = apiToken;
     try {
-      const invoices = await Promise.all(
-        batchFiles.map(async (f) => ({
-          filename: f.name,
-          pdfBase64: await fileToBase64(f),
-        }))
-      );
+      const tr = await fetch('/api/token', { method: 'POST' });
+      const td = await tr.json();
+      freshToken = td.token ?? apiToken;
+      setApiToken(freshToken);
+    } catch { /* keep existing */ }
 
-      let freshToken = apiToken;
+    const bypass = sessionStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_bypass') ?? undefined;
+
+    let done = 0, failed = 0;
+
+    for (let i = 0; i < batchFiles.length; i++) {
+      setBatchInvoices((prev) => prev.map((inv, idx) => idx === i ? { ...inv, status: 'extracting' } : inv));
+
       try {
-        const tr = await fetch('/api/token', { method: 'POST' });
-        const td = await tr.json();
-        freshToken = td.token ?? apiToken;
-        setApiToken(freshToken);
-      } catch { /* keep existing token */ }
+        const pdfBase64 = await fileToBase64(batchFiles[i]);
+        const res = await fetch('/api/test-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pdfBase64,
+            industry,
+            employees: parseInt(employees, 10) || 5,
+            token: freshToken ?? 'dev',
+            bypass,
+          }),
+        });
+        const data = await res.json();
 
-      const res = await fetch('/api/batch-upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoices,
-          customer: { industry, employees: parseInt(employees, 10) || 5 },
-          token: freshToken ?? 'dev',
-        }),
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        setBatchError(data.error ?? 'Uppladdning misslyckades');
-        setBatchLoading(false);
-        return;
-      }
-
-      setBatchJobId(data.jobId);
-      // Polling starts via useEffect below
-    } catch (err) {
-      setBatchError(err.message ?? 'Något gick fel');
-      setBatchLoading(false);
-    }
-  };
-
-  // Poll batch status while a job is in-flight
-  React.useEffect(() => {
-    if (!batchJobId) return;
-    let cancelled = false;
-    let timer;
-
-    const poll = async () => {
-      if (cancelled) return;
-      try {
-        const r = await fetch(`/api/batch-status?jobId=${batchJobId}&size=100`);
-        const d = await r.json();
-        if (cancelled || !d.ok) return;
-        setBatchJob(d.job);
-        setBatchInvoices(d.invoices ?? []);
-        if (d.job.status === 'done' || d.job.status === 'failed') {
-          setBatchLoading(false);
+        if (data.route) {
+          done++;
+          setBatchInvoices((prev) => prev.map((inv, idx) => idx === i ? {
+            ...inv, status: 'done',
+            route: data.route, extracted: data.extracted,
+            categorized: data.categorized, recommendation: data.recommendation,
+          } : inv));
         } else {
-          timer = setTimeout(poll, 5000);
+          failed++;
+          setBatchInvoices((prev) => prev.map((inv, idx) => idx === i ? {
+            ...inv, status: 'failed', error: data.error ?? 'Analys misslyckades',
+          } : inv));
         }
-      } catch {
-        if (!cancelled) timer = setTimeout(poll, 10000);
+      } catch (err) {
+        failed++;
+        setBatchInvoices((prev) => prev.map((inv, idx) => idx === i ? {
+          ...inv, status: 'failed', error: err.message,
+        } : inv));
       }
-    };
 
-    poll();
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-  }, [batchJobId]);
+      setBatchJob({
+        status: i === batchFiles.length - 1 ? 'done' : 'processing',
+        total: batchFiles.length,
+        done,
+        failed,
+      });
+    }
+
+    setBatchLoading(false);
+  };
 
   const runAnalysis = async (overrideEmail = null) => {
     if (!file) { setError('Välj en PDF-faktura först.'); return; }
@@ -810,7 +798,7 @@ const TestaFaktura = () => {
         )}
 
         {/* ── Batch mode results ─────────────────────────────────────────── */}
-        {batchMode && (batchJobId || batchError) && (
+        {batchMode && (batchJob || batchError) && (
           <Card style={{ marginTop: 20 }}>
             <BatchHeader>
               <div>
