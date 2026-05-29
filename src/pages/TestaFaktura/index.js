@@ -1183,12 +1183,6 @@ const TestaFaktura = () => {
                     <p className="diag-text">{diagInsight}</p>
                   </div>
                 </ScoreDiag>
-                {result.recommendation?.reasoning && (
-                  <Reasoning>
-                    <span className="kicker">Vad analysen visar</span>
-                    <p>{result.recommendation.reasoning}</p>
-                  </Reasoning>
-                )}
                 {result.recommendation?.monitoringNote && (
                   <NoSwitchBlock style={{ marginTop: 0 }}>
                     {result.recommendation.monitoringNote}
