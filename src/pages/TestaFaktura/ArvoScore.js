@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import styled, { css } from 'styled-components';
 import { Link } from 'react-router-dom';
 import Button from '../../components/Button';
+import { getCategoryMeta } from '../../lib/categoryMeta';
 
 const CIRC = 427.26; // 2π × 68
 
@@ -26,16 +27,6 @@ function insightText(score, pct) {
   return 'Ni har ett kostnadsoptimerat leverantörsnätverk.';
 }
 
-const CATEGORY_TO_CLUSTER = {
-  skrivarleasing: 0, utrustningsleasing: 0,
-  el: 1,
-  mobil: 2, bredband: 2,
-  'saas-productivity': 3, 'saas-crm': 3, 'saas-finance': 3, 'saas-other': 3, 'saas-creative': 3,
-  'it-support': 4, serverhosting: 4,
-  'transport-frakt': 5, 'leasing-bil': 5,
-  kontorsmaterial: 6, 'städ-rengöring': 6, 'larm-bevakning': 6, 'faktura-tjanst': 6,
-  foretagshalsovard: 7, loneadmin: 7,
-};
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
@@ -448,7 +439,7 @@ const ArvoScore = ({ result }) => {
     return () => cancelAnimationFrame(id);
   }, [offset]);
 
-  const clusterIdx = CATEGORY_TO_CLUSTER[categorized?.category] ?? 0;
+  const clusterIdx = getCategoryMeta(categorized?.category).segment;
   const netSaving  = recommendation?.netSaving ?? 0;
   const savingText = netSaving > 0
     ? `−${new Intl.NumberFormat('sv-SE').format(netSaving)} kr/år`

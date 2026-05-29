@@ -5,6 +5,7 @@ import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr } from '../../data/mockData';
+import { getCategoryMeta } from '../../lib/categoryMeta';
 import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
@@ -80,9 +81,6 @@ async function getBrowserFingerprint() {
   }
 }
 
-// Categories with verified public list prices — show supplier name proudly.
-const REAL_PRICE_CATEGORIES = new Set(['saas-productivity', 'mobil']);
-
 // Scrub the suggested supplier name from reasoning text so the tier/price
 // analysis stays visible but the specific alternative brand stays hidden.
 function redactSupplier(text, supplier) {
@@ -101,24 +99,6 @@ function redactSupplier(text, supplier) {
   return out;
 }
 
-// Category 2: contract-based benchmark prices — hide supplier, show verified partner.
-const CATEGORY_PARTNER_LABEL = {
-  el:                 'Kvalificerad Elleverantör',
-  bredband:           'Kvalificerad Bredbandsoperatör',
-  kortterminal:       'Kvalificerad Betaltjänstleverantör',
-  'faktura-tjanst':   'Kvalificerad Affärssystemsleverantör',
-  'leasing-bil':      'Kvalificerad Leasingpartner',
-  skrivarleasing:     'Kvalificerad Print-leverantör',
-  loneadmin:          'Kvalificerad Lönesystemleverantör',
-  'larm-bevakning':   'Kvalificerad Säkerhetsleverantör',
-  foretagshalsovard:  'Kvalificerad Hälsovårdspartner',
-  bankavgifter:       'Kvalificerad Bankpartner',
-  kontorsmaterial:    'Kvalificerad Förbrukningsleverantör',
-  'städ-rengöring':   'Kvalificerad Städleverantör',
-  'transport-frakt':  'Kvalificerad Fraktleverantör',
-  'avfall-atervinning': 'Kvalificerad Avfallsleverantör',
-  'it-support':       'Kvalificerad IT-partner',
-};
 
 const INDUSTRY_LABELS = {
   ehandel:     'E-handel & Detaljhandel',
@@ -132,34 +112,6 @@ const INDUSTRY_LABELS = {
   ovrigt:      'Övrigt / Annan bransch',
 };
 
-const CATEGORY_LABELS = {
-  el:                  'Elavtal',
-  mobil:               'Mobilabonnemang',
-  bredband:            'Företagsbredband',
-  'forsakring-foretag':'Företagsförsäkring',
-  'forsakring-ansvar': 'Yrkesansvarsförsäkring',
-  'leasing-bil':       'Företagsleasing',
-  kortterminal:        'Kortterminal',
-  'faktura-tjanst':    'Fakturatjänst / Affärssystem',
-  'saas-productivity': 'Programvarulicenser / SaaS',
-  'saas-creative':     'Kreativ mjukvara / Design',
-  'saas-crm':          'CRM-system',
-  'saas-finance':      'Affärssystem / Bokföring',
-  'saas-other':        'Programvarulicenser / SaaS · övrigt',
-  serverhosting:       'Serverhosting & Cloud-infrastruktur',
-  utrustningsleasing:  'IT-utrustningsleasing',
-  skrivarleasing:      'Skrivare & Managed Print',
-  loneadmin:           'Löneadministration',
-  'larm-bevakning':    'Larm & Bevakning',
-  foretagshalsovard:   'Företagshälsovård',
-  bankavgifter:        'Bankavgifter & Betaltjänster',
-  kontorsmaterial:     'Kontorsmaterial & Förbrukning',
-  'städ-rengöring':    'Städ & Rengöring',
-  'transport-frakt':   'Transport & Frakt',
-  'it-support':        'IT-drift & Support',
-  'avfall-atervinning': 'Avfall & Återvinning',
-  uncategorized:       'Okategoriserad',
-};
 
 const SEGMENTS = [
   { label: 'Skrivare',          icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
@@ -708,7 +660,7 @@ const TestaFaktura = () => {
                   <span className="subtitle">
                     {result.reason === 'natavgift'
                       ? 'Nätavgift'
-                      : (CATEGORY_LABELS[result.categorized.category] || result.categorized.category)}
+                      : (getCategoryMeta(result.categorized.category).label || result.categorized.category)}
                     {result.categorized.subType && result.reason !== 'natavgift' ? ` · ${result.categorized.subType}` : ''}
                   </span>
                 )}
@@ -809,7 +761,7 @@ const TestaFaktura = () => {
                 </MonitoringBlock>
                 <KV>
                   <div>
-                    <dt>Du betalar idag{result.categorized?.category === 'el' ? ' (energidel)' : ''}</dt>
+                    <dt>Du betalar idag{getCategoryMeta(result.categorized?.category).elSuffix ? ' (energidel)' : ''}</dt>
                     <dd>
                       {formatKr(result.extracted.annualCost)} / år
                       <small style={{ fontStyle: 'italic' }}>Projicerat från abonnemangsradernas listpris</small>
@@ -846,12 +798,7 @@ const TestaFaktura = () => {
                       <p>
                         {result.categorized.normalizedSupplier || result.extracted?.supplier} fakturerar{' '}
                         {formatKr(result.extracted?.annualCost)} per år för{' '}
-                        {result.categorized.category === 'el' ? 'el (energidel)'
-                          : result.categorized.category === 'mobil' ? 'mobilabonnemang'
-                          : result.categorized.category === 'bredband' ? 'bredband'
-                          : result.categorized.category?.startsWith('saas') ? 'programvarulicenser'
-                          : result.categorized.category === 'skrivarleasing' ? 'skrivarlösning'
-                          : 'denna tjänst'}.
+                        {getCategoryMeta(result.categorized.category).inlineLabel}.
                         {' '}Avtalet är bevakat — Arvo tar kontakt{' '}
                         {daysUntilEnd != null && daysUntilEnd <= 90
                           ? 'nu inför förestående förnyelse'
@@ -1145,9 +1092,10 @@ const TestaFaktura = () => {
                   </div>
                 </ScoreDiag>
                 {(() => {
-                  const isRealPrice = REAL_PRICE_CATEGORIES.has(result.categorized.category);
+                  const _catMeta = getCategoryMeta(result.categorized.category);
+                  const isRealPrice = _catMeta.isRealPrice;
                   const isLicensePending = result.categorized.licensePending;
-                  const partnerLabel = CATEGORY_PARTNER_LABEL[result.categorized.category] ?? 'Arvo-verifierad Partner';
+                  const partnerLabel = _catMeta.partnerLabel;
                   return (
                     <>
                       <SavingsBlock>
@@ -1175,13 +1123,12 @@ const TestaFaktura = () => {
                         </span>
                       </SavingsBlock>
                       {!isLicensePending && (() => {
-                        const cat = result?.categorized?.category;
-                        const isRealPublic = cat === 'mobil' || cat === 'bredband' || cat === 'saas-productivity';
+                        const _meta = getCategoryMeta(result?.categorized?.category);
                         return (
                           <PriceNote $compact>
-                            {isRealPublic
+                            {_meta.benchmarkType === 'list-verified'
                               ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
-                              : 'Detta pris baseras på Arvos samlade databas av förhandlade volymrabatter, vilket ger dig tillgång till prisnivåer som ligger utanför leverantörernas ordinarie listpriser.'}
+                              : (_meta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
                           </PriceNote>
                         );
                       })()}
@@ -1274,20 +1221,20 @@ const TestaFaktura = () => {
                 {_secSaving ? (
                   <>
                     Kombinerad faktura —{' '}
-                    {CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}
+                    {getCategoryMeta(result.categorized?.category).label}
                     {result.extracted?.primaryComponentMonthly != null
                       ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
                       : ''}
                     {' '}+ {_secLabel} ({formatKr(_secSaving.currentAnnual)}/år).
                     {' '}Besparing:{' '}
-                    {CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}
+                    {getCategoryMeta(result.categorized?.category).label}
                     {' '}−{formatKr(_primGross)}/år{' '}|{' '}
                     {_secLabel} −{formatKr(_secSaving.grossSaving)}/år.
                   </>
                 ) : (
                   <>
                     Kombinerad faktura — analysen avser{' '}
-                    {CATEGORY_LABELS[result.categorized?.category] || result.categorized?.category}
+                    {getCategoryMeta(result.categorized?.category).label}
                     {result.extracted?.primaryComponentMonthly != null
                       ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
                       : ''}
@@ -1403,17 +1350,8 @@ const TestaFaktura = () => {
                   <dd>
                     {formatKr(result.extracted.variableCharges)}
                     <small>
-                      {result.categorized?.category === 'el'
-                        ? 'Rörliga energikostnader (spotpris, nätavgift) — ej inkluderat i årsberäkningen.'
-                        : result.categorized?.category === 'skrivarleasing'
-                          ? 'Klickkostnader per utskrift (volymbaserat) — ej inkluderat i årsberäkningen.'
-                          : result.categorized?.category === 'kortterminal'
-                            ? 'Transaktionsavgifter och volymbaserade procentavgifter — ej inkluderat i årsberäkningen.'
-                            : result.categorized?.category === 'mobil'
-                              ? 'Roaming, övertrafik m.m. — ej inkluderat i årsberäkningen.'
-                              : result.categorized?.category === 'bredband'
-                                ? 'Datatrafik och överskottsavgifter — ej inkluderat i årsberäkningen.'
-                                : 'Rörliga avgifter denna period — ej inkluderat i årsberäkningen.'}
+                      {getCategoryMeta(result.categorized?.category).variableChargeNote
+                        ?? 'Rörliga avgifter denna period — ej inkluderat i årsberäkningen.'}
                     </small>
                   </dd>
                 </div>
@@ -1473,7 +1411,7 @@ const TestaFaktura = () => {
               <Reasoning>
                 <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Vad analysen visar'}</span>
                 <p>
-                  {REAL_PRICE_CATEGORIES.has(result.categorized.category)
+                  {getCategoryMeta(result.categorized.category).isRealPrice
                     ? result.recommendation.reasoning
                     : redactSupplier(
                         result.recommendation.reasoning,
@@ -1487,9 +1425,10 @@ const TestaFaktura = () => {
               const sc = result.extracted?.seatCount;
               const emp = Number(employees);
               const overage = sc != null && sc > emp ? sc - emp : 0;
-              const isMobil = result.categorized?.category === 'mobil';
-              const term = isMobil ? 'abonnemang' : 'licenser';
-              const kicker = isMobil ? 'Notering om abonnemang' : 'Notering om licenser';
+              const _om = getCategoryMeta(result.categorized?.category);
+              const term = _om.unit;
+              const termSing = _om.unitSingular;
+              const kicker = `Notering om ${term}`;
               return overage > 0 ? (
                 <LicenseOverageNote>
                   <span className="kicker">{kicker}</span>
@@ -1497,7 +1436,7 @@ const TestaFaktura = () => {
                     Kalkylen ovan bygger på att vi behåller era {sc} {term},
                     men sänker styckpriset genom att flytta er till rätt avtalsnivå. Vi noterar dock
                     att ni enligt uppgift är {emp} anställda. Om man dessutom hade städat bort
-                    {overage === 1 ? ` detta ${overage} överflödiga ${isMobil ? 'abonnemang' : 'licens'}` : ` dessa ${overage} överflödiga ${term}`}, hade er kostnad sänkts ytterligare.
+                    {overage === 1 ? ` detta ${overage} överflödiga ${termSing}` : ` dessa ${overage} överflödiga ${term}`}, hade er kostnad sänkts ytterligare.
                   </p>
                 </LicenseOverageNote>
               ) : null;
@@ -1639,7 +1578,7 @@ const TestaFaktura = () => {
                   <span className="gate-saving-amount">+{formatKr(result?.recommendation?.netSaving ?? 0)}</span>
                   <span className="gate-saving-context">
                     {result?.extracted?.supplier}
-                    {result?.categorized?.category ? ` · ${CATEGORY_LABELS[result.categorized.category] ?? result.categorized.category}` : ''}
+                    {result?.categorized?.category ? ` · ${getCategoryMeta(result.categorized.category).label ?? result.categorized.category}` : ''}
                   </span>
                 </div>
                 <p className="sub">
@@ -1719,12 +1658,12 @@ const TestaFaktura = () => {
                 <p className="sub">
                   {isOptimize
                     ? `Vi hjälper er aktivera den inbyggda modulen och avveckla det separata abonnemanget — utan att ni behöver kontakta leverantören. Ni sparar ${formatNum(optNet)} kr/år netto efter Arvos fee.`
-                    : REAL_PRICE_CATEGORIES.has(result.categorized.category)
+                    : getCategoryMeta(result.categorized.category).isRealPrice
                       ? <>För att vi ska kunna verkställa bytet till <strong>{result.recommendation.suggestedSupplier}</strong> – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.</>
                       : 'För att vi ska få rätt underlag att vinna förhandlingen åt er – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.'}
                 </p>
                 <div className="context-badge">
-                  {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
+                  {getCategoryMeta(result.categorized.category).label} · {result.extracted.supplier}
                 </div>
                 <Button as={Link} to="/connect" $variant="primary" $size="lg" $full onClick={() => setModalOpen(false)}>
                   Koppla Fortnox / Visma <Icon name="arrow" size={16} />
@@ -1749,7 +1688,7 @@ const TestaFaktura = () => {
                     : 'Vi skickar analysen och leverantörsidentiteten direkt till er inkorg.'}
                 </p>
                 <div className="context-badge">
-                  {CATEGORY_LABELS[result.categorized.category]} · {result.extracted.supplier}
+                  {getCategoryMeta(result.categorized.category).label} · {result.extracted.supplier}
                 </div>
                 <form className="modal-form" onSubmit={submitModalEmail}>
                   <input
@@ -1794,7 +1733,7 @@ const TestaFaktura = () => {
                   Ange er e-post så skickar vi en sammanfattning av analysen direkt till er inkorg.
                 </p>
                 <div className="context-badge">
-                  {result.extracted.supplier} · {CATEGORY_LABELS[result.categorized?.category] || ''}
+                  {result.extracted.supplier} · {getCategoryMeta(result.categorized?.category).label}
                 </div>
                 <form className="modal-form" onSubmit={submitDownload}>
                   <input
