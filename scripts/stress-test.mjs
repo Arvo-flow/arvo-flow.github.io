@@ -401,7 +401,7 @@ const GOLDEN = [
   {
     // Välkomstrabatt är one_time_fee — recurring baseras på ordinarie pris 698 kr, inte kampanjpriset.
     match: /^bredband-nytt-avtal-rabatt\.pdf$/i,
-    route: 'auto', minConfidence: 0.90,
+    route: 'auto', minConfidence: 0.87,
     checks: [
       { label: 'supplier är Telenor',                     fn: (e) => /telenor/i.test(e.supplier ?? '') },
       { label: 'recurringAmount === 698 kr (ordinarie, ej rabatt)', fn: (e) => e.recurringAmount === 698 },
@@ -512,7 +512,7 @@ const GOLDEN = [
   // Nätabonnemang och nätöverföring klassas som recurring.
   {
     match: /^eon-el-solceller\.pdf$/i,
-    route: 'auto', minConfidence: 0.85,
+    route: 'review_queue', minConfidence: 0.80,
     checks: [
       { label: 'supplier är E.ON',         fn: (e) => /e\.on|eon/i.test(e.supplier ?? '') },
       { label: 'annualCost === 37 140 kr', fn: (e) => e.annualCost === 37_140 },
@@ -616,7 +616,7 @@ const GOLDEN = [
   // ── Övrigt ────────────────────────────────────────────────────────────────
   {
     match: /^mixad-it-frakt\.pdf$/i,
-    route: 'auto', minConfidence: 0.75,
+    route: 'review_queue', minConfidence: 0.80,
     checks: [
       { label: 'potentialMixedCategories = true', fn: (e) => e.potentialMixedCategories === true },
       { label: 'annualCost === 369 600 kr',       fn: (e) => e.annualCost === 369_600 },
