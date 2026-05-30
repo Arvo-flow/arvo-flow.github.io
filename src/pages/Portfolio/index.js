@@ -178,6 +178,63 @@ const OptimizedBadge = styled(SavingBadge)`
   color: ${({ theme }) => theme.color.success ?? '#1B7A6E'};
 `;
 
+const ConversionCard = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 28px 32px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 6px rgba(14,26,23,.06);
+  @media (max-width: 580px) { padding: 22px 20px; }
+`;
+
+const ConversionLabel = styled.p`
+  font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: ${({ theme }) => theme.color.brand}; margin: 0 0 6px;
+`;
+
+const ConversionHeading = styled.h3`
+  font-size: 18px; font-weight: 800; color: ${({ theme }) => theme.color.ink};
+  letter-spacing: -.02em; margin: 0 0 6px;
+`;
+
+const ConversionBody = styled.p`
+  font-size: 13.5px; color: ${({ theme }) => theme.color.inkSoft};
+  line-height: 1.65; margin: 0 0 18px;
+`;
+
+const ConversionRow = styled.form`
+  display: flex; gap: 10px;
+  @media (max-width: 520px) { flex-direction: column; }
+`;
+
+const EmailInput = styled.input`
+  flex: 1; padding: 11px 16px; border-radius: 100px;
+  border: 1.5px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.bg};
+  font-size: 14px; color: ${({ theme }) => theme.color.ink};
+  outline: none; transition: border-color .15s;
+  &:focus { border-color: ${({ theme }) => theme.color.brand}; }
+  &::placeholder { color: ${({ theme }) => theme.color.mutedSoft}; }
+`;
+
+const GradientBtn = styled.button`
+  padding: 11px 22px; border-radius: 100px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #5DD6CA 0%, #1B6E66 100%);
+  color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap;
+  transition: opacity .15s;
+  &:disabled { opacity: .55; cursor: not-allowed; }
+`;
+
+const SuccessMsg = styled.p`
+  font-size: 13.5px; color: ${({ theme }) => theme.color.brand};
+  font-weight: 600; margin: 0; padding: 10px 0;
+`;
+
+const ErrorHint = styled.p`
+  font-size: 12px; color: #C0392B; margin: 6px 0 0;
+`;
+
 const CtaCard = styled.div`
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
@@ -231,14 +288,19 @@ function categoryIcon(category) {
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function Portfolio() {
-  const [analyses, setAnalyses] = useState(null); // null = loading
-  const [error, setError] = useState(null);
+  const [analyses, setAnalyses]     = useState(null); // null = loading
+  const [error, setError]           = useState(null);
+  const [fingerprint, setFingerprint] = useState('');
+  const [email, setEmail]           = useState('');
+  const [submitState, setSubmitState] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const fp = await getBrowserFingerprint();
+        if (!cancelled) setFingerprint(fp);
         const res = await fetch(`/api/invoice-history?fingerprint=${encodeURIComponent(fp)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -249,6 +311,26 @@ export default function Portfolio() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  async function handleSendReport(e) {
+    e.preventDefault();
+    if (submitState === 'loading') return;
+    setSubmitState('loading');
+    setSubmitError('');
+    try {
+      const res = await fetch('/api/send-report', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ fingerprint, email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setSubmitState('success');
+    } catch (err) {
+      setSubmitError(err.message);
+      setSubmitState('error');
+    }
+  }
 
   const autoAnalyses = (analyses ?? []).filter((a) => a.route === 'auto');
   const totalAnnualCost = autoAnalyses.reduce((s, a) => s + (a.annual_cost ?? 0), 0);
@@ -315,11 +397,41 @@ export default function Portfolio() {
             </InvoiceList>
 
             {switchCount > 0 && (
-              <p style={{ fontSize: 13, color: '#5C6E68', marginBottom: 24 }}>
+              <p style={{ fontSize: 13, color: '#5C6E68', marginBottom: 16 }}>
                 {switchCount} av {autoAnalyses.length} leverantörer har besparingspotential.
                 {' '}Arvo tar 20&nbsp;% av realiserad besparing — inga fasta avgifter.
               </p>
             )}
+
+            <ConversionCard>
+              <ConversionLabel>Arvo-rapport</ConversionLabel>
+              <ConversionHeading>Få din kompletta Arvo-rapport</ConversionHeading>
+              <ConversionBody>
+                Vi sammanställer en PDF med alla besparingar och kontaktar dig inom 24h.
+              </ConversionBody>
+              {submitState === 'success' ? (
+                <SuccessMsg>✓ Rapporten är skickad! Kolla din inkorg.</SuccessMsg>
+              ) : (
+                <>
+                  <ConversionRow onSubmit={handleSendReport}>
+                    <EmailInput
+                      type="email"
+                      placeholder="din@email.se"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={submitState === 'loading'}
+                    />
+                    <GradientBtn type="submit" disabled={submitState === 'loading' || !email}>
+                      {submitState === 'loading' ? 'Skickar…' : 'Få din kompletta Arvo-rapport →'}
+                    </GradientBtn>
+                  </ConversionRow>
+                  {submitState === 'error' && submitError && (
+                    <ErrorHint>{submitError}</ErrorHint>
+                  )}
+                </>
+              )}
+            </ConversionCard>
           </>
         )}
 
