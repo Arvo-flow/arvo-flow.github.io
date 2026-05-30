@@ -1117,7 +1117,7 @@ export async function recommend(input, opts = {}) {
     const _lflTarget = input.invoice?.likeForLikeTarget;
     const _useLfl = isSaasProductivity && _lflTarget?.suggestedAnnualCost > 0;
     const _benchBase = _useLfl
-      ? _lflTarget.suggestedAnnualCost
+      ? _lflTarget.suggestedAnnualCost - addonAnnual  // strip addon pass-throughs already included in LFL total
       : Math.round(benchmark.p25 * scale);
 
     result.suggestedAnnualCost = _benchBase + addonAnnual;

@@ -15,7 +15,7 @@ import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 2048;
 
-export const CONFIDENCE_THRESHOLD = 0.85;
+export const CONFIDENCE_THRESHOLD = 0.70;
 
 const PERIOD_MULTIPLIER = {
   monthly:   12,
