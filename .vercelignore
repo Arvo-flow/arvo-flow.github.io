@@ -13,6 +13,13 @@ _scripts/
 # Old standalone build artifact
 arvo-os.html
 
+# Exclude from serverless function deployment to stay within Hobby plan 12-function limit.
+# el-prices is not referenced in the frontend; electricity logic runs inside test-invoice.
+api/el-prices.mjs
+
+# Test PDFs are only needed for CI, not for the running app.
+test-pdfs/
+
 # Standard
 node_modules/
 build/
