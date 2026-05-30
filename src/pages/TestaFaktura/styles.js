@@ -1197,6 +1197,88 @@ export const TierOptAccordion = styled.div`
   }
 `;
 
+// P2.1 — Beräkningskedja
+export const CalculationChain = styled.div`
+  margin: 16px 0 20px;
+  border: 1px solid ${({ theme }) => theme.color.border ?? '#D5E2DC'};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  overflow: hidden;
+
+  .chain-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: ${({ theme }) => theme.color.surface ?? '#F7FAF9'};
+    border-bottom: 1px solid ${({ theme }) => theme.color.border ?? '#D5E2DC'};
+    cursor: pointer;
+    user-select: none;
+    gap: 8px;
+  }
+  .chain-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.brand ?? '#1B6E66'};
+  }
+  .chain-toggle {
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
+  }
+  .chain-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .chain-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.text ?? '#0E1A17'};
+    border-bottom: 1px dashed #E8F0EC;
+    padding-bottom: 7px;
+    &:last-child { border-bottom: none; padding-bottom: 0; }
+  }
+  .chain-row.total {
+    font-weight: 700;
+    font-size: 14px;
+    color: ${({ theme }) => theme.color.brand ?? '#1B6E66'};
+    border-top: 1.5px solid #D5E2DC;
+    border-bottom: none;
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+  .chain-label { color: #5C6E68; font-size: 12px; }
+  .chain-value { font-weight: 600; white-space: nowrap; }
+  .chain-source {
+    font-size: 10px;
+    color: #888;
+    margin-top: 2px;
+  }
+`;
+
+// P2.2 — Konfidensintervall-badge (för Kategori 2)
+export const SavingRangeBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(27,110,102,.08);
+  border: 1px solid rgba(27,110,102,.18);
+  border-radius: 100px;
+  font-size: 11px;
+  color: #1B6E66;
+  font-weight: 600;
+  margin-top: 6px;
+
+  .range-label { opacity: .7; font-weight: 400; }
+`;
+
 export const NextSteps = styled.div`
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};

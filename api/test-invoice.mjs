@@ -22,9 +22,17 @@ import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity } from '../lib/sanity-verifier.js';
 import { storeAnalysis } from '../lib/invoice-store.js';
+import { validateCategory } from '../lib/category-validator.js';
+import { validateSeatPrice, getBenchmarkBasis, getSupplierPriceIntel } from '../lib/supplier-price-intel.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
+
+// P2.3 — Versionmetadata per analys
+const PIPELINE_VERSION = '4.0';
+const EXTRACT_MODEL    = 'claude-opus-4-8';
+const CATEGORIZE_MODEL = 'claude-sonnet-4-6';
+const RECOMMEND_MODEL  = 'claude-opus-4-8';
 const PDF_CACHE_TTL         = 6 * 60 * 60;       // 6 h (GDPR-avvägning: kortare retain)
 const GATE_WINDOW_TTL       = 30 * 24 * 60 * 60; // 30 dagar
 const FREE_SAVING_ANALYSES  = 2;                  // Alltid fria analyser med besparing
@@ -612,6 +620,64 @@ export default async function handler(req, res) {
         const boosted = Math.max(categorized.confidence ?? 0, 0.95);
         console.log(`[fingerprint] MATCH key=${fp.key} category='${categorized.category}' confidence ${categorized.confidence?.toFixed(2)} → ${boosted}`);
         categorized.confidence = boosted;
+      }
+    }
+
+    // ── P1.1: DUAL-MODEL KATEGORI-VALIDERING ─────────────────────────────────────
+    // Kör bara för leverantörer som INTE matchades av fingerprint-databasen.
+    // En andra oberoende Haiku-klassificering validerar att kategorin är rimlig.
+    // Fail-open: timeout eller API-fel blockerar aldrig en korrekt analys.
+    {
+      const _fpCheck = checkSupplierFingerprint(categorized.normalizedSupplier, extracted.supplier, categorized.category);
+      if (!_fpCheck.matched) {
+        const _validation = await validateCategory({
+          supplier:         extracted.supplier,
+          amount:           extracted.amount,
+          lineItems:        extracted.lineItems,
+          proposedCategory: categorized.category,
+        });
+        if (_validation.conflict) {
+          console.error(`[P1.1:dual-model] KONFLIKT: primär='${categorized.category}' validator='${_validation.validatorCategory}' supplier='${extracted.supplier}'`);
+          notifyReviewQueue(extracted, `[P1.1 Dual-model] Kategorikonflikt: Sonnet='${categorized.category}', Haiku='${_validation.validatorCategory}' — manuell granskning krävs`).catch(() => {});
+          timing.totalMs = Date.now() - t0;
+          return send(res, 200, {
+            ok: true, route: 'review_queue', reason: 'categorization_conflict',
+            extracted: {
+              supplier:        extracted.supplier,
+              date:            extracted.date,
+              amount:          extracted.amount,
+              confidenceScore: extracted.confidenceScore,
+            },
+            timing,
+          });
+        }
+      }
+    }
+
+    // ── P1.2: SUPPLIER PRICE INTELLIGENCE ────────────────────────────────────────
+    // Validerar att pricePerSeatMonthly är inom rimligt intervall för kända leverantörer.
+    // Pris >1.30× MSRP indikerar faktureringsfel eller fel kategori → review_queue.
+    if (extracted.pricePerSeatMonthly && categorized.normalizedSupplier) {
+      const _priceCheck = validateSeatPrice({
+        normalizedSupplier:   categorized.normalizedSupplier,
+        pricePerSeatMonthly:  extracted.pricePerSeatMonthly,
+        tierKey:              null,
+      });
+      if (_priceCheck.anomaly) {
+        console.error(`[P1.2:price-intel] ANOMALI: ${_priceCheck.detail}`);
+        notifyReviewQueue(extracted, `[P1.2 Price Intel] ${_priceCheck.detail}`).catch(() => {});
+        timing.totalMs = Date.now() - t0;
+        return send(res, 200, {
+          ok: true, route: 'review_queue', reason: 'price_anomaly',
+          extracted: {
+            supplier:           extracted.supplier,
+            date:               extracted.date,
+            amount:             extracted.amount,
+            confidenceScore:    extracted.confidenceScore,
+            pricePerSeatMonthly: extracted.pricePerSeatMonthly,
+          },
+          timing,
+        });
       }
     }
 
@@ -1241,6 +1307,61 @@ export default async function handler(req, res) {
       ? Math.round((metrics.broadbandAddonMonthly ?? 0) * 12)
       : 0;
 
+    // ── P2.1: BERÄKNINGSKEDJA (Calculation Chain) ────────────────────────────────
+    // Visar exakt hur varje siffra härletts — nuläge, benchmark, besparing, arvode.
+    // Kunden kan verifiera varje steg. Bygger förtroende och möjliggör extern revision.
+    const _benchIntel = getBenchmarkBasis({
+      normalizedSupplier: categorized.normalizedSupplier,
+      seatCount:          extracted.seatCount,
+      suggestedAnnualCost: recommendation.suggestedAnnualCost,
+      tierKey:            null,
+    });
+    const _benchmarkType = BRANCHINDEX[categorized.category]?.priceSource ?? 'negotiated-target';
+    const calculationChain = {
+      currentAnnualCost: {
+        value:  extracted.annualCost,
+        source: extracted.billingPeriod === 'annual'
+          ? 'Direkt från faktura'
+          : 'Projicerat från fakturaperiodens återkommande rader',
+      },
+      benchmarkAnnualCost: recommendation.suggestedAnnualCost ? {
+        value:         recommendation.suggestedAnnualCost,
+        formula:       _benchIntel?.formula ?? null,
+        source:        _benchIntel?.source
+          ?? (_benchmarkType === 'real-public'
+            ? 'Arvo-verifierade offentliga listpriser'
+            : 'Arvo branschindex (maj 2026)'),
+        benchmarkType: _benchmarkType,
+      } : null,
+      grossSaving: { value: grossSaving },
+      arvoFee:     { value: arvoFee,    formula: `${grossSaving?.toLocaleString('sv-SE')} kr × 20 %` },
+      netSaving:   { value: netSaving },
+    };
+
+    // ── P2.2: KONFIDENSINTERVALL (Saving Range) ───────────────────────────────────
+    // Visar ett ärligt intervall istället för en enda punktskattning.
+    // Kategori 1 (listpriser): ±12 % | Kategori 2 (förhandlade): ±25 %
+    const _rangeFactor = _benchmarkType === 'real-public' ? 0.12 : 0.25;
+    const savingRange = netSaving > 0 ? {
+      low:   Math.max(0, Math.round(netSaving * (1 - _rangeFactor))),
+      high:  Math.round(netSaving * (1 + _rangeFactor)),
+      basis: _benchmarkType,
+    } : null;
+
+    // ── P2.3: VERSIONMETADATA ────────────────────────────────────────────────────
+    // Varje analys stämplas med modellversion, benchmarkversion och tidpunkt.
+    // Möjliggör revision, A/B-jämförelse och spårbarhet vid modellbyten.
+    const analysisMeta = {
+      analyzedAt:       new Date().toISOString(),
+      pipelineVersion:  PIPELINE_VERSION,
+      models: {
+        extract:    EXTRACT_MODEL,
+        categorize: CATEGORIZE_MODEL,
+        recommend:  RECOMMEND_MODEL,
+      },
+      branchindexVersion: '2026-05',
+    };
+
     const autoResponse = {
       ok:    true,
       route: 'auto',
@@ -1303,6 +1424,9 @@ export default async function handler(req, res) {
         tierOptimizationToTier:   recommendation.tierOptimizationToTier   ?? null,
         clickRateAnalysis:        recommendation.clickRateAnalysis        ?? null,
       },
+      calculationChain,
+      savingRange,
+      meta: analysisMeta,
       timing,
     };
 
