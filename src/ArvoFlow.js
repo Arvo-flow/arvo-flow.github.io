@@ -16,6 +16,7 @@ import Integritet from './pages/Integritet';
 import Cookies from './pages/Cookies';
 import TestaFaktura from './pages/TestaFaktura';
 import Portfolio from './pages/Portfolio';
+import Admin from './pages/Admin';
 import ScrollToTop from './components/ScrollToTop';
 
 const ArvoFlow = () => (
@@ -35,6 +36,7 @@ const ArvoFlow = () => (
         <Route path="/cookies" element={<Cookies />} />
         <Route path="/testa-faktura" element={<TestaFaktura />} />
         <Route path="/portfolio" element={<Portfolio />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

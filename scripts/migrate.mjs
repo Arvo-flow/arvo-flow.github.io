@@ -88,4 +88,50 @@ await sql`
     ON invoice_analyses (fingerprint, pdf_hash)
 `;
 
-console.log('Migration klar — invoice_datapoints, fortnox_connections, customers och invoice_analyses är redo.');
+await sql`
+  CREATE TABLE IF NOT EXISTS waitlist (
+    id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    email       TEXT        NOT NULL,
+    source      TEXT        NOT NULL DEFAULT 'review_queue',
+    reason      TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (email, source)
+  )
+`;
+
+await sql`
+  CREATE TABLE IF NOT EXISTS invoice_feedback (
+    id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    analysis_id     UUID        REFERENCES invoice_analyses(id) ON DELETE SET NULL,
+    fingerprint     TEXT        NOT NULL,
+    supplier        TEXT,
+    category        TEXT,
+    vote            TEXT        NOT NULL CHECK (vote IN ('up', 'down')),
+    comment         TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+
+await sql`
+  CREATE INDEX IF NOT EXISTS idx_feedback_fingerprint
+    ON invoice_feedback (fingerprint, created_at DESC)
+`;
+
+await sql`
+  CREATE TABLE IF NOT EXISTS magic_tokens (
+    id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    token       TEXT        NOT NULL UNIQUE,
+    email       TEXT        NOT NULL,
+    note        TEXT,
+    used_at     TIMESTAMPTZ,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+
+await sql`
+  CREATE INDEX IF NOT EXISTS idx_magic_tokens_token
+    ON magic_tokens (token)
+`;
+
+console.log('Migration klar — alla tabeller inkl. waitlist, invoice_feedback och magic_tokens är redo.');
