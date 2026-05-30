@@ -1741,7 +1741,7 @@ const TestaFaktura = () => {
 
             {result.recommendation?.reasoning && (result.recommendation?.shouldSwitch || isOptimize) && (
               <Reasoning>
-                <span className="kicker">{isOptimize ? 'Vad vi hittade' : _isSecondaryOnlySwitch ? 'Kombinerad analys' : 'Arvo rekommenderar'}</span>
+                <span className="kicker">{isOptimize ? 'Vad vi hittade' : _isSecondaryOnlySwitch ? 'Kombinerad analys' : 'Arvo bedömer'}</span>
                 <p>
                   {getCategoryMeta(result.categorized.category).isRealPrice
                     ? result.recommendation.reasoning
