@@ -767,8 +767,8 @@ const TestaFaktura = () => {
           ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
           : `Ni betalar ${diagOvPct} % sämre än branschsnittet — Arvo förhandlar välförhandlat avtalspris vid förnyelsen.`
       : diagScore < 45
-        ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — stor besparingspotential.` : 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.')
-        : diagScore < 80 ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — välförhandlat avtalspris finns att hämta.` : 'Ni betalar något sämre än branschsnittet — välförhandlat avtalspris finns att hämta.')
+        ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — ${_effectiveMeta.smfBenchmark ?? 'stor besparingspotential'}.` : 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.')
+        : diagScore < 80 ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — ${_effectiveMeta.smfBenchmark ?? 'välförhandlat avtalspris finns att hämta'}.` : 'Ni betalar något sämre än branschsnittet — välförhandlat avtalspris finns att hämta.')
         : 'Ni har ett välförhandlat avtal — bättre än branschsnittet.';
 
   const GAUGE_R = 26;
