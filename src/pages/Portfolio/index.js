@@ -37,6 +37,31 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
 }
 
+// Compute Arvo Score (0-100) from list of auto analyses
+function computeArvoScore(analyses) {
+  if (!analyses.length) return 0;
+  const uniqueSegs = new Set(
+    analyses.map((a) => getCategoryMeta(a.category)?.segment ?? -1).filter((s) => s >= 0)
+  );
+  const segmentScore = Math.round((uniqueSegs.size / 8) * 65);
+  const totalNet = analyses.reduce((s, a) => s + (a.net_saving ?? 0), 0);
+  const savingScore = totalNet > 5000 ? 25 : totalNet > 0 ? 15 : 0;
+  const completenessBonus = analyses.length >= 5 ? 10 : analyses.length >= 3 ? 5 : 0;
+  return Math.min(100, segmentScore + savingScore + completenessBonus);
+}
+
+// 8 segments and their display names
+const SEGMENT_META = [
+  { id: 0, label: 'Skrivare & tryck' },
+  { id: 1, label: 'El & energi' },
+  { id: 2, label: 'Telekom' },
+  { id: 3, label: 'SaaS & licenser' },
+  { id: 4, label: 'Leasing' },
+  { id: 5, label: 'IT-drift' },
+  { id: 6, label: 'Transport & frakt' },
+  { id: 7, label: 'Försäkring' },
+];
+
 // ─── animations ─────────────────────────────────────────────────────────────
 
 const fadeUp = keyframes`
@@ -48,6 +73,10 @@ const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
 
+const dashFill = keyframes`
+  from { stroke-dashoffset: 283; }
+`;
+
 // ─── styled components ───────────────────────────────────────────────────────
 
 const Page = styled.main`
@@ -56,7 +85,7 @@ const Page = styled.main`
 `;
 
 const Hero = styled.section`
-  max-width: 800px;
+  max-width: 860px;
   margin: 0 auto;
   padding: 72px 28px 32px;
   animation: ${fadeUp} 0.55s ease both;
@@ -87,60 +116,175 @@ const Sub = styled.p`
 `;
 
 const Body = styled.section`
-  max-width: 800px; margin: 0 auto; padding: 0 28px 80px;
+  max-width: 860px; margin: 0 auto; padding: 0 28px 80px;
   @media (max-width: 600px) { padding: 0 20px 60px; }
 `;
 
+// ── Score hero card ──────────────────────────────────────────────────────────
+
+const ScoreHeroCard = styled.div`
+  background: linear-gradient(145deg, #0E1A17 0%, #1B3A30 100%);
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 32px;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 32px;
+  box-shadow: 0 4px 24px rgba(14,26,23,.18);
+  @media (max-width: 640px) { flex-direction: column; gap: 20px; padding: 24px 20px; }
+`;
+
+const GaugeWrap = styled.div`
+  position: relative; flex-shrink: 0;
+  width: 140px; height: 140px;
+  svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .gauge-track { fill: none; stroke: rgba(255,255,255,.1); stroke-width: 10; }
+  .gauge-fill  { fill: none; stroke-width: 10; stroke-linecap: round;
+    stroke: url(#scoreGrad);
+    animation: ${dashFill} 1.2s cubic-bezier(.4,0,.2,1) both; }
+`;
+
+const GaugeCenter = styled.div`
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+`;
+
+const GaugeScore = styled.span`
+  font-size: 34px; font-weight: 900; letter-spacing: -.03em; color: #fff; line-height: 1;
+`;
+
+const GaugeLabel = styled.span`
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: rgba(255,255,255,.5); margin-top: 3px;
+`;
+
+const ScoreInfo = styled.div`
+  flex: 1;
+  h2 { font-size: 22px; font-weight: 800; color: #fff; margin: 0 0 8px;
+    letter-spacing: -.02em;
+    sup { font-size: 10px; vertical-align: super; } }
+  p { font-size: 14px; color: rgba(255,255,255,.6); line-height: 1.6; margin: 0 0 16px; }
+`;
+
+const ScoreBadgeRow = styled.div`
+  display: flex; gap: 8px; flex-wrap: wrap;
+`;
+
+const ScoreBadge = styled.span`
+  padding: 4px 12px; border-radius: 100px; font-size: 12px; font-weight: 600;
+  background: rgba(93,214,202,.15); color: #5DD6CA;
+  border: 1px solid rgba(93,214,202,.3);
+`;
+
+// ── Stats row ────────────────────────────────────────────────────────────────
+
 const StatsRow = styled.div`
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-  margin-bottom: 24px;
-  @media (max-width: 540px) { grid-template-columns: 1fr 1fr; }
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  margin-bottom: 16px;
+  @media (max-width: 640px) { grid-template-columns: 1fr 1fr; }
 `;
 
 const StatCard = styled.div`
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
   border-radius: ${({ theme }) => theme.size.radius.md};
-  padding: 18px 20px;
+  padding: 16px 18px;
   box-shadow: 0 1px 3px rgba(14,26,23,.04);
 `;
 
 const StatLabel = styled.p`
-  font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
-  color: ${({ theme }) => theme.color.mutedSoft}; margin: 0 0 6px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: ${({ theme }) => theme.color.mutedSoft}; margin: 0 0 5px;
 `;
 
 const StatValue = styled.p`
-  font-size: 22px; font-weight: 800; letter-spacing: -.025em;
+  font-size: 20px; font-weight: 800; letter-spacing: -.025em;
   color: ${({ theme }) => theme.color.ink}; margin: 0;
-  span.unit { font-size: 13px; font-weight: 500; color: ${({ theme }) => theme.color.inkSoft}; margin-left: 4px; }
+  span.unit { font-size: 12px; font-weight: 500; color: ${({ theme }) => theme.color.inkSoft}; margin-left: 3px; }
 `;
 
 const SavingValue = styled(StatValue)`
   color: ${({ theme }) => theme.color.brand};
 `;
 
+// ── Segment coverage ─────────────────────────────────────────────────────────
+
+const SegmentGrid = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  padding: 18px 20px;
+  margin-bottom: 16px;
+`;
+
+const SegmentHeader = styled.div`
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+  h4 { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: ${({ theme }) => theme.color.mutedSoft}; margin: 0; }
+  span { font-size: 12px; color: ${({ theme }) => theme.color.inkSoft}; }
+`;
+
+const SegmentDots = styled.div`
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  @media (max-width: 480px) { grid-template-columns: repeat(2, 1fr); }
+`;
+
+const SegmentDot = styled.div`
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  background: ${({ $covered, theme }) =>
+    $covered ? theme.color.brandSoft : theme.color.bg};
+  border: 1px solid ${({ $covered, theme }) =>
+    $covered ? 'rgba(27,110,102,.25)' : theme.color.border};
+  transition: all .2s;
+`;
+
+const SegmentDotCircle = styled.div`
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: ${({ $covered, theme }) =>
+    $covered ? theme.color.brand : theme.color.border};
+`;
+
+const SegmentDotLabel = styled.span`
+  font-size: 11.5px; font-weight: ${({ $covered }) => $covered ? 600 : 400};
+  color: ${({ $covered, theme }) =>
+    $covered ? theme.color.ink : theme.color.mutedSoft};
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+`;
+
+// ── Invoice list ─────────────────────────────────────────────────────────────
+
 const InvoiceList = styled.div`
-  display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;
+`;
+
+const SectionTitle = styled.h3`
+  font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: ${({ theme }) => theme.color.mutedSoft}; margin: 0 0 10px;
 `;
 
 const InvoiceCard = styled.div`
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
   border-radius: ${({ theme }) => theme.size.radius.md};
-  padding: 16px 20px;
-  display: flex; align-items: center; gap: 16px;
+  padding: 14px 18px 14px 0;
+  display: flex; align-items: center; gap: 14px;
   box-shadow: 0 1px 3px rgba(14,26,23,.04);
   transition: box-shadow .15s ease;
+  overflow: hidden;
   &:hover { box-shadow: 0 3px 12px rgba(14,26,23,.09); }
   @media (max-width: 540px) { flex-wrap: wrap; gap: 10px; }
 `;
 
+const InvoiceAccent = styled.div`
+  width: 4px; align-self: stretch; flex-shrink: 0; border-radius: 0 3px 3px 0;
+  background: ${({ $saving }) =>
+    $saving ? 'linear-gradient(180deg,#5DD6CA,#1B6E66)' : '#D5E2DC'};
+`;
+
 const InvoiceIcon = styled.div`
-  width: 40px; height: 40px; border-radius: 10px;
+  width: 36px; height: 36px; border-radius: 9px;
   background: ${({ theme }) => theme.color.brandSoft};
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; color: ${({ theme }) => theme.color.brand}; font-size: 18px;
+  flex-shrink: 0; font-size: 16px;
 `;
 
 const InvoiceInfo = styled.div`
@@ -148,27 +292,27 @@ const InvoiceInfo = styled.div`
 `;
 
 const InvoiceName = styled.p`
-  font-size: 14.5px; font-weight: 700; color: ${({ theme }) => theme.color.ink};
+  font-size: 14px; font-weight: 700; color: ${({ theme }) => theme.color.ink};
   margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 `;
 
 const InvoiceMeta = styled.p`
-  font-size: 12px; color: ${({ theme }) => theme.color.mutedSoft}; margin: 0;
+  font-size: 11.5px; color: ${({ theme }) => theme.color.mutedSoft}; margin: 0;
 `;
 
 const InvoiceRight = styled.div`
   text-align: right; flex-shrink: 0;
-  @media (max-width: 540px) { width: 100%; text-align: left; }
+  @media (max-width: 540px) { width: 100%; text-align: left; padding-left: 54px; }
 `;
 
 const InvoiceCost = styled.p`
-  font-size: 14px; font-weight: 700; color: ${({ theme }) => theme.color.ink};
+  font-size: 13.5px; font-weight: 700; color: ${({ theme }) => theme.color.ink};
   margin: 0 0 3px;
 `;
 
 const SavingBadge = styled.span`
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 8px; border-radius: 100px; font-size: 11.5px; font-weight: 600;
+  padding: 3px 8px; border-radius: 100px; font-size: 11px; font-weight: 600;
   background: ${({ $pos, theme }) => $pos ? theme.color.brandSoft : theme.color.surfaceAlt};
   color: ${({ $pos, theme }) => $pos ? theme.color.brand : theme.color.mutedSoft};
 `;
@@ -177,6 +321,8 @@ const OptimizedBadge = styled(SavingBadge)`
   background: ${({ theme }) => theme.color.successSoft ?? '#EDF7F1'};
   color: ${({ theme }) => theme.color.success ?? '#1B7A6E'};
 `;
+
+// ── Conversion card ──────────────────────────────────────────────────────────
 
 const ConversionCard = styled.div`
   background: ${({ theme }) => theme.color.surface};
@@ -264,7 +410,7 @@ const EmptyState = styled.div`
   p { font-size: 14px; color: ${({ theme }) => theme.color.inkSoft}; margin: 0 0 24px; line-height: 1.6; }
 `;
 
-const Spinner = styled.div`
+const SpinnerEl = styled.div`
   width: 32px; height: 32px; border: 3px solid ${({ theme }) => theme.color.border};
   border-top-color: ${({ theme }) => theme.color.brand};
   border-radius: 50%; animation: ${spin} .7s linear infinite; margin: 48px auto;
@@ -275,7 +421,7 @@ const ErrorMsg = styled.p`
   font-size: 14px; padding: 32px;
 `;
 
-// ─── category icon (simple letter fallback) ──────────────────────────────────
+// ─── category icon ───────────────────────────────────────────────────────────
 
 const SEGMENT_EMOJI = ['🖨', '⚡', '📱', '💻', '🖥', '🚛', '🏢', '👥'];
 
@@ -285,14 +431,48 @@ function categoryIcon(category) {
   return SEGMENT_EMOJI[seg] ?? '📄';
 }
 
+// ─── Circular gauge SVG ───────────────────────────────────────────────────────
+
+function ScoreGauge({ score }) {
+  const R = 45;
+  const C = 2 * Math.PI * R;
+  const offset = C - (score / 100) * C;
+  const color = score >= 70 ? '#5DD6CA' : score >= 40 ? '#F59E0B' : '#EF4444';
+
+  return (
+    <GaugeWrap>
+      <svg viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#5DD6CA" />
+            <stop offset="100%" stopColor="#1B6E66" />
+          </linearGradient>
+        </defs>
+        <circle className="gauge-track" cx="50" cy="50" r={R} />
+        <circle
+          className="gauge-fill"
+          cx="50" cy="50" r={R}
+          strokeDasharray={C}
+          strokeDashoffset={offset}
+          stroke={score >= 70 ? 'url(#scoreGrad)' : color}
+        />
+      </svg>
+      <GaugeCenter>
+        <GaugeScore>{score}</GaugeScore>
+        <GaugeLabel>/ 100</GaugeLabel>
+      </GaugeCenter>
+    </GaugeWrap>
+  );
+}
+
 // ─── component ───────────────────────────────────────────────────────────────
 
 export default function Portfolio() {
-  const [analyses, setAnalyses]     = useState(null); // null = loading
-  const [error, setError]           = useState(null);
+  const [analyses, setAnalyses]       = useState(null);
+  const [error, setError]             = useState(null);
   const [fingerprint, setFingerprint] = useState('');
-  const [email, setEmail]           = useState('');
-  const [submitState, setSubmitState] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
+  const [email, setEmail]             = useState('');
+  const [submitState, setSubmitState] = useState('idle');
   const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
@@ -332,17 +512,29 @@ export default function Portfolio() {
     }
   }
 
-  const autoAnalyses = (analyses ?? []).filter((a) => a.route === 'auto');
+  const autoAnalyses   = (analyses ?? []).filter((a) => a.route === 'auto');
   const totalAnnualCost = autoAnalyses.reduce((s, a) => s + (a.annual_cost ?? 0), 0);
   const totalNetSaving  = autoAnalyses.reduce((s, a) => s + (a.net_saving ?? 0), 0);
   const switchCount     = autoAnalyses.filter((a) => a.should_switch).length;
+  const arvoScore       = computeArvoScore(autoAnalyses);
+  const savingsPct      = totalAnnualCost > 0
+    ? Math.round((totalNetSaving / totalAnnualCost) * 100) : 0;
+
+  const coveredSegments = new Set(
+    autoAnalyses.map((a) => getCategoryMeta(a.category)?.segment ?? -1).filter((s) => s >= 0)
+  );
+
+  const scoreLabel = arvoScore >= 80 ? 'Excellent portfölj'
+    : arvoScore >= 60 ? 'Bra täckning'
+    : arvoScore >= 40 ? 'Delvis täckt'
+    : 'Kom igång';
 
   return (
     <Page>
       <Nav />
       <Hero>
         <Eyebrow><span className="dot" />Leverantörsportfölj</Eyebrow>
-        <H1>Er Arvo Score™ — portfölj</H1>
+        <H1>Er Arvo Score™</H1>
         <Sub>
           Alla fakturor ni analyserat samlade på ett ställe. Koppla Fortnox eller Visma
           för att låsa upp hela er leverantörsbild och automatisera varje byte.
@@ -350,14 +542,33 @@ export default function Portfolio() {
       </Hero>
 
       <Body>
-        {analyses === null && !error && <Spinner />}
+        {analyses === null && !error && <SpinnerEl />}
         {error && <ErrorMsg>Kunde inte ladda portföljdata — försök igen om en stund.</ErrorMsg>}
 
         {analyses !== null && autoAnalyses.length > 0 && (
           <>
+            {/* ── Score hero ─────────────────────────────────────────── */}
+            <ScoreHeroCard>
+              <ScoreGauge score={arvoScore} />
+              <ScoreInfo>
+                <h2>Arvo Score<sup>™</sup> — {scoreLabel}</h2>
+                <p>
+                  Baserat på {autoAnalyses.length} analyserade fakturor och täckning
+                  av {coveredSegments.size} av 8 leverantörssegment.
+                  {totalNetSaving > 0 && ` Potentiell nettobesparing: ${fmtNum(totalNetSaving)} kr/år.`}
+                </p>
+                <ScoreBadgeRow>
+                  <ScoreBadge>{coveredSegments.size}/8 segment</ScoreBadge>
+                  {totalNetSaving > 0 && <ScoreBadge>−{savingsPct}% kostnad möjlig</ScoreBadge>}
+                  {switchCount > 0 && <ScoreBadge>{switchCount} byten rekommenderas</ScoreBadge>}
+                </ScoreBadgeRow>
+              </ScoreInfo>
+            </ScoreHeroCard>
+
+            {/* ── Stats ──────────────────────────────────────────────── */}
             <StatsRow>
               <StatCard>
-                <StatLabel>Analyserade fakturor</StatLabel>
+                <StatLabel>Fakturor analyserade</StatLabel>
                 <StatValue>{autoAnalyses.length}<span className="unit">st</span></StatValue>
               </StatCard>
               <StatCard>
@@ -365,17 +576,43 @@ export default function Portfolio() {
                 <StatValue>{fmtNum(totalAnnualCost)}<span className="unit">kr/år</span></StatValue>
               </StatCard>
               <StatCard>
-                <StatLabel>Identifierad nettobesparing</StatLabel>
+                <StatLabel>Nettobesparing möjlig</StatLabel>
                 <SavingValue>{fmtNum(totalNetSaving)}<span className="unit">kr/år</span></SavingValue>
+              </StatCard>
+              <StatCard>
+                <StatLabel>Besparingspotential</StatLabel>
+                <StatValue>{savingsPct}<span className="unit">%</span></StatValue>
               </StatCard>
             </StatsRow>
 
+            {/* ── Segment coverage ───────────────────────────────────── */}
+            <SegmentGrid>
+              <SegmentHeader>
+                <h4>Segmenttäckning</h4>
+                <span>{coveredSegments.size} av 8 analyserade</span>
+              </SegmentHeader>
+              <SegmentDots>
+                {SEGMENT_META.map((seg) => {
+                  const covered = coveredSegments.has(seg.id);
+                  return (
+                    <SegmentDot key={seg.id} $covered={covered}>
+                      <SegmentDotCircle $covered={covered} />
+                      <SegmentDotLabel $covered={covered}>{seg.label}</SegmentDotLabel>
+                    </SegmentDot>
+                  );
+                })}
+              </SegmentDots>
+            </SegmentGrid>
+
+            {/* ── Invoice list ───────────────────────────────────────── */}
+            <SectionTitle>Analyserade leverantörer</SectionTitle>
             <InvoiceList>
               {autoAnalyses.map((a) => {
-                const meta = getCategoryMeta(a.category);
+                const meta     = getCategoryMeta(a.category);
                 const hasSaving = a.should_switch && (a.net_saving ?? 0) > 0;
                 return (
                   <InvoiceCard key={a.id}>
+                    <InvoiceAccent $saving={hasSaving} />
                     <InvoiceIcon>{categoryIcon(a.category)}</InvoiceIcon>
                     <InvoiceInfo>
                       <InvoiceName>{a.supplier || a.normalized_supplier || 'Okänd leverantör'}</InvoiceName>
@@ -403,6 +640,7 @@ export default function Portfolio() {
               </p>
             )}
 
+            {/* ── Report CTA ─────────────────────────────────────────── */}
             <ConversionCard>
               <ConversionLabel>Arvo-rapport</ConversionLabel>
               <ConversionHeading>Få din kompletta Arvo-rapport</ConversionHeading>
