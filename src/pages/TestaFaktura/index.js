@@ -85,7 +85,7 @@ function useRevealedScore(target, delay = 200) {
   return { score, gaugeReady };
 }
 
-const REVEAL_GAUGE_R = 52;
+const REVEAL_GAUGE_R = 40;
 const REVEAL_GAUGE_C = 2 * Math.PI * REVEAL_GAUGE_R;
 
 function ScoreReveal({ diagScore, diagC, diagInsight }) {
@@ -94,13 +94,13 @@ function ScoreReveal({ diagScore, diagC, diagInsight }) {
   return (
     <ScoreRevealCard style={{ '--diag-color': diagC.dot }}>
       <div className="gauge-wrap">
-        <svg className="gauge-svg" width="120" height="120" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="9" />
+        <svg className="gauge-svg" width="90" height="90" viewBox="0 0 90 90">
+          <circle cx="45" cy="45" r={REVEAL_GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="7" />
           <circle
-            cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none"
-            stroke={diagC.dot} strokeWidth="9" strokeLinecap="round"
+            cx="45" cy="45" r={REVEAL_GAUGE_R} fill="none"
+            stroke={diagC.dot} strokeWidth="7" strokeLinecap="round"
             strokeDasharray={gaugeReady ? `${gaugeDashLg} ${REVEAL_GAUGE_C}` : `0 ${REVEAL_GAUGE_C}`}
-            style={{ transform: 'rotate(-90deg)', transformOrigin: '60px 60px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
+            style={{ transform: 'rotate(-90deg)', transformOrigin: '45px 45px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
           />
         </svg>
         <div className="num-overlay">

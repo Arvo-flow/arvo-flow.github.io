@@ -1456,8 +1456,8 @@ const revealFade = keyframes`
 export const ScoreRevealCard = styled.div`
   display: flex;
   align-items: center;
-  gap: 28px;
-  padding: 24px 28px;
+  gap: 20px;
+  padding: 16px 20px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
   background: ${({ theme }) => theme.color.surface};
   border: 2px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
@@ -1467,8 +1467,8 @@ export const ScoreRevealCard = styled.div`
   .gauge-wrap {
     flex-shrink: 0;
     position: relative;
-    width: 120px;
-    height: 120px;
+    width: 90px;
+    height: 90px;
   }
   .gauge-svg {
     position: absolute;
@@ -1486,7 +1486,7 @@ export const ScoreRevealCard = styled.div`
     pointer-events: none;
   }
   .score-val {
-    font-size: 42px;
+    font-size: 34px;
     font-weight: 800;
     letter-spacing: -0.04em;
     font-feature-settings: "tnum";
@@ -1545,9 +1545,9 @@ export const ScoreRevealCard = styled.div`
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
-    padding: 20px 18px;
-    .gauge-wrap { width: 100px; height: 100px; }
-    .score-val { font-size: 34px; }
+    padding: 14px 16px;
+    .gauge-wrap { width: 80px; height: 80px; }
+    .score-val { font-size: 28px; }
   }
 `;
 
