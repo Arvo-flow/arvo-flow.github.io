@@ -1202,6 +1202,12 @@ for (const file of files) {
     console.log(`\n${'─'.repeat(70)}`);
     console.log(`${BOLD}${file}${R}  ${RED}${BOLD}[ERROR]${R}  ${DIM}(${elapsed} ms)${R}`);
     console.log(`  ${RED}${err.message}${R}`);
+    const cause = err.cause;
+    if (cause) {
+      const status = cause.status ?? cause.statusCode ?? cause.code;
+      const causeMsg = cause.message ?? String(cause);
+      console.log(`  ${RED}Cause: ${status != null ? `[HTTP ${status}] ` : ''}${causeMsg}${R}`);
+    }
     results.push({ file, route: 'error', error: err.message, assertPassed: false });
   }
 }
