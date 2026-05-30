@@ -36,8 +36,10 @@ node scripts/stress-test.mjs
 **Aldrig:** Starta produktion med en ny faktura-typ utan ett godkänt golden master.
 
 **CI-täckning:** `.github/workflows/stress-test.yml` kör automatiskt de 74 syntetiska
-testfakturorna vid ändring av `agents/test-invoice/**`, `api/test-invoice.mjs` eller
-`scripts/stress-test.mjs`. Kräver `ANTHROPIC_API_KEY` som GitHub Secret.
+testfakturorna vid ändring av `agents/test-invoice/**` eller `scripts/stress-test.mjs`.
+Kräver `ANTHROPIC_API_KEY` som GitHub Secret.
+OBS: `api/test-invoice.mjs` triggar INTE CI — filen ändras ofta för icke-AI-saker
+(rate limiting, IP-whitelist etc.). Kör stress-testet manuellt vid AI-relaterade ändringar.
 
 ---
 

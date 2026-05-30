@@ -5,13 +5,7 @@ on:
   push:
     paths:
       - 'agents/test-invoice/**'
-      - 'api/test-invoice.mjs'
-      - 'lib/batch-processor.js'
-  pull_request:
-    paths:
-      - 'agents/test-invoice/**'
-      - 'api/test-invoice.mjs'
-      - 'lib/batch-processor.js'
+      - 'scripts/stress-test.mjs'
 
 jobs:
   stress-test:
