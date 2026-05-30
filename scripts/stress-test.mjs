@@ -134,7 +134,7 @@ const GOLDEN = [
     minConfidence: 0.70,
     checks: [
       { label: 'supplier innehåller Fortnox',          fn: (e) => /fortnox/i.test(e.supplier ?? '') },
-      { label: 'seatCount ≥ 12 (core bokföringsanvändare)', fn: (e) => (e.seatCount ?? 0) >= 12 },
+      { label: 'seatCount === 60 (max från Kvitto & Utlägg)', fn: (e) => e.seatCount === 60 },
       { label: 'recurringAmount === 4 728 kr',         fn: (e) => e.recurringAmount === 4_728 },
       { label: 'annualCost === 56 736 kr',             fn: (e) => e.annualCost === 56_736 },
       { label: 'billingPeriod monthly',                fn: (e) => e.billingPeriod === 'monthly' },

@@ -44,6 +44,10 @@ recurring_subscription
   Exempel: månadsabonnemang, maskinleasing, fasta licensavgifter,
   fakturaavgifter som återkommer varje period, fasta paketavgifter,
   supportavtal, serviceavtal.
+  OBS: "Fast månadsavgift", "Fast avgift", "Fast fakturaavgift" och liknande
+  fasta löpande avgifter är ALLTID recurring_subscription — de återkommer varje
+  period och ska alltid ingå i annualCost-beräkningen. Klassificera dem aldrig
+  som one_time_fee.
   SAMT bas-fraktavgifter i transport/frakt-fakturor (pallfrakt, styckegods, fraktavgift per pall/paket/kg)
   — dessa representerar en löpande månatlig tjänsterelation oavsett att volymen varierar.
   SAMT elförbrukning / elhandel (kWh × pris) — el är en månadsvis återkommande kostnad även om
@@ -60,6 +64,10 @@ recurring_subscription
 variable_usage
   Rörliga kostnader som varierar med faktisk förbrukning.
   För mobiltelefoni: roaming utanför EU, övertrafik, extra datapåslag, SMS-paket utanför plan.
+  KRITISKT MOBILREGEL: "Datatillägg X GB", "Extra data X GB", "GB-tillägg för abonnent",
+  "Datapåslag X GB" och liknande temporära datapåköp är ALLTID variable_usage — aldrig
+  recurring_subscription. De är köpta utöver inkluderad data och varierar period för period.
+  Exempel: "Datatillägg 2 GB (abonnent 070-123-45-67)" → variable_usage, 49 kr.
   För Managed Print-avtal: klickkostnader (svart/vit-utskrift kr/sida, färgutskrift kr/sida).
   Klickkostnader beror på periodens utskriftsvolym — de ska ALDRIG läggas ihop med
   den fasta maskinhyran för annualisering.
@@ -225,6 +233,13 @@ BREDBANDSFAKTUROR — extrahera dessa fält om fakturan är från en bredbandsle
   OBS: Statisk IP, managed firewall, extra SLA och liknande tillägg ska märkas is_addon: true med rätt addon_type (se TILLÄGGSTJÄNSTER ovan).
 
 SAAS-LICENSER — extrahera dessa fält om fakturan avser mjukvarulicenser eller SaaS:
+  KRITISKT SAAS-SEATCOUNT-REGEL: Fakturor med FLERA FUNKTIONSMODULER (t.ex. Fortnox
+  Bokföring, Fakturering, Lön, Kvitto & Utlägg; Visma Administration + Lön; HubSpot
+  Marketing + Sales Hub) har ofta OLIKA antal användare per modul. I detta fall:
+  seatCount = MAXIMUM antal användare bland ALLA moduler.
+  Exempel: Bokföring 5 anv. + Fakturering 5 anv. + Lön 2 anv. + Kvitto & Utlägg 60 anv.
+  → seatCount = 60. Motivering: Arvo benchmarkar er totalkostnad mot marknaden
+  utifrån volymen licensierade platser — det högsta modulantalet avgör volymen.
   license_type: Det specifika licensplanets namn som det framgår av fakturan. Normalisera
     till kortform, t.ex. "Business Standard", "Business Premium", "E3", "E5",
     "Business Basic", "Google Workspace Business Starter", "Google Workspace Business Standard",
@@ -533,11 +548,67 @@ const EXTRACT_TOOL = {
 };
 
 /**
+ * Deterministic post-processing rules applied to raw AI output BEFORE aggregation.
+ *
+ * Every rule here encodes a previously discovered AI classification mistake so
+ * it never repeats. When a new failure is found: add a rule, add a comment
+ * with the source invoice, run stress-test.mjs on that file to verify, commit.
+ *
+ * Rules never touch amounts — only `type` and `seatCount`.
+ */
+function applyDeterministicRules(raw) {
+  if (!Array.isArray(raw.lineItems)) return raw;
+
+  const lineItems = raw.lineItems.map((item) => {
+    const desc = item.description ?? '';
+
+    // RULE: Mobile data add-ons are variable_usage, never recurring.
+    // "Datatillägg X GB", "Extra data X GB", "tillägg X GB", "GB-tillägg"
+    // Source: comviq-mobil-budget — 49 kr Datatillägg 2 GB classified as recurring_subscription.
+    if (
+      item.type === 'recurring_subscription' &&
+      /datatillägg|extra[\s-]data\b|(?:\d+\s*GB\b|GB[-\s])tillägg|\btillägg\s+\d+\s*GB\b/i.test(desc)
+    ) {
+      return { ...item, type: 'variable_usage' };
+    }
+
+    // RULE: Fixed periodic fees are always recurring_subscription.
+    // "Fast månadsavgift", "Fast avgift", "Fast fakturaavgift"
+    // Source: tele2-mobil-enkel — 49 kr Fast månadsavgift sometimes excluded from annualCost.
+    if (
+      item.type !== 'recurring_subscription' &&
+      item.type !== 'one_time_fee' &&
+      /^\s*fast\s+(?:månads|dygns|vecko|faktura|admin)?avgift/i.test(desc)
+    ) {
+      return { ...item, type: 'recurring_subscription' };
+    }
+
+    return item;
+  });
+
+  // RULE: Multi-module SaaS seatCount = max across all modules.
+  // When line items have per-module quantities (Fortnox, Visma etc.), the
+  // dominant module (most users) determines seatCount — not the sum of cores.
+  // Source: customer-fortnox — AI returned 12 (5+5+2) ignoring K&U module (60 users).
+  let seatCount = raw.seatCount ?? null;
+  const lineQtys = lineItems
+    .filter((l) => l.type === 'recurring_subscription' && (l.quantity ?? 0) > 0)
+    .map((l) => l.quantity);
+  if (lineQtys.length > 1) {
+    const maxQty = Math.max(...lineQtys);
+    if (seatCount == null || maxQty > seatCount) seatCount = maxQty;
+  }
+
+  return { ...raw, lineItems, seatCount };
+}
+
+/**
  * Summera lineItems per typ och beräkna annualCost deterministiskt.
  * Alla aggregerade fält som categorize.js och recommend.js förväntar sig
  * genereras här — modellen räknar aldrig ut dem själv.
  */
-export function aggregateLineItems(raw) {
+export function aggregateLineItems(rawInput) {
+  const raw = applyDeterministicRules(rawInput);
   const sum = (type) =>
     (raw.lineItems ?? [])
       .filter((l) => l.type === type)
