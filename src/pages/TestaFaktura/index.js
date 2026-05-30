@@ -1434,6 +1434,16 @@ const TestaFaktura = () => {
                   const isRealPrice = _effectiveMeta.isRealPrice;
                   const isLicensePending = result.categorized.licensePending;
                   const partnerLabel = _effectiveMeta.partnerLabel;
+                  const _suggestedLower = (result.recommendation.suggestedSupplier ?? '').toLowerCase().trim();
+                  const _currentLower = (result.categorized?.normalizedSupplier ?? result.extracted?.supplier ?? '').toLowerCase().trim();
+                  const _isSameSupplier = isRealPrice && _suggestedLower && _currentLower && (
+                    _suggestedLower === _currentLower ||
+                    _suggestedLower.includes(_currentLower) ||
+                    _currentLower.includes(_suggestedLower)
+                  );
+                  const partnerCtaLabel = _isSameSupplier
+                    ? `Sänk er ${result.recommendation.suggestedSupplier}-kostnad`
+                    : isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen';
                   return (
                     <>
                       <SavingsBlock>
@@ -1494,7 +1504,7 @@ const TestaFaktura = () => {
                             $size="sm"
                             onClick={() => setModalOpen(true)}
                           >
-                            {isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen'} <Icon name="arrow" size={14} />
+                            {partnerCtaLabel} <Icon name="arrow" size={14} />
                           </Button>
                         </PartnerBlock>
                       )}
