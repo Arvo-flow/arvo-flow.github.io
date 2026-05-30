@@ -173,6 +173,8 @@ const TestaFaktura = () => {
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [downloadEmail, setDownloadEmail] = useState('');
   const [downloadEmailState, setDownloadEmailState] = useState('idle'); // idle | submitting | sent
+  const [reviewQueueEmail, setReviewQueueEmail] = useState('');
+  const [reviewQueueEmailState, setReviewQueueEmailState] = useState('idle'); // idle | submitting | sent
 
   // Batch mode — activated when multiple PDFs are dropped / selected
   const [batchFiles, setBatchFiles] = useState([]);
@@ -555,6 +557,22 @@ const TestaFaktura = () => {
       setEmailState('sent');
     } catch {
       setEmailState('error');
+    }
+  };
+
+  const submitReviewQueueEmail = async (e) => {
+    e.preventDefault();
+    if (!reviewQueueEmail || reviewQueueEmailState !== 'idle') return;
+    setReviewQueueEmailState('submitting');
+    try {
+      await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: reviewQueueEmail, source: 'review_queue', reason: result?.reason }),
+      });
+      setReviewQueueEmailState('sent');
+    } catch {
+      setReviewQueueEmailState('sent'); // non-fatal — show success anyway
     }
   };
 
@@ -1129,6 +1147,41 @@ const TestaFaktura = () => {
                       felfri analys av hela er leverantörsreskontra.
                     </p>
                   </>
+                )}
+                {reviewQueueEmailState === 'sent' ? (
+                  <p style={{ fontSize: 13, color: '#1B6E66', fontWeight: 600, marginTop: 14, marginBottom: 0 }}>
+                    ✓ Vi hör av oss när analysen är klar!
+                  </p>
+                ) : (
+                  <form
+                    onSubmit={submitReviewQueueEmail}
+                    style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}
+                  >
+                    <input
+                      type="email"
+                      placeholder="din@email.se — vi meddelar när vi har ett svar"
+                      value={reviewQueueEmail}
+                      onChange={(e) => setReviewQueueEmail(e.target.value)}
+                      required
+                      style={{
+                        flex: 1, minWidth: 180, padding: '9px 14px', borderRadius: 100,
+                        border: '1.5px solid #D5E2DC', fontSize: 13, outline: 'none',
+                        background: '#fff', color: '#0E1A17',
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!reviewQueueEmail || reviewQueueEmailState === 'submitting'}
+                      style={{
+                        padding: '9px 18px', borderRadius: 100, border: 'none', cursor: 'pointer',
+                        background: 'linear-gradient(135deg,#5DD6CA,#1B6E66)', color: '#fff',
+                        fontSize: 13, fontWeight: 700,
+                        opacity: (!reviewQueueEmail || reviewQueueEmailState === 'submitting') ? .55 : 1,
+                      }}
+                    >
+                      {reviewQueueEmailState === 'submitting' ? 'Skickar…' : 'Meddela mig →'}
+                    </button>
+                  </form>
                 )}
               </NoSwitchBlock>
             ) : result.recommendation?.requiresQuote ? (
