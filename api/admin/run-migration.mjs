@@ -17,15 +17,15 @@ export default async function handler(req, res) {
     return send(res, 401, { error: 'Ej behörig' });
   }
 
-  const db = getDb();
-  if (!db) return send(res, 503, { error: 'DB ej konfigurerad' });
+  const sql = getDb();
+  if (!sql) return send(res, 503, { error: 'DB ej konfigurerad' });
 
   const results = [];
 
   const steps = [
     {
       name: 'waitlist',
-      sql: `CREATE TABLE IF NOT EXISTS waitlist (
+      run: () => sql`CREATE TABLE IF NOT EXISTS waitlist (
         id         UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
         email      TEXT        NOT NULL,
         source     TEXT        NOT NULL DEFAULT 'review_queue',
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     },
     {
       name: 'invoice_feedback',
-      sql: `CREATE TABLE IF NOT EXISTS invoice_feedback (
+      run: () => sql`CREATE TABLE IF NOT EXISTS invoice_feedback (
         id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
         fingerprint TEXT NOT NULL,
         supplier    TEXT,
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     },
     {
       name: 'magic_tokens',
-      sql: `CREATE TABLE IF NOT EXISTS magic_tokens (
+      run: () => sql`CREATE TABLE IF NOT EXISTS magic_tokens (
         id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
         token      TEXT NOT NULL UNIQUE,
         email      TEXT NOT NULL,
@@ -60,17 +60,17 @@ export default async function handler(req, res) {
     },
     {
       name: 'idx_magic_tokens_token',
-      sql: `CREATE INDEX IF NOT EXISTS idx_magic_tokens_token ON magic_tokens (token)`,
+      run: () => sql`CREATE INDEX IF NOT EXISTS idx_magic_tokens_token ON magic_tokens (token)`,
     },
     {
       name: 'idx_feedback_fingerprint',
-      sql: `CREATE INDEX IF NOT EXISTS idx_feedback_fingerprint ON invoice_feedback (fingerprint, created_at DESC)`,
+      run: () => sql`CREATE INDEX IF NOT EXISTS idx_feedback_fingerprint ON invoice_feedback (fingerprint, created_at DESC)`,
     },
   ];
 
   for (const step of steps) {
     try {
-      await db.unsafe(step.sql);
+      await step.run();
       results.push({ name: step.name, ok: true });
     } catch (err) {
       results.push({ name: step.name, ok: false, error: err.message });
