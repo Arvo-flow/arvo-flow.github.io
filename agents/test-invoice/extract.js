@@ -178,6 +178,9 @@ CONFIDENCE SCORE (0.0–1.0):
 OUT OF SCOPE — sätt outOfScope: true om fakturan avser tjänster utan
   förhandlingsbar volymstruktur: redovisningstjänster, juridik, restaurang/mat,
   rekrytering, marknadsföring, bemanning, utbildning, myndighetsavgifter.
+  ALLTID out of scope: försäkringar av alla slag (företagsförsäkring, ansvarsförsäkring,
+  sjukförsäkring, gruppförsäkring, sakförsäkring, fordonsförsäkring, pensionsförsäkring).
+  Försäkringsförmedling kräver tillstånd från Finansinspektionen — Arvo hanterar ej detta.
   ALDRIG out of scope: elavtal (spotpris, rörligt el), mobilabonnemang, bredband,
   leasing (bil, IT, skrivare), SaaS-licenser, kortterminaler, larm & bevakning,
   löneadministration, städ, frakt — dessa har alltid förhandlingsbara volymer.
@@ -416,6 +419,10 @@ const EXTRACT_TOOL = {
         type: 'boolean',
         description: 'true om fakturan avser en kategori utan förhandlingsbar volymstruktur',
       },
+      outOfScopeReason: {
+        type: ['string', 'null'],
+        description: 'Specificerar varför outOfScope är true. Sätt "insurance" för försäkringsfakturor, annars null.',
+      },
       seatCount: {
         type: ['integer', 'null'],
         description: 'Totalt antal seats/licenser. Summera alla licensrader oavsett tier. null om inte per-användarprenumeration.',
@@ -548,7 +555,7 @@ const EXTRACT_TOOL = {
     },
     required: [
       'supplier', 'date', 'description', 'billingPeriod',
-      'lineItems', 'confidenceScore', 'outOfScope',
+      'lineItems', 'confidenceScore', 'outOfScope', 'outOfScopeReason',
       'projectedRecurringAmount',
     ],
   },
@@ -674,6 +681,7 @@ export function aggregateLineItems(rawInput) {
     confidenceScore:          raw.confidenceScore,
     confidenceNotes:          raw.confidenceNotes ?? null,
     outOfScope:               raw.outOfScope ?? false,
+    outOfScopeReason:         raw.outOfScopeReason ?? null,
     seatCount:                raw.seatCount ?? null,
     roamingZone:              raw.roaming_zone != null ? Number(raw.roaming_zone) : null,
     notes:                    raw.confidenceNotes ?? null,
@@ -728,7 +736,7 @@ export function aggregateLineItems(rawInput) {
  */
 export function routeExtraction(extracted) {
   if (extracted.outOfScope) {
-    return { route: 'unsupported' };
+    return { route: 'unsupported', reason: extracted.outOfScopeReason ?? 'out_of_scope' };
   }
 
   // ── Lager 1: Sanity checks ────────────────────────────────────────────────
