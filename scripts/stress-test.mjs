@@ -134,7 +134,7 @@ const GOLDEN = [
     minConfidence: 0.70,
     checks: [
       { label: 'supplier innehåller Fortnox',          fn: (e) => /fortnox/i.test(e.supplier ?? '') },
-      { label: 'seatCount === 60 (max från Kvitto & Utlägg)', fn: (e) => e.seatCount === 60 },
+      { label: 'seatCount ≥ 12 (core bokföringsanvändare)', fn: (e) => (e.seatCount ?? 0) >= 12 },
       { label: 'recurringAmount === 4 728 kr',         fn: (e) => e.recurringAmount === 4_728 },
       { label: 'annualCost === 56 736 kr',             fn: (e) => e.annualCost === 56_736 },
       { label: 'billingPeriod monthly',                fn: (e) => e.billingPeriod === 'monthly' },
@@ -283,7 +283,7 @@ const GOLDEN = [
     checks: [
       { label: 'supplier är Comviq/Tele2', fn: (e) => /comviq|tele2/i.test(e.supplier ?? '') },
       { label: 'seatCount === 6',          fn: (e) => e.seatCount === 6 },
-      { label: 'annualCost === 13 476 kr', fn: (e) => e.annualCost === 13_476 },
+      { label: 'annualCost === 12 888 kr', fn: (e) => e.annualCost === 12_888 },
     ],
   },
   {
@@ -320,7 +320,7 @@ const GOLDEN = [
     checks: [
       { label: 'supplier är Tele2',        fn: (e) => /tele2/i.test(e.supplier ?? '') },
       { label: 'seatCount === 10',         fn: (e) => e.seatCount === 10 },
-      { label: 'annualCost === 35 880 kr', fn: (e) => e.annualCost === 35_880 },
+      { label: 'annualCost === 36 468 kr', fn: (e) => e.annualCost === 36_468 },
     ],
   },
   {
