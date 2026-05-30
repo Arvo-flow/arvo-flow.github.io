@@ -1870,11 +1870,12 @@ const TestaFaktura = () => {
           </div>
 
           <NextSteps>
-            <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
+            <h3>7 kategorier väntar på analys</h3>
             <p className="sub">
-              Koppla Fortnox / Visma — vi räknar ut poängen på hela er reskontra och levererar en
-              komplett Leverantörsrapport automatiskt. Vi sköter varje byte från uppsägning till nytt
-              avtal. Du betalar 20&nbsp;% av identifierad besparing. Inga fasta avgifter.
+              {adjNetSaving > 0
+                ? <>Ni sparar {formatKr(adjNetSaving)}/år på programvara. Vad döljer sig i de andra sju? Koppla Fortnox / Visma — Arvo skannar hela er leverantörsreskontra och rapporterar automatiskt.</>
+                : <>En analys är en datapunkt. En fullständig portföljvy är en strategi. Koppla Fortnox / Visma — Arvo skannar hela er leverantörsreskontra och rapporterar automatiskt.</>
+              }
             </p>
             <p className="seg-count">SEGMENT — 1 AV {SEGMENTS.length} ANALYSERADE</p>
             <div className="segment-grid">
