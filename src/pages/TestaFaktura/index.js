@@ -1187,6 +1187,15 @@ const TestaFaktura = () => {
                       fakturan för en korrekt analys.
                     </p>
                   </>
+                ) : result.reason === 'insurance' ? (
+                  <>
+                    <strong>Försäkringar hanteras inte av Arvo ännu.</strong>
+                    <p>
+                      Försäkringsförmedling kräver tillstånd från Finansinspektionen. Arvo planerar
+                      att ansöka om detta tillstånd under 2027 — tills dess analyserar vi inte
+                      försäkringsfakturor. Ladda upp en annan leverantörsfaktura för att komma igång.
+                    </p>
+                  </>
                 ) : (
                   <>
                     <strong>Utanför analysräckvidden.</strong>

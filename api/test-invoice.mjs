@@ -540,6 +540,7 @@ export default async function handler(req, res) {
       return send(res, 200, {
         ok:    true,
         route: 'unsupported',
+        reason: routing.reason ?? 'out_of_scope',
         extracted: {
           supplier:   extracted.supplier,
           date:       extracted.date,
