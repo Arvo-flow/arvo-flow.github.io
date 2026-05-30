@@ -55,4 +55,35 @@ await sql`
   )
 `;
 
-console.log('Migration klar — invoice_datapoints, fortnox_connections och customers är redo.');
+await sql`
+  CREATE TABLE IF NOT EXISTS invoice_analyses (
+    id                    UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    fingerprint           TEXT        NOT NULL,
+    pdf_hash              TEXT        NOT NULL,
+    supplier              TEXT        NOT NULL DEFAULT '',
+    normalized_supplier   TEXT,
+    category              TEXT        NOT NULL DEFAULT 'uncategorized',
+    annual_cost           INTEGER,
+    suggested_annual_cost INTEGER,
+    gross_saving          INTEGER,
+    net_saving            INTEGER,
+    should_switch         BOOLEAN     DEFAULT FALSE,
+    route                 TEXT        NOT NULL DEFAULT 'auto',
+    industry              TEXT        NOT NULL DEFAULT 'ovrigt',
+    employees             INTEGER     NOT NULL DEFAULT 1,
+    billing_period        TEXT,
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+
+await sql`
+  CREATE INDEX IF NOT EXISTS idx_analyses_fingerprint
+    ON invoice_analyses (fingerprint, created_at DESC)
+`;
+
+await sql`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_analyses_dedup
+    ON invoice_analyses (fingerprint, pdf_hash)
+`;
+
+console.log('Migration klar — invoice_datapoints, fortnox_connections, customers och invoice_analyses är redo.');

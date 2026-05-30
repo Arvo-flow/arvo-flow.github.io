@@ -1,0 +1,49 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 1318 >>
+stream
+BT /F1 9 Tf 50 750 Td (TryggEl Sverige AB                                          FAKTURA) Tj ET
+BT /F1 9 Tf 50 738 Td () Tj ET
+BT /F1 9 Tf 50 726 Td (Till:                                    Fakturanummer: 443211) Tj ET
+BT /F1 9 Tf 50 714 Td (Jonkopings Logistikcenter AB             Datum: 2026-05-02) Tj ET
+BT /F1 9 Tf 50 702 Td (Box 445                                  Anl.ID: 735999555444333222) Tj ET
+BT /F1 9 Tf 50 690 Td (551 16 Jonkoping) Tj ET
+BT /F1 9 Tf 50 678 Td () Tj ET
+BT /F1 9 Tf 50 666 Td (Avtalsinformation: Fast Pris 3 ar \(Galler t.o.m 2027-12-31\)) Tj ET
+BT /F1 9 Tf 50 654 Td () Tj ET
+BT /F1 9 Tf 50 642 Td (Beskrivning Period 260401-260430    Forbrukning   Pris \(kr\)   Summa \(kr\)) Tj ET
+BT /F1 9 Tf 50 630 Td () Tj ET
+BT /F1 9 Tf 50 618 Td (Fastprisavtal El \(Bunden\)           3 100 kWh     1,8500      5 735,00) Tj ET
+BT /F1 9 Tf 50 606 Td (Manadsavgift Fast Pris              1 st          45,0000        45,00) Tj ET
+BT /F1 9 Tf 50 594 Td () Tj ET
+BT /F1 9 Tf 50 582 Td (                                               Netto:      5 780,00 kr) Tj ET
+BT /F1 9 Tf 50 570 Td (                                               Moms \(25%\): 1 445,00 kr) Tj ET
+BT /F1 9 Tf 50 558 Td (                                               TOTALT:     7 225,00 kr) Tj ET
+BT /F1 9 Tf 50 546 Td () Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001611 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1679
+%%EOF
