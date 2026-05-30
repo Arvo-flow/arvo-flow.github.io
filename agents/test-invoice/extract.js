@@ -60,6 +60,9 @@ recurring_subscription
   dessutom el_skatter_kr med deras sammanlagda belopp.
   OBS: Fast maskinhyra / leasingavgift för skrivare i Managed Print-avtal = recurring_subscription.
   OBS: Klickkostnader (kr/sida) i samma avtal = variable_usage (se nedan).
+  OBS FASTA AVGIFTER: "Fast månadsavgift", "Månadsavgift fast", "Fast avgift" och liknande
+  är ALLTID recurring_subscription — fasta avgifter som debiteras varje period utan undantag.
+  Inkludera dem ALLTID i recurringAmount och annualCost.
 
 variable_usage
   Rörliga kostnader som varierar med faktisk förbrukning.
@@ -200,6 +203,10 @@ KRITISKT:
     (backup, säkerhet, arkiv, e-signatur) med bastjänsten — om 57 M365-licenser + 57
     molnbackup-licenser är seatCount = 57, inte 114. Sätt null om fakturan inte avser
     per-användarlicenser.
+    MULTI-MODUL SAAS (Fortnox, Visma, HubSpot m.fl.): Om fakturan har FLERA separata moduler
+    med var och en sitt EGET antal användare (t.ex. Bokföring 5 usr, Lön 2 usr, Kvitto &
+    Utlägg 60 usr), sätt seatCount = MAXIMALA antalet användare bland ALLA moduler.
+    Exempel: max(5, 2, 60) = seatCount 60. Summera INTE modulernas användare (5+2+60≠67).
   — projectedRecurringAmount: Det belopp som faktiskt kommer att debiteras nästa FULLA period,
     efter att engångsjusteringar (pro-rata, krediteringar) är normaliserade.
     Exempel: Faktura visar 20 licenser × 500 kr (recurring) + 5 licenser × 250 kr (pro-rata tillagda
