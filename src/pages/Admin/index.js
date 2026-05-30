@@ -48,6 +48,8 @@ export default function Admin() {
   const [magicLink, setMagicLink]         = useState('');
   const [magicState, setMagicState]       = useState('idle'); // idle | loading | done | error
   const [activeTab, setActiveTab]         = useState('queue'); // queue | waitlist | feedback
+  const [migrState, setMigrState]         = useState('idle'); // idle | loading | done | error
+  const [migrResult, setMigrResult]       = useState(null);
 
   const load = useCallback(async (token) => {
     setLoadError('');
@@ -70,6 +72,22 @@ export default function Admin() {
   async function login(e) {
     e.preventDefault();
     setAdminToken(tokenInput);
+  }
+
+  async function runMigration() {
+    setMigrState('loading');
+    setMigrResult(null);
+    try {
+      const res  = await fetch('/api/admin/run-migration', {
+        method:  'POST',
+        headers: { 'x-admin-token': adminToken },
+      });
+      const json = await res.json();
+      setMigrResult(json);
+      setMigrState(json.ok ? 'done' : 'error');
+    } catch {
+      setMigrState('error');
+    }
   }
 
   async function generateMagicLink(e) {
@@ -136,6 +154,40 @@ export default function Admin() {
         <StatBox><SLabel>Waitlist</SLabel><SValue>{data?.waitlist?.length ?? '–'}</SValue></StatBox>
         <StatBox><SLabel>Feedback</SLabel><SValue>{data?.feedback?.length ?? '–'}</SValue></StatBox>
       </Grid>
+
+      {/* ── DB Migration ───────────────────────────────────────── */}
+      <Section>
+        <STitle>Databasmigration</STitle>
+        <Table>
+          <div style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,.6)', flex: 1 }}>
+              Skapar tabellerna <code style={{ background: 'rgba(255,255,255,.1)', padding: '1px 6px', borderRadius: 4 }}>waitlist</code>,{' '}
+              <code style={{ background: 'rgba(255,255,255,.1)', padding: '1px 6px', borderRadius: 4 }}>invoice_feedback</code> och{' '}
+              <code style={{ background: 'rgba(255,255,255,.1)', padding: '1px 6px', borderRadius: 4 }}>magic_tokens</code> i databasen.
+              Säkert att köra flera gånger (IF NOT EXISTS).
+            </p>
+            <Btn
+              type="button"
+              onClick={runMigration}
+              disabled={migrState === 'loading'}
+              style={{ background: migrState === 'done' ? '#16a34a' : undefined }}
+            >
+              {migrState === 'loading' ? 'Kör migration…'
+                : migrState === 'done' ? '✓ Migration klar!'
+                : 'Kör migration →'}
+            </Btn>
+          </div>
+          {migrResult && (
+            <div style={{ padding: '0 18px 16px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {migrResult.results?.map((r) => (
+                <div key={r.name} style={{ fontSize: 12, color: r.ok ? '#5DD6CA' : '#EF4444' }}>
+                  {r.ok ? '✓' : '✗'} {r.name}{r.error ? ` — ${r.error}` : ''}
+                </div>
+              ))}
+            </div>
+          )}
+        </Table>
+      </Section>
 
       {/* ── Magic link-generator ───────────────────────────────── */}
       <Section>
