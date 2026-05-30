@@ -2,10 +2,6 @@ name: Invoice Stress Test
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'agents/test-invoice/**'
-      - 'scripts/stress-test.mjs'
 
 jobs:
   stress-test:
