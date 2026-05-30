@@ -16,6 +16,9 @@
     "api/send-analysis.mjs": {
       "maxDuration": 30
     },
+    "api/send-report.mjs": {
+      "maxDuration": 30
+    },
     "api/cron/update-fx-rate.mjs": {
       "maxDuration": 15
     }
