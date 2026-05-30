@@ -30,11 +30,27 @@ const GATE_WINDOW_TTL       = 30 * 24 * 60 * 60; // 30 dagar
 const FREE_SAVING_ANALYSES  = 2;                  // Alltid fria analyser med besparing
 const SAVING_GATE_THRESHOLD = 25_000;             // Kr kumulativ nettobesparing
 const PIPELINE_TIMEOUT_MS = 55_000;             // 5 s marginal mot Vercels 60 s hard kill
+const RATE_LIMIT_MAX        = 5;                  // Max analyser per IP per 24h
+const RATE_WINDOW_TTL       = 24 * 60 * 60;      // 24 timmar
+
+// ── IP-baserad rate limiting ──────────────────────────────────────────────────
+async function checkRateLimit(kv, ip) {
+  if (!kv || !ip) return false;
+  const key = `ratelimit:ip:${createHash('sha256').update(ip).digest('hex').slice(0, 24)}`;
+  try {
+    const count = (await kv.get(key)) ?? 0;
+    if (count >= RATE_LIMIT_MAX) return true;
+    await kv.set(key, count + 1, { ex: RATE_WINDOW_TTL });
+  } catch {
+    // Non-fatal — låt analysen gå igenom om KV failar
+  }
+  return false;
+}
 
 // ── HMAC-tokenvalidering ──────────────────────────────────────────────────────
 function validateToken(token) {
   const secret = process.env.ARVO_HMAC_SECRET;
-  if (!secret || token === 'dev') return true; // dev-läge
+  if (!secret) return true; // dev-läge utan konfigurerad secret
   if (!token || typeof token !== 'string') return false;
   const parts = token.split('.');
   if (parts.length !== 3) return false;
@@ -296,20 +312,29 @@ export default async function handler(req, res) {
   const pdfHash  = createHash('sha256').update(pdfBytes).digest('hex');
   // v2: invaliderar v1-cache (bredband secondary savings ej med i gamla svar)
   const cacheKey = `pdf:result:v2:${pdfHash}:e${employeesNum}`;
-  // isBypass: hoppar över token-validering, PDF-cache och saving gate.
-  // Accepterar ARVO_BYPASS_SECRET från miljön (production) ELLER 'dev' (intern testning).
-  const isBypass = bypass === 'dev'
-    || !!(bypass && typeof bypass === 'string'
-      && process.env.ARVO_BYPASS_SECRET
-      && bypass === process.env.ARVO_BYPASS_SECRET);
+  // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
+  // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
+  const isBypass = !!(bypass && typeof bypass === 'string'
+    && process.env.ARVO_BYPASS_SECRET
+    && bypass === process.env.ARVO_BYPASS_SECRET);
 
   if (!isBypass) {
     if (!validateToken(token)) {
       return send(res, 401, { error: 'Ogiltig session — ladda om sidan och försök igen.' });
     }
 
-    // PDF-fingerprintcache: identisk faktura inom 24h → returnera cachat svar
     const kv = getKv();
+
+    // IP-baserad rate limiting: max 5 analyser per IP per 24h
+    const clientIp = (req.headers['x-forwarded-for'] ?? req.socket?.remoteAddress ?? '').split(',')[0].trim();
+    if (await checkRateLimit(kv, clientIp)) {
+      return send(res, 429, {
+        error: 'Du har analyserat för många fakturor idag. Försök igen imorgon eller kontakta oss för att utöka din kvot.',
+        rateLimited: true,
+      });
+    }
+
+    // PDF-fingerprintcache: identisk faktura inom 24h → returnera cachat svar
     if (kv) {
       try {
         const cached = await kv.get(cacheKey);

@@ -126,9 +126,9 @@ const SEGMENTS = [
 ];
 
 const PHASES = [
-  { id: 'extract', label: 'Läser fakturan' },
-  { id: 'categorize', label: 'Identifierar leverantör & kategori' },
-  { id: 'recommend', label: 'Jämför mot branschindex' },
+  { id: 'extract',    label: 'AI läser & klassificerar fakturan',   sublabel: 'Claude Opus analyserar raderna' },
+  { id: 'categorize', label: 'Identifierar leverantör & kategori',   sublabel: 'Matchar mot 200+ leverantörsprofiler' },
+  { id: 'recommend',  label: 'Beräknar besparing mot branschindex', sublabel: 'Jämför med svenska SMF-data' },
 ];
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -394,6 +394,13 @@ const TestaFaktura = () => {
       if (data.timeout) {
         setPhase(null);
         setError('Analysen tog lite för lång tid just nu. Vänta ett ögonblick och försök igen — det brukar gå snabbare vid andra försöket.');
+        return;
+      }
+
+      // Rate limit nådd
+      if (res.status === 429 || data.rateLimited) {
+        setPhase(null);
+        setError('Du har analyserat för många fakturor idag (max 5/dag). Kontakta oss på hej@arvoflow.se för att utöka din kvot.');
         return;
       }
 
@@ -778,7 +785,12 @@ const TestaFaktura = () => {
                             ? <Icon name="check" size={14} stroke={2.5} />
                             : <span>{PHASES.findIndex((x) => x.id === p.id) + 1}</span>}
                         </div>
-                        <div className="label">{p.label}</div>
+                        <div className="label">
+                          {p.label}
+                          {state === 'active' && p.sublabel && (
+                            <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2, fontWeight: 400 }}>{p.sublabel}</div>
+                          )}
+                        </div>
                         <div className="time">
                           {state === 'done' ? '✓' : state === 'active' ? '…' : ''}
                         </div>
