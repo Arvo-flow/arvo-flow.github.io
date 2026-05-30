@@ -175,6 +175,8 @@ const TestaFaktura = () => {
   const [downloadEmailState, setDownloadEmailState] = useState('idle'); // idle | submitting | sent
   const [reviewQueueEmail, setReviewQueueEmail] = useState('');
   const [reviewQueueEmailState, setReviewQueueEmailState] = useState('idle'); // idle | submitting | sent
+  const [feedbackVote, setFeedbackVote] = useState(null); // null | 'up' | 'down'
+  const [feedbackState, setFeedbackState] = useState('idle'); // idle | submitting | sent
 
   // Batch mode — activated when multiple PDFs are dropped / selected
   const [batchFiles, setBatchFiles] = useState([]);
@@ -184,14 +186,31 @@ const TestaFaktura = () => {
   const [batchLoading, setBatchLoading] = useState(false);
   const batchMode = batchFiles.length > 1;
 
-  // Token + bypass-setup vid mount
+  // Token + bypass-setup vid mount (stöder ?bypass=<secret> och ?magic=<token>)
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
     const bypassParam = params.get('bypass');
     if (bypassParam) {
       sessionStorage.setItem('arvo_bypass', bypassParam);
       window.history.replaceState({}, '', window.location.pathname);
     }
+
+    const magicParam = params.get('magic');
+    if (magicParam) {
+      window.history.replaceState({}, '', window.location.pathname);
+      fetch('/api/validate-magic', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ token: magicParam }),
+      })
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.ok && d.bypass) sessionStorage.setItem('arvo_bypass', d.bypass);
+        })
+        .catch(() => {});
+    }
+
     fetch('/api/token', { method: 'POST' })
       .then((r) => r.json())
       .then((d) => setApiToken(d.token ?? null))
@@ -335,6 +354,8 @@ const TestaFaktura = () => {
     setError(null);
     setResult(null);
     setGateOpen(false);
+    setFeedbackVote(null);
+    setFeedbackState('idle');
     setPhase('uploading');
 
     let t1, t2;
@@ -574,6 +595,25 @@ const TestaFaktura = () => {
     } catch {
       setReviewQueueEmailState('sent'); // non-fatal — show success anyway
     }
+  };
+
+  const submitFeedback = async (vote) => {
+    if (feedbackState !== 'idle') return;
+    setFeedbackVote(vote);
+    setFeedbackState('submitting');
+    try {
+      await fetch('/api/feedback', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          fingerprint: fingerprint ?? '',
+          supplier:    result?.extracted?.supplier,
+          category:    result?.categorized?.category,
+          vote,
+        }),
+      });
+    } catch { /* non-fatal */ }
+    setFeedbackState('sent');
   };
 
   const phaseState = (id) => {
@@ -1456,6 +1496,39 @@ const TestaFaktura = () => {
                           </Button>
                         </PartnerBlock>
                       )}
+
+                      {/* ── Savings timeline ───────────────────────── */}
+                      {adjNetSaving > 0 && !isLicensePending && (() => {
+                        const monthsAgo3  = Math.round(adjNetSaving / 4);
+                        const monthsAgo12 = adjNetSaving;
+                        return (
+                          <div style={{
+                            marginTop: 12,
+                            background: 'linear-gradient(135deg,rgba(27,110,102,.06),rgba(93,214,202,.06))',
+                            border: '1px solid rgba(27,110,102,.15)', borderRadius: 10,
+                            padding: '12px 16px',
+                          }}>
+                            <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#1B6E66', opacity: .8 }}>
+                              Kostnad för väntan
+                            </p>
+                            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                              <div>
+                                <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#DC2626', letterSpacing: '-.02em' }}>
+                                  −{Math.round(monthsAgo3).toLocaleString('sv-SE')} kr
+                                </p>
+                                <p style={{ margin: 0, fontSize: 11, color: '#5C6E68' }}>förlorat senaste 3 mån</p>
+                              </div>
+                              <div style={{ width: 1, background: '#D5E2DC', alignSelf: 'stretch' }} />
+                              <div>
+                                <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#DC2626', letterSpacing: '-.02em' }}>
+                                  −{Math.round(monthsAgo12).toLocaleString('sv-SE')} kr
+                                </p>
+                                <p style={{ margin: 0, fontSize: 11, color: '#5C6E68' }}>förlorat senaste 12 mån</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </>
                   );
                 })()}
@@ -1817,6 +1890,51 @@ const TestaFaktura = () => {
             )}
 
           </Card>
+
+          {/* ── In-app feedback ───────────────────────────────── */}
+          <div style={{
+            background: '#fff', borderRadius: 14, border: '1px solid #E8F0EC',
+            padding: '16px 22px', marginBottom: 12,
+            display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+            boxShadow: '0 1px 4px rgba(14,26,23,.05)',
+          }}>
+            {feedbackState === 'sent' ? (
+              <p style={{ margin: 0, fontSize: 13.5, color: '#1B6E66', fontWeight: 600 }}>
+                {feedbackVote === 'up' ? '✓ Tack för ditt omdöme!' : '✓ Noterat — vi förbättrar analysen!'}
+              </p>
+            ) : (
+              <>
+                <p style={{ margin: 0, fontSize: 13, color: '#5C6E68', flex: 1, minWidth: 160 }}>
+                  Stämde klassificeringen?
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => submitFeedback('up')}
+                    disabled={feedbackState !== 'idle'}
+                    style={{
+                      padding: '7px 16px', borderRadius: 100, border: '1.5px solid #D5E2DC',
+                      background: '#fff', cursor: 'pointer', fontSize: 15,
+                      opacity: feedbackState !== 'idle' ? .5 : 1,
+                      transition: 'all .15s',
+                    }}
+                    title="Ja, stämmer"
+                  >👍</button>
+                  <button
+                    onClick={() => submitFeedback('down')}
+                    disabled={feedbackState !== 'idle'}
+                    style={{
+                      padding: '7px 16px', borderRadius: 100, border: '1.5px solid #D5E2DC',
+                      background: '#fff', cursor: 'pointer', fontSize: 15,
+                      opacity: feedbackState !== 'idle' ? .5 : 1,
+                      transition: 'all .15s',
+                    }}
+                    title="Nej, stämmer inte"
+                  >👎</button>
+                </div>
+              </>
+            )}
+          </div>
+
           <NextSteps>
             <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
             <p className="sub">
