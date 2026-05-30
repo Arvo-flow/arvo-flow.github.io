@@ -76,6 +76,33 @@ function calcArvoScore(totalCost, totalSaving) {
   return Math.max(0, Math.min(100, Math.round((1 - totalSaving / totalCost) * 100)));
 }
 
+// ── Per-supplier Arvo Score ───────────────────────────────────────────────────
+function calcSupplierScore(a) {
+  if (!a.should_switch || (a.net_saving ?? 0) <= 0) return 100;
+  const pct = a.annual_cost > 0 ? Math.round((a.net_saving / a.annual_cost) * 100) : 0;
+  return Math.max(0, Math.round(100 - pct * 1.5));
+}
+
+function getScoreColor(score) {
+  if (score < 45) return '#DC2626';
+  if (score < 65) return '#D97706';
+  if (score < 80) return '#65A30D';
+  return '#1B7A6E';
+}
+
+function drawScoreGauge(doc, cx, cy, r, score, lw) {
+  const color = getScoreColor(score);
+  doc.save();
+  doc.circle(cx, cy, r).lineWidth(lw).strokeColor('#E5EFEA').stroke();
+  if (score > 0) {
+    const sa = -Math.PI / 2;
+    const ea = sa + (score / 100) * 2 * Math.PI;
+    doc.arc(cx, cy, r, sa, ea, false).lineWidth(lw).strokeColor(color).stroke();
+  }
+  doc.restore();
+  return color;
+}
+
 // ── Traffic light per supplier ────────────────────────────────────────────────
 function trafficLight(a) {
   if (!a.should_switch || (a.net_saving ?? 0) <= 0) return 'green';
@@ -224,8 +251,11 @@ function generatePortfolioPdf(analyses) {
     doc.moveTo(PAD + 90, y).lineTo(PW - PAD - 90, y).strokeColor(T.border).lineWidth(0.4).stroke();
     y += 18;
 
-    // ── Arvo Score ──
-    const SBX_H = 62;
+    // ── Arvo Score (circular gauge) ──
+    const SBX_H = 90;
+    const GR    = 26;
+    const GCX   = PAD + 16 + GR;
+    const GCY   = y + SBX_H / 2 + 4;
     doc.rect(PAD, y, W, SBX_H).fill('#F4FAF8');
     doc.rect(PAD, y, W, SBX_H).strokeColor(T.border).lineWidth(0.5).stroke();
     doc.rect(PAD, y, 3, SBX_H).fill(scoreColor);
@@ -233,14 +263,17 @@ function generatePortfolioPdf(analyses) {
        .text('ARVO SCORE', PAD + 14, y + 9, { characterSpacing: 1.2 });
     doc.fontSize(7).font('Helvetica').fillColor(T.mutedSoft)
        .text('TM', PAD + 14 + 52, y + 9);
-    doc.fontSize(30).font('Helvetica-Bold').fillColor(scoreColor)
-       .text(String(score), PAD + 14, y + 20, { continued: true, lineBreak: false });
-    doc.fontSize(10).font('Helvetica').fillColor(T.mutedSoft).text('/100');
+    drawScoreGauge(doc, GCX, GCY, GR, score, 5);
+    doc.fontSize(17).font('Helvetica-Bold').fillColor(scoreColor)
+       .text(String(score), GCX - GR, GCY - 12, { width: GR * 2, align: 'center', lineBreak: false });
+    doc.fontSize(7).font('Helvetica').fillColor(T.mutedSoft)
+       .text('/100', GCX - GR, GCY + 6, { width: GR * 2, align: 'center', lineBreak: false });
     const scoreText = score >= 85
       ? 'Er avtalsportfolj ar valoptimerad.'
       : 'Er avtalsportfolj presterar under branschstandard (85+) for bolag av er storlek.';
+    const txtX = GCX + GR + 16;
     doc.fontSize(8.5).font('Helvetica').fillColor(T.inkSoft)
-       .text(scoreText, PAD + 110, y + 22, { width: W - 124, lineGap: 2 });
+       .text(scoreText, txtX, y + 36, { width: W - (txtX - PAD) - 10, lineGap: 2 });
     y += SBX_H + 20;
 
     // ── Leverantorsanalys rubrik ──
@@ -261,16 +294,17 @@ function generatePortfolioPdf(analyses) {
       doc.rect(PAD, y, W, CARD_H).strokeColor(T.border).lineWidth(0.4).stroke();
       doc.rect(PAD, y, 3, CARD_H).fill(lColor);
 
-      doc.save();
-      doc.circle(PAD + 17, y + 11, 4).fill(lColor);
-      doc.restore();
+      const suppScore = calcSupplierScore(a);
+      const suppColor = drawScoreGauge(doc, PAD + 22, y + 30, 14, suppScore, 3.5);
+      doc.fontSize(7.5).font('Helvetica-Bold').fillColor(suppColor)
+         .text(String(suppScore), PAD + 8, y + 25, { width: 28, align: 'center', lineBreak: false });
 
       doc.fontSize(10.5).font('Helvetica-Bold').fillColor(T.ink)
-         .text(name, PAD + 30, y + 5, { width: W - 130 });
+         .text(name, PAD + 44, y + 5, { width: W - 154 });
       doc.fontSize(7).font('Helvetica').fillColor(T.mutedSoft)
-         .text(catLabel(a.category) + '  |  ' + LIGHT_LABEL[light], PAD + 30, y + 19, { width: W - 130 });
+         .text(catLabel(a.category) + '  |  ' + LIGHT_LABEL[light], PAD + 44, y + 20, { width: W - 154 });
       doc.fontSize(7).font('Helvetica').fillColor(T.mutedSoft)
-         .text(aiDiagnos(a), PAD + 30, y + 31, { width: W - 130, lineGap: 1 });
+         .text(aiDiagnos(a), PAD + 44, y + 32, { width: W - 154, lineGap: 1 });
 
       if (hasSav) {
         doc.fontSize(6.5).font('Helvetica-Bold').fillColor(T.mutedSoft)
@@ -305,48 +339,62 @@ function generatePortfolioPdf(analyses) {
       y += 16;
     }
 
-    // ── Nasta steg ──
+    // ── Nasta steg (3-kolumn horisontell) ──
     doc.fontSize(7).font('Helvetica-Bold').fillColor(T.brand)
        .text('NASTA STEG', PAD, y, { characterSpacing: 1.5 });
-    y += 14;
+    doc.fontSize(17).font('Helvetica-Bold').fillColor(T.ink)
+       .text('Lat oss hamta hem pengarna', PW - PAD - 240, y - 1, { width: 240, align: 'right' });
+    y += 20;
 
-    // White CTA card
-    const CTACARD_H = 96;
-    doc.rect(PAD, y, W, CTACARD_H).fill('#FFFFFF');
-    doc.rect(PAD, y, W, CTACARD_H).strokeColor(T.border).lineWidth(0.5).stroke();
-    const cardGrad = doc.linearGradient(PAD, y, PAD + W, y + CTACARD_H);
-    cardGrad.stop(0, T.gradTop); cardGrad.stop(1, T.gradBot);
-    doc.rect(PAD, y, W, 3).fill(cardGrad);
+    const steps = [
+      { num: '01', head: 'Ni ger oss fullmakt',
+        body: 'Vi tar dialogen med era leverantorer - ni behoover inte lyfta ett finger.' },
+      { num: '02', head: 'Vi omforhandlar',
+        body: 'Samma tjanster, till ratt pris. Inga avbrott, inga byten om ni inte vill.' },
+      { num: '03', head: 'No Cure, No Pay',
+        body: 'Vi tar 20 % av det vi faktiskt sparar. Sparar vi inget, kostar vi inget.' },
+    ];
 
-    // Title + TM superscript
-    const ctaTitleText = 'Las upp er fullstandiga Arvo Score';
-    doc.fontSize(13).font('Helvetica-Bold').fillColor(T.ink);
-    const ctaTitleW = doc.widthOfString(ctaTitleText);
-    doc.text(ctaTitleText, PAD + 20, y + 16, { lineBreak: false });
+    const COL_W = (W - 16) / 3;
+    const BALL  = 13;
+    steps.forEach((step, i) => {
+      const cx = PAD + i * (COL_W + 8) + BALL + 1;
+      const cy = y + BALL + 1;
+      const cg = doc.linearGradient(cx - BALL, cy - BALL, cx + BALL, cy + BALL);
+      cg.stop(0, T.gradTop); cg.stop(1, T.gradBot);
+      doc.save();
+      doc.circle(cx, cy, BALL).fillColor(cg).fill();
+      doc.restore();
+      doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#fff')
+         .text(step.num, cx - BALL, cy - 7, { width: BALL * 2, align: 'center', lineBreak: false });
+
+      const tx = PAD + i * (COL_W + 8) + BALL * 2 + 8;
+      doc.fontSize(9.5).font('Helvetica-Bold').fillColor(T.ink)
+         .text(step.head, tx, y + 3, { width: COL_W - BALL * 2 - 8 });
+      doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft)
+         .text(step.body, tx, y + 18, { width: COL_W - BALL * 2 - 8, lineGap: 1.5 });
+    });
+    y += 60;
+
+    // ── Statistikrad ──
     doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft)
-       .text('TM', PAD + 20 + ctaTitleW + 2, y + 13, { lineBreak: false });
-
-    // Body text
-    doc.fontSize(8.5).font('Helvetica').fillColor(T.mutedSoft)
        .text(
-         'Koppla ert Fortnox- eller Visma-konto for att automatiskt importera era leverantorsfakturor och fa er kompletta portfoljanalys.',
-         PAD + 20, y + 36, { width: W - 200, lineGap: 1.5 }
+         auto.length + ' analyserade fakturor  .  ' + switchCount + ' leverantorer med besparingspotential  .  Arvo tar 20 % av realiserad besparing',
+         PAD, y, { width: W, align: 'center' }
        );
+    y += 18;
 
-    // Gradient pill button (right side, vertically centered)
-    const BTN_W  = 150;
-    const BTN_H  = 30;
-    const btnX   = PAD + W - BTN_W - 16;
-    const btnY   = y + CTACARD_H / 2 - BTN_H / 2;
-    const btnGrd = doc.linearGradient(btnX, btnY, btnX + BTN_W, btnY + BTN_H);
-    btnGrd.stop(0, T.gradTop); btnGrd.stop(1, T.gradBot);
-    doc.roundedRect(btnX, btnY, BTN_W, BTN_H, BTN_H / 2).fill(btnGrd);
-    doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#FFFFFF')
-       .text('Koppla Fortnox / Visma ->', btnX, btnY + (BTN_H - 9) / 2, { width: BTN_W, align: 'center', lineBreak: false });
-
-    y += CTACARD_H + 16;
-
-    pageFooter(doc, PAD, W, PW, PH);
+    // ── Gradient CTA-block ──
+    const CTA_H = 64;
+    const ctaG  = doc.linearGradient(0, y, PW, y + CTA_H);
+    ctaG.stop(0, T.gradTop); ctaG.stop(1, T.gradBot);
+    doc.rect(0, y, PW, CTA_H).fill(ctaG);
+    doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.65)')
+       .text('REDO ATT REALISERA BESPARINGEN?', PAD, y + 10, { width: W, align: 'center', characterSpacing: 1.2 });
+    doc.fontSize(20).font('Helvetica-Bold').fillColor('#fff')
+       .text('arvoflow.se', PAD, y + 24, { width: W, align: 'center' });
+    doc.fontSize(8.5).font('Helvetica').fillColor('rgba(255,255,255,0.75)')
+       .text('hej@arvoflow.se', PAD, y + 44, { width: W, align: 'center' });
 
     doc.end();
   });
