@@ -4,8 +4,7 @@
   "outputDirectory": "build",
   "framework": null,
   "crons": [
-    { "path": "/api/cron/update-fx-rate",   "schedule": "0 6 * * *"   },
-    { "path": "/api/cron/batch-process",    "schedule": "*/2 * * * *" }
+    { "path": "/api/cron/update-fx-rate", "schedule": "0 6 * * *" }
   ],
   "functions": {
     "api/test-invoice.mjs": {
