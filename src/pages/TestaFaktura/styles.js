@@ -1448,6 +1448,109 @@ export const ScoreDiag = styled.div`
   }
 `;
 
+const revealFade = keyframes`
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+`;
+
+export const ScoreRevealCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 24px 28px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+  border: 2px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
+  margin-bottom: 16px;
+  box-shadow: 0 2px 20px rgba(0,0,0,.06);
+
+  .gauge-wrap {
+    flex-shrink: 0;
+    position: relative;
+    width: 120px;
+    height: 120px;
+  }
+  .gauge-svg {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+  }
+  .num-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .score-val {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    font-feature-settings: "tnum";
+    color: var(--diag-color);
+  }
+  .score-denom {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.4;
+    color: var(--diag-color);
+    margin-top: 1px;
+  }
+
+  .content {
+    flex: 1;
+    min-width: 0;
+  }
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: ${({ theme }) => theme.color.muted};
+    margin-bottom: 8px;
+  }
+  .level-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 13px 5px 9px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    animation: ${revealFade} 0.45s ease both;
+    animation-delay: 1.65s;
+  }
+  .level-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--diag-color);
+  }
+  .insight {
+    font-size: 14.5px;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    color: ${({ theme }) => theme.color.ink};
+    margin: 0;
+    animation: ${revealFade} 0.45s ease both;
+    animation-delay: 2.05s;
+  }
+
+  @media (max-width: 520px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 18px;
+    .gauge-wrap { width: 100px; height: 100px; }
+    .score-val { font-size: 34px; }
+  }
+`;
+
 export const EmailGate = styled.div`
   margin-top: 20px;
   padding: 20px 24px;

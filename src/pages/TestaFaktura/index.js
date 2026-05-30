@@ -11,7 +11,7 @@ import {
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
-  Reasoning, LicenseOverageNote, TierOptAccordion, NextSteps, ScoreDiag, EmailGate,
+  Reasoning, LicenseOverageNote, TierOptAccordion, NextSteps, ScoreDiag, ScoreRevealCard, EmailGate,
   ModalOverlay, ModalCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
 } from './styles';
@@ -57,6 +57,67 @@ function useCountUp(target, duration = 1600) {
     return () => { if (raf) cancelAnimationFrame(raf); };
   }, [target, duration]);
   return val;
+}
+
+function useRevealedScore(target, delay = 200) {
+  const [gaugeReady, setGaugeReady] = React.useState(false);
+  const [score, setScore] = React.useState(0);
+  React.useEffect(() => {
+    setGaugeReady(false);
+    setScore(0);
+    if (!target) return;
+    const t = setTimeout(() => {
+      setGaugeReady(true);
+      const duration = 1450;
+      const t0 = performance.now();
+      let raf;
+      const tick = (now) => {
+        const p = Math.min((now - t0) / duration, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        setScore(Math.round(target * ease));
+        if (p < 1) { raf = requestAnimationFrame(tick); } else { setScore(target); }
+      };
+      raf = requestAnimationFrame(tick);
+      return () => { if (raf) cancelAnimationFrame(raf); };
+    }, delay);
+    return () => clearTimeout(t);
+  }, [target, delay]);
+  return { score, gaugeReady };
+}
+
+const REVEAL_GAUGE_R = 52;
+const REVEAL_GAUGE_C = 2 * Math.PI * REVEAL_GAUGE_R;
+
+function ScoreReveal({ diagScore, diagC, diagInsight }) {
+  const gaugeDashLg = (diagScore / 100) * REVEAL_GAUGE_C;
+  const { score: animScore, gaugeReady } = useRevealedScore(diagScore, 180);
+  return (
+    <ScoreRevealCard style={{ '--diag-color': diagC.dot }}>
+      <div className="gauge-wrap">
+        <svg className="gauge-svg" width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="9" />
+          <circle
+            cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none"
+            stroke={diagC.dot} strokeWidth="9" strokeLinecap="round"
+            strokeDasharray={gaugeReady ? `${gaugeDashLg} ${REVEAL_GAUGE_C}` : `0 ${REVEAL_GAUGE_C}`}
+            style={{ transform: 'rotate(-90deg)', transformOrigin: '60px 60px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
+          />
+        </svg>
+        <div className="num-overlay">
+          <span className="score-val">{animScore}</span>
+          <span className="score-denom">/100</span>
+        </div>
+      </div>
+      <div className="content">
+        <div className="eyebrow">Arvo Score™</div>
+        <div className="level-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
+          <span className="level-dot" />
+          {diagC.label}
+        </div>
+        <p className="insight">{diagInsight}</p>
+      </div>
+    </ScoreRevealCard>
+  );
 }
 
 const MAX_PDF_SIZE   = 3 * 1024 * 1024;
@@ -1228,34 +1289,7 @@ const TestaFaktura = () => {
               <>
                 {(result.recommendation?.clickRateAnalysis || (result.recommendation?.shouldSwitch && (result.recommendation?.netSaving ?? 0) > 0)) && (
                   <>
-                    <ScoreDiag style={{ '--diag-color': diagC.dot }}>
-                      <div className="gauge-wrap">
-                        <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
-                          <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
-                          <circle
-                            cx="30" cy="30" r={GAUGE_R} fill="none"
-                            stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
-                            strokeDasharray={`${gaugeDash} ${GAUGE_C}`}
-                            style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1s ease' }}
-                          />
-                        </svg>
-                        <div className="gauge-num" style={{ color: diagC.dot }}>
-                          <span className="gauge-val">{diagScore}</span>
-                          <span className="gauge-denom">/100</span>
-                        </div>
-                      </div>
-                      <div className="diag-body">
-                        <div className="diag-top">
-                          <span className="diag-score-label">Arvo Score</span>
-                          <span className="diag-sep">·</span>
-                          <span className="diag-status">
-                            <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
-                            <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
-                          </span>
-                        </div>
-                        <p className="diag-text">{diagInsight}</p>
-                      </div>
-                    </ScoreDiag>
+                    <ScoreReveal diagScore={diagScore} diagC={diagC} diagInsight={diagInsight} />
                     <Reasoning>
                       <span className="kicker">Vad analysen visar</span>
                       <p>{result.recommendation.reasoning}</p>
@@ -1386,34 +1420,7 @@ const TestaFaktura = () => {
               </>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
-                <ScoreDiag style={{ '--diag-color': diagC.dot }}>
-                  <div className="gauge-wrap">
-                    <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
-                      <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
-                      <circle
-                        cx="30" cy="30" r={GAUGE_R} fill="none"
-                        stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
-                        strokeDasharray={`${gaugeDash} ${GAUGE_C}`}
-                        style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1s ease' }}
-                      />
-                    </svg>
-                    <div className="gauge-num" style={{ color: diagC.dot }}>
-                      <span className="gauge-val">{diagScore}</span>
-                      <span className="gauge-denom">/100</span>
-                    </div>
-                  </div>
-                  <div className="diag-body">
-                    <div className="diag-top">
-                      <span className="diag-score-label">Arvo Score</span>
-                      <span className="diag-sep">·</span>
-                      <span className="diag-status">
-                        <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
-                        <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
-                      </span>
-                    </div>
-                    <p className="diag-text">{diagInsight}</p>
-                  </div>
-                </ScoreDiag>
+                <ScoreReveal diagScore={diagScore} diagC={diagC} diagInsight={diagInsight} />
                 {(() => {
                   const isRealPrice = _effectiveMeta.isRealPrice;
                   const isLicensePending = result.categorized.licensePending;
@@ -1494,34 +1501,7 @@ const TestaFaktura = () => {
               </NoSwitchBlock>
             ) : (
               <>
-                <ScoreDiag style={{ '--diag-color': diagC.dot }}>
-                  <div className="gauge-wrap">
-                    <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
-                      <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
-                      <circle
-                        cx="30" cy="30" r={GAUGE_R} fill="none"
-                        stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
-                        strokeDasharray={`${gaugeDash} ${GAUGE_C}`}
-                        style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1s ease' }}
-                      />
-                    </svg>
-                    <div className="gauge-num" style={{ color: diagC.dot }}>
-                      <span className="gauge-val">{diagScore}</span>
-                      <span className="gauge-denom">/100</span>
-                    </div>
-                  </div>
-                  <div className="diag-body">
-                    <div className="diag-top">
-                      <span className="diag-score-label">Arvo Score</span>
-                      <span className="diag-sep">·</span>
-                      <span className="diag-status">
-                        <Icon name="check" size={13} color={diagC.dot} stroke={2} />
-                        <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
-                      </span>
-                    </div>
-                    <p className="diag-text">{diagInsight}</p>
-                  </div>
-                </ScoreDiag>
+                <ScoreReveal diagScore={diagScore} diagC={diagC} diagInsight={diagInsight} />
                 {result.recommendation?.monitoringNote && (
                   <NoSwitchBlock style={{ marginTop: 0 }}>
                     {result.recommendation.monitoringNote}
