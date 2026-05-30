@@ -34,8 +34,13 @@ const RATE_LIMIT_MAX        = 5;                  // Max analyser per IP per 24h
 const RATE_WINDOW_TTL       = 24 * 60 * 60;      // 24 timmar
 
 // ── IP-baserad rate limiting ──────────────────────────────────────────────────
+const WHITELISTED_IPS = new Set([
+  '83.249.237.58', // owner mobile
+]);
+
 async function checkRateLimit(kv, ip) {
   if (!kv || !ip) return false;
+  if (WHITELISTED_IPS.has(ip)) return false;
   const key = `ratelimit:ip:${createHash('sha256').update(ip).digest('hex').slice(0, 24)}`;
   try {
     const count = (await kv.get(key)) ?? 0;
