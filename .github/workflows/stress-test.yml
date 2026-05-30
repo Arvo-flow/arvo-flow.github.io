@@ -1,6 +1,7 @@
 name: Invoice Stress Test
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'agents/test-invoice/**'
