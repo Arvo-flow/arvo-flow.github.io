@@ -1497,38 +1497,6 @@ const TestaFaktura = () => {
                         </PartnerBlock>
                       )}
 
-                      {/* ── Savings timeline ───────────────────────── */}
-                      {adjNetSaving > 0 && !isLicensePending && (() => {
-                        const monthsAgo3  = Math.round(adjNetSaving / 4);
-                        const monthsAgo12 = adjNetSaving;
-                        return (
-                          <div style={{
-                            marginTop: 12,
-                            background: 'linear-gradient(135deg,rgba(27,110,102,.06),rgba(93,214,202,.06))',
-                            border: '1px solid rgba(27,110,102,.15)', borderRadius: 10,
-                            padding: '12px 16px',
-                          }}>
-                            <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#1B6E66', opacity: .8 }}>
-                              Kostnad för väntan
-                            </p>
-                            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                              <div>
-                                <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#DC2626', letterSpacing: '-.02em' }}>
-                                  −{Math.round(monthsAgo3).toLocaleString('sv-SE')} kr
-                                </p>
-                                <p style={{ margin: 0, fontSize: 11, color: '#5C6E68' }}>förlorat senaste 3 mån</p>
-                              </div>
-                              <div style={{ width: 1, background: '#D5E2DC', alignSelf: 'stretch' }} />
-                              <div>
-                                <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#DC2626', letterSpacing: '-.02em' }}>
-                                  −{Math.round(monthsAgo12).toLocaleString('sv-SE')} kr
-                                </p>
-                                <p style={{ margin: 0, fontSize: 11, color: '#5C6E68' }}>förlorat senaste 12 mån</p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()}
                     </>
                   );
                 })()}
