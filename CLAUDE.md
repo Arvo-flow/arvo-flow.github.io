@@ -12,10 +12,32 @@
 (mobil + bredband) att hamna i review_queue. Stress-testet hade fångat detta OM det körts.
 Golden master i `scripts/stress-test.mjs` definierar förväntad route + minConfidence per faktura.
 
+Testet täcker 80 fakturor (74 syntetiska i repot + 6 riktiga kundfakturor lokalt).
+GitHub Actions kör automatiskt mot de 74 syntetiska vid push till AI-relaterade filer.
+
 ```bash
 # Kör ALLTID detta innan push av ovanstående filer:
 node scripts/stress-test.mjs
 ```
+
+---
+
+## Ny kundfaktura-process (OBLIGATORISK)
+
+**Innan en ny faktura-typ läggs ut i produktion:**
+
+1. Kopiera fakturan till `test-pdfs/customer-<leverantör>.pdf`
+2. Kör extraktorn: `node scripts/stress-test.mjs customer-<leverantör>.pdf`
+3. Granska output — verifiera att route=auto och att belopp/seatCount är korrekta
+4. Lägg till som golden master i `scripts/stress-test.mjs` (i blocket för kundfakturor)
+5. Kör hela stresstest: `node scripts/stress-test.mjs` — alla 80 måste passera
+6. Commit och push (customer-*.pdf committas INTE — de är gitignorerade)
+
+**Aldrig:** Starta produktion med en ny faktura-typ utan ett godkänt golden master.
+
+**CI-täckning:** `.github/workflows/stress-test.yml` kör automatiskt de 74 syntetiska
+testfakturorna vid ändring av `agents/test-invoice/**`, `api/test-invoice.mjs` eller
+`scripts/stress-test.mjs`. Kräver `ANTHROPIC_API_KEY` som GitHub Secret.
 
 ---
 
@@ -162,9 +184,29 @@ https://arvoflow.se/testa-faktura?bypass=dev
 
 ---
 
+## Implementerade kvalitetsnivåer
+
+### Nivå 1 — Postgres-lager
+- `lib/invoice-store.js` — lagrar varje `auto`-analys i `invoice_analyses`-tabellen
+- `api/test-invoice.mjs` anropar `storeAnalysis()` fire-and-forget efter varje lyckad analys
+- Fingerprint hashas server-side (SHA-256) innan lagring för GDPR-säkerhet
+- `scripts/migrate.mjs` — ny tabell `invoice_analyses` med index på (fingerprint, created_at)
+
+### Nivå 2 — Supplier Fingerprinting
+- `lib/supplier-fingerprints.js` — fullt implementerat
+- Pre-routing confidence boost: kända leverantörer med ≥0.70 boostar till threshold
+- Post-kategorisering fingerprint-validering: mismatch → review_queue med alert
+
+### Nivå 3 — Portföljvy
+- `api/invoice-history.mjs` — GET /api/invoice-history?fingerprint=<fp>
+- `src/pages/Portfolio/index.js` — React-sida med samlade analyser per browser-fingerprint
+- Route: `/portfolio` i ArvoFlow.js
+- Visar: totalt analyserade, total årskkostnad, total nettobesparing, per-leverantörs-kort + Fortnox/Visma-CTA
+
+---
+
 ## Nästa steg (planerat)
 
-1. **CLAUDE.md** — skapad (denna fil)
-2. **review_queue-test** — behöver en skannad/suddig faktura för att verifiera confidence < 0.70
-3. **Supplier fingerprints (Sniper-strategi)** — Telia och Microsoft som första två, byggs om basmotorn visar tveksamhet
-4. **Fortnox-integration** — om 2–3 månader när bolaget är registrerat
+1. **review_queue-test** — behöver en skannad/suddig faktura för att verifiera confidence < 0.70
+2. **Fortnox-integration** — om 2–3 månader när bolaget är registrerat
+3. **Portföljvy v2** — visa segment-coverage (8 segment), Arvo Score™ aggregat för hela portföljen

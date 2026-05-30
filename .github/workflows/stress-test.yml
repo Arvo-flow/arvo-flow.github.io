@@ -1,0 +1,47 @@
+name: Invoice Stress Test
+
+on:
+  push:
+    paths:
+      - 'agents/test-invoice/**'
+      - 'api/test-invoice.mjs'
+      - 'scripts/stress-test.mjs'
+      - 'lib/batch-processor.js'
+  pull_request:
+    paths:
+      - 'agents/test-invoice/**'
+      - 'api/test-invoice.mjs'
+      - 'scripts/stress-test.mjs'
+      - 'lib/batch-processor.js'
+
+jobs:
+  stress-test:
+    name: Run invoice stress test (synthetic PDFs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run stress test
+        run: node scripts/stress-test.mjs
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Upload results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-test-failure-${{ github.run_id }}
+          path: |
+            scripts/stress-test.mjs
+            agents/test-invoice/extract.js
+          retention-days: 7

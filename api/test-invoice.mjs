@@ -21,6 +21,7 @@ import { getEurSekRate, FALLBACK_RATE_EUR_SEK, getSekRate, FALLBACK_RATE_USD_SEK
 import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity } from '../lib/sanity-verifier.js';
+import { storeAnalysis } from '../lib/invoice-store.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
@@ -1010,6 +1011,18 @@ export default async function handler(req, res) {
         cost_usd: cost.toFixed(4),
       }));
     }
+
+    // Fire-and-forget — lagrar fullständig analys för portföljvyn.
+    storeAnalysis({
+      fingerprint: typeof fingerprint === 'string' ? fingerprint : null,
+      pdfHash,
+      extracted,
+      categorized,
+      recommendation: { ...recommendation, grossSaving, netSaving },
+      route: 'auto',
+      industry,
+      employees: employeesNum,
+    }).catch((err) => console.error('[test-invoice] storeAnalysis failed:', err.message));
 
     // Fire-and-forget — lagrar anonymiserad datapunkt för branschindex.
     // Felet får aldrig blockera svaret till kunden.

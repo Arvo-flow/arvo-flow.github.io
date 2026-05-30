@@ -30,8 +30,9 @@ yarn-error.log*
 agents/orchestrator/data/*
 !agents/orchestrator/data/.gitkeep
 
-# Test invoices — binary files, may contain sensitive business data
-test-pdfs/*.pdf
+# Test invoices — riktiga kundfakturor med affärsdata hålls utanför repot.
+# Syntetiska testfakturor (allt utom customer-*) committas för CI.
+test-pdfs/customer-*.pdf
 
 # Local env
 .env
