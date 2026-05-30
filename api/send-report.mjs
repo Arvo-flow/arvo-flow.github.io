@@ -173,7 +173,7 @@ function generatePortfolioPdf(analyses) {
     const PW     = 595.28;
     const PH     = 841.89;
     const W      = PW - PAD * 2;
-    const CARD_H = 72;
+    const CARD_H = 60;
 
     // >3 suppliers: analysis page 1, next steps page 2
     const useTwoPages = sorted.length > 3;
@@ -244,11 +244,9 @@ function generatePortfolioPdf(analyses) {
     y += SBX_H + 20;
 
     // ── Leverantorsanalys rubrik ──
-    doc.fontSize(7).font('Helvetica-Bold').fillColor(T.brand)
+    doc.fontSize(7).font('Helvetica-Bold').fillColor(T.mutedSoft)
        .text('LEVERANTORSANALYS', PAD, y, { characterSpacing: 1.5 });
-    doc.fontSize(15).font('Helvetica-Bold').fillColor(T.ink)
-       .text('De storsta lackagen', PW - PAD - 200, y - 1, { width: 200, align: 'right' });
-    y += 18;
+    y += 12;
 
     // ── Leverantorskort ──
     for (const a of sorted) {
@@ -264,26 +262,24 @@ function generatePortfolioPdf(analyses) {
       doc.rect(PAD, y, 3, CARD_H).fill(lColor);
 
       doc.save();
-      doc.circle(PAD + 17, y + 14, 4).fill(lColor);
+      doc.circle(PAD + 17, y + 11, 4).fill(lColor);
       doc.restore();
 
-      doc.fontSize(11).font('Helvetica-Bold').fillColor(T.ink)
-         .text(name, PAD + 30, y + 7, { width: W - 130 });
-      doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft)
-         .text(catLabel(a.category), PAD + 30, y + 21);
-      doc.fontSize(7.5).font('Helvetica-Bold').fillColor(lColor)
-         .text(LIGHT_LABEL[light], PAD + 30, y + 31);
-      doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft)
-         .text('Arvo AI: ' + aiDiagnos(a), PAD + 30, y + 42, { width: W - 130, lineGap: 1 });
+      doc.fontSize(10.5).font('Helvetica-Bold').fillColor(T.ink)
+         .text(name, PAD + 30, y + 5, { width: W - 130 });
+      doc.fontSize(7).font('Helvetica').fillColor(T.mutedSoft)
+         .text(catLabel(a.category) + '  |  ' + LIGHT_LABEL[light], PAD + 30, y + 19, { width: W - 130 });
+      doc.fontSize(7).font('Helvetica').fillColor(T.mutedSoft)
+         .text(aiDiagnos(a), PAD + 30, y + 31, { width: W - 130, lineGap: 1 });
 
       if (hasSav) {
         doc.fontSize(6.5).font('Helvetica-Bold').fillColor(T.mutedSoft)
-           .text('BESPARING/AR', PW - PAD - 92, y + 9, { width: 92, align: 'right', characterSpacing: 0.4 });
+           .text('BESPARING/AR', PW - PAD - 92, y + 7, { width: 92, align: 'right', characterSpacing: 0.4 });
         doc.fontSize(12).font('Helvetica-Bold').fillColor(T.brand)
-           .text('-' + formatKr(a.net_saving), PW - PAD - 92, y + 23, { width: 92, align: 'right' });
+           .text('-' + formatKr(a.net_saving), PW - PAD - 92, y + 20, { width: 92, align: 'right' });
       } else {
         doc.fontSize(9).font('Helvetica-Bold').fillColor(T.brand)
-           .text('Optimerat', PW - PAD - 75, y + 28, { width: 75, align: 'right' });
+           .text('Optimerat', PW - PAD - 75, y + 23, { width: 75, align: 'right' });
       }
 
       y += CARD_H + 6;
@@ -309,62 +305,48 @@ function generatePortfolioPdf(analyses) {
       y += 16;
     }
 
-    // ── Nasta steg (3-kolumn horisontell) ──
+    // ── Nasta steg ──
     doc.fontSize(7).font('Helvetica-Bold').fillColor(T.brand)
        .text('NASTA STEG', PAD, y, { characterSpacing: 1.5 });
-    doc.fontSize(17).font('Helvetica-Bold').fillColor(T.ink)
-       .text('Lat oss hamta hem pengarna', PW - PAD - 240, y - 1, { width: 240, align: 'right' });
-    y += 20;
+    y += 14;
 
-    const steps = [
-      { num: '01', head: 'Ni ger oss fullmakt',
-        body: 'Vi tar dialogen med era leverantorer - ni behoover inte lyfta ett finger.' },
-      { num: '02', head: 'Vi omforhandlar',
-        body: 'Samma tjanster, till ratt pris. Inga avbrott, inga byten om ni inte vill.' },
-      { num: '03', head: 'No Cure, No Pay',
-        body: 'Vi tar 20 % av det vi faktiskt sparar. Sparar vi inget, kostar vi inget.' },
-    ];
+    // White CTA card
+    const CTACARD_H = 96;
+    doc.rect(PAD, y, W, CTACARD_H).fill('#FFFFFF');
+    doc.rect(PAD, y, W, CTACARD_H).strokeColor(T.border).lineWidth(0.5).stroke();
+    const cardGrad = doc.linearGradient(PAD, y, PAD + W, y + CTACARD_H);
+    cardGrad.stop(0, T.gradTop); cardGrad.stop(1, T.gradBot);
+    doc.rect(PAD, y, W, 3).fill(cardGrad);
 
-    const COL_W = (W - 16) / 3;
-    const BALL  = 13;
-    steps.forEach((step, i) => {
-      const cx = PAD + i * (COL_W + 8) + BALL + 1;
-      const cy = y + BALL + 1;
-      const cg = doc.linearGradient(cx - BALL, cy - BALL, cx + BALL, cy + BALL);
-      cg.stop(0, T.gradTop); cg.stop(1, T.gradBot);
-      doc.save();
-      doc.circle(cx, cy, BALL).fillColor(cg).fill();
-      doc.restore();
-      doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#fff')
-         .text(step.num, cx - BALL, cy - 7, { width: BALL * 2, align: 'center', lineBreak: false });
-
-      const tx = PAD + i * (COL_W + 8) + BALL * 2 + 8;
-      doc.fontSize(9.5).font('Helvetica-Bold').fillColor(T.ink)
-         .text(step.head, tx, y + 3, { width: COL_W - BALL * 2 - 8 });
-      doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft)
-         .text(step.body, tx, y + 18, { width: COL_W - BALL * 2 - 8, lineGap: 1.5 });
-    });
-    y += 60;
-
-    // ── Statistikrad ──
+    // Title + TM superscript
+    const ctaTitleText = 'Las upp er fullstandiga Arvo Score';
+    doc.fontSize(13).font('Helvetica-Bold').fillColor(T.ink);
+    const ctaTitleW = doc.widthOfString(ctaTitleText);
+    doc.text(ctaTitleText, PAD + 20, y + 16, { lineBreak: false });
     doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft)
-       .text(
-         auto.length + ' analyserade fakturor  .  ' + switchCount + ' leverantorer med besparingspotential  .  Arvo tar 20 % av realiserad besparing',
-         PAD, y, { width: W, align: 'center' }
-       );
-    y += 18;
+       .text('TM', PAD + 20 + ctaTitleW + 2, y + 13, { lineBreak: false });
 
-    // ── Gradient CTA-block ──
-    const CTA_H = 64;
-    const ctaG  = doc.linearGradient(0, y, PW, y + CTA_H);
-    ctaG.stop(0, T.gradTop); ctaG.stop(1, T.gradBot);
-    doc.rect(0, y, PW, CTA_H).fill(ctaG);
-    doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.65)')
-       .text('REDO ATT REALISERA BESPARINGEN?', PAD, y + 10, { width: W, align: 'center', characterSpacing: 1.2 });
-    doc.fontSize(20).font('Helvetica-Bold').fillColor('#fff')
-       .text('arvoflow.se', PAD, y + 24, { width: W, align: 'center' });
-    doc.fontSize(8.5).font('Helvetica').fillColor('rgba(255,255,255,0.75)')
-       .text('hej@arvoflow.se', PAD, y + 44, { width: W, align: 'center' });
+    // Body text
+    doc.fontSize(8.5).font('Helvetica').fillColor(T.mutedSoft)
+       .text(
+         'Koppla ert Fortnox- eller Visma-konto for att automatiskt importera era leverantorsfakturor och fa er kompletta portfoljanalys.',
+         PAD + 20, y + 36, { width: W - 200, lineGap: 1.5 }
+       );
+
+    // Gradient pill button (right side, vertically centered)
+    const BTN_W  = 150;
+    const BTN_H  = 30;
+    const btnX   = PAD + W - BTN_W - 16;
+    const btnY   = y + CTACARD_H / 2 - BTN_H / 2;
+    const btnGrd = doc.linearGradient(btnX, btnY, btnX + BTN_W, btnY + BTN_H);
+    btnGrd.stop(0, T.gradTop); btnGrd.stop(1, T.gradBot);
+    doc.roundedRect(btnX, btnY, BTN_W, BTN_H, BTN_H / 2).fill(btnGrd);
+    doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#FFFFFF')
+       .text('Koppla Fortnox / Visma ->', btnX, btnY + (BTN_H - 9) / 2, { width: BTN_W, align: 'center', lineBreak: false });
+
+    y += CTACARD_H + 16;
+
+    pageFooter(doc, PAD, W, PW, PH);
 
     doc.end();
   });
