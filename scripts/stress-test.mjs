@@ -90,6 +90,80 @@ const GOLDEN = [
     ],
   },
 
+  // ── Riktiga kundfakturor — regression mot faktiska kundinladdningar ─────────────────────────
+  // Dessa måste stå FÖRE generiska mönster (telia, microsoft, ricoh) som annars träffar dem.
+  // Värden fastställda 2026-05-30 med CONFIDENCE_THRESHOLD=0.70.
+  {
+    match: /customer-telia/i,
+    route:         'auto',
+    minConfidence: 0.70,
+    checks: [
+      { label: 'supplier innehåller Telia',            fn: (e) => /telia/i.test(e.supplier ?? '') },
+      { label: 'seatCount === 45',                     fn: (e) => e.seatCount === 45 },
+      { label: 'recurringAmount === 22 410 kr',        fn: (e) => e.recurringAmount === 22_410 },
+      { label: 'annualCost === 268 920 kr',            fn: (e) => e.annualCost === 268_920 },
+      { label: 'billingPeriod monthly',                fn: (e) => e.billingPeriod === 'monthly' },
+      { label: 'har variable_usage (roaming)',         fn: (e) => (e.lineItems ?? []).some(l => l.type === 'variable_usage') },
+    ],
+  },
+  {
+    match: /customer-bahnhof/i,
+    route:         'auto',
+    minConfidence: 0.70,
+    checks: [
+      { label: 'supplier innehåller Bahnhof',          fn: (e) => /bahnhof/i.test(e.supplier ?? '') },
+      { label: 'annualCost === 43 788 kr',             fn: (e) => e.annualCost === 43_788 },
+      { label: 'recurringAmount === 3 649 kr',         fn: (e) => e.recurringAmount === 3_649 },
+      { label: 'billingPeriod monthly',                fn: (e) => e.billingPeriod === 'monthly' },
+    ],
+  },
+  {
+    match: /customer-salesforce/i,
+    route:         'auto',
+    minConfidence: 0.70,
+    checks: [
+      { label: 'supplier innehåller Salesforce',       fn: (e) => /salesforce/i.test(e.supplier ?? '') },
+      { label: 'seatCount === 25',                     fn: (e) => e.seatCount === 25 },
+      { label: 'annualCost === 382 500 kr',            fn: (e) => e.annualCost === 382_500 },
+      { label: 'billingPeriod annual (årsavi)',         fn: (e) => e.billingPeriod === 'annual' },
+    ],
+  },
+  {
+    match: /customer-fortnox/i,
+    route:         'auto',
+    minConfidence: 0.70,
+    checks: [
+      { label: 'supplier innehåller Fortnox',          fn: (e) => /fortnox/i.test(e.supplier ?? '') },
+      { label: 'seatCount === 60 (max från Kvitto & Utlägg)', fn: (e) => e.seatCount === 60 },
+      { label: 'recurringAmount === 4 728 kr',         fn: (e) => e.recurringAmount === 4_728 },
+      { label: 'annualCost === 56 736 kr',             fn: (e) => e.annualCost === 56_736 },
+      { label: 'billingPeriod monthly',                fn: (e) => e.billingPeriod === 'monthly' },
+    ],
+  },
+  {
+    match: /customer-microsoft/i,
+    route:         'auto',
+    minConfidence: 0.70,
+    checks: [
+      { label: 'supplier innehåller Microsoft',        fn: (e) => /microsoft/i.test(e.supplier ?? '') },
+      { label: 'seatCount === 60',                     fn: (e) => e.seatCount === 60 },
+      { label: 'recurringAmount === 15 780 kr',        fn: (e) => e.recurringAmount === 15_780 },
+      { label: 'annualCost === 189 360 kr',            fn: (e) => e.annualCost === 189_360 },
+      { label: 'billingPeriod monthly',                fn: (e) => e.billingPeriod === 'monthly' },
+    ],
+  },
+  {
+    match: /customer-ricoh/i,
+    route:         'auto',
+    minConfidence: 0.70,
+    checks: [
+      { label: 'supplier innehåller Ricoh',            fn: (e) => /ricoh/i.test(e.supplier ?? '') },
+      { label: 'annualCost === 14 000 kr',             fn: (e) => e.annualCost === 14_000 },
+      { label: 'recurringAmount === 3 500 kr (kvartal)', fn: (e) => e.recurringAmount === 3_500 },
+      { label: 'har variable_usage (klickkostnader)',  fn: (e) => (e.lineItems ?? []).some(l => l.type === 'variable_usage') },
+    ],
+  },
+
   // ── Telia fiber + statisk IP (fil-specifik — måste stå FÖRE den breda /telia/i-matchningen) ─
   {
     match: /telia-fiber-statisk-ip/i,
