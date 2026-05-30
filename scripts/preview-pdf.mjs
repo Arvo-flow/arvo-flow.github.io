@@ -6,56 +6,44 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const PDFDocument = require('pdfkit');
 
-// ── Mockdata — 3 leverantörer ─────────────────────────────────────────────────
 const MOCK_ANALYSES = [
   {
     id: '1', route: 'auto',
     supplier: 'Microsoft 365', normalized_supplier: 'Microsoft',
     category: 'mjukvara-saas', annual_cost: 187200,
-    suggested_annual_cost: 132000, gross_saving: 55200,
     net_saving: 44160, should_switch: true,
-    created_at: new Date().toISOString(),
   },
   {
     id: '2', route: 'auto',
     supplier: 'Telia', normalized_supplier: 'Telia',
     category: 'mobil', annual_cost: 96000,
-    suggested_annual_cost: 62400, gross_saving: 33600,
     net_saving: 26880, should_switch: true,
-    created_at: new Date().toISOString(),
   },
   {
     id: '3', route: 'auto',
     supplier: 'Fortnox', normalized_supplier: 'Fortnox',
     category: 'saas-finance', annual_cost: 18000,
-    suggested_annual_cost: 18000, gross_saving: 0,
     net_saving: 0, should_switch: false,
-    created_at: new Date().toISOString(),
   },
 ];
 
-// ── Importera PDF-generatorn ur send-report.mjs ───────────────────────────────
-// Eftersom send-report.mjs är en Vercel-funktion utan default export för PDF,
-// kopierar vi nyckelfunktionerna inline här.
-
 const T = {
-  surface: '#FFFFFF', ink: '#0E1A17', inkSoft: '#1F2E2A',
-  mutedSoft: '#5C6E68', border: '#D5E2DC', brand: '#1B7A6E',
-  brandSoft: '#DCEEEA', gradTop: '#5DD6CA', gradBot: '#1B6E66',
+  ink: '#0E1A17', inkSoft: '#1F2E2A', mutedSoft: '#5C6E68',
+  border: '#D5E2DC', brand: '#1B7A6E', gradTop: '#5DD6CA', gradBot: '#1B6E66',
   red: '#C0392B', yellow: '#D4A940',
 };
 
 function formatKr(n) {
-  if (n == null) return '–';
+  if (n == null) return '-';
   return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n) + ' kr';
 }
 
 const CAT_LABEL = {
   'mjukvara-saas': 'Programvarulicenser', mobil: 'Mobilabonnemang',
-  'saas-finance': 'Affärssystem', bredband: 'Företagsbredband',
+  'saas-finance': 'Affarssystem', bredband: 'Foretagsbredband',
   el: 'Elavtal', skrivarleasing: 'Skrivare & MPS',
 };
-function catLabel(cat) { return CAT_LABEL[cat] ?? cat ?? '–'; }
+function catLabel(cat) { return CAT_LABEL[cat] ?? cat ?? '-'; }
 
 function calcArvoScore(totalCost, totalSaving) {
   if (totalCost <= 0) return 100;
@@ -70,15 +58,14 @@ function trafficLight(a) {
 
 function aiDiagnos(a) {
   if (!a.should_switch || (a.net_saving ?? 0) <= 0)
-    return 'Optimalt avtal. Ni har rätt moduler för ert behov. Inga åtgärder krävs.';
+    return 'Optimalt avtal. Ni har ratt moduler for ert behov. Inga atgarder kravs.';
   const yr = new Date().getFullYear();
   const map = {
-    'mjukvara-saas': `Identifierad överlicensiering. Avtalsmodellen är föråldrad jämfört med ${yr} års marknadspriser.`,
-    mobil: 'Dolda avgifter och ineffektiv paketetering. Marknaden har rört sig sedan avtalet tecknades.',
-    bredband: 'Kapaciteten matchar inte prisnivån. Kvalificerade alternativ tillgängliga till lägre kostnad.',
+    'mjukvara-saas': `Identifierad overlicensiering. Avtalsmodellen ar foraldrard jomfort med ${yr} ars marknadspriser.`,
+    mobil: 'Dolda avgifter och ineffektiv paketetering. Marknaden har rort sig sedan avtalet tecknades.',
   };
   const savePct = a.annual_cost > 0 ? Math.round((a.net_saving / a.annual_cost) * 100) : 0;
-  return map[a.category] ?? `Kostnadsnivån överstiger branschsnittet med ${savePct} %. Omförhandling rekommenderas.`;
+  return map[a.category] ?? `Kostnadsnivan overstiger branschsnittet med ${savePct} %. Omforhandling rekommenderas.`;
 }
 
 function drawLogoMark(doc, ox, oy, size) {
@@ -99,7 +86,7 @@ function miniHeader(doc, PAD, W, PW, pageLabel) {
   doc.fontSize(10).font('Times-Bold').fillColor(T.ink).text('Arvo', PAD+30, y+4, { continued: true });
   doc.font('Times-Italic').fillColor(T.mutedSoft).text(' Flow');
   doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft)
-     .text(`Leverantörsrevision  ·  ${pageLabel}`, PAD, y+5, { width: W, align: 'right' });
+     .text('Leverantorsrevision  .  ' + pageLabel, PAD, y+5, { width: W, align: 'right' });
   const divY = y + 28;
   doc.moveTo(PAD, divY).lineTo(PW-PAD, divY).strokeColor(T.border).lineWidth(0.5).stroke();
   return divY + 20;
@@ -109,7 +96,7 @@ function pageFooter(doc, PAD, W, PW, PH) {
   const fy = PH - PAD - 24;
   doc.moveTo(PAD, fy).lineTo(PW-PAD, fy).strokeColor(T.border).lineWidth(0.3).stroke();
   doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft)
-     .text('arvoflow.se  ·  hej@arvoflow.se  ·  No Cure, No Pay — 20 % av realiserad besparing.', PAD, fy+8, { width: W, align: 'center' });
+     .text('arvoflow.se  .  hej@arvoflow.se  .  No Cure, No Pay - 20 % av realiserad besparing.', PAD, fy+8, { width: W, align: 'center' });
 }
 
 // ── Generera ──────────────────────────────────────────────────────────────────
@@ -124,142 +111,167 @@ const sorted      = [...auto].sort((a, b) => {
   return (order[trafficLight(a)] ?? 3) - (order[trafficLight(b)] ?? 3);
 });
 
-const PAD = 52, PW = 595.28, PH = 841.89, W = PW - PAD * 2;
+const PAD    = 48;
+const PW     = 595.28;
+const PH     = 841.89;
+const W      = PW - PAD * 2;
+const CARD_H = 72;
+const useTwoPages = sorted.length > 3;
+
+const LIGHT_COLOR = { red: T.red, yellow: T.yellow, green: T.brand };
+const LIGHT_LABEL = { red: 'Rod - Atgard kravs', yellow: 'Gul - Bevaka', green: 'Gron - Optimalt' };
+
 const doc    = new PDFDocument({ margin: PAD, size: 'A4', autoFirstPage: true });
 const chunks = [];
 doc.on('data', c => chunks.push(c));
 
 const today = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
 
-// ── SIDA 1 ────────────────────────────────────────────────────────────────────
+// ── Gradientbar ──
 const topBar = doc.linearGradient(0, 0, PW, 0);
 topBar.stop(0, T.gradTop); topBar.stop(1, T.gradBot);
-doc.rect(0, 0, PW, 4).fill(topBar);
+doc.rect(0, 0, PW, 5).fill(topBar);
 
 let y = PAD;
-const MARK = 28;
+
+// ── Header ──
+const MARK = 24;
 drawLogoMark(doc, PAD, y, MARK);
-const lx = PAD + MARK + 8, ly = y + (MARK - 16) / 2;
-doc.fontSize(14).font('Times-Bold').fillColor(T.ink).text('Arvo', lx, ly, { continued: true });
+const ly = y + 4;
+doc.fontSize(13).font('Times-Bold').fillColor(T.ink).text('Arvo', PAD+MARK+7, ly, { continued: true });
 doc.font('Times-Italic').fillColor(T.mutedSoft).text(' Flow');
-doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft)
-   .text(`Leverantörsrevision  ·  ${today}`, PAD, ly+2, { width: W, align: 'right' });
-y += MARK + 22;
+doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft)
+   .text('Leverantorsrevision  .  ' + today, PAD, ly+2, { width: W, align: 'right' });
+y += MARK + 16;
 doc.moveTo(PAD, y).lineTo(PW-PAD, y).strokeColor(T.border).lineWidth(0.5).stroke();
-y += 48;
+y += 30;
 
-doc.fontSize(8.5).font('Helvetica-Bold').fillColor(T.mutedSoft)
-   .text('IDENTIFIERAD BESPARINGSPOTENTIAL', PAD, y, { width: W, align: 'center', characterSpacing: 1.5 });
-y += 18;
-doc.fontSize(52).font('Helvetica-Bold').fillColor(T.brand)
+// ── Hero ──
+doc.fontSize(7.5).font('Helvetica-Bold').fillColor(T.mutedSoft)
+   .text('IDENTIFIERAD BESPARINGSPOTENTIAL', PAD, y, { width: W, align: 'center', characterSpacing: 1.6 });
+y += 16;
+doc.fontSize(56).font('Helvetica-Bold').fillColor(T.brand)
    .text('+' + formatKr(totalSaving), PAD, y, { width: W, align: 'center' });
-y += 66;
-doc.fontSize(10).font('Helvetica').fillColor(T.mutedSoft)
-   .text(`Nuvarande total årskkostnad: ${formatKr(totalCost)}`, PAD, y, { width: W, align: 'center' });
-y += 46;
-doc.moveTo(PAD+80, y).lineTo(PW-PAD-80, y).strokeColor(T.border).lineWidth(0.4).stroke();
-y += 32;
+y += 62;
+doc.fontSize(9).font('Helvetica').fillColor(T.mutedSoft)
+   .text('Nuvarande total arskostnad: ' + formatKr(totalCost), PAD, y, { width: W, align: 'center' });
+y += 24;
+doc.moveTo(PAD+90, y).lineTo(PW-PAD-90, y).strokeColor(T.border).lineWidth(0.4).stroke();
+y += 18;
 
-const SBX_H = 78;
+// ── Arvo Score ──
+const SBX_H = 62;
 doc.rect(PAD, y, W, SBX_H).fill('#F4FAF8');
 doc.rect(PAD, y, W, SBX_H).strokeColor(T.border).lineWidth(0.5).stroke();
-doc.rect(PAD, y, 3.5, SBX_H).fill(scoreColor);
-doc.fontSize(7.5).font('Helvetica-Bold').fillColor(T.mutedSoft)
-   .text('ARVO SCORE™', PAD+16, y+12, { characterSpacing: 1.2 });
-doc.fontSize(34).font('Helvetica-Bold').fillColor(scoreColor)
-   .text(`${score}`, PAD+16, y+24, { continued: true, lineBreak: false });
-doc.fontSize(12).font('Helvetica').fillColor(T.mutedSoft).text('/100');
+doc.rect(PAD, y, 3, SBX_H).fill(scoreColor);
+doc.fontSize(7).font('Helvetica-Bold').fillColor(T.mutedSoft).text('ARVO SCORE TM', PAD+14, y+9, { characterSpacing: 1.2 });
+doc.fontSize(30).font('Helvetica-Bold').fillColor(scoreColor)
+   .text(String(score), PAD+14, y+20, { continued: true, lineBreak: false });
+doc.fontSize(10).font('Helvetica').fillColor(T.mutedSoft).text('/100');
 const scoreText = score >= 85
-  ? 'Er avtalsportfölj är väloptimerad.'
-  : 'Er avtalsportfölj presterar under branschstandard (85+) för bolag av er storlek.';
-doc.fontSize(9.5).font('Helvetica').fillColor(T.inkSoft)
-   .text(scoreText, PAD+122, y+28, { width: W-140, lineGap: 3 });
-y += SBX_H + 34;
-doc.fontSize(8.5).font('Helvetica').fillColor(T.mutedSoft)
-   .text(`${auto.length} analyserade fakturor  ·  ${switchCount} leverantörer med besparingspotential  ·  Arvo tar 20 % av realiserad besparing`, PAD, y, { width: W, align: 'center' });
-pageFooter(doc, PAD, W, PW, PH);
+  ? 'Er avtalsportfolj ar valoptimerad.'
+  : 'Er avtalsportfolj presterar under branschstandard (85+) for bolag av er storlek.';
+doc.fontSize(8.5).font('Helvetica').fillColor(T.inkSoft)
+   .text(scoreText, PAD+110, y+22, { width: W-124, lineGap: 2 });
+y += SBX_H + 20;
 
-// ── SIDA 2 ────────────────────────────────────────────────────────────────────
-doc.addPage();
-y = miniHeader(doc, PAD, W, PW, 'Sida 2 av 3');
-doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brand).text('LEVERANTÖRSANALYS', PAD, y, { characterSpacing: 1.5 });
-y += 14;
-doc.fontSize(22).font('Helvetica-Bold').fillColor(T.ink).text('De största läckagen', PAD, y);
-y += 36;
-
-const LIGHT_COLOR = { red: T.red, yellow: T.yellow, green: T.brand };
-const LIGHT_LABEL = { red: 'Röd — Åtgärd krävs', yellow: 'Gul — Bevaka', green: 'Grön — Optimalt' };
+// ── Leverantorsanalys ──
+doc.fontSize(7).font('Helvetica-Bold').fillColor(T.brand)
+   .text('LEVERANTORSANALYS', PAD, y, { characterSpacing: 1.5 });
+doc.fontSize(15).font('Helvetica-Bold').fillColor(T.ink)
+   .text('De storsta lackagen', PW-PAD-200, y-1, { width: 200, align: 'right' });
+y += 18;
 
 for (const a of sorted) {
-  const light = trafficLight(a), lColor = LIGHT_COLOR[light];
-  const name  = a.supplier || a.normalized_supplier || 'Okänd leverantör';
+  if (y > PH - PAD - CARD_H - 10) { doc.addPage(); y = PAD; }
+
+  const light  = trafficLight(a);
+  const lColor = LIGHT_COLOR[light];
+  const name   = a.supplier || a.normalized_supplier || 'Okand leverantor';
   const hasSav = a.should_switch && (a.net_saving ?? 0) > 0;
-  const CARD_H = 86;
 
   doc.rect(PAD, y, W, CARD_H).fill('#FAFCFB');
   doc.rect(PAD, y, W, CARD_H).strokeColor(T.border).lineWidth(0.4).stroke();
-  doc.rect(PAD, y, 3.5, CARD_H).fill(lColor);
-  doc.save(); doc.circle(PAD+20, y+18, 5).fill(lColor); doc.restore();
-  doc.fontSize(11).font('Helvetica-Bold').fillColor(T.ink).text(name, PAD+34, y+9, { width: W-145 });
-  doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft).text(catLabel(a.category), PAD+34, y+23);
-  doc.fontSize(8).font('Helvetica-Bold').fillColor(lColor).text(LIGHT_LABEL[light], PAD+34, y+34);
-  doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft)
-     .text(`Arvo AI: ${aiDiagnos(a)}`, PAD+34, y+46, { width: W-145, lineGap: 1.5 });
+  doc.rect(PAD, y, 3, CARD_H).fill(lColor);
+  doc.save(); doc.circle(PAD+17, y+14, 4).fill(lColor); doc.restore();
+
+  doc.fontSize(11).font('Helvetica-Bold').fillColor(T.ink).text(name, PAD+30, y+7, { width: W-130 });
+  doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft).text(catLabel(a.category), PAD+30, y+21);
+  doc.fontSize(7.5).font('Helvetica-Bold').fillColor(lColor).text(LIGHT_LABEL[light], PAD+30, y+31);
+  doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft)
+     .text('Arvo AI: ' + aiDiagnos(a), PAD+30, y+42, { width: W-130, lineGap: 1 });
+
   if (hasSav) {
-    doc.fontSize(7.5).font('Helvetica-Bold').fillColor(T.mutedSoft)
-       .text('BESPARING/ÅR', PW-PAD-100, y+12, { width: 100, align: 'right', characterSpacing: 0.4 });
-    doc.fontSize(13).font('Helvetica-Bold').fillColor(T.brand)
-       .text('−' + formatKr(a.net_saving), PW-PAD-100, y+28, { width: 100, align: 'right' });
+    doc.fontSize(6.5).font('Helvetica-Bold').fillColor(T.mutedSoft)
+       .text('BESPARING/AR', PW-PAD-92, y+9, { width: 92, align: 'right', characterSpacing: 0.4 });
+    doc.fontSize(12).font('Helvetica-Bold').fillColor(T.brand)
+       .text('-' + formatKr(a.net_saving), PW-PAD-92, y+23, { width: 92, align: 'right' });
   } else {
     doc.fontSize(9).font('Helvetica-Bold').fillColor(T.brand)
-       .text('✓ Optimerat', PW-PAD-90, y+34, { width: 90, align: 'right' });
+       .text('Optimerat', PW-PAD-75, y+28, { width: 75, align: 'right' });
   }
-  y += CARD_H + 8;
+  y += CARD_H + 6;
 }
-pageFooter(doc, PAD, W, PW, PH);
 
-// ── SIDA 3 ────────────────────────────────────────────────────────────────────
-doc.addPage();
-y = miniHeader(doc, PAD, W, PW, 'Sida 3 av 3');
-doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brand).text('NÄSTA STEG', PAD, y, { characterSpacing: 1.5 });
-y += 14;
-doc.fontSize(24).font('Helvetica-Bold').fillColor(T.ink).text('Låt oss hämta hem pengarna', PAD, y);
-y += 32;
-doc.fontSize(14).font('Helvetica').fillColor(T.mutedSoft).text('Helt utan risk.', PAD, y);
-y += 44;
+if (useTwoPages) {
+  y += 8;
+  doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft)
+     .text(auto.length + ' analyserade fakturor  .  ' + switchCount + ' leverantorer med besparingspotential  .  Arvo tar 20 % av realiserad besparing', PAD, y, { width: W, align: 'center' });
+  pageFooter(doc, PAD, W, PW, PH);
+  doc.addPage();
+  y = miniHeader(doc, PAD, W, PW, 'Sida 2 av 2');
+} else {
+  y += 10;
+  doc.moveTo(PAD+70, y).lineTo(PW-PAD-70, y).strokeColor(T.border).lineWidth(0.3).stroke();
+  y += 16;
+}
+
+// ── Nasta steg (3-kolumn) ──
+doc.fontSize(7).font('Helvetica-Bold').fillColor(T.brand).text('NASTA STEG', PAD, y, { characterSpacing: 1.5 });
+doc.fontSize(17).font('Helvetica-Bold').fillColor(T.ink)
+   .text('Lat oss hamta hem pengarna', PW-PAD-240, y-1, { width: 240, align: 'right' });
+y += 20;
 
 const steps = [
-  { num: '01', head: 'Ni ger oss fullmakt',  body: 'Vi tar dialogen med era leverantörer — ni behöver inte lyfta ett finger.' },
-  { num: '02', head: 'Vi omförhandlar',       body: 'Ni behåller exakt samma tjänster, men till rätt pris. Inga avbrott, inga byten om ni inte vill.' },
-  { num: '03', head: 'No Cure, No Pay',       body: 'Vi tar endast 20 % av det vi faktiskt sparar under första året. Sparar vi inget, kostar vi inget.' },
+  { num: '01', head: 'Ni ger oss fullmakt',  body: 'Vi tar dialogen med era leverantorer - ni behoover inte lyfta ett finger.' },
+  { num: '02', head: 'Vi omforhandlar',       body: 'Samma tjanster, till ratt pris. Inga avbrott, inga byten om ni inte vill.' },
+  { num: '03', head: 'No Cure, No Pay',       body: 'Vi tar 20 % av det vi faktiskt sparar. Sparar vi inget, kostar vi inget.' },
 ];
-for (const step of steps) {
-  const cx = PAD+20, cy = y+22;
-  const cg = doc.linearGradient(cx-18, cy-18, cx+18, cy+18);
-  cg.stop(0, T.gradTop); cg.stop(1, T.gradBot);
-  doc.save(); doc.circle(cx, cy, 18).fillColor(cg).fill(); doc.restore();
-  doc.fontSize(11).font('Helvetica-Bold').fillColor('#fff').text(step.num, cx-14, cy-8, { width: 28, align: 'center', lineBreak: false });
-  doc.fontSize(12).font('Helvetica-Bold').fillColor(T.ink).text(step.head, PAD+50, y+8);
-  doc.fontSize(9.5).font('Helvetica').fillColor(T.inkSoft).text(step.body, PAD+50, y+24, { width: W-60, lineGap: 2 });
-  y += 70;
-}
-y += 18;
-doc.moveTo(PAD+80, y).lineTo(PW-PAD-80, y).strokeColor(T.border).lineWidth(0.4).stroke();
-y += 28;
 
-const CTA_H = 82, ctaG = doc.linearGradient(0, y, PW, y+CTA_H);
+const COL_W = (W - 16) / 3;
+const BALL  = 13;
+steps.forEach((step, i) => {
+  const cx = PAD + i * (COL_W + 8) + BALL + 1;
+  const cy = y + BALL + 1;
+  const cg = doc.linearGradient(cx-BALL, cy-BALL, cx+BALL, cy+BALL);
+  cg.stop(0, T.gradTop); cg.stop(1, T.gradBot);
+  doc.save(); doc.circle(cx, cy, BALL).fillColor(cg).fill(); doc.restore();
+  doc.fontSize(8.5).font('Helvetica-Bold').fillColor('#fff')
+     .text(step.num, cx-BALL, cy-7, { width: BALL*2, align: 'center', lineBreak: false });
+  const tx = PAD + i * (COL_W + 8) + BALL * 2 + 8;
+  doc.fontSize(9.5).font('Helvetica-Bold').fillColor(T.ink).text(step.head, tx, y+3, { width: COL_W-BALL*2-8 });
+  doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft).text(step.body, tx, y+18, { width: COL_W-BALL*2-8, lineGap: 1.5 });
+});
+y += 60;
+
+doc.fontSize(7.5).font('Helvetica').fillColor(T.mutedSoft)
+   .text(auto.length + ' analyserade fakturor  .  ' + switchCount + ' leverantorer med besparingspotential  .  Arvo tar 20 % av realiserad besparing', PAD, y, { width: W, align: 'center' });
+y += 18;
+
+const CTA_H = 64;
+const ctaG  = doc.linearGradient(0, y, PW, y+CTA_H);
 ctaG.stop(0, T.gradTop); ctaG.stop(1, T.gradBot);
 doc.rect(0, y, PW, CTA_H).fill(ctaG);
-doc.fontSize(8.5).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.65)')
-   .text('REDO ATT REALISERA BESPARINGEN?', PAD, y+14, { width: W, align: 'center', characterSpacing: 1.2 });
-doc.fontSize(22).font('Helvetica-Bold').fillColor('#fff').text('arvoflow.se', PAD, y+30, { width: W, align: 'center' });
-doc.fontSize(9).font('Helvetica').fillColor('rgba(255,255,255,0.75)').text('hej@arvoflow.se', PAD, y+56, { width: W, align: 'center' });
+doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.65)')
+   .text('REDO ATT REALISERA BESPARINGEN?', PAD, y+10, { width: W, align: 'center', characterSpacing: 1.2 });
+doc.fontSize(20).font('Helvetica-Bold').fillColor('#fff').text('arvoflow.se', PAD, y+24, { width: W, align: 'center' });
+doc.fontSize(8.5).font('Helvetica').fillColor('rgba(255,255,255,0.75)').text('hej@arvoflow.se', PAD, y+44, { width: W, align: 'center' });
 
 doc.end();
 
 doc.on('end', () => {
   const buf = Buffer.concat(chunks);
   writeFileSync('arvo-rapport-preview.pdf', buf);
-  console.log(`✓ arvo-rapport-preview.pdf skapad (${Math.round(buf.length / 1024)} kB)`);
-  console.log('  Öppna med:  open arvo-rapport-preview.pdf');
+  console.log('arvo-rapport-preview.pdf skapad (' + Math.round(buf.length/1024) + ' kB)');
+  console.log('Oppna med:  open arvo-rapport-preview.pdf');
 });
