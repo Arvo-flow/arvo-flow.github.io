@@ -1012,18 +1012,6 @@ export default async function handler(req, res) {
       }));
     }
 
-    // Fire-and-forget — lagrar fullständig analys för portföljvyn.
-    storeAnalysis({
-      fingerprint: typeof fingerprint === 'string' ? fingerprint : null,
-      pdfHash,
-      extracted,
-      categorized,
-      recommendation: { ...recommendation, grossSaving, netSaving },
-      route: 'auto',
-      industry,
-      employees: employeesNum,
-    }).catch((err) => console.error('[test-invoice] storeAnalysis failed:', err.message));
-
     // Fire-and-forget — lagrar anonymiserad datapunkt för branschindex.
     // Felet får aldrig blockera svaret till kunden.
     storeDatapoint({
@@ -1202,6 +1190,19 @@ export default async function handler(req, res) {
     const grossSaving    = primaryGross + secondaryGross;
     const arvoFee        = categorized.licensePending ? 0 : Math.round(grossSaving * 0.20);
     const netSaving      = categorized.licensePending ? grossSaving : grossSaving - arvoFee;
+
+    // Fire-and-forget — lagrar fullständig analys för portföljvyn.
+    // Placerad efter alla overrides så att grossSaving/netSaving är slutgiltiga värden.
+    storeAnalysis({
+      fingerprint: typeof fingerprint === 'string' ? fingerprint : null,
+      pdfHash,
+      extracted,
+      categorized,
+      recommendation: { ...recommendation, grossSaving, netSaving },
+      route: 'auto',
+      industry,
+      employees: employeesNum,
+    }).catch((err) => console.error('[test-invoice] storeAnalysis failed:', err.message));
 
     // Broadband-tillägg (statisk IP etc.) på mobil-primär faktura — pass-through i suggestedAnnualCost.
     const _bbAddonPassthrough = categorized.category === 'mobil'
