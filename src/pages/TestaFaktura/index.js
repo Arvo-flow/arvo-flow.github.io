@@ -706,8 +706,8 @@ const TestaFaktura = () => {
           ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
           : `Ni betalar ${diagOvPct} % sämre än branschsnittet — Arvo förhandlar välförhandlat avtalspris vid förnyelsen.`
       : diagScore < 45
-        ? 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.'
-        : diagScore < 80 ? 'Ni betalar något sämre än branschsnittet — välförhandlat avtalspris finns att hämta.'
+        ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — stor besparingspotential.` : 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.')
+        : diagScore < 80 ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — välförhandlat avtalspris finns att hämta.` : 'Ni betalar något sämre än branschsnittet — välförhandlat avtalspris finns att hämta.')
         : 'Ni har ett välförhandlat avtal — bättre än branschsnittet.';
 
   const GAUGE_R = 26;
@@ -1444,20 +1444,6 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
-                      {!isLicensePending && (() => {
-                        const _pct = adjAnnualCost > 0
-                          ? Math.round((adjGrossSaving / adjAnnualCost) * 100) : 0;
-                        const _ctx = _pct >= 20
-                          ? `Ni betalar ${_pct}% mer än marknadspriset — de flesta svenska SMF i er bransch betalar väsentligt mindre.`
-                          : _pct >= 10
-                          ? `Ni betalar ${_pct}% över marknadspris — ett byte ger omedelbar effekt.`
-                          : null;
-                        return _ctx ? (
-                          <PriceNote $compact style={{ background: 'rgba(27,110,102,.07)', borderColor: 'rgba(27,110,102,.2)' }}>
-                            📊 {_ctx}
-                          </PriceNote>
-                        ) : null;
-                      })()}
                       {!isLicensePending && (
                         <PriceNote $compact>
                           {_effectiveMeta.benchmarkType === 'list-verified'
