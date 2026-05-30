@@ -902,6 +902,9 @@ const TestaFaktura = () => {
           <Card ref={resultRef}>
             <ResultHead>
               <div>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#1B6E66', margin: '0 0 4px', opacity: .8 }}>
+                  Arvo analyserade er faktura
+                </p>
                 <h2>{result.extracted.supplier}</h2>
                 {result.categorized && (
                   <span className="subtitle">
@@ -1348,6 +1351,20 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
+                      {!isLicensePending && (() => {
+                        const _pct = adjAnnualCost > 0
+                          ? Math.round((adjGrossSaving / adjAnnualCost) * 100) : 0;
+                        const _ctx = _pct >= 20
+                          ? `Ni betalar ${_pct}% mer än marknadspriset — de flesta svenska SMF i er bransch betalar väsentligt mindre.`
+                          : _pct >= 10
+                          ? `Ni betalar ${_pct}% över marknadspris — ett byte ger omedelbar effekt.`
+                          : null;
+                        return _ctx ? (
+                          <PriceNote $compact style={{ background: 'rgba(27,110,102,.07)', borderColor: 'rgba(27,110,102,.2)' }}>
+                            📊 {_ctx}
+                          </PriceNote>
+                        ) : null;
+                      })()}
                       {!isLicensePending && (
                         <PriceNote $compact>
                           {_effectiveMeta.benchmarkType === 'list-verified'
