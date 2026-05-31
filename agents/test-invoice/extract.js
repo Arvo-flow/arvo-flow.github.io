@@ -244,12 +244,21 @@ BREDBANDSFAKTUROR — extrahera dessa fält om fakturan är från en bredbandsle
 
 SAAS-LICENSER — extrahera dessa fält om fakturan avser mjukvarulicenser eller SaaS:
   KRITISKT SAAS-SEATCOUNT-REGEL: Fakturor med FLERA FUNKTIONSMODULER (t.ex. Fortnox
-  Bokföring, Fakturering, Lön, Kvitto & Utlägg; Visma Administration + Lön; HubSpot
-  Marketing + Sales Hub) har ofta OLIKA antal användare per modul. I detta fall:
+  Bokföring, Fakturering, Lön, Kvitto & Utlägg; Visma Administration + Lön; Atlassian
+  Jira + Confluence) har ofta OLIKA antal användare per modul. I detta fall:
   seatCount = MAXIMUM antal användare bland ALLA moduler.
   Exempel: Bokföring 5 anv. + Fakturering 5 anv. + Lön 2 anv. + Kvitto & Utlägg 60 anv.
   → seatCount = 60. Motivering: Arvo benchmarkar er totalkostnad mot marknaden
   utifrån volymen licensierade platser — det högsta modulantalet avgör volymen.
+  UNDANTAG CRM-PRODUKTER (HubSpot, Salesforce): CRM-moduler som Marketing Hub, Sales Hub,
+  Service Cloud, Einstein Analytics etc. används av HELT OLIKA team — inte samma användare.
+  För dessa: seatCount = SUMMAN av alla modulers användare, inte maximum.
+  Exempel HubSpot: Marketing Hub Pro 5 lic. + Sales Hub Pro 10 lic. → seatCount 15 (5+10=15).
+  Exempel Salesforce: Sales Cloud 25 lic. + Service Cloud 10 lic. → seatCount 35 (25+10=35).
+  UNDANTAG ARKIVERADE KONTON: "Archived User", "Archived license", "Arkiverad användare"
+  och liknande nedgraderade lagringskonton räknas ALDRIG mot seatCount.
+  De är inaktiva konton för f.d. anställdas data — de är inte aktiva användare.
+  Exkludera dem alltid: om fakturan har 20 aktiva + 5 Archived → seatCount = 20.
   license_type: Det specifika licensplanets namn som det framgår av fakturan. Normalisera
     till kortform, t.ex. "Business Standard", "Business Premium", "E3", "E5",
     "Business Basic", "Google Workspace Business Starter", "Google Workspace Business Standard",
@@ -608,17 +617,69 @@ function applyDeterministicRules(raw) {
     return item;
   });
 
-  // RULE: Multi-module SaaS seatCount = max across all modules.
-  // When line items have per-module quantities (Fortnox, Visma etc.), the
-  // dominant module (most users) determines seatCount — not the sum of cores.
-  // Source: customer-fortnox — AI returned 12 (5+5+2) ignoring K&U module (60 users).
+  // All rules below operate on non-addon subscription lines with explicit quantities.
   let seatCount = raw.seatCount ?? null;
-  const lineQtys = lineItems
-    .filter((l) => l.type === 'recurring_subscription' && (l.quantity ?? 0) > 0)
-    .map((l) => l.quantity);
-  if (lineQtys.length > 1) {
-    const maxQty = Math.max(...lineQtys);
+  const subLineItems = lineItems.filter(
+    (l) => l.type === 'recurring_subscription' && (l.quantity ?? 0) > 0 && !l.is_addon,
+  );
+
+  // Partition sub-lines into archived and active — archived accounts must never count.
+  // "Archived User" = reduced-cost storage for ex-employees, not an active seat.
+  // Source: google-workspace-arsbetalning — AI sometimes includes 5 archived in seatCount.
+  const ARCHIVED_RE = /archived?\s+(user|licens|license|account)|arkiverad\s+an/i;
+  const archivedSubLines = subLineItems.filter((l) => ARCHIVED_RE.test(l.description ?? ''));
+  const activeSubLines   = subLineItems.filter((l) => !ARCHIVED_RE.test(l.description ?? ''));
+  const effectiveLines   = activeSubLines.length > 0 ? activeSubLines : subLineItems;
+
+  // RULE: Multi-module SaaS seatCount = max across active modules.
+  // When line items have per-module quantities (Fortnox, Visma etc.), the
+  // dominant module (most users) determines seatCount — not the sum of modules.
+  // Source: customer-fortnox — AI returned 12 (5+5+2) ignoring K&U module (60 users).
+  if (effectiveLines.length > 0) {
+    const maxQty = Math.max(...effectiveLines.map((l) => l.quantity));
     if (seatCount == null || maxQty > seatCount) seatCount = maxQty;
+  }
+
+  // RULE: If archived lines were present, always recompute seatCount from active lines.
+  // Prevents double-subtract when AI already excluded archived users per SYSTEM_PROMPT.
+  // Source: google-workspace-arsbetalning — AI returns 20 (correct active count); rule
+  // ensures seatCount = max(active line quantities) = 20, not affected by archived lines.
+  if (archivedSubLines.length > 0 && activeSubLines.length > 0) {
+    seatCount = Math.max(...activeSubLines.map((l) => l.quantity));
+  }
+
+  // RULE: CRM multi-module seatCount = SUM (not max).
+  // HubSpot and Salesforce modules serve distinct teams — Marketing ≠ Sales ≠ Service.
+  // Exception: Salesforce analytics/AI products (Einstein, Tableau CRM) share seats with primary
+  // modules — they are feature add-ons, not additional headcount.
+  // Source: hubspot-marketing-pro (5+10=15, not max=10).
+  // Source: salesforce-enterprise (25+10=35; Einstein Analytics 25 overlaps with Sales Cloud 25).
+  if (/hubspot|salesforce/i.test(raw.supplier ?? '') && effectiveLines.length > 1) {
+    const SFDC_ANALYTICS_RE = /einstein|tableau\s+crm|analytics\s+cloud/i;
+    const headcountLines = /salesforce/i.test(raw.supplier ?? '')
+      ? effectiveLines.filter((l) => !SFDC_ANALYTICS_RE.test(l.description ?? ''))
+      : effectiveLines;
+    const sumLines = headcountLines.length > 0 ? headcountLines : effectiveLines;
+    seatCount = sumLines.reduce((s, l) => s + l.quantity, 0);
+  }
+
+  // RULE: For mobile invoices with cloud switchboard (pbx), SIM-card count wins.
+  // PBX user licenses can exceed actual SIM subscriptions — benchmark is on mobile
+  // subscriptions, not switchboard capacity.
+  // Source: telenor-molnvaxel-stor — 45 SIM-kort men 50 molnväxelanvändare → seatCount 45.
+  const simLines = lineItems.filter(
+    (l) =>
+      l.type === 'recurring_subscription' &&
+      !l.is_addon &&
+      (l.quantity ?? 0) > 0 &&
+      /abonnemang|sim[-\s]?kort|mobilabonnemang|jobbmobil|företagsmobil/i.test(l.description ?? ''),
+  );
+  const pbxLines = lineItems.filter(
+    (l) => l.is_addon && l.addon_type === 'pbx' && (l.quantity ?? 0) > 0,
+  );
+  if (simLines.length > 0 && pbxLines.length > 0) {
+    const simCount = simLines.reduce((s, l) => s + l.quantity, 0);
+    if (simCount > 0) seatCount = simCount;
   }
 
   return { ...raw, lineItems, seatCount };

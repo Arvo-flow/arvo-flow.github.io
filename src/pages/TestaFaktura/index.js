@@ -204,6 +204,54 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
+function CalculationChainBlock({ cc }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <CalculationChain>
+      <div className="chain-header" onClick={() => setOpen(o => !o)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && setOpen(o => !o)}>
+        <span className="chain-title">Beräkningsunderlag</span>
+        <span className="chain-toggle">{open ? 'Dölj ▲' : 'Visa hur vi räknar ▼'}</span>
+      </div>
+      {open && (
+        <div className="chain-body">
+          <div className="chain-row">
+            <div>
+              <div className="chain-label">Nuvarande kostnad</div>
+              <div className="chain-source">{cc.currentAnnualCost.source}</div>
+            </div>
+            <span className="chain-value">{formatKr(cc.currentAnnualCost.value)} kr/år</span>
+          </div>
+          {cc.benchmarkAnnualCost && (
+            <div className="chain-row">
+              <div>
+                <div className="chain-label">Arvo-pris</div>
+                {cc.benchmarkAnnualCost.formula && <div className="chain-source">{cc.benchmarkAnnualCost.formula}</div>}
+                <div className="chain-source">{cc.benchmarkAnnualCost.source}</div>
+              </div>
+              <span className="chain-value">{formatKr(cc.benchmarkAnnualCost.value)} kr/år</span>
+            </div>
+          )}
+          <div className="chain-row">
+            <div className="chain-label">Bruttobesparing</div>
+            <span className="chain-value">{formatKr(cc.grossSaving.value)} kr/år</span>
+          </div>
+          <div className="chain-row">
+            <div>
+              <div className="chain-label">Arvos arvode</div>
+              <div className="chain-source">{cc.arvoFee.formula}</div>
+            </div>
+            <span className="chain-value">−{formatKr(cc.arvoFee.value)} kr/år</span>
+          </div>
+          <div className="chain-row total">
+            <span>Er nettobesparing</span>
+            <span className="chain-value">+{formatKr(cc.netSaving.value)} kr/år</span>
+          </div>
+        </div>
+      )}
+    </CalculationChain>
+  );
+}
+
 const TestaFaktura = () => {
   const fileInputRef = useRef(null);
   const resultRef    = useRef(null);
@@ -1488,54 +1536,9 @@ const TestaFaktura = () => {
                       )}
 
                       {/* P2.1 — Beräkningskedja (expanderbar) */}
-                      {!isLicensePending && result.calculationChain && (() => {
-                        const [open, setOpen] = React.useState(false);
-                        const cc = result.calculationChain;
-                        return (
-                          <CalculationChain>
-                            <div className="chain-header" onClick={() => setOpen(o => !o)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && setOpen(o => !o)}>
-                              <span className="chain-title">Beräkningsunderlag</span>
-                              <span className="chain-toggle">{open ? 'Dölj ▲' : 'Visa hur vi räknar ▼'}</span>
-                            </div>
-                            {open && (
-                              <div className="chain-body">
-                                <div className="chain-row">
-                                  <div>
-                                    <div className="chain-label">Nuvarande kostnad</div>
-                                    <div className="chain-source">{cc.currentAnnualCost.source}</div>
-                                  </div>
-                                  <span className="chain-value">{formatKr(cc.currentAnnualCost.value)} kr/år</span>
-                                </div>
-                                {cc.benchmarkAnnualCost && (
-                                  <div className="chain-row">
-                                    <div>
-                                      <div className="chain-label">Arvo-pris</div>
-                                      {cc.benchmarkAnnualCost.formula && <div className="chain-source">{cc.benchmarkAnnualCost.formula}</div>}
-                                      <div className="chain-source">{cc.benchmarkAnnualCost.source}</div>
-                                    </div>
-                                    <span className="chain-value">{formatKr(cc.benchmarkAnnualCost.value)} kr/år</span>
-                                  </div>
-                                )}
-                                <div className="chain-row">
-                                  <div className="chain-label">Bruttobesparing</div>
-                                  <span className="chain-value">{formatKr(cc.grossSaving.value)} kr/år</span>
-                                </div>
-                                <div className="chain-row">
-                                  <div>
-                                    <div className="chain-label">Arvos arvode</div>
-                                    <div className="chain-source">{cc.arvoFee.formula}</div>
-                                  </div>
-                                  <span className="chain-value">−{formatKr(cc.arvoFee.value)} kr/år</span>
-                                </div>
-                                <div className="chain-row total">
-                                  <span>Er nettobesparing</span>
-                                  <span className="chain-value">+{formatKr(cc.netSaving.value)} kr/år</span>
-                                </div>
-                              </div>
-                            )}
-                          </CalculationChain>
-                        );
-                      })()}
+                      {!isLicensePending && result.calculationChain && (
+                        <CalculationChainBlock cc={result.calculationChain} />
+                      )}
 
                       {result.recommendation.suggestedAnnualCost && !isLicensePending && (
                         <PartnerBlock>
