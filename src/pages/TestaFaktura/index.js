@@ -95,7 +95,7 @@ function ScoreReveal({ diagScore, diagC, diagInsight }) {
   return (
     <ScoreRevealCard style={{ '--diag-color': diagC.dot }}>
       <div className="gauge-wrap">
-        <svg className="gauge-svg" width="90" height="90" viewBox="0 0 90 90">
+        <svg className="gauge-svg" viewBox="0 0 90 90">
           <circle cx="45" cy="45" r={REVEAL_GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="7" />
           <circle
             cx="45" cy="45" r={REVEAL_GAUGE_R} fill="none"
