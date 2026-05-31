@@ -539,6 +539,15 @@ export default async function handler(req, res) {
       }).catch((err) => console.warn('[ring2:seat-oracle] fail-open:', err.message));
     }
 
+    // ── Produktionslarm: billing period 'unknown' trots att datum extraherades ──
+    // Datum > 400 dagar är ovanligt — kan indikera att AI blandade ihop avtalstid med fakturaperiod.
+    if (extracted.billingPeriod === 'unknown' && extracted.billingPeriodStart) {
+      notifyReviewQueue(
+        extracted,
+        `[BillingPeriod] Perioddatum extraherades (${extracted.billingPeriodStart} – ${extracted.billingPeriodEnd}) men ger billingPeriod=unknown — ovanligt lång period eller datumdrift?`,
+      ).catch(() => {});
+    }
+
     // Triage — review_queue eller unsupported avbryter pipeline
     const routing = routeExtraction(extracted);
 

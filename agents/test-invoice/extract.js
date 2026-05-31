@@ -25,6 +25,22 @@ const PERIOD_MULTIPLIER = {
   unknown:   12,
 };
 
+/**
+ * Beräkna faktureringsperiod deterministiskt från datum.
+ * Returnerar null om datum saknas eller är ogiltiga — fallback till AI-värde.
+ */
+function computeBillingPeriodFromDates(start, end) {
+  if (!start || !end) return null;
+  try {
+    const days = (Date.parse(end) - Date.parse(start)) / 86_400_000;
+    if (!Number.isFinite(days) || days <= 0) return null;
+    if (days < 50)  return 'monthly';
+    if (days < 130) return 'quarterly';
+    if (days < 400) return 'annual';
+    return 'unknown';
+  } catch { return null; }
+}
+
 export class ExtractorError extends Error {
   constructor(message, { cause } = {}) {
     super(message);
@@ -156,14 +172,22 @@ AVTALSTID & UPPSÄGNING — extrahera BARA om fakturan innehåller ett explicit 
     återstående förbrukningen för avtalsperioden"
     null om ingen explicit lösenavgiftstext förekommer.
 
-FAKTURERINGSPERIOD — välj exakt ett värde baserat på fakturans rader:
+FAKTURERINGSPERIODDATUM — extrahera om perioddatum finns explicit på fakturan:
+  billing_period_start: Startdatum för perioden fakturan AVSER i ISO-format YYYY-MM-DD.
+    Extrahera från periodrubriker som "Period 2026-01-01 – 2026-01-31",
+    "May 8 – Jun 7, 2026", "Faktureras för: 2026-01-01 till 2026-03-31" osv.
+    null om inga perioddatum finns på fakturan.
+  billing_period_end: Slutdatum för perioden fakturan avser i ISO-format YYYY-MM-DD.
+    null om inga perioddatum finns på fakturan.
+  OBS: Ange ALLTID båda eller ingen. Dessa avser faktureringsperioden (t.ex. jan-mars 2026),
+  INTE avtalets bindningstid (service_period_start/end).
+
+FAKTURERINGSPERIOD — används ENBART som fallback om billing_period_start/end saknas:
   monthly   = faktureras månadsvis (vanligast för abonnemang)
-  quarterly = faktureras kvartalsvis. Välj detta ENDAST om fakturan explicit markerar
-              FAKTURERINGSPERIODEN som "Q1", "Q2", "Q3", "Q4", "kvartal" eller "quarter",
-              ELLER om perioddatumet för abonnemangsraderna täcker ≥ 60 dagar.
+  quarterly = faktureras kvartalsvis. Välj ENDAST om fakturan explicit markerar
+              FAKTURERINGSPERIODEN med "Q1", "Q2", "Q3", "Q4", "kvartal" eller "quarter".
               OBS: "uppsägningstid", "notice period", "cancellation period" och liknande
-              avtalsvillkorstexter beskriver INTE faktureringsperioden — välj INTE quarterly
-              baserat på dessa. Multiplikatorn quarterly × 4 = årskostnad.
+              villkorstexter är INTE faktureringsperiod.
   annual    = faktureras årsvis (t.ex. försäkringspremie, årslicens, 12-månadersfaktura)
   one_time  = engångsfaktura utan löpande abonnemang
   unknown   = kan ej avgöras med säkerhet
@@ -541,11 +565,19 @@ const EXTRACT_TOOL = {
       },
       service_period_start: {
         type: ['string', 'null'],
-        description: 'Startdatum för fakturans tjänsteperiod i ISO-format YYYY-MM-DD. null om ej angivet.',
+        description: 'Startdatum för avtalets BINDNINGSPERIOD i ISO-format YYYY-MM-DD (t.ex. "Avtal 2024-01-01 – 2026-12-31" → "2024-01-01"). null om löpande abonnemang utan angiven bindningstid.',
       },
       service_period_end: {
         type: ['string', 'null'],
-        description: 'Slutdatum för fakturans tjänsteperiod i ISO-format YYYY-MM-DD. null om ej angivet.',
+        description: 'Slutdatum för avtalets BINDNINGSPERIOD i ISO-format YYYY-MM-DD. null om löpande abonnemang utan angiven bindningstid.',
+      },
+      billing_period_start: {
+        type: ['string', 'null'],
+        description: 'Startdatum för perioden fakturan AVSER i ISO-format YYYY-MM-DD (t.ex. "Period 2026-01-01 – 2026-01-31" → "2026-01-01"). null om inga perioddatum finns på fakturan.',
+      },
+      billing_period_end: {
+        type: ['string', 'null'],
+        description: 'Slutdatum för perioden fakturan avser i ISO-format YYYY-MM-DD. null om inga perioddatum finns på fakturan.',
       },
       cancellation_notice_days: {
         type: ['integer', 'null'],
@@ -718,7 +750,23 @@ export function aggregateLineItems(rawInput) {
   const recurringAmount = sum('recurring_subscription');
   const variableCharges = sum('variable_usage');
   const oneTimeFees     = sum('one_time_fee') + sum('hardware');
-  const multiplier      = PERIOD_MULTIPLIER[raw.billingPeriod] ?? 12;
+
+  // Beräkna faktureringsperiod från datum i första hand — kan inte luras av fotnotstext.
+  // AI-värdet används bara som fallback när inga datum finns på fakturan.
+  const dateDerivedPeriod = computeBillingPeriodFromDates(
+    raw.billing_period_start,
+    raw.billing_period_end,
+  );
+  const billingPeriod = dateDerivedPeriod ?? raw.billingPeriod;
+  const billingPeriodSource = dateDerivedPeriod ? 'dates' : 'ai';
+
+  if (dateDerivedPeriod && dateDerivedPeriod !== raw.billingPeriod) {
+    console.log(
+      `[billing-period] date override: AI="${raw.billingPeriod}" → dates="${dateDerivedPeriod}" (${raw.billing_period_start} – ${raw.billing_period_end})`,
+    );
+  }
+
+  const multiplier = PERIOD_MULTIPLIER[billingPeriod] ?? 12;
 
   // projectedRecurringAmount: beräknas deterministiskt om is_prorata-rader finns.
   // Pro-rata-rader representerar nya licenser som nästa period debiteras fullt —
@@ -747,7 +795,8 @@ export function aggregateLineItems(rawInput) {
     date:                     raw.date,
     description:              raw.description,
     account:                  raw.account ?? null,
-    billingPeriod:            raw.billingPeriod,
+    billingPeriod,
+    billingPeriodSource,
     lineItems: (raw.lineItems ?? []).map((li) => ({
       description: li.description,
       amount:      li.amount,
@@ -789,7 +838,7 @@ export function aggregateLineItems(rawInput) {
     billingCycleType:          raw.billing_cycle_type ?? null,
     // Compute price per seat in code — more reliable than asking AI to do the arithmetic
     pricePerSeatMonthly: (() => {
-      const periodMonths = { monthly: 1, quarterly: 3, annual: 12, one_time: 1, unknown: 1 }[raw.billingPeriod] ?? 1;
+      const periodMonths = { monthly: 1, quarterly: 3, annual: 12, one_time: 1, unknown: 1 }[billingPeriod] ?? 1;
       const seats = raw.seatCount > 0 ? raw.seatCount : null;
       return (seats && periodMonths > 0 && recurringAmount > 0)
         ? Math.round(recurringAmount / seats / periodMonths * 100) / 100
@@ -803,6 +852,8 @@ export function aggregateLineItems(rawInput) {
     startupCreditExpiryDate:   raw.startup_credit_expiry_date ?? null,
     servicePeriodStart:        raw.service_period_start ?? null,
     servicePeriodEnd:          raw.service_period_end ?? null,
+    billingPeriodStart:        raw.billing_period_start ?? null,
+    billingPeriodEnd:          raw.billing_period_end ?? null,
     cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,
     cancellationFeeExplicit:   raw.cancellation_fee_explicit ?? null,
     currency:                  raw.currency ?? 'SEK',
