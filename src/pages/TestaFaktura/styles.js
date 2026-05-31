@@ -1538,8 +1538,8 @@ const revealFade = keyframes`
 export const ScoreRevealCard = styled.div`
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 16px 20px;
+  gap: 16px;
+  padding: 12px 16px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
   background: ${({ theme }) => theme.color.surface};
   border: 2px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
@@ -1549,8 +1549,8 @@ export const ScoreRevealCard = styled.div`
   .gauge-wrap {
     flex-shrink: 0;
     position: relative;
-    width: 90px;
-    height: 90px;
+    width: 72px;
+    height: 72px;
   }
   .gauge-svg {
     position: absolute;
@@ -1570,7 +1570,7 @@ export const ScoreRevealCard = styled.div`
     pointer-events: none;
   }
   .score-val {
-    font-size: 34px;
+    font-size: 26px;
     font-weight: 800;
     letter-spacing: -0.04em;
     font-feature-settings: "tnum";

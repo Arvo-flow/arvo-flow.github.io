@@ -191,7 +191,7 @@ const SEGMENTS = [
 const PHASES = [
   { id: 'extract',    label: 'AI läser & klassificerar fakturan',   sublabel: 'Claude Opus analyserar raderna' },
   { id: 'categorize', label: 'Identifierar leverantör & kategori',   sublabel: 'Matchar mot 200+ leverantörsprofiler' },
-  { id: 'recommend',  label: 'Beräknar besparing mot branschindex', sublabel: 'Jämför med svenska SMF-data' },
+  { id: 'recommend',  label: 'Beräknar besparing mot branschindex', sublabel: 'Jämför med svenska branschdata' },
 ];
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -1610,7 +1610,7 @@ const TestaFaktura = () => {
                     <>
                       <SavingsBlock>
                         <span className="kicker">
-                          {isLicensePending ? 'Möjlig årlig besparing' : 'Din nettobesparing'}
+                          {isLicensePending ? 'Möjlig årlig besparing' : 'Din identifierade nettobesparing'}
                         </span>
                         <span className="amount">+{formatKr(animatedNet)}</span>
                         <span className="unit">
@@ -2064,20 +2064,6 @@ const TestaFaktura = () => {
             )}
           </div>
 
-          {/* Avtalsbevakning — visas om vi har en analys och användaren är inloggad eller ger e-post */}
-          {analysisId && result?.route === 'auto' && contractState !== 'saved' && (
-            <ContractWatchCard
-              analysisId={analysisId}
-              supplier={result.extracted?.supplier}
-              email={authEmail}
-              onSaved={() => setContractState('saved')}
-            />
-          )}
-          {contractState === 'saved' && (
-            <div style={{ padding: '14px 20px', borderRadius: 12, background: '#F0FDF4', border: '1px solid #BBF7D0', marginBottom: 16, fontSize: 14, color: '#166534' }}>
-              ✓ Arvo bevakar ert avtal och påminner er i god tid innan det är dags att förhandla.
-            </div>
-          )}
 
           <NextSteps>
             <h3>7 kategorier väntar på analys</h3>
