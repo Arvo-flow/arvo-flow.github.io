@@ -49,8 +49,5 @@ export default async function handler(req, res) {
     await db`UPDATE magic_tokens SET used_at = NOW() WHERE id = ${row.id}`.catch(() => {});
   }
 
-  const bypass = process.env.ARVO_BYPASS_SECRET;
-  if (!bypass) return send(res, 500, { error: 'Servern är inte konfigurerad för magic links' });
-
-  return send(res, 200, { ok: true, bypass, email: row.email });
+  return send(res, 200, { ok: true, email: row.email });
 }
