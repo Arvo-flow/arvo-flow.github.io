@@ -19,6 +19,7 @@ import TestaFaktura from './pages/TestaFaktura';
 import Portfolio from './pages/Portfolio';
 import Admin from './pages/Admin';
 import OutcomeSurvey from './pages/OutcomeSurvey';
+import ArvoScore from './pages/ArvoScore';
 import ScrollToTop from './components/ScrollToTop';
 
 const ArvoFlow = () => (
@@ -41,6 +42,7 @@ const ArvoFlow = () => (
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/utfall" element={<OutcomeSurvey />} />
+          <Route path="/arvo-score" element={<ArvoScore />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
