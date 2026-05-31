@@ -22,6 +22,7 @@ export default createGlobalStyle`
 
   html, body, #root {
     min-height: 100%;
+    overflow-x: hidden;
     background: ${({ theme }) => theme.color.bg};
     color: ${({ theme }) => theme.color.ink};
   }

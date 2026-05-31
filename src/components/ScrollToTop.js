@@ -8,7 +8,9 @@ if ('scrollRestoration' in window.history) {
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    // Direktanrop utan behavior — iOS Safari ignorerar 'instant' när
+    // scroll-behavior: smooth är satt på html-elementet
+    window.scrollTo(0, 0);
   }, [pathname]);
   return null;
 };
