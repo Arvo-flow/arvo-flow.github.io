@@ -338,7 +338,11 @@ ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
     "Nord Pool Spot: 0,38 kr/kWh", "Inköpspris el: 0,41 kr". Sätts till null om:
     – Fakturan visar ett kombinerat energipris utan separation av spot vs. påslag.
     – Det är ett fastprisavtal (el_contract_type = 'fixed').
-    – Spotpriset inte framgår explicit med ord som "spot", "inköp", "Nord Pool" o.d.${FEWSHOT_EXAMPLES ? '\n\n' + FEWSHOT_EXAMPLES : ''}`;
+    – Spotpriset inte framgår explicit med ord som "spot", "inköp", "Nord Pool" o.d.
+  — invoiceTotal: Fakturans totala betalningsbelopp EXKLUSIVE moms — det belopp som framgår
+    som "Att betala", "Totalt att betala", "Total", "Amount due", "Total amount due" eller
+    liknande slutsumma längst ner på fakturan. Om enbart ink. moms anges: dividera med 1.25.
+    Sätt null om totalsumman ej är tydligt angiven eller ej kan fastställas med säkerhet.${FEWSHOT_EXAMPLES ? '\n\n' + FEWSHOT_EXAMPLES : ''}`;
 
 const EXTRACT_TOOL = {
   name: 'extract_invoice',
@@ -552,6 +556,10 @@ const EXTRACT_TOOL = {
         type: ['string', 'null'],
         description: 'Kundens (fakturamottagarens) organisationsnummer, t.ex. "556777-1111". null om ej angivet på fakturan.',
       },
+      invoiceTotal: {
+        type: ['integer', 'null'],
+        description: 'Fakturans totala "Att betala"-belopp exkl. moms (dividera med 1.25 om enbart ink. moms visas). null om ej tydligt angivet.',
+      },
     },
     required: [
       'supplier', 'date', 'description', 'billingPeriod',
@@ -722,6 +730,7 @@ export function aggregateLineItems(rawInput) {
     potentialMixedCategories:  raw.potential_mixed_categories ?? false,
 
     customerOrgNumber:         raw.customer_org_number ?? null,
+    invoiceTotal:              raw.invoiceTotal != null ? Number(raw.invoiceTotal) : null,
   };
 }
 
@@ -737,6 +746,24 @@ export function aggregateLineItems(rawInput) {
 export function routeExtraction(extracted) {
   if (extracted.outOfScope) {
     return { route: 'unsupported', reason: extracted.outOfScopeReason ?? 'out_of_scope' };
+  }
+
+  // ── Ring 1: Matematisk ankartest ─────────────────────────────────────────
+  // Om fakturan har ett "Att betala"-belopp ska summan av raderna stämma inom 3%.
+  // Stor avvikelse indikerar missad rad, dubbel rad eller fel vid moms-hantering.
+  // Tolerans: max(50 kr, 3 % av total) — absorberar avrundning och öresavrundning.
+  if (extracted.invoiceTotal > 0 && (extracted.lineItems ?? []).length > 0) {
+    const lineSum = (extracted.lineItems ?? []).reduce((s, l) => s + (l.amount ?? 0), 0);
+    if (lineSum > 0) {
+      const diff      = Math.abs(lineSum - extracted.invoiceTotal);
+      const tolerance = Math.max(50, extracted.invoiceTotal * 0.03);
+      if (diff > tolerance) {
+        return {
+          route:  'review_queue',
+          reason: `Ring1: radsumma ${lineSum.toLocaleString('sv-SE')} kr ≠ fakturatotal ${extracted.invoiceTotal.toLocaleString('sv-SE')} kr (avvikelse ${diff.toLocaleString('sv-SE')} kr)`,
+        };
+      }
+    }
   }
 
   // ── Lager 1: Sanity checks ────────────────────────────────────────────────

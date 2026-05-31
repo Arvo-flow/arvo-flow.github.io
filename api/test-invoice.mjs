@@ -20,7 +20,7 @@ import { computeSecondarySaving } from '../lib/secondary-savings.js';
 import { getEurSekRate, FALLBACK_RATE_EUR_SEK, getSekRate, FALLBACK_RATE_USD_SEK } from '../agents/recommender/pricing.js';
 import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
-import { verifySanity } from '../lib/sanity-verifier.js';
+import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
 import { storeAnalysis } from '../lib/invoice-store.js';
 import { validateCategory } from '../lib/category-validator.js';
 import { validateSeatPrice, getBenchmarkBasis, getSupplierPriceIntel } from '../lib/supplier-price-intel.js';
@@ -518,6 +518,25 @@ export default async function handler(req, res) {
         console.log(`[fingerprint:pre-route] ${_preRoute.key}: confidence ${extracted.confidenceScore?.toFixed(2)} → ${boosted}`);
         extracted.confidenceScore = boosted;
       }
+    }
+
+    // ── Ring 2: Seat count oracle (fire-and-forget) ───────────────────────────
+    // Haiku läser PDF:en oberoende av Opus och verifierar antalet licenser/SIM-kort.
+    // Ej blockerande — påverkar inte kundlatensen. Vid avvikelse: internt larm.
+    if ((extracted.seatCount ?? 0) > 0) {
+      verifySeatCount({
+        seatCount:  extracted.seatCount,
+        lineItems:  extracted.lineItems,
+        pdfBase64:  pdfBytes.toString('base64'),
+      }).then((seatResult) => {
+        if (!seatResult.ok) {
+          notifyReviewQueue(
+            extracted,
+            `[Ring2 Seat Oracle] seatCount Opus=${seatResult.opusCount} ≠ Haiku=${seatResult.oracleCount} (diff=${seatResult.diff})`,
+          ).catch(() => {});
+          console.error(`[ring2:seat-oracle] ALERT: opus=${seatResult.opusCount} haiku=${seatResult.oracleCount}`);
+        }
+      }).catch((err) => console.warn('[ring2:seat-oracle] fail-open:', err.message));
     }
 
     // Triage — review_queue eller unsupported avbryter pipeline
