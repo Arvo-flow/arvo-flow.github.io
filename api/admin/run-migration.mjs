@@ -224,6 +224,41 @@ export default async function handler(req, res) {
     // El
     { name: 'seed:tibber',        run: () => upsertPrice({ supplier:'tibber',      product:'Tibber Spotpris',    tier:'spot', category:'el', priceMonthly:39,    priceUnit:'per_subscription', currency:'SEK', sourceType:'official_web', sourceUrl:'https://tibber.com/se/foretag',                confidence:0.88, lastVerified:'2026-05-01', changedBy:'migration', metadata:{ pricePerKwh:'spot' } }) },
     { name: 'seed:skatteverket',  run: () => upsertPrice({ supplier:'skatteverket', product:'Energiskatt 2026',   tier:'2026', category:'el', priceUnit:'per_kwh', currency:'SEK', sourceType:'official_web', sourceUrl:'https://www.skatteverket.se/foretag/skatterochavdrag/punktskatter/energiskatter.4.html', confidence:0.99, lastVerified:'2026-05-22', changedBy:'migration', metadata:{ pricePerKwh:0.360 } }) },
+
+    // ── Fas 2: AI-CFO-kolumner ─────────────────────────────────────────────────
+    // arvo_outcomes — skapa tabell om den inte finns (med alla kolumner)
+    {
+      name: 'arvo_outcomes',
+      run: () => sql`
+        CREATE TABLE IF NOT EXISTS arvo_outcomes (
+          id                    SERIAL      PRIMARY KEY,
+          fingerprint           TEXT,
+          supplier              TEXT        NOT NULL,
+          category              TEXT        NOT NULL,
+          predicted_net         INTEGER,
+          actual_net            INTEGER,
+          switched              BOOLEAN     NOT NULL DEFAULT false,
+          switched_at           DATE,
+          reported_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          notes                 TEXT,
+          source                TEXT        DEFAULT 'customer'
+        )`,
+    },
+    { name: 'arvo_outcomes_cat_idx', run: () => sql`CREATE INDEX IF NOT EXISTS arvo_outcomes_cat_idx ON arvo_outcomes (category)` },
+    { name: 'arvo_outcomes_fp_idx',  run: () => sql`CREATE INDEX IF NOT EXISTS arvo_outcomes_fp_idx ON arvo_outcomes (fingerprint)` },
+    // Nya kolumner på arvo_outcomes
+    { name: 'ao_analysis_id',           run: () => sql`ALTER TABLE arvo_outcomes ADD COLUMN IF NOT EXISTS analysis_id UUID REFERENCES invoice_analyses(id) ON DELETE SET NULL` },
+    { name: 'ao_predicted_annual_cost', run: () => sql`ALTER TABLE arvo_outcomes ADD COLUMN IF NOT EXISTS predicted_annual_cost INTEGER` },
+    { name: 'ao_actual_annual_cost',    run: () => sql`ALTER TABLE arvo_outcomes ADD COLUMN IF NOT EXISTS actual_annual_cost INTEGER` },
+    { name: 'ao_analysis_id_idx',       run: () => sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_outcomes_analysis_id ON arvo_outcomes (analysis_id) WHERE analysis_id IS NOT NULL` },
+    // Nya kolumner på invoice_analyses
+    { name: 'ia_user_email',           run: () => sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS user_email TEXT` },
+    { name: 'ia_contract_end_date',    run: () => sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS contract_end_date DATE` },
+    { name: 'ia_reminder_60',          run: () => sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS reminder_60_sent_at TIMESTAMPTZ` },
+    { name: 'ia_reminder_30',          run: () => sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS reminder_30_sent_at TIMESTAMPTZ` },
+    { name: 'ia_outcome_email',        run: () => sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS outcome_email_sent_at TIMESTAMPTZ` },
+    { name: 'idx_analyses_user_email', run: () => sql`CREATE INDEX IF NOT EXISTS idx_analyses_user_email ON invoice_analyses (user_email, created_at DESC) WHERE user_email IS NOT NULL` },
+    { name: 'idx_analyses_contract',   run: () => sql`CREATE INDEX IF NOT EXISTS idx_analyses_contract_end ON invoice_analyses (contract_end_date) WHERE contract_end_date IS NOT NULL` },
   ];
 
   for (const step of steps) {
