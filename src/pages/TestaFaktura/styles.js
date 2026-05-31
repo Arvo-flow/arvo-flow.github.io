@@ -1555,6 +1555,8 @@ export const ScoreRevealCard = styled.div`
   .gauge-svg {
     position: absolute;
     inset: 0;
+    width: 100%;
+    height: 100%;
     overflow: visible;
   }
   .num-overlay {
@@ -1624,12 +1626,14 @@ export const ScoreRevealCard = styled.div`
   }
 
   @media (max-width: 520px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 14px 16px;
-    .gauge-wrap { width: 80px; height: 80px; }
-    .score-val { font-size: 28px; }
+    gap: 14px;
+    padding: 12px 14px;
+    .gauge-wrap { width: 72px; height: 72px; }
+    .score-val { font-size: 26px; }
+    .score-denom { font-size: 11px; }
+    .eyebrow { margin-bottom: 4px; }
+    .level-badge { font-size: 13px; padding: 4px 10px 4px 8px; margin-bottom: 6px; }
+    .insight { font-size: 13px; line-height: 1.5; }
   }
 `;
 
