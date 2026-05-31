@@ -206,12 +206,40 @@ const AuthEmail = styled.span`
   @media (max-width: 520px) { display: none; }
 `;
 
+const MagicToast = styled.div`
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 14px 24px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  background: ${({ $error, theme }) => $error
+    ? '#D94F3C'
+    : 'linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%)'};
+  pointer-events: none;
+`;
+
 const EMPTY = { company: '', name: '', email: '' };
 const EMPTY_AUTH = { email: '' };
 
 const Nav = ({ variant = 'public' }) => {
   const { pathname } = useLocation();
-  const { email: authEmail, logout } = useAuth();
+  const { email: authEmail, logout, magicState } = useAuth();
+  const [toastVisible, setToastVisible] = useState(false);
+
+  useEffect(() => {
+    if (magicState === 'ok' || magicState === 'error') {
+      setToastVisible(true);
+      const t = setTimeout(() => setToastVisible(false), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [magicState]);
   const [modalOpen, setModalOpen]   = useState(false);
   const [authModal, setAuthModal]   = useState(false);
   const [authForm, setAuthForm]     = useState(EMPTY_AUTH);
@@ -302,6 +330,14 @@ const Nav = ({ variant = 'public' }) => {
 
   return (
     <>
+      {toastVisible && (
+        <MagicToast $error={magicState === 'error'}>
+          {magicState === 'ok'
+            ? `✓ Inloggad som ${authEmail}`
+            : '✕ Länken fungerade inte — begär en ny'}
+        </MagicToast>
+      )}
+      <>
       <Bar>
         <Inner>
           <Link to="/"><Logo /></Link>
@@ -475,6 +511,7 @@ const Nav = ({ variant = 'public' }) => {
           </Modal>
         </Overlay>
       )}
+    </>
     </>
   );
 };
