@@ -170,22 +170,25 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
   const effectiveSeats = seatCount ?? employees;
   const scale = isPerUser && effectiveSeats > 0 ? effectiveSeats : 1;
   const totalMedian = bm ? bm.median * scale : null;
+  const totalP25    = bm ? bm.p25    * scale : null;
   const isRealData      = bm?.source === 'real';
   const isVerifiedPublic = bm?.source === 'real-public';
   const isEstimated      = bm?.source === 'estimated';
   const dataPoints = bm?.n ?? 0;
 
   // Skip benchmark % comparison for accounting systems.
+  // Compare against p25 (the achievable benchmark), not median.
+  // Comparing against median masks overpayment for customers between p25 and median.
   const overpaymentPct =
-    !isAccountingSystem && totalMedian && totalMedian > 0
-      ? Math.round(((annualCost - totalMedian) / totalMedian) * 100)
+    !isAccountingSystem && totalP25 && totalP25 > 0
+      ? Math.round(((annualCost - totalP25) / totalP25) * 100)
       : null;
 
   // Annotation injected next to the annual cost — controls what the AI echoes back.
   // Three tiers: real DB data, verified public prices, range-based estimates.
   const overpaymentAnnotation = overpaymentPct !== null
     ? isRealData
-      ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER medianen' : Math.abs(overpaymentPct) + ' % UNDER medianen'} (${dataPoints} analyserade fakturor i databasen)`
+      ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER branschsnittet (p25)' : Math.abs(overpaymentPct) + ' % UNDER branschsnittet (p25)'} (${dataPoints} analyserade fakturor i databasen)`
       : isVerifiedPublic
         ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER verifierat listpris' : Math.abs(overpaymentPct) + ' % UNDER verifierat listpris'}`
         : `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER branschstandarden' : Math.abs(overpaymentPct) + ' % UNDER branschstandarden'}`
