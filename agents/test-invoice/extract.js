@@ -757,13 +757,31 @@ export function aggregateLineItems(rawInput) {
     raw.billing_period_start,
     raw.billing_period_end,
   );
-  const billingPeriod = dateDerivedPeriod ?? raw.billingPeriod;
-  const billingPeriodSource = dateDerivedPeriod ? 'dates' : 'ai';
+  let billingPeriod = dateDerivedPeriod ?? raw.billingPeriod;
+  let billingPeriodSource = dateDerivedPeriod ? 'dates' : 'ai';
 
   if (dateDerivedPeriod && dateDerivedPeriod !== raw.billingPeriod) {
     console.log(
       `[billing-period] date override: AI="${raw.billingPeriod}" → dates="${dateDerivedPeriod}" (${raw.billing_period_start} – ${raw.billing_period_end})`,
     );
+  }
+
+  // RULE: Fakturor med ≥2 recurring-rader med quantity ≥5 är nästan alltid månadsvis.
+  // Mobilabonnemang (SIM-kort per rad) och SaaS faktureras i Sverige alltid månadsvis
+  // när de har många per-enhet/per-seat-rader. Kvartalsfakturor har sällan denna struktur.
+  // Skyddar mot AI-fel där footertext ("3 månaders uppsägningstid") eller annat triggar quarterly.
+  // Source: customer-sveamobil — AI satte quarterly trots månadsvis mobilfaktura.
+  if (!dateDerivedPeriod && billingPeriod === 'quarterly') {
+    const perUnitLines = (raw.lineItems ?? []).filter(
+      (l) => l.type === 'recurring_subscription' && (l.quantity ?? 0) >= 5,
+    );
+    if (perUnitLines.length >= 2) {
+      console.log(
+        `[billing-period] multi-unit quarterly override → monthly (${perUnitLines.length} rader med quantity≥5)`,
+      );
+      billingPeriod = 'monthly';
+      billingPeriodSource = 'rule:multi-unit';
+    }
   }
 
   const multiplier = PERIOD_MULTIPLIER[billingPeriod] ?? 12;
