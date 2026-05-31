@@ -104,7 +104,7 @@ const SEGMENTS = [
   { label: 'Personal och hälsa',    icon: 'shield',    score: null, analyzed: false },
 ];
 
-const HERO_R = 62;
+const HERO_R = 48;
 const HERO_C = 2 * Math.PI * HERO_R;
 const DIAG_R = 26;
 const DIAG_C = 2 * Math.PI * DIAG_R;
@@ -135,17 +135,17 @@ const ArvoScore = () => {
         <HeroEyebrow>Arvo analyserade 847 fakturor från Fortnox — Andersson &amp; Partners AB</HeroEyebrow>
 
         <ScoreWrap>
-          <svg width="160" height="160" viewBox="0 0 160 160">
-            <circle cx="80" cy="80" r={HERO_R} fill="none" stroke="rgba(255,255,255,.1)" strokeWidth="10" />
+          <svg width="124" height="124" viewBox="0 0 124 124">
+            <circle cx="62" cy="62" r={HERO_R} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="8" />
             <circle
-              cx="80" cy="80" r={HERO_R}
+              cx="62" cy="62" r={HERO_R}
               fill="none"
               stroke="#5DD6CA"
-              strokeWidth="10"
+              strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={HERO_C}
               strokeDashoffset={heroReady ? HERO_C * (1 - SCORE / 100) : HERO_C}
-              style={{ transform: 'rotate(-90deg)', transformOrigin: '80px 80px', transition: 'stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1) 0.2s' }}
+              style={{ transform: 'rotate(-90deg)', transformOrigin: '62px 62px', transition: 'stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1) 0.2s' }}
             />
           </svg>
           <ScoreInner>
