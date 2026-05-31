@@ -429,6 +429,13 @@ const TestaFaktura = () => {
       .catch(() => {});
   }, []);
 
+  // Scrolla till resultatkortet när analysen är klar
+  React.useEffect(() => {
+    if (!result || !resultRef.current) return;
+    const top = resultRef.current.getBoundingClientRect().top + window.pageYOffset - 80;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }, [result]);
+
   const validateAndSetFile = (f) => {
     setError(null);
     if (!f) return;
