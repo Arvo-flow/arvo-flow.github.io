@@ -3,6 +3,16 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 const AuthContext = createContext(null);
 const STORAGE_KEY = 'arvo_user_email';
 
+// Läs magic-token SYNKRONT vid modulinläsning — innan något useEffect kört.
+// TestaFaktura kör window.history.replaceState i sitt useEffect (child-effect
+// körs före parent-effect i React), vilket raderar ?magic= ur URL:en innan
+// AuthContext useEffect hinner läsa den. Modulnivå-IIFE löser race condition.
+const PENDING_MAGIC_TOKEN = (() => {
+  try {
+    return new URLSearchParams(window.location.search).get('magic') ?? null;
+  } catch { return null; }
+})();
+
 export function AuthProvider({ children }) {
   const [email, setEmail] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) || null; } catch { return null; }
@@ -10,10 +20,9 @@ export function AuthProvider({ children }) {
   // 'idle' | 'validating' | 'ok' | 'error'
   const [magicState, setMagicState] = useState('idle');
 
-  // Hantera ?magic=<token> i URL — validera och logga in
+  // Hantera ?magic=<token> — validera token som fångades synkront vid modulinläsning
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token  = params.get('magic');
+    const token = PENDING_MAGIC_TOKEN;
     if (!token) return;
 
     setMagicState('validating');
@@ -35,10 +44,6 @@ export function AuthProvider({ children }) {
         } else {
           setMagicState('error');
         }
-        // Ta bort magic-token från URL utan att ladda om sidan
-        const url = new URL(window.location.href);
-        url.searchParams.delete('magic');
-        window.history.replaceState({}, '', url.toString());
       })
       .catch((err) => {
         console.error('[auth] validate-magic misslyckades:', err.message);
