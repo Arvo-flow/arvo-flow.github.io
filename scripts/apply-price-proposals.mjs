@@ -16,9 +16,11 @@
  * Skriver /tmp/apply-summary.json med vad som ändrades, för PR-body-generering.
  */
 
+import 'dotenv/config';
 import { readFileSync, writeFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { upsertPrice } from '../lib/price-db.js';
 
 const __dir   = dirname(fileURLToPath(import.meta.url));
 const ROOT    = join(__dir, '..');
@@ -140,6 +142,24 @@ for (const alert of actionable) {
       reasoning:    haiku.reasoning,
       filesChanged,
     });
+
+    // Spara bekräftad prisändring till supplier_prices (fire-and-forget)
+    upsertPrice({
+      supplier:     alert.supplier.toLowerCase().split(/\s+/)[0],
+      product:      alert.supplier,
+      tier:         null,
+      category:     alert.category,
+      priceMonthly: parseFloat(newNumber),
+      priceAnnual:  null,
+      priceUnit:    'per_seat',
+      currency:     'SEK',
+      sourceType:   'official_web',
+      sourceUrl:    alert.url,
+      confidence:   haiku.confidence,
+      lastVerified: new Date().toISOString().slice(0, 10),
+      changedBy:    'price-monitor',
+      metadata:     { extractedPrice: rawExtracted, reasoning: haiku.reasoning },
+    }).catch(err => console.warn('[price-db] upsert failed (non-critical):', err.message));
   } else {
     summary.skipped.push({ ...alert, reason: 'Strängen hittades inte i källfilerna — kontrollera manuellt' });
   }

@@ -279,6 +279,151 @@ const PRICE_CHECKS = [
       { name: '299–499 kr/mth startpris', pattern: /[23][0-9]{2}\s*kr/ },
     ],
   },
+
+  // Verisure Företag — larm & bevakning
+  {
+    category: 'larm-bevakning',
+    supplier: 'Verisure Företag',
+    url: 'https://www.verisure.se/foretag-och-organisationer',
+    checks: [
+      { name: '349–499 kr/mth larmövervakning', pattern: /[34][0-9]{2}\s*kr/ },
+    ],
+  },
+
+  // ── Mobil: Telia Företag ─────────────────────────────────────────────────
+  {
+    category: 'mobil',
+    supplier: 'Telia Företag mobilabonnemang',
+    url: 'https://www.telia.se/foretag/mobiltelefoni',
+    checks: [
+      { name: '349 kr/mth standard plan', pattern: /349/ },
+      { name: '449 kr/mth premium plan',  pattern: /449/ },
+    ],
+  },
+
+  // ── Mobil: Telenor Företag ────────────────────────────────────────────────
+  {
+    category: 'mobil',
+    supplier: 'Telenor Företag mobilabonnemang',
+    url: 'https://www.telenor.se/foretag/mobiltelefon',
+    checks: [
+      { name: '299 kr/mth bas plan', pattern: /299/ },
+    ],
+  },
+
+  // ── Mobil: Tre Företag ────────────────────────────────────────────────────
+  {
+    category: 'mobil',
+    supplier: 'Tre Företag mobilabonnemang',
+    url: 'https://www.tre.se/foretag/abonnemang',
+    checks: [
+      { name: '249 kr/mth bas plan', pattern: /249/ },
+    ],
+  },
+
+  // ── SaaS Finance: Fortnox ─────────────────────────────────────────────────
+  // Fortnox är #1 bokföringssystem för svenska SMF — kritisk referenspunkt.
+  {
+    category: 'saas-finance',
+    supplier: 'Fortnox priser (bokföring)',
+    url: 'https://www.fortnox.se/priser',
+    checks: [
+      { name: '399 kr/mth bas-paket',       pattern: /399/ },
+    ],
+  },
+
+  // ── SaaS Finance: Visma eEkonomi ─────────────────────────────────────────
+  {
+    category: 'saas-finance',
+    supplier: 'Visma eEkonomi priser',
+    url: 'https://vismaeekonomii.se/priser',
+    checks: [
+      { name: '249 kr/mth Smart-plan', pattern: /249/ },
+    ],
+  },
+
+  // ── SaaS Finance: Bokio ───────────────────────────────────────────────────
+  {
+    category: 'saas-finance',
+    supplier: 'Bokio priser',
+    url: 'https://www.bokio.se/priser',
+    checks: [
+      { name: '149 kr/mth Business Pro', pattern: /149/ },
+    ],
+  },
+
+  // ── SaaS Creative: Adobe Creative Cloud for Teams ────────────────────────
+  // Adobe All Apps: 699 kr/user/mth (supplier-price-intel.js, lastUpdated 2026-05)
+  {
+    category: 'saas-creative',
+    supplier: 'Adobe Creative Cloud for Teams (sv)',
+    url: 'https://www.adobe.com/se/creativecloud/business/teams.html',
+    checks: [
+      { name: 'All Apps 699 kr/user/mth', pattern: /699\s*(?:kr|SEK)/i },
+    ],
+  },
+
+  // ── SaaS Creative: Figma ─────────────────────────────────────────────────
+  {
+    category: 'saas-creative',
+    supplier: 'Figma Professional',
+    url: 'https://www.figma.com/pricing/',
+    checks: [
+      { name: 'Professional $15/editor/mth', pattern: /\$\s*15[.,]?\d*\s*(?:\/|\bper\b)/ },
+    ],
+  },
+
+  // ── SaaS CRM: Pipedrive ───────────────────────────────────────────────────
+  // Pipedrive är grundat av estniska entreprenörer men ledande bland svenska SMF.
+  {
+    category: 'saas-crm',
+    supplier: 'Pipedrive priser',
+    url: 'https://www.pipedrive.com/sv/pricing',
+    checks: [
+      { name: 'Essential $14/user/mth annual', pattern: /\$\s*14[.,]?\d*\b/ },
+    ],
+  },
+
+  // ── SaaS CRM: HubSpot ────────────────────────────────────────────────────
+  {
+    category: 'saas-crm',
+    supplier: 'HubSpot Sales Hub priser',
+    url: 'https://www.hubspot.com/pricing/sales',
+    checks: [
+      { name: 'Starter $15-20/seat/mth', pattern: /\$\s*1[5-9][.,]?\d*\b/ },
+    ],
+  },
+
+  // ── Bredband: Telia Företag ───────────────────────────────────────────────
+  {
+    category: 'bredband',
+    supplier: 'Telia Företag bredband',
+    url: 'https://www.telia.se/foretag/bredband',
+    checks: [
+      { name: '500–900 kr/mth fiber', pattern: /[5-9][0-9]{2}\s*kr/ },
+    ],
+  },
+
+  // ── El: Tibber Företag ───────────────────────────────────────────────────
+  // Tibber är det enda spotprisalternativet med öppen API för smart styrning.
+  {
+    category: 'el',
+    supplier: 'Tibber Företag',
+    url: 'https://tibber.com/se/foretag',
+    checks: [
+      { name: '39 kr/mth abonnemang', pattern: /39\s*kr/ },
+    ],
+  },
+
+  // ── Löneadmin: Visma Lön ─────────────────────────────────────────────────
+  {
+    category: 'loneadmin',
+    supplier: 'Visma Lön priser',
+    url: 'https://www.visma.com/se/lonesystem',
+    checks: [
+      { name: 'Visma Lön startpris', pattern: /[1-9][0-9]{2,3}\s*kr/ },
+    ],
+  },
 ];
 
 // ── Haiku price extraction ──────────────────────────────────────────────────
