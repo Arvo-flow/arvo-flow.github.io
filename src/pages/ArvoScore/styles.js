@@ -5,11 +5,6 @@ const fadeUp = keyframes`
   to   { opacity: 1; transform: translateY(0); }
 `;
 
-const revealFade = keyframes`
-  from { opacity: 0; transform: translateY(5px); }
-  to   { opacity: 1; transform: translateY(0); }
-`;
-
 export const Page = styled.div`
   min-height: 100vh;
   background: ${({ theme }) => theme.color.bg};
@@ -17,7 +12,7 @@ export const Page = styled.div`
 
 export const Hero = styled.section`
   background: linear-gradient(160deg, #0E3D38 0%, #1B7A6E 60%, #2AA090 100%);
-  padding: 48px 24px 64px;
+  padding: 64px 24px 80px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -37,18 +32,80 @@ export const HeroEyebrow = styled.p`
   letter-spacing: .1em;
   text-transform: uppercase;
   color: rgba(255,255,255,.55);
-  margin: 0 0 16px;
+  margin: 0 0 32px;
+`;
+
+export const ScoreWrap = styled.div`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+  svg { display: block; }
+`;
+
+export const ScoreInner = styled.div`
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+
+  .score-num {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 52px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .score-denom {
+    font-size: 14px;
+    color: rgba(255,255,255,.5);
+    font-weight: 500;
+  }
+  .score-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.45);
+    margin-top: 4px;
+  }
+`;
+
+export const HeroGrade = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px;
+  padding: 6px 16px;
+  margin-bottom: 20px;
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: ${({ $color }) => $color ?? '#F5D598'};
+    flex-shrink: 0;
+  }
+  span {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,.85);
+  }
 `;
 
 export const HeroHeadline = styled.h1`
   font-family: ${({ theme }) => theme.font.display};
-  font-size: clamp(24px, 5vw, 38px);
+  font-size: clamp(28px, 6vw, 44px);
   font-weight: 700;
   color: #fff;
   letter-spacing: -0.025em;
-  line-height: 1.15;
-  margin: 0 0 10px;
-  max-width: 560px;
+  line-height: 1.12;
+  margin: 0 0 12px;
+  max-width: 640px;
   margin-left: auto;
   margin-right: auto;
 
@@ -84,142 +141,6 @@ export const SectionLabel = styled.p`
   text-transform: uppercase;
   color: ${({ theme }) => theme.color.muted};
   margin: 0 0 14px;
-`;
-
-/* ── SavingsBlock — matches TestaFaktura brandGradient block ── */
-
-export const SavingsBlock = styled.div`
-  padding: 24px;
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  background: ${({ theme }) => theme.color.brandGradient};
-  color: #FAFAF7;
-
-  span.kicker {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.85;
-    margin-bottom: 8px;
-  }
-  span.amount {
-    display: block;
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(42px, 7vw, 64px);
-    font-weight: 500;
-    line-height: 1.0;
-    letter-spacing: -0.025em;
-    font-feature-settings: "tnum";
-  }
-  span.unit {
-    display: block;
-    margin-top: 8px;
-    font-size: 14px;
-    opacity: 0.85;
-    line-height: 1.5;
-  }
-`;
-
-/* ── ScoreRevealCard — matches TestaFaktura large score card ── */
-
-export const ScoreRevealCard = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 16px 20px;
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  background: ${({ theme }) => theme.color.surface};
-  border: 2px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
-  box-shadow: 0 2px 20px rgba(0,0,0,.06);
-
-  .gauge-wrap {
-    flex-shrink: 0;
-    position: relative;
-    width: 90px;
-    height: 90px;
-  }
-  .gauge-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-  }
-  .num-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    pointer-events: none;
-  }
-  .score-val {
-    font-size: 34px;
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    font-feature-settings: "tnum";
-    color: var(--diag-color);
-  }
-  .score-denom {
-    font-size: 12px;
-    font-weight: 600;
-    opacity: 0.4;
-    color: var(--diag-color);
-    margin-top: 1px;
-  }
-  .content {
-    flex: 1;
-    min-width: 0;
-  }
-  .eyebrow {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 8px;
-  }
-  .level-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 5px 13px 5px 9px;
-    border-radius: 100px;
-    font-size: 14px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    animation: ${revealFade} 0.45s ease both;
-    animation-delay: 0.4s;
-  }
-  .level-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    background: var(--diag-color);
-  }
-  .insight {
-    font-size: 14px;
-    line-height: 1.6;
-    letter-spacing: -0.01em;
-    color: ${({ theme }) => theme.color.ink};
-    margin: 0;
-    animation: ${revealFade} 0.45s ease both;
-    animation-delay: 0.6s;
-  }
-
-  @media (max-width: 520px) {
-    gap: 14px;
-    padding: 12px 14px;
-    .gauge-wrap { width: 72px; height: 72px; }
-    .score-val { font-size: 26px; }
-    .score-denom { font-size: 11px; }
-    .level-badge { font-size: 13px; padding: 4px 10px 4px 8px; margin-bottom: 6px; }
-    .insight { font-size: 13px; line-height: 1.5; }
-  }
 `;
 
 /* ── ScoreDiag — matches TestaFaktura small score row ── */
@@ -299,137 +220,6 @@ export const ScoreDiag = styled.div`
     color: ${({ theme }) => theme.color.muted};
     margin: 0;
     line-height: 1.45;
-  }
-`;
-
-/* ── SegmentSection — NextSteps-style card with segment tile grid ── */
-
-export const SegmentSection = styled.div`
-  background: ${({ theme }) => theme.color.surface};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
-  padding: 24px;
-
-  h3 {
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(18px, 3vw, 22px);
-    font-weight: 700;
-    color: ${({ theme }) => theme.color.ink};
-    letter-spacing: -0.02em;
-    margin: 0 0 8px;
-  }
-  p.sub {
-    font-size: 14px;
-    color: ${({ theme }) => theme.color.muted};
-    line-height: 1.65;
-    margin: 0 0 16px;
-  }
-  p.seg-count {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: ${({ theme }) => theme.color.muted};
-    margin: 0 0 10px;
-  }
-
-  .segment-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 20px;
-    @media (max-width: 580px) { grid-template-columns: repeat(2, 1fr); }
-  }
-  .segment-tile {
-    position: relative;
-    padding: 12px 12px 11px;
-    border-radius: ${({ theme }) => theme.size.radius.md};
-    border: 1px solid ${({ theme }) => theme.color.border};
-    background: ${({ theme }) => theme.color.surface};
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    opacity: 0.6;
-    cursor: default;
-    transition: opacity 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
-    &:hover {
-      opacity: 0.85;
-      transform: translateY(-1px);
-      box-shadow: 0 3px 10px rgba(14,26,23,.07);
-    }
-  }
-  .tile-active {
-    border: 1.5px solid ${({ theme }) => theme.color.brand};
-    background: linear-gradient(
-      145deg,
-      ${({ theme }) => theme.color.brandSoft} 0%,
-      ${({ theme }) => theme.color.surface} 100%
-    );
-    box-shadow: 0 2px 12px ${({ theme }) => theme.color.brand}1A;
-    opacity: 1;
-    &:hover {
-      opacity: 1;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px ${({ theme }) => theme.color.brand}2A;
-    }
-  }
-  .tile-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border: 1px solid ${({ theme }) => theme.color.border};
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 7px;
-    flex-shrink: 0;
-  }
-  .icon-active {
-    width: 32px;
-    height: 32px;
-    background: ${({ theme }) => theme.color.brand};
-    border-color: transparent;
-    color: #FAFAF7;
-    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
-  }
-  .tile-name {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    line-height: 1.25;
-    color: ${({ theme }) => theme.color.inkSoft};
-  }
-  .tile-active .tile-name {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: ${({ theme }) => theme.color.ink};
-  }
-  .tile-status {
-    font-size: 10.5px;
-    color: ${({ theme }) => theme.color.muted};
-    font-weight: 500;
-  }
-  .status-active {
-    color: ${({ theme }) => theme.color.brand};
-    font-weight: 600;
-    font-size: 11px;
-  }
-  .tile-metric {
-    font-size: 12px;
-    font-weight: 800;
-    color: ${({ theme }) => theme.color.ink};
-    font-feature-settings: "tnum";
-    letter-spacing: -0.03em;
-    margin-top: 2px;
-  }
-  .tile-lock {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    color: ${({ theme }) => theme.color.borderStrong};
   }
 `;
 
