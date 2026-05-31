@@ -2080,43 +2080,13 @@ const TestaFaktura = () => {
           )}
 
           <NextSteps>
-            <h3>7 kategorier väntar på analys</h3>
+            <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
             <p className="sub">
               {adjNetSaving > 0
-                ? <>Ni sparar {formatKr(adjNetSaving)}/år på programvara. Vad döljer sig i de andra sju? Koppla Fortnox / Visma — Arvo skannar hela er leverantörsreskontra och rapporterar automatiskt.</>
-                : <>En analys är en datapunkt. En fullständig portföljvy är en strategi. Koppla Fortnox / Visma — Arvo skannar hela er leverantörsreskontra och rapporterar automatiskt.</>
+                ? <>Ni sparar {formatKr(adjNetSaving)}/år på den här fakturan. Koppla Fortnox / Visma — Arvo skannar hela er leverantörsreskontra och beräknar er fullständiga Arvo Score™ automatiskt.</>
+                : <>En analys är en datapunkt. En fullständig Arvo Score™ kräver hela portföljen. Koppla Fortnox / Visma — Arvo skannar er leverantörsreskontra och rapporterar automatiskt.</>
               }
             </p>
-            <p className="seg-count">SEGMENT — 1 AV {SEGMENTS.length} ANALYSERADE</p>
-            <div className="segment-grid">
-              {SEGMENTS.map((seg) => {
-                const isActive = seg.cats.includes(result?.categorized?.category);
-                const netSav = result?.recommendation?.netSaving;
-                return (
-                  <div key={seg.label} className={`segment-tile${isActive ? ' tile-active' : ''}`}>
-                    {!isActive && (
-                      <span className="tile-lock">
-                        <Icon name="lock" size={11} stroke={1.8} />
-                      </span>
-                    )}
-                    <div className={`tile-icon${isActive ? ' icon-active' : ''}`}>
-                      <Icon name={seg.icon} size={15} stroke={isActive ? 2.5 : 1.8} />
-                    </div>
-                    <span className="tile-name">{seg.label}</span>
-                    {isActive ? (
-                      <>
-                        <span className="tile-status status-active">Analyserat</span>
-                        {netSav > 0 && (
-                          <span className="tile-metric">–{formatNum(netSav)}&nbsp;kr/år</span>
-                        )}
-                      </>
-                    ) : (
-                      <span className="tile-status">Ej analyserat</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
             <Button as={Link} to="/connect" $variant="gradient" $size="lg">
               Koppla Fortnox / Visma →
             </Button>
