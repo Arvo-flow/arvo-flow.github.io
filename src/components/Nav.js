@@ -200,6 +200,9 @@ const AuthChip = styled.div`
   gap: 8px;
   font-size: 13px;
   color: ${({ theme }) => theme.color.muted};
+`;
+
+const AuthEmail = styled.span`
   @media (max-width: 520px) { display: none; }
 `;
 
@@ -320,7 +323,7 @@ const Nav = ({ variant = 'public' }) => {
           <Right>
             {authEmail ? (
               <AuthChip>
-                <span>{authEmail}</span>
+                <AuthEmail>{authEmail}</AuthEmail>
                 <Button $variant="ghost" $size="sm" onClick={logout}>Logga ut</Button>
               </AuthChip>
             ) : (
