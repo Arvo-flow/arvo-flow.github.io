@@ -32,6 +32,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      - name: Ring 3 — Outcomes-kalibrering (prediktionsnoggrannhet per kategori)
+        run: node scripts/calibrate-outcomes.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        continue-on-error: true
+
       - name: Run calibration
         run: node scripts/calibrate-benchmarks.mjs
         env:
