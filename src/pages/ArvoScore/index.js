@@ -7,19 +7,19 @@ import {
   Page, CardStack,
   DashCard, DashHeader, ActiveBadge, NotifChip, DashSavings,
   SectionLabel,
-  ActionCard, ActionCardTop, ActionArrowRow, ActionChip,
+  ActionCard, ActionIconCircle, ActionMeta, ActionRight,
   CalCard, CalTrack, CalItem,
-  SegScoreCard, SegUndoneCard, SegUndoneRow,
+  SegScoreCard, TierPill, SegUndoneCard, SegUndoneRow,
   CtaCard, TotalBar,
 } from './styles';
 
 const fmt = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 
 function scoreTier(s) {
-  if (s >= 80) return { label: 'Optimalt',         desc: 'Ni har ett kostnadsoptimerat leverantörsnätverk. Ni betalar under eller i nivå med branschsnittet.', color: '#1B7A6E' };
-  if (s >= 65) return { label: 'Förbättringsläge', desc: 'Ni betalar mer än marknadspriset — en meningsfull besparing som Arvo kan realisera åt er utan byråkrati.', color: '#65A30D' };
-  if (s >= 45) return { label: 'Suboptimerat',     desc: 'Ni betalar klart mer än branschsnittet. Arvo kan göra ett byte som betalar sig från dag ett.', color: '#D97706' };
-  return         { label: 'Kritisk',               desc: 'Ni betalar kraftigt mer och förlorar pengar varje faktura. Arvo identifierar, förhandlar och genomför bytet åt er.', color: '#DC2626' };
+  if (s >= 80) return { label: 'Optimalt',         desc: 'Ni har ett kostnadsoptimerat leverantörsnätverk. Ni betalar under eller i nivå med branschsnittet.', color: '#1B7A6E', bg: 'rgba(27,122,110,.1)' };
+  if (s >= 65) return { label: 'Förbättringsläge', desc: 'Ni betalar mer än marknadspriset — en meningsfull besparing som Arvo kan realisera åt er utan byråkrati.', color: '#65A30D', bg: 'rgba(101,163,13,.1)' };
+  if (s >= 45) return { label: 'Suboptimerat',     desc: 'Ni betalar klart mer än branschsnittet. Arvo kan göra ett byte som betalar sig från dag ett.', color: '#D97706', bg: 'rgba(217,119,6,.1)' };
+  return         { label: 'Kritisk',               desc: 'Ni betalar kraftigt mer och förlorar pengar varje faktura. Arvo identifierar, förhandlar och genomför bytet åt er.', color: '#DC2626', bg: 'rgba(220,38,38,.1)' };
 }
 
 function ScoreRing({ score, color, size = 68 }) {
@@ -55,37 +55,25 @@ function ScoreRing({ score, color, size = 68 }) {
 
 const ACTIONS = [
   {
-    id: 1,
-    category: 'Mobil',
-    categoryDetail: null,
-    from: 'Telia Företag',
-    to: 'Tele2 Företag',
-    reason: 'Avtal löper ut om 47 dagar — optimalt förhandlingsläge',
+    id: 1, category: 'Mobil', icon: 'phone',
+    title: 'Tele2 Företag',
+    sub: 'Byter från Telia · avtal löper ut om 47 dagar',
     btnLabel: 'Aktivera bytet',
-    gross: 156_000,
-    locked: false,
+    gross: 156_000, locked: false,
   },
   {
-    id: 2,
-    category: 'SaaS',
-    categoryDetail: 'Microsoft 365',
-    from: 'Microsoft (nuvarande)',
-    to: 'Tier-optimering',
-    reason: '12 oanvända licenser identifierade — spara direkt',
+    id: 2, category: 'SaaS', icon: 'spark',
+    title: 'Tier-optimering',
+    sub: '12 oanvända Microsoft 365-licenser',
     btnLabel: 'Aktivera optimeringen',
-    gross: 89_000,
-    locked: false,
+    gross: 89_000, locked: false,
   },
   {
-    id: 3,
-    category: 'Skrivarleasing',
-    categoryDetail: null,
-    from: 'Ricoh',
-    to: 'Kyocera',
-    reason: 'Bundet t.o.m. dec 2026 — Arvo bevakar och agerar vid förfall',
+    id: 3, category: 'Skrivarleasing', icon: 'file',
+    title: 'Ricoh',
+    sub: 'Bundet t.o.m. dec 2026 — Arvo agerar vid förfall',
     btnLabel: 'Bevakas',
-    gross: 39_000,
-    locked: true,
+    gross: 39_000, locked: true,
   },
 ];
 
@@ -155,33 +143,23 @@ const ArvoScore = () => {
 
         {ACTIONS.map((a) => (
           <ActionCard key={a.id} $locked={a.locked}>
-            <ActionCardTop>
-              <span className="act-category">
-                {a.category}{a.categoryDetail ? ` — ${a.categoryDetail}` : ''}
-              </span>
-              <div className="act-amount-wrap">
-                <span className="act-amount">−{fmt(a.gross)}</span>
-                <span className="act-unit">kr/år</span>
-              </div>
-            </ActionCardTop>
-            <ActionArrowRow $locked={a.locked}>
-              <span className="act-from">{a.from}</span>
-              <span className="act-arrow">→</span>
-              <span className="act-to">{a.to}</span>
-            </ActionArrowRow>
-            <ActionChip $locked={a.locked}>
-              <span className="chip-dot" />
-              {a.reason}
-            </ActionChip>
-            {a.locked ? (
-              <Button $variant="secondary" $size="sm" style={{ alignSelf: 'flex-start' }} disabled>
-                {a.btnLabel}
-              </Button>
-            ) : (
-              <Button $variant="brand" $size="sm" style={{ alignSelf: 'flex-start' }}>
-                {a.btnLabel}
-              </Button>
-            )}
+            <ActionIconCircle $locked={a.locked}>
+              <Icon name={a.locked ? 'lock' : a.icon} size={18} stroke={2} />
+            </ActionIconCircle>
+            <ActionMeta>
+              <div className="meta-title">{a.category} · {a.title}</div>
+              <div className="meta-sub">{a.sub}</div>
+            </ActionMeta>
+            <ActionRight>
+              {a.locked ? (
+                <span className="right-status">Bevakas</span>
+              ) : (
+                <>
+                  <span className="right-amount">+{fmt(Math.round(a.gross * 0.8))} kr</span>
+                  <Button $variant="brand" $size="sm">{a.btnLabel}</Button>
+                </>
+              )}
+            </ActionRight>
           </ActionCard>
         ))}
 
@@ -210,8 +188,9 @@ const ArvoScore = () => {
             <SegScoreCard key={seg.label} $borderColor={t.color}>
               <ScoreRing score={seg.score} color={t.color} size={68} />
               <div className="seg-body">
-                <div className="seg-tier" style={{ color: t.color }}>{t.label}</div>
-                <div className="seg-label">{seg.label}</div>
+                <span className="seg-score-label">Arvo Score™</span>
+                <TierPill $color={t.color} $bg={t.bg}>{t.label}</TierPill>
+                <div className="seg-name">{seg.label}</div>
                 <div className="seg-desc">{t.desc}</div>
               </div>
             </SegScoreCard>
