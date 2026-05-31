@@ -1,4 +1,9 @@
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+
+const pulseDot = keyframes`
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+`;
 
 export const Page = styled.div`
   min-height: 100vh;
@@ -65,11 +70,7 @@ export const ActiveBadge = styled.span`
     border-radius: 50%;
     background: ${({ theme }) => theme.color.brand};
     flex-shrink: 0;
-    animation: pulse-dot 2.4s ease infinite;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.35; }
+    animation: ${pulseDot} 2.4s ease infinite;
   }
 `;
 
