@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 import Button from './Button';
+import { useAuth } from '../contexts/AuthContext';
 
 const Bar = styled.header`
   position: sticky;
@@ -193,14 +194,28 @@ const SuccessBody = styled.p`
   line-height: 1.55;
 `;
 
+const AuthChip = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: ${({ theme }) => theme.color.muted};
+  @media (max-width: 520px) { display: none; }
+`;
+
 const EMPTY = { company: '', name: '', email: '' };
+const EMPTY_AUTH = { email: '' };
 
 const Nav = ({ variant = 'public' }) => {
   const { pathname } = useLocation();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState(EMPTY);
-  const [errors, setErrors] = useState({});
-  const [submitState, setSubmitState] = useState('idle'); // idle | submitting | success | error
+  const { email: authEmail, logout } = useAuth();
+  const [modalOpen, setModalOpen]   = useState(false);
+  const [authModal, setAuthModal]   = useState(false);
+  const [authForm, setAuthForm]     = useState(EMPTY_AUTH);
+  const [authState, setAuthState]   = useState('idle'); // idle | submitting | sent | error
+  const [form, setForm]             = useState(EMPTY);
+  const [errors, setErrors]         = useState({});
+  const [submitState, setSubmitState] = useState('idle');
   const firstInputRef = useRef(null);
 
   useEffect(() => {
@@ -265,6 +280,23 @@ const Nav = ({ variant = 'public' }) => {
     }
   };
 
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    const email = authForm.email.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    setAuthState('submitting');
+    try {
+      await fetch('/api/auth/request-magic-link', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email }),
+      });
+      setAuthState('sent');
+    } catch {
+      setAuthState('error');
+    }
+  };
+
   return (
     <>
       <Bar>
@@ -286,6 +318,16 @@ const Nav = ({ variant = 'public' }) => {
             </Links>
           )}
           <Right>
+            {authEmail ? (
+              <AuthChip>
+                <span>{authEmail}</span>
+                <Button $variant="ghost" $size="sm" onClick={logout}>Logga ut</Button>
+              </AuthChip>
+            ) : (
+              <Button $variant="ghost" $size="sm" onClick={() => { setAuthForm(EMPTY_AUTH); setAuthState('idle'); setAuthModal(true); }}>
+                Logga in
+              </Button>
+            )}
             {variant === 'public' ? (
               <>
                 <FoundingBtn><Button $variant="ghost" $size="sm" onClick={openModal}>Bli Founding Member</Button></FoundingBtn>
@@ -294,11 +336,60 @@ const Nav = ({ variant = 'public' }) => {
                 </Button>
               </>
             ) : (
-              <Button as={Link} to="/" $variant="ghost" $size="sm">Logga ut</Button>
+              null
             )}
           </Right>
         </Inner>
       </Bar>
+
+      {authModal && (
+        <Overlay onClick={(e) => { if (e.target === e.currentTarget) setAuthModal(false); }}>
+          <Modal role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+            <ModalClose onClick={() => setAuthModal(false)} aria-label="Stäng">✕</ModalClose>
+            {authState === 'sent' ? (
+              <ModalSuccess>
+                <SuccessIcon>✉</SuccessIcon>
+                <SuccessTitle>Kolla inkorgen.</SuccessTitle>
+                <SuccessBody>
+                  Vi har skickat en inloggningslänk till {authForm.email}.<br />
+                  Klicka på länken i mejlet — det tar 10 sekunder.
+                </SuccessBody>
+              </ModalSuccess>
+            ) : (
+              <form onSubmit={handleAuthSubmit} noValidate>
+                <ModalTitle id="auth-modal-title">Logga in på Arvo Flow</ModalTitle>
+                <ModalSub>
+                  Ange din e-post — vi skickar en inloggningslänk direkt. Inget lösenord.
+                </ModalSub>
+                <Field>
+                  <FieldLabel htmlFor="auth-email">E-postadress</FieldLabel>
+                  <Input
+                    id="auth-email"
+                    type="email"
+                    placeholder="anna@acme.se"
+                    value={authForm.email}
+                    onChange={(e) => setAuthForm({ email: e.target.value })}
+                    autoComplete="email"
+                    autoFocus
+                  />
+                </Field>
+                {authState === 'error' && (
+                  <FieldError style={{ marginBottom: 12 }}>Något gick fel — försök igen.</FieldError>
+                )}
+                <Button
+                  type="submit"
+                  $variant="gradient"
+                  $size="md"
+                  $full
+                  disabled={authState === 'submitting'}
+                >
+                  {authState === 'submitting' ? 'Skickar…' : 'Skicka inloggningslänk →'}
+                </Button>
+              </form>
+            )}
+          </Modal>
+        </Overlay>
+      )}
 
       {modalOpen && (
         <Overlay onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>

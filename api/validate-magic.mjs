@@ -52,5 +52,5 @@ export default async function handler(req, res) {
   const bypass = process.env.ARVO_BYPASS_SECRET;
   if (!bypass) return send(res, 500, { error: 'Servern är inte konfigurerad för magic links' });
 
-  return send(res, 200, { ok: true, bypass });
+  return send(res, 200, { ok: true, bypass, email: row.email });
 }

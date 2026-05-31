@@ -1308,9 +1308,9 @@ export default async function handler(req, res) {
     const arvoFee        = categorized.licensePending ? 0 : Math.round(grossSaving * 0.20);
     const netSaving      = categorized.licensePending ? grossSaving : grossSaving - arvoFee;
 
-    // Fire-and-forget — lagrar fullständig analys för portföljvyn.
+    // Lagrar fullständig analys och returnerar analysisId för avtalsbevakning.
     // Placerad efter alla overrides så att grossSaving/netSaving är slutgiltiga värden.
-    storeAnalysis({
+    const analysisId = await storeAnalysis({
       fingerprint: typeof fingerprint === 'string' ? fingerprint : null,
       pdfHash,
       extracted,
@@ -1319,7 +1319,8 @@ export default async function handler(req, res) {
       route: 'auto',
       industry,
       employees: employeesNum,
-    }).catch((err) => console.error('[test-invoice] storeAnalysis failed:', err.message));
+      userEmail: typeof body.userEmail === 'string' ? body.userEmail.trim().toLowerCase() : null,
+    }).catch((err) => { console.error('[test-invoice] storeAnalysis failed:', err.message); return null; });
 
     // Broadband-tillägg (statisk IP etc.) på mobil-primär faktura — pass-through i suggestedAnnualCost.
     const _bbAddonPassthrough = categorized.category === 'mobil'
@@ -1447,6 +1448,7 @@ export default async function handler(req, res) {
       savingRange,
       meta: analysisMeta,
       timing,
+      analysisId: analysisId ?? undefined,
     };
 
     // Saving gate: kontrollera kvot efter analysen (vi behöver netSaving och orgNumber).

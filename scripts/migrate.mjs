@@ -135,3 +135,35 @@ await sql`
 `;
 
 console.log('Migration klar — alla tabeller inkl. waitlist, invoice_feedback och magic_tokens är redo.');
+
+// ── Fas 2: Tillägg för AI-CFO-funktioner ─────────────────────────────────────
+// user_email        — kopplar analys till autentiserad användare (magic link)
+// contract_end_date — när avtalet löper ut (för påminnelsemail)
+// reminder_60/30    — spårar skickade påminnelser (idempotens)
+// outcome_email     — spårar 60-dagars utfallsenkät
+
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS user_email TEXT`;
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS contract_end_date DATE`;
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS reminder_60_sent_at TIMESTAMPTZ`;
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS reminder_30_sent_at TIMESTAMPTZ`;
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS outcome_email_sent_at TIMESTAMPTZ`;
+
+await sql`
+  CREATE INDEX IF NOT EXISTS idx_analyses_user_email
+    ON invoice_analyses (user_email, created_at DESC)
+  WHERE user_email IS NOT NULL
+`;
+
+await sql`
+  CREATE INDEX IF NOT EXISTS idx_analyses_contract_end
+    ON invoice_analyses (contract_end_date)
+  WHERE contract_end_date IS NOT NULL
+`;
+
+// Tillägg till arvo_outcomes för analyse-koppling och faktiska kostnader
+await sql`ALTER TABLE arvo_outcomes ADD COLUMN IF NOT EXISTS analysis_id UUID REFERENCES invoice_analyses(id) ON DELETE SET NULL`;
+await sql`ALTER TABLE arvo_outcomes ADD COLUMN IF NOT EXISTS predicted_annual_cost INTEGER`;
+await sql`ALTER TABLE arvo_outcomes ADD COLUMN IF NOT EXISTS actual_annual_cost INTEGER`;
+await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_outcomes_analysis_id ON arvo_outcomes (analysis_id) WHERE analysis_id IS NOT NULL`;
+
+console.log('Fas 2 klar — user_email, contract_end_date, reminder-kolumner och outcome-tillägg redo.');
