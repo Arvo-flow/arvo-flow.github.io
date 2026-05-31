@@ -301,6 +301,14 @@ jobs:
               console.log('Skapade ärende #' + issue.number);
             }
 
+      - name: Notify affected customers
+        if: steps.monitor.outcome == 'failure'
+        continue-on-error: true
+        run: node scripts/notify-price-changes.mjs /tmp/price-monitor-report.json
+        env:
+          DATABASE_URL:    ${{ secrets.DATABASE_URL }}
+          RESEND_API_KEY:  ${{ secrets.RESEND_API_KEY }}
+
       - name: All checks passed
         if: steps.monitor.outcome == 'success'
         run: echo "✅ Alla priskontroller godkända — inga åtgärder behövs."
