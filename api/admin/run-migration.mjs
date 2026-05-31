@@ -11,9 +11,10 @@ function send(res, status, body) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return send(res, 405, { error: 'Endast POST' });
+  // Accepterar POST (x-admin-token header) eller GET (?token=...) för mobil-åtkomst
+  const token = req.headers['x-admin-token']
+    ?? new URL(req.url, 'https://x').searchParams.get('token');
 
-  const token = req.headers['x-admin-token'];
   if (!token || token !== process.env.ADMIN_TOKEN) {
     return send(res, 401, { error: 'Ej behörig' });
   }
