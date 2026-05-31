@@ -1,463 +1,329 @@
-import styled, { keyframes } from 'styled-components';
-
-const fadeUp = keyframes`
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-`;
+import styled from 'styled-components';
 
 export const Page = styled.div`
   min-height: 100vh;
   background: ${({ theme }) => theme.color.bg};
 `;
 
-export const Hero = styled.section`
-  background: linear-gradient(160deg, #0E3D38 0%, #1B7A6E 60%, #2AA090 100%);
-  padding: 56px 24px 72px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse 80% 60% at 50% 120%, rgba(93,214,202,.18) 0%, transparent 70%);
-    pointer-events: none;
-  }
-`;
-
-export const HeroEyebrow = styled.p`
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.55);
-  margin: 0 0 24px;
-  max-width: 480px;
-`;
-
-export const ScoreWrap = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 24px;
-  svg { display: block; }
-`;
-
-export const ScoreInner = styled.div`
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  pointer-events: none;
-
-  .score-num {
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: 42px;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1;
-    letter-spacing: -0.03em;
-  }
-  .score-denom {
-    font-size: 12px;
-    color: rgba(255,255,255,.5);
-    font-weight: 500;
-  }
-  .score-label {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.4);
-    margin-top: 3px;
-  }
-`;
-
-export const HeroGrade = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 999px;
-  padding: 6px 16px;
-  margin-bottom: 20px;
-
-  .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: ${({ $color }) => $color ?? '#F5D598'};
-    flex-shrink: 0;
-  }
-  span {
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(255,255,255,.85);
-  }
-`;
-
-export const HeroHeadline = styled.h1`
-  font-family: ${({ theme }) => theme.font.display};
-  font-size: clamp(28px, 6vw, 44px);
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.025em;
-  line-height: 1.12;
-  margin: 0 0 12px;
-  max-width: 640px;
-  margin-left: auto;
-  margin-right: auto;
-
-  em {
-    font-style: normal;
-    color: #5DD6CA;
-  }
-`;
-
-export const HeroSub = styled.p`
-  font-size: 15px;
-  color: rgba(255,255,255,.6);
-  margin: 0;
-  line-height: 1.6;
-`;
-
-export const Body = styled.div`
-  max-width: 760px;
+export const CardStack = styled.div`
+  max-width: 540px;
   margin: 0 auto;
-  padding: 0 20px 80px;
-`;
-
-export const Section = styled.section`
-  margin-top: ${({ $gap }) => $gap ?? '40px'};
-  animation: ${fadeUp} 0.45s ease both;
-  animation-delay: ${({ $delay }) => $delay ?? '0ms'};
-`;
-
-export const SectionLabel = styled.p`
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: ${({ theme }) => theme.color.muted};
-  margin: 0 0 14px;
-`;
-
-/* ── ScoreDiag — matches TestaFaktura small score row ── */
-
-export const ScoreDiag = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 14px 18px;
-  border-radius: ${({ theme }) => theme.size.radius.md};
-  background: ${({ theme }) => theme.color.surface};
-  border: 1.5px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
-  margin-bottom: 12px;
-
-  .gauge-wrap {
-    flex-shrink: 0;
-    position: relative;
-    width: 60px;
-    height: 60px;
-  }
-  .gauge-svg {
-    position: absolute;
-    inset: 0;
-  }
-  .gauge-num {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    gap: 2px;
-  }
-  .gauge-val {
-    font-size: 17px;
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    font-feature-settings: "tnum";
-  }
-  .gauge-denom {
-    font-size: 8px;
-    font-weight: 600;
-    opacity: 0.5;
-  }
-  .diag-body {
-    flex: 1;
-    min-width: 0;
-  }
-  .diag-top {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 4px;
-  }
-  .diag-score-label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: ${({ theme }) => theme.color.ink};
-  }
-  .diag-sep {
-    color: ${({ theme }) => theme.color.borderStrong};
-    font-size: 12px;
-    flex-shrink: 0;
-  }
-  .diag-label {
-    font-size: 13px;
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-  .diag-text {
-    font-size: 13px;
-    letter-spacing: -0.01em;
-    color: ${({ theme }) => theme.color.muted};
-    margin: 0;
-    line-height: 1.45;
-  }
-`;
-
-/* ── Action cards ── */
-
-export const ActionList = styled.div`
+  padding: 0 16px 64px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 `;
 
-const STATUS_COLORS = {
-  urgent: '#1B7A6E',
-  locked: '#5C6E68',
-};
+/* ── Main dashboard card ── */
 
-export const ActionCard = styled.div`
-  background: ${({ theme }) => theme.color.surface};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1.5px solid ${({ $status, theme }) =>
-    $status === 'urgent' ? theme.color.brand : theme.color.border};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
+export const DashCard = styled.div`
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 4px 28px rgba(14,26,23,.08);
   overflow: hidden;
-  display: grid;
-  grid-template-columns: 4px 1fr;
-
-  &::before {
-    content: '';
-    display: block;
-    background: ${({ $status }) => STATUS_COLORS[$status] ?? STATUS_COLORS.locked};
-  }
 `;
 
-export const ActionCardInner = styled.div`
-  padding: 18px 20px;
-`;
-
-export const ActionTop = styled.div`
+export const DashHeader = styled.div`
+  padding: 18px 22px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-`;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
-export const ActionMeta = styled.div`
-  .category {
-    font-size: 10px;
-    font-weight: 700;
+  .company {
+    font-size: 12px;
+    font-weight: 800;
     letter-spacing: .07em;
     text-transform: uppercase;
-    color: ${({ theme }) => theme.color.muted};
-    margin: 0 0 4px;
-  }
-  .suppliers {
-    font-size: 15px;
-    font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
-    letter-spacing: -0.01em;
-    line-height: 1.25;
   }
-  .arrow {
-    color: ${({ theme }) => theme.color.brand};
-    margin: 0 4px;
+  .sep {
+    margin: 0 6px;
+    color: ${({ theme }) => theme.color.borderStrong};
   }
-`;
-
-export const ActionSaving = styled.div`
-  text-align: right;
-  flex-shrink: 0;
-
-  .amount {
-    font-size: 20px;
-    font-weight: 800;
-    color: ${({ theme }) => theme.color.brand};
-    letter-spacing: -0.03em;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-  }
-  .label {
-    font-size: 11px;
+  .live {
+    font-size: 12px;
+    font-weight: 600;
     color: ${({ theme }) => theme.color.muted};
-    margin-top: 2px;
   }
 `;
 
-export const ActionBottom = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-`;
-
-export const StatusBadge = styled.span`
+export const ActiveBadge = styled.span`
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.color.brand};
+  background: ${({ theme }) => theme.color.brandSoft};
   padding: 4px 10px;
   border-radius: 999px;
-  background: ${({ $status }) => $status === 'urgent' ? '#DCEEEA' : '#E8EDEC'};
-  color: ${({ $status }) => $status === 'urgent' ? '#0E4F47' : '#3F4B47'};
 
   &::before {
     content: '';
     width: 6px; height: 6px;
     border-radius: 50%;
-    background: ${({ $status }) => STATUS_COLORS[$status] ?? STATUS_COLORS.locked};
+    background: ${({ theme }) => theme.color.brand};
+    flex-shrink: 0;
+    animation: pulse-dot 2.4s ease infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.35; }
+  }
+`;
+
+export const NotifChip = styled.div`
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(14,26,23,.13);
+  padding: 11px 16px 11px 11px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  align-self: flex-end;
+  margin-bottom: 10px;
+
+  .chip-icon {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: ${({ theme }) => theme.color.brandSoft};
+    color: ${({ theme }) => theme.color.brand};
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
   }
-`;
-
-export const ActionBtn = styled.button`
-  font-size: 13px;
-  font-weight: 700;
-  padding: 8px 18px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 160ms ease;
-  white-space: nowrap;
-  font-family: inherit;
-
-  ${({ $variant }) => $variant === 'primary' ? `
-    background: linear-gradient(135deg, #5DD6CA 0%, #1B6E66 100%);
-    color: #fff;
-    border: none;
-    box-shadow: 0 4px 14px rgba(27,122,110,.3);
-    &:hover { filter: brightness(1.06); transform: translateY(-1px); }
-  ` : `
-    background: transparent;
-    color: #5C6E68;
-    border: 1.5px solid #D5E2DC;
-    &:hover { border-color: #1B7A6E; color: #1B7A6E; }
-  `}
-
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-    transform: none !important;
+  .chip-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.ink};
+    line-height: 1.2;
+  }
+  .chip-sub {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    margin-top: 1px;
   }
 `;
 
-/* ── Kontraktskalender ── */
+export const DashSavings = styled.div`
+  padding: 26px 22px 22px;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
-export const CalendarWrap = styled.div`
-  background: ${({ theme }) => theme.color.surface};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
-  padding: 24px;
+  .savings-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.muted};
+    margin: 0 0 10px;
+  }
+  .savings-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .savings-num {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: clamp(52px, 13vw, 80px);
+    font-weight: 400;
+    color: ${({ theme }) => theme.color.brand};
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+  }
+  .savings-unit {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: clamp(24px, 5vw, 34px);
+    font-weight: 400;
+    color: ${({ theme }) => theme.color.brand};
+    opacity: 0.6;
+  }
+  .savings-sub {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.5;
+    margin: 0;
+  }
+`;
+
+export const ActionRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 22px;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  opacity: ${({ $locked }) => $locked ? 0.5 : 1};
+
+  &:last-child { border-bottom: none; }
+`;
+
+export const ActionIconWrap = styled.div`
+  width: 42px; height: 42px;
+  border-radius: 13px;
+  background: ${({ $locked, theme }) => $locked ? theme.color.surfaceAlt : theme.color.brandSoft};
+  color: ${({ $locked, theme }) => $locked ? theme.color.borderStrong : theme.color.brand};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+`;
+
+export const ActionBody = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  .action-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.ink};
+    line-height: 1.25;
+  }
+  .action-sub {
+    font-size: 12.5px;
+    color: ${({ theme }) => theme.color.muted};
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+`;
+
+export const ActionAmount = styled.div`
+  font-size: 15px;
+  font-weight: 800;
+  color: ${({ $locked, theme }) => $locked ? theme.color.muted : theme.color.brand};
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  font-feature-settings: "tnum";
+  flex-shrink: 0;
+`;
+
+/* ── Secondary cards (Calendar, Segments) ── */
+
+export const SecCard = styled.div`
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 28px rgba(14,26,23,.08);
   overflow: hidden;
 `;
 
-export const CalendarTrack = styled.div`
-  position: relative;
-  padding: 32px 0 8px;
+export const SecHeader = styled.div`
+  padding: 15px 22px 13px;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+
+  p {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.muted};
+    margin: 0;
+  }
 `;
 
-export const CalendarLine = styled.div`
-  position: absolute;
-  top: 44px;
-  left: 0; right: 0;
-  height: 2px;
-  background: ${({ theme }) => theme.color.border};
-`;
-
-export const CalendarItems = styled.div`
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  position: relative;
-`;
-
-export const CalendarItem = styled.div`
+export const CalRow = styled.div`
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  cursor: default;
+  gap: 12px;
+  padding: 13px 22px;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
-  .dot {
-    width: 14px; height: 14px;
+  &:last-child { border-bottom: none; }
+
+  .cal-dot {
+    width: 9px; height: 9px;
     border-radius: 50%;
-    border: 2.5px solid ${({ theme }) => theme.color.surface};
-    box-shadow: 0 0 0 1.5px ${({ $color }) => $color ?? '#BACBC2'};
     background: ${({ $color }) => $color ?? '#BACBC2'};
-    z-index: 1;
     flex-shrink: 0;
   }
-  .name {
-    font-size: 11px;
+  .cal-name {
+    flex: 1;
+    font-size: 14px;
     font-weight: 600;
-    color: ${({ theme }) => theme.color.inkSoft};
-    text-align: center;
-    line-height: 1.3;
+    color: ${({ theme }) => theme.color.ink};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .date {
-    font-size: 10px;
-    color: ${({ theme }) => theme.color.muted};
-    text-align: center;
-  }
-  .tag {
-    font-size: 10px;
+  .cal-tag {
+    font-size: 11px;
     font-weight: 700;
     padding: 2px 8px;
     border-radius: 999px;
     background: ${({ $tagBg }) => $tagBg ?? '#E8EDEC'};
     color: ${({ $tagColor }) => $tagColor ?? '#3F4B47'};
     white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .cal-date {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    width: 60px;
+    text-align: right;
+    flex-shrink: 0;
   }
 `;
 
-/* ── CTA card ── */
+export const SegRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 22px;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  opacity: ${({ $analyzed }) => $analyzed ? 1 : 0.42};
+
+  &:last-child { border-bottom: none; }
+
+  .seg-icon {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    background: ${({ $analyzed, theme }) => $analyzed ? theme.color.brandSoft : theme.color.surfaceAlt};
+    color: ${({ $analyzed, theme }) => $analyzed ? theme.color.brand : theme.color.borderStrong};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .seg-name {
+    flex: 1;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+  }
+  .seg-score {
+    font-size: 13px;
+    font-weight: 800;
+    color: ${({ $scoreColor }) => $scoreColor ?? '#BACBC2'};
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+    flex-shrink: 0;
+  }
+  .seg-na {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    flex-shrink: 0;
+  }
+`;
+
+/* ── CTA ── */
 
 export const CtaCard = styled.div`
   background: linear-gradient(160deg, #0E3D38 0%, #1B7A6E 100%);
-  border-radius: ${({ theme }) => theme.size.radius.xl};
-  padding: 32px;
+  border-radius: 20px;
+  padding: 26px 22px;
   text-align: center;
 
   h2 {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(20px, 4vw, 28px);
+    font-size: clamp(19px, 4vw, 24px);
     color: #fff;
-    margin: 0 0 8px;
+    margin: 0 0 7px;
     letter-spacing: -0.02em;
+    font-weight: 700;
   }
   p {
-    font-size: 14px;
+    font-size: 13px;
     color: rgba(255,255,255,.65);
-    margin: 0 0 24px;
+    margin: 0 0 20px;
     line-height: 1.6;
   }
 `;
@@ -469,17 +335,17 @@ export const TotalBar = styled.div`
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 12px;
-  padding: 14px 20px;
-  margin-bottom: 24px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 
   .bar-label {
-    font-size: 13px;
+    font-size: 12px;
     color: rgba(255,255,255,.6);
   }
   .bar-value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     color: #5DD6CA;
     letter-spacing: -0.02em;
