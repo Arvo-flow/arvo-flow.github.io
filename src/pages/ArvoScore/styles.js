@@ -12,8 +12,11 @@ export const Page = styled.div`
 
 export const Hero = styled.section`
   background: linear-gradient(160deg, #0E3D38 0%, #1B7A6E 60%, #2AA090 100%);
-  padding: 64px 24px 80px;
+  padding: 56px 24px 72px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   position: relative;
   overflow: hidden;
 
@@ -32,15 +35,16 @@ export const HeroEyebrow = styled.p`
   letter-spacing: .1em;
   text-transform: uppercase;
   color: rgba(255,255,255,.55);
-  margin: 0 0 32px;
+  margin: 0 0 24px;
+  max-width: 480px;
 `;
 
 export const ScoreWrap = styled.div`
   position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   svg { display: block; }
 `;
 
@@ -49,28 +53,29 @@ export const ScoreInner = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
+  pointer-events: none;
 
   .score-num {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 52px;
+    font-size: 42px;
     font-weight: 700;
     color: #fff;
     line-height: 1;
     letter-spacing: -0.03em;
   }
   .score-denom {
-    font-size: 14px;
+    font-size: 12px;
     color: rgba(255,255,255,.5);
     font-weight: 500;
   }
   .score-label {
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: .06em;
     text-transform: uppercase;
-    color: rgba(255,255,255,.45);
-    margin-top: 4px;
+    color: rgba(255,255,255,.4);
+    margin-top: 3px;
   }
 `;
 
