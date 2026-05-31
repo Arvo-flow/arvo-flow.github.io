@@ -158,9 +158,12 @@ AVTALSTID & UPPSÄGNING — extrahera BARA om fakturan innehåller ett explicit 
 
 FAKTURERINGSPERIOD — välj exakt ett värde baserat på fakturans rader:
   monthly   = faktureras månadsvis (vanligast för abonnemang)
-  quarterly = faktureras kvartalsvis. Välj detta om fakturan explicit markeras "Q1", "Q2", "Q3",
-              "Q4", "kvartal", "quarter", "3 månader" ELLER om perioddatumet täcker ≥ 60 dagar
-              av löpande abonnemangstjänst. Multiplikatorn quarterly × 4 = årskostnad.
+  quarterly = faktureras kvartalsvis. Välj detta ENDAST om fakturan explicit markerar
+              FAKTURERINGSPERIODEN som "Q1", "Q2", "Q3", "Q4", "kvartal" eller "quarter",
+              ELLER om perioddatumet för abonnemangsraderna täcker ≥ 60 dagar.
+              OBS: "uppsägningstid", "notice period", "cancellation period" och liknande
+              avtalsvillkorstexter beskriver INTE faktureringsperioden — välj INTE quarterly
+              baserat på dessa. Multiplikatorn quarterly × 4 = årskostnad.
   annual    = faktureras årsvis (t.ex. försäkringspremie, årslicens, 12-månadersfaktura)
   one_time  = engångsfaktura utan löpande abonnemang
   unknown   = kan ej avgöras med säkerhet
