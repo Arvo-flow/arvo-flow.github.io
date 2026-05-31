@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
@@ -252,9 +253,107 @@ function CalculationChainBlock({ cc }) {
   );
 }
 
+function ContractWatchCard({ analysisId, supplier, email: initEmail, onSaved }) {
+  const [date, setDate]       = useState('');
+  const [email, setEmail]     = useState(initEmail ?? '');
+  const [status, setStatus]   = useState('idle'); // idle | saving | error
+  const [dismissed, setDismissed] = useState(false);
+
+  if (dismissed) return null;
+
+  const minDate = new Date();
+  minDate.setDate(minDate.getDate() + 1);
+  const minStr  = minDate.toISOString().split('T')[0];
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!date) return;
+    setStatus('saving');
+    try {
+      const res = await fetch('/api/save-contract', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ analysisId, contractEndDate: date, email: email || undefined }),
+      });
+      if (!res.ok) throw new Error();
+      onSaved();
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div style={{
+      background: '#F0FDF9', border: '1px solid #99F6E4', borderRadius: 14,
+      padding: '20px 22px', marginBottom: 16,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#0D9488', margin: '0 0 4px' }}>
+            Avtalsbevakning
+          </p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#0E1A17', margin: 0 }}>
+            När löper ert {supplier ? `${supplier}-avtal` : 'avtal'} ut?
+          </p>
+          <p style={{ fontSize: 13, color: '#5C6E68', margin: '4px 0 0', lineHeight: 1.5 }}>
+            Arvo påminner er 60 och 30 dagar innan — så ni aldrig missar förhandlingsfönstret.
+          </p>
+        </div>
+        <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 18, padding: 4, lineHeight: 1 }}>✕</button>
+      </div>
+      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <input
+          type="date"
+          min={minStr}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          required
+          style={{
+            height: 42, padding: '0 12px', border: '1.5px solid #99F6E4', borderRadius: 8,
+            fontSize: 14, color: '#0E1A17', background: '#fff', outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+        {!initEmail && (
+          <input
+            type="email"
+            placeholder="Er e-post för påminnelse"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            style={{
+              height: 42, padding: '0 12px', border: '1.5px solid #99F6E4', borderRadius: 8,
+              fontSize: 14, color: '#0E1A17', background: '#fff', outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+        )}
+        {status === 'error' && <p style={{ fontSize: 12, color: '#D94F3C', margin: 0 }}>Något gick fel — försök igen.</p>}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button
+            type="submit"
+            disabled={status === 'saving' || !date}
+            style={{
+              padding: '10px 20px', borderRadius: 100, border: 'none', cursor: 'pointer',
+              background: 'linear-gradient(135deg,#5DD6CA,#1B6E66)', color: '#fff',
+              fontWeight: 700, fontSize: 13,
+            }}
+          >
+            {status === 'saving' ? 'Sparar…' : 'Bevaka avtalet →'}
+          </button>
+          <button type="button" onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#9CA3AF' }}>
+            Nej tack
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 const TestaFaktura = () => {
   const fileInputRef = useRef(null);
   const resultRef    = useRef(null);
+  const { email: authEmail } = useAuth();
   const [file, setFile] = useState(null);
   const [industry, setIndustry] = useState('konsult');
   const [employees, setEmployees] = useState(5);
@@ -262,6 +361,9 @@ const TestaFaktura = () => {
   const [phase, setPhase] = useState(null);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
+  const [analysisId, setAnalysisId] = useState(null);
+  const [contractDate, setContractDate] = useState('');
+  const [contractState, setContractState] = useState('idle'); // idle | saving | saved
   const [dragActive, setDragActive] = useState(false);
   const [email, setEmail] = useState('');
   const [emailState, setEmailState] = useState('idle'); // idle | submitting | sent
@@ -499,6 +601,7 @@ const TestaFaktura = () => {
           fingerprint,
           bypass: bypass || undefined,
           email: overrideEmail || undefined,
+          userEmail: authEmail || undefined,
         }),
       });
 
@@ -543,6 +646,9 @@ const TestaFaktura = () => {
 
       setPhase('done');
       setResult(data);
+      setAnalysisId(data.analysisId ?? null);
+      setContractDate('');
+      setContractState('idle');
 
       if (data.route === 'auto') {
         const count = parseInt(localStorage.getItem('arvo_successful_count') ?? '0') + 1;
@@ -716,7 +822,7 @@ const TestaFaktura = () => {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
-          fingerprint: fingerprint ?? '',
+          fingerprint: await getBrowserFingerprint().catch(() => ''),
           supplier:    result?.extracted?.supplier,
           category:    result?.categorized?.category,
           vote,
@@ -1950,6 +2056,21 @@ const TestaFaktura = () => {
               </>
             )}
           </div>
+
+          {/* Avtalsbevakning — visas om vi har en analys och användaren är inloggad eller ger e-post */}
+          {analysisId && result?.route === 'auto' && contractState !== 'saved' && (
+            <ContractWatchCard
+              analysisId={analysisId}
+              supplier={result.extracted?.supplier}
+              email={authEmail}
+              onSaved={() => setContractState('saved')}
+            />
+          )}
+          {contractState === 'saved' && (
+            <div style={{ padding: '14px 20px', borderRadius: 12, background: '#F0FDF4', border: '1px solid #BBF7D0', marginBottom: 16, fontSize: 14, color: '#166534' }}>
+              ✓ Arvo bevakar ert avtal och påminner er i god tid innan det är dags att förhandla.
+            </div>
+          )}
 
           <NextSteps>
             <h3>7 kategorier väntar på analys</h3>

@@ -4,7 +4,8 @@
   "outputDirectory": "build",
   "framework": null,
   "crons": [
-    { "path": "/api/cron/update-fx-rate", "schedule": "0 6 * * *" }
+    { "path": "/api/cron/update-fx-rate", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/send-reminders", "schedule": "0 7 * * *" }
   ],
   "functions": {
     "api/test-invoice.mjs": {
@@ -21,6 +22,9 @@
     },
     "api/cron/update-fx-rate.mjs": {
       "maxDuration": 15
+    },
+    "api/cron/send-reminders.mjs": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
