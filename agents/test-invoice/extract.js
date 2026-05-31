@@ -593,6 +593,18 @@ function applyDeterministicRules(raw) {
   const lineItems = raw.lineItems.map((item) => {
     const desc = item.description ?? '';
 
+    // RULE: Fixed corporate data packages are always recurring_subscription.
+    // "Datapaket X GB" = flat-rate upgrade included in all subscriptions — recurring cost.
+    // Distinct from "Datatillägg X GB (abonnent 070-...)" which is per-user variable purchase.
+    // Source: customer-telia — "Datapaket 50GB Extra" (6 705 kr for 45 subs) misclassified as variable.
+    if (
+      item.type === 'variable_usage' &&
+      /\bdatapaket\b/i.test(desc) &&
+      !/abonnent|070|073|076|072|\+46|\d{9,}/.test(desc)
+    ) {
+      return { ...item, type: 'recurring_subscription' };
+    }
+
     // RULE: Mobile data add-ons are variable_usage, never recurring.
     // "Datatillägg X GB", "Extra data X GB", "tillägg X GB", "GB-tillägg"
     // Source: comviq-mobil-budget — 49 kr Datatillägg 2 GB classified as recurring_subscription.
@@ -652,13 +664,16 @@ function applyDeterministicRules(raw) {
   // HubSpot and Salesforce modules serve distinct teams — Marketing ≠ Sales ≠ Service.
   // Exception: Salesforce analytics/AI products (Einstein, Tableau CRM) share seats with primary
   // modules — they are feature add-ons, not additional headcount.
+  // Also exclude credit/discount lines — they carry quantity=1 but represent no users.
   // Source: hubspot-marketing-pro (5+10=15, not max=10).
   // Source: salesforce-enterprise (25+10=35; Einstein Analytics 25 overlaps with Sales Cloud 25).
+  // Source: customer-salesforce — Annual Discount sometimes recurring w/ quantity=1 → 26 instead of 25.
   if (/hubspot|salesforce/i.test(raw.supplier ?? '') && effectiveLines.length > 1) {
     const SFDC_ANALYTICS_RE = /einstein|tableau\s+crm|analytics\s+cloud/i;
+    const CRM_CREDIT_RE = /rabatt|discount|kredit|credit|kreditering|avdrag/i;
     const headcountLines = /salesforce/i.test(raw.supplier ?? '')
-      ? effectiveLines.filter((l) => !SFDC_ANALYTICS_RE.test(l.description ?? ''))
-      : effectiveLines;
+      ? effectiveLines.filter((l) => !SFDC_ANALYTICS_RE.test(l.description ?? '') && !CRM_CREDIT_RE.test(l.description ?? '') && (l.amount ?? 0) >= 0)
+      : effectiveLines.filter((l) => !CRM_CREDIT_RE.test(l.description ?? '') && (l.amount ?? 0) >= 0);
     const sumLines = headcountLines.length > 0 ? headcountLines : effectiveLines;
     seatCount = sumLines.reduce((s, l) => s + l.quantity, 0);
   }
