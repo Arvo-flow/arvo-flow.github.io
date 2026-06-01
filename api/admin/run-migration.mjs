@@ -369,6 +369,30 @@ export default async function handler(req, res) {
           )
       `,
     },
+
+    // ── Arvo Intelligence: Interactive Briefing ───────────────────────────────
+    {
+      name: 'briefing_reports',
+      run: () => sql`
+        CREATE TABLE IF NOT EXISTS briefing_reports (
+          id                      UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+          customer_email          TEXT        NOT NULL,
+          period                  TEXT        NOT NULL,
+          insights                JSONB       NOT NULL DEFAULT '[]',
+          actions_taken           JSONB       NOT NULL DEFAULT '{}',
+          total_saving_potential  INTEGER,
+          total_invoices_analyzed INTEGER,
+          insight_count           INTEGER,
+          token_id                UUID        REFERENCES magic_tokens(id) ON DELETE SET NULL,
+          generated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          expires_at              TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
+          viewed_at               TIMESTAMPTZ,
+          UNIQUE(customer_email, period)
+        )
+      `,
+    },
+    { name: 'idx_briefing_token_id',     run: () => sql`CREATE INDEX IF NOT EXISTS idx_briefing_token_id ON briefing_reports (token_id) WHERE token_id IS NOT NULL` },
+    { name: 'idx_briefing_email_period', run: () => sql`CREATE INDEX IF NOT EXISTS idx_briefing_email_period ON briefing_reports (customer_email, period DESC)` },
   ];
 
   for (const step of steps) {
