@@ -86,25 +86,34 @@ export const BRANCHINDEX = {
 
   mobil: {
     source: 'real-public',
-    lastVerified: '2026-05-22',
-    verifiedVia: 'playwright',
+    lastVerified: '2026-06-01',
+    verifiedVia: 'web-search',
     unit: 'kr/år',
-    // Prices are per user/year — lib/benchmark.js scales by employee count before the LLM sees it.
-    // Real Tele2 Företag listpriser maj 2026 (exkl. moms): Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth.
-    // Median = Plus (349×12 = 4 188 kr/år). p25 = Bas (299×12 = 3 588 kr/år).
-    // Volume discounts ~5 % at small, ~10 % at mid reduce both columns proportionally.
-    note: 'Per användare/år (exkl. moms). Vi multiplicerar med antal anställda. Källa: Tele2 Företag listpriser maj 2026 — Bas 299 kr/mth, Plus 349 kr/mth, Max 449 kr/mth. Obegränsad data + EU-roaming. OBS: Hårdvaruhyra (telefon ~450 kr/mth) klassificeras som hardware i extract.js och ingår INTE i besparingskalkylen.',
+    // Prices are per user/year — lib/benchmark.js scales by seat count before the LLM sees it.
+    // Real Tele2 Företag listpriser juni 2026 (exkl. moms, verifierade via flera källor):
+    //   Bas 299 kr/mth = 3 588 kr/yr (obegränsad data, EU-roaming) ← p25
+    //   Plus 349 kr/mth = 4 188 kr/yr                               ← median
+    //   Max 449 kr/mth = 5 388 kr/yr
+    // Volymrabatter (10+ SIM): Tele2 publicerar INGA listpriser för volymrabatter —
+    //   rabatter förhandlas individuellt via Tele2 Företagssälj. Arvo kan förhandla
+    //   dessa rabatter åt kunden, men de kan inte föringes i benchmarken.
+    //   p25 = Tele2 Bas listpris (299 kr) för ALLA buckets — inga estimerade rabatter.
+    // NÄSTA VERIFIERING: 2026-09-01
+    note: 'Per användare/år (exkl. moms). Källa: Tele2 Företag listpriser juni 2026 — Bas 299 kr/mth (obegränsad data + EU-roaming), Plus 349 kr/mth, Max 449 kr/mth. Volymrabatter förhandlas individuellt av Arvo — ingår INTE i p25. Hårdvaruhyra klassificeras som hardware i extract.js och ingår INTE i besparingskalkylen.',
     alternatives: [
-      { supplier: 'Tele2 Företag',   positioning: 'Obegränsad data + EU-roaming, ofta 10–30 % under Telia — marknadsledare bland SMF', reliability: 0.93 },
-      { supplier: 'Tre Företag',     positioning: 'Stark datakapacitet, lägst listpris för basabonnemang',                              reliability: 0.91 },
-      { supplier: 'Telia Företag',   positioning: 'Störst nättäckning i Sverige, premium med bra support',                              reliability: 0.96 },
-      { supplier: 'Telenor Företag', positioning: 'God täckning, flexibla volymavtal, konkurrenskraftig prissättning',                  reliability: 0.92 },
+      { supplier: 'Tele2 Företag',   positioning: 'Obegränsad data + EU-roaming, Bas 299 kr/mth — ofta lägst listpris bland rikstäckande operatörer', reliability: 0.93 },
+      { supplier: 'Tre Företag',     positioning: 'Stark datakapacitet, konkurrenskraftigt listpris för basabonnemang',                                  reliability: 0.91 },
+      { supplier: 'Telia Företag',   positioning: 'Rikstäckande nät, premium-support, volymavtal för större flottor',                                    reliability: 0.96 },
+      { supplier: 'Telenor Företag', positioning: 'God täckning, flexibla volymavtal, konkurrenskraftig prissättning',                                   reliability: 0.92 },
     ],
     matrix: {
-      byraer:      { micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
-      hantverkare: { micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
-      ehandel:     { micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
-      tillverkning:{ micro: { median: 4188, p25: 3588 }, small: { median: 3972, p25: 3408 }, mid: { median: 3768, p25: 3228 } },
+      // p25 = Tele2 Bas verifierat listpris (299 kr/mth × 12 = 3 588 kr/år) — ALLA buckets.
+      // Volymrabatter är förhandlade, inte publicerade — ingår ej i p25.
+      // Median = Tele2 Plus verifierat listpris (349 kr/mth × 12 = 4 188 kr/år) — ALLA buckets.
+      byraer:      { micro: { median: 4188, p25: 3588 }, small: { median: 4188, p25: 3588 }, mid: { median: 4188, p25: 3588 } },
+      hantverkare: { micro: { median: 4188, p25: 3588 }, small: { median: 4188, p25: 3588 }, mid: { median: 4188, p25: 3588 } },
+      ehandel:     { micro: { median: 4188, p25: 3588 }, small: { median: 4188, p25: 3588 }, mid: { median: 4188, p25: 3588 } },
+      tillverkning:{ micro: { median: 4188, p25: 3588 }, small: { median: 4188, p25: 3588 }, mid: { median: 4188, p25: 3588 } },
     },
   },
 
