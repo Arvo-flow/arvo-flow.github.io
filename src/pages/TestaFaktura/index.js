@@ -2069,26 +2069,41 @@ const TestaFaktura = () => {
           {/* ── Arvo Intelligence — premium AI-CFO acquisition ─────────────── */}
           <IntelligenceCard>
             <div className="eyebrow">Arvo Intelligence</div>
-            <h3>Er AI-finansdirektör, dygnet runt</h3>
+
+            {adjNetSaving > 0 ? (
+              <div className="saving-hero">
+                <span className="saving-label">Identifierad besparing — 1 av {SEGMENTS.length} kategorier</span>
+                <div className="saving-amount">
+                  {formatKr(adjNetSaving)}<span className="saving-unit">/år</span>
+                </div>
+              </div>
+            ) : null}
+
+            <h3>
+              {adjNetSaving > 0
+                ? <>Vad döljer sig i de övriga {SEGMENTS.length - 1} kategorierna?</>
+                : <>Er AI-finansdirektör, dygnet runt</>
+              }
+            </h3>
             <p className="sub">
               {adjNetSaving > 0
-                ? <>Ni sparar {formatKr(adjNetSaving)}/år på det vi just analyserade. Arvo Intelligence bevakar hela er leverantörsportfölj och agerar — utan att ni behöver lyfta ett finger.</>
-                : <>En analys är en datapunkt. Arvo Intelligence ger er det kompletta bilden — kontinuerlig bevakning av alla leverantörsavtal, automatisk.</>
+                ? <>Arvo Intelligence bevakar hela er leverantörsportfölj — inte bara det ni just analyserade.</>
+                : <>En analys är en datapunkt. Arvo Intelligence ger er den fullständiga bilden — kontinuerlig bevakning av alla leverantörsavtal.</>
               }
             </p>
 
             <ul className="value-list">
               <li>
                 <span className="check">✓</span>
-                <span>Månadsvis Intelligence Briefing — konkreta besparingsinsikter direkt i inkorgen</span>
+                <span>Månadsvis Intelligence Briefing — besparingsinsikter direkt i inkorgen</span>
               </li>
               <li>
                 <span className="check">✓</span>
-                <span>Kontinuerlig bevakning mot smyghöjningar och oannonserade prishöjningar</span>
+                <span>Automatisk prisbevakning — Arvo agerar innan ni ens märker en höjning</span>
               </li>
               <li>
                 <span className="check">✓</span>
-                <span>Arvo förhandlar och genomför leverantörsbyten — ni behöver inte göra något</span>
+                <span>Arvo genomför leverantörsbyten åt er — mot 20% av realiserad besparing</span>
               </li>
             </ul>
 
@@ -2126,10 +2141,13 @@ const TestaFaktura = () => {
                 <span className="price">1 995 kr</span>
                 <span className="price-period">/ mån</span>
               </div>
-              <span className="price-note">Ingen bindningstid</span>
+              <div className="price-meta">
+                <span className="price-note">Ingen bindningstid</span>
+                <span className="price-sub">Byten utan förskott — 20% av besparing</span>
+              </div>
             </div>
 
-            <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
+            <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center', marginTop: '4px' }}>
               Kom igång med Arvo Intelligence →
             </Button>
           </IntelligenceCard>
