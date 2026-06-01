@@ -215,6 +215,26 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
     ? `\n  Nuvarande hastighet: ${invoice.connectionSpeedMbit} Mbit/s — benchmarken ovan gäller för EXAKT denna hastighets-tier. Jämför mot motsvarande produkt (${invoice.connectionSpeedMbit} Mbit/s eller bättre till samma pris). Nämn ALDRIG en annan hastighet i reasoning utan att explicit förklara att det är ett uppgrade.`
     : '';
 
+  const mobileNote = (() => {
+    if (categorized.category !== 'mobil') return '';
+    const recurringItems = (invoice.lineItems ?? []).filter(l => l.type === 'recurring_subscription');
+    const planNames = [...new Set(recurringItems.map(l => l.description).filter(Boolean))].slice(0, 3);
+    const planLine = planNames.length > 0
+      ? `\n  Nuvarande abonnemangstyp (från fakturan): ${planNames.join(', ')}`
+      : '';
+    const tele2Alt = (benchmark?.alternatives ?? []).find(a =>
+      a.supplier?.toLowerCase().includes('tele2') &&
+      a.positioning?.toLowerCase().includes('obegränsad')
+    );
+    const unlimitedLine = tele2Alt && !categorized.normalizedSupplier?.toLowerCase().includes('tele2')
+      ? `\nOBS MOBIL: Tele2 Företag Bas erbjuder OBEGRÄNSAD data till p25-priset (299 kr/mth). ` +
+        `Om kundens nuvarande plan är datakapat (t.ex. 100GB, 50GB) ska du ALLTID nämna detta i reasoning — ` +
+        `kunden kan alltså byta till obegränsad surf utan att betala mer. ` +
+        `Formulera det som ett värdetillägg, inte ett kritikpåstående om nuvarande leverantör.`
+      : '';
+    return planLine + unlimitedLine;
+  })();
+
   const saasNote = (() => {
     if (!['saas-productivity', 'saas-devtools'].includes(categorized.category)) return '';
     const isDevtools = categorized.category === 'saas-devtools';
@@ -386,7 +406,7 @@ Kategoriserad faktura:
 Branschindex för segmentet:
 ${benchmarkBlock}
 
-${phrasingRule}${secretOverride}${saasNote}${speedNote}${elContext ? elContext : ''}
+${phrasingRule}${secretOverride}${saasNote}${speedNote}${mobileNote}${elContext ? elContext : ''}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }

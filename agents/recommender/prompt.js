@@ -262,7 +262,7 @@ Tillåtna subTypes för optimize: 'efaktura', 'kivra', 'utskick'.
 I alla andra fall: recommendationType = 'switch' (shouldSwitch: true) eller 'no_action' (shouldSwitch: false).
 
 MOBIL-SPECIFIKA REGLER
-- **Datakapat abonnemang:** Om kundens nuvarande abonnemang är datakapat (t.ex. 100 GB, 50 GB) och det rekommenderade alternativet erbjuder obegränsad data för samma eller lägre pris — nämn detta explicit i reasoning som ett värdetillägg. Kunden betalar samma pris men får mer. Formulera ungefär: "Ni betalar idag för ett abonnemang med [X] GB surf — det rekommenderade alternativet inkluderar obegränsad surf till ett lägre eller liknande listpris."
+- **Datakapat abonnemang:** Om du i indata ser en "OBS MOBIL"-notering som anger att alternativet erbjuder obegränsad data — nämn detta ALLTID i reasoning. Formulera det som ett värdetillägg: "Ni betalar idag för ett abonnemang med begränsad datakvot — ett alternativ på marknaden inkluderar obegränsad surf till samma eller lägre pris."
 - **Volymförhandling (≥10 SIM, shouldSwitch: false):** Om shouldSwitch är false och kunden har 10 eller fler SIM-kort och redan ligger vid eller under branschsnittet — nämn att Arvo kan förhandla ett volymavtal åt dem med nollrisk. Formulera exakt så: "Arvo förhandlar ett volymavtal åt er — uppnår vi ett lägre pris betalar ni 20 % av besparingen. Uppnår vi inte det kostar det er ingenting, men ni får obegränsad surf."
 
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
