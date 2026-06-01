@@ -34,6 +34,23 @@ Kommunicera aldrig Arvo Intelligence som ett abonnemang med features. Kommunicer
 
 ---
 
+## AFFÄRSMODELL — HYBRIDMODELL (TVÅ LAGER)
+
+Arvo bygger prisintelligens, smyghöjningsdetektering, cross-customer benchmarks och kontraktsbevakning — ett erbjudande som är värdefullt **varje månad**, inte bara vid en specifik switch-tidpunkt. Rätt modell är därför ett tvålagerssystem:
+
+### Layer 1 — Arvo Intelligence (prenumeration, 1 995 kr/mån)
+Kontinuerlig övervakning av samtliga leverantörsfakturor. Månadsrapport. Proaktiv avisering när marknadspriser förändras eller när ett avtal är inom 90 dagars förnyelse. Det är det verkliga AI-CFO-erbjudandet. Det rättfärdigar "arbetar 24/7". Värde levereras oavsett om kunden byter leverantör eller inte.
+
+### Layer 2 — Arvo Switch (provision, 20% av realiserad besparing)
+För kunder som vill att Arvo hanterar genomförandet av ett leverantörsbyte. Tas på toppen av prenumerationen. **Det är ett aktivt val kunden gör** — inte modellens hela fundament. Arvo Switch är ett naturligt nästa steg för Intelligence-kunder, inte en förutsättning.
+
+**Konsekvenser för copy och produkt:**
+- Intelligence marknadsförs aldrig som "gratis tills vi sparar åt er" — det är en prenumeration med eget värde
+- Switch-provisionen presenteras som ett tillägg: "Vill ni att Arvo hanterar bytet? Då tar vi 20% av besparingen."
+- Dessa två lager ska aldrig blandas ihop i kommunikation — de säljer olika saker vid olika tidpunkter i kundrelationen
+
+---
+
 ## STÅENDE BETEENDEREGLER (KRITISKA — GÄLLER ALLTID)
 
 Dessa regler gäller ALLTID, oavsett vad som verkar rimligt i stunden:
