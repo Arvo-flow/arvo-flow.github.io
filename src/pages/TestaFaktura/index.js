@@ -2068,37 +2068,41 @@ const TestaFaktura = () => {
 
           {/* ── Arvo Intelligence — premium AI-CFO acquisition ─────────────── */}
           <IntelligenceCard>
-            <div className="eyebrow">Arvo Intelligence</div>
-            <h3>
-              {adjNetSaving > 0
-                ? <>Vad döljer sig i de övriga {SEGMENTS.length - 1} kategorierna?</>
-                : <>Er AI-finansdirektör, dygnet runt</>
-              }
-            </h3>
+            {/* Mini-Briefing preview — visar produkten, inte bara ord om den */}
+            <div className="briefing-preview">
+              <div className="preview-top">
+                <span className="preview-brand">Arvo Intelligence</span>
+                <span className="preview-date">
+                  {new Date().toLocaleString('sv-SE', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}
+                </span>
+              </div>
+              <div className="preview-divider" />
+              <div className="preview-saving-label">Identifierad besparing</div>
+              <div className="preview-saving-number">
+                {adjNetSaving > 0 ? formatKr(adjNetSaving) : '47 230 kr'}
+                <span className="preview-saving-unit">/år</span>
+              </div>
+              <div className="preview-finding">
+                {adjNetSaving > 0
+                  ? `${SEGMENTS.length - 1} ytterligare kategorier ej analyserade`
+                  : '3 avtal avviker från marknadspris'
+                }
+              </div>
+              <div className="preview-action">Se fullständig analys →</div>
+            </div>
+
+            <h3>Arvo bevakar vad bokföringen inte ser.</h3>
             <p className="sub">
-              {adjNetSaving > 0
-                ? <>Vi hittade en besparing på <strong>{formatKr(adjNetSaving)}/år i en kategori.</strong> Arvo Intelligence bevakar alla {SEGMENTS.length} — och agerar automatiskt.</>
-                : <>En analys är en datapunkt. Arvo Intelligence ger er den fullständiga bilden — kontinuerlig bevakning av alla leverantörsavtal.</>
-              }
+              Ovanför är ett utdrag ur er månadsrapport. Arvo Intelligence täcker
+              alla {SEGMENTS.length} leverantörskategorier och agerar — utan att ni behöver lyfta ett finger.
             </p>
 
-            <ul className="value-list">
-              <li>
-                <span className="check">✓</span>
-                <span>Månadsvis Intelligence Briefing direkt i inkorgen</span>
-              </li>
-              <li>
-                <span className="check">✓</span>
-                <span>Automatisk prisbevakning — Arvo agerar vid smyghöjningar</span>
-              </li>
-              <li>
-                <span className="check">✓</span>
-                <span>Leverantörsbyten genomförs av Arvo — mot 20% av realiserad besparing</span>
-              </li>
-            </ul>
-
-            <div className="coverage-line">
-              Täcker alla {SEGMENTS.length} leverantörskategorier
+            <div className="trust-row">
+              <span>Månadsvis briefing</span>
+              <span className="dot">·</span>
+              <span>Automatisk prisbevakning</span>
+              <span className="dot">·</span>
+              <span>Byten mot 20% av besparing</span>
             </div>
 
             <div className="price-row">
