@@ -9,7 +9,7 @@ import {
   InsightCard, InsightInner,
   Breadcrumb, SupplierChip, TypeBadge, Headline, Subheadline,
   MetricGrid, MetricBlock, MetricValue, MetricUnit, MetricLabel,
-  ContextText, CardFooter, CtaButton, Spinner, SkipLink,
+  ContextText, CardFooter, CtaButton, Spinner,
   SummaryCard, CheckCircle, SummaryTitle, SummaryBody,
   ActionsList, ActionItem, ActionCheck, ActionText,
   SummaryResponseNote, SummaryCta,
@@ -297,11 +297,6 @@ export default function Briefing() {
                         ? '✓ Arvo är på det — vi återkommer inom 24 timmar'
                         : insight.action.label}
                     </CtaButton>
-                    {!isDone && (
-                      <SkipLink onClick={() => goToCard(cardIdx + 1)}>
-                        Hoppa över →
-                      </SkipLink>
-                    )}
                   </CardFooter>
                 )}
               </InsightInner>
