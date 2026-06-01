@@ -1930,55 +1930,23 @@ export const IntelligenceCard = styled.div`
     margin-bottom: 14px;
   }
 
-  .preview-saving-label {
-    font-size: 10.5px;
-    color: ${({ theme }) => theme.color.muted};
-    letter-spacing: .04em;
-    margin-bottom: 4px;
-  }
+  .preview-alert {
+    font-size: 14px;
+    color: ${({ theme }) => theme.color.inkSoft};
+    line-height: 1.65;
+    margin-bottom: 14px;
 
-  .preview-saving-number {
-    font-size: 38px;
-    font-weight: 800;
-    letter-spacing: -.04em;
-    color: ${({ theme }) => theme.color.brand};
-    line-height: 1;
-    font-feature-settings: "tnum";
-    margin-bottom: 8px;
-  }
-
-  .preview-saving-unit {
-    font-size: 16px;
-    font-weight: 400;
-    color: ${({ theme }) => theme.color.muted};
-    margin-left: 4px;
-    letter-spacing: 0;
-  }
-
-  .preview-finding {
-    font-size: 12px;
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 12px;
-    line-height: 1.5;
+    strong {
+      color: ${({ theme }) => theme.color.ink};
+      font-weight: 700;
+    }
   }
 
   .preview-action {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     color: ${({ theme }) => theme.color.brand};
     letter-spacing: .01em;
-  }
-
-  /* ── Trust-rad ── */
-  .trust-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 8px;
-    font-size: 12px;
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 24px;
-
-    .dot { color: ${({ theme }) => theme.color.borderStrong}; }
   }
 
   /* ── Pris ── */
