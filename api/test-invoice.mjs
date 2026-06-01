@@ -336,6 +336,9 @@ export default async function handler(req, res) {
     && process.env.ARVO_BYPASS_SECRET
     && bypass === process.env.ARVO_BYPASS_SECRET);
 
+  const clientIp = (req.headers['x-forwarded-for'] ?? req.socket?.remoteAddress ?? '').split(',')[0].trim();
+  const isWhitelisted = WHITELISTED_IPS.has(clientIp);
+
   if (!isBypass) {
     if (!validateToken(token)) {
       return send(res, 401, { error: 'Ogiltig session — ladda om sidan och försök igen.' });
@@ -344,7 +347,6 @@ export default async function handler(req, res) {
     const kv = getKv();
 
     // IP-baserad rate limiting: max 5 analyser per IP per 24h
-    const clientIp = (req.headers['x-forwarded-for'] ?? req.socket?.remoteAddress ?? '').split(',')[0].trim();
     if (await checkRateLimit(kv, clientIp)) {
       return send(res, 429, {
         error: 'Du har analyserat för många fakturor idag. Försök igen imorgon eller kontakta oss för att utöka din kvot.',
@@ -1545,7 +1547,8 @@ export default async function handler(req, res) {
     };
 
     // Saving gate: kontrollera kvot efter analysen (vi behöver netSaving och orgNumber).
-    if (!isBypass) {
+    // Vitlistade IPs (ägare/intern) hoppar över gate precis som rate limit.
+    if (!isBypass && !isWhitelisted) {
       const kv = getKv();
       const gateHit = await checkSavingGate(kv, {
         orgNumber: extracted.customerOrgNumber,
