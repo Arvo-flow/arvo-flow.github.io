@@ -167,3 +167,72 @@ await sql`ALTER TABLE arvo_outcomes ADD COLUMN IF NOT EXISTS actual_annual_cost 
 await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_outcomes_analysis_id ON arvo_outcomes (analysis_id) WHERE analysis_id IS NOT NULL`;
 
 console.log('Fas 2 klar — user_email, contract_end_date, reminder-kolumner och outcome-tillägg redo.');
+
+// ── Fas 3: Flywheel-arkitektur ────────────────────────────────────────────────
+// labeled_corrections — varje AI-korrektion (automatisk + manuell) sparas
+// suppliers           — normaliserad leverantörsentitet
+// supplier_prices     — prishistorik per leverantör/segment/datum
+// contract_timelines  — kontraktssnapshots för proaktiv förfallodetektering
+
+await sql`
+  CREATE TABLE IF NOT EXISTS labeled_corrections (
+    id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    analysis_id     UUID        REFERENCES invoice_analyses(id) ON DELETE SET NULL,
+    field           TEXT        NOT NULL,
+    original_value  TEXT,
+    corrected_value TEXT,
+    reason          TEXT        NOT NULL,
+    corrected_by    TEXT        NOT NULL DEFAULT 'system',
+    severity        TEXT        NOT NULL DEFAULT 'fix'
+                    CHECK (severity IN ('fix', 'warning', 'info')),
+    category        TEXT,
+    supplier        TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_corrections_field_reason ON labeled_corrections (field, reason)`;
+await sql`CREATE INDEX IF NOT EXISTS idx_corrections_analysis ON labeled_corrections (analysis_id) WHERE analysis_id IS NOT NULL`;
+await sql`CREATE INDEX IF NOT EXISTS idx_corrections_category ON labeled_corrections (category) WHERE category IS NOT NULL`;
+
+await sql`
+  CREATE TABLE IF NOT EXISTS suppliers (
+    id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    name            TEXT        NOT NULL,
+    normalized_name TEXT        NOT NULL UNIQUE,
+    category        TEXT,
+    invoice_count   INTEGER     NOT NULL DEFAULT 1,
+    first_seen      DATE        NOT NULL DEFAULT CURRENT_DATE,
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+
+await sql`
+  CREATE TABLE IF NOT EXISTS supplier_prices (
+    id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    supplier_id    UUID        REFERENCES suppliers(id) ON DELETE CASCADE,
+    segment        TEXT        NOT NULL,
+    size_bucket    TEXT        NOT NULL,
+    price_per_seat INTEGER,
+    annual_cost    INTEGER     NOT NULL,
+    seats          INTEGER,
+    invoice_date   DATE        NOT NULL,
+    source         TEXT        NOT NULL DEFAULT 'invoice',
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_supplier_prices_lookup ON supplier_prices (supplier_id, segment, size_bucket, invoice_date DESC)`;
+
+await sql`
+  CREATE TABLE IF NOT EXISTS contract_timelines (
+    id           UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    analysis_id  UUID        REFERENCES invoice_analyses(id) ON DELETE CASCADE,
+    supplier_id  UUID        REFERENCES suppliers(id) ON DELETE SET NULL,
+    seats        INTEGER,
+    annual_cost  INTEGER     NOT NULL,
+    invoice_date DATE        NOT NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_contract_timelines_supplier ON contract_timelines (supplier_id, invoice_date DESC)`;
+
+console.log('Fas 3 klar — labeled_corrections, suppliers, supplier_prices, contract_timelines redo.');
