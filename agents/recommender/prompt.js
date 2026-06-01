@@ -261,6 +261,10 @@ Tillåtna subTypes för optimize: 'efaktura', 'kivra', 'utskick'.
 
 I alla andra fall: recommendationType = 'switch' (shouldSwitch: true) eller 'no_action' (shouldSwitch: false).
 
+MOBIL-SPECIFIKA REGLER
+- **Datakapat abonnemang:** Om kundens nuvarande abonnemang är datakapat (t.ex. 100 GB, 50 GB) och det rekommenderade alternativet erbjuder obegränsad data för samma eller lägre pris — nämn detta explicit i reasoning som ett värdetillägg. Kunden betalar samma pris men får mer. Formulera ungefär: "Ni betalar idag för ett abonnemang med [X] GB surf — det rekommenderade alternativet inkluderar obegränsad surf till ett lägre eller liknande listpris."
+- **Volymförhandling (≥10 SIM, shouldSwitch: false):** Om shouldSwitch är false och kunden har 10 eller fler SIM-kort och redan ligger vid eller under branschsnittet — nämn att Arvo kan förhandla ett volymavtal åt dem med nollrisk. Formulera exakt så: "Arvo förhandlar ett volymavtal åt er — uppnår vi ett lägre pris betalar ni 20 % av besparingen. Uppnår vi inte det kostar det er ingenting, men ni får obegränsad surf."
+
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
 suggestedAnnualCost och savingPerYear låses i kod mot Arvo-volympriset. Fyll i Arvo-volympriset exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
 I din reasoning: hänvisa alltid till "branschsnittet" eller "välförhandlat avtalspris" — aldrig till "p25", "25:e percentilen", "Arvo-volympris", "medianen" eller "marknadsbenchmark".
