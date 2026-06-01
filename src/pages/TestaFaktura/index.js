@@ -12,7 +12,7 @@ import {
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
-  Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, ScoreDiag, ScoreRevealCard, EmailGate,
+  Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, NextSteps, ScoreDiag, ScoreRevealCard, EmailGate,
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
@@ -938,6 +938,29 @@ const TestaFaktura = () => {
   const GAUGE_C = 2 * Math.PI * GAUGE_R;
   const gaugeDash = (diagScore / 100) * GAUGE_C;
 
+  // Layer 2 (Arvo Switch) — beräknas i komponent-scope så PartnerBlock kan renderas
+  // utanför result-kortet, efter IntelligenceCard (Layer 1 → Layer 2-ordning)
+  const _switchIsRealPrice     = _effectiveMeta.isRealPrice;
+  const _switchIsLicensePending = !!(result?.categorized?.licensePending);
+  const _switchPartnerLabel    = _effectiveMeta.partnerLabel;
+  const _switchSuggestedLower  = (result?.recommendation?.suggestedSupplier ?? '').toLowerCase().trim();
+  const _switchCurrentLower    = (result?.categorized?.normalizedSupplier ?? result?.extracted?.supplier ?? '').toLowerCase().trim();
+  const _switchIsSameSupplier  = _switchIsRealPrice && _switchSuggestedLower && _switchCurrentLower && (
+    _switchSuggestedLower === _switchCurrentLower ||
+    _switchSuggestedLower.includes(_switchCurrentLower) ||
+    _switchCurrentLower.includes(_switchSuggestedLower)
+  );
+  const _switchCtaLabel = _switchIsSameSupplier
+    ? `Sänk er ${result?.recommendation?.suggestedSupplier}-kostnad`
+    : _switchIsRealPrice ? 'Aktivera bytet' : 'Säkra besparingen';
+  const _showSwitch = !!(
+    result?.route === 'auto'
+    && result?.recommendation?.suggestedAnnualCost
+    && !_switchIsLicensePending
+    && adjNetSaving > 0
+  );
+  const _showOptimizeSwitch = !!(result?.route === 'auto' && result?.recommendation?.isOptimize);
+
   return (
     <Page>
       <Nav variant="public" />
@@ -1570,25 +1593,6 @@ const TestaFaktura = () => {
                     {' '}· Arvos besparingsarvode {formatKr(optArvoFee)} (20 %)
                   </span>
                 </SavingsBlock>
-                <PartnerBlock>
-                  <div className="left">
-                    <span className="verified-badge">
-                      <Icon name="check" size={12} stroke={2.5} />
-                    </span>
-                    <div>
-                      <p className="partner-name">Avveckling av dubblad kostnad</p>
-                      <p className="price-label">Arvo sköter hela avvecklingen åt dig</p>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    $variant="gradient"
-                    $size="sm"
-                    onClick={() => setModalOpen(true)}
-                  >
-                    Säkra besparingen <Icon name="arrow" size={14} />
-                  </Button>
-                </PartnerBlock>
               </>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
@@ -2103,6 +2107,25 @@ const TestaFaktura = () => {
               Kom igång med Arvo Intelligence →
             </Button>
           </IntelligenceCard>
+
+          {/* ── Lås upp fullständig Arvo Score™ (Fortnox/Visma-anslutning) ─── */}
+          <NextSteps>
+            <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
+            <p className="sub">
+              Er nuvarande analys baseras på en faktura. Koppla Fortnox eller Visma
+              — Arvo genomlyser hela er leverantörsreskontra och ger er ett fullständigt
+              Arvo Score™ över samtliga kostnadsslag.
+            </p>
+            <Button
+              as={Link}
+              to="/connect"
+              $variant="gradient"
+              $size="lg"
+              style={{ width: '100%', justifyContent: 'center' }}
+            >
+              Koppla Fortnox / Visma →
+            </Button>
+          </NextSteps>
           </>
         )}
       </Body>
