@@ -69,7 +69,7 @@ export const CoverCard = styled(Card)`
 `;
 
 export const CoverEyebrow = styled.p`
-  margin: 0 0 4px;
+  margin: 16px 0 4px;
   font-size: 11px;
   font-weight: 700;
   color: #1DB09A;

@@ -57,6 +57,19 @@ function formatPeriod(period) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+// ── Arvo logotyp — teal gradient, anpassad för mörk bakgrund ─────────────────
+const ArvoMark = ({ size = 36 }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" fill="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="briefingGrad" x1="50" y1="5" x2="50" y2="95" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#4ECDC4" />
+        <stop offset="100%" stopColor="#1DB09A" />
+      </linearGradient>
+    </defs>
+    <path d="M50 5 L12 85 L35 85 L50 55 L65 85 L88 85 Z" fill="url(#briefingGrad)" />
+  </svg>
+);
+
 // ── Arrow down SVG ────────────────────────────────────────────────────────────
 
 const ArrowDown = () => (
@@ -208,6 +221,7 @@ export default function Briefing() {
           data-card-index="0"
           ref={el => { cardRefs.current[0] = el; }}
         >
+          <ArvoMark size={44} />
           <CoverEyebrow>Arvo Intelligence</CoverEyebrow>
           <CoverPeriod>{formatPeriod(briefing?.period)}</CoverPeriod>
 

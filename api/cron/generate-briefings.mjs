@@ -110,7 +110,7 @@ export default async function handler(req, res) {
         await resend.emails.send({
           from:    FROM,
           to:      email,
-          subject: `Arvo-briefing ${periodDisplay} — ${data.insightCount} ${data.insightCount === 1 ? 'insikt' : 'insikter'} identifierade`,
+          subject: `Arvo Intelligence · ${periodDisplay} · ${Math.round(data.totalSavingPotential).toLocaleString('sv-SE')} kr/år identifierat`,
           html:    buildHookEmail({
             insightCount: data.insightCount,
             totalSaving:  data.totalSavingPotential,
@@ -136,53 +136,62 @@ export default async function handler(req, res) {
   });
 }
 
+// Premium hook-email — kortare än ett bankkort, tyngre än ett revisorsutlåtande.
+// Principen: ett tal, ett beslut, en knapp. Inget mer.
 function buildHookEmail({ insightCount, totalSaving, period, briefingUrl }) {
   const fmt = (n) => Math.round(n).toLocaleString('sv-SE');
+  const finding = insightCount === 1
+    ? 'Vi identifierade ett avtal som avviker från marknadsnivå.'
+    : `Vi identifierade ${insightCount} avtal som avviker från marknadsnivå.`;
+
   return `<!DOCTYPE html>
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Arvo-briefing ${period}</title>
 </head>
 <body style="margin:0;padding:0;background:#0A1512;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A1512;padding:48px 16px">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0A1512;padding:56px 16px">
 <tr><td align="center">
-<table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%">
+<table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%">
 
-  <!-- Avsändare-chip -->
-  <tr><td style="padding-bottom:36px;text-align:center">
-    <p style="margin:0 0 8px;font-size:11px;color:#1DB09A;text-transform:uppercase;letter-spacing:.18em;font-weight:700">Arvo Intelligence</p>
-    <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.35)">${period}</p>
+  <!-- Avsändare -->
+  <tr><td style="padding-bottom:40px">
+    <p style="margin:0 0 4px;font-size:10px;font-weight:700;color:#1DB09A;text-transform:uppercase;letter-spacing:.22em">Arvo Intelligence</p>
+    <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.25)">${period}</p>
   </td></tr>
 
-  <!-- Huvudkort -->
-  <tr><td style="background:#0F2018;border:1px solid rgba(29,176,154,0.20);border-radius:20px;padding:44px 40px">
+  <!-- Separatorlinje -->
+  <tr><td style="border-top:1px solid rgba(29,176,154,0.18);padding-bottom:44px"></td></tr>
 
-    <!-- Besparing -->
-    <p style="margin:0 0 6px;font-size:11px;color:rgba(255,255,255,0.40);text-transform:uppercase;letter-spacing:.12em">Potentiell besparing</p>
-    <p style="margin:0 0 28px;font-size:52px;font-weight:800;color:#ffffff;line-height:1;letter-spacing:-.02em">
-      ${fmt(totalSaving)}<span style="font-size:22px;font-weight:400;color:rgba(255,255,255,0.40);margin-left:8px">kr/år</span>
+  <!-- Det enda som spelar roll: siffran -->
+  <tr><td style="padding-bottom:10px">
+    <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.30);letter-spacing:.04em">Identifierad besparing</p>
+  </td></tr>
+  <tr><td style="padding-bottom:32px">
+    <p style="margin:0;font-size:68px;font-weight:800;color:#ffffff;line-height:1;letter-spacing:-.04em">
+      ${fmt(totalSaving)}<span style="font-size:26px;font-weight:300;color:rgba(255,255,255,0.28);margin-left:8px">kr/år</span>
     </p>
+  </td></tr>
 
-    <!-- Brödtext -->
-    <p style="margin:0 0 36px;font-size:16px;color:rgba(255,255,255,0.70);line-height:1.6">
-      Arvo har identifierat <strong style="color:#fff">${insightCount} ${insightCount === 1 ? 'besparingsinsikt' : 'besparingsinsikter'}</strong> för ert bolag denna period.
-      Varje insikt är en konkret åtgärd du kan aktivera med ett klick — Arvo sköter resten.
-    </p>
+  <!-- Korthugget fynd — inte en knapp-instruktion -->
+  <tr><td style="padding-bottom:44px">
+    <p style="margin:0;font-size:15px;color:rgba(255,255,255,0.50);line-height:1.65">${finding}</p>
+  </td></tr>
 
-    <!-- CTA -->
+  <!-- CTA — en dörr, inte en reklambanner -->
+  <tr><td style="padding-bottom:56px">
     <a href="${briefingUrl}"
-       style="display:block;background:linear-gradient(135deg,#1DB09A 0%,#0B7A6A 100%);color:#ffffff;text-decoration:none;text-align:center;padding:18px 24px;border-radius:12px;font-size:16px;font-weight:700;letter-spacing:.02em">
-      Öppna Arvo-briefingen →
+       style="display:inline-block;background:linear-gradient(135deg,#1DB09A 0%,#0A6B5C 100%);color:#ffffff;text-decoration:none;padding:16px 28px;border-radius:10px;font-size:15px;font-weight:700;letter-spacing:.01em">
+      Se analysen →
     </a>
   </td></tr>
 
-  <!-- Footer -->
-  <tr><td style="padding-top:28px;text-align:center">
-    <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.20);line-height:1.7">
-      Arvo Intelligence · Automatiskt genererad för ert bolag<br>
-      <a href="https://arvoflow.se" style="color:rgba(255,255,255,0.25);text-decoration:none">arvoflow.se</a>
+  <!-- Footer — diskret, inte ursäktande -->
+  <tr><td style="border-top:1px solid rgba(255,255,255,0.06);padding-top:24px">
+    <p style="margin:0;font-size:11px;color:rgba(255,255,255,0.15);line-height:1.8">
+      Arvo Intelligence &nbsp;·&nbsp; Konfidentiellt &nbsp;·&nbsp;
+      <a href="https://arvoflow.se" style="color:rgba(255,255,255,0.20);text-decoration:none">arvoflow.se</a>
     </p>
   </td></tr>
 
