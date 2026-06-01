@@ -259,6 +259,73 @@ export default async function handler(req, res) {
     { name: 'ia_outcome_email',        run: () => sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS outcome_email_sent_at TIMESTAMPTZ` },
     { name: 'idx_analyses_user_email', run: () => sql`CREATE INDEX IF NOT EXISTS idx_analyses_user_email ON invoice_analyses (user_email, created_at DESC) WHERE user_email IS NOT NULL` },
     { name: 'idx_analyses_contract',   run: () => sql`CREATE INDEX IF NOT EXISTS idx_analyses_contract_end ON invoice_analyses (contract_end_date) WHERE contract_end_date IS NOT NULL` },
+
+    // ── Fas 3: Flywheel-arkitektur ────────────────────────────────────────────
+    {
+      name: 'labeled_corrections',
+      run: () => sql`
+        CREATE TABLE IF NOT EXISTS labeled_corrections (
+          id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+          analysis_id     UUID        REFERENCES invoice_analyses(id) ON DELETE SET NULL,
+          field           TEXT        NOT NULL,
+          original_value  TEXT,
+          corrected_value TEXT,
+          reason          TEXT        NOT NULL,
+          corrected_by    TEXT        NOT NULL DEFAULT 'system',
+          severity        TEXT        NOT NULL DEFAULT 'fix'
+                          CHECK (severity IN ('fix', 'warning', 'info')),
+          category        TEXT,
+          supplier        TEXT,
+          created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )`,
+    },
+    { name: 'idx_corrections_field_reason', run: () => sql`CREATE INDEX IF NOT EXISTS idx_corrections_field_reason ON labeled_corrections (field, reason)` },
+    { name: 'idx_corrections_analysis',     run: () => sql`CREATE INDEX IF NOT EXISTS idx_corrections_analysis ON labeled_corrections (analysis_id) WHERE analysis_id IS NOT NULL` },
+    { name: 'idx_corrections_category',     run: () => sql`CREATE INDEX IF NOT EXISTS idx_corrections_category ON labeled_corrections (category) WHERE category IS NOT NULL` },
+    {
+      name: 'graph_suppliers',
+      run: () => sql`
+        CREATE TABLE IF NOT EXISTS graph_suppliers (
+          id              UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+          name            TEXT        NOT NULL,
+          normalized_name TEXT        NOT NULL UNIQUE,
+          category        TEXT,
+          invoice_count   INTEGER     NOT NULL DEFAULT 1,
+          first_seen      DATE        NOT NULL DEFAULT CURRENT_DATE,
+          updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )`,
+    },
+    {
+      name: 'graph_supplier_prices',
+      run: () => sql`
+        CREATE TABLE IF NOT EXISTS graph_supplier_prices (
+          id             UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+          supplier_id    UUID        REFERENCES graph_suppliers(id) ON DELETE CASCADE,
+          segment        TEXT        NOT NULL,
+          size_bucket    TEXT        NOT NULL,
+          price_per_seat INTEGER,
+          annual_cost    INTEGER     NOT NULL,
+          seats          INTEGER,
+          invoice_date   DATE        NOT NULL,
+          source         TEXT        NOT NULL DEFAULT 'invoice',
+          created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )`,
+    },
+    { name: 'idx_graph_prices_lookup', run: () => sql`CREATE INDEX IF NOT EXISTS idx_graph_prices_lookup ON graph_supplier_prices (supplier_id, segment, size_bucket, invoice_date DESC)` },
+    {
+      name: 'graph_contract_timelines',
+      run: () => sql`
+        CREATE TABLE IF NOT EXISTS graph_contract_timelines (
+          id           UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+          analysis_id  UUID        REFERENCES invoice_analyses(id) ON DELETE CASCADE,
+          supplier_id  UUID        REFERENCES graph_suppliers(id) ON DELETE SET NULL,
+          seats        INTEGER,
+          annual_cost  INTEGER     NOT NULL,
+          invoice_date DATE        NOT NULL,
+          created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )`,
+    },
+    { name: 'idx_graph_contracts_supplier', run: () => sql`CREATE INDEX IF NOT EXISTS idx_graph_contracts_supplier ON graph_contract_timelines (supplier_id, invoice_date DESC)` },
   ];
 
   for (const step of steps) {
