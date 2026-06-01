@@ -432,7 +432,8 @@ const TestaFaktura = () => {
   // Scrolla till resultatkortet när analysen är klar
   React.useEffect(() => {
     if (!result || !resultRef.current) return;
-    const top = resultRef.current.getBoundingClientRect().top + window.pageYOffset - 80;
+    const navHeight = document.querySelector('header')?.offsetHeight ?? 64;
+    const top = resultRef.current.getBoundingClientRect().top + window.pageYOffset - navHeight - 8;
     window.scrollTo({ top, behavior: 'smooth' });
   }, [result]);
 
