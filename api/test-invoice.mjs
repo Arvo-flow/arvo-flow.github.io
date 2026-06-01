@@ -27,6 +27,7 @@ import { saveIntegrityOverrides } from '../lib/labeled-corrections.js';
 import { upsertSupplier, recordSupplierPrice, recordContractTimeline } from '../lib/invoice-graph.js';
 import { validateCategory } from '../lib/category-validator.js';
 import { validateSeatPrice, getBenchmarkBasis, getSupplierPriceIntel } from '../lib/supplier-price-intel.js';
+import { detectPriceAlert, getMarketIntelligence } from '../lib/price-alert.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
@@ -1349,6 +1350,25 @@ export default async function handler(req, res) {
       userEmail: typeof body.userEmail === 'string' ? body.userEmail.trim().toLowerCase() : null,
     }).catch((err) => { console.error('[test-invoice] storeAnalysis failed:', err.message); return null; });
 
+    // Prissignal: smyghöjning-detektering mot verifierade listpriser (fire-and-forget).
+    // Aktiveras om pricePerSeatMonthly finns och leverantören finns i supplier_prices.
+    // marketIntel aktiveras vid ≥3 analyserade fakturor för samma leverantör i databasen.
+    let priceAlert = null;
+    let marketIntel = null;
+    if (extracted.pricePerSeatMonthly && categorized.normalizedSupplier) {
+      [priceAlert, marketIntel] = await Promise.all([
+        detectPriceAlert({
+          normalizedSupplier:  categorized.normalizedSupplier,
+          pricePerSeatMonthly: extracted.pricePerSeatMonthly,
+          category:            categorized.category,
+        }).catch(() => null),
+        getMarketIntelligence({
+          normalizedSupplier: categorized.normalizedSupplier,
+          category:           categorized.category,
+        }).catch(() => null),
+      ]);
+    }
+
     // Fas 3–4: Invoice graph — spara leverantörs- och prisdata (fire-and-forget)
     if (extracted.annualCost > 0 && categorized.normalizedSupplier) {
       (async () => {
@@ -1517,6 +1537,8 @@ export default async function handler(req, res) {
       },
       calculationChain,
       savingRange,
+      priceAlert:   priceAlert   ?? null,
+      marketIntel:  marketIntel  ?? null,
       meta: analysisMeta,
       timing,
       analysisId: analysisId ?? undefined,
