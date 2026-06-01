@@ -32,6 +32,9 @@
     },
     "api/cron/generate-briefings.mjs": {
       "maxDuration": 60
+    },
+    "api/admin/preview-briefing.mjs": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
