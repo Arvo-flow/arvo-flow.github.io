@@ -270,7 +270,86 @@ Ladda alltid upp PDF:en direkt i chatten (inte bara på sajten) — Claude kan i
 
 ---
 
-## AGENTER (KOMPLETT LISTA)
+## LÄRANDE FLYWHEEL-ARKITEKTUR (LÅNGSIKTIG VISION — ALDRIG KOMPROMISSA)
+
+Detta är den arkitekturella nordstiärnan. Varje tekniskt beslut ska vara kompatibelt med denna riktning — aldrig bygga silo-lösningar som måste rivas om ett år.
+
+### Grundinsikten
+Validation layers och manuella regler är defensiv ingenjörskonst — inte en AI-finansdirektör. Det som skiljer Arvo från ett verktyg är att systemet lär sig av varje faktura och blir smartare utan att vi skriver en enda ny regel manuellt.
+
+### Flywheel-loopen
+```
+Faktura analyseras
+       ↓
+Osäkra prediktioner flaggas automatiskt (active learning)
+       ↓
+Operatör granskar edge cases → korrigerar utfall
+       ↓
+Korrektioner sparas som labeled data i Postgres
+       ↓
+Systemet deriverar egna regler från data — inte vi manuellt
+       ↓
+Bättre precision → fler kunder → fler fakturor → mer data
+       ↑_____________________________________________|
+```
+
+### Det verkliga moatet: real-time B2B-prisintelligens
+Varje faktura vi processar är en datapunkt som gör Arvo smartare för alla framtida kunder. Efter 10 000 fakturor vet Arvo:
+- Vad Lime CRM **faktiskt** tar betalt av olika kundstorlekar — inte bara listpris
+- Vilka leverantörer som smyghöjer priser utan att informera kunderna
+- Vilka branscher som systematiskt betalar för mycket
+- Marknadsmönster för kontraktsförnyelse
+
+Ingen konkurrent kan replikera detta. Det är ett nätverkseffekt-moat som växer med varje faktura.
+
+### Implementeringsordning (fas för fas)
+
+**Fas 1 — Active learning pipeline** *(bygger grunden för allt)*
+- `labeled_corrections`-tabell i Postgres: varje manuell korrektion sparas strukturerat
+- Systemet flaggar automatiskt låg-confidence prediktioner för operatörsgranskning
+- UI för Arvo-operatörer att granska och korrigera (internt admin)
+- Korrektioner flödar tillbaka och förbättrar extraction/categorization-prompts
+
+**Fas 2 — Extraction integrity (deterministisk, inte AI)**
+- Post-extraction validering: math-konsistens, logisk konsistens
+- `recurring_subscription`-rader finns → tvinga `recurring: true` på fakturanivå (Lime-buggen)
+- `seatCount × pricePerSeat ≈ invoiceAmount` (korsvalidering)
+- Pre-heuristics: kända fakturatyper (LICENSFAKTURA + månadsperiod = recurring)
+
+**Fas 3 — Automatisk supplier fingerprinting**
+- Istället för manuell fingerprinting-databas: klustrera fakturor automatiskt per leverantör
+- Varje ny leverantör som processerats 3+ gånger → automatisk fingerprint
+- `lib/supplier-fingerprints.js` ersätts gradvis med DB-driven lookup
+
+**Fas 4 — Automatisk benchmarking**
+- `branchindex.js` mock-data ersätts automatiskt när ≥10 fakturor/segment finns i DB
+- Priser uppdateras av sig självt utan manuell intervention
+- Anomali-detektion: leverantör höjer pris → Arvo vet det innan kunden gör det
+
+**Fas 5 — Proaktiv intelligens**
+- Arvo berättar saker kunden inte frågade om: "Ni har tre SaaS-verktyg med överlappande funktioner"
+- Portfolio-analys: aggregerar besparingsmöjligheter över alla kundens fakturor
+- Marknadsintelligens: "Priset på Lime CRM har stigit 12% det senaste året bland jämförbara bolag"
+
+### Vad detta INTE är
+- Inte validation layers som patches
+- Inte manuellt underhållna regler som vi skriver
+- Inte statisk databas som uppdateras 1-2 gånger/år
+- Inte ett system som behandlar varje faktura isolerat
+
+---
+
+## KÄNDA BUGGAR ATT ÅTGÄRDA (FLYWHEEL-KOMPATIBELT)
+
+### Lime CRM (Faktura 2, blind test 2026-06-01)
+- **Bug 1:** `recurring: false` — månadsabonnemang klassificeras felaktigt som engångskostnad
+  - Fix: extraction integrity check (Fas 2) + pre-heuristic (LICENSFAKTURA + månadsperiod → recurring: true)
+  - Fix ska sparas som labeled correction i DB (Fas 1) för att träna systemet
+- **Bug 2:** `saas-other` istället för `saas-crm`
+  - Fix: lägg till Lime Technologies i `lib/supplier-fingerprints.js` med category: 'saas-crm'
+  - Långsiktigt: automatisk fingerprinting (Fas 3) ersätter manuell fix
+
+
 
 ### Produktionssatta
 - **`agents/test-invoice/extract.js`** — Opus 4.8, native PDF, rad-för-rad-klassificering
@@ -372,17 +451,20 @@ Routes: `auto` (normal pipeline), `review_queue` (confidence < 0.70), `unsupport
 
 ## PÅGÅENDE ARBETE / PARKERAT
 
+- **Flywheel Fas 1 (active learning pipeline):** Högsta prioritet. labeled_corrections-tabell + operatörs-UI + feedback-loop.
+- **Flywheel Fas 2 (extraction integrity):** Lime recurring-bug + pre-heuristics.
+- **Lime Technologies fingerprint:** Lägg till i supplier-fingerprints.js (snabb fix medan Fas 3 byggs).
 - **ArvoScore-mockup** (`/arvo-score`): Design parkerad. Feedback: "för smalt och intryckt, saknar luft". Återkommer.
-- **Blindtestning:** Faktura 1 klar (Telenor). 9 återstående Gemini-genererade testfakturor att köra.
+- **Blindtestning:** Faktura 1 (Telenor) ✓, Faktura 2 (Lime CRM) ✓. 8 återstående.
 - **Fortnox-integration:** Väntar på bolagsregistrering (~2–3 månader).
 - **BankID/Scrive:** Klar att aktivera, väntar på produktion.
-- **review_queue-test:** Behöver skannad/suddig faktura för att verifiera confidence < 0.70.
 
 ---
 
-## NÄSTA STEG
+## NÄSTA STEG (I PRIORITETSORDNING)
 
-1. Fortsätt blindtestning med resterande 9 Gemini-fakturor (ett i taget, bifoga PDF + bransch/anst i chatten)
-2. Verifiera att Telenor-fakturan nu ger korrekt score (~65/Förbättringsläge) efter p25-fix
-3. ArvoScore-mockup design-revision (mer luft, bredare layout)
-4. Fortnox-integration när bolaget är registrerat
+1. **Flywheel Fas 1** — labeled_corrections-tabell i Postgres + Arvo-operatörs-UI för att granska och korrigera edge cases. Detta är grunden för allt annat.
+2. **Flywheel Fas 2** — Extraction integrity: `recurring`-fix, math-konsistenskontroll, pre-heuristics för LICENSFAKTURA-typ.
+3. **Lime fingerprint** — Snabb fix: lägg till Lime Technologies i supplier-fingerprints.js med saas-crm.
+4. **Fortsätt blindtestning** — 8 Gemini-fakturor kvar (ett i taget, PDF + bransch/anst i chatten).
+5. **Fortnox-integration** — när bolaget är registrerat.
