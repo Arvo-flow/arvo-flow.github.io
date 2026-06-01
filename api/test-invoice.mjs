@@ -22,6 +22,9 @@ import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
 import { storeAnalysis } from '../lib/invoice-store.js';
+import { runIntegrityChecks } from '../lib/extraction-integrity.js';
+import { saveIntegrityOverrides } from '../lib/labeled-corrections.js';
+import { upsertSupplier, recordSupplierPrice, recordContractTimeline } from '../lib/invoice-graph.js';
 import { validateCategory } from '../lib/category-validator.js';
 import { validateSeatPrice, getBenchmarkBasis, getSupplierPriceIntel } from '../lib/supplier-price-intel.js';
 
@@ -401,6 +404,21 @@ export default async function handler(req, res) {
         cache_read: u.cache_read_input_tokens ?? 0,
         cost_usd: cost.toFixed(4),
       }));
+    }
+
+    // Fas 2: deterministiska integritetskontroller post-extraction
+    {
+      const rawHeader = body.pdfRawHeader ?? '';
+      const { result: fixed, overrides } = runIntegrityChecks(extracted, rawHeader);
+      if (overrides.length > 0) {
+        console.log('[integrity] overrides:', JSON.stringify(overrides));
+        Object.assign(extracted, fixed);
+        // Spara överrides som labeled corrections för träning (fire-and-forget)
+        saveIntegrityOverrides(overrides, {
+          category: null,
+          supplier: extracted.supplier ?? null,
+        }).catch(() => {});
+      }
     }
 
     // Guard: kreditnotor (negativt totalt fakturabelopp)
@@ -1330,6 +1348,47 @@ export default async function handler(req, res) {
       employees: employeesNum,
       userEmail: typeof body.userEmail === 'string' ? body.userEmail.trim().toLowerCase() : null,
     }).catch((err) => { console.error('[test-invoice] storeAnalysis failed:', err.message); return null; });
+
+    // Fas 3–4: Invoice graph — spara leverantörs- och prisdata (fire-and-forget)
+    if (extracted.annualCost > 0 && categorized.normalizedSupplier) {
+      (async () => {
+        try {
+          const invoiceDate = extracted.date ?? new Date().toISOString().slice(0, 10);
+          const segment     = INDUSTRY_SEGMENT_MAP[industry] ?? industry;
+          const sizeBucket  = bucketForSize(employeesNum);
+          const supplierId  = await upsertSupplier({
+            name:           extracted.supplier ?? categorized.normalizedSupplier,
+            normalizedName: categorized.normalizedSupplier,
+            category:       categorized.category,
+          });
+          if (supplierId) {
+            await recordSupplierPrice({
+              supplierId,
+              segment,
+              sizeBucket,
+              pricePerSeat:  extracted.seatCount > 0
+                ? Math.round(extracted.annualCost / extracted.seatCount)
+                : null,
+              annualCost:    extracted.annualCost,
+              seats:         extracted.seatCount ?? null,
+              invoiceDate,
+            });
+            await recordContractTimeline({
+              analysisId: analysisId ?? null,
+              supplierId,
+              seats:       extracted.seatCount ?? null,
+              annualCost:  extracted.annualCost,
+              invoiceDate,
+            });
+          }
+          // Uppdatera labeled_corrections med rätt analysisId om integrity overrides sparades
+          // (analysisId var okänt vid tidpunkten för integrity-sparbara — ignoreras här,
+          //  corrections läggs till med null analysisId vilket är OK för mönsteranalys)
+        } catch (err) {
+          console.warn('[invoice-graph] record failed:', err.message);
+        }
+      })();
+    }
 
     // Broadband-tillägg (statisk IP etc.) på mobil-primär faktura — pass-through i suggestedAnnualCost.
     const _bbAddonPassthrough = categorized.category === 'mobil'

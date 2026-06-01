@@ -47,9 +47,12 @@ export default function Admin() {
   const [magicHours, setMagicHours]       = useState('72');
   const [magicLink, setMagicLink]         = useState('');
   const [magicState, setMagicState]       = useState('idle'); // idle | loading | done | error
-  const [activeTab, setActiveTab]         = useState('queue'); // queue | waitlist | feedback
+  const [activeTab, setActiveTab]         = useState('queue'); // queue | waitlist | feedback | corrections
   const [migrState, setMigrState]         = useState('idle'); // idle | loading | done | error
   const [migrResult, setMigrResult]       = useState(null);
+  const [corrections, setCorrections]     = useState(null);
+  const [patterns, setPatterns]           = useState(null);
+  const [corrView, setCorrView]           = useState('list'); // list | patterns
 
   const load = useCallback(async (token) => {
     setLoadError('');
@@ -221,7 +224,7 @@ export default function Admin() {
 
       {/* ── Tabs ───────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
-        {[['queue','Review Queue'], ['waitlist','Waitlist'], ['feedback','Feedback']].map(([id, label]) => (
+        {[['queue','Review Queue'], ['waitlist','Waitlist'], ['feedback','Feedback'], ['corrections','Korrektioner 🧠']].map(([id, label]) => (
           <button key={id} onClick={() => setActiveTab(id)} style={{
             padding: '7px 16px', borderRadius: 100, border: 'none', cursor: 'pointer',
             fontSize: 12.5, fontWeight: 600,
@@ -285,6 +288,92 @@ export default function Admin() {
               </TRow>
             ))}
           </Table>
+        </Section>
+      )}
+
+      {activeTab === 'corrections' && (
+        <Section>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center' }}>
+            <STitle style={{ margin: 0 }}>Flywheel — Labeled Corrections</STitle>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
+              {[['list','Lista'], ['patterns','Mönster']].map(([v, l]) => (
+                <button key={v} onClick={() => {
+                  setCorrView(v);
+                  const hdr = { 'x-admin-token': adminToken };
+                  if (v === 'patterns' && !patterns) {
+                    fetch('/api/admin/corrections?patterns', { headers: hdr })
+                      .then(r => r.json()).then(j => setPatterns(j.patterns ?? [])).catch(() => {});
+                  }
+                  if (v === 'list' && !corrections) {
+                    fetch('/api/admin/corrections', { headers: hdr })
+                      .then(r => r.json()).then(j => setCorrections(j.corrections ?? [])).catch(() => {});
+                  }
+                }} style={{
+                  padding: '5px 12px', borderRadius: 100, border: 'none', cursor: 'pointer',
+                  fontSize: 12, fontWeight: 600,
+                  background: corrView === v ? '#5DD6CA' : 'rgba(255,255,255,.08)',
+                  color: corrView === v ? '#0E1A17' : 'rgba(255,255,255,.6)',
+                }}>{l}</button>
+              ))}
+              <button onClick={() => {
+                const hdr = { 'x-admin-token': adminToken };
+                if (corrView === 'patterns') {
+                  fetch('/api/admin/corrections?patterns', { headers: hdr })
+                    .then(r => r.json()).then(j => setPatterns(j.patterns ?? [])).catch(() => {});
+                } else {
+                  fetch('/api/admin/corrections', { headers: hdr })
+                    .then(r => r.json()).then(j => setCorrections(j.corrections ?? [])).catch(() => {});
+                }
+              }} style={{
+                padding: '5px 12px', borderRadius: 100, border: 'none', cursor: 'pointer',
+                fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,.08)',
+                color: 'rgba(255,255,255,.6)',
+              }}>↻ Ladda</button>
+            </div>
+          </div>
+
+          {corrView === 'list' && (
+            <Table>
+              <THead $cols="1fr 1fr 1fr 1fr 80px 110px">
+                <span>Fält</span><span>Från</span><span>Till</span>
+                <span>Anledning</span><span>Av</span><span>Datum</span>
+              </THead>
+              {corrections === null && <EmptyRow>Klicka ↻ Ladda för att hämta korrektioner.</EmptyRow>}
+              {corrections?.length === 0 && <EmptyRow>Inga korrektioner ännu — systemet är nytt.</EmptyRow>}
+              {(corrections ?? []).map((c) => (
+                <TRow key={c.id} $cols="1fr 1fr 1fr 1fr 80px 110px">
+                  <Tag $c="rgba(93,214,202,.15)">{c.field}</Tag>
+                  <span style={{ color: 'rgba(255,100,100,.8)', fontSize: 11.5 }}>{c.original_value || '–'}</span>
+                  <span style={{ color: 'rgba(100,220,180,.8)', fontSize: 11.5 }}>{c.corrected_value || '–'}</span>
+                  <span style={{ color: 'rgba(255,255,255,.45)', fontSize: 11 }}>{c.reason}</span>
+                  <Tag $c={c.corrected_by === 'operator' ? 'rgba(245,158,11,.2)' : 'rgba(93,214,202,.1)'}>
+                    {c.corrected_by}
+                  </Tag>
+                  <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>{fmtDate(c.created_at)}</span>
+                </TRow>
+              ))}
+            </Table>
+          )}
+
+          {corrView === 'patterns' && (
+            <Table>
+              <THead $cols="1fr 2fr 80px 80px">
+                <span>Fält</span><span>Mönster (reason)</span><span>Antal</span><span>Av</span>
+              </THead>
+              {patterns === null && <EmptyRow>Klicka ↻ Ladda för att analysera mönster.</EmptyRow>}
+              {patterns?.length === 0 && <EmptyRow>Inga mönster ännu.</EmptyRow>}
+              {(patterns ?? []).map((p, i) => (
+                <TRow key={i} $cols="1fr 2fr 80px 80px">
+                  <Tag $c="rgba(93,214,202,.15)">{p.field}</Tag>
+                  <span style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>{p.reason}</span>
+                  <span style={{ fontWeight: 700, color: p.count >= 5 ? '#F59E0B' : '#5DD6CA' }}>{p.count}×</span>
+                  <Tag $c={p.corrected_by === 'operator' ? 'rgba(245,158,11,.2)' : 'rgba(93,214,202,.1)'}>
+                    {p.corrected_by}
+                  </Tag>
+                </TRow>
+              ))}
+            </Table>
+          )}
         </Section>
       )}
     </Page>
