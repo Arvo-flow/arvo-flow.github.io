@@ -14,6 +14,26 @@ Vi är ett high tech, modernt bolag som är kreativa, innovativa och effektiva �
 
 ---
 
+## ARVO INTELLIGENCE — POSITIONERING (ALDRIG KOMPROMISSA)
+
+**Arvo Intelligence är en relation, inte en produkt.**
+
+Skillnaden: bokföringsprogrammet gör det du ber det om. CFO:n kommer till dig när något hänt som du inte visste att du behövde veta.
+
+Det enda som bevisar att vi är det sistnämnda — det mejl ingen bad om:
+
+> *"Vi noterade att Telia höjde priset på er mobilflotta med 11% förra månaden. 8 av 15 bolag vi följer i er bransch fick samma höjning. Vill ni att Arvo agerar?"*
+
+**Det mejlet ÄR Arvo Intelligence.** Dashboard, rapport, fakturaportal — är infrastruktur runt det.
+
+**Copy-regel (gäller all kommunikation om Arvo Intelligence):**
+- FEL: feature-lista — "Månadsvis briefing, prisbevakning, 90-dagars påminnelse"
+- RÄTT: det proaktiva momentet — "Arvo märkte något. Ni visste inte om det. Arvo kontaktade er."
+
+Kommunicera aldrig Arvo Intelligence som ett abonnemang med features. Kommunicera relationen — CFO:n som ringer dig, inte verktyget du loggar in på.
+
+---
+
 ## STÅENDE BETEENDEREGLER (KRITISKA — GÄLLER ALLTID)
 
 Dessa regler gäller ALLTID, oavsett vad som verkar rimligt i stunden:

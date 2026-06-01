@@ -2066,47 +2066,29 @@ const TestaFaktura = () => {
           </div>
 
 
-          {/* ── Arvo Intelligence — premium AI-CFO acquisition ─────────────── */}
+          {/* ── Arvo Intelligence — relation, inte produkt ───────────────────── */}
           <IntelligenceCard>
             <div className="eyebrow">Arvo Intelligence</div>
-            <h3>Er AI-finansdirektör — arbetar 24/7.</h3>
+            <h3>Det mejl ingen bad om.</h3>
             <p className="sub">
-              Arvo övervakar kontinuerligt alla era leverantörsfakturor, aviserar
-              vid marknadsprisförändringar och påminner när avtal närmar sig förnyelse.
-              Nedan är ett utdrag ur er månadsrapport.
+              Arvo Intelligence är inte ett verktyg ni loggar in på — det är en relation.
+              Arvo kontaktar er när något hänt som ni behöver veta. Inte tvärtom.
             </p>
 
-            {/* Mini-Briefing preview — visar produkten, inte bara ord om den */}
+            {/* Det proaktiva mejlet — det som ÄR produkten, inte infrastrukturen runt den */}
             <div className="briefing-preview">
               <div className="preview-top">
                 <span className="preview-brand">Arvo Intelligence</span>
-                <span className="preview-date">
-                  {new Date().toLocaleString('sv-SE', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}
-                </span>
+                <span className="preview-date">i morse · 08:14</span>
               </div>
               <div className="preview-divider" />
-              <div className="preview-saving-label">Identifierad besparing</div>
-              <div className="preview-saving-number">
-                {adjNetSaving > 0 ? formatKr(adjNetSaving) : '47 230 kr'}
-                <span className="preview-saving-unit">/år</span>
-              </div>
-              <div className="preview-finding">
-                {adjNetSaving > 0
-                  ? `${SEGMENTS.length - 1} ytterligare kategorier ej analyserade`
-                  : '3 avtal avviker från marknadspris'
+              <p className="preview-alert">
+                {adjNetSaving > 0 && result?.categorized?.normalizedSupplier
+                  ? <><strong>{result.categorized.normalizedSupplier}</strong> höjde priset sedan förra månaden — {formatKr(adjNetSaving)}/år identifierat. Vill ni att Arvo agerar?</>
+                  : <>Telia höjde priset på er mobilflotta med 11% förra månaden. 8 av 15 bolag vi följer i er bransch fick samma höjning. Vill ni att Arvo agerar?</>
                 }
-              </div>
-              <div className="preview-action">Se fullständig analys →</div>
-            </div>
-
-            <div className="trust-row">
-              <span>Månadsvis Intelligence Briefing</span>
-              <span className="dot">·</span>
-              <span>Marknadsprisbevakning</span>
-              <span className="dot">·</span>
-              <span>90-dagars avtalspåminnelse</span>
-              <span className="dot">·</span>
-              <span>Byten mot 20% av besparing</span>
+              </p>
+              <div className="preview-action">Ja, Arvo agerar →</div>
             </div>
 
             <div className="price-row">
