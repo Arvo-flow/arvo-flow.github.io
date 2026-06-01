@@ -1863,30 +1863,67 @@ export const IntelligenceCard = styled.div`
   border: 1px solid ${({ theme }) => theme.color.border};
   border-top: 3px solid ${({ theme }) => theme.color.brand};
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  padding: 32px;
+  padding: 36px 36px 32px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(14,26,23,.05), 0 6px 24px rgba(27,122,110,.08);
+  box-shadow: 0 2px 8px rgba(14,26,23,.06), 0 12px 40px rgba(27,122,110,.10);
 
   .eyebrow {
     font-size: 10px;
     font-weight: 700;
     color: ${({ theme }) => theme.color.brand};
     text-transform: uppercase;
-    letter-spacing: .20em;
+    letter-spacing: .22em;
+    margin-bottom: 20px;
+  }
+
+  .saving-hero {
+    margin: 0 0 24px;
+    padding: 20px 24px 22px;
+    background: linear-gradient(135deg,
+      ${({ theme }) => theme.color.brand}12 0%,
+      ${({ theme }) => theme.color.brand}06 100%);
+    border: 1px solid ${({ theme }) => theme.color.brand}30;
+    border-radius: 12px;
+  }
+
+  .saving-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: ${({ theme }) => theme.color.brand};
     margin-bottom: 10px;
   }
 
+  .saving-amount {
+    font-size: 54px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    color: ${({ theme }) => theme.color.ink};
+    line-height: 1;
+    font-feature-settings: "tnum";
+  }
+
+  .saving-unit {
+    font-size: 20px;
+    font-weight: 400;
+    color: ${({ theme }) => theme.color.muted};
+    margin-left: 6px;
+    letter-spacing: 0;
+  }
+
   h3 {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 800;
     letter-spacing: -.03em;
     color: ${({ theme }) => theme.color.ink};
-    margin: 0 0 10px;
-    line-height: 1.15;
+    margin: 0 0 8px;
+    line-height: 1.2;
   }
 
   p.sub {
-    font-size: 15px;
+    font-size: 14.5px;
     color: ${({ theme }) => theme.color.muted};
     line-height: 1.65;
     margin: 0 0 24px;
@@ -2010,10 +2047,26 @@ export const IntelligenceCard = styled.div`
     margin-left: 3px;
   }
 
+  .price-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+  }
+
   .price-note {
     font-size: 12px;
     color: ${({ theme }) => theme.color.muted};
   }
 
-  @media (max-width: 600px) { padding: 24px 20px; }
+  .price-sub {
+    font-size: 11px;
+    color: ${({ theme }) => theme.color.brand};
+    font-weight: 600;
+  }
+
+  @media (max-width: 600px) {
+    padding: 24px 20px;
+    .saving-amount { font-size: 42px; }
+  }
 `;
