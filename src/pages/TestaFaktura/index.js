@@ -2069,10 +2069,11 @@ const TestaFaktura = () => {
           {/* ── Arvo Intelligence — premium AI-CFO acquisition ─────────────── */}
           <IntelligenceCard>
             <div className="eyebrow">Arvo Intelligence</div>
-            <h3>Arvo bevakar vad bokföringen inte ser.</h3>
+            <h3>Er AI-finansdirektör — arbetar 24/7.</h3>
             <p className="sub">
-              Nedan är ett utdrag ur er månadsrapport. Arvo Intelligence täcker
-              alla {SEGMENTS.length} leverantörskategorier och agerar — utan att ni behöver lyfta ett finger.
+              Arvo övervakar kontinuerligt alla era leverantörsfakturor, aviserar
+              vid marknadsprisförändringar och påminner när avtal närmar sig förnyelse.
+              Nedan är ett utdrag ur er månadsrapport.
             </p>
 
             {/* Mini-Briefing preview — visar produkten, inte bara ord om den */}
@@ -2099,9 +2100,11 @@ const TestaFaktura = () => {
             </div>
 
             <div className="trust-row">
-              <span>Månadsvis briefing</span>
+              <span>Månadsvis Intelligence Briefing</span>
               <span className="dot">·</span>
-              <span>Automatisk prisbevakning</span>
+              <span>Marknadsprisbevakning</span>
+              <span className="dot">·</span>
+              <span>90-dagars avtalspåminnelse</span>
               <span className="dot">·</span>
               <span>Byten mot 20% av besparing</span>
             </div>
