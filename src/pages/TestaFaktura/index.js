@@ -2069,16 +2069,6 @@ const TestaFaktura = () => {
           {/* ── Arvo Intelligence — premium AI-CFO acquisition ─────────────── */}
           <IntelligenceCard>
             <div className="eyebrow">Arvo Intelligence</div>
-
-            {adjNetSaving > 0 ? (
-              <div className="saving-hero">
-                <span className="saving-label">Identifierad besparing — 1 av {SEGMENTS.length} kategorier</span>
-                <div className="saving-amount">
-                  {formatKr(adjNetSaving)}<span className="saving-unit">/år</span>
-                </div>
-              </div>
-            ) : null}
-
             <h3>
               {adjNetSaving > 0
                 ? <>Vad döljer sig i de övriga {SEGMENTS.length - 1} kategorierna?</>
@@ -2087,7 +2077,7 @@ const TestaFaktura = () => {
             </h3>
             <p className="sub">
               {adjNetSaving > 0
-                ? <>Arvo Intelligence bevakar hela er leverantörsportfölj — inte bara det ni just analyserade.</>
+                ? <>Vi hittade en besparing på <strong>{formatKr(adjNetSaving)}/år i en kategori.</strong> Arvo Intelligence bevakar alla {SEGMENTS.length} — och agerar automatiskt.</>
                 : <>En analys är en datapunkt. Arvo Intelligence ger er den fullständiga bilden — kontinuerlig bevakning av alla leverantörsavtal.</>
               }
             </p>
@@ -2095,45 +2085,20 @@ const TestaFaktura = () => {
             <ul className="value-list">
               <li>
                 <span className="check">✓</span>
-                <span>Månadsvis Intelligence Briefing — besparingsinsikter direkt i inkorgen</span>
+                <span>Månadsvis Intelligence Briefing direkt i inkorgen</span>
               </li>
               <li>
                 <span className="check">✓</span>
-                <span>Automatisk prisbevakning — Arvo agerar innan ni ens märker en höjning</span>
+                <span>Automatisk prisbevakning — Arvo agerar vid smyghöjningar</span>
               </li>
               <li>
                 <span className="check">✓</span>
-                <span>Arvo genomför leverantörsbyten åt er — mot 20% av realiserad besparing</span>
+                <span>Leverantörsbyten genomförs av Arvo — mot 20% av realiserad besparing</span>
               </li>
             </ul>
 
-            <p className="seg-label">Arvo bevakar — 1 av {SEGMENTS.length} kategorier analyserat</p>
-            <div className="segment-grid">
-              {SEGMENTS.map((seg) => {
-                const isActive = seg.cats.includes(result?.categorized?.category);
-                const netSav = result?.recommendation?.netSaving;
-                return (
-                  <div key={seg.label} className={`segment-tile${isActive ? ' tile-active' : ''}`}>
-                    {!isActive && (
-                      <span className="tile-lock">
-                        <Icon name="lock" size={11} stroke={1.8} />
-                      </span>
-                    )}
-                    <div className={`tile-icon${isActive ? ' icon-active' : ''}`}>
-                      <Icon name={seg.icon} size={15} stroke={isActive ? 2.5 : 1.8} />
-                    </div>
-                    <span className="tile-name">{seg.label}</span>
-                    {isActive ? (
-                      <>
-                        <span className="tile-status status-active">Analyserat</span>
-                        {netSav > 0 && <span className="tile-metric">–{formatNum(netSav)}&nbsp;kr/år</span>}
-                      </>
-                    ) : (
-                      <span className="tile-status">Ej analyserat</span>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="coverage-line">
+              Täcker alla {SEGMENTS.length} leverantörskategorier
             </div>
 
             <div className="price-row">
@@ -2141,13 +2106,10 @@ const TestaFaktura = () => {
                 <span className="price">1 995 kr</span>
                 <span className="price-period">/ mån</span>
               </div>
-              <div className="price-meta">
-                <span className="price-note">Ingen bindningstid</span>
-                <span className="price-sub">Byten utan förskott — 20% av besparing</span>
-              </div>
+              <span className="price-note">Ingen bindningstid</span>
             </div>
 
-            <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center', marginTop: '4px' }}>
+            <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
               Kom igång med Arvo Intelligence →
             </Button>
           </IntelligenceCard>

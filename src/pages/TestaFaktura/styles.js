@@ -1859,90 +1859,56 @@ export const BatchSummary = styled.div`
 // ── Arvo Intelligence — premium AI-CFO acquisition card ────────────────────
 // Detta är affären. Varje detalj motiverar 1 995 kr/mån.
 export const IntelligenceCard = styled.div`
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-top: 3px solid ${({ theme }) => theme.color.brand};
+  background: #0A1512;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  padding: 36px 36px 32px;
+  padding: 40px 36px 36px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(14,26,23,.06), 0 12px 40px rgba(27,122,110,.10);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18), 0 1px 3px rgba(0,0,0,.12);
 
   .eyebrow {
     font-size: 10px;
     font-weight: 700;
-    color: ${({ theme }) => theme.color.brand};
+    color: #1DB09A;
     text-transform: uppercase;
     letter-spacing: .22em;
-    margin-bottom: 20px;
-  }
-
-  .saving-hero {
-    margin: 0 0 24px;
-    padding: 20px 24px 22px;
-    background: linear-gradient(135deg,
-      ${({ theme }) => theme.color.brand}12 0%,
-      ${({ theme }) => theme.color.brand}06 100%);
-    border: 1px solid ${({ theme }) => theme.color.brand}30;
-    border-radius: 12px;
-  }
-
-  .saving-label {
-    display: block;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: ${({ theme }) => theme.color.brand};
-    margin-bottom: 10px;
-  }
-
-  .saving-amount {
-    font-size: 54px;
-    font-weight: 800;
-    letter-spacing: -.04em;
-    color: ${({ theme }) => theme.color.ink};
-    line-height: 1;
-    font-feature-settings: "tnum";
-  }
-
-  .saving-unit {
-    font-size: 20px;
-    font-weight: 400;
-    color: ${({ theme }) => theme.color.muted};
-    margin-left: 6px;
-    letter-spacing: 0;
+    margin-bottom: 16px;
   }
 
   h3 {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
     letter-spacing: -.03em;
-    color: ${({ theme }) => theme.color.ink};
-    margin: 0 0 8px;
+    color: #ffffff;
+    margin: 0 0 12px;
     line-height: 1.2;
   }
 
   p.sub {
-    font-size: 14.5px;
-    color: ${({ theme }) => theme.color.muted};
+    font-size: 15px;
+    color: rgba(255,255,255,0.50);
     line-height: 1.65;
-    margin: 0 0 24px;
+    margin: 0 0 28px;
+
+    strong {
+      color: rgba(255,255,255,0.85);
+      font-weight: 600;
+    }
   }
 
   .value-list {
     list-style: none;
     padding: 0;
-    margin: 0 0 28px;
+    margin: 0 0 32px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 
     li {
       display: flex;
       align-items: flex-start;
       gap: 12px;
       font-size: 14.5px;
-      color: ${({ theme }) => theme.color.inkSoft};
+      color: rgba(255,255,255,0.65);
       line-height: 1.5;
     }
 
@@ -1951,8 +1917,8 @@ export const IntelligenceCard = styled.div`
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      background: ${({ theme }) => theme.color.brandSoft};
-      color: ${({ theme }) => theme.color.brand};
+      background: rgba(29,176,154,0.18);
+      color: #1DB09A;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1962,111 +1928,43 @@ export const IntelligenceCard = styled.div`
     }
   }
 
-  .seg-label {
-    font-size: 10px;
+  .coverage-line {
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .10em;
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 10px;
+    letter-spacing: .12em;
+    color: rgba(29,176,154,0.70);
+    border-top: 1px solid rgba(29,176,154,0.15);
+    padding-top: 20px;
+    margin-bottom: 20px;
   }
-
-  .segment-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 24px;
-    @media (max-width: 580px) { grid-template-columns: repeat(2, 1fr); }
-  }
-  .segment-tile {
-    position: relative;
-    padding: 12px 12px 11px;
-    border-radius: ${({ theme }) => theme.size.radius.md};
-    border: 1px solid ${({ theme }) => theme.color.border};
-    background: ${({ theme }) => theme.color.surface};
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    opacity: 0.5;
-  }
-  .tile-active {
-    border: 1.5px solid ${({ theme }) => theme.color.brand};
-    background: linear-gradient(145deg, ${({ theme }) => theme.color.brandSoft} 0%, ${({ theme }) => theme.color.surface} 100%);
-    box-shadow: 0 2px 12px ${({ theme }) => theme.color.brand}1A;
-    opacity: 1;
-  }
-  .tile-icon {
-    width: 30px; height: 30px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border: 1px solid ${({ theme }) => theme.color.border};
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 7px; flex-shrink: 0;
-  }
-  .icon-active {
-    width: 32px; height: 32px;
-    background: ${({ theme }) => theme.color.brand};
-    border-color: transparent; color: #FAFAF7;
-    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
-  }
-  .tile-name {
-    font-size: 12px; font-weight: 600; letter-spacing: -0.01em;
-    line-height: 1.25; color: ${({ theme }) => theme.color.inkSoft};
-  }
-  .tile-active .tile-name { font-size: 12.5px; font-weight: 700; color: ${({ theme }) => theme.color.ink}; }
-  .tile-status { font-size: 10.5px; color: ${({ theme }) => theme.color.muted}; font-weight: 500; }
-  .status-active { color: ${({ theme }) => theme.color.brand}; font-weight: 600; font-size: 11px; }
-  .tile-metric {
-    font-size: 12px; font-weight: 800; color: ${({ theme }) => theme.color.ink};
-    font-feature-settings: "tnum"; letter-spacing: -0.03em; margin-top: 2px;
-  }
-  .tile-lock { position: absolute; top: 8px; right: 8px; color: ${({ theme }) => theme.color.borderStrong}; }
 
   .price-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 0;
-    border-top: 1px solid ${({ theme }) => theme.color.border};
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
-    margin-bottom: 20px;
+    padding: 0 0 24px;
   }
 
   .price {
-    font-size: 38px;
+    font-size: 40px;
     font-weight: 800;
-    letter-spacing: -.03em;
-    color: ${({ theme }) => theme.color.ink};
+    letter-spacing: -.04em;
+    color: #ffffff;
     font-feature-settings: "tnum";
   }
 
   .price-period {
     font-size: 16px;
     font-weight: 400;
-    color: ${({ theme }) => theme.color.muted};
-    margin-left: 3px;
-  }
-
-  .price-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 3px;
+    color: rgba(255,255,255,0.35);
+    margin-left: 4px;
   }
 
   .price-note {
     font-size: 12px;
-    color: ${({ theme }) => theme.color.muted};
+    color: rgba(255,255,255,0.30);
   }
 
-  .price-sub {
-    font-size: 11px;
-    color: ${({ theme }) => theme.color.brand};
-    font-weight: 600;
-  }
-
-  @media (max-width: 600px) {
-    padding: 24px 20px;
-    .saving-amount { font-size: 42px; }
-  }
+  @media (max-width: 600px) { padding: 28px 24px 24px; }
 `;
