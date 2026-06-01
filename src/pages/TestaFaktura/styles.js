@@ -1861,89 +1861,121 @@ export const BatchSummary = styled.div`
 export const IntelligenceCard = styled.div`
   background: #0A1512;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  padding: 40px 36px 36px;
+  padding: 28px 28px 32px;
   margin-bottom: 16px;
   box-shadow: 0 4px 24px rgba(0,0,0,.18), 0 1px 3px rgba(0,0,0,.12);
 
-  .eyebrow {
+  /* ── Mini Briefing preview ── */
+  .briefing-preview {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(29,176,154,0.22);
+    border-radius: 12px;
+    padding: 20px 22px 18px;
+    margin-bottom: 28px;
+  }
+
+  .preview-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .preview-brand {
     font-size: 10px;
     font-weight: 700;
     color: #1DB09A;
     text-transform: uppercase;
-    letter-spacing: .22em;
+    letter-spacing: .20em;
+  }
+
+  .preview-date {
+    font-size: 11px;
+    color: rgba(255,255,255,0.22);
+  }
+
+  .preview-divider {
+    height: 1px;
+    background: rgba(29,176,154,0.14);
     margin-bottom: 16px;
   }
 
-  h3 {
-    font-size: 26px;
+  .preview-saving-label {
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.32);
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+
+  .preview-saving-number {
+    font-size: 48px;
     font-weight: 800;
-    letter-spacing: -.03em;
+    letter-spacing: -.04em;
     color: #ffffff;
-    margin: 0 0 12px;
-    line-height: 1.2;
+    line-height: 1;
+    font-feature-settings: "tnum";
+    margin-bottom: 10px;
+  }
+
+  .preview-saving-unit {
+    font-size: 18px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.28);
+    margin-left: 5px;
+    letter-spacing: 0;
+  }
+
+  .preview-finding {
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.38);
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+
+  .preview-action {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1DB09A;
+    letter-spacing: .01em;
+  }
+
+  /* ── Copy ── */
+  h3 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    color: #ffffff;
+    margin: 0 0 10px;
+    line-height: 1.25;
   }
 
   p.sub {
-    font-size: 15px;
-    color: rgba(255,255,255,0.50);
-    line-height: 1.65;
-    margin: 0 0 28px;
-
-    strong {
-      color: rgba(255,255,255,0.85);
-      font-weight: 600;
-    }
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.7;
+    margin: 0 0 24px;
   }
 
-  .value-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 32px;
+  /* ── Trust-rad ── */
+  .trust-row {
     display: flex;
-    flex-direction: column;
-    gap: 14px;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.38);
+    margin-bottom: 24px;
 
-    li {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      font-size: 14.5px;
-      color: rgba(255,255,255,0.65);
-      line-height: 1.5;
-    }
-
-    .check {
-      flex-shrink: 0;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: rgba(29,176,154,0.18);
-      color: #1DB09A;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 800;
-      margin-top: 2px;
-    }
+    .dot { color: rgba(29,176,154,0.40); }
   }
 
-  .coverage-line {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .12em;
-    color: rgba(29,176,154,0.70);
-    border-top: 1px solid rgba(29,176,154,0.15);
-    padding-top: 20px;
-    margin-bottom: 20px;
-  }
-
+  /* ── Pris ── */
   .price-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0 24px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding-top: 20px;
+    margin-bottom: 16px;
   }
 
   .price {
@@ -1955,16 +1987,19 @@ export const IntelligenceCard = styled.div`
   }
 
   .price-period {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 400;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.30);
     margin-left: 4px;
   }
 
   .price-note {
     font-size: 12px;
-    color: rgba(255,255,255,0.30);
+    color: rgba(255,255,255,0.25);
   }
 
-  @media (max-width: 600px) { padding: 28px 24px 24px; }
+  @media (max-width: 600px) {
+    padding: 20px 20px 24px;
+    .preview-saving-number { font-size: 38px; }
+  }
 `;
