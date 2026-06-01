@@ -11,8 +11,8 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
-  Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, NextSteps, ScoreDiag, ScoreRevealCard, EmailGate,
+  ResultHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
+  Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, ScoreRevealCard, EmailGate,
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
@@ -938,8 +938,7 @@ const TestaFaktura = () => {
   const GAUGE_C = 2 * Math.PI * GAUGE_R;
   const gaugeDash = (diagScore / 100) * GAUGE_C;
 
-  // Layer 2 (Arvo Switch) — beräknas i komponent-scope så PartnerBlock kan renderas
-  // utanför result-kortet, efter IntelligenceCard (Layer 1 → Layer 2-ordning)
+  // Layer 2 (Arvo Switch) — komponent-scope variabler för SwitchCard utanför Card
   const _switchIsRealPrice     = _effectiveMeta.isRealPrice;
   const _switchIsLicensePending = !!(result?.categorized?.licensePending);
   const _switchPartnerLabel    = _effectiveMeta.partnerLabel;
@@ -1658,38 +1657,6 @@ const TestaFaktura = () => {
                         <CalculationChainBlock cc={result.calculationChain} />
                       )}
 
-                      {result.recommendation.suggestedAnnualCost && !isLicensePending && (
-                        <PartnerBlock>
-                          <div className="left">
-                            <span className="verified-badge">
-                              <Icon name="check" size={12} stroke={2.5} />
-                            </span>
-                            <div>
-                              <p className="partner-name">
-                                {isRealPrice
-                                  ? result.recommendation.suggestedSupplier
-                                  : partnerLabel}
-                              </p>
-                              <p className="price-label">
-                                {isRealPrice ? 'Verifierat marknadspris' : 'Arvos kalkylerade riktpris'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="price-offer">
-                            <span className="offer-price">{formatKr(result.recommendation.suggestedAnnualCost)}/år</span>
-                            <span className="offer-label">↓ från {formatKr(adjAnnualCost)}</span>
-                          </div>
-                          <Button
-                            type="button"
-                            $variant="gradient"
-                            $size="sm"
-                            onClick={() => setModalOpen(true)}
-                          >
-                            {partnerCtaLabel} <Icon name="arrow" size={14} />
-                          </Button>
-                        </PartnerBlock>
-                      )}
-
                     </>
                   );
                 })()}
@@ -2025,6 +1992,49 @@ const TestaFaktura = () => {
 
           </Card>
 
+          {/* ── Arvo Switch — Layer 2 · 20 % av realiserad besparing ────────── */}
+          {_showSwitch && (
+            <SwitchCard>
+              <div className="switch-eyebrow">Arvo Switch</div>
+              <h3>Redo att realisera besparingen?</h3>
+              <p className="sub">
+                Arvo sköter allt — från uppsägning till nytt avtal.
+                Ni betalar 20&nbsp;% av identifierad besparing, inget annat.
+              </p>
+              <div className="switch-offer-row">
+                <span className="switch-badge">
+                  <Icon name="check" size={13} stroke={2.5} />
+                </span>
+                <div className="switch-supplier">
+                  <p className="switch-supplier-name">
+                    {_switchIsRealPrice
+                      ? result.recommendation.suggestedSupplier
+                      : _switchPartnerLabel}
+                  </p>
+                  <p className="switch-price-label">
+                    {_switchIsRealPrice ? 'Verifierat marknadspris' : 'Arvos kalkylerade riktpris'}
+                  </p>
+                </div>
+                <div className="switch-amount">
+                  <span className="switch-amount-main">{formatKr(result.recommendation.suggestedAnnualCost)}/år</span>
+                  <span className="switch-amount-from">↓ från {formatKr(adjAnnualCost)}</span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                $variant="gradient"
+                $size="lg"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => setModalOpen(true)}
+              >
+                {_switchCtaLabel} <Icon name="arrow" size={16} />
+              </Button>
+              <p className="switch-fine-print">
+                Arvo-arvode {formatKr(adjArvoFee)}/år&nbsp;(20&nbsp;%) · Inget annat att betala
+              </p>
+            </SwitchCard>
+          )}
+
           {/* ── In-app feedback ───────────────────────────────── */}
           <div style={{
             background: '#fff', borderRadius: 14, border: '1px solid #E8F0EC',
@@ -2070,16 +2080,16 @@ const TestaFaktura = () => {
           </div>
 
 
-          {/* ── Arvo Intelligence — relation, inte produkt ───────────────────── */}
+          {/* ── Arvo Intelligence — "Det här var en faktura." ───────────────── */}
           <IntelligenceCard>
             <div className="eyebrow">Arvo Intelligence</div>
-            <h3>Det mejl ingen bad om.</h3>
+            <h3>Det här var en faktura.</h3>
             <p className="sub">
-              Arvo Intelligence är inte ett verktyg ni loggar in på — det är en relation.
-              Arvo kontaktar er när något hänt som ni behöver veta. Inte tvärtom.
+              Er leverantörsreskontra döljer fler. Koppla Fortnox eller Visma —
+              Arvo analyserar varje faktura automatiskt och kontaktar er när
+              något händer som ni behöver veta.
             </p>
 
-            {/* Det proaktiva mejlet — det som ÄR produkten, inte infrastrukturen runt den */}
             <div className="briefing-preview">
               <div className="preview-top">
                 <span className="preview-brand">Arvo Intelligence</span>
@@ -2089,7 +2099,7 @@ const TestaFaktura = () => {
               <p className="preview-alert">
                 {adjNetSaving > 0 && result?.categorized?.normalizedSupplier
                   ? <><strong>{result.categorized.normalizedSupplier}</strong> höjde priset sedan förra månaden — {formatKr(adjNetSaving)}/år identifierat. Vill ni att Arvo agerar?</>
-                  : <>Telia höjde priset på er mobilflotta med 11% förra månaden. 8 av 15 bolag vi följer i er bransch fick samma höjning. Vill ni att Arvo agerar?</>
+                  : <>Telia höjde priset på er mobilflotta med 11&nbsp;% förra månaden. 8 av 15 bolag vi följer i er bransch fick samma höjning. Vill ni att Arvo agerar?</>
                 }
               </p>
               <div className="preview-action">Ja, Arvo agerar →</div>
@@ -2104,28 +2114,9 @@ const TestaFaktura = () => {
             </div>
 
             <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
-              Kom igång med Arvo Intelligence →
-            </Button>
-          </IntelligenceCard>
-
-          {/* ── Lås upp fullständig Arvo Score™ (Fortnox/Visma-anslutning) ─── */}
-          <NextSteps>
-            <h3>Lås upp er fullständiga Arvo Score<sup>™</sup></h3>
-            <p className="sub">
-              Er nuvarande analys baseras på en faktura. Koppla Fortnox eller Visma
-              — Arvo genomlyser hela er leverantörsreskontra och ger er ett fullständigt
-              Arvo Score™ över samtliga kostnadsslag.
-            </p>
-            <Button
-              as={Link}
-              to="/connect"
-              $variant="gradient"
-              $size="lg"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
               Koppla Fortnox / Visma →
             </Button>
-          </NextSteps>
+          </IntelligenceCard>
           </>
         )}
       </Body>

@@ -479,6 +479,118 @@ export const PartnerBlock = styled.div`
   }
 `;
 
+export const SwitchCard = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-top: 3px solid ${({ theme }) => theme.color.brand};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 28px 32px 26px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 16px rgba(14,26,23,.08), 0 1px 3px rgba(14,26,23,.04);
+
+  .switch-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.brand};
+    text-transform: uppercase;
+    letter-spacing: .22em;
+    margin-bottom: 8px;
+  }
+
+  h3 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    color: ${({ theme }) => theme.color.ink};
+    margin: 0 0 8px;
+    line-height: 1.2;
+  }
+
+  p.sub {
+    font-size: 14px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.65;
+    margin: 0 0 20px;
+  }
+
+  .switch-offer-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    margin-bottom: 20px;
+  }
+
+  .switch-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brand};
+    color: #FAFAF7;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
+  }
+
+  .switch-supplier {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .switch-supplier-name {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.ink};
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .switch-price-label {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.brand};
+    font-weight: 600;
+    margin: 2px 0 0;
+    letter-spacing: .01em;
+  }
+
+  .switch-amount {
+    text-align: right;
+    flex-shrink: 0;
+    @media (max-width: 480px) { display: none; }
+  }
+
+  .switch-amount-main {
+    display: block;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-feature-settings: "tnum";
+    color: ${({ theme }) => theme.color.ink};
+  }
+
+  .switch-amount-from {
+    display: block;
+    font-size: 11px;
+    color: ${({ theme }) => theme.color.muted};
+    margin-top: 2px;
+  }
+
+  .switch-fine-print {
+    font-size: 11.5px;
+    color: ${({ theme }) => theme.color.muted};
+    text-align: center;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 600px) { padding: 22px 20px; }
+`;
+
 export const NoSwitchBlock = styled.div`
   padding: 24px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
