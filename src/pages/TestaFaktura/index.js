@@ -12,7 +12,7 @@ import {
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   ResultHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, PartnerBlock, KV,
-  Reasoning, LicenseOverageNote, TierOptAccordion, NextSteps, ScoreDiag, ScoreRevealCard, EmailGate,
+  Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, ScoreDiag, ScoreRevealCard, EmailGate,
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
@@ -2066,15 +2066,33 @@ const TestaFaktura = () => {
           </div>
 
 
-          <NextSteps>
-            <h3>7 kategorier väntar på analys</h3>
+          {/* ── Arvo Intelligence — premium AI-CFO acquisition ─────────────── */}
+          <IntelligenceCard>
+            <div className="eyebrow">Arvo Intelligence</div>
+            <h3>Er AI-finansdirektör, dygnet runt</h3>
             <p className="sub">
               {adjNetSaving > 0
-                ? <>Ni sparar {formatKr(adjNetSaving)}/år på programvara. Vad döljer sig i de andra sju? Koppla Fortnox / Visma — Arvo skannar hela er leverantörsreskontra och rapporterar automatiskt.</>
-                : <>En analys är en datapunkt. En fullständig portföljvy är en strategi. Koppla Fortnox / Visma — Arvo skannar hela er leverantörsreskontra och rapporterar automatiskt.</>
+                ? <>Ni sparar {formatKr(adjNetSaving)}/år på det vi just analyserade. Arvo Intelligence bevakar hela er leverantörsportfölj och agerar — utan att ni behöver lyfta ett finger.</>
+                : <>En analys är en datapunkt. Arvo Intelligence ger er det kompletta bilden — kontinuerlig bevakning av alla leverantörsavtal, automatisk.</>
               }
             </p>
-            <p className="seg-count">SEGMENT — 1 AV {SEGMENTS.length} ANALYSERADE</p>
+
+            <ul className="value-list">
+              <li>
+                <span className="check">✓</span>
+                <span>Månadsvis Intelligence Briefing — konkreta besparingsinsikter direkt i inkorgen</span>
+              </li>
+              <li>
+                <span className="check">✓</span>
+                <span>Kontinuerlig bevakning mot smyghöjningar och oannonserade prishöjningar</span>
+              </li>
+              <li>
+                <span className="check">✓</span>
+                <span>Arvo förhandlar och genomför leverantörsbyten — ni behöver inte göra något</span>
+              </li>
+            </ul>
+
+            <p className="seg-label">Arvo bevakar — 1 av {SEGMENTS.length} kategorier analyserat</p>
             <div className="segment-grid">
               {SEGMENTS.map((seg) => {
                 const isActive = seg.cats.includes(result?.categorized?.category);
@@ -2093,9 +2111,7 @@ const TestaFaktura = () => {
                     {isActive ? (
                       <>
                         <span className="tile-status status-active">Analyserat</span>
-                        {netSav > 0 && (
-                          <span className="tile-metric">–{formatNum(netSav)}&nbsp;kr/år</span>
-                        )}
+                        {netSav > 0 && <span className="tile-metric">–{formatNum(netSav)}&nbsp;kr/år</span>}
                       </>
                     ) : (
                       <span className="tile-status">Ej analyserat</span>
@@ -2104,10 +2120,19 @@ const TestaFaktura = () => {
                 );
               })}
             </div>
-            <Button as={Link} to="/connect" $variant="gradient" $size="lg">
-              Koppla Fortnox / Visma →
+
+            <div className="price-row">
+              <div>
+                <span className="price">1 995 kr</span>
+                <span className="price-period">/ mån</span>
+              </div>
+              <span className="price-note">Ingen bindningstid</span>
+            </div>
+
+            <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
+              Kom igång med Arvo Intelligence →
             </Button>
-          </NextSteps>
+          </IntelligenceCard>
           </>
         )}
       </Body>
