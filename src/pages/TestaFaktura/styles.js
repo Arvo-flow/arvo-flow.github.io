@@ -1894,77 +1894,78 @@ export const IntelligenceCard = styled.div`
     margin: 0 0 24px;
   }
 
-  /* ── Mini Briefing preview — mörkt utdrag, som en iPhone-demo på vit bakgrund ── */
+  /* ── Mini Briefing preview — ljus, del av sidan, inte ett frängande element ── */
   .briefing-preview {
-    background: #0A1512;
-    border-radius: 12px;
-    padding: 22px 24px 20px;
-    margin-bottom: 28px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.14);
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    border-left: 3px solid ${({ theme }) => theme.color.brand};
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 24px;
   }
 
   .preview-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
 
   .preview-brand {
     font-size: 10px;
     font-weight: 700;
-    color: #1DB09A;
+    color: ${({ theme }) => theme.color.brand};
     text-transform: uppercase;
     letter-spacing: .20em;
   }
 
   .preview-date {
     font-size: 11px;
-    color: rgba(255,255,255,0.22);
+    color: ${({ theme }) => theme.color.muted};
   }
 
   .preview-divider {
     height: 1px;
-    background: rgba(29,176,154,0.15);
-    margin-bottom: 16px;
+    background: ${({ theme }) => theme.color.border};
+    margin-bottom: 14px;
   }
 
   .preview-saving-label {
     font-size: 10.5px;
-    color: rgba(255,255,255,0.32);
+    color: ${({ theme }) => theme.color.muted};
     letter-spacing: .04em;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .preview-saving-number {
-    font-size: 46px;
+    font-size: 38px;
     font-weight: 800;
     letter-spacing: -.04em;
-    color: #ffffff;
+    color: ${({ theme }) => theme.color.brand};
     line-height: 1;
     font-feature-settings: "tnum";
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
   .preview-saving-unit {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 400;
-    color: rgba(255,255,255,0.28);
-    margin-left: 5px;
+    color: ${({ theme }) => theme.color.muted};
+    margin-left: 4px;
     letter-spacing: 0;
   }
 
   .preview-finding {
     font-size: 12px;
-    color: rgba(255,255,255,0.36);
-    margin-bottom: 14px;
+    color: ${({ theme }) => theme.color.muted};
+    margin-bottom: 12px;
     line-height: 1.5;
   }
 
   .preview-action {
     font-size: 12px;
     font-weight: 700;
-    color: #1DB09A;
+    color: ${({ theme }) => theme.color.brand};
     letter-spacing: .01em;
   }
 
