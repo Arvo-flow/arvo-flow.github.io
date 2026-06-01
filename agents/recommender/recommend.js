@@ -56,7 +56,8 @@ function formatBenchmark(benchmark, seatCount, employees) {
   // fall back to employee count. Ensures apples-to-apples comparison.
   const isPerUser = benchmark.note.toLowerCase().includes('per användare');
   const effectiveSeats = seatCount ?? employees;
-  const scale = isPerUser && effectiveSeats > 0 ? effectiveSeats : 1;
+  // isTotal: live_analyses data is already company-level totals — do NOT multiply by seats
+  const scale = (isPerUser && effectiveSeats > 0 && !benchmark.isTotal) ? effectiveSeats : 1;
   const totalMedian = benchmark.median * scale;
   const totalP25 = benchmark.p25 * scale;
   const scaleLabel = seatCount != null ? `${seatCount} licenser` : `${employees} anställda`;
@@ -71,9 +72,11 @@ function formatBenchmark(benchmark, seatCount, employees) {
     )
     .join('\n');
 
-  const sourceStr = benchmark.source === 'real'
-    ? `Arvo Flow branschindex — ${benchmark.n} verkliga datapunkter`
-    : 'Estimat från publika listpriser (ersätts med riktig kunddata)';
+  const sourceStr = benchmark.source === 'live_analyses'
+    ? `Arvo Flows analys-databas — ${benchmark.n} anonymiserade kundfakturor`
+    : benchmark.source === 'real'
+      ? `Arvo Flow branschindex — ${benchmark.n} verkliga datapunkter`
+      : 'Estimat från publika listpriser (ersätts med riktig kunddata)';
 
   return `Bransch: ${benchmark.industry}, storlek: ${benchmark.size}
 Median (total, per år): ${totalMedian.toLocaleString('sv-SE')} ${benchmark.unit}${scaleNote}
@@ -168,13 +171,15 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
   const bm = benchmark;
   const isPerUser = bm && bm.note.toLowerCase().includes('per användare');
   const effectiveSeats = seatCount ?? employees;
-  const scale = isPerUser && effectiveSeats > 0 ? effectiveSeats : 1;
+  // isTotal: live_analyses data is already company-level totals — do NOT multiply by seats
+  const scale = (isPerUser && effectiveSeats > 0 && !bm?.isTotal) ? effectiveSeats : 1;
   const totalMedian = bm ? bm.median * scale : null;
   const totalP25    = bm ? bm.p25    * scale : null;
-  const isRealData      = bm?.source === 'real';
+  const isRealData       = bm?.source === 'real';
+  const isLiveData       = bm?.source === 'live_analyses';
   const isVerifiedPublic = bm?.source === 'real-public';
   const isEstimated      = bm?.source === 'estimated';
-  const dataPoints = bm?.n ?? 0;
+  const dataPoints       = bm?.n ?? 0;
 
   // Skip benchmark % comparison for accounting systems.
   // Compare against p25 (the achievable benchmark), not median.
@@ -185,23 +190,30 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
       : null;
 
   // Annotation injected next to the annual cost — controls what the AI echoes back.
-  // Three tiers: real DB data, verified public prices, range-based estimates.
+  // Four tiers: live cross-customer data, real DB data, verified public prices, estimates.
+  const _pctLabel = (pct) => pct > 0
+    ? `${pct} % ÖVER`
+    : `${Math.abs(pct)} % UNDER`;
   const overpaymentAnnotation = overpaymentPct !== null
-    ? isRealData
-      ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER branschsnittet (p25)' : Math.abs(overpaymentPct) + ' % UNDER branschsnittet (p25)'} (${dataPoints} analyserade fakturor i databasen)`
-      : isVerifiedPublic
-        ? `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER verifierat listpris' : Math.abs(overpaymentPct) + ' % UNDER verifierat listpris'}`
-        : `  ← ${overpaymentPct > 0 ? overpaymentPct + ' % ÖVER branschstandarden' : Math.abs(overpaymentPct) + ' % UNDER branschstandarden'}`
+    ? isLiveData
+      ? `  ← ${_pctLabel(overpaymentPct)} branschsnittet (baserat på ${dataPoints} fakturor från liknande bolag i Arvo-databasen)`
+      : isRealData
+        ? `  ← ${_pctLabel(overpaymentPct)} branschsnittet (p25) (${dataPoints} analyserade fakturor i databasen)`
+        : isVerifiedPublic
+          ? `  ← ${_pctLabel(overpaymentPct)} verifierat listpris`
+          : `  ← ${_pctLabel(overpaymentPct)} branschstandarden`
     : '';
 
   // Explicit phrasing instruction so the AI uses the right language in reasoning.
   const phrasingRule = isAccountingSystem
     ? 'OBS: Detta är ett affärssystem. Jämför INTE kostnaden procentuellt mot branschsnittet. Undersök om inbyggda funktioner täcker behovet och ge konkret åtgärdsrekommendation.'
-    : isRealData
-      ? `OBS: Benchmarkdatan är baserad på ${dataPoints} verkliga kundfakturor i Arvo Flows databas. I din reasoning, jämför mot "branschsnittet" — skriv t.ex. "Ni betalar mer än jämförbara bolag i er bransch" eller "Välförhandlat avtalspris för er storlek är väsentligt lägre." — ALDRIG "medianen", "referenspriser" eller interna procentsatser.`
-      : isVerifiedPublic
-        ? 'OBS: Benchmarkdatan är verifierade offentliga listpriser — INTE aggregerade kundfakturor. I din reasoning, skriv "mer än det verifierade marknadspriset" eller "välförhandlat avtalspris finns tillgängligt" — ALDRIG "medianen" eller interna procentsatser.'
-        : 'OBS: Benchmarkdatan är intervallbaserade branschuppskattningar — INTE exakta priser. I din reasoning, jämför mot "branschsnittet" och skriv "välförhandlat avtalspris är lägre" — ALDRIG "exakta priser", "garanterade" eller "medianen".';
+    : isLiveData
+      ? `OBS: Benchmarkdatan är baserad på ${dataPoints} anonymiserade fakturor från liknande bolag i Arvo Flows databas. I din reasoning, skriv "jämförbara bolag i er bransch betalar väsentligt lägre" eller "Ni betalar mer än vad vi ser i liknande bolag" — ALDRIG "medianen", "referenspriser" eller interna procentsatser.`
+      : isRealData
+        ? `OBS: Benchmarkdatan är baserad på ${dataPoints} verkliga kundfakturor i Arvo Flows databas. I din reasoning, jämför mot "branschsnittet" — skriv t.ex. "Ni betalar mer än jämförbara bolag i er bransch" eller "Välförhandlat avtalspris för er storlek är väsentligt lägre." — ALDRIG "medianen", "referenspriser" eller interna procentsatser.`
+        : isVerifiedPublic
+          ? 'OBS: Benchmarkdatan är verifierade offentliga listpriser — INTE aggregerade kundfakturor. I din reasoning, skriv "mer än det verifierade marknadspriset" eller "välförhandlat avtalspris finns tillgängligt" — ALDRIG "medianen" eller interna procentsatser.'
+          : 'OBS: Benchmarkdatan är intervallbaserade branschuppskattningar — INTE exakta priser. I din reasoning, jämför mot "branschsnittet" och skriv "välförhandlat avtalspris är lägre" — ALDRIG "exakta priser", "garanterade" eller "medianen".';
 
   const benchmarkBlock = isAccountingSystem
     ? formatBenchmark(benchmark, seatCount, employees) + '\n\n' + phrasingRule

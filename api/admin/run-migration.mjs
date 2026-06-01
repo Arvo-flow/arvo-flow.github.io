@@ -326,6 +326,49 @@ export default async function handler(req, res) {
         )`,
     },
     { name: 'idx_graph_contracts_supplier', run: () => sql`CREATE INDEX IF NOT EXISTS idx_graph_contracts_supplier ON graph_contract_timelines (supplier_id, invoice_date DESC)` },
+
+    // ── Fas 3b: Backfill + live-benchmarking infrastruktur ────────────────────
+    // Lägger till source_analysis_id på invoice_datapoints för idempotent backfill.
+    // Utan denna kolumn skulle varje migrations-körning duplicera datapunkterna.
+    {
+      name: 'dp_source_analysis_id',
+      run: () => sql`ALTER TABLE invoice_datapoints ADD COLUMN IF NOT EXISTS source_analysis_id UUID`,
+    },
+    {
+      name: 'idx_dp_source_analysis',
+      run: () => sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_dp_source_analysis ON invoice_datapoints (source_analysis_id) WHERE source_analysis_id IS NOT NULL`,
+    },
+    // Retroaktiv backfill: alla tidigare invoice_analyses → invoice_datapoints.
+    // ON CONFLICT-skyddet via source_analysis_id gör steget idempotent.
+    // El-kategorin exkluderas (elRec har egna beräkningar, inte jämförbar direkt).
+    {
+      name: 'backfill_datapoints_from_analyses',
+      run: () => sql`
+        INSERT INTO invoice_datapoints
+          (category, supplier, annual_cost, industry, size_bucket, source_analysis_id)
+        SELECT
+          ia.category,
+          ia.normalized_supplier,
+          ia.annual_cost,
+          ia.industry,
+          CASE
+            WHEN ia.employees <= 9  THEN 'micro'
+            WHEN ia.employees <= 49 THEN 'small'
+            ELSE                         'mid'
+          END,
+          ia.id
+        FROM invoice_analyses ia
+        WHERE ia.route       = 'auto'
+          AND ia.annual_cost > 500
+          AND ia.annual_cost < 5000000
+          AND ia.employees   > 0
+          AND ia.category    NOT IN ('uncategorized', 'el')
+          AND NOT EXISTS (
+            SELECT 1 FROM invoice_datapoints dp
+            WHERE dp.source_analysis_id = ia.id
+          )
+      `,
+    },
   ];
 
   for (const step of steps) {
