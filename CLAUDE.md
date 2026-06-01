@@ -14,6 +14,47 @@ Vi är ett high tech, modernt bolag som är kreativa, innovativa och effektiva �
 
 ---
 
+## STRATEGISKT MANIFEST — VÄGEN FRAMÅT (BIBELN)
+
+Varje kodrad och tekniskt beslut valideras mot detta manifest. Vi bygger en "AI-finansdirektör" med "Tip of the Sword"-mentalitet. Utvecklingstid är sekundärt till att bygga en banbrytande produkt.
+
+### 1. Affärsmodellen (SaaS Hybrid & Data Moat)
+
+Vi skrotar den rena 20%-mäklarmodellen som kärna — den skapar ett skalbarhetstak (operationell mardröm). Vår framtid bygger på hybridmodellen:
+
+- **Layer 1 — Arvo Intelligence (prenumeration):** Proaktiv AI-CFO som övervakar fakturor 24/7, identifierar smyghöjningar och varnar innan avtal löper ut.
+- **Layer 2 — Arvo Switch (success fee):** 20%-modellen, men som en *upsell* när kunden väljer att låta oss genomföra den identifierade besparingen.
+- **Vallgrav (Data Moat):** Arvo handlar inte om att byta leverantör. Vår moat är den realtids-prisintelligens (Community Benchmark / Invoice Graph) vi bygger. Vi ska bli B2B-marknadens "Bloomberg-terminal" för inköpspriser.
+
+### 2. Operationell strategi — "Arvo-Trappan"
+
+Arvo är ett tech-bolag, inte en kundtjänstbyrå. Vi hanterar aldrig fysiska leverantörsbyten (posta SIM-kort, migrera mjukvara). Exekvering sker strikt enligt trappan:
+
+1. **Omförhandling (Nivå 1):** Arvo skickar mail/krav till nuvarande leverantör via fullmakt — sänker priset eller tar bort oanvända licenser. Noll friktion.
+2. **Semi-automatiserat (Nivå 2):** Arvo genererar instruktioner/mail som kunden själv klickar iväg i sina egna system.
+3. **Partnernätverk (Nivå 3):** Behövs ett fysiskt byte (ny operatör, ny hårdvara) — vi räckverkar leadet till nischade partners. Vi rör inte driften.
+
+### 3. Output & UX — "The Interactive Briefing"
+
+Vi skickar inte statiska PDF-rapporter eller platta HTML-mail.
+
+- **Kroken:** Minimalistiska, proaktiva mail — *"Arvo har hittat en smyghöjning på 18% hos [Leverantör]. Klicka här för er briefing."*
+- **The Decision Board:** Magic Link → Interactive Briefing (B2B-versionen av Spotify Wrapped). Dynamisk, supersnabb webbvy med korta, vassa datadrivna insikter.
+- **One-Click Execution:** CTA-knappar i briefingen där CFO:n fattar beslut direkt — "Låt Arvo omförhandla avtalet".
+
+### 4. Go-to-Market & Datainmatning — E-posthacket
+
+Vi väntar inte 3 månader på juridik för Fortnox/Visma API:er.
+
+- Kontinuerligt dataflöde via **e-postvidarebefordran**: varje kund får en unik adress (`analys-[hash]@arvoflow.se`) och sätter upp automatisk vidarebefordran från sin inkorg/ekonomisystem. Noll friktion för kunden, omedelbar data för oss.
+- Stripe, inloggningsportaler och "customer accounts" parkeras i fas 1. Vi bevisar värdet med Concierge MVP mot de 10 första kunderna.
+
+### 5. Outcome Tracking — Den Affärskritiska Länken
+
+Eftersom Layer 2 bygger på "20% av realiserad besparing" MÅSTE vi ha en `outcome-loop`. När en kund klickar "Agera" i Interactive Briefing ska ett uppföljningsflöde (30-dagars mail) finnas för att bekräfta att bytet/förhandlingen gick igenom — så att vi kan fakturera.
+
+---
+
 ## ARVO INTELLIGENCE — POSITIONERING (ALDRIG KOMPROMISSA)
 
 **Arvo Intelligence är en relation, inte en produkt.**
