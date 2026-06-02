@@ -193,22 +193,22 @@ const Landing = () => {
               Er finansdirektör.<br /><em>Aldrig offline.</em>
             </Headline>
             <Lede>
-              Arvo bevakar era leverantörsavtal dygnet runt och kontaktar er direkt
-              när någon höjer priset, ett avtal snart förnyas, eller en besparing väntar.
-              Ni behöver inte fråga — vi hör av oss.
+              Bokföringsprogram registrerar historiken. Arvo agerar på framtiden —
+              vi bevakar era leverantörsavtal dygnet runt och kontaktar er direkt
+              när ett läckage identifieras. Ni behöver inte fråga — vi hör av oss.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/testa-faktura" $variant="gradient" $size="lg">
-                Testa med en faktura — gratis <Icon name="arrow" size={18} />
+                Testa med en faktura <Icon name="arrow" size={18} />
               </Button>
               <Button as={Link} to="/connect" $variant="secondary" $size="lg">
                 Aktivera Arvo Intelligence
               </Button>
             </HeroActions>
             <HeroProof>
-              <div><strong>Dygnet runt</strong><span>vi hör av oss — ni behöver inte fråga</span></div>
-              <div><strong>100 % oberoende</strong><span>alltid objektiv analys</span></div>
-              <div><strong>Gratis att starta</strong><span>Switch: 0 kr tills ni sparat</span></div>
+              <div><strong>Ingen integration krävs</strong><span>kom igång på 2 min via e-post</span></div>
+              <div><strong>Aldrig utan er signatur</strong><span>ni behåller full kontroll</span></div>
+              <div><strong>Betala bara när ni sparat</strong><span>Switch: 0 kr tills bytet är klart</span></div>
             </HeroProof>
           </div>
 
