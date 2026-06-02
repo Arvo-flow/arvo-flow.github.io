@@ -1529,49 +1529,67 @@ export const SpectrumAxisFoot = styled.div`
 export const SpectrumSummary = styled.div`
   display: flex;
   align-items: center;
-  gap: 18px;
-  margin-top: 26px;
-  padding-top: 22px;
+  gap: 0;
+  margin-top: 28px;
+  padding-top: 24px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
 
-  .stat {
+  .sum-meta {
+    display: flex;
+    align-items: center;
+    gap: 0;
     flex-shrink: 0;
+  }
+  .sum-col {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 10px 18px;
-    border-radius: ${({ theme }) => theme.size.radius.md};
-    background: ${({ theme }) => theme.color.brandSoft};
+    text-align: center;
+    padding: 0 22px 0 0;
   }
-  .stat strong {
-    font-size: 30px;
+  .sum-col + .sum-sep + .sum-col {
+    padding: 0 22px;
+  }
+  .sum-col strong {
+    font-size: 40px;
     font-weight: 800;
     line-height: 1;
-    letter-spacing: -0.04em;
-    color: ${({ theme }) => theme.color.brand};
+    letter-spacing: -0.05em;
     font-feature-settings: "tnum";
   }
-  .stat .of { font-size: 18px; opacity: 0.5; }
-  .stat .lbl {
-    margin-top: 6px;
-    font-size: 10.5px;
-    font-weight: 600;
+  .sum-col.bad strong  { color: #DC2626; }
+  .sum-col.good strong { color: ${({ theme }) => theme.color.brand}; }
+  .sum-col span {
+    margin-top: 5px;
+    font-size: 9px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: ${({ theme }) => theme.color.brand};
-    text-align: center;
+    letter-spacing: 0.07em;
+    color: ${({ theme }) => theme.color.muted};
+    white-space: nowrap;
+  }
+  .sum-sep {
+    width: 1px;
+    height: 44px;
+    background: ${({ theme }) => theme.color.border};
+    flex-shrink: 0;
+    margin: 0 4px;
   }
   p {
     margin: 0;
     font-size: 13.5px;
     line-height: 1.6;
     color: ${({ theme }) => theme.color.inkSoft};
+    padding-left: 28px;
+    border-left: 1px solid ${({ theme }) => theme.color.border};
+    margin-left: 24px;
   }
 
-  @media (max-width: 560px) {
+  @media (max-width: 620px) {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 20px;
+    p { padding-left: 0; border-left: none; margin-left: 0; }
   }
 `;
 
