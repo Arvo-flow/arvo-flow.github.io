@@ -244,7 +244,7 @@ const BenchmarkViz = () => {
       <div className="spectrum-head">
         <span className="title">Er leverantörsportfölj</span>
         <span className="sub">8 kategorier · bevakade dygnet runt</span>
-        <span className="tag">Illustrativ data</span>
+        <span className="tag">Exempel</span>
       </div>
 
       <SpectrumRows>
