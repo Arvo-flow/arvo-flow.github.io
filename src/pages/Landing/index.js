@@ -413,7 +413,7 @@ const Landing = () => {
                   <span className="tl-saving-label">Säkrad besparing</span>
                   <span className="tl-saving-value">18&nbsp;480&nbsp;kr<span className="unit">/år</span></span>
                 </div>
-                <button className="tl-cta">Visa briefing →</button>
+                <button className="tl-cta">Se hur Arvo löste det →</button>
               </div>
             </HeroTimeline>
 
@@ -422,13 +422,6 @@ const Landing = () => {
               <div className="text">
                 <strong>Ny avisering</strong>
                 <span>automatisk bevakning</span>
-              </div>
-            </PreviewFloat>
-            <PreviewFloat $bottom="-24px" $left="20px">
-              <div className="dot"><Icon name="calendar-clock" size={18} /></div>
-              <div className="text">
-                <strong>Avtal förnyas snart</strong>
-                <span>Arvo bevakar — 14 dagar kvar</span>
               </div>
             </PreviewFloat>
           </HeroVisual>
