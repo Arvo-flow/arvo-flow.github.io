@@ -21,9 +21,9 @@ import {
   FaqWrap, FaqItem,
   FinalCta,
   BenchmarkSection, BenchmarkInner, BenchmarkLeft,
-  BenchmarkRows, BenchmarkRow, BenchmarkRowHead,
+  BenchmarkPanel, BenchmarkPanelHead, BenchmarkRows, BenchmarkRow, BenchmarkRowHead,
   BenchmarkTrack, BenchmarkRange, BenchmarkMedian, BenchmarkYou,
-  BenchmarkRowLabels, BenchmarkLegend,
+  BenchmarkRowLabels, BenchmarkLegend, BenchmarkSummary,
 } from './styles';
 
 const HOW_STEPS = [
@@ -148,76 +148,103 @@ const BENCHMARK_ROWS = [
   { cat: 'Elavtal',          unit: 'öre/kWh',    p25: 112,  median: 145,  p75: 178,  you: 195,  max: 230  },
 ];
 
+// Animerad uppräkning av ett tal när elementet blir synligt
+const useCountUp = (target, active, duration = 1100, delay = 0) => {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!active) return undefined;
+    let raf;
+    const timer = setTimeout(() => {
+      let start;
+      const tick = (t) => {
+        if (start === undefined) start = t;
+        const p = Math.min((t - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        setVal(Math.round(target * eased));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }, delay);
+    return () => { clearTimeout(timer); if (raf) cancelAnimationFrame(raf); };
+  }, [target, active, duration, delay]);
+  return val;
+};
+
+const BenchmarkRowItem = ({ row, i, visible }) => {
+  const pct = (v) => `${(v / row.max) * 100}%`;
+  const delta = row.you - row.median;
+  const barDelay = `${i * 140}ms`;
+  const dotDelay = `${i * 140 + 1000}ms`;
+  const count = useCountUp(delta, visible, 1000, i * 140 + 1000);
+
+  return (
+    <BenchmarkRow>
+      <BenchmarkRowHead>
+        <div className="label-group">
+          <span className="cat">{row.cat}</span>
+          <span className="unit">{row.unit}</span>
+        </div>
+        <div className="delta">
+          <strong>+{(visible ? count : 0).toLocaleString('sv-SE')}</strong>
+          <small>över branschsnittet</small>
+        </div>
+      </BenchmarkRowHead>
+      <BenchmarkTrack>
+        <BenchmarkRange $left={pct(row.p25)} $width={pct(row.p75 - row.p25)} $visible={visible} $delay={barDelay} />
+        <BenchmarkMedian $left={pct(row.median)} />
+        <BenchmarkYou $left={pct(row.you)} $visible={visible} $delay={dotDelay} />
+      </BenchmarkTrack>
+      <BenchmarkRowLabels>
+        <span className="p25" style={{ left: pct(row.p25) }}>{row.p25.toLocaleString('sv-SE')}</span>
+        <span className="median" style={{ left: pct(row.median) }}>{row.median.toLocaleString('sv-SE')}</span>
+        <span className="you" style={{ left: pct(row.you) }}>{row.you.toLocaleString('sv-SE')}</span>
+      </BenchmarkRowLabels>
+    </BenchmarkRow>
+  );
+};
+
 const BenchmarkViz = () => {
   const [visible, setVisible] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el) return undefined;
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.15 }
+      { threshold: 0.12 }
     );
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
 
   return (
-    <BenchmarkRows ref={ref}>
-      {BENCHMARK_ROWS.map((row, i) => {
-        const rangeLeft = `${(row.p25 / row.max) * 100}%`;
-        const rangeWidth = `${((row.p75 - row.p25) / row.max) * 100}%`;
-        const medianLeft = `${(row.median / row.max) * 100}%`;
-        const youLeft = `${(row.you / row.max) * 100}%`;
-        const barDelay = `${i * 160}ms`;
-        const dotDelay = `${i * 160 + 1100}ms`;
-        return (
-          <BenchmarkRow key={row.cat}>
-            <BenchmarkRowHead>
-              <span className="cat">{row.cat}</span>
-              <span className="unit">{row.unit}</span>
-            </BenchmarkRowHead>
-            <BenchmarkTrack>
-              <BenchmarkRange
-                $left={rangeLeft}
-                $width={rangeWidth}
-                $visible={visible}
-                $delay={barDelay}
-              />
-              <BenchmarkMedian $left={medianLeft} />
-              <BenchmarkYou
-                $left={youLeft}
-                $visible={visible}
-                $delay={dotDelay}
-              />
-            </BenchmarkTrack>
-            <BenchmarkRowLabels>
-              <span style={{ left: rangeLeft, fontSize: '11px', color: '#1B7A6E', fontWeight: 600 }}>
-                {row.p25.toLocaleString('sv-SE')}
-              </span>
-              <span style={{ left: medianLeft, fontSize: '11px', color: '#8A9E98' }}>
-                {row.median.toLocaleString('sv-SE')}
-              </span>
-            </BenchmarkRowLabels>
-          </BenchmarkRow>
-        );
-      })}
+    <BenchmarkPanel ref={ref}>
+      <BenchmarkPanelHead>
+        <span className="title">Prisspann i er bransch</span>
+        <span className="tag">Illustrativ data</span>
+      </BenchmarkPanelHead>
+
+      <BenchmarkRows>
+        {BENCHMARK_ROWS.map((row, i) => (
+          <BenchmarkRowItem key={row.cat} row={row} i={i} visible={visible} />
+        ))}
+      </BenchmarkRows>
+
       <BenchmarkLegend>
-        <div className="legend-item">
-          <div className="swatch-bar" />
-          <span>Välförhandlat prisspann</span>
-        </div>
-        <div className="legend-item">
-          <div className="swatch-tick" />
-          <span>Branschsnitt</span>
-        </div>
-        <div className="legend-item">
-          <div className="swatch-dot" />
-          <span>Er illustration</span>
-        </div>
+        <div className="legend-item"><div className="swatch-bar" /><span>Välförhandlat prisspann</span></div>
+        <div className="legend-item"><div className="swatch-tick" /><span>Branschsnitt</span></div>
+        <div className="legend-item"><div className="swatch-dot" /><span>Ni idag</span></div>
       </BenchmarkLegend>
-    </BenchmarkRows>
+
+      <BenchmarkSummary>
+        <div className="stat">
+          <strong>4<span className="of">/4</span></strong>
+          <span className="lbl">kategorier över snittet</span>
+        </div>
+        <p>I den här illustrationen ligger exempelbolaget över branschsnittet i varje kategori. Det är precis det mönstret Arvo fångar — faktura för faktura, ofta innan ni hunnit märka höjningen.</p>
+      </BenchmarkSummary>
+    </BenchmarkPanel>
   );
 };
 

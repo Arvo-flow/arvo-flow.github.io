@@ -1330,12 +1330,12 @@ export const BenchmarkInner = styled.div`
   max-width: ${({ theme }) => theme.size.container};
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  gap: 80px;
-  align-items: center;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 72px;
+  align-items: start;
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: 56px;
+    gap: 48px;
   }
 `;
 
@@ -1371,10 +1371,52 @@ export const BenchmarkLeft = styled.div`
   }
 `;
 
+const youPulse = keyframes`
+  0%   { transform: scale(0.8); opacity: 0.55; }
+  100% { transform: scale(2);   opacity: 0; }
+`;
+
+export const BenchmarkPanel = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.xl};
+  box-shadow:
+    0 1px 2px rgba(14, 26, 23, 0.04),
+    0 18px 48px rgba(14, 26, 23, 0.10);
+  padding: 34px 36px 30px;
+  @media (max-width: 740px) { padding: 26px 22px 22px; }
+`;
+
+export const BenchmarkPanelHead = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 22px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+
+  .title {
+    font-size: 14.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: ${({ theme }) => theme.color.ink};
+  }
+  .tag {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: ${({ theme }) => theme.color.brand};
+    background: ${({ theme }) => theme.color.brandSoft};
+    padding: 4px 10px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+  }
+`;
+
 export const BenchmarkRows = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 30px;
 `;
 
 export const BenchmarkRow = styled.div`
@@ -1385,35 +1427,59 @@ export const BenchmarkRow = styled.div`
 export const BenchmarkRowHead = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 8px;
+  align-items: flex-start;
+  margin-bottom: 13px;
 
+  .label-group { display: flex; flex-direction: column; gap: 2px; }
   .cat {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 650;
     color: ${({ theme }) => theme.color.ink};
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
   }
   .unit {
-    font-size: 11px;
+    font-size: 11.5px;
+    color: ${({ theme }) => theme.color.muted};
+  }
+  .delta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+  }
+  .delta strong {
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: #DC2626;
+    font-feature-settings: "tnum";
+  }
+  .delta small {
+    margin-top: 3px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     color: ${({ theme }) => theme.color.muted};
   }
 `;
 
 export const BenchmarkTrack = styled.div`
   position: relative;
-  height: 8px;
-  background: ${({ theme }) => theme.color.border};
-  border-radius: 4px;
-  overflow: visible;
+  height: 14px;
+  background: ${({ theme }) => theme.color.surfaceAlt};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: 7px;
+  box-shadow: inset 0 1px 2px rgba(14, 26, 23, 0.06);
 `;
 
 export const BenchmarkRange = styled.div`
   position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #1B7A6E 0%, #2DB59F 100%);
+  top: -1px;
+  bottom: -1px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #1B7A6E 0%, #2DB59F 100%);
+  box-shadow: 0 2px 8px rgba(27, 122, 110, 0.32);
   left: ${({ $left }) => $left};
   width: ${({ $visible, $width }) => $visible ? $width : '0%'};
   transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1) ${({ $delay }) => $delay};
@@ -1422,54 +1488,71 @@ export const BenchmarkRange = styled.div`
 export const BenchmarkMedian = styled.div`
   position: absolute;
   top: 50%;
+  z-index: 2;
   width: 2px;
-  height: 14px;
+  height: 22px;
   transform: translate(-50%, -50%);
   background: ${({ theme }) => theme.color.ink};
-  opacity: 0.35;
+  opacity: 0.42;
+  border-radius: 1px;
   left: ${({ $left }) => $left};
 `;
 
 export const BenchmarkYou = styled.div`
   position: absolute;
   top: 50%;
-  width: 14px;
-  height: 14px;
+  z-index: 3;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #DC2626;
-  border: 2.5px solid ${({ theme }) => theme.color.surfaceAlt};
-  transform: translate(-50%, -50%) translateY(1px);
+  border: 3px solid ${({ theme }) => theme.color.surface};
+  box-shadow: 0 2px 9px rgba(220, 38, 38, 0.45);
+  transform: translate(-50%, -50%);
   left: ${({ $left }) => $left};
   opacity: ${({ $visible }) => $visible ? 1 : 0};
-  transition: opacity 0.4s ease ${({ $delay }) => $delay};
+  transition: opacity 0.45s ease ${({ $delay }) => $delay};
 
-  &::after {
-    content: 'Ni idag';
+  /* pulserande ring */
+  &::before {
+    content: '';
     position: absolute;
-    bottom: calc(100% + 8px);
+    inset: -3px;
+    border-radius: 50%;
+    border: 1.5px solid #DC2626;
+    opacity: 0;
+    animation: ${({ $visible }) => $visible ? youPulse : 'none'} 2.4s ease-out 0.6s infinite;
+  }
+  /* kopplingslinje ner till värdet */
+  &::after {
+    content: '';
+    position: absolute;
+    top: calc(100% + 1px);
     left: 50%;
+    width: 1.5px;
+    height: 15px;
     transform: translateX(-50%);
-    background: #DC2626;
-    color: #fff;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 4px;
-    white-space: nowrap;
-    letter-spacing: .02em;
-    pointer-events: none;
+    background: linear-gradient(#DC2626, rgba(220, 38, 38, 0));
+    opacity: ${({ $visible }) => $visible ? 1 : 0};
+    transition: opacity 0.45s ease ${({ $delay }) => $delay};
   }
 `;
 
 export const BenchmarkRowLabels = styled.div`
   position: relative;
-  height: 18px;
-  margin-top: 8px;
+  height: 16px;
+  margin-top: 11px;
 
   span {
     position: absolute;
     transform: translateX(-50%);
+    font-size: 11px;
+    white-space: nowrap;
+    font-feature-settings: "tnum";
   }
+  span.p25    { color: ${({ theme }) => theme.color.brand}; font-weight: 600; }
+  span.median { color: ${({ theme }) => theme.color.muted}; }
+  span.you    { color: #DC2626; font-weight: 700; }
 `;
 
 export const BenchmarkLegend = styled.div`
@@ -1477,7 +1560,7 @@ export const BenchmarkLegend = styled.div`
   gap: 20px;
   flex-wrap: wrap;
   border-top: 1px solid ${({ theme }) => theme.color.border};
-  margin-top: 32px;
+  margin-top: 34px;
   padding-top: 20px;
 
   .legend-item {
@@ -1487,29 +1570,72 @@ export const BenchmarkLegend = styled.div`
     font-size: 12px;
     color: ${({ theme }) => theme.color.inkSoft};
   }
-
   .swatch-bar {
-    width: 24px;
-    height: 6px;
+    width: 24px; height: 7px;
     border-radius: 3px;
-    background: linear-gradient(90deg, #1B7A6E 0%, #2DB59F 100%);
+    background: linear-gradient(135deg, #1B7A6E 0%, #2DB59F 100%);
     flex-shrink: 0;
   }
-
   .swatch-tick {
-    width: 2px;
-    height: 14px;
+    width: 2px; height: 15px;
     background: ${({ theme }) => theme.color.ink};
-    opacity: 0.35;
+    opacity: 0.42;
     flex-shrink: 0;
   }
-
   .swatch-dot {
-    width: 12px;
-    height: 12px;
+    width: 13px; height: 13px;
     border-radius: 50%;
     background: #DC2626;
     flex-shrink: 0;
+  }
+`;
+
+export const BenchmarkSummary = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 26px;
+  padding-top: 24px;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+
+  .stat {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    background: ${({ theme }) => theme.color.brandSoft};
+  }
+  .stat strong {
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: ${({ theme }) => theme.color.brand};
+    font-feature-settings: "tnum";
+  }
+  .stat .of { font-size: 18px; opacity: 0.5; }
+  .stat .lbl {
+    margin-top: 6px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: ${({ theme }) => theme.color.brand};
+    text-align: center;
+  }
+  p {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+
+  @media (max-width: 560px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
 `;
 
