@@ -2242,6 +2242,11 @@ export const IntelligenceCard = styled.div`
     color: #C41E1E;
     white-space: nowrap;
     letter-spacing: -.01em;
+
+    &.signal-badge--contract {
+      background: #FFFBEB;
+      color: #92400E;
+    }
   }
 
   .signal-sub {

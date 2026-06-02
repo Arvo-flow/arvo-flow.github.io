@@ -28,6 +28,13 @@ const TIER_DISPLAY = {
 
 const formatNum = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 
+function truncateReasoning(text, maxSentences = 2) {
+  if (!text) return '';
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+  if (sentences.length === 0) return text.length > 200 ? text.slice(0, 200).trimEnd() + '…' : text;
+  return sentences.slice(0, maxSentences).join(' ').trim();
+}
+
 function detectHardwareInstallments(lineItems) {
   if (!Array.isArray(lineItems)) return [];
   const re = /[Mm]ånad\s+(\d+)\s+av\s+(\d+)|[Mm]onth\s+(\d+)\s+of\s+(\d+)/;
@@ -1665,6 +1672,37 @@ const TestaFaktura = () => {
               </>
             )}
 
+            {/* ── Reasoning excerpt — synlig utan att öppna detaljer ───────────── */}
+            {result.route === 'auto' &&
+             result.categorized?.category &&
+             result.recommendation?.shouldSwitch &&
+             result.recommendation?.netSaving > 0 &&
+             result.recommendation?.reasoning && (
+              <blockquote style={{
+                margin: '4px 0 16px',
+                padding: '12px 16px 12px 18px',
+                borderLeft: '2px solid #B8D4CB',
+                borderRadius: '0 6px 6px 0',
+              }}>
+                <p style={{
+                  fontSize: 13.5,
+                  color: '#3D5249',
+                  lineHeight: 1.6,
+                  margin: 0,
+                  fontStyle: 'italic',
+                }}>
+                  {truncateReasoning(
+                    getCategoryMeta(result.categorized.category).isRealPrice
+                      ? result.recommendation.reasoning
+                      : redactSupplier(result.recommendation.reasoning, result.recommendation.suggestedSupplier)
+                  )}
+                </p>
+                <cite style={{ fontSize: 11, color: '#8A9E98', marginTop: 6, display: 'block', fontStyle: 'normal' }}>
+                  — Arvos bedömning
+                </cite>
+              </blockquote>
+            )}
+
             {/* ── Fakturaunderlag — dolt som standard, öppnas på begäran ──────── */}
             <button
               onClick={() => setDetailsOpen(o => !o)}
@@ -2115,6 +2153,20 @@ const TestaFaktura = () => {
                   <p className="signal-sub">
                     <strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning — inklusive er.
                   </p>
+                </div>
+              </div>
+
+              <div className="signal">
+                <div className="signal-ico">
+                  <Icon name="calendar-clock" size={14} stroke={2} />
+                </div>
+                <div>
+                  <span className="signal-tag">Proaktiv avtalsbevakning</span>
+                  <div className="signal-line">
+                    {result?.categorized?.normalizedSupplier || 'Er leverantör'} · Förnyelse om 90 dagar
+                    <span className="signal-badge signal-badge--contract">Förnyelse</span>
+                  </div>
+                  <p className="signal-sub">Arvo varnar automatiskt — och förhandlar på er begäran.</p>
                 </div>
               </div>
             </div>
