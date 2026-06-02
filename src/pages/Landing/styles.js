@@ -1411,27 +1411,21 @@ export const SpectrumRow = styled.div`
   .unit { font-size: 10px; color: ${({ theme }) => theme.color.muted}; }
 
   /* delad axel — zon + branschsnitt-linje löper kontinuerligt genom alla rader */
-  .axis { position: relative; height: 52px; }
+  .axis { position: relative; height: 46px; }
   .axis .zone {
     position: absolute;
     top: 0; bottom: 0;
-    left: 18%; width: 30%;
-    background: ${({ theme }) => theme.color.brand}12;
+    left: 8%; width: 27%;
+    background: ${({ theme }) => theme.color.brand}14;
+    border-radius: 2px;
   }
   .axis .line {
     position: absolute;
     top: 0; bottom: 0;
-    left: 45%;
+    left: 32%;
     width: 1.5px;
     background: ${({ theme }) => theme.color.ink};
-    opacity: 0.16;
-  }
-  .axis .baseline {
-    position: absolute;
-    left: 0; right: 0;
-    top: 50%;
-    height: 1px;
-    background: ${({ theme }) => theme.color.border};
+    opacity: 0.22;
   }
 
   .delta { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
@@ -1464,20 +1458,34 @@ export const SpectrumRow = styled.div`
   @media (max-width: 740px) {
     grid-template-columns: minmax(84px, 1fr) 1.6fr 70px;
     gap: 12px;
-    .axis { height: 46px; }
+    .axis { height: 42px; }
   }
+`;
+
+/* Färgat segment som skjuter ut från branschsnitt-linjen till pricken */
+export const SpectrumGap = styled.span`
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  height: 2px;
+  border-radius: 2px;
+  transform: translateY(-50%);
+  background: ${({ $over }) => $over ? 'rgba(220,38,38,0.55)' : 'rgba(27,122,110,0.55)'};
+  ${({ $over, $line }) => $over ? `left: ${$line};` : `right: calc(100% - ${$line});`}
+  width: ${({ $visible, $span }) => $visible ? $span : '0%'};
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${({ $delay }) => $delay};
 `;
 
 export const SpectrumDot = styled.span`
   position: absolute;
   top: 50%;
   z-index: 3;
-  width: 13px;
-  height: 13px;
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
   border-radius: 50%;
   background: ${({ $over }) => $over ? '#DC2626' : '#1B7A6E'};
   border: 2.5px solid ${({ theme }) => theme.color.bg};
-  box-shadow: 0 1px 5px ${({ $over }) => $over ? 'rgba(220,38,38,0.45)' : 'rgba(27,122,110,0.45)'};
+  box-shadow: 0 1px 6px ${({ $over }) => $over ? 'rgba(220,38,38,0.50)' : 'rgba(27,122,110,0.45)'};
   left: ${({ $x }) => $x};
   transform: translate(-50%, -50%) scale(${({ $visible }) => $visible ? 1 : 0});
   opacity: ${({ $visible }) => $visible ? 1 : 0};
@@ -1507,8 +1515,8 @@ export const SpectrumAxisFoot = styled.div`
     white-space: nowrap;
     color: ${({ theme }) => theme.color.muted};
   }
-  .axis-cell .zone { left: 18%; }
-  .axis-cell .mid { left: 45%; transform: translateX(-50%); color: ${({ theme }) => theme.color.inkSoft}; }
+  .axis-cell .zone { left: 8%; }
+  .axis-cell .mid { left: 32%; transform: translateX(-50%); color: ${({ theme }) => theme.color.inkSoft}; }
   .axis-cell .right { right: 0; color: #DC2626; opacity: 0.75; }
 
   @media (max-width: 740px) {
