@@ -74,7 +74,7 @@ export const HeroInner = styled.div`
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   gap: 64px;
-  align-items: center;
+  align-items: start;
   @media (max-width: 980px) { grid-template-columns: 1fr; gap: 48px; }
 `;
 
@@ -103,13 +103,18 @@ export const Eyebrow = styled.span`
 
 export const Headline = styled.h1`
   margin-top: 24px;
-  font-size: clamp(44px, 6vw, 76px);
-  line-height: 1.02;
+  font-size: clamp(40px, 5.2vw, 64px);
+  line-height: 1.04;
   font-weight: 500;
   letter-spacing: -0.025em;
   animation: ${fadeUp} 0.7s 0.1s ease both;
 
+  .line {
+    display: block;
+    white-space: nowrap;
+  }
   em {
+    display: block;
     font-style: italic;
     color: ${({ theme }) => theme.color.brand};
     font-weight: 500;
@@ -171,7 +176,9 @@ export const HeroProof = styled.div`
 
 export const HeroVisual = styled.div`
   position: relative;
+  margin-top: 58px; /* förankrar kortets topp mot rubrikens datumlinje */
   animation: ${fadeUp} 0.8s 0.2s ease both;
+  @media (max-width: 980px) { margin-top: 0; }
 `;
 
 // Hero — ljus livscykel-timeline (Apple-ren, animeras in steg för steg)
