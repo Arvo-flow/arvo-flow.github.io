@@ -1377,15 +1377,23 @@ const ctaPulse = keyframes`
   50%       { box-shadow: 0 0 0 6px rgba(27,122,110,0.20); }
 `;
 
-// Intelligence-sektion — mörkt proaktivt larm (det oombedda mejlet)
+const livePulse = keyframes`
+  0%   { box-shadow: 0 0 0 0 rgba(45,181,159,0.55); }
+  70%  { box-shadow: 0 0 0 6px rgba(45,181,159,0); }
+  100% { box-shadow: 0 0 0 0 rgba(45,181,159,0); }
+`;
+
+// Intelligence-sektion — en levande briefing där alla tre fakulteter
+// (smyghöjningslarm · community benchmark · avtalsbevakning) fångas i
+// arbete på samma verkliga fall. Speglar de tre pelarna till vänster.
 export const IntelligencePreview = styled.div`
   background: rgba(250,250,247,.04);
   border: 1px solid rgba(250,250,247,.10);
   border-radius: ${({ theme }) => theme.size.radius.xl};
-  padding: 30px 32px;
+  padding: 26px 28px;
   opacity: ${({ $visible }) => $visible === false ? 0 : 1};
-  transform: ${({ $visible }) => $visible === false ? 'translateX(28px)' : 'none'};
-  transition: opacity 0.85s ease, transform 0.85s ease;
+  transform: ${({ $visible }) => $visible === false ? 'translateY(20px)' : 'none'};
+  transition: opacity 0.8s ease, transform 0.8s ease;
 
   .preview-header {
     display: flex;
@@ -1395,78 +1403,135 @@ export const IntelligencePreview = styled.div`
     border-bottom: 1px solid rgba(250,250,247,.08);
   }
   .preview-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .22em;
     color: ${({ theme }) => theme.color.accent};
   }
+  .preview-brand .live {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.accent};
+    animation: ${livePulse} 2.4s ease-out infinite;
+  }
   .preview-time {
     font-size: 11px;
     color: rgba(250,250,247,.35);
   }
 
-  .alert-row {
-    margin-top: 18px;
+  /* Tre intelligenssignaler — speglar pelarnas ikoner till vänster */
+  .signal {
     display: flex;
-    gap: 14px;
+    gap: 13px;
     align-items: flex-start;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(250,250,247,.07);
+    opacity: ${({ $visible }) => $visible === false ? 0 : 1};
+    transform: ${({ $visible }) => $visible === false ? 'translateY(10px)' : 'none'};
+    transition: opacity .6s ease, transform .6s ease;
   }
-  .alert-icon {
-    width: 40px; height: 40px;
-    border-radius: 11px;
+  .signal:nth-child(2) { transition-delay: .12s; }
+  .signal:nth-child(3) { transition-delay: .30s; }
+  .signal:nth-child(4) { transition-delay: .48s; }
+
+  .signal-ico {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     flex-shrink: 0;
-    background: rgba(217,119,6,.16);
-    border: 1px solid rgba(245,158,11,.30);
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(150deg, rgba(45,181,159,.22), rgba(27,122,110,.08));
+    border: 1px solid rgba(93,214,202,.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    color: ${({ theme }) => theme.color.accent};
   }
-  .alert-meta { flex: 1; min-width: 0; }
-  .alert-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: .1em;
-    text-transform: uppercase;
+  .signal.alert .signal-ico {
+    background: linear-gradient(150deg, rgba(217,119,6,.24), rgba(217,119,6,.06));
+    border-color: rgba(245,158,11,.30);
     color: #FBBF24;
-    margin-bottom: 5px;
   }
-  .alert-supplier {
-    font-size: 17px;
+
+  .signal-main { flex: 1; min-width: 0; }
+  .signal-tag {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.accent};
+    margin-bottom: 6px;
+  }
+  .signal.alert .signal-tag { color: #FBBF24; }
+
+  .signal-line {
+    font-size: 16px;
     font-weight: 700;
     color: #FAFAF7;
     letter-spacing: -.02em;
-    line-height: 1.15;
+    line-height: 1.2;
     display: flex;
     align-items: baseline;
     gap: 8px;
     flex-wrap: wrap;
   }
-  .alert-badge {
+  .signal-line.sm { font-size: 14.5px; font-weight: 600; }
+  .signal-line strong { color: ${({ theme }) => theme.color.accent}; font-weight: 800; }
+
+  .badge {
     display: inline-flex;
     align-items: center;
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 700;
-    color: #FCA5A5;
-    background: rgba(220,38,38,.20);
     border-radius: 6px;
     padding: 2px 7px;
     white-space: nowrap;
   }
+  .badge.up {
+    color: #FCA5A5;
+    background: rgba(220,38,38,.20);
+  }
 
-  .alert-proof {
-    margin: 16px 0;
-    padding: 10px 14px;
-    border-left: 2.5px solid rgba(93,214,202,.40);
-    background: rgba(93,214,202,.06);
-    border-radius: 0 8px 8px 0;
-    font-size: 13px;
+  .signal-sub {
+    margin: 5px 0 0;
+    font-size: 12.5px;
+    color: rgba(250,250,247,.55);
     line-height: 1.5;
-    color: rgba(250,250,247,.62);
-    strong { color: #FAFAF7; font-weight: 600; }
+  }
+  .signal-sub strong { color: #FAFAF7; font-weight: 600; }
+
+  /* Community Benchmark — mini-fördelning som poppar in en prick i taget */
+  .bench-dots {
+    display: flex;
+    gap: 5px;
+    margin: 9px 0 8px;
+  }
+  .bench-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(250,250,247,.14);
+    transform: scale(${({ $visible }) => $visible === false ? 0 : 1});
+    opacity: ${({ $visible }) => $visible === false ? 0 : 1};
+    transition:
+      transform .45s cubic-bezier(.34,1.56,.64,1),
+      opacity .3s ease;
+  }
+  .bench-dots span.on {
+    background: #F2B45A;
+    box-shadow: 0 0 7px rgba(242,180,90,.50);
   }
 
   .alert-saving {
-    padding: 14px 0 2px;
-    border-top: 1px solid rgba(250,250,247,.08);
+    padding: 16px 0 2px;
+    opacity: ${({ $visible }) => $visible === false ? 0 : 1};
+    transition: opacity .6s ease .62s;
   }
   .saving-label {
     font-size: 10px;
@@ -1477,7 +1542,7 @@ export const IntelligencePreview = styled.div`
     margin-bottom: 4px;
   }
   .saving-amount {
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 800;
     letter-spacing: -.04em;
     line-height: 1;
@@ -1487,9 +1552,11 @@ export const IntelligencePreview = styled.div`
   }
 
   .alert-actions {
-    margin-top: 16px;
+    margin-top: 18px;
     display: flex;
     gap: 10px;
+    opacity: ${({ $visible }) => $visible === false ? 0 : 1};
+    transition: opacity .6s ease .74s;
   }
   .btn-primary {
     flex: 1;
