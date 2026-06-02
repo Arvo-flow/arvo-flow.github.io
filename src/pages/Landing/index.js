@@ -20,6 +20,10 @@ import {
   FoundingCard, FoundingLeft, FoundingForm, FoundingSuccess,
   FaqWrap, FaqItem,
   FinalCta,
+  BenchmarkSection, BenchmarkInner, BenchmarkLeft,
+  BenchmarkRows, BenchmarkRow, BenchmarkRowHead,
+  BenchmarkTrack, BenchmarkRange, BenchmarkMedian, BenchmarkYou,
+  BenchmarkRowLabels, BenchmarkLegend,
 } from './styles';
 
 const HOW_STEPS = [
@@ -137,6 +141,86 @@ const FAQ = [
 ];
 
 
+const BENCHMARK_ROWS = [
+  { cat: 'Mobilabonnemang',  unit: 'kr/SIM/år',  p25: 3408, median: 4200, p75: 5200, you: 5760, max: 7000 },
+  { cat: 'Microsoft 365',    unit: 'kr/seat/år', p25: 1320, median: 1680, p75: 2100, you: 2400, max: 2800 },
+  { cat: 'Företagsbredband', unit: 'kr/mån',     p25: 380,  median: 510,  p75: 650,  you: 730,  max: 880  },
+  { cat: 'Elavtal',          unit: 'öre/kWh',    p25: 112,  median: 145,  p75: 178,  you: 195,  max: 230  },
+];
+
+const BenchmarkViz = () => {
+  const [visible, setVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <BenchmarkRows ref={ref}>
+      {BENCHMARK_ROWS.map((row, i) => {
+        const rangeLeft = `${(row.p25 / row.max) * 100}%`;
+        const rangeWidth = `${((row.p75 - row.p25) / row.max) * 100}%`;
+        const medianLeft = `${(row.median / row.max) * 100}%`;
+        const youLeft = `${(row.you / row.max) * 100}%`;
+        const barDelay = `${i * 160}ms`;
+        const dotDelay = `${i * 160 + 1100}ms`;
+        return (
+          <BenchmarkRow key={row.cat}>
+            <BenchmarkRowHead>
+              <span className="cat">{row.cat}</span>
+              <span className="unit">{row.unit}</span>
+            </BenchmarkRowHead>
+            <BenchmarkTrack>
+              <BenchmarkRange
+                $left={rangeLeft}
+                $width={rangeWidth}
+                $visible={visible}
+                $delay={barDelay}
+              />
+              <BenchmarkMedian $left={medianLeft} />
+              <BenchmarkYou
+                $left={youLeft}
+                $visible={visible}
+                $delay={dotDelay}
+              />
+            </BenchmarkTrack>
+            <BenchmarkRowLabels>
+              <span style={{ left: rangeLeft, fontSize: '11px', color: '#1B7A6E', fontWeight: 600 }}>
+                {row.p25.toLocaleString('sv-SE')}
+              </span>
+              <span style={{ left: medianLeft, fontSize: '11px', color: '#8A9E98' }}>
+                {row.median.toLocaleString('sv-SE')}
+              </span>
+            </BenchmarkRowLabels>
+          </BenchmarkRow>
+        );
+      })}
+      <BenchmarkLegend>
+        <div className="legend-item">
+          <div className="swatch-bar" />
+          <span>Välförhandlat prisspann</span>
+        </div>
+        <div className="legend-item">
+          <div className="swatch-tick" />
+          <span>Branschsnitt</span>
+        </div>
+        <div className="legend-item">
+          <div className="swatch-dot" />
+          <span>Er illustration</span>
+        </div>
+      </BenchmarkLegend>
+    </BenchmarkRows>
+  );
+};
+
 const validateFoundingForm = (form) => {
   const errors = {};
   if (!form.company.trim()) errors.company = 'Företagsnamn saknas.';
@@ -153,6 +237,19 @@ const Landing = () => {
   const [form, setForm] = useState({ company: '', name: '', email: '' });
   const [errors, setErrors] = useState({});
   const [state, setState] = useState('idle'); // idle | submitting | success | error
+  const [intellVisible, setIntellVisible] = useState(false);
+  const intellRef = useRef(null);
+
+  useEffect(() => {
+    const el = intellRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIntellVisible(true); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   const submitFounding = async (e) => {
     e.preventDefault();
@@ -355,7 +452,7 @@ const Landing = () => {
       </AlgoTrust>
 
       <Section id="hur">
-        <SectionHead>
+        <SectionHead $left>
           <span className="kicker">Så fungerar Arvo Flow</span>
           <h2>Aktivera en gång. Vi sköter resten.</h2>
           <p>Ni behöver inte byta system, lära er något nytt eller komma ihåg att kolla något. Arvo är den finansdirektören som aldrig går offline.</p>
@@ -436,7 +533,7 @@ const Landing = () => {
             </IntelligencePillars>
           </div>
 
-          <IntelligencePreview>
+          <IntelligencePreview ref={intellRef} $visible={intellVisible}>
             <div className="preview-header">
               <span className="preview-brand">Arvo Intelligence</span>
               <span className="preview-time">i morse · 08:14</span>
@@ -457,6 +554,30 @@ const Landing = () => {
           </IntelligencePreview>
         </IntelligenceInner>
       </IntelligenceSection>
+
+      {/* ── Benchmark — data moat visualisation ──────────────────────────── */}
+      <BenchmarkSection id="prisintelligens">
+        <BenchmarkInner>
+          <BenchmarkLeft>
+            <span className="kicker">Arvos prisintelligens</span>
+            <h2>Vi vet vad era leverantörer tar av andra.</h2>
+            <p>
+              Varje faktura Arvo analyserar är en ny datapunkt. Det innebär att vi inte
+              bara vet vad Telia listar på sin hemsida — vi vet vad de faktiskt tar betalt
+              av bolag i er bransch och er storlek.
+            </p>
+            <p>
+              Det är den skillnaden som gör Arvo Intelligence till en finansdirektör och
+              inte ett verktyg.
+            </p>
+            <span className="footnote">
+              Visualiseringen är illustrativ — prisintervall baserade på verifierade
+              marknadsdata maj 2026.
+            </span>
+          </BenchmarkLeft>
+          <BenchmarkViz />
+        </BenchmarkInner>
+      </BenchmarkSection>
 
       {/* ── Priser — hybridmodell ─────────────────────────────────────────── */}
       <Section id="priser">

@@ -490,9 +490,9 @@ export const AlgoTrust = styled.section`
 `;
 
 export const SectionHead = styled.div`
-  max-width: 720px;
-  margin: 0 auto 64px;
-  text-align: center;
+  max-width: ${({ $left }) => $left ? 'none' : '720px'};
+  margin: ${({ $left }) => $left ? '0 0 64px' : '0 auto 64px'};
+  text-align: ${({ $left }) => $left ? 'left' : 'center'};
 
   span.kicker {
     display: inline-block;
@@ -579,8 +579,8 @@ export const HowCard = styled.div`
 
 export const ScoreSubHead = styled.div`
   max-width: 680px;
-  margin: 80px auto 0;
-  text-align: center;
+  margin: 80px 0 0;
+  text-align: left;
 
   span.kicker {
     display: inline-block;
@@ -1220,11 +1220,19 @@ export const IntelligencePillar = styled.div`
   }
 `;
 
+const ctaPulse = keyframes`
+  0%, 100% { box-shadow: 0 0 0 0 rgba(27,122,110,0); }
+  50%       { box-shadow: 0 0 0 6px rgba(27,122,110,0.20); }
+`;
+
 export const IntelligencePreview = styled.div`
   background: rgba(250,250,247,.04);
   border: 1px solid rgba(250,250,247,.10);
   border-radius: ${({ theme }) => theme.size.radius.xl};
   padding: 32px;
+  opacity: ${({ $visible }) => $visible === false ? 0 : 1};
+  transform: ${({ $visible }) => $visible === false ? 'translateX(28px)' : 'none'};
+  transition: opacity 0.85s ease, transform 0.85s ease;
 
   .preview-header {
     display: flex;
@@ -1265,6 +1273,7 @@ export const IntelligencePreview = styled.div`
     border-radius: ${({ theme }) => theme.size.radius.md};
     letter-spacing: -.01em;
     margin-bottom: 28px;
+    animation: ${ctaPulse} 2.8s ease-in-out 2s infinite;
   }
   .preview-footer {
     padding-top: 20px;
@@ -1295,6 +1304,212 @@ export const IntelligencePreview = styled.div`
     color: rgba(250,250,247,.35);
     line-height: 1.5;
     text-align: right;
+  }
+`;
+
+// ─── Benchmark section — data moat visualisation ─────────────────────────────
+
+export const BenchmarkSection = styled.section`
+  position: relative;
+  padding: 120px 28px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: calc(-50vw + 50%);
+    right: calc(-50vw + 50%);
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    z-index: -1;
+  }
+
+  @media (max-width: 740px) { padding: 80px 20px; }
+`;
+
+export const BenchmarkInner = styled.div`
+  max-width: ${({ theme }) => theme.size.container};
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 80px;
+  align-items: center;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+`;
+
+export const BenchmarkLeft = styled.div`
+  .kicker {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: ${({ theme }) => theme.color.brand};
+    margin-bottom: 18px;
+  }
+  h2 {
+    font-size: clamp(30px, 3.8vw, 48px);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    margin: 0 0 20px;
+  }
+  p {
+    font-size: 16px;
+    line-height: 1.65;
+    color: ${({ theme }) => theme.color.inkSoft};
+    margin: 0 0 16px;
+  }
+  p:last-of-type { margin-bottom: 0; }
+  .footnote {
+    display: block;
+    margin-top: 24px;
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.5;
+  }
+`;
+
+export const BenchmarkRows = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+`;
+
+export const BenchmarkRow = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+export const BenchmarkRowHead = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+
+  .cat {
+    font-size: 14px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    letter-spacing: -0.01em;
+  }
+  .unit {
+    font-size: 11px;
+    color: ${({ theme }) => theme.color.muted};
+  }
+`;
+
+export const BenchmarkTrack = styled.div`
+  position: relative;
+  height: 8px;
+  background: ${({ theme }) => theme.color.border};
+  border-radius: 4px;
+  overflow: visible;
+`;
+
+export const BenchmarkRange = styled.div`
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #1B7A6E 0%, #2DB59F 100%);
+  left: ${({ $left }) => $left};
+  width: ${({ $visible, $width }) => $visible ? $width : '0%'};
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1) ${({ $delay }) => $delay};
+`;
+
+export const BenchmarkMedian = styled.div`
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  background: ${({ theme }) => theme.color.ink};
+  opacity: 0.35;
+  left: ${({ $left }) => $left};
+`;
+
+export const BenchmarkYou = styled.div`
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #DC2626;
+  border: 2.5px solid ${({ theme }) => theme.color.surfaceAlt};
+  transform: translate(-50%, -50%) translateY(1px);
+  left: ${({ $left }) => $left};
+  opacity: ${({ $visible }) => $visible ? 1 : 0};
+  transition: opacity 0.4s ease ${({ $delay }) => $delay};
+
+  &::after {
+    content: 'Ni idag';
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #DC2626;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    letter-spacing: .02em;
+    pointer-events: none;
+  }
+`;
+
+export const BenchmarkRowLabels = styled.div`
+  position: relative;
+  height: 18px;
+  margin-top: 8px;
+
+  span {
+    position: absolute;
+    transform: translateX(-50%);
+  }
+`;
+
+export const BenchmarkLegend = styled.div`
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+  margin-top: 32px;
+  padding-top: 20px;
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+
+  .swatch-bar {
+    width: 24px;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #1B7A6E 0%, #2DB59F 100%);
+    flex-shrink: 0;
+  }
+
+  .swatch-tick {
+    width: 2px;
+    height: 14px;
+    background: ${({ theme }) => theme.color.ink};
+    opacity: 0.35;
+    flex-shrink: 0;
+  }
+
+  .swatch-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #DC2626;
+    flex-shrink: 0;
   }
 `;
 
