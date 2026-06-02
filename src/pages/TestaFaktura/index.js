@@ -1712,16 +1712,23 @@ const TestaFaktura = () => {
             <button
               onClick={() => setDetailsOpen(o => !o)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6,
+                display: 'flex', alignItems: 'center', gap: 8,
                 background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 13, fontWeight: 600, color: '#1B6E66',
-                padding: '4px 0 12px', letterSpacing: '.01em',
+                fontSize: 12.5, fontWeight: 600,
+                color: '#5C6E68', letterSpacing: '.03em', textTransform: 'uppercase',
+                padding: '11px 0 11px', width: '100%',
+                borderTop: '1px solid #E5EFE9',
+                marginTop: 4,
               }}
             >
-              <span style={{
-                display: 'inline-flex', transform: detailsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                transition: 'transform .2s', fontSize: 11,
-              }}>▶</span>
+              <svg
+                width={13} height={13} viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth={2.5}
+                strokeLinecap="round" strokeLinejoin="round"
+                style={{ transition: 'transform .2s', transform: detailsOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}
+              >
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
               {detailsOpen ? 'Dölj fakturaunderlag' : 'Visa fakturaunderlag'}
             </button>
 

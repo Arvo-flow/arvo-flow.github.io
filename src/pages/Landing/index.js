@@ -15,7 +15,8 @@ import {
   SectionHead, HowGrid, HowCard,
   ScoreSubHead, ScoreGrid, ScoreLevelCard, ScoreGauge, ScoreGaugeCenter,
 
-  PricingCard, PricingInner,
+  PricingTiers, PricingTier,
+  IntelligenceSection, IntelligenceInner, IntelligencePillars, IntelligencePillar, IntelligencePreview,
   FoundingCard, FoundingLeft, FoundingForm, FoundingSuccess,
   FaqWrap, FaqItem,
   FinalCta,
@@ -107,7 +108,7 @@ const SCORE_LEVELS = [
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Inget i förskott. Vi tar 20 % av identifierad besparing — ett besparingsarvode som faktureras efter din första faktura från den nya leverantören. Hittar vi inget — kostar det inget.',
+    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande övervakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: vill ni att Arvo genomför ett identifierat leverantörsbyte tar vi 20 % av realiserad besparing, fakturerat efter att bytet är genomfört. Hittar vi ingen besparing — kostar Switch inget.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
@@ -372,32 +373,114 @@ const Landing = () => {
         </ScoreGrid>
       </Section>
 
+      {/* ── Arvo Intelligence ─────────────────────────────────────────────── */}
+      <IntelligenceSection id="intelligence">
+        <IntelligenceInner>
+          <div>
+            <span className="eyebrow">Arvo Intelligence</span>
+            <h2>Arvo märker det innan det kostar er.</h2>
+            <p className="sub">
+              Bokföringsprogram registrerar vad ni betalar.
+              Arvo Intelligence kontaktar er när ni håller på att betala för mycket.
+            </p>
+            <IntelligencePillars>
+              <IntelligencePillar>
+                <div className="pillar-icon">
+                  <Icon name="alert-circle" size={18} stroke={2} />
+                </div>
+                <div>
+                  <h4>Smyghöjningslarm</h4>
+                  <p>Vi jämför varje ny faktura mot föregående period. Avviker priset — kontaktar vi er samma dag.</p>
+                </div>
+              </IntelligencePillar>
+              <IntelligencePillar>
+                <div className="pillar-icon">
+                  <Icon name="trend" size={18} stroke={2} />
+                </div>
+                <div>
+                  <h4>Community Benchmark</h4>
+                  <p>Er prisdata mäts mot anonymiserade data från jämförbara bolag i er bransch. Ni vet alltid om ni betalar rätt.</p>
+                </div>
+              </IntelligencePillar>
+              <IntelligencePillar>
+                <div className="pillar-icon">
+                  <Icon name="file" size={18} stroke={2} />
+                </div>
+                <div>
+                  <h4>Proaktiv avtalsbevakning</h4>
+                  <p>90 dagar innan ett avtal förnyas automatiskt varnar vi er — och förhandlar på er begäran.</p>
+                </div>
+              </IntelligencePillar>
+            </IntelligencePillars>
+          </div>
 
+          <IntelligencePreview>
+            <div className="preview-header">
+              <span className="preview-brand">Arvo Intelligence</span>
+              <span className="preview-time">i morse · 08:14</span>
+            </div>
+            <div className="preview-divider" />
+            <p className="preview-message">
+              Vi noterade att <strong>Telia</strong> höjde priset på er mobilflotta
+              med 11&nbsp;% förra månaden. 8 av 15 jämförbara bolag i vårt nätverk
+              fick samma höjning. Vill ni att Arvo agerar och förhandlar tillbaka priset?
+            </p>
+            <div className="preview-cta">Ja, Arvo agerar →</div>
+            <div className="preview-footer">
+              <div className="preview-price">
+                1&nbsp;995&nbsp;kr<span className="period">/ mån</span>
+              </div>
+              <div className="preview-price-note">Ingen bindningstid<br />Kom igång på 2 minuter</div>
+            </div>
+          </IntelligencePreview>
+        </IntelligenceInner>
+      </IntelligenceSection>
+
+      {/* ── Priser — hybridmodell ─────────────────────────────────────────── */}
       <Section id="priser">
         <SectionHead>
           <span className="kicker">Pris</span>
-          <h2>Du betalar bara när vi sparat åt dig.</h2>
-          <p>Vi är så övertygade om att vi hittar pengarna att vi vägrar ta en krona innan de är dina.</p>
+          <h2>Övervakning på prenumeration. Genomfört byte vid behov.</h2>
+          <p>Välj det som passar er — eller kombinera båda.</p>
         </SectionHead>
-        <PricingCard>
-          <PricingInner>
-            <div>
-              <span className="kicker">Success-baserat</span>
-              <h3>20 % av identifierad besparing.</h3>
-              <p>Inga månadsavgifter. Inga uppstartskostnader. En engångsavgift som faktureras 3 månader efter aktiverat avtal. Fr.o.m. år 2 tillfaller hela besparingen er. Hittar vi inget — kostar det inget.</p>
-            </div>
+        <PricingTiers>
+          <PricingTier $featured>
+            <div className="tier-badge">Arvo Intelligence</div>
+            <h3>Er proaktiva AI-CFO.</h3>
+            <div className="tier-price">1&nbsp;995 kr<span className="period">/ mån</span></div>
+            <p className="tier-tagline">Löpande övervakning av samtliga leverantörsfakturor. Arvo hör av sig — ni behöver inte fråga.</p>
             <ul>
-              <li><Icon name="check" size={18} stroke={2.2} /> Skanning av alla leverantörsfakturor varje kvartal</li>
-              <li><Icon name="check" size={18} stroke={2.2} /> Förberedda byten med BankID-signering</li>
-              <li><Icon name="check" size={18} stroke={2.2} /> Förändras marknadsläget hjälper vi er med ny analys — utan extra kostnad</li>
-              <li><Icon name="check" size={18} stroke={2.2} /> Branschindex tillgängligt för dig som kund</li>
+              <li><Icon name="check" size={15} stroke={2.4} /> Smyghöjningslarm — avvikelse detekteras direkt</li>
+              <li><Icon name="check" size={15} stroke={2.4} /> Community Benchmark mot er bransch</li>
+              <li><Icon name="check" size={15} stroke={2.4} /> Avtalsbevakning med 90-dagarsvarning</li>
+              <li><Icon name="check" size={15} stroke={2.4} /> Månadsvis briefing med actionbara insikter</li>
             </ul>
-            <div className="promise">
-              <strong>Vårt löfte</strong>
-              <span>Hittar vi inga överpriser på 30 dagar raderas data + koppling automatiskt.</span>
+            <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
+              Aktivera Arvo Intelligence →
+            </Button>
+            <p className="tier-note">Ingen bindningstid · Kom igång på 2 minuter</p>
+          </PricingTier>
+
+          <PricingTier>
+            <div className="tier-badge">Arvo Switch</div>
+            <h3>Genomfört leverantörsbyte.</h3>
+            <div className="tier-price">20 %<span className="period">av besparing</span></div>
+            <p className="tier-tagline">Arvo agerar ombud — hanterar uppsägning, prisförhandling och signering av det nya avtalet.</p>
+            <ul>
+              <li><Icon name="check" size={15} stroke={2.4} /> Identifierad besparing bekräftas med verifierade marknadsdata</li>
+              <li><Icon name="check" size={15} stroke={2.4} /> Ni godkänner varje byte med BankID</li>
+              <li><Icon name="check" size={15} stroke={2.4} /> Fr.o.m. år 2 tillfaller hela besparingen er</li>
+              <li><Icon name="check" size={15} stroke={2.4} /> Hittar vi inget — kostar det inget</li>
+            </ul>
+            <Button as={Link} to="/testa-faktura" $variant="secondary" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
+              Testa med en faktura →
+            </Button>
+            <div className="tier-addon">
+              <strong>Tillägg för Intelligence-kunder</strong>
+              Aktivera ett byte direkt från er månadsbriefing. 20 % av realiserad besparing.
             </div>
-          </PricingInner>
-        </PricingCard>
+          </PricingTier>
+        </PricingTiers>
       </Section>
 
       <Section id="founding-members">
