@@ -98,7 +98,7 @@ const Footer = () => (
     <Inner>
       <Brand>
         <Logo />
-        <p>Vi sänker svenska företags leverantörskostnader. Inga fasta avgifter — vi tjänar pengar bara när du gör det.</p>
+        <p>Er proaktiva finansdirektör för leverantörskostnader. Bevakning på prenumeration — genomfört byte när ni vill.</p>
       </Brand>
       <Col>
         <h4>Produkt</h4>

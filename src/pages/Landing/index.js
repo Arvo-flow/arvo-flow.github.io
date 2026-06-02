@@ -25,21 +25,21 @@ import {
 const HOW_STEPS = [
   {
     step: 'Steg 01',
-    title: 'Koppla Fortnox / Visma på 60 sek',
-    body: 'Säker OAuth-anslutning till ditt befintliga bokföringssystem. Vi läser leverantörsfakturor — inget annat. Du kan koppla bort när som helst.',
-    bullets: ['Endast läs-rättigheter', 'OAuth 2.0 — inga lösenord lagras hos oss', 'GDPR-säkrad infrastruktur i Sverige'],
+    title: 'Aktivera Arvo — klart på 2 min',
+    body: 'Ni sätter upp automatisk vidarebefordran från er faktura-inkorg. Varje ny leverantörsfaktura flödar in till Arvo — helt automatiskt, ingen IT-integration krävs. Vill ni ha fullständig täckning kopplar ni enkelt in Fortnox eller Visma som komplement.',
+    bullets: ['Noll IT-projekt', 'GDPR-säkrad infrastruktur i Sverige', 'Koppla bort när som helst'],
   },
   {
     step: 'Steg 02',
-    title: 'Vi skannar dina avtal — du sover',
-    body: 'På 30 sekunder analyseras 12 månaders leverantörsfakturor. AI:n jämför mot 50 000+ andra svenska SMB:er och hittar var du betalar över marknadspris.',
-    bullets: ['8 leverantörskategorier idag', 'Branschjusterad benchmark', 'Återkommande scanning varje kvartal'],
+    title: 'Arvo bevakar. Ni lever era liv.',
+    body: 'Varje faktura analyseras mot verifierade marknadsdata och prisdata från jämförbara bolag i er bransch. Avviker ett pris — oavsett om det rör sig om ett par hundra eller tiotusentals kronor — identifieras det direkt.',
+    bullets: ['8 leverantörskategorier idag', 'Branschanpassad prisdata', 'Löpande bevakning — ingen engångsscan'],
   },
   {
     step: 'Steg 03',
-    title: 'Godkänn med BankID — vi byter åt dig',
-    body: 'Du ser exakt vad du sparar och vad som måste signeras. Arvo förbereder uppsägning + nytt avtal. Du klickar igenom — vi sköter resten.',
-    bullets: ['Du behåller full kontroll', 'Ingen leverantör byts utan din signatur', 'Garanti om priset höjs inom 12 mån'],
+    title: 'Vi hör av oss. Ni bestämmer.',
+    body: 'Identifierar Arvo en besparing skickar vi er en briefing med exakt vad ni betalar och vad som är möjligt. Vill ni agera genomför Arvo bytet åt er — uppsägning, prisförhandling och signering. Inget händer utan er godkännande.',
+    bullets: ['Ni behåller full kontroll', 'Inget byte utan er BankID-signatur', 'Arvo Switch: 20 % av realiserad besparing'],
   },
 ];
 
@@ -108,11 +108,11 @@ const SCORE_LEVELS = [
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande övervakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: vill ni att Arvo genomför ett identifierat leverantörsbyte tar vi 20 % av realiserad besparing, fakturerat efter att bytet är genomfört. Hittar vi ingen besparing — kostar Switch inget.',
+    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande bevakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: vill ni att Arvo genomför ett identifierat leverantörsbyte tar vi 20 % av realiserad besparing, fakturerat efter att bytet är genomfört. Hittar vi ingen besparing — kostar Switch inget.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
-    a: <>Vi tjänar pengar bara när du sparar — det är beviset på opartiskhet. Leverantörer kan inte köpa sig en högre placering; vi sätter tak för vad de får betala oss och krediterar dig direkt om någon försöker gå över. Policyn är öppet publicerad under <Link to="/bias">vår rankningspolicy</Link>.</>,
+    a: <>Vi tjänar pengar bara när ni sparar — det är beviset på opartiskhet. Leverantörer kan inte köpa sig en högre placering; vi sätter tak för vad de får betala oss och krediterar er direkt om någon försöker gå över. Policyn är öppet publicerad under <Link to="/bias">vår rankningspolicy</Link>.</>,
   },
   {
     q: 'Varför ska jag lita på era besparingskalkyler?',
@@ -124,7 +124,7 @@ const FAQ = [
   },
   {
     q: 'Säger ni upp avtal autonomt utan min godkännande?',
-    a: 'Aldrig. Varje byte kräver din BankID-signatur. Vi förbereder, du godkänner. Det är en hård regel.',
+    a: 'Aldrig. Varje byte kräver er BankID-signatur. Vi förbereder, ni godkänner. Det är en hård regel.',
   },
   {
     q: 'Vilka kategorier täcker ni idag?',
@@ -132,7 +132,7 @@ const FAQ = [
   },
   {
     q: 'Vad händer med min data?',
-    a: 'Vi läser endast leverantörsfakturor från Fortnox / Visma via läs-rättigheter. Datan lagras krypterad i Sverige (Bahnhof Stockholm). Vi säljer aldrig identifierbar data — anonymiserade branschindex är vår enda dataprodukt utöver tjänsten.',
+    a: 'Arvo ser endast det ni vidarebefordrar — leverantörsfakturor, inget annat. Datan lagras krypterad i Sverige (Bahnhof Stockholm). Kopplar ni in Fortnox eller Visma gäller samma princip: enbart läs-rättigheter mot leverantörsfakturor. Vi säljer aldrig identifierbar data — anonymiserade branschindex är vår enda dataprodukt utöver tjänsten.',
   },
 ];
 
@@ -341,12 +341,12 @@ const Landing = () => {
       <AlgoTrust>
         <div className="inner">
           <div className="eyebrow"><Icon name="shield" size={13} stroke={2} /> Rankningspolicy</div>
-          <h2>100 % oberoende. Vår algoritm styrs av din besparing, inte provisioner.</h2>
+          <h2>100 % oberoende. Vår algoritm styrs av er besparing, inte provisioner.</h2>
           <p>
-            Vi står på din sida, inte leverantörens. Genom fasta tak för ersättningar säkerställer
-            vi att vår algoritm alltid är objektiv och enbart prioriterar din besparing. Om en
-            leverantör erbjuder mer än vårt tak, krediteras överskottet direkt till dig. Det är
-            matematisk transparens – inga dolda agendor, bara lägre kostnader.
+            Vi står på er sida, inte leverantörens. Genom fasta tak för ersättningar säkerställer
+            vi att vår algoritm alltid är objektiv och enbart prioriterar er besparing. Om en
+            leverantör erbjuder mer än vårt tak, krediteras överskottet direkt till er. Det är
+            matematisk transparens — inga dolda agendor, bara lägre kostnader.
           </p>
           <Link to="/bias" className="cta-link">
             Läs hur vår algoritm rankar <Icon name="arrow" size={15} />
@@ -357,8 +357,8 @@ const Landing = () => {
       <Section id="hur">
         <SectionHead>
           <span className="kicker">Så fungerar Arvo Flow</span>
-          <h2>Tre steg från trasigt till transparent.</h2>
-          <p>Vi byggde Arvo Flow för att vi själva tröttnade på att betala 30 % över marknad utan att ens veta om det. Här är hur vi gör det enkelt.</p>
+          <h2>Aktivera en gång. Vi sköter resten.</h2>
+          <p>Ni behöver inte byta system, lära er något nytt eller komma ihåg att kolla något. Arvo är den finansdirektören som aldrig går offline.</p>
         </SectionHead>
         <HowGrid>
           {HOW_STEPS.map((s) => (
@@ -462,20 +462,20 @@ const Landing = () => {
       <Section id="priser">
         <SectionHead>
           <span className="kicker">Pris</span>
-          <h2>Övervakning på prenumeration. Genomfört byte vid behov.</h2>
+          <h2>Bevakning på prenumeration. Genomfört byte vid behov.</h2>
           <p>Välj det som passar er — eller kombinera båda.</p>
         </SectionHead>
         <PricingTiers>
           <PricingTier $featured>
             <div className="tier-badge">Arvo Intelligence</div>
-            <h3>Er proaktiva AI-CFO.</h3>
+            <h3>Er proaktiva finansdirektör.</h3>
             <div className="tier-price">1&nbsp;995 kr<span className="period">/ mån</span></div>
-            <p className="tier-tagline">Löpande övervakning av samtliga leverantörsfakturor. Arvo hör av sig — ni behöver inte fråga.</p>
+            <p className="tier-tagline">Löpande bevakning av samtliga leverantörsfakturor. Arvo hör av sig — ni behöver inte fråga.</p>
             <ul>
               <li><Icon name="check" size={15} stroke={2.4} /> Smyghöjningslarm — avvikelse detekteras direkt</li>
               <li><Icon name="check" size={15} stroke={2.4} /> Community Benchmark mot er bransch</li>
               <li><Icon name="check" size={15} stroke={2.4} /> Avtalsbevakning med 90-dagarsvarning</li>
-              <li><Icon name="check" size={15} stroke={2.4} /> Månadsvis briefing med actionbara insikter</li>
+              <li><Icon name="check" size={15} stroke={2.4} /> Månadsvis briefing med konkreta insikter</li>
             </ul>
             <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
               Aktivera Arvo Intelligence →
@@ -605,14 +605,14 @@ const Landing = () => {
       </Section>
 
       <FinalCta>
-        <h2>Hur mycket betalar du för mycket just nu?</h2>
-        <p>Snittet bland våra kunder är {TOTALS.activeNet.toLocaleString('sv-SE')} kr/år i nettobesparing efter vår avgift. Du vet inte förrän vi har scannat. 60 sekunder med Fortnox / Visma och du har svaret.</p>
+        <h2>Betalar ni för mycket just nu?</h2>
+        <p>Ni vet det inte förrän Arvo har tittat. Ladda upp en faktura på 60 sekunder — vi visar er exakt var ni står mot branschsnittet.</p>
         <div className="actions">
-          <Button as={Link} to="/connect" $variant="gradient" $size="lg">
-            Analysera mina fakturor — gratis <Icon name="arrow" size={18} />
+          <Button as={Link} to="/testa-faktura" $variant="gradient" $size="lg">
+            Testa med en faktura <Icon name="arrow" size={18} />
           </Button>
         </div>
-        <div className="fineprint">Inga kreditkortsuppgifter. Ingen bindningstid. Avsluta när du vill.</div>
+        <div className="fineprint">Inga kreditkortsuppgifter. Ingen bindningstid. Avsluta när ni vill.</div>
       </FinalCta>
 
       <Footer />
