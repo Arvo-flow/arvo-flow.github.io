@@ -14,7 +14,7 @@ import {
   BriefingHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
   Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, ScoreRevealCard, EmailGate, PortfolioBridge,
   CalculationChain, SavingRangeBadge,
-  ModalOverlay, ModalCard, QuoteLeadForm, RoamingInsight,
+  ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
 } from './styles';
 
@@ -396,6 +396,9 @@ const TestaFaktura = () => {
   const [feedbackVote, setFeedbackVote] = useState(null); // null | 'up' | 'down'
   const [feedbackState, setFeedbackState] = useState('idle'); // idle | submitting | sent
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [activationOpen, setActivationOpen] = useState(false);
+  const [activationEmail, setActivationEmail] = useState('');
+  const [activationStatus, setActivationStatus] = useState('idle'); // idle | submitting | sent | error
 
   // Batch mode — activated when multiple PDFs are dropped / selected
   const [batchFiles, setBatchFiles] = useState([]);
@@ -825,6 +828,43 @@ const TestaFaktura = () => {
       setReviewQueueEmailState('sent');
     } catch {
       setReviewQueueEmailState('sent'); // non-fatal — show success anyway
+    }
+  };
+
+  const handleActivate = async (e) => {
+    e.preventDefault();
+    const email = activationEmail.trim() || gateEmail.trim();
+    if (!email || activationStatus === 'submitting') return;
+    setActivationStatus('submitting');
+    const reasoning = truncateReasoning(
+      result?.categorized?.category && getCategoryMeta(result.categorized.category).isRealPrice
+        ? result?.recommendation?.reasoning ?? ''
+        : redactSupplier(result?.recommendation?.reasoning ?? '', result?.recommendation?.suggestedSupplier),
+    );
+    try {
+      const res = await fetch('/api/activate-intelligence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          supplier:             result?.extracted?.supplier,
+          normalizedSupplier:   result?.categorized?.normalizedSupplier,
+          category:             result?.categorized?.category,
+          annualCost:           adjAnnualCost,
+          suggestedAnnualCost:  result?.recommendation?.suggestedAnnualCost,
+          grossSaving:          adjGrossSaving,
+          netSaving:            adjNetSaving,
+          arvoFee:              adjArvoFee,
+          reasoning,
+          diagScore,
+          diagLabel:            diagC?.label,
+          diagInsight,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setActivationStatus('sent');
+    } catch {
+      setActivationStatus('error');
     }
   };
 
@@ -2179,11 +2219,21 @@ const TestaFaktura = () => {
               <span className="price-note">Ingen bindningstid</span>
             </div>
 
-            <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
+            <Button
+              type="button"
+              $variant="gradient"
+              $size="lg"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                setActivationEmail(gateEmail ?? '');
+                setActivationStatus('idle');
+                setActivationOpen(true);
+              }}
+            >
               Aktivera Arvo Intelligence →
             </Button>
             <p style={{ fontSize: 12, color: '#8A9E98', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>
-              Kom igång på 2 minuter via e-postvidarebefordran. Noll IT-integration krävs.
+              Arvo söker igenom er inkorg — ni behöver inte lyfta ett finger.
             </p>
           </IntelligenceCard>
 
@@ -2443,6 +2493,108 @@ const TestaFaktura = () => {
               </>
             )}
           </ModalCard>
+        </ModalOverlay>
+      )}
+
+      {/* ── Activation Modal — Arvo Intelligence onboarding ───────────────── */}
+      {activationOpen && (
+        <ModalOverlay onClick={(e) => { if (e.target === e.currentTarget) setActivationOpen(false); }}>
+          <ActivationCard>
+            <button className="ac-close" onClick={() => setActivationOpen(false)} aria-label="Stäng">×</button>
+
+            {activationStatus === 'sent' ? (
+              /* ── Success state ── */
+              <div className="ac-success">
+                <div className="ac-check">✓</div>
+                <h3>Briefing på väg</h3>
+                <p className="ac-email-sent">{activationEmail || gateEmail}</p>
+                <p className="ac-success-sub">
+                  Er Arvo Intelligence-briefing för {result?.extracted?.supplier ?? 'er leverantör'} är skickad.
+                  Koppla er inkorg så bevakar Arvo alla era leverantörsfakturor löpande.
+                </p>
+                <span className="ac-upgrade-label">Koppla er inkorg</span>
+                <a
+                  href={`/api/auth/gmail-init?email=${encodeURIComponent(activationEmail || gateEmail)}`}
+                  className="ac-oauth-btn"
+                  style={{ marginBottom: 9, display: 'flex' }}
+                >
+                  <span className="ac-provider-badge ac-provider-badge--google">G</span>
+                  <span className="ac-oauth-label">Koppla Gmail</span>
+                  <span className="ac-oauth-arrow">→</span>
+                </a>
+                <a
+                  href={`/api/auth/outlook-init?email=${encodeURIComponent(activationEmail || gateEmail)}`}
+                  className="ac-oauth-btn"
+                  style={{ display: 'flex' }}
+                >
+                  <span className="ac-provider-badge ac-provider-badge--outlook">M</span>
+                  <span className="ac-oauth-label">Koppla Outlook</span>
+                  <span className="ac-oauth-arrow">→</span>
+                </a>
+                <p className="ac-privacy">Arvo läser bara faktura-mail — aldrig personlig korrespondens.</p>
+              </div>
+            ) : (
+              /* ── Default state ── */
+              <>
+                <div className="ac-eyebrow">Arvo Intelligence</div>
+                <h2 className="ac-heading">Arvo söker igenom er inkorg</h2>
+                <p className="ac-sub">
+                  Koppla Gmail eller Outlook — Arvo söker er inkorg efter leverantörsfakturor och
+                  skickar er första fullständiga briefing inom en timme.
+                </p>
+
+                <a
+                  href={`/api/auth/gmail-init?email=${encodeURIComponent(activationEmail || gateEmail)}`}
+                  className="ac-oauth-btn"
+                >
+                  <span className="ac-provider-badge ac-provider-badge--google">G</span>
+                  <span className="ac-oauth-label">Koppla Gmail</span>
+                  <span className="ac-oauth-arrow">→</span>
+                </a>
+                <a
+                  href={`/api/auth/outlook-init?email=${encodeURIComponent(activationEmail || gateEmail)}`}
+                  className="ac-oauth-btn"
+                >
+                  <span className="ac-provider-badge ac-provider-badge--outlook">M</span>
+                  <span className="ac-oauth-label">Koppla Outlook</span>
+                  <span className="ac-oauth-arrow">→</span>
+                </a>
+
+                <div className="ac-divider">eller börja nu</div>
+
+                <form onSubmit={handleActivate}>
+                  <div className="ac-email-row">
+                    <input
+                      className="ac-email-input"
+                      type="email"
+                      placeholder="er@foretag.se"
+                      value={activationEmail || gateEmail}
+                      onChange={(e) => setActivationEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                    />
+                    <Button
+                      type="submit"
+                      $variant="gradient"
+                      $size="md"
+                      disabled={activationStatus === 'submitting'}
+                      style={{ flexShrink: 0 }}
+                    >
+                      {activationStatus === 'submitting' ? '…' : 'Skicka →'}
+                    </Button>
+                  </div>
+                  {activationStatus === 'error' && (
+                    <p style={{ fontSize: 12, color: '#C41E1E', marginTop: 8 }}>Något gick fel — försök igen.</p>
+                  )}
+                </form>
+
+                <p className="ac-privacy">
+                  Vi skickar er första Intelligence-briefing omedelbart — baserad på denna analys.
+                  Arvo läser bara faktura-mail, aldrig personlig korrespondens.
+                </p>
+              </>
+            )}
+          </ActivationCard>
         </ModalOverlay>
       )}
     </Page>

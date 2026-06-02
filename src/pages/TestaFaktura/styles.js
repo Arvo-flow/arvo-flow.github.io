@@ -1243,6 +1243,145 @@ export const ModalCard = styled.div`
   }
 `;
 
+// ── Activation Modal — Arvo Intelligence onboarding ──────────────────────────
+export const ActivationCard = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  border-top: 3px solid ${({ theme }) => theme.color.brand};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 32px 32px 28px;
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(14,26,23,.22);
+
+  button.ac-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    background: none;
+    color: ${({ theme }) => theme.color.muted};
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; line-height: 1;
+    &:hover { background: ${({ theme }) => theme.color.surfaceAlt}; }
+  }
+
+  .ac-eyebrow {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .22em; color: ${({ theme }) => theme.color.brand};
+    margin-bottom: 12px;
+  }
+
+  h2.ac-heading {
+    font-size: clamp(20px, 4vw, 26px);
+    font-weight: 800; letter-spacing: -.03em;
+    color: ${({ theme }) => theme.color.ink};
+    margin: 0 0 8px; line-height: 1.15; padding-right: 28px;
+  }
+
+  p.ac-sub {
+    font-size: 14px; color: ${({ theme }) => theme.color.muted};
+    line-height: 1.6; margin: 0 0 24px;
+  }
+
+  /* ── OAuth provider buttons ── */
+  .ac-oauth-btn {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; padding: 13px 18px;
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    border-radius: 11px;
+    background: ${({ theme }) => theme.color.surface};
+    font-family: inherit; font-size: 14.5px; font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    cursor: pointer; text-align: left; text-decoration: none;
+    transition: border-color ${({ theme }) => theme.motion.fast},
+                box-shadow    ${({ theme }) => theme.motion.fast};
+    margin-bottom: 9px;
+
+    &:hover {
+      border-color: ${({ theme }) => theme.color.brand};
+      box-shadow: 0 0 0 3px ${({ theme }) => theme.color.brandSoft};
+    }
+
+    .ac-provider-badge {
+      width: 28px; height: 28px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; flex-shrink: 0;
+    }
+    .ac-provider-badge--google  { background: #FEF2F2; color: #C0392B; }
+    .ac-provider-badge--outlook { background: #EFF6FF; color: #1D4ED8; }
+
+    .ac-oauth-label { flex: 1; }
+    .ac-oauth-arrow { color: ${({ theme }) => theme.color.muted}; font-size: 12px; }
+  }
+
+  /* ── Divider ── */
+  .ac-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 20px 0 18px;
+    font-size: 11.5px; color: ${({ theme }) => theme.color.muted};
+    &::before, &::after {
+      content: ''; flex: 1; height: 1px;
+      background: ${({ theme }) => theme.color.border};
+    }
+  }
+
+  /* ── Email input ── */
+  .ac-email-row { display: flex; gap: 8px; }
+
+  .ac-email-input {
+    flex: 1; padding: 12px 14px;
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    border-radius: 10px;
+    font-family: inherit; font-size: 14.5px;
+    color: ${({ theme }) => theme.color.ink};
+    background: ${({ theme }) => theme.color.surface};
+    transition: border-color ${({ theme }) => theme.motion.fast};
+    &:focus {
+      outline: none;
+      border-color: ${({ theme }) => theme.color.brand};
+      box-shadow: 0 0 0 3px ${({ theme }) => theme.color.brandSoft};
+    }
+    &::placeholder { color: ${({ theme }) => theme.color.mutedSoft}; }
+  }
+
+  /* ── Privacy note ── */
+  .ac-privacy {
+    font-size: 11px; color: ${({ theme }) => theme.color.mutedSoft};
+    text-align: center; margin-top: 14px; line-height: 1.6;
+  }
+
+  /* ── Success state ── */
+  .ac-success {
+    text-align: center; padding: 8px 0 4px;
+
+    .ac-check {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: ${({ theme }) => theme.color.brandSoft};
+      color: ${({ theme }) => theme.color.brand};
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; font-size: 22px;
+    }
+    h3 { font-size: 20px; font-weight: 800; color: ${({ theme }) => theme.color.ink}; margin: 0 0 6px; letter-spacing: -.02em; }
+    .ac-email-sent { font-size: 13px; color: ${({ theme }) => theme.color.brand}; font-weight: 600; margin: 0 0 20px; }
+    p.ac-success-sub { font-size: 13.5px; color: ${({ theme }) => theme.color.muted}; line-height: 1.6; margin: 0 0 20px; }
+
+    .ac-upgrade-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .14em; color: ${({ theme }) => theme.color.muted};
+      margin-bottom: 10px; display: block;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 24px 20px 22px;
+    h2.ac-heading { font-size: 19px; }
+  }
+`;
+
 export const FortnoxButton = styled.a`
   display: flex;
   align-items: center;
