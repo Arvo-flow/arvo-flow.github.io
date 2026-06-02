@@ -193,9 +193,10 @@ const Landing = () => {
               Er finansdirektör.<br /><em>Aldrig offline.</em>
             </Headline>
             <Lede>
-              Bokföringsprogram registrerar historiken. Arvo agerar på framtiden —
-              vi bevakar era leverantörsavtal dygnet runt och kontaktar er direkt
-              när ett läckage identifieras. Ni behöver inte fråga — vi hör av oss.
+              Bokföringsprogrammet visar vad ni betalade. Inte att ni betalar för mycket.
+              Arvo bevakar era leverantörsavtal dygnet runt och hör av sig i samma stund
+              en kostnad börjar krypa uppåt — ofta innan ni själva hunnit märka något.
+              Ni behöver inte fråga. Vi hör av oss.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/testa-faktura" $variant="gradient" $size="lg">
