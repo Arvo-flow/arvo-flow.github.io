@@ -11,6 +11,13 @@ const markerPop = keyframes`
   100% { box-shadow: 0 0 0 4px rgba(27,122,110,0.12); }
 `;
 
+const markerScale = keyframes`
+  0%   { transform: scale(0); opacity: 0; }
+  55%  { transform: scale(1.30); opacity: 1; }
+  75%  { transform: scale(0.88); }
+  100% { transform: scale(1); opacity: 1; }
+`;
+
 
 export const Page = styled.main`
   background: ${({ theme }) => theme.color.bg};
@@ -233,6 +240,12 @@ export const HeroTimeline = styled.div`
     background: ${({ theme }) => theme.color.brandSoft};
     border: 2px solid ${({ theme }) => theme.color.brand}55;
   }
+  .tl-step:nth-child(1) .tl-marker {
+    animation: ${({ $visible }) => $visible ? markerScale : 'none'} .5s cubic-bezier(0.34, 1.56, 0.64, 1) .22s both;
+  }
+  .tl-step:nth-child(2) .tl-marker {
+    animation: ${({ $visible }) => $visible ? markerScale : 'none'} .5s cubic-bezier(0.34, 1.56, 0.64, 1) .52s both;
+  }
   .tl-step:not(:last-child) .tl-marker::after {
     content: '';
     position: absolute;
@@ -247,7 +260,9 @@ export const HeroTimeline = styled.div`
     background: ${({ theme }) => theme.color.brand};
     border-color: ${({ theme }) => theme.color.brand};
     box-shadow: 0 0 0 0 ${({ theme }) => theme.color.brandSoft};
-    animation: ${({ $visible }) => $visible ? markerPop : 'none'} .6s cubic-bezier(0.34, 1.56, 0.64, 1) .95s both;
+    animation:
+      ${({ $visible }) => $visible ? markerScale : 'none'} .5s cubic-bezier(0.34, 1.56, 0.64, 1) .82s both,
+      ${({ $visible }) => $visible ? markerPop : 'none'} .6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.05s both;
   }
   .tl-body-text { display: flex; flex-direction: column; gap: 1px; }
   .tl-date {
