@@ -291,6 +291,12 @@ const validateFoundingForm = (form) => {
   return errors;
 };
 
+// Community Benchmark — unit chart: 15 jämförbara bolag, 8 fick samma höjning.
+// Spritt mönster (ej en rad) så det läses som en population, inte ett betyg.
+const BENCH_TOTAL = 15;
+const BENCH_HIT = new Set([0, 2, 3, 5, 8, 9, 11, 13]); // 8 bolag som drabbades
+const BENCH_YOU = 8; // ert bolag — markeras med ring
+
 const Landing = () => {
   const [form, setForm] = useState({ company: '', name: '', email: '' });
   const [errors, setErrors] = useState({});
@@ -588,16 +594,16 @@ const Landing = () => {
               <div className="signal-ico"><Icon name="benchmark" size={16} stroke={2} /></div>
               <div className="signal-main">
                 <span className="signal-tag">Community Benchmark</span>
-                <div className="bench-dots" aria-hidden="true">
-                  {Array.from({ length: 15 }).map((_, i) => (
+                <div className="bench-grid" aria-hidden="true">
+                  {Array.from({ length: BENCH_TOTAL }).map((_, i) => (
                     <span
                       key={i}
-                      className={i < 8 ? 'on' : ''}
-                      style={{ transitionDelay: `${560 + i * 45}ms` }}
+                      className={`${BENCH_HIT.has(i) ? 'on' : ''}${i === BENCH_YOU ? ' you' : ''}`}
+                      style={{ transitionDelay: `${560 + i * 38}ms` }}
                     />
                   ))}
                 </div>
-                <p className="signal-sub"><strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning den här månaden.</p>
+                <p className="signal-sub"><strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning den här månaden — <strong>inklusive er</strong>.</p>
               </div>
             </div>
 

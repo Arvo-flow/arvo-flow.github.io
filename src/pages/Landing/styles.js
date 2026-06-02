@@ -1383,10 +1383,21 @@ const livePulse = keyframes`
   100% { box-shadow: 0 0 0 0 rgba(45,181,159,0); }
 `;
 
+// Långsam scanlinje — Arvo läser av i realtid (rörelse, inte stökigt)
+const scanSweep = keyframes`
+  0%   { transform: translateY(-130%); opacity: 0; }
+  10%  { opacity: 1; }
+  45%  { transform: translateY(280%); opacity: 1; }
+  55%  { opacity: 0; }
+  100% { transform: translateY(280%); opacity: 0; }
+`;
+
 // Intelligence-sektion — en levande briefing där alla tre fakulteter
 // (smyghöjningslarm · community benchmark · avtalsbevakning) fångas i
 // arbete på samma verkliga fall. Speglar de tre pelarna till vänster.
 export const IntelligencePreview = styled.div`
+  position: relative;
+  overflow: hidden;
   background: rgba(250,250,247,.04);
   border: 1px solid rgba(250,250,247,.10);
   border-radius: ${({ theme }) => theme.size.radius.xl};
@@ -1395,7 +1406,22 @@ export const IntelligencePreview = styled.div`
   transform: ${({ $visible }) => $visible === false ? 'translateY(20px)' : 'none'};
   transition: opacity 0.8s ease, transform 0.8s ease;
 
+  /* realtids-scan som sveper nedför kortet */
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 34%;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(93,214,202,0.09) 55%, transparent);
+    transform: translateY(-130%);
+    animation: ${({ $visible }) => $visible === false ? 'none' : scanSweep} 7s ease-in-out 1.6s infinite;
+  }
+
   .preview-header {
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1506,26 +1532,32 @@ export const IntelligencePreview = styled.div`
   }
   .signal-sub strong { color: #FAFAF7; font-weight: 600; }
 
-  /* Community Benchmark — mini-fördelning som poppar in en prick i taget */
-  .bench-dots {
-    display: flex;
-    gap: 5px;
-    margin: 9px 0 8px;
+  /* Community Benchmark — unit chart: rutnät av 15 bolag, 8 drabbade (er ringad).
+     Rutnät i stället för en rad → läses som population, inte ett betyg. */
+  .bench-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 9px);
+    gap: 6px;
+    margin: 11px 0 10px;
+    width: max-content;
   }
-  .bench-dots span {
-    width: 8px;
-    height: 8px;
+  .bench-grid span {
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-    background: rgba(250,250,247,.14);
+    background: rgba(250,250,247,.15);
     transform: scale(${({ $visible }) => $visible === false ? 0 : 1});
     opacity: ${({ $visible }) => $visible === false ? 0 : 1};
     transition:
       transform .45s cubic-bezier(.34,1.56,.64,1),
       opacity .3s ease;
   }
-  .bench-dots span.on {
-    background: #F2B45A;
-    box-shadow: 0 0 7px rgba(242,180,90,.50);
+  .bench-grid span.on {
+    background: #D9923C;
+  }
+  .bench-grid span.you {
+    background: #E8A24A;
+    box-shadow: 0 0 0 2px rgba(250,250,247,.9);
   }
 
   .alert-saving {
