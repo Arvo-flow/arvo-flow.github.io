@@ -1108,3 +1108,331 @@ export const FinalCta = styled.section`
     color: ${({ theme }) => theme.color.mutedSoft};
   }
 `;
+
+// ─── Arvo Intelligence — dark section ───────────────────────────────────────
+
+export const IntelligenceSection = styled.section`
+  background: ${({ theme }) => theme.color.ink};
+  padding: 120px 28px;
+  position: relative;
+  overflow: hidden;
+  @media (max-width: 740px) { padding: 80px 20px; }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -30%; left: -10%;
+    width: 55%; height: 160%;
+    background: radial-gradient(circle, rgba(27,122,110,.20), transparent 60%);
+    pointer-events: none;
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -20%; right: -8%;
+    width: 50%; height: 160%;
+    background: radial-gradient(circle, rgba(93,214,202,.08), transparent 60%);
+    pointer-events: none;
+  }
+`;
+
+export const IntelligenceInner = styled.div`
+  position: relative;
+  z-index: 1;
+  max-width: ${({ theme }) => theme.size.container};
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  @media (max-width: 900px) { grid-template-columns: 1fr; gap: 56px; }
+
+  .eyebrow {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .22em;
+    color: ${({ theme }) => theme.color.accent};
+    margin-bottom: 20px;
+  }
+  h2 {
+    font-size: clamp(30px, 3.8vw, 50px);
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1.08;
+    color: #FAFAF7;
+    margin: 0 0 20px;
+  }
+  p.sub {
+    font-size: 16px;
+    color: rgba(250,250,247,.58);
+    line-height: 1.65;
+    margin: 0 0 40px;
+    max-width: 420px;
+  }
+`;
+
+export const IntelligencePillars = styled.div`
+  border-top: 1px solid rgba(250,250,247,.09);
+`;
+
+export const IntelligencePillar = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(250,250,247,.09);
+
+  .pillar-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: rgba(27,122,110,.30);
+    border: 1px solid rgba(93,214,202,.18);
+    display: flex; align-items: center; justify-content: center;
+    color: ${({ theme }) => theme.color.accent};
+    flex-shrink: 0;
+  }
+  h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #FAFAF7;
+    margin: 0 0 4px;
+    letter-spacing: -.01em;
+  }
+  p {
+    font-size: 13.5px;
+    color: rgba(250,250,247,.50);
+    line-height: 1.55;
+    margin: 0;
+  }
+`;
+
+export const IntelligencePreview = styled.div`
+  background: rgba(250,250,247,.04);
+  border: 1px solid rgba(250,250,247,.10);
+  border-radius: ${({ theme }) => theme.size.radius.xl};
+  padding: 32px;
+
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .preview-brand {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .22em;
+    color: ${({ theme }) => theme.color.accent};
+  }
+  .preview-time {
+    font-size: 11px;
+    color: rgba(250,250,247,.30);
+  }
+  .preview-divider {
+    height: 1px;
+    background: rgba(250,250,247,.08);
+    margin-bottom: 18px;
+  }
+  .preview-message {
+    font-size: 15px;
+    color: rgba(250,250,247,.75);
+    line-height: 1.72;
+    margin-bottom: 22px;
+    strong { color: #FAFAF7; font-weight: 700; }
+  }
+  .preview-cta {
+    display: inline-block;
+    background: ${({ theme }) => theme.color.brand};
+    color: #FAFAF7;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 11px 20px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    letter-spacing: -.01em;
+    margin-bottom: 28px;
+  }
+  .preview-footer {
+    padding-top: 20px;
+    border-top: 1px solid rgba(250,250,247,.08);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .preview-price {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    color: #FAFAF7;
+    font-feature-settings: "tnum";
+    line-height: 1;
+    .period {
+      font-size: 15px;
+      font-weight: 400;
+      color: rgba(250,250,247,.45);
+      letter-spacing: 0;
+      margin-left: 4px;
+    }
+  }
+  .preview-price-note {
+    font-size: 12px;
+    color: rgba(250,250,247,.35);
+    line-height: 1.5;
+    text-align: right;
+  }
+`;
+
+// ─── Pricing tiers — hybridmodell ────────────────────────────────────────────
+
+export const PricingTiers = styled.div`
+  max-width: 880px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  @media (max-width: 680px) { grid-template-columns: 1fr; }
+`;
+
+export const PricingTier = styled.div`
+  background: ${({ $featured, theme }) =>
+    $featured ? theme.color.ink : theme.color.surface};
+  border: ${({ $featured, theme }) =>
+    $featured ? `2px solid ${theme.color.brand}` : `1px solid ${theme.color.border}`};
+  border-radius: ${({ theme }) => theme.size.radius.xl};
+  padding: 36px 32px;
+  position: relative;
+  overflow: hidden;
+  @media (max-width: 740px) { padding: 28px 22px; }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -40%; right: -25%;
+    width: 60%; height: 200%;
+    background: ${({ $featured }) =>
+      $featured
+        ? 'radial-gradient(circle, rgba(93,214,202,.14), transparent 60%)'
+        : 'none'};
+    pointer-events: none;
+  }
+
+  .tier-badge {
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    padding: 4px 10px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    background: ${({ $featured, theme }) =>
+      $featured ? theme.color.brand : theme.color.brandSoft};
+    color: ${({ $featured, theme }) =>
+      $featured ? '#FAFAF7' : theme.color.brand};
+    margin-bottom: 20px;
+  }
+
+  h3 {
+    position: relative;
+    z-index: 1;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    color: ${({ $featured }) => $featured ? '#FAFAF7' : 'inherit'};
+    margin: 0 0 8px;
+  }
+
+  .tier-price {
+    position: relative;
+    z-index: 1;
+    margin: 16px 0 6px;
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    font-feature-settings: "tnum";
+    color: ${({ $featured }) => $featured ? '#FAFAF7' : 'inherit'};
+    .period {
+      font-size: 15px;
+      font-weight: 400;
+      color: ${({ $featured }) =>
+        $featured ? 'rgba(250,250,247,.45)' : 'inherit'};
+      letter-spacing: 0;
+      margin-left: 4px;
+    }
+  }
+
+  .tier-tagline {
+    position: relative;
+    z-index: 1;
+    font-size: 14px;
+    color: ${({ $featured }) =>
+      $featured ? 'rgba(250,250,247,.55)' : 'inherit'};
+    margin: 0 0 24px;
+    line-height: 1.55;
+  }
+
+  ul {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 0 28px;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13.5px;
+    color: ${({ $featured }) =>
+      $featured ? 'rgba(250,250,247,.78)' : 'inherit'};
+    line-height: 1.45;
+    svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: ${({ $featured, theme }) =>
+        $featured ? theme.color.accent : theme.color.brand};
+    }
+  }
+
+  .tier-note {
+    position: relative;
+    z-index: 1;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 10px;
+    color: ${({ $featured }) =>
+      $featured ? 'rgba(250,250,247,.35)' : 'inherit'};
+    opacity: ${({ $featured }) => $featured ? 1 : 0.6};
+  }
+
+  .tier-addon {
+    position: relative;
+    z-index: 1;
+    padding: 14px 16px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    background: ${({ $featured }) =>
+      $featured ? 'rgba(250,250,247,.06)' : 'rgba(27,122,110,.06)'};
+    border: 1px solid ${({ $featured }) =>
+      $featured ? 'rgba(250,250,247,.09)' : 'rgba(27,122,110,.14)'};
+    font-size: 13px;
+    color: ${({ $featured }) =>
+      $featured ? 'rgba(250,250,247,.60)' : 'inherit'};
+    line-height: 1.5;
+    margin-top: 4px;
+    strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: ${({ $featured }) => $featured ? '#FAFAF7' : 'inherit'};
+      margin-bottom: 2px;
+    }
+  }
+`;
