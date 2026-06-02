@@ -80,6 +80,29 @@ const ICONS = {
       <path d="M12 16h.01" />
     </>
   ),
+  // 24/7-bevakning fångar avvikelsen — monitor-puls med spik
+  pulse: (
+    <path d="M2 13h4l2.5-7 4 14 2.5-7H22" />
+  ),
+  // Community Benchmark — fördelningsstaplar mot baslinje
+  benchmark: (
+    <>
+      <path d="M3 20h18" />
+      <path d="M6.5 20v-4.5" />
+      <path d="M11 20v-10" />
+      <path d="M15.5 20v-6.5" />
+      <path d="M20 20v-13" />
+    </>
+  ),
+  // Proaktiv avtalsbevakning — kalender med klocka (90-dagarsvarning)
+  'calendar-clock': (
+    <>
+      <path d="M21 10.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h6.5" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+      <circle cx="17.5" cy="17.5" r="4.5" />
+      <path d="M17.5 15.6v2l1.4 1" />
+    </>
+  ),
 };
 
 const Icon = ({ name, size = 20, stroke = 1.6, color = 'currentColor', fill = 'none', ...rest }) => {

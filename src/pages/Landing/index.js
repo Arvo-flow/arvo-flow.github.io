@@ -563,7 +563,7 @@ const Landing = () => {
             <IntelligencePillars>
               <IntelligencePillar>
                 <div className="pillar-icon">
-                  <Icon name="alert-circle" size={18} stroke={2} />
+                  <Icon name="pulse" size={19} stroke={1.9} />
                 </div>
                 <div>
                   <h4>Smyghöjningslarm</h4>
@@ -572,7 +572,7 @@ const Landing = () => {
               </IntelligencePillar>
               <IntelligencePillar>
                 <div className="pillar-icon">
-                  <Icon name="trend" size={18} stroke={2} />
+                  <Icon name="benchmark" size={19} stroke={1.9} />
                 </div>
                 <div>
                   <h4>Community Benchmark</h4>
@@ -581,7 +581,7 @@ const Landing = () => {
               </IntelligencePillar>
               <IntelligencePillar>
                 <div className="pillar-icon">
-                  <Icon name="file" size={18} stroke={2} />
+                  <Icon name="calendar-clock" size={19} stroke={1.9} />
                 </div>
                 <div>
                   <h4>Proaktiv avtalsbevakning</h4>

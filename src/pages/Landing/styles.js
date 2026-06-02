@@ -1197,21 +1197,21 @@ export const IntelligencePillar = styled.div`
   border-bottom: 1px solid rgba(250,250,247,.09);
 
   .pillar-icon {
-    width: 38px; height: 38px;
-    border-radius: 10px;
-    background: rgba(27,122,110,.30);
-    border: 1px solid rgba(93,214,202,.18);
+    width: 40px; height: 40px;
+    border-radius: 11px;
+    background: linear-gradient(150deg, rgba(45,181,159,.24), rgba(27,122,110,.10));
+    border: 1px solid rgba(93,214,202,.24);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.07);
     display: flex; align-items: center; justify-content: center;
     color: ${({ theme }) => theme.color.accent};
     flex-shrink: 0;
   }
   h4 {
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: 16px;
+    font-size: 15.5px;
     font-weight: 700;
     color: #FAFAF7;
     margin: 0 0 4px;
-    letter-spacing: -.02em;
+    letter-spacing: -.01em;
   }
   p {
     font-size: 13.5px;
