@@ -566,28 +566,49 @@ const Landing = () => {
 
           <IntelligencePreview ref={intellRef} $visible={intellVisible}>
             <div className="preview-header">
-              <span className="preview-brand">Arvo Intelligence</span>
+              <span className="preview-brand"><span className="live" /> Arvo Intelligence</span>
               <span className="preview-time">i morse · 08:14</span>
             </div>
 
-            <div className="alert-row">
-              <div className="alert-icon">
-                <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                  <polyline points="16 7 22 7 22 13" />
-                </svg>
-              </div>
-              <div className="alert-meta">
-                <div className="alert-label">Smyghöjning identifierad</div>
-                <div className="alert-supplier">
+            {/* Signal 1 — Smyghöjningslarm */}
+            <div className="signal alert">
+              <div className="signal-ico"><Icon name="pulse" size={16} stroke={2} /></div>
+              <div className="signal-main">
+                <span className="signal-tag">Smyghöjningslarm</span>
+                <div className="signal-line">
                   Telia · Er mobilflotta
-                  <span className="alert-badge">+11&nbsp;%</span>
+                  <span className="badge up">+11&nbsp;%</span>
                 </div>
+                <p className="signal-sub">Priset höjt mot förra perioden — utan avisering.</p>
               </div>
             </div>
 
-            <div className="alert-proof">
-              <strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning den här månaden.
+            {/* Signal 2 — Community Benchmark */}
+            <div className="signal">
+              <div className="signal-ico"><Icon name="benchmark" size={16} stroke={2} /></div>
+              <div className="signal-main">
+                <span className="signal-tag">Community Benchmark</span>
+                <div className="bench-dots" aria-hidden="true">
+                  {Array.from({ length: 15 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={i < 8 ? 'on' : ''}
+                      style={{ transitionDelay: `${560 + i * 45}ms` }}
+                    />
+                  ))}
+                </div>
+                <p className="signal-sub"><strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning den här månaden.</p>
+              </div>
+            </div>
+
+            {/* Signal 3 — Proaktiv avtalsbevakning */}
+            <div className="signal">
+              <div className="signal-ico"><Icon name="calendar-clock" size={16} stroke={2} /></div>
+              <div className="signal-main">
+                <span className="signal-tag">Avtalsbevakning</span>
+                <div className="signal-line sm">Avtalet förnyas automatiskt om <strong>23&nbsp;dagar</strong></div>
+                <p className="signal-sub">Arvo hinner omförhandla innan bindningen låses ännu ett år.</p>
+              </div>
             </div>
 
             <div className="alert-saving">
