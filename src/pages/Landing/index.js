@@ -351,7 +351,8 @@ const Landing = () => {
           <div>
             <Eyebrow><span className="dot" /> Arvo Intelligence · Proaktiv finansdirektör för svenska bolag</Eyebrow>
             <Headline>
-              Er finansdirektör.<br /><em>Aldrig offline.</em>
+              <span className="line">Er finansdirektör.</span>
+              <em>Aldrig offline.</em>
             </Headline>
             <Lede>
               Bokföringsprogrammet visar vad ni betalade. Inte att ni betalar för mycket.
