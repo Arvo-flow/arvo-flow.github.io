@@ -188,28 +188,27 @@ const Landing = () => {
         <HeroBackdrop />
         <HeroInner>
           <div>
-            <Eyebrow><span className="dot" /> Hittar överpriset. Genomför bytet. Noll kronor i förskott.</Eyebrow>
+            <Eyebrow><span className="dot" /> Arvo Intelligence · Proaktiv finansdirektör för svenska bolag</Eyebrow>
             <Headline>
-              Du betalar överpris.<br />Vår algoritm visar dig <em>exakt var.</em>
+              Er finansdirektör.<br /><em>Aldrig offline.</em>
             </Headline>
             <Lede>
-              Din bokföring visar vad du betalar, inte om du betalar rätt. Arvo Flow
-              granskar dina leverantörsfakturor och tar fram färdiga avtalsbyten.
-              Vi gör grovjobbet — du behåller kontrollen och godkänner med BankID.
-              Inga fasta avgifter.
+              Arvo bevakar era leverantörsavtal dygnet runt och kontaktar er direkt
+              när någon höjer priset, ett avtal snart förnyas, eller en besparing väntar.
+              Ni behöver inte fråga — vi hör av oss.
             </Lede>
             <HeroActions>
-              <Button as={Link} to="/connect" $variant="gradient" $size="lg">
-                Se mina besparingar — gratis <Icon name="arrow" size={18} />
+              <Button as={Link} to="/testa-faktura" $variant="gradient" $size="lg">
+                Testa med en faktura — gratis <Icon name="arrow" size={18} />
               </Button>
-              <Button as={Link} to="/testa-faktura" $variant="secondary" $size="lg">
-              Se vad en faktura avslöjar
+              <Button as={Link} to="/connect" $variant="secondary" $size="lg">
+                Aktivera Arvo Intelligence
               </Button>
             </HeroActions>
             <HeroProof>
-              <div><strong>Faktisk prisdata</strong><span>från tusentals volymavtal</span></div>
-              <div><strong>100 % oberoende</strong><span>och objektiv algoritm</span></div>
-              <div><strong>0 kr</strong><span>tills vi bevisat din besparing</span></div>
+              <div><strong>Bevakning dygnet runt</strong><span>vi hör av oss — ni behöver inte fråga</span></div>
+              <div><strong>100 % oberoende</strong><span>och objektiv analys</span></div>
+              <div><strong>Gratis att starta</strong><span>Switch: 0 kr tills ni sparat</span></div>
             </HeroProof>
           </div>
 
@@ -307,12 +306,12 @@ const Landing = () => {
 
         <TrustPillar>
           <div className="icon"><Icon name="trend" size={22} stroke={2} /></div>
-          <h3>Inga fasta avgifter</h3>
+          <h3>Betala bara för värdet</h3>
           <p>
-            Vi tjänar pengar bara när du gör det. 20 % av identifierad besparing —
-            en engångsavgift, inget annat.
+            Arvo Switch är 100 % prestationsbaserat — 20 % av identifierad besparing,
+            fakturerat efter genomfört byte. Hittar vi inget kostar Switch ingenting.
           </p>
-          <strong>Hittar vi inget kostar det inget.</strong>
+          <strong>Gratis att starta. Ni betalar när ni sparat.</strong>
         </TrustPillar>
       </TrustStrip>
 
