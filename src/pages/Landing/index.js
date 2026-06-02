@@ -8,8 +8,7 @@ import { TOTALS } from '../../data/mockData';
 import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
-  PreviewCard, PreviewHead, PreviewFloat,
-  AlertRow, AlertIcon, AlertMeta, AlertProof, AlertSaving, AlertActions,
+  HeroTimeline, PreviewFloat,
   WaveDivider,
   TrustStrip, TrustPillar,
   AlgoTrust,
@@ -298,6 +297,12 @@ const Landing = () => {
   const [state, setState] = useState('idle'); // idle | submitting | success | error
   const [intellVisible, setIntellVisible] = useState(false);
   const intellRef = useRef(null);
+  const [heroCardVisible, setHeroCardVisible] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setHeroCardVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     const el = intellRef.current;
@@ -370,44 +375,47 @@ const Landing = () => {
           </div>
 
           <HeroVisual>
-            <PreviewCard>
-              <PreviewHead>
-                <h4>Arvo Intelligence</h4>
-                <span>i morse · 08:14</span>
-              </PreviewHead>
+            <HeroTimeline $visible={heroCardVisible}>
+              <div className="tl-head">
+                <span className="tl-brand">Arvo Intelligence</span>
+                <span className="tl-status"><Icon name="check" size={11} stroke={3} /> Åtgärdat</span>
+              </div>
 
-              <AlertRow>
-                <AlertIcon>
-                  <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-                    <polyline points="16 7 22 7 22 13" />
-                  </svg>
-                </AlertIcon>
-                <AlertMeta>
-                  <div className="alert-label">Smyghöjning identifierad</div>
-                  <div className="alert-supplier">
-                    Telia · Er mobilflotta
-                    <span className="alert-badge">+11&nbsp;%</span>
+              <div className="tl-body">
+                <div className="tl-step">
+                  <span className="tl-marker" />
+                  <div className="tl-body-text">
+                    <span className="tl-date">2 maj · 08:14</span>
+                    <span className="tl-title">Smyghöjning identifierad</span>
+                    <span className="tl-detail">Telia höjde er mobilflotta med 11&nbsp;% — utan att avisera</span>
                   </div>
-                </AlertMeta>
-              </AlertRow>
-
-              <AlertProof>
-                <strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning den här månaden.
-              </AlertProof>
-
-              <AlertSaving>
-                <div className="saving-label">Identifierad besparing</div>
-                <div className="saving-amount">
-                  18&nbsp;480&nbsp;kr<span className="unit">/år</span>
                 </div>
-              </AlertSaving>
+                <div className="tl-step">
+                  <span className="tl-marker" />
+                  <div className="tl-body-text">
+                    <span className="tl-date">4 maj</span>
+                    <span className="tl-title">Arvo agerade på ert mandat</span>
+                    <span className="tl-detail">Omförhandling via fullmakt — ni behövde inte göra något</span>
+                  </div>
+                </div>
+                <div className="tl-step done">
+                  <span className="tl-marker" />
+                  <div className="tl-body-text">
+                    <span className="tl-date">9 maj</span>
+                    <span className="tl-title">Nytt pris bekräftat</span>
+                    <span className="tl-detail">Telia sänkte priset −14&nbsp;%, besparingen säkrad</span>
+                  </div>
+                </div>
+              </div>
 
-              <AlertActions>
-                <button className="btn-primary">Ja, Arvo agerar →</button>
-                <button className="btn-secondary">Visa underlag</button>
-              </AlertActions>
-            </PreviewCard>
+              <div className="tl-foot">
+                <div className="tl-saving">
+                  <span className="tl-saving-label">Säkrad besparing</span>
+                  <span className="tl-saving-value">18&nbsp;480&nbsp;kr<span className="unit">/år</span></span>
+                </div>
+                <button className="tl-cta">Visa briefing →</button>
+              </div>
+            </HeroTimeline>
 
             <PreviewFloat $top="-24px" $right="-12px">
               <div className="dot"><Icon name="spark" size={18} /></div>
@@ -417,10 +425,10 @@ const Landing = () => {
               </div>
             </PreviewFloat>
             <PreviewFloat $bottom="-24px" $left="20px">
-              <div className="dot"><Icon name="check" size={18} /></div>
+              <div className="dot"><Icon name="calendar-clock" size={18} /></div>
               <div className="text">
-                <strong>Förhandling klar</strong>
-                <span>Telia sänkte −12&nbsp;%</span>
+                <strong>Avtal förnyas snart</strong>
+                <span>Arvo bevakar — 14 dagar kvar</span>
               </div>
             </PreviewFloat>
           </HeroVisual>
@@ -573,43 +581,39 @@ const Landing = () => {
           <IntelligencePreview ref={intellRef} $visible={intellVisible}>
             <div className="preview-header">
               <span className="preview-brand">Arvo Intelligence</span>
-              <span className="preview-status"><Icon name="check" size={11} stroke={3} /> Åtgärdat</span>
+              <span className="preview-time">i morse · 08:14</span>
             </div>
-            <div className="preview-divider" />
 
-            <div className="timeline">
-              <div className="t-step">
-                <span className="t-marker" />
-                <div className="t-body">
-                  <span className="t-date">2 maj · 08:14</span>
-                  <strong>Smyghöjning identifierad</strong>
-                  <span className="t-detail">Telia höjde er mobilflotta med 11&nbsp;% — utan att avisera</span>
-                </div>
+            <div className="alert-row">
+              <div className="alert-icon">
+                <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                  <polyline points="16 7 22 7 22 13" />
+                </svg>
               </div>
-              <div className="t-step">
-                <span className="t-marker" />
-                <div className="t-body">
-                  <span className="t-date">4 maj</span>
-                  <strong>Arvo agerade på ert mandat</strong>
-                  <span className="t-detail">Omförhandling via fullmakt — ni behövde inte göra något</span>
-                </div>
-              </div>
-              <div className="t-step done">
-                <span className="t-marker" />
-                <div className="t-body">
-                  <span className="t-date">9 maj</span>
-                  <strong>Nytt pris bekräftat</strong>
-                  <span className="t-detail">Telia sänkte priset −14&nbsp;%, besparingen säkrad</span>
+              <div className="alert-meta">
+                <div className="alert-label">Smyghöjning identifierad</div>
+                <div className="alert-supplier">
+                  Telia · Er mobilflotta
+                  <span className="alert-badge">+11&nbsp;%</span>
                 </div>
               </div>
             </div>
 
-            <div className="preview-footer">
-              <div className="preview-result">
-                <span className="r-label">Säkrad besparing</span>
-                <span className="r-value">18&nbsp;480&nbsp;kr<span className="per">/år</span></span>
+            <div className="alert-proof">
+              <strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning den här månaden.
+            </div>
+
+            <div className="alert-saving">
+              <div className="saving-label">Identifierad besparing</div>
+              <div className="saving-amount">
+                18&nbsp;480&nbsp;kr<span className="unit">/år</span>
               </div>
-              <div className="preview-cta">Visa briefing →</div>
+            </div>
+
+            <div className="alert-actions">
+              <button className="btn-primary">Ja, Arvo agerar →</button>
+              <button className="btn-secondary">Visa underlag</button>
             </div>
           </IntelligencePreview>
         </IntelligenceInner>
