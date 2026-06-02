@@ -21,9 +21,9 @@ import {
   FaqWrap, FaqItem,
   FinalCta,
   BenchmarkSection, BenchmarkInner, BenchmarkLeft,
-  BenchmarkPanel, BenchmarkPanelHead, BenchmarkRows, BenchmarkRow, BenchmarkRowHead,
+  BenchmarkPanel, BenchmarkPanelHead, BenchmarkRows, BenchmarkRow,
   BenchmarkTrack, BenchmarkRange, BenchmarkMedian, BenchmarkYou,
-  BenchmarkRowLabels, BenchmarkLegend, BenchmarkSummary,
+  BenchmarkLegend, BenchmarkSummary,
 } from './styles';
 
 const HOW_STEPS = [
@@ -141,11 +141,17 @@ const FAQ = [
 ];
 
 
+// Åtta kategorier Arvo kan genomföra byte i idag. Illustrativa intervall.
+// Sorterade med största besparingsmöjligheten överst, "i nivå" sist.
 const BENCHMARK_ROWS = [
-  { cat: 'Mobilabonnemang',  unit: 'kr/SIM/år',  p25: 3408, median: 4200, p75: 5200, you: 5760, max: 7000 },
-  { cat: 'Microsoft 365',    unit: 'kr/seat/år', p25: 1320, median: 1680, p75: 2100, you: 2400, max: 2800 },
-  { cat: 'Företagsbredband', unit: 'kr/mån',     p25: 380,  median: 510,  p75: 650,  you: 730,  max: 880  },
-  { cat: 'Elavtal',          unit: 'öre/kWh',    p25: 112,  median: 145,  p75: 178,  you: 195,  max: 230  },
+  { cat: 'Mobilabonnemang',  unit: 'kr/SIM/år',  p25: 3408, median: 4200, p75: 5200, you: 5760, max: 7000, status: 'over' },
+  { cat: 'Skrivare & print', unit: 'kr/mån',     p25: 1800, median: 2400, p75: 3200, you: 3900, max: 4600, status: 'over' },
+  { cat: 'Microsoft 365',    unit: 'kr/seat/år', p25: 1320, median: 1680, p75: 2100, you: 2400, max: 2800, status: 'over' },
+  { cat: 'Företagsbredband', unit: 'kr/mån',     p25: 380,  median: 510,  p75: 650,  you: 730,  max: 880,  status: 'over' },
+  { cat: 'Fakturatjänst',    unit: 'kr/mån',     p25: 180,  median: 240,  p75: 320,  you: 360,  max: 440,  status: 'over' },
+  { cat: 'Elavtal',          unit: 'öre/kWh',    p25: 112,  median: 145,  p75: 178,  you: 195,  max: 230,  status: 'over' },
+  { cat: 'Kortterminal',     unit: 'kr/mån',     p25: 240,  median: 320,  p75: 420,  you: 298,  max: 520,  status: 'inline' },
+  { cat: 'Företagsleasing',  unit: 'kr/mån',     p25: 3200, median: 4100, p75: 5200, you: 3850, max: 6000, status: 'inline' },
 ];
 
 // Animerad uppräkning av ett tal när elementet blir synligt
@@ -172,33 +178,34 @@ const useCountUp = (target, active, duration = 1100, delay = 0) => {
 
 const BenchmarkRowItem = ({ row, i, visible }) => {
   const pct = (v) => `${(v / row.max) * 100}%`;
+  const over = row.status === 'over';
   const delta = row.you - row.median;
-  const barDelay = `${i * 140}ms`;
-  const dotDelay = `${i * 140 + 1000}ms`;
-  const count = useCountUp(delta, visible, 1000, i * 140 + 1000);
+  const barDelay = `${i * 80}ms`;
+  const dotDelay = `${i * 80 + 650}ms`;
+  const count = useCountUp(delta, visible && over, 850, i * 80 + 650);
 
   return (
     <BenchmarkRow>
-      <BenchmarkRowHead>
-        <div className="label-group">
-          <span className="cat">{row.cat}</span>
-          <span className="unit">{row.unit}</span>
-        </div>
-        <div className="delta">
-          <strong>+{(visible ? count : 0).toLocaleString('sv-SE')}</strong>
-          <small>över branschsnittet</small>
-        </div>
-      </BenchmarkRowHead>
+      <div className="cat-col">
+        <span className="cat">{row.cat}</span>
+        <span className="unit">{row.unit}</span>
+      </div>
       <BenchmarkTrack>
         <BenchmarkRange $left={pct(row.p25)} $width={pct(row.p75 - row.p25)} $visible={visible} $delay={barDelay} />
         <BenchmarkMedian $left={pct(row.median)} />
-        <BenchmarkYou $left={pct(row.you)} $visible={visible} $delay={dotDelay} />
+        <BenchmarkYou $left={pct(row.you)} $over={over} $visible={visible} $delay={dotDelay} />
       </BenchmarkTrack>
-      <BenchmarkRowLabels>
-        <span className="p25" style={{ left: pct(row.p25) }}>{row.p25.toLocaleString('sv-SE')}</span>
-        <span className="median" style={{ left: pct(row.median) }}>{row.median.toLocaleString('sv-SE')}</span>
-        <span className="you" style={{ left: pct(row.you) }}>{row.you.toLocaleString('sv-SE')}</span>
-      </BenchmarkRowLabels>
+      {over ? (
+        <div className="delta over">
+          <strong>+{(visible ? count : 0).toLocaleString('sv-SE')}</strong>
+          <small>över snittet</small>
+        </div>
+      ) : (
+        <div className="delta inline">
+          <strong><Icon name="check" size={13} stroke={2.6} /> i nivå</strong>
+          <small>välförhandlat</small>
+        </div>
+      )}
     </BenchmarkRow>
   );
 };
@@ -212,16 +219,21 @@ const BenchmarkViz = () => {
     if (!el) return undefined;
     const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.12 }
+      { threshold: 0.1 }
     );
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
 
+  const overCount = BENCHMARK_ROWS.filter((r) => r.status === 'over').length;
+
   return (
     <BenchmarkPanel ref={ref}>
       <BenchmarkPanelHead>
-        <span className="title">Prisspann i er bransch</span>
+        <div className="title-group">
+          <span className="title">Er leverantörsportfölj</span>
+          <span className="subtitle">8 kategorier · bevakade dygnet runt</span>
+        </div>
         <span className="tag">Illustrativ data</span>
       </BenchmarkPanelHead>
 
@@ -234,15 +246,16 @@ const BenchmarkViz = () => {
       <BenchmarkLegend>
         <div className="legend-item"><div className="swatch-bar" /><span>Välförhandlat prisspann</span></div>
         <div className="legend-item"><div className="swatch-tick" /><span>Branschsnitt</span></div>
-        <div className="legend-item"><div className="swatch-dot" /><span>Ni idag</span></div>
+        <div className="legend-item"><div className="swatch-dot over" /><span>Över snittet</span></div>
+        <div className="legend-item"><div className="swatch-dot ok" /><span>I nivå</span></div>
       </BenchmarkLegend>
 
       <BenchmarkSummary>
         <div className="stat">
-          <strong>4<span className="of">/4</span></strong>
-          <span className="lbl">kategorier över snittet</span>
+          <strong>{overCount}<span className="of">/8</span></strong>
+          <span className="lbl">över snittet</span>
         </div>
-        <p>I den här illustrationen ligger exempelbolaget över branschsnittet i varje kategori. Det är precis det mönstret Arvo fångar — faktura för faktura, ofta innan ni hunnit märka höjningen.</p>
+        <p>I den här illustrationen ligger exempelbolaget över branschsnittet i sex av åtta kategorier — två är redan välförhandlade. Det är precis den bilden Arvo ger er, faktura för faktura, ofta innan ni hunnit märka höjningen.</p>
       </BenchmarkSummary>
     </BenchmarkPanel>
   );
