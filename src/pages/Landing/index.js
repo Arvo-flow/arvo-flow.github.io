@@ -594,20 +594,43 @@ const Landing = () => {
           <IntelligencePreview ref={intellRef} $visible={intellVisible}>
             <div className="preview-header">
               <span className="preview-brand">Arvo Intelligence</span>
-              <span className="preview-time">i morse · 08:14</span>
+              <span className="preview-status"><Icon name="check" size={11} stroke={3} /> Åtgärdat</span>
             </div>
             <div className="preview-divider" />
-            <p className="preview-message">
-              Vi noterade att <strong>Telia</strong> höjde priset på er mobilflotta
-              med 11&nbsp;% förra månaden. 8 av 15 jämförbara bolag i vårt nätverk
-              fick samma höjning. Vill ni att Arvo agerar och förhandlar tillbaka priset?
-            </p>
-            <div className="preview-cta">Ja, Arvo agerar →</div>
-            <div className="preview-footer">
-              <div className="preview-price">
-                1&nbsp;995&nbsp;kr<span className="period">/ mån</span>
+
+            <div className="timeline">
+              <div className="t-step">
+                <span className="t-marker" />
+                <div className="t-body">
+                  <span className="t-date">2 maj · 08:14</span>
+                  <strong>Smyghöjning identifierad</strong>
+                  <span className="t-detail">Telia höjde er mobilflotta med 11&nbsp;% — utan att avisera</span>
+                </div>
               </div>
-              <div className="preview-price-note">Ingen bindningstid<br />Kom igång på 2 minuter</div>
+              <div className="t-step">
+                <span className="t-marker" />
+                <div className="t-body">
+                  <span className="t-date">4 maj</span>
+                  <strong>Arvo agerade på ert mandat</strong>
+                  <span className="t-detail">Omförhandling via fullmakt — ni behövde inte göra något</span>
+                </div>
+              </div>
+              <div className="t-step done">
+                <span className="t-marker" />
+                <div className="t-body">
+                  <span className="t-date">9 maj</span>
+                  <strong>Nytt pris bekräftat</strong>
+                  <span className="t-detail">Telia sänkte priset −14&nbsp;%, besparingen säkrad</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="preview-footer">
+              <div className="preview-result">
+                <span className="r-label">Säkrad besparing</span>
+                <span className="r-value">18&nbsp;480&nbsp;kr<span className="per">/år</span></span>
+              </div>
+              <div className="preview-cta">Visa briefing →</div>
             </div>
           </IntelligencePreview>
         </IntelligenceInner>
