@@ -1207,7 +1207,7 @@ const TestaFaktura = () => {
             <BriefingHead>
               <div className="bh-top">
                 <span className="bh-stamp">
-                  Briefing · {new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
+                  Arvo-analys · {new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
                 </span>
                 <button className="bh-dl" onClick={() => setDownloadModalOpen(true)} title="Ladda ner analys">
                   <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
