@@ -20,10 +20,9 @@ import {
   FoundingCard, FoundingLeft, FoundingForm, FoundingSuccess,
   FaqWrap, FaqItem,
   FinalCta,
-  BenchmarkSection, BenchmarkInner, BenchmarkLeft,
-  BenchmarkPanel, BenchmarkPanelHead, BenchmarkRows, BenchmarkRow,
-  BenchmarkTrack, BenchmarkRange, BenchmarkMedian, BenchmarkYou,
-  BenchmarkLegend, BenchmarkSummary,
+  BenchmarkSection, BenchmarkHead, BenchmarkMoatLine, BenchmarkFootnote,
+  Spectrum, SpectrumRows, SpectrumRow, SpectrumDot,
+  SpectrumAxisFoot, SpectrumSummary,
 } from './styles';
 
 const HOW_STEPS = [
@@ -176,25 +175,32 @@ const useCountUp = (target, active, duration = 1100, delay = 0) => {
   return val;
 };
 
+// Normaliserar varje kategori mot sitt eget branschsnitt → en gemensam axel.
+// Branschsnitt-linjen ligger på 45 %, "välförhandlat"-korridoren 18–48 %.
+const spectrumX = (you, median) => {
+  const ratio = you / median;
+  return Math.max(7, Math.min(95, 45 + (ratio - 1) * 56));
+};
+
 const BenchmarkRowItem = ({ row, i, visible }) => {
-  const pct = (v) => `${(v / row.max) * 100}%`;
   const over = row.status === 'over';
   const delta = row.you - row.median;
-  const barDelay = `${i * 80}ms`;
-  const dotDelay = `${i * 80 + 650}ms`;
-  const count = useCountUp(delta, visible && over, 850, i * 80 + 650);
+  const x = spectrumX(row.you, row.median);
+  const dotDelay = `${i * 75 + 300}ms`;
+  const count = useCountUp(delta, visible && over, 850, i * 75 + 450);
 
   return (
-    <BenchmarkRow>
+    <SpectrumRow>
       <div className="cat-col">
         <span className="cat">{row.cat}</span>
         <span className="unit">{row.unit}</span>
       </div>
-      <BenchmarkTrack>
-        <BenchmarkRange $left={pct(row.p25)} $width={pct(row.p75 - row.p25)} $visible={visible} $delay={barDelay} />
-        <BenchmarkMedian $left={pct(row.median)} />
-        <BenchmarkYou $left={pct(row.you)} $over={over} $visible={visible} $delay={dotDelay} />
-      </BenchmarkTrack>
+      <div className="axis">
+        <span className="zone" />
+        <span className="line" />
+        <span className="baseline" />
+        <SpectrumDot $x={`${x}%`} $over={over} $visible={visible} $delay={dotDelay} />
+      </div>
       {over ? (
         <div className="delta over">
           <strong>+{(visible ? count : 0).toLocaleString('sv-SE')}</strong>
@@ -206,7 +212,7 @@ const BenchmarkRowItem = ({ row, i, visible }) => {
           <small>välförhandlat</small>
         </div>
       )}
-    </BenchmarkRow>
+    </SpectrumRow>
   );
 };
 
@@ -228,36 +234,35 @@ const BenchmarkViz = () => {
   const overCount = BENCHMARK_ROWS.filter((r) => r.status === 'over').length;
 
   return (
-    <BenchmarkPanel ref={ref}>
-      <BenchmarkPanelHead>
-        <div className="title-group">
-          <span className="title">Er leverantörsportfölj</span>
-          <span className="subtitle">8 kategorier · bevakade dygnet runt</span>
-        </div>
+    <Spectrum ref={ref}>
+      <div className="spectrum-head">
+        <span className="title">Er leverantörsportfölj</span>
+        <span className="sub">8 kategorier · bevakade dygnet runt</span>
         <span className="tag">Illustrativ data</span>
-      </BenchmarkPanelHead>
+      </div>
 
-      <BenchmarkRows>
+      <SpectrumRows>
         {BENCHMARK_ROWS.map((row, i) => (
           <BenchmarkRowItem key={row.cat} row={row} i={i} visible={visible} />
         ))}
-      </BenchmarkRows>
+      </SpectrumRows>
 
-      <BenchmarkLegend>
-        <div className="legend-item"><div className="swatch-bar" /><span>Välförhandlat prisspann</span></div>
-        <div className="legend-item"><div className="swatch-tick" /><span>Branschsnitt</span></div>
-        <div className="legend-item"><div className="swatch-dot over" /><span>Över snittet</span></div>
-        <div className="legend-item"><div className="swatch-dot ok" /><span>I nivå</span></div>
-      </BenchmarkLegend>
+      <SpectrumAxisFoot>
+        <span className="axis-cell">
+          <span className="lbl zone">Välförhandlat</span>
+          <span className="lbl mid">Branschsnitt</span>
+          <span className="lbl right">Betalar mer →</span>
+        </span>
+      </SpectrumAxisFoot>
 
-      <BenchmarkSummary>
+      <SpectrumSummary>
         <div className="stat">
           <strong>{overCount}<span className="of">/8</span></strong>
           <span className="lbl">över snittet</span>
         </div>
-        <p>I den här illustrationen ligger exempelbolaget över branschsnittet i sex av åtta kategorier — två är redan välförhandlade. Det är precis den bilden Arvo ger er, faktura för faktura, ofta innan ni hunnit märka höjningen.</p>
-      </BenchmarkSummary>
-    </BenchmarkPanel>
+        <p>Sex av åtta kategorier ligger till höger om branschsnittet — två är redan välförhandlade. Det är precis den bilden Arvo ger er, faktura för faktura, ofta innan ni hunnit märka höjningen.</p>
+      </SpectrumSummary>
+    </Spectrum>
   );
 };
 
@@ -595,32 +600,29 @@ const Landing = () => {
         </IntelligenceInner>
       </IntelligenceSection>
 
-      {/* ── Benchmark — data moat visualisation ──────────────────────────── */}
+      {/* ── Benchmark — delat marknadsspann (data moat) ──────────────────── */}
       <BenchmarkSection id="prisintelligens">
-        <BenchmarkInner>
-          <BenchmarkLeft>
-            <span className="kicker">Arvos prisintelligens</span>
-            <h2>Vi vet vad era leverantörer tar av andra.</h2>
-            <p>
-              Varje faktura Arvo analyserar är en ny datapunkt. Det innebär att vi inte
-              bara vet vad Telia listar på sin hemsida — vi vet vad de faktiskt tar betalt
-              av bolag i er bransch och er storlek.
-            </p>
-            <p>
-              Det är den skillnaden som gör Arvo Intelligence till en finansdirektör och
-              inte ett verktyg.
-            </p>
-            <p className="moat">
-              Ju fler fakturor Arvo ser, desto mer vet vi — och desto vassare blir varje
-              rekommendation. Det är ett försprång som inte går att kopiera.
-            </p>
-            <span className="footnote">
-              Visualiseringen är illustrativ — prisintervall baserade på verifierade
-              marknadsdata maj 2026.
-            </span>
-          </BenchmarkLeft>
-          <BenchmarkViz />
-        </BenchmarkInner>
+        <BenchmarkHead>
+          <span className="kicker">Arvos prisintelligens</span>
+          <h2>Vi vet vad era leverantörer tar av andra.</h2>
+          <p>
+            Varje faktura Arvo analyserar är en ny datapunkt. Vi vet inte bara vad Telia
+            listar på sin hemsida — vi vet vad de faktiskt tar betalt av bolag i er bransch
+            och er storlek. Här är hela er leverantörsportfölj, mätt mot marknaden på en
+            och samma skala.
+          </p>
+        </BenchmarkHead>
+
+        <BenchmarkViz />
+
+        <BenchmarkMoatLine>
+          Ju fler fakturor Arvo ser, desto mer vet vi — och desto vassare blir varje
+          rekommendation. Ett försprång som inte går att kopiera.
+        </BenchmarkMoatLine>
+        <BenchmarkFootnote>
+          Visualiseringen är illustrativ — prisintervall baserade på verifierade
+          marknadsdata maj 2026.
+        </BenchmarkFootnote>
       </BenchmarkSection>
 
       {/* ── Priser — hybridmodell ─────────────────────────────────────────── */}

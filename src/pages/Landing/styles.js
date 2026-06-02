@@ -1307,39 +1307,21 @@ export const IntelligencePreview = styled.div`
   }
 `;
 
-// ─── Benchmark section — data moat visualisation ─────────────────────────────
+// ─── Benchmark — delat marknadsspann (data moat) ─────────────────────────────
 
 export const BenchmarkSection = styled.section`
   position: relative;
   padding: 120px 28px;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0;
-    left: calc(-50vw + 50%);
-    right: calc(-50vw + 50%);
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    z-index: -1;
-  }
-
+  max-width: ${({ theme }) => theme.size.container};
+  margin: 0 auto;
   @media (max-width: 740px) { padding: 80px 20px; }
 `;
 
-export const BenchmarkInner = styled.div`
-  max-width: ${({ theme }) => theme.size.container};
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  align-items: start;
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-    gap: 48px;
-  }
-`;
+export const BenchmarkHead = styled.div`
+  max-width: 720px;
+  margin: 0 auto 52px;
+  text-align: center;
 
-export const BenchmarkLeft = styled.div`
   .kicker {
     display: inline-block;
     font-size: 12.5px;
@@ -1347,95 +1329,74 @@ export const BenchmarkLeft = styled.div`
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: ${({ theme }) => theme.color.brand};
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
   h2 {
-    font-size: clamp(30px, 3.8vw, 48px);
-    line-height: 1.08;
+    font-size: clamp(32px, 4.4vw, 54px);
+    line-height: 1.06;
     letter-spacing: -0.025em;
-    margin: 0 0 20px;
+    margin: 0;
   }
   p {
-    font-size: 16px;
-    line-height: 1.65;
-    color: ${({ theme }) => theme.color.inkSoft};
-    margin: 0 0 16px;
-  }
-  p.moat {
-    margin-top: 28px;
-    padding-left: 20px;
-    border-left: 2.5px solid ${({ theme }) => theme.color.brand};
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: 20px;
-    line-height: 1.4;
-    letter-spacing: -0.01em;
-    color: ${({ theme }) => theme.color.ink};
-  }
-  .footnote {
-    display: block;
-    margin-top: 28px;
-    font-size: 12px;
+    margin: 18px auto 0;
+    max-width: 600px;
+    font-size: 16.5px;
+    line-height: 1.6;
     color: ${({ theme }) => theme.color.muted};
-    line-height: 1.5;
   }
 `;
 
-export const BenchmarkPanel = styled.div`
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-radius: ${({ theme }) => theme.size.radius.xl};
-  box-shadow:
-    0 1px 2px rgba(14, 26, 23, 0.04),
-    0 14px 38px rgba(14, 26, 23, 0.09);
-  padding: 24px 26px 22px;
-  @media (max-width: 740px) { padding: 22px 18px 18px; }
+export const BenchmarkMoatLine = styled.p`
+  max-width: 740px;
+  margin: 56px auto 0;
+  text-align: center;
+  font-family: ${({ theme }) => theme.font.display};
+  font-size: clamp(20px, 2.4vw, 27px);
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  color: ${({ theme }) => theme.color.ink};
 `;
 
-export const BenchmarkPanelHead = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 15px;
-  margin-bottom: 6px;
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+export const BenchmarkFootnote = styled.p`
+  max-width: 720px;
+  margin: 20px auto 0;
+  text-align: center;
+  font-size: 12px;
+  color: ${({ theme }) => theme.color.muted};
+  line-height: 1.5;
+`;
 
-  .title-group { display: flex; flex-direction: column; gap: 3px; }
-  .title {
-    font-size: 14.5px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: ${({ theme }) => theme.color.ink};
-  }
-  .subtitle {
-    font-size: 11.5px;
-    color: ${({ theme }) => theme.color.muted};
-    letter-spacing: 0.01em;
-  }
-  .tag {
-    font-size: 10.5px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: ${({ theme }) => theme.color.brand};
-    background: ${({ theme }) => theme.color.brandSoft};
-    padding: 4px 10px;
-    border-radius: ${({ theme }) => theme.size.radius.pill};
+export const Spectrum = styled.div`
+  max-width: 920px;
+  margin: 0 auto;
+
+  .spectrum-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
+
+    .title { font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; color: ${({ theme }) => theme.color.ink}; }
+    .sub { font-size: 12px; color: ${({ theme }) => theme.color.muted}; margin-right: auto; }
+    .tag {
+      font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+      color: ${({ theme }) => theme.color.brand}; background: ${({ theme }) => theme.color.brandSoft};
+      padding: 4px 10px; border-radius: ${({ theme }) => theme.size.radius.pill};
+    }
   }
 `;
 
-export const BenchmarkRows = styled.div`
+export const SpectrumRows = styled.div`
   display: flex;
   flex-direction: column;
 `;
 
-export const BenchmarkRow = styled.div`
+export const SpectrumRow = styled.div`
   display: grid;
-  grid-template-columns: minmax(104px, 1.05fr) 1.5fr 76px;
-  gap: 16px;
+  grid-template-columns: 150px 1fr 96px;
+  gap: 20px;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
-  &:last-child { border-bottom: none; }
 
   .cat-col { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .cat {
@@ -1449,12 +1410,31 @@ export const BenchmarkRow = styled.div`
   }
   .unit { font-size: 10px; color: ${({ theme }) => theme.color.muted}; }
 
-  .delta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    text-align: right;
+  /* delad axel — zon + branschsnitt-linje löper kontinuerligt genom alla rader */
+  .axis { position: relative; height: 52px; }
+  .axis .zone {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 18%; width: 30%;
+    background: ${({ theme }) => theme.color.brand}12;
   }
+  .axis .line {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 45%;
+    width: 1.5px;
+    background: ${({ theme }) => theme.color.ink};
+    opacity: 0.16;
+  }
+  .axis .baseline {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 1px;
+    background: ${({ theme }) => theme.color.border};
+  }
+
+  .delta { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
   .delta.over strong {
     font-size: 16px;
     font-weight: 800;
@@ -1482,100 +1462,68 @@ export const BenchmarkRow = styled.div`
   }
 
   @media (max-width: 740px) {
-    grid-template-columns: minmax(86px, 1fr) 1.25fr 64px;
+    grid-template-columns: minmax(84px, 1fr) 1.6fr 70px;
     gap: 12px;
+    .axis { height: 46px; }
   }
 `;
 
-export const BenchmarkTrack = styled.div`
-  position: relative;
-  height: 6px;
-  background: ${({ theme }) => theme.color.border};
-  border-radius: 3px;
-`;
-
-export const BenchmarkRange = styled.div`
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: 3px;
-  background: linear-gradient(135deg, #1B7A6E 0%, #2DB59F 100%);
-  left: ${({ $left }) => $left};
-  width: ${({ $visible, $width }) => $visible ? $width : '0%'};
-  transition: width 1.1s cubic-bezier(0.4, 0, 0.2, 1) ${({ $delay }) => $delay};
-`;
-
-export const BenchmarkMedian = styled.div`
-  position: absolute;
-  top: 50%;
-  z-index: 2;
-  width: 1.5px;
-  height: 11px;
-  transform: translate(-50%, -50%);
-  background: ${({ theme }) => theme.color.ink};
-  opacity: 0.38;
-  border-radius: 1px;
-  left: ${({ $left }) => $left};
-`;
-
-export const BenchmarkYou = styled.div`
+export const SpectrumDot = styled.span`
   position: absolute;
   top: 50%;
   z-index: 3;
-  width: 11px;
-  height: 11px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
   background: ${({ $over }) => $over ? '#DC2626' : '#1B7A6E'};
-  border: 2px solid ${({ theme }) => theme.color.surface};
-  box-shadow: 0 1px 4px ${({ $over }) => $over ? 'rgba(220,38,38,0.40)' : 'rgba(27,122,110,0.40)'};
-  transform: translate(-50%, -50%);
-  left: ${({ $left }) => $left};
+  border: 2.5px solid ${({ theme }) => theme.color.bg};
+  box-shadow: 0 1px 5px ${({ $over }) => $over ? 'rgba(220,38,38,0.45)' : 'rgba(27,122,110,0.45)'};
+  left: ${({ $x }) => $x};
+  transform: translate(-50%, -50%) scale(${({ $visible }) => $visible ? 1 : 0});
   opacity: ${({ $visible }) => $visible ? 1 : 0};
-  transition: opacity 0.4s ease ${({ $delay }) => $delay};
+  transition:
+    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) ${({ $delay }) => $delay},
+    opacity 0.4s ease ${({ $delay }) => $delay};
 `;
 
-export const BenchmarkLegend = styled.div`
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-  border-top: 1px solid ${({ theme }) => theme.color.border};
-  margin-top: 18px;
-  padding-top: 16px;
+export const SpectrumAxisFoot = styled.div`
+  display: grid;
+  grid-template-columns: 150px 1fr 96px;
+  gap: 20px;
+  margin-top: 8px;
 
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 11.5px;
-    color: ${({ theme }) => theme.color.inkSoft};
+  .axis-cell {
+    grid-column: 2;
+    position: relative;
+    height: 16px;
   }
-  .swatch-bar {
-    width: 22px; height: 6px;
-    border-radius: 3px;
-    background: linear-gradient(135deg, #1B7A6E 0%, #2DB59F 100%);
-    flex-shrink: 0;
+  .axis-cell .lbl {
+    position: absolute;
+    top: 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: ${({ theme }) => theme.color.muted};
   }
-  .swatch-tick {
-    width: 1.5px; height: 13px;
-    background: ${({ theme }) => theme.color.ink};
-    opacity: 0.38;
-    flex-shrink: 0;
+  .axis-cell .zone { left: 18%; }
+  .axis-cell .mid { left: 45%; transform: translateX(-50%); color: ${({ theme }) => theme.color.inkSoft}; }
+  .axis-cell .right { right: 0; color: #DC2626; opacity: 0.75; }
+
+  @media (max-width: 740px) {
+    grid-template-columns: minmax(84px, 1fr) 1.6fr 70px;
+    gap: 12px;
+    .axis-cell .zone { display: none; }
   }
-  .swatch-dot {
-    width: 11px; height: 11px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .swatch-dot.over { background: #DC2626; }
-  .swatch-dot.ok   { background: ${({ theme }) => theme.color.brand}; }
 `;
 
-export const BenchmarkSummary = styled.div`
+export const SpectrumSummary = styled.div`
   display: flex;
   align-items: center;
   gap: 18px;
-  margin-top: 18px;
-  padding-top: 18px;
+  margin-top: 26px;
+  padding-top: 22px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
 
   .stat {
