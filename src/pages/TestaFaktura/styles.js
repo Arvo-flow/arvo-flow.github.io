@@ -376,8 +376,8 @@ export const BriefingHead = styled.div`
     border-radius: 100px;
     font-size: 12px;
     font-weight: 500;
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.surface};
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
     color: ${({ theme }) => theme.color.inkSoft};
     white-space: nowrap;
   }
@@ -634,8 +634,8 @@ export const SwitchCard = styled.div`
     align-items: center;
     gap: 11px;
     padding: 14px 18px;
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.brandSoft};
+    border-bottom: 1px solid ${({ theme }) => theme.color.brand}33;
   }
 
   .switch-badge {
@@ -1799,10 +1799,11 @@ const revealFade = keyframes`
 `;
 
 export const ScoreRevealCard = styled.div`
-  padding: 28px 4px;
-  background: transparent;
+  padding: 26px 28px;
+  background: rgba(27, 122, 110, 0.05);
   border: none;
-  margin-bottom: 24px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  margin-bottom: 22px;
   box-shadow: none;
   display: flex;
   flex-direction: row;
@@ -2155,8 +2156,8 @@ export const IntelligenceCard = styled.div`
     justify-content: space-between;
     align-items: center;
     padding: 12px 18px;
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.brandSoft};
+    border-bottom: 1px solid ${({ theme }) => theme.color.brand}33;
   }
 
   .preview-live-dot {
