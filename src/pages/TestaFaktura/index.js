@@ -2209,8 +2209,8 @@ const TestaFaktura = () => {
             <div className="pb-foot">
               <p className="pb-note">
                 En faktura säger en sak. Hela reskontran säger var ni faktiskt
-                blöder. Koppla Fortnox eller Visma så kartlägger Arvo varje
-                leverantör — och hittar varenda besparing, inte bara den här.
+                blöder. Vidarebefordra era leverantörsfakturor så kartlägger Arvo
+                varje leverantör — och hittar varenda besparing, inte bara den här.
               </p>
               <Link to="/portfolio" className="pb-link">
                 Kartlägg er reskontra <Icon name="arrow" size={15} stroke={2} />
