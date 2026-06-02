@@ -8,7 +8,7 @@ import { TOTALS } from '../../data/mockData';
 import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
-  PreviewCard, PreviewHead, SavingBig, PreviewList, PreviewRow, PreviewFloat,
+  PreviewCard, PreviewHead, PreviewFloat,
   WaveDivider,
   TrustStrip, TrustPillar,
   AlgoTrust,
@@ -206,8 +206,8 @@ const Landing = () => {
               </Button>
             </HeroActions>
             <HeroProof>
-              <div><strong>Bevakning dygnet runt</strong><span>vi hör av oss — ni behöver inte fråga</span></div>
-              <div><strong>100 % oberoende</strong><span>och objektiv analys</span></div>
+              <div><strong>Dygnet runt</strong><span>vi hör av oss — ni behöver inte fråga</span></div>
+              <div><strong>100 % oberoende</strong><span>alltid objektiv analys</span></div>
               <div><strong>Gratis att starta</strong><span>Switch: 0 kr tills ni sparat</span></div>
             </HeroProof>
           </div>
@@ -215,55 +215,77 @@ const Landing = () => {
           <HeroVisual>
             <PreviewCard>
               <PreviewHead>
-                <h4>Lindberg VVS · Live</h4>
-                <span>● Aktiv</span>
+                <h4>Arvo Intelligence</h4>
+                <span style={{ background: 'none', color: '#8A9E98', fontWeight: 400, padding: 0 }}>
+                  i morse · 08:14
+                </span>
               </PreviewHead>
-              <SavingBig>
-                <small>Din nettobesparing / år</small>
-                <div className="amount">
-                  <em>{TOTALS.activeNet.toLocaleString('sv-SE')}</em>
-                  <span className="unit">kr</span>
+
+              {/* Proactive alert */}
+              <div style={{ marginTop: 20, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 42, height: 42, borderRadius: 10, flexShrink: 0,
+                  background: '#FEF3C7',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                    <polyline points="16 7 22 7 22 13" />
+                  </svg>
                 </div>
-              </SavingBig>
-              <PreviewList>
-                <PreviewRow>
-                  <div className="icon"><Icon name="bolt" size={18} /></div>
-                  <div>
-                    <div className="label">Elavtal · Tibber</div>
-                    <div className="sub">vs Vattenfall (rörligt)</div>
+                <div>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#D97706', marginBottom: 4 }}>
+                    Smyghöjning identifierad
                   </div>
-                  <div className="amount">+44 480 kr</div>
-                </PreviewRow>
-                <PreviewRow>
-                  <div className="icon"><Icon name="truck" size={18} /></div>
-                  <div>
-                    <div className="label">Leasing · Arval</div>
-                    <div className="sub">8 servicebilar vs ALD</div>
+                  <div style={{ fontSize: 16.5, fontWeight: 600, color: '#1A2821', lineHeight: 1.2 }}>
+                    Telia · Er mobilflotta
                   </div>
-                  <div className="amount">+39 680 kr</div>
-                </PreviewRow>
-                <PreviewRow>
-                  <div className="icon"><Icon name="phone" size={18} /></div>
-                  <div>
-                    <div className="label">Mobil · Tele2</div>
-                    <div className="sub">14 abonnemang vs Telia</div>
+                  <div style={{ fontSize: 13, color: '#6B7C79', marginTop: 4 }}>
+                    +11&nbsp;% sedan förra kvartalet
                   </div>
-                  <div className="amount">+12 480 kr</div>
-                </PreviewRow>
-              </PreviewList>
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px solid #E5EFE9', margin: '18px 0' }} />
+
+              <p style={{ fontSize: 14, lineHeight: 1.6, color: '#4A5C58', margin: 0 }}>
+                8 av 15 jämförbara bolag fick samma höjning. Arvo har
+                identifierat en besparing på{' '}
+                <strong style={{ color: '#1B7A6E' }}>18&nbsp;480&nbsp;kr/år</strong>.
+              </p>
+
+              <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
+                <button style={{
+                  flex: 1, padding: '11px 0', borderRadius: 9,
+                  background: 'linear-gradient(135deg, #1B7A6E 0%, #2DB59F 100%)',
+                  border: 'none', color: '#fff', fontSize: 14, fontWeight: 600,
+                  cursor: 'default', letterSpacing: '-.01em',
+                }}>
+                  Ja, Arvo agerar →
+                </button>
+                <button style={{
+                  padding: '11px 16px', borderRadius: 9,
+                  background: 'transparent',
+                  border: '1px solid #D0E5DE',
+                  color: '#5C7A74', fontSize: 14, cursor: 'default',
+                }}>
+                  Visa underlag
+                </button>
+              </div>
             </PreviewCard>
+
             <PreviewFloat $top="-24px" $right="-12px">
               <div className="dot"><Icon name="spark" size={18} /></div>
               <div className="text">
-                <strong>5 nya förslag</strong>
-                <span>scanning klar 09:14</span>
+                <strong>Ny avisering</strong>
+                <span>automatisk bevakning</span>
               </div>
             </PreviewFloat>
             <PreviewFloat $bottom="-24px" $left="20px">
               <div className="dot"><Icon name="check" size={18} /></div>
               <div className="text">
-                <strong>Bytet är klart</strong>
-                <span>Tibber tar över 1 maj</span>
+                <strong>Förhandling klar</strong>
+                <span>Telia sänkte −12&nbsp;%</span>
               </div>
             </PreviewFloat>
           </HeroVisual>
