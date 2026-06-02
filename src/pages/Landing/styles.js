@@ -1424,18 +1424,18 @@ export const IntelligencePreview = styled.div`
     color: rgba(250,250,247,.35);
   }
 
-  /* Tre intelligenssignaler — speglar pelarnas ikoner till vänster */
+  /* Tre intelligenssignaler — speglar pelarnas ikoner till vänster.
+     Inga skiljelinjer — luft och ikoner bär strukturen. */
   .signal {
     display: flex;
     gap: 13px;
     align-items: flex-start;
-    padding: 16px 0;
-    border-bottom: 1px solid rgba(250,250,247,.07);
+    padding: 17px 0;
     opacity: ${({ $visible }) => $visible === false ? 0 : 1};
     transform: ${({ $visible }) => $visible === false ? 'translateY(10px)' : 'none'};
     transition: opacity .6s ease, transform .6s ease;
   }
-  .signal:nth-child(2) { transition-delay: .12s; }
+  .signal:nth-child(2) { padding-top: 20px; transition-delay: .12s; }
   .signal:nth-child(3) { transition-delay: .30s; }
   .signal:nth-child(4) { transition-delay: .48s; }
 
@@ -1529,7 +1529,9 @@ export const IntelligencePreview = styled.div`
   }
 
   .alert-saving {
-    padding: 16px 0 2px;
+    margin-top: 8px;
+    padding: 18px 0 2px;
+    border-top: 1px solid rgba(250,250,247,.08);
     opacity: ${({ $visible }) => $visible === false ? 0 : 1};
     transition: opacity .6s ease .62s;
   }
