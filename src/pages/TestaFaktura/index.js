@@ -389,6 +389,7 @@ const TestaFaktura = () => {
   const [reviewQueueEmailState, setReviewQueueEmailState] = useState('idle'); // idle | submitting | sent
   const [feedbackVote, setFeedbackVote] = useState(null); // null | 'up' | 'down'
   const [feedbackState, setFeedbackState] = useState('idle'); // idle | submitting | sent
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Batch mode — activated when multiple PDFs are dropped / selected
   const [batchFiles, setBatchFiles] = useState([]);
@@ -1648,7 +1649,7 @@ const TestaFaktura = () => {
                       {!isLicensePending && !isRealPrice && result.savingRange && (
                         <SavingRangeBadge>
                           <span className="range-label">Intervall:</span>
-                          {formatKr(result.savingRange.low)} – {formatKr(result.savingRange.high)} kr/år netto
+                          {formatNum(result.savingRange.low)} – {formatNum(result.savingRange.high)} kr/år netto
                         </SavingRangeBadge>
                       )}
 
@@ -1706,6 +1707,25 @@ const TestaFaktura = () => {
                 )}
               </p>
             )}
+
+            {/* ── Fakturaunderlag — dolt som standard, öppnas på begäran ──────── */}
+            <button
+              onClick={() => setDetailsOpen(o => !o)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 600, color: '#1B6E66',
+                padding: '4px 0 12px', letterSpacing: '.01em',
+              }}
+            >
+              <span style={{
+                display: 'inline-flex', transform: detailsOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'transform .2s', fontSize: 11,
+              }}>▶</span>
+              {detailsOpen ? 'Dölj fakturaunderlag' : 'Visa fakturaunderlag'}
+            </button>
+
+            {detailsOpen && <>
 
             {result.extracted?.annualCost != null && result.route !== 'monitoring' && result.route !== 'unsupported' && <KV>
               <div>
@@ -1990,6 +2010,8 @@ const TestaFaktura = () => {
               </TierOptAccordion>
             )}
 
+            </>} {/* end detailsOpen */}
+
           </Card>
 
           {/* ── Arvo Switch — Layer 2 · 20 % av realiserad besparing ────────── */}
@@ -1998,8 +2020,9 @@ const TestaFaktura = () => {
               <div className="switch-eyebrow">Arvo Switch</div>
               <h3>Redo att realisera besparingen?</h3>
               <p className="sub">
-                Arvo sköter allt — från uppsägning till nytt avtal.
-                Ni betalar 20&nbsp;% av identifierad besparing, inget annat.
+                Arvo agerar ombud. Vi hanterar uppsägning, prisförhandling och
+                signering av det nya avtalet — ni betalar 20&nbsp;% av identifierad
+                besparing, inget annat.
               </p>
               <div className="switch-offer-row">
                 <span className="switch-badge">
@@ -2012,7 +2035,7 @@ const TestaFaktura = () => {
                       : _switchPartnerLabel}
                   </p>
                   <p className="switch-price-label">
-                    {_switchIsRealPrice ? 'Verifierat marknadspris' : 'Arvos kalkylerade riktpris'}
+                    {_switchIsRealPrice ? 'Verifierat marknadspris' : 'Arvo-verifierad partner · Bästa tillgängliga pris'}
                   </p>
                 </div>
                 <div className="switch-amount">
@@ -2080,14 +2103,13 @@ const TestaFaktura = () => {
           </div>
 
 
-          {/* ── Arvo Intelligence — "Det här var en faktura." ───────────────── */}
+          {/* ── Arvo Intelligence — relation, inte produkt ───────────────────── */}
           <IntelligenceCard>
             <div className="eyebrow">Arvo Intelligence</div>
             <h3>Det här var en faktura.</h3>
             <p className="sub">
-              Er leverantörsreskontra döljer fler. Koppla Fortnox eller Visma —
-              Arvo analyserar varje faktura automatiskt och kontaktar er när
-              något händer som ni behöver veta.
+              Bokföringsprogram gör vad ni ber dem om. Arvo Intelligence kontaktar
+              er när något händer som ni behöver veta — utan att ni frågat.
             </p>
 
             <div className="briefing-preview">
@@ -2098,8 +2120,8 @@ const TestaFaktura = () => {
               <div className="preview-divider" />
               <p className="preview-alert">
                 {adjNetSaving > 0 && result?.categorized?.normalizedSupplier
-                  ? <><strong>{result.categorized.normalizedSupplier}</strong> höjde priset sedan förra månaden — {formatKr(adjNetSaving)}/år identifierat. Vill ni att Arvo agerar?</>
-                  : <>Telia höjde priset på er mobilflotta med 11&nbsp;% förra månaden. 8 av 15 bolag vi följer i er bransch fick samma höjning. Vill ni att Arvo agerar?</>
+                  ? <>Vi noterade att <strong>{result.categorized.normalizedSupplier}</strong> höjde priset sedan förra månaden — {formatKr(adjNetSaving)}/år identifierat. Vill ni att Arvo agerar och förhandlar tillbaka priset?</>
+                  : <>Vi noterade att Telia höjde priset på er mobilflotta med 11&nbsp;% förra månaden. 8 av 15 jämförbara bolag i vårt nätverk fick samma höjning. Vill ni att Arvo agerar och förhandlar tillbaka priset?</>
                 }
               </p>
               <div className="preview-action">Ja, Arvo agerar →</div>
@@ -2114,8 +2136,11 @@ const TestaFaktura = () => {
             </div>
 
             <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
-              Koppla Fortnox / Visma →
+              Aktivera Arvo Intelligence →
             </Button>
+            <p style={{ fontSize: 12, color: '#8A9E98', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>
+              Kom igång på 2 minuter via e-postvidarebefordran. Noll IT-integration krävs.
+            </p>
           </IntelligenceCard>
           </>
         )}
