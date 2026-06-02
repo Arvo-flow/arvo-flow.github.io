@@ -207,7 +207,7 @@ const Landing = () => {
               </Button>
             </HeroActions>
             <HeroProof>
-              <div><strong>Ingen integration krävs</strong><span>kom igång på 2 min via e-post</span></div>
+              <div><strong>Aktivera en gång</strong><span>Arvo bevakar resten — klart på 2 min</span></div>
               <div><strong>Aldrig utan er signatur</strong><span>ni behåller full kontroll</span></div>
               <div><strong>Betala bara när ni sparat</strong><span>Switch: 0 kr tills bytet är klart</span></div>
             </HeroProof>
@@ -302,29 +302,29 @@ const Landing = () => {
       <TrustStrip id="sakerhet">
         <TrustPillar>
           <div className="icon"><Icon name="lock" size={22} stroke={2} /></div>
-          <h3>Vi får bara läsa, aldrig ändra</h3>
+          <h3>Vi ser bara det ni delar</h3>
           <p>
-            Endast leverantörsfakturor — kundfakturor, lönedata, bankkonton och personnummer
-            ligger utanför vad vi kommer åt.
+            Ni vidarebefordrar era leverantörsfakturor — inget annat. Kundfakturor,
+            lönedata, bankkonton och personnummer når oss aldrig.
           </p>
           <ul>
-            <li className="group-label">Vad vi läser</li>
+            <li className="group-label">Vad vi ser</li>
             <li><Icon name="check" size={14} stroke={2.4} /> Leverantörsfakturor</li>
             <li><Icon name="check" size={14} stroke={2.4} /> Avtal &amp; förfallodatum</li>
-            <li className="group-label blocked">Utanför vår räckvidd</li>
+            <li className="group-label blocked">Når oss aldrig</li>
             <li className="no"><Icon name="lock" size={14} stroke={2} /> Lön &amp; personnummer</li>
             <li className="no"><Icon name="lock" size={14} stroke={2} /> Kundfakturor</li>
           </ul>
         </TrustPillar>
 
         <TrustPillar>
-          <div className="icon"><Icon name="check" size={22} stroke={2.4} /></div>
-          <h3>Vårt löfte</h3>
+          <div className="icon"><Icon name="bolt" size={22} stroke={2} /></div>
+          <h3>Aktivera en gång. Aldrig offline.</h3>
           <p>
-            Hittar vi inga överpriser på 30 dagar är ditt bolag redan optimerat.
-            Vi raderar Fortnox-kopplingen och all data automatiskt.
+            Ni kopplar in Arvo en enda gång. Därefter flödar varje ny leverantörsfaktura
+            in automatiskt och bevakas i realtid — ni behöver aldrig ladda upp något manuellt.
           </p>
-          <strong>Du har inte betalat en krona.</strong>
+          <strong>Klart på 2 minuter. Sen sköter Arvo resten.</strong>
         </TrustPillar>
 
         <TrustPillar>
