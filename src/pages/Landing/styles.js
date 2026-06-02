@@ -1380,11 +1380,6 @@ export const BenchmarkLeft = styled.div`
   }
 `;
 
-const youPulse = keyframes`
-  0%   { transform: scale(0.8); opacity: 0.55; }
-  100% { transform: scale(2);   opacity: 0; }
-`;
-
 export const BenchmarkPanel = styled.div`
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
@@ -1401,14 +1396,20 @@ export const BenchmarkPanelHead = styled.div`
   justify-content: space-between;
   align-items: center;
   padding-bottom: 15px;
-  margin-bottom: 18px;
+  margin-bottom: 6px;
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
+  .title-group { display: flex; flex-direction: column; gap: 3px; }
   .title {
     font-size: 14.5px;
     font-weight: 700;
     letter-spacing: -0.01em;
     color: ${({ theme }) => theme.color.ink};
+  }
+  .subtitle {
+    font-size: 11.5px;
+    color: ${({ theme }) => theme.color.muted};
+    letter-spacing: 0.01em;
   }
   .tag {
     font-size: 10.5px;
@@ -1425,84 +1426,94 @@ export const BenchmarkPanelHead = styled.div`
 export const BenchmarkRows = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 20px;
 `;
 
 export const BenchmarkRow = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
+  display: grid;
+  grid-template-columns: minmax(104px, 1.05fr) 1.5fr 76px;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  &:last-child { border-bottom: none; }
 
-export const BenchmarkRowHead = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
-
-  .label-group { display: flex; flex-direction: column; gap: 1px; }
+  .cat-col { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .cat {
-    font-size: 15px;
-    font-weight: 650;
+    font-size: 13.5px;
+    font-weight: 600;
     color: ${({ theme }) => theme.color.ink};
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .unit {
-    font-size: 11px;
-    color: ${({ theme }) => theme.color.muted};
-  }
+  .unit { font-size: 10px; color: ${({ theme }) => theme.color.muted}; }
+
   .delta {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     text-align: right;
   }
-  .delta strong {
-    font-size: 21px;
+  .delta.over strong {
+    font-size: 16px;
     font-weight: 800;
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     color: #DC2626;
     font-feature-settings: "tnum";
   }
+  .delta.inline strong {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12.5px;
+    font-weight: 700;
+    line-height: 1;
+    color: ${({ theme }) => theme.color.brand};
+  }
+  .delta.inline strong svg { color: ${({ theme }) => theme.color.brand}; }
   .delta small {
-    margin-top: 2px;
-    font-size: 10.5px;
+    margin-top: 3px;
+    font-size: 9.5px;
     font-weight: 500;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     color: ${({ theme }) => theme.color.muted};
+  }
+
+  @media (max-width: 740px) {
+    grid-template-columns: minmax(86px, 1fr) 1.25fr 64px;
+    gap: 12px;
   }
 `;
 
 export const BenchmarkTrack = styled.div`
   position: relative;
-  height: 14px;
-  background: ${({ theme }) => theme.color.surfaceAlt};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-radius: 7px;
-  box-shadow: inset 0 1px 2px rgba(14, 26, 23, 0.06);
+  height: 6px;
+  background: ${({ theme }) => theme.color.border};
+  border-radius: 3px;
 `;
 
 export const BenchmarkRange = styled.div`
   position: absolute;
-  top: -1px;
-  bottom: -1px;
-  border-radius: 7px;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
   background: linear-gradient(135deg, #1B7A6E 0%, #2DB59F 100%);
-  box-shadow: 0 2px 8px rgba(27, 122, 110, 0.32);
   left: ${({ $left }) => $left};
   width: ${({ $visible, $width }) => $visible ? $width : '0%'};
-  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1) ${({ $delay }) => $delay};
+  transition: width 1.1s cubic-bezier(0.4, 0, 0.2, 1) ${({ $delay }) => $delay};
 `;
 
 export const BenchmarkMedian = styled.div`
   position: absolute;
   top: 50%;
   z-index: 2;
-  width: 2px;
-  height: 22px;
+  width: 1.5px;
+  height: 11px;
   transform: translate(-50%, -50%);
   background: ${({ theme }) => theme.color.ink};
-  opacity: 0.42;
+  opacity: 0.38;
   border-radius: 1px;
   left: ${({ $left }) => $left};
 `;
@@ -1511,92 +1522,52 @@ export const BenchmarkYou = styled.div`
   position: absolute;
   top: 50%;
   z-index: 3;
-  width: 18px;
-  height: 18px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
-  background: #DC2626;
-  border: 3px solid ${({ theme }) => theme.color.surface};
-  box-shadow: 0 2px 9px rgba(220, 38, 38, 0.45);
+  background: ${({ $over }) => $over ? '#DC2626' : '#1B7A6E'};
+  border: 2px solid ${({ theme }) => theme.color.surface};
+  box-shadow: 0 1px 4px ${({ $over }) => $over ? 'rgba(220,38,38,0.40)' : 'rgba(27,122,110,0.40)'};
   transform: translate(-50%, -50%);
   left: ${({ $left }) => $left};
   opacity: ${({ $visible }) => $visible ? 1 : 0};
-  transition: opacity 0.45s ease ${({ $delay }) => $delay};
-
-  /* pulserande ring */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -3px;
-    border-radius: 50%;
-    border: 1.5px solid #DC2626;
-    opacity: 0;
-    animation: ${({ $visible }) => $visible ? youPulse : 'none'} 2.4s ease-out 0.6s infinite;
-  }
-  /* kopplingslinje ner till värdet */
-  &::after {
-    content: '';
-    position: absolute;
-    top: calc(100% + 1px);
-    left: 50%;
-    width: 1.5px;
-    height: 15px;
-    transform: translateX(-50%);
-    background: linear-gradient(#DC2626, rgba(220, 38, 38, 0));
-    opacity: ${({ $visible }) => $visible ? 1 : 0};
-    transition: opacity 0.45s ease ${({ $delay }) => $delay};
-  }
-`;
-
-export const BenchmarkRowLabels = styled.div`
-  position: relative;
-  height: 15px;
-  margin-top: 9px;
-
-  span {
-    position: absolute;
-    transform: translateX(-50%);
-    font-size: 11px;
-    white-space: nowrap;
-    font-feature-settings: "tnum";
-  }
-  span.p25    { color: ${({ theme }) => theme.color.brand}; font-weight: 600; }
-  span.median { color: ${({ theme }) => theme.color.muted}; }
-  span.you    { color: #DC2626; font-weight: 700; }
+  transition: opacity 0.4s ease ${({ $delay }) => $delay};
 `;
 
 export const BenchmarkLegend = styled.div`
   display: flex;
-  gap: 20px;
+  gap: 18px;
   flex-wrap: wrap;
   border-top: 1px solid ${({ theme }) => theme.color.border};
-  margin-top: 22px;
+  margin-top: 18px;
   padding-top: 16px;
 
   .legend-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
+    gap: 7px;
+    font-size: 11.5px;
     color: ${({ theme }) => theme.color.inkSoft};
   }
   .swatch-bar {
-    width: 24px; height: 7px;
+    width: 22px; height: 6px;
     border-radius: 3px;
     background: linear-gradient(135deg, #1B7A6E 0%, #2DB59F 100%);
     flex-shrink: 0;
   }
   .swatch-tick {
-    width: 2px; height: 15px;
+    width: 1.5px; height: 13px;
     background: ${({ theme }) => theme.color.ink};
-    opacity: 0.42;
+    opacity: 0.38;
     flex-shrink: 0;
   }
   .swatch-dot {
-    width: 13px; height: 13px;
+    width: 11px; height: 11px;
     border-radius: 50%;
-    background: #DC2626;
     flex-shrink: 0;
   }
+  .swatch-dot.over { background: #DC2626; }
+  .swatch-dot.ok   { background: ${({ theme }) => theme.color.brand}; }
 `;
 
 export const BenchmarkSummary = styled.div`
