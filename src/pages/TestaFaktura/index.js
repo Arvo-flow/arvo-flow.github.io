@@ -419,6 +419,7 @@ const TestaFaktura = () => {
   const [activationOpen, setActivationOpen] = useState(false);
   const [activationEmail, setActivationEmail] = useState('');
   const [activationStatus, setActivationStatus] = useState('idle'); // idle | submitting | sent | error
+  const [oauthBanner, setOauthBanner] = useState(null); // null | { type: 'connected'|'pending'|'error', provider, invoices, email, errorCode }
 
   // Batch mode — activated when multiple PDFs are dropped / selected
   const [batchFiles, setBatchFiles] = useState([]);
@@ -457,6 +458,24 @@ const TestaFaktura = () => {
       .then((r) => r.json())
       .then((d) => setApiToken(d.token ?? null))
       .catch(() => {});
+
+    // Handle OAuth return params (?intelligence_connected, ?oauth_pending, ?oauth_error)
+    const connected = params.get('intelligence_connected');
+    const pending   = params.get('oauth_pending');
+    const oauthErr  = params.get('oauth_error');
+    const provider  = params.get('provider') ?? connected ?? pending ?? 'gmail';
+    if (connected || pending || oauthErr) {
+      const invoices = parseInt(params.get('invoices') ?? '0', 10) || 0;
+      const retEmail = params.get('email') ?? '';
+      if (connected) {
+        setOauthBanner({ type: 'connected', provider: connected, invoices, email: retEmail });
+      } else if (pending) {
+        setOauthBanner({ type: 'pending', provider: pending });
+      } else if (oauthErr) {
+        setOauthBanner({ type: 'error', provider, errorCode: oauthErr });
+      }
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   // Scrolla till resultatkortet när analysen är klar
@@ -1030,6 +1049,47 @@ const TestaFaktura = () => {
   return (
     <Page>
       <Nav variant="public" />
+
+      {/* ── OAuth return banner ─────────────────────────────────────────── */}
+      {oauthBanner && (
+        <div style={{
+          background: oauthBanner.type === 'connected' ? '#F0FDF9'
+                    : oauthBanner.type === 'pending'   ? '#FFFBEB'
+                    : '#FEF2F2',
+          borderBottom: `1px solid ${oauthBanner.type === 'connected' ? '#6EE7D1'
+                                   : oauthBanner.type === 'pending'   ? '#FCD34D'
+                                   : '#FECACA'}`,
+          padding: '13px 24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <span style={{ fontSize: 14, color: oauthBanner.type === 'connected' ? '#065F46' : oauthBanner.type === 'pending' ? '#92400E' : '#991B1B', fontWeight: 600, lineHeight: 1.5 }}>
+            {oauthBanner.type === 'connected' && (
+              <>
+                {oauthBanner.provider === 'gmail' ? 'Gmail' : 'Outlook'} kopplat —{' '}
+                {oauthBanner.invoices > 0
+                  ? `Arvo hittade ${oauthBanner.invoices} fakturor i er inkorg. Er briefing skickas inom kort.`
+                  : 'Arvo bevakar nu er inkorg. Er briefing skickas inom kort.'}
+              </>
+            )}
+            {oauthBanner.type === 'pending' && (
+              <>
+                {oauthBanner.provider === 'gmail' ? 'Gmail' : 'Outlook'}-anslutning kräver konfiguration —{' '}
+                er aktivering är mottagen och Arvo kontaktar er inom kort.
+              </>
+            )}
+            {oauthBanner.type === 'error' && (
+              <>
+                Anslutning misslyckades ({oauthBanner.errorCode}) — försök igen eller kontakta hej@arvoflow.se.
+              </>
+            )}
+          </span>
+          <button
+            onClick={() => setOauthBanner(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, lineHeight: 1, opacity: 0.5, padding: '0 4px' }}
+            aria-label="Stäng"
+          >×</button>
+        </div>
+      )}
 
       <Hero>
         <Eyebrow><span className="dot" /> Testa själv · Gratis · Resultat direkt</Eyebrow>
