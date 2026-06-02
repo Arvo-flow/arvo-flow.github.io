@@ -8,7 +8,7 @@ import { TOTALS } from '../../data/mockData';
 import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
-  HeroTimeline, PreviewFloat,
+  HeroTimeline,
   WaveDivider,
   TrustStrip, TrustPillar,
   AlgoTrust,
@@ -416,14 +416,6 @@ const Landing = () => {
                 <button className="tl-cta">Se hur Arvo löste det →</button>
               </div>
             </HeroTimeline>
-
-            <PreviewFloat $top="-24px" $right="-12px">
-              <div className="dot"><Icon name="spark" size={18} /></div>
-              <div className="text">
-                <strong>Ny avisering</strong>
-                <span>automatisk bevakning</span>
-              </div>
-            </PreviewFloat>
           </HeroVisual>
         </HeroInner>
       </Hero>
