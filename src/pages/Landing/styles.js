@@ -1207,11 +1207,13 @@ export const IntelligencePillar = styled.div`
     flex-shrink: 0;
   }
   h4 {
+    font-family: ${({ theme }) => theme.font.sans};
     font-size: 15.5px;
     font-weight: 700;
     color: #FAFAF7;
     margin: 0 0 4px;
     letter-spacing: -.01em;
+    line-height: 1.2;
   }
   p {
     font-size: 13.5px;
