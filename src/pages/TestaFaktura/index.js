@@ -1226,7 +1226,7 @@ const TestaFaktura = () => {
                 )}
                 {result.route === 'auto' && adjNetSaving > 0 && (
                   <span className="bh-chip bh-chip--alert">
-                    +{formatKr(adjNetSaving)}&thinsp;kr/år
+                    +{formatNum(adjNetSaving)}&thinsp;kr/år
                   </span>
                 )}
               </div>
