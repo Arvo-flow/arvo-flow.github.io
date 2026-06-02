@@ -443,6 +443,16 @@ export const SavingsBlock = styled.div`
     border-top: 1px solid rgba(255,255,255,.18);
     padding-top: 10px;
   }
+  span.key-finding {
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.9;
+    letter-spacing: .01em;
+    border-top: 1px solid rgba(255,255,255,.14);
+    padding-top: 10px;
+  }
 `;
 
 export const EstimateSavingsBlock = styled.div`

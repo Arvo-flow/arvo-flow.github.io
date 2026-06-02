@@ -35,6 +35,26 @@ function truncateReasoning(text, maxSentences = 2) {
   return sentences.slice(0, maxSentences).join(' ').trim();
 }
 
+function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnnualCost, diagOvPct, licenseOverage }) {
+  if (!diagOvPct && !licenseOverage) return null;
+  const fmtN = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
+  if ((cat === 'mobil' || cat === 'vaxel') && seatCount > 1) {
+    const perNow = Math.round(adjAnnualCost / seatCount);
+    const perNew = Math.round((suggestedAnnualCost ?? 0) / seatCount);
+    return `${seatCount} abonnemang hos ${supplier} — ${fmtN(perNow)} kr/st/år mot avtalspriset ${fmtN(perNew)} kr/st/år.`;
+  }
+  if (cat?.startsWith('saas') && licenseOverage > 0) {
+    return `${seatCount} licenser hos ${supplier} — varav ${licenseOverage} verkar oanvända.`;
+  }
+  if (cat?.startsWith('saas') && seatCount > 1) {
+    return `${seatCount} licenser hos ${supplier} — ${diagOvPct}% över avtalspris för er storlek.`;
+  }
+  if (diagOvPct > 0 && supplier) {
+    return `${supplier} — ${diagOvPct}% över verifierat marknadspris.`;
+  }
+  return null;
+}
+
 function detectHardwareInstallments(lineItems) {
   if (!Array.isArray(lineItems)) return [];
   const re = /[Mm]ånad\s+(\d+)\s+av\s+(\d+)|[Mm]onth\s+(\d+)\s+of\s+(\d+)/;
@@ -1690,6 +1710,20 @@ const TestaFaktura = () => {
                                 </>
                               )}
                         </span>
+                        {(() => {
+                          const kf = buildKeyFinding({
+                            cat:                result.categorized?.category,
+                            supplier:           result.categorized?.normalizedSupplier ?? result.extracted?.supplier,
+                            seatCount:          result.extracted?.seatCount ?? 0,
+                            adjAnnualCost,
+                            suggestedAnnualCost: result.recommendation.suggestedAnnualCost,
+                            diagOvPct,
+                            licenseOverage:     result.recommendation?.licenseOverage ?? 0,
+                          });
+                          return kf ? (
+                            <span className="key-finding">{kf}</span>
+                          ) : null;
+                        })()}
                       </SavingsBlock>
 
                     </>
@@ -1710,37 +1744,6 @@ const TestaFaktura = () => {
                   </NoSwitchBlock>
                 )}
               </>
-            )}
-
-            {/* ── Reasoning excerpt — synlig utan att öppna detaljer ───────────── */}
-            {result.route === 'auto' &&
-             result.categorized?.category &&
-             result.recommendation?.shouldSwitch &&
-             result.recommendation?.netSaving > 0 &&
-             result.recommendation?.reasoning && (
-              <blockquote style={{
-                margin: '4px 0 16px',
-                padding: '12px 16px 12px 18px',
-                borderLeft: '2px solid #B8D4CB',
-                borderRadius: '0 6px 6px 0',
-              }}>
-                <p style={{
-                  fontSize: 13.5,
-                  color: '#3D5249',
-                  lineHeight: 1.6,
-                  margin: 0,
-                  fontStyle: 'italic',
-                }}>
-                  {truncateReasoning(
-                    getCategoryMeta(result.categorized.category).isRealPrice
-                      ? result.recommendation.reasoning
-                      : redactSupplier(result.recommendation.reasoning, result.recommendation.suggestedSupplier)
-                  )}
-                </p>
-                <cite style={{ fontSize: 11, color: '#8A9E98', marginTop: 6, display: 'block', fontStyle: 'normal' }}>
-                  — Arvos bedömning
-                </cite>
-              </blockquote>
             )}
 
             {/* ── Fakturaunderlag — dolt som standard, öppnas på begäran ──────── */}
