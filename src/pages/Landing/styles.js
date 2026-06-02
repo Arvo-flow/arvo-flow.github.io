@@ -1361,10 +1361,19 @@ export const BenchmarkLeft = styled.div`
     color: ${({ theme }) => theme.color.inkSoft};
     margin: 0 0 16px;
   }
-  p:last-of-type { margin-bottom: 0; }
+  p.moat {
+    margin-top: 28px;
+    padding-left: 20px;
+    border-left: 2.5px solid ${({ theme }) => theme.color.brand};
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 20px;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    color: ${({ theme }) => theme.color.ink};
+  }
   .footnote {
     display: block;
-    margin-top: 24px;
+    margin-top: 28px;
     font-size: 12px;
     color: ${({ theme }) => theme.color.muted};
     line-height: 1.5;
