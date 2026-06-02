@@ -11,7 +11,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  ResultHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
+  BriefingHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
   Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, ScoreRevealCard, EmailGate,
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, QuoteLeadForm, RoamingInsight,
@@ -1202,27 +1202,35 @@ const TestaFaktura = () => {
         {result && (
           <>
           <Card ref={resultRef}>
-            <ResultHead>
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#1B6E66', margin: '0 0 4px', opacity: .8 }}>
-                  Arvo analyserade er faktura
-                </p>
-                <h2>{result.extracted.supplier}</h2>
+            <BriefingHead>
+              <div className="bh-top">
+                <span className="bh-stamp">
+                  Briefing · {new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}
+                </span>
+                <button className="bh-dl" onClick={() => setDownloadModalOpen(true)} title="Ladda ner analys">
+                  <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 5v14M5 12l7 7 7-7" />
+                  </svg>
+                </button>
+              </div>
+              <h2 className="bh-supplier">{result.extracted.supplier}</h2>
+              <div className="bh-row">
                 {result.categorized && (
-                  <span className="subtitle">
-                    {result.reason === 'natavgift'
-                      ? 'Nätavgift'
-                      : _secSaving != null
-                        ? `${getCategoryMeta(result.categorized.category).label} & ${_secLabel}`
-                        : (getCategoryMeta(result.categorized.category).label || result.categorized.category)}
-                    {result.categorized.subType && result.reason !== 'natavgift' && _secSaving == null ? ` · ${result.categorized.subType}` : ''}
+                  <span className="bh-chip">
+                    {result.reason === 'natavgift' ? 'Nätavgift'
+                      : _secSaving != null ? `${getCategoryMeta(result.categorized.category).label} & ${_secLabel}`
+                      : (getCategoryMeta(result.categorized.category).label || result.categorized.category)}
+                    {result.categorized.subType && result.reason !== 'natavgift' && _secSaving == null
+                      ? ` · ${result.categorized.subType}` : ''}
+                  </span>
+                )}
+                {result.route === 'auto' && adjNetSaving > 0 && (
+                  <span className="bh-chip bh-chip--alert">
+                    +{formatKr(adjNetSaving)}&thinsp;kr/år
                   </span>
                 )}
               </div>
-              <Button onClick={() => setDownloadModalOpen(true)} $variant="secondary" $size="sm">
-                Ladda ner analys
-              </Button>
-            </ResultHead>
+            </BriefingHead>
 
             {result.route === 'monitoring' ? (
               <>
@@ -1634,26 +1642,6 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
-                      {!isLicensePending && (
-                        <PriceNote $compact>
-                          {_effectiveMeta.benchmarkType === 'list-verified'
-                            ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
-                            : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
-                        </PriceNote>
-                      )}
-
-                      {/* P2.2 — Konfidensintervall för Kategori 2 */}
-                      {!isLicensePending && !isRealPrice && result.savingRange && (
-                        <SavingRangeBadge>
-                          <span className="range-label">Intervall:</span>
-                          {formatNum(result.savingRange.low)} – {formatNum(result.savingRange.high)} kr/år netto
-                        </SavingRangeBadge>
-                      )}
-
-                      {/* P2.1 — Beräkningskedja (expanderbar) */}
-                      {!isLicensePending && result.calculationChain && (
-                        <CalculationChainBlock cc={result.calculationChain} />
-                      )}
 
                     </>
                   );
@@ -1675,6 +1663,39 @@ const TestaFaktura = () => {
               </>
             )}
 
+            {/* ── Fakturaunderlag — dolt som standard, öppnas på begäran ──────── */}
+            <button
+              onClick={() => setDetailsOpen(o => !o)}
+              style={{
+                display: 'block', background: 'none', border: 'none', cursor: 'pointer',
+                width: '100%', textAlign: 'center',
+                padding: '18px 0 6px', marginTop: 8,
+                fontSize: 13, color: '#5C6E68',
+                borderTop: '1px solid #E5EFE9',
+                fontFamily: 'inherit',
+              }}
+            >
+              {detailsOpen ? '← Dölj underlag' : 'Hur vi räknar →'}
+            </button>
+
+            {detailsOpen && <>
+
+            {result.route === 'auto' && !result.categorized?.licensePending && (
+              <PriceNote>
+                {_effectiveMeta.benchmarkType === 'list-verified'
+                  ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
+                  : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
+              </PriceNote>
+            )}
+            {result.route === 'auto' && !result.categorized?.licensePending && !_effectiveMeta.isRealPrice && result.savingRange && (
+              <SavingRangeBadge>
+                <span className="range-label">Intervall:</span>
+                {formatNum(result.savingRange.low)} – {formatNum(result.savingRange.high)} kr/år netto
+              </SavingRangeBadge>
+            )}
+            {result.route === 'auto' && !result.categorized?.licensePending && result.calculationChain && (
+              <CalculationChainBlock cc={result.calculationChain} />
+            )}
             {result.extracted?.potentialMixedCategories && (
               <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 14, lineHeight: 1.5, fontStyle: 'italic' }}>
                 {_secSaving ? (
@@ -1704,32 +1725,6 @@ const TestaFaktura = () => {
                 )}
               </p>
             )}
-
-            {/* ── Fakturaunderlag — dolt som standard, öppnas på begäran ──────── */}
-            <button
-              onClick={() => setDetailsOpen(o => !o)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 12.5, fontWeight: 600,
-                color: '#5C6E68', letterSpacing: '.03em', textTransform: 'uppercase',
-                padding: '11px 0 11px', width: '100%',
-                borderTop: '1px solid #E5EFE9',
-                marginTop: 4,
-              }}
-            >
-              <svg
-                width={13} height={13} viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth={2.5}
-                strokeLinecap="round" strokeLinejoin="round"
-                style={{ transition: 'transform .2s', transform: detailsOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}
-              >
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
-              {detailsOpen ? 'Dölj fakturaunderlag' : 'Visa fakturaunderlag'}
-            </button>
-
-            {detailsOpen && <>
 
             {result.extracted?.annualCost != null && result.route !== 'monitoring' && result.route !== 'unsupported' && <KV>
               <div>

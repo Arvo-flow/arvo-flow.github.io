@@ -87,6 +87,7 @@ export const Card = styled.div`
   border-radius: ${({ theme }) => theme.size.radius.lg};
   padding: 32px;
   margin-bottom: 16px;
+  animation: ${fadeUp} 0.5s ease both;
   @media (max-width: 600px) { padding: 22px 20px; }
 `;
 
@@ -311,6 +312,79 @@ export const ResultHead = styled.div`
     font-size: 14px;
     color: ${({ theme }) => theme.color.muted};
     display: block;
+  }
+`;
+
+export const BriefingHead = styled.div`
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+
+  .bh-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .bh-stamp {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.brand};
+  }
+  .bh-dl {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: ${({ theme }) => theme.color.muted};
+    transition: all 0.18s;
+    padding: 0;
+    flex-shrink: 0;
+    &:hover {
+      background: ${({ theme }) => theme.color.brandSoft};
+      border-color: ${({ theme }) => theme.color.brand};
+      color: ${({ theme }) => theme.color.brand};
+    }
+  }
+  h2.bh-supplier {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: ${({ theme }) => theme.color.ink};
+    line-height: 1.1;
+    margin: 0 0 14px;
+  }
+  .bh-row {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .bh-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    color: ${({ theme }) => theme.color.inkSoft};
+    white-space: nowrap;
+  }
+  .bh-chip--alert {
+    background: ${({ theme }) => theme.color.brandSoft};
+    border-color: ${({ theme }) => theme.color.brand}44;
+    color: ${({ theme }) => theme.color.brandInk};
+    font-weight: 600;
   }
 `;
 
