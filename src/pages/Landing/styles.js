@@ -175,24 +175,150 @@ export const PreviewHead = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 18px;
+  padding-bottom: 16px;
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
   h4 {
     font-family: ${({ theme }) => theme.font.sans};
-    font-size: 13px;
-    font-weight: 600;
-    color: ${({ theme }) => theme.color.muted};
+    font-size: 10px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.brand};
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.14em;
   }
   span {
-    font-size: 12px;
+    font-size: 11px;
+    color: ${({ theme }) => theme.color.mutedSoft};
+    font-weight: 400;
+    background: none;
+    padding: 0;
+  }
+`;
+
+export const AlertRow = styled.div`
+  margin-top: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+`;
+
+export const AlertIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  flex-shrink: 0;
+  background: #FEF3C7;
+  border: 1px solid rgba(217,119,6,.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+`;
+
+export const AlertMeta = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  .alert-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #B45309;
+    margin-bottom: 5px;
+  }
+  .alert-supplier {
+    font-size: 17px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.ink};
+    letter-spacing: -.02em;
+    line-height: 1.15;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .alert-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: #B91C1C;
+    background: #FEE2E2;
+    border-radius: 6px;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+`;
+
+export const AlertProof = styled.div`
+  margin: 16px 0;
+  padding: 10px 14px;
+  border-left: 2.5px solid ${({ theme }) => theme.color.brandSoft};
+  background: ${({ theme }) => theme.color.brandSoft}55;
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.color.inkSoft};
+
+  strong { color: ${({ theme }) => theme.color.ink}; font-weight: 600; }
+`;
+
+export const AlertSaving = styled.div`
+  padding: 14px 0 2px;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+
+  .saving-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.muted};
+    margin-bottom: 4px;
+  }
+  .saving-amount {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    line-height: 1;
     color: ${({ theme }) => theme.color.brand};
-    background: ${({ theme }) => theme.color.brandSoft};
-    padding: 4px 10px;
-    border-radius: ${({ theme }) => theme.size.radius.pill};
+    font-feature-settings: "tnum";
+
+    .unit { font-size: 15px; font-weight: 400; color: ${({ theme }) => theme.color.muted}; margin-left: 3px; letter-spacing: 0; }
+  }
+`;
+
+export const AlertActions = styled.div`
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+
+  .btn-primary {
+    flex: 1;
+    padding: 12px 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #1B7A6E 0%, #2DB59F 100%);
+    border: none;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -.015em;
+    cursor: default;
+    box-shadow: 0 4px 16px rgba(27,122,110,.30);
+  }
+  .btn-secondary {
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1.5px solid ${({ theme }) => theme.color.borderStrong};
+    color: ${({ theme }) => theme.color.inkSoft};
+    font-family: inherit;
+    font-size: 14px;
     font-weight: 500;
+    cursor: default;
+    white-space: nowrap;
   }
 `;
 
