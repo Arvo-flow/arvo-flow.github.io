@@ -1758,7 +1758,7 @@ export const ScoreRevealCard = styled.div`
   padding: 36px 28px 32px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
   background: ${({ theme }) => theme.color.surface};
-  border: 2px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
+  border: 1px solid ${({ theme }) => theme.color.border};
   margin-bottom: 20px;
   box-shadow: 0 4px 28px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.04);
   text-align: center;
