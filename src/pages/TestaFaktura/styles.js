@@ -621,28 +621,33 @@ export const SwitchCard = styled.div`
     margin: 0 0 20px;
   }
 
-  .switch-offer-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
+  .switch-offer {
+    padding: 18px 20px 20px;
     border-radius: ${({ theme }) => theme.size.radius.md};
     background: ${({ theme }) => theme.color.surfaceAlt};
     border: 1px solid ${({ theme }) => theme.color.border};
     margin-bottom: 20px;
   }
 
+  .switch-offer-head {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding-bottom: 15px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  }
+
   .switch-badge {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background: ${({ theme }) => theme.color.brand};
     color: #FAFAF7;
     flex-shrink: 0;
-    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
   }
 
   .switch-supplier {
@@ -656,36 +661,76 @@ export const SwitchCard = styled.div`
     color: ${({ theme }) => theme.color.ink};
     margin: 0;
     letter-spacing: -0.01em;
+    line-height: 1.25;
   }
 
   .switch-price-label {
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
     color: ${({ theme }) => theme.color.brand};
-    font-weight: 600;
-    margin: 2px 0 0;
-    letter-spacing: .01em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin: 4px 0 0;
   }
 
-  .switch-amount {
-    text-align: right;
-    flex-shrink: 0;
-    @media (max-width: 480px) { display: none; }
+  .switch-transition {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
   }
 
-  .switch-amount-main {
-    display: block;
-    font-size: 17px;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    font-feature-settings: "tnum";
-    color: ${({ theme }) => theme.color.ink};
+  .sp-col {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
   }
 
-  .switch-amount-from {
-    display: block;
-    font-size: 11px;
+  .sp-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .11em;
     color: ${({ theme }) => theme.color.muted};
-    margin-top: 2px;
+  }
+
+  .sp-old {
+    font-size: 16px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.muted};
+    text-decoration: line-through;
+    text-decoration-color: ${({ theme }) => theme.color.borderStrong};
+    font-feature-settings: "tnum";
+    white-space: nowrap;
+  }
+
+  .sp-arrow {
+    color: ${({ theme }) => theme.color.brand};
+    flex-shrink: 0;
+    padding-bottom: 3px;
+  }
+
+  .sp-new {
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: ${({ theme }) => theme.color.brand};
+    line-height: 1;
+    font-feature-settings: "tnum";
+    white-space: nowrap;
+
+    small {
+      font-family: ${({ theme }) => theme.font.sans};
+      font-size: 13px;
+      font-weight: 500;
+      color: ${({ theme }) => theme.color.muted};
+      margin-left: 3px;
+      letter-spacing: 0;
+    }
   }
 
   .switch-fine-print {
@@ -1756,23 +1801,25 @@ const revealFade = keyframes`
 `;
 
 export const ScoreRevealCard = styled.div`
-  padding: 36px 0 28px;
+  padding: 28px 4px;
   background: transparent;
   border: none;
   margin-bottom: 24px;
   box-shadow: none;
-  text-align: center;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  gap: 28px;
   animation: ${fadeUp} 0.5s ease both;
+
+  @media (max-width: 460px) { gap: 20px; }
 
   .gauge-wrap {
     flex-shrink: 0;
     position: relative;
-    width: 128px;
-    height: 128px;
-    margin-bottom: 20px;
+    width: 112px;
+    height: 112px;
+    @media (max-width: 460px) { width: 92px; height: 92px; }
   }
   .gauge-svg {
     position: absolute;
@@ -1793,54 +1840,50 @@ export const ScoreRevealCard = styled.div`
   }
   .score-val {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 48px;
+    font-size: 42px;
     font-weight: 500;
     letter-spacing: -0.03em;
     font-feature-settings: "tnum";
     color: var(--diag-color);
+    @media (max-width: 460px) { font-size: 34px; }
   }
   .score-denom {
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 600;
     opacity: 0.38;
     color: var(--diag-color);
-    margin-top: 3px;
+    margin-top: 2px;
+  }
+  .score-body {
+    flex: 1;
+    min-width: 0;
   }
   .level-badge {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 6px 14px 6px 10px;
+    padding: 5px 13px 5px 9px;
     border-radius: 100px;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 700;
-    margin-bottom: 14px;
-    animation: ${revealFade} 0.45s ease 1.65s both;
+    margin-bottom: 11px;
+    animation: ${revealFade} 0.45s ease 1.5s both;
   }
   .level-dot {
-    width: 9px;
-    height: 9px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
     background: var(--diag-color);
   }
   .insight {
     font-size: 15.5px;
-    line-height: 1.6;
+    line-height: 1.55;
     letter-spacing: -0.01em;
     color: ${({ theme }) => theme.color.ink};
     margin: 0;
-    max-width: 440px;
-    animation: ${revealFade} 0.45s ease 2.05s both;
-  }
-
-  @media (max-width: 520px) {
-    padding: 28px 20px 24px;
-    .gauge-wrap { width: 108px; height: 108px; }
-    .score-val { font-size: 40px; }
-    .score-denom { font-size: 13px; }
-    .level-badge { font-size: 13px; margin-bottom: 10px; }
-    .insight { font-size: 14.5px; }
+    animation: ${revealFade} 0.45s ease 1.85s both;
+    @media (max-width: 460px) { font-size: 14.5px; }
   }
 `;
 

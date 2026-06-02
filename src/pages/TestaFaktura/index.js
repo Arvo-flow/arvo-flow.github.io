@@ -110,11 +110,13 @@ function ScoreReveal({ diagScore, diagC, diagInsight }) {
           <span className="score-denom">/100</span>
         </div>
       </div>
-      <div className="level-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
-        <span className="level-dot" />
-        {diagC.label}
+      <div className="score-body">
+        <div className="level-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
+          <span className="level-dot" />
+          {diagC.label}
+        </div>
+        <p className="insight">{diagInsight}</p>
       </div>
-      <p className="insight">{diagInsight}</p>
     </ScoreRevealCard>
   );
 }
@@ -2023,23 +2025,37 @@ const TestaFaktura = () => {
                 signering av det nya avtalet — ni betalar 20&nbsp;% av identifierad
                 besparing, inget annat.
               </p>
-              <div className="switch-offer-row">
-                <span className="switch-badge">
-                  <Icon name="check" size={13} stroke={2.5} />
-                </span>
-                <div className="switch-supplier">
-                  <p className="switch-supplier-name">
-                    {_switchIsRealPrice
-                      ? result.recommendation.suggestedSupplier
-                      : _switchPartnerLabel}
-                  </p>
-                  <p className="switch-price-label">
-                    {_switchIsRealPrice ? 'Verifierat marknadspris' : 'Arvo-verifierad partner · Bästa tillgängliga pris'}
-                  </p>
+              <div className="switch-offer">
+                <div className="switch-offer-head">
+                  <span className="switch-badge">
+                    <Icon name="check" size={14} stroke={2.5} />
+                  </span>
+                  <div className="switch-supplier">
+                    <p className="switch-supplier-name">
+                      {_switchIsRealPrice
+                        ? result.recommendation.suggestedSupplier
+                        : _switchPartnerLabel}
+                    </p>
+                    <span className="switch-price-label">
+                      <Icon name="shield" size={11} stroke={2} />
+                      {_switchIsRealPrice ? 'Verifierat marknadspris' : 'Arvo-verifierad partner'}
+                    </span>
+                  </div>
                 </div>
-                <div className="switch-amount">
-                  <span className="switch-amount-main">{formatKr(result.recommendation.suggestedAnnualCost)}/år</span>
-                  <span className="switch-amount-from">↓ från {formatKr(adjAnnualCost)}</span>
+                <div className="switch-transition">
+                  <div className="sp-col">
+                    <span className="sp-label">Idag</span>
+                    <span className="sp-old">{formatKr(adjAnnualCost)}</span>
+                  </div>
+                  <span className="sp-arrow">
+                    <Icon name="arrow" size={18} stroke={2} />
+                  </span>
+                  <div className="sp-col">
+                    <span className="sp-label">Med Arvo</span>
+                    <span className="sp-new">
+                      {formatNum(result.recommendation.suggestedAnnualCost)}<small>kr/år</small>
+                    </span>
+                  </div>
                 </div>
               </div>
               <Button
