@@ -1330,8 +1330,8 @@ export const BenchmarkInner = styled.div`
   max-width: ${({ theme }) => theme.size.container};
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 0.85fr 1.15fr;
-  gap: 72px;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
   align-items: start;
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
