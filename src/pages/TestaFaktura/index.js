@@ -177,14 +177,14 @@ const INDUSTRY_LABELS = {
 
 
 const SEGMENTS = [
-  { label: 'Skrivare',          icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
-  { label: 'El',               icon: 'bolt',      cats: ['el'] },
-  { label: 'Telefoni och bredband', icon: 'phone', cats: ['mobil', 'bredband', 'vaxel'] },
-  { label: 'Programvara',      icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
-  { label: 'IT',               icon: 'wifi',      cats: ['it-support'] },
-  { label: 'Fordon och frakt',  icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
-  { label: 'Kontor och städ',  icon: 'briefcase', cats: ['kontorsmaterial', 'städ-rengöring', 'larm-bevakning', 'kortterminal', 'avfall-atervinning', 'bankavgifter'] },
-  { label: 'Personal och hälsa', icon: 'shield',  cats: ['foretagshalsovard', 'loneadmin', 'forsakring-foretag', 'forsakring-ansvar'] },
+  { label: 'Skrivare',              short: 'Skrivare',   icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
+  { label: 'El',                    short: 'El',          icon: 'bolt',      cats: ['el'] },
+  { label: 'Telefoni och bredband', short: 'Telefoni',    icon: 'phone',     cats: ['mobil', 'bredband', 'vaxel'] },
+  { label: 'Programvara',           short: 'Programvara', icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
+  { label: 'IT',                    short: 'IT',          icon: 'wifi',      cats: ['it-support'] },
+  { label: 'Fordon och frakt',      short: 'Fordon',      icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
+  { label: 'Kontor och städ',       short: 'Kontor',      icon: 'briefcase', cats: ['kontorsmaterial', 'städ-rengöring', 'larm-bevakning', 'kortterminal', 'avfall-atervinning', 'bankavgifter'] },
+  { label: 'Personal och hälsa',    short: 'Personal',    icon: 'shield',    cats: ['foretagshalsovard', 'loneadmin', 'forsakring-foretag', 'forsakring-ansvar'] },
 ];
 
 const PHASES = [
@@ -2028,7 +2028,7 @@ const TestaFaktura = () => {
               <div className="switch-offer">
                 <div className="switch-offer-head">
                   <span className="switch-badge">
-                    <Icon name="check" size={14} stroke={2.5} />
+                    <Icon name="check" size={13} stroke={2.5} />
                   </span>
                   <div className="switch-supplier">
                     <p className="switch-supplier-name">
@@ -2037,25 +2037,22 @@ const TestaFaktura = () => {
                         : _switchPartnerLabel}
                     </p>
                     <span className="switch-price-label">
-                      <Icon name="shield" size={11} stroke={2} />
+                      <Icon name="shield" size={10} stroke={2} />
                       {_switchIsRealPrice ? 'Verifierat marknadspris' : 'Arvo-verifierad partner'}
                     </span>
                   </div>
                 </div>
-                <div className="switch-transition">
-                  <div className="sp-col">
-                    <span className="sp-label">Idag</span>
-                    <span className="sp-old">{formatKr(adjAnnualCost)}</span>
+                <div className="switch-offer-body">
+                  <div className="sp-from-row">
+                    <span className="sp-old">{formatKr(adjAnnualCost)}/år</span>
+                    <span className="sp-from-arrow">→</span>
                   </div>
-                  <span className="sp-arrow">
-                    <Icon name="arrow" size={18} stroke={2} />
+                  <span className="sp-new">
+                    {formatNum(result.recommendation.suggestedAnnualCost)}<small>kr/år</small>
                   </span>
-                  <div className="sp-col">
-                    <span className="sp-label">Med Arvo</span>
-                    <span className="sp-new">
-                      {formatNum(result.recommendation.suggestedAnnualCost)}<small>kr/år</small>
-                    </span>
-                  </div>
+                  <span className="sp-save-note">
+                    Ni sparar {formatKr(adjGrossSaving)}/år — Arvo tar 20&nbsp;% av det
+                  </span>
                 </div>
               </div>
               <Button
@@ -2067,9 +2064,6 @@ const TestaFaktura = () => {
               >
                 {_switchCtaLabel} <Icon name="arrow" size={16} />
               </Button>
-              <p className="switch-fine-print">
-                Arvo-arvode {formatKr(adjArvoFee)}/år&nbsp;(20&nbsp;%) · Inget annat att betala
-              </p>
             </SwitchCard>
           )}
 
@@ -2155,7 +2149,7 @@ const TestaFaktura = () => {
                     <span className="pb-seg-ico">
                       <Icon name={seg.icon} size={20} stroke={1.8} />
                     </span>
-                    <span className="pb-seg-label">{seg.label}</span>
+                    <span className="pb-seg-label">{seg.short}</span>
                   </div>
                 );
               })}

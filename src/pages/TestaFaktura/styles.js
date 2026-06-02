@@ -622,10 +622,10 @@ export const SwitchCard = styled.div`
   }
 
   .switch-offer {
-    padding: 18px 20px 20px;
     border-radius: ${({ theme }) => theme.size.radius.md};
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.surface};
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    overflow: hidden;
     margin-bottom: 20px;
   }
 
@@ -633,8 +633,8 @@ export const SwitchCard = styled.div`
     display: flex;
     align-items: center;
     gap: 11px;
-    padding-bottom: 15px;
-    margin-bottom: 16px;
+    padding: 14px 18px;
+    background: ${({ theme }) => theme.color.surfaceAlt};
     border-bottom: 1px solid ${({ theme }) => theme.color.border};
   }
 
@@ -642,8 +642,8 @@ export const SwitchCard = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: ${({ theme }) => theme.color.brand};
     color: #FAFAF7;
@@ -656,7 +656,7 @@ export const SwitchCard = styled.div`
   }
 
   .switch-supplier-name {
-    font-size: 14.5px;
+    font-size: 14px;
     font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
     margin: 0;
@@ -667,70 +667,68 @@ export const SwitchCard = styled.div`
   .switch-price-label {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 10.5px;
+    gap: 4px;
+    font-size: 10px;
     color: ${({ theme }) => theme.color.brand};
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .08em;
-    margin: 4px 0 0;
+    margin: 3px 0 0;
   }
 
-  .switch-transition {
+  .switch-offer-body {
+    padding: 20px 22px 18px;
+  }
+
+  .sp-from-row {
     display: flex;
-    align-items: flex-end;
-    gap: 16px;
-  }
-
-  .sp-col {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 0;
-  }
-
-  .sp-label {
-    font-size: 9.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .11em;
-    color: ${({ theme }) => theme.color.muted};
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
   }
 
   .sp-old {
-    font-size: 16px;
-    font-weight: 600;
-    color: ${({ theme }) => theme.color.muted};
+    font-size: 14px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.mutedSoft};
     text-decoration: line-through;
     text-decoration-color: ${({ theme }) => theme.color.borderStrong};
     font-feature-settings: "tnum";
     white-space: nowrap;
   }
 
-  .sp-arrow {
-    color: ${({ theme }) => theme.color.brand};
+  .sp-from-arrow {
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.mutedSoft};
     flex-shrink: 0;
-    padding-bottom: 3px;
   }
 
   .sp-new {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 30px;
+    font-size: clamp(40px, 6vw, 52px);
     font-weight: 500;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
     color: ${({ theme }) => theme.color.brand};
     line-height: 1;
     font-feature-settings: "tnum";
     white-space: nowrap;
+    display: block;
+    margin-bottom: 10px;
 
     small {
       font-family: ${({ theme }) => theme.font.sans};
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 15px;
+      font-weight: 400;
       color: ${({ theme }) => theme.color.muted};
-      margin-left: 3px;
+      margin-left: 4px;
       letter-spacing: 0;
     }
+  }
+
+  .sp-save-note {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.4;
   }
 
   .switch-fine-print {
@@ -2144,29 +2142,32 @@ export const IntelligenceCard = styled.div`
 
   /* ── Briefing preview — signal cards ── */
   .briefing-preview {
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.surface};
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
     border-radius: 14px;
-    padding: 18px 20px 6px;
+    overflow: hidden;
     margin-bottom: 24px;
+    box-shadow: 0 2px 10px rgba(14,26,23,.06);
   }
 
   .preview-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 14px;
+    padding: 12px 18px;
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
   }
 
   .preview-live-dot {
     display: inline-block;
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: ${({ theme }) => theme.color.brand};
     box-shadow: 0 0 0 3px ${({ theme }) => theme.color.brandSoft};
     animation: ${livePulse} 2s ease-in-out infinite;
-    margin-right: 6px;
+    margin-right: 7px;
     vertical-align: middle;
     position: relative;
     top: -1px;
@@ -2189,21 +2190,20 @@ export const IntelligenceCard = styled.div`
   /* ── Signal rows ── */
   .signal {
     display: flex;
-    gap: 12px;
-    padding: 12px 0;
+    gap: 14px;
+    padding: 16px 18px;
     border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
     &:last-child {
       border-bottom: none;
-      padding-bottom: 4px;
     }
   }
 
   .signal-ico {
     flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
     background: ${({ theme }) => theme.color.brandSoft};
     display: flex;
     align-items: center;
@@ -2214,37 +2214,38 @@ export const IntelligenceCard = styled.div`
 
   .signal-tag {
     display: block;
-    font-size: 9px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .12em;
+    font-size: 10px;
+    font-weight: 600;
     color: ${({ theme }) => theme.color.muted};
+    letter-spacing: .04em;
     margin-bottom: 5px;
   }
 
   .signal-line {
-    font-size: 13.5px;
-    font-weight: 600;
+    font-size: 14.5px;
+    font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
+    letter-spacing: -.01em;
   }
 
   .signal-badge {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 7px;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 9px;
     border-radius: 100px;
     background: #FEF2F2;
-    color: #DC2626;
+    color: #C41E1E;
     white-space: nowrap;
+    letter-spacing: -.01em;
   }
 
   .signal-sub {
-    font-size: 12.5px;
+    font-size: 13px;
     line-height: 1.5;
     color: ${({ theme }) => theme.color.muted};
     margin: 0;
@@ -2255,25 +2256,28 @@ export const IntelligenceCard = styled.div`
   /* ── Community Benchmark dot grid ── */
   .bench-grid {
     display: grid;
-    grid-template-columns: repeat(8, 9px);
-    gap: 4px;
-    margin: 6px 0 7px;
+    grid-template-columns: repeat(5, 13px);
+    gap: 5px;
+    margin: 7px 0 8px;
 
     span {
       display: block;
-      width: 9px;
-      height: 9px;
-      border-radius: 2px;
-      background: ${({ theme }) => theme.color.border};
+      width: 13px;
+      height: 13px;
+      border-radius: 3px;
+      background: ${({ theme }) => theme.color.surfaceAlt};
+      border: 1px solid ${({ theme }) => theme.color.border};
 
       &.on {
         background: ${({ theme }) => theme.color.brand};
-        opacity: .65;
+        border-color: ${({ theme }) => theme.color.brand};
+        opacity: .6;
       }
       &.you {
         background: ${({ theme }) => theme.color.brand};
+        border-color: ${({ theme }) => theme.color.brand};
         opacity: 1;
-        box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px ${({ theme }) => theme.color.brand};
+        box-shadow: 0 0 0 2.5px #fff, 0 0 0 4px ${({ theme }) => theme.color.brand};
       }
     }
   }
@@ -2320,9 +2324,10 @@ export const PortfolioBridge = styled.div`
   margin-bottom: 12px;
   padding: 30px 32px 26px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  background: ${({ theme }) => theme.color.surfaceAlt};
+  background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
+  border-top: 3px solid ${({ theme }) => theme.color.brand};
+  box-shadow: ${({ theme }) => theme.shadow.md};
   animation: ${fadeUp} 0.5s ease 0.24s both;
 
   .pb-eyebrow {
@@ -2371,9 +2376,9 @@ export const PortfolioBridge = styled.div`
   }
 
   .pb-seg-ico {
-    width: 44px;
-    height: 44px;
-    border-radius: 13px;
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
