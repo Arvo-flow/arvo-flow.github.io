@@ -123,24 +123,36 @@ export const HeroActions = styled.div`
 export const HeroProof = styled.div`
   margin-top: 28px;
   display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
+  gap: 0;
+  flex-wrap: nowrap;
   animation: ${fadeUp} 0.7s 0.4s ease both;
 
   div {
     display: flex;
     flex-direction: column;
+    padding-right: 24px;
+  }
+  div + div {
+    padding-left: 24px;
+    border-left: 1px solid ${({ theme }) => theme.color.border};
   }
   strong {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 14.5px;
+    font-weight: 650;
     color: ${({ theme }) => theme.color.ink};
-    font-feature-settings: "tnum";
+    letter-spacing: -.01em;
   }
   span {
-    font-size: 13px;
+    font-size: 12.5px;
     color: ${({ theme }) => theme.color.muted};
-    margin-top: 2px;
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+  @media (max-width: 580px) {
+    flex-wrap: wrap;
+    gap: 16px;
+    div { padding-right: 0; }
+    div + div { padding-left: 0; border-left: none; }
   }
 `;
 
