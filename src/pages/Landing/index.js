@@ -210,7 +210,7 @@ const BenchmarkRowItem = ({ row, i, visible }) => {
       {over ? (
         <div className="delta over">
           <strong>+{(visible ? count : 0).toLocaleString('sv-SE')}</strong>
-          <small>över snittet</small>
+          <small>sämre än snittet</small>
         </div>
       ) : (
         <div className="delta inline">
@@ -257,16 +257,23 @@ const BenchmarkViz = () => {
         <span className="axis-cell">
           <span className="lbl zone">Välförhandlat</span>
           <span className="lbl mid">Branschsnitt</span>
-          <span className="lbl right">Betalar mer →</span>
+          <span className="lbl right">Sämre →</span>
         </span>
       </SpectrumAxisFoot>
 
       <SpectrumSummary>
-        <div className="stat">
-          <strong>{overCount}<span className="of">/8</span></strong>
-          <span className="lbl">över snittet</span>
+        <div className="sum-meta">
+          <div className="sum-col bad">
+            <strong>{overCount}</strong>
+            <span>sämre än snittet</span>
+          </div>
+          <div className="sum-sep" />
+          <div className="sum-col good">
+            <strong>{BENCHMARK_ROWS.length - overCount}</strong>
+            <span>bättre än snittet</span>
+          </div>
         </div>
-        <p>Sex av åtta kategorier ligger till höger om branschsnittet — två är redan välförhandlade. Det är precis den bilden Arvo ger er, faktura för faktura, ofta innan ni hunnit märka höjningen.</p>
+        <p>Sex av åtta kategorier kostar mer än välförhandlade bolag i er bransch betalar — höjningen sker gradvis och märks sällan i tid. Arvo identifierar det innan ni hunnit se det.</p>
       </SpectrumSummary>
     </Spectrum>
   );
