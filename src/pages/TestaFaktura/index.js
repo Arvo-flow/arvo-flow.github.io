@@ -12,7 +12,7 @@ import {
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   BriefingHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
-  Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, ScoreRevealCard, EmailGate,
+  Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, ScoreRevealCard, EmailGate, PortfolioBridge,
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
@@ -2140,6 +2140,37 @@ const TestaFaktura = () => {
               Kom igång på 2 minuter via e-postvidarebefordran. Noll IT-integration krävs.
             </p>
           </IntelligenceCard>
+
+          {/* ── Invoice Graph — den här fakturan är en nod i hela reskontran ── */}
+          <PortfolioBridge>
+            <div className="pb-eyebrow">Helhetsbilden</div>
+            <h2 className="pb-head">
+              Arvo bevakar åtta kostnadskategorier. Den här fakturan var en.
+            </h2>
+            <div className="pb-grid">
+              {SEGMENTS.map((seg) => {
+                const lit = seg.cats.includes(result.categorized?.category);
+                return (
+                  <div key={seg.label} className={`pb-seg${lit ? ' lit' : ''}`}>
+                    <span className="pb-seg-ico">
+                      <Icon name={seg.icon} size={20} stroke={1.8} />
+                    </span>
+                    <span className="pb-seg-label">{seg.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="pb-foot">
+              <p className="pb-note">
+                En faktura säger en sak. Hela reskontran säger var ni faktiskt
+                blöder. Koppla Fortnox eller Visma så kartlägger Arvo varje
+                leverantör — och hittar varenda besparing, inte bara den här.
+              </p>
+              <Link to="/portfolio" className="pb-link">
+                Kartlägg er reskontra <Icon name="arrow" size={15} stroke={2} />
+              </Link>
+            </div>
+          </PortfolioBridge>
 
           {/* Diskret feedback — syns men kräver aktivt val */}
           <p style={{ textAlign: 'center', fontSize: 12, color: '#8A9E98', marginBottom: 8 }}>
