@@ -21,7 +21,7 @@ import {
   FaqWrap, FaqItem,
   FinalCta,
   BenchmarkSection, BenchmarkHead, BenchmarkMoatLine, BenchmarkFootnote,
-  Spectrum, SpectrumRows, SpectrumRow, SpectrumDot,
+  Spectrum, SpectrumRows, SpectrumRow, SpectrumGap, SpectrumDot,
   SpectrumAxisFoot, SpectrumSummary,
 } from './styles';
 
@@ -176,17 +176,23 @@ const useCountUp = (target, active, duration = 1100, delay = 0) => {
 };
 
 // Normaliserar varje kategori mot sitt eget branschsnitt → en gemensam axel.
-// Branschsnitt-linjen ligger på 45 %, "välförhandlat"-korridoren 18–48 %.
+// Branschsnitt-linjen ligger på 32 %, "välförhandlat"-korridoren 8–35 %.
+const SPECTRUM_LINE = 32;
 const spectrumX = (you, median) => {
   const ratio = you / median;
-  return Math.max(7, Math.min(95, 45 + (ratio - 1) * 56));
+  return Math.max(9, Math.min(94, SPECTRUM_LINE + (ratio - 1) * 68));
 };
 
 const BenchmarkRowItem = ({ row, i, visible }) => {
   const over = row.status === 'over';
   const delta = row.you - row.median;
   const x = spectrumX(row.you, row.median);
-  const dotDelay = `${i * 75 + 300}ms`;
+  const span = Math.abs(x - SPECTRUM_LINE);
+  // Prickstorlek efter hur långt över snittet — drar ögat till största blödningen
+  const sev = Math.max(0, row.you / row.median - 1);
+  const dotSize = over ? Math.round(12 + Math.min(sev * 10, 5)) : 12;
+  const gapDelay = `${i * 75 + 250}ms`;
+  const dotDelay = `${i * 75 + 420}ms`;
   const count = useCountUp(delta, visible && over, 850, i * 75 + 450);
 
   return (
@@ -198,8 +204,8 @@ const BenchmarkRowItem = ({ row, i, visible }) => {
       <div className="axis">
         <span className="zone" />
         <span className="line" />
-        <span className="baseline" />
-        <SpectrumDot $x={`${x}%`} $over={over} $visible={visible} $delay={dotDelay} />
+        <SpectrumGap $over={over} $span={`${span}%`} $line={`${SPECTRUM_LINE}%`} $visible={visible} $delay={gapDelay} />
+        <SpectrumDot $x={`${x}%`} $size={dotSize} $over={over} $visible={visible} $delay={dotDelay} />
       </div>
       {over ? (
         <div className="delta over">
