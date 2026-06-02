@@ -1156,7 +1156,7 @@ export const IntelligenceInner = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 80px;
-  align-items: start;
+  align-items: center;
   @media (max-width: 900px) { grid-template-columns: 1fr; gap: 56px; }
 
   .eyebrow {
@@ -1206,15 +1206,16 @@ export const IntelligencePillar = styled.div`
     flex-shrink: 0;
   }
   h4 {
-    font-size: 15px;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 16px;
     font-weight: 700;
     color: #FAFAF7;
     margin: 0 0 4px;
-    letter-spacing: -.01em;
+    letter-spacing: -.02em;
   }
   p {
     font-size: 13.5px;
-    color: rgba(250,250,247,.50);
+    color: rgba(250,250,247,.72);
     line-height: 1.55;
     margin: 0;
   }
