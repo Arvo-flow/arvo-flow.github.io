@@ -411,7 +411,7 @@ const Landing = () => {
               <div className="tl-foot">
                 <div className="tl-saving">
                   <span className="tl-saving-label">Säkrad besparing</span>
-                  <span className="tl-saving-value">18&nbsp;480&nbsp;kr<span className="unit">/år</span></span>
+                  <span className="tl-saving-value">21&nbsp;360&nbsp;kr<span className="unit">/år</span></span>
                 </div>
                 <button className="tl-cta">Se hur Arvo löste det →</button>
               </div>
@@ -600,7 +600,7 @@ const Landing = () => {
             <div className="alert-saving">
               <div className="saving-label">Identifierad besparing</div>
               <div className="saving-amount">
-                18&nbsp;480&nbsp;kr<span className="unit">/år</span>
+                21&nbsp;360&nbsp;kr<span className="unit">/år</span>
               </div>
             </div>
 
