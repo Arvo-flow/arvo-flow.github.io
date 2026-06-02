@@ -597,6 +597,10 @@ const Landing = () => {
               Det är den skillnaden som gör Arvo Intelligence till en finansdirektör och
               inte ett verktyg.
             </p>
+            <p className="moat">
+              Ju fler fakturor Arvo ser, desto mer vet vi — och desto vassare blir varje
+              rekommendation. Det är ett försprång som inte går att kopiera.
+            </p>
             <span className="footnote">
               Visualiseringen är illustrativ — prisintervall baserade på verifierade
               marknadsdata maj 2026.
