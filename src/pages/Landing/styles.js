@@ -1382,17 +1382,17 @@ export const BenchmarkPanel = styled.div`
   border-radius: ${({ theme }) => theme.size.radius.xl};
   box-shadow:
     0 1px 2px rgba(14, 26, 23, 0.04),
-    0 18px 48px rgba(14, 26, 23, 0.10);
-  padding: 34px 36px 30px;
-  @media (max-width: 740px) { padding: 26px 22px 22px; }
+    0 14px 38px rgba(14, 26, 23, 0.09);
+  padding: 24px 26px 22px;
+  @media (max-width: 740px) { padding: 22px 18px 18px; }
 `;
 
 export const BenchmarkPanelHead = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 22px;
-  margin-bottom: 26px;
+  padding-bottom: 15px;
+  margin-bottom: 18px;
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
   .title {
@@ -1416,7 +1416,7 @@ export const BenchmarkPanelHead = styled.div`
 export const BenchmarkRows = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 20px;
 `;
 
 export const BenchmarkRow = styled.div`
@@ -1428,17 +1428,17 @@ export const BenchmarkRowHead = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 13px;
+  margin-bottom: 10px;
 
-  .label-group { display: flex; flex-direction: column; gap: 2px; }
+  .label-group { display: flex; flex-direction: column; gap: 1px; }
   .cat {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 650;
     color: ${({ theme }) => theme.color.ink};
     letter-spacing: -0.015em;
   }
   .unit {
-    font-size: 11.5px;
+    font-size: 11px;
     color: ${({ theme }) => theme.color.muted};
   }
   .delta {
@@ -1448,7 +1448,7 @@ export const BenchmarkRowHead = styled.div`
     text-align: right;
   }
   .delta strong {
-    font-size: 23px;
+    font-size: 21px;
     font-weight: 800;
     line-height: 1;
     letter-spacing: -0.03em;
@@ -1456,7 +1456,7 @@ export const BenchmarkRowHead = styled.div`
     font-feature-settings: "tnum";
   }
   .delta small {
-    margin-top: 3px;
+    margin-top: 2px;
     font-size: 10.5px;
     font-weight: 500;
     letter-spacing: 0.02em;
@@ -1540,8 +1540,8 @@ export const BenchmarkYou = styled.div`
 
 export const BenchmarkRowLabels = styled.div`
   position: relative;
-  height: 16px;
-  margin-top: 11px;
+  height: 15px;
+  margin-top: 9px;
 
   span {
     position: absolute;
@@ -1560,8 +1560,8 @@ export const BenchmarkLegend = styled.div`
   gap: 20px;
   flex-wrap: wrap;
   border-top: 1px solid ${({ theme }) => theme.color.border};
-  margin-top: 34px;
-  padding-top: 20px;
+  margin-top: 22px;
+  padding-top: 16px;
 
   .legend-item {
     display: flex;
@@ -1593,9 +1593,9 @@ export const BenchmarkLegend = styled.div`
 export const BenchmarkSummary = styled.div`
   display: flex;
   align-items: center;
-  gap: 22px;
-  margin-top: 26px;
-  padding-top: 24px;
+  gap: 18px;
+  margin-top: 18px;
+  padding-top: 18px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
 
   .stat {
@@ -1603,12 +1603,12 @@ export const BenchmarkSummary = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 12px 20px;
+    padding: 10px 18px;
     border-radius: ${({ theme }) => theme.size.radius.md};
     background: ${({ theme }) => theme.color.brandSoft};
   }
   .stat strong {
-    font-size: 34px;
+    font-size: 30px;
     font-weight: 800;
     line-height: 1;
     letter-spacing: -0.04em;
