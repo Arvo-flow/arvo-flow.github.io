@@ -97,7 +97,7 @@ function ScoreReveal({ diagScore, diagC, diagInsight }) {
     <ScoreRevealCard style={{ '--diag-color': diagC.dot }}>
       <div className="gauge-wrap">
         <svg className="gauge-svg" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="8" />
+          <circle cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none" stroke="#E5EFEA" strokeWidth="8" />
           <circle
             cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none"
             stroke={diagC.dot} strokeWidth="8" strokeLinecap="round"
@@ -2057,63 +2057,13 @@ const TestaFaktura = () => {
             </SwitchCard>
           )}
 
-          {/* ── In-app feedback ───────────────────────────────── */}
-          <div style={{
-            background: '#fff', borderRadius: 16, border: '1px solid #E5EFEA',
-            padding: '14px 22px', marginBottom: 12,
-            display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-            boxShadow: '0 1px 3px rgba(14,26,23,.04)',
-          }}>
-            {feedbackState === 'sent' ? (
-              <p style={{ margin: 0, fontSize: 13.5, color: '#1B7A6E', fontWeight: 600 }}>
-                {feedbackVote === 'up' ? '✓ Tack — kul att analysen stämde!' : '✓ Noterat — vi justerar modellen!'}
-              </p>
-            ) : (
-              <>
-                <p style={{ margin: 0, fontSize: 13, color: '#5C6E68', flex: 1, minWidth: 160, lineHeight: 1.4 }}>
-                  Stämde klassificeringen?
-                </p>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button
-                    onClick={() => submitFeedback('up')}
-                    disabled={feedbackState !== 'idle'}
-                    style={{
-                      padding: '6px 14px', borderRadius: 100,
-                      border: `1.5px solid ${feedbackVote === 'up' ? '#1B7A6E' : '#D5E2DC'}`,
-                      background: feedbackVote === 'up' ? '#DCEEEA' : '#fff',
-                      cursor: 'pointer', fontSize: 14,
-                      opacity: feedbackState !== 'idle' && feedbackVote !== 'up' ? .4 : 1,
-                      transition: 'all .2s',
-                    }}
-                    title="Ja, stämmer"
-                  >👍</button>
-                  <button
-                    onClick={() => submitFeedback('down')}
-                    disabled={feedbackState !== 'idle'}
-                    style={{
-                      padding: '6px 14px', borderRadius: 100,
-                      border: `1.5px solid ${feedbackVote === 'down' ? '#9F3B22' : '#D5E2DC'}`,
-                      background: feedbackVote === 'down' ? '#F4DAD0' : '#fff',
-                      cursor: 'pointer', fontSize: 14,
-                      opacity: feedbackState !== 'idle' && feedbackVote !== 'down' ? .4 : 1,
-                      transition: 'all .2s',
-                    }}
-                    title="Nej, stämmer inte"
-                  >👎</button>
-                </div>
-              </>
-            )}
-          </div>
+          {/* ── Minimal feedback ─────────────────────────────────────────── */}
 
 
           {/* ── Arvo Intelligence — relation, inte produkt ───────────────────── */}
           <IntelligenceCard>
             <div className="eyebrow">Arvo Intelligence</div>
             <h3>Det här var en faktura.</h3>
-            <p className="sub">
-              Bokföringsprogram gör vad ni ber dem om. Arvo Intelligence märker när
-              priset höjs — och kontaktar er utan att ni frågat.
-            </p>
 
             <div className="briefing-preview">
               <div className="preview-header">
@@ -2174,6 +2124,24 @@ const TestaFaktura = () => {
               Kom igång på 2 minuter via e-postvidarebefordran. Noll IT-integration krävs.
             </p>
           </IntelligenceCard>
+
+          {/* Diskret feedback — syns men kräver aktivt val */}
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#8A9E98', marginBottom: 8 }}>
+            {feedbackState === 'sent' ? (
+              <span style={{ color: '#1B7A6E' }}>✓ Noterat — vi justerar modellen</span>
+            ) : (
+              <>
+                Felklassificerad faktura?{' '}
+                <button
+                  onClick={() => submitFeedback('down')}
+                  disabled={feedbackState !== 'idle'}
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: '#5C6E68', textDecoration: 'underline', textUnderlineOffset: 2, fontFamily: 'inherit' }}
+                >
+                  Berätta →
+                </button>
+              </>
+            )}
+          </p>
           </>
         )}
       </Body>

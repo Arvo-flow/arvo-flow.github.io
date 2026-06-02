@@ -87,6 +87,7 @@ export const Card = styled.div`
   border-radius: ${({ theme }) => theme.size.radius.lg};
   padding: 32px;
   margin-bottom: 16px;
+  box-shadow: ${({ theme }) => theme.shadow.sm};
   animation: ${fadeUp} 0.5s ease both;
   @media (max-width: 600px) { padding: 22px 20px; }
 `;
@@ -1755,12 +1756,11 @@ const revealFade = keyframes`
 `;
 
 export const ScoreRevealCard = styled.div`
-  padding: 36px 28px 32px;
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  margin-bottom: 20px;
-  box-shadow: 0 4px 28px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.04);
+  padding: 36px 0 28px;
+  background: transparent;
+  border: none;
+  margin-bottom: 24px;
+  box-shadow: none;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -2084,12 +2084,12 @@ export const IntelligenceCard = styled.div`
   }
 
   h3 {
-    font-size: 24px;
+    font-size: clamp(26px, 4vw, 34px);
     font-weight: 800;
     letter-spacing: -.03em;
     color: ${({ theme }) => theme.color.ink};
-    margin: 0 0 8px;
-    line-height: 1.2;
+    margin: 0 0 20px;
+    line-height: 1.15;
   }
 
   p.sub {
