@@ -14,6 +14,16 @@ const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
 
+const shimmer = keyframes`
+  0%   { transform: translateX(-120%) skewX(-12deg); }
+  100% { transform: translateX(220%)  skewX(-12deg); }
+`;
+
+const livePulse = keyframes`
+  0%, 100% { box-shadow: 0 0 0 0 rgba(27,122,110,.5); }
+  60%       { box-shadow: 0 0 0 4px rgba(27,122,110,.0); }
+`;
+
 export const Page = styled.main`
   background: ${({ theme }) => theme.color.bg};
   min-height: 100vh;
@@ -305,25 +315,45 @@ export const ResultHead = styled.div`
 `;
 
 export const SavingsBlock = styled.div`
-  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  padding: 28px 28px 26px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
   background: ${({ theme }) => theme.color.brandGradient};
   color: #FAFAF7;
   margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(27,110,102,.22), 0 2px 6px rgba(27,110,102,.14);
+  animation: ${fadeUp} 0.5s ease both;
+
+  /* shimmer sweep */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 38%,
+      rgba(255,255,255,.14) 48%,
+      rgba(255,255,255,.08) 52%,
+      transparent 62%
+    );
+    animation: ${shimmer} 3.6s ease-in-out 1.2s infinite;
+    pointer-events: none;
+  }
 
   span.kicker {
     display: block;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    opacity: 0.85;
-    margin-bottom: 8px;
+    letter-spacing: 0.12em;
+    opacity: 0.75;
+    margin-bottom: 10px;
   }
   span.amount {
     display: block;
     font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(42px, 7vw, 64px);
+    font-size: clamp(44px, 8vw, 68px);
     font-weight: 500;
     line-height: 1.0;
     letter-spacing: -0.025em;
@@ -331,10 +361,12 @@ export const SavingsBlock = styled.div`
   }
   span.unit {
     display: block;
-    margin-top: 8px;
+    margin-top: 10px;
     font-size: 14px;
-    opacity: 0.85;
-    line-height: 1.5;
+    opacity: 0.82;
+    line-height: 1.55;
+    border-top: 1px solid rgba(255,255,255,.18);
+    padding-top: 10px;
   }
 `;
 
@@ -486,7 +518,8 @@ export const SwitchCard = styled.div`
   border-radius: ${({ theme }) => theme.size.radius.lg};
   padding: 28px 32px 26px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 16px rgba(14,26,23,.08), 0 1px 3px rgba(14,26,23,.04);
+  box-shadow: 0 4px 24px rgba(14,26,23,.10), 0 1px 4px rgba(14,26,23,.06);
+  animation: ${fadeUp} 0.5s ease 0.08s both;
 
   .switch-eyebrow {
     font-size: 10px;
@@ -1648,21 +1681,24 @@ const revealFade = keyframes`
 `;
 
 export const ScoreRevealCard = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
+  padding: 36px 28px 32px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
   background: ${({ theme }) => theme.color.surface};
   border: 2px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
-  margin-bottom: 16px;
-  box-shadow: 0 2px 20px rgba(0,0,0,.06);
+  margin-bottom: 20px;
+  box-shadow: 0 4px 28px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.04);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: ${fadeUp} 0.5s ease both;
 
   .gauge-wrap {
     flex-shrink: 0;
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 128px;
+    height: 128px;
+    margin-bottom: 20px;
   }
   .gauge-svg {
     position: absolute;
@@ -1682,43 +1718,30 @@ export const ScoreRevealCard = styled.div`
     pointer-events: none;
   }
   .score-val {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.04em;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 48px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
     font-feature-settings: "tnum";
     color: var(--diag-color);
   }
   .score-denom {
-    font-size: 12px;
+    font-size: 15px;
     font-weight: 600;
-    opacity: 0.4;
+    opacity: 0.38;
     color: var(--diag-color);
-    margin-top: 1px;
-  }
-
-  .content {
-    flex: 1;
-    min-width: 0;
-  }
-  .eyebrow {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 8px;
+    margin-top: 3px;
   }
   .level-badge {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 5px 13px 5px 9px;
+    padding: 6px 14px 6px 10px;
     border-radius: 100px;
     font-size: 14px;
     font-weight: 700;
-    margin-bottom: 12px;
-    animation: ${revealFade} 0.45s ease both;
-    animation-delay: 1.65s;
+    margin-bottom: 14px;
+    animation: ${revealFade} 0.45s ease 1.65s both;
   }
   .level-dot {
     width: 9px;
@@ -1728,24 +1751,22 @@ export const ScoreRevealCard = styled.div`
     background: var(--diag-color);
   }
   .insight {
-    font-size: 14.5px;
+    font-size: 15.5px;
     line-height: 1.6;
     letter-spacing: -0.01em;
     color: ${({ theme }) => theme.color.ink};
     margin: 0;
-    animation: ${revealFade} 0.45s ease both;
-    animation-delay: 2.05s;
+    max-width: 440px;
+    animation: ${revealFade} 0.45s ease 2.05s both;
   }
 
   @media (max-width: 520px) {
-    gap: 14px;
-    padding: 12px 14px;
-    .gauge-wrap { width: 72px; height: 72px; }
-    .score-val { font-size: 26px; }
-    .score-denom { font-size: 11px; }
-    .eyebrow { margin-bottom: 4px; }
-    .level-badge { font-size: 13px; padding: 4px 10px 4px 8px; margin-bottom: 6px; }
-    .insight { font-size: 13px; line-height: 1.5; }
+    padding: 28px 20px 24px;
+    .gauge-wrap { width: 108px; height: 108px; }
+    .score-val { font-size: 40px; }
+    .score-denom { font-size: 13px; }
+    .level-badge { font-size: 13px; margin-bottom: 10px; }
+    .insight { font-size: 14.5px; }
   }
 `;
 
@@ -1969,7 +1990,6 @@ export const BatchSummary = styled.div`
 
 
 // ── Arvo Intelligence — premium AI-CFO acquisition card ────────────────────
-// Detta är affären. Varje detalj motiverar 1 995 kr/mån.
 export const IntelligenceCard = styled.div`
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
@@ -1977,19 +1997,18 @@ export const IntelligenceCard = styled.div`
   border-radius: ${({ theme }) => theme.size.radius.lg};
   padding: 32px 32px 28px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 4px rgba(14,26,23,.04), 0 8px 32px rgba(14,26,23,.07);
+  box-shadow: 0 4px 24px rgba(14,26,23,.08), 0 1px 4px rgba(14,26,23,.04);
+  animation: ${fadeUp} 0.5s ease 0.16s both;
 
-  /* ── Eyebrow ── */
   .eyebrow {
     font-size: 10px;
     font-weight: 700;
     color: ${({ theme }) => theme.color.brand};
     text-transform: uppercase;
     letter-spacing: .22em;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
   }
 
-  /* ── Headline + sub ── */
   h3 {
     font-size: 24px;
     font-weight: 800;
@@ -2003,65 +2022,146 @@ export const IntelligenceCard = styled.div`
     font-size: 14px;
     color: ${({ theme }) => theme.color.muted};
     line-height: 1.7;
-    margin: 0 0 24px;
+    margin: 0 0 20px;
   }
 
-  /* ── Mini Briefing preview — ljus, del av sidan, inte ett frängande element ── */
+  /* ── Briefing preview — signal cards ── */
   .briefing-preview {
     background: ${({ theme }) => theme.color.surfaceAlt};
     border: 1px solid ${({ theme }) => theme.color.border};
-    border-left: 3px solid ${({ theme }) => theme.color.brand};
-    border-radius: 10px;
-    padding: 20px 22px;
+    border-radius: 14px;
+    padding: 18px 20px 6px;
     margin-bottom: 24px;
   }
 
-  .preview-top {
+  .preview-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
-  .preview-brand {
+  .preview-live-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brand};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.color.brandSoft};
+    animation: ${livePulse} 2s ease-in-out infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+
+  .preview-brand-name {
     font-size: 10px;
     font-weight: 700;
-    color: ${({ theme }) => theme.color.brand};
     text-transform: uppercase;
-    letter-spacing: .20em;
+    letter-spacing: .18em;
+    color: ${({ theme }) => theme.color.brand};
+    vertical-align: middle;
   }
 
-  .preview-date {
+  .preview-time {
     font-size: 11px;
     color: ${({ theme }) => theme.color.muted};
   }
 
-  .preview-divider {
-    height: 1px;
-    background: ${({ theme }) => theme.color.border};
-    margin-bottom: 14px;
-  }
+  /* ── Signal rows ── */
+  .signal {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
 
-  .preview-alert {
-    font-size: 14px;
-    color: ${({ theme }) => theme.color.inkSoft};
-    line-height: 1.65;
-    margin-bottom: 14px;
-
-    strong {
-      color: ${({ theme }) => theme.color.ink};
-      font-weight: 700;
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 4px;
     }
   }
 
-  .preview-action {
-    font-size: 13px;
-    font-weight: 700;
+  .signal-ico {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brandSoft};
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: ${({ theme }) => theme.color.brand};
-    letter-spacing: .01em;
+    margin-top: 1px;
   }
 
-  /* ── Pris ── */
+  .signal-tag {
+    display: block;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: ${({ theme }) => theme.color.muted};
+    margin-bottom: 5px;
+  }
+
+  .signal-line {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+  }
+
+  .signal-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 100px;
+    background: #FEF2F2;
+    color: #DC2626;
+    white-space: nowrap;
+  }
+
+  .signal-sub {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: ${({ theme }) => theme.color.muted};
+    margin: 0;
+
+    strong { color: ${({ theme }) => theme.color.ink}; font-weight: 700; }
+  }
+
+  /* ── Community Benchmark dot grid ── */
+  .bench-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 9px);
+    gap: 4px;
+    margin: 6px 0 7px;
+
+    span {
+      display: block;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      background: ${({ theme }) => theme.color.border};
+
+      &.on {
+        background: ${({ theme }) => theme.color.brand};
+        opacity: .65;
+      }
+      &.you {
+        background: ${({ theme }) => theme.color.brand};
+        opacity: 1;
+        box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px ${({ theme }) => theme.color.brand};
+      }
+    }
+  }
+
+  /* ── Price row ── */
   .price-row {
     display: flex;
     align-items: center;
@@ -2072,9 +2172,10 @@ export const IntelligenceCard = styled.div`
   }
 
   .price {
-    font-size: 40px;
-    font-weight: 800;
-    letter-spacing: -.04em;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 36px;
+    font-weight: 500;
+    letter-spacing: -.03em;
     color: ${({ theme }) => theme.color.ink};
     font-feature-settings: "tnum";
   }
@@ -2093,7 +2194,7 @@ export const IntelligenceCard = styled.div`
 
   @media (max-width: 600px) {
     padding: 24px 20px 22px;
-    .preview-saving-number { font-size: 36px; }
     h3 { font-size: 21px; }
+    .price { font-size: 30px; }
   }
 `;

@@ -87,7 +87,7 @@ function useRevealedScore(target, delay = 200) {
   return { score, gaugeReady };
 }
 
-const REVEAL_GAUGE_R = 40;
+const REVEAL_GAUGE_R = 56;
 const REVEAL_GAUGE_C = 2 * Math.PI * REVEAL_GAUGE_R;
 
 function ScoreReveal({ diagScore, diagC, diagInsight }) {
@@ -96,13 +96,13 @@ function ScoreReveal({ diagScore, diagC, diagInsight }) {
   return (
     <ScoreRevealCard style={{ '--diag-color': diagC.dot }}>
       <div className="gauge-wrap">
-        <svg className="gauge-svg" viewBox="0 0 90 90">
-          <circle cx="45" cy="45" r={REVEAL_GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="7" />
+        <svg className="gauge-svg" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="8" />
           <circle
-            cx="45" cy="45" r={REVEAL_GAUGE_R} fill="none"
-            stroke={diagC.dot} strokeWidth="7" strokeLinecap="round"
+            cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none"
+            stroke={diagC.dot} strokeWidth="8" strokeLinecap="round"
             strokeDasharray={gaugeReady ? `${gaugeDashLg} ${REVEAL_GAUGE_C}` : `0 ${REVEAL_GAUGE_C}`}
-            style={{ transform: 'rotate(-90deg)', transformOrigin: '45px 45px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
+            style={{ transform: 'rotate(-90deg)', transformOrigin: '60px 60px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
           />
         </svg>
         <div className="num-overlay">
@@ -110,14 +110,11 @@ function ScoreReveal({ diagScore, diagC, diagInsight }) {
           <span className="score-denom">/100</span>
         </div>
       </div>
-      <div className="content">
-        <div className="eyebrow">Arvo Score™</div>
-        <div className="level-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
-          <span className="level-dot" />
-          {diagC.label}
-        </div>
-        <p className="insight">{diagInsight}</p>
+      <div className="level-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
+        <span className="level-dot" />
+        {diagC.label}
       </div>
+      <p className="insight">{diagInsight}</p>
     </ScoreRevealCard>
   );
 }
@@ -2067,29 +2064,31 @@ const TestaFaktura = () => {
 
           {/* ── In-app feedback ───────────────────────────────── */}
           <div style={{
-            background: '#fff', borderRadius: 14, border: '1px solid #E8F0EC',
-            padding: '16px 22px', marginBottom: 12,
-            display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
-            boxShadow: '0 1px 4px rgba(14,26,23,.05)',
+            background: '#fff', borderRadius: 16, border: '1px solid #E5EFEA',
+            padding: '14px 22px', marginBottom: 12,
+            display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+            boxShadow: '0 1px 3px rgba(14,26,23,.04)',
           }}>
             {feedbackState === 'sent' ? (
-              <p style={{ margin: 0, fontSize: 13.5, color: '#1B6E66', fontWeight: 600 }}>
-                {feedbackVote === 'up' ? '✓ Tack för ditt omdöme!' : '✓ Noterat — vi förbättrar analysen!'}
+              <p style={{ margin: 0, fontSize: 13.5, color: '#1B7A6E', fontWeight: 600 }}>
+                {feedbackVote === 'up' ? '✓ Tack — kul att analysen stämde!' : '✓ Noterat — vi justerar modellen!'}
               </p>
             ) : (
               <>
-                <p style={{ margin: 0, fontSize: 13, color: '#5C6E68', flex: 1, minWidth: 160 }}>
+                <p style={{ margin: 0, fontSize: 13, color: '#5C6E68', flex: 1, minWidth: 160, lineHeight: 1.4 }}>
                   Stämde klassificeringen?
                 </p>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 6 }}>
                   <button
                     onClick={() => submitFeedback('up')}
                     disabled={feedbackState !== 'idle'}
                     style={{
-                      padding: '7px 16px', borderRadius: 100, border: '1.5px solid #D5E2DC',
-                      background: '#fff', cursor: 'pointer', fontSize: 15,
-                      opacity: feedbackState !== 'idle' ? .5 : 1,
-                      transition: 'all .15s',
+                      padding: '6px 14px', borderRadius: 100,
+                      border: `1.5px solid ${feedbackVote === 'up' ? '#1B7A6E' : '#D5E2DC'}`,
+                      background: feedbackVote === 'up' ? '#DCEEEA' : '#fff',
+                      cursor: 'pointer', fontSize: 14,
+                      opacity: feedbackState !== 'idle' && feedbackVote !== 'up' ? .4 : 1,
+                      transition: 'all .2s',
                     }}
                     title="Ja, stämmer"
                   >👍</button>
@@ -2097,10 +2096,12 @@ const TestaFaktura = () => {
                     onClick={() => submitFeedback('down')}
                     disabled={feedbackState !== 'idle'}
                     style={{
-                      padding: '7px 16px', borderRadius: 100, border: '1.5px solid #D5E2DC',
-                      background: '#fff', cursor: 'pointer', fontSize: 15,
-                      opacity: feedbackState !== 'idle' ? .5 : 1,
-                      transition: 'all .15s',
+                      padding: '6px 14px', borderRadius: 100,
+                      border: `1.5px solid ${feedbackVote === 'down' ? '#9F3B22' : '#D5E2DC'}`,
+                      background: feedbackVote === 'down' ? '#F4DAD0' : '#fff',
+                      cursor: 'pointer', fontSize: 14,
+                      opacity: feedbackState !== 'idle' && feedbackVote !== 'down' ? .4 : 1,
+                      transition: 'all .2s',
                     }}
                     title="Nej, stämmer inte"
                   >👎</button>
@@ -2115,23 +2116,52 @@ const TestaFaktura = () => {
             <div className="eyebrow">Arvo Intelligence</div>
             <h3>Det här var en faktura.</h3>
             <p className="sub">
-              Bokföringsprogram gör vad ni ber dem om. Arvo Intelligence kontaktar
-              er när något händer som ni behöver veta — utan att ni frågat.
+              Bokföringsprogram gör vad ni ber dem om. Arvo Intelligence märker när
+              priset höjs — och kontaktar er utan att ni frågat.
             </p>
 
             <div className="briefing-preview">
-              <div className="preview-top">
-                <span className="preview-brand">Arvo Intelligence</span>
-                <span className="preview-date">i morse · 08:14</span>
+              <div className="preview-header">
+                <span>
+                  <span className="preview-live-dot" />
+                  <span className="preview-brand-name">Arvo Intelligence</span>
+                </span>
+                <span className="preview-time">i morse · 08:14</span>
               </div>
-              <div className="preview-divider" />
-              <p className="preview-alert">
-                {adjNetSaving > 0 && result?.categorized?.normalizedSupplier
-                  ? <>Vi noterade att <strong>{result.categorized.normalizedSupplier}</strong> höjde priset sedan förra månaden — {formatKr(adjNetSaving)}/år identifierat. Vill ni att Arvo agerar och förhandlar tillbaka priset?</>
-                  : <>Vi noterade att Telia höjde priset på er mobilflotta med 11&nbsp;% förra månaden. 8 av 15 jämförbara bolag i vårt nätverk fick samma höjning. Vill ni att Arvo agerar och förhandlar tillbaka priset?</>
-                }
-              </p>
-              <div className="preview-action">Ja, Arvo agerar →</div>
+
+              <div className="signal">
+                <div className="signal-ico">
+                  <Icon name="pulse" size={14} stroke={2} />
+                </div>
+                <div>
+                  <span className="signal-tag">Smyghöjningslarm</span>
+                  <div className="signal-line">
+                    {result?.categorized?.normalizedSupplier || 'Telia'} · Er faktura
+                    <span className="signal-badge">+11&nbsp;%</span>
+                  </div>
+                  <p className="signal-sub">Priset höjt mot förra perioden — utan avisering.</p>
+                </div>
+              </div>
+
+              <div className="signal">
+                <div className="signal-ico">
+                  <Icon name="benchmark" size={14} stroke={2} />
+                </div>
+                <div>
+                  <span className="signal-tag">Community Benchmark</span>
+                  <div className="bench-grid">
+                    {[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14].map(i => (
+                      <span
+                        key={i}
+                        className={`${[0,2,3,5,8,9,11,13].includes(i) ? 'on' : ''}${i === 8 ? ' you' : ''}`}
+                      />
+                    ))}
+                  </div>
+                  <p className="signal-sub">
+                    <strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning — inklusive er.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="price-row">
