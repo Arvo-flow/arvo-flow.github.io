@@ -177,7 +177,7 @@ function HeaderScore({ diagScore, diagC }) {
           />
         </svg>
         <span className="bh-score-num">
-          {animScore}<span className="bh-score-den">/100</span>
+          <span>{animScore}<span className="bh-score-den">/100</span></span>
         </span>
       </div>
     </div>
@@ -1404,11 +1404,6 @@ const TestaFaktura = () => {
                       : (getCategoryMeta(result.categorized.category).label || result.categorized.category)}
                     {result.categorized.subType && result.reason !== 'natavgift' && _secSaving == null
                       ? ` · ${result.categorized.subType}` : ''}
-                  </span>
-                )}
-                {result.route === 'auto' && adjNetSaving > 0 && (
-                  <span className="bh-chip bh-chip--alert">
-                    +{formatNum(adjNetSaving)}&thinsp;kr/år
                   </span>
                 )}
               </div>
