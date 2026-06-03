@@ -235,69 +235,120 @@ export const SubmitRow = styled.div`
 export const MissionPlan = styled.div`
   border: 1px solid ${({ theme }) => theme.color.borderStrong};
   border-radius: ${({ theme }) => theme.size.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
   overflow: hidden;
-  margin: 12px 0 4px;
+  margin: 16px 0 4px;
+  box-shadow: ${({ theme }) => theme.shadow.sm};
   animation: ${fadeUp} .35s ease both;
 
+  .mp-head {
+    padding: 20px 22px 14px;
+  }
   .mp-title {
-    padding: 18px 20px 4px;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
+  }
+  .mp-sub {
+    margin-top: 3px;
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.5;
   }
 
   .mp-steps {
-    padding: 12px 20px 18px;
+    padding: 2px 22px 18px;
     display: flex;
     flex-direction: column;
-    gap: 11px;
   }
 
   .mp-step {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+    padding-bottom: 18px;
+  }
+  .mp-step:last-child { padding-bottom: 0; }
+
+  /* connector line between nodes */
+  .mp-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 28px;
+    bottom: -2px;
+    width: 2px;
+    background: ${({ theme }) => theme.color.border};
   }
 
-  .mp-arrow {
-    color: ${({ theme }) => theme.color.brand};
-    font-size: 14px;
-    font-weight: 600;
+  .mp-node {
     flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brandSoft};
+    color: ${({ theme }) => theme.color.brand};
+    border: 1.5px solid ${({ theme }) => theme.color.brand};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12.5px;
+    font-weight: 700;
+    font-feature-settings: "tnum";
+    z-index: 1;
+  }
+  .mp-step:last-child .mp-node {
+    background: ${({ theme }) => theme.color.brand};
+    color: #FFFFFF;
   }
 
+  .mp-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 28px;
+    flex-wrap: wrap;
+  }
   .mp-action {
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 500;
     color: ${({ theme }) => theme.color.ink};
-    flex: 1;
+    line-height: 1.4;
   }
-
   .mp-when {
-    font-size: 12px;
-    font-weight: 500;
+    flex-shrink: 0;
+    font-size: 11.5px;
+    font-weight: 600;
     color: ${({ theme }) => theme.color.muted};
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    padding: 3px 10px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
     white-space: nowrap;
   }
 
   .mp-deal {
-    padding: 11px 20px;
+    padding: 14px 22px;
     background: ${({ theme }) => theme.color.brandSoft};
     border-top: 1px solid ${({ theme }) => theme.color.borderStrong};
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
   }
-
   .mp-fee {
-    font-size: 13px;
+    font-size: 13.5px;
+    font-weight: 600;
     color: ${({ theme }) => theme.color.brandInk};
   }
-
   .mp-guarantee {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 13px;
     font-weight: 700;
     color: ${({ theme }) => theme.color.brand};
@@ -309,12 +360,63 @@ export const FormReveal = styled.div`
   animation: ${slideDown} 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 `;
 
-export const AnalysisNote = styled.p`
-  font-size: 13.5px;
-  color: ${({ theme }) => theme.color.inkSoft};
-  line-height: 1.65;
-  margin: 10px 0 4px;
-  padding: 0 2px;
+export const AnalysisNote = styled.div`
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-left: 3px solid ${({ theme }) => theme.color.brand};
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  background: ${({ theme }) => theme.color.surface};
+  padding: 16px 18px 15px;
+  margin: 14px 0 4px;
+  animation: ${fadeUp} .35s ease both;
+
+  .an-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: ${({ theme }) => theme.color.brand};
+    margin-bottom: 11px;
+  }
+
+  .an-drivers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .an-driver {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+  }
+  .an-dot {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brand};
+    margin-top: 7px;
+  }
+  .an-text {
+    font-size: 14px;
+    color: ${({ theme }) => theme.color.inkSoft};
+    line-height: 1.5;
+    strong {
+      font-weight: 700;
+      color: ${({ theme }) => theme.color.ink};
+    }
+  }
+
+  .an-conclusion {
+    margin: 12px 0 0;
+    padding-top: 11px;
+    border-top: 1px solid ${({ theme }) => theme.color.border};
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.5;
+  }
 `;
 
 export const CalcToggle = styled.button`

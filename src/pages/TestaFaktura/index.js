@@ -56,27 +56,33 @@ function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnn
   return null;
 }
 
-function buildAnalysisSummary({ cat, seatCount, adjAnnualCost, suggestedAnnualCost, diagOvPct, licenseOverage, adjNetSaving }) {
+function buildAnalysisSummary({ cat, seatCount, adjAnnualCost, suggestedAnnualCost, diagOvPct, licenseOverage }) {
   if (!diagOvPct && !licenseOverage) return null;
-  const fmtN = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
-  if (cat?.startsWith('saas') && licenseOverage > 0 && diagOvPct > 0) {
-    return `${licenseOverage} av ${seatCount} licenser verkar oanvända, och ni betalar ${diagOvPct}% över avtalspris för er storlek. Sammantaget förklarar det besparingen på ${fmtN(adjNetSaving)} kr/år.`;
-  }
-  if (cat?.startsWith('saas') && licenseOverage > 0) {
-    return `${licenseOverage} av ${seatCount} licenser verkar oanvända — det förklarar huvuddelen av besparingen på ${fmtN(adjNetSaving)} kr/år.`;
-  }
-  if (cat?.startsWith('saas') && diagOvPct > 0) {
-    return `Ni betalar ${diagOvPct}% över avtalspris för bolag av er storlek — det förklarar besparingen på ${fmtN(adjNetSaving)} kr/år.`;
-  }
-  if ((cat === 'mobil' || cat === 'vaxel') && seatCount > 1 && adjAnnualCost && suggestedAnnualCost) {
+  const drivers = [];
+
+  if (cat?.startsWith('saas')) {
+    if (licenseOverage > 0) {
+      drivers.push({ metric: `${licenseOverage} av ${seatCount}`, label: 'licenser verkar oanvända' });
+    }
+    if (diagOvPct > 0) {
+      drivers.push({ metric: `${diagOvPct}%`, label: 'över verifierat avtalspris för bolag av er storlek' });
+    }
+  } else if ((cat === 'mobil' || cat === 'vaxel') && seatCount > 1 && adjAnnualCost && suggestedAnnualCost) {
     const perNow = Math.round(adjAnnualCost / seatCount / 12);
     const perNew = Math.round(suggestedAnnualCost / seatCount / 12);
-    return `Era ${seatCount} abonnemang kostar ${perNow} kr/mån per SIM — verifierat avtalspris för er storlek är ${perNew} kr. Det ger en besparing på ${fmtN(adjNetSaving)} kr/år.`;
+    drivers.push({ metric: `${perNow} kr/mån`, label: `per SIM idag — verifierat avtalspris är ${perNew} kr` });
+    if (diagOvPct > 0) {
+      drivers.push({ metric: `${diagOvPct}%`, label: 'över marknadspris totalt' });
+    }
+  } else if (diagOvPct > 0) {
+    drivers.push({ metric: `${diagOvPct}%`, label: 'över verifierat marknadspris för er storlek och bransch' });
   }
-  if (diagOvPct > 0) {
-    return `Ni betalar ${diagOvPct}% över verifierat marknadspris för er storlek och bransch — det förklarar besparingen på ${fmtN(adjNetSaving)} kr/år.`;
-  }
-  return null;
+
+  if (drivers.length === 0) return null;
+  const conclusion = drivers.length > 1
+    ? 'Sammantaget förklarar det din identifierade besparing ovan.'
+    : 'Det förklarar din identifierade besparing ovan.';
+  return { drivers, conclusion };
 }
 
 function buildMissionPlan({ cat, arvoFee }) {
@@ -436,7 +442,6 @@ const TestaFaktura = () => {
   const [email, setEmail] = useState('');
   const [emailState, setEmailState] = useState('idle'); // idle | submitting | sent
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalView, setModalView] = useState('fortnox'); // fortnox | email
   const [modalEmail, setModalEmail] = useState('');
   const [modalEmailState, setModalEmailState] = useState('idle'); // idle | submitting | sent
   const [apiToken, setApiToken] = useState(null);
@@ -822,7 +827,6 @@ const TestaFaktura = () => {
     setEmail('');
     setEmailState('idle');
     setModalOpen(false);
-    setModalView('fortnox');
     setModalEmail('');
     setModalEmailState('idle');
     setGateOpen(false);
@@ -1835,9 +1839,25 @@ const TestaFaktura = () => {
                           suggestedAnnualCost: result.recommendation.suggestedAnnualCost,
                           diagOvPct,
                           licenseOverage: result.recommendation?.licenseOverage ?? 0,
-                          adjNetSaving,
                         });
-                        return summary ? <AnalysisNote>{summary}</AnalysisNote> : null;
+                        if (!summary) return null;
+                        return (
+                          <AnalysisNote>
+                            <span className="an-eyebrow">
+                              <Icon name="spark" size={12} stroke={2.2} />
+                              Vad Arvo såg
+                            </span>
+                            <div className="an-drivers">
+                              {summary.drivers.map((d, i) => (
+                                <div key={i} className="an-driver">
+                                  <span className="an-dot" />
+                                  <span className="an-text"><strong>{d.metric}</strong> {d.label}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="an-conclusion">{summary.conclusion}</p>
+                          </AnalysisNote>
+                        );
                       })()}
                       {(() => {
                         const mp = buildMissionPlan({
@@ -1847,19 +1867,27 @@ const TestaFaktura = () => {
                         if (!mp) return null;
                         return (
                           <MissionPlan>
-                            <div className="mp-title">Arvo tar det härifrån</div>
+                            <div className="mp-head">
+                              <div className="mp-title">Arvo tar det härifrån</div>
+                              <div className="mp-sub">Priset är säkrat. Ni gör ingenting mer.</div>
+                            </div>
                             <div className="mp-steps">
                               {mp.steps.map((s, i) => (
                                 <div key={i} className="mp-step">
-                                  <span className="mp-arrow">→</span>
-                                  <span className="mp-action">{s.action}</span>
-                                  <span className="mp-when">{s.when}</span>
+                                  <span className="mp-node">{i + 1}</span>
+                                  <span className="mp-body">
+                                    <span className="mp-action">{s.action}</span>
+                                    <span className="mp-when">{s.when}</span>
+                                  </span>
                                 </div>
                               ))}
                             </div>
                             <div className="mp-deal">
                               <span className="mp-fee">{mp.fee} kr om vi lyckas</span>
-                              <span className="mp-guarantee">Ingenting annars</span>
+                              <span className="mp-guarantee">
+                                <Icon name="shield" size={13} stroke={2.2} />
+                                Annars ingenting
+                              </span>
                             </div>
                           </MissionPlan>
                         );
