@@ -1749,11 +1749,7 @@ const TestaFaktura = () => {
                                 <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
                               </span>
                             </div>
-                            <p className="diag-text">
-                              {(result.recommendation?.licenseOverage > 0 && result.extracted?.seatCount > 0)
-                                ? `${diagInsight} ${result.recommendation.licenseOverage} av ${result.extracted.seatCount} licenser verkar dessutom oanvända.`
-                                : diagInsight}
-                            </p>
+                            <p className="diag-text">{diagInsight}</p>
                           </div>
                         </ScoreDiag>
                       )}
@@ -1781,7 +1777,13 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
-
+                      {!isLicensePending && (
+                        <PriceNote $compact>
+                          {_effectiveMeta.benchmarkType === 'list-verified'
+                            ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
+                            : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
+                        </PriceNote>
+                      )}
                     </>
                   );
                 })()}
@@ -1815,6 +1817,27 @@ const TestaFaktura = () => {
               </Reasoning>
             )}
 
+            {result.recommendation?.shouldSwitch && !isOptimize && (() => {
+              const sc = result.extracted?.seatCount;
+              const emp = Number(employees);
+              const overage = sc != null && sc > emp ? sc - emp : 0;
+              const _om = getCategoryMeta(result.categorized?.category);
+              const term = _om.unit;
+              const termSing = _om.unitSingular;
+              const kicker = `Notering om ${term}`;
+              return overage > 0 ? (
+                <LicenseOverageNote>
+                  <span className="kicker">{kicker}</span>
+                  <p>
+                    Kalkylen ovan bygger på att vi behåller era {sc} {term},
+                    men sänker styckpriset genom att flytta er till rätt avtalsnivå. Vi noterar dock
+                    att ni enligt uppgift är {emp} anställda. Om man dessutom hade städat bort
+                    {overage === 1 ? ` detta ${overage} överflödiga ${termSing}` : ` dessa ${overage} överflödiga ${term}`}, hade er kostnad sänkts ytterligare.
+                  </p>
+                </LicenseOverageNote>
+              ) : null;
+            })()}
+
             {/* ── Fakturaunderlag — dolt som standard, öppnas på begäran ──────── */}
             <CalcToggle onClick={() => setDetailsOpen(o => !o)}>
               {detailsOpen ? '↑ Dölj underlag' : '↓ Hur vi räknar'}
@@ -1822,7 +1845,7 @@ const TestaFaktura = () => {
 
             {detailsOpen && <>
 
-            {result.route === 'auto' && !result.categorized?.licensePending && (
+            {result.route === 'auto' && !result.categorized?.licensePending && !(result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 && !isOptimize) && (
               <PriceNote>
                 {_effectiveMeta.benchmarkType === 'list-verified'
                   ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
@@ -2060,27 +2083,6 @@ const TestaFaktura = () => {
                 </p>
               </Reasoning>
             )}
-
-            {(() => {
-              const sc = result.extracted?.seatCount;
-              const emp = Number(employees);
-              const overage = sc != null && sc > emp ? sc - emp : 0;
-              const _om = getCategoryMeta(result.categorized?.category);
-              const term = _om.unit;
-              const termSing = _om.unitSingular;
-              const kicker = `Notering om ${term}`;
-              return overage > 0 ? (
-                <LicenseOverageNote>
-                  <span className="kicker">{kicker}</span>
-                  <p>
-                    Kalkylen ovan bygger på att vi behåller era {sc} {term},
-                    men sänker styckpriset genom att flytta er till rätt avtalsnivå. Vi noterar dock
-                    att ni enligt uppgift är {emp} anställda. Om man dessutom hade städat bort
-                    {overage === 1 ? ` detta ${overage} överflödiga ${termSing}` : ` dessa ${overage} överflödiga ${term}`}, hade er kostnad sänkts ytterligare.
-                  </p>
-                </LicenseOverageNote>
-              ) : null;
-            })()}
 
             {result.categorized?.category === 'saas-productivity' &&
              (result.recommendation?.tierOptimizationSaving ?? 0) > 0 && (

@@ -522,11 +522,11 @@ export const BriefingHead = styled.div`
 export const SavingsBlock = styled.div`
   position: relative;
   overflow: hidden;
-  padding: 28px 28px 26px;
+  padding: 24px 26px 22px;
   border-radius: ${({ theme }) => theme.size.radius.lg};
   background: ${({ theme }) => theme.color.brandGradient};
   color: #FAFAF7;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   box-shadow: 0 8px 32px rgba(27,110,102,.22), 0 2px 6px rgba(27,110,102,.14);
   animation: ${fadeUp} 0.5s ease both;
 
@@ -558,7 +558,7 @@ export const SavingsBlock = styled.div`
   span.amount {
     display: block;
     font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(44px, 8vw, 68px);
+    font-size: clamp(38px, 6.5vw, 56px);
     font-weight: 500;
     line-height: 1.0;
     letter-spacing: -0.025em;
@@ -567,7 +567,7 @@ export const SavingsBlock = styled.div`
   span.unit {
     display: block;
     margin-top: 10px;
-    font-size: 14px;
+    font-size: 13.5px;
     opacity: 0.82;
     line-height: 1.55;
     border-top: 1px solid rgba(255,255,255,.18);
@@ -2083,7 +2083,7 @@ export const ScoreDiag = styled.div`
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 14px 18px;
+  padding: 18px 22px;
   border-radius: ${({ theme }) => theme.size.radius.md};
   background: ${({ theme }) => theme.color.surface};
   border: 1.5px solid var(--diag-color, ${({ theme }) => theme.color.borderStrong});
@@ -2133,7 +2133,7 @@ export const ScoreDiag = styled.div`
     margin-bottom: 4px;
   }
   .diag-score-label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
@@ -2141,7 +2141,7 @@ export const ScoreDiag = styled.div`
   }
   .diag-sep {
     color: ${({ theme }) => theme.color.borderStrong};
-    font-size: 12px;
+    font-size: 13px;
     flex-shrink: 0;
   }
   .diag-status {
@@ -2151,16 +2151,16 @@ export const ScoreDiag = styled.div`
     flex-shrink: 0;
   }
   .diag-label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     flex-shrink: 0;
   }
   .diag-text {
-    font-size: 13px;
+    font-size: 14.5px;
     letter-spacing: -0.01em;
     color: ${({ theme }) => theme.color.ink};
     margin: 0;
-    line-height: 1.45;
+    line-height: 1.55;
   }
 `;
 
