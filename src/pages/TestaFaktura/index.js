@@ -78,7 +78,6 @@ function buildAnalysisSummary({ cat, seatCount, adjAnnualCost, suggestedAnnualCo
 
 function buildMissionPlan({ cat, arvoFee }) {
   if (!arvoFee) return null;
-  const fmtN = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
   const step3 = cat === 'el'
     ? { action: 'Nytt avtal aktiveras', when: '~14 dagar' }
     : (cat === 'mobil' || cat === 'vaxel')
@@ -90,7 +89,6 @@ function buildMissionPlan({ cat, arvoFee }) {
       { action: 'Ni godkänner ett förslag', when: '~5 dagar' },
       step3,
     ],
-    fee: fmtN(arvoFee),
   };
 }
 
@@ -1872,13 +1870,6 @@ const TestaFaktura = () => {
                                   </span>
                                 </div>
                               ))}
-                            </div>
-                            <div className="mp-deal">
-                              <span className="mp-fee">{mp.fee} kr om vi lyckas</span>
-                              <span className="mp-guarantee">
-                                <Icon name="shield" size={13} stroke={2.2} />
-                                Annars ingenting
-                              </span>
                             </div>
                           </MissionPlan>
                         );
