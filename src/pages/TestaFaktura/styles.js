@@ -2326,6 +2326,17 @@ export const ScoreRevealCard = styled.div`
     flex: 1;
     min-width: 0;
   }
+  .score-eyebrow {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: ${({ theme }) => theme.color.brand};
+    opacity: 0.8;
+    margin-bottom: 9px;
+    animation: ${revealFade} 0.45s ease 1.5s both;
+  }
   .level-badge {
     display: inline-flex;
     align-items: center;
