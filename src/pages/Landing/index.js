@@ -358,7 +358,7 @@ const Landing = () => {
             <Eyebrow><span className="dot" /> Arvo Intelligence · Proaktiv finansdirektör för svenska bolag</Eyebrow>
             <Headline>
               <span className="line">Er finansdirektör.</span>
-              <em>Aldrig offline.</em>
+              <em>Innan ni frågar.</em>
             </Headline>
             <Lede>
               Bokföringsprogrammet visar vad ni betalade. Inte att ni betalar för mycket.
@@ -453,7 +453,7 @@ const Landing = () => {
 
         <TrustPillar>
           <div className="icon"><Icon name="bolt" size={22} stroke={2} /></div>
-          <h3>Aktivera en gång. Aldrig offline.</h3>
+          <h3>Aktivera en gång. Arvo tar resten.</h3>
           <p>
             Ni kopplar in Arvo en enda gång. Därefter flödar varje ny leverantörsfaktura
             in automatiskt och bevakas i realtid — ni behöver aldrig ladda upp något manuellt.
@@ -492,7 +492,7 @@ const Landing = () => {
         <SectionHead $left>
           <span className="kicker">Så fungerar Arvo Flow</span>
           <h2>Aktivera en gång. Vi sköter resten.</h2>
-          <p>Ni behöver inte byta system, lära er något nytt eller komma ihåg att kolla något. Arvo är den finansdirektören som aldrig går offline.</p>
+          <p>Ni behöver inte byta system, lära er något nytt eller komma ihåg att kolla något. Arvo hör av sig — ni behöver inte fråga.</p>
         </SectionHead>
         <HowGrid>
           {HOW_STEPS.map((s) => (
