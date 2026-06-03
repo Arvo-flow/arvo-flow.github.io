@@ -239,73 +239,61 @@ export const MissionPlan = styled.div`
   margin: 12px 0 4px;
   animation: ${fadeUp} .35s ease both;
 
-  .mp-head {
-    padding: 10px 18px;
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
-    font-size: 10px;
+  .mp-title {
+    padding: 18px 20px 4px;
+    font-size: 15px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .13em;
-    color: ${({ theme }) => theme.color.brand};
+    color: ${({ theme }) => theme.color.ink};
+    letter-spacing: -0.01em;
+  }
+
+  .mp-steps {
+    padding: 12px 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  .mp-step {
     display: flex;
     align-items: center;
-    gap: 7px;
-    &::before {
-      content: '';
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: ${({ theme }) => theme.color.brand};
-      flex-shrink: 0;
-    }
+    gap: 10px;
   }
 
-  .mp-row {
-    display: grid;
-    grid-template-columns: 88px 1fr;
-    gap: 2px 14px;
-    padding: 11px 18px;
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
-    align-items: start;
-    &:last-of-type { border-bottom: none; }
-  }
-
-  .mp-lbl {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    color: ${({ theme }) => theme.color.muted};
-    padding-top: 3px;
-    line-height: 1.4;
-  }
-
-  .mp-val {
-    font-size: 13.5px;
+  .mp-arrow {
+    color: ${({ theme }) => theme.color.brand};
+    font-size: 14px;
     font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .mp-action {
+    font-size: 13.5px;
+    font-weight: 500;
     color: ${({ theme }) => theme.color.ink};
-    line-height: 1.45;
+    flex: 1;
   }
 
-  .mp-detail {
+  .mp-when {
     font-size: 12px;
+    font-weight: 500;
     color: ${({ theme }) => theme.color.muted};
-    margin-top: 2px;
+    white-space: nowrap;
   }
 
-  .mp-foot {
-    padding: 12px 18px;
+  .mp-deal {
+    padding: 11px 20px;
     background: ${({ theme }) => theme.color.brandSoft};
     border-top: 1px solid ${({ theme }) => theme.color.borderStrong};
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
   }
 
   .mp-fee {
-    font-size: 12.5px;
+    font-size: 13px;
     color: ${({ theme }) => theme.color.brandInk};
   }
 
