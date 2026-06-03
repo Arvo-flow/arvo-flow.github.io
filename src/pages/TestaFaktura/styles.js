@@ -258,7 +258,7 @@ export const MissionPlan = styled.div`
   }
 
   .mp-steps {
-    padding: 2px 22px 18px;
+    padding: 2px 22px 20px;
     display: flex;
     flex-direction: column;
   }
@@ -299,9 +299,14 @@ export const MissionPlan = styled.div`
     font-feature-settings: "tnum";
     z-index: 1;
   }
-  .mp-step:last-child .mp-node {
+  /* steg 1 = där kunden är nu */
+  .mp-step:first-child .mp-node {
     background: ${({ theme }) => theme.color.brand};
     color: #FFFFFF;
+    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
+  }
+  .mp-step:not(:first-child) .mp-action {
+    color: ${({ theme }) => theme.color.muted};
   }
 
   .mp-body {
@@ -327,31 +332,6 @@ export const MissionPlan = styled.div`
     background: ${({ theme }) => theme.color.surfaceAlt};
     padding: 3px 10px;
     border-radius: ${({ theme }) => theme.size.radius.pill};
-    white-space: nowrap;
-  }
-
-  .mp-deal {
-    padding: 14px 22px;
-    background: ${({ theme }) => theme.color.brandSoft};
-    border-top: 1px solid ${({ theme }) => theme.color.borderStrong};
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .mp-fee {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: ${({ theme }) => theme.color.brandInk};
-  }
-  .mp-guarantee {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 13px;
-    font-weight: 700;
-    color: ${({ theme }) => theme.color.brand};
     white-space: nowrap;
   }
 `;
