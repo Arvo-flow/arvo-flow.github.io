@@ -1676,17 +1676,53 @@ export const Reasoning = styled.div`
 
 export const LicenseOverageNote = styled.div`
   margin-top: 16px;
-  padding: 12px 16px;
   border-left: 2px solid ${({ theme }) => theme.color.borderStrong};
 
+  .lon-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    &:hover .lon-teaser { color: ${({ theme }) => theme.color.ink}; }
+  }
+  .lon-head {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
   span.kicker {
-    display: block;
     font-size: 10.5px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: ${({ theme }) => theme.color.muted};
-    margin-bottom: 5px;
+  }
+  .lon-teaser {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.inkSoft};
+    letter-spacing: -0.01em;
+    transition: color .15s;
+  }
+  .lon-chevron {
+    flex-shrink: 0;
+    color: ${({ theme }) => theme.color.muted};
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+    &.open { transform: rotate(90deg); }
+  }
+  .lon-body {
+    padding: 2px 16px 10px;
+    animation: ${slideDown} 0.2s ease both;
   }
   p {
     font-family: ${({ theme }) => theme.font.display};
