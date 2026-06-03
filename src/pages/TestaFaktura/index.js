@@ -16,7 +16,7 @@ import {
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
-  FormReveal, ScoreAnalysis, CalcToggle,
+  FormReveal, CalcToggle,
 } from './styles';
 
 const TIER_DISPLAY = {
@@ -115,30 +115,6 @@ function useRevealedScore(target, delay = 200) {
   return { score, gaugeReady };
 }
 
-const SA_GAUGE_R = 30;
-const SA_GAUGE_C = 2 * Math.PI * SA_GAUGE_R;
-
-function ScoreGaugeMini({ diagScore, diagC }) {
-  const dash = (diagScore / 100) * SA_GAUGE_C;
-  const { score: animScore, gaugeReady } = useRevealedScore(diagScore, 300);
-  return (
-    <div className="sa-gauge">
-      <svg viewBox="0 0 72 72">
-        <circle cx="36" cy="36" r={SA_GAUGE_R} fill="none" stroke="#E9F1ED" strokeWidth="6.5" />
-        <circle
-          cx="36" cy="36" r={SA_GAUGE_R} fill="none"
-          stroke={diagC.dot} strokeWidth="6.5" strokeLinecap="round"
-          strokeDasharray={gaugeReady ? `${dash} ${SA_GAUGE_C}` : `0 ${SA_GAUGE_C}`}
-          style={{ transform: 'rotate(-90deg)', transformOrigin: '36px 36px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
-        />
-      </svg>
-      <span className="sa-num">
-        <span className="sa-val">{animScore}</span>
-        <span className="sa-den">/100</span>
-      </span>
-    </div>
-  );
-}
 
 const MAX_PDF_SIZE   = 3 * 1024 * 1024;
 const FREE_ANALYSES    = 3; // speglar serverns konstant
@@ -1014,6 +990,7 @@ const TestaFaktura = () => {
   const GAUGE_R = 26;
   const GAUGE_C = 2 * Math.PI * GAUGE_R;
   const gaugeDash = (diagScore / 100) * GAUGE_C;
+  const { score: animScoreVal, gaugeReady: animGaugeReady } = useRevealedScore(diagScore, 400);
 
   // Layer 2 (Arvo Switch) — komponent-scope variabler för SwitchCard utanför Card
   const _switchIsRealPrice     = _effectiveMeta.isRealPrice;
@@ -1746,6 +1723,40 @@ const TestaFaktura = () => {
                     : isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen';
                   return (
                     <>
+                      {diagInsight && (
+                        <ScoreDiag style={{ '--diag-color': diagC.dot }}>
+                          <div className="gauge-wrap">
+                            <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
+                              <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E9F1ED" strokeWidth="4.5" />
+                              <circle
+                                cx="30" cy="30" r={GAUGE_R} fill="none"
+                                stroke={diagC.dot} strokeWidth="4.5" strokeLinecap="round"
+                                strokeDasharray={animGaugeReady ? `${(animScoreVal / 100) * GAUGE_C} ${GAUGE_C}` : `0 ${GAUGE_C}`}
+                                style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
+                              />
+                            </svg>
+                            <div className="gauge-num" style={{ color: diagC.dot }}>
+                              <span className="gauge-val">{animScoreVal}</span>
+                              <span className="gauge-denom">/100</span>
+                            </div>
+                          </div>
+                          <div className="diag-body">
+                            <div className="diag-top">
+                              <span className="diag-score-label">Arvo Score™</span>
+                              <span className="diag-sep">·</span>
+                              <span className="diag-status">
+                                <Icon name="alert-circle" size={13} color={diagC.dot} stroke={2} />
+                                <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                              </span>
+                            </div>
+                            <p className="diag-text">
+                              {(result.recommendation?.licenseOverage > 0 && result.extracted?.seatCount > 0)
+                                ? `${diagInsight} ${result.recommendation.licenseOverage} av ${result.extracted.seatCount} licenser verkar dessutom oanvända.`
+                                : diagInsight}
+                            </p>
+                          </div>
+                        </ScoreDiag>
+                      )}
                       <SavingsBlock>
                         <span className="kicker">
                           {isLicensePending ? 'Möjlig årlig besparing' : 'Din identifierade nettobesparing'}
@@ -1770,26 +1781,6 @@ const TestaFaktura = () => {
                               )}
                         </span>
                       </SavingsBlock>
-                      {(() => {
-                        if (!diagInsight) return null;
-                        const licenseOverage = result.recommendation?.licenseOverage ?? 0;
-                        const seatCount = result.extracted?.seatCount ?? 0;
-                        const analysisText = (licenseOverage > 0 && seatCount > 0)
-                          ? `${diagInsight} ${licenseOverage} av ${seatCount} licenser verkar dessutom oanvända.`
-                          : diagInsight;
-                        return (
-                          <ScoreAnalysis style={{ '--diag-color': diagC.dot, '--diag-label-clr': diagC.labelClr }}>
-                            <div className="sa-head">
-                              <ScoreGaugeMini diagScore={diagScore} diagC={diagC} />
-                              <div className="sa-meta">
-                                <span className="sa-eyebrow">Arvo Score™</span>
-                                <span className="sa-label">{diagC.label}</span>
-                              </div>
-                            </div>
-                            <p className="sa-text">{analysisText}</p>
-                          </ScoreAnalysis>
-                        );
-                      })()}
 
                     </>
                   );
@@ -1808,6 +1799,20 @@ const TestaFaktura = () => {
                   </NoSwitchBlock>
                 )}
               </>
+            )}
+
+            {result.recommendation?.reasoning && result.recommendation?.shouldSwitch && !isOptimize && !_isSecondaryOnlySwitch && (
+              <Reasoning>
+                <span className="kicker">Arvo bedömer</span>
+                <p>
+                  {getCategoryMeta(result.categorized.category).isRealPrice
+                    ? result.recommendation.reasoning
+                    : redactSupplier(
+                        result.recommendation.reasoning,
+                        result.recommendation.suggestedSupplier,
+                      )}
+                </p>
+              </Reasoning>
             )}
 
             {/* ── Fakturaunderlag — dolt som standard, öppnas på begäran ──────── */}
@@ -2042,9 +2047,9 @@ const TestaFaktura = () => {
               })()}
             </KV>}
 
-            {result.recommendation?.reasoning && (result.recommendation?.shouldSwitch || isOptimize) && (
+            {result.recommendation?.reasoning && (isOptimize || _isSecondaryOnlySwitch) && (
               <Reasoning>
-                <span className="kicker">{isOptimize ? 'Vad vi hittade' : _isSecondaryOnlySwitch ? 'Kombinerad analys' : 'Arvo bedömer'}</span>
+                <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Kombinerad analys'}</span>
                 <p>
                   {getCategoryMeta(result.categorized.category).isRealPrice
                     ? result.recommendation.reasoning
