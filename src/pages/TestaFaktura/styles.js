@@ -2262,6 +2262,18 @@ export const ScoreDiag = styled.div`
     margin: 0;
     line-height: 1.55;
   }
+
+  @media (max-width: 480px) {
+    gap: 15px;
+    padding: 16px 18px;
+    align-items: flex-start;
+    .diag-top {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+    }
+    .diag-sep { display: none; }
+  }
 `;
 
 export const EmailGate = styled.div`
