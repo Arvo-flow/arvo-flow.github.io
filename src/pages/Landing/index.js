@@ -361,10 +361,9 @@ const Landing = () => {
               <em>Innan ni frågar.</em>
             </Headline>
             <Lede>
-              Bokföringsprogrammet visar vad ni betalade. Inte att ni betalar för mycket.
-              Arvo bevakar varje leverantörsavtal — och hör av sig i samma stund en kostnad
-              börjar röra sig uppåt. Ingen inloggning. Ingen rapport att läsa. Bara ett
-              samtal när det händer något som kostar er pengar.
+              Era leverantörer justerar priser tyst. Arvo bevakar varje avtal dygnet runt
+              — och hör av sig i samma stund en kostnad börjar krypa uppåt, ofta innan ni
+              själva hunnit märka något. Vi identifierar läckaget. Ni tar beslutet.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/testa-faktura" $variant="gradient" $size="lg">
