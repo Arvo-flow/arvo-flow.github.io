@@ -5,6 +5,11 @@ const fadeUp = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
+const slideDown = keyframes`
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+`;
+
 const pulse = keyframes`
   0%, 100% { opacity: 0.55; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.04); }
@@ -97,7 +102,7 @@ export const Dropzone = styled.div`
   border: 2px dashed ${({ theme, $active, $hasFile }) => {
     if ($active) return theme.color.brand;
     if ($hasFile) return theme.color.brand;
-    return theme.color.borderStrong;
+    return '#A8C8BE';
   }};
   background: ${({ theme, $active, $hasFile }) => {
     if ($active) return theme.color.brandSoft;
@@ -105,7 +110,7 @@ export const Dropzone = styled.div`
     return theme.color.surfaceAlt;
   }};
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  padding: 28px 24px;
+  padding: 32px 24px 28px;
   text-align: center;
   cursor: pointer;
   transition: background ${({ theme }) => theme.motion.fast},
@@ -117,14 +122,13 @@ export const Dropzone = styled.div`
   }
 
   div.icon {
-    margin: 0 auto 14px;
-    width: 44px;
-    height: 44px;
+    margin: 0 auto 16px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: ${({ theme }) => theme.color.brand};
-    opacity: 0.85;
   }
 
   strong.primary {
@@ -132,10 +136,27 @@ export const Dropzone = styled.div`
     font-size: 15px;
     font-weight: 600;
     color: ${({ theme }) => theme.color.ink};
-    margin-bottom: 5px;
+    margin-bottom: 14px;
   }
+
+  span.cta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    border-radius: 100px;
+    background: linear-gradient(135deg, #5DD6CA, #1B6E66);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    pointer-events: none;
+    margin-bottom: 14px;
+  }
+
   span.secondary {
-    font-size: 12.5px;
+    display: block;
+    font-size: 12px;
     color: ${({ theme }) => theme.color.muted};
     line-height: 1.5;
   }
@@ -209,6 +230,10 @@ export const SubmitRow = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+`;
+
+export const FormReveal = styled.div`
+  animation: ${slideDown} 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 `;
 
 export const Disclaimer = styled.p`
