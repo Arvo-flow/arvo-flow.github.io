@@ -105,7 +105,7 @@ export const Dropzone = styled.div`
     return theme.color.surfaceAlt;
   }};
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  padding: 40px 24px;
+  padding: 28px 24px;
   text-align: center;
   cursor: pointer;
   transition: background ${({ theme }) => theme.motion.fast},
@@ -118,26 +118,26 @@ export const Dropzone = styled.div`
 
   div.icon {
     margin: 0 auto 14px;
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    background: ${({ theme }) => theme.color.surface};
-    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: ${({ theme }) => theme.color.brand};
+    opacity: 0.85;
   }
 
   strong.primary {
     display: block;
-    font-size: 16px;
+    font-size: 15px;
+    font-weight: 600;
     color: ${({ theme }) => theme.color.ink};
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
   span.secondary {
-    font-size: 13.5px;
+    font-size: 12.5px;
     color: ${({ theme }) => theme.color.muted};
+    line-height: 1.5;
   }
   span.filename {
     display: block;

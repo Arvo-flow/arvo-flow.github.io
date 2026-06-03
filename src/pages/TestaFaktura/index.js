@@ -1127,7 +1127,7 @@ const TestaFaktura = () => {
                   }}
                 />
                 <div className="icon">
-                  <Icon name={(file || batchMode) ? 'check' : 'arrow'} size={26} stroke={2} />
+                  <Icon name={(file || batchMode) ? 'check' : 'upload'} size={28} stroke={1.75} />
                 </div>
                 {batchMode ? (
                   <>
@@ -1136,13 +1136,17 @@ const TestaFaktura = () => {
                   </>
                 ) : file ? (
                   <>
-                    <strong className="primary">PDF vald</strong>
+                    <strong className="primary">Faktura vald</strong>
                     <span className="filename">{file.name} · {(file.size / 1024).toFixed(0)} kB</span>
                   </>
                 ) : (
                   <>
-                    <strong className="primary">Dra hit fakturor — eller klicka för att välja</strong>
-                    <span className="secondary">En eller flera PDF:er, max 3 MB styck. Vi sparar inte filen.</span>
+                    <strong className="primary">
+                      {typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0
+                        ? 'Tryck för att välja faktura'
+                        : 'Dra hit er faktura — eller klicka för att välja'}
+                    </strong>
+                    <span className="secondary">PDF · max 3 MB · Vi sparar inte filen</span>
                   </>
                 )}
               </Dropzone>
