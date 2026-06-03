@@ -35,6 +35,15 @@
     },
     "api/admin/preview-briefing.mjs": {
       "maxDuration": 30
+    },
+    "api/auth/gmail-callback.mjs": {
+      "maxDuration": 30
+    },
+    "api/auth/outlook-callback.mjs": {
+      "maxDuration": 30
+    },
+    "api/activate-intelligence.mjs": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
