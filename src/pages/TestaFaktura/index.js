@@ -16,7 +16,7 @@ import {
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
-  FormReveal,
+  FormReveal, MissionPlan,
 } from './styles';
 
 const TIER_DISPLAY = {
@@ -54,6 +54,37 @@ function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnn
     return `${supplier} — ${diagOvPct}% över verifierat marknadspris.`;
   }
   return null;
+}
+
+function buildMissionPlan({ cat, supplier, suggestedSupplier, seatCount, adjAnnualCost, suggestedAnnualCost, diagOvPct, licenseOverage, arvoFee }) {
+  if (!adjAnnualCost || !suggestedAnnualCost) return null;
+  const fmtN = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
+  const actions = [];
+  let timeline = '5–14 arbetsdagar';
+
+  if (cat?.startsWith('saas')) {
+    timeline = '5–10 arbetsdagar';
+    if (licenseOverage > 0) {
+      actions.push({ label: `Justera licensvolym — ${seatCount} → ${seatCount - licenseOverage} st`, detail: `${licenseOverage} licenser verkar oanvända` });
+    }
+    actions.push({ label: 'Förhandla per-licens-pris', detail: 'mot verifierat avtalspris för er storlek' });
+  } else if (cat === 'mobil' || cat === 'vaxel') {
+    timeline = '3–7 arbetsdagar';
+    actions.push({ label: `Förhandla abonnemangspris — ${seatCount} abonnemang`, detail: `${diagOvPct}% under nuvarande pris` });
+  } else if (cat === 'el') {
+    timeline = '7–14 arbetsdagar';
+    actions.push({ label: 'Avsluta nuvarande elavtal', detail: 'vid närmaste möjliga tillfälle' });
+    actions.push({ label: `Teckna nytt avtal med ${suggestedSupplier || 'ny leverantör'}`, detail: 'mot aktuellt marknadspris' });
+  } else {
+    actions.push({ label: `Förhandla avtalspris med ${supplier || 'leverantören'}`, detail: `${diagOvPct}% under nuvarande kostnad` });
+  }
+
+  return {
+    goal: { from: fmtN(adjAnnualCost), to: fmtN(suggestedAnnualCost), supplier: suggestedSupplier || null },
+    actions,
+    timeline,
+    arvoFee: fmtN(arvoFee),
+  };
 }
 
 function detectHardwareInstallments(lineItems) {
@@ -1784,21 +1815,54 @@ const TestaFaktura = () => {
                                 </>
                               )}
                         </span>
-                        {(() => {
-                          const kf = buildKeyFinding({
-                            cat:                result.categorized?.category,
-                            supplier:           result.categorized?.normalizedSupplier ?? result.extracted?.supplier,
-                            seatCount:          result.extracted?.seatCount ?? 0,
-                            adjAnnualCost,
-                            suggestedAnnualCost: result.recommendation.suggestedAnnualCost,
-                            diagOvPct,
-                            licenseOverage:     result.recommendation?.licenseOverage ?? 0,
-                          });
-                          return kf ? (
-                            <span className="key-finding">{kf}</span>
-                          ) : null;
-                        })()}
                       </SavingsBlock>
+                      {(() => {
+                        const mp = buildMissionPlan({
+                          cat:                result.categorized?.category,
+                          supplier:           result.categorized?.normalizedSupplier ?? result.extracted?.supplier,
+                          suggestedSupplier:  result.recommendation.suggestedSupplier,
+                          seatCount:          result.extracted?.seatCount ?? 0,
+                          adjAnnualCost,
+                          suggestedAnnualCost: result.recommendation.suggestedAnnualCost,
+                          diagOvPct,
+                          licenseOverage:     result.recommendation?.licenseOverage ?? 0,
+                          arvoFee:            adjArvoFee,
+                        });
+                        if (!mp) return null;
+                        return (
+                          <MissionPlan>
+                            <div className="mp-head">Arvos uppdragsplan</div>
+                            <div className="mp-row">
+                              <span className="mp-lbl">Mål</span>
+                              <div>
+                                <div className="mp-val">{mp.goal.from} → {mp.goal.to} kr/år</div>
+                                {mp.goal.supplier && <div className="mp-detail">hos {mp.goal.supplier}</div>}
+                              </div>
+                            </div>
+                            {mp.actions.map((a, i) => (
+                              <div key={i} className="mp-row">
+                                <span className="mp-lbl">Åtgärd {i + 1}</span>
+                                <div>
+                                  <div className="mp-val">{a.label}</div>
+                                  {a.detail && <div className="mp-detail">{a.detail}</div>}
+                                </div>
+                              </div>
+                            ))}
+                            <div className="mp-row">
+                              <span className="mp-lbl">Tidplan</span>
+                              <div className="mp-val">{mp.timeline}</div>
+                            </div>
+                            <div className="mp-row">
+                              <span className="mp-lbl">Ert bidrag</span>
+                              <div className="mp-val">Signera fullmakt · Godkänna avtal</div>
+                            </div>
+                            <div className="mp-foot">
+                              <span className="mp-fee">Arvos arvode: {mp.arvoFee} kr (20 % av realiserad besparing)</span>
+                              <span className="mp-guarantee">Ingenting om vi inte lyckas</span>
+                            </div>
+                          </MissionPlan>
+                        );
+                      })()}
 
                     </>
                   );

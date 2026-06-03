@@ -232,6 +232,91 @@ export const SubmitRow = styled.div`
   gap: 10px;
 `;
 
+export const MissionPlan = styled.div`
+  border: 1px solid ${({ theme }) => theme.color.borderStrong};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  overflow: hidden;
+  margin: 12px 0 4px;
+  animation: ${fadeUp} .35s ease both;
+
+  .mp-head {
+    padding: 10px 18px;
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .13em;
+    color: ${({ theme }) => theme.color.brand};
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    &::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: ${({ theme }) => theme.color.brand};
+      flex-shrink: 0;
+    }
+  }
+
+  .mp-row {
+    display: grid;
+    grid-template-columns: 88px 1fr;
+    gap: 2px 14px;
+    padding: 11px 18px;
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
+    align-items: start;
+    &:last-of-type { border-bottom: none; }
+  }
+
+  .mp-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: ${({ theme }) => theme.color.muted};
+    padding-top: 3px;
+    line-height: 1.4;
+  }
+
+  .mp-val {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.ink};
+    line-height: 1.45;
+  }
+
+  .mp-detail {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    margin-top: 2px;
+  }
+
+  .mp-foot {
+    padding: 12px 18px;
+    background: ${({ theme }) => theme.color.brandSoft};
+    border-top: 1px solid ${({ theme }) => theme.color.borderStrong};
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .mp-fee {
+    font-size: 12.5px;
+    color: ${({ theme }) => theme.color.brandInk};
+  }
+
+  .mp-guarantee {
+    font-size: 13px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.brand};
+    white-space: nowrap;
+  }
+`;
+
 export const FormReveal = styled.div`
   animation: ${slideDown} 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 `;
