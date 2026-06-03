@@ -12,7 +12,7 @@ import {
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
   BriefingHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
-  Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, ScoreRevealCard, EmailGate, PortfolioBridge,
+  Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, ScoreInsight, EmailGate, PortfolioBridge,
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
@@ -151,38 +151,34 @@ function useRevealedScore(target, delay = 200) {
   return { score, gaugeReady };
 }
 
-const REVEAL_GAUGE_R = 56;
-const REVEAL_GAUGE_C = 2 * Math.PI * REVEAL_GAUGE_R;
+const HEADER_GAUGE_R = 24;
+const HEADER_GAUGE_C = 2 * Math.PI * HEADER_GAUGE_R;
 
-function ScoreReveal({ diagScore, diagC, diagInsight }) {
-  const gaugeDashLg = (diagScore / 100) * REVEAL_GAUGE_C;
+function HeaderScore({ diagScore, diagC }) {
+  const dash = (diagScore / 100) * HEADER_GAUGE_C;
   const { score: animScore, gaugeReady } = useRevealedScore(diagScore, 180);
   return (
-    <ScoreRevealCard style={{ '--diag-color': diagC.dot }}>
-      <div className="gauge-wrap">
-        <svg className="gauge-svg" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none" stroke="#E5EFEA" strokeWidth="8" />
+    <div className="bh-score" style={{ '--diag-color': diagC.dot }}>
+      <div className="bh-score-gauge">
+        <svg viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r={HEADER_GAUGE_R} fill="none" stroke="#E5EFEA" strokeWidth="5" />
           <circle
-            cx="60" cy="60" r={REVEAL_GAUGE_R} fill="none"
-            stroke={diagC.dot} strokeWidth="8" strokeLinecap="round"
-            strokeDasharray={gaugeReady ? `${gaugeDashLg} ${REVEAL_GAUGE_C}` : `0 ${REVEAL_GAUGE_C}`}
-            style={{ transform: 'rotate(-90deg)', transformOrigin: '60px 60px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
+            cx="30" cy="30" r={HEADER_GAUGE_R} fill="none"
+            stroke={diagC.dot} strokeWidth="5" strokeLinecap="round"
+            strokeDasharray={gaugeReady ? `${dash} ${HEADER_GAUGE_C}` : `0 ${HEADER_GAUGE_C}`}
+            style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
           />
         </svg>
-        <div className="num-overlay">
-          <span className="score-val">{animScore}</span>
-          <span className="score-denom">/100</span>
-        </div>
+        <span className="bh-score-num">{animScore}</span>
       </div>
-      <div className="score-body">
-        <span className="score-eyebrow">Arvo Score™</span>
-        <div className="level-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
-          <span className="level-dot" />
+      <div className="bh-score-meta">
+        <span className="bh-score-cap">Arvo Score™</span>
+        <span className="bh-score-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
+          <span className="dot" />
           {diagC.label}
-        </div>
-        <p className="insight">{diagInsight}</p>
+        </span>
       </div>
-    </ScoreRevealCard>
+    </div>
   );
 }
 
@@ -1392,7 +1388,12 @@ const TestaFaktura = () => {
                   </svg>
                 </button>
               </div>
-              <h2 className="bh-supplier">{result.extracted.supplier}</h2>
+              <div className="bh-main">
+                <h2 className="bh-supplier">{result.extracted.supplier}</h2>
+                {result.route === 'auto' && result.categorized?.category !== 'uncategorized' && (
+                  <HeaderScore diagScore={diagScore} diagC={diagC} />
+                )}
+              </div>
               <div className="bh-row">
                 {result.categorized && (
                   <span className="bh-chip">
@@ -1668,7 +1669,7 @@ const TestaFaktura = () => {
               <>
                 {(result.recommendation?.clickRateAnalysis || (result.recommendation?.shouldSwitch && (result.recommendation?.netSaving ?? 0) > 0)) && (
                   <>
-                    <ScoreReveal diagScore={diagScore} diagC={diagC} diagInsight={diagInsight} />
+                    <ScoreInsight>{diagInsight}</ScoreInsight>
                     <Reasoning>
                       <span className="kicker">Vad analysen visar</span>
                       <p>{result.recommendation.reasoning}</p>
@@ -1780,7 +1781,6 @@ const TestaFaktura = () => {
               </>
             ) : result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 ? (
               <>
-                <ScoreReveal diagScore={diagScore} diagC={diagC} diagInsight={diagInsight} />
                 {(() => {
                   const isRealPrice = _effectiveMeta.isRealPrice;
                   const isLicensePending = result.categorized.licensePending;
@@ -1829,22 +1829,28 @@ const TestaFaktura = () => {
                           suggestedAnnualCost: result.recommendation.suggestedAnnualCost,
                           licenseOverage: result.recommendation?.licenseOverage ?? 0,
                         });
-                        if (!summary) return null;
+                        const hasDrivers = summary && summary.drivers.length > 0;
+                        if (!diagInsight && !hasDrivers) return null;
                         return (
                           <AnalysisNote>
                             <span className="an-eyebrow">
                               <Icon name="spark" size={12} stroke={2.2} />
                               Vad Arvo såg
                             </span>
-                            <div className="an-drivers">
-                              {summary.drivers.map((d, i) => (
-                                <div key={i} className="an-driver">
-                                  <span className="an-dot" />
-                                  <span className="an-text"><strong>{d.metric}</strong> {d.label}</span>
+                            {diagInsight && <p className="an-lead">{diagInsight}</p>}
+                            {hasDrivers && (
+                              <>
+                                <div className="an-drivers">
+                                  {summary.drivers.map((d, i) => (
+                                    <div key={i} className="an-driver">
+                                      <span className="an-dot" />
+                                      <span className="an-text"><strong>{d.metric}</strong> {d.label}</span>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                            <p className="an-conclusion">{summary.conclusion}</p>
+                                <p className="an-conclusion">{summary.conclusion}</p>
+                              </>
+                            )}
                           </AnalysisNote>
                         );
                       })()}
@@ -1886,7 +1892,7 @@ const TestaFaktura = () => {
               </NoSwitchBlock>
             ) : (
               <>
-                <ScoreReveal diagScore={diagScore} diagC={diagC} diagInsight={diagInsight} />
+                <ScoreInsight>{diagInsight}</ScoreInsight>
                 {result.recommendation?.monitoringNote && (
                   <NoSwitchBlock style={{ marginTop: 0 }}>
                     {result.recommendation.monitoringNote}

@@ -361,6 +361,17 @@ export const AnalysisNote = styled.div`
     margin-bottom: 11px;
   }
 
+  .an-lead {
+    font-size: 14.5px;
+    color: ${({ theme }) => theme.color.ink};
+    line-height: 1.55;
+    letter-spacing: -0.005em;
+    margin: 0;
+  }
+  .an-lead + .an-drivers {
+    margin-top: 13px;
+  }
+
   .an-drivers {
     display: flex;
     flex-direction: column;
@@ -397,6 +408,16 @@ export const AnalysisNote = styled.div`
     color: ${({ theme }) => theme.color.muted};
     line-height: 1.5;
   }
+`;
+
+export const ScoreInsight = styled.p`
+  font-size: 15.5px;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  color: ${({ theme }) => theme.color.ink};
+  margin: 0 0 20px;
+  animation: ${fadeUp} 0.45s ease both;
+  @media (max-width: 460px) { font-size: 14.5px; }
 `;
 
 export const CalcToggle = styled.button`
@@ -570,7 +591,78 @@ export const BriefingHead = styled.div`
     letter-spacing: -0.025em;
     color: ${({ theme }) => theme.color.ink};
     line-height: 1.1;
-    margin: 0 0 14px;
+    margin: 0;
+    flex: 1;
+    min-width: 190px;
+  }
+  .bh-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .bh-score {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    flex-shrink: 0;
+  }
+  .bh-score-gauge {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+  }
+  .bh-score-gauge svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+  .bh-score-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+    color: var(--diag-color);
+  }
+  .bh-score-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .bh-score-cap {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: ${({ theme }) => theme.color.brand};
+    opacity: 0.82;
+  }
+  .bh-score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 11px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .bh-score-badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--diag-color);
+    flex-shrink: 0;
   }
   .bh-row {
     display: flex;
@@ -2240,109 +2332,6 @@ export const ScoreDiag = styled.div`
     color: ${({ theme }) => theme.color.ink};
     margin: 0;
     line-height: 1.45;
-  }
-`;
-
-const revealFade = keyframes`
-  from { opacity: 0; transform: translateY(5px); }
-  to   { opacity: 1; transform: translateY(0); }
-`;
-
-export const ScoreRevealCard = styled.div`
-  padding: 22px 4px 24px;
-  background: transparent;
-  border: none;
-  margin-bottom: 20px;
-  box-shadow: none;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 28px;
-  animation: ${fadeUp} 0.5s ease both;
-
-  @media (max-width: 460px) { gap: 20px; }
-
-  .gauge-wrap {
-    flex-shrink: 0;
-    position: relative;
-    width: 112px;
-    height: 112px;
-    @media (max-width: 460px) { width: 92px; height: 92px; }
-  }
-  .gauge-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-  }
-  .num-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    pointer-events: none;
-  }
-  .score-val {
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: 42px;
-    font-weight: 500;
-    letter-spacing: -0.03em;
-    font-feature-settings: "tnum";
-    color: var(--diag-color);
-    @media (max-width: 460px) { font-size: 34px; }
-  }
-  .score-denom {
-    font-size: 13px;
-    font-weight: 600;
-    opacity: 0.38;
-    color: var(--diag-color);
-    margin-top: 2px;
-  }
-  .score-body {
-    flex: 1;
-    min-width: 0;
-  }
-  .score-eyebrow {
-    display: block;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: ${({ theme }) => theme.color.brand};
-    opacity: 0.8;
-    margin-bottom: 9px;
-    animation: ${revealFade} 0.45s ease 1.5s both;
-  }
-  .level-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 5px 13px 5px 9px;
-    border-radius: 100px;
-    font-size: 13.5px;
-    font-weight: 700;
-    margin-bottom: 11px;
-    animation: ${revealFade} 0.45s ease 1.5s both;
-  }
-  .level-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    background: var(--diag-color);
-  }
-  .insight {
-    font-size: 15.5px;
-    line-height: 1.55;
-    letter-spacing: -0.01em;
-    color: ${({ theme }) => theme.color.ink};
-    margin: 0;
-    animation: ${revealFade} 0.45s ease 1.85s both;
-    @media (max-width: 460px) { font-size: 14.5px; }
   }
 `;
 
