@@ -410,16 +410,6 @@ export const AnalysisNote = styled.div`
   }
 `;
 
-export const ScoreInsight = styled.p`
-  font-size: 15.5px;
-  line-height: 1.55;
-  letter-spacing: -0.01em;
-  color: ${({ theme }) => theme.color.ink};
-  margin: 0 0 20px;
-  animation: ${fadeUp} 0.45s ease both;
-  @media (max-width: 460px) { font-size: 14.5px; }
-`;
-
 export const CalcToggle = styled.button`
   display: flex;
   align-items: center;
@@ -596,90 +586,7 @@ export const BriefingHead = styled.div`
     min-width: 190px;
   }
   .bh-main {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 18px;
     margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .bh-score {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-shrink: 0;
-  }
-  .bh-score-gauge {
-    position: relative;
-    width: 88px;
-    height: 88px;
-    flex-shrink: 0;
-  }
-  .bh-score-gauge svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-    overflow: visible;
-  }
-  .bh-score-num {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: 30px;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    font-feature-settings: "tnum";
-    color: var(--diag-color);
-    line-height: 1;
-    white-space: nowrap;
-  }
-  .bh-score-den {
-    font-size: 12px;
-    font-weight: 500;
-    color: ${({ theme }) => theme.color.mutedSoft};
-    letter-spacing: 0;
-    margin-left: 1px;
-  }
-  .bh-score-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    text-align: right;
-    gap: 8px;
-  }
-  .bh-score-cap {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: ${({ theme }) => theme.color.brand};
-
-    sup {
-      font-size: 0.62em;
-      font-weight: 600;
-      vertical-align: super;
-      margin-left: 1px;
-    }
-  }
-  .bh-score-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: ${({ theme }) => theme.size.radius.pill};
-    font-size: 12.5px;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-  .bh-score-badge .dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--diag-color);
-    flex-shrink: 0;
   }
   .bh-row {
     display: flex;
@@ -704,6 +611,158 @@ export const BriefingHead = styled.div`
     border-color: ${({ theme }) => theme.color.brand};
     color: #FAFAF7;
     font-weight: 700;
+  }
+`;
+
+export const VerdictPanelWrap = styled.div`
+  position: relative;
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+  box-shadow: ${({ theme }) => theme.shadow.md};
+  padding: 22px 26px 22px;
+  margin: 0 0 18px;
+  overflow: hidden;
+  animation: ${fadeUp} .4s ease both;
+
+  /* Tunn färgad rand i topp som bär betygets dom-färg */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: var(--diag-color);
+  }
+
+  .vp-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: ${({ theme }) => theme.color.brand};
+    margin-bottom: 18px;
+
+    svg { color: var(--diag-color); }
+    sup { font-size: 0.6em; vertical-align: super; margin-left: 1px; }
+  }
+  .vp-eyebrow-sub {
+    margin-left: auto;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.mutedSoft};
+  }
+
+  .vp-main {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .vp-gauge {
+    position: relative;
+    width: 108px;
+    height: 108px;
+    flex-shrink: 0;
+  }
+  .vp-gauge svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+  .vp-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 40px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+    color: var(--diag-color);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .vp-den {
+    font-size: 15px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.mutedSoft};
+    letter-spacing: 0;
+    margin-left: 1px;
+  }
+
+  .vp-verdict {
+    flex: 1;
+    min-width: 0;
+  }
+  .vp-label {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--diag-label-clr);
+    margin-bottom: 8px;
+  }
+  .vp-insight {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    color: ${({ theme }) => theme.color.ink};
+  }
+
+  .vp-scale {
+    margin-top: 22px;
+  }
+  .vp-scale-track {
+    position: relative;
+    height: 7px;
+    border-radius: 999px;
+    background: linear-gradient(
+      90deg,
+      #DC2626 0%,
+      #D97706 38%,
+      #65A30D 62%,
+      #1B7A6E 100%
+    );
+  }
+  .vp-scale-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--diag-color);
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.color.surface}, ${({ theme }) => theme.shadow.sm};
+  }
+  .vp-scale-dot { display: none; }
+  .vp-scale-ends {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 9px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: ${({ theme }) => theme.color.mutedSoft};
+  }
+
+  @media (max-width: 560px) {
+    padding: 20px 18px;
+    .vp-eyebrow-sub { display: none; }
+    .vp-main { gap: 16px; }
+    .vp-gauge { width: 88px; height: 88px; }
+    .vp-num { font-size: 32px; }
+    .vp-den { font-size: 13px; }
+    .vp-insight { font-size: 14px; }
   }
 `;
 
