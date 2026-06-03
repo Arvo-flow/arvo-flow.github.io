@@ -309,6 +309,35 @@ export const FormReveal = styled.div`
   animation: ${slideDown} 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 `;
 
+export const AnalysisNote = styled.p`
+  font-size: 13.5px;
+  color: ${({ theme }) => theme.color.inkSoft};
+  line-height: 1.65;
+  margin: 10px 0 4px;
+  padding: 0 2px;
+`;
+
+export const CalcToggle = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+  cursor: pointer;
+  padding: 14px 0 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.color.brand};
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  transition: opacity .15s;
+  &:hover { opacity: 0.7; }
+`;
+
 export const Disclaimer = styled.p`
   margin-top: 14px;
   font-size: 12px;
