@@ -216,7 +216,7 @@ const SEGMENTS = [
 ];
 
 const PHASES = [
-  { id: 'extract',    label: 'AI läser & klassificerar fakturan',   sublabel: 'Claude Opus analyserar raderna' },
+  { id: 'extract',    label: 'Arvo läser & klassificerar fakturan',  sublabel: 'Tolkar varje rad och post' },
   { id: 'categorize', label: 'Identifierar leverantör & kategori',   sublabel: 'Matchar mot 200+ leverantörsprofiler' },
   { id: 'recommend',  label: 'Beräknar besparing mot branschindex', sublabel: 'Jämför med svenska branschdata' },
 ];
@@ -1248,7 +1248,7 @@ const TestaFaktura = () => {
               <Disclaimer>
                 Genom att fortsätta godkänner du våra <Link to="/villkor">villkor</Link>{' '}
                 och vår <Link to="/integritet">integritetspolicy</Link>. Fakturan analyseras
-                via AI och raderas omedelbart efter analysen.
+                av Arvo Intelligence och raderas omedelbart efter analysen.
               </Disclaimer>
             </form>
           </Card>
@@ -1336,7 +1336,7 @@ const TestaFaktura = () => {
 
             {batchJob?.status !== 'done' && batchJob?.status !== 'failed' && (
               <p style={{ fontSize: 12, color: '#888', textAlign: 'center', margin: 0 }}>
-                Batch-analys körs asynkront via Anthropic Batch API. Uppdateras var 5:e sekund.
+                Arvo analyserar fakturorna i bakgrunden. Uppdateras var 5:e sekund.
               </p>
             )}
           </Card>
