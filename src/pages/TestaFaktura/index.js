@@ -16,7 +16,7 @@ import {
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
-  FormReveal, MissionPlan, ScoreAnalysis, CalcToggle,
+  FormReveal, ScoreAnalysis, CalcToggle,
 } from './styles';
 
 const TIER_DISPLAY = {
@@ -54,22 +54,6 @@ function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnn
     return `${supplier} — ${diagOvPct}% över verifierat marknadspris.`;
   }
   return null;
-}
-
-function buildMissionPlan({ cat, arvoFee }) {
-  if (!arvoFee) return null;
-  const step3 = cat === 'el'
-    ? { action: 'Nytt avtal aktiveras', when: '~14 dagar' }
-    : (cat === 'mobil' || cat === 'vaxel')
-      ? { action: 'Nytt pris aktiveras', when: '~7 dagar' }
-      : { action: 'Nytt pris aktiveras', when: '~10 dagar' };
-  return {
-    steps: [
-      { action: 'Arvo förbereder er förhandling', when: 'Idag' },
-      { action: 'Ni godkänner ett förslag', when: '~5 dagar' },
-      step3,
-    ],
-  };
 }
 
 function detectHardwareInstallments(lineItems) {
@@ -1804,32 +1788,6 @@ const TestaFaktura = () => {
                             </div>
                             <p className="sa-text">{analysisText}</p>
                           </ScoreAnalysis>
-                        );
-                      })()}
-                      {(() => {
-                        const mp = buildMissionPlan({
-                          cat:     result.categorized?.category,
-                          arvoFee: adjArvoFee,
-                        });
-                        if (!mp) return null;
-                        return (
-                          <MissionPlan>
-                            <div className="mp-head">
-                              <div className="mp-title">Arvo tar det härifrån</div>
-                              <div className="mp-sub">Priset är säkrat. Ni gör ingenting mer.</div>
-                            </div>
-                            <div className="mp-steps">
-                              {mp.steps.map((s, i) => (
-                                <div key={i} className="mp-step">
-                                  <span className="mp-node">{i + 1}</span>
-                                  <span className="mp-body">
-                                    <span className="mp-action">{s.action}</span>
-                                    <span className="mp-when">{s.when}</span>
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </MissionPlan>
                         );
                       })()}
 

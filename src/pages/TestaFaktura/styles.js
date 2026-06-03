@@ -232,110 +232,6 @@ export const SubmitRow = styled.div`
   gap: 10px;
 `;
 
-export const MissionPlan = styled.div`
-  border: 1px solid ${({ theme }) => theme.color.borderStrong};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  background: ${({ theme }) => theme.color.surface};
-  overflow: hidden;
-  margin: 16px 0 4px;
-  box-shadow: ${({ theme }) => theme.shadow.sm};
-  animation: ${fadeUp} .35s ease both;
-
-  .mp-head {
-    padding: 20px 22px 14px;
-  }
-  .mp-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: ${({ theme }) => theme.color.ink};
-    letter-spacing: -0.015em;
-  }
-  .mp-sub {
-    margin-top: 3px;
-    font-size: 13px;
-    color: ${({ theme }) => theme.color.muted};
-    line-height: 1.5;
-  }
-
-  .mp-steps {
-    padding: 2px 22px 20px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .mp-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    position: relative;
-    padding-bottom: 18px;
-  }
-  .mp-step:last-child { padding-bottom: 0; }
-
-  /* connector line between nodes */
-  .mp-step:not(:last-child)::before {
-    content: '';
-    position: absolute;
-    left: 13px;
-    top: 28px;
-    bottom: -2px;
-    width: 2px;
-    background: ${({ theme }) => theme.color.border};
-  }
-
-  .mp-node {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: ${({ theme }) => theme.color.brandSoft};
-    color: ${({ theme }) => theme.color.brand};
-    border: 1.5px solid ${({ theme }) => theme.color.brand};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12.5px;
-    font-weight: 700;
-    font-feature-settings: "tnum";
-    z-index: 1;
-  }
-  /* steg 1 = där kunden är nu */
-  .mp-step:first-child .mp-node {
-    background: ${({ theme }) => theme.color.brand};
-    color: #FFFFFF;
-    box-shadow: 0 0 0 4px ${({ theme }) => theme.color.brandSoft};
-  }
-  .mp-step:not(:first-child) .mp-action {
-    color: ${({ theme }) => theme.color.muted};
-  }
-
-  .mp-body {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    min-height: 28px;
-    flex-wrap: wrap;
-  }
-  .mp-action {
-    font-size: 14px;
-    font-weight: 500;
-    color: ${({ theme }) => theme.color.ink};
-    line-height: 1.4;
-  }
-  .mp-when {
-    flex-shrink: 0;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: ${({ theme }) => theme.color.muted};
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    padding: 3px 10px;
-    border-radius: ${({ theme }) => theme.size.radius.pill};
-    white-space: nowrap;
-  }
-`;
-
 export const FormReveal = styled.div`
   animation: ${slideDown} 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 `;
@@ -850,12 +746,12 @@ export const SwitchCard = styled.div`
   }
 
   h3 {
-    font-size: 22px;
+    font-size: clamp(24px, 3.6vw, 30px);
     font-weight: 800;
-    letter-spacing: -.025em;
+    letter-spacing: -.028em;
     color: ${({ theme }) => theme.color.ink};
     margin: 0 0 8px;
-    line-height: 1.2;
+    line-height: 1.18;
   }
 
   p.sub {
@@ -2508,12 +2404,12 @@ export const IntelligenceCard = styled.div`
   }
 
   h3 {
-    font-size: clamp(26px, 4vw, 34px);
+    font-size: clamp(24px, 3.6vw, 30px);
     font-weight: 800;
-    letter-spacing: -.03em;
+    letter-spacing: -.028em;
     color: ${({ theme }) => theme.color.ink};
     margin: 0 0 20px;
-    line-height: 1.15;
+    line-height: 1.18;
   }
 
   p.sub {
