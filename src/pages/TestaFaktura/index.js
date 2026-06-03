@@ -247,6 +247,33 @@ function CalculationChainBlock({ cc }) {
   );
 }
 
+function LicenseOverageBlock({ seatCount, employees, overage, term, termSing }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <LicenseOverageNote>
+      <button className="lon-trigger" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+        <span className="lon-head">
+          <span className="kicker">Notering om {term}</span>
+          <span className="lon-teaser">{overage} av {seatCount} {term} verkar oanvända</span>
+        </span>
+        <span className={`lon-chevron${open ? ' open' : ''}`}>
+          <Icon name="chevron-right" size={15} stroke={2.5} />
+        </span>
+      </button>
+      {open && (
+        <div className="lon-body">
+          <p>
+            Kalkylen ovan bygger på att vi behåller era {seatCount} {term},
+            men sänker styckpriset genom att flytta er till rätt avtalsnivå. Vi noterar dock
+            att ni enligt uppgift är {employees} anställda. Om man dessutom hade städat bort
+            {overage === 1 ? ` detta ${overage} överflödiga ${termSing}` : ` dessa ${overage} överflödiga ${term}`}, hade er kostnad sänkts ytterligare.
+          </p>
+        </div>
+      )}
+    </LicenseOverageNote>
+  );
+}
+
 function ContractWatchCard({ analysisId, supplier, email: initEmail, onSaved }) {
   const [date, setDate]       = useState('');
   const [email, setEmail]     = useState(initEmail ?? '');
@@ -1822,19 +1849,14 @@ const TestaFaktura = () => {
               const emp = Number(employees);
               const overage = sc != null && sc > emp ? sc - emp : 0;
               const _om = getCategoryMeta(result.categorized?.category);
-              const term = _om.unit;
-              const termSing = _om.unitSingular;
-              const kicker = `Notering om ${term}`;
               return overage > 0 ? (
-                <LicenseOverageNote>
-                  <span className="kicker">{kicker}</span>
-                  <p>
-                    Kalkylen ovan bygger på att vi behåller era {sc} {term},
-                    men sänker styckpriset genom att flytta er till rätt avtalsnivå. Vi noterar dock
-                    att ni enligt uppgift är {emp} anställda. Om man dessutom hade städat bort
-                    {overage === 1 ? ` detta ${overage} överflödiga ${termSing}` : ` dessa ${overage} överflödiga ${term}`}, hade er kostnad sänkts ytterligare.
-                  </p>
-                </LicenseOverageNote>
+                <LicenseOverageBlock
+                  seatCount={sc}
+                  employees={emp}
+                  overage={overage}
+                  term={_om.unit}
+                  termSing={_om.unitSingular}
+                />
               ) : null;
             })()}
 
