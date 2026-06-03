@@ -53,6 +53,19 @@ Vi väntar inte 3 månader på juridik för Fortnox/Visma API:er.
 
 Eftersom Layer 2 bygger på "20% av realiserad besparing" MÅSTE vi ha en `outcome-loop`. När en kund klickar "Agera" i Interactive Briefing ska ett uppföljningsflöde (30-dagars mail) finnas för att bekräfta att bytet/förhandlingen gick igenom — så att vi kan fakturera.
 
+### 6. Exekveringsmodell — Tre faser (ALDRIG KOMPROMISSA PÅ RIKTNINGEN)
+
+Arvo är aldrig ett juridiskt eller finansiellt ombud. Arvo är en intelligent motor — kunden trycker play, Arvo spelar. Mekanismen bakom är alltid Arvos svarta låda, aldrig kundens problem.
+
+**Fas 1 — Partnernätverk före kunder (0–100 kunder)**
+Arvo förhandlar partneravtal med utvalda leverantörer och återförsäljare i kärnkategorier *innan* vi har kunder. Microsoft CSP-återförsäljare, elhandlare, mobiloperatörer. De ger Arvo ett förhandspris i utbyte mot deal flow. Kund #1 får redan ett bättre pris — utan att Arvo behöver ha hundra kunder som förhandlingsstyrka. "Aktivera" = Arvo byter kunden digitalt till Arvo-partnern med det säkrade priset. 48 timmar. Noll förhandling med befintlig leverantör.
+
+**Fas 2 — Nätverkseffekten (100–500 kunder)**
+Med etablerad kundvolym kontaktar Arvo Telia, Tele2, Microsoft direkt: "Vi representerar X svenska SMF som kollektivt betalar er Y mkr/år. Ge oss ett Arvo-ramavtal." Leverantörerna förhandlar nu med Arvo, inte med enskilda kunder. Varje ny kund stärker alla befintliga kunders prisposition.
+
+**Fas 3 — Arvo som prissättningslager (500+ kunder)**
+Arvo är en etablerad marknadsaktör. Leverantörer söker upp Arvo proaktivt för att inte förlora kunder ur nätverket. "Aktivera" innebär att kunden automatiskt ansluts till Arvos ramavtalspris — ingen utskick, ingen switch, ingen väntan. Priset är redan säkrat.
+
 ---
 
 ## ARVO INTELLIGENCE — POSITIONERING (ALDRIG KOMPROMISSA)
