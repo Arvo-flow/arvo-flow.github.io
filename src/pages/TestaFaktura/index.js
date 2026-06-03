@@ -16,7 +16,7 @@ import {
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
-  FormReveal, MissionPlan,
+  FormReveal, MissionPlan, AnalysisNote, CalcToggle,
 } from './styles';
 
 const TIER_DISPLAY = {
@@ -52,6 +52,29 @@ function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnn
   }
   if (diagOvPct > 0 && supplier) {
     return `${supplier} — ${diagOvPct}% över verifierat marknadspris.`;
+  }
+  return null;
+}
+
+function buildAnalysisSummary({ cat, seatCount, adjAnnualCost, suggestedAnnualCost, diagOvPct, licenseOverage, adjNetSaving }) {
+  if (!diagOvPct && !licenseOverage) return null;
+  const fmtN = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
+  if (cat?.startsWith('saas') && licenseOverage > 0 && diagOvPct > 0) {
+    return `${licenseOverage} av ${seatCount} licenser verkar oanvända, och ni betalar ${diagOvPct}% över avtalspris för er storlek. Sammantaget förklarar det besparingen på ${fmtN(adjNetSaving)} kr/år.`;
+  }
+  if (cat?.startsWith('saas') && licenseOverage > 0) {
+    return `${licenseOverage} av ${seatCount} licenser verkar oanvända — det förklarar huvuddelen av besparingen på ${fmtN(adjNetSaving)} kr/år.`;
+  }
+  if (cat?.startsWith('saas') && diagOvPct > 0) {
+    return `Ni betalar ${diagOvPct}% över avtalspris för bolag av er storlek — det förklarar besparingen på ${fmtN(adjNetSaving)} kr/år.`;
+  }
+  if ((cat === 'mobil' || cat === 'vaxel') && seatCount > 1 && adjAnnualCost && suggestedAnnualCost) {
+    const perNow = Math.round(adjAnnualCost / seatCount / 12);
+    const perNew = Math.round(suggestedAnnualCost / seatCount / 12);
+    return `Era ${seatCount} abonnemang kostar ${perNow} kr/mån per SIM — verifierat avtalspris för er storlek är ${perNew} kr. Det ger en besparing på ${fmtN(adjNetSaving)} kr/år.`;
+  }
+  if (diagOvPct > 0) {
+    return `Ni betalar ${diagOvPct}% över verifierat marknadspris för er storlek och bransch — det förklarar besparingen på ${fmtN(adjNetSaving)} kr/år.`;
   }
   return null;
 }
@@ -1804,6 +1827,18 @@ const TestaFaktura = () => {
                         </span>
                       </SavingsBlock>
                       {(() => {
+                        const summary = buildAnalysisSummary({
+                          cat:          result.categorized?.category,
+                          seatCount:    result.extracted?.seatCount ?? 0,
+                          adjAnnualCost,
+                          suggestedAnnualCost: result.recommendation.suggestedAnnualCost,
+                          diagOvPct,
+                          licenseOverage: result.recommendation?.licenseOverage ?? 0,
+                          adjNetSaving,
+                        });
+                        return summary ? <AnalysisNote>{summary}</AnalysisNote> : null;
+                      })()}
+                      {(() => {
                         const mp = buildMissionPlan({
                           cat:     result.categorized?.category,
                           arvoFee: adjArvoFee,
@@ -1850,19 +1885,9 @@ const TestaFaktura = () => {
             )}
 
             {/* ── Fakturaunderlag — dolt som standard, öppnas på begäran ──────── */}
-            <button
-              onClick={() => setDetailsOpen(o => !o)}
-              style={{
-                display: 'block', background: 'none', border: 'none', cursor: 'pointer',
-                width: '100%', textAlign: 'center',
-                padding: '18px 0 6px', marginTop: 8,
-                fontSize: 13, color: '#5C6E68',
-                borderTop: '1px solid #E5EFE9',
-                fontFamily: 'inherit',
-              }}
-            >
-              {detailsOpen ? '← Dölj underlag' : 'Hur vi räknar →'}
-            </button>
+            <CalcToggle onClick={() => setDetailsOpen(o => !o)}>
+              {detailsOpen ? '↑ Dölj underlag' : '↓ Hur vi räknar'}
+            </CalcToggle>
 
             {detailsOpen && <>
 
