@@ -401,16 +401,16 @@ const Landing = () => {
                   <span className="tl-marker" />
                   <div className="tl-body-text">
                     <span className="tl-date">4 maj</span>
-                    <span className="tl-title">Ni gav klartecken</span>
-                    <span className="tl-detail">Ett klick. Resten skötte Arvo.</span>
+                    <span className="tl-title">Ni godkände åtgärden</span>
+                    <span className="tl-detail">Arvo genomförde resten — ni behövde inte agera</span>
                   </div>
                 </div>
                 <div className="tl-step done">
                   <span className="tl-marker" />
                   <div className="tl-body-text">
                     <span className="tl-date">9 maj</span>
-                    <span className="tl-title">Priset tillbaka nere</span>
-                    <span className="tl-detail">−14&nbsp;%. Besparingen säkrad.</span>
+                    <span className="tl-title">Nytt pris bekräftat</span>
+                    <span className="tl-detail">Priset sänkt 14&nbsp;% — besparingen säkrad</span>
                   </div>
                 </div>
               </div>
