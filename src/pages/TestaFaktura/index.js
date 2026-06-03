@@ -2185,9 +2185,23 @@ const TestaFaktura = () => {
               <div className="switch-eyebrow">Arvo Switch</div>
               <h3>Priset är säkrat. Ni aktiverar det.</h3>
               <p className="sub">
-                Arvo har förberett bytet via partnernätverket — er BankID-signatur
-                aktiverar det. Ni betalar 20&nbsp;% av realiserad besparing, inget annat.
+                Arvo har redan förhandlat fram priset via partnernätverket.
+                Ni behöver inte kontakta er nuvarande leverantör — Arvo sköter allt.
               </p>
+              <div className="switch-steps">
+                <div className="switch-step">
+                  <span className="step-num">1</span>
+                  <span className="step-text">Ni godkänner bytet — ett klick</span>
+                </div>
+                <div className="switch-step">
+                  <span className="step-num">2</span>
+                  <span className="step-text">Arvo genomför bytet via partnernätverket — klart inom 48 timmar</span>
+                </div>
+                <div className="switch-step">
+                  <span className="step-num">3</span>
+                  <span className="step-text">Nytt avtalspris aktivt — ni betalar 20&nbsp;% av realiserad besparing</span>
+                </div>
+              </div>
               <div className="switch-offer">
                 <div className="switch-offer-head">
                   <span className="switch-badge">
