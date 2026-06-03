@@ -625,18 +625,19 @@ export const BriefingHead = styled.div`
     position: absolute;
     inset: 0;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: center;
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 34px;
+    font-size: 30px;
     font-weight: 500;
     letter-spacing: -0.02em;
     font-feature-settings: "tnum";
     color: var(--diag-color);
     line-height: 1;
+    white-space: nowrap;
   }
   .bh-score-den {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     color: ${({ theme }) => theme.color.mutedSoft};
     letter-spacing: 0;
