@@ -1092,11 +1092,11 @@ const TestaFaktura = () => {
       )}
 
       <Hero>
-        <Eyebrow><span className="dot" /> Testa själv · Gratis · Resultat direkt</Eyebrow>
-        <Headline>Ladda upp <em>en</em> leverantörsfaktura — få svar direkt.</Headline>
+        <Eyebrow><span className="dot" /> Arvo Intelligence · Analys på 60 sekunder</Eyebrow>
+        <Headline>Ni betalar för mycket. <em>En</em> faktura bevisar det.</Headline>
         <Lede>
-          Vi visar exakt vad du betalar, hur du ligger mot branschsnittet och vad du kan
-          spara om du byter. Inget Fortnox-konto behövs, ingen signering, ingen kostnad.
+          Arvo Intelligence jämför er faktura mot vad bolag av er storlek faktiskt
+          betalar i er bransch — och visar exakt vad ni kan förhandla ned, och hos vem.
         </Lede>
       </Hero>
 
@@ -1150,7 +1150,7 @@ const TestaFaktura = () => {
               <FormRow>
                 <Field>
                   <span className="label">Bransch</span>
-                  <span className="hint">Vi anpassar jämförelsetalen mot bolag som liknar er.</span>
+                  <span className="hint">Vi jämför mot bolag av er storlek i samma bransch.</span>
                   <select value={industry} onChange={(e) => setIndustry(e.target.value)}>
                     {Object.entries(INDUSTRY_LABELS).map(([id, label]) => (
                       <option key={id} value={id}>{label}</option>
@@ -1159,7 +1159,7 @@ const TestaFaktura = () => {
                 </Field>
                 <Field>
                   <span className="label">Antal anställda</span>
-                  <span className="hint">Påverkar vilket prisintervall vi jämför mot.</span>
+                  <span className="hint">Prisnivån varierar med bolagets storlek.</span>
                   <input
                     type="number"
                     min="1"
