@@ -340,73 +340,79 @@ export const FormReveal = styled.div`
   animation: ${slideDown} 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 `;
 
-export const AnalysisNote = styled.div`
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-left: 3px solid ${({ theme }) => theme.color.brand};
-  border-radius: ${({ theme }) => theme.size.radius.md};
-  background: ${({ theme }) => theme.color.surface};
-  padding: 16px 18px 15px;
-  margin: 14px 0 4px;
-  animation: ${fadeUp} .35s ease both;
+export const ScoreAnalysis = styled.div`
+  margin: 20px 0 6px;
+  animation: ${fadeUp} .4s ease both;
 
-  .an-eyebrow {
-    display: inline-flex;
+  .sa-head {
+    display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 18px;
+    margin-bottom: 14px;
+  }
+  .sa-gauge {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+  }
+  .sa-gauge svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+  .sa-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ${({ theme }) => theme.font.display};
+    font-size: 26px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+    color: var(--diag-color);
+    white-space: nowrap;
+  }
+  .sa-den {
     font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: ${({ theme }) => theme.color.brand};
-    margin-bottom: 11px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.mutedSoft};
+    letter-spacing: 0;
+    margin-left: 1px;
   }
-
-  .an-lead {
-    font-size: 14.5px;
-    color: ${({ theme }) => theme.color.ink};
-    line-height: 1.55;
-    letter-spacing: -0.005em;
-    margin: 0;
-  }
-  .an-lead + .an-drivers {
-    margin-top: 13px;
-  }
-
-  .an-drivers {
+  .sa-meta {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
   }
-  .an-driver {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
+  .sa-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: ${({ theme }) => theme.color.brand};
   }
-  .an-dot {
-    flex-shrink: 0;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: ${({ theme }) => theme.color.brand};
-    margin-top: 7px;
+  .sa-label {
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--diag-label-clr);
+    line-height: 1.1;
   }
-  .an-text {
-    font-size: 14px;
-    color: ${({ theme }) => theme.color.inkSoft};
-    line-height: 1.5;
-    strong {
-      font-weight: 700;
-      color: ${({ theme }) => theme.color.ink};
-    }
+  .sa-text {
+    font-size: 15.5px;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    color: ${({ theme }) => theme.color.ink};
+    margin: 0;
   }
-
-  .an-conclusion {
-    margin: 12px 0 0;
-    padding-top: 11px;
-    border-top: 1px solid ${({ theme }) => theme.color.border};
-    font-size: 13px;
-    color: ${({ theme }) => theme.color.muted};
-    line-height: 1.5;
+  @media (max-width: 480px) {
+    .sa-label { font-size: 14px; }
+    .sa-text { font-size: 14.5px; }
   }
 `;
 
@@ -611,158 +617,6 @@ export const BriefingHead = styled.div`
     border-color: ${({ theme }) => theme.color.brand};
     color: #FAFAF7;
     font-weight: 700;
-  }
-`;
-
-export const VerdictPanelWrap = styled.div`
-  position: relative;
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  background: ${({ theme }) => theme.color.surface};
-  box-shadow: ${({ theme }) => theme.shadow.md};
-  padding: 22px 26px 22px;
-  margin: 0 0 18px;
-  overflow: hidden;
-  animation: ${fadeUp} .4s ease both;
-
-  /* Tunn färgad rand i topp som bär betygets dom-färg */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 3px;
-    background: var(--diag-color);
-  }
-
-  .vp-eyebrow {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: ${({ theme }) => theme.color.brand};
-    margin-bottom: 18px;
-
-    svg { color: var(--diag-color); }
-    sup { font-size: 0.6em; vertical-align: super; margin-left: 1px; }
-  }
-  .vp-eyebrow-sub {
-    margin-left: auto;
-    text-transform: none;
-    letter-spacing: 0;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: ${({ theme }) => theme.color.mutedSoft};
-  }
-
-  .vp-main {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-  }
-  .vp-gauge {
-    position: relative;
-    width: 108px;
-    height: 108px;
-    flex-shrink: 0;
-  }
-  .vp-gauge svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-    overflow: visible;
-  }
-  .vp-num {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: ${({ theme }) => theme.font.display};
-    font-size: 40px;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    font-feature-settings: "tnum";
-    color: var(--diag-color);
-    line-height: 1;
-    white-space: nowrap;
-  }
-  .vp-den {
-    font-size: 15px;
-    font-weight: 500;
-    color: ${({ theme }) => theme.color.mutedSoft};
-    letter-spacing: 0;
-    margin-left: 1px;
-  }
-
-  .vp-verdict {
-    flex: 1;
-    min-width: 0;
-  }
-  .vp-label {
-    display: inline-block;
-    font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--diag-label-clr);
-    margin-bottom: 8px;
-  }
-  .vp-insight {
-    margin: 0;
-    font-size: 15.5px;
-    line-height: 1.5;
-    letter-spacing: -0.01em;
-    color: ${({ theme }) => theme.color.ink};
-  }
-
-  .vp-scale {
-    margin-top: 22px;
-  }
-  .vp-scale-track {
-    position: relative;
-    height: 7px;
-    border-radius: 999px;
-    background: linear-gradient(
-      90deg,
-      #DC2626 0%,
-      #D97706 38%,
-      #65A30D 62%,
-      #1B7A6E 100%
-    );
-  }
-  .vp-scale-marker {
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 4px;
-    height: 18px;
-    border-radius: 999px;
-    background: var(--diag-color);
-    box-shadow: 0 0 0 3px ${({ theme }) => theme.color.surface}, ${({ theme }) => theme.shadow.sm};
-  }
-  .vp-scale-dot { display: none; }
-  .vp-scale-ends {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 9px;
-    font-size: 10.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: ${({ theme }) => theme.color.mutedSoft};
-  }
-
-  @media (max-width: 560px) {
-    padding: 20px 18px;
-    .vp-eyebrow-sub { display: none; }
-    .vp-main { gap: 16px; }
-    .vp-gauge { width: 88px; height: 88px; }
-    .vp-num { font-size: 32px; }
-    .vp-den { font-size: 13px; }
-    .vp-insight { font-size: 14px; }
   }
 `;
 

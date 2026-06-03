@@ -16,7 +16,7 @@ import {
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
-  FormReveal, MissionPlan, AnalysisNote, CalcToggle, VerdictPanelWrap,
+  FormReveal, MissionPlan, ScoreAnalysis, CalcToggle,
 } from './styles';
 
 const TIER_DISPLAY = {
@@ -54,26 +54,6 @@ function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnn
     return `${supplier} — ${diagOvPct}% över verifierat marknadspris.`;
   }
   return null;
-}
-
-function buildAnalysisSummary({ cat, seatCount, adjAnnualCost, suggestedAnnualCost, licenseOverage }) {
-  const drivers = [];
-
-  if (cat?.startsWith('saas') && licenseOverage > 0) {
-    drivers.push({ metric: `${licenseOverage} av ${seatCount}`, label: 'licenser verkar oanvända' });
-  } else if ((cat === 'mobil' || cat === 'vaxel') && seatCount > 1 && adjAnnualCost && suggestedAnnualCost) {
-    const perNow = Math.round(adjAnnualCost / seatCount / 12);
-    const perNew = Math.round(suggestedAnnualCost / seatCount / 12);
-    drivers.push({ metric: `${perNow} kr/mån`, label: `per SIM idag — verifierat avtalspris är ${perNew} kr` });
-  }
-
-  if (drivers.length === 0) return null;
-  return {
-    drivers,
-    conclusion: drivers.length > 1
-      ? 'Sammantaget förklarar det din identifierade besparing ovan.'
-      : 'Det förklarar din identifierade besparing ovan.',
-  };
 }
 
 function buildMissionPlan({ cat, arvoFee }) {
@@ -151,56 +131,27 @@ function useRevealedScore(target, delay = 200) {
   return { score, gaugeReady };
 }
 
-const VERDICT_GAUGE_R = 52;
-const VERDICT_GAUGE_C = 2 * Math.PI * VERDICT_GAUGE_R;
+const SA_GAUGE_R = 30;
+const SA_GAUGE_C = 2 * Math.PI * SA_GAUGE_R;
 
-function VerdictPanel({ diagScore, diagC, diagInsight }) {
-  const dash = (diagScore / 100) * VERDICT_GAUGE_C;
-  const { score: animScore, gaugeReady } = useRevealedScore(diagScore, 200);
+function ScoreGaugeMini({ diagScore, diagC }) {
+  const dash = (diagScore / 100) * SA_GAUGE_C;
+  const { score: animScore, gaugeReady } = useRevealedScore(diagScore, 300);
   return (
-    <VerdictPanelWrap
-      style={{ '--diag-color': diagC.dot, '--diag-label-clr': diagC.labelClr }}
-    >
-      <span className="vp-eyebrow">
-        <Icon name="shield" size={12} stroke={2.2} />
-        Arvo Score<sup>™</sup>
-        <span className="vp-eyebrow-sub">Betyg på ert nuvarande avtal</span>
+    <div className="sa-gauge">
+      <svg viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r={SA_GAUGE_R} fill="none" stroke="#E5EFEA" strokeWidth="5" />
+        <circle
+          cx="36" cy="36" r={SA_GAUGE_R} fill="none"
+          stroke={diagC.dot} strokeWidth="5" strokeLinecap="round"
+          strokeDasharray={gaugeReady ? `${dash} ${SA_GAUGE_C}` : `0 ${SA_GAUGE_C}`}
+          style={{ transform: 'rotate(-90deg)', transformOrigin: '36px 36px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
+        />
+      </svg>
+      <span className="sa-num">
+        <span>{animScore}<span className="sa-den">/100</span></span>
       </span>
-
-      <div className="vp-main">
-        <div className="vp-gauge">
-          <svg viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r={VERDICT_GAUGE_R} fill="none" stroke="#E5EFEA" strokeWidth="7" />
-            <circle
-              cx="60" cy="60" r={VERDICT_GAUGE_R} fill="none"
-              stroke={diagC.dot} strokeWidth="7" strokeLinecap="round"
-              strokeDasharray={gaugeReady ? `${dash} ${VERDICT_GAUGE_C}` : `0 ${VERDICT_GAUGE_C}`}
-              style={{ transform: 'rotate(-90deg)', transformOrigin: '60px 60px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
-            />
-          </svg>
-          <span className="vp-num">
-            <span>{animScore}<span className="vp-den">/100</span></span>
-          </span>
-        </div>
-
-        <div className="vp-verdict">
-          <span className="vp-label">{diagC.label}</span>
-          {diagInsight && <p className="vp-insight">{diagInsight}</p>}
-        </div>
-      </div>
-
-      <div className="vp-scale">
-        <div className="vp-scale-track">
-          <span className="vp-scale-marker" style={{ left: `${diagScore}%` }}>
-            <span className="vp-scale-dot" />
-          </span>
-        </div>
-        <div className="vp-scale-ends">
-          <span>Kritisk</span>
-          <span>Optimalt</span>
-        </div>
-      </div>
-    </VerdictPanelWrap>
+    </div>
   );
 }
 
@@ -1426,10 +1377,6 @@ const TestaFaktura = () => {
               </div>
             </BriefingHead>
 
-            {result.route === 'auto' && result.categorized?.category !== 'uncategorized' && (
-              <VerdictPanel diagScore={diagScore} diagC={diagC} diagInsight={diagInsight} />
-            )}
-
             {result.route === 'monitoring' ? (
               <>
                 <ScoreDiag style={{ '--diag-color': diagC.dot }}>
@@ -1839,35 +1786,23 @@ const TestaFaktura = () => {
                         </span>
                       </SavingsBlock>
                       {(() => {
-                        const summary = buildAnalysisSummary({
-                          cat:          result.categorized?.category,
-                          seatCount:    result.extracted?.seatCount ?? 0,
-                          adjAnnualCost,
-                          suggestedAnnualCost: result.recommendation.suggestedAnnualCost,
-                          licenseOverage: result.recommendation?.licenseOverage ?? 0,
-                        });
-                        const hasDrivers = summary && summary.drivers.length > 0;
-                        if (!hasDrivers) return null;
+                        if (!diagInsight) return null;
+                        const licenseOverage = result.recommendation?.licenseOverage ?? 0;
+                        const seatCount = result.extracted?.seatCount ?? 0;
+                        const analysisText = (licenseOverage > 0 && seatCount > 0)
+                          ? `${diagInsight} ${licenseOverage} av ${seatCount} licenser verkar dessutom oanvända.`
+                          : diagInsight;
                         return (
-                          <AnalysisNote>
-                            <span className="an-eyebrow">
-                              <Icon name="spark" size={12} stroke={2.2} />
-                              Vad Arvo såg
-                            </span>
-                            {hasDrivers && (
-                              <>
-                                <div className="an-drivers">
-                                  {summary.drivers.map((d, i) => (
-                                    <div key={i} className="an-driver">
-                                      <span className="an-dot" />
-                                      <span className="an-text"><strong>{d.metric}</strong> {d.label}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                                <p className="an-conclusion">{summary.conclusion}</p>
-                              </>
-                            )}
-                          </AnalysisNote>
+                          <ScoreAnalysis style={{ '--diag-color': diagC.dot, '--diag-label-clr': diagC.labelClr }}>
+                            <div className="sa-head">
+                              <ScoreGaugeMini diagScore={diagScore} diagC={diagC} />
+                              <div className="sa-meta">
+                                <span className="sa-eyebrow">Arvo Score™</span>
+                                <span className="sa-label">{diagC.label}</span>
+                              </div>
+                            </div>
+                            <p className="sa-text">{analysisText}</p>
+                          </ScoreAnalysis>
                         );
                       })()}
                       {(() => {
