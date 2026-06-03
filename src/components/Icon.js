@@ -46,6 +46,13 @@ const ICONS = {
   ),
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
   check: <path d="M5 12l5 5L20 7" />,
+  upload: (
+    <>
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+      <path d="M14 2v6h6" />
+      <path d="M12 17v-5M9.5 14.5L12 12l2.5 2.5" />
+    </>
+  ),
   spark: (
     <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z" />
   ),
