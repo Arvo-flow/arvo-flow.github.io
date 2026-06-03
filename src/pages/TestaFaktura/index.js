@@ -140,16 +140,17 @@ function ScoreGaugeMini({ diagScore, diagC }) {
   return (
     <div className="sa-gauge">
       <svg viewBox="0 0 72 72">
-        <circle cx="36" cy="36" r={SA_GAUGE_R} fill="none" stroke="#E5EFEA" strokeWidth="5" />
+        <circle cx="36" cy="36" r={SA_GAUGE_R} fill="none" stroke="#E9F1ED" strokeWidth="6.5" />
         <circle
           cx="36" cy="36" r={SA_GAUGE_R} fill="none"
-          stroke={diagC.dot} strokeWidth="5" strokeLinecap="round"
+          stroke={diagC.dot} strokeWidth="6.5" strokeLinecap="round"
           strokeDasharray={gaugeReady ? `${dash} ${SA_GAUGE_C}` : `0 ${SA_GAUGE_C}`}
           style={{ transform: 'rotate(-90deg)', transformOrigin: '36px 36px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
         />
       </svg>
       <span className="sa-num">
-        <span>{animScore}<span className="sa-den">/100</span></span>
+        <span className="sa-val">{animScore}</span>
+        <span className="sa-den">/100</span>
       </span>
     </div>
   );

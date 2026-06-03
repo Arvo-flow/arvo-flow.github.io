@@ -352,8 +352,8 @@ export const ScoreAnalysis = styled.div`
   }
   .sa-gauge {
     position: relative;
-    width: 72px;
-    height: 72px;
+    width: 74px;
+    height: 74px;
     flex-shrink: 0;
   }
   .sa-gauge svg {
@@ -366,27 +366,30 @@ export const ScoreAnalysis = styled.div`
     position: absolute;
     inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    line-height: 1;
+  }
+  .sa-val {
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 26px;
+    font-size: 27px;
     font-weight: 500;
     letter-spacing: -0.02em;
     font-feature-settings: "tnum";
     color: var(--diag-color);
-    white-space: nowrap;
   }
   .sa-den {
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 600;
     color: ${({ theme }) => theme.color.mutedSoft};
-    letter-spacing: 0;
-    margin-left: 1px;
+    letter-spacing: 0.02em;
+    margin-top: 3px;
   }
   .sa-meta {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
   }
   .sa-eyebrow {
     font-size: 10px;
@@ -396,10 +399,10 @@ export const ScoreAnalysis = styled.div`
     color: ${({ theme }) => theme.color.brand};
   }
   .sa-label {
-    font-size: 16px;
-    font-weight: 800;
+    font-size: 12.5px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.07em;
     color: var(--diag-label-clr);
     line-height: 1.1;
   }
