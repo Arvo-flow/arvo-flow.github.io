@@ -56,33 +56,24 @@ function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnn
   return null;
 }
 
-function buildAnalysisSummary({ cat, seatCount, adjAnnualCost, suggestedAnnualCost, diagOvPct, licenseOverage }) {
-  if (!diagOvPct && !licenseOverage) return null;
+function buildAnalysisSummary({ cat, seatCount, adjAnnualCost, suggestedAnnualCost, licenseOverage }) {
   const drivers = [];
 
-  if (cat?.startsWith('saas')) {
-    if (licenseOverage > 0) {
-      drivers.push({ metric: `${licenseOverage} av ${seatCount}`, label: 'licenser verkar oanvända' });
-    }
-    if (diagOvPct > 0) {
-      drivers.push({ metric: `${diagOvPct}%`, label: 'över verifierat avtalspris för bolag av er storlek' });
-    }
+  if (cat?.startsWith('saas') && licenseOverage > 0) {
+    drivers.push({ metric: `${licenseOverage} av ${seatCount}`, label: 'licenser verkar oanvända' });
   } else if ((cat === 'mobil' || cat === 'vaxel') && seatCount > 1 && adjAnnualCost && suggestedAnnualCost) {
     const perNow = Math.round(adjAnnualCost / seatCount / 12);
     const perNew = Math.round(suggestedAnnualCost / seatCount / 12);
     drivers.push({ metric: `${perNow} kr/mån`, label: `per SIM idag — verifierat avtalspris är ${perNew} kr` });
-    if (diagOvPct > 0) {
-      drivers.push({ metric: `${diagOvPct}%`, label: 'över marknadspris totalt' });
-    }
-  } else if (diagOvPct > 0) {
-    drivers.push({ metric: `${diagOvPct}%`, label: 'över verifierat marknadspris för er storlek och bransch' });
   }
 
   if (drivers.length === 0) return null;
-  const conclusion = drivers.length > 1
-    ? 'Sammantaget förklarar det din identifierade besparing ovan.'
-    : 'Det förklarar din identifierade besparing ovan.';
-  return { drivers, conclusion };
+  return {
+    drivers,
+    conclusion: drivers.length > 1
+      ? 'Sammantaget förklarar det din identifierade besparing ovan.'
+      : 'Det förklarar din identifierade besparing ovan.',
+  };
 }
 
 function buildMissionPlan({ cat, arvoFee }) {
@@ -186,6 +177,7 @@ function ScoreReveal({ diagScore, diagC, diagInsight }) {
         </div>
       </div>
       <div className="score-body">
+        <span className="score-eyebrow">Arvo Score™</span>
         <div className="level-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
           <span className="level-dot" />
           {diagC.label}
@@ -1837,7 +1829,6 @@ const TestaFaktura = () => {
                           seatCount:    result.extracted?.seatCount ?? 0,
                           adjAnnualCost,
                           suggestedAnnualCost: result.recommendation.suggestedAnnualCost,
-                          diagOvPct,
                           licenseOverage: result.recommendation?.licenseOverage ?? 0,
                         });
                         if (!summary) return null;
