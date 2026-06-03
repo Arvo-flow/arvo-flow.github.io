@@ -552,6 +552,56 @@ Routes: `auto` (normal pipeline), `review_queue` (confidence < 0.70), `unsupport
 
 ---
 
+## PARTNERNÄTVERK — MÅLBILD (Fas 1, 0–100 kunder)
+
+Arvo förhandlar partneravtal med utvalda leverantörer/återförsäljare INNAN vi har kunder. De ger Arvo ett förhandspris mot deal flow. "Aktivera" = kunden byter digitalt till Arvo-partnern med säkrat pris. 48h. Noll förhandling med befintlig leverantör.
+
+**Bolagsregistrering krävs innan avtal kan tecknas.** Explorativa Teams-samtal kan hållas dessförinnan.
+
+### Tier 1 — Prioritera omedelbart
+
+| Kategori | Kandidat | Motiv |
+|---|---|---|
+| **Växel/VoIP** | **Telavox** | Svensk, Malmö-baserat (nära Kristianstad), digitalt, aktivt partnerprogram, SMB-fokus. Första samtalet. |
+| **El** | **Tibber** | Digital-first, API-drivet, referral-program finns, perfekt brand-match |
+| **El** | **Bixia** | Kooperativ, konkurrenskraftigt SMF-pris, rimlig att förhandla med |
+| **Mobil** | **Tele2 Företag** | Aktivt partnerprogram, vill vinna Telias kunder, formellt reselleravtal |
+| **Mobil** | **Telenor Företag** | Telenor Partner-program, SMB-fokus |
+| **Microsoft 365** | **Dustin Group** | Börsnoterad, Microsofts största svenska CSP, transparent, dedikerat SMB-erbjudande |
+| **Microsoft 365** | **Crayon Group** | Nordisk, renodlad Microsoft-fokus, flexibla på volympriser |
+| **Kortterminaler** | **Bambora (Worldline)** | Aktivt söker referral-partners, SMB-vänlig |
+| **Kortterminaler** | **Nets** | Dominant nordisk aktör, formellt ISO/partnerprogram |
+
+### Tier 2 — Nästa steg
+
+| Kategori | Kandidat | Motiv |
+|---|---|---|
+| **Bredband** | Tele2 / Telenor / Bahnhof | Paketeras med mobil/växel |
+| **Serverhosting** | **Elastx** | Svensk, aktivt partnerprogram, prissätter mot AWS |
+| **Serverhosting** | **Hetzner** | Dominerande i Sverige, affiliate/partnerprogram |
+| **Larm/Bevakning** | Verisure Företag / Sector Alarm | Referral-program finns |
+| **Löneadmin** | Hogia / Aditro / Azets | Återförsäljarstrukturer etablerade |
+| **Företagshälsa** | Feelgood / Falck Healthcare | B2B-partnerskap normalt |
+
+### Tier 3 — Avvakta
+
+| Kategori | Anledning |
+|---|---|
+| Försäkring | Kräver FI-licens (Insurance Distribution Directive) — juridiskt stopp |
+| Leasing-bil | Långa komplexa avtal, ej digitalt genomförbart |
+| Städ / Transport / Avfall | Fragmenterad, lokal, låg marginal |
+| Kontorsmaterial | Commoditiserat, minimal besparingspotential |
+| SaaS-creative / SaaS-devtools | Adobe/GitHub säljer direkt — ingen realistisk partnervinkel |
+
+### Rekommenderad kontaktordning
+1. Telavox — svenska, nära, hungriga, digital match
+2. Tibber — enkel ingång, tech-vänliga
+3. Tele2 Företag — stor kategori, formellt program
+4. Bambora — aktivt söker partners
+5. Dustin — Microsoft 365, störst volym
+
+---
+
 ## NÄSTA STEG (I PRIORITETSORDNING)
 
 1. **Flywheel Fas 1** — labeled_corrections-tabell i Postgres + Arvo-operatörs-UI för att granska och korrigera edge cases. Detta är grunden för allt annat.
