@@ -1378,6 +1378,98 @@ export const ModalCard = styled.div`
       line-height: 1.5;
     }
   }
+
+  /* ── BankID activation modal ────────────────────────────── */
+  p.bk-title {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin: 0 0 18px;
+    padding-right: 32px;
+    color: ${({ theme }) => theme.color.ink};
+  }
+
+  div.bk-offer {
+    border: 1px solid ${({ theme }) => theme.color.borderStrong};
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    padding: 16px;
+    margin-bottom: 18px;
+    background: ${({ theme }) => theme.color.surfaceAlt};
+  }
+
+  div.bk-offer-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  span.bk-partner-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.ink};
+  }
+
+  span.bk-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.brand};
+  }
+
+  div.bk-price-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  span.bk-from {
+    font-size: 13.5px;
+    color: ${({ theme }) => theme.color.muted};
+    text-decoration: line-through;
+    text-decoration-color: ${({ theme }) => theme.color.muted}88;
+  }
+
+  span.bk-arrow {
+    color: ${({ theme }) => theme.color.brand};
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  span.bk-to {
+    font-size: 16px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.ink};
+    letter-spacing: -0.01em;
+  }
+
+  p.bk-savings-row {
+    font-size: 12.5px;
+    color: ${({ theme }) => theme.color.muted};
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  p.bk-email-confirm {
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    margin: 0 0 14px;
+    strong { color: ${({ theme }) => theme.color.ink}; font-weight: 500; }
+  }
+
+  p.bk-fine-print {
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.mutedSoft};
+    text-align: center;
+    margin: 12px 0 0;
+    line-height: 1.5;
+  }
 `;
 
 // ── Activation Modal — Arvo Intelligence onboarding ──────────────────────────
