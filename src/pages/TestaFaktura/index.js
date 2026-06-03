@@ -870,13 +870,14 @@ const TestaFaktura = () => {
   };
 
   const submitModalEmail = async (e) => {
-    e.preventDefault();
-    if (!modalEmail || modalEmailState !== 'idle') return;
+    e?.preventDefault?.();
+    const email = (modalEmail || gateEmail || '').trim();
+    if (!email || modalEmailState !== 'idle') return;
     setModalEmailState('submitting');
     try {
       await Promise.all([
-        sendConfirmationMail(modalEmail),
-        sendAnalysisMail(modalEmail),
+        sendConfirmationMail(email),
+        sendAnalysisMail(email),
       ]);
       setModalEmailState('sent');
     } catch {
@@ -2228,11 +2229,10 @@ const TestaFaktura = () => {
           {_showSwitch && (
             <SwitchCard>
               <div className="switch-eyebrow">Arvo Switch</div>
-              <h3>Redo att realisera besparingen?</h3>
+              <h3>Priset är säkrat. Ni aktiverar det.</h3>
               <p className="sub">
-                Arvo agerar ombud. Vi hanterar uppsägning, prisförhandling och
-                signering av det nya avtalet — ni betalar 20&nbsp;% av identifierad
-                besparing, inget annat.
+                Arvo har förberett bytet via partnernätverket — er BankID-signatur
+                aktiverar det. Ni betalar 20&nbsp;% av realiserad besparing, inget annat.
               </p>
               <div className="switch-offer">
                 <div className="switch-offer-head">
@@ -2269,7 +2269,7 @@ const TestaFaktura = () => {
                 $variant="gradient"
                 $size="lg"
                 style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => setModalOpen(true)}
+                onClick={() => { setModalEmail(gateEmail || ''); setModalEmailState('idle'); setModalOpen(true); }}
               >
                 {_switchCtaLabel} <Icon name="arrow" size={16} />
               </Button>
@@ -2496,83 +2496,83 @@ const TestaFaktura = () => {
       )}
 
       {modalOpen && result && (
-        <ModalOverlay onClick={(e) => { if (e.target === e.currentTarget) { setModalOpen(false); setModalView('fortnox'); } }}>
+        <ModalOverlay onClick={(e) => { if (e.target === e.currentTarget) { setModalOpen(false); } }}>
           <ModalCard>
-            <button className="close" onClick={() => { setModalOpen(false); setModalView('fortnox'); }} aria-label="Stäng">×</button>
+            <button className="close" onClick={() => { setModalOpen(false); }} aria-label="Stäng">×</button>
 
             {modalEmailState === 'sent' ? (
               <div className="sent-state">
                 <span className="sent-icon"><Icon name="check" size={20} stroke={2.5} /></span>
                 <p className="sent-title">
-                  {isOptimize ? 'Avvecklingen är igångsatt.' : 'Bytet är igångsatt.'}
+                  {_switchIsSameSupplier ? 'Optimeringen är aktiverad.' : 'Bytet är aktiverat.'}
                 </p>
                 <p className="sent-sub">
-                  Bekräftelse med nästa steg skickad till {modalEmail}.
-                  {' '}Du har 24 timmars ångerrätt.
+                  Arvo tar det härifrån — ni hör av oss inom 48 timmar.
                 </p>
               </div>
-            ) : modalView === 'fortnox' ? (
-              <>
-                <h3>
-                  {isOptimize
-                    ? <>Avveckla <em>dubbla avgiften</em></>
-                    : <>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></>}
-                </h3>
-                <p className="sub">
-                  {isOptimize
-                    ? `Vi hjälper er aktivera den inbyggda modulen och avveckla det separata abonnemanget — utan att ni behöver kontakta leverantören. Ni sparar ${formatNum(optNet)} kr/år netto efter Arvos fee.`
-                    : getCategoryMeta(result.categorized.category).isRealPrice
-                      ? <>För att vi ska kunna verkställa bytet till <strong>{result.recommendation.suggestedSupplier}</strong> – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.</>
-                      : 'För att vi ska få rätt underlag att vinna förhandlingen åt er – och automatiskt hitta fler onödiga kostnader – gör vi en säker och smidig synk med er Fortnox / Visma. Snabbt, tryggt och du har alltid full kontroll.'}
-                </p>
-                <div className="context-badge">
-                  {getCategoryMeta(result.categorized.category).label} · {result.extracted.supplier}
-                </div>
-                <Button as={Link} to="/connect" $variant="primary" $size="lg" $full onClick={() => setModalOpen(false)}>
-                  Koppla Fortnox / Visma <Icon name="arrow" size={16} />
-                </Button>
-                <button className="manual-link" type="button" onClick={() => setModalView('email')}>
-                  Jag använder inte Fortnox, fortsätt manuellt via e-post.
-                </button>
-              </>
             ) : (
               <>
-                <button className="back-link" type="button" onClick={() => setModalView('fortnox')}>
-                  ← Tillbaka
-                </button>
-                <h3>
-                  {isOptimize
-                    ? <>Avveckla <em>dubbla avgiften</em></>
-                    : <>Säkra dina <em>{formatNum(result.recommendation.netSaving)} kr</em></>}
-                </h3>
-                <p className="sub">
-                  {isOptimize
-                    ? 'Vi skickar bekräftelse och nästa steg direkt till er inkorg.'
-                    : 'Vi skickar analysen och leverantörsidentiteten direkt till er inkorg.'}
-                </p>
-                <div className="context-badge">
-                  {getCategoryMeta(result.categorized.category).label} · {result.extracted.supplier}
+                <p className="bk-title">Allt är förberett.<br />Er signatur aktiverar det.</p>
+
+                <div className="bk-offer">
+                  <div className="bk-offer-top">
+                    <span className="bk-partner-name">
+                      {_switchIsRealPrice
+                        ? result.recommendation.suggestedSupplier
+                        : _switchPartnerLabel}
+                    </span>
+                    <span className="bk-verified">
+                      <Icon name="shield" size={10} stroke={2} />
+                      {_switchIsRealPrice ? 'Verifierat marknadspris' : 'Arvo-verifierad partner'}
+                    </span>
+                  </div>
+                  <div className="bk-price-row">
+                    <span className="bk-from">{formatKr(adjAnnualCost)}/år</span>
+                    <span className="bk-arrow">→</span>
+                    <span className="bk-to">{formatNum(result.recommendation.suggestedAnnualCost)} kr/år</span>
+                  </div>
+                  <p className="bk-savings-row">
+                    Ni sparar {formatKr(adjGrossSaving)} · Arvo {formatKr(adjArvoFee)}
+                  </p>
                 </div>
-                <form className="modal-form" onSubmit={submitModalEmail}>
-                  <input
-                    type="email"
-                    placeholder="din@epost.se"
-                    value={modalEmail}
-                    onChange={(e) => setModalEmail(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                  <Button
-                    type="submit"
-                    $variant="gradient"
-                    $size="lg"
-                    $full
-                    disabled={modalEmailState === 'submitting'}
-                  >
-                    {modalEmailState === 'submitting' ? 'Skickar…' : <>Skicka analysen <Icon name="arrow" size={16} /></>}
-                  </Button>
-                  <p className="fine-print">Ingen spam. Inga fasta avgifter. Du betalar 20 % av identifierad besparing.</p>
-                </form>
+
+                {(gateEmail || modalEmail) ? (
+                  <>
+                    <p className="bk-email-confirm">Bekräftelse till: <strong>{gateEmail || modalEmail}</strong></p>
+                    <Button
+                      type="button"
+                      $variant="gradient"
+                      $size="lg"
+                      $full
+                      disabled={modalEmailState === 'submitting'}
+                      onClick={submitModalEmail}
+                    >
+                      {modalEmailState === 'submitting' ? 'Aktiverar…' : <>Signera med BankID <Icon name="arrow" size={16} /></>}
+                    </Button>
+                  </>
+                ) : (
+                  <form className="modal-form" onSubmit={submitModalEmail}>
+                    <input
+                      type="email"
+                      placeholder="din@epost.se"
+                      value={modalEmail}
+                      onChange={(e) => setModalEmail(e.target.value)}
+                      required
+                      autoFocus
+                    />
+                    <Button
+                      type="submit"
+                      $variant="gradient"
+                      $size="lg"
+                      $full
+                      disabled={modalEmailState === 'submitting'}
+                    >
+                      {modalEmailState === 'submitting' ? 'Aktiverar…' : <>Signera med BankID <Icon name="arrow" size={16} /></>}
+                    </Button>
+                  </form>
+                )}
+
+                <p className="bk-fine-print">Du har 24 timmars ångerrätt.</p>
               </>
             )}
           </ModalCard>
