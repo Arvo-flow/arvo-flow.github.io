@@ -361,7 +361,7 @@ const Landing = () => {
               <em>Innan ni frågar.</em>
             </Headline>
             <Lede>
-              Era leverantörer justerar priser tyst. Arvo bevakar varje avtal dygnet runt
+              Era leverantörer justerar priser i det tysta. Arvo bevakar varje avtal dygnet runt
               — och hör av sig i samma stund en kostnad börjar krypa uppåt, ofta innan ni
               själva hunnit märka något. Vi identifierar läckaget. Ni tar beslutet.
             </Lede>
