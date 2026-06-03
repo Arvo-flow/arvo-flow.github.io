@@ -16,6 +16,7 @@ import {
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
+  FormReveal,
 } from './styles';
 
 const TIER_DISPLAY = {
@@ -1095,8 +1096,8 @@ const TestaFaktura = () => {
         <Eyebrow><span className="dot" /> Arvo Intelligence · Analys på 60 sekunder</Eyebrow>
         <Headline>Ni betalar för mycket. <em>En</em> faktura bevisar det.</Headline>
         <Lede>
-          Arvo Intelligence jämför er faktura mot vad bolag av er storlek faktiskt
-          betalar i er bransch — och visar exakt vad ni kan förhandla ned, och hos vem.
+          Arvo Intelligence jämför er faktura mot verkliga branschpriser och visar
+          exakt vad ni betalar för mycket — och hos vem ni kan spara.
         </Lede>
       </Hero>
 
@@ -1143,40 +1144,47 @@ const TestaFaktura = () => {
                   <>
                     <strong className="primary">
                       {typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0
-                        ? 'Tryck för att välja faktura'
-                        : 'Dra hit er faktura — eller klicka för att välja'}
+                        ? 'Lägg till er faktura'
+                        : 'Dra hit er faktura'}
                     </strong>
+                    <span className="cta-pill">
+                      {typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0
+                        ? 'Välj faktura'
+                        : 'Välj fil'} →
+                    </span>
                     <span className="secondary">PDF · max 3 MB · Vi sparar inte filen</span>
                   </>
                 )}
               </Dropzone>
 
-              <FormRow>
-                <Field>
-                  <span className="label">Bransch</span>
-                  <span className="hint">Vi jämför mot bolag av er storlek i samma bransch.</span>
-                  <select value={industry} onChange={(e) => setIndustry(e.target.value)}>
-                    {Object.entries(INDUSTRY_LABELS).map(([id, label]) => (
-                      <option key={id} value={id}>{label}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field>
-                  <span className="label">Antal anställda</span>
-                  <span className="hint">Prisnivån varierar med bolagets storlek.</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="5000"
-                    value={employees}
-                    onChange={(e) => setEmployees(e.target.value)}
-                  />
-                </Field>
-              </FormRow>
+              {(file || batchMode) && (
+              <FormReveal>
+                <FormRow>
+                  <Field>
+                    <span className="label">Bransch</span>
+                    <span className="hint">Vi jämför mot bolag av er storlek i samma bransch.</span>
+                    <select value={industry} onChange={(e) => setIndustry(e.target.value)}>
+                      {Object.entries(INDUSTRY_LABELS).map(([id, label]) => (
+                        <option key={id} value={id}>{label}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field>
+                    <span className="label">Antal anställda</span>
+                    <span className="hint">Prisnivån varierar med bolagets storlek.</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="5000"
+                      value={employees}
+                      onChange={(e) => setEmployees(e.target.value)}
+                    />
+                  </Field>
+                </FormRow>
 
-              {error && <ErrorBox>{error}</ErrorBox>}
+                {error && <ErrorBox>{error}</ErrorBox>}
 
-              <SubmitRow>
+                <SubmitRow>
                 {batchMode ? (
                   <Button
                     type="button"
@@ -1208,6 +1216,8 @@ const TestaFaktura = () => {
                   </Button>
                 )}
               </SubmitRow>
+              </FormReveal>
+              )}
 
               {loading && (
                 <ProgressList>
