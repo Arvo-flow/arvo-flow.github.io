@@ -764,42 +764,65 @@ export const SwitchCard = styled.div`
   .switch-steps {
     display: flex;
     flex-direction: column;
-    gap: 0;
-    margin-bottom: 20px;
-    border: 1px solid ${({ theme }) => theme.color.border};
-    border-radius: ${({ theme }) => theme.size.radius.md};
-    overflow: hidden;
+    margin: 4px 0 24px;
   }
 
   .switch-step {
+    position: relative;
     display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 11px 16px;
-    background: ${({ theme }) => theme.color.surfaceAlt};
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
-    &:last-child { border-bottom: none; }
+    gap: 16px;
+    padding-bottom: 22px;
+    &:last-child { padding-bottom: 0; }
+  }
+
+  /* connecting timeline line */
+  .switch-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 30px;
+    bottom: -2px;
+    width: 2px;
+    background: ${({ theme }) => theme.color.brand}26;
   }
 
   .step-num {
+    position: relative;
+    z-index: 1;
     flex-shrink: 0;
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: ${({ theme }) => theme.color.brand};
-    color: #FAFAF7;
-    font-size: 11px;
+    background: ${({ theme }) => theme.color.surface};
+    border: 2px solid ${({ theme }) => theme.color.brand};
+    color: ${({ theme }) => theme.color.brand};
+    font-size: 13px;
     font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
-    letter-spacing: 0;
+    font-feature-settings: "tnum";
   }
 
-  .step-text {
-    font-size: 13.5px;
+  .step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 3px;
+  }
+
+  .step-title {
+    font-size: 14.5px;
+    font-weight: 700;
     color: ${({ theme }) => theme.color.ink};
-    line-height: 1.45;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+  }
+
+  .step-detail {
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.5;
   }
 
   .switch-offer {

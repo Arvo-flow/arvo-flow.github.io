@@ -2191,15 +2191,24 @@ const TestaFaktura = () => {
               <div className="switch-steps">
                 <div className="switch-step">
                   <span className="step-num">1</span>
-                  <span className="step-text">Ni godkänner bytet — ett klick</span>
+                  <span className="step-body">
+                    <span className="step-title">Ni godkänner bytet</span>
+                    <span className="step-detail">Ett klick — inget mer krävs av er.</span>
+                  </span>
                 </div>
                 <div className="switch-step">
                   <span className="step-num">2</span>
-                  <span className="step-text">Arvo genomför bytet via partnernätverket — klart inom 48 timmar</span>
+                  <span className="step-body">
+                    <span className="step-title">Arvo genomför bytet</span>
+                    <span className="step-detail">Via partnernätverket, klart inom 48 timmar. Ni behöver inte lyfta ett finger.</span>
+                  </span>
                 </div>
                 <div className="switch-step">
                   <span className="step-num">3</span>
-                  <span className="step-text">Nytt avtalspris aktivt — ni betalar 20&nbsp;% av realiserad besparing</span>
+                  <span className="step-body">
+                    <span className="step-title">Nytt avtalspris aktivt</span>
+                    <span className="step-detail">Ni betalar 20&nbsp;% av den identifierade besparingen — inget annat.</span>
+                  </span>
                 </div>
               </div>
               <div className="switch-offer">
