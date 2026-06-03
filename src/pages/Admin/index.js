@@ -53,6 +53,8 @@ export default function Admin() {
   const [corrections, setCorrections]     = useState(null);
   const [patterns, setPatterns]           = useState(null);
   const [corrView, setCorrView]           = useState('list'); // list | patterns
+  const [connections, setConnections]     = useState(null);
+  const [connStats, setConnStats]         = useState(null);
 
   const load = useCallback(async (token) => {
     setLoadError('');
@@ -224,7 +226,7 @@ export default function Admin() {
 
       {/* ── Tabs ───────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
-        {[['queue','Review Queue'], ['waitlist','Waitlist'], ['feedback','Feedback'], ['corrections','Korrektioner 🧠']].map(([id, label]) => (
+        {[['queue','Review Queue'], ['waitlist','Waitlist'], ['feedback','Feedback'], ['corrections','Korrektioner 🧠'], ['connections','Anslutningar 🔗']].map(([id, label]) => (
           <button key={id} onClick={() => setActiveTab(id)} style={{
             padding: '7px 16px', borderRadius: 100, border: 'none', cursor: 'pointer',
             fontSize: 12.5, fontWeight: 600,
@@ -374,6 +376,77 @@ export default function Admin() {
               ))}
             </Table>
           )}
+        </Section>
+      )}
+
+      {activeTab === 'connections' && (
+        <Section>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center' }}>
+            <STitle style={{ margin: 0 }}>OAuth-anslutningar — Gmail &amp; Outlook</STitle>
+            <button onClick={() => {
+              fetch('/api/admin/connections', { headers: { 'x-admin-token': adminToken } })
+                .then(r => r.json())
+                .then(j => { setConnections(j.connections ?? []); setConnStats(j.stats ?? []); })
+                .catch(() => {});
+            }} style={{
+              marginLeft: 'auto', padding: '5px 12px', borderRadius: 100, border: 'none',
+              cursor: 'pointer', fontSize: 12, fontWeight: 600,
+              background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.6)',
+            }}>↻ Ladda</button>
+          </div>
+
+          {/* Provider-statistik */}
+          {connStats && connStats.length > 0 && (
+            <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+              {connStats.map((s) => (
+                <div key={s.provider} style={{
+                  background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)',
+                  borderRadius: 10, padding: '10px 16px', minWidth: 130,
+                }}>
+                  <SLabel>{s.provider}</SLabel>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#5DD6CA' }}>{s.total}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)' }}>totalt</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#4ADE80' }}>{s.active}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)' }}>aktiva</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#F59E0B' }}>{s.last_7d}</div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)' }}>7 dagar</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Table>
+            <THead $cols="2fr 1fr 1fr 1.5fr 1.5fr 80px">
+              <span>E-post</span><span>Leverantör</span><span>Token</span>
+              <span>Kopplad</span><span>Uppdaterad</span><span>Status</span>
+            </THead>
+            {connections === null && <EmptyRow>Klicka ↻ Ladda för att hämta anslutningar.</EmptyRow>}
+            {connections?.length === 0 && <EmptyRow>Inga anslutningar ännu — ingen har kopplat Gmail/Outlook.</EmptyRow>}
+            {(connections ?? []).map((c) => (
+              <TRow key={c.id} $cols="2fr 1fr 1fr 1.5fr 1.5fr 80px">
+                <span style={{ fontWeight: 600, fontSize: 12.5 }}>{c.email}</span>
+                <Tag $c={c.provider === 'gmail' ? 'rgba(234,67,53,.2)' : 'rgba(0,120,212,.2)'}>
+                  {c.provider}
+                </Tag>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,.4)' }}>
+                  {c.token_expiry ? new Date(c.token_expiry).toLocaleDateString('sv-SE') : '–'}
+                </span>
+                <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{fmtDate(c.created_at)}</span>
+                <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{fmtDate(c.updated_at)}</span>
+                <Tag $c={c.token_valid ? 'rgba(74,222,128,.2)' : 'rgba(239,68,68,.2)'}>
+                  {c.token_valid ? 'OK' : 'Utgången'}
+                </Tag>
+              </TRow>
+            ))}
+          </Table>
         </Section>
       )}
     </Page>
