@@ -606,13 +606,13 @@ export const BriefingHead = styled.div`
   .bh-score {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 16px;
     flex-shrink: 0;
   }
   .bh-score-gauge {
     position: relative;
-    width: 56px;
-    height: 56px;
+    width: 88px;
+    height: 88px;
     flex-shrink: 0;
   }
   .bh-score-gauge svg {
@@ -625,35 +625,51 @@ export const BriefingHead = styled.div`
     position: absolute;
     inset: 0;
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: center;
     font-family: ${({ theme }) => theme.font.display};
-    font-size: 22px;
+    font-size: 34px;
     font-weight: 500;
     letter-spacing: -0.02em;
     font-feature-settings: "tnum";
     color: var(--diag-color);
+    line-height: 1;
+  }
+  .bh-score-den {
+    font-size: 14px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.mutedSoft};
+    letter-spacing: 0;
+    margin-left: 1px;
   }
   .bh-score-meta {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    align-items: flex-end;
+    text-align: right;
+    gap: 8px;
   }
   .bh-score-cap {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     color: ${({ theme }) => theme.color.brand};
-    opacity: 0.82;
+
+    sup {
+      font-size: 0.62em;
+      font-weight: 600;
+      vertical-align: super;
+      margin-left: 1px;
+    }
   }
   .bh-score-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 3px 11px;
+    padding: 4px 12px;
     border-radius: ${({ theme }) => theme.size.radius.pill};
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 700;
     white-space: nowrap;
   }

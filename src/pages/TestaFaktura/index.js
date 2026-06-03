@@ -151,7 +151,7 @@ function useRevealedScore(target, delay = 200) {
   return { score, gaugeReady };
 }
 
-const HEADER_GAUGE_R = 24;
+const HEADER_GAUGE_R = 26;
 const HEADER_GAUGE_C = 2 * Math.PI * HEADER_GAUGE_R;
 
 function HeaderScore({ diagScore, diagC }) {
@@ -159,23 +159,25 @@ function HeaderScore({ diagScore, diagC }) {
   const { score: animScore, gaugeReady } = useRevealedScore(diagScore, 180);
   return (
     <div className="bh-score" style={{ '--diag-color': diagC.dot }}>
+      <div className="bh-score-meta">
+        <span className="bh-score-cap">Arvo Score<sup>™</sup></span>
+        <span className="bh-score-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
+          <span className="dot" />
+          {diagC.label}
+        </span>
+      </div>
       <div className="bh-score-gauge">
         <svg viewBox="0 0 60 60">
-          <circle cx="30" cy="30" r={HEADER_GAUGE_R} fill="none" stroke="#E5EFEA" strokeWidth="5" />
+          <circle cx="30" cy="30" r={HEADER_GAUGE_R} fill="none" stroke="#E5EFEA" strokeWidth="4" />
           <circle
             cx="30" cy="30" r={HEADER_GAUGE_R} fill="none"
-            stroke={diagC.dot} strokeWidth="5" strokeLinecap="round"
+            stroke={diagC.dot} strokeWidth="4" strokeLinecap="round"
             strokeDasharray={gaugeReady ? `${dash} ${HEADER_GAUGE_C}` : `0 ${HEADER_GAUGE_C}`}
             style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1.5s cubic-bezier(0.4,0,0.2,1)' }}
           />
         </svg>
-        <span className="bh-score-num">{animScore}</span>
-      </div>
-      <div className="bh-score-meta">
-        <span className="bh-score-cap">Arvo Score™</span>
-        <span className="bh-score-badge" style={{ background: diagC.bg, color: diagC.labelClr }}>
-          <span className="dot" />
-          {diagC.label}
+        <span className="bh-score-num">
+          {animScore}<span className="bh-score-den">/100</span>
         </span>
       </div>
     </div>
