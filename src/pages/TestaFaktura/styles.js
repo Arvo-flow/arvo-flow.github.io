@@ -761,6 +761,47 @@ export const SwitchCard = styled.div`
     margin: 0 0 20px;
   }
 
+  .switch-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 20px;
+    border: 1px solid ${({ theme }) => theme.color.border};
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    overflow: hidden;
+  }
+
+  .switch-step {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 11px 16px;
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    border-bottom: 1px solid ${({ theme }) => theme.color.border};
+    &:last-child { border-bottom: none; }
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brand};
+    color: #FAFAF7;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0;
+  }
+
+  .step-text {
+    font-size: 13.5px;
+    color: ${({ theme }) => theme.color.ink};
+    line-height: 1.45;
+  }
+
   .switch-offer {
     border-radius: ${({ theme }) => theme.size.radius.md};
     background: ${({ theme }) => theme.color.surface};
@@ -1706,8 +1747,8 @@ export const LicenseOverageNote = styled.div`
     color: ${({ theme }) => theme.color.muted};
   }
   .lon-teaser {
-    font-size: 13.5px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 400;
     color: ${({ theme }) => theme.color.inkSoft};
     letter-spacing: -0.01em;
     transition: color .15s;
