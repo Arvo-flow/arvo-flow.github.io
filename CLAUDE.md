@@ -113,16 +113,55 @@ Kommunicera aldrig Arvo Intelligence som ett abonnemang med features. Kommunicer
 
 Arvo bygger prisintelligens, smyghöjningsdetektering, cross-customer benchmarks och kontraktsbevakning — ett erbjudande som är värdefullt **varje månad**, inte bara vid en specifik switch-tidpunkt. Rätt modell är därför ett tvålagerssystem:
 
+### De två reglerna (kommuniceras alltid så — aldrig som "två produkter")
+> **Regel 1:** Arvo vaktar er för 1 995 kr/mån.
+> **Regel 2:** När Arvo sparar er pengar behåller ni 80%. Arvo tar 20%.
+
+Positionering: *"Den enda finansiella partnern i Sverige som bara tjänar riktigt bra när ni sparar riktigt bra."*
+
 ### Layer 1 — Arvo Intelligence (prenumeration, 1 995 kr/mån)
-Kontinuerlig övervakning av samtliga leverantörsfakturor. Månadsrapport. Proaktiv avisering när marknadspriser förändras eller när ett avtal är inom 90 dagars förnyelse. Det är det verkliga AI-CFO-erbjudandet. Det rättfärdigar "arbetar 24/7". Värde levereras oavsett om kunden byter leverantör eller inte.
+
+Arvo ger svenska SMF tillgång till den inköpsintelligens som bara Fortune 500-bolag med egna inköpsavdelningar haft tillgång till. Fyra pelare:
+
+**① Marknadsintelligens före fakturan** *(bara möjlig med Arvos cross-customer-data)*
+Arvo varnar kunden INNAN en prishöjning syns på deras faktura — baserat på vad som hänt hos liknande bolag i nätverket.
+> *"6 av 14 bolag i er bransch fick Telias prishöjning förra månaden. Ni är troligtvis nästa."*
+
+**② Faktura-mot-avtal-verifiering**
+Leverantörer fakturerar fel — ofta. Arvo kontrollerar automatiskt varje faktura mot känt avtalspris.
+> *"Telia fakturerar 349 kr/SIM. Ert avtal säger 299 kr. Arvo har identifierat en felaktig debitering på 21 000 kr."*
+
+**③ Komplett kontraktskalender med handlingsplaner**
+Inte bara påminnelser — utan exakt vad som ska göras, när och varför, för varje avtal.
+> *"87 dagar kvar. Arvo rekommenderar: aktivera byte senast 15 september för att undvika automatisk förlängning till nuvarande pris."*
+
+**④ Månatlig CFO-brief**
+En professionell sammanfattning — klar för styrelserummet — med vad Arvo hittat, vad som sparats och vad som är på väg. Ingen SMF har råd med en CFO som producerar detta. Med Arvo ingår det.
 
 ### Layer 2 — Arvo Switch (provision, 20% av realiserad besparing)
-För kunder som vill att Arvo hanterar genomförandet av ett leverantörsbyte. Tas på toppen av prenumerationen. **Det är ett aktivt val kunden gör** — inte modellens hela fundament. Arvo Switch är ett naturligt nästa steg för Intelligence-kunder, inte en förutsättning.
+För kunder som vill att Arvo hanterar genomförandet. Tas på toppen av prenumerationen. **Det är ett aktivt val kunden gör** — inte modellens hela fundament.
+
+**Aktiveringslogik (ALDRIG KOMPROMISSA):**
+- **Partner finns för segmentet** → Omedelbart byte, omedelbart resultat. Ett klick.
+- **Ingen partner ännu** → "Arvo har tagit över — vi återkommer inom 5 dagar." Samma UX för kunden. Mekanismen bakom är Arvos svarta låda.
+
+Kunden klickar alltid exakt samma sak. Vilket spår som triggas är aldrig kundens problem.
+
+**Verifieringsmodell:**
+Arvo läser redan kundens fakturor via e-postvidarebefordran. När nästa faktura visar lägre pris beräknas besparingen automatiskt och Arvo fakturerar 20% — ingen manuell handpåläggning.
+
+```
+Faktura innan:  349 kr × 35 SIM = 12 215 kr/mån
+Faktura efter:  295 kr × 35 SIM = 10 325 kr/mån
+Besparing:      1 890 kr/mån
+Arvo fakturerar: 378 kr/mån (20%)
+Kunden behåller: 1 512 kr/mån (80%)
+```
 
 **Konsekvenser för copy och produkt:**
 - Intelligence marknadsförs aldrig som "gratis tills vi sparar åt er" — det är en prenumeration med eget värde
-- Switch-provisionen presenteras som ett tillägg: "Vill ni att Arvo hanterar bytet? Då tar vi 20% av besparingen."
-- Dessa två lager ska aldrig blandas ihop i kommunikation — de säljer olika saker vid olika tidpunkter i kundrelationen
+- Switch presenteras som: "Vill ni att Arvo agerar? Ni behåller 80% av vad vi sparar er."
+- Dessa två lager blandas aldrig ihop i kommunikation
 
 ---
 
@@ -635,8 +674,11 @@ Det betyder konkret för aktiveringsmomentet:
 
 ## NÄSTA STEG (I PRIORITETSORDNING)
 
-1. **Flywheel Fas 1** — labeled_corrections-tabell i Postgres + Arvo-operatörs-UI för att granska och korrigera edge cases. Detta är grunden för allt annat.
-2. **Flywheel Fas 2** — Extraction integrity: `recurring`-fix, math-konsistenskontroll, pre-heuristics för LICENSFAKTURA-typ.
-3. **Lime fingerprint** — Snabb fix: lägg till Lime Technologies i supplier-fingerprints.js med saas-crm.
-4. **Fortsätt blindtestning** — 8 Gemini-fakturor kvar (ett i taget, PDF + bransch/anst i chatten).
-5. **Fortnox-integration** — när bolaget är registrerat.
+1. **Aktiveringsflöde** — Bygga sidan kunden landar på när de klickar "Aktivera Arvo Intelligence". Personaliserad värdebekräftelse med analysdata + ett-klicksaktivering. Logik: partner finns → omedelbart byte. Ingen partner → "Arvo tar över inom 5 dagar."
+2. **Partner-flagga i systemet** — Hur koden vet om en partner finns för ett givet segment, så att rätt aktiveringsväg triggas automatiskt.
+3. **Arvo Intelligence-sida på sajten** — Kommunicerar de fyra pelarna som kundmoment (inte features), "utan vs. med Arvo"-kontrast, och de två reglerna. Se designbeslut nedan.
+4. **Flywheel Fas 1** — labeled_corrections-tabell i Postgres + Arvo-operatörs-UI för att granska och korrigera edge cases. Detta är grunden för allt annat.
+5. **Flywheel Fas 2** — Extraction integrity: `recurring`-fix, math-konsistenskontroll, pre-heuristics för LICENSFAKTURA-typ.
+6. **Lime fingerprint** — Snabb fix: lägg till Lime Technologies i supplier-fingerprints.js med saas-crm.
+7. **Fortsätt blindtestning** — 8 Gemini-fakturor kvar (ett i taget, PDF + bransch/anst i chatten).
+8. **Fortnox-integration** — när bolaget är registrerat.
