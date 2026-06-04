@@ -344,6 +344,7 @@ const Nav = ({ variant = 'public' }) => {
           {variant === 'public' && (
             <Links>
               <Item to="/" $active={pathname === '/'}>Hem</Item>
+              <Item to="/intelligence" $active={pathname === '/intelligence'}>Arvo Intelligence</Item>
               <Item to="/#hur" $active={false} onClick={(e) => scrollTo(e, 'hur')}>Så fungerar det</Item>
               <Item to="/#priser" $active={false} onClick={(e) => scrollTo(e, 'priser')}>Pris</Item>
               <Item to="/#faq" $active={false} onClick={(e) => scrollTo(e, 'faq')}>FAQ</Item>
