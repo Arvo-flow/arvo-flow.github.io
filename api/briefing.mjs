@@ -125,6 +125,20 @@ export default async function handler(req, res) {
         WHERE id = ${br.id}
       `;
 
+      // Layer 2-utfallsspårning: varje kundaktivering skapar en rad i activation_outcomes.
+      // fee_kr = generated column = 20% av verified_saving_kr när kunden bekräftar utfallet.
+      if (insight.action?.type === 'approve_switch' || insight.action?.type === 'renegotiate') {
+        db`
+          INSERT INTO activation_outcomes
+            (briefing_id, customer_email, supplier, category, action_type, predicted_saving_kr)
+          VALUES
+            (${br.id}, ${br.customer_email}, ${insight.supplier ?? ''},
+             ${insight.category ?? ''}, ${insight.action.type},
+             ${insight.action?.estimatedNetSaving ?? null})
+          ON CONFLICT DO NOTHING
+        `.catch(err => console.error('[briefing] activation_outcomes insert failed:', err.message));
+      }
+
       // Internt Resend-alert
       if (process.env.RESEND_API_KEY) {
         const fmtKr = (n) => Math.round(n ?? 0).toLocaleString('sv-SE');

@@ -768,32 +768,44 @@ export default async function handler(req, res) {
         const _db = getDb();
         if (_db) {
           const _fpHash = createHash('sha256').update(String(fingerprint)).digest('hex').slice(0, 32);
+          // Kräver samma normalized_supplier — utan detta jämförs kostnader
+          // kors-leverantör om kunden bytt (t.ex. Telia → Tele2, samma kategori).
           const _prevRows = await _db`
-            SELECT annual_cost, created_at
+            SELECT annual_cost, seat_count, created_at
             FROM invoice_analyses
-            WHERE fingerprint = ${_fpHash}
-              AND category    = ${categorized.category}
-              AND route       = 'auto'
-              AND annual_cost > 0
+            WHERE fingerprint        = ${_fpHash}
+              AND category           = ${categorized.category}
+              AND normalized_supplier = ${categorized.normalizedSupplier ?? ''}
+              AND route              = 'auto'
+              AND annual_cost        > 0
             ORDER BY created_at DESC
             LIMIT 1
           `;
           const _prev = _prevRows[0];
           if (_prev) {
-            const _prevAnnual  = _prev.annual_cost;
+            const _prevAnnual  = Number(_prev.annual_cost);
             const _currAnnual  = extracted.annualCost;
-            const _deltaPct    = ((_currAnnual - _prevAnnual) / _prevAnnual) * 100;
+            // Per-säte-normalisering: totalkostnad kan stiga utan att priset/säte ökar,
+            // t.ex. om bolaget anställt fler. Utan denna normalisering flaggas tillväxt
+            // felaktigt som en smyghöjning.
+            const _prevSeats   = Number(_prev.seat_count ?? 0);
+            const _currSeats   = Number(extracted.seatCount ?? 0);
+            const _usePerSeat  = _prevSeats > 0 && _currSeats > 0;
+            const _prevBase    = _usePerSeat ? _prevAnnual / _prevSeats : _prevAnnual;
+            const _currBase    = _usePerSeat ? _currAnnual / _currSeats : _currAnnual;
+            const _deltaPct    = ((_currBase - _prevBase) / _prevBase) * 100;
             const _monthsSince = Math.max(1, Math.round(
               (Date.now() - new Date(_prev.created_at).getTime()) / (1000 * 60 * 60 * 24 * 30.5)
             ));
             if (Math.abs(_deltaPct) > 7) {
               priceHistoryContext = {
-                prevAnnualCost: _prevAnnual,
-                deltaPct:       Math.round(_deltaPct * 10) / 10,
-                monthsSince:    _monthsSince,
-                isIncrease:     _deltaPct > 0,
+                prevAnnualCost:  _prevAnnual,
+                deltaPct:        Math.round(_deltaPct * 10) / 10,
+                monthsSince:     _monthsSince,
+                isIncrease:      _deltaPct > 0,
+                perSeatNorm:     _usePerSeat,
               };
-              console.log(`[smyghöjning] category=${categorized.category} delta=${_deltaPct.toFixed(1)}% months=${_monthsSince}`);
+              console.log(`[smyghöjning] category=${categorized.category} supplier=${categorized.normalizedSupplier} delta=${_deltaPct.toFixed(1)}% perSeat=${_usePerSeat} months=${_monthsSince}`);
             }
           }
         }
@@ -1404,6 +1416,7 @@ export default async function handler(req, res) {
       industry,
       employees: employeesNum,
       userEmail: typeof body.userEmail === 'string' ? body.userEmail.trim().toLowerCase() : null,
+      seatCount: extracted.seatCount ?? null,
     }).catch((err) => { console.error('[test-invoice] storeAnalysis failed:', err.message); return null; });
 
     // Prissignal: smyghöjning-detektering mot verifierade listpriser (fire-and-forget).

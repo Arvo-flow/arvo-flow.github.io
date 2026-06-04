@@ -308,6 +308,7 @@ jobs:
         env:
           DATABASE_URL:    ${{ secrets.DATABASE_URL }}
           RESEND_API_KEY:  ${{ secrets.RESEND_API_KEY }}
+          ARVO_BASE_URL:   https://arvoflow.se
 
       - name: All checks passed
         if: steps.monitor.outcome == 'success'
