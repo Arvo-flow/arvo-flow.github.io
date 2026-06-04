@@ -322,9 +322,9 @@ export const HeroTimeline = styled.div`
     color: ${({ theme }) => theme.color.muted};
   }
   .tl-saving-value {
-    font-size: 30px;
-    font-weight: 800;
-    letter-spacing: -.04em;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -.02em;
     line-height: 1;
     color: ${({ theme }) => theme.color.brand};
     font-feature-settings: "tnum";
