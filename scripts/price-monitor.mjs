@@ -394,6 +394,16 @@ const PRICE_CHECKS = [
     ],
   },
 
+  // ── SaaS CRM: Zoho CRM ───────────────────────────────────────────────────
+  {
+    category: 'saas-crm',
+    supplier: 'Zoho CRM priser',
+    url: 'https://www.zoho.com/crm/pricing.html',
+    checks: [
+      { name: 'Standard $14/user/mth annual', pattern: /\$\s*1[34][.,]?\d*\b/ },
+    ],
+  },
+
   // ── Bredband: Telia Företag ───────────────────────────────────────────────
   {
     category: 'bredband',

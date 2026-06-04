@@ -419,27 +419,85 @@ export const BRANCHINDEX = {
   },
 
   'saas-crm': {
-    requiresVolumeData: true,
-    volumeDataNote: 'CRM-system prissätts ofta utifrån antalet kontakter i databasen och specifika säljverktyg. Våra experter kikar på detta för en rättvis kalkyl.',
+    source: 'estimated',
     unit: 'kr/år',
-    note: 'CRM-licenser. Prissättning beror på kontaktvolym, pipeline-moduler och avtalslängd.',
+    // Kalibrering juni 2026 — per användare/år (exkl. moms):
+    // Pipedrive Essential (annual billing): $14/user/mth ≈ 144 SEK × 12 = ~1 728 kr/user/år.
+    // Zoho CRM Standard (annual): $14/user/mth ≈ 144 SEK × 12 = ~1 728 kr/user/år.
+    // HubSpot Sales Hub Starter: $20/user/mth ≈ 206 SEK × 12 = ~2 472 kr/user/år.
+    // SuperOffice CRM (nordisk, estimerat): ~250–400 kr/user/mth → ~3 000–4 800 kr/user/år.
+    // Lime CRM (svensk, estimerat från kunddata): ~299–599 kr/user/mth → ~3 588–7 188 kr/user/år.
+    // Salesforce Starter Suite: $25/user/mth ≈ 258 SEK × 12 = ~3 090 kr/user/år.
+    // p25 = välförhandlat pris Pipedrive/Zoho-nivå ≈ 1 800 kr/user/år.
+    // Median = typiskt svenskt SMF-CRM-avtal SuperOffice/Lime-nivå ≈ 4 200 kr/user/år.
+    // Volymrabatt vid small/mid: ~5–10 % på median.
+    // CRM-priser varierar minimalt per bransch — matrisen är konsekvent över segment.
+    note: 'Per användare/år (exkl. moms). Estimat juni 2026: p25 = välförhandlat Pipedrive/Zoho-nivå (~150 kr/mth/user), median = typiskt Svenska SMF-avtal SuperOffice/Lime-nivå (~350 kr/mth/user). Prissättning varierar med kontaktvolym och avtalslängd.',
     alternatives: [
-      { supplier: 'HubSpot CRM (Starter/Pro)',  positioning: 'Ledande för SMF — skalbar från gratis till avancerad automatisering',         reliability: 0.94 },
-      { supplier: 'Pipedrive',                  positioning: 'Enkelt och effektivt för säljfokuserade bolag, lägst TCO för rena CRM-behov', reliability: 0.92 },
-      { supplier: 'Zoho CRM',                   positioning: 'Bredaste funktionsuppsättningen till lägst kostnad — bäst pris/prestanda',    reliability: 0.90 },
+      { supplier: 'Pipedrive',           positioning: 'Enklast och effektivast för säljfokuserade bolag — lägst TCO per user, starkt API', reliability: 0.92 },
+      { supplier: 'HubSpot CRM Starter', positioning: 'Stark för bolag med kombinerade sälj- och marknadsföringsbehov — fri tier existerar', reliability: 0.94 },
+      { supplier: 'Zoho CRM',            positioning: 'Bredaste funktionsuppsättningen till lägst kostnad — bäst pris/prestanda i segmentet', reliability: 0.90 },
+      { supplier: 'SuperOffice CRM',     positioning: 'Nordisk aktör med lokal support och stark integration mot svenska affärssystem', reliability: 0.91 },
     ],
+    licenseTierBenchmarks: {
+      // Pipedrive — USD-baspris, konverteras runtime via pricing.js.
+      // Källa: pipedrive.com/pricing (estimat juni 2026).
+      'pipedrive-essential': {
+        usdMonthly: 14.00, usdAnnual: 14.00, usdArvoAnnual: 11.90,
+        currency: 'USD', lastVerified: '2026-06-04', source: 'pipedrive.com/pricing',
+        note: 'Pipedrive Essential — pipeline, kontaktimport, standardrapporter, mobilapp.',
+      },
+      'pipedrive-advanced': {
+        usdMonthly: 29.00, usdAnnual: 29.00, usdArvoAnnual: 24.65,
+        currency: 'USD', lastVerified: '2026-06-04', source: 'pipedrive.com/pricing',
+        note: 'Pipedrive Advanced — full e-postintegration, automatisering, grupputskick.',
+      },
+      // HubSpot CRM — USD-baspris, konverteras runtime.
+      'hubspot-starter': {
+        usdMonthly: 20.00, usdAnnual: 20.00, usdArvoAnnual: 17.00,
+        currency: 'USD', lastVerified: '2026-06-04', source: 'hubspot.com/pricing',
+        note: 'HubSpot Sales Hub Starter — kontakter, deals, e-postspårning.',
+      },
+      // Zoho CRM — USD-baspris.
+      'zoho-crm-standard': {
+        usdMonthly: 20.00, usdAnnual: 14.00, usdArvoAnnual: 11.90,
+        currency: 'USD', lastVerified: '2026-06-04', source: 'zoho.com/crm/pricing',
+        note: 'Zoho CRM Standard — leads, kontakter, konton, standardrapporter.',
+      },
+    },
+    matrix: {
+      byraer:      { micro: { median: 4200, p25: 1800 }, small: { median: 3900, p25: 1680 }, mid: { median: 3600, p25: 1560 } },
+      hantverkare: { micro: { median: 4200, p25: 1800 }, small: { median: 3900, p25: 1680 }, mid: { median: 3600, p25: 1560 } },
+      ehandel:     { micro: { median: 4200, p25: 1800 }, small: { median: 3900, p25: 1680 }, mid: { median: 3600, p25: 1560 } },
+      tillverkning:{ micro: { median: 4200, p25: 1800 }, small: { median: 3900, p25: 1680 }, mid: { median: 3600, p25: 1560 } },
+    },
   },
 
   'saas-finance': {
-    requiresVolumeData: true,
-    volumeDataNote: 'Affärs- och bokföringssystem styrs ofta av antalet verifikationer, moduler och transaktioner, inte bara antalet anställda. Vi analyserar detta manuellt.',
+    source: 'estimated',
     unit: 'kr/år',
-    note: 'Bokföringssystem och affärssystem (ERP). Prissättning beror på modulval, transaktionsvolym och antal bolag.',
+    // Kalibrering juni 2026 — totalt per bolag/år (ej per användare, skalas ej med seatCount):
+    // Fortnox Bokföring (verifierat maj 2026): 209 kr/mth = 2 508 kr/år.
+    // Fortnox Fakturering: 209 kr/mth separat. Standard SMF-bundle (2+ moduler): ~350–450 kr/mth.
+    // Typisk SMF micro (Bokföring + Fakturering): p25 ~4 200 kr/år, median ~7 200 kr/år (med extra moduler).
+    // Small (20 anst, fler moduler, fler verifikationer): p25 ~6 600 kr/år, median ~12 000 kr/år.
+    // Mid (100 anst, ERP-nivå med lön/projekt): p25 ~12 000 kr/år, median ~24 000 kr/år.
+    // eHandel: +25–35 % jämfört med byraer (WMS-integration, fler fakturor, fler kassasystem).
+    // OBS: isAccountingSystem (subType='affärssystem') i recommend.js sätter overpaymentPct = null —
+    //   systemet jämför inte procentuellt utan ger modulrådgivning. Matrisen används ändå för kontext.
+    note: 'Totalt per bolag/år (exkl. moms). Bokföringssystem och affärssystem. Estimat juni 2026: Fortnox standard bundle ~350–450 kr/mth (p25 micro ~4 200 kr/år). Prissättning varierar med modulval, verifikationsvolym och antal bolag.',
     alternatives: [
-      { supplier: 'Fortnox',        positioning: 'Lägst grundkostnad för SMF — modulbaserat, skalbart, stark integration mot banker',  reliability: 0.96 },
-      { supplier: 'Visma eEkonomi', positioning: 'Bredare funktionalitet, stark för bolag med komplexa rapporteringsbehov',            reliability: 0.94 },
-      { supplier: 'Bokio',          positioning: 'Enklast och billigast för solobolag och mikroföretag utan komplex redovisning',       reliability: 0.88 },
+      { supplier: 'Fortnox',        positioning: 'Lägst grundkostnad för SMF — modulbaserat, skalbart, stark integration mot banker och lönesystem', reliability: 0.96 },
+      { supplier: 'Visma eEkonomi', positioning: 'Bredare funktionalitet, stark för bolag med komplexa rapporteringsbehov och multi-bolag',          reliability: 0.94 },
+      { supplier: 'Bokio',          positioning: 'Enklast och billigast för solobolag — AI-bokföring utan krav på redovisningskompetens',             reliability: 0.88 },
+      { supplier: 'PE Redovisning', positioning: 'Stark för byråer och deras kunder — komplett redovisningsplattform med klientportal',              reliability: 0.91 },
     ],
+    matrix: {
+      byraer:      { micro: { median:  7200, p25:  4200 }, small: { median: 12000, p25:  6600 }, mid: { median: 24000, p25: 12000 } },
+      hantverkare: { micro: { median:  7200, p25:  4200 }, small: { median: 12000, p25:  6600 }, mid: { median: 24000, p25: 12000 } },
+      ehandel:     { micro: { median:  9600, p25:  5400 }, small: { median: 16800, p25:  8400 }, mid: { median: 36000, p25: 18000 } },
+      tillverkning:{ micro: { median:  7200, p25:  4200 }, small: { median: 12000, p25:  6600 }, mid: { median: 24000, p25: 12000 } },
+    },
   },
 
   'saas-other': {
