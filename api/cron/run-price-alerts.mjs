@@ -164,8 +164,15 @@ export default async function handler(req, res) {
                 ? `${fmt(impact.impactKrYear)} kr/år — ${impact.deltaPct > 0 ? '+' : ''}${impact.deltaPct}%`
                 : 'Arvo granskar om förändringen är befogad',
               supplier: supplierName, category,
+              metric: impact && impact.impactKrYear > 0 ? {
+                primary:   { value: impact.impactKrYear, label: 'Kostnadspåverkan/år' },
+                secondary: { value: impact.deltaPct,    label: `+% (${impact.seats} licenser)` },
+              } : null,
+              context: impact && impact.impactKrYear > 0
+                ? `Priset gick från ${fmt(impact.oldKrMonth)} till ${fmt(impact.newKrMonth)} kr/licens/mån.`
+                : null,
               action: {
-                label: 'Låt Arvo granska och förhandla', type: 'renegotiate',
+                label: 'Låt Arvo förhandla tillbaka priset', type: 'renegotiate',
                 estimatedNetSaving: impact && impact.impactKrYear > 0 ? Math.round(impact.impactKrYear * 0.80) : 0,
               },
             };

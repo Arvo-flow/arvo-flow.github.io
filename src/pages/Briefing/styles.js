@@ -237,12 +237,14 @@ export const TypeBadge = styled.span`
   display: inline-flex;
   align-items: center;
   background: ${({ $type }) =>
-    $type === 'recommendation' ? 'rgba(29,176,154,0.15)' :
+    $type === 'recommendation' ? 'rgba(29,176,154,0.15)'  :
     $type === 'cost_trend'     ? 'rgba(245,158,11,0.15)'  :
+    $type === 'price_alert'    ? 'rgba(192,57,43,0.12)'   :
                                  'rgba(245,158,11,0.12)'};
   color: ${({ $type }) =>
     $type === 'recommendation' ? '#1DB09A' :
     $type === 'cost_trend'     ? '#F59E0B' :
+    $type === 'price_alert'    ? '#C0392B' :
                                  '#F59E0B'};
   font-size: 10px;
   font-weight: 700;
