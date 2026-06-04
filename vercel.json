@@ -44,6 +44,12 @@
     },
     "api/activate-intelligence.mjs": {
       "maxDuration": 30
+    },
+    "api/cron/run-price-alerts.mjs": {
+      "maxDuration": 60
+    },
+    "api/confirm-activation.mjs": {
+      "maxDuration": 15
     }
   },
   "rewrites": [
