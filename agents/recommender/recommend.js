@@ -372,6 +372,30 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
       : '';
   })();
 
+  // Smyghöjning-indikator — injiceras när kundens historik visar tydlig prisförändring.
+  // Ger AI:n faktaunderlag för det proaktiva moment som är kärnan i Arvo Intelligence.
+  const priceHistoryBlock = (() => {
+    const ph = invoice.priceHistoryContext;
+    if (!ph) return '';
+    const direction   = ph.isIncrease ? 'ÖKAT' : 'MINSKAT';
+    const absPct      = Math.abs(ph.deltaPct);
+    const monthsLabel = ph.monthsSince === 1 ? '1 månad' : `${ph.monthsSince} månader`;
+    const prevFmt     = ph.prevAnnualCost.toLocaleString('sv-SE');
+    if (ph.isIncrease) {
+      return `\n\nSMYGHÖJNINGS-INDIKATOR (KRITISK KONTEXTSIGNAL):
+  Kundens kostnad hos denna leverantör har ÖKAT med ${absPct} % sedan Arvo:s senaste analys (${monthsLabel} sedan).
+  Förra analyserade kostnad: ${prevFmt} kr/år.
+  → Du MÅSTE nämna denna prisökning i din reasoning. Formulera det exakt som:
+    "Vi noterade att er kostnad hos [leverantör] stigit med ${absPct} % sedan vår senaste analys (${monthsLabel} sedan)."
+  → Prisökningen är ett starkt argument för att agera nu — framhåll det som den primära drivkraften.
+  → Kombinera med överprisargumentet mot marknaden om det är relevant.`;
+    }
+    return `\n\nPRISFÖRÄNDRINGS-KONTEXT:
+  Kundens kostnad hos denna leverantör har MINSKAT med ${absPct} % sedan Arvo:s senaste analys (${monthsLabel} sedan).
+  Förra analyserade kostnad: ${prevFmt} kr/år.
+  → Du KAN nämna att kostnaden minskat. Fokusera ändå på om ytterligare besparingsmöjligheter finns.`;
+  })();
+
   return `Kunden:
   Bolagstyp: ${customer.industry}
   Anställda: ${employees}
@@ -418,7 +442,7 @@ Kategoriserad faktura:
 Branschindex för segmentet:
 ${benchmarkBlock}
 
-${phrasingRule}${secretOverride}${saasNote}${speedNote}${mobileNote}${elContext ? elContext : ''}
+${phrasingRule}${secretOverride}${saasNote}${speedNote}${mobileNote}${elContext ? elContext : ''}${priceHistoryBlock}
 
 Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend".`;
 }

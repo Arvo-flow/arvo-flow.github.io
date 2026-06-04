@@ -757,6 +757,51 @@ export default async function handler(req, res) {
       employees:                employeesNum,
     });
 
+    // ── Smyghöjning-detektering: jämför mot kundens senaste analys ──────────────
+    // Kärnan i Arvo Intelligence — proaktiv CFO som märker prisökningar innan kunden gör det.
+    // Slår upp senaste auto-analyse med samma fingerprint+kategori i invoice_analyses.
+    // Injiceras i rekommenderarens prompt som en stark kontextsignal.
+    // Fail-open: query-fel stoppar aldrig pipelinen.
+    let priceHistoryContext = null;
+    if (fingerprint && categorized.category !== 'el' && (extracted.annualCost ?? 0) > 0) {
+      try {
+        const _db = getDb();
+        if (_db) {
+          const _fpHash = createHash('sha256').update(String(fingerprint)).digest('hex').slice(0, 32);
+          const _prevRows = await _db`
+            SELECT annual_cost, created_at
+            FROM invoice_analyses
+            WHERE fingerprint = ${_fpHash}
+              AND category    = ${categorized.category}
+              AND route       = 'auto'
+              AND annual_cost > 0
+            ORDER BY created_at DESC
+            LIMIT 1
+          `;
+          const _prev = _prevRows[0];
+          if (_prev) {
+            const _prevAnnual  = _prev.annual_cost;
+            const _currAnnual  = extracted.annualCost;
+            const _deltaPct    = ((_currAnnual - _prevAnnual) / _prevAnnual) * 100;
+            const _monthsSince = Math.max(1, Math.round(
+              (Date.now() - new Date(_prev.created_at).getTime()) / (1000 * 60 * 60 * 24 * 30.5)
+            ));
+            if (Math.abs(_deltaPct) > 7) {
+              priceHistoryContext = {
+                prevAnnualCost: _prevAnnual,
+                deltaPct:       Math.round(_deltaPct * 10) / 10,
+                monthsSince:    _monthsSince,
+                isIncrease:     _deltaPct > 0,
+              };
+              console.log(`[smyghöjning] category=${categorized.category} delta=${_deltaPct.toFixed(1)}% months=${_monthsSince}`);
+            }
+          }
+        }
+      } catch (_err) {
+        console.warn('[smyghöjning] history query failed (non-fatal):', _err.message);
+      }
+    }
+
     // ── Avtalslås-detektering (körs före alla tidiga exits) ───────────────────
     // Hoppas över för licensePending-kategorier — vi kan inte byta ändå, så
     // "låst avtal" skulle vara vilseledande för t.ex. försäkringskunder.
@@ -1144,6 +1189,7 @@ export default async function handler(req, res) {
         description:          extracted.description ?? null,
         lineItems:            extracted.lineItems ?? null,
         likeForLikeTarget:    _lflTarget,
+        priceHistoryContext:  priceHistoryContext ?? null,
       },
       categorized,
     });
