@@ -357,7 +357,6 @@ export default function Admin() {
                       onChange={e => setCorrReasoning(e.target.value)}
                       style={{ marginTop:8, width:'100%', boxSizing:'border-box', padding:'8px 12px', borderRadius:8, border:'1.5px solid rgba(255,255,255,.12)', background:'rgba(255,255,255,.05)', color:'#fff', fontSize:12, fontFamily:'inherit', resize:'vertical', minHeight:56, outline:'none' }}
                     />
-                    </div>
                     {corrSuccess === r.id && (
                       <p style={{ color:'#5DD6CA', fontSize:12, margin:'8px 0 0' }}>✓ Korrektion sparad — systemet lär sig.</p>
                     )}
