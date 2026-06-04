@@ -218,6 +218,25 @@ function deterministicMatch(invoice) {
     };
   }
 
+  // Rule 3d: known CRM supplier → saas-crm (no license signal required).
+  // Lime CRM invoices often don't contain "licens" in the description — supplier name alone
+  // is sufficient. Runs before Rule 4 to prevent fallthrough to saas-other.
+  const CRM_SUPPLIER_NAMES = [
+    'salesforce', 'hubspot', 'pipedrive', 'lime technologies', 'limecrm',
+    'superoffice', 'zoho crm', 'freshsales', 'dynamics 365 sales',
+  ];
+  const isCrmSupplierName = CRM_SUPPLIER_NAMES.some((s) => combined.includes(s));
+  if (isCrmSupplierName) {
+    return {
+      category: 'saas-crm',
+      subType: '',
+      normalizedSupplier: invoice.supplier ?? '',
+      confidence: 0.90,
+      reasoning: `Deterministisk matchning: känd CRM-leverantör → saas-crm`,
+      licensePending: false,
+    };
+  }
+
   // Rule 4: known SaaS supplier + license signal → route to correct saas sub-category.
   // Unknown supplier with license signal → saas-other (manual review).
   const isLicenseDesc = LICENSE_DESC_SIGNALS.some((s) => desc.includes(s) || supplier.includes(s));

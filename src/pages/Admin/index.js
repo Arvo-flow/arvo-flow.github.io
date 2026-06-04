@@ -55,6 +55,12 @@ export default function Admin() {
   const [corrView, setCorrView]           = useState('list'); // list | patterns
   const [connections, setConnections]     = useState(null);
   const [connStats, setConnStats]         = useState(null);
+  const [expandedQueueRow, setExpandedQueueRow] = useState(null);
+  const [corrField, setCorrField]              = useState('category');
+  const [corrValue, setCorrValue]              = useState('');
+  const [corrReason, setCorrReason]            = useState('');
+  const [corrSubmitting, setCorrSubmitting]    = useState(false);
+  const [corrSuccess, setCorrSuccess]          = useState(null);
 
   const load = useCallback(async (token) => {
     setLoadError('');
@@ -115,6 +121,40 @@ export default function Admin() {
     }
   }
 
+  async function submitCorrection(row) {
+    if (!corrValue || corrSubmitting) return;
+    setCorrSubmitting(true);
+    try {
+      const originalValue = corrField === 'category' ? (row.category ?? '') :
+                            corrField === 'recurring' ? 'false' : '';
+      const res = await fetch('/api/admin/corrections', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
+        body: JSON.stringify({
+          analysisId:     row.id,
+          field:          corrField,
+          originalValue,
+          correctedValue: corrValue,
+          reason:         corrReason || 'operator_manual_review',
+          category:       corrField === 'category' ? corrValue : (row.category ?? null),
+          supplier:       row.normalized_supplier || row.supplier || null,
+        }),
+      });
+      if (res.ok) {
+        setCorrSuccess(row.id);
+        setTimeout(() => {
+          setCorrSuccess(null);
+          setExpandedQueueRow(null);
+          setCorrValue('');
+          setCorrReason('');
+          setCorrField('category');
+        }, 2500);
+      }
+    } catch { /* silent */ } finally {
+      setCorrSubmitting(false);
+    }
+  }
+
   if (!authed) {
     return (
       <Page>
@@ -139,7 +179,9 @@ export default function Admin() {
 
   const s = data?.stats ?? {};
 
-  const QUEUE_COLS  = '2fr 1.5fr 1fr 1fr 1fr 1.2fr';
+  const QUEUE_COLS  = '2fr 1.5fr 1fr 1fr 1fr 1.2fr 84px';
+  const SEL_STYLE   = { padding:'6px 10px', borderRadius:8, border:'1.5px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.06)', color:'#fff', fontSize:12.5, cursor:'pointer', outline:'none' };
+  const ALL_CATS    = ['saas-crm','saas-productivity','saas-finance','saas-devtools','saas-other','mobil','bredband','el','skrivarleasing','kortterminal','vaxel','loneadmin','utrustningsleasing','managed-workplace','larm-bevakning','foretagshalsovard','bankavgifter','forsakring-foretag','serverhosting','it-support','faktura-tjanst','leasing-bil'];
   const WAIT_COLS   = '2fr 1.5fr 1.5fr 1.5fr';
   const FB_COLS     = '2fr 1.5fr 0.5fr 2fr 1.5fr';
 
@@ -241,18 +283,75 @@ export default function Admin() {
           <Table>
             <THead $cols={QUEUE_COLS}>
               <span>Leverantör</span><span>Kategori</span><span>Årskkostnad</span>
-              <span>Bransch</span><span>Anställda</span><span>Datum</span>
+              <span>Bransch</span><span>Anställda</span><span>Datum</span><span>Åtgärd</span>
             </THead>
             {(data?.reviewQueue ?? []).length === 0 && <EmptyRow>Inga review_queue-fakturor ännu.</EmptyRow>}
             {(data?.reviewQueue ?? []).map((r) => (
-              <TRow key={r.id} $cols={QUEUE_COLS}>
-                <span style={{ fontWeight: 600 }}>{r.supplier || r.normalized_supplier || '–'}</span>
-                <Tag $c="rgba(93,214,202,.15)">{r.category}</Tag>
-                <span>{fmtNum(r.annual_cost)} kr</span>
-                <span style={{ color: 'rgba(255,255,255,.5)' }}>{r.industry}</span>
-                <span style={{ color: 'rgba(255,255,255,.5)' }}>{r.employees}</span>
-                <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{fmtDate(r.created_at)}</span>
-              </TRow>
+              <React.Fragment key={r.id}>
+                <TRow $cols={QUEUE_COLS}>
+                  <span style={{ fontWeight: 600 }}>{r.supplier || r.normalized_supplier || '–'}</span>
+                  <Tag $c="rgba(93,214,202,.15)">{r.category}</Tag>
+                  <span>{fmtNum(r.annual_cost)} kr</span>
+                  <span style={{ color: 'rgba(255,255,255,.5)' }}>{r.industry}</span>
+                  <span style={{ color: 'rgba(255,255,255,.5)' }}>{r.employees}</span>
+                  <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{fmtDate(r.created_at)}</span>
+                  <button
+                    onClick={() => {
+                      const isOpen = expandedQueueRow === r.id;
+                      setExpandedQueueRow(isOpen ? null : r.id);
+                      setCorrValue(''); setCorrReason(''); setCorrField('category'); setCorrSuccess(null);
+                    }}
+                    style={{ padding:'4px 10px', borderRadius:100, border:'1px solid rgba(93,214,202,.3)', background: expandedQueueRow===r.id ? 'rgba(93,214,202,.15)' : 'transparent', color:'#5DD6CA', cursor:'pointer', fontSize:11.5, fontWeight:600 }}
+                  >{expandedQueueRow === r.id ? '✕' : 'Korrigera'}</button>
+                </TRow>
+                {expandedQueueRow === r.id && (
+                  <div style={{ padding:'14px 16px', borderTop:'1px solid rgba(93,214,202,.12)', background:'rgba(93,214,202,.03)' }}>
+                    <p style={{ margin:'0 0 10px', fontSize:12, color:'rgba(255,255,255,.45)' }}>
+                      Manuell korrektion — sparas som labeled data och tränar systemet.
+                    </p>
+                    <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
+                      <select value={corrField} onChange={e => { setCorrField(e.target.value); setCorrValue(''); }} style={SEL_STYLE}>
+                        <option value="category">Kategori</option>
+                        <option value="recurring">Återkommande</option>
+                        <option value="route">Route</option>
+                      </select>
+                      {corrField === 'category' && (
+                        <select value={corrValue} onChange={e => setCorrValue(e.target.value)} style={SEL_STYLE}>
+                          <option value="">Välj rätt kategori…</option>
+                          {ALL_CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      )}
+                      {corrField === 'recurring' && (
+                        <select value={corrValue} onChange={e => setCorrValue(e.target.value)} style={SEL_STYLE}>
+                          <option value="">Välj…</option>
+                          <option value="true">true (återkommande)</option>
+                          <option value="false">false (engångskostnad)</option>
+                        </select>
+                      )}
+                      {corrField === 'route' && (
+                        <select value={corrValue} onChange={e => setCorrValue(e.target.value)} style={SEL_STYLE}>
+                          <option value="">Välj…</option>
+                          <option value="auto">auto</option>
+                          <option value="review_queue">review_queue</option>
+                          <option value="unsupported">unsupported</option>
+                        </select>
+                      )}
+                      <Input
+                        placeholder="Anledning (valfri)"
+                        value={corrReason}
+                        onChange={e => setCorrReason(e.target.value)}
+                        style={{ flex:'1 1 160px', borderRadius:8, padding:'6px 12px', fontSize:12.5 }}
+                      />
+                      <Btn type="button" onClick={() => submitCorrection(r)} disabled={!corrValue || corrSubmitting} style={{ padding:'7px 18px', fontSize:12.5 }}>
+                        {corrSubmitting ? 'Sparar…' : 'Spara →'}
+                      </Btn>
+                    </div>
+                    {corrSuccess === r.id && (
+                      <p style={{ color:'#5DD6CA', fontSize:12, margin:'8px 0 0' }}>✓ Korrektion sparad — systemet lär sig.</p>
+                    )}
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </Table>
         </Section>
