@@ -47,8 +47,9 @@ const RATE_WINDOW_TTL       = 24 * 60 * 60;      // 24 timmar
 
 // ── IP-baserad rate limiting ──────────────────────────────────────────────────
 const WHITELISTED_IPS = new Set([
-  '83.249.237.58', // owner mobile
-  '192.165.21.4',  // owner work laptop
+  '83.249.237.58',   // owner mobile
+  '192.165.21.4',    // owner work laptop
+  '94.191.136.154',  // owner
 ]);
 
 async function checkRateLimit(kv, ip) {
