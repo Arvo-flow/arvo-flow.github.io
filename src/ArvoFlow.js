@@ -21,6 +21,7 @@ import Admin from './pages/Admin';
 import OutcomeSurvey from './pages/OutcomeSurvey';
 import ArvoScore from './pages/ArvoScore';
 import Briefing from './pages/Briefing';
+import Intelligence from './pages/Intelligence';
 import ScrollToTop from './components/ScrollToTop';
 
 const ArvoFlow = () => (
@@ -45,6 +46,7 @@ const ArvoFlow = () => (
           <Route path="/utfall" element={<OutcomeSurvey />} />
           <Route path="/arvo-score" element={<ArvoScore />} />
           <Route path="/briefing/:token" element={<Briefing />} />
+          <Route path="/intelligence" element={<Intelligence />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
