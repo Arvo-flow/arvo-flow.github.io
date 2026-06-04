@@ -463,6 +463,9 @@ ${pageText.slice(0, 4000)}
 Extrahera det aktuella ordinarie B2B-listpriset för denna produkt. Svara i exakt detta JSON-format:
 {
   "extractedPrice": "t.ex. '349 kr/mth' eller null om ej hittad",
+  "extractedNumeric": 349.0,
+  "extractedCurrency": "SEK",
+  "extractedUnit": "per_seat_month",
   "isPermanent": true,
   "isCampaign": false,
   "confidence": 0.90,
@@ -470,10 +473,16 @@ Extrahera det aktuella ordinarie B2B-listpriset för denna produkt. Svara i exak
   "reasoning": "kort förklaring (max 80 ord)"
 }
 
+Möjliga värden för extractedUnit:
+  per_seat_month | per_seat_year | per_company_month | per_company_year | flat_month | percentage
+
+extractedCurrency: SEK | USD | EUR
+extractedNumeric: bara siffran, utan enhet eller valuta (t.ex. 349 för "349 kr/mth")
+
 Möjliga värden för actionRequired:
-- "update" — priset har ändrats permanent, automatisk uppdatering kan föreslås
-- "verify_manually" — oklar situation (kampanj? layout-ändring?), manuell koll krävs
-- "false_positive" — sidan har förändrats men priset verkar detsamma`,
+- "update"          — priset har ändrats permanent
+- "verify_manually" — oklar situation, manuell koll krävs
+- "false_positive"  — sidan förändrades men priset verkar detsamma`,
         },
       ],
     });

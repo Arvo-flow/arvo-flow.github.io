@@ -21,6 +21,7 @@ import {
   hasAlertBeenSent,
   markAlertSent,
 } from '../../lib/price-alert-store.js';
+import { computeImpactKr, parseCheckPrice } from '../../lib/price-impact.js';
 
 export const config = { maxDuration: 60 };
 
@@ -120,23 +121,26 @@ export default async function handler(req, res) {
       if (!resend) continue;
 
       const supplierName = (customer.supplier || keyword).replace(/\b\w/g, c => c.toUpperCase());
-      const annualCost   = Number(customer.annualCost ?? 0);
       const seatCount    = customer.seatCount ?? null;
-      const haikuPrice   = groupAlerts[0]?.haiku?.extractedPrice;
+      const primaryAlert = groupAlerts[0];
 
-      // Per-säte impact-estimat
-      let impactKrYear = null;
-      if (seatCount && haikuPrice && annualCost > 0) {
-        const perSeatYear = annualCost / seatCount;
-        const numMatch = haikuPrice.match(/[\d\s]+[,.]?[\d]*/);
-        if (numMatch) {
-          const n = parseFloat(numMatch[0].replace(/\s/g, '').replace(',', '.'));
-          if (!isNaN(n)) {
-            const newPerSeatYear = n < 1000 ? n * 12 : n;
-            impactKrYear = Math.round((newPerSeatYear - perSeatYear) * seatCount);
-          }
-        }
-      }
+      // Deterministisk impact via parseCheckPrice + computeImpactKr
+      const currentPrice = parseCheckPrice(primaryAlert?.check ?? '');
+      const haiku        = primaryAlert?.haiku ?? null;
+      const impact = currentPrice && haiku?.extractedNumeric != null
+        ? computeImpactKr({
+            currentNumeric:  currentPrice.numeric,
+            currentCurrency: currentPrice.currency,
+            currentUnit:     currentPrice.unit,
+            newNumeric:      haiku.extractedNumeric,
+            newCurrency:     haiku.extractedCurrency ?? currentPrice.currency,
+            newUnit:         haiku.extractedUnit     ?? currentPrice.unit,
+            seatCount,
+            fxRates: null,
+          })
+        : null;
+
+      const impactKrYear = impact?.impactKrYear ?? null;
       if (impactKrYear) groupImpact += Math.abs(impactKrYear);
 
       // Magic token + briefing_reports
@@ -156,13 +160,13 @@ export default async function handler(req, res) {
             const insight = {
               id: crypto.randomUUID(), type: 'price_alert',
               headline: `${supplierName} har ändrat sin prisbild`,
-              subheadline: impactKrYear && impactKrYear > 0
-                ? `${fmt(impactKrYear)} kr/år identifierad påverkan`
+              subheadline: impact && impact.impactKrYear > 0
+                ? `${fmt(impact.impactKrYear)} kr/år — ${impact.deltaPct > 0 ? '+' : ''}${impact.deltaPct}%`
                 : 'Arvo granskar om förändringen är befogad',
               supplier: supplierName, category,
               action: {
                 label: 'Låt Arvo granska och förhandla', type: 'renegotiate',
-                estimatedNetSaving: impactKrYear && impactKrYear > 0 ? Math.round(impactKrYear * 0.85) : 0,
+                estimatedNetSaving: impact && impact.impactKrYear > 0 ? Math.round(impact.impactKrYear * 0.80) : 0,
               },
             };
             await db`
@@ -185,11 +189,11 @@ export default async function handler(req, res) {
       }
 
       // Skicka alert-mail
-      const subject = impactKrYear && impactKrYear > 0
-        ? `Arvo: ${supplierName} har höjt priset — ${fmt(impactKrYear)} kr/år påverkan`
+      const subject = impact && impact.impactKrYear > 0
+        ? `${supplierName}: +${fmt(impact.impactKrYear)} kr/år — Arvo har detekterat en prishöjning`
         : `Arvo har noterat en prisändring hos ${supplierName}`;
 
-      const html = buildAlertEmail({ supplierName, groupAlerts, segStats, impactKrYear, seatCount, briefingUrl, date: reportDate });
+      const html = buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefingUrl, date: reportDate });
 
       try {
         const { error } = await resend.emails.send({ from: FROM, to: customer.email, subject, html });
@@ -208,15 +212,41 @@ export default async function handler(req, res) {
   return send(res, 200, { ok: true, processed: alertGroups.size, sent: totalSent, skipped: totalSkipped, failed: totalFailed });
 }
 
-// ── Minimal alert-mail ────────────────────────────────────────────────────────
-function buildAlertEmail({ supplierName, groupAlerts, segStats, impactKrYear, seatCount, briefingUrl, date }) {
-  const isIncrease = impactKrYear != null ? impactKrYear > 0 : true;
-  const segLine    = segStats.total >= 3
-    ? `<p style="margin:0 0 16px;padding:12px 16px;background:#EEF9F7;border-radius:8px;font-size:13px;color:#1B7A6E;font-weight:600">Arvo följer ${segStats.total} bolag med liknande profil — ${segStats.withSupplier} av dessa använder ${supplierName}.</p>`
+// ── Bloomberg Terminal alert-mail ─────────────────────────────────────────────
+function buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefingUrl, date }) {
+  const hasImpact  = impact && impact.impactKrYear > 0;
+  const isIncrease = hasImpact;
+
+  // Segment intelligence — "X av Y bolag i er segment"
+  const segLine = segStats.total >= 3
+    ? `<tr><td colspan="2" style="padding:12px 14px;background:#EEF9F7;border-radius:8px;font-size:13px;color:#1B7A6E;font-weight:600;margin-bottom:20px;display:block">
+        Arvo ser samma höjning hos ${segStats.withSupplier} av ${segStats.total} bolag i ert segment
+       </td></tr>`
     : '';
-  const impactLine = impactKrYear && impactKrYear > 0
-    ? `<p style="margin:0 0 20px;font-size:28px;font-weight:800;color:#0E1A17;letter-spacing:-.03em">+${fmt(Math.abs(impactKrYear))} kr/år${seatCount ? `<span style="font-size:14px;font-weight:400;color:#5C6E68;margin-left:8px">${seatCount} licenser</span>` : ''}</p>`
-    : '';
+
+  // Exakt kr-beräkning i tabellrad
+  const breakdownRows = hasImpact ? `
+    <tr style="border-top:1px solid #D5E2DC">
+      <td style="padding:10px 0;font-size:13px;color:#5C6E68;width:200px">Gammalt pris/licens/mån</td>
+      <td style="padding:10px 0;font-size:13px;color:#0E1A17;font-weight:600;text-align:right">${fmt(impact.oldKrMonth)} kr</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 0;font-size:13px;color:#5C6E68">Nytt pris/licens/mån</td>
+      <td style="padding:10px 0;font-size:13px;color:#C0392B;font-weight:700;text-align:right">+${fmt(impact.newKrMonth)} kr (+${impact.deltaPct}%)</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 0;font-size:13px;color:#5C6E68">Antal licenser</td>
+      <td style="padding:10px 0;font-size:13px;color:#0E1A17;font-weight:600;text-align:right">${impact.seats} st</td>
+    </tr>
+    <tr style="border-top:2px solid #0E1A17">
+      <td style="padding:14px 0 6px;font-size:14px;color:#0E1A17;font-weight:700">Total påverkan/år</td>
+      <td style="padding:14px 0 6px;font-size:20px;color:#C0392B;font-weight:800;text-align:right">+${fmt(impact.impactKrYear)} kr</td>
+    </tr>` : '';
+
+  const impactHeadline = hasImpact
+    ? `<p style="margin:0 0 8px;font-size:36px;font-weight:800;color:#C0392B;letter-spacing:-.04em">+${fmt(impact.impactKrYear)} kr/år</p>
+       <p style="margin:0 0 24px;font-size:13px;color:#5C6E68">${impact.oldKrMonth} → ${impact.newKrMonth} kr/licens/mån · ${impact.seats} licenser · +${impact.deltaPct}%</p>`
+    : `<p style="margin:0 0 24px;font-size:15px;color:#5C6E68">Arvo granskar om förändringen är befogad och kontaktar er med en rekommendation.</p>`;
 
   return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#F1F6F3;font-family:-apple-system,Arial,sans-serif">
@@ -224,22 +254,26 @@ function buildAlertEmail({ supplierName, groupAlerts, segStats, impactKrYear, se
 <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;max-width:600px;box-shadow:0 2px 16px rgba(14,26,23,0.08)">
 <tr><td style="height:4px;background:linear-gradient(90deg,#5DD6CA,#1B6E66)">&nbsp;</td></tr>
 <tr><td style="padding:28px 36px 22px;border-bottom:1px solid #D5E2DC">
-  <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#1B7A6E;text-transform:uppercase;letter-spacing:.1em">Arvo Intelligence</p>
-  <p style="margin:0;font-size:22px;font-weight:800;color:#0E1A17">${isIncrease ? `${supplierName} har höjt priset` : `Prisändring hos ${supplierName}`}</p>
+  <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#1B7A6E;text-transform:uppercase;letter-spacing:.1em">Arvo Intelligence · Prishöjningsvarning</p>
+  <p style="margin:0;font-size:22px;font-weight:800;color:#0E1A17">
+    ${isIncrease ? `${supplierName} har höjt priset` : `Prisändring hos ${supplierName}`}
+  </p>
   <p style="margin:6px 0 0;font-size:12px;color:#5C6E68">${date}</p>
 </td></tr>
 <tr><td style="padding:28px 36px">
-  <p style="margin:0 0 20px;font-size:15px;color:#0E1A17;line-height:1.65">Arvo bevakar era leverantörskostnader nattligen och har detekterat en förändring hos <strong>${supplierName}</strong>.</p>
-  ${impactLine}
-  ${segLine}
-  <table cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+  ${impactHeadline}
+  ${hasImpact ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border-radius:10px;background:#F8FAF9;padding:4px 16px;border:1px solid #D5E2DC">
+    ${segLine}
+    ${breakdownRows}
+  </table>` : ''}
+  <table cellpadding="0" cellspacing="0" style="margin:0 0 20px">
     <tr><td style="border-radius:10px;background:linear-gradient(135deg,#5DD6CA,#1B6E66)">
       <a href="${briefingUrl}" style="display:inline-block;color:#fff;font-weight:700;font-size:15px;padding:15px 36px;text-decoration:none">
-        ${isIncrease ? 'Låt Arvo granska och förhandla' : 'Se fullständig analys'} &rarr;
+        ${isIncrease ? 'Låt Arvo förhandla tillbaka priset' : 'Se fullständig analys'} &rarr;
       </a>
     </td></tr>
   </table>
-  <p style="margin:0;font-size:12px;color:#5C6E68">AI-extraherade priser är indikativa — den fullständiga analysen finns i briefingen ovan.</p>
+  <p style="margin:0;font-size:12px;color:#5C6E68">Beräkningen baseras på er senaste faktura. Fullständig verifiering i briefingen ovan.</p>
 </td></tr>
 <tr><td style="padding:16px 36px;border-top:1px solid #D5E2DC;text-align:center">
   <p style="margin:0;font-size:11px;color:#5C6E68">Arvo Flow · <a href="${BASE_URL}/testa-faktura" style="color:#1B7A6E;text-decoration:none">arvoflow.se</a></p>

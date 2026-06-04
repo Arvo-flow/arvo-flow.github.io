@@ -32,6 +32,7 @@ import crypto from 'crypto';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { getAffectedCustomers, getSegmentStats, hasAlertBeenSent, markAlertSent } from '../lib/price-alert-store.js';
+import { computeImpactKr, parseCheckPrice } from '../lib/price-impact.js';
 
 const REPORT_PATH = process.argv[2] ?? '/tmp/price-monitor-report.json';
 const FROM        = process.env.RESEND_FROM    ?? 'Arvo Flow <analys@arvo-flow.se>';
@@ -146,34 +147,29 @@ for (const [groupKey, { keyword, category, items: groupAlerts }] of alertGroups)
   for (const customer of customers) {
     const supplierName = displaySupplier(customer.supplier, keyword);
 
-    // Per-säte-beräkning av impact om seat_count finns
-    const seatCount  = customer.seatCount ?? null;
-    const annualCost = Number(customer.annualCost ?? 0);
-
-    // Försök extrahera pris-delta från Haiku-analysen
-    // Haiku rapporterar t.ex. "349 kr/mth" — jämför med befintligt pris i checken
+    const seatCount    = customer.seatCount ?? null;
     const primaryAlert = groupAlerts[0];
-    const haikuPrice   = primaryAlert?.haiku?.extractedPrice;
 
-    // Estimera impact: om vi kan tolka det nya priset och seat_count finns
-    let impactKrYear  = null;
-    if (seatCount && haikuPrice && annualCost > 0) {
-      // Enkel heuristik: annualCost / seatCount = nuvarande pris/säte/år
-      const currentPerSeatYear = annualCost / seatCount;
-      // Matcha numerisk del ur Haiku-priset (t.ex. "349 kr/mth" → 349 × 12)
-      const numMatch = haikuPrice.match(/[\d\s]+[,.]?[\d]*/);
-      if (numMatch) {
-        const haikuNum = parseFloat(numMatch[0].replace(/\s/g, '').replace(',', '.'));
-        if (!isNaN(haikuNum)) {
-          const newPerSeatYear = haikuNum < 1000 ? haikuNum * 12 : haikuNum;
-          impactKrYear = Math.round((newPerSeatYear - currentPerSeatYear) * seatCount);
-        }
-      }
-    } else if (annualCost > 0) {
-      // Utan seatCount: estimera impact som 10% av annual (konservativ)
-      impactKrYear = null;
-    }
+    // Deterministisk impact-beräkning via strukturerade prisfält från Haiku.
+    // parseCheckPrice() extraherar exakt numeric+currency+unit ur check.name.
+    // Haiku returnerar nu extractedNumeric/extractedCurrency/extractedUnit.
+    // Inga regex, inga "× 12 om < 1000"-heuristiker.
+    const currentPrice = parseCheckPrice(primaryAlert?.check ?? '');
+    const haiku        = primaryAlert?.haiku ?? null;
+    const impact = currentPrice && haiku?.extractedNumeric != null
+      ? computeImpactKr({
+          currentNumeric:  currentPrice.numeric,
+          currentCurrency: currentPrice.currency,
+          currentUnit:     currentPrice.unit,
+          newNumeric:      haiku.extractedNumeric,
+          newCurrency:     haiku.extractedCurrency ?? currentPrice.currency,
+          newUnit:         haiku.extractedUnit     ?? currentPrice.unit,
+          seatCount,
+          fxRates: null, // fallback: 10.42 kr/USD i lib/price-impact.js
+        })
+      : null;
 
+    const impactKrYear = impact?.impactKrYear ?? null;
     if (impactKrYear) groupTotalImpactKr += Math.abs(impactKrYear);
 
     // Skapa magic token och briefing_reports-rad
@@ -196,7 +192,7 @@ for (const [groupKey, { keyword, category, items: groupAlerts }] of alertGroups)
           const alertPeriod  = new Date(report.runAt).toISOString().slice(0, 7); // YYYY-MM
           const priceAlertInsight = buildPriceAlertInsight({
             keyword, category, supplierName, customer, groupAlerts,
-            segStats, impactKrYear, haikuPrice,
+            segStats, impact,
           });
 
           await db`
@@ -222,15 +218,16 @@ for (const [groupKey, { keyword, category, items: groupAlerts }] of alertGroups)
       }
     }
 
-    // Bygg och skicka alert-mail
-    const subject = impactKrYear && impactKrYear > 0
-      ? `Arvo: ${supplierName} har höjt priset — ${fmt(impactKrYear)} kr/år påverkan`
+    // Subject: exakt om vi har siffror, generisk annars
+    const subject = impact && impactKrYear > 0
+      ? `${supplierName}: +${fmt(impactKrYear)} kr/år — Arvo har detekterat en prishöjning`
+      : impact && impactKrYear < 0
+      ? `${supplierName} sänkte priset — ${fmt(Math.abs(impactKrYear))} kr/år påverkan`
       : `Arvo har noterat en prisändring hos ${supplierName}`;
 
     const html = buildAlertEmail({
       customer, supplierName, groupAlerts, segStats,
-      impactKrYear, haikuPrice, annualCost, seatCount,
-      briefingUrl, date: reportDate,
+      impact, briefingUrl, date: reportDate,
     });
 
     try {
@@ -263,22 +260,29 @@ console.log(`Klart: ${totalSent} skickade, ${totalSkipped} överhoppade (idempot
 if (totalFailed > 0) process.exit(1);
 
 // ── Insight-objekt för briefing_reports ──────────────────────────────────────
-function buildPriceAlertInsight({ keyword, category, supplierName, customer, groupAlerts, segStats, impactKrYear, haikuPrice }) {
-  const isIncrease = impactKrYear != null ? impactKrYear > 0 : true;
-  const headline = isIncrease
-    ? `${supplierName} har höjt priset — Arvo agerar åt er`
-    : `Prisändring hos ${supplierName} — Arvo har granskat`;
+function buildPriceAlertInsight({ keyword, category, supplierName, customer, groupAlerts, segStats, impact }) {
+  const isIncrease       = impact ? impact.impactKrYear > 0 : true;
+  const impactKrYear     = impact?.impactKrYear ?? null;
+  const hasExactNumbers  = impact != null;
+
+  const headline = hasExactNumbers && isIncrease
+    ? `${supplierName} höjde priset ${impact.deltaPct > 0 ? `+${impact.deltaPct}%` : ''} — ${fmt(impact.impactKrYear)} kr/år extra`
+    : `Prisändring hos ${supplierName} — Arvo har detekterat`;
 
   const segSignal = segStats.total >= 3
     ? `${segStats.withSupplier} av ${segStats.total} bolag vi följer i er bransch använder ${supplierName}.`
     : null;
 
+  const breakdownContext = hasExactNumbers
+    ? `${impact.oldKrMonth} kr/säte/mth → ${impact.newKrMonth} kr/säte/mth (${isIncrease ? '+' : ''}${impact.deltaPct}%). ${impact.seats} licenser × ${Math.abs(impact.deltaKrMonth)} kr/mth × 12 = ${fmt(Math.abs(impactKrYear))} kr/år.`
+    : null;
+
   return {
-    id:          crypto.randomUUID(),
-    type:        'price_alert',
+    id:   crypto.randomUUID(),
+    type: 'price_alert',
     headline,
-    subheadline: impactKrYear && impactKrYear > 0
-      ? `Prisökning på ${Math.round(impactKrYear).toLocaleString('sv-SE')} kr/år identifierad av Arvo`
+    subheadline: hasExactNumbers
+      ? `Exakt påverkan: ${isIncrease ? '+' : ''}${fmt(impactKrYear)} kr/år för ${impact.seats} licenser`
       : 'Prisändring detekterad — Arvo granskar om den är befogad',
     metric: impactKrYear ? {
       primary:   { value: Math.abs(impactKrYear), label: 'kr/år identifierad påverkan' },
@@ -286,10 +290,11 @@ function buildPriceAlertInsight({ keyword, category, supplierName, customer, gro
     } : null,
     context: [
       `Arvo bevakar ${supplierName}:s priser nattligen och detekterade en förändring.`,
+      breakdownContext,
       segSignal,
       isIncrease
-        ? 'Smyghöjningar utan kundinformation är vanliga och kan ifrågasättas. Arvo granskar om höjningen är befogad och agerar direkt.'
-        : 'Arvo har analyserat förändringen och bedömer om den påverkar ert avtal.',
+        ? 'Smyghöjningar utan kundinformation är vanliga och kan ifrågasättas direkt.'
+        : 'Arvo analyserar om förändringen är permanent och om ert avtal påverkas.',
     ].filter(Boolean).join(' '),
     supplier:   supplierName,
     category,
@@ -297,146 +302,143 @@ function buildPriceAlertInsight({ keyword, category, supplierName, customer, gro
     action: {
       label:              isIncrease ? 'Be Arvo granska och förhandla' : 'Se fullständig analys',
       type:               isIncrease ? 'renegotiate' : 'review',
-      estimatedNetSaving: impactKrYear && impactKrYear > 0 ? Math.round(impactKrYear * 0.85) : 0,
+      estimatedNetSaving: impactKrYear && isIncrease ? Math.round(impactKrYear * 0.85) : 0,
     },
   };
 }
 
-// ── Alert-mail HTML ──────────────────────────────────────────────────────────
-function buildAlertEmail({ customer, supplierName, groupAlerts, segStats, impactKrYear, haikuPrice, annualCost, seatCount, briefingUrl, date }) {
-  const T = {
-    brand:   '#1B7A6E',
-    brandDk: '#1B6E66',
-    ink:     '#0E1A17',
-    muted:   '#5C6E68',
-    bg:      '#F1F6F3',
-    border:  '#D5E2DC',
-    white:   '#FFFFFF',
-    red:     '#C41C1C',
-    green:   '#15803d',
-  };
+// ── Alert-mail HTML — Bloomberg Terminal-standard ───────────────────────────
+// Princip: ett exakt tal, ett beslut, en knapp. Inget generiskt.
+// En CFO fattar beslut på siffror, inte på "kan ha förändrats".
+function buildAlertEmail({ customer, supplierName, groupAlerts, segStats, impact, briefingUrl, date }) {
+  const brand   = '#1B7A6E';
+  const brandDk = '#1B6E66';
+  const ink     = '#0E1A17';
+  const muted   = '#5C6E68';
+  const bg      = '#F1F6F3';
+  const border  = '#D5E2DC';
+  const white   = '#FFFFFF';
 
-  const isIncrease = impactKrYear != null ? impactKrYear > 0 : true;
+  const isIncrease     = impact ? impact.impactKrYear > 0 : true;
+  const impactKrYear   = impact?.impactKrYear ?? null;
+  const hasExactImpact = impact != null && impactKrYear != null;
+  const primaryAlert   = groupAlerts[0];
 
-  const impactBlock = impactKrYear
-    ? `<table width="100%" cellpadding="0" cellspacing="0"
-         style="background:#FEF3F2;border:1px solid #FCA5A5;border-radius:10px;margin:0 0 24px;overflow:hidden">
-        <tr>
-          <td style="padding:16px 20px">
-            <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:${T.red};text-transform:uppercase;letter-spacing:.08em">
-              Identifierad påverkan på ert avtal
-            </p>
-            <p style="margin:0;font-size:28px;font-weight:800;color:${T.ink};letter-spacing:-.03em">
-              +${fmt(Math.abs(impactKrYear))} kr/år
-            </p>
-            ${seatCount ? `<p style="margin:4px 0 0;font-size:12px;color:${T.muted}">${seatCount} licenser/abonnemang</p>` : ''}
-          </td>
-        </tr>
-      </table>`
-    : '';
+  // Hero-block: exakt kr/år + breakdown om vi har siffror
+  const heroBlock = hasExactImpact ? `
+    <table width="100%" cellpadding="0" cellspacing="0"
+      style="background:${isIncrease ? '#FEF2F2' : '#F0FDF4'};border:1px solid ${isIncrease ? '#FECACA' : '#BBF7D0'};border-radius:12px;margin:0 0 24px;overflow:hidden">
+      <tr><td style="padding:20px 24px">
+        <p style="margin:0 0 2px;font-size:11px;font-weight:700;color:${isIncrease ? '#991B1B' : '#166534'};text-transform:uppercase;letter-spacing:.1em">
+          ${isIncrease ? 'Bekräftad prishöjning' : 'Prissänkning'}
+        </p>
+        <p style="margin:0 0 12px;font-size:36px;font-weight:800;color:${ink};letter-spacing:-.04em;line-height:1">
+          ${isIncrease ? '+' : ''}${fmt(impactKrYear)} kr/år
+        </p>
+        <table cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+          <tr>
+            <td style="padding:4px 12px 4px 0;font-size:13px;color:${muted}">Gammalt pris</td>
+            <td style="padding:4px 0;font-size:13px;font-weight:600;color:${ink}">${impact.oldKrMonth} kr/säte/mth</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 12px 4px 0;font-size:13px;color:${muted}">Nytt pris</td>
+            <td style="padding:4px 0;font-size:13px;font-weight:700;color:${isIncrease ? '#991B1B' : '#166534'}">${impact.newKrMonth} kr/säte/mth (${isIncrease ? '+' : ''}${impact.deltaPct}%)</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 12px 4px 0;font-size:13px;color:${muted}">Er flotta</td>
+            <td style="padding:4px 0;font-size:13px;color:${ink}">${impact.seats} licenser × ${Math.abs(impact.deltaKrMonth)} kr/mth × 12</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>` : `
+    <p style="margin:0 0 20px;font-size:15px;color:${ink};line-height:1.65">
+      Arvo bevakar era leverantörskostnader nattligen. Vi har detekterat en förändring
+      hos <strong>${supplierName}</strong> och kontaktar er innan det syns på er faktura.
+    </p>`;
 
+  // Segment-signal: nätverkseffekten som gör Arvo unik
   const segBlock = segStats.total >= 3
-    ? `<p style="margin:0 0 20px;padding:14px 16px;background:#EEF9F7;border-radius:8px;
-               font-size:13px;color:${T.brand};font-weight:600;line-height:1.5">
-        Arvo följer ${segStats.total} bolag med liknande profil.
-        ${segStats.withSupplier} av dessa använder ${supplierName}.
+    ? `<p style="margin:0 0 24px;padding:14px 18px;background:#EEF9F7;border-left:3px solid ${brand};border-radius:0 8px 8px 0;font-size:13px;color:${brand};font-weight:600;line-height:1.5">
+        ${segStats.withSupplier} av ${segStats.total} bolag vi följer i er bransch
+        använder ${supplierName} — Arvo ser hela prisbilden, ni ser er del.
       </p>`
     : '';
 
-  const alertRows = groupAlerts.slice(0, 3).map(a => {
-    const oldPrice = a.check ?? '–';
-    const newPrice = a.haiku?.extractedPrice ?? 'Ny prisbild';
-    return `<tr>
-      <td style="padding:10px 16px;border-top:1px solid ${T.border};font-size:13px;color:${T.ink}">${a.supplier}</td>
-      <td style="padding:10px 16px;border-top:1px solid ${T.border};font-size:13px;color:#9B1C1C;font-weight:600">${oldPrice}</td>
-      <td style="padding:10px 16px;border-top:1px solid ${T.border};font-size:13px;color:${T.green};font-weight:600">${newPrice}</td>
-    </tr>`;
-  }).join('');
-
-  const ctaLabel = isIncrease ? 'Låt Arvo granska och förhandla' : 'Se fullständig analys';
+  const ctaLabel = isIncrease ? 'Låt Arvo omförhandla' : 'Se fullständig analys';
 
   return `<!DOCTYPE html>
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Arvo — Prisändring detekterad</title>
 </head>
-<body style="margin:0;padding:0;background:${T.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:${T.bg};padding:40px 16px">
+<body style="margin:0;padding:0;background:${bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:${bg};padding:40px 16px">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0"
-  style="background:${T.white};border-radius:16px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 2px 16px rgba(14,26,23,0.08)">
+<table width="560" cellpadding="0" cellspacing="0"
+  style="background:${white};border-radius:16px;overflow:hidden;max-width:560px;width:100%;box-shadow:0 2px 20px rgba(14,26,23,0.10)">
 
-  <tr><td style="height:4px;background:linear-gradient(90deg,#5DD6CA,${T.brandDk});font-size:0">&nbsp;</td></tr>
+  <tr><td style="height:3px;background:linear-gradient(90deg,#5DD6CA,${brandDk});font-size:0">&nbsp;</td></tr>
 
+  <!-- Header -->
   <tr>
-    <td style="padding:28px 36px 22px;border-bottom:1px solid ${T.border}">
-      <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.1em">
-        Arvo Intelligence — Proaktiv prisbevakning
+    <td style="padding:28px 32px 20px;border-bottom:1px solid ${border}">
+      <p style="margin:0 0 3px;font-size:10px;font-weight:700;color:${brand};text-transform:uppercase;letter-spacing:.12em">
+        Arvo Intelligence
       </p>
-      <p style="margin:0;font-size:22px;font-weight:800;color:${T.ink};letter-spacing:-.02em;line-height:1.3">
-        ${isIncrease ? `${supplierName} har höjt priset` : `Prisändring detekterad hos ${supplierName}`}
+      <p style="margin:0;font-size:20px;font-weight:800;color:${ink};letter-spacing:-.025em;line-height:1.3">
+        ${hasExactImpact && isIncrease
+          ? `${supplierName} höjde priset ${impact.deltaPct > 0 ? `+${impact.deltaPct}%` : ''}`
+          : `Prisändring detekterad hos ${supplierName}`}
       </p>
-      <p style="margin:6px 0 0;font-size:12px;color:${T.muted}">${date}</p>
+      <p style="margin:5px 0 0;font-size:11px;color:${muted}">${date}</p>
     </td>
   </tr>
 
+  <!-- Body -->
   <tr>
-    <td style="padding:28px 36px">
-
-      <p style="margin:0 0 20px;font-size:15px;color:${T.ink};line-height:1.65;font-weight:500">
-        ${isIncrease
-          ? `Arvo bevakar era leverantörskostnader nattligen och har nu detekterat att <strong>${supplierName}</strong> har ändrat sin prisbild. Vi kontaktar er innan avgiften syns på er faktura.`
-          : `Arvo har detekterat en förändring hos <strong>${supplierName}</strong> och granskar om den påverkar ert avtal.`
-        }
-      </p>
-
-      ${impactBlock}
+    <td style="padding:24px 32px">
+      ${heroBlock}
       ${segBlock}
 
-      <!-- CTA — Magic link till Decision Board -->
-      <table cellpadding="0" cellspacing="0" style="margin:0 0 28px">
+      <!-- CTA -->
+      <table cellpadding="0" cellspacing="0" style="margin:0 0 24px">
         <tr>
-          <td style="border-radius:10px;background:linear-gradient(135deg,#5DD6CA,${T.brandDk})">
+          <td style="border-radius:10px;background:linear-gradient(135deg,#5DD6CA,${brandDk})">
             <a href="${briefingUrl}"
-               style="display:inline-block;color:${T.white};font-weight:700;font-size:15px;
-                      padding:15px 36px;text-decoration:none;letter-spacing:.02em">
+               style="display:inline-block;color:${white};font-weight:700;font-size:15px;
+                      padding:14px 32px;text-decoration:none;letter-spacing:.01em">
               ${ctaLabel} &rarr;
             </a>
           </td>
         </tr>
       </table>
 
-      <!-- Detekterade ändringar -->
-      <p style="margin:0 0 8px;font-size:11px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.08em">
-        Detekterade prisavvikelser
-      </p>
+      <!-- Rådata för transparens -->
+      <p style="margin:0 0 6px;font-size:10px;font-weight:700;color:${brand};text-transform:uppercase;letter-spacing:.1em">Detekterad avvikelse</p>
       <table width="100%" cellpadding="0" cellspacing="0"
-        style="border:1px solid ${T.border};border-radius:8px;overflow:hidden">
-        <tr style="background:#f8faf9">
-          <th style="padding:9px 16px;font-size:11px;font-weight:700;color:${T.muted};text-align:left;text-transform:uppercase;letter-spacing:.06em">Leverantör</th>
-          <th style="padding:9px 16px;font-size:11px;font-weight:700;color:${T.muted};text-align:left;text-transform:uppercase;letter-spacing:.06em">Förväntad prissträng</th>
-          <th style="padding:9px 16px;font-size:11px;font-weight:700;color:${T.muted};text-align:left;text-transform:uppercase;letter-spacing:.06em">Ny prisbild (AI)</th>
+        style="border:1px solid ${border};border-radius:8px;overflow:hidden;font-size:12px">
+        <tr style="background:#F8FAF9">
+          <th style="padding:8px 14px;text-align:left;color:${muted};font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:10px">Förväntad prissträng</th>
+          <th style="padding:8px 14px;text-align:left;color:${muted};font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:10px">AI-detekterat</th>
         </tr>
-        ${alertRows}
+        ${groupAlerts.slice(0, 3).map(a => `
+        <tr>
+          <td style="padding:9px 14px;border-top:1px solid ${border};color:${ink}">${a.check ?? '–'}</td>
+          <td style="padding:9px 14px;border-top:1px solid ${border};color:${isIncrease ? '#991B1B' : '#166534'};font-weight:600">${a.haiku?.extractedPrice ?? 'Detekterad förändring'}</td>
+        </tr>`).join('')}
       </table>
 
-      <p style="margin:20px 0 0;font-size:12px;color:${T.muted};line-height:1.6">
-        Arvo Intelligence bevakar era leverantörspriser automatiskt och kontaktar er vid förändringar.
-        AI-extraherade priser är indikativa — er fullständiga analys finns i briefingen ovan.
+      <p style="margin:16px 0 0;font-size:11px;color:${muted};line-height:1.6">
+        Arvo bevakar listpriser nattligen. Exakta tal beräknas från era lagrade analysdata.
       </p>
     </td>
   </tr>
 
   <tr>
-    <td style="padding:18px 36px;border-top:1px solid ${T.border};text-align:center">
-      <p style="margin:0;font-size:11px;color:${T.muted}">
-        Arvo Flow &nbsp;·&nbsp;
-        <a href="${BASE_URL}/testa-faktura" style="color:${T.brand};text-decoration:none">arvoflow.se</a>
-      </p>
-      <p style="margin:4px 0 0;font-size:10px;color:#aaa">
-        Du får detta mail för att Arvo bevakar era leverantörskostnader.
+    <td style="padding:16px 32px;border-top:1px solid ${border};text-align:center">
+      <p style="margin:0;font-size:10px;color:${muted}">
+        Arvo Flow &nbsp;·&nbsp; <a href="${BASE_URL}" style="color:${brand};text-decoration:none">arvoflow.se</a>
       </p>
     </td>
   </tr>
