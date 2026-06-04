@@ -45,6 +45,7 @@ const TYPE_LABEL = {
   recommendation: 'Bytesrekommendation',
   cost_trend:     'Prishöjning',
   overpaying:     'Överpris',
+  price_alert:    'Prishöjningsvarning',
 };
 
 // ── Period formatter ──────────────────────────────────────────────────────────
