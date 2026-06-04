@@ -176,7 +176,7 @@ export default function Intelligence() {
           </HeroSub>
 
           <HeroCtaWrap>
-            <HeroCta as={Link} to="/testa-faktura">
+            <HeroCta as={Link} to="/aktivera">
               Aktivera Arvo Intelligence
             </HeroCta>
             <HeroPrice>1 995 kr/mån · Ingen bindningstid</HeroPrice>
@@ -277,7 +277,7 @@ export default function Intelligence() {
           <ActivationSub>
             Ladda upp er första faktura och se vad Arvo hittar — på två minuter.
           </ActivationSub>
-          <ActivationCta as={Link} to="/testa-faktura">
+          <ActivationCta as={Link} to="/aktivera">
             Aktivera Arvo Intelligence →
           </ActivationCta>
           <ActivationNote>
