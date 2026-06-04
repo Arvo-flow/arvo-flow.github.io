@@ -235,4 +235,6 @@ await sql`
 `;
 await sql`CREATE INDEX IF NOT EXISTS idx_contract_timelines_supplier ON contract_timelines (supplier_id, invoice_date DESC)`;
 
+await sql`ALTER TABLE labeled_corrections ADD COLUMN IF NOT EXISTS operator_reasoning TEXT`;
+
 console.log('Fas 3 klar — labeled_corrections, suppliers, supplier_prices, contract_timelines redo.');

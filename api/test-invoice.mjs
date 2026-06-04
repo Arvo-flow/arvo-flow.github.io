@@ -23,7 +23,7 @@ import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
 import { storeAnalysis } from '../lib/invoice-store.js';
 import { runIntegrityChecks } from '../lib/extraction-integrity.js';
-import { saveIntegrityOverrides } from '../lib/labeled-corrections.js';
+import { saveIntegrityOverrides, flagNewSupplier } from '../lib/labeled-corrections.js';
 import { upsertSupplier, recordSupplierPrice, recordContractTimeline } from '../lib/invoice-graph.js';
 import { validateCategory } from '../lib/category-validator.js';
 import { validateSeatPrice, getBenchmarkBasis, getSupplierPriceIntel } from '../lib/supplier-price-intel.js';
@@ -421,6 +421,14 @@ export default async function handler(req, res) {
           category: null,
           supplier: extracted.supplier ?? null,
         }).catch(() => {});
+      }
+    }
+
+    // Active learning: okänd leverantör → flagga för proaktiv märkning (fire-and-forget)
+    {
+      const fp = checkSupplierFingerprint(extracted.supplier, extracted.supplier, null);
+      if (!fp.matched && extracted.supplier) {
+        flagNewSupplier({ supplier: extracted.supplier }).catch(() => {});
       }
     }
 

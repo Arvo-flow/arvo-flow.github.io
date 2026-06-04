@@ -52,7 +52,10 @@ export default function Admin() {
   const [migrResult, setMigrResult]       = useState(null);
   const [corrections, setCorrections]     = useState(null);
   const [patterns, setPatterns]           = useState(null);
-  const [corrView, setCorrView]           = useState('list'); // list | patterns
+  const [corrView, setCorrView]           = useState('list'); // list | patterns | learning | market
+  const [corrReasoning, setCorrReasoning]      = useState('');
+  const [learningQueue, setLearningQueue]      = useState(null);
+  const [marketData, setMarketData]            = useState(null);
   const [connections, setConnections]     = useState(null);
   const [connStats, setConnStats]         = useState(null);
   const [expandedQueueRow, setExpandedQueueRow] = useState(null);
@@ -131,13 +134,14 @@ export default function Admin() {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-token': adminToken },
         body: JSON.stringify({
-          analysisId:     row.id,
-          field:          corrField,
+          analysisId:        row.id,
+          field:             corrField,
           originalValue,
-          correctedValue: corrValue,
-          reason:         corrReason || 'operator_manual_review',
-          category:       corrField === 'category' ? corrValue : (row.category ?? null),
-          supplier:       row.normalized_supplier || row.supplier || null,
+          correctedValue:    corrValue,
+          reason:            corrReason || 'operator_manual_review',
+          category:          corrField === 'category' ? corrValue : (row.category ?? null),
+          supplier:          row.normalized_supplier || row.supplier || null,
+          operatorReasoning: corrReasoning || null,
         }),
       });
       if (res.ok) {
@@ -147,6 +151,7 @@ export default function Admin() {
           setExpandedQueueRow(null);
           setCorrValue('');
           setCorrReason('');
+          setCorrReasoning('');
           setCorrField('category');
         }, 2500);
       }
@@ -340,11 +345,18 @@ export default function Admin() {
                         placeholder="Anledning (valfri)"
                         value={corrReason}
                         onChange={e => setCorrReason(e.target.value)}
-                        style={{ flex:'1 1 160px', borderRadius:8, padding:'6px 12px', fontSize:12.5 }}
+                        style={{ flex:'1 1 140px', borderRadius:8, padding:'6px 12px', fontSize:12.5 }}
                       />
                       <Btn type="button" onClick={() => submitCorrection(r)} disabled={!corrValue || corrSubmitting} style={{ padding:'7px 18px', fontSize:12.5 }}>
                         {corrSubmitting ? 'Sparar…' : 'Spara →'}
                       </Btn>
+                    </div>
+                    <textarea
+                      placeholder="Resonemang / princip (valfri men värdefullt — används som few-shot-exempel i AI:n nästa gång)"
+                      value={corrReasoning}
+                      onChange={e => setCorrReasoning(e.target.value)}
+                      style={{ marginTop:8, width:'100%', boxSizing:'border-box', padding:'8px 12px', borderRadius:8, border:'1.5px solid rgba(255,255,255,.12)', background:'rgba(255,255,255,.05)', color:'#fff', fontSize:12, fontFamily:'inherit', resize:'vertical', minHeight:56, outline:'none' }}
+                    />
                     </div>
                     {corrSuccess === r.id && (
                       <p style={{ color:'#5DD6CA', fontSize:12, margin:'8px 0 0' }}>✓ Korrektion sparad — systemet lär sig.</p>
@@ -394,21 +406,17 @@ export default function Admin() {
 
       {activeTab === 'corrections' && (
         <Section>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center', flexWrap: 'wrap' }}>
             <STitle style={{ margin: 0 }}>Flywheel — Labeled Corrections</STitle>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
-              {[['list','Lista'], ['patterns','Mönster']].map(([v, l]) => (
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {[['list','Lista'], ['patterns','Mönster'], ['learning','Aktiv inlärning 🔬'], ['market','Marknadsdata 📊']].map(([v, l]) => (
                 <button key={v} onClick={() => {
                   setCorrView(v);
                   const hdr = { 'x-admin-token': adminToken };
-                  if (v === 'patterns' && !patterns) {
-                    fetch('/api/admin/corrections?patterns', { headers: hdr })
-                      .then(r => r.json()).then(j => setPatterns(j.patterns ?? [])).catch(() => {});
-                  }
-                  if (v === 'list' && !corrections) {
-                    fetch('/api/admin/corrections', { headers: hdr })
-                      .then(r => r.json()).then(j => setCorrections(j.corrections ?? [])).catch(() => {});
-                  }
+                  if (v === 'patterns'  && !patterns)      fetch('/api/admin/corrections?patterns', { headers: hdr }).then(r => r.json()).then(j => setPatterns(j.patterns ?? [])).catch(() => {});
+                  if (v === 'list'      && !corrections)   fetch('/api/admin/corrections',           { headers: hdr }).then(r => r.json()).then(j => setCorrections(j.corrections ?? [])).catch(() => {});
+                  if (v === 'learning'  && !learningQueue) fetch('/api/admin/corrections?learning',  { headers: hdr }).then(r => r.json()).then(j => setLearningQueue(j.queue ?? [])).catch(() => {});
+                  if (v === 'market'    && !marketData)    fetch('/api/admin/corrections?market',    { headers: hdr }).then(r => r.json()).then(j => setMarketData(j)).catch(() => {});
                 }} style={{
                   padding: '5px 12px', borderRadius: 100, border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 600,
@@ -418,18 +426,11 @@ export default function Admin() {
               ))}
               <button onClick={() => {
                 const hdr = { 'x-admin-token': adminToken };
-                if (corrView === 'patterns') {
-                  fetch('/api/admin/corrections?patterns', { headers: hdr })
-                    .then(r => r.json()).then(j => setPatterns(j.patterns ?? [])).catch(() => {});
-                } else {
-                  fetch('/api/admin/corrections', { headers: hdr })
-                    .then(r => r.json()).then(j => setCorrections(j.corrections ?? [])).catch(() => {});
-                }
-              }} style={{
-                padding: '5px 12px', borderRadius: 100, border: 'none', cursor: 'pointer',
-                fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,.08)',
-                color: 'rgba(255,255,255,.6)',
-              }}>↻ Ladda</button>
+                if (corrView === 'patterns')  fetch('/api/admin/corrections?patterns', { headers: hdr }).then(r => r.json()).then(j => setPatterns(j.patterns ?? [])).catch(() => {});
+                if (corrView === 'list')      fetch('/api/admin/corrections',          { headers: hdr }).then(r => r.json()).then(j => setCorrections(j.corrections ?? [])).catch(() => {});
+                if (corrView === 'learning')  fetch('/api/admin/corrections?learning', { headers: hdr }).then(r => r.json()).then(j => setLearningQueue(j.queue ?? [])).catch(() => {});
+                if (corrView === 'market')    fetch('/api/admin/corrections?market',   { headers: hdr }).then(r => r.json()).then(j => setMarketData(j)).catch(() => {});
+              }} style={{ padding: '5px 12px', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.6)' }}>↻ Ladda</button>
             </div>
           </div>
 
@@ -442,16 +443,22 @@ export default function Admin() {
               {corrections === null && <EmptyRow>Klicka ↻ Ladda för att hämta korrektioner.</EmptyRow>}
               {corrections?.length === 0 && <EmptyRow>Inga korrektioner ännu — systemet är nytt.</EmptyRow>}
               {(corrections ?? []).map((c) => (
-                <TRow key={c.id} $cols="1fr 1fr 1fr 1fr 80px 110px">
-                  <Tag $c="rgba(93,214,202,.15)">{c.field}</Tag>
-                  <span style={{ color: 'rgba(255,100,100,.8)', fontSize: 11.5 }}>{c.original_value || '–'}</span>
-                  <span style={{ color: 'rgba(100,220,180,.8)', fontSize: 11.5 }}>{c.corrected_value || '–'}</span>
-                  <span style={{ color: 'rgba(255,255,255,.45)', fontSize: 11 }}>{c.reason}</span>
-                  <Tag $c={c.corrected_by === 'operator' ? 'rgba(245,158,11,.2)' : 'rgba(93,214,202,.1)'}>
-                    {c.corrected_by}
-                  </Tag>
-                  <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>{fmtDate(c.created_at)}</span>
-                </TRow>
+                <React.Fragment key={c.id}>
+                  <TRow $cols="1fr 1fr 1fr 1fr 80px 110px">
+                    <Tag $c="rgba(93,214,202,.15)">{c.field}</Tag>
+                    <span style={{ color: 'rgba(255,100,100,.8)', fontSize: 11.5 }}>{c.original_value || '–'}</span>
+                    <span style={{ color: 'rgba(100,220,180,.8)', fontSize: 11.5 }}>{c.corrected_value || '–'}</span>
+                    <span style={{ color: 'rgba(255,255,255,.45)', fontSize: 11 }}>{c.reason}</span>
+                    <Tag $c={c.corrected_by === 'operator' ? 'rgba(245,158,11,.2)' : 'rgba(93,214,202,.1)'}>{c.corrected_by}</Tag>
+                    <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>{fmtDate(c.created_at)}</span>
+                  </TRow>
+                  {c.operator_reasoning && (
+                    <div style={{ padding: '6px 16px 10px', borderTop: '1px solid rgba(255,255,255,.04)', background: 'rgba(93,214,202,.02)' }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(93,214,202,.5)', marginRight: 8 }}>Princip</span>
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,.55)' }}>{c.operator_reasoning}</span>
+                    </div>
+                  )}
+                </React.Fragment>
               ))}
             </Table>
           )}
@@ -468,12 +475,82 @@ export default function Admin() {
                   <Tag $c="rgba(93,214,202,.15)">{p.field}</Tag>
                   <span style={{ color: 'rgba(255,255,255,.6)', fontSize: 11.5 }}>{p.reason}</span>
                   <span style={{ fontWeight: 700, color: p.count >= 5 ? '#F59E0B' : '#5DD6CA' }}>{p.count}×</span>
-                  <Tag $c={p.corrected_by === 'operator' ? 'rgba(245,158,11,.2)' : 'rgba(93,214,202,.1)'}>
-                    {p.corrected_by}
-                  </Tag>
+                  <Tag $c={p.corrected_by === 'operator' ? 'rgba(245,158,11,.2)' : 'rgba(93,214,202,.1)'}>{p.corrected_by}</Tag>
                 </TRow>
               ))}
             </Table>
+          )}
+
+          {corrView === 'learning' && (
+            <>
+              <div style={{ marginBottom: 12, padding: '10px 14px', background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.2)', borderRadius: 10, fontSize: 12.5, color: 'rgba(255,255,255,.7)' }}>
+                Leverantörer som inte matchar något känt fingerprint — flaggade automatiskt av pipeline. Lägg till korrektion för att lära systemet.
+              </div>
+              <Table>
+                <THead $cols="2fr 80px 1.5fr">
+                  <span>Leverantör (okänd)</span><span>Sedd</span><span>Senast</span>
+                </THead>
+                {learningQueue === null && <EmptyRow>Klicka ↻ Ladda för att hämta kön.</EmptyRow>}
+                {learningQueue?.length === 0 && <EmptyRow>Inga okända leverantörer — systemet känner igen alla det sett.</EmptyRow>}
+                {(learningQueue ?? []).map((item, i) => (
+                  <TRow key={i} $cols="2fr 80px 1.5fr">
+                    <span style={{ fontWeight: 600, color: '#F59E0B' }}>{item.supplier}</span>
+                    <span style={{ fontWeight: 700, color: item.seen_count >= 3 ? '#EF4444' : '#F59E0B' }}>{item.seen_count}×</span>
+                    <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11.5 }}>{fmtDate(item.last_seen)}</span>
+                  </TRow>
+                ))}
+              </Table>
+            </>
+          )}
+
+          {corrView === 'market' && (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                <div>
+                  <STitle>Kategorifördelning (operatörskorrektioner)</STitle>
+                  <Table>
+                    <THead $cols="2fr 80px"><span>Kategori</span><span>Antal</span></THead>
+                    {!marketData && <EmptyRow>Klicka ↻ Ladda.</EmptyRow>}
+                    {marketData?.categoryDist?.length === 0 && <EmptyRow>Inga korrektioner ännu.</EmptyRow>}
+                    {(marketData?.categoryDist ?? []).map((d, i) => (
+                      <TRow key={i} $cols="2fr 80px">
+                        <Tag $c="rgba(93,214,202,.15)">{d.category}</Tag>
+                        <span style={{ fontWeight: 700, color: '#5DD6CA' }}>{d.count}×</span>
+                      </TRow>
+                    ))}
+                  </Table>
+                </div>
+                <div>
+                  <STitle>Mest korrigerade leverantörer</STitle>
+                  <Table>
+                    <THead $cols="2fr 80px 1fr"><span>Leverantör</span><span>Korr.</span><span>Senast</span></THead>
+                    {!marketData && <EmptyRow>Klicka ↻ Ladda.</EmptyRow>}
+                    {marketData?.topSuppliers?.length === 0 && <EmptyRow>Inga korrektioner ännu.</EmptyRow>}
+                    {(marketData?.topSuppliers ?? []).map((s, i) => (
+                      <TRow key={i} $cols="2fr 80px 1fr">
+                        <span style={{ fontWeight: 600, fontSize: 12 }}>{s.supplier}</span>
+                        <span style={{ fontWeight: 700, color: s.correction_count >= 5 ? '#F59E0B' : '#5DD6CA' }}>{s.correction_count}×</span>
+                        <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 11 }}>{fmtDate(s.last_corrected)}</span>
+                      </TRow>
+                    ))}
+                  </Table>
+                </div>
+              </div>
+              <STitle>Nya leverantörer per vecka (senaste 90 dagar)</STitle>
+              {marketData?.discoveryTrend?.length > 0 ? (
+                <Table>
+                  <THead $cols="2fr 1fr"><span>Vecka</span><span>Ny leverantörer</span></THead>
+                  {(marketData.discoveryTrend ?? []).map((d, i) => (
+                    <TRow key={i} $cols="2fr 1fr">
+                      <span style={{ color: 'rgba(255,255,255,.5)', fontSize: 12 }}>{d.week}</span>
+                      <span style={{ fontWeight: 700, color: '#5DD6CA' }}>{d.new_suppliers}</span>
+                    </TRow>
+                  ))}
+                </Table>
+              ) : (
+                <EmptyRow>{marketData ? 'Inga data ännu — skicka in fakturor för att bygga marknadsdata.' : 'Klicka ↻ Ladda.'}</EmptyRow>
+              )}
+            </>
           )}
         </Section>
       )}

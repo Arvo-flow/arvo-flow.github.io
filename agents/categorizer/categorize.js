@@ -11,6 +11,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, CATEGORIZE_TOOL } from './prompt.js';
 import { CATEGORIES } from './categories.js';
+import { getFewShotExamples } from '../../lib/labeled-corrections.js';
 
 const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 512;
@@ -468,6 +469,12 @@ export async function categorize(invoice, opts = {}) {
 
   const client = opts.client ?? getClient();
 
+  // Inject operator corrections as few-shot examples — cached 5 min, fail-open.
+  const fewShot = await getFewShotExamples({ limit: 10 }).catch(() => '');
+  const userContent = fewShot
+    ? `${formatInvoice(effectiveInvoice)}\n\n${fewShot}`
+    : formatInvoice(effectiveInvoice);
+
   let response;
   const maxAttempts = 3;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -484,7 +491,7 @@ export async function categorize(invoice, opts = {}) {
         ],
         tools: [CATEGORIZE_TOOL],
         tool_choice: { type: 'tool', name: 'categorize' },
-        messages: [{ role: 'user', content: formatInvoice(effectiveInvoice) }],
+        messages: [{ role: 'user', content: userContent }],
       });
       break;
     } catch (err) {
