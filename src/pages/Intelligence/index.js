@@ -241,8 +241,8 @@ export default function Intelligence() {
               <ScenarioHead>
                 <ScenarioNum>{s.num}</ScenarioNum>
                 <ScenarioTitle>{s.title}</ScenarioTitle>
-                <ScenarioAmount $isText={s.isText}>{s.amount}</ScenarioAmount>
               </ScenarioHead>
+              <ScenarioAmount $isText={s.isText}>{s.amount}</ScenarioAmount>
               <ScenarioWithout>{s.without}</ScenarioWithout>
               <ScenarioWith>{s.with}</ScenarioWith>
             </ScenarioItem>

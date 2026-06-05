@@ -217,13 +217,13 @@ export const HeroPrice = styled.p`
 // ── Section shared ────────────────────────────────────────────────────────────
 
 export const SectionWrap = styled.section`
-  padding: 96px 24px;
+  padding: 80px 24px;
   background: #ffffff;
 
-  @media (max-width: 640px) { padding: 72px 20px; }
+  @media (max-width: 640px) { padding: 64px 20px; }
 
   & > * {
-    max-width: 760px;
+    max-width: 900px;
     margin-left: auto;
     margin-right: auto;
   }
@@ -255,7 +255,7 @@ export const SectionHeadline = styled.h2`
 export const ScenarioList = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 18px;
 
   @media (max-width: 600px) { grid-template-columns: 1fr; }
 `;
@@ -264,9 +264,9 @@ export const ScenarioItem = styled.div`
   background: #fff;
   border: 1px solid #D5E2DC;
   border-top: 3px solid #9F3B22;
-  border-radius: 0 0 16px 16px;
-  padding: 22px 22px 18px;
-  box-shadow: 0 2px 8px rgba(14,26,23,0.05);
+  border-radius: 0 0 18px 18px;
+  padding: 26px 26px 22px;
+  box-shadow: 0 2px 12px rgba(14,26,23,0.06);
   display: flex;
   flex-direction: column;
   opacity: 0;
@@ -281,9 +281,9 @@ export const ScenarioItem = styled.div`
 
 export const ScenarioHead = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 6px;
 `;
 
 export const ScenarioNum = styled.span`
@@ -292,7 +292,7 @@ export const ScenarioNum = styled.span`
   color: #9F3B22;
   letter-spacing: .10em;
   flex-shrink: 0;
-  opacity: 0.65;
+  opacity: 0.55;
 `;
 
 export const ScenarioTitle = styled.h3`
@@ -302,17 +302,16 @@ export const ScenarioTitle = styled.h3`
   font-weight: 600;
   color: #0E1A17;
   line-height: 1.25;
-  flex: 1;
 `;
 
 export const ScenarioAmount = styled.p`
-  margin: 0 0 12px;
+  margin: 6px 0 16px;
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: ${({ $isText }) => $isText ? 'clamp(18px,3vw,24px)' : 'clamp(22px,3.5vw,30px)'};
+  font-size: ${({ $isText }) => $isText ? 'clamp(20px,2.8vw,26px)' : 'clamp(24px,3.2vw,32px)'};
   font-weight: 700;
   color: #9F3B22;
-  letter-spacing: -.02em;
-  line-height: 1.1;
+  letter-spacing: -.025em;
+  line-height: 1.05;
 `;
 
 export const ScenarioWithout = styled.p`
@@ -468,9 +467,9 @@ export const PillarQuote = styled.p`
 
 export const RulesSection = styled.section`
   background: #000;
-  padding: 100px 24px;
+  padding: 88px 24px;
 
-  @media (max-width: 640px) { padding: 80px 20px; }
+  @media (max-width: 640px) { padding: 72px 20px; }
 `;
 
 export const RulesInner = styled.div`
