@@ -237,6 +237,7 @@ export const SectionEyebrow = styled.p`
   text-transform: uppercase;
   letter-spacing: .20em;
   text-align: center;
+  max-width: 560px;
 `;
 
 export const SectionHeadline = styled.h2`
@@ -248,6 +249,7 @@ export const SectionHeadline = styled.h2`
   line-height: 1.12;
   letter-spacing: -.02em;
   text-align: center;
+  max-width: 560px;
 
   @media (max-width: 640px) { margin-bottom: 36px; }
 `;
@@ -265,7 +267,7 @@ export const ScenarioList = styled.div`
 export const ScenarioItem = styled.div`
   background: #fff;
   border: 1px solid #D5E2DC;
-  border-top: 3px solid #9F3B22;
+  border-top: 3px solid #0E1A17;
   border-radius: 0 0 18px 18px;
   padding: 26px 26px 22px;
   box-shadow: 0 2px 12px rgba(14,26,23,0.06);
