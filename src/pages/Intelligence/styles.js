@@ -74,20 +74,20 @@ export const HeroInner = styled.div`
 export const NotifCard = styled.div`
   width: 100%;
   max-width: 400px;
-  background: rgba(8, 14, 12, 0.97);
-  backdrop-filter: blur(40px) saturate(160%);
-  -webkit-backdrop-filter: blur(40px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.13);
+  background: rgba(6, 11, 10, 0.98);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.22);
   border-radius: 22px;
   padding: 20px 22px 22px;
   margin-bottom: 56px;
   text-align: left;
   animation: ${notifArrive} 0.75s cubic-bezier(0.34, 1.46, 0.64, 1) both;
   box-shadow:
-    0 0 0 1px rgba(29,176,154,0.22),
-    0 2px 0 rgba(255,255,255,0.10) inset,
-    0 48px 120px rgba(0,0,0,0.65),
-    0 12px 40px rgba(0,0,0,0.35);
+    0 2px 0 rgba(255,255,255,0.28) inset,
+    0 -1px 0 rgba(255,255,255,0.04) inset,
+    0 48px 120px rgba(0,0,0,0.70),
+    0 8px 32px rgba(0,0,0,0.40);
 `;
 
 export const NotifHeader = styled.div`
