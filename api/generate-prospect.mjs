@@ -135,8 +135,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { error: 'method not allowed' });
 
   // Admin auth
-  const adminSecret = process.env.ARVO_ADMIN_SECRET;
-  if (adminSecret && req.headers['x-arvo-admin'] !== adminSecret) {
+  // Accept either ARVO_ADMIN_SECRET (curl/batch) or ADMIN_TOKEN (admin UI)
+  const secret = process.env.ARVO_ADMIN_SECRET ?? process.env.ADMIN_TOKEN;
+  const provided = req.headers['x-arvo-admin'] ?? req.headers['x-admin-token'];
+  if (secret && provided !== secret) {
     return send(res, 401, { error: 'unauthorized' });
   }
 
