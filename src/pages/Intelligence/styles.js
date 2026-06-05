@@ -253,80 +253,89 @@ export const SectionHeadline = styled.h2`
 // ── Scenarios ─────────────────────────────────────────────────────────────────
 
 export const ScenarioList = styled.div`
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
 `;
 
 export const ScenarioItem = styled.div`
-  padding: 24px 0;
-  border-bottom: 1px solid #D5E2DC;
+  background: #fff;
+  border: 1px solid #D5E2DC;
+  border-top: 3px solid #9F3B22;
+  border-radius: 0 0 16px 16px;
+  padding: 22px 22px 18px;
+  box-shadow: 0 2px 8px rgba(14,26,23,0.05);
+  display: flex;
+  flex-direction: column;
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.55s ease, transform 0.55s ease;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
 
   ${({ $visible }) => $visible && css`
     opacity: 1;
     transform: translateY(0);
   `}
-
-  &:first-child {
-    border-top: 1px solid #D5E2DC;
-  }
 `;
 
 export const ScenarioHead = styled.div`
   display: flex;
-  align-items: baseline;
-  gap: 14px;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
 `;
 
 export const ScenarioNum = styled.span`
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  color: #1B7A6E;
-  letter-spacing: .08em;
+  color: #9F3B22;
+  letter-spacing: .10em;
   flex-shrink: 0;
+  opacity: 0.65;
 `;
 
 export const ScenarioTitle = styled.h3`
   margin: 0;
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #0E1A17;
   line-height: 1.25;
   flex: 1;
 `;
 
-export const ScenarioAmount = styled.span`
-  font-size: ${({ $isText }) => $isText ? '14px' : '16px'};
-  font-weight: 800;
+export const ScenarioAmount = styled.p`
+  margin: 0 0 12px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: ${({ $isText }) => $isText ? 'clamp(18px,3vw,24px)' : 'clamp(22px,3.5vw,30px)'};
+  font-weight: 700;
   color: #9F3B22;
-  white-space: nowrap;
-  flex-shrink: 0;
-  font-style: ${({ $isText }) => $isText ? 'italic' : 'normal'};
+  letter-spacing: -.02em;
+  line-height: 1.1;
 `;
 
 export const ScenarioWithout = styled.p`
-  margin: 0 0 6px;
-  font-size: 14px;
+  margin: 0;
+  font-size: 13px;
   color: #5C6E68;
-  line-height: 1.55;
-  padding-left: 26px;
+  line-height: 1.6;
+  flex: 1;
 `;
 
 export const ScenarioWith = styled.p`
-  margin: 0;
-  font-size: 13px;
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #D5E2DC;
+  font-size: 12.5px;
   color: #1B7A6E;
   font-style: italic;
-  padding-left: 26px;
   line-height: 1.5;
 
   &::before {
     content: '→ ';
     font-style: normal;
+    font-weight: 700;
   }
 `;
 

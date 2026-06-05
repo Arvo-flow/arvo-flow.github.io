@@ -225,7 +225,7 @@ export default function Intelligence() {
       </HeroSection>
 
       {/* ── Scenarios ────────────────────────────────────────────────────── */}
-      <SectionWrap>
+      <SectionWrap $white>
         <SectionEyebrow>Utan Arvo</SectionEyebrow>
         <SectionHeadline>Vad händer när ingen bevakar</SectionHeadline>
 
