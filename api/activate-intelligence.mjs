@@ -1,7 +1,8 @@
 // api/activate-intelligence.mjs
-// POST { email, supplier, category, annualCost, suggestedAnnualCost, netSaving,
-//        arvoFee, reasoning, diagScore, diagLabel, diagInsight }
-// Stores activation intent in Postgres + fires first Intelligence briefing via Resend.
+// POST { email, company?, supplier?, category?, annualCost?, suggestedAnnualCost?,
+//        netSaving?, arvoFee?, reasoning?, diagScore?, diagLabel?, diagInsight?, source }
+// Cold signup (source=intelligence-page): premium welcome email.
+// Post-analysis signup (source=testa-faktura): full briefing email with analysis data.
 
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
@@ -31,6 +32,107 @@ function diagColors(score) {
   return { dot: '#1B7A6E', bg: '#DCEEEA', labelClr: '#0E4F47' };
 }
 
+// ── Cold signup: welcome email ────────────────────────────────────────────────
+
+function buildWelcomeHtml(email, company) {
+  const firstName  = email.split('@')[0].split('.')[0];
+  const displayName = company
+    ? company.trim()
+    : firstName.charAt(0).toUpperCase() + firstName.slice(1);
+
+  return `<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arvo Intelligence är aktiverat</title>
+</head>
+<body style="margin:0;padding:0;background:#F2F7F4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td align="center" style="padding:40px 20px 60px;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:540px;">
+
+  <!-- dark header -->
+  <tr><td style="background:#060D0B;border-radius:20px 20px 0 0;padding:28px 36px 28px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td>
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#1DB09A;margin-right:8px;vertical-align:middle;"></span>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.22em;color:#4FBFB3;vertical-align:middle;">Arvo Intelligence</span>
+      </td>
+      <td align="right">
+        <span style="font-size:11px;color:rgba(255,255,255,0.30);">Aktiverat just nu</span>
+      </td>
+    </tr></table>
+    <p style="margin:20px 0 0;font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-.025em;line-height:1.15;">
+      Arvo börjar bevaka<br>${displayName} nu.
+    </p>
+    <p style="margin:10px 0 0;font-size:14px;color:rgba(255,255,255,0.45);line-height:1.6;">
+      Ni ska inte behöva hålla koll. Det är Arvos jobb.
+    </p>
+  </td></tr>
+
+  <!-- body -->
+  <tr><td style="background:#ffffff;padding:32px 36px 8px;border-left:1px solid #D5E2DC;border-right:1px solid #D5E2DC;">
+
+    <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:#1B7A6E;margin:0 0 20px;">Vad händer nu</p>
+
+    <!-- step 1 -->
+    <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;width:100%"><tr>
+      <td width="36" valign="top">
+        <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#060D0B;color:#ffffff;font-size:12px;font-weight:700;text-align:center;line-height:26px;">1</span>
+      </td>
+      <td valign="top" style="padding-left:8px;">
+        <p style="font-size:14px;font-weight:700;color:#0E1A17;margin:3px 0 4px;letter-spacing:-.01em;">Arvo aktiverar er bevakning inom 24h</p>
+        <p style="font-size:13px;color:#5C6E68;margin:0;line-height:1.6;">Vi sätter upp er profil och börjar övervaka era leverantörskategorier.</p>
+      </td>
+    </tr></table>
+
+    <!-- step 2 -->
+    <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;width:100%"><tr>
+      <td width="36" valign="top">
+        <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#060D0B;color:#ffffff;font-size:12px;font-weight:700;text-align:center;line-height:26px;">2</span>
+      </td>
+      <td valign="top" style="padding-left:8px;">
+        <p style="font-size:14px;font-weight:700;color:#0E1A17;margin:3px 0 4px;letter-spacing:-.01em;">Arvo kontrollerar fakturor mot era avtal</p>
+        <p style="font-size:13px;color:#5C6E68;margin:0;line-height:1.6;">Avvikelser, smyghöjningar och förnyelsefönster flaggas automatiskt.</p>
+      </td>
+    </tr></table>
+
+    <!-- step 3 -->
+    <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:28px;width:100%"><tr>
+      <td width="36" valign="top">
+        <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#060D0B;color:#ffffff;font-size:12px;font-weight:700;text-align:center;line-height:26px;">3</span>
+      </td>
+      <td valign="top" style="padding-left:8px;">
+        <p style="font-size:14px;font-weight:700;color:#0E1A17;margin:3px 0 4px;letter-spacing:-.01em;">Ni hör av oss — inte tvärtom</p>
+        <p style="font-size:13px;color:#5C6E68;margin:0;line-height:1.6;">Arvo kontaktar er när något hänt som ni behöver veta. Inget nyhetsbrev, inga rapporter utan anledning.</p>
+      </td>
+    </tr></table>
+
+    <div style="border-top:1px solid #EEF4F2;padding-top:28px;margin-bottom:28px;">
+      <p style="font-size:13px;color:#5C6E68;margin:0 0 18px;line-height:1.6;">Medan Arvo sätter upp bevakningen — testa er första faktura direkt och se exakt vad ni betalar mot vad marknaden tar.</p>
+      <a href="https://arvoflow.se/testa-faktura" style="display:block;text-align:center;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);color:#ffffff;font-size:15px;font-weight:700;padding:16px 32px;border-radius:12px;text-decoration:none;letter-spacing:-.01em;">Analysera er första faktura &rarr;</a>
+    </div>
+
+  </td></tr>
+
+  <!-- footer -->
+  <tr><td style="background:#F8FAF9;border:1px solid #D5E2DC;border-top:none;border-radius:0 0 20px 20px;padding:20px 36px;">
+    <p style="font-size:11px;color:#8A9E98;margin:0;line-height:1.7;text-align:center;">
+      Arvo Intelligence &middot; 1&nbsp;995&nbsp;kr/m&aring;n &middot; Ingen bindningstid<br>
+      <a href="https://arvoflow.se" style="color:#1B7A6E;text-decoration:none;">arvoflow.se</a>
+    </p>
+  </td></tr>
+
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+// ── Post-analysis: full briefing email ────────────────────────────────────────
+
 function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSaving, arvoFee, reasoning, diagScore, diagLabel, diagInsight }) {
   const dateStr = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
   const dc      = diagColors(diagScore ?? 72);
@@ -51,10 +153,8 @@ function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSavin
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:540px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #D5E2DC;">
 
-<!-- accent bar -->
 <tr><td height="3" style="background:#1B7A6E;font-size:0;line-height:0;">&nbsp;</td></tr>
 
-<!-- header -->
 <tr><td style="padding:24px 36px 20px;border-bottom:1px solid #EEF4F2;">
 <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#1B7A6E;margin-right:7px;vertical-align:middle;"></span><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.2em;color:#1B7A6E;vertical-align:middle;">Arvo Intelligence</span></td>
@@ -62,7 +162,6 @@ function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSavin
 </tr></table>
 </td></tr>
 
-<!-- supplier + score -->
 <tr><td style="padding:28px 36px 24px;border-bottom:1px solid #EEF4F2;">
 <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#8A9E98;margin:0 0 6px;">Analyserad leverant&ouml;r</p>
 <h1 style="font-size:30px;font-weight:800;color:#0E1A17;margin:0 0 18px;letter-spacing:-.025em;line-height:1.1;">${supplier ?? '&ndash;'}</h1>
@@ -81,28 +180,24 @@ function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSavin
 ${diagInsight ? `<p style="font-size:13.5px;color:#3D5249;margin:14px 0 0;line-height:1.6;">${diagInsight}</p>` : ''}
 </td></tr>
 
-<!-- saving -->
 <tr><td style="padding:24px 36px;background:#F0FDF9;border-bottom:1px solid #D5E2DC;">
 <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#047857;margin:0 0 8px;">Din identifierade nettobesparing</p>
 <p style="font-size:40px;font-weight:800;color:#0E1A17;margin:0 0 8px;letter-spacing:-.03em;line-height:1;">+${fmt(netSaving)}&nbsp;<span style="font-size:18px;font-weight:400;color:#5C6E68;">kr/&aring;r</span></p>
 <p style="font-size:13px;color:#5C6E68;margin:0;">${fmt(annualCost)} &rarr; ${fmt(suggestedAnnualCost)} kr/&aring;r &middot; Arvos arvode ${fmt(arvoFee)} kr (20&nbsp;%)</p>
 </td></tr>
 
-${reasoning ? `<!-- reasoning -->
-<tr><td style="padding:24px 36px;border-bottom:1px solid #EEF4F2;">
+${reasoning ? `<tr><td style="padding:24px 36px;border-bottom:1px solid #EEF4F2;">
 <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#8A9E98;margin:0 0 12px;">Arvos bed&ouml;mning</p>
 <div style="border-left:2px solid #B8D4CB;padding-left:16px;">
 <p style="font-size:14px;color:#1F2E2A;line-height:1.7;font-style:italic;margin:0;">&ldquo;${reasoning}&rdquo;</p>
 </div>
 </td></tr>` : ''}
 
-<!-- CTA -->
 <tr><td style="padding:28px 36px 24px;">
-<a href="https://arvoflow.se/testa-faktura?bypass=dev" style="display:block;text-align:center;background:#1B7A6E;color:#ffffff;font-size:15px;font-weight:700;padding:16px 32px;border-radius:12px;text-decoration:none;letter-spacing:-.01em;">Aktivera bytet &rarr;</a>
+<a href="https://arvoflow.se/testa-faktura?bypass=dev" style="display:block;text-align:center;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);color:#ffffff;font-size:15px;font-weight:700;padding:16px 32px;border-radius:12px;text-decoration:none;letter-spacing:-.01em;">Aktivera bytet &rarr;</a>
 <p style="text-align:center;font-size:12px;color:#8A9E98;margin:12px 0 0;line-height:1.6;">Arvo hanterar hela bytet &mdash; ni betalar 20&nbsp;% av realiserad besparing, inget annat.</p>
 </td></tr>
 
-<!-- portfolio bridge -->
 <tr><td style="padding:0 24px 28px;">
 <div style="border:1px solid #D5E2DC;border-top:2px solid #1B7A6E;border-radius:14px;padding:20px 22px;">
 <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:#1B7A6E;margin:0 0 8px;">Helhetsbilden</p>
@@ -113,7 +208,6 @@ ${reasoning ? `<!-- reasoning -->
 </div>
 </td></tr>
 
-<!-- footer -->
 <tr><td style="padding:20px 36px 28px;border-top:1px solid #EEF4F2;">
 <p style="font-size:11px;color:#8A9E98;margin:0;text-align:center;line-height:1.7;">Arvo Flow &middot; arvoflow.se &middot; hej@arvoflow.se<br>Arvo l&auml;ser bara faktura-mail &mdash; aldrig personlig korrespondens.</p>
 </td></tr>
@@ -122,6 +216,8 @@ ${reasoning ? `<!-- reasoning -->
 </td></tr></table>
 </body></html>`;
 }
+
+// ── Handler ───────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed' });
@@ -134,16 +230,20 @@ export default async function handler(req, res) {
   }
 
   const {
-    email, supplier, category,
+    email, company, supplier, category,
     annualCost, suggestedAnnualCost, netSaving, arvoFee,
     reasoning, diagScore, diagLabel, diagInsight,
+    source = 'unknown',
   } = body ?? {};
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email))) {
     return send(res, 400, { error: 'Ogiltig e-postadress' });
   }
 
-  // Store activation intent
+  const companyName    = company ?? supplier ?? null;
+  const isColdSignup   = !diagScore && source === 'intelligence-page';
+
+  // ── Persist ──────────────────────────────────────────────────────────────
   const db = getDb();
   let activationId = null;
   if (db) {
@@ -152,19 +252,24 @@ export default async function handler(req, res) {
         CREATE TABLE IF NOT EXISTS intelligence_activations (
           id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
           email       TEXT        NOT NULL,
+          company     TEXT,
           supplier    TEXT,
           category    TEXT,
           annual_cost INTEGER,
           net_saving  INTEGER,
           diag_score  INTEGER,
           diag_label  TEXT,
-          source      TEXT        NOT NULL DEFAULT 'email',
+          source      TEXT        NOT NULL DEFAULT 'unknown',
           created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
       `;
       const rows = await db`
-        INSERT INTO intelligence_activations (email, supplier, category, annual_cost, net_saving, diag_score, diag_label)
-        VALUES (${email}, ${supplier ?? null}, ${category ?? null}, ${annualCost ?? null}, ${netSaving ?? null}, ${diagScore ?? null}, ${diagLabel ?? null})
+        INSERT INTO intelligence_activations
+          (email, company, supplier, category, annual_cost, net_saving, diag_score, diag_label, source)
+        VALUES
+          (${email}, ${companyName}, ${supplier ?? null}, ${category ?? null},
+           ${annualCost ?? null}, ${netSaving ?? null}, ${diagScore ?? null},
+           ${diagLabel ?? null}, ${source})
         RETURNING id
       `;
       activationId = rows[0]?.id ?? null;
@@ -173,38 +278,42 @@ export default async function handler(req, res) {
     }
   }
 
-  // Build + send briefing email to customer
-  const html = buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSaving, arvoFee, reasoning, diagScore, diagLabel, diagInsight });
+  // ── Customer email ────────────────────────────────────────────────────────
+  const html    = isColdSignup
+    ? buildWelcomeHtml(email, companyName)
+    : buildBriefingHtml({ supplier: companyName, annualCost, suggestedAnnualCost, netSaving, arvoFee, reasoning, diagScore, diagLabel, diagInsight });
+
+  const subject = isColdSignup
+    ? 'Arvo Intelligence är aktiverat.'
+    : `Arvo Intelligence · ${companyName ?? 'Er leverantörsanalys'}`;
+
   try {
-    await resend.emails.send({
-      from: FROM,
-      to: email,
-      subject: `Arvo Intelligence · ${supplier ?? 'Er leverantörsanalys'}`,
-      html,
-    });
+    await resend.emails.send({ from: FROM, to: email, subject, html });
   } catch (err) {
     console.error('[activate-intelligence] Resend failed:', err.message);
-    return send(res, 500, { error: 'Kunde inte skicka briefing — försök igen.' });
+    return send(res, 500, { error: 'Kunde inte skicka bekräftelse — försök igen.' });
   }
 
-  // Internal activation alert (non-critical)
+  // ── Internal alert ────────────────────────────────────────────────────────
   try {
     await resend.emails.send({
-      from: FROM,
-      to: INTERNAL,
-      subject: `[Intelligence] Ny aktivering: ${email} — ${supplier ?? '?'} ${netSaving ? `+${fmt(netSaving)} kr/år` : ''}`,
-      html: `<p style="font-family:sans-serif;font-size:14px;line-height:1.6;">
+      from:    FROM,
+      to:      INTERNAL,
+      subject: `[Intelligence] ${isColdSignup ? 'Ny prenumerant' : 'Ny aktivering'}: ${email}${companyName ? ` — ${companyName}` : ''}${netSaving ? ` +${fmt(netSaving)} kr/år` : ''}`,
+      html: `<p style="font-family:sans-serif;font-size:14px;line-height:1.8;">
+        <b>Typ:</b> ${isColdSignup ? 'Kald anmälan (Intelligence-sidan)' : 'Post-analys aktivering'}<br>
         <b>E-post:</b> ${email}<br>
-        <b>Leverant&ouml;r:</b> ${supplier ?? '–'}<br>
+        <b>Bolag:</b> ${companyName ?? '–'}<br>
         <b>Kategori:</b> ${category ?? '–'}<br>
-        <b>Score:</b> ${diagScore}/100 (${diagLabel})<br>
-        <b>Nettobesparing:</b> +${fmt(netSaving)} kr/&aring;r<br>
+        <b>Score:</b> ${diagScore ? `${diagScore}/100 (${diagLabel})` : '–'}<br>
+        <b>Nettobesparing:</b> ${netSaving ? `+${fmt(netSaving)} kr/år` : '–'}<br>
+        <b>K&auml;lla:</b> ${source}<br>
         <b>ID:</b> ${activationId ?? '–'}
       </p>`,
     });
   } catch {
-    // Non-critical — swallow
+    // Non-critical
   }
 
-  send(res, 200, { ok: true });
+  send(res, 200, { ok: true, id: activationId });
 }
