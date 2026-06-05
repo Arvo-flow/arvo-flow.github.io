@@ -39,3 +39,6 @@ test-pdfs/customer-*.pdf
 
 # Lokalt genererade preview-filer
 arvo-rapport-preview.pdf
+
+# Batch prospect results
+results/
