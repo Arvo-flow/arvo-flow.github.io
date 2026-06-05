@@ -369,7 +369,7 @@ const Landing = () => {
               <Button as={Link} to="/testa-faktura" $variant="gradient" $size="lg">
                 Testa med en faktura <Icon name="arrow" size={18} />
               </Button>
-              <Button as={Link} to="/connect" $variant="secondary" $size="lg">
+              <Button as={Link} to="/aktivera" $variant="secondary" $size="lg">
                 Aktivera Arvo Intelligence
               </Button>
             </HeroActions>
@@ -675,7 +675,7 @@ const Landing = () => {
               <li><Icon name="check" size={15} stroke={2.4} /> Avtalsbevakning med 90-dagarsvarning</li>
               <li><Icon name="check" size={15} stroke={2.4} /> Månadsvis briefing med konkreta insikter</li>
             </ul>
-            <Button as={Link} to="/connect" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
+            <Button as={Link} to="/aktivera" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
               Aktivera Arvo Intelligence →
             </Button>
             <p className="tier-note">Ingen bindningstid · Kom igång på 2 minuter</p>
