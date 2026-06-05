@@ -229,6 +229,12 @@ export const SectionWrap = styled.section`
   }
 `;
 
+export const SectionHeadWrap = styled.div`
+  text-align: center;
+  margin-bottom: 48px;
+  @media (max-width: 640px) { margin-bottom: 36px; }
+`;
+
 export const SectionEyebrow = styled.p`
   margin: 0 0 12px;
   font-size: 11px;
@@ -421,6 +427,20 @@ export const PillarCard = styled.div`
   `}
 
   @media (max-width: 620px) { padding: 22px 20px; }
+`;
+
+export const CardContext = styled.p`
+  margin: 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: #7B8F89;
+  line-height: 1.6;
+`;
+
+export const CardDivider = styled.div`
+  height: 1px;
+  background: #E4EDE9;
+  margin: 16px 0;
 `;
 
 export const PillarNum = styled.span`

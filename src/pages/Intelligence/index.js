@@ -8,11 +8,9 @@ import {
   NotifCard, NotifHeader, NotifDot, NotifAppName, NotifTime,
   NotifTitle, NotifBody, NotifCta,
   HeroTagline, HeroSub, HeroCtaWrap, HeroCta, HeroPrice,
-  SectionWrap, SectionEyebrow, SectionHeadline,
-  ScenarioList, ScenarioItem, ScenarioHead, ScenarioNum, ScenarioTitle,
-  ScenarioAmount, ScenarioWithout, ScenarioWith,
-  ScenarioTotal, ScenarioTotalAmount, ScenarioTotalSub, ScenarioTotalNote,
-  PillarsGrid, PillarCard, PillarNum, PillarTitle, PillarBody, PillarQuote,
+  SectionWrap, SectionHeadWrap, SectionEyebrow, SectionHeadline,
+  PillarsGrid, PillarCard, PillarTitle, PillarBody, PillarQuote,
+  CardContext, CardDivider,
   RulesSection, RulesInner, RulesEyebrow,
   RuleItem, RuleNumber, RuleText, RuleDivider,
   ActivationSection, ActivationInner, ActivationHeadline,
@@ -25,65 +23,30 @@ import {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-const SCENARIOS = [
-  {
-    num: '01',
-    title: 'Smyghöjningen ingen såg',
-    without: 'Telia höjer 11% i januari. Ni märker det i september — åtta månader senare.',
-    amount: '22 400 kr',
-    isText: false,
-    with: 'Arvo varnar tre veckor innan. Ni är redan ute.',
-  },
-  {
-    num: '02',
-    title: 'Fönstret som stängdes',
-    without: 'Tele2-avtalet förnyas automatiskt. Ni märkte det inte. Nu är ni låsta ett år till.',
-    amount: 'Ett år förlorat',
-    isText: true,
-    with: 'Arvo flaggar 87 dagar innan. Ni agerar i lugn och ro.',
-  },
-  {
-    num: '03',
-    title: 'Licenserna ingen använde',
-    without: '12 Microsoft-licenser betalas varje månad. Ingen vet hur många som faktiskt används.',
-    amount: '26 208 kr/år',
-    isText: false,
-    with: 'Arvo identifierar oanvända licenser månaden efter. Borttaget. Klart.',
-  },
-  {
-    num: '04',
-    title: 'Fakturan som ljög',
-    without: 'Telia fakturerar 349 kr/SIM. Ert avtal säger 299 kr. Ni betalar utan att kontrollera.',
-    amount: '21 000 kr',
-    isText: false,
-    with: 'Avvikelsen flaggas automatiskt. Ni begär tillbaka pengarna.',
-  },
-];
-
 const PILLARS = [
   {
-    num: '①',
+    context: 'Telia höjer 11% i januari. Ni märker det i september — åtta månader senare.',
     title: 'Marknadsintelligens före fakturan',
-    body: 'Arvo ser vad som händer hos jämförbara bolag i nätverket — och varnar er innan höjningen syns på er faktura. Bara möjlig med Arvos cross-customer-data.',
+    body: 'Arvo ser vad som händer hos jämförbara bolag i nätverket — och varnar er innan höjningen syns på er faktura.',
     quote: '"6 av 14 bolag i er bransch fick Telias prishöjning förra månaden."',
   },
   {
-    num: '②',
+    context: 'Tele2-avtalet förnyas automatiskt. Ni märkte det inte. Nu är ni låsta ett år till.',
+    title: 'Kontraktskalender med handlingsplan',
+    body: 'Inte bara påminnelser — utan exakt vad som ska göras, när och varför. Arvo räknar baklänges från varje förnyelsedatum.',
+    quote: '"87 dagar kvar. Aktivera byte senast 15 september."',
+  },
+  {
+    context: 'Telia fakturerar 349 kr/SIM. Ert avtal säger 299 kr. Ni betalar differensen utan att veta om det.',
     title: 'Faktura mot avtal',
     body: 'Leverantörer fakturerar fel — ofta. Arvo kontrollerar automatiskt varje faktura mot känt avtalspris och flaggar avvikelser direkt.',
     quote: '"Telia fakturerar 349 kr/SIM. Ert avtal säger 299 kr."',
   },
   {
-    num: '③',
-    title: 'Kontraktskalender med handlingsplan',
-    body: 'Inte bara påminnelser — utan exakt vad som ska göras, när och varför, för varje avtal. Arvo räknar baklänges från varje förnyelsedatum.',
-    quote: '"87 dagar kvar. Aktivera byte senast 15 september."',
-  },
-  {
-    num: '④',
-    title: 'Månatlig sammanfattning',
-    body: 'En professionell rapport — klar för styrelserummet — med vad Arvo hittat, vad som sparats och vad som är på väg. Varje månad, automatiskt.',
-    quote: '"Er totala besparing sedan aktivering: 94 200 kr."',
+    context: 'Kostnaderna rullar på. Ingen sammanfattar. Styrelsen frågar — ingen har svaret.',
+    title: 'Månatlig CFO-brief',
+    body: 'En professionell rapport — klar för styrelserummet — med vad Arvo hittat, vad som sparats och vad som är på väg.',
+    quote: '"Tre avtal bevakas. Ett flaggat för åtgärd nästa vecka."',
   },
 ];
 
@@ -126,8 +89,6 @@ const fmt = n => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).fo
 export default function Intelligence() {
   const [pillarsRef, pillarsInView] = useInView(0.08);
   const [rulesRef, rulesInView]     = useInView(0.12);
-  const [scenarioVisibility, setScenarioVisibility] = useState({});
-  const scenarioRefs = useRef([]);
 
   // Activation form
   const [params]       = useSearchParams();
@@ -163,21 +124,6 @@ export default function Intelligence() {
     }
   };
 
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const i = Number(entry.target.dataset.idx);
-            setScenarioVisibility(prev => ({ ...prev, [i]: true }));
-          }
-        });
-      },
-      { threshold: 0.08 }
-    );
-    scenarioRefs.current.forEach(el => { if (el) obs.observe(el); });
-    return () => obs.disconnect();
-  }, []);
 
   return (
     <Page>
@@ -224,49 +170,18 @@ export default function Intelligence() {
         </HeroInner>
       </HeroSection>
 
-      {/* ── Scenarios ────────────────────────────────────────────────────── */}
-      <SectionWrap>
-        <SectionEyebrow>Utan Arvo</SectionEyebrow>
-        <SectionHeadline>Vad händer när ingen bevakar</SectionHeadline>
-
-        <ScenarioList>
-          {SCENARIOS.map((s, i) => (
-            <ScenarioItem
-              key={i}
-              data-idx={i}
-              ref={el => { scenarioRefs.current[i] = el; }}
-              $visible={!!scenarioVisibility[i]}
-              style={{ transitionDelay: `${i * 0.06}s` }}
-            >
-              <ScenarioHead>
-                <ScenarioNum>{s.num}</ScenarioNum>
-                <ScenarioTitle>{s.title}</ScenarioTitle>
-              </ScenarioHead>
-              <ScenarioAmount $isText={s.isText}>{s.amount}</ScenarioAmount>
-              <ScenarioWithout>{s.without}</ScenarioWithout>
-              <ScenarioWith>{s.with}</ScenarioWith>
-            </ScenarioItem>
-          ))}
-        </ScenarioList>
-
-        <ScenarioTotal>
-          <div>
-            <ScenarioTotalAmount>69 608 kr</ScenarioTotalAmount>
-            <ScenarioTotalSub>borta — tyst, obemärkt</ScenarioTotalSub>
-          </div>
-          <ScenarioTotalNote>Allt detta ingår i 1 995 kr/mån</ScenarioTotalNote>
-        </ScenarioTotal>
-      </SectionWrap>
-
       {/* ── Pillars ──────────────────────────────────────────────────────── */}
       <SectionWrap ref={pillarsRef}>
-        <SectionEyebrow>Med Arvo</SectionEyebrow>
-        <SectionHeadline>Fyra lager av bevakning</SectionHeadline>
+        <SectionHeadWrap>
+          <SectionEyebrow>Arvo Intelligence</SectionEyebrow>
+          <SectionHeadline style={{ marginBottom: 0 }}>Det Arvo ser — som annars försvinner</SectionHeadline>
+        </SectionHeadWrap>
 
         <PillarsGrid>
           {PILLARS.map((p, i) => (
             <PillarCard key={i} $i={i} $visible={pillarsInView}>
-              <PillarNum>{p.num}</PillarNum>
+              <CardContext>{p.context}</CardContext>
+              <CardDivider />
               <PillarTitle>{p.title}</PillarTitle>
               <PillarBody>{p.body}</PillarBody>
               <PillarQuote>{p.quote}</PillarQuote>
