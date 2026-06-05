@@ -9,10 +9,9 @@ import {
   NotifTitle, NotifBody, NotifCta,
   HeroTagline, HeroSub, HeroCtaWrap, HeroCta, HeroPrice,
   SectionWrap, SectionEyebrow, SectionHeadline,
-  ScenarioList, ScenarioItem, ScenarioTop, ScenarioNum, ScenarioTitle,
-  ScenarioRows, ScenarioBox, ScenarioBoxLabel, ScenarioBoxText,
-  ScenarioAmount, ScenarioTotal, ScenarioTotalLeft, ScenarioTotalLabel,
-  ScenarioTotalNote, ScenarioTotalRight, ScenarioTotalAmount, ScenarioTotalSub,
+  ScenarioList, ScenarioItem, ScenarioHead, ScenarioNum, ScenarioTitle,
+  ScenarioAmount, ScenarioWithout, ScenarioWith,
+  ScenarioTotal, ScenarioTotalAmount, ScenarioTotalSub, ScenarioTotalNote,
   PillarsGrid, PillarCard, PillarNum, PillarTitle, PillarBody, PillarQuote,
   RulesSection, RulesInner, RulesEyebrow,
   RuleItem, RuleNumber, RuleText, RuleDivider,
@@ -208,7 +207,7 @@ export default function Intelligence() {
 
           <HeroTagline>
             Arvo märkte det.<br />
-            Ni visste inte om det ännu.
+            <em>Ni visste inte om det ännu.</em>
           </HeroTagline>
 
           <HeroSub>
@@ -237,43 +236,30 @@ export default function Intelligence() {
               data-idx={i}
               ref={el => { scenarioRefs.current[i] = el; }}
               $visible={!!scenarioVisibility[i]}
-              style={{ transitionDelay: `${i * 0.04}s` }}
+              style={{ transitionDelay: `${i * 0.06}s` }}
             >
-              <ScenarioTop>
+              <ScenarioHead>
                 <ScenarioNum>{s.num}</ScenarioNum>
                 <ScenarioTitle>{s.title}</ScenarioTitle>
-              </ScenarioTop>
-              <ScenarioRows>
-                <ScenarioBox $type="without">
-                  <ScenarioBoxLabel $type="without">Utan Arvo</ScenarioBoxLabel>
-                  <ScenarioBoxText>{s.without}</ScenarioBoxText>
-                  <ScenarioAmount $isText={s.isText}>{s.amount}</ScenarioAmount>
-                </ScenarioBox>
-                <ScenarioBox $type="with">
-                  <ScenarioBoxLabel $type="with">Med Arvo</ScenarioBoxLabel>
-                  <ScenarioBoxText>{s.with}</ScenarioBoxText>
-                </ScenarioBox>
-              </ScenarioRows>
+                <ScenarioAmount $isText={s.isText}>{s.amount}</ScenarioAmount>
+              </ScenarioHead>
+              <ScenarioWithout>{s.without}</ScenarioWithout>
+              <ScenarioWith>{s.with}</ScenarioWith>
             </ScenarioItem>
           ))}
         </ScenarioList>
 
         <ScenarioTotal>
-          <ScenarioTotalLeft>
-            <ScenarioTotalLabel>
-              Tre av fyra scenarier innebär en direkt, mätbar förlust.
-            </ScenarioTotalLabel>
-            <ScenarioTotalNote>Allt detta ingår i 1 995 kr/mån</ScenarioTotalNote>
-          </ScenarioTotalLeft>
-          <ScenarioTotalRight>
+          <div>
             <ScenarioTotalAmount>69 608 kr</ScenarioTotalAmount>
-            <ScenarioTotalSub>borta. Tyst.</ScenarioTotalSub>
-          </ScenarioTotalRight>
+            <ScenarioTotalSub>borta — tyst, obemärkt</ScenarioTotalSub>
+          </div>
+          <ScenarioTotalNote>Allt detta ingår i 1 995 kr/mån</ScenarioTotalNote>
         </ScenarioTotal>
       </SectionWrap>
 
       {/* ── Pillars ──────────────────────────────────────────────────────── */}
-      <SectionWrap ref={pillarsRef}>
+      <SectionWrap $white ref={pillarsRef}>
         <SectionEyebrow>Med Arvo</SectionEyebrow>
         <SectionHeadline>Fyra lager av bevakning</SectionHeadline>
 
