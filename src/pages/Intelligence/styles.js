@@ -74,7 +74,7 @@ export const HeroInner = styled.div`
 export const NotifCard = styled.div`
   width: 100%;
   max-width: 400px;
-  background: rgba(16, 34, 28, 0.94);
+  background: rgba(8, 14, 12, 0.97);
   backdrop-filter: blur(40px) saturate(160%);
   -webkit-backdrop-filter: blur(40px) saturate(160%);
   border: 1px solid rgba(255,255,255,0.13);
