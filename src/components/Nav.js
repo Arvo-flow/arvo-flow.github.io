@@ -40,6 +40,7 @@ const Item = styled(Link)`
   padding: 8px 14px;
   border-radius: ${({ theme }) => theme.size.radius.sm};
   font-size: 14px;
+  white-space: nowrap;
   color: ${({ theme, $active }) => ($active ? theme.color.ink : theme.color.muted)};
   font-weight: ${({ $active }) => ($active ? 600 : 500)};
   transition: background ${({ theme }) => theme.motion.fast}, color ${({ theme }) => theme.motion.fast};
@@ -198,12 +199,21 @@ const AuthChip = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  color: ${({ theme }) => theme.color.muted};
 `;
 
-const AuthEmail = styled.span`
-  @media (max-width: 520px) { display: none; }
+const AuthAvatar = styled.span`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.color.brand};
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0;
 `;
 
 const MagicToast = styled.div`
@@ -360,7 +370,7 @@ const Nav = ({ variant = 'public' }) => {
           <Right>
             {authEmail ? (
               <AuthChip>
-                <AuthEmail>{authEmail}</AuthEmail>
+                <AuthAvatar>{authEmail[0].toUpperCase()}</AuthAvatar>
                 <Button $variant="ghost" $size="sm" onClick={logout}>Logga ut</Button>
               </AuthChip>
             ) : (
