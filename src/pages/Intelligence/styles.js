@@ -13,6 +13,12 @@ const notifArrive = keyframes`
   to   { opacity: 1; transform: translateY(0) scale(1); }
 `;
 
+const checkRing = keyframes`
+  from { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); }
+  to   { transform: scale(1);   opacity: 1; }
+`;
+
 const dotPulse = keyframes`
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(29,176,154,0.4); }
   50%       { opacity: 0.7; box-shadow: 0 0 0 4px rgba(29,176,154,0); }
@@ -581,4 +587,122 @@ export const ActivationNote = styled.p`
   font-size: 13px;
   color: rgba(255,255,255,0.22);
   letter-spacing: .01em;
+`;
+
+// ── Activation form ───────────────────────────────────────────────────────────
+
+export const ActivationSavingsBanner = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(29,176,154,0.10);
+  border: 1px solid rgba(29,176,154,0.22);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 32px;
+  text-align: left;
+  font-size: 13.5px;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.55;
+
+  strong { color: #1DB09A; font-weight: 700; }
+`;
+
+export const ActivationForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 0;
+`;
+
+export const ActivationInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 15px 18px;
+  font-size: 15px;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.18s, background 0.18s;
+
+  &::placeholder { color: rgba(255,255,255,0.22); }
+
+  &:focus {
+    border-color: rgba(29,176,154,0.50);
+    background: rgba(29,176,154,0.05);
+  }
+`;
+
+export const ActivationSubmitBtn = styled.button`
+  width: 100%;
+  background: linear-gradient(135deg, #1DB09A 0%, #0B7A6A 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  box-shadow: 0 8px 40px rgba(29,176,154,0.28);
+  transition: opacity 0.18s, transform 0.15s;
+  margin-top: 2px;
+
+  &:hover { opacity: 0.88; transform: translateY(-2px); }
+  &:active { transform: translateY(0); }
+  &:disabled { opacity: 0.40; cursor: not-allowed; transform: none; }
+`;
+
+export const ActivationError = styled.p`
+  font-size: 12.5px;
+  color: #F87171;
+  margin: 4px 0 0;
+  line-height: 1.5;
+`;
+
+export const ActivationSuccess = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+`;
+
+export const ActivationSuccessCheck = styled.div`
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(29,176,154,0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #1DB09A;
+  margin-bottom: 8px;
+  animation: ${checkRing} 0.55s cubic-bezier(0.34,1.46,0.64,1) both;
+`;
+
+export const ActivationSuccessTitle = styled.h3`
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #fff;
+`;
+
+export const ActivationSuccessSub = styled.p`
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255,255,255,0.42);
+  line-height: 1.6;
+`;
+
+export const ActivationSuccessEmail = styled.p`
+  margin: 0;
+  font-size: 13px;
+  color: rgba(255,255,255,0.25);
+  font-style: italic;
 `;

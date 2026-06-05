@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import {
@@ -17,7 +17,11 @@ import {
   RulesSection, RulesInner, RulesEyebrow,
   RuleItem, RuleNumber, RuleText, RuleDivider,
   ActivationSection, ActivationInner, ActivationHeadline,
-  ActivationSub, ActivationCta, ActivationNote,
+  ActivationSub, ActivationNote,
+  ActivationSavingsBanner,
+  ActivationForm, ActivationInput, ActivationSubmitBtn, ActivationError,
+  ActivationSuccess, ActivationSuccessCheck, ActivationSuccessTitle,
+  ActivationSuccessSub, ActivationSuccessEmail,
 } from './styles';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -118,11 +122,47 @@ const ArvoMark = () => (
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+const fmt = n => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
+
 export default function Intelligence() {
   const [pillarsRef, pillarsInView] = useInView(0.08);
   const [rulesRef, rulesInView]     = useInView(0.12);
   const [scenarioVisibility, setScenarioVisibility] = useState({});
   const scenarioRefs = useRef([]);
+
+  // Activation form
+  const [params]       = useSearchParams();
+  const savings        = params.get('savings') ? Number(params.get('savings')) : null;
+  const supplier       = params.get('supplier') ?? null;
+  const [email, setEmail]       = useState('');
+  const [company, setCompany]   = useState('');
+  const [formStatus, setFormStatus] = useState('idle'); // idle | submitting | sent | error
+  const [formErr, setFormErr]   = useState('');
+
+  const handleActivate = async (e) => {
+    e.preventDefault();
+    const trimEmail = email.trim();
+    if (!trimEmail || formStatus === 'submitting') return;
+    setFormStatus('submitting');
+    setFormErr('');
+    try {
+      const res = await fetch('/api/activate-intelligence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: trimEmail,
+          supplier:  supplier  ?? (company.trim() || undefined),
+          netSaving: savings   ?? undefined,
+          source:    'intelligence-page',
+        }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'err');
+      setFormStatus('sent');
+    } catch {
+      setFormErr('Något gick fel — försök igen.');
+      setFormStatus('error');
+    }
+  };
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -176,7 +216,7 @@ export default function Intelligence() {
           </HeroSub>
 
           <HeroCtaWrap>
-            <HeroCta as={Link} to="/aktivera">
+            <HeroCta as="a" href="#aktivera">
               Aktivera Arvo Intelligence
             </HeroCta>
             <HeroPrice>1 995 kr/mån · Ingen bindningstid</HeroPrice>
@@ -269,19 +309,65 @@ export default function Intelligence() {
       </RulesSection>
 
       {/* ── Activation ───────────────────────────────────────────────────── */}
-      <ActivationSection>
+      <ActivationSection id="aktivera">
         <ActivationInner>
-          <ActivationHeadline>
-            Arvo börjar bevaka<br />imorgon bitti.
-          </ActivationHeadline>
-          <ActivationSub>
-            Ladda upp er första faktura och se vad Arvo hittar — på två minuter.
-          </ActivationSub>
-          <ActivationCta as={Link} to="/aktivera">
-            Aktivera Arvo Intelligence →
-          </ActivationCta>
+          {formStatus !== 'sent' && (
+            <ActivationHeadline>
+              Arvo börjar bevaka<br />imorgon bitti.
+            </ActivationHeadline>
+          )}
+
+          {formStatus === 'sent' ? (
+            <ActivationSuccess>
+              <ActivationSuccessCheck>✓</ActivationSuccessCheck>
+              <ActivationSuccessTitle>Aktiverat.</ActivationSuccessTitle>
+              <ActivationSuccessSub>
+                Arvo börjar bevaka er inom 24&nbsp;timmar.<br />
+                Vi hör av oss när det finns något att agera på.
+              </ActivationSuccessSub>
+              {email && <ActivationSuccessEmail>{email}</ActivationSuccessEmail>}
+            </ActivationSuccess>
+          ) : (
+            <>
+              {savings != null ? (
+                <ActivationSavingsBanner>
+                  {supplier
+                    ? <>Vi identifierade redan <strong>{fmt(savings)}&nbsp;kr/år</strong> hos {supplier}. Den besparingen väntar.</>
+                    : <>Vi identifierade redan <strong>{fmt(savings)}&nbsp;kr/år</strong> i besparing åt er. Den väntar på att aktiveras.</>
+                  }
+                </ActivationSavingsBanner>
+              ) : (
+                <ActivationSub>
+                  E-post och bolagsnamn — klart på 30 sekunder.
+                </ActivationSub>
+              )}
+
+              <ActivationForm onSubmit={handleActivate}>
+                <ActivationInput
+                  type="email"
+                  placeholder="er@foretag.se"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+                <ActivationInput
+                  type="text"
+                  placeholder="Bolagsnamn"
+                  value={company}
+                  onChange={e => setCompany(e.target.value)}
+                  autoComplete="organization"
+                />
+                <ActivationSubmitBtn type="submit" disabled={formStatus === 'submitting'}>
+                  {formStatus === 'submitting' ? '…' : 'Aktivera bevakningen →'}
+                </ActivationSubmitBtn>
+                {formErr && <ActivationError>{formErr}</ActivationError>}
+              </ActivationForm>
+            </>
+          )}
+
           <ActivationNote>
-            1 995 kr/mån · Ingen bindningstid · Arvo startar bevakningen inom 24h
+            1&nbsp;995&nbsp;kr/mån · Ingen bindningstid · Arvo startar bevakningen inom 24h
           </ActivationNote>
         </ActivationInner>
       </ActivationSection>
