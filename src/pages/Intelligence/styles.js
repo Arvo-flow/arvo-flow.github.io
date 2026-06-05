@@ -237,7 +237,6 @@ export const SectionEyebrow = styled.p`
   text-transform: uppercase;
   letter-spacing: .20em;
   text-align: center;
-  max-width: 560px;
 `;
 
 export const SectionHeadline = styled.h2`
@@ -249,7 +248,6 @@ export const SectionHeadline = styled.h2`
   line-height: 1.12;
   letter-spacing: -.02em;
   text-align: center;
-  max-width: 560px;
 
   @media (max-width: 640px) { margin-bottom: 36px; }
 `;
