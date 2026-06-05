@@ -429,6 +429,16 @@ export const PillarCard = styled.div`
     transform: translateY(0);
   `}
 
+  &:hover {
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: 0 16px 48px rgba(14,26,23,0.13);
+    border-color: #B8D0C8;
+    transition:
+      transform 0.28s ease,
+      box-shadow 0.28s ease,
+      border-color 0.28s ease;
+  }
+
   @media (max-width: 620px) { padding: 22px 20px; }
 `;
 
