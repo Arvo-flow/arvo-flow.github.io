@@ -225,7 +225,7 @@ export default function Intelligence() {
       </HeroSection>
 
       {/* ── Scenarios ────────────────────────────────────────────────────── */}
-      <SectionWrap $white>
+      <SectionWrap>
         <SectionEyebrow>Utan Arvo</SectionEyebrow>
         <SectionHeadline>Vad händer när ingen bevakar</SectionHeadline>
 
@@ -259,7 +259,7 @@ export default function Intelligence() {
       </SectionWrap>
 
       {/* ── Pillars ──────────────────────────────────────────────────────── */}
-      <SectionWrap $white ref={pillarsRef}>
+      <SectionWrap ref={pillarsRef}>
         <SectionEyebrow>Med Arvo</SectionEyebrow>
         <SectionHeadline>Fyra lager av bevakning</SectionHeadline>
 

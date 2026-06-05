@@ -27,7 +27,7 @@ const checkRing = keyframes`
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export const Page = styled.div`
-  background: #F1F6F3;
+  background: #ffffff;
   color: #0E1A17;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -218,7 +218,7 @@ export const HeroPrice = styled.p`
 
 export const SectionWrap = styled.section`
   padding: 96px 24px;
-  background: ${({ $white }) => $white ? '#fff' : '#F1F6F3'};
+  background: #ffffff;
 
   @media (max-width: 640px) { padding: 72px 20px; }
 
@@ -324,15 +324,14 @@ export const ScenarioWithout = styled.p`
 `;
 
 export const ScenarioWith = styled.p`
-  margin: 14px 0 0;
-  background: rgba(27,122,110,0.08);
-  border-radius: 8px;
-  padding: 11px 13px;
+  margin: 16px 0 0;
+  padding: 0 0 0 13px;
+  border-left: 2.5px solid #1B7A6E;
   font-size: 12.5px;
   font-style: normal;
-  color: #0E4F47;
+  color: #2D4A44;
   font-weight: 500;
-  line-height: 1.55;
+  line-height: 1.6;
 
   &::before {
     content: 'MED ARVO';
@@ -342,7 +341,6 @@ export const ScenarioWith = styled.p`
     letter-spacing: .16em;
     color: #1B7A6E;
     margin-bottom: 5px;
-    opacity: 0.75;
   }
 `;
 
@@ -533,8 +531,9 @@ export const RuleDivider = styled.div`
 // ── Activation ────────────────────────────────────────────────────────────────
 
 export const ActivationSection = styled.section`
-  background: #F1F6F3;
+  background: #ffffff;
   padding: 96px 24px;
+  border-top: 1px solid #E8EFEC;
   text-align: center;
 
   @media (max-width: 640px) { padding: 72px 20px; }
@@ -576,8 +575,8 @@ export const ActivationSavingsBanner = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: #E5EFEA;
-  border: 1px solid #D5E2DC;
+  background: #F0F8F6;
+  border: 1px solid #C8E0DA;
   border-radius: 14px;
   padding: 14px 18px;
   margin-bottom: 32px;
