@@ -431,9 +431,11 @@ export const PillarCard = styled.div`
 
 export const CardContext = styled.p`
   margin: 0;
-  font-size: 12.5px;
+  padding: 0 0 0 12px;
+  border-left: 2.5px solid #9F3B22;
+  font-size: 13px;
   font-style: italic;
-  color: #7B8F89;
+  color: #4A5E58;
   line-height: 1.6;
 `;
 
