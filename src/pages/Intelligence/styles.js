@@ -13,23 +13,23 @@ const notifArrive = keyframes`
   to   { opacity: 1; transform: translateY(0) scale(1); }
 `;
 
+const dotPulse = keyframes`
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(29,176,154,0.4); }
+  50%       { opacity: 0.7; box-shadow: 0 0 0 4px rgba(29,176,154,0); }
+`;
+
 const checkRing = keyframes`
   from { transform: scale(0.6); opacity: 0; }
   60%  { transform: scale(1.08); }
   to   { transform: scale(1);   opacity: 1; }
 `;
 
-const dotPulse = keyframes`
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(29,176,154,0.4); }
-  50%       { opacity: 0.7; box-shadow: 0 0 0 4px rgba(29,176,154,0); }
-`;
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export const Page = styled.div`
-  background: #060D0B;
-  color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', Arial, sans-serif;
+  background: #F1F6F3;
+  color: #0E1A17;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 `;
@@ -38,6 +38,7 @@ export const Page = styled.div`
 
 export const HeroSection = styled.section`
   min-height: 100vh;
+  background: #060D0B;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -155,12 +156,18 @@ export const NotifCta = styled.button`
 
 export const HeroTagline = styled.h1`
   margin: 0 0 20px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
   font-size: clamp(38px, 6.5vw, 76px);
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
-  line-height: 1.06;
-  letter-spacing: -.045em;
+  line-height: 1.10;
+  letter-spacing: -.02em;
   animation: ${fadeUp} 0.8s 0.28s both ease-out;
+
+  em {
+    font-style: italic;
+    font-weight: 400;
+  }
 `;
 
 export const HeroSub = styled.p`
@@ -182,7 +189,7 @@ export const HeroCtaWrap = styled.div`
 export const HeroCta = styled.a`
   display: inline-flex;
   align-items: center;
-  background: linear-gradient(135deg, #1DB09A 0%, #0B7A6A 100%);
+  background: linear-gradient(135deg, #5DD6CA 0%, #1B6E66 100%);
   color: #fff;
   font-size: 16px;
   font-weight: 700;
@@ -190,7 +197,7 @@ export const HeroCta = styled.a`
   border-radius: 100px;
   text-decoration: none;
   letter-spacing: -.01em;
-  box-shadow: 0 8px 40px rgba(29,176,154,0.28);
+  box-shadow: 0 8px 40px rgba(27,122,110,0.28);
   transition: opacity 0.2s, transform 0.15s;
 
   &:hover {
@@ -210,31 +217,37 @@ export const HeroPrice = styled.p`
 // ── Section shared ────────────────────────────────────────────────────────────
 
 export const SectionWrap = styled.section`
-  padding: 120px 24px;
-  max-width: 960px;
-  margin: 0 auto;
+  padding: 96px 24px;
+  background: ${({ $white }) => $white ? '#fff' : '#F1F6F3'};
 
-  @media (max-width: 640px) { padding: 80px 20px; }
+  @media (max-width: 640px) { padding: 72px 20px; }
+
+  & > * {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 `;
 
 export const SectionEyebrow = styled.p`
   margin: 0 0 12px;
   font-size: 11px;
   font-weight: 700;
-  color: #1DB09A;
+  color: #1B7A6E;
   text-transform: uppercase;
   letter-spacing: .20em;
 `;
 
 export const SectionHeadline = styled.h2`
-  margin: 0 0 56px;
-  font-size: clamp(28px, 4vw, 50px);
-  font-weight: 800;
-  color: #fff;
-  line-height: 1.08;
-  letter-spacing: -.035em;
+  margin: 0 0 48px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 700;
+  color: #0E1A17;
+  line-height: 1.12;
+  letter-spacing: -.02em;
 
-  @media (max-width: 640px) { margin-bottom: 40px; }
+  @media (max-width: 640px) { margin-bottom: 36px; }
 `;
 
 // ── Scenarios ─────────────────────────────────────────────────────────────────
@@ -242,151 +255,124 @@ export const SectionHeadline = styled.h2`
 export const ScenarioList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 3px;
 `;
 
 export const ScenarioItem = styled.div`
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 18px;
-  padding: 36px 40px;
-  background: rgba(255,255,255,0.02);
+  padding: 24px 0;
+  border-bottom: 1px solid #D5E2DC;
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.65s ease, transform 0.65s ease, border-color 0.25s;
+  transform: translateY(24px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
 
   ${({ $visible }) => $visible && css`
     opacity: 1;
     transform: translateY(0);
   `}
 
-  &:hover { border-color: rgba(255,255,255,0.11); }
-
-  @media (max-width: 640px) { padding: 28px 22px; }
+  &:first-child {
+    border-top: 1px solid #D5E2DC;
+  }
 `;
 
-export const ScenarioTop = styled.div`
+export const ScenarioHead = styled.div`
   display: flex;
   align-items: baseline;
   gap: 14px;
-  margin-bottom: 22px;
+  margin-bottom: 8px;
 `;
 
 export const ScenarioNum = styled.span`
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  color: rgba(255,255,255,0.18);
-  letter-spacing: .18em;
+  color: #1B7A6E;
+  letter-spacing: .08em;
   flex-shrink: 0;
 `;
 
 export const ScenarioTitle = styled.h3`
   margin: 0;
-  font-size: clamp(17px, 2.5vw, 21px);
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -.02em;
-  line-height: 1.2;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0E1A17;
+  line-height: 1.25;
+  flex: 1;
 `;
 
-export const ScenarioRows = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-
-  @media (max-width: 600px) { grid-template-columns: 1fr; }
-`;
-
-export const ScenarioBox = styled.div`
-  border-radius: 12px;
-  padding: 20px 22px;
-  background: ${({ $type }) =>
-    $type === 'without' ? 'rgba(239,68,68,0.06)' : 'rgba(29,176,154,0.06)'};
-  border: 1px solid ${({ $type }) =>
-    $type === 'without' ? 'rgba(239,68,68,0.14)' : 'rgba(29,176,154,0.14)'};
-`;
-
-export const ScenarioBoxLabel = styled.p`
-  margin: 0 0 8px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .14em;
-  color: ${({ $type }) =>
-    $type === 'without' ? 'rgba(239,68,68,0.65)' : 'rgba(29,176,154,0.65)'};
-`;
-
-export const ScenarioBoxText = styled.p`
-  margin: 0;
-  font-size: 14px;
-  color: rgba(255,255,255,0.60);
-  line-height: 1.6;
-`;
-
-export const ScenarioAmount = styled.p`
-  margin: 12px 0 0;
-  font-size: ${({ $isText }) => $isText ? '18px' : 'clamp(20px, 3vw, 28px)'};
+export const ScenarioAmount = styled.span`
+  font-size: ${({ $isText }) => $isText ? '14px' : '16px'};
   font-weight: 800;
-  color: #EF4444;
-  letter-spacing: -.03em;
-  line-height: 1.1;
+  color: #9F3B22;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-style: ${({ $isText }) => $isText ? 'italic' : 'normal'};
+`;
+
+export const ScenarioWithout = styled.p`
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #5C6E68;
+  line-height: 1.55;
+  padding-left: 26px;
+`;
+
+export const ScenarioWith = styled.p`
+  margin: 0;
+  font-size: 13px;
+  color: #1B7A6E;
+  font-style: italic;
+  padding-left: 26px;
+  line-height: 1.5;
+
+  &::before {
+    content: '→ ';
+    font-style: normal;
+  }
 `;
 
 export const ScenarioTotal = styled.div`
   margin-top: 40px;
-  padding: 32px 36px;
-  background: rgba(29,176,154,0.05);
-  border: 1px solid rgba(29,176,154,0.18);
-  border-radius: 18px;
+  padding-top: 28px;
+  border-top: 2px solid #0E1A17;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
 
   @media (max-width: 600px) {
     flex-direction: column;
     align-items: flex-start;
-    padding: 24px 22px;
+    gap: 16px;
   }
-`;
-
-export const ScenarioTotalLeft = styled.div``;
-
-export const ScenarioTotalLabel = styled.p`
-  margin: 0 0 6px;
-  font-size: 15px;
-  color: rgba(255,255,255,0.50);
-  line-height: 1.5;
-  max-width: 340px;
-`;
-
-export const ScenarioTotalNote = styled.p`
-  margin: 0;
-  font-size: 12px;
-  color: #1DB09A;
-  font-weight: 600;
-  letter-spacing: .01em;
-`;
-
-export const ScenarioTotalRight = styled.div`
-  text-align: right;
-  flex-shrink: 0;
-
-  @media (max-width: 600px) { text-align: left; }
 `;
 
 export const ScenarioTotalAmount = styled.p`
   margin: 0 0 4px;
-  font-size: clamp(32px, 4.5vw, 44px);
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -.045em;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: clamp(40px, 7vw, 60px);
+  font-weight: 700;
+  color: #9F3B22;
+  letter-spacing: -.03em;
   line-height: 1;
 `;
 
 export const ScenarioTotalSub = styled.p`
   margin: 0;
+  font-size: 14px;
+  color: #5C6E68;
+  font-style: italic;
+  line-height: 1.4;
+`;
+
+export const ScenarioTotalNote = styled.p`
+  margin: 0;
   font-size: 12px;
-  color: rgba(255,255,255,0.25);
+  color: #1B7A6E;
+  font-weight: 600;
+  letter-spacing: .01em;
+  text-align: right;
+
+  @media (max-width: 600px) { text-align: left; }
 `;
 
 // ── Pillars ───────────────────────────────────────────────────────────────────
@@ -394,76 +380,83 @@ export const ScenarioTotalSub = styled.p`
 export const PillarsGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3px;
+  gap: 16px;
 
   @media (max-width: 620px) { grid-template-columns: 1fr; }
 `;
 
 export const PillarCard = styled.div`
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 18px;
-  padding: 40px 36px;
+  background: #fff;
+  border: 1px solid #D5E2DC;
+  border-radius: 20px;
+  padding: 28px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(14,26,23,0.06);
   opacity: 0;
-  transform: translateY(28px);
+  transform: translateY(24px);
   transition:
-    opacity 0.65s ${({ $i }) => `${0.08 * $i}s`} ease,
-    transform 0.65s ${({ $i }) => `${0.08 * $i}s`} ease,
-    border-color 0.25s;
+    opacity 0.60s ${({ $i }) => `${0.08 * $i}s`} ease,
+    transform 0.60s ${({ $i }) => `${0.08 * $i}s`} ease;
 
   ${({ $visible }) => $visible && css`
     opacity: 1;
     transform: translateY(0);
   `}
 
-  &:hover { border-color: rgba(255,255,255,0.13); }
-
-  @media (max-width: 620px) { padding: 28px 22px; }
+  @media (max-width: 620px) { padding: 22px 20px; }
 `;
 
 export const PillarNum = styled.span`
-  font-size: 26px;
-  display: block;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid #1B7A6E;
+  color: #1B7A6E;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 `;
 
 export const PillarTitle = styled.h3`
   margin: 0;
-  font-size: clamp(17px, 2.2vw, 20px);
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -.025em;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0E1A17;
   line-height: 1.25;
 `;
 
 export const PillarBody = styled.p`
   margin: 0;
-  font-size: 14px;
-  color: rgba(255,255,255,0.48);
-  line-height: 1.7;
+  font-size: 13.5px;
+  color: #5C6E68;
+  line-height: 1.6;
   flex: 1;
 `;
 
 export const PillarQuote = styled.p`
   margin: 0;
-  font-size: 13px;
-  color: #1DB09A;
+  font-size: 12.5px;
+  color: #1B7A6E;
   font-style: italic;
   line-height: 1.55;
-  padding-top: 14px;
-  border-top: 1px solid rgba(29,176,154,0.18);
+  padding-top: 16px;
+  margin-top: 4px;
+  border-top: 1px solid #D5E2DC;
 `;
 
 // ── Rules ─────────────────────────────────────────────────────────────────────
 
 export const RulesSection = styled.section`
   background: #000;
-  padding: 128px 24px;
-  text-align: center;
+  padding: 100px 24px;
 
-  @media (max-width: 640px) { padding: 88px 20px; }
+  @media (max-width: 640px) { padding: 80px 20px; }
 `;
 
 export const RulesInner = styled.div`
@@ -472,10 +465,10 @@ export const RulesInner = styled.div`
 `;
 
 export const RulesEyebrow = styled.p`
-  margin: 0 0 64px;
+  margin: 0 0 56px;
   font-size: 11px;
   font-weight: 700;
-  color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.28);
   text-transform: uppercase;
   letter-spacing: .22em;
 `;
@@ -497,116 +490,90 @@ export const RuleNumber = styled.span`
   display: block;
   font-size: 11px;
   font-weight: 700;
-  color: #1DB09A;
+  color: #4FBFB3;
   text-transform: uppercase;
   letter-spacing: .20em;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 `;
 
 export const RuleText = styled.p`
   margin: 0;
-  font-size: clamp(26px, 4.5vw, 52px);
-  font-weight: 800;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: clamp(30px, 5.5vw, 60px);
+  font-weight: 700;
   color: #fff;
   line-height: 1.1;
-  letter-spacing: -.04em;
+  letter-spacing: -.03em;
+  text-align: left;
 `;
 
 export const RuleDivider = styled.div`
   width: 1px;
   height: 56px;
-  background: rgba(255,255,255,0.08);
-  margin: 48px auto;
+  background: rgba(255,255,255,0.10);
+  margin: 52px 0;
 `;
 
 // ── Activation ────────────────────────────────────────────────────────────────
 
 export const ActivationSection = styled.section`
-  padding: 128px 24px;
+  background: #F1F6F3;
+  padding: 96px 24px;
   text-align: center;
-  position: relative;
-  overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(29,176,154,0.07) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  @media (max-width: 640px) { padding: 88px 20px; }
+  @media (max-width: 640px) { padding: 72px 20px; }
 `;
 
 export const ActivationInner = styled.div`
-  position: relative;
-  z-index: 1;
-  max-width: 520px;
+  max-width: 480px;
   margin: 0 auto;
 `;
 
 export const ActivationHeadline = styled.h2`
   margin: 0 0 16px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
   font-size: clamp(28px, 4vw, 46px);
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -.04em;
-  line-height: 1.1;
+  font-weight: 700;
+  color: #0E1A17;
+  letter-spacing: -.025em;
+  line-height: 1.12;
 `;
 
 export const ActivationSub = styled.p`
-  margin: 0 0 48px;
+  margin: 0 0 40px;
   font-size: 16px;
-  color: rgba(255,255,255,0.42);
+  color: #5C6E68;
   line-height: 1.6;
 `;
 
-export const ActivationCta = styled.a`
-  display: inline-flex;
-  align-items: center;
-  background: linear-gradient(135deg, #1DB09A 0%, #0B7A6A 100%);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  padding: 18px 48px;
-  border-radius: 100px;
-  text-decoration: none;
-  letter-spacing: -.01em;
-  box-shadow: 0 8px 48px rgba(29,176,154,0.30);
-  transition: opacity 0.2s, transform 0.15s;
-
-  &:hover {
-    opacity: 0.90;
-    transform: translateY(-2px);
-  }
-  &:active { transform: translateY(0); }
-`;
-
 export const ActivationNote = styled.p`
-  margin: 22px 0 0;
-  font-size: 13px;
-  color: rgba(255,255,255,0.22);
+  margin: 24px 0 0;
+  font-size: 12px;
+  color: #3F4B47;
   letter-spacing: .01em;
+  opacity: 0.65;
 `;
 
-// ── Activation form ───────────────────────────────────────────────────────────
+// ── Activation savings banner ─────────────────────────────────────────────────
 
 export const ActivationSavingsBanner = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: rgba(29,176,154,0.10);
-  border: 1px solid rgba(29,176,154,0.22);
+  background: #E5EFEA;
+  border: 1px solid #D5E2DC;
   border-radius: 14px;
   padding: 14px 18px;
   margin-bottom: 32px;
   text-align: left;
   font-size: 13.5px;
-  color: rgba(255,255,255,0.65);
+  color: #3F4B47;
   line-height: 1.55;
 
-  strong { color: #1DB09A; font-weight: 700; }
+  strong { color: #1B7A6E; font-weight: 700; }
 `;
+
+// ── Activation form ───────────────────────────────────────────────────────────
 
 export const ActivationForm = styled.form`
   display: flex;
@@ -619,26 +586,27 @@ export const ActivationForm = styled.form`
 export const ActivationInput = styled.input`
   width: 100%;
   box-sizing: border-box;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: #fff;
+  border: 1px solid #D5E2DC;
   border-radius: 12px;
   padding: 15px 18px;
   font-size: 15px;
-  color: #fff;
+  color: #0E1A17;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   outline: none;
-  transition: border-color 0.18s, background 0.18s;
+  transition: border-color 0.18s, box-shadow 0.18s;
 
-  &::placeholder { color: rgba(255,255,255,0.22); }
+  &::placeholder { color: #5C6E68; opacity: 0.55; }
 
   &:focus {
-    border-color: rgba(29,176,154,0.50);
-    background: rgba(29,176,154,0.05);
+    border-color: #1B7A6E;
+    box-shadow: 0 0 0 3px rgba(27,122,110,0.12);
   }
 `;
 
 export const ActivationSubmitBtn = styled.button`
   width: 100%;
-  background: linear-gradient(135deg, #1DB09A 0%, #0B7A6A 100%);
+  background: linear-gradient(135deg, #5DD6CA 0%, #1B6E66 100%);
   border: none;
   border-radius: 12px;
   padding: 16px 24px;
@@ -647,9 +615,10 @@ export const ActivationSubmitBtn = styled.button`
   color: #fff;
   cursor: pointer;
   letter-spacing: -0.01em;
-  box-shadow: 0 8px 40px rgba(29,176,154,0.28);
+  box-shadow: 0 8px 32px rgba(27,122,110,0.22);
   transition: opacity 0.18s, transform 0.15s;
-  margin-top: 2px;
+  margin-top: 4px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   &:hover { opacity: 0.88; transform: translateY(-2px); }
   &:active { transform: translateY(0); }
@@ -658,7 +627,7 @@ export const ActivationSubmitBtn = styled.button`
 
 export const ActivationError = styled.p`
   font-size: 12.5px;
-  color: #F87171;
+  color: #9F3B22;
   margin: 4px 0 0;
   line-height: 1.5;
 `;
@@ -675,34 +644,37 @@ export const ActivationSuccessCheck = styled.div`
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: rgba(29,176,154,0.14);
+  background: #E5EFEA;
+  border: 1.5px solid #1B7A6E;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
-  color: #1DB09A;
+  color: #1B7A6E;
   margin-bottom: 8px;
   animation: ${checkRing} 0.55s cubic-bezier(0.34,1.46,0.64,1) both;
 `;
 
 export const ActivationSuccessTitle = styled.h3`
   margin: 0;
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: #fff;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0E1A17;
 `;
 
 export const ActivationSuccessSub = styled.p`
   margin: 0;
   font-size: 14px;
-  color: rgba(255,255,255,0.42);
+  color: #5C6E68;
   line-height: 1.6;
 `;
 
 export const ActivationSuccessEmail = styled.p`
   margin: 0;
   font-size: 13px;
-  color: rgba(255,255,255,0.25);
+  color: #3F4B47;
+  opacity: 0.55;
   font-style: italic;
 `;
