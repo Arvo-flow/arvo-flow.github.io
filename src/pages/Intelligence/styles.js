@@ -325,17 +325,24 @@ export const ScenarioWithout = styled.p`
 
 export const ScenarioWith = styled.p`
   margin: 14px 0 0;
-  padding-top: 12px;
-  border-top: 1px solid #D5E2DC;
+  background: rgba(27,122,110,0.08);
+  border-radius: 8px;
+  padding: 11px 13px;
   font-size: 12.5px;
-  color: #1B7A6E;
-  font-style: italic;
-  line-height: 1.5;
+  font-style: normal;
+  color: #0E4F47;
+  font-weight: 500;
+  line-height: 1.55;
 
   &::before {
-    content: '→ ';
-    font-style: normal;
+    content: 'MED ARVO';
+    display: block;
+    font-size: 9px;
     font-weight: 700;
+    letter-spacing: .16em;
+    color: #1B7A6E;
+    margin-bottom: 5px;
+    opacity: 0.75;
   }
 `;
 

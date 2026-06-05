@@ -37,7 +37,7 @@ const SCENARIOS = [
   {
     num: '02',
     title: 'Fönstret som stängdes',
-    without: 'Tele2-avtalet förnyas automatiskt. Ni satt i ett möte. Nu är ni låsta ett år till.',
+    without: 'Tele2-avtalet förnyas automatiskt. Ni märkte det inte. Nu är ni låsta ett år till.',
     amount: 'Ett år förlorat',
     isText: true,
     with: 'Arvo flaggar 87 dagar innan. Ni agerar i lugn och ro.',
@@ -45,10 +45,10 @@ const SCENARIOS = [
   {
     num: '03',
     title: 'Licenserna ingen använde',
-    without: '12 Microsoft-licenser betalas varje månad. Fyra av dem tillhör folk som slutat.',
+    without: '12 Microsoft-licenser betalas varje månad. Ingen vet hur många som faktiskt används.',
     amount: '26 208 kr/år',
     isText: false,
-    with: 'Arvo identifierar avvikelsen månaden efter. Borttaget. Klart.',
+    with: 'Arvo identifierar oanvända licenser månaden efter. Borttaget. Klart.',
   },
   {
     num: '04',
