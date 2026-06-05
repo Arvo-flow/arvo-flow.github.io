@@ -64,6 +64,11 @@ export default function Admin() {
   const [corrReason, setCorrReason]            = useState('');
   const [corrSubmitting, setCorrSubmitting]    = useState(false);
   const [corrSuccess, setCorrSuccess]          = useState(null);
+  const [prospects, setProspects]              = useState(null);
+  const [prospectStats, setProspectStats]      = useState(null);
+  const [newProspect, setNewProspect]          = useState({ companyName: '', sniCode: '', employees: '', contactEmail: '', sendEmail: false });
+  const [createState, setCreateState]          = useState('idle');
+  const [createResult, setCreateResult]        = useState(null);
 
   const load = useCallback(async (token) => {
     setLoadError('');
@@ -157,6 +162,44 @@ export default function Admin() {
       }
     } catch { /* silent */ } finally {
       setCorrSubmitting(false);
+    }
+  }
+
+  const loadProspects = useCallback(() => {
+    fetch('/api/admin/prospects', { headers: { 'x-admin-token': adminToken } })
+      .then(r => r.json())
+      .then(j => { setProspects(j.prospects ?? []); setProspectStats(j.stats ?? {}); })
+      .catch(() => {});
+  }, [adminToken]);
+
+  async function createProspect(e) {
+    e.preventDefault();
+    if (createState === 'loading' || !newProspect.companyName || !newProspect.employees) return;
+    setCreateState('loading');
+    setCreateResult(null);
+    try {
+      const res = await fetch('/api/generate-prospect', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'x-arvo-admin': adminToken },
+        body:    JSON.stringify({
+          companyName:  newProspect.companyName,
+          sniCode:      newProspect.sniCode || undefined,
+          employees:    Number(newProspect.employees),
+          contactEmail: newProspect.contactEmail || undefined,
+          sendEmail:    newProspect.sendEmail,
+          createdBy:    'admin-ui',
+        }),
+      });
+      const json = await res.json();
+      setCreateResult(json);
+      if (json.ok) {
+        setNewProspect({ companyName: '', sniCode: '', employees: '', contactEmail: '', sendEmail: false });
+        loadProspects();
+      }
+    } catch {
+      setCreateResult({ ok: false, error: 'Nätverksfel' });
+    } finally {
+      setCreateState('idle');
     }
   }
 
@@ -273,7 +316,7 @@ export default function Admin() {
 
       {/* ── Tabs ───────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
-        {[['queue','Review Queue'], ['waitlist','Waitlist'], ['feedback','Feedback'], ['corrections','Korrektioner 🧠'], ['connections','Anslutningar 🔗']].map(([id, label]) => (
+        {[['queue','Review Queue'], ['waitlist','Waitlist'], ['feedback','Feedback'], ['corrections','Korrektioner 🧠'], ['connections','Anslutningar 🔗'], ['outbound','Outbound 🚀']].map(([id, label]) => (
           <button key={id} onClick={() => setActiveTab(id)} style={{
             padding: '7px 16px', borderRadius: 100, border: 'none', cursor: 'pointer',
             fontSize: 12.5, fontWeight: 600,
@@ -619,6 +662,107 @@ export default function Admin() {
                 <Tag $c={c.token_valid ? 'rgba(74,222,128,.2)' : 'rgba(239,68,68,.2)'}>
                   {c.token_valid ? 'OK' : 'Utgången'}
                 </Tag>
+              </TRow>
+            ))}
+          </Table>
+        </Section>
+      )}
+
+      {activeTab === 'outbound' && (
+        <Section>
+          {/* ── Prospect stats ──────────────────────────────────── */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+            {[
+              ['Skapade', prospectStats?.total, '#5DD6CA'],
+              ['Mail skickade', prospectStats?.email_sent, '#5DD6CA'],
+              ['Öppnade länken', prospectStats?.opened, '#F59E0B'],
+              ['Konverterade', prospectStats?.converted, '#4ADE80'],
+            ].map(([label, val, color]) => (
+              <StatBox key={label} style={{ minWidth: 120 }}>
+                <SLabel>{label}</SLabel>
+                <SValue style={{ color }}>{val ?? '–'}</SValue>
+              </StatBox>
+            ))}
+          </div>
+
+          {/* ── Create form ─────────────────────────────────────── */}
+          <STitle>Skapa prospect</STitle>
+          <Table>
+            <div style={{ padding: '16px 18px' }}>
+              <form onSubmit={createProspect} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <Input placeholder="Bolagsnamn *" value={newProspect.companyName}
+                  onChange={e => setNewProspect(p => ({ ...p, companyName: e.target.value }))}
+                  style={{ minWidth: 180, borderRadius: 8 }} />
+                <Input placeholder="SNI-kod (t.ex. 41)" value={newProspect.sniCode}
+                  onChange={e => setNewProspect(p => ({ ...p, sniCode: e.target.value }))}
+                  style={{ width: 130, borderRadius: 8 }} />
+                <Input placeholder="Antal anst. *" type="number" value={newProspect.employees}
+                  onChange={e => setNewProspect(p => ({ ...p, employees: e.target.value }))}
+                  style={{ width: 110, borderRadius: 8 }} />
+                <Input placeholder="Kontakt-mail" value={newProspect.contactEmail}
+                  onChange={e => setNewProspect(p => ({ ...p, contactEmail: e.target.value }))}
+                  style={{ minWidth: 200, borderRadius: 8 }} />
+                <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:13, color:'rgba(255,255,255,.6)', whiteSpace:'nowrap', cursor:'pointer' }}>
+                  <input type="checkbox" checked={newProspect.sendEmail}
+                    onChange={e => setNewProspect(p => ({ ...p, sendEmail: e.target.checked }))} />
+                  Skicka mail
+                </label>
+                <Btn type="submit" disabled={createState === 'loading' || !newProspect.companyName || !newProspect.employees}>
+                  {createState === 'loading' ? '…' : 'Skapa →'}
+                </Btn>
+              </form>
+              {createResult && (
+                <div style={{ marginTop: 10, padding: '10px 14px', borderRadius: 8,
+                  background: createResult.ok ? 'rgba(74,222,128,.1)' : 'rgba(239,68,68,.1)',
+                  border: `1px solid ${createResult.ok ? 'rgba(74,222,128,.25)' : 'rgba(239,68,68,.25)'}` }}>
+                  {createResult.ok ? (
+                    <span style={{ fontSize: 12.5, color: '#4ADE80' }}>
+                      ✓ Skapad:&nbsp;
+                      <a href={createResult.url} target="_blank" rel="noopener noreferrer"
+                        style={{ color: '#5DD6CA', wordBreak: 'break-all' }}>{createResult.url}</a>
+                      {createResult.emailSent && ' · mail skickat'}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 12.5, color: '#F87171' }}>Fel: {createResult.error}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </Table>
+
+          {/* ── Prospect list ────────────────────────────────────── */}
+          <div style={{ display:'flex', gap:8, marginBottom:12, marginTop:20, alignItems:'center' }}>
+            <STitle style={{ margin:0 }}>Prospects</STitle>
+            <button onClick={loadProspects} style={{
+              marginLeft:'auto', padding:'5px 12px', borderRadius:100, border:'none',
+              cursor:'pointer', fontSize:12, fontWeight:600,
+              background:'rgba(255,255,255,.08)', color:'rgba(255,255,255,.6)',
+            }}>↻ Ladda</button>
+          </div>
+          <Table>
+            <THead $cols="2fr 1.5fr 0.6fr 1.3fr 1.3fr 1fr 1fr">
+              <span>Bolag</span><span>Bransch</span><span>Anst.</span>
+              <span>Mail skickat</span><span>Öppnat</span><span>Åtgärd</span><span>Skapad</span>
+            </THead>
+            {prospects === null && <EmptyRow>Klicka ↻ Ladda för att hämta prospects.</EmptyRow>}
+            {prospects?.length === 0 && <EmptyRow>Inga prospects än — skapa ett ovan.</EmptyRow>}
+            {(prospects ?? []).map((p) => (
+              <TRow key={p.id} $cols="2fr 1.5fr 0.6fr 1.3fr 1.3fr 1fr 1fr">
+                <span style={{ fontWeight:600, fontSize:12.5 }}>{p.company_name}</span>
+                <span style={{ fontSize:11.5, color:'rgba(255,255,255,.50)' }}>{p.industry}</span>
+                <span style={{ fontSize:12 }}>{p.employees}</span>
+                <span style={{ fontSize:11, color: p.email_sent_at ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.2)' }}>
+                  {fmtDate(p.email_sent_at)}
+                </span>
+                <span style={{ fontSize:11, color: p.opened_at ? '#F59E0B' : 'rgba(255,255,255,.2)' }}>
+                  {fmtDate(p.opened_at)}
+                </span>
+                <Tag $c={
+                  p.action === 'upload'   ? 'rgba(74,222,128,.25)' :
+                  p.action === 'activate' ? 'rgba(93,214,202,.25)' :
+                  'rgba(255,255,255,.07)'
+                }>{p.action ?? '–'}</Tag>
+                <span style={{ fontSize:11, color:'rgba(255,255,255,.30)' }}>{fmtDate(p.created_at)}</span>
               </TRow>
             ))}
           </Table>
