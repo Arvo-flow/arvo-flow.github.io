@@ -378,15 +378,10 @@ const Nav = ({ variant = 'public' }) => {
                 Logga in
               </Button>
             )}
-            {variant === 'public' ? (
-              <>
-                <FoundingBtn><Button $variant="ghost" $size="sm" onClick={openModal}>Bli Founding Member</Button></FoundingBtn>
-                <Button as={Link} to="/testa-faktura" $variant="gradient" $size="sm">
-                  <CtaText><span className="full">Se mina besparingar →</span><span className="short">Se besparingar →</span></CtaText>
-                </Button>
-              </>
-            ) : (
-              null
+            {variant === 'public' && (
+              <Button as={Link} to="/testa-faktura" $variant="gradient" $size="sm">
+                <CtaText><span className="full">Se mina besparingar →</span><span className="short">Se besparingar →</span></CtaText>
+              </Button>
             )}
           </Right>
         </Inner>
