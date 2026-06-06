@@ -95,6 +95,49 @@ const MX_LABELS = {
   unknown:      'Okänd plattform',
 };
 
+// Kända mail-gateways — SPF som pekar hit är INTE felkonfig, det är en
+// medveten säkerhetsleverantör framför e-posten (= vaket IT, drar ned tesen).
+const MAIL_GATEWAYS = [
+  ['mimecast',     'Mimecast'],
+  ['barracuda',    'Barracuda'],
+  ['pphosted',     'Proofpoint'],
+  ['ppe-hosted',   'Proofpoint'],
+  ['messagelabs',  'Symantec MessageLabs'],
+  ['mailcontrol',  'Forcepoint'],
+  ['antispamcloud','SpamExperts'],
+  ['emailsrvr',    'Rackspace'],
+  ['sdmarc',       'SPF/DMARC-hanteringstjänst'],
+  ['dmarcian',     'dmarcian'],
+  ['easydmarc',    'EasyDMARC'],
+];
+
+// Expandera en SPF-post rekursivt: följ redirect= OCH include: (max 2 nivåer,
+// respekterar SPF:s 10-uppslagsgräns). Returnerar alla mekanismer + uppslagsantal.
+async function expandSpf(domain, depth = 0, seen = new Set()) {
+  if (depth > 2 || seen.has(domain)) return { mechanisms: [], lookups: 0 };
+  seen.add(domain);
+  let txts;
+  try { txts = (await dns.resolveTxt(domain)).map(c => c.join('')); }
+  catch { return { mechanisms: [], lookups: 0 }; }
+  const spf = txts.find(t => t.toLowerCase().startsWith('v=spf1'));
+  if (!spf) return { mechanisms: [], lookups: 0 };
+
+  const tokens = spf.split(/\s+/).slice(1);
+  let mechanisms = [...tokens];
+  let lookups = 0;
+  for (const tok of tokens) {
+    if (/^[+\-~?]?(a|mx|ptr|exists)([:/]|$)/i.test(tok)) lookups++;
+    const target = tok.match(/^[+\-~?]?include:(.+)/i)?.[1] ?? tok.match(/^redirect=(.+)/i)?.[1];
+    if (target) {
+      lookups++;
+      const sub = await expandSpf(target, depth + 1, seen);
+      mechanisms = mechanisms.concat(sub.mechanisms);
+      lookups += sub.lookups;
+    }
+  }
+  return { mechanisms, lookups };
+}
+
 // ── T3a · DNS-postur (gratis, körs överallt) ─────────────────────────────────
 //
 // En enda DNS-svep avslöjar hela e-poststacken OCH hur vaket bolagets IT är.
@@ -102,7 +145,8 @@ const MX_LABELS = {
 
 async function getDnsPosture(domain) {
   const d = domain?.trim()?.toLowerCase();
-  const p = { mx: 'unknown', spf: null, spfIncludes: [], spfM365: false,
+  const p = { mx: 'unknown', spf: null, spfLookups: 0, spfM365: false,
+              spfGateway: null, spfDelegated: false, spfMissing: false,
               dmarc: null, mtaSts: false, dkimM365: false };
   if (!d) return p;
 
@@ -119,9 +163,18 @@ async function getDnsPosture(domain) {
     const txts = (await dns.resolveTxt(d)).map(c => c.join(''));
     const spf  = txts.find(t => t.toLowerCase().startsWith('v=spf1'));
     if (spf) {
-      p.spf         = spf;
-      p.spfIncludes = [...spf.matchAll(/include:([^\s]+)/gi)].map(m => m[1]);
-      p.spfM365     = p.spfIncludes.some(i => i.includes('protection.outlook.com'));
+      p.spf = spf;
+      // Full evaluering: följ redirect= och nästlade include: innan vi dömer.
+      const { mechanisms, lookups } = await expandSpf(d);
+      const all = mechanisms.join(' ').toLowerCase();
+      p.spfLookups = lookups;
+      p.spfM365    = all.includes('protection.outlook.com');
+      p.spfGateway = MAIL_GATEWAYS.find(([m]) => all.includes(m))?.[1] ?? null;
+      // redirect= utan igenkänd plattform = medvetet delegerad SPF (vaket IT),
+      // INTE felkonfig. Det var precis det som tidigare flaggades fel.
+      p.spfDelegated = /\bredirect=/i.test(spf) && !p.spfM365 && !p.spfGateway;
+    } else {
+      p.spfMissing = true;
     }
   } catch {}
 
@@ -237,11 +290,16 @@ function buildFindings({ row, posture, domainReg, ct }) {
   else if (posture.dmarc === 'reject')
     push('T3', -15, false, `DMARC p=reject — IT aktivt påkopplat, svagare frysnings-tes`);
 
-  // ── T3 · SPF-sprawl / felkonfig ──
-  if (posture.spfIncludes.length >= 4)
-    push('T3', 12, true, `SPF pekar mot ${posture.spfIncludes.length} system — påbyggt i lager över år, aldrig städat`);
-  else if (posture.mx === 'microsoft365' && !posture.spfM365)
-    push('T3', 8, true, `SPF saknar Microsoft-include trots M365 — felkonfigurerat sedan start`);
+  // ── T3 · SPF — CFO-säker tolkning (följer redirect= och nästlade include:) ──
+  // Vi utropar ALDRIG "felkonfig" utan att först ha följt hela SPF-kedjan.
+  if (posture.spfGateway)
+    push('T3', -8, false, `${posture.spfGateway} framför e-posten — etablerad säkerhetsleverantör, vaket IT`);
+  else if (posture.spfDelegated)
+    push('T3', -8, false, `SPF delegerad via redirect till hanteringstjänst — outsourcad e-postauth, vaket IT`);
+  else if (posture.spfMissing && posture.mx === 'microsoft365')
+    push('T3', 12, true, `Ingen SPF-post alls trots Microsoft 365 — e-postautentisering aldrig konfigurerad`);
+  else if (posture.spfLookups >= 6)
+    push('T3', 10, true, `SPF auktoriserar ${posture.spfLookups} uppslag att skicka i ert namn — påbyggd stack nära 10-gränsen`);
 
   // ── T3 · MTA-STS = modern → drar ned tesen ──
   if (posture.mtaSts)
@@ -345,7 +403,8 @@ async function main() {
       mx_platform:    posture.mx,
       mx_label:       MX_LABELS[posture.mx],
       dmarc:          posture.dmarc ?? 'saknas',
-      spf_includes:   posture.spfIncludes.length,
+      spf_lookups:    posture.spfLookups,
+      spf_gateway:    posture.spfGateway,
       mta_sts:        posture.mtaSts,
       domain_registered: domainReg,
       ct_m365_since:  ct?.m365Since ?? null,
