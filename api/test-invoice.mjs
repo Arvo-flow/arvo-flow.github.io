@@ -50,6 +50,7 @@ const WHITELISTED_IPS = new Set([
   '83.249.237.58',   // owner mobile
   '192.165.21.4',    // owner work laptop
   '94.191.136.154',  // owner
+  '94.191.136.170',  // owner (dynamiskt — samma subnät)
 ]);
 
 async function checkRateLimit(kv, ip) {
