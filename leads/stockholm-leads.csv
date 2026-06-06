@@ -1,28 +1,30 @@
-# Arvo — Stockholm-leads batch 1 · Frozen Contract Scorer
+# Arvo — Batch 1 · Frozen Contract Scorer · Stockholm + Skåne
 # Hämtad från allabolag.se · Verifierad 2026-06-06
 # Kör: node --env-file=.env scripts/score-leads.mjs leads/stockholm-leads.csv
 #
-# Segment: tjänsteföretag 27–99 anst · Stockholm · SNI 62/70/73/78
-# Domäner markerade (?) = trolig domän, ej verifierad — kontrollera före utsändning
+# Segment: tjänsteföretag 27–99 anst · SNI 62/70/71/73/78
+# 10 Stockholm · 5 Malmö · 1 Helsingborg · 2 Lund · 2 Kristianstad
+# Domäner utan * = verifierade · med * = trolig domän, ej verifierad — kontrollera före utsändning
+# Overifierade Skåne-domäner: jobbklar.se · trivector.se · netray.se
 #
 company_name,domain,org_nr,founded_year,employees,sni_code,contact_email
 Westander PR Sverige AB,westander.se,556593-8312,2000,39,7330,
 Hallvarsson & Halvarsson AB,halvarsson.se,559081-7390,1995,81,7022,
-Friday Öst AB,friday.se,559222-5253,2019,72,7810,
-Ants Tech Recruiters AB,ants.se,556653-6230,2004,54,7810,
-Intelliplan AB,intelliplan.se,556582-6848,2000,35,6202,
-Wise IT AB,wiseit.se,556919-5356,2013,30,7810,
-Bravura Sverige AB,bravura.se,556752-0803,2008,89,7810,
-Diplomat Communications AB,diplomatcommunications.se,559012-9333,2015,27,7330,
-Kognity AB,kognity.com,559023-5080,2015,71,5821,
 Apendo AB,apendo.se,556437-4840,1991,33,6202,
+Lynxeye AB,lynxeye.com,556569-0087,1999,50,7022,
+Intelliplan AB,intelliplan.se,556582-6848,2000,35,6202,
+Netigate AB,netigate.se,556576-0997,1999,77,7022,
+Implement Consulting Group AB,implement.se,556637-4533,2002,72,7022,
 Daresay AB,daresay.com,556770-3573,2008,61,6202,
 Jurek Recruitment & Consulting AB,jurek.se,556694-5324,2005,63,7810,
-Amendo Bemanning & Rekrytering AB,amendo.se,556616-8687,2001,98,7820,
-Lynxeye AB,lynxeye.com,556569-0087,1999,50,7022,
-Recruitive AB,recruitive.se,559072-9546,2016,99,7820,
-Implement Consulting Group AB,implement.se,556637-4533,2002,72,7022,
-Netigate AB,netigate.se,556576-0997,1999,77,7022,
 Alumni AB,alumni.se,556431-1826,1991,66,7810,
-Kanstockholm AB,kanstockholm.se,556752-3252,2008,28,6201,
-B3 Consulting Group AB,b3.se,556606-3300,2001,27,7010,
+Castra Syd AB,castra.se,556721-2351,2007,77,6210,
+Knowit Core Syd AB,knowit.se,556943-4912,2013,99,6210,
+Kanmalmo AB,kan.se,556669-2983,2004,93,7311,
+BIMobject AB,bimobject.com,556856-7696,2011,63,5829,
+OnePartnerGroup Syd AB,onepartnergroup.se,559117-8107,2017,31,7810,
+Jobbklar Sverige AB,jobbklar.se,556270-1630,1986,42,7810,
+Trivector Mobility AB,trivector.se,556555-1701,1998,45,7112,
+Sigma Technology Software Solutions AB,sigmatechnology.com,559283-3791,2020,65,6210,
+Init Industry AB,initgroup.com,556542-2184,1997,54,7112,
+Netray Consulting AB,netray.se,559049-8035,2016,37,7820,
