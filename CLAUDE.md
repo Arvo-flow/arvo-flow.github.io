@@ -51,3 +51,234 @@ Vi fakturerar aldrig före kunden sparar. Arvo och kunden är alltid på samma s
 ---
 
 *Commit aldrig `.env` eller credentials · Kör aldrig `scripts/stress-test.mjs` utan explicit OK*
+
+---
+
+## Systemarkitektur — Full karta (uppdaterad 2026-06-06)
+
+> Läs detta innan all ny- eller vidareutveckling. Vi jobbar inte i stuprör.
+
+### Körnings­miljöer
+
+| Miljö | Vad körs | Begränsningar |
+|-------|----------|--------------|
+| **Vercel (prod)** | `api/**.mjs`, React SPA, cron-jobs | HTTP fritt · Serverless, max 60s |
+| **GitHub Actions** | `scripts/price-monitor.mjs`, CI | Playwright + Chromium · Kör nattligen |
+| **Lokal / sandbox** | `scripts/**.mjs`, agenter, tester | DNS fritt · HTTP blockerat av allowlist |
+
+DNS-anrop (Node `dns`-modulen) fungerar överallt. HTTP (fetch, axios, crt.sh, RDAP) fungerar bara på Vercel och GitHub Actions — inte i sandboxen.
+
+---
+
+### Dataskikt — Neon Postgres (prod)
+
+Alla tabeller skapas av `scripts/migrate.mjs` + `migrate-v2.mjs` + `migrate-price-db.mjs` + `migrate-prospects.mjs`. Kör i ordning vid ny miljö.
+
+| Tabell | Syfte |
+|--------|-------|
+| `invoice_analyses` | Varje AI-analys (extract → categorize → recommend). Centrala entiteten. |
+| `invoice_datapoints` | Anonymiserade kostnadspunkter för branschbenchmark. 3σ outlier-guard. |
+| `labeled_corrections` | Varje AI-korrektion (auto + manuell) — few-shot flywheel. |
+| `suppliers` | Normaliserade leverantörs­entiteter med faktura-count. |
+| `supplier_prices` | Prishistorik per leverantör/produkt/tier (is_current=true = nu). |
+| `supplier_price_history` | Ändring­slog — en rad per prisändring. |
+| `contract_timelines` | Kontraktssnapshots för proaktiv förfallodetektering. |
+| `price_alerts_sent` | Idempotens för kundnotifierings­pipelinen (en rad per run+supplier). |
+| `outbound_prospects` | Utgående prospect-briefings med token + spårning (opened_at, action). |
+| `magic_tokens` | Auth via magic link (expires 24h, single-use). |
+| `gate_emails` | Fingerprint → e-post koppling (för pris-alert-routing). |
+| `waitlist` | Väntelista (source: review_queue etc.). |
+| `invoice_feedback` | Tumme upp/ned per analys — förbättrar kategorisering. |
+| `fortnox_connections` | OAuth tokens för Fortnox-integration. |
+| `customers` | Kund­entitet kopplad till Fortnox-anslutning. |
+| `arvo_outcomes` | 60-dagars utfallsenkät — verifierar faktisk besparing (grund för success fee). |
+| `activation_outcomes` | Layer 2 utfallsspårning — success fee (20 % av verifierad besparing). |
+| `invoice_benchmarks` | Aggregerade marknadsdata per kategori/bransch/storlek. |
+
+**Cache:** Vercel KV (Redis). Nyckel: `bm:v2:{category}:{industry}:{sizeBucket}`. TTL 6h. Invalideras vid `storeDatapoint()`. Läses i `lib/benchmark.js` före Postgres.
+
+---
+
+### AI-pipeline — Faktura­analys (inbound)
+
+```
+PDF upload (frontend /testa-faktura)
+  │
+  ▼
+api/test-invoice.mjs          ← orchestrerar hela pipelinen, maxDuration 60s
+  │
+  ├─ agents/test-invoice/extract.js   (claude-opus-4-8, extraherar leverantör/belopp/period)
+  ├─ agents/categorizer/categorize.js (claude-sonnet-4-6, deterministicMatch → AI-fallback)
+  └─ agents/recommender/recommend.js  (claude-opus-4-8, rekommendation med BRANCHINDEX-benchmark)
+        │
+        ├─ lib/benchmark.js            (KV → Postgres → invoice_analyses → BRANCHINDEX mock)
+        ├─ lib/invoice-store.js        (lagrar analys med dedup på fingerprint+pdf_hash)
+        ├─ lib/labeled-corrections.js  (sparar AI-korrektera few-shot-exempel)
+        ├─ lib/invoice-graph.js        (uppdaterar suppliers, supplier_prices, contract_timelines)
+        ├─ lib/benchmark.js/storeDatapoint (anonymiserad datapunkt om annualCost 500–5M kr)
+        ├─ lib/price-alert.js/detectPriceAlert (jämför mot supplier_prices.price_monthly)
+        └─ lib/price-alert.js/getMarketIntelligence (cross-customer aggregat, ≥3 analyser)
+```
+
+**Gate-logik:** Gratis för 2 analyser med besparing. Därefter "savings gate": kumulativ nettobesparing ≥ 25 000 kr → registrering krävs. Rate limit: 5 analyser/IP/24h (whitelist för ägarens IP:er).
+
+---
+
+### Intelligence-pipeline — Pris­bevakning (proaktiv)
+
+```
+GitHub Actions (nattlig)
+  │
+  ▼
+scripts/price-monitor.mjs     ← Playwright + claude-haiku, ~40 leverantörssidor
+  │
+  ├─ Hittar avvikelse → /tmp/price-monitor-report.json (exit code 1)
+  └─ GH Actions → POST api/cron/run-price-alerts   ← CRON_SECRET bearer auth
+                       │
+                       ├─ lib/price-alert-store.js/getAffectedCustomers
+                       │     (fingerprint → gate_emails → invoice_analyses → berörda kunder)
+                       ├─ lib/price-impact.js/computeImpactKr
+                       │     (deterministic kr/år: (nytt−gammalt) × seats × 12)
+                       └─ Resend → kund-e-post "Telia höjde priset för X av Y i er bransch"
+```
+
+Alternativt: `scripts/notify-price-changes.mjs` (direkt Node.js, samma logik utan Vercel).
+
+---
+
+### Fynd-motor — Utgående prospektering (outbound)
+
+```
+leads/stockholm-leads.csv     ← 20 bolag (10 Stockholm + 10 Skåne), SNI 62/70/71/73/78
+  │
+  ▼
+scripts/score-leads.mjs       ← fynd-motor (INTE estimat-rankare)
+  │
+  ├─ T3a DNS-postur per domän:
+  │     MX (plattform) · SPF (expandSpf rekursivt, MAIL_GATEWAYS) · DMARC · MTA-STS · DKIM
+  ├─ buildFindings() → findings[] med {tier, weight, wow, text}
+  │     wow=true = "Hur visste de det?"-bar clearad
+  │     DMARC p=none → +18 wow · DMARC null → +20 wow · p=reject → −15
+  │     SPF gateway → −8 (vaket IT) · spfMissing+M365 → +12 wow · lookups≥6 → +10 wow
+  ├─ benchmarkExposure() via agents/recommender/branchindex.js (BRANCHINDEX)
+  │     premium = (median − p25) × employees = frusen premie de troligtvis överbetalar
+  └─ Output: results/scored-YYYY-MM-DD.json + .csv (wow≥1 filter)
+```
+
+**Kritisk insikt:** Fynd-motorn crier bara "frysta avtal" när DNS-fakta stödjer tesen. Samma signal (t.ex. SPF till mailgateway) kan SÄNKA tesen — det är medvetet. CFO-säkerheten är icke-förhandlingsbar.
+
+---
+
+### Benchmark-motor — BRANCHINDEX
+
+`agents/recommender/branchindex.js` (866 rader) är kärnan i alla prisjämförelser.
+
+```
+getBenchmark({ category, industry, employees })
+  → { median, p25, source, unit, note, alternatives[], isTotal? }
+```
+
+**Read path i lib/benchmark.js:**
+1. Vercel KV (6h TTL)
+2. `invoice_datapoints` (Postgres) — kräver ≥10 datapunkter
+3. `invoice_analyses` (live cross-customer) — kräver ≥5 datapunkter, returnerar `isTotal:true`
+4. BRANCHINDEX mock — sources: `real-public` (verifierat) · `estimated` · `mock`
+
+**SNI → industri:** SNI 62/63/58 → `it-tech` → `byraer`-segment. SNI 69–78 → `konsult` → `byraer`-segment.
+
+**Nyckelpriser (real-public, 2026-06):**
+- M365 Business Standard: 119,48 kr/mån (årsavtal) · p25: 1 704 kr/anv/år · median: 2 040 kr/anv/år
+- Tele2 mobil Bas: 299 kr/mån · Plus: 349 kr/mån
+
+---
+
+### Switch-orkestrator — Arvo Switch
+
+`agents/orchestrator/orchestrator.js` driver bytet med ett explicit tillståndsmaskin.
+
+**Tillståndsflöde:**
+```
+PROPOSED → AWAITING_APPROVAL → FULLMAKT_PREPARED → BANKID_PENDING → BANKID_SIGNED
+  → TERMINATED_OLD → [SCHEDULED_FUTURE |] APPLIED_NEW → LIVE → SUCCESS_FEE_DUE → COMPLETED
+```
+Terminal: `CUSTOMER_CANCELLED · SIGNING_EXPIRED · SUPPLIER_REJECTED · FAILED`
+
+Bygg­klossarna: `FileStore` (persistence) · `ScriveClient` (BankID e-signering, stub i dev) · `SupplierClient` (stub) · `FortnoxWatchdog` (go-live detektion). Success fee: 20 % av år-1-besparing.
+
+---
+
+### Frontend — React SPA
+
+Deployad till GitHub Pages (`build/`) via `npm run deploy` (gh-pages → `/flow`). Vercel hanterar API + React SPA i produktion.
+
+| Sida | Route | Vad |
+|------|-------|-----|
+| Landing | `/` | Värvning, intelligence-demo, CTA till testa-faktura |
+| Intelligence | `/intelligence` | Produktpitch för Arvo Intelligence (1 995 kr/mån) |
+| Testa Faktura | `/testa-faktura` | PDF-upload → AI-analys (huvud­funnel) |
+| Opportunity | `/opportunity/:token` | Visar rekommendation + aktivera switch |
+| Briefing | `/briefing/:token` | Månadsvis CFO-brief (mail-länk) |
+| Connect | `/connect` | Fortnox OAuth-anslutning |
+| Portfolio | `/portfolio` | Kund-dashboard över alla analyser |
+| Insights | `/insights` | Cross-customer aggregat (admin) |
+| Prospect | `/prospect/:token` | Outbound-briefing för prospekts |
+| Admin | `/admin/**` | Intern admin (magic link auth) |
+
+Auth: Magic link via `api/auth/request-magic-link.mjs` → `magic_tokens` → `api/validate-magic.mjs` → JWT i `AuthContext.js`.
+
+---
+
+### Cron-jobb (Vercel)
+
+| Schema | Endpoint | Vad |
+|--------|----------|-----|
+| `0 6 * * *` | `api/cron/update-fx-rate.mjs` | Hämtar USD/EUR→SEK (FX för priskalkyl) |
+| `0 7 * * *` | `api/cron/send-reminders.mjs` | 60/30-dagars kontrakts­påminnelser |
+| `0 9 1 * *` | `api/cron/generate-briefings.mjs` | Månadsvis CFO-brief till alla kunder |
+
+---
+
+### Viktiga lib-moduler
+
+| Fil | Vad |
+|-----|-----|
+| `lib/db.js` | Neon Postgres-klient (null om URL saknas — degraderar gracefully) |
+| `lib/kv.js` | Vercel KV-klient (null om URL saknas) |
+| `lib/benchmark.js` | Benchmark read/write med KV + Postgres + BRANCHINDEX fallback |
+| `lib/briefing-generator.js` | CFO-brief-insikter (SQL, inga AI-anrop) |
+| `lib/price-alert.js` | Smyghöjnings­detektion + cross-customer aggregat |
+| `lib/price-alert-store.js` | getAffectedCustomers + idempotens­logik |
+| `lib/price-impact.js` | Deterministisk kr/år-beräkning (inga heuristiker) |
+| `lib/outbound-estimator.js` | Estimat för outbound briefings (BRANCHINDEX, ej AI) |
+| `lib/sni-mapper.js` | SNI-kod → industri/segment |
+| `lib/invoice-graph.js` | Uppdaterar suppliers + supplier_prices + contract_timelines |
+| `lib/extraction-integrity.js` | Sanitetskontroller på extraherat data |
+| `lib/labeled-corrections.js` | Few-shot flywheel — sparar AI-korrektera exempel |
+
+---
+
+### Miljövariabler — kritiska
+
+```
+ANTHROPIC_API_KEY     — alla AI-anrop
+DATABASE_URL          — Neon Postgres (alias: POSTGRES_URL, POSTGRES_PRISMA_URL)
+KV_REST_API_URL       — Vercel KV
+KV_REST_API_TOKEN     — Vercel KV
+RESEND_API_KEY        — e-postutskick
+RESEND_FROM           — avsändaradress (default: analys@arvo-flow.se)
+ARVO_ADMIN_SECRET     — admin-API-skydd (generate-prospect etc.)
+CRON_SECRET           — autentisering för GH Actions → Vercel cron-anrop
+ARVO_BASE_URL         — bas-URL för mail-länkar
+```
+
+---
+
+### Nästa naturliga steg (ranked efter "Hur visste de det?"-potential)
+
+1. **Koppla price-monitor → fynd-motor:** När `price-monitor.mjs` hittar en prisändring, slå upp vilka scored-leads som använder den leverantören (via MX-plattform) → generera "Telia höjde priset för 8 av 14 i er bransch"-insikt direkt i outbound-briefingen. Det är vår moat.
+
+2. **T1-data (årsredovisningar):** Bolagsverket/allabolag.se-data för nyckeltal (omsättning, resultat, skuldsättning) ger CFO-relevanta fynd utan DNS. Starkaste "hur visste de det"-källan — ännu ej byggt.
+
+3. **T2-data (kohort-delta):** Spåra leverantörs­byten i en bransch via invoice_analyses-nätverket → "6 av 14 bolag i er bransch bytte från Telia förra kvartalet". Kräver kritisk massa av kunddata.
+
+4. **CT-datering av M365-onboarding:** crt.sh-loggar för `autodiscover.{domain}` ger exakt onboarding-datum → "Ni låste er i april 2021, typisk bindningstid är 3 år = förhandlingsbar nu". Kräver HTTP-egress (Vercel, ej sandbox).
