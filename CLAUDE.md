@@ -211,20 +211,114 @@ Bygg­klossarna: `FileStore` (persistence) · `ScriveClient` (BankID e-signering
 
 Deployad till GitHub Pages (`build/`) via `npm run deploy` (gh-pages → `/flow`). Vercel hanterar API + React SPA i produktion.
 
-| Sida | Route | Vad |
-|------|-------|-----|
-| Landing | `/` | Värvning, intelligence-demo, CTA till testa-faktura |
-| Intelligence | `/intelligence` | Produktpitch för Arvo Intelligence (1 995 kr/mån) |
-| Testa Faktura | `/testa-faktura` | PDF-upload → AI-analys (huvud­funnel) |
-| Opportunity | `/opportunity/:token` | Visar rekommendation + aktivera switch |
-| Briefing | `/briefing/:token` | Månadsvis CFO-brief (mail-länk) |
-| Connect | `/connect` | Fortnox OAuth-anslutning |
-| Portfolio | `/portfolio` | Kund-dashboard över alla analyser |
-| Insights | `/insights` | Cross-customer aggregat (admin) |
-| Prospect | `/prospect/:token` | Outbound-briefing för prospekts |
-| Admin | `/admin/**` | Intern admin (magic link auth) |
+| Sida | Route | Status | Vad |
+|------|-------|--------|-----|
+| Landing | `/` | ✅ Real | Värvning, intelligence-demo, CTA till testa-faktura |
+| Testa Faktura | `/testa-faktura` | ✅ Real | PDF-upload → AI-analys (huvud­funnel) |
+| Briefing | `/briefing/:token` | ✅ Real | Månadsvis CFO-brief (mail-länk) |
+| Prospect | `/prospect/:token` | ✅ Real | Outbound-briefing för prospekts |
+| Portfolio | `/portfolio` | ✅ Real | Kund-dashboard, fingerprint-baserad historik |
+| Aktivera | `/aktivera` | ✅ Real | Intelligence-aktivering (POST /api/activate-intelligence) |
+| Utfall | `/utfall` | ✅ Real | 60-dagars utfallsenkät (POST /api/outcome-survey) |
+| Connect | `/connect` | ⚠️ Delvis | Fortnox OAuth-anslutning (Visma = stub) |
+| Intelligence | `/intelligence` | ℹ️ Statisk | Produktpitch (aktiveringsformulär → API) |
+| Bias | `/bias` | ℹ️ Statisk | Algoritmtransparens-sida |
+| Villkor/Integritet/Cookies | `/villkor` etc | ℹ️ Statisk | Juridisk dokumentation |
+| **Insights** | `/insights` | ❌ **MOCK** | Läser mockData.js — "Lindberg VVS AB" — ej kopplad till API |
+| **Opportunity** | `/opportunity/:id` | ❌ **MOCK** | Läser mockData.js — BankID simulerat (2.4s delay) |
+| **ArvoScore** | `/arvo-score` | ❌ **MOCK** | Statisk mock-dashboard |
+| **Scanning** | `/scanning` | ❌ **MOCK** | Falsk animation ~6s, navigerar alltid till /insights |
+| Admin | `/admin/**` | ✅ Real | Intern admin (magic link auth) |
 
 Auth: Magic link via `api/auth/request-magic-link.mjs` → `magic_tokens` → `api/validate-magic.mjs` → JWT i `AuthContext.js`.
+
+---
+
+### Frontend — Detaljkarta
+
+#### Design­system (`src/theme.js`)
+- **Palett:** Brand `#1B7A6E` (teal) · Gradient `#5DD6CA → #1B6E66` · Bg `#F1F6F3` · Text `#0E1A17`
+- **Typsnitt:** Playfair Display (display) · Inter (body) · JetBrains Mono (kod)
+- **Grid:** 8px bas (4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96 · 128 px)
+- **Radier:** sm 6px · md 12px · lg 20px · xl 28px
+- **Rörelse:** fast 160ms · base 240ms · slow 420ms · spring 520ms (cubic-bezier)
+- **Shadows:** brand shadow `0 12px 32px rgba(27,122,110,0.28)`
+
+#### Arkitekturmönster
+- **Styled-components:** All styling CSS-in-JS med theme-integration
+- **Fingerprint-ID:** SHA-256(userAgent+screen+timezone) = anonym användar-ID för historik
+- **E-post­gate:** localStorage-nycklar `arvo_successful_count` · `arvo_had_saving` · `arvo_gate_passed` — 3 fria analyser med besparing, sedan registrering
+- **URL-driven state:** `?magic=<token>` · `?bypass` · `?intelligence_connected` · `?outlook_connected`
+- **Scroll-animationer:** IntersectionObserver för benchmark-spektrum, saving-counter, briefing-nav
+- **RAF-animationer:** RequestAnimationFrame + cubic-bezier för gauge/counter-transitions
+
+#### Sidor — vad är byggt, vad saknas
+
+**Landing** (`src/pages/Landing/index.js`, 822 rader)
+- Hero med animerat tidslinjekort · 3-stegs how-it-works · Score-gauge (4 nivåer)
+- Benchmark-spektrum (animerade dots, IntersectionObserver) · Intelligence-pitch · FAQ accordion
+- Pricing: 1 995 kr/mån + 20% switch · Founding Member-formulär (POST `/api/founding-member` — enda riktiga API-anropet)
+- Saknar: "Se hur Arvo löste det →" länken i tidslinjen leder ingenstans
+
+**Testa Faktura** (`src/pages/TestaFaktura/index.js`)
+- Drag-drop PDF-upload (batch-stöd) · bransch/anst­antal-väljare · Analysfaser (Extract → Categorize → Recommend)
+- Visar: Arvo Score gauge · nuv. vs föreslagen kostnad · brutto/netto besparing · ArvoFee-avdrag · hårdvaruavbe­talnings­detektion · licensöver­skott · contract watch-form
+- API-anrop: `/api/test-invoice` · `/api/send-analysis` · `/api/activate-intelligence` · `/api/quote-request` · `/api/feedback` · `/api/waitlist` · `/api/save-contract` · `/api/validate-magic`
+- Saknar: Tier-optimerings­modal är ofullständig · `/api/quote-request` genererar inga riktiga offerter
+
+**Briefing** (`src/pages/Briefing/index.js`)
+- Scroll-snap-kort · Cover-kort med besparing · Insikts­kort per möjlighet (recommendation/cost_trend/overpaying/price_alert)
+- Nav-dots (IntersectionObserver) · Action-recording (POST) · Laddnings- och felstate
+
+**Prospect** (`src/pages/Prospect/index.js`)
+- Memo-format · Intel-kort (e-postplattform, konfig­ålder, domänregistrering) · Estimat­kort per kategori
+- Action-tracking (upload/activate/dismissed) · Allt data från API via magic token
+
+**Portfolio** (`src/pages/Portfolio/index.js`)
+- GET `/api/invoice-history?fingerprint={fp}` · Arvo Score beräknas från 8 segment
+- Segment-grid · Faktura­lista · Rapport-formulär (POST `/api/send-report`) · CTA till Connect Fortnox/Visma
+
+**Aktivera** (`src/pages/Aktivera/index.js`)
+- OAuth-knappar (Gmail/Outlook) · ELLER e-post­formulär → POST `/api/activate-intelligence`
+- Savings-banner om länkad från analys (?supplier=, ?saving=) · 3-stegs tids­linje
+
+**Utfall** (`src/pages/OutcomeSurvey/index.js`)
+- 2-stegs enkät (bytte du? → ny kostnad?) · URL-params (id, svar=ja|nej)
+- POST `/api/outcome-survey` · Validering av numerisk kostnad
+
+**Connect** (`src/pages/Connect/index.js`)
+- Redirect till `/api/fortnox/auth?industry={}&employees={}` · Visma = placeholder
+- Security-badges (BankID, GDPR, AES-256) · Samtyckes­check · Bransch+anst­antal-väljare
+
+**Intelligence** (`src/pages/Intelligence/index.js`)
+- 4 pelare: Marknadsintelligens · Kontrakts­kalender · Faktura­kontroll · CFO-brief
+- Aktiverings­formulär POST `/api/activate-intelligence` (e-post + frivilligt bolagsnamn)
+
+#### ❌ Kritiska mockar — ej produktions­klara
+
+**Insights** (`src/pages/Insights/index.js`) — `import { COMPANY, SUMMARY, OPPORTUNITIES, TIMELINE } from '../data/mockData.js'`
+- Visar alltid "Lindberg VVS AB" med hårdkodade möjligheter (försäkring/el/mobil/bredband/SaaS)
+- Skeleton-laddning 4.2s, sedan mock-data
+- Behöver: GET `/api/insights?fingerprint={}` eller session-baserat API
+
+**Opportunity** (`src/pages/Opportunity/index.js`) — läser `OPPORTUNITIES` från mockData.js
+- BankID-signering simuleras med 2.4s `setTimeout` → omedelbart "klart"
+- "Mejla mig sammanfattningen" gör ingenting
+- Behöver: riktig Scrive-integration + `/api/opportunity/:id`
+
+**ArvoScore** (`src/pages/ArvoScore/index.js`) — statisk mock
+- 3 klara byten · 1 låst · 5 kontrakts­förfallodatum — allt hårdkodat
+- Behöver: koppling till `invoice_analyses` + `contract_timelines`
+
+**Scanning** (`src/pages/Scanning/index.js`) — alltid klart om ~6s
+- Falsk animation av Fortnox-scanning · navigerar till /insights (som också är mock)
+- Behöver: real Fortnox API polling
+
+#### Komponenter
+- `Nav.js`: Sticky header · variant prop (public/app) · Auth-modal (magic link) · Founding Member-modal · Toast-notiser
+- `Button.js`: 6 varianter (primary/brand/gradient/secondary/ghost/ghostInverse) · 3 storlekar
+- `AuthContext.js`: email i localStorage · `?magic=<token>` vid sidladdning → POST `/api/validate-magic` → toast i Nav
+- `mockData.js`: "Lindberg VVS AB" · 14 anst · VVS/installation · OPPORTUNITIES/TOTALS/SUMMARY/TIMELINE
 
 ---
 
