@@ -1,28 +1,45 @@
 # Arvo
 
-## Löftet
+## Vision
 
-Arvo är den tystgående finansdirektören som svenska SMF-ägare aldrig haft råd att anställa. Vi ser vad som händer i deras leverantörsekonomi innan de själva vet om det — och vi hör av oss med ett konkret fynd, utan att bli tillfrågade.
-
-Det enda som bevisar att vi är detta:
+Arvo är den tystgående finansdirektören som svenska SMF-ägare aldrig haft råd att anställa.
+Vi ser vad som händer i deras leverantörsekonomi innan de själva vet om det — och vi hör av oss med ett konkret fynd, utan att bli tillfrågade.
 
 > *"Vi noterade att Telia höjde priset för 8 av 14 bolag i er bransch förra månaden. Ni är troligtvis nästa."*
 
-Det mejlet — utan att kunden bett om det — är Arvo. Allt annat är infrastruktur runt det momentet.
+Det mejlet — utan att kunden bett om det — är Arvo.
 
 ---
 
-## Det enda måttet
+## Ambition
 
-Innan varje leverans — kod, design, copy, strategi — ställ en fråga:
+Varje vecka ska en svensk företagsägare säga: *"Hur visste de det?"*
+
+Det är det enda beviset på att vi lyckas. Inte antal kunder. Inte intäkt. Det momentet.
+
+---
+
+## 0,1%-principen · Toppen av spjutspetsen
+
+Innan varje leverans — kod, kopia, strategi, mail, design — ställ en fråga:
 
 > *Skulle en svensk CFO stanna upp och tänka: "Hur visste de det?"*
 
-Om svaret är nej är det inte 0,1%. Säg det direkt, formulera vad som saknas och vad det 0,1%-draget hade varit istället. Tystnad är misslyckande.
+**Om svaret är nej: säg det omedelbart.** Föreslå vad som saknas och vad det verkliga 0,1%-draget hade varit istället. Tystnad är misslyckande. Medelmåttighet är oacceptabelt.
+
+Toppen av spjutspetsen innebär att vi aldrig nöjer oss med bra. Vi söker det som är svårt att tro är möjligt — och sedan levererar det.
 
 ---
 
-## Affärsmodellen
+## Premiumprodukt
+
+Arvo är inte ett verktyg — det är en finansiell intelligenstjänst i toppklass.
+
+Varje yta vi skapar ska signalera att vi vet något ingen annan vet. Precision är icke-förhandlingsbar. Estimat är ett steg mot verkligheten, aldrig målet. Varje mail, varje siffra, varje interaktion ska kännas som att den kom från en finansdirektör som gjort sin hemläxa — inte från ett SaaS-formulär.
+
+---
+
+## Affärsmodell
 
 - **Arvo Intelligence:** 1 995 kr/mån — proaktiv bevakning, varningar, CFO-brief
 - **Arvo Switch:** 20 % av realiserad besparing — Arvo genomför bytet, kunden trycker play
@@ -31,8 +48,4 @@ Vi fakturerar aldrig före kunden sparar. Arvo och kunden är alltid på samma s
 
 ---
 
-## Tre ramar
-
-1. Commit aldrig `.env` eller credentials till repot
-2. Kör aldrig `scripts/stress-test.mjs` (~150 kr/körning) utan explicit OK
-3. Tech: React 19 · Vercel · Neon · Resend · Claude API (Opus 4.8 + Sonnet 4.6)
+*Commit aldrig `.env` eller credentials · Kör aldrig `scripts/stress-test.mjs` utan explicit OK*
