@@ -101,6 +101,16 @@ export const EstimateCard = styled.div`
     background: rgba(255,255,255,0.055);
     transition: all 0.2s ease;
   }
+
+`;
+
+export const IntelCard = styled.div`
+  background: rgba(29,176,154,0.07);
+  border: 1px solid rgba(29,176,154,0.28);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  animation: ${fadeUp} 0.5s 0.1s ease both;
 `;
 
 export const CategoryLabel = styled.div`

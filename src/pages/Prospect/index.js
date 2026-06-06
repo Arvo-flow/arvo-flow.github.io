@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import {
   Wrap, Header, LogoText, DateStamp,
   Body, MemoHead, Eyebrow, CompanyName, MetaLine, MetaDot,
-  Intro, EstimateCard, CategoryLabel, DataRow, DataDesc, DataVal,
+  Intro, EstimateCard, IntelCard, CategoryLabel, DataRow, DataDesc, DataVal,
   SavingBand, SavingLabel, SavingRange, SourceNote,
   Divider, Disclaimer, CtaSection, PrimaryCta, SecondaryCta,
   Footer, FooterText,
@@ -24,6 +24,27 @@ const ArvoMark = () => (
 );
 
 const fmt = n => n != null ? new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n) : '–';
+
+const MX_LABELS = {
+  microsoft365: 'Microsoft 365',
+  google:       'Google Workspace',
+  zoho:         'Zoho Mail',
+  other:        'Anpassad e-postlösning',
+};
+
+const SV_MONTHS = ['januari','februari','mars','april','maj','juni',
+                   'juli','augusti','september','oktober','november','december'];
+
+function swMonthYear(dateStr) {
+  if (!dateStr) return null;
+  const [y, m] = dateStr.split('-');
+  return `${SV_MONTHS[parseInt(m) - 1]} ${y}`;
+}
+
+function monthsAgo(dateStr) {
+  if (!dateStr) return 0;
+  return Math.round((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+}
 
 function formatDate(iso) {
   if (!iso) return '';
@@ -86,8 +107,16 @@ export default function Prospect() {
   }
 
   const { companyName, industry, sizeBucket, employees, estimates, generatedAt } = data;
-  const cats = estimates?.categories ?? [];
+  const cats      = estimates?.categories ?? [];
   const hasSaving = estimates?.hasEstimates && cats.length > 0;
+
+  const mxPlatform       = estimates?.mxPlatform;
+  const mxSince          = estimates?.mxSince;
+  const domainRegistered = estimates?.domainRegistered;
+  const foundedYear      = estimates?.foundedYear;
+  const hasIntel         = mxPlatform && (mxSince || foundedYear);
+
+  const mxMonths = monthsAgo(mxSince);
 
   return (
     <Wrap>
@@ -105,21 +134,58 @@ export default function Prospect() {
             <span>{industry}</span>
             <MetaDot>·</MetaDot>
             <span>{employees} anställda</span>
-            <MetaDot>·</MetaDot>
-            <span>{sizeBucketLabel(sizeBucket)}</span>
+            {foundedYear && <><MetaDot>·</MetaDot><span>Grundat {foundedYear}</span></>}
           </MetaLine>
         </MemoHead>
 
         <Intro>
-          Arvo har analyserat kostnadsprofilen för bolag i er bransch med {employees}&nbsp;anställda.
-          {hasSaving
-            ? <> Analysen identifierar en potentiell besparing på{' '}
-                <strong style={{ color: '#ffffff' }}>{fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}&nbsp;kr/år</strong>
-                {' '}— baserat på verifierade marknadspriser. Ladda upp er faktura för att se vad ni faktiskt betalar.
+          {mxSince
+            ? <>Er {MX_LABELS[mxPlatform] ?? mxPlatform}-konfiguration är oförändrad sedan{' '}
+                <strong style={{ color: '#ffffff' }}>{swMonthYear(mxSince)}</strong>
+                {' '}— {mxMonths} månader. Ladda upp er faktura för att se den exakta
+                besparingen det innebär.
               </>
-            : <> Ladda upp er faktura för en exakt analys av er kostnadssituation.</>
+            : <>Arvo har analyserat kostnadsprofilen för bolag i er bransch med {employees}&nbsp;anställda.
+                {hasSaving
+                  ? <>{' '}Analysen identifierar en potentiell besparing på{' '}
+                      <strong style={{ color: '#ffffff' }}>{fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}&nbsp;kr/år</strong>
+                      {' '}— baserat på verifierade marknadspriser.</>
+                  : null
+                }
+                {' '}Ladda upp er faktura för att se vad ni faktiskt betalar.
+              </>
           }
         </Intro>
+
+        {hasIntel && (
+          <IntelCard>
+            <CategoryLabel>Arvo:s underlag — verifierade datapunkter</CategoryLabel>
+            {mxPlatform && (
+              <DataRow>
+                <DataDesc>E-postplattform</DataDesc>
+                <DataVal>{MX_LABELS[mxPlatform] ?? mxPlatform}</DataVal>
+              </DataRow>
+            )}
+            {mxSince && (
+              <DataRow>
+                <DataDesc>Konfiguration oförändrad sedan</DataDesc>
+                <DataVal $highlight>{swMonthYear(mxSince)} — {mxMonths} månader</DataVal>
+              </DataRow>
+            )}
+            {domainRegistered && (
+              <DataRow>
+                <DataDesc>Domän registrerad</DataDesc>
+                <DataVal>{swMonthYear(domainRegistered)}</DataVal>
+              </DataRow>
+            )}
+            {foundedYear && (
+              <DataRow style={{ marginBottom: 0 }}>
+                <DataDesc>Grundat</DataDesc>
+                <DataVal>{foundedYear}</DataVal>
+              </DataRow>
+            )}
+          </IntelCard>
+        )}
 
         {cats.map((cat, i) => (
           <EstimateCard key={i}>

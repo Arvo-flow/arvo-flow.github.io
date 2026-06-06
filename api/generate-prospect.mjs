@@ -52,7 +52,20 @@ function calcFrozenSaving({ employees, mxPlatform }) {
   };
 }
 
-function buildOutboundEmail({ companyName, industry, employees, estimates, prospectUrl, foundedYear, mxPlatform }) {
+function swMonthYear(dateStr) {
+  if (!dateStr) return null;
+  const [y, m] = dateStr.split('-');
+  const months = ['januari','februari','mars','april','maj','juni',
+                  'juli','augusti','september','oktober','november','december'];
+  return `${months[parseInt(m) - 1]} ${y}`;
+}
+
+function monthsAgo(dateStr) {
+  if (!dateStr) return 0;
+  return Math.round((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+}
+
+function buildOutboundEmail({ companyName, industry, employees, estimates, prospectUrl, foundedYear, mxPlatform, mxSince, domainRegistered }) {
   const useFrozen = mxPlatform && foundedYear && MX_LABELS[mxPlatform];
   const CSS = `
   body { margin:0; padding:0; background:#f4f4f4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -90,41 +103,44 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
   if (useFrozen) {
     const platformLabel = MX_LABELS[mxPlatform];
     const saving        = calcFrozenSaving({ employees, mxPlatform });
-    const age           = new Date().getFullYear() - parseInt(foundedYear);
-    const ageDesc       = age >= 8 ? `${age} år` : `${age} år`;
+    const mxSinceLabel  = swMonthYear(mxSince);
+    const mxMonths      = mxSince ? monthsAgo(mxSince) : null;
+    const domRegLabel   = swMonthYear(domainRegistered);
+
+    const openingPara = mxSince
+      ? `Vi analyserade er DNS-konfiguration den ${new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' })}. Er <strong>${platformLabel}</strong>-konfiguration är oförändrad sedan <strong>${mxSinceLabel}</strong> — ${mxMonths} månader.`
+      : `Vi hittade er via Bolagsverket. Ni kör <strong>${platformLabel}</strong> och grundades ${foundedYear}.`;
+
+    const contextPara = mxSince
+      ? `Det är starkt korrelerat med att de underliggande telekommunikationsavtalen inte heller omförhandlats sedan dess. Operatörerna proaktivt erbjuder aldrig bättre priser — det kräver att någon ber om det.`
+      : `Det är en profil vi känner igen: ett bolag som vuxit stadigt och fokuserat på kärnverksamheten — och där telekomavtalet tecknades i bolagets tidiga år och sedan dess förnyats automatiskt, utan att någon haft ett skäl att ringa upp och förhandla.`;
 
     return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Arvo — ${companyName}</title><style>${CSS}</style></head><body>
 <div class="wrap">
   ${HEADER}
   <div class="body">
-    <div class="eyebrow">Arvo har tittat på er profil</div>
+    <div class="eyebrow">Arvo har analyserat er profil</div>
     <h1>${companyName}</h1>
     <div class="meta">${industry} &nbsp;·&nbsp; ${employees} anställda &nbsp;·&nbsp; Grundat ${foundedYear}</div>
 
-    <p class="intro">
-      Vi hittade er via Bolagsverket. Ni kör <strong>${platformLabel}</strong> och har funnits i ${ageDesc}.
-    </p>
-    <p class="intro">
-      Det är en profil vi känner igen: ett bolag som vuxit stadigt och fokuserat på kärnverksamheten —
-      och där telekomavtalet tecknades i bolagets tidiga år och sedan dess förnyats automatiskt, utan att
-      någon haft ett skäl att ringa upp och förhandla.
-    </p>
+    <p class="intro">${openingPara}</p>
+    <p class="intro">${contextPara}</p>
 
     <div class="intel-card">
-      <div class="intel-label">Arvo:s bedömning — er profil</div>
+      <div class="intel-label">Verifierade datapunkter</div>
       <div class="intel-row">
-        <span class="intel-desc">E-postplattform (verifierad)</span>
+        <span class="intel-desc">E-postplattform</span>
         <span class="intel-val">${platformLabel}</span>
       </div>
-      <div class="intel-row">
-        <span class="intel-desc">Bolagsålder</span>
-        <span class="intel-val">${ageDesc}</span>
-      </div>
-      <div class="intel-row">
-        <span class="intel-desc">Antal anställda</span>
-        <span class="intel-val">${employees}</span>
-      </div>
+      ${mxSince ? `<div class="intel-row">
+        <span class="intel-desc">Konfiguration oförändrad sedan</span>
+        <span class="intel-val green">${mxSinceLabel} (${mxMonths} mån)</span>
+      </div>` : ''}
+      ${domRegLabel ? `<div class="intel-row">
+        <span class="intel-desc">Domän registrerad</span>
+        <span class="intel-val">${domRegLabel}</span>
+      </div>` : ''}
       <div class="intel-row">
         <span class="intel-desc">Typisk merkostnad — bolag med er profil</span>
         <span class="intel-val green">${fmt(saving.low)}–${fmt(saving.high)} kr/år</span>
@@ -133,9 +149,8 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
     </div>
 
     <div class="disclaimer">
-      Bedömningen baseras på er storlek, plattform och bransch — inte er specifika faktura.
-      Den exakta besparingen beror på ert faktiska avtal. Vi levererar den siffran utan kostnad,
-      utan bindning och utan att fråga om något annat.
+      Bedömningen baseras på er storlek, plattform och bransch. Den exakta besparingen
+      beror på ert faktiska avtal — vi levererar den siffran utan kostnad och utan bindning.
     </div>
 
     <a href="${prospectUrl}" class="cta-btn">Se er kostnadsbedömning →</a>
@@ -198,6 +213,8 @@ export default async function handler(req, res) {
     foundedYear,
     mxPlatform,
     frozenScore,
+    mxSince,
+    domainRegistered,
   } = req.body ?? {};
 
   if (!companyName) return send(res, 400, { error: 'companyName required' });
@@ -219,9 +236,11 @@ export default async function handler(req, res) {
   const estimates = estimateForProfile({ segment: profile.segment, sizeBucket, employees });
 
   // Attach frozen intelligence metadata if provided
-  if (foundedYear) estimates.foundedYear  = parseInt(foundedYear, 10);
-  if (mxPlatform)  estimates.mxPlatform   = mxPlatform;
-  if (frozenScore) estimates.frozenScore  = parseInt(frozenScore, 10);
+  if (foundedYear)      estimates.foundedYear      = parseInt(foundedYear, 10);
+  if (mxPlatform)       estimates.mxPlatform        = mxPlatform;
+  if (frozenScore)      estimates.frozenScore       = parseInt(frozenScore, 10);
+  if (mxSince)          estimates.mxSince           = mxSince;
+  if (domainRegistered) estimates.domainRegistered  = domainRegistered;
 
   // Create token
   const token = crypto.randomBytes(18).toString('base64url');
