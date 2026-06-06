@@ -29,6 +29,8 @@ Innan varje leverans — kod, kopia, strategi, mail, design — ställ en fråga
 
 Toppen av spjutspetsen innebär att vi aldrig nöjer oss med bra. Vi söker det som är svårt att tro är möjligt — och sedan levererar det.
 
+Varje lösning ska vara **kreativ** (oväntad vinkel, inte den uppenbara), **innovativ** (bryt mönstret när mönstret är genomsnittligt) och **effektiv** (rätt sak, snabbast möjliga väg, inget slöseri). De tre egenskaperna gäller alltid — inte när det är bekvämt.
+
 ---
 
 ## Premiumprodukt
