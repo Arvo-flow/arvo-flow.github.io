@@ -1,23 +1,31 @@
 // scripts/score-leads.mjs
-// Frozen Contract Scorer — identifierar bolag med föråldrade telekomavtal.
+// Fynd-motor — Arvo letar inte efter "troliga" frysta avtal. Den letar efter
+// VERIFIERBARA FAKTA om ett bolags leverantörsekonomi som bolaget självt känner
+// igen som sant och inte väntade sig att en utomstående visste.
+//
+// Reframe (från estimat-rankare → fynd-motor):
+//   • Varje bolag får findings[] — daterbara, publika fakta de kan kontrollera själva.
+//   • Finding Score härleds ur fyndens OAVVISLIGHET, inte ur en gissad besparing.
+//   • Samma signal kan dra upp ELLER ned frysnings-tesen (p=reject = vaket IT = svagare).
+//   • Estimatet finns kvar — men som slutkläm, aldrig som krok.
 //
 // Usage: node --env-file=.env scripts/score-leads.mjs leads.csv [--dry-run]
 //
 // CSV-format (rubrikrad krävs):
 //   company_name,domain,org_nr,founded_year,employees,sni_code,contact_email
 //
-// Datakällor per bolag (gratis, manuellt via allabolag.se):
-//   founded_year, employees, sni_code, org_nr
-//   domain = bolagets e-postdomän (t.ex. foretaget.se)
+// Fyndlager (gratis, rankade efter "hur visste de det"-kraft):
+//   T1  Bolagets egna inlämnade siffror (årsredovisning) — STARKAST, ej kopplat än
+//   T2  Kohort-deltat (leverantörsbyte i branschen) — moaten, ej byggt än
+//   T3  Infrastruktur: DNS (MX/SPF/DMARC/DKIM/MTA-STS) + CT-loggar + RDAP-datum
 //
-// Env-variabler (valfria):
-//   SECURITY_TRAILS_KEY — SecurityTrails API-nyckel (50 gratis queries/dag)
-//                         Ger MX-historik med exakt datum. Hoppar över om saknas.
+// Miljö: DNS körs överallt. CT/RDAP (HTTP) kräver öppen egress → kör från Vercel.
+//        Härifrån (allowlist) tystnar HTTP-lagren och faller tillbaka på DNS.
 //
 // Output:
-//   • Rankad lista i terminalen med MX-plattform, datum och besparingsestimat
-//   • results/scored-YYYY-MM-DD.json  (full data)
-//   • results/scored-YYYY-MM-DD.csv   (batch-redo för score ≥ 60)
+//   • Rankad lista i terminalen — fynd först, score + wow-antal, estimat sist
+//   • results/scored-YYYY-MM-DD.json  (full data inkl. findings[])
+//   • results/scored-YYYY-MM-DD.csv   (batch-redo för wow-antal ≥ 1)
 
 import { promises as dns } from 'dns';
 import { createReadStream } from 'fs';
@@ -77,52 +85,66 @@ function monthsAgo(dateStr) {
   return Math.round((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
 }
 
-// ── MX-lookup — nuläge (gratis, Node.js inbyggd DNS) ─────────────────────────
+function fmtKr(n) { return new Intl.NumberFormat('sv-SE').format(n); }
 
-async function getMxPlatform(domain) {
-  if (!domain?.trim()) return 'unknown';
+const MX_LABELS = {
+  microsoft365: 'Microsoft 365',
+  google:       'Google Workspace',
+  zoho:         'Zoho Mail',
+  other:        'Anpassad e-postlösning',
+  unknown:      'Okänd plattform',
+};
+
+// ── T3a · DNS-postur (gratis, körs överallt) ─────────────────────────────────
+//
+// En enda DNS-svep avslöjar hela e-poststacken OCH hur vaket bolagets IT är.
+// MX = plattform · SPF = stack-komplexitet · DMARC = bevakning · MTA-STS = mognad.
+
+async function getDnsPosture(domain) {
+  const d = domain?.trim()?.toLowerCase();
+  const p = { mx: 'unknown', spf: null, spfIncludes: [], spfM365: false,
+              dmarc: null, mtaSts: false, dkimM365: false };
+  if (!d) return p;
+
   try {
-    const records = await dns.resolveMx(domain.trim());
-    const hosts   = records.map(r => r.exchange.toLowerCase()).join(' ');
-    if (hosts.includes('mail.protection.outlook.com'))             return 'microsoft365';
-    if (hosts.includes('google.com') || hosts.includes('googlemail.com')) return 'google';
-    if (hosts.includes('zoho.com'))                                return 'zoho';
-    return 'other';
-  } catch { return 'unknown'; }
+    const recs  = (await dns.resolveMx(d)).map(r => r.exchange.toLowerCase());
+    const hosts = recs.join(' ');
+    if      (hosts.includes('mail.protection.outlook.com'))                 p.mx = 'microsoft365';
+    else if (hosts.includes('google.com') || hosts.includes('googlemail')) p.mx = 'google';
+    else if (hosts.includes('zoho'))                                        p.mx = 'zoho';
+    else if (recs.length)                                                   p.mx = 'other';
+  } catch {}
+
+  try {
+    const txts = (await dns.resolveTxt(d)).map(c => c.join(''));
+    const spf  = txts.find(t => t.toLowerCase().startsWith('v=spf1'));
+    if (spf) {
+      p.spf         = spf;
+      p.spfIncludes = [...spf.matchAll(/include:([^\s]+)/gi)].map(m => m[1]);
+      p.spfM365     = p.spfIncludes.some(i => i.includes('protection.outlook.com'));
+    }
+  } catch {}
+
+  try {
+    const txts = (await dns.resolveTxt(`_dmarc.${d}`)).map(c => c.join(''));
+    const rec  = txts.find(t => t.toLowerCase().startsWith('v=dmarc1'));
+    if (rec) p.dmarc = (rec.match(/p=(\w+)/i)?.[1] ?? 'unknown').toLowerCase();
+  } catch {}
+
+  try {
+    const txts = (await dns.resolveTxt(`_mta-sts.${d}`)).map(c => c.join(''));
+    p.mtaSts = txts.some(t => t.toLowerCase().startsWith('v=stsv1'));
+  } catch {}
+
+  try {
+    const cname = await dns.resolveCname(`selector1._domainkey.${d}`);
+    p.dkimM365  = cname.some(c => c.toLowerCase().includes('onmicrosoft.com'));
+  } catch {}
+
+  return p;
 }
 
-// ── SecurityTrails — MX-historik (kräver API-nyckel, 50 gratis/dag) ──────────
-//
-// Ger oss "er Microsoft 365-konfiguration är oförändrad sedan november 2019"
-// — det specifika faktum som gör emailen omöjlig att avfärda som mass-mail.
-
-async function getMxSince(domain, mxPlatform, apiKey) {
-  if (!apiKey || !domain?.trim() || !mxPlatform) return null;
-  const platformHost = {
-    microsoft365: 'mail.protection.outlook.com',
-    google:       'google.com',
-    zoho:         'zoho.com',
-  }[mxPlatform];
-  if (!platformHost) return null;
-  try {
-    const res = await fetch(
-      `https://api.securitytrails.com/v1/history/${domain.trim()}/dns/mx`,
-      { headers: { APIKEY: apiKey }, signal: AbortSignal.timeout(8000) }
-    );
-    if (!res.ok) return null;
-    const { records } = await res.json();
-    if (!records?.length) return null;
-    const matching = records
-      .filter(r => r.values?.some(v => v.value?.toLowerCase().includes(platformHost)))
-      .sort((a, b) => a.first_seen.localeCompare(b.first_seen));
-    return matching[0]?.first_seen ?? null; // 'YYYY-MM-DD'
-  } catch { return null; }
-}
-
-// ── RDAP — domänregistreringsdatum (gratis, ingen API-nyckel) ─────────────────
-//
-// rdap.org är ARIN:s universella RDAP-router som delegerar till rätt
-// registrar per TLD (.se → IIS, .com → Verisign, etc.)
+// ── T3b · RDAP — domänregistrering (HTTP, körs på Vercel) ─────────────────────
 
 async function getDomainRegistered(domain) {
   if (!domain?.trim()) return null;
@@ -134,52 +156,124 @@ async function getDomainRegistered(domain) {
     if (!res.ok) return null;
     const data = await res.json();
     const reg  = data.events?.find(e => e.eventAction === 'registration');
-    return reg?.eventDate?.slice(0, 10) ?? null; // 'YYYY-MM-DD'
+    return reg?.eventDate?.slice(0, 10) ?? null;
   } catch { return null; }
 }
 
-// ── MX-plattform labels ───────────────────────────────────────────────────────
+// ── T3c · Certificate Transparency — daterar M365-onboarding (HTTP, Vercel) ───
+//
+// crt.sh är en publik, append-only logg över varje TLS-cert. M365-onboarding
+// lämnar fingeravtryck: autodiscover/enterpriseregistration/msoid-subdomäner får
+// cert med exakt datum. Ger "samma infrastruktur sedan november 2017" — gratis,
+// och ersätter SecurityTrails vi släppte för kostnad.
 
-const MX_LABELS = {
-  microsoft365: 'Microsoft 365',
-  google:       'Google Workspace',
-  zoho:         'Zoho Mail',
-  other:        'Anpassad e-postlösning',
-  unknown:      'Okänd plattform',
-};
+const M365_FINGERPRINTS = ['autodiscover', 'enterpriseregistration', 'msoid', 'lyncdiscover'];
 
-// ── Frozen Contract Score (0–100) ─────────────────────────────────────────────
+async function getCtOnboarding(domain) {
+  const d = domain?.trim()?.toLowerCase();
+  if (!d) return null;
+  try {
+    const res = await fetch(
+      `https://crt.sh/?q=${encodeURIComponent('%.' + d)}&output=json`,
+      { headers: {
+          Accept: 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36',
+        }, signal: AbortSignal.timeout(20000) }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (!rows?.length) return null;
 
-function calcFrozenScore({ foundedYear, employees, mxPlatform, sniCode }) {
-  let score = 0;
-
-  const age = THIS_YEAR - parseInt(foundedYear || 0);
-  if      (age >= 8) score += 25;
-  else if (age >= 6) score += 18;
-  else if (age >= 4) score += 10;
-  else               score += 2;
-
-  const emp = parseInt(employees || 0);
-  if      (emp >= 30 && emp <= 100) score += 25;
-  else if (emp > 100)               score += 18;
-  else if (emp >= 15)               score += 12;
-  else                              score += 4;
-
-  if      (mxPlatform === 'microsoft365') score += 30;
-  else if (mxPlatform === 'google')       score += 22;
-  else if (mxPlatform === 'zoho')         score += 15;
-  else if (mxPlatform === 'other')        score += 10;
-
-  const sni2 = parseInt((sniCode || '').slice(0, 2));
-  if      ((sni2 >= 69 && sni2 <= 74) || (sni2 >= 62 && sni2 <= 63)) score += 20;
-  else if (sni2 >= 41 && sni2 <= 43) score += 15;
-  else if (sni2 >= 45 && sni2 <= 47) score += 15;
-  else                                score += 8;
-
-  return Math.min(score, 100);
+    let oldest = null, m365Since = null, m365Via = null;
+    for (const r of rows) {
+      const nb = r.not_before;
+      if (nb && (!oldest || nb < oldest)) oldest = nb;
+      const names = (r.name_value || '').toLowerCase().split('\n');
+      for (const fp of M365_FINGERPRINTS) {
+        if (names.some(n => n.startsWith(fp + '.')) && nb && (!m365Since || nb < m365Since)) {
+          m365Since = nb; m365Via = fp;
+        }
+      }
+    }
+    return { oldestCert: oldest?.slice(0, 10) ?? null, m365Since: m365Since?.slice(0, 10) ?? null, m365Via };
+  } catch { return null; }
 }
 
-// ── Besparingsestimat ─────────────────────────────────────────────────────────
+// ── Fynd-motorn ───────────────────────────────────────────────────────────────
+//
+// Varje fynd: { tier, text, weight, wow }
+//   weight — bidrag (±) till frysnings-tesen
+//   wow    — klarar "hur visste de det"-baren? (specifikt, daterbart, oväntat)
+//            Bara wow-fynd duger som krok i ett utskick.
+
+function buildFindings({ row, posture, domainReg, ct }) {
+  const f = [];
+  const push = (tier, weight, wow, text) => f.push({ tier, weight, wow, text });
+
+  // ── T3 · Microsoft 365-bekräftelse (styrkan = antal bekräftande lager) ──
+  const m365Layers = [posture.mx === 'microsoft365', posture.spfM365, posture.dkimM365].filter(Boolean).length;
+  if (posture.mx === 'microsoft365' && m365Layers >= 2)
+    push('T3', 15, false, `Microsoft 365 bekräftat på ${m365Layers} nivåer (MX/SPF/DKIM) — inlåst e-poststack`);
+  else if (posture.mx !== 'unknown')
+    push('T3', posture.mx === 'microsoft365' ? 8 : 5, false, `E-post via ${MX_LABELS[posture.mx]}`);
+
+  // ── T3 · Daterad infrastruktur (CT-logg starkast, RDAP fallback) ──
+  if (ct?.m365Since) {
+    const yrs = Math.floor(monthsAgo(ct.m365Since) / 12);
+    push('T3', 18, true, `Microsoft 365 driftsatt ${swMonthYear(ct.m365Since)} enligt certifikatloggar — ${yrs} år utan plattformsbyte`);
+  } else if (ct?.oldestCert) {
+    push('T3', 8, true, `Digital närvaro sedan ${swMonthYear(ct.oldestCert)} (certifikatloggar)`);
+  } else if (domainReg) {
+    push('T3', 8, true, `Domän registrerad ${swMonthYear(domainReg)} — e-post på samma plattform sedan dess`);
+  }
+
+  // ── T3 · DMARC — det skarpaste DNS-fyndet, går åt båda håll ──
+  if (posture.dmarc === null)
+    push('T3', 20, true, `DMARC saknas helt — ingen bevakar vem som skickar mail i ert namn`);
+  else if (posture.dmarc === 'none')
+    push('T3', 18, true, `DMARC står kvar på p=none — uppsatt men aldrig aktiverat (klassiskt fryst-IT-tecken)`);
+  else if (posture.dmarc === 'quarantine')
+    push('T3', -5, false, `DMARC p=quarantine — halvvägs påkopplat IT`);
+  else if (posture.dmarc === 'reject')
+    push('T3', -15, false, `DMARC p=reject — IT aktivt påkopplat, svagare frysnings-tes`);
+
+  // ── T3 · SPF-sprawl / felkonfig ──
+  if (posture.spfIncludes.length >= 4)
+    push('T3', 12, true, `SPF pekar mot ${posture.spfIncludes.length} system — påbyggt i lager över år, aldrig städat`);
+  else if (posture.mx === 'microsoft365' && !posture.spfM365)
+    push('T3', 8, true, `SPF saknar Microsoft-include trots M365 — felkonfigurerat sedan start`);
+
+  // ── T3 · MTA-STS = modern → drar ned tesen ──
+  if (posture.mtaSts)
+    push('T3', -10, false, `MTA-STS aktiv — modern säkerhetsuppsättning, vaket IT`);
+
+  // ── Kontext (ej wow, men styr frysnings-sannolikhet) ──
+  const yr  = parseInt(row.founded_year || 0);
+  const age = yr ? THIS_YEAR - yr : null;
+  if      (age !== null && age >= 8) push('ctx', 15, false, `${age} år gammalt bolag — etablerade, sällan omförhandlade leverantörsavtal`);
+  else if (age !== null && age >= 6) push('ctx', 10, false, `${age} år gammalt bolag`);
+  else if (age !== null && age >= 4) push('ctx',  5, false, `${age} år gammalt bolag`);
+
+  const emp = parseInt(row.employees || 0);
+  if      (emp >= 30 && emp <= 100) push('ctx', 15, false, `${emp} anställda — telekomvolym i söta zonen 30–100`);
+  else if (emp > 100)               push('ctx', 10, false, `${emp} anställda`);
+  else if (emp >= 15)               push('ctx',  8, false, `${emp} anställda`);
+
+  const sni2 = parseInt((row.sni_code || '').slice(0, 2));
+  if ((sni2 >= 69 && sni2 <= 74) || (sni2 >= 62 && sni2 <= 63))
+    push('ctx', 10, false, `Tjänstebransch (SNI ${sni2}) — hög mobil/mjukvarukostnad per anställd`);
+
+  // Wow-fynd först, sedan tyngst — så kroken alltid hamnar överst.
+  f.sort((a, b) => (b.wow - a.wow) || (Math.abs(b.weight) - Math.abs(a.weight)));
+  return f;
+}
+
+function calcFindingScore(findings) {
+  const raw = findings.reduce((s, f) => s + f.weight, 0);
+  return Math.max(0, Math.min(100, raw));
+}
+
+// ── Besparingsestimat — slutkläm, ej krok ─────────────────────────────────────
 
 function estimateSaving({ employees, mxPlatform }) {
   const emp    = Math.max(1, parseInt(employees || 0));
@@ -193,20 +287,17 @@ function estimateSaving({ employees, mxPlatform }) {
   };
 }
 
-function fmtKr(n) { return new Intl.NumberFormat('sv-SE').format(n); }
-
-function priorityTag(score) {
-  if (score >= 80) return '🔴 Hög';
-  if (score >= 60) return '🟡 Medel';
-  return '⚪ Låg';
+function priorityTag(wow, score) {
+  if (wow >= 2 && score >= 50) return '🔴 Stark krok';
+  if (wow >= 1)               return '🟡 Krok finns';
+  return '⚪ Ingen krok';
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 const args    = process.argv.slice(2);
-const csvFile = args.find(a => !a.startsWith('--'));
-const dryRun  = args.includes('--dry-run');
-const stKey   = process.env.SECURITY_TRAILS_KEY;
+const csvFile  = args.find(a => !a.startsWith('--'));
+const dryRun   = args.includes('--dry-run');
 
 if (!csvFile) {
   console.error('Usage: node --env-file=.env scripts/score-leads.mjs leads.csv [--dry-run]');
@@ -214,11 +305,9 @@ if (!csvFile) {
 }
 
 async function main() {
-  console.log('\nArvo — Frozen Contract Scorer');
+  console.log('\nArvo — Fynd-motor');
   console.log('══════════════════════════════');
-  if (stKey) console.log('SecurityTrails: aktiv (MX-historik aktiverad)');
-  else       console.log('SecurityTrails: ej konfigurerad (SECURITY_TRAILS_KEY saknas — kör utan historik)');
-  console.log();
+  console.log('Mål: ett verifierbart, oväntat fynd per bolag — inte ett estimat.\n');
 
   let rows;
   try { rows = await readCsv(csvFile); }
@@ -228,98 +317,100 @@ async function main() {
   console.log(`${rows.length} bolag laddade.\n`);
 
   const results = [];
+  let httpReached = false;
 
   for (let i = 0; i < rows.length; i++) {
     const row  = rows[i];
     const name = row.company_name || '—';
-    process.stdout.write(`  [${String(i + 1).padStart(2)}/${rows.length}] ${name.padEnd(32)} `);
+    process.stdout.write(`  [${String(i + 1).padStart(2)}/${rows.length}] ${name.padEnd(40)} `);
 
-    // MX-plattform och domänålder parallellt, sedan SecurityTrails
-    const [mxPlatform, domainRegistered] = await Promise.all([
-      getMxPlatform(row.domain),
+    // DNS överallt; HTTP-lagren (CT/RDAP) tystnar bakom allowlist men körs på Vercel.
+    const posture = await getDnsPosture(row.domain);
+    const [domainReg, ct] = await Promise.all([
       getDomainRegistered(row.domain),
+      getCtOnboarding(row.domain),
     ]);
-    const mxSince  = await getMxSince(row.domain, mxPlatform, stKey);
-    const mxMonths = monthsAgo(mxSince);
+    if (domainReg || ct) httpReached = true;
 
-    const score  = calcFrozenScore({ foundedYear: row.founded_year, employees: row.employees, mxPlatform, sniCode: row.sni_code });
-    const saving = estimateSaving({ employees: row.employees, mxPlatform });
+    const findings = buildFindings({ row, posture, domainReg, ct });
+    const score    = calcFindingScore(findings);
+    const wowCount  = findings.filter(f => f.wow).length;
+    const saving    = estimateSaving({ employees: row.employees, mxPlatform: posture.mx });
+    const topFinding = findings.find(f => f.wow)?.text ?? findings[0]?.text ?? '—';
 
-    // Bygg informationsraden
-    const dateLine = mxSince
-      ? `  MX sedan: ${swMonthYear(mxSince)} (${mxMonths} mån)`
-      : domainRegistered
-        ? `  Domän: ${swMonthYear(domainRegistered)}`
-        : '';
-    console.log(`${MX_LABELS[mxPlatform].padEnd(20)} Score: ${String(score).padStart(3)}  ${priorityTag(score)}  ~${fmtKr(saving.low)}–${fmtKr(saving.high)} kr/år${dateLine}`);
+    console.log(`Score:${String(score).padStart(3)}  ${String(wowCount)}× wow  ${priorityTag(wowCount, score)}`);
 
     results.push({
       ...row,
-      mx_platform:         mxPlatform,
-      mx_label:            MX_LABELS[mxPlatform],
-      mx_since:            mxSince,
-      mx_since_label:      swMonthYear(mxSince),
-      mx_months:           mxSince ? mxMonths : null,
-      domain_registered:   domainRegistered,
-      domain_reg_label:    swMonthYear(domainRegistered),
-      frozen_score:        score,
-      priority:            score >= 80 ? 'Hög' : score >= 60 ? 'Medel' : 'Låg',
-      saving_low:          saving.low,
-      saving_high:         saving.high,
-      saving_mobile:       saving.mobile,
-      saving_software:     saving.software,
+      mx_platform:    posture.mx,
+      mx_label:       MX_LABELS[posture.mx],
+      dmarc:          posture.dmarc ?? 'saknas',
+      spf_includes:   posture.spfIncludes.length,
+      mta_sts:        posture.mtaSts,
+      domain_registered: domainReg,
+      ct_m365_since:  ct?.m365Since ?? null,
+      finding_score:  score,
+      wow_count:      wowCount,
+      top_finding:    topFinding,
+      findings,
+      saving_low:     saving.low,
+      saving_high:    saving.high,
     });
   }
 
-  results.sort((a, b) => b.frozen_score - a.frozen_score);
+  results.sort((a, b) => (b.wow_count - a.wow_count) || (b.finding_score - a.finding_score));
 
+  // ── Fynd-rapport: kroken först, score + estimat som stöd ──
   console.log('\n══════════════════════════════');
-  console.log('PRIORITETSLISTA:\n');
+  console.log('FYND-RAPPORT (rankad efter oavvislighet):\n');
   results.forEach((r, i) => {
     const email = r.contact_email ? '✉' : ' ';
-    const intel = r.mx_since ? ` · MX sedan ${r.mx_since_label}` : '';
-    console.log(`  ${String(i + 1).padStart(2)}. ${email} ${r.company_name.padEnd(32)} ${String(r.frozen_score).padStart(3)} pts  ${r.mx_label.padEnd(20)}${intel}`);
+    console.log(`${String(i + 1).padStart(2)}. ${email} ${r.company_name}  ·  Score ${r.finding_score}  ·  ${r.wow_count}× wow  ${priorityTag(r.wow_count, r.finding_score)}`);
+    r.findings.filter(f => f.tier !== 'ctx').forEach(f => {
+      console.log(`      ${f.wow ? '★' : '▸'} ${f.text}`);
+    });
+    console.log(`      └ slutkläm (ej krok): indikativt ~${fmtKr(r.saving_low)}–${fmtKr(r.saving_high)} kr/år\n`);
   });
 
-  const high      = results.filter(r => r.frozen_score >= 80);
-  const med       = results.filter(r => r.frozen_score >= 60 && r.frozen_score < 80);
-  const withEmail = results.filter(r => r.contact_email && r.frozen_score >= 60);
-  const withDates = results.filter(r => r.mx_since);
-
-  console.log(`\nSammanfattning:`);
-  console.log(`  Hög prioritet (≥80):     ${high.length} bolag`);
-  console.log(`  Medel prioritet (60–79): ${med.length} bolag`);
-  console.log(`  Redo för utskick:        ${withEmail.length} bolag (score ≥60 + e-post)`);
-  console.log(`  Med MX-historik:         ${withDates.length} bolag (exakt datum i email)`);
-  if (withEmail.length) {
-    const lo = withEmail.reduce((s, r) => s + r.saving_low, 0);
-    const hi = withEmail.reduce((s, r) => s + r.saving_high, 0);
-    console.log(`  Samlad besparingspotential: ${fmtKr(lo)}–${fmtKr(hi)} kr/år`);
+  // ── "Hur visste de det"-porten ──
+  const withWow = results.filter(r => r.wow_count >= 1);
+  const strong  = results.filter(r => r.wow_count >= 2);
+  console.log('══════════════════════════════');
+  console.log('"HUR VISSTE DE DET"-PORTEN:\n');
+  console.log(`  Bolag med ≥1 verifierbart wow-fynd:  ${withWow.length}/${results.length}  ← det enda tal som predikterar momentet`);
+  console.log(`  Bolag med ≥2 wow-fynd (stark krok):  ${strong.length}/${results.length}`);
+  if (!httpReached) {
+    console.log(`\n  ⚠ HTTP-lagren (CT-datering, RDAP) tystnade — allowlist blockerar egress härifrån.`);
+    console.log(`    Kör samma skript från Vercel för daterade infrastruktur-fynd ("M365 sedan 2017").`);
   }
+  console.log(`\n  Nästa fyndlager för att nå full kraft:`);
+  console.log(`    T1  Årsredovisnings-delta (allabolag) — "era externa kostnader/anställd steg X%" — STARKAST, ej kopplat`);
+  console.log(`    T2  Kohort-deltat — "8 av 14 i er bransch bytte leverantör" — moaten, ej byggt`);
 
   if (dryRun) { console.log('\nDRY-RUN — inga filer skrivna.'); return; }
 
-  const date    = new Date().toISOString().slice(0, 10);
-  const outDir  = join(__dirname, '..', 'results');
+  const date   = new Date().toISOString().slice(0, 10);
+  const outDir = join(__dirname, '..', 'results');
   await mkdir(outDir, { recursive: true });
 
   const outJson = join(outDir, `scored-${date}.json`);
-  await writeFile(outJson, JSON.stringify({ date, stEnabled: !!stKey, count: results.length, results }, null, 2));
+  await writeFile(outJson, JSON.stringify({ date, count: results.length, httpReached, results }, null, 2));
 
-  const batchHeaders = 'company_name,sni_code,employees,contact_email,org_nr,founded_year,mx_platform,mx_since,domain_registered,frozen_score';
-  const batchRows    = results
-    .filter(r => r.frozen_score >= 60)
+  // Batch-redo = bolag vi faktiskt har en krok till (wow ≥ 1).
+  const batchHeaders = 'company_name,sni_code,employees,contact_email,org_nr,founded_year,mx_platform,dmarc,finding_score,wow_count,top_finding';
+  const batchRows = results
+    .filter(r => r.wow_count >= 1)
     .map(r => [
-      r.company_name, r.sni_code || '', r.employees,
-      r.contact_email || '', r.org_nr || '', r.founded_year || '',
-      r.mx_platform, r.mx_since || '', r.domain_registered || '', r.frozen_score,
+      r.company_name, r.sni_code || '', r.employees, r.contact_email || '',
+      r.org_nr || '', r.founded_year || '', r.mx_platform, r.dmarc,
+      r.finding_score, r.wow_count, r.top_finding,
     ].map(v => (String(v).includes(',') ? `"${v}"` : v)).join(','));
   const outCsv = join(outDir, `scored-${date}.csv`);
   await writeFile(outCsv, [batchHeaders, ...batchRows].join('\n'));
 
   console.log(`\nFiler sparade:`);
   console.log(`  ${outJson}`);
-  console.log(`  ${outCsv}  (${batchRows.length} bolag batch-redo)`);
+  console.log(`  ${outCsv}  (${batchRows.length} bolag med krok — wow ≥ 1)`);
   console.log(`\nNästa steg:`);
   console.log(`  node --env-file=.env scripts/batch-prospects.mjs results/scored-${date}.csv --no-email\n`);
 }
