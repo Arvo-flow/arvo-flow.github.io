@@ -148,7 +148,8 @@ async function getDnsPosture(domain) {
   const d = domain?.trim()?.toLowerCase();
   const p = { mx: 'unknown', spf: null, spfLookups: 0, spfM365: false,
               spfGateway: null, spfDelegated: false, spfMissing: false,
-              dmarc: null, mtaSts: false, dkimM365: false };
+              dmarc: null, dmarcRua: null, mtaSts: false, dkimM365: false,
+              nsProvider: 'unknown', nsDetail: null };
   if (!d) return p;
 
   try {
@@ -182,7 +183,10 @@ async function getDnsPosture(domain) {
   try {
     const txts = (await dns.resolveTxt(`_dmarc.${d}`)).map(c => c.join(''));
     const rec  = txts.find(t => t.toLowerCase().startsWith('v=dmarc1'));
-    if (rec) p.dmarc = (rec.match(/p=(\w+)/i)?.[1] ?? 'unknown').toLowerCase();
+    if (rec) {
+      p.dmarc    = (rec.match(/p=(\w+)/i)?.[1] ?? 'unknown').toLowerCase();
+      p.dmarcRua = rec.match(/rua=mailto:([^\s;,>]+)/i)?.[1] ?? null;
+    }
   } catch {}
 
   try {
@@ -193,6 +197,20 @@ async function getDnsPosture(domain) {
   try {
     const cname = await dns.resolveCname(`selector1._domainkey.${d}`);
     p.dkimM365  = cname.some(c => c.toLowerCase().includes('onmicrosoft.com'));
+  } catch {}
+
+  // NS-leverantör: Cloud/Managed = aktivt IT-team (motverkar frysnings-tesen),
+  // Registrar = passiv setup (stärker tesen). 100% DNS-baserat, ingen HTTP.
+  const CLOUD_NS = ['cloudflare', 'awsdns', 'azure-dns', 'hetzner', 'excedodns', 'oraclecloud', 'dnsimple', 'nsone'];
+  const REGISTRAR_NS = ['loopia', 'one.com', 'binero', 'ztld', 'glesys', 'websupport', 'domainnameshop'];
+  try {
+    const ns    = (await dns.resolveNs(d)).map(n => n.toLowerCase());
+    const nsStr = ns.join(' ');
+    const cloud = CLOUD_NS.find(s => nsStr.includes(s));
+    const reg   = REGISTRAR_NS.find(s => nsStr.includes(s));
+    if (cloud)    { p.nsProvider = 'cloud';     p.nsDetail = cloud; }
+    else if (reg) { p.nsProvider = 'registrar'; p.nsDetail = reg;   }
+    else          { p.nsProvider = 'other'; }
   } catch {}
 
   return p;
@@ -282,10 +300,17 @@ function buildFindings({ row, posture, domainReg, ct }) {
   }
 
   // ── T3 · DMARC — det skarpaste DNS-fyndet, går åt båda håll ──
+  // Betald bevakningstjänst + p=none = starkaste frozen-IT-signalen vi har:
+  // de betalar för att se problemen — men har ändå inte åtgärdat dem.
+  const PAID_DMARC_SVCS = ['dmarcian.com', 'vali.email', 'dmarcanalyzer.com', 'agari.com', '250ok.com', 'postmarkapp.com', 'returnpath.com'];
+  const dmarcMonitor = PAID_DMARC_SVCS.find(s => posture.dmarcRua?.includes(s));
+
   if (posture.dmarc === null)
     push('T3', 20, true, `DMARC saknas helt — ingen bevakar vem som skickar mail i ert namn`);
+  else if (posture.dmarc === 'none' && dmarcMonitor)
+    push('T3', 22, true, `Betalar för DMARC-bevakning via ${dmarcMonitor} — men skyddet är aldrig aktiverat (p=none). Ser problemen, har inte åtgärdat dem.`);
   else if (posture.dmarc === 'none')
-    push('T3', 18, true, `DMARC står kvar på p=none — uppsatt men aldrig aktiverat (klassiskt fryst-IT-tecken)`);
+    push('T3', 18, true, `DMARC p=none — aktiverat men aldrig skärpt (klassiskt fryst-IT-mönster)`);
   else if (posture.dmarc === 'quarantine')
     push('T3', -5, false, `DMARC p=quarantine — halvvägs påkopplat IT`);
   else if (posture.dmarc === 'reject')
@@ -300,11 +325,21 @@ function buildFindings({ row, posture, domainReg, ct }) {
   else if (posture.spfMissing && posture.mx === 'microsoft365')
     push('T3', 12, true, `Ingen SPF-post alls trots Microsoft 365 — e-postautentisering aldrig konfigurerad`);
   else if (posture.spfLookups >= 6)
-    push('T3', 10, true, `SPF auktoriserar ${posture.spfLookups} uppslag att skicka i ert namn — påbyggd stack nära 10-gränsen`);
+    // wow=false när dmarc=reject: komplexitet + aktivt IT = inte ett frysnings-fynd
+    push('T3', 10, posture.dmarc !== 'reject', `SPF auktoriserar ${posture.spfLookups} uppslag att skicka i ert namn — påbyggd stack nära 10-gränsen`);
 
   // ── T3 · MTA-STS = modern → drar ned tesen ──
   if (posture.mtaSts)
     push('T3', -10, false, `MTA-STS aktiv — modern säkerhetsuppsättning, vaket IT`);
+
+  // ── T3 · NS-leverantör — indikator på IT-mognad ──
+  // Cloud-hanterad DNS (Cloudflare, AWS, Azure) korrelerar 100% med DMARC p=reject
+  // i vår data — dessa bolag har aktiva IT-team. Drar ned frysnings-tesen.
+  // Registrar-DNS (Loopia, one.com) = "kom igång snabbt, rördes aldrig igen" — stärker.
+  if (posture.nsProvider === 'cloud')
+    push('T3', -8, false, `DNS via ${posture.nsDetail} — cloud-hanterad infrastruktur, aktivt IT-team`);
+  else if (posture.nsProvider === 'registrar')
+    push('T3', 6, false, `DNS via registrar (${posture.nsDetail}) — passiv setup, stärker frysnings-tesen`);
 
   // ── Kontext (ej wow, men styr frysnings-sannolikhet) ──
   const yr  = parseInt(row.founded_year || 0);
