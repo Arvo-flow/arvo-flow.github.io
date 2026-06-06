@@ -38,3 +38,39 @@ En DNS-query på ett bolags domän avslöjar om de kör Microsoft 365 eller Goog
 - Strategisk journal (denna fil): skapad som levande produktminne
 
 ---
+
+## 2026-06-06
+
+### Insikter
+
+**Det verkliga problemet är inte ineffektivitet — det är information.**
+Leverantörer (Telia, Telenor, Ellevio) har fullständig prisbild per kund. Deras SMF-kunder vet ingenting om vad någon annan betalar. Den asymmetrin är inte en marknadsimperfection — det är affärsmodellen. Arvo:s revolutionära akt är att förstöra den asymmetrin permanent.
+
+**Intelligence Compounding: en modell som skalerar med sig själv.**
+Fas 1 (0–50 kunder): årsredovisningsbaserad precision-hunting — verkliga siffror, specifika fynd, inga estimat. Fas 2 (50–500): intern benchmarkdata gör intelligensen skarpare än något externt index. Fas 3 (500–1 000): kollektiv köpkraft — Arvo förhandlar med leverantörer som ett block, inte som enskilda kunder. Samma mekanism driver alla tre faserna. Det är inte en pivot, det är skalning.
+
+**Årsredovisningar som PR-maskin.**
+En annual rapport — "Svenska SMF:er betalade X miljarder för mycket förra året, dessa branscher värst drabbade" — är anskaffning utan försäljning. DI och SVT skriver om det. Varje CFO som läser det frågar sig omedelbart om de är ett av bolagen. Kostnaden: nära noll. Effekten: inbound som ett betalat kampanjteam inte kan matcha.
+
+**Garantispråk underminerar premiumpositioneringen.**
+"50 000 kr eller vi betalar er 5 000 kr" låter som en sliskig försäljare. Det är defensivt — det förutsätter att kunden inte litar på oss och försöker köpa sig förbi det. En riktig CFO-profil lovar inte. Den levererar beviset före pitchen. Beviset ÄR det specifika fyndet från årsredovisningen. Ingen garanti behövs när faktum talar.
+
+**Switch-modellen är redan garantin — uttryckt med integritet.**
+"Vi fakturerar aldrig förrän ni sparar. Om vi inte hittar något att åtgärda säger vi det." Samma sak som en garanti, utan säljteknikens desperation. Det är karaktären.
+
+### Öppna frågor
+
+- Vilken teknisk arkitektur för årsredovisnings-parsern? Bolagsverket-API vs. scraping vs. manuell för de första 50 bolagen?
+- Vilket format och frekvens för den årliga kostnadsrapporten?
+- Hur kvalificerar vi vilka bolag som är värda att kontakta (storlek, bransch, kostnadsnivå)?
+- Hur ser Switch-avtalet ut juridiskt — fullmakt, inköpsombud, eller något annat?
+
+### Beslut tagna
+
+- Garantiformulering: borttagen. Ersatt med "vi fakturerar aldrig förrän ni sparar."
+- Tillväxtmodell: Intelligence Compounding — samma mekanism, tre faser
+- Anskaffningsstrategi fas 1: årsredovisningsbaserad precision-hunting
+- Anskaffningsstrategi fas 2: annual kostnadssannolik som PR
+- CLAUDE.md: uppdaterad med kreativ/innovativ/effektiv som explicita arbetsprinciper
+
+---
