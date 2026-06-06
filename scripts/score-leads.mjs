@@ -30,13 +30,30 @@
 import { promises as dns } from 'dns';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, readdir, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBenchmark } from '../agents/recommender/branchindex.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const THIS_YEAR = new Date().getFullYear();
+
+// ── Kohort-index — läser senaste sni-kohort-*.json från results/ ──────────────
+// Byggs av scripts/build-sni-kohort.mjs. Om filen saknas → tyst fallback (null).
+// Injicerar "X av Y i er bransch" som kontextfynd i buildFindings().
+
+async function loadKohortIndex() {
+  const dir = join(__dirname, '..', 'results');
+  try {
+    const files = (await readdir(dir))
+      .filter(f => f.startsWith('sni-kohort-') && f.endsWith('.json'))
+      .sort()
+      .reverse();
+    if (!files.length) return null;
+    const raw = await readFile(join(dir, files[0]), 'utf8');
+    return JSON.parse(raw);
+  } catch { return null; }
+}
 
 // ── CSV ───────────────────────────────────────────────────────────────────────
 
@@ -278,7 +295,7 @@ async function getCtOnboarding(domain) {
 //   wow    — klarar "hur visste de det"-baren? (specifikt, daterbart, oväntat)
 //            Bara wow-fynd duger som krok i ett utskick.
 
-function buildFindings({ row, posture, domainReg, ct }) {
+function buildFindings({ row, posture, domainReg, ct, kohortIndex }) {
   const f = [];
   const push = (tier, weight, wow, text) => f.push({ tier, weight, wow, text });
 
@@ -357,6 +374,23 @@ function buildFindings({ row, posture, domainReg, ct }) {
   if ((sni2 >= 69 && sni2 <= 74) || (sni2 >= 62 && sni2 <= 63))
     push('ctx', 10, false, `Tjänstebransch (SNI ${sni2}) — hög mobil/mjukvarukostnad per anställd`);
 
+  // ── Kohort-kontext — "X av Y i er bransch" (kräver build-sni-kohort.mjs) ──
+  // Samma formel som Arvos kärna: "Telia höjde priset för 8 av 14" — men med DNS.
+  // Låg vikt (ej wow): det är stödjande kontext, inte det primära fyndet.
+  const sniKey = String(row.sni_code ?? '').slice(0, 2);
+  const kohort = kohortIndex?.[sniKey] ?? kohortIndex?.[row.sni_code];
+  if (kohort && kohort.n >= 30) {
+    const notProtected = kohort.dmarc.none_pct + kohort.dmarc.missing_pct;
+    if (posture.dmarc === 'none' || posture.dmarc === null) {
+      push('ctx', 4, false,
+        `Branschdata (n=${kohort.n}): ${kohort.dmarc.reject_pct}% av bolag i er SNI-grupp har DMARC aktiverat — ni är bland de ${notProtected}% som inte gjort det`);
+    }
+    if (posture.mx === 'microsoft365' && kohort.mx.microsoft365 >= 50) {
+      push('ctx', 2, false,
+        `${kohort.mx.microsoft365}% av bolag i er bransch kör Microsoft 365 — ni är i majoriteten`);
+    }
+  }
+
   // Wow-fynd först, sedan tyngst — så kroken alltid hamnar överst.
   f.sort((a, b) => (b.wow - a.wow) || (Math.abs(b.weight) - Math.abs(a.weight)));
   return f;
@@ -428,6 +462,13 @@ async function main() {
   if (!rows.length) { console.log('Inga rader hittades.'); return; }
   console.log(`${rows.length} bolag laddade.\n`);
 
+  // Ladda kohort-index om det finns (byggs av build-sni-kohort.mjs)
+  const kohortIndex = await loadKohortIndex();
+  if (kohortIndex) {
+    const sniKeys = Object.keys(kohortIndex).join(', ');
+    console.log(`Kohort-index laddat (SNI: ${sniKeys}) — "X av Y i er bransch" aktiverat.\n`);
+  }
+
   const results = [];
   let httpReached = false;
 
@@ -444,7 +485,7 @@ async function main() {
     ]);
     if (domainReg || ct) httpReached = true;
 
-    const findings = buildFindings({ row, posture, domainReg, ct });
+    const findings = buildFindings({ row, posture, domainReg, ct, kohortIndex });
     const score    = calcFindingScore(findings);
     const wowCount  = findings.filter(f => f.wow).length;
     const exposure  = benchmarkExposure({ employees: row.employees, sniCode: row.sni_code });
