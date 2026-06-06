@@ -1,0 +1,108 @@
+name: DNS Bransch-Kohort Builder
+
+# ── Bygger DMARC/MX-kohortindex per SNI-segment ────────────────────────────────
+#
+# Kör varje måndag 03:00 UTC + manuellt.
+# Hämtar ~500 domäner per SNI från allabolag.se, kör DNS-kontroll (inga API-nycklar),
+# sparar results/sni-kohort-YYYY-MM-DD.json och committar tillbaka till main.
+#
+# score-leads.mjs läser senaste filen automatiskt och injicerar
+# "X av Y bolag i er bransch har DMARC aktiverat" i findings[].
+#
+# Inga secrets krävs — DNS + HTTP mot allabolag.se är öppet.
+# Tar ~15–20 min för 4 SNI-koder × 500 domäner.
+#
+# Manuell körning: Actions → "DNS Bransch-Kohort Builder" → Run workflow
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # Varje måndag 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      sni_codes:
+        description: 'SNI-koder, kommaseparerade (default: 62,70,71,73)'
+        required: false
+        default: '62,70,71,73'
+      limit:
+        description: 'Max domäner per SNI (default: 500)'
+        required: false
+        default: '500'
+
+permissions:
+  contents: write
+
+jobs:
+  build-kohort:
+    name: Bygg DNS kohortindex per SNI
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Kör kohort-builder
+        id: build
+        run: |
+          SNI="${{ github.event.inputs.sni_codes || '62,70,71,73' }}"
+          LIMIT="${{ github.event.inputs.limit || '500' }}"
+          node scripts/build-sni-kohort.mjs --sni "$SNI" --limit "$LIMIT"
+        # Inga secrets behövs — DNS + HTTP mot allabolag.se
+
+      - name: Kontrollera om filer skapades
+        id: check
+        run: |
+          COUNT=$(ls results/sni-kohort-*.json 2>/dev/null | wc -l)
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          if [ "$COUNT" -gt 0 ]; then
+            LATEST=$(ls results/sni-kohort-*.json | sort | tail -1)
+            echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+            echo "Senaste fil: $LATEST"
+            cat "$LATEST" | python3 -m json.tool --no-ensure-ascii | head -40
+          else
+            echo "Inga kohortfiler skapades — allabolag.se kan ha blockerat"
+          fi
+
+      - name: Committa kohortindex
+        if: steps.check.outputs.count > 0
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Kohort Bot"
+
+          git add results/sni-kohort-*.json
+
+          if ! git diff --staged --quiet; then
+            git commit -m "data(kohort): DNS branschindex uppdaterat ${DATE}
+
+Kört av build-sni-kohort.mjs mot SNI ${{ github.event.inputs.sni_codes || '62,70,71,73' }}.
+Injiceras i score-leads.mjs som 'X av Y i er bransch'-kontext."
+            git push origin main
+            echo "✅ Kohortindex committat till main"
+          else
+            echo "ℹ️ Ingen förändring sedan senaste körning"
+          fi
+
+      - name: Sammanfattning
+        run: |
+          if [ -f results/sni-kohort-$(date +%Y-%m-%d).json ]; then
+            echo "### ✅ Kohortindex uppdaterat" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat results/sni-kohort-$(date +%Y-%m-%d).json | python3 -m json.tool --no-ensure-ascii >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ⚠️ Inga filer skapades" >> "$GITHUB_STEP_SUMMARY"
+            echo "allabolag.se kan ha blockerat — kör manuellt för felsökning." >> "$GITHUB_STEP_SUMMARY"
+          fi
