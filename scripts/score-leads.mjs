@@ -33,6 +33,7 @@ import { createInterface } from 'readline';
 import { writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { getBenchmark } from '../agents/recommender/branchindex.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const THIS_YEAR = new Date().getFullYear();
@@ -331,17 +332,35 @@ function calcFindingScore(findings) {
   return Math.max(0, Math.min(100, raw));
 }
 
-// ── Besparingsestimat — slutkläm, ej krok ─────────────────────────────────────
+// ── Benchmark-exponering — slutkläm, ej krok ──────────────────────────────────
+//
+// Ersätter fabricerat estimat (emp×120×12) med Arvos riktiga BRANCHINDEX —
+// samma källverifierade prismotor som Recommender och fakturaanalysen använder.
+// För prospekt (ingen faktura ännu) rapporterar vi ett SPANN, inte en påhittad
+// besparing: p25 (välförhandlat) → median (vad marknaden faktiskt betalar).
 
-function estimateSaving({ employees, mxPlatform }) {
-  const emp    = Math.max(1, parseInt(employees || 0));
-  const mobile = emp * 120 * 12;
-  const sw     = mxPlatform === 'microsoft365' ? emp * 60 * 12 : 0;
-  const total  = mobile + sw;
+function sniToIndustry(sni) {
+  const n = parseInt(String(sni ?? '').slice(0, 2));
+  if (n === 62 || n === 63 || n === 58) return 'it-tech';
+  return 'konsult';
+}
+
+function benchmarkExposure({ employees, sniCode }) {
+  const emp = Math.max(1, parseInt(employees || 0));
+  const saas = getBenchmark({
+    category: 'saas-productivity',
+    industry: sniToIndustry(sniCode),
+    employees: emp,
+  });
+  if (!saas) return null;
   return {
-    mobile, software: sw, total,
-    low:  Math.round(total * 0.80 / 1000) * 1000,
-    high: Math.round(total * 1.20 / 1000) * 1000,
+    perSeatLow:  saas.p25,
+    perSeatHigh: saas.median,
+    spendLow:    saas.p25 * emp,
+    spendHigh:   saas.median * emp,
+    premium:     (saas.median - saas.p25) * emp,  // frusen premie de troligen överbetalar
+    source:      saas.source,
+    alt:         saas.alternatives?.[0]?.supplier ?? null,
   };
 }
 
@@ -393,7 +412,7 @@ async function main() {
     const findings = buildFindings({ row, posture, domainReg, ct });
     const score    = calcFindingScore(findings);
     const wowCount  = findings.filter(f => f.wow).length;
-    const saving    = estimateSaving({ employees: row.employees, mxPlatform: posture.mx });
+    const exposure  = benchmarkExposure({ employees: row.employees, sniCode: row.sni_code });
     const topFinding = findings.find(f => f.wow)?.text ?? findings[0]?.text ?? '—';
 
     console.log(`Score:${String(score).padStart(3)}  ${String(wowCount)}× wow  ${priorityTag(wowCount, score)}`);
@@ -412,8 +431,7 @@ async function main() {
       wow_count:      wowCount,
       top_finding:    topFinding,
       findings,
-      saving_low:     saving.low,
-      saving_high:    saving.high,
+      exposure,
     });
   }
 
@@ -428,7 +446,12 @@ async function main() {
     r.findings.filter(f => f.tier !== 'ctx').forEach(f => {
       console.log(`      ${f.wow ? '★' : '▸'} ${f.text}`);
     });
-    console.log(`      └ slutkläm (ej krok): indikativt ~${fmtKr(r.saving_low)}–${fmtKr(r.saving_high)} kr/år\n`);
+    if (r.exposure) {
+      const e = r.exposure;
+      console.log(`      └ slutkläm: M365-klass benchmark ${fmtKr(e.spendLow)}–${fmtKr(e.spendHigh)} kr/år (källa: ${e.source}, ${e.perSeatLow}–${e.perSeatHigh} kr/anv) · välförhandlat sparar ~${fmtKr(e.premium)} kr/år\n`);
+    } else {
+      console.log('');
+    }
   });
 
   // ── "Hur visste de det"-porten ──
