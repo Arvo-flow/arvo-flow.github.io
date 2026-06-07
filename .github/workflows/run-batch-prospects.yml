@@ -1,0 +1,95 @@
+name: Generera prospect-briefingar
+
+# Kör score-leads → batch-prospects → visar URLs i Summary.
+# Prospect-sidor visas på arvo-flow.se/prospect/:token
+#
+# Kräver GitHub Secret: ARVO_ADMIN_SECRET (samma värde som i Vercel)
+#
+# Manuell körning: Actions → "Generera prospect-briefingar" → Run workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      csv_file:
+        description: 'CSV med leads (default: leads/stockholm-leads.csv)'
+        required: false
+        default: 'leads/stockholm-leads.csv'
+      send_email:
+        description: 'Skicka mail till contact_email (ja/nej)'
+        required: false
+        default: 'nej'
+
+permissions:
+  contents: read
+
+jobs:
+  generate-prospects:
+    name: Score leads → Generera prospect-URLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Kör score-leads (generera scored CSV)
+        run: |
+          FILE="${{ github.event.inputs.csv_file || 'leads/stockholm-leads.csv' }}"
+          echo "Kör mot: $FILE"
+          node scripts/score-leads.mjs "$FILE" 2>&1 | tee /tmp/score-output.txt
+          # Hitta senaste scored CSV
+          SCORED=$(ls results/scored-*.csv 2>/dev/null | sort | tail -1)
+          echo "scored_csv=$SCORED" >> "$GITHUB_ENV"
+          echo "Scorad fil: $SCORED"
+
+      - name: Kör batch-prospects (generera URLs)
+        env:
+          ARVO_ADMIN_SECRET: ${{ secrets.ARVO_ADMIN_SECRET }}
+          BASE_URL: 'https://arvo-flow.se'
+        run: |
+          SCORED="${{ env.scored_csv }}"
+          if [ -z "$SCORED" ] || [ ! -f "$SCORED" ]; then
+            echo "Ingen scored CSV hittades — avbryter"
+            exit 1
+          fi
+
+          SEND_EMAIL="${{ github.event.inputs.send_email || 'nej' }}"
+          NO_EMAIL_FLAG="--no-email"
+          if [ "$SEND_EMAIL" = "ja" ]; then
+            NO_EMAIL_FLAG=""
+          fi
+
+          echo "Kör batch-prospects mot: $SCORED"
+          node scripts/batch-prospects.mjs "$SCORED" $NO_EMAIL_FLAG 2>&1 | tee /tmp/batch-output.txt
+
+      - name: Visa prospect-URLs i Summary
+        run: |
+          echo "## Prospect-briefingar skapade" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Öppna länkarna nedan för att se vad respektive bolag ser:" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # Extrahera URLs från batch-output
+          grep -oE 'https://arvo-flow\.se/prospect/[a-zA-Z0-9_-]+' /tmp/batch-output.txt | while read url; do
+            echo "- $url" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/batch-output.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Score-leads fynd:**" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -E '(Stark krok|Krok finns|Ingen krok|Score|wow)' /tmp/score-output.txt | head -30 >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
