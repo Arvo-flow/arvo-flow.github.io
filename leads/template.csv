@@ -1,0 +1,25 @@
+# Arvo — Lead-mall för Frozen Contract Scorer
+# Fyll i ett bolag per rad. Hämta data från allabolag.se (gratis).
+# MX-lookup körs automatiskt av score-leads.mjs — lämna domain tom om okänd.
+#
+# Fält:
+#   company_name  — Bolagets namn (obligatoriskt)
+#   domain        — Bolagets e-postdomän, t.ex. foretaget.se (för MX-lookup)
+#   org_nr        — Organisationsnummer, t.ex. 556123-4567
+#   founded_year  — Grundat år, t.ex. 2014 (från allabolag.se)
+#   employees     — Antal anställda just nu (från allabolag.se)
+#   sni_code      — SNI-kod, t.ex. 6920 (från allabolag.se → "Branscher")
+#   contact_email — Kontakte-post om känd (lämna tomt annars)
+#
+# SNI-koder för vanliga segment:
+#   6201–6209  IT-konsult / systemutveckling
+#   6920       Redovisning / bokföring
+#   7010       Huvudkontor / managementkonsult
+#   7022       PR / kommunikation
+#   7112       Teknikkonsult
+#   4110–4120  Byggutveckling
+#   4120       Husbyggande
+#   6810       Fastighetsförvaltning
+#
+company_name,domain,org_nr,founded_year,employees,sni_code,contact_email
+Exempelbolaget AB,exempel.se,556123-4567,2014,45,7022,cfo@exempel.se

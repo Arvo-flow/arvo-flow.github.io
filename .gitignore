@@ -40,5 +40,7 @@ test-pdfs/customer-*.pdf
 # Lokalt genererade preview-filer
 arvo-rapport-preview.pdf
 
-# Batch prospect results
-results/
+# Batch prospect results — scorade leads ignoreras (persondata)
+# Kohort-index (sni-kohort-*.json) committas — score-leads.mjs läser det
+results/scored-*
+results/*.csv
