@@ -54,7 +54,7 @@ jobs:
       - name: Kör batch-prospects (generera URLs)
         env:
           ARVO_ADMIN_SECRET: ${{ secrets.ARVO_ADMIN_SECRET }}
-          BASE_URL: 'https://arvo-flow.se'
+          BASE_URL: 'https://arvoflow.se'
         run: |
           SCORED="${{ env.scored_csv }}"
           if [ -z "$SCORED" ] || [ ! -f "$SCORED" ]; then
