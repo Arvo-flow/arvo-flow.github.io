@@ -1,0 +1,53 @@
+name: Kör fynd-motor (score-leads)
+
+# Kör score-leads.mjs mot en leads-CSV och visar resultatet som workflow-sammanfattning.
+# Används för att validera modell utan terminal.
+#
+# Kör från mobilen: Actions → "Kör fynd-motor" → Run workflow → välj fil → Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      csv_file:
+        description: 'CSV-fil i leads/ (t.ex. stockholm-leads.csv)'
+        required: false
+        default: 'stockholm-leads.csv'
+
+permissions:
+  contents: read
+
+jobs:
+  score:
+    name: Fynd-motor — ${{ github.event.inputs.csv_file || 'stockholm-leads.csv' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Kör score-leads
+        id: score
+        run: |
+          FILE="leads/${{ github.event.inputs.csv_file || 'stockholm-leads.csv' }}"
+          echo "Kör mot: $FILE"
+          node scripts/score-leads.mjs "$FILE" 2>&1 | tee /tmp/score-output.txt
+        # DNS fungerar i GitHub Actions — inga secrets behövs
+
+      - name: Visa sammanfattning
+        if: always()
+        run: |
+          echo "## Fynd-motor resultat" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/score-output.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
