@@ -1,0 +1,66 @@
+name: Kör alla DB-migrationer
+
+# Kör alla fyra migrationsskript i rätt ordning mot Neon Postgres.
+# Idempotent — säkert att köra flera gånger (CREATE TABLE IF NOT EXISTS).
+#
+# Kör från mobilen: Actions → "Kör alla DB-migrationer" → Run workflow → Run
+# Kräver: DATABASE_URL i GitHub Secrets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    name: Migrera Neon Postgres (alla tabeller)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: 1 — migrate.mjs (bastabeller)
+        run: node scripts/migrate.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: 2 — migrate-v2.mjs (utökade fält)
+        run: node scripts/migrate-v2.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: 3 — migrate-price-db.mjs (prisdatabas)
+        run: node scripts/migrate-price-db.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: 4 — migrate-prospects.mjs (outbound)
+        run: node scripts/migrate-prospects.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Sammanfattning
+        if: success()
+        run: |
+          echo "## ✅ Alla migrationer klara" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Följande tabeller är skapade/verifierade:" >> "$GITHUB_STEP_SUMMARY"
+          echo "- invoice_analyses, invoice_datapoints, labeled_corrections" >> "$GITHUB_STEP_SUMMARY"
+          echo "- suppliers, supplier_prices, supplier_price_history" >> "$GITHUB_STEP_SUMMARY"
+          echo "- contract_timelines, price_alerts_sent" >> "$GITHUB_STEP_SUMMARY"
+          echo "- outbound_prospects, magic_tokens, gate_emails" >> "$GITHUB_STEP_SUMMARY"
+          echo "- waitlist, invoice_feedback, fortnox_connections" >> "$GITHUB_STEP_SUMMARY"
+          echo "- customers, arvo_outcomes, activation_outcomes" >> "$GITHUB_STEP_SUMMARY"
+          echo "- invoice_benchmarks" >> "$GITHUB_STEP_SUMMARY"
