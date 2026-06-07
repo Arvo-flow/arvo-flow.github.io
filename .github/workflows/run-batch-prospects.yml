@@ -69,7 +69,7 @@ jobs:
           fi
 
           echo "Kör batch-prospects mot: $SCORED"
-          node scripts/batch-prospects.mjs "$SCORED" $NO_EMAIL_FLAG 2>&1 | tee /tmp/batch-output.txt
+          node scripts/batch-prospects.mjs "$SCORED" $NO_EMAIL_FLAG --rate=30000 2>&1 | tee /tmp/batch-output.txt
 
       - name: Visa prospect-URLs i Summary
         run: |
