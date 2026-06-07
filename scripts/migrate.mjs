@@ -220,6 +220,7 @@ await sql`
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )
 `;
+await sql`ALTER TABLE supplier_prices ADD COLUMN IF NOT EXISTS supplier_id UUID REFERENCES suppliers(id) ON DELETE CASCADE`;
 await sql`CREATE INDEX IF NOT EXISTS idx_supplier_prices_lookup ON supplier_prices (supplier_id, segment, size_bucket, invoice_date DESC)`;
 
 await sql`
@@ -233,6 +234,7 @@ await sql`
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )
 `;
+await sql`ALTER TABLE contract_timelines ADD COLUMN IF NOT EXISTS supplier_id UUID REFERENCES suppliers(id) ON DELETE SET NULL`;
 await sql`CREATE INDEX IF NOT EXISTS idx_contract_timelines_supplier ON contract_timelines (supplier_id, invoice_date DESC)`;
 
 await sql`ALTER TABLE labeled_corrections ADD COLUMN IF NOT EXISTS operator_reasoning TEXT`;
