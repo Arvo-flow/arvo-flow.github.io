@@ -1,6 +1,7 @@
 name: DNS Bransch-Kohort Builder
 
 # ── Bygger DMARC/MX-kohortindex per SNI-segment ────────────────────────────────
+# (v2 — tvingar GitHub att re-indexera workflow_dispatch-triggern)
 #
 # Kör varje måndag 03:00 UTC + manuellt.
 # Hämtar ~500 domäner per SNI från allabolag.se, kör DNS-kontroll (inga API-nycklar),
