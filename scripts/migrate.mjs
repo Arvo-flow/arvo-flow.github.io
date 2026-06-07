@@ -226,6 +226,8 @@ await sql`ALTER TABLE supplier_prices ADD COLUMN IF NOT EXISTS size_bucket TEXT 
 await sql`ALTER TABLE supplier_prices ADD COLUMN IF NOT EXISTS price_per_seat INTEGER`;
 await sql`ALTER TABLE supplier_prices ADD COLUMN IF NOT EXISTS seats INTEGER`;
 await sql`ALTER TABLE supplier_prices ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'invoice'`;
+await sql`ALTER TABLE supplier_prices ADD COLUMN IF NOT EXISTS annual_cost INTEGER NOT NULL DEFAULT 0`;
+await sql`ALTER TABLE supplier_prices ADD COLUMN IF NOT EXISTS invoice_date DATE NOT NULL DEFAULT CURRENT_DATE`;
 await sql`CREATE INDEX IF NOT EXISTS idx_supplier_prices_lookup ON supplier_prices (supplier_id, segment, size_bucket, invoice_date DESC)`;
 
 await sql`
