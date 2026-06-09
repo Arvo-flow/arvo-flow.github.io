@@ -55,11 +55,13 @@ jobs:
 
       - name: Kör kohort-builder
         id: build
+        continue-on-error: true
         run: |
           SNI="${{ github.event.inputs.sni_codes || '62,70,71,73' }}"
           LIMIT="${{ github.event.inputs.limit || '500' }}"
           node scripts/build-sni-kohort.mjs --sni "$SNI" --limit "$LIMIT"
         # Inga secrets behövs — DNS + HTTP mot allabolag.se
+        # continue-on-error: allabolag.se kan blockera — vi vill ändå inte få felmail
 
       - name: Kontrollera om filer skapades
         id: check
