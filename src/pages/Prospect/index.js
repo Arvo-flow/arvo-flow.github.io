@@ -2,18 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   PageWrap,
-  HeaderBar, HeaderInner, HeaderMeta, ConfidentialLabel, HeaderDate,
-  CompanyName, MetaLine, MetaDot,
-  ContentArea,
-  SectionEyebrow,
-  SignalSection, SignalCard, SignalBullet, SignalText,
-  DataCard, DataRow, DataDesc, DataVal,
-  FinancialSection, BigNumber, BigNumberSub, BigNumberNote,
-  EstimateCard, CategoryLabel, SavingBand, SavingLabel, SavingRange, SourceNote,
-  MethodologyNote,
-  CtaSection, PrimaryCtaWrap, PrimaryCta, PrimaryCtaSub,
+  HeroSection, HeroTopRow, HeroCompany, HeroMeta, HeroDate, MetaDot,
+  ConfidentialLabel,
+  IntelSection, SectionEyebrow, IntelFinding, FindingStar, FindingText,
+  IntelMeta, IntelMetaRow, IntelMetaLabel, IntelMetaVal,
+  NumberSection, NumberEyebrow, ImpactNumber, ImpactUnit, ImpactMeta, ImpactNote,
+  BreakdownSection, BreakdownInner, BreakdownEyebrow,
+  CategoryCard, CategoryLabel, DataRow, DataDesc, DataVal,
+  SavingBand, SavingLabel, SavingRange, SourceNote,
+  CtaSection, MethodologyNote,
+  PrimaryCtaWrap, PrimaryCta, PrimaryCtaSub,
   CtaGap, SecondaryCtaWrap, SecondaryCta, SecondaryCtaSub,
-  Divider,
   PageFooter, FooterDomain, FooterBrand,
   LoadingWrap, Dots, Dot, LoadingText,
   ErrorWrap, ErrorIcon, ErrorTitle, ErrorBody, ErrorCta,
@@ -112,7 +111,7 @@ export default function Prospect() {
 
   const hasFindings = findings.length > 0;
 
-  // Build signal list — findings first, then derived infrastructure signals
+  // Build signal list
   const signals = [];
   findings.forEach(f => signals.push({ text: f, key: f }));
 
@@ -123,168 +122,169 @@ export default function Prospect() {
     });
   } else if (!hasFindings && mxPlatform) {
     signals.push({
-      text: `${mxLabel} identifierat för er domän · ${employees} licenser i konsultbransch`,
+      text: `${mxLabel} identifierat för er domän · ${employees} licenser`,
       key: 'mxPlatform',
     });
   }
 
   const hasSignals = signals.length > 0;
-  const eyebrow    = hasFindings ? 'IDENTIFIERADE SIGNALER' : 'INFRASTRUKTURANALYS';
+  const eyebrow    = hasFindings ? 'IDENTIFIERAT FYND' : 'INFRASTRUKTURANALYS';
+
+  const showIntelMeta = hasFindings && (mxPlatform || domainRegistered || mxSince);
 
   return (
     <PageWrap>
 
-      {/* ── Top header bar ─────────────────────────────────────────────────── */}
-      <HeaderBar>
-        <HeaderInner>
-          <HeaderMeta>
-            <ConfidentialLabel>KONFIDENTIELL ANALYS</ConfidentialLabel>
-            <HeaderDate>{formatDate(generatedAt)}</HeaderDate>
-          </HeaderMeta>
+      {/* ── Hero ──────────────────────────────────────────────────────────────── */}
+      <HeroSection>
+        <HeroTopRow>
+          <ConfidentialLabel>Konfidentiell analys</ConfidentialLabel>
+          <HeroDate>{formatDate(generatedAt)}</HeroDate>
+        </HeroTopRow>
 
-          <CompanyName>{companyName}</CompanyName>
-          <MetaLine>
-            {industry && <span>{industry}</span>}
-            {industry && employees && <MetaDot>·</MetaDot>}
-            {employees && <span>{employees} anställda</span>}
-            {foundedYear && <><MetaDot>·</MetaDot><span>Grundat {foundedYear}</span></>}
-          </MetaLine>
-        </HeaderInner>
-      </HeaderBar>
+        <HeroCompany>{companyName}</HeroCompany>
 
-      <ContentArea>
+        <HeroMeta>
+          {industry && <span>{industry}</span>}
+          {industry && employees && <MetaDot>·</MetaDot>}
+          {employees && <span>{employees} anställda</span>}
+          {foundedYear && <><MetaDot>·</MetaDot><span>Grundat {foundedYear}</span></>}
+        </HeroMeta>
+      </HeroSection>
 
-        {/* ── Signal section — the "how did they know?" moment ───────────── */}
-        {hasSignals && (
-          <SignalSection>
-            <SectionEyebrow>{eyebrow}</SectionEyebrow>
+      {/* ── Intelligence finding ─────────────────────────────────────────────── */}
+      {hasSignals && (
+        <IntelSection>
+          <SectionEyebrow>{eyebrow}</SectionEyebrow>
 
-            {signals.map((s, i) => (
-              <SignalCard key={s.key} $i={i}>
-                <SignalBullet>★</SignalBullet>
-                <SignalText>{s.text}</SignalText>
-              </SignalCard>
+          {signals.map((s, i) => (
+            <IntelFinding key={s.key} $i={i}>
+              <FindingStar>★</FindingStar>
+              <FindingText>{s.text}</FindingText>
+            </IntelFinding>
+          ))}
+
+          {showIntelMeta && (
+            <IntelMeta>
+              {mxPlatform && (
+                <IntelMetaRow>
+                  <IntelMetaLabel>E-postplattform</IntelMetaLabel>
+                  <IntelMetaVal>{mxLabel}</IntelMetaVal>
+                </IntelMetaRow>
+              )}
+              {mxSince && (
+                <IntelMetaRow>
+                  <IntelMetaLabel>Konfiguration sedan</IntelMetaLabel>
+                  <IntelMetaVal $highlight>{swMonthYear(mxSince)} — {mxMonths} mån</IntelMetaVal>
+                </IntelMetaRow>
+              )}
+              {domainRegistered && (
+                <IntelMetaRow>
+                  <IntelMetaLabel>Domän registrerad</IntelMetaLabel>
+                  <IntelMetaVal>{swMonthYear(domainRegistered)}</IntelMetaVal>
+                </IntelMetaRow>
+              )}
+            </IntelMeta>
+          )}
+        </IntelSection>
+      )}
+
+      {/* ── Financial impact ─────────────────────────────────────────────────── */}
+      {hasSaving && (
+        <NumberSection>
+          <NumberEyebrow>Beräknad kostnadspremie</NumberEyebrow>
+          <ImpactNumber>
+            {fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}{' '}
+            <ImpactUnit>kr/år</ImpactUnit>
+          </ImpactNumber>
+          {mxPlatform && employees && (
+            <ImpactMeta>
+              Baserat på {employees} licenser × marknadspris {mxLabel}
+            </ImpactMeta>
+          )}
+          <ImpactNote>
+            Er faktiska avtalskostnad ser vi inte förrän ni delar er faktura
+          </ImpactNote>
+        </NumberSection>
+      )}
+
+      {/* ── Category breakdown ───────────────────────────────────────────────── */}
+      {cats.length > 0 && (
+        <BreakdownSection>
+          <BreakdownInner>
+            <BreakdownEyebrow>Kostnadsanalys per kategori</BreakdownEyebrow>
+            {cats.map((cat, i) => (
+              <CategoryCard key={i}>
+                <CategoryLabel>{cat.label}</CategoryLabel>
+
+                <DataRow>
+                  <DataDesc>{cat.category === 'm365' ? 'Uppskattade licenser' : 'Uppskattade abonnemang'}</DataDesc>
+                  <DataVal>{cat.estimatedSims} st</DataVal>
+                </DataRow>
+                <DataRow>
+                  <DataDesc>Typisk marknadskostnad</DataDesc>
+                  <DataVal>{fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år</DataVal>
+                </DataRow>
+                <DataRow>
+                  <DataDesc>Arvo-priset (verifierat listpris)</DataDesc>
+                  <DataVal $highlight>{fmt(cat.arvoAnnual)} kr/år</DataVal>
+                </DataRow>
+                <DataRow>
+                  <DataDesc>{cat.category === 'm365' ? 'Pris per licens' : 'Pris per abonnemang'}</DataDesc>
+                  <DataVal>
+                    {cat.pricePerSim.arvo} kr/mån{' '}
+                    <span style={{ color: 'rgba(0,0,0,0.22)', fontWeight: 400, fontSize: 11 }}>
+                      (typiskt {cat.pricePerSim.typical} kr/mån)
+                    </span>
+                  </DataVal>
+                </DataRow>
+
+                <SavingBand>
+                  <SavingLabel>Potentiell besparing</SavingLabel>
+                  <SavingRange>upp till {fmt(cat.savingHigh)} kr/år</SavingRange>
+                </SavingBand>
+
+                <SourceNote>{cat.sourceNote}</SourceNote>
+              </CategoryCard>
             ))}
+          </BreakdownInner>
+        </BreakdownSection>
+      )}
 
-            {/* Secondary data points when findings exist and mx metadata is available */}
-            {hasFindings && (mxPlatform || domainRegistered) && (
-              <DataCard>
-                {mxPlatform && (
-                  <DataRow>
-                    <DataDesc>E-postplattform</DataDesc>
-                    <DataVal>{mxLabel}</DataVal>
-                  </DataRow>
-                )}
-                {mxSince && (
-                  <DataRow>
-                    <DataDesc>Konfiguration sedan</DataDesc>
-                    <DataVal $highlight>{swMonthYear(mxSince)} — {mxMonths} mån</DataVal>
-                  </DataRow>
-                )}
-                {domainRegistered && (
-                  <DataRow>
-                    <DataDesc>Domän registrerad</DataDesc>
-                    <DataVal>{swMonthYear(domainRegistered)}</DataVal>
-                  </DataRow>
-                )}
-              </DataCard>
-            )}
-          </SignalSection>
-        )}
-
-        {/* ── Financial stakes ────────────────────────────────────────────── */}
-        {hasSaving && (
-          <FinancialSection>
-            <SectionEyebrow>BERÄKNAD KOSTNADSPREMIE</SectionEyebrow>
-            <BigNumber>
-              {fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)} kr/år
-            </BigNumber>
-            {mxPlatform && employees && (
-              <BigNumberSub>
-                Baserat på {employees} licenser × marknadspris {mxLabel}
-              </BigNumberSub>
-            )}
-            <BigNumberNote>
-              Ert faktiska avtalspris ser vi inte förrän ni delar er faktura
-            </BigNumberNote>
-          </FinancialSection>
-        )}
-
-        {/* ── Category estimate cards ─────────────────────────────────────── */}
-        {cats.map((cat, i) => (
-          <EstimateCard key={i}>
-            <CategoryLabel>{cat.label}</CategoryLabel>
-
-            <DataRow>
-              <DataDesc>{cat.category === 'm365' ? 'Uppskattade licenser' : 'Uppskattade abonnemang'}</DataDesc>
-              <DataVal>{cat.estimatedSims} st</DataVal>
-            </DataRow>
-            <DataRow>
-              <DataDesc>Typisk marknadskostnad</DataDesc>
-              <DataVal>{fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år</DataVal>
-            </DataRow>
-            <DataRow>
-              <DataDesc>Arvo-priset (verifierat listpris)</DataDesc>
-              <DataVal $highlight>{fmt(cat.arvoAnnual)} kr/år</DataVal>
-            </DataRow>
-            <DataRow>
-              <DataDesc>{cat.category === 'm365' ? 'Pris per licens' : 'Pris per abonnemang'}</DataDesc>
-              <DataVal>
-                {cat.pricePerSim.arvo} kr/mån{' '}
-                <span style={{ color: 'rgba(255,255,255,0.20)', fontWeight: 400, fontSize: 12 }}>
-                  (typiskt {cat.pricePerSim.typical} kr/mån)
-                </span>
-              </DataVal>
-            </DataRow>
-
-            <SavingBand>
-              <SavingLabel>Potentiell besparing</SavingLabel>
-              <SavingRange>upp till {fmt(cat.savingHigh)} kr/år</SavingRange>
-            </SavingBand>
-
-            <SourceNote>{cat.sourceNote}</SourceNote>
-          </EstimateCard>
-        ))}
-
-        {/* ── Methodology note — trust anchor ─────────────────────────────── */}
+      {/* ── CTA ──────────────────────────────────────────────────────────────── */}
+      <CtaSection>
         <MethodologyNote>
           Arvo har analyserat den publika DNS-konfigurationen för {companyName}s domän.
           Ingen data har inhämtats från er eller era leverantörer utan ert tillstånd.
           Er faktiska avtalskostnad känner vi inte till förrän ni visar oss er faktura.
         </MethodologyNote>
 
-        <Divider />
+        <PrimaryCtaWrap>
+          <PrimaryCta href="/testa-faktura" onClick={() => recordAction('upload')}>
+            Verifiera er kostnad — ladda upp faktura
+          </PrimaryCta>
+          <PrimaryCtaSub>Kostnadsfritt · 2 minuter · Ingen registrering krävs</PrimaryCtaSub>
+        </PrimaryCtaWrap>
 
-        {/* ── CTA section ─────────────────────────────────────────────────── */}
-        <CtaSection>
-          <PrimaryCtaWrap>
-            <PrimaryCta href="/testa-faktura" onClick={() => recordAction('upload')}>
-              Verifiera er kostnad — ladda upp faktura
-            </PrimaryCta>
-            <PrimaryCtaSub>Kostnadsfritt · 2 minuter · Ingen registrering krävs</PrimaryCtaSub>
-          </PrimaryCtaWrap>
+        <CtaGap />
 
-          <CtaGap />
+        <SecondaryCtaWrap>
+          <SecondaryCta
+            href="/intelligence#aktivera"
+            onClick={() => recordAction('activate')}
+          >
+            Aktivera Arvo Intelligence — 1 995 kr/mån
+          </SecondaryCta>
+          <SecondaryCtaSub>
+            Löpande bevakning · Ingen bindningstid · Arvo börjar bevaka er inom 24 timmar
+          </SecondaryCtaSub>
+        </SecondaryCtaWrap>
+      </CtaSection>
 
-          <SecondaryCtaWrap>
-            <SecondaryCta
-              href="/intelligence#aktivera"
-              onClick={() => recordAction('activate')}
-            >
-              Aktivera Arvo Intelligence — 1 995 kr/mån
-            </SecondaryCta>
-            <SecondaryCtaSub>
-              Löpande bevakning · Ingen bindningstid · Arvo börjar bevaka er inom 24 timmar
-            </SecondaryCtaSub>
-          </SecondaryCtaWrap>
-        </CtaSection>
-
-      </ContentArea>
-
-      {/* ── Footer ──────────────────────────────────────────────────────────── */}
+      {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <PageFooter>
         <FooterDomain>arvoflow.se</FooterDomain>
-        <FooterBrand>ARVO INTELLIGENCE</FooterBrand>
+        <FooterBrand>Arvo Intelligence</FooterBrand>
       </PageFooter>
 
     </PageWrap>

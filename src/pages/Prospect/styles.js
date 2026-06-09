@@ -1,8 +1,13 @@
 import styled, { keyframes } from 'styled-components';
 
 const fadeUp = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
+`;
+
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to   { opacity: 1; }
 `;
 
 const pulse = keyframes`
@@ -10,403 +15,441 @@ const pulse = keyframes`
   50%       { opacity: 1;   transform: scale(1); }
 `;
 
-// ── Page wrapper ──────────────────────────────────────────────────────────────
+// ── Shared ────────────────────────────────────────────────────────────────────
+
+const DARK  = '#040A09';
+const TEAL  = '#1DB09A';
+const TEAL2 = '#4ECDC4';
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export const PageWrap = styled.div`
   min-height: 100vh;
-  background: #060D0B;
-  font-family: 'Inter', -apple-system, sans-serif;
+  background: ${DARK};
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
 `;
 
-// ── Top header bar ────────────────────────────────────────────────────────────
+// ── Hero ──────────────────────────────────────────────────────────────────────
 
-export const HeaderBar = styled.div`
-  background: #060D0B;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  padding: 28px 24px 24px;
+export const HeroSection = styled.div`
+  background: ${DARK};
+  padding: 64px 32px 56px;
+  text-align: center;
   position: relative;
-  animation: ${fadeUp} 0.4s ease-out both;
+  animation: ${fadeUp} 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 
   &::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: linear-gradient(90deg, #1DB09A 0%, #4ECDC4 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, ${TEAL} 30%, ${TEAL2} 60%, transparent 100%);
   }
 `;
 
-export const HeaderInner = styled.div`
-  max-width: 560px;
-  margin: 0 auto;
-`;
-
-export const HeaderMeta = styled.div`
+export const HeroTopRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 48px;
 `;
 
 export const ConfidentialLabel = styled.div`
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.20em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #1DB09A;
+  color: ${TEAL};
 `;
 
-export const HeaderDate = styled.div`
+export const HeroDate = styled.div`
   font-size: 11px;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.22);
   letter-spacing: 0.04em;
 `;
 
-export const CompanyName = styled.h1`
+export const HeroCompany = styled.h1`
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 28px;
+  font-size: clamp(40px, 11vw, 56px);
   font-weight: 700;
   color: #ffffff;
-  margin: 0 0 10px;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+  line-height: 1.06;
+  letter-spacing: -0.025em;
+  animation: ${fadeUp} 0.5s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
 `;
 
-export const MetaLine = styled.div`
-  font-size: 12px;
-  color: rgba(255,255,255,0.30);
+export const HeroMeta = styled.div`
+  font-size: 13px;
+  color: rgba(255,255,255,0.28);
   display: flex;
+  justify-content: center;
   gap: 8px;
   flex-wrap: wrap;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
+  animation: ${fadeUp} 0.5s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
 `;
 
 export const MetaDot = styled.span`
-  color: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.15);
 `;
 
-// ── Main content area ─────────────────────────────────────────────────────────
+// ── Intel section (finding reveal) ───────────────────────────────────────────
 
-export const ContentArea = styled.div`
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 40px 24px 80px;
+export const IntelSection = styled.div`
+  background: ${DARK};
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding: 56px 32px 52px;
+  text-align: center;
 `;
-
-// ── Section eyebrow ───────────────────────────────────────────────────────────
 
 export const SectionEyebrow = styled.div`
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.20em;
   text-transform: uppercase;
-  color: #1DB09A;
-  margin-bottom: 16px;
+  color: rgba(255,255,255,0.30);
+  margin-bottom: 28px;
+`;
+
+export const IntelFinding = styled.div`
+  margin-bottom: 20px;
+  animation: ${fadeUp} 0.5s ${({ $i }) => 0.1 + ($i ?? 0) * 0.08}s cubic-bezier(0.22, 1, 0.36, 1) both;
+`;
+
+export const FindingStar = styled.div`
+  font-size: 14px;
+  color: ${TEAL};
+  margin-bottom: 10px;
+  letter-spacing: 0.08em;
+`;
+
+export const FindingText = styled.p`
+  font-size: 20px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.92);
+  line-height: 1.50;
+  margin: 0;
+  letter-spacing: -0.01em;
+  max-width: 480px;
+  margin-inline: auto;
+`;
+
+// ── Intel secondary metadata ──────────────────────────────────────────────────
+
+export const IntelMeta = styled.div`
+  margin-top: 32px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 24px;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 380px;
+  margin-inline: auto;
+`;
+
+export const IntelMetaRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+`;
+
+export const IntelMetaLabel = styled.span`
+  font-size: 12px;
+  color: rgba(255,255,255,0.30);
+  flex-shrink: 0;
+`;
+
+export const IntelMetaVal = styled.span`
+  font-size: 13px;
+  font-weight: 600;
+  color: ${({ $highlight }) => $highlight ? TEAL : 'rgba(255,255,255,0.70)'};
+  text-align: right;
+`;
+
+// ── Number section (financial impact) ────────────────────────────────────────
+
+export const NumberSection = styled.div`
+  background: linear-gradient(180deg, ${DARK} 0%, #06120E 100%);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding: 64px 32px 60px;
+  text-align: center;
+`;
+
+export const NumberEyebrow = styled.div`
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  margin-bottom: 20px;
+  animation: ${fadeUp} 0.5s 0.05s cubic-bezier(0.22, 1, 0.36, 1) both;
+`;
+
+export const ImpactNumber = styled.div`
+  font-size: clamp(44px, 13vw, 68px);
+  font-weight: 800;
+  color: ${TEAL};
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: 4px;
+  animation: ${fadeUp} 0.6s 0.10s cubic-bezier(0.22, 1, 0.36, 1) both;
+`;
+
+export const ImpactUnit = styled.span`
+  font-size: 0.40em;
+  font-weight: 500;
+  color: rgba(29,176,154,0.65);
+  letter-spacing: -0.01em;
+  vertical-align: baseline;
+`;
+
+export const ImpactMeta = styled.div`
+  font-size: 12px;
+  color: rgba(255,255,255,0.28);
+  margin-top: 12px;
+  letter-spacing: 0.01em;
+`;
+
+export const ImpactNote = styled.div`
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255,255,255,0.22);
+  margin-top: 20px;
+  max-width: 320px;
+  margin-inline: auto;
+  line-height: 1.6;
+`;
+
+// ── Breakdown section (light) ─────────────────────────────────────────────────
+
+export const BreakdownSection = styled.div`
+  background: #F5F8F6;
+  padding: 48px 24px 40px;
+`;
+
+export const BreakdownInner = styled.div`
+  max-width: 520px;
+  margin: 0 auto;
+`;
+
+export const BreakdownEyebrow = styled.div`
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(14,26,23,0.35);
+  margin-bottom: 24px;
+  text-align: center;
+`;
+
+export const CategoryCard = styled.div`
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+  position: relative;
+  overflow: hidden;
 
   &::before {
     content: '';
-    display: inline-block;
-    width: 14px;
-    height: 1px;
-    background: #1DB09A;
-    opacity: 0.7;
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, ${TEAL} 0%, ${TEAL2} 100%);
   }
 `;
 
-// ── Signal cards ──────────────────────────────────────────────────────────────
-
-export const SignalSection = styled.div`
-  margin-bottom: 32px;
-  animation: ${fadeUp} 0.4s ease-out both;
-  animation-delay: 0.1s;
-`;
-
-export const SignalCard = styled.div`
-  background: rgba(29,176,154,0.07);
-  border-left: 3px solid #1DB09A;
-  border-radius: 0 10px 10px 0;
-  padding: 14px 18px;
-  margin-bottom: 10px;
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  animation: ${fadeUp} 0.4s ease-out both;
-  animation-delay: ${({ $i }) => 0.15 + ($i ?? 0) * 0.1}s;
-`;
-
-export const SignalBullet = styled.span`
-  color: #4ECDC4;
-  font-size: 12px;
-  flex-shrink: 0;
-  margin-top: 2px;
+export const CategoryLabel = styled.div`
+  font-size: 11px;
   font-weight: 700;
-`;
-
-export const SignalText = styled.span`
-  font-size: 15px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.88);
-  line-height: 1.5;
-`;
-
-// ── Secondary data rows inside intel card ─────────────────────────────────────
-
-export const DataCard = styled.div`
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1B7A6E;
+  margin-bottom: 20px;
 `;
 
 export const DataRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 10px;
   gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
 
-  &:last-child { margin-bottom: 0; }
+  &:last-of-type {
+    border-bottom: none;
+  }
 `;
 
 export const DataDesc = styled.span`
   font-size: 13px;
-  color: rgba(255,255,255,0.38);
-  flex: 1;
+  color: rgba(14,26,23,0.45);
+  flex-shrink: 0;
 `;
 
 export const DataVal = styled.span`
   font-size: 14px;
   font-weight: 600;
-  color: ${({ $highlight }) => $highlight ? '#4ECDC4' : 'rgba(255,255,255,0.82)'};
-  white-space: nowrap;
-`;
-
-// ── Financial stakes ──────────────────────────────────────────────────────────
-
-export const FinancialSection = styled.div`
-  margin-bottom: 32px;
-  animation: ${fadeUp} 0.4s ease-out both;
-  animation-delay: 0.2s;
-`;
-
-export const BigNumber = styled.div`
-  font-size: 28px;
-  font-weight: 800;
-  color: #1DB09A;
-  letter-spacing: -0.02em;
-  margin: 8px 0;
-`;
-
-export const BigNumberSub = styled.div`
-  font-size: 13px;
-  color: rgba(255,255,255,0.38);
-  margin-bottom: 6px;
-  line-height: 1.5;
-`;
-
-export const BigNumberNote = styled.div`
-  font-size: 12px;
-  color: rgba(255,255,255,0.22);
-  font-style: italic;
-  line-height: 1.55;
-`;
-
-// ── Category estimate cards (minimal dark style) ───────────────────────────────
-
-export const EstimateCard = styled.div`
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 12px;
-  transition: border-color 0.2s;
-
-  &:hover {
-    border-color: rgba(29,176,154,0.20);
-  }
-`;
-
-export const CategoryLabel = styled.div`
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.22);
-  margin-bottom: 14px;
+  color: ${({ $highlight }) => $highlight ? '#1B7A6E' : '#0E1A17'};
+  text-align: right;
 `;
 
 export const SavingBand = styled.div`
-  margin-top: 16px;
-  background: linear-gradient(135deg, rgba(29,176,154,0.12), rgba(29,176,154,0.05));
-  border: 1px solid rgba(29,176,154,0.22);
-  border-radius: 10px;
-  padding: 12px 16px;
+  background: #0E1A17;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-top: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 `;
 
 export const SavingLabel = styled.span`
   font-size: 12px;
+  color: rgba(255,255,255,0.45);
   font-weight: 500;
-  color: rgba(255,255,255,0.38);
 `;
 
 export const SavingRange = styled.span`
-  font-size: 16px;
-  font-weight: 800;
-  color: #4ECDC4;
+  font-size: 15px;
+  font-weight: 700;
+  color: ${TEAL2};
   letter-spacing: -0.01em;
 `;
 
 export const SourceNote = styled.div`
-  margin-top: 10px;
   font-size: 11px;
-  color: rgba(255,255,255,0.16);
+  color: rgba(14,26,23,0.28);
+  margin-top: 12px;
   line-height: 1.5;
 `;
 
-// ── Methodology note ──────────────────────────────────────────────────────────
-
-export const MethodologyNote = styled.div`
-  font-size: 12px;
-  color: rgba(255,255,255,0.35);
-  line-height: 1.65;
-  padding: 14px 18px;
-  border-left: 2px solid rgba(29,176,154,0.18);
-  background: rgba(255,255,255,0.018);
-  border-radius: 0 6px 6px 0;
-  margin-bottom: 36px;
-`;
-
-// ── CTA section ───────────────────────────────────────────────────────────────
+// ── CTA section (dark) ────────────────────────────────────────────────────────
 
 export const CtaSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-  animation: ${fadeUp} 0.6s ease-out both;
-  animation-delay: 0.4s;
+  background: ${DARK};
+  padding: 56px 28px 48px;
+  text-align: center;
+  border-top: 1px solid rgba(255,255,255,0.05);
+`;
+
+export const MethodologyNote = styled.p`
+  font-size: 12px;
+  color: rgba(255,255,255,0.20);
+  line-height: 1.75;
+  max-width: 380px;
+  margin: 0 auto 40px;
 `;
 
 export const PrimaryCtaWrap = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  margin-bottom: 8px;
 `;
 
 export const PrimaryCta = styled.a`
   display: block;
   width: 100%;
-  background: linear-gradient(135deg, #4ECDC4 0%, #1DB09A 60%, #1B6E66 100%);
+  max-width: 420px;
+  margin-inline: auto;
+  background: linear-gradient(135deg, ${TEAL2} 0%, ${TEAL} 55%, #1B6E66 100%);
   color: #fff;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
-  padding: 18px 32px;
+  padding: 20px 32px;
   border-radius: 100px;
   text-align: center;
   text-decoration: none;
-  letter-spacing: -0.01em;
-  transition: opacity 0.18s, transform 0.15s;
-  box-shadow: 0 8px 32px rgba(29,176,154,0.28);
+  letter-spacing: 0.01em;
+  box-shadow: 0 12px 40px rgba(29,176,154,0.35);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
   box-sizing: border-box;
 
-  &:hover {
-    opacity: 0.90;
-    transform: translateY(-2px);
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 6px 24px rgba(29,176,154,0.25);
   }
 `;
 
 export const PrimaryCtaSub = styled.div`
   font-size: 12px;
-  color: rgba(255,255,255,0.28);
-  letter-spacing: 0.03em;
-  text-align: center;
+  color: rgba(255,255,255,0.25);
+  margin-top: 10px;
+  letter-spacing: 0.01em;
 `;
 
 export const CtaGap = styled.div`
-  height: 8px;
+  height: 20px;
 `;
 
 export const SecondaryCtaWrap = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  margin-bottom: 8px;
 `;
 
 export const SecondaryCta = styled.a`
   display: block;
   width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
+  border: 1px solid rgba(255,255,255,0.18);
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.50);
+  color: rgba(255,255,255,0.80);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 18px 32px;
+  border-radius: 100px;
   text-align: center;
   text-decoration: none;
-  padding: 16px 24px;
-  border-radius: 100px;
-  font-size: 14px;
-  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: border-color 0.18s ease, color 0.18s ease;
   box-sizing: border-box;
-  transition: border-color 0.2s, color 0.2s;
 
-  &:hover {
-    border-color: rgba(255,255,255,0.28);
-    color: rgba(255,255,255,0.80);
+  &:active {
+    border-color: rgba(255,255,255,0.35);
+    color: #fff;
   }
 `;
 
 export const SecondaryCtaSub = styled.div`
   font-size: 12px;
-  color: rgba(255,255,255,0.22);
-  letter-spacing: 0.02em;
-  text-align: center;
-`;
-
-// ── Divider ───────────────────────────────────────────────────────────────────
-
-export const Divider = styled.hr`
-  border: none;
-  border-top: 1px solid rgba(255,255,255,0.05);
-  margin: 28px 0;
+  color: rgba(255,255,255,0.20);
+  margin-top: 10px;
+  letter-spacing: 0.01em;
 `;
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 
 export const PageFooter = styled.div`
-  padding: 20px 24px 32px;
-  max-width: 560px;
-  margin: 0 auto;
+  background: ${DARK};
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding: 20px 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 `;
 
-export const FooterDomain = styled.div`
-  font-size: 12px;
-  color: rgba(255,255,255,0.15);
-  letter-spacing: 0.05em;
+export const FooterDomain = styled.span`
+  font-size: 11px;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: 0.04em;
 `;
 
-export const FooterBrand = styled.div`
+export const FooterBrand = styled.span`
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.15);
 `;
 
 // ── Loading ───────────────────────────────────────────────────────────────────
 
 export const LoadingWrap = styled.div`
   min-height: 100vh;
-  background: #060D0B;
+  background: ${DARK};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -419,63 +462,61 @@ export const Dots = styled.div`
   gap: 8px;
 `;
 
-export const Dot = styled.span`
+export const Dot = styled.div`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #1DB09A;
-  animation: ${pulse} 1.2s ${({ $i }) => $i * 0.18}s ease-in-out infinite;
+  background: ${TEAL};
+  animation: ${pulse} 1.2s ${({ $i }) => ($i ?? 0) * 0.2}s ease-in-out infinite;
 `;
 
-export const LoadingText = styled.p`
-  font-size: 14px;
-  color: rgba(255,255,255,0.28);
-  margin: 0;
+export const LoadingText = styled.div`
+  font-size: 13px;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.04em;
 `;
 
 // ── Error ─────────────────────────────────────────────────────────────────────
 
 export const ErrorWrap = styled.div`
   min-height: 100vh;
-  background: #060D0B;
+  background: ${DARK};
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 40px 28px;
   text-align: center;
-  gap: 12px;
-  max-width: 400px;
-  margin: 0 auto;
+  gap: 0;
 `;
 
 export const ErrorIcon = styled.div`
-  font-size: 36px;
-  margin-bottom: 4px;
+  font-size: 32px;
+  margin-bottom: 20px;
+  animation: ${fadeIn} 0.4s ease both;
 `;
 
 export const ErrorTitle = styled.h2`
-  font-size: 20px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 24px;
   font-weight: 700;
-  color: #ffffff;
-  margin: 0;
+  color: #fff;
+  margin: 0 0 12px;
 `;
 
 export const ErrorBody = styled.p`
   font-size: 14px;
-  color: rgba(255,255,255,0.40);
-  line-height: 1.6;
-  margin: 0;
+  color: rgba(255,255,255,0.35);
+  line-height: 1.65;
+  max-width: 320px;
+  margin: 0 0 28px;
 `;
 
 export const ErrorCta = styled.a`
-  margin-top: 8px;
-  display: inline-block;
-  background: linear-gradient(135deg, #4ECDC4, #1DB09A);
-  color: #ffffff;
-  text-decoration: none;
-  padding: 13px 22px;
-  border-radius: 100px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
+  color: ${TEAL};
+  text-decoration: none;
+  border-bottom: 1px solid rgba(29,176,154,0.3);
+  padding-bottom: 2px;
 `;
