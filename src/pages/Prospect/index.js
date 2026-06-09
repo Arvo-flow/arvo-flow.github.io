@@ -112,7 +112,7 @@ export default function Prospect() {
 
   const hasFindings = findings.length > 0;
 
-  // Build signal list — findings first, then derived data signals
+  // Build signal list — findings first, then derived infrastructure signals
   const signals = [];
   findings.forEach(f => signals.push({ text: f, key: f }));
 
@@ -129,15 +129,16 @@ export default function Prospect() {
   }
 
   const hasSignals = signals.length > 0;
-  const eyebrow = hasFindings ? 'IDENTIFIERADE SIGNALER' : 'INFRASTRUKTURANALYS';
+  const eyebrow    = hasFindings ? 'IDENTIFIERADE SIGNALER' : 'INFRASTRUKTURANALYS';
 
   return (
     <PageWrap>
-      {/* ── Top header bar ───────────────────────────────────────────────── */}
+
+      {/* ── Top header bar ─────────────────────────────────────────────────── */}
       <HeaderBar>
         <HeaderInner>
           <HeaderMeta>
-            <ConfidentialLabel>Konfidentiell analys</ConfidentialLabel>
+            <ConfidentialLabel>KONFIDENTIELL ANALYS</ConfidentialLabel>
             <HeaderDate>{formatDate(generatedAt)}</HeaderDate>
           </HeaderMeta>
 
@@ -152,10 +153,12 @@ export default function Prospect() {
       </HeaderBar>
 
       <ContentArea>
-        {/* ── Signal section ─────────────────────────────────────────────── */}
+
+        {/* ── Signal section — the "how did they know?" moment ───────────── */}
         {hasSignals && (
           <SignalSection>
             <SectionEyebrow>{eyebrow}</SectionEyebrow>
+
             {signals.map((s, i) => (
               <SignalCard key={s.key} $i={i}>
                 <SignalBullet>★</SignalBullet>
@@ -163,7 +166,7 @@ export default function Prospect() {
               </SignalCard>
             ))}
 
-            {/* Secondary data points when we have findings and also mx data */}
+            {/* Secondary data points when findings exist and mx metadata is available */}
             {hasFindings && (mxPlatform || domainRegistered) && (
               <DataCard>
                 {mxPlatform && (
@@ -189,10 +192,10 @@ export default function Prospect() {
           </SignalSection>
         )}
 
-        {/* ── Financial stakes ───────────────────────────────────────────── */}
+        {/* ── Financial stakes ────────────────────────────────────────────── */}
         {hasSaving && (
           <FinancialSection>
-            <SectionEyebrow>Beräknad kostnadspremie</SectionEyebrow>
+            <SectionEyebrow>BERÄKNAD KOSTNADSPREMIE</SectionEyebrow>
             <BigNumber>
               {fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)} kr/år
             </BigNumber>
@@ -207,7 +210,7 @@ export default function Prospect() {
           </FinancialSection>
         )}
 
-        {/* ── Category estimate cards ────────────────────────────────────── */}
+        {/* ── Category estimate cards ─────────────────────────────────────── */}
         {cats.map((cat, i) => (
           <EstimateCard key={i}>
             <CategoryLabel>{cat.label}</CategoryLabel>
@@ -243,14 +246,16 @@ export default function Prospect() {
           </EstimateCard>
         ))}
 
-        {/* ── Methodology note ───────────────────────────────────────────── */}
+        {/* ── Methodology note — trust anchor ─────────────────────────────── */}
         <MethodologyNote>
           Arvo har analyserat den publika DNS-konfigurationen för {companyName}s domän.
           Ingen data har inhämtats från er eller era leverantörer utan ert tillstånd.
           Er faktiska avtalskostnad känner vi inte till förrän ni visar oss er faktura.
         </MethodologyNote>
 
-        {/* ── CTA section ────────────────────────────────────────────────── */}
+        <Divider />
+
+        {/* ── CTA section ─────────────────────────────────────────────────── */}
         <CtaSection>
           <PrimaryCtaWrap>
             <PrimaryCta href="/testa-faktura" onClick={() => recordAction('upload')}>
@@ -273,13 +278,15 @@ export default function Prospect() {
             </SecondaryCtaSub>
           </SecondaryCtaWrap>
         </CtaSection>
+
       </ContentArea>
 
-      {/* ── Footer ─────────────────────────────────────────────────────────── */}
+      {/* ── Footer ──────────────────────────────────────────────────────────── */}
       <PageFooter>
         <FooterDomain>arvoflow.se</FooterDomain>
-        <FooterBrand>Arvo Intelligence</FooterBrand>
+        <FooterBrand>ARVO INTELLIGENCE</FooterBrand>
       </PageFooter>
+
     </PageWrap>
   );
 }
