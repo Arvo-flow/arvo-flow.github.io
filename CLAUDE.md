@@ -54,6 +54,8 @@ Vi fakturerar aldrig före kunden sparar. Arvo och kunden är alltid på samma s
 
 *Merga alltid till `main` direkt efter varje commit — lämna aldrig ändringar enbart på en feature branch.*
 
+*Kör alltid `npm run deploy` efter push till `main` — frontend-bygget ska alltid vara uppdaterat.*
+
 ---
 
 ## Systemarkitektur — Full karta (uppdaterad 2026-06-06)
