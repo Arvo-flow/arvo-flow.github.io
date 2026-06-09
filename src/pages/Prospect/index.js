@@ -3,9 +3,11 @@ import { useParams } from 'react-router-dom';
 import {
   Wrap, Header, LogoText, DateStamp,
   Body, MemoHead, Eyebrow, CompanyName, MetaLine, MetaDot,
-  Intro, EstimateCard, IntelCard, CategoryLabel, DataRow, DataDesc, DataVal,
+  Intro, EstimateCard, IntelCard, IntelLabel, FindingsList, FindingItem,
+  FindingBullet, FindingText, IntelDivider,
+  CategoryLabel, DataRow, DataDesc, DataVal,
   SavingBand, SavingLabel, SavingRange, SourceNote,
-  Divider, Disclaimer, CtaSection, PrimaryCta, SecondaryCta,
+  Divider, Disclaimer, CtaSection, PrimaryCta, FreeNote, SecondaryCta,
   Footer, FooterText,
   LoadingWrap, Dots, Dot, LoadingText,
   ErrorWrap, ErrorIcon, ErrorTitle, ErrorBody, ErrorCta,
@@ -52,14 +54,10 @@ function formatDate(iso) {
   return d.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function sizeBucketLabel(bucket) {
-  return { micro: '1–9 anst.', small: '10–49 anst.', mid: '50–249 anst.' }[bucket] ?? '';
-}
-
 export default function Prospect() {
   const { token } = useParams();
-  const [status, setStatus]   = useState('loading');
-  const [data, setData]       = useState(null);
+  const [status, setStatus]         = useState('loading');
+  const [data, setData]             = useState(null);
   const [actionSent, setActionSent] = useState(false);
 
   useEffect(() => {
@@ -114,7 +112,11 @@ export default function Prospect() {
   const mxSince          = estimates?.mxSince;
   const domainRegistered = estimates?.domainRegistered;
   const foundedYear      = estimates?.foundedYear;
-  const hasIntel         = mxPlatform && (mxSince || foundedYear);
+  const findings         = estimates?.findings ?? [];
+
+  const hasFindings = findings.length > 0;
+  const hasDataPoints = mxPlatform && (mxSince || foundedYear || domainRegistered);
+  const hasIntel = hasFindings || hasDataPoints;
 
   const mxMonths = monthsAgo(mxSince);
 
@@ -139,50 +141,77 @@ export default function Prospect() {
         </MemoHead>
 
         <Intro>
-          {mxSince
-            ? <>Er {MX_LABELS[mxPlatform] ?? mxPlatform}-konfiguration är oförändrad sedan{' '}
-                <strong style={{ color: '#ffffff' }}>{swMonthYear(mxSince)}</strong>
-                {' '}— {mxMonths} månader. Ladda upp er faktura för att se den exakta
-                besparingen det innebär.
-              </>
-            : <>Arvo har analyserat kostnadsprofilen för bolag i er bransch med {employees}&nbsp;anställda.
+          {hasFindings
+            ? <>Arvo har analyserat er infrastruktur och identifierat konkreta signaler på
                 {hasSaving
-                  ? <>{' '}Analysen identifierar en potentiell besparing på{' '}
-                      <strong style={{ color: '#ffffff' }}>{fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}&nbsp;kr/år</strong>
-                      {' '}— baserat på verifierade marknadspriser.</>
-                  : null
-                }
-                {' '}Ladda upp er faktura för att se vad ni faktiskt betalar.
+                  ? <> en potentiell besparing på{' '}
+                      <strong style={{ color: '#ffffff' }}>{fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}&nbsp;kr/år</strong>.
+                    </>
+                  : <> icke-omförhandlade leverantörsavtal.</>
+                }{' '}
+                Ladda upp er faktura för att få den exakta siffran — det är kostnadsfritt.
               </>
+            : mxSince
+              ? <>Er {MX_LABELS[mxPlatform] ?? mxPlatform}-konfiguration är oförändrad sedan{' '}
+                  <strong style={{ color: '#ffffff' }}>{swMonthYear(mxSince)}</strong>
+                  {' '}— {mxMonths} månader. Ladda upp er faktura för att se den exakta
+                  besparingen det innebär.
+                </>
+              : <>Arvo har analyserat kostnadsprofilen för bolag i er bransch med {employees}&nbsp;anställda.
+                  {hasSaving
+                    ? <>{' '}Analysen identifierar en potentiell besparing på{' '}
+                        <strong style={{ color: '#ffffff' }}>{fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}&nbsp;kr/år</strong>
+                        {' '}— baserat på verifierade marknadspriser.</>
+                    : null
+                  }
+                  {' '}Ladda upp er faktura för att se vad ni faktiskt betalar.
+                </>
           }
         </Intro>
 
         {hasIntel && (
           <IntelCard>
-            <CategoryLabel>Arvo:s underlag — verifierade datapunkter</CategoryLabel>
-            {mxPlatform && (
-              <DataRow>
-                <DataDesc>E-postplattform</DataDesc>
-                <DataVal>{MX_LABELS[mxPlatform] ?? mxPlatform}</DataVal>
-              </DataRow>
+            <IntelLabel>Arvo:s underlag</IntelLabel>
+
+            {hasFindings && (
+              <FindingsList>
+                {findings.map((text, i) => (
+                  <FindingItem key={i}>
+                    <FindingBullet>★</FindingBullet>
+                    <FindingText>{text}</FindingText>
+                  </FindingItem>
+                ))}
+              </FindingsList>
             )}
-            {mxSince && (
-              <DataRow>
-                <DataDesc>Konfiguration oförändrad sedan</DataDesc>
-                <DataVal $highlight>{swMonthYear(mxSince)} — {mxMonths} månader</DataVal>
-              </DataRow>
-            )}
-            {domainRegistered && (
-              <DataRow>
-                <DataDesc>Domän registrerad</DataDesc>
-                <DataVal>{swMonthYear(domainRegistered)}</DataVal>
-              </DataRow>
-            )}
-            {foundedYear && (
-              <DataRow style={{ marginBottom: 0 }}>
-                <DataDesc>Grundat</DataDesc>
-                <DataVal>{foundedYear}</DataVal>
-              </DataRow>
+
+            {hasDataPoints && (
+              <>
+                {hasFindings && <IntelDivider />}
+                {mxPlatform && (
+                  <DataRow>
+                    <DataDesc>E-postplattform</DataDesc>
+                    <DataVal>{MX_LABELS[mxPlatform] ?? mxPlatform}</DataVal>
+                  </DataRow>
+                )}
+                {mxSince && (
+                  <DataRow>
+                    <DataDesc>Konfiguration oförändrad sedan</DataDesc>
+                    <DataVal $highlight>{swMonthYear(mxSince)} — {mxMonths} månader</DataVal>
+                  </DataRow>
+                )}
+                {domainRegistered && (
+                  <DataRow>
+                    <DataDesc>Domän registrerad</DataDesc>
+                    <DataVal>{swMonthYear(domainRegistered)}</DataVal>
+                  </DataRow>
+                )}
+                {foundedYear && !mxSince && (
+                  <DataRow style={{ marginBottom: 0 }}>
+                    <DataDesc>Grundat</DataDesc>
+                    <DataVal>{foundedYear}</DataVal>
+                  </DataRow>
+                )}
+              </>
             )}
           </IntelCard>
         )}
@@ -210,7 +239,7 @@ export default function Prospect() {
               <DataDesc>Pris per abonnemang</DataDesc>
               <DataVal>
                 {cat.pricePerSim.arvo} kr/mån{' '}
-                <span style={{ color: 'rgba(255,255,255,0.30)', fontWeight: 400, fontSize: 12 }}>
+                <span style={{ color: 'rgba(255,255,255,0.26)', fontWeight: 400, fontSize: 12 }}>
                   (typiskt {cat.pricePerSim.typical} kr/mån)
                 </span>
               </DataVal>
@@ -228,9 +257,9 @@ export default function Prospect() {
         <Divider />
 
         <Disclaimer>
-          Dessa siffror är uppskattningar baserade på branschdata och verifierade listpriser.
-          Arvo känner inte till ert faktiska avtalspris — det ser vi först när ni laddar upp er faktura.
-          Exakt analys tar 2 minuter och ger er det verkliga svaret.
+          Dessa siffror är uppskattningar baserade på er infrastruktur, branschdata och verifierade
+          listpriser. Arvo känner inte till ert faktiska avtalspris — det ser vi när ni laddar upp
+          er faktura. Exakt analys tar 2 minuter och är helt kostnadsfri.
         </Disclaimer>
 
         <CtaSection>
@@ -240,6 +269,7 @@ export default function Prospect() {
           >
             Ladda upp er faktura — se exakt vad ni betalar →
           </PrimaryCta>
+          <FreeNote>Kostnadsfritt · Tar 2 minuter · Ingen registrering krävs</FreeNote>
           <SecondaryCta
             href="/intelligence#aktivera"
             onClick={() => recordAction('activate')}

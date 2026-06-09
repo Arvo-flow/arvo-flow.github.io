@@ -18,9 +18,8 @@ export const config = { maxDuration: 20 };
 const resend   = new Resend(process.env.RESEND_API_KEY);
 const FROM     = process.env.RESEND_FROM         ?? 'Arvo Intelligence <analys@arvo-flow.se>';
 const INTERNAL = process.env.ARVO_INTERNAL_EMAIL ?? 'hej@arvo-flow.se';
-const BASE_URL = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : 'https://arvoflow.se';
+const BASE_URL = process.env.ARVO_BASE_URL
+  ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://arvoflow.se');
 
 const MX_LABELS = {
   microsoft365: 'Microsoft 365',
@@ -215,6 +214,7 @@ export default async function handler(req, res) {
     frozenScore,
     mxSince,
     domainRegistered,
+    findings,
   } = req.body ?? {};
 
   if (!companyName) return send(res, 400, { error: 'companyName required' });
@@ -241,6 +241,7 @@ export default async function handler(req, res) {
   if (frozenScore)      estimates.frozenScore       = parseInt(frozenScore, 10);
   if (mxSince)          estimates.mxSince           = mxSince;
   if (domainRegistered) estimates.domainRegistered  = domainRegistered;
+  if (Array.isArray(findings) && findings.length)   estimates.findings = findings;
 
   // Create token
   const token = crypto.randomBytes(18).toString('base64url');
