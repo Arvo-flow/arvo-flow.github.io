@@ -1,20 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Wrap, Header, LogoText, DateStamp,
-  Body, MemoHead, Eyebrow, CompanyName, MetaLine, MetaDot,
-  Intro, EstimateCard, IntelCard, IntelLabel, FindingsList, FindingItem,
-  FindingBullet, FindingText, IntelDivider,
-  CategoryLabel, DataRow, DataDesc, DataVal,
-  SavingBand, SavingLabel, SavingRange, SourceNote,
-  Divider, Disclaimer, CtaSection, PrimaryCta, FreeNote, SecondaryCta,
-  Footer, FooterText,
+  HeroSection, HeroInner,
+  NotifCard, NotifHeader, NotifDot, NotifAppName, NotifTime,
+  NotifTitle, NotifBody, NotifCta,
+  HeroTagline, HeroSub, HeroCtaWrap, HeroCta, HeroPrice,
+  HeroFooter, FooterDomain, FooterBrand,
+  DetailSection, DetailInner, DetailEyebrow,
+  CompanyName, MetaLine, MetaDot,
+  IntelCard, IntelLabel, FindingsList, FindingItem, FindingBullet, FindingText,
+  IntelDivider, DataRow, DataDesc, DataVal,
+  EstimateCard, CategoryLabel, SavingBand, SavingLabel, SavingRange, SourceNote,
+  Divider, Disclaimer, SecondaryCtaWrap, SecondaryCta, FreeNote,
   LoadingWrap, Dots, Dot, LoadingText,
   ErrorWrap, ErrorIcon, ErrorTitle, ErrorBody, ErrorCta,
 } from './styles';
 
 const ArvoMark = () => (
-  <svg width="20" height="20" viewBox="0 0 100 100" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+  <svg width="14" height="14" viewBox="0 0 100 100" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
     <defs>
       <linearGradient id="prospGrad" x1="50" y1="5" x2="50" y2="95" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#4ECDC4" />
@@ -104,7 +107,7 @@ export default function Prospect() {
     );
   }
 
-  const { companyName, industry, sizeBucket, employees, estimates, generatedAt } = data;
+  const { companyName, industry, employees, estimates, generatedAt } = data;
   const cats      = estimates?.categories ?? [];
   const hasSaving = estimates?.hasEstimates && cats.length > 0;
 
@@ -114,177 +117,183 @@ export default function Prospect() {
   const foundedYear      = estimates?.foundedYear;
   const findings         = estimates?.findings ?? [];
 
-  const hasFindings = findings.length > 0;
+  const hasFindings   = findings.length > 0;
   const hasDataPoints = mxPlatform && (mxSince || foundedYear || domainRegistered);
-  const hasIntel = hasFindings || hasDataPoints;
+  const hasIntel      = hasFindings || hasDataPoints;
+  const mxMonths      = monthsAgo(mxSince);
 
-  const mxMonths = monthsAgo(mxSince);
+  const notifBody = () => {
+    if (hasFindings) return findings[0];
+    if (mxSince) {
+      const platform = MX_LABELS[mxPlatform] ?? mxPlatform;
+      return `Er ${platform}-konfiguration är oförändrad sedan ${swMonthYear(mxSince)} — ${mxMonths} månader.`;
+    }
+    if (hasSaving) {
+      return `Vår analys identifierar en potentiell besparing på ${fmt(estimates.totalSavingLow)}–${fmt(estimates.totalSavingHigh)} kr/år baserat på branschdata.`;
+    }
+    return `Vi har analyserat kostnadsprofilen för bolag i er bransch med ${employees} anställda.`;
+  };
 
   return (
-    <Wrap>
-      <Header>
-        <ArvoMark />
-        <LogoText>Arvo Intelligence</LogoText>
-        <DateStamp>{formatDate(generatedAt)}</DateStamp>
-      </Header>
+    <>
+      {/* ── Hero — above the fold ─────────────────────────────────────── */}
+      <HeroSection>
+        <HeroInner>
 
-      <Body>
-        <MemoHead>
-          <Eyebrow>Konfidentiell kostnadsbedömning</Eyebrow>
-          <CompanyName>{companyName}</CompanyName>
-          <MetaLine>
-            <span>{industry}</span>
-            <MetaDot>·</MetaDot>
-            <span>{employees} anställda</span>
-            {foundedYear && <><MetaDot>·</MetaDot><span>Grundat {foundedYear}</span></>}
-          </MetaLine>
-        </MemoHead>
+          <NotifCard>
+            <NotifHeader>
+              <ArvoMark />
+              <NotifDot />
+              <NotifAppName>Arvo Intelligence</NotifAppName>
+              <NotifTime>{formatDate(generatedAt)}</NotifTime>
+            </NotifHeader>
+            <NotifTitle>Arvo har analyserat {companyName}</NotifTitle>
+            <NotifBody>{notifBody()}</NotifBody>
+            <NotifCta href="/testa-faktura" onClick={() => recordAction('upload')}>
+              Se vad det innebär för er →
+            </NotifCta>
+          </NotifCard>
 
-        <Intro>
-          {hasFindings
-            ? <>Arvo har analyserat er infrastruktur och identifierat konkreta signaler på
-                {hasSaving
-                  ? <> en potentiell besparing på{' '}
-                      <strong style={{ color: '#ffffff' }}>{fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}&nbsp;kr/år</strong>.
-                    </>
-                  : <> icke-omförhandlade leverantörsavtal.</>
-                }{' '}
-                Ladda upp er faktura för att få den exakta siffran — det är kostnadsfritt.
-              </>
-            : mxSince
-              ? <>Er {MX_LABELS[mxPlatform] ?? mxPlatform}-konfiguration är oförändrad sedan{' '}
-                  <strong style={{ color: '#ffffff' }}>{swMonthYear(mxSince)}</strong>
-                  {' '}— {mxMonths} månader. Ladda upp er faktura för att se den exakta
-                  besparingen det innebär.
-                </>
-              : <>Arvo har analyserat kostnadsprofilen för bolag i er bransch med {employees}&nbsp;anställda.
-                  {hasSaving
-                    ? <>{' '}Analysen identifierar en potentiell besparing på{' '}
-                        <strong style={{ color: '#ffffff' }}>{fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}&nbsp;kr/år</strong>
-                        {' '}— baserat på verifierade marknadspriser.</>
-                    : null
-                  }
-                  {' '}Ladda upp er faktura för att se vad ni faktiskt betalar.
-                </>
-          }
-        </Intro>
+          <HeroTagline>
+            Arvo märkte det.<br />
+            <em>Ni visste inte om det ännu.</em>
+          </HeroTagline>
 
-        {hasIntel && (
-          <IntelCard>
-            <IntelLabel>Arvo:s underlag</IntelLabel>
+          <HeroSub>
+            Ni ska inte behöva hålla koll. Det är Arvos jobb.
+          </HeroSub>
 
-            {hasFindings && (
-              <FindingsList>
-                {findings.map((text, i) => (
-                  <FindingItem key={i}>
-                    <FindingBullet>★</FindingBullet>
-                    <FindingText>{text}</FindingText>
-                  </FindingItem>
-                ))}
-              </FindingsList>
+          <HeroCtaWrap>
+            <HeroCta href="/testa-faktura" onClick={() => recordAction('upload')}>
+              Ladda upp er faktura — se exakt vad ni betalar
+            </HeroCta>
+            <HeroPrice>Kostnadsfritt · Tar 2 minuter · Ingen registrering krävs</HeroPrice>
+          </HeroCtaWrap>
+
+        </HeroInner>
+
+        <HeroFooter>
+          <FooterDomain>arvoflow.se</FooterDomain>
+          <FooterBrand>Arvo Intelligence</FooterBrand>
+        </HeroFooter>
+      </HeroSection>
+
+      {/* ── Detail — below the fold ───────────────────────────────────── */}
+      {(hasIntel || hasSaving) && (
+        <DetailSection>
+          <DetailInner>
+            <DetailEyebrow>Konfidentiell kostnadsbedömning</DetailEyebrow>
+
+            <CompanyName>{companyName}</CompanyName>
+            <MetaLine>
+              <span>{industry}</span>
+              <MetaDot>·</MetaDot>
+              <span>{employees} anställda</span>
+              {foundedYear && <><MetaDot>·</MetaDot><span>Grundat {foundedYear}</span></>}
+            </MetaLine>
+
+            {hasIntel && (
+              <IntelCard>
+                <IntelLabel>Arvo:s underlag</IntelLabel>
+
+                {hasFindings && (
+                  <FindingsList>
+                    {findings.map((text, i) => (
+                      <FindingItem key={i}>
+                        <FindingBullet>★</FindingBullet>
+                        <FindingText>{text}</FindingText>
+                      </FindingItem>
+                    ))}
+                  </FindingsList>
+                )}
+
+                {hasDataPoints && (
+                  <>
+                    {hasFindings && <IntelDivider />}
+                    {mxPlatform && (
+                      <DataRow>
+                        <DataDesc>E-postplattform</DataDesc>
+                        <DataVal>{MX_LABELS[mxPlatform] ?? mxPlatform}</DataVal>
+                      </DataRow>
+                    )}
+                    {mxSince && (
+                      <DataRow>
+                        <DataDesc>Konfiguration oförändrad sedan</DataDesc>
+                        <DataVal $highlight>{swMonthYear(mxSince)} — {mxMonths} månader</DataVal>
+                      </DataRow>
+                    )}
+                    {domainRegistered && (
+                      <DataRow>
+                        <DataDesc>Domän registrerad</DataDesc>
+                        <DataVal>{swMonthYear(domainRegistered)}</DataVal>
+                      </DataRow>
+                    )}
+                    {foundedYear && !mxSince && (
+                      <DataRow style={{ marginBottom: 0 }}>
+                        <DataDesc>Grundat</DataDesc>
+                        <DataVal>{foundedYear}</DataVal>
+                      </DataRow>
+                    )}
+                  </>
+                )}
+              </IntelCard>
             )}
 
-            {hasDataPoints && (
-              <>
-                {hasFindings && <IntelDivider />}
-                {mxPlatform && (
-                  <DataRow>
-                    <DataDesc>E-postplattform</DataDesc>
-                    <DataVal>{MX_LABELS[mxPlatform] ?? mxPlatform}</DataVal>
-                  </DataRow>
-                )}
-                {mxSince && (
-                  <DataRow>
-                    <DataDesc>Konfiguration oförändrad sedan</DataDesc>
-                    <DataVal $highlight>{swMonthYear(mxSince)} — {mxMonths} månader</DataVal>
-                  </DataRow>
-                )}
-                {domainRegistered && (
-                  <DataRow>
-                    <DataDesc>Domän registrerad</DataDesc>
-                    <DataVal>{swMonthYear(domainRegistered)}</DataVal>
-                  </DataRow>
-                )}
-                {foundedYear && !mxSince && (
-                  <DataRow style={{ marginBottom: 0 }}>
-                    <DataDesc>Grundat</DataDesc>
-                    <DataVal>{foundedYear}</DataVal>
-                  </DataRow>
-                )}
-              </>
-            )}
-          </IntelCard>
-        )}
+            {cats.map((cat, i) => (
+              <EstimateCard key={i}>
+                <CategoryLabel>{cat.label}</CategoryLabel>
 
-        {cats.map((cat, i) => (
-          <EstimateCard key={i}>
-            <CategoryLabel>{cat.label}</CategoryLabel>
+                <DataRow>
+                  <DataDesc>Uppskattade abonnemang</DataDesc>
+                  <DataVal>{cat.estimatedSims} st</DataVal>
+                </DataRow>
+                <DataRow>
+                  <DataDesc>Typisk marknadskostnad</DataDesc>
+                  <DataVal>{fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år</DataVal>
+                </DataRow>
+                <DataRow>
+                  <DataDesc>Arvo-priset (verifierat listpris)</DataDesc>
+                  <DataVal $highlight>{fmt(cat.arvoAnnual)} kr/år</DataVal>
+                </DataRow>
+                <DataRow style={{ marginBottom: 0 }}>
+                  <DataDesc>Pris per abonnemang</DataDesc>
+                  <DataVal>
+                    {cat.pricePerSim.arvo} kr/mån{' '}
+                    <span style={{ color: 'rgba(255,255,255,0.22)', fontWeight: 400, fontSize: 12 }}>
+                      (typiskt {cat.pricePerSim.typical} kr/mån)
+                    </span>
+                  </DataVal>
+                </DataRow>
 
-            <DataRow>
-              <DataDesc>Uppskattade abonnemang</DataDesc>
-              <DataVal>{cat.estimatedSims} st</DataVal>
-            </DataRow>
+                <SavingBand>
+                  <SavingLabel>Potentiell besparing</SavingLabel>
+                  <SavingRange>upp till {fmt(cat.savingHigh)} kr/år</SavingRange>
+                </SavingBand>
 
-            <DataRow>
-              <DataDesc>Typisk marknadskostnad</DataDesc>
-              <DataVal>{fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år</DataVal>
-            </DataRow>
+                <SourceNote>{cat.sourceNote}</SourceNote>
+              </EstimateCard>
+            ))}
 
-            <DataRow>
-              <DataDesc>Arvo-priset (verifierat listpris)</DataDesc>
-              <DataVal $highlight>{fmt(cat.arvoAnnual)} kr/år</DataVal>
-            </DataRow>
+            <Divider />
 
-            <DataRow style={{ marginBottom: 0 }}>
-              <DataDesc>Pris per abonnemang</DataDesc>
-              <DataVal>
-                {cat.pricePerSim.arvo} kr/mån{' '}
-                <span style={{ color: 'rgba(255,255,255,0.26)', fontWeight: 400, fontSize: 12 }}>
-                  (typiskt {cat.pricePerSim.typical} kr/mån)
-                </span>
-              </DataVal>
-            </DataRow>
+            <Disclaimer>
+              Dessa siffror är uppskattningar baserade på er infrastruktur, branschdata och
+              verifierade listpriser. Arvo känner inte till ert faktiska avtalspris — det ser vi
+              när ni laddar upp er faktura. Exakt analys tar 2 minuter och är helt kostnadsfri.
+            </Disclaimer>
 
-            <SavingBand>
-              <SavingLabel>Potentiell besparing</SavingLabel>
-              <SavingRange>upp till {fmt(cat.savingHigh)} kr/år</SavingRange>
-            </SavingBand>
-
-            <SourceNote>{cat.sourceNote}</SourceNote>
-          </EstimateCard>
-        ))}
-
-        <Divider />
-
-        <Disclaimer>
-          Dessa siffror är uppskattningar baserade på er infrastruktur, branschdata och verifierade
-          listpriser. Arvo känner inte till ert faktiska avtalspris — det ser vi när ni laddar upp
-          er faktura. Exakt analys tar 2 minuter och är helt kostnadsfri.
-        </Disclaimer>
-
-        <CtaSection>
-          <PrimaryCta
-            href="/testa-faktura"
-            onClick={() => recordAction('upload')}
-          >
-            Ladda upp er faktura — se exakt vad ni betalar →
-          </PrimaryCta>
-          <FreeNote>Kostnadsfritt · Tar 2 minuter · Ingen registrering krävs</FreeNote>
-          <SecondaryCta
-            href="/intelligence#aktivera"
-            onClick={() => recordAction('activate')}
-          >
-            Aktivera Arvo Intelligence direkt — 1 995 kr/mån
-          </SecondaryCta>
-        </CtaSection>
-      </Body>
-
-      <Footer>
-        <FooterText>
-          Arvo Intelligence · 1&nbsp;995 kr/mån · Ingen bindningstid<br />
-          Arvo börjar bevaka er inom 24 timmar från aktivering
-        </FooterText>
-      </Footer>
-    </Wrap>
+            <SecondaryCtaWrap>
+              <SecondaryCta
+                href="/intelligence#aktivera"
+                onClick={() => recordAction('activate')}
+              >
+                Aktivera Arvo Intelligence — 1 995 kr/mån
+              </SecondaryCta>
+              <FreeNote>Ingen bindningstid · Arvo börjar bevaka er inom 24 timmar</FreeNote>
+            </SecondaryCtaWrap>
+          </DetailInner>
+        </DetailSection>
+      )}
+    </>
   );
 }

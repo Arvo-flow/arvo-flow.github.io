@@ -1,14 +1,19 @@
 import styled, { keyframes } from 'styled-components';
 
 const fadeUp = keyframes`
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(32px); }
   to   { opacity: 1; transform: translateY(0); }
 `;
 
-const shimmer = keyframes`
-  0%   { opacity: 0.6; }
-  50%  { opacity: 1; }
-  100% { opacity: 0.6; }
+const notifArrive = keyframes`
+  from { opacity: 0; transform: translateY(-24px) scale(0.95); }
+  65%  { transform: translateY(4px) scale(1.005); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+`;
+
+const dotPulse = keyframes`
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(29,176,154,0.4); }
+  50%       { opacity: 0.7; box-shadow: 0 0 0 4px rgba(29,176,154,0); }
 `;
 
 const pulse = keyframes`
@@ -16,78 +21,239 @@ const pulse = keyframes`
   50%       { opacity: 1;   transform: scale(1); }
 `;
 
-// ── Layout ──────────────────────────────────────────────────────────────────────
+// ── Hero (above the fold) ─────────────────────────────────────────────────────
 
-export const Wrap = styled.div`
+export const HeroSection = styled.div`
   min-height: 100vh;
-  background: #080F0D;
-  color: #ffffff;
+  background: #060D0B;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 80px;
+  justify-content: center;
+  padding: 80px 24px 64px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
 
   &::before {
     content: '';
-    position: fixed;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
-    height: 400px;
-    background: radial-gradient(ellipse at 50% 0%, rgba(29,176,154,0.09) 0%, transparent 70%);
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 90% 55% at 50% 10%, rgba(29,176,154,0.10) 0%, transparent 65%),
+      radial-gradient(ellipse 50% 40% at 80% 85%, rgba(29,176,154,0.04) 0%, transparent 60%);
     pointer-events: none;
-    z-index: 0;
   }
-
-  > * { position: relative; z-index: 1; }
 `;
 
-export const Header = styled.header`
+export const HeroInner = styled.div`
+  position: relative;
+  z-index: 1;
+  max-width: 440px;
   width: 100%;
-  max-width: 600px;
-  padding: 26px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+// ── Notification card ─────────────────────────────────────────────────────────
+
+export const NotifCard = styled.div`
+  width: 100%;
+  background: rgba(6, 11, 10, 0.98);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.50);
+  border-radius: 22px;
+  padding: 20px 22px 22px;
+  margin-bottom: 52px;
+  text-align: left;
+  animation: ${notifArrive} 0.75s cubic-bezier(0.34, 1.46, 0.64, 1) both;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.55) inset,
+    0 -1px 0 rgba(255,255,255,0.06) inset,
+    0 0 40px rgba(255,255,255,0.04),
+    0 48px 120px rgba(0,0,0,0.70),
+    0 8px 32px rgba(0,0,0,0.40);
+`;
+
+export const NotifHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-  border-bottom: 1px solid rgba(29,176,154,0.20);
+  gap: 7px;
+  margin-bottom: 12px;
 `;
 
-export const LogoText = styled.span`
+export const NotifDot = styled.span`
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1DB09A;
+  flex-shrink: 0;
+  animation: ${dotPulse} 2.2s ease-in-out infinite;
+`;
+
+export const NotifAppName = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: .02em;
+  flex: 1;
+`;
+
+export const NotifTime = styled.span`
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: .01em;
+`;
+
+export const NotifTitle = styled.p`
+  margin: 0 0 7px;
   font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.90);
-  flex: 1;
-  text-transform: uppercase;
+  color: #fff;
+  letter-spacing: -.015em;
 `;
 
-export const DateStamp = styled.span`
-  font-size: 12px;
-  color: rgba(255,255,255,0.28);
-  letter-spacing: 0.04em;
+export const NotifBody = styled.p`
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.6;
+
+  strong {
+    color: rgba(255,255,255,0.88);
+    font-weight: 600;
+  }
 `;
 
-export const Body = styled.main`
+export const NotifCta = styled.a`
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1DB09A;
+  cursor: pointer;
+  letter-spacing: -.01em;
+  text-decoration: none;
+  transition: opacity 0.2s;
+
+  &:hover { opacity: 0.70; }
+`;
+
+// ── Hero text ─────────────────────────────────────────────────────────────────
+
+export const HeroTagline = styled.h1`
+  margin: 0 0 16px;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: clamp(36px, 9vw, 64px);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.10;
+  letter-spacing: -.02em;
+  animation: ${fadeUp} 0.8s 0.28s both ease-out;
+
+  em {
+    font-style: italic;
+    font-weight: 400;
+  }
+`;
+
+export const HeroSub = styled.p`
+  margin: 0 0 48px;
+  font-size: 16px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.55;
+  animation: ${fadeUp} 0.8s 0.42s both ease-out;
+`;
+
+export const HeroCtaWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  max-width: 600px;
-  padding: 0 24px;
+  animation: ${fadeUp} 0.8s 0.56s both ease-out;
 `;
 
-// ── Memo header ────────────────────────────────────────────────────────────────
+export const HeroCta = styled.a`
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg, #5DD6CA 0%, #1B6E66 100%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 18px 32px;
+  border-radius: 100px;
+  text-align: center;
+  text-decoration: none;
+  letter-spacing: -.01em;
+  transition: opacity 0.18s, transform 0.15s;
+  box-shadow: 0 8px 32px rgba(29,176,154,0.32);
 
-export const MemoHead = styled.div`
-  padding: 40px 0 28px;
-  animation: ${fadeUp} 0.45s ease both;
+  &:hover {
+    opacity: 0.90;
+    transform: translateY(-2px);
+  }
 `;
 
-export const Eyebrow = styled.div`
+export const HeroPrice = styled.div`
+  font-size: 13px;
+  color: rgba(255,255,255,0.30);
+  letter-spacing: .02em;
+`;
+
+// ── Footer ────────────────────────────────────────────────────────────────────
+
+export const HeroFooter = styled.div`
+  position: absolute;
+  bottom: 28px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 1;
+`;
+
+export const FooterDomain = styled.div`
+  font-size: 12px;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: .06em;
+`;
+
+export const FooterBrand = styled.div`
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.12);
+`;
+
+// ── Detail section (below the fold) ──────────────────────────────────────────
+
+export const DetailSection = styled.div`
+  background: #080F0D;
+  padding: 60px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+export const DetailInner = styled.div`
+  max-width: 560px;
+  width: 100%;
+`;
+
+export const DetailEyebrow = styled.div`
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: #1DB09A;
-  margin-bottom: 14px;
+  margin-bottom: 32px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -102,42 +268,31 @@ export const Eyebrow = styled.div`
   }
 `;
 
-export const CompanyName = styled.h1`
+export const CompanyName = styled.h2`
   font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  font-size: 38px;
+  font-size: 32px;
   font-weight: 700;
   color: #ffffff;
-  margin: 0 0 12px;
-  line-height: 1.10;
+  margin: 0 0 8px;
+  line-height: 1.15;
   letter-spacing: -0.02em;
-
-  @media (max-width: 400px) {
-    font-size: 30px;
-  }
 `;
 
 export const MetaLine = styled.div`
   font-size: 13px;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.30);
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   letter-spacing: 0.02em;
+  margin-bottom: 32px;
 `;
 
 export const MetaDot = styled.span`
-  color: rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.14);
 `;
 
-export const Intro = styled.p`
-  font-size: 16px;
-  color: rgba(255,255,255,0.72);
-  line-height: 1.75;
-  margin: 0 0 32px;
-  animation: ${fadeUp} 0.45s 0.08s ease both;
-`;
-
-// ── Intel card — "Hur visste de det?" ──────────────────────────────────────────
+// ── Intel card ────────────────────────────────────────────────────────────────
 
 export const IntelCard = styled.div`
   position: relative;
@@ -145,16 +300,13 @@ export const IntelCard = styled.div`
   border: 1px solid rgba(29,176,154,0.32);
   border-radius: 20px;
   padding: 28px 24px 24px;
-  margin-bottom: 24px;
-  animation: ${fadeUp} 0.45s 0.10s ease both;
+  margin-bottom: 20px;
   overflow: hidden;
 
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 2px;
     background: linear-gradient(90deg, #4ECDC4 0%, #1DB09A 60%, transparent 100%);
     border-radius: 20px 20px 0 0;
@@ -216,7 +368,6 @@ export const FindingText = styled.span`
   font-size: 14px;
   color: rgba(255,255,255,0.85);
   line-height: 1.55;
-  font-weight: 400;
 `;
 
 export const IntelDivider = styled.div`
@@ -225,7 +376,28 @@ export const IntelDivider = styled.div`
   margin: 16px 0;
 `;
 
-// ── Estimate card ───────────────────────────────────────────────────────────────
+export const DataRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  gap: 12px;
+`;
+
+export const DataDesc = styled.span`
+  font-size: 13px;
+  color: rgba(255,255,255,0.40);
+  flex: 1;
+`;
+
+export const DataVal = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ $highlight }) => $highlight ? '#4ECDC4' : 'rgba(255,255,255,0.85)'};
+  white-space: nowrap;
+`;
+
+// ── Estimate card ─────────────────────────────────────────────────────────────
 
 export const EstimateCard = styled.div`
   background: rgba(255,255,255,0.035);
@@ -233,7 +405,6 @@ export const EstimateCard = styled.div`
   border-radius: 18px;
   padding: 24px;
   margin-bottom: 16px;
-  animation: ${fadeUp} 0.45s 0.18s ease both;
 
   &:hover {
     border-color: rgba(29,176,154,0.22);
@@ -247,29 +418,8 @@ export const CategoryLabel = styled.div`
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.28);
+  color: rgba(255,255,255,0.24);
   margin-bottom: 16px;
-`;
-
-export const DataRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 10px;
-  gap: 12px;
-`;
-
-export const DataDesc = styled.span`
-  font-size: 13px;
-  color: rgba(255,255,255,0.46);
-  flex: 1;
-`;
-
-export const DataVal = styled.span`
-  font-size: 14px;
-  font-weight: 600;
-  color: ${({ $highlight }) => $highlight ? '#4ECDC4' : 'rgba(255,255,255,0.88)'};
-  white-space: nowrap;
 `;
 
 export const SavingBand = styled.div`
@@ -286,8 +436,7 @@ export const SavingBand = styled.div`
 export const SavingLabel = styled.span`
   font-size: 12px;
   font-weight: 500;
-  color: rgba(255,255,255,0.42);
-  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.40);
 `;
 
 export const SavingRange = styled.span`
@@ -300,110 +449,66 @@ export const SavingRange = styled.span`
 export const SourceNote = styled.div`
   margin-top: 10px;
   font-size: 11px;
-  color: rgba(255,255,255,0.20);
-  letter-spacing: 0.02em;
+  color: rgba(255,255,255,0.18);
 `;
 
 export const Divider = styled.hr`
   border: none;
   border-top: 1px solid rgba(255,255,255,0.06);
-  margin: 28px 0;
+  margin: 24px 0;
 `;
-
-// ── Disclaimer ──────────────────────────────────────────────────────────────────
 
 export const Disclaimer = styled.div`
   font-size: 12px;
-  color: rgba(255,255,255,0.26);
+  color: rgba(255,255,255,0.22);
   line-height: 1.65;
   padding: 14px 16px;
   background: rgba(255,255,255,0.02);
-  border-left: 2px solid rgba(29,176,154,0.25);
+  border-left: 2px solid rgba(29,176,154,0.20);
   border-radius: 4px;
   margin-bottom: 32px;
-  animation: ${fadeUp} 0.45s 0.28s ease both;
 `;
 
-// ── CTAs ─────────────────────────────────────────────────────────────────────────
-
-export const CtaSection = styled.div`
+export const SecondaryCtaWrap = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  animation: ${fadeUp} 0.45s 0.32s ease both;
-`;
-
-export const PrimaryCta = styled.a`
-  display: block;
-  background: linear-gradient(135deg, #4ECDC4 0%, #1DB09A 100%);
-  color: #ffffff;
-  text-align: center;
-  text-decoration: none;
-  padding: 20px 28px;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  transition: opacity 0.18s, transform 0.15s;
-  box-shadow: 0 8px 24px rgba(29,176,154,0.28);
-
-  &:hover {
-    opacity: 0.90;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(29,176,154,0.36);
-  }
-`;
-
-export const FreeNote = styled.div`
-  text-align: center;
-  font-size: 12px;
-  color: rgba(255,255,255,0.36);
-  letter-spacing: 0.04em;
-  margin-top: -4px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
 `;
 
 export const SecondaryCta = styled.a`
   display: block;
   background: transparent;
   border: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.50);
   text-align: center;
   text-decoration: none;
   padding: 16px 24px;
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.01em;
+  width: 100%;
   transition: border-color 0.2s, color 0.2s;
 
   &:hover {
     border-color: rgba(255,255,255,0.28);
-    color: rgba(255,255,255,0.85);
+    color: rgba(255,255,255,0.80);
   }
 `;
 
-// ── Footer ──────────────────────────────────────────────────────────────────────
-
-export const Footer = styled.footer`
-  width: 100%;
-  max-width: 600px;
-  padding: 28px 24px 0;
-  border-top: 1px solid rgba(255,255,255,0.05);
+export const FreeNote = styled.div`
   text-align: center;
-  animation: ${fadeUp} 0.45s 0.38s ease both;
-`;
-
-export const FooterText = styled.div`
   font-size: 12px;
-  color: rgba(255,255,255,0.18);
-  line-height: 1.7;
+  color: rgba(255,255,255,0.28);
+  letter-spacing: 0.03em;
 `;
 
-// ── Loading & error states ──────────────────────────────────────────────────────
+// ── Loading & error ───────────────────────────────────────────────────────────
 
 export const LoadingWrap = styled.div`
   min-height: 100vh;
-  background: #080F0D;
+  background: #060D0B;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -426,13 +531,13 @@ export const Dot = styled.span`
 
 export const LoadingText = styled.p`
   font-size: 14px;
-  color: rgba(255,255,255,0.30);
+  color: rgba(255,255,255,0.28);
   margin: 0;
 `;
 
 export const ErrorWrap = styled.div`
   min-height: 100vh;
-  background: #080F0D;
+  background: #060D0B;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -458,7 +563,7 @@ export const ErrorTitle = styled.h2`
 
 export const ErrorBody = styled.p`
   font-size: 14px;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.40);
   line-height: 1.6;
   margin: 0;
 `;
@@ -470,7 +575,7 @@ export const ErrorCta = styled.a`
   color: #ffffff;
   text-decoration: none;
   padding: 13px 22px;
-  border-radius: 10px;
+  border-radius: 100px;
   font-size: 14px;
   font-weight: 600;
 `;
