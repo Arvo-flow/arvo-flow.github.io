@@ -56,6 +56,8 @@ Vi fakturerar aldrig före kunden sparar. Arvo och kunden är alltid på samma s
 
 *Kör alltid `npm run deploy` efter push till `main` — frontend-bygget ska alltid vara uppdaterat.*
 
+*Lös alltid allt som kan göras automatiskt — GitHub Actions (trigga workflows, läsa loggar, fixa fel), Vercel (miljövariabler via MCP om tillgängligt) — be aldrig användaren göra något som kan göras via verktyg.*
+
 ---
 
 ## Systemarkitektur — Full karta (uppdaterad 2026-06-06)
