@@ -216,7 +216,7 @@ export default function Prospect() {
             <CategoryLabel>{cat.label}</CategoryLabel>
 
             <DataRow>
-              <DataDesc>Uppskattade abonnemang</DataDesc>
+              <DataDesc>{cat.category === 'm365' ? 'Uppskattade licenser' : 'Uppskattade abonnemang'}</DataDesc>
               <DataVal>{cat.estimatedSims} st</DataVal>
             </DataRow>
             <DataRow>
@@ -228,7 +228,7 @@ export default function Prospect() {
               <DataVal $highlight>{fmt(cat.arvoAnnual)} kr/år</DataVal>
             </DataRow>
             <DataRow>
-              <DataDesc>Pris per abonnemang</DataDesc>
+              <DataDesc>{cat.category === 'm365' ? 'Pris per licens' : 'Pris per abonnemang'}</DataDesc>
               <DataVal>
                 {cat.pricePerSim.arvo} kr/mån{' '}
                 <span style={{ color: 'rgba(255,255,255,0.20)', fontWeight: 400, fontSize: 12 }}>

@@ -232,8 +232,8 @@ export default async function handler(req, res) {
 
   const sizeBucket = bucketForSize(employees);
 
-  // Generate estimates
-  const estimates = estimateForProfile({ segment: profile.segment, sizeBucket, employees });
+  // Generate estimates — pass mxPlatform so M365 category is included when confirmed via DNS
+  const estimates = estimateForProfile({ segment: profile.segment, sizeBucket, employees, mxPlatform });
 
   // Attach frozen intelligence metadata if provided
   if (foundedYear)      estimates.foundedYear      = parseInt(foundedYear, 10);
