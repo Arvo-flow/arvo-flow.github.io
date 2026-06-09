@@ -33,18 +33,10 @@ permissions:
   contents: write
 
 jobs:
-  guard:
-    name: Hoppa över push-körningar
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Triggad av ${{ github.event_name }} — build-kohort kör enbart vid schedule/workflow_dispatch"
-
   build-kohort:
     name: Bygg DNS kohortindex per SNI
-    needs: guard
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout
@@ -95,10 +87,8 @@ jobs:
           git add results/sni-kohort-*.json
 
           if ! git diff --staged --quiet; then
-            git commit -m "data(kohort): DNS branschindex uppdaterat ${DATE}
-
-Kört av build-sni-kohort.mjs mot SNI ${{ github.event.inputs.sni_codes || '62,70,71,73' }}.
-Injiceras i score-leads.mjs som 'X av Y i er bransch'-kontext."
+            git commit -m "data(kohort): DNS branschindex uppdaterat ${DATE}" \
+              -m "Kört av build-sni-kohort.mjs mot SNI ${{ github.event.inputs.sni_codes || '62,70,71,73' }}. Injiceras i score-leads.mjs som 'X av Y i er bransch'-kontext."
             git push origin main
             echo "✅ Kohortindex committat till main"
           else
