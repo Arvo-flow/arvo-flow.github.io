@@ -52,6 +52,8 @@ Vi fakturerar aldrig före kunden sparar. Arvo och kunden är alltid på samma s
 
 *Commit aldrig `.env` eller credentials · Kör aldrig `scripts/stress-test.mjs` utan explicit OK*
 
+*Merga alltid till `main` direkt efter varje commit — lämna aldrig ändringar enbart på en feature branch.*
+
 ---
 
 ## Systemarkitektur — Full karta (uppdaterad 2026-06-06)
