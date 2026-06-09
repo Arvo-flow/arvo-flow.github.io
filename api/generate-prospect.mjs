@@ -18,8 +18,7 @@ export const config = { maxDuration: 20 };
 const resend   = new Resend(process.env.RESEND_API_KEY);
 const FROM     = process.env.RESEND_FROM         ?? 'Arvo Intelligence <analys@arvo-flow.se>';
 const INTERNAL = process.env.ARVO_INTERNAL_EMAIL ?? 'hej@arvo-flow.se';
-const BASE_URL = process.env.ARVO_BASE_URL
-  ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://arvoflow.se');
+const BASE_URL = process.env.ARVO_BASE_URL ?? 'https://arvoflow.se';
 
 const MX_LABELS = {
   microsoft365: 'Microsoft 365',
