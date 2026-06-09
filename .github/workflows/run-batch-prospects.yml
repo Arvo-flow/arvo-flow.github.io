@@ -78,18 +78,14 @@ jobs:
           echo "Öppna länkarna nedan för att se vad respektive bolag ser:" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
 
-          # Extrahera URLs från batch-output
-          grep -oE 'https://arvo-flow\.se/prospect/[a-zA-Z0-9_-]+' /tmp/batch-output.txt | while read url; do
-            echo "- $url" >> "$GITHUB_STEP_SUMMARY"
+          # Extrahera URLs — stöd för arvoflow.se (utan bindestreck)
+          grep -oE 'https://arvoflow\.se/prospect/[a-zA-Z0-9_-]+' /tmp/batch-output.txt | while read url; do
+            company=$(grep "$url" /tmp/batch-output.txt | grep -oP '^\[\d+/\d+\] \K[^(]+' | head -1 | xargs)
+            echo "- **${company}** — $url" >> "$GITHUB_STEP_SUMMARY"
           done
 
           echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "---" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/batch-output.txt >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Score-leads fynd:**" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          grep -E '(Stark krok|Krok finns|Ingen krok|Score|wow)' /tmp/score-output.txt | head -30 >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
