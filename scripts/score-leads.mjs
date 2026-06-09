@@ -555,14 +555,22 @@ async function main() {
   await writeFile(outJson, JSON.stringify({ date, count: results.length, httpReached, results }, null, 2));
 
   // Batch-redo = bolag vi faktiskt har en krok till (wow ≥ 1).
-  const batchHeaders = 'company_name,sni_code,employees,contact_email,org_nr,founded_year,mx_platform,dmarc,finding_score,wow_count,top_finding';
+  const csvQ = v => {
+    const s = String(v ?? '');
+    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const batchHeaders = 'company_name,sni_code,employees,contact_email,org_nr,founded_year,mx_platform,dmarc,finding_score,wow_count,top_finding,mx_since,domain_registered,wow_findings';
   const batchRows = results
     .filter(r => r.wow_count >= 1)
-    .map(r => [
-      r.company_name, r.sni_code || '', r.employees, r.contact_email || '',
-      r.org_nr || '', r.founded_year || '', r.mx_platform, r.dmarc,
-      r.finding_score, r.wow_count, r.top_finding,
-    ].map(v => (String(v).includes(',') ? `"${v}"` : v)).join(','));
+    .map(r => {
+      const wowTexts = r.findings.filter(f => f.wow).map(f => f.text).join('|||');
+      return [
+        csvQ(r.company_name), csvQ(r.sni_code || ''), r.employees, csvQ(r.contact_email || ''),
+        csvQ(r.org_nr || ''), r.founded_year || '', r.mx_platform, r.dmarc,
+        r.finding_score, r.wow_count, csvQ(r.top_finding),
+        r.ct_m365_since || '', r.domain_registered || '', csvQ(wowTexts),
+      ].join(',');
+    });
   const outCsv = join(outDir, `scored-${date}.csv`);
   await writeFile(outCsv, [batchHeaders, ...batchRows].join('\n'));
 
