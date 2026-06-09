@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "case \"$VERCEL_GIT_COMMIT_REF\" in claude/*) exit 1;; *) exit 0;; esac",
+  "ignoreCommand": "case \"$VERCEL_GIT_COMMIT_REF\" in claude/*) exit 0;; *) exit 1;; esac",
   "buildCommand": "PUBLIC_URL=/ DISABLE_ESLINT_PLUGIN=true react-scripts build",
   "outputDirectory": "build",
   "framework": null,

@@ -33,8 +33,15 @@ permissions:
   contents: write
 
 jobs:
+  guard:
+    name: Hoppa över push-körningar
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Triggad av ${{ github.event_name }} — build-kohort kör enbart vid schedule/workflow_dispatch"
+
   build-kohort:
     name: Bygg DNS kohortindex per SNI
+    needs: guard
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
