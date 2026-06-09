@@ -306,14 +306,17 @@ function buildFindings({ row, posture, domainReg, ct, kohortIndex }) {
   else if (posture.mx !== 'unknown')
     push('T3', posture.mx === 'microsoft365' ? 8 : 5, false, `E-post via ${MX_LABELS[posture.mx]}`);
 
-  // ── T3 · Daterad infrastruktur (CT-logg starkast, RDAP fallback) ──
+  // ── T3 · Daterad infrastruktur (CT-logg för M365-datering, annars äldsta källan) ──
+  // domainReg (RDAP) och oldestCert (CT) kan båda finnas — visa bara den ÄLDSTA,
+  // annars motsäger briefingen sig själv ("närvaro sedan 2009" bredvid "domän 2000").
   if (ct?.m365Since) {
     const yrs = Math.floor(monthsAgo(ct.m365Since) / 12);
     push('T3', 18, true, `Microsoft 365 driftsatt ${swMonthYear(ct.m365Since)} enligt certifikatloggar — ${yrs} år utan plattformsbyte`);
+  } else if (domainReg && (!ct?.oldestCert || domainReg <= ct.oldestCert)) {
+    const yrs = Math.floor(monthsAgo(domainReg) / 12);
+    push('T3', 8, true, `Domän registrerad ${swMonthYear(domainReg)} — ${yrs} års obruten digital närvaro`);
   } else if (ct?.oldestCert) {
-    push('T3', 8, true, `Digital närvaro sedan ${swMonthYear(ct.oldestCert)} (certifikatloggar)`);
-  } else if (domainReg) {
-    push('T3', 8, true, `Domän registrerad ${swMonthYear(domainReg)} — e-post på samma plattform sedan dess`);
+    push('T3', 8, true, `Digital närvaro sedan minst ${swMonthYear(ct.oldestCert)} (certifikatloggar)`);
   }
 
   // ── T3 · DMARC — det skarpaste DNS-fyndet, går åt båda håll ──
@@ -325,9 +328,9 @@ function buildFindings({ row, posture, domainReg, ct, kohortIndex }) {
   if (posture.dmarc === null)
     push('T3', 20, true, `DMARC saknas helt — ingen bevakar vem som skickar mail i ert namn`);
   else if (posture.dmarc === 'none' && dmarcMonitor)
-    push('T3', 22, true, `Betalar för DMARC-bevakning via ${dmarcMonitor} — men skyddet är aldrig aktiverat (p=none). Ser problemen, har inte åtgärdat dem.`);
+    push('T3', 22, true, `Ni betalar ${dmarcMonitor} för att bevaka er e-postdomän — men skyddet som bevakningen ska styra har aldrig slagits på. En betald tjänst vars värde står outnyttjat.`);
   else if (posture.dmarc === 'none')
-    push('T3', 18, true, `DMARC p=none — aktiverat men aldrig skärpt (klassiskt fryst-IT-mönster)`);
+    push('T3', 18, true, `Ert e-postskydd står kvar i övervakningsläge — installerat men aldrig aktiverat. Ett kännetecken för avtal och infrastruktur som inte rörts på länge.`);
   else if (posture.dmarc === 'quarantine')
     push('T3', -5, false, `DMARC p=quarantine — halvvägs påkopplat IT`);
   else if (posture.dmarc === 'reject')
@@ -343,7 +346,7 @@ function buildFindings({ row, posture, domainReg, ct, kohortIndex }) {
     push('T3', 12, true, `Ingen SPF-post alls trots Microsoft 365 — e-postautentisering aldrig konfigurerad`);
   else if (posture.spfLookups >= 6)
     // wow=false när dmarc=reject: komplexitet + aktivt IT = inte ett frysnings-fynd
-    push('T3', 10, posture.dmarc !== 'reject', `SPF auktoriserar ${posture.spfLookups} uppslag att skicka i ert namn — påbyggd stack nära 10-gränsen`);
+    push('T3', 10, posture.dmarc !== 'reject', `${posture.spfLookups} tjänstelager är auktoriserade att skicka e-post i ert namn — en stack som byggts på men aldrig gallrats`);
 
   // ── T3 · MTA-STS = modern → drar ned tesen ──
   if (posture.mtaSts)

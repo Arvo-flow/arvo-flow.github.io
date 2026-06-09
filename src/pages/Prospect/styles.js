@@ -29,11 +29,22 @@ export const PageWrap = styled.div`
   -webkit-font-smoothing: antialiased;
 `;
 
+/* Mask under iOS-statusbaren så skrollande text tonar ut istället för att
+   krocka med klockan — Apple-mönstret för mörka sidor. */
+export const TopFade = styled.div`
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+  height: calc(env(safe-area-inset-top, 0px) + 28px);
+  background: linear-gradient(to bottom, rgba(6,13,10,0.94) 0%, rgba(6,13,10,0) 100%);
+  pointer-events: none;
+`;
+
 // ── Hero ──────────────────────────────────────────────────────────────────────
 
 export const HeaderBar = styled.div`
   background: #060D0A;
-  padding: 56px 28px 72px;
+  padding: calc(72px + env(safe-area-inset-top, 0px)) 28px 88px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -44,8 +55,8 @@ export const HeaderBar = styled.div`
     position: absolute;
     top: 55%; left: 50%;
     transform: translate(-50%, -50%);
-    width: 420px; height: 280px;
-    background: radial-gradient(ellipse, rgba(29,176,154,0.07) 0%, transparent 68%);
+    width: 460px; height: 320px;
+    background: radial-gradient(ellipse, rgba(29,176,154,0.10) 0%, transparent 68%);
     pointer-events: none;
   }
 `;
@@ -54,25 +65,21 @@ export const HeaderInner = styled.div`
   position: relative;
 `;
 
-export const HeaderMeta = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 64px;
+export const ConfidentialLabel = styled.div`
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #2BC4AC;
+  margin-bottom: 40px;
   ${appear(0)}
 `;
 
-export const ConfidentialLabel = styled.div`
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #1DB09A;
-`;
-
 export const HeaderDate = styled.div`
-  font-size: 11px;
-  color: rgba(255,255,255,0.18);
+  font-size: 12px;
+  color: rgba(255,255,255,0.40);
+  margin-top: 28px;
+  ${appear(0.22)}
 `;
 
 export const CompanyName = styled.h1`
@@ -87,8 +94,8 @@ export const CompanyName = styled.h1`
 `;
 
 export const MetaLine = styled.div`
-  font-size: 14px;
-  color: rgba(255,255,255,0.22);
+  font-size: 15px;
+  color: rgba(255,255,255,0.55);
   display: flex;
   justify-content: center;
   gap: 8px;
@@ -97,7 +104,7 @@ export const MetaLine = styled.div`
 `;
 
 export const MetaDot = styled.span`
-  color: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.22);
 `;
 
 // ── Signal / finding section ──────────────────────────────────────────────────
@@ -110,23 +117,25 @@ export const SignalSection = styled.div`
 `;
 
 export const SectionEyebrow = styled.div`
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.20em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.42);
   margin-bottom: 36px;
 `;
 
 export const SignalCard = styled.div`
-  margin-bottom: 14px;
+  margin-bottom: 40px;
+  &:last-of-type { margin-bottom: 0; }
   ${({ $i }) => appear(0.08 + ($i ?? 0) * 0.06)}
 `;
 
 export const SignalBullet = styled.div`
-  font-size: 16px;
-  color: #1DB09A;
-  margin-bottom: 18px;
+  width: 28px;
+  height: 1px;
+  background: rgba(78,205,196,0.55);
+  margin: 0 auto 26px;
 `;
 
 export const SignalText = styled.p`
@@ -160,14 +169,14 @@ export const DataRow = styled.div`
 `;
 
 export const DataDesc = styled.span`
-  font-size: 12px;
-  color: rgba(255,255,255,0.22);
+  font-size: 13px;
+  color: rgba(255,255,255,0.48);
 `;
 
 export const DataVal = styled.span`
   font-size: 13px;
   font-weight: 600;
-  color: ${({ $highlight }) => $highlight ? '#1DB09A' : 'rgba(255,255,255,0.60)'};
+  color: ${({ $highlight }) => $highlight ? '#2BC4AC' : 'rgba(255,255,255,0.85)'};
   text-align: right;
 `;
 
@@ -181,77 +190,104 @@ export const FinancialSection = styled.div`
 `;
 
 export const BigNumber = styled.div`
-  font-size: clamp(56px, 16vw, 84px);
+  font-size: clamp(60px, 17vw, 92px);
   font-weight: 800;
-  color: #1DB09A;
+  color: #2BC4AC;
   letter-spacing: -0.05em;
   line-height: 1;
   ${appear(0.06)}
 `;
 
+export const BigNumberApprox = styled.span`
+  font-size: 0.52em;
+  font-weight: 600;
+  vertical-align: 0.32em;
+  margin-right: 0.10em;
+  color: rgba(43,196,172,0.65);
+`;
+
+export const BigNumberInterval = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.62);
+  margin-top: 20px;
+  ${appear(0.12)}
+`;
+
 export const BigNumberSub = styled.div`
   font-size: 13px;
-  color: rgba(255,255,255,0.20);
-  margin-top: 18px;
-  ${appear(0.14)}
+  color: rgba(255,255,255,0.45);
+  margin-top: 8px;
+  ${appear(0.16)}
 `;
 
 export const BigNumberNote = styled.div`
   font-size: 12px;
   font-style: italic;
-  color: rgba(255,255,255,0.14);
-  margin-top: 10px;
+  color: rgba(255,255,255,0.38);
+  margin-top: 14px;
 `;
 
 // ── Estimate cards (light section) ────────────────────────────────────────────
 
 export const EstimateCard = styled.div`
   background: #ffffff;
-  border-radius: 22px;
-  padding: 26px 22px;
-  margin-bottom: 14px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  border-radius: 24px;
+  padding: 28px 24px 22px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.06);
 `;
 
 export const CategoryLabel = styled.div`
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #1B7A6E;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
 `;
 
 export const SavingBand = styled.div`
   background: #0B1612;
-  border-radius: 12px;
-  padding: 14px 18px;
-  margin-top: 18px;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-top: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+
+  > div { text-align: right; }
 `;
 
 export const SavingLabel = styled.span`
   font-size: 12px;
-  color: rgba(255,255,255,0.35);
+  font-weight: 500;
+  color: rgba(255,255,255,0.60);
 `;
 
-export const SavingRange = styled.span`
-  font-size: 15px;
+export const SavingCentral = styled.div`
+  font-size: 17px;
   font-weight: 700;
   color: #4ECDC4;
+  letter-spacing: -0.01em;
+`;
+
+export const SavingInterval = styled.div`
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  margin-top: 3px;
 `;
 
 export const SourceNote = styled.div`
   font-size: 11px;
-  color: rgba(14,26,23,0.22);
-  margin-top: 10px;
+  color: rgba(14,26,23,0.45);
+  margin-top: 12px;
 `;
 
 export const MethodologyNote = styled.p`
   font-size: 12px;
-  color: rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.45);
   line-height: 1.80;
   max-width: 360px;
   margin: 0 auto 48px;
@@ -267,11 +303,11 @@ export const ContentArea = styled.div`
 `;
 
 export const BreakdownEyebrow = styled.div`
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.20em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(14,26,23,0.30);
+  color: rgba(14,26,23,0.48);
   margin-bottom: 24px;
   text-align: center;
 `;
@@ -281,18 +317,30 @@ export const EstimateRow = styled.div`
   justify-content: space-between;
   align-items: baseline;
   gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(14,26,23,0.06);
+
+  &:last-of-type { border-bottom: none; }
 `;
 
 export const EstimateDesc = styled.span`
-  font-size: 12px;
-  color: rgba(14,26,23,0.40);
+  font-size: 13px;
+  color: rgba(14,26,23,0.55);
 `;
 
 export const EstimateVal = styled.span`
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: ${({ $highlight }) => $highlight ? '#1B7A6E' : 'rgba(14,26,23,0.65)'};
+  color: ${({ $highlight }) => $highlight ? '#1B7A6E' : 'rgba(14,26,23,0.82)'};
   text-align: right;
+`;
+
+export const EstimateValNote = styled.span`
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(14,26,23,0.42);
+  margin-top: 2px;
 `;
 
 // ── CTA ───────────────────────────────────────────────────────────────────────
@@ -333,41 +381,35 @@ export const PrimaryCta = styled.a`
 
 export const PrimaryCtaSub = styled.div`
   font-size: 12px;
-  color: rgba(255,255,255,0.18);
-  margin-top: 12px;
+  color: rgba(255,255,255,0.50);
+  margin-top: 14px;
 `;
 
 export const CtaGap = styled.div`
-  height: 18px;
+  height: 36px;
 `;
 
-export const SecondaryCtaWrap = styled.div``;
-
-export const SecondaryCta = styled.a`
-  display: block;
-  max-width: 400px;
-  margin-inline: auto;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: transparent;
-  color: rgba(255,255,255,0.55);
-  font-size: 15px;
+/* Intelligence på kall trafik är en viskning, inte en knapp —
+   första kontaktytan har EN handling. */
+export const SecondaryLink = styled.a`
+  display: inline-block;
+  font-size: 14px;
   font-weight: 500;
-  padding: 18px 32px;
-  border-radius: 100px;
-  text-align: center;
+  color: rgba(255,255,255,0.55);
   text-decoration: none;
-  box-sizing: border-box;
-  transition: border-color 0.15s, color 0.15s;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  padding-bottom: 3px;
+  transition: color 0.15s, border-color 0.15s;
 
   &:active {
-    border-color: rgba(255,255,255,0.28);
-    color: rgba(255,255,255,0.85);
+    color: rgba(255,255,255,0.90);
+    border-color: rgba(255,255,255,0.40);
   }
 `;
 
 export const SecondaryCtaSub = styled.div`
   font-size: 12px;
-  color: rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.38);
   margin-top: 12px;
 `;
 
@@ -384,7 +426,7 @@ export const PageFooter = styled.div`
 
 export const FooterDomain = styled.span`
   font-size: 11px;
-  color: rgba(255,255,255,0.13);
+  color: rgba(255,255,255,0.30);
 `;
 
 export const FooterBrand = styled.span`
@@ -392,7 +434,7 @@ export const FooterBrand = styled.span`
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.26);
 `;
 
 // ── Loading / Error ───────────────────────────────────────────────────────────

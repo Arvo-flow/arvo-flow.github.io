@@ -161,6 +161,9 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
   const cat      = estimates.categories?.[0];
   const hasSaving = estimates.hasEstimates && cat;
   const savingRange = hasSaving ? `${fmt(estimates.totalSavingLow)}–${fmt(estimates.totalSavingHigh)} kr/år` : null;
+  const catCentral  = hasSaving
+    ? (cat.savingCentral ?? Math.round((cat.savingLow + cat.savingHigh) / 2 / 500) * 500)
+    : null;
 
   return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Arvo Kostnadsbedömning — ${companyName}</title><style>${CSS}</style></head><body>
@@ -178,7 +181,7 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
       <div class="intel-label">${cat.label}</div>
       <div class="intel-row"><span class="intel-desc">Typisk marknadskostnad</span><span class="intel-val">${fmt(cat.typicalLow)}–${fmt(cat.typicalHigh)} kr/år</span></div>
       <div class="intel-row"><span class="intel-desc">Arvo-priset (verifierat listpris)</span><span class="intel-val green">${fmt(cat.arvoAnnual)} kr/år</span></div>
-      <div class="saving-bar">Potentiell besparing: upp till ${fmt(cat.savingHigh)} kr/år</div>
+      <div class="saving-bar">Sannolik premie: ≈ ${fmt(catCentral)} kr/år (intervall ${fmt(cat.savingLow)}–${fmt(cat.savingHigh)})</div>
     </div>` : ''}
     <div class="disclaimer">Dessa siffror är uppskattningar baserade på branschdata och verifierade listpriser. Exakt analys kräver er faktura — ladda upp den på 2 minuter.</div>
     <a href="${prospectUrl}" class="cta-btn">Se er fullständiga kostnadsbedömning →</a>

@@ -1,24 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  PageWrap,
-  HeaderBar, HeaderInner, HeaderMeta, ConfidentialLabel, HeaderDate,
+  PageWrap, TopFade,
+  HeaderBar, HeaderInner, ConfidentialLabel, HeaderDate,
   CompanyName, MetaLine, MetaDot,
   SignalSection, SectionEyebrow, SignalCard, SignalBullet, SignalText,
   DataCard, DataRow, DataDesc, DataVal,
-  FinancialSection, BigNumber, BigNumberSub, BigNumberNote,
+  FinancialSection, BigNumber, BigNumberApprox, BigNumberInterval, BigNumberSub, BigNumberNote,
   ContentArea, BreakdownEyebrow, EstimateCard, CategoryLabel,
-  EstimateRow, EstimateDesc, EstimateVal,
-  SavingBand, SavingLabel, SavingRange, SourceNote,
+  EstimateRow, EstimateDesc, EstimateVal, EstimateValNote,
+  SavingBand, SavingLabel, SavingCentral, SavingInterval, SourceNote,
   CtaSection, MethodologyNote,
   PrimaryCtaWrap, PrimaryCta, PrimaryCtaSub,
-  CtaGap, SecondaryCtaWrap, SecondaryCta, SecondaryCtaSub,
+  CtaGap, SecondaryLink, SecondaryCtaSub,
   PageFooter, FooterDomain, FooterBrand,
   LoadingWrap, Dots, Dot, LoadingText,
   ErrorWrap, ErrorIcon, ErrorTitle, ErrorBody, ErrorCta,
 } from './styles';
 
 const fmt = n => n != null ? new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n) : '–';
+
+// Mittpunkt avrundad till 500 — fallback för payloads skapade innan savingCentral fanns
+const mid500 = (low, high) => Math.round((low + high) / 2 / 500) * 500;
 
 const MX_LABELS = {
   microsoft365: 'Microsoft 365',
@@ -131,16 +134,22 @@ export default function Prospect() {
 
   const showIntelMeta = hasFindings && (mxPlatform || domainRegistered || mxSince);
 
+  // Premien härleds alltid ur de kategorier som faktiskt byggde summan —
+  // aldrig ur e-postplattformen (de kan vara olika saker).
+  const savingCentral = estimates?.totalSavingCentral
+    ?? (hasSaving ? mid500(estimates.totalSavingLow, estimates.totalSavingHigh) : null);
+  const basisLine = cats
+    .map(c => `${c.estimatedSims} ${c.category === 'm365' ? 'Microsoft 365-licenser' : 'mobilabonnemang'}`)
+    .join(' + ');
+
   return (
     <PageWrap>
+      <TopFade />
 
       {/* ── Hero ── */}
       <HeaderBar>
         <HeaderInner>
-          <HeaderMeta>
-            <ConfidentialLabel>Konfidentiell analys</ConfidentialLabel>
-            <HeaderDate>{formatDate(generatedAt)}</HeaderDate>
-          </HeaderMeta>
+          <ConfidentialLabel>Konfidentiell analys</ConfidentialLabel>
 
           <CompanyName>{companyName}</CompanyName>
 
@@ -150,6 +159,8 @@ export default function Prospect() {
             {employees && <span>{employees} anställda</span>}
             {foundedYear && <><MetaDot>·</MetaDot><span>Grundat {foundedYear}</span></>}
           </MetaLine>
+
+          <HeaderDate>{formatDate(generatedAt)}</HeaderDate>
         </HeaderInner>
       </HeaderBar>
 
@@ -193,14 +204,17 @@ export default function Prospect() {
       {/* ── Financial impact ── */}
       {hasSaving && (
         <FinancialSection>
-          <SectionEyebrow>Beräknad kostnadspremie</SectionEyebrow>
+          <SectionEyebrow>Sannolik kostnadspremie</SectionEyebrow>
           <BigNumber>
-            {fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}{' '}
+            <BigNumberApprox>≈</BigNumberApprox>{fmt(savingCentral)}{' '}
             <span style={{ fontSize: '0.42em', letterSpacing: '0em', fontWeight: 700 }}>kr/år</span>
           </BigNumber>
-          {mxPlatform && employees && (
+          <BigNumberInterval>
+            Intervall {fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)} kr/år
+          </BigNumberInterval>
+          {basisLine && (
             <BigNumberSub>
-              Baserat på {employees} licenser × marknadspris {mxLabel}
+              Baserat på {basisLine} mot verifierade listpriser
             </BigNumberSub>
           )}
           <BigNumberNote>
@@ -213,40 +227,44 @@ export default function Prospect() {
       {cats.length > 0 && (
         <ContentArea>
           <BreakdownEyebrow>Kostnadsanalys per kategori</BreakdownEyebrow>
-          {cats.map((cat, i) => (
-            <EstimateCard key={i}>
-              <CategoryLabel>{cat.label}</CategoryLabel>
+          {cats.map((cat, i) => {
+            const unit       = cat.category === 'm365' ? 'licens' : 'abonnemang';
+            const catCentral = cat.savingCentral ?? mid500(cat.savingLow, cat.savingHigh);
+            return (
+              <EstimateCard key={i}>
+                <CategoryLabel>{cat.label}</CategoryLabel>
 
-              <EstimateRow>
-                <EstimateDesc>{cat.category === 'm365' ? 'Uppskattade licenser' : 'Uppskattade abonnemang'}</EstimateDesc>
-                <EstimateVal>{cat.estimatedSims} st</EstimateVal>
-              </EstimateRow>
-              <EstimateRow>
-                <EstimateDesc>Typisk marknadskostnad</EstimateDesc>
-                <EstimateVal>{fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år</EstimateVal>
-              </EstimateRow>
-              <EstimateRow>
-                <EstimateDesc>Arvo-priset (verifierat listpris)</EstimateDesc>
-                <EstimateVal $highlight>{fmt(cat.arvoAnnual)} kr/år</EstimateVal>
-              </EstimateRow>
-              <EstimateRow>
-                <EstimateDesc>{cat.category === 'm365' ? 'Pris per licens' : 'Pris per abonnemang'}</EstimateDesc>
-                <EstimateVal>
-                  {cat.pricePerSim.arvo} kr/mån{' '}
-                  <span style={{ color: 'rgba(14,26,23,0.28)', fontWeight: 400, fontSize: 11 }}>
-                    (typiskt {cat.pricePerSim.typical} kr/mån)
-                  </span>
-                </EstimateVal>
-              </EstimateRow>
+                <EstimateRow>
+                  <EstimateDesc>{cat.category === 'm365' ? 'Uppskattade licenser' : 'Uppskattade abonnemang'}</EstimateDesc>
+                  <EstimateVal>{cat.estimatedSims} st</EstimateVal>
+                </EstimateRow>
+                <EstimateRow>
+                  <EstimateDesc>Typisk marknadskostnad</EstimateDesc>
+                  <EstimateVal>
+                    {fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år
+                    <EstimateValNote>median {cat.pricePerSim.typical} kr/mån per {unit} ± 15 %</EstimateValNote>
+                  </EstimateVal>
+                </EstimateRow>
+                <EstimateRow>
+                  <EstimateDesc>Arvo-pris, verifierat listpris</EstimateDesc>
+                  <EstimateVal $highlight>
+                    {fmt(cat.arvoAnnual)} kr/år
+                    <EstimateValNote>{cat.pricePerSim.arvo} kr/mån per {unit}</EstimateValNote>
+                  </EstimateVal>
+                </EstimateRow>
 
-              <SavingBand>
-                <SavingLabel>Potentiell besparing</SavingLabel>
-                <SavingRange>upp till {fmt(cat.savingHigh)} kr/år</SavingRange>
-              </SavingBand>
+                <SavingBand>
+                  <SavingLabel>Sannolik premie</SavingLabel>
+                  <div>
+                    <SavingCentral>≈ {fmt(catCentral)} kr/år</SavingCentral>
+                    <SavingInterval>intervall {fmt(cat.savingLow)}–{fmt(cat.savingHigh)}</SavingInterval>
+                  </div>
+                </SavingBand>
 
-              <SourceNote>{cat.sourceNote}</SourceNote>
-            </EstimateCard>
-          ))}
+                <SourceNote>{cat.sourceNote}</SourceNote>
+              </EstimateCard>
+            );
+          })}
         </ContentArea>
       )}
 
@@ -255,29 +273,26 @@ export default function Prospect() {
         <MethodologyNote>
           Arvo har analyserat den publika DNS-konfigurationen för {companyName}s domän.
           Ingen data har inhämtats från er eller era leverantörer utan ert tillstånd.
-          Er faktiska avtalskostnad känner vi inte till förrän ni visar oss er faktura.
         </MethodologyNote>
 
         <PrimaryCtaWrap>
           <PrimaryCta href="/testa-faktura" onClick={() => recordAction('upload')}>
-            Verifiera er kostnad — ladda upp faktura
+            Se er exakta premie — ladda upp en faktura
           </PrimaryCta>
           <PrimaryCtaSub>Kostnadsfritt · 2 minuter · Ingen registrering krävs</PrimaryCtaSub>
         </PrimaryCtaWrap>
 
         <CtaGap />
 
-        <SecondaryCtaWrap>
-          <SecondaryCta
-            href="/intelligence#aktivera"
-            onClick={() => recordAction('activate')}
-          >
-            Aktivera Arvo Intelligence — 1 995 kr/mån
-          </SecondaryCta>
-          <SecondaryCtaSub>
-            Löpande bevakning · Ingen bindningstid · Arvo börjar bevaka er inom 24 timmar
-          </SecondaryCtaSub>
-        </SecondaryCtaWrap>
+        <SecondaryLink
+          href="/intelligence#aktivera"
+          onClick={() => recordAction('activate')}
+        >
+          Eller låt Arvo bevaka er löpande — Arvo Intelligence, 1&nbsp;995 kr/mån →
+        </SecondaryLink>
+        <SecondaryCtaSub>
+          Ingen bindningstid · Bevakningen börjar inom 24 timmar
+        </SecondaryCtaSub>
       </CtaSection>
 
       {/* ── Footer ── */}
