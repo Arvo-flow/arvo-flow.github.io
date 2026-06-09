@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   PageWrap,
-  HeroSection, HeroTopRow, HeroCompany, HeroMeta, HeroDate, MetaDot,
-  ConfidentialLabel,
-  IntelSection, SectionEyebrow, IntelFinding, FindingStar, FindingText,
-  IntelMeta, IntelMetaRow, IntelMetaLabel, IntelMetaVal,
-  NumberSection, NumberEyebrow, ImpactNumber, ImpactUnit, ImpactMeta, ImpactNote,
-  BreakdownSection, BreakdownInner, BreakdownEyebrow,
-  CategoryCard, CategoryLabel, DataRow, DataDesc, DataVal,
+  HeaderBar, HeaderInner, HeaderMeta, ConfidentialLabel, HeaderDate,
+  CompanyName, MetaLine, MetaDot,
+  SignalSection, SectionEyebrow, SignalCard, SignalBullet, SignalText,
+  DataCard, DataRow, DataDesc, DataVal,
+  FinancialSection, BigNumber, BigNumberSub, BigNumberNote,
+  ContentArea, BreakdownEyebrow, EstimateCard, CategoryLabel,
+  EstimateRow, EstimateDesc, EstimateVal,
   SavingBand, SavingLabel, SavingRange, SourceNote,
   CtaSection, MethodologyNote,
   PrimaryCtaWrap, PrimaryCta, PrimaryCtaSub,
@@ -111,7 +111,6 @@ export default function Prospect() {
 
   const hasFindings = findings.length > 0;
 
-  // Build signal list
   const signals = [];
   findings.forEach(f => signals.push({ text: f, key: f }));
 
@@ -135,123 +134,123 @@ export default function Prospect() {
   return (
     <PageWrap>
 
-      {/* ── Hero ──────────────────────────────────────────────────────────────── */}
-      <HeroSection>
-        <HeroTopRow>
-          <ConfidentialLabel>Konfidentiell analys</ConfidentialLabel>
-          <HeroDate>{formatDate(generatedAt)}</HeroDate>
-        </HeroTopRow>
+      {/* ── Hero ── */}
+      <HeaderBar>
+        <HeaderInner>
+          <HeaderMeta>
+            <ConfidentialLabel>Konfidentiell analys</ConfidentialLabel>
+            <HeaderDate>{formatDate(generatedAt)}</HeaderDate>
+          </HeaderMeta>
 
-        <HeroCompany>{companyName}</HeroCompany>
+          <CompanyName>{companyName}</CompanyName>
 
-        <HeroMeta>
-          {industry && <span>{industry}</span>}
-          {industry && employees && <MetaDot>·</MetaDot>}
-          {employees && <span>{employees} anställda</span>}
-          {foundedYear && <><MetaDot>·</MetaDot><span>Grundat {foundedYear}</span></>}
-        </HeroMeta>
-      </HeroSection>
+          <MetaLine>
+            {industry && <span>{industry}</span>}
+            {industry && employees && <MetaDot>·</MetaDot>}
+            {employees && <span>{employees} anställda</span>}
+            {foundedYear && <><MetaDot>·</MetaDot><span>Grundat {foundedYear}</span></>}
+          </MetaLine>
+        </HeaderInner>
+      </HeaderBar>
 
-      {/* ── Intelligence finding ─────────────────────────────────────────────── */}
+      {/* ── Intelligence finding ── */}
       {hasSignals && (
-        <IntelSection>
+        <SignalSection>
           <SectionEyebrow>{eyebrow}</SectionEyebrow>
 
           {signals.map((s, i) => (
-            <IntelFinding key={s.key} $i={i}>
-              <FindingStar>★</FindingStar>
-              <FindingText>{s.text}</FindingText>
-            </IntelFinding>
+            <SignalCard key={s.key} $i={i}>
+              <SignalBullet>★</SignalBullet>
+              <SignalText>{s.text}</SignalText>
+            </SignalCard>
           ))}
 
           {showIntelMeta && (
-            <IntelMeta>
+            <DataCard>
               {mxPlatform && (
-                <IntelMetaRow>
-                  <IntelMetaLabel>E-postplattform</IntelMetaLabel>
-                  <IntelMetaVal>{mxLabel}</IntelMetaVal>
-                </IntelMetaRow>
+                <DataRow>
+                  <DataDesc>E-postplattform</DataDesc>
+                  <DataVal>{mxLabel}</DataVal>
+                </DataRow>
               )}
               {mxSince && (
-                <IntelMetaRow>
-                  <IntelMetaLabel>Konfiguration sedan</IntelMetaLabel>
-                  <IntelMetaVal $highlight>{swMonthYear(mxSince)} — {mxMonths} mån</IntelMetaVal>
-                </IntelMetaRow>
+                <DataRow>
+                  <DataDesc>Konfiguration sedan</DataDesc>
+                  <DataVal $highlight>{swMonthYear(mxSince)} — {mxMonths} mån</DataVal>
+                </DataRow>
               )}
               {domainRegistered && (
-                <IntelMetaRow>
-                  <IntelMetaLabel>Domän registrerad</IntelMetaLabel>
-                  <IntelMetaVal>{swMonthYear(domainRegistered)}</IntelMetaVal>
-                </IntelMetaRow>
+                <DataRow>
+                  <DataDesc>Domän registrerad</DataDesc>
+                  <DataVal>{swMonthYear(domainRegistered)}</DataVal>
+                </DataRow>
               )}
-            </IntelMeta>
+            </DataCard>
           )}
-        </IntelSection>
+        </SignalSection>
       )}
 
-      {/* ── Financial impact ─────────────────────────────────────────────────── */}
+      {/* ── Financial impact ── */}
       {hasSaving && (
-        <NumberSection>
-          <NumberEyebrow>Beräknad kostnadspremie</NumberEyebrow>
-          <ImpactNumber>
+        <FinancialSection>
+          <SectionEyebrow>Beräknad kostnadspremie</SectionEyebrow>
+          <BigNumber>
             {fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)}{' '}
-            <ImpactUnit>kr/år</ImpactUnit>
-          </ImpactNumber>
+            <span style={{ fontSize: '0.42em', letterSpacing: '0em', fontWeight: 700 }}>kr/år</span>
+          </BigNumber>
           {mxPlatform && employees && (
-            <ImpactMeta>
+            <BigNumberSub>
               Baserat på {employees} licenser × marknadspris {mxLabel}
-            </ImpactMeta>
+            </BigNumberSub>
           )}
-          <ImpactNote>
+          <BigNumberNote>
             Er faktiska avtalskostnad ser vi inte förrän ni delar er faktura
-          </ImpactNote>
-        </NumberSection>
+          </BigNumberNote>
+        </FinancialSection>
       )}
 
-      {/* ── Category breakdown ───────────────────────────────────────────────── */}
+      {/* ── Category breakdown ── */}
       {cats.length > 0 && (
-        <BreakdownSection>
-          <BreakdownInner>
-            <BreakdownEyebrow>Kostnadsanalys per kategori</BreakdownEyebrow>
-            {cats.map((cat, i) => (
-              <CategoryCard key={i}>
-                <CategoryLabel>{cat.label}</CategoryLabel>
+        <ContentArea>
+          <BreakdownEyebrow>Kostnadsanalys per kategori</BreakdownEyebrow>
+          {cats.map((cat, i) => (
+            <EstimateCard key={i}>
+              <CategoryLabel>{cat.label}</CategoryLabel>
 
-                <DataRow>
-                  <DataDesc>{cat.category === 'm365' ? 'Uppskattade licenser' : 'Uppskattade abonnemang'}</DataDesc>
-                  <DataVal>{cat.estimatedSims} st</DataVal>
-                </DataRow>
-                <DataRow>
-                  <DataDesc>Typisk marknadskostnad</DataDesc>
-                  <DataVal>{fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år</DataVal>
-                </DataRow>
-                <DataRow>
-                  <DataDesc>Arvo-priset (verifierat listpris)</DataDesc>
-                  <DataVal $highlight>{fmt(cat.arvoAnnual)} kr/år</DataVal>
-                </DataRow>
-                <DataRow>
-                  <DataDesc>{cat.category === 'm365' ? 'Pris per licens' : 'Pris per abonnemang'}</DataDesc>
-                  <DataVal>
-                    {cat.pricePerSim.arvo} kr/mån{' '}
-                    <span style={{ color: 'rgba(0,0,0,0.22)', fontWeight: 400, fontSize: 11 }}>
-                      (typiskt {cat.pricePerSim.typical} kr/mån)
-                    </span>
-                  </DataVal>
-                </DataRow>
+              <EstimateRow>
+                <EstimateDesc>{cat.category === 'm365' ? 'Uppskattade licenser' : 'Uppskattade abonnemang'}</EstimateDesc>
+                <EstimateVal>{cat.estimatedSims} st</EstimateVal>
+              </EstimateRow>
+              <EstimateRow>
+                <EstimateDesc>Typisk marknadskostnad</EstimateDesc>
+                <EstimateVal>{fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år</EstimateVal>
+              </EstimateRow>
+              <EstimateRow>
+                <EstimateDesc>Arvo-priset (verifierat listpris)</EstimateDesc>
+                <EstimateVal $highlight>{fmt(cat.arvoAnnual)} kr/år</EstimateVal>
+              </EstimateRow>
+              <EstimateRow>
+                <EstimateDesc>{cat.category === 'm365' ? 'Pris per licens' : 'Pris per abonnemang'}</EstimateDesc>
+                <EstimateVal>
+                  {cat.pricePerSim.arvo} kr/mån{' '}
+                  <span style={{ color: 'rgba(14,26,23,0.28)', fontWeight: 400, fontSize: 11 }}>
+                    (typiskt {cat.pricePerSim.typical} kr/mån)
+                  </span>
+                </EstimateVal>
+              </EstimateRow>
 
-                <SavingBand>
-                  <SavingLabel>Potentiell besparing</SavingLabel>
-                  <SavingRange>upp till {fmt(cat.savingHigh)} kr/år</SavingRange>
-                </SavingBand>
+              <SavingBand>
+                <SavingLabel>Potentiell besparing</SavingLabel>
+                <SavingRange>upp till {fmt(cat.savingHigh)} kr/år</SavingRange>
+              </SavingBand>
 
-                <SourceNote>{cat.sourceNote}</SourceNote>
-              </CategoryCard>
-            ))}
-          </BreakdownInner>
-        </BreakdownSection>
+              <SourceNote>{cat.sourceNote}</SourceNote>
+            </EstimateCard>
+          ))}
+        </ContentArea>
       )}
 
-      {/* ── CTA ──────────────────────────────────────────────────────────────── */}
+      {/* ── CTA ── */}
       <CtaSection>
         <MethodologyNote>
           Arvo har analyserat den publika DNS-konfigurationen för {companyName}s domän.
@@ -281,7 +280,7 @@ export default function Prospect() {
         </SecondaryCtaWrap>
       </CtaSection>
 
-      {/* ── Footer ───────────────────────────────────────────────────────────── */}
+      {/* ── Footer ── */}
       <PageFooter>
         <FooterDomain>arvoflow.se</FooterDomain>
         <FooterBrand>Arvo Intelligence</FooterBrand>
