@@ -165,7 +165,7 @@ export default async function handler(req, res) {
   <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#1B7A6E;margin:0 0 12px;">Gmail kopplat</p>
   <h1 style="font-size:26px;font-weight:800;color:#0E1A17;margin:0 0 14px;letter-spacing:-.025em;line-height:1.2;">Arvo bevakar nu er inkorg.</h1>
   <p style="font-size:14.5px;color:#3D5249;line-height:1.7;margin:0 0 10px;">${countText}</p>
-  <p style="font-size:14px;color:#5C6E68;line-height:1.7;margin:0;">Er fullst&auml;ndiga Intelligence-briefing med samtliga leverant&ouml;rsanalyser skickas inom kort.</p>
+  <p style="font-size:14px;color:#5C6E68;line-height:1.7;margin:0;">N&auml;sta steg: ladda upp en av era leverant&ouml;rsfakturor p&aring; <a href="https://arvoflow.se/testa-faktura" style="color:#1B7A6E;font-weight:600;">arvoflow.se/testa-faktura</a> &mdash; analysen tar 2 minuter och visar er exakta premie.</p>
 </td></tr>
 <tr><td style="padding:24px 36px;">
   <p style="font-size:12px;color:#8A9E98;text-align:center;margin:0;line-height:1.6;">

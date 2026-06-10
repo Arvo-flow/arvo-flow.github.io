@@ -4,7 +4,6 @@ import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
-import { TOTALS } from '../../data/mockData';
 import {
   Page, Section, Hero, HeroBackdrop, HeroInner,
   Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,

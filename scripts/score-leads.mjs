@@ -34,6 +34,7 @@ import { writeFile, mkdir, readdir, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBenchmark } from '../agents/recommender/branchindex.js';
+import { swMonthYear, monthsAgo, MX_LABELS } from '../lib/format.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const THIS_YEAR = new Date().getFullYear();
@@ -89,29 +90,8 @@ async function readCsv(filePath) {
 
 // ── Hjälpfunktioner ───────────────────────────────────────────────────────────
 
-const SV_MONTHS = ['januari','februari','mars','april','maj','juni',
-                   'juli','augusti','september','oktober','november','december'];
-
-function swMonthYear(dateStr) {
-  if (!dateStr) return null;
-  const [y, m] = dateStr.split('-');
-  return `${SV_MONTHS[parseInt(m) - 1]} ${y}`;
-}
-
-function monthsAgo(dateStr) {
-  if (!dateStr) return 0;
-  return Math.round((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
-}
-
 function fmtKr(n) { return new Intl.NumberFormat('sv-SE').format(n); }
 
-const MX_LABELS = {
-  microsoft365: 'Microsoft 365',
-  google:       'Google Workspace',
-  zoho:         'Zoho Mail',
-  other:        'Anpassad e-postlösning',
-  unknown:      'Okänd plattform',
-};
 
 // Kända mail-gateways — SPF som pekar hit är INTE felkonfig, det är en
 // medveten säkerhetsleverantör framför e-posten (= vaket IT, drar ned tesen).

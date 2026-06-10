@@ -16,6 +16,7 @@ const Connect = () => {
   const navigate = useNavigate();
   const [provider, setProvider] = useState('fortnox');
   const [connecting, setConnecting] = useState(false);
+  const [vismaNotice, setVismaNotice] = useState(false);
   const [consent, setConsent] = useState(false);
   const [showConsentError, setShowConsentError] = useState(false);
   const [industry, setIndustry] = useState('konsult');
@@ -27,6 +28,7 @@ const Connect = () => {
       return;
     }
     if (provider === 'fortnox') {
+      setConnecting(true); // spinner medan webbläsaren navigerar till OAuth
       const params = new URLSearchParams({
         industry,
         employees: String(employees),
@@ -34,9 +36,14 @@ const Connect = () => {
       window.location.href = `/api/fortnox/auth?${params}`;
       return;
     }
-    // Visma OAuth not yet implemented — placeholder
-    setConnecting(true);
-    setTimeout(() => navigate('/scanning'), 900);
+    // Visma-OAuth är inte byggd än — vi simulerar ALDRIG en koppling.
+    // Registrera intresset och var ärlig med läget.
+    fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: 'visma_connect', industry, employees }),
+    }).catch(() => {});
+    setVismaNotice(true);
   };
 
   return (
@@ -116,9 +123,10 @@ const Connect = () => {
               <span>Direkt OAuth-koppling</span>
             </ProviderBtn>
             <ProviderBtn $active={provider === 'visma'} onClick={() => setProvider('visma')}>
+              <span className="badge">Inom kort</span>
               <Icon name="fortnox" size={22} color="#0F5132" />
               <strong>Visma eEkonomi</strong>
-              <span>Direkt OAuth-koppling</span>
+              <span>Lanseras inom kort</span>
             </ProviderBtn>
           </ProviderRow>
 
@@ -170,6 +178,14 @@ const Connect = () => {
             <ConsentError>
               <Icon name="lock" size={12} stroke={2.4} />
               Du måste godkänna villkoren innan du går vidare.
+            </ConsentError>
+          )}
+
+          {vismaNotice && (
+            <ConsentError as="div" style={{ background: 'rgba(27,122,110,0.08)', color: '#1B7A6E' }}>
+              <Icon name="check" size={12} stroke={2.4} />
+              Visma-kopplingen lanseras inom kort — vi har noterat ert intresse och hör av oss.
+              Tills dess: <Link to="/testa-faktura" style={{ color: '#1B7A6E', fontWeight: 600 }}>analysera en faktura direkt</Link>.
             </ConsentError>
           )}
 

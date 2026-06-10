@@ -5,7 +5,7 @@ import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
-import { formatKr } from '../../data/mockData';
+import { formatKr } from '../../utils/format';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,

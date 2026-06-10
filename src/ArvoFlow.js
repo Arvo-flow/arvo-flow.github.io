@@ -8,9 +8,6 @@ import { AuthProvider } from './contexts/AuthContext';
 
 import Landing from './pages/Landing';
 import Connect from './pages/Connect';
-import Scanning from './pages/Scanning';
-import Insights from './pages/Insights';
-import Opportunity from './pages/Opportunity';
 import Bias from './pages/Bias';
 import Villkor from './pages/Villkor';
 import Integritet from './pages/Integritet';
@@ -19,7 +16,6 @@ import TestaFaktura from './pages/TestaFaktura';
 import Portfolio from './pages/Portfolio';
 import Admin from './pages/Admin';
 import OutcomeSurvey from './pages/OutcomeSurvey';
-import ArvoScore from './pages/ArvoScore';
 import Briefing from './pages/Briefing';
 import Intelligence from './pages/Intelligence';
 import Aktivera from './pages/Aktivera';
@@ -35,9 +31,6 @@ const ArvoFlow = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/connect" element={<Connect />} />
-          <Route path="/scanning" element={<Scanning />} />
-          <Route path="/insights" element={<Insights />} />
-          <Route path="/opportunity/:id" element={<Opportunity />} />
           <Route path="/bias" element={<Bias />} />
           <Route path="/villkor" element={<Villkor />} />
           <Route path="/integritet" element={<Integritet />} />
@@ -46,7 +39,6 @@ const ArvoFlow = () => (
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/utfall" element={<OutcomeSurvey />} />
-          <Route path="/arvo-score" element={<ArvoScore />} />
           <Route path="/briefing/:token" element={<Briefing />} />
           <Route path="/intelligence" element={<Intelligence />} />
           <Route path="/aktivera" element={<Aktivera />} />

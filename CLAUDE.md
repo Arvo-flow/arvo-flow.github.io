@@ -60,7 +60,54 @@ Vi fakturerar aldrig före kunden sparar. Arvo och kunden är alltid på samma s
 
 ---
 
-## Systemarkitektur — Full karta (uppdaterad 2026-06-06)
+## Helhetsregler — LÄS FÖRE VARJE ÄNDRING (frontend och backend)
+
+> Vi jobbar aldrig i stuprör. Varje ändring görs med hela systemet i huvudet.
+> Dessa regler är icke-förhandlingsbara och gäller varje commit.
+
+1. **En sanning per fråga.** Innan du skriver ny logik: leta upp den befintliga källan.
+   Prisdata → `lib/benchmark.js` (enda läsvägen: KV → invoice_datapoints → invoice_analyses → BRANCHINDEX).
+   Kr/år-impact → `lib/price-impact.js`. Formattering/etiketter → `lib/format.js` (backend) och
+   `src/utils/format.js` (frontend). Like-for-like-mål → `computeLikeForLikeSaasTarget`.
+   Lokala kopior av delad logik är förbjudna — det var så 2009/2000-motsägelsen och
+   `calcFrozenSaving`-heuristiken föddes.
+
+2. **AI tolkar, kod räknar.** Modellen läser fakturor och formulerar text — den får ALDRIG
+   utföra finansiell aritmetik. Alla kronor, procent och per-användare-tal beräknas i
+   deterministiska, testlåsta moduler och injiceras färdiga i prompten (se LFL-blocket i
+   `recommend.js`: "FÖRBJUDET: räkna egna tal").
+
+3. **Inga siffror utan källa.** Varje kundsynlig siffra ska ha proveniens (livedata /
+   verifierat listpris / märkt estimat) och gå att räkna hem med miniräknare.
+   Heuristiker i kundytor är förbjudna. Punktestimat visas alltid med sitt intervall.
+
+4. **Precision eller tystnad.** Kan vi inte stå för siffran visas ingen siffra.
+   Fejkade flöden (simulerade scanningar, låtsas-BankID, mockdata som ser verklig ut)
+   får aldrig vara routade i produktion.
+
+5. **Följ ändringen genom ALLA ytor.** Samma data visas ofta i analyssidan, briefingen,
+   prospect-sidan, mail och admin. Ändrar du copy, beräkning eller fältnamn: grep:a
+   repot och uppdatera varje yta i samma commit. Mail och webb får aldrig säga olika saker.
+
+6. **Designsystemet är lag.** `ThemeProvider` är inkopplad (`ArvoFlow.js`) — nya och ändrade
+   styled-components konsumerar `theme.js` (`${({ theme }) => theme.color…}`), aldrig nya
+   hårdkodade hexvärden. Prospect-sidan är mallen för dossier-designspråket.
+
+7. **Varje fel blir en tillgång.** Ett produktionsfel är inte åtgärdat förrän det har
+   (a) en rotorsaksfix, (b) ett regressionstest som låser felet för alltid, och
+   (c) vid tolkningsfel: ett few-shot-exempel i flywheeln. Bumpa cache-versioner
+   (`pdf:result:vN`, `bm:vN`) vid varje pipelineändring som påverkar resultat.
+
+8. **Visuell verifiering före deploy.** UI-ändringar screenshotas i mobil (390px) OCH
+   desktop (1600px) före push — mönster: `scripts/screenshot-prospect.mjs`.
+   Användaren är aldrig vår QA.
+
+9. **Kundlöften ska ha mekanik.** Skicka aldrig copy som utlovar något systemet inte
+   gör ("briefing skickas inom kort" utan ingest). Löftet och koden levereras tillsammans.
+
+---
+
+## Systemarkitektur — Full karta (uppdaterad 2026-06-10)
 
 > Läs detta innan all ny- eller vidareutveckling. Vi jobbar inte i stuprör.
 
@@ -230,10 +277,10 @@ Deployad till GitHub Pages (`build/`) via `npm run deploy` (gh-pages → `/flow`
 | Intelligence | `/intelligence` | ℹ️ Statisk | Produktpitch (aktiveringsformulär → API) |
 | Bias | `/bias` | ℹ️ Statisk | Algoritmtransparens-sida |
 | Villkor/Integritet/Cookies | `/villkor` etc | ℹ️ Statisk | Juridisk dokumentation |
-| **Insights** | `/insights` | ❌ **MOCK** | Läser mockData.js — "Lindberg VVS AB" — ej kopplad till API |
-| **Opportunity** | `/opportunity/:id` | ❌ **MOCK** | Läser mockData.js — BankID simulerat (2.4s delay) |
-| **ArvoScore** | `/arvo-score` | ❌ **MOCK** | Statisk mock-dashboard |
-| **Scanning** | `/scanning` | ❌ **MOCK** | Falsk animation ~6s, navigerar alltid till /insights |
+| Insights | — | 🚫 **AVROUTAD** | Mock (Lindberg VVS). Fil kvar, ej nåbar i prod. Byggs på riktigt mot API eller raderas. |
+| Opportunity | — | 🚫 **AVROUTAD** | Mock (simulerat BankID). Fil kvar, ej nåbar i prod. |
+| ArvoScore | — | 🚫 **AVROUTAD** | Statisk mock. Fil kvar, ej nåbar i prod. |
+| Scanning | — | 🚫 **AVROUTAD** | Fejk-animation. Fil kvar, ej nåbar i prod. Visma i Connect visar nu ärligt "lanseras inom kort". |
 | Admin | `/admin/**` | ✅ Real | Intern admin (magic link auth) |
 
 Auth: Magic link via `api/auth/request-magic-link.mjs` → `magic_tokens` → `api/validate-magic.mjs` → JWT i `AuthContext.js`.
@@ -300,25 +347,13 @@ Auth: Magic link via `api/auth/request-magic-link.mjs` → `magic_tokens` → `a
 - 4 pelare: Marknadsintelligens · Kontrakts­kalender · Faktura­kontroll · CFO-brief
 - Aktiverings­formulär POST `/api/activate-intelligence` (e-post + frivilligt bolagsnamn)
 
-#### ❌ Kritiska mockar — ej produktions­klara
+#### 🚫 Potemkin-sidorna — avroutade 2026-06-10 (regel 4: precision eller tystnad)
 
-**Insights** (`src/pages/Insights/index.js`) — `import { COMPANY, SUMMARY, OPPORTUNITIES, TIMELINE } from '../data/mockData.js'`
-- Visar alltid "Lindberg VVS AB" med hårdkodade möjligheter (försäkring/el/mobil/bredband/SaaS)
-- Skeleton-laddning 4.2s, sedan mock-data
-- Behöver: GET `/api/insights?fingerprint={}` eller session-baserat API
-
-**Opportunity** (`src/pages/Opportunity/index.js`) — läser `OPPORTUNITIES` från mockData.js
-- BankID-signering simuleras med 2.4s `setTimeout` → omedelbart "klart"
-- "Mejla mig sammanfattningen" gör ingenting
-- Behöver: riktig Scrive-integration + `/api/opportunity/:id`
-
-**ArvoScore** (`src/pages/ArvoScore/index.js`) — statisk mock
-- 3 klara byten · 1 låst · 5 kontrakts­förfallodatum — allt hårdkodat
-- Behöver: koppling till `invoice_analyses` + `contract_timelines`
-
-**Scanning** (`src/pages/Scanning/index.js`) — alltid klart om ~6s
-- Falsk animation av Fortnox-scanning · navigerar till /insights (som också är mock)
-- Behöver: real Fortnox API polling
+Insights, Opportunity, Scanning och ArvoScore är borttagna ur `ArvoFlow.js`-routingen —
+de simulerade verkliga flöden (falsk Fortnox-scanning, låtsas-BankID, hårdkodat bolag)
+och fick aldrig nås av riktiga besökare. Filerna ligger kvar som designreferens.
+Återinförs ENDAST kopplade mot riktiga API:er. mockData.js används numera enbart av
+dessa oroutade filer — Landing och TestaFaktura är frikopplade (`src/utils/format.js`).
 
 #### Komponenter
 - `Nav.js`: Sticky header · variant prop (public/app) · Auth-modal (magic link) · Founding Member-modal · Toast-notiser
@@ -349,7 +384,8 @@ Auth: Magic link via `api/auth/request-magic-link.mjs` → `magic_tokens` → `a
 | `lib/price-alert.js` | Smyghöjnings­detektion + cross-customer aggregat |
 | `lib/price-alert-store.js` | getAffectedCustomers + idempotens­logik |
 | `lib/price-impact.js` | Deterministisk kr/år-beräkning (inga heuristiker) |
-| `lib/outbound-estimator.js` | Estimat för outbound briefings (BRANCHINDEX, ej AI) |
+| `lib/outbound-estimator.js` | Estimat för outbound briefings — läser PRISBOKEN via lib/benchmark.js (livedata → listpris-fallback, sanity-band), ej AI |
+| `lib/format.js` | EN källa för sv-SE-formattering/etiketter i backend (frontend: `src/utils/format.js`) |
 | `lib/sni-mapper.js` | SNI-kod → industri/segment |
 | `lib/invoice-graph.js` | Uppdaterar suppliers + supplier_prices + contract_timelines |
 | `lib/extraction-integrity.js` | Sanitetskontroller på extraherat data |
@@ -370,6 +406,28 @@ ARVO_ADMIN_SECRET     — admin-API-skydd (generate-prospect etc.)
 CRON_SECRET           — autentisering för GH Actions → Vercel cron-anrop
 ARVO_BASE_URL         — bas-URL för mail-länkar
 ```
+
+---
+
+### Arkitekturstatus — åtgärdat & känd skuld (2026-06-10)
+
+**Åtgärdat (denna iteration):**
+- ✅ Prorata-buggen i like-for-like ("188 kr/anv", uppblåst besparing) — deterministisk fix + regressionssvit (CR-88412)
+- ✅ En prissanning: `calcFrozenSaving`-heuristiken raderad; outbound-estimatorn läser prisboken via `lib/benchmark.js`
+- ✅ Potemkin-rutterna (/insights, /opportunity, /scanning, /arvo-score) avroutade; Visma i Connect ärlig ("inom kort" + waitlist)
+- ✅ mockData frikopplad från Landing/TestaFaktura; delade format-utils (`lib/format.js` + `src/utils/format.js`) ersätter 3 kopior
+- ✅ `src/App.js` (2 100 rader död kod) raderad
+- ✅ Löftesbuggen i Gmail/Outlook-callbacks (utlovad briefing utan ingest) — ärlig copy med testa-faktura-CTA
+- ✅ Prospect-sidan: dossier-designspråk, desktop-kolumn, spektrum-bar — MALLEN för premiumytor
+
+**Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
+1. **Identitet:** fingerprint är primärnyckel för historik — magic link-kontot ska bära portföljen (krävs för plattformsvisionen)
+2. **E-post-ingest:** inkommande faktura-PDF → pipeline → datapunkt → mailsvar (skuggadress v1, Outlook OAuth v2, Gmail efter CASA)
+3. **Dubbla alertvägar:** `api/cron/run-price-alerts.mjs` + `scripts/notify-price-changes.mjs` — extrahera gemensam lib
+4. **Theme-migrering:** 0/20 sidor konsumerar theme.js — migrera per sida när den ändå rörs (regel 6), Prospect/dossier som mall
+5. **extraction-integrity som GATE:** varnar idag, ska stoppa obalanserade analyser → granskningskö ("balanskravet")
+6. **30 pre-existerande testfel:** bredband/Gbit-snappning + CRM-benchmarks driftade från branchindex-data — städpass
+7. **Migrationer:** 4 filer som körs i ordning ur minnet — en samlad migrate-runner
 
 ---
 

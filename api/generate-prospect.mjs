@@ -12,6 +12,7 @@ import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { mapSni } from '../lib/sni-mapper.js';
 import { estimateForProfile, bucketForSize } from '../lib/outbound-estimator.js';
+import { swMonthYear, monthsAgo, MX_LABELS } from '../lib/format.js';
 
 export const config = { maxDuration: 20 };
 
@@ -20,12 +21,6 @@ const FROM     = process.env.RESEND_FROM         ?? 'Arvo Intelligence <analys@a
 const INTERNAL = process.env.ARVO_INTERNAL_EMAIL ?? 'hej@arvo-flow.se';
 const BASE_URL = process.env.ARVO_BASE_URL ?? 'https://arvoflow.se';
 
-const MX_LABELS = {
-  microsoft365: 'Microsoft 365',
-  google:       'Google Workspace',
-  zoho:         'Zoho Mail',
-  other:        'Anpassad e-postlösning',
-};
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -39,18 +34,7 @@ function fmt(n) {
   return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 }
 
-function swMonthYear(dateStr) {
-  if (!dateStr) return null;
-  const [y, m] = dateStr.split('-');
-  const months = ['januari','februari','mars','april','maj','juni',
-                  'juli','augusti','september','oktober','november','december'];
-  return `${months[parseInt(m) - 1]} ${y}`;
-}
 
-function monthsAgo(dateStr) {
-  if (!dateStr) return 0;
-  return Math.round((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
-}
 
 function buildOutboundEmail({ companyName, industry, employees, estimates, prospectUrl, foundedYear, mxPlatform, mxSince, domainRegistered }) {
   const useFrozen = mxPlatform && foundedYear && MX_LABELS[mxPlatform];
