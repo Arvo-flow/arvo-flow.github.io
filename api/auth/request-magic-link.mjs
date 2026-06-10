@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { Resend } from 'resend';
 import { getDb } from '../../lib/db.js';
 
-const FROM     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
+const FROM     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://arvoflow.se';
 const RATE_MS  = 5 * 60 * 1000; // 5 minuter
 

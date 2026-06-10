@@ -9,8 +9,8 @@ const PDFDocument = require('pdfkit');
 
 export const config = { maxDuration: 30 };
 
-const FROM           = process.env.RESEND_FROM         ?? 'Arvo Flow <analys@arvo-flow.se>';
-const INTERNAL_EMAIL = process.env.ARVO_INTERNAL_EMAIL ?? 'hej@arvo-flow.se';
+const FROM           = process.env.RESEND_FROM         ?? 'Arvo Flow <analys@arvoflow.se>';
+const INTERNAL_EMAIL = process.env.ARVO_INTERNAL_EMAIL ?? 'hej@arvoflow.se';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
 const T = {

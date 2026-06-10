@@ -3,7 +3,7 @@
 //
 // Kräver miljövariabel:
 //   RESEND_API_KEY — hämtas från resend.com
-//   RESEND_FROM    — valfri, default: "Arvo Flow <analys@arvo-flow.se>"
+//   RESEND_FROM    — valfri, default: "Arvo Flow <analys@arvoflow.se>"
 
 import { Resend } from 'resend';
 import { createRequire } from 'module';
@@ -11,7 +11,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const PDFDocument = require('pdfkit');
 
-const FROM = process.env.RESEND_FROM ?? 'Arvo Flow <analys@arvo-flow.se>';
+const FROM = process.env.RESEND_FROM ?? 'Arvo Flow <analys@arvoflow.se>';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
 const T = {
@@ -289,7 +289,7 @@ function generatePdf(result) {
       .text('Arvo', FTX + FMARK + 5, FTY + 1, { continued: true });
     doc.font('Times-Italic').fillColor(T.mutedSoft).text(' Flow');
     doc.fontSize(8).font('Helvetica').fillColor(T.mutedSoft)
-      .text('arvo-flow.se  ·  20 % av identifierad besparing. Inga fasta avgifter.', PAD, FY + 24, { width: W, align: 'center' });
+      .text('arvoflow.se  ·  20 % av identifierad besparing. Inga fasta avgifter.', PAD, FY + 24, { width: W, align: 'center' });
 
     doc.end();
   });

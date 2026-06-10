@@ -15,7 +15,7 @@ import { generateBriefingInsights } from '../../lib/briefing-generator.js';
 import { Resend }                   from 'resend';
 import crypto                       from 'crypto';
 
-const FROM     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
+const FROM     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
 const BASE_URL = process.env.ARVO_BASE_URL    ?? 'https://arvoflow.se';
 
 export const config = { maxDuration: 60 };

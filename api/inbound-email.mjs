@@ -31,7 +31,7 @@ export const config = { maxDuration: 60 };
 let _resend = null;
 const getResend = () =>
   process.env.RESEND_API_KEY ? (_resend ??= new Resend(process.env.RESEND_API_KEY)) : null;
-const FROM     = process.env.RESEND_FROM ?? 'Arvo Intelligence <analys@arvo-flow.se>';
+const FROM     = process.env.RESEND_FROM ?? 'Arvo Intelligence <analys@arvoflow.se>';
 const BASE_URL = process.env.ARVO_BASE_URL ?? 'https://arvoflow.se';
 
 const MAX_PDFS_PER_MAIL  = 2;

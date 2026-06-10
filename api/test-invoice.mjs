@@ -30,8 +30,8 @@ import { validateCategory } from '../lib/category-validator.js';
 import { validateSeatPrice, getBenchmarkBasis, getSupplierPriceIntel } from '../lib/supplier-price-intel.js';
 import { detectPriceAlert, getMarketIntelligence } from '../lib/price-alert.js';
 
-const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
-const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
+const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
+const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvoflow.se';
 
 // P2.3 — Versionmetadata per analys
 const PIPELINE_VERSION = '4.0';

@@ -25,7 +25,7 @@ import { computeImpactKr, parseCheckPrice } from '../../lib/price-impact.js';
 
 export const config = { maxDuration: 60 };
 
-const FROM     = process.env.RESEND_FROM    ?? 'Arvo Flow <analys@arvo-flow.se>';
+const FROM     = process.env.RESEND_FROM    ?? 'Arvo Flow <analys@arvoflow.se>';
 const BASE_URL = process.env.ARVO_BASE_URL  ?? 'https://arvoflow.se';
 
 function send(res, status, body) {

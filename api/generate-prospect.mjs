@@ -17,8 +17,8 @@ import { swMonthYear, monthsAgo, MX_LABELS } from '../lib/format.js';
 export const config = { maxDuration: 20 };
 
 const resend   = new Resend(process.env.RESEND_API_KEY);
-const FROM     = process.env.RESEND_FROM         ?? 'Arvo Intelligence <analys@arvo-flow.se>';
-const INTERNAL = process.env.ARVO_INTERNAL_EMAIL ?? 'hej@arvo-flow.se';
+const FROM     = process.env.RESEND_FROM         ?? 'Arvo Intelligence <analys@arvoflow.se>';
+const INTERNAL = process.env.ARVO_INTERNAL_EMAIL ?? 'hej@arvoflow.se';
 const BASE_URL = process.env.ARVO_BASE_URL ?? 'https://arvoflow.se';
 
 

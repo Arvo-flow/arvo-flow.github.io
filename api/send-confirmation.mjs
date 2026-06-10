@@ -6,7 +6,7 @@
 
 import { Resend } from 'resend';
 
-const FROM = process.env.RESEND_FROM ?? 'Arvo Flow <analys@arvo-flow.se>';
+const FROM = process.env.RESEND_FROM ?? 'Arvo Flow <analys@arvoflow.se>';
 
 const T = {
   bg:        '#F1F6F3',

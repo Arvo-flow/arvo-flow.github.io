@@ -10,8 +10,8 @@ import { getDb } from '../lib/db.js';
 export const config = { maxDuration: 15 };
 
 const resend   = new Resend(process.env.RESEND_API_KEY);
-const FROM     = process.env.RESEND_FROM         ?? 'Arvo Intelligence <analys@arvo-flow.se>';
-const INTERNAL = process.env.ARVO_INTERNAL_EMAIL ?? 'hej@arvo-flow.se';
+const FROM     = process.env.RESEND_FROM         ?? 'Arvo Intelligence <analys@arvoflow.se>';
+const INTERNAL = process.env.ARVO_INTERNAL_EMAIL ?? 'hej@arvoflow.se';
 
 function send(res, status, body) {
   res.statusCode = status;

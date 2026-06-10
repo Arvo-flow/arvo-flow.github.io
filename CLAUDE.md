@@ -428,7 +428,7 @@ DATABASE_URL          — Neon Postgres (alias: POSTGRES_URL, POSTGRES_PRISMA_UR
 KV_REST_API_URL       — Vercel KV
 KV_REST_API_TOKEN     — Vercel KV
 RESEND_API_KEY        — e-postutskick
-RESEND_FROM           — avsändaradress (default: analys@arvo-flow.se)
+RESEND_FROM           — avsändaradress (default: analys@arvoflow.se)
 ARVO_ADMIN_SECRET     — admin-API-skydd (generate-prospect etc.)
 CRON_SECRET           — autentisering för GH Actions → Vercel cron-anrop
 INBOUND_WEBHOOK_SECRET — auth för Resend inbound-webhook → api/inbound-email

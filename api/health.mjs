@@ -30,7 +30,7 @@ export default function handler(req, res) {
     'CRON_SECRET',         // GH Actions → Vercel cron-autentisering
     'ARVO_BASE_URL',       // Mail-länk-bas (default: arvoflow.se)
     'ARVO_BYPASS_SECRET',  // Bypass rate limit + gate utan IP-whitelist
-    'RESEND_FROM',         // Avsändaradress (default: analys@arvo-flow.se)
+    'RESEND_FROM',         // Avsändaradress (default: analys@arvoflow.se)
   ];
 
   const missing = CRITICAL.filter(k => !process.env[k]);

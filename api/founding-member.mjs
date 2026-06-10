@@ -5,13 +5,13 @@
 //
 // Miljövariabler:
 //   RESEND_API_KEY        — hämtas från resend.com (samma nyckel som send-analysis.mjs)
-//   RESEND_FROM           — valfri, default: "Arvo Flow <hej@arvo-flow.se>"
-//   FOUNDING_NOTIFY_EMAIL — valfri, default: "hej@arvo-flow.se"
+//   RESEND_FROM           — valfri, default: "Arvo Flow <hej@arvoflow.se>"
+//   FOUNDING_NOTIFY_EMAIL — valfri, default: "hej@arvoflow.se"
 
 import { Resend } from 'resend';
 
-const FROM   = process.env.RESEND_FROM            ?? 'Arvo Flow <hej@arvo-flow.se>';
-const NOTIFY = process.env.FOUNDING_NOTIFY_EMAIL  ?? 'hej@arvo-flow.se';
+const FROM   = process.env.RESEND_FROM            ?? 'Arvo Flow <hej@arvoflow.se>';
+const NOTIFY = process.env.FOUNDING_NOTIFY_EMAIL  ?? 'hej@arvoflow.se';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────────
 const T = {

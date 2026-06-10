@@ -9,8 +9,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 
-const FROM_ALERT = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvo-flow.se>';
-const ALERT_TO   = process.env.ARVO_ALERT_EMAIL ?? 'team@arvo-flow.se';
+const FROM_ALERT = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
+const ALERT_TO   = process.env.ARVO_ALERT_EMAIL ?? 'team@arvoflow.se';
 
 function send(res, status, body) {
   res.statusCode = status;

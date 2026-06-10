@@ -9,8 +9,8 @@
 import { getDb } from '../lib/db.js';
 import { Resend } from 'resend';
 
-const FROM     = process.env.RESEND_FROM       ?? 'Arvo Flow <analys@arvo-flow.se>';
-const ALERT_TO = process.env.ARVO_ALERT_EMAIL  ?? 'team@arvo-flow.se';
+const FROM     = process.env.RESEND_FROM       ?? 'Arvo Flow <analys@arvoflow.se>';
+const ALERT_TO = process.env.ARVO_ALERT_EMAIL  ?? 'team@arvoflow.se';
 
 export const config = { maxDuration: 15 };
 
