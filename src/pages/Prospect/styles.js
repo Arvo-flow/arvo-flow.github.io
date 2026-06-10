@@ -51,6 +51,10 @@ export const HeaderBar = styled.div`
   position: relative;
   overflow: hidden;
 
+  @media (min-width: 768px) {
+    padding: calc(130px + env(safe-area-inset-top, 0px)) 28px 150px;
+  }
+
   /* Tunn brand-keyline i absoluta toppen */
   &::after {
     content: '';
@@ -61,15 +65,15 @@ export const HeaderBar = styled.div`
     opacity: 0.85;
   }
 
-  /* Aurora — två lager ljus i mörkret, ger djup istället för platt svart */
+  /* Aurora — px-bundna ljuskällor (procent-ellipser bandar på breda skärmar) */
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(ellipse 75% 55% at 50% 38%, rgba(43,196,172,0.16) 0%, transparent 62%),
-      radial-gradient(ellipse 55% 40% at 18% 88%, rgba(27,110,102,0.18) 0%, transparent 70%),
-      radial-gradient(ellipse 45% 35% at 85% 12%, rgba(93,214,202,0.07) 0%, transparent 70%);
+      radial-gradient(ellipse 680px 400px at 50% 42%, rgba(43,196,172,0.15) 0%, transparent 62%),
+      radial-gradient(ellipse 520px 300px at 30% 96%, rgba(27,110,102,0.14) 0%, transparent 70%),
+      radial-gradient(ellipse 440px 260px at 72% 4%, rgba(93,214,202,0.06) 0%, transparent 70%);
     pointer-events: none;
   }
 `;
@@ -149,6 +153,10 @@ export const SignalSection = styled.div`
   border-top: 1px solid rgba(255,255,255,0.07);
   padding: 84px 28px 76px;
   text-align: center;
+
+  @media (min-width: 768px) {
+    padding: 120px 28px 110px;
+  }
 `;
 
 export const SectionEyebrow = styled.div`
@@ -177,11 +185,11 @@ export const SignalBullet = styled.div`
 
 export const SignalText = styled.p`
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(24px, 6.4vw, 31px);
+  font-size: clamp(24px, 6.4vw, 33px);
   font-weight: 500;
   color: #F2F8F6;
   line-height: 1.46;
-  max-width: 460px;
+  max-width: 560px;
   margin: 0 auto;
   letter-spacing: -0.012em;
 `;
@@ -228,6 +236,10 @@ export const FinancialSection = styled.div`
   text-align: center;
   position: relative;
   overflow: hidden;
+
+  @media (min-width: 768px) {
+    padding: 130px 28px 126px;
+  }
 
   &::before {
     content: '';
@@ -316,6 +328,10 @@ export const BigNumberNote = styled.div`
 export const ContentArea = styled.div`
   background: #EDF3F0;
   padding: 56px 20px 48px;
+
+  @media (min-width: 768px) {
+    padding: 88px 28px 76px;
+  }
 `;
 
 export const BreakdownEyebrow = styled.div`
@@ -330,11 +346,13 @@ export const BreakdownEyebrow = styled.div`
   text-align: center;
 `;
 
+/* Dossier-kolumn — ett memo är aldrig bredare än läsbart, oavsett skärm */
 export const EstimateCard = styled.div`
   background: #ffffff;
   border-radius: 24px;
   padding: 28px 24px 0;
-  margin-bottom: 16px;
+  max-width: 580px;
+  margin: 0 auto 16px;
   overflow: hidden;
   box-shadow: 0 2px 24px rgba(11,22,18,0.07);
 `;
@@ -430,6 +448,10 @@ export const CtaSection = styled.div`
   border-top: 1px solid rgba(255,255,255,0.07);
   padding: 72px 24px 60px;
   text-align: center;
+
+  @media (min-width: 768px) {
+    padding: 110px 24px 96px;
+  }
 `;
 
 export const MethodologyNote = styled.p`
