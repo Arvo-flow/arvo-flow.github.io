@@ -165,6 +165,14 @@ export default function Admin() {
     }
   }
 
+  const [prisbok, setPrisbok] = useState(null);
+  const loadPrisbok = useCallback(() => {
+    fetch('/api/admin/benchmark-stats', { headers: { 'x-admin-token': adminToken } })
+      .then(r => r.json())
+      .then(setPrisbok)
+      .catch(() => {});
+  }, [adminToken]);
+
   const loadProspects = useCallback(() => {
     fetch('/api/admin/prospects', { headers: { 'x-admin-token': adminToken } })
       .then(r => r.json())
@@ -316,7 +324,7 @@ export default function Admin() {
 
       {/* ── Tabs ───────────────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 16 }}>
-        {[['queue','Review Queue'], ['waitlist','Waitlist'], ['feedback','Feedback'], ['corrections','Korrektioner 🧠'], ['connections','Anslutningar 🔗'], ['outbound','Outbound 🚀']].map(([id, label]) => (
+        {[['queue','Review Queue'], ['waitlist','Waitlist'], ['feedback','Feedback'], ['corrections','Korrektioner 🧠'], ['connections','Anslutningar 🔗'], ['outbound','Outbound 🚀'], ['prisbok','Prisboken 📒']].map(([id, label]) => (
           <button key={id} onClick={() => setActiveTab(id)} style={{
             padding: '7px 16px', borderRadius: 100, border: 'none', cursor: 'pointer',
             fontSize: 12.5, fontWeight: 600,
@@ -665,6 +673,38 @@ export default function Admin() {
               </TRow>
             ))}
           </Table>
+        </Section>
+      )}
+
+      {activeTab === 'prisbok' && (
+        <Section>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <STitle style={{ margin: 0 }}>Prisbokens cellteckning</STitle>
+            <button onClick={loadPrisbok} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 100, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.7)' }}>Uppdatera</button>
+          </div>
+          {!prisbok ? (
+            <EmptyRow>Klicka Uppdatera för att läsa cellteckningen.</EmptyRow>
+          ) : (
+            <>
+              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,.55)', margin: '0 0 14px' }}>
+                {prisbok.total_datapoints ?? 0} datapunkter totalt · {prisbok.segments_with_real_data ?? 0} celler bär (≥{prisbok.min_points_threshold}) ·
+                celler nära tröskeln fylls medvetet — välj nästa outbound-lista på SNI-koder som tippar dem över.
+              </p>
+              <Table>
+                <THead $cols="1.2fr 1fr .8fr .5fr .8fr"><span>Kategori</span><span>Bransch</span><span>Storlek</span><span>n</span><span>Status</span></THead>
+                {(prisbok.segments ?? []).length === 0 && <EmptyRow>Prisboken är tom — varje analyserad faktura lägger en datapunkt.</EmptyRow>}
+                {(prisbok.segments ?? []).map((c, i) => (
+                  <TRow key={i} $cols="1.2fr 1fr .8fr .5fr .8fr">
+                    <span style={{ fontWeight: 600 }}>{c.category}</span>
+                    <span style={{ color: 'rgba(255,255,255,.6)' }}>{c.industry}</span>
+                    <span style={{ color: 'rgba(255,255,255,.5)' }}>{c.size_bucket}</span>
+                    <span style={{ fontWeight: 700 }}>{c.n}</span>
+                    <Tag $c={c.status === 'BÄR' ? 'rgba(93,214,202,.2)' : c.status === 'LIVE-LIGHT' ? 'rgba(93,214,202,.12)' : c.status === 'NÄRA' ? 'rgba(245,158,11,.15)' : 'rgba(255,255,255,.08)'}>{c.status}</Tag>
+                  </TRow>
+                ))}
+              </Table>
+            </>
+          )}
         </Section>
       )}
 

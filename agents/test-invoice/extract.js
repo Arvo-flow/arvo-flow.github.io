@@ -8,6 +8,7 @@
 // Output: tool_use + tool_choice för deterministisk strukturerad output.
 
 import Anthropic from '@anthropic-ai/sdk';
+import { judgeLineArithmetic } from '../../lib/extraction-integrity.js';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
@@ -912,6 +913,25 @@ export function routeExtraction(extracted) {
         return {
           route:  'review_queue',
           reason: `Ring1: radsumma ${lineSum.toLocaleString('sv-SE')} kr ≠ fakturatotal ${extracted.invoiceTotal.toLocaleString('sv-SE')} kr (avvikelse ${diff.toLocaleString('sv-SE')} kr)`,
+        };
+      }
+    }
+  }
+
+  // ── Ring 2 (Balanskravet B2): per-rad-aritmetik — antal × à-pris = radbelopp ──
+  // SKUGG-LÄGE tills falsklarmsfrekvensen är uppmätt i produktion:
+  // utfall loggas alltid; stoppar enbart när BALANSKRAV_ENFORCE=1.
+  {
+    const b2 = judgeLineArithmetic(extracted);
+    if (!b2.balanced) {
+      const detail = b2.violations
+        .map(v => `"${(v.line ?? '').slice(0, 48)}" förväntat ${Math.round(v.expected)} kr, fick ${v.actual} kr (${v.reason})`)
+        .join(' · ');
+      console.warn(`[balanskrav] B2 ${process.env.BALANSKRAV_ENFORCE === '1' ? 'STOPP' : 'SKUGGA'}: ${b2.violations.length}/${b2.judged} rader obalanserade — ${detail}`);
+      if (process.env.BALANSKRAV_ENFORCE === '1') {
+        return {
+          route:  'review_queue',
+          reason: `Balanskrav B2: ${b2.violations.length} rad(er) där antal × à-pris inte ger radbeloppet`,
         };
       }
     }

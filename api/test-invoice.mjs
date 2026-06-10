@@ -12,6 +12,7 @@ import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD }
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
+import { shadowReport } from '../lib/invoice-lines.js';
 import { storeDatapoint } from '../lib/benchmark.js';
 import { BRANCHINDEX, INDUSTRY_SEGMENT_MAP, bucketForSize } from '../agents/recommender/branchindex.js';
 import { getKv } from '../lib/kv.js';
@@ -1227,6 +1228,10 @@ export default async function handler(req, res) {
       }));
     }
 
+    // Rad-först-skuggan (fas 1): mäter flerkategori-verkligheten per analys.
+    // Ren instrumentering — påverkar aldrig svar eller lagring (regel 1-säkrad).
+    try { console.log(shadowReport(extracted.lineItems, categorized.category)); } catch {}
+
     // Fire-and-forget — lagrar anonymiserad datapunkt för branschindex.
     // Felet får aldrig blockera svaret till kunden.
     storeDatapoint({
@@ -1235,6 +1240,7 @@ export default async function handler(req, res) {
       annualCost: extracted.annualCost ?? extracted.amount,
       industry,
       employees: employeesNum,
+      seatCount: extracted.seatCount ?? null,
     }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
     // ── SAAS-PRODUCTIVITY LIKE-FOR-LIKE OVERRIDE ─────────────────────────────

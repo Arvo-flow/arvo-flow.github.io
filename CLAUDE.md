@@ -453,9 +453,18 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 - ✅ Ingest-arbetaren: api/inbound-email.mjs — mail-in → samma pipeline → datapunkt → svarsmail med kontorslänk (extern setup återstår: Resend MX + webhook + env, se Ingest-sektionen)
 - ✅ Identitet light: analyser e-postnycklas (user_email) · invoice-history med magic-token-bevis · Portfolio skickar magic ur kontorslänken
 
+**Åtgärdat (bristkorrigeringen, fas 1 — 2026-06-10):**
+- ✅ Balanskravet B2: `judgeLineArithmetic` (antal × à-pris = radbelopp, prorata ≤ fullt pris) i extraction-integrity — inkopplad i routeExtraction i SKUGG-LÄGE (loggar `[balanskrav]`), armeras med env `BALANSKRAV_ENFORCE=1` när falsklarmsfrekvensen är uppmätt. B1 (radsumma = fakturatotal) gatade redan (Ring 1).
+- ✅ Prisbokens semantik: kundytor säger "ordinarie listpris" när källan är listpris, "median av verifierade fakturor" först när livedata bär — fördelningsspråk utan fördelning är förbjudet
+- ✅ Enhetskarantän i storeDatapoint: per-användar-kategorier utanför 0,1–10× listpris-median lagras aldrig (enhetsfel förgiftar inte prisboken)
+- ✅ Rad-först fas 1 (SKUGGA): `lib/invoice-lines.js` — per-rad-klassning + kategoriaggregering loggas per analys (`[rad-först SKUGGA]`) som beslutsunderlag för fulla strypare-migreringen. Ren instrumentering, når aldrig kund.
+- ✅ Cellteckningen: benchmark-stats med status per cell (BÄR/LIVE-LIGHT/NÄRA/MOCK) + Prisboken-flik i admin — outbound-listor väljs på celler nära tröskeln
+
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI
 2. **E-post-ingest, nästa steg:** extern setup (MX/webhook/env) → personliga skuggadresser per kund → Outlook OAuth (historisk skörd) → Gmail efter CASA. Kontorets dossier-UI byggs när ingesten ger innehåll
+2b. **Rad-först fas 2–3:** när skuggloggen visat flerkategori-frekvensen — `aggregateByCategory` blir källan, specialfälten (primaryComponentMonthly m.fl.) blir härledda vyer, konsumenter flyttas en i taget med korpusdiff som skyddsnät
+2c. **Balanskravet armeras:** mät `[balanskrav]`-skuggloggen ~1 vecka → <2 % falsklarm → sätt `BALANSKRAV_ENFORCE=1` i Vercel
 3. **Dubbla alertvägar:** `api/cron/run-price-alerts.mjs` + `scripts/notify-price-changes.mjs` — extrahera gemensam lib
 4. **Theme-migrering:** 1/20 sidor konsumerar theme.js (Prospect = mall, 0 hex) — migrera per sida när den ändå rörs (regel 6)
 4b. **Arvo-kontoret:** Portfolio → e-postnycklat premiumrum i dossier-språket: fyndflöde, bevakningsstatus, kontraktskalender (`contract_timelines` saknar vy), "detta hände sedan sist". Byggs som EN enhet med e-post-ingesten — mailen är dörren, kontoret är rummet

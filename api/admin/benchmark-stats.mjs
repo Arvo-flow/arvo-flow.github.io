@@ -43,11 +43,19 @@ export default async function handler(req, res) {
   const total = segments.reduce((s, r) => s + r.n, 0);
   const readySegments = segments.filter((r) => r.n >= 10).length;
 
+  // Cellstatus driver outbound-urvalet: celler NÄRA tröskeln fylls medvetet
+  // (lead-listor väljs på SNI-koder som tippar dem över) — prisboken som styrt bygge.
+  const cells = segments.map((r) => ({
+    ...r,
+    status: r.n >= 10 ? 'BÄR' : r.n >= 5 ? 'LIVE-LIGHT' : r.n >= 3 ? 'NÄRA' : 'MOCK',
+  }));
+
   return send(res, 200, {
     total_datapoints: total,
     segments_with_real_data: readySegments,
     segments_still_on_mock: segments.length - readySegments,
     min_points_threshold: 10,
-    segments,
+    live_light_threshold: 5,
+    segments: cells,
   });
 }

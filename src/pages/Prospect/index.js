@@ -235,7 +235,11 @@ export default function Prospect() {
                   <EstimateDesc>Typisk marknadskostnad</EstimateDesc>
                   <EstimateVal>
                     {fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år
-                    <EstimateValNote>median {cat.pricePerSim.typical} kr/mån per {unit} ± 15 %</EstimateValNote>
+                    <EstimateValNote>
+                      {cat.source === 'live'
+                        ? `median av verifierade fakturor: ${cat.pricePerSim.typical} kr/mån per ${unit} ± 15 %`
+                        : `ordinarie listpris ${cat.pricePerSim.typical} kr/mån per ${unit} ± 15 %`}
+                    </EstimateValNote>
                   </EstimateVal>
                 </EstimateRow>
                 <EstimateRow>
