@@ -334,11 +334,16 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
         'business-basic': 'Business Basic', 'e3': 'E3', 'e5': 'E5',
       };
       const tierLabel = _LFL_TIER_LABELS[lfl.dominantTierKey] ?? lfl.dominantTierKey ?? 'nuvarande tier';
-      lines.push(`\n  LIKE-FOR-LIKE PRISSÄTTNING (deterministisk beräkning):`);
-      lines.push(`    Marknadspris SAMMA licenser (${tierLabel}-tier behålls): ${lfl.suggestedAnnualCost.toLocaleString('sv-SE')} kr/år`);
+      lines.push(`\n  LIKE-FOR-LIKE PRISSÄTTNING (deterministisk beräkning — ANVÄND EXAKT DESSA TAL):`);
+      for (const t of (lfl.tierLines ?? [])) {
+        const tLabel = _LFL_TIER_LABELS[t.key] ?? t.key;
+        lines.push(`    ${tLabel}: ${t.quantity} licenser × ${t.benchmarkMonthly} kr/mån (Microsoft årsavtal) = ${t.tierAnnual.toLocaleString('sv-SE')} kr/år`);
+      }
+      lines.push(`    Marknadspris SAMMA licensmix (inkl. licenser tillagda under perioden): ${lfl.suggestedAnnualCost.toLocaleString('sv-SE')} kr/år`);
       lines.push(`    → HELA besparingen kommer från PRISGAPET — kunden överprisas av sin nuvarande återförsäljare för exakt samma licenser.`);
       lines.push(`    → KRITISKT: Nämn INTE tier-byte eller nedgradering i main reasoning. Tier-alternativ är valfri extraoptimering som visas separat i gränssnittet.`);
       lines.push(`    → Reasoning ska förklara: Varför betalar kunden markant mer än marknadspriset för ${tierLabel}-licenser? Återförsäljarens marginal? Månadsavtal vs årsavtal?`);
+      lines.push(`    → FÖRBJUDET: räkna egna per-användare-, procent- eller besparingstal i reasoning. Varje siffra du nämner ska vara hämtad ordagrant från raderna ovan eller från "Aktuellt pris/seat".`);
     }
 
     // Feature overlap detection (M365 / Google Workspace only)
@@ -558,6 +563,12 @@ const LFL_TIER_RE = [
  * Each tier is benchmarked at its own price (no downgrade). Non-tier add-ons
  * (backup, security) are passed through at invoice price.
  *
+ * Pro-rata-rader (typade one_time_fee + is_prorata=true av extraktionen) är nya
+ * licenser som från nästa period debiteras fullt. De ingår i annualCost-baslinjen
+ * (aggregateLineItems projicerar quantity × unitPrice) — exkluderas de här jämförs
+ * t.ex. 73 licensers kostnad mot 65 licensers målpris, och besparingen blåses upp
+ * med de nya licensernas hela årskostnad. Source: CloudReseller CR-88412.
+ *
  * Returns null when quantity is missing on any tier line (can't compute accurately).
  *
  * @param {Array}  lineItems      - extracted lineItems (must include quantity per tier line)
@@ -568,15 +579,25 @@ const LFL_TIER_RE = [
 export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCost) {
   if (!Array.isArray(lineItems) || lineItems.length === 0) return null;
 
-  const lines = lineItems.filter(l => l.type === 'recurring_subscription');
+  const recurringLines = lineItems.filter(l => l.type === 'recurring_subscription');
+  const proRataLines   = lineItems.filter(l => l.is_prorata === true && l.type !== 'recurring_subscription');
+  const lines = [...recurringLines, ...proRataLines];
   if (lines.length === 0) return null;
 
-  const periodicTotal = lines.reduce((s, l) => s + (l.amount ?? 0), 0);
+  // Run-rate per faktureringsperiod för en rad: prorata till fullt pris
+  // (quantity × unitPrice — inte det fakturerade delperiodsbeloppet), övriga radbelopp.
+  const runRate = (l) => (l.is_prorata === true && l.quantity != null && l.unitPrice != null)
+    ? l.quantity * l.unitPrice
+    : (l.amount ?? 0);
+
+  const periodicTotal = lines.reduce((s, l) => s + runRate(l), 0);
   const billMult = periodicTotal > 0 ? annualCost / periodicTotal : 12;
 
-  const tierLines  = [];
+  // Summera quantity per tier (ordinarie + prorata på samma tier slås ihop),
+  // beräkna tierAnnual EN gång per tier — en avrundning per tier, inte per rad.
+  const tierAcc    = {};
   const addonLines = [];
-  let suggestedAnnualCost = 0;
+  let addonAnnualTotal = 0;
 
   for (const item of lines) {
     const match = LFL_TIER_RE.find(p => p.re.test(item.description ?? ''));
@@ -585,14 +606,12 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
       if (qty == null) return null;  // can't compute like-for-like without seat count
 
       const bm = tierBenchmarks[match.key];
-      const benchmarkMonthly = bm.arvoAnnual ?? bm.msrpAnnual;
-      const tierAnnual = Math.round(benchmarkMonthly * qty * 12);
-      suggestedAnnualCost += tierAnnual;
-      tierLines.push({ key: match.key, quantity: qty, benchmarkMonthly, tierAnnual });
+      tierAcc[match.key] = tierAcc[match.key] ?? { quantity: 0, benchmarkMonthly: bm.arvoAnnual ?? bm.msrpAnnual };
+      tierAcc[match.key].quantity += qty;
     } else {
-      // Add-on / unrecognised: pass through at invoice price
-      const addonAnnual = Math.round((item.amount ?? 0) * billMult);
-      suggestedAnnualCost += addonAnnual;
+      // Add-on / unrecognised: pass through at invoice run-rate
+      const addonAnnual = Math.round(runRate(item) * billMult);
+      addonAnnualTotal += addonAnnual;
       addonLines.push({
         description: item.description,
         amount:      item.amount,
@@ -603,6 +622,14 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
     }
   }
 
+  const tierLines = Object.entries(tierAcc).map(([key, t]) => ({
+    key,
+    quantity:         t.quantity,
+    benchmarkMonthly: t.benchmarkMonthly,
+    tierAnnual:       Math.round(t.benchmarkMonthly * t.quantity * 12),
+  }));
+
+  const suggestedAnnualCost = tierLines.reduce((s, t) => s + t.tierAnnual, 0) + addonAnnualTotal;
   if (suggestedAnnualCost === 0) return null;
 
   // Dominant tier = the tier with the highest total invoice amount (for supplier label).

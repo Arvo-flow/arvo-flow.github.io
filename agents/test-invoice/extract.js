@@ -854,12 +854,15 @@ export function aggregateLineItems(rawInput) {
     connectionSpeedMbit:       raw.connection_speed_mbit != null ? Number(raw.connection_speed_mbit) : null,
     licenseType:               raw.license_type ?? null,
     billingCycleType:          raw.billing_cycle_type ?? null,
-    // Compute price per seat in code — more reliable than asking AI to do the arithmetic
+    // Compute price per seat in code — more reliable than asking AI to do the arithmetic.
+    // Täljaren är projected (run-rate inkl. prorata-licenser till fullt pris), eftersom
+    // seatCount räknar SAMMA licensmängd. recurringAmount exkluderar prorata-rader →
+    // 13 725 kr / 73 licenser = "188 kr/anv" när sanningen är 15 355 / 73 = 210 kr.
     pricePerSeatMonthly: (() => {
       const periodMonths = { monthly: 1, quarterly: 3, annual: 12, one_time: 1, unknown: 1 }[billingPeriod] ?? 1;
       const seats = raw.seatCount > 0 ? raw.seatCount : null;
-      return (seats && periodMonths > 0 && recurringAmount > 0)
-        ? Math.round(recurringAmount / seats / periodMonths * 100) / 100
+      return (seats && periodMonths > 0 && projected > 0)
+        ? Math.round(projected / seats / periodMonths * 100) / 100
         : null;
     })(),
     saasProductFamily:    raw.saas_product_family ?? null,

@@ -38,15 +38,24 @@
     }
   ],
   "expected": {
+    "_priceBasis": "Microsoft sv-se årsavtal verifierat 2026-05-27: Premium 210,29 · Basic 57,40 kr/anv/mån",
     "dominantTierKey": "business-premium",
-    "suggestedAnnualCost": 152388,
-    "savingPerYear": 32292,
-    "arvoFee": 6458,
-    "netSaving": 25834,
+    "suggestedAnnualCost": 152603,
+    "savingPerYear": 32077,
+    "arvoFee": 6415,
+    "netSaving": 25662,
     "addonPassthroughAnnual": 30780,
     "tierBreakdown": {
-      "business-premium": { "quantity": 45, "benchmarkMonthly": 210, "tierAnnual": 113400 },
-      "business-basic":   { "quantity": 12, "benchmarkMonthly": 57,  "tierAnnual": 8208  }
+      "business-premium": {
+        "quantity": 45,
+        "benchmarkMonthly": 210.29,
+        "tierAnnual": 113557
+      },
+      "business-basic": {
+        "quantity": 12,
+        "benchmarkMonthly": 57.4,
+        "tierAnnual": 8266
+      }
     }
   }
 }
