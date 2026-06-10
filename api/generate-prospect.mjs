@@ -39,17 +39,6 @@ function fmt(n) {
   return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 }
 
-function calcFrozenSaving({ employees, mxPlatform }) {
-  const emp    = Math.max(1, employees);
-  const mobile = emp * 120 * 12;
-  const sw     = mxPlatform === 'microsoft365' ? emp * 60 * 12 : 0;
-  const total  = mobile + sw;
-  return {
-    low:  Math.round(total * 0.80 / 1000) * 1000,
-    high: Math.round(total * 1.20 / 1000) * 1000,
-  };
-}
-
 function swMonthYear(dateStr) {
   if (!dateStr) return null;
   const [y, m] = dateStr.split('-');
@@ -100,7 +89,11 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
 
   if (useFrozen) {
     const platformLabel = MX_LABELS[mxPlatform];
-    const saving        = calcFrozenSaving({ employees, mxPlatform });
+    // Premien kommer ur estimatorn (prisboken/verifierade listpriser) —
+    // aldrig ur en heuristik. Saknas estimat visas ingen siffra alls.
+    const saving = estimates?.hasEstimates
+      ? { low: estimates.totalSavingLow, high: estimates.totalSavingHigh, central: estimates.totalSavingCentral }
+      : null;
     const mxSinceLabel  = swMonthYear(mxSince);
     const mxMonths      = mxSince ? monthsAgo(mxSince) : null;
     const domRegLabel   = swMonthYear(domainRegistered);
@@ -139,10 +132,10 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
         <span class="intel-desc">Domän registrerad</span>
         <span class="intel-val">${domRegLabel}</span>
       </div>` : ''}
-      <div class="intel-row">
-        <span class="intel-desc">Typisk merkostnad — bolag med er profil</span>
-        <span class="intel-val green">${fmt(saving.low)}–${fmt(saving.high)} kr/år</span>
-      </div>
+      ${saving ? `<div class="intel-row">
+        <span class="intel-desc">Sannolik premie — bolag med er profil</span>
+        <span class="intel-val green">≈ ${fmt(saving.central)} kr/år (${fmt(saving.low)}–${fmt(saving.high)})</span>
+      </div>` : ''}
       <div class="saving-bar">Exakt siffra levereras när ni laddar upp er faktura — tar 2 minuter</div>
     </div>
 
@@ -234,8 +227,9 @@ export default async function handler(req, res) {
 
   const sizeBucket = bucketForSize(employees);
 
-  // Generate estimates — pass mxPlatform so M365 category is included when confirmed via DNS
-  const estimates = estimateForProfile({ segment: profile.segment, sizeBucket, employees, mxPlatform });
+  // Generate estimates — pass mxPlatform so M365 category is included when confirmed via DNS.
+  // industry → lib/benchmark.js läskedja: prisbokens livedata används när den bär.
+  const estimates = await estimateForProfile({ segment: profile.segment, sizeBucket, employees, mxPlatform, industry: profile.label });
 
   // Attach frozen intelligence metadata if provided
   if (foundedYear)      estimates.foundedYear      = parseInt(foundedYear, 10);
