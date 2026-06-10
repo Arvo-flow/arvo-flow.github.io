@@ -29,6 +29,39 @@ const theme = {
     warningSoft: '#F3E5C7',
   },
 
+  // ── DOSSIER — det mörka premiumspråket (mall: src/pages/Prospect) ───────────
+  // Används för intelligence-ytor: prospect, briefing, kontoret, analysresultat.
+  // Regel 6 i CLAUDE.md: nya/ändrade styles konsumerar dessa tokens — aldrig nya hex.
+  dossier: {
+    bg: '#050B09',                    // sidbakgrund — nästan svart, grönstämd
+    bgRaised: '#0B1612',              // band/kort på mörk botten (premie-bandet)
+    surface: '#EDF3F0',               // ljus kontrastsektion (kostnadsanalysen)
+    card: '#FFFFFF',                  // kort i ljus sektion
+
+    teal: '#2BC4AC',                  // primär accent på mörkt (eyebrows, tal)
+    tealBright: '#5DD6CA',            // glödpunkter, markörer, brand-mark
+    tealDeep: '#178A7B',              // gradientslut
+
+    // Text på mörk botten — kontrastkalibrerad (aldrig under 0.38 alpha)
+    inkOnDark: '#F2F8F6',
+    mutedOnDark: 'rgba(255,255,255,0.55)',
+    faintOnDark: 'rgba(255,255,255,0.38)',
+    hairlineOnDark: 'rgba(255,255,255,0.10)',
+
+    // Signaturer
+    metallicText: 'linear-gradient(180deg, #FFFFFF 24%, #D9EFEA 58%, #9FD9CE 100%)',      // bolagsnamn à la keynote
+    numberGradient: 'linear-gradient(135deg, #7BEADB 0%, #2BC4AC 52%, #179580 100%)',      // stora tal
+    keyline: 'linear-gradient(90deg, transparent 0%, #2BC4AC 35%, #5DD6CA 50%, #2BC4AC 65%, transparent 100%)',
+    aurora: `radial-gradient(ellipse 680px 400px at 50% 42%, rgba(43,196,172,0.15) 0%, transparent 62%),
+      radial-gradient(ellipse 520px 300px at 30% 96%, rgba(27,110,102,0.14) 0%, transparent 70%),
+      radial-gradient(ellipse 440px 260px at 72% 4%, rgba(93,214,202,0.06) 0%, transparent 70%)`,
+    glow: '0 0 0 4px rgba(93,214,202,0.18), 0 0 18px rgba(93,214,202,0.55)',               // markörer
+    ctaShadow: '0 18px 56px rgba(29,176,154,0.38), inset 0 1px 0 rgba(255,255,255,0.22)',
+    ctaGradient: 'linear-gradient(140deg, #4ECDC4 0%, #1DB09A 52%, #178A7B 100%)',
+
+    column: '580px',                  // dossier-kolumnen — ett memo är aldrig bredare än läsbart
+  },
+
   font: {
     display: "'Playfair Display', Georgia, 'Times New Roman', serif",
     sans: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",

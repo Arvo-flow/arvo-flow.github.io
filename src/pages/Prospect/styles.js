@@ -1,4 +1,5 @@
 import styled, { keyframes, css } from 'styled-components';
+import theme from '../../theme';
 
 const rise = keyframes`
   from { opacity: 0; transform: translateY(28px); }
@@ -20,13 +21,13 @@ const appear = (delay = 0) => css`
   animation: ${rise} 0.75s ${delay}s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 `;
 
-const MONO = `'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace`;
+const MONO = theme.font.mono;
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export const PageWrap = styled.div`
   min-height: 100vh;
-  background: #050B09;
+  background: ${theme.dossier.bg};
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
 `;
@@ -45,7 +46,7 @@ export const TopFade = styled.div`
 // ── Hero ──────────────────────────────────────────────────────────────────────
 
 export const HeaderBar = styled.div`
-  background: #050B09;
+  background: ${theme.dossier.bg};
   padding: calc(76px + env(safe-area-inset-top, 0px)) 28px 96px;
   text-align: center;
   position: relative;
@@ -61,7 +62,7 @@ export const HeaderBar = styled.div`
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent 0%, #2BC4AC 35%, #5DD6CA 50%, #2BC4AC 65%, transparent 100%);
+    background: ${theme.dossier.keyline};
     opacity: 0.85;
   }
 
@@ -70,10 +71,7 @@ export const HeaderBar = styled.div`
     content: '';
     position: absolute;
     inset: 0;
-    background:
-      radial-gradient(ellipse 680px 400px at 50% 42%, rgba(43,196,172,0.15) 0%, transparent 62%),
-      radial-gradient(ellipse 520px 300px at 30% 96%, rgba(27,110,102,0.14) 0%, transparent 70%),
-      radial-gradient(ellipse 440px 260px at 72% 4%, rgba(93,214,202,0.06) 0%, transparent 70%);
+    background: ${theme.dossier.aurora};
     pointer-events: none;
   }
 `;
@@ -88,7 +86,7 @@ export const BrandMark = styled.div`
   font-weight: 600;
   letter-spacing: 0.42em;
   text-indent: 0.42em; /* kompenserar sista bokstavens spacing vid centrering */
-  color: #5DD6CA;
+  color: ${theme.dossier.tealBright};
   margin-bottom: 18px;
   ${appear(0)}
 `;
@@ -114,8 +112,8 @@ export const CompanyName = styled.h1`
   letter-spacing: -0.03em;
 
   /* Apple-metallisk text: vit som tonar mot teal-is i botten */
-  color: #EAF6F3;
-  background: linear-gradient(180deg, #FFFFFF 24%, #D9EFEA 58%, #9FD9CE 100%);
+  color: ${theme.dossier.inkOnDark}; /* fallback när background-clip saknas */
+  background: ${theme.dossier.metallicText};
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -149,7 +147,7 @@ export const HeaderDate = styled.div`
 // ── Signal / finding section ──────────────────────────────────────────────────
 
 export const SignalSection = styled.div`
-  background: #050B09;
+  background: ${theme.dossier.bg};
   border-top: 1px solid rgba(255,255,255,0.07);
   padding: 84px 28px 76px;
   text-align: center;
@@ -166,7 +164,7 @@ export const SectionEyebrow = styled.div`
   letter-spacing: 0.30em;
   text-indent: 0.30em;
   text-transform: uppercase;
-  color: #2BC4AC;
+  color: ${theme.dossier.teal};
   margin-bottom: 40px;
 `;
 
@@ -187,7 +185,7 @@ export const SignalText = styled.p`
   font-family: 'Playfair Display', Georgia, serif;
   font-size: clamp(24px, 6.4vw, 33px);
   font-weight: 500;
-  color: #F2F8F6;
+  color: ${theme.dossier.inkOnDark};
   line-height: 1.46;
   max-width: 560px;
   margin: 0 auto;
@@ -223,14 +221,14 @@ export const DataVal = styled.span`
   font-family: ${MONO};
   font-size: 12.5px;
   font-weight: 500;
-  color: ${({ $highlight }) => $highlight ? '#5DD6CA' : 'rgba(255,255,255,0.88)'};
+  color: ${({ $highlight }) => $highlight ? theme.dossier.tealBright : 'rgba(255,255,255,0.88)'};
   text-align: right;
 `;
 
 // ── Financial section ─────────────────────────────────────────────────────────
 
 export const FinancialSection = styled.div`
-  background: #050B09;
+  background: ${theme.dossier.bg};
   border-top: 1px solid rgba(255,255,255,0.07);
   padding: 96px 28px 92px;
   text-align: center;
@@ -259,8 +257,8 @@ export const BigNumber = styled.div`
   letter-spacing: -0.05em;
   line-height: 1;
 
-  color: #2BC4AC;
-  background: linear-gradient(135deg, #7BEADB 0%, #2BC4AC 52%, #179580 100%);
+  color: ${theme.dossier.teal};
+  background: ${theme.dossier.numberGradient};
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -295,8 +293,8 @@ export const RangeMarker = styled.div`
   transform: translate(-50%, -50%);
   width: 11px; height: 11px;
   border-radius: 50%;
-  background: #5DD6CA;
-  box-shadow: 0 0 0 4px rgba(93,214,202,0.18), 0 0 18px rgba(93,214,202,0.55);
+  background: ${theme.dossier.tealBright};
+  box-shadow: ${theme.dossier.glow};
 `;
 
 export const RangeLabels = styled.div`
@@ -326,7 +324,7 @@ export const BigNumberNote = styled.div`
 // ── Estimate cards (light section) ────────────────────────────────────────────
 
 export const ContentArea = styled.div`
-  background: #EDF3F0;
+  background: ${theme.dossier.surface};
   padding: 56px 20px 48px;
 
   @media (min-width: 768px) {
@@ -348,10 +346,10 @@ export const BreakdownEyebrow = styled.div`
 
 /* Dossier-kolumn — ett memo är aldrig bredare än läsbart, oavsett skärm */
 export const EstimateCard = styled.div`
-  background: #ffffff;
+  background: ${theme.dossier.card};
   border-radius: 24px;
   padding: 28px 24px 0;
-  max-width: 580px;
+  max-width: ${theme.dossier.column};
   margin: 0 auto 16px;
   overflow: hidden;
   box-shadow: 0 2px 24px rgba(11,22,18,0.07);
@@ -363,7 +361,7 @@ export const CategoryLabel = styled.div`
   font-weight: 600;
   letter-spacing: 0.20em;
   text-transform: uppercase;
-  color: #1B7A6E;
+  color: ${theme.color.brand};
   margin-bottom: 10px;
 `;
 
@@ -387,7 +385,7 @@ export const EstimateVal = styled.span`
   font-family: ${MONO};
   font-size: 13px;
   font-weight: 600;
-  color: ${({ $highlight }) => $highlight ? '#1B7A6E' : 'rgba(14,26,23,0.84)'};
+  color: ${({ $highlight }) => $highlight ? theme.color.brand : 'rgba(14,26,23,0.84)'};
   text-align: right;
 `;
 
@@ -402,7 +400,7 @@ export const EstimateValNote = styled.span`
 
 /* Premie-bandet bleedar till kortets kanter — en avslutning, inte en låda i lådan */
 export const SavingBand = styled.div`
-  background: #0B1612;
+  background: ${theme.dossier.bgRaised};
   margin: 18px -24px 0;
   padding: 18px 24px;
   display: flex;
@@ -423,7 +421,7 @@ export const SavingCentral = styled.div`
   font-family: ${MONO};
   font-size: 16px;
   font-weight: 600;
-  color: #5DD6CA;
+  color: ${theme.dossier.tealBright};
   letter-spacing: -0.01em;
 `;
 
@@ -444,7 +442,7 @@ export const SourceNote = styled.div`
 // ── CTA ───────────────────────────────────────────────────────────────────────
 
 export const CtaSection = styled.div`
-  background: #050B09;
+  background: ${theme.dossier.bg};
   border-top: 1px solid rgba(255,255,255,0.07);
   padding: 72px 24px 60px;
   text-align: center;
@@ -470,7 +468,7 @@ export const PrimaryCta = styled.a`
   display: block;
   max-width: 400px;
   margin-inline: auto;
-  background: linear-gradient(140deg, #4ECDC4 0%, #1DB09A 52%, #178A7B 100%);
+  background: ${theme.dossier.ctaGradient};
   color: #fff;
   font-size: 17px;
   font-weight: 700;
@@ -480,7 +478,7 @@ export const PrimaryCta = styled.a`
   border-radius: 100px;
   text-align: center;
   text-decoration: none;
-  box-shadow: 0 18px 56px rgba(29,176,154,0.38), inset 0 1px 0 rgba(255,255,255,0.22);
+  box-shadow: ${theme.dossier.ctaShadow};
   box-sizing: border-box;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 
@@ -532,7 +530,7 @@ export const PageFooter = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #050B09;
+  background: ${theme.dossier.bg};
 `;
 
 export const FooterDomain = styled.span`
@@ -554,7 +552,7 @@ export const FooterBrand = styled.span`
 
 export const LoadingWrap = styled.div`
   min-height: 100vh;
-  background: #050B09;
+  background: ${theme.dossier.bg};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -567,7 +565,7 @@ export const Dots = styled.div`display: flex; gap: 8px;`;
 export const Dot = styled.div`
   width: 8px; height: 8px;
   border-radius: 50%;
-  background: #1DB09A;
+  background: ${theme.dossier.teal};
   animation: ${pulse} 1.2s ${({ $i }) => ($i ?? 0) * 0.2}s ease-in-out infinite;
 `;
 
@@ -578,7 +576,7 @@ export const LoadingText = styled.div`
 
 export const ErrorWrap = styled.div`
   min-height: 100vh;
-  background: #050B09;
+  background: ${theme.dossier.bg};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -612,7 +610,7 @@ export const ErrorBody = styled.p`
 export const ErrorCta = styled.a`
   font-size: 15px;
   font-weight: 600;
-  color: #1DB09A;
+  color: ${theme.dossier.teal};
   text-decoration: none;
   border-bottom: 1px solid rgba(29,176,154,0.3);
   padding-bottom: 2px;

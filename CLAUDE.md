@@ -419,12 +419,14 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 - ✅ `src/App.js` (2 100 rader död kod) raderad
 - ✅ Löftesbuggen i Gmail/Outlook-callbacks (utlovad briefing utan ingest) — ärlig copy med testa-faktura-CTA
 - ✅ Prospect-sidan: dossier-designspråk, desktop-kolumn, spektrum-bar — MALLEN för premiumytor
+- ✅ Designspråket LÅST I KOD: `theme.dossier` i `src/theme.js` (palett, metallic-text, aurora, keyline, glöd, CTA, dossier-kolumn) — Prospect/styles.js konsumerar 100 % tokens (0 hårdkodade hex), mall för all migrering
 
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet:** fingerprint är primärnyckel för historik — magic link-kontot ska bära portföljen (krävs för plattformsvisionen)
 2. **E-post-ingest:** inkommande faktura-PDF → pipeline → datapunkt → mailsvar (skuggadress v1, Outlook OAuth v2, Gmail efter CASA)
 3. **Dubbla alertvägar:** `api/cron/run-price-alerts.mjs` + `scripts/notify-price-changes.mjs` — extrahera gemensam lib
-4. **Theme-migrering:** 0/20 sidor konsumerar theme.js — migrera per sida när den ändå rörs (regel 6), Prospect/dossier som mall
+4. **Theme-migrering:** 1/20 sidor konsumerar theme.js (Prospect = mall, 0 hex) — migrera per sida när den ändå rörs (regel 6)
+4b. **Arvo-kontoret:** Portfolio → e-postnycklat premiumrum i dossier-språket: fyndflöde, bevakningsstatus, kontraktskalender (`contract_timelines` saknar vy), "detta hände sedan sist". Byggs som EN enhet med e-post-ingesten — mailen är dörren, kontoret är rummet
 5. **extraction-integrity som GATE:** varnar idag, ska stoppa obalanserade analyser → granskningskö ("balanskravet")
 6. **30 pre-existerande testfel:** bredband/Gbit-snappning + CRM-benchmarks driftade från branchindex-data — städpass
 7. **Migrationer:** 4 filer som körs i ordning ur minnet — en samlad migrate-runner
