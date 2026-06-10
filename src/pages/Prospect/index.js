@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   PageWrap, TopFade,
-  HeaderBar, HeaderInner, ConfidentialLabel, HeaderDate,
+  HeaderBar, HeaderInner, BrandMark, ConfidentialLabel, HeaderDate,
   CompanyName, MetaLine, MetaDot,
   SignalSection, SectionEyebrow, SignalCard, SignalBullet, SignalText,
   DataCard, DataRow, DataDesc, DataVal,
-  FinancialSection, BigNumber, BigNumberApprox, BigNumberInterval, BigNumberSub, BigNumberNote,
+  FinancialSection, BigNumber, BigNumberApprox, BigNumberSub, BigNumberNote,
+  RangeWrap, RangeTrack, RangeMarker, RangeLabels,
   ContentArea, BreakdownEyebrow, EstimateCard, CategoryLabel,
   EstimateRow, EstimateDesc, EstimateVal, EstimateValNote,
   SavingBand, SavingLabel, SavingCentral, SavingInterval, SourceNote,
@@ -149,6 +150,7 @@ export default function Prospect() {
       {/* ── Hero ── */}
       <HeaderBar>
         <HeaderInner>
+          <BrandMark>ARVO</BrandMark>
           <ConfidentialLabel>Konfidentiell analys</ConfidentialLabel>
 
           <CompanyName>{companyName}</CompanyName>
@@ -209,9 +211,21 @@ export default function Prospect() {
             <BigNumberApprox>≈</BigNumberApprox>{fmt(savingCentral)}{' '}
             <span style={{ fontSize: '0.42em', letterSpacing: '0em', fontWeight: 700 }}>kr/år</span>
           </BigNumber>
-          <BigNumberInterval>
-            Intervall {fmt(estimates.totalSavingLow)}–{fmt(estimates.totalSavingHigh)} kr/år
-          </BigNumberInterval>
+          <RangeWrap>
+            <RangeTrack>
+              <RangeMarker style={{
+                left: `${Math.min(88, Math.max(12,
+                  estimates.totalSavingHigh > estimates.totalSavingLow
+                    ? ((savingCentral - estimates.totalSavingLow) / (estimates.totalSavingHigh - estimates.totalSavingLow)) * 100
+                    : 50
+                ))}%`,
+              }} />
+            </RangeTrack>
+            <RangeLabels>
+              <span>{fmt(estimates.totalSavingLow)}</span>
+              <span>{fmt(estimates.totalSavingHigh)} kr/år</span>
+            </RangeLabels>
+          </RangeWrap>
           {basisLine && (
             <BigNumberSub>
               Baserat på {basisLine} mot verifierade listpriser
@@ -253,6 +267,8 @@ export default function Prospect() {
                   </EstimateVal>
                 </EstimateRow>
 
+                <SourceNote>{cat.sourceNote}</SourceNote>
+
                 <SavingBand>
                   <SavingLabel>Sannolik premie</SavingLabel>
                   <div>
@@ -260,8 +276,6 @@ export default function Prospect() {
                     <SavingInterval>intervall {fmt(cat.savingLow)}–{fmt(cat.savingHigh)}</SavingInterval>
                   </div>
                 </SavingBand>
-
-                <SourceNote>{cat.sourceNote}</SourceNote>
               </EstimateCard>
             );
           })}
