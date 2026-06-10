@@ -481,7 +481,12 @@ export default function Portfolio() {
       try {
         const fp = await getBrowserFingerprint();
         if (!cancelled) setFingerprint(fp);
-        const res = await fetch(`/api/invoice-history?fingerprint=${encodeURIComponent(fp)}`);
+        // Magic-token ur mailsvarets kontorslänk = bevis för e-postnycklad historik.
+        // Läses direkt ur URL:en (AuthContext kan ha konsumerat den för inloggning,
+        // men invoice-history accepterar tokens inom expiry).
+        const magic = new URLSearchParams(window.location.search).get('magic');
+        const qs = `fingerprint=${encodeURIComponent(fp)}` + (magic ? `&magic=${encodeURIComponent(magic)}` : '');
+        const res = await fetch(`/api/invoice-history?${qs}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!cancelled) setAnalyses(data.analyses ?? []);

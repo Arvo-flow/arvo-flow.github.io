@@ -177,6 +177,33 @@ api/test-invoice.mjs          ← orchestrerar hela pipelinen, maxDuration 60s
 
 ---
 
+### Ingest — mail-in (dörren till kontoret)
+
+```
+Kund vidarebefordrar faktura-PDF → inbox-adress (Resend inbound)
+  │
+  ▼
+api/inbound-email.mjs            ← webhook email.received, maxDuration 60
+  ├─ Auth: ?secret=INBOUND_WEBHOOK_SECRET (constant-time) · idempotens per email_id (KV)
+  ├─ Rate limit 10 mail/avsändare/dygn · endast PDF · max 2 bilagor · max 6 MB
+  ├─ INTERNT POST /api/test-invoice (bypass) — EN pipeline, aldrig en kopia (regel 1)
+  │    identitet = avsändaradress (userEmail) + syntetisk fingerprint mail:<sha16>
+  ├─ Magic token (magic_tokens) → kontorslänk /portfolio?magic=<token>
+  └─ Svarsmail ENBART till avsändaren: fynd + siffror + "Öppna ert Arvo-kontor →"
+```
+
+**Kontorets datadörr:** `api/invoice-history?fingerprint=…&magic=…` — magic-token
+(ur kundens inkorg) är ägarskapsbeviset för e-postnycklad historik
+(`getAnalysesByEmail`, slås ihop med fingerprint-historiken). Klienten får ALDRIG
+fråga på rå e-postadress.
+
+**Engångs-setup (extern, ej körbar via verktyg):**
+1. Resend → Domains: inbound-domän `inbox.arvoflow.se` (MX → Resend)
+2. Resend → Webhooks: `email.received` → `https://arvoflow.se/api/inbound-email?secret=<INBOUND_WEBHOOK_SECRET>`
+3. Vercel env: `INBOUND_WEBHOOK_SECRET` (slumpad, samma värde som i webhook-URL:en)
+
+---
+
 ### Intelligence-pipeline — Pris­bevakning (proaktiv)
 
 ```
@@ -404,6 +431,7 @@ RESEND_API_KEY        — e-postutskick
 RESEND_FROM           — avsändaradress (default: analys@arvo-flow.se)
 ARVO_ADMIN_SECRET     — admin-API-skydd (generate-prospect etc.)
 CRON_SECRET           — autentisering för GH Actions → Vercel cron-anrop
+INBOUND_WEBHOOK_SECRET — auth för Resend inbound-webhook → api/inbound-email
 ARVO_BASE_URL         — bas-URL för mail-länkar
 ```
 
@@ -421,9 +449,13 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 - ✅ Prospect-sidan: dossier-designspråk, desktop-kolumn, spektrum-bar — MALLEN för premiumytor
 - ✅ Designspråket LÅST I KOD: `theme.dossier` i `src/theme.js` (palett, metallic-text, aurora, keyline, glöd, CTA, dossier-kolumn) — Prospect/styles.js konsumerar 100 % tokens (0 hårdkodade hex), mall för all migrering
 
+**Åtgärdat (ingest + kontoret, fas 1):**
+- ✅ Ingest-arbetaren: api/inbound-email.mjs — mail-in → samma pipeline → datapunkt → svarsmail med kontorslänk (extern setup återstår: Resend MX + webhook + env, se Ingest-sektionen)
+- ✅ Identitet light: analyser e-postnycklas (user_email) · invoice-history med magic-token-bevis · Portfolio skickar magic ur kontorslänken
+
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
-1. **Identitet:** fingerprint är primärnyckel för historik — magic link-kontot ska bära portföljen (krävs för plattformsvisionen)
-2. **E-post-ingest:** inkommande faktura-PDF → pipeline → datapunkt → mailsvar (skuggadress v1, Outlook OAuth v2, Gmail efter CASA)
+1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI
+2. **E-post-ingest, nästa steg:** extern setup (MX/webhook/env) → personliga skuggadresser per kund → Outlook OAuth (historisk skörd) → Gmail efter CASA. Kontorets dossier-UI byggs när ingesten ger innehåll
 3. **Dubbla alertvägar:** `api/cron/run-price-alerts.mjs` + `scripts/notify-price-changes.mjs` — extrahera gemensam lib
 4. **Theme-migrering:** 1/20 sidor konsumerar theme.js (Prospect = mall, 0 hex) — migrera per sida när den ändå rörs (regel 6)
 4b. **Arvo-kontoret:** Portfolio → e-postnycklat premiumrum i dossier-språket: fyndflöde, bevakningsstatus, kontraktskalender (`contract_timelines` saknar vy), "detta hände sedan sist". Byggs som EN enhet med e-post-ingesten — mailen är dörren, kontoret är rummet
