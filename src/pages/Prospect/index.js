@@ -171,7 +171,7 @@ export default function Prospect() {
 
           {signals.map((s, i) => (
             <SignalCard key={s.key} $i={i}>
-              <SignalBullet>★</SignalBullet>
+              {i > 0 && <SignalBullet />}
               <SignalText>{s.text}</SignalText>
             </SignalCard>
           ))}
@@ -277,9 +277,9 @@ export default function Prospect() {
 
         <PrimaryCtaWrap>
           <PrimaryCta href="/testa-faktura" onClick={() => recordAction('upload')}>
-            Se er exakta premie — ladda upp en faktura
+            Se er exakta premie
           </PrimaryCta>
-          <PrimaryCtaSub>Kostnadsfritt · 2 minuter · Ingen registrering krävs</PrimaryCtaSub>
+          <PrimaryCtaSub>Ladda upp en faktura · Kostnadsfritt · 2 minuter · Ingen registrering</PrimaryCtaSub>
         </PrimaryCtaWrap>
 
         <CtaGap />
