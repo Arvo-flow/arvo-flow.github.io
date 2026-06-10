@@ -1822,10 +1822,25 @@ const TestaFaktura = () => {
               </NoSwitchBlock>
             ) : (
               <>
-                {result.recommendation?.monitoringNote && (
-                  <NoSwitchBlock style={{ marginTop: 0 }}>
-                    {result.recommendation.monitoringNote}
-                  </NoSwitchBlock>
+                {/* Inget prisgap = ett BESKED, inte ett tomt kort. En finansdirektör
+                    som granskat och funnit avtalet bra säger det — och bevakar. */}
+                <NoSwitchBlock style={{ marginTop: 0 }}>
+                  <strong>Väl förhandlat.</strong>{' '}
+                  {result.recommendation?.monitoringNote
+                    ?? 'Vi hittar inget prisgap mot marknadens bästa förhandlade nivå — Arvo rekommenderar inget byte i dag.'}
+                </NoSwitchBlock>
+                {!result.recommendation?.shouldSwitch && result.recommendation?.reasoning && (
+                  <Reasoning>
+                    <span className="kicker">Arvo bedömer</span>
+                    <p>
+                      {getCategoryMeta(result.categorized.category).isRealPrice
+                        ? result.recommendation.reasoning
+                        : redactSupplier(
+                            result.recommendation.reasoning,
+                            result.recommendation.suggestedSupplier,
+                          )}
+                    </p>
+                  </Reasoning>
                 )}
               </>
             )}
@@ -2267,7 +2282,7 @@ const TestaFaktura = () => {
                   <span className="preview-live-dot" />
                   <span className="preview-brand-name">Arvo Intelligence</span>
                 </span>
-                <span className="preview-time">i morse · 08:14</span>
+                <span className="preview-time">Exempel ur en briefing</span>
               </div>
 
               <div className="signal">
@@ -2277,10 +2292,10 @@ const TestaFaktura = () => {
                 <div>
                   <span className="signal-tag">Smyghöjningslarm</span>
                   <div className="signal-line">
-                    {result?.categorized?.normalizedSupplier || 'Telia'} · Er faktura
+                    Telia · Mobilflotta 24 abonnemang
                     <span className="signal-badge">+11&nbsp;%</span>
                   </div>
-                  <p className="signal-sub">Priset höjt mot förra perioden — utan avisering.</p>
+                  <p className="signal-sub">Pris höjt mot föregående period — utan avisering. Så här ser larmet ut när det händer er.</p>
                 </div>
               </div>
 
@@ -2294,12 +2309,12 @@ const TestaFaktura = () => {
                     {[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14].map(i => (
                       <span
                         key={i}
-                        className={`${[0,2,3,5,8,9,11,13].includes(i) ? 'on' : ''}${i === 8 ? ' you' : ''}`}
+                        className={[0,2,3,5,8,9,11,13].includes(i) ? 'on' : ''}
                       />
                     ))}
                   </div>
                   <p className="signal-sub">
-                    <strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning — inklusive er.
+                    <strong>8 av 15</strong> bolag i samma kohort fick höjningen — Arvo ser mönstret innan det når er.
                   </p>
                 </div>
               </div>
@@ -2311,7 +2326,7 @@ const TestaFaktura = () => {
                 <div>
                   <span className="signal-tag">Proaktiv avtalsbevakning</span>
                   <div className="signal-line">
-                    {result?.categorized?.normalizedSupplier || 'Er leverantör'} · Förnyelse om 90 dagar
+                    Avtalsbevakning · varnar 90 dagar före förnyelse
                     <span className="signal-badge signal-badge--contract">Förnyelse</span>
                   </div>
                   <p className="signal-sub">Arvo varnar automatiskt — och förhandlar på er begäran.</p>

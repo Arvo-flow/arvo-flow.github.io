@@ -294,7 +294,6 @@ const validateFoundingForm = (form) => {
 // Spritt mönster (ej en rad) så det läses som en population, inte ett betyg.
 const BENCH_TOTAL = 15;
 const BENCH_HIT = new Set([0, 2, 3, 5, 8, 9, 11, 13]); // 8 bolag som drabbades
-const BENCH_YOU = 8; // ert bolag — markeras med ring
 
 const Landing = () => {
   const [form, setForm] = useState({ company: '', name: '', email: '' });
@@ -571,7 +570,7 @@ const Landing = () => {
           <IntelligencePreview ref={intellRef} $visible={intellVisible}>
             <div className="preview-header">
               <span className="preview-brand"><span className="live" /> Arvo Intelligence</span>
-              <span className="preview-time">i morse · 08:14</span>
+              <span className="preview-time">Exempel ur en briefing</span>
             </div>
 
             {/* Signal 1 — Smyghöjningslarm */}
@@ -580,7 +579,7 @@ const Landing = () => {
               <div className="signal-main">
                 <span className="signal-tag">Smyghöjningslarm</span>
                 <div className="signal-line">
-                  Telia · Er mobilflotta
+                  Telia · Mobilflotta 24 abonnemang
                   <span className="badge up">+11&nbsp;%</span>
                 </div>
                 <p className="signal-sub">Priset höjt mot förra perioden — utan avisering.</p>
@@ -596,12 +595,12 @@ const Landing = () => {
                   {Array.from({ length: BENCH_TOTAL }).map((_, i) => (
                     <span
                       key={i}
-                      className={`${BENCH_HIT.has(i) ? 'on' : ''}${i === BENCH_YOU ? ' you' : ''}`}
+                      className={BENCH_HIT.has(i) ? 'on' : ''}
                       style={{ transitionDelay: `${560 + i * 38}ms` }}
                     />
                   ))}
                 </div>
-                <p className="signal-sub"><strong>8 av 15</strong> jämförbara bolag i er bransch fick samma höjning den här månaden — <strong>inklusive er</strong>.</p>
+                <p className="signal-sub"><strong>8 av 15</strong> bolag i samma kohort fick höjningen — Arvo ser mönstret innan det når er.</p>
               </div>
             </div>
 
