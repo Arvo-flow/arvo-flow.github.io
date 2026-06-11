@@ -14,6 +14,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, RECOMMEND_TOOL } from './prompt.js';
+import { checkProseNumbers } from '../../lib/prose-guard.js';
 import { getBenchmark } from '../../lib/benchmark.js';
 import { CATEGORIES } from '../categorizer/categories.js';
 import { getElIntelligence } from '../../lib/el-intelligence.js';
@@ -1046,6 +1047,24 @@ export async function recommend(input, opts = {}) {
   }
 
   const result = toolUse.input;
+
+  // ── Prosakravet (SKUGGA): varje tal i AI:ns reasoning måste finnas i prompten ──
+  // (prompten innehåller alla injicerade kodberäknade fakta — ett tal utanför den
+  // kan modellen bara ha räknat fram själv, vilket är förbjudet). Loggas alltid;
+  // vid PROSAKRAV_ENFORCE=1 ersätts texten aldrig — analysen routas till granskning
+  // genom att reasoning töms (UI visar då det deterministiska beskedet istället).
+  if (typeof result.reasoning === 'string' && result.reasoning) {
+    const factsText = SYSTEM_PROMPT + '\n' + requestParams.messages[0].content;
+    const prose = checkProseNumbers(result.reasoning, factsText);
+    if (!prose.ok) {
+      console.warn(`[prosakrav] ${process.env.PROSAKRAV_ENFORCE === '1' ? 'STOPP' : 'SKUGGA'}: ` +
+        `${prose.violations.length} tal utan källtäckning i reasoning: ${prose.violations.join(', ')} ` +
+        `(${prose.checked} tal kontrollerade)`);
+      if (process.env.PROSAKRAV_ENFORCE === '1') {
+        result.reasoning = '';
+      }
+    }
+  }
 
   // Accounting-system guard: 'optimize' is never valid when subType is
   // 'affärssystem'. The main accounting license (Fortnox, Visma…) IS the

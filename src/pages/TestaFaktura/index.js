@@ -1062,8 +1062,8 @@ const TestaFaktura = () => {
               <>
                 {oauthBanner.provider === 'gmail' ? 'Gmail' : 'Outlook'} kopplat —{' '}
                 {oauthBanner.invoices > 0
-                  ? `Arvo hittade ${oauthBanner.invoices} fakturor i er inkorg. Er briefing skickas inom kort.`
-                  : 'Arvo bevakar nu er inkorg. Er briefing skickas inom kort.'}
+                  ? `Arvo hittade ${oauthBanner.invoices} fakturor i er inkorg — analysera er första nedan, det tar 2 minuter.`
+                  : 'Inkorgen är kopplad. Analysera er första faktura nedan — det tar 2 minuter.'}
               </>
             )}
             {oauthBanner.type === 'pending' && (

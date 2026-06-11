@@ -40,8 +40,8 @@ const HOW_STEPS = [
   {
     step: 'Steg 03',
     title: 'Vi hör av oss. Ni bestämmer.',
-    body: 'Identifierar Arvo en besparing skickar vi er en briefing med exakt vad ni betalar och vad som är möjligt. Priset är redan säkrat via Arvos partnernätverk — er BankID-signatur aktiverar bytet. Arvo tar det härifrån.',
-    bullets: ['Ni behåller full kontroll', 'Er BankID-signatur aktiverar bytet — inget mer', 'Arvo Switch: 20 % av realiserad besparing'],
+    body: 'Identifierar Arvo en besparing skickar vi er en briefing med exakt vad ni betalar och vad som är möjligt. Varje pris är verifierat mot leverantörens officiella avtalspris — ni godkänner, Arvo förbereder hela bytet.',
+    bullets: ['Ni behåller full kontroll', 'Ni godkänner varje byte — inget sker utan er', 'Arvo Switch: 20 % av realiserad besparing'],
   },
 ];
 
@@ -382,7 +382,7 @@ const Landing = () => {
             <HeroTimeline $visible={heroCardVisible}>
               <div className="tl-head">
                 <span className="tl-brand">Arvo Intelligence</span>
-                <span className="tl-status"><Icon name="check" size={11} stroke={3} /> Åtgärdat</span>
+                <span className="tl-status"><Icon name="check" size={11} stroke={3} /> Exempel</span>
               </div>
 
               <div className="tl-body">
@@ -683,7 +683,7 @@ const Landing = () => {
             <div className="tier-badge">Arvo Switch</div>
             <h3>Genomfört leverantörsbyte.</h3>
             <div className="tier-price">20 %<span className="period">av besparing</span></div>
-            <p className="tier-tagline">Priset är säkrat via Arvos partnernätverk — er BankID-signatur aktiverar bytet.</p>
+            <p className="tier-tagline">Varje pris verifieras mot leverantörens officiella avtalspris — ni godkänner, Arvo förbereder bytet.</p>
             <ul>
               <li><Icon name="check" size={15} stroke={2.4} /> Identifierad besparing bekräftas med verifierade marknadsdata</li>
               <li><Icon name="check" size={15} stroke={2.4} /> Ni godkänner varje byte med BankID</li>

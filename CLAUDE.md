@@ -83,7 +83,9 @@ hela systemet (like-for-like, estimatorn, switch-kortet) plockar upp det automat
 2. **AI tolkar, kod räknar.** Modellen läser fakturor och formulerar text — den får ALDRIG
    utföra finansiell aritmetik. Alla kronor, procent och per-användare-tal beräknas i
    deterministiska, testlåsta moduler och injiceras färdiga i prompten (se LFL-blocket i
-   `recommend.js`: "FÖRBJUDET: räkna egna tal").
+   `recommend.js`: "FÖRBJUDET: räkna egna tal"). Prosakravet (`lib/prose-guard.js`)
+   verifierar maskinellt att varje tal i AI:ns reasoning finns i prompten — tal utan
+   källtäckning loggas (`[prosakrav]`), armeras via `PROSAKRAV_ENFORCE=1`.
 
 3. **Inga siffror utan källa.** Varje kundsynlig siffra ska ha proveniens (livedata /
    verifierat listpris / märkt estimat) och gå att räkna hem med miniräknare.
@@ -112,6 +114,9 @@ hela systemet (like-for-like, estimatorn, switch-kortet) plockar upp det automat
 
 9. **Kundlöften ska ha mekanik.** Skicka aldrig copy som utlovar något systemet inte
    gör ("briefing skickas inom kort" utan ingest). Löftet och koden levereras tillsammans.
+   Maskinvakt: `scripts/claims-audit.mjs` (pre-commit, bredvid price-audit) blockerar
+   förbjudna påståenden i kundytor — listan VÄXER med varje incident. Legitim träff
+   motiveras inline med `// claims-ok: <skäl>`. Exempel-innehåll märks alltid "Exempel".
 
 ---
 
@@ -467,6 +472,12 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 - ✅ Enhetskarantän i storeDatapoint: per-användar-kategorier utanför 0,1–10× listpris-median lagras aldrig (enhetsfel förgiftar inte prisboken)
 - ✅ Rad-först fas 1 (SKUGGA): `lib/invoice-lines.js` — per-rad-klassning + kategoriaggregering loggas per analys (`[rad-först SKUGGA]`) som beslutsunderlag för fulla strypare-migreringen. Ren instrumentering, når aldrig kund.
 - ✅ Cellteckningen: benchmark-stats med status per cell (BÄR/LIVE-LIGHT/NÄRA/MOCK) + Prisboken-flik i admin — outbound-listor väljs på celler nära tröskeln
+
+**Åtgärdat (ordens försvar — 2026-06-11):**
+- ✅ Prosakravet: `lib/prose-guard.js` — varje tal i AI-reasoning verifieras mot promptens injicerade fakta (683-felklassen maskinfångad). SKUGGA → armeras med `PROSAKRAV_ENFORCE=1`
+- ✅ Påståendevakthunden: `scripts/claims-audit.mjs` i pre-commit — förbjudna löften ("partnernätverk", "skickas inom kort", "inklusive er"…) kan aldrig committas till kundytor igen. Fångade 4 missade brott på första körningen (Landing ×2, OAuth-bannern ×2)
+- ✅ Påståendeinventeringen genomförd: alla löftesformade meningar i kundytan klassade FAKTA/LÖFTE/EXEMPEL — hero-tidslinjen exempel-märkt; kvarvarande tidslöften ("inom 24/48 h") är medvetna operativa SLA:er som grundaren äger
+- ✅ Attribueringsskyddet: LFL-prompten ger fakturerat à-pris per tier + ATTRIBUERING-regel (per-seat-total får aldrig kallas licenspris)
 
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI

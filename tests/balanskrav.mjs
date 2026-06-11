@@ -150,3 +150,45 @@ describe('Like-for-like — NMIT 8840219 (E3 + tilläggstjänster)', () => {
     assert.equal(addonSum, 183_120);
   });
 });
+
+// ── Prosakravet — varje tal i AI-prosa måste ha källtäckning ──────────────────
+
+describe('Prosakravet — checkProseNumbers', () => {
+
+  test('683-felet fångas: tal i prosan som saknas i fakta', async () => {
+    const { checkProseNumbers } = await import('../lib/prose-guard.js');
+    const facts = 'Aktuellt pris/seat: 683 kr/mån. E3: 58 licenser · fakturerat à-pris 420 kr/mån → 384,70 kr/mån = 267 751 kr/år';
+    // AI hittar på ett eget tal (t.ex. egen multiplikation 58×35,3 = 2047,4 → "2 047 kr")
+    const r = checkProseNumbers('Ni sparar 2 047 kr per månad på gapet.', facts);
+    assert.equal(r.ok, false);
+    assert.ok(r.violations.includes('2047'));
+  });
+
+  test('sv-SE-format normaliseras: "475 440" i prosa = "475 440" i fakta', async () => {
+    const { checkProseNumbers } = await import('../lib/prose-guard.js');
+    const r = checkProseNumbers(
+      'Er årskostnad är 475 440 kr och årsavtalet kostar 384,70 kr per användare.',
+      'annualCost: 475 440 kr · msrpAnnual 384.70 kr'
+    );
+    assert.equal(r.ok, true, JSON.stringify(r.violations));
+  });
+
+  test('decimalvarianter tillåts: 384,7 ↔ 384,70', async () => {
+    const { checkProseNumbers } = await import('../lib/prose-guard.js');
+    assert.equal(checkProseNumbers('priset är 384,7 kr', 'fakta: 384,70 kr').ok, true);
+    assert.equal(checkProseNumbers('priset är 384,70 kr', 'fakta: 384,7 kr').ok, true);
+  });
+
+  test('små uppräkningstal och arvodesprocent kräver ingen källa', async () => {
+    const { checkProseNumbers } = await import('../lib/prose-guard.js');
+    const r = checkProseNumbers('I 3 steg: Arvo tar 20 % och återkommer inom 24 timmar.', 'inga tal här');
+    assert.equal(r.ok, true, JSON.stringify(r.violations));
+  });
+
+  test('fail-open: tom/null prosa kraschar aldrig', async () => {
+    const { checkProseNumbers } = await import('../lib/prose-guard.js');
+    assert.equal(checkProseNumbers('', 'fakta').ok, true);
+    assert.equal(checkProseNumbers(null, null).ok, true);
+  });
+
+});

@@ -40,6 +40,12 @@ const PRE_COMMIT_CONTENT = `#!/bin/sh
 node scripts/price-audit.mjs
 STATUS=$?
 
+# Påståendevakthunden — förbjudna löften/påståenden i kundytor (regel 3, 4, 9)
+if [ $STATUS -eq 0 ]; then
+  node scripts/claims-audit.mjs
+  STATUS=$?
+fi
+
 if [ $STATUS -ne 0 ]; then
   echo ""
   echo "  Commit blockerad av price-audit. Åtgärda felen ovan och försök igen."
