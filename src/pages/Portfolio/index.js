@@ -1,6 +1,6 @@
-// src/pages/Portfolio — Arvo-kontoret i sajtens ljusa analys-språk.
-// Mall: TestaFakturas resultatkort (ARVO-ANALYS-stämpel, serif-rubrik, vita kort,
-// brandGradient-besparingsbandet). Regel 6: alla färger ur theme — 0 hårdkodade hex.
+// src/pages/Portfolio — Ert Arvo-kontor.
+// Design: importerar BriefingHead, ScoreDiag, SavingsBlock, PriceNote och Card
+// direkt ur TestaFaktura/styles.js — pixelidentisk med analys­resultat­kortet (regel 6).
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -9,6 +9,14 @@ import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import { getCategoryMeta } from '../../lib/categoryMeta';
+import {
+  Page,
+  Card,
+  BriefingHead,
+  ScoreDiag,
+  SavingsBlock,
+  PriceNote,
+} from '../TestaFaktura/styles';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -34,8 +42,7 @@ async function getBrowserFingerprint() {
 const fmtNum  = (n) => (n == null ? '–' : Math.round(n).toLocaleString('sv-SE'));
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) : '');
 
-// En leverantör = en rad. Senaste analysen är sanningen; äldre är historik.
-// (Totalsummor över RÅA analyser dubbelräknar varje omanalys — regel 3.)
+// En leverantör = en rad. Senaste analysen är sanningen.
 function groupBySupplier(analyses) {
   const groups = new Map();
   for (const a of analyses) {
@@ -57,161 +64,51 @@ function computeArvoScore(suppliers) {
   const uniqueSegs = new Set(
     suppliers.map((s) => getCategoryMeta(s.latest.category)?.segment ?? -1).filter((x) => x >= 0)
   );
-  const segmentScore = Math.round((uniqueSegs.size / 8) * 65);
-  const totalNet = suppliers.reduce((sum, s) => sum + (s.latest.net_saving ?? 0), 0);
-  const savingScore = totalNet > 5000 ? 25 : totalNet > 0 ? 15 : 0;
-  const completenessBonus = suppliers.length >= 5 ? 10 : suppliers.length >= 3 ? 5 : 0;
-  return Math.min(100, segmentScore + savingScore + completenessBonus);
+  const segmentScore    = Math.round((uniqueSegs.size / 8) * 65);
+  const totalNet        = suppliers.reduce((sum, s) => sum + (s.latest.net_saving ?? 0), 0);
+  const savingScore     = totalNet > 5000 ? 25 : totalNet > 0 ? 15 : 0;
+  const completenessB   = suppliers.length >= 5 ? 10 : suppliers.length >= 3 ? 5 : 0;
+  return Math.min(100, segmentScore + savingScore + completenessB);
 }
 
-// ─── animations ─────────────────────────────────────────────────────────────
+// Samma färgkodning som TestaFakturas diagC
+function scoreColors(score) {
+  if (score < 45) return { dot: '#DC2626', label: 'Kritisk',          labelClr: '#991B1B' };
+  if (score < 65) return { dot: '#D97706', label: 'Suboptimerat',     labelClr: '#92400E' };
+  if (score < 80) return { dot: '#65A30D', label: 'Förbättringsläge', labelClr: '#365314' };
+  return             { dot: '#1B7A6E', label: 'Optimalt',         labelClr: '#0E4F47' };
+}
+
+// ─── animations (lokala, för leverantörs­listan) ──────────────────────────
 
 const fadeUp = keyframes`
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 `;
-
 const spin = keyframes`to { transform: rotate(360deg); }`;
-const dashFill = keyframes`from { stroke-dashoffset: 283; }`;
-
-const shimmer = keyframes`
-  0%   { transform: translateX(-100%); }
-  60%, 100% { transform: translateX(100%); }
-`;
 
 // ─── layout ──────────────────────────────────────────────────────────────────
 
-const Page = styled.main`
-  background: ${({ theme }) => theme.color.bg};
-  min-height: 100vh;
-`;
-
 const Column = styled.div`
-  max-width: 640px;
+  max-width: 660px;
   margin: 0 auto;
-  padding: 40px 20px 72px;
-  @media (min-width: 768px) { padding: 56px 24px 96px; }
-`;
-
-// ─── stämpel + rubrik (ARVO-ANALYS-mönstret) ─────────────────────────────────
-
-const StampRow = styled.div`
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 14px;
-  animation: ${fadeUp} 0.5s ease both;
-`;
-
-const Stamp = styled.span`
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: ${({ theme }) => theme.color.brand};
-`;
-
-const H1 = styled.h1`
-  font-family: ${({ theme }) => theme.font.display};
-  font-size: clamp(28px, 6.5vw, 38px);
-  font-weight: 600; letter-spacing: -0.015em; line-height: 1.12;
-  color: ${({ theme }) => theme.color.ink};
-  margin: 0 0 10px;
-  animation: ${fadeUp} 0.5s 0.04s ease both;
-`;
-
-const HeroSub = styled.p`
-  font-size: 14.5px; line-height: 1.7;
-  color: ${({ theme }) => theme.color.inkSoft};
-  margin: 0 0 26px;
-  animation: ${fadeUp} 0.5s 0.08s ease both;
-`;
-
-// ─── score-kortet (vita kortet med gauge) ────────────────────────────────────
-
-const ScoreCard = styled.div`
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  padding: 22px 24px;
-  margin-bottom: 12px;
-  display: flex; align-items: center; gap: 20px;
-  box-shadow: 0 1px 6px rgba(14, 26, 23, 0.05);
-  animation: ${fadeUp} 0.5s 0.12s ease both;
-`;
-
-const GaugeWrap = styled.div`
-  position: relative; flex-shrink: 0;
-  width: 84px; height: 84px;
-  svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  .track { fill: none; stroke: ${({ theme }) => theme.color.border}; stroke-width: 9; }
-  .fill  { fill: none; stroke-width: 9; stroke-linecap: round;
-    stroke: url(#kontorGrad);
-    animation: ${dashFill} 1.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
-`;
-
-const GaugeCenter = styled.div`
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  span.score { font-family: ${({ theme }) => theme.font.display}; font-size: 26px;
-    font-weight: 600; color: ${({ theme }) => theme.color.ink}; line-height: 1; }
-  span.of { font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
-    color: ${({ theme }) => theme.color.mutedSoft}; margin-top: 3px; }
-`;
-
-const ScoreInfo = styled.div`
-  flex: 1;
-  h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    color: ${({ theme }) => theme.color.inkSoft}; margin: 0 0 6px;
-    sup { font-size: 8px; } }
-  p { font-size: 13.5px; line-height: 1.6; color: ${({ theme }) => theme.color.inkSoft}; margin: 0; }
-`;
-
-// ─── besparingsbandet (SavingsBlock-mönstret) ────────────────────────────────
-
-const SavingsBand = styled.div`
-  position: relative; overflow: hidden;
-  padding: 24px 26px 22px;
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  background: ${({ theme }) => theme.color.brandGradient};
-  color: #FAFAF7;
-  margin-bottom: 12px;
-  box-shadow: 0 8px 32px rgba(27, 110, 102, 0.22), 0 2px 6px rgba(27, 110, 102, 0.14);
-  animation: ${fadeUp} 0.5s 0.16s ease both;
-
-  &::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.14) 48%, rgba(255,255,255,0.08) 52%, transparent 62%);
-    animation: ${shimmer} 3.6s ease-in-out 1.2s infinite;
-    pointer-events: none;
-  }
-
-  span.kicker { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.12em; opacity: 0.75; margin-bottom: 10px; }
-  span.amount { display: block; font-family: ${({ theme }) => theme.font.display};
-    font-size: clamp(36px, 6.5vw, 52px); font-weight: 500; line-height: 1;
-    letter-spacing: -0.025em; font-feature-settings: 'tnum'; }
-  span.unit { display: block; margin-top: 10px; font-size: 13.5px; opacity: 0.82;
-    line-height: 1.55; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 10px; }
-`;
-
-const FinePrint = styled.p`
-  font-size: 12px; font-style: italic; line-height: 1.6; text-align: center;
-  color: ${({ theme }) => theme.color.mutedSoft};
-  margin: 0 0 28px; padding: 0 12px;
-  animation: ${fadeUp} 0.5s 0.2s ease both;
+  padding: 32px 20px 80px;
+  @media (min-width: 768px) { padding: 40px 24px 96px; }
 `;
 
 // ─── leverantörslistan ───────────────────────────────────────────────────────
 
 const SectionLabel = styled.h3`
-  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
   color: ${({ theme }) => theme.color.brand};
-  margin: 0 0 12px;
+  margin: 28px 0 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
 `;
 
 const SupplierList = styled.div`
-  display: flex; flex-direction: column; gap: 9px;
-  margin-bottom: 28px;
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 20px;
 `;
 
 const SupplierCard = styled.div`
@@ -219,10 +116,11 @@ const SupplierCard = styled.div`
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
   border-radius: ${({ theme }) => theme.size.radius.md};
-  padding: 15px 18px 15px 22px;
+  padding: 14px 18px 14px 22px;
   display: flex; align-items: center; gap: 14px;
   box-shadow: 0 1px 3px rgba(14, 26, 23, 0.04);
   transition: box-shadow 0.18s ease;
+  animation: ${fadeUp} 0.4s ease both;
   &:hover { box-shadow: 0 4px 14px rgba(14, 26, 23, 0.09); }
 
   &::before {
@@ -238,7 +136,7 @@ const SupplierCard = styled.div`
 const SupplierInfo = styled.div`
   flex: 1; min-width: 0;
   h4 { font-family: ${({ theme }) => theme.font.display};
-    font-size: 16px; font-weight: 600; letter-spacing: -0.005em;
+    font-size: 15.5px; font-weight: 600; letter-spacing: -0.005em;
     color: ${({ theme }) => theme.color.ink}; margin: 0 0 3px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   p { font-size: 11.5px; color: ${({ theme }) => theme.color.mutedSoft}; margin: 0; }
@@ -248,7 +146,7 @@ const SupplierRight = styled.div`
   text-align: right; flex-shrink: 0;
   p.cost { font-size: 13px; font-weight: 700; color: ${({ theme }) => theme.color.ink};
     margin: 0 0 4px; font-feature-settings: 'tnum'; }
-  @media (max-width: 480px) { width: 100%; text-align: left; padding-left: 0; }
+  @media (max-width: 480px) { width: 100%; text-align: left; }
 `;
 
 const VerdictBadge = styled.span`
@@ -261,28 +159,24 @@ const VerdictBadge = styled.span`
        border: 1px solid ${theme.color.border};`}
 `;
 
-// ─── kort: gör Arvo permanent / rapport / connect ────────────────────────────
-
-const Card = styled.section`
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  padding: 24px 26px;
-  margin-bottom: 12px;
-  box-shadow: 0 1px 6px rgba(14, 26, 23, 0.05);
-
-  h3 { font-family: ${({ theme }) => theme.font.display};
-    font-size: 19px; font-weight: 600; letter-spacing: -0.01em;
-    color: ${({ theme }) => theme.color.ink}; margin: 0 0 7px; }
-  p { font-size: 13.5px; line-height: 1.65;
-    color: ${({ theme }) => theme.color.inkSoft}; margin: 0 0 16px; }
-`;
+// ─── CTA-kort ────────────────────────────────────────────────────────────────
 
 const CardLabel = styled.span`
   display: block;
   font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
   color: ${({ theme }) => theme.color.brand};
   margin-bottom: 8px;
+`;
+
+const CardTitle = styled.h3`
+  font-family: ${({ theme }) => theme.font.display};
+  font-size: 19px; font-weight: 600; letter-spacing: -0.01em;
+  color: ${({ theme }) => theme.color.ink}; margin: 0 0 7px;
+`;
+
+const CardBody = styled.p`
+  font-size: 13.5px; line-height: 1.65;
+  color: ${({ theme }) => theme.color.inkSoft}; margin: 0 0 16px;
 `;
 
 const AddressChip = styled.div`
@@ -312,29 +206,7 @@ const EmailInput = styled.input`
   &::placeholder { color: ${({ theme }) => theme.color.mutedSoft}; }
 `;
 
-const SuccessMsg = styled.p`
-  &&& { color: ${({ theme }) => theme.color.brand}; font-weight: 600; margin: 0; }
-`;
-
-const ErrorHint = styled.p`
-  &&& { font-size: 12px; color: ${({ theme }) => theme.color.danger ?? theme.color.inkSoft}; margin: 8px 0 0; }
-`;
-
 // ─── states ──────────────────────────────────────────────────────────────────
-
-const EmptyState = styled.div`
-  text-align: center;
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  padding: 52px 26px;
-  margin-bottom: 12px;
-  h3 { font-family: ${({ theme }) => theme.font.display};
-    font-size: 22px; font-weight: 600; color: ${({ theme }) => theme.color.ink};
-    margin: 0 0 10px; }
-  p { font-size: 14px; line-height: 1.7; color: ${({ theme }) => theme.color.inkSoft};
-    max-width: 380px; margin: 0 auto 20px; }
-`;
 
 const SpinnerEl = styled.div`
   width: 30px; height: 30px;
@@ -342,37 +214,47 @@ const SpinnerEl = styled.div`
   border-top-color: ${({ theme }) => theme.color.brand};
   border-radius: 50%;
   animation: ${spin} 0.7s linear infinite;
-  margin: 64px auto;
+  margin: 80px auto;
 `;
 
 const ErrorMsg = styled.p`
   text-align: center; color: ${({ theme }) => theme.color.inkSoft};
-  font-size: 14px; padding: 40px 20px;
+  font-size: 14px; padding: 48px 20px;
 `;
 
-// ─── gauge ───────────────────────────────────────────────────────────────────
+const SuccessMsg = styled.p`
+  color: ${({ theme }) => theme.color.brand}; font-weight: 600; margin: 0;
+  font-size: 14px;
+`;
 
-function ScoreGauge({ score }) {
-  const R = 45;
-  const C = 2 * Math.PI * R;
+const ErrorHint = styled.p`
+  font-size: 12px; color: ${({ theme }) => theme.color.inkSoft};
+  margin: 8px 0 0;
+`;
+
+const EmptyBody = styled.p`
+  font-size: 14.5px; line-height: 1.7;
+  color: ${({ theme }) => theme.color.inkSoft};
+  margin: 0 0 20px;
+`;
+
+// ─── gauge (samma mått som TestaFakturas ScoreDiag) ─────────────────────────
+
+const GAUGE_R = 26;
+const GAUGE_C = 2 * Math.PI * GAUGE_R;
+
+function ScoreGaugeSvg({ score, color }) {
+  const dash = (score / 100) * GAUGE_C;
   return (
-    <GaugeWrap>
-      <svg viewBox="0 0 100 100">
-        <defs>
-          <linearGradient id="kontorGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#5DD6CA" />
-            <stop offset="100%" stopColor="#1B6E66" />
-          </linearGradient>
-        </defs>
-        <circle className="track" cx="50" cy="50" r={R} />
-        <circle className="fill" cx="50" cy="50" r={R}
-          strokeDasharray={C} strokeDashoffset={C - (score / 100) * C} />
-      </svg>
-      <GaugeCenter>
-        <span className="score">{score}</span>
-        <span className="of">/100</span>
-      </GaugeCenter>
-    </GaugeWrap>
+    <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
+      <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
+      <circle
+        cx="30" cy="30" r={GAUGE_R} fill="none"
+        stroke={color} strokeWidth="4.5" strokeLinecap="round"
+        strokeDasharray={`${dash} ${GAUGE_C}`}
+        style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1.2s cubic-bezier(0.16,1,0.3,1)' }}
+      />
+    </svg>
   );
 }
 
@@ -392,7 +274,6 @@ export default function Portfolio() {
       try {
         const fp = await getBrowserFingerprint();
         if (!cancelled) setFingerprint(fp);
-        // Magic-token ur mailsvarets kontorslänk = bevis för e-postnycklad historik.
         const magic = new URLSearchParams(window.location.search).get('magic');
         const qs = `fingerprint=${encodeURIComponent(fp)}` + (magic ? `&magic=${encodeURIComponent(magic)}` : '');
         const res = await fetch(`/api/invoice-history?${qs}`);
@@ -430,14 +311,15 @@ export default function Portfolio() {
     () => (analyses ?? []).filter((a) => a.route === 'auto'),
     [analyses]
   );
-  const suppliers = useMemo(() => groupBySupplier(autoAnalyses), [autoAnalyses]);
+  const suppliers        = useMemo(() => groupBySupplier(autoAnalyses), [autoAnalyses]);
+  const totalAnnualCost  = suppliers.reduce((s, g) => s + (g.latest.annual_cost ?? 0), 0);
+  const totalNetSaving   = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
+  const arvoScore        = computeArvoScore(suppliers);
+  const diagC            = scoreColors(arvoScore);
 
-  // Totalsummor per UNIK leverantör (senaste analysen) — aldrig över råa omanalyser
-  const totalAnnualCost = suppliers.reduce((s, g) => s + (g.latest.annual_cost ?? 0), 0);
-  const totalNetSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
-  const arvoScore       = computeArvoScore(suppliers);
-
-  const today = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
+  const today = new Date().toLocaleDateString('sv-SE', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  }).toUpperCase();
 
   return (
     <Page>
@@ -446,53 +328,77 @@ export default function Portfolio() {
         {analyses === null && !error && <SpinnerEl />}
         {error && <ErrorMsg>Kunde inte ladda ert kontor — försök igen om en stund.</ErrorMsg>}
 
+        {/* ── Huvudkort (identisk layout med TestaFakturas resultatkort) ── */}
         {analyses !== null && suppliers.length > 0 && (
           <>
-            <StampRow>
-              <Stamp>Arvo-kontoret · {today}</Stamp>
-            </StampRow>
-            <H1>Ert Arvo-kontor.</H1>
-            <HeroSub>
-              Varje faktura ni delar bevakas härifrån — priser, avtal och
-              marknadsrörelser, samlade i en bild.
-            </HeroSub>
+            <Card>
+              <BriefingHead>
+                <div className="bh-top">
+                  <span className="bh-stamp">ARVO-KONTORET · {today}</span>
+                </div>
+                <div className="bh-main">
+                  <h2 className="bh-supplier">Ert Arvo-kontor.</h2>
+                </div>
+                <div className="bh-row">
+                  <span className="bh-chip">
+                    {suppliers.length === 1 ? '1 bevakad leverantör' : `${suppliers.length} bevakade leverantörer`}
+                  </span>
+                  {totalAnnualCost > 0 && (
+                    <span className="bh-chip">{fmtNum(totalAnnualCost)} kr/år</span>
+                  )}
+                </div>
+              </BriefingHead>
 
-            <ScoreCard>
-              <ScoreGauge score={arvoScore} />
-              <ScoreInfo>
-                <h2>Arvo Score<sup>™</sup></h2>
-                <p>
-                  {suppliers.length === 1
-                    ? 'En bevakad leverantör'
-                    : `${suppliers.length} bevakade leverantörer`}
-                  {' '}· {fmtNum(totalAnnualCost)} kr/år under bevakning.
-                  Fler delade fakturor skärper bilden.
-                </p>
-              </ScoreInfo>
-            </ScoreCard>
+              <ScoreDiag style={{ '--diag-color': diagC.dot }}>
+                <div className="gauge-wrap">
+                  <ScoreGaugeSvg score={arvoScore} color={diagC.dot} />
+                  <div className="gauge-num" style={{ color: diagC.dot }}>
+                    <span className="gauge-val">{arvoScore}</span>
+                    <span className="gauge-denom">/100</span>
+                  </div>
+                </div>
+                <div className="diag-body">
+                  <div className="diag-top">
+                    <span className="diag-score-label">Arvo Score</span>
+                    <span className="diag-sep">·</span>
+                    <div className="diag-status">
+                      <span className="diag-label" style={{ color: diagC.labelClr }}>
+                        {diagC.label}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="diag-text">
+                    {suppliers.length === 1 ? 'En leverantör analyserad' : `${suppliers.length} leverantörer analyserade`}
+                    {totalAnnualCost > 0 ? ` · ${fmtNum(totalAnnualCost)} kr/år under bevakning` : ''}.
+                    {' '}Fler delade fakturor skärper bilden.
+                  </p>
+                </div>
+              </ScoreDiag>
 
-            {totalNetSaving > 0 && (
-              <SavingsBand>
-                <span className="kicker">Er identifierade nettobesparing</span>
-                <span className="amount">+{fmtNum(totalNetSaving)} kr</span>
-                <span className="unit">
-                  Per år, över {suppliers.length === 1 ? 'er bevakade leverantör' : `${suppliers.length} bevakade leverantörer`} ·
-                  Arvos besparingsarvode (20&nbsp;%) är avdraget.
-                </span>
-              </SavingsBand>
-            )}
+              {totalNetSaving > 0 && (
+                <SavingsBlock>
+                  <span className="kicker">Er identifierade nettobesparing</span>
+                  <span className="amount">+{fmtNum(totalNetSaving)} kr</span>
+                  <span className="unit">
+                    Per år, över{' '}
+                    {suppliers.length === 1 ? 'er bevakade leverantör' : `${suppliers.length} bevakade leverantörer`}
+                    {' '}· Arvos besparingsarvode (20&nbsp;%) är avdraget.
+                  </span>
+                </SavingsBlock>
+              )}
 
-            <FinePrint>
-              Priset baseras på verifierade offentliga listpriser hos ledande
-              leverantörer. Vid genomfört byte bekräftas slutpriset i offert
-              innan ni godkänner.
-            </FinePrint>
+              <PriceNote>
+                Priset baseras på verifierade offentliga listpriser hos ledande leverantörer.
+                Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.
+              </PriceNote>
+            </Card>
 
+            {/* ── Leverantörslista ──────────────────────────────────────── */}
             <SectionLabel>Era bevakade leverantörer</SectionLabel>
             <SupplierList>
               {suppliers.map((g) => {
-                const a = g.latest;
-                const meta = getCategoryMeta(a.category);
+                const a        = g.latest;
+                const meta     = getCategoryMeta(a.category);
                 const hasSaving = a.should_switch && (a.net_saving ?? 0) > 0;
                 return (
                   <SupplierCard key={a.id} $saving={hasSaving}>
@@ -504,9 +410,13 @@ export default function Portfolio() {
                       </p>
                     </SupplierInfo>
                     <SupplierRight>
-                      {a.annual_cost != null && <p className="cost">{fmtNum(a.annual_cost)} kr/år</p>}
+                      {a.annual_cost != null && (
+                        <p className="cost">{fmtNum(a.annual_cost)} kr/år</p>
+                      )}
                       <VerdictBadge $saving={hasSaving}>
-                        {hasSaving ? `+${fmtNum(a.net_saving)} kr/år identifierad` : 'Bevakad'}
+                        {hasSaving
+                          ? `+${fmtNum(a.net_saving)} kr/år identifierad`
+                          : 'Bevakad'}
                       </VerdictBadge>
                     </SupplierRight>
                   </SupplierCard>
@@ -514,21 +424,26 @@ export default function Portfolio() {
               })}
             </SupplierList>
 
+            {/* ── Gör Arvo permanent ───────────────────────────────────── */}
             <Card>
               <CardLabel>Gör Arvo permanent</CardLabel>
-              <h3>En vidarebefordringsregel räcker.</h3>
-              <p>
+              <CardTitle>En vidarebefordringsregel räcker.</CardTitle>
+              <CardBody>
                 Peka era leverantörsfakturor till adressen nedan, så analyserar
                 Arvo varje ny faktura automatiskt — och hör av sig bara när
                 något är fel prissatt.
-              </p>
+              </CardBody>
               <AddressChip>faktura@inbox.arvoflow.se</AddressChip>
             </Card>
 
+            {/* ── Rapport ──────────────────────────────────────────────── */}
             <Card>
               <CardLabel>Arvo-rapport</CardLabel>
-              <h3>Er samlade rapport, som PDF.</h3>
-              <p>Hela kostnadsbilden, varje identifierat fynd och nästa steg — skickad till er inkorg.</p>
+              <CardTitle>Er samlade rapport, som PDF.</CardTitle>
+              <CardBody>
+                Hela kostnadsbilden, varje identifierat fynd och nästa steg —
+                skickad till er inkorg.
+              </CardBody>
               {submitState === 'success' ? (
                 <SuccessMsg>Rapporten är på väg — kolla er inkorg.</SuccessMsg>
               ) : (
@@ -547,18 +462,21 @@ export default function Portfolio() {
                       {submitState === 'loading' ? 'Skickar…' : 'Skicka rapporten →'}
                     </Button>
                   </FormRow>
-                  {submitState === 'error' && submitError && <ErrorHint>{submitError}</ErrorHint>}
+                  {submitState === 'error' && submitError && (
+                    <ErrorHint>{submitError}</ErrorHint>
+                  )}
                 </>
               )}
             </Card>
 
+            {/* ── Koppla bokföringen ────────────────────────────────────── */}
             <Card>
               <CardLabel>Hela leverantörsbilden</CardLabel>
-              <h3>Koppla bokföringen — bevaka allt.</h3>
-              <p>
+              <CardTitle>Koppla bokföringen — bevaka allt.</CardTitle>
+              <CardBody>
                 Med Fortnox eller Visma läser Arvo hela er leverantörsreskontra —
                 varje avtal bevakat, varje prisrörelse fångad, utan ett enda mail.
-              </p>
+              </CardBody>
               <Button as={Link} to="/connect" $variant="gradient" $size="md">
                 Koppla Fortnox / Visma →
               </Button>
@@ -566,24 +484,32 @@ export default function Portfolio() {
           </>
         )}
 
+        {/* ── Tomt kontor ───────────────────────────────────────────────── */}
         {analyses !== null && suppliers.length === 0 && (
           <>
-            <StampRow>
-              <Stamp>Arvo-kontoret · {today}</Stamp>
-            </StampRow>
-            <EmptyState>
-              <h3>Ert kontor väntar på sin första faktura.</h3>
-              <p>
+            <Card>
+              <BriefingHead>
+                <div className="bh-top">
+                  <span className="bh-stamp">ARVO-KONTORET · {today}</span>
+                </div>
+                <div className="bh-main">
+                  <h2 className="bh-supplier">Ert Arvo-kontor.</h2>
+                </div>
+                <div className="bh-row">
+                  <span className="bh-chip">Väntar på er första faktura</span>
+                </div>
+              </BriefingHead>
+              <EmptyBody>
                 Mejla en leverantörsfaktura (PDF) till adressen nedan, eller
                 ladda upp den direkt — analysen landar här inom ett par minuter.
-              </p>
+              </EmptyBody>
               <AddressChip style={{ maxWidth: 340, margin: '0 auto 20px' }}>
                 faktura@inbox.arvoflow.se
               </AddressChip>
               <Button as={Link} to="/testa-faktura" $variant="gradient" $size="md">
                 Analysera en faktura direkt →
               </Button>
-            </EmptyState>
+            </Card>
           </>
         )}
       </Column>
