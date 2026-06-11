@@ -462,7 +462,7 @@ export const fixtures = [
     mixed: true,
     employees: 5,
     industry: 'konsult',
-    // secAnnual=Math.round(895*12)=10740, p25=9000, gross=1740, net=1392
+    // secAnnual=Math.round(895*12)=10740, p25=10200, gross=540, net=432
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -475,9 +475,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10740,
-      suggestedAnnual: 9000,
-      grossSaving:     1740,
-      netSaving:       1392,
+      suggestedAnnual: 10200,
+      grossSaving:     540,
+      netSaving:       432,
     },
   },
 
@@ -563,14 +563,7 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 1000,
       secondarySeatCount:           null,
     },
-    secondary: {
-      category:        'bredband',
-      speedMbit:       1000,
-      currentAnnual:   10200,
-      suggestedAnnual: 9000,
-      grossSaving:     1200,
-      netSaving:       960,
-    },
+    secondary: null, // kund på/under verifierat listpris (Tele2 849 kr/mån / Bas 299) — ingen besparing får claimas (precision eller tystnad)
   },
 
   // ── edge-20 ──────────────────────────────────────────────────────────────────
@@ -588,7 +581,7 @@ export const fixtures = [
     mixed: true,
     employees: 8,
     industry: 'konsult',
-    // secAnnual=Math.round(1495*12)=17940, p25=9000, gross=8940, net=7152
+    // secAnnual=Math.round(1495*12)=17940, p25=10200, gross=7740, net=6192
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -601,9 +594,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   17940,
-      suggestedAnnual: 9000,
-      grossSaving:     8940,
-      netSaving:       7152,
+      suggestedAnnual: 10200,
+      grossSaving:     7740,
+      netSaving:       6192,
     },
   },
 

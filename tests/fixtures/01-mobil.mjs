@@ -677,9 +677,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 9000,
-      grossSaving:     2940,
-      netSaving:       2352,
+      suggestedAnnual: 10200,
+      grossSaving:     1740,
+      netSaving:       1392,
     },
   },
 

@@ -29,6 +29,8 @@ Innan varje leverans — kod, kopia, strategi, mail, design — ställ en fråga
 
 Toppen av spjutspetsen innebär att vi aldrig nöjer oss med bra. Vi söker det som är svårt att tro är möjligt — och sedan levererar det.
 
+**Arbetsinsats är aldrig en faktor.** Lösningar skopas på risk och kundvärde — aldrig på hur mycket arbete de kostar. Föreslå aldrig en mindre lösning för att den större är jobbig; föreslå den mindre ENDAST när den är bättre för kunden. Pressa varje lösning till sin extrem — men håll den realistisk: extremen är den mest kompromisslösa versionen som faktiskt kan byggas och verifieras, inte den mest spektakulära som inte kan det.
+
 Varje lösning ska vara **kreativ** (oväntad vinkel, inte den uppenbara), **innovativ** (bryt mönstret när mönstret är genomsnittligt) och **effektiv** (rätt sak, snabbast möjliga väg, inget slöseri). De tre egenskaperna gäller alltid — inte när det är bekvämt.
 
 ---
@@ -486,7 +488,13 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 - ✅ Ny avgift-detektorn: `lib/fee-signals.js` — leverantörens egna höjningsmarkörer ("Ny tariff", "prisjustering"…) i radbeskrivningar blir fyndets öppningsmening + annualiserad kostnad
 - ✅ Maskinhyran in i analysen: per-maskin-pris mot A4-norm (200–400 kr/mån) + bindningstid mot 36-månadersnorm, med ärlig A3-reservation
 - ✅ Projektionskravet (SKUGGA): `judgeProjection` — AI:ns `projectedRecurringAmount` får avvika max 2 % från deterministiska radsumman utan prorata-rader; armeras via `PROJEKTIONSKRAV_ENFORCE=1`
-- ✅ Regressionssvit `tests/svea-print.mjs` (18 tester) låser faktura 440192 för alltid · cache bumpat till `pdf:result:v6`
+- ✅ Regressionssvit `tests/svea-print.mjs` (18 tester) låser faktura 440192 för alltid
+
+**Åtgärdat (revisionsgrinden + sifferrevisorn — 2026-06-11):**
+- ✅ **Revisionsgrinden** (`lib/revision-gate.js`): regel 4 som ARKITEKTUR — oreviderade kategorier kortsluter i `recommend()` till talfritt offert-läge FÖRE all beräkning och AI. Endast kategorier med dedikerad regressionssvit (`REVIDERADE_KATEGORIER`: saas-productivity, mobil, bredband, el, skrivarleasing, kortterminal) får visa siffror. Okända fel kan inte längre nå kund — de kan bara drabba ytor som redan bär maskinlås
+- ✅ **Sifferrevisorn** (`scripts/sifferrevisor.mjs`, pre-commit): bevisar tystnadsgarantin maskinellt — kör `recommend()` offline för VARJE oreviderad kategori (21 st) och underkänner commit om någon läcker en siffra (fält eller copy); verifierar att varje grindad kategori pekar på sviter som existerar. Fångade sitt första fel på första körningen (`saas-devtools` fanns inte i CATEGORIES)
+- ✅ **Städpass skuld #6 KLAR:** alla 30 röda tester gröna — 24 fixturer + BI-03/BI-08 hade driftat från medvetna priskorrigeringar (bredband-p25 9 000→10 200 = Tele2 849×12 verifierat; mobil-p25 →3 588 = Tele2 Bas 299×12). 7 fixturer fick `secondary: null` — kunder på verifierat listpris ska inte loviseras besparingar. Sviten: **1 270/1 270 grönt, 0 fel**
+- ✅ Pre-commit-kedjan nu: price-audit → claims-audit → sifferrevisorn · cache bumpat till `pdf:result:v7`
 
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI
@@ -497,7 +505,7 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 4. **Theme-migrering:** 1/20 sidor konsumerar theme.js (Prospect = mall, 0 hex) — migrera per sida när den ändå rörs (regel 6)
 4b. **Arvo-kontoret:** Portfolio → e-postnycklat premiumrum i dossier-språket: fyndflöde, bevakningsstatus, kontraktskalender (`contract_timelines` saknar vy), "detta hände sedan sist". Byggs som EN enhet med e-post-ingesten — mailen är dörren, kontoret är rummet
 5. **extraction-integrity som GATE:** varnar idag, ska stoppa obalanserade analyser → granskningskö ("balanskravet")
-6. **30 pre-existerande testfel:** bredband/Gbit-snappning + CRM-benchmarks driftade från branchindex-data — städpass
+6. ~~30 pre-existerande testfel~~ — ✅ KLART 2026-06-11 (sviten 1 270/1 270). Nästa: kategorier ut ur revisionsgrindens tystnad en i taget — priset är alltid fixturfaktura + svit + grönt i sifferrevisorn
 7. **Migrationer:** 4 filer som körs i ordning ur minnet — en samlad migrate-runner
 
 ---

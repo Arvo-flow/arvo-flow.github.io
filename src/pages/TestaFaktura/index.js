@@ -1655,7 +1655,9 @@ const TestaFaktura = () => {
                       ? 'Beräkna exakt besparing per år'
                       : (result.recommendation?.netSaving ?? 0) > 0
                         ? 'Säkra besparingen — kräver offert'
-                        : 'Kräver offert — volymdata behövs.'}
+                        : result.recommendation?.revisionGate === 'unaudited'
+                          ? 'Kräver offert — Arvo gör en manuell genomgång'
+                          : 'Kräver offert — volymdata behövs.'}
                   </strong>
                   <p>
                     {result.recommendation?.clickRateAnalysis

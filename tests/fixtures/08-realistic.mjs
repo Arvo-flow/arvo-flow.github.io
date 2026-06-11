@@ -245,14 +245,7 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 1000,
       secondarySeatCount:           null,
     },
-    secondary: {
-      category:        'bredband',
-      speedMbit:       1000,
-      currentAnnual:   10188,
-      suggestedAnnual: 9000,
-      grossSaving:     1188,
-      netSaving:       950,
-    },
+    secondary: null, // kund på/under verifierat listpris (Tele2 849 kr/mån / Bas 299) — ingen besparing får claimas (precision eller tystnad)
   },
 
   // ── tele2-05 ──────────────────────────────────────────────────────────────────
@@ -1019,14 +1012,7 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 1000,
       secondarySeatCount:           null,
     },
-    secondary: {
-      category:        'bredband',
-      speedMbit:       1000,
-      currentAnnual:   10200,
-      suggestedAnnual: 9000,
-      grossSaving:     1200,
-      netSaving:       960,
-    },
+    secondary: null, // kund på/under verifierat listpris (Tele2 849 kr/mån / Bas 299) — ingen besparing får claimas (precision eller tystnad)
   },
 
   // ── combo-02 ──────────────────────────────────────────────────────────────────
@@ -1189,14 +1175,7 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           10,
     },
-    secondary: {
-      category:        'mobil',
-      seatCount:       10,
-      currentAnnual:   35880,
-      suggestedAnnual: 34080,
-      grossSaving:     1800,
-      netSaving:       1440,
-    },
+    secondary: null, // kund på/under verifierat listpris (Tele2 849 kr/mån / Bas 299) — ingen besparing får claimas (precision eller tystnad)
   },
 
   // ── combo-07 ──────────────────────────────────────────────────────────────────
@@ -1206,7 +1185,7 @@ export const fixtures = [
   // ehandel small p25=3408, p25Total=Math.round(3408*8)=27264, gross=6240, net=4992
   {
     id: 'combo-07',
-    name: 'Bredband 1 Gbit + 8 mobilabonnemang-rader — ehandel small, gross=6240, net=4992',
+    name: 'Bredband 1 Gbit + 8 mobilabonnemang-rader — ehandel small, gross=4800, net=3840',
     lineItems: [
       { type: 'recurring_subscription', description: 'Telia Fiber 1 Gbit', amount: 849 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Telia Business 1', amount: 349 },
@@ -1223,7 +1202,7 @@ export const fixtures = [
     employees: 25,
     industry: 'ehandel',
     // secondarySeatCount=8, secondarySum=2792, secAnnual=33504
-    // ehandel small p25=3408, p25Total=Math.round(3408*8)=27264, gross=6240, net=4992
+    // ehandel small p25=3408, p25Total=Math.round(3408*8)=28704, gross=4800, net=3840
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1236,9 +1215,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       8,
       currentAnnual:   33504,
-      suggestedAnnual: 27264,
-      grossSaving:     6240,
-      netSaving:       4992,
+      suggestedAnnual: 28704,
+      grossSaving:     4800,
+      netSaving:       3840,
     },
   },
 
@@ -1278,7 +1257,7 @@ export const fixtures = [
   // secAnnual=Math.round(900*12)=10800, p25=9000, gross=1800, net=Math.round(1800*0.80)=1440
   {
     id: 'combo-09',
-    name: 'Tele2: 50 mobil (17350) + 1 Gbit (900) — gross=1800, net=1440',
+    name: 'Tele2: 50 mobil (17350) + 1 Gbit (900) — gross=600, net=480',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Business Max (50 st)', amount: 17350 },
       { type: 'recurring_subscription', description: 'Tele2 Bredband 1 Gbit', amount: 900 },
@@ -1287,7 +1266,7 @@ export const fixtures = [
     mixed: true,
     employees: 50,
     industry: 'tillverkning',
-    // secAnnual=10800, p25=9000, gross=1800, net=1440
+    // secAnnual=10800, p25=10200, gross=600, net=480
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1300,18 +1279,18 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10800,
-      suggestedAnnual: 9000,
-      grossSaving:     1800,
-      netSaving:       1440,
+      suggestedAnnual: 10200,
+      grossSaving:     600,
+      netSaving:       480,
     },
   },
 
   // ── combo-10 ──────────────────────────────────────────────────────────────────
   // 15 mobil (4485) + 1 Gbit (895), mixed=true, category=mobil, employees=15
-  // secAnnual=Math.round(895*12)=10740, p25=9000, gross=1740, net=Math.round(1740*0.80)=1392
+  // secAnnual=Math.round(895*12)=10740, p25=10200, gross=1740, net=Math.round(1740*0.80)=1392
   {
     id: 'combo-10',
-    name: 'Telenor: 15 mobil (4485) + 1 Gbit (895) — gross=1740, net=1392',
+    name: 'Telenor: 15 mobil (4485) + 1 Gbit (895) — gross=540, net=432',
     lineItems: [
       { type: 'recurring_subscription', description: 'Telenor Jobbmobil Plus (15 st)', amount: 4485 },
       { type: 'recurring_subscription', description: 'Telenor Fiber 1 Gbit', amount: 895 },
@@ -1320,7 +1299,7 @@ export const fixtures = [
     mixed: true,
     employees: 15,
     industry: 'ehandel',
-    // secAnnual=10740, p25=9000, gross=1740, net=1392
+    // secAnnual=10740, p25=10200, gross=540, net=432
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1333,9 +1312,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10740,
-      suggestedAnnual: 9000,
-      grossSaving:     1740,
-      netSaving:       1392,
+      suggestedAnnual: 10200,
+      grossSaving:     540,
+      netSaving:       432,
     },
   },
 
@@ -1806,7 +1785,7 @@ export const fixtures = [
   // byraer small p25=3408, p25Total=Math.round(3408*2)=6816, gross=11976-6816=5160, net=Math.round(5160*0.80)=4128
   {
     id: 'misc-20',
-    name: 'Bredband 500 Mbit + 2 premium-mobilabonnemang — byraer small, gross=5160, net=4128',
+    name: 'Bredband 500 Mbit + 2 premium-mobilabonnemang — byraer small, gross=4800, net=3840',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Fiber 500 Mbit', amount: 700 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Tele2 Business Premium 1', amount: 499 },
@@ -1816,7 +1795,7 @@ export const fixtures = [
     mixed: true,
     employees: 20,
     industry: 'konsult',
-    // byraer small p25=3408, secondarySeatCount=2, secAnnual=11976, p25Total=6816, gross=5160, net=4128
+    // byraer small p25=3408, secondarySeatCount=2, secAnnual=11976, p25Total=7176, gross=4800, net=3840
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1829,9 +1808,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       2,
       currentAnnual:   11976,
-      suggestedAnnual: 6816,
-      grossSaving:     5160,
-      netSaving:       4128,
+      suggestedAnnual: 7176,
+      grossSaving:     4800,
+      netSaving:       3840,
     },
   },
 
@@ -1849,7 +1828,7 @@ export const fixtures = [
     employees: 6,
     industry: 'konsult',
     // "FTTH 1 Gbit" matchar /ftth/ → secondaryLine; speed "1 Gbit" → speedMbit=1000
-    // secAnnual=Math.round(895*12)=10740, p25=9000, gross=1740, net=Math.round(1740*0.80)=1392
+    // secAnnual=Math.round(895*12)=10740, p25=10200, gross=540, net=Math.round(540*0.80)=432
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1862,9 +1841,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10740,
-      suggestedAnnual: 9000,
-      grossSaving:     1740,
-      netSaving:       1392,
+      suggestedAnnual: 10200,
+      grossSaving:     540,
+      netSaving:       432,
     },
   },
 

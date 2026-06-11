@@ -82,10 +82,13 @@ describe('BI-02 · getBenchmark — matrix-lookup', () => {
 });
 
 // ── BI-03 ─────────────────────────────────────────────────────────────────────
-// requiresVolumeData-kategorier → getBenchmark returnerar null
+// requiresVolumeData-kategorier → getBenchmark returnerar null.
+// OBS: saas-crm och saas-finance flyttade UT ur listan (kalibrerade estimated-
+// benchmarks juni 2026 — Pipedrive/Zoho/HubSpot resp. Fortnox/Visma) — de
+// asserteras nedan som estimated istället.
 describe('BI-03 · requiresVolumeData-kategorier → null', () => {
   const volumeCats = [
-    'saas-crm', 'saas-finance', 'saas-creative', 'saas-other',
+    'saas-creative', 'saas-other',
     'leasing-bil', 'utrustningsleasing', 'serverhosting',
     'städ-rengöring', 'transport-frakt', 'kontorsmaterial',
   ];
@@ -93,6 +96,14 @@ describe('BI-03 · requiresVolumeData-kategorier → null', () => {
     test(`${cat} → null`, () => {
       const bm = getBenchmark({ category: cat, industry: 'konsult', employees: 10 });
       assert.strictEqual(bm, null, `${cat} ska returnera null (requiresVolumeData)`);
+    });
+  }
+  for (const cat of ['saas-crm', 'saas-finance']) {
+    test(`${cat} → estimated benchmark (kalibrerad juni 2026)`, () => {
+      const bm = getBenchmark({ category: cat, industry: 'konsult', employees: 10 });
+      assert.ok(bm, `${cat} ska ha benchmark`);
+      assert.equal(bm.source, 'estimated', `${cat} är estimat tills livedata bär`);
+      assert.ok(bm.p25 > 0 && bm.p25 <= bm.median, `${cat}: p25 ≤ median`);
     });
   }
 });
@@ -215,9 +226,11 @@ describe('BI-08 · Bredband speedTierBenchmarks', () => {
       assert.ok(t.p25 < t.median, `${s} Mbit: p25 (${t.p25}) >= median (${t.median})`);
     });
   }
-  test('1000 Mbit verifierat listpris ~9000–10800 kr/år (Tele2/Bahnhof)', () => {
+  test('1000 Mbit verifierat listpris: p25 = 10 200 (Tele2 849×12), median = 10 800', () => {
+    // p25 höjdes medvetet från 9 000: ett mål under dokumenterat listpris är ett
+    // löfte ingen kund kan realisera (samma felklass som print-kortets 0,275).
     const t = tiers[1000];
-    assert.strictEqual(t.p25,    9000);
+    assert.strictEqual(t.p25,    10200);
     assert.strictEqual(t.median, 10800);
   });
 });

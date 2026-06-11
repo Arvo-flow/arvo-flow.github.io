@@ -46,6 +46,12 @@ if [ $STATUS -eq 0 ]; then
   STATUS=$?
 fi
 
+# Sifferrevisorn — tystnadsgarantin: oreviderade kategorier visar aldrig siffror (regel 4)
+if [ $STATUS -eq 0 ]; then
+  node scripts/sifferrevisor.mjs
+  STATUS=$?
+fi
+
 if [ $STATUS -ne 0 ]; then
   echo ""
   echo "  Commit blockerad av price-audit. Åtgärda felen ovan och försök igen."

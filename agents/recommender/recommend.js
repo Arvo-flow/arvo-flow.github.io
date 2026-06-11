@@ -21,6 +21,7 @@ import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
+import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -785,6 +786,18 @@ export async function recommend(input, opts = {}) {
     throw new RecommenderError(
       'input måste innehålla customer + categorized + invoice'
     );
+  }
+
+  // Revisionsgrinden (regel 4 som arkitektur): oreviderade kategorier får ALDRIG
+  // visa siffror — de faller till ärligt offert-läge med talfri copy, före all
+  // beräkning och före AI-anropet. Väg in: dedikerad regressionssvit + grönt i
+  // sifferrevisorn. Se lib/revision-gate.js.
+  {
+    const _cat = input.categorized.category;
+    if (!isAudited(_cat)) {
+      console.log(`[revisionsgrind] '${_cat}' är oreviderad → offert-läge utan siffror`);
+      return ungatedQuoteResponse(_cat, CATEGORIES[_cat]?.label ?? null);
+    }
   }
 
   // Hämta live SEK/USD-kurs för USD-prissatta produkter (Atlassian, Slack, Zoom, Google).

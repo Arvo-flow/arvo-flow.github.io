@@ -166,14 +166,7 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 1000,
       secondarySeatCount:           null,
     },
-    secondary: {
-      category:        'bredband',
-      speedMbit:       1000,
-      currentAnnual:   10188,
-      suggestedAnnual: 9000,
-      grossSaving:     1188,
-      netSaving:       950,
-    },
+    secondary: null, // kund på/under verifierat listpris (Tele2 849 kr/mån / Bas 299) — ingen besparing får claimas (precision eller tystnad)
   },
 
   // ── comb-05 ──────────────────────────────────────────────────────────────────
@@ -201,14 +194,7 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 1000,
       secondarySeatCount:           null,
     },
-    secondary: {
-      category:        'bredband',
-      speedMbit:       1000,
-      currentAnnual:   9588,
-      suggestedAnnual: 9000,
-      grossSaving:     588,
-      netSaving:       470,
-    },
+    secondary: null, // kund på/under verifierat listpris (Tele2 849 kr/mån / Bas 299) — ingen besparing får claimas (precision eller tystnad)
   },
 
   // ── comb-06 ──────────────────────────────────────────────────────────────────
@@ -340,9 +326,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 9000,
-      grossSaving:     2940,
-      netSaving:       2352,
+      suggestedAnnual: 10200,
+      grossSaving:     1740,
+      netSaving:       1392,
     },
   },
 
@@ -548,9 +534,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 9000,
-      grossSaving:     2940,
-      netSaving:       2352,
+      suggestedAnnual: 10200,
+      grossSaving:     1740,
+      netSaving:       1392,
     },
   },
 
@@ -630,14 +616,7 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 1000,
       secondarySeatCount:           null,
     },
-    secondary: {
-      category:        'bredband',
-      speedMbit:       1000,
-      currentAnnual:   10200,
-      suggestedAnnual: 9000,
-      grossSaving:     1200,
-      netSaving:       960,
-    },
+    secondary: null, // kund på/under verifierat listpris (Tele2 849 kr/mån / Bas 299) — ingen besparing får claimas (precision eller tystnad)
   },
 
   // ── comb-20 ──────────────────────────────────────────────────────────────────
@@ -782,9 +761,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 9000,
-      grossSaving:     2940,
-      netSaving:       2352,
+      suggestedAnnual: 10200,
+      grossSaving:     1740,
+      netSaving:       1392,
     },
   },
 
@@ -843,9 +822,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   59940,
-      suggestedAnnual: 9000,
-      grossSaving:     50940,
-      netSaving:       40752,
+      suggestedAnnual: 10200,
+      grossSaving:     49740,
+      netSaving:       39792,
     },
   },
 
@@ -1258,7 +1237,7 @@ export const fixtures = [
   //   p25Total=3408*10=34080, gross=41880-34080=7800, net=Math.round(7800*0.80)=6240
   {
     id: 'comb-39',
-    name: 'Bredband + 10 SIM-rader, tillverkning small bucket — p25=3408×10=34080',
+    name: 'Bredband + 10 SIM-rader, tillverkning small bucket — p25=3588×10=35880',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 699 },
       { type: 'recurring_subscription', description: 'SIM-kort Jobbmobil 1', amount: 349 },
@@ -1288,9 +1267,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       10,
       currentAnnual:   41880,
-      suggestedAnnual: 34080,
-      grossSaving:     7800,
-      netSaving:       6240,
+      suggestedAnnual: 35880,
+      grossSaving:     6000,
+      netSaving:       4800,
     },
   },
 
@@ -1621,9 +1600,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 9000,
-      grossSaving:     2940,
-      netSaving:       2352,
+      suggestedAnnual: 10200,
+      grossSaving:     1740,
+      netSaving:       1392,
     },
   },
 
