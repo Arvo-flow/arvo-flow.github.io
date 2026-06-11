@@ -55,6 +55,39 @@ function secretOk(provided) {
 
 const sha16 = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
 
+// ── Bilagehämtning — Resend skickar ALDRIG innehåll i webhooken ────────────────
+// email.received-payloaden innehåller bara metadata (id, filename, content_type).
+// Innehållet hämtas i ett andra steg: lista bilagor → signerad download_url → bytes.
+// (Designat så av Resend för stora filer i serverless-miljöer.)
+
+export async function fetchInboundPdfs(emailId, { fetchImpl = fetch } = {}) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || !emailId) return [];
+  const list = await fetchImpl(`https://api.resend.com/emails/receiving/${emailId}/attachments`, {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  if (!list.ok) throw new Error(`bilagelistning misslyckades (HTTP ${list.status})`);
+  const { data } = await list.json();
+
+  const pdfMeta = (data ?? [])
+    .filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''))
+    .slice(0, MAX_PDFS_PER_MAIL);
+
+  const out = [];
+  for (const a of pdfMeta) {
+    const filename = a.filename ?? 'faktura.pdf';
+    if (a.size > MAX_PDF_BYTES) {
+      out.push({ filename, tooBig: true });
+      continue;
+    }
+    const dl = await fetchImpl(a.download_url);
+    if (!dl.ok) throw new Error(`bilagenedladdning misslyckades (HTTP ${dl.status})`);
+    const buf = Buffer.from(await dl.arrayBuffer());
+    out.push({ filename, content: buf.toString('base64') });
+  }
+  return out;
+}
+
 /** Magic link in i kontoret — samma tabell/format som request-magic-link.mjs. */
 async function mintPortalLink(db, email) {
   if (!db) return null;
@@ -139,12 +172,16 @@ export default async function handler(req, res) {
     body = req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
   } catch { return send(res, 400, { error: 'ogiltig JSON' }); }
 
-  if (body.type !== 'email.received') return send(res, 200, { ok: true, skipped: body.type });
+  if (body.type !== 'email.received') {
+    console.log(`[inbound-email] hoppar över event av typ '${body.type}'`);
+    return send(res, 200, { ok: true, skipped: body.type });
+  }
   const data = body.data ?? {};
 
   const sender = (Array.isArray(data.from) ? data.from[0]?.email ?? data.from[0] : data.from?.email ?? data.from)
     ?.toString().trim().toLowerCase();
   if (!sender || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sender)) {
+    console.log('[inbound-email] hoppar över: ogiltig avsändare');
     return send(res, 200, { ok: true, skipped: 'ogiltig avsändare' });
   }
 
@@ -155,7 +192,10 @@ export default async function handler(req, res) {
   if (kv) {
     try {
       const seen = await kv.set(`inbound:done:${mailId}`, 1, { ex: 86400, nx: true });
-      if (seen === null) return send(res, 200, { ok: true, skipped: 'redan hanterad' });
+      if (seen === null) {
+        console.log(`[inbound-email] hoppar över: ${mailId} redan hanterad (idempotens)`);
+        return send(res, 200, { ok: true, skipped: 'redan hanterad' });
+      }
     } catch { /* non-fatal */ }
   }
 
@@ -169,9 +209,20 @@ export default async function handler(req, res) {
     } catch { /* non-fatal */ }
   }
 
-  const pdfs = (data.attachments ?? [])
+  // Inline-innehåll om Resend någonsin skickar det — annars hämtas via Attachments-API:t
+  // (webhooken innehåller ALDRIG innehåll i dag, bara metadata — Resend-designval).
+  let pdfs = (data.attachments ?? [])
     .filter((a) => (a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? '')) && a.content)
     .slice(0, MAX_PDFS_PER_MAIL);
+
+  if (pdfs.length === 0 && (data.attachments ?? []).length > 0) {
+    try {
+      pdfs = await fetchInboundPdfs(mailId);
+    } catch (err) {
+      console.error('[inbound-email] bilagehämtning misslyckades:', err.message);
+    }
+  }
+  console.log(`[inbound-email] från=${sha16(sender)} bilagor=${(data.attachments ?? []).length} pdf=${pdfs.length}`);
 
   const db = getDb();
   const results = [];
@@ -184,6 +235,10 @@ export default async function handler(req, res) {
   for (const att of pdfs) {
     const filename = att.filename ?? 'faktura.pdf';
     try {
+      if (att.tooBig) {
+        results.push({ ok: false, filename, message: 'Filen är större än 6 MB — mejla en mindre version.' });
+        continue;
+      }
       const pdfBase64 = att.content;
       if (Buffer.byteLength(pdfBase64, 'base64') > MAX_PDF_BYTES) {
         results.push({ ok: false, filename, message: 'Filen är större än 6 MB — mejla en mindre version.' });
