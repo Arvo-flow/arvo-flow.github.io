@@ -66,7 +66,10 @@ export async function fetchInboundPdfs(emailId, { fetchImpl = fetch } = {}) {
   const list = await fetchImpl(`https://api.resend.com/emails/receiving/${emailId}/attachments`, {
     headers: { Authorization: `Bearer ${key}` },
   });
-  if (!list.ok) throw new Error(`bilagelistning misslyckades (HTTP ${list.status})`);
+  if (!list.ok) {
+    const body = await list.text().catch(() => '');
+    throw new Error(`bilagelistning misslyckades (HTTP ${list.status}): ${body.slice(0, 300)}`);
+  }
   const { data } = await list.json();
 
   const pdfMeta = (data ?? [])
