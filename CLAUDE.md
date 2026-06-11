@@ -212,10 +212,15 @@ api/inbound-email.mjs            ← webhook email.received, maxDuration 60
 (`getAnalysesByEmail`, slås ihop med fingerprint-historiken). Klienten får ALDRIG
 fråga på rå e-postadress.
 
-**Engångs-setup (extern, ej körbar via verktyg):**
-1. Resend → Domains: inbound-domän `inbox.arvoflow.se` (MX → Resend)
-2. Resend → Webhooks: `email.received` → `https://arvoflow.se/api/inbound-email?secret=<INBOUND_WEBHOOK_SECRET>`
-3. Vercel env: `INBOUND_WEBHOOK_SECRET` (slumpad, samma värde som i webhook-URL:en)
+**Engångs-setup — ✅ KLAR 2026-06-11 (verifierad live end-to-end: mail → analys → svarsmail → kontoret):**
+1. ✅ Resend → Domains: `inbox.arvoflow.se` Verified (MX/SPF/DKIM i Loopia)
+2. ✅ Resend → Webhooks: `email.received` → `https://arvoflow.se/api/inbound-email?secret=<INBOUND_WEBHOOK_SECRET>`
+3. ✅ Vercel env: `INBOUND_WEBHOOK_SECRET` + `RESEND_API_KEY` (Full access — sending-only-nycklar får 400 på receiving-API:t)
+
+**Resend-läxor (inlåsta i tests/inbound-attachments.mjs):**
+- `email.received`-webhooken bär ALDRIG bilageinnehåll — endast metadata. PDF:er hämtas i andra steg: `GET /emails/receiving/{email_id}/attachments` → signerad `download_url`
+- Loopias negativa DNS-cache är 24 h (SOA minttl) — lägg ALLTID in DNS-poster FÖRE domänregistrering i Resend, annars fastnar "Checking DNS" på cachat NXDOMAIN
+- Tysta tidiga utgångar är förbjudna — varje return i inbound-handlern loggar sitt skäl
 
 ---
 
@@ -504,7 +509,7 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI
-2. **E-post-ingest, nästa steg:** extern setup (MX/webhook/env) → personliga skuggadresser per kund → Outlook OAuth (historisk skörd) → Gmail efter CASA. Kontorets dossier-UI byggs när ingesten ger innehåll
+2. **E-post-ingest, nästa steg:** ~~extern setup (MX/webhook/env)~~ ✅ LIVE 2026-06-11 (verifierad end-to-end) → personliga skuggadresser per kund → Outlook OAuth (historisk skörd) → Gmail efter CASA. Kontorets dossier-UI byggs när ingesten ger innehåll
 2b. **Rad-först fas 2–3:** när skuggloggen visat flerkategori-frekvensen — `aggregateByCategory` blir källan, specialfälten (primaryComponentMonthly m.fl.) blir härledda vyer, konsumenter flyttas en i taget med korpusdiff som skyddsnät
 2c. **Balanskravet armeras:** mät `[balanskrav]`-skuggloggen ~1 vecka → <2 % falsklarm → sätt `BALANSKRAV_ENFORCE=1` i Vercel
 3. **Dubbla alertvägar:** `api/cron/run-price-alerts.mjs` + `scripts/notify-price-changes.mjs` — extrahera gemensam lib
