@@ -518,6 +518,17 @@ export const BRANCHINDEX = {
     // Serviceavtal ingår i de flesta managed print-avtal.
     // p25 = Kyocera/Brother-klass (lägst TCO). Median = Ricoh/Konica Minolta-klass (marknadsledare).
     note: 'Totalt per år: skrivarhyra + klickavtal S/V + serviceavtal (per driftsställe). Kommersiella SMF-priser maj 2026 (privat sektor): A4 MFP lease 200–400 kr/mån, klick S/V 0,08–0,15 kr/sida, klick färg 0,55–1,00 kr/sida. OBS: Kammarkollegiets offentligupphandlade priser (0,05–0,08 kr/sida) gäller INTE SMF utan offentligupphandlad volym.',
+    // EN källa för klick- och leasinganalys (regel 1): analyzeClickRates i recommend.js
+    // läser HÄRIFRÅN — aldrig egna konstanter. source: estimated tills livedata/partner-
+    // avtal bär → kundytor MÅSTE märka som estimat och visa BANDET, aldrig en punkt.
+    clickRateBenchmarks: {
+      source: 'estimated',
+      bw:    { low: 0.08, high: 0.15 },   // kr/sida S/V, kommersiella SMF-avtal maj 2026
+      color: { low: 0.55, high: 1.00 },   // kr/sida färg
+      leasePerMachineMonthly: { low: 200, high: 400 }, // A4 MFP — A3 ligger högre, kräver maskinmodell
+      contractMonthsNorm: 36,
+      note: 'Kommersiella SMF-klickpriser maj 2026 (privat sektor, estimat). Kammarkollegiets offentligupphandlade priser gäller INTE SMF.',
+    },
     alternatives: [
       { supplier: 'Konica Minolta SMB Solutions', positioning: 'Stark SMF-portfölj, konkurrenskraftiga klickavtal, rikstäckande service',       reliability: 0.95 },
       { supplier: 'Ricoh Sverige',                positioning: 'Bäst total cost of ownership för mellanstor printvolym, stark SLA',              reliability: 0.94 },

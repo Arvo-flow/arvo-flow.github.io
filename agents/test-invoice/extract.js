@@ -8,7 +8,7 @@
 // Output: tool_use + tool_choice för deterministisk strukturerad output.
 
 import Anthropic from '@anthropic-ai/sdk';
-import { judgeLineArithmetic } from '../../lib/extraction-integrity.js';
+import { judgeLineArithmetic, judgeProjection } from '../../lib/extraction-integrity.js';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
@@ -802,12 +802,28 @@ export function aggregateLineItems(rawInput) {
     return s + fullMonthly;
   }, 0);
 
-  const projected =
-    proRataLines.length > 0
-      ? recurringAmount + proRataProjected
-      : typeof raw.projectedRecurringAmount === 'number' && raw.projectedRecurringAmount > 0
-        ? raw.projectedRecurringAmount
-        : recurringAmount;
+  // Projektionskravet: utan prorata-rader får AI:ns projektion avvika max 2 %
+  // från den deterministiska radsumman — annars är det ett AI-räknat tal på väg
+  // in i den deterministiska kedjan (regel 2). SKUGGA → PROJEKTIONSKRAV_ENFORCE=1.
+  let projected;
+  if (proRataLines.length > 0) {
+    projected = recurringAmount + proRataProjected;
+  } else if (typeof raw.projectedRecurringAmount === 'number' && raw.projectedRecurringAmount > 0) {
+    const pj = judgeProjection({
+      projectedFromAI: raw.projectedRecurringAmount,
+      recurringAmount,
+      proRataCount: 0,
+    });
+    const enforce = process.env.PROJEKTIONSKRAV_ENFORCE === '1';
+    if (!pj.ok) {
+      console.warn(
+        `[projektionskrav]${enforce ? '' : ' SKUGGA:'} AI-projektion ${raw.projectedRecurringAmount} avviker ${pj.deviationPct} % från radsumman ${recurringAmount} utan prorata-rader${enforce ? ' — radsumman används' : ''}`,
+      );
+    }
+    projected = !pj.ok && enforce ? recurringAmount : raw.projectedRecurringAmount;
+  } else {
+    projected = recurringAmount;
+  }
 
   return {
     supplier:                 raw.supplier,

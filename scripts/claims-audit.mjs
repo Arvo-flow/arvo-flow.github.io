@@ -28,6 +28,9 @@ const FORBIDDEN = [
   [/klart inom 48/i,            'Automationslöfte utan automation (switch-orchestratorn har stubbar)'],
   [/garanterad besparing/i,     'Besparingar är estimat eller verifierade utfall — aldrig garantier'],
   [/vi vet exakt vad ni betalar/i, 'Vi vet först när fakturan delats — regel 3'],
+  // ×0,80-läxan (Svea 440192): frontend multiplicerade backendens besparingstal med
+  // hårdkodade 0,80 → kundsiffran gick inte att räkna hem. Backend äger aritmetiken.
+  [/(estimatedAnnualSavings\w*|netSaving|grossSaving|savingPerYear)\s*\*\s*[\d.]/, 'Frontend får inte räkna om backendens besparingstal — backend äger aritmetiken (regel 1/2)', 'src-only'],
 ];
 
 // ── Kundvända ytor ────────────────────────────────────────────────────────────
@@ -57,7 +60,8 @@ for (const dir of SCAN_DIRS) {
     lines.forEach((line, i) => {
       if (line.includes('claims-ok:')) return;
       if (line.trimStart().startsWith('//') || line.trimStart().startsWith('*')) return; // kommentarer
-      for (const [re, reason] of FORBIDDEN) {
+      for (const [re, reason, scope] of FORBIDDEN) {
+        if (scope === 'src-only' && !rel.startsWith('src/')) continue;
         if (re.test(line)) {
           violations++;
           console.error(`✗ ${rel}:${i + 1} — ${re}\n    ${reason}\n    » ${line.trim().slice(0, 110)}`);

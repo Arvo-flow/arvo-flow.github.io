@@ -20,6 +20,7 @@ import { CATEGORIES } from '../categorizer/categories.js';
 import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
+import { detectFeeSignals } from '../../lib/fee-signals.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -655,10 +656,22 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
   };
 }
 
-// Managed Print click-rate benchmarks — Arvo-verifierade profilkontraktspriser (svensk marknad)
-const PRINT_BENCHMARKS = { bw: 0.065, color: 0.275 };
+// Managed Print klickanalys. Benchmarks läses ur BRANCHINDEX.skrivarleasing
+// .clickRateBenchmarks (EN källa, regel 1) — aldrig lokala konstanter.
+// Svea-läxan (faktura 440192): den gamla versionen hade (a) egna benchmarks som
+// motsade prisboken, (b) "X % mer"-copy där formeln räknade andel-av-priset,
+// (c) ett syntetiskt intervall (benchmark × 1,15), (d) billingMult-heuristik.
+// Allt här är nu bandbaserat, deterministiskt och miniräknar-reproducerbart.
 
-function analyzeClickRates(lineItems, supplierName, invoiceData = null) {
+const PRINT_PERIOD_MULTIPLIER = { monthly: 12, quarterly: 4, annual: 1 };
+
+const fmtRate = (n) => String(n).replace('.', ',');
+const fmtX    = (n) => n.toFixed(1).replace('.', ',');
+
+export function analyzeClickRates(lineItems, supplierName, invoiceData = null) {
+  const bm = BRANCHINDEX.skrivarleasing?.clickRateBenchmarks;
+  if (!bm) return null;
+
   const varItems = (lineItems ?? []).filter(l => l.type === 'variable_usage');
   let bwRate = null, bwAmount = 0;
   let colorRate = null, colorAmount = 0;
@@ -680,41 +693,91 @@ function analyzeClickRates(lineItems, supplierName, invoiceData = null) {
 
   const totalClick  = bwAmount + colorAmount;
   const colorShare  = totalClick > 0 ? colorAmount / totalClick : 0;
-  const bwGapPct    = bwRate    && bwRate    > PRINT_BENCHMARKS.bw
-    ? Math.round((bwRate    - PRINT_BENCHMARKS.bw)    / bwRate    * 100) : null;
-  const colorGapPct = colorRate && colorRate > PRINT_BENCHMARKS.color
-    ? Math.round((colorRate - PRINT_BENCHMARKS.color) / colorRate * 100) : null;
 
-  const weightedGapPct = colorShare * (colorGapPct ?? 0) + (1 - colorShare) * (bwGapPct ?? 0);
-  const priceGapScore  = Math.max(5, Math.round(100 - weightedGapPct * 1.5));
+  // Gap räknas mot BANDETS TOPP (ärligaste minimum): "X % mer" = (rate − high) / high.
+  // Andel-av-priset-formeln ((rate−bm)/rate) får ALDRIG kallas "mer än" (Svea-läxan).
+  const bwGapPct    = bwRate    && bwRate    > bm.bw.high
+    ? Math.round((bwRate    - bm.bw.high)    / bm.bw.high    * 100) : null;
+  const colorGapPct = colorRate && colorRate > bm.color.high
+    ? Math.round((colorRate - bm.color.high) / bm.color.high * 100) : null;
+
+  // priceGapScore (0–100, lägre = större gap) viktas på överprisandelen mot bandtopp.
+  const bwExcessShare    = bwRate    > bm.bw.high    ? (bwRate    - bm.bw.high)    / bwRate    : 0;
+  const colorExcessShare = colorRate > bm.color.high ? (colorRate - bm.color.high) / colorRate : 0;
+  const weightedExcess   = (colorShare * colorExcessShare + (1 - colorShare) * bwExcessShare) * 100;
+  const priceGapScore    = Math.max(5, Math.round(100 - weightedExcess * 1.5));
 
   const supplier = supplierName || 'Leverantören';
   const parts = [];
-  if (colorRate && colorGapPct > 0) {
-    const rFmt  = colorRate.toFixed(2).replace('.', ',');
-    const bmFmt = PRINT_BENCHMARKS.color.toFixed(2).replace('.', ',');
-    const hiEnd = (PRINT_BENCHMARKS.color * 1.15).toFixed(2).replace('.', ',');
-    parts.push(`${supplier} fakturerar er ${rFmt} kr/sida för färgutskrifter — välförhandlat avtalspris för professionella B2B-avtal är ${bmFmt}–${hiEnd} kr/sida. Ni betalar ${colorGapPct} % mer per färgsida än jämförbara bolag.`);
+
+  // Ny avgift/tariff-signal först — leverantörens egen dokumenterade höjning är fyndet.
+  const periodMultiplier = PRINT_PERIOD_MULTIPLIER[invoiceData?.billingPeriod] ?? 12;
+  const feeSignals = detectFeeSignals(lineItems, periodMultiplier);
+  for (const sig of feeSignals) {
+    parts.push(`Notera: leverantören har själv markerat en ny avgift på fakturan — "${sig.description}", ${sig.amount.toLocaleString('sv-SE')} kr/mån = ${sig.annualImpact.toLocaleString('sv-SE')} kr/år. En nyinförd kostnadspost är alltid förhandlingsbar.`);
   }
-  if (bwRate && bwGapPct > 0) {
-    const rFmt  = bwRate.toFixed(2).replace('.', ',');
-    const bmFmt = PRINT_BENCHMARKS.bw.toFixed(2).replace('.', ',');
-    parts.push(`Svartvita sidor kostar er ${rFmt} kr/sida — välförhandlat avtalspris är ${bmFmt} kr/sida.`);
+
+  if (colorRate && colorRate > bm.color.high) {
+    parts.push(`${supplier} fakturerar er ${fmtRate(colorRate)} kr/sida för färgutskrifter — ${fmtX(colorRate / bm.color.high)}–${fmtX(colorRate / bm.color.low)}× marknadsbandet för kommersiella SMF-klickavtal, ${fmtRate(bm.color.low)}–${fmtRate(bm.color.high)} kr/sida (estimat, maj 2026).`);
   }
+  if (bwRate && bwRate > bm.bw.high) {
+    parts.push(`Svartvita sidor kostar er ${fmtRate(bwRate)} kr/sida — marknadsbandet är ${fmtRate(bm.bw.low)}–${fmtRate(bm.bw.high)} kr/sida (${fmtX(bwRate / bm.bw.high)}–${fmtX(bwRate / bm.bw.low)}×).`);
+  }
+
+  // Maskinhyran — fakturans största fasta rad ska inte passera oanalyserad.
+  let lease = null;
+  const leaseLine = (lineItems ?? []).find(
+    l => l.type === 'recurring_subscription' && /hyra|leasing|lease/i.test(l.description ?? '')
+  );
+  if (leaseLine && leaseLine.unitPrice > 0) {
+    const contractMonths = Number((leaseLine.description ?? '').match(/avtal:?\s*(\d+)\s*mån/i)?.[1] ?? 0) || null;
+    lease = {
+      perMachineMonthly: leaseLine.unitPrice,
+      machineCount:      leaseLine.quantity ?? 1,
+      contractMonths,
+      bandLow:  bm.leasePerMachineMonthly.low,
+      bandHigh: bm.leasePerMachineMonthly.high,
+    };
+    const leaseBits = [];
+    if (leaseLine.unitPrice > bm.leasePerMachineMonthly.high) {
+      leaseBits.push(`Maskinhyran ${leaseLine.unitPrice.toLocaleString('sv-SE')} kr/mån per maskin ligger över A4-normen ${bm.leasePerMachineMonthly.low}–${bm.leasePerMachineMonthly.high} kr/mån — är maskinerna A3 kan nivån vara motiverad; ange modell i offertsteget så jämför vi exakt.`);
+    }
+    if (contractMonths && contractMonths > bm.contractMonthsNorm) {
+      leaseBits.push(`Bindningstiden ${contractMonths} månader överstiger marknadsnormen ${bm.contractMonthsNorm} — förhandlingsbart vid förnyelse.`);
+    }
+    if (leaseBits.length) parts.push(leaseBits.join(' '));
+  }
+
   parts.push(`Klickpriset är ett kontraktspris och gäller oberoende av volym. Koppla Fortnox/Visma eller ladda upp fler månaders fakturor för att beräkna er exakta besparing per år.`);
 
-  // Estimate annual savings based on actual invoice variable charges.
-  // billingMult inferred from annualCost / recurringAmount (e.g. 18000/1500 = 12 for monthly).
-  let estimatedAnnualSavingsGross = null;
-  const { variableCharges, annualCost, recurringAmount } = invoiceData ?? {};
-  if (variableCharges > 0 && recurringAmount > 0 && annualCost > 0 && weightedGapPct > 0) {
-    const billingMult   = annualCost / recurringAmount;
-    const annualVariable = variableCharges * billingMult;
-    const gross          = Math.round(annualVariable * weightedGapPct / 100);
-    if (gross > 2000) estimatedAnnualSavingsGross = gross;
+  // Besparingsband per år, deterministiskt ur fakturans egna rader:
+  // rad-besparing = radbelopp × (rate − mål) / rate, mål = bandtopp (low-änden) resp. bandbotten (high-änden).
+  // Annualisering via explicit fakturaperiod — ALDRIG härledd ur en kvot (Svea-läxan).
+  const savePerMonth = (amount, rate, target) =>
+    amount > 0 && rate > target ? amount * (rate - target) / rate : 0;
+  const lowMonthly  = savePerMonth(bwAmount, bwRate, bm.bw.high) + savePerMonth(colorAmount, colorRate, bm.color.high);
+  const highMonthly = savePerMonth(bwAmount, bwRate, bm.bw.low)  + savePerMonth(colorAmount, colorRate, bm.color.low);
+  let estimatedAnnualSavingsLow  = Math.round(lowMonthly  * periodMultiplier);
+  let estimatedAnnualSavingsHigh = Math.round(highMonthly * periodMultiplier);
+  if (estimatedAnnualSavingsHigh <= 2000) {
+    estimatedAnnualSavingsLow = null;
+    estimatedAnnualSavingsHigh = null;
   }
 
-  return { bwRate, bwBenchmark: PRINT_BENCHMARKS.bw, bwGapPct, colorRate, colorBenchmark: PRINT_BENCHMARKS.color, colorGapPct, colorSharePct: Math.round(colorShare * 100), priceGapScore, estimatedAnnualSavingsGross, reasoning: parts.join(' ') };
+  return {
+    bwRate,    bwBand:    bm.bw,    bwGapPct,
+    colorRate, colorBand: bm.color, colorGapPct,
+    colorSharePct: Math.round(colorShare * 100),
+    priceGapScore,
+    estimatedAnnualSavingsLow,
+    estimatedAnnualSavingsHigh,
+    // Bakåtkompatibelt alias = konservativa änden (bandtopp). Kundytor visar BANDET.
+    estimatedAnnualSavingsGross: estimatedAnnualSavingsLow,
+    feeSignals,
+    lease,
+    benchmarkSource: bm.source,
+    reasoning: parts.join(' '),
+  };
 }
 
 export async function recommend(input, opts = {}) {
@@ -843,11 +906,7 @@ export async function recommend(input, opts = {}) {
       const clickRateAnalysis = analyzeClickRates(
         input.invoice.lineItems,
         input.categorized.normalizedSupplier,
-        {
-          variableCharges: input.invoice.variableCharges,
-          annualCost:      input.invoice.annualCost,
-          recurringAmount: input.invoice.recurringAmount,
-        },
+        { billingPeriod: input.invoice.billingPeriod ?? 'monthly' },
       );
       const reasoning = clickRateAnalysis?.reasoning ??
         'Era utskriftskostnader drivs av klickvolymer — Arvo behöver er printhistorik för att förhandla rätt klick-avtal.';

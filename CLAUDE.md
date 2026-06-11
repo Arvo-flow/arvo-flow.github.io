@@ -479,6 +479,15 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 - ✅ Påståendeinventeringen genomförd: alla löftesformade meningar i kundytan klassade FAKTA/LÖFTE/EXEMPEL — hero-tidslinjen exempel-märkt; kvarvarande tidslöften ("inom 24/48 h") är medvetna operativa SLA:er som grundaren äger
 - ✅ Attribueringsskyddet: LFL-prompten ger fakturerat à-pris per tier + ATTRIBUERING-regel (per-seat-total får aldrig kallas licenspris)
 
+**Åtgärdat (Svea-läxan, print-kortet — 2026-06-11):**
+- ✅ Print-benchmarken: lokala `PRINT_BENCHMARKS` (0,065/0,275 — motsade prisboken) raderade; `analyzeClickRates` läser `BRANCHINDEX.skrivarleasing.clickRateBenchmarks` (S/V 0,08–0,15 · färg 0,55–1,00, märkt estimat) och visar BANDET — aldrig en punkt eller syntetiskt intervall (×1,15-fabrikatet borta)
+- ✅ ×0,80-läxan: frontend multiplicerade backendens besparingstal med hårdkodade 0,80 (85 440 ≠ kodens tal) — borttaget; claims-audit blockerar nu all frontend-aritmetik på besparingsfält (`src-only`-regel)
+- ✅ Etikettsemantik: "X % mer" beräknas alltid (pris−bandtopp)/bandtopp — andel-av-priset-formeln får aldrig kallas "mer än" (85-felet)
+- ✅ Ny avgift-detektorn: `lib/fee-signals.js` — leverantörens egna höjningsmarkörer ("Ny tariff", "prisjustering"…) i radbeskrivningar blir fyndets öppningsmening + annualiserad kostnad
+- ✅ Maskinhyran in i analysen: per-maskin-pris mot A4-norm (200–400 kr/mån) + bindningstid mot 36-månadersnorm, med ärlig A3-reservation
+- ✅ Projektionskravet (SKUGGA): `judgeProjection` — AI:ns `projectedRecurringAmount` får avvika max 2 % från deterministiska radsumman utan prorata-rader; armeras via `PROJEKTIONSKRAV_ENFORCE=1`
+- ✅ Regressionssvit `tests/svea-print.mjs` (18 tester) låser faktura 440192 för alltid · cache bumpat till `pdf:result:v6`
+
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI
 2. **E-post-ingest, nästa steg:** extern setup (MX/webhook/env) → personliga skuggadresser per kund → Outlook OAuth (historisk skörd) → Gmail efter CASA. Kontorets dossier-UI byggs när ingesten ger innehåll

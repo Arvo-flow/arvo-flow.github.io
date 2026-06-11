@@ -1629,14 +1629,15 @@ const TestaFaktura = () => {
                     </Reasoning>
                   </>
                 )}
-                {result.recommendation?.clickRateAnalysis?.estimatedAnnualSavingsGross > 0 ? (
+                {result.recommendation?.clickRateAnalysis?.estimatedAnnualSavingsHigh > 0 ? (
                   <EstimateSavingsBlock>
                     <div className="estimate-header">
                       <span className="kicker">Identifierat besparingsgap</span>
                       <span className="estimate-badge">Uppskattning</span>
                     </div>
-                    <span className="amount">≈ +{formatNum(Math.round(result.recommendation.clickRateAnalysis.estimatedAnnualSavingsGross * 0.80))}&nbsp;kr/år</span>
-                    <span className="unit">Baserat på er faktiska klickkostnad × 12 månader · exakt belopp bekräftas med offert</span>
+                    {/* Backend äger aritmetiken (regel 1/2) — frontend renderar bandet, räknar aldrig om. */}
+                    <span className="amount">≈ {formatNum(result.recommendation.clickRateAnalysis.estimatedAnnualSavingsLow)}–{formatNum(result.recommendation.clickRateAnalysis.estimatedAnnualSavingsHigh)}&nbsp;kr/år</span>
+                    <span className="unit">Er faktiska klickkostnad på årsbasis mot marknadsbandet (estimat) · exakt belopp bekräftas med offert</span>
                   </EstimateSavingsBlock>
                 ) : (result.recommendation?.netSaving ?? 0) > 0 ? (
                   <EstimateSavingsBlock>
