@@ -106,58 +106,118 @@ async function mintPortalLink(db, email) {
 }
 
 // ── Mailsvaret — analysen i mail-form, kontoret som CTA ───────────────────────
+//
+// E-postklienter (Gmail!) stödjer INTE flexbox/grid — allt är tabeller med
+// inline-styles (Gmail-läxan: .row{display:flex} klistrade ihop etikett+belopp).
+// Palett och tonalitet = theme.dossier (mörk header, teal accent, serif display).
+// Regel 5: mejlets siffror och besked ska vara IDENTISKA med kontorets.
 
-function replyHtml({ results, portalLink, senderName }) {
-  const CSS = `
-  body { margin:0; padding:0; background:#f4f4f4; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
-  .wrap { max-width:560px; margin:32px auto; background:#fff; border-radius:14px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08); }
-  .header { background:#050B09; padding:26px 32px; }
-  .brand { color:#5DD6CA; font-size:12px; font-weight:600; letter-spacing:0.4em; }
-  .headline { color:#fff; font-size:21px; font-weight:700; margin:10px 0 0; }
-  .body { padding:28px 32px; }
-  .card { background:#F6FAF8; border:1px solid #D8EDE7; border-radius:10px; padding:18px 22px; margin:0 0 16px; }
-  .lbl { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#5B8070; margin-bottom:10px; }
-  .row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
-  .k { font-size:13px; color:#3A5248; } .v { font-size:14px; font-weight:600; color:#0E1A17; }
-  .v.green { color:#1B7A6E; }
-  .saving { background:#0B1612; color:#5DD6CA; border-radius:8px; padding:12px 16px; margin-top:12px; font-size:15px; font-weight:700; text-align:center; }
-  .cta { display:block; background:linear-gradient(140deg,#4ECDC4 0%,#1DB09A 52%,#178A7B 100%); color:#fff; text-align:center; text-decoration:none; padding:15px 24px; border-radius:100px; font-size:15px; font-weight:700; margin:20px 0 8px; }
-  .note { font-size:12px; color:#8AA89E; line-height:1.6; }
-  .rule { border-top:1px solid #E8F0ED; margin:20px 0; }
-  .footer { padding:18px 32px; border-top:1px solid #E8F0ED; font-size:11px; color:#9AADA8; text-align:center; line-height:1.6; }`;
+const M = {
+  bg: '#F1F6F3', card: '#FFFFFF', dark: '#050B09', band: '#0B1612',
+  teal: '#2BC4AC', tealBright: '#5DD6CA', ink: '#0E1A17', inkSoft: '#3A5248',
+  muted: '#5B8070', faint: '#8AA89E', hairline: '#E2EDE8',
+  sans: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
+  serif: "Georgia,'Times New Roman',serif",
+};
 
+const rowHtml = (label, value, { strong = false, teal = false } = {}) => `
+  <tr>
+    <td style="padding:7px 0;font-family:${M.sans};font-size:13px;color:${M.inkSoft};">${label}</td>
+    <td align="right" style="padding:7px 0;font-family:${M.sans};font-size:14px;font-weight:${strong ? 700 : 600};color:${teal ? '#1B7A6E' : M.ink};white-space:nowrap;">${value}</td>
+  </tr>`;
+
+export function buildReplySubject(results) {
+  const okCount = results.filter((r) => r.ok).length;
+  const best = results.filter((r) => r.ok).sort((a, b) => (b.netSaving ?? 0) - (a.netSaving ?? 0))[0];
+  if (best?.netSaving > 0) {
+    return `Er analys: ${best.supplier ?? 'fakturan'} — ${fmtNumber(best.netSaving)} kr/år i identifierad nettobesparing`;
+  }
+  if (okCount > 0) {
+    const names = results.filter((r) => r.ok).map((r) => r.supplier).filter(Boolean).join(', ');
+    return `Er analys är klar — ${names || 'fakturan'}`;
+  }
+  return 'Vi kunde inte analysera ert mail';
+}
+
+export function replyHtml({ results, portalLink }) {
   const cards = results.map((r) => {
     if (!r.ok) {
-      return `<div class="card"><div class="lbl">${r.filename}</div>
-        <p class="k" style="margin:0">${r.message}</p></div>`;
+      return `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">
+        <tr><td style="background:#F6FAF8;border:1px solid ${M.hairline};border-radius:12px;padding:18px 22px;">
+          <p style="margin:0 0 6px;font-family:${M.sans};font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:${M.muted};">${r.filename}</p>
+          <p style="margin:0;font-family:${M.sans};font-size:13px;line-height:1.6;color:${M.inkSoft};">${r.message}</p>
+        </td></tr>
+      </table>`;
     }
-    const saving = r.savingPerYear > 0
-      ? `<div class="saving">Sannolik premie: ≈ ${fmtNumber(r.savingPerYear)} kr/år</div>`
-      : `<div class="saving" style="color:rgba(255,255,255,0.75)">Inget tydligt prisgap — bra förhandlat</div>`;
-    return `<div class="card">
-      <div class="lbl">${r.supplier ?? 'Leverantör'}</div>
-      ${r.annualCost ? `<div class="row"><span class="k">Årskostnad</span><span class="v">${fmtNumber(r.annualCost)} kr/år</span></div>` : ''}
-      ${r.suggestedAnnualCost ? `<div class="row"><span class="k">Marknadspris samma tjänst</span><span class="v green">${fmtNumber(r.suggestedAnnualCost)} kr/år</span></div>` : ''}
-      ${saving}
-    </div>`;
+
+    const verdict = r.netSaving > 0
+      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
+          <tr><td align="center" bgcolor="${M.band}" style="background:${M.band};border-radius:10px;padding:16px 18px;">
+            <p style="margin:0 0 3px;font-family:${M.sans};font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.5);">Identifierad nettobesparing</p>
+            <p style="margin:0;font-family:${M.serif};font-size:26px;font-weight:700;color:${M.tealBright};">+${fmtNumber(r.netSaving)} kr/år</p>
+          </td></tr>
+        </table>`
+      : r.requiresQuote
+        ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
+            <tr><td align="center" bgcolor="${M.band}" style="background:${M.band};border-radius:10px;padding:14px 18px;">
+              <p style="margin:0;font-family:${M.sans};font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);">Kräver offert för exakt jämförelse — öppna kontoret för nästa steg</p>
+            </td></tr>
+          </table>`
+        : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
+            <tr><td align="center" bgcolor="${M.band}" style="background:${M.band};border-radius:10px;padding:14px 18px;">
+              <p style="margin:0;font-family:${M.sans};font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);">Väl förhandlat — inget prisgap mot verifierat marknadspris</p>
+            </td></tr>
+          </table>`;
+
+    return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 14px;">
+      <tr><td style="background:#F6FAF8;border:1px solid ${M.hairline};border-radius:12px;padding:20px 22px;">
+        <p style="margin:0 0 12px;font-family:${M.sans};font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${M.muted};">${r.supplier ?? 'Leverantör'}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+          ${r.annualCost ? rowHtml('Årskostnad i dag', `${fmtNumber(r.annualCost)} kr/år`) : ''}
+          ${r.suggestedAnnualCost && r.netSaving > 0 ? rowHtml('Marknadspris, samma tjänst', `${fmtNumber(r.suggestedAnnualCost)} kr/år`, { teal: true }) : ''}
+        </table>
+        ${verdict}
+      </td></tr>
+    </table>`;
   }).join('');
 
-  return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"/><style>${CSS}</style></head><body>
-<div class="wrap">
-  <div class="header"><div class="brand">ARVO</div>
-    <div class="headline">Er analys är klar${senderName ? `, ${senderName}` : ''}.</div></div>
-  <div class="body">
-    ${cards}
-    ${portalLink ? `<a class="cta" href="${portalLink}">Öppna ert Arvo-kontor →</a>
-    <p class="note" style="text-align:center">Hela analysen, er historik och er bevakning — länken är personlig och gäller 24 timmar.</p>` : ''}
-    <div class="rule"></div>
-    <p class="note"><strong>Gör Arvo permanent:</strong> sätt en vidarebefordringsregel för era
-    leverantörsfakturor till den här adressen, så analyserar Arvo varje ny faktura automatiskt —
-    och hör av sig bara när något är fel prissatt.</p>
-  </div>
-  <div class="footer">Svaret skickas alltid och enbart till avsändaradressen ·
-  Arvo läser bara det ni skickar hit · arvoflow.se</div>
-</div></body></html>`;
+  return `<!DOCTYPE html>
+<html lang="sv"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:${M.bg};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${M.bg}" style="background:${M.bg};">
+    <tr><td align="center" style="padding:36px 14px;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:${M.card};border-radius:16px;overflow:hidden;border:1px solid ${M.hairline};">
+        <tr><td bgcolor="${M.dark}" style="background:${M.dark};padding:30px 34px 26px;">
+          <p style="margin:0 0 12px;font-family:${M.sans};font-size:11px;font-weight:700;letter-spacing:0.42em;color:${M.tealBright};">ARVO</p>
+          <p style="margin:0;font-family:${M.serif};font-size:25px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">Er analys är klar.</p>
+        </td></tr>
+        <tr><td style="height:3px;background:linear-gradient(90deg,transparent 0%,${M.teal} 35%,${M.tealBright} 50%,${M.teal} 65%,transparent 100%);font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td style="padding:26px 30px 8px;">
+          ${cards}
+          ${portalLink ? `
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 6px;">
+            <tr><td align="center">
+              <a href="${portalLink}" style="display:inline-block;background:linear-gradient(140deg,#4ECDC4 0%,#1DB09A 52%,#178A7B 100%);background-color:#1DB09A;color:#FFFFFF;text-decoration:none;font-family:${M.sans};font-size:15px;font-weight:700;padding:15px 38px;border-radius:100px;">Öppna ert Arvo-kontor&nbsp;→</a>
+            </td></tr>
+            <tr><td align="center" style="padding-top:10px;">
+              <p style="margin:0;font-family:${M.sans};font-size:12px;line-height:1.6;color:${M.faint};">Hela analysen, er historik och er bevakning — länken är personlig och gäller 24 timmar.</p>
+            </td></tr>
+          </table>` : ''}
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;border-top:1px solid ${M.hairline};">
+            <tr><td style="padding:16px 2px 18px;">
+              <p style="margin:0;font-family:${M.sans};font-size:12.5px;line-height:1.65;color:${M.faint};"><strong style="color:${M.inkSoft};">Gör Arvo permanent:</strong> sätt en vidarebefordringsregel för era leverantörsfakturor till den här adressen, så analyserar Arvo varje ny faktura automatiskt — och hör av sig bara när något är fel prissatt.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:16px 30px;border-top:1px solid ${M.hairline};">
+          <p style="margin:0;font-family:${M.sans};font-size:11px;line-height:1.6;color:#9AADA8;text-align:center;">Svaret skickas alltid och enbart till avsändaradressen · Arvo läser bara det ni skickar hit · arvoflow.se</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -278,12 +338,15 @@ export default async function handler(req, res) {
       const a = await r.json().catch(() => null);
 
       if (a?.ok && a.route === 'auto') {
+        // OBS: API-svaret exponerar netSaving/grossSaving — INTE savingPerYear.
+        // (Fältläxan: fel fältnamn → alltid 0 → "inget prisgap" bredvid två olika priser.)
         results.push({
           ok: true, filename,
           supplier:            a.extracted?.supplier ?? null,
           annualCost:          a.extracted?.annualCost ?? null,
           suggestedAnnualCost: a.recommendation?.suggestedAnnualCost ?? null,
-          savingPerYear:       a.recommendation?.savingPerYear ?? 0,
+          netSaving:           a.recommendation?.netSaving ?? 0,
+          requiresQuote:       a.recommendation?.requiresQuote ?? false,
         });
       } else if (a?.ok) {
         results.push({ ok: false, filename,
@@ -301,12 +364,7 @@ export default async function handler(req, res) {
   // Svar — ALLTID och ENBART till avsändaren
   const portalLink = await mintPortalLink(db, sender);
   const okCount    = results.filter((r) => r.ok).length;
-  const best       = results.filter((r) => r.ok).sort((a, b) => b.savingPerYear - a.savingPerYear)[0];
-  const subject = best?.savingPerYear > 0
-    ? `Er analys: ${best.supplier ?? 'fakturan'} — ≈ ${fmtNumber(best.savingPerYear)} kr/år i sannolik premie`
-    : okCount > 0
-      ? `Er analys är klar — ${results.filter(r => r.ok).map(r => r.supplier).filter(Boolean).join(', ') || 'fakturan'}`
-      : 'Vi kunde inte analysera ert mail';
+  const subject    = buildReplySubject(results);
 
   try {
     const resend = getResend();
@@ -315,7 +373,7 @@ export default async function handler(req, res) {
         from: FROM,
         to: sender,
         subject,
-        html: replyHtml({ results, portalLink, senderName: null }),
+        html: replyHtml({ results, portalLink }),
       });
     } else {
       console.error('[inbound-email] RESEND_API_KEY saknas — svarsmail ej skickat');
