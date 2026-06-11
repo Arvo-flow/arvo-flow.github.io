@@ -216,10 +216,23 @@ export default async function handler(req, res) {
     .slice(0, MAX_PDFS_PER_MAIL);
 
   if (pdfs.length === 0 && (data.attachments ?? []).length > 0) {
-    try {
-      pdfs = await fetchInboundPdfs(mailId);
-    } catch (err) {
-      console.error('[inbound-email] bilagehämtning misslyckades:', err.message);
+    // Prova båda id-fälten — payload-varianter har förekommit (email_id vs id)
+    const candidateIds = [...new Set([data.email_id, data.id].filter(Boolean))];
+    let lastErr = null;
+    for (const id of candidateIds) {
+      try {
+        pdfs = await fetchInboundPdfs(id);
+        lastErr = null;
+        break;
+      } catch (err) { lastErr = err; }
+    }
+    if (lastErr) {
+      console.error(
+        '[inbound-email] bilagehämtning misslyckades:', lastErr.message,
+        '· data-nycklar:', Object.keys(data).join(','),
+        '· id-kandidater:', candidateIds.map(i => String(i).slice(0, 40)).join(' | ') || '(inga)',
+        '· bilaga0-nycklar:', Object.keys(data.attachments?.[0] ?? {}).join(','),
+      );
     }
   }
   console.log(`[inbound-email] från=${sha16(sender)} bilagor=${(data.attachments ?? []).length} pdf=${pdfs.length}`);
