@@ -1001,6 +1001,11 @@ const TestaFaktura = () => {
     ? getCategoryMeta(_secSaving.category)
     : getCategoryMeta(result?.categorized?.category ?? 'uncategorized');
 
+  // Magnitudmedveten benchmarkfras: "kostar väsentligt mindre" får bara sägas när
+  // gapet faktiskt är väsentligt (≥15 %) — vid små gap är frasen självmotsägande.
+  const _bmPhrase = diagOvPct >= 15
+    ? (_effectiveMeta.smfBenchmark ?? 'välförhandlat avtalspris finns att hämta')
+    : 'samma avtal kostar mindre till leverantörens publika årsavtalspris';
   const diagInsight = _isSecondaryOnlySwitch
     ? `Ert ${getCategoryMeta(result?.categorized?.category ?? 'uncategorized').label.toLowerCase()} är konkurrenskraftigt — ${_secLabel ?? 'sekundärtjänsten'} kan optimeras.`
     : result?.route === 'monitoring'
@@ -1010,8 +1015,8 @@ const TestaFaktura = () => {
           ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
           : `Ni betalar ${diagOvPct} % sämre än branschsnittet — Arvo förhandlar välförhandlat avtalspris vid förnyelsen.`
       : diagScore < 45
-        ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — ${_effectiveMeta.smfBenchmark ?? 'stor besparingspotential'}.` : 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.')
-        : diagScore < 80 ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — ${_effectiveMeta.smfBenchmark ?? 'välförhandlat avtalspris finns att hämta'}.` : 'Ni betalar något sämre än branschsnittet — välförhandlat avtalspris finns att hämta.')
+        ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — ${diagOvPct >= 15 ? (_effectiveMeta.smfBenchmark ?? 'stor besparingspotential') : _bmPhrase}.` : 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.')
+        : diagScore < 80 ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — ${_bmPhrase}.` : 'Ni betalar något sämre än branschsnittet — välförhandlat avtalspris finns att hämta.')
         : 'Ni har ett välförhandlat avtal — bättre än branschsnittet.';
 
   const GAUGE_R = 26;

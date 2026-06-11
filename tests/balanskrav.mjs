@@ -151,6 +151,70 @@ describe('Like-for-like — NMIT 8840219 (E3 + tilläggstjänster)', () => {
   });
 });
 
+// ── Attribueringslåset — LFL-resonemanget skrivs av kod, inte AI ──────────────
+// 683-felet återkom i produktion 2026-06-11 TROTS ATTRIBUERING-regeln i prompten
+// (färska körningar verifierade i Vercel-loggar). Promptregler är råd; detta är låset.
+
+describe('Attribueringslåset — buildLikeForLikeReasoning (NMIT 8840219)', () => {
+  const NMIT_LFL_LINES = [
+    { type: 'recurring_subscription', description: 'Microsoft 365 E3 - Enterprise License', amount: 24_360, quantity: 58, unitPrice: 420, is_addon: false, addon_type: null, is_prorata: false },
+    { type: 'recurring_subscription', description: 'Endpoint Protection Advanced', amount: 3_770, quantity: 58, unitPrice: 65, is_addon: true, addon_type: 'other', is_prorata: false },
+    { type: 'recurring_subscription', description: 'Email Security & DMARC Premium', amount: 2_990, quantity: 1, unitPrice: 2_990, is_addon: true, addon_type: 'other', is_prorata: false },
+    { type: 'recurring_subscription', description: 'SLA Avtal - Standard Support (8x5)', amount: 8_500, quantity: 1, unitPrice: 8_500, is_addon: true, addon_type: 'sla', is_prorata: false },
+  ];
+
+  async function buildNmitReasoning() {
+    const { computeLikeForLikeSaasTarget, buildLikeForLikeReasoning } = await import('../agents/recommender/recommend.js');
+    const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
+    const lfl = computeLikeForLikeSaasTarget(NMIT_LFL_LINES, BRANCHINDEX['saas-productivity'].licenseTierBenchmarks, 475_440);
+    const text = buildLikeForLikeReasoning({
+      supplier: 'Nordic Managed IT Services AB',
+      lfl,
+      annualCost: 475_440,
+      suggestedAnnualCost: 450_871,
+      savingPerYear: 24_569,
+      billingCycleType: 'monthly',
+    });
+    // sv-SE-tusentalsavgränsare är hårt mellanslag (U+00A0/U+202F) — normalisera för asserts
+    return text.replace(/[  ]/g, ' ');
+  }
+
+  test('texten attribuerar rätt: 420 kr = E3-radens à-pris, 384,70 = årsavtalet', async () => {
+    const r = await buildNmitReasoning();
+    assert.match(r, /420 kr per användare och månad för era 58 E3-licenser/);
+    assert.match(r, /årsavtalspris[^.]*384,70 kr/);
+  });
+
+  test('683 (blandade per-seat-totalen) kan ALDRIG förekomma i texten', async () => {
+    const r = await buildNmitReasoning();
+    assert.ok(!r.includes('683'), `683-attribueringen återuppstod: "${r}"`);
+  });
+
+  test('årssiffrorna är kortets exakta tal: 475 440 → 450 871, gap 24 569', async () => {
+    const r = await buildNmitReasoning();
+    assert.match(r, /475 440 kr i dag mot 450 871 kr för identisk licensmix — 24 569 kr/);
+  });
+
+  test('tilläggen redovisas separat (183 120 kr/år) och E3-advisoryn är talfri', async () => {
+    const r = await buildNmitReasoning();
+    assert.match(r, /tilläggstjänster \(183 120 kr\/år\) ingår oförändrade/);
+    assert.match(r, /Saknar ni E3-nivåns compliance-funktioner/);
+  });
+
+  test('varje tal i texten har källtäckning i LFL-fakta (prosakravet på oss själva)', async () => {
+    const { checkProseNumbers } = await import('../lib/prose-guard.js');
+    const r = await buildNmitReasoning();
+    const facts = '420 · 384,70 · 58 · 475 440 · 450 871 · 24 569 · 183 120 kr';
+    const check = checkProseNumbers(r, facts);
+    assert.equal(check.ok, true, JSON.stringify(check.violations));
+  });
+
+  test('ingen besparing → null (texten lovar aldrig utan grund)', async () => {
+    const { buildLikeForLikeReasoning } = await import('../agents/recommender/recommend.js');
+    assert.equal(buildLikeForLikeReasoning({ supplier: 'X', lfl: { tierLines: [] }, annualCost: 1, suggestedAnnualCost: 1, savingPerYear: 0, billingCycleType: 'monthly' }), null);
+  });
+});
+
 // ── Prosakravet — varje tal i AI-prosa måste ha källtäckning ──────────────────
 
 describe('Prosakravet — checkProseNumbers', () => {

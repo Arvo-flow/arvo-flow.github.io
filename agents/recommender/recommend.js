@@ -332,14 +332,10 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
     // Tells the AI exactly what the override will set so reasoning matches the numbers shown.
     if (invoice.likeForLikeTarget) {
       const lfl = invoice.likeForLikeTarget;
-      const _LFL_TIER_LABELS = {
-        'business-premium': 'Business Premium', 'business-standard': 'Business Standard',
-        'business-basic': 'Business Basic', 'e3': 'E3', 'e5': 'E5',
-      };
-      const tierLabel = _LFL_TIER_LABELS[lfl.dominantTierKey] ?? lfl.dominantTierKey ?? 'nuvarande tier';
+      const tierLabel = LFL_TIER_LABELS[lfl.dominantTierKey] ?? lfl.dominantTierKey ?? 'nuvarande tier';
       lines.push(`\n  LIKE-FOR-LIKE PRISSÄTTNING (deterministisk beräkning — ANVÄND EXAKT DESSA TAL):`);
       for (const t of (lfl.tierLines ?? [])) {
-        const tLabel = _LFL_TIER_LABELS[t.key] ?? t.key;
+        const tLabel = LFL_TIER_LABELS[t.key] ?? t.key;
         const billed = t.billedUnitMonthly != null ? `fakturerat à-pris ${t.billedUnitMonthly} kr/mån → ` : '';
         lines.push(`    ${tLabel}: ${t.quantity} licenser · ${billed}${t.benchmarkMonthly} kr/mån (Microsoft årsavtal) = ${t.tierAnnual.toLocaleString('sv-SE')} kr/år`);
       }
@@ -665,6 +661,85 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
 // Allt här är nu bandbaserat, deterministiskt och miniräknar-reproducerbart.
 
 const PRINT_PERIOD_MULTIPLIER = { monthly: 12, quarterly: 4, annual: 1 };
+
+// ── Attribueringslåset: LFL-resonemanget skrivs av KOD, inte AI ────────────────
+//
+// 683-läxan (NMIT 8840219, två gånger): AI:n kallade den blandade per-seat-
+// totalen (licenser + tilläggstjänster) för "licenspris" — TROTS explicit
+// ATTRIBUERING-regel i prompten. Promptregler är råd; modellen kan bryta dem.
+// Prosakravet är blint för felet (talet finns i prompten — rätt tal, fel etikett).
+// Enda hållbara låset: när like-for-like-fakta finns kompletta skrivs hela
+// resonemanget deterministiskt — en maskinskriven mening kan inte felattribuera.
+
+export const LFL_TIER_LABELS = {
+  'business-premium': 'Business Premium', 'business-standard': 'Business Standard',
+  'business-basic': 'Business Basic', 'e3': 'E3', 'e5': 'E5',
+};
+
+const fmtKrUnit = (n) => Number.isInteger(n)
+  ? n.toLocaleString('sv-SE')
+  : n.toFixed(2).replace('.', ',');
+
+export function buildLikeForLikeReasoning({
+  supplier, lfl, annualCost, suggestedAnnualCost, savingPerYear, billingCycleType,
+}) {
+  const tiers = (lfl?.tierLines ?? []).filter(t => t.quantity > 0 && t.benchmarkMonthly != null);
+  if (tiers.length === 0 || !(savingPerYear > 0)) return null;
+
+  const supplierName = supplier || 'er nuvarande leverantör';
+  const dominant = tiers.find(t => t.key === lfl.dominantTierKey) ?? tiers[0];
+  const rest     = tiers.filter(t => t !== dominant);
+  const parts = [];
+
+  const dLabel = LFL_TIER_LABELS[dominant.key] ?? dominant.key;
+  if (dominant.billedUnitMonthly != null) {
+    parts.push(
+      `Ni betalar ${fmtKrUnit(dominant.billedUnitMonthly)} kr per användare och månad för era ` +
+      `${dominant.quantity} ${dLabel}-licenser via ${supplierName} — Microsofts publika årsavtalspris ` +
+      `för exakt samma licens är ${fmtKrUnit(dominant.benchmarkMonthly)} kr.`
+    );
+  } else {
+    parts.push(
+      `Era ${dominant.quantity} ${dLabel}-licenser via ${supplierName} prissätts över Microsofts ` +
+      `publika årsavtalspris ${fmtKrUnit(dominant.benchmarkMonthly)} kr per användare och månad.`
+    );
+  }
+  for (const t of rest) {
+    const label = LFL_TIER_LABELS[t.key] ?? t.key;
+    const billed = t.billedUnitMonthly != null ? `à ${fmtKrUnit(t.billedUnitMonthly)} kr ` : '';
+    parts.push(`${label}: ${t.quantity} licenser ${billed}mot årsavtalspriset ${fmtKrUnit(t.benchmarkMonthly)} kr.`);
+  }
+
+  parts.push(
+    `Skillnaden ligger helt i fakturerat à-pris mot Microsofts publika årsavtalspris för samma licens` +
+    (billingCycleType === 'monthly' ? ` — ni faktureras månadsvis utan årsåtagande, vilket är en del av gapet.` : `.`)
+  );
+
+  if (annualCost > 0 && suggestedAnnualCost > 0) {
+    parts.push(
+      `På årsbasis: ${Math.round(annualCost).toLocaleString('sv-SE')} kr i dag mot ` +
+      `${Math.round(suggestedAnnualCost).toLocaleString('sv-SE')} kr för identisk licensmix — ` +
+      `${Math.round(savingPerYear).toLocaleString('sv-SE')} kr utan att en enda funktion ändras.`
+    );
+  }
+
+  const addonAnnual = (lfl.addonLines ?? []).reduce((s, a) => s + (a.addonAnnual ?? 0), 0);
+  if (addonAnnual > 0) {
+    parts.push(
+      `Era tilläggstjänster (${addonAnnual.toLocaleString('sv-SE')} kr/år) ingår oförändrade i ` +
+      `jämförelsen — besparingen avser enbart licenspriset.`
+    );
+  }
+
+  if (['e3', 'e5'].includes(dominant.key)) {
+    parts.push(
+      `Saknar ni ${dLabel}-nivåns compliance-funktioner kan en lägre licensnivå sänka kostnaden ` +
+      `ytterligare — Arvo verifierar behovet i bytesprocessen.`
+    );
+  }
+
+  return parts.join(' ');
+}
 
 const fmtRate = (n) => String(n).replace('.', ',');
 const fmtX    = (n) => n.toFixed(1).replace('.', ',');
@@ -1338,6 +1413,26 @@ export async function recommend(input, opts = {}) {
       result.shouldSwitch = false;
       result.licenseOverage = null;
       result.overageSavings = null;
+    }
+
+    // Attribueringslåset: när LFL-fakta är kompletta ersätts AI:ns resonemang med
+    // den kodskrivna versionen — 683-felklassen (blandad per-seat-total kallad
+    // licenspris) kan inte återuppstå i en maskinskriven mening.
+    if (_useLfl && result.shouldSwitch) {
+      const deterministicReasoning = buildLikeForLikeReasoning({
+        supplier:            input.categorized.normalizedSupplier,
+        lfl:                 _lflTarget,
+        annualCost:          comparableAnnualCost + addonAnnual,
+        suggestedAnnualCost: result.suggestedAnnualCost,
+        savingPerYear:       result.savingPerYear,
+        billingCycleType,
+      });
+      if (deterministicReasoning) {
+        if (result.reasoning && result.reasoning !== deterministicReasoning) {
+          console.log('[attribueringslås] AI-reasoning ersatt med deterministisk LFL-text');
+        }
+        result.reasoning = deterministicReasoning;
+      }
     }
 
     } // end else (combined+null guard)

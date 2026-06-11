@@ -496,6 +496,12 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 - ✅ **Städpass skuld #6 KLAR:** alla 30 röda tester gröna — 24 fixturer + BI-03/BI-08 hade driftat från medvetna priskorrigeringar (bredband-p25 9 000→10 200 = Tele2 849×12 verifierat; mobil-p25 →3 588 = Tele2 Bas 299×12). 7 fixturer fick `secondary: null` — kunder på verifierat listpris ska inte loviseras besparingar. Sviten: **1 270/1 270 grönt, 0 fel**
 - ✅ Pre-commit-kedjan nu: price-audit → claims-audit → sifferrevisorn · cache bumpat till `pdf:result:v7`
 
+**Åtgärdat (attribueringslåset — 2026-06-11, kväll):**
+- ✅ **683-felet återkom i produktion TROTS ATTRIBUERING-regeln i prompten** (färska körningar verifierade i Vercel-loggar 12:31/15:28/16:23) — beviset för att promptregler är råd, inte lås. Fix: `buildLikeForLikeReasoning` i recommend.js — när LFL-fakta är kompletta ersätts AI:ns reasoning med KODSKRIVEN text (samma mönster som print-kortet). En maskinskriven mening kan inte felattribuera. Loggas `[attribueringslås]`
+- ✅ Magnitudmedveten scorecard-fras: "kostar väsentligt mindre" sägs bara vid gap ≥15 % — vid 5 % var frasen självmotsägande (TestaFaktura `_bmPhrase`)
+- ✅ 6 nya regressionstester i `tests/balanskrav.mjs` låser NMIT-texten: 420 = E3-radens à-pris, 384,70 = årsavtalet, 683 förbjudet, varje tal källtäckt · cache → `pdf:result:v8` · sviten 1 276/1 276
+- **Princip befäst:** AI-prosa med kompletta deterministiska fakta ska GENERERAS av kod, inte verifieras i efterhand — verifiering (prosakrav) är skyddsnätet för fall där fakta inte räcker till en mall
+
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI
 2. **E-post-ingest, nästa steg:** extern setup (MX/webhook/env) → personliga skuggadresser per kund → Outlook OAuth (historisk skörd) → Gmail efter CASA. Kontorets dossier-UI byggs när ingesten ger innehåll
