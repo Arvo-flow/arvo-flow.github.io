@@ -1,15 +1,14 @@
-// src/pages/Portfolio — Arvo-kontoret: det e-postnycklade premiumrummet.
-// Mailen är dörren, kontoret är rummet (CLAUDE.md skuld 4b — byggd ihop med ingesten).
-// Designspråk: theme.dossier (mall: src/pages/Prospect) — regel 6: 0 hårdkodade hex.
+// src/pages/Portfolio — Arvo-kontoret i sajtens ljusa analys-språk.
+// Mall: TestaFakturas resultatkort (ARVO-ANALYS-stämpel, serif-rubrik, vita kort,
+// brandGradient-besparingsbandet). Regel 6: alla färger ur theme — 0 hårdkodade hex.
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import styled, { keyframes, css } from 'styled-components';
-import theme from '../../theme';
+import styled, { keyframes } from 'styled-components';
+import Nav from '../../components/Nav';
+import Footer from '../../components/Footer';
+import Button from '../../components/Button';
 import { getCategoryMeta } from '../../lib/categoryMeta';
-
-const D    = theme.dossier;
-const MONO = theme.font.mono;
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -67,261 +66,235 @@ function computeArvoScore(suppliers) {
 
 // ─── animations ─────────────────────────────────────────────────────────────
 
-const rise = keyframes`
-  from { opacity: 0; transform: translateY(24px); }
+const fadeUp = keyframes`
+  from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 `;
 
 const spin = keyframes`to { transform: rotate(360deg); }`;
 const dashFill = keyframes`from { stroke-dashoffset: 283; }`;
 
-const appear = (delay = 0) => css`
-  opacity: 0;
-  animation: ${rise} 0.7s ${delay}s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+const shimmer = keyframes`
+  0%   { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(100%); }
 `;
 
 // ─── layout ──────────────────────────────────────────────────────────────────
 
-const PageWrap = styled.div`
+const Page = styled.main`
+  background: ${({ theme }) => theme.color.bg};
   min-height: 100vh;
-  background: ${D.bg};
-  font-family: ${theme.font.sans};
-  -webkit-font-smoothing: antialiased;
-  padding-bottom: 64px;
-`;
-
-const TopFade = styled.div`
-  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-  height: calc(env(safe-area-inset-top, 0px) + 28px);
-  background: linear-gradient(to bottom, ${D.bg}F0 0%, transparent 100%);
-  pointer-events: none;
 `;
 
 const Column = styled.div`
-  max-width: ${D.column};
+  max-width: 640px;
   margin: 0 auto;
-  padding: 0 22px;
+  padding: 40px 20px 72px;
+  @media (min-width: 768px) { padding: 56px 24px 96px; }
 `;
 
-// ─── hero ────────────────────────────────────────────────────────────────────
+// ─── stämpel + rubrik (ARVO-ANALYS-mönstret) ─────────────────────────────────
 
-const Hero = styled.header`
-  position: relative;
-  overflow: hidden;
-  padding: calc(72px + env(safe-area-inset-top, 0px)) 0 44px;
-  text-align: center;
-
-  &::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: ${D.aurora};
-    pointer-events: none;
-  }
-  &::after {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: ${D.keyline};
-  }
+const StampRow = styled.div`
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+  animation: ${fadeUp} 0.5s ease both;
 `;
 
-const Eyebrow = styled.p`
-  position: relative;
-  font-family: ${MONO};
-  font-size: 11px; font-weight: 500;
-  letter-spacing: 0.32em; text-transform: uppercase;
-  color: ${D.teal};
-  margin: 0 0 18px;
-  ${appear(0)}
+const Stamp = styled.span`
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: ${({ theme }) => theme.color.brand};
 `;
 
 const H1 = styled.h1`
-  position: relative;
-  font-family: ${theme.font.display};
-  font-size: clamp(34px, 8vw, 46px);
-  font-weight: 700; letter-spacing: -0.015em; line-height: 1.08;
-  margin: 0 0 14px;
-  background: ${D.metallicText};
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  ${appear(0.06)}
+  font-family: ${({ theme }) => theme.font.display};
+  font-size: clamp(28px, 6.5vw, 38px);
+  font-weight: 600; letter-spacing: -0.015em; line-height: 1.12;
+  color: ${({ theme }) => theme.color.ink};
+  margin: 0 0 10px;
+  animation: ${fadeUp} 0.5s 0.04s ease both;
 `;
 
 const HeroSub = styled.p`
-  position: relative;
-  font-size: 15px; line-height: 1.7;
-  color: ${D.mutedOnDark};
-  max-width: 420px; margin: 0 auto;
-  ${appear(0.12)}
+  font-size: 14.5px; line-height: 1.7;
+  color: ${({ theme }) => theme.color.inkSoft};
+  margin: 0 0 26px;
+  animation: ${fadeUp} 0.5s 0.08s ease both;
 `;
 
-// ─── översiktsbandet ─────────────────────────────────────────────────────────
+// ─── score-kortet (vita kortet med gauge) ────────────────────────────────────
 
-const OverviewBand = styled.section`
-  background: ${D.bgRaised};
-  border: 1px solid ${D.hairlineOnDark};
-  border-radius: 20px;
-  padding: 28px 26px;
-  margin-bottom: 14px;
-  ${appear(0.18)}
-`;
-
-const GaugeRow = styled.div`
-  display: flex; align-items: center; gap: 24px;
-  margin-bottom: 24px;
-  @media (max-width: 520px) { gap: 18px; }
+const ScoreCard = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 22px 24px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 20px;
+  box-shadow: 0 1px 6px rgba(14, 26, 23, 0.05);
+  animation: ${fadeUp} 0.5s 0.12s ease both;
 `;
 
 const GaugeWrap = styled.div`
   position: relative; flex-shrink: 0;
-  width: 108px; height: 108px;
+  width: 84px; height: 84px;
   svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  .track { fill: none; stroke: ${D.hairlineOnDark}; stroke-width: 9; }
+  .track { fill: none; stroke: ${({ theme }) => theme.color.border}; stroke-width: 9; }
   .fill  { fill: none; stroke-width: 9; stroke-linecap: round;
     stroke: url(#kontorGrad);
-    animation: ${dashFill} 1.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    animation: ${dashFill} 1.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
 `;
 
 const GaugeCenter = styled.div`
   position: absolute; inset: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  span.score { font-family: ${theme.font.display}; font-size: 30px; font-weight: 700;
-    color: ${D.inkOnDark}; line-height: 1; }
-  span.of { font-family: ${MONO}; font-size: 9px; letter-spacing: 0.14em;
-    color: ${D.faintOnDark}; margin-top: 4px; }
+  span.score { font-family: ${({ theme }) => theme.font.display}; font-size: 26px;
+    font-weight: 600; color: ${({ theme }) => theme.color.ink}; line-height: 1; }
+  span.of { font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+    color: ${({ theme }) => theme.color.mutedSoft}; margin-top: 3px; }
 `;
 
-const GaugeInfo = styled.div`
-  flex: 1; text-align: left;
-  h2 { font-family: ${theme.font.display}; font-size: 19px; font-weight: 700;
-    color: ${D.inkOnDark}; margin: 0 0 6px; letter-spacing: -0.01em;
-    sup { font-size: 9px; color: ${D.teal}; } }
-  p { font-size: 13px; line-height: 1.65; color: ${D.mutedOnDark}; margin: 0; }
+const ScoreInfo = styled.div`
+  flex: 1;
+  h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: ${({ theme }) => theme.color.inkSoft}; margin: 0 0 6px;
+    sup { font-size: 8px; } }
+  p { font-size: 13.5px; line-height: 1.6; color: ${({ theme }) => theme.color.inkSoft}; margin: 0; }
 `;
 
-const KeyNumbers = styled.div`
-  display: grid; grid-template-columns: 1fr 1fr 1fr;
-  border-top: 1px solid ${D.hairlineOnDark};
-  padding-top: 20px;
-  @media (max-width: 520px) { grid-template-columns: 1fr; gap: 16px;
-    text-align: left; }
-`;
+// ─── besparingsbandet (SavingsBlock-mönstret) ────────────────────────────────
 
-const KeyNumber = styled.div`
-  text-align: center;
-  @media (max-width: 520px) { display: flex; align-items: baseline; justify-content: space-between; }
-  p.label { font-family: ${MONO}; font-size: 9.5px; letter-spacing: 0.18em;
-    text-transform: uppercase; color: ${D.faintOnDark}; margin: 0 0 7px;
-    @media (max-width: 520px) { margin: 0; } }
-  p.value { font-family: ${theme.font.display}; font-size: 22px; font-weight: 700;
-    color: ${D.inkOnDark}; margin: 0; letter-spacing: -0.01em;
-    span.unit { font-size: 12px; font-family: ${theme.font.sans}; font-weight: 500;
-      color: ${D.mutedOnDark}; margin-left: 4px; } }
-  &.saving p.value {
-    background: ${D.numberGradient};
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent;
-    span.unit { -webkit-text-fill-color: ${D.mutedOnDark}; }
+const SavingsBand = styled.div`
+  position: relative; overflow: hidden;
+  padding: 24px 26px 22px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  background: ${({ theme }) => theme.color.brandGradient};
+  color: #FAFAF7;
+  margin-bottom: 12px;
+  box-shadow: 0 8px 32px rgba(27, 110, 102, 0.22), 0 2px 6px rgba(27, 110, 102, 0.14);
+  animation: ${fadeUp} 0.5s 0.16s ease both;
+
+  &::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.14) 48%, rgba(255,255,255,0.08) 52%, transparent 62%);
+    animation: ${shimmer} 3.6s ease-in-out 1.2s infinite;
+    pointer-events: none;
   }
+
+  span.kicker { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; opacity: 0.75; margin-bottom: 10px; }
+  span.amount { display: block; font-family: ${({ theme }) => theme.font.display};
+    font-size: clamp(36px, 6.5vw, 52px); font-weight: 500; line-height: 1;
+    letter-spacing: -0.025em; font-feature-settings: 'tnum'; }
+  span.unit { display: block; margin-top: 10px; font-size: 13.5px; opacity: 0.82;
+    line-height: 1.55; border-top: 1px solid rgba(255,255,255,0.18); padding-top: 10px; }
+`;
+
+const FinePrint = styled.p`
+  font-size: 12px; font-style: italic; line-height: 1.6; text-align: center;
+  color: ${({ theme }) => theme.color.mutedSoft};
+  margin: 0 0 28px; padding: 0 12px;
+  animation: ${fadeUp} 0.5s 0.2s ease both;
 `;
 
 // ─── leverantörslistan ───────────────────────────────────────────────────────
 
 const SectionLabel = styled.h3`
-  font-family: ${MONO};
-  font-size: 10px; font-weight: 500;
-  letter-spacing: 0.26em; text-transform: uppercase;
-  color: ${D.faintOnDark};
-  margin: 30px 2px 12px;
-  ${appear(0.22)}
+  font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: ${({ theme }) => theme.color.brand};
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid ${({ theme }) => theme.color.border};
 `;
 
 const SupplierList = styled.div`
-  display: flex; flex-direction: column; gap: 10px;
-  ${appear(0.26)}
+  display: flex; flex-direction: column; gap: 9px;
+  margin-bottom: 28px;
 `;
 
 const SupplierCard = styled.div`
-  position: relative;
-  background: ${D.bgRaised};
-  border: 1px solid ${D.hairlineOnDark};
-  border-radius: 16px;
-  padding: 18px 20px 18px 24px;
-  display: flex; align-items: center; gap: 16px;
-  overflow: hidden;
-  transition: border-color 0.25s ease;
-  &:hover { border-color: rgba(43, 196, 172, 0.35); }
+  position: relative; overflow: hidden;
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.md};
+  padding: 15px 18px 15px 22px;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 1px 3px rgba(14, 26, 23, 0.04);
+  transition: box-shadow 0.18s ease;
+  &:hover { box-shadow: 0 4px 14px rgba(14, 26, 23, 0.09); }
 
   &::before {
     content: '';
-    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    background: ${({ $saving }) => ($saving ? D.numberGradient : D.hairlineOnDark)};
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: ${({ $saving, theme }) =>
+      $saving ? theme.color.brandGradient : theme.color.border};
   }
+
+  @media (max-width: 480px) { flex-wrap: wrap; }
 `;
 
 const SupplierInfo = styled.div`
   flex: 1; min-width: 0;
-  h4 { font-family: ${theme.font.display}; font-size: 16.5px; font-weight: 700;
-    color: ${D.inkOnDark}; margin: 0 0 5px; letter-spacing: -0.005em;
+  h4 { font-family: ${({ theme }) => theme.font.display};
+    font-size: 16px; font-weight: 600; letter-spacing: -0.005em;
+    color: ${({ theme }) => theme.color.ink}; margin: 0 0 3px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  p { font-family: ${MONO}; font-size: 10px; letter-spacing: 0.1em;
-    text-transform: uppercase; color: ${D.faintOnDark}; margin: 0; }
+  p { font-size: 11.5px; color: ${({ theme }) => theme.color.mutedSoft}; margin: 0; }
 `;
 
 const SupplierRight = styled.div`
   text-align: right; flex-shrink: 0;
-  p.cost { font-size: 13.5px; font-weight: 600; color: ${D.mutedOnDark}; margin: 0 0 6px; }
+  p.cost { font-size: 13px; font-weight: 700; color: ${({ theme }) => theme.color.ink};
+    margin: 0 0 4px; font-feature-settings: 'tnum'; }
+  @media (max-width: 480px) { width: 100%; text-align: left; padding-left: 0; }
 `;
 
 const VerdictBadge = styled.span`
   display: inline-block;
-  font-family: ${MONO};
-  font-size: 10.5px; font-weight: 500; letter-spacing: 0.06em;
-  padding: 4px 11px; border-radius: 100px;
-  ${({ $saving }) => $saving
-    ? css`color: ${D.tealBright}; background: rgba(43, 196, 172, 0.12);
-        border: 1px solid rgba(43, 196, 172, 0.3);`
-    : css`color: ${D.faintOnDark}; background: transparent;
-        border: 1px solid ${D.hairlineOnDark};`}
+  font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 100px;
+  ${({ $saving, theme }) => $saving
+    ? `color: ${theme.color.brand}; background: ${theme.color.brandSoft};`
+    : `color: ${theme.color.mutedSoft}; background: ${theme.color.bg};
+       border: 1px solid ${theme.color.border};`}
 `;
 
-// ─── kortet: gör Arvo permanent ──────────────────────────────────────────────
+// ─── kort: gör Arvo permanent / rapport / connect ────────────────────────────
 
-const PermanentCard = styled.section`
-  background: ${D.bgRaised};
-  border: 1px solid ${D.hairlineOnDark};
-  border-radius: 20px;
-  padding: 26px;
-  margin-top: 30px;
-  ${appear(0.3)}
-  h3 { font-family: ${theme.font.display}; font-size: 19px; font-weight: 700;
-    color: ${D.inkOnDark}; margin: 0 0 8px; letter-spacing: -0.01em; }
-  p { font-size: 13.5px; line-height: 1.7; color: ${D.mutedOnDark}; margin: 0 0 16px; }
+const Card = styled.section`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 24px 26px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 6px rgba(14, 26, 23, 0.05);
+
+  h3 { font-family: ${({ theme }) => theme.font.display};
+    font-size: 19px; font-weight: 600; letter-spacing: -0.01em;
+    color: ${({ theme }) => theme.color.ink}; margin: 0 0 7px; }
+  p { font-size: 13.5px; line-height: 1.65;
+    color: ${({ theme }) => theme.color.inkSoft}; margin: 0 0 16px; }
+`;
+
+const CardLabel = styled.span`
+  display: block;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  color: ${({ theme }) => theme.color.brand};
+  margin-bottom: 8px;
 `;
 
 const AddressChip = styled.div`
-  font-family: ${MONO};
-  font-size: 13px; letter-spacing: 0.02em;
-  color: ${D.tealBright};
-  background: ${D.bg};
-  border: 1px solid rgba(43, 196, 172, 0.3);
-  border-radius: 10px;
+  font-family: ${({ theme }) => theme.font.mono};
+  font-size: 13.5px; letter-spacing: 0.01em;
+  color: ${({ theme }) => theme.color.brand};
+  background: ${({ theme }) => theme.color.bg};
+  border: 1px dashed ${({ theme }) => theme.color.brand};
+  border-radius: ${({ theme }) => theme.size.radius.md};
   padding: 13px 16px;
   text-align: center;
   user-select: all;
-`;
-
-// ─── rapport + connect ───────────────────────────────────────────────────────
-
-const ActionCard = styled.section`
-  background: ${D.bgRaised};
-  border: 1px solid ${D.hairlineOnDark};
-  border-radius: 20px;
-  padding: 26px;
-  margin-top: 14px;
-  ${appear(0.34)}
-  h3 { font-family: ${theme.font.display}; font-size: 17px; font-weight: 700;
-    color: ${D.inkOnDark}; margin: 0 0 7px; letter-spacing: -0.01em; }
-  p { font-size: 13px; line-height: 1.65; color: ${D.mutedOnDark}; margin: 0 0 16px; }
 `;
 
 const FormRow = styled.form`
@@ -330,77 +303,51 @@ const FormRow = styled.form`
 `;
 
 const EmailInput = styled.input`
-  flex: 1; padding: 12px 18px; border-radius: 100px;
-  border: 1px solid ${D.hairlineOnDark};
-  background: ${D.bg};
-  font-size: 14px; color: ${D.inkOnDark};
-  outline: none; transition: border-color 0.2s;
-  &:focus { border-color: ${D.teal}; }
-  &::placeholder { color: ${D.faintOnDark}; }
-`;
-
-const CtaButton = styled.button`
-  padding: 12px 26px; border-radius: 100px; border: none; cursor: pointer;
-  background: ${D.ctaGradient};
-  box-shadow: ${D.ctaShadow};
-  color: ${D.inkOnDark}; font-size: 14px; font-weight: 700; white-space: nowrap;
-  transition: transform 0.2s ease, opacity 0.2s;
-  &:hover { transform: translateY(-1px); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-`;
-
-const CtaLink = styled(Link)`
-  display: inline-block;
-  padding: 13px 30px; border-radius: 100px;
-  background: ${D.ctaGradient};
-  box-shadow: ${D.ctaShadow};
-  color: ${D.inkOnDark}; font-size: 14px; font-weight: 700;
-  text-decoration: none;
-  transition: transform 0.2s ease;
-  &:hover { transform: translateY(-1px); }
-`;
-
-const FormNote = styled.p`
-  &&& { margin: 10px 0 0; font-size: 12px; color: ${D.faintOnDark}; }
+  flex: 1; padding: 11px 16px; border-radius: 100px;
+  border: 1.5px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.bg};
+  font-size: 14px; color: ${({ theme }) => theme.color.ink};
+  outline: none; transition: border-color 0.15s;
+  &:focus { border-color: ${({ theme }) => theme.color.brand}; }
+  &::placeholder { color: ${({ theme }) => theme.color.mutedSoft}; }
 `;
 
 const SuccessMsg = styled.p`
-  &&& { color: ${D.tealBright}; font-weight: 600; margin: 0; }
+  &&& { color: ${({ theme }) => theme.color.brand}; font-weight: 600; margin: 0; }
+`;
+
+const ErrorHint = styled.p`
+  &&& { font-size: 12px; color: ${({ theme }) => theme.color.danger ?? theme.color.inkSoft}; margin: 8px 0 0; }
 `;
 
 // ─── states ──────────────────────────────────────────────────────────────────
 
 const EmptyState = styled.div`
   text-align: center;
-  background: ${D.bgRaised};
-  border: 1px solid ${D.hairlineOnDark};
-  border-radius: 20px;
-  padding: 56px 28px;
-  ${appear(0.18)}
-  h3 { font-family: ${theme.font.display}; font-size: 21px; font-weight: 700;
-    color: ${D.inkOnDark}; margin: 0 0 10px; }
-  p { font-size: 14px; line-height: 1.7; color: ${D.mutedOnDark};
-    max-width: 380px; margin: 0 auto 24px; }
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  padding: 52px 26px;
+  margin-bottom: 12px;
+  h3 { font-family: ${({ theme }) => theme.font.display};
+    font-size: 22px; font-weight: 600; color: ${({ theme }) => theme.color.ink};
+    margin: 0 0 10px; }
+  p { font-size: 14px; line-height: 1.7; color: ${({ theme }) => theme.color.inkSoft};
+    max-width: 380px; margin: 0 auto 20px; }
 `;
 
 const SpinnerEl = styled.div`
   width: 30px; height: 30px;
-  border: 3px solid ${D.hairlineOnDark};
-  border-top-color: ${D.teal};
+  border: 3px solid ${({ theme }) => theme.color.border};
+  border-top-color: ${({ theme }) => theme.color.brand};
   border-radius: 50%;
   animation: ${spin} 0.7s linear infinite;
-  margin: 72px auto;
+  margin: 64px auto;
 `;
 
 const ErrorMsg = styled.p`
-  text-align: center; color: ${D.mutedOnDark}; font-size: 14px; padding: 48px 24px;
-`;
-
-const PageFooter = styled.footer`
-  text-align: center; margin-top: 48px;
-  p.domain { font-family: ${MONO}; font-size: 11px; letter-spacing: 0.2em;
-    color: ${D.faintOnDark}; margin: 0 0 6px; text-transform: uppercase; }
-  p.brand { font-size: 12px; color: ${D.mutedOnDark}; margin: 0; }
+  text-align: center; color: ${({ theme }) => theme.color.inkSoft};
+  font-size: 14px; padding: 40px 20px;
 `;
 
 // ─── gauge ───────────────────────────────────────────────────────────────────
@@ -413,8 +360,8 @@ function ScoreGauge({ score }) {
       <svg viewBox="0 0 100 100">
         <defs>
           <linearGradient id="kontorGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={D.tealBright} />
-            <stop offset="100%" stopColor={D.tealDeep} />
+            <stop offset="0%" stopColor="#5DD6CA" />
+            <stop offset="100%" stopColor="#1B6E66" />
           </linearGradient>
         </defs>
         <circle className="track" cx="50" cy="50" r={R} />
@@ -423,7 +370,7 @@ function ScoreGauge({ score }) {
       </svg>
       <GaugeCenter>
         <span className="score">{score}</span>
-        <span className="of">AV 100</span>
+        <span className="of">/100</span>
       </GaugeCenter>
     </GaugeWrap>
   );
@@ -493,53 +440,53 @@ export default function Portfolio() {
   const today = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <PageWrap>
-      <TopFade />
-
-      <Hero>
-        <Eyebrow>Arvo-kontoret · {today}</Eyebrow>
-        <H1>Ert Arvo-kontor.</H1>
-        <HeroSub>
-          Varje faktura ni delar bevakas härifrån — priser, avtal och
-          marknadsrörelser, samlade i en bild.
-        </HeroSub>
-      </Hero>
-
+    <Page>
+      <Nav />
       <Column>
         {analyses === null && !error && <SpinnerEl />}
         {error && <ErrorMsg>Kunde inte ladda ert kontor — försök igen om en stund.</ErrorMsg>}
 
         {analyses !== null && suppliers.length > 0 && (
           <>
-            <OverviewBand>
-              <GaugeRow>
-                <ScoreGauge score={arvoScore} />
-                <GaugeInfo>
-                  <h2>Arvo Score<sup>™</sup></h2>
-                  <p>
-                    Baserat på {suppliers.length === 1
-                      ? 'en bevakad leverantör'
-                      : `${suppliers.length} bevakade leverantörer`} och
-                    täckningen av era leverantörssegment. Fler delade fakturor
-                    skärper bilden.
-                  </p>
-                </GaugeInfo>
-              </GaugeRow>
-              <KeyNumbers>
-                <KeyNumber>
-                  <p className="label">Bevakad årskostnad</p>
-                  <p className="value">{fmtNum(totalAnnualCost)}<span className="unit">kr/år</span></p>
-                </KeyNumber>
-                <KeyNumber className={totalNetSaving > 0 ? 'saving' : ''}>
-                  <p className="label">Identifierad nettobesparing</p>
-                  <p className="value">{totalNetSaving > 0 ? `+${fmtNum(totalNetSaving)}` : '0'}<span className="unit">kr/år</span></p>
-                </KeyNumber>
-                <KeyNumber>
-                  <p className="label">Leverantörer</p>
-                  <p className="value">{suppliers.length}<span className="unit">st</span></p>
-                </KeyNumber>
-              </KeyNumbers>
-            </OverviewBand>
+            <StampRow>
+              <Stamp>Arvo-kontoret · {today}</Stamp>
+            </StampRow>
+            <H1>Ert Arvo-kontor.</H1>
+            <HeroSub>
+              Varje faktura ni delar bevakas härifrån — priser, avtal och
+              marknadsrörelser, samlade i en bild.
+            </HeroSub>
+
+            <ScoreCard>
+              <ScoreGauge score={arvoScore} />
+              <ScoreInfo>
+                <h2>Arvo Score<sup>™</sup></h2>
+                <p>
+                  {suppliers.length === 1
+                    ? 'En bevakad leverantör'
+                    : `${suppliers.length} bevakade leverantörer`}
+                  {' '}· {fmtNum(totalAnnualCost)} kr/år under bevakning.
+                  Fler delade fakturor skärper bilden.
+                </p>
+              </ScoreInfo>
+            </ScoreCard>
+
+            {totalNetSaving > 0 && (
+              <SavingsBand>
+                <span className="kicker">Er identifierade nettobesparing</span>
+                <span className="amount">+{fmtNum(totalNetSaving)} kr</span>
+                <span className="unit">
+                  Per år, över {suppliers.length === 1 ? 'er bevakade leverantör' : `${suppliers.length} bevakade leverantörer`} ·
+                  Arvos besparingsarvode (20&nbsp;%) är avdraget.
+                </span>
+              </SavingsBand>
+            )}
+
+            <FinePrint>
+              Priset baseras på verifierade offentliga listpriser hos ledande
+              leverantörer. Vid genomfört byte bekräftas slutpriset i offert
+              innan ni godkänner.
+            </FinePrint>
 
             <SectionLabel>Era bevakade leverantörer</SectionLabel>
             <SupplierList>
@@ -567,19 +514,21 @@ export default function Portfolio() {
               })}
             </SupplierList>
 
-            <PermanentCard>
-              <h3>Gör Arvo permanent.</h3>
+            <Card>
+              <CardLabel>Gör Arvo permanent</CardLabel>
+              <h3>En vidarebefordringsregel räcker.</h3>
               <p>
-                Sätt en vidarebefordringsregel för era leverantörsfakturor till
-                adressen nedan, så analyserar Arvo varje ny faktura automatiskt —
-                och hör av sig bara när något är fel prissatt.
+                Peka era leverantörsfakturor till adressen nedan, så analyserar
+                Arvo varje ny faktura automatiskt — och hör av sig bara när
+                något är fel prissatt.
               </p>
               <AddressChip>faktura@inbox.arvoflow.se</AddressChip>
-            </PermanentCard>
+            </Card>
 
-            <ActionCard>
+            <Card>
+              <CardLabel>Arvo-rapport</CardLabel>
               <h3>Er samlade rapport, som PDF.</h3>
-              <p>Hela kostnadsbilden, varje identifierat fynd och nästa steg — sammanställd och skickad till er inkorg.</p>
+              <p>Hela kostnadsbilden, varje identifierat fynd och nästa steg — skickad till er inkorg.</p>
               {submitState === 'success' ? (
                 <SuccessMsg>Rapporten är på väg — kolla er inkorg.</SuccessMsg>
               ) : (
@@ -593,45 +542,52 @@ export default function Portfolio() {
                       required
                       disabled={submitState === 'loading'}
                     />
-                    <CtaButton type="submit" disabled={submitState === 'loading' || !email}>
+                    <Button type="submit" $variant="gradient" $size="md"
+                      disabled={submitState === 'loading' || !email}>
                       {submitState === 'loading' ? 'Skickar…' : 'Skicka rapporten →'}
-                    </CtaButton>
+                    </Button>
                   </FormRow>
-                  {submitState === 'error' && submitError && <FormNote>{submitError}</FormNote>}
+                  {submitState === 'error' && submitError && <ErrorHint>{submitError}</ErrorHint>}
                 </>
               )}
-            </ActionCard>
+            </Card>
 
-            <ActionCard>
-              <h3>Hela leverantörsbilden, automatiskt.</h3>
+            <Card>
+              <CardLabel>Hela leverantörsbilden</CardLabel>
+              <h3>Koppla bokföringen — bevaka allt.</h3>
               <p>
-                Koppla Fortnox eller Visma så läser Arvo hela er leverantörsreskontra —
+                Med Fortnox eller Visma läser Arvo hela er leverantörsreskontra —
                 varje avtal bevakat, varje prisrörelse fångad, utan ett enda mail.
               </p>
-              <CtaLink to="/connect">Koppla Fortnox / Visma →</CtaLink>
-            </ActionCard>
+              <Button as={Link} to="/connect" $variant="gradient" $size="md">
+                Koppla Fortnox / Visma →
+              </Button>
+            </Card>
           </>
         )}
 
         {analyses !== null && suppliers.length === 0 && (
-          <EmptyState>
-            <h3>Ert kontor väntar på sin första faktura.</h3>
-            <p>
-              Mejla en leverantörsfaktura (PDF) till adressen nedan, eller ladda
-              upp den direkt — analysen landar här inom ett par minuter.
-            </p>
-            <AddressChip style={{ maxWidth: 360, margin: '0 auto 22px' }}>
-              faktura@inbox.arvoflow.se
-            </AddressChip>
-            <CtaLink to="/testa-faktura">Analysera en faktura direkt →</CtaLink>
-          </EmptyState>
+          <>
+            <StampRow>
+              <Stamp>Arvo-kontoret · {today}</Stamp>
+            </StampRow>
+            <EmptyState>
+              <h3>Ert kontor väntar på sin första faktura.</h3>
+              <p>
+                Mejla en leverantörsfaktura (PDF) till adressen nedan, eller
+                ladda upp den direkt — analysen landar här inom ett par minuter.
+              </p>
+              <AddressChip style={{ maxWidth: 340, margin: '0 auto 20px' }}>
+                faktura@inbox.arvoflow.se
+              </AddressChip>
+              <Button as={Link} to="/testa-faktura" $variant="gradient" $size="md">
+                Analysera en faktura direkt →
+              </Button>
+            </EmptyState>
+          </>
         )}
-
-        <PageFooter>
-          <p className="domain">arvoflow.se</p>
-          <p className="brand">Arvo Intelligence</p>
-        </PageFooter>
       </Column>
-    </PageWrap>
+      <Footer />
+    </Page>
   );
 }
