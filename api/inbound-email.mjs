@@ -67,7 +67,7 @@ export async function fetchInboundPdfs(emailId, { fetchImpl = fetch } = {}) {
     headers: { Authorization: `Bearer ${key}` },
   });
   if (!list.ok) {
-    const body = await list.text().catch(() => '');
+    const body = typeof list.text === 'function' ? await list.text().catch(() => '') : '';
     throw new Error(`bilagelistning misslyckades (HTTP ${list.status}): ${body.slice(0, 300)}`);
   }
   const { data } = await list.json();
