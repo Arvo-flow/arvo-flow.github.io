@@ -110,3 +110,43 @@ describe('Rad-först-skuggan — aggregateByCategory', () => {
   });
 
 });
+
+// ── Verklig faktura: Nordic Managed IT 8840219 (Lynxeye AB, juni 2026) ────────
+// 58 × E3 à 420 kr + tilläggstjänster. Låser: (a) besparing claimas ENBART på
+// E3-gapet, tilläggen passerar orörda, (b) billedUnitMonthly = radens à-pris
+// (420), aldrig den blandade per-seat-totalen (683 — attribueringsfelet).
+
+describe('Like-for-like — NMIT 8840219 (E3 + tilläggstjänster)', () => {
+  const NMIT_LINES = [
+    { type: 'recurring_subscription', description: 'Microsoft 365 E3 - Enterprise License', amount: 24_360, quantity: 58, unitPrice: 420, is_addon: false, addon_type: null, is_prorata: false },
+    { type: 'recurring_subscription', description: 'Endpoint Protection Advanced', amount: 3_770, quantity: 58, unitPrice: 65, is_addon: true, addon_type: 'other', is_prorata: false },
+    { type: 'recurring_subscription', description: 'Email Security & DMARC Premium', amount: 2_990, quantity: 1, unitPrice: 2_990, is_addon: true, addon_type: 'other', is_prorata: false },
+    { type: 'recurring_subscription', description: 'SLA Avtal - Standard Support (8x5)', amount: 8_500, quantity: 1, unitPrice: 8_500, is_addon: true, addon_type: 'sla', is_prorata: false },
+  ];
+  const NMIT_ANNUAL = 39_620 * 12; // 475 440
+
+  test('mål 450 871 kr — E3 till årsavtal, tilläggen orörda', async () => {
+    const { computeLikeForLikeSaasTarget } = await import('../agents/recommender/recommend.js');
+    const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
+    const r = computeLikeForLikeSaasTarget(NMIT_LINES, BRANCHINDEX['saas-productivity'].licenseTierBenchmarks, NMIT_ANNUAL);
+    assert.equal(r.suggestedAnnualCost, 450_871);
+    assert.equal(r.savingPerYear, 24_569);
+  });
+
+  test('billedUnitMonthly = E3-radens à-pris 420 kr (inte blandade 683)', async () => {
+    const { computeLikeForLikeSaasTarget } = await import('../agents/recommender/recommend.js');
+    const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
+    const r = computeLikeForLikeSaasTarget(NMIT_LINES, BRANCHINDEX['saas-productivity'].licenseTierBenchmarks, NMIT_ANNUAL);
+    const e3 = r.tierLines.find(t => t.key === 'e3');
+    assert.equal(e3.billedUnitMonthly, 420);
+    assert.equal(e3.quantity, 58);
+  });
+
+  test('tilläggen passerar till fullt fakturapris (183 120 kr/år)', async () => {
+    const { computeLikeForLikeSaasTarget } = await import('../agents/recommender/recommend.js');
+    const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
+    const r = computeLikeForLikeSaasTarget(NMIT_LINES, BRANCHINDEX['saas-productivity'].licenseTierBenchmarks, NMIT_ANNUAL);
+    const addonSum = r.addonLines.reduce((s, a) => s + a.addonAnnual, 0);
+    assert.equal(addonSum, 183_120);
+  });
+});

@@ -48,6 +48,14 @@ Varje yta vi skapar ska signalera att vi vet något ingen annan vet. Precision �
 
 Vi fakturerar aldrig före kunden sparar. Arvo och kunden är alltid på samma sida av bordet.
 
+**Partnerstrategi (hösten 2026, efter bolagsregistrering):** Arvo ingår partneravtal
+med leverantörer (Microsoft CSP, Tele2 m.fl.) för förhandlade priser som kunden inte
+kan få själv. Arkitekturen är förberedd: `licenseTierBenchmarks.arvoAnnual` hålls
+separat från `msrpAnnual` — när ett partneravtal tecknas uppdateras `arvoAnnual` och
+hela systemet (like-for-like, estimatorn, switch-kortet) plockar upp det automatiskt.
+**Tills dess: kundytor får ALDRIG hävda förhandlade priser eller partnernätverk
+(regel 9) — allt vi visar är verifierade publika listpriser.**
+
 ---
 
 *Commit aldrig `.env` eller credentials · Kör aldrig `scripts/stress-test.mjs` utan explicit OK*

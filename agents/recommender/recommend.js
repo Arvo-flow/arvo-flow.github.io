@@ -337,13 +337,15 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
       lines.push(`\n  LIKE-FOR-LIKE PRISSÄTTNING (deterministisk beräkning — ANVÄND EXAKT DESSA TAL):`);
       for (const t of (lfl.tierLines ?? [])) {
         const tLabel = _LFL_TIER_LABELS[t.key] ?? t.key;
-        lines.push(`    ${tLabel}: ${t.quantity} licenser × ${t.benchmarkMonthly} kr/mån (Microsoft årsavtal) = ${t.tierAnnual.toLocaleString('sv-SE')} kr/år`);
+        const billed = t.billedUnitMonthly != null ? `fakturerat à-pris ${t.billedUnitMonthly} kr/mån → ` : '';
+        lines.push(`    ${tLabel}: ${t.quantity} licenser · ${billed}${t.benchmarkMonthly} kr/mån (Microsoft årsavtal) = ${t.tierAnnual.toLocaleString('sv-SE')} kr/år`);
       }
       lines.push(`    Marknadspris SAMMA licensmix (inkl. licenser tillagda under perioden): ${lfl.suggestedAnnualCost.toLocaleString('sv-SE')} kr/år`);
       lines.push(`    → HELA besparingen kommer från PRISGAPET — kunden överprisas av sin nuvarande återförsäljare för exakt samma licenser.`);
       lines.push(`    → KRITISKT: Nämn INTE tier-byte eller nedgradering i main reasoning. Tier-alternativ är valfri extraoptimering som visas separat i gränssnittet.`);
       lines.push(`    → Reasoning ska förklara: Varför betalar kunden markant mer än marknadspriset för ${tierLabel}-licenser? Återförsäljarens marginal? Månadsavtal vs årsavtal?`);
       lines.push(`    → FÖRBJUDET: räkna egna per-användare-, procent- eller besparingstal i reasoning. Varje siffra du nämner ska vara hämtad ordagrant från raderna ovan eller från "Aktuellt pris/seat".`);
+      lines.push(`    → ATTRIBUERING: "Aktuellt pris/seat" är kundens TOTALA kostnad per användare inkl. eventuella tilläggstjänster (support, säkerhet) — kalla den ALDRIG licenspris. Licensprisjämförelser görs ENDAST mellan tier-radens fakturerade à-pris och årsavtalspriset ovan.`);
     }
 
     // Feature overlap detection (M365 / Google Workspace only)
@@ -606,8 +608,9 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
       if (qty == null) return null;  // can't compute like-for-like without seat count
 
       const bm = tierBenchmarks[match.key];
-      tierAcc[match.key] = tierAcc[match.key] ?? { quantity: 0, benchmarkMonthly: bm.arvoAnnual ?? bm.msrpAnnual };
+      tierAcc[match.key] = tierAcc[match.key] ?? { quantity: 0, billedRunRate: 0, benchmarkMonthly: bm.arvoAnnual ?? bm.msrpAnnual };
       tierAcc[match.key].quantity += qty;
+      tierAcc[match.key].billedRunRate += runRate(item);
     } else {
       // Add-on / unrecognised: pass through at invoice run-rate
       const addonAnnual = Math.round(runRate(item) * billMult);
@@ -626,6 +629,10 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
     key,
     quantity:         t.quantity,
     benchmarkMonthly: t.benchmarkMonthly,
+    // Fakturerat à-pris (kr/mån) — normaliserat via billMult oavsett faktureringsperiod.
+    // Ges till AI:n så att licensjämförelser görs på RADENS pris, aldrig på den
+    // blandade per-seat-totalen (683-kronorsfelet: totalkostnad kallades licenspris).
+    billedUnitMonthly: Math.round((t.billedRunRate * billMult / 12 / t.quantity) * 100) / 100,
     tierAnnual:       Math.round(t.benchmarkMonthly * t.quantity * 12),
   }));
 

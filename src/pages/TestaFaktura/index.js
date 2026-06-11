@@ -1807,7 +1807,7 @@ const TestaFaktura = () => {
                       {!isLicensePending && (
                         <PriceNote $compact>
                           {_effectiveMeta.benchmarkType === 'list-verified'
-                            ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
+                            ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.'
                             : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
                         </PriceNote>
                       )}
@@ -1885,7 +1885,7 @@ const TestaFaktura = () => {
             {result.route === 'auto' && !result.categorized?.licensePending && !(result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 && !isOptimize) && (
               <PriceNote>
                 {_effectiveMeta.benchmarkType === 'list-verified'
-                  ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Arvo förhandlar ytterligare rabatter vid ett faktiskt leverantörsbyte.'
+                  ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.'
                   : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
               </PriceNote>
             )}
@@ -2198,24 +2198,25 @@ const TestaFaktura = () => {
           {_showSwitch && (
             <SwitchCard>
               <div className="switch-eyebrow">Arvo Switch</div>
-              <h3>Priset är säkrat. Ni aktiverar det.</h3>
+              <h3>Priset är verifierat. Arvo förbereder bytet.</h3>
               <p className="sub">
-                Arvo har redan förhandlat fram priset via partnernätverket.
-                Ni behöver inte kontakta er nuvarande leverantör — Arvo sköter allt.
+                Priset är leverantörens officiella avtalspris — verifierat och tillgängligt
+                utan förhandling. Ni behöver inte kontakta er nuvarande leverantör — Arvo
+                förbereder hela bytet.
               </p>
               <div className="switch-steps">
                 <div className="switch-step">
                   <span className="step-num">1</span>
                   <span className="step-body">
-                    <span className="step-title">Ni godkänner bytet</span>
-                    <span className="step-detail">Ett klick — inget mer krävs av er.</span>
+                    <span className="step-title">Ni aktiverar bytet</span>
+                    <span className="step-detail">Ett klick — Arvo tar det därifrån.</span>
                   </span>
                 </div>
                 <div className="switch-step">
                   <span className="step-num">2</span>
                   <span className="step-body">
-                    <span className="step-title">Arvo genomför bytet</span>
-                    <span className="step-detail">Via partnernätverket, klart inom 48 timmar. Ni behöver inte lyfta ett finger.</span>
+                    <span className="step-title">Arvo förbereder allt</span>
+                    <span className="step-detail">Fullmakt och bytesplan i er inkorg inom 24 timmar — ni granskar och signerar.</span>
                   </span>
                 </div>
                 <div className="switch-step">
@@ -2239,7 +2240,7 @@ const TestaFaktura = () => {
                     </p>
                     <span className="switch-price-label">
                       <Icon name="shield" size={10} stroke={2} />
-                      {_switchIsRealPrice ? 'Verifierat marknadspris' : 'Arvo-verifierad partner'}
+                      {_switchIsRealPrice ? 'Verifierat listpris' : 'Arvo-verifierad leverantör'}
                     </span>
                   </div>
                 </div>
@@ -2515,7 +2516,7 @@ const TestaFaktura = () => {
                     </span>
                     <span className="bk-verified">
                       <Icon name="shield" size={10} stroke={2} />
-                      {_switchIsRealPrice ? 'Verifierat marknadspris' : 'Arvo-verifierad partner'}
+                      {_switchIsRealPrice ? 'Verifierat listpris' : 'Arvo-verifierad leverantör'}
                     </span>
                   </div>
                   <div className="bk-price-row">
