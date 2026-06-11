@@ -101,6 +101,7 @@ const ICONS = {
       <path d="M20 20v-13" />
     </>
   ),
+  'chevron-down': <path d="M6 9l6 6 6-6" />,
   // Proaktiv avtalsbevakning — kalender med klocka (90-dagarsvarning)
   'calendar-clock': (
     <>
