@@ -208,93 +208,95 @@ const Column = styled.div`
   @media (min-width: 768px) { padding: 40px 28px 96px; }
 `;
 
-// Dashboard-grid: huvudkortet + översikten till vänster, fynden till höger.
-// På mobil stackas allt i DOM-ordning: huvudkort → leverantörer → switch →
-// intelligence → helhetsbild → kanaler.
+// Dashboard-grid: två lika breda kolumner på desktop.
+// Rad 1: Arvo-kontoret | Analyserade leverantörer
+// Rad 2: Arvo Switch | Arvo Intelligence
+// Rad 3: Helhetsbilden (fullbredd)
+// Rad 4: tre kanalkort (rapport · vidarebefordran · bokföring)
 const DashGrid = styled.div`
   display: grid;
-  gap: 18px;
-  align-items: start;
+  gap: 20px;
   grid-template-columns: minmax(0, 1fr);
-
   @media (min-width: 1080px) {
-    grid-template-columns: 420px minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      'head main'
-      'side main';
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
   }
 `;
 
-const colReset = `
+// En cell = ett kort. Kortet fyller cellens höjd så att varje rad får jämn underkant.
+const Cell = styled.div`
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  & > * { margin-bottom: 0; }
+  & > * { margin-bottom: 0; flex: 1; }
 `;
 
-const HeadArea = styled.div`
-  ${colReset}
-  @media (min-width: 1080px) { grid-area: head; }
+const CellFull = styled(Cell)`
+  @media (min-width: 1080px) { grid-column: 1 / -1; }
 `;
 
-const SideArea = styled.div`
-  ${colReset}
-  @media (min-width: 1080px) { grid-area: side; }
-
-  /* Helhetsbildens segmentgrid är 8 kolumner i fullbredd — i sidokolumnen 4. */
+const TrioGrid = styled.div`
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
   @media (min-width: 1080px) {
-    && .pb-grid { grid-template-columns: repeat(4, 1fr); row-gap: 16px; }
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-`;
-
-const MainArea = styled.div`
-  ${colReset}
-  @media (min-width: 1080px) { grid-area: main; }
+  & > * { margin-bottom: 0; }
 `;
 
 // ─── leverantörs­lista ───────────────────────────────────────────────────────
 
-const SectionLabel = styled.h3`
-  font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  color: ${({ theme }) => theme.color.brand};
-  margin: 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
-`;
+// Leverantörskortet — rubriken bor i kortet, raderna avgränsas av hårlinjer.
+const SupplierCard = styled.div`
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-top: 3px solid ${({ theme }) => theme.color.brand};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  box-shadow: 0 4px 24px rgba(14,26,23,.08), 0 1px 4px rgba(14,26,23,.04);
+  overflow: hidden;
+  animation: ${fadeUp} 0.5s ease both;
+  display: flex;
+  flex-direction: column;
 
-const SupplierList = styled.div`
-  display: flex; flex-direction: column; gap: 8px;
-  margin-top: -8px;
+  .sc-head {
+    padding: 26px 28px 16px;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    @media (max-width: 600px) { padding: 20px 20px 14px; }
+  }
+  .sc-eyebrow {
+    font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+    color: ${({ theme }) => theme.color.brand};
+  }
+  .sc-meta {
+    font-size: 12px; color: ${({ theme }) => theme.color.mutedSoft};
+    font-feature-settings: 'tnum'; white-space: nowrap;
+  }
 `;
 
 const SupplierOuter = styled.div`
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ $open, theme }) => $open ? theme.color.brandSoft : theme.color.border};
-  border-radius: ${({ theme }) => theme.size.radius.md};
-  overflow: hidden;
-  box-shadow: ${({ $open }) => $open ? '0 4px 18px rgba(27,122,110,.1)' : '0 1px 3px rgba(14,26,23,.04)'};
-  transition: border-color 0.18s, box-shadow 0.18s;
-  animation: ${fadeUp} 0.4s ease both;
   position: relative;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ $open, theme }) => ($open ? theme.color.bg : 'transparent')};
+  transition: background 0.18s;
 
   &::before {
     content: '';
-    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
     background: ${({ $saving, theme }) =>
-      $saving ? theme.color.brandGradient : theme.color.border};
-    transition: background 0.2s;
+      $saving ? theme.color.brandGradient : 'transparent'};
   }
 `;
 
 const SupplierRow = styled.button`
   width: 100%; background: none; border: none; cursor: pointer;
   display: flex; align-items: center; gap: 14px;
-  padding: 14px 18px 14px 22px;
+  padding: 13px 24px 13px 26px;
   text-align: left;
   transition: background 0.15s;
   &:hover { background: ${({ theme }) => theme.color.bg}; }
+  @media (max-width: 600px) { padding: 13px 18px; }
   @media (max-width: 480px) { flex-wrap: wrap; }
 `;
 
@@ -330,9 +332,10 @@ const ChevronWrap = styled.span`
 `;
 
 const SupplierDetail = styled.div`
-  padding: 0 22px 22px 22px;
+  padding: 0 26px 22px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
   animation: ${expand} 0.24s ease both;
+  @media (max-width: 600px) { padding: 0 18px 20px; }
 `;
 
 // Ytterligare förberedda byten under huvuderbjudandet i Switch-kortet.
@@ -594,9 +597,9 @@ export default function Portfolio() {
         {analyses !== null && suppliers.length > 0 && (
           <DashGrid>
 
-            {/* ── VÄNSTER TOPP: Arvo Score + nettobesparing ──────────────── */}
-            <HeadArea>
-              <Card style={{ padding: '24px 24px 20px' }}>
+            {/* ── Rad 1, vänster: Arvo Score + nettobesparing ────────────── */}
+            <Cell>
+              <Card>
                 <BriefingHead>
                   <div className="bh-top">
                     <span className="bh-stamp">ARVO-KONTORET · {today}</span>
@@ -653,94 +656,18 @@ export default function Portfolio() {
                   bekräftas slutpriset i offert innan ni godkänner.
                 </PriceNote>
               </Card>
-            </HeadArea>
+            </Cell>
 
-            {/* ── VÄNSTER BOTTEN: Helhetsbild + Kanaler ──────────────────── */}
-            <SideArea>
-              <PortfolioBridge>
-                <div className="pb-eyebrow">Helhetsbilden</div>
-                <h2 className="pb-head">
-                  Ni har täckt {litSegments.length} av 8 kostnadskategorier.
-                </h2>
-                <div className="pb-grid">
-                  {SEGMENTS.map((seg) => {
-                    const lit = seg.cats.some((c) => coveredCats.has(c));
-                    return (
-                      <div key={seg.short} className={`pb-seg${lit ? ' lit' : ''}`}>
-                        <span className="pb-seg-ico">
-                          <Icon name={seg.icon} size={18} stroke={1.8} />
-                        </span>
-                        <span className="pb-seg-label">{seg.short}</span>
-                      </div>
-                    );
-                  })}
+            {/* ── Rad 1, höger: analyserade leverantörer ─────────────────── */}
+            <Cell>
+              <SupplierCard>
+                <div className="sc-head">
+                  <span className="sc-eyebrow">Era analyserade leverantörer</span>
+                  <span className="sc-meta">
+                    {suppliers.length} st · {fmtNum(totalCost)} kr/år
+                  </span>
                 </div>
-                <div className="pb-foot">
-                  <p className="pb-note">
-                    Dela fler fakturor — Arvo kartlägger varje leverantör och hittar
-                    varenda besparing, inte bara dem ni hittills delat.
-                  </p>
-                  <Link to="/testa-faktura" className="pb-link">
-                    Analysera fler fakturor <Icon name="arrow" size={14} stroke={2} />
-                  </Link>
-                </div>
-              </PortfolioBridge>
-
-              {/* Rapport */}
-              <Card style={{ padding: '22px 24px 20px' }}>
-                <CardLabel>Arvo-rapport</CardLabel>
-                <CardTitle style={{ fontSize: 17 }}>Er samlade rapport, som PDF.</CardTitle>
-                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
-                  Hela kostnadsbilden, varje identifierat fynd och nästa steg — skickad till er inkorg.
-                </CardBody>
-                {reportState === 'success' ? (
-                  <SuccessMsg>Rapporten är på väg — kolla er inkorg.</SuccessMsg>
-                ) : (
-                  <>
-                    <FormRow onSubmit={handleSendReport}>
-                      <EmailInput
-                        type="email" placeholder="namn@bolaget.se"
-                        value={reportEmail} onChange={(e) => setReportEmail(e.target.value)}
-                        required disabled={reportState === 'loading'}
-                      />
-                      <Button type="submit" $variant="gradient" $size="md"
-                        disabled={reportState === 'loading' || !reportEmail}>
-                        {reportState === 'loading' ? 'Skickar…' : 'Skicka →'}
-                      </Button>
-                    </FormRow>
-                    {reportState === 'error' && reportError && <ErrorHint>{reportError}</ErrorHint>}
-                  </>
-                )}
-              </Card>
-
-              {/* Faktura-inleverans */}
-              <Card style={{ padding: '22px 24px 20px' }}>
-                <CardLabel>Gör Arvo permanent</CardLabel>
-                <CardTitle style={{ fontSize: 17 }}>En vidarebefordringsregel räcker.</CardTitle>
-                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
-                  Peka era leverantörsfakturor hit — Arvo analyserar varje ny faktura automatiskt.
-                </CardBody>
-                <AddressChip>faktura@inbox.arvoflow.se</AddressChip>
-              </Card>
-
-              {/* Koppla bokföringen */}
-              <Card style={{ padding: '22px 24px 20px' }}>
-                <CardLabel>Hela leverantörsbilden</CardLabel>
-                <CardTitle style={{ fontSize: 17 }}>Koppla bokföringen — bevaka allt.</CardTitle>
-                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
-                  Med Fortnox eller Visma läser Arvo hela er reskontra — varje avtal bevakat,
-                  varje prisrörelse fångad.
-                </CardBody>
-                <Button as={Link} to="/connect" $variant="gradient" $size="md">
-                  Koppla Fortnox / Visma →
-                </Button>
-              </Card>
-            </SideArea>
-
-            {/* ── HÖGER: Leverantörer + Switch + Intelligence ─────────────── */}
-            <MainArea>
-              <SectionLabel>Era analyserade leverantörer</SectionLabel>
-              <SupplierList>
+                <div>
                 {suppliers.map((g) => {
                   const a         = g.latest;
                   const meta      = getCategoryMeta(a.category);
@@ -764,7 +691,9 @@ export default function Portfolio() {
                             <p className="cost">{fmtNum(a.annual_cost)} kr/år</p>
                           )}
                           <VerdictBadge $saving={hasSaving}>
-                            {hasSaving ? `+${fmtNum(a.net_saving)} kr/år` : 'Bevakad'}
+                            {hasSaving
+                              ? `+${fmtNum(a.net_saving)} kr/år`
+                              : a.route === 'monitoring' ? 'Avtalsbevakad' : 'Rätt prissatt'}
                           </VerdictBadge>
                           <ChevronWrap $open={isOpen}>
                             <Icon name="chevron-down" size={16} stroke={2} />
@@ -775,10 +704,13 @@ export default function Portfolio() {
                     </SupplierOuter>
                   );
                 })}
-              </SupplierList>
+                </div>
+              </SupplierCard>
+            </Cell>
 
-              {/* ── Arvo Switch — visas när minst ett byte är identifierat ─── */}
-              {topSwitch && (
+            {/* ── Rad 2, vänster: Arvo Switch ────────────────────────────── */}
+            {topSwitch && (
+              <Cell>
                 <SwitchCard>
                   <div className="switch-eyebrow">Arvo Switch</div>
                   <h3>Priset är verifierat. Arvo förbereder bytet.</h3>
@@ -876,9 +808,11 @@ export default function Portfolio() {
                     </p>
                   )}
                 </SwitchCard>
-              )}
+              </Cell>
+            )}
 
-              {/* ── Arvo Intelligence ──────────────────────────────────────── */}
+            {/* ── Rad 2, höger: Arvo Intelligence ────────────────────────── */}
+            <Cell style={!topSwitch ? { gridColumn: '1 / -1' } : undefined}>
               <IntelligenceCard>
                 <div className="eyebrow">Arvo Intelligence</div>
                 <h3>
@@ -962,7 +896,92 @@ export default function Portfolio() {
                   Arvo söker igenom er inkorg — ni behöver inte lyfta ett finger.
                 </p>
               </IntelligenceCard>
-            </MainArea>
+            </Cell>
+
+            {/* ── Rad 3: Helhetsbilden (fullbredd) ───────────────────────── */}
+            <CellFull>
+              <PortfolioBridge>
+                <div className="pb-eyebrow">Helhetsbilden</div>
+                <h2 className="pb-head">
+                  Arvo analyserar åtta kostnadskategorier.{' '}
+                  Ni har täckt {litSegments.length} av dem.
+                </h2>
+                <div className="pb-grid">
+                  {SEGMENTS.map((seg) => {
+                    const lit = seg.cats.some((c) => coveredCats.has(c));
+                    return (
+                      <div key={seg.short} className={`pb-seg${lit ? ' lit' : ''}`}>
+                        <span className="pb-seg-ico">
+                          <Icon name={seg.icon} size={20} stroke={1.8} />
+                        </span>
+                        <span className="pb-seg-label">{seg.short}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="pb-foot">
+                  <p className="pb-note">
+                    Hela reskontran säger var ni faktiskt blöder. Vidarebefordra era
+                    leverantörsfakturor — Arvo kartlägger varje leverantör och hittar
+                    varenda besparing, inte bara dem ni hittills delat.
+                  </p>
+                  <Link to="/testa-faktura" className="pb-link">
+                    Analysera fler fakturor <Icon name="arrow" size={15} stroke={2} />
+                  </Link>
+                </div>
+              </PortfolioBridge>
+            </CellFull>
+
+            {/* ── Rad 4: kanalkorten ─────────────────────────────────────── */}
+            <TrioGrid>
+              <Card style={{ padding: '24px 26px 22px' }}>
+                <CardLabel>Arvo-rapport</CardLabel>
+                <CardTitle style={{ fontSize: 17 }}>Er samlade rapport, som PDF.</CardTitle>
+                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
+                  Hela kostnadsbilden, varje identifierat fynd och nästa steg — skickad till er inkorg.
+                </CardBody>
+                {reportState === 'success' ? (
+                  <SuccessMsg>Rapporten är på väg — kolla er inkorg.</SuccessMsg>
+                ) : (
+                  <>
+                    <FormRow onSubmit={handleSendReport} style={{ flexDirection: 'column' }}>
+                      <EmailInput
+                        type="email" placeholder="namn@bolaget.se"
+                        value={reportEmail} onChange={(e) => setReportEmail(e.target.value)}
+                        required disabled={reportState === 'loading'}
+                      />
+                      <Button type="submit" $variant="gradient" $size="md"
+                        disabled={reportState === 'loading' || !reportEmail}>
+                        {reportState === 'loading' ? 'Skickar…' : 'Skicka rapporten →'}
+                      </Button>
+                    </FormRow>
+                    {reportState === 'error' && reportError && <ErrorHint>{reportError}</ErrorHint>}
+                  </>
+                )}
+              </Card>
+
+              <Card style={{ padding: '24px 26px 22px' }}>
+                <CardLabel>Gör Arvo permanent</CardLabel>
+                <CardTitle style={{ fontSize: 17 }}>En vidarebefordringsregel räcker.</CardTitle>
+                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
+                  Peka era leverantörsfakturor hit — Arvo analyserar varje ny faktura
+                  automatiskt och hör av sig när något är fel prissatt.
+                </CardBody>
+                <AddressChip>faktura@inbox.arvoflow.se</AddressChip>
+              </Card>
+
+              <Card style={{ padding: '24px 26px 22px' }}>
+                <CardLabel>Hela leverantörsbilden</CardLabel>
+                <CardTitle style={{ fontSize: 17 }}>Koppla bokföringen — bevaka allt.</CardTitle>
+                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
+                  Med Fortnox eller Visma läser Arvo hela er reskontra — varje avtal
+                  bevakat, varje prisrörelse fångad.
+                </CardBody>
+                <Button as={Link} to="/connect" $variant="gradient" $size="md">
+                  Koppla Fortnox / Visma →
+                </Button>
+              </Card>
+            </TrioGrid>
 
           </DashGrid>
         )}
