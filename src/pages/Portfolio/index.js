@@ -22,6 +22,7 @@ import {
   Reasoning,
   IntelligenceCard,
   PortfolioBridge,
+  SwitchCard,
 } from '../TestaFaktura/styles';
 
 // ─── konstanter ──────────────────────────────────────────────────────────────
@@ -84,16 +85,23 @@ function groupBySupplier(analyses) {
   return [...groups.values()].sort((x, y) => (y.latest.net_saving ?? 0) - (x.latest.net_saving ?? 0));
 }
 
+// Totalpoängen är det kostnadsviktade snittet av leverantörsradernas poäng —
+// samma siffror kunden ser per rad, så helheten alltid går att räkna hem (regel 1 + 3).
 function computeArvoScore(suppliers) {
   if (!suppliers.length) return 0;
-  const uniqueSegs = new Set(
-    suppliers.map((s) => getCategoryMeta(s.latest.category)?.segment ?? -1).filter((x) => x >= 0)
-  );
-  const segmentScore  = Math.round((uniqueSegs.size / 8) * 65);
-  const totalNet      = suppliers.reduce((sum, s) => sum + (s.latest.net_saving ?? 0), 0);
-  const savingScore   = totalNet > 5000 ? 25 : totalNet > 0 ? 15 : 0;
-  const completenessB = suppliers.length >= 5 ? 10 : suppliers.length >= 3 ? 5 : 0;
-  return Math.min(100, segmentScore + savingScore + completenessB);
+  let weightSum = 0;
+  let scoreSum  = 0;
+  for (const s of suppliers) {
+    const w = s.latest.annual_cost > 0 ? s.latest.annual_cost : 0;
+    weightSum += w;
+    scoreSum  += supplierDiagScore(s.latest) * w;
+  }
+  if (weightSum === 0) {
+    return Math.round(
+      suppliers.reduce((acc, s) => acc + supplierDiagScore(s.latest), 0) / suppliers.length
+    );
+  }
+  return Math.round(scoreSum / weightSum);
 }
 
 // Samma färgkodning som TestaFakturas diagC.
@@ -129,9 +137,9 @@ function buildReasoning(a) {
     const ovPct = a.annual_cost > 0 && a.suggested_annual_cost > 0
       ? Math.round((a.annual_cost - a.suggested_annual_cost) / a.annual_cost * 100)
       : 0;
-    return `Ni betalar${ovPct > 0 ? ` ${ovPct}% mer` : ' mer'} än verifierat marknadspris för ${label.toLowerCase()}. Arvo rekommenderar byte — ${fmtNum(a.gross_saving)} kr/år i bruttobesparing, ${fmtNum(a.net_saving)} kr/år netto efter Arvos arvode (20&nbsp;%).`;
+    return `Ni betalar${ovPct > 0 ? ` ${ovPct}% mer` : ' mer'} än verifierat marknadspris för ${label.toLowerCase()}. Arvo rekommenderar byte — ${fmtNum(a.gross_saving)} kr/år i bruttobesparing, ${fmtNum(a.net_saving)} kr/år netto efter Arvos arvode (20&nbsp;% av första årets besparing).`;
   }
-  return `Priset är konkurrenskraftigt mot verifierat marknadspris för ${label.toLowerCase()}. Arvo bevakar och hör av sig om läget förändras.`;
+  return `Priset är konkurrenskraftigt mot verifierat marknadspris för ${label.toLowerCase()}. Inget byte rekommenderas i dag — dela en ny faktura vid nästa avtalsperiod så kontrollerar Arvo prissättningen igen.`;
 }
 
 // ─── gauge (identisk med TestaFakturas ScoreDiag) ───────────────────────────
@@ -194,10 +202,56 @@ const expand = keyframes`from { opacity:0; transform:translateY(-6px); } to { op
 // ─── layout ──────────────────────────────────────────────────────────────────
 
 const Column = styled.div`
-  max-width: 900px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 32px 20px 80px;
   @media (min-width: 768px) { padding: 40px 28px 96px; }
+`;
+
+// Dashboard-grid: huvudkortet + översikten till vänster, fynden till höger.
+// På mobil stackas allt i DOM-ordning: huvudkort → leverantörer → switch →
+// intelligence → helhetsbild → kanaler.
+const DashGrid = styled.div`
+  display: grid;
+  gap: 18px;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 1080px) {
+    grid-template-columns: 420px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'head main'
+      'side main';
+  }
+`;
+
+const colReset = `
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  & > * { margin-bottom: 0; }
+`;
+
+const HeadArea = styled.div`
+  ${colReset}
+  @media (min-width: 1080px) { grid-area: head; }
+`;
+
+const SideArea = styled.div`
+  ${colReset}
+  @media (min-width: 1080px) { grid-area: side; }
+
+  /* Helhetsbildens segmentgrid är 8 kolumner i fullbredd — i sidokolumnen 4. */
+  @media (min-width: 1080px) {
+    && .pb-grid { grid-template-columns: repeat(4, 1fr); row-gap: 16px; }
+  }
+`;
+
+const MainArea = styled.div`
+  ${colReset}
+  @media (min-width: 1080px) { grid-area: main; }
 `;
 
 // ─── leverantörs­lista ───────────────────────────────────────────────────────
@@ -205,14 +259,14 @@ const Column = styled.div`
 const SectionLabel = styled.h3`
   font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
   color: ${({ theme }) => theme.color.brand};
-  margin: 28px 0 10px;
+  margin: 0;
   padding-bottom: 10px;
   border-bottom: 1px solid ${({ theme }) => theme.color.border};
 `;
 
 const SupplierList = styled.div`
   display: flex; flex-direction: column; gap: 8px;
-  margin-bottom: 20px;
+  margin-top: -8px;
 `;
 
 const SupplierOuter = styled.div`
@@ -279,6 +333,27 @@ const SupplierDetail = styled.div`
   padding: 0 22px 22px 22px;
   border-top: 1px solid ${({ theme }) => theme.color.border};
   animation: ${expand} 0.24s ease both;
+`;
+
+// Ytterligare förberedda byten under huvuderbjudandet i Switch-kortet.
+const SwitchMore = styled.div`
+  display: flex; flex-direction: column; gap: 6px;
+  margin: 0 0 18px;
+  .more-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 16px;
+    border: 1px solid ${({ theme }) => theme.color.border};
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    background: ${({ theme }) => theme.color.bg};
+  }
+  .more-name {
+    font-size: 13px; font-weight: 600; color: ${({ theme }) => theme.color.ink};
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .more-save {
+    font-size: 13px; font-weight: 700; color: ${({ theme }) => theme.color.brand};
+    font-feature-settings: 'tnum'; flex-shrink: 0;
+  }
 `;
 
 // ─── CTA-kort ────────────────────────────────────────────────────────────────
@@ -376,7 +451,7 @@ function SupplierDetailPanel({ a }) {
           <span className="amount">+{fmtNum(a.net_saving)} kr</span>
           <span className="unit">
             {fmtNum(a.annual_cost)} → {fmtNum(a.suggested_annual_cost)} kr/år ·
-            {' '}Arvos besparingsarvode (20&nbsp;%) avdraget.
+            {' '}Arvos arvode (20&nbsp;% av första årets besparing) avdraget.
           </span>
         </SavingsBlock>
       )}
@@ -498,6 +573,12 @@ export default function Portfolio() {
   const coveredCats   = new Set(suppliers.map((g) => g.latest.category));
   const litSegments   = SEGMENTS.filter((seg) => seg.cats.some((c) => coveredCats.has(c)));
 
+  // Förberedda byten — leverantörer med verifierad besparing, störst först.
+  const switchables   = suppliers.filter((g) =>
+    g.latest.should_switch && (g.latest.net_saving ?? 0) > 0 && g.latest.suggested_annual_cost != null);
+  const topSwitch     = switchables[0]?.latest;
+  const totalGross    = switchables.reduce((s, g) => s + (g.latest.gross_saving ?? 0), 0);
+
   const today = new Date().toLocaleDateString('sv-SE', {
     day: 'numeric', month: 'short', year: 'numeric',
   }).toUpperCase();
@@ -509,276 +590,381 @@ export default function Portfolio() {
         {analyses === null && !error && <SpinnerEl />}
         {error && <ErrorMsg>Kunde inte ladda ert kontor — försök igen om en stund.</ErrorMsg>}
 
-        {/* ── Huvudkort ─────────────────────────────────────────────────── */}
+        {/* ── Dashboard ─────────────────────────────────────────────────── */}
         {analyses !== null && suppliers.length > 0 && (
-          <>
-            <Card>
-              <BriefingHead>
-                <div className="bh-top">
-                  <span className="bh-stamp">ARVO-KONTORET · {today}</span>
-                </div>
-                <div className="bh-main">
-                  <h2 className="bh-supplier">{companyName ?? 'Ert Arvo-kontor.'}</h2>
-                </div>
-                <div className="bh-row">
-                  <span className="bh-chip">
-                    {suppliers.length === 1 ? '1 bevakad leverantör' : `${suppliers.length} bevakade leverantörer`}
-                  </span>
-                  {totalCost > 0 && (
-                    <span className="bh-chip">{fmtNum(totalCost)} kr/år</span>
-                  )}
-                </div>
-              </BriefingHead>
+          <DashGrid>
 
-              <ScoreDiag style={{ '--diag-color': diagC.dot }}>
-                <div className="gauge-wrap">
-                  <Gauge score={arvoScore} color={diagC.dot} />
-                  <div className="gauge-num" style={{ color: diagC.dot }}>
-                    <span className="gauge-val">{arvoScore}</span>
-                    <span className="gauge-denom">/100</span>
+            {/* ── VÄNSTER TOPP: Arvo Score + nettobesparing ──────────────── */}
+            <HeadArea>
+              <Card style={{ padding: '24px 24px 20px' }}>
+                <BriefingHead>
+                  <div className="bh-top">
+                    <span className="bh-stamp">ARVO-KONTORET · {today}</span>
                   </div>
-                </div>
-                <div className="diag-body">
-                  <div className="diag-top">
-                    <span className="diag-score-label">Arvo Score</span>
-                    <span className="diag-sep">·</span>
-                    <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
+                  <div className="bh-main">
+                    <h2 className="bh-supplier">{companyName ?? 'Ert Arvo-kontor.'}</h2>
                   </div>
-                  <p className="diag-text">
-                    {suppliers.length === 1 ? 'En leverantör analyserad' : `${suppliers.length} leverantörer analyserade`}
-                    {totalCost > 0 ? ` · ${fmtNum(totalCost)} kr/år under bevakning` : ''}.
-                    {' '}Fler delade fakturor skärper bilden.
-                  </p>
-                </div>
-              </ScoreDiag>
+                  <div className="bh-row">
+                    <span className="bh-chip">
+                      {suppliers.length === 1 ? '1 leverantör analyserad' : `${suppliers.length} leverantörer analyserade`}
+                    </span>
+                    {totalCost > 0 && (
+                      <span className="bh-chip">{fmtNum(totalCost)} kr/år</span>
+                    )}
+                  </div>
+                </BriefingHead>
 
-              {totalSaving > 0 && (
-                <SavingsBlock>
-                  <span className="kicker">Er identifierade nettobesparing</span>
-                  <span className="amount">+{fmtNum(totalSaving)} kr</span>
-                  <span className="unit">
-                    Per år, över{' '}
-                    {suppliers.length === 1 ? 'er bevakade leverantör' : `${suppliers.length} bevakade leverantörer`}
-                    {' '}· Arvos besparingsarvode (20&nbsp;%) är avdraget.
-                  </span>
-                </SavingsBlock>
-              )}
-
-              <PriceNote>
-                Priset baseras på verifierade offentliga listpriser hos ledande leverantörer.
-                Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.
-              </PriceNote>
-            </Card>
-
-            {/* ── Leverantörslista med expanderbara detaljer ────────────── */}
-            <SectionLabel>Era bevakade leverantörer</SectionLabel>
-            <SupplierList>
-              {suppliers.map((g) => {
-                const a        = g.latest;
-                const meta     = getCategoryMeta(a.category);
-                const hasSaving = a.should_switch && (a.net_saving ?? 0) > 0;
-                const isOpen   = expanded.has(a.id);
-                const rowScore = supplierDiagScore(a);
-                const rowC     = scoreColors(rowScore);
-                return (
-                  <SupplierOuter key={a.id} $saving={hasSaving} $open={isOpen}>
-                    <SupplierRow
-                      onClick={() => toggleExpand(a.id)}
-                      aria-expanded={isOpen}
-                    >
-                      <MiniGauge score={rowScore} color={rowC.dot} />
-                      <SupplierInfo>
-                        <h4>{a.supplier || a.normalized_supplier || 'Okänd leverantör'}</h4>
-                        <p>
-                          {meta.label} · {fmtDate(a.created_at)}
-                          {g.count > 1 ? ` · ${g.count} analyser` : ''}
-                        </p>
-                      </SupplierInfo>
-                      <SupplierRight>
-                        {a.annual_cost != null && (
-                          <p className="cost">{fmtNum(a.annual_cost)} kr/år</p>
-                        )}
-                        <VerdictBadge $saving={hasSaving}>
-                          {hasSaving ? `+${fmtNum(a.net_saving)} kr/år` : 'Bevakad'}
-                        </VerdictBadge>
-                        <ChevronWrap $open={isOpen}>
-                          <Icon name="chevron-down" size={16} stroke={2} />
-                        </ChevronWrap>
-                      </SupplierRight>
-                    </SupplierRow>
-                    {isOpen && <SupplierDetailPanel a={a} />}
-                  </SupplierOuter>
-                );
-              })}
-            </SupplierList>
-
-            {/* ── Segmenttäckning ───────────────────────────────────────── */}
-            <PortfolioBridge>
-              <div className="pb-eyebrow">Helhetsbilden</div>
-              <h2 className="pb-head">
-                Arvo bevakar åtta kostnadskategorier.{' '}
-                Ni har täckt {litSegments.length} av dem.
-              </h2>
-              <div className="pb-grid">
-                {SEGMENTS.map((seg) => {
-                  const lit = seg.cats.some((c) => coveredCats.has(c));
-                  return (
-                    <div key={seg.short} className={`pb-seg${lit ? ' lit' : ''}`}>
-                      <span className="pb-seg-ico">
-                        <Icon name={seg.icon} size={20} stroke={1.8} />
-                      </span>
-                      <span className="pb-seg-label">{seg.short}</span>
+                <ScoreDiag style={{ '--diag-color': diagC.dot }}>
+                  <div className="gauge-wrap">
+                    <Gauge score={arvoScore} color={diagC.dot} />
+                    <div className="gauge-num" style={{ color: diagC.dot }}>
+                      <span className="gauge-val">{arvoScore}</span>
+                      <span className="gauge-denom">/100</span>
                     </div>
-                  );
-                })}
-              </div>
-              <div className="pb-foot">
-                <p className="pb-note">
-                  Hela reskontran säger var ni faktiskt blöder. Vidarebefordra era
-                  leverantörsfakturor — Arvo kartlägger varje leverantör och hittar
-                  varenda besparing, inte bara dem ni hittills delat.
-                </p>
-                <Link to="/testa-faktura" className="pb-link">
-                  Analysera fler fakturor <Icon name="arrow" size={15} stroke={2} />
-                </Link>
-              </div>
-            </PortfolioBridge>
-
-            {/* ── Arvo Intelligence ─────────────────────────────────────── */}
-            <IntelligenceCard>
-              <div className="eyebrow">Arvo Intelligence</div>
-              <h3>
-                {autoAnalyses.length === 1
-                  ? 'En faktura analyserad.'
-                  : `${autoAnalyses.length} fakturor analyserade.`}{' '}
-                Nästa prishöjning ser ni innan den kommer.
-              </h3>
-              <p className="sub">
-                Analysen ovan är en ögonblicksbild. Med Arvo Intelligence bevakas{' '}
-                {suppliers.length === 1 ? 'er leverantör' : `era ${suppliers.length} leverantörer`}{' '}
-                kontinuerligt — ni larmas när priser rör sig och får en CFO-brief
-                varje månad med exakt vad som förändrats.
-              </p>
-
-              <div className="briefing-preview">
-                <div className="preview-header">
-                  <span>
-                    <span className="preview-live-dot" />
-                    <span className="preview-brand-name">Arvo Intelligence</span>
-                  </span>
-                  <span className="preview-time">Exempel ur en briefing</span>
-                </div>
-                <div className="signal">
-                  <div className="signal-ico">
-                    <Icon name="pulse" size={14} stroke={2} />
                   </div>
-                  <div>
-                    <span className="signal-tag">Smyghöjningslarm</span>
-                    <div className="signal-line">
-                      Telia · Mobilflotta 24 abonnemang
-                      <span className="signal-badge">+11&nbsp;%</span>
+                  <div className="diag-body">
+                    <div className="diag-top">
+                      <span className="diag-score-label">Arvo Score</span>
+                      <span className="diag-sep">·</span>
+                      <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
                     </div>
-                    <p className="signal-sub">Pris höjt mot föregående period — utan avisering. Så här ser larmet ut när det händer er.</p>
-                  </div>
-                </div>
-                <div className="signal">
-                  <div className="signal-ico">
-                    <Icon name="benchmark" size={14} stroke={2} />
-                  </div>
-                  <div>
-                    <span className="signal-tag">Community Benchmark</span>
-                    <div className="bench-grid">
-                      {[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14].map((i) => (
-                        <span key={i} className={[0,2,3,5,8,9,11,13].includes(i) ? 'on' : ''} />
-                      ))}
-                    </div>
-                    <p className="signal-sub">
-                      <strong>8 av 15</strong> bolag i samma kohort fick höjningen — Arvo ser mönstret innan det når er.
+                    <p className="diag-text">
+                      {suppliers.length === 1
+                        ? 'Poängen för er analyserade leverantör'
+                        : `Kostnadsviktat snitt av era ${suppliers.length} leverantörers poäng`}.
+                      {' '}Fler delade fakturor skärper bilden.
                     </p>
                   </div>
+                </ScoreDiag>
+
+                {totalSaving > 0 && (
+                  <SavingsBlock>
+                    <span className="kicker">Er identifierade nettobesparing</span>
+                    <span className="amount">+{fmtNum(totalSaving)} kr</span>
+                    <span className="unit">
+                      Per år · Arvos arvode (20&nbsp;% av första årets besparing) är avdraget —
+                      från år två är hela besparingen er.
+                    </span>
+                  </SavingsBlock>
+                )}
+
+                <PriceNote>
+                  Priset baseras på verifierade offentliga listpriser. Vid genomfört byte
+                  bekräftas slutpriset i offert innan ni godkänner.
+                </PriceNote>
+              </Card>
+            </HeadArea>
+
+            {/* ── VÄNSTER BOTTEN: Helhetsbild + Kanaler ──────────────────── */}
+            <SideArea>
+              <PortfolioBridge>
+                <div className="pb-eyebrow">Helhetsbilden</div>
+                <h2 className="pb-head">
+                  Ni har täckt {litSegments.length} av 8 kostnadskategorier.
+                </h2>
+                <div className="pb-grid">
+                  {SEGMENTS.map((seg) => {
+                    const lit = seg.cats.some((c) => coveredCats.has(c));
+                    return (
+                      <div key={seg.short} className={`pb-seg${lit ? ' lit' : ''}`}>
+                        <span className="pb-seg-ico">
+                          <Icon name={seg.icon} size={18} stroke={1.8} />
+                        </span>
+                        <span className="pb-seg-label">{seg.short}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="signal">
-                  <div className="signal-ico">
-                    <Icon name="calendar-clock" size={14} stroke={2} />
-                  </div>
-                  <div>
-                    <span className="signal-tag">Proaktiv avtalsbevakning</span>
-                    <div className="signal-line">
-                      Avtalsbevakning · varnar 90 dagar före förnyelse
-                      <span className="signal-badge signal-badge--contract">Förnyelse</span>
+                <div className="pb-foot">
+                  <p className="pb-note">
+                    Dela fler fakturor — Arvo kartlägger varje leverantör och hittar
+                    varenda besparing, inte bara dem ni hittills delat.
+                  </p>
+                  <Link to="/testa-faktura" className="pb-link">
+                    Analysera fler fakturor <Icon name="arrow" size={14} stroke={2} />
+                  </Link>
+                </div>
+              </PortfolioBridge>
+
+              {/* Rapport */}
+              <Card style={{ padding: '22px 24px 20px' }}>
+                <CardLabel>Arvo-rapport</CardLabel>
+                <CardTitle style={{ fontSize: 17 }}>Er samlade rapport, som PDF.</CardTitle>
+                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
+                  Hela kostnadsbilden, varje identifierat fynd och nästa steg — skickad till er inkorg.
+                </CardBody>
+                {reportState === 'success' ? (
+                  <SuccessMsg>Rapporten är på väg — kolla er inkorg.</SuccessMsg>
+                ) : (
+                  <>
+                    <FormRow onSubmit={handleSendReport}>
+                      <EmailInput
+                        type="email" placeholder="namn@bolaget.se"
+                        value={reportEmail} onChange={(e) => setReportEmail(e.target.value)}
+                        required disabled={reportState === 'loading'}
+                      />
+                      <Button type="submit" $variant="gradient" $size="md"
+                        disabled={reportState === 'loading' || !reportEmail}>
+                        {reportState === 'loading' ? 'Skickar…' : 'Skicka →'}
+                      </Button>
+                    </FormRow>
+                    {reportState === 'error' && reportError && <ErrorHint>{reportError}</ErrorHint>}
+                  </>
+                )}
+              </Card>
+
+              {/* Faktura-inleverans */}
+              <Card style={{ padding: '22px 24px 20px' }}>
+                <CardLabel>Gör Arvo permanent</CardLabel>
+                <CardTitle style={{ fontSize: 17 }}>En vidarebefordringsregel räcker.</CardTitle>
+                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
+                  Peka era leverantörsfakturor hit — Arvo analyserar varje ny faktura automatiskt.
+                </CardBody>
+                <AddressChip>faktura@inbox.arvoflow.se</AddressChip>
+              </Card>
+
+              {/* Koppla bokföringen */}
+              <Card style={{ padding: '22px 24px 20px' }}>
+                <CardLabel>Hela leverantörsbilden</CardLabel>
+                <CardTitle style={{ fontSize: 17 }}>Koppla bokföringen — bevaka allt.</CardTitle>
+                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
+                  Med Fortnox eller Visma läser Arvo hela er reskontra — varje avtal bevakat,
+                  varje prisrörelse fångad.
+                </CardBody>
+                <Button as={Link} to="/connect" $variant="gradient" $size="md">
+                  Koppla Fortnox / Visma →
+                </Button>
+              </Card>
+            </SideArea>
+
+            {/* ── HÖGER: Leverantörer + Switch + Intelligence ─────────────── */}
+            <MainArea>
+              <SectionLabel>Era analyserade leverantörer</SectionLabel>
+              <SupplierList>
+                {suppliers.map((g) => {
+                  const a         = g.latest;
+                  const meta      = getCategoryMeta(a.category);
+                  const hasSaving = a.should_switch && (a.net_saving ?? 0) > 0;
+                  const isOpen    = expanded.has(a.id);
+                  const rowScore  = supplierDiagScore(a);
+                  const rowC      = scoreColors(rowScore);
+                  return (
+                    <SupplierOuter key={a.id} $saving={hasSaving} $open={isOpen}>
+                      <SupplierRow onClick={() => toggleExpand(a.id)} aria-expanded={isOpen}>
+                        <MiniGauge score={rowScore} color={rowC.dot} />
+                        <SupplierInfo>
+                          <h4>{a.supplier || a.normalized_supplier || 'Okänd leverantör'}</h4>
+                          <p>
+                            {meta.label} · {fmtDate(a.created_at)}
+                            {g.count > 1 ? ` · ${g.count} analyser` : ''}
+                          </p>
+                        </SupplierInfo>
+                        <SupplierRight>
+                          {a.annual_cost != null && (
+                            <p className="cost">{fmtNum(a.annual_cost)} kr/år</p>
+                          )}
+                          <VerdictBadge $saving={hasSaving}>
+                            {hasSaving ? `+${fmtNum(a.net_saving)} kr/år` : 'Bevakad'}
+                          </VerdictBadge>
+                          <ChevronWrap $open={isOpen}>
+                            <Icon name="chevron-down" size={16} stroke={2} />
+                          </ChevronWrap>
+                        </SupplierRight>
+                      </SupplierRow>
+                      {isOpen && <SupplierDetailPanel a={a} />}
+                    </SupplierOuter>
+                  );
+                })}
+              </SupplierList>
+
+              {/* ── Arvo Switch — visas när minst ett byte är identifierat ─── */}
+              {topSwitch && (
+                <SwitchCard>
+                  <div className="switch-eyebrow">Arvo Switch</div>
+                  <h3>Priset är verifierat. Arvo förbereder bytet.</h3>
+                  <p className="sub">
+                    Priset är leverantörens officiella avtalspris — verifierat och tillgängligt
+                    utan förhandling. Ni behöver inte kontakta er nuvarande leverantör —
+                    Arvo förbereder hela bytet.
+                  </p>
+                  <div className="switch-steps">
+                    <div className="switch-step">
+                      <span className="step-num">1</span>
+                      <span className="step-body">
+                        <span className="step-title">Ni aktiverar bytet</span>
+                        <span className="step-detail">Ett klick — Arvo tar det därifrån.</span>
+                      </span>
                     </div>
-                    <p className="signal-sub">Arvo varnar automatiskt — och förhandlar på er begäran.</p>
+                    <div className="switch-step">
+                      <span className="step-num">2</span>
+                      <span className="step-body">
+                        <span className="step-title">Arvo förbereder allt</span>
+                        <span className="step-detail">
+                          Fullmakt och bytesplan i er inkorg inom 24 timmar — ni granskar och signerar.
+                        </span>
+                      </span>
+                    </div>
+                    <div className="switch-step">
+                      <span className="step-num">3</span>
+                      <span className="step-body">
+                        <span className="step-title">Nytt avtalspris aktivt</span>
+                        <span className="step-detail">
+                          Ni betalar 20&nbsp;% av första årets besparing — från år två är hela
+                          besparingen er.
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Primärt byte — det med störst besparing */}
+                  <div className="switch-offer">
+                    <div className="switch-offer-head">
+                      <span className="switch-badge">
+                        <Icon name="check" size={13} stroke={2.5} />
+                      </span>
+                      <div className="switch-supplier">
+                        <p className="switch-supplier-name">
+                          {topSwitch.supplier || topSwitch.normalized_supplier}
+                        </p>
+                        <span className="switch-price-label">
+                          <Icon name="shield" size={10} stroke={2} />
+                          Verifierat listpris
+                        </span>
+                      </div>
+                    </div>
+                    <div className="switch-offer-body">
+                      <div className="sp-from-row">
+                        <span className="sp-old">{fmtNum(topSwitch.annual_cost)}&nbsp;kr/år</span>
+                        <span className="sp-from-arrow">→</span>
+                      </div>
+                      <span className="sp-new">
+                        {fmtNum(topSwitch.suggested_annual_cost)}<small>kr/år</small>
+                      </span>
+                      <span className="sp-save-note">
+                        Ni sparar {fmtNum(topSwitch.gross_saving)}&nbsp;kr/år — Arvo tar 20&nbsp;% av det (år&nbsp;1)
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Ytterligare förberedda byten */}
+                  {switchables.length > 1 && (
+                    <SwitchMore>
+                      {switchables.slice(1).map((g) => (
+                        <div key={g.latest.id} className="more-row">
+                          <span className="more-name">
+                            {g.latest.supplier || g.latest.normalized_supplier}
+                          </span>
+                          <span className="more-save">
+                            +{fmtNum(g.latest.net_saving)}&nbsp;kr/år
+                          </span>
+                        </div>
+                      ))}
+                    </SwitchMore>
+                  )}
+
+                  <Button
+                    as={Link} to="/aktivera"
+                    $variant="gradient" $size="lg"
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    {switchables.length === 1 ? 'Aktivera bytet' : `Aktivera ${switchables.length} byten`} →
+                  </Button>
+                  {totalGross > 0 && switchables.length > 1 && (
+                    <p className="switch-fine-print">
+                      Totalt {fmtNum(totalGross)}&nbsp;kr/år i bruttobesparing
+                      · Arvo tar 20&nbsp;% av det (år&nbsp;1)
+                    </p>
+                  )}
+                </SwitchCard>
+              )}
+
+              {/* ── Arvo Intelligence ──────────────────────────────────────── */}
+              <IntelligenceCard>
+                <div className="eyebrow">Arvo Intelligence</div>
+                <h3>
+                  {suppliers.length === 1 ? 'En leverantör analyserad.' : `${suppliers.length} leverantörer analyserade.`}{' '}
+                  Nästa prishöjning ser ni innan den kommer.
+                </h3>
+                <p className="sub">
+                  Analysen ovan är en ögonblicksbild. Med Arvo Intelligence bevakas{' '}
+                  {suppliers.length === 1 ? 'er leverantör' : `era ${suppliers.length} leverantörer`}{' '}
+                  kontinuerligt — ni larmas när priser rör sig och får en CFO-brief
+                  varje månad med exakt vad som förändrats.
+                </p>
+
+                <div className="briefing-preview">
+                  <div className="preview-header">
+                    <span>
+                      <span className="preview-live-dot" />
+                      <span className="preview-brand-name">Arvo Intelligence</span>
+                    </span>
+                    <span className="preview-time">Exempel ur en briefing</span>
+                  </div>
+                  <div className="signal">
+                    <div className="signal-ico">
+                      <Icon name="pulse" size={14} stroke={2} />
+                    </div>
+                    <div>
+                      <span className="signal-tag">Smyghöjningslarm</span>
+                      <div className="signal-line">
+                        Telia · Mobilflotta 24 abonnemang
+                        <span className="signal-badge">+11&nbsp;%</span>
+                      </div>
+                      <p className="signal-sub">
+                        Pris höjt mot föregående period — utan avisering. Så här ser larmet ut när det händer er.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="signal">
+                    <div className="signal-ico">
+                      <Icon name="benchmark" size={14} stroke={2} />
+                    </div>
+                    <div>
+                      <span className="signal-tag">Community Benchmark</span>
+                      <div className="bench-grid">
+                        {[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14].map((i) => (
+                          <span key={i} className={[0,2,3,5,8,9,11,13].includes(i) ? 'on' : ''} />
+                        ))}
+                      </div>
+                      <p className="signal-sub">
+                        <strong>8 av 15</strong> bolag i samma kohort fick höjningen —
+                        Arvo ser mönstret innan det når er.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="signal">
+                    <div className="signal-ico">
+                      <Icon name="calendar-clock" size={14} stroke={2} />
+                    </div>
+                    <div>
+                      <span className="signal-tag">Proaktiv avtalsbevakning</span>
+                      <div className="signal-line">
+                        Avtalsbevakning · varnar 90 dagar före förnyelse
+                        <span className="signal-badge signal-badge--contract">Förnyelse</span>
+                      </div>
+                      <p className="signal-sub">Arvo varnar automatiskt — och förhandlar på er begäran.</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="price-row">
-                <div>
-                  <span className="price">1 995 kr</span>
-                  <span className="price-period">/ mån</span>
+                <div className="price-row">
+                  <div>
+                    <span className="price">1 995 kr</span>
+                    <span className="price-period">/ mån</span>
+                  </div>
+                  <span className="price-note">Ingen bindningstid</span>
                 </div>
-                <span className="price-note">Ingen bindningstid</span>
-              </div>
-              <Button as={Link} to="/aktivera" $variant="gradient" $size="lg"
-                style={{ width: '100%', justifyContent: 'center' }}>
-                Aktivera Arvo Intelligence →
-              </Button>
-              <p style={{ fontSize: 12, color: '#8A9E98', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>
-                Arvo söker igenom er inkorg — ni behöver inte lyfta ett finger.
-              </p>
-            </IntelligenceCard>
+                <Button as={Link} to="/aktivera" $variant="gradient" $size="lg"
+                  style={{ width: '100%', justifyContent: 'center' }}>
+                  Aktivera Arvo Intelligence →
+                </Button>
+                <p style={{ fontSize: 12, color: '#8A9E98', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>
+                  Arvo söker igenom er inkorg — ni behöver inte lyfta ett finger.
+                </p>
+              </IntelligenceCard>
+            </MainArea>
 
-            {/* ── Gör Arvo permanent ───────────────────────────────────── */}
-            <Card>
-              <CardLabel>Gör Arvo permanent</CardLabel>
-              <CardTitle>En vidarebefordringsregel räcker.</CardTitle>
-              <CardBody>
-                Peka era leverantörsfakturor till adressen nedan, så analyserar Arvo
-                varje ny faktura automatiskt — och hör av sig bara när något är fel prissatt.
-              </CardBody>
-              <AddressChip>faktura@inbox.arvoflow.se</AddressChip>
-            </Card>
-
-            {/* ── Rapport ──────────────────────────────────────────────── */}
-            <Card>
-              <CardLabel>Arvo-rapport</CardLabel>
-              <CardTitle>Er samlade rapport, som PDF.</CardTitle>
-              <CardBody>
-                Hela kostnadsbilden, varje identifierat fynd och nästa steg — skickad till er inkorg.
-              </CardBody>
-              {reportState === 'success' ? (
-                <SuccessMsg>Rapporten är på väg — kolla er inkorg.</SuccessMsg>
-              ) : (
-                <>
-                  <FormRow onSubmit={handleSendReport}>
-                    <EmailInput
-                      type="email" placeholder="namn@bolaget.se"
-                      value={reportEmail} onChange={(e) => setReportEmail(e.target.value)}
-                      required disabled={reportState === 'loading'}
-                    />
-                    <Button type="submit" $variant="gradient" $size="md"
-                      disabled={reportState === 'loading' || !reportEmail}>
-                      {reportState === 'loading' ? 'Skickar…' : 'Skicka rapporten →'}
-                    </Button>
-                  </FormRow>
-                  {reportState === 'error' && reportError && <ErrorHint>{reportError}</ErrorHint>}
-                </>
-              )}
-            </Card>
-
-            {/* ── Koppla bokföringen ────────────────────────────────────── */}
-            <Card>
-              <CardLabel>Hela leverantörsbilden</CardLabel>
-              <CardTitle>Koppla bokföringen — bevaka allt.</CardTitle>
-              <CardBody>
-                Med Fortnox eller Visma läser Arvo hela er leverantörsreskontra —
-                varje avtal bevakat, varje prisrörelse fångad, utan ett enda mail.
-              </CardBody>
-              <Button as={Link} to="/connect" $variant="gradient" $size="md">
-                Koppla Fortnox / Visma →
-              </Button>
-            </Card>
-          </>
+          </DashGrid>
         )}
 
         {/* ── Tomt kontor ───────────────────────────────────────────────── */}
