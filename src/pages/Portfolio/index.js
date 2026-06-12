@@ -153,6 +153,38 @@ function Gauge({ score, color }) {
   );
 }
 
+// Kompakt gauge för leverantörsraderna — samma färglogik, mindre format.
+const MINI_R = 17;
+const MINI_C = 2 * Math.PI * MINI_R;
+
+const MiniGaugeWrap = styled.div`
+  position: relative; flex-shrink: 0;
+  width: 44px; height: 44px;
+  span.val {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; letter-spacing: -0.04em;
+    font-feature-settings: 'tnum';
+  }
+`;
+
+function MiniGauge({ score, color }) {
+  return (
+    <MiniGaugeWrap>
+      <svg width="44" height="44" viewBox="0 0 44 44">
+        <circle cx="22" cy="22" r={MINI_R} fill="none" stroke="#E5E7EB" strokeWidth="3.5" />
+        <circle
+          cx="22" cy="22" r={MINI_R} fill="none"
+          stroke={color} strokeWidth="3.5" strokeLinecap="round"
+          strokeDasharray={`${(score / 100) * MINI_C} ${MINI_C}`}
+          style={{ transform: 'rotate(-90deg)', transformOrigin: '22px 22px', transition: 'stroke-dasharray 1s ease' }}
+        />
+      </svg>
+      <span className="val" style={{ color }}>{score}</span>
+    </MiniGaugeWrap>
+  );
+}
+
 // ─── animationer ─────────────────────────────────────────────────────────────
 
 const fadeUp = keyframes`from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); }`;
@@ -538,6 +570,48 @@ export default function Portfolio() {
               </PriceNote>
             </Card>
 
+            {/* ── Leverantörslista med expanderbara detaljer ────────────── */}
+            <SectionLabel>Era bevakade leverantörer</SectionLabel>
+            <SupplierList>
+              {suppliers.map((g) => {
+                const a        = g.latest;
+                const meta     = getCategoryMeta(a.category);
+                const hasSaving = a.should_switch && (a.net_saving ?? 0) > 0;
+                const isOpen   = expanded.has(a.id);
+                const rowScore = supplierDiagScore(a);
+                const rowC     = scoreColors(rowScore);
+                return (
+                  <SupplierOuter key={a.id} $saving={hasSaving} $open={isOpen}>
+                    <SupplierRow
+                      onClick={() => toggleExpand(a.id)}
+                      aria-expanded={isOpen}
+                    >
+                      <MiniGauge score={rowScore} color={rowC.dot} />
+                      <SupplierInfo>
+                        <h4>{a.supplier || a.normalized_supplier || 'Okänd leverantör'}</h4>
+                        <p>
+                          {meta.label} · {fmtDate(a.created_at)}
+                          {g.count > 1 ? ` · ${g.count} analyser` : ''}
+                        </p>
+                      </SupplierInfo>
+                      <SupplierRight>
+                        {a.annual_cost != null && (
+                          <p className="cost">{fmtNum(a.annual_cost)} kr/år</p>
+                        )}
+                        <VerdictBadge $saving={hasSaving}>
+                          {hasSaving ? `+${fmtNum(a.net_saving)} kr/år` : 'Bevakad'}
+                        </VerdictBadge>
+                        <ChevronWrap $open={isOpen}>
+                          <Icon name="chevron-down" size={16} stroke={2} />
+                        </ChevronWrap>
+                      </SupplierRight>
+                    </SupplierRow>
+                    {isOpen && <SupplierDetailPanel a={a} />}
+                  </SupplierOuter>
+                );
+              })}
+            </SupplierList>
+
             {/* ── Segmenttäckning ───────────────────────────────────────── */}
             <PortfolioBridge>
               <div className="pb-eyebrow">Helhetsbilden</div>
@@ -570,54 +644,21 @@ export default function Portfolio() {
               </div>
             </PortfolioBridge>
 
-            {/* ── Leverantörslista med expanderbara detaljer ────────────── */}
-            <SectionLabel>Era bevakade leverantörer</SectionLabel>
-            <SupplierList>
-              {suppliers.map((g) => {
-                const a        = g.latest;
-                const meta     = getCategoryMeta(a.category);
-                const hasSaving = a.should_switch && (a.net_saving ?? 0) > 0;
-                const isOpen   = expanded.has(a.id);
-                return (
-                  <SupplierOuter key={a.id} $saving={hasSaving} $open={isOpen}>
-                    <SupplierRow
-                      onClick={() => toggleExpand(a.id)}
-                      aria-expanded={isOpen}
-                    >
-                      <SupplierInfo>
-                        <h4>{a.supplier || a.normalized_supplier || 'Okänd leverantör'}</h4>
-                        <p>
-                          {meta.label} · {fmtDate(a.created_at)}
-                          {g.count > 1 ? ` · ${g.count} analyser` : ''}
-                        </p>
-                      </SupplierInfo>
-                      <SupplierRight>
-                        {a.annual_cost != null && (
-                          <p className="cost">{fmtNum(a.annual_cost)} kr/år</p>
-                        )}
-                        <VerdictBadge $saving={hasSaving}>
-                          {hasSaving ? `+${fmtNum(a.net_saving)} kr/år` : 'Bevakad'}
-                        </VerdictBadge>
-                        <ChevronWrap $open={isOpen}>
-                          <Icon name="chevron-down" size={16} stroke={2} />
-                        </ChevronWrap>
-                      </SupplierRight>
-                    </SupplierRow>
-                    {isOpen && <SupplierDetailPanel a={a} />}
-                  </SupplierOuter>
-                );
-              })}
-            </SupplierList>
-
             {/* ── Arvo Intelligence ─────────────────────────────────────── */}
             <IntelligenceCard>
               <div className="eyebrow">Arvo Intelligence</div>
               <h3>
                 {autoAnalyses.length === 1
-                  ? 'Det var en faktura.'
+                  ? 'En faktura analyserad.'
                   : `${autoAnalyses.length} fakturor analyserade.`}{' '}
-                Vi ser mer.
+                Nästa prishöjning ser ni innan den kommer.
               </h3>
+              <p className="sub">
+                Analysen ovan är en ögonblicksbild. Med Arvo Intelligence bevakas{' '}
+                {suppliers.length === 1 ? 'er leverantör' : `era ${suppliers.length} leverantörer`}{' '}
+                kontinuerligt — ni larmas när priser rör sig och får en CFO-brief
+                varje månad med exakt vad som förändrats.
+              </p>
 
               <div className="briefing-preview">
                 <div className="preview-header">
