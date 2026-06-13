@@ -25,7 +25,11 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/migrate-public-prices.mjs
-      - name: Ingest
+      - name: Ingest curated seed (verifierad data)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/ingest-public-prices.mjs --seed
+      - name: Ingest live (adaptrar)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/ingest-public-prices.mjs --source=${{ github.event.inputs.source || 'all' }}

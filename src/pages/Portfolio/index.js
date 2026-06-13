@@ -302,8 +302,11 @@ export default function Portfolio() {
     for (const g of suppliers) {
       const a = g.latest;
       const pb = publicBench[a.category];
-      if (pb && pb.n >= 3 && pb.median > 0) {
-        const customerUnit = (a.price_per_seat_monthly != null && a.price_per_seat_monthly > 0) ? a.price_per_seat_monthly : null;
+      if (pb && pb.n >= 2 && pb.observations?.length) {
+        // Per-enhet-jämförelse mot kunden ENDAST när vi har samma leverantör
+        // (like-for-like) — annars visas det offentliga priset som ren referens.
+        const sameSupplier = pb.scope === 'supplier';
+        const customerUnit = (sameSupplier && a.price_per_seat_monthly > 0) ? a.price_per_seat_monthly : null;
         const pct = customerUnit ? Math.round(((customerUnit - pb.median) / pb.median) * 100) : null;
         return { ...pb, category: a.category, supplier: a.supplier || a.normalized_supplier, customerUnit, pct };
       }
@@ -432,7 +435,7 @@ export default function Portfolio() {
                   <Truth $full={renewals.length === 0}>
                     <div className="card-eyebrow">
                       <span>Den kollektiva sanningen</span>
-                      <span className="src">offentlig sektor · {publicFeatured.n} obs</span>
+                      <span className="src">offentlig sektor · {publicFeatured.n} avtalspris{publicFeatured.n > 1 ? 'er' : ''}</span>
                     </div>
                     <h3>
                       {(() => {
@@ -444,16 +447,16 @@ export default function Portfolio() {
                           return <>Ni betalar <em>{Math.abs(publicFeatured.pct)}% mindre</em> än offentlig sektor för {cat}.</>;
                         if (publicFeatured.customerUnit)
                           return <>Ni betalar <em>i nivå</em> med offentlig sektor för {cat}.</>;
-                        return <>Offentlig sektor betalar i snitt <em>{fmtUnit(publicFeatured.median)} {u}</em> för {cat}.</>;
+                        return <>Offentlig sektor betalar <em>{fmtUnit(publicFeatured.min)}–{fmtUnit(publicFeatured.max)} {u}</em> för {cat}.</>;
                       })()}
                     </h3>
                     {(() => {
                       const rows = [
                         ...(publicFeatured.customerUnit ? [{ lbl: 'Ni betalar', amt: publicFeatured.customerUnit, you: true }] : []),
-                        ...(publicFeatured.buyers || []).map((b) => ({ lbl: b.buyer, amt: b.unitPrice, you: false })),
+                        ...(publicFeatured.observations || []).map((o) => ({ lbl: o.product || o.buyer, amt: o.unitPrice, you: false })),
                       ];
                       if (!rows.length) return null;
-                      const max = Math.max(...rows.map((r) => r.amt), publicFeatured.median) || 1;
+                      const max = Math.max(...rows.map((r) => r.amt)) || 1;
                       return (
                         <div className="bars">
                           {rows.map((r, i) => (
@@ -467,8 +470,9 @@ export default function Portfolio() {
                       );
                     })()}
                     <p className="truth-note">
-                      Verkliga kontraktspriser ur <b>svensk öppen data</b> ({PUBLIC_SOURCE_LABEL[publicFeatured.buyers?.[0]?.source] || 'offentliga avtal'}) —
-                      vad stora köpare faktiskt betalar. {publicFeatured.customerUnit ? 'Jämfört per enhet mot er faktura.' : 'Ladda upp er faktura så jämför Arvo per enhet.'}
+                      Verkliga avtalspriser ur <b>svensk öppen data</b> — {PUBLIC_SOURCE_LABEL[publicFeatured.observations?.[0]?.source] || 'offentliga avtal'}
+                      {publicFeatured.observations?.[0]?.buyer ? `, ${publicFeatured.observations[0].buyer}` : ''}. Vad stora köpare faktiskt betalar.
+                      {publicFeatured.customerUnit ? ' Jämfört per enhet mot er faktura.' : ''}
                     </p>
                   </Truth>
                 )}

@@ -49,9 +49,8 @@ const ADAPTERS = {
   },
 };
 
-function loadSample() {
-  const p = path.resolve('data/public-prices-sample.json');
-  const json = JSON.parse(readFileSync(p, 'utf8'));
+function loadJson(file) {
+  const json = JSON.parse(readFileSync(path.resolve(file), 'utf8'));
   return json.records ?? [];
 }
 
@@ -68,12 +67,16 @@ function validate(records) {
 async function main() {
   const args = process.argv.slice(2);
   const sample = args.includes('--sample');
+  const seed = args.includes('--seed');
   const sourceArg = (args.find((a) => a.startsWith('--source=')) ?? '--source=all').split('=')[1];
 
   let raw = [];
   if (sample) {
-    raw = loadSample();
-    console.log(`[ingest] sample-läge · ${raw.length} records ur fixture`);
+    raw = loadJson('data/public-prices-sample.json');
+    console.log(`[ingest] sample-läge · ${raw.length} records ur fixture (EXEMPEL)`);
+  } else if (seed) {
+    raw = loadJson('data/public-prices-seed.json');
+    console.log(`[ingest] seed-läge · ${raw.length} VERIFIERADE records ur curation`);
   } else {
     const names = sourceArg === 'all' ? Object.keys(ADAPTERS) : sourceArg.split(',');
     for (const name of names) {
