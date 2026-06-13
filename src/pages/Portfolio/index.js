@@ -4,7 +4,7 @@
 // eller honest systemkonstant. Lager som kräver data vi ännu inte har
 // (kohort-prisdiskriminering, sannolikhetsprognos) visas ENDAST med verklig
 // täckning — annars utelämnas de (regel 3/4: precision eller tystnad).
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
@@ -12,7 +12,30 @@ import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
   SwitchInline, SwitchBtn, IntelQuiet, SignOff, Spinner,
+  CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
+
+// ── intagsdiskens kategorier — tre hotspots där läckaget oftast sitter ───────
+const INTAKE_SEGMENTS = [
+  { label: 'IT-licenser',    icon: 'spark',  hot: true },
+  { label: 'Telefoni',       icon: 'phone',  hot: true },
+  { label: 'Mjukvara / SaaS', icon: 'wifi',   hot: true },
+  { label: 'IT-drift',       icon: 'fortnox', hot: false },
+  { label: 'El',             icon: 'bolt',   hot: false },
+  { label: 'Skrivare',       icon: 'file',   hot: false },
+  { label: 'Fordon',         icon: 'truck',  hot: false },
+  { label: 'Försäkring',     icon: 'shield', hot: false },
+];
+
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = String(reader.result || '');
+    resolve(result.includes(',') ? result.split(',')[1] : result);
+  };
+  reader.onerror = () => reject(new Error('Kunde inte läsa filen'));
+  reader.readAsDataURL(file);
+});
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const GENERIC_DOMAINS = new Set([
@@ -138,26 +161,65 @@ export default function Portfolio() {
   const [cohort, setCohort]     = useState({});
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
+  const [fingerprint, setFingerprint] = useState('');
+  const [uploads, setUploads]   = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadNote, setUploadNote] = useState('');
+
+  const magic = useMemo(() => new URLSearchParams(window.location.search).get('magic'), []);
+
+  const loadOffice = useCallback(async (fp) => {
+    const effFp = fp || fingerprint || await getBrowserFingerprint();
+    const qs = `fingerprint=${encodeURIComponent(effFp)}` + (magic ? `&magic=${encodeURIComponent(magic)}` : '');
+    const res = await fetch(`/api/invoice-history?${qs}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    setAnalyses(data.analyses ?? []);
+    setApiEmail(data.email ?? null);
+    setCohort(data.cohort ?? {});
+  }, [fingerprint, magic]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const fp = await getBrowserFingerprint();
-        const magic = new URLSearchParams(window.location.search).get('magic');
-        const qs = `fingerprint=${encodeURIComponent(fp)}` + (magic ? `&magic=${encodeURIComponent(magic)}` : '');
-        const res = await fetch(`/api/invoice-history?${qs}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (!cancelled) {
-          setAnalyses(data.analyses ?? []);
-          setApiEmail(data.email ?? null);
-          setCohort(data.cohort ?? {});
-        }
+        if (!cancelled) setFingerprint(fp);
+        if (!cancelled) await loadOffice(fp);
       } catch (err) { if (!cancelled) setError(err.message); }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleIntakeFiles(e) {
+    const picked = [...(e.target.files || [])]
+      .filter((f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name))
+      .slice(0, 20);
+    e.target.value = '';
+    if (!picked.length) return;
+    if (!magic) {
+      setUploadNote('Direktuppladdning kräver att ni öppnat kontoret via länken i ert mejl. Vidarebefordra fakturorna till faktura@inbox.arvoflow.se så landar de här ändå.');
+      return;
+    }
+    setUploadNote('');
+    setUploading(true);
+    setUploads(picked.map((f) => ({ name: f.name, status: 'work' })));
+    for (let i = 0; i < picked.length; i++) {
+      try {
+        const pdfBase64 = await fileToBase64(picked[i]);
+        const res = await fetch('/api/kontor-ingest', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdfBase64, magic, fingerprint }),
+        });
+        const data = await res.json().catch(() => ({}));
+        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: data.ok ? 'done' : 'fail' } : u));
+      } catch {
+        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: 'fail' } : u));
+      }
+    }
+    setUploading(false);
+    try { await loadOffice(); } catch { /* behåll intaget om hämtning fallerar */ }
+  }
 
   function toggle(id) {
     setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -461,26 +523,86 @@ export default function Portfolio() {
           </>
         )}
 
-        {/* ── Tomt kontor ─────────────────────────────────────────────────── */}
+        {/* ── Tomt kontor = intelligensintaget (intagsdisk, ej säljpitch) ──── */}
         {analyses !== null && suppliers.length === 0 && !error && (
           <>
             <TopRow>
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}</div>
-                <h1>Ert kontor<br />väntar på första fakturan.</h1>
+                <h1>Tre kategorier<br />läcker mest. Börja där.</h1>
               </Ident>
             </TopRow>
+
             <Verdict>
-              <div className="eyebrow">Så kommer ni igång</div>
-              <h2>Mejla en faktura — <em>kontoret fylls på minuter.</em></h2>
+              <div className="eyebrow">Var pengarna oftast rinner</div>
+              <h2>Överbetalningen sitter oftast i <em>IT-licenser, telefoni och mjukvara.</em></h2>
               <p className="work">
-                Vidarebefordra en leverantörsfaktura (PDF) till <b>faktura@inbox.arvoflow.se</b>,
-                eller ladda upp den direkt. Arvo analyserar, jämför mot verifierat marknadspris
-                och börjar bevaka — analysen landar här.
+                Vi vet var svenska bolag oftast överbetalar — Microsoft- och Google-licenser,
+                mobilflottan och SaaS-prenumerationerna. Börja med dem, så har ni ert första
+                fynd inom minuter. Töm sedan resten av högen: ju fler avtal ni matar in, desto
+                skarpare ser Arvo hela er kostnadsbild.
               </p>
-              <SwitchBtn as={Link} to="/testa-faktura">Analysera en faktura <Icon name="arrow" size={16} /></SwitchBtn>
             </Verdict>
+
+            <CoverageMap>
+              <div className="cm-eyebrow">Er kostnadskarta · 8 kategorier</div>
+              <div className="cm-grid">
+                {INTAKE_SEGMENTS.map((s) => (
+                  <div key={s.label} className={`cm-cell${s.hot ? ' hot' : ''}`}>
+                    <span className="cm-ico"><Icon name={s.icon} size={20} stroke={1.7} /></span>
+                    <span className="cm-label">{s.label}</span>
+                    {s.hot && <span className="cm-tag">Börja här</span>}
+                  </div>
+                ))}
+              </div>
+            </CoverageMap>
+
+            <IntakeDoors>
+              <div className="door">
+                <div className="door-k">Snabbast · vidarebefordra</div>
+                <h4>Töm månadens fakturor i ett mejl.</h4>
+                <p>Markera era leverantörsfakturor (PDF) i inkorgen och vidarebefordra allt på en gång — analyserna landar här.</p>
+                <div className="spacer" />
+                <AddressChipDark>faktura@inbox.arvoflow.se</AddressChipDark>
+              </div>
+
+              <div className="door">
+                <div className="door-k">Eller · ladda upp direkt</div>
+                <h4>Dra in flera fakturor här.</h4>
+                <p>PDF · upp till 20 åt gången · vi sparar aldrig filen efter analysen.</p>
+                <div className="spacer" />
+                <Dropzone className={uploading ? 'busy' : ''}>
+                  <span className="dz-ico"><Icon name="upload" size={22} stroke={1.7} /></span>
+                  <span className="dz-t">{uploading ? 'Analyserar…' : 'Släpp eller välj PDF-fakturor'}</span>
+                  <span className="dz-s">Flera samtidigt går bra</span>
+                  <input type="file" accept="application/pdf" multiple disabled={uploading} onChange={handleIntakeFiles} />
+                </Dropzone>
+                {uploads.length > 0 && (
+                  <DropProgress>
+                    {uploads.map((u, i) => (
+                      <div className="dp-row" key={`${u.name}-${i}`}>
+                        <span className="dp-name">{u.name}</span>
+                        <span className={`dp-stat ${u.status}`}>
+                          {u.status === 'done' ? 'Klar' : u.status === 'fail' ? 'Misslyckades' : 'Analyserar…'}
+                        </span>
+                      </div>
+                    ))}
+                  </DropProgress>
+                )}
+                {uploadNote && <DropProgress><p className="dp-note">{uploadNote}</p></DropProgress>}
+              </div>
+            </IntakeDoors>
+
+            <FortnoxTease>
+              <span className="ft-ico"><Icon name="lock" size={18} stroke={1.7} /></span>
+              <span className="ft-txt">
+                <b>Snart: koppla Fortnox.</b> När integrationen är på plats läses hela
+                leverantörsreskontran automatiskt — då slutar ni ladda upp.
+              </span>
+              <span className="ft-soon">Lanseras inom kort</span>
+            </FortnoxTease>
+
             <SignOff>
               <div className="keyline" />
               <div className="mark">ARVO</div>

@@ -476,5 +476,83 @@ export const Spinner = styled.div`
   animation:${sweep} .8s linear infinite; margin:120px auto;
 `;
 
+// ── Intelligensintaget (tomma kontoret = intagsdisk, ej säljpitch) ──────────
+export const CoverageMap = styled.div`
+  margin-top:34px; padding-top:28px; border-top:1px solid ${theme.dossier.hairlineOnDark};
+  ${appear(0.06)}
+  .cm-eyebrow { font-family:${MONO}; font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+    color:${theme.dossier.teal}; margin-bottom:16px; }
+  .cm-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+    @media (max-width:600px){ grid-template-columns:repeat(2,1fr); } }
+  .cm-cell { position:relative; border:1px solid ${theme.dossier.hairlineOnDark};
+    border-radius:${theme.size.radius.md}; padding:15px 14px 14px;
+    display:flex; flex-direction:column; gap:10px; background:${theme.dossier.bgRaised}; }
+  .cm-cell.hot { border-color:rgba(43,196,172,.45);
+    background:linear-gradient(155deg, rgba(43,196,172,.10), rgba(23,138,123,.04));
+    box-shadow:0 0 0 1px rgba(43,196,172,.12); }
+  .cm-ico { color:${theme.dossier.faintOnDark}; display:flex; }
+  .cm-cell.hot .cm-ico { color:${theme.dossier.tealBright}; }
+  .cm-label { font-size:13px; font-weight:600; color:${theme.dossier.mutedOnDark}; letter-spacing:-.005em; }
+  .cm-cell.hot .cm-label { color:${theme.dossier.inkOnDark}; }
+  .cm-tag { font-family:${MONO}; font-size:9px; letter-spacing:.12em; text-transform:uppercase;
+    color:${theme.dossier.tealBright}; }
+`;
+
+export const IntakeDoors = styled.div`
+  margin-top:20px; display:grid; gap:18px; grid-template-columns:1fr 1fr;
+  ${appear(0.12)}
+  @media (max-width:760px){ grid-template-columns:1fr; }
+  .door { border:1px solid ${theme.dossier.hairlineOnDark}; border-radius:${theme.size.radius.lg};
+    background:${theme.dossier.bgRaised}; padding:24px 24px 22px; display:flex; flex-direction:column; }
+  .door-k { font-family:${MONO}; font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+    color:${theme.dossier.teal}; margin-bottom:12px; }
+  .door h4 { font-family:${SERIF}; font-weight:600; font-size:18px; letter-spacing:-.01em;
+    color:${theme.dossier.inkOnDark}; margin:0 0 8px; }
+  .door p { font-size:13px; line-height:1.55; color:${theme.dossier.mutedOnDark}; margin:0 0 16px; }
+  .door .spacer { flex:1; }
+`;
+
+export const AddressChipDark = styled.div`
+  font-family:${MONO}; font-size:14px; letter-spacing:.01em; color:${theme.dossier.tealBright};
+  background:rgba(43,196,172,.06); border:1px dashed rgba(43,196,172,.45);
+  border-radius:${theme.size.radius.md}; padding:13px 16px; text-align:center; user-select:all;
+`;
+
+export const Dropzone = styled.label`
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  border:1.5px dashed rgba(43,196,172,.38); border-radius:${theme.size.radius.md};
+  padding:26px 18px; cursor:pointer; text-align:center;
+  background:rgba(43,196,172,.04); transition:border-color .15s, background .15s;
+  &:hover { border-color:${theme.dossier.tealBright}; background:rgba(43,196,172,.09); }
+  .dz-ico { color:${theme.dossier.tealBright}; }
+  .dz-t { font-size:14px; font-weight:600; color:${theme.dossier.inkOnDark}; }
+  .dz-s { font-size:12px; color:${theme.dossier.mutedOnDark}; }
+  input { display:none; }
+`;
+
+export const DropProgress = styled.div`
+  margin-top:14px; display:flex; flex-direction:column; gap:7px;
+  .dp-row { display:flex; align-items:center; justify-content:space-between; gap:12px;
+    font-size:12.5px; color:${theme.dossier.mutedOnDark}; }
+  .dp-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
+  .dp-stat { font-family:${MONO}; font-size:11px; letter-spacing:.06em; white-space:nowrap; }
+  .dp-stat.done { color:${theme.dossier.tealBright}; }
+  .dp-stat.work { color:${theme.dossier.faintOnDark}; }
+  .dp-stat.fail { color:#E06A4D; }
+  .dp-note { margin-top:6px; font-size:12px; color:${theme.dossier.faintOnDark}; line-height:1.5; }
+`;
+
+export const FortnoxTease = styled.div`
+  margin-top:24px; display:flex; align-items:center; gap:14px;
+  padding:15px 18px; border:1px solid ${theme.dossier.hairlineOnDark};
+  border-radius:${theme.size.radius.md}; ${appear(0.18)}
+  .ft-ico { color:${theme.dossier.faintOnDark}; flex-shrink:0; display:flex; }
+  .ft-txt { flex:1; font-size:13px; line-height:1.5; color:${theme.dossier.mutedOnDark};
+    b { color:${theme.dossier.inkOnDark}; } }
+  .ft-soon { font-family:${MONO}; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:${theme.dossier.tealBright}; border:1px solid rgba(43,196,172,.4);
+    border-radius:${theme.size.radius.pill}; padding:5px 11px; white-space:nowrap; }
+`;
+
 export const shimmerCss = shimmer;
 export const blipCss = blip;
