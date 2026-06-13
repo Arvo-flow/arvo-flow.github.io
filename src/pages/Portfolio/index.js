@@ -300,9 +300,12 @@ export default function Portfolio() {
   const publicFeatured = useMemo(() => {
     if (featured) return null;
     for (const g of suppliers) {
-      const pb = publicBench[g.latest.category];
+      const a = g.latest;
+      const pb = publicBench[a.category];
       if (pb && pb.n >= 3 && pb.median > 0) {
-        return { ...pb, category: g.latest.category, supplier: g.latest.supplier || g.latest.normalized_supplier };
+        const customerUnit = (a.price_per_seat_monthly != null && a.price_per_seat_monthly > 0) ? a.price_per_seat_monthly : null;
+        const pct = customerUnit ? Math.round(((customerUnit - pb.median) / pb.median) * 100) : null;
+        return { ...pb, category: a.category, supplier: a.supplier || a.normalized_supplier, customerUnit, pct };
       }
     }
     return null;
@@ -432,19 +435,32 @@ export default function Portfolio() {
                       <span className="src">offentlig sektor · {publicFeatured.n} obs</span>
                     </div>
                     <h3>
-                      Offentlig sektor betalar i snitt <em>{fmtUnit(publicFeatured.median)} {UNIT_LABEL[publicFeatured.unit] || ''}</em>
-                      {' '}för {(getCategoryMeta(publicFeatured.category)?.label || publicFeatured.category).toLowerCase()}.
+                      {(() => {
+                        const cat = (getCategoryMeta(publicFeatured.category)?.label || publicFeatured.category).toLowerCase();
+                        const u = UNIT_LABEL[publicFeatured.unit] || '';
+                        if (publicFeatured.customerUnit && publicFeatured.pct >= 8)
+                          return <>Offentlig sektor betalar {fmtUnit(publicFeatured.median)} {u} för {cat}. Ni betalar <em>{publicFeatured.pct}% mer.</em></>;
+                        if (publicFeatured.customerUnit && publicFeatured.pct <= -8)
+                          return <>Ni betalar <em>{Math.abs(publicFeatured.pct)}% mindre</em> än offentlig sektor för {cat}.</>;
+                        if (publicFeatured.customerUnit)
+                          return <>Ni betalar <em>i nivå</em> med offentlig sektor för {cat}.</>;
+                        return <>Offentlig sektor betalar i snitt <em>{fmtUnit(publicFeatured.median)} {u}</em> för {cat}.</>;
+                      })()}
                     </h3>
-                    {publicFeatured.buyers?.length > 0 && (() => {
-                      const vals = publicFeatured.buyers.map((b) => b.unitPrice);
-                      const max = Math.max(...vals, publicFeatured.median) || 1;
+                    {(() => {
+                      const rows = [
+                        ...(publicFeatured.customerUnit ? [{ lbl: 'Ni betalar', amt: publicFeatured.customerUnit, you: true }] : []),
+                        ...(publicFeatured.buyers || []).map((b) => ({ lbl: b.buyer, amt: b.unitPrice, you: false })),
+                      ];
+                      if (!rows.length) return null;
+                      const max = Math.max(...rows.map((r) => r.amt), publicFeatured.median) || 1;
                       return (
                         <div className="bars">
-                          {publicFeatured.buyers.map((b, i) => (
-                            <div className="barrow" key={i}>
-                              <span className="lbl">{b.buyer}</span>
-                              <span className="track"><span className="fill" style={{ width: `${Math.max(8, (b.unitPrice / max) * 100)}%` }} /></span>
-                              <span className="amt">{fmtUnit(b.unitPrice)}</span>
+                          {rows.map((r, i) => (
+                            <div className={`barrow${r.you ? ' you' : ''}`} key={i}>
+                              <span className="lbl">{r.lbl}</span>
+                              <span className="track"><span className="fill" style={{ width: `${Math.max(8, (r.amt / max) * 100)}%` }} /></span>
+                              <span className="amt">{fmtUnit(r.amt)}</span>
                             </div>
                           ))}
                         </div>
@@ -452,7 +468,7 @@ export default function Portfolio() {
                     })()}
                     <p className="truth-note">
                       Verkliga kontraktspriser ur <b>svensk öppen data</b> ({PUBLIC_SOURCE_LABEL[publicFeatured.buyers?.[0]?.source] || 'offentliga avtal'}) —
-                      vad stora köpare faktiskt betalar. Ladda upp er faktura så jämför Arvo per enhet.
+                      vad stora köpare faktiskt betalar. {publicFeatured.customerUnit ? 'Jämfört per enhet mot er faktura.' : 'Ladda upp er faktura så jämför Arvo per enhet.'}
                     </p>
                   </Truth>
                 )}
