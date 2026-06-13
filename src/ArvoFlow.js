@@ -20,6 +20,7 @@ import Briefing from './pages/Briefing';
 import Intelligence from './pages/Intelligence';
 import Aktivera from './pages/Aktivera';
 import Prospect from './pages/Prospect';
+import Kontoret from './pages/Kontoret';
 import ScrollToTop from './components/ScrollToTop';
 
 const ArvoFlow = () => (
@@ -43,6 +44,7 @@ const ArvoFlow = () => (
           <Route path="/intelligence" element={<Intelligence />} />
           <Route path="/aktivera" element={<Aktivera />} />
           <Route path="/prospect/:token" element={<Prospect />} />
+          <Route path="/kontoret" element={<Kontoret />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

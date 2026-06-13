@@ -1,21 +1,90 @@
 # Arvo
 
+> **Den här bibeln är levande, inte helig.** Den fångar vår bästa nuvarande
+> förståelse — inte en gräns för hur långt vi får tänka. Ser du en modigare,
+> mer lönsam eller mer kreativ väg än vad som står här: **säg det och föreslå
+> ändringen i samma andetag.** Bibeln får ALDRIG sätta käppar i hjulet för ett
+> bättre koncept. Det enda som är oförhandlingsbart är integriteten (regel 1–9:
+> inga siffror utan källa, precision eller tystnad, kundlöften med mekanik) —
+> för det är *därför* vi uppfattas som premium, inte trots det. Allt annat —
+> vision, koncept, affärsmodell, UI, strategi — är till för att utmanas och
+> överträffas. När du utmanar bibeln: uppdatera den i samma commit (den här
+> filen är kod, inte dekoration).
+
 ## Vision
 
-Arvo är den tystgående finansdirektören som svenska SMF-ägare aldrig haft råd att anställa.
-Vi ser vad som händer i deras leverantörsekonomi innan de själva vet om det — och vi hör av oss med ett konkret fynd, utan att bli tillfrågade.
+Arvo ger varje svenskt småföretag samma marknadsövertag som storbolagens
+inköpsavdelningar — **den kollektiva sanningen om vad allt faktiskt kostar,
+och en maskin som agerar på den innan leverantören hinner.**
 
-> *"Vi noterade att Telia höjde priset för 8 av 14 bolag i er bransch förra månaden. Ni är troligtvis nästa."*
+Vi är den enda entitet som ser vad hundratals svenska bolag *faktiskt betalar*
+— inte listpriser, verkliga transaktionspriser — tvärs över alla leverantörer
+samtidigt. En konsult ger en enkät från i fjol. En jämförelsesajt ger listpriser.
+Leverantören ljuger per definition. Bara Arvo sitter på den levande sanningen.
+Det är strukturellt omöjligt att köpa någon annanstans, och det är sant *varje
+dag* — inte 5 % av dem.
 
-Det mejlet — utan att kunden bett om det — är Arvo.
+> *"Telia tar 14 % mer av er bransch än av verkstadsindustrin — för exakt samma
+> abonnemang. Vi vet, för vi ser båda fakturorna."*
+
+Den meningen kan ingen CFO, ingen byrå, ingen sajt och inte leverantören själv
+ge en kund. Bara Arvo. Det är moaten — allt annat är leveransmekanik runt den.
+
+**Produkten är vakten, inte fyndet.** Du betalar inte en finansdirektör för att
+hen hittar en brand varje dag. Du betalar för vetskapen att någon kompetent sitter
+vaken på dina pengar — varje natt, även de tysta. Smyghöjningen (en händelse i
+<5 % av fallen) är vaktens högljudda undantag, aldrig ryggraden. Den tysta dagen,
+där Arvo säger *"håll, allt är under kontroll, vi sköter augusti åt er"* — **det**
+är produkten.
 
 ---
 
 ## Ambition
 
-Varje vecka ska en svensk företagsägare säga: *"Hur visste de det?"*
+Det gamla beviset var ett överraskningsmoment per kvartal ("Hur visste de det?").
+Det räcker inte — överraskningar är sällsynta, beroende är dagligt. Det nya beviset
+är en identitetsmening:
 
-Det är det enda beviset på att vi lyckas. Inte antal kunder. Inte intäkt. Det momentet.
+> *"Jag skulle aldrig driva mitt bolag utan Arvo igen."*
+
+Vi jagar inte förvåning. Vi bygger oumbärlighet. Varje vecka — tyst eller
+högljudd — ska kunden känna att en intelligens vakar, ser längre än deras
+konkurrenter, och redan förberett nästa drag.
+
+---
+
+## Helheten — kontoret som intelligensinstrument
+
+Kontoret (`/portfolio`) får aldrig bli en dashboard som speglar kundens egna
+fakturor. Det är ett **instrument** byggt på lager som *aldrig kan vara tomma*,
+så att mervärdet är kännbart varje dag — inte bara den dag något händer:
+
+1. **Vakten (radarn)** — levande, daterad övervakning: "Bevakar 8 leverantörer ·
+   47 prispunkter · 40 marknadskällor · senaste svep 03:14." Beviset att en maskin
+   är vaken. Aldrig tom — vakten stängs aldrig av.
+2. **Veckodomen** — ETT författat omdöme överst, skrivet som en CFO skrev det,
+   med arbetet redan påbörjat. *"Gör inget"* är den vanligaste och mest
+   premiumladdade leveransen — men bara om lugnet är förtjänat och *visat*
+   (domen bär alltid sitt arbete).
+3. **Den kollektiva sanningen** — vad er bransch faktiskt betalar, prisdiskriminering
+   exponerad. Det irreplaceabla. Aldrig tom.
+4. **Maktkalendern (prognosen)** — sannolikhetsbelagda framtida prisrörelser och
+   förhandlingslägen, med motdraget köat. Alltid fylld, för framtiden finns alltid.
+5. **Positionen / Arvo-index** — ett levande, proprietärt, marknadsrelativt tal
+   som andas med marknaden, inte bara med kundens egna fakturor.
+6. **Arbetets kvitton + likräkningen** — vad Arvo gjorde i veckan medan kunden
+   drev bolaget, och löpande summa av avvärjda katastrofer ("214 000 kr sparat,
+   2 höjningar avvärjda ni aldrig märkte").
+
+Empty-state är löst eftersom lager 1, 3, 4, 5 aldrig kan vara tomma. Fyndet
+(lager 2:s högljudda variant) reser sig när det finns; annars är tystnaden
+återförsäkran: *vi tittade åt er, ni kunde sova.*
+
+**Visuellt: instrument, inte dashboard.** Dossier-mörkt (`theme.dossier`),
+monospace på varje tal, en signalfärg sparsamt, rörelse som telemetri (radarns
+svep, levande tidsstämplar) — aldrig dekor. Källa + konfidens på varje påstående
+("92 % säkert · grundat på 340 bolags faktiska fakturor") — hederligheten *är*
+premiumsignalen.
 
 ---
 
