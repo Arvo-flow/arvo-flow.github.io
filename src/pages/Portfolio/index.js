@@ -70,7 +70,10 @@ const PUBLIC_SOURCE_LABEL = {
   'ramavtal-kommun': 'kommunala ramavtal',
   'reskontra-kommun': 'kommunal leverantörsreskontra',
   upphandling: 'offentliga upphandlingar',
+  eurostat: 'officiell statistik (Eurostat/SCB)',
 };
+// Vem datan beskriver — offentliga avtal vs marknadsgenomsnitt för företag.
+const publicScopeLabel = (src) => (src === 'eurostat' ? 'Svenska företag' : 'Offentlig sektor');
 const fmtUnit = (n) => (n == null ? '–' : Number(n).toLocaleString('sv-SE', { maximumFractionDigits: 2 }));
 
 function companyFromEmail(email) {
@@ -435,19 +438,20 @@ export default function Portfolio() {
                   <Truth $full={renewals.length === 0}>
                     <div className="card-eyebrow">
                       <span>Den kollektiva sanningen</span>
-                      <span className="src">offentlig sektor · {publicFeatured.n} avtalspris{publicFeatured.n > 1 ? 'er' : ''}</span>
+                      <span className="src">{publicScopeLabel(publicFeatured.observations?.[0]?.source).toLowerCase()} · {publicFeatured.n} pris{publicFeatured.n > 1 ? 'punkter' : 'punkt'}</span>
                     </div>
                     <h3>
                       {(() => {
+                        const scope = publicScopeLabel(publicFeatured.observations?.[0]?.source);
                         const cat = (getCategoryMeta(publicFeatured.category)?.label || publicFeatured.category).toLowerCase();
                         const u = UNIT_LABEL[publicFeatured.unit] || '';
                         if (publicFeatured.customerUnit && publicFeatured.pct >= 8)
-                          return <>Offentlig sektor betalar {fmtUnit(publicFeatured.median)} {u} för {cat}. Ni betalar <em>{publicFeatured.pct}% mer.</em></>;
+                          return <>{scope} betalar {fmtUnit(publicFeatured.median)} {u} för {cat}. Ni betalar <em>{publicFeatured.pct}% mer.</em></>;
                         if (publicFeatured.customerUnit && publicFeatured.pct <= -8)
-                          return <>Ni betalar <em>{Math.abs(publicFeatured.pct)}% mindre</em> än offentlig sektor för {cat}.</>;
+                          return <>Ni betalar <em>{Math.abs(publicFeatured.pct)}% mindre</em> än {scope.toLowerCase()} för {cat}.</>;
                         if (publicFeatured.customerUnit)
-                          return <>Ni betalar <em>i nivå</em> med offentlig sektor för {cat}.</>;
-                        return <>Offentlig sektor betalar <em>{fmtUnit(publicFeatured.min)}–{fmtUnit(publicFeatured.max)} {u}</em> för {cat}.</>;
+                          return <>Ni betalar <em>i nivå</em> med {scope.toLowerCase()} för {cat}.</>;
+                        return <>{scope} betalar <em>{fmtUnit(publicFeatured.min)}–{fmtUnit(publicFeatured.max)} {u}</em> för {cat}.</>;
                       })()}
                     </h3>
                     {(() => {
@@ -470,8 +474,8 @@ export default function Portfolio() {
                       );
                     })()}
                     <p className="truth-note">
-                      Verkliga avtalspriser ur <b>svensk öppen data</b> — {PUBLIC_SOURCE_LABEL[publicFeatured.observations?.[0]?.source] || 'offentliga avtal'}
-                      {publicFeatured.observations?.[0]?.buyer ? `, ${publicFeatured.observations[0].buyer}` : ''}. Vad stora köpare faktiskt betalar.
+                      Verkliga priser ur <b>öppen data</b> — {PUBLIC_SOURCE_LABEL[publicFeatured.observations?.[0]?.source] || 'offentliga avtal'}
+                      {publicFeatured.observations?.[0]?.buyer ? `, ${publicFeatured.observations[0].buyer}` : ''}.
                       {publicFeatured.customerUnit ? ' Jämfört per enhet mot er faktura.' : ''}
                     </p>
                   </Truth>

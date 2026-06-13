@@ -13,10 +13,65 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { ingestPublicPricePoints, CATEGORY_UNIT } from '../lib/public-prices.js';
 
-// ── Källadaptrar (riktiga svenska öppna datakällor) ─────────────────────────
+const UA = 'ArvoFlow-DataIngest/1.0 (+https://arvoflow.se; team@arvoflow.se)';
+
+// JSON-stat 2.0 — slå upp ett värde via {dimId: kod} (hanterar strides korrekt).
+function jsonstatValue(js, selection) {
+  const { id, size, value, dimension } = js;
+  let idx = 0;
+  for (let d = 0; d < id.length; d++) {
+    const pos = dimension[id[d]].category.index[selection[id[d]]];
+    if (pos == null) return null;
+    const stride = size.slice(d + 1).reduce((a, b) => a * b, 1);
+    idx += pos * stride;
+  }
+  return value[idx] ?? value[String(idx)] ?? null;
+}
+
+// Eurostat nrg_pc_205 — elpris för icke-hushåll (företag), Sverige, SEK/kWh
+// exkl. moms, per förbrukningsband. Officiell statistik (ESTAT/SCB) → öre/kWh.
+async function fetchEurostatElPrices() {
+  const url = 'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_pc_205'
+    + '?format=JSON&geo=SE&currency=NAC&tax=X_VAT&unit=KWH&siec=E7000&lastTimePeriod=1';
+  const r = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
+  if (!r.ok) { console.warn('[eurostat] status', r.status); return []; }
+  const js = await r.json();
+  if (!js?.dimension?.nrg_cons) { console.warn('[eurostat] saknar nrg_cons — kontrollera tax/currency-koder'); return []; }
+  const time = Object.keys(js.dimension.time.category.index)[0];
+  const tm = String(time).match(/(\d{4}).?S([12])/);
+  const observedAt = tm ? `${tm[1]}-${tm[2] === '1' ? '06' : '12'}-01` : null;
+  const bands = js.dimension.nrg_cons.category;
+  const WANT = ['MWH_LT20', 'MWH20-499', 'MWH500-1999']; // SMB-relevanta band
+  const recs = [];
+  for (const code of WANT) {
+    if (!(code in bands.index)) continue;
+    const sel = {};
+    for (const dimId of js.id) sel[dimId] = dimId === 'nrg_cons' ? code : Object.keys(js.dimension[dimId].category.index)[0];
+    const sek = jsonstatValue(js, sel);
+    if (sek == null) continue;
+    recs.push({
+      source: 'eurostat', sourceRef: 'nrg_pc_205', sourceUrl: url,
+      buyer: 'Svenska företag (icke-hushåll)', buyerType: 'statistik',
+      supplier: 'Marknad (Eurostat/SCB)', category: 'el',
+      product: `Företag · ${bands.label[code]}`, unit: 'ore_per_kwh',
+      unitPrice: Math.round(Number(sek) * 100 * 100) / 100, // SEK/kWh → öre/kWh
+      observedAt, region: 'Sverige', raw: { band: code, sekPerKwh: sek, period: time },
+    });
+  }
+  console.log(`[eurostat] el · ${time}: ${recs.map((r) => `${r.product}=${r.unitPrice} öre`).join(' | ') || 'inga band'}`);
+  return recs;
+}
+
+// ── Källadaptrar (riktiga svenska/EU öppna datakällor) ──────────────────────
 // Varje adapter returnerar en array av normaliserade records. Live-fetch sker
-// bara där HTTP finns; tills dess dokumenterar de exakt var datan bor.
+// bara där HTTP finns (GitHub Actions-runnern, ej sandbox).
 const ADAPTERS = {
+  // Eurostat — elpris för svenska företag (officiell statistik). LIVE.
+  'eurostat-el': {
+    label: 'Eurostat nrg_pc_205 (elpris icke-hushåll, SE)',
+    url: 'https://ec.europa.eu/eurostat/',
+    fetchRecords: fetchEurostatElPrices,
+  },
   // Statliga ramavtal med publicerade enhetspriser (programvara, telekom, IT).
   'ramavtal-stat': {
     label: 'Statliga ramavtal (Kammarkollegiet / avropa.se)',
