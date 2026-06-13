@@ -122,7 +122,11 @@ function buildReasoning(a) {
   if (a.should_switch && (a.net_saving ?? 0) > 0) {
     const ovPct = a.annual_cost > 0 && a.suggested_annual_cost > 0
       ? Math.round((a.annual_cost - a.suggested_annual_cost) / a.annual_cost * 100) : 0;
-    return `Ni betalar ${ovPct > 0 ? `${ovPct}% mer` : 'mer'} än verifierat marknadspris för ${label}. Arvo rekommenderar byte — <b>${fmtNum(a.gross_saving)} kr/år</b> brutto, ${fmtNum(a.net_saving)} kr/år netto efter arvode (20% av första årets besparing).`;
+    // Magnitudmedvetet: full bytesrekommendation reserveras för gap som bär den.
+    if (ovPct >= 10) {
+      return `Ni betalar <b>${ovPct}% mer</b> än verifierat marknadspris för ${label}. Arvo rekommenderar byte — det lägre priset finns förberett nedan.`;
+    }
+    return `Ni betalar ${ovPct > 0 ? `${ovPct}% mer` : 'något mer'} än verifierat marknadspris för ${label} — ett litet gap. Ett lägre avtalspris finns att säkra om ni vill, men ingen brådska; avvärjt är ändå avvärjt.`;
   }
   return `Priset är konkurrenskraftigt mot verifierat marknadspris för ${label}. Inget byte rekommenderas i dag — dela en ny faktura vid nästa avtalsperiod så kontrollerar Arvo igen.`;
 }
@@ -390,36 +394,35 @@ export default function Portfolio() {
                     {isOpen && (
                       <HoldDetail>
                         <div className="diag">
-                          <div className="gwrap">
-                            <Ring score={score} size={54} r={23} sw={3.6} />
-                            <span className="v" style={{ color }}>{score}</span>
-                          </div>
                           <div className="dbody">
                             <div className="dtop">Arvo bedömer</div>
                             <div className="dtxt" dangerouslySetInnerHTML={{ __html: buildReasoning(a) }} />
                           </div>
                         </div>
 
+                        {/* Faktatabell — råa tal en gång. Priset bor i Switch-kortet
+                            när ett byte finns; annars här. */}
                         <dl className="facts">
-                          {a.annual_cost != null && <div className="fact"><dt>Ni betalar idag</dt><dd>{fmtNum(a.annual_cost)} kr/år</dd></div>}
-                          {a.suggested_annual_cost != null && a.should_switch && <div className="fact"><dt>Verifierat marknadspris</dt><dd>{fmtNum(a.suggested_annual_cost)} kr/år</dd></div>}
-                          {a.gross_saving > 0 && <div className="fact"><dt>Bruttobesparing</dt><dd>{fmtNum(a.gross_saving)} kr/år</dd></div>}
+                          {!saving && a.annual_cost != null && <div className="fact"><dt>Ni betalar idag</dt><dd>{fmtNum(a.annual_cost)} kr/år</dd></div>}
                           <div className="fact"><dt>Kategori</dt><dd style={{ fontFamily: 'inherit' }}>{meta.label}</dd></div>
                           <div className="fact"><dt>Analyserad</dt><dd>{fmtDate(a.created_at)}</dd></div>
                         </dl>
 
                         {saving && (
-                          <SwitchInline style={{ gridColumn: '1 / -1' }}>
-                            <div className="si-k">Arvo Switch · bytet är förberett</div>
+                          <SwitchInline>
+                            <div className="si-k">Arvo Switch · så går bytet till</div>
                             <div className="si-steps">
-                              <div className="si-step"><span className="si-n">1</span><span><span className="si-t">Ni aktiverar bytet</span><span className="si-d">Ett klick — Arvo tar det därifrån.</span></span></div>
-                              <div className="si-step"><span className="si-n">2</span><span><span className="si-t">Arvo förbereder allt</span><span className="si-d">Fullmakt och bytesplan i er inkorg inom 24 timmar — ni granskar och signerar.</span></span></div>
-                              <div className="si-step"><span className="si-n">3</span><span><span className="si-t">Nytt avtalspris aktivt</span><span className="si-d">Ni betalar 20% av första årets besparing — från år två är hela besparingen er.</span></span></div>
+                              <div className="si-step"><span className="si-n">1</span><span className="si-body"><span className="si-t">Ni aktiverar bytet</span><span className="si-d">Ett klick — Arvo tar det därifrån.</span></span></div>
+                              <div className="si-step"><span className="si-n">2</span><span className="si-body"><span className="si-t">Arvo förbereder allt</span><span className="si-d">Fullmakt och bytesplan i er inkorg inom 24 timmar — ni granskar och signerar.</span></span></div>
+                              <div className="si-step"><span className="si-n">3</span><span className="si-body"><span className="si-t">Nytt avtalspris aktivt</span><span className="si-d">Ni betalar 20 % av första årets besparing — från år två är hela besparingen er.</span></span></div>
                             </div>
                             <div className="si-offer">
                               <span className="old">{fmtNum(a.annual_cost)} kr/år</span>
                               <span className="arr">→</span>
                               <span className="new">{fmtNum(a.suggested_annual_cost)}<small>kr/år</small></span>
+                            </div>
+                            <div className="si-save">
+                              Ni sparar <b>{fmtNum(a.net_saving)} kr/år</b> netto efter Arvos arvode (20 % av första årets besparing).
                             </div>
                             <SwitchBtn as={Link} to="/aktivera">
                               Aktivera bytet <Icon name="arrow" size={16} />

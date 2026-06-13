@@ -374,11 +374,12 @@ export const HoldHead = styled.button`
   .h-cost { font-family:${MONO}; font-size:13.5px; color:${theme.dossier.mutedOnDark};
     font-feature-settings:'tnum'; white-space:nowrap;
     @media (max-width:760px){ grid-column:2; grid-row:1; text-align:right; } }
-  .h-badge { font-family:${MONO}; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  .h-badge { font-family:${MONO}; font-size:10.5px; letter-spacing:.08em;
     white-space:nowrap; padding:5px 11px; border-radius:${theme.size.radius.pill};
     border:1px solid ${theme.dossier.hairlineOnDark};
-    &.save { color:${theme.dossier.bg}; background:${theme.dossier.tealBright}; border-color:transparent; font-weight:600; }
-    &.watch { color:${theme.dossier.mutedOnDark}; }
+    /* sparbadgen bär ett tal (kr/år) → aldrig versaler; statusord versaliseras */
+    &.save { color:${theme.dossier.bg}; background:${theme.dossier.tealBright}; border-color:transparent; font-weight:600; font-feature-settings:'tnum'; }
+    &.watch { color:${theme.dossier.mutedOnDark}; text-transform:uppercase; }
     @media (max-width:760px){ grid-column:2; grid-row:2; justify-self:start; } }
   .h-chev { color:${theme.dossier.faintOnDark}; display:flex; transition:transform .22s ease;
     transform:${({ $open }) => ($open ? 'rotate(180deg)' : 'none')};
@@ -394,24 +395,20 @@ export const RingWrap = styled.div`
 
 export const HoldDetail = styled.div`
   padding:6px 0 24px; animation:${rise} .28s ease both;
-  display:grid; grid-template-columns:1fr 1fr; gap:22px;
-  @media (max-width:680px){ grid-template-columns:1fr; gap:18px; }
+  display:flex; flex-direction:column; gap:18px;
 
-  .diag { grid-column:1 / -1; display:flex; gap:16px; align-items:flex-start;
-    padding:16px 18px; border:1px solid ${theme.dossier.hairlineOnDark};
-    border-radius:${theme.size.radius.md}; background:rgba(255,255,255,.02); }
-  .diag .gwrap { position:relative; width:54px; height:54px; flex-shrink:0;
-    span.v { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      font-family:${MONO}; font-size:15px; font-weight:700; font-feature-settings:'tnum'; } }
+  /* Arvo bedömer — bara omdömet (score-ringen bor i radhuvudet, ej dubblerad) */
+  .diag { padding:0 2px; }
   .diag .dbody .dtop { font-family:${MONO}; font-size:10px; letter-spacing:.18em; text-transform:uppercase;
-    color:${theme.dossier.teal}; margin-bottom:6px; }
-  .diag .dbody .dtxt { font-size:13.5px; line-height:1.55; color:${theme.dossier.mutedOnDark};
-    b { color:${theme.dossier.inkOnDark}; } }
+    color:${theme.dossier.teal}; margin-bottom:8px; }
+  .diag .dbody .dtxt { font-size:14px; line-height:1.6; color:${theme.dossier.mutedOnDark};
+    max-width:64ch; b { color:${theme.dossier.inkOnDark}; } }
 
-  .facts { display:flex; flex-direction:column; gap:0; }
+  /* Faktatabell — råa tal, varje en gång */
+  .facts { display:flex; flex-direction:column; gap:0;
+    border-top:1px solid ${theme.dossier.hairlineOnDark}; }
   .fact { display:flex; justify-content:space-between; align-items:baseline; gap:14px;
-    padding:9px 0; border-top:1px solid ${theme.dossier.hairlineOnDark}; font-size:13px;
-    &:first-child { border-top:none; }
+    padding:10px 0; border-bottom:1px solid ${theme.dossier.hairlineOnDark}; font-size:13px;
     dt { color:${theme.dossier.mutedOnDark}; }
     dd { font-family:${MONO}; color:${theme.dossier.inkOnDark}; font-feature-settings:'tnum'; margin:0; } }
 `;
@@ -424,15 +421,16 @@ export const SwitchInline = styled.div`
 
   .si-k { font-family:${MONO}; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
     color:${theme.dossier.teal}; margin-bottom:14px; }
-  .si-steps { display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
+  .si-steps { display:flex; flex-direction:column; gap:14px; margin-bottom:18px; }
   .si-step { display:flex; gap:12px; align-items:flex-start; }
   .si-n { flex-shrink:0; width:22px; height:22px; border-radius:50%;
     border:1.5px solid ${theme.dossier.teal}; color:${theme.dossier.tealBright};
     font-family:${MONO}; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; }
-  .si-t { font-size:13px; color:${theme.dossier.inkOnDark}; font-weight:600; line-height:1.3; }
-  .si-d { font-size:12px; color:${theme.dossier.mutedOnDark}; line-height:1.45; margin-top:1px; }
-  .si-offer { display:flex; align-items:baseline; gap:8px; margin-bottom:14px;
-    padding-top:14px; border-top:1px solid ${theme.dossier.hairlineOnDark}; flex-wrap:wrap;
+  .si-body { display:flex; flex-direction:column; gap:2px; }
+  .si-t { display:block; font-size:13px; color:${theme.dossier.inkOnDark}; font-weight:600; line-height:1.3; }
+  .si-d { display:block; font-size:12px; color:${theme.dossier.mutedOnDark}; line-height:1.45; }
+  .si-offer { display:flex; align-items:baseline; gap:8px; margin-bottom:6px;
+    padding-top:16px; border-top:1px solid ${theme.dossier.hairlineOnDark}; flex-wrap:wrap;
     .old { font-family:${MONO}; font-size:13px; color:${theme.dossier.faintOnDark};
       text-decoration:line-through; }
     .arr { color:${theme.dossier.faintOnDark}; }
@@ -440,6 +438,8 @@ export const SwitchInline = styled.div`
       color:${theme.dossier.tealBright}; }
     .new small { font-family:${theme.font.sans}; font-size:12px; font-weight:400;
       color:${theme.dossier.mutedOnDark}; margin-left:3px; } }
+  .si-save { font-size:12.5px; color:${theme.dossier.mutedOnDark}; line-height:1.5; margin-bottom:16px;
+    b { color:${theme.dossier.inkOnDark}; font-feature-settings:'tnum'; } }
 `;
 
 export const SwitchBtn = styled.a`
