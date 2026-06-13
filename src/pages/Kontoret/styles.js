@@ -464,8 +464,10 @@ export const IntelQuiet = styled.div`
   p { font-size:15px; line-height:1.65; color:${theme.dossier.mutedOnDark}; max-width:54ch; margin:0 0 22px;
     b { color:${theme.dossier.inkOnDark}; } }
   .iq-row { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
-  .iq-price { font-family:${MONO}; font-size:15px; color:${theme.dossier.inkOnDark};
-    span { color:${theme.dossier.faintOnDark}; font-size:12px; } }
+  /* Priset gömmer sig aldrig — krispig off-white som poppar ur mörkret */
+  .iq-price { font-family:${MONO}; font-size:19px; font-weight:600; letter-spacing:-.01em;
+    color:${theme.dossier.inkOnDark}; font-feature-settings:'tnum';
+    span { color:${theme.dossier.mutedOnDark}; font-size:12.5px; font-weight:400; letter-spacing:0; } }
 `;
 
 export const Spinner = styled.div`

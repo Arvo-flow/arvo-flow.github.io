@@ -82,21 +82,13 @@ function computeArvoScore(suppliers) {
   return Math.round(s / w);
 }
 
-// Marknadsläge — kostnadsviktad överbetalning mot verifierat marknadspris (suggested).
-// Helt sourcat ur kundens egen analys: (faktiskt − marknadspris)/marknadspris.
-function marketPosition(suppliers) {
-  let actual = 0, market = 0;
-  for (const g of suppliers) {
-    const a = g.latest;
-    if (a.should_switch && a.annual_cost > 0 && a.suggested_annual_cost > 0) {
-      actual += a.annual_cost; market += a.suggested_annual_cost;
-    }
-  }
-  if (market === 0) return { pct: 0, pointer: 50, label: 'I nivå' };
-  const pct = Math.round((actual - market) / market * 100);
-  const pointer = Math.max(8, Math.min(92, 50 + pct * 1.6));
-  const label = pct >= 8 ? 'Över marknaden' : pct <= -8 ? 'Under marknaden' : 'I nivå';
-  return { pct, pointer, label };
+// Marknadsläge — doten kartläggs EXAKT mot Arvo Score (precision bygger förtroende).
+// Skalan löper Över marknaden (svag, vänster) → Under marknaden (stark, höger),
+// så ett högt score sitter på den gynnsamma (högra) sidan. left% = score.
+function marketStanding(score) {
+  const pointer = Math.max(4, Math.min(96, score));
+  const label = score >= 67 ? 'Under marknaden' : score >= 45 ? 'I nivå' : 'Över marknaden';
+  return { pointer, label };
 }
 
 function scoreColor(score) {
@@ -171,7 +163,7 @@ export default function Portfolio() {
   const suppliers    = useMemo(() => groupBySupplier(autoAnalyses), [autoAnalyses]);
   const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
   const arvoScore    = computeArvoScore(suppliers);
-  const mkt          = marketPosition(suppliers);
+  const standing     = marketStanding(arvoScore);
   const companyName  = companyFromEmail(apiEmail);
   const switchables  = suppliers.filter((g) => g.latest.should_switch && (g.latest.net_saving ?? 0) > 0);
 
@@ -279,17 +271,19 @@ export default function Portfolio() {
                   <span className="idx-num">{arvoScore}</span>
                   <span className="idx-denom">/100</span>
                 </div>
-                <div className="mkt-k">Marknadsläge</div>
-                <div className="mkt-track"><span className="mkt-ptr" style={{ left: `${mkt.pointer}%` }} /></div>
+                <div className="mkt-k">Marknadsläge · {arvoScore}/100</div>
+                <div className="mkt-track"><span className="mkt-ptr" style={{ left: `${standing.pointer}%` }} /></div>
                 <div className="mkt-scale">
-                  <span className={mkt.label === 'Under marknaden' ? 'on' : ''}>Under marknaden</span>
-                  <span className={mkt.label === 'I nivå' ? 'on' : ''}>I nivå</span>
-                  <span className={mkt.label === 'Över marknaden' ? 'on' : ''}>Över marknaden</span>
+                  <span className={standing.label === 'Över marknaden' ? 'on' : ''}>Över marknaden</span>
+                  <span className={standing.label === 'I nivå' ? 'on' : ''}>I nivå</span>
+                  <span className={standing.label === 'Under marknaden' ? 'on' : ''}>Under marknaden</span>
                 </div>
                 <p className="idx-note">
-                  {mkt.pct > 0
-                    ? <>Ni betalar sammanvägt <b>{mkt.pct}% över verifierat marknadspris</b> på de leverantörer där ett byte finns.</>
-                    : <>Era priser ligger <b>i nivå med verifierat marknadspris</b>. Talet andas med marknaden — det sjunker om er bransch förhandlar ner medan ni står still.</>}
+                  {arvoScore >= 67
+                    ? <>Ert sammanvägda läge mot marknaden är <b>starkt</b>. Enskilda avtal kan ändå sticka ut — se innehavet nedan.</>
+                    : arvoScore >= 45
+                      ? <>Era priser ligger <b>i nivå med verifierat marknadspris</b>, med utrymme att skärpa enskilda avtal.</>
+                      : <>Ni betalar <b>över verifierat marknadspris</b> på flera avtal — flera byten ligger på bordet.</>}
                 </p>
               </Index>
 

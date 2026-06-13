@@ -42,11 +42,12 @@ const theme = {
     tealBright: '#5DD6CA',            // glödpunkter, markörer, brand-mark
     tealDeep: '#178A7B',              // gradientslut
 
-    // Text på mörk botten — kontrastkalibrerad (aldrig under 0.38 alpha)
-    inkOnDark: '#F2F8F6',
-    mutedOnDark: 'rgba(255,255,255,0.55)',
-    faintOnDark: 'rgba(255,255,255,0.38)',
-    hairlineOnDark: 'rgba(255,255,255,0.10)',
+    // Text på mörk botten — kontrastkalibrerad för läsbarhet även i ljusa
+    // kontorsmiljöer (mutedOnDark ~6.5:1, faintOnDark ~4.6:1 mot dossier.bg).
+    inkOnDark: '#F4F9F7',
+    mutedOnDark: 'rgba(236,244,241,0.80)',
+    faintOnDark: 'rgba(228,238,234,0.62)',
+    hairlineOnDark: 'rgba(255,255,255,0.12)',
 
     // Signaturer
     metallicText: 'linear-gradient(180deg, #FFFFFF 24%, #D9EFEA 58%, #9FD9CE 100%)',      // bolagsnamn à la keynote
