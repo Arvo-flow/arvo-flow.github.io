@@ -442,8 +442,8 @@ export default function Portfolio() {
               <h3>Vill ni att vi <em>fortsätter vaka</em> — varje natt, även de tysta?</h3>
               <p>
                 {acting
-                  ? <>Aktivera ett byte ovan, så börjar vi. Med Arvo Intelligence bevakar vi sedan era {suppliers.length} leverantörer kontinuerligt — ni larmas när priser rör sig och får en CFO-brief varje månad med exakt vad som förändrats.</>
-                  : <>Era priser står sig i dag. Med Arvo Intelligence ser vi till att de <b>fortsätter göra det</b> — vi bevakar era {suppliers.length} leverantörer kontinuerligt och hör av oss innan en höjning når er.</>}
+                  ? <>Aktivera ett byte ovan, så börjar vi. Men Arvo Intelligence ser längre än fakturorna ni delat — vi tar in <b>hela er leverantörsreskontra</b>, varenda avtal, och bevakar den dygnet runt. Ni larmas innan nästa höjning når er, och får ett månadsbrev med exakt vad som rört sig — och vad vi gjort åt det.</>
+                  : <>Era priser står sig i dag. Arvo Intelligence ser till att de <b>fortsätter göra det</b> — vi tar in <b>hela er leverantörsreskontra</b>, inte bara fakturorna ni delat, och bevakar varenda avtal dygnet runt. Vi hör av oss innan en höjning når er, och skickar ett månadsbrev med vad som rört sig.</>}
               </p>
               <div className="iq-row">
                 <span className="iq-price">1 995 kr <span>/ mån · ingen bindningstid</span></span>
