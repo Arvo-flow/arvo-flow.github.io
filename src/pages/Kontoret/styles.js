@@ -348,5 +348,131 @@ export const SignOff = styled.div`
     color: ${theme.dossier.mutedOnDark}; margin-top: 14px; }
 `;
 
+// ── innehavet, EXPANDERBART (riktiga /portfolio) ────────────────────────────
+export const HoldRow = styled.div`
+  border-top: 1px solid ${theme.dossier.hairlineOnDark};
+  &:first-of-type { border-top: none; }
+  position: relative;
+  &::before {
+    content:''; position:absolute; left:-22px; top:0; bottom:0; width:2px;
+    background:${({ $saving }) => ($saving ? theme.dossier.numberGradient : 'transparent')};
+    opacity:.9;
+    @media (max-width: 760px){ left:-12px; }
+  }
+`;
+
+export const HoldHead = styled.button`
+  width:100%; background:none; border:none; cursor:pointer; text-align:left;
+  display:grid; grid-template-columns:auto 1fr auto auto auto; align-items:center; gap:16px;
+  padding:15px 0; color:inherit; transition:opacity .15s;
+  &:hover { opacity:.82; }
+  @media (max-width: 760px){ grid-template-columns:auto 1fr auto; gap:8px 12px; padding:14px 0; }
+
+  .h-name { color:${theme.dossier.inkOnDark}; font-size:15px; font-weight:600; letter-spacing:-.005em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .h-cat { font-size:12px; color:${theme.dossier.faintOnDark}; margin-top:2px; }
+  .h-cost { font-family:${MONO}; font-size:13.5px; color:${theme.dossier.mutedOnDark};
+    font-feature-settings:'tnum'; white-space:nowrap;
+    @media (max-width:760px){ grid-column:2; grid-row:1; text-align:right; } }
+  .h-badge { font-family:${MONO}; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    white-space:nowrap; padding:5px 11px; border-radius:${theme.size.radius.pill};
+    border:1px solid ${theme.dossier.hairlineOnDark};
+    &.save { color:${theme.dossier.bg}; background:${theme.dossier.tealBright}; border-color:transparent; font-weight:600; }
+    &.watch { color:${theme.dossier.mutedOnDark}; }
+    @media (max-width:760px){ grid-column:2; grid-row:2; justify-self:start; } }
+  .h-chev { color:${theme.dossier.faintOnDark}; display:flex; transition:transform .22s ease;
+    transform:${({ $open }) => ($open ? 'rotate(180deg)' : 'none')};
+    @media (max-width:760px){ grid-column:3; grid-row:1 / 3; } }
+`;
+
+// mini-ring för score på mörk botten
+export const RingWrap = styled.div`
+  position:relative; width:42px; height:42px; flex-shrink:0;
+  span.v { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:${MONO}; font-size:12.5px; font-weight:700; font-feature-settings:'tnum'; }
+`;
+
+export const HoldDetail = styled.div`
+  padding:6px 0 24px; animation:${rise} .28s ease both;
+  display:grid; grid-template-columns:1fr 1fr; gap:22px;
+  @media (max-width:680px){ grid-template-columns:1fr; gap:18px; }
+
+  .diag { grid-column:1 / -1; display:flex; gap:16px; align-items:flex-start;
+    padding:16px 18px; border:1px solid ${theme.dossier.hairlineOnDark};
+    border-radius:${theme.size.radius.md}; background:rgba(255,255,255,.02); }
+  .diag .gwrap { position:relative; width:54px; height:54px; flex-shrink:0;
+    span.v { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+      font-family:${MONO}; font-size:15px; font-weight:700; font-feature-settings:'tnum'; } }
+  .diag .dbody .dtop { font-family:${MONO}; font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+    color:${theme.dossier.teal}; margin-bottom:6px; }
+  .diag .dbody .dtxt { font-size:13.5px; line-height:1.55; color:${theme.dossier.mutedOnDark};
+    b { color:${theme.dossier.inkOnDark}; } }
+
+  .facts { display:flex; flex-direction:column; gap:0; }
+  .fact { display:flex; justify-content:space-between; align-items:baseline; gap:14px;
+    padding:9px 0; border-top:1px solid ${theme.dossier.hairlineOnDark}; font-size:13px;
+    &:first-child { border-top:none; }
+    dt { color:${theme.dossier.mutedOnDark}; }
+    dd { font-family:${MONO}; color:${theme.dossier.inkOnDark}; font-feature-settings:'tnum'; margin:0; } }
+`;
+
+// inbäddad Switch i raden (kundens "baka in i listan")
+export const SwitchInline = styled.div`
+  border:1px solid ${theme.dossier.hairlineOnDark}; border-radius:${theme.size.radius.md};
+  background: linear-gradient(160deg, rgba(43,196,172,.10), rgba(23,138,123,.04));
+  padding:18px 20px; display:flex; flex-direction:column;
+
+  .si-k { font-family:${MONO}; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:${theme.dossier.teal}; margin-bottom:14px; }
+  .si-steps { display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
+  .si-step { display:flex; gap:12px; align-items:flex-start; }
+  .si-n { flex-shrink:0; width:22px; height:22px; border-radius:50%;
+    border:1.5px solid ${theme.dossier.teal}; color:${theme.dossier.tealBright};
+    font-family:${MONO}; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; }
+  .si-t { font-size:13px; color:${theme.dossier.inkOnDark}; font-weight:600; line-height:1.3; }
+  .si-d { font-size:12px; color:${theme.dossier.mutedOnDark}; line-height:1.45; margin-top:1px; }
+  .si-offer { display:flex; align-items:baseline; gap:8px; margin-bottom:14px;
+    padding-top:14px; border-top:1px solid ${theme.dossier.hairlineOnDark}; flex-wrap:wrap;
+    .old { font-family:${MONO}; font-size:13px; color:${theme.dossier.faintOnDark};
+      text-decoration:line-through; }
+    .arr { color:${theme.dossier.faintOnDark}; }
+    .new { font-family:${MONO}; font-size:20px; font-weight:700; font-feature-settings:'tnum';
+      color:${theme.dossier.tealBright}; }
+    .new small { font-family:${theme.font.sans}; font-size:12px; font-weight:400;
+      color:${theme.dossier.mutedOnDark}; margin-left:3px; } }
+`;
+
+export const SwitchBtn = styled.a`
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  text-decoration:none; cursor:pointer;
+  font-size:14px; font-weight:600; color:${theme.dossier.bg};
+  background:${theme.dossier.ctaGradient}; box-shadow:${theme.dossier.ctaShadow};
+  border-radius:${theme.size.radius.pill}; padding:13px 20px; border:none;
+  transition:transform .15s ease, filter .15s ease;
+  &:hover { transform:translateY(-1px); filter:brightness(1.05); }
+`;
+
+// Intelligence — tyst avslutande pitch (kundens steg 1: kasta inte SaaS för tidigt)
+export const IntelQuiet = styled.div`
+  margin-top:40px; padding:30px 0 4px; border-top:1px solid ${theme.dossier.hairlineOnDark};
+  ${appear(0.1)}
+  .iq-k { font-family:${MONO}; font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+    color:${theme.dossier.teal}; margin-bottom:14px; }
+  h3 { font-family:${SERIF}; font-weight:600; font-size:clamp(22px,3.2vw,30px); line-height:1.16;
+    letter-spacing:-.02em; margin:0 0 14px; max-width:24ch; color:${theme.dossier.inkOnDark};
+    em { font-style:normal; color:${theme.dossier.tealBright}; } }
+  p { font-size:15px; line-height:1.65; color:${theme.dossier.mutedOnDark}; max-width:54ch; margin:0 0 22px;
+    b { color:${theme.dossier.inkOnDark}; } }
+  .iq-row { display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .iq-price { font-family:${MONO}; font-size:15px; color:${theme.dossier.inkOnDark};
+    span { color:${theme.dossier.faintOnDark}; font-size:12px; } }
+`;
+
+export const Spinner = styled.div`
+  width:30px; height:30px; border:3px solid ${theme.dossier.hairlineOnDark};
+  border-top-color:${theme.dossier.tealBright}; border-radius:50%;
+  animation:${sweep} .8s linear infinite; margin:120px auto;
+`;
+
 export const shimmerCss = shimmer;
 export const blipCss = blip;

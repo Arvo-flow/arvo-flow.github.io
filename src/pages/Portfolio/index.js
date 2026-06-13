@@ -1,49 +1,24 @@
-// src/pages/Portfolio — Ert Arvo-kontor.
-// Design: pixelidentisk med TestaFakturas resultatkort.
-// Importerar BriefingHead, ScoreDiag, SavingsBlock, PriceNote, KV, Reasoning,
-// IntelligenceCard och PortfolioBridge direkt ur TestaFaktura/styles.js (regel 6).
-
+// src/pages/Portfolio — Arvo-kontoret (riktig kundyta, datadriven).
+// Konceptet: produkten är VAKTEN, inte fyndet (CLAUDE.md → Helheten).
+// Dossier-mörkt instrument. Varje tal är sourcat ur riktig invoice-history-data
+// eller honest systemkonstant. Lager som kräver data vi ännu inte har
+// (kohort-prisdiskriminering, sannolikhetsprognos) visas ENDAST med verklig
+// täckning — annars utelämnas de (regel 3/4: precision eller tystnad).
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
-import Nav from '../../components/Nav';
-import Footer from '../../components/Footer';
-import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import {
-  Page,
-  Card,
-  BriefingHead,
-  ScoreDiag,
-  SavingsBlock,
-  PriceNote,
-  KV,
-  Reasoning,
-  IntelligenceCard,
-  PortfolioBridge,
-  SwitchCard,
-} from '../TestaFaktura/styles';
+  Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
+  Grid, Index, Tally, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
+  SwitchInline, SwitchBtn, IntelQuiet, SignOff, Spinner,
+} from '../Kontoret/styles';
 
-// ─── konstanter ──────────────────────────────────────────────────────────────
-
-const SEGMENTS = [
-  { short: 'Skrivare',   icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
-  { short: 'El',          icon: 'bolt',      cats: ['el'] },
-  { short: 'Telefoni',    icon: 'phone',     cats: ['mobil', 'bredband', 'vaxel'] },
-  { short: 'Programvara', icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
-  { short: 'IT',          icon: 'wifi',      cats: ['it-support'] },
-  { short: 'Fordon',      icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
-  { short: 'Kontor',      icon: 'briefcase', cats: ['kontorsmaterial', 'städ-rengöring', 'larm-bevakning', 'kortterminal', 'avfall-atervinning', 'bankavgifter'] },
-  { short: 'Personal',    icon: 'shield',    cats: ['foretagshalsovard', 'loneadmin', 'forsakring-foretag', 'forsakring-ansvar'] },
-];
-
+// ── helpers ──────────────────────────────────────────────────────────────────
 const GENERIC_DOMAINS = new Set([
   'gmail.com','hotmail.com','outlook.com','yahoo.com','yahoo.se',
   'icloud.com','live.com','msn.com','me.com','proton.me','protonmail.com',
 ]);
-
-// ─── helpers ────────────────────────────────────────────────────────────────
 
 async function getBrowserFingerprint() {
   const raw = [
@@ -61,7 +36,6 @@ async function getBrowserFingerprint() {
 const fmtNum  = (n) => (n == null ? '–' : Math.round(n).toLocaleString('sv-SE'));
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) : '');
 
-// Derivera företagsnamn ur e-post (business-domain → förnamet av domänen).
 function companyFromEmail(email) {
   if (!email) return null;
   const domain = (email.split('@')[1] ?? '').toLowerCase();
@@ -70,7 +44,6 @@ function companyFromEmail(email) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-// En leverantör = en rad. Senaste analysen är sanningen.
 function groupBySupplier(analyses) {
   const groups = new Map();
   for (const a of analyses) {
@@ -85,34 +58,7 @@ function groupBySupplier(analyses) {
   return [...groups.values()].sort((x, y) => (y.latest.net_saving ?? 0) - (x.latest.net_saving ?? 0));
 }
 
-// Totalpoängen är det kostnadsviktade snittet av leverantörsradernas poäng —
-// samma siffror kunden ser per rad, så helheten alltid går att räkna hem (regel 1 + 3).
-function computeArvoScore(suppliers) {
-  if (!suppliers.length) return 0;
-  let weightSum = 0;
-  let scoreSum  = 0;
-  for (const s of suppliers) {
-    const w = s.latest.annual_cost > 0 ? s.latest.annual_cost : 0;
-    weightSum += w;
-    scoreSum  += supplierDiagScore(s.latest) * w;
-  }
-  if (weightSum === 0) {
-    return Math.round(
-      suppliers.reduce((acc, s) => acc + supplierDiagScore(s.latest), 0) / suppliers.length
-    );
-  }
-  return Math.round(scoreSum / weightSum);
-}
-
-// Samma färgkodning som TestaFakturas diagC.
-function scoreColors(score) {
-  if (score < 45) return { dot: '#DC2626', label: 'Kritisk',           labelClr: '#991B1B' };
-  if (score < 65) return { dot: '#D97706', label: 'Suboptimerat',      labelClr: '#92400E' };
-  if (score < 80) return { dot: '#65A30D', label: 'Förbättringsläge',  labelClr: '#365314' };
-  return            { dot: '#1B7A6E', label: 'Optimalt',          labelClr: '#0E4F47' };
-}
-
-// Per-leverantör diagScore — identisk logik med TestaFakturas.
+// Per-leverantör Arvo Score (samma logik som TestaFaktura).
 function supplierDiagScore(a) {
   if (a.route === 'monitoring') return 72;
   if (!a.should_switch || !a.annual_cost || !a.suggested_annual_cost) {
@@ -123,897 +69,328 @@ function supplierDiagScore(a) {
   return (a.net_saving ?? 0) > 0 ? Math.min(raw, 79) : raw;
 }
 
-// Deterministisk "Arvo bedömer"-text baserad på lagrade fält (regel 2: kod räknar, AI tolkar).
-function buildReasoning(a) {
-  const meta  = getCategoryMeta(a.category);
-  const label = meta?.label ?? a.category;
-  if (a.route === 'monitoring') {
-    return `Avtalet är tidsbegränsat. Arvo bevakar och initierar omförhandling inför förnyelsen — ni betalar konkurrenskraftigt till dess.`;
+// Totalpoäng = kostnadsviktat snitt av radernas poäng (går alltid att räkna hem).
+function computeArvoScore(suppliers) {
+  if (!suppliers.length) return 0;
+  let w = 0, s = 0;
+  for (const g of suppliers) {
+    const weight = g.latest.annual_cost > 0 ? g.latest.annual_cost : 0;
+    w += weight; s += supplierDiagScore(g.latest) * weight;
   }
-  if (a.route === 'review_queue') {
-    return `Kategorin kräver manuell granskning — Arvo inhämtar offert för exakt prisjämförelse. Ni kontaktas när det är klart.`;
-  }
-  if (a.should_switch && (a.net_saving ?? 0) > 0) {
-    const ovPct = a.annual_cost > 0 && a.suggested_annual_cost > 0
-      ? Math.round((a.annual_cost - a.suggested_annual_cost) / a.annual_cost * 100)
-      : 0;
-    return `Ni betalar${ovPct > 0 ? ` ${ovPct}% mer` : ' mer'} än verifierat marknadspris för ${label.toLowerCase()}. Arvo rekommenderar byte — ${fmtNum(a.gross_saving)} kr/år i bruttobesparing, ${fmtNum(a.net_saving)} kr/år netto efter Arvos arvode (20&nbsp;% av första årets besparing).`;
-  }
-  return `Priset är konkurrenskraftigt mot verifierat marknadspris för ${label.toLowerCase()}. Inget byte rekommenderas i dag — dela en ny faktura vid nästa avtalsperiod så kontrollerar Arvo prissättningen igen.`;
+  if (w === 0) return Math.round(suppliers.reduce((acc, g) => acc + supplierDiagScore(g.latest), 0) / suppliers.length);
+  return Math.round(s / w);
 }
 
-// ─── gauge (identisk med TestaFakturas ScoreDiag) ───────────────────────────
+// Marknadsläge — kostnadsviktad överbetalning mot verifierat marknadspris (suggested).
+// Helt sourcat ur kundens egen analys: (faktiskt − marknadspris)/marknadspris.
+function marketPosition(suppliers) {
+  let actual = 0, market = 0;
+  for (const g of suppliers) {
+    const a = g.latest;
+    if (a.should_switch && a.annual_cost > 0 && a.suggested_annual_cost > 0) {
+      actual += a.annual_cost; market += a.suggested_annual_cost;
+    }
+  }
+  if (market === 0) return { pct: 0, pointer: 50, label: 'I nivå' };
+  const pct = Math.round((actual - market) / market * 100);
+  const pointer = Math.max(8, Math.min(92, 50 + pct * 1.6));
+  const label = pct >= 8 ? 'Över marknaden' : pct <= -8 ? 'Under marknaden' : 'I nivå';
+  return { pct, pointer, label };
+}
 
-const GAUGE_R = 26;
-const GAUGE_C = 2 * Math.PI * GAUGE_R;
+function scoreColor(score) {
+  if (score < 45) return '#E06A4D';
+  if (score < 65) return '#E0A23C';
+  if (score < 80) return '#5DD6CA';
+  return '#2BC4AC';
+}
 
-function Gauge({ score, color }) {
+const RING_R = 17;
+function Ring({ score, size = 42, r = RING_R, sw = 3.2 }) {
+  const c = 2 * Math.PI * r, color = scoreColor(score);
   return (
-    <svg className="gauge-svg" width="60" height="60" viewBox="0 0 60 60">
-      <circle cx="30" cy="30" r={GAUGE_R} fill="none" stroke="#E5E7EB" strokeWidth="4.5" />
-      <circle
-        cx="30" cy="30" r={GAUGE_R} fill="none"
-        stroke={color} strokeWidth="4.5" strokeLinecap="round"
-        strokeDasharray={`${(score / 100) * GAUGE_C} ${GAUGE_C}`}
-        style={{ transform: 'rotate(-90deg)', transformOrigin: '30px 30px', transition: 'stroke-dasharray 1.2s cubic-bezier(0.16,1,0.3,1)' }}
-      />
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth={sw} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round"
+        strokeDasharray={`${(score/100)*c} ${c}`}
+        style={{ transform:'rotate(-90deg)', transformOrigin:'center', transition:'stroke-dasharray 1s ease' }} />
     </svg>
   );
 }
 
-// Kompakt gauge för leverantörsraderna — samma färglogik, mindre format.
-const MINI_R = 17;
-const MINI_C = 2 * Math.PI * MINI_R;
-
-const MiniGaugeWrap = styled.div`
-  position: relative; flex-shrink: 0;
-  width: 44px; height: 44px;
-  span.val {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 800; letter-spacing: -0.04em;
-    font-feature-settings: 'tnum';
+// Deterministisk bedömning per leverantör (regel 2: kod skriver, ingen AI).
+function buildReasoning(a) {
+  const meta = getCategoryMeta(a.category);
+  const label = (meta?.label ?? a.category).toLowerCase();
+  if (a.route === 'monitoring')
+    return `Avtalet är tidsbegränsat. Arvo bevakar och initierar omförhandling inför förnyelsen — ni betalar konkurrenskraftigt till dess.`;
+  if (a.route === 'review_queue')
+    return `Kategorin kräver manuell granskning — Arvo inhämtar offert för exakt prisjämförelse. Ni kontaktas när det är klart.`;
+  if (a.should_switch && (a.net_saving ?? 0) > 0) {
+    const ovPct = a.annual_cost > 0 && a.suggested_annual_cost > 0
+      ? Math.round((a.annual_cost - a.suggested_annual_cost) / a.annual_cost * 100) : 0;
+    return `Ni betalar ${ovPct > 0 ? `${ovPct}% mer` : 'mer'} än verifierat marknadspris för ${label}. Arvo rekommenderar byte — <b>${fmtNum(a.gross_saving)} kr/år</b> brutto, ${fmtNum(a.net_saving)} kr/år netto efter arvode (20% av första årets besparing).`;
   }
-`;
-
-function MiniGauge({ score, color }) {
-  return (
-    <MiniGaugeWrap>
-      <svg width="44" height="44" viewBox="0 0 44 44">
-        <circle cx="22" cy="22" r={MINI_R} fill="none" stroke="#E5E7EB" strokeWidth="3.5" />
-        <circle
-          cx="22" cy="22" r={MINI_R} fill="none"
-          stroke={color} strokeWidth="3.5" strokeLinecap="round"
-          strokeDasharray={`${(score / 100) * MINI_C} ${MINI_C}`}
-          style={{ transform: 'rotate(-90deg)', transformOrigin: '22px 22px', transition: 'stroke-dasharray 1s ease' }}
-        />
-      </svg>
-      <span className="val" style={{ color }}>{score}</span>
-    </MiniGaugeWrap>
-  );
+  return `Priset är konkurrenskraftigt mot verifierat marknadspris för ${label}. Inget byte rekommenderas i dag — dela en ny faktura vid nästa avtalsperiod så kontrollerar Arvo igen.`;
 }
 
-// ─── animationer ─────────────────────────────────────────────────────────────
-
-const fadeUp = keyframes`from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); }`;
-const spin   = keyframes`to { transform: rotate(360deg); }`;
-const expand = keyframes`from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); }`;
-
-// ─── layout ──────────────────────────────────────────────────────────────────
-
-const Column = styled.div`
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 32px 20px 80px;
-  @media (min-width: 768px) { padding: 40px 28px 96px; }
-`;
-
-// Dashboard-grid: två lika breda kolumner på desktop.
-// Rad 1: Arvo-kontoret | Analyserade leverantörer
-// Rad 2: Arvo Switch | Arvo Intelligence
-// Rad 3: Helhetsbilden (fullbredd)
-// Rad 4: tre kanalkort (rapport · vidarebefordran · bokföring)
-const DashGrid = styled.div`
-  display: grid;
-  gap: 20px;
-  grid-template-columns: minmax(0, 1fr);
-  @media (min-width: 1080px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: stretch;
-  }
-`;
-
-// En cell = ett kort. Kortet fyller cellens höjd så att varje rad får jämn underkant.
-const Cell = styled.div`
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  & > * { margin-bottom: 0; flex: 1; }
-`;
-
-const CellFull = styled(Cell)`
-  @media (min-width: 1080px) { grid-column: 1 / -1; }
-`;
-
-const TrioGrid = styled.div`
-  display: grid;
-  gap: 20px;
-  grid-template-columns: minmax(0, 1fr);
-  @media (min-width: 1080px) {
-    grid-column: 1 / -1;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  & > * { margin-bottom: 0; }
-`;
-
-// ─── leverantörs­lista ───────────────────────────────────────────────────────
-
-// Leverantörskortet — rubriken bor i kortet, raderna avgränsas av hårlinjer.
-const SupplierCard = styled.div`
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.border};
-  border-top: 3px solid ${({ theme }) => theme.color.brand};
-  border-radius: ${({ theme }) => theme.size.radius.lg};
-  box-shadow: 0 4px 24px rgba(14,26,23,.08), 0 1px 4px rgba(14,26,23,.04);
-  overflow: hidden;
-  animation: ${fadeUp} 0.5s ease both;
-  display: flex;
-  flex-direction: column;
-
-  .sc-head {
-    padding: 26px 28px 16px;
-    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-    @media (max-width: 600px) { padding: 20px 20px 14px; }
-  }
-  .sc-eyebrow {
-    font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
-    color: ${({ theme }) => theme.color.brand};
-  }
-  .sc-meta {
-    font-size: 12px; color: ${({ theme }) => theme.color.mutedSoft};
-    font-feature-settings: 'tnum'; white-space: nowrap;
-  }
-`;
-
-const SupplierOuter = styled.div`
-  position: relative;
-  border-top: 1px solid ${({ theme }) => theme.color.border};
-  background: ${({ $open, theme }) => ($open ? theme.color.bg : 'transparent')};
-  transition: background 0.18s;
-
-  &::before {
-    content: '';
-    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    background: ${({ $saving, theme }) =>
-      $saving ? theme.color.brandGradient : 'transparent'};
-  }
-`;
-
-const SupplierRow = styled.button`
-  width: 100%; background: none; border: none; cursor: pointer;
-  display: flex; align-items: center; gap: 14px;
-  padding: 13px 24px 13px 26px;
-  text-align: left;
-  transition: background 0.15s;
-  &:hover { background: ${({ theme }) => theme.color.bg}; }
-  @media (max-width: 600px) { padding: 13px 18px; }
-  @media (max-width: 480px) { flex-wrap: wrap; }
-`;
-
-const SupplierInfo = styled.div`
-  flex: 1; min-width: 0;
-  h4 { font-family: ${({ theme }) => theme.font.display};
-    font-size: 15.5px; font-weight: 600; letter-spacing: -0.005em;
-    color: ${({ theme }) => theme.color.ink}; margin: 0 0 3px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  p { font-size: 11.5px; color: ${({ theme }) => theme.color.mutedSoft}; margin: 0; }
-`;
-
-const SupplierRight = styled.div`
-  text-align: right; flex-shrink: 0; display: flex; align-items: center; gap: 12px;
-  p.cost { font-size: 13px; font-weight: 700; color: ${({ theme }) => theme.color.ink};
-    margin: 0; font-feature-settings: 'tnum'; }
-  @media (max-width: 480px) { width: 100%; text-align: left; gap: 8px; }
-`;
-
-const VerdictBadge = styled.span`
-  display: inline-block; font-size: 11px; font-weight: 600;
-  padding: 3px 10px; border-radius: 100px;
-  ${({ $saving, theme }) => $saving
-    ? `color: ${theme.color.brand}; background: ${theme.color.brandSoft};`
-    : `color: ${theme.color.mutedSoft}; background: ${theme.color.bg}; border: 1px solid ${theme.color.border};`}
-`;
-
-const ChevronWrap = styled.span`
-  flex-shrink: 0; color: ${({ theme }) => theme.color.mutedSoft};
-  transition: transform 0.22s ease;
-  transform: ${({ $open }) => $open ? 'rotate(180deg)' : 'rotate(0)'};
-  display: flex; align-items: center;
-`;
-
-const SupplierDetail = styled.div`
-  padding: 0 26px 22px;
-  border-top: 1px solid ${({ theme }) => theme.color.border};
-  animation: ${expand} 0.24s ease both;
-  @media (max-width: 600px) { padding: 0 18px 20px; }
-`;
-
-// Ytterligare förberedda byten under huvuderbjudandet i Switch-kortet.
-const SwitchMore = styled.div`
-  display: flex; flex-direction: column; gap: 6px;
-  margin: 0 0 18px;
-  .more-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 10px 16px;
-    border: 1px solid ${({ theme }) => theme.color.border};
-    border-radius: ${({ theme }) => theme.size.radius.md};
-    background: ${({ theme }) => theme.color.bg};
-  }
-  .more-name {
-    font-size: 13px; font-weight: 600; color: ${({ theme }) => theme.color.ink};
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .more-save {
-    font-size: 13px; font-weight: 700; color: ${({ theme }) => theme.color.brand};
-    font-feature-settings: 'tnum'; flex-shrink: 0;
-  }
-`;
-
-// ─── CTA-kort ────────────────────────────────────────────────────────────────
-
-const CardLabel = styled.span`
-  display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
-  text-transform: uppercase; color: ${({ theme }) => theme.color.brand}; margin-bottom: 8px;
-`;
-
-const CardTitle = styled.h3`
-  font-family: ${({ theme }) => theme.font.display}; font-size: 19px; font-weight: 600;
-  letter-spacing: -0.01em; color: ${({ theme }) => theme.color.ink}; margin: 0 0 7px;
-`;
-
-const CardBody = styled.p`
-  font-size: 13.5px; line-height: 1.65; color: ${({ theme }) => theme.color.inkSoft}; margin: 0 0 16px;
-`;
-
-const AddressChip = styled.div`
-  font-family: ${({ theme }) => theme.font.mono}; font-size: 13.5px; letter-spacing: 0.01em;
-  color: ${({ theme }) => theme.color.brand}; background: ${({ theme }) => theme.color.bg};
-  border: 1px dashed ${({ theme }) => theme.color.brand};
-  border-radius: ${({ theme }) => theme.size.radius.md};
-  padding: 13px 16px; text-align: center; user-select: all;
-`;
-
-const FormRow = styled.form`
-  display: flex; gap: 10px;
-  @media (max-width: 520px) { flex-direction: column; }
-`;
-
-const EmailInput = styled.input`
-  flex: 1; padding: 11px 16px; border-radius: 100px;
-  border: 1.5px solid ${({ theme }) => theme.color.border};
-  background: ${({ theme }) => theme.color.bg}; font-size: 14px; color: ${({ theme }) => theme.color.ink};
-  outline: none; transition: border-color 0.15s;
-  &:focus { border-color: ${({ theme }) => theme.color.brand}; }
-  &::placeholder { color: ${({ theme }) => theme.color.mutedSoft}; }
-`;
-
-const SuccessMsg = styled.p`
-  color: ${({ theme }) => theme.color.brand}; font-weight: 600; margin: 0; font-size: 14px;
-`;
-const ErrorHint = styled.p`
-  font-size: 12px; color: ${({ theme }) => theme.color.inkSoft}; margin: 8px 0 0;
-`;
-const EmptyBody = styled.p`
-  font-size: 14.5px; line-height: 1.7; color: ${({ theme }) => theme.color.inkSoft}; margin: 0 0 20px;
-`;
-
-// ─── loading / error ─────────────────────────────────────────────────────────
-
-const SpinnerEl = styled.div`
-  width: 30px; height: 30px; border: 3px solid ${({ theme }) => theme.color.border};
-  border-top-color: ${({ theme }) => theme.color.brand}; border-radius: 50%;
-  animation: ${spin} 0.7s linear infinite; margin: 80px auto;
-`;
-const ErrorMsg = styled.p`
-  text-align: center; color: ${({ theme }) => theme.color.inkSoft}; font-size: 14px; padding: 48px 20px;
-`;
-
-// ─── expanderat leverantörskort ──────────────────────────────────────────────
-
-function SupplierDetailPanel({ a }) {
-  const score  = supplierDiagScore(a);
-  const diagC  = scoreColors(score);
-  const meta   = getCategoryMeta(a.category);
-  const saving = (a.net_saving ?? 0) > 0 && a.should_switch;
-
-  return (
-    <SupplierDetail>
-      <ScoreDiag style={{ '--diag-color': diagC.dot, marginTop: 16, marginBottom: 0 }}>
-        <div className="gauge-wrap">
-          <Gauge score={score} color={diagC.dot} />
-          <div className="gauge-num" style={{ color: diagC.dot }}>
-            <span className="gauge-val">{score}</span>
-            <span className="gauge-denom">/100</span>
-          </div>
-        </div>
-        <div className="diag-body">
-          <div className="diag-top">
-            <span className="diag-score-label">Arvo Score</span>
-            <span className="diag-sep">·</span>
-            <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
-          </div>
-          <p className="diag-text">
-            {a.supplier || a.normalized_supplier} · {meta.label}
-          </p>
-        </div>
-      </ScoreDiag>
-
-      {saving && (
-        <SavingsBlock style={{ marginTop: 12 }}>
-          <span className="kicker">Identifierad nettobesparing</span>
-          <span className="amount">+{fmtNum(a.net_saving)} kr</span>
-          <span className="unit">
-            {fmtNum(a.annual_cost)} → {fmtNum(a.suggested_annual_cost)} kr/år ·
-            {' '}Arvos arvode (20&nbsp;% av första årets besparing) avdraget.
-          </span>
-        </SavingsBlock>
-      )}
-
-      <KV style={{ marginTop: 16 }}>
-        {a.annual_cost != null && (
-          <div>
-            <dt>Ni betalar idag</dt>
-            <dd>{fmtNum(a.annual_cost)} kr/år</dd>
-          </div>
-        )}
-        {a.suggested_annual_cost != null && a.should_switch && (
-          <div>
-            <dt>Marknadspris</dt>
-            <dd>{fmtNum(a.suggested_annual_cost)} kr/år</dd>
-          </div>
-        )}
-        {a.gross_saving != null && a.gross_saving > 0 && (
-          <div>
-            <dt>Bruttobesparing</dt>
-            <dd>{fmtNum(a.gross_saving)} kr/år</dd>
-          </div>
-        )}
-        <div>
-          <dt>Kategori</dt>
-          <dd>{meta.label}</dd>
-        </div>
-        <div>
-          <dt>Analyserad</dt>
-          <dd>{fmtDate(a.created_at)}</dd>
-        </div>
-        {a.seat_count != null && (
-          <div>
-            <dt>Antal {meta.unit ?? 'enheter'}</dt>
-            <dd>{a.seat_count} st</dd>
-          </div>
-        )}
-      </KV>
-
-      <Reasoning style={{ marginBottom: 0 }}>
-        <span className="kicker">Arvo bedömer</span>
-        <p dangerouslySetInnerHTML={{ __html: buildReasoning(a) }} />
-      </Reasoning>
-    </SupplierDetail>
-  );
-}
-
-// ─── component ───────────────────────────────────────────────────────────────
-
+// ── component ────────────────────────────────────────────────────────────────
 export default function Portfolio() {
-  const [analyses, setAnalyses]       = useState(null);
-  const [apiEmail, setApiEmail]       = useState(null);
-  const [error, setError]             = useState(null);
-  const [fingerprint, setFingerprint] = useState('');
-  const [expanded, setExpanded]       = useState(new Set());
-  const [reportEmail, setReportEmail] = useState('');
-  const [reportState, setReportState] = useState('idle');
-  const [reportError, setReportError] = useState('');
+  const [analyses, setAnalyses] = useState(null);
+  const [apiEmail, setApiEmail] = useState(null);
+  const [error, setError]       = useState(null);
+  const [expanded, setExpanded] = useState(new Set());
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const fp    = await getBrowserFingerprint();
-        if (!cancelled) setFingerprint(fp);
+        const fp = await getBrowserFingerprint();
         const magic = new URLSearchParams(window.location.search).get('magic');
-        const qs    = `fingerprint=${encodeURIComponent(fp)}` + (magic ? `&magic=${encodeURIComponent(magic)}` : '');
-        const res   = await fetch(`/api/invoice-history?${qs}`);
+        const qs = `fingerprint=${encodeURIComponent(fp)}` + (magic ? `&magic=${encodeURIComponent(magic)}` : '');
+        const res = await fetch(`/api/invoice-history?${qs}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data  = await res.json();
-        if (!cancelled) {
-          setAnalyses(data.analyses ?? []);
-          setApiEmail(data.email ?? null);
-        }
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      }
+        const data = await res.json();
+        if (!cancelled) { setAnalyses(data.analyses ?? []); setApiEmail(data.email ?? null); }
+      } catch (err) { if (!cancelled) setError(err.message); }
     })();
     return () => { cancelled = true; };
   }, []);
 
-  async function handleSendReport(e) {
-    e.preventDefault();
-    if (reportState === 'loading') return;
-    setReportState('loading');
-    setReportError('');
-    try {
-      const res  = await fetch('/api/send-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fingerprint, email: reportEmail }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
-      setReportState('success');
-    } catch (err) {
-      setReportError(err.message);
-      setReportState('error');
-    }
+  function toggle(id) {
+    setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
 
-  function toggleExpand(id) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const autoAnalyses = useMemo(() => (analyses ?? []).filter((a) => a.route === 'auto' || a.route === 'monitoring'), [analyses]);
+  const suppliers    = useMemo(() => groupBySupplier(autoAnalyses), [autoAnalyses]);
+  const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
+  const arvoScore    = computeArvoScore(suppliers);
+  const mkt          = marketPosition(suppliers);
+  const companyName  = companyFromEmail(apiEmail);
+  const switchables  = suppliers.filter((g) => g.latest.should_switch && (g.latest.net_saving ?? 0) > 0);
 
-  const autoAnalyses  = useMemo(() => (analyses ?? []).filter((a) => a.route === 'auto' || a.route === 'monitoring'), [analyses]);
-  const suppliers     = useMemo(() => groupBySupplier(autoAnalyses), [autoAnalyses]);
-  const totalCost     = suppliers.reduce((s, g) => s + (g.latest.annual_cost ?? 0), 0);
-  const totalSaving   = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
-  const arvoScore     = computeArvoScore(suppliers);
-  const diagC         = scoreColors(arvoScore);
-  const companyName   = companyFromEmail(apiEmail);
+  const latestDate = suppliers.length
+    ? fmtDate(suppliers.map((g) => g.latest.created_at).sort().reverse()[0]) : '';
+  const today = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
 
-  const coveredCats   = new Set(suppliers.map((g) => g.latest.category));
-  const litSegments   = SEGMENTS.filter((seg) => seg.cats.some((c) => coveredCats.has(c)));
-
-  // Förberedda byten — leverantörer med verifierad besparing, störst först.
-  const switchables   = suppliers.filter((g) =>
-    g.latest.should_switch && (g.latest.net_saving ?? 0) > 0 && g.latest.suggested_annual_cost != null);
-  const topSwitch     = switchables[0]?.latest;
-  const totalGross    = switchables.reduce((s, g) => s + (g.latest.gross_saving ?? 0), 0);
-
-  const today = new Date().toLocaleDateString('sv-SE', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  }).toUpperCase();
+  // Veckodomen — deterministisk ur verkligt läge.
+  const acting = switchables.length > 0;
+  const verdictHead = acting
+    ? <>Ni betalar <em>över marknaden</em> hos {switchables.length} av {suppliers.length}.</>
+    : <>Håll kursen. Era priser <em>står sig mot marknaden.</em></>;
+  const verdictWork = acting
+    ? <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
+        <b> {fmtNum(totalSaving)} kr/år</b> i identifierad nettobesparing ligger på bordet — det
+        största bytet tar två minuter att signera. Resten håller måttet; dem rör vi inte.</>
+    : <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
+        Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>;
 
   return (
     <Page>
-      <Nav />
-      <Column>
-        {analyses === null && !error && <SpinnerEl />}
-        {error && <ErrorMsg>Kunde inte ladda ert kontor — försök igen om en stund.</ErrorMsg>}
+      <Shell>
+        {analyses === null && !error && <Spinner />}
+        {error && <Verdict><h2 style={{ fontSize: 26 }}>Kunde inte ladda ert kontor — försök igen om en stund.</h2></Verdict>}
 
-        {/* ── Dashboard ─────────────────────────────────────────────────── */}
         {analyses !== null && suppliers.length > 0 && (
-          <DashGrid>
+          <>
+            {/* ── Identitet + Vakten ──────────────────────────────────────── */}
+            <TopRow>
+              <Ident>
+                <div className="brand">ARVO · LEVERANTÖRSRADAR</div>
+                <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}</div>
+                <h1>{acting ? <>Ett par drag<br />väntar på er.</> : <>God morgon.<br />Allt är under kontroll.</>}</h1>
+              </Ident>
 
-            {/* ── Rad 1, vänster: Arvo Score + nettobesparing ────────────── */}
-            <Cell>
-              <Card>
-                <BriefingHead>
-                  <div className="bh-top">
-                    <span className="bh-stamp">ARVO-KONTORET · {today}</span>
+              <Radar>
+                <div className="radar-head">
+                  <div className="disc">
+                    <svg width="46" height="46" viewBox="0 0 46 46">
+                      <circle cx="23" cy="23" r="21" fill="none" stroke="rgba(93,214,202,.18)" strokeWidth="1" />
+                      <circle cx="23" cy="23" r="13" fill="none" stroke="rgba(93,214,202,.14)" strokeWidth="1" />
+                      <circle cx="23" cy="23" r="2" fill="#5DD6CA" />
+                    </svg>
+                    <div className="sweep" />
                   </div>
-                  <div className="bh-main">
-                    <h2 className="bh-supplier">{companyName ?? 'Ert Arvo-kontor.'}</h2>
-                  </div>
-                  <div className="bh-row">
-                    <span className="bh-chip">
-                      {suppliers.length === 1 ? '1 leverantör analyserad' : `${suppliers.length} leverantörer analyserade`}
-                    </span>
-                    {totalCost > 0 && (
-                      <span className="bh-chip">{fmtNum(totalCost)} kr/år</span>
-                    )}
-                  </div>
-                </BriefingHead>
-
-                <ScoreDiag style={{ '--diag-color': diagC.dot }}>
-                  <div className="gauge-wrap">
-                    <Gauge score={arvoScore} color={diagC.dot} />
-                    <div className="gauge-num" style={{ color: diagC.dot }}>
-                      <span className="gauge-val">{arvoScore}</span>
-                      <span className="gauge-denom">/100</span>
-                    </div>
-                  </div>
-                  <div className="diag-body">
-                    <div className="diag-top">
-                      <span className="diag-score-label">Arvo Score</span>
-                      <span className="diag-sep">·</span>
-                      <span className="diag-label" style={{ color: diagC.labelClr }}>{diagC.label}</span>
-                    </div>
-                    <p className="diag-text">
-                      {suppliers.length === 1
-                        ? 'Poängen för er analyserade leverantör'
-                        : `Kostnadsviktat snitt av era ${suppliers.length} leverantörers poäng`}.
-                      {' '}Fler delade fakturor skärper bilden.
-                    </p>
-                  </div>
-                </ScoreDiag>
-
-                {totalSaving > 0 && (
-                  <SavingsBlock>
-                    <span className="kicker">Er identifierade nettobesparing</span>
-                    <span className="amount">+{fmtNum(totalSaving)} kr</span>
-                    <span className="unit">
-                      Per år · Arvos arvode (20&nbsp;% av första årets besparing) är avdraget —
-                      från år två är hela besparingen er.
-                    </span>
-                  </SavingsBlock>
-                )}
-
-                <PriceNote>
-                  Priset baseras på verifierade offentliga listpriser. Vid genomfört byte
-                  bekräftas slutpriset i offert innan ni godkänner.
-                </PriceNote>
-              </Card>
-            </Cell>
-
-            {/* ── Rad 1, höger: analyserade leverantörer ─────────────────── */}
-            <Cell>
-              <SupplierCard>
-                <div className="sc-head">
-                  <span className="sc-eyebrow">Era analyserade leverantörer</span>
-                  <span className="sc-meta">
-                    {suppliers.length} st · {fmtNum(totalCost)} kr/år
-                  </span>
+                  <div className="radar-title"><strong>Vakten</strong>bevakar marknaden</div>
                 </div>
-                <div>
-                {suppliers.map((g) => {
-                  const a         = g.latest;
-                  const meta      = getCategoryMeta(a.category);
-                  const hasSaving = a.should_switch && (a.net_saving ?? 0) > 0;
-                  const isOpen    = expanded.has(a.id);
-                  const rowScore  = supplierDiagScore(a);
-                  const rowC      = scoreColors(rowScore);
-                  return (
-                    <SupplierOuter key={a.id} $saving={hasSaving} $open={isOpen}>
-                      <SupplierRow onClick={() => toggleExpand(a.id)} aria-expanded={isOpen}>
-                        <MiniGauge score={rowScore} color={rowC.dot} />
-                        <SupplierInfo>
-                          <h4>{a.supplier || a.normalized_supplier || 'Okänd leverantör'}</h4>
-                          <p>
-                            {meta.label} · {fmtDate(a.created_at)}
-                            {g.count > 1 ? ` · ${g.count} analyser` : ''}
-                          </p>
-                        </SupplierInfo>
-                        <SupplierRight>
-                          {a.annual_cost != null && (
-                            <p className="cost">{fmtNum(a.annual_cost)} kr/år</p>
-                          )}
-                          <VerdictBadge $saving={hasSaving}>
-                            {hasSaving
-                              ? `+${fmtNum(a.net_saving)} kr/år`
-                              : a.route === 'monitoring' ? 'Avtalsbevakad' : 'Rätt prissatt'}
-                          </VerdictBadge>
-                          <ChevronWrap $open={isOpen}>
-                            <Icon name="chevron-down" size={16} stroke={2} />
-                          </ChevronWrap>
-                        </SupplierRight>
-                      </SupplierRow>
-                      {isOpen && <SupplierDetailPanel a={a} />}
-                    </SupplierOuter>
-                  );
-                })}
+                <div className="radar-stats">
+                  <div className="rstat"><span>Leverantörer</span><span className="v">{suppliers.length}</span></div>
+                  <div className="rstat"><span>Analyser</span><span className="v">{autoAnalyses.length}</span></div>
+                  <div className="rstat"><span>Marknadskällor</span><span className="v">40</span></div>
                 </div>
-              </SupplierCard>
-            </Cell>
+                <div className="radar-foot">
+                  <span className="live" />
+                  {latestDate ? <>Senaste analys {latestDate} · bevakning aktiv</> : 'Bevakning aktiv'}
+                </div>
+              </Radar>
+            </TopRow>
 
-            {/* ── Rad 2, vänster: Arvo Switch ────────────────────────────── */}
-            {topSwitch && (
-              <Cell>
-                <SwitchCard>
-                  <div className="switch-eyebrow">Arvo Switch</div>
-                  <h3>Priset är verifierat. Arvo förbereder bytet.</h3>
-                  <p className="sub">
-                    Priset är leverantörens officiella avtalspris — verifierat och tillgängligt
-                    utan förhandling. Ni behöver inte kontakta er nuvarande leverantör —
-                    Arvo förbereder hela bytet.
-                  </p>
-                  <div className="switch-steps">
-                    <div className="switch-step">
-                      <span className="step-num">1</span>
-                      <span className="step-body">
-                        <span className="step-title">Ni aktiverar bytet</span>
-                        <span className="step-detail">Ett klick — Arvo tar det därifrån.</span>
-                      </span>
-                    </div>
-                    <div className="switch-step">
-                      <span className="step-num">2</span>
-                      <span className="step-body">
-                        <span className="step-title">Arvo förbereder allt</span>
-                        <span className="step-detail">
-                          Fullmakt och bytesplan i er inkorg inom 24 timmar — ni granskar och signerar.
-                        </span>
-                      </span>
-                    </div>
-                    <div className="switch-step">
-                      <span className="step-num">3</span>
-                      <span className="step-body">
-                        <span className="step-title">Nytt avtalspris aktivt</span>
-                        <span className="step-detail">
-                          Ni betalar 20&nbsp;% av första årets besparing — från år två är hela
-                          besparingen er.
-                        </span>
-                      </span>
-                    </div>
-                  </div>
+            {/* ── Veckodomen ──────────────────────────────────────────────── */}
+            <Verdict>
+              <div className="eyebrow">Arvo bedömer</div>
+              <h2>{verdictHead}</h2>
+              <p className="work">{verdictWork}</p>
+              <Confidence>
+                <span className="pct">Verifierat</span> · grundat på {suppliers.length} analyserade leverantörer · publika listpriser
+              </Confidence>
+            </Verdict>
 
-                  {/* Primärt byte — det med störst besparing */}
-                  <div className="switch-offer">
-                    <div className="switch-offer-head">
-                      <span className="switch-badge">
-                        <Icon name="check" size={13} stroke={2.5} />
-                      </span>
-                      <div className="switch-supplier">
-                        <p className="switch-supplier-name">
-                          {topSwitch.supplier || topSwitch.normalized_supplier}
-                        </p>
-                        <span className="switch-price-label">
-                          <Icon name="shield" size={10} stroke={2} />
-                          Verifierat listpris
-                        </span>
+            {/* ── Instrument: Arvo Score + likräkning ─────────────────────── */}
+            <Grid>
+              <Index>
+                <div className="card-eyebrow"><span>Arvo Score</span><span className="src">marknadsrelativt</span></div>
+                <div className="idx-main">
+                  <span className="idx-num">{arvoScore}</span>
+                  <span className="idx-denom">/100</span>
+                </div>
+                <div className="mkt-k">Marknadsläge</div>
+                <div className="mkt-track"><span className="mkt-ptr" style={{ left: `${mkt.pointer}%` }} /></div>
+                <div className="mkt-scale">
+                  <span className={mkt.label === 'Under marknaden' ? 'on' : ''}>Under marknaden</span>
+                  <span className={mkt.label === 'I nivå' ? 'on' : ''}>I nivå</span>
+                  <span className={mkt.label === 'Över marknaden' ? 'on' : ''}>Över marknaden</span>
+                </div>
+                <p className="idx-note">
+                  {mkt.pct > 0
+                    ? <>Ni betalar sammanvägt <b>{mkt.pct}% över verifierat marknadspris</b> på de leverantörer där ett byte finns.</>
+                    : <>Era priser ligger <b>i nivå med verifierat marknadspris</b>. Talet andas med marknaden — det sjunker om er bransch förhandlar ner medan ni står still.</>}
+                </p>
+              </Index>
+
+              <Tally>
+                <div className="tally-k">Identifierad nettobesparing</div>
+                <div className="tally-num">{fmtNum(totalSaving)} kr<small>per år</small></div>
+                <div className="tally-sub">
+                  {switchables.length > 0
+                    ? <><b>{switchables.length} byte{switchables.length > 1 ? 'n' : ''} förberedda</b> · netto efter Arvos arvode (20% av första årets besparing). Från år två är hela besparingen er.</>
+                    : <>Inga byten på bordet just nu — era priser står sig. Det är vad en tystgående finansdirektör levererar: lugnet att ni ligger rätt.</>}
+                </div>
+              </Tally>
+            </Grid>
+
+            {/* ── Innehavet — leverantörer, Switch inbakad i raden ────────── */}
+            <Holdings>
+              <div className="h-eyebrow">Innehavet · {suppliers.length} analyserade leverantörer</div>
+              {suppliers.map((g) => {
+                const a = g.latest, meta = getCategoryMeta(a.category);
+                const score = supplierDiagScore(a), color = scoreColor(score);
+                const isOpen = expanded.has(a.id);
+                const saving = a.should_switch && (a.net_saving ?? 0) > 0;
+                return (
+                  <HoldRow key={a.id} $saving={saving}>
+                    <HoldHead $open={isOpen} onClick={() => toggle(a.id)} aria-expanded={isOpen}>
+                      <RingWrap>
+                        <Ring score={score} />
+                        <span className="v" style={{ color }}>{score}</span>
+                      </RingWrap>
+                      <div>
+                        <div className="h-name">{a.supplier || a.normalized_supplier || 'Okänd leverantör'}</div>
+                        <div className="h-cat">{meta.label} · {fmtDate(a.created_at)}{g.count > 1 ? ` · ${g.count} analyser` : ''}</div>
                       </div>
-                    </div>
-                    <div className="switch-offer-body">
-                      <div className="sp-from-row">
-                        <span className="sp-old">{fmtNum(topSwitch.annual_cost)}&nbsp;kr/år</span>
-                        <span className="sp-from-arrow">→</span>
+                      <div className="h-cost">{a.annual_cost != null ? `${fmtNum(a.annual_cost)} kr/år` : ''}</div>
+                      <div className={`h-badge ${saving ? 'save' : 'watch'}`}>
+                        {saving ? `+${fmtNum(a.net_saving)} kr/år` : a.route === 'monitoring' ? 'Avtalsbevakad' : 'Rätt prissatt'}
                       </div>
-                      <span className="sp-new">
-                        {fmtNum(topSwitch.suggested_annual_cost)}<small>kr/år</small>
-                      </span>
-                      <span className="sp-save-note">
-                        Ni sparar {fmtNum(topSwitch.gross_saving)}&nbsp;kr/år — Arvo tar 20&nbsp;% av det (år&nbsp;1)
-                      </span>
-                    </div>
-                  </div>
+                      <span className="h-chev"><Icon name="chevron-down" size={16} stroke={2} /></span>
+                    </HoldHead>
 
-                  {/* Ytterligare förberedda byten */}
-                  {switchables.length > 1 && (
-                    <SwitchMore>
-                      {switchables.slice(1).map((g) => (
-                        <div key={g.latest.id} className="more-row">
-                          <span className="more-name">
-                            {g.latest.supplier || g.latest.normalized_supplier}
-                          </span>
-                          <span className="more-save">
-                            +{fmtNum(g.latest.net_saving)}&nbsp;kr/år
-                          </span>
+                    {isOpen && (
+                      <HoldDetail>
+                        <div className="diag">
+                          <div className="gwrap">
+                            <Ring score={score} size={54} r={23} sw={3.6} />
+                            <span className="v" style={{ color }}>{score}</span>
+                          </div>
+                          <div className="dbody">
+                            <div className="dtop">Arvo bedömer</div>
+                            <div className="dtxt" dangerouslySetInnerHTML={{ __html: buildReasoning(a) }} />
+                          </div>
                         </div>
-                      ))}
-                    </SwitchMore>
-                  )}
 
-                  <Button
-                    as={Link} to="/aktivera"
-                    $variant="gradient" $size="lg"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                  >
-                    {switchables.length === 1 ? 'Aktivera bytet' : `Aktivera ${switchables.length} byten`} →
-                  </Button>
-                  {totalGross > 0 && switchables.length > 1 && (
-                    <p className="switch-fine-print">
-                      Totalt {fmtNum(totalGross)}&nbsp;kr/år i bruttobesparing
-                      · Arvo tar 20&nbsp;% av det (år&nbsp;1)
-                    </p>
-                  )}
-                </SwitchCard>
-              </Cell>
-            )}
+                        <dl className="facts">
+                          {a.annual_cost != null && <div className="fact"><dt>Ni betalar idag</dt><dd>{fmtNum(a.annual_cost)} kr/år</dd></div>}
+                          {a.suggested_annual_cost != null && a.should_switch && <div className="fact"><dt>Verifierat marknadspris</dt><dd>{fmtNum(a.suggested_annual_cost)} kr/år</dd></div>}
+                          {a.gross_saving > 0 && <div className="fact"><dt>Bruttobesparing</dt><dd>{fmtNum(a.gross_saving)} kr/år</dd></div>}
+                          <div className="fact"><dt>Kategori</dt><dd style={{ fontFamily: 'inherit' }}>{meta.label}</dd></div>
+                          <div className="fact"><dt>Analyserad</dt><dd>{fmtDate(a.created_at)}</dd></div>
+                        </dl>
 
-            {/* ── Rad 2, höger: Arvo Intelligence ────────────────────────── */}
-            <Cell style={!topSwitch ? { gridColumn: '1 / -1' } : undefined}>
-              <IntelligenceCard>
-                <div className="eyebrow">Arvo Intelligence</div>
-                <h3>
-                  {suppliers.length === 1 ? 'En leverantör analyserad.' : `${suppliers.length} leverantörer analyserade.`}{' '}
-                  Nästa prishöjning ser ni innan den kommer.
-                </h3>
-                <p className="sub">
-                  Analysen ovan är en ögonblicksbild. Med Arvo Intelligence bevakas{' '}
-                  {suppliers.length === 1 ? 'er leverantör' : `era ${suppliers.length} leverantörer`}{' '}
-                  kontinuerligt — ni larmas när priser rör sig och får en CFO-brief
-                  varje månad med exakt vad som förändrats.
-                </p>
+                        {saving && (
+                          <SwitchInline style={{ gridColumn: '1 / -1' }}>
+                            <div className="si-k">Arvo Switch · bytet är förberett</div>
+                            <div className="si-steps">
+                              <div className="si-step"><span className="si-n">1</span><span><span className="si-t">Ni aktiverar bytet</span><span className="si-d">Ett klick — Arvo tar det därifrån.</span></span></div>
+                              <div className="si-step"><span className="si-n">2</span><span><span className="si-t">Arvo förbereder allt</span><span className="si-d">Fullmakt och bytesplan i er inkorg inom 24 timmar — ni granskar och signerar.</span></span></div>
+                              <div className="si-step"><span className="si-n">3</span><span><span className="si-t">Nytt avtalspris aktivt</span><span className="si-d">Ni betalar 20% av första årets besparing — från år två är hela besparingen er.</span></span></div>
+                            </div>
+                            <div className="si-offer">
+                              <span className="old">{fmtNum(a.annual_cost)} kr/år</span>
+                              <span className="arr">→</span>
+                              <span className="new">{fmtNum(a.suggested_annual_cost)}<small>kr/år</small></span>
+                            </div>
+                            <SwitchBtn as={Link} to="/aktivera">
+                              Aktivera bytet <Icon name="arrow" size={16} />
+                            </SwitchBtn>
+                          </SwitchInline>
+                        )}
+                      </HoldDetail>
+                    )}
+                  </HoldRow>
+                );
+              })}
+            </Holdings>
 
-                <div className="briefing-preview">
-                  <div className="preview-header">
-                    <span>
-                      <span className="preview-live-dot" />
-                      <span className="preview-brand-name">Arvo Intelligence</span>
-                    </span>
-                    <span className="preview-time">Exempel ur en briefing</span>
-                  </div>
-                  <div className="signal">
-                    <div className="signal-ico">
-                      <Icon name="pulse" size={14} stroke={2} />
-                    </div>
-                    <div>
-                      <span className="signal-tag">Smyghöjningslarm</span>
-                      <div className="signal-line">
-                        Telia · Mobilflotta 24 abonnemang
-                        <span className="signal-badge">+11&nbsp;%</span>
-                      </div>
-                      <p className="signal-sub">
-                        Pris höjt mot föregående period — utan avisering. Så här ser larmet ut när det händer er.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="signal">
-                    <div className="signal-ico">
-                      <Icon name="benchmark" size={14} stroke={2} />
-                    </div>
-                    <div>
-                      <span className="signal-tag">Community Benchmark</span>
-                      <div className="bench-grid">
-                        {[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14].map((i) => (
-                          <span key={i} className={[0,2,3,5,8,9,11,13].includes(i) ? 'on' : ''} />
-                        ))}
-                      </div>
-                      <p className="signal-sub">
-                        <strong>8 av 15</strong> bolag i samma kohort fick höjningen —
-                        Arvo ser mönstret innan det når er.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="signal">
-                    <div className="signal-ico">
-                      <Icon name="calendar-clock" size={14} stroke={2} />
-                    </div>
-                    <div>
-                      <span className="signal-tag">Proaktiv avtalsbevakning</span>
-                      <div className="signal-line">
-                        Avtalsbevakning · varnar 90 dagar före förnyelse
-                        <span className="signal-badge signal-badge--contract">Förnyelse</span>
-                      </div>
-                      <p className="signal-sub">Arvo varnar automatiskt — och förhandlar på er begäran.</p>
-                    </div>
-                  </div>
-                </div>
+            {/* ── Arvo Intelligence — tyst avslutande pitch ───────────────── */}
+            <IntelQuiet>
+              <div className="iq-k">Arvo Intelligence</div>
+              <h3>Vill ni att vi <em>fortsätter vaka</em> — varje natt, även de tysta?</h3>
+              <p>
+                {acting
+                  ? <>Aktivera ett byte ovan, så börjar vi. Med Arvo Intelligence bevakar vi sedan era {suppliers.length} leverantörer kontinuerligt — ni larmas när priser rör sig och får en CFO-brief varje månad med exakt vad som förändrats.</>
+                  : <>Era priser står sig i dag. Med Arvo Intelligence ser vi till att de <b>fortsätter göra det</b> — vi bevakar era {suppliers.length} leverantörer kontinuerligt och hör av oss innan en höjning når er.</>}
+              </p>
+              <div className="iq-row">
+                <span className="iq-price">1 995 kr <span>/ mån · ingen bindningstid</span></span>
+                <SwitchBtn as={Link} to="/aktivera">Aktivera Arvo Intelligence <Icon name="arrow" size={16} /></SwitchBtn>
+              </div>
+            </IntelQuiet>
 
-                <div className="price-row">
-                  <div>
-                    <span className="price">1 995 kr</span>
-                    <span className="price-period">/ mån</span>
-                  </div>
-                  <span className="price-note">Ingen bindningstid</span>
-                </div>
-                <Button as={Link} to="/aktivera" $variant="gradient" $size="lg"
-                  style={{ width: '100%', justifyContent: 'center' }}>
-                  Aktivera Arvo Intelligence →
-                </Button>
-                <p style={{ fontSize: 12, color: '#8A9E98', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>
-                  Arvo söker igenom er inkorg — ni behöver inte lyfta ett finger.
-                </p>
-              </IntelligenceCard>
-            </Cell>
-
-            {/* ── Rad 3: Helhetsbilden (fullbredd) ───────────────────────── */}
-            <CellFull>
-              <PortfolioBridge>
-                <div className="pb-eyebrow">Helhetsbilden</div>
-                <h2 className="pb-head">
-                  Arvo analyserar åtta kostnadskategorier.{' '}
-                  Ni har täckt {litSegments.length} av dem.
-                </h2>
-                <div className="pb-grid">
-                  {SEGMENTS.map((seg) => {
-                    const lit = seg.cats.some((c) => coveredCats.has(c));
-                    return (
-                      <div key={seg.short} className={`pb-seg${lit ? ' lit' : ''}`}>
-                        <span className="pb-seg-ico">
-                          <Icon name={seg.icon} size={20} stroke={1.8} />
-                        </span>
-                        <span className="pb-seg-label">{seg.short}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="pb-foot">
-                  <p className="pb-note">
-                    Hela reskontran säger var ni faktiskt blöder. Vidarebefordra era
-                    leverantörsfakturor — Arvo kartlägger varje leverantör och hittar
-                    varenda besparing, inte bara dem ni hittills delat.
-                  </p>
-                  <Link to="/testa-faktura" className="pb-link">
-                    Analysera fler fakturor <Icon name="arrow" size={15} stroke={2} />
-                  </Link>
-                </div>
-              </PortfolioBridge>
-            </CellFull>
-
-            {/* ── Rad 4: kanalkorten ─────────────────────────────────────── */}
-            <TrioGrid>
-              <Card style={{ padding: '24px 26px 22px' }}>
-                <CardLabel>Arvo-rapport</CardLabel>
-                <CardTitle style={{ fontSize: 17 }}>Er samlade rapport, som PDF.</CardTitle>
-                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
-                  Hela kostnadsbilden, varje identifierat fynd och nästa steg — skickad till er inkorg.
-                </CardBody>
-                {reportState === 'success' ? (
-                  <SuccessMsg>Rapporten är på väg — kolla er inkorg.</SuccessMsg>
-                ) : (
-                  <>
-                    <FormRow onSubmit={handleSendReport} style={{ flexDirection: 'column' }}>
-                      <EmailInput
-                        type="email" placeholder="namn@bolaget.se"
-                        value={reportEmail} onChange={(e) => setReportEmail(e.target.value)}
-                        required disabled={reportState === 'loading'}
-                      />
-                      <Button type="submit" $variant="gradient" $size="md"
-                        disabled={reportState === 'loading' || !reportEmail}>
-                        {reportState === 'loading' ? 'Skickar…' : 'Skicka rapporten →'}
-                      </Button>
-                    </FormRow>
-                    {reportState === 'error' && reportError && <ErrorHint>{reportError}</ErrorHint>}
-                  </>
-                )}
-              </Card>
-
-              <Card style={{ padding: '24px 26px 22px' }}>
-                <CardLabel>Gör Arvo permanent</CardLabel>
-                <CardTitle style={{ fontSize: 17 }}>En vidarebefordringsregel räcker.</CardTitle>
-                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
-                  Peka era leverantörsfakturor hit — Arvo analyserar varje ny faktura
-                  automatiskt och hör av sig när något är fel prissatt.
-                </CardBody>
-                <AddressChip>faktura@inbox.arvoflow.se</AddressChip>
-              </Card>
-
-              <Card style={{ padding: '24px 26px 22px' }}>
-                <CardLabel>Hela leverantörsbilden</CardLabel>
-                <CardTitle style={{ fontSize: 17 }}>Koppla bokföringen — bevaka allt.</CardTitle>
-                <CardBody style={{ fontSize: 13, marginBottom: 14 }}>
-                  Med Fortnox eller Visma läser Arvo hela er reskontra — varje avtal
-                  bevakat, varje prisrörelse fångad.
-                </CardBody>
-                <Button as={Link} to="/connect" $variant="gradient" $size="md">
-                  Koppla Fortnox / Visma →
-                </Button>
-              </Card>
-            </TrioGrid>
-
-          </DashGrid>
+            <SignOff>
+              <div className="keyline" />
+              <div className="mark">ARVO</div>
+              <div className="tagline">Den tystgående finansdirektören. På er post, dygnet runt.</div>
+            </SignOff>
+          </>
         )}
 
-        {/* ── Tomt kontor ───────────────────────────────────────────────── */}
-        {analyses !== null && suppliers.length === 0 && (
-          <Card>
-            <BriefingHead>
-              <div className="bh-top">
-                <span className="bh-stamp">ARVO-KONTORET · {today}</span>
-              </div>
-              <div className="bh-main">
-                <h2 className="bh-supplier">{companyName ?? 'Ert Arvo-kontor.'}</h2>
-              </div>
-              <div className="bh-row">
-                <span className="bh-chip">Väntar på er första faktura</span>
-              </div>
-            </BriefingHead>
-            <EmptyBody>
-              Mejla en leverantörsfaktura (PDF) till adressen nedan, eller ladda upp
-              den direkt — analysen landar här inom ett par minuter.
-            </EmptyBody>
-            <AddressChip style={{ maxWidth: 340, margin: '0 auto 20px' }}>
-              faktura@inbox.arvoflow.se
-            </AddressChip>
-            <Button as={Link} to="/testa-faktura" $variant="gradient" $size="md">
-              Analysera en faktura direkt →
-            </Button>
-          </Card>
+        {/* ── Tomt kontor ─────────────────────────────────────────────────── */}
+        {analyses !== null && suppliers.length === 0 && !error && (
+          <>
+            <TopRow>
+              <Ident>
+                <div className="brand">ARVO · LEVERANTÖRSRADAR</div>
+                <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}</div>
+                <h1>Ert kontor<br />väntar på första fakturan.</h1>
+              </Ident>
+            </TopRow>
+            <Verdict>
+              <div className="eyebrow">Så kommer ni igång</div>
+              <h2>Mejla en faktura — <em>kontoret fylls på minuter.</em></h2>
+              <p className="work">
+                Vidarebefordra en leverantörsfaktura (PDF) till <b>faktura@inbox.arvoflow.se</b>,
+                eller ladda upp den direkt. Arvo analyserar, jämför mot verifierat marknadspris
+                och börjar bevaka — analysen landar här.
+              </p>
+              <SwitchBtn as={Link} to="/testa-faktura">Analysera en faktura <Icon name="arrow" size={16} /></SwitchBtn>
+            </Verdict>
+            <SignOff>
+              <div className="keyline" />
+              <div className="mark">ARVO</div>
+              <div className="tagline">Den tystgående finansdirektören. På er post, dygnet runt.</div>
+            </SignOff>
+          </>
         )}
-      </Column>
-      <Footer />
+      </Shell>
     </Page>
   );
 }
