@@ -439,11 +439,11 @@ export default function Portfolio() {
             {/* ── Arvo Intelligence — tyst avslutande pitch ───────────────── */}
             <IntelQuiet>
               <div className="iq-k">Arvo Intelligence</div>
-              <h3>Vill ni att vi <em>fortsätter vaka</em> — varje natt, även de tysta?</h3>
+              <h3>Hela reskontran, <em>bevakad dygnet runt.</em></h3>
               <p>
                 {acting
-                  ? <>Aktivera ett byte ovan, så börjar vi. Men Arvo Intelligence ser längre än fakturorna ni delat — vi tar in <b>hela er leverantörsreskontra</b>, varenda avtal, och bevakar den dygnet runt. Ni larmas innan nästa höjning når er, och får ett månadsbrev med exakt vad som rört sig — och vad vi gjort åt det.</>
-                  : <>Era priser står sig i dag. Arvo Intelligence ser till att de <b>fortsätter göra det</b> — vi tar in <b>hela er leverantörsreskontra</b>, inte bara fakturorna ni delat, och bevakar varenda avtal dygnet runt. Vi hör av oss innan en höjning når er, och skickar ett månadsbrev med vad som rört sig.</>}
+                  ? <>Aktivera ett byte ovan, så börjar vi. I dag ser ni avtalen ni delat — Arvo Intelligence tar in <b>resten av boken</b> och larmar er innan nästa höjning når er. Varje månad får ni ett brev med exakt vad som rört sig — och vad vi gjort åt det.</>
+                  : <>Era priser står sig i dag. Arvo Intelligence ser till att de <b>fortsätter göra det</b> — vi tar in <b>resten av boken</b>, inte bara fakturorna ni delat, och larmar er innan en höjning når er. Varje månad: ett brev med vad som rört sig.</>}
               </p>
               <div className="iq-row">
                 <span className="iq-price">1 995 kr <span>/ mån · ingen bindningstid</span></span>
