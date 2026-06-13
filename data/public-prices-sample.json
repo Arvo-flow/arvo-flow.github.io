@@ -1,0 +1,11 @@
+{
+  "_note": "EXEMPELDATA — påhittade värden, enbart för att verifiera ingest-pipelinens form/normalisering. ALDRIG verkliga priser. Riktig data hämtas av scripts/ingest-public-prices.mjs adaptrar på GitHub Actions.",
+  "records": [
+    { "source": "ramavtal-stat", "sourceRef": "EXEMPEL-0001", "buyer": "Exempelmyndigheten", "buyerType": "stat", "supplier": "Microsoft (återförsäljare) AB", "category": "saas-productivity", "product": "M365 Business Standard", "unit": "per_user_month", "unitPrice": 999.99, "observedAt": "2026-01-01", "region": "Riket" },
+    { "source": "ramavtal-stat", "sourceRef": "EXEMPEL-0002", "buyer": "Exempelmyndigheten", "buyerType": "stat", "supplier": "Atea Sverige AB", "category": "saas-productivity", "product": "M365 Business Standard", "unit": "per_user_month", "unitPrice": 888.88, "observedAt": "2026-01-01" },
+    { "source": "ramavtal-kommun", "sourceRef": "EXEMPEL-0003", "buyer": "Exempel kommun", "buyerType": "kommun", "supplier": "Dustin AB", "category": "saas-productivity", "product": "M365 Business Standard", "unit": "per_user_month", "unitPrice": 777.77, "observedAt": "2026-02-01" },
+    { "source": "ramavtal-stat", "sourceRef": "EXEMPEL-0010", "buyer": "Exempelmyndigheten", "buyerType": "stat", "supplier": "Telia Sverige AB", "category": "mobil", "product": "Mobil Bas", "unit": "per_subscription_month", "unitPrice": 99.99, "observedAt": "2026-01-01" },
+    { "source": "reskontra-kommun", "sourceRef": "EXEMPEL-0011", "buyer": "Exempel kommun", "buyerType": "kommun", "supplier": "Tele2 Sverige AB", "category": "mobil", "product": "Mobil Företag", "unit": "per_subscription_month", "unitPrice": 88.88, "observedAt": "2026-02-01" },
+    { "source": "ramavtal-kommun", "sourceRef": "EXEMPEL-0012", "buyer": "Exempel region", "buyerType": "region", "supplier": "Telenor Sverige AB", "category": "mobil", "product": "Mobil", "unit": "per_subscription_month", "unitPrice": 77.77, "observedAt": "2026-03-01" }
+  ]
+}

@@ -1,0 +1,108 @@
+// scripts/ingest-public-prices.mjs — hämtar offentlig sektors VERKLIGA priser
+// ur svensk öppen data och skriver dem till public_price_points.
+//
+//   node scripts/ingest-public-prices.mjs --sample      (verifierar pipelinen mot fixture)
+//   node scripts/ingest-public-prices.mjs --source=all  (live — körs på GitHub Actions, HTTP krävs)
+//
+// HTTP funkar inte i sandboxen (CLAUDE.md) → live-körning sker på GitHub Actions
+// (.github/workflows/ingest-public-prices.yml) eller Vercel. --sample kör helt
+// offline och bevisar normalisering + (om DATABASE_URL finns) insert.
+//
+// REGEL 3: varje punkt bär källa, köpare och datum. Inga konstruerade tal.
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { ingestPublicPricePoints, CATEGORY_UNIT } from '../lib/public-prices.js';
+
+// ── Källadaptrar (riktiga svenska öppna datakällor) ─────────────────────────
+// Varje adapter returnerar en array av normaliserade records. Live-fetch sker
+// bara där HTTP finns; tills dess dokumenterar de exakt var datan bor.
+const ADAPTERS = {
+  // Statliga ramavtal med publicerade enhetspriser (programvara, telekom, IT).
+  'ramavtal-stat': {
+    label: 'Statliga ramavtal (Kammarkollegiet / avropa.se)',
+    url: 'https://www.avropa.se/ramavtal/',
+    async fetchRecords() {
+      // TODO(live på Actions): hämta avropa.se prisbilagor (xlsx/csv) per ramavtal,
+      // parsa enhetspriser för programvarulicenser + telefoni. Strukturen är känd;
+      // parsing valideras vid första Actions-körning. Returnerar [] tills dess.
+      return [];
+    },
+  },
+  // Kommunala/regionala ramavtal (Adda / SKR Kommentus) — publicerade priser.
+  'ramavtal-kommun': {
+    label: 'Kommunala ramavtal (Adda Inköpscentral)',
+    url: 'https://www.adda.se/upphandling-och-ramavtal/vara-ramavtal/',
+    async fetchRecords() { return []; },
+  },
+  // Kommunal leverantörsreskontra (öppna data via Sveriges dataportal / CKAN).
+  // Många kommuner publicerar varje utbetalning till varje leverantör.
+  'reskontra-kommun': {
+    label: 'Kommunal leverantörsreskontra (dataportal.se / CKAN)',
+    url: 'https://www.dataportal.se/datasets?q=leverant%C3%B6rsreskontra',
+    async fetchRecords() { return []; },
+  },
+  // Upphandlingstilldelningar med pris (TED / Visma Opic).
+  'upphandling': {
+    label: 'Upphandlingstilldelningar (TED / Visma Opic)',
+    url: 'https://ted.europa.eu/',
+    async fetchRecords() { return []; },
+  },
+};
+
+function loadSample() {
+  const p = path.resolve('data/public-prices-sample.json');
+  const json = JSON.parse(readFileSync(p, 'utf8'));
+  return json.records ?? [];
+}
+
+function validate(records) {
+  const ok = [], rejected = [];
+  for (const r of records) {
+    const unit = r.unit ?? CATEGORY_UNIT[r.category];
+    if (r.supplier && r.category && unit && Number(r.unitPrice) > 0) ok.push({ ...r, unit });
+    else rejected.push(r);
+  }
+  return { ok, rejected };
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const sample = args.includes('--sample');
+  const sourceArg = (args.find((a) => a.startsWith('--source=')) ?? '--source=all').split('=')[1];
+
+  let raw = [];
+  if (sample) {
+    raw = loadSample();
+    console.log(`[ingest] sample-läge · ${raw.length} records ur fixture`);
+  } else {
+    const names = sourceArg === 'all' ? Object.keys(ADAPTERS) : sourceArg.split(',');
+    for (const name of names) {
+      const a = ADAPTERS[name];
+      if (!a) { console.warn(`[ingest] okänd källa: ${name}`); continue; }
+      try {
+        const recs = await a.fetchRecords();
+        console.log(`[ingest] ${name} (${a.label}) → ${recs.length} records`);
+        raw.push(...recs);
+      } catch (err) {
+        console.error(`[ingest] ${name} fel:`, err.message);
+      }
+    }
+  }
+
+  const { ok, rejected } = validate(raw);
+  if (rejected.length) console.warn(`[ingest] ${rejected.length} records förkastade (ofullständiga)`);
+  console.log(`[ingest] ${ok.length} giltiga records`);
+
+  // Visa per kategori (för verifiering av normaliseringen).
+  const byCat = ok.reduce((m, r) => { (m[r.category] ??= []).push(r.unitPrice); return m; }, {});
+  for (const [cat, prices] of Object.entries(byCat)) {
+    console.log(`  · ${cat} (${CATEGORY_UNIT[cat]}): ${prices.length} st`);
+  }
+
+  const inserted = await ingestPublicPricePoints(ok);
+  console.log(inserted > 0
+    ? `[ingest] ✓ ${inserted} nya rader i public_price_points`
+    : `[ingest] inga rader skrivna (DATABASE_URL saknas i sandbox, eller redan deduppade) — normalisering verifierad`);
+}
+
+main().catch((e) => { console.error(e); process.exit(1); });

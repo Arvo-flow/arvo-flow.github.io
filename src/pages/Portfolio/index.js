@@ -60,6 +60,19 @@ const fmtNum   = (n) => (n == null ? '–' : Math.round(n).toLocaleString('sv-SE
 const fmtDate  = (iso) => (iso ? new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) : '');
 const monthYear = (d) => d.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
 
+const UNIT_LABEL = {
+  per_user_month: 'kr/anv./mån',
+  per_subscription_month: 'kr/abonn./mån',
+  ore_per_kwh: 'öre/kWh',
+};
+const PUBLIC_SOURCE_LABEL = {
+  'ramavtal-stat': 'statliga ramavtal',
+  'ramavtal-kommun': 'kommunala ramavtal',
+  'reskontra-kommun': 'kommunal leverantörsreskontra',
+  upphandling: 'offentliga upphandlingar',
+};
+const fmtUnit = (n) => (n == null ? '–' : Number(n).toLocaleString('sv-SE', { maximumFractionDigits: 2 }));
+
 function companyFromEmail(email) {
   if (!email) return null;
   const domain = (email.split('@')[1] ?? '').toLowerCase();
@@ -159,6 +172,7 @@ export default function Portfolio() {
   const [analyses, setAnalyses] = useState(null);
   const [apiEmail, setApiEmail] = useState(null);
   const [cohort, setCohort]     = useState({});
+  const [publicBench, setPublicBench] = useState({});
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
   const [fingerprint, setFingerprint] = useState('');
@@ -178,6 +192,7 @@ export default function Portfolio() {
     setAnalyses(data.analyses ?? []);
     setApiEmail(data.email ?? null);
     setCohort(data.cohort ?? {});
+    setPublicBench(data.publicBench ?? {});
   }, [fingerprint, magic]);
 
   useEffect(() => {
@@ -278,6 +293,20 @@ export default function Portfolio() {
     }
     return best;
   }, [suppliers, cohort]);
+
+  // Offentlig sektor — vad stora svenska köpare faktiskt betalar (per enhet),
+  // ur öppen data. Fyller "kollektiva sanningen" med en SOURCAD jämförelse innan
+  // privat kohort finns. Featureras bara när privat kohort saknas.
+  const publicFeatured = useMemo(() => {
+    if (featured) return null;
+    for (const g of suppliers) {
+      const pb = publicBench[g.latest.category];
+      if (pb && pb.n >= 3 && pb.median > 0) {
+        return { ...pb, category: g.latest.category, supplier: g.latest.supplier || g.latest.normalized_supplier };
+      }
+    }
+    return null;
+  }, [featured, suppliers, publicBench]);
 
   // Maktkalendern — årsavtal med uppskattat förnyelsefönster (created_at + 12 mån).
   // Estimat, tydligt märkt (regel 3) — inga fabricerade sannolikheter.
@@ -394,8 +423,39 @@ export default function Portfolio() {
             </Grid>
 
             {/* ── Kohort-sanningen + Maktkalendern (gate:ade till verklig data) ── */}
-            {(featured || renewals.length > 0) && (
+            {(featured || publicFeatured || renewals.length > 0) && (
               <Grid>
+                {publicFeatured && (
+                  <Truth $full={renewals.length === 0}>
+                    <div className="card-eyebrow">
+                      <span>Den kollektiva sanningen</span>
+                      <span className="src">offentlig sektor · {publicFeatured.n} obs</span>
+                    </div>
+                    <h3>
+                      Offentlig sektor betalar i snitt <em>{fmtUnit(publicFeatured.median)} {UNIT_LABEL[publicFeatured.unit] || ''}</em>
+                      {' '}för {(getCategoryMeta(publicFeatured.category)?.label || publicFeatured.category).toLowerCase()}.
+                    </h3>
+                    {publicFeatured.buyers?.length > 0 && (() => {
+                      const vals = publicFeatured.buyers.map((b) => b.unitPrice);
+                      const max = Math.max(...vals, publicFeatured.median) || 1;
+                      return (
+                        <div className="bars">
+                          {publicFeatured.buyers.map((b, i) => (
+                            <div className="barrow" key={i}>
+                              <span className="lbl">{b.buyer}</span>
+                              <span className="track"><span className="fill" style={{ width: `${Math.max(8, (b.unitPrice / max) * 100)}%` }} /></span>
+                              <span className="amt">{fmtUnit(b.unitPrice)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    <p className="truth-note">
+                      Verkliga kontraktspriser ur <b>svensk öppen data</b> ({PUBLIC_SOURCE_LABEL[publicFeatured.buyers?.[0]?.source] || 'offentliga avtal'}) —
+                      vad stora köpare faktiskt betalar. Ladda upp er faktura så jämför Arvo per enhet.
+                    </p>
+                  </Truth>
+                )}
                 {featured && (
                   <Truth $full={renewals.length === 0}>
                     <div className="card-eyebrow">
@@ -436,7 +496,7 @@ export default function Portfolio() {
                 )}
 
                 {renewals.length > 0 && (
-                  <Calendar $full={!featured}>
+                  <Calendar $full={!featured && !publicFeatured}>
                     <div className="card-eyebrow">
                       <span>Maktkalendern · era årsavtal</span>
                       <span className="src">uppskattat</span>
