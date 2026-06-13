@@ -7,6 +7,7 @@
 // ägarskapsbeviset. Tokens accepteras inom expiry även om de förbrukats
 // för inloggning (AuthContext konsumerar dem vid sidladdning).
 import { getAnalysesByFingerprint, getAnalysesByEmail } from '../lib/invoice-store.js';
+import { getMarketIntelligence } from '../lib/price-alert.js';
 import { getDb } from '../lib/db.js';
 
 export const config = { maxDuration: 10 };
@@ -56,5 +57,33 @@ export default async function handler(req, res) {
     .filter((a) => (seen.has(a.id) ? false : seen.add(a.id)))
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-  return send(res, 200, { ok: true, analyses, email: email ?? undefined });
+  // ── Kohort-intelligens: vad betalar bolag hos samma leverantör? ───────────
+  // Cross-customer-aggregat ur invoice_analyses (getMarketIntelligence gate:ar
+  // själv på ≥3 datapunkter → null annars). Det enda Arvo kan ge som ingen
+  // jämförelsesajt kan: nätverkseffektens levande sanning (regel 3: gate:ad till
+  // verklig täckning, aldrig fabricerad).
+  const cohort = await buildCohort(analyses);
+
+  return send(res, 200, { ok: true, analyses, cohort, email: email ?? undefined });
+}
+
+async function buildCohort(analyses) {
+  // Distinkta (normalized_supplier, category) bland auto-analyser.
+  const pairs = new Map();
+  for (const a of analyses) {
+    if (a.route !== 'auto') continue;
+    const ns = a.normalized_supplier;
+    if (!ns || !a.category) continue;
+    pairs.set(`${ns}|${a.category}`, { normalizedSupplier: ns, category: a.category });
+    if (pairs.size >= 10) break;
+  }
+  if (pairs.size === 0) return {};
+
+  const entries = await Promise.all(
+    [...pairs.entries()].map(async ([key, { normalizedSupplier, category }]) => {
+      const mi = await getMarketIntelligence({ normalizedSupplier, category });
+      return mi ? [key, mi] : null;
+    }),
+  );
+  return Object.fromEntries(entries.filter(Boolean));
 }

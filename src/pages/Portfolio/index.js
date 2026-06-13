@@ -10,7 +10,7 @@ import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
-  Grid, Index, Tally, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
+  Grid, Index, Tally, Truth, Calendar, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
   SwitchInline, SwitchBtn, IntelQuiet, SignOff, Spinner,
 } from '../Kontoret/styles';
 
@@ -33,8 +33,9 @@ async function getBrowserFingerprint() {
   } catch { return Math.random().toString(36).slice(2, 14); }
 }
 
-const fmtNum  = (n) => (n == null ? '–' : Math.round(n).toLocaleString('sv-SE'));
-const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) : '');
+const fmtNum   = (n) => (n == null ? '–' : Math.round(n).toLocaleString('sv-SE'));
+const fmtDate  = (iso) => (iso ? new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) : '');
+const monthYear = (d) => d.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
 
 function companyFromEmail(email) {
   if (!email) return null;
@@ -138,6 +139,7 @@ function buildReasoning(a) {
 export default function Portfolio() {
   const [analyses, setAnalyses] = useState(null);
   const [apiEmail, setApiEmail] = useState(null);
+  const [cohort, setCohort]     = useState({});
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
 
@@ -151,7 +153,11 @@ export default function Portfolio() {
         const res = await fetch(`/api/invoice-history?${qs}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (!cancelled) { setAnalyses(data.analyses ?? []); setApiEmail(data.email ?? null); }
+        if (!cancelled) {
+          setAnalyses(data.analyses ?? []);
+          setApiEmail(data.email ?? null);
+          setCohort(data.cohort ?? {});
+        }
       } catch (err) { if (!cancelled) setError(err.message); }
     })();
     return () => { cancelled = true; };
@@ -168,6 +174,36 @@ export default function Portfolio() {
   const mkt          = marketPosition(suppliers);
   const companyName  = companyFromEmail(apiEmail);
   const switchables  = suppliers.filter((g) => g.latest.should_switch && (g.latest.net_saving ?? 0) > 0);
+
+  // Kohort-sanningen — featurera leverantören med störst gap mot vad bolag
+  // hos samma leverantör betalar. Helt ur verklig cross-customer-data (≥3).
+  const featured = useMemo(() => {
+    let best = null;
+    for (const g of suppliers) {
+      const a = g.latest;
+      const mi = cohort[`${a.normalized_supplier}|${a.category}`];
+      const median = mi?.supplierMedian || mi?.supplierAvgCost;
+      if (!mi || !median || !a.annual_cost) continue;
+      const pct = Math.round(((a.annual_cost - median) / median) * 100);
+      const cand = {
+        supplier: a.supplier || a.normalized_supplier,
+        cost: a.annual_cost, median, p25: mi.supplierP25, n: mi.supplierDataPoints, pct,
+      };
+      if (!best || pct > best.pct) best = cand;
+    }
+    return best;
+  }, [suppliers, cohort]);
+
+  // Maktkalendern — årsavtal med uppskattat förnyelsefönster (created_at + 12 mån).
+  // Estimat, tydligt märkt (regel 3) — inga fabricerade sannolikheter.
+  const renewals = useMemo(() => suppliers
+    .filter((g) => g.latest.billing_period === 'annual' && g.latest.created_at)
+    .map((g) => {
+      const a = g.latest;
+      const when = new Date(a.created_at); when.setMonth(when.getMonth() + 12);
+      return { id: a.id, supplier: a.supplier || a.normalized_supplier, when, cost: a.annual_cost };
+    })
+    .sort((x, y) => x.when - y.when), [suppliers]);
 
   const latestDate = suppliers.length
     ? fmtDate(suppliers.map((g) => g.latest.created_at).sort().reverse()[0]) : '';
@@ -267,6 +303,69 @@ export default function Portfolio() {
                 </div>
               </Tally>
             </Grid>
+
+            {/* ── Kohort-sanningen + Maktkalendern (gate:ade till verklig data) ── */}
+            {(featured || renewals.length > 0) && (
+              <Grid>
+                {featured && (
+                  <Truth $full={renewals.length === 0}>
+                    <div className="card-eyebrow">
+                      <span>Den kollektiva sanningen</span>
+                      <span className="src">{featured.n} bolag · live</span>
+                    </div>
+                    <h3>
+                      {featured.pct >= 8
+                        ? <>{featured.n} bolag hos {featured.supplier} betalar i snitt {fmtNum(featured.median)} kr. Ni betalar <em>{featured.pct}% mer.</em></>
+                        : featured.pct <= -8
+                          ? <>Ni betalar <em>{Math.abs(featured.pct)}% mindre</em> än snittet hos {featured.supplier} — {featured.n} bolag jämförda.</>
+                          : <>Ni betalar <em>i nivå</em> med vad {featured.n} bolag betalar hos {featured.supplier}.</>}
+                    </h3>
+                    {(() => {
+                      const max = Math.max(featured.cost, featured.median, featured.p25 || 0) || 1;
+                      const rows = [
+                        { lbl: 'Ni betalar', amt: featured.cost, you: true },
+                        { lbl: `Snitt · ${featured.n} bolag`, amt: featured.median, you: false },
+                        ...(featured.p25 ? [{ lbl: 'Lägst 25 %', amt: featured.p25, you: false }] : []),
+                      ];
+                      return (
+                        <div className="bars">
+                          {rows.map((r) => (
+                            <div className={`barrow${r.you ? ' you' : ''}`} key={r.lbl}>
+                              <span className="lbl">{r.lbl}</span>
+                              <span className="track"><span className="fill" style={{ width: `${Math.max(8, (r.amt / max) * 100)}%` }} /></span>
+                              <span className="amt">{fmtNum(r.amt)} kr</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    <p className="truth-note">
+                      Den här raden kräver att man ser <b>många bolags faktiska fakturor samtidigt</b>.
+                      Ingen jämförelsesajt och ingen konsult kan ge den — bara Arvo, tack vare nätverket.
+                    </p>
+                  </Truth>
+                )}
+
+                {renewals.length > 0 && (
+                  <Calendar $full={!featured}>
+                    <div className="card-eyebrow">
+                      <span>Maktkalendern · era årsavtal</span>
+                      <span className="src">uppskattat</span>
+                    </div>
+                    {renewals.map((r) => (
+                      <div className="cal-row" key={r.id}>
+                        <span className="cal-prob"><Icon name="calendar-clock" size={18} stroke={1.8} /></span>
+                        <div className="cal-body">
+                          <div className="t">{r.supplier}</div>
+                          <div className="s">Årsavtal — förhandlingsläget återkommer årligen. {fmtNum(r.cost)} kr/år.</div>
+                        </div>
+                        <span className="cal-when">~ {monthYear(r.when)}</span>
+                      </div>
+                    ))}
+                  </Calendar>
+                )}
+              </Grid>
+            )}
 
             {/* ── Innehavet — leverantörer, Switch inbakad i raden ────────── */}
             <Holdings>
