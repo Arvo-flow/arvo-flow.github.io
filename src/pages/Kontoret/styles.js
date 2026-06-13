@@ -219,7 +219,7 @@ export const Truth = styled(Card)`
     b { color: ${theme.dossier.inkOnDark}; } }
 `;
 
-// Arvo-index — levande, marknadsrelativt tal.
+// Arvo Score — levande, marknadsrelativt tal (0–100).
 export const Index = styled(Card)`
   display: flex; flex-direction: column;
   .idx-main { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 6px; }
@@ -229,16 +229,36 @@ export const Index = styled(Card)`
     background: ${theme.dossier.numberGradient};
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   }
+  .idx-denom { font-family: ${MONO}; font-size: 22px; font-weight: 500; letter-spacing: -.02em;
+    color: ${theme.dossier.faintOnDark}; padding-bottom: 8px; }
   .idx-delta {
     font-family: ${MONO}; font-size: 13px; color: ${theme.dossier.tealBright};
-    padding-bottom: 10px;
+    padding-bottom: 10px; margin-left: auto; text-align: right;
     .d { display:block; } .dl { color: ${theme.dossier.faintOnDark}; font-size:11px; letter-spacing:.1em; }
   }
-  .spark { display: flex; align-items: flex-end; gap: 4px; height: 40px; margin: 14px 0 16px; }
+  .spark { display: flex; align-items: flex-end; gap: 4px; height: 34px; margin: 12px 0 18px; }
   .spark span { flex: 1; border-radius: 2px 2px 0 0; background: rgba(255,255,255,.14); }
   .spark span.hot { background: ${theme.dossier.numberGradient}; }
+
+  /* Marknadsläge — under / i nivå / över marknaden */
+  .mkt-k { font-family: ${MONO}; font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+    color: ${theme.dossier.faintOnDark}; margin-bottom: 9px; }
+  .mkt-track {
+    position: relative; height: 6px; border-radius: ${theme.size.radius.pill};
+    background: linear-gradient(90deg, rgba(159,217,206,.16), rgba(255,255,255,.08) 50%, rgba(43,196,172,.30));
+    margin-bottom: 9px;
+  }
+  .mkt-ptr {
+    position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%;
+    background: ${theme.dossier.tealBright}; box-shadow: ${theme.dossier.glow};
+    transform: translate(-50%, -50%);
+  }
+  .mkt-scale { display: flex; justify-content: space-between;
+    font-family: ${MONO}; font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+    color: ${theme.dossier.faintOnDark};
+    .on { color: ${theme.dossier.tealBright}; } }
   .idx-note { font-size: 12.5px; line-height: 1.6; color: ${theme.dossier.mutedOnDark};
-    margin-top: auto; b { color: ${theme.dossier.inkOnDark}; } }
+    margin-top: 16px; b { color: ${theme.dossier.inkOnDark}; } }
 `;
 
 // Maktkalendern — sannolikhetsbelagd horisont.

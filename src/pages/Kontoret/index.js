@@ -100,11 +100,12 @@ export default function Kontoret() {
             </p>
           </Truth>
 
-          {/* Arvo-index */}
+          {/* Arvo Score — marknadsrelativt */}
           <Index>
-            <div className="card-eyebrow"><span>Arvo-index</span><span className="src">marknadsrelativt</span></div>
+            <div className="card-eyebrow"><span>Arvo Score</span><span className="src">marknadsrelativt</span></div>
             <div className="idx-main">
               <span className="idx-num">73</span>
+              <span className="idx-denom">/100</span>
               <span className="idx-delta">
                 <span className="d">▲ 4</span>
                 <span className="dl">sedan mars</span>
@@ -115,9 +116,17 @@ export default function Kontoret() {
                 <span key={i} className={i >= 9 ? 'hot' : ''} style={{ height: `${h}%` }} />
               ))}
             </div>
+            <div className="mkt-k">Marknadsläge</div>
+            <div className="mkt-track"><span className="mkt-ptr" style={{ left: '62%' }} /></div>
+            <div className="mkt-scale">
+              <span>Under marknaden</span>
+              <span className="on">I nivå</span>
+              <span>Över marknaden</span>
+            </div>
             <p className="idx-note">
-              Ert läge mot marknaden — inte mot er egen faktura. Indexet <b>andas med marknaden</b>:
-              det sjunker om er bransch förhandlar ner och ni står still, även om ni inte gjort något.
+              Ni betalar <b>i nivå med marknaden</b> sammanvägt — med enskilda utstickare (se Telia).
+              Talet är relativt marknaden, inte er egen faktura: det <b>andas med marknaden</b> och
+              sjunker om er bransch förhandlar ner medan ni står still.
             </p>
           </Index>
 
