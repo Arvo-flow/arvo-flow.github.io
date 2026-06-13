@@ -228,7 +228,7 @@ export default function Portfolio() {
             {/* ── Identitet + Vakten ──────────────────────────────────────── */}
             <TopRow>
               <Ident>
-                <div className="brand">ARVO · LEVERANTÖRSRADAR</div>
+                <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}</div>
                 <h1>{acting ? <>Ett par drag<br />väntar på er.</> : <>God morgon.<br />Allt är under kontroll.</>}</h1>
               </Ident>
@@ -243,7 +243,7 @@ export default function Portfolio() {
                     </svg>
                     <div className="sweep" />
                   </div>
-                  <div className="radar-title"><strong>Vakten</strong>bevakar marknaden</div>
+                  <div className="radar-title"><strong>Vakten</strong>bevakar era avtal</div>
                 </div>
                 <div className="radar-stats">
                   <div className="rstat"><span>Leverantörer</span><span className="v">{suppliers.length}</span></div>
@@ -270,12 +270,12 @@ export default function Portfolio() {
             {/* ── Instrument: Arvo Score + likräkning ─────────────────────── */}
             <Grid>
               <Index>
-                <div className="card-eyebrow"><span>Arvo Score</span><span className="src">marknadsrelativt</span></div>
+                <div className="card-eyebrow"><span>Arvo Score</span><span className="src">mot verifierat listpris</span></div>
                 <div className="idx-main">
                   <span className="idx-num">{arvoScore}</span>
                   <span className="idx-denom">/100</span>
                 </div>
-                <div className="mkt-k">Marknadsläge · {arvoScore}/100</div>
+                <div className="mkt-k">Marknadsläge</div>
                 <div className="mkt-track"><span className="mkt-ptr" style={{ left: `${standing.pointer}%` }} /></div>
                 <div className="mkt-scale">
                   <span className={standing.label === 'Över marknaden' ? 'on' : ''}>Över marknaden</span>
@@ -283,21 +283,23 @@ export default function Portfolio() {
                   <span className={standing.label === 'Under marknaden' ? 'on' : ''}>Under marknaden</span>
                 </div>
                 <p className="idx-note">
-                  {arvoScore >= 67
-                    ? <>Ert sammanvägda läge mot marknaden är <b>starkt</b>. Enskilda avtal kan ändå sticka ut — se innehavet nedan.</>
-                    : arvoScore >= 45
-                      ? <>Era priser ligger <b>i nivå med verifierat marknadspris</b>, med utrymme att skärpa enskilda avtal.</>
-                      : <>Ni betalar <b>över verifierat marknadspris</b> på flera avtal — flera byten ligger på bordet.</>}
+                  {switchables.length > 0
+                    ? <>Sammanvägt {arvoScore >= 67 ? 'starkt' : arvoScore >= 45 ? 'godkänt' : 'svagt'} — men <b>{switchables.length} avtal drar över marknaden</b>. De ligger förberedda i innehavet nedan.</>
+                    : <>Era priser ligger <b>i nivå med eller under verifierat listpris</b>. Inget enskilt avtal sticker ut i dag.</>}
                 </p>
               </Index>
 
               <Tally>
-                <div className="tally-k">Identifierad nettobesparing</div>
-                <div className="tally-num">{fmtNum(totalSaving)} kr<small>per år</small></div>
+                <div className="tally-k">{acting ? 'Identifierad nettobesparing' : 'Avtal under bevakning'}</div>
+                <div className="tally-num">
+                  {acting
+                    ? <>{fmtNum(totalSaving)} kr<small>per år</small></>
+                    : <>{suppliers.length}<small>{suppliers.length === 1 ? 'avtal' : 'avtal'}</small></>}
+                </div>
                 <div className="tally-sub">
-                  {switchables.length > 0
+                  {acting
                     ? <><b>{switchables.length} byte{switchables.length > 1 ? 'n' : ''} förberedda</b> · netto efter Arvos arvode (20% av första årets besparing). Från år två är hela besparingen er.</>
-                    : <>Inga byten på bordet just nu — era priser står sig. Det är vad en tystgående finansdirektör levererar: lugnet att ni ligger rätt.</>}
+                    : <>Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.</>}
                 </div>
               </Tally>
             </Grid>
@@ -442,8 +444,8 @@ export default function Portfolio() {
               <h3>Hela reskontran, <em>bevakad dygnet runt.</em></h3>
               <p>
                 {acting
-                  ? <>Aktivera ett byte ovan, så börjar vi. I dag ser ni avtalen ni delat — Arvo Intelligence tar in <b>resten av boken</b> och larmar er innan nästa höjning når er. Varje månad får ni ett brev med exakt vad som rört sig — och vad vi gjort åt det.</>
-                  : <>Era priser står sig i dag. Arvo Intelligence ser till att de <b>fortsätter göra det</b> — vi tar in <b>resten av boken</b>, inte bara fakturorna ni delat, och larmar er innan en höjning når er. Varje månad: ett brev med vad som rört sig.</>}
+                  ? <>I dag vaktar Arvo de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b> — varenda avtal ni har — och larmar er innan nästa höjning når er. Varje månad: ett brev med exakt vad som rört sig, och vad vi gjort åt det.</>
+                  : <>Era priser står sig i dag, och Arvo vaktar de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b>, så att inget avtal lämnas obevakat — och skickar varje månad ett brev med vad som rört sig.</>}
               </p>
               <div className="iq-row">
                 <span className="iq-price">1 995 kr <span>/ mån · ingen bindningstid</span></span>
@@ -464,7 +466,7 @@ export default function Portfolio() {
           <>
             <TopRow>
               <Ident>
-                <div className="brand">ARVO · LEVERANTÖRSRADAR</div>
+                <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}</div>
                 <h1>Ert kontor<br />väntar på första fakturan.</h1>
               </Ident>

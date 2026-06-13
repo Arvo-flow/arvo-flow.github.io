@@ -318,7 +318,7 @@ export const Holdings = styled.section`
   margin-top: 40px; padding-top: 28px; border-top: 1px solid ${theme.dossier.hairlineOnDark};
   ${appear(0.24)}
   .h-eyebrow { font-family: ${MONO}; font-size: 10px; letter-spacing: .24em; text-transform: uppercase;
-    color: ${theme.dossier.faintOnDark}; margin-bottom: 18px; }
+    color: ${theme.dossier.teal}; margin-bottom: 18px; }
   .h-row {
     display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 18px;
     padding: 14px 0; border-top: 1px solid ${theme.dossier.hairlineOnDark};
@@ -419,7 +419,7 @@ export const SwitchInline = styled.div`
   background: linear-gradient(160deg, rgba(43,196,172,.10), rgba(23,138,123,.04));
   padding:18px 20px; display:flex; flex-direction:column;
 
-  .si-k { font-family:${MONO}; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  .si-k { font-family:${MONO}; font-size:10px; letter-spacing:.24em; text-transform:uppercase;
     color:${theme.dossier.teal}; margin-bottom:14px; }
   .si-steps { display:flex; flex-direction:column; gap:14px; margin-bottom:18px; }
   .si-step { display:flex; gap:12px; align-items:flex-start; }
