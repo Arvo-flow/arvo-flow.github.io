@@ -203,7 +203,7 @@ export default function Kontoret() {
         <SignOff>
           <div className="keyline" />
           <div className="mark">ARVO</div>
-          <div className="tagline">Den tystgående finansdirektören. På er post, dygnet runt.</div>
+          <div className="tagline">Finansiell intelligens som aldrig sover.</div>
         </SignOff>
       </Shell>
     </Page>

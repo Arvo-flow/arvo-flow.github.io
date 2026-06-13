@@ -17,14 +17,14 @@ import {
 
 // ── intagsdiskens kategorier — tre hotspots där läckaget oftast sitter ───────
 const INTAKE_SEGMENTS = [
-  { label: 'IT-licenser',    icon: 'spark',  hot: true },
-  { label: 'Telefoni',       icon: 'phone',  hot: true },
-  { label: 'Mjukvara / SaaS', icon: 'wifi',   hot: true },
-  { label: 'IT-drift',       icon: 'fortnox', hot: false },
-  { label: 'El',             icon: 'bolt',   hot: false },
-  { label: 'Skrivare',       icon: 'file',   hot: false },
-  { label: 'Fordon',         icon: 'truck',  hot: false },
-  { label: 'Försäkring',     icon: 'shield', hot: false },
+  { label: 'IT-licenser',     icon: 'spark',  hot: true,  hint: 'Microsoft · Google' },
+  { label: 'Telefoni',        icon: 'phone',  hot: true,  hint: 'Mobil · växel · bredband' },
+  { label: 'Mjukvara / SaaS', icon: 'wifi',   hot: true,  hint: 'Verktyg · prenumerationer' },
+  { label: 'IT-drift',        icon: 'fortnox', hot: false, hint: 'Support · drift' },
+  { label: 'El',              icon: 'bolt',   hot: false, hint: 'Elavtal' },
+  { label: 'Skrivare',        icon: 'file',   hot: false, hint: 'Leasing · print' },
+  { label: 'Fordon',          icon: 'truck',  hot: false, hint: 'Leasing · transport' },
+  { label: 'Försäkring',      icon: 'shield', hot: false, hint: 'Företag · ansvar' },
 ];
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -165,6 +165,7 @@ export default function Portfolio() {
   const [uploads, setUploads]   = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadNote, setUploadNote] = useState('');
+  const [dragOver, setDragOver] = useState(false);
 
   const magic = useMemo(() => new URLSearchParams(window.location.search).get('magic'), []);
 
@@ -191,35 +192,61 @@ export default function Portfolio() {
     return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleIntakeFiles(e) {
-    const picked = [...(e.target.files || [])]
+  // Intag: magic-kunder går via secure kontor-ingest (bypass, e-postnycklat);
+  // anonyma går via samma publika väg som testa-faktura (token + gate på fingerprint).
+  async function processFiles(fileList) {
+    const picked = [...(fileList || [])]
       .filter((f) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name))
       .slice(0, 20);
-    e.target.value = '';
     if (!picked.length) return;
-    if (!magic) {
-      setUploadNote('Direktuppladdning kräver att ni öppnat kontoret via länken i ert mejl. Vidarebefordra fakturorna till faktura@inbox.arvoflow.se så landar de här ändå.');
-      return;
-    }
     setUploadNote('');
     setUploading(true);
     setUploads(picked.map((f) => ({ name: f.name, status: 'work' })));
+
+    let token = null;
+    if (!magic) {
+      try { const tr = await fetch('/api/token', { method: 'POST' }); token = (await tr.json())?.token; } catch { /* försök ändå */ }
+    }
+
+    let gated = false;
     for (let i = 0; i < picked.length; i++) {
       try {
         const pdfBase64 = await fileToBase64(picked[i]);
-        const res = await fetch('/api/kontor-ingest', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pdfBase64, magic, fingerprint }),
-        });
-        const data = await res.json().catch(() => ({}));
-        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: data.ok ? 'done' : 'fail' } : u));
+        let ok = false, isGate = false;
+        if (magic) {
+          const res = await fetch('/api/kontor-ingest', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pdfBase64, magic, fingerprint }),
+          });
+          const data = await res.json().catch(() => ({}));
+          ok = !!data.ok;
+        } else {
+          const res = await fetch('/api/test-invoice', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pdfBase64, industry: 'ovrigt', employees: 10, token, fingerprint }),
+          });
+          const data = await res.json().catch(() => ({}));
+          isGate = !!data.gate;
+          ok = !isGate && !!data.route;
+          if (isGate) gated = true;
+        }
+        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: ok ? 'done' : (isGate ? 'gate' : 'fail') } : u));
       } catch {
         setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: 'fail' } : u));
       }
     }
+
     setUploading(false);
+    if (gated) {
+      setUploadNote('Ni har nått gränsen för fria analyser. Vidarebefordra resten till faktura@inbox.arvoflow.se — eller aktivera ert konto — så fortsätter vi.');
+    }
     try { await loadOffice(); } catch { /* behåll intaget om hämtning fallerar */ }
   }
+
+  const onPick = (e) => { const fl = e.target.files; e.target.value = ''; processFiles(fl); };
+  const onDrop = (e) => { e.preventDefault(); setDragOver(false); processFiles(e.dataTransfer?.files); };
+  const onDragOver = (e) => { e.preventDefault(); if (!dragOver) setDragOver(true); };
+  const onDragLeave = () => setDragOver(false);
 
   function toggle(id) {
     setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -518,7 +545,7 @@ export default function Portfolio() {
             <SignOff>
               <div className="keyline" />
               <div className="mark">ARVO</div>
-              <div className="tagline">Den tystgående finansdirektören. På er post, dygnet runt.</div>
+              <div className="tagline">Finansiell intelligens som aldrig sover.</div>
             </SignOff>
           </>
         )}
@@ -530,7 +557,7 @@ export default function Portfolio() {
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}</div>
-                <h1>Tre kategorier<br />läcker mest. Börja där.</h1>
+                <h1>Ert kontor väntar<br />på första analysen.</h1>
               </Ident>
             </TopRow>
 
@@ -538,10 +565,9 @@ export default function Portfolio() {
               <div className="eyebrow">Var pengarna oftast rinner</div>
               <h2>Överbetalningen sitter oftast i <em>IT-licenser, telefoni och mjukvara.</em></h2>
               <p className="work">
-                Vi vet var svenska bolag oftast överbetalar — Microsoft- och Google-licenser,
-                mobilflottan och SaaS-prenumerationerna. Börja med dem, så har ni ert första
-                fynd inom minuter. Töm sedan resten av högen: ju fler avtal ni matar in, desto
-                skarpare ser Arvo hela er kostnadsbild.
+                Börja där — en enda faktura räcker för ert första fynd, ofta inom minuter.
+                Töm sedan resten av högen: ju fler avtal Arvo ser, desto skarpare blir hela
+                bilden av var ni betalar för mycket.
               </p>
             </Verdict>
 
@@ -550,9 +576,12 @@ export default function Portfolio() {
               <div className="cm-grid">
                 {INTAKE_SEGMENTS.map((s) => (
                   <div key={s.label} className={`cm-cell${s.hot ? ' hot' : ''}`}>
-                    <span className="cm-ico"><Icon name={s.icon} size={20} stroke={1.7} /></span>
+                    <div className="cm-top">
+                      <span className="cm-ico"><Icon name={s.icon} size={19} stroke={1.7} /></span>
+                      {s.hot && <span className="cm-tag">Börja här</span>}
+                    </div>
                     <span className="cm-label">{s.label}</span>
-                    {s.hot && <span className="cm-tag">Börja här</span>}
+                    <span className="cm-hint">{s.hint}</span>
                   </div>
                 ))}
               </div>
@@ -572,19 +601,22 @@ export default function Portfolio() {
                 <h4>Dra in flera fakturor här.</h4>
                 <p>PDF · upp till 20 åt gången · vi sparar aldrig filen efter analysen.</p>
                 <div className="spacer" />
-                <Dropzone className={uploading ? 'busy' : ''}>
+                <Dropzone
+                  className={`${uploading ? 'busy' : ''}${dragOver ? ' over' : ''}`}
+                  onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
+                >
                   <span className="dz-ico"><Icon name="upload" size={22} stroke={1.7} /></span>
-                  <span className="dz-t">{uploading ? 'Analyserar…' : 'Släpp eller välj PDF-fakturor'}</span>
+                  <span className="dz-t">{uploading ? 'Analyserar…' : dragOver ? 'Släpp här' : 'Släpp eller välj PDF-fakturor'}</span>
                   <span className="dz-s">Flera samtidigt går bra</span>
-                  <input type="file" accept="application/pdf" multiple disabled={uploading} onChange={handleIntakeFiles} />
+                  <input type="file" accept="application/pdf" multiple disabled={uploading} onChange={onPick} />
                 </Dropzone>
                 {uploads.length > 0 && (
                   <DropProgress>
                     {uploads.map((u, i) => (
                       <div className="dp-row" key={`${u.name}-${i}`}>
                         <span className="dp-name">{u.name}</span>
-                        <span className={`dp-stat ${u.status}`}>
-                          {u.status === 'done' ? 'Klar' : u.status === 'fail' ? 'Misslyckades' : 'Analyserar…'}
+                        <span className={`dp-stat ${u.status === 'work' ? 'work' : u.status === 'done' ? 'done' : u.status === 'gate' ? 'work' : 'fail'}`}>
+                          {u.status === 'done' ? 'Klar' : u.status === 'fail' ? 'Misslyckades' : u.status === 'gate' ? 'Gräns nådd' : 'Analyserar…'}
                         </span>
                       </div>
                     ))}
@@ -606,7 +638,7 @@ export default function Portfolio() {
             <SignOff>
               <div className="keyline" />
               <div className="mark">ARVO</div>
-              <div className="tagline">Den tystgående finansdirektören. På er post, dygnet runt.</div>
+              <div className="tagline">Finansiell intelligens som aldrig sover.</div>
             </SignOff>
           </>
         )}

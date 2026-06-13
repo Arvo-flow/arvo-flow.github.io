@@ -485,17 +485,20 @@ export const CoverageMap = styled.div`
   .cm-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
     @media (max-width:600px){ grid-template-columns:repeat(2,1fr); } }
   .cm-cell { position:relative; border:1px solid ${theme.dossier.hairlineOnDark};
-    border-radius:${theme.size.radius.md}; padding:15px 14px 14px;
-    display:flex; flex-direction:column; gap:10px; background:${theme.dossier.bgRaised}; }
-  .cm-cell.hot { border-color:rgba(43,196,172,.45);
-    background:linear-gradient(155deg, rgba(43,196,172,.10), rgba(23,138,123,.04));
-    box-shadow:0 0 0 1px rgba(43,196,172,.12); }
+    border-radius:${theme.size.radius.md}; padding:14px 15px 15px;
+    display:flex; flex-direction:column; gap:9px; background:${theme.dossier.bgRaised}; }
+  .cm-cell.hot { border-color:rgba(43,196,172,.42);
+    background:linear-gradient(155deg, rgba(43,196,172,.11), rgba(23,138,123,.03));
+    box-shadow:0 0 0 1px rgba(43,196,172,.10); }
+  .cm-top { display:flex; align-items:center; justify-content:space-between; min-height:24px; }
   .cm-ico { color:${theme.dossier.faintOnDark}; display:flex; }
   .cm-cell.hot .cm-ico { color:${theme.dossier.tealBright}; }
-  .cm-label { font-size:13px; font-weight:600; color:${theme.dossier.mutedOnDark}; letter-spacing:-.005em; }
+  .cm-label { font-size:13.5px; font-weight:600; color:${theme.dossier.mutedOnDark}; letter-spacing:-.005em; line-height:1.2; }
   .cm-cell.hot .cm-label { color:${theme.dossier.inkOnDark}; }
-  .cm-tag { font-family:${MONO}; font-size:9px; letter-spacing:.12em; text-transform:uppercase;
-    color:${theme.dossier.tealBright}; }
+  .cm-hint { font-size:11px; color:${theme.dossier.faintOnDark}; letter-spacing:.01em; }
+  .cm-tag { font-family:${MONO}; font-size:8.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:${theme.dossier.tealBright}; border:1px solid rgba(43,196,172,.4);
+    border-radius:${theme.size.radius.pill}; padding:3px 8px; white-space:nowrap; }
 `;
 
 export const IntakeDoors = styled.div`
@@ -523,7 +526,8 @@ export const Dropzone = styled.label`
   border:1.5px dashed rgba(43,196,172,.38); border-radius:${theme.size.radius.md};
   padding:26px 18px; cursor:pointer; text-align:center;
   background:rgba(43,196,172,.04); transition:border-color .15s, background .15s;
-  &:hover { border-color:${theme.dossier.tealBright}; background:rgba(43,196,172,.09); }
+  &:hover, &.over { border-color:${theme.dossier.tealBright}; background:rgba(43,196,172,.10); }
+  &.over { box-shadow:0 0 0 1px ${theme.dossier.tealBright}; }
   .dz-ico { color:${theme.dossier.tealBright}; }
   .dz-t { font-size:14px; font-weight:600; color:${theme.dossier.inkOnDark}; }
   .dz-s { font-size:12px; color:${theme.dossier.mutedOnDark}; }
