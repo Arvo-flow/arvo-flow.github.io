@@ -242,10 +242,10 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
       a.positioning?.toLowerCase().includes('obegränsad')
     );
     const unlimitedLine = tele2Alt && !categorized.normalizedSupplier?.toLowerCase().includes('tele2')
-      ? `\nOBS MOBIL: Tele2 Företag Bas erbjuder OBEGRÄNSAD data till p25-priset (299 kr/mth). ` +
-        `Om kundens nuvarande plan är datakapat (t.ex. 100GB, 50GB) ska du ALLTID nämna detta i reasoning — ` +
-        `kunden kan alltså byta till obegränsad surf utan att betala mer. ` +
-        `Formulera det som ett värdetillägg, inte ett kritikpåstående om nuvarande leverantör.`
+      ? `\nOBS MOBIL: Tele2 Företag har en Obegränsad-plan nära det medianpris vi visar (entrétiern på p25 är datakapad). ` +
+        `Om kundens nuvarande plan är datakapad (t.ex. 100GB, 50GB) ska du nämna i reasoning att obegränsad surf finns utan stort prispåslag. ` +
+        `Formulera det som ett värdetillägg, inte ett kritikpåstående om nuvarande leverantör. ` +
+        `FÖRBJUDET: hitta på egna kronor- eller GB-tal — använd bara de siffror som redan finns i prompten.`
       : '';
     return planLine + unlimitedLine;
   })();

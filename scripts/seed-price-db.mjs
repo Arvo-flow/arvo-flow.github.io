@@ -304,31 +304,31 @@ await seed({
   metadata: { note: 'Bokföring + moms + lön. Enklast och billigast för solobolag.' },
 });
 
-// ── Tele2 Företag mobil — verifierat (price-monitor 2026-05) ──
+// ── Tele2 Företag mobil — verifierat LIVE 2026-06-14 (Playwright, 24 mån bindning) ──
 console.log('📦  Tele2 Företag mobil…');
 await seed({
-  supplier: 'tele2', product: 'Tele2 Företag Bas', tier: 'bas',
+  supplier: 'tele2', product: 'Tele2 Företag 60 GB', tier: 'entre',
+  category: 'mobil', priceMonthly: 239, priceAnnual: 239 * 12,
+  priceUnit: 'per_seat', currency: 'SEK',
+  sourceType: 'official_web', sourceUrl: 'https://www.tele2.se/foretag/mobilabonnemang',
+  confidence: 0.93, lastVerified: '2026-06-14',
+  metadata: { note: '60 GB data, 24 mån bindning (faktiskt B2B-pris). Ordinarie 399 kr utan bindning.' },
+});
+await seed({
+  supplier: 'tele2', product: 'Tele2 Företag Obegränsad', tier: 'obegransad',
+  category: 'mobil', priceMonthly: 279, priceAnnual: 279 * 12,
+  priceUnit: 'per_seat', currency: 'SEK',
+  sourceType: 'official_web', sourceUrl: 'https://www.tele2.se/foretag/mobilabonnemang',
+  confidence: 0.93, lastVerified: '2026-06-14',
+  metadata: { note: 'Obegränsad surf, 24 mån bindning. Ordinarie 499 kr utan bindning.' },
+});
+await seed({
+  supplier: 'tele2', product: 'Tele2 Företag Obegränsad Max', tier: 'obegransad_max',
   category: 'mobil', priceMonthly: 299, priceAnnual: 299 * 12,
   priceUnit: 'per_seat', currency: 'SEK',
   sourceType: 'official_web', sourceUrl: 'https://www.tele2.se/foretag/mobilabonnemang',
-  confidence: 0.93, lastVerified: '2026-05-22',
-  metadata: { note: 'Obegränsad data + EU-roaming. Grundabonnemang.' },
-});
-await seed({
-  supplier: 'tele2', product: 'Tele2 Företag Plus', tier: 'plus',
-  category: 'mobil', priceMonthly: 349, priceAnnual: 349 * 12,
-  priceUnit: 'per_seat', currency: 'SEK',
-  sourceType: 'official_web', sourceUrl: 'https://www.tele2.se/foretag/mobilabonnemang',
-  confidence: 0.93, lastVerified: '2026-05-22',
-  metadata: { note: 'Obegränsad data + EU-roaming. Standardabonnemang.' },
-});
-await seed({
-  supplier: 'tele2', product: 'Tele2 Företag Max', tier: 'max',
-  category: 'mobil', priceMonthly: 449, priceAnnual: 449 * 12,
-  priceUnit: 'per_seat', currency: 'SEK',
-  sourceType: 'official_web', sourceUrl: 'https://www.tele2.se/foretag/mobilabonnemang',
-  confidence: 0.93, lastVerified: '2026-05-22',
-  metadata: { note: 'Obegränsad data + utökad roaming + prioriterad nätkapacitet.' },
+  confidence: 0.93, lastVerified: '2026-06-14',
+  metadata: { note: 'Obegränsad surf + prioriterad nätkapacitet, 24 mån bindning. Ordinarie 599 kr utan bindning.' },
 });
 
 // ── Telia Företag mobil ──

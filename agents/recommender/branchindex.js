@@ -86,34 +86,35 @@ export const BRANCHINDEX = {
 
   mobil: {
     source: 'real-public',
-    lastVerified: '2026-06-01',
-    verifiedVia: 'web-search',
+    lastVerified: '2026-06-14',
+    verifiedVia: 'playwright-live',
     unit: 'kr/år',
     // Prices are per user/year — lib/benchmark.js scales by seat count before the LLM sees it.
-    // Real Tele2 Företag listpriser juni 2026 (exkl. moms, verifierade via flera källor):
-    //   Bas 299 kr/mth = 3 588 kr/yr (obegränsad data, EU-roaming) ← p25
-    //   Plus 349 kr/mth = 4 188 kr/yr                               ← median
-    //   Max 449 kr/mth = 5 388 kr/yr
-    // Volymrabatter (10+ SIM): Tele2 publicerar INGA listpriser för volymrabatter —
-    //   rabatter förhandlas individuellt via Tele2 Företagssälj. Arvo kan förhandla
-    //   dessa rabatter åt kunden, men de kan inte föringes i benchmarken.
-    //   p25 = Tele2 Bas listpris (299 kr) för ALLA buckets — inga estimerade rabatter.
-    // NÄSTA VERIFIERING: 2026-09-01
-    note: 'Per användare/år (exkl. moms). Källa: Tele2 Företag listpriser juni 2026 — Bas 299 kr/mth (obegränsad data + EU-roaming), Plus 349 kr/mth, Max 449 kr/mth. Volymrabatter förhandlas individuellt av Arvo — ingår INTE i p25. Hårdvaruhyra klassificeras som hardware i extract.js och ingår INTE i besparingskalkylen.',
+    // Tele2 Företag mobilabonnemang — verifierat LIVE 2026-06-14 (Playwright, status 200,
+    // scripts/verify-tele2-mobil.mjs). Renderade plan→pris (24 mån bindning = faktiskt B2B-pris):
+    //   60 GB           239 kr/mth = 2 868 kr/yr  ← p25   (ordinarie 399 kr utan bindning)
+    //   Obegränsad      279 kr/mth = 3 348 kr/yr  ← median (ordinarie 499 kr utan bindning)
+    //   Obegränsad Max  299 kr/mth = 3 588 kr/yr          (ordinarie 599 kr utan bindning)
+    // Vi ankrar på 24-mån-priset (inte ordinarie sticker) eftersom ~all B2B-mobil säljs på
+    // 24-mån bindning — det är vad bolag FAKTISKT betalar. Vakten går rött om priset/planen drivit.
+    // Kollega-tillägg: 50 % rabatt på extra abonnemang kopplade till huvudabonnemang — publicerad
+    //   rabatt men gäller sekundära SIM, ingår INTE i p25 (samma princip som tidigare volymrabatt).
+    // NÄSTA VERIFIERING: vakten kör veckovis (måndagar) — manuell koll behövs bara vid rött bygge.
+    note: 'Per användare/år (exkl. moms). Källa: Tele2 Företag mobilabonnemang, verifierat live 2026-06-14 — 60 GB 239 kr/mth, Obegränsad 279 kr/mth, Obegränsad Max 299 kr/mth (24 mån bindning, faktiskt B2B-pris). p25 = entrétier 60 GB. Median = Obegränsad. Extra abonnemang via Kollega (50 % rabatt) ingår INTE i p25. Hårdvaruhyra klassificeras som hardware i extract.js och ingår INTE i besparingskalkylen.',
     alternatives: [
-      { supplier: 'Tele2 Företag',   positioning: 'Obegränsad data + EU-roaming, Bas 299 kr/mth — ofta lägst listpris bland rikstäckande operatörer', reliability: 0.93 },
-      { supplier: 'Tre Företag',     positioning: 'Stark datakapacitet, konkurrenskraftigt listpris för basabonnemang',                                  reliability: 0.91 },
-      { supplier: 'Telia Företag',   positioning: 'Rikstäckande nät, premium-support, volymavtal för större flottor',                                    reliability: 0.96 },
-      { supplier: 'Telenor Företag', positioning: 'God täckning, flexibla volymavtal, konkurrenskraftig prissättning',                                   reliability: 0.92 },
+      { supplier: 'Tele2 Företag',   positioning: 'Entré 60 GB 239 kr/mth, Obegränsad 279 kr/mth (24 mån) — ofta lägst faktiskt B2B-pris bland rikstäckande operatörer', reliability: 0.93 },
+      { supplier: 'Tre Företag',     positioning: 'Stark datakapacitet, konkurrenskraftigt pris för obegränsad data',                                        reliability: 0.91 },
+      { supplier: 'Telia Företag',   positioning: 'Rikstäckande nät, premium-support, volymavtal för större flottor',                                        reliability: 0.96 },
+      { supplier: 'Telenor Företag', positioning: 'God täckning, flexibla volymavtal, konkurrenskraftig prissättning',                                       reliability: 0.92 },
     ],
     matrix: {
-      // p25 = Tele2 Bas verifierat listpris (299 kr/mth × 12 = 3 588 kr/år) — ALLA buckets.
-      // Volymrabatter är förhandlade, inte publicerade — ingår ej i p25.
-      // Median = Tele2 Plus verifierat listpris (349 kr/mth × 12 = 4 188 kr/år) — ALLA buckets.
-      byraer:      { micro: { median: 4188, p25: 3588 }, small: { median: 4188, p25: 3588 }, mid: { median: 4188, p25: 3588 } },
-      hantverkare: { micro: { median: 4188, p25: 3588 }, small: { median: 4188, p25: 3588 }, mid: { median: 4188, p25: 3588 } },
-      ehandel:     { micro: { median: 4188, p25: 3588 }, small: { median: 4188, p25: 3588 }, mid: { median: 4188, p25: 3588 } },
-      tillverkning:{ micro: { median: 4188, p25: 3588 }, small: { median: 4188, p25: 3588 }, mid: { median: 4188, p25: 3588 } },
+      // p25 = Tele2 60 GB verifierat 24-mån-pris (239 kr/mth × 12 = 2 868 kr/år) — ALLA buckets.
+      // Median = Tele2 Obegränsad verifierat 24-mån-pris (279 kr/mth × 12 = 3 348 kr/år) — ALLA buckets.
+      // Volymrabatter (Kollega 50 % på sekundära SIM) är inte baserade på huvudpriset → ingår ej i p25.
+      byraer:      { micro: { median: 3348, p25: 2868 }, small: { median: 3348, p25: 2868 }, mid: { median: 3348, p25: 2868 } },
+      hantverkare: { micro: { median: 3348, p25: 2868 }, small: { median: 3348, p25: 2868 }, mid: { median: 3348, p25: 2868 } },
+      ehandel:     { micro: { median: 3348, p25: 2868 }, small: { median: 3348, p25: 2868 }, mid: { median: 3348, p25: 2868 } },
+      tillverkning:{ micro: { median: 3348, p25: 2868 }, small: { median: 3348, p25: 2868 }, mid: { median: 3348, p25: 2868 } },
     },
   },
 

@@ -607,10 +607,10 @@ export const fixtures = [
   // ── edge-21 ──────────────────────────────────────────────────────────────────
   // mixed=true, category='bredband', 3 separata mobilabonnemang-rader → secondarySeatCount=3
   // secAnnual=Math.round(897*12)=10764, segment=byraer(konsult), bucket=micro
-  // p25Total=Math.round(3588*3)=10764, gross=10764-10764=0 → secondary=null
+  // p25Total=Math.round(2868*3)=8604, gross=10764-8604=2160 ≥ 500 → secondary satt
   {
     id: 'edge-21',
-    name: 'Bredband + 3 mobilabonnemang-rader → secondarySeatCount=3, gross=0 → secondary=null',
+    name: 'Bredband + 3 mobilabonnemang-rader → secondarySeatCount=3, gross=2160 → secondary satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 700 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Jobbmobil 1', amount: 299 },
@@ -624,7 +624,7 @@ export const fixtures = [
     // secondaryLines=[3 mobilabonnemang], secondarySeatCount=3
     // secondarySum=897, primarySum=700
     // secAnnual=Math.round(897*12)=10764
-    // mobilP25=3588(byraer/micro), p25Total=Math.round(3588*3)=10764, gross=0 → null
+    // mobilP25=2868(byraer/micro), p25Total=Math.round(2868*3)=8604, gross=2160 → satt
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -633,7 +633,14 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           3,
     },
-    secondary: null,
+    secondary: {
+      category:        'mobil',
+      seatCount:       3,
+      currentAnnual:   10764,
+      suggestedAnnual: 8604,
+      grossSaving:     2160,
+      netSaving:       1728,
+    },
   },
 
   // ── edge-22 ──────────────────────────────────────────────────────────────────
@@ -655,8 +662,8 @@ export const fixtures = [
     industry: 'konsult',
     // primaryLines: NOT /sim|mobilabonnemang|mobiltelefoni/ → Fiber 500 Mbit (700)
     // secondaryLines: /sim|.../ → SIM-kort (1745) → 1 rad → seatCount=1
-    // secAnnual=Math.round(1745*12)=20940, mobilP25=3588, p25Total=3588
-    // gross=20940-3588=17352, net=Math.round(17352*0.80)=13882
+    // secAnnual=Math.round(1745*12)=20940, mobilP25=2868, p25Total=2868
+    // gross=20940-2868=18072, net=Math.round(18072*0.80)=14458
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -669,9 +676,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   20940,
-      suggestedAnnual: 3588,
-      grossSaving:     17352,
-      netSaving:       13882,
+      suggestedAnnual: 2868,
+      grossSaving:     18072,
+      netSaving:       14458,
     },
   },
 
@@ -689,7 +696,7 @@ export const fixtures = [
     employees: 5,
     industry: 'konsult',
     // secondarySeatCount=1, secAnnual=Math.round(999*12)=11988
-    // mobilP25=3588(byraer/micro), p25Total=3588, gross=11988-3588=8400, net=Math.round(8400*0.80)=6720
+    // mobilP25=2868(byraer/micro), p25Total=2868, gross=11988-2868=9120, net=Math.round(9120*0.80)=7296
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -702,9 +709,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   11988,
-      suggestedAnnual: 3588,
-      grossSaving:     8400,
-      netSaving:       6720,
+      suggestedAnnual: 2868,
+      grossSaving:     9120,
+      netSaving:       7296,
     },
   },
 
@@ -829,14 +836,14 @@ export const fixtures = [
   },
 
   // ── edge-28 ──────────────────────────────────────────────────────────────────
-  // bredband+mobil: secAnnual just > p25Total+500 → secondary returneras
-  // category='bredband', industry=konsult(byraer), employees=5(micro), mobilP25=3588
-  // 1 mobilabonnemang-rad: p25Total=3588*1=3588, behöver secAnnual > 3588+500=4088
-  // monthly=342 kr → secAnnual=Math.round(342*12)=4104, gross=4104-3588=516 ≥ 500 → secondary
-  // net=Math.round(516*0.80)=413
+  // bredband+mobil: secAnnual > p25Total+500 → secondary returneras
+  // category='bredband', industry=konsult(byraer), employees=5(micro), mobilP25=2868
+  // 1 mobilabonnemang-rad: p25Total=2868*1=2868, behöver secAnnual > 2868+500=3368
+  // monthly=342 kr → secAnnual=Math.round(342*12)=4104, gross=4104-2868=1236 ≥ 500 → secondary
+  // net=Math.round(1236*0.80)=989
   {
     id: 'edge-28',
-    name: 'Bredband+mobil: secAnnual=4104 > p25Total+500=4088 → secondary returneras',
+    name: 'Bredband+mobil: secAnnual=4104 > p25Total+500=3368 → secondary returneras',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 700 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Business', amount: 342 },
@@ -845,7 +852,7 @@ export const fixtures = [
     mixed: true,
     employees: 5,
     industry: 'konsult',
-    // secAnnual=Math.round(342*12)=4104, mobilP25=3588, p25Total=3588, gross=516, net=413
+    // secAnnual=Math.round(342*12)=4104, mobilP25=2868, p25Total=2868, gross=1236, net=989
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -858,19 +865,19 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   4104,
-      suggestedAnnual: 3588,
-      grossSaving:     516,
-      netSaving:       413,
+      suggestedAnnual: 2868,
+      grossSaving:     1236,
+      netSaving:       989,
     },
   },
 
   // ── edge-29 ──────────────────────────────────────────────────────────────────
-  // bredband+mobil: secAnnual = p25Total exakt → gross=0 → secondary=null
-  // mobilP25=3588(byraer/micro), p25Total=3588, secAnnual=3588
-  // monthly=3588/12=299 kr → secAnnual=Math.round(299*12)=3588, gross=0 → null
+  // bredband+mobil: 1 mobilrad 299 kr/mån
+  // mobilP25=2868(byraer/micro), p25Total=2868, secAnnual=Math.round(299*12)=3588
+  // gross=3588-2868=720 ≥ 500 → secondary satt, net=Math.round(720*0.80)=576
   {
     id: 'edge-29',
-    name: 'Bredband+mobil: secAnnual=3588 = p25Total → gross=0 → secondary=null',
+    name: 'Bredband+mobil: secAnnual=3588 vs p25Total=2868 → gross=720 → secondary satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 700 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Business', amount: 299 },
@@ -879,7 +886,7 @@ export const fixtures = [
     mixed: true,
     employees: 5,
     industry: 'konsult',
-    // secAnnual=Math.round(299*12)=3588, mobilP25=3588, p25Total=3588, gross=0 → null
+    // secAnnual=Math.round(299*12)=3588, mobilP25=2868, p25Total=2868, gross=720 → satt
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -888,17 +895,24 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           1,
     },
-    secondary: null,
+    secondary: {
+      category:        'mobil',
+      seatCount:       1,
+      currentAnnual:   3588,
+      suggestedAnnual: 2868,
+      grossSaving:     720,
+      netSaving:       576,
+    },
   },
 
   // ── edge-30 ──────────────────────────────────────────────────────────────────
-  // industry='it-tech' → segment='byraer'. bredband+mobil, 5 employees (micro), mobilP25=3588
+  // industry='it-tech' → segment='byraer'. bredband+mobil, 5 employees (micro), mobilP25=2868
   // 4 mobilabonnemang-rader (4 lines), each 349 kr → secondarySeatCount=4
   // secondarySum=4*349=1396, secAnnual=Math.round(1396*12)=16752
-  // p25Total=Math.round(3588*4)=14352, gross=16752-14352=2400, net=Math.round(2400*0.80)=1920
+  // p25Total=Math.round(2868*4)=11472, gross=16752-11472=5280, net=Math.round(5280*0.80)=4224
   {
     id: 'edge-30',
-    name: 'it-tech→byraer segment, 4 mobil-rader: p25Total=14352, gross=2400, net=1920',
+    name: 'it-tech→byraer segment, 4 mobil-rader: p25Total=11472, gross=5280, net=4224',
     lineItems: [
       { type: 'recurring_subscription', description: 'Bredband 1 Gbit', amount: 849 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Business 1', amount: 349 },
@@ -910,9 +924,9 @@ export const fixtures = [
     mixed: true,
     employees: 5,
     industry: 'it-tech',
-    // segment=byraer, bucket=micro, mobilP25=3588
+    // segment=byraer, bucket=micro, mobilP25=2868
     // secondarySeatCount=4, secondarySum=1396, secAnnual=16752
-    // p25Total=Math.round(3588*4)=14352, gross=2400, net=1920
+    // p25Total=Math.round(2868*4)=11472, gross=5280, net=4224
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -925,9 +939,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       4,
       currentAnnual:   16752,
-      suggestedAnnual: 14352,
-      grossSaving:     2400,
-      netSaving:       1920,
+      suggestedAnnual: 11472,
+      grossSaving:     5280,
+      netSaving:       4224,
     },
   },
 

@@ -32,11 +32,11 @@ describe('BI-01 · bucketForSize — storleksbuckets', () => {
 // ── BI-02 ─────────────────────────────────────────────────────────────────────
 // getBenchmark — korrekt matrix-lookup för kända kombinationer
 describe('BI-02 · getBenchmark — matrix-lookup', () => {
-  test('mobil + konsult + 5 anst → byraer.micro { p25:3588, median:4188 }', () => {
+  test('mobil + konsult + 5 anst → byraer.micro { p25:2868, median:3348 }', () => {
     const bm = getBenchmark({ category: 'mobil', industry: 'konsult', employees: 5 });
     assert.notStrictEqual(bm, null);
-    assert.strictEqual(bm.p25,    3588);
-    assert.strictEqual(bm.median, 4188);
+    assert.strictEqual(bm.p25,    2868);
+    assert.strictEqual(bm.median, 3348);
     assert.strictEqual(bm.industry, 'byraer');
     assert.strictEqual(bm.size, 'micro');
   });

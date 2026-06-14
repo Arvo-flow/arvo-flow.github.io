@@ -440,8 +440,8 @@ export const fixtures = [
   },
 
   // ── mob-20 ───────────────────────────────────────────────────────────────────
-  // Exakt branschsnittspris (vi testar bara metrics, ej secondary)
-  // median=4188/user, 5 users → 20940 kr/år = 1745 kr/mån
+  // Branschsnittsnära pris (vi testar bara metrics, ej secondary)
+  // median=3348/user, 5 users → 16740 kr/år; fakturan = 1745 kr/mån = 20940 kr/år
   {
     id: 'mob-20',
     name: 'Exakt branschsnittspris — 5 abonnemang 1745 kr/mån',

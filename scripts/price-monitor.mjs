@@ -52,10 +52,13 @@ const PRICE_CHECKS = [
     category: 'mobil',
     supplier: 'Tele2 Företag mobilabonnemang',
     url: 'https://www.tele2.se/foretag/mobilabonnemang',
+    // OBS: huvudplanerna är JS-renderade — den DETERMINISTISKA driftvakten är
+    // scripts/verify-tele2-mobil.mjs (Playwright, hård gate). Dessa substräng-
+    // checkar är en grov nattlig backup. Verifierat 2026-06-14 (24 mån bindning).
     checks: [
-      { name: 'Bas 299 kr/mth',  pattern: /299/ },
-      { name: 'Plus 349 kr/mth', pattern: /349/ },
-      { name: 'Max 449 kr/mth',  pattern: /449/ },
+      { name: '60 GB 239 kr/mth (24 mån)',          pattern: /239/ },
+      { name: 'Obegränsad 279 kr/mth (24 mån)',     pattern: /279/ },
+      { name: 'Obegränsad Max 299 kr/mth (24 mån)', pattern: /299/ },
     ],
   },
 

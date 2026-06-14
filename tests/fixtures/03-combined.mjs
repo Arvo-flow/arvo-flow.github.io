@@ -973,8 +973,8 @@ export const fixtures = [
   //   secondaryLines = base där /sim|mobilabonnemang|mobiltelefoni/ → mobil-raden (1047)
   //   secondarySeatCount = 1 (en rad)
   //   secAnnual=Math.round(1047*12)=12564
-  //   segment=konsult, bucket=micro(1-9) → mobilP25=3588, p25Total=3588*1=3588
-  //   gross=12564-3588=8976, net=Math.round(8976*0.80)=7181
+  //   segment=konsult, bucket=micro(1-9) → mobilP25=2868, p25Total=2868*1=2868
+  //   gross=12564-2868=9696, net=Math.round(9696*0.80)=7757
   {
     id: 'comb-31',
     name: 'Bredband primary + mobilabonnemang sekundär — konsult micro, 1 rad',
@@ -998,9 +998,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   12564,
-      suggestedAnnual: 3588,
-      grossSaving:     8976,
-      netSaving:       7181,
+      suggestedAnnual: 2868,
+      grossSaving:     9696,
+      netSaving:       7757,
     },
   },
 
@@ -1008,8 +1008,8 @@ export const fixtures = [
   // Bredband 1000 Mbit 849 + "SIM-kort Business (5 st)" 1794
   //   "SIM-kort" matchar /\bsim\b/ → secondaryLine, secondarySeatCount=1 (en rad)
   //   secAnnual=Math.round(1794*12)=21528
-  //   segment=konsult, bucket=micro → mobilP25=3588, p25Total=3588*1=3588
-  //   gross=21528-3588=17940, net=Math.round(17940*0.80)=14352
+  //   segment=konsult, bucket=micro → mobilP25=2868, p25Total=2868*1=2868
+  //   gross=21528-2868=18660, net=Math.round(18660*0.80)=14928
   {
     id: 'comb-32',
     name: 'Bredband 1000 Mbit + SIM-kort rad (matchar /sim/) — seatCount=1 (en rad)',
@@ -1033,20 +1033,20 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   21528,
-      suggestedAnnual: 3588,
-      grossSaving:     17940,
-      netSaving:       14352,
+      suggestedAnnual: 2868,
+      grossSaving:     18660,
+      netSaving:       14928,
     },
   },
 
   // ── comb-33 ──────────────────────────────────────────────────────────────────
   // Bredband 500 Mbit + mobiltelefoni 1 abonnemang 349 — matchar /mobiltelefoni/
   //   secondarySeatCount=1, secAnnual=Math.round(349*12)=4188
-  //   segment=konsult, bucket=micro → mobilP25=3588, p25Total=3588*1=3588
-  //   gross=4188-3588=600, net=Math.round(600*0.80)=480
+  //   segment=konsult, bucket=micro → mobilP25=2868, p25Total=2868*1=2868
+  //   gross=4188-2868=1320, net=Math.round(1320*0.80)=1056
   {
     id: 'comb-33',
-    name: '"mobiltelefoni" matchar sekundär-regex — 1 abonnemang, gross=600, net=480',
+    name: '"mobiltelefoni" matchar sekundär-regex — 1 abonnemang, gross=1320, net=1056',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 699 },
       { type: 'recurring_subscription', description: 'mobiltelefoni Business', amount: 349 },
@@ -1067,20 +1067,20 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   4188,
-      suggestedAnnual: 3588,
-      grossSaving:     600,
-      netSaving:       480,
+      suggestedAnnual: 2868,
+      grossSaving:     1320,
+      netSaving:       1056,
     },
   },
 
   // ── comb-34 ──────────────────────────────────────────────────────────────────
   // Bredband + "mobilabonnemang" radtext, industry=bygg (→hantverkare), employees=3
   //   secondarySeatCount=1, secAnnual=Math.round(399*12)=4788
-  //   segment=hantverkare, bucket=micro(1-9) → mobilP25=3588, p25Total=3588*1=3588
-  //   gross=4788-3588=1200, net=Math.round(1200*0.80)=960
+  //   segment=hantverkare, bucket=micro(1-9) → mobilP25=2868, p25Total=2868*1=2868
+  //   gross=4788-2868=1920, net=Math.round(1920*0.80)=1536
   {
     id: 'comb-34',
-    name: '"mobilabonnemang" matchar + bygg-segment — hantverkare micro p25=3588',
+    name: '"mobilabonnemang" matchar + bygg-segment — hantverkare micro p25=2868',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 699 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Business', amount: 399 },
@@ -1101,20 +1101,20 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   4788,
-      suggestedAnnual: 3588,
-      grossSaving:     1200,
-      netSaving:       960,
+      suggestedAnnual: 2868,
+      grossSaving:     1920,
+      netSaving:       1536,
     },
   },
 
   // ── comb-35 ──────────────────────────────────────────────────────────────────
   // Bredband + mobilabonnemang 2 rader (2×349=698 kr/mån) → secondarySeatCount=2
   //   secAnnual=Math.round(698*12)=8376
-  //   segment=konsult, bucket=micro → mobilP25=3588, p25Total=3588*2=7176
-  //   gross=8376-7176=1200, net=Math.round(1200*0.80)=960
+  //   segment=konsult, bucket=micro → mobilP25=2868, p25Total=2868*2=5736
+  //   gross=8376-5736=2640, net=Math.round(2640*0.80)=2112
   {
     id: 'comb-35',
-    name: 'Bredband + 2 mobilrader — secondarySeatCount=2, gross=1200, net=960',
+    name: 'Bredband + 2 mobilrader — secondarySeatCount=2, gross=2640, net=2112',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 699 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Jobbmobil 1', amount: 349 },
@@ -1136,16 +1136,16 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       2,
       currentAnnual:   8376,
-      suggestedAnnual: 7176,
-      grossSaving:     1200,
-      netSaving:       960,
+      suggestedAnnual: 5736,
+      grossSaving:     2640,
+      netSaving:       2112,
     },
   },
 
   // ── comb-36 ──────────────────────────────────────────────────────────────────
   // Bredband + mobil UNDER p25: 1 mobilabonnemang 249 kr/mån
-  //   secAnnual=Math.round(249*12)=2988, mobilP25=3588, p25Total=3588*1=3588
-  //   gross=max(0,2988-3588)=0 → secondary=null
+  //   secAnnual=Math.round(249*12)=2988, mobilP25=2868, p25Total=2868*1=2868
+  //   gross=2988-2868=120 < 500 → secondary=null
   {
     id: 'comb-36',
     name: 'Mobilabonnemang 249 kr/mån under p25 — gross=0 → secondary=null',
@@ -1169,13 +1169,12 @@ export const fixtures = [
   },
 
   // ── comb-37 ──────────────────────────────────────────────────────────────────
-  // Bredband + mobil gränsvärde: secAnnual = p25Total + 499 → gross=499 < 500 → secondary=null
-  //   p25Total=3588*1=3588, secAnnual=3588+499=4087
-  //   monthly ≈ 4087/12 = 340.58 → 341 kr → secAnnual=Math.round(341*12)=4092, gross=4092-3588=504 ≥ 500
-  //   Justera: behöver gross=499 exakt. Prova 340 kr → secAnnual=Math.round(340*12)=4080, gross=492 < 500 ✓
+  // Bredband + mobil 340 kr/mån (1 rad) → secondarySeatCount=1
+  //   p25Total=2868*1=2868, secAnnual=Math.round(340*12)=4080
+  //   gross=4080-2868=1212 ≥ 500 → secondary satt, net=Math.round(1212*0.80)=970
   {
     id: 'comb-37',
-    name: 'Mobil sekundär 340 kr/mån — gross=492 < 500 → secondary=null (under tröskel)',
+    name: 'Mobil sekundär 340 kr/mån — gross=1212 ≥ 500 → secondary satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 699 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Business', amount: 340 },
@@ -1192,17 +1191,23 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           1,
     },
-    secondary: null,
+    secondary: {
+      category:        'mobil',
+      seatCount:       1,
+      currentAnnual:   4080,
+      suggestedAnnual: 2868,
+      grossSaving:     1212,
+      netSaving:       970,
+    },
   },
 
   // ── comb-38 ──────────────────────────────────────────────────────────────────
-  // Bredband + mobil gränsvärde: secAnnual = p25Total + 500 → gross=500 ≥ 500 → secondary satt
-  //   p25Total=3588*1=3588, secAnnual=3588+500=4088
-  //   monthly: 4088/12=340.67 → 341 kr → secAnnual=Math.round(341*12)=4092, gross=4092-3588=504 ≥ 500 ✓
-  //   net=Math.round(504*0.80)=403
+  // Bredband + mobil 341 kr/mån (1 rad) → secondarySeatCount=1
+  //   p25Total=2868*1=2868, secAnnual=Math.round(341*12)=4092
+  //   gross=4092-2868=1224 ≥ 500 → secondary satt, net=Math.round(1224*0.80)=979
   {
     id: 'comb-38',
-    name: 'Mobil sekundär 341 kr/mån — gross=504 ≥ 500 → secondary satt (gränsvärde)',
+    name: 'Mobil sekundär 341 kr/mån — gross=1224 ≥ 500 → secondary satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 699 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Business', amount: 341 },
@@ -1223,21 +1228,21 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   4092,
-      suggestedAnnual: 3588,
-      grossSaving:     504,
-      netSaving:       403,
+      suggestedAnnual: 2868,
+      grossSaving:     1224,
+      netSaving:       979,
     },
   },
 
   // ── comb-39 ──────────────────────────────────────────────────────────────────
   // Bredband + 10 SIM-kort (10 rader), industry=tillverkning, employees=15
   //   secondarySeatCount=10 (10 rader)
-  //   segment=tillverkning, bucket=small(10-49) → mobilP25=3408
+  //   segment=tillverkning, mobilP25=2868 (flat matrix)
   //   secAnnual=Math.round(3490*12)=41880
-  //   p25Total=3408*10=34080, gross=41880-34080=7800, net=Math.round(7800*0.80)=6240
+  //   p25Total=2868*10=28680, gross=41880-28680=13200, net=Math.round(13200*0.80)=10560
   {
     id: 'comb-39',
-    name: 'Bredband + 10 SIM-rader, tillverkning small bucket — p25=3588×10=35880',
+    name: 'Bredband + 10 SIM-rader, tillverkning small bucket — p25=2868×10=28680',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 699 },
       { type: 'recurring_subscription', description: 'SIM-kort Jobbmobil 1', amount: 349 },
@@ -1267,9 +1272,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       10,
       currentAnnual:   41880,
-      suggestedAnnual: 35880,
-      grossSaving:     6000,
-      netSaving:       4800,
+      suggestedAnnual: 28680,
+      grossSaving:     13200,
+      netSaving:       10560,
     },
   },
 
@@ -1301,8 +1306,8 @@ export const fixtures = [
   // ── comb-41 ──────────────────────────────────────────────────────────────────
   // Bredband + static_ip addon + mobilabonnemang sekundär
   //   static_ip → broadbandAddon (ej base), mobilabonnemang → secondaryLine
-  //   secAnnual=Math.round(699*12)=8388, p25Total=3588*1=3588
-  //   gross=8388-3588=4800, net=Math.round(4800*0.80)=3840
+  //   secAnnual=Math.round(699*12)=8388, p25Total=2868*1=2868
+  //   gross=8388-2868=5520, net=Math.round(5520*0.80)=4416
   {
     id: 'comb-41',
     name: 'Bredband + static_ip addon + mobilabonnemang sekundär — broadbandAddon korrekt',
@@ -1327,9 +1332,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   8388,
-      suggestedAnnual: 3588,
-      grossSaving:     4800,
-      netSaving:       3840,
+      suggestedAnnual: 2868,
+      grossSaving:     5520,
+      netSaving:       4416,
     },
   },
 
@@ -1337,8 +1342,8 @@ export const fixtures = [
   // Bredband + firewall + SLA addons + mobilabonnemang sekundär
   //   broadbandAddon = firewall(299) + sla(199) = 498
   //   mobilabonnemang → secondaryLine, secondarySeatCount=1
-  //   secAnnual=Math.round(698*12)=8376, p25Total=3588*1=3588
-  //   gross=8376-3588=4788, net=Math.round(4788*0.80)=3830
+  //   secAnnual=Math.round(698*12)=8376, p25Total=2868*1=2868
+  //   gross=8376-2868=5508, net=Math.round(5508*0.80)=4406
   {
     id: 'comb-42',
     name: 'Bredband + firewall + SLA addons — broadbandAddon=498, mobil sekundär',
@@ -1364,9 +1369,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   8376,
-      suggestedAnnual: 3588,
-      grossSaving:     4788,
-      netSaving:       3830,
+      suggestedAnnual: 2868,
+      grossSaving:     5508,
+      netSaving:       4406,
     },
   },
 
@@ -1398,8 +1403,8 @@ export const fixtures = [
   // Bredband + 50 mobilabonnemang "SIM-kort 50 st" som EN rad 17940 kr/mån
   //   secondarySeatCount=1 (en rad, inte 50 — seatCount är antal RADER)
   //   secAnnual=Math.round(17940*12)=215280
-  //   segment=konsult, bucket=micro → mobilP25=3588, p25Total=3588*1=3588
-  //   gross=215280-3588=211692, net=Math.round(211692*0.80)=169354
+  //   segment=konsult, bucket=micro → mobilP25=2868, p25Total=2868*1=2868
+  //   gross=215280-2868=212412, net=Math.round(212412*0.80)=169930
   {
     id: 'comb-44',
     name: 'SIM-kort 50 st som EN rad — seatCount=1 (antal rader, ej antal SIM)',
@@ -1423,9 +1428,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   215280,
-      suggestedAnnual: 3588,
-      grossSaving:     211692,
-      netSaving:       169354,
+      suggestedAnnual: 2868,
+      grossSaving:     212412,
+      netSaving:       169930,
     },
   },
 
@@ -1433,11 +1438,11 @@ export const fixtures = [
   // Bredband combined, industry=ehandel, bucket=micro, 3 SIM-rader
   //   secondarySeatCount=3
   //   secAnnual=Math.round(1047*12)=12564
-  //   segment=ehandel, bucket=micro → mobilP25=3588, p25Total=3588*3=10764
-  //   gross=12564-10764=1800, net=Math.round(1800*0.80)=1440
+  //   segment=ehandel, bucket=micro → mobilP25=2868, p25Total=2868*3=8604
+  //   gross=12564-8604=3960, net=Math.round(3960*0.80)=3168
   {
     id: 'comb-45',
-    name: 'Bredband combined, industry=ehandel, 3 SIM-rader — p25=3588×3=10764',
+    name: 'Bredband combined, industry=ehandel, 3 SIM-rader — p25=2868×3=8604',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 699 },
       { type: 'recurring_subscription', description: 'SIM-kort Jobbmobil 1', amount: 349 },
@@ -1460,9 +1465,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       3,
       currentAnnual:   12564,
-      suggestedAnnual: 10764,
-      grossSaving:     1800,
-      netSaving:       1440,
+      suggestedAnnual: 8604,
+      grossSaving:     3960,
+      netSaving:       3168,
     },
   },
 

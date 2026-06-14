@@ -9,11 +9,7 @@
 // computeSecondarySaving (category='bredband'):
 //   segment = INDUSTRY_SEGMENT_MAP[industry] (default: byraer)
 //   bucket  = bucketForSize(employees): 1-9→micro, 10-49→small, 50-249→mid
-//   mobilP25 per segment/bucket:
-//     byraer.micro=3588, byraer.small=3408, byraer.mid=3228
-//     hantverkare.micro=3588, hantverkare.small=3408, hantverkare.mid=3228
-//     ehandel.micro=3588, ehandel.small=3408, ehandel.mid=3228
-//     tillverkning.micro=3588, tillverkning.small=3408, tillverkning.mid=3228
+//   mobilP25 = 2868 (flat across all segments and buckets — Tele2 "60 GB" 239 kr/mån × 12)
 //   p25Total = Math.round(mobilP25 * secondarySeatCount)
 //   secAnnual = Math.round(secondaryComponentMonthly * 12)
 //   gross = Math.max(0, secAnnual - p25Total)
@@ -371,9 +367,9 @@ export const fixtures = [
   // secondary: "Mobilabonnemang Telenor (3 st)" 1047 kr (matches /mobilabonnemang/i)
   // primaryComponentMonthly=899, secondaryComponentMonthly=1047, secondarySeatCount=1 (one line item)
   // computeSecondarySaving: industry=konsult→byraer, employees=5→micro
-  // mobilP25=3588, p25Total=round(3588*1)=3588
-  // secAnnual=round(1047*12)=12564, gross=max(0,12564-3588)=8976 ≥ 500 → saving satt
-  // netSaving=round(8976*0.80)=7181
+  // mobilP25=2868, p25Total=round(2868*1)=2868
+  // secAnnual=round(1047*12)=12564, gross=max(0,12564-2868)=9696 ≥ 500 → saving satt
+  // netSaving=round(9696*0.80)=7757
   {
     id: 'brd-16',
     name: 'Bredband combined + 3 SIM-abonnemang på en rad → secondarySeatCount=1',
@@ -397,18 +393,18 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   12564,
-      suggestedAnnual: 3588,
-      grossSaving:     8976,
-      netSaving:       7181,
+      suggestedAnnual: 2868,
+      grossSaving:     9696,
+      netSaving:       7757,
     },
   },
 
   // ── brd-17 ───────────────────────────────────────────────────────────────────
   // Bredband combined, secondary "SIM-kort Business (5 st)" — matches /\bsim\b/i
   // secondarySeatCount = 1 (one line item)
-  // secAnnual=round(1745*12)=20940, p25Total=round(3588*1)=3588 (byraer.micro)
-  // gross=max(0,20940-3588)=17352 ≥ 500
-  // netSaving=round(17352*0.80)=13882
+  // secAnnual=round(1745*12)=20940, p25Total=round(2868*1)=2868
+  // gross=max(0,20940-2868)=18072 ≥ 500
+  // netSaving=round(18072*0.80)=14458
   {
     id: 'brd-17',
     name: 'Bredband combined + SIM-kort Business — matches /\\bsim\\b/',
@@ -432,20 +428,21 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   20940,
-      suggestedAnnual: 3588,
-      grossSaving:     17352,
-      netSaving:       13882,
+      suggestedAnnual: 2868,
+      grossSaving:     18072,
+      netSaving:       14458,
     },
   },
 
   // ── brd-18 ───────────────────────────────────────────────────────────────────
-  // Bredband combined men secondary gross < 500 → secondarySaving=null
+  // Bredband combined med 1 SIM (secondary 299 kr/mån = 3588 kr/år), p25=2868
   // primary: 500 Mbit 699 kr, secondary: "mobilabonnemang 1 st" 299 kr
-  // secAnnual=round(299*12)=3588, p25Total=round(3588*1)=3588 (byraer.micro, 1 seat)
-  // gross=max(0,3588-3588)=0 < 500 → null
+  // secAnnual=round(299*12)=3588, p25Total=round(2868*1)=2868 (1 seat)
+  // gross=max(0,3588-2868)=720 ≥ 500 → saving satt
+  // netSaving=round(720*0.80)=576
   {
     id: 'brd-18',
-    name: 'Bredband combined — secondary gross=0 < 500 → secondarySaving=null',
+    name: 'Bredband combined — secondary gross=720 ≥ 500 → secondarySaving satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Fiber 500/500 Mbit/s', amount: 699 },
       { type: 'recurring_subscription', description: 'mobilabonnemang 1 st', amount: 299 },
@@ -462,15 +459,22 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           1,
     },
-    secondary: null,
+    secondary: {
+      category:        'mobil',
+      seatCount:       1,
+      currentAnnual:   3588,
+      suggestedAnnual: 2868,
+      grossSaving:     720,
+      netSaving:       576,
+    },
   },
 
   // ── brd-19 ───────────────────────────────────────────────────────────────────
-  // Bredband combined med 1 SIM (secondary 299 kr/mån = 3588 kr/år), byraer.micro → p25=3588
-  // gross=max(0,3588-3588)=0 → secondarySaving=null
+  // Bredband combined med 1 SIM (secondary 299 kr/mån = 3588 kr/år), p25=2868
+  // gross=max(0,3588-2868)=720 ≥ 500 → secondarySaving satt, net=round(720*0.80)=576
   {
     id: 'brd-19',
-    name: 'Bredband + 1 SIM-rad 299 kr/mån → gross=0 → secondarySaving=null',
+    name: 'Bredband + 1 SIM-rad 299 kr/mån → gross=720 → secondarySaving satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Bahnhof Fiber 1 Gbit', amount: 995 },
       { type: 'recurring_subscription', description: 'mobilabonnemang bas', amount: 299 },
@@ -487,17 +491,24 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           1,
     },
-    secondary: null,
+    secondary: {
+      category:        'mobil',
+      seatCount:       1,
+      currentAnnual:   3588,
+      suggestedAnnual: 2868,
+      grossSaving:     720,
+      netSaving:       576,
+    },
   },
 
   // ── brd-20 ───────────────────────────────────────────────────────────────────
   // Bredband combined med 2 SIM-rader (secondary sum = 700 kr/mån = 8400 kr/år)
-  // secondarySeatCount=2, p25Total=round(3588*2)=7176
-  // gross=max(0,8400-7176)=1224 ≥ 500 → secondarySaving satt
-  // netSaving=round(1224*0.80)=979
+  // secondarySeatCount=2, p25Total=round(2868*2)=5736
+  // gross=max(0,8400-5736)=2664 ≥ 500 → secondarySaving satt
+  // netSaving=round(2664*0.80)=2131
   {
     id: 'brd-20',
-    name: 'Bredband + 2 SIM-rader à 350 kr → gross=1224 → secondarySaving satt',
+    name: 'Bredband + 2 SIM-rader à 350 kr → gross=2664 → secondarySaving satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Fiber 1000/1000 Mbit/s', amount: 849 },
       { type: 'recurring_subscription', description: 'mobilabonnemang rad 1', amount: 350 },
@@ -519,9 +530,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       2,
       currentAnnual:   8400,
-      suggestedAnnual: 7176,
-      grossSaving:     1224,
-      netSaving:       979,
+      suggestedAnnual: 5736,
+      grossSaving:     2664,
+      netSaving:       2131,
     },
   },
 
@@ -833,10 +844,10 @@ export const fixtures = [
   // ── brd-34 ───────────────────────────────────────────────────────────────────
   // Bredband combined: Tele2 1000 Mbit 849 kr + mobilabonnemang 5 st 1794 kr
   // industry=bygg → segment=hantverkare, employees=8 → bucket=micro
-  // mobilP25=3588, secondarySeatCount=1 (one line item)
-  // secAnnual=round(1794*12)=21528, p25Total=round(3588*1)=3588
-  // gross=max(0,21528-3588)=17940 ≥ 500
-  // netSaving=round(17940*0.80)=14352
+  // mobilP25=2868, secondarySeatCount=1 (one line item)
+  // secAnnual=round(1794*12)=21528, p25Total=round(2868*1)=2868
+  // gross=max(0,21528-2868)=18660 ≥ 500
+  // netSaving=round(18660*0.80)=14928
   {
     id: 'brd-34',
     name: 'Bredband combined: Tele2 1000 Mbit + 5 mobil-abonnemang (bygg, 8 anst)',
@@ -860,19 +871,19 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   21528,
-      suggestedAnnual: 3588,
-      grossSaving:     17940,
-      netSaving:       14352,
+      suggestedAnnual: 2868,
+      grossSaving:     18660,
+      netSaving:       14928,
     },
   },
 
   // ── brd-35 ───────────────────────────────────────────────────────────────────
   // Bredband combined: Bahnhof 500 Mbit 995 kr + SIM-kort 3 st 1047 kr
   // industry=konsult → segment=byraer, employees=20 → bucket=small
-  // mobilP25=3408, secondarySeatCount=1 (one line item)
-  // secAnnual=round(1047*12)=12564, p25Total=round(3408*1)=3408
-  // gross=max(0,12564-3408)=9156 ≥ 500
-  // netSaving=round(9156*0.80)=7325
+  // mobilP25=2868 (flat), secondarySeatCount=1 (one line item)
+  // secAnnual=round(1047*12)=12564, p25Total=round(2868*1)=2868
+  // gross=max(0,12564-2868)=9696 ≥ 500
+  // netSaving=round(9696*0.80)=7757
   {
     id: 'brd-35',
     name: 'Bredband combined: Bahnhof 500 Mbit + SIM-kort 3 st (konsult, 20 anst)',
@@ -896,9 +907,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   12564,
-      suggestedAnnual: 3588,
-      grossSaving:     8976,
-      netSaving:       7181,
+      suggestedAnnual: 2868,
+      grossSaving:     9696,
+      netSaving:       7757,
     },
   },
 
@@ -955,10 +966,10 @@ export const fixtures = [
 
   // ── brd-38 ───────────────────────────────────────────────────────────────────
   // Bredband combined 3 SIM-rader (industry=transport, employees=15)
-  // transport → hantverkare, 15 employees → bucket=small, mobilP25=3408
-  // secondarySeatCount=3, p25Total=round(3408*3)=10224
-  // secAnnual=round(1047*12)=12564, gross=max(0,12564-10224)=2340 ≥ 500
-  // netSaving=round(2340*0.80)=1872
+  // transport → hantverkare, 15 employees → bucket=small, mobilP25=2868 (flat)
+  // secondarySeatCount=3, p25Total=round(2868*3)=8604
+  // secAnnual=round(1047*12)=12564, gross=max(0,12564-8604)=3960 ≥ 500
+  // netSaving=round(3960*0.80)=3168
   {
     id: 'brd-38',
     name: 'Bredband combined 3 SIM-rader (transport, 15 anst) → hantverkare/small',
@@ -984,9 +995,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       3,
       currentAnnual:   12564,
-      suggestedAnnual: 10764,
-      grossSaving:     1800,
-      netSaving:       1440,
+      suggestedAnnual: 8604,
+      grossSaving:     3960,
+      netSaving:       3168,
     },
   },
 
@@ -1016,10 +1027,10 @@ export const fixtures = [
 
   // ── brd-40 ───────────────────────────────────────────────────────────────────
   // Bredband combined, 10 SIM-rader (industry=tillverkning, employees=50)
-  // tillverkning → tillverkning, 50 employees → bucket=mid (50-249), mobilP25=3228
-  // secondarySeatCount=10, p25Total=round(3228*10)=32280
-  // secAnnual=round(3490*12)=41880, gross=max(0,41880-32280)=9600 ≥ 500
-  // netSaving=round(9600*0.80)=7680
+  // mobilP25=2868 (flat matrix, alla buckets)
+  // secondarySeatCount=10, p25Total=round(2868*10)=28680
+  // secAnnual=round(3490*12)=41880, gross=max(0,41880-28680)=13200 ≥ 500
+  // netSaving=round(13200*0.80)=10560
   {
     id: 'brd-40',
     name: 'Bredband combined 10 SIM-rader (tillverkning, 50 anst) → tillverkning/mid',
@@ -1052,9 +1063,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       10,
       currentAnnual:   41880,
-      suggestedAnnual: 35880,
-      grossSaving:     6000,
-      netSaving:       4800,
+      suggestedAnnual: 28680,
+      grossSaving:     13200,
+      netSaving:       10560,
     },
   },
 
