@@ -1,42 +1,36 @@
-// scripts/probe-public-source.mjs — upptäcktsrunda: mappa pris → plan.
-// Hämtar M365- och Tele2-prissidorna på runnern, strippar HTML, och skriver ut
-// varje pris med texten omedelbart före (= plannamnet). Inga inserts.
+// scripts/probe-public-source.mjs — upptäcktsrunda M365 (längre timeout, kontext).
+// Microsoft-sidan är server-renderad men långsam → 20s. Skriver ut varje pris med
+// text FÖRE och EFTER (planens namn ligger oftast i en rubrik bredvid). Inga inserts.
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+const URL = 'https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-plans-and-pricing';
 
-const PAGES = [
-  ['Microsoft 365 Business', 'https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-plans-and-pricing'],
-  ['Tele2 företag mobil', 'https://www.tele2.se/foretag/mobilabonnemang'],
-];
+const ac = new AbortController();
+const t = setTimeout(() => ac.abort(), 20000);
+let body = '', status = '';
+try {
+  const r = await fetch(URL, { signal: ac.signal, redirect: 'follow', headers: { 'User-Agent': UA, Accept: 'text/html,*/*', 'Accept-Language': 'sv-SE,sv;q=0.9' } });
+  status = r.status; body = await r.text();
+} catch (e) { status = 'ERR ' + e.name; } finally { clearTimeout(t); }
 
-async function fetchText(url) {
-  const ac = new AbortController();
-  const t = setTimeout(() => ac.abort(), 9000);
-  try {
-    const r = await fetch(url, { signal: ac.signal, redirect: 'follow', headers: { 'User-Agent': UA, Accept: 'text/html,*/*', 'Accept-Language': 'sv-SE,sv;q=0.9' } });
-    return { status: r.status, body: await r.text() };
-  } catch (e) { return { status: 'ERR ' + e.name, body: '' }; } finally { clearTimeout(t); }
+console.log(`M365 status ${status}, len ${body.length}`);
+const text = body
+  .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+  .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/&[a-z#0-9]+;/gi, ' ')
+  .replace(/\s+/g, ' ');
+
+const re = /(\d[\d ]*[.,]\d{2})\s*kr/g;
+const seen = new Set();
+let m, n = 0;
+while ((m = re.exec(text)) && n < 30) {
+  const price = m[1].replace(/\s/g, '');
+  const before = text.slice(Math.max(0, m.index - 75), m.index).trim();
+  const after = text.slice(m.index + m[0].length, m.index + m[0].length + 45).trim();
+  const key = before.slice(-30) + price;
+  if (seen.has(key)) continue; seen.add(key);
+  console.log(`  [${price} kr]  …${before}  «PRIS»  ${after}…`);
+  n++;
 }
-
-for (const [name, url] of PAGES) {
-  const { status, body } = await fetchText(url);
-  console.log(`\n========== ${name} (status ${status}, len ${body.length})`);
-  const text = body
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&[a-z]+;/gi, ' ')
-    .replace(/\s+/g, ' ');
-  // Pris med text precis före (planens namn brukar ligga där)
-  const matches = [...text.matchAll(/([A-Za-zÅÄÖåäö0-9 .,/&+-]{8,70}?)\s(\d[\d ]*(?:[.,]\d{1,2})?)\s*kr\b/g)];
-  const seen = new Set();
-  let n = 0;
-  for (const m of matches) {
-    const ctx = m[1].trim(); const price = m[2].replace(/\s/g, '');
-    const key = ctx + '|' + price;
-    if (seen.has(key)) continue; seen.add(key);
-    console.log(`  · "${ctx}"  →  ${price} kr`);
-    if (++n >= 30) break;
-  }
-}
-console.log('\n[probe] klar');
+console.log('[probe] klar');
