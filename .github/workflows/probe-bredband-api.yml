@@ -1,0 +1,23 @@
+name: Probe bredband API
+
+# Engångssond: fångar nätverkstrafiken på bredbands-leverantörssidor för att hitta
+# det API som bär planer+priser (DOM:en är adress-gated). Manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe bredband API
+        run: node scripts/probe-bredband-api.mjs
