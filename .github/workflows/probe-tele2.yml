@@ -1,0 +1,24 @@
+name: Probe Tele2 mobil (Playwright)
+
+# Engångssond: renderar Tele2:s företags-mobilsida med Playwright (huvudplanerna
+# är JS-renderade) och dumpar plan→pris-strukturen i loggen så vi kan skriva en
+# deterministisk parser + driftvakt. Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe Tele2
+        run: node scripts/probe-tele2-mobil.mjs
