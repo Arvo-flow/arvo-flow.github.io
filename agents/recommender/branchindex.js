@@ -272,9 +272,11 @@ export const BRANCHINDEX = {
       // ─────────────────────────────────────────────────────────────────────
       // PRISSTRATEGI:
       //   Microsoft 365  → SEK-priser från microsoft.com/sv-se (publik prissida).
-      //                    Uppdateras INTE automatiskt — verifiera manuellt vid
-      //                    prisrevision (Microsoft aviserar typiskt 1–2 ggr/år).
-      //                    Källa: microsoft.com direktverifierat 2026-05-26.
+      //                    Business-tiers (basic/standard/premium) re-verifieras
+      //                    automatiskt via scripts/verify-m365-prices.mjs på
+      //                    GitHub Actions-runnern (obockerad egress) — driftlarm,
+      //                    aldrig tyst överskrivning (parse-fel får ej korrumpera
+      //                    prisboken). Källa: microsoft.com direktverifierat 2026-06-14.
       //                    NÄSTA VERIFIERING: 2026-09-01
       //                    OBS: arvoAnnual = msrpAnnual (inget Microsoft-partnerskap
       //                    aktivt ännu — uppdatera när partneravtal tecknas).
@@ -287,21 +289,22 @@ export const BRANCHINDEX = {
       // ─────────────────────────────────────────────────────────────────────
 
       // Microsoft 365 — SEK-priser från microsoft.com/sv-se (publik prissida).
-      // Källa: direktverifierat mot microsoft.com 2026-05-26.
+      // Business-tiers re-verifierade live mot microsoft.com 2026-06-14
+      // (status 200, samtliga sex tal — års-/månadsavtal — oförändrade).
       // arvoAnnual = msrpAnnual (inget partneravtal aktivt — uppdatera när avtal tecknas).
       'business-basic': {
         msrpMonthly: 68.88, msrpAnnual: 57.40, arvoAnnual: 57.40,
-        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-06-14', source: 'microsoft.com',
         note: 'M365 Business Basic — Teams, Exchange, webb-appar, 1 TB OneDrive. Ingen desktop Office-suite.',
       },
       'business-standard': {
         msrpMonthly: 143.38, msrpAnnual: 119.48, arvoAnnual: 119.48,
-        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-06-14', source: 'microsoft.com',
         note: 'M365 Business Standard — full desktop Office, Teams, SharePoint, 1 TB OneDrive. Vanligast bland svenska SMF.',
       },
       'business-premium': {
         msrpMonthly: 252.35, msrpAnnual: 210.29, arvoAnnual: 210.29,
-        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-06-14', source: 'microsoft.com',
         note: 'M365 Business Premium — inkl. Intune MDM + Microsoft Defender for Business. Rätt val vid säkerhetskrav.',
       },
       // OBS: Microsoft 365 E3/E5 ≠ Office 365 E3/E5 (separata produkter).

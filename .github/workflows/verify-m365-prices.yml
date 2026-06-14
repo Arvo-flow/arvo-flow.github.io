@@ -1,0 +1,20 @@
+name: Verify M365 list prices
+
+# Driftvakt: jämför de M365-listpriser vi lagrar i branchindex.js mot Microsofts
+# publika svenska prissida. Rött bygge = priset har ändrats och måste bekräftas
+# manuellt (vakten skriver aldrig själv). Kräver HTTP-egress → körs här, ej i sandbox.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * 1'   # måndagar 05:00 UTC
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verifiera M365-priser mot microsoft.com
+        run: node scripts/verify-m365-prices.mjs
