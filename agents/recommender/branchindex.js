@@ -201,11 +201,22 @@ export const BRANCHINDEX = {
     // Kortvolymer uppskattade (ingen offentlig källa): micro ~500 kkr/år, small ~2 Mkr/år, mid ~8 Mkr/år.
     // Tillverkning halverad (mestadels B2B-fakturering, låg kortandel).
     // p25 = Stripe/billigaste spotavtal ~1,50 %. Median = SumUp/Zettle standardrate ~1,75 %.
-    note: 'Transaktionsavgifter per år (uppskattad kortvolym × rate). Priser maj 2026: SumUp ~1,75 %, Zettle ~1,75 %, Stripe Terminal EEA ~1,5 % + ~1,50 kr/köp. OBS: Exakta rates varierar med avtalslängd och volym — denna källa är "estimated" (inte "real-public") eftersom kortvolym per segment är uppskattad.',
+    note: 'Transaktionsavgifter per år (uppskattad kortvolym × rate). VERIFIERADE rates live 2026-06-14: Zettle 1,85 %, Stripe Terminal 1,4 % + 1,00 kr (EES-kort, card-present). SumUp ~1,75–1,95 % (publicerar ej rate på lättskrapad sida). OBS: kr/år är "estimated" (inte "real-public") eftersom kortvolym per segment är uppskattad — ratet är verifierat, volymen är det inte. För en riktig faktura jämförs kundens faktiska rate mot det verifierade bandet.',
+    // VERIFIERADE transaktionsrater (card-present, Sverige, exkl moms) — hämtas/verifieras
+    // veckovis av scripts/verify-kortterminal-rates.mjs. Roll: ankra rate-bandet (det
+    // verifierbara). kr/år-matrisen förblir estimat (kortvolym saknar offentlig källa, som el:s kWh).
+    verifiedRates: {
+      source: 'official_web', lastVerified: '2026-06-14',
+      basis: 'card-present, Sverige, exkl. moms',
+      rates: [
+        { supplier: 'Stripe Terminal',  pct: 1.40, fixed: 1.00, url: 'https://stripe.com/se/terminal',     note: 'EES-kort; non-EES online 2,9 % + 1 kr' },
+        { supplier: 'Zettle by PayPal', pct: 1.85, fixed: 0.00, url: 'https://www.zettle.com/se/priser',    note: 'korttransaktionsavgift, ingen månadsavgift' },
+      ],
+    },
     alternatives: [
-      { supplier: 'Stripe Terminal',  positioning: 'Lägst EEA-rate: ~1,5 % + ~1,50 kr/köp — bäst om kunden redan har Stripe online', reliability: 0.97 },
-      { supplier: 'SumUp',            positioning: '~1,75 % per transaktion, ingen månadsavgift — enkel setup, lägst kostnad för låg-volym', reliability: 0.91 },
-      { supplier: 'Zettle by PayPal', positioning: '~1,75 % per transaktion, ingen månadsavgift, stark app-integration och rapportering', reliability: 0.93 },
+      { supplier: 'Stripe Terminal',  positioning: 'Lägst rate: 1,4 % + 1,00 kr (EES-kort, verifierat 2026-06-14) — bäst om kunden redan har Stripe online', reliability: 0.97 },
+      { supplier: 'SumUp',            positioning: '~1,75–1,95 % per transaktion, ingen månadsavgift — enkel setup, lägst kostnad för låg-volym', reliability: 0.91 },
+      { supplier: 'Zettle by PayPal', positioning: '1,85 % per transaktion (verifierat 2026-06-14), ingen månadsavgift, stark app-integration', reliability: 0.93 },
       { supplier: 'Klarna Checkout',  positioning: 'Bäst för e-handel: integrerad checkout med bnpl och kortbetalning',                   reliability: 0.96 },
     ],
     matrix: {

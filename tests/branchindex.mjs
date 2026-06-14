@@ -48,6 +48,15 @@ describe('BI-02 · getBenchmark — matrix-lookup', () => {
     assert.strictEqual(bm.median, 36000);
   });
 
+  test('kortterminal.verifiedRates låser de live-verifierade raterna (Zettle 1,85 / Stripe 1,40+1,00)', () => {
+    const vr = BRANCHINDEX.kortterminal.verifiedRates;
+    assert.ok(vr && Array.isArray(vr.rates), 'verifiedRates.rates måste finnas');
+    const byName = Object.fromEntries(vr.rates.map((r) => [r.supplier, r]));
+    assert.strictEqual(byName['Zettle by PayPal'].pct, 1.85);
+    assert.strictEqual(byName['Stripe Terminal'].pct, 1.40);
+    assert.strictEqual(byName['Stripe Terminal'].fixed, 1.00);
+  });
+
   test('avfall-atervinning + konsult + 5 anst → byraer.micro { p25:9500, median:16000 }', () => {
     const bm = getBenchmark({ category: 'avfall-atervinning', industry: 'konsult', employees: 5 });
     assert.notStrictEqual(bm, null);
