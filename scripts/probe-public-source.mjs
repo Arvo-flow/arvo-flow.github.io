@@ -1,45 +1,40 @@
-// scripts/probe-public-source.mjs — HTTP-sond på Actions-runnern (obockerad egress).
-// Kartlägger officiella/öppna priskällor inför adaptrar. Timeout per request så
-// inget hänger. Inga inserts.
+// scripts/probe-public-source.mjs — HTTP-sond på Actions-runnern.
+// Kartlägger leverantörers prissidor: vilka har server-renderat/strukturerat pris
+// (JSON-LD Offer) som vanlig fetch kan läsa, vs vilka kräver Playwright (JS-render).
+// Inga inserts. Mål: verifierade LISTPRISER för SMB-produkter (kall-start-benchmark).
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
-async function get(url) {
-  const ac = new AbortController();
-  const t = setTimeout(() => ac.abort(), 9000);
-  try {
-    const r = await fetch(url, { signal: ac.signal, headers: { 'User-Agent': UA, Accept: 'application/json,text/html,*/*', 'Accept-Language': 'sv-SE,sv;q=0.9' } });
-    const body = await r.text();
-    return { status: `${r.status} ${r.statusText}`, type: r.headers.get('content-type'), len: body.length, body };
-  } catch (e) { return { status: 'ERR ' + e.name, body: e.message }; } finally { clearTimeout(t); }
-}
-
-async function post(url, json) {
-  const ac = new AbortController();
-  const t = setTimeout(() => ac.abort(), 9000);
-  try {
-    const r = await fetch(url, { signal: ac.signal, method: 'POST', headers: { 'User-Agent': UA, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(json) });
-    const body = await r.text();
-    return { status: `${r.status} ${r.statusText}`, type: r.headers.get('content-type'), len: body.length, body };
-  } catch (e) { return { status: 'ERR ' + e.name, body: e.message }; } finally { clearTimeout(t); }
-}
-
-const TASKS = [
-  // Microsofts officiella retail-priser (Azure + ev. M365-SKU:er), SEK, ingen auth
-  ['Azure Retail Prices (SEK)', () => get("https://prices.azure.com/api/retail/prices?currencyCode='SEK'&$top=5")],
-  ['Azure Retail Prices (M365-filter)', () => get("https://prices.azure.com/api/retail/prices?currencyCode='SEK'&$filter=" + encodeURIComponent("contains(productName,'Microsoft 365')") + "&$top=5")],
-  // Kommunal CKAN — Helsingborg öppna data, leverantörsbetalningar
-  ['Helsingborg CKAN (leverantör)', () => get('https://catalog.helsingborg.io/api/3/action/package_search?q=leverant%C3%B6r&rows=5')],
-  // TED v3 — EU-upphandlingar, svenska mjukvarukontrakt (CPV 48000000)
-  ['TED v3 search (SE software)', () => post('https://api.ted.europa.eu/v3/notices/search', { query: "classification-cpv IN (48000000) AND buyer-country IN (SWE)", fields: ['publication-number', 'notice-title', 'winner-name', 'tender-value'], limit: 3 })],
-  // Adda — rätt ramavtals-listningssida (reachable, ej blockerad)
-  ['Adda ramavtal-listning', () => get('https://www.adda.se/upphandling-och-ramavtal/hitta-ramavtal-och-tjanster/')],
+const PAGES = [
+  ['Google Workspace (SV)', 'https://workspace.google.com/intl/sv/pricing.html'],
+  ['Microsoft 365 Business (SV)', 'https://www.microsoft.com/sv-se/microsoft-365/business/compare-all-microsoft-365-business-products'],
+  ['Slack pricing (SV)', 'https://slack.com/intl/sv-se/pricing'],
+  ['Atlassian Jira pricing', 'https://www.atlassian.com/software/jira/pricing'],
+  ['Dropbox Business (SV)', 'https://www.dropbox.com/business/plans-comparison'],
+  ['Telia företag mobil', 'https://www.telia.se/foretag/mobilt/mobilabonnemang'],
+  ['Tele2 företag mobil', 'https://www.tele2.se/foretag/mobilabonnemang'],
 ];
 
-for (const [name, fn] of TASKS) {
-  const r = await fn();
+async function probe(url) {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 9000);
+  try {
+    const r = await fetch(url, { signal: ac.signal, redirect: 'follow', headers: { 'User-Agent': UA, Accept: 'text/html,*/*', 'Accept-Language': 'sv-SE,sv;q=0.9' } });
+    const body = await r.text();
+    const jsonld = [...body.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+    const priceLd = jsonld.find((j) => /"price"|priceCurrency|"offers"/i.test(j));
+    const krHits = (body.match(/\d[\d\s.,]*\s*kr\b/gi) || []).slice(0, 6);
+    return { status: `${r.status} ${r.statusText}`, len: body.length, finalUrl: r.url, jsonldCount: jsonld.length, hasPriceLd: !!priceLd, priceLd: priceLd ? priceLd.slice(0, 900) : null, krHits };
+  } catch (e) { return { status: 'ERR ' + e.name, body: e.message }; } finally { clearTimeout(t); }
+}
+
+for (const [name, url] of PAGES) {
+  const r = await probe(url);
   console.log(`\n========== ${name}`);
-  console.log(`STATUS : ${r.status} · TYPE ${r.type ?? '-'} · LEN ${r.len ?? '-'}`);
-  console.log(`BODY   :\n${(r.body || '').slice(0, 1600)}`);
+  console.log(`STATUS ${r.status} · LEN ${r.len ?? '-'} · finalUrl ${r.finalUrl ?? '-'}`);
+  console.log(`JSON-LD: ${r.jsonldCount ?? 0} block · prisrik LD: ${r.hasPriceLd ?? false}`);
+  if (r.krHits?.length) console.log(`"kr"-träffar: ${r.krHits.join(' | ')}`);
+  if (r.priceLd) console.log(`PRIS-LD:\n${r.priceLd}`);
+  if (r.body) console.log(`ERR: ${r.body}`);
 }
 console.log('\n[probe] klar');
