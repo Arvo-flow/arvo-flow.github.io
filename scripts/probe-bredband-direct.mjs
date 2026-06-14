@@ -9,12 +9,14 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const H = { 'User-Agent': UA, Accept: 'application/json', 'Accept-Language': 'sv-SE,sv;q=0.9' };
 
 // Kandidat-adresser: storstad / industriområde / mindre ort (geografisk spridning).
-const QUERIES = [
-  'Sveavägen 44, Stockholm',
-  'Domnarvsgatan 4, Spånga',
-  'Storgatan 1, Östersund',
+const QUERIES = ['Sveavägen 44, Stockholm'];
+const INFRA_SETS = [
+  ['ZZZ_BOGUS'],                            // tvinga fram full enum i Zod-felet
+  ['COAX', 'LAN'],                          // v7-bevisat giltigt (gav 200)
+  ['VILLA_FIBER', 'COAX', 'LAN'],
+  ['VILLA_FIBER', 'FIBER_LAN', 'COAX', 'LAN'],
+  ['MDU_FIBER', 'FIBER_LAN', 'COAX', 'LAN'],
 ];
-const INFRA = ['FIBER', 'FIBRE', 'COAX', 'LAN'];
 const ENTRY_ID = '9cQPebFT7wUEj8FwrzG6F'; // fångat i v7 (Contentful-entry för bredbandssidan)
 
 async function getJson(url) {
@@ -24,7 +26,7 @@ async function getJson(url) {
     const r = await fetch(url, { headers: H, signal: ac.signal });
     const txt = await r.text();
     let j = null; try { j = JSON.parse(txt); } catch {}
-    return { status: r.status, json: j, raw: txt.slice(0, 300) };
+    return { status: r.status, json: j, raw: txt.slice(0, 1600) };
   } catch (e) { return { status: 'ERR ' + e.name, json: null, raw: e.message }; }
   finally { clearTimeout(t); }
 }
@@ -39,28 +41,22 @@ for (const q of QUERIES) {
   const hit = results[0];
   console.log(`  vald: id=${hit.id} · ${hit.address}  (av ${results.length} träffar)`);
 
-  // Products-endpointen: entryId krävs (400 utan). Prova param-varianter, dumpa RÅ svar.
-  const infraParam = encodeURIComponent(JSON.stringify(INFRA));
-  const addrParam = encodeURIComponent(hit.address);
-  const variants = [
-    `category=REGULAR&addressId=${hit.id}&groupAgreement=false&infrastructure=${infraParam}&entryId=${ENTRY_ID}`,
-    `category=REGULAR&addressId=${hit.id}&groupAgreement=false&infrastructure=${infraParam}&entryId=${ENTRY_ID}&address=${addrParam}`,
-  ];
-  for (let i = 0; i < variants.length; i++) {
-    const p = await getJson(`https://www.tele2.se/api/broadband/products?${variants[i]}`);
+  // Products-endpointen: prova infrastruktur-set, dumpa fullt fel (enum) + ev. produkter.
+  for (const set of INFRA_SETS) {
+    const infraParam = encodeURIComponent(JSON.stringify(set));
+    const p = await getJson(`https://www.tele2.se/api/broadband/products?category=REGULAR&addressId=${hit.id}&groupAgreement=false&infrastructure=${infraParam}&entryId=${ENTRY_ID}`);
     const prods = p.json?.products ?? null;
-    console.log(`  products[v${i}] → ${p.status} · status=${JSON.stringify(p.json?.status ?? null)} · produkter=${prods ? prods.length : 'n/a'}`);
-    if (p.status !== 200) { console.log(`     RÅ: ${p.raw}`); continue; }
+    console.log(`\n  infra=${JSON.stringify(set)} → ${p.status} · produkter=${prods ? prods.length : 'n/a'} · status=${JSON.stringify(p.json?.status ?? null)}`);
+    if (p.status !== 200) { console.log(`     FEL: ${p.raw.slice(0, 1200)}`); continue; }
     if (prods && prods.length) {
-      console.log('  >>> RÅ PRODUKT[0]:', JSON.stringify(prods[0]).slice(0, 900));
-      for (const pr of prods.slice(0, 8)) {
+      console.log('  >>> RÅ PRODUKT[0]:', JSON.stringify(prods[0]).slice(0, 1100));
+      for (const pr of prods.slice(0, 10)) {
         const name = pr.name ?? pr.title ?? pr.displayName ?? pr.productName ?? '?';
         const speed = pr.downloadSpeed ?? pr.speed ?? pr.bandwidth ?? '?';
-        const price = pr.price ?? pr.monthlyPrice ?? pr.priceAmount ?? pr.amount ?? pr.recurringPrice ?? JSON.stringify(pr.prices ?? pr.pricing ?? null).slice(0, 80);
-        console.log(`        · ${JSON.stringify(name)} (${JSON.stringify(speed)}) → pris ${JSON.stringify(price)}`);
+        const price = pr.price ?? pr.monthlyPrice ?? pr.priceAmount ?? pr.amount ?? pr.recurringPrice ?? JSON.stringify(pr.prices ?? pr.pricing ?? null).slice(0, 90);
+        console.log(`        · ${JSON.stringify(name)} (${JSON.stringify(speed)}) → ${JSON.stringify(price)}`);
       }
-      break;
-    } else { console.log(`     tom produktlista · RÅ: ${p.raw}`); }
+    } else { console.log(`     tom produktlista (ingen sådan infra på adressen)`); }
   }
 }
 console.log('\n[probe-bredband-direct] klar');
