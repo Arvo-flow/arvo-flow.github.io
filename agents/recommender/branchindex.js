@@ -63,7 +63,26 @@ export const BRANCHINDEX = {
     //   All-in p25 (effektivt spotavtal, låg nätavgift): 51,25+5+26+36,0 = ~118 öre → ~1,18 kr/kWh.
     //   All-in median (standard rörligt): 51,25+8+32+36,0 = ~127 öre → ~1,27 kr/kWh.
     //   Kunder på äldre fast avtal betalar mer (~1,35–1,55 kr/kWh) — de ligger ovan median.
-    note: 'Rörligt spotavtal + nätavgift + energiskatt (exkl. moms, SE3). Källa: Nordpool SE3 årssnitt 2025: 51,25 öre/kWh + nätavgift ~26–39 öre/kWh (Ellevio) + energiskatt 36,0 öre/kWh (Skatteverket 2026, sänkt 1 jan 2026) + elhandlare påslag ~5–10 öre = ~1,18–1,35 kr/kWh all-in exkl. moms. Typisk förbrukning: micro ~10–15 MWh/år, small ~25–35 MWh/år, mid ~80–120 MWh/år.',
+    note: 'Rörligt spotavtal + nätavgift + energiskatt (exkl. moms, SE3). Källa: Nordpool SE3 årssnitt 2025: 51,25 öre/kWh + nätavgift ~26–39 öre/kWh (Ellevio) + energiskatt 36,0 öre/kWh (Skatteverket 2026, sänkt 1 jan 2026) + elhandlare påslag ~5–10 öre = ~1,18–1,35 kr/kWh all-in exkl. moms. OBS: all-in-priset är STARKT storleksberoende — verifierade svenska företag <20 MWh/år betalar ~2,16 kr/kWh, 20–499 MWh ~1,26 kr/kWh, 500–1 999 MWh ~1,07 kr/kWh (Eurostat 2025-S2, se eurostatBands). Typisk förbrukning: micro ~10–15 MWh/år, small ~25–35 MWh/år, mid ~80–120 MWh/år.',
+    // VERIFIERADE företagselpriser per förbrukningsband (Eurostat nrg_pc_205, icke-hushåll,
+    // SE, allt-in EXKL moms). Hämtas/verifieras veckovis av scripts/verify-eurostat-el.mjs.
+    // Roll 1 (GOLV): lib/el-intelligence.js floorar uppnåeligt all-in-pris vid bandet — ett bolag
+    //   kan aldrig nå ett lägre pris än vad verifierade bolag i samma storleksband betalar, för
+    //   nätavgiften (monopol) följer med vid leverantörsbyte. Förhindrar överskattad besparing för
+    //   små förbrukare (regel 3/4) — den flata 0,32 kr/kWh-nätavgiften underskattade micro-golvet.
+    // Roll 2 (MARKNADSPOSITION): "verifierade bolag i ert band betalar X kr/kWh" — moat-insikt ur
+    //   publik data, storleksbaserad prisdiskriminering exponerad utan kohort.
+    // Källa: Eurostat 2025-S2, verifierat live 2026-06-14 (216,01 / 125,87 / 107,06 öre/kWh).
+    eurostatBands: {
+      source: 'eurostat', sourceRef: 'nrg_pc_205', period: '2025-S2',
+      lastVerified: '2026-06-14', basis: 'icke-hushåll, SE, allt-in exkl. moms',
+      unit: 'kr_per_kwh',
+      bands: [
+        { maxMwh: 20,       allInKwh: 2.1601, label: '< 20 MWh/år (små bolag)' },
+        { maxMwh: 500,      allInKwh: 1.2587, label: '20–499 MWh/år' },
+        { maxMwh: Infinity, allInKwh: 1.0706, label: '500–1 999 MWh/år (stora)' },
+      ],
+    },
     alternatives: [
       { supplier: 'Tibber',       positioning: 'Spotpris per timme, ~5 öre/kWh påslag, app-drivet — lägst rörligt pris',        reliability: 0.92 },
       { supplier: 'Bixia',        positioning: '100 % förnybar el, transparent prissättning, konkurrenskraftigt rörligt avtal',  reliability: 0.94 },

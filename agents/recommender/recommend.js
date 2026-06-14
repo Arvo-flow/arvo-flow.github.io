@@ -122,7 +122,8 @@ async function enrichElContext({ annualCost, elKwh, categorized }) {
       kwhIsEstimated,
     });
 
-    const { zone, spot, spotSource, best, ranked, saving, savingPct } = intel;
+    const { zone, spot, spotSource, best, ranked, saving, savingPct,
+            marketFloor, achievablePriceKwh, floorApplied, current } = intel;
     const spotLabel = spotSource === 'live'
       ? `${spot.toFixed(4)} kr/kWh (Nordpool live)`
       : `${spot.toFixed(4)} kr/kWh (årsmedel 2025, API otillgängligt)`;
@@ -130,17 +131,30 @@ async function enrichElContext({ annualCost, elKwh, categorized }) {
       ? ` (kWh estimerat — saknas på fakturan)`
       : ` (${annualKwh.toLocaleString('sv-SE')} kWh/år från fakturan)`;
 
+    // Visa den BYTBARA energidelen per leverantör (inte all-in-total) — nätavgift +
+    // energiskatt är monopol/skatt som följer med vid byte och ska inte se bytbara ut.
     const top3 = ranked.slice(0, 3).map((s, i) =>
-      `  ${i + 1}. ${s.name}: ${s.energyPerKwh.toFixed(4)} kr/kWh energi + ${s.annualFee.toLocaleString('sv-SE')} kr/år avgift = ${s.totalAnnual.toLocaleString('sv-SE')} kr/år totalt`
+      `  ${i + 1}. ${s.name}: ${s.energyPerKwh.toFixed(4)} kr/kWh energipris + ${s.annualFee.toLocaleString('sv-SE')} kr/år avgift`
     ).join('\n');
+
+    // Marknadsgolv-rad: bara som BEKRÄFTAD marknadsposition när kWh är faktiskt
+    // (annars vet vi inte säkert kundens förbrukningsband).
+    const floorLine = (marketFloor && !kwhIsEstimated)
+      ? `\n  Verifierat marknadsgolv för er storlek: ${marketFloor.allInKwh.toFixed(4)} kr/kWh all-in (${marketFloor.label}, Eurostat ${marketFloor.period}) — nätavgift är monopol och följer med vid byte`
+      : '';
+    const floorRule = marketFloor
+      ? `\n  FÖRBJUDET: påstå ett lägre uppnåeligt all-in-pris än ${marketFloor.allInKwh.toFixed(4)} kr/kWh för ett bolag av denna storlek — besparingen är redan begränsad till det verifierade golvet.`
+      : '';
 
     return `\nEl-prisintelligens (Nordpool ${zone})${kwhNote}:
   Dagens spotpris: ${spotLabel}
-  Bästa leverantör: ${best.name} — ${best.energyPerKwh.toFixed(4)} kr/kWh energipris, ${best.totalAnnual.toLocaleString('sv-SE')} kr/år totalt (inkl. nät + skatt)
-  Uppskattad besparing vs kund: ${saving.toLocaleString('sv-SE')} kr/år (${savingPct} %)
-  Topp 3 alternativ:
+  Bästa elhandlare (bytbar energidel): ${best.name} — ${best.energyPerKwh.toFixed(4)} kr/kWh energipris + ${best.annualFee.toLocaleString('sv-SE')} kr/år avgift${floorLine}
+  Realistiskt uppnåeligt all-in: ${achievablePriceKwh.toFixed(4)} kr/kWh${floorApplied ? ' (golvat vid verifierat marknadspris)' : ''}
+  Ni betalar: ${current.priceKwh.toFixed(4)} kr/kWh all-in
+  Uppskattad besparing vs kund: ${saving.toLocaleString('sv-SE')} kr/år (${savingPct} %) — aldrig under det verifierade golvet
+  Topp 3 elhandlare (energidel):
 ${top3}
-  OBS: Använd dessa siffror i din reasoning. Namnge leverantören (el är offentliga spotpriser).`;
+  OBS: Använd dessa siffror i din reasoning. Namnge leverantören (el är offentliga spotpriser).${floorRule}`;
   } catch (err) {
     console.warn('[Recommender] enrichElContext misslyckades (non-fatal):', err.message);
     return null;

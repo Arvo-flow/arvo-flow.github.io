@@ -155,8 +155,9 @@ describe('getElIntelligence — supplier ranking och totalAnnual', () => {
     );
   });
 
-  test('saving = max(0, currentAnnual - best.totalAnnual)', async () => {
-    const annualKwh      = 18_000;
+  test('saving = max(0, currentAnnual - achievableAnnual) där achievable golvas vid Eurostat-bandet', async () => {
+    // 30 MWh (band 20–499, golv 1,2587) @ 1,60 → genuint över golvet → reell saving.
+    const annualKwh      = 30_000;
     const currentPriceKwh = 1.60;
     const intel = await getElIntelligence({
       annualKwh,
@@ -165,9 +166,49 @@ describe('getElIntelligence — supplier ranking och totalAnnual', () => {
     });
 
     const expectedCurrentAnnual = Math.round(currentPriceKwh * annualKwh);
-    const expectedSaving = Math.max(0, expectedCurrentAnnual - intel.best.totalAnnual);
+    const expectedAchievable = Math.max(
+      intel.best.totalAnnual,
+      Math.round(intel.marketFloor.allInKwh * annualKwh),
+    );
+    const expectedSaving = Math.max(0, expectedCurrentAnnual - expectedAchievable);
+    assert.equal(intel.achievableAnnual, expectedAchievable);
     assert.equal(intel.saving, expectedSaving);
     assert.equal(intel.current.totalAnnual, expectedCurrentAnnual);
+  });
+
+});
+
+describe('getElIntelligence — Eurostat-marknadsgolv (regel 3/4: aldrig under verifierat band)', () => {
+
+  test('micro-bolag PÅ marknaden (12 MWh @ 2,00) → saving = 0 (ingen falsk besparing)', async () => {
+    const intel = await getElIntelligence({
+      annualKwh: 12_000, currentPriceKwh: 2.00, supplierName: TEST_SUPPLIER, kwhIsEstimated: false,
+    });
+    // Eurostat micro-golv (<20 MWh) = 2,1601 kr/kWh > 2,00 → uppnåeligt golvas, saving = 0.
+    assert.equal(intel.marketFloor.allInKwh, 2.1601);
+    assert.equal(intel.floorApplied, true);
+    assert.equal(intel.saving, 0,
+      `Micro-bolag under verifierat marknadsgolv ska INTE visas en besparing, fick ${intel.saving}`);
+  });
+
+  test('micro-bolag som ÖVERbetalar (12 MWh @ 2,80) → reell saving golvad vid bandet', async () => {
+    const annualKwh = 12_000;
+    const intel = await getElIntelligence({
+      annualKwh, currentPriceKwh: 2.80, supplierName: TEST_SUPPLIER, kwhIsEstimated: false,
+    });
+    // saving = (2,80 − 2,1601) × 12 000 = 7 679 — exakt skillnaden mot verifierat golv.
+    const expected = Math.round(2.80 * annualKwh) - Math.round(2.1601 * annualKwh);
+    assert.equal(intel.saving, expected);
+    assert.ok(intel.saving > 0 && intel.saving < Math.round((2.80 - 1.27) * annualKwh),
+      'saving ska vara reell men klart mindre än mot det gamla flata ~1,27-antagandet');
+  });
+
+  test('golvet sänker ALDRIG en besparing (achievable ≥ modellens supplier-total)', async () => {
+    const intel = await getElIntelligence({
+      annualKwh: 9_000, currentPriceKwh: 3.00, supplierName: TEST_SUPPLIER,
+    });
+    assert.ok(intel.achievableAnnual >= intel.best.totalAnnual,
+      'golvet får bara höja uppnåeligt pris, aldrig sänka det');
   });
 
 });
