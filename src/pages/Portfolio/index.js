@@ -297,21 +297,21 @@ export default function Portfolio() {
     return best;
   }, [suppliers, cohort]);
 
-  // Offentlig sektor — vad stora svenska köpare faktiskt betalar (per enhet),
-  // ur öppen data. Fyller "kollektiva sanningen" med en SOURCAD jämförelse innan
-  // privat kohort finns. Featureras bara när privat kohort saknas.
+  // Offentlig/marknadsdata — fyller "kollektiva sanningen" tills privat kohort finns.
+  // VIKTIGT: peer-data (svenska företag, t.ex. Eurostat) är en relevant jämförelse;
+  // offentlig sektor (ramavtal) är volymgrindat och OUPPNÅELIGT för ett SMB — visas
+  // bara som golv-referens ("priset är förhandlingsbart"), aldrig som "ni betalar X% mer".
   const publicFeatured = useMemo(() => {
     if (featured) return null;
     for (const g of suppliers) {
       const a = g.latest;
       const pb = publicBench[a.category];
       if (pb && pb.n >= 2 && pb.observations?.length) {
-        // Per-enhet-jämförelse mot kunden ENDAST när vi har samma leverantör
-        // (like-for-like) — annars visas det offentliga priset som ren referens.
-        const sameSupplier = pb.scope === 'supplier';
-        const customerUnit = (sameSupplier && a.price_per_seat_monthly > 0) ? a.price_per_seat_monthly : null;
+        const isPeer = pb.observations[0]?.source === 'eurostat'; // företag-mot-företag = relevant
+        // Per-enhet-jämförelse mot kunden ENDAST för relevant peer-data + samma leverantör.
+        const customerUnit = (isPeer && pb.scope === 'supplier' && a.price_per_seat_monthly > 0) ? a.price_per_seat_monthly : null;
         const pct = customerUnit ? Math.round(((customerUnit - pb.median) / pb.median) * 100) : null;
-        return { ...pb, category: a.category, supplier: a.supplier || a.normalized_supplier, customerUnit, pct };
+        return { ...pb, category: a.category, supplier: a.supplier || a.normalized_supplier, customerUnit, pct, isPeer };
       }
     }
     return null;
@@ -437,21 +437,22 @@ export default function Portfolio() {
                 {publicFeatured && (
                   <Truth $full={renewals.length === 0}>
                     <div className="card-eyebrow">
-                      <span>Den kollektiva sanningen</span>
-                      <span className="src">{publicScopeLabel(publicFeatured.observations?.[0]?.source).toLowerCase()} · {publicFeatured.n} pris{publicFeatured.n > 1 ? 'punkter' : 'punkt'}</span>
+                      <span>{publicFeatured.isPeer ? 'Den kollektiva sanningen' : 'Golv-referens'}</span>
+                      <span className="src">{publicFeatured.isPeer ? 'svenska företag' : 'offentlig sektor'} · {publicFeatured.n} pris{publicFeatured.n > 1 ? 'punkter' : 'punkt'}</span>
                     </div>
                     <h3>
                       {(() => {
-                        const scope = publicScopeLabel(publicFeatured.observations?.[0]?.source);
                         const cat = (getCategoryMeta(publicFeatured.category)?.label || publicFeatured.category).toLowerCase();
                         const u = UNIT_LABEL[publicFeatured.unit] || '';
+                        if (!publicFeatured.isPeer)
+                          return <>Offentlig sektor pressar samma {cat} till <em>{fmtUnit(publicFeatured.min)}–{fmtUnit(publicFeatured.max)} {u}</em>. Beviset att priset är <em>förhandlingsbart.</em></>;
                         if (publicFeatured.customerUnit && publicFeatured.pct >= 8)
-                          return <>{scope} betalar {fmtUnit(publicFeatured.median)} {u} för {cat}. Ni betalar <em>{publicFeatured.pct}% mer.</em></>;
+                          return <>Svenska företag betalar {fmtUnit(publicFeatured.median)} {u} för {cat}. Ni betalar <em>{publicFeatured.pct}% mer.</em></>;
                         if (publicFeatured.customerUnit && publicFeatured.pct <= -8)
-                          return <>Ni betalar <em>{Math.abs(publicFeatured.pct)}% mindre</em> än {scope.toLowerCase()} för {cat}.</>;
+                          return <>Ni betalar <em>{Math.abs(publicFeatured.pct)}% mindre</em> än svenska företag för {cat}.</>;
                         if (publicFeatured.customerUnit)
-                          return <>Ni betalar <em>i nivå</em> med {scope.toLowerCase()} för {cat}.</>;
-                        return <>{scope} betalar <em>{fmtUnit(publicFeatured.min)}–{fmtUnit(publicFeatured.max)} {u}</em> för {cat}.</>;
+                          return <>Ni betalar <em>i nivå</em> med svenska företag för {cat}.</>;
+                        return <>Svenska företag betalar <em>{fmtUnit(publicFeatured.min)}–{fmtUnit(publicFeatured.max)} {u}</em> för {cat}.</>;
                       })()}
                     </h3>
                     {(() => {
@@ -476,7 +477,9 @@ export default function Portfolio() {
                     <p className="truth-note">
                       Verkliga priser ur <b>öppen data</b> — {PUBLIC_SOURCE_LABEL[publicFeatured.observations?.[0]?.source] || 'offentliga avtal'}
                       {publicFeatured.observations?.[0]?.buyer ? `, ${publicFeatured.observations[0].buyer}` : ''}.
-                      {publicFeatured.customerUnit ? ' Jämfört per enhet mot er faktura.' : ''}
+                      {publicFeatured.isPeer
+                        ? (publicFeatured.customerUnit ? ' Jämfört per enhet mot er faktura.' : '')
+                        : ' Golvet — inte ett mål ni når i er storlek, men beviset att listpriset är förhandlingsbart.'}
                     </p>
                   </Truth>
                 )}
