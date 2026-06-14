@@ -11,12 +11,11 @@ const H = { 'User-Agent': UA, Accept: 'application/json', 'Accept-Language': 'sv
 // Kandidat-adresser: storstad / industriområde / mindre ort (geografisk spridning).
 const QUERIES = [
   'Sveavägen 44, Stockholm',
-  'Kungsgatan 1, Göteborg',
   'Domnarvsgatan 4, Spånga',
   'Storgatan 1, Östersund',
-  'Stortorget 1, Malmö',
 ];
 const INFRA = ['FIBER', 'FIBRE', 'COAX', 'LAN'];
+const ENTRY_ID = '9cQPebFT7wUEj8FwrzG6F'; // fångat i v7 (Contentful-entry för bredbandssidan)
 
 async function getJson(url) {
   const ac = new AbortController();
@@ -40,24 +39,28 @@ for (const q of QUERIES) {
   const hit = results[0];
   console.log(`  vald: id=${hit.id} · ${hit.address}  (av ${results.length} träffar)`);
 
-  // Prova products-endpointen med och utan entryId, bred infrastruktur.
+  // Products-endpointen: entryId krävs (400 utan). Prova param-varianter, dumpa RÅ svar.
   const infraParam = encodeURIComponent(JSON.stringify(INFRA));
-  for (const extra of ['', '&groupAgreement=false']) {
-    const url = `https://www.tele2.se/api/broadband/products?category=REGULAR&addressId=${hit.id}&infrastructure=${infraParam}${extra}`;
-    const p = await getJson(url);
+  const addrParam = encodeURIComponent(hit.address);
+  const variants = [
+    `category=REGULAR&addressId=${hit.id}&groupAgreement=false&infrastructure=${infraParam}&entryId=${ENTRY_ID}`,
+    `category=REGULAR&addressId=${hit.id}&groupAgreement=false&infrastructure=${infraParam}&entryId=${ENTRY_ID}&address=${addrParam}`,
+  ];
+  for (let i = 0; i < variants.length; i++) {
+    const p = await getJson(`https://www.tele2.se/api/broadband/products?${variants[i]}`);
     const prods = p.json?.products ?? null;
-    console.log(`  products [${extra || 'bas'}] → ${p.status} · status=${JSON.stringify(p.json?.status ?? null)} · produkter=${prods ? prods.length : 'n/a'}`);
+    console.log(`  products[v${i}] → ${p.status} · status=${JSON.stringify(p.json?.status ?? null)} · produkter=${prods ? prods.length : 'n/a'}`);
+    if (p.status !== 200) { console.log(`     RÅ: ${p.raw}`); continue; }
     if (prods && prods.length) {
-      console.log('  >>> RÅ PRODUKT[0]:', JSON.stringify(prods[0]).slice(0, 700));
-      for (const pr of prods.slice(0, 6)) {
-        const name = pr.name ?? pr.title ?? pr.displayName ?? pr.speed ?? '?';
-        const price = pr.price ?? pr.monthlyPrice ?? pr.priceAmount ?? pr.amount ?? pr.recurringPrice ?? (pr.prices && pr.prices[0]) ?? '?';
-        console.log(`        · ${JSON.stringify(name)} → pris ${JSON.stringify(price)}`);
+      console.log('  >>> RÅ PRODUKT[0]:', JSON.stringify(prods[0]).slice(0, 900));
+      for (const pr of prods.slice(0, 8)) {
+        const name = pr.name ?? pr.title ?? pr.displayName ?? pr.productName ?? '?';
+        const speed = pr.downloadSpeed ?? pr.speed ?? pr.bandwidth ?? '?';
+        const price = pr.price ?? pr.monthlyPrice ?? pr.priceAmount ?? pr.amount ?? pr.recurringPrice ?? JSON.stringify(pr.prices ?? pr.pricing ?? null).slice(0, 80);
+        console.log(`        · ${JSON.stringify(name)} (${JSON.stringify(speed)}) → pris ${JSON.stringify(price)}`);
       }
       break;
-    } else if (p.json && prods && prods.length === 0) {
-      console.log(`     (tom produktlista — adressen saknar fiber/COAX hos Tele2)`);
-    }
+    } else { console.log(`     tom produktlista · RÅ: ${p.raw}`); }
   }
 }
 console.log('\n[probe-bredband-direct] klar');
