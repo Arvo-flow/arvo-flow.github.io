@@ -1,29 +1,45 @@
-// scripts/probe-public-source.mjs — HTTP-sond som körs på GitHub Actions-runnern
-// (obockerad egress). Testar om runnern (ren GitHub-IP + browser-UA) når källor
-// som 403:ade WebFetch, och kartlägger struktur inför adaptrar. Inga inserts.
-
-const CANDIDATES = [
-  // Tar sig runnern förbi 403 på ramavtalskällorna (per-licens-priser, hotspots)?
-  ['avropa.se ramavtal (Microsoft)', 'https://www.avropa.se/ramavtal/ramavtalsomraden/programvaror-och-tjanster/Programvaror-och-tjanster/volymavtal-for-microsoft/'],
-  ['adda.se ramavtal', 'https://www.adda.se/upphandling-och-ramavtal/vara-ramavtal/'],
-  // SCB v2 — sök telekom/bredband-tabeller (absolutpriser?)
-  ['SCB v2 sök telefoni', 'https://api.scb.se/ov0104/v2beta/api/v2/tables?lang=sv&query=telefoni&pageSize=8'],
-  ['SCB v2 sök bredband', 'https://api.scb.se/ov0104/v2beta/api/v2/tables?lang=sv&query=bredband&pageSize=8'],
-  // Eurostat — naturgas icke-hushåll (energi-tvilling till el)
-  ['Eurostat gas non-household SE', 'https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_pc_203?format=JSON&geo=SE&currency=NAC&tax=X_VAT&unit=KWH&lastTimePeriod=1'],
-];
+// scripts/probe-public-source.mjs — HTTP-sond på Actions-runnern (obockerad egress).
+// Kartlägger officiella/öppna priskällor inför adaptrar. Timeout per request så
+// inget hänger. Inga inserts.
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
-for (const [name, url] of CANDIDATES) {
+async function get(url) {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 9000);
   try {
-    const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept': 'text/html,application/json,*/*', 'Accept-Language': 'sv-SE,sv;q=0.9' } });
+    const r = await fetch(url, { signal: ac.signal, headers: { 'User-Agent': UA, Accept: 'application/json,text/html,*/*', 'Accept-Language': 'sv-SE,sv;q=0.9' } });
     const body = await r.text();
-    console.log(`\n========== ${name}`);
-    console.log(`STATUS : ${r.status} ${r.statusText} · TYPE ${r.headers.get('content-type')} · LEN ${body.length}`);
-    console.log(`BODY   :\n${body.slice(0, 1400)}`);
-  } catch (err) {
-    console.log(`\n========== ${name}\nERROR  : ${err.message}`);
-  }
+    return { status: `${r.status} ${r.statusText}`, type: r.headers.get('content-type'), len: body.length, body };
+  } catch (e) { return { status: 'ERR ' + e.name, body: e.message }; } finally { clearTimeout(t); }
+}
+
+async function post(url, json) {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 9000);
+  try {
+    const r = await fetch(url, { signal: ac.signal, method: 'POST', headers: { 'User-Agent': UA, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(json) });
+    const body = await r.text();
+    return { status: `${r.status} ${r.statusText}`, type: r.headers.get('content-type'), len: body.length, body };
+  } catch (e) { return { status: 'ERR ' + e.name, body: e.message }; } finally { clearTimeout(t); }
+}
+
+const TASKS = [
+  // Microsofts officiella retail-priser (Azure + ev. M365-SKU:er), SEK, ingen auth
+  ['Azure Retail Prices (SEK)', () => get("https://prices.azure.com/api/retail/prices?currencyCode='SEK'&$top=5")],
+  ['Azure Retail Prices (M365-filter)', () => get("https://prices.azure.com/api/retail/prices?currencyCode='SEK'&$filter=" + encodeURIComponent("contains(productName,'Microsoft 365')") + "&$top=5")],
+  // Kommunal CKAN — Helsingborg öppna data, leverantörsbetalningar
+  ['Helsingborg CKAN (leverantör)', () => get('https://catalog.helsingborg.io/api/3/action/package_search?q=leverant%C3%B6r&rows=5')],
+  // TED v3 — EU-upphandlingar, svenska mjukvarukontrakt (CPV 48000000)
+  ['TED v3 search (SE software)', () => post('https://api.ted.europa.eu/v3/notices/search', { query: "classification-cpv IN (48000000) AND buyer-country IN (SWE)", fields: ['publication-number', 'notice-title', 'winner-name', 'tender-value'], limit: 3 })],
+  // Adda — rätt ramavtals-listningssida (reachable, ej blockerad)
+  ['Adda ramavtal-listning', () => get('https://www.adda.se/upphandling-och-ramavtal/hitta-ramavtal-och-tjanster/')],
+];
+
+for (const [name, fn] of TASKS) {
+  const r = await fn();
+  console.log(`\n========== ${name}`);
+  console.log(`STATUS : ${r.status} · TYPE ${r.type ?? '-'} · LEN ${r.len ?? '-'}`);
+  console.log(`BODY   :\n${(r.body || '').slice(0, 1600)}`);
 }
 console.log('\n[probe] klar');
