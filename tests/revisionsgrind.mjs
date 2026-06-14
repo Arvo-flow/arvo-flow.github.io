@@ -41,9 +41,14 @@ describe('Revisionsgrinden — tystnadsgarantin', () => {
   });
 
   test('reviderade kategorier passerar grinden', () => {
-    for (const cat of ['saas-productivity', 'mobil', 'bredband', 'el', 'skrivarleasing', 'kortterminal']) {
+    for (const cat of ['saas-productivity', 'mobil', 'bredband', 'el', 'kortterminal']) {
       assert.equal(isAudited(cat), true, `${cat} ska vara reviderad`);
     }
+  });
+
+  test('skrivarleasing är GATAD (ingen publik klickpris-källa) → ej reviderad', () => {
+    assert.equal(isAudited('skrivarleasing'), false,
+      'skrivarleasing ska vara gatad till offert-läge tills verifierbar källa finns');
   });
 
   test('varje reviderad kategori finns i kategoriserarens utrymme', () => {
@@ -57,8 +62,8 @@ describe('Revisionsgrinden — tystnadsgarantin', () => {
     assert.ok(!/\d/.test(ungatedQuoteResponse('saas-crm', 'CRM-system').reasoning));
   });
 
-  test('skrivarleasing-grindens print-guard fungerar fortfarande efter grinden (offline)', async () => {
-    // Klickdominant faktura → requires_quote MED siffror (reviderad kategori får visa)
+  test('skrivarleasing faller till talfritt offert-läge efter grinden (offline)', async () => {
+    // Samma klickdominanta Svea-faktura — men skrivarleasing är nu GATAD: inga siffror får nå kund.
     const r = await recommend({
       customer:    { industry: 'konsult', employees: 10 },
       categorized: { category: 'skrivarleasing', normalizedSupplier: 'Svea Kontorsprint & Leasing AB', confidence: 0.95 },
@@ -73,10 +78,12 @@ describe('Revisionsgrinden — tystnadsgarantin', () => {
         ],
       },
     });
+    assert.equal(r.revisionGate, 'unaudited');
     assert.equal(r.requiresQuote, true);
-    assert.notEqual(r.revisionGate, 'unaudited');
-    assert.equal(r.clickRateAnalysis.estimatedAnnualSavingsLow, 56_400);
-    assert.equal(r.clickRateAnalysis.estimatedAnnualSavingsHigh, 90_468);
+    assert.equal(r.suggestedAnnualCost, null);
+    assert.equal(r.grossSaving, null);
+    assert.ok(!r.clickRateAnalysis, 'inga klick-siffror får nå kund i offert-läge');
+    assert.ok(!/\d/.test(r.reasoning), 'offert-copyn ska vara talfri');
   });
 
 });
