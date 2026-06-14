@@ -164,9 +164,20 @@ export const BRANCHINDEX = {
   bredband: {
     source: 'real-public',
     lastVerified: '2026-05-22',
-    verifiedVia: 'playwright',
+    verifiedVia: 'manual-address-check',
+    // VERIFIERINGENS GRÄNS (bevisat via 4 sond-rundor 2026-06-14): företagsbredband har INGEN
+    // kontinuerligt skrapbar publik priskälla. Tele2:s /foretag/bredband är en marknadssida utan
+    // adressfält/pris — priset (849) ligger bakom beställningsflödet; Bahnhof är cookie-vägg. Priserna
+    // nedan är VERIFIERADE listpriser fångade vid datum via manuell adresskoll, men kan inte auto-vaktas.
+    // Löpande verifiering kommer från KOHORTEN: kundernas faktiska bredbandsfakturor (det starkaste
+    // möjliga "vad bolag faktiskt betalar"-källan) så snart vi har kunddata. Tills dess: daterat listpris.
+    continuousVerification: false,
+    verifiedAnchors: [
+      { supplier: 'Tele2 Företag', product: '1200 Mbit', monthly: 849, lastVerified: '2026-05-22', url: 'https://www.tele2.se/foretag/bredband' },
+      { supplier: 'Bahnhof Företag', product: '1 Gbit', monthly: 995, lastVerified: '2026-05-22', url: 'https://www.bahnhof.se/foretag/internet' },
+    ],
     unit: 'kr/år',
-    note: 'Företagsfiber per kontorsadress. Verifierade listpriser maj 2026 (exkl. moms): Tele2 Företag 1200 Mbit 849 kr/mån (reguljärt), Bahnhof Företag 1 Gbit från 995 kr/mån. Priser adressberoende. Matrisen inkluderar 100–1 000 Mbit och speglar faktisk betald premie, inte lägsta tekniskt möjliga.',
+    note: 'Företagsfiber per kontorsadress. Verifierade listpriser (exkl. moms, dateras): Tele2 Företag 1200 Mbit 849 kr/mån, Bahnhof Företag 1 Gbit från 995 kr/mån — fångade via manuell adresskoll 2026-05-22. OBS: fiberpris är adressberoende och ligger bakom leverantörens beställningsflöde → ingen kontinuerlig auto-skrapning är möjlig; löpande verifiering sker mot kundens faktiska bredbandsfaktura. 100–500 Mbit-tiers är estimat (visas med intervall). Matrisen speglar faktisk betald premie, inte lägsta tekniskt möjliga.',
     alternatives: [
       { supplier: 'Tele2 Företag Bredband', positioning: 'Verifierat 849 kr/mån (1200 Mbit, 24 mån) — stark bundle med mobilabonnemang', reliability: 0.93 },
       { supplier: 'Bahnhof Företag',        positioning: 'Verifierat från 995 kr/mån (1 Gbit) — svensk support, statisk IP, stark SLA',  reliability: 0.96 },
