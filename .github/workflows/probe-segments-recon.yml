@@ -1,0 +1,23 @@
+name: Probe segments recon
+
+# Engångs-spaning: hittar strukturerade priskällor för logistik/fordon/mjukvara (Playwright
+# nätverksfångst). Underlag för att bygga nästa segment i fabriken. Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe segments
+        run: node scripts/probe-segments-recon.mjs
