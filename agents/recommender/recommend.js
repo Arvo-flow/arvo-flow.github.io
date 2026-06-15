@@ -22,6 +22,7 @@ import { BRANCHINDEX, bredbandSpeedBenchmark } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
+import { computeShelfware } from '../../lib/shelfware.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -1388,10 +1389,23 @@ export async function recommend(input, opts = {}) {
       ? Math.round(((comparableAnnualCost - benchmark.median * scale) / (benchmark.median * scale)) * 100)
       : (result.overpaymentPercent ?? 0);
 
-    if (seatCount != null && seatCount > employees) {
-      result.licenseOverage = seatCount - employees;
-      result.overageSavings = Math.round(result.licenseOverage * benchmark.p25);
+    // Licensrensning som rådgivande revisor (lib/shelfware.js). Gapet seatCount−employees
+    // är ett FAKTUM, inte garanterat svinn — bolag lägger överskott på konsulter/mötesrum.
+    // Har kunden inte redovisat undantag (knownExceptions) räknar vi INGEN besparing; vi
+    // returnerar revisorsfrågan (shelfware.reviewPrompt) och driver dialogen. Först när
+    // svinnet är bekräftat sätts en hård siffra — på kundens EGNA pris/plats (regel 3/4).
+    const shelfware = computeShelfware({
+      seatCount,
+      pricePerSeatMonthly,
+      employees,
+      knownExceptions: input.invoice?.licenseKnownExceptions ?? null,
+    });
+    result.shelfware = shelfware;
+    if (shelfware && !shelfware.needsReview) {
+      result.licenseOverage = shelfware.confirmedIdle;
+      result.overageSavings = shelfware.annualWaste;
     } else {
+      // review-läge eller inget gap → ingen besparingssiffra (precision eller tystnad)
       result.licenseOverage = null;
       result.overageSavings = null;
     }
@@ -1416,6 +1430,7 @@ export async function recommend(input, opts = {}) {
       result.shouldSwitch = false;
       result.licenseOverage = null;
       result.overageSavings = null;
+      result.shelfware = null;
     }
 
     // Attribueringslåset: när LFL-fakta är kompletta ersätts AI:ns resonemang med

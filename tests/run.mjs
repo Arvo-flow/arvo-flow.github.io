@@ -22,6 +22,7 @@ import './tele2-broadband.mjs';
 import './verifier-registry.mjs';
 import './branchindex.mjs';
 import './recommend-deterministic.mjs';
+import './shelfware.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

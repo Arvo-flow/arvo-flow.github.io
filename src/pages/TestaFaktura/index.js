@@ -2115,6 +2115,32 @@ const TestaFaktura = () => {
               })()}
             </KV>}
 
+            {result.recommendation?.shelfware?.needsReview && (
+              <div style={{
+                gridColumn: '1 / -1',
+                marginTop: '14px',
+                padding: '16px 18px',
+                background: '#F1F6F3',
+                border: '1px solid #BFD8D0',
+                borderRadius: '12px',
+              }}>
+                <div style={{
+                  fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px',
+                }}>
+                  Licensrevision — vi behöver er bekräftelse
+                </div>
+                <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
+                  {result.recommendation.shelfware.reviewPrompt}
+                </p>
+                <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
+                  Om de står oanvända motsvarar det upp till{' '}
+                  {formatKr(result.recommendation.shelfware.potentialAnnualWaste)} kr/år.
+                  Vi räknar ingen besparing förrän ni bekräftat — siffror utan källa visar vi aldrig.
+                </p>
+              </div>
+            )}
+
             {result.recommendation?.reasoning && (isOptimize || _isSecondaryOnlySwitch) && (
               <Reasoning>
                 <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Kombinerad analys'}</span>

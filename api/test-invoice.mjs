@@ -1601,10 +1601,12 @@ export default async function handler(req, res) {
         confidence: recommendation.confidence,
         reasoning: (recommendation.reasoning ?? '').replace(/\s*\}\}+\s*$/, '').trim(),
         switchSteps: recommendation.switchSteps ?? [],
-        licenseOverage: (extracted.seatCount != null && extracted.seatCount > employeesNum)
-          ? extracted.seatCount - employeesNum
-          : null,
+        // EN sanning: licenseOverage/overageSavings/shelfware kommer uteslutande från
+        // recommend.js shelfware-modellen (rådgivande revisor) — aldrig en lokal omräkning
+        // av seatCount−employees här (det var regel 1-brottet: naivt gap som "svinn").
+        licenseOverage: recommendation.licenseOverage ?? null,
         overageSavings: recommendation.overageSavings ?? null,
+        shelfware:      recommendation.shelfware ?? null,
         annualBillingSaving: recommendation.annualBillingSaving ?? null,
         nonPrimaryAnnual:    recommendation.nonPrimaryAnnual ?? 0,
         tierOptimizationSaving:   recommendation.tierOptimizationSaving   ?? null,
