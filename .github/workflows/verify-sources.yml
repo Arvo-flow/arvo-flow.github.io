@@ -1,0 +1,48 @@
+name: Verify price sources (factory)
+
+# EN workflow för HELA verifierar-fabriken. Job-matrisen härleds ur registryt
+# (scripts/verify.mjs --matrix) → lägg till en verifierare i lib/verifiers/registry.mjs så
+# vaktas den automatiskt här. Playwright/Chromium installeras bara för källor med needsBrowser.
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: 'Kör en enskild källa (id) eller "all"'
+        default: 'all'
+  schedule:
+    - cron: '0 5 * * 1'   # måndagar 05:00 UTC
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - id: gen
+        run: echo "matrix=$(node scripts/verify.mjs --matrix)" >> "$GITHUB_OUTPUT"
+
+  verify:
+    needs: discover
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        source: ${{ fromJson(needs.discover.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium (endast browser-källor)
+        if: ${{ matrix.source.needsBrowser }}
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Verifiera ${{ matrix.source.id }}
+        run: node scripts/verify.mjs ${{ matrix.source.id }}

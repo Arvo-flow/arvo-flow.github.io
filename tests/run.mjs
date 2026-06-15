@@ -19,6 +19,7 @@ import { fixtures as f08 } from './fixtures/08-realistic.mjs';
 import './el-recommendation.mjs';
 import './el-intelligence.mjs';
 import './tele2-broadband.mjs';
+import './verifier-registry.mjs';
 import './branchindex.mjs';
 import './recommend-deterministic.mjs';
 
