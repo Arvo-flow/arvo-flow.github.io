@@ -23,6 +23,7 @@ import './verifier-registry.mjs';
 import './branchindex.mjs';
 import './recommend-deterministic.mjs';
 import './shelfware.mjs';
+import './recompute-shelfware.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

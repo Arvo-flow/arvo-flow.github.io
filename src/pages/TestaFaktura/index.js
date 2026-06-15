@@ -415,6 +415,11 @@ const TestaFaktura = () => {
   const [activationStatus, setActivationStatus] = useState('idle'); // idle | submitting | sent | error
   const [oauthBanner, setOauthBanner] = useState(null); // null | { type: 'connected'|'pending'|'error', provider, invoices, email, errorCode }
 
+  // Licensrevision (shelfware): kundens svar på revisorsfrågan → live omräkning via API.
+  const [shelfwareOverride, setShelfwareOverride] = useState(null); // recomputed shelfware (backend)
+  const [shelfwareExceptions, setShelfwareExceptions] = useState(''); // input: platser som används till annat
+  const [shelfwareState, setShelfwareState] = useState('idle'); // idle | submitting | done | error
+
   // Batch mode — activated when multiple PDFs are dropped / selected
   const [batchFiles, setBatchFiles] = useState([]);
   const [batchJob, setBatchJob] = useState(null);
@@ -918,6 +923,34 @@ const TestaFaktura = () => {
       });
     } catch { /* non-fatal */ }
     setFeedbackState('sent');
+  };
+
+  // Licensrevision: kunden bekräftar hur många överskottsplatser som används till annat.
+  // Backend räknar om svinnet i kronor (klienten gör ALDRIG kr-aritmetik själv, regel 2).
+  const submitShelfwareReview = async (e) => {
+    e.preventDefault();
+    const sw = result?.recommendation?.shelfware;
+    if (!sw || shelfwareState === 'submitting') return;
+    setShelfwareState('submitting');
+    try {
+      const res = await fetch('/api/recompute-shelfware', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          seatCount:           sw.paidSeats,
+          pricePerSeatMonthly: sw.perSeatMonthly,
+          employees:           sw.employees,
+          knownExceptions:     shelfwareExceptions === '' ? 0 : Number(shelfwareExceptions),
+        }),
+      });
+      if (!res.ok) throw new Error('recompute failed');
+      const data = await res.json();
+      // data.shelfware === null betyder: allt förklarat / under golvet → inget svinn kvar.
+      setShelfwareOverride(data.shelfware ?? { cleared: true });
+      setShelfwareState('done');
+    } catch {
+      setShelfwareState('error');
+    }
   };
 
   const phaseState = (id) => {
@@ -2115,31 +2148,76 @@ const TestaFaktura = () => {
               })()}
             </KV>}
 
-            {result.recommendation?.shelfware?.needsReview && (
-              <div style={{
-                gridColumn: '1 / -1',
-                marginTop: '14px',
-                padding: '16px 18px',
-                background: '#F1F6F3',
-                border: '1px solid #BFD8D0',
-                borderRadius: '12px',
-              }}>
-                <div style={{
-                  fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
-                  letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px',
-                }}>
-                  Licensrevision — vi behöver er bekräftelse
+            {result.recommendation?.shelfware && (() => {
+              // Licensrevision: fristående (oberoende av leverantörsbyte). Visar revisorsfrågan,
+              // tar kundens svar, och visar det backend-omräknade svinnet live. Inga kr räknas i
+              // klienten — allt kommer färdigt från /api/recompute-shelfware (regel 2).
+              const swBase = result.recommendation.shelfware;
+              const swEff = shelfwareOverride !== null ? shelfwareOverride : swBase;
+              const submitted = shelfwareOverride !== null;
+              const cardStyle = { gridColumn: '1 / -1', marginTop: '14px', padding: '16px 18px', background: '#F1F6F3', border: '1px solid #BFD8D0', borderRadius: '12px' };
+              const headStyle = { fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px' };
+
+              // Bekräftat svinn (efter kundens svar)
+              if (submitted && swEff && !swEff.cleared && swEff.annualWaste > 0) {
+                return (
+                  <div style={cardStyle}>
+                    <div style={headStyle}>Licensrevision — bekräftat</div>
+                    <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
+                      <strong>{swEff.confirmedIdle} bekräftat oanvända platser</strong> à {swEff.perSeatMonthly} kr/plats/mån
+                      {' '}= <strong style={{ color: '#1B7A6E' }}>{formatKr(swEff.annualWaste)} kr/år</strong> i verifierat svinn att avveckla.
+                    </p>
+                  </div>
+                );
+              }
+              // Allt förklarat → ingen åtgärd (återförsäkran, inte anklagelse)
+              if (submitted) {
+                return (
+                  <div style={cardStyle}>
+                    <div style={headStyle}>Licensrevision — klar</div>
+                    <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
+                      Tack — då är överskottet förklarat. Vi flaggar inget svinn på era licenser.
+                    </p>
+                  </div>
+                );
+              }
+              // Review-läge: ställ frågan + input + bekräfta
+              if (!swBase.needsReview) return null;
+              return (
+                <div style={cardStyle}>
+                  <div style={headStyle}>Licensrevision — vi behöver er bekräftelse</div>
+                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
+                    {swBase.reviewPrompt}
+                  </p>
+                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
+                    Om de står oanvända motsvarar det upp till {formatKr(swBase.potentialAnnualWaste)} kr/år.
+                    Vi räknar ingen besparing förrän ni bekräftat — siffror utan källa visar vi aldrig.
+                  </p>
+                  <form onSubmit={submitShelfwareReview} style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '12px', flexWrap: 'wrap' }}>
+                    <label htmlFor="shelfware-exc" style={{ fontSize: '13px', color: '#0E1A17' }}>
+                      Hur många av de {swBase.unverifiedGap} används till annat?
+                    </label>
+                    <input
+                      id="shelfware-exc"
+                      type="number" min="0" max={swBase.unverifiedGap} inputMode="numeric"
+                      value={shelfwareExceptions}
+                      onChange={(e) => setShelfwareExceptions(e.target.value)}
+                      placeholder="0"
+                      style={{ width: '72px', padding: '7px 9px', fontSize: '14px', border: '1px solid #BFD8D0', borderRadius: '8px', background: '#fff' }}
+                    />
+                    <button
+                      type="submit" disabled={shelfwareState === 'submitting'}
+                      style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 600, color: '#fff', background: '#1B7A6E', border: 'none', borderRadius: '8px', cursor: 'pointer', opacity: shelfwareState === 'submitting' ? 0.6 : 1 }}
+                    >
+                      {shelfwareState === 'submitting' ? 'Räknar…' : 'Bekräfta'}
+                    </button>
+                  </form>
+                  {shelfwareState === 'error' && (
+                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#B4341F' }}>Något gick fel — försök igen.</p>
+                  )}
                 </div>
-                <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
-                  {result.recommendation.shelfware.reviewPrompt}
-                </p>
-                <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
-                  Om de står oanvända motsvarar det upp till{' '}
-                  {formatKr(result.recommendation.shelfware.potentialAnnualWaste)} kr/år.
-                  Vi räknar ingen besparing förrän ni bekräftat — siffror utan källa visar vi aldrig.
-                </p>
-              </div>
-            )}
+              );
+            })()}
 
             {result.recommendation?.reasoning && (isOptimize || _isSecondaryOnlySwitch) && (
               <Reasoning>

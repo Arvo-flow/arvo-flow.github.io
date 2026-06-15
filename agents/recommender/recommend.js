@@ -1199,6 +1199,30 @@ export async function recommend(input, opts = {}) {
 
   const result = toolUse.input;
 
+  // ── Shelfware (FRISTÅENDE) — oanvända SaaS-licenser ───────────────────────────
+  // Svinnet existerar OBEROENDE av om vi rekommenderar ett leverantörsbyte: en kund kan
+  // ha helt rätt pris men ändå betala för 20 tomma platser. Därför räknas shelfware här,
+  // utanför shouldSwitch-blocket, så att revisorsfrågan/svinnet alltid når kunden.
+  // Endast SaaS (per-plats-licenser). Gapet mot kundens EGNA pris/plats är verifierbart
+  // utan extern benchmark (regel 3/4) — revisionsgrinden har redan släppt igenom kategorin.
+  if (input.categorized.category?.startsWith('saas')) {
+    const _shelfware = computeShelfware({
+      seatCount:           input.invoice?.seatCount ?? null,
+      pricePerSeatMonthly,
+      employees:           input.customer?.employees ?? 1,
+      knownExceptions:     input.invoice?.licenseKnownExceptions ?? null,
+    });
+    result.shelfware = _shelfware ?? null;
+    if (_shelfware && !_shelfware.needsReview) {
+      result.licenseOverage = _shelfware.confirmedIdle;
+      result.overageSavings = _shelfware.annualWaste;
+    } else {
+      // review-läge eller inget gap → ingen besparingssiffra (precision eller tystnad)
+      result.licenseOverage = null;
+      result.overageSavings = null;
+    }
+  }
+
   // ── Prosakravet (SKUGGA): varje tal i AI:ns reasoning måste finnas i prompten ──
   // (prompten innehåller alla injicerade kodberäknade fakta — ett tal utanför den
   // kan modellen bara ha räknat fram själv, vilket är förbjudet). Loggas alltid;
@@ -1389,26 +1413,8 @@ export async function recommend(input, opts = {}) {
       ? Math.round(((comparableAnnualCost - benchmark.median * scale) / (benchmark.median * scale)) * 100)
       : (result.overpaymentPercent ?? 0);
 
-    // Licensrensning som rådgivande revisor (lib/shelfware.js). Gapet seatCount−employees
-    // är ett FAKTUM, inte garanterat svinn — bolag lägger överskott på konsulter/mötesrum.
-    // Har kunden inte redovisat undantag (knownExceptions) räknar vi INGEN besparing; vi
-    // returnerar revisorsfrågan (shelfware.reviewPrompt) och driver dialogen. Först när
-    // svinnet är bekräftat sätts en hård siffra — på kundens EGNA pris/plats (regel 3/4).
-    const shelfware = computeShelfware({
-      seatCount,
-      pricePerSeatMonthly,
-      employees,
-      knownExceptions: input.invoice?.licenseKnownExceptions ?? null,
-    });
-    result.shelfware = shelfware;
-    if (shelfware && !shelfware.needsReview) {
-      result.licenseOverage = shelfware.confirmedIdle;
-      result.overageSavings = shelfware.annualWaste;
-    } else {
-      // review-läge eller inget gap → ingen besparingssiffra (precision eller tystnad)
-      result.licenseOverage = null;
-      result.overageSavings = null;
-    }
+    // Licensrensning (shelfware) räknas fristående ovan, oberoende av shouldSwitch —
+    // result.overageSavings är redan satt och plockas upp av savingsBreakdown nedan.
 
     // Tier optimization: saasTierBm now holds the RECOMMENDED tier (already downgraded).
     // The tier saving is embedded in the primary savingPerYear — no separate advisory needed.
@@ -1425,12 +1431,11 @@ export async function recommend(input, opts = {}) {
     };
 
     // Minimigräns: ett leverantörsbyte under 500 kr nettobesparing per år är
-    // operationellt orimligt — byteskostnad i tid överstiger vinsten.
+    // operationellt orimligt — byteskostnad i tid överstiger vinsten. OBS: detta rör
+    // ENBART leverantörsbytet. Shelfware (licensrensning) är en fristående besparing och
+    // röjs aldrig av en liten bytesvinst — den lever kvar i result.shelfware/overageSavings.
     if ((result.savingPerYear ?? 0) < 500) {
       result.shouldSwitch = false;
-      result.licenseOverage = null;
-      result.overageSavings = null;
-      result.shelfware = null;
     }
 
     // Attribueringslåset: när LFL-fakta är kompletta ersätts AI:ns resonemang med
