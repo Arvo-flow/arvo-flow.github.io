@@ -18,7 +18,7 @@ import { checkProseNumbers } from '../../lib/prose-guard.js';
 import { getBenchmark } from '../../lib/benchmark.js';
 import { CATEGORIES } from '../categorizer/categories.js';
 import { getElIntelligence } from '../../lib/el-intelligence.js';
-import { BRANCHINDEX } from './branchindex.js';
+import { BRANCHINDEX, bredbandSpeedBenchmark } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
@@ -477,13 +477,6 @@ Ge en rekommendation enligt instruktionerna. Returnera via verktyget "recommend"
  * @param {object} [opts]
  * @param {Anthropic} [opts.client]
  */
-function closestSpeedTier(speedMbit) {
-  for (const t of [100, 250, 500, 1000]) {
-    if (speedMbit <= t) return t;
-  }
-  return 1000;
-}
-
 // Maps an extracted license type string to a branchindex tier key.
 function getSaasLicenseTierKey(licenseType, productFamily) {
   const lt = (licenseType   || '').toLowerCase();
@@ -903,17 +896,13 @@ export async function recommend(input, opts = {}) {
     employees: input.customer.employees,
   });
 
-  // Speed-tier override för bredband: ersätt median/p25 med hastighetsspecifika värden
-  // när connection_speed_mbit är känt. Fiberpriser beror på hastighet, inte bolagets storlek.
+  // Bredband-benchmark är HASTIGHETSBASERAD och härleds ur tele2Verified (regel 1) — ingen
+  // industry×size-matris finns längre. Utan känd hastighet finns ingen verifierbar benchmark
+  // (Zero Trust: ingen gissad siffra). Fiberpris beror på hastighet/nät, inte bolagets storlek.
   const connectionSpeedMbit = input.invoice?.connectionSpeedMbit ?? null;
   let benchmark = rawBenchmark;
-  if (input.categorized.category === 'bredband' && connectionSpeedMbit > 0 && rawBenchmark) {
-    const speedTiers = BRANCHINDEX.bredband?.speedTierBenchmarks;
-    const tier = closestSpeedTier(connectionSpeedMbit);
-    const speedBm = speedTiers?.[tier];
-    if (speedBm) {
-      benchmark = { ...rawBenchmark, median: speedBm.median, p25: speedBm.p25, note: speedBm.note };
-    }
+  if (input.categorized.category === 'bredband') {
+    benchmark = connectionSpeedMbit > 0 ? bredbandSpeedBenchmark(connectionSpeedMbit) : null;
   }
 
   // License tier override for saas-productivity / saas-devtools: swap generic p25

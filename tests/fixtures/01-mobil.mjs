@@ -618,9 +618,9 @@ export const fixtures = [
 
   // ── mob-28 ───────────────────────────────────────────────────────────────────
   // mixed=true, bredbandsrad "Bredband 500/500 Mbit/s" → speed=500
-  // secondary=bredband → computeSecondarySaving: tier=500, p25=7200
+  // secondary=bredband → computeSecondarySaving: tier=500, p25=3828
   // secAnnual = round(899 * 12) = 10788
-  // gross = max(0, 10788 - 7200) = 3588 ≥ 500 → saving satt
+  // gross = max(0, 10788 - 3828) = 6960 ≥ 500 → saving satt
   {
     id: 'mob-28',
     name: 'mixed=true + bredband 500 Mbit → speed=500, secondarySaving satt',
@@ -644,16 +644,16 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   10788,
-      suggestedAnnual: 7200,
-      grossSaving:     3588,
-      netSaving:       2870,
+      suggestedAnnual: 3828,
+      grossSaving:     6960,
+      netSaving:       5568,
     },
   },
 
   // ── mob-29 ───────────────────────────────────────────────────────────────────
   // mixed=true, bredbandsrad "Fiber 1 Gbit" → 1*1000=1000 Mbit → tier=1000
   // secAnnual = round(995 * 12) = 11940
-  // gross = max(0, 11940 - 9000) = 2940 ≥ 500 → saving satt
+  // gross = max(0, 11940 - 4020) = 7920 ≥ 500 → saving satt
   {
     id: 'mob-29',
     name: 'mixed=true + Fiber 1 Gbit → speed snappas till 1000',
@@ -677,16 +677,16 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 10200,
-      grossSaving:     1740,
-      netSaving:       1392,
+      suggestedAnnual: 4020,
+      grossSaving:     7920,
+      netSaving:       6336,
     },
   },
 
   // ── mob-30 ───────────────────────────────────────────────────────────────────
   // mixed=true, bredbandsrad "Internet 100 Mbit" → speed=100
   // secAnnual = round(450 * 12) = 5400
-  // gross = max(0, 5400 - 4200) = 1200 ≥ 500 → saving satt
+  // gross = max(0, 5400 - 3156) = 2244 ≥ 500 → saving satt
   {
     id: 'mob-30',
     name: 'mixed=true + Internet 100 Mbit → speed=100',
@@ -710,9 +710,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   5400,
-      suggestedAnnual: 4200,
-      grossSaving:     1200,
-      netSaving:       960,
+      suggestedAnnual: 3156,
+      grossSaving:     2244,
+      netSaving:       1795,
     },
   },
 

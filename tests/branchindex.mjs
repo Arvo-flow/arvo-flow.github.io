@@ -11,6 +11,7 @@ import {
   INDUSTRY_SEGMENT_MAP,
   getBenchmark,
   bucketForSize,
+  bredbandSpeedBenchmark,
 } from '../agents/recommender/branchindex.js';
 import { usdToSek, FALLBACK_RATE_USD_SEK } from '../agents/recommender/pricing.js';
 
@@ -41,11 +42,11 @@ describe('BI-02 · getBenchmark — matrix-lookup', () => {
     assert.strictEqual(bm.size, 'micro');
   });
 
-  test('bredband + tillverkning + 50 anst → hantverkare.mid { p25:26400, median:36000 }', () => {
+  test('bredband har INGEN industry×size-benchmark (hastighetsbaserad) → getBenchmark null', () => {
+    // Bredband-priset beror på hastighet/nät, inte bolagsstorlek. Benchmarken härleds
+    // ur tele2Verified via bredbandSpeedBenchmark — getBenchmark returnerar därför null.
     const bm = getBenchmark({ category: 'bredband', industry: 'tillverkning', employees: 50 });
-    assert.notStrictEqual(bm, null);
-    assert.strictEqual(bm.p25,    26400);
-    assert.strictEqual(bm.median, 36000);
+    assert.strictEqual(bm, null);
   });
 
   test('kortterminal.verifiedRates låser de live-verifierade raterna (Zettle 1,85 / Stripe 1,40+1,00)', () => {
@@ -224,22 +225,25 @@ describe('BI-07 · usdToSek — konverteringsaritmetik', () => {
 });
 
 // ── BI-08 ─────────────────────────────────────────────────────────────────────
-// Bredband speedTierBenchmarks: p25 < median, täcker 100/250/500/1000
-describe('BI-08 · Bredband speedTierBenchmarks', () => {
+// Bredband-benchmarken härleds DETERMINISTISKT ur tele2Verified (inga legacy-estimat):
+// p25 = billigaste verifierade Tele2-nät (COAX), median = öppen fiber. p25 < median.
+describe('BI-08 · Bredband bredbandSpeedBenchmark (härledd ur tele2Verified)', () => {
   const speeds = [100, 250, 500, 1000];
-  const tiers = BRANCHINDEX.bredband.speedTierBenchmarks;
   for (const s of speeds) {
-    test(`${s} Mbit: existerar + p25 < median`, () => {
-      const t = tiers[s];
-      assert.ok(t, `Saknar speedTierBenchmark för ${s} Mbit`);
+    test(`${s} Mbit: existerar + p25 < median + source tele2-verified`, () => {
+      const t = bredbandSpeedBenchmark(s);
+      assert.ok(t, `Saknar bredbandSpeedBenchmark för ${s} Mbit`);
+      assert.equal(t.source, 'tele2-verified');
       assert.ok(t.p25 < t.median, `${s} Mbit: p25 (${t.p25}) >= median (${t.median})`);
     });
   }
-  test('1000 Mbit verifierat listpris: p25 = 10 200 (Tele2 849×12), median = 10 800', () => {
-    // p25 höjdes medvetet från 9 000: ett mål under dokumenterat listpris är ett
-    // löfte ingen kund kan realisera (samma felklass som print-kortets 0,275).
-    const t = tiers[1000];
-    assert.strictEqual(t.p25,    10200);
-    assert.strictEqual(t.median, 10800);
+  test('1000 Mbit: p25 = 4 020 (Tele2 COAX 1200 335×12), median = 5 844 (öppen fiber 1000 487×12)', () => {
+    const t = bredbandSpeedBenchmark(1000);
+    assert.strictEqual(t.p25,    4020);
+    assert.strictEqual(t.median, 5844);
+  });
+  test('utan giltig hastighet → null (Zero Trust: ingen gissad siffra)', () => {
+    assert.strictEqual(bredbandSpeedBenchmark(0), null);
+    assert.strictEqual(bredbandSpeedBenchmark(null), null);
   });
 });

@@ -73,23 +73,8 @@ const PRICE_CHECKS = [
     ],
   },
 
-  // Bredband — real-public, verified
-  {
-    category: 'bredband',
-    supplier: 'Tele2 Företag bredband',
-    url: 'https://www.tele2.se/foretag/bredband',
-    checks: [
-      { name: '849 kr/mth (1 200 Mbit)', pattern: /849/ },
-    ],
-  },
-  {
-    category: 'bredband',
-    supplier: 'Bahnhof Företag internet',
-    url: 'https://www.bahnhof.se/foretag/internet',
-    checks: [
-      { name: 'Från 995 kr/mth', pattern: /995/ },
-    ],
-  },
+  // Bredband bevakas INTE här: priset ligger inte på en skrapbar sida (adress-gated). Det
+  // verifieras live per adress/nät av scripts/verify-tele2-bredband.mjs mot Tele2:s adress-API.
 
   // Kortterminal — estimated (rates changed; monitor for further changes)
   {
@@ -407,15 +392,7 @@ const PRICE_CHECKS = [
     ],
   },
 
-  // ── Bredband: Telia Företag ───────────────────────────────────────────────
-  {
-    category: 'bredband',
-    supplier: 'Telia Företag bredband',
-    url: 'https://www.telia.se/foretag/bredband',
-    checks: [
-      { name: '500–900 kr/mth fiber', pattern: /[5-9][0-9]{2}\s*kr/ },
-    ],
-  },
+  // (Bredband flyttat till dedikerad adress-API-vakt: scripts/verify-tele2-bredband.mjs)
 
   // ── El: Tibber Företag ───────────────────────────────────────────────────
   // Tibber är det enda spotprisalternativet med öppen API för smart styrning.

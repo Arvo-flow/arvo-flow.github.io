@@ -186,29 +186,16 @@ export const BRANCHINDEX = {
       standard: { 100: 399, 250: 415, 500: 455, 1000: 487, bindingMonths: 12 },
     },
     unit: 'kr/år',
-    note: 'Bredband per adress — priset beror på vilket NÄT som når adressen (inget rikstäckande listpris). Verifierat live mot Tele2:s adress-API 2026-06-14 (exkl moms): "Max"/COAX nationellt enhetligt (1200 Mbit 335 kr/mån, 24 mån), "Standard"/öppen fiber dyrare (1000 Mbit 487 kr/mån, 12 mån). Adresser utan Tele2-nät har inget fast erbjudande (bara mobilt). Det tidigare statiska 849 kr var ett företagskatalog-tal och är ERSATT — ett enda rikstäckande pris missrepresenterar en adressberoende marknad (samma fel som vi dödade på el). speedTierBenchmarks-matrisen nedan är legacy-estimat (migreras till tele2Verified).',
+    note: 'Bredband per adress — priset beror på vilket NÄT som når adressen (inget rikstäckande listpris). Verifierat live mot Tele2:s adress-API 2026-06-14 (exkl moms): "Max"/COAX nationellt enhetligt (1200 Mbit 335 kr/mån, 24 mån), "Standard"/öppen fiber dyrare (1000 Mbit 487 kr/mån, 12 mån). Adresser utan Tele2-nät har inget fast erbjudande (bara mobilt). Benchmarken är hastighetsbaserad och härleds i kod ur tele2Verified (bredbandSpeedBenchmark) — inga legacy-estimat finns kvar. Utan känd hastighet finns ingen verifierbar benchmark (Zero Trust: ingen gissad siffra).',
     alternatives: [
       { supplier: 'Tele2 Bredband Max (COAX)',     positioning: 'Verifierat via adress-API: 1200/100 Mbit 335 kr/mån exkl (24 mån) — nationellt enhetligt där COAX-nätet når',  reliability: 0.95 },
       { supplier: 'Tele2 Bredband Standard (fiber)', positioning: 'Verifierat: 1000/1000 Mbit 487 kr/mån exkl (12 mån) — öppna fibernät, dyrare än COAX',                        reliability: 0.95 },
       { supplier: 'Bahnhof Företag',                positioning: 'Svensk support, statisk IP, stark SLA — offert per adress (ej i Tele2-API:t)',                                  reliability: 0.94 },
     ],
-    // Speed-tier benchmarks (kr/år per kontorsadress) — används när connection_speed_mbit är känt.
-    // Priser baserade på publika listpriser maj 2026 (exkl. moms). Oberoende av bransch/storlek
-    // eftersom fiberpriser är adressbaserade, inte volymberoende för SMB.
-    // Verifierat: Tele2 1200 Mbit = 849 kr/mån. Bahnhof 1 Gbit = 995 kr/mån.
-    // 100–500 Mbit estimerat utifrån operatörernas offentliga prislistor och Arvo MVP-data.
-    speedTierBenchmarks: {
-      100:  { median: 5400,  p25: 4200,  note: 'Fiber 100 Mbit/s per adress/år — estimerat maj 2026 (~350–449 kr/mån)' },
-      250:  { median: 6600,  p25: 5400,  note: 'Fiber 250 Mbit/s per adress/år — estimerat maj 2026 (~450–549 kr/mån)' },
-      500:  { median: 8400,  p25: 7200,  note: 'Fiber 500 Mbit/s per adress/år — estimerat maj 2026 (~600–699 kr/mån)' },
-      1000: { median: 10800, p25: 10200, note: 'Fiber 1 Gbit/s per adress/år — verifierat: Tele2 849 kr/mån, Bahnhof 995 kr/mån maj 2026. p25 = 849×12 = 10 188 ≈ 10 200 — understiger ej dokumenterat listpris.' },
-    },
-    matrix: {
-      byraer:      { micro: { median: 9000,  p25: 6500  }, small: { median: 13200, p25:  9600 }, mid: { median: 28800, p25: 19200 } },
-      hantverkare: { micro: { median: 9600,  p25: 7200  }, small: { median: 14400, p25: 10200 }, mid: { median: 30000, p25: 22000 } },
-      ehandel:     { micro: { median: 9600,  p25: 7200  }, small: { median: 14400, p25: 10200 }, mid: { median: 30000, p25: 22000 } },
-      tillverkning:{ micro: { median: 10800, p25: 7800  }, small: { median: 16800, p25: 12000 }, mid: { median: 36000, p25: 26400 } },
-    },
+    // INGEN matrix/speedTierBenchmarks: bredband-benchmarken är hastighetsbaserad och härleds
+    // deterministiskt ur tele2Verified via bredbandSpeedBenchmark() (regel 1, en sanning).
+    // getBenchmark() returnerar därför null för bredband — konsumenterna (recommend.js,
+    // secondary-savings.js) anropar bredbandSpeedBenchmark(speedMbit) med känd hastighet.
   },
 
   kortterminal: {
@@ -910,6 +897,9 @@ export function getBenchmark({ category, industry, employees }) {
   const cat = BRANCHINDEX[category];
   if (!cat) return null;
   if (cat.requiresVolumeData) return null;
+  // bredband saknar industry×size-matris med flit: benchmarken är hastighetsbaserad
+  // (bredbandSpeedBenchmark). Kategorier utan matris har ingen generisk benchmark.
+  if (!cat.matrix) return null;
 
   const ind = INDUSTRY_SEGMENT_MAP[industry] ?? 'byraer';
   const size = bucketForSize(employees ?? 5);
@@ -926,5 +916,38 @@ export function getBenchmark({ category, industry, employees }) {
     median: cell.median,
     p25: cell.p25,
     alternatives: cat.alternatives,
+  };
+}
+
+/**
+ * Hastighetsbaserad bredband-benchmark (kr/år) härledd DETERMINISTISKT ur
+ * BRANCHINDEX.bredband.tele2Verified — enda sanningen (regel 1), inga legacy-estimat.
+ *   p25    = billigaste verifierade Tele2-pris som levererar ≥ speedMbit (Max/COAX är billigast)
+ *   median = öppen fiber (Standard) som levererar ≥ speedMbit (typiskt dyrare)
+ * Returnerar { p25, median, note, source } eller null om hastighet saknas/ogiltig.
+ *
+ * @param {number} speedMbit
+ */
+export function bredbandSpeedBenchmark(speedMbit) {
+  const tv = BRANCHINDEX.bredband?.tele2Verified;
+  const s = Number(speedMbit);
+  if (!tv || !(s > 0)) return null;
+  const nearestMonthly = (fam) => {
+    const tiers = Object.keys(tv[fam]).map(Number).filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b);
+    const t = tiers.find((n) => n >= s) ?? tiers[tiers.length - 1];
+    return tv[fam][t];
+  };
+  const maxMonthly = nearestMonthly('max');         // COAX
+  const stdMonthly = nearestMonthly('standard');    // öppen fiber
+  if (maxMonthly == null && stdMonthly == null) return null;
+  const cheapest = Math.min(...[maxMonthly, stdMonthly].filter((x) => x != null));
+  const dearest  = Math.max(...[maxMonthly, stdMonthly].filter((x) => x != null));
+  const p25 = Math.round(cheapest * 12);
+  const median = Math.round(dearest * 12);
+  return {
+    p25,
+    median,
+    source: 'tele2-verified',
+    note: `Bredband ≥${s} Mbit — verifierat Tele2 adress-API ${tv.lastVerified}: billigast ${cheapest} kr/mån exkl (COAX), öppen fiber ${dearest} kr/mån exkl. p25=${p25}, median=${median} kr/år.`,
   };
 }

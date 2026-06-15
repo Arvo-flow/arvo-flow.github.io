@@ -102,9 +102,15 @@ const critical = [];  // exit 1
 const warnings = [];  // exit 0 (eller 1 med --strict)
 const infos    = [];  // alltid exit 0
 
+// Kategorier som bevakas av en DEDIKERAD API-vakt (starkare än price-monitors substräng-check),
+// och vars priser inte ligger på en skrapbar sida → undantagna från price-monitor-kravet.
+//   bredband → scripts/verify-tele2-bredband.mjs (Tele2 adress-API, per nät/hastighet)
+const DEDICATED_VAKT = new Set(['bredband']);
+
 // ── Kontroll 1: Täckning — real-public kategori utan price-monitor-check ──────
 for (const { key, source } of categoryEntries) {
   if (source !== 'real-public') continue;
+  if (DEDICATED_VAKT.has(key)) continue;
   if (!monitoredCategories.has(key)) {
     critical.push(
       `[TÄCKNING] '${key}' är real-public i branchindex.js men saknar entry i price-monitor.mjs.\n` +

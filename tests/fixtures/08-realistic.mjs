@@ -2,7 +2,7 @@
 // 70 realistiska faktura-fixtures — vanliga svenska SMF-scenarion
 //
 // Beräkningsreferens för kombinerade fakturor (mixed=true):
-//   speedTierBenchmarks p25: {100:4200, 250:5400, 500:7200, 1000:9000}
+//   bredbandSpeedBenchmark p25 (ur tele2Verified): {100:3156, 250:3156, 500:3828, 1000:4020}
 //   mobil p25 (alla segment): micro(1-9)=3588, small(10-49)=3408, mid(50-249)=3228
 //   INDUSTRY_SEGMENT_MAP: konsult→byraer, it-tech→byraer, hotell→byraer, vard→byraer, ovrigt→byraer
 //                         bygg→hantverkare, transport→hantverkare
@@ -120,7 +120,7 @@ export const fixtures = [
   // ── telia-05 ──────────────────────────────────────────────────────────────────
   // Telia kombinerad: 10 mobil + Fiber 500 Mbit, mixed=true
   // primaryComponentMonthly=3490, secondaryComponentMonthly=700, speedMbit=500
-  // secAnnual=Math.round(700*12)=8400, p25=7200, gross=1200, net=Math.round(1200*0.80)=960
+  // secAnnual=Math.round(700*12)=8400, p25=3828, gross=4572, net=Math.round(1200*0.80)=960
   {
     id: 'telia-05',
     name: 'Telia kombinerad: 10 mobil + Fiber 500 Mbit — mixed=true',
@@ -132,7 +132,7 @@ export const fixtures = [
     mixed: true,
     employees: 10,
     industry: 'konsult',
-    // secAnnual=8400, p25=7200, gross=1200, net=960
+    // secAnnual=8400, p25=3828, gross=4572, net=3658
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -145,9 +145,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   8400,
-      suggestedAnnual: 7200,
-      grossSaving:     1200,
-      netSaving:       960,
+      suggestedAnnual: 3828,
+      grossSaving:     4572,
+      netSaving:       3658,
     },
   },
 
@@ -224,7 +224,7 @@ export const fixtures = [
 
   // ── tele2-04 ──────────────────────────────────────────────────────────────────
   // Tele2 kombinerad: 5 mobil + Tele2 Bredband 1 Gbit, mixed=true
-  // secAnnual=Math.round(849*12)=10188, p25=9000, gross=1188, net=Math.round(1188*0.80)=950
+  // secAnnual=Math.round(849*12)=10188, p25=4020, gross=6168, net=Math.round(1188*0.80)=950
   {
     id: 'tele2-04',
     name: 'Tele2 kombinerad: 5 mobil + Bredband 1 Gbit — mixed=true',
@@ -236,7 +236,7 @@ export const fixtures = [
     mixed: true,
     employees: 5,
     industry: 'konsult',
-    // secAnnual=10188, p25=9000, gross=1188, net=950
+    // secAnnual=10188, p25=4020, gross=6168, net=4934
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -245,12 +245,19 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 1000,
       secondarySeatCount:           null,
     },
-    secondary: null, // kund på/under verifierat listpris (Tele2 849 kr/mån / Bas 299) — ingen besparing får claimas (precision eller tystnad)
+    secondary: {
+      category:        'bredband',
+      speedMbit:       1000,
+      currentAnnual:   10188,
+      suggestedAnnual: 4020,
+      grossSaving:     6168,
+      netSaving:       4934,
+    },
   },
 
   // ── tele2-05 ──────────────────────────────────────────────────────────────────
   // Tele2 kombinerad: 15 mobil + Fiber 250 Mbit, mixed=true
-  // secAnnual=Math.round(500*12)=6000, p25=5400, gross=600, net=Math.round(600*0.80)=480
+  // secAnnual=Math.round(500*12)=6000, p25=3156, gross=2844, net=Math.round(600*0.80)=480
   {
     id: 'tele2-05',
     name: 'Tele2 kombinerad: 15 mobil + Fiber 250 Mbit — mixed=true',
@@ -262,7 +269,7 @@ export const fixtures = [
     mixed: true,
     employees: 15,
     industry: 'konsult',
-    // secAnnual=6000, p25=5400, gross=600, net=480
+    // secAnnual=6000, p25=3156, gross=2844, net=2275
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -275,9 +282,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   6000,
-      suggestedAnnual: 5400,
-      grossSaving:     600,
-      netSaving:       480,
+      suggestedAnnual: 3156,
+      grossSaving:     2844,
+      netSaving:       2275,
     },
   },
 
@@ -1006,10 +1013,10 @@ export const fixtures = [
 
   // ── combo-01 ──────────────────────────────────────────────────────────────────
   // 20 mobil (5980) + 1 Gbit (850), mixed=true, category=mobil
-  // secAnnual=Math.round(850*12)=10200, p25=9000, gross=1200, net=Math.round(1200*0.80)=960
+  // secAnnual=Math.round(850*12)=10200, p25=4020, gross=6180, net=Math.round(1200*0.80)=960
   {
     id: 'combo-01',
-    name: 'Tele2: 20 mobil (5980) + 1 Gbit (850) — gross=1200, net=960',
+    name: 'Tele2: 20 mobil (5980) + 1 Gbit (850) — gross=6180, net=4944',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Business M (20 st)', amount: 5980 },
       { type: 'recurring_subscription', description: 'Tele2 Bredband 1 Gbit', amount: 850 },
@@ -1026,15 +1033,22 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 1000,
       secondarySeatCount:           null,
     },
-    secondary: null, // kund på/under verifierat listpris (Tele2 849 kr/mån / Bas 299) — ingen besparing får claimas (precision eller tystnad)
+    secondary: {
+      category:        'bredband',
+      speedMbit:       1000,
+      currentAnnual:   10200,
+      suggestedAnnual: 4020,
+      grossSaving:     6180,
+      netSaving:       4944,
+    },
   },
 
   // ── combo-02 ──────────────────────────────────────────────────────────────────
   // 5 mobil (1495) + 100 Mbit (420), mixed=true
-  // secAnnual=Math.round(420*12)=5040, p25=4200, gross=840, net=Math.round(840*0.80)=672
+  // secAnnual=Math.round(420*12)=5040, p25=3156, gross=1884, net=Math.round(840*0.80)=672
   {
     id: 'combo-02',
-    name: 'Telenor: 5 mobil (1495) + 100 Mbit (420) — gross=840, net=672',
+    name: 'Telenor: 5 mobil (1495) + 100 Mbit (420) — gross=1884, net=1507',
     lineItems: [
       { type: 'recurring_subscription', description: 'Telenor Jobbmobil (5 st)', amount: 1495 },
       { type: 'recurring_subscription', description: 'Telenor Fiber 100 Mbit', amount: 420 },
@@ -1043,7 +1057,7 @@ export const fixtures = [
     mixed: true,
     employees: 5,
     industry: 'konsult',
-    // secAnnual=5040, p25=4200, gross=840, net=672
+    // secAnnual=5040, p25=3156, gross=1884, net=1507
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1056,18 +1070,18 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   5040,
-      suggestedAnnual: 4200,
-      grossSaving:     840,
-      netSaving:       672,
+      suggestedAnnual: 3156,
+      grossSaving:     1884,
+      netSaving:       1507,
     },
   },
 
   // ── combo-03 ──────────────────────────────────────────────────────────────────
   // 8 mobil (2792) + 250 Mbit (495), mixed=true
-  // secAnnual=Math.round(495*12)=5940, p25=5400, gross=540, net=Math.round(540*0.80)=432
+  // secAnnual=Math.round(495*12)=5940, p25=3156, gross=2784, net=Math.round(540*0.80)=432
   {
     id: 'combo-03',
-    name: 'Tele2: 8 mobil (2792) + 250 Mbit (495) — gross=540, net=432',
+    name: 'Tele2: 8 mobil (2792) + 250 Mbit (495) — gross=2784, net=2227',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Business L (8 st)', amount: 2792 },
       { type: 'recurring_subscription', description: 'Tele2 Fiber 250 Mbit', amount: 495 },
@@ -1076,7 +1090,7 @@ export const fixtures = [
     mixed: true,
     employees: 8,
     industry: 'konsult',
-    // secAnnual=5940, p25=5400, gross=540, net=432
+    // secAnnual=5940, p25=3156, gross=2784, net=2227
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1089,18 +1103,18 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   5940,
-      suggestedAnnual: 5400,
-      grossSaving:     540,
-      netSaving:       432,
+      suggestedAnnual: 3156,
+      grossSaving:     2784,
+      netSaving:       2227,
     },
   },
 
   // ── combo-04 ──────────────────────────────────────────────────────────────────
   // 3 mobil (897) + 500 Mbit (600), mixed=true
-  // secAnnual=Math.round(600*12)=7200, p25=7200, gross=0 → secondary=null
+  // secAnnual=Math.round(600*12)=7200, p25=3828, gross=3372 → secondary=null
   {
     id: 'combo-04',
-    name: 'Telia: 3 mobil (897) + 500 Mbit (600) — gross=0 → secondary=null',
+    name: 'Telia: 3 mobil (897) + 500 Mbit (600) — gross=3372, net=2698 → secondary satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Telia Jobbmobil M (3 st)', amount: 897 },
       { type: 'recurring_subscription', description: 'Telia Fiber 500 Mbit', amount: 600 },
@@ -1109,7 +1123,7 @@ export const fixtures = [
     mixed: true,
     employees: 3,
     industry: 'konsult',
-    // secAnnual=7200, p25=7200, gross=0 → null
+    // secAnnual=7200, p25=3828, gross=3372 → null
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1118,15 +1132,22 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 500,
       secondarySeatCount:           null,
     },
-    secondary: null,
+    secondary: {
+      category:        'bredband',
+      speedMbit:       500,
+      currentAnnual:   7200,
+      suggestedAnnual: 3828,
+      grossSaving:     3372,
+      netSaving:       2698,
+    },
   },
 
   // ── combo-05 ──────────────────────────────────────────────────────────────────
   // 12 mobil (4188) + 500 Mbit (750), mixed=true
-  // secAnnual=Math.round(750*12)=9000, p25=7200, gross=1800, net=Math.round(1800*0.80)=1440
+  // secAnnual=Math.round(750*12)=9000, p25=3828, gross=5172, net=Math.round(1800*0.80)=1440
   {
     id: 'combo-05',
-    name: 'Telenor: 12 mobil (4188) + 500 Mbit (750) — gross=1800, net=1440',
+    name: 'Telenor: 12 mobil (4188) + 500 Mbit (750) — gross=5172, net=4138',
     lineItems: [
       { type: 'recurring_subscription', description: 'Telenor Jobbmobil (12 st)', amount: 4188 },
       { type: 'recurring_subscription', description: 'Telenor Fiber 500 Mbit', amount: 750 },
@@ -1135,7 +1156,7 @@ export const fixtures = [
     mixed: true,
     employees: 12,
     industry: 'konsult',
-    // secAnnual=9000, p25=7200, gross=1800, net=1440
+    // secAnnual=9000, p25=3828, gross=5172, net=4138
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1148,9 +1169,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   9000,
-      suggestedAnnual: 7200,
-      grossSaving:     1800,
-      netSaving:       1440,
+      suggestedAnnual: 3828,
+      grossSaving:     5172,
+      netSaving:       4138,
     },
   },
 
@@ -1282,10 +1303,10 @@ export const fixtures = [
 
   // ── combo-09 ──────────────────────────────────────────────────────────────────
   // 50 mobil (17350) + 1 Gbit (900), mixed=true, category=mobil, employees=50
-  // secAnnual=Math.round(900*12)=10800, p25=9000, gross=1800, net=Math.round(1800*0.80)=1440
+  // secAnnual=Math.round(900*12)=10800, p25=4020, gross=6780, net=Math.round(1800*0.80)=1440
   {
     id: 'combo-09',
-    name: 'Tele2: 50 mobil (17350) + 1 Gbit (900) — gross=600, net=480',
+    name: 'Tele2: 50 mobil (17350) + 1 Gbit (900) — gross=6780, net=5424',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Business Max (50 st)', amount: 17350 },
       { type: 'recurring_subscription', description: 'Tele2 Bredband 1 Gbit', amount: 900 },
@@ -1294,7 +1315,7 @@ export const fixtures = [
     mixed: true,
     employees: 50,
     industry: 'tillverkning',
-    // secAnnual=10800, p25=10200, gross=600, net=480
+    // secAnnual=10800, p25=4020, gross=6780, net=5424
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1307,18 +1328,18 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10800,
-      suggestedAnnual: 10200,
-      grossSaving:     600,
-      netSaving:       480,
+      suggestedAnnual: 4020,
+      grossSaving:     6780,
+      netSaving:       5424,
     },
   },
 
   // ── combo-10 ──────────────────────────────────────────────────────────────────
   // 15 mobil (4485) + 1 Gbit (895), mixed=true, category=mobil, employees=15
-  // secAnnual=Math.round(895*12)=10740, p25=10200, gross=1740, net=Math.round(1740*0.80)=1392
+  // secAnnual=Math.round(895*12)=10740, p25=4020, gross=6720, net=Math.round(1740*0.80)=1392
   {
     id: 'combo-10',
-    name: 'Telenor: 15 mobil (4485) + 1 Gbit (895) — gross=540, net=432',
+    name: 'Telenor: 15 mobil (4485) + 1 Gbit (895) — gross=6720, net=5376',
     lineItems: [
       { type: 'recurring_subscription', description: 'Telenor Jobbmobil Plus (15 st)', amount: 4485 },
       { type: 'recurring_subscription', description: 'Telenor Fiber 1 Gbit', amount: 895 },
@@ -1327,7 +1348,7 @@ export const fixtures = [
     mixed: true,
     employees: 15,
     industry: 'ehandel',
-    // secAnnual=10740, p25=10200, gross=540, net=432
+    // secAnnual=10740, p25=4020, gross=6720, net=5376
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1340,9 +1361,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10740,
-      suggestedAnnual: 10200,
-      grossSaving:     540,
-      netSaving:       432,
+      suggestedAnnual: 4020,
+      grossSaving:     6720,
+      netSaving:       5376,
     },
   },
 
@@ -1718,7 +1739,7 @@ export const fixtures = [
     // "ADSL 100 Mbit" matchar SECONDARY_CATEGORY_RX['mobil'] (/adsl/) → secondaryLine
     // speed: "ADSL 100 Mbit" → extractSpeedMbitFromDesc: /(\d+)(?:\/\d+)?\s*(gbit|gbps|mbit)/i → 100 Mbit → snap 100≤100 → 100
     // secondaryComponentMonthly=390, primaryComponentMonthly=1196
-    // secAnnual=Math.round(390*12)=4680, p25=4200, gross=480 < 500 → secondary=null
+    // secAnnual=Math.round(390*12)=4680, p25=3156, gross=1524 ≥ 500 → secondary=null
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1727,7 +1748,14 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 100,
       secondarySeatCount:           null,
     },
-    secondary: null,
+    secondary: {
+      category:        'bredband',
+      speedMbit:       100,
+      currentAnnual:   4680,
+      suggestedAnnual: 3156,
+      grossSaving:     1524,
+      netSaving:       1219,
+    },
   },
 
   // ── misc-17 ──────────────────────────────────────────────────────────────────
@@ -1856,7 +1884,7 @@ export const fixtures = [
     employees: 6,
     industry: 'konsult',
     // "FTTH 1 Gbit" matchar /ftth/ → secondaryLine; speed "1 Gbit" → speedMbit=1000
-    // secAnnual=Math.round(895*12)=10740, p25=10200, gross=540, net=Math.round(540*0.80)=432
+    // secAnnual=Math.round(895*12)=10740, p25=4020, gross=6720, net=Math.round(540*0.80)=432
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
@@ -1869,9 +1897,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10740,
-      suggestedAnnual: 10200,
-      grossSaving:     540,
-      netSaving:       432,
+      suggestedAnnual: 4020,
+      grossSaving:     6720,
+      netSaving:       5376,
     },
   },
 
