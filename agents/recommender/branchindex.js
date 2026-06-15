@@ -65,7 +65,7 @@ export const BRANCHINDEX = {
     //   Kunder på äldre fast avtal betalar mer (~1,35–1,55 kr/kWh) — de ligger ovan median.
     note: 'Rörligt spotavtal + nätavgift + energiskatt (exkl. moms, SE3). Källa: Nordpool SE3 årssnitt 2025: 51,25 öre/kWh + nätavgift ~26–39 öre/kWh (Ellevio) + energiskatt 36,0 öre/kWh (Skatteverket 2026, sänkt 1 jan 2026) + elhandlare påslag ~5–10 öre = ~1,18–1,35 kr/kWh all-in exkl. moms. OBS: all-in-priset är STARKT storleksberoende — verifierade svenska företag <20 MWh/år betalar ~2,16 kr/kWh, 20–499 MWh ~1,26 kr/kWh, 500–1 999 MWh ~1,07 kr/kWh (Eurostat 2025-S2, se eurostatBands). Typisk förbrukning: micro ~10–15 MWh/år, small ~25–35 MWh/år, mid ~80–120 MWh/år.',
     // VERIFIERADE företagselpriser per förbrukningsband (Eurostat nrg_pc_205, icke-hushåll,
-    // SE, allt-in EXKL moms). Hämtas/verifieras veckovis av scripts/verify-eurostat-el.mjs.
+    // SE, allt-in EXKL moms). Hämtas/verifieras veckovis av scripts/verify.mjs eurostat-el (fabriken).
     // Roll 1 (GOLV): lib/el-intelligence.js floorar uppnåeligt all-in-pris vid bandet — ett bolag
     //   kan aldrig nå ett lägre pris än vad verifierade bolag i samma storleksband betalar, för
     //   nätavgiften (monopol) följer med vid leverantörsbyte. Förhindrar överskattad besparing för
@@ -110,7 +110,7 @@ export const BRANCHINDEX = {
     unit: 'kr/år',
     // Prices are per user/year — lib/benchmark.js scales by seat count before the LLM sees it.
     // Tele2 Företag mobilabonnemang — verifierat LIVE 2026-06-14 (Playwright, status 200,
-    // scripts/verify-tele2-mobil.mjs). Renderade plan→pris (24 mån bindning = faktiskt B2B-pris):
+    // scripts/verify.mjs tele2-mobil (fabriken)). Renderade plan→pris (24 mån bindning = faktiskt B2B-pris):
     //   60 GB           239 kr/mth = 2 868 kr/yr  ← p25   (ordinarie 399 kr utan bindning)
     //   Obegränsad      279 kr/mth = 3 348 kr/yr  ← median (ordinarie 499 kr utan bindning)
     //   Obegränsad Max  299 kr/mth = 3 588 kr/yr          (ordinarie 599 kr utan bindning)
@@ -173,7 +173,7 @@ export const BRANCHINDEX = {
     //   • "Standard" (öppet fiber/LAN): dyrare, varierar — 1000/1000 = 487 kr/mån exkl (12 mån)
     // DÄRMED är det gamla statiska "849 kr" (företagskatalog) FELAKTIGT som rikstäckande ankare —
     // det skapade el-liknande falska besparingar på en adressberoende marknad. Ersatt av tele2Verified
-    // nedan + veckovis driftvakt (scripts/verify-tele2-bredband.mjs, replayar 3 fasta adresser).
+    // nedan + veckovis driftvakt (scripts/verify.mjs tele2-bredband (fabriken), replayar 3 fasta adresser).
     continuousVerification: true,
     // Verifierade Tele2 REGULAR-priser (kr/mån EXKL moms), live 2026-06-14 via API:t.
     // Driftvakten resolvar dessa adresser → API → jämför mot priserna. Rött vid drift.
@@ -210,7 +210,7 @@ export const BRANCHINDEX = {
     // p25 = Stripe/billigaste spotavtal ~1,50 %. Median = SumUp/Zettle standardrate ~1,75 %.
     note: 'Transaktionsavgifter per år (uppskattad kortvolym × rate). VERIFIERADE rates live 2026-06-14: Zettle 1,85 %, Stripe Terminal 1,4 % + 1,00 kr (EES-kort, card-present). SumUp ~1,75–1,95 % (publicerar ej rate på lättskrapad sida). OBS: kr/år är "estimated" (inte "real-public") eftersom kortvolym per segment är uppskattad — ratet är verifierat, volymen är det inte. För en riktig faktura jämförs kundens faktiska rate mot det verifierade bandet.',
     // VERIFIERADE transaktionsrater (card-present, Sverige, exkl moms) — hämtas/verifieras
-    // veckovis av scripts/verify-kortterminal-rates.mjs. Roll: ankra rate-bandet (det
+    // veckovis av scripts/verify.mjs kortterminal (fabriken). Roll: ankra rate-bandet (det
     // verifierbara). kr/år-matrisen förblir estimat (kortvolym saknar offentlig källa, som el:s kWh).
     verifiedRates: {
       source: 'official_web', lastVerified: '2026-06-14',
@@ -311,7 +311,7 @@ export const BRANCHINDEX = {
       // PRISSTRATEGI:
       //   Microsoft 365  → SEK-priser från microsoft.com/sv-se (publik prissida).
       //                    Business-tiers (basic/standard/premium) re-verifieras
-      //                    automatiskt via scripts/verify-m365-prices.mjs på
+      //                    automatiskt via scripts/verify.mjs m365 (fabriken) på
       //                    GitHub Actions-runnern (obockerad egress) — driftlarm,
       //                    aldrig tyst överskrivning (parse-fel får ej korrumpera
       //                    prisboken). Källa: microsoft.com direktverifierat 2026-06-14.

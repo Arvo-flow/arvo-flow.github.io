@@ -53,7 +53,7 @@ const PRICE_CHECKS = [
     supplier: 'Tele2 Företag mobilabonnemang',
     url: 'https://www.tele2.se/foretag/mobilabonnemang',
     // OBS: huvudplanerna är JS-renderade — den DETERMINISTISKA driftvakten är
-    // scripts/verify-tele2-mobil.mjs (Playwright, hård gate). Dessa substräng-
+    // scripts/verify.mjs tele2-mobil (fabriken) (Playwright, hård gate). Dessa substräng-
     // checkar är en grov nattlig backup. Verifierat 2026-06-14 (24 mån bindning).
     checks: [
       { name: '60 GB 239 kr/mth (24 mån)',          pattern: /239/ },
@@ -74,7 +74,7 @@ const PRICE_CHECKS = [
   },
 
   // Bredband bevakas INTE här: priset ligger inte på en skrapbar sida (adress-gated). Det
-  // verifieras live per adress/nät av scripts/verify-tele2-bredband.mjs mot Tele2:s adress-API.
+  // verifieras live per adress/nät av scripts/verify.mjs tele2-bredband (fabriken) mot Tele2:s adress-API.
 
   // Kortterminal — estimated (rates changed; monitor for further changes)
   {
@@ -392,7 +392,7 @@ const PRICE_CHECKS = [
     ],
   },
 
-  // (Bredband flyttat till dedikerad adress-API-vakt: scripts/verify-tele2-bredband.mjs)
+  // (Bredband flyttat till dedikerad adress-API-vakt: scripts/verify.mjs tele2-bredband (fabriken))
 
   // ── El: Tibber Företag ───────────────────────────────────────────────────
   // Tibber är det enda spotprisalternativet med öppen API för smart styrning.

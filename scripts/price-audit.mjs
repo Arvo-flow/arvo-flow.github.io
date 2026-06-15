@@ -104,7 +104,7 @@ const infos    = [];  // alltid exit 0
 
 // Kategorier som bevakas av en DEDIKERAD API-vakt (starkare än price-monitors substräng-check),
 // och vars priser inte ligger på en skrapbar sida → undantagna från price-monitor-kravet.
-//   bredband → scripts/verify-tele2-bredband.mjs (Tele2 adress-API, per nät/hastighet)
+//   bredband → scripts/verify.mjs tele2-bredband (fabriken)
 const DEDICATED_VAKT = new Set(['bredband']);
 
 // ── Kontroll 1: Täckning — real-public kategori utan price-monitor-check ──────
