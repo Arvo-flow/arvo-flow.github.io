@@ -1,0 +1,22 @@
+name: Probe Tele2 recal
+
+# Diagnos för omkalibrering av tele2-mobil + tele2-bredband (DOM-/API-drift). Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe Tele2 recal
+        run: node scripts/probe-tele2-recal.mjs
