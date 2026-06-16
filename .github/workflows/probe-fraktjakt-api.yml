@@ -1,0 +1,23 @@
+name: Probe Fraktjakt API
+
+# Runda 2: bekräftar Fraktjakts officiella frakt-API (ren fetch) + djupdyker Sendifys
+# priskalkylator (alla XHR). Underlag för logistik-vakten i fabriken. Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe Fraktjakt API + Sendify calculator
+        run: node scripts/probe-fraktjakt-api.mjs
