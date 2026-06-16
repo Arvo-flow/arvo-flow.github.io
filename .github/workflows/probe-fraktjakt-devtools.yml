@@ -1,0 +1,17 @@
+name: Probe Fraktjakt devtools
+
+# Hittar exakt URL där consignor_id + key genereras (registrera integration). Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Probe Fraktjakt devtools
+        run: node scripts/probe-fraktjakt-devtools.mjs
