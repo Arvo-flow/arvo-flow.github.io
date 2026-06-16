@@ -1,0 +1,24 @@
+name: Probe aggregators recon
+
+# Hävstångs-spaning: hittar frakt-aggregatorernas rate-API (Fraktjakt/Sendify/Shipmondo)
+# via Playwright nätverksfångst + configurator-driving. Underlag för logistik-vakten i
+# fabriken. Endast manuell (workflow_dispatch).
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe aggregators
+        run: node scripts/probe-aggregators-recon.mjs
