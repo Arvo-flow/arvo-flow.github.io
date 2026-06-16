@@ -24,6 +24,7 @@ import './branchindex.mjs';
 import './recommend-deterministic.mjs';
 import './shelfware.mjs';
 import './recompute-shelfware.mjs';
+import './fraktjakt.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

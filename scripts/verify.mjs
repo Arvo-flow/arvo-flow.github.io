@@ -28,6 +28,14 @@ for (const v of targets) {
   try { res = await v.run(); }
   catch (e) { console.error(`  ✗ körfel: ${e.message.split('\n')[0]}`); anyFail = true; continue; }
 
+  // Källa som väntar på en credential (t.ex. en API-nyckel som ännu inte lagts in som secret)
+  // är varken verifierad eller drivande — den är pending. Neutral skip, aldrig rött.
+  if (res.skipped) {
+    for (const n of res.notes ?? []) console.log(`  · ${n}`);
+    console.log(`  → ⏭ [${v.id}] väntar (tänds när källans credential finns)`);
+    continue;
+  }
+
   for (const n of res.notes ?? []) console.log(`  · ${n}`);
   for (const c of res.checks ?? []) {
     console.log(`  ${c.ok ? '✓' : '✗ DRIFT'} ${c.name}: prisbok ${c.expected} · live ${c.actual}`);
