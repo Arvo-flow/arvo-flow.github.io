@@ -56,10 +56,13 @@ function tierCtx(raw, tiers) {
 for (const [vendor, { urls, tiers }] of Object.entries(TARGETS)) {
   console.log(`\n══════════════ ${vendor} ══════════════`);
   for (const url of urls) {
-    // 1) Plain fetch RÅ HTML
+    // 1) Plain fetch RÅ HTML (6s timeout → snabb-fail om sidan bot-väggar/hänger)
     let raw = '', status = '?';
     try {
-      const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'sv-SE,sv;q=0.9' }, redirect: 'follow' });
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 6000);
+      const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'sv-SE,sv;q=0.9' }, redirect: 'follow', signal: ac.signal });
+      clearTimeout(t);
       status = r.status; raw = await r.text();
     } catch (e) { status = 'ERR ' + e.name; }
     const f = scan(raw);
@@ -70,13 +73,16 @@ for (const [vendor, { urls, tiers }] of Object.entries(TARGETS)) {
     f.usd.slice(0, 4).forEach((s) => console.log(`     $| ${s}`));
     tierCtx(raw, tiers).forEach((s) => console.log(`     tier| ${s}`));
 
-    // 2) Chromium-render (om RÅ HTML var pristom men sidan är JS-app)
-    if (f.sek.length === 0 && status === 200) {
+    // 2) Chromium-render ALLTID när plain fetch inte gav SEK (bot-väggad fetch ELLER JS-app).
+    //    Detta är den ärliga testen: kan en RIKTIG webbläsare läsa öppet SEK?
+    if (f.sek.length === 0) {
       try {
-        const html = await withPage(url, async (page) => await page.content(), { settleMs: 4000 });
+        const html = await withPage(url, async (page) => await page.content(), { settleMs: 4500 });
         const r2 = scan(html);
-        console.log(`  [render] SEK kr-träffar ${r2.sek.length} · EUR ${r2.eur.length} · USD ${r2.usd.length}`);
-        r2.sek.slice(0, 12).forEach((s) => console.log(`     kr*| ${s}`));
+        console.log(`  [render] ${html.length}b · SEK kr-träffar ${r2.sek.length} · "SEK" ${r2.sekW} · EUR ${r2.eur.length} · USD ${r2.usd.length} · login:${r2.login} · offert:${r2.quote}`);
+        r2.sek.slice(0, 14).forEach((s) => console.log(`     kr*| ${s}`));
+        r2.eur.slice(0, 4).forEach((s) => console.log(`     €*| ${s}`));
+        tierCtx(html, tiers).slice(0, 8).forEach((s) => console.log(`     tier*| ${s}`));
       } catch (e) { console.log(`  [render] ERR ${e.message.split('\n')[0]}`); }
     }
   }
