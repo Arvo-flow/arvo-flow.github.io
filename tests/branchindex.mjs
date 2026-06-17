@@ -237,9 +237,9 @@ describe('BI-08 · Bredband bredbandSpeedBenchmark (härledd ur tele2Verified)',
       assert.ok(t.p25 < t.median, `${s} Mbit: p25 (${t.p25}) >= median (${t.median})`);
     });
   }
-  test('1000 Mbit: p25 = 4 020 (Tele2 COAX 1200 335×12), median = 5 844 (öppen fiber 1000 487×12)', () => {
+  test('1000 Mbit: p25 = 3 828 (Tele2 COAX 1200 319×12), median = 5 844 (öppen fiber 1000 487×12)', () => {
     const t = bredbandSpeedBenchmark(1000);
-    assert.strictEqual(t.p25,    4020);
+    assert.strictEqual(t.p25,    3828);
     assert.strictEqual(t.median, 5844);
   });
   test('utan giltig hastighet → null (Zero Trust: ingen gissad siffra)', () => {

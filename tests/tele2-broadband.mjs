@@ -42,7 +42,7 @@ describe('Tele2-bredband — verifierade priser låsta i prisboken', () => {
   test('tele2Verified bär de live-verifierade ankarpriserna (exkl moms)', () => {
     const tv = BRANCHINDEX.bredband.tele2Verified;
     assert.ok(tv && Array.isArray(tv.verifyAddresses) && tv.verifyAddresses.length >= 3);
-    assert.equal(tv.max[1200], 335);
+    assert.equal(tv.max[1200], 319);
     assert.equal(tv.max.bindingMonths, 24);
     assert.equal(tv.standard[1000], 487);
     assert.equal(tv.standard.bindingMonths, 12);
