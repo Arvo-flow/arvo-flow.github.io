@@ -43,7 +43,9 @@ describe('Tele2-bredband — verifierade priser låsta i prisboken', () => {
     const tv = BRANCHINDEX.bredband.tele2Verified;
     assert.ok(tv && Array.isArray(tv.verifyAddresses) && tv.verifyAddresses.length >= 3);
     assert.equal(tv.max[1200], 319);
-    assert.equal(tv.max.bindingMonths, 24);
+    // Bindningstid sänkt 24 → 12 mån, verifierad 2026-06-17 via COAX-sonden (319-priset
+    // bärs av 12-mån-raden på alla tre adresser; 0-mån-raden ligger på 439).
+    assert.equal(tv.max.bindingMonths, 12);
     assert.equal(tv.standard[1000], 487);
     assert.equal(tv.standard.bindingMonths, 12);
   });

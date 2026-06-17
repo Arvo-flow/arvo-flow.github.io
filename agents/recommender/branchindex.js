@@ -169,7 +169,7 @@ export const BRANCHINDEX = {
     // två rena publika JSON-endpoints (feasibility/addresses + broadband/products) som ger
     // adress- OCH nät-specifika priser. Inget rikstäckande listpris finns; priset beror på
     // vilket NÄT som når adressen. Bekräftat empiriskt:
-    //   • "Max" (Tele2 COAX): nationellt enhetligt — 1200/100 = 319 kr/mån exkl (24 mån)
+    //   • "Max" (Tele2 COAX): nationellt enhetligt — 1200/100 = 319 kr/mån exkl (12 mån)
     //   • "Standard" (öppet fiber/LAN): dyrare, varierar — 1000/1000 = 487 kr/mån exkl (12 mån)
     // DÄRMED är det gamla statiska "849 kr" (företagskatalog) FELAKTIGT som rikstäckande ankare —
     // det skapade el-liknande falska besparingar på en adressberoende marknad. Ersatt av tele2Verified
@@ -180,16 +180,18 @@ export const BRANCHINDEX = {
     tele2Verified: {
       source: 'tele2-address-api', lastVerified: '2026-06-17', unit: 'kr_per_manad_exkl_moms',
       verifyAddresses: ['Götgatan 92B, Stockholm', 'Sturegatan 33, Sundbyberg', 'Storgatan 41F, Östersund'],
-      // family Max = Tele2 COAX (nationellt enhetligt, 24 mån bindning).
+      // family Max = Tele2 COAX (nationellt enhetligt, 12 mån bindning).
       // Prissänkning verifierad 2026-06-17 (vakten larmade): 263/319/335 → 239/279/319.
-      max: { 250: 239, 500: 279, 1200: 319, 2500: 319, bindingMonths: 24 },
+      // Bindningstid sänkt 24 → 12 mån, verifierad 2026-06-17 via adress-API (COAX-sondens
+      // 12-mån-rad bär 319-priset på alla tre adresser; 0-mån-raden ligger på 439).
+      max: { 250: 239, 500: 279, 1200: 319, 2500: 319, bindingMonths: 12 },
       // family Standard = öppet fiber/LAN (12 mån bindning)
       standard: { 100: 399, 250: 415, 500: 455, 1000: 487, bindingMonths: 12 },
     },
     unit: 'kr/år',
-    note: 'Bredband per adress — priset beror på vilket NÄT som når adressen (inget rikstäckande listpris). Verifierat live mot Tele2:s adress-API 2026-06-17 (exkl moms): "Max"/COAX nationellt enhetligt (1200 Mbit 319 kr/mån, 24 mån), "Standard"/öppen fiber dyrare (1000 Mbit 487 kr/mån, 12 mån). Adresser utan Tele2-nät har inget fast erbjudande (bara mobilt). Benchmarken är hastighetsbaserad och härleds i kod ur tele2Verified (bredbandSpeedBenchmark) — inga legacy-estimat finns kvar. Utan känd hastighet finns ingen verifierbar benchmark (Zero Trust: ingen gissad siffra).',
+    note: 'Bredband per adress — priset beror på vilket NÄT som når adressen (inget rikstäckande listpris). Verifierat live mot Tele2:s adress-API 2026-06-17 (exkl moms): "Max"/COAX nationellt enhetligt (1200 Mbit 319 kr/mån, 12 mån), "Standard"/öppen fiber dyrare (1000 Mbit 487 kr/mån, 12 mån). Adresser utan Tele2-nät har inget fast erbjudande (bara mobilt). Benchmarken är hastighetsbaserad och härleds i kod ur tele2Verified (bredbandSpeedBenchmark) — inga legacy-estimat finns kvar. Utan känd hastighet finns ingen verifierbar benchmark (Zero Trust: ingen gissad siffra).',
     alternatives: [
-      { supplier: 'Tele2 Bredband Max (COAX)',     positioning: 'Verifierat via adress-API: 1200/100 Mbit 319 kr/mån exkl (24 mån) — nationellt enhetligt där COAX-nätet når',  reliability: 0.95 },
+      { supplier: 'Tele2 Bredband Max (COAX)',     positioning: 'Verifierat via adress-API: 1200/100 Mbit 319 kr/mån exkl (12 mån) — nationellt enhetligt där COAX-nätet når',  reliability: 0.95 },
       { supplier: 'Tele2 Bredband Standard (fiber)', positioning: 'Verifierat: 1000/1000 Mbit 487 kr/mån exkl (12 mån) — öppna fibernät, dyrare än COAX',                        reliability: 0.95 },
       { supplier: 'Bahnhof Företag',                positioning: 'Svensk support, statisk IP, stark SLA — offert per adress (ej i Tele2-API:t)',                                  reliability: 0.94 },
     ],
