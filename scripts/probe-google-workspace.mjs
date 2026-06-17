@@ -1,63 +1,52 @@
-// scripts/probe-google-workspace.mjs — RECON: hitta Google Workspace PUBLIKA SEK-listpriser
-// direkt från Google (workspace.google.com), inte via tredjepartsaggregator. Idag bär prisboken
-// USD-priser från softwarepricingguide.com (sekundärkälla) → integritetshål (regel 3). Innan vi
-// riktar den agnostiska rätt-storleksmotorn mot Google MÅSTE vi ha verifierade primärpriser i SEK.
-//
-// Sonden provar flera kandidat-URL:er (sv-lokaliserade) med BÅDE plain fetch OCH Chromium-render,
-// och dumpar varje "kr"-pristoken + dess närkontext + tier-namnen (Starter/Standard/Plus/Enterprise)
-// så vi ser exakt vad Google visar för svensk marknad och hur sidan är byggd (SSR vs JS).
-// HTTP-egress krävs (GH Actions, ej sandbox). Ren diagnos — når aldrig kund.
+// scripts/probe-google-workspace.mjs — RECON v2: Google Workspace publika SEK-listpriser.
+// v1 visade 0 "kr" i BÅDE plain fetch och render — MEN v1 strippade <script>, och Googles prissida
+// är en JS-app vars priser sannolikt ligger i en inbäddad JSON-blob (script), inte i synlig text.
+// v2 söker RÅ-HTML (ostrippad) + renderad sida + embedded JSON efter pristokens i alla format:
+// kr / SEK / USD / $ / amountMicros / currencyCode + siffror nära tier-namnen. Avgör om Google
+// över huvud taget exponerar ett verifierbart publikt pris (primärkälla) eller gömmer det i funneln.
+// HTTP-egress krävs (GH Actions). Ren diagnos — når aldrig kund.
 
-import { fetchText, stripHtml, withPage } from '../lib/verifiers/core.mjs';
+import { withPage } from '../lib/verifiers/core.mjs';
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
 const URLS = [
   'https://workspace.google.com/intl/sv/pricing.html',
-  'https://workspace.google.com/intl/sv-se/pricing.html',
-  'https://workspace.google.com/intl/sv/pricing',
-  'https://workspace.google.com/pricing.html',
+  'https://workspace.google.com/pricing.html',            // ev. USD-ankare
+  'https://workspace.google.com/intl/en/pricing.html',
 ];
 
-const TIERS = ['Starter', 'Standard', 'Plus', 'Enterprise'];
-
-// Plocka ut "<n> kr"-tokens + 40 tecken kontext på var sida.
-function priceSnippets(flat) {
+// Pristokens i RÅ text/HTML: siffror följt av valuta, eller valutakod/microbelopp.
+function priceHits(raw) {
+  const pats = [
+    /.{0,30}\d[\d\s.,]*\s*kr\b.{0,15}/gi,
+    /.{0,20}\bSEK\b.{0,25}/gi,
+    /.{0,15}(?:US)?\$\s?\d[\d.,]*.{0,12}/gi,
+    /.{0,20}\d[\d.,]*\s*(?:USD|EUR)\b.{0,12}/gi,
+    /.{0,20}"?(?:amountMicros|priceMicros|units|currencyCode)"?\s*[:=]\s*"?[A-Z0-9.]+.{0,12}/gi,
+  ];
   const out = [];
-  const re = /.{0,45}\d[\d\s.,]*\s*kr\b.{0,25}/gi;
-  let m;
-  while ((m = re.exec(flat)) !== null) out.push(m[0].replace(/\s+/g, ' ').trim());
+  for (const re of pats) { let m; while ((m = re.exec(raw)) !== null) out.push(m[0].replace(/\s+/g, ' ').trim()); }
   return [...new Set(out)];
 }
 
-function tierContext(flat) {
-  const out = [];
-  for (const t of TIERS) {
-    const re = new RegExp(`.{0,10}\\bBusiness ${t}\\b.{0,80}`, 'gi');
-    let m;
-    while ((m = re.exec(flat)) !== null) out.push(m[0].replace(/\s+/g, ' ').trim());
-  }
-  return [...new Set(out)];
-}
-
-console.log('═══ PLAIN FETCH ═══');
+console.log('═══ PLAIN FETCH — RÅ HTML (script INKLUDERAT) ═══');
 for (const url of URLS) {
-  const { status, text } = await fetchText(url, { timeoutMs: 25000 });
-  const flat = stripHtml(text);
-  const prices = priceSnippets(flat);
-  console.log(`\n#### ${url}\n     status ${status} · ${text.length} bytes · "kr"-träffar: ${prices.length}`);
-  prices.slice(0, 25).forEach((p) => console.log(`     kr| ${p}`));
-  tierContext(flat).slice(0, 12).forEach((t) => console.log(`     tier| ${t}`));
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'sv-SE,sv;q=0.9' } });
+    const raw = await r.text();
+    const hits = priceHits(raw);
+    console.log(`\n#### ${url}\n     status ${r.status} · ${raw.length} bytes · pristokens: ${hits.length}`);
+    hits.slice(0, 40).forEach((h) => console.log(`     $| ${h}`));
+  } catch (e) { console.log(`\n#### ${url} → ERR ${e.message.split('\n')[0]}`); }
 }
 
-console.log('\n═══ CHROMIUM RENDER (bästa kandidaten) ═══');
-const RENDER_URL = URLS[0];
+console.log('\n═══ CHROMIUM RENDER — RÅ HTML via page.content() ═══');
 try {
-  const flat = await withPage(RENDER_URL, async (page) =>
-    (await page.evaluate(() => document.body?.innerText ?? '')).replace(/\s+/g, ' '), { settleMs: 4000 });
-  const prices = priceSnippets(flat);
-  console.log(`#### ${RENDER_URL} (renderad)\n     innerText ${flat.length} tecken · "kr"-träffar: ${prices.length}`);
-  prices.slice(0, 30).forEach((p) => console.log(`     kr| ${p}`));
-  tierContext(flat).slice(0, 12).forEach((t) => console.log(`     tier| ${t}`));
-} catch (e) {
-  console.log(`     RENDER ERR ${e.message.split('\n')[0]}`);
-}
-console.log('\n[probe-google-workspace] klar');
+  const raw = await withPage(URLS[0], async (page) => await page.content(), { settleMs: 4500 });
+  const hits = priceHits(raw);
+  console.log(`#### ${URLS[0]} (renderad, page.content)\n     ${raw.length} bytes · pristokens: ${hits.length}`);
+  hits.slice(0, 40).forEach((h) => console.log(`     $| ${h}`));
+} catch (e) { console.log(`     RENDER ERR ${e.message.split('\n')[0]}`); }
+
+console.log('\n[probe-google-workspace v2] klar');
