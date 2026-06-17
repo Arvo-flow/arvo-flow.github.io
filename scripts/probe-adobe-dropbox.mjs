@@ -1,3 +1,15 @@
+// ═══ VERDIKT 2026-06-17 (2 körningar, GH Actions): BÅDA UNDERKÄNDA — ingen ren öppen SEK. ═══
+//   ADOBE  (adobe.com/se ×4): plain fetch → AbortError (bot-väggad, 0b); Chromium-render → 39 BYTE
+//          (tom challenge-shell). Adobe blockerar BÅDE fetch OCH headless browser från US-runner.
+//          → ingen verifierbar öppen SEK via automation. (SEK finns i konsument-browser men bakom
+//            Akamai bot-skydd — opålitligt för veckovis fabriksvakt.) Fraktjakt-disciplin: avbryt.
+//   DROPBOX (dropbox.com ×3): status 200 MEN 0 pris-tokens (SEK/EUR/USD) i RÅ HTML + render;
+//          login:true + offert:true. Priser injiceras klient-sidan/bakom köp-flöde, inte öppet
+//          deterministiskt. Tier-namn syns (Plus/Professional/Standard/Advanced) men inga priser.
+//          → ingen öppen deterministisk SEK. Fraktjakt-disciplin: avbryt.
+//   ÅTGÄRD: ingen prisbok rörd, ingen data stagead. saas-creative förblir grindad (tystnad > gissning).
+//   Sonden behålls som bevis/mönster; engångs-workflow kan tas bort vid städning.
+//
 // scripts/probe-adobe-dropbox.mjs — RECON (read-only): publicerar Adobe (saas-creative) eller Dropbox
 // ÖPPNA, deterministiska listpriser i ÄKTA SEK — utan FX, inloggning eller offert-krav?
 //
