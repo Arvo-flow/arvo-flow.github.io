@@ -2219,6 +2219,28 @@ const TestaFaktura = () => {
               );
             })()}
 
+            {result.recommendation?.fortnoxRightsizing && (() => {
+              // Rätt-storleks-rådgivning för Fortnox. Alla tal kommer färdiga från backend
+              // (verifierad publik prisskillnad) — klienten räknar inget (regel 2).
+              const rs = result.recommendation.fortnoxRightsizing;
+              return (
+                <div style={{ gridColumn: '1 / -1', marginTop: '14px', padding: '16px 18px', background: '#F1F6F3', border: '1px solid #BFD8D0', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px' }}>
+                    Rätt-storlek — Fortnox-abonnemang
+                  </div>
+                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
+                    Ni betalar för paket <strong>{rs.currentPaket}</strong> ({rs.currentMonthly} kr/mån). Nivån under,{' '}
+                    <strong>{rs.targetPaket}</strong> ({rs.targetMonthly} kr/mån), är {rs.deltaMonthly} kr/mån billigare.
+                  </p>
+                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
+                    Ryms er användning (moduler, antal användare, verifikationsvolym) i {rs.targetPaket}? Då realiserar vi upp till{' '}
+                    <strong style={{ color: '#1B7A6E' }}>{formatKr(rs.annualSaving)} kr/år</strong>. Verifierad prisskillnad mot
+                    Fortnox publika listpris — vi visar ingen siffra vi inte kan stå för.
+                  </p>
+                </div>
+              );
+            })()}
+
             {result.recommendation?.reasoning && (isOptimize || _isSecondaryOnlySwitch) && (
               <Reasoning>
                 <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Kombinerad analys'}</span>

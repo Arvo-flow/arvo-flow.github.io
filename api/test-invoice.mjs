@@ -1607,6 +1607,7 @@ export default async function handler(req, res) {
         licenseOverage: recommendation.licenseOverage ?? null,
         overageSavings: recommendation.overageSavings ?? null,
         shelfware:      recommendation.shelfware ?? null,
+        fortnoxRightsizing: recommendation.fortnoxRightsizing ?? null,
         annualBillingSaving: recommendation.annualBillingSaving ?? null,
         nonPrimaryAnnual:    recommendation.nonPrimaryAnnual ?? 0,
         tierOptimizationSaving:   recommendation.tierOptimizationSaving   ?? null,

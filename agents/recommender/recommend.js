@@ -23,6 +23,7 @@ import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
+import { fortnoxRightsizing } from '../../lib/fortnox-rightsizing.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -864,6 +865,39 @@ export function analyzeClickRates(lineItems, supplierName, invoiceData = null) {
   };
 }
 
+// Deterministisk saas-finance-rekommendation (Fortnox rätt-storlek). Ren funktion av fakturan
+// + verifierade publika priser — ingen AI, ingen estimerad matris. Advisory/review: besparingen
+// är en verifierad prisskillnad men realiseras först när kunden bekräftat att behovet ryms.
+function fortnoxFinanceRecommendation(input) {
+  const zeroUsage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+  const rs = fortnoxRightsizing(input.invoice?.lineItems ?? []);
+  if (!rs) {
+    // Inget igenkänt Fortnox-paket → talfritt offert-läge (aldrig den estimerade matrisen).
+    return {
+      shouldSwitch: false, requiresQuote: true, recommendationType: 'requires_quote',
+      reasoning: 'Vi ser ert bokföringssystem men kan inte säkert läsa vilken paketnivå ni ligger på ur fakturan. ' +
+        'Vi gör en manuell genomgång mot Fortnox/Vismas publika prislista istället för att visa en siffra vi inte kan stå för — ' +
+        'koppla ert system eller ladda upp en tydligare faktura så rätt-storlekar vi ert abonnemang.',
+      revisionGate: 'audited', fortnoxRightsizing: null,
+      suggestedSupplier: null, suggestedAnnualCost: null, savingPerYear: null,
+      grossSaving: null, arvoFee: null, netSaving: null, optimizationSaving: null,
+      licenseOverage: null, overageSavings: null, confidence: 'low', switchSteps: [],
+      benchmark: null, usage: zeroUsage,
+    };
+  }
+  // Igenkänt paket → advisory optimize. Siffran är VERIFIERAD (prisskillnad) men i review:
+  // optimizationSaving hålls null tills kunden bekräftat (rådgivande revisor). Potentialen
+  // lever i fortnoxRightsizing.annualSaving + den kodskrivna reasoning-texten.
+  return {
+    shouldSwitch: false, requiresQuote: false, recommendationType: 'optimize',
+    reasoning: rs.reviewPrompt, revisionGate: 'audited', fortnoxRightsizing: rs,
+    suggestedSupplier: `Fortnox ${rs.targetPaket}`, suggestedAnnualCost: null,
+    savingPerYear: null, grossSaving: null, arvoFee: null, netSaving: null,
+    optimizationSaving: null, licenseOverage: null, overageSavings: null,
+    confidence: 'high', switchSteps: [], benchmark: null, usage: zeroUsage,
+  };
+}
+
 export async function recommend(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(
@@ -881,6 +915,14 @@ export async function recommend(input, opts = {}) {
       console.log(`[revisionsgrind] '${_cat}' är oreviderad → offert-läge utan siffror`);
       return ungatedQuoteResponse(_cat, CATEGORIES[_cat]?.label ?? null);
     }
+  }
+
+  // ── saas-finance: deterministisk rätt-storleks-rådgivning (Fortnox) ────────────
+  // Ingen AI, ingen estimerad matris. Enda kundsynliga siffran är skillnaden mellan TVÅ
+  // verifierade publika Fortnox-listpriser (lib/fortnox-rightsizing.js, vaktad veckovis).
+  // Igenkänns inget paket → talfritt offert-läge — det ESTIMERADE matrisvärdet når ALDRIG kund.
+  if (input.categorized.category === 'saas-finance') {
+    return fortnoxFinanceRecommendation(input);
   }
 
   // Hämta live SEK/USD-kurs för USD-prissatta produkter (Atlassian, Slack, Zoom, Google).
