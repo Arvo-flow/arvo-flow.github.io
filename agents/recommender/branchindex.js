@@ -518,9 +518,20 @@ export const BRANCHINDEX = {
   'saas-finance': {
     source: 'estimated',
     unit: 'kr/år',
+    // Verifierade Fortnox-listpriser (kr/mån EXKL moms), live 2026-06-17 via fortnox.se/produkt/prislista.
+    // Driftvakten (scripts/verify.mjs fortnox · fabriken) bekräftar dessa veckovis — rött vid drift.
+    // Fortnox är marknadsledande för svensk SMF-bokföring → starkaste publika ankaret i kategorin.
+    fortnoxVerified: {
+      source: 'fortnox-prislista', lastVerified: '2026-06-17', unit: 'kr_per_manad_exkl_moms',
+      url: 'https://www.fortnox.se/produkt/prislista',
+      // Paket = det bolag faktiskt köper (det vi ankrar på).
+      paket: { Mini: 209, Liten: 349, Mellan: 490, Stor: 710, 'Mini+': 369, 'Mellan+': 659, 'Stor+': 919, Byråpartner: 499 },
+      // Enskilda kärnmoduler.
+      moduler: { 'Bokföring': 189, 'Attest & Koll': 119, 'Avstämning': 139, 'Autogiro': 109, 'Anläggningsregister': 129 },
+    },
     // Kalibrering juni 2026 — totalt per bolag/år (ej per användare, skalas ej med seatCount):
-    // Fortnox Bokföring (verifierat maj 2026): 209 kr/mth = 2 508 kr/år.
-    // Fortnox Fakturering: 209 kr/mth separat. Standard SMF-bundle (2+ moduler): ~350–450 kr/mth.
+    // Fortnox-paket (verifierat 2026-06-17): Mini 209, Liten 349, Mellan 490, Stor 710 kr/mth.
+    // Enskild modul Bokföring 189 kr/mth separat. Standard SMF-bundle (paket Liten/Mellan): 349–490 kr/mth.
     // Typisk SMF micro (Bokföring + Fakturering): p25 ~4 200 kr/år, median ~7 200 kr/år (med extra moduler).
     // Small (20 anst, fler moduler, fler verifikationer): p25 ~6 600 kr/år, median ~12 000 kr/år.
     // Mid (100 anst, ERP-nivå med lön/projekt): p25 ~12 000 kr/år, median ~24 000 kr/år.
