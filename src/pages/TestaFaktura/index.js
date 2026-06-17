@@ -2268,6 +2268,28 @@ const TestaFaktura = () => {
                 </div>
               );
             })()}
+            {result.recommendation?.m365Rightsizing && (() => {
+              // M365 rätt-storlek (E3/E5 → Business Premium för SMF). Advisory/review: den verifierade
+              // prisskillnaden visas, men realiseras först när kunden bekräftat funktionsbehovet.
+              // Alla tal kommer färdiga från backend (verifierat publikt listpris) — klienten räknar inget.
+              const rs = result.recommendation.m365Rightsizing;
+              return (
+                <div style={{ gridColumn: '1 / -1', marginTop: '14px', padding: '16px 18px', background: '#F1F6F3', border: '1px solid #BFD8D0', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px' }}>
+                    Rätt-storlek — Microsoft 365 (rådgivning)
+                  </div>
+                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
+                    Ni betalar för <strong>{rs.currentLabel}</strong> ({rs.currentPerSeatLabel} kr/anv/mån) — full enterprise-svit.{' '}
+                    <strong>{rs.targetLabel}</strong> ({rs.targetPerSeatLabel} kr/anv/mån) ger Intune MDM + Defender, säkerheten de flesta SMF behöver.
+                  </p>
+                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
+                    Kräver ni inte {rs.currentTier.toUpperCase()}:s enterprise-funktioner (compliance, eDiscovery)? Då realiserar vi upp till{' '}
+                    <strong style={{ color: '#1B7A6E' }}>{rs.annualSavingLabel} kr/år</strong> för era {rs.seats} användare. Verifierad prisskillnad mot
+                    Microsofts publika listpris — vi visar ingen siffra vi inte kan stå för.
+                  </p>
+                </div>
+              );
+            })()}
 
             {result.recommendation?.reasoning && (isOptimize || _isSecondaryOnlySwitch) && (
               <Reasoning>

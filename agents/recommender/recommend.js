@@ -25,6 +25,7 @@ import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
 import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
 import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
+import { m365Rightsizing, deriveM365Seats } from '../../lib/m365-rightsizing.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -331,18 +332,9 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
         lines.push(`    → Arvo saknar Atlassian-återförsäljaravtal — rekommendera advisory med uppmaning att koppla Fortnox/Visma`);
       }
 
-      // Downsell note for enterprise tiers with SMF-sized companies
-      if ((_saasNoteKey === 'e3' || _saasNoteKey === 'e5') && seats <= 300) {
-        const bpTier = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks?.['business-premium'];
-        if (bpTier) {
-          const downsellSav = Math.round((tierBm.msrpAnnual - bpTier.msrpAnnual) * 12 * seats);
-          lines.push(`\n  TIERANALYS — ${_saasNoteKey.toUpperCase()} för ${seats} seats:`);
-          lines.push(`    ${_saasNoteKey.toUpperCase()} motiveras av: eDiscovery, avancerat auditlogg, Purview compliance, SIEM.`);
-          lines.push(`    Saknas dessa krav: Business Premium (Intune + Defender) räcker för säkerhetsfokuserade SMF.`);
-          lines.push(`    Möjlig tier-besparing (${_saasNoteKey.toUpperCase()} → Business Premium): ${downsellSav.toLocaleString('sv-SE')} kr/år`);
-          lines.push(`    OBS: Nämn alltid tier-alternativet i reasoning om kunden troligen saknar E3-specifika behov.`);
-        }
-      }
+      // E3/E5 → Business Premium-nedförsäljningen är INTE en AI-uppmaning längre (AI får aldrig
+      // narrera ett tal — regel 2). Den beräknas deterministiskt nedan (m365Rightsizing) och renderas
+      // som ett eget advisory-kort. AI:n håller sig till like-for-like-kontexten ovan.
     }
 
     // Like-for-like context: pre-computed deterministic target passed from test-invoice.
@@ -1513,9 +1505,16 @@ export async function recommend(input, opts = {}) {
     // Licensrensning (shelfware) räknas fristående ovan, oberoende av shouldSwitch —
     // result.overageSavings är redan satt och plockas upp av savingsBreakdown nedan.
 
-    // Tier optimization: saasTierBm now holds the RECOMMENDED tier (already downgraded).
-    // The tier saving is embedded in the primary savingPerYear — no separate advisory needed.
-    const tierOptimizationSaving = null;
+    // M365 rätt-storlek (E3/E5 → Business Premium för SMF): deterministisk, verifierad ADVISORY.
+    // LFL-benchmarken ovan prissätter SAMMA tier (inget downgrade) → nedförsäljningen är en
+    // FRISTÅENDE potential, aldrig inbakad i savingPerYear (ingen dubbelräkning). Den verifierade
+    // prisskillnaden visas, men optimizationSaving förblir null tills kunden bekräftat att de inte
+    // kräver enterprise-funktionerna (rådgivande revisor — samma mönster som Fortnox/shelfware).
+    const _m365rs = input.categorized.category === 'saas-productivity'
+      ? m365Rightsizing(saasLicenseTierKey, deriveM365Seats(input.invoice))
+      : null;
+    if (_m365rs) result.m365Rightsizing = _m365rs;
+    const tierOptimizationSaving = _m365rs?.annualSaving ?? null;
 
     // Savings breakdown — decompose total saving by channel
     result.savingsBreakdown = {
@@ -1563,6 +1562,7 @@ export async function recommend(input, opts = {}) {
     recommendationType: result.recommendationType ?? (result.shouldSwitch ? 'switch' : 'no_action'),
     requiresQuote:      result.requiresQuote ?? false,
     optimizationSaving: result.optimizationSaving ?? null,
+    m365Rightsizing:    result.m365Rightsizing ?? null,
     suggestedSupplier: result.suggestedSupplier ?? null,
     suggestedAnnualCost: result.suggestedAnnualCost ?? null,
     annualBillingSaving,
