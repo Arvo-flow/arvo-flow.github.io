@@ -45,8 +45,4 @@ jobs:
           npm install playwright
           npx playwright install chromium --with-deps
       - name: Verifiera ${{ matrix.source.id }}
-        env:
-          # Frakt-källor läser sina nycklar ur env. Saknas de → verifieraren skippar neutralt.
-          FRAKTJAKT_CONSIGNOR_ID: ${{ secrets.FRAKTJAKT_CONSIGNOR_ID }}
-          FRAKTJAKT_KEY: ${{ secrets.FRAKTJAKT_KEY }}
         run: node scripts/verify.mjs ${{ matrix.source.id }}
