@@ -365,24 +365,28 @@ export const BRANCHINDEX = {
         note: 'M365 E5 — full SIEM, Defender for Endpoint, Power BI Pro, avancerad analys. Förväxla ej med Office 365 E5 (424 kr).',
       },
 
-      // Google Workspace — USD-baspris, konverteras runtime via pricing.js.
-      // Källa: workspace.google.com/pricing (via softwarepricingguide.com maj 2026).
-      // OBS: Google höjde alla priser ~17-22% i 2025 (Gemini AI inkluderat).
+      // Google Workspace — Google publicerar publikt listpris ENBART i USD. Verifierat direkt mot
+      // primärkällan workspace.google.com/intl/en 2026-06-17 (3 recon-sonder via GH Actions):
+      // Starter $7 · Standard $14 · Plus $22 (per anv/mån, årsavtal). INGET publikt SEK-pris finns —
+      // Google sätter det bakom signup-funnelns auth-grind (sv-sidan visar 0 priser, råHTML + render).
+      // DÄRFÖR: dessa USD-tal FX-konverteras ALDRIG till en kundsynlig SEK-siffra — se google-sek-grind
+      // i recommend.js. FX-gissning mot kund är förbjuden (regel 3/4: antingen verifierat SEK, eller tyst).
+      // USD-ankaret vaktas veckovis: lib/verifiers/google-workspace.mjs. usdMonthly = flex-månadspris.
       // NÄSTA VERIFIERING: 2026-09-01
       'google-starter': {
         usdMonthly: 8.40,  usdAnnual: 7.00,  usdArvoAnnual: 5.95,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'softwarepricingguide.com',
-        note: 'Google Workspace Business Starter — 30 GB Drive/user, Meet, Docs, Gemini AI.',
+        currency: 'USD', sekPublic: false, lastVerified: '2026-06-17', source: 'workspace.google.com/intl/en',
+        note: 'Google Workspace Business Starter — 30 GB Drive/user, Meet, Docs, Gemini AI. Publikt pris endast USD ($7 årsavtal); SEK ej publikt verifierbart.',
       },
       'google-standard': {
         usdMonthly: 16.80, usdAnnual: 14.00, usdArvoAnnual: 11.90,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'softwarepricingguide.com',
-        note: 'Google Workspace Business Standard — 2 TB poolad Drive, Meet 150 deltagare + inspelning.',
+        currency: 'USD', sekPublic: false, lastVerified: '2026-06-17', source: 'workspace.google.com/intl/en',
+        note: 'Google Workspace Business Standard — 2 TB poolad Drive, Meet 150 deltagare + inspelning. Publikt pris endast USD ($14 årsavtal); SEK ej publikt verifierbart.',
       },
       'google-plus': {
         usdMonthly: 26.40, usdAnnual: 22.00, usdArvoAnnual: 18.70,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'softwarepricingguide.com',
-        note: 'Google Workspace Business Plus — 5 TB poolad Drive, utökad säkerhet, eDiscovery.',
+        currency: 'USD', sekPublic: false, lastVerified: '2026-06-17', source: 'workspace.google.com/intl/en',
+        note: 'Google Workspace Business Plus — 5 TB poolad Drive, utökad säkerhet, eDiscovery. Publikt pris endast USD ($22 årsavtal); SEK ej publikt verifierbart.',
       },
 
       // Slack — USD-baspris, konverteras runtime.

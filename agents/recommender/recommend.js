@@ -898,6 +898,26 @@ function fortnoxFinanceRecommendation(input) {
   };
 }
 
+// Talfritt offert-svar för Google Workspace: Google publicerar publikt listpris ENBART i USD;
+// det faktiska SEK-priset ligger bakom signup-funnelns auth-grind (recon 2026-06-17, 3 sonder).
+// Vi vägrar FX-gissa en SEK-besparing mot kund (regel 3/4). M365 nämns som verifierat alternativ
+// UTAN att en Google→M365-besparing påstås (ingen siffra utan källa). Copyn är talfri per konstruktion.
+function googleWorkspaceQuoteResponse() {
+  const zeroUsage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+  return {
+    shouldSwitch: false, requiresQuote: true, recommendationType: 'requires_quote',
+    reasoning:
+      'Ni kör Google Workspace. Google publicerar bara listpris i amerikanska dollar offentligt — ' +
+      'ert faktiska pris i kronor sätter Google bakom inloggning, så vi visar ingen kronsiffra vi inte ' +
+      'kan verifiera. Vi gör en manuell genomgång, inklusive jämförelse mot Microsoft 365 Business ' +
+      'Standard vars svenska listpris vi verifierar löpande, istället för en gissad besparing.',
+    revisionGate: 'audited', suggestedSupplier: null, suggestedAnnualCost: null,
+    grossSaving: null, arvoFee: null, netSaving: null, savingPerYear: null,
+    optimizationSaving: null, licenseOverage: null, overageSavings: null,
+    confidence: 'low', switchSteps: [], benchmark: null, usage: zeroUsage,
+  };
+}
+
 export async function recommend(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(
@@ -923,6 +943,24 @@ export async function recommend(input, opts = {}) {
   // Igenkänns inget paket → talfritt offert-läge — det ESTIMERADE matrisvärdet når ALDRIG kund.
   if (input.categorized.category === 'saas-finance') {
     return fortnoxFinanceRecommendation(input);
+  }
+
+  // ── google-sek-grind: Google Workspace saknar verifierat publikt SEK-pris ──────
+  // Google publicerar publikt listpris ENBART i USD ($7/$14/$22, verifierat 2026-06-17);
+  // det faktiska SEK-priset ligger bakom signup-funnelns auth-grind (3 recon-sonder, 0 publikt
+  // SEK). Att FX-konvertera USD → en kundsynlig SEK-besparing vore en gissning mot kund (förbjudet,
+  // regel 3/4). Tills Google ger verifierbart SEK håller vi tyst: talfritt offert-läge. M365
+  // (SEK-satt av Microsoft SE) fortsätter tala oförändrat. USD-ankaret vaktas i fabriken.
+  if (input.categorized.category === 'saas-productivity') {
+    const _gwKey = getDominantSaasTierKey(
+      input.invoice?.lineItems ?? [],
+      input.invoice?.licenseType ?? null,
+      input.invoice?.saasProductFamily ?? null,
+    );
+    if (typeof _gwKey === 'string' && _gwKey.startsWith('google-')) {
+      console.log('[google-sek-grind] Google Workspace saknar verifierat publikt SEK-pris → offert-läge utan siffror');
+      return googleWorkspaceQuoteResponse();
+    }
   }
 
   // Hämta live SEK/USD-kurs för USD-prissatta produkter (Atlassian, Slack, Zoom, Google).

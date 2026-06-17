@@ -1,3 +1,10 @@
+// ARKIVERAD — VERDIKT 2026-06-17 (3 sonder, GH Actions): Google publicerar publikt listpris ENBART i
+// USD (workspace.google.com/intl/en: $7/$14/$22 årsavtal). Den svenska sidan visar 0 priser (rå-HTML +
+// render); det faktiska SEK-priset ligger bakom signup-funnelns AUTH-GRIND (billinginfo/setup → 200 men
+// ingen pris-DOM, inget publikt land-parametriserat pris-API). → Vi FX-gissar ALDRIG SEK mot kund
+// (regel 3/4). Beslut: vakta USD-ankaret (lib/verifiers/google-workspace.mjs) + håll SEK tyst
+// (google-sek-grind i recommend.js). Sonden behålls som mönster/bevis; workflowen borttagen (engångs-recon).
+//
 // scripts/probe-google-workspace.mjs — RECON v3: KNÄCK FUNNELN för äkta SEK (VD-beslut: högsta ambition,
 // timeboxad). v2 slog fast: Google publicerar USD-listpris ($7/$14/$22) på en-sidan men INGET publikt SEK.
 // Renderade sidan bar pris-PLATSHÅLLARE ($0/$1) → priserna hämtas av JS från en bakomliggande pris-API

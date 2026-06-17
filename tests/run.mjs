@@ -29,6 +29,7 @@ import './fortnox.mjs';
 import './fortnox-recommendation.mjs';
 import './spiris.mjs';
 import './spiris-recommendation.mjs';
+import './google-workspace-recommendation.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,
