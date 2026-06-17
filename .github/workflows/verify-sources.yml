@@ -38,6 +38,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      # Cachar Chromium-binären (~177 MB) mellan körningar → browser-jobben slipper ladda ner
+      # den varje gång (det var den som throttlade/segade ner fabriken). Cache-miss → install
+      # laddar ner och sparar; cache-hit → install hittar den och hoppar nedladdningen.
+      - name: Cache Playwright-browser (endast browser-källor)
+        if: ${{ matrix.source.needsBrowser }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}
       - name: Install Playwright + Chromium (endast browser-källor)
         if: ${{ matrix.source.needsBrowser }}
         run: |
