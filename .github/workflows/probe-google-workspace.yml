@@ -1,0 +1,23 @@
+name: Probe Google Workspace pricing
+
+# Recon: vilka SEK-listpriser visar Google Workspace publikt (primärkälla), och är sidan SSR/JS?
+# Installerar Chromium (render-delen). Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe Google Workspace
+        run: node scripts/probe-google-workspace.mjs
