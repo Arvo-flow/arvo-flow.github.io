@@ -634,6 +634,81 @@ export const EstimateSavingsBlock = styled.div`
   }
 `;
 
+// Verifierad M365-referens på Google-kortet: den BEVISADE datan (M365, verifierat SEK) som benchmark
+// för den OBEVISADE (Google, inget publikt SEK). Visar Microsofts pris för den likvärdiga sviten —
+// uttryckligen INTE Googles pris (disclaimer alltid med). Instrumentkänsla: monospace på talet.
+export const M365ReferenceBlock = styled.div`
+  padding: 20px 24px;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+  border: 1.5px solid ${({ theme }) => theme.color.border};
+  margin-bottom: 20px;
+
+  .ref-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  span.kicker {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: ${({ theme }) => theme.color.muted};
+  }
+  span.ref-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: ${({ theme }) => theme.color.brand};
+    background: ${({ theme }) => theme.color.brandSoft};
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+  .ref-tier {
+    font-weight: 700;
+    color: ${({ theme }) => theme.color.ink};
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .ref-figure {
+    font-family: ${({ theme }) => theme.font.mono};
+    font-size: clamp(24px, 4.2vw, 34px);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+    color: ${({ theme }) => theme.color.ink};
+  }
+  .ref-figure .per {
+    font-family: ${({ theme }) => theme.font.sans};
+    font-size: 14px;
+    font-weight: 500;
+    color: ${({ theme }) => theme.color.muted};
+  }
+  .ref-sub {
+    margin-top: 8px;
+    font-size: 13px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.55;
+  }
+  .ref-disclaimer {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid ${({ theme }) => theme.color.border};
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.muted};
+    line-height: 1.55;
+  }
+  .ref-disclaimer strong {
+    color: ${({ theme }) => theme.color.ink};
+    font-weight: 600;
+  }
+`;
+
 export const PriceNote = styled.p`
   margin-top: 10px;
   margin-bottom: ${({ $compact }) => $compact ? '10px' : '24px'};

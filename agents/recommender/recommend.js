@@ -24,6 +24,7 @@ import { detectFeeSignals } from '../../lib/fee-signals.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
 import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
+import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -898,20 +899,36 @@ function fortnoxFinanceRecommendation(input) {
   };
 }
 
-// Talfritt offert-svar för Google Workspace: Google publicerar publikt listpris ENBART i USD;
-// det faktiska SEK-priset ligger bakom signup-funnelns auth-grind (recon 2026-06-17, 3 sonder).
-// Vi vägrar FX-gissa en SEK-besparing mot kund (regel 3/4). M365 nämns som verifierat alternativ
-// UTAN att en Google→M365-besparing påstås (ingen siffra utan källa). Copyn är talfri per konstruktion.
-function googleWorkspaceQuoteResponse() {
+// Offert-svar för Google Workspace med VERIFIERAD M365-referens. Google publicerar publikt listpris
+// ENBART i USD; SEK ligger bakom signup-funnelns auth-grind (recon 2026-06-17, 3 sonder). Vi vägrar
+// FX-gissa en SEK-besparing mot kund (regel 3/4) → ingen Google-siffra, ingen påstådd besparing. MEN:
+// den bevisade datan (M365, verifierat SEK) agerar benchmark för den obevisade — kortet bär vad den
+// LIKVÄRDIGA Microsoft-sviten kostar i SEK för kundens volym. Talet är Microsofts pris, kodskrivet ur
+// verifierad data (ingen AI, ingen FX) och uttryckligen INTE ett påstående om Googles pris.
+function googleWorkspaceQuoteResponse(input, googleTierKey) {
   const zeroUsage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+  const seats = deriveGoogleSeats(input?.invoice ?? null);
+  const m365 = m365EquivalentForGoogle(googleTierKey, seats);
+
+  const ref = m365
+    ? `Som verifierad referens: närmaste likvärdiga Microsoft-svit, ${m365.m365TierLabel}, kostar ` +
+      `${m365.perSeatMonthlyLabel} kr per användare och månad (Microsofts publika listpris vid årsavtal` +
+      `${m365.lastVerified ? `, verifierat ${m365.lastVerified}` : ''})` +
+      (m365.monthlyTotal != null
+        ? ` — ${m365.monthlyTotalLabel} kr per månad för era ${m365.seats} användare`
+        : '') +
+      `. Det är Microsofts pris för den likvärdiga sviten, inte ert Google-pris. `
+    : '';
+
   return {
     shouldSwitch: false, requiresQuote: true, recommendationType: 'requires_quote',
     reasoning:
       'Ni kör Google Workspace. Google publicerar bara listpris i amerikanska dollar offentligt — ' +
-      'ert faktiska pris i kronor sätter Google bakom inloggning, så vi visar ingen kronsiffra vi inte ' +
-      'kan verifiera. Vi gör en manuell genomgång, inklusive jämförelse mot Microsoft 365 Business ' +
-      'Standard vars svenska listpris vi verifierar löpande, istället för en gissad besparing.',
-    revisionGate: 'audited', suggestedSupplier: null, suggestedAnnualCost: null,
+      'ert faktiska pris i kronor sätter Google bakom inloggning, så vi visar ingen Google-siffra vi inte ' +
+      'kan verifiera. ' + ref +
+      'Ladda upp eller koppla ert Google-avtal så jämför vi mot ert faktiska pris i en offert.',
+    revisionGate: 'audited', m365Equivalent: m365,
+    suggestedSupplier: null, suggestedAnnualCost: null,
     grossSaving: null, arvoFee: null, netSaving: null, savingPerYear: null,
     optimizationSaving: null, licenseOverage: null, overageSavings: null,
     confidence: 'low', switchSteps: [], benchmark: null, usage: zeroUsage,
@@ -958,8 +975,8 @@ export async function recommend(input, opts = {}) {
       input.invoice?.saasProductFamily ?? null,
     );
     if (typeof _gwKey === 'string' && _gwKey.startsWith('google-')) {
-      console.log('[google-sek-grind] Google Workspace saknar verifierat publikt SEK-pris → offert-läge utan siffror');
-      return googleWorkspaceQuoteResponse();
+      console.log('[google-sek-grind] Google Workspace saknar verifierat publikt SEK-pris → offert-läge (verifierad M365-referens)');
+      return googleWorkspaceQuoteResponse(input, _gwKey);
     }
   }
 

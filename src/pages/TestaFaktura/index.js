@@ -11,7 +11,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  BriefingHead, SavingsBlock, EstimateSavingsBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
+  BriefingHead, SavingsBlock, EstimateSavingsBlock, M365ReferenceBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
   Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, EmailGate, PortfolioBridge,
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
@@ -1687,22 +1687,50 @@ const TestaFaktura = () => {
                     <span className="unit">Jämfört mot välförhandlat B2B-avtal · bekräftas med faktisk offert</span>
                   </EstimateSavingsBlock>
                 ) : null}
+                {/* Verifierad M365-referens (Google-kortet): bevisad SEK-data benchmarkar obevisad
+                    Google. Backend äger talet (regel 1/2) — frontend renderar bara, räknar aldrig om. */}
+                {result.recommendation?.m365Equivalent && (
+                  <M365ReferenceBlock>
+                    <div className="ref-header">
+                      <span className="kicker">Verifierad referens — likvärdig svit</span>
+                      <span className="ref-badge">Microsoft listpris</span>
+                    </div>
+                    <div className="ref-tier">{result.recommendation.m365Equivalent.m365TierLabel}</div>
+                    <div className="ref-figure">
+                      {result.recommendation.m365Equivalent.monthlyTotal != null ? (
+                        <>{formatNum(result.recommendation.m365Equivalent.monthlyTotal)}&nbsp;kr<span className="per">/mån för {result.recommendation.m365Equivalent.seats} användare</span></>
+                      ) : (
+                        <>{result.recommendation.m365Equivalent.perSeatMonthlyLabel}&nbsp;kr<span className="per">/användare/mån</span></>
+                      )}
+                    </div>
+                    <div className="ref-sub">
+                      {result.recommendation.m365Equivalent.perSeatMonthlyLabel}&nbsp;kr/användare/mån vid årsavtal · {result.recommendation.m365Equivalent.equivalenceNote}
+                    </div>
+                    <div className="ref-disclaimer">
+                      <strong>Detta är Microsofts publika listpris för den likvärdiga sviten — inte ert Google-pris.</strong> Google publicerar bara listpris i USD; ert faktiska kronpris jämför vi mot i offerten nedan.
+                    </div>
+                  </M365ReferenceBlock>
+                )}
                 <NoSwitchBlock>
                   <strong>
                     {result.recommendation?.clickRateAnalysis
                       ? 'Beräkna exakt besparing per år'
                       : (result.recommendation?.netSaving ?? 0) > 0
                         ? 'Säkra besparingen — kräver offert'
-                        : result.recommendation?.revisionGate === 'unaudited'
-                          ? 'Kräver offert — Arvo gör en manuell genomgång'
-                          : 'Kräver offert — volymdata behövs.'}
+                        : result.recommendation?.m365Equivalent
+                          ? 'Exakt Google-pris kräver offert'
+                          : result.recommendation?.revisionGate === 'unaudited'
+                            ? 'Kräver offert — Arvo gör en manuell genomgång'
+                            : 'Kräver offert — volymdata behövs.'}
                   </strong>
                   <p>
                     {result.recommendation?.clickRateAnalysis
                       ? 'Klickpriset är fastslaget. Fyll i nedan så beräknar Arvo det exakta beloppet inklusive maskinleasing.'
                       : (result.recommendation?.netSaving ?? 0) > 0
                         ? 'Fyll i era uppgifter — Arvo begär in och sammanställer offerter från rikstäckande avfallspartners.'
-                        : result.recommendation.reasoning}
+                        : result.recommendation?.m365Equivalent
+                          ? 'Vi jämför referensen ovan mot ert faktiska Google-pris och tar fram en exakt besparing i offerten.'
+                          : result.recommendation.reasoning}
                   </p>
                   <QuoteLeadForm onSubmit={submitQuoteLead}>
                     {quoteState === 'sent' ? (
