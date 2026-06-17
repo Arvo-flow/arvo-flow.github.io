@@ -1,0 +1,22 @@
+name: Probe Fortnox priser
+
+# Recon: låser Fortnox publika pris/modul-schema (saas-finance-ankare). Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe Fortnox priser
+        run: node scripts/probe-fortnox-priser.mjs
