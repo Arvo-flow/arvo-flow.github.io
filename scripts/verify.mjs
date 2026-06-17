@@ -7,17 +7,20 @@
 // Exit 1 om någon källa drivit eller är oåtkomlig (regel 4: hellre rött än tyst osäkerhet).
 import { VERIFIERS, getVerifier } from '../lib/verifiers/registry.mjs';
 
-const arg = process.argv[2] ?? 'all';
+const args = process.argv.slice(2);
 
-if (arg === '--matrix') {
+if (args[0] === '--matrix') {
   // Workflow härleder sin job-matris härifrån → en sanning, ingen dubblering.
   process.stdout.write(JSON.stringify(VERIFIERS.map((v) => ({ id: v.id, needsBrowser: !!v.needsBrowser }))));
   process.exit(0);
 }
 
-const targets = arg === 'all' ? VERIFIERS : [getVerifier(arg)].filter(Boolean);
+// En, flera eller alla: `verify.mjs tele2-mobil tele2-bredband` kör en delmängd.
+const targets = (args.length === 0 || args.includes('all'))
+  ? VERIFIERS
+  : args.map(getVerifier).filter(Boolean);
 if (!targets.length) {
-  console.error(`Okänd verifierare: '${arg}'. Giltiga: ${VERIFIERS.map((v) => v.id).join(', ')}`);
+  console.error(`Okänd verifierare: '${args.join(' ')}'. Giltiga: ${VERIFIERS.map((v) => v.id).join(', ')}`);
   process.exit(2);
 }
 

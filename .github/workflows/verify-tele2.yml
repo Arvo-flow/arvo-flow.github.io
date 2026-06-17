@@ -1,0 +1,23 @@
+name: Verify Tele2 (mobil + bredband)
+
+# Kör bara de två Tele2-vakterna (utan att röra övriga källor). Manuell bekräftelse efter
+# omkalibrering. fraktjakt rörs INTE här (kontot är spärrat — undviker att förvärra).
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium (tele2-mobil behöver browser)
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Verifiera tele2-mobil + tele2-bredband
+        run: node scripts/verify.mjs tele2-mobil tele2-bredband
