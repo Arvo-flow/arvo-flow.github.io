@@ -27,6 +27,8 @@ import './recompute-shelfware.mjs';
 import './fraktjakt.mjs';
 import './fortnox.mjs';
 import './fortnox-recommendation.mjs';
+import './spiris.mjs';
+import './spiris-recommendation.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

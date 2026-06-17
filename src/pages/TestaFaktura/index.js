@@ -2226,10 +2226,10 @@ const TestaFaktura = () => {
               return (
                 <div style={{ gridColumn: '1 / -1', marginTop: '14px', padding: '16px 18px', background: '#F1F6F3', border: '1px solid #BFD8D0', borderRadius: '12px' }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px' }}>
-                    Rätt-storlek — Fortnox-abonnemang
+                    Rätt-storlek — {rs.vendor}
                   </div>
                   <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
-                    Ni betalar för paket <strong>{rs.currentPaket}</strong> ({rs.currentMonthly} kr/mån). Nivån under,{' '}
+                    Ni betalar för <strong>{rs.vendor} {rs.currentPaket}</strong> ({rs.currentMonthly} kr/mån). Nivån under,{' '}
                     <strong>{rs.targetPaket}</strong> ({rs.targetMonthly} kr/mån), är {rs.deltaMonthly} kr/mån billigare.
                   </p>
                   <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>

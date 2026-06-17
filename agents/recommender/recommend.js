@@ -23,7 +23,7 @@ import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
-import { fortnoxRightsizing } from '../../lib/fortnox-rightsizing.js';
+import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -870,9 +870,9 @@ export function analyzeClickRates(lineItems, supplierName, invoiceData = null) {
 // är en verifierad prisskillnad men realiseras först när kunden bekräftat att behovet ryms.
 function fortnoxFinanceRecommendation(input) {
   const zeroUsage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
-  const rs = fortnoxRightsizing(input.invoice?.lineItems ?? []);
+  const rs = saasFinanceRightsizing(input.invoice?.lineItems ?? []);
   if (!rs) {
-    // Inget igenkänt Fortnox-paket → talfritt offert-läge (aldrig den estimerade matrisen).
+    // Inget igenkänt paket (Fortnox/Spiris) → talfritt offert-läge (aldrig den estimerade matrisen).
     return {
       shouldSwitch: false, requiresQuote: true, recommendationType: 'requires_quote',
       reasoning: 'Vi ser ert bokföringssystem men kan inte säkert läsa vilken paketnivå ni ligger på ur fakturan. ' +
@@ -891,7 +891,7 @@ function fortnoxFinanceRecommendation(input) {
   return {
     shouldSwitch: false, requiresQuote: false, recommendationType: 'optimize',
     reasoning: rs.reviewPrompt, revisionGate: 'audited', fortnoxRightsizing: rs,
-    suggestedSupplier: `Fortnox ${rs.targetPaket}`, suggestedAnnualCost: null,
+    suggestedSupplier: `${rs.vendor} ${rs.targetPaket}`, suggestedAnnualCost: null,
     savingPerYear: null, grossSaving: null, arvoFee: null, netSaving: null,
     optimizationSaving: null, licenseOverage: null, overageSavings: null,
     confidence: 'high', switchSteps: [], benchmark: null, usage: zeroUsage,

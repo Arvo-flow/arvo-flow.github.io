@@ -529,6 +529,17 @@ export const BRANCHINDEX = {
       // Enskilda kärnmoduler.
       moduler: { 'Bokföring': 189, 'Attest & Koll': 119, 'Avstämning': 139, 'Autogiro': 109, 'Anläggningsregister': 129 },
     },
+    // Verifierade Spiris-listpriser (kr/mån EXKL moms), live 2026-06-17 via spiris.se/priser.
+    // Spiris = tidigare Visma eEkonomi / Visma Spcs (vismaspcs.se → spiris.se, rebrandat 2025/26).
+    // Den andra halvan av svensk SMF-bokföring. Vakten (verify.mjs spiris) bekräftar veckovis.
+    spirisVerified: {
+      source: 'spiris-prislista', lastVerified: '2026-06-17', unit: 'kr_per_manad_exkl_moms',
+      url: 'https://www.spiris.se/priser', formerlyKnownAs: 'Visma eEkonomi',
+      // Abonnemangsnivåer (stigande) = det bolag faktiskt köper (det vi ankrar på).
+      niva: { Starta: 199, Driva: 349, Skala: 549, 'Växa': 749, Lyfta: 1249 },
+      // Enskilda kärnmoduler / tillägg.
+      moduler: { 'Lön till anställda': 299, 'Skatt & Bokslut': 419, 'Lager': 249, 'Offert & Order': 129, 'Integration': 119 },
+    },
     // Kalibrering juni 2026 — totalt per bolag/år (ej per användare, skalas ej med seatCount):
     // Fortnox-paket (verifierat 2026-06-17): Mini 209, Liten 349, Mellan 490, Stor 710 kr/mth.
     // Enskild modul Bokföring 189 kr/mth separat. Standard SMF-bundle (paket Liten/Mellan): 349–490 kr/mth.
