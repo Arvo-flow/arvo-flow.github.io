@@ -1312,6 +1312,14 @@ export async function recommend(input, opts = {}) {
     }
   }
 
+  // ── M365 rätt-storlek (E3/E5 → Business Premium) — FRISTÅENDE advisory ─────────
+  // Beräknas oberoende av benchmark/shouldSwitch (samma princip som shelfware ovan): en kund kan
+  // ligga på rätt pris men fel TIER. Deterministisk, verifierad prisskillnad (BRANCHINDEX M365,
+  // ingen FX). optimizationSaving förblir null (advisory/review) — potentialen lever i m365Rightsizing.
+  if (input.categorized.category === 'saas-productivity') {
+    result.m365Rightsizing = m365Rightsizing(saasLicenseTierKey, deriveM365Seats(input.invoice)) ?? null;
+  }
+
   // ── Prosakravet (SKUGGA): varje tal i AI:ns reasoning måste finnas i prompten ──
   // (prompten innehåller alla injicerade kodberäknade fakta — ett tal utanför den
   // kan modellen bara ha räknat fram själv, vilket är förbjudet). Loggas alltid;
@@ -1505,16 +1513,10 @@ export async function recommend(input, opts = {}) {
     // Licensrensning (shelfware) räknas fristående ovan, oberoende av shouldSwitch —
     // result.overageSavings är redan satt och plockas upp av savingsBreakdown nedan.
 
-    // M365 rätt-storlek (E3/E5 → Business Premium för SMF): deterministisk, verifierad ADVISORY.
-    // LFL-benchmarken ovan prissätter SAMMA tier (inget downgrade) → nedförsäljningen är en
-    // FRISTÅENDE potential, aldrig inbakad i savingPerYear (ingen dubbelräkning). Den verifierade
-    // prisskillnaden visas, men optimizationSaving förblir null tills kunden bekräftat att de inte
-    // kräver enterprise-funktionerna (rådgivande revisor — samma mönster som Fortnox/shelfware).
-    const _m365rs = input.categorized.category === 'saas-productivity'
-      ? m365Rightsizing(saasLicenseTierKey, deriveM365Seats(input.invoice))
-      : null;
-    if (_m365rs) result.m365Rightsizing = _m365rs;
-    const tierOptimizationSaving = _m365rs?.annualSaving ?? null;
+    // M365 rätt-storlek beräknades FRISTÅENDE ovan (oberoende av benchmark/shouldSwitch). LFL-benchmarken
+    // prissätter SAMMA tier → nedförsäljningen är aldrig inbakad i savingPerYear (ingen dubbelräkning).
+    // Här plockas bara den verifierade potentialen in i breakdown som ADVISORY (optimizationSaving = null).
+    const tierOptimizationSaving = result.m365Rightsizing?.annualSaving ?? null;
 
     // Savings breakdown — decompose total saving by channel
     result.savingsBreakdown = {

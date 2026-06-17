@@ -14,6 +14,10 @@
 //   Business Basic: ~75 kr, Business Standard: ~142 kr, Business Premium: ~212 kr
 //   E3: ~350 kr, E5: ~520 kr
 
+import { test, describe } from 'node:test';
+import assert from 'node:assert/strict';
+import { recommend } from '../../agents/recommender/recommend.js';
+
 export const fixtures = [
 
   // ── saas-01 ──────────────────────────────────────────────────────────────────
@@ -834,4 +838,147 @@ export const fixtures = [
     secondary: null,
   },
 
+  // ── saas-36 ──────────────────────────────────────────────────────────────────
+  // M365 E5, 25 licenser hos en SMF — enterprise-svit, klassisk nedförsäljningskandidat.
+  // Körs både genom metrics-harnessen (alla null) OCH recommend()-e2e (m365Rightsizing) nedan.
+  {
+    id: 'saas-36',
+    name: 'M365 E5 25 lic — enterprise-svit hos SMF (E5 → Business Premium-kandidat)',
+    lineItems: [
+      { type: 'recurring_subscription', description: 'Microsoft 365 E5 (25 användare)', quantity: 25, amount: 15228 },
+    ],
+    category: 'saas-productivity',
+    mixed: false,
+    employees: 25,
+    seatCount: 25,
+    industry: 'it-tech',
+    metrics: {
+      mobileAddonMonthly:           null,
+      broadbandAddonMonthly:        null,
+      primaryComponentMonthly:      null,
+      secondaryComponentMonthly:    null,
+      secondaryConnectionSpeedMbit: null,
+      secondarySeatCount:           null,
+    },
+    secondary: null,
+  },
+
+  // ── saas-37 ──────────────────────────────────────────────────────────────────
+  // M365 E3, 40 licenser hos en SMF — enterprise compliance som sällan är motiverad.
+  {
+    id: 'saas-37',
+    name: 'M365 E3 40 lic — enterprise compliance hos SMF (E3 → Business Premium-kandidat)',
+    lineItems: [
+      { type: 'recurring_subscription', description: 'Microsoft 365 E3', quantity: 40, amount: 15388 },
+    ],
+    category: 'saas-productivity',
+    mixed: false,
+    employees: 40,
+    seatCount: 40,
+    industry: 'konsult',
+    metrics: {
+      mobileAddonMonthly:           null,
+      broadbandAddonMonthly:        null,
+      primaryComponentMonthly:      null,
+      secondaryComponentMonthly:    null,
+      secondaryConnectionSpeedMbit: null,
+      secondarySeatCount:           null,
+    },
+    secondary: null,
+  },
+
+  // ── saas-38 ──────────────────────────────────────────────────────────────────
+  // M365 E5, 25 lic MEN köpt via återförsäljare med påslag (750 kr/säte vs 609,10 list) → BÅDE ett
+  // leverantörsbyte (overpayment) OCH tier-nedförsäljning. Bevisar att tier-advisoryn även flödar in
+  // i savingsBreakdown på bytesvägen (e2e nedan), inte bara som fristående kort.
+  {
+    id: 'saas-38',
+    name: 'M365 E5 25 lic via återförsäljare (påslag) — byte + tier-nedförsäljning',
+    lineItems: [
+      { type: 'recurring_subscription', description: 'Microsoft 365 E5 (25 användare)', quantity: 25, amount: 18750 },
+    ],
+    category: 'saas-productivity',
+    mixed: false,
+    employees: 25,
+    seatCount: 25,
+    industry: 'it-tech',
+    metrics: {
+      mobileAddonMonthly:           null,
+      broadbandAddonMonthly:        null,
+      primaryComponentMonthly:      null,
+      secondaryComponentMonthly:    null,
+      secondaryConnectionSpeedMbit: null,
+      secondarySeatCount:           null,
+    },
+    secondary: null,
+  },
+
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E2E: M365 rätt-storlek HELA recommend()-vägen — beviset att lib/m365-rightsizing.js är
+// INKOPPLAT i ett verkligt fakturaflöde, inte bara unit-testat. recommend() går genom AI-anropet
+// för saas-productivity; vi stubbar modellen (minimalt no-action-svar) OCH FX-kursen (stub-KV) så
+// hela den deterministiska pipelinen körs offline. m365Rightsizing beräknas oberoende av AI:n och
+// attacheras till svaret — vi asserterar att fakturan saas-36/37 ger den verifierade advisoryn.
+const stubAi = { messages: { create: async () => ({
+  content: [{ type: 'tool_use', input: { shouldSwitch: false, recommendationType: 'no_action', reasoning: 'Analys klar.' } }],
+  usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+}) } };
+const stubKv = { get: async () => ({ rate: 10.5, fetchedAt: new Date().toISOString() }) };
+
+const byId = (id) => fixtures.find((f) => f.id === id);
+const e2eInput = (fx) => ({
+  customer:    { industry: fx.industry, employees: fx.employees },
+  categorized: { category: 'saas-productivity', subType: 'produktivitet', normalizedSupplier: 'Microsoft', confidence: 0.95 },
+  invoice:     {
+    annualCost: fx.lineItems.reduce((s, l) => s + (l.amount ?? 0), 0) * 12,
+    billingPeriod: 'monthly', seatCount: fx.seatCount ?? null, lineItems: fx.lineItems,
+  },
+});
+const runE2E = (fx) => recommend(e2eInput(fx), { client: stubAi, kvStore: stubKv });
+
+describe('05-saas · M365 rätt-storlek e2e (recommend() hela vägen, stubbad AI+FX)', () => {
+  test('E5 × 25 (saas-36) → m365Rightsizing inkopplat: Business Premium, 119 643 kr/år advisory', async () => {
+    const r = await runE2E(byId('saas-36'));
+    assert.ok(r.m365Rightsizing, 'm365Rightsizing ska finnas i recommend()-svaret (inkopplat e2e)');
+    assert.equal(r.m365Rightsizing.currentTier, 'e5');
+    assert.equal(r.m365Rightsizing.targetTier, 'business-premium');
+    assert.equal(r.m365Rightsizing.seats, 25);
+    assert.equal(r.m365Rightsizing.annualSaving, 119643);
+    assert.equal(r.m365Rightsizing.needsReview, true);
+    // Advisory/review: ingen REALISERAD besparing förrän kunden bekräftat funktionsbehovet.
+    // Den verifierade potentialen lever i m365Rightsizing (eget kort), aldrig som en hård siffra.
+    assert.equal(r.optimizationSaving, null);
+    // Kund på E5-LISTPRIS → inget leverantörsbyte (savingsBreakdown byggs bara på bytesvägen).
+    // Tier-nedförsäljningen är FRISTÅENDE och når kunden ändå via m365Rightsizing-kortet.
+    assert.equal(r.shouldSwitch, false);
+  });
+
+  test('E3 × 40 (saas-37) → Business Premium, 83 717 kr/år advisory', async () => {
+    const r = await runE2E(byId('saas-37'));
+    assert.ok(r.m365Rightsizing);
+    assert.equal(r.m365Rightsizing.currentTier, 'e3');
+    assert.equal(r.m365Rightsizing.targetTier, 'business-premium');
+    assert.equal(r.m365Rightsizing.seats, 40);
+    assert.equal(r.m365Rightsizing.annualSaving, 83717);
+    assert.equal(r.optimizationSaving, null);
+  });
+
+  test('E5 via återförsäljare (saas-38) → byte UTLÖST + tier-advisory i savingsBreakdown (119 643)', async () => {
+    const r = await runE2E(byId('saas-38'));
+    // Påslaget (>15 % över E5-listpris) utlöser det deterministiska bytet → savingsBreakdown byggs.
+    assert.equal(r.shouldSwitch, true);
+    assert.ok(r.savingsBreakdown, 'savingsBreakdown ska byggas på bytesvägen');
+    // Tier-nedförsäljningen flödar in i breakdown som ADVISORY, aldrig inbakad i savingPerYear.
+    assert.equal(r.savingsBreakdown.tierOptimization, 119643);
+    assert.equal(r.m365Rightsizing.annualSaving, 119643);
+    // Fortsatt advisory: optimizationSaving null (realiseras först vid bekräftelse).
+    assert.equal(r.optimizationSaving, null);
+  });
+
+  test('Business Standard (saas-01) → ingen nedförsäljning (m365Rightsizing null)', async () => {
+    const r = await runE2E(byId('saas-01'));
+    assert.equal(r.m365Rightsizing, null);
+  });
+});
