@@ -31,6 +31,7 @@ import './spiris.mjs';
 import './spiris-recommendation.mjs';
 import './google-workspace-recommendation.mjs';
 import './m365-rightsizing.mjs';
+import './adobe-pricing.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,
