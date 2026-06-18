@@ -27,6 +27,7 @@ import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
 import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
 import { m365Rightsizing, deriveM365Seats } from '../../lib/m365-rightsizing.js';
 import { detectAdobePlan, adobeRightsizing, adobeListExVat, deriveAdobeSeats } from '../../lib/adobe-rightsizing.js';
+import { detectStorageSubstitution } from '../../lib/saas-substitution.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -971,6 +972,20 @@ function adobeCreativeRecommendation(input) {
   };
 }
 
+// Dropbox/Box-korselden: arkitektonisk substitutionsinsikt, INGEN påhittad SEK-besparing (USD → ingen FX).
+function storageSubstitutionResponse(sub) {
+  const zeroUsage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+  return {
+    shouldSwitch: false, requiresQuote: true, recommendationType: 'requires_quote',
+    reasoning: `${sub.usdPain} ${sub.substitution} ${sub.note}`,
+    revisionGate: 'audited', storageSubstitution: sub,
+    suggestedSupplier: null, suggestedAnnualCost: null,
+    grossSaving: null, arvoFee: null, netSaving: null, savingPerYear: null,
+    optimizationSaving: null, licenseOverage: null, overageSavings: null,
+    confidence: 'low', switchSteps: [], benchmark: null, usage: zeroUsage,
+  };
+}
+
 export async function recommend(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(
@@ -1003,6 +1018,19 @@ export async function recommend(input, opts = {}) {
   // (advisory/review). Igenkänns ingen Adobe-rad → talfritt offert-läge.
   if (input.categorized.category === 'saas-creative') {
     return adobeCreativeRecommendation(input);
+  }
+
+  // ── saas-substitution: Dropbox/Box (molnlagring i USD) → arkitektonisk substitutionsinsikt ──
+  // Dropbox prissätter Sverige i USD → ingen FX-besparing (Zero Trust). Istället: smärtpunkten (USD-FX,
+  // dolda valutapåslag) + att lagring redan ingår i M365. Vi slår ut överflödig SaaS med saas-productivity.
+  if (input.categorized.category === 'saas-productivity') {
+    const _sub = detectStorageSubstitution(
+      input.invoice?.lineItems ?? [], input.categorized?.normalizedSupplier ?? null, input.customer?.hasM365 === true,
+    );
+    if (_sub) {
+      console.log(`[saas-substitution] ${_sub.vendor}-faktura → arkitektonisk substitutionsinsikt (ingen FX-besparing)`);
+      return storageSubstitutionResponse(_sub);
+    }
   }
 
   // ── google-sek-grind: Google Workspace saknar verifierat publikt SEK-pris ──────

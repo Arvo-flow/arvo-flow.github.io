@@ -34,6 +34,7 @@ import './m365-rightsizing.mjs';
 import './adobe-pricing.mjs';
 import './adobe-rightsizing.mjs';
 import './adobe-recommendation.mjs';
+import './saas-substitution.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

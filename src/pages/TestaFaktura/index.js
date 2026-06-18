@@ -1687,6 +1687,22 @@ const TestaFaktura = () => {
                     <span className="unit">Jämfört mot välförhandlat B2B-avtal · bekräftas med faktisk offert</span>
                   </EstimateSavingsBlock>
                 ) : null}
+                {/* Dropbox/Box-korselden: arkitektonisk substitutionsinsikt. INGEN påhittad SEK-besparing
+                    (USD-prissatt → vi FX-konverterar aldrig). All copy kommer färdig från backend. */}
+                {result.recommendation?.storageSubstitution && (() => {
+                  const sub = result.recommendation.storageSubstitution;
+                  return (
+                    <div style={{ gridColumn: '1 / -1', marginBottom: '20px', padding: '18px 22px', background: '#0E1A17', borderRadius: '20px', border: '1.5px solid #1B7A6E' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#5DD6CA' }}>Arkitektonisk insikt</span>
+                        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#0E1A17', background: '#5DD6CA', borderRadius: '4px', padding: '2px 6px' }}>{sub.vendor} · USD</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '15px', lineHeight: 1.55, color: '#F1F6F3', fontWeight: 600 }}>{sub.usdPain}</p>
+                      <p style={{ margin: '10px 0 0', fontSize: '14px', lineHeight: 1.55, color: '#C7D6D0' }}>{sub.substitution}</p>
+                      <p style={{ margin: '12px 0 0', paddingTop: '12px', borderTop: '1px solid #2A3A35', fontSize: '12px', lineHeight: 1.5, color: '#8FA39C' }}>{sub.note}</p>
+                    </div>
+                  );
+                })()}
                 {/* Verifierad M365-referens (Google-kortet): bevisad SEK-data benchmarkar obevisad
                     Google. Backend äger talet (regel 1/2) — frontend renderar bara, räknar aldrig om. */}
                 {result.recommendation?.m365Equivalent && (
