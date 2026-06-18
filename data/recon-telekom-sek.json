@@ -20,7 +20,8 @@
     },
     "telia": {
       "source": "telia.se/foretag/vaxlar/vaxel-sma-foretag", "product": "Smart Connect (ersätter Touchpoint)",
-      "vatBasis": "OBEKRÄFTAT (B2B /foretag-konvention: exkl)", "bundles": "växel-licens separat från mobil",
+      "vatBasis": "EXKL MOMS — BEKRÄFTAT 2026-06-18 (telia.se/foretag/priser: 'priser för abonnemang, tjänster, samtal och produkter är exklusive moms')",
+      "bundles": "växel-licens separat från mobil",
       "tiers": {
         "T1": { "plan": "Smart Connect uppsättning 1", "monthlyFromSek": 89,  "includes": "styr samtal, hänvisning, öppettider, eget mobil+företagsnummer" },
         "T2": { "plan": "Smart Connect uppsättning 2", "monthlyFromSek": 118, "includes": "+ lokalt nummer, välkomstfras" },
