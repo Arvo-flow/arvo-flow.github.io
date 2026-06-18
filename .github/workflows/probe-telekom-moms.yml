@@ -1,0 +1,27 @@
+name: Probe Telekom moms
+
+# Riktad moms-sond: bekräfta exkl/inkl moms-bas för Telavox + Telia listpriser. Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Cache Playwright-browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}
+      - name: Install Playwright + stealth
+        run: |
+          npm ci
+          npm install playwright playwright-extra puppeteer-extra-plugin-stealth
+          npx playwright install chromium
+      - name: Probe Telekom moms (headful via xvfb)
+        run: HEADFUL=1 xvfb-run -a node scripts/probe-telekom-moms.mjs
