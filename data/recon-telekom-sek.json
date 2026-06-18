@@ -1,0 +1,32 @@
+{
+  "_recon": "STAGING — Telavox + Telia Smart Connect molnväxel-priser, stealth-verifierade 2026-06-18 (förbi bot-skydd).",
+  "_status": "EJ INKOPPLAD som kundsynlig listprisreferens. Vallgrav-KÄRNAN (invoice-vs-marknad, lib/telekom-normalize.js) är moms-ren oberoende av detta. Listpris-spine HÅLLS tills moms-basen bekräftats (regel: ingen gissad moms).",
+  "_zeroTrust": "Äkta SEK direkt från leverantörernas sidor, ingen FX. MEN moms-basen anges INTE explicit på någon av sidorna.",
+  "category": "molnvaxel",
+  "verifiedAt": "2026-06-18",
+  "method": "stealth (playwright-extra + headful via xvfb), web-search för korrekta Telia-URL:er",
+  "openIntegrityFlags": [
+    "MOMS: varken Telavox eller Telia anger exkl/inkl moms i sidans text (momsRx fann 0 på full innerText). B2B-konvention = exkl moms (Telia /foretag, Telavox företagsabonnemang), men EJ explicit verifierat. → bekräfta mot faktisk faktura innan listpriset blir kundsynligt.",
+    "STRUKTUR-MISSMATCH: Telavox BUNDLAR mobil+växel (Premium 399 = obegränsad 5G + växel); Telia separerar växel-LICENS (från 89) från mobilabonnemanget. Naiv listpris-jämförelse vore äpplen-mot-päron. Kanonisk T1/T2/T3 jämför FUNKTIONSNIVÅ; invoice-vs-marknad-kärnan hanterar det (kundens faktiska per-user-kostnad). Listpris-referens måste visas PER LEVERANTÖR med innehållsnot, aldrig blandad."
+  ],
+  "suppliers": {
+    "telavox": {
+      "source": "telavox.se/priser", "vatBasis": "OBEKRÄFTAT (B2B-konvention: exkl)", "bundles": "mobil+växel (Obegränsad)",
+      "tiers": {
+        "T2": { "plan": "Obegränsad Premium", "monthlySek": 399, "includes": "växel, app, chatt/video, fria interna samtal, AI Assist" },
+        "T3": { "plan": "Obegränsad Max",     "monthlySek": 549, "includes": "+ ärendehantering, CRM, Teams, inspelade samtal, avancerad statistik" }
+      },
+      "note": "Plus 298 = mobil-only (ingen växel), ej molnväxel-tier."
+    },
+    "telia": {
+      "source": "telia.se/foretag/vaxlar/vaxel-sma-foretag", "product": "Smart Connect (ersätter Touchpoint)",
+      "vatBasis": "OBEKRÄFTAT (B2B /foretag-konvention: exkl)", "bundles": "växel-licens separat från mobil",
+      "tiers": {
+        "T1": { "plan": "Smart Connect uppsättning 1", "monthlyFromSek": 89,  "includes": "styr samtal, hänvisning, öppettider, eget mobil+företagsnummer" },
+        "T2": { "plan": "Smart Connect uppsättning 2", "monthlyFromSek": 118, "includes": "+ lokalt nummer, välkomstfras" },
+        "T3": { "plan": "Skräddarsy (offert)", "monthlyFromSek": null, "includes": "kösystem, CRM/öppet API, inspelning, SMS-analys" }
+      },
+      "addons": { "softphone": 29, "funktionsnummer": 99, "extraNummer": 39 }
+    }
+  }
+}
