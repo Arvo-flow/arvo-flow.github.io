@@ -1,0 +1,32 @@
+{
+  "_recon": "STAGING — Adobe Creative Cloud SEK-priser, stealth-verifierade 2026-06-18 (Sond 2.0 förbi Akamai).",
+  "_status": "EJ INKOPPLAD. Detta är recon-data, inte prisbok. saas-creative förblir grindad tills (a) moms-status på team-priser bekräftad, (b) dedikerad verifierare i fabriken, (c) regressionssvit. Samma disciplin som M365/Tele2.",
+  "_zeroTrust": "Äkta deterministisk SEK direkt från adobe.com/se. Priser skrivna som 'NNN,NN SEK/mån'. INGEN FX. Promo-priser (intro) ignoreras — endast normalpris.",
+  "vendor": "Adobe Creative Cloud",
+  "category": "saas-creative",
+  "source": "adobe.com/se",
+  "method": "playwright-extra + stealth, headful via xvfb, sv-SE-kontext (scripts/probe-adobe-stealth.mjs)",
+  "verifiedAt": "2026-06-18",
+  "currency": "SEK",
+  "fxConverted": false,
+  "openQuestionsBeforeWiring": [
+    "Moms: individ-priser är uttryckligen 'inkl. moms' (25%). Team/per-licens-priser saknade markör i recon — B2B-benchmark vill ha EXKL moms. BEKRÄFTA före wiring.",
+    "Tier-namn 2025+: 'Creative Cloud Pro' = nya All Apps (mer generativ-AI). 'Creative Cloud Standard' = All Apps utan premium-AI. Single App = 'Fristående program'.",
+    "Single App team-pris anges 'från 381,00' — verifiera om det varierar per program eller är enhetligt."
+  ],
+  "tiers": {
+    "individual_incl_vat": {
+      "single_app_photoshop": { "monthlySek": 311.25, "unit": "kr/mån/anv", "vat": "inkl", "note": "Single App (Photoshop), årsavtal månadsfakturerat" },
+      "all_apps_pro":         { "monthlySek": 932.50, "unit": "kr/mån/anv", "vat": "inkl", "introFirst3moSek": 466.16, "note": "Creative Cloud Pro (Alla program), NORMALPRIS" },
+      "all_apps_standard":    { "monthlySek": 741.25, "unit": "kr/mån/anv", "vat": "inkl", "note": "Creative Cloud Standard (Alla program utan premium-AI)" },
+      "acrobat_standard":     { "monthlySek": 215.00, "unit": "kr/mån/anv", "vat": "inkl" },
+      "adobe_stock":          { "monthlySek": 426.25, "unit": "kr/mån/anv", "vat": "inkl" }
+    },
+    "team_per_license": {
+      "all_apps_pro":             { "monthlySek": 985.00, "unit": "kr/mån/licens", "vat": "OBEKRÄFTAT", "note": "Creative Cloud Pro (All Apps) för team" },
+      "single_app_from":          { "monthlySek": 381.00, "unit": "kr/mån/licens", "vat": "OBEKRÄFTAT", "note": "Fristående program (Single App) för team, FRÅN" },
+      "acrobat_pro":              { "monthlySek": 273.00, "unit": "kr/mån/licens", "vat": "OBEKRÄFTAT" },
+      "substance_3d_collection":  { "monthlySek": 1093.00, "unit": "kr/mån/licens", "vat": "OBEKRÄFTAT" }
+    }
+  }
+}

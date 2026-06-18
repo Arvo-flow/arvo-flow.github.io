@@ -1,3 +1,10 @@
+// ═══ VERDIKT 2026-06-18: STEALTH PASSERADE AKAMAI. Adobe publicerar ÄKTA deterministisk SEK. ═══
+//   Alla URL:er → status 200, fullt svenskt innehåll. Priser skrivs "NNN,NN SEK/mån" (ej "kr") — ingen FX.
+//   Individ (inkl moms): Single App/Photoshop 311,25 · Alla program/CC Pro 932,50 (normalpris) · CC Standard 741,25.
+//   Team (per licens): All Apps/CC Pro 985,00 · Single App "från" 381,00 · Acrobat Pro 273,00 · Substance3D 1093,00.
+//   Data stagead i data/recon-adobe-creative-sek.json (EJ inkopplad). Öppen fråga: moms på team-priser.
+//   → saas-creative är en LEVANDE kandidat: nästa steg = bekräfta moms + dedikerad verifierare + svit (ej i natt).
+//
 // scripts/probe-adobe-stealth.mjs — ADOBE SOND 2.0: stealth-skrapning av Creative Cloud SEK-listpriser.
 //
 // Sond 1.0 dog mot Adobes Akamai bot-skydd (plain fetch → AbortError, headless render → 39-byte challenge).
