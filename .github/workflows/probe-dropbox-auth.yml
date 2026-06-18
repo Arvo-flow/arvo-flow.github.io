@@ -1,0 +1,25 @@
+name: Probe Dropbox (auth)
+
+# Dropbox-sond med inloggad session. Kräver repo-secret DROPBOX_AUTH_COOKIE (hela cookie-strängen
+# från en inloggad dropbox.com-session). Secret maskas i loggar; sonden loggar aldrig värden. Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe Dropbox (authenticated)
+        env:
+          DROPBOX_AUTH_COOKIE: ${{ secrets.DROPBOX_AUTH_COOKIE }}
+        run: node scripts/probe-dropbox-auth.mjs
