@@ -11,7 +11,7 @@ const args = process.argv.slice(2);
 
 if (args[0] === '--matrix') {
   // Workflow härleder sin job-matris härifrån → en sanning, ingen dubblering.
-  process.stdout.write(JSON.stringify(VERIFIERS.map((v) => ({ id: v.id, needsBrowser: !!v.needsBrowser }))));
+  process.stdout.write(JSON.stringify(VERIFIERS.map((v) => ({ id: v.id, needsBrowser: !!v.needsBrowser, needsStealth: !!v.needsStealth }))));
   process.exit(0);
 }
 

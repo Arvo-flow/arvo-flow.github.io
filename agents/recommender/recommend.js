@@ -26,6 +26,7 @@ import { computeShelfware } from '../../lib/shelfware.js';
 import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
 import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
 import { m365Rightsizing, deriveM365Seats } from '../../lib/m365-rightsizing.js';
+import { detectAdobePlan, adobeRightsizing, adobeListExVat, deriveAdobeSeats } from '../../lib/adobe-rightsizing.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -927,6 +928,49 @@ function googleWorkspaceQuoteResponse(input, googleTierKey) {
   };
 }
 
+// Deterministisk saas-creative-rekommendation (Adobe Creative Cloud). Ingen AI, ingen FX. Enda kundsynliga
+// siffran är skillnaden mellan TVÅ verifierade publika Adobe-listpriser (exkl moms) — All Apps → Single App.
+// SKU-medvetet (team direkt exkl / individ ÷1,25). Igenkänns ingen Adobe-rad → talfritt offert-läge.
+function adobeCreativeRecommendation(input) {
+  const zeroUsage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+  const base = {
+    shouldSwitch: false, revisionGate: 'audited', suggestedAnnualCost: null,
+    grossSaving: null, arvoFee: null, netSaving: null, savingPerYear: null,
+    optimizationSaving: null, licenseOverage: null, overageSavings: null,
+    confidence: 'low', switchSteps: [], benchmark: null, usage: zeroUsage,
+  };
+  const lineItems = input.invoice?.lineItems ?? [];
+  const plan = detectAdobePlan(lineItems);
+  if (!plan) {
+    return {
+      ...base, requiresQuote: true, recommendationType: 'requires_quote', adobeRightsizing: null, suggestedSupplier: null,
+      reasoning: 'Vi ser en kreativ-mjukvarufaktura men kan inte säkert läsa vilket Adobe-paket ni ligger på ur raderna. ' +
+        'Vi gör en manuell genomgång mot Adobes verifierade publika listpriser (adobe.com/se) istället för en siffra vi inte kan stå för — ' +
+        'ladda upp en tydligare faktura så rätt-storlekar vi ert abonnemang.',
+    };
+  }
+  const seats = deriveAdobeSeats(input.invoice);
+  const rs = adobeRightsizing(lineItems, seats);
+  if (rs) {
+    // All Apps → Single App: verifierad exkl-moms prisskillnad, ADVISORY (optimizationSaving null tills bekräftat).
+    return {
+      ...base, requiresQuote: false, recommendationType: 'optimize', adobeRightsizing: rs,
+      suggestedSupplier: `Adobe ${rs.targetLabel}`, confidence: 'high', reasoning: rs.reviewPrompt,
+    };
+  }
+  // Igenkänt Adobe-paket UTAN nedförsäljning (redan Single App/Acrobat) → verifierad referens, talfri besparing.
+  const listEx = adobeListExVat(plan.sku, plan.tier);
+  const unit = plan.sku === 'team' ? 'kr/licens/mån' : 'kr/användare/mån';
+  return {
+    ...base, requiresQuote: true, recommendationType: 'requires_quote', adobeRightsizing: null, suggestedSupplier: null,
+    reasoning: listEx
+      ? `Ni kör Adobe på ett enskilt program-/instegspaket. Adobes verifierade listpris för den nivån är ` +
+        `${new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(listEx)} ${unit} exkl moms ` +
+        `(adobe.com/se). Det finns ingen lägre Adobe-nivå att rätt-storleka mot — vill ni jämföra mot Figma/Canva gör vi en offertgenomgång.`
+      : 'Ni kör Adobe Creative Cloud. Vi gör en manuell genomgång mot verifierade listpriser och alternativ (Figma/Canva).',
+  };
+}
+
 export async function recommend(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(
@@ -952,6 +996,13 @@ export async function recommend(input, opts = {}) {
   // Igenkänns inget paket → talfritt offert-läge — det ESTIMERADE matrisvärdet når ALDRIG kund.
   if (input.categorized.category === 'saas-finance') {
     return fortnoxFinanceRecommendation(input);
+  }
+
+  // ── saas-creative: Adobe Creative Cloud rätt-storlek (verifierad exkl-moms prisskillnad) ──
+  // Ingen AI, ingen FX. B2B exkl moms (team direkt, individ ÷1,25). All Apps → Single App-rådgivning
+  // (advisory/review). Igenkänns ingen Adobe-rad → talfritt offert-läge.
+  if (input.categorized.category === 'saas-creative') {
+    return adobeCreativeRecommendation(input);
   }
 
   // ── google-sek-grind: Google Workspace saknar verifierat publikt SEK-pris ──────

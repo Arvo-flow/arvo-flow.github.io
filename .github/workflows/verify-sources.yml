@@ -53,5 +53,13 @@ jobs:
           npm ci
           npm install playwright
           npx playwright install chromium --with-deps
+      # Stealth-källor (t.ex. Adobe bakom Akamai) behöver playwright-extra + stealth-plugin och körs headful.
+      - name: Install stealth (endast needsStealth-källor)
+        if: ${{ matrix.source.needsStealth }}
+        run: npm install playwright-extra puppeteer-extra-plugin-stealth
+      - name: Verifiera ${{ matrix.source.id }} (stealth, headful via xvfb)
+        if: ${{ matrix.source.needsStealth }}
+        run: HEADFUL=1 xvfb-run -a node scripts/verify.mjs ${{ matrix.source.id }}
       - name: Verifiera ${{ matrix.source.id }}
+        if: ${{ !matrix.source.needsStealth }}
         run: node scripts/verify.mjs ${{ matrix.source.id }}

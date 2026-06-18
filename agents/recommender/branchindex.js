@@ -455,12 +455,31 @@ export const BRANCHINDEX = {
   },
 
   'saas-creative': {
-    requiresVolumeData: true,
-    volumeDataNote: 'Kreativ mjukvara (Adobe CC, Figma, Canva) prissätts per produkt och tier — inte jämförbar med produktivitetsverktyg. Våra experter kikar på detta manuellt för att ge er en rättvis analys.',
     unit: 'kr/år',
-    note: 'Per användare/år. Designverktyg och kreativ mjukvara — prisnivå beror starkt på produktval och tier.',
+    note: 'Adobe Creative Cloud — verifierade publika SEK-listpriser (stealth-skrapning av adobe.com/se, lib/verifiers/adobe.mjs). B2B exkl moms.',
+    // Adobe Creative Cloud — ÄKTA SEK direkt från adobe.com/se, stealth-verifierat 2026-06-18 (förbi Akamai).
+    // TVÅ SKU-familjer med OLIKA moms-bas (verifierat på sidorna):
+    //   • Team/B2B (per licens): priserna anges EXKL moms → ankras DIREKT (ingen division).
+    //   • Individ: priserna anges INKL 25% moms → exkl beräknas i kod (lib/adobe-pricing.js exVat ÷1,25).
+    // Ett B2B-företag sitter nästan alltid på Team-planen → fakturedetektorn väljer rätt ankare (regel 4:
+    // de-momsa aldrig ett pris som redan är exkl; jämför aldrig Team-faktura mot individpris = falsk besparing).
+    // Endast NORMALPRIS — intro/promo (t.ex. 466,16 första 3 mån) ignoreras. INGEN FX (äkta SEK).
+    adobeVerified: {
+      source: 'adobe.com/se', method: 'stealth (playwright-extra)', lastVerified: '2026-06-18',
+      teamExVatMonthly: {            // SEK/mån/licens, EXKL moms (årsplan, fakt. månadsvis) — ankras direkt
+        'all-apps':   985,           // Creative Cloud Pro (Alla program)
+        'single-app': 381,           // Fristående program (Single App), "från"
+        'acrobat':    273,           // Acrobat Pro
+      },
+      individualInclVatMonthly: {    // SEK/mån, INKL 25% moms — exkl beräknas i kod (verifierarens individ-ankare)
+        'all-apps':          932.50, // Creative Cloud Pro → exkl 746
+        'all-apps-standard': 741.25, // Creative Cloud Standard (utan premium-AI) → exkl 593
+        'single-app':        311.25, // t.ex. Photoshop → exkl 249
+        'acrobat':           215.00, // → exkl 172
+      },
+    },
     alternatives: [
-      { supplier: 'Adobe Creative Cloud for Teams', positioning: 'Branschstandard för kreativa team — offert via Arvo CSP ger volymrabatt',     reliability: 0.95 },
+      { supplier: 'Adobe Creative Cloud for Teams', positioning: 'Branschstandard för kreativa team — All Apps 985 kr/licens/mån exkl moms (verifierat adobe.com/se)', reliability: 0.95 },
       { supplier: 'Figma Organization',             positioning: 'Designplattform med starka samarbetsfunktioner, konkurrenskraftigt vs Adobe', reliability: 0.93 },
       { supplier: 'Canva for Teams',                positioning: 'Lägst kostnad för enklare grafik utan avancerade redigeringsbehov',           reliability: 0.88 },
     ],

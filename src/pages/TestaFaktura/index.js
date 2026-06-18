@@ -2291,6 +2291,29 @@ const TestaFaktura = () => {
               );
             })()}
 
+            {result.recommendation?.adobeRightsizing && (() => {
+              // Adobe rätt-storlek (Alla program → Single App). Advisory/review: verifierad EXKL-moms
+              // prisskillnad (team direkt / individ ÷1,25). Alla tal färdiga från backend — klienten räknar inget.
+              const rs = result.recommendation.adobeRightsizing;
+              return (
+                <div style={{ gridColumn: '1 / -1', marginTop: '14px', padding: '16px 18px', background: '#F1F6F3', border: '1px solid #BFD8D0', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px' }}>
+                    Rätt-storlek — Adobe Creative Cloud (rådgivning)
+                  </div>
+                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
+                    Ni betalar för <strong>{rs.currentLabel}</strong> ({rs.currentMonthlyLabel} {rs.unit} exkl moms) — hela sviten.{' '}
+                    Använder era användare i praktiken bara <strong>ett program</strong>? Då räcker <strong>{rs.targetLabel}</strong> ({rs.targetMonthlyLabel} {rs.unit} exkl moms).
+                  </p>
+                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
+                    {rs.annualSavingLabel
+                      ? <>Bekräfta så realiserar vi upp till <strong style={{ color: '#1B7A6E' }}>{rs.annualSavingLabel} kr/år</strong> för era {rs.seats} licenser. </>
+                      : <>Bekräfta antal licenser så räknar vi hem beloppet. </>}
+                    Verifierad prisskillnad mot Adobes publika listpris (adobe.com/se) — vi visar ingen siffra vi inte kan stå för.
+                  </p>
+                </div>
+              );
+            })()}
+
             {result.recommendation?.reasoning && (isOptimize || _isSecondaryOnlySwitch) && (
               <Reasoning>
                 <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Kombinerad analys'}</span>
