@@ -20,7 +20,8 @@ const URLS = [
 const TIERS = ['Alla program', 'All Apps', 'Alla appar', 'Enstaka program', 'Single App', 'En app',
   'Photoshop', 'Illustrator', 'Acrobat', 'Lightroom', 'Express', 'Team', 'Företag'];
 
-const priceHits = (t) => [...new Set((t.match(/.{0,42}\d[\d\s.,]*\s*kr\b.{0,18}/gi) || []).map((s) => s.replace(/\s+/g, ' ').trim()))].slice(0, 40);
+// Adobe skriver priser med suffixet "SEK" (t.ex. "311,25 SEK/månad"), inte "kr" — fånga BÅDA.
+const priceHits = (t) => [...new Set((t.match(/.{0,50}\d[\d\s.,]*\s*(?:SEK|kr)\b\s*\/?\s*(?:m[åa]n(?:ad)?)?.{0,6}/gi) || []).map((s) => s.replace(/\s+/g, ' ').trim()))].slice(0, 50);
 function tierCtx(t) {
   const out = [];
   for (const x of TIERS) {

@@ -26,7 +26,8 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const URLS = ['https://www.dropbox.com/sv_SE/plans', 'https://www.dropbox.com/sv_SE/business/pricing', 'https://www.dropbox.com/business/plans-comparison'];
 const TIERS = ['Plus', 'Essentials', 'Professional', 'Standard', 'Advanced', 'Business'];
 
-const priceHits = (t) => [...new Set((t.match(/.{0,42}\d[\d\s.,]*\s*kr\b.{0,18}/gi) || []).map((s) => s.replace(/\s+/g, ' ').trim()))].slice(0, 40);
+// Fånga både "SEK" och "kr" (svenska prissidor använder bägge).
+const priceHits = (t) => [...new Set((t.match(/.{0,50}\d[\d\s.,]*\s*(?:SEK|kr)\b\s*\/?\s*(?:m[åa]n(?:ad)?)?.{0,6}/gi) || []).map((s) => s.replace(/\s+/g, ' ').trim()))].slice(0, 50);
 function tierCtx(t) {
   const out = [];
   for (const x of TIERS) {
