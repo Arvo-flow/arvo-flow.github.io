@@ -34,6 +34,19 @@ await sql`
     ON invoice_datapoints (category, industry, size_bucket)
 `;
 
+// ── Vallgrav-beredskap (additivt, bakåtkompatibelt) ──────────────────────────────
+// Den kollektiva sanningen kräver att datapunkten är NORMALISERAD (jämförbar tvärs kunder/
+// leverantörer) och NIVÅTAGGAD (kanonisk T1/T2/T3), inte bara total årskostnad. Befintliga
+// kategorier skriver NULL i dessa → helt orörda. Molnväxel (och framtida per-användare-kategorier)
+// skriver den normaliserade jämförelseenheten + kanonisk nivå, så fynd-motorn kan säga
+// "ni betalar Y/anv, marknaden X" utan en rad efterhandsarbete. ADD COLUMN IF NOT EXISTS = idempotent.
+await sql`ALTER TABLE invoice_datapoints ADD COLUMN IF NOT EXISTS per_user_monthly_exvat NUMERIC`;
+await sql`ALTER TABLE invoice_datapoints ADD COLUMN IF NOT EXISTS tier TEXT`;
+await sql`
+  CREATE INDEX IF NOT EXISTS idx_datapoints_tier_segment
+    ON invoice_datapoints (category, tier, industry, size_bucket)
+`;
+
 await sql`
   CREATE TABLE IF NOT EXISTS fortnox_connections (
     id            UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
