@@ -1,0 +1,22 @@
+name: Probe Telekom (stealth)
+
+# Recon: Telavox + Telia Företag molnväxel — äkta SEK + moms-bas (Vallgrav-kategorin). Endast manuell.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + stealth
+        run: |
+          npm ci
+          npm install playwright playwright-extra puppeteer-extra-plugin-stealth
+          npx playwright install chromium --with-deps
+      - name: Probe Telekom (headful via xvfb)
+        run: HEADFUL=1 xvfb-run -a node scripts/probe-telekom-stealth.mjs
