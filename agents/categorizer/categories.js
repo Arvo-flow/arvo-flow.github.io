@@ -45,6 +45,17 @@ export const CATEGORIES = {
     ],
     accountHints: ['6210', '6212'],
   },
+  molnvaxel: {
+    label: 'Företagsväxel (molnväxel)',
+    licensePending: false,
+    subTypes: ['växel', 'kontaktcenter', 'telefoni'],
+    // Växel/PBX-lagret (samtalsstyrning, kö, IVR, anknytningar) — INTE mobilabonnemang (de stannar i mobil).
+    keywords: [
+      'växel', 'molnväxel', 'telefonväxel', 'företagsväxel', 'växeltjänst', 'växellicens',
+      'smart connect', 'touchpoint', 'telavox', '3cx', 'anknytning', 'kösystem', 'kontaktcenter',
+    ],
+    accountHints: ['6211'],
+  },
   bredband: {
     label: 'Företagsbredband',
     licensePending: false,

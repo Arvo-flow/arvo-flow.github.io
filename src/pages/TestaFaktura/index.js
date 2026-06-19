@@ -39,7 +39,7 @@ function truncateReasoning(text, maxSentences = 2) {
 function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnnualCost, diagOvPct, licenseOverage }) {
   if (!diagOvPct && !licenseOverage) return null;
   const fmtN = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
-  if ((cat === 'mobil' || cat === 'vaxel') && seatCount > 1) {
+  if ((cat === 'mobil' || cat === 'molnvaxel') && seatCount > 1) {
     const perNow = Math.round(adjAnnualCost / seatCount);
     const perNew = Math.round((suggestedAnnualCost ?? 0) / seatCount);
     return `${seatCount} abonnemang hos ${supplier} — ${fmtN(perNow)} kr/st/år mot avtalspriset ${fmtN(perNew)} kr/st/år.`;
@@ -174,7 +174,7 @@ const INDUSTRY_LABELS = {
 const SEGMENTS = [
   { label: 'Skrivare',              short: 'Skrivare',   icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
   { label: 'El',                    short: 'El',          icon: 'bolt',      cats: ['el'] },
-  { label: 'Telefoni och bredband', short: 'Telefoni',    icon: 'phone',     cats: ['mobil', 'bredband', 'vaxel'] },
+  { label: 'Telefoni och bredband', short: 'Telefoni',    icon: 'phone',     cats: ['mobil', 'bredband', 'molnvaxel'] },
   { label: 'Programvara',           short: 'Programvara', icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
   { label: 'IT',                    short: 'IT',          icon: 'wifi',      cats: ['it-support'] },
   { label: 'Fordon och frakt',      short: 'Fordon',      icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
@@ -2302,6 +2302,35 @@ const TestaFaktura = () => {
                     Kräver ni inte {rs.currentTier.toUpperCase()}:s enterprise-funktioner (compliance, eDiscovery)? Då realiserar vi upp till{' '}
                     <strong style={{ color: '#1B7A6E' }}>{rs.annualSavingLabel} kr/år</strong> för era {rs.seats} användare. Verifierad prisskillnad mot
                     Microsofts publika listpris — vi visar ingen siffra vi inte kan stå för.
+                  </p>
+                </div>
+              );
+            })()}
+            {result.recommendation?.molnvaxel && (() => {
+              // Molnväxel: kundens faktiska per-användare-kostnad (exkl moms) mot Telias verifierade
+              // instegsgolv + verifierade tilläggspriser. Alla tal från backend — klienten räknar inget.
+              const mv = result.recommendation.molnvaxel;
+              const addonsWithPrice = (mv.addons || []).filter((a) => a.monthlyExVat != null);
+              return (
+                <div style={{ gridColumn: '1 / -1', marginTop: '14px', padding: '16px 18px', background: '#F1F6F3', border: '1px solid #BFD8D0', borderRadius: '12px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px' }}>
+                    Företagsväxel — {mv.tierLabel}-nivå (verifierad referens)
+                  </div>
+                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
+                    Ni betalar <strong>{mv.perUserLabel} kr/användare/mån</strong> (exkl moms) för era {mv.seats} användare.
+                    {mv.teliaFloorLabel != null ? (
+                      <> Telia Smart Connect — marknadens instegsväxel — kostar <strong>från {mv.teliaFloorLabel} kr/anv/mån</strong> (exkl moms) för motsvarande nivå.</>
+                    ) : (
+                      <> På kontaktcenter-nivå sätts pris via offert — vi jämför mot er faktiska kostnad i en genomgång.</>
+                    )}
+                  </p>
+                  {addonsWithPrice.length > 0 && (
+                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
+                      Ni betalar för {addonsWithPrice.map((a) => `${a.label} (${a.monthlyExVat} kr/mån)`).join(', ')} — bekräfta att de används, annars är det ren besparing.
+                    </p>
+                  )}
+                  <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#8A988F' }}>
+                    Telias instegspris exkl moms verifierat mot telia.se. "Från"-pris = golv; exakt jämförelse mot er bransch görs när underlaget räcker.
                   </p>
                 </div>
               );

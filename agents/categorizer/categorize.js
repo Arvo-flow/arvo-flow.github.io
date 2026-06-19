@@ -27,8 +27,12 @@ export class CategorizerError extends Error {
 // Strong description signals that unambiguously identify a category.
 // Keyed by category ID → array of lowercase substrings to scan for.
 const STRONG_DESC_SIGNALS = {
-  mobil:            ['mobilabonnemang', 'mobiltelefoni', 'telefonabonnemang', 'företagstelefoni', 'mobildata',
+  mobil:            ['mobilabonnemang', 'mobiltelefoni', 'telefonabonnemang', 'mobildata',
                      'sim-kort', 'sim kort', 'jobbmobil', 'företagsmobil', 'mobilplan'],
+  // Molnväxel/företagsväxel = PBX-lagret (växelfunktioner), åtskilt från mobilabonnemang.
+  molnvaxel:        ['molnväxel', 'telefonväxel', 'företagsväxel', 'växeltjänst', 'växellicens', 'mobil växel',
+                     'smart connect', 'touchpoint', 'telavox', 'kösystem', 'svarsgrupp', 'kontaktcenter',
+                     'anknytning', '3cx', 'växel premium', 'växel med'],
   serverhosting:    ['microsoft azure', 'azure förbrukning', 'aws ec2', 'amazon web services',
                      'google cloud platform', 'azure csp', 'compute instances', 'molnhosting',
                      'vps hosting', 'dedikerad server', 'cloud computing'],

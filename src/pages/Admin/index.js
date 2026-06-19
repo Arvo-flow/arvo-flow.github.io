@@ -237,7 +237,7 @@ export default function Admin() {
 
   const QUEUE_COLS  = '2fr 1.5fr 1fr 1fr 1fr 1.2fr 84px';
   const SEL_STYLE   = { padding:'6px 10px', borderRadius:8, border:'1.5px solid rgba(255,255,255,.15)', background:'rgba(255,255,255,.06)', color:'#fff', fontSize:12.5, cursor:'pointer', outline:'none' };
-  const ALL_CATS    = ['saas-crm','saas-productivity','saas-finance','saas-devtools','saas-other','mobil','bredband','el','skrivarleasing','kortterminal','vaxel','loneadmin','utrustningsleasing','managed-workplace','larm-bevakning','foretagshalsovard','bankavgifter','forsakring-foretag','serverhosting','it-support','faktura-tjanst','leasing-bil'];
+  const ALL_CATS    = ['saas-crm','saas-productivity','saas-finance','saas-devtools','saas-other','mobil','bredband','el','skrivarleasing','kortterminal','molnvaxel','loneadmin','utrustningsleasing','managed-workplace','larm-bevakning','foretagshalsovard','bankavgifter','forsakring-foretag','serverhosting','it-support','faktura-tjanst','leasing-bil'];
   const WAIT_COLS   = '2fr 1.5fr 1.5fr 1.5fr';
   const FB_COLS     = '2fr 1.5fr 0.5fr 2fr 1.5fr';
 

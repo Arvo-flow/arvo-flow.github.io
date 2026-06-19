@@ -26,6 +26,7 @@ import { computeShelfware } from '../../lib/shelfware.js';
 import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
 import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
 import { m365Rightsizing, deriveM365Seats } from '../../lib/m365-rightsizing.js';
+import { molnvaxelRecommendation } from '../../lib/molnvaxel-recommendation.js';
 import { detectAdobePlan, adobeRightsizing, adobeListExVat, deriveAdobeSeats } from '../../lib/adobe-rightsizing.js';
 import { detectStorageSubstitution } from '../../lib/saas-substitution.js';
 
@@ -1011,6 +1012,14 @@ export async function recommend(input, opts = {}) {
   // Igenkänns inget paket → talfritt offert-läge — det ESTIMERADE matrisvärdet når ALDRIG kund.
   if (input.categorized.category === 'saas-finance') {
     return fortnoxFinanceRecommendation(input);
+  }
+
+  // ── molnväxel: deterministisk växel-rekommendation (Vallgrav-kategorin) ─────────
+  // Ingen AI, ingen FX. Kundens faktiska per-användare-kostnad (normaliserad, exkl moms) mot Telias
+  // verifierade instegsgolv + exakta tilläggspriser. Normaliseringen föder även den k-anonyma
+  // tvärkund-jämförelsen (Vallgraven) via lib/telekom-normalize.js.
+  if (input.categorized.category === 'molnvaxel') {
+    return molnvaxelRecommendation(input);
   }
 
   // ── saas-creative: Adobe Creative Cloud rätt-storlek (verifierad exkl-moms prisskillnad) ──

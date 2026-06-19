@@ -201,6 +201,37 @@ export const BRANCHINDEX = {
     // secondary-savings.js) anropar bredbandSpeedBenchmark(speedMbit) med känd hastighet.
   },
 
+  // ── Molnväxel / företagstelefoni (Vallgrav-kategorin) ────────────────────────────
+  // Verifierat ankare: Telia Smart Connect (ersätter Touchpoint). Stealth-verifierat 2026-06-18.
+  // EXKL MOMS bekräftat 2026-06-18 (telia.se/foretag/priser: "priser för abonnemang, tjänster,
+  // samtal och produkter är exklusive moms"). Ingen FX. "från"-priser = instegsgolv per nivå.
+  // Kanonisk T1/T2/T3-axel (lib/telekom-normalize.js) + k-anonym tvärkund-jämförelse (Vallgraven).
+  // Telavox tillkommer som leverantör 2 när dess moms-bas bekräftats (prissida saknar markör).
+  molnvaxel: {
+    source: 'real-public',
+    unit: 'kr/år',
+    canonicalTiers: { T1: 'Samtal', T2: 'Proffs', T3: 'Kontaktcenter' },
+    teliaVerified: {
+      product: 'Telia Smart Connect',
+      source: 'telia.se/foretag/vaxlar/vaxel-sma-foretag',
+      vatBasis: 'exkl',
+      vatConfirmedAt: '2026-06-18',
+      lastVerified: '2026-06-18',
+      // kr/användare/mån EXKL moms — "från" (instegsgolv). T3 = skräddarsy/offert (inget fast listpris).
+      tiers: {
+        T1: { plan: 'Smart Connect uppsättning 1', fromMonthly: 89 },
+        T2: { plan: 'Smart Connect uppsättning 2', fromMonthly: 118 },
+      },
+      // Exakta verifierade tilläggspriser (kr/mån exkl moms) — grund för add-on-rätt-storlek.
+      addons: { softphone: 29, funktionsnummer: 99, extraNummer: 39 },
+    },
+    note: 'Molnväxel per användare/mån (exkl moms). Verifierat ankare: Telia Smart Connect — instegsgolv T1 från 89 kr, T2 från 118 kr (telia.se, exkl moms bekräftat 2026-06-18). Tilläggspriser exakta: softphone 29, funktionsnummer 99, extra nummer 39 kr/mån. Kanonisk T1/T2/T3 + k-anonym tvärkund-jämförelse.',
+    alternatives: [
+      { supplier: 'Telia Smart Connect', positioning: 'Marknadens instegsväxel för SMF — från 89 kr/anv/mån exkl moms (T1), ersätter Touchpoint', reliability: 0.95 },
+      { supplier: 'Telavox',             positioning: 'Bundlar mobil+växel (Premium 399, Max 549) — stark app; moms bekräftas innan listpris visas', reliability: 0.90 },
+    ],
+  },
+
   kortterminal: {
     source: 'estimated',
     unit: 'kr/år',
