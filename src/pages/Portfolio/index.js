@@ -39,11 +39,11 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
 
 // Översätt API-svaret till ett ÄRLIGT, åtgärdbart skäl (regel 7: varje fel blir en tillgång).
 // Statuskoden är diagnosen — 429 dagskvot, 504 timeout, 401 session, 413 storlek, 404 fel ursprung.
-function failReason(status, apiError) {
+function failReason(status, apiError, code) {
   switch (status) {
     case 429: return ['Dagskvot nådd', apiError || 'Ni har nått max antal fria analyser idag — försök igen imorgon eller aktivera ert konto.'];
     case 504: return ['Tog för lång tid', 'Analysen hann inte klart i tid. Vänta en stund och försök igen.'];
-    case 401: return ['Sessionen löpte ut', 'Ladda om sidan och försök igen.'];
+    case 401: return ['Sessionen löpte ut', `Ladda om sidan och försök igen.${code ? ` (orsak: ${code})` : ''}`];
     case 413: return ['Filen för stor', apiError || 'PDF:en överstiger maxstorleken — komprimera eller dela upp den.'];
     case 400: return ['Kunde inte läsas', apiError || 'Filen gick inte att tolka som en faktura. Kontrollera att det är en PDF-faktura.'];
     case 404: return ['Tjänsten nås inte här', 'Öppna ert kontor via arvoflow.se så fungerar analysen.'];
@@ -266,7 +266,7 @@ export default function Portfolio() {
         }
         if (!ok && !isGate) {
           // Varje fel blir en tillgång (regel 7): visa det FAKTISKA skälet, inte ett tomt "Misslyckades".
-          [label, hint] = failReason(res.status, data?.error);
+          [label, hint] = failReason(res.status, data?.error, data?.code);
           lastHint = hint;
         }
         setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: ok ? 'done' : (isGate ? 'gate' : 'fail'), label, hint } : u));

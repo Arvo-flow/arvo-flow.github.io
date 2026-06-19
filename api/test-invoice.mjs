@@ -69,17 +69,25 @@ async function checkRateLimit(kv, ip) {
 }
 
 // ── HMAC-tokenvalidering ──────────────────────────────────────────────────────
-function validateToken(token) {
+// Returnerar null om token är giltig, annars en TERS orsakskod (för diagnos — regel 7).
+// Klockskew-tolerans: token-utfärdaren och validatorn är olika serverless-instanser i Vercels
+// fleet; en utfärdar-klocka som ligger någon sekund före validatorns gjorde age<0 → falskt
+// "Sessionen löpte ut". Vi tolererar ±2 min skew (oexploaterbart, dödar hela 401-klassen).
+const TOKEN_SKEW_MS = 120_000;
+function tokenRejectReason(token) {
   const secret = process.env.ARVO_HMAC_SECRET;
-  if (!secret) return true; // dev-läge utan konfigurerad secret
-  if (!token || typeof token !== 'string') return false;
+  if (!secret) return null;                              // dev-läge utan konfigurerad secret
+  if (!token || typeof token !== 'string') return 'no-token';
   const parts = token.split('.');
-  if (parts.length !== 3) return false;
+  if (parts.length !== 3) return 'bad-format';
   const [ts, nonce, sig] = parts;
   const age = Date.now() - Number(ts);
-  if (!Number.isFinite(age) || age < 0 || age > 3_600_000) return false;
+  if (!Number.isFinite(age)) return 'bad-ts';
+  if (age < -TOKEN_SKEW_MS) return 'future';            // utfärdar-klocka före validatorn
+  if (age > 3_600_000 + TOKEN_SKEW_MS) return 'expired';
   const expected = createHmac('sha256', secret).update(`${ts}.${nonce}`).digest('hex');
-  return sig === expected;
+  if (sig !== expected) return 'bad-sig';
+  return null;
 }
 
 // ── E-postlagring (gate) ──────────────────────────────────────────────────────
@@ -343,8 +351,10 @@ export default async function handler(req, res) {
   const isWhitelisted = WHITELISTED_IPS.has(clientIp);
 
   if (!isBypass) {
-    if (!validateToken(token)) {
-      return send(res, 401, { error: 'Ogiltig session — ladda om sidan och försök igen.' });
+    const _tokReason = tokenRejectReason(token);
+    if (_tokReason) {
+      console.log(`[test-invoice] 401 token avvisad: ${_tokReason}`);
+      return send(res, 401, { error: 'Ogiltig session — ladda om sidan och försök igen.', code: _tokReason });
     }
 
     const kv = getKv();
