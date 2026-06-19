@@ -709,6 +709,185 @@ export const M365ReferenceBlock = styled.div`
   }
 `;
 
+// ── AdvisoryCard — premiumkort för rätt-storlek/referens-råd (molnväxel, M365, Adobe, Fortnox) ──
+// Instrument, inte ruta: monospace-hjältetal, visuell jämförelse mot verifierat golv, signalfärg
+// sparsamt. 100 % theme-tokens (regel 6) — ersätter de inline-hex-boxar som drog ner ytan.
+export const AdvisoryCard = styled.div`
+  grid-column: 1 / -1;
+  position: relative;
+  margin-top: 14px;
+  margin-bottom: 22px;
+  padding: 22px 24px 18px;
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  box-shadow: ${({ theme }) => theme.shadow.sm};
+  overflow: hidden;
+
+  /* dossier-keyline överst — telemetri, inte dekor */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: ${({ theme }) => theme.color.brandGradient};
+  }
+
+  .adv-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .adv-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: ${({ theme }) => theme.color.brand};
+  }
+  .adv-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: ${({ theme }) => theme.color.brand};
+    background: ${({ theme }) => theme.color.brandSoft};
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    padding: 3px 9px;
+  }
+  .adv-badge::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.color.brand};
+  }
+
+  /* Hjältetalet — kundens faktiska kostnad, instrumentläst */
+  .adv-figure {
+    font-family: ${({ theme }) => theme.font.mono};
+    font-size: clamp(30px, 6vw, 40px);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-feature-settings: "tnum";
+    color: ${({ theme }) => theme.color.ink};
+  }
+  .adv-figure .unit {
+    display: block;
+    margin-top: 6px;
+    font-family: ${({ theme }) => theme.font.sans};
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: ${({ theme }) => theme.color.muted};
+  }
+
+  /* Visuell jämförelse mot verifierat golv — två staplar på gemensam skala */
+  .adv-compare {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .adv-bar {
+    display: grid;
+    grid-template-columns: 92px 1fr auto;
+    align-items: center;
+    gap: 12px;
+  }
+  .adv-bar .lbl {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: ${({ theme }) => theme.color.muted};
+  }
+  .adv-bar .track {
+    height: 8px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    background: ${({ theme }) => theme.color.surfaceAlt};
+    overflow: hidden;
+  }
+  .adv-bar .fill {
+    height: 100%;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    transition: width ${({ theme }) => theme.motion.slow};
+  }
+  .adv-bar.you .fill {
+    background: ${({ theme, $over }) => ($over ? theme.color.warning : theme.color.brand)};
+  }
+  .adv-bar.floor .fill {
+    background: ${({ theme }) => theme.color.borderStrong};
+  }
+  .adv-bar .amt {
+    font-family: ${({ theme }) => theme.font.mono};
+    font-size: 13px;
+    font-weight: 600;
+    font-feature-settings: "tnum";
+    color: ${({ theme }) => theme.color.inkSoft};
+    white-space: nowrap;
+  }
+
+  /* Signalchip — sparsam färg, bara när siffran förtjänar den */
+  .adv-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    padding: 6px 12px;
+    border-radius: ${({ theme }) => theme.size.radius.pill};
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .adv-pill.warn {
+    color: ${({ theme }) => theme.color.warning};
+    background: ${({ theme }) => theme.color.warningSoft};
+  }
+  .adv-pill.ok {
+    color: ${({ theme }) => theme.color.success};
+    background: ${({ theme }) => theme.color.successSoft};
+  }
+  .adv-pill.neutral {
+    color: ${({ theme }) => theme.color.muted};
+    background: ${({ theme }) => theme.color.surfaceAlt};
+  }
+
+  .adv-prose {
+    margin: 16px 0 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: ${({ theme }) => theme.color.inkSoft};
+  }
+  .adv-prose strong { color: ${({ theme }) => theme.color.ink}; font-weight: 700; }
+
+  .adv-addons {
+    margin: 12px 0 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: ${({ theme }) => theme.color.muted};
+  }
+
+  .adv-foot {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid ${({ theme }) => theme.color.border};
+    font-size: 11px;
+    line-height: 1.55;
+    color: ${({ theme }) => theme.color.mutedSoft};
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px 18px 16px;
+    .adv-bar { grid-template-columns: 76px 1fr auto; gap: 9px; }
+    .adv-bar .lbl { font-size: 11px; }
+  }
+`;
+
 export const PriceNote = styled.p`
   margin-top: 10px;
   margin-bottom: ${({ $compact }) => $compact ? '10px' : '24px'};

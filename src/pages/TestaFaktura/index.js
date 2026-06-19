@@ -11,7 +11,7 @@ import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  BriefingHead, SavingsBlock, EstimateSavingsBlock, M365ReferenceBlock, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
+  BriefingHead, SavingsBlock, EstimateSavingsBlock, M365ReferenceBlock, AdvisoryCard, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
   Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, EmailGate, PortfolioBridge,
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
@@ -2309,36 +2309,73 @@ const TestaFaktura = () => {
             {result.recommendation?.molnvaxel && (() => {
               // Molnväxel: kundens faktiska per-användare-kostnad (exkl moms) mot Telias verifierade
               // instegsgolv + verifierade tilläggspriser. Alla tal från backend — klienten räknar inget.
+              // Stapelbredderna nedan är ren layout (andel av maxvärdet), inte kundsynliga siffror.
               const mv = result.recommendation.molnvaxel;
               const addonsWithPrice = (mv.addons || []).filter((a) => a.monthlyExVat != null);
+              const hasFloor = !mv.bundled && mv.teliaFloorLabel != null && mv.teliaFloor != null;
+              const over = mv.overFloorPct != null && mv.overFloorPct >= 30;
+              const scaleMax = Math.max(mv.perUserMonthlyExVat || 0, mv.teliaFloor || 0) || 1;
+              const youW = Math.max(6, Math.round(((mv.perUserMonthlyExVat || 0) / scaleMax) * 100));
+              const floorW = Math.max(6, Math.round(((mv.teliaFloor || 0) / scaleMax) * 100));
               return (
-                <div style={{ gridColumn: '1 / -1', marginTop: '14px', padding: '16px 18px', background: '#F1F6F3', border: '1px solid #BFD8D0', borderRadius: '12px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px' }}>
-                    Företagsväxel — {mv.tierLabel}-nivå (verifierad referens)
+                <AdvisoryCard $over={over}>
+                  <div className="adv-top">
+                    <span className="adv-eyebrow">Företagsväxel · {mv.tierLabel}-nivå</span>
+                    <span className="adv-badge">Verifierad referens</span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
-                    Ni betalar <strong>{mv.perUserLabel} kr/användare/mån</strong> (exkl moms) för era {mv.seats} användare.
-                    {mv.bundled ? (
-                      <> Priset buntar växel <strong>och</strong> mobilabonnemang (inkl. surf) — inte direkt jämförbart med en ren växellicens. Vi jämför mot ert faktiska pris i en genomgång istället för en missvisande siffra.</>
-                    ) : mv.teliaFloorLabel != null ? (
-                      <> Telia Smart Connect — marknadens instegsväxel — kostar <strong>från {mv.teliaFloorLabel} kr/anv/mån</strong> (exkl moms) för motsvarande nivå.
-                        {mv.overFloorPct != null && mv.overFloorPct >= 30 && (
-                          <> Ni ligger <strong style={{ color: '#1B7A6E' }}>~{mv.overFloorPct} % över instegsgolvet</strong> — värt en offertjämförelse.</>
-                        )}
-                      </>
+
+                  <div className="adv-figure">
+                    {mv.perUserLabel} kr
+                    <span className="unit">per användare/mån · exkl moms · {mv.seats} användare</span>
+                  </div>
+
+                  {hasFloor && (
+                    <div className="adv-compare">
+                      <div className="adv-bar you">
+                        <span className="lbl">Ni betalar</span>
+                        <span className="track"><span className="fill" style={{ width: `${youW}%` }} /></span>
+                        <span className="amt">{mv.perUserLabel} kr</span>
+                      </div>
+                      <div className="adv-bar floor">
+                        <span className="lbl">Telia-golv</span>
+                        <span className="track"><span className="fill" style={{ width: `${floorW}%` }} /></span>
+                        <span className="amt">{mv.teliaFloorLabel} kr</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {mv.bundled ? (
+                    <span className="adv-pill neutral">Buntat pris — jämförs i genomgång, inte mot golv</span>
+                  ) : hasFloor ? (
+                    over ? (
+                      <span className="adv-pill warn">~{mv.overFloorPct} % över Telias instegsgolv</span>
                     ) : (
-                      <> På kontaktcenter-nivå sätts pris via offert — vi jämför mot er faktiska kostnad i en genomgång.</>
+                      <span className="adv-pill ok">I nivå med marknadens instegsväxel</span>
+                    )
+                  ) : (
+                    <span className="adv-pill neutral">Kontaktcenter — pris sätts via offert</span>
+                  )}
+
+                  <p className="adv-prose">
+                    {mv.bundled ? (
+                      <>Priset buntar växel <strong>och</strong> mobilabonnemang (inkl. surf) — inte direkt jämförbart med en ren växellicens. Vi jämför mot ert faktiska pris i en genomgång istället för en missvisande siffra.</>
+                    ) : hasFloor ? (
+                      <>Telia Smart Connect — marknadens instegsväxel för motsvarande nivå — kostar <strong>från {mv.teliaFloorLabel} kr/anv/mån</strong> (exkl moms){over ? <>. Glappet är värt en offertjämförelse.</> : <>. Ni ligger redan rätt — vi bevakar att det förblir så.</>}</>
+                    ) : (
+                      <>På kontaktcenter-nivå sätter leverantörerna pris via offert — vi jämför mot er faktiska kostnad i en genomgång.</>
                     )}
                   </p>
+
                   {addonsWithPrice.length > 0 && (
-                    <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
+                    <p className="adv-addons">
                       Ni betalar för {addonsWithPrice.map((a) => `${a.label} (${a.monthlyExVat} kr/mån)`).join(', ')} — bekräfta att de används, annars är det ren besparing.
                     </p>
                   )}
-                  <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#8A988F' }}>
-                    Telias instegspris exkl moms verifierat mot telia.se. "Från"-pris = golv; exakt jämförelse mot er bransch görs när underlaget räcker.
-                  </p>
-                </div>
+
+                  <div className="adv-foot">
+                    Telias instegspris exkl moms verifierat mot telia.se. ”Från”-pris = golv; exakt jämförelse mot er bransch görs när underlaget räcker.
+                  </div>
+                </AdvisoryCard>
               );
             })()}
 
