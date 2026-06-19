@@ -73,6 +73,32 @@ async function getBrowserFingerprint() {
   } catch { return Math.random().toString(36).slice(2, 14); }
 }
 
+// Medveten TESTVÄG (rör aldrig den riktiga deterministiska identiteten):
+//   ?reset=1   → färsk slumpad identitet → tomt "ny kund"-kontor (demo/test om och om igen)
+//   ?reset=off → tillbaka till det riktiga fingerprint-kontot
+// Identiteten lagras under en SEPARAT nyckel och är tydligt märkt "testkonto" i UI:t.
+const FP_OVERRIDE_KEY = 'arvo_fp_override';
+function resolveTestIdentity() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('reset')) {
+      const v = (params.get('reset') || '1').toLowerCase();
+      if (v === 'off' || v === '0' || v === 'real') {
+        localStorage.removeItem(FP_OVERRIDE_KEY);
+      } else {
+        const fresh = 'test' + Array.from(crypto.getRandomValues(new Uint8Array(10)))
+          .map((b) => b.toString(16).padStart(2, '0')).join('');
+        localStorage.setItem(FP_OVERRIDE_KEY, fresh);
+        ['arvo_successful_count', 'arvo_had_saving', 'arvo_gate_passed'].forEach((k) => localStorage.removeItem(k));
+      }
+      params.delete('reset');                       // strippa så reload inte rullar ny identitet
+      const qs = params.toString();
+      window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    }
+    return localStorage.getItem(FP_OVERRIDE_KEY) || null;
+  } catch { return null; }
+}
+
 const fmtNum   = (n) => (n == null ? '–' : Math.round(n).toLocaleString('sv-SE'));
 const fmtDate  = (iso) => (iso ? new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) : '');
 const monthYear = (d) => d.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
@@ -200,6 +226,7 @@ export default function Portfolio() {
   const [uploading, setUploading] = useState(false);
   const [uploadNote, setUploadNote] = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [testMode, setTestMode] = useState(false);
 
   const magic = useMemo(() => new URLSearchParams(window.location.search).get('magic'), []);
 
@@ -219,7 +246,9 @@ export default function Portfolio() {
     let cancelled = false;
     (async () => {
       try {
-        const fp = await getBrowserFingerprint();
+        const override = resolveTestIdentity();      // ?reset → färsk testidentitet (annars riktig fingerprint)
+        if (!cancelled) setTestMode(!!override);
+        const fp = override || await getBrowserFingerprint();
         if (!cancelled) setFingerprint(fp);
         if (!cancelled) await loadOffice(fp);
       } catch (err) { if (!cancelled) setError(err.message); }
@@ -380,7 +409,7 @@ export default function Portfolio() {
             <TopRow>
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
-                <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}</div>
+                <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
                 <h1>{acting ? <>Ett par drag<br />väntar på er.</> : <>God morgon.<br />Allt är under kontroll.</>}</h1>
               </Ident>
 
@@ -667,7 +696,7 @@ export default function Portfolio() {
             <TopRow>
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
-                <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}</div>
+                <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
                 <h1>Ert kontor väntar<br />på första analysen.</h1>
               </Ident>
             </TopRow>
