@@ -678,6 +678,18 @@ export const BRANCHINDEX = {
     lastVerified: '2026-05-22',
     verifiedVia: 'playwright',
     unit: 'kr/år',
+    // Strukturerat verifierat ankare — det rätt-storleks-loben (lib/loneadmin-rightsizing.js)
+    // OCH verifieraren (lib/verifiers/fortnox-lon.mjs) läser HÄRIFRÅN, aldrig egna konstanter (regel 1).
+    // Fortnox Lön är ett komplett lönesystem till FAST publikt listpris (ej "från") → golvet är ett tal.
+    fortnoxLonVerified: {
+      product:            'Fortnox Lön',
+      vatBasis:           'exkl',
+      lastVerified:       '2026-05-22',
+      source:             'fortnox.se/produkt/lon',
+      fixedMonthly:       199,   // fast avgift kr/mån
+      perEmployeeMonthly: 25,    // kr/anställd/mån
+      perPayslip:         5,     // kr/lönebesked (Kivra-utskick) — redovisas separat, ingår ej i golvet
+    },
     // Verifierat: Fortnox Lön listpris maj 2026 (exkl. moms): 199 kr/mån fast + 25 kr/anställd/mån.
     // p25 = Fortnox-priset per anställd/år vid representativt anställningsantal per bucket:
     //   micro  (n=5):   (199 + 5×25)×12/5   =  780 kr/anst/år

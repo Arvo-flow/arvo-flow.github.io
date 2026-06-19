@@ -2402,6 +2402,71 @@ const TestaFaktura = () => {
               );
             })()}
 
+            {result.recommendation?.loneadminRightsizing && (() => {
+              // Löneadmin: kundens faktiska per-anställd-kostnad (exkl moms) mot Fortnox Löns verifierade
+              // golv (199 + 25/anställd). Alla tal från backend — klienten räknar inget (regel 2).
+              // Stapelbredderna är ren layout (andel av maxvärdet), inte kundsynliga siffror.
+              const la = result.recommendation.loneadminRightsizing;
+              const over = la.aboveFloor && la.overFloorPct != null && la.overFloorPct >= 15;
+              const scaleMax = Math.max(la.perEmployeeMonthly || 0, la.floorPerEmployee || 0) || 1;
+              const youW = Math.max(6, Math.round(((la.perEmployeeMonthly || 0) / scaleMax) * 100));
+              const floorW = Math.max(6, Math.round(((la.floorPerEmployee || 0) / scaleMax) * 100));
+              return (
+                <AdvisoryCard $over={over}>
+                  <div className="adv-top">
+                    <span className="adv-eyebrow">Löneadministration · per anställd</span>
+                    <span className="adv-badge">Verifierad referens</span>
+                  </div>
+
+                  <div className="adv-figure">
+                    {la.perEmployeeLabel} kr
+                    <span className="unit">per anställd/mån · exkl moms · {la.headcount} anställda</span>
+                  </div>
+
+                  <div className="adv-compare">
+                    <div className="adv-bar you">
+                      <span className="lbl">Ni betalar</span>
+                      <span className="track"><span className="fill" style={{ width: `${youW}%` }} /></span>
+                      <span className="amt">{la.perEmployeeLabel} kr</span>
+                    </div>
+                    <div className="adv-bar floor">
+                      <span className="lbl">Fortnox-golv</span>
+                      <span className="track"><span className="fill" style={{ width: `${floorW}%` }} /></span>
+                      <span className="amt">{la.floorPerEmployeeLabel} kr</span>
+                    </div>
+                  </div>
+
+                  {la.alreadyFortnox ? (
+                    <span className="adv-pill neutral">Redan på Fortnox Löns verifierade nivå</span>
+                  ) : over ? (
+                    <span className="adv-pill warn">~{la.overFloorPct} % över Fortnox-golvet</span>
+                  ) : (
+                    <span className="adv-pill ok">I nivå med Fortnox-golvet</span>
+                  )}
+
+                  <p className="adv-prose">
+                    {la.alreadyFortnox ? (
+                      <>Ni ligger redan på Fortnox Löns verifierade nivå — vi bevakar att det förblir så.</>
+                    ) : la.aboveFloor ? (
+                      <><strong>{la.fortnoxProduct}</strong> — verifierat lägst — kostar 199 kr/mån + 25 kr/anställd. Ryms er lönehantering (kollektivavtal, integrationer) där? Bekräfta så realiserar vi upp till <strong>{formatKr(la.annualSaving)} kr/år</strong>.</>
+                    ) : (
+                      <>Ni ligger i nivå med Fortnox Löns verifierade golv — ni ligger rätt, vi bevakar.</>
+                    )}
+                  </p>
+
+                  {la.hasPayslip && (
+                    <p className="adv-addons">
+                      Lönebesked-/utskicksavgifter (Kivra) är rörliga och ingår inte i golvjämförelsen.
+                    </p>
+                  )}
+
+                  <div className="adv-foot">
+                    Fortnox Löns listpris exkl moms verifierat mot fortnox.se. Golvet är ett fast pris; exakt utfall beror på om behovet ryms i Fortnox Lön.
+                  </div>
+                </AdvisoryCard>
+              );
+            })()}
+
             {result.recommendation?.reasoning && (isOptimize || _isSecondaryOnlySwitch) && (
               <Reasoning>
                 <span className="kicker">{isOptimize ? 'Vad vi hittade' : 'Kombinerad analys'}</span>

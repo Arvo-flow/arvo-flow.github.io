@@ -106,7 +106,8 @@ const infos    = [];  // alltid exit 0
 // och vars priser inte ligger på en skrapbar sida → undantagna från price-monitor-kravet.
 //   bredband  → scripts/verify.mjs tele2-bredband (fabriken)
 //   molnvaxel → scripts/verify.mjs telia-vaxel (stealth, lib/verifiers/telia-vaxel.mjs)
-const DEDICATED_VAKT = new Set(['bredband', 'molnvaxel']);
+//   loneadmin → scripts/verify.mjs fortnox-lon (lib/verifiers/fortnox-lon.mjs)
+const DEDICATED_VAKT = new Set(['bredband', 'molnvaxel', 'loneadmin']);
 
 // ── Kontroll 1: Täckning — real-public kategori utan price-monitor-check ──────
 for (const { key, source } of categoryEntries) {

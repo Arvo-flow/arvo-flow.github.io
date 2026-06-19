@@ -27,6 +27,7 @@ import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
 import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
 import { m365Rightsizing, deriveM365Seats } from '../../lib/m365-rightsizing.js';
 import { molnvaxelRecommendation } from '../../lib/molnvaxel-recommendation.js';
+import { loneadminRecommendation } from '../../lib/loneadmin-rightsizing.js';
 import { detectAdobePlan, adobeRightsizing, adobeListExVat, deriveAdobeSeats } from '../../lib/adobe-rightsizing.js';
 import { detectStorageSubstitution } from '../../lib/saas-substitution.js';
 
@@ -1020,6 +1021,14 @@ export async function recommend(input, opts = {}) {
   // tvärkund-jämförelsen (Vallgraven) via lib/telekom-normalize.js.
   if (input.categorized.category === 'molnvaxel') {
     return molnvaxelRecommendation(input);
+  }
+
+  // ── loneadmin: deterministisk löne-rätt-storlek mot Fortnox Löns verifierade golv ──
+  // Ingen AI, ingen FX. Kundens faktiska per-anställd-kostnad (exkl moms) mot Fortnox Löns
+  // verifierade publika listpris (199 + 25/anställd, vaktat i lib/verifiers/fortnox-lon.mjs).
+  // Igenkänns inget anställningsantal → talfritt offert-läge.
+  if (input.categorized.category === 'loneadmin') {
+    return loneadminRecommendation(input);
   }
 
   // ── saas-creative: Adobe Creative Cloud rätt-storlek (verifierad exkl-moms prisskillnad) ──

@@ -604,6 +604,22 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 6. ~~30 pre-existerande testfel~~ — ✅ KLART 2026-06-11 (sviten 1 270/1 270). Nästa: kategorier ut ur revisionsgrindens tystnad en i taget — priset är alltid fixturfaktura + svit + grönt i sifferrevisorn
 7. **Migrationer:** 4 filer som körs i ordning ur minnet — en samlad migrate-runner
 
+> **⚠️ STRATEGISKT VÄGVAL — OAVGJORT (sätt INTE i produktion utan grundarbeslut):**
+> **Partner-/återförsäljarmodellen vs neutralitets-moaten.** Att teckna partneravtal
+> (Tele2, Dustin, Microsoft CSP m.fl.) ger förhandlade priser kunden inte kan få själv
+> — en äkta moat-förstärkare OCH en genväg förbi volym-muren för de tysta kategorierna
+> (Dustins publika SEK-priser kan ankra hårdvaru-/IT-kategorier direkt). MEN det drar
+> Arvo mot exakt den återförsäljarmodell visionen definierar sig MOT: *"Arvo och kunden
+> är alltid på samma sida av bordet."* I samma sekund Arvo tjänar marginal på att styra
+> en kund till en partner är neutraliteten — själva premium-tesen — i spel (regel 1 på
+> affärsmodellsnivå, inte kodnivå). **Villkor som MÅSTE vara uppfyllda innan modellen
+> aktiveras:** (a) partnerpriset slår genuint vad kunden kan få själv, (b) full
+> transparens mot kund, (c) partnerpris får ALDRIG överrida en sannare rekommendation,
+> (d) datafirewall — partnern får ALDRIG insyn i den kollektiva sanningens datapunkter.
+> Tills grundaren avgjort detta: `arvoAnnual`-arkitekturen är förberedd men tom, och
+> regel 9 + claims-audit håller alla partnerpåståenden ute ur kundytan. *Diskuterad
+> 2026-06-19; väntar på grundarbeslut.*
+
 ---
 
 ### Nästa naturliga steg (ranked efter "Hur visste de det?"-potential)

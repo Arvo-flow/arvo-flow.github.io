@@ -172,6 +172,7 @@ export const CATEGORIES = {
       'löneadministration', 'löneprogram', 'lönesystem', 'löneutbetalning',
       'hogia lön', 'hogia', 'azets', 'lön och hr', 'payroll',
       'lönekörning', 'lönehantering',
+      'fortnox lön', 'visma lön', 'lönebesked', 'lön plus', 'kontek lön', 'crona lön',
     ],
     accountHints: ['7699', '6540', '7690'],
   },
