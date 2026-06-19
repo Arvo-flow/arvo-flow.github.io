@@ -44,6 +44,40 @@ describe('Forensik · hårdvaruavbetalning förklädd till löpande tjänst', ()
   });
 });
 
+describe('Forensik · valutapåslag (leverantören tar betalt för växlingen)', () => {
+  test('"valutapåslag"-rad → high-fynd', () => {
+    const f = detectForensicFindings([line('Valutapåslag USD', 240, 1)], { periodMultiplier: 12 });
+    assert.equal(f[0].type, 'fx_surcharge');
+    assert.equal(f[0].severity, 'high');
+    assert.equal(f[0].annualImpact, 2880);
+  });
+  test('växlingsavgift/valutatillägg fångas också', () => {
+    assert.equal(detectForensicFindings([line('Växlingsavgift', 90)], {})[0].type, 'fx_surcharge');
+    assert.equal(detectForensicFindings([line('Valutatillägg', 90)], {})[0].type, 'fx_surcharge');
+  });
+});
+
+describe('Forensik · administrativ tilläggsavgift (junk fee)', () => {
+  test('"faktureringsavgift" → medium-fynd', () => {
+    const f = detectForensicFindings([line('Faktureringsavgift pappersfaktura', 49, 1)], { periodMultiplier: 12 });
+    assert.equal(f[0].type, 'junk_fee');
+    assert.equal(f[0].severity, 'medium');
+    assert.equal(f[0].annualImpact, 588);
+  });
+  test('expeditions-/aviavgift fångas också', () => {
+    assert.equal(detectForensicFindings([line('Expeditionsavgift', 35)], {})[0].type, 'junk_fee');
+    assert.equal(detectForensicFindings([line('Aviavgift', 29)], {})[0].type, 'junk_fee');
+  });
+});
+
+describe('Forensik · dedup per rad (en rad ger högst ett fynd, högst prioritet vinner)', () => {
+  test('rad som matchar både höjning och junk → ETT high-fynd', () => {
+    const f = detectForensicFindings([line('Prisjustering faktureringsavgift', 60, 1)], { periodMultiplier: 12 });
+    assert.equal(f.length, 1);
+    assert.equal(f[0].type, 'supplier_documented_hike');   // high vinner över junk
+  });
+});
+
 describe('Forensik · rangordning (high före medium, störst årsimpact först)', () => {
   test('höjning leder över avbetalning oavsett belopp', () => {
     const f = detectForensicFindings([

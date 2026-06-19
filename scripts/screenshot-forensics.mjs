@@ -11,6 +11,7 @@ const L = (description, amount, quantity) => ({ type: 'recurring_subscription', 
 const CASES = [
   { name: 'Telia-faktura (smyghöjning + amortering)', lines: [L('Mobilabonnemang', 3490, 10), L('Prisjustering enligt index', 500, 1), L('Avbetalning telefoner', 280, 5)] },
   { name: 'Försäkringsfaktura (offert-kategori — fynd ändå)', lines: [L('Företagsförsäkring premie', 8000, 1), L('Indexuppräkning 2026', 420, 1)] },
+  { name: 'SaaS-faktura (valutapåslag + faktureringsavgift)', lines: [L('CRM-licenser', 4200, 12), L('Valutapåslag USD', 240, 1), L('Faktureringsavgift pappersfaktura', 49, 1)] },
 ];
 
 const T = {
