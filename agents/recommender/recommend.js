@@ -21,6 +21,7 @@ import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX, bredbandSpeedBenchmark } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
+import { detectForensicFindings } from '../../lib/forensics.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
 import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
@@ -995,6 +996,15 @@ export async function recommend(input, opts = {}) {
     );
   }
 
+  // Forensik-inversionen (universell): läs kundens EGEN faktura djupare än deras ekonomiansvarig.
+  // Category-agnostiskt, Zero Trust (talet ur kundens egen rad) → får rida med på VARJE svar, även
+  // oreviderade offert-kategorier (egna rader ≠ marknadstal; revisionsgrindens tystnad gäller ej dem).
+  // Sätts ALDRIG i reasoning-copyn — lever i forensicFindings/leadFinding (sifferrevisorns talfri-krav intakt).
+  const _forensicPeriod = input.invoice?.billingPeriod === 'annual' ? 1 : 12;
+  const forensicFindings = detectForensicFindings(input.invoice?.lineItems, { periodMultiplier: _forensicPeriod });
+  const leadFinding = forensicFindings[0] ?? null;
+  const withForensics = (resp) => (resp && typeof resp === 'object' ? { ...resp, forensicFindings, leadFinding } : resp);
+
   // Revisionsgrinden (regel 4 som arkitektur): oreviderade kategorier får ALDRIG
   // visa siffror — de faller till ärligt offert-läge med talfri copy, före all
   // beräkning och före AI-anropet. Väg in: dedikerad regressionssvit + grönt i
@@ -1003,7 +1013,7 @@ export async function recommend(input, opts = {}) {
     const _cat = input.categorized.category;
     if (!isAudited(_cat)) {
       console.log(`[revisionsgrind] '${_cat}' är oreviderad → offert-läge utan siffror`);
-      return ungatedQuoteResponse(_cat, CATEGORIES[_cat]?.label ?? null);
+      return withForensics(ungatedQuoteResponse(_cat, CATEGORIES[_cat]?.label ?? null));
     }
   }
 
@@ -1012,7 +1022,7 @@ export async function recommend(input, opts = {}) {
   // verifierade publika Fortnox-listpriser (lib/fortnox-rightsizing.js, vaktad veckovis).
   // Igenkänns inget paket → talfritt offert-läge — det ESTIMERADE matrisvärdet når ALDRIG kund.
   if (input.categorized.category === 'saas-finance') {
-    return fortnoxFinanceRecommendation(input);
+    return withForensics(fortnoxFinanceRecommendation(input));
   }
 
   // ── molnväxel: deterministisk växel-rekommendation (Vallgrav-kategorin) ─────────
@@ -1020,7 +1030,7 @@ export async function recommend(input, opts = {}) {
   // verifierade instegsgolv + exakta tilläggspriser. Normaliseringen föder även den k-anonyma
   // tvärkund-jämförelsen (Vallgraven) via lib/telekom-normalize.js.
   if (input.categorized.category === 'molnvaxel') {
-    return molnvaxelRecommendation(input);
+    return withForensics(molnvaxelRecommendation(input));
   }
 
   // ── loneadmin: deterministisk löne-rätt-storlek mot Fortnox Löns verifierade golv ──
@@ -1028,14 +1038,14 @@ export async function recommend(input, opts = {}) {
   // verifierade publika listpris (199 + 25/anställd, vaktat i lib/verifiers/fortnox-lon.mjs).
   // Igenkänns inget anställningsantal → talfritt offert-läge.
   if (input.categorized.category === 'loneadmin') {
-    return loneadminRecommendation(input);
+    return withForensics(loneadminRecommendation(input));
   }
 
   // ── saas-creative: Adobe Creative Cloud rätt-storlek (verifierad exkl-moms prisskillnad) ──
   // Ingen AI, ingen FX. B2B exkl moms (team direkt, individ ÷1,25). All Apps → Single App-rådgivning
   // (advisory/review). Igenkänns ingen Adobe-rad → talfritt offert-läge.
   if (input.categorized.category === 'saas-creative') {
-    return adobeCreativeRecommendation(input);
+    return withForensics(adobeCreativeRecommendation(input));
   }
 
   // ── saas-substitution: Dropbox/Box (molnlagring i USD) → arkitektonisk substitutionsinsikt ──
@@ -1047,7 +1057,7 @@ export async function recommend(input, opts = {}) {
     );
     if (_sub) {
       console.log(`[saas-substitution] ${_sub.vendor}-faktura → arkitektonisk substitutionsinsikt (ingen FX-besparing)`);
-      return storageSubstitutionResponse(_sub);
+      return withForensics(storageSubstitutionResponse(_sub));
     }
   }
 
@@ -1065,7 +1075,7 @@ export async function recommend(input, opts = {}) {
     );
     if (typeof _gwKey === 'string' && _gwKey.startsWith('google-')) {
       console.log('[google-sek-grind] Google Workspace saknar verifierat publikt SEK-pris → offert-läge (verifierad M365-referens)');
-      return googleWorkspaceQuoteResponse(input, _gwKey);
+      return withForensics(googleWorkspaceQuoteResponse(input, _gwKey));
     }
   }
 
@@ -1658,6 +1668,7 @@ export async function recommend(input, opts = {}) {
 
   return {
     ...result,
+    forensicFindings, leadFinding,
     recommendationType: result.recommendationType ?? (result.shouldSwitch ? 'switch' : 'no_action'),
     requiresQuote:      result.requiresQuote ?? false,
     optimizationSaving: result.optimizationSaving ?? null,

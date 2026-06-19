@@ -35,6 +35,7 @@ import './adobe-pricing.mjs';
 import './telekom-normalize.mjs';
 import './molnvaxel-recommendation.mjs';
 import './loneadmin-recommendation.mjs';
+import './forensics.mjs';
 import './adobe-rightsizing.mjs';
 import './adobe-recommendation.mjs';
 import './saas-substitution.mjs';
