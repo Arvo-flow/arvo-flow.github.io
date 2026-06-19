@@ -2318,8 +2318,14 @@ const TestaFaktura = () => {
                   </div>
                   <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
                     Ni betalar <strong>{mv.perUserLabel} kr/användare/mån</strong> (exkl moms) för era {mv.seats} användare.
-                    {mv.teliaFloorLabel != null ? (
-                      <> Telia Smart Connect — marknadens instegsväxel — kostar <strong>från {mv.teliaFloorLabel} kr/anv/mån</strong> (exkl moms) för motsvarande nivå.</>
+                    {mv.bundled ? (
+                      <> Priset buntar växel <strong>och</strong> mobilabonnemang (inkl. surf) — inte direkt jämförbart med en ren växellicens. Vi jämför mot ert faktiska pris i en genomgång istället för en missvisande siffra.</>
+                    ) : mv.teliaFloorLabel != null ? (
+                      <> Telia Smart Connect — marknadens instegsväxel — kostar <strong>från {mv.teliaFloorLabel} kr/anv/mån</strong> (exkl moms) för motsvarande nivå.
+                        {mv.overFloorPct != null && mv.overFloorPct >= 30 && (
+                          <> Ni ligger <strong style={{ color: '#1B7A6E' }}>~{mv.overFloorPct} % över instegsgolvet</strong> — värt en offertjämförelse.</>
+                        )}
+                      </>
                     ) : (
                       <> På kontaktcenter-nivå sätts pris via offert — vi jämför mot er faktiska kostnad i en genomgång.</>
                     )}

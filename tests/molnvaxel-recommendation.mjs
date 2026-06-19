@@ -67,6 +67,32 @@ describe('Molnväxel · recommend() — deterministisk, Zero Trust (ingen AI, in
     assert.equal(r.suggestedAnnualCost, null);
   });
 
+  test('PILOT blandad Telia-faktura → mobil exkluderas: korrekt 124,60/anv (T2), ej falsk 473,60', async () => {
+    const r = await recommend(inv([
+      line('Telia Jobbmobil Obegränsad', 15705, 45),
+      line('Telia Smart Connect Använd.', 5310, 45),
+      line('Svarsgrupp / Köhantering', 297, 3),
+    ], 45));
+    assert.equal(r.molnvaxel.perUserMonthlyExVat, 124.6);
+    assert.equal(r.molnvaxel.tier, 'T2');
+    assert.equal(r.molnvaxel.teliaFloor, 118);
+    assert.equal(r.molnvaxel.excludedMobilMonthly, 15705);
+    assert.equal(r.grossSaving, null);
+    assert.match(r.reasoning, /124,60 kr\/användare/);
+  });
+
+  test('PILOT bundlad Telavox-faktura → golv-jämförelse SUPPRIMERAD (ej äpplen-mot-päron)', async () => {
+    const r = await recommend(inv([
+      line('Telavox Premium (PBX-Växel & 100GB Surf)', 8778, 22),
+      line('Hårdvara: Hyra IP-telefon.', 745, 5),
+    ], 22));
+    assert.equal(r.molnvaxel.bundled, true);
+    assert.equal(r.molnvaxel.teliaFloor, null);
+    assert.equal(r.requiresQuote, true);
+    assert.match(r.reasoning, /buntar växel OCH mobil/i);
+    assert.ok(!/% över/.test(r.reasoning), 'ingen missvisande över-golvet-siffra för bundlat pris');
+  });
+
   test('ej normaliserbar (saknar säten) → talfritt offert-läge, ingen siffra', async () => {
     const r = await recommend(inv([line('Växeltjänst', 5000)], null));
     assert.equal(r.requiresQuote, true);

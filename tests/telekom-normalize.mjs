@@ -6,7 +6,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   inferCanonicalTier, deriveTelekomSeats, normalizeTelekomInvoice, buildTelekomDatapoint,
-  CANONICAL_TIERS, K_ANON_MIN, marketComparisonAllowed,
+  CANONICAL_TIERS, K_ANON_MIN, marketComparisonAllowed, classifyTelekomLine,
 } from '../lib/telekom-normalize.js';
 
 const line = (description, amount, quantity) => ({ type: 'recurring_subscription', description, amount, quantity });
@@ -61,6 +61,37 @@ describe('Telekom · normalisering → jämförbar enhet (kr/anv/mån exkl moms)
   test('robust avrundning till 2 decimaler (inga flyttalsspöken)', () => {
     const r = normalizeTelekomInvoice({ seatCount: 3, lineItems: [line('Växel samtal', 100)] }, 'telia');
     assert.equal(r.perUserMonthlyExVat, 33.33);      // 100/3 = 33.3333… → 33.33
+  });
+});
+
+describe('Telekom · rad-isolering (PILOTDATA-LÄXAN: mobil ≠ växel, regel 7)', () => {
+  test('classifyTelekomLine skiljer växel / mobil / hårdvara', () => {
+    assert.equal(classifyTelekomLine('Telia Smart Connect Använd.'), 'vaxel');
+    assert.equal(classifyTelekomLine('Telia Touchpoint Plus (Huvudlicens)'), 'vaxel');
+    assert.equal(classifyTelekomLine('Telia Jobbmobil Obegränsad'), 'mobil');
+    assert.equal(classifyTelekomLine('Företagsabonnemang 50GB'), 'mobil');
+    assert.equal(classifyTelekomLine('Hårdvara: Hyra IP-telefon.'), 'hardware');
+  });
+
+  test('blandad faktura: mobilabonnemang EXKLUDERAS ur växel-per-user (ingen falsk överbetalning)', () => {
+    const r = normalizeTelekomInvoice({ seatCount: 45, lineItems: [
+      line('Telia Jobbmobil Obegränsad', 15705, 45),   // MOBIL → ut
+      line('Telia Smart Connect Använd.', 5310, 45),   // växel
+      line('Svarsgrupp / Köhantering', 297, 3),        // växel
+    ] }, 'telia');
+    assert.equal(r.perUserMonthlyExVat, 124.6);         // (5310+297)/45 — INTE 473,6
+    assert.equal(r.canonicalTier, 'T2');
+    assert.equal(r.excludedMobilMonthly, 15705);
+    assert.equal(r.bundled, false);
+  });
+
+  test('bundlad rad (Telavox Premium: PBX-Växel & 100GB Surf) flaggas bundled, hårdvara ut', () => {
+    const r = normalizeTelekomInvoice({ seatCount: 22, lineItems: [
+      line('Telavox Premium (PBX-Växel & 100GB Surf)', 8778, 22),
+      line('Hårdvara: Hyra IP-telefon.', 745, 5),       // hårdvara → ut
+    ] }, 'telavox');
+    assert.equal(r.bundled, true);
+    assert.equal(r.perUserMonthlyExVat, 399);           // hårdvara ej med
   });
 });
 
