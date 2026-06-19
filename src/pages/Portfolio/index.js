@@ -37,6 +37,23 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
+// Översätt API-svaret till ett ÄRLIGT, åtgärdbart skäl (regel 7: varje fel blir en tillgång).
+// Statuskoden är diagnosen — 429 dagskvot, 504 timeout, 401 session, 413 storlek, 404 fel ursprung.
+function failReason(status, apiError) {
+  switch (status) {
+    case 429: return ['Dagskvot nådd', apiError || 'Ni har nått max antal fria analyser idag — försök igen imorgon eller aktivera ert konto.'];
+    case 504: return ['Tog för lång tid', 'Analysen hann inte klart i tid. Vänta en stund och försök igen.'];
+    case 401: return ['Sessionen löpte ut', 'Ladda om sidan och försök igen.'];
+    case 413: return ['Filen för stor', apiError || 'PDF:en överstiger maxstorleken — komprimera eller dela upp den.'];
+    case 400: return ['Kunde inte läsas', apiError || 'Filen gick inte att tolka som en faktura. Kontrollera att det är en PDF-faktura.'];
+    case 404: return ['Tjänsten nås inte här', 'Öppna ert kontor via arvoflow.se så fungerar analysen.'];
+    case 500:
+    case 502:
+    case 503: return ['Tillfälligt serverfel', 'Något gick fel på vår sida — försök igen om en stund.'];
+    default:  return ['Misslyckades', apiError || `Servern svarade ${status || 'oväntat'}.`];
+  }
+}
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 const GENERIC_DOMAINS = new Set([
   'gmail.com','hotmail.com','outlook.com','yahoo.com','yahoo.se',
@@ -226,37 +243,44 @@ export default function Portfolio() {
       try { const tr = await fetch('/api/token', { method: 'POST' }); token = (await tr.json())?.token; } catch { /* försök ändå */ }
     }
 
-    let gated = false;
+    let gated = false, lastHint = '';
     for (let i = 0; i < picked.length; i++) {
       try {
         const pdfBase64 = await fileToBase64(picked[i]);
-        let ok = false, isGate = false;
+        let ok = false, isGate = false, label = 'Misslyckades', hint = '';
+        const endpoint = magic ? '/api/kontor-ingest' : '/api/test-invoice';
+        const payload = magic
+          ? { pdfBase64, magic, fingerprint }
+          : { pdfBase64, industry: 'ovrigt', employees: 10, token, fingerprint };
+        const res = await fetch(endpoint, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
         if (magic) {
-          const res = await fetch('/api/kontor-ingest', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pdfBase64, magic, fingerprint }),
-          });
-          const data = await res.json().catch(() => ({}));
           ok = !!data.ok;
         } else {
-          const res = await fetch('/api/test-invoice', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pdfBase64, industry: 'ovrigt', employees: 10, token, fingerprint }),
-          });
-          const data = await res.json().catch(() => ({}));
           isGate = !!data.gate;
           ok = !isGate && !!data.route;
           if (isGate) gated = true;
         }
-        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: ok ? 'done' : (isGate ? 'gate' : 'fail') } : u));
+        if (!ok && !isGate) {
+          // Varje fel blir en tillgång (regel 7): visa det FAKTISKA skälet, inte ett tomt "Misslyckades".
+          [label, hint] = failReason(res.status, data?.error);
+          lastHint = hint;
+        }
+        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: ok ? 'done' : (isGate ? 'gate' : 'fail'), label, hint } : u));
       } catch {
-        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: 'fail' } : u));
+        lastHint = 'Kunde inte nå servern — kontrollera nätet och försök igen.';
+        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: 'fail', label: 'Nätverksfel', hint: lastHint } : u));
       }
     }
 
     setUploading(false);
     if (gated) {
       setUploadNote('Ni har nått gränsen för fria analyser. Vidarebefordra resten till faktura@inbox.arvoflow.se — eller aktivera ert konto — så fortsätter vi.');
+    } else if (lastHint) {
+      setUploadNote(lastHint);
     }
     try { await loadOffice(); } catch { /* behåll intaget om hämtning fallerar */ }
   }
@@ -702,8 +726,13 @@ export default function Portfolio() {
                     {uploads.map((u, i) => (
                       <div className="dp-row" key={`${u.name}-${i}`}>
                         <span className="dp-name">{u.name}</span>
-                        <span className={`dp-stat ${u.status === 'work' ? 'work' : u.status === 'done' ? 'done' : u.status === 'gate' ? 'work' : 'fail'}`}>
-                          {u.status === 'done' ? 'Klar' : u.status === 'fail' ? 'Misslyckades' : u.status === 'gate' ? 'Gräns nådd' : 'Analyserar…'}
+                        <span
+                          className={`dp-stat ${u.status === 'work' ? 'work' : u.status === 'done' ? 'done' : u.status === 'gate' ? 'work' : 'fail'}`}
+                          title={u.status === 'fail' ? (u.hint || '') : ''}
+                        >
+                          {u.status === 'done' ? 'Klar'
+                            : u.status === 'fail' ? (u.label || 'Misslyckades')
+                            : u.status === 'gate' ? 'Gräns nådd' : 'Analyserar…'}
                         </span>
                       </div>
                     ))}
