@@ -160,6 +160,10 @@ await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS contract_end_dat
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS reminder_60_sent_at TIMESTAMPTZ`;
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS reminder_30_sent_at TIMESTAMPTZ`;
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS outcome_email_sent_at TIMESTAMPTZ`;
+// Forensik-inversionen i rummet: persistera det starkaste mekanism-fyndet (leverantörens egen
+// dokumenterade höjning, valutapåslag, hårdvaruavbetalning…) så kontoret kan LEDA med det, per
+// leverantör, i stället för ett benchmark-pålägg. Zero Trust — fyndet är kundens egen rad. Idempotent.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS lead_finding_json JSONB`;
 
 await sql`
   CREATE INDEX IF NOT EXISTS idx_analyses_user_email

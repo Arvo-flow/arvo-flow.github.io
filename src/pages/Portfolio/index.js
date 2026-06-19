@@ -10,7 +10,7 @@ import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
-  Grid, Index, Tally, Truth, Calendar, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
+  Grid, Index, Tally, Truth, Calendar, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail, RoomFinding,
   SwitchInline, SwitchBtn, IntelQuiet, SignOff, Spinner,
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
@@ -325,6 +325,16 @@ export default function Portfolio() {
 
   const autoAnalyses = useMemo(() => (analyses ?? []).filter((a) => a.route === 'auto' || a.route === 'monitoring'), [analyses]);
   const suppliers    = useMemo(() => groupBySupplier(autoAnalyses), [autoAnalyses]);
+
+  // Forensik-inversionen i rummet: starkaste mekanism-fyndet (ur kundens egna rader) leder domen.
+  // Zero Trust — talet kommer från fakturaraden, persisterat i lead_finding_json. Tomt → inget kort.
+  const roomFinding = useMemo(() => {
+    const rank = { high: 0, medium: 1, low: 2 };
+    return (autoAnalyses ?? [])
+      .map((a) => a.lead_finding_json)
+      .filter((f) => f && typeof f === 'object' && f.title)
+      .sort((x, y) => (rank[x.severity] - rank[y.severity]) || ((y.annualImpact || 0) - (x.annualImpact || 0)))[0] ?? null;
+  }, [autoAnalyses]);
   const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
   const arvoScore    = computeArvoScore(suppliers);
   const standing     = marketStanding(arvoScore);
@@ -436,6 +446,19 @@ export default function Portfolio() {
                 </div>
               </Radar>
             </TopRow>
+
+            {/* ── Forensik-domen: mekanismen leder (ur kundens egna rader) ──── */}
+            {roomFinding && (
+              <RoomFinding>
+                <div className="rf-eyebrow">Fynd på era fakturor</div>
+                <div className="rf-row">
+                  <div className="rf-title">{roomFinding.title}</div>
+                  {roomFinding.annualImpact > 0 && <div className="rf-impact">{fmtNum(roomFinding.annualImpact)} kr/år</div>}
+                </div>
+                {roomFinding.lineDescription && <div className="rf-line">”{roomFinding.lineDescription}”</div>}
+                <p className="rf-text">{roomFinding.text}</p>
+              </RoomFinding>
+            )}
 
             {/* ── Veckodomen ──────────────────────────────────────────────── */}
             <Verdict>
