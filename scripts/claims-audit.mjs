@@ -20,7 +20,12 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
 // ── Förbudslistan — varje rad är en lärd läxa ─────────────────────────────────
 const FORBIDDEN = [
-  [/partnern[äa]tverk/i,        'Inget partneravtal finns ännu (hösten 2026) — får inte hävdas i kundytor'],
+  [/partnern[äa]tverk/i,        'Neutralitets-moaten (grundarbeslut 2026-06-19): Arvo har inga partneravtal — aldrig'],
+  // Neutralitets-moaten, stenhårt: Arvo tar ALDRIG leverantörspengar. Enda intäkten är kundens
+  // success fee. Antyds leverantörsersättning/partnerskap i en kundyta är oberoendet — och vallgraven — död.
+  [/kickback/i,                 'Neutralitets-moaten: Arvo tar aldrig kickback från en leverantör'],
+  [/provision fr[åa]n/i,        'Neutralitets-moaten: Arvo tar aldrig provision från en leverantör'],
+  [/(leverant[öo]rsersättning|partner-?fee|återförsäljarmarginal)/i, 'Neutralitets-moaten: ingen leverantörs-sidig intäkt får antydas i kundyta'],
   [/redan f[öo]rhandlat/i,      'Arvo har inte förhandlat något pris ännu — listpriser är verifierade, inte förhandlade'],
   [/inklusive er\b/i,           'Fabricerad kohorttillhörighet — kunden ingår inte i påstådd statistik'],
   [/i morse · \d/i,             'Fejk-tidsstämpel som ger exempel sken av verklig händelse'],
