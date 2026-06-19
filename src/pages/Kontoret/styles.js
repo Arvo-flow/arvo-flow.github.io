@@ -538,6 +538,9 @@ export const CoverageMap = styled.div`
   .cm-tag { font-family:${MONO}; font-size:8.5px; letter-spacing:.12em; text-transform:uppercase;
     color:${theme.dossier.tealBright}; border:1px solid rgba(43,196,172,.4);
     border-radius:${theme.size.radius.pill}; padding:3px 8px; white-space:nowrap; }
+  .cm-tag.offert { color:${theme.dossier.faintOnDark}; border-color:${theme.dossier.hairlineOnDark}; }
+  .cm-verified { font-family:${MONO}; font-size:9px; letter-spacing:.07em; text-transform:uppercase;
+    color:${theme.dossier.tealBright}; margin-top:1px; }
 `;
 
 export const IntakeDoors = styled.div`

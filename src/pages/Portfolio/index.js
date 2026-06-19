@@ -15,16 +15,20 @@ import {
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
 
-// ── intagsdiskens kategorier — tre hotspots där läckaget oftast sitter ───────
+// ── kostnadskartan — ledd av DELIVERY: kategorier vi kan ge en verifierad dom för först,
+// offert-only ärligt märkt. mode:'verdict' = källtäckt marknadspris/golv finns. mode:'offert' =
+// vi jämför mot faktiska leverantörsofferter (ingen verifierad listprisdom ännu).
+// Försäkring visas medvetet INTE — det är ett 2028-spår som väntar på FI-tillstånd (regel 9:
+// inget kundlöfte utan mekanik). `know` = ärlig, källtäckt referens på kategorinivå (ingen kunddata).
 const INTAKE_SEGMENTS = [
-  { label: 'IT-licenser',     icon: 'spark',  hot: true,  hint: 'Microsoft · Google' },
-  { label: 'Telefoni',        icon: 'phone',  hot: true,  hint: 'Mobil · växel · bredband' },
-  { label: 'Mjukvara / SaaS', icon: 'wifi',   hot: true,  hint: 'Verktyg · prenumerationer' },
-  { label: 'IT-drift',        icon: 'fortnox', hot: false, hint: 'Support · drift' },
-  { label: 'El',              icon: 'bolt',   hot: false, hint: 'Elavtal' },
-  { label: 'Skrivare',        icon: 'file',   hot: false, hint: 'Leasing · print' },
-  { label: 'Fordon',          icon: 'truck',  hot: false, hint: 'Leasing · transport' },
-  { label: 'Försäkring',      icon: 'shield', hot: false, hint: 'Företag · ansvar' },
+  { label: 'IT-licenser',       icon: 'spark',   mode: 'verdict', hint: 'Microsoft 365',           know: 'verifierat listpris' },
+  { label: 'Telefoni',          icon: 'phone',   mode: 'verdict', hint: 'Mobil · växel · bredband', know: 'verifierat marknadspris' },
+  { label: 'Bokföring & lön',   icon: 'fortnox', mode: 'verdict', hint: 'Fortnox · Visma · lön',    know: 'verifierat golv' },
+  { label: 'Kreativ mjukvara',  icon: 'wifi',    mode: 'verdict', hint: 'Adobe · design',           know: 'verifierat exkl moms' },
+  { label: 'El',                icon: 'bolt',    mode: 'verdict', hint: 'Företagsel',               know: 'Nordpool-verifierat' },
+  { label: 'IT-drift & hosting', icon: 'lock',   mode: 'offert',  hint: 'Support · server · moln' },
+  { label: 'Skrivare & print',   icon: 'file',   mode: 'offert',  hint: 'Leasing · klickavtal' },
+  { label: 'Fordon & frakt',     icon: 'truck',  mode: 'offert',  hint: 'Leasing · transport' },
 ];
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -272,11 +276,11 @@ export default function Portfolio() {
       try { const tr = await fetch('/api/token', { method: 'POST' }); token = (await tr.json())?.token; } catch { /* försök ändå */ }
     }
 
-    let gated = false, lastHint = '';
+    let gated = false, lastHint = '', reviewCount = 0;
     for (let i = 0; i < picked.length; i++) {
       try {
         const pdfBase64 = await fileToBase64(picked[i]);
-        let ok = false, isGate = false, label = 'Misslyckades', hint = '';
+        let status = 'fail', label = 'Misslyckades', hint = '';
         const endpoint = magic ? '/api/kontor-ingest' : '/api/test-invoice';
         const payload = magic
           ? { pdfBase64, magic, fingerprint }
@@ -287,18 +291,20 @@ export default function Portfolio() {
         });
         const data = await res.json().catch(() => ({}));
         if (magic) {
-          ok = !!data.ok;
+          if (data.ok) status = 'done';
+          else { [label, hint] = failReason(res.status, data?.error, data?.code); lastHint = hint; }
+        } else if (data.gate) {
+          status = 'gate'; gated = true;
+        } else if (data.route === 'auto' || data.route === 'monitoring') {
+          status = 'done';                                   // riktig analys → leder till rummet
+        } else if (data.route === 'review_queue' || data.route === 'unsupported') {
+          status = 'review'; reviewCount++;                  // mottagen men kräver manuell granskning — ärligt kvitto
         } else {
-          isGate = !!data.gate;
-          ok = !isGate && !!data.route;
-          if (isGate) gated = true;
-        }
-        if (!ok && !isGate) {
           // Varje fel blir en tillgång (regel 7): visa det FAKTISKA skälet, inte ett tomt "Misslyckades".
           [label, hint] = failReason(res.status, data?.error, data?.code);
           lastHint = hint;
         }
-        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: ok ? 'done' : (isGate ? 'gate' : 'fail'), label, hint } : u));
+        setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status, label, hint } : u));
       } catch {
         lastHint = 'Kunde inte nå servern — kontrollera nätet och försök igen.';
         setUploads((prev) => prev.map((u, idx) => idx === i ? { ...u, status: 'fail', label: 'Nätverksfel', hint: lastHint } : u));
@@ -308,6 +314,8 @@ export default function Portfolio() {
     setUploading(false);
     if (gated) {
       setUploadNote('Ni har nått gränsen för fria analyser. Vidarebefordra resten till faktura@inbox.arvoflow.se — eller aktivera ert konto — så fortsätter vi.');
+    } else if (reviewCount > 0) {
+      setUploadNote('En eller flera fakturor behöver manuell granskning (t.ex. utländsk valuta eller låg läsbarhet). Vi tittar på dem och återkommer — ladda gärna upp fler under tiden.');
     } else if (lastHint) {
       setUploadNote(lastHint);
     }
@@ -735,16 +743,19 @@ export default function Portfolio() {
             </Verdict>
 
             <CoverageMap>
-              <div className="cm-eyebrow">Er kostnadskarta · 8 kategorier</div>
+              <div className="cm-eyebrow">Er kostnadskarta · {INTAKE_SEGMENTS.length} kategorier</div>
               <div className="cm-grid">
                 {INTAKE_SEGMENTS.map((s) => (
-                  <div key={s.label} className={`cm-cell${s.hot ? ' hot' : ''}`}>
+                  <div key={s.label} className={`cm-cell${s.mode === 'verdict' ? ' hot' : ''}`}>
                     <div className="cm-top">
                       <span className="cm-ico"><Icon name={s.icon} size={19} stroke={1.7} /></span>
-                      {s.hot && <span className="cm-tag">Börja här</span>}
+                      {s.mode === 'verdict'
+                        ? <span className="cm-tag">Börja här</span>
+                        : <span className="cm-tag offert">via offert</span>}
                     </div>
                     <span className="cm-label">{s.label}</span>
                     <span className="cm-hint">{s.hint}</span>
+                    {s.know && <span className="cm-verified">{s.know}</span>}
                   </div>
                 ))}
               </div>
@@ -779,10 +790,11 @@ export default function Portfolio() {
                       <div className="dp-row" key={`${u.name}-${i}`}>
                         <span className="dp-name">{u.name}</span>
                         <span
-                          className={`dp-stat ${u.status === 'work' ? 'work' : u.status === 'done' ? 'done' : u.status === 'gate' ? 'work' : 'fail'}`}
+                          className={`dp-stat ${u.status === 'done' ? 'done' : (u.status === 'work' || u.status === 'gate' || u.status === 'review') ? 'work' : 'fail'}`}
                           title={u.status === 'fail' ? (u.hint || '') : ''}
                         >
                           {u.status === 'done' ? 'Klar'
+                            : u.status === 'review' ? 'Manuell granskning'
                             : u.status === 'fail' ? (u.label || 'Misslyckades')
                             : u.status === 'gate' ? 'Gräns nådd' : 'Analyserar…'}
                         </span>
