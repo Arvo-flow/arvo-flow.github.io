@@ -8,11 +8,12 @@ import Icon from '../../components/Icon';
 import { formatKr } from '../../utils/format';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
+import FindingCard from '../../components/FindingCard';
 import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
   ProgressList, ProgressItem,
-  BriefingHead, SavingsBlock, EstimateSavingsBlock, M365ReferenceBlock, AdvisoryCard, ForensicLead, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
+  BriefingHead, SavingsBlock, EstimateSavingsBlock, M365ReferenceBlock, AdvisoryCard, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
   Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, EmailGate, PortfolioBridge,
   CalculationChain, SavingRangeBadge,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
@@ -1401,28 +1402,12 @@ const TestaFaktura = () => {
               </div>
             </BriefingHead>
 
-            {result.recommendation?.leadFinding && (() => {
-              // Forensik-inversionen: mekanismen kunden blöder på — läst ur DERAS EGEN faktura —
-              // leder, före score och benchmark. Talet kommer från backend (kundens egen rad, Zero Trust).
-              const lf = result.recommendation.leadFinding;
-              const extra = (result.recommendation.forensicFindings?.length ?? 0) - 1;
-              return (
-                <ForensicLead>
-                  <span className="fl-eyebrow">Fynd på er faktura</span>
-                  <div className="fl-title">{lf.title}</div>
-                  <div className="fl-row">
-                    <span className="fl-line">”{lf.lineDescription}”</span>
-                    {lf.annualImpact > 0 && <span className="fl-impact">{formatKr(lf.annualImpact)} kr/år</span>}
-                  </div>
-                  <p className="fl-text">{lf.text}</p>
-                  {extra > 0 && (
-                    <p className="fl-more">
-                      <strong>+{extra} fler fynd</strong> på fakturan — vi går igenom dem i er genomgång.
-                    </p>
-                  )}
-                </ForensicLead>
-              );
-            })()}
+            {/* Forensik-inversionen: mekanismen leder, ur kundens egen rad. Delad komponent (ljust ansikte). */}
+            <FindingCard
+              finding={result.recommendation?.leadFinding}
+              extraCount={(result.recommendation?.forensicFindings?.length ?? 0) - 1}
+              variant="light"
+            />
 
             {result.route === 'monitoring' ? (
               <>

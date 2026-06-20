@@ -9,9 +9,10 @@ import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
+import FindingCard from '../../components/FindingCard';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
-  Grid, Index, Tally, Truth, Calendar, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail, RoomFinding,
+  Grid, Index, Tally, Truth, Calendar, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
   SwitchInline, SwitchBtn, IntelQuiet, SignOff, Spinner,
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
@@ -444,18 +445,8 @@ export default function Portfolio() {
               </Radar>
             </TopRow>
 
-            {/* ── Forensik-domen: mekanismen leder (ur kundens egna rader) ──── */}
-            {roomFinding && (
-              <RoomFinding>
-                <div className="rf-eyebrow">Fynd på era fakturor</div>
-                <div className="rf-row">
-                  <div className="rf-title">{roomFinding.title}</div>
-                  {roomFinding.annualImpact > 0 && <div className="rf-impact">{fmtNum(roomFinding.annualImpact)} kr/år</div>}
-                </div>
-                {roomFinding.lineDescription && <div className="rf-line">”{roomFinding.lineDescription}”</div>}
-                <p className="rf-text">{roomFinding.text}</p>
-              </RoomFinding>
-            )}
+            {/* ── Forensik-domen: mekanismen leder (delad komponent, mörkt ansikte) ──── */}
+            <FindingCard finding={roomFinding} variant="dossier" />
 
             {/* ── Veckodomen ──────────────────────────────────────────────── */}
             <Verdict>

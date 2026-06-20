@@ -147,44 +147,6 @@ export const Verdict = styled.section`
   }
 `;
 
-// RoomFinding — forensik-domen som LEDER i rummet (mekanismen, per leverantör, ur kundens egen rad).
-// Amber-signal = en hittad läcka (vaktens högljudda undantag), tydligt skild från den lugna teal-vakten.
-// Zero Trust: talet är kundens egen fakturarad. Regel 6: enbart tokens.
-export const RoomFinding = styled.section`
-  margin: 26px 0 4px;
-  padding: 18px 20px;
-  background: ${theme.dossier.bgRaised};
-  border: 1px solid ${theme.color.warning};
-  border-radius: 14px;
-  ${appear(0.06)}
-
-  .rf-eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-family: ${MONO}; font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
-    color: ${theme.color.warning}; margin-bottom: 12px;
-  }
-  .rf-eyebrow::before {
-    content: ''; width: 7px; height: 7px; border-radius: 50%; background: ${theme.color.warning};
-  }
-  .rf-row {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-    margin-bottom: 12px;
-  }
-  .rf-title {
-    font-family: ${SERIF}; font-weight: 600; font-size: clamp(20px, 3.4vw, 27px); line-height: 1.15;
-    color: ${theme.dossier.inkOnDark};
-  }
-  .rf-impact {
-    flex-shrink: 0; font-family: ${MONO}; font-size: clamp(20px, 3.6vw, 26px); font-weight: 600;
-    letter-spacing: -.02em; font-feature-settings: 'tnum'; color: ${theme.color.warning}; white-space: nowrap;
-  }
-  .rf-line {
-    display: inline-block; font-family: ${MONO}; font-size: 12.5px; color: ${theme.dossier.mutedOnDark};
-    border: 1px solid ${theme.dossier.hairlineOnDark}; border-radius: 6px; padding: 4px 9px; margin-bottom: 12px;
-    word-break: break-word;
-  }
-  .rf-text { margin: 0; font-size: 14.5px; line-height: 1.65; color: ${theme.dossier.mutedOnDark}; }
-`;
 
 export const Confidence = styled.span`
   display: inline-flex; align-items: center; gap: 8px;
