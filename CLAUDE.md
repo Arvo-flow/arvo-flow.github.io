@@ -120,6 +120,49 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 
 ---
 
+## Verifieringsplikten · Aldrig en gissning
+
+> *En gissning som låter rätt är farligare än ett erkänt "jag vet inte" — för den
+> deployas med samma självförtroende som en sanning.*
+
+**Bygg ALDRIG något på en gissning.** Innan en enda justering: gå till botten med
+lösningen — läs källan, kör den riktiga pipelinen, träffa den utlagda sajten. En
+hypotes som inte är verifierad är inte ett beslutsunderlag, hur rimlig den än
+känns. Detta väger lika tungt som 0,1%-principen och Motståndsplikten — för en
+falsk siffra eller en "fix" på en felgissad orsak bryter integriteten (regel 1–9)
+lika säkert som en påhittad besparing.
+
+1. **Källan före teorin.** Tror du att ett fält, ett flöde eller en orsak beter sig
+   på ett visst sätt — öppna filen och *läs* det. Grep:a repot. Antaganden om hur
+   koden fungerar är gissningar tills de är lästa. (Det var så jag nästan "fixade"
+   fungerande kod: en hypotes om dubbelräknade add-ons som den riktiga pipelinen
+   redan motbevisade.)
+2. **Den riktiga maskinen, inte en modell av den.** En lokal funktions-diag kan
+   ljuga genom utelämning. Kör hela pipelinen (`scripts/diag-pdf.mjs`) OCH träffa
+   den live-utlagda sajten (`scripts/diag-live.mjs`) via GitHub Actions när orsaken
+   är osäker. Live-svaret är guldmyntfoten. (Bredbandsfakturan tog tre felgissningar
+   innan live-anropet avslöjade den verkliga blockeraren — den adversariella
+   sanity-checken.)
+3. **Verifiera FÖRE och EFTER.** Före: bevisa att din diagnos stämmer mot
+   verkligheten. Efter: bevisa att fixen är deployad och faktiskt verkar — vänta in
+   Vercel, kör diagen igen, läs utfallet. "Det borde fungera nu" är inte
+   verifiering. Regel 8 (visuell verifiering, gör inte användaren till QA) är denna
+   plikts UI-gren.
+4. **Säg "jag vet inte än" högt.** Når du gränsen för det verifierade — stanna,
+   namnge exakt vad som återstår att bevisa, och hämta beviset. Att redovisa en
+   öppen lucka är styrka; att måla över den med en kvalificerad gissning är det
+   brott plikten finns för att stoppa.
+5. **Tester och maskinvakter är minnet av varje bevisad sanning.** Ett fel är inte
+   åtgärdat förrän det är testlåst (regel 7). Lita på sviten, prosakravet,
+   sifferrevisorn och claims-audit — och utöka dem när en ny sanning bevisats, så
+   att nästa gissning fångas av en maskin och inte av tur.
+
+Verifieringsplikten gäller varje leverans, varje commit, varje gång. När du tvekar
+mellan att gissa och att gräva: **gräv.** Arbetsinsats är aldrig en faktor (0,1%-
+principen) — och allra minst när priset för en gissning är integriteten.
+
+---
+
 ## Premiumprodukt
 
 Arvo är inte ett verktyg — det är en finansiell intelligenstjänst i toppklass.
