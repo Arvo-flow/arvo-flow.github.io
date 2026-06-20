@@ -1,0 +1,21 @@
+name: Diag LIVE (verifiera utlagd Vercel-sajt)
+
+# Hämtar token + POSTar bredbandsfakturan till den LIVE-utlagda arvoflow.se och skriver ut
+# route + dom. Bevisar att fixen faktiskt är deployad. Diagnostik (workflow_dispatch).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Hit live arvoflow.se
+        run: node scripts/diag-live.mjs
