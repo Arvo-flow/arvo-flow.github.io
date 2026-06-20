@@ -333,6 +333,15 @@ export default function Portfolio() {
       .filter((f) => f && typeof f === 'object' && f.title)
       .sort((x, y) => (rank[x.severity] - rank[y.severity]) || ((y.annualImpact || 0) - (x.annualImpact || 0)))[0] ?? null;
   }, [autoAnalyses]);
+
+  // Kontraktsklockan i rummet — det avtal som förfaller SNARAST leder (minst dagar kvar).
+  // contractClock kommer fresiderande från api/invoice-history (beräknat vid läsning, ej lagrat).
+  const roomClock = useMemo(() => {
+    return (analyses ?? [])
+      .map((a) => a.contractClock)
+      .filter((c) => c && typeof c === 'object' && c.title && c.daysLeft > 0)
+      .sort((x, y) => x.daysLeft - y.daysLeft)[0] ?? null;
+  }, [analyses]);
   const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
   const arvoScore    = computeArvoScore(suppliers);
   const standing     = marketStanding(arvoScore);
@@ -447,6 +456,9 @@ export default function Portfolio() {
 
             {/* ── Forensik-domen: mekanismen leder (delad komponent, mörkt ansikte) ──── */}
             <FindingCard finding={roomFinding} variant="dossier" />
+
+            {/* ── Kontraktsklockan (Maktkalendern): det avtal som förfaller snarast ──── */}
+            <FindingCard finding={roomClock} variant="dossier" eyebrow="Maktkalendern · avtalsbevakning" />
 
             {/* ── Veckodomen ──────────────────────────────────────────────── */}
             <Verdict>

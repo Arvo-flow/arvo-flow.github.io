@@ -1409,6 +1409,12 @@ const TestaFaktura = () => {
               variant="light"
             />
 
+            {/* Kontraktsklockan (Maktkalendern): bindningsslut ur kundens egen faktura. Monitoring-rutten
+                ritar avtalslåset i egen, rikare vy nedan — visa klock-kortet bara på övriga rutter. */}
+            {result.route !== 'monitoring' && (
+              <FindingCard finding={result.contractClock} variant="light" />
+            )}
+
             {result.route === 'monitoring' ? (
               <>
                 <ScoreDiag style={{ '--diag-color': diagC.dot }}>

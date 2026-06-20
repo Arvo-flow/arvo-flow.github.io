@@ -9,6 +9,7 @@
 import { getAnalysesByFingerprint, getAnalysesByEmail } from '../lib/invoice-store.js';
 import { getMarketIntelligence } from '../lib/price-alert.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
+import { contractClockFinding } from '../lib/contract-clock.js';
 import { getDb } from '../lib/db.js';
 
 export const config = { maxDuration: 10 };
@@ -56,7 +57,16 @@ export default async function handler(req, res) {
   const seen = new Set();
   const analyses = [...byEmail, ...byFp]
     .filter((a) => (seen.has(a.id) ? false : seen.add(a.id)))
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    // Kontraktsklockan beräknas FRESH vid läsning (aldrig lagrad) så "dagar kvar" stämmer
+    // varje gång rummet öppnas. Zero Trust: bara rader med ett verkligt bindningsslut bär klocka.
+    .map((a) => ({
+      ...a,
+      contractClock: contractClockFinding({
+        servicePeriodEnd: a.contract_end_date ?? null,
+        supplier:         a.normalized_supplier || a.supplier || null,
+      }),
+    }));
 
   // ── Kohort-intelligens: vad betalar bolag hos samma leverantör? ───────────
   // Cross-customer-aggregat ur invoice_analyses (getMarketIntelligence gate:ar

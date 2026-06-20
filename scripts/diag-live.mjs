@@ -28,5 +28,12 @@ console.log(JSON.stringify({
   requiresQuote:       data.recommendation?.requiresQuote,
   suggestedAnnualCost: data.recommendation?.suggestedAnnualCost,
   savingPerYear:       data.recommendation?.savingPerYear,
+  // Serialiserings-bevis: dessa fält droppades tidigare ur auto-svaret (FindingCard ritade tomt).
+  hasLeadFindingKey:   Object.prototype.hasOwnProperty.call(data.recommendation ?? {}, 'leadFinding'),
+  leadFindingTitle:    data.recommendation?.leadFinding?.title ?? null,
+  forensicCount:       data.recommendation?.forensicFindings?.length ?? null,
+  hasContractClockKey: Object.prototype.hasOwnProperty.call(data, 'contractClock'),
+  contractClock:       data.contractClock?.title ?? null,
+  servicePeriodEnd:    data.extracted?.servicePeriodEnd ?? null,
   error:               data.error,
 }, null, 2));

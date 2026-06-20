@@ -36,6 +36,7 @@ import './telekom-normalize.mjs';
 import './molnvaxel-recommendation.mjs';
 import './loneadmin-recommendation.mjs';
 import './forensics.mjs';
+import './contract-clock.mjs';
 import './extract-simple-invoice.mjs';
 import './sanity-verifier.mjs';
 import './adobe-rightsizing.mjs';

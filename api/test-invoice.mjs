@@ -20,6 +20,7 @@ import { getDb } from '../lib/db.js';
 import { computeSecondarySaving } from '../lib/secondary-savings.js';
 import { getEurSekRate, FALLBACK_RATE_EUR_SEK, getSekRate, FALLBACK_RATE_USD_SEK } from '../agents/recommender/pricing.js';
 import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.js';
+import { contractClockFinding } from '../lib/contract-clock.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
 import { storeAnalysis } from '../lib/invoice-store.js';
@@ -862,6 +863,11 @@ export default async function handler(req, res) {
           servicePeriodEnd:       extracted.servicePeriodEnd,
           cancellationNoticeDays: extracted.cancellationNoticeDays,
           monitoringDate:         monitoringDate ? monitoringDate.toISOString().slice(0, 10) : null,
+          contractClock:          contractClockFinding({
+            servicePeriodEnd:       extracted.servicePeriodEnd,
+            cancellationNoticeDays: extracted.cancellationNoticeDays,
+            supplier:               categorized.normalizedSupplier || extracted.supplier,
+          }),
           extracted: {
             supplier:               extracted.supplier,
             amount:                 extracted.amount,
@@ -1558,9 +1564,22 @@ export default async function handler(req, res) {
       branchindexVersion: '2026-05',
     };
 
+    // Kontraktsklockan (Maktkalendern): bindningsslut ur kundens egen faktura → ledande
+    // bevaknings-fynd även på rekommendationsbärande fakturor (terminala avtalslås fångas
+    // separat av monitoring-rutten ovan). EN källa: lib/contract-clock.js. Zero Trust —
+    // null när fakturan inte uttalar ett verkligt framtida bindningsslut.
+    const contractClock = (!categorized.licensePending)
+      ? contractClockFinding({
+          servicePeriodEnd:       extracted.servicePeriodEnd,
+          cancellationNoticeDays: extracted.cancellationNoticeDays,
+          supplier:               categorized.normalizedSupplier || extracted.supplier,
+        })
+      : null;
+
     const autoResponse = {
       ok:    true,
       route: 'auto',
+      contractClock,
       extracted: {
         supplier:        extracted.supplier,
         amount:          extracted.amount,
@@ -1570,6 +1589,9 @@ export default async function handler(req, res) {
         annualCost:      extracted.annualCost,
         date:            extracted.date,
         description:     extracted.description,
+        servicePeriodStart:  extracted.servicePeriodStart ?? null,
+        servicePeriodEnd:    extracted.servicePeriodEnd ?? null,
+        cancellationNoticeDays: extracted.cancellationNoticeDays ?? null,
         billingPeriod:       extracted.billingPeriod,
         billingPeriodSource: extracted.billingPeriodSource,
         billingPeriodAssumed: extracted.billingPeriodAssumed ?? false,
@@ -1626,6 +1648,11 @@ export default async function handler(req, res) {
         tierOptimizationFromTier: recommendation.tierOptimizationFromTier ?? null,
         tierOptimizationToTier:   recommendation.tierOptimizationToTier   ?? null,
         clickRateAnalysis:        recommendation.clickRateAnalysis        ?? null,
+        // Forensik-inversionen (regel 2: kod räknar): mekanism-fyndet ur kundens egen
+        // fakturarad. Beräknas i recommend.js men serialiserades inte hit — utan dessa
+        // två fält ritar FindingCard i testa-faktura tomt. Zero Trust, får rida med alltid.
+        leadFinding:      recommendation.leadFinding      ?? null,
+        forensicFindings: recommendation.forensicFindings ?? null,
       },
       calculationChain,
       savingRange,

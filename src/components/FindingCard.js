@@ -1,29 +1,41 @@
 // src/components/FindingCard.js — EN delad fynd-komponent, två ansikten (konvergens steg 2).
-// Samma forensik-fynd (leadFinding: title/lineDescription/annualImpact/text) ritas av EN kodbas,
-// men i två stämningar via variant: 'light' (testa-faktura, värmt/inbjudande) och 'dossier'
-// (kontoret, mörkt/förtroligt). Skinnet skiljer — datan och strukturen är delad, så de två ytorna
-// aldrig mer kan säga olika saker om samma fynd (regel 5). Amber-signal = en hittad läcka.
+// Samma fynd ritas av EN kodbas, men i två stämningar via variant: 'light' (testa-faktura,
+// värmt/inbjudande) och 'dossier' (kontoret, mörkt/förtroligt). Skinnet skiljer — datan och
+// strukturen är delad, så de två ytorna aldrig mer kan säga olika saker om samma fynd (regel 5).
+//
+// Två toner via finding.tone:
+//   'leak'  (default) — amber-signal, en hittad läcka (forensik-fynden). Visar kr/år-impact.
+//   'watch'           — brand-signal, vaktens lugna besked (kontraktsklockan). Visar metricText
+//                       (t.ex. "184 dagar kvar") i stället för kr — klockan är inte ett larm.
 import React from 'react';
 import styled, { css } from 'styled-components';
 
 const fmt = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 
+// Accentfärg per ton × variant. Läck = amber (warning), bevakning = brand/teal.
+const accent = (theme, tone, variant) => {
+  if (tone === 'watch') return variant === 'dossier' ? theme.dossier.teal : theme.color.brand;
+  return theme.color.warning;
+};
+// Mjuk bakgrund för ljus variant (mörk variant använder alltid dossier.bgRaised).
+const softBg = (theme, tone) => (tone === 'watch' ? theme.color.brandSoft : theme.color.warningSoft);
+
 const Card = styled.section`
   position: relative;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1px solid ${({ theme }) => theme.color.warning};
+  border: 1px solid ${({ theme, $tone, $variant }) => accent(theme, $tone, $variant)};
   padding: 18px 20px;
   margin: ${({ $variant }) => ($variant === 'dossier' ? '26px 0 4px' : '0 0 20px')};
-  background: ${({ theme, $variant }) => ($variant === 'dossier' ? theme.dossier.bgRaised : theme.color.warningSoft)};
+  background: ${({ theme, $variant, $tone }) => ($variant === 'dossier' ? theme.dossier.bgRaised : softBg(theme, $tone))};
 
   .fc-eyebrow {
     display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px;
-    text-transform: uppercase; color: ${({ theme }) => theme.color.warning};
+    text-transform: uppercase; color: ${({ theme, $tone, $variant }) => accent(theme, $tone, $variant)};
     ${({ theme, $variant }) => ($variant === 'dossier'
       ? css`font-family: ${theme.font.mono}; font-size: 11px; letter-spacing: .22em;`
       : css`font-size: 10px; font-weight: 800; letter-spacing: .1em;`)}
   }
-  .fc-eyebrow::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: ${({ theme }) => theme.color.warning}; }
+  .fc-eyebrow::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: ${({ theme, $tone, $variant }) => accent(theme, $tone, $variant)}; }
 
   .fc-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
   .fc-title {
@@ -34,7 +46,7 @@ const Card = styled.section`
   }
   .fc-impact {
     flex-shrink: 0; font-family: ${({ theme }) => theme.font.mono}; font-weight: 600; letter-spacing: -.02em;
-    font-feature-settings: 'tnum'; color: ${({ theme }) => theme.color.warning}; white-space: nowrap;
+    font-feature-settings: 'tnum'; color: ${({ theme, $tone, $variant }) => accent(theme, $tone, $variant)}; white-space: nowrap;
     font-size: ${({ $variant }) => ($variant === 'dossier' ? 'clamp(20px, 3.6vw, 26px)' : 'clamp(18px, 4vw, 24px)')};
   }
   .fc-line {
@@ -60,20 +72,27 @@ const Card = styled.section`
 `;
 
 /**
- * @param {object}  finding    - leadFinding: { title, lineDescription, annualImpact, text }
+ * @param {object}  finding    - { title, lineDescription, annualImpact, text, tone?, metricText? }
  * @param {number}  extraCount - antal övriga fynd (visar "+N fler fynd")
  * @param {string}  variant    - 'light' (testa-faktura) | 'dossier' (kontoret)
- * @param {string}  eyebrow    - valfri rubrik (default per variant)
+ * @param {string}  eyebrow    - valfri rubrik (default per ton/variant)
  */
 export default function FindingCard({ finding, extraCount = 0, variant = 'light', eyebrow }) {
   if (!finding || !finding.title) return null;
-  const label = eyebrow ?? (variant === 'dossier' ? 'Fynd på era fakturor' : 'Fynd på er faktura');
+  const tone = finding.tone === 'watch' ? 'watch' : 'leak';
+  const defaultLabel = tone === 'watch'
+    ? 'Avtalsbevakning'
+    : (variant === 'dossier' ? 'Fynd på era fakturor' : 'Fynd på er faktura');
+  const label = eyebrow ?? defaultLabel;
+  const hasImpact = finding.annualImpact > 0;
   return (
-    <Card $variant={variant}>
+    <Card $variant={variant} $tone={tone}>
       <div className="fc-eyebrow">{label}</div>
       <div className="fc-row">
         <div className="fc-title">{finding.title}</div>
-        {finding.annualImpact > 0 && <div className="fc-impact">{fmt(finding.annualImpact)} kr/år</div>}
+        {hasImpact
+          ? <div className="fc-impact">{fmt(finding.annualImpact)} kr/år</div>
+          : finding.metricText ? <div className="fc-impact">{finding.metricText}</div> : null}
       </div>
       {finding.lineDescription && <div className="fc-line">”{finding.lineDescription}”</div>}
       <p className="fc-text">{finding.text}</p>
