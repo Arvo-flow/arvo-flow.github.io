@@ -1571,6 +1571,7 @@ export default async function handler(req, res) {
         description:     extracted.description,
         billingPeriod:       extracted.billingPeriod,
         billingPeriodSource: extracted.billingPeriodSource,
+        billingPeriodAssumed: extracted.billingPeriodAssumed ?? false,
         billingPeriodStart:  extracted.billingPeriodStart ?? null,
         billingPeriodEnd:    extracted.billingPeriodEnd   ?? null,
         lineItems:       extracted.lineItems,

@@ -785,6 +785,25 @@ export function aggregateLineItems(rawInput) {
     }
   }
 
+  // RULE: recurring_subscription-fakturor UTAN datum och utan utläsbar period är i svensk B2B
+  // nästan alltid månadsvis (bredband, mobil, växel, SaaS) — annualiseringen defaultar redan ×12.
+  // Hellre en transparent månadsdom på en glasklar abonnemangsfaktura än tystnad. Vi MARKERAR
+  // antagandet (billingPeriodAssumed) så kundytan kan be om bekräftelse. Engångs/hårdvara rörs ej.
+  let billingPeriodAssumed = false;
+  if (billingPeriod === 'unknown' && !dateDerivedPeriod) {
+    const recurringLines = (raw.lineItems ?? []).filter(
+      (l) => l.type === 'recurring_subscription' && (l.amount ?? 0) > 0,
+    );
+    if (recurringLines.length > 0) {
+      console.log(
+        `[billing-period] unknown → monthly (antaget: ${recurringLines.length} recurring-rader, ingen period/datum på fakturan)`,
+      );
+      billingPeriod = 'monthly';
+      billingPeriodSource = 'rule:recurring-default';
+      billingPeriodAssumed = true;
+    }
+  }
+
   const multiplier = PERIOD_MULTIPLIER[billingPeriod] ?? 12;
 
   // projectedRecurringAmount: beräknas deterministiskt om is_prorata-rader finns.
@@ -832,6 +851,7 @@ export function aggregateLineItems(rawInput) {
     account:                  raw.account ?? null,
     billingPeriod,
     billingPeriodSource,
+    billingPeriodAssumed,
     lineItems: (raw.lineItems ?? []).map((li) => ({
       description: li.description,
       amount:      li.amount,
@@ -925,7 +945,12 @@ export function routeExtraction(extracted) {
     if (lineSum > 0) {
       const diff      = Math.abs(lineSum - extracted.invoiceTotal);
       const tolerance = Math.max(50, extracted.invoiceTotal * 0.03);
-      if (diff > tolerance) {
+      // Vanligaste svenska mönstret: rader EXKL moms, "Att betala" INKL moms. Glappet ÄR momsen
+      // (25/12/6 %), inte en saknad rad — erkänn det innan vi flaggar, annars fastnar enkla fakturor.
+      const vatExplained = [0.25, 0.12, 0.06].some(
+        (v) => Math.abs(lineSum * (1 + v) - extracted.invoiceTotal) <= tolerance,
+      );
+      if (diff > tolerance && !vatExplained) {
         return {
           route:  'review_queue',
           reason: `Ring1: radsumma ${lineSum.toLocaleString('sv-SE')} kr ≠ fakturatotal ${extracted.invoiceTotal.toLocaleString('sv-SE')} kr (avvikelse ${diff.toLocaleString('sv-SE')} kr)`,

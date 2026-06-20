@@ -1499,7 +1499,10 @@ const TestaFaktura = () => {
                     <dd>
                       {formatKr(result.extracted.annualCost)} / år
                       {result.extracted.billingPeriod !== 'annual' && (
-                        <small style={{ fontStyle: 'italic' }}>Projicerat från abonnemangsradernas listpris</small>
+                        <small style={{ fontStyle: 'italic' }}>
+                          Projicerat från abonnemangsradernas listpris
+                          {result.extracted.billingPeriodAssumed ? ' · antaget månadsvis (fakturan saknar period)' : ''}
+                        </small>
                       )}
                     </dd>
                   </div>
