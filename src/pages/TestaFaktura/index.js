@@ -151,7 +151,7 @@ function redactSupplier(text, supplier) {
   for (const term of [...new Set(terms)]) {
     out = out.replace(
       new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
-      'Arvo-verifierad partner',
+      'en verifierad lägre leverantör',
     );
   }
   return out;
@@ -993,6 +993,11 @@ const TestaFaktura = () => {
   const diagOvPct   = diagAnnual > 0 && diagSugg > 0 && diagSugg < diagAnnual
     ? Math.round((diagAnnual - diagSugg) / diagAnnual * 100)
     : 0;
+  // "Över marknadspris" = (pris − mål)/mål — ALDRIG andel-av-priset (Svea/85-felet är låst).
+  // diagOvPct (besparingsandel) driver score-gaugen; diagOverMarketPct är det ärliga "över marknad"-talet.
+  const diagOverMarketPct = diagAnnual > 0 && diagSugg > 0 && diagSugg < diagAnnual
+    ? Math.round((diagAnnual - diagSugg) / diagSugg * 100)
+    : 0;
   const _clickPriceScore = result?.recommendation?.clickRateAnalysis?.priceGapScore ?? null;
   const diagScoreRaw = _clickPriceScore ?? Math.max(5, Math.round(100 - diagOvPct * 1.5));
   const diagScore    = _clickPriceScore != null
@@ -1037,7 +1042,7 @@ const TestaFaktura = () => {
   // Magnitudmedveten benchmarkfras: "kostar väsentligt mindre" får bara sägas när
   // gapet faktiskt är väsentligt (≥15 %) — vid små gap är frasen självmotsägande.
   const _bmPhrase = diagOvPct >= 15
-    ? (_effectiveMeta.smfBenchmark ?? 'välförhandlat avtalspris finns att hämta')
+    ? (_effectiveMeta.smfBenchmark ?? 'ett lägre verifierat marknadspris finns att hämta')
     : 'samma avtal kostar mindre till leverantörens publika årsavtalspris';
   const diagInsight = _isSecondaryOnlySwitch
     ? `Ert ${getCategoryMeta(result?.categorized?.category ?? 'uncategorized').label.toLowerCase()} är konkurrenskraftigt — ${_secLabel ?? 'sekundärtjänsten'} kan optimeras.`
@@ -1046,11 +1051,11 @@ const TestaFaktura = () => {
         ? `Avtalslåset lossnar snart${daysUntilEnd != null ? ` — ${daysUntilEnd} dagar kvar` : ''}. Arvo förbereder omförhandling.`
         : diagScore >= 80
           ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
-          : `Ni betalar ${diagOvPct} % sämre än branschsnittet — Arvo förhandlar välförhandlat avtalspris vid förnyelsen.`
+          : `Ni betalar ${diagOverMarketPct}% över verifierat marknadspris — ett lägre pris finns att säkra inför förnyelsen.`
       : diagScore < 45
-        ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — ${diagOvPct >= 15 ? (_effectiveMeta.smfBenchmark ?? 'stor besparingspotential') : _bmPhrase}.` : 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.')
-        : diagScore < 80 ? (diagOvPct > 0 ? `Ni betalar ${diagOvPct}% över marknadspris — ${_bmPhrase}.` : 'Ni betalar något sämre än branschsnittet — välförhandlat avtalspris finns att hämta.')
-        : 'Ni har ett välförhandlat avtal — bättre än branschsnittet.';
+        ? (diagOverMarketPct > 0 ? `Ni betalar ${diagOverMarketPct}% över marknadspris — ${diagOvPct >= 15 ? (_effectiveMeta.smfBenchmark ?? 'stor besparingspotential') : _bmPhrase}.` : 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.')
+        : diagScore < 80 ? (diagOverMarketPct > 0 ? `Ni betalar ${diagOverMarketPct}% över marknadspris — ${_bmPhrase}.` : 'Ni betalar något sämre än branschsnittet — ett lägre verifierat marknadspris finns att hämta.')
+        : 'Ni har ett marknadsmässigt avtal — bättre än branschsnittet.';
 
   const GAUGE_R = 26;
   const GAUGE_C = 2 * Math.PI * GAUGE_R;
@@ -1710,7 +1715,7 @@ const TestaFaktura = () => {
                       <span className="estimate-badge">Uppskattning</span>
                     </div>
                     <span className="amount">≈ +{formatNum(result.recommendation.netSaving)}&nbsp;kr/år</span>
-                    <span className="unit">Jämfört mot välförhandlat B2B-avtal · bekräftas med faktisk offert</span>
+                    <span className="unit">Jämfört mot verifierat B2B-marknadspris · bekräftas med faktisk offert</span>
                   </EstimateSavingsBlock>
                 ) : null}
                 {/* Dropbox/Box-korselden: arkitektonisk substitutionsinsikt. INGEN påhittad SEK-besparing
@@ -1919,7 +1924,7 @@ const TestaFaktura = () => {
                         <PriceNote $compact>
                           {_effectiveMeta.benchmarkType === 'list-verified'
                             ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.'
-                            : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
+                            : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från en verifierad lägre leverantör.')}
                         </PriceNote>
                       )}
                     </>
@@ -1997,7 +2002,7 @@ const TestaFaktura = () => {
               <PriceNote>
                 {_effectiveMeta.benchmarkType === 'list-verified'
                   ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.'
-                  : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från Arvo-verifierad partner.')}
+                  : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från en verifierad lägre leverantör.')}
               </PriceNote>
             )}
             {result.route === 'auto' && !result.categorized?.licensePending && !_effectiveMeta.isRealPrice && result.savingRange && (

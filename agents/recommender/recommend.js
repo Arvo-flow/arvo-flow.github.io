@@ -92,7 +92,7 @@ function formatBenchmark(benchmark, seatCount, employees) {
 
   return `Bransch: ${benchmark.industry}, storlek: ${benchmark.size}
 Median (total, per år): ${totalMedian.toLocaleString('sv-SE')} ${benchmark.unit}${scaleNote}
-Arvo-volympris (förhandlat, per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${scaleLabel})` : ''}
+Verifierat lägre marknadspris (per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${scaleLabel})` : ''}
 
 Alternativa leverantörer:
 ${altList}
@@ -236,10 +236,10 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
     : isLiveData
       ? `OBS: Benchmarkdatan är baserad på ${dataPoints} anonymiserade fakturor från liknande bolag i Arvo Flows databas. I din reasoning, skriv "jämförbara bolag i er bransch betalar väsentligt lägre" eller "Ni betalar mer än vad vi ser i liknande bolag" — ALDRIG "medianen", "referenspriser" eller interna procentsatser.`
       : isRealData
-        ? `OBS: Benchmarkdatan är baserad på ${dataPoints} verkliga kundfakturor i Arvo Flows databas. I din reasoning, jämför mot "branschsnittet" — skriv t.ex. "Ni betalar mer än jämförbara bolag i er bransch" eller "Välförhandlat avtalspris för er storlek är väsentligt lägre." — ALDRIG "medianen", "referenspriser" eller interna procentsatser.`
+        ? `OBS: Benchmarkdatan är baserad på ${dataPoints} verkliga kundfakturor i Arvo Flows databas. I din reasoning, jämför mot "branschsnittet" — skriv t.ex. "Ni betalar mer än jämförbara bolag i er bransch" eller "Jämförbara bolag i er bransch betalar väsentligt mindre." — ALDRIG "medianen", "referenspriser" eller interna procentsatser.`
         : isVerifiedPublic
-          ? 'OBS: Benchmarkdatan är verifierade offentliga listpriser — INTE aggregerade kundfakturor. I din reasoning, skriv "mer än det verifierade marknadspriset" eller "välförhandlat avtalspris finns tillgängligt" — ALDRIG "medianen" eller interna procentsatser.'
-          : 'OBS: Benchmarkdatan är intervallbaserade branschuppskattningar — INTE exakta priser. I din reasoning, jämför mot "branschsnittet" och skriv "välförhandlat avtalspris är lägre" — ALDRIG "exakta priser", "garanterade" eller "medianen".';
+          ? 'OBS: Benchmarkdatan är verifierade offentliga listpriser — INTE aggregerade kundfakturor. I din reasoning, skriv "mer än det verifierade marknadspriset" eller "leverantörens eget publika listpris är lägre, tillgängligt utan förhandling" — ALDRIG "medianen" eller interna procentsatser.'
+          : 'OBS: Benchmarkdatan är intervallbaserade branschuppskattningar — INTE exakta priser. I din reasoning, jämför mot "branschsnittet" och skriv "marknadens pris är lägre" — ALDRIG "exakta priser", "garanterade" eller "medianen".';
 
   const benchmarkBlock = isAccountingSystem
     ? formatBenchmark(benchmark, seatCount, employees) + '\n\n' + phrasingRule
@@ -438,13 +438,13 @@ Kategoriserad faktura:
       ? (() => {
           const _secCostFmt  = nonPrimaryAnnualForPrompt.toLocaleString('sv-SE');
           const _action = _hasSavingBoth
-            ? `Arvo förhandlar ned bredbandskostnaden mot marknadsbenchmark.`
+            ? `Arvo genomför bytet av bredbandet till ett lägre verifierat marknadspris.`
             : `Bredbandskomponenten är marknadsmässig.`;
           return `Fakturan innehåller även ${_secLabel} (${_secCostFmt} kr/år) — ${_action}`;
         })()
       : `Övriga tjänster (${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr+) analyseras via Fortnox/Visma.`;
     const _secActionInstruction = _hasSavingBoth
-      ? `KRITISKT: Bredbandskomponenten har en identifierad besparing mot marknadsbenchmark. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en aktiv åtgärd ("Arvo förhandlar ned bredbandskostnaden"), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `
+      ? `KRITISKT: Bredbandskomponenten har en identifierad besparing mot marknadsbenchmark. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en aktiv åtgärd ("Arvo genomför bytet av bredbandet till ett lägre pris"), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `
       : `KRITISKT: Ange i reasoning EXAKT `;
     return `
   OBS KOMBINERAT FAKTURA — fakturan innehåller tjänster i FLERA kategorier:
@@ -1299,7 +1299,7 @@ export async function recommend(input, opts = {}) {
       shouldSwitch = annualCost > bm.p25 * 1.10;
       const overMedianPct = Math.round(((annualCost - bm.median) / bm.median) * 100);
       if (shouldSwitch) {
-        reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år är sämre än branschsnittet för er verksamhetsstorlek. Välförhandlat avtalspris med rikstäckande aktörer är väsentligt lägre. Arvo begär offert från ${alts} baserat på ert tömningsschema och fraktionsfördelning.`;
+        reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år är sämre än branschsnittet för er verksamhetsstorlek. Marknadspriset hos rikstäckande aktörer är väsentligt lägre. Arvo begär offert från ${alts} baserat på ert tömningsschema och fraktionsfördelning.`;
         suggestedAnnualCost = bm.p25;
         grossSaving = Math.max(0, annualCost - bm.p25);
         arvoFee = Math.round(grossSaving * 0.20);

@@ -224,7 +224,7 @@ const ArvoScore = () => {
           </TotalBar>
           <h2>Aktivera aktionsplanen</h2>
           <p>
-            Arvo förhandlar och sköter varje leverantörsbyte åt er — från
+            Arvo sköter varje leverantörsbyte åt er — från
             uppsägning till nytt avtal. Ni betalar 20&nbsp;% av realiserad
             besparing. Inget annars.
           </p>

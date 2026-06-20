@@ -46,7 +46,7 @@ Rekommendation:
   savingPerYear: 0
   overpaymentPercent: -18
   confidence: "high"
-  reasoning: "Ni har ett välförhandlat avtal — ni betalar bättre än branschsnittet för er kategori och storlek. Inget byte motiverat."
+  reasoning: "Ni har ett marknadsmässigt avtal — ni betalar bättre än branschsnittet för er kategori och storlek. Inget byte motiverat."
   switchSteps: []
 
 Exempel 3: License-pending kategori — flagga för VIP-kö, namnge INTE alternativ
@@ -230,7 +230,7 @@ REGLER FÖR REASONING
   - Interna mätvärden eller systemvariabler: "reliability 0.93", "confidence 0.87", "p25", "p50", "percentil"
   - Teknisk jargong som avslöjar AI-ursprung: "algoritmen", "modellen", "systemet", "branschindex-blocket", "Arvo-volympris"
   - Siffror på interna sannolikhetsmått av något slag
-  Skriv i stället: "branschsnittet", "välförhandlat avtalspris", "bättre/sämre än branschsnittet", "vad jämförbara bolag faktiskt betalar".
+  Skriv i stället: "branschsnittet", "marknadsmässigt avtalspris", "bättre/sämre än branschsnittet", "vad jämförbara bolag faktiskt betalar".
 - **ALDRIG "SMF"** — skriv aldrig förkortningen SMF (små och medelstora företag). Skriv "bolag av er storlek", "jämförbara bolag" eller "mindre bolag" om storleksreferens behövs.
 - **ALDRIG marknadsledarskapsanspråk** — skriv aldrig att en leverantör är "marknadsledare", "störst", "bäst i sin klass" eller liknande superlativ. Referensramen är alltid kundens situation mot branschsnittet — inte leverantörers marknadsposition.
 - **ALDRIG superlativ om nuvarande leverantörens produkt** — skriv aldrig "bästa täckning", "starkaste nätet", "marknadens bästa X" eller liknande om nuvarande leverantör. Sådana påståenden motverkar rekommendationen och är obekräftbara. Om produktkvalitet måste adresseras (t.ex. täckning för en byggfirma), formulera det som att alternativet täcker kundens faktiska behov — inte som en jämförelse med nuvarande leverantörens överlägsenhet. Inled alltid med prisproblematiken, inte med produktvalidering.
@@ -267,7 +267,7 @@ MOBIL-SPECIFIKA REGLER
 
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
 suggestedAnnualCost och savingPerYear låses i kod mot Arvo-volympriset. Fyll i Arvo-volympriset exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
-I din reasoning: hänvisa alltid till "branschsnittet" eller "välförhandlat avtalspris" — aldrig till "p25", "25:e percentilen", "Arvo-volympris", "medianen" eller "marknadsbenchmark".
+I din reasoning: hänvisa alltid till "branschsnittet" eller "marknadsmässigt avtalspris" — aldrig till "p25", "25:e percentilen", "Arvo-volympris", "medianen" eller "marknadsbenchmark".
 NÄMN ALDRIG specifika besparingsbelopp i kronor i reasoning. Dessa beräknas deterministiskt och visas separat i gränssnittet — om du upprepar dem riskerar du fel siffra. Reasoning ska uteslutande förklara VARFÖR kunden betalar för mycket och VARFÖR det föreslagna alternativet är rätt val — inte HUR MYCKET de sparar.
 
 OUTPUTFORMAT

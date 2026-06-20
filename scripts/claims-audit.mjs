@@ -27,6 +27,12 @@ const FORBIDDEN = [
   [/provision fr[åa]n/i,        'Neutralitets-moaten: Arvo tar aldrig provision från en leverantör'],
   [/(leverant[öo]rsersättning|partner-?fee|återförsäljarmarginal)/i, 'Neutralitets-moaten: ingen leverantörs-sidig intäkt får antydas i kundyta'],
   [/redan f[öo]rhandlat/i,      'Arvo har inte förhandlat något pris ännu — listpriser är verifierade, inte förhandlade'],
+  // Bredbands-läxan 2026-06-20: AI:n kallade Telias EGNA publika listpris "välförhandlat avtalspris"
+  // → falskt (Arvo förhandlar inte fram benchmarkpriser; de är verifierade/publika). OK att säga
+  // "Arvo förhandlar ett volymavtal åt er" (Switch-tjänsten, success-fee) — men ett PRIS får aldrig
+  // beskrivas som "välförhandlat", och inga "partner"-leverantörer får antydas (neutralitets-moaten).
+  [/v[äa]lf[öo]rhandl/i,        'Ett verifierat/publikt listpris får aldrig kallas "välförhandlat" — Arvo förhandlar inte fram benchmarkpriser (säg "marknadspris"/"verifierat listpris")'],
+  [/arvo-verifierad partner/i,  'Neutralitets-moaten: Arvo har inga partner-leverantörer — säg "verifierad lägre leverantör" eller "offert vi inhämtar"'],
   [/inklusive er\b/i,           'Fabricerad kohorttillhörighet — kunden ingår inte i påstådd statistik'],
   [/i morse · \d/i,             'Fejk-tidsstämpel som ger exempel sken av verklig händelse'],
   [/skickas inom kort/i,        'Löfte utan leveransmekanik (gmail-callback-läxan)'],

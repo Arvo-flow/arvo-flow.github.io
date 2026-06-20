@@ -526,11 +526,11 @@ export const BRANCHINDEX = {
     // SuperOffice CRM (nordisk, estimerat): ~250–400 kr/user/mth → ~3 000–4 800 kr/user/år.
     // Lime CRM (svensk, estimerat från kunddata): ~299–599 kr/user/mth → ~3 588–7 188 kr/user/år.
     // Salesforce Starter Suite: $25/user/mth ≈ 258 SEK × 12 = ~3 090 kr/user/år.
-    // p25 = välförhandlat pris Pipedrive/Zoho-nivå ≈ 1 800 kr/user/år.
+    // p25 = marknadsmässigt pris Pipedrive/Zoho-nivå ≈ 1 800 kr/user/år.
     // Median = typiskt svenskt SMF-CRM-avtal SuperOffice/Lime-nivå ≈ 4 200 kr/user/år.
     // Volymrabatt vid small/mid: ~5–10 % på median.
     // CRM-priser varierar minimalt per bransch — matrisen är konsekvent över segment.
-    note: 'Per användare/år (exkl. moms). Estimat juni 2026: p25 = välförhandlat Pipedrive/Zoho-nivå (~150 kr/mth/user), median = typiskt Svenska SMF-avtal SuperOffice/Lime-nivå (~350 kr/mth/user). Prissättning varierar med kontaktvolym och avtalslängd.',
+    note: 'Per användare/år (exkl. moms). Estimat juni 2026: p25 = marknadsmässigt Pipedrive/Zoho-nivå (~150 kr/mth/user), median = typiskt Svenska SMF-avtal SuperOffice/Lime-nivå (~350 kr/mth/user). Prissättning varierar med kontaktvolym och avtalslängd.',
     alternatives: [
       { supplier: 'Pipedrive',           positioning: 'Enklast och effektivast för säljfokuserade bolag — lägst TCO per user, starkt API', reliability: 0.92 },
       { supplier: 'HubSpot CRM Starter', positioning: 'Stark för bolag med kombinerade sälj- och marknadsföringsbehov — fri tier existerar', reliability: 0.94 },
@@ -901,7 +901,7 @@ export const BRANCHINDEX = {
     // Avfallsskatt 2026: 750 kr/ton (lagstadgad, Skatteverket). Sysav +15 % feb 2025, +4 % jan 2026.
     // B2B-kontrakt inkluderar normalt: kärlhyra (20-30 %), tömningsavgift (40-50 %),
     // behandling/deponering (15-25 %) samt lagstadgad avfallsskatt (10-20 % av totalen).
-    // p25 = välförhandlat volymavtal med rikstäckande aktör (Ragn-Sells / SUEZ / Stena).
+    // p25 = marknadsmässigt volymavtal med rikstäckande aktör (Ragn-Sells / SUEZ / Stena).
     // Byrå micro-p25 kalibrerad mot Skaraborg-basscenariot + 30 % (regionjusterat).
     note: 'Avfall & återvinning. Kostnad varierar med containertyp, tömningsfrekvens, avfallsfraktioner och lagstadgade avgifter. Källa: kommunal taxa-data (Skaraborg 2023, Stockholm 2026, Sysav 2025-2026) + Avfallsskatt Skatteverket 2026.',
     alternatives: [

@@ -82,7 +82,7 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
   const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
   const suppDisplay = isRealPrice
     ? r.suggestedSupplier
-    : (CATEGORY_PARTNER_LABEL[cat?.category] ?? 'Arvo-verifierad Partner');
+    : (CATEGORY_PARTNER_LABEL[cat?.category] ?? 'Verifierad leverantör');
 
   const saving    = isOptimize ? (r.optimizationSaving ?? 0) : (r.grossSaving ?? 0);
   const arvoFee   = Math.round(saving * 0.20);

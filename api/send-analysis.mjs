@@ -73,7 +73,7 @@ const CATEGORY_LABELS = {
 function displayedSupplier(cat, r) {
   if (!r.suggestedSupplier) return null;
   if (REAL_PRICE_CATEGORIES.has(cat?.category)) return r.suggestedSupplier;
-  return CATEGORY_PARTNER_LABEL[cat?.category] ?? 'Arvo-verifierad Partner';
+  return CATEGORY_PARTNER_LABEL[cat?.category] ?? 'Verifierad leverantör';
 }
 
 function formatKr(n) {

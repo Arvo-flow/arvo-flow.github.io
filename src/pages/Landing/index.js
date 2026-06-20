@@ -175,7 +175,7 @@ const useCountUp = (target, active, duration = 1100, delay = 0) => {
 };
 
 // Normaliserar varje kategori mot sitt eget branschsnitt → en gemensam axel.
-// Branschsnitt-linjen ligger på 32 %, "välförhandlat"-korridoren 8–35 %.
+// Branschsnitt-linjen ligger på 32 %, "marknadspris"-korridoren 8–35 %.
 const SPECTRUM_LINE = 32;
 const spectrumX = (you, median) => {
   const ratio = you / median;
@@ -214,7 +214,7 @@ const BenchmarkRowItem = ({ row, i, visible }) => {
       ) : (
         <div className="delta inline">
           <strong><Icon name="check" size={13} stroke={2.6} /> i nivå</strong>
-          <small>välförhandlat</small>
+          <small>marknadspris</small>
         </div>
       )}
     </SpectrumRow>
@@ -254,7 +254,7 @@ const BenchmarkViz = () => {
 
       <SpectrumAxisFoot>
         <span className="axis-cell">
-          <span className="lbl zone">Välförhandlat</span>
+          <span className="lbl zone">Marknadspris</span>
           <span className="lbl mid">Branschsnitt</span>
           <span className="lbl right">Sämre →</span>
         </span>
@@ -272,7 +272,7 @@ const BenchmarkViz = () => {
             <span>bättre än snittet</span>
           </div>
         </div>
-        <p>Sex av åtta kategorier kostar mer än välförhandlade bolag i er bransch betalar — höjningen sker gradvis och märks sällan i tid. Arvo identifierar det innan ni hunnit se det.</p>
+        <p>Sex av åtta kategorier kostar mer än bolag som betalar marknadspris i er bransch — höjningen sker gradvis och märks sällan i tid. Arvo identifierar det innan ni hunnit se det.</p>
       </SpectrumSummary>
     </Spectrum>
   );
