@@ -1396,6 +1396,7 @@ export default async function handler(req, res) {
         annualCost: extracted.annualCost,
         savingPct: _savingPct,
         supplier:  categorized.normalizedSupplier ?? extracted.supplier,
+        benchmarkSource: recommendation.benchmark?.source,   // verifierat listpris → Haiku hoppas över
       });
       if (!sanity.pass) {
         console.error(`[sanity] BLOCKED method=${sanity.method} reason=${sanity.reason}`);

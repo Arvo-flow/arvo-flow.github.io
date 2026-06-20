@@ -37,6 +37,7 @@ import './molnvaxel-recommendation.mjs';
 import './loneadmin-recommendation.mjs';
 import './forensics.mjs';
 import './extract-simple-invoice.mjs';
+import './sanity-verifier.mjs';
 import './adobe-rightsizing.mjs';
 import './adobe-recommendation.mjs';
 import './saas-substitution.mjs';
