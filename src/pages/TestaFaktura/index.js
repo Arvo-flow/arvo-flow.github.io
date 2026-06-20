@@ -7,6 +7,7 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr } from '../../utils/format';
 import { getCategoryMeta } from '../../lib/categoryMeta';
+import { COST_CATEGORIES } from '../../lib/costCategories';
 import {
   Page, Hero, Eyebrow, Headline, Lede, Body, Card,
   Dropzone, FormRow, Field, SubmitRow, Disclaimer, ErrorBox, Spinner,
@@ -171,16 +172,7 @@ const INDUSTRY_LABELS = {
 };
 
 
-const SEGMENTS = [
-  { label: 'Skrivare',              short: 'Skrivare',   icon: 'file',      cats: ['skrivarleasing', 'utrustningsleasing'] },
-  { label: 'El',                    short: 'El',          icon: 'bolt',      cats: ['el'] },
-  { label: 'Telefoni och bredband', short: 'Telefoni',    icon: 'phone',     cats: ['mobil', 'bredband', 'molnvaxel'] },
-  { label: 'Programvara',           short: 'Programvara', icon: 'spark',     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'serverhosting', 'faktura-tjanst'] },
-  { label: 'IT',                    short: 'IT',          icon: 'wifi',      cats: ['it-support'] },
-  { label: 'Fordon och frakt',      short: 'Fordon',      icon: 'truck',     cats: ['leasing-bil', 'transport-frakt'] },
-  { label: 'Kontor och städ',       short: 'Kontor',      icon: 'briefcase', cats: ['kontorsmaterial', 'städ-rengöring', 'larm-bevakning', 'kortterminal', 'avfall-atervinning', 'bankavgifter'] },
-  { label: 'Personal och hälsa',    short: 'Personal',    icon: 'shield',    cats: ['foretagshalsovard', 'loneadmin', 'forsakring-foretag', 'forsakring-ansvar'] },
-];
+const SEGMENTS = COST_CATEGORIES;
 
 const PHASES = [
   { id: 'extract',    label: 'Arvo läser & klassificerar fakturan',  sublabel: 'Tolkar varje rad och post' },

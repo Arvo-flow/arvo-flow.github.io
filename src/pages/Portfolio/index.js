@@ -8,6 +8,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
+import { COST_CATEGORIES } from '../../lib/costCategories';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail, RoomFinding,
@@ -15,21 +16,9 @@ import {
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
 
-// ── kostnadskartan — ledd av DELIVERY: kategorier vi kan ge en verifierad dom för först,
-// offert-only ärligt märkt. mode:'verdict' = källtäckt marknadspris/golv finns. mode:'offert' =
-// vi jämför mot faktiska leverantörsofferter (ingen verifierad listprisdom ännu).
-// Försäkring visas medvetet INTE — det är ett 2028-spår som väntar på FI-tillstånd (regel 9:
-// inget kundlöfte utan mekanik). `know` = ärlig, källtäckt referens på kategorinivå (ingen kunddata).
-const INTAKE_SEGMENTS = [
-  { label: 'IT-licenser',       icon: 'spark',   mode: 'verdict', hint: 'Microsoft 365',           know: 'verifierat listpris' },
-  { label: 'Telefoni',          icon: 'phone',   mode: 'verdict', hint: 'Mobil · växel · bredband', know: 'verifierat marknadspris' },
-  { label: 'Bokföring & lön',   icon: 'fortnox', mode: 'verdict', hint: 'Fortnox · Visma · lön',    know: 'verifierat golv' },
-  { label: 'Kreativ mjukvara',  icon: 'wifi',    mode: 'verdict', hint: 'Adobe · design',           know: 'verifierat exkl moms' },
-  { label: 'El',                icon: 'bolt',    mode: 'verdict', hint: 'Företagsel',               know: 'Nordpool-verifierat' },
-  { label: 'IT-drift & hosting', icon: 'lock',   mode: 'offert',  hint: 'Support · server · moln' },
-  { label: 'Skrivare & print',   icon: 'file',   mode: 'offert',  hint: 'Leasing · klickavtal' },
-  { label: 'Fordon & frakt',     icon: 'truck',  mode: 'offert',  hint: 'Leasing · transport' },
-];
+// Kostnadskartan läses från EN delad källa (src/lib/costCategories) — samma data som testa-fakturas
+// "Helhetsbild", så dörren och rummet aldrig kan säga olika saker (regel 5).
+const INTAKE_SEGMENTS = COST_CATEGORIES;
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
