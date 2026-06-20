@@ -1,0 +1,26 @@
+name: Diag PDF (en faktura genom pipelinen)
+
+# Kör den skarpa extract→route→categorize-pipelinen på test-pdfs/diag-bredband.pdf
+# och skriver ut EXAKT route/reason/kategori/confidence. Diagnostik, ej kundyta.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Kör pipeline på bredbandsfakturan
+        run: node scripts/diag-pdf.mjs test-pdfs/diag-bredband.pdf
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
