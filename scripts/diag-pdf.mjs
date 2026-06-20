@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { extractInvoice, routeExtraction } from '../agents/test-invoice/extract.js';
 import { categorize } from '../agents/categorizer/categorize.js';
 import { recommend } from '../agents/recommender/recommend.js';
+import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 
 const path = process.argv[2];
 if (!path) { console.error('usage: node scripts/diag-pdf.mjs <pdf>'); process.exit(1); }
@@ -22,42 +23,36 @@ if (routing.route !== 'unsupported') {
   });
 }
 
-let rec = null;
+let rec = null, metrics = null;
 if (routing.route === 'auto' || routing.route === 'monitoring') {
+  metrics = computeInvoiceMetrics(extracted.lineItems, categorized.category, extracted.potentialMixedCategories ?? false);
   try {
     rec = await recommend({
       customer:    { industry: 'ovrigt', employees: 10 },
       categorized: { category: categorized.category, normalizedSupplier: categorized.normalizedSupplier, confidence: categorized.confidence, subType: categorized.subType },
-      invoice:     extracted,
+      invoice: {
+        amount: extracted.amount, annualCost: extracted.annualCost, recurringAmount: extracted.recurringAmount,
+        variableCharges: extracted.variableCharges, seatCount: extracted.seatCount ?? null,
+        mobileAddonMonthly: metrics.mobileAddonMonthly, broadbandAddonMonthly: metrics.broadbandAddonMonthly,
+        primaryComponentMonthly: metrics.primaryComponentMonthly, secondaryComponentMonthly: metrics.secondaryComponentMonthly,
+        potentialMixedCategories: extracted.potentialMixedCategories ?? false,
+        connectionSpeedMbit: extracted.connectionSpeedMbit ?? null, lineItems: extracted.lineItems ?? null,
+      },
     });
   } catch (e) { rec = { ERROR: e.message }; }
 }
 
-console.log('=== DIAG-RESULTAT ===');
+console.log('=== DIAG-RESULTAT (full pipeline m. metrics) ===');
 console.log(JSON.stringify({
-  supplier:             extracted.supplier,
-  billingPeriod:        extracted.billingPeriod,
-  billingPeriodSource:  extracted.billingPeriodSource,
-  billingPeriodAssumed: extracted.billingPeriodAssumed,
-  confidenceScore:      extracted.confidenceScore,
-  invoiceTotal:         extracted.invoiceTotal,
-  lineSum:              (extracted.lineItems ?? []).reduce((s, l) => s + (l.amount ?? 0), 0),
-  annualCost:           extracted.annualCost,
-  ROUTE:                routing.route,
-  REASON:               routing.reason,
-  category:             categorized.category,
-  categoryConfidence:   categorized.confidence,
-  normalizedSupplier:   categorized.normalizedSupplier,
+  ROUTE: routing.route, category: categorized.category, categoryConfidence: categorized.confidence,
+  annualCost: extracted.annualCost,
+  broadbandAddonMonthly: metrics?.broadbandAddonMonthly,
   RECOMMENDATION: rec && !rec.ERROR ? {
-    recommendationType: rec.recommendationType,
-    requiresQuote:      rec.requiresQuote,
-    revisionGate:       rec.revisionGate,
-    shouldSwitch:       rec.shouldSwitch,
-    suggestedSupplier:  rec.suggestedSupplier,
-    suggestedAnnualCost: rec.suggestedAnnualCost,
-    grossSaving:        rec.grossSaving,
-    benchmarkSource:    rec.benchmark?.source,
-    reasoning:          (rec.reasoning ?? '').slice(0, 200),
+    recommendationType: rec.recommendationType, shouldSwitch: rec.shouldSwitch,
+    suggestedAnnualCost: rec.suggestedAnnualCost, savingPerYear: rec.savingPerYear,
+    grossSaving: rec.grossSaving, netSaving: rec.netSaving, nonPrimaryAnnual: rec.nonPrimaryAnnual,
+    benchmarkSource: rec.benchmark?.source, reasoning: (rec.reasoning ?? '').slice(0, 240),
   } : rec,
 }, null, 2));
+
 
