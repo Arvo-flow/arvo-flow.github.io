@@ -195,6 +195,27 @@ Gränsen är knivskarp: **publik prisdata = ja; ersättning, rabatt-mot-volym el
 bindning från leverantören = aldrig.** Maskinvakt: `scripts/claims-audit.mjs` blockerar
 all kundyte-copy som antyder leverantörsersättning eller partnerskap.
 
+**Switch-doktrinen (GRUNDARBESLUT 2026-06-21, icke-förhandlingsbart): Arvo förhandlar
+aldrig och köar aldrig — Arvo är en stående fullmakt.** Switch genomförs som en
+*fullmakts- och BankID-orkestrering* (`agents/orchestrator/orchestrator.js`:
+`generateFullmakt` → `ScriveClient` e-signering → `SupplierClient` uppsägning + nyansökan,
+tajmat mot kontraktsklockan), ALDRIG som en förhandlingsdisk. Detta är en gräns, inte en
+kapacitetslucka: i samma sekund som ekonomin kräver en människa en timme i en leverantörs
+telefonkö är både marginalen och premiumpositionen död. Arvos arbete ska förbli
+*mjukvaru- och pappersformat, aldrig konversationsformat*. Kunden upplever att "det bara
+hände" — en BankID-signatur, sen lägger Arvo bytet i kundens namn och den *vinnande*
+leverantören sköter onboardingen (i el/mobil/bredband är detta lagstadgat systematiserat).
+
+Konsekvens (regel 9 — kundlöften ska ha mekanik): varje kategori är antingen **Switch-bar**
+(bytet är ett systematiserat pappers-/signaturflöde → vi lovar "vi genomför bytet") eller
+**Intelligence-only** (besparingen kräver hagglande med samma leverantör → vi levererar
+fyndet, tajmingen och det exakta motbudet, och *beväpnar* kunden, men lovar ALDRIG att
+verkställa det vi inte kan skala). Switch börjar smalt — el + telekom/bredband — och växer
+först när fullmaktsrälsen bevisat sig live. Att märka kategorier Switch-bar vs
+Intelligence-only är ett 0,1%-drag: vi lovar bara den mekanik vi äger. (Status: rälsen är
+`mode: 'stub'` — arkitektur, inte mekanik; tills den är skarp säljs Switch som "förbered +
+signera", aldrig som ett verkställt löfte.)
+
 ---
 
 *Commit aldrig `.env` eller credentials · Kör aldrig `scripts/stress-test.mjs` utan explicit OK*
