@@ -103,22 +103,22 @@ const SCORE_LEVELS = [
     label: 'Kritisk',
     color: '#DC2626',
     score: 28,
-    desc: 'Ni betalar kraftigt mer än marknadspriset och förlorar pengar varje faktura. Arvo identifierar, förhandlar och genomför bytet åt er.',
+    desc: 'Ni betalar kraftigt mer än marknadspriset och förlorar pengar varje faktura. Arvo identifierar läckan och genomför bytet åt er — utan förhandling, utan telefonköer.',
   },
 ];
 
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande bevakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: vill ni att Arvo genomför ett identifierat leverantörsbyte tar vi 20 % av realiserad besparing, fakturerat efter att bytet är genomfört. Hittar vi ingen besparing — kostar Switch inget.',
+    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande bevakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: i kategorier där bytet är systematiserat genomför eller förbereder Arvo bytet åt er, och vi tar 20 % av realiserad besparing — fakturerat först när besparingen faktiskt syns i era egna böcker. Landar ingen besparing kostar Switch ingenting.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
-    a: <>Vi tjänar pengar bara när ni sparar — det är beviset på opartiskhet. Leverantörer kan inte köpa sig en högre placering; vi sätter tak för vad de får betala oss och krediterar er direkt om någon försöker gå över. Policyn är öppet publicerad under <Link to="/bias">vår rankningspolicy</Link>.</>,
+    a: <>Vi tjänar pengar bara när ni sparar — det är beviset på opartiskhet. Leverantörer kan inte köpa sig en högre placering, för vi tar aldrig en krona från dem: noll provision, noll partner-avgift, ingen dörr in. Vår enda intäkt är er besparing. Policyn är öppet publicerad under <Link to="/bias">vår rankningspolicy</Link>.</>,
   },
   {
     q: 'Varför ska jag lita på era besparingskalkyler?',
-    a: 'Vi bygger på verifierade marknadsdata — offentliga listpriser, ramavtalsdata och faktiska operatörspriser. Och eftersom vi tar 20 % av identifierad besparing har vi inget att vinna på att överdriva: en projektion som inte håller kostar oss förtroendet, inte bara besparingsarvodet. Vi tjänar mer på att lova lite och leverera fullt ut.',
+    a: 'Vi bygger på verifierade marknadsdata — offentliga listpriser, ramavtalsdata och faktiska operatörspriser. Och eftersom vi tar 20 % av realiserad besparing — den som faktiskt syns i era böcker, inte den vi gissar — har vi inget att vinna på att överdriva: en projektion som inte håller kostar oss förtroendet och arvodet. Vi tjänar mer på att lova lite och leverera fullt ut.',
   },
   {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',
@@ -130,7 +130,7 @@ const FAQ = [
   },
   {
     q: 'Vilka kategorier täcker ni idag?',
-    a: 'Elavtal, mobilabonnemang, företagsbredband, programvarulicenser / SaaS, skrivare & Managed Print, kortterminaler, fakturatjänster och företagsleasing — åtta kategorier där vi kan genomföra hela bytesprocessen idag. Företags- och yrkesansvarsförsäkringar analyserar vi redan, men byten genomförs när vår FI-licens är klar. Fler kategorier läggs till varje kvartal baserat på var vi ser störst besparingar i kunddatan.',
+    a: 'Vi bevakar er kostnad i tre lägen. I el, mobil och företagsbredband genomför Arvo bytet åt er — ni godkänner med BankID, den vinnande leverantören sköter resten. I programvara / SaaS, kortterminaler, fakturatjänster och löneadministration förbereder Arvo hela bytet — ni formaliserar med ett klick. I försäkring, leasing, larm och tjänsteavtal levererar vi fyndet, tajmingen och det exakta motbudet och beväpnar er att agera (försäkringsbyten genomförs när vår FI-licens är klar). Fler kategorier läggs till varje kvartal baserat på var vi ser störst besparingar i kunddatan.',
   },
   {
     q: 'Vad händer med min data?',
@@ -139,8 +139,8 @@ const FAQ = [
 ];
 
 
-// Åtta kategorier Arvo kan genomföra byte i idag. Illustrativa intervall.
-// Sorterade med största besparingsmöjligheten överst, "i nivå" sist.
+// Kategorier Arvo bevakar — Nivå 1 genomför bytet, Nivå 2 förbereder det, Nivå 3 beväpnar.
+// Illustrativa intervall. Sorterade med största besparingsmöjligheten överst, "i nivå" sist.
 const BENCHMARK_ROWS = [
   { cat: 'Mobilabonnemang',  unit: 'kr/SIM/år',  p25: 3408, median: 4200, p75: 5200, you: 5760, max: 7000, status: 'over' },
   { cat: 'Skrivare & print', unit: 'kr/mån',     p25: 1800, median: 2400, p75: 3200, you: 3900, max: 4600, status: 'over' },
@@ -462,8 +462,8 @@ const Landing = () => {
           <div className="icon"><Icon name="trend" size={22} stroke={2} /></div>
           <h3>Betala bara för värdet</h3>
           <p>
-            Arvo Switch är 100 % prestationsbaserat — 20 % av identifierad besparing,
-            fakturerat efter genomfört byte. Hittar vi inget kostar Switch ingenting.
+            Arvo Switch är 100 % prestationsbaserat — 20 % av realiserad besparing,
+            fakturerat först när den syns i era egna böcker. Landar inget kostar Switch ingenting.
           </p>
           <strong>Gratis att starta. Ni betalar när ni sparat.</strong>
         </TrustPillar>
@@ -474,10 +474,10 @@ const Landing = () => {
           <div className="eyebrow"><Icon name="shield" size={13} stroke={2} /> Rankningspolicy</div>
           <h2>100 % oberoende. Vår algoritm styrs av er besparing, inte provisioner.</h2>
           <p>
-            Vi står på er sida, inte leverantörens. Genom fasta tak för ersättningar säkerställer
-            vi att vår algoritm alltid är objektiv och enbart prioriterar er besparing. Om en
-            leverantör erbjuder mer än vårt tak, krediteras överskottet direkt till er. Det är
-            matematisk transparens — inga dolda agendor, bara lägre kostnader.
+            Vi står på er sida, inte leverantörens. Arvo tar aldrig en krona från en leverantör —
+            noll provision, noll partner-avgift, ingen dörr in. Vår enda intäkt är er realiserade
+            besparing, så algoritmen kan bara prioritera en enda sak: era kronor. Det är
+            strukturell oberoende — inga dolda agendor, bara lägre kostnader.
           </p>
           <Link to="/bias" className="cta-link">
             Läs hur vår algoritm rankar <Icon name="arrow" size={15} />
@@ -561,7 +561,7 @@ const Landing = () => {
                 </div>
                 <div>
                   <h4>Proaktiv avtalsbevakning</h4>
-                  <p>90 dagar innan ett avtal förnyas automatiskt varnar vi er — och förhandlar på er begäran.</p>
+                  <p>90 dagar innan ett avtal förnyas automatiskt varnar vi er — i tid att byta eller agera innan bindningen låser ännu ett år.</p>
                 </div>
               </IntelligencePillar>
             </IntelligencePillars>
@@ -610,12 +610,12 @@ const Landing = () => {
               <div className="signal-main">
                 <span className="signal-tag">Avtalsbevakning</span>
                 <div className="signal-line sm">Avtalet förnyas automatiskt om <strong>23&nbsp;dagar</strong></div>
-                <p className="signal-sub">Arvo hinner omförhandla innan bindningen låses ännu ett år.</p>
+                <p className="signal-sub">Arvo hinner agera innan bindningen låses ännu ett år.</p>
               </div>
             </div>
 
             <div className="alert-saving">
-              <div className="saving-label">Identifierad besparing</div>
+              <div className="saving-label">Möjlig besparing</div>
               <div className="saving-amount">
                 21&nbsp;360&nbsp;kr<span className="unit">/år</span>
               </div>
@@ -685,7 +685,7 @@ const Landing = () => {
             <div className="tier-price">20 %<span className="period">av besparing</span></div>
             <p className="tier-tagline">Varje pris verifieras mot leverantörens officiella avtalspris — ni godkänner, Arvo förbereder bytet.</p>
             <ul>
-              <li><Icon name="check" size={15} stroke={2.4} /> Identifierad besparing bekräftas med verifierade marknadsdata</li>
+              <li><Icon name="check" size={15} stroke={2.4} /> Arvodet faktureras först när besparingen syns i era egna böcker</li>
               <li><Icon name="check" size={15} stroke={2.4} /> Ni godkänner varje byte med BankID</li>
               <li><Icon name="check" size={15} stroke={2.4} /> Fr.o.m. år 2 tillfaller hela besparingen er</li>
               <li><Icon name="check" size={15} stroke={2.4} /> Hittar vi inget — kostar det inget</li>

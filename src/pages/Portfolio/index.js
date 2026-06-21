@@ -192,7 +192,7 @@ function buildReasoning(a) {
   const meta = getCategoryMeta(a.category);
   const label = (meta?.label ?? a.category).toLowerCase();
   if (a.route === 'monitoring')
-    return `Avtalet är tidsbegränsat. Arvo bevakar och initierar omförhandling inför förnyelsen — ni betalar konkurrenskraftigt till dess.`;
+    return `Avtalet är tidsbegränsat. Arvo bevakar och förbereder bytet inför förnyelsen — ni betalar konkurrenskraftigt till dess.`;
   if (a.route === 'review_queue')
     return `Kategorin kräver manuell granskning — Arvo inhämtar offert för exakt prisjämförelse. Ni kontaktas när det är klart.`;
   if (a.should_switch && (a.net_saving ?? 0) > 0) {
@@ -609,7 +609,7 @@ export default function Portfolio() {
                         <span className="cal-prob"><Icon name="calendar-clock" size={18} stroke={1.8} /></span>
                         <div className="cal-body">
                           <div className="t">{r.supplier}</div>
-                          <div className="s">Årsavtal — förhandlingsläget återkommer årligen. {fmtNum(r.cost)} kr/år.</div>
+                          <div className="s">Årsavtal — bytesläget återkommer årligen. {fmtNum(r.cost)} kr/år.</div>
                         </div>
                         <span className="cal-when">~ {monthYear(r.when)}</span>
                       </div>

@@ -33,6 +33,12 @@ const FORBIDDEN = [
   // beskrivas som "välförhandlat", och inga "partner"-leverantörer får antydas (neutralitets-moaten).
   [/v[äa]lf[öo]rhandl/i,        'Ett verifierat/publikt listpris får aldrig kallas "välförhandlat" — Arvo förhandlar inte fram benchmarkpriser (säg "marknadspris"/"verifierat listpris")'],
   [/arvo-verifierad partner/i,  'Neutralitets-moaten: Arvo har inga partner-leverantörer — säg "verifierad lägre leverantör" eller "offert vi inhämtar"'],
+  // Switch-doktrinen 2026-06-21: arvodet utgår på REALISERAD besparing (verifierad liggar-delta,
+  // FortnoxWatchdog ser gammal rad ned + ny rad upp), aldrig på "identifierad" (en gissning).
+  [/identifierad besparing/i,   'Arvodet utgår på REALISERAD besparing (verifierad liggar-delta), aldrig "identifierad" — Switch-doktrinen 2026-06-21'],
+  // Neutralitets-moaten: den förkastade affiliate-/partnermodellen får aldrig återuppstå i kundyta.
+  // (Bias-sidans "affiliate är INTE en variabel" matchar ej — bara intäkts-/tak-framingen fångas.)
+  [/affiliate-?(int[äa]kt|avgift|tak|ers[äa]ttning)|kapad affiliate/i, 'Neutralitets-moaten: Arvo tar ingen affiliate-/leverantörsintäkt — det finns inget tak att kapa (success fee från kund är enda intäkten)'],
   [/inklusive er\b/i,           'Fabricerad kohorttillhörighet — kunden ingår inte i påstådd statistik'],
   [/i morse · \d/i,             'Fejk-tidsstämpel som ger exempel sken av verklig händelse'],
   [/skickas inom kort/i,        'Löfte utan leveransmekanik (gmail-callback-läxan)'],

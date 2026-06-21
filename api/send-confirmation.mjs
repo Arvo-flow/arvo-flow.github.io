@@ -252,7 +252,7 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
         &nbsp;&middot;&nbsp;
         <a href="mailto:hej@arvoflow.se" style="color:${T.brand};text-decoration:none">hej@arvoflow.se</a>
       </p>
-      <p style="margin:0;font-size:10px;color:#B0C4BE;line-height:1.6;font-family:'Inter',Arial,sans-serif">Besparingsarvode 20 % av identifierad besparing, faktureras en gång. Inga fasta avgifter.</p>
+      <p style="margin:0;font-size:10px;color:#B0C4BE;line-height:1.6;font-family:'Inter',Arial,sans-serif">Besparingsarvode 20 % av realiserad besparing, faktureras när den syns i era böcker. Inga fasta avgifter.</p>
     </td>
   </tr>
 

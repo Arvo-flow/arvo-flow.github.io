@@ -85,8 +85,9 @@ const Villkor = () => (
 
       <Clause>
         <h3>3. Arvode och Betalning</h3>
-        <p><strong>3.1</strong> Tjänsten baseras på identifierad besparing. Inga fasta avgifter,
-          uppstartsavgifter eller licensavgifter utgår.</p>
+        <p><strong>3.1</strong> Tjänsten baseras på realiserad besparing — den skillnad som faktiskt
+          uppstår mellan tidigare och nytt avtal. Inga fasta avgifter, uppstartsavgifter eller
+          licensavgifter utgår.</p>
         <p><strong>3.2</strong> Besparingsavgiften faktureras som en engångsavgift, 3 månader
           efter att det nya avtalet aktiverats. Fr.o.m. år 2 tillfaller hela besparingen Kunden.</p>
         <p><strong>3.3 Förtida avslut av leverantörsavtal.</strong> Om Kunden väljer att avsluta

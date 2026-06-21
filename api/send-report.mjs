@@ -240,7 +240,7 @@ function generatePortfolioPdf(analyses) {
 
     // ── Hero: besparingspotential ──
     doc.fontSize(7.5).font('Helvetica-Bold').fillColor(T.mutedSoft)
-       .text('IDENTIFIERAD BESPARINGSPOTENTIAL', PAD, y, { width: W, align: 'center', characterSpacing: 1.6 });
+       .text('BESPARINGSPOTENTIAL', PAD, y, { width: W, align: 'center', characterSpacing: 1.6 });
     y += 16;
     doc.fontSize(56).font('Helvetica-Bold').fillColor(T.brand)
        .text('+' + formatKr(totalSaving), PAD, y, { width: W, align: 'center' });
@@ -444,7 +444,7 @@ function userEmailHtml({ analyses, totalCost, totalSaving }) {
   </td></tr>
 
   <tr><td style="padding:32px 36px 24px;border-bottom:1px solid #D5E2DC;">
-    <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5C6E68;">Identifierad besparingspotential</p>
+    <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5C6E68;">Besparingspotential</p>
     <p style="margin:0 0 8px;font-size:40px;font-weight:800;color:#1B7A6E;letter-spacing:-.03em;">+${formatKr(totalSaving)}</p>
     <p style="margin:0 0 16px;font-size:13px;color:#5C6E68;">Nuvarande total årskostnad: <strong style="color:#0E1A17;">${formatKr(totalCost)}</strong></p>
     <div style="display:inline-block;background:#F4FAF8;border:1px solid #D5E2DC;border-left:3px solid ${scoreColor};border-radius:6px;padding:10px 16px;">

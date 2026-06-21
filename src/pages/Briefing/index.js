@@ -342,7 +342,7 @@ export default function Briefing() {
                 <ActionItem key={id}>
                   <ActionCheck>✓</ActionCheck>
                   <ActionText>
-                    <strong>{a.type === 'approve_switch' ? 'Bytesuppdrag' : 'Förhandlingsuppdrag'}</strong>
+                    <strong>{a.type === 'approve_switch' ? 'Bytesuppdrag' : 'Bevakningsuppdrag'}</strong>
                     {' '}aktiverat för <strong>{a.supplier}</strong>
                     {a.estimatedNetSaving > 0 && ` · Potentiell besparing: ${fmt(a.estimatedNetSaving)} kr/år`}
                   </ActionText>

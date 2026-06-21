@@ -11,15 +11,19 @@ import {
   Cta,
 } from './styles';
 
-const POLICY_CAPS = [
-  { cat: 'Företagsförsäkring', detail: 'Per genomfört byte', cap: '500 kr' },
-  { cat: 'Elavtal', detail: 'Per genomfört byte', cap: '500 kr' },
-  { cat: 'Mobilabonnemang', detail: 'Per abonnemang som flyttas', cap: '120 kr' },
-  { cat: 'Företagsbredband', detail: 'Per genomfört byte', cap: '500 kr' },
-  { cat: 'Kortterminal', detail: 'Per genomfört byte', cap: '400 kr' },
-  { cat: 'Fakturatjänst', detail: 'Per genomfört byte', cap: '300 kr' },
-  { cat: 'Yrkesansvarsförsäkring', detail: 'Per genomfört byte', cap: '500 kr' },
-  { cat: 'Företagsleasing', detail: 'Per genomfört byte', cap: '500 kr' },
+// Mekanism-transparens per kategori (de tre nivåerna). Ingen affiliate-tabell —
+// Arvo tar aldrig en krona från en leverantör (neutralitets-moaten). Vad vi GÖR
+// och hur vi betalas, öppet redovisat.
+const CATEGORY_MODEL = [
+  { cat: 'Elavtal',             detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av realiserad besparing' },
+  { cat: 'Mobilabonnemang',     detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av realiserad besparing' },
+  { cat: 'Företagsbredband',    detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av realiserad besparing' },
+  { cat: 'Programvara / SaaS',  detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av realiserad besparing' },
+  { cat: 'Kortterminal',        detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av realiserad besparing' },
+  { cat: 'Fakturatjänst',       detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av realiserad besparing' },
+  { cat: 'Löneadministration',  detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av realiserad besparing' },
+  { cat: 'Företagsförsäkring',  detail: 'Arvo beväpnar er med exakt motbud',  pay: 'Ingår i prenumerationen' },
+  { cat: 'Företagsleasing',     detail: 'Arvo beväpnar er med exakt motbud',  pay: 'Ingår i prenumerationen' },
 ];
 
 const Bias = () => (
@@ -39,8 +43,8 @@ const Bias = () => (
       <Kicker>De fyra reglerna</Kicker>
       <KickerH2>Hur vi förhindrar bias från dag 1.</KickerH2>
       <SubLede>
-        Affiliate-intäkter är bra för affärsmodellen — men en uppenbar intressekonflikt mot kunden.
-        Vi löste det strukturellt, inte bara i marknadsföringstexten.
+        Provision från leverantörer är en uppenbar intressekonflikt mot kunden. {/* claims-ok: neutralitets-deklaration — sidan förklarar att vi INTE tar provision */}
+        Vi löste den inte med tak eller löften — vi tog bort dörren helt. Arvo tar aldrig en krona från en leverantör.
       </SubLede>
 
       <RuleCard>
@@ -68,12 +72,12 @@ const Bias = () => (
       <RuleCard>
         <div className="num">2</div>
         <div>
-          <h3>Affiliate-intäkten är kapad — överskott går till dig.</h3>
+          <h3>Noll kronor från leverantörer. Inget tak — för det finns inget att kapa.</h3>
           <p>
-            Vi accepterar en fast, kapad affiliate-avgift per leverantörskategori (se tabellen
-            nedan). Om en leverantör vill betala mer för att vinna oftare — då har vi inte rätten
-            att tjäna mer på det. Överskottet läggs i en kundbonus-pool och krediteras tillbaka
-            på din Besparingsavgift.
+            Arvo tar aldrig en kickback, provision eller partner-avgift från en leverantör {/* claims-ok: neutralitets-deklaration — förklarar att vi INTE tar kickback/provision */}
+            — inte nu, inte kapat, aldrig. Vår enda intäkt är success fee från dig. Vi kan inte köpas,
+            för det finns ingen dörr in. I samma sekund vi tjänade en krona på att styra dig mot
+            en leverantör vore vår oberoende röst död — och med den hela vårt existensberättigande.
           </p>
         </div>
       </RuleCard>
@@ -83,13 +87,10 @@ const Bias = () => (
         <div>
           <h3>Ett erbjudande. Inga val, inga krångel.</h3>
           <p>
-            Vi tar <strong>20 % av identifierad besparing</strong> — en engångsavgift som
-            faktureras 3 månader efter aktiverat avtal. Det är det enda du behöver godkänna.
-          </p>
-          <p>
-            Om affiliate-intäkter från leverantörer överstiger de tak som anges i tabellen nedan,
-            krediteras överskottet automatiskt tillbaka till dig — du behöver inte välja, begära
-            eller ens hålla koll. Systemet sköter det.
+            Vi tar <strong>20 % av realiserad besparing</strong> — och fakturerar först när
+            besparingen faktiskt syns i dina egna böcker (den gamla leverantörsraden försvinner,
+            den nya dyker upp). Aldrig på en siffra vi bara gissat. Landar ingen besparing kostar
+            Switch ingenting. Det är det enda du behöver godkänna.
           </p>
         </div>
       </RuleCard>
@@ -97,35 +98,35 @@ const Bias = () => (
       <RuleCard>
         <div className="num">4</div>
         <div>
-          <h3>Vi publicerar våra rekommendationsstatistik kvartalsvis.</h3>
+          <h3>Vi publicerar vår rekommendationsstatistik kvartalsvis.</h3>
           <p>
-            Varje kvartal publiceras hur ofta varje leverantör rekommenderas, hur mycket affiliate
-            som faktiskt utbetalats, och hur stor andel av besparing-poolen som rabatterats.
-            Granska oss. Det gör branschen ärligare.
+            Varje kvartal publiceras hur ofta varje leverantör rekommenderas och hur mycket
+            besparing som faktiskt realiserats hos våra kunder. Inga affiliate-utbetalningar att
+            redovisa — det finns inga. Granska oss. Det gör branschen ärligare.
           </p>
         </div>
       </RuleCard>
     </Section>
 
     <Section>
-      <Kicker>Affiliate-tak per kategori</Kicker>
-      <KickerH2>Det här är max vi får ta — oavsett vad leverantören vill betala.</KickerH2>
+      <Kicker>Vad vi gör — och hur vi betalas — per kategori</Kicker>
+      <KickerH2>Olika kategorier, olika mekanik. Samma intäkt: bara från dig.</KickerH2>
       <SubLede>
-        Taken är satta för att rymma normal industri-affiliate utan att skapa incitament att
-        favorisera en viss leverantör.
+        I vissa kategorier genomför vi bytet, i andra förbereder vi det, i några beväpnar vi dig att
+        agera själv. Vi lovar bara den mekanik vi äger — och tar betalt bara på besparing som landat.
       </SubLede>
 
       <PolicyTable>
         <PolicyRow className="header">
           <div>Kategori</div>
-          <div>Mätpunkt</div>
-          <div style={{ textAlign: 'right' }}>Tak</div>
+          <div>Vad Arvo gör</div>
+          <div style={{ textAlign: 'right' }}>Hur vi betalas</div>
         </PolicyRow>
-        {POLICY_CAPS.map((p) => (
+        {CATEGORY_MODEL.map((p) => (
           <PolicyRow key={p.cat}>
             <div className="cat">{p.cat}</div>
             <div className="detail">{p.detail}</div>
-            <div className="cap">{p.cap}</div>
+            <div className="cap">{p.pay}</div>
           </PolicyRow>
         ))}
       </PolicyTable>

@@ -166,7 +166,7 @@ function buildHookEmail({ insightCount, totalSaving, period, briefingUrl }) {
 
   <!-- Det enda som spelar roll: siffran -->
   <tr><td style="padding-bottom:10px">
-    <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.30);letter-spacing:.04em">Identifierad besparing</p>
+    <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.30);letter-spacing:.04em">Möjlig besparing</p>
   </td></tr>
   <tr><td style="padding-bottom:32px">
     <p style="margin:0;font-size:68px;font-weight:800;color:#ffffff;line-height:1;letter-spacing:-.04em">

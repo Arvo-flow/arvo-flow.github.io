@@ -21,7 +21,7 @@ function getScoreStyle(score) {
 }
 
 function insightText(score, pct) {
-  if (score < 45) return `Ni betalar ${pct} % mer än marknadspriset — ni förlorar pengar varje månad. Arvo genomför bytet omedelbart.`;
+  if (score < 45) return `Ni betalar ${pct} % mer än marknadspriset — ni förlorar pengar varje månad. Arvo agerar på det åt er.`;
   if (score < 65) return `Ni betalar ${pct} % över marknadspriset — klar besparingspotential som Arvo kan realisera.`;
   if (score < 80) return `Ni betalar ${pct} % mer än marknadspriset — Arvo kan sänka den kostnaden åt er.`;
   return 'Ni har ett kostnadsoptimerat leverantörsnätverk.';

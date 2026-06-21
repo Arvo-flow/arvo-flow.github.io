@@ -60,7 +60,7 @@ export default function Kontoret() {
           <p className="work">
             Vi vägde <b>47 prispunkter mot 340 bolags faktiska fakturor</b> i veckan.
             Marknaden rörde sig på två punkter — ingen träffar er ännu. Ett drag är
-            redan köat: <b>vi öppnar er Telia-förhandling i augusti</b>, inför att
+            redan köat: <b>vi förbereder ert Telia-byte i augusti</b>, inför att
             avtalet blir uppsägningsbart. Ni behöver inte göra något.
           </p>
           <Confidence>
@@ -126,13 +126,13 @@ export default function Kontoret() {
             <p className="idx-note">
               Ni betalar <b>i nivå med marknaden</b> sammanvägt — med enskilda utstickare (se Telia).
               Talet är relativt marknaden, inte er egen faktura: det <b>andas med marknaden</b> och
-              sjunker om er bransch förhandlar ner medan ni står still.
+              sjunker om er bransch pressar ner priserna medan ni står still.
             </p>
           </Index>
 
           {/* Maktkalendern */}
           <Calendar $full>
-            <div className="card-eyebrow"><span>Maktkalendern · er framtida förhandlingsstyrka</span><span className="src">prognos</span></div>
+            <div className="card-eyebrow"><span>Maktkalendern · ert framtida bytesläge</span><span className="src">prognos</span></div>
             <div className="cal-row">
               <span className="cal-prob">92 %</span>
               <div className="cal-body">
@@ -145,7 +145,7 @@ export default function Kontoret() {
               <span className="cal-prob">—</span>
               <div className="cal-body">
                 <div className="t">Ert Microsoft 365-avtal blir uppsägningsbart</div>
-                <div className="s">3-årsbindning löper ut. Ni förhandlar från styrka — vi börjar förbereda i månad 3.</div>
+                <div className="s">3-årsbindning löper ut. Ni byter från styrka — vi börjar förbereda i månad 3.</div>
               </div>
               <span className="cal-when">Om 4 mån</span>
             </div>
@@ -165,7 +165,7 @@ export default function Kontoret() {
             <div className="rcpt"><span className="day">Mån</span><span className="what">Svepte <b>40 marknadskällor</b> mot era leverantörer. Inga avvikelser.</span></div>
             <div className="rcpt"><span className="day">Ons</span><span className="what">Upptäckte en <b>Tele2-prisrörelse</b> — bedömde att den inte når er flotta.</span></div>
             <div className="rcpt"><span className="day">Tor</span><span className="what">Uppdaterade er kohort-benchmark med <b>12 nya fakturor</b> i er bransch.</span></div>
-            <div className="rcpt"><span className="day">Fre</span><span className="what">Förberedde underlaget för er <b>Telia-förhandling</b> inför augusti.</span></div>
+            <div className="rcpt"><span className="day">Fre</span><span className="what">Förberedde underlaget för ert <b>Telia-byte</b> inför augusti.</span></div>
           </Receipts>
 
           {/* Likräkningen */}
@@ -186,7 +186,7 @@ export default function Kontoret() {
             ['Nordic Managed IT Services', 'Programvarulicenser', '475 440 kr/år', 'Optimalt', 'opt'],
             ['SveaMobil Företag', 'Mobilabonnemang', '188 160 kr/år', 'Bevakas', 'watch'],
             ['IT-Partner Sverige', 'Programvarulicenser', '184 680 kr/år', 'Bevakas', 'watch'],
-            ['Telia Sverige', 'Mobilabonnemang', '127 380 kr/år', 'Förhandling i aug', 'opt'],
+            ['Telia Sverige', 'Mobilabonnemang', '127 380 kr/år', 'Byte i aug', 'opt'],
             ['Svea Kontorsprint', 'Skrivarleasing', '58 800 kr/år', 'Bevakas', 'watch'],
           ].map(([name, cat, cost, state, cls]) => (
             <div className="h-row" key={name}>

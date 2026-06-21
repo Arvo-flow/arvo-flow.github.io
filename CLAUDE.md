@@ -206,14 +206,38 @@ telefonkö är både marginalen och premiumpositionen död. Arvos arbete ska fö
 hände" — en BankID-signatur, sen lägger Arvo bytet i kundens namn och den *vinnande*
 leverantören sköter onboardingen (i el/mobil/bredband är detta lagstadgat systematiserat).
 
-Konsekvens (regel 9 — kundlöften ska ha mekanik): varje kategori är antingen **Switch-bar**
-(bytet är ett systematiserat pappers-/signaturflöde → vi lovar "vi genomför bytet") eller
-**Intelligence-only** (besparingen kräver hagglande med samma leverantör → vi levererar
-fyndet, tajmingen och det exakta motbudet, och *beväpnar* kunden, men lovar ALDRIG att
-verkställa det vi inte kan skala). Switch börjar smalt — el + telekom/bredband — och växer
-först när fullmaktsrälsen bevisat sig live. Att märka kategorier Switch-bar vs
-Intelligence-only är ett 0,1%-drag: vi lovar bara den mekanik vi äger. (Status: rälsen är
-`mode: 'stub'` — arkitektur, inte mekanik; tills den är skarp säljs Switch som "förbered +
+Konsekvens (regel 9 — kundlöften ska ha mekanik): varje kategori ligger på EN av tre nivåer
+efter vem som kan trycka på avtryckaren:
+
+- **Nivå 1 — Arvo avfyrar** (el, mobil, bredband). Bytet är lagstadgat systematiserat, den
+  *vinnande* leverantören verkställer. Autonom utlösare på den kollektiva klockan: kunden
+  godkänner en gång med BankID, resten sköts av lag och motpart. Här lovar vi "vi genomför bytet".
+- **Nivå 2 — Arvo laddar, kunden formaliserar** (programvara/SaaS, kortterminal, fakturatjänst,
+  löneadmin, molnväxel). Ingen legal portering finns, men bytet är mjukvara: Arvo genererar hela
+  paketet (förifylld nyteckning + färdig uppsägning, tajmad) och kunden formaliserar med ett klick.
+  Arvos marginalarbete är ändå ≈ noll (en genererad artefakt, inte en körd process).
+- **Nivå 3 — Arvo beväpnar** (försäkring, leasing, larm, företagshälsovård, städ, transport,
+  IT-tjänster). Inget byte existerar — besparingen kräver hagglande/offertrunda eller att inte
+  förnya vid avtalsslut. Vi lovar ALDRIG verkställighet här (det vore timmen-i-telefonkö-fällan).
+  Arvo levererar fyndet, tajmingen och det exakta motbudet och *beväpnar* kunden. Monetiseras via
+  **prenumerationen**, aldrig en switch-avgift vi inte kan koppla till mekanik.
+
+**Success fee (20 %) gäller Nivå 1 + Nivå 2 — och utlöses av VERIFIERAD REALISERING, aldrig av
+förberedelse.** Arvodet fyrar när `FortnoxWatchdog` + faktura-ingesten ser den gamla
+leverantörsraden *försvinna* och den nya *dyka upp* i kundens egna böcker (liggar-deltan). Vi
+fakturerar på *landad* besparing, aldrig på "identifierad" — kundytan säger alltid "realiserad
+besparing", aldrig "identifierad besparing". Samma vakt som hittar läckan bevisar besparingen.
+
+**Nyckelstenen är inte bytesrälsen — det är den levande kopplingen till kundens verkliga
+spendering** (Fortnox / vidarebefordrade fakturor / ingest). Den är finnare (hittar
+överbetalningen → Intelligence), avtryckare (tajmar bytet mot klockan), verifierare (ser
+besparingen landa → success fee) och om-vakt (ser priset krypa tillbaka) i ett. Switch är bara en
+handling vakten utför; **vakten är produkten, prenumerationen är hjälten, Switch är spiken.** Den
+dagen vi obsederar över switch-mekaniken istället för kopplingen bygger vi fel sak.
+
+Att märka kategorier Nivå 1/2/3 är ett 0,1%-drag: vi lovar bara den mekanik vi äger. Switch börjar
+smalt (Nivå 1: el + telekom/bredband) och växer först när rälsen bevisat sig live. (Status: rälsen
+är `mode: 'stub'` — arkitektur, inte mekanik; tills den är skarp säljs Switch som "förbered +
 signera", aldrig som ett verkställt löfte.)
 
 ---

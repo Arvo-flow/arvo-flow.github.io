@@ -310,7 +310,7 @@ function ContractWatchCard({ analysisId, supplier, email: initEmail, onSaved }) 
             När löper ert {supplier ? `${supplier}-avtal` : 'avtal'} ut?
           </p>
           <p style={{ fontSize: 13, color: '#5C6E68', margin: '4px 0 0', lineHeight: 1.5 }}>
-            Arvo påminner er 60 och 30 dagar innan — så ni aldrig missar förhandlingsfönstret.
+            Arvo påminner er 60 och 30 dagar innan — så ni aldrig missar bytesfönstret.
           </p>
         </div>
         <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 18, padding: 4, lineHeight: 1 }}>✕</button>
@@ -1041,7 +1041,7 @@ const TestaFaktura = () => {
     ? `Ert ${getCategoryMeta(result?.categorized?.category ?? 'uncategorized').label.toLowerCase()} är konkurrenskraftigt — ${_secLabel ?? 'sekundärtjänsten'} kan optimeras.`
     : result?.route === 'monitoring'
       ? monitoringDatePast
-        ? `Avtalslåset lossnar snart${daysUntilEnd != null ? ` — ${daysUntilEnd} dagar kvar` : ''}. Arvo förbereder omförhandling.`
+        ? `Avtalslåset lossnar snart${daysUntilEnd != null ? ` — ${daysUntilEnd} dagar kvar` : ''}. Arvo förbereder bytet inför förnyelsen.`
         : diagScore >= 80
           ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
           : `Ni betalar ${diagOverMarketPct}% över verifierat marknadspris — ett lägre pris finns att säkra inför förnyelsen.`
@@ -1455,8 +1455,8 @@ const TestaFaktura = () => {
                       <strong>Fastprisavtal — bundet t.o.m. {result.servicePeriodEnd ? new Date(result.servicePeriodEnd).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : result.servicePeriodEnd}.</strong>
                       <p>
                         {monitoringDatePast
-                          ? `Fastprisavtal kan inte avslutas i förtid. Avtalet löper ut om ${daysUntilEnd != null ? `${daysUntilEnd} dagar` : 'kort tid'} — Arvo initierar nu förhandling om nytt avtal.`
-                          : `Fastprisavtal kan inte avslutas i förtid. Arvo bevakar avtalet och påminner er ${result.monitoringDate ? new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : '3 månader'} innan slutdatum så ni hinner förhandla fram ett nytt avtal i rätt tid.`
+                          ? `Fastprisavtal kan inte avslutas i förtid. Avtalet löper ut om ${daysUntilEnd != null ? `${daysUntilEnd} dagar` : 'kort tid'} — Arvo förbereder bytet till ett bättre avtal nu.`
+                          : `Fastprisavtal kan inte avslutas i förtid. Arvo bevakar avtalet och påminner er ${result.monitoringDate ? new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : '3 månader'} innan slutdatum så ni hinner byta till ett bättre avtal i rätt tid.`
                         }
                       </p>
                     </>
@@ -1471,10 +1471,10 @@ const TestaFaktura = () => {
                           const endFmt = end ? new Date(end).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
                           const monFmt = mon ? new Date(mon).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : null;
                           if (monitoringDatePast) {
-                            return `Avtalet löper t.o.m. ${endFmt ?? end}${daysUntilEnd != null ? ` (${daysUntilEnd} dagar kvar)` : ''}. Arvo initierar omförhandling och säkrar bästa villkor innan förnyelse.`;
+                            return `Avtalet löper t.o.m. ${endFmt ?? end}${daysUntilEnd != null ? ` (${daysUntilEnd} dagar kvar)` : ''}. Arvo förbereder bytet till bästa verifierade villkor innan förnyelse.`;
                           }
                           return days != null
-                            ? `Avtalet löper t.o.m. ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo initierar omförhandling ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
+                            ? `Avtalet löper t.o.m. ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo förbereder bytet ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
                             : `Avtalet löper t.o.m. ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera när avtalet löper ut.`;
                         })()}
                       </p>
@@ -1604,8 +1604,8 @@ const TestaFaktura = () => {
                           Ni förbrukar {result.startupCreditCurrency} {result.startupCreditMonthlyBurn?.toLocaleString('sv-SE')}/mån men
                           betalar ingenting tack vare kvarvarande kredit ({result.startupCreditCurrency} {result.startupCreditBalance?.toLocaleString('sv-SE')}).
                           {result.creditWillExpireUnused
-                            ? ` Vid nuvarande förbrukningstakt förfaller ca ${result.startupCreditCurrency} ${result.creditUnusedAmount?.toLocaleString('sv-SE')} oanvänt. Överväg att skala upp era resurser eller kontakta leverantören om förlängning — sedan hjälper Arvo er att förhandla rätt pris.`
-                            : ' Nu är rätt tid att planera ert molnavtal — vi hjälper er att förhandla rätt pris innan fakturorna börjar landa.'}
+                            ? ` Vid nuvarande förbrukningstakt förfaller ca ${result.startupCreditCurrency} ${result.creditUnusedAmount?.toLocaleString('sv-SE')} oanvänt. Överväg att skala upp era resurser eller kontakta leverantören om förlängning — sedan beväpnar Arvo er med exakt vilken prisnivå ni ska kräva.`
+                            : ' Nu är rätt tid att planera ert molnavtal — vi visar er exakt vilken prisnivå ni ska kräva innan fakturorna börjar landa.'}
                         </p>
                       </CreditAlert>
                     )}
@@ -1813,7 +1813,7 @@ const TestaFaktura = () => {
                           {quoteState === 'submitting' ? 'Startar...' : 'Starta offertprocessen →'}
                         </Button>
                         <p className="qlf-zero-risk">
-                          Ni betalar ingenting om vi inte hittar besparingar — 20&nbsp;% av identifierad besparing.
+                          Ni betalar ingenting om vi inte hittar besparingar — 20&nbsp;% av realiserad besparing.
                         </p>
                       </>
                     )}
@@ -1924,9 +1924,9 @@ const TestaFaktura = () => {
                 {/* Inget prisgap = ett BESKED, inte ett tomt kort. En finansdirektör
                     som granskat och funnit avtalet bra säger det — och bevakar. */}
                 <NoSwitchBlock style={{ marginTop: 0 }}>
-                  <strong>Väl förhandlat.</strong>{' '}
+                  <strong>Marknadsmässigt pris.</strong>{' '}
                   {result.recommendation?.monitoringNote
-                    ?? 'Vi hittar inget prisgap mot marknadens bästa förhandlade nivå — Arvo rekommenderar inget byte i dag.'}
+                    ?? 'Vi hittar inget prisgap mot marknadens bästa verifierade nivå — Arvo rekommenderar inget byte i dag.'}
                 </NoSwitchBlock>
                 {!result.recommendation?.shouldSwitch && result.recommendation?.reasoning && (
                   <Reasoning>
@@ -2704,7 +2704,7 @@ const TestaFaktura = () => {
                     Avtalsbevakning · varnar 90 dagar före förnyelse
                     <span className="signal-badge signal-badge--contract">Förnyelse</span>
                   </div>
-                  <p className="signal-sub">Arvo varnar automatiskt — och förhandlar på er begäran.</p>
+                  <p className="signal-sub">Arvo varnar automatiskt — och förbereder bytet på er begäran.</p>
                 </div>
               </div>
             </div>
@@ -2849,7 +2849,7 @@ const TestaFaktura = () => {
               </Button>
               <p className="fine-print">
                 {gateReason === 'saving'
-                  ? 'Ingen spam. Inga bindningstider. Ni betalar 20 % av identifierad besparing.'
+                  ? 'Ingen spam. Inga bindningstider. Ni betalar 20 % av realiserad besparing — först när den syns i era böcker.'
                   : 'Ingen spam. Inga fasta avgifter. Vi kontaktar dig bara om det finns besparingar att hämta.'}
               </p>
               {gateReason === 'saving_limit' && (
