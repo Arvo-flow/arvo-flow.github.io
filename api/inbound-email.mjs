@@ -130,7 +130,7 @@ export function buildReplySubject(results) {
   const okCount = results.filter((r) => r.ok).length;
   const best = results.filter((r) => r.ok).sort((a, b) => (b.netSaving ?? 0) - (a.netSaving ?? 0))[0];
   if (best?.netSaving > 0) {
-    return `Er analys: ${best.supplier ?? 'fakturan'} — ${fmtNumber(best.netSaving)} kr/år i identifierad nettobesparing`;
+    return `Er analys: ${best.supplier ?? 'fakturan'} — ${fmtNumber(best.netSaving)} kr/år i möjlig nettobesparing`;
   }
   if (okCount > 0) {
     const names = results.filter((r) => r.ok).map((r) => r.supplier).filter(Boolean).join(', ');
@@ -154,7 +154,7 @@ export function replyHtml({ results, portalLink }) {
     const verdict = r.netSaving > 0
       ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
           <tr><td align="center" bgcolor="${M.band}" style="background:${M.band};border-radius:10px;padding:16px 18px;">
-            <p style="margin:0 0 3px;font-family:${M.sans};font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.5);">Identifierad nettobesparing</p>
+            <p style="margin:0 0 3px;font-family:${M.sans};font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.5);">Möjlig nettobesparing</p>
             <p style="margin:0;font-family:${M.serif};font-size:26px;font-weight:700;color:${M.tealBright};">+${fmtNumber(r.netSaving)} kr/år</p>
           </td></tr>
         </table>`
@@ -166,7 +166,7 @@ export function replyHtml({ results, portalLink }) {
           </table>`
         : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
             <tr><td align="center" bgcolor="${M.band}" style="background:${M.band};border-radius:10px;padding:14px 18px;">
-              <p style="margin:0;font-family:${M.sans};font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);">Väl förhandlat — inget prisgap mot verifierat marknadspris</p>
+              <p style="margin:0;font-family:${M.sans};font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);">Marknadsmässigt pris — inget prisgap mot verifierat marknadspris</p>
             </td></tr>
           </table>`;
 

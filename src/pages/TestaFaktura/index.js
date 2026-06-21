@@ -2804,7 +2804,7 @@ const TestaFaktura = () => {
             ) : gateReason === 'saving' ? (
               <>
                 <div className="gate-saving">
-                  <span className="gate-saving-label">Identifierad nettobesparing</span>
+                  <span className="gate-saving-label">Möjlig nettobesparing</span>
                   <span className="gate-saving-amount">+{formatKr(result?.recommendation?.netSaving ?? 0)}</span>
                   <span className="gate-saving-context">
                     {result?.extracted?.supplier}

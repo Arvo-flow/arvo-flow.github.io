@@ -409,7 +409,7 @@ export default function Portfolio() {
     : <>Håll kursen. Era priser <em>står sig mot marknaden.</em></>;
   const verdictWork = acting
     ? <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
-        <b> {fmtNum(totalSaving)} kr/år</b> i identifierad nettobesparing ligger på bordet — det
+        <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
         största bytet tar två minuter att signera. Resten håller måttet; dem rör vi inte.</>
     : <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
         Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>;
@@ -493,7 +493,7 @@ export default function Portfolio() {
               </Index>
 
               <Tally>
-                <div className="tally-k">{acting ? 'Identifierad nettobesparing' : 'Avtal under bevakning'}</div>
+                <div className="tally-k">{acting ? 'Möjlig nettobesparing' : 'Avtal under bevakning'}</div>
                 <div className="tally-num">
                   {acting
                     ? <>{fmtNum(totalSaving)} kr<small>per år</small></>
