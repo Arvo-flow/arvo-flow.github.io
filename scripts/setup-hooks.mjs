@@ -52,6 +52,12 @@ if [ $STATUS -eq 0 ]; then
   STATUS=$?
 fi
 
+# Bedömningskravet — en prognos/bedömning når kunden bara med grund + konfidens + asymmetri (regel 4)
+if [ $STATUS -eq 0 ]; then
+  node scripts/bedomningskrav.mjs
+  STATUS=$?
+fi
+
 if [ $STATUS -ne 0 ]; then
   echo ""
   echo "  Commit blockerad av price-audit. Åtgärda felen ovan och försök igen."

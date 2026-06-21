@@ -292,8 +292,11 @@ signera", aldrig som ett verkställt löfte.)
 
    Integritetskärnan är orörd: ingen påhittad precision, ingen siffra utan källa, och **fejkade flöden**
    (simulerade scanningar, låtsas-BankID, mockdata som ser verklig ut) får aldrig vara routade i
-   produktion. Maskinvakt att bygga: `bedömningskravet` — en prognos/bedömning i kundyta utan grund +
-   konfidens + asymmetri ska fångas (samma anda som prosakravet och sifferrevisorn).
+   produktion. Maskinvakt (✅ byggd 2026-06-21): `scripts/bedomningskrav.mjs` (pre-commit, bredvid
+   sifferrevisorn) kör varje registrerad bedömnings-producent (`lib/judgment-contract.js` →
+   `JUDGMENT_PRODUCERS`) och blockerar commit om en producerad bedömning saknar grund, konfidens
+   eller asymmetri — eller om någon del inte når kundens text. Bevisat med tänder (fäller en trasig
+   producent). Registret VÄXER med varje ny bedömningsmotor.
 
 5. **Följ ändringen genom ALLA ytor.** Samma data visas ofta i analyssidan, briefingen,
    prospect-sidan, mail och admin. Ändrar du copy, beräkning eller fältnamn: grep:a

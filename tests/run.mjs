@@ -38,6 +38,7 @@ import './loneadmin-recommendation.mjs';
 import './forensics.mjs';
 import './contract-clock.mjs';
 import './price-forecast.mjs';
+import './judgment-contract.mjs';
 import './extract-simple-invoice.mjs';
 import './sanity-verifier.mjs';
 import './adobe-rightsizing.mjs';
