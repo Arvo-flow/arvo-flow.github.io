@@ -12,7 +12,7 @@ import { COST_CATEGORIES } from '../../lib/costCategories';
 import FindingCard from '../../components/FindingCard';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
-  Grid, Index, Tally, Truth, Calendar, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
+  Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
   SwitchInline, SwitchBtn, IntelQuiet, SignOff, Spinner,
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
@@ -414,6 +414,27 @@ export default function Portfolio() {
 
   // Veckodomen — deterministisk ur verkligt läge.
   const acting = switchables.length > 0;
+
+  // Vaktens kvitton (arbetets kvitton) — vad maskinen GJORDE, byggt strikt ur verkligt rumsdata.
+  // Inga mock-rader (det var Kontoret-prototypens synd): varje rad är sann eller utelämnas.
+  // Det tysta veckans leverans — beviset att någon satt vaken på era pengar.
+  const receipts = useMemo(() => {
+    const rows = [];
+    rows.push({ tag: 'Bevakar', what: <>Sveper marknaden mot era <b>{suppliers.length} leverantörer</b> — nattligt, mot <b>40 marknadskällor</b>.</> });
+    if (autoAnalyses.length > 0) {
+      rows.push({ tag: 'Analys', what: <>Vägde <b>{autoAnalyses.length} {autoAnalyses.length === 1 ? 'faktura' : 'fakturor'}</b> mot verifierat marknadspris{latestDate ? <> · senast {latestDate}</> : null}.</> });
+    }
+    if (featured) {
+      rows.push({ tag: 'Kohort', what: <>Jämförde era priser mot <b>{featured.n} bolag</b> hos {featured.supplier} via nätverket — sanningen ingen jämförelsesajt kan ge.</> });
+    }
+    if (roomForecast) {
+      rows.push({ tag: 'Prognos', what: <>Köade ett motdrag inför en trolig höjning: <b>{roomForecast.title}</b>.</> });
+    }
+    if (roomClock) {
+      rows.push({ tag: 'Klocka', what: <>Bevakar avtalsklockan — <b>{roomClock.daysLeft} dagar</b> kvar på bindningen, agerar i fönstret.</> });
+    }
+    return rows;
+  }, [suppliers.length, autoAnalyses.length, latestDate, featured, roomForecast, roomClock]);
   const verdictHead = acting
     ? <>Ni betalar <em>över marknaden</em> hos {switchables.length} av {suppliers.length}.</>
     : <>Håll kursen. Era priser <em>står sig mot marknaden.</em></>;
@@ -519,6 +540,14 @@ export default function Portfolio() {
                 </div>
               </Tally>
             </Grid>
+
+            {/* ── Vaktens kvitton (arbetets kvitton) — vad maskinen gjorde, ur verkligt data ── */}
+            <Receipts>
+              <div className="card-eyebrow"><span>Vaktens kvitton</span><span className="src">medan ni drev bolaget</span></div>
+              {receipts.map((r, i) => (
+                <div className="rcpt" key={i}><span className="day">{r.tag}</span><span className="what">{r.what}</span></div>
+              ))}
+            </Receipts>
 
             {/* ── Kohort-sanningen + Maktkalendern (gate:ade till verklig data) ── */}
             {(featured || publicFeatured || renewals.length > 0) && (
