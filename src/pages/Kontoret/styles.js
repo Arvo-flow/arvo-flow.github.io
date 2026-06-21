@@ -368,7 +368,7 @@ export const HoldHead = styled.button`
   .h-cost { font-family:${MONO}; font-size:13.5px; color:${theme.dossier.mutedOnDark};
     font-feature-settings:'tnum'; white-space:nowrap;
     @media (max-width:760px){ grid-column:2; grid-row:1; text-align:right; } }
-  .h-badge { font-family:${MONO}; font-size:10.5px; letter-spacing:.08em;
+  .h-badge { font-family:${MONO}; font-size:13px; letter-spacing:.06em;
     white-space:nowrap; padding:5px 11px; border-radius:${theme.size.radius.pill};
     border:1px solid ${theme.dossier.hairlineOnDark};
     /* sparbadgen bär ett tal (kr/år) → aldrig versaler; statusord versaliseras */
@@ -385,7 +385,7 @@ export const HoldHead = styled.button`
 export const RingWrap = styled.div`
   position:relative; width:42px; height:42px; flex-shrink:0;
   span.v { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-family:${MONO}; font-size:12.5px; font-weight:700; font-feature-settings:'tnum'; }
+    font-family:${MONO}; font-size:15px; font-weight:700; font-feature-settings:'tnum'; }
 `;
 
 export const HoldDetail = styled.div`
