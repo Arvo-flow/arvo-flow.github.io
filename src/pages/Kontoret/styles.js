@@ -353,13 +353,6 @@ export const SignOff = styled.div`
 export const HoldRow = styled.div`
   border-top: 1px solid ${theme.dossier.hairlineOnDark};
   &:first-of-type { border-top: none; }
-  position: relative;
-  &::before {
-    content:''; position:absolute; left:-22px; top:0; bottom:0; width:2px;
-    background:${({ $saving }) => ($saving ? theme.dossier.numberGradient : 'transparent')};
-    opacity:.9;
-    @media (max-width: 760px){ left:-12px; }
-  }
 `;
 
 export const HoldHead = styled.button`
@@ -381,7 +374,8 @@ export const HoldHead = styled.button`
     /* sparbadgen bär ett tal (kr/år) → aldrig versaler; statusord versaliseras */
     &.save { color:${theme.dossier.bg}; background:${theme.dossier.tealBright}; border-color:transparent; font-weight:600; font-feature-settings:'tnum'; }
     &.watch { color:${theme.dossier.mutedOnDark}; text-transform:uppercase; }
-    @media (max-width:760px){ grid-column:2; grid-row:2; justify-self:start; } }
+    /* pillen högerställs under kostnaden → kostnad + pill bildar en ren högerkolumn (i linje) */
+    @media (max-width:760px){ grid-column:2; grid-row:2; justify-self:end; } }
   .h-chev { color:${theme.dossier.faintOnDark}; display:flex; transition:transform .22s ease;
     transform:${({ $open }) => ($open ? 'rotate(180deg)' : 'none')};
     @media (max-width:760px){ grid-column:3; grid-row:1 / 3; } }

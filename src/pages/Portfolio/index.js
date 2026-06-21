@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
+import { groupBySupplier, supplierName } from '../../lib/holdings';
 import FindingCard from '../../components/FindingCard';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
@@ -121,19 +122,7 @@ function companyFromEmail(email) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-function groupBySupplier(analyses) {
-  const groups = new Map();
-  for (const a of analyses) {
-    const key = (a.normalized_supplier || a.supplier || 'okänd').toLowerCase();
-    const g = groups.get(key);
-    if (!g) groups.set(key, { latest: a, count: 1 });
-    else {
-      g.count += 1;
-      if (new Date(a.created_at) > new Date(g.latest.created_at)) g.latest = a;
-    }
-  }
-  return [...groups.values()].sort((x, y) => (y.latest.net_saving ?? 0) - (x.latest.net_saving ?? 0));
-}
+// Gruppering + visningsnamn bor i src/lib/holdings (ren, testbar) — EN sanning (regel 1).
 
 // Per-leverantör Arvo Score (samma logik som TestaFaktura).
 function supplierDiagScore(a) {
@@ -677,7 +666,7 @@ export default function Portfolio() {
                         <span className="v" style={{ color }}>{score}</span>
                       </RingWrap>
                       <div>
-                        <div className="h-name">{a.supplier || a.normalized_supplier || 'Okänd leverantör'}</div>
+                        <div className="h-name">{supplierName(a)}</div>
                         <div className="h-cat">{meta.label} · {fmtDate(a.created_at)}{g.count > 1 ? ` · ${g.count} analyser` : ''}</div>
                       </div>
                       <div className="h-cost">{a.annual_cost != null ? `${fmtNum(a.annual_cost)} kr/år` : ''}</div>
