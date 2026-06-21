@@ -213,6 +213,7 @@ export default function Portfolio() {
   const [apiEmail, setApiEmail] = useState(null);
   const [cohort, setCohort]     = useState({});
   const [publicBench, setPublicBench] = useState({});
+  const [forecasts, setForecasts] = useState({});
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
   const [fingerprint, setFingerprint] = useState('');
@@ -234,6 +235,7 @@ export default function Portfolio() {
     setApiEmail(data.email ?? null);
     setCohort(data.cohort ?? {});
     setPublicBench(data.publicBench ?? {});
+    setForecasts(data.forecasts ?? {});
   }, [fingerprint, magic]);
 
   useEffect(() => {
@@ -342,6 +344,14 @@ export default function Portfolio() {
       .filter((c) => c && typeof c === 'object' && c.title && c.daysLeft > 0)
       .sort((x, y) => x.daysLeft - y.daysLeft)[0] ?? null;
   }, [analyses]);
+  // Maktkalenderns prognos — den höjning som är mest sannolik leder (hög > medel > låg).
+  // Källbelagd, konfidensmärkt bedömning ur leverantörens prishistorik (bibelns nya regel 4).
+  const roomForecast = useMemo(() => {
+    const rank = { high: 0, medium: 1, low: 2 };
+    return Object.values(forecasts ?? {})
+      .filter((f) => f && typeof f === 'object' && f.title)
+      .sort((x, y) => (rank[x.confidence] ?? 3) - (rank[y.confidence] ?? 3))[0] ?? null;
+  }, [forecasts]);
   const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
   const arvoScore    = computeArvoScore(suppliers);
   const standing     = marketStanding(arvoScore);
@@ -459,6 +469,9 @@ export default function Portfolio() {
 
             {/* ── Kontraktsklockan (Maktkalendern): det avtal som förfaller snarast ──── */}
             <FindingCard finding={roomClock} variant="dossier" eyebrow="Maktkalendern · avtalsbevakning" />
+
+            {/* ── Maktkalendern · prognos: källbelagd bedömning ur leverantörens prishistorik ── */}
+            <FindingCard finding={roomForecast} variant="dossier" eyebrow="Maktkalendern · prognos" />
 
             {/* ── Veckodomen ──────────────────────────────────────────────── */}
             <Verdict>

@@ -5,7 +5,7 @@
 > mer lönsam eller mer kreativ väg än vad som står här: **säg det och föreslå
 > ändringen i samma andetag.** Bibeln får ALDRIG sätta käppar i hjulet för ett
 > bättre koncept. Det enda som är oförhandlingsbart är integriteten (regel 1–9:
-> inga siffror utan källa, precision eller tystnad, kundlöften med mekanik) —
+> inga siffror utan källa, källbelagd bedömning hellre än tystnad, kundlöften med mekanik) —
 > för det är *därför* vi uppfattas som premium, inte trots det. Allt annat —
 > vision, koncept, affärsmodell, UI, strategi — är till för att utmanas och
 > överträffas. När du utmanar bibeln: uppdatera den i samma commit (den här
@@ -275,9 +275,25 @@ signera", aldrig som ett verkställt löfte.)
    verifierat listpris / märkt estimat) och gå att räkna hem med miniräknare.
    Heuristiker i kundytor är förbjudna. Punktestimat visas alltid med sitt intervall.
 
-4. **Precision eller tystnad.** Kan vi inte stå för siffran visas ingen siffra.
-   Fejkade flöden (simulerade scanningar, låtsas-BankID, mockdata som ser verklig ut)
-   får aldrig vara routade i produktion.
+4. **Precision där vi har den · grundad bedömning där vi inte har den · tystnad bara som sista utväg.**
+   (GRUNDARBESLUT 2026-06-21 — ersätter det binära "precision eller tystnad".) En vakt som bara
+   får tala om det verifierade förflutna är en historiker, inte en livvakt. Premiumvärdet bor i
+   framtiden — förvarningen, prognosen, "det här är på väg att hända er". Därför tre lägen, inte två:
+   - **Precision** där vi har verifierad fakta (livedata / verifierat listpris). Presenteras som fakta.
+   - **Grundad bedömning** där vi inte har fakta men har en kvalificerad uppfattning. Får visas ENDAST
+     om den bär alla tre: **(1) sin grund/proveniens** (t.ex. "Telia har höjt i Q1 fyra av fem senaste
+     år, senast +6,8 % — ur `supplier_price_history`"), **(2) sin konfidens** (ett uttalat ~%-spann
+     eller lågt/medel/högt), och **(3) sin asymmetri** (vad som händer om bedömningen slår fel — och
+     varför ett felaktigt utfall är kundens vinst, inte Arvos blamage: "höjer de inte, ännu bättre —
+     ni betalade inget för beredskapen"). En bedömning märks ALLTID som bedömning, aldrig maskerad
+     som fakta (regel 3 står kvar: en siffra som påstås vara FAKTA kräver källa och ska räknas hem).
+   - **Tystnad** bara när vi varken har fakta eller en grundad uppfattning. Tystnad är inte längre
+     default — den är sista utväg. En tyst vakt som hade en värdefull uppfattning är ett misslyckande.
+
+   Integritetskärnan är orörd: ingen påhittad precision, ingen siffra utan källa, och **fejkade flöden**
+   (simulerade scanningar, låtsas-BankID, mockdata som ser verklig ut) får aldrig vara routade i
+   produktion. Maskinvakt att bygga: `bedömningskravet` — en prognos/bedömning i kundyta utan grund +
+   konfidens + asymmetri ska fångas (samma anda som prosakravet och sifferrevisorn).
 
 5. **Följ ändringen genom ALLA ytor.** Samma data visas ofta i analyssidan, briefingen,
    prospect-sidan, mail och admin. Ändrar du copy, beräkning eller fältnamn: grep:a

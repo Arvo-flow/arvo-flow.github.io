@@ -10,6 +10,8 @@ import { getAnalysesByFingerprint, getAnalysesByEmail } from '../lib/invoice-sto
 import { getMarketIntelligence } from '../lib/price-alert.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding } from '../lib/contract-clock.js';
+import { priceHikeForecast } from '../lib/price-forecast.js';
+import { getSupplierCategoryChanges } from '../lib/price-db.js';
 import { getDb } from '../lib/db.js';
 
 export const config = { maxDuration: 10 };
@@ -81,7 +83,35 @@ export default async function handler(req, res) {
   // när privat kohort saknas. Gate:ad på ≥3 observationer (lib/public-prices.js).
   const publicBench = await buildPublicBench(analyses);
 
-  return send(res, 200, { ok: true, analyses, cohort, publicBench, email: email ?? undefined });
+  // ── Maktkalendern: prognos ur leverantörens egen prishistorik (bibelns nya regel 4) ──
+  // En källbelagd, konfidensmärkt BEDÖMNING (grund + konfidens + asymmetri) — vakten som
+  // ser framåt. Zero Trust: byggs bara ur verkliga prisändringar; tunn historik → tystnad.
+  const forecasts = await buildForecasts(analyses);
+
+  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, email: email ?? undefined });
+}
+
+async function buildForecasts(analyses) {
+  const pairs = new Map();
+  for (const a of analyses) {
+    if (a.route !== 'auto') continue;
+    const supplier = a.normalized_supplier || a.supplier;
+    if (!supplier || !a.category) continue;
+    pairs.set(`${supplier}|${a.category}`, { supplier, category: a.category });
+    if (pairs.size >= 10) break;
+  }
+  if (pairs.size === 0) return {};
+
+  const entries = await Promise.all(
+    [...pairs.entries()].map(async ([key, { supplier, category }]) => {
+      try {
+        const rows = await getSupplierCategoryChanges({ supplier, category });
+        const f = priceHikeForecast(rows, { supplier });
+        return f ? [key, f] : null;
+      } catch { return null; }
+    }),
+  );
+  return Object.fromEntries(entries.filter(Boolean));
 }
 
 async function buildPublicBench(analyses) {
