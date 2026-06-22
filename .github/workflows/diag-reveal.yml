@@ -1,0 +1,21 @@
+name: Diag Avslöjandet (verifiera /api/reveal live)
+
+# POSTar en känd M365-domän till den LIVE-utlagda /api/reveal och skriver ut fynden.
+# Bevisar att hela kedjan (DNS + RDAP-domänålder + crt.sh M365-onboarding) fungerar på Vercel.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag-reveal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Hit live /api/reveal
+        run: node scripts/diag-reveal.mjs

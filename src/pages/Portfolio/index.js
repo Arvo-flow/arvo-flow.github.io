@@ -11,6 +11,7 @@ import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
 import { groupBySupplier, supplierName } from '../../lib/holdings';
 import FindingCard from '../../components/FindingCard';
+import { RevealPrompt } from '../../components/RevealCard';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
@@ -211,6 +212,11 @@ export default function Portfolio() {
   const [uploadNote, setUploadNote] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [testMode, setTestMode] = useState(false);
+  // Avslöjandet — kundens e-postdomän → källbelagt "hur visste de det?"-kort (gratis-vägen, DNS).
+  const [revealEmail, setRevealEmail] = useState('');
+  const [reveal, setReveal] = useState(null);
+  const [revealLoading, setRevealLoading] = useState(false);
+  const [revealNote, setRevealNote] = useState('');
 
   const magic = useMemo(() => new URLSearchParams(window.location.search).get('magic'), []);
 
@@ -310,6 +316,26 @@ export default function Portfolio() {
 
   function toggle(id) {
     setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  }
+
+  async function runReveal(e) {
+    e?.preventDefault?.();
+    const email = revealEmail.trim();
+    if (!email || revealLoading) return;
+    setRevealLoading(true); setReveal(null); setRevealNote('');
+    try {
+      const res = await fetch('/api/reveal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.findings?.length) setReveal(data);
+      else setRevealNote(data.note || 'Vi kunde inte läsa av den domänen — ange er företagsadress så försöker vi igen.');
+    } catch {
+      setRevealNote('Kunde inte nå Arvo just nu — försök igen om en stund.');
+    } finally {
+      setRevealLoading(false);
+    }
   }
 
   const autoAnalyses = useMemo(() => (analyses ?? []).filter((a) => a.route === 'auto' || a.route === 'monitoring'), [analyses]);
@@ -754,6 +780,12 @@ export default function Portfolio() {
                 <h1>Ert kontor väntar<br />på första analysen.</h1>
               </Ident>
             </TopRow>
+
+            {/* Avslöjandet — "hur visste de det?" före första fakturan (källbelagt, gratis-vägen) */}
+            <RevealPrompt
+              email={revealEmail} setEmail={setRevealEmail} onSubmit={runReveal}
+              loading={revealLoading} reveal={reveal} note={revealNote}
+            />
 
             <Verdict>
               <div className="eyebrow">Var pengarna oftast rinner</div>
