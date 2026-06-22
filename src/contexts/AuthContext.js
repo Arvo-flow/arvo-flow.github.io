@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = 'arvo_user_email';
+const SESSION_KEY = 'arvo_session';   // varaktig signerad session — överlever 24h-magic-token
 
 // Läs magic-token SYNKRONT vid modulinläsning — innan något useEffect kört.
 // TestaFaktura kör window.history.replaceState i sitt useEffect (child-effect
@@ -16,6 +17,9 @@ const PENDING_MAGIC_TOKEN = (() => {
 export function AuthProvider({ children }) {
   const [email, setEmail] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) || null; } catch { return null; }
+  });
+  const [sessionToken, setSessionToken] = useState(() => {
+    try { return localStorage.getItem(SESSION_KEY) || null; } catch { return null; }
   });
   // 'idle' | 'validating' | 'ok' | 'error'
   const [magicState, setMagicState] = useState('idle');
@@ -40,6 +44,11 @@ export function AuthProvider({ children }) {
         if (data.email) {
           try { localStorage.setItem(STORAGE_KEY, data.email); } catch {}
           setEmail(data.email);
+          // Varaktig session — håller kunden inloggad efter att 24h-token gått ut.
+          if (data.session) {
+            try { localStorage.setItem(SESSION_KEY, data.session); } catch {}
+            setSessionToken(data.session);
+          }
           setMagicState('ok');
         } else {
           setMagicState('error');
@@ -51,18 +60,20 @@ export function AuthProvider({ children }) {
       });
   }, []);
 
-  const login = useCallback((e) => {
+  const login = useCallback((e, session) => {
     try { localStorage.setItem(STORAGE_KEY, e); } catch {}
     setEmail(e);
+    if (session) { try { localStorage.setItem(SESSION_KEY, session); } catch {} setSessionToken(session); }
   }, []);
 
   const logout = useCallback(() => {
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(SESSION_KEY); } catch {}
     setEmail(null);
+    setSessionToken(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ email, login, logout, magicState }}>
+    <AuthContext.Provider value={{ email, sessionToken, login, logout, magicState }}>
       {children}
     </AuthContext.Provider>
   );

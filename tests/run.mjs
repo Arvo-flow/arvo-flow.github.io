@@ -41,6 +41,7 @@ import './price-forecast.mjs';
 import './judgment-contract.mjs';
 import './holdings.mjs';
 import './domain-intel.mjs';
+import './session.mjs';
 import './extract-simple-invoice.mjs';
 import './sanity-verifier.mjs';
 import './adobe-rightsizing.mjs';

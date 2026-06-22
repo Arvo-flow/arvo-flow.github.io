@@ -1,6 +1,7 @@
 // api/validate-magic.mjs — Validerar magic link-token och returnerar bypass-värde.
 // POST { token } → { ok, bypass } där bypass = ARVO_BYPASS_SECRET
 import { getDb } from '../lib/db.js';
+import { issueSession } from '../lib/session.js';
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -49,5 +50,8 @@ export default async function handler(req, res) {
     await db`UPDATE magic_tokens SET used_at = NOW() WHERE id = ${row.id}`.catch(() => {});
   }
 
-  return send(res, 200, { ok: true, email: row.email });
+  // Utfärda en VARAKTIG session (90 dagar) — magic-token är 24h/engångs, sessionen överlever den
+  // så kunden förblir inloggad på vilken enhet som helst tills hen loggar ut. null om hemlighet saknas.
+  const session = issueSession(row.email);
+  return send(res, 200, { ok: true, email: row.email, session });
 }

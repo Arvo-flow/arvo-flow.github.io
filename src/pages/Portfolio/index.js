@@ -12,6 +12,8 @@ import { COST_CATEGORIES } from '../../lib/costCategories';
 import { groupBySupplier, supplierName } from '../../lib/holdings';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt } from '../../components/RevealCard';
+import AccountBar from '../../components/AccountBar';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
@@ -219,11 +221,20 @@ export default function Portfolio() {
   const [revealNote, setRevealNote] = useState('');
 
   const magic = useMemo(() => new URLSearchParams(window.location.search).get('magic'), []);
+  const { email: authEmail, sessionToken, logout: authLogout } = useAuth();
 
   const loadOffice = useCallback(async (fp) => {
-    const effFp = fp || fingerprint || await getBrowserFingerprint();
-    const qs = `fingerprint=${encodeURIComponent(effFp)}` + (magic ? `&magic=${encodeURIComponent(magic)}` : '');
-    const res = await fetch(`/api/invoice-history?${qs}`);
+    // Inloggad (varaktig session) → kontoret laddas e-postnycklat, på vilken enhet som helst,
+    // utan fingerprint (ren konfidentialitet — ingen kollideande webbläsare kan blöda in).
+    // Anonym → fingerprint som förr. Magic bryggar första inloggningen tills sessionen landat.
+    const params = new URLSearchParams();
+    if (sessionToken) params.set('session', sessionToken);
+    else {
+      const effFp = fp || fingerprint || await getBrowserFingerprint();
+      if (effFp) params.set('fingerprint', effFp);
+    }
+    if (magic) params.set('magic', magic);
+    const res = await fetch(`/api/invoice-history?${params.toString()}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     setAnalyses(data.analyses ?? []);
@@ -231,7 +242,7 @@ export default function Portfolio() {
     setCohort(data.cohort ?? {});
     setPublicBench(data.publicBench ?? {});
     setForecasts(data.forecasts ?? {});
-  }, [fingerprint, magic]);
+  }, [fingerprint, magic, sessionToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -246,6 +257,19 @@ export default function Portfolio() {
     })();
     return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // När en varaktig session landar (efter magic-validering) → ladda om kontoret e-postnycklat.
+  useEffect(() => {
+    if (sessionToken) loadOffice().catch((err) => setError(err.message));
+  }, [sessionToken]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleLogout = useCallback(() => {
+    authLogout();
+    // Rensa ev. ?magic ur URL:en och ladda om som anonym (fingerprint) — riktig "logga ut/börja om".
+    const url = window.location.pathname;
+    window.history.replaceState({}, '', url);
+    window.location.reload();
+  }, [authLogout]);
 
   // Intag: magic-kunder går via secure kontor-ingest (bypass, e-postnycklat);
   // anonyma går via samma publika väg som testa-faktura (token + gate på fingerprint).
@@ -463,6 +487,8 @@ export default function Portfolio() {
   return (
     <Page>
       <Shell>
+        {/* Riktig inloggning: vem är inne, logga ut/byt konto (varaktig session, ej fingerprint-gissning) */}
+        <AccountBar email={authEmail} onLogout={handleLogout} />
         {analyses === null && !error && <Spinner />}
         {error && <Verdict><h2 style={{ fontSize: 26 }}>Kunde inte ladda ert kontor — försök igen om en stund.</h2></Verdict>}
 

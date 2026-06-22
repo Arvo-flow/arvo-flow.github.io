@@ -13,6 +13,7 @@ import { contractClockFinding } from '../lib/contract-clock.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
 import { getSupplierCategoryChanges } from '../lib/price-db.js';
 import { getDb } from '../lib/db.js';
+import { verifySession } from '../lib/session.js';
 
 export const config = { maxDuration: 10 };
 
@@ -40,15 +41,18 @@ async function emailFromMagic(token) {
 export default async function handler(req, res) {
   if (req.method !== 'GET') return send(res, 405, { error: 'Endast GET stöds' });
 
-  const fp    = req.query?.fingerprint;
-  const magic = req.query?.magic;
+  const fp      = req.query?.fingerprint;
+  const magic   = req.query?.magic;
+  const session = req.query?.session;
 
   const hasFp = typeof fp === 'string' && fp.length >= 8;
-  if (!hasFp && !magic) {
-    return send(res, 400, { error: 'fingerprint (minst 8 tecken) eller magic krävs' });
+  if (!hasFp && !magic && !session) {
+    return send(res, 400, { error: 'fingerprint, magic eller session krävs' });
   }
 
-  const email = await emailFromMagic(magic);
+  // E-postägarskap: en VARAKTIG session (signatur-verifierad) ELLER en färsk magic-token (24h).
+  // Sessionen är primärnyckeln — den överlever 24h-token, så kontoret följer kunden, ej enheten.
+  const email = verifySession(session)?.email || await emailFromMagic(magic);
 
   const [byFp, byEmail] = await Promise.all([
     hasFp ? getAnalysesByFingerprint(fp) : [],
