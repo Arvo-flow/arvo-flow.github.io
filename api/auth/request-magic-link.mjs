@@ -52,7 +52,9 @@ export default async function handler(req, res) {
 
   const token     = randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + 24 * 3600 * 1000); // 24h
-  const magicLink = `${BASE_URL}/testa-faktura?magic=${token}`;
+  // Landningssida: /portfolio för konto-inloggning (in i kontoret), annars /testa-faktura (default).
+  const dest = body.dest === 'portfolio' ? '/portfolio' : '/testa-faktura';
+  const magicLink = `${BASE_URL}${dest}?magic=${token}`;
 
   try {
     await db`

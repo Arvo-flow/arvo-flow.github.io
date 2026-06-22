@@ -64,7 +64,7 @@ export default function AccountBar({ email, onLogout }) {
     try {
       await fetch('/api/auth/request-magic-link', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: addr }),
+        body: JSON.stringify({ email: addr, dest: 'portfolio' }),
       });
       setSent(true);                 // svaret är alltid ok (soft-fail) — visa neutralt besked
     } catch { setSent(true); }
