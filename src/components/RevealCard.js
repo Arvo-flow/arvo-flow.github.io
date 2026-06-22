@@ -78,7 +78,7 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note 
     <>
       <Prompt onSubmit={onSubmit}>
         <div className="rp-k">Innan första fakturan</div>
-        <p className="rp-lede">Ange er <b>företagsmejl</b>. Innan ni delat en enda siffra lägger Arvo fram vad vi redan ser om er — varje rad med sin källa.</p>
+        <p className="rp-lede">Ett underlag om ert bolag ligger redan framme. Ange er <b>företagsmejl</b>, så öppnar vi det — hämtat ur öppna källor.</p>
         <div className="rp-row">
           <input
             type="email" inputMode="email" autoComplete="email"
