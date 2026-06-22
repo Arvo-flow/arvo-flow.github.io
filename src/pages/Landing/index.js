@@ -635,8 +635,8 @@ const Landing = () => {
           <span className="kicker">Arvos prisintelligens</span>
           <h2>Vi vet vad era leverantörer tar av andra.</h2>
           <p>
-            Varje faktura Arvo analyserar är en ny datapunkt. Vi vet inte bara vad Telia
-            listar på sin hemsida — vi vet vad de faktiskt tar betalt av bolag i er bransch
+            Varje faktura Arvo analyserar gör bilden skarpare. Vi ser inte bara vad Telia
+            listar på sin hemsida — vi ser vad de faktiskt tar betalt av bolag i er bransch
             och er storlek. Här är hela er leverantörsportfölj, mätt mot marknaden på en
             och samma skala.
           </p>

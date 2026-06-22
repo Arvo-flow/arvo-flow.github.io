@@ -83,11 +83,11 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
     const domRegLabel   = swMonthYear(domainRegistered);
 
     const openingPara = mxSince
-      ? `Vi analyserade er DNS-konfiguration den ${new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' })}. Er <strong>${platformLabel}</strong>-konfiguration är oförändrad sedan <strong>${mxSinceLabel}</strong> — ${mxMonths} månader.`
+      ? `Vi gick igenom er digitala uppsättning den ${new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' })}. Er <strong>${platformLabel}</strong>-uppsättning har stått orörd sedan <strong>${mxSinceLabel}</strong> — ${mxMonths} månader.`
       : `Vi hittade er via Bolagsverket. Ni kör <strong>${platformLabel}</strong> och grundades ${foundedYear}.`;
 
     const contextPara = mxSince
-      ? `Det är starkt korrelerat med att de underliggande telekommunikationsavtalen inte heller omförhandlats sedan dess. Operatörerna proaktivt erbjuder aldrig bättre priser — det kräver att någon ber om det.`
+      ? `Det brukar gå hand i hand med att telekomavtalen inte heller rörts sedan dess. Operatörer sänker aldrig priset av sig själva — det kräver att någon ber om det.`
       : `Det är en profil vi känner igen: ett bolag som vuxit stadigt och fokuserat på kärnverksamheten — och där telekomavtalet tecknades i bolagets tidiga år och sedan dess förnyats automatiskt, utan att någon haft ett skäl att ringa upp och förhandla.`;
 
     return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -103,13 +103,13 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
     <p class="intro">${contextPara}</p>
 
     <div class="intel-card">
-      <div class="intel-label">Verifierade datapunkter</div>
+      <div class="intel-label">Vad vi redan ser</div>
       <div class="intel-row">
         <span class="intel-desc">E-postplattform</span>
         <span class="intel-val">${platformLabel}</span>
       </div>
       ${mxSince ? `<div class="intel-row">
-        <span class="intel-desc">Konfiguration oförändrad sedan</span>
+        <span class="intel-desc">Uppsättningen orörd sedan</span>
         <span class="intel-val green">${mxSinceLabel} (${mxMonths} mån)</span>
       </div>` : ''}
       ${domRegLabel ? `<div class="intel-row">

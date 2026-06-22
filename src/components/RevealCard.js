@@ -86,7 +86,7 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note 
             onChange={(e) => setEmail(e.target.value)} disabled={loading}
           />
           <button type="submit" disabled={loading || !email.trim()}>
-            {loading ? 'Läser av…' : 'Visa vad vi ser →'}
+            {loading ? 'Öppnar…' : 'Öppna underlaget →'}
           </button>
         </div>
         {note && <p className="rp-note">{note}</p>}
@@ -100,7 +100,7 @@ export default function RevealCard({ domain, findings }) {
   if (!domain || !findings?.length) return null;
   return (
     <Wrap>
-      <div className="rv-eyebrow">Avläst · {domain}</div>
+      <div className="rv-eyebrow">Underlag · {domain}</div>
       {findings.map((f, i) => (
         <div className="rv-find" key={i}>
           <div className="rv-title">{f.title}</div>
@@ -109,8 +109,8 @@ export default function RevealCard({ domain, findings }) {
         </div>
       ))}
       <p className="rv-foot">
-        Allt ovan är <b>publik fakta</b>, avläst på sekunder — innan ni loggat in, utan att ni lämnat
-        ifrån er något. Tänk er vad vakten ser den dag ni delar en faktura.
+        Allt ovan är <b>offentlig information</b>, sammanställd på sekunder — innan ni loggat in,
+        utan att ni lämnat ifrån er något. Tänk er vad vakten ser den dag ni delar en faktura.
       </p>
     </Wrap>
   );

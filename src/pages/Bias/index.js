@@ -50,11 +50,11 @@ const Bias = () => (
       <RuleCard>
         <div className="num">1</div>
         <div>
-          <h3>Vår algoritm är publik. Och deterministisk.</h3>
+          <h3>Vår algoritm är publik. Och förutsägbar.</h3>
           <p>
-            Vi rankar varje förslag på <strong>total cost of ownership över 24 månader minus
-            switching cost</strong>. Den som ger dig flest kronor över på kontot vinner — alltid.
-            Affiliate-storlek är inte ett ingångsvärde i scoring-funktionen.
+            Vi rankar varje förslag på <strong>vad det kostar er totalt över två år — minus vad
+            själva bytet kostar</strong>. Den som ger er flest kronor kvar på kontot vinner — alltid.
+            Vad en leverantör skulle vilja betala oss räknas aldrig in: de betalar oss aldrig något.
           </p>
           <pre>
 {`score(provider) =
@@ -63,8 +63,8 @@ const Bias = () => (
   - reliabilityBonus(provider)     // SLA, supportkvalitet (publik benchmark)
   - coverageMatch(provider)        // % av nuvarande täckning som behålls
 
-`}<b>{`// Affiliate-rate är aldrig en variabel i scoringen.
-// Lägst score vinner. Vid likastånd: lägst nominellt pris för dig.`}</b>
+`}<b>{`// Vad en leverantör betalar oss är aldrig en variabel — de betalar oss aldrig något.
+// Lägst score vinner. Vid lika: lägst pris för er.`}</b>
           </pre>
         </div>
       </RuleCard>

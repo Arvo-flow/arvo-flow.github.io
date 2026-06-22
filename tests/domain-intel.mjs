@@ -42,27 +42,28 @@ describe('buildRevealFindings · varje fynd bär en källa, inget fabriceras', (
     assert.ok(p);
     assert.match(p.title, /Microsoft 365/);
     assert.equal(p.confidence, 'high');                 // 3 nivåer
-    assert.match(p.source, /mail\.protection\.outlook\.com/);  // källan finns
+    assert.match(p.source, /Microsoft/);                // källan finns, i klarspråk
+    assert.match(p.source, /publika uppgifter/);
   });
 
-  test('M365-onboarding ur crt.sh → daterat fynd med källa', () => {
+  test('M365-onboarding → daterat fynd med källa (klarspråk)', () => {
     const f = buildRevealFindings(
       { domain: 'lynxeye.se', posture: { mx: 'microsoft365' }, ct: { m365Since: '2021-04-15', m365Via: 'autodiscover' } },
       { now: NOW });
     const o = f.find((x) => x.kind === 'onboarding');
     assert.ok(o);
-    assert.match(o.title, /restes/);
-    assert.match(o.source, /crt\.sh/);
-    assert.match(o.source, /autodiscover\.lynxeye\.se/);
+    assert.match(o.title, /sattes upp/);
+    assert.match(o.source, /Offentligt register/);
+    assert.match(o.source, /2021-04-15/);
   });
 
-  test('domänålder ur RDAP → år beräknat, källa angiven', () => {
+  test('domänålder → år beräknat, källa angiven (klarspråk)', () => {
     const f = buildRevealFindings(
       { domain: 'lynxeye.se', posture: {}, domainReg: '2000-04-04' }, { now: NOW });
     const d = f.find((x) => x.kind === 'domain');
     assert.ok(d);
     assert.match(d.title, /26 års/);                    // 2000 → 2026
-    assert.match(d.source, /RDAP/);
+    assert.match(d.source, /domänregistret/);
   });
 
   test('ung domän (< 6 år) → utelämnas (inte anmärkningsvärt)', () => {

@@ -99,12 +99,12 @@ export default function Prospect() {
 
   if (!hasFindings && mxSince) {
     signals.push({
-      text: `${mxLabel}-konfiguration oförändrad sedan ${swMonthYear(mxSince)} — ${mxMonths} månader`,
+      text: `${mxLabel}-uppsättningen orörd sedan ${swMonthYear(mxSince)} — ${mxMonths} månader`,
       key: 'mxSince',
     });
   } else if (!hasFindings && mxPlatform) {
     signals.push({
-      text: `${mxLabel} identifierat för er domän · ${employees} licenser`,
+      text: `Ni kör ${mxLabel} · ${employees} licenser`,
       key: 'mxPlatform',
     });
   }
@@ -167,7 +167,7 @@ export default function Prospect() {
               )}
               {mxSince && (
                 <DataRow>
-                  <DataDesc>Konfiguration sedan</DataDesc>
+                  <DataDesc>Oförändrad sedan</DataDesc>
                   <DataVal $highlight>{swMonthYear(mxSince)} — {mxMonths} mån</DataVal>
                 </DataRow>
               )}
@@ -268,8 +268,8 @@ export default function Prospect() {
       {/* ── CTA ── */}
       <CtaSection>
         <MethodologyNote>
-          Arvo har analyserat den publika DNS-konfigurationen för {companyName}s domän.
-          Ingen data har inhämtats från er eller era leverantörer utan ert tillstånd.
+          Arvo har gått igenom den publika digitala uppsättningen för {companyName}s domän.
+          Ingen data har hämtats från er eller era leverantörer utan ert tillstånd.
         </MethodologyNote>
 
         <PrimaryCtaWrap>
