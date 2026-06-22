@@ -280,8 +280,11 @@ export default function Portfolio() {
     setUploading(true);
     setUploads(picked.map((f) => ({ name: f.name, status: 'work' })));
 
+    // Inloggad (session) eller magic-länk → kontor-ingest (uppladdningen hamnar på KONTOT).
+    // Anonym → test-invoice (fingerprint), med token mot sparkvoten.
+    const accountUpload = !!(magic || sessionToken);
     let token = null;
-    if (!magic) {
+    if (!accountUpload) {
       try { const tr = await fetch('/api/token', { method: 'POST' }); token = (await tr.json())?.token; } catch { /* försök ändå */ }
     }
 
@@ -290,17 +293,17 @@ export default function Portfolio() {
       try {
         const pdfBase64 = await fileToBase64(picked[i]);
         let status = 'fail', label = 'Misslyckades', hint = '';
-        const endpoint = magic ? '/api/kontor-ingest' : '/api/test-invoice';
-        const payload = magic
-          ? { pdfBase64, magic, fingerprint }
+        const endpoint = accountUpload ? '/api/kontor-ingest' : '/api/test-invoice';
+        const payload = accountUpload
+          ? { pdfBase64, magic, session: sessionToken, fingerprint }
           : { pdfBase64, industry: 'ovrigt', employees: 10, token, fingerprint };
         const res = await fetch(endpoint, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
         const data = await res.json().catch(() => ({}));
-        if (magic) {
-          if (data.ok) status = 'done';
+        if (accountUpload) {
+          if (data.ok) status = 'done';                        // kontor-ingest → lagt på kontot
           else { [label, hint] = failReason(res.status, data?.error, data?.code); lastHint = hint; }
         } else if (data.gate) {
           status = 'gate'; gated = true;

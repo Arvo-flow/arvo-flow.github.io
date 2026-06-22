@@ -5,6 +5,7 @@
 // token (samma modell som invoice-history) — utan giltig token, ingen bypass.
 import { createHash } from 'node:crypto';
 import { getDb } from '../lib/db.js';
+import { verifySession } from '../lib/session.js';
 
 export const config = { maxDuration: 60 };
 
@@ -38,7 +39,7 @@ export default async function handler(req, res) {
 
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = {}; } }
-  const { pdfBase64, magic, fingerprint } = body ?? {};
+  const { pdfBase64, magic, session, fingerprint } = body ?? {};
 
   if (!pdfBase64 || typeof pdfBase64 !== 'string') {
     return send(res, 400, { error: 'pdfBase64 krävs' });
@@ -47,9 +48,10 @@ export default async function handler(req, res) {
     return send(res, 413, { error: 'Filen är större än 6 MB — ladda upp en mindre version.' });
   }
 
-  // Ägarskapsbevis: magic token → e-post. Utan giltig token ges ingen bypass
-  // (annars vore detta en öppen kringgång av sparkvoten).
-  const email = await emailFromMagic(magic);
+  // Ägarskapsbevis: en varaktig session (signatur-verifierad) ELLER en färsk magic-token → e-post.
+  // Sessionen gör att en inloggad kunds uppladdning hamnar på KONTOT, inte på webbläsaren.
+  // Utan något av dem ges ingen bypass (annars vore detta en öppen kringgång av sparkvoten).
+  const email = verifySession(session)?.email || await emailFromMagic(magic);
   if (!email) {
     return send(res, 401, { error: 'Öppna kontoret via länken i ert mejl för att ladda upp direkt — eller vidarebefordra fakturan till faktura@inbox.arvoflow.se.', needsMagic: true });
   }
