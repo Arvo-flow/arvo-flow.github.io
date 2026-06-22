@@ -47,7 +47,7 @@ const Wrap = styled.section`
 `;
 
 const Prompt = styled.form`
-  margin: 0 0 22px;
+  margin: 32px 0 22px;
   .rp-k {
     font-family: ${({ theme }) => theme.font.mono}; font-size: 10px; letter-spacing: .24em;
     text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; margin-bottom: 12px;

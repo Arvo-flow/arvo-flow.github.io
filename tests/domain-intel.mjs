@@ -19,6 +19,11 @@ describe('domainFromEmail', () => {
     assert.equal(domainFromEmail('x@outlook.com'), null);
     assert.equal(domainFromEmail('y@hotmail.se'), null);
   });
+  test('vanlig felstavning av gratisleverantör → null (gamil/gmial/hotmial)', () => {
+    assert.equal(domainFromEmail('met.sogojeva@gamil.com'), null);
+    assert.equal(domainFromEmail('x@gmial.com'), null);
+    assert.equal(domainFromEmail('y@hotmial.com'), null);
+  });
   test('skräp → null', () => {
     assert.equal(domainFromEmail(''), null);
     assert.equal(domainFromEmail('inte en domän'), null);
@@ -60,10 +65,15 @@ describe('buildRevealFindings · varje fynd bär en källa, inget fabriceras', (
     assert.match(d.source, /RDAP/);
   });
 
-  test('domän < 1 år → utelämnas (inget svagt fynd)', () => {
+  test('ung domän (< 6 år) → utelämnas (inte anmärkningsvärt)', () => {
     const f = buildRevealFindings(
-      { domain: 'ny.se', posture: {}, domainReg: '2026-01-01' }, { now: NOW });
+      { domain: 'ny.se', posture: {}, domainReg: '2023-01-01' }, { now: NOW });
     assert.equal(f.find((x) => x.kind === 'domain'), undefined);
+  });
+
+  test('KVALITETSTRÖSKEL: generisk e-post (mx=other) ger INGET fynd — hellre tystnad än limp', () => {
+    const f = buildRevealFindings({ domain: 'foo.se', posture: { mx: 'other' } }, { now: NOW });
+    assert.deepEqual(f, []);                              // "E-post via Anpassad e-postlösning" får aldrig visas
   });
 
   test('tom posture → inga fynd (tystnad, inget fabricerat)', () => {
