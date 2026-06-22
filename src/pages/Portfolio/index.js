@@ -355,9 +355,9 @@ export default function Portfolio() {
       });
       const data = await res.json().catch(() => ({}));
       if (data.findings?.length) setReveal(data);
-      else setRevealNote(data.note || 'Vi kunde inte läsa av den domänen — ange er företagsadress så försöker vi igen.');
+      else setRevealNote(data.note || 'Vi kunde inte läsa av den domänen just nu — kontrollera adressen och försök igen.');
     } catch {
-      setRevealNote('Kunde inte nå Arvo just nu — försök igen om en stund.');
+      setRevealNote('Vi når inte Arvo just nu — försök igen om en stund.');
     } finally {
       setRevealLoading(false);
     }
@@ -819,8 +819,8 @@ export default function Portfolio() {
               <h2>Överbetalningen sitter oftast i <em>IT-licenser, telefoni och mjukvara.</em></h2>
               <p className="work">
                 Börja där — en enda faktura räcker för ert första fynd, ofta inom minuter.
-                Töm sedan resten av högen: ju fler avtal Arvo ser, desto skarpare blir hela
-                bilden av var ni betalar för mycket.
+                Lägg sedan till resten: ju fler avtal Arvo ser, desto skarpare blir bilden
+                av var ni ligger över marknadspris.
               </p>
             </Verdict>
 

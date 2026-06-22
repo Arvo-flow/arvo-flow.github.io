@@ -77,8 +77,8 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note 
   return (
     <>
       <Prompt onSubmit={onSubmit}>
-        <div className="rp-k">Innan ni laddar upp</div>
-        <p className="rp-lede">Skriv er <b>jobbadress</b> — så visar Arvo vad vi redan kan läsa av om er, källbelagt, innan ni gett oss en enda faktura.</p>
+        <div className="rp-k">Innan första fakturan</div>
+        <p className="rp-lede">Ange er <b>företagsmejl</b>. Innan ni delat en enda siffra lägger Arvo fram vad vi redan ser om er — varje rad med sin källa.</p>
         <div className="rp-row">
           <input
             type="email" inputMode="email" autoComplete="email"
@@ -86,7 +86,7 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note 
             onChange={(e) => setEmail(e.target.value)} disabled={loading}
           />
           <button type="submit" disabled={loading || !email.trim()}>
-            {loading ? 'Läser av…' : 'Se vad vi redan vet →'}
+            {loading ? 'Läser av…' : 'Visa vad vi ser →'}
           </button>
         </div>
         {note && <p className="rp-note">{note}</p>}
@@ -100,7 +100,7 @@ export default function RevealCard({ domain, findings }) {
   if (!domain || !findings?.length) return null;
   return (
     <Wrap>
-      <div className="rv-eyebrow">Arvo läste av {domain}</div>
+      <div className="rv-eyebrow">Avläst · {domain}</div>
       {findings.map((f, i) => (
         <div className="rv-find" key={i}>
           <div className="rv-title">{f.title}</div>
@@ -109,8 +109,8 @@ export default function RevealCard({ domain, findings }) {
         </div>
       ))}
       <p className="rv-foot">
-        Allt ovan är <b>publik fakta</b> vi läste av på sekunder — innan ni ens loggat in, utan att
-        ni gett oss något. Tänk vad vakten ser när ni delar er första faktura.
+        Allt ovan är <b>publik fakta</b>, avläst på sekunder — innan ni loggat in, utan att ni lämnat
+        ifrån er något. Tänk er vad vakten ser den dag ni delar en faktura.
       </p>
     </Wrap>
   );

@@ -74,13 +74,13 @@ export default function AccountBar({ email, onLogout }) {
   return (
     <Bar>
       <form onSubmit={submit}>
-        <div className="ab-k">Har ni redan ett konto?</div>
+        <div className="ab-k">Redan kund?</div>
         {sent ? (
-          <p className="ab-msg">Kolla er inkorg — vi skickade en inloggningslänk till <b>{val.trim()}</b>. Den loggar in er på vilken enhet som helst.</p>
+          <p className="ab-msg">Kolla er inkorg — en inloggningslänk är på väg till <b>{val.trim()}</b>. Den öppnar ert kontor på vilken enhet som helst.</p>
         ) : (
           <>
             <input type="email" inputMode="email" autoComplete="email"
-              placeholder="Logga in med er mejl" value={val} onChange={(e) => setVal(e.target.value)} disabled={busy} />
+              placeholder="Logga in med er företagsmejl" value={val} onChange={(e) => setVal(e.target.value)} disabled={busy} />
             <button className="ab-in" type="submit" disabled={busy || !val.trim()}>
               {busy ? 'Skickar…' : 'Skicka länk'}
             </button>

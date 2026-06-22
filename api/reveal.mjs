@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     if (!result.domain) {
       // Privat mejl eller ogiltig domän — ärligt: vi har inget bolag att läsa av.
       return send(res, 200, { ok: true, domain: null, findings: [],
-        note: 'Privat mejladress — ange er företagsadress för att se vad Arvo redan kan läsa av.' });
+        note: 'En privat inkorg berättar inget om ert bolag. Ange er företagsmejl — det är bolaget vi läser av, inte personen.' });
     }
     return send(res, 200, { ok: true, domain: result.domain, platform: result.platform, findings: result.findings });
   } catch (err) {
