@@ -149,11 +149,11 @@ function computeArvoScore(suppliers) {
 }
 
 // Marknadsläge — doten kartläggs EXAKT mot Arvo Score (precision bygger förtroende).
-// Skalan löper Över marknaden (svag, vänster) → Under marknaden (stark, höger),
-// så ett högt score sitter på den gynnsamma (högra) sidan. left% = score.
+// Skalan löper Sämre (vänster) → Bättre än marknaden (höger), så ett högt score sitter på
+// den gynnsamma (högra) sidan. "Bättre/Sämre" bär valören direkt — klarare än "över/under".
 function marketStanding(score) {
   const pointer = Math.max(4, Math.min(96, score));
-  const label = score >= 67 ? 'Under marknaden' : score >= 45 ? 'I nivå' : 'Över marknaden';
+  const label = score >= 67 ? 'Bättre än marknaden' : score >= 45 ? 'I nivå' : 'Sämre än marknaden';
   return { pointer, label };
 }
 
@@ -479,11 +479,11 @@ export default function Portfolio() {
   // med de N avtalen som den fokuserade möjligheten — aldrig en motsägelse mot gaugen nedan.
   const verdictHead = !acting
     ? <>Håll kursen. Era priser <em>står sig mot marknaden.</em></>
-    : standing.label === 'Under marknaden'
-      ? <>Sammantaget står ni <em>starkt</em> — men {switchables.length} avtal drar över.</>
+    : standing.label === 'Bättre än marknaden'
+      ? <>Sammantaget står ni <em>starkt</em> — men {switchables.length} avtal kostar mer än de borde.</>
       : standing.label === 'I nivå'
         ? <>Ni ligger <em>i nivå</em> med marknaden — {switchables.length} avtal kan skärpas.</>
-        : <>Ni betalar <em>över marknaden</em> — {switchables.length} avtal drar mest.</>;
+        : <>Ni betalar <em>mer än marknaden</em> — {switchables.length} avtal drar mest.</>;
   const verdictWork = acting
     ? <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
         <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
@@ -563,14 +563,14 @@ export default function Portfolio() {
                 <div className="mkt-k">Marknadsläge</div>
                 <div className="mkt-track"><span className="mkt-ptr" style={{ left: `${standing.pointer}%` }} /></div>
                 <div className="mkt-scale">
-                  <span className={standing.label === 'Över marknaden' ? 'on' : ''}>Över marknaden</span>
+                  <span className={standing.label === 'Sämre än marknaden' ? 'on' : ''}>Sämre</span>
                   <span className={standing.label === 'I nivå' ? 'on' : ''}>I nivå</span>
-                  <span className={standing.label === 'Under marknaden' ? 'on' : ''}>Under marknaden</span>
+                  <span className={standing.label === 'Bättre än marknaden' ? 'on' : ''}>Bättre</span>
                 </div>
                 <p className="idx-note">
                   {switchables.length > 0
-                    ? <>Sammanvägt {arvoScore >= 67 ? 'starkt' : arvoScore >= 45 ? 'godkänt' : 'svagt'} — men <b>{switchables.length} avtal drar över marknaden</b>. De ligger förberedda i innehavet nedan.</>
-                    : <>Era priser ligger <b>i nivå med eller under verifierat listpris</b>. Inget enskilt avtal sticker ut i dag.</>}
+                    ? <>Sammanvägt {arvoScore >= 67 ? 'starkt' : arvoScore >= 45 ? 'godkänt' : 'svagt'} — men <b>{switchables.length} avtal kostar mer än marknaden</b>. De ligger förberedda i innehavet nedan.</>
+                    : <>Era priser ligger <b>i nivå med eller bättre än verifierat listpris</b>. Inget enskilt avtal sticker ut i dag.</>}
                 </p>
               </Index>
 
@@ -826,7 +826,7 @@ export default function Portfolio() {
               <p className="work">
                 Börja där — en enda faktura räcker för ert första fynd, ofta inom minuter.
                 Lägg sedan till resten: ju fler avtal Arvo ser, desto skarpare blir bilden
-                av var ni ligger över marknadspris.
+                av var ni betalar mer än marknaden.
               </p>
             </Verdict>
 

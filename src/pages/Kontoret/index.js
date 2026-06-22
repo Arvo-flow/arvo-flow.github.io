@@ -119,9 +119,9 @@ export default function Kontoret() {
             <div className="mkt-k">Marknadsläge</div>
             <div className="mkt-track"><span className="mkt-ptr" style={{ left: '62%' }} /></div>
             <div className="mkt-scale">
-              <span>Under marknaden</span>
+              <span>Sämre</span>
               <span className="on">I nivå</span>
-              <span>Över marknaden</span>
+              <span>Bättre</span>
             </div>
             <p className="idx-note">
               Ni betalar <b>i nivå med marknaden</b> sammanvägt — med enskilda utstickare (se Telia).
