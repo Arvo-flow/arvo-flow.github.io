@@ -475,9 +475,15 @@ export default function Portfolio() {
     }
     return rows;
   }, [suppliers.length, autoAnalyses.length, latestDate, featured, roomForecast, roomClock]);
-  const verdictHead = acting
-    ? <>Ni betalar <em>över marknaden</em> hos {switchables.length} av {suppliers.length}.</>
-    : <>Håll kursen. Era priser <em>står sig mot marknaden.</em></>;
+  // Rubriken HÅLLER MED mätaren (samma källa: standing): leder med var ni står sammantaget,
+  // med de N avtalen som den fokuserade möjligheten — aldrig en motsägelse mot gaugen nedan.
+  const verdictHead = !acting
+    ? <>Håll kursen. Era priser <em>står sig mot marknaden.</em></>
+    : standing.label === 'Under marknaden'
+      ? <>Sammantaget står ni <em>starkt</em> — men {switchables.length} avtal drar över.</>
+      : standing.label === 'I nivå'
+        ? <>Ni ligger <em>i nivå</em> med marknaden — {switchables.length} avtal kan skärpas.</>
+        : <>Ni betalar <em>över marknaden</em> — {switchables.length} avtal drar mest.</>;
   const verdictWork = acting
     ? <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
         <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
