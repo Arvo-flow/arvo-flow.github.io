@@ -113,8 +113,6 @@ const PUBLIC_SOURCE_LABEL = {
   upphandling: 'offentliga upphandlingar',
   eurostat: 'officiell statistik (Eurostat/SCB)',
 };
-// Vem datan beskriver — offentliga avtal vs marknadsgenomsnitt för företag.
-const publicScopeLabel = (src) => (src === 'eurostat' ? 'Svenska företag' : 'Offentlig sektor');
 const fmtUnit = (n) => (n == null ? '–' : Number(n).toLocaleString('sv-SE', { maximumFractionDigits: 2 }));
 
 function companyFromEmail(email) {
