@@ -426,7 +426,7 @@ export default function Portfolio() {
     for (const g of suppliers) {
       const a = g.latest;
       const pb = publicBench[a.category];
-      if (pb && pb.n >= 2 && pb.observations?.length) {
+      if (pb && pb.n >= 3 && pb.observations?.length) {
         const isPeer = pb.observations[0]?.source === 'eurostat'; // företag-mot-företag = relevant
         // Per-enhet-jämförelse mot kunden ENDAST för relevant peer-data + samma leverantör.
         const customerUnit = (isPeer && pb.scope === 'supplier' && a.price_per_seat_monthly > 0) ? a.price_per_seat_monthly : null;
