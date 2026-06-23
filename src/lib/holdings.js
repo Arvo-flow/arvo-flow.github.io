@@ -12,6 +12,21 @@ export function supplierName(a) {
   return a.normalized_supplier || a.supplier || 'Okänd leverantör';
 }
 
+// Per-leverantörs score — MÅSTE följa samma tal som besparings-pillen (regel 1: EN sanning per fråga).
+// Tidigare läste den suggested_annual_cost medan pillen läser net_saving → de kunde säga emot varandra
+// (en låg score 49 bredvid en liten besparing +6 230 / ~13 %). Nu härleds marknadsgapet ur gross_saving
+// (samma källa som net_saving som pillen visar) → score och pill kan aldrig motsäga varandra.
+export function supplierDiagScore(a) {
+  if (a.route === 'monitoring') return 72;
+  const gross = a.gross_saving ?? (a.net_saving != null ? a.net_saving / 0.8 : 0);
+  if (!a.should_switch || !a.annual_cost || !(gross > 0)) {
+    return a.annual_cost > 0 ? 82 : 50;
+  }
+  const ovPct = Math.round((gross / a.annual_cost) * 100);   // marknadsgapet som besparingen representerar
+  const raw   = Math.max(5, Math.round(100 - ovPct * 1.5));
+  return (a.net_saving ?? 0) > 0 ? Math.min(raw, 79) : raw;
+}
+
 export function groupBySupplier(analyses) {
   const groups = new Map();
   for (const a of analyses ?? []) {

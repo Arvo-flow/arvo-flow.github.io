@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
-import { groupBySupplier, supplierName } from '../../lib/holdings';
+import { groupBySupplier, supplierName, supplierDiagScore } from '../../lib/holdings';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
@@ -124,17 +124,6 @@ function companyFromEmail(email) {
 }
 
 // Gruppering + visningsnamn bor i src/lib/holdings (ren, testbar) — EN sanning (regel 1).
-
-// Per-leverantör Arvo Score (samma logik som TestaFaktura).
-function supplierDiagScore(a) {
-  if (a.route === 'monitoring') return 72;
-  if (!a.should_switch || !a.annual_cost || !a.suggested_annual_cost) {
-    return a.annual_cost > 0 ? 82 : 50;
-  }
-  const ovPct = Math.round((a.annual_cost - a.suggested_annual_cost) / a.annual_cost * 100);
-  const raw   = Math.max(5, Math.round(100 - ovPct * 1.5));
-  return (a.net_saving ?? 0) > 0 ? Math.min(raw, 79) : raw;
-}
 
 // Totalpoäng = kostnadsviktat snitt av radernas poäng (går alltid att räkna hem).
 function computeArvoScore(suppliers) {
