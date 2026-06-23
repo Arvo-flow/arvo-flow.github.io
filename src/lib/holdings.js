@@ -8,8 +8,29 @@
 // dubblett-buggen: nyckeln prioriterade normalized_supplier medan namnet visade supplier —
 // omvänd ordning → två kort kunde visa identiskt namn utan att slås ihop. Nu är de låsta ihop.
 
+// Kanoniska varumärken — "Telia Företag" och "Telia Sverige AB" är samma Telia. Slår ihop kända
+// varianter; nyckeln bär kategori, så Telia mobil ≠ Telia bredband (ingen över-sammanslagning).
+// Konservativ lista över stora varumärken — okända leverantörer rörs ALDRIG (säkrare att inte slå
+// ihop än att felaktigt slå ihop två olika bolag).
+const SUPPLIER_ALIASES = [
+  [/\btelia\b/i,            'Telia'],
+  [/\btele\s*2\b/i,         'Tele2'],
+  [/\btelenor\b/i,          'Telenor'],
+  [/\bmicrosoft\b/i,        'Microsoft'],
+  [/\bgoogle\b/i,           'Google'],
+  [/\badobe\b/i,            'Adobe'],
+  [/\bdustin\b/i,           'Dustin'],
+];
+
+export function canonicalSupplier(name) {
+  const s = String(name || '').trim();
+  if (!s) return 'Okänd leverantör';
+  for (const [re, brand] of SUPPLIER_ALIASES) if (re.test(s)) return brand;
+  return s;
+}
+
 export function supplierName(a) {
-  return a.normalized_supplier || a.supplier || 'Okänd leverantör';
+  return canonicalSupplier(a.normalized_supplier || a.supplier);
 }
 
 // Per-leverantörs score — MÅSTE följa samma tal som besparings-pillen (regel 1: EN sanning per fråga).

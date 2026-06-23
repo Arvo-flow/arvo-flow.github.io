@@ -398,7 +398,7 @@ export default function Portfolio() {
       if (!mi || !median || !a.annual_cost) continue;
       const pct = Math.round(((a.annual_cost - median) / median) * 100);
       const cand = {
-        supplier: a.supplier || a.normalized_supplier,
+        supplier: supplierName(a),
         cost: a.annual_cost, median, p25: mi.supplierP25, n: mi.supplierDataPoints, pct,
       };
       if (!best || pct > best.pct) best = cand;
@@ -420,7 +420,7 @@ export default function Portfolio() {
         // Per-enhet-jämförelse mot kunden ENDAST för relevant peer-data + samma leverantör.
         const customerUnit = (isPeer && pb.scope === 'supplier' && a.price_per_seat_monthly > 0) ? a.price_per_seat_monthly : null;
         const pct = customerUnit ? Math.round(((customerUnit - pb.median) / pb.median) * 100) : null;
-        return { ...pb, category: a.category, supplier: a.supplier || a.normalized_supplier, customerUnit, pct, isPeer };
+        return { ...pb, category: a.category, supplier: supplierName(a), customerUnit, pct, isPeer };
       }
     }
     return null;
@@ -433,7 +433,7 @@ export default function Portfolio() {
     .map((g) => {
       const a = g.latest;
       const when = new Date(a.created_at); when.setMonth(when.getMonth() + 12);
-      return { id: a.id, supplier: a.supplier || a.normalized_supplier, when, cost: a.annual_cost };
+      return { id: a.id, supplier: supplierName(a), when, cost: a.annual_cost };
     })
     .sort((x, y) => x.when - y.when), [suppliers]);
 

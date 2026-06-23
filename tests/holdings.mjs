@@ -8,10 +8,16 @@ import { groupBySupplier, supplierName, supplierDiagScore } from '../src/lib/hol
 
 const a = (o) => ({ net_saving: 0, category: 'mobil', created_at: '2025-06-01', ...o });
 
-describe('Holdings · visningsnamn', () => {
-  test('normaliserat namn först (samma precedens som nyckeln)', () => {
-    assert.equal(supplierName({ normalized_supplier: 'Telia Sverige AB', supplier: 'TELIA' }), 'Telia Sverige AB');
+describe('Holdings · visningsnamn + kanonisering', () => {
+  test('kända varumärken kanoniseras (Telia Företag = Telia Sverige AB = Telia)', () => {
+    assert.equal(supplierName({ normalized_supplier: 'Telia Företag' }), 'Telia');
+    assert.equal(supplierName({ normalized_supplier: 'Telia Sverige AB' }), 'Telia');
+    assert.equal(supplierName({ supplier: 'Tele2 Företag AB' }), 'Tele2');
+    assert.equal(supplierName({ normalized_supplier: 'Microsoft Ireland Operations' }), 'Microsoft');
+  });
+  test('okända leverantörer rörs ALDRIG (ingen över-sammanslagning)', () => {
     assert.equal(supplierName({ supplier: 'Råform AB' }), 'Råform AB');
+    assert.equal(supplierName({ normalized_supplier: 'SveaMobil Företag AB' }), 'SveaMobil Företag AB');
     assert.equal(supplierName({}), 'Okänd leverantör');
   });
 });
@@ -25,6 +31,24 @@ describe('Holdings · gruppering', () => {
     assert.equal(g.length, 1);                 // inte två kort
     assert.equal(g[0].count, 2);
     assert.equal(g[0].latest.id, 2);           // senaste analysen
+  });
+
+  test('Telia Företag + Telia Sverige AB (båda mobil) → ETT kort (varumärkes-kanonisering)', () => {
+    const g = groupBySupplier([
+      a({ id: 1, normalized_supplier: 'Telia Företag', category: 'mobil', created_at: '2025-06-12' }),
+      a({ id: 2, normalized_supplier: 'Telia Sverige AB', category: 'mobil', created_at: '2025-06-13' }),
+    ]);
+    assert.equal(g.length, 1);
+    assert.equal(g[0].count, 2);
+    assert.equal(supplierName(g[0].latest), 'Telia');
+  });
+
+  test('samma varumärke + OLIKA kategori → TVÅ kort (Tele2 mobil ≠ Tele2 bredband)', () => {
+    const g = groupBySupplier([
+      a({ id: 1, normalized_supplier: 'Tele2 Företag AB', category: 'mobil' }),
+      a({ id: 2, normalized_supplier: 'Tele2 Bredband AB', category: 'bredband' }),
+    ]);
+    assert.equal(g.length, 2);
   });
 
   test('samma leverantör + OLIKA kategori → TVÅ kort (mobil ≠ bredband)', () => {
