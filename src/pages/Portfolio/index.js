@@ -194,6 +194,7 @@ export default function Portfolio() {
   const [publicBench, setPublicBench] = useState({});
   const [forecasts, setForecasts] = useState({});
   const [branchAnchors, setBranchAnchors] = useState({});
+  const [movements, setMovements] = useState({});
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
   const [fingerprint, setFingerprint] = useState('');
@@ -231,6 +232,7 @@ export default function Portfolio() {
     setPublicBench(data.publicBench ?? {});
     setForecasts(data.forecasts ?? {});
     setBranchAnchors(data.branchAnchors ?? {});
+    setMovements(data.movements ?? {});
   }, [fingerprint, magic, sessionToken]);
 
   useEffect(() => {
@@ -383,6 +385,13 @@ export default function Portfolio() {
       .filter((f) => f && typeof f === 'object' && f.title)
       .sort((x, y) => (rank[x.confidence] ?? 3) - (rank[y.confidence] ?? 3))[0] ?? null;
   }, [forecasts]);
+  // Marknadsrörelsen — den färskaste verifierade höjningen som slår mot flest bolag leder.
+  // Ett FAKTUM (höjning + X/Y), byggt i api/invoice-history ur supplier_price_history × getSegmentStats.
+  const roomMovement = useMemo(() => {
+    return Object.values(movements ?? {})
+      .filter((m) => m && typeof m === 'object' && m.title)
+      .sort((x, y) => (new Date(y.changedAt) - new Date(x.changedAt)) || ((y.withSupplier ?? 0) - (x.withSupplier ?? 0)))[0] ?? null;
+  }, [movements]);
   const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
   const arvoScore    = computeArvoScore(suppliers);
   const standing     = marketStanding(arvoScore);
@@ -475,6 +484,9 @@ export default function Portfolio() {
     if (featured) {
       rows.push({ tag: 'Kohort', what: <>Jämförde era priser mot <b>{featured.n} bolag</b> hos {featured.supplier} via nätverket — sanningen ingen jämförelsesajt kan ge.</> });
     }
+    if (roomMovement) {
+      rows.push({ tag: 'Rörelse', what: <>Fångade en marknadsrörelse: <b>{roomMovement.title}</b> — {roomMovement.withSupplier} av {roomMovement.total} bolag vi följer berörs.</> });
+    }
     if (roomForecast) {
       rows.push({ tag: 'Prognos', what: <>Köade ett motdrag inför en trolig höjning: <b>{roomForecast.title}</b>.</> });
     }
@@ -482,7 +494,7 @@ export default function Portfolio() {
       rows.push({ tag: 'Klocka', what: <>Bevakar avtalsklockan — <b>{roomClock.daysLeft} dagar</b> kvar på bindningen, agerar i fönstret.</> });
     }
     return rows;
-  }, [suppliers.length, autoAnalyses.length, latestDate, featured, roomForecast, roomClock]);
+  }, [suppliers.length, autoAnalyses.length, latestDate, featured, roomMovement, roomForecast, roomClock]);
   // Rubriken HÅLLER MED mätaren (samma källa: standing): leder med var ni står sammantaget,
   // med de N avtalen som den fokuserade möjligheten — aldrig en motsägelse mot gaugen nedan.
   const verdictHead = !acting
@@ -543,6 +555,9 @@ export default function Portfolio() {
 
             {/* ── Forensik-domen: mekanismen leder (delad komponent, mörkt ansikte) ──── */}
             <FindingCard finding={roomFinding} variant="dossier" />
+
+            {/* ── Marknadsrörelsen: verifierad höjning × nätverkets bredd (den vassaste moaten) ── */}
+            <FindingCard finding={roomMovement} variant="dossier" eyebrow="Marknadsrörelsen · nätverket" />
 
             {/* ── Kontraktsklockan (Maktkalendern): det avtal som förfaller snarast ──── */}
             <FindingCard finding={roomClock} variant="dossier" eyebrow="Maktkalendern · avtalsbevakning" />
@@ -696,44 +711,72 @@ export default function Portfolio() {
                   </Truth>
                 )}
 
-                {branchAnchor && (
+                {branchAnchor && (() => {
+                  const meta = getCategoryMeta(branchAnchor.category);
+                  const cat = meta?.inlineLabel || (meta?.label || branchAnchor.category).toLowerCase();
+                  // seats kända → skala det verifierade per-enhet-priset till kundens antal enheter =
+                  // en bransch-TOTAL, jämförbar med kundens årskostnad (bägge totaler, samma enhet).
+                  // seats okända → ingen total-jämförelse (vi gissar aldrig enheten); visa ankaret per enhet.
+                  const seats = branchAnchor.seats;
+                  const cost  = branchAnchor.customerCost;
+                  const branschTotal = seats > 0 ? branchAnchor.median * seats : null;
+                  const comparable = branschTotal != null && cost > 0;
+                  return (
                   <Truth $full={renewals.length === 0}>
                     <div className="card-eyebrow">
                       <span>Den kollektiva sanningen</span>
                       <span className="src">branschestimat</span>
                     </div>
-                    <h3>
-                      {(() => {
-                        const meta = getCategoryMeta(branchAnchor.category);
-                        const cat = meta?.inlineLabel || (meta?.label || branchAnchor.category).toLowerCase();
-                        return <>Branschen betalar typiskt <em>{fmtNum(branchAnchor.p25 || branchAnchor.median)}–{fmtNum(branchAnchor.median)} kr</em> {branchAnchor.unitLabel} för {cat} — verifierat publikt listpris.</>;
-                      })()}
-                    </h3>
-                    {(() => {
-                      const max = branchAnchor.median || 1;
-                      const rows = [
-                        { lbl: 'Branschsnitt', amt: branchAnchor.median },
-                        ...(branchAnchor.p25 ? [{ lbl: 'Lägst 25 %', amt: branchAnchor.p25 }] : []),
-                      ];
-                      return (
-                        <div className="bars">
-                          {rows.map((r) => (
-                            <div className="barrow" key={r.lbl}>
-                              <span className="lbl">{r.lbl}</span>
-                              <span className="track"><span className="fill" style={{ width: `${Math.max(8, (r.amt / max) * 100)}%` }} /></span>
-                              <span className="amt">{fmtNum(r.amt)} kr</span>
+                    {comparable ? (
+                      <>
+                        <h3>
+                          Ni betalar <em>{fmtNum(cost)} kr/år</em> för {cat}. Branschen betalar typiskt{' '}
+                          <em>{fmtNum(branschTotal)} kr/år</em> för motsvarande {seats} {seats === 1 ? branchAnchor.unitNoun : branchAnchor.unitNounPl}.
+                        </h3>
+                        {(() => {
+                          const max = Math.max(cost, branschTotal) || 1;
+                          const rows = [
+                            { lbl: 'Ni betalar', amt: cost, you: true },
+                            { lbl: 'Branschen typiskt', amt: branschTotal, you: false },
+                          ];
+                          return (
+                            <div className="bars">
+                              {rows.map((r) => (
+                                <div className={`barrow${r.you ? ' you' : ''}`} key={r.lbl}>
+                                  <span className="lbl">{r.lbl}</span>
+                                  <span className="track"><span className="fill" style={{ width: `${Math.max(8, (r.amt / max) * 100)}%` }} /></span>
+                                  <span className="amt">{fmtNum(r.amt)} kr</span>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                    <p className="truth-note">
-                      Branschtypiskt {branchAnchor.unitLabel}, ur verifierade publika listpriser — ett ankare, inte er
-                      exakta position (den står i innehavet nedan). När fler bolag i er bransch delar sina fakturor blir
-                      det här <b>er levande kohort</b> — den sanning ingen jämförelsesajt kan ge.
-                    </p>
+                          );
+                        })()}
+                        <p className="truth-note">
+                          Branschtypiskt = verifierat publikt listpris ({fmtNum(branchAnchor.median)} kr {branchAnchor.unitLabel})
+                          {' '}× era {seats} {seats === 1 ? branchAnchor.unitNoun : branchAnchor.unitNounPl}. Ett ankare, inte er exakta
+                          position — den står i innehavet nedan. När fler bolag i er bransch delar sina fakturor blir det här <b>er levande kohort</b>.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <h3>
+                          Branschen betalar typiskt <em>{fmtNum(branchAnchor.median)} kr</em> {branchAnchor.unitLabel} för {cat} — verifierat publikt listpris.
+                        </h3>
+                        {cost > 0 && (
+                          <p className="truth-note" style={{ borderTop: 'none', paddingTop: 0, marginTop: 4 }}>
+                            Er kostnad i dag: <b>{fmtNum(cost)} kr/år</b>.
+                          </p>
+                        )}
+                        <p className="truth-note">
+                          Branschtypiskt {branchAnchor.unitLabel}, ur verifierade publika listpriser — ett ankare, inte er
+                          exakta position (den står i innehavet nedan). När fler bolag i er bransch delar sina fakturor blir
+                          det här <b>er levande kohort</b>.
+                        </p>
+                      </>
+                    )}
                   </Truth>
-                )}
+                  );
+                })()}
 
                 {renewals.length > 0 && (
                   <Calendar $full={!featured && !publicFeatured && !branchAnchor}>

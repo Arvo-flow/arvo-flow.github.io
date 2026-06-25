@@ -33,6 +33,7 @@ import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { getAffectedCustomers, getSegmentStats, hasAlertBeenSent, markAlertSent } from '../lib/price-alert-store.js';
 import { computeImpactKr, parseCheckPrice } from '../lib/price-impact.js';
+import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 
 const REPORT_PATH = process.argv[2] ?? '/tmp/price-monitor-report.json';
 const FROM        = process.env.RESEND_FROM    ?? 'Arvo Flow <analys@arvo-flow.se>';
@@ -72,27 +73,7 @@ const reportDate   = new Date(report.runAt).toLocaleDateString('sv-SE', {
 });
 
 // ── Leverantörs-nyckelord ─────────────────────────────────────────────────────
-function extractSupplierKeyword(alertSupplier) {
-  const s = alertSupplier.toLowerCase();
-  if (s.includes('microsoft'))    return 'microsoft';
-  if (s.includes('google'))       return 'google';
-  if (s.includes('adobe'))        return 'adobe';
-  if (s.includes('tele2'))        return 'tele2';
-  if (s.includes('telia'))        return 'telia';
-  if (s.includes('telenor'))      return 'telenor';
-  if (s.includes('slack'))        return 'slack';
-  if (s.includes('zoom'))         return 'zoom';
-  if (s.includes('atlassian'))    return 'atlassian';
-  if (s.includes('fortnox'))      return 'fortnox';
-  if (s.includes('bahnhof'))      return 'bahnhof';
-  if (s.includes('pipedrive'))    return 'pipedrive';
-  if (s.includes('hubspot'))      return 'hubspot';
-  if (s.includes('zoho'))         return 'zoho';
-  if (s.includes('sector alarm')) return 'sector alarm';
-  if (s.includes('sumup'))        return 'sumup';
-  if (s.includes('zettle'))       return 'zettle';
-  return s.split(/\s+/)[0];
-}
+// extractSupplierKeyword bor nu i lib/supplier-keyword.js (regel 1: en källa, tre konsumenter).
 
 function displaySupplier(dbSupplier, keyword) {
   const s = dbSupplier || keyword;

@@ -37,11 +37,21 @@ const ANALYSES = [
 // (högst customerCost) → saas-productivity. cohort/publicBench medvetet utelämnade här så
 // cold-start-kortet renderas (regel 8: verifiera exakt det tillstånd koden gäller).
 const BRANCH_ANCHORS = {
-  'saas-productivity': { category: 'saas-productivity', median: 2040, p25: 1704, source: 'real-public', unitLabel: 'per användare/år', customerCost: 184260 },
-  mobil:               { category: 'mobil',             median: 3348, p25: 2868, source: 'real-public', unitLabel: 'per abonnemang/år', customerCost: 58092 },
+  'saas-productivity': { category: 'saas-productivity', median: 2040, p25: 1704, source: 'real-public', unitLabel: 'per användare/år', unitNoun: 'användare', unitNounPl: 'användare', customerCost: 184260, seats: 78 },
+  mobil:               { category: 'mobil',             median: 3348, p25: 2868, source: 'real-public', unitLabel: 'per abonnemang/år', unitNoun: 'abonnemang', unitNounPl: 'abonnemang', customerCost: 58092, seats: 16 },
 };
 
-const PAYLOAD = { ok: true, analyses: ANALYSES, branchAnchors: BRANCH_ANCHORS, email: 'ekonomi@lynxeye.se' };
+// Marknadsrörelsen (1B) — verifierad höjning × nätverkets bredd. Staged så kortet kan ses lokalt.
+const MOVEMENTS = {
+  'telia|mobil': {
+    kind: 'market-movement', tone: 'leak', title: 'Telia höjde priset för mobilabonnemang',
+    metricText: '+6,8 %', annualImpact: 0, withSupplier: 8, total: 14,
+    changedAt: '2026-06-18T00:00:00Z',
+    text: 'Telia höjde sitt publika pris med +6,8 % den 18 juni 2026 — verifierat. Bland bolagen Arvo följer för mobilabonnemang ligger 8 av 14 hos Telia; ni är ett av dem. Vi bevakar ert avtal mot höjningen och hör av oss när ert läge kräver ett drag.',
+  },
+};
+
+const PAYLOAD = { ok: true, analyses: ANALYSES, branchAnchors: BRANCH_ANCHORS, movements: MOVEMENTS, email: 'ekonomi@lynxeye.se' };
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.map': 'application/json', '.woff2': 'font/woff2' };
 

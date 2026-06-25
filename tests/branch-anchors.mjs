@@ -33,6 +33,14 @@ describe('Branschankaret · enhet + källa', () => {
     assert.equal(out['saas-productivity'].source, 'real-public');
   });
 
+  test('seats ur fakturan bärs vidare (för bransch-total = median × seats); saknas → null', async () => {
+    const withSeats = await buildBranchAnchors([a({ category: 'mobil', seat_count: 20 })]);
+    assert.equal(withSeats.mobil.seats, 20);
+    assert.equal(withSeats.mobil.unitNoun, 'abonnemang');
+    const noSeats = await buildBranchAnchors([a({ category: 'mobil' })]);
+    assert.equal(noSeats.mobil.seats, null);          // aldrig en gissad enhetsmängd
+  });
+
   test('estimat-kategori (vaxel) → INGET ankare (ej i enhets-allowlist + ej real-public)', async () => {
     const out = await buildBranchAnchors([a({ category: 'vaxel' })]);
     assert.equal(out.vaxel, undefined);

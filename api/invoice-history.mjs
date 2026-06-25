@@ -11,7 +11,11 @@ import { getMarketIntelligence } from '../lib/price-alert.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding } from '../lib/contract-clock.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
-import { getSupplierCategoryChanges } from '../lib/price-db.js';
+import { getSupplierCategoryChanges, getRecentHike } from '../lib/price-db.js';
+import { getSegmentStats } from '../lib/price-alert-store.js';
+import { marketMovementFinding } from '../lib/market-movement.js';
+import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
+import { catLabel } from '../lib/format.js';
 import { getBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
@@ -99,7 +103,41 @@ export default async function handler(req, res) {
   // branschestimat, aldrig "X bolag betalar". Ersätts av den verkliga kohorten när volymen kommer.
   const branchAnchors = await buildBranchAnchors(analyses);
 
-  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, email: email ?? undefined });
+  // ── Marknadsrörelsen: "Telia höjde — X av Y bolag vi följer för <kategori> ligger hos Telia" ──
+  // Den vassaste "hur visste de det?": en VERIFIERAD publik höjning (supplier_price_history) korsad
+  // med nätverkets breddsignal (getSegmentStats). Ett faktum, inte en bedömning (regel 3). Zero Trust:
+  // bägge bevisen måste bära (färsk höjning + ≥3 bolag hos leverantören), annars tystnad.
+  const movements = await buildMovements(analyses);
+
+  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, movements, email: email ?? undefined });
+}
+
+async function buildMovements(analyses) {
+  const seen = new Set();
+  const out = {};
+  for (const a of analyses) {
+    if (a.route !== 'auto' || !a.category) continue;
+    const raw = a.normalized_supplier || a.supplier;
+    if (!raw) continue;
+    const keyword = extractSupplierKeyword(raw);
+    if (!keyword) continue;
+    const key = `${keyword}|${a.category}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (seen.size > 10) break;
+    try {
+      const [hike, segment] = await Promise.all([
+        getRecentHike({ supplierKeyword: keyword, category: a.category }),
+        getSegmentStats({ category: a.category, supplierKeyword: keyword }),
+      ]);
+      const finding = marketMovementFinding(hike, segment, {
+        supplier:      keyword.replace(/\b\w/g, (c) => c.toUpperCase()),   // varumärket, snyggt: "Telia"
+        categoryLabel: catLabel(a.category),
+      });
+      if (finding) out[key] = finding;
+    } catch { /* fail-open → ingen rörelse för det paret */ }
+  }
+  return out;
 }
 
 // Enhetsfras per kategori — BRANCHINDEX-medianen är PER ENHET (per användare/år, per
@@ -109,11 +147,11 @@ export default async function handler(req, res) {
 // som enhetskarantänen finns för att stoppa). Bandet visas, kundjämförelse görs ALDRIG här
 // (den bor i innehavskortet, byggt ur kundens egen verifierade analys).
 export const BRANCH_ANCHOR_UNIT = {
-  'saas-productivity': 'per användare/år',
-  'saas-creative':     'per användare/år',
-  'saas-crm':          'per användare/år',
-  mobil:               'per abonnemang/år',
-  bredband:            'per anslutning/år',
+  'saas-productivity': { label: 'per användare/år', noun: 'användare',   nounPl: 'användare' },
+  'saas-creative':     { label: 'per användare/år', noun: 'användare',   nounPl: 'användare' },
+  'saas-crm':          { label: 'per användare/år', noun: 'användare',   nounPl: 'användare' },
+  mobil:               { label: 'per abonnemang/år', noun: 'abonnemang', nounPl: 'abonnemang' },
+  bredband:            { label: 'per anslutning/år', noun: 'anslutning', nounPl: 'anslutningar' },
 };
 
 export async function buildBranchAnchors(analyses) {
@@ -121,8 +159,8 @@ export async function buildBranchAnchors(analyses) {
   const out = {};
   for (const a of analyses) {
     if (a.route !== 'auto' || !a.category || seen.has(a.category)) continue;
-    const unitLabel = BRANCH_ANCHOR_UNIT[a.category];
-    if (!unitLabel) continue;                       // okänd enhet → inget ankare (aldrig gissa enheten)
+    const unit = BRANCH_ANCHOR_UNIT[a.category];
+    if (!unit) continue;                            // okänd enhet → inget ankare (aldrig gissa enheten)
     seen.add(a.category);
     if (seen.size > 8) break;
     try {
@@ -131,9 +169,13 @@ export async function buildBranchAnchors(analyses) {
       // vars median är PER ENHET och matchar unitLabel. 'real' (invoice_datapoints) och
       // 'live_analyses' percentilerar TOTAL årskostnad → fel enhet för per-enhet-frasen, exkluderas.
       if (b && b.median > 0 && !b.isTotal && b.source === 'real-public') {
+        // seats = antal enheter ur kundens egen faktura. median (per enhet) × seats = bransch-TOTAL,
+        // jämförbar med kundens annual_cost (bägge totaler, samma enhet). null → ingen total-jämförelse.
+        const seats = (typeof a.seat_count === 'number' && a.seat_count > 0) ? a.seat_count : null;
         out[a.category] = {
           category: a.category, median: b.median, p25: b.p25 ?? null,
-          source: b.source, unitLabel, customerCost: a.annual_cost ?? null,
+          source: b.source, unitLabel: unit.label, unitNoun: unit.noun, unitNounPl: unit.nounPl,
+          customerCost: a.annual_cost ?? null, seats,
         };
       }
     } catch { /* benchmark fail-open → inget ankare för den kategorin */ }
