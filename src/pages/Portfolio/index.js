@@ -704,7 +704,8 @@ export default function Portfolio() {
                     </div>
                     <h3>
                       {(() => {
-                        const cat = (getCategoryMeta(branchAnchor.category)?.label || branchAnchor.category).toLowerCase();
+                        const meta = getCategoryMeta(branchAnchor.category);
+                        const cat = meta?.inlineLabel || (meta?.label || branchAnchor.category).toLowerCase();
                         return <>Branschen betalar typiskt <em>{fmtNum(branchAnchor.p25 || branchAnchor.median)}–{fmtNum(branchAnchor.median)} kr</em> {branchAnchor.unitLabel} för {cat} — verifierat publikt listpris.</>;
                       })()}
                     </h3>

@@ -32,7 +32,16 @@ const ANALYSES = [
   A(11, 'Telia Sverige AB', 'mobil', 58092, 50304, 6230, 'auto', '2026-05-12T06:00:00Z'),
 ];
 
-const PAYLOAD = { ok: true, analyses: ANALYSES, email: 'ekonomi@lynxeye.se' };
+// Branschankaret (1A) — visas när varken kohort eller offentligt golv bär. Per-enhet-median
+// ur verifierat publikt listpris (BRANCHINDEX real-public). Memon väljer mest materiella
+// (högst customerCost) → saas-productivity. cohort/publicBench medvetet utelämnade här så
+// cold-start-kortet renderas (regel 8: verifiera exakt det tillstånd koden gäller).
+const BRANCH_ANCHORS = {
+  'saas-productivity': { category: 'saas-productivity', median: 2040, p25: 1704, source: 'real-public', unitLabel: 'per användare/år', customerCost: 184260 },
+  mobil:               { category: 'mobil',             median: 3348, p25: 2868, source: 'real-public', unitLabel: 'per abonnemang/år', customerCost: 58092 },
+};
+
+const PAYLOAD = { ok: true, analyses: ANALYSES, branchAnchors: BRANCH_ANCHORS, email: 'ekonomi@lynxeye.se' };
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.map': 'application/json', '.woff2': 'font/woff2' };
 
