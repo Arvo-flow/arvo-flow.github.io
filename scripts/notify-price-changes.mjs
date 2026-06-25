@@ -11,7 +11,7 @@
  * Flöde per leverantör:
  *   1. Idempotens-check  — har detta alert redan skickats för denna monitor-körning?
  *   2. Hitta kunder      — getAffectedCustomers() via gate_emails JOIN invoice_analyses
- *   3. Segment-signal    — getSegmentStats() → "X av Y bolag i er bransch"
+ *   3. Segment-signal    — getSegmentStats() → "X av Y bolag vi följer för <kategori>"
  *   4. Beräkna impact    — seat_count × pris-delta × 12 = kr/år per kund
  *   5. Magic link        — magic_tokens INSERT + briefing_reports upsert per kund
  *   6. Skicka mail       — personaliserat med kr-impact och magic link till Decision Board
@@ -34,6 +34,7 @@ import { getDb } from '../lib/db.js';
 import { getAffectedCustomers, getSegmentStats, hasAlertBeenSent, markAlertSent } from '../lib/price-alert-store.js';
 import { computeImpactKr, parseCheckPrice } from '../lib/price-impact.js';
 import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
+import { catLabel } from '../lib/format.js';
 
 const REPORT_PATH = process.argv[2] ?? '/tmp/price-monitor-report.json';
 const FROM        = process.env.RESEND_FROM    ?? 'Arvo Flow <analys@arvo-flow.se>';
@@ -251,7 +252,7 @@ function buildPriceAlertInsight({ keyword, category, supplierName, customer, gro
     : `Prisändring hos ${supplierName} — Arvo har detekterat`;
 
   const segSignal = segStats.total >= 3
-    ? `${segStats.withSupplier} av ${segStats.total} bolag vi följer i er bransch använder ${supplierName}.`
+    ? `${segStats.withSupplier} av ${segStats.total} bolag vi följer för ${catLabel(category)} använder ${supplierName}.`
     : null;
 
   const breakdownContext = hasExactNumbers
@@ -340,7 +341,7 @@ function buildAlertEmail({ customer, supplierName, groupAlerts, segStats, impact
   // Segment-signal: nätverkseffekten som gör Arvo unik
   const segBlock = segStats.total >= 3
     ? `<p style="margin:0 0 24px;padding:14px 18px;background:#EEF9F7;border-left:3px solid ${brand};border-radius:0 8px 8px 0;font-size:13px;color:${brand};font-weight:600;line-height:1.5">
-        ${segStats.withSupplier} av ${segStats.total} bolag vi följer i er bransch
+        ${segStats.withSupplier} av ${segStats.total} bolag vi följer för ${catLabel(category)}
         använder ${supplierName} — Arvo ser hela prisbilden, ni ser er del.
       </p>`
     : '';

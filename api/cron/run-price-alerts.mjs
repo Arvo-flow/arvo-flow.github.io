@@ -23,6 +23,7 @@ import {
 } from '../../lib/price-alert-store.js';
 import { computeImpactKr, parseCheckPrice } from '../../lib/price-impact.js';
 import { extractSupplierKeyword } from '../../lib/supplier-keyword.js';
+import { catLabel } from '../../lib/format.js';
 
 export const config = { maxDuration: 60 };
 
@@ -207,10 +208,11 @@ function buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefing
   const hasImpact  = impact && impact.impactKrYear > 0;
   const isIncrease = hasImpact;
 
-  // Segment intelligence — "X av Y bolag i er segment"
+  // Segment intelligence — "X av Y bolag vi följer för <kategori>" (kategori-scopat, inte industri:
+  // getSegmentStats räknar per kategori → den ärliga frasen är kategorin, aldrig "bransch"/"segment").
   const segLine = segStats.total >= 3
     ? `<tr><td colspan="2" style="padding:12px 14px;background:#EEF9F7;border-radius:8px;font-size:13px;color:#1B7A6E;font-weight:600;margin-bottom:20px;display:block">
-        Arvo ser samma höjning hos ${segStats.withSupplier} av ${segStats.total} bolag i ert segment
+        Arvo ser samma höjning hos ${segStats.withSupplier} av ${segStats.total} bolag vi följer för ${catLabel(category)}
        </td></tr>`
     : '';
 
