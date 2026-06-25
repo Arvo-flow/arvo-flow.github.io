@@ -12,6 +12,7 @@ import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib
 import { contractClockFinding } from '../lib/contract-clock.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
 import { getSupplierCategoryChanges } from '../lib/price-db.js';
+import { getBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
 
@@ -92,7 +93,52 @@ export default async function handler(req, res) {
   // ser framåt. Zero Trust: byggs bara ur verkliga prisändringar; tunn historik → tystnad.
   const forecasts = await buildForecasts(analyses);
 
-  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, email: email ?? undefined });
+  // ── Branschankaret: den kollektiva sanningen blir ALDRIG tom (cold-start) ──
+  // När varken privat kohort (≥3 bolag) eller offentligt golv (≥3 punkter) bär, visar vi ändå
+  // vad branschen TYPISKT betalar ur verifierade publika listpriser (BRANCHINDEX) — tydligt märkt
+  // branschestimat, aldrig "X bolag betalar". Ersätts av den verkliga kohorten när volymen kommer.
+  const branchAnchors = await buildBranchAnchors(analyses);
+
+  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, email: email ?? undefined });
+}
+
+// Enhetsfras per kategori — BRANCHINDEX-medianen är PER ENHET (per användare/år, per
+// abonnemang/år), aldrig en totalsumma. unit-fältet ('kr/år') ljuger; noten bär sanningen.
+// Därför en explicit allowlist: en kategori utan känd enhetsfras får ALDRIG bli ett ankare
+// (då skulle vi riskera att märka ett per-enhet-tal som vore det en totalsumma — enhetsfelet
+// som enhetskarantänen finns för att stoppa). Bandet visas, kundjämförelse görs ALDRIG här
+// (den bor i innehavskortet, byggt ur kundens egen verifierade analys).
+export const BRANCH_ANCHOR_UNIT = {
+  'saas-productivity': 'per användare/år',
+  'saas-creative':     'per användare/år',
+  'saas-crm':          'per användare/år',
+  mobil:               'per abonnemang/år',
+  bredband:            'per anslutning/år',
+};
+
+export async function buildBranchAnchors(analyses) {
+  const seen = new Set();
+  const out = {};
+  for (const a of analyses) {
+    if (a.route !== 'auto' || !a.category || seen.has(a.category)) continue;
+    const unitLabel = BRANCH_ANCHOR_UNIT[a.category];
+    if (!unitLabel) continue;                       // okänd enhet → inget ankare (aldrig gissa enheten)
+    seen.add(a.category);
+    if (seen.size > 8) break;
+    try {
+      const b = await getBenchmark({ category: a.category, industry: a.industry, employees: a.employees });
+      // ENDAST 'real-public' (BRANCHINDEX verifierat publikt listpris) — det är den enda källan
+      // vars median är PER ENHET och matchar unitLabel. 'real' (invoice_datapoints) och
+      // 'live_analyses' percentilerar TOTAL årskostnad → fel enhet för per-enhet-frasen, exkluderas.
+      if (b && b.median > 0 && !b.isTotal && b.source === 'real-public') {
+        out[a.category] = {
+          category: a.category, median: b.median, p25: b.p25 ?? null,
+          source: b.source, unitLabel, customerCost: a.annual_cost ?? null,
+        };
+      }
+    } catch { /* benchmark fail-open → inget ankare för den kategorin */ }
+  }
+  return out;
 }
 
 async function buildForecasts(analyses) {

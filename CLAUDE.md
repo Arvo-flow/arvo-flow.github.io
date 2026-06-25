@@ -742,3 +742,40 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 3. **T2-data (kohort-delta):** Spåra leverantörs­byten i en bransch via invoice_analyses-nätverket → "6 av 14 bolag i er bransch bytte från Telia förra kvartalet". Kräver kritisk massa av kunddata.
 
 4. **CT-datering av M365-onboarding:** crt.sh-loggar för `autodiscover.{domain}` ger exakt onboarding-datum → "Ni låste er i april 2021, typisk bindningstid är 3 år = förhandlingsbar nu". Kräver HTTP-egress (Vercel, ej sandbox).
+
+---
+
+### Levande vägkartan — "vakten som ser och agerar" (2026-06-25)
+
+> Den grundade kartan över lösningen: **vetandet** (analys, ingest, rummet, avslöjandet, briefingar,
+> maskinvakterna) är byggt och starkt. **Agerandet** (Switch nåbar från prod, autonom slinga) är ännu
+> ritning/stub. Moaten är data-svältad + halvmanuell. Vägkartan stänger glappet i denna ordning. Fortnox/
+> Visma-kopplingen (alltid-på-perceptionen) är medvetet parkerad några veckor till — den lyfts som egen fas.
+> Kör en punkt i taget: grundad, testlåst, deployad. Inga gissningar, inga fejkflöden.
+
+**Fas 1 — fyll rummet med levande sanning (lättast moat-vinst först):**
+- **1A · Branschankaret** ✅ KLAR 2026-06-25. "Den kollektiva sanningen" blir ALDRIG tom: när varken privat
+  kohort (≥3 bolag) eller offentligt golv (≥3 punkter) bär, visar rummet vad branschen TYPISKT betalar PER
+  ENHET ur verifierat publikt listpris (`BRANCHINDEX` `real-public`). `api/invoice-history.mjs`
+  `buildBranchAnchors` + `Portfolio` `branchAnchor`-kort. Integritetslås: explicit enhets-allowlist
+  (`BRANCH_ANCHOR_UNIT`) — okänd kategori blir aldrig ankare; ENDAST `real-public` (per-enhet-medianen som
+  matchar etiketten), aldrig `real`/`live_analyses` (totalsumma → fel enhet). ALDRIG en kundjämförelse i
+  ankaret (kundens position bor i innehavskortet). Testlåst: `tests/branch-anchors.mjs`.
+- **1B · Marknadsrörelsen:** koppla `price-monitor.mjs` → kohort: "Telia höjde för 8 av 14 i er bransch" som
+  ett FindingCard i rummet + i alert-mailet. Ny `lib/market-movement.js`. (Samma moat som outbound-punkt 1.)
+- **1C · Vaktens hjärtslag:** nattlig `api/cron/vakt-sweep` + `vakt_events`-tabell → radarns "senaste svep"
+  och kvittona blir VERKLIGA tidsstämplade händelser, inte härledd text. Vakten stängs aldrig av — på riktigt.
+
+**Fas 2 — gör agerandet nåbart (Nivå 1, smalt):**
+- **2A · Switch-utlösaren:** `api/switch/prepare` som driver `orchestrator.js` till `FULLMAKT_PREPARED` med
+  riktig `generateFullmakt`. Säljs som "förbered + signera" tills rälsen bevisat sig live (bibelns Switch-
+  doktrin: `mode:'stub'` → skarp först när den är verifierad end-to-end). Ingen telefonkö, ingen förhandling.
+
+**Fas 3 — närma prognosdata automation:**
+- **3A · Prognosmaten:** `price-monitor.mjs` auto-applicerar högkonfidens-prisändringar till
+  `supplier_price_history` → Maktkalenderns prognos (`lib/price-forecast.js`) får färskt underlag utan handpåläggning.
+
+**Parkerad (egen fas, några veckor till): Fortnox/Visma-sync.** Den levande kopplingen till kundens verkliga
+spendering är nyckelstenen (finnare + avtryckare + verifierare + om-vakt i ett). Tyngst, men lyfter hela
+produkten från "kunden matar oss fakturor" till "vakten ser allt, alltid". Byggs när fas 1 gjort rummet
+oumbärligt även utan den.

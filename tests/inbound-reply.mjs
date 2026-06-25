@@ -36,19 +36,23 @@ describe('Mejlsvaret — replyHtml', () => {
   });
 
   test('regel 5: nettobesparingen visas med webbens belopp och etikett', () => {
+    // Etiketten är "Möjlig nettobesparing" — SAMMA som webben (Portfolio), efter Switch-doktrin-
+    // migreringen som strök "identifierad" (claims-audit förbjuder det i kundytor: vi lovar bara
+    // realiserad besparing, och innan bytet är den möjlig, aldrig "identifierad").
     const html = norm(replyHtml({ results: [NMIT_RESULT], portalLink: null }));
-    assert.match(html, /Identifierad nettobesparing/);
+    assert.match(html, /Möjlig nettobesparing/);
+    assert.ok(!/Identifierad nettobesparing/.test(html), 'gammal "identifierad"-copy kan aldrig återuppstå');
     assert.match(html, /\+19 655 kr\/år/);
     assert.match(html, /450 871 kr\/år/, 'marknadspriset visas när besparing finns');
     assert.ok(!/Inget tydligt prisgap/.test(html), 'motsägelsen kan aldrig återuppstå');
   });
 
-  test('utan besparing: "Väl förhandlat" (webbens besked) — och inget marknadspris-rad', () => {
+  test('utan besparing: "Marknadsmässigt pris" (webbens besked) — och inget marknadspris-rad', () => {
     const html = norm(replyHtml({
       results: [{ ...NMIT_RESULT, netSaving: 0, suggestedAnnualCost: 475_440 }],
       portalLink: null,
     }));
-    assert.match(html, /Väl förhandlat — inget prisgap mot verifierat marknadspris/);
+    assert.match(html, /Marknadsmässigt pris — inget prisgap mot verifierat marknadspris/);
     assert.ok(!/Marknadspris, samma tjänst/.test(html));
   });
 
@@ -76,7 +80,7 @@ describe('Mejlsvaret — buildReplySubject', () => {
   test('med besparing: leverantör + nettobesparing (samma tal som webben)', () => {
     assert.equal(
       norm(buildReplySubject([NMIT_RESULT])),
-      'Er analys: Nordic Managed IT Services AB — 19 655 kr/år i identifierad nettobesparing'
+      'Er analys: Nordic Managed IT Services AB — 19 655 kr/år i möjlig nettobesparing'
     );
   });
 

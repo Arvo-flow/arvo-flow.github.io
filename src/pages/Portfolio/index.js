@@ -193,6 +193,7 @@ export default function Portfolio() {
   const [cohort, setCohort]     = useState({});
   const [publicBench, setPublicBench] = useState({});
   const [forecasts, setForecasts] = useState({});
+  const [branchAnchors, setBranchAnchors] = useState({});
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
   const [fingerprint, setFingerprint] = useState('');
@@ -229,6 +230,7 @@ export default function Portfolio() {
     setCohort(data.cohort ?? {});
     setPublicBench(data.publicBench ?? {});
     setForecasts(data.forecasts ?? {});
+    setBranchAnchors(data.branchAnchors ?? {});
   }, [fingerprint, magic, sessionToken]);
 
   useEffect(() => {
@@ -426,6 +428,23 @@ export default function Portfolio() {
     return null;
   }, [featured, suppliers, publicBench]);
 
+  // Branschankaret — den kollektiva sanningen blir ALDRIG tom. När varken privat kohort (≥3 bolag)
+  // eller offentligt golv (≥3 punkter) finns visar vi vad branschen TYPISKT betalar per enhet, ur
+  // verifierat publikt listpris (BRANCHINDEX, real-public). Tydligt branschestimat — ALDRIG en
+  // kundjämförelse (enheten är per användare/abonnemang, kundens totalposition bor i innehavskortet).
+  // Ersätts av den verkliga kohorten i samma yta så fort nätverksvolymen bär den.
+  const branchAnchor = useMemo(() => {
+    if (featured || publicFeatured) return null;
+    let best = null;
+    for (const g of suppliers) {
+      const an = branchAnchors[g.latest.category];
+      if (!an || !(an.median > 0)) continue;
+      const material = an.customerCost ?? 0;
+      if (!best || material > best._material) best = { ...an, _material: material };
+    }
+    return best;
+  }, [featured, publicFeatured, suppliers, branchAnchors]);
+
   // Maktkalendern — årsavtal med uppskattat förnyelsefönster (created_at + 12 mån).
   // Estimat, tydligt märkt (regel 3) — inga fabricerade sannolikheter.
   const renewals = useMemo(() => suppliers
@@ -587,7 +606,7 @@ export default function Portfolio() {
             </Receipts>
 
             {/* ── Kohort-sanningen + Maktkalendern (gate:ade till verklig data) ── */}
-            {(featured || publicFeatured || renewals.length > 0) && (
+            {(featured || publicFeatured || branchAnchor || renewals.length > 0) && (
               <Grid>
                 {publicFeatured && (
                   <Truth $full={renewals.length === 0}>
@@ -677,8 +696,46 @@ export default function Portfolio() {
                   </Truth>
                 )}
 
+                {branchAnchor && (
+                  <Truth $full={renewals.length === 0}>
+                    <div className="card-eyebrow">
+                      <span>Den kollektiva sanningen</span>
+                      <span className="src">branschestimat</span>
+                    </div>
+                    <h3>
+                      {(() => {
+                        const cat = (getCategoryMeta(branchAnchor.category)?.label || branchAnchor.category).toLowerCase();
+                        return <>Branschen betalar typiskt <em>{fmtNum(branchAnchor.p25 || branchAnchor.median)}–{fmtNum(branchAnchor.median)} kr</em> {branchAnchor.unitLabel} för {cat} — verifierat publikt listpris.</>;
+                      })()}
+                    </h3>
+                    {(() => {
+                      const max = branchAnchor.median || 1;
+                      const rows = [
+                        { lbl: 'Branschsnitt', amt: branchAnchor.median },
+                        ...(branchAnchor.p25 ? [{ lbl: 'Lägst 25 %', amt: branchAnchor.p25 }] : []),
+                      ];
+                      return (
+                        <div className="bars">
+                          {rows.map((r) => (
+                            <div className="barrow" key={r.lbl}>
+                              <span className="lbl">{r.lbl}</span>
+                              <span className="track"><span className="fill" style={{ width: `${Math.max(8, (r.amt / max) * 100)}%` }} /></span>
+                              <span className="amt">{fmtNum(r.amt)} kr</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    <p className="truth-note">
+                      Branschtypiskt {branchAnchor.unitLabel}, ur verifierade publika listpriser — ett ankare, inte er
+                      exakta position (den står i innehavet nedan). När fler bolag i er bransch delar sina fakturor blir
+                      det här <b>er levande kohort</b> — den sanning ingen jämförelsesajt kan ge.
+                    </p>
+                  </Truth>
+                )}
+
                 {renewals.length > 0 && (
-                  <Calendar $full={!featured && !publicFeatured}>
+                  <Calendar $full={!featured && !publicFeatured && !branchAnchor}>
                     <div className="card-eyebrow">
                       <span>Maktkalendern · era årsavtal</span>
                       <span className="src">uppskattat</span>
