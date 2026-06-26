@@ -780,8 +780,29 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
   doktrin: `mode:'stub'` → skarp först när den är verifierad end-to-end). Ingen telefonkö, ingen förhandling.
 
 **Fas 3 — närma prognosdata automation:**
-- **3A · Prognosmaten:** `price-monitor.mjs` auto-applicerar högkonfidens-prisändringar till
-  `supplier_price_history` → Maktkalenderns prognos (`lib/price-forecast.js`) får färskt underlag utan handpåläggning.
+- **3A · Prognosmaten + Verifieringsjuryn** (🔨 bygger 2026-06-26). `price-monitor`-detekterade
+  prisändringar matar `supplier_price_history` → Maktkalenderns prognos + Marknadsrörelsen får färskt
+  underlag UTAN människan-i-loopen. Se grundarbeslutet nedan.
+
+> **✅ GRUNDARBESLUT 2026-06-26 — VERIFIERINGSJURYN ERSÄTTER MÄNNISKAN-I-LOOPEN (avviker medvetet
+> från den gamla "Human-in-the-loop: granska diff manuellt"-doktrinen i `price-monitor.yml`).**
+> En modern high-tech-vakt verifierar *maskinellt*, inte manuellt. Människan-i-loopen var det sämsta
+> av två världar — en flaskhals OCH en singelpunkt som själv missläser. Den ersätts av en **jury av
+> oberoende maskinvittnen som måste vara överens** (`lib/price-verdict.js` + `lib/price-extract.js`),
+> *mätbart strängare* än ett mänskligt ögonkast. Integritetslinjen är ORÖRD: "verifierat" måste
+> FÖRTJÄNAS, aldrig påstås. Grindar (felar olika): **gSource** (rätt produkt på sidan), **gSanity**
+> (magnitud inom band — dödar enhets-/valutafel & +400 %-artefakter), **gConsensus** (sidans råtext
+> bekräftar siffran deterministiskt — dödar AI-hallucination), **gConfidence** (AI-konfidens ≥ 0,85),
+> **gStability** (samma siffra över ≥2 körningar — dödar glitchar/kampanjer), **corroboration** (andra
+> källa, höjer). **Nivå → vad vi får SÄGA (regel 4):** `verified` (alla grindar) → "verifierat" på
+> rörelse-kortet + skrivs till `supplier_price_history`; `provisional` (osäker) → matar ENBART den
+> hedgade prognosen, aldrig "verifierat"; `rejected` → tystnad. **Varför det är tryggt (asymmetrin,
+> regel 4):** ett sällsynt falskt "Telia höjde" kostar kunden INGET (vi bad dem aldrig agera
+> oåterkalleligt — bara "vi bevakar"). En BESPARINGSSIFFRA eller ett BYTE auto-verifieras ALDRIG så —
+> där är nedsidan oåterkallelig. **Gränsen går vid konsekvensen, inte vid tekniken.** Svänghjul: en
+> topp-nivå-ändring som ändå visar sig fel blir ett märkt exempel som strammar grindarna. Maskinvakt:
+> `tests/price-verdict.mjs`. (Wiring: kandidat-persistens för stabilitet + skarp koppling till rörelse/
+> prognos byggs härnäst — juryns kärna är klar och testlåst.)
 
 **Parkerad (egen fas, några veckor till): Fortnox/Visma-sync.** Den levande kopplingen till kundens verkliga
 spendering är nyckelstenen (finnare + avtryckare + verifierare + om-vakt i ett). Tyngst, men lyfter hela
