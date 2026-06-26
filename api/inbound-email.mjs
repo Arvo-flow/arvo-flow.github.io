@@ -25,6 +25,7 @@ import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { getKv } from '../lib/kv.js';
 import { fmtNumber } from '../lib/format.js';
+import { enqueueJobs } from '../lib/ingest-queue.js';
 
 export const config = { maxDuration: 60 };
 
@@ -34,10 +35,12 @@ const getResend = () =>
 const FROM     = process.env.RESEND_FROM ?? 'Arvo Intelligence <analys@arvoflow.se>';
 const BASE_URL = process.env.ARVO_BASE_URL ?? 'https://arvoflow.se';
 
-const MAX_PDFS_PER_MAIL  = 2;            // behåll 2 — fler PDF:er/mail riskerar 60s-timeout (maxDuration)
+const MAX_PDFS_PER_MAIL  = 2;            // ≤ detta antal analyseras INLINE (synkront, svar med resultat).
+const INLINE_LIMIT       = 2;            // > detta → ASYNK kö (bulk: 50–100 fakturor på en gång).
+const MAX_BULK_PDFS      = 100;          // tak per mail i bulk-läge
 const MAX_PDF_BYTES      = 6 * 1024 * 1024;
-// Env-överstyrbar; default höjt till 40 för grundarens 20-faktura-testpass (utrymme för canary + omtag).
-// Återställ till 10 efter testet (eller sätt INBOUND_RATE_LIMIT_PER_DAY i Vercel).
+// Env-överstyrbar; höjd default för testpass. I bulk-läge är detta mindre relevant (en kund kan
+// mata in många i ETT mail). Sätt INBOUND_RATE_LIMIT_PER_DAY i Vercel för att justera.
 const RATE_LIMIT_PER_DAY = Number(process.env.INBOUND_RATE_LIMIT_PER_DAY) || 40;
 
 function send(res, status, body) {
@@ -91,6 +94,27 @@ export async function fetchInboundPdfs(emailId, { fetchImpl = fetch } = {}) {
     out.push({ filename, content: buf.toString('base64') });
   }
   return out;
+}
+
+// Hämta EN PDF-bilaga vid given index (bland PDF:erna) — drain-arbetaren hämtar ett köat jobbs PDF
+// vid analystillfället (signerade download_url:er är färska vid varje listning). null om saknas/för stor.
+export async function fetchInboundPdfByIndex(emailId, index, { fetchImpl = fetch } = {}) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || !emailId) return null;
+  const list = await fetchImpl(`https://api.resend.com/emails/receiving/${emailId}/attachments`, {
+    headers: { Authorization: `Bearer ${key}` },
+  });
+  if (!list.ok) throw new Error(`bilagelistning misslyckades (HTTP ${list.status})`);
+  const { data } = await list.json();
+  const pdfs = (data ?? []).filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
+  const a = pdfs[index];
+  if (!a) return null;
+  const filename = a.filename ?? 'faktura.pdf';
+  if (a.size > MAX_PDF_BYTES) return { filename, tooBig: true };
+  const dl = await fetchImpl(a.download_url);
+  if (!dl.ok) throw new Error(`bilagenedladdning misslyckades (HTTP ${dl.status})`);
+  const buf = Buffer.from(await dl.arrayBuffer());
+  return { filename, content: buf.toString('base64') };
 }
 
 /** Magic link in i kontoret — samma tabell/format som request-magic-link.mjs. */
@@ -222,6 +246,41 @@ export function replyHtml({ results, portalLink }) {
 </body></html>`;
 }
 
+// Bulk-kvittot — när en kund matar in många fakturor: svara DIREKT att vi tog emot dem och att
+// kontoret fylls medan analyserna körs (regel 9: löftet bärs av kön + drain-cronen, inte tomt prat).
+export function bulkReceivedHtml({ count, portalLink }) {
+  return `<!DOCTYPE html>
+<html lang="sv"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
+<body style="margin:0;padding:0;background:${M.bg};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${M.bg}" style="background:${M.bg};">
+    <tr><td align="center" style="padding:36px 14px;">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:${M.card};border-radius:16px;overflow:hidden;border:1px solid ${M.hairline};">
+        <tr><td bgcolor="${M.dark}" style="background:${M.dark};padding:30px 34px 26px;">
+          <p style="margin:0 0 12px;font-family:${M.sans};font-size:11px;font-weight:700;letter-spacing:0.42em;color:${M.tealBright};">ARVO</p>
+          <p style="margin:0;font-family:${M.serif};font-size:25px;font-weight:700;color:#FFFFFF;letter-spacing:-0.01em;">Vi tog emot ${count} fakturor.</p>
+        </td></tr>
+        <tr><td style="height:3px;background:linear-gradient(90deg,transparent 0%,${M.teal} 35%,${M.tealBright} 50%,${M.teal} 65%,transparent 100%);font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td style="padding:26px 30px 8px;">
+          <p style="margin:0 0 18px;font-family:${M.sans};font-size:14px;line-height:1.65;color:${M.inkSoft};">Arvo analyserar dem nu, en i taget mot verifierat marknadspris. <strong>Ert kontor fylls i takt med att de blir klara</strong> — håll det öppet så ser ni varje fynd landa.</p>
+          ${portalLink ? `
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 6px;">
+            <tr><td align="center">
+              <a href="${portalLink}" style="display:inline-block;background:linear-gradient(140deg,#4ECDC4 0%,#1DB09A 52%,#178A7B 100%);background-color:#1DB09A;color:#FFFFFF;text-decoration:none;font-family:${M.sans};font-size:15px;font-weight:700;padding:15px 38px;border-radius:100px;">Öppna ert Arvo-kontor&nbsp;→</a>
+            </td></tr>
+            <tr><td align="center" style="padding-top:10px;">
+              <p style="margin:0;font-family:${M.sans};font-size:12px;line-height:1.6;color:${M.faint};">Länken är personlig och gäller 24 timmar.</p>
+            </td></tr>
+          </table>` : ''}
+        </td></tr>
+        <tr><td style="padding:16px 30px;border-top:1px solid ${M.hairline};">
+          <p style="margin:0;font-family:${M.sans};font-size:11px;line-height:1.6;color:#9AADA8;text-align:center;">Svaret skickas alltid och enbart till avsändaradressen · arvoflow.se</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -274,6 +333,35 @@ export default async function handler(req, res) {
     } catch { /* non-fatal */ }
   }
 
+  const db = getDb();
+
+  // ── BULK-läge: >2 PDF:er → köa + svara direkt, drain-cronen betar av (moaten: 50–100 på en gång) ──
+  // Serverless kan inte analysera 100 PDF:er i ETT 60s-anrop. Vi köar ett jobb per PDF (snabbt) och
+  // svarar "vi tog emot N — kontoret fylls medan vi kör". api/cron/drain-ingest analyserar dem.
+  const pdfAtts = (data.attachments ?? [])
+    .filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
+  if (pdfAtts.length > INLINE_LIMIT) {
+    const jobs = pdfAtts.slice(0, MAX_BULK_PDFS).map((a, idx) => ({
+      emailId: mailId, sender, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
+    }));
+    const added = await enqueueJobs(jobs);
+    const portalLink = await mintPortalLink(db, sender);
+    try {
+      const resend = getResend();
+      if (resend) {
+        await resend.emails.send({
+          from: FROM, to: sender,
+          subject: `Vi tog emot ${added} fakturor — Arvo analyserar dem nu`,
+          html: bulkReceivedHtml({ count: added, portalLink }),
+        });
+      } else {
+        console.error('[inbound-email] RESEND_API_KEY saknas — bulk-kvitto ej skickat');
+      }
+    } catch (err) { console.error('[inbound-email] bulk-kvitto misslyckades:', err.message); }
+    console.log(`[inbound-email] BULK från=${sha16(sender)}: köade ${added}/${pdfAtts.length} jobb`);
+    return send(res, 200, { ok: true, mode: 'async', queued: added });
+  }
+
   // Inline-innehåll om Resend någonsin skickar det — annars hämtas via Attachments-API:t
   // (webhooken innehåller ALDRIG innehåll i dag, bara metadata — Resend-designval).
   let pdfs = (data.attachments ?? [])
@@ -302,7 +390,6 @@ export default async function handler(req, res) {
   }
   console.log(`[inbound-email] från=${sha16(sender)} bilagor=${(data.attachments ?? []).length} pdf=${pdfs.length}`);
 
-  const db = getDb();
   const results = [];
 
   if (pdfs.length === 0) {

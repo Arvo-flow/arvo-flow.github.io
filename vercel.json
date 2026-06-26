@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/generate-briefings",
       "schedule": "0 9 1 * *"
+    },
+    {
+      "path": "/api/cron/drain-ingest",
+      "schedule": "*/2 * * * *"
     }
   ],
   "functions": {
@@ -59,6 +63,9 @@
       "maxDuration": 60
     },
     "api/inbound-email.mjs": {
+      "maxDuration": 60
+    },
+    "api/cron/drain-ingest.mjs": {
       "maxDuration": 60
     }
   },

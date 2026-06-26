@@ -396,16 +396,22 @@ api/test-invoice.mjs          ← orchestrerar hela pipelinen, maxDuration 60s
 ### Ingest — mail-in (dörren till kontoret)
 
 ```
-Kund vidarebefordrar faktura-PDF → inbox-adress (Resend inbound)
+Kund vidarebefordrar faktura-PDF(er) → inbox-adress (Resend inbound)
   │
   ▼
 api/inbound-email.mjs            ← webhook email.received, maxDuration 60
   ├─ Auth: ?secret=INBOUND_WEBHOOK_SECRET (constant-time) · idempotens per email_id (KV)
-  ├─ Rate limit 10 mail/avsändare/dygn · endast PDF · max 2 bilagor · max 6 MB
+  ├─ endast PDF · max 6 MB/styck · rate limit (env INBOUND_RATE_LIMIT_PER_DAY)
+  ├─ ≤2 PDF:er  → INLINE: analysera synkront, svar MED resultat (snabbvägen, oförändrad)
+  ├─ >2 PDF:er  → BULK (moaten: 50–100 fakturor på en gång): köa ett jobb/PDF i ingest_jobs,
+  │    svara DIREKT ("vi tog emot N — kontoret fylls medan vi kör"), api/cron/drain-ingest betar av
   ├─ INTERNT POST /api/test-invoice (bypass) — EN pipeline, aldrig en kopia (regel 1)
   │    identitet = avsändaradress (userEmail) + syntetisk fingerprint mail:<sha16>
   ├─ Magic token (magic_tokens) → kontorslänk /portfolio?magic=<token>
-  └─ Svarsmail ENBART till avsändaren: fynd + siffror + "Öppna ert Arvo-kontor →"
+  └─ Svarsmail ENBART till avsändaren
+
+api/cron/drain-ingest.mjs        ← Vercel-cron */2 min · claimar batch (FOR UPDATE SKIP LOCKED),
+  analyserar var PDF via samma pipeline, completeJob/failJob (retry tills attempts-tak). lib/ingest-queue.js.
 ```
 
 **Kontorets datadörr:** `api/invoice-history?fingerprint=…&magic=…` — magic-token
