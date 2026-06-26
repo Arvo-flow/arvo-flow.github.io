@@ -103,6 +103,16 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
+      # Verifieringsjuryn (3A): kör domen över upptäckta ändringar. Skriver bara JURY-VERIFIERADE
+      # ändringar (stabila över ≥2 nätter + konsensus + sund + rätt produkt) till ändringsloggen —
+      # ingen människa-i-loopen. Provisoriska väntar. Matar Maktkalenderns prognos + Marknadsrörelsen.
+      - name: Verify price changes (jury)
+        if: always() && steps.monitor.outcome != 'skipped'
+        continue-on-error: true
+        run: node scripts/verify-price-changes.mjs /tmp/price-monitor-report.json
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Apply proposals and create branch
         id: apply
         if: steps.monitor.outcome == 'failure'

@@ -118,4 +118,24 @@ await db`
 `;
 await db`CREATE INDEX IF NOT EXISTS vakt_events_swept_idx ON vakt_events (swept_at DESC)`;
 
-console.log('✅  Pristabeller klara: supplier_prices, supplier_price_history, invoice_benchmarks, vakt_events.');
+// ── Verifieringsjuryns stabilitets-grind (3A) ───────────────────────────────
+// En upptäckt prisändring måste ses över ≥2 körningar innan den graderas till
+// supplier_price_history. Provisoriska kandidater väntar här. lib/price-candidates.js
+// self-ensurar samma schema.
+await db`
+  CREATE TABLE IF NOT EXISTS price_change_candidates (
+    id            BIGSERIAL PRIMARY KEY,
+    supplier      TEXT NOT NULL,
+    category      TEXT NOT NULL,
+    check_name    TEXT NOT NULL,
+    new_numeric   NUMERIC,
+    old_numeric   NUMERIC,
+    seen_count    INTEGER NOT NULL DEFAULT 1,
+    first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_seen_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    graduated     BOOLEAN NOT NULL DEFAULT false,
+    CONSTRAINT uq_candidate UNIQUE (supplier, category, check_name)
+  )
+`;
+
+console.log('✅  Pristabeller klara: supplier_prices, supplier_price_history, invoice_benchmarks, vakt_events, price_change_candidates.');

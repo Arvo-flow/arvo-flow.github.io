@@ -11,7 +11,7 @@ import { getMarketIntelligence } from '../lib/price-alert.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding } from '../lib/contract-clock.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
-import { getSupplierCategoryChanges, getRecentHike } from '../lib/price-db.js';
+import { getSupplierCategoryChangesByKeyword, getRecentHike } from '../lib/price-db.js';
 import { getSegmentStats } from '../lib/price-alert-store.js';
 import { marketMovementFinding } from '../lib/market-movement.js';
 import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
@@ -191,20 +191,24 @@ export async function buildBranchAnchors(analyses) {
 }
 
 async function buildForecasts(analyses) {
+  // Varumärkesbrygga (samma som buildMovements): nyckelord + ILIKE, annars matchar prognosen aldrig
+  // juryns/price-monitorns beskrivande leverantörsnamn i supplier_price_history.
   const pairs = new Map();
   for (const a of analyses) {
-    if (a.route !== 'auto') continue;
-    const supplier = a.normalized_supplier || a.supplier;
-    if (!supplier || !a.category) continue;
-    pairs.set(`${supplier}|${a.category}`, { supplier, category: a.category });
+    if (a.route !== 'auto' || !a.category) continue;
+    const keyword = extractSupplierKeyword(a.normalized_supplier || a.supplier);
+    if (!keyword) continue;
+    const key = `${keyword}|${a.category}`;
+    if (!pairs.has(key)) pairs.set(key, { keyword, category: a.category });
     if (pairs.size >= 10) break;
   }
   if (pairs.size === 0) return {};
 
   const entries = await Promise.all(
-    [...pairs.entries()].map(async ([key, { supplier, category }]) => {
+    [...pairs.entries()].map(async ([key, { keyword, category }]) => {
       try {
-        const rows = await getSupplierCategoryChanges({ supplier, category });
+        const rows = await getSupplierCategoryChangesByKeyword({ supplierKeyword: keyword, category });
+        const supplier = keyword.replace(/\b\w/g, (c) => c.toUpperCase());   // snyggt varumärke i titeln
         const f = priceHikeForecast(rows, { supplier });
         return f ? [key, { ...f, category }] : null;   // category → rummet kan undertrycka mot rörelsen
       } catch { return null; }

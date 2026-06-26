@@ -20,6 +20,8 @@
 import { writeFileSync } from 'fs';
 import { chromium } from 'playwright';
 import Anthropic from '@anthropic-ai/sdk';
+// Verifieringsjuryns sid-beroende vittnen (resten av juryn körs i scripts/verify-price-changes.mjs).
+import { extractPriceTokens, pageConfirmsPrice, pageMentionsProduct } from '../lib/price-extract.js';
 
 const HEADED = process.argv.includes('--headed');
 const PAGE_TIMEOUT = 30_000;
@@ -563,6 +565,18 @@ for (const source of PRICE_CHECKS) {
       const haiku = await extractPriceWithHaiku(pageText, source, checkObj);
       if (haiku) {
         alert.haiku = haiku;
+        // Verifieringsjuryns SID-beroende vittnen (sidan finns bara här i minnet). De DB-beroende
+        // grindarna (stabilitet) + domen körs i verify-price-changes.mjs ur dessa signaler.
+        const oldNumeric = extractPriceTokens(alert.check)[0] ?? null;   // gamla priset ur check-namnet
+        const keywords = [source.supplier, ...String(alert.check).split(/\s+/)];
+        alert.verify = {
+          oldNumeric,
+          newNumeric:      haiku.extractedNumeric ?? null,
+          unit:            haiku.extractedUnit ?? null,
+          haikuConfidence: haiku.confidence ?? null,
+          productPresent:  pageMentionsProduct(pageText, keywords),
+          pageConfirmsNew: pageConfirmsPrice(pageText, haiku.extractedNumeric),
+        };
         const action = haiku.actionRequired;
         const price  = haiku.extractedPrice ?? '(ej hittad)';
         const pct    = Math.round((haiku.confidence ?? 0) * 100);

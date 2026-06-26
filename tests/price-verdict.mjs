@@ -85,3 +85,18 @@ describe('price-verdict · asymmetri-tröskeln är medveten', () => {
     assert.ok(withC.confidence >= without.confidence);
   });
 });
+
+// ── Stabilitets-grindens rena kärna (price-candidates.samePrice) ────────────────
+import { samePrice } from '../lib/price-candidates.js';
+
+describe('price-candidates · samePrice (stabilitets-matchning)', () => {
+  test('samma siffra inom öres-tolerans → true (en natt till räknas som stabil)', () => {
+    assert.equal(samePrice(298, 298), true);
+    assert.equal(samePrice(298, 298.5), true);     // ≤1 % / ≤1 kr
+  });
+  test('annan siffra → false (ny kandidat, räknaren nollas)', () => {
+    assert.equal(samePrice(298, 349), false);
+    assert.equal(samePrice(298, 0), false);
+    assert.equal(samePrice(0, 298), false);
+  });
+});
