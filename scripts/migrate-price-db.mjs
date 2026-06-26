@@ -100,4 +100,22 @@ await db`
 `;
 await db`CREATE INDEX IF NOT EXISTS ib_cat_idx ON invoice_benchmarks (category, company_size, industry)`;
 
-console.log('✅  Pristabeller klara: supplier_prices, supplier_price_history, invoice_benchmarks.');
+// ── Vaktens hjärtslag (1C) ──────────────────────────────────────────────────
+// Ett verkligt svep per nattlig price-monitor-körning (record-vakt-sweep.mjs).
+// lib/vakt.js self-ensurar samma schema (CREATE TABLE IF NOT EXISTS) så prod
+// täcks oavsett migrationskörning; här för upptäckbarhet (schemat bor i migrationen).
+await db`
+  CREATE TABLE IF NOT EXISTS vakt_events (
+    id           BIGSERIAL PRIMARY KEY,
+    event_type   TEXT        NOT NULL DEFAULT 'sweep',
+    swept_at     TIMESTAMPTZ NOT NULL,
+    sources      INTEGER,
+    price_points INTEGER,
+    changes      INTEGER,
+    detail       JSONB,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await db`CREATE INDEX IF NOT EXISTS vakt_events_swept_idx ON vakt_events (swept_at DESC)`;
+
+console.log('✅  Pristabeller klara: supplier_prices, supplier_price_history, invoice_benchmarks, vakt_events.');

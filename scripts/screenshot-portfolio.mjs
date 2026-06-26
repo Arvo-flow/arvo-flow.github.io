@@ -51,7 +51,10 @@ const MOVEMENTS = {
   },
 };
 
-const PAYLOAD = { ok: true, analyses: ANALYSES, branchAnchors: BRANCH_ANCHORS, movements: MOVEMENTS, email: 'ekonomi@lynxeye.se' };
+// Vaktens hjärtslag (1C) — senaste verkliga svep, tidsstämplat. Staged så radarn kan ses lokalt.
+const VAKT = { sweptAt: '2026-06-25T21:00:00Z', sources: 38, pricePoints: 47, changes: 1 };
+
+const PAYLOAD = { ok: true, analyses: ANALYSES, branchAnchors: BRANCH_ANCHORS, movements: MOVEMENTS, vakt: VAKT, email: 'ekonomi@lynxeye.se' };
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.map': 'application/json', '.woff2': 'font/woff2' };
 

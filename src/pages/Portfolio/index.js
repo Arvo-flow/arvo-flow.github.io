@@ -101,6 +101,18 @@ const fmtNum   = (n) => (n == null ? '–' : Math.round(n).toLocaleString('sv-SE
 const fmtDate  = (iso) => (iso ? new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) : '');
 const monthYear = (d) => d.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
 
+// Relativ tid för vaktens "senaste svep" — verklig tidsstämpel ur vakt_events, mänskligt formaterad.
+const relSwept = (iso) => {
+  if (!iso) return '';
+  const d = new Date(iso); if (Number.isNaN(d.getTime())) return '';
+  const hm = d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+  const startOfDay = (x) => { const c = new Date(x); c.setHours(0, 0, 0, 0); return c; };
+  const days = Math.round((startOfDay(new Date()) - startOfDay(d)) / 86400000);
+  if (days <= 0) return `i dag ${hm}`;
+  if (days === 1) return `i natt ${hm}`;          // gårdagens nattliga svep (kör 22:00 CET)
+  return `${d.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })} ${hm}`;
+};
+
 const UNIT_LABEL = {
   per_user_month: 'kr/anv./mån',
   per_subscription_month: 'kr/abonn./mån',
@@ -195,6 +207,7 @@ export default function Portfolio() {
   const [forecasts, setForecasts] = useState({});
   const [branchAnchors, setBranchAnchors] = useState({});
   const [movements, setMovements] = useState({});
+  const [vakt, setVakt] = useState(null);
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
   const [fingerprint, setFingerprint] = useState('');
@@ -233,6 +246,7 @@ export default function Portfolio() {
     setForecasts(data.forecasts ?? {});
     setBranchAnchors(data.branchAnchors ?? {});
     setMovements(data.movements ?? {});
+    setVakt(data.vakt ?? null);
   }, [fingerprint, magic, sessionToken]);
 
   useEffect(() => {
@@ -477,7 +491,9 @@ export default function Portfolio() {
   // Det tysta veckans leverans — beviset att någon satt vaken på era pengar.
   const receipts = useMemo(() => {
     const rows = [];
-    rows.push({ tag: 'Bevakar', what: <>Sveper marknaden mot era <b>{suppliers.length} leverantörer</b> — nattligt, mot <b>40 marknadskällor</b>.</> });
+    rows.push({ tag: 'Bevakar', what: vakt?.sweptAt
+      ? <>Svepte <b>{vakt.sources} marknadskällor</b> {relSwept(vakt.sweptAt)} — {vakt.changes > 0 ? <><b>{vakt.changes}</b> {vakt.changes === 1 ? 'prisavvikelse' : 'prisavvikelser'} i marknaden fångad{vakt.changes === 1 ? '' : 'e'}.</> : 'allt lugnt, inget krävde er uppmärksamhet.'}</>
+      : <>Sveper marknaden nattligt mot fyrtiotalet marknadskällor — er bevakning är aktiv.</> });
     if (autoAnalyses.length > 0) {
       rows.push({ tag: 'Analys', what: <>Vägde <b>{autoAnalyses.length} {autoAnalyses.length === 1 ? 'faktura' : 'fakturor'}</b> mot verifierat marknadspris{latestDate ? <> · senast {latestDate}</> : null}.</> });
     }
@@ -494,7 +510,7 @@ export default function Portfolio() {
       rows.push({ tag: 'Klocka', what: <>Bevakar avtalsklockan — <b>{roomClock.daysLeft} dagar</b> kvar på bindningen, agerar i fönstret.</> });
     }
     return rows;
-  }, [suppliers.length, autoAnalyses.length, latestDate, featured, roomMovement, roomForecast, roomClock]);
+  }, [suppliers.length, autoAnalyses.length, latestDate, vakt, featured, roomMovement, roomForecast, roomClock]);
   // Rubriken HÅLLER MED mätaren (samma källa: standing): leder med var ni står sammantaget,
   // med de N avtalen som den fokuserade möjligheten — aldrig en motsägelse mot gaugen nedan.
   const verdictHead = !acting
@@ -544,11 +560,16 @@ export default function Portfolio() {
                 <div className="radar-stats">
                   <div className="rstat"><span>Leverantörer</span><span className="v">{suppliers.length}</span></div>
                   <div className="rstat"><span>Analyser</span><span className="v">{autoAnalyses.length}</span></div>
-                  <div className="rstat"><span>Marknadskällor</span><span className="v">40</span></div>
+                  {/* Marknadskällor = verkliga svepta källor ur senaste nattliga svep (vakt_events) */}
+                  <div className="rstat"><span>Marknadskällor</span><span className="v">{vakt?.sources ?? 40}</span></div>
                 </div>
                 <div className="radar-foot">
                   <span className="live" />
-                  {latestDate ? <>Senaste analys {latestDate} · bevakning aktiv</> : 'Bevakning aktiv'}
+                  {vakt?.sweptAt
+                    ? <>Senaste svep {relSwept(vakt.sweptAt)} · {vakt.changes > 0
+                        ? <>{vakt.changes} {vakt.changes === 1 ? 'prisavvikelse' : 'prisavvikelser'} i marknaden</>
+                        : 'allt lugnt'}</>
+                    : latestDate ? <>Senaste analys {latestDate} · bevakning aktiv</> : 'Bevakning aktiv'}
                 </div>
               </Radar>
             </TopRow>

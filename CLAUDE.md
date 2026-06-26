@@ -763,8 +763,16 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
   ankaret (kundens position bor i innehavskortet). Testlåst: `tests/branch-anchors.mjs`.
 - **1B · Marknadsrörelsen:** koppla `price-monitor.mjs` → kohort: "Telia höjde för 8 av 14 i er bransch" som
   ett FindingCard i rummet + i alert-mailet. Ny `lib/market-movement.js`. (Samma moat som outbound-punkt 1.)
-- **1C · Vaktens hjärtslag:** nattlig `api/cron/vakt-sweep` + `vakt_events`-tabell → radarns "senaste svep"
-  och kvittona blir VERKLIGA tidsstämplade händelser, inte härledd text. Vakten stängs aldrig av — på riktigt.
+- **1C · Vaktens hjärtslag** ✅ KLAR 2026-06-26. Radarns "senaste svep" och kvittona är nu VERKLIGA
+  tidsstämplade händelser, inte härledd text. Anti-Potemkin: hjärtslaget registreras FRÅN det verkliga
+  nattliga svepet (`scripts/price-monitor.mjs` sveper ~40 sidor och skriver rapporten OAVSETT utfall),
+  aldrig en tom tidsstämpel. `scripts/record-vakt-sweep.mjs` (ALLTID-steg i `price-monitor.yml`) läser
+  rapporten → `vakt_events`-rad med vad maskinen FAKTISKT svepte (källor · prispunkter · avvikelser).
+  Även den tysta "allt lugnt"-natten lämnar bevis (det premiumladdade tysta svepet). `lib/vakt.js`
+  (`sweepSummaryFromReport` ren/testbar + `recordSweep`/`getLatestSweep`, self-ensurar tabellen).
+  `api/invoice-history` → `vakt`; `Portfolio`-radarn visar "Senaste svep i natt 23:00 · allt lugnt" +
+  verkliga svepta källor (ersätter hårdkodade 40). Testlåst: `tests/vakt.mjs`. (Inget separat Vercel-cron:
+  det verkliga svepet bor i GH Actions — mer ärligt än roadmapens tentativa "api/cron"-namn.)
 
 **Fas 2 — gör agerandet nåbart (Nivå 1, smalt):**
 - **2A · Switch-utlösaren:** `api/switch/prepare` som driver `orchestrator.js` till `FULLMAKT_PREPARED` med

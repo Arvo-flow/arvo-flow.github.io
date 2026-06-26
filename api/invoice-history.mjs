@@ -16,6 +16,7 @@ import { getSegmentStats } from '../lib/price-alert-store.js';
 import { marketMovementFinding } from '../lib/market-movement.js';
 import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 import { catLabel } from '../lib/format.js';
+import { getLatestSweep } from '../lib/vakt.js';
 import { getBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
@@ -109,7 +110,11 @@ export default async function handler(req, res) {
   // bägge bevisen måste bära (färsk höjning + ≥3 bolag hos leverantören), annars tystnad.
   const movements = await buildMovements(analyses);
 
-  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, movements, email: email ?? undefined });
+  // ── Vaktens hjärtslag: senaste verkliga svep (tidsstämplat) → radarns "senaste svep" ──
+  // null tills första nattliga svepet registrerats; rummet faller då tillbaka på härledd text.
+  const vakt = await getLatestSweep();
+
+  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, movements, vakt, email: email ?? undefined });
 }
 
 async function buildMovements(analyses) {
