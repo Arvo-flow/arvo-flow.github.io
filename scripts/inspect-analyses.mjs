@@ -47,10 +47,13 @@ for (const r of recent) {
 console.log('═══════════════════════════════════════════════════\n');
 
 const kr = (n) => (n == null ? '—' : Number(n).toLocaleString('sv-SE'));
-const mailSourced = rows.filter((r) => String(r.fp).startsWith('mail:'));
+// OBS: fingerprinten lagras HASHAD → "mail:"-prefixet finns inte i DB. Mail-in känns igen på user_email
+// (avsändaren sätts som user_email i drain/inbound). En registrerad webbkund kan också ha e-post, så
+// detta är "med e-post" snarare än strikt mail-in — den exakta listan står i 60-min-sektionen ovan.
+const withEmail = rows.filter((r) => r.email);
 
 console.log(`\n═══════ SENASTE ${rows.length} ANALYSER (av frågade ${N}) ═══════`);
-console.log(`Mail-källade (fingerprint mail:*): ${mailSourced.length}`);
+console.log(`Med e-post (mail-in eller registrerad): ${withEmail.length}`);
 const byRoute = rows.reduce((m, r) => ((m[r.route] = (m[r.route] || 0) + 1), m), {});
 console.log('Väg-fördelning:', JSON.stringify(byRoute));
 console.log('───────────────────────────────────────────────────────────────');
@@ -62,7 +65,7 @@ for (const r of rows) {
   const cost = kr(r.annual_cost).padStart(9);
   const save = r.net_saving > 0 ? `spar ${kr(r.net_saving)}` : (r.should_switch ? 'byte u. nettogap' : '—');
   const flag = r.route !== 'auto' ? `  ⚠️ ${r.route}` : '';
-  const src  = String(r.fp).startsWith('mail:') ? '📧' : '🌐';
+  const src  = r.email ? '📧' : '🌐';   // har e-post → sannolikt mail-in (fingerprint är hashad i DB)
   console.log(`${src} ${when}  ${sup} ${cat} ${cost} kr/år  ${save}${flag}`);
 }
 console.log('═══════════════════════════════════════════════════════════════\n');
