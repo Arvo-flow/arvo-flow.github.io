@@ -34,9 +34,11 @@ const getResend = () =>
 const FROM     = process.env.RESEND_FROM ?? 'Arvo Intelligence <analys@arvoflow.se>';
 const BASE_URL = process.env.ARVO_BASE_URL ?? 'https://arvoflow.se';
 
-const MAX_PDFS_PER_MAIL  = 2;
+const MAX_PDFS_PER_MAIL  = 2;            // behåll 2 — fler PDF:er/mail riskerar 60s-timeout (maxDuration)
 const MAX_PDF_BYTES      = 6 * 1024 * 1024;
-const RATE_LIMIT_PER_DAY = 10;
+// Env-överstyrbar; default höjt till 40 för grundarens 20-faktura-testpass (utrymme för canary + omtag).
+// Återställ till 10 efter testet (eller sätt INBOUND_RATE_LIMIT_PER_DAY i Vercel).
+const RATE_LIMIT_PER_DAY = Number(process.env.INBOUND_RATE_LIMIT_PER_DAY) || 40;
 
 function send(res, status, body) {
   res.statusCode = status;

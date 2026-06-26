@@ -1,0 +1,30 @@
+name: Inspect analyses
+
+# Manuell, läs-bar detaljgranskning av de senaste analyserna (för ingest-test-utvärdering).
+# Inga skrivningar.
+on:
+  workflow_dispatch:
+    inputs:
+      n:
+        description: 'Antal senaste analyser att visa'
+        required: false
+        default: '30'
+
+jobs:
+  inspect:
+    name: Granska analyser
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Inspect
+        run: node scripts/inspect-analyses.mjs "${{ inputs.n }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
