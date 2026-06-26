@@ -8,6 +8,7 @@
 // för inloggning (AuthContext konsumerar dem vid sidladdning).
 import { getAnalysesByFingerprint, getAnalysesByEmail } from '../lib/invoice-store.js';
 import { getMarketIntelligence } from '../lib/price-alert.js';
+import { pendingCountBySender } from '../lib/ingest-queue.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding } from '../lib/contract-clock.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
@@ -119,7 +120,10 @@ export default async function handler(req, res) {
   // null tills första nattliga svepet registrerats; rummet faller då tillbaka på härledd text.
   const vakt = await getLatestSweep();
 
-  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, movements, vakt, email: email ?? undefined });
+  // ── Pågående intag: fakturor PÅ VÄG (köade men ej klara) → rummet visar "analyserar N", ej tomt ──
+  const ingesting = email ? await pendingCountBySender(email) : 0;
+
+  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, movements, vakt, ingesting, email: email ?? undefined });
 }
 
 async function buildMovements(analyses) {

@@ -208,6 +208,7 @@ export default function Portfolio() {
   const [branchAnchors, setBranchAnchors] = useState({});
   const [movements, setMovements] = useState({});
   const [vakt, setVakt] = useState(null);
+  const [ingesting, setIngesting] = useState(0);   // fakturor på väg (köade, ej klara) → "analyserar N"
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
   const [fingerprint, setFingerprint] = useState('');
@@ -247,6 +248,7 @@ export default function Portfolio() {
     setBranchAnchors(data.branchAnchors ?? {});
     setMovements(data.movements ?? {});
     setVakt(data.vakt ?? null);
+    setIngesting(data.ingesting ?? 0);
   }, [fingerprint, magic, sessionToken]);
 
   useEffect(() => {
@@ -267,6 +269,13 @@ export default function Portfolio() {
   useEffect(() => {
     if (sessionToken) loadOffice().catch((err) => setError(err.message));
   }, [sessionToken]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pågående intag: medan fakturor är på väg (köade) → polla så kontoret FYLLS LIVE när de landar.
+  useEffect(() => {
+    if (ingesting <= 0) return undefined;
+    const t = setInterval(() => { loadOffice().catch(() => {}); }, 12000);
+    return () => clearInterval(t);
+  }, [ingesting, loadOffice]);
 
   const handleLogout = useCallback(() => {
     authLogout();
@@ -923,15 +932,26 @@ export default function Portfolio() {
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
-                <h1>Ert kontor väntar<br />på första analysen.</h1>
+                <h1>{ingesting > 0
+                  ? <>Arvo analyserar<br />{ingesting} {ingesting === 1 ? 'faktura' : 'fakturor'}…</>
+                  : <>Ert kontor väntar<br />på första analysen.</>}</h1>
               </Ident>
             </TopRow>
 
-            {/* Avslöjandet — "hur visste de det?" före första fakturan (källbelagt, gratis-vägen) */}
-            <RevealPrompt
-              email={revealEmail} setEmail={setRevealEmail} onSubmit={runReveal}
-              loading={revealLoading} reveal={reveal} note={revealNote}
-            />
+            {/* Pågående intag: ärligt "fylls strax"-läge så rummet aldrig ser tomt/trasigt ut mitt i en bunt. */}
+            {ingesting > 0 ? (
+              <Verdict>
+                <div className="eyebrow"><span className="live" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#5DD6CA', marginRight: 8 }} />Arbetar nu</div>
+                <h2>Vi väger era <em>{ingesting} {ingesting === 1 ? 'faktura' : 'fakturor'}</em> mot verifierat marknadspris.</h2>
+                <p className="work">Kontoret fylls i takt med att varje analys blir klar — sidan uppdateras automatiskt, ni behöver inte göra något. Det tar oftast någon minut.</p>
+              </Verdict>
+            ) : (
+              /* Avslöjandet — "hur visste de det?" före första fakturan (källbelagt, gratis-vägen) */
+              <RevealPrompt
+                email={revealEmail} setEmail={setRevealEmail} onSubmit={runReveal}
+                loading={revealLoading} reveal={reveal} note={revealNote}
+              />
+            )}
 
             <Verdict>
               <div className="eyebrow">Var pengarna oftast rinner</div>
