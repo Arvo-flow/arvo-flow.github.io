@@ -139,7 +139,9 @@ async function buildMovements(analyses) {
         supplier:      keyword.replace(/\b\w/g, (c) => c.toUpperCase()),   // varumärket, snyggt: "Telia"
         categoryLabel: catLabel(a.category),
       });
-      if (finding) out[key] = finding;
+      // category bärs med så rummet kan undertrycka prognosen för samma kategori: ett VERIFIERAT
+      // nyss-inträffat (rörelsen) gör en "höjer sannolikt"-bedömning för samma kategori motsägande.
+      if (finding) out[key] = { ...finding, category: a.category };
     } catch { /* fail-open → ingen rörelse för det paret */ }
   }
   return out;
@@ -204,7 +206,7 @@ async function buildForecasts(analyses) {
       try {
         const rows = await getSupplierCategoryChanges({ supplier, category });
         const f = priceHikeForecast(rows, { supplier });
-        return f ? [key, f] : null;
+        return f ? [key, { ...f, category }] : null;   // category → rummet kan undertrycka mot rörelsen
       } catch { return null; }
     }),
   );

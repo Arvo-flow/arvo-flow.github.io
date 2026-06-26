@@ -393,12 +393,6 @@ export default function Portfolio() {
   }, [analyses]);
   // Maktkalenderns prognos — den höjning som är mest sannolik leder (hög > medel > låg).
   // Källbelagd, konfidensmärkt bedömning ur leverantörens prishistorik (bibelns nya regel 4).
-  const roomForecast = useMemo(() => {
-    const rank = { high: 0, medium: 1, low: 2 };
-    return Object.values(forecasts ?? {})
-      .filter((f) => f && typeof f === 'object' && f.title)
-      .sort((x, y) => (rank[x.confidence] ?? 3) - (rank[y.confidence] ?? 3))[0] ?? null;
-  }, [forecasts]);
   // Marknadsrörelsen — den färskaste verifierade höjningen som slår mot flest bolag leder.
   // Ett FAKTUM (höjning + X/Y), byggt i api/invoice-history ur supplier_price_history × getSegmentStats.
   const roomMovement = useMemo(() => {
@@ -406,6 +400,14 @@ export default function Portfolio() {
       .filter((m) => m && typeof m === 'object' && m.title)
       .sort((x, y) => (new Date(y.changedAt) - new Date(x.changedAt)) || ((y.withSupplier ?? 0) - (x.withSupplier ?? 0)))[0] ?? null;
   }, [movements]);
+  // Maktkalenderns prognos — men ALDRIG för en kategori där rörelsen redan visar ett verifierat
+  // nyss-inträffat (då vore "höjer sannolikt" motsägande mot "höjde nyss"; faktumet vinner, regel 3).
+  const roomForecast = useMemo(() => {
+    const rank = { high: 0, medium: 1, low: 2 };
+    return Object.values(forecasts ?? {})
+      .filter((f) => f && typeof f === 'object' && f.title && f.category !== roomMovement?.category)
+      .sort((x, y) => (rank[x.confidence] ?? 3) - (rank[y.confidence] ?? 3))[0] ?? null;
+  }, [forecasts, roomMovement]);
   const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
   const arvoScore    = computeArvoScore(suppliers);
   const standing     = marketStanding(arvoScore);
