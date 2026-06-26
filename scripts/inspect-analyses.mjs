@@ -9,6 +9,19 @@ const N = Number(process.argv[2]) || 30;
 const db = getDb();
 if (!db) { console.log('Ingen DATABASE_URL — exit 0'); process.exit(0); }
 
+// ── TESTYTAN (isolerad testidentitet): exakt "N in → N analyser ut", opåverkat av annat data ──
+const TEST_EMAIL = 'testyta@arvoflow.se';
+const testRows = await db`
+  SELECT created_at, normalized_supplier, category, annual_cost, net_saving
+  FROM invoice_analyses WHERE user_email = ${TEST_EMAIL} ORDER BY created_at DESC
+`.catch(() => []);
+console.log(`\n═══════ TESTYTAN (${TEST_EMAIL}): ${testRows.length} analyser ═══════`);
+for (const r of testRows) {
+  const when = new Date(r.created_at).toISOString().slice(5, 16).replace('T', ' ');
+  console.log(`   ${when}  ${(r.normalized_supplier||'?').slice(0,24).padEnd(24)} ${(r.category||'?').slice(0,16).padEnd(16)} ${String(r.annual_cost).padStart(8)} kr  ${r.net_saving>0?`spar ${r.net_saving}`:'—'}`);
+}
+console.log('═══════════════════════════════════════════════════════\n');
+
 // ── Ingest-kö (bulk): blev fakturorna köade, och drog drain-cronen dem? ──────────
 const jobs = await db`
   SELECT status, COUNT(*)::int AS n, MAX(created_at) AS senast, MAX(error) AS ett_fel

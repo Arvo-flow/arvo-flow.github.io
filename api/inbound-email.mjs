@@ -26,6 +26,7 @@ import { getDb } from '../lib/db.js';
 import { getKv } from '../lib/kv.js';
 import { fmtNumber } from '../lib/format.js';
 import { enqueueJobs } from '../lib/ingest-queue.js';
+import { isTestRecipient, resetTestSurfaceIfStale, TEST_EMAIL, TEST_FINGERPRINT } from '../lib/test-surface.js';
 
 export const config = { maxDuration: 60 };
 
@@ -335,6 +336,16 @@ export default async function handler(req, res) {
 
   const db = getDb();
 
+  // ── TESTYTA: mail till test-mottagaradress → isolerad testidentitet, auto-nollställs per pass ──
+  // Lagras på TEST_EMAIL (ej avsändaren) så riktig kunddata aldrig rörs. Svar går ändå till avsändaren.
+  const testMode = isTestRecipient(data.to);
+  const identityEmail = testMode ? TEST_EMAIL : sender;
+  const identityFp = testMode ? TEST_FINGERPRINT : `mail:${sha16(sender)}`;
+  if (testMode) {
+    const { reset, deleted } = await resetTestSurfaceIfStale();
+    console.log(`[inbound-email] TESTYTA: ${reset ? `nollställde ${deleted} rader (nytt pass)` : 'samma pass (ingen nollställning)'}`);
+  }
+
   // ── BULK-läge: >2 PDF:er → köa + svara direkt, drain-cronen betar av (moaten: 50–100 på en gång) ──
   // Serverless kan inte analysera 100 PDF:er i ETT 60s-anrop. Vi köar ett jobb per PDF (snabbt) och
   // svarar "vi tog emot N — kontoret fylls medan vi kör". api/cron/drain-ingest analyserar dem.
@@ -342,10 +353,10 @@ export default async function handler(req, res) {
     .filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
   if (pdfAtts.length > INLINE_LIMIT) {
     const jobs = pdfAtts.slice(0, MAX_BULK_PDFS).map((a, idx) => ({
-      emailId: mailId, sender, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
+      emailId: mailId, sender: identityEmail, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
     }));
     const added = await enqueueJobs(jobs);
-    const portalLink = await mintPortalLink(db, sender);
+    const portalLink = await mintPortalLink(db, identityEmail);
     try {
       const resend = getResend();
       if (resend) {
@@ -419,9 +430,9 @@ export default async function handler(req, res) {
           industry:    'ovrigt',           // okänd vid mail-in — förfinas i kontoret
           employees:   10,
           bypass:      process.env.ARVO_BYPASS_SECRET,
-          email:       sender,
-          userEmail:   sender,
-          fingerprint: `mail:${sha16(sender)}`,
+          email:       identityEmail,
+          userEmail:   identityEmail,
+          fingerprint: identityFp,
         }),
       });
       const a = await r.json().catch(() => null);
@@ -451,7 +462,7 @@ export default async function handler(req, res) {
   }
 
   // Svar — ALLTID och ENBART till avsändaren
-  const portalLink = await mintPortalLink(db, sender);
+  const portalLink = await mintPortalLink(db, identityEmail);
   const okCount    = results.filter((r) => r.ok).length;
   const subject    = buildReplySubject(results);
 
