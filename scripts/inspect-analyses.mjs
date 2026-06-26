@@ -25,11 +25,26 @@ const rows = await db`
   SELECT id, created_at, route, normalized_supplier, supplier, category,
          annual_cost, suggested_annual_cost, gross_saving, net_saving,
          should_switch, seat_count,
-         LEFT(fingerprint, 12) AS fp, NULLIF(user_email,'') AS email
+         LEFT(fingerprint, 22) AS fp, NULLIF(user_email,'') AS email
   FROM invoice_analyses
   ORDER BY created_at DESC
   LIMIT ${N}
 `.catch((e) => { console.log('FEL:', e.message); return []; });
+
+// Analyser senaste 60 min (test-fönstret) — med e-post, för att se mail-in definitivt.
+const recent = await db`
+  SELECT created_at, route, normalized_supplier, category, annual_cost, net_saving,
+         NULLIF(user_email,'') AS email, LEFT(fingerprint, 22) AS fp
+  FROM invoice_analyses
+  WHERE created_at > NOW() - INTERVAL '60 minutes'
+  ORDER BY created_at DESC
+`.catch(() => []);
+console.log(`\n═══════ ANALYSER SENASTE 60 MIN (${recent.length}) ═══════`);
+for (const r of recent) {
+  const when = new Date(r.created_at).toISOString().slice(11, 16);
+  console.log(`   ${when}  ${(r.normalized_supplier||'?').slice(0,22).padEnd(22)} ${(r.category||'?').slice(0,16).padEnd(16)} ${String(r.annual_cost).padStart(8)} kr  email=${r.email||'(ingen)'}  fp=${r.fp}`);
+}
+console.log('═══════════════════════════════════════════════════\n');
 
 const kr = (n) => (n == null ? '—' : Number(n).toLocaleString('sv-SE'));
 const mailSourced = rows.filter((r) => String(r.fp).startsWith('mail:'));
