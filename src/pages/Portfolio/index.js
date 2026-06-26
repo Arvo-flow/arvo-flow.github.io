@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
-  SwitchInline, SwitchBtn, IntelQuiet, SignOff, Spinner,
+  SwitchInline, SwitchTargets, SwitchBtn, IntelQuiet, SignOff, Spinner,
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
 
@@ -207,6 +207,7 @@ export default function Portfolio() {
   const [forecasts, setForecasts] = useState({});
   const [branchAnchors, setBranchAnchors] = useState({});
   const [movements, setMovements] = useState({});
+  const [switchTargets, setSwitchTargets] = useState({});
   const [vakt, setVakt] = useState(null);
   const [ingesting, setIngesting] = useState(0);   // fakturor på väg (köade, ej klara) → "analyserar N"
   const [error, setError]       = useState(null);
@@ -247,6 +248,7 @@ export default function Portfolio() {
     setForecasts(data.forecasts ?? {});
     setBranchAnchors(data.branchAnchors ?? {});
     setMovements(data.movements ?? {});
+    setSwitchTargets(data.switchTargets ?? {});
     setVakt(data.vakt ?? null);
     setIngesting(data.ingesting ?? 0);
   }, [fingerprint, magic, sessionToken]);
@@ -873,6 +875,27 @@ export default function Portfolio() {
                           <div className="fact"><dt>Kategori</dt><dd style={{ fontFamily: 'inherit' }}>{meta.label}</dd></div>
                           <div className="fact"><dt>Analyserad</dt><dd>{fmtDate(a.created_at)}</dd></div>
                         </dl>
+
+                        {/* Rekommenderat byte: VAD marknaden erbjuder för er nivå — namngivet + verifierade
+                            specs (källbelagt, aldrig påhittat). Svarar på CFO:ns "spara till VAD?". */}
+                        {saving && switchTargets[a.category]?.alternatives?.length > 0 && (
+                          <SwitchTargets>
+                            <div className="st-k">Rekommenderat byte · marknaden för er nivå</div>
+                            {switchTargets[a.category].alternatives.map((alt, i) => (
+                              <div className="st-alt" key={alt.supplier}>
+                                <div className="st-sup">
+                                  {alt.supplier}
+                                  {i === 0 && <span className="st-tag">bäst matchning</span>}
+                                </div>
+                                <div className="st-pos">{alt.positioning}</div>
+                              </div>
+                            ))}
+                            <div className="st-src">
+                              Matchat mot er nuvarande nivå — <b>samma eller bättre, aldrig en nedgradering.</b>{' '}
+                              Verifierat publikt listpris{switchTargets[a.category].lastVerified ? ` · senast bekräftat ${switchTargets[a.category].lastVerified}` : ''}.
+                            </div>
+                          </SwitchTargets>
+                        )}
 
                         {saving && (
                           <SwitchInline>

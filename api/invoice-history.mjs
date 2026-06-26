@@ -17,6 +17,7 @@ import { getSegmentStats } from '../lib/price-alert-store.js';
 import { marketMovementFinding } from '../lib/market-movement.js';
 import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 import { catLabel } from '../lib/format.js';
+import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { getLatestSweep } from '../lib/vakt.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getBenchmark } from '../lib/benchmark.js';
@@ -116,6 +117,12 @@ export default async function handler(req, res) {
   // bägge bevisen måste bära (färsk höjning + ≥3 bolag hos leverantören), annars tystnad.
   const movements = await buildMovements(analyses);
 
+  // ── Rekommenderat byte: VAD marknaden erbjuder för er nivå (namngivet + verifierade specs) ──
+  // En CFO som ser "spara X" frågar "till vad?". Vi svarar konkret: namngivna verifierade
+  // alternativ ur BRANCHINDEX (real-public) med riktiga specs/priser + källa. Aldrig påhittat,
+  // aldrig kundens nuvarande leverantör, aldrig estimat-kategorier (specs som fakta kräver källa).
+  const switchTargets = buildSwitchTargets(analyses);
+
   // ── Vaktens hjärtslag: senaste verkliga svep (tidsstämplat) → radarns "senaste svep" ──
   // null tills första nattliga svepet registrerats; rummet faller då tillbaka på härledd text.
   const vakt = await getLatestSweep();
@@ -123,7 +130,31 @@ export default async function handler(req, res) {
   // ── Pågående intag: fakturor PÅ VÄG (köade men ej klara) → rummet visar "analyserar N", ej tomt ──
   const ingesting = email ? await pendingCountBySender(email) : 0;
 
-  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, movements, vakt, ingesting, email: email ?? undefined });
+  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, movements, switchTargets, vakt, ingesting, email: email ?? undefined });
+}
+
+function buildSwitchTargets(analyses) {
+  const out = {};
+  const seen = new Set();
+  for (const a of analyses) {
+    if (a.route !== 'auto' || !a.category || !a.should_switch || !(a.net_saving > 0)) continue;
+    if (seen.has(a.category)) continue;
+    seen.add(a.category);
+    if (seen.size > 8) break;
+    const bi = BRANCHINDEX[a.category];
+    // ENDAST verifierade kategorier (real-public) — för estimat visar vi inte specs som fakta (regel 3).
+    if (!bi || bi.source !== 'real-public' || !Array.isArray(bi.alternatives) || !bi.alternatives.length) continue;
+    const custKw = extractSupplierKeyword(a.normalized_supplier || a.supplier || '');
+    const alts = bi.alternatives
+      .filter((alt) => alt.supplier && alt.positioning)
+      .filter((alt) => !custKw || extractSupplierKeyword(alt.supplier) !== custKw)   // aldrig deras nuvarande
+      .sort((x, y) => (y.reliability ?? 0) - (x.reliability ?? 0))
+      .slice(0, 3)
+      .map((alt) => ({ supplier: alt.supplier, positioning: alt.positioning }));
+    if (!alts.length) continue;
+    out[a.category] = { alternatives: alts, source: bi.source, lastVerified: bi.lastVerified ?? null };
+  }
+  return out;
 }
 
 async function buildMovements(analyses) {

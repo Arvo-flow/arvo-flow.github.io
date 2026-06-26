@@ -437,6 +437,27 @@ export const SwitchInline = styled.div`
     b { color:${theme.dossier.inkOnDark}; font-feature-settings:'tnum'; } }
 `;
 
+// Rekommenderat byte — VAD marknaden erbjuder för er nivå (namngivna verifierade alternativ + specs).
+export const SwitchTargets = styled.div`
+  border:1px solid ${theme.dossier.hairlineOnDark}; border-radius:${theme.size.radius.md};
+  background:${theme.dossier.bgRaised}; padding:18px 20px; margin-bottom:14px;
+  display:flex; flex-direction:column;
+
+  .st-k { font-family:${MONO}; font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+    color:${theme.dossier.teal}; margin-bottom:14px; }
+  .st-alt { padding:12px 0; border-top:1px solid ${theme.dossier.hairlineOnDark}; }
+  .st-alt:first-of-type { border-top:none; padding-top:0; }
+  .st-sup { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:14px; font-weight:600;
+    color:${theme.dossier.inkOnDark}; margin-bottom:3px; }
+  .st-tag { font-family:${MONO}; font-size:9px; letter-spacing:.12em; text-transform:uppercase;
+    color:${theme.dossier.bg}; background:${theme.dossier.teal}; border-radius:${theme.size.radius.sm};
+    padding:2px 7px; }
+  .st-pos { font-size:12.5px; color:${theme.dossier.mutedOnDark}; line-height:1.5; }
+  .st-src { margin-top:14px; padding-top:12px; border-top:1px solid ${theme.dossier.hairlineOnDark};
+    font-size:11.5px; color:${theme.dossier.faintOnDark}; line-height:1.55;
+    b { color:${theme.dossier.mutedOnDark}; } }
+`;
+
 export const SwitchBtn = styled.a`
   display:flex; align-items:center; justify-content:center; gap:8px;
   text-decoration:none; cursor:pointer;

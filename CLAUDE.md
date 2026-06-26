@@ -195,6 +195,17 @@ Gränsen är knivskarp: **publik prisdata = ja; ersättning, rabatt-mot-volym el
 bindning från leverantören = aldrig.** Maskinvakt: `scripts/claims-audit.mjs` blockerar
 all kundyte-copy som antyder leverantörsersättning eller partnerskap.
 
+> **KLARGÖRANDE 2026-06-26 (så att framing aldrig bromsar 0,1%): Neutralitet = ingen
+> leverantörs-ERSÄTTNING. Den betyder ALDRIG "inga konkreta rekommendationer".** Att
+> NAMNGE och rekommendera den bästa verifierade leverantören/produkten — med specs (obegränsad
+> surf, 1200 Mbit, 319 kr/mån), källa och datum — är själva LIVVAKTSROLLEN, inte ett brott
+> mot den. En livvakt som inte vågar peka på det vassa alternativet är värdelös. Det enda
+> oförhandlingsbara är integritetskärnan: ingen leverantörspeng, inga påhittade specs (bara
+> verifierad publik data), ingen nedgradering som påstås vara likvärdig (like-for-like-ärlighet).
+> Allt annat — inklusive om vi visar "byt till X" eller "marknaden för er nivå" — är ett
+> KONCEPT-val som alltid böjer sig mot den mest hjälpsamma 0,1%-versionen. Bibeln är ett
+> verktyg, aldrig en bromskloss (se preambeln).
+
 **Switch-doktrinen (GRUNDARBESLUT 2026-06-21, icke-förhandlingsbart): Arvo förhandlar
 aldrig och köar aldrig — Arvo är en stående fullmakt.** Switch genomförs som en
 *fullmakts- och BankID-orkestrering* (`agents/orchestrator/orchestrator.js`:
