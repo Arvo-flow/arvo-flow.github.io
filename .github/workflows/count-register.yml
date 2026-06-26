@@ -1,0 +1,28 @@
+name: Count register
+
+# Manuell, läs-bar ögonblicksbild av registret (invoice_analyses m.fl.).
+# Inga skrivningar. Kör i Actions där DB-åtkomst + egress fungerar.
+on:
+  workflow_dispatch:
+
+jobs:
+  count:
+    name: Räkna registret
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Count
+        run: node scripts/count-register.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
