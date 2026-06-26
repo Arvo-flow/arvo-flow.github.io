@@ -17,6 +17,7 @@ import { marketMovementFinding } from '../lib/market-movement.js';
 import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 import { catLabel } from '../lib/format.js';
 import { getLatestSweep } from '../lib/vakt.js';
+import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
@@ -60,8 +61,12 @@ export default async function handler(req, res) {
   // Sessionen är primärnyckeln — den överlever 24h-token, så kontoret följer kunden, ej enheten.
   const email = verifySession(session)?.email || await emailFromMagic(magic);
 
+  // TESTYTAN är ISOLERAD: öppnas rummet som testidentiteten visas ENBART testytans data — aldrig
+  // webbläsarens fingerprint-historik (annars läcker den egna uppladdningar in och "ser inte nollställt ut").
+  const isTestRoom = email === TEST_EMAIL;
+
   const [byFp, byEmail] = await Promise.all([
-    hasFp ? getAnalysesByFingerprint(fp) : [],
+    (hasFp && !isTestRoom) ? getAnalysesByFingerprint(fp) : [],
     email ? getAnalysesByEmail(email)    : [],
   ]);
 
