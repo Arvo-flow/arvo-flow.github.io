@@ -9,17 +9,41 @@ const N = Number(process.argv[2]) || 30;
 const db = getDb();
 if (!db) { console.log('Ingen DATABASE_URL — exit 0'); process.exit(0); }
 
-// ── TESTYTAN (isolerad testidentitet): exakt "N in → N analyser ut", opåverkat av annat data ──
+// ── TESTYTAN (isolerad testidentitet): ingående granskning — per faktura + aggregat + flaggor ──
 const TEST_EMAIL = 'testyta@arvoflow.se';
 const testRows = await db`
-  SELECT created_at, normalized_supplier, category, annual_cost, net_saving
+  SELECT created_at, supplier, normalized_supplier, category, annual_cost, suggested_annual_cost,
+         gross_saving, net_saving, should_switch, route, seat_count, price_per_seat_monthly
   FROM invoice_analyses WHERE user_email = ${TEST_EMAIL} ORDER BY created_at DESC
-`.catch(() => []);
+`.catch((e) => { console.log('testyta-fel:', e.message); return []; });
+
+const kr0 = (n) => (n == null ? '—' : Number(n).toLocaleString('sv-SE'));
 console.log(`\n═══════ TESTYTAN (${TEST_EMAIL}): ${testRows.length} analyser ═══════`);
+console.log('   tid    leverantör                 kategori          årskostnad   →förslag    nettospar   flaggor');
+let sumCost = 0, sumSave = 0, nSwitch = 0;
+const catCount = {}, supSeen = {};
 for (const r of testRows) {
-  const when = new Date(r.created_at).toISOString().slice(5, 16).replace('T', ' ');
-  console.log(`   ${when}  ${(r.normalized_supplier||'?').slice(0,24).padEnd(24)} ${(r.category||'?').slice(0,16).padEnd(16)} ${String(r.annual_cost).padStart(8)} kr  ${r.net_saving>0?`spar ${r.net_saving}`:'—'}`);
+  const when = new Date(r.created_at).toISOString().slice(11, 16);
+  const flags = [];
+  // Anomali-flaggor (extraktions-sanity):
+  if (!r.supplier && !r.normalized_supplier) flags.push('SAKNAR-LEV');
+  if (!r.category) flags.push('SAKNAR-KAT');
+  if (r.route !== 'auto') flags.push(`väg=${r.route}`);
+  if (r.annual_cost != null && r.annual_cost < 1000) flags.push('LÅG-KOSTN?(per mån?)');
+  if (r.annual_cost != null && r.annual_cost > 5_000_000) flags.push('HÖG-KOSTN?');
+  if (r.should_switch && !(r.net_saving > 0)) flags.push('BYTE-UTAN-SPAR');
+  if (r.suggested_annual_cost != null && r.annual_cost != null && r.suggested_annual_cost > r.annual_cost) flags.push('FÖRSLAG>NUVARANDE!');
+  if (r.net_saving > 0 && r.annual_cost > 0 && (r.net_saving / r.annual_cost) > 0.7) flags.push('SPAR>70%?');
+  const key = `${(r.normalized_supplier||r.supplier||'?').toLowerCase()}|${r.category}`;
+  if (supSeen[key]) flags.push('DUBBLETT-PAR'); else supSeen[key] = 1;
+  sumCost += Number(r.annual_cost || 0); sumSave += Number(r.net_saving || 0);
+  if (r.should_switch && r.net_saving > 0) nSwitch++;
+  catCount[r.category || '?'] = (catCount[r.category || '?'] || 0) + 1;
+  console.log(`   ${when}  ${(r.normalized_supplier||r.supplier||'?').slice(0,25).padEnd(25)} ${(r.category||'?').slice(0,16).padEnd(16)} ${kr0(r.annual_cost).padStart(10)}  ${kr0(r.suggested_annual_cost).padStart(9)}  ${(r.net_saving>0?kr0(r.net_saving):'—').padStart(9)}  ${flags.join(' ')}`);
 }
+console.log('   ─────────────────────────────────────────────────────────────────────────────');
+console.log(`   AGGREGAT: ${testRows.length} fakturor · ${nSwitch} med byte · total årskostnad ${kr0(sumCost)} kr · total nettobesparing ${kr0(sumSave)} kr`);
+console.log(`   Kategorier: ${Object.entries(catCount).map(([k,v])=>`${k}:${v}`).join(' · ')}`);
 console.log('═══════════════════════════════════════════════════════\n');
 
 // ── Ingest-kö (bulk): blev fakturorna köade, och drog drain-cronen dem? ──────────
