@@ -1,6 +1,7 @@
 
-═══════ TESTYTAN (testyta@arvoflow.se): 9 analyser ═══════
+═══════ TESTYTAN (testyta@arvoflow.se): 10 analyser ═══════
    tid    leverantör                 kategori          årskostnad   →förslag    nettospar   flaggor
+   22:32  Google Ireland Ltd        saas-productivit     72 900     64 519      6 705  
    22:27  Tre Foretag               mobil                14 940          —          —  
    22:26  Visma Spcs AB             loneadmin            18 900          —          —  
    22:25  Telia Företag             mobil               119 520          —          —  
@@ -11,19 +12,19 @@
    22:21  Tele2 Företag             mobil                62 820          —          —  DUBBLETT-PAR
    22:20  Microsoft Ireland         saas-productivit    129 600    113 557     12 834  DUBBLETT-PAR
    ─────────────────────────────────────────────────────────────────────────────
-   AGGREGAT: 9 fakturor · 1 med byte · total årskostnad 818 736 kr · total nettobesparing 12 834 kr
-   Kategorier: mobil:5 · loneadmin:1 · saas-productivity:2 · faktura-tjanst:1
+   AGGREGAT: 10 fakturor · 2 med byte · total årskostnad 891 636 kr · total nettobesparing 19 539 kr
+   Kategorier: saas-productivity:3 · mobil:5 · loneadmin:1 · faktura-tjanst:1
 ═══════════════════════════════════════════════════════
 
 
 ═══════ INGEST-KÖ (ingest_jobs) ═══════
-   done        15   senast 2026-06-27 22:19
-   pending     6   senast 2026-06-27 22:19   ⚠️ PDF kunde inte hämtas
-   processing  8   senast 2026-06-27 22:19
+   done        23   senast 2026-06-27 22:19
+   failed      6   senast 2026-06-27 22:19   ⚠️ PDF kunde inte hämtas
 ═══════════════════════════════════════
 
 
-═══════ ANALYSER SENASTE 60 MIN (9) ═══════
+═══════ ANALYSER SENASTE 60 MIN (10) ═══════
+   22:32  Google Ireland Ltd     saas-productivit    72900 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
    22:27  Tre Foretag            mobil               14940 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
    22:26  Visma Spcs AB          loneadmin           18900 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
    22:25  Telia Företag          mobil              119520 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
@@ -36,10 +37,11 @@
 ═══════════════════════════════════════════════════
 
 
-═══════ SENASTE 38 ANALYSER (av frågade 40) ═══════
-Med e-post (mail-in eller registrerad): 37
-Väg-fördelning: {"auto":38}
+═══════ SENASTE 30 ANALYSER (av frågade 30) ═══════
+Med e-post (mail-in eller registrerad): 29
+Väg-fördelning: {"auto":30}
 ───────────────────────────────────────────────────────────────
+📧 2026-06-27 22:32  Google Ireland Ltd         saas-productivity     72 900 kr/år  spar 6 705
 📧 2026-06-27 22:27  Tre Foretag                mobil                 14 940 kr/år  —
 📧 2026-06-27 22:26  Visma Spcs AB              loneadmin             18 900 kr/år  —
 📧 2026-06-27 22:25  Telia Företag              mobil                119 520 kr/år  —
@@ -69,15 +71,6 @@ Väg-fördelning: {"auto":38}
 📧 2026-06-03 21:59  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
 📧 2026-06-03 21:56  Telia Sverige AB           mobil                269 460 kr/år  —
 📧 2026-06-02 23:18  IT-Partner Sverige AB      saas-productivity    212 040 kr/år  spar 32 674
-📧 2026-06-02 09:12  Telia Sverige AB           mobil                269 460 kr/år  —
-📧 2026-06-01 22:43  Telia Företag              mobil                 58 092 kr/år  spar 6 230
-📧 2026-06-01 21:39  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
-📧 2026-06-01 12:33  Telenor Sverige AB         mobil                125 580 kr/år  —
-📧 2026-06-01 04:53  Telenor Sverige AB         mobil                125 580 kr/år  spar 5 040
-📧 2026-05-31 22:13  Telenor Sverige AB         mobil                125 580 kr/år  —
-📧 2026-05-31 20:36  Telia Sverige AB           mobil                188 460 kr/år  spar 28 080
-📧 2026-05-31 18:18  SveaMobil Företag AB       mobil                188 160 kr/år  spar 21 840
-📧 2026-05-30 13:47  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
 ═══════════════════════════════════════════════════════════════
 
 Läs: 📧=mail-in · 🌐=webb · ⚠️=ej auto (kö/ej stödd) · "spar"=rekommenderat byte med nettogap
