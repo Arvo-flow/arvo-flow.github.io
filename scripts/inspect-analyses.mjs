@@ -51,15 +51,16 @@ const jobs = await db`
   SELECT status, COUNT(*)::int AS n, MAX(created_at) AS senast, MAX(error) AS ett_fel
   FROM ingest_jobs GROUP BY status ORDER BY status
 `.catch((e) => { console.log('ingest_jobs: (tabell saknas ännu eller fel:', e.message, ')'); return null; });
-// Misslyckade jobb i detalj — VILKA föll och varför (t.ex. kredit-slut → HTTP 422).
+// Misslyckade jobb i detalj — VILKA föll, vilket bilage-index och varför (t.ex. kredit-slut → HTTP 422,
+// eller "PDF kunde inte hämtas" = Resend-listningen saknar det indexet). Felet loggas, aldrig tyst.
 const failedJobs = await db`
-  SELECT sender, filename, attempts, error, last_seen_at
-  FROM ingest_jobs WHERE status='failed' ORDER BY last_seen_at DESC LIMIT 30
-`.catch(() => []);
+  SELECT sender, filename, attachment_index, attempts, error, created_at
+  FROM ingest_jobs WHERE status='failed' ORDER BY attachment_index ASC LIMIT 60
+`.catch((e) => { console.log('   (failedJobs-query fel:', e.message, ')'); return []; });
 if (failedJobs.length) {
   console.log('\n═══════ MISSLYCKADE JOBB (detalj) ═══════');
   for (const f of failedJobs) {
-    console.log(`   ${(f.filename||'?').slice(0,40).padEnd(40)} försök=${f.attempts}  ${String(f.error||'').slice(0,60)}`);
+    console.log(`   idx=${String(f.attachment_index).padStart(2)}  ${(f.filename||'?').slice(0,36).padEnd(36)} försök=${f.attempts}  ${String(f.error||'').slice(0,50)}`);
   }
   console.log('═══════════════════════════════════════\n');
 }
