@@ -51,6 +51,19 @@ const jobs = await db`
   SELECT status, COUNT(*)::int AS n, MAX(created_at) AS senast, MAX(error) AS ett_fel
   FROM ingest_jobs GROUP BY status ORDER BY status
 `.catch((e) => { console.log('ingest_jobs: (tabell saknas ännu eller fel:', e.message, ')'); return null; });
+// Misslyckade jobb i detalj — VILKA föll och varför (t.ex. kredit-slut → HTTP 422).
+const failedJobs = await db`
+  SELECT sender, filename, attempts, error, last_seen_at
+  FROM ingest_jobs WHERE status='failed' ORDER BY last_seen_at DESC LIMIT 30
+`.catch(() => []);
+if (failedJobs.length) {
+  console.log('\n═══════ MISSLYCKADE JOBB (detalj) ═══════');
+  for (const f of failedJobs) {
+    console.log(`   ${(f.filename||'?').slice(0,40).padEnd(40)} försök=${f.attempts}  ${String(f.error||'').slice(0,60)}`);
+  }
+  console.log('═══════════════════════════════════════\n');
+}
+
 if (jobs) {
   console.log('\n═══════ INGEST-KÖ (ingest_jobs) ═══════');
   if (!jobs.length) console.log('   (kön är tom — inga bulk-jobb köade)');

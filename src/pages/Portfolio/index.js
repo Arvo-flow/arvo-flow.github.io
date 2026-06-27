@@ -210,6 +210,7 @@ export default function Portfolio() {
   const [switchTargets, setSwitchTargets] = useState({});
   const [vakt, setVakt] = useState(null);
   const [ingesting, setIngesting] = useState(0);   // fakturor på väg (köade, ej klara) → "analyserar N"
+  const [ingestFailed, setIngestFailed] = useState(0);   // fakturor som föll → ärligt bortfalls-besked
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
   const [fingerprint, setFingerprint] = useState('');
@@ -251,6 +252,7 @@ export default function Portfolio() {
     setSwitchTargets(data.switchTargets ?? {});
     setVakt(data.vakt ?? null);
     setIngesting(data.ingesting ?? 0);
+    setIngestFailed(data.ingestFailed ?? 0);
   }, [fingerprint, magic, sessionToken]);
 
   useEffect(() => {
@@ -545,6 +547,17 @@ export default function Portfolio() {
       <Shell>
         {/* Riktig inloggning: vem är inne, logga ut/byt konto (varaktig session, ej fingerprint-gissning) */}
         <AccountBar email={authEmail} onLogout={handleLogout} />
+        {/* Bortfalls-besked: aldrig tyst tapp. Visas i alla rumslägen när något inte gick igenom. */}
+        {ingestFailed > 0 && (
+          <div style={{
+            border: '1px solid rgba(245,180,90,0.45)', borderRadius: 12, background: 'rgba(245,180,90,0.07)',
+            padding: '14px 18px', margin: '0 0 18px', color: '#E8C9A0', fontSize: 13.5, lineHeight: 1.55,
+          }}>
+            <strong style={{ color: '#F5B45A' }}>{ingestFailed} {ingestFailed === 1 ? 'faktura' : 'fakturor'} kunde inte läsas in.</strong>{' '}
+            Det var oftast ett tillfälligt fel (en bild-PDF, en icke-faktura, eller ett tekniskt avbrott).
+            Vidarebefordra dem gärna igen — resten är analyserade och klara{suppliers.length > 0 ? ' nedan' : ' så snart de bearbetats'}.
+          </div>
+        )}
         {analyses === null && !error && <Spinner />}
         {error && <Verdict><h2 style={{ fontSize: 26 }}>Kunde inte ladda ert kontor — försök igen om en stund.</h2></Verdict>}
 
