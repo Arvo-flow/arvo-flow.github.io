@@ -356,6 +356,19 @@ export default async function handler(req, res) {
       emailId: mailId, sender: identityEmail, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
     }));
     const added = await enqueueJobs(jobs);
+    // Sparka igång drainen DIREKT (best-effort) så bulken börjar analyseras inom sekunder i stället
+    // för att vänta upp till en cron-tick. Vi väntar inte in hela körningen — bara att den startar
+    // (AbortController efter 1,5s; drain-invokationen körs vidare server-side även om vi släpper den).
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 1500);
+      await fetch(`${BASE_URL}/api/cron/drain-ingest`, {
+        method: 'POST',
+        headers: process.env.CRON_SECRET ? { Authorization: `Bearer ${process.env.CRON_SECRET}` } : {},
+        signal: ctrl.signal,
+      }).catch(() => {});                 // timeout/abort är väntat — drainen rullar vidare
+      clearTimeout(t);
+    } catch { /* best-effort kick, kön betas av av cronen oavsett */ }
     const portalLink = await mintPortalLink(db, identityEmail);
     try {
       const resend = getResend();
