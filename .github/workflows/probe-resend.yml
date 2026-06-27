@@ -1,0 +1,43 @@
+name: Probe Resend attachments
+
+# Verifierar Resends bilage-listning mot den riktiga maskinen (RESEND_API_KEY): hårt tak vid 20
+# eller opaginerad default? Skriver ops/probe-result.txt och pushar tillbaka (läses via git fetch).
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ops/probe.trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    name: Probe Resend
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Probe
+        run: |
+          mkdir -p ops
+          node scripts/probe-resend-attachments.mjs | tee ops/probe-result.txt
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      - name: Commit result back (git-vägen)
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git add ops/probe-result.txt
+          git commit -m "ops: probe-resultat [skip ci]" || echo "inget att committa"
+          git push origin HEAD:main || echo "push misslyckades"
