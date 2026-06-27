@@ -1,7 +1,8 @@
 name: Inspect analyses
 
-# Manuell, läs-bar detaljgranskning av de senaste analyserna (för ingest-test-utvärdering).
-# Inga skrivningar.
+# Läs-bar detaljgranskning av de senaste analyserna (för ingest-test-utvärdering). Inga DB-skrivningar.
+# Triggas manuellt ELLER via en push till ops/inspect.trigger (git-vägen, när GitHub-API/MCP är nere).
+# Skriver resultatet till ops/inspect-result.txt och pushar tillbaka — så det kan läsas via git fetch.
 on:
   workflow_dispatch:
     inputs:
@@ -9,6 +10,12 @@ on:
         description: 'Antal senaste analyser att visa'
         required: false
         default: '30'
+  push:
+    paths:
+      - 'ops/inspect.trigger'
+
+permissions:
+  contents: write
 
 jobs:
   inspect:
@@ -25,6 +32,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Inspect
-        run: node scripts/inspect-analyses.mjs "${{ inputs.n }}"
+        run: |
+          mkdir -p ops
+          node scripts/inspect-analyses.mjs "${{ inputs.n || '40' }}" | tee ops/inspect-result.txt
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Commit result back (git-vägen)
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Inspect Bot"
+          git add ops/inspect-result.txt
+          # Result-filen ligger på ANNAN path än triggern → ingen loop. [skip ci] som extra bälte.
+          git commit -m "ops: inspect-resultat [skip ci]" || echo "inget att committa"
+          git push origin HEAD:main || echo "push misslyckades"
