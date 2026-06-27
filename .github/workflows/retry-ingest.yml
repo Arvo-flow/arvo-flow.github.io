@@ -1,0 +1,32 @@
+name: Retry failed ingest
+
+# Flippar fallna ingest-jobb → 'pending' så drainen kör om dem (efter en rotorsaksfix).
+on:
+  workflow_dispatch:
+    inputs:
+      sender:
+        description: 'Avsändar-identitet (e-post) vars fallna jobb ska köras om'
+        required: false
+        default: 'testyta@arvoflow.se'
+
+permissions:
+  contents: read
+
+jobs:
+  retry:
+    name: Retry failed ingest
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Retry
+        run: node scripts/retry-ingest.mjs "${{ inputs.sender || 'testyta@arvoflow.se' }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

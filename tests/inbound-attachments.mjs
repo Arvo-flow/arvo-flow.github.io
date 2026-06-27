@@ -8,7 +8,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchInboundPdfs } from '../api/inbound-email.mjs';
+import { fetchInboundPdfs, fetchInboundPdfByIndex, listInboundAttachments } from '../api/inbound-email.mjs';
 
 const PDF_BYTES = Buffer.from('%PDF-1.4 testinnehåll');
 
@@ -42,7 +42,8 @@ describe('Resend-bilagehämtning — fetchInboundPdfs', () => {
     assert.equal(pdfs.length, 1);
     assert.equal(pdfs[0].filename, 'faktura.pdf');
     assert.equal(Buffer.from(pdfs[0].content, 'base64').toString(), PDF_BYTES.toString());
-    assert.match(f.calls[0].url, /\/emails\/receiving\/em_123\/attachments$/);
+    // Listningen paginerar nu (limit=100) så bilagor med index ≥20 aldrig tappas.
+    assert.match(f.calls[0].url, /\/emails\/receiving\/em_123\/attachments\?limit=100&offset=0$/);
     assert.equal(f.calls[0].opts.headers.Authorization, 'Bearer test-key');
   });
 
@@ -80,4 +81,56 @@ describe('Resend-bilagehämtning — fetchInboundPdfs', () => {
     assert.deepEqual(await fetchInboundPdfs(null, { fetchImpl: mockFetch({ data: [] }) }), []);
   });
 
+});
+
+// ── Pagineringsläxan (2026-06-27): Resends listning defaultar till 20 bilagor (has_more=true).
+// Ett 26-bilagors mejl tappade idx 20–25 ("PDF kunde inte hämtas") tills vi paginerade med limit=100.
+// Verifierat mot riktiga maskinen (probe-resend). Dessa tester låser att overflow ALDRIG tappas tyst.
+const pdfAtt = (i) => ({
+  id: `att_${i}`, filename: `INV_${i}.pdf`, size: 2048,
+  content_type: 'application/pdf', download_url: `https://dl.example/att_${i}`,
+});
+
+// Resend-trogen mock: respekterar limit/offset OCH sätter has_more korrekt (default 20 utan limit).
+function pagedMock(total) {
+  const all = Array.from({ length: total }, (_, i) => pdfAtt(i));
+  const impl = async (url) => {
+    const s = String(url);
+    if (s.includes('/attachments')) {
+      const u = new URL(s);
+      const limit = Number(u.searchParams.get('limit')) || 20;   // Resends default = 20
+      const offset = Number(u.searchParams.get('offset')) || 0;
+      const page = all.slice(offset, offset + limit);
+      return { ok: true, status: 200, json: async () => ({ object: 'list', has_more: offset + limit < total, data: page }) };
+    }
+    return { ok: true, status: 200, arrayBuffer: async () => PDF_BYTES.buffer.slice(PDF_BYTES.byteOffset, PDF_BYTES.byteOffset + PDF_BYTES.byteLength) };
+  };
+  return impl;
+}
+
+describe('Resend-bilagepaginering — index ≥20 tappas aldrig', () => {
+  test('listInboundAttachments hämtar ALLA 26 (inte bara default-20)', async () => {
+    process.env.RESEND_API_KEY = 'test-key';
+    const all = await listInboundAttachments('em_bulk', { fetchImpl: pagedMock(26) });
+    assert.equal(all.length, 26);
+  });
+
+  test('fetchInboundPdfByIndex(25) på 26-bilagors mejl → hämtar PDF:en (regressionen)', async () => {
+    process.env.RESEND_API_KEY = 'test-key';
+    const r = await fetchInboundPdfByIndex('em_bulk', 25, { fetchImpl: pagedMock(26) });
+    assert.ok(r && r.content, 'idx 25 ska resolva, inte bli null');
+    assert.equal(r.filename, 'INV_25.pdf');
+  });
+
+  test('paginering över 100: idx 120 av 150 resolvar (flera sidor)', async () => {
+    process.env.RESEND_API_KEY = 'test-key';
+    const r = await fetchInboundPdfByIndex('em_huge', 120, { fetchImpl: pagedMock(150) });
+    assert.ok(r && r.content);
+    assert.equal(r.filename, 'INV_120.pdf');
+  });
+
+  test('idx bortom alla bilagor → null (inget påhittat)', async () => {
+    process.env.RESEND_API_KEY = 'test-key';
+    assert.equal(await fetchInboundPdfByIndex('em_bulk', 99, { fetchImpl: pagedMock(26) }), null);
+  });
 });

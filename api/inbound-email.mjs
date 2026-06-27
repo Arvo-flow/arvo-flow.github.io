@@ -69,16 +69,9 @@ const sha16 = (s) => createHash('sha256').update(s).digest('hex').slice(0, 16);
 export async function fetchInboundPdfs(emailId, { fetchImpl = fetch } = {}) {
   const key = process.env.RESEND_API_KEY;
   if (!key || !emailId) return [];
-  const list = await fetchImpl(`https://api.resend.com/emails/receiving/${emailId}/attachments`, {
-    headers: { Authorization: `Bearer ${key}` },
-  });
-  if (!list.ok) {
-    const body = typeof list.text === 'function' ? await list.text().catch(() => '') : '';
-    throw new Error(`bilagelistning misslyckades (HTTP ${list.status}): ${body.slice(0, 300)}`);
-  }
-  const { data } = await list.json();
+  const data = await listInboundAttachments(emailId, { fetchImpl });   // paginerad (en sanning, regel 1)
 
-  const pdfMeta = (data ?? [])
+  const pdfMeta = data
     .filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''))
     .slice(0, MAX_PDFS_PER_MAIL);
 
@@ -97,17 +90,35 @@ export async function fetchInboundPdfs(emailId, { fetchImpl = fetch } = {}) {
   return out;
 }
 
+// Listar ALLA bilagor för ett mottaget mejl. KRITISKT: Resends listning defaultar till 20 bilagor
+// (has_more=true) — den nakna endpointen tappar allt med index ≥20. Verifierat 2026-06-27 mot riktiga
+// maskinen: ett 26-bilagors mejl gav bara idx 0–19; ?limit=100 gav alla 26 (has_more=false). Vi
+// paginerar via offset tills has_more är false → säkert även bortom 100 (moaten: 50–100 fakturor/mejl).
+export async function listInboundAttachments(emailId, { fetchImpl = fetch } = {}) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || !emailId) return [];
+  const base = `https://api.resend.com/emails/receiving/${emailId}/attachments`;
+  const all = [];
+  for (let offset = 0; offset <= 5000; offset += 100) {
+    const list = await fetchImpl(`${base}?limit=100&offset=${offset}`, {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!list.ok) throw new Error(`bilagelistning misslyckades (HTTP ${list.status})`);
+    const body = await list.json();
+    const batch = Array.isArray(body?.data) ? body.data : [];
+    all.push(...batch);
+    if (!body?.has_more || batch.length === 0) break;   // sista sidan
+  }
+  return all;
+}
+
 // Hämta EN PDF-bilaga vid given index (bland PDF:erna) — drain-arbetaren hämtar ett köat jobbs PDF
 // vid analystillfället (signerade download_url:er är färska vid varje listning). null om saknas/för stor.
 export async function fetchInboundPdfByIndex(emailId, index, { fetchImpl = fetch } = {}) {
   const key = process.env.RESEND_API_KEY;
   if (!key || !emailId) return null;
-  const list = await fetchImpl(`https://api.resend.com/emails/receiving/${emailId}/attachments`, {
-    headers: { Authorization: `Bearer ${key}` },
-  });
-  if (!list.ok) throw new Error(`bilagelistning misslyckades (HTTP ${list.status})`);
-  const { data } = await list.json();
-  const pdfs = (data ?? []).filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
+  const data = await listInboundAttachments(emailId, { fetchImpl });
+  const pdfs = data.filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
   const a = pdfs[index];
   if (!a) return null;
   const filename = a.filename ?? 'faktura.pdf';
@@ -352,6 +363,10 @@ export default async function handler(req, res) {
   const pdfAtts = (data.attachments ?? [])
     .filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
   if (pdfAtts.length > INLINE_LIMIT) {
+    // Overflow bortom taket får ALDRIG tappas tyst (regel 9). Med pagineringen läser vi alla bilagor,
+    // men vår egen kö-cap är MAX_BULK_PDFS — överskottet redovisas, aldrig svaldas.
+    const overflow = Math.max(0, pdfAtts.length - MAX_BULK_PDFS);
+    if (overflow > 0) console.warn(`[inbound-email] BULK overflow: ${pdfAtts.length} PDF:er > tak ${MAX_BULK_PDFS} — ${overflow} ej köade (be kunden dela upp)`);
     const jobs = pdfAtts.slice(0, MAX_BULK_PDFS).map((a, idx) => ({
       emailId: mailId, sender: identityEmail, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
     }));
