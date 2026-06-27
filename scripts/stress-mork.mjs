@@ -15,6 +15,7 @@ import { createHash } from 'node:crypto';
 import { deterministicMatch } from '../agents/categorizer/categorize.js';
 import { isAudited } from '../lib/revision-gate.js';
 import { aggregateByCategory } from '../lib/invoice-lines.js';
+import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { detectFeeSignals } from '../lib/fee-signals.js';
 
 // ── De 10 arketyperna (grundarens rigg) ─────────────────────────────────────────
@@ -116,73 +117,97 @@ const contentHash = (inv) => createHash('sha256').update(JSON.stringify({
   li: inv.lineItems.map((l) => [l.description, l.unitPrice, l.quantity]),
 })).digest('hex').slice(0, 16);
 
-// ── Kör ──────────────────────────────────────────────────────────────────────────
-const invoices = generate();
-const seen = new Set();
-let dupCollapsed = 0;
-const gate = { AUDITED: [], GATED: [], 'AI-FALLBACK': [] };
-const junk = { feeLines: 0, feeKrYr: 0, fxLines: 0, fxKrYr: 0, hwLines: 0, hwKrYr: 0, varLines: 0, varKrYr: 0 };
-const forensics = [];          // övervintrande avbetalningar m.m.
-let tariffSignalHits = 0;
-const perInvoice = [];
+// ── Analysmotor (ren, importerbar — så regressionssviten kan låsa varje invariant) ──
+export function runMorker() {
+  const invoices = generate();
+  const seen = new Set();
+  let dupCollapsed = 0;
+  const gate = { AUDITED: [], GATED: [], 'AI-FALLBACK': [] };
+  const junk = { feeLines: 0, feeKrYr: 0, fxLines: 0, fxKrYr: 0, hwLines: 0, hwKrYr: 0, varLines: 0, varKrYr: 0 };
+  const forensics = [];          // övervintrande avbetalningar m.m.
+  let tariffSignalHits = 0;
+  const perInvoice = [];
+  let variableLeakedIntoRunRate = 0;   // Kivra-vakten: rörligt får ALDRIG in i fast run-rate
 
-for (const inv of invoices) {
-  const h = contentHash(inv);
-  if (seen.has(h)) { dupCollapsed++; continue; }   // DEDUP (innehålls-hash)
-  seen.add(h);
+  for (const inv of invoices) {
+    const h = contentHash(inv);
+    if (seen.has(h)) { dupCollapsed++; continue; }   // DEDUP (innehålls-hash)
+    seen.add(h);
 
-  const description = inv.lineItems.map((l) => l.description).join(' · ');
-  const match = deterministicMatch({ supplier: inv.supplier, description, lineItems: inv.lineItems });
-  const category = match?.category ?? null;
-  const status = !category ? 'AI-FALLBACK' : (isAudited(category) ? 'AUDITED' : 'GATED');
+    const description = inv.lineItems.map((l) => l.description).join(' · ');
+    const match = deterministicMatch({ supplier: inv.supplier, description, lineItems: inv.lineItems });
+    const category = match?.category ?? null;
+    const status = !category ? 'AI-FALLBACK' : (isAudited(category) ? 'AUDITED' : 'GATED');
 
-  const typed = inv.lineItems.map(typeLine);
-  // RIKTIGA grindar:
-  const agg = aggregateByCategory(typed);                       // run-rate exkl. engångs-junk
-  const tariff = detectFeeSignals(typed);                       // leverantörens egna höjningsmarkörer
-  if (tariff.length) tariffSignalHits += tariff.length;
+    const typed = inv.lineItems.map(typeLine);
+    // RIKTIGA grindar:
+    aggregateByCategory(typed);                                   // skuggmodul (instrumentering) — körs för röktest
+    const tariff = detectFeeSignals(typed);                       // leverantörens egna höjningsmarkörer
+    if (tariff.length) tariffSignalHits += tariff.length;
 
-  for (const t of typed) {
-    const yr = t.amount * 12;
-    if (t._kind === 'one_time_fee') { junk.feeLines++; junk.feeKrYr += yr; }
-    if (t._kind === 'fx_surcharge') { junk.fxLines++; junk.fxKrYr += yr; }
-    if (t._kind === 'hardware')     { junk.hwLines++; junk.hwKrYr += yr; }
-    if (t._kind === 'variable')     { junk.varLines++; junk.varKrYr += yr; }
-    const am = t.description.match(AMORT_RE);
-    if (am && Number(am[1]) > Number(am[2])) {
-      forensics.push(`${inv.supplier} (${inv.id}): "${t.description}" — avbetalning ÖVER planen (månad ${am[1]} av ${am[2]}) → ${Math.round(t.amount * 12)} kr/år för redan avbetald hårdvara`);
+    // Kivra-invarianten mot den RIKTIGA kundytan (computeInvoiceMetrics, regel 1: en sanning).
+    // computeInvoiceMetrics bygger run-raten ur en ALLOWLIST (type === 'recurring_subscription'),
+    // så allt rörligt/engångs/hårdvara faller bort per konstruktion. Beviset: metrik-utfallet ska
+    // vara IDENTISKT med och utan de rörliga raderna — en rörlig krona som ändrar metriken = läckage.
+    if (typed.some((t) => t._kind === 'variable')) {
+      const cat = category ?? 'mobil';
+      const withVar    = computeInvoiceMetrics(typed, cat, false);
+      const withoutVar = computeInvoiceMetrics(typed.filter((t) => t._kind !== 'variable'), cat, false);
+      if (JSON.stringify(withVar) !== JSON.stringify(withoutVar)) variableLeakedIntoRunRate++;
     }
+
+    for (const t of typed) {
+      const yr = t.amount * 12;
+      if (t._kind === 'one_time_fee') { junk.feeLines++; junk.feeKrYr += yr; }
+      if (t._kind === 'fx_surcharge') { junk.fxLines++; junk.fxKrYr += yr; }
+      if (t._kind === 'hardware')     { junk.hwLines++; junk.hwKrYr += yr; }
+      if (t._kind === 'variable')     { junk.varLines++; junk.varKrYr += yr; }
+      const am = t.description.match(AMORT_RE);
+      if (am && Number(am[1]) > Number(am[2])) {
+        forensics.push(`${inv.supplier} (${inv.id}): "${t.description}" — avbetalning ÖVER planen (månad ${am[1]} av ${am[2]}) → ${Math.round(t.amount * 12)} kr/år för redan avbetald hårdvara`);
+      }
+    }
+
+    gate[status].push(`${inv.supplier}→${category ?? 'AI'}`);
+    perInvoice.push({ id: inv.id, supplier: inv.supplier, category: category ?? 'AI-fallback', status });
   }
 
-  gate[status].push(`${inv.supplier}→${category ?? 'AI'}`);
-  perInvoice.push({ id: inv.id, supplier: inv.supplier, category: category ?? 'AI-fallback', status,
-    runRate: Math.round(agg.periodicTotal), multi: agg.isMultiCategory, primary: agg.primary });
+  return {
+    generated: invoices.length, dupCollapsed, uniqueAnalyzed: seen.size,
+    gate, junk, forensics, tariffSignalHits, perInvoice, variableLeakedIntoRunRate,
+  };
 }
 
-// ── Dossier ──────────────────────────────────────────────────────────────────────
-const kr = (n) => Math.round(n).toLocaleString('sv-SE');
-const uniq = (arr) => [...new Set(arr)];
-console.log('\n╔══════════════════ MÖRKER-DOSSIER ══════════════════╗');
-console.log(`Genererade fakturor: ${invoices.length}`);
-console.log(`Dedup (innehålls-hash): ${dupCollapsed} EXAKTA dubbletter kollapsade → ${seen.size} unika analyserade`);
-console.log(`  (4 nära-dubbletter med nytt fakturanr/datum behölls korrekt som separata)`);
-console.log('\n── REVISIONSGRINDEN (per kategori) ──');
-console.log(`  AUDITED (visar siffror):  ${uniq(gate.AUDITED).join('  ·  ')}`);
-console.log(`  GATAD (talfri offert):    ${uniq(gate.GATED).join('  ·  ')}`);
-console.log(`  AI-FALLBACK (ej determ.): ${uniq(gate['AI-FALLBACK']).join('  ·  ')}`);
-console.log(`  → ${seen.size} analyser: ${gate.AUDITED.length} audited · ${gate.GATED.length} gatade · ${gate['AI-FALLBACK'].length} ai-fallback`);
-console.log('\n── JUNK-FÅNGSTEN (exkluderat ur run-rate / besparing) ──');
-console.log(`  Fasta avgifter (papper/expedition/påminnelse/admin): ${junk.feeLines} rader · ${kr(junk.feeKrYr)} kr/år`);
-console.log(`  FX-/cross-border-surcharges:                          ${junk.fxLines} rader · ${kr(junk.fxKrYr)} kr/år`);
-console.log(`  Hårdvara (hyra/avbetalning):                          ${junk.hwLines} rader · ${kr(junk.hwKrYr)} kr/år`);
-console.log(`  RÖRLIGT (Kivra/utskick/overshoot):                    ${junk.varLines} rader · ${kr(junk.varKrYr)} kr/år`);
-console.log(`  → totalt ${junk.feeLines + junk.fxLines + junk.hwLines + junk.varLines} junk-/icke-fasta rader exkluderade ur den fasta run-raten`);
-console.log('\n── TARIFF-MARKÖR (detectFeeSignals: leverantörens egna höjningsord) ──');
-console.log(`  Träffar: ${tariffSignalHits} — väntat lågt: dessa arketyper bär GENERISKA avgifter, inte "ny tariff/prisjustering"-ord.`);
-console.log('\n── FORENSISKA FYND (övervintrande hårdvara m.m.) ──');
-if (forensics.length) for (const f of uniq(forensics)) console.log(`  ⚠️  ${f}`);
-else console.log('  (inga)');
-console.log('\n── RÖRLIGT HÅLLS BORTA (Kivra-frågan) ──');
-const kivra = perInvoice.filter((p) => /fortnox|visma/i.test(p.supplier));
-console.log(`  Fortnox/Visma (Lön + Kivra/Utskick): rörliga raderna typade 'variable' → ALDRIG i fast run-rate.`);
-console.log('╚════════════════════════════════════════════════════╝\n');
+// ── Dossier (CLI — körs bara direkt, aldrig vid import) ────────────────────────────
+function printDossier() {
+  const r = runMorker();
+  const kr = (n) => Math.round(n).toLocaleString('sv-SE');
+  const uniq = (arr) => [...new Set(arr)];
+  console.log('\n╔══════════════════ MÖRKER-DOSSIER ══════════════════╗');
+  console.log(`Genererade fakturor: ${r.generated}`);
+  console.log(`Dedup (innehålls-hash): ${r.dupCollapsed} EXAKTA dubbletter kollapsade → ${r.uniqueAnalyzed} unika analyserade`);
+  console.log(`  (4 nära-dubbletter med nytt fakturanr/datum behölls korrekt som separata)`);
+  console.log('\n── REVISIONSGRINDEN (per kategori) ──');
+  console.log(`  AUDITED (visar siffror):  ${uniq(r.gate.AUDITED).join('  ·  ')}`);
+  console.log(`  GATAD (talfri offert):    ${uniq(r.gate.GATED).join('  ·  ')}`);
+  console.log(`  AI-FALLBACK (ej determ.): ${uniq(r.gate['AI-FALLBACK']).join('  ·  ')}`);
+  console.log(`  → ${r.uniqueAnalyzed} analyser: ${r.gate.AUDITED.length} audited · ${r.gate.GATED.length} gatade · ${r.gate['AI-FALLBACK'].length} ai-fallback`);
+  console.log('\n── JUNK-FÅNGSTEN (exkluderat ur run-rate / besparing) ──');
+  console.log(`  Fasta avgifter (papper/expedition/påminnelse/admin): ${r.junk.feeLines} rader · ${kr(r.junk.feeKrYr)} kr/år`);
+  console.log(`  FX-/cross-border-surcharges:                          ${r.junk.fxLines} rader · ${kr(r.junk.fxKrYr)} kr/år`);
+  console.log(`  Hårdvara (hyra/avbetalning):                          ${r.junk.hwLines} rader · ${kr(r.junk.hwKrYr)} kr/år`);
+  console.log(`  RÖRLIGT (Kivra/utskick/overshoot):                    ${r.junk.varLines} rader · ${kr(r.junk.varKrYr)} kr/år`);
+  console.log(`  → totalt ${r.junk.feeLines + r.junk.fxLines + r.junk.hwLines + r.junk.varLines} junk-/icke-fasta rader exkluderade ur den fasta run-raten`);
+  console.log('\n── TARIFF-MARKÖR (detectFeeSignals: leverantörens egna höjningsord) ──');
+  console.log(`  Träffar: ${r.tariffSignalHits} — väntat lågt: dessa arketyper bär GENERISKA avgifter, inte "ny tariff/prisjustering"-ord.`);
+  console.log('\n── FORENSISKA FYND (övervintrande hårdvara m.m.) ──');
+  if (r.forensics.length) for (const f of uniq(r.forensics)) console.log(`  ⚠️  ${f}`);
+  else console.log('  (inga)');
+  console.log('\n── RÖRLIGT HÅLLS BORTA (Kivra-frågan) ──');
+  console.log(`  Fortnox/Visma (Lön + Kivra/Utskick): rörliga raderna typade 'variable' → ALDRIG i fast run-rate (läckage: ${r.variableLeakedIntoRunRate}).`);
+  console.log('╚════════════════════════════════════════════════════╝\n');
+}
+
+// Kör bara dossier-utskriften när filen körs direkt (node scripts/stress-mork.mjs),
+// aldrig vid import (då vill tests/stress-mork.mjs bara åt runMorker()).
+if (import.meta.url === `file://${process.argv[1]}`) printDossier();

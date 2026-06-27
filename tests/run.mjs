@@ -47,6 +47,7 @@ import './sanity-verifier.mjs';
 import './adobe-rightsizing.mjs';
 import './adobe-recommendation.mjs';
 import './saas-substitution.mjs';
+import './stress-mork.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,
