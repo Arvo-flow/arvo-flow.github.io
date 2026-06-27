@@ -131,7 +131,7 @@ const TELECOM_SUPPLIER_SIGNALS = ['telekom', 'telecom', 'tele2', 'telia', 'telen
 const SUBSCRIPTION_DESC_SIGNALS = ['abonnemang', 'abonnement', 'subscription', 'månadsavgift telefon', 'telefonitjänst'];
 
 // Returns a result object if a strong deterministic match is found, otherwise null.
-function deterministicMatch(invoice) {
+export function deterministicMatch(invoice) {
   const desc = (invoice.description ?? '').toLowerCase();
   const supplier = (invoice.supplier ?? '').toLowerCase();
   const combined = `${desc} ${supplier}`;
