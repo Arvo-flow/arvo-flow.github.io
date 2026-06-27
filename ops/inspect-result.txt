@@ -1,0 +1,80 @@
+
+═══════ TESTYTAN (testyta@arvoflow.se): 14 analyser ═══════
+   tid    leverantör                 kategori          årskostnad   →förslag    nettospar   flaggor
+   22:24  Tele2 Företag AB          mobil               373 800          —          —  
+   22:24  Zettle by PayPal          kortterminal         29 760          —          —  
+   22:20  Zettle by PayPal          kortterminal          5 952          —          —  DUBBLETT-PAR
+   22:16  Microsoft Ireland Operati saas-productivit    352 296    351 994        242  
+   22:15  Tele2 Företag AB          mobil               355 980          —          —  DUBBLETT-PAR
+   22:14  Microsoft Ireland Operati saas-productivit    352 296    351 994        242  DUBBLETT-PAR
+   22:14  Tele2 Bredband AB         bredband             23 388     11 628      9 408  
+   22:13  Tele2 Företag AB          mobil               443 304          —          —  DUBBLETT-PAR
+   22:13  Microsoft Ireland Operati saas-productivit    332 160    331 908        202  DUBBLETT-PAR
+   22:12  Microsoft Ireland Operati saas-productivit    332 160    331 908        202  DUBBLETT-PAR
+   22:11  Tele2 Bredband AB         bredband            116 940     42 828     59 290  DUBBLETT-PAR
+   22:11  Tele2 Bredband AB         bredband             23 388     11 628      9 408  DUBBLETT-PAR
+   22:10  Zettle by PayPal          kortterminal         29 760          —          —  DUBBLETT-PAR
+   22:10  Zettle by PayPal          kortterminal          5 952          —          —  DUBBLETT-PAR
+   ─────────────────────────────────────────────────────────────────────────────
+   AGGREGAT: 14 fakturor · 3 med byte · total årskostnad 2 777 136 kr · total nettobesparing 78 994 kr
+   Kategorier: mobil:3 · kortterminal:4 · saas-productivity:4 · bredband:3
+═══════════════════════════════════════════════════════
+
+
+═══════ INGEST-KÖ (ingest_jobs) ═══════
+   done        20   senast 2026-06-26 22:08
+   failed      3   senast 2026-06-26 22:08   ⚠️ analys misslyckades (HTTP 422)
+═══════════════════════════════════════
+
+
+═══════ ANALYSER SENASTE 60 MIN (0) ═══════
+═══════════════════════════════════════════════════
+
+
+═══════ SENASTE 40 ANALYSER (av frågade 40) ═══════
+Med e-post (mail-in eller registrerad): 39
+Väg-fördelning: {"auto":40}
+───────────────────────────────────────────────────────────────
+📧 2026-06-26 22:24  Tele2 Företag AB           mobil                373 800 kr/år  —
+📧 2026-06-26 22:24  Zettle by PayPal           kortterminal          29 760 kr/år  —
+📧 2026-06-26 22:20  Zettle by PayPal           kortterminal           5 952 kr/år  —
+📧 2026-06-26 22:16  Microsoft Ireland Operatio saas-productivity    352 296 kr/år  spar 242
+📧 2026-06-26 22:15  Tele2 Företag AB           mobil                355 980 kr/år  —
+📧 2026-06-26 22:14  Microsoft Ireland Operatio saas-productivity    352 296 kr/år  spar 242
+📧 2026-06-26 22:14  Tele2 Bredband AB          bredband              23 388 kr/år  spar 9 408
+📧 2026-06-26 22:13  Tele2 Företag AB           mobil                443 304 kr/år  —
+📧 2026-06-26 22:13  Microsoft Ireland Operatio saas-productivity    332 160 kr/år  spar 202
+📧 2026-06-26 22:12  Microsoft Ireland Operatio saas-productivity    332 160 kr/år  spar 202
+📧 2026-06-26 22:11  Tele2 Bredband AB          bredband             116 940 kr/år  spar 59 290
+📧 2026-06-26 22:11  Tele2 Bredband AB          bredband              23 388 kr/år  spar 9 408
+📧 2026-06-26 22:10  Zettle by PayPal           kortterminal          29 760 kr/år  —
+📧 2026-06-26 22:10  Zettle by PayPal           kortterminal           5 952 kr/år  —
+📧 2026-06-26 15:13  Tele2 Företag AB           mobil                439 740 kr/år  —
+📧 2026-06-26 15:12  Microsoft Ireland Operatio saas-productivity    352 296 kr/år  spar 242
+📧 2026-06-22 17:24  Microsoft Ireland Operatio saas-productivity    332 160 kr/år  spar 202
+📧 2026-06-22 17:24  Tele2 Bredband AB          bredband             116 940 kr/år  spar 59 290
+📧 2026-06-20 20:44  Tele2 Företag AB           mobil                373 800 kr/år  spar 104 016
+📧 2026-06-20 20:41  Microsoft Ireland Operatio saas-productivity    332 160 kr/år  spar 202
+📧 2026-06-20 13:46  Tele2 Bredband AB          bredband              23 388 kr/år  spar 9 408
+📧 2026-06-15 20:38  Tele2 Företag AB           mobil                146 580 kr/år  —
+📧 2026-06-13 14:02  Svea Kontorsprint & Leasin skrivarleasing        58 800 kr/år  —
+📧 2026-06-13 14:02  Telia Sverige AB           mobil                269 460 kr/år  —
+📧 2026-06-12 00:09  Telia Företag              mobil                 58 092 kr/år  spar 6 230
+📧 2026-06-11 23:40  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
+🌐 2026-06-11 23:22  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
+📧 2026-06-11 22:10  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
+📧 2026-06-11 12:31  Svea Kontorsprint & Leasin skrivarleasing        58 800 kr/år  —
+📧 2026-06-10 21:39  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
+📧 2026-06-08 18:52  CloudReseller Norden AB    saas-productivity    184 260 kr/år  spar 33 622
+📧 2026-06-03 21:59  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
+📧 2026-06-03 21:56  Telia Sverige AB           mobil                269 460 kr/år  —
+📧 2026-06-02 23:18  IT-Partner Sverige AB      saas-productivity    212 040 kr/år  spar 32 674
+📧 2026-06-02 09:12  Telia Sverige AB           mobil                269 460 kr/år  —
+📧 2026-06-01 22:43  Telia Företag              mobil                 58 092 kr/år  spar 6 230
+📧 2026-06-01 21:39  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
+📧 2026-06-01 12:33  Telenor Sverige AB         mobil                125 580 kr/år  —
+📧 2026-06-01 04:53  Telenor Sverige AB         mobil                125 580 kr/år  spar 5 040
+📧 2026-05-31 22:13  Telenor Sverige AB         mobil                125 580 kr/år  —
+═══════════════════════════════════════════════════════════════
+
+Läs: 📧=mail-in · 🌐=webb · ⚠️=ej auto (kö/ej stödd) · "spar"=rekommenderat byte med nettogap
