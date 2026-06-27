@@ -70,6 +70,41 @@ describe('Forensik · administrativ tilläggsavgift (junk fee)', () => {
   });
 });
 
+describe('Forensik · avbetald hårdvara (Månad X/Y, X > Y → ni äger den redan)', () => {
+  test('"Månad 37/36" → high-fynd hardware_overpaid med skoningslös copy', () => {
+    const f = detectForensicFindings([line('Delbetalning iPhone 13 (Månad 37/36)', 560, 2)], { periodMultiplier: 12 });
+    assert.equal(f.length, 1);
+    assert.equal(f[0].type, 'hardware_overpaid');
+    assert.equal(f[0].severity, 'high');                 // skarpare än vanlig avbetalning (medium)
+    assert.equal(f[0].annualImpact, 6720);               // 560 × 12 — ren förlust för redan ägd hårdvara
+    assert.match(f[0].text, /månad 37 av 36/);
+    assert.match(f[0].text, /redan slutbetald/);
+    assert.match(f[0].title, /redan äger/);
+  });
+  test('"Månad 12/36" (inom plan) → degraderar korrekt till hardware_financing (guard faller)', () => {
+    const f = detectForensicFindings([line('Avbetalning surfplattor (Månad 12/36)', 200, 1)], { periodMultiplier: 12 });
+    assert.equal(f[0].type, 'hardware_financing');        // INTE overpaid — planen löper ännu
+    assert.equal(f[0].severity, 'medium');
+  });
+  test('"Månad 36/36" (sista månaden, ej över) → hardware_financing, inte overpaid', () => {
+    assert.equal(detectForensicFindings([line('Delbetalning (Månad 36/36)', 100)], {})[0].type, 'hardware_financing');
+  });
+  test('"Månad 37 av 36" (text-variant) fångas också som overpaid', () => {
+    assert.equal(detectForensicFindings([line('Avbetalning (Månad 37 av 36)', 100)], {})[0].type, 'hardware_overpaid');
+  });
+});
+
+describe('Forensik · valutapåslag på engelska/cross-border (USD-fakturor)', () => {
+  test('"Foreign Transaction / Currency Conversion Fee" → fx_surcharge (annars osynligt)', () => {
+    const f = detectForensicFindings([line('Foreign Transaction / Currency Conversion Fee', 28.5, 1)], { periodMultiplier: 12 });
+    assert.equal(f[0].type, 'fx_surcharge');
+    assert.equal(f[0].severity, 'high');
+  });
+  test('"Cross-border Processing Surcharge" → fx_surcharge', () => {
+    assert.equal(detectForensicFindings([line('Cross-border Processing Surcharge', 41.25)], {})[0].type, 'fx_surcharge');
+  });
+});
+
 describe('Forensik · dedup per rad (en rad ger högst ett fynd, högst prioritet vinner)', () => {
   test('rad som matchar både höjning och junk → ETT high-fynd', () => {
     const f = detectForensicFindings([line('Prisjustering faktureringsavgift', 60, 1)], { periodMultiplier: 12 });

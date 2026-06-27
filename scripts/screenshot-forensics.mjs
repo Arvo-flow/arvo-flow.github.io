@@ -8,10 +8,14 @@ import { detectForensicFindings } from '../lib/forensics.js';
 
 const fmtKr = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
 const L = (description, amount, quantity) => ({ type: 'recurring_subscription', description, amount, quantity });
+// De tre vassaste asymmetriska fynden ur Mörker-dossierns arketyper — exakt de rader kunden får.
 const CASES = [
-  { name: 'Telia-faktura (smyghöjning + amortering)', lines: [L('Mobilabonnemang', 3490, 10), L('Prisjustering enligt index', 500, 1), L('Avbetalning telefoner', 280, 5)] },
-  { name: 'Försäkringsfaktura (offert-kategori — fynd ändå)', lines: [L('Företagsförsäkring premie', 8000, 1), L('Indexuppräkning 2026', 420, 1)] },
-  { name: 'SaaS-faktura (valutapåslag + faktureringsavgift)', lines: [L('CRM-licenser', 4200, 12), L('Valutapåslag USD', 240, 1), L('Faktureringsavgift pappersfaktura', 49, 1)] },
+  { name: 'Tre Företag · mobilfaktura (övervintrande hårdvara)', lines: [
+    L('3Företag Obegränsad', 349, 12), L('Delbetalning iPhone 13 (Månad 37/36)', 560, 2), L('Pappersfaktura', 49, 1) ] },
+  { name: 'HubSpot · USD-faktura (valutapåslag)', lines: [
+    L('Marketing Hub Professional', 890, 1), L('Foreign Transaction / Currency Conversion Fee', 28.5, 1) ] },
+  { name: 'Telia · mobilfaktura (administrativ junk-avgift)', lines: [
+    L('Företagsabonnemang 50GB', 299, 80), L('Faktureringsavgift Papper', 49, 1) ] },
 ];
 
 const T = {
@@ -20,6 +24,8 @@ const T = {
   mono: "'JetBrains Mono', ui-monospace, monospace", sans: "'Inter', system-ui, sans-serif",
 };
 
+// Trogen repro av src/components/FindingCard.js (variant='light'): eyebrow · rad(title+impact) ·
+// citerad rad · text · "+N fler fynd". Datan kommer ur RIKTIGA detectForensicFindings.
 function card(name, findings) {
   const lf = findings[0];
   if (!lf) return `<div style="margin-bottom:20px;color:${T.muted}">${name}: inga fynd</div>`;
@@ -28,13 +34,13 @@ function card(name, findings) {
   return `
   <div style="font-size:12px;color:${T.muted};margin:0 0 8px;font-weight:600">${name}</div>
   <div style="position:relative;margin:0 0 26px;padding:18px 20px;background:${T.warningSoft};border:1px solid ${T.warning};border-radius:${T.radiusLg}">
-    <span style="display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:${T.warning};margin-bottom:10px"><span style="width:7px;height:7px;border-radius:50%;background:${T.warning};display:inline-block"></span>Fynd på er faktura</span>
-    <div style="font-size:16px;font-weight:700;line-height:1.3;color:${T.ink};margin:0 0 10px">${lf.title}</div>
-    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:10px">
-      <span style="font-family:${T.mono};font-size:12.5px;color:${T.inkSoft};background:${T.surface};border:1px solid ${T.border};border-radius:${T.radiusSm};padding:4px 9px">”${lf.lineDescription}”</span>
-      ${lf.annualImpact > 0 ? `<span style="font-family:${T.mono};font-size:26px;font-weight:600;letter-spacing:-0.02em;color:${T.warning};white-space:nowrap">${fmtKr(lf.annualImpact)} kr/år</span>` : ''}
+    <span style="display:inline-flex;align-items:center;gap:8px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:${T.warning};margin-bottom:12px"><span style="width:7px;height:7px;border-radius:50%;background:${T.warning};display:inline-block"></span>Fynd på er faktura</span>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+      <span style="font-weight:700;font-size:17px;line-height:1.18;color:${T.ink}">${lf.title}</span>
+      ${lf.annualImpact > 0 ? `<span style="flex-shrink:0;font-family:${T.mono};font-weight:600;letter-spacing:-0.02em;color:${T.warning};white-space:nowrap;font-size:24px">${fmtKr(lf.annualImpact)} kr/år</span>` : ''}
     </div>
-    <p style="margin:0;font-size:13.5px;line-height:1.55;color:${T.inkSoft}">${lf.text}</p>
+    <span style="display:inline-block;font-family:${T.mono};font-size:12.5px;color:${T.inkSoft};background:${T.surface};border:1px solid ${T.border};border-radius:${T.radiusSm};padding:4px 9px;margin-bottom:12px;word-break:break-word">”${lf.lineDescription}”</span>
+    <p style="margin:0;font-size:13.5px;line-height:1.6;color:${T.inkSoft}">${lf.text}</p>
     ${more}
   </div>`;
 }
