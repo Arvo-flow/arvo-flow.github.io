@@ -211,6 +211,8 @@ export default function Portfolio() {
   const [vakt, setVakt] = useState(null);
   const [ingesting, setIngesting] = useState(0);   // fakturor på väg (köade, ej klara) → "analyserar N"
   const [ingestFailed, setIngestFailed] = useState(0);   // fakturor som föll → ärligt bortfalls-besked
+  const [ingestFailedFiles, setIngestFailedFiles] = useState([]);   // namnen på de fallna
+  const [retrying, setRetrying] = useState(false);
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
   const [fingerprint, setFingerprint] = useState('');
@@ -253,7 +255,22 @@ export default function Portfolio() {
     setVakt(data.vakt ?? null);
     setIngesting(data.ingesting ?? 0);
     setIngestFailed(data.ingestFailed ?? 0);
+    setIngestFailedFiles(data.ingestFailedFiles ?? []);
   }, [fingerprint, magic, sessionToken]);
+
+  // "Försök igen": Arvo kör om de fallna fakturorna själv (re-köar jobben) — inget nytt mejl behövs.
+  const retryFailed = useCallback(async () => {
+    setRetrying(true);
+    try {
+      await fetch('/api/ingest/retry', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session: sessionToken, magic }),
+      });
+      setIngestFailed(0); setIngestFailedFiles([]); setIngesting((n) => n || 1);  // visa "analyserar" direkt
+      await loadOffice();
+    } catch { /* banner kvar om det inte gick */ }
+    finally { setRetrying(false); }
+  }, [sessionToken, magic, loadOffice]);
 
   useEffect(() => {
     let cancelled = false;
@@ -547,15 +564,33 @@ export default function Portfolio() {
       <Shell>
         {/* Riktig inloggning: vem är inne, logga ut/byt konto (varaktig session, ej fingerprint-gissning) */}
         <AccountBar email={authEmail} onLogout={handleLogout} />
-        {/* Bortfalls-besked: aldrig tyst tapp. Visas i alla rumslägen när något inte gick igenom. */}
+        {/* Bortfalls-besked: aldrig tyst tapp. Namnger VILKA föll + Arvo kör om dem på ett klick. */}
         {ingestFailed > 0 && (
           <div style={{
             border: '1px solid rgba(245,180,90,0.45)', borderRadius: 12, background: 'rgba(245,180,90,0.07)',
-            padding: '14px 18px', margin: '0 0 18px', color: '#E8C9A0', fontSize: 13.5, lineHeight: 1.55,
+            padding: '16px 18px', margin: '0 0 18px', color: '#E8C9A0', fontSize: 13.5, lineHeight: 1.55,
           }}>
-            <strong style={{ color: '#F5B45A' }}>{ingestFailed} {ingestFailed === 1 ? 'faktura' : 'fakturor'} kunde inte läsas in.</strong>{' '}
-            Det var oftast ett tillfälligt fel (en bild-PDF, en icke-faktura, eller ett tekniskt avbrott).
-            Vidarebefordra dem gärna igen — resten är analyserade och klara{suppliers.length > 0 ? ' nedan' : ' så snart de bearbetats'}.
+            <strong style={{ color: '#F5B45A' }}>{ingestFailed} {ingestFailed === 1 ? 'faktura kunde' : 'fakturor kunde'} inte läsas in.</strong>{' '}
+            Oftast ett tillfälligt fel (ett tekniskt avbrott) — sällan att filen inte var en läsbar faktura.
+            {ingestFailedFiles.length > 0 && (
+              <ul style={{ margin: '10px 0 0', paddingLeft: 18 }}>
+                {ingestFailedFiles.map((f, i) => (
+                  <li key={i} style={{ fontFamily: 'monospace', fontSize: 12.5, color: '#D9B98A', marginBottom: 2 }}>{f}</li>
+                ))}
+              </ul>
+            )}
+            <div style={{ marginTop: 12, display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={retryFailed} disabled={retrying}
+                style={{
+                  cursor: retrying ? 'default' : 'pointer', border: '1px solid #F5B45A', background: 'transparent',
+                  color: '#F5B45A', borderRadius: 100, padding: '9px 20px', fontSize: 13, fontWeight: 600,
+                  opacity: retrying ? 0.6 : 1,
+                }}>
+                {retrying ? 'Kör om…' : `Försök igen — Arvo kör om ${ingestFailed === 1 ? 'den' : 'dem'} åt er`}
+              </button>
+              <span style={{ fontSize: 12, color: '#B89B72' }}>Inget nytt mejl behövs.</span>
+            </div>
           </div>
         )}
         {analyses === null && !error && <Spinner />}
