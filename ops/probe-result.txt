@@ -1,0 +1,32 @@
+═══════ BULK-MEJL I KÖN ═══════
+   089a713f-fdcf-4df3-90a1-3c8a96085aa9  jobb=26 done=20 failed=6  2026-06-27T22:19
+   13fcab63-e2d2-44e4-8b01-70736086932d  jobb=3 done=3 failed=0  2026-06-26T15:11
+
+→ Proberar email_id=089a713f-fdcf-4df3-90a1-3c8a96085aa9 (jobb=26, failed=6)
+
+═══════ BAS-LISTNING ═══════
+   HTTP 200 · antal=20
+   topnivå-nycklar: ["object","has_more","data"]
+   bilage-objektets nycklar: ["id","filename","content_type","content_id","content_disposition","size","download_url","expires_at"]
+   exempel: filename=INV_9906_Microsoft_Ireland.pdf content_type=application/pdf size=1571 har_id=true har_download_url=true
+
+═══════ PAGINERINGS-PROBER ═══════
+   "?limit=100" → HTTP 200 · antal=26 · has_more/next=false
+   "?limit=50" → HTTP 200 · antal=26 · has_more/next=false
+   "?limit=100&offset=20" → HTTP 200 · antal=26 · has_more/next=false
+   "?offset=20" → HTTP 200 · antal=20 · has_more/next=true
+   "?limit=10" → HTTP 200 · antal=10 · has_more/next=true
+
+═══════ FALLNA INDEX vs LISTNINGENS RÄCKVIDD ═══════
+   listningen returnerar index 0..19
+   idx=20 (INV_9924_Tele2_Foretag.pdf) — UTANFÖR listningen → orsaken
+   idx=21 (INV_9922_Google_Ireland_Ltd.pdf) — UTANFÖR listningen → orsaken
+   idx=22 (INV_9909_GleSYS_AB.pdf) — UTANFÖR listningen → orsaken
+   idx=23 (INV_9918_Binero_Group_AB.pdf) — UTANFÖR listningen → orsaken
+   idx=24 (INV_9919_Fortnox_AB.pdf) — UTANFÖR listningen → orsaken
+   idx=25 (INV_9923_Slack_Technologies.pdf) — UTANFÖR listningen → orsaken
+
+═══════ DEDUP-KONTROLL (testytan) ═══════
+   analyser=10 · unika pdf_hash=10
+
+KLART.
