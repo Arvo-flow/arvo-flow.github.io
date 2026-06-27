@@ -1,0 +1,28 @@
+name: Reset test surface
+
+# Forcerad nollställning av den isolerade testytan (testyta@arvoflow.se) inför ett rent ingest-pass.
+# Raderar BARA testidentitetens data (hårdkodat i lib/test-surface.js).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    name: Reset test surface
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Reset
+        run: node scripts/reset-test-surface.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
