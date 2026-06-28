@@ -12,6 +12,7 @@ import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD }
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
+import { isAudited } from '../lib/revision-gate.js';
 import { shadowReport } from '../lib/invoice-lines.js';
 import { storeDatapoint } from '../lib/benchmark.js';
 import { BRANCHINDEX, INDUSTRY_SEGMENT_MAP, bucketForSize } from '../agents/recommender/branchindex.js';
@@ -719,7 +720,14 @@ export default async function handler(req, res) {
           lineItems:        extracted.lineItems,
           proposedCategory: categorized.category,
         });
-        if (_validation.conflict) {
+        // #3-fix (2026-06-28): en validator-oenighet får ALDRIG veta över en GRANSKAD + konfident
+        // primärkategori. En granskad kategori (molnvaxel, mobil, loneadmin…) har egen regressionssvit
+        // + verifierat pris — revisionsgrinden litar på den. Validatorn är skyddsnät för OSÄKra/
+        // overifierade fall, inte vetorätt över en trygg kategori. Annars stals prissättbara fakturor.
+        const _trustPrimary = isAudited(categorized.category) && (categorized.confidence ?? 0) >= 0.8;
+        if (_validation.conflict && _trustPrimary) {
+          console.log(`[P1.1:dual-model] oenighet IGNORERAD — primär '${categorized.category}' är granskad+konfident (validator='${_validation.validatorCategory}', conf=${categorized.confidence})`);
+        } else if (_validation.conflict) {
           console.error(`[P1.1:dual-model] KONFLIKT: primär='${categorized.category}' validator='${_validation.validatorCategory}' supplier='${extracted.supplier}'`);
           notifyReviewQueue(extracted, `[P1.1 Dual-model] Kategorikonflikt: Sonnet='${categorized.category}', Haiku='${_validation.validatorCategory}' — manuell granskning krävs`).catch(() => {});
           timing.totalMs = Date.now() - t0;
@@ -872,6 +880,14 @@ export default async function handler(req, res) {
       const monitoringDate = new Date(_periodEnd);
       monitoringDate.setMonth(monitoringDate.getMonth() - 3);
       timing.totalMs = Date.now() - t0;
+        // #1-fix (2026-06-28): en avtalsbevakad faktura ska SYNAS i kontoret (Liggare 1, "Avtalsbevakad"),
+        // inte försvinna. Lagra som monitoring-rad med kontraktsklockan — annars tyst bortfall (regel 9).
+        await storeAnalysis({
+          fingerprint, pdfHash, extracted, categorized,
+          recommendation: { shouldSwitch: false, reasoning: '' },
+          route: 'monitoring', industry, employees: employeesNum,
+          userEmail: body.userEmail, seatCount: extracted.seatCount ?? null,
+        }).catch((err) => console.error('[test-invoice] storeAnalysis (monitoring) failed:', err.message));
         return send(res, 200, {
           ok:    true,
           route: 'monitoring',
