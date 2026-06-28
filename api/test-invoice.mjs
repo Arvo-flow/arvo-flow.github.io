@@ -724,7 +724,11 @@ export default async function handler(req, res) {
         // primärkategori. En granskad kategori (molnvaxel, mobil, loneadmin…) har egen regressionssvit
         // + verifierat pris — revisionsgrinden litar på den. Validatorn är skyddsnät för OSÄKra/
         // overifierade fall, inte vetorätt över en trygg kategori. Annars stals prissättbara fakturor.
-        const _trustPrimary = isAudited(categorized.category) && (categorized.confidence ?? 0) >= 0.8;
+        // En KONFIDENT primärkategorisering (≥0,8) litar vi på även om kategorin är oreviderad —
+        // en oreviderad kategori visar ändå bara talfritt offert-läge (revisionsgrinden skyddar siffrorna),
+        // så en validator-oenighet ska aldrig stjäla en konfident faktura till Liggare 2. Lågt förtroende
+        // (<0,8) → validatorn får fortfarande väcka review (där behövs skyddsnätet som mest).
+        const _trustPrimary = (categorized.confidence ?? 0) >= 0.8;
         if (_validation.conflict && _trustPrimary) {
           console.log(`[P1.1:dual-model] oenighet IGNORERAD — primär '${categorized.category}' är granskad+konfident (validator='${_validation.validatorCategory}', conf=${categorized.confidence})`);
         } else if (_validation.conflict) {
