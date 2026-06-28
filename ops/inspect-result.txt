@@ -1,45 +1,17 @@
 
-═══════ TESTYTAN (testyta@arvoflow.se): 0 analyser ═══════
+═══════ TESTYTAN (testyta@arvoflow.se): 3 analyser ═══════
    tid    leverantör                 kategori          årskostnad   →förslag    nettospar   flaggor
+   11:50  Telavox AB                molnvaxel           101 100          —          —  
+   11:50  Fortnox AB                faktura-tjanst        2 388          —          —  
+   11:50  HubSpot, Inc.             uncategorized             —          —          —  väg=review_queue
    ─────────────────────────────────────────────────────────────────────────────
-   AGGREGAT: 0 fakturor · 0 med byte · total årskostnad 0 kr · total nettobesparing 0 kr
-   Kategorier: 
+   AGGREGAT: 3 fakturor · 0 med byte · total årskostnad 103 488 kr · total nettobesparing 0 kr
+   Kategorier: molnvaxel:1 · faktura-tjanst:1 · uncategorized:1
 ═══════════════════════════════════════════════════════
 
 
-═══════ MISSLYCKADE JOBB (detalj) ═══════
-   idx= 0  Bredband_Faktura_Maj.pdf             försök=3  analys misslyckades (HTTP 422)
-   idx= 1  Bredband_Faktura_Maj_realistisk.pdf  försök=3  analys misslyckades (HTTP 422)
-   idx= 2  Faktura_1__Lynxeye_IT.pdf            försök=3  analys misslyckades (HTTP 422)
-   idx= 3  Faktura_2__Lynxeye_Print.pdf         försök=3  analys misslyckades (HTTP 422)
-   idx= 4  INV_9901_Visma_Spcs_AB.pdf           försök=3  analys misslyckades (HTTP 422)
-   idx= 5  INV_9907_HubSpot_Inc..pdf            försök=3  analys misslyckades (HTTP 422)
-   idx= 6  INV_9908_Telavox_AB.pdf              försök=3  analys misslyckades (HTTP 422)
-   idx= 7  INV_9909_GleSYS_AB.pdf               försök=3  analys misslyckades (HTTP 422)
-   idx= 8  INV_9910_Adobe_Systems.pdf           försök=3  analys misslyckades (HTTP 422)
-   idx= 9  INV_9911_Tele2_Foretag.pdf           försök=3  analys misslyckades (HTTP 422)
-   idx=10  INV_9912_Zoom_Video.pdf              försök=3  analys misslyckades (HTTP 422)
-   idx=11  INV_9913_Visma_Spcs_AB.pdf           försök=3  analys misslyckades (HTTP 422)
-   idx=12  INV_9914_Tre_Foretag.pdf             försök=3  analys misslyckades (HTTP 422)
-   idx=13  INV_9915_Salesforce.com.pdf          försök=3  analys misslyckades (HTTP 422)
-   idx=14  INV_9916_Telia_Foretag.pdf           försök=3  analys misslyckades (HTTP 422)
-   idx=15  INV_9917_Microsoft_Ireland.pdf       försök=3  analys misslyckades (HTTP 422)
-   idx=16  INV_9918_Binero_Group_AB.pdf         försök=3  analys misslyckades (HTTP 422)
-   idx=17  INV_9919_Fortnox_AB.pdf              försök=3  analys misslyckades (HTTP 422)
-   idx=18  INV_9920_Ellevio_AB.pdf              försök=3  analys misslyckades (HTTP 422)
-   idx=19  INV_9921_Tre_Foretag.pdf             försök=3  analys misslyckades (HTTP 422)
-   idx=20  INV_9922_Google_Ireland_Ltd.pdf      försök=3  analys misslyckades (HTTP 422)
-   idx=21  INV_9923_Slack_Technologies.pdf      försök=3  analys misslyckades (HTTP 422)
-   idx=22  INV_9924_Tele2_Foretag.pdf           försök=3  analys misslyckades (HTTP 422)
-   idx=23  INV_9925_Amazon_Web_Services.pdf     försök=3  analys misslyckades (HTTP 422)
-   idx=24  Mobil_Faktura_Juni.pdf               försök=3  analys misslyckades (HTTP 422)
-   idx=25  faktura1mobilabonnemang.pdf          försök=3  analys misslyckades (HTTP 422)
-═══════════════════════════════════════
-
-
 ═══════ INGEST-KÖ (ingest_jobs) ═══════
-   done        3   senast 2026-06-26 15:11
-   failed      26   senast 2026-06-28 11:02   ⚠️ analys misslyckades (HTTP 422)
+   done        7   senast 2026-06-28 11:50
 ═══════════════════════════════════════
 
 
@@ -47,12 +19,43 @@
 ═══════════════════════════════════════════════════
 
 
-═══════ SENASTE 2 ANALYSER (av frågade 2) ═══════
-Med e-post (mail-in eller registrerad): 2
-Väg-fördelning: {"auto":2}
+═══════ SENASTE 33 ANALYSER (av frågade 40) ═══════
+Med e-post (mail-in eller registrerad): 32
+Väg-fördelning: {"auto":31,"review_queue":2}
 ───────────────────────────────────────────────────────────────
+📧 2026-06-28 11:50  Telavox AB                 molnvaxel            101 100 kr/år  —
+📧 2026-06-28 11:50  Fortnox AB                 faktura-tjanst         2 388 kr/år  —
+📧 2026-06-28 11:50  HubSpot, Inc.              uncategorized              — kr/år  —  ⚠️ review_queue
+📧 2026-06-28 11:47  DiagFn AB                  molnvaxel                  — kr/år  —  ⚠️ review_queue
 📧 2026-06-26 15:13  Tele2 Företag AB           mobil                439 740 kr/år  —
 📧 2026-06-26 15:12  Microsoft Ireland Operatio saas-productivity    352 296 kr/år  spar 242
+📧 2026-06-22 17:24  Microsoft Ireland Operatio saas-productivity    332 160 kr/år  spar 202
+📧 2026-06-22 17:24  Tele2 Bredband AB          bredband             116 940 kr/år  spar 59 290
+📧 2026-06-20 20:44  Tele2 Företag AB           mobil                373 800 kr/år  spar 104 016
+📧 2026-06-20 20:41  Microsoft Ireland Operatio saas-productivity    332 160 kr/år  spar 202
+📧 2026-06-20 13:46  Tele2 Bredband AB          bredband              23 388 kr/år  spar 9 408
+📧 2026-06-15 20:38  Tele2 Företag AB           mobil                146 580 kr/år  —
+📧 2026-06-13 14:02  Svea Kontorsprint & Leasin skrivarleasing        58 800 kr/år  —
+📧 2026-06-13 14:02  Telia Sverige AB           mobil                269 460 kr/år  —
+📧 2026-06-12 00:09  Telia Företag              mobil                 58 092 kr/år  spar 6 230
+📧 2026-06-11 23:40  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
+🌐 2026-06-11 23:22  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
+📧 2026-06-11 22:10  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
+📧 2026-06-11 12:31  Svea Kontorsprint & Leasin skrivarleasing        58 800 kr/år  —
+📧 2026-06-10 21:39  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
+📧 2026-06-08 18:52  CloudReseller Norden AB    saas-productivity    184 260 kr/år  spar 33 622
+📧 2026-06-03 21:59  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
+📧 2026-06-03 21:56  Telia Sverige AB           mobil                269 460 kr/år  —
+📧 2026-06-02 23:18  IT-Partner Sverige AB      saas-productivity    212 040 kr/år  spar 32 674
+📧 2026-06-02 09:12  Telia Sverige AB           mobil                269 460 kr/år  —
+📧 2026-06-01 22:43  Telia Företag              mobil                 58 092 kr/år  spar 6 230
+📧 2026-06-01 21:39  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
+📧 2026-06-01 12:33  Telenor Sverige AB         mobil                125 580 kr/år  —
+📧 2026-06-01 04:53  Telenor Sverige AB         mobil                125 580 kr/år  spar 5 040
+📧 2026-05-31 22:13  Telenor Sverige AB         mobil                125 580 kr/år  —
+📧 2026-05-31 20:36  Telia Sverige AB           mobil                188 460 kr/år  spar 28 080
+📧 2026-05-31 18:18  SveaMobil Företag AB       mobil                188 160 kr/år  spar 21 840
+📧 2026-05-30 13:47  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
 ═══════════════════════════════════════════════════════════════
 
 Läs: 📧=mail-in · 🌐=webb · ⚠️=ej auto (kö/ej stödd) · "spar"=rekommenderat byte med nettogap
