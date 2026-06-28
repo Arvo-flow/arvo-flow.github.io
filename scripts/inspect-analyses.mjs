@@ -13,7 +13,7 @@ if (!db) { console.log('Ingen DATABASE_URL — exit 0'); process.exit(0); }
 const TEST_EMAIL = 'testyta@arvoflow.se';
 const testRows = await db`
   SELECT created_at, supplier, normalized_supplier, category, annual_cost, suggested_annual_cost,
-         suggested_supplier, gross_saving, net_saving, should_switch, route, seat_count, price_per_seat_monthly
+         gross_saving, net_saving, should_switch, route, seat_count, price_per_seat_monthly
   FROM invoice_analyses WHERE user_email = ${TEST_EMAIL} ORDER BY created_at DESC
 `.catch((e) => { console.log('testyta-fel:', e.message); return []; });
 
@@ -39,8 +39,7 @@ for (const r of testRows) {
   sumCost += Number(r.annual_cost || 0); sumSave += Number(r.net_saving || 0);
   if (r.should_switch && r.net_saving > 0) nSwitch++;
   catCount[r.category || '?'] = (catCount[r.category || '?'] || 0) + 1;
-  const sw = r.should_switch && r.suggested_supplier ? `→${String(r.suggested_supplier).slice(0,22)}` : '';
-  console.log(`   ${when}  ${(r.normalized_supplier||r.supplier||'?').slice(0,25).padEnd(25)} ${(r.category||'?').slice(0,16).padEnd(16)} ${kr0(r.annual_cost).padStart(10)}  ${kr0(r.suggested_annual_cost).padStart(9)}  ${(r.net_saving>0?kr0(r.net_saving):'—').padStart(9)}  ${sw.padEnd(24)} ${flags.join(' ')}`);
+  console.log(`   ${when}  ${(r.normalized_supplier||r.supplier||'?').slice(0,25).padEnd(25)} ${(r.category||'?').slice(0,16).padEnd(16)} ${kr0(r.annual_cost).padStart(10)}  ${kr0(r.suggested_annual_cost).padStart(9)}  ${(r.net_saving>0?kr0(r.net_saving):'—').padStart(9)}  ${flags.join(' ')}`);
 }
 console.log('   ─────────────────────────────────────────────────────────────────────────────');
 console.log(`   AGGREGAT: ${testRows.length} fakturor · ${nSwitch} med byte · total årskostnad ${kr0(sumCost)} kr · total nettobesparing ${kr0(sumSave)} kr`);

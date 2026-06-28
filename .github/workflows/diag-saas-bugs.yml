@@ -1,0 +1,40 @@
+name: Diag saas bugs
+
+# Kör recommend() live på Microsoft + Google + en rätt-prissatt faktura och dumpar byte-mål +
+# reasoning + Arvo Score → bevisar MS↔Google-motsägelsen och "alla 82" mot riktiga motorn.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Diag
+        run: |
+          mkdir -p ops
+          node scripts/diag-saas-bugs.mjs \
+            test-pdfs/bulk26/INV_9917_Microsoft_Ireland.pdf \
+            test-pdfs/bulk26/INV_9922_Google_Ireland_Ltd.pdf \
+            test-pdfs/bulk26/INV_9908_Telavox_AB.pdf | tee ops/diag-saas-result.txt
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Commit result back
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git pull --rebase origin main || true
+          git add ops/diag-saas-result.txt
+          git commit -m "ops: diag-saas-resultat [skip ci]" || echo "inget att committa"
+          git push origin HEAD:main || echo "push misslyckades"
