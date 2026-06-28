@@ -686,6 +686,8 @@ export default async function handler(req, res) {
       if (fp.matched && !fp.categoryOk) {
         console.error(`[fingerprint] MISMATCH key=${fp.key} ai_category='${categorized.category}' expected=[${fp.expectedCategories.join(', ')}]`);
         notifyReviewQueue(extracted, `[Fingerprint] ${fp.key}: AI gav '${categorized.category}', förväntat [${fp.expectedCategories.join(', ')}]`).catch(() => {});
+        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+          route: 'review_queue', reason: 'fingerprint_mismatch', userEmail: body.userEmail }).catch(() => {});
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'fingerprint_mismatch',
           extracted: {
@@ -721,6 +723,8 @@ export default async function handler(req, res) {
           console.error(`[P1.1:dual-model] KONFLIKT: primär='${categorized.category}' validator='${_validation.validatorCategory}' supplier='${extracted.supplier}'`);
           notifyReviewQueue(extracted, `[P1.1 Dual-model] Kategorikonflikt: Sonnet='${categorized.category}', Haiku='${_validation.validatorCategory}' — manuell granskning krävs`).catch(() => {});
           timing.totalMs = Date.now() - t0;
+          await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+            route: 'review_queue', reason: 'categorization_conflict', userEmail: body.userEmail }).catch(() => {});
           return send(res, 200, {
             ok: true, route: 'review_queue', reason: 'categorization_conflict',
             extracted: {
@@ -748,6 +752,8 @@ export default async function handler(req, res) {
         console.error(`[P1.2:price-intel] ANOMALI: ${_priceCheck.detail}`);
         notifyReviewQueue(extracted, `[P1.2 Price Intel] ${_priceCheck.detail}`).catch(() => {});
         timing.totalMs = Date.now() - t0;
+        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+          route: 'review_queue', reason: 'price_anomaly', userEmail: body.userEmail }).catch(() => {});
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'price_anomaly',
           extracted: {

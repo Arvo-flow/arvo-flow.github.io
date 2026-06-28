@@ -622,7 +622,9 @@ export default function Portfolio() {
                 </div>
                 <div className="radar-stats">
                   <div className="rstat"><span>Leverantörer</span><span className="v">{suppliers.length}</span></div>
-                  <div className="rstat"><span>Analyser</span><span className="v">{autoAnalyses.length}</span></div>
+                  <div className="rstat"><span>{watched.length > 0 ? 'Prissatta' : 'Analyser'}</span><span className="v">{autoAnalyses.length}</span></div>
+                  {/* Bevakat — inte prissatt: triagade fakturor syns i räknaren så intaget aldrig läser som bortfall */}
+                  {watched.length > 0 && <div className="rstat"><span>Under uppsikt</span><span className="v">{watched.length}</span></div>}
                   {/* Marknadskällor = verkliga svepta källor ur senaste nattliga svep (vakt_events) */}
                   <div className="rstat"><span>Marknadskällor</span><span className="v">{vakt?.sources ?? 40}</span></div>
                 </div>
