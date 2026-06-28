@@ -1,7 +1,13 @@
-✓ seedade: Microsoft Microsoft 365 Business Standard 2022-03-01 (+ källa)
-✓ seedade: Microsoft Microsoft 365 Business Standard 2026-07-01 (+ källa)
+↩︎  finns redan: Microsoft Microsoft 365 Business Standard 2022-03-01
+↩︎  finns redan: Microsoft Microsoft 365 Business Standard 2026-07-01
 
-→ 2 insatta · 0 redan fanns
+→ 0 insatta · 2 redan fanns
+
+═══════ RÅ DUMP — supplier_price_history WHERE supplier ILIKE %microsoft% ═══════
+rader: 2
+   Tue Mar 01 2022 00:00:00 GMT+0000 (Coordinated Universal Time) | saas-productivity | m:12.50→14.00 a:null→null
+   Wed Jul 01 2026 00:00:00 GMT+0000 (Coordinated Universal Time) | saas-productivity | m:null→null a:150.00→168.00
+   NOW()=Sun Jun 28 2026 22:15:57 GMT+0000 (Coordinated Universal Time) · 48-mån-golv=Tue Jun 28 2022 00:00:00 GMT+0000 (Coordinated Universal Time)
 
 ═══════ VERIFIERAR: tänds prognosen? ═══════
 Hittade 0 historik-rader för microsoft/saas-productivity
