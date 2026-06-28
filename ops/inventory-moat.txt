@@ -1,0 +1,36 @@
+═══════ 1. KOHORT — distinkta kunder per (leverantör, kategori) ═══════
+    2 kund(er)  Nordic Managed IT Services AB · saas-productivity
+    1 kund(er)  CloudReseller Norden AB · saas-productivity
+    1 kund(er)  Fortnox AB · faktura-tjanst
+    1 kund(er)  IT-Partner Sverige AB · saas-productivity
+    1 kund(er)  Microsoft Ireland Operations · saas-productivity
+    1 kund(er)  Svea Kontorsprint & Leasing AB · skrivarleasing
+    1 kund(er)  SveaMobil Företag AB · mobil
+    1 kund(er)  Telavox AB · molnvaxel
+    1 kund(er)  Tele2 Bredband AB · bredband
+    1 kund(er)  Tele2 Företag AB · mobil
+    1 kund(er)  Telenor Sverige AB · mobil
+    1 kund(er)  Telia Företag · mobil
+    1 kund(er)  Telia Sverige AB · mobil
+   → PAR SOM TÄNDER KOHORTEN (≥3 distinkta kunder): 0
+
+═══════ 2. PRISHISTORIK — supplier_price_history ═══════
+   Totalt rader: 0 · senaste 6 mån: 0
+   → PAR SOM TÄNDER PROGNOSEN (≥2 höjningar): 0
+
+═══════ 3. PUBLIKA GOLV — public_prices ═══════
+   (public_prices saknas/fel: relation "public_prices" does not exist )
+
+═══════ 4. TVÄRBRANSCH — samma leverantör i ≥2 industrier (prisdiskriminering) ═══════
+   IT-Partner Sverige AB · saas-productivity: 4 industrier, 1 kunder
+   Telia Sverige AB · mobil: 3 industrier, 1 kunder
+   Nordic Managed IT Services AB · saas-productivity: 2 industrier, 2 kunder
+   Svea Kontorsprint & Leasing AB · skrivarleasing: 2 industrier, 1 kunder
+   Tele2 Bredband AB · bredband: 2 industrier, 1 kunder
+   Tele2 Företag AB · mobil: 2 industrier, 1 kunder
+   Telia Företag · mobil: 2 industrier, 1 kunder
+   Microsoft Ireland Operations · saas-productivity: 2 industrier, 1 kunder
+
+═══════ DISTINKTA KUNDER TOTALT ═══════
+   Distinkta kunder (auto-analyser): 3
+═══════════════════════════════════════════════════════
