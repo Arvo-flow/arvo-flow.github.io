@@ -1,81 +1,45 @@
+testyta-fel: column "suggested_supplier" does not exist
 
-═══════ TESTYTAN (testyta@arvoflow.se): 13 analyser ═══════
+═══════ TESTYTAN (testyta@arvoflow.se): 0 analyser ═══════
    tid    leverantör                 kategori          årskostnad   →förslag    nettospar   flaggor
-   23:47  Tele2 Företag AB          mobil               373 800          —          —  
-   23:47  Microsoft Ireland         saas-productivit    129 600    113 557     12 834  
-   23:47  Telenor Företag           mobil                23 904          —          —  
-   23:47  Tre Foretag               mobil                50 256          —          —  
-   23:47  Microsoft Ireland         saas-productivit     45 600     46 164          —  FÖRSLAG>NUVARANDE! DUBBLETT-PAR
-   23:47  Telia Företag             mobil               119 520          —          —  
-   23:47  Tele2 Företag             mobil                35 880          —          —  
-   23:47  Tele2 Företag             mobil                62 820          —          —  DUBBLETT-PAR
-   23:47  Visma Spcs AB             loneadmin            18 900          —          —  
-   23:47  Tre Företag               mobil                14 940          —          —  
-   23:47  Adobe Systems             saas-creative        32 040          —          —  
-   23:47  Google Ireland Ltd        saas-productivit     72 900     64 519      6 705  
-   23:47  Fortnox AB                faktura-tjanst       17 676          —          —  
    ─────────────────────────────────────────────────────────────────────────────
-   AGGREGAT: 13 fakturor · 2 med byte · total årskostnad 997 836 kr · total nettobesparing 19 539 kr
-   Kategorier: mobil:7 · saas-productivity:3 · loneadmin:1 · saas-creative:1 · faktura-tjanst:1
+   AGGREGAT: 0 fakturor · 0 med byte · total årskostnad 0 kr · total nettobesparing 0 kr
+   Kategorier: 
 ═══════════════════════════════════════════════════════
 
 
 ═══════ INGEST-KÖ (ingest_jobs) ═══════
-   done        29   senast 2026-06-27 23:46
+   done        29   senast 2026-06-28 00:02
 ═══════════════════════════════════════
 
 
-═══════ ANALYSER SENASTE 60 MIN (13) ═══════
-   23:47  Tele2 Företag AB       mobil              373800 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Microsoft Ireland      saas-productivit   129600 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Telenor Företag        mobil               23904 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Tre Foretag            mobil               50256 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Microsoft Ireland      saas-productivit    45600 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Telia Företag          mobil              119520 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Tele2 Företag          mobil               35880 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Tele2 Företag          mobil               62820 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Visma Spcs AB          loneadmin           18900 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Tre Företag            mobil               14940 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Adobe Systems          saas-creative       32040 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Google Ireland Ltd     saas-productivit    72900 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
-   23:47  Fortnox AB             faktura-tjanst      17676 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+═══════ ANALYSER SENASTE 60 MIN (14) ═══════
+   00:03  Tre Företag (Hi3G Acce mobil               14940 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:03  Microsoft Ireland      saas-productivit    45600 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:03  Tele2 Bredband AB      bredband            23388 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:03  Telia Företag          mobil              119520 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:03  Svea Kontorsprint & Le skrivarleasing      58800 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:03  Visma Spcs AB          loneadmin           18900 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:03  Adobe Systems          saas-creative       32040 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:02  Nordic Managed IT Serv saas-productivit   475440 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:02  Google Ireland Ltd     saas-productivit    72900 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:02  Tele2 Företag          mobil               62820 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:02  Telenor Sverige AB     mobil              125580 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:02  Tele2 Bredband AB      bredband            23388 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:02  Tele2 Företag AB       mobil              373800 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
+   00:02  Tele2 Sverige AB       mobil               35880 kr  email=testyta@arvoflow.se  fp=bdae11da5b93bca2f1a113
 ═══════════════════════════════════════════════════
 
 
-═══════ SENASTE 30 ANALYSER (av frågade 30) ═══════
-Med e-post (mail-in eller registrerad): 29
-Väg-fördelning: {"auto":30}
+═══════ SENASTE 5 ANALYSER (av frågade 5) ═══════
+Med e-post (mail-in eller registrerad): 5
+Väg-fördelning: {"auto":5}
 ───────────────────────────────────────────────────────────────
-📧 2026-06-27 23:47  Tele2 Företag AB           mobil                373 800 kr/år  —
-📧 2026-06-27 23:47  Microsoft Ireland          saas-productivity    129 600 kr/år  spar 12 834
-📧 2026-06-27 23:47  Telenor Företag            mobil                 23 904 kr/år  —
-📧 2026-06-27 23:47  Tre Foretag                mobil                 50 256 kr/år  —
-📧 2026-06-27 23:47  Microsoft Ireland          saas-productivity     45 600 kr/år  —
-📧 2026-06-27 23:47  Telia Företag              mobil                119 520 kr/år  —
-📧 2026-06-27 23:47  Tele2 Företag              mobil                 35 880 kr/år  —
-📧 2026-06-27 23:47  Tele2 Företag              mobil                 62 820 kr/år  —
-📧 2026-06-27 23:47  Visma Spcs AB              loneadmin             18 900 kr/år  —
-📧 2026-06-27 23:47  Tre Företag                mobil                 14 940 kr/år  —
-📧 2026-06-27 23:47  Adobe Systems              saas-creative         32 040 kr/år  —
-📧 2026-06-27 23:47  Google Ireland Ltd         saas-productivity     72 900 kr/år  spar 6 705
-📧 2026-06-27 23:47  Fortnox AB                 faktura-tjanst        17 676 kr/år  —
-📧 2026-06-26 15:13  Tele2 Företag AB           mobil                439 740 kr/år  —
-📧 2026-06-26 15:12  Microsoft Ireland Operatio saas-productivity    352 296 kr/år  spar 242
-📧 2026-06-22 17:24  Microsoft Ireland Operatio saas-productivity    332 160 kr/år  spar 202
-📧 2026-06-22 17:24  Tele2 Bredband AB          bredband             116 940 kr/år  spar 59 290
-📧 2026-06-20 20:44  Tele2 Företag AB           mobil                373 800 kr/år  spar 104 016
-📧 2026-06-20 20:41  Microsoft Ireland Operatio saas-productivity    332 160 kr/år  spar 202
-📧 2026-06-20 13:46  Tele2 Bredband AB          bredband              23 388 kr/år  spar 9 408
-📧 2026-06-15 20:38  Tele2 Företag AB           mobil                146 580 kr/år  —
-📧 2026-06-13 14:02  Svea Kontorsprint & Leasin skrivarleasing        58 800 kr/år  —
-📧 2026-06-13 14:02  Telia Sverige AB           mobil                269 460 kr/år  —
-📧 2026-06-12 00:09  Telia Företag              mobil                 58 092 kr/år  spar 6 230
-📧 2026-06-11 23:40  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
-🌐 2026-06-11 23:22  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
-📧 2026-06-11 22:10  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
-📧 2026-06-11 12:31  Svea Kontorsprint & Leasin skrivarleasing        58 800 kr/år  —
-📧 2026-06-10 21:39  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
-📧 2026-06-08 18:52  CloudReseller Norden AB    saas-productivity    184 260 kr/år  spar 33 622
+📧 2026-06-28 00:03  Tre Företag (Hi3G Access A mobil                 14 940 kr/år  —
+📧 2026-06-28 00:03  Microsoft Ireland          saas-productivity     45 600 kr/år  —
+📧 2026-06-28 00:03  Tele2 Bredband AB          bredband              23 388 kr/år  spar 9 408
+📧 2026-06-28 00:03  Telia Företag              mobil                119 520 kr/år  —
+📧 2026-06-28 00:03  Svea Kontorsprint & Leasin skrivarleasing        58 800 kr/år  —
 ═══════════════════════════════════════════════════════════════
 
 Läs: 📧=mail-in · 🌐=webb · ⚠️=ej auto (kö/ej stödd) · "spar"=rekommenderat byte med nettogap
