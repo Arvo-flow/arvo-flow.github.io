@@ -1,14 +1,41 @@
 ═══════ BULK-MEJL I KÖN ═══════
-   a96e0e4e-e55e-478a-becf-490d932aebe1  jobb=26 done=26 failed=0  2026-06-27T23:46
+   f3641fda-fd60-48a5-87ae-22f328ace67c  jobb=26 done=26 failed=0  2026-06-28T00:26
    13fcab63-e2d2-44e4-8b01-70736086932d  jobb=3 done=3 failed=0  2026-06-26T15:11
 
-→ Proberar email_id=a96e0e4e-e55e-478a-becf-490d932aebe1 (jobb=26, failed=0)
+→ Proberar email_id=f3641fda-fd60-48a5-87ae-22f328ace67c (jobb=26, failed=0)
 
-═══════ BAS-LISTNING ═══════
-   HTTP 200 · antal=20
+═══════ BAS-LISTNING (limit=100) ═══════
+   HTTP 200 · antal=26
+   distinkta filnamn=26 · distinkta download_url(bas)=26
+     [ 0] INV_9910_Adobe_Systems.pdf
+     [ 1] INV_9924_Tele2_Foretag.pdf
+     [ 2] faktura1mobilabonnemang.pdf
+     [ 3] INV_9916_Telia_Foretag.pdf
+     [ 4] INV_9912_Zoom_Video.pdf
+     [ 5] INV_9913_Visma_Spcs_AB.pdf
+     [ 6] INV_9915_Salesforce.com.pdf
+     [ 7] INV_9901_Visma_Spcs_AB.pdf
+     [ 8] Bredband_Faktura_Maj.pdf
+     [ 9] INV_9917_Microsoft_Ireland.pdf
+     [10] INV_9914_Tre_Foretag.pdf
+     [11] INV_9911_Tele2_Foretag.pdf
+     [12] INV_9921_Tre_Foretag.pdf
+     [13] Bredband_Faktura_Maj_realistisk.pdf
+     [14] INV_9925_Amazon_Web_Services.pdf
+     [15] INV_9909_GleSYS_AB.pdf
+     [16] INV_9908_Telavox_AB.pdf
+     [17] Faktura_2__Lynxeye_Print.pdf
+     [18] INV_9918_Binero_Group_AB.pdf
+     [19] Mobil_Faktura_Juni.pdf
+     [20] INV_9919_Fortnox_AB.pdf
+     [21] INV_9923_Slack_Technologies.pdf
+     [22] INV_9920_Ellevio_AB.pdf
+     [23] Faktura_1__Lynxeye_IT.pdf
+     [24] INV_9922_Google_Ireland_Ltd.pdf
+     [25] INV_9907_HubSpot_Inc..pdf
    topnivå-nycklar: ["object","has_more","data"]
-   bilage-objektets nycklar: ["id","filename","content_type","content_id","content_disposition","size","download_url","expires_at"]
-   exempel: filename=INV_9903_Slack_Technologies.pdf content_type=application/pdf size=1592 har_id=true har_download_url=true
+   bilage-objektets nycklar: ["id","filename","content_type","content_disposition","size","download_url","expires_at"]
+   exempel: filename=INV_9910_Adobe_Systems.pdf content_type=application/pdf size=1579 har_id=true har_download_url=true
 
 ═══════ PAGINERINGS-PROBER ═══════
    "?limit=100" → HTTP 200 · antal=26 · has_more/next=false
@@ -18,7 +45,7 @@
    "?limit=10" → HTTP 200 · antal=10 · has_more/next=true
 
 ═══════ FALLNA INDEX vs LISTNINGENS RÄCKVIDD ═══════
-   listningen returnerar index 0..19
+   listningen returnerar index 0..25
 
 ═══════ DEDUP-KONTROLL (testytan) ═══════
    analyser=13 · unika pdf_hash=13
