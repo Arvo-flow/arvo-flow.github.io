@@ -6,6 +6,12 @@ import { TEST_EMAIL } from '../lib/test-surface.js';
 const db = getDb();
 if (!db) { console.log('[]'); process.exit(0); }
 
+// #2-diagnos: finns triage_reason + health_score-kolumnerna FAKTISKT? (frågar schemat, inte gissar)
+try {
+  const cols = await db`SELECT column_name FROM information_schema.columns WHERE table_name='invoice_analyses' AND column_name IN ('triage_reason','health_score')`;
+  console.error('[KOLUMN-KOLL] invoice_analyses har:', cols.map((c) => c.column_name).join(', ') || '(varken triage_reason eller health_score!)');
+} catch (e) { console.error('[KOLUMN-KOLL] fel:', e.message); }
+
 const rows = await db`
   SELECT id, created_at, supplier, normalized_supplier, category, annual_cost,
          suggested_annual_cost, gross_saving, net_saving, should_switch, route,
