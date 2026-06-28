@@ -49,6 +49,17 @@ for (const h of VERIFIED_HIKES) {
 }
 console.log(`\n→ ${inserted} insatta · ${skipped} redan fanns`);
 
+// ── Rå dump: exakt vad som FAKTISKT ligger i tabellen (diagnos före slutsats) ──
+console.log('\n═══════ RÅ DUMP — supplier_price_history WHERE supplier ILIKE %microsoft% ═══════');
+const dump = await db`
+  SELECT supplier, category, changed_at, old_price_monthly, new_price_monthly,
+         old_price_annual, new_price_annual, source_type
+  FROM supplier_price_history WHERE supplier ILIKE '%microsoft%' ORDER BY changed_at`.catch((e) => { console.log('fel:', e.message); return []; });
+console.log(`rader: ${dump.length}`);
+for (const r of dump) console.log(`   ${r.changed_at} | ${r.category} | m:${r.old_price_monthly}→${r.new_price_monthly} a:${r.old_price_annual}→${r.new_price_annual}`);
+const now = await db`SELECT NOW() AS now, (NOW() - 48 * INTERVAL '1 month')::date AS floor48`;
+console.log(`   NOW()=${now[0].now} · 48-mån-golv=${now[0].floor48}`);
+
 // ── Verifiera LIVE att prognosen faktiskt tänds (verifieringsplikten: bevisa efter, inte bara före) ──
 console.log('\n═══════ VERIFIERAR: tänds prognosen? ═══════');
 const rows = await getSupplierCategoryChangesByKeyword({ supplierKeyword: 'microsoft', category: 'saas-productivity' });
