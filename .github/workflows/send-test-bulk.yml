@@ -1,0 +1,29 @@
+name: Send test bulk
+
+# Skickar de stagade test-fakturorna (test-pdfs/bulk26/) som ETT mejl via Resend till
+# test@inbox.arvoflow.se → driver hela den riktiga ingest-rälsen (inbound → kö → drain).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    name: Send test bulk
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Send
+        run: node scripts/send-uploaded-bulk.mjs
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
