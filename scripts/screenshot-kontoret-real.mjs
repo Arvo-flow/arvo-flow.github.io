@@ -7,10 +7,19 @@ import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
 const BUILD = path.resolve('build');
+const { watchedCard } = await import('../api/invoice-history.mjs');
 const rows = JSON.parse(readFileSync('ops/testyta-rows.json', 'utf8'));
 
+// Dela liggarna SAMMA väg som api/invoice-history (regel 1): prissatt (auto, ingen triage) vs bevakat.
+const TRIAGE = new Set(['unsupported', 'review_queue']);
+const isTriaged = (r) => TRIAGE.has(r.route) || r.triage_reason != null;
+const watched = rows.filter(isTriaged).map((r) => watchedCard({
+  normalized_supplier: r.normalized_supplier, supplier: r.supplier, category: r.category,
+  route: r.route, triage_reason: r.triage_reason,
+}));
+
 // Mappa DB-rader → API-formen kontoret läser (camel/snake som invoice-history skickar: spread av raden).
-const analyses = rows.map((r, i) => ({
+const analyses = rows.filter((r) => !isTriaged(r)).map((r, i) => ({
   id: r.id ?? i + 1,
   supplier: r.supplier, normalized_supplier: r.normalized_supplier, category: r.category,
   annual_cost: r.annual_cost, suggested_annual_cost: r.suggested_annual_cost,
@@ -23,7 +32,7 @@ const analyses = rows.map((r, i) => ({
 
 // Vaktens hjärtslag (verkligt svep-format) så radarn andas i bilden.
 const VAKT = { sweptAt: '2026-06-28T00:00:00Z', sources: 38, pricePoints: 47, changes: 1 };
-const PAYLOAD = { ok: true, analyses, vakt: VAKT, email: 'testyta@arvoflow.se' };
+const PAYLOAD = { ok: true, analyses, watched, vakt: VAKT, email: 'testyta@arvoflow.se' };
 
 const MIME = { '.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.svg':'image/svg+xml','.ico':'image/x-icon','.map':'application/json','.woff2':'font/woff2' };
 const server = http.createServer((req, res) => {

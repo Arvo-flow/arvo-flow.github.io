@@ -152,7 +152,7 @@ export default async function handler(req, res) {
 // "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.
 // Disciplinen ÄR premiumsignalen — vi gissar aldrig (Zero Trust), och vakten talar även när den tiger om tal.
 // reasonCode (lagrat) + leverantörsnamn → kundvänlig, ärlig copy. NOLL siffror (sifferrevisorns tystnad orörd).
-function watchedCard(a) {
+export function watchedCard(a) {
   const reason = String(a.triage_reason ?? a.route ?? '').toLowerCase();
   const sup = (a.normalized_supplier || a.supplier || '').toLowerCase();
   const supplierName = a.normalized_supplier || a.supplier || 'Okänd leverantör';
