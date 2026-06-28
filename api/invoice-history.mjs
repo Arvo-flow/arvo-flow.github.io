@@ -67,6 +67,7 @@ export default async function handler(req, res) {
   // webbläsarens fingerprint-historik (annars läcker den egna uppladdningar in och "ser inte nollställt ut").
   const isTestRoom = email === TEST_EMAIL;
 
+  // (watchedCard definieras på modulnivå nedan)
   const [byFp, byEmail] = await Promise.all([
     (hasFp && !isTestRoom) ? getAnalysesByFingerprint(fp) : [],
     email ? getAnalysesByEmail(email)    : [],
@@ -74,9 +75,21 @@ export default async function handler(req, res) {
 
   // Slå ihop + dedupa (samma analys kan ha både fingerprint och user_email)
   const seen = new Set();
-  const analyses = [...byEmail, ...byFp]
+  const merged = [...byEmail, ...byFp]
     .filter((a) => (seen.has(a.id) ? false : seen.add(a.id)))
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  // "Bevakat — inte prissatt" (Liggare 2): fakturor vi SÅG men medvetet inte prissatte (triagade).
+  // Disciplinmontern — Zero Trust gjort synligt: vi gissar aldrig på utländsk valuta eller en kategori
+  // utan verifierat svenskt golv. Inget tyst bortfall (regel 9). Bär källbelagt skäl + väg framåt, noll tal.
+  const TRIAGE_ROUTES = new Set(['unsupported', 'review_queue']);
+  const watched = merged
+    .filter((a) => TRIAGE_ROUTES.has(a.route) || a.triage_reason != null)
+    .map((a) => watchedCard(a));
+
+  // Liggare 1 (prissatt): bara riktiga analyser driver score/innehav/kohort — triagade hålls utanför.
+  const analyses = merged
+    .filter((a) => !TRIAGE_ROUTES.has(a.route) && a.triage_reason == null)
     // Kontraktsklockan beräknas FRESH vid läsning (aldrig lagrad) så "dagar kvar" stämmer
     // varje gång rummet öppnas. Zero Trust: bara rader med ett verkligt bindningsslut bär klocka.
     .map((a) => ({
@@ -133,7 +146,51 @@ export default async function handler(req, res) {
   const ingestFailed = email ? await failedCountBySender(email) : 0;
   const ingestFailedFiles = ingestFailed > 0 ? await failedFilesBySender(email) : [];
 
-  return send(res, 200, { ok: true, analyses, cohort, publicBench, forecasts, branchAnchors, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, email: email ?? undefined });
+  return send(res, 200, { ok: true, analyses, watched, cohort, publicBench, forecasts, branchAnchors, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, email: email ?? undefined });
+}
+
+// "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.
+// Disciplinen ÄR premiumsignalen — vi gissar aldrig (Zero Trust), och vakten talar även när den tiger om tal.
+// reasonCode (lagrat) + leverantörsnamn → kundvänlig, ärlig copy. NOLL siffror (sifferrevisorns tystnad orörd).
+function watchedCard(a) {
+  const reason = String(a.triage_reason ?? a.route ?? '').toLowerCase();
+  const sup = (a.normalized_supplier || a.supplier || '').toLowerCase();
+  const supplierName = a.normalized_supplier || a.supplier || 'Okänd leverantör';
+  let kind, headline, detail, action;
+
+  if (reason.startsWith('foreign_currency')) {
+    const cur = (a.triage_reason || '').split(':')[1] || 'utländsk valuta';
+    kind = 'Utländsk valuta';
+    headline = `Prissatt i ${cur} — vi gissar aldrig kursen`;
+    detail = `Leverantörens publika listpris finns bara i ${cur}. Att räkna om till en svensk besparing via dagskurs vore en gissning — och vi sätter aldrig en siffra vi inte kan stå för.`;
+    action = 'Koppla avtalet så jämför vi mot ert faktiska pris i kronor.';
+  } else if (reason.includes('credit_note')) {
+    kind = 'Kreditnota';
+    headline = 'En kreditfaktura — ingen kostnad att prissätta';
+    detail = 'Posten är en kreditering, inte en löpande utgift. Vi räknar den aldrig som en kostnad.';
+    action = 'Ingen åtgärd — vi noterade den och går vidare.';
+  } else if (reason.includes('implausible')) {
+    kind = 'Beloppskontroll';
+    headline = 'Beloppen bär ett troligt format-/valutafel';
+    detail = 'Talen ser inte rimliga ut för en svensk SME — vi prissätter aldrig på en faktura vi misstänker är feltolkad.';
+    action = 'Vi granskar fakturan manuellt och återkommer.';
+  } else if (/ellevio|vattenfall|e\.?on|elnät|elnat|nätavgift|natavgift/.test(sup) || reason.includes('elnat')) {
+    kind = 'Reglerad nätkostnad';
+    headline = 'Elnätet går inte att byta — men vi bevakar tariffen';
+    detail = 'Elnätsavgiften är en reglerad monopolkostnad utan marknad att byta till. Att lova en besparing vore oärligt.';
+    action = 'Vi bevakar er nättariff och larmar vid förändring.';
+  } else if (/binero|loopia|one\.com|gleSYS|glesys|webbhotell|hosting|domän|doman|\.se$/.test(sup)) {
+    kind = 'Fragmenterad marknad';
+    headline = 'Ingen verifierad prisnivå ännu — under bevakning';
+    detail = 'Webbhotell, domän och hosting är en splittrad marknad utan ett verifierat svenskt golv vi kan jämföra mot. Vi flaggar hellre än gissar.';
+    action = 'Ladda upp avtalet/specen så bygger vi en ärlig jämförelse.';
+  } else {
+    kind = 'Ej prissatt kategori';
+    headline = 'Mottagen och klassad — men utan verifierat golv att prissätta mot';
+    detail = 'Vi såg fakturan och la den under uppsikt. Vi sätter ingen siffra förrän vi har en verifierad marknadsreferens — aldrig en gissning.';
+    action = 'Under bevakning — vi prissätter så snart ett verifierat golv finns.';
+  }
+  return { supplier: supplierName, category: a.category ?? null, reasonCode: reason, kind, headline, detail, action };
 }
 
 function buildSwitchTargets(analyses) {

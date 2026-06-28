@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
-  SwitchInline, SwitchTargets, SwitchBtn, IntelQuiet, SignOff, Spinner,
+  SwitchInline, SwitchTargets, SwitchBtn, Watched, IntelQuiet, SignOff, Spinner,
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
 
@@ -208,6 +208,7 @@ export default function Portfolio() {
   const [branchAnchors, setBranchAnchors] = useState({});
   const [movements, setMovements] = useState({});
   const [switchTargets, setSwitchTargets] = useState({});
+  const [watched, setWatched] = useState([]);   // "Bevakat — inte prissatt" (Liggare 2): triagade fakturor
   const [vakt, setVakt] = useState(null);
   const [ingesting, setIngesting] = useState(0);   // fakturor på väg (köade, ej klara) → "analyserar N"
   const [ingestFailed, setIngestFailed] = useState(0);   // fakturor som föll → ärligt bortfalls-besked
@@ -252,6 +253,7 @@ export default function Portfolio() {
     setBranchAnchors(data.branchAnchors ?? {});
     setMovements(data.movements ?? {});
     setSwitchTargets(data.switchTargets ?? {});
+    setWatched(data.watched ?? []);
     setVakt(data.vakt ?? null);
     setIngesting(data.ingesting ?? 0);
     setIngestFailed(data.ingestFailed ?? 0);
@@ -972,6 +974,29 @@ export default function Portfolio() {
                 );
               })}
             </Holdings>
+
+            {/* ── Liggare 2: "Bevakat — inte prissatt" — disciplinmontern (Zero Trust gjort synligt) ── */}
+            {watched.length > 0 && (
+              <Watched>
+                <div className="w-eyebrow">Bevakat — inte prissatt · {watched.length}</div>
+                <p className="w-manifesto">
+                  Vi läste varje faktura ni skickade. Dessa <b>{watched.length}</b> prissätter vi medvetet inte —
+                  vi gissar aldrig på utländsk valuta eller en kategori utan verifierat svenskt golv. Vakten
+                  håller dem under uppsikt, med ett ärligt skäl och en väg framåt. Inget föll mellan stolarna.
+                </p>
+                {watched.map((w, i) => (
+                  <div className="w-row" key={`${w.supplier}-${i}`}>
+                    <div className="w-top">
+                      <span className="w-sup">{w.supplier}</span>
+                      <span className="w-kind">{w.kind}</span>
+                    </div>
+                    <div className="w-head">{w.headline}</div>
+                    <p className="w-detail">{w.detail}</p>
+                    <div className="w-action"><span className="w-arrow">→</span> {w.action}</div>
+                  </div>
+                ))}
+              </Watched>
+            )}
 
             {/* ── Arvo Intelligence — tyst avslutande pitch ───────────────── */}
             <IntelQuiet>

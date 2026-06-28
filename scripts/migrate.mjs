@@ -169,6 +169,11 @@ await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS lead_finding_jso
 // golv, räknat i recommend(). Ersätter det hårdkodade 82 i kontoret. Idempotent.
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS health_score INTEGER`;
 
+// "Bevakat — inte prissatt" (2026-06-28): triagade fakturor (utländsk valuta, ej stödd kategori,
+// kreditnota, granskning) lagras med ett källbelagt SKÄL men noll siffror → Liggare 2 i kontoret,
+// så ingen kundfaktura faller tyst (regel 9). Idempotent.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS triage_reason TEXT`;
+
 await sql`
   CREATE INDEX IF NOT EXISTS idx_analyses_user_email
     ON invoice_analyses (user_email, created_at DESC)

@@ -458,6 +458,28 @@ export const SwitchTargets = styled.div`
     b { color:${theme.dossier.mutedOnDark}; } }
 `;
 
+// "Bevakat — inte prissatt" (Liggare 2): disciplinmontern. Återhållsam, förtrolig — hederligheten
+// är premiumsignalen. Ingen amber (inte ett fel), ingen CTA-glöd (inte ett byte): keyline + monospace.
+export const Watched = styled.section`
+  margin-top:40px;
+  .w-eyebrow { font-family:${MONO}; font-size:11px; letter-spacing:.24em; text-transform:uppercase;
+    color:${theme.dossier.teal}; padding-bottom:14px; border-bottom:1px solid ${theme.dossier.hairlineOnDark}; }
+  .w-manifesto { margin:16px 0 22px; font-size:14px; line-height:1.65; color:${theme.dossier.mutedOnDark};
+    max-width:64ch; b { color:${theme.dossier.inkOnDark}; font-weight:700; } }
+  .w-row { padding:18px 0; border-top:1px solid ${theme.dossier.hairlineOnDark}; }
+  .w-row:first-of-type { border-top:none; }
+  .w-top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+  .w-sup { font-size:15px; font-weight:600; color:${theme.dossier.inkOnDark}; }
+  .w-kind { font-family:${MONO}; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:${theme.dossier.faintOnDark}; border:1px solid ${theme.dossier.hairlineOnDark};
+    border-radius:${theme.size.radius.sm}; padding:3px 8px; white-space:nowrap; }
+  .w-head { font-family:${theme.font.display}; font-size:17px; font-weight:600; line-height:1.3;
+    color:${theme.dossier.inkOnDark}; margin-bottom:7px; }
+  .w-detail { margin:0 0 10px; font-size:13px; line-height:1.6; color:${theme.dossier.mutedOnDark}; max-width:68ch; }
+  .w-action { font-size:12.5px; color:${theme.dossier.teal}; display:flex; gap:7px; align-items:baseline;
+    .w-arrow { font-family:${MONO}; } }
+`;
+
 export const SwitchBtn = styled.a`
   display:flex; align-items:center; justify-content:center; gap:8px;
   text-decoration:none; cursor:pointer;

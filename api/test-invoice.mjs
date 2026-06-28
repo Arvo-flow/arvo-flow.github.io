@@ -23,7 +23,7 @@ import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.
 import { contractClockFinding } from '../lib/contract-clock.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
-import { storeAnalysis } from '../lib/invoice-store.js';
+import { storeAnalysis, storeTriaged } from '../lib/invoice-store.js';
 import { runIntegrityChecks } from '../lib/extraction-integrity.js';
 import { saveIntegrityOverrides, flagNewSupplier } from '../lib/labeled-corrections.js';
 import { upsertSupplier, recordSupplierPrice, recordContractTimeline } from '../lib/invoice-graph.js';
@@ -448,6 +448,8 @@ export default async function handler(req, res) {
 
     // Guard: kreditnotor (negativt totalt fakturabelopp)
     if (extracted.amount < 0) {
+      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+        route: 'unsupported', reason: 'credit_note', userEmail: body.userEmail }).catch(() => {});
       return send(res, 200, {
         ok: true, route: 'unsupported', reason: 'credit_note',
         extracted: { supplier: extracted.supplier, date: extracted.date },
@@ -513,6 +515,8 @@ export default async function handler(req, res) {
       notifyReviewQueue(extracted, `[Utländsk valuta] ${extracted.currency}`).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue (currency) threw:', err.message)
       );
+      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+        route: 'review_queue', reason: `foreign_currency:${extracted.currency}`, userEmail: body.userEmail }).catch(() => {});
       return send(res, 200, {
         ok: true, route: 'review_queue', reason: 'foreign_currency',
         currency: extracted.currency,
@@ -537,6 +541,8 @@ export default async function handler(req, res) {
       if (_implausible) {
         console.error(`[guard:belopp] Orimliga belopp — annualCost=${extracted.annualCost} amount=${extracted.amount} currency=${extracted.currency}`);
         notifyReviewQueue(extracted, `[Beloppsvalidering] Orimliga belopp (annualCost=${(extracted.annualCost ?? 0).toLocaleString('sv-SE')} kr) — troligt valutatransformationsfel`).catch(() => {});
+        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+          route: 'review_queue', reason: 'implausible_amounts', userEmail: body.userEmail }).catch(() => {});
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'implausible_amounts',
           extracted: {
@@ -599,6 +605,8 @@ export default async function handler(req, res) {
       notifyReviewQueue(extracted, routing.reason).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue threw:', err.message)
       );
+      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+        route: 'review_queue', reason: routing.reason, userEmail: body.userEmail }).catch(() => {});
       return send(res, 200, {
         ok:     true,
         route:  'review_queue',
@@ -616,6 +624,8 @@ export default async function handler(req, res) {
     }
 
     if (routing.route === 'unsupported') {
+      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+        route: 'unsupported', reason: routing.reason ?? 'out_of_scope', userEmail: body.userEmail }).catch(() => {});
       return send(res, 200, {
         ok:    true,
         route: 'unsupported',
