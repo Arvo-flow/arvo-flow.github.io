@@ -31,10 +31,16 @@ async function list(qs = '') {
 }
 
 // 2) Bas-listning: hur många returneras, vilka topnycklar (cursor/has_more?), vilken form per bilaga.
-const b = await list();
+const b = await list('?limit=100');
 const data = Array.isArray(b.j?.data) ? b.j.data : (Array.isArray(b.j) ? b.j : []);
-console.log('═══════ BAS-LISTNING ═══════');
+console.log('═══════ BAS-LISTNING (limit=100) ═══════');
 console.log(`   HTTP ${b.status} · antal=${data.length}`);
+// Dumpa alla filnamn + distinkt-räkning (avslöjar om Resend listar dubbletter → dubbel-fetch-bug).
+const names = data.map((a) => a.filename ?? '?');
+const distinctNames = new Set(names);
+const distinctUrls = new Set(data.map((a) => (a.download_url ?? '').split('?')[0]));
+console.log(`   distinkta filnamn=${distinctNames.size} · distinkta download_url(bas)=${distinctUrls.size}`);
+names.forEach((n, i) => console.log(`     [${String(i).padStart(2)}] ${n}`));
 console.log(`   topnivå-nycklar: ${JSON.stringify(Object.keys(b.j ?? {}))}`);
 console.log(`   bilage-objektets nycklar: ${JSON.stringify(Object.keys(data[0] ?? {}))}`);
 if (data[0]) {
