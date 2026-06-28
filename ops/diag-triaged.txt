@@ -1,4 +1,6 @@
 KOLUMNER (triage_reason/health_score): health_score, triage_reason
 INSERT med triage_reason: OK
 LÄST triage_reason: "diag_reason_test"
+storeTriaged returnerade: true
+LÄST tillbaka: route= undefined  triage_reason= undefined
 KLART.
