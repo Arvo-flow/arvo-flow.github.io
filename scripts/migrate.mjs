@@ -165,6 +165,10 @@ await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS outcome_email_se
 // leverantör, i stället för ett benchmark-pålägg. Zero Trust — fyndet är kundens egen rad. Idempotent.
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS lead_finding_json JSONB`;
 
+// Arvo Score-underlag (bug #2-fix 2026-06-28): deterministiskt hälsotal ur prisläget mot verifierat
+// golv, räknat i recommend(). Ersätter det hårdkodade 82 i kontoret. Idempotent.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS health_score INTEGER`;
+
 await sql`
   CREATE INDEX IF NOT EXISTS idx_analyses_user_email
     ON invoice_analyses (user_email, created_at DESC)

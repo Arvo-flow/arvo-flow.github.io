@@ -1073,9 +1073,17 @@ export async function recommend(input, opts = {}) {
       input.invoice?.licenseType ?? null,
       input.invoice?.saasProductFamily ?? null,
     );
-    if (typeof _gwKey === 'string' && _gwKey.startsWith('google-')) {
-      console.log('[google-sek-grind] Google Workspace saknar verifierat publikt SEK-pris → offert-läge (verifierad M365-referens)');
-      return withForensics(googleWorkspaceQuoteResponse(input, _gwKey));
+    // Grinda på TIER-nyckel ELLER på LEVERANTÖR. Buggen 2026-06-28: en Google-faktura vars
+    // rader inte bar "Google Workspace" i licenstyp/familj fick _gwKey=null → föll till den
+    // allmänna M365-golvade benchmarken och fick en PÅHITTAD SEK-besparing (Google→M365, regel 3/4-
+    // brott). Leverantörsnamnet "Google" är ett lika starkt USD-only-bevis — grinda på det också.
+    const _supplier = (input.categorized.normalizedSupplier ?? '').toLowerCase();
+    const _isGoogleSupplier = /\bgoogle\b/.test(_supplier);
+    const _isGoogleTier = typeof _gwKey === 'string' && _gwKey.startsWith('google-');
+    if (_isGoogleTier || _isGoogleSupplier) {
+      const gwKey = _isGoogleTier ? _gwKey : 'google-standard';   // default-tier för M365-referensen
+      console.log(`[google-sek-grind] Google Workspace (${_isGoogleTier ? 'tier' : 'leverantör'}) saknar verifierat publikt SEK-pris → offert-läge (verifierad M365-referens)`);
+      return withForensics(googleWorkspaceQuoteResponse(input, gwKey));
     }
   }
 
@@ -1664,6 +1672,38 @@ export async function recommend(input, opts = {}) {
     }
 
     } // end else (combined+null guard)
+  }
+
+  // Bytesmålet för saas-productivity LÅSES till M365-golvet som besparingen räknas mot — aldrig en
+  // AI-vald konkurrent. Buggen 2026-06-28: AI:n plockade "Google Workspace" ur alternativ-listan
+  // som suggestedSupplier MEDAN talet deterministiskt räknades mot M365-golvet (p25) → kortet sa
+  // "byt till Google" med en M365-baserad siffra (regel 2: koden räknar → koden namnger målet).
+  // Google-fakturor är redan grindade till offert-läge ovan; kvar här är M365-jämförbara byten.
+  if (input.categorized.category === 'saas-productivity' && result.shouldSwitch) {
+    result.suggestedSupplier = 'Microsoft 365 Business Standard (årsavtal)';
+  }
+
+  // Arvo Score-underlag (bug #2-fix 2026-06-28): ett DETERMINISTISKT hälsotal ur fakturans prisläge
+  // mot verifierat golv (benchmark.p25 × platser). Tidigare gav kontoret ett HÅRDKODAT 82 för varje
+  // icke-byte-faktura (src/lib/holdings.js) → ingen differentiering, ett oförtjänt tal (regel 3-brott).
+  // Nu: vid golvet ~88, under golvet upp mot 96, mot median fallande, i bytesläge lågt. Källan ÄR
+  // prisläget (inget estimat). Bara för kategorier med verifierad benchmark; annars null → frontend
+  // faller till neutral. Talet räknas i kod (regel 2), aldrig av AI.
+  if (benchmark && benchmark.p25 > 0 && !categoryDef?.licensePending) {
+    const _perUser = (benchmark.note ?? '').toLowerCase().includes('per användare');
+    const _seats = _perUser ? (input.invoice?.seatCount ?? input.customer?.employees ?? 1) : 1;
+    const _floor = benchmark.p25 * _seats;
+    const _cost = input.invoice?.primaryComponentMonthly != null
+      ? Math.round(input.invoice.primaryComponentMonthly * 12)
+      : (input.invoice?.annualCost ?? input.invoice?.amount ?? 0);
+    if (_floor > 0 && _cost > 0) {
+      const ratio = _cost / _floor;                       // 1,0 = exakt på det verifierade golvet
+      let hs;
+      if (ratio <= 1.0)      hs = Math.min(96, Math.round(88 + (1 - ratio) * 40));   // under golvet → upp mot 96
+      else if (ratio <= 1.5) hs = Math.round(88 - (ratio - 1) * 96);                 // 1,0→88 … 1,5→40
+      else                   hs = Math.max(15, Math.round(40 - (ratio - 1.5) * 30)); // långt över → lågt
+      result.healthScore = hs;
+    }
   }
 
   return {

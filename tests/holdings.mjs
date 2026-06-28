@@ -101,8 +101,16 @@ describe('supplierDiagScore · scoren följer SAMMA tal som besparings-pillen (r
     assert.equal(s, 79);                                  // följer pillen (gross_saving), inte suggested
   });
 
-  test('inget byte men kostnad finns → 82 (rätt prissatt)', () => {
-    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000 }), 82);
+  test('bug #2-fix: health_score (förtjänat tal ur prisläget) styr — inte ett hårdkodat 82', () => {
+    // Vid golvet ~88, under golvet upp mot 96, mot median fallande — differentierat per faktura.
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 92 }), 92);
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 61 }), 61);
+    // Ett rekommenderat byte får aldrig visa ett högt "allt bra"-tal → taklägg vid 79.
+    assert.equal(supplierDiagScore({ should_switch: true, net_saving: 5000, annual_cost: 100000, health_score: 90 }), 79);
+  });
+
+  test('bug #2-fix: utan health_score (äldre rad) → neutralt 75, ALDRIG det degenererade 82', () => {
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000 }), 75);
   });
 
   test('monitoring → 72', () => {

@@ -103,6 +103,28 @@ describe('Google Workspace · recommend() — google-sek-grind + verifierad M365
     assert.match(r.reasoning, /inte ert Google-pris/);
   });
 
+  test('BUG #1-fix (2026-06-28): Google via LEVERANTÖR fångas även när raden inte säger "Google Workspace"', async () => {
+    // Den riktiga buggen: en Google-faktura vars rad var generisk ("Produktivitetstjänst") och
+    // utan licenseType → tier-detekteringen missade → fakturan föll till den allmänna M365-golvade
+    // benchmarken och fick en PÅHITTAD SEK-besparing (Google→Microsoft, "spar X"). Nu grindar
+    // leverantörsnamnet "Google Ireland Ltd" den till offert-läge oavsett radtext.
+    const r = await recommend(gwInvoice('Produktivitetstjänst molnabonnemang', 600, null, {
+      // efterhärma extraherad faktura: supplier=Google men ingen Workspace-markör i raden
+    }));
+    // Override normalizedSupplier till den verkliga formen extraktorn ger:
+    const r2 = await recommend({
+      customer: { industry: 'it-tech', employees: 10 },
+      categorized: { category: 'saas-productivity', subType: 'produktivitet', normalizedSupplier: 'Google Ireland Ltd', confidence: 0.95 },
+      invoice: { annualCost: 72900, billingPeriod: 'monthly', licenseType: null,
+        lineItems: [{ type: 'recurring_subscription', description: 'Molnabonnemang produktivitet', amount: 6075 }] },
+    });
+    assert.equal(r2.requiresQuote, true, 'Google-leverantör → offert-läge, inte byte');
+    assert.equal(r2.shouldSwitch, false);
+    assert.equal(r2.suggestedAnnualCost, null, 'ingen påhittad SEK-siffra för Google');
+    assert.equal(r2.netSaving, null);
+    assert.equal(r2.savingPerYear, null);
+  });
+
   test('Google via licenseType utan säten → per-säte-referens, ingen total, ingen Google-siffra', async () => {
     const r = await recommend(gwInvoice('Produktivitetslicens', 600, 'Google Workspace Starter'));
     assert.equal(r.requiresQuote, true);

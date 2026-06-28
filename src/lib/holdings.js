@@ -39,9 +39,18 @@ export function supplierName(a) {
 // (samma källa som net_saving som pillen visar) → score och pill kan aldrig motsäga varandra.
 export function supplierDiagScore(a) {
   if (a.route === 'monitoring') return 72;
+  // Bug #2-fix (2026-06-28): deterministiskt hälsotal ur fakturans prisläge mot verifierat golv,
+  // räknat i recommend() (regel 2). Ersätter det hårdkodade 82 som gjorde att VARJE rätt-prissatt
+  // faktura fick exakt samma tal. Finns det → använd det (förtjänat, differentierat, källa = prisläget).
+  if (a.health_score != null && Number.isFinite(Number(a.health_score))) {
+    const hs = Number(a.health_score);
+    // Ett rekommenderat byte ska aldrig visa ett högt "allt är bra"-tal — taklägg vid 79.
+    return (a.should_switch && (a.net_saving ?? 0) > 0) ? Math.min(hs, 79) : hs;
+  }
   const gross = a.gross_saving ?? (a.net_saving != null ? a.net_saving / 0.8 : 0);
   if (!a.should_switch || !a.annual_cost || !(gross > 0)) {
-    return a.annual_cost > 0 ? 82 : 50;
+    // Fallback (ingen verifierad benchmark, t.ex. äldre rader utan health_score): neutralt, inte 82.
+    return a.annual_cost > 0 ? 75 : 50;
   }
   const ovPct = Math.round((gross / a.annual_cost) * 100);   // marknadsgapet som besparingen representerar
   const raw   = Math.max(5, Math.round(100 - ovPct * 1.5));
