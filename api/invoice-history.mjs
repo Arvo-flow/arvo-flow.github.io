@@ -158,10 +158,11 @@ function watchedCard(a) {
   const supplierName = a.normalized_supplier || a.supplier || 'Okänd leverantör';
   let kind, headline, detail, action;
 
-  if (reason.startsWith('foreign_currency')) {
-    const cur = (a.triage_reason || '').split(':')[1] || 'utländsk valuta';
-    kind = 'Utländsk valuta';
-    headline = `Prissatt i ${cur} — vi gissar aldrig kursen`;
+  const INTL_SAAS = /hubspot|slack|zoom|salesforce|\baws\b|amazon web|atlassian|notion|figma|datadog|stripe|dropbox|\bbox\b|monday|asana|miro/;
+  if (reason.startsWith('foreign_currency') || INTL_SAAS.test(sup)) {
+    const cur = (a.triage_reason || '').split(':')[1] || 'USD';
+    kind = 'Internationell SaaS';
+    headline = `Prissatt i utländsk valuta — vi gissar aldrig kursen`;
     detail = `Leverantörens publika listpris finns bara i ${cur}. Att räkna om till en svensk besparing via dagskurs vore en gissning — och vi sätter aldrig en siffra vi inte kan stå för.`;
     action = 'Koppla avtalet så jämför vi mot ert faktiska pris i kronor.';
   } else if (reason.includes('credit_note')) {
