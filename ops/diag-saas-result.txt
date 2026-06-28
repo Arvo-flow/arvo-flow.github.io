@@ -1,0 +1,51 @@
+
+═══════════ INV_9917_Microsoft_Ireland.pdf ═══════════
+{
+  "leverantör": "Microsoft Ireland",
+  "kategori": "saas-productivity",
+  "route": "auto",
+  "årskostnad": 45600,
+  "BYTE": {
+    "shouldSwitch": false,
+    "recommendationType": "no_action",
+    "suggestedSupplier": null,
+    "suggestedAnnualCost": null
+  },
+  "ARVO_SCORE": 82,
+  "reasoning": "Ni betalar redan mindre än jämförbara bolag i er bransch för Microsoft 365 — avtalet är rätt dimensionerat för tio personer och kräver ingen åtgärd. En sak att bevaka: ert pris ligger nära nivån för ett Microsoft årsavtal. Säkerställ vid förnyelsen att ni ligger på årsbetalning och inte rullande månadsfakturering, då månadsmodellen kostar runt 20 % mer för exakt samma licenser."
+}
+
+═══════════ INV_9922_Google_Ireland_Ltd.pdf ═══════════
+{
+  "leverantör": "Google Ireland Ltd",
+  "kategori": "saas-productivity",
+  "route": "auto",
+  "årskostnad": 72900,
+  "BYTE": {
+    "shouldSwitch": true,
+    "recommendationType": "switch",
+    "suggestedSupplier": "Microsoft 365 Business Standard",
+    "suggestedAnnualCost": 14338
+  },
+  "ARVO_SCORE": 82,
+  "reasoning": "Ni betalar mer än jämförbara bolag i er bransch för exakt samma produktivitetsfunktioner. Prisanomalin ligger i faktureringsmodellen — ni betalar troligen månadspris i stället för det betydligt lägre årsavtalspriset. Microsoft 365 Business Standard ger samma Teams, SharePoint, Exchange och molnlagring till marknadsmässigt avtalspris, och täcker hela vardagen för ett 10-personers bolag utan onödiga compliance-funktioner."
+}
+
+═══════════ INV_9908_Telavox_AB.pdf ═══════════
+{
+  "leverantör": "Telavox AB",
+  "kategori": "molnvaxel",
+  "route": "auto",
+  "årskostnad": 101100,
+  "BYTE": {
+    "shouldSwitch": false,
+    "recommendationType": "optimize",
+    "suggestedSupplier": "Telia Smart Connect",
+    "suggestedAnnualCost": null,
+    "netSaving": null
+  },
+  "ARVO_SCORE": 82,
+  "reasoning": "Ni betalar 399,00 kr/användare och månad (exkl moms) för er växel på Samtal-nivån. Telia Smart Connect — marknadens instegsväxel för motsvarande nivå — kostar från 89 kr/användare/mån (exkl moms). Ni ligger ~348 % över instegsgolvet — värt en offertjämförelse."
+}
+
+KLART.
