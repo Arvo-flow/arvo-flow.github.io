@@ -464,6 +464,61 @@ export const SwitchTargets = styled.div`
     b { color:${theme.dossier.mutedOnDark}; } }
 `;
 
+// Bytes-kortet, DOM-FÖRST. En asymmetrisk dom bär kortet (serif-hjälte); bevisen viks ner i en
+// <details> så domen reser sig ensam överst. Två lägen: $known=true (vi vet avtalsdatum → teal,
+// "vi avfyrar exakt då") / $known=false (datum saknas → varm signal, "ett drag kvar — skicka avtalet").
+// Den varma signalen är lugn, aldrig alarm — bristen är nästa drag, inte ett fel.
+export const SwitchVerdict = styled.div`
+  position:relative; border:1px solid ${theme.dossier.hairlineOnDark};
+  border-radius:${theme.size.radius.md}; overflow:hidden;
+  background: radial-gradient(560px 260px at 8% -22%,
+      ${({ $known }) => ($known ? 'rgba(43,196,172,0.10)' : 'rgba(224,162,60,0.09)')}, transparent 60%),
+    ${theme.dossier.bgRaised};
+  padding:22px 22px 18px; display:flex; flex-direction:column;
+
+  .sv-eyebrow { display:flex; align-items:center; gap:9px; font-family:${MONO}; font-size:10px;
+    letter-spacing:.26em; text-transform:uppercase; color:${theme.dossier.faintOnDark}; margin-bottom:15px; }
+  .sv-dot { flex-shrink:0; width:6px; height:6px; border-radius:50%;
+    background:${({ $known }) => ($known ? theme.dossier.teal : theme.dossier.signal)};
+    box-shadow:0 0 0 4px ${({ $known }) => ($known ? 'rgba(43,196,172,0.13)' : 'rgba(224,162,60,0.13)')},
+      0 0 12px ${({ $known }) => ($known ? theme.dossier.tealBright : theme.dossier.signal)}; }
+  .sv-dom { font-family:${SERIF}; font-weight:500; font-size:clamp(20px,2.6vw,25px); line-height:1.22;
+    letter-spacing:-.01em; color:${theme.dossier.inkOnDark}; margin-bottom:13px;
+    em { font-style:normal; color:${({ $known }) => ($known ? theme.dossier.teal : theme.dossier.tealBright)}; } }
+  .sv-support { font-size:13.5px; line-height:1.62; color:${theme.dossier.mutedOnDark}; margin:0;
+    b { color:${theme.dossier.inkOnDark}; } }
+
+  .sv-proof { margin-top:12px; border-top:1px solid ${theme.dossier.hairlineOnDark}; }
+  .sv-proof > summary { list-style:none; cursor:pointer; font-family:${MONO}; font-size:10px;
+    letter-spacing:.2em; text-transform:uppercase; color:${theme.dossier.teal};
+    padding:13px 0 0; display:flex; align-items:center; }
+  .sv-proof > summary::-webkit-details-marker { display:none; }
+  .sv-proof > summary::after { content:'+'; margin-left:auto; font-size:15px; line-height:1;
+    color:${theme.dossier.faintOnDark}; }
+  .sv-proof[open] > summary::after { content:'\\2013'; }
+  .sv-proof-body { padding-top:4px; }
+  .sv-sec { padding:13px 0 2px; border-top:1px solid ${theme.dossier.hairlineOnDark}; }
+  .sv-sec:first-child { border-top:none; }
+  .sv-lbl { font-family:${MONO}; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase;
+    color:${theme.dossier.faintOnDark}; margin-bottom:8px; }
+  .sv-alt { margin-bottom:8px; }
+  .sv-sup { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:13.5px; font-weight:600;
+    color:${theme.dossier.inkOnDark}; }
+  .sv-tag { font-family:${MONO}; font-size:9px; letter-spacing:.12em; text-transform:uppercase;
+    color:${theme.dossier.bg}; background:${theme.dossier.teal}; border-radius:${theme.size.radius.sm}; padding:2px 7px; }
+  .sv-pos { display:block; font-size:12px; color:${theme.dossier.mutedOnDark}; line-height:1.5; margin-top:3px; }
+  .sv-fine { margin-top:6px; font-size:11.5px; color:${theme.dossier.faintOnDark}; line-height:1.5;
+    b { color:${theme.dossier.mutedOnDark}; } }
+  .sv-note { font-size:12.5px; line-height:1.6; color:${theme.dossier.mutedOnDark}; margin:2px 0 0; }
+  .sv-row { display:flex; justify-content:space-between; align-items:baseline; padding:7px 0; gap:14px;
+    & > span:first-child { font-size:12.5px; color:${theme.dossier.mutedOnDark}; display:flex; flex-direction:column; }
+    small { font-size:10.5px; color:${theme.dossier.faintOnDark}; margin-top:2px; } }
+  .sv-v { font-family:${MONO}; font-size:13px; color:${theme.dossier.inkOnDark}; font-feature-settings:'tnum'; white-space:nowrap; }
+  .sv-keep .sv-v { font-size:15px; color:${theme.dossier.tealBright}; }
+
+  .sv-act { margin-top:18px; }
+`;
+
 // "Bevakat — inte prissatt" (Liggare 2): disciplinmontern. Återhållsam, förtrolig — hederligheten
 // är premiumsignalen. Ingen amber (inte ett fel), ingen CTA-glöd (inte ett byte): keyline + monospace.
 export const Watched = styled.section`

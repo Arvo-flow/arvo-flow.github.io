@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
-  SwitchInline, SwitchTargets, SwitchBtn, Watched, IntelQuiet, SignOff, Spinner,
+  SwitchVerdict, SwitchBtn, Watched, IntelQuiet, SignOff, Spinner,
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
 
@@ -944,48 +944,86 @@ export default function Portfolio() {
                           <div className="fact"><dt>Analyserad</dt><dd>{fmtDate(a.created_at)}</dd></div>
                         </dl>
 
-                        {/* Rekommenderat byte: VAD marknaden erbjuder för er nivå — namngivet + verifierade
-                            specs (källbelagt, aldrig påhittat). Svarar på CFO:ns "spara till VAD?". */}
-                        {saving && switchTargets[a.category]?.alternatives?.length > 0 && (
-                          <SwitchTargets>
-                            <div className="st-k">Rekommenderat byte · marknaden för er nivå</div>
-                            {switchTargets[a.category].alternatives.map((alt, i) => (
-                              <div className="st-alt" key={alt.supplier}>
-                                <div className="st-sup">
-                                  {alt.supplier}
-                                  {i === 0 && <span className="st-tag">bäst matchning</span>}
-                                </div>
-                                <div className="st-pos">{alt.positioning}</div>
+                        {/* Bytes-kortet DOM-FÖRST: en asymmetrisk dom bär kortet, bevisen viks ner.
+                            Två ärliga lägen styrda av om vi har avtalsdatum (regel 4: precision /
+                            grundad bedömning). $known fyras nästan aldrig idag — avtalsdatum fångas
+                            sällan vid extraktion; det är vakten som vet vad den inte vet. */}
+                        {saving && (() => {
+                          const known = !!a.contract_end_date;
+                          const tgt = switchTargets[a.category];
+                          return (
+                            <SwitchVerdict $known={known}>
+                              <div className="sv-eyebrow">
+                                <span className="sv-dot" />
+                                {known ? 'Vakten · ert byte' : 'Vakten · ett drag kvar'}
                               </div>
-                            ))}
-                            <div className="st-src">
-                              Matchat mot er nuvarande nivå — <b>samma eller bättre, aldrig en nedgradering.</b>{' '}
-                              Verifierat publikt listpris{switchTargets[a.category].lastVerified ? ` · senast bekräftat ${switchTargets[a.category].lastVerified}` : ''}.
-                            </div>
-                          </SwitchTargets>
-                        )}
+                              <div className="sv-dom">
+                                {known
+                                  ? <>Ni kan byta — och vi vet <em>exakt när</em>.</>
+                                  : <>En sak står mellan er och <em>{fmtNum(a.net_saving)} kr</em>: vad ert avtal säger.</>}
+                              </div>
+                              <p className="sv-support">
+                                {known
+                                  ? <>Ert {supplierName(a)}-avtal löper till <b>{fmtDate(a.contract_end_date)}</b> — vi avfyrar
+                                      bytet på dagen, i ert namn. Ni betalar <b>aldrig en dag dubbelt</b>, och vi flyttar er
+                                      <b> aldrig in i en avgift</b>.</>
+                                  : <>Vi ser besparingen tydligt — men inget bindningsdatum på er faktura. Skicka avtalet, så
+                                      <b> läser vi bindningstiden</b> och tajmar bytet så ni <b>aldrig betalar dubbelt</b> och
+                                      aldrig hamnar i en brytavgift.</>}
+                              </p>
 
-                        {saving && (
-                          <SwitchInline>
-                            <div className="si-k">Arvo Switch · så går bytet till</div>
-                            <div className="si-steps">
-                              <div className="si-step"><span className="si-n">1</span><span className="si-body"><span className="si-t">Ni aktiverar bytet</span><span className="si-d">Ett klick — Arvo tar det därifrån.</span></span></div>
-                              <div className="si-step"><span className="si-n">2</span><span className="si-body"><span className="si-t">Arvo förbereder allt</span><span className="si-d">Fullmakt och bytesplan i er inkorg inom 24 timmar — ni granskar och signerar.</span></span></div>
-                              <div className="si-step"><span className="si-n">3</span><span className="si-body"><span className="si-t">Nytt avtalspris aktivt</span><span className="si-d">Ni betalar 20 % av första årets besparing — från år två är hela besparingen er.</span></span></div>
-                            </div>
-                            <div className="si-offer">
-                              <span className="old">{fmtNum(a.annual_cost)} kr/år</span>
-                              <span className="arr">→</span>
-                              <span className="new">{fmtNum(a.suggested_annual_cost)}<small>kr/år</small></span>
-                            </div>
-                            <div className="si-save">
-                              Ni sparar <b>{fmtNum(a.net_saving)} kr/år</b> netto efter Arvos arvode (20 % av första årets besparing).
-                            </div>
-                            <SwitchBtn as={Link} to="/aktivera">
-                              Aktivera bytet <Icon name="arrow" size={16} />
-                            </SwitchBtn>
-                          </SwitchInline>
-                        )}
+                              <details className="sv-proof">
+                                <summary>Förutsättningar inför bytet</summary>
+                                <div className="sv-proof-body">
+                                  {tgt?.alternatives?.length > 0 && (
+                                    <div className="sv-sec">
+                                      <div className="sv-lbl">Vad ni får</div>
+                                      {tgt.alternatives.map((alt, i) => (
+                                        <div className="sv-alt" key={alt.supplier}>
+                                          <span className="sv-sup">{alt.supplier}{i === 0 && <span className="sv-tag">bäst matchning</span>}</span>
+                                          <span className="sv-pos">{alt.positioning}</span>
+                                        </div>
+                                      ))}
+                                      <div className="sv-fine">
+                                        Matchat mot er nuvarande nivå — <b>samma eller bättre, aldrig en nedgradering.</b>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div className="sv-sec">
+                                    <div className="sv-lbl">Vad bytet ger er</div>
+                                    <div className="sv-row"><span>Ni betalar idag<small>er faktura</small></span><span className="sv-v">{fmtNum(a.annual_cost)} kr/år</span></div>
+                                    <div className="sv-row"><span>Samma nivå kostar idag<small>verifierat öppet pris{tgt?.lastVerified ? ` · ${tgt.lastVerified}` : ''}</small></span><span className="sv-v">{fmtNum(a.suggested_annual_cost)} kr/år</span></div>
+                                    <div className="sv-row sv-keep"><span>Ni behåller<small>efter Arvos arvode · vi tar betalt först när pengarna landat</small></span><span className="sv-v">+{fmtNum(a.net_saving)} kr/år</span></div>
+                                    <div className="sv-fine">
+                                      {a.category === 'bredband'
+                                        ? <>Exakt pris sätts per adress i offert — </>
+                                        : <>Det slutliga priset sätts i offert — </>}
+                                      det <b>bekräftas innan ni skriver under.</b>
+                                    </div>
+                                  </div>
+
+                                  <div className="sv-sec">
+                                    <div className="sv-lbl">{known ? 'Er enda handling' : 'Varför vi väntar på datumet'}</div>
+                                    <p className="sv-note">
+                                      {known
+                                        ? <>En signatur med BankID. Inget är bindande förrän ni skriver under, ni kan tacka nej utan
+                                            kostnad, och själva bytet ger ingen driftstörning — den nya leverantören sköter flytten.</>
+                                        : <>En bindningstid eller brytavgift kan äta besparingen om bytet sker fel dag. Vi rör er aldrig
+                                            förrän vi vet att kalkylen håller — bristen är nästa drag, inte ett hinder.</>}
+                                    </p>
+                                  </div>
+                                </div>
+                              </details>
+
+                              <div className="sv-act">
+                                <SwitchBtn as={Link} to="/aktivera">
+                                  {known ? 'Aktivera bytet' : 'Förbered bytet'} <Icon name="arrow" size={16} />
+                                </SwitchBtn>
+                              </div>
+                            </SwitchVerdict>
+                          );
+                        })()}
                       </HoldDetail>
                     )}
                   </HoldRow>

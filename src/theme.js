@@ -41,6 +41,7 @@ const theme = {
     teal: '#2BC4AC',                  // primär accent på mörkt (eyebrows, tal)
     tealBright: '#5DD6CA',            // glödpunkter, markörer, brand-mark
     tealDeep: '#178A7B',              // gradientslut
+    signal: '#E0A23C',                // varm signal — "ett drag kvar" (lugnt, inte alarm-rött)
 
     // Text på mörk botten — kontrastkalibrerad för läsbarhet även i ljusa
     // kontorsmiljöer (mutedOnDark ~6.5:1, faintOnDark ~4.6:1 mot dossier.bg).
