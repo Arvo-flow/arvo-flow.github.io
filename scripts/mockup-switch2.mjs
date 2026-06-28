@@ -51,16 +51,16 @@ const known = card(T.teal,
   `Ert Tele2-avtal löper till ${ink('30 september')}. Vi avfyrar bytet på dagen, i ert namn — ni betalar ${ink('aldrig en dag dubbelt')}, och vi flyttar er ${ink('aldrig in i en avgift')}.`,
   proof('Vad ni får', `
     <div style="font-family:${T.sans};font-size:12.5px;line-height:1.6;color:${T.muted};padding:2px 0 4px">
-      Bahnhof Företag matchat mot er nivå — svensk support, statisk IP, stark SLA. Samma eller bättre, aldrig en nedgradering.</div>`)
-  + proof('Vad ni betalar · realiserad besparing', `
-    ${evRow('Idag', '23 388 kr/år', 'er faktura')}
-    ${evRow('Marknadsgolv för er nivå', '13 980 kr/år', 'verifierat publikt listpris · 2026-06-17')}
-    ${evRow('Ni behåller', '+9 408 kr/år', 'efter Arvos arvode · vi fakturerar först när det landat', true)}
+      Bahnhof Företag matchat mot er nuvarande nivå — svensk support, fast IP-adress, samma drifttrygghet. Lika bra eller bättre, aldrig en nedgradering.</div>`)
+  + proof('Vad bytet ger er', `
+    ${evRow('Ni betalar idag', '23 388 kr/år', 'er faktura')}
+    ${evRow('Samma nivå kostar idag', '13 980 kr/år', 'verifierat öppet pris · 2026-06-17')}
+    ${evRow('Ni behåller', '+9 408 kr/år', 'efter Arvos arvode · vi tar betalt först när pengarna landat', true)}
     <div style="margin-top:8px;font-family:${T.sans};font-size:11px;line-height:1.55;color:${T.faint}">
-      Bahnhof sätter exakt pris per adress — slutpriset bekräftas innan ni signerar.</div>`)
+      Bahnhof sätter exakt pris per adress — det slutliga priset bekräftas innan ni skriver under.</div>`)
   + proof('Er enda handling', `
     <div style="font-family:${T.sans};font-size:12.5px;line-height:1.6;color:${T.muted};padding:2px 0">
-      En BankID-signatur. Inget är bindande förrän ni skriver under, offerten kan tackas nej till utan kostnad, och porteringen ger ingen driftstörning — den vinnande leverantören verkställer.</div>`));
+      En signatur med BankID. Inget är bindande förrän ni skriver under, ni kan tacka nej utan kostnad, och själva bytet ger ingen driftstörning — den nya leverantören sköter flytten.</div>`));
 
 // ── Läge 2: datum SAKNAS — vakten vet vad den inte vet ────────────────────
 const unknown = card(T.warn,
@@ -68,9 +68,9 @@ const unknown = card(T.warn,
   `En sak står mellan er och <span style="color:${T.tealBright}">9 408 kr</span>: vad ert avtal säger.`,
   `Vi ser besparingen tydligt — men inget bindningsdatum på er faktura. Skicka avtalet, så ${ink('läser vi bindningstiden')} och tajmar bytet så ni ${ink('aldrig betalar dubbelt')} och ${ink('aldrig hamnar i en brytavgift')}.`,
   proof('Besparingen vi redan ser', `
-    ${evRow('Idag', '23 388 kr/år', 'er faktura')}
-    ${evRow('Marknadsgolv för er nivå', '13 980 kr/år', 'verifierat publikt listpris · 2026-06-17')}
-    ${evRow('Möjlig behållning', '+9 408 kr/år', 'efter arvode — bekräftas när avtalet lästs', true)}`)
+    ${evRow('Ni betalar idag', '23 388 kr/år', 'er faktura')}
+    ${evRow('Samma nivå kostar idag', '13 980 kr/år', 'verifierat öppet pris · 2026-06-17')}
+    ${evRow('Detta kan ni behålla', '+9 408 kr/år', 'efter arvode — bekräftas när vi läst avtalet', true)}`)
   + proof('Varför vi väntar på datumet', `
     <div style="font-family:${T.sans};font-size:12.5px;line-height:1.6;color:${T.muted};padding:2px 0">
       En bindningstid eller brytavgift kan äta besparingen om bytet sker fel dag. Vi rör er aldrig förrän vi vet att kalkylen håller — bristen är nästa drag, inte ett hinder.</div>`));
