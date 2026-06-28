@@ -105,6 +105,10 @@ export const Radar = styled.div`
     color: ${theme.dossier.mutedOnDark}; line-height: 1.5;
     strong { color: ${theme.dossier.inkOnDark}; display: block; letter-spacing: .14em; }
   }
+  /* Minimal separation (variant C): två namngivna grupper i SAMMA kort — era avtal vs marknaden.
+     Hårfin men SYNLIG mono-etikett (faintOnDark, inte osynlig) så de två sanningarna aldrig blandas. */
+  .rgroup-label { font-family: ${MONO}; font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase;
+    color: ${theme.dossier.faintOnDark}; margin-bottom: 9px; }
   .radar-stats { display: flex; flex-direction: column; gap: 7px; }
   .rstat {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -112,11 +116,13 @@ export const Radar = styled.div`
     span.v { font-family: ${MONO}; color: ${theme.dossier.inkOnDark}; font-feature-settings:'tnum'; }
   }
   .radar-foot {
-    margin-top: 14px; padding-top: 12px; border-top: 1px solid ${theme.dossier.hairlineOnDark};
-    display: flex; align-items: center; gap: 8px;
+    margin-top: 16px; padding-top: 14px; border-top: 1px solid ${theme.dossier.hairlineOnDark};
+    display: flex; flex-direction: column; align-items: flex-start;
     font-size: 12px; color: ${theme.dossier.inkOnDark};
-    .live { width: 7px; height: 7px; border-radius: 50%; background: ${theme.dossier.tealBright};
-      box-shadow: ${theme.dossier.glow}; animation: ${breathe} 2.4s ease-in-out infinite; }
+    .foot-line { display: flex; align-items: baseline; gap: 8px; line-height: 1.5;
+      b { color: ${theme.dossier.inkOnDark}; font-weight: 600; } }
+    .live { flex-shrink: 0; transform: translateY(2px); width: 7px; height: 7px; border-radius: 50%;
+      background: ${theme.dossier.tealBright}; box-shadow: ${theme.dossier.glow}; animation: ${breathe} 2.4s ease-in-out infinite; }
   }
 `;
 

@@ -632,21 +632,25 @@ export default function Portfolio() {
                   </div>
                   <div className="radar-title"><strong>Vakten</strong>bevakar era avtal</div>
                 </div>
+                {/* Variant C — grupp 1: ERA AVTAL (intaget). Aldrig blandat med marknaden. */}
                 <div className="radar-stats">
+                  <div className="rgroup-label">Era avtal</div>
                   <div className="rstat"><span>Leverantörer</span><span className="v">{suppliers.length}</span></div>
                   <div className="rstat"><span>{watched.length > 0 ? 'Prissatta' : 'Analyser'}</span><span className="v">{autoAnalyses.length}</span></div>
                   {/* Bevakat — inte prissatt: triagade fakturor syns i räknaren så intaget aldrig läser som bortfall */}
                   {watched.length > 0 && <div className="rstat"><span>Under uppsikt</span><span className="v">{watched.length}</span></div>}
-                  {/* Marknadskällor = verkliga svepta källor ur senaste nattliga svep (vakt_events) */}
-                  <div className="rstat"><span>Marknadskällor</span><span className="v">{vakt?.sources ?? 40}</span></div>
                 </div>
+                {/* Variant C — grupp 2: MARKNADEN (svepet). Marknadskällor folds in i svep-raden där den hör hemma. */}
                 <div className="radar-foot">
-                  <span className="live" />
-                  {vakt?.sweptAt
-                    ? <>Senaste svep {relSwept(vakt.sweptAt)} · {vakt.changes > 0
-                        ? <>{vakt.changes} {vakt.changes === 1 ? 'prisavvikelse' : 'prisavvikelser'} i marknaden</>
-                        : 'allt lugnt'}</>
-                    : latestDate ? <>Senaste analys {latestDate} · bevakning aktiv</> : 'Bevakning aktiv'}
+                  <div className="rgroup-label">Marknaden</div>
+                  <div className="foot-line">
+                    <span className="live" />
+                    <span>{vakt?.sweptAt
+                      ? <>Senaste svep {relSwept(vakt.sweptAt)} · <b>{vakt.sources ?? 40} marknadskällor</b> svepta{vakt.changes > 0
+                          ? <> · {vakt.changes} {vakt.changes === 1 ? 'prisrörelse' : 'prisrörelser'} i marknaden</>
+                          : ' · allt lugnt'}</>
+                      : latestDate ? <>Senaste analys {latestDate} · bevakning aktiv</> : 'Bevakning aktiv'}</span>
+                  </div>
                 </div>
               </Radar>
             </TopRow>
