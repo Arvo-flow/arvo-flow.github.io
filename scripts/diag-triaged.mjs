@@ -19,4 +19,14 @@ try {
 } catch (e) {
   console.log('INSERT-FEL:', e.message);
 }
+// Kör den RIKTIGA produktions-storeTriaged (samma kod som Vercel) och läs tillbaka skälet.
+import { storeTriaged } from '../lib/invoice-store.js';
+try {
+  const ok = await storeTriaged({ fingerprint: 'diagfn00000000000000000000000000', pdfHash: 'diaghash2',
+    supplier: 'DiagFn AB', category: 'molnvaxel', route: 'review_queue', reason: 'categorization_conflict', userEmail: 'diag@test' });
+  console.log('storeTriaged returnerade:', ok);
+  const r = await db`SELECT route, triage_reason FROM invoice_analyses WHERE fingerprint='diagfn00000000000000000000000000'`;
+  console.log('LÄST tillbaka: route=', JSON.stringify(r[0]?.route), ' triage_reason=', JSON.stringify(r[0]?.triage_reason));
+  await db`DELETE FROM invoice_analyses WHERE fingerprint='diagfn00000000000000000000000000'`;
+} catch (e) { console.log('storeTriaged-FEL:', e.message); }
 console.log('KLART.');
