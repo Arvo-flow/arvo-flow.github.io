@@ -1,0 +1,31 @@
+name: Inventory moat
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  inv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Inventory
+        run: |
+          mkdir -p ops
+          node scripts/inventory-moat.mjs | tee ops/inventory-moat.txt
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Inv Bot"
+          git pull --rebase origin main || true
+          git add ops/inventory-moat.txt
+          git commit -m "ops: inventory-moat [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
