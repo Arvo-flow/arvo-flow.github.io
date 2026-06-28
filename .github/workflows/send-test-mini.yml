@@ -1,0 +1,26 @@
+name: Send test mini
+
+# Frugalt verifieringspass: skickar BARA test-pdfs/bulk-mini/ (4 representativa fakturor som täcker
+# alla tre fixarna) → ~$0,5 i st f ~$3 för hela 26-batchen. Samma riktiga räls (inbound → kö → drain).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Send mini
+        run: node scripts/send-uploaded-bulk.mjs
+        env:
+          BULK_DIR: test-pdfs/bulk-mini
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
