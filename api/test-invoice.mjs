@@ -980,6 +980,8 @@ export default async function handler(req, res) {
         }
       }
 
+      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+        route: 'review_queue', reason: 'volume_data_required', userEmail: body.userEmail }).catch(() => {});
       return send(res, 200, {
         ok:     true,
         route:  'review_queue',
@@ -1014,6 +1016,8 @@ export default async function handler(req, res) {
       notifyReviewQueue(extracted, `[Ingen benchmark] Kategori '${categorized.category}' saknas i branschindex`).catch((e) =>
         console.error('[test-invoice] alert failed:', e.message)
       );
+      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+        route: 'review_queue', reason: 'no_benchmark', userEmail: body.userEmail }).catch(() => {});
       return send(res, 200, {
         ok:     true,
         route:  'review_queue',
