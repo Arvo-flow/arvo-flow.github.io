@@ -1,0 +1,8 @@
+✓ seedade: Microsoft Microsoft 365 Business Standard 2022-03-01 (+ källa)
+✓ seedade: Microsoft Microsoft 365 Business Standard 2026-07-01 (+ källa)
+
+→ 2 insatta · 0 redan fanns
+
+═══════ VERIFIERAR: tänds prognosen? ═══════
+Hittade 0 historik-rader för microsoft/saas-productivity
+⚠️  prognosen tänds INTE — färre än 2 giltiga höjningar i historiken.
