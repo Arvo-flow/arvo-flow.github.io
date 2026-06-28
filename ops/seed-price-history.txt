@@ -7,8 +7,11 @@
 rader: 2
    Tue Mar 01 2022 00:00:00 GMT+0000 (Coordinated Universal Time) | saas-productivity | m:12.50→14.00 a:null→null
    Wed Jul 01 2026 00:00:00 GMT+0000 (Coordinated Universal Time) | saas-productivity | m:null→null a:150.00→168.00
-   NOW()=Sun Jun 28 2026 22:15:57 GMT+0000 (Coordinated Universal Time) · 48-mån-golv=Tue Jun 28 2022 00:00:00 GMT+0000 (Coordinated Universal Time)
+   NOW()=Sun Jun 28 2026 22:18:07 GMT+0000 (Coordinated Universal Time) · 48-mån-golv=Tue Jun 28 2022 00:00:00 GMT+0000 (Coordinated Universal Time)
 
 ═══════ VERIFIERAR: tänds prognosen? ═══════
-Hittade 0 historik-rader för microsoft/saas-productivity
-⚠️  prognosen tänds INTE — färre än 2 giltiga höjningar i historiken.
+Hittade 2 historik-rader för microsoft/saas-productivity
+✅ PROGNOSEN TÄNDS:
+   titel: Microsoft har en höjningstrend
+   magnitud: +12 % · konfidens: low
+   text: Microsoft har höjt sitt publika pris 2 gånger de senaste åren, typiskt +12 %, utan tydlig säsong. Bedömning (ej fakta): håll uppsikt — mönstret räcker inte för att peka ut en månad, men höjningar återkommer. Vi köar motdraget och agerar i fönstret. Kommer höjningen inte — desto bättre; ni betalade inget för beredskapen och bevakningen flyttar bara fram.
