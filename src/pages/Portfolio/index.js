@@ -405,6 +405,18 @@ export default function Portfolio() {
   const autoAnalyses = useMemo(() => (analyses ?? []).filter((a) => a.route === 'auto' || a.route === 'monitoring'), [analyses]);
   const suppliers    = useMemo(() => groupBySupplier(autoAnalyses), [autoAnalyses]);
 
+  // "Bevakat — inte prissatt": gruppera per SLAG (kind) så fem identiska "utländsk valuta"-kort blir
+  // ETT kuraterat omdöme med leverantörslistan — disciplin, inte en vägg. Delat skäl/väg ur första i slaget.
+  const watchedGroups = useMemo(() => {
+    const m = new Map();
+    for (const w of (watched ?? [])) {
+      if (!m.has(w.kind)) m.set(w.kind, { kind: w.kind, headline: w.headline, detail: w.detail, action: w.action, suppliers: [] });
+      const g = m.get(w.kind);
+      if (!g.suppliers.includes(w.supplier)) g.suppliers.push(w.supplier);
+    }
+    return [...m.values()];
+  }, [watched]);
+
   // Forensik-inversionen i rummet: starkaste mekanism-fyndet (ur kundens egna rader) leder domen.
   // Zero Trust — talet kommer från fakturaraden, persisterat i lead_finding_json. Tomt → inget kort.
   const roomFinding = useMemo(() => {
@@ -986,15 +998,16 @@ export default function Portfolio() {
                   vi gissar aldrig på utländsk valuta eller en kategori utan verifierat svenskt golv. Vakten
                   håller dem under uppsikt, med ett ärligt skäl och en väg framåt. Inget föll mellan stolarna.
                 </p>
-                {watched.map((w, i) => (
-                  <div className="w-row" key={`${w.supplier}-${i}`}>
+                {watchedGroups.map((g) => (
+                  <div className="w-row" key={g.kind}>
                     <div className="w-top">
-                      <span className="w-sup">{w.supplier}</span>
-                      <span className="w-kind">{w.kind}</span>
+                      <span className="w-sup">{g.suppliers.length === 1 ? g.suppliers[0] : `${g.suppliers.length} fakturor`}</span>
+                      <span className="w-kind">{g.kind}</span>
                     </div>
-                    <div className="w-head">{w.headline}</div>
-                    <p className="w-detail">{w.detail}</p>
-                    <div className="w-action"><span className="w-arrow">→</span> {w.action}</div>
+                    <div className="w-head">{g.headline}</div>
+                    <p className="w-detail">{g.detail}</p>
+                    {g.suppliers.length > 1 && <div className="w-list">{g.suppliers.join(' · ')}</div>}
+                    <div className="w-action"><span className="w-arrow">→</span> {g.action}</div>
                   </div>
                 ))}
               </Watched>

@@ -476,6 +476,8 @@ export const Watched = styled.section`
   .w-head { font-family:${theme.font.display}; font-size:17px; font-weight:600; line-height:1.3;
     color:${theme.dossier.inkOnDark}; margin-bottom:7px; }
   .w-detail { margin:0 0 10px; font-size:13px; line-height:1.6; color:${theme.dossier.mutedOnDark}; max-width:68ch; }
+  .w-list { font-family:${MONO}; font-size:12px; letter-spacing:.02em; color:${theme.dossier.faintOnDark};
+    margin-bottom:10px; line-height:1.7; }
   .w-action { font-size:12.5px; color:${theme.dossier.teal}; display:flex; gap:7px; align-items:baseline;
     .w-arrow { font-family:${MONO}; } }
 `;
