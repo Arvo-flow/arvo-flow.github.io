@@ -57,6 +57,16 @@ export function supplierDiagScore(a) {
   return (a.net_saving ?? 0) > 0 ? Math.min(raw, 79) : raw;
 }
 
+// Domens "agerande krävs"-avgörande. GRUNDARLÄRDOM 2026-06-30 (live skärmdump): en kostsam
+// forensik-upptäckt (t.ex. avbetald hårdvara, 16 800 kr/år) UTAN ett tillgängligt leverantörsbyte
+// fick domen att ändå säga "Allt är under kontroll" — rakt motsägande fyndkortet direkt under.
+// En kostnad är lika mycket "agerande krävs" som ett byte. Ren funktion = regressionstestbar.
+export function computeActing({ switchablesCount, roomFinding }) {
+  const hasSwitchAction = (switchablesCount ?? 0) > 0;
+  const hasFindingAction = !!(roomFinding && (roomFinding.annualImpact ?? 0) > 0);
+  return { hasSwitchAction, hasFindingAction, acting: hasSwitchAction || hasFindingAction };
+}
+
 export function groupBySupplier(analyses) {
   const groups = new Map();
   for (const a of analyses ?? []) {

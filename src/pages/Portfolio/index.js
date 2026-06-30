@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
-import { groupBySupplier, supplierName, supplierDiagScore } from '../../lib/holdings';
+import { groupBySupplier, supplierName, supplierDiagScore, computeActing } from '../../lib/holdings';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
-  SwitchVerdict, SwitchBtn, Watched, IntelQuiet, SignOff, Spinner,
+  SwitchVerdict, SwitchBtn, Watched, IntelQuiet, SignOff, Spinner, Evidence,
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
 
@@ -529,8 +529,9 @@ export default function Portfolio() {
     ? fmtDate(suppliers.map((g) => g.latest.created_at).sort().reverse()[0]) : '';
   const today = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
 
-  // Veckodomen — deterministisk ur verkligt läge.
-  const acting = switchables.length > 0;
+  // Veckodomen — deterministisk ur verkligt läge. Avgörandet bor i lib/holdings.js (ren, testbar) —
+  // regressionstestat efter grundarlärdomen 2026-06-30 (domen fick aldrig ljuga mot sitt eget bevis).
+  const { hasSwitchAction, hasFindingAction, acting } = computeActing({ switchablesCount: switchables.length, roomFinding });
 
   // Vaktens kvitton (arbetets kvitton) — vad maskinen GJORDE, byggt strikt ur verkligt rumsdata.
   // Inga mock-rader (det var Kontoret-prototypens synd): varje rad är sann eller utelämnas.
@@ -561,17 +562,23 @@ export default function Portfolio() {
   // med de N avtalen som den fokuserade möjligheten — aldrig en motsägelse mot gaugen nedan.
   const verdictHead = !acting
     ? <>Håll kursen. Era priser <em>står sig mot marknaden.</em></>
-    : standing.label === 'Bättre än marknaden'
-      ? <>Sammantaget står ni <em>starkt</em> — men {switchables.length} avtal kostar mer än de borde.</>
-      : standing.label === 'I nivå'
-        ? <>Ni ligger <em>i nivå</em> med marknaden — {switchables.length} avtal kan skärpas.</>
-        : <>Ni betalar <em>mer än marknaden</em> — {switchables.length} avtal drar mest.</>;
-  const verdictWork = acting
+    : hasSwitchAction
+      ? (standing.label === 'Bättre än marknaden'
+          ? <>Sammantaget står ni <em>starkt</em> — men {switchables.length} avtal kostar mer än de borde.</>
+          : standing.label === 'I nivå'
+            ? <>Ni ligger <em>i nivå</em> med marknaden — {switchables.length} avtal kan skärpas.</>
+            : <>Ni betalar <em>mer än marknaden</em> — {switchables.length} avtal drar mest.</>)
+      : <>Era avtal står sig — men vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda.</>;
+  const verdictWork = !acting
     ? <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
-        <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
-        största bytet tar två minuter att signera. Resten håller måttet; dem rör vi inte.</>
-    : <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
-        Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>;
+        Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>
+    : hasSwitchAction
+      ? <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
+          <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
+          största bytet tar två minuter att signera. Resten håller måttet; dem rör vi inte.</>
+      : <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris — priserna står sig.
+          Men vi läste varje rad på era fakturor och fångade en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
+          se vad domen bygger på nedan.</>;
 
   return (
     <Page>
@@ -612,12 +619,12 @@ export default function Portfolio() {
 
         {analyses !== null && suppliers.length > 0 && (
           <>
-            {/* ── Identitet + Vakten ──────────────────────────────────────── */}
+            {/* ── Identitet + Vakten — rent masthead, ingen egen rubrik. Domen (Verdict, nedan)
+                 är sidans enda ledare; TopRow konkurrerar inte längre med den. ──────────────── */}
             <TopRow>
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
-                <h1>{acting ? <>Ett par drag<br />väntar på er.</> : <>God morgon.<br />Allt är under kontroll.</>}</h1>
               </Ident>
 
               <Radar>
@@ -655,27 +662,27 @@ export default function Portfolio() {
               </Radar>
             </TopRow>
 
-            {/* ── Forensik-domen: mekanismen leder (delad komponent, mörkt ansikte) ──── */}
-            <FindingCard finding={roomFinding} variant="dossier" />
-
-            {/* ── Marknadsrörelsen: verifierad höjning × nätverkets bredd (den vassaste moaten) ── */}
-            <FindingCard finding={roomMovement} variant="dossier" eyebrow="Marknadsrörelsen · nätverket" />
-
-            {/* ── Kontraktsklockan (Maktkalendern): det avtal som förfaller snarast ──── */}
-            <FindingCard finding={roomClock} variant="dossier" eyebrow="Maktkalendern · avtalsbevakning" />
-
-            {/* ── Maktkalendern · prognos: källbelagd bedömning ur leverantörens prishistorik ── */}
-            <FindingCard finding={roomForecast} variant="dossier" eyebrow="Maktkalendern · prognos" />
-
-            {/* ── Veckodomen ──────────────────────────────────────────────── */}
+            {/* ── Veckodomen — SIDANS ENDA LEDARE, direkt efter masthead ──────────────────── */}
             <Verdict>
               <div className="eyebrow">Arvo bedömer</div>
-              <h2>{verdictHead}</h2>
+              <h1>{verdictHead}</h1>
               <p className="work">{verdictWork}</p>
               <Confidence>
                 <span className="pct">Verifierat</span> · grundat på {suppliers.length} analyserade leverantörer · publika listpriser
               </Confidence>
             </Verdict>
+
+            {/* ── Bevisen — vad domen bygger på. Samma fyndkort som förr, nu EFTER domen och
+                 ramade som stöd (regel: en dom leder, allt annat är bevis under den). ──────── */}
+            {(roomFinding || roomMovement || roomClock || roomForecast) && (
+              <Evidence>
+                <div className="ev-eyebrow">Vad domen bygger på</div>
+                <FindingCard finding={roomFinding} variant="dossier" />
+                <FindingCard finding={roomMovement} variant="dossier" eyebrow="Marknadsrörelsen · nätverket" />
+                <FindingCard finding={roomClock} variant="dossier" eyebrow="Maktkalendern · avtalsbevakning" />
+                <FindingCard finding={roomForecast} variant="dossier" eyebrow="Maktkalendern · prognos" />
+              </Evidence>
+            )}
 
             {/* ── Instrument: Arvo Score + likräkning ─────────────────────── */}
             <Grid>
@@ -700,16 +707,20 @@ export default function Portfolio() {
               </Index>
 
               <Tally>
-                <div className="tally-k">{acting ? 'Möjlig nettobesparing' : 'Avtal under bevakning'}</div>
+                <div className="tally-k">{hasSwitchAction ? 'Möjlig nettobesparing' : acting ? 'Fångad kostnad' : 'Avtal under bevakning'}</div>
                 <div className="tally-num">
-                  {acting
+                  {hasSwitchAction
                     ? <>{fmtNum(totalSaving)} kr<small>per år</small></>
-                    : <>{suppliers.length}<small>{suppliers.length === 1 ? 'avtal' : 'avtal'}</small></>}
+                    : acting
+                      ? <>{fmtNum(roomFinding.annualImpact)} kr<small>per år</small></>
+                      : <>{suppliers.length}<small>{suppliers.length === 1 ? 'avtal' : 'avtal'}</small></>}
                 </div>
                 <div className="tally-sub">
-                  {acting
+                  {hasSwitchAction
                     ? <><b>{switchables.length} byte{switchables.length > 1 ? 'n' : ''} förberedda</b> · netto efter Arvos arvode (20% av första årets besparing). Från år två är hela besparingen er.</>
-                    : <>Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.</>}
+                    : acting
+                      ? <>Inget leverantörsbyte krävs — kostnaden åtgärdas direkt mot fakturan. Se fyndet ovan.</>
+                      : <>Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.</>}
                 </div>
               </Tally>
             </Grid>

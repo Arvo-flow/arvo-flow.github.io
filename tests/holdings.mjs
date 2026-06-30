@@ -4,7 +4,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupBySupplier, supplierName, supplierDiagScore } from '../src/lib/holdings.js';
+import { groupBySupplier, supplierName, supplierDiagScore, computeActing } from '../src/lib/holdings.js';
 
 const a = (o) => ({ net_saving: 0, category: 'mobil', created_at: '2025-06-01', ...o });
 
@@ -120,5 +120,30 @@ describe('supplierDiagScore · scoren följer SAMMA tal som besparings-pillen (r
   test('faller tillbaka på net_saving om gross saknas', () => {
     // net 6230 → gross ≈ 7787 → ~13% → 79
     assert.equal(supplierDiagScore(row({ annual_cost: 58092, gross_saving: undefined, net_saving: 6230 })), 79);
+  });
+});
+
+describe('computeActing · domen får aldrig ljuga mot sitt eget bevis (grundarlärdom 2026-06-30)', () => {
+  test('live-fallet ordagrant: 0 byten + ett 16 800 kr/år-fynd → acting=true (INTE "allt under kontroll")', () => {
+    const r = computeActing({ switchablesCount: 0, roomFinding: { title: 'Avbetald hårdvara', annualImpact: 16800 } });
+    assert.equal(r.hasSwitchAction, false);
+    assert.equal(r.hasFindingAction, true);
+    assert.equal(r.acting, true);
+  });
+
+  test('byte finns, inget fynd → acting=true via switch', () => {
+    const r = computeActing({ switchablesCount: 2, roomFinding: null });
+    assert.equal(r.hasSwitchAction, true);
+    assert.equal(r.hasFindingAction, false);
+    assert.equal(r.acting, true);
+  });
+
+  test('varken byte eller fynd → acting=false, "håll kursen" är sant', () => {
+    assert.equal(computeActing({ switchablesCount: 0, roomFinding: null }).acting, false);
+  });
+
+  test('fynd utan kr-belopp (annualImpact 0/null) räknas INTE som agerande — bara verkliga kostnader', () => {
+    assert.equal(computeActing({ switchablesCount: 0, roomFinding: { title: 'Kreditnota', annualImpact: 0 } }).acting, false);
+    assert.equal(computeActing({ switchablesCount: 0, roomFinding: { title: 'X' } }).acting, false);
   });
 });
