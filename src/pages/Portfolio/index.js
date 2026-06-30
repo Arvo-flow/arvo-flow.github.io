@@ -625,6 +625,7 @@ export default function Portfolio() {
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
+                <div className="greeting">God morgon.</div>
               </Ident>
 
               <Radar>

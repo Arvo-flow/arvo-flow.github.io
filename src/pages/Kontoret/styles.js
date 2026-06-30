@@ -72,6 +72,14 @@ export const Ident = styled.div`
     font-family: ${MONO}; font-size: 10px; letter-spacing: .26em; text-transform: uppercase;
     color: ${theme.dossier.faintOnDark}; margin-bottom: 18px;
   }
+  /* Hälsningen — borttagen av misstag i dom-först-omstruktureringen (2026-06-30) när den
+     tävlande statusrubriken ("Allt är under kontroll") rensades bort. De satt i samma <h1>,
+     men hälsningen är RELATION (välkomnande), inte INFORMATION (statuspåstående) — den ska
+     finnas kvar, bara tyst underordnad domen, inte tävla med den. */
+  .greeting {
+    font-family: ${SERIF}; font-weight: 500; font-size: clamp(17px, 2vw, 21px);
+    color: ${theme.dossier.faintOnDark}; margin-bottom: 22px;
+  }
   h1 {
     font-family: ${SERIF}; font-weight: 700; line-height: 1.02; letter-spacing: -.03em;
     font-size: clamp(40px, 7vw, 62px); margin: 0;
