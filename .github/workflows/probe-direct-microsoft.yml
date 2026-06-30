@@ -1,0 +1,31 @@
+name: Probe direct Microsoft customer
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Probe
+        run: |
+          mkdir -p ops
+          node scripts/probe-direct-microsoft.mjs | tee ops/probe-direct-microsoft.txt
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git pull --rebase origin main || true
+          git add ops/probe-direct-microsoft.txt
+          git commit -m "ops: probe-direct-microsoft [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
