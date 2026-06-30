@@ -72,14 +72,6 @@ export const Ident = styled.div`
     font-family: ${MONO}; font-size: 10px; letter-spacing: .26em; text-transform: uppercase;
     color: ${theme.dossier.faintOnDark}; margin-bottom: 18px;
   }
-  /* Hälsningen — borttagen av misstag i dom-först-omstruktureringen (2026-06-30) när den
-     tävlande statusrubriken ("Allt är under kontroll") rensades bort. De satt i samma <h1>,
-     men hälsningen är RELATION (välkomnande), inte INFORMATION (statuspåstående) — den ska
-     finnas kvar, bara tyst underordnad domen, inte tävla med den. */
-  .greeting {
-    font-family: ${SERIF}; font-weight: 500; font-size: clamp(17px, 2vw, 21px);
-    color: ${theme.dossier.faintOnDark}; margin-bottom: 22px;
-  }
   h1 {
     font-family: ${SERIF}; font-weight: 700; line-height: 1.02; letter-spacing: -.03em;
     font-size: clamp(40px, 7vw, 62px); margin: 0;
@@ -134,14 +126,11 @@ export const Radar = styled.div`
   }
 `;
 
-// ── veckodomen — ETT författat omdöme, NU SIDANS ENDA LEDARE ────────────────
-// Flyttad till första positionen (direkt efter masthead+Vakten): innan stod H1 (TopRow) och upp
-// till fyra FindingCards som lika tunga, konkurrerande påståenden FÖRE domen — "tre ledare, ingen
-// ledare". Domen är nu <h1> (enda rubriken på sidan i det fyllda läget; TopRow har ingen egen
-// längre) och bär hjälte-vikt. Bevisen (Evidence, nedan) viks in UNDER den.
+// ── veckodomen — ETT författat omdöme (deck under den metalliska hjälten i TopRow) ──────────
 export const Verdict = styled.section`
-  margin-top: 26px; padding: 0 0 4px;
-  ${appear(0.04)}
+  margin-top: 30px; padding: 34px 0 4px;
+  border-top: 1px solid ${theme.dossier.hairlineOnDark};
+  ${appear(0.08)}
 
   .eyebrow {
     font-family: ${MONO}; font-size: 11px; letter-spacing: .26em; text-transform: uppercase;
@@ -150,32 +139,17 @@ export const Verdict = styled.section`
   }
   .eyebrow::after { content:''; flex:1; height:1px; background:${theme.dossier.hairlineOnDark}; }
 
-  /* h1 = det fyllda rummet (sidans ENDA rubrik, domen leder — hjälte-vikt).
-     h2 = tomma-kontoret-läget (Ident äger redan sidans h1 där — domen blir subordinerad, oförändrad storlek). */
-  h1, h2 {
-    font-family: ${SERIF}; font-weight: 700; letter-spacing: -.025em;
-    line-height: 1.05; margin: 0 0 20px; max-width: 20ch; color: ${theme.dossier.inkOnDark};
+  h2 {
+    font-family: ${SERIF}; font-weight: 600; letter-spacing: -.02em;
+    font-size: clamp(30px, 5vw, 48px); line-height: 1.08; margin: 0 0 20px;
+    max-width: 20ch; color: ${theme.dossier.inkOnDark};
   }
-  h1 { font-size: clamp(36px, 6.4vw, 58px); }
-  h2 { font-size: clamp(30px, 5vw, 48px); font-weight: 600; }
-  h1 em, h2 em { font-style: normal; color: ${theme.dossier.tealBright}; }
+  h2 em { font-style: normal; color: ${theme.dossier.tealBright}; }
 
   p.work {
     font-size: 16px; line-height: 1.7; color: ${theme.dossier.mutedOnDark};
     max-width: 56ch; margin: 0 0 22px;
     b { color: ${theme.dossier.inkOnDark}; font-weight: 600; }
-  }
-`;
-
-// ── bevisen — det domen bygger på. Samma FindingCards som förr, men nu EFTER domen och
-// uttryckligen ramade som stöd, inte som konkurrerande rubriker (regel: en dom, inget annat).
-export const Evidence = styled.section`
-  margin-top: 36px; padding-top: 26px;
-  border-top: 1px solid ${theme.dossier.hairlineOnDark};
-  ${appear(0.1)}
-  .ev-eyebrow {
-    font-family: ${MONO}; font-size: 10px; letter-spacing: .24em; text-transform: uppercase;
-    color: ${theme.dossier.faintOnDark}; margin-bottom: 18px;
   }
 `;
 

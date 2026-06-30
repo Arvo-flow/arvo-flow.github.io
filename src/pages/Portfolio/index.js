@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
-  SwitchVerdict, SwitchBtn, Watched, IntelQuiet, SignOff, Spinner, Evidence,
+  SwitchVerdict, SwitchBtn, Watched, IntelQuiet, SignOff, Spinner,
   CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
 
@@ -619,13 +619,15 @@ export default function Portfolio() {
 
         {analyses !== null && suppliers.length > 0 && (
           <>
-            {/* ── Identitet + Vakten — rent masthead, ingen egen rubrik. Domen (Verdict, nedan)
-                 är sidans enda ledare; TopRow konkurrerar inte längre med den. ──────────────── */}
+            {/* ── Identitet + Vakten ──────────────────────────────────────── */}
+            {/* Den stora metalliska hjälten — varm hälsning FUSAD med dagens läge (målbilden).
+                Rad 2 är acting-medveten: "Allt är under kontroll" sägs ALDRIG när ett fynd finns
+                (computeActing räknar nu in kostsamma fynd, inte bara byten — grundarlärdom 2026-06-30). */}
             <TopRow>
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
-                <div className="greeting">God morgon.</div>
+                <h1>{acting ? <>Ett par drag<br />väntar på er.</> : <>God morgon.<br />Allt är under kontroll.</>}</h1>
               </Ident>
 
               <Radar>
@@ -663,27 +665,21 @@ export default function Portfolio() {
               </Radar>
             </TopRow>
 
-            {/* ── Veckodomen — SIDANS ENDA LEDARE, direkt efter masthead ──────────────────── */}
+            {/* ── Fynden — leder direkt efter hjälten + Vakten (målbilden) ──── */}
+            <FindingCard finding={roomFinding} variant="dossier" />
+            <FindingCard finding={roomMovement} variant="dossier" eyebrow="Marknadsrörelsen · nätverket" />
+            <FindingCard finding={roomClock} variant="dossier" eyebrow="Maktkalendern · avtalsbevakning" />
+            <FindingCard finding={roomForecast} variant="dossier" eyebrow="Maktkalendern · prognos" />
+
+            {/* ── Veckodomen — den detaljerade bedömningen (deck under hjälten) ──── */}
             <Verdict>
               <div className="eyebrow">Arvo bedömer</div>
-              <h1>{verdictHead}</h1>
+              <h2>{verdictHead}</h2>
               <p className="work">{verdictWork}</p>
               <Confidence>
                 <span className="pct">Verifierat</span> · grundat på {suppliers.length} analyserade leverantörer · publika listpriser
               </Confidence>
             </Verdict>
-
-            {/* ── Bevisen — vad domen bygger på. Samma fyndkort som förr, nu EFTER domen och
-                 ramade som stöd (regel: en dom leder, allt annat är bevis under den). ──────── */}
-            {(roomFinding || roomMovement || roomClock || roomForecast) && (
-              <Evidence>
-                <div className="ev-eyebrow">Vad domen bygger på</div>
-                <FindingCard finding={roomFinding} variant="dossier" />
-                <FindingCard finding={roomMovement} variant="dossier" eyebrow="Marknadsrörelsen · nätverket" />
-                <FindingCard finding={roomClock} variant="dossier" eyebrow="Maktkalendern · avtalsbevakning" />
-                <FindingCard finding={roomForecast} variant="dossier" eyebrow="Maktkalendern · prognos" />
-              </Evidence>
-            )}
 
             {/* ── Instrument: Arvo Score + likräkning ─────────────────────── */}
             <Grid>
