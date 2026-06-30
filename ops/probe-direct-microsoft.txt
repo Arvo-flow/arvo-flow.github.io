@@ -1,0 +1,11 @@
+═══════ Direkt-Microsoft-kunder (saas-productivity, route=auto) ═══════
+   #900908c0-b382-431b-8794-332979c526ee · Microsoft Ireland Operations · kund=met.sogojeva@gma · Fri Jun 26 2026 15:12:38 GMT+0000 (Coordinated Universal Time)
+        annual_cost=352296 · seat_count=120 · price_per_seat_monthly=245 · billing_period=monthly
+   #b2f51442-1ab4-443c-b56a-d18242c407bc · Microsoft Ireland Operations · kund=met.sogojeva@gma · Mon Jun 22 2026 17:24:37 GMT+0000 (Coordinated Universal Time)
+        annual_cost=332160 · seat_count=100 · price_per_seat_monthly=277 · billing_period=monthly
+   #6c5bc67f-fa20-45da-b4c5-a6cf96958b1f · Microsoft Ireland Operations · kund=met.sogojeva@gma · Sat Jun 20 2026 20:41:52 GMT+0000 (Coordinated Universal Time)
+        annual_cost=332160 · seat_count=100 · price_per_seat_monthly=277 · billing_period=monthly
+
+   → 3 direkt-Microsoft-rader · 3 med känt seat_count
+   ✅ Underlag finns för ett personligt faktakort (kr-räkning möjlig).
+═══════════════════════════════════════════════════════
