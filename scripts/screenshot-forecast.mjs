@@ -50,6 +50,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const page = await browser.newPage({ viewport: { width: 880, height: 1000 }, deviceScaleFactor: 2 });
 await page.goto('http://localhost:4182/flow/portfolio', { waitUntil: 'networkidle' });
 await page.waitForTimeout(1600);
+await page.screenshot({ path: '/tmp/forecast-room-full.png', fullPage: true });
 // Beskär prognos-kortet (FindingCard med eyebrow "Maktkalendern · prognos").
 const handle = await page.evaluateHandle(() => {
   const el = [...document.querySelectorAll('*')].find((n) => /Maktkalendern · prognos/i.test(n.textContent || '') && n.className && /Finding|Card|dossier/i.test(String(n.className)));
