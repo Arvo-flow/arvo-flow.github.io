@@ -13,6 +13,7 @@ import { groupBySupplier, supplierName, supplierDiagScore, computeActing } from 
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
+import { greetingForHour } from '../../utils/format';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
@@ -528,6 +529,7 @@ export default function Portfolio() {
   const latestDate = suppliers.length
     ? fmtDate(suppliers.map((g) => g.latest.created_at).sort().reverse()[0]) : '';
   const today = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
+  const greeting = greetingForHour(new Date().getHours());   // kundens lokala timme → rätt hälsning
 
   // Veckodomen — deterministisk ur verkligt läge. Avgörandet bor i lib/holdings.js (ren, testbar) —
   // regressionstestat efter grundarlärdomen 2026-06-30 (domen fick aldrig ljuga mot sitt eget bevis).
@@ -627,7 +629,7 @@ export default function Portfolio() {
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
-                <h1>{acting ? <>Ett par drag<br />väntar på er.</> : <>God morgon.<br />Allt är under kontroll.</>}</h1>
+                <h1>{acting ? <>Ett par drag<br />väntar på er.</> : <>{greeting}.<br />Allt är under kontroll.</>}</h1>
               </Ident>
 
               <Radar>

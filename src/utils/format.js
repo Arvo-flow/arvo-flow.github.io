@@ -21,6 +21,16 @@ export function monthsAgo(dateStr) {
   return Math.round((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24 * 30.44));
 }
 
+// Tidsanpassad hälsning — en premiumyta som säger "God morgon" kl. 15 avslöjar att ingen är hemma.
+// Ren funktion (h = 0–23, kundens LOKALA timme) → regressionstestbar. Undviker medvetet "God natt"
+// (i svenskan en AVSKEDSFRAS, inte en hälsning) — sena timmar faller på "God kväll", aldrig fel-känsla.
+export function greetingForHour(h) {
+  if (h >= 5 && h < 10) return 'God morgon';
+  if (h >= 10 && h < 12) return 'God förmiddag';
+  if (h >= 12 && h < 17) return 'God eftermiddag';
+  return 'God kväll';                                  // 17–04 (inkl. natt — aldrig "god natt")
+}
+
 export const MX_LABELS = {
   microsoft365: 'Microsoft 365',
   google:       'Google Workspace',
