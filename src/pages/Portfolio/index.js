@@ -629,7 +629,9 @@ export default function Portfolio() {
               <Ident>
                 <div className="brand">ARVO-KONTORET</div>
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
-                <h1>{acting ? <>Ett par drag<br />väntar på er.</> : <>{greeting}.<br />Allt är under kontroll.</>}</h1>
+                {/* Hälsningen leder ALLTID (tidsanpassad), sedan dagens läge — samma struktur i
+                    båda grenar (grundarbeslut 2026-06-30). Rad 1 vit metallic, lägesraden mint. */}
+                <h1>{greeting}.<br />{acting ? 'Ett par drag väntar på er.' : 'Allt är under kontroll.'}</h1>
               </Ident>
 
               <Radar>
