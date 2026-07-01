@@ -1,0 +1,64 @@
+Kör avslöjandet mot 20 riktiga svenska bolag…
+
+▽ GOLV  alumni.se  (mx: other)
+      · [bridge] Er kostnadssanning ligger ett mejl bort
+✅  apendo.se  (mx: other)
+      · [onboarding] Er Microsoft 365 sattes upp september 2017
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  bimobject.com  (mx: google)
+      · [platform] Ni kör Google Workspace
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  castra.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  daresay.com  (mx: other)
+      · [domain] 27 års obruten digital närvaro
+✅  halvarsson.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+✅  implement.se  (mx: other)
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  initgroup.com  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  intelliplan.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  jobbklar.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+✅  jurek.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  kan.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+✅  knowit.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  lynxeye.com  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [cert] Digital närvaro sedan oktober 2009
+      · [domain] 26 års obruten digital närvaro
+✅  netigate.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  netray.se  (mx: google)
+      · [platform] Ni kör Google Workspace
+✅  onepartnergroup.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  sigmatechnology.com  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [domain] 27 års obruten digital närvaro
+✅  trivector.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+✅  westander.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
+
+═══════ SAMMANFATTNING ═══════
+Bolag totalt:                        20
+✅ Starka "om er"-fynd:              19
+▽  Endast golv (brygga/infra):       1
+✗  Whiff (inget):                    0
+   varav plattform (M365/Google):    16
+   varav M365-UPPSÄTTNINGSDATUM:      1   ← käftsläpparen
+═══════════════════════════════════
