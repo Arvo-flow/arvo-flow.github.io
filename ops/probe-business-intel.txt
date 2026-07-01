@@ -1,120 +1,106 @@
-═══════ FRÅGA 1 v2 · rå-innehåll på bolagssidorna ═══════
+═══════ A · DOMÄN → ORGNR: allabolag-sökets träffstruktur ═══════
 
-▶ Apendo AB (556437-4840)
-  ✓ HTTP 200 · allabolag.se · slutlig URL: https://www.allabolag.se/foretag/apendo-ab/danderyd/konsulter/2K0VV3SI5YF3I
-     längd 352060 · __NEXT_DATA__: true · JSON-LD: false
-     ✅ nettoomsättning:
-        …tto","RPE":"Omsättning per anställd i Tkr","SAP":"Avsättningar","SI":"Nettoomsättning","SDI":"Omsättning","SED":"Summa tillgångar","SEK":"Eget kapital","SF":"Kundfordringar","SFA":"Anläggningstillgång…
-     ✅ omsättning:
-        …k-root StatsWidget-cell mui-12psgy0"><span class="StatsWidget-header">Omsättning<!-- --> <!-- -->2025</span><span class="StatsWidget-value">52 874</span></div><div class="MuiStack-root StatsWidget-cel…
-        …tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Omsättning</th><td>52 874</td></tr><tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Resultat efter finansnet…
-     ✅ "revenue":
-        …pe":null,"logo":null,"searchResultImage":null,"legalName":"Apendo AB","revenue":"52874","currency":"SEK","profit":"2036","companyAccountsLastUpdatedDate":"2025","employees":"30","contactPerson":{"type…
-        …es":"Bolagsverket","corporateStructure":"UC AB"}},"SearchResultCard":{"revenue":"Omsättning {{period}}","legalName":"Juridiskt namn ","companyCompareLabel":"Jämför","companyMonitoringLabel":"Bevaka","…
-     ✅ rörelseresultat:
-        …ditet","changeInTurnover":"Change in turnover","operatingResultEBIT":"Rörelseresultat EBIT","shareholdersEquity":"Eget kapital","reserves":"reserver","currentFinancialAssets":"Aktuella finansiella til…
-        …ueAfterFinItems_abbr":"REF"},"avk_totalt_kapital":{"operatingProfit":"Rörelseresultat","operatingProfit_abbr":"RR"},"RPE":{"operatingIncome":"Rörelseintäkter","operatingIncome_abbr":"RI"},"CPE":{"PC":…
-     ✅ "profit:
-        …mage":null,"legalName":"Apendo AB","revenue":"52874","currency":"SEK","profit":"2036","companyAccountsLastUpdatedDate":"2025","employees":"30","contactPerson":{"type":"Person","name":"Johan Erik Olof …
-        …name":"Tillgångar","axisLabel":{"xAxis":"År","yAxis":"Antal i 1000"}},"profitabilityChartsheet":{"name":"Vinstmarginal","axisLabel":{"xAxis":"År","yAxis":"%"}},"solidityChartsheet":{"name":"Soliditet"…
-     ✅ resultat efter finansnetto:
-        …k-root StatsWidget-cell mui-12psgy0"><span class="StatsWidget-header">Resultat efter finansnetto<!-- --> <!-- -->2025</span><span class="StatsWidget-value">2 734</span></div><div class="MuiStack-root …
-        …tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Resultat efter finansnetto</th><td>2 734</td></tr><tr class="AccountFiguresWidget-inactiveRow"><th style="text-align:left">Årets r…
-     ✅ antal anställda:
-        …d-propertyList"><span class="OfficialCompanyInformationCard-property">Antal anställda</span><span class="OfficialCompanyInformationCard-propertyValue">30</span></span><span class="OfficialCompanyInfor…
-        …{"xAxis":"År","yAxis":"%"}},"employeesChartsheet":{"name":"Utveckling Antal anställda","axisLabel":{"xAxis":"År","yAxis":"Antal Anställda"}}}},"valuation":{"label":"Uppskattat bolagsvärdering","title"…
-     ✅ "employees":
-        …rrency":"SEK","profit":"2036","companyAccountsLastUpdatedDate":"2025","employees":"30","contactPerson":{"type":"Person","name":"Johan Erik Olof Ekberg","role":"Verkställande direktör","id":"10538618",…
-        …hela listan","oldest":{"title":"Äldsta","label":"Registreringsdatum"},"employees":{"title":"Flest anställda","label":"Anställda"},"turnover":{"title":"Största omsättningen","label":"Omsättning"}},"fin…
-  ✓ HTTP 200 · proff.se företag · slutlig URL: https://www.allabolag.se/foretag/apendo-ab/danderyd/konsulter/2K0VV3SI5YF3I
-     längd 352060 · __NEXT_DATA__: true · JSON-LD: false
-     ✅ nettoomsättning:
-        …tto","RPE":"Omsättning per anställd i Tkr","SAP":"Avsättningar","SI":"Nettoomsättning","SDI":"Omsättning","SED":"Summa tillgångar","SEK":"Eget kapital","SF":"Kundfordringar","SFA":"Anläggningstillgång…
-     ✅ omsättning:
-        …k-root StatsWidget-cell mui-12psgy0"><span class="StatsWidget-header">Omsättning<!-- --> <!-- -->2025</span><span class="StatsWidget-value">52 874</span></div><div class="MuiStack-root StatsWidget-cel…
-        …tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Omsättning</th><td>52 874</td></tr><tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Resultat efter finansnet…
-     ✅ "revenue":
-        …pe":null,"logo":null,"searchResultImage":null,"legalName":"Apendo AB","revenue":"52874","currency":"SEK","profit":"2036","companyAccountsLastUpdatedDate":"2025","employees":"30","contactPerson":{"type…
-        …es":"Bolagsverket","corporateStructure":"UC AB"}},"SearchResultCard":{"revenue":"Omsättning {{period}}","legalName":"Juridiskt namn ","companyCompareLabel":"Jämför","companyMonitoringLabel":"Bevaka","…
-     ✅ rörelseresultat:
-        …ditet","changeInTurnover":"Change in turnover","operatingResultEBIT":"Rörelseresultat EBIT","shareholdersEquity":"Eget kapital","reserves":"reserver","currentFinancialAssets":"Aktuella finansiella til…
-        …ueAfterFinItems_abbr":"REF"},"avk_totalt_kapital":{"operatingProfit":"Rörelseresultat","operatingProfit_abbr":"RR"},"RPE":{"operatingIncome":"Rörelseintäkter","operatingIncome_abbr":"RI"},"CPE":{"PC":…
-     ✅ "profit:
-        …mage":null,"legalName":"Apendo AB","revenue":"52874","currency":"SEK","profit":"2036","companyAccountsLastUpdatedDate":"2025","employees":"30","contactPerson":{"type":"Person","name":"Johan Erik Olof …
-        …name":"Tillgångar","axisLabel":{"xAxis":"År","yAxis":"Antal i 1000"}},"profitabilityChartsheet":{"name":"Vinstmarginal","axisLabel":{"xAxis":"År","yAxis":"%"}},"solidityChartsheet":{"name":"Soliditet"…
-     ✅ resultat efter finansnetto:
-        …k-root StatsWidget-cell mui-12psgy0"><span class="StatsWidget-header">Resultat efter finansnetto<!-- --> <!-- -->2025</span><span class="StatsWidget-value">2 734</span></div><div class="MuiStack-root …
-        …tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Resultat efter finansnetto</th><td>2 734</td></tr><tr class="AccountFiguresWidget-inactiveRow"><th style="text-align:left">Årets r…
-     ✅ antal anställda:
-        …d-propertyList"><span class="OfficialCompanyInformationCard-property">Antal anställda</span><span class="OfficialCompanyInformationCard-propertyValue">30</span></span><span class="OfficialCompanyInfor…
-        …{"xAxis":"År","yAxis":"%"}},"employeesChartsheet":{"name":"Utveckling Antal anställda","axisLabel":{"xAxis":"År","yAxis":"Antal Anställda"}}}},"valuation":{"label":"Uppskattat bolagsvärdering","title"…
-     ✅ "employees":
-        …rrency":"SEK","profit":"2036","companyAccountsLastUpdatedDate":"2025","employees":"30","contactPerson":{"type":"Person","name":"Johan Erik Olof Ekberg","role":"Verkställande direktör","id":"10538618",…
-        …hela listan","oldest":{"title":"Äldsta","label":"Registreringsdatum"},"employees":{"title":"Flest anställda","label":"Anställda"},"turnover":{"title":"Största omsättningen","label":"Omsättning"}},"fin…
+▶ sök "apendo" → HTTP 200 · https://www.allabolag.se/bransch-s%C3%B6k?q=apendo · längd 593230
+   props.pageProps.rolePersons.businessPersons.0.name = "Steven Arend Zaat"
+   props.pageProps.rolePersons.businessPersons.1.name = "Ando Carl Wikström"
+   props.pageProps.rolePersons.businessPersons.2.name = "Filip Alexander Arenbo"
+   props.pageProps.rolePersons.businessPersons.3.name = "Thomas Gunner Arendt"
+   props.pageProps.rolePersons.businessPersons.4.name = "Bengt Arne Ingvar Pende"
+   props.pageProps.rolePersons.businessPersons.5.name = "Peter Arendt Ando de Jounge"
+   props.pageProps.rolePersons.businessPersons.6.name = "Per Henrik Arenbo Jacobsson"
+   props.pageProps.rolePersons.businessPersons.7.name = "Sebastian Arendt"
+   props.pageProps.rolePersons.businessPersons.8.name = "Ola Arendt Mauritz Rönnqvist"
+   props.pageProps.rolePersons.businessPersons.9.name = "Rikard Carl Ando Norlindh"
+   props.pageProps.rolePersons.businessPersons.10.name = "Giovanni Penco"
+   props.pageProps.rolePersons.businessPersons.11.name = "Fredrik Per Erik Arendt Cederqvist"
+   props.pageProps.rolePersons.businessPersons.12.name = "Erik Per Oskar Apelmo"
+   props.pageProps.rolePersons.businessPersons.13.name = "Tor Arend Halbesma"
 
-▶ Lynxeye AB (556569-0087)
-  ✓ HTTP 200 · allabolag.se · slutlig URL: https://www.allabolag.se/foretag/lynxeye-ab/stockholm/f%C3%B6retagsutveckling/2K1O1YFI5YEHU
-     längd 346106 · __NEXT_DATA__: true · JSON-LD: false
-     ✅ nettoomsättning:
-        …tto","RPE":"Omsättning per anställd i Tkr","SAP":"Avsättningar","SI":"Nettoomsättning","SDI":"Omsättning","SED":"Summa tillgångar","SEK":"Eget kapital","SF":"Kundfordringar","SFA":"Anläggningstillgång…
-     ✅ omsättning:
-        …k-root StatsWidget-cell mui-12psgy0"><span class="StatsWidget-header">Omsättning<!-- --> <!-- -->2025</span><span class="StatsWidget-value">221 918</span></div><div class="MuiStack-root StatsWidget-ce…
-        …tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Omsättning</th><td>221 918</td></tr><tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Resultat efter finansne…
-     ✅ "revenue":
-        …e":null,"logo":null,"searchResultImage":null,"legalName":"Lynxeye AB","revenue":"221918","currency":"SEK","profit":"38514","companyAccountsLastUpdatedDate":"2025","employees":"54","contactPerson":{"ty…
-        …es":"Bolagsverket","corporateStructure":"UC AB"}},"SearchResultCard":{"revenue":"Omsättning {{period}}","legalName":"Juridiskt namn ","companyCompareLabel":"Jämför","companyMonitoringLabel":"Bevaka","…
-     ✅ rörelseresultat:
-        …ditet","changeInTurnover":"Change in turnover","operatingResultEBIT":"Rörelseresultat EBIT","shareholdersEquity":"Eget kapital","reserves":"reserver","currentFinancialAssets":"Aktuella finansiella til…
-        …ueAfterFinItems_abbr":"REF"},"avk_totalt_kapital":{"operatingProfit":"Rörelseresultat","operatingProfit_abbr":"RR"},"RPE":{"operatingIncome":"Rörelseintäkter","operatingIncome_abbr":"RI"},"CPE":{"PC":…
-     ✅ "profit:
-        …ge":null,"legalName":"Lynxeye AB","revenue":"221918","currency":"SEK","profit":"38514","companyAccountsLastUpdatedDate":"2025","employees":"54","contactPerson":{"type":"Person","name":"Lars Niclas And…
-        …name":"Tillgångar","axisLabel":{"xAxis":"År","yAxis":"Antal i 1000"}},"profitabilityChartsheet":{"name":"Vinstmarginal","axisLabel":{"xAxis":"År","yAxis":"%"}},"solidityChartsheet":{"name":"Soliditet"…
-     ✅ resultat efter finansnetto:
-        …k-root StatsWidget-cell mui-12psgy0"><span class="StatsWidget-header">Resultat efter finansnetto<!-- --> <!-- -->2025</span><span class="StatsWidget-value">48 680</span></div><div class="MuiStack-root…
-        …tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Resultat efter finansnetto</th><td>48 680</td></tr><tr class="AccountFiguresWidget-inactiveRow"><th style="text-align:left">Årets …
-     ✅ antal anställda:
-        …d-propertyList"><span class="OfficialCompanyInformationCard-property">Antal anställda</span><span class="OfficialCompanyInformationCard-propertyValue">54</span></span><span class="OfficialCompanyInfor…
-        …{"xAxis":"År","yAxis":"%"}},"employeesChartsheet":{"name":"Utveckling Antal anställda","axisLabel":{"xAxis":"År","yAxis":"Antal Anställda"}}}},"valuation":{"label":"Uppskattat bolagsvärdering","title"…
-     ✅ "employees":
-        …rency":"SEK","profit":"38514","companyAccountsLastUpdatedDate":"2025","employees":"54","contactPerson":{"type":"Person","name":"Lars Niclas Andersson","role":"Extern verkställande direktör","id":"1138…
-        …hela listan","oldest":{"title":"Äldsta","label":"Registreringsdatum"},"employees":{"title":"Flest anställda","label":"Anställda"},"turnover":{"title":"Största omsättningen","label":"Omsättning"}},"fin…
-  ✓ HTTP 200 · proff.se företag · slutlig URL: https://www.allabolag.se/foretag/lynxeye-ab/stockholm/f%C3%B6retagsutveckling/2K1O1YFI5YEHU
-     längd 346106 · __NEXT_DATA__: true · JSON-LD: false
-     ✅ nettoomsättning:
-        …tto","RPE":"Omsättning per anställd i Tkr","SAP":"Avsättningar","SI":"Nettoomsättning","SDI":"Omsättning","SED":"Summa tillgångar","SEK":"Eget kapital","SF":"Kundfordringar","SFA":"Anläggningstillgång…
-     ✅ omsättning:
-        …k-root StatsWidget-cell mui-12psgy0"><span class="StatsWidget-header">Omsättning<!-- --> <!-- -->2025</span><span class="StatsWidget-value">221 918</span></div><div class="MuiStack-root StatsWidget-ce…
-        …tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Omsättning</th><td>221 918</td></tr><tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Resultat efter finansne…
-     ✅ "revenue":
-        …e":null,"logo":null,"searchResultImage":null,"legalName":"Lynxeye AB","revenue":"221918","currency":"SEK","profit":"38514","companyAccountsLastUpdatedDate":"2025","employees":"54","contactPerson":{"ty…
-        …es":"Bolagsverket","corporateStructure":"UC AB"}},"SearchResultCard":{"revenue":"Omsättning {{period}}","legalName":"Juridiskt namn ","companyCompareLabel":"Jämför","companyMonitoringLabel":"Bevaka","…
-     ✅ rörelseresultat:
-        …ditet","changeInTurnover":"Change in turnover","operatingResultEBIT":"Rörelseresultat EBIT","shareholdersEquity":"Eget kapital","reserves":"reserver","currentFinancialAssets":"Aktuella finansiella til…
-        …ueAfterFinItems_abbr":"REF"},"avk_totalt_kapital":{"operatingProfit":"Rörelseresultat","operatingProfit_abbr":"RR"},"RPE":{"operatingIncome":"Rörelseintäkter","operatingIncome_abbr":"RI"},"CPE":{"PC":…
-     ✅ "profit:
-        …ge":null,"legalName":"Lynxeye AB","revenue":"221918","currency":"SEK","profit":"38514","companyAccountsLastUpdatedDate":"2025","employees":"54","contactPerson":{"type":"Person","name":"Lars Niclas And…
-        …name":"Tillgångar","axisLabel":{"xAxis":"År","yAxis":"Antal i 1000"}},"profitabilityChartsheet":{"name":"Vinstmarginal","axisLabel":{"xAxis":"År","yAxis":"%"}},"solidityChartsheet":{"name":"Soliditet"…
-     ✅ resultat efter finansnetto:
-        …k-root StatsWidget-cell mui-12psgy0"><span class="StatsWidget-header">Resultat efter finansnetto<!-- --> <!-- -->2025</span><span class="StatsWidget-value">48 680</span></div><div class="MuiStack-root…
-        …tr class="AccountFiguresWidget-activeRow"><th style="text-align:left">Resultat efter finansnetto</th><td>48 680</td></tr><tr class="AccountFiguresWidget-inactiveRow"><th style="text-align:left">Årets …
-     ✅ antal anställda:
-        …d-propertyList"><span class="OfficialCompanyInformationCard-property">Antal anställda</span><span class="OfficialCompanyInformationCard-propertyValue">54</span></span><span class="OfficialCompanyInfor…
-        …{"xAxis":"År","yAxis":"%"}},"employeesChartsheet":{"name":"Utveckling Antal anställda","axisLabel":{"xAxis":"År","yAxis":"Antal Anställda"}}}},"valuation":{"label":"Uppskattat bolagsvärdering","title"…
-     ✅ "employees":
-        …rency":"SEK","profit":"38514","companyAccountsLastUpdatedDate":"2025","employees":"54","contactPerson":{"type":"Person","name":"Lars Niclas Andersson","role":"Extern verkställande direktör","id":"1138…
-        …hela listan","oldest":{"title":"Äldsta","label":"Registreringsdatum"},"employees":{"title":"Flest anställda","label":"Anställda"},"turnover":{"title":"Största omsättningen","label":"Omsättning"}},"fin…
+▶ sök "lynxeye" → HTTP 200 · https://www.allabolag.se/bransch-s%C3%B6k?q=lynxeye · längd 343451
+   props.pageProps.rolePersons.businessPersons.0.name = "Lynsey Ann Blair"
+   props.pageProps.rolePersons.businessPersons.1.name = "Blair Lynsey Ann"
+   props.pageProps.rolePersons.businessPersons.2.name = "Anna Josefine Lynxén"
+   props.pageProps.rolePersons.businessPersons.3.name = "Carl Fredrik Lyngbye Thaning"
+   props.pageProps.rolePersons.businessPersons.4.name = "Lynlee Kajsa Lindkvist"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.name = "Lynxeye AB"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.orgnr = "5565690087"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.companyId = "2K1O1YFI5YEHU"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.industries.0.name = "Företagsutveckling"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.industries.0.companyId = "2K1O1YFI5YEHU"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.currentIndustry.name = "Företagsutveckling"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.currentIndustry.companyId = null
+   props.pageProps.hydrationData.searchStore.companies.companies.0.legalName = "Lynxeye AB"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.contactPerson.name = "Lars Niclas Andersson"
 
-═══════ Bolagsverket — vilka dörrar finns? ═══════
-  ✗ HTTP 403 · portal.api.bolagsverket.se · slutlig URL: https://portal.api.bolagsverket.se/
-     längd 2518 · __NEXT_DATA__: false · JSON-LD: false
-  ✗ FEL · bolagsverket öppna data-sida — fetch failed
+▶ sök "westander" → HTTP 200 · https://www.allabolag.se/bransch-s%C3%B6k?q=westander · längd 593010
+   props.pageProps.rolePersons.businessPersons.0.name = "Jo-Ann Petra Westander"
+   props.pageProps.rolePersons.businessPersons.1.name = "Göran Henrik Westander"
+   props.pageProps.rolePersons.businessPersons.2.name = "Patrik Filip Westander"
+   props.pageProps.rolePersons.businessPersons.3.name = "Kerstin Elisabeth Westander"
+   props.pageProps.rolePersons.businessPersons.4.name = "Malin Westander Agsjö"
+   props.pageProps.rolePersons.businessPersons.5.name = "Bengt Fredrik Westander"
+   props.pageProps.rolePersons.businessPersons.6.name = "Rebecca Maria M Westander Lekmo"
+   props.pageProps.rolePersons.businessPersons.7.name = "Jenny Christina Westander"
+   props.pageProps.rolePersons.businessPersons.8.name = "Berndt Stefan Sune Westander"
+   props.pageProps.rolePersons.businessPersons.9.name = "Anna Nina Cecilia Westander"
+   props.pageProps.rolePersons.businessPersons.10.name = "Carl Christian Hellsten Westander"
+   props.pageProps.rolePersons.businessPersons.11.name = "Moa Lisen Hellsten Westander"
+   props.pageProps.rolePersons.businessPersons.12.name = "Mette Elisabeth Anwar-Westander"
+   props.pageProps.rolePersons.businessPersons.13.name = "Lynn Anna Sjöberg Westander"
 
-═══════ FRÅGA 2 v2 · crt.sh med retry (var 502 förra passet) ═══════
-▶ lynxeye.com försök 1: The operation was aborted due to timeout
-▶ lynxeye.com försök 2: HTTP 502
-▶ lynxeye.com försök 3: HTTP 502
-▶ westander.se försök 1: The operation was aborted due to timeout
-▶ westander.se försök 2: HTTP 502
-▶ westander.se försök 3: The operation was aborted due to timeout
+▶ sök "netigate" → HTTP 200 · https://www.allabolag.se/bransch-s%C3%B6k?q=netigate · längd 554213
+   props.pageProps.hydrationData.searchStore.companies.companies.0.name = "Netigate AB"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.orgnr = "5565760997"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.companyId = "2K1PKO5I5YEHU"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.industries.0.name = "Företagsutveckling"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.industries.0.companyId = "2K1PKO5I5YEHU"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.currentIndustry.name = "Företagsutveckling"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.currentIndustry.companyId = null
+   props.pageProps.hydrationData.searchStore.companies.companies.0.legalName = "Netigate AB"
+   props.pageProps.hydrationData.searchStore.companies.companies.0.contactPerson.name = "Inger Maria Dedering Börjesson"
+   props.pageProps.hydrationData.searchStore.companies.companies.1.name = "Netigate Holding AB"
+   props.pageProps.hydrationData.searchStore.companies.companies.1.orgnr = "5590665658"
+   props.pageProps.hydrationData.searchStore.companies.companies.1.companyId = "2KGJD8AI5YE9Q"
+   props.pageProps.hydrationData.searchStore.companies.companies.1.industries.0.name = "Finansbolag, finansiella tjänster"
+   props.pageProps.hydrationData.searchStore.companies.companies.1.industries.0.companyId = "2KGJD8AI5YE9Q"
+
+═══════ B · PARSNING-KONTRAKTET: var bor siffrorna i bolagssidans __NEXT_DATA__? ═══════
+▶ Apendo-sidan → HTTP 200 · https://www.allabolag.se/foretag/apendo-ab/danderyd/konsulter/2K0VV3SI5YF3I
+  props.pageProps-nycklar: _sentryTraceData, _sentryBaggage, company, relatedCompanies, trademarks, hasCompanyEvents, hydrationData
+  revenue:
+     props.pageProps.company.revenue = "52874"
+     props.i18n.initialStore.sv.common.SearchResultCard.revenue = "Omsättning {{period}}"
+     props.i18n.initialStore.sv.common.AccountingFigures.figureCalculations.SE.TR.revenue = "Omsättning"
+     props.i18n.initialStore.sv.common.SegmentationPage.filters.revenue = "Omsättning"
+     props.i18n.initialStore.sv.common.PaymentPage.descriptionFilterLabels.revenue = "Omsättning"
+     props.i18n.initialStore.sv.common.SegmentationExport.excel.summarySheet.otherInfo.revenue = "Omsättning"
+  profit:
+     props.pageProps.company.profit = "2036"
+     props.i18n.initialStore.sv.common.SegmentationPage.filters.profit = "Rörelseresultat"
+     props.i18n.initialStore.sv.common.PaymentPage.descriptionFilterLabels.profit = "Rörelseresultat"
+  employees:
+     props.pageProps.company.employees = "30"
+     props.i18n.initialStore.sv.common.findSimilar.dialog.employees = "Anställda"
+     props.i18n.initialStore.sv.common.CorporateStructure.CorporateStructureDetailsCard.employees = "Anställda"
+     props.i18n.initialStore.sv.common.companyCard.employees = "Anställda"
+     props.i18n.initialStore.sv.common.SegmentationPage.filters.employees = "Anställda"
+     props.i18n.initialStore.sv.common.PaymentPage.descriptionFilterLabels.employees = "Anställda"
+  orgnr:
+     props.pageProps.company.orgnr = "5564374840"
+     props.pageProps.relatedCompanies.companies.0.orgnr = "5590450168"
+     props.pageProps.relatedCompanies.companies.1.orgnr = "5592689193"
+     props.pageProps.relatedCompanies.companies.2.orgnr = "5569492902"
+     props.pageProps.relatedCompanies.companies.3.orgnr = "5594878224"
+     props.pageProps.relatedCompanies.companies.4.orgnr = "5590627039"
+  legalName:
+     props.pageProps.company.legalName = "Apendo AB"
+     props.i18n.initialStore.sv.common.SearchResultCard.legalName = "Juridiskt namn "
+  år/period:
+     props.pageProps.company.companyAccountsLastUpdatedDate = "2025"
+     props.pageProps.company.companyAccounts.0.year = "2025"
+     props.pageProps.company.companyAccounts.0.period = "2025-04"
+     props.pageProps.company.companyAccounts.1.year = "2024"
+     props.pageProps.company.companyAccounts.1.period = "2024-04"
+     props.pageProps.company.companyAccounts.2.year = "2023"
 
 ═══════ KLART ═══════
