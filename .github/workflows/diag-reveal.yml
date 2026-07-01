@@ -1,12 +1,12 @@
 name: Diag Avslöjandet (verifiera /api/reveal live)
 
-# POSTar en känd M365-domän till den LIVE-utlagda /api/reveal och skriver ut fynden.
-# Bevisar att hela kedjan (DNS + RDAP-domänålder + crt.sh M365-onboarding) fungerar på Vercel.
+# POSTar kända domäner till den LIVE-utlagda /api/reveal och skriver fynden till ops/.
+# Bevisar hela kedjan (affärshjärnan + DNS + RDAP + crt.sh) utlagd på Vercel.
 on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   diag-reveal:
@@ -18,4 +18,16 @@ jobs:
         with:
           node-version: '20'
       - name: Hit live /api/reveal
-        run: node scripts/diag-reveal.mjs
+        run: |
+          mkdir -p ops
+          node scripts/diag-reveal.mjs | tee ops/diag-reveal-live.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git pull --rebase origin main || true
+          git add ops/diag-reveal-live.txt
+          git commit -m "ops: diag-reveal-live [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"

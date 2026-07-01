@@ -3,7 +3,8 @@
 // fungerar utlagt, inte bara DNS-delen lokalt. Diagnostik (regel 8 — gör inte användaren till QA).
 const BASE = process.env.ARVO_BASE_URL || 'https://arvoflow.se';
 
-for (const email of ['namn@microsoft.com', 'namn@gmail.com']) {
+// lynxeye.com = känt svenskt SME med affärsdata (bevisar affärshjärnan genom den LIVE-utlagda API:n)
+for (const email of ['namn@lynxeye.com', 'namn@microsoft.com', 'namn@gmail.com']) {
   const res = await fetch(`${BASE}/api/reveal`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
