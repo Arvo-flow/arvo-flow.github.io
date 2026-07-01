@@ -2,8 +2,8 @@
 === namn@lynxeye.com → HTTP 200 · domän=lynxeye.com ===
   ✓ Ert bokslut 2025: 221,9 mkr i omsättning, 54 anställda
       källa: Offentliga årsredovisningsuppgifter (Bolagsverket) · Lynxeye AB · bokslutsår 2025
-  ✓ Era kontorslicenser: från ~77 423 kr/år vid verifierat listpris
-      källa: Verifierat publikt listpris (microsoft.com, 2026-06-14) × antal anställda ur årsredovisningen
+  ✓ Era Microsoft-licenser: 37 195–136 268 kr/år för 54 platser — beroende på plan
+      källa: Microsofts publika prislista (microsoft.com, 2026-06-14) × antal anställda ur årsredovisningen
   ✓ Ni kör Microsoft 365
       källa: Ert e-postsystem dirigeras till Microsoft — öppet i lynxeye.com:s publika uppgifter
   ✓ 26 års obruten digital närvaro

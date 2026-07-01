@@ -13,9 +13,9 @@
     {
       "kind": "costline",
       "confidence": "high",
-      "title": "Era kontorslicenser: från ~77 423 kr/år vid verifierat listpris",
-      "detail": "119,48 kr/användare/mån (Microsoft 365 Business Standard, årsavtal — verifierat publikt listpris) × era 54 anställda × 12 mån. De flesta betalar mer — dela en faktura så ser vi exakt var ni ligger.",
-      "source": "Verifierat publikt listpris (microsoft.com, 2026-06-14) × antal anställda ur årsredovisningen"
+      "title": "Era Microsoft-licenser: 37 195–136 268 kr/år för 54 platser — beroende på plan",
+      "detail": "Microsofts Business-planer på årsavtal (publik prislista): Business Basic 57,40 · Business Standard 119,48 · Business Premium 210,29 kr/användare/mån × era 54 anställda × 12 mån. Vilken plan ni betalar för — och om varje plats faktiskt används — ser vi på er första faktura.",
+      "source": "Microsofts publika prislista (microsoft.com, 2026-06-14) × antal anställda ur årsredovisningen"
     },
     {
       "kind": "platform",
