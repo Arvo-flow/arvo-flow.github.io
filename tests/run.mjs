@@ -50,6 +50,7 @@ import './saas-substitution.mjs';
 import './stress-mork.mjs';
 import './watched-ledger.mjs';
 import './greeting.mjs';
+import './business-intel.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

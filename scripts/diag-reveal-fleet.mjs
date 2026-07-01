@@ -13,7 +13,7 @@ const domains = [...new Set(csv.split('\n')
 
 console.log(`Kör avslöjandet mot ${domains.length} riktiga svenska bolag…\n`);
 
-const STRONG = new Set(['platform', 'onboarding', 'cert', 'domain', 'dmarc']);  // äkta "om er"-fynd
+const STRONG = new Set(['platform', 'onboarding', 'cert', 'domain', 'dmarc', 'business', 'costline']);  // äkta "om er"-fynd
 const FLOOR  = new Set(['bridge', 'infra']);
 
 async function run(d) {
@@ -29,7 +29,7 @@ await Promise.all(Array.from({ length: 4 }, async () => {
   while (queue.length) { const d = queue.shift(); results.push(await run(d)); }
 }));
 
-let strong = 0, floorOnly = 0, whiff = 0, withDate = 0, withPlatform = 0;
+let strong = 0, floorOnly = 0, whiff = 0, withDate = 0, withPlatform = 0, withBusiness = 0;
 for (const r of results.sort((a, b) => a.d.localeCompare(b.d))) {
   if (r.error) { console.log(`✗ ${r.d} — fel: ${r.error}`); whiff++; continue; }
   const hasStrong = r.findings.some((f) => STRONG.has(f.kind));
@@ -37,6 +37,7 @@ for (const r of results.sort((a, b) => a.d.localeCompare(b.d))) {
   if (hasStrong) strong++; else if (onlyFloor) floorOnly++; else whiff++;
   if (r.findings.some((f) => f.kind === 'onboarding')) withDate++;
   if (r.findings.some((f) => f.kind === 'platform')) withPlatform++;
+  if (r.findings.some((f) => f.kind === 'business')) withBusiness++;
   console.log(`${hasStrong ? '✅' : onlyFloor ? '▽ GOLV' : '✗ WHIFF'}  ${r.d}  (mx: ${r.platform})`);
   for (const f of r.findings) console.log(`      · [${f.kind}] ${f.title}`);
 }
@@ -47,5 +48,6 @@ console.log(`✅ Starka "om er"-fynd:              ${strong}`);
 console.log(`▽  Endast golv (brygga/infra):       ${floorOnly}`);
 console.log(`✗  Whiff (inget):                    ${whiff}`);
 console.log(`   varav plattform (M365/Google):    ${withPlatform}`);
-console.log(`   varav M365-UPPSÄTTNINGSDATUM:      ${withDate}   ← käftsläpparen`);
+console.log(`   varav M365-UPPSÄTTNINGSDATUM:      ${withDate}`);
+console.log(`   varav AFFÄRSFYND (omsättning):     ${withBusiness}   ← käftsläpparen`);
 console.log('═══════════════════════════════════');
