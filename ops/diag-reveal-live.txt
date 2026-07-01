@@ -13,8 +13,8 @@
 === namn@microsoft.com → HTTP 200 · domän=microsoft.com ===
   ✓ Ert bokslut 2025: 27 548,9 mkr i omsättning, 591 anställda
       källa: Offentliga årsredovisningsuppgifter (Bolagsverket) · Microsoft Aktiebolag · bokslutsår 2025
-  ✓ Era kontorslicenser: från ~847 352 kr/år vid verifierat listpris
-      källa: Verifierat publikt listpris (microsoft.com, 2026-06-14) × antal anställda ur årsredovisningen
+  ✓ Era Microsoft-licenser: 407 081–1 491 377 kr/år för 591 platser — beroende på plan
+      källa: Microsofts publika prislista (microsoft.com, 2026-06-14) × antal anställda ur årsredovisningen
   ✓ Ni kör Microsoft 365
       källa: Ert e-postsystem dirigeras till Microsoft — öppet i microsoft.com:s publika uppgifter
   ✓ 35 års obruten digital närvaro
