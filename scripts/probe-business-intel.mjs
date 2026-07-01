@@ -1,74 +1,74 @@
-// scripts/probe-business-intel.mjs — RESEARCH-sond v2 (Actions, fri egress).
+// scripts/probe-business-intel.mjs — RESEARCH-sond v3 (Actions, fri egress).
 //
-// v1-läxan: detektorn strippade <script> INNAN den letade omsättning — men allabolag/proff är
-// SPA:er som bär datan SOM JSON i script-taggar. v2 söker i RÅ HTML, dumpar utdrag runt träffarna
-// (så vi SER exakt vad som finns), skriver ut slutlig URL efter redirect, och kör crt.sh med retry.
+// v2 bevisade: allabolag serverar hela affärsbilden (omsättning/resultat/anställda, källa
+// Bolagsverket/UC) server-side i __NEXT_DATA__, oblockerat, på orgnr-URL. v3 löser de två
+// återstående byggfrågorna INNAN lib-koden skrivs:
+//
+//  A · DOMÄN → ORGNR: dörren börjar med en mejldomän. Kan allabolag-SÖKET lösa domänens
+//      SLD ("apendo") till rätt bolag ENTYDIGT? (Fel bolags omsättning = integritetskatastrof —
+//      vi behöver se träfflistans struktur för att designa en konservativ matchningsgrind.)
+//  B · PARSNING-KONTRAKTET: exakt var i __NEXT_DATA__ bor revenue/profit/employees/historik?
+//      Skriver ut JSON-vägarna så lib/business-intel.js byggs mot verkligheten, inte gissning.
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
-const H = { 'User-Agent': UA, 'Accept-Language': 'sv-SE,sv;q=0.9', Accept: 'text/html,application/json;q=0.9,*/*;q=0.8' };
+const H = { 'User-Agent': UA, 'Accept-Language': 'sv-SE,sv;q=0.9', Accept: 'text/html,*/*;q=0.8' };
 
-const COMPANIES = [
-  { name: 'Apendo AB',   orgnr: '556437-4840' },
-  { name: 'Lynxeye AB',  orgnr: '556569-0087' },
-];
+function nextData(html) {
+  const m = html.match(/<script id="__NEXT_DATA__" type="application\/json"[^>]*>([\s\S]*?)<\/script>/);
+  if (!m) return null;
+  try { return JSON.parse(m[1]); } catch { return null; }
+}
 
-// Signaler i RÅ text (inkl. JSON i script): svenska + vanliga JSON-fältnamn
-const SIGNALS = [/nettoomsättning/i, /omsättning/i, /"revenue"/i, /netSales/i, /rörelseresultat/i, /"profit/i, /resultat efter finansnetto/i, /antal anställda/i, /"employees"/i];
-
-function excerpts(raw, re, max = 2) {
-  const out = [];
-  let m, rx = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
-  while ((m = rx.exec(raw)) && out.length < max) {
-    out.push(raw.slice(Math.max(0, m.index - 70), m.index + 130).replace(/\s+/g, ' '));
+// Hitta alla JSON-vägar vars nyckel matchar — så vi ser VAR datan bor.
+function findPaths(obj, keyRe, path = '', out = [], depth = 0) {
+  if (!obj || typeof obj !== 'object' || depth > 9 || out.length > 40) return out;
+  for (const [k, v] of Object.entries(obj)) {
+    const p = path ? `${path}.${k}` : k;
+    if (keyRe.test(k) && (typeof v !== 'object' || v === null)) out.push(`${p} = ${JSON.stringify(v)?.slice(0, 90)}`);
+    if (typeof v === 'object') findPaths(v, keyRe, p, out, depth + 1);
   }
   return out;
 }
 
-async function probeRaw(label, url, opts = {}) {
+async function get(url) {
+  const res = await fetch(url, { headers: H, redirect: 'follow', signal: AbortSignal.timeout(15000) });
+  const body = await res.text();
+  return { status: res.status, url: res.url, body };
+}
+
+console.log('═══════ A · DOMÄN → ORGNR: allabolag-sökets träffstruktur ═══════');
+// SLD ur domän, som dörren skulle göra: apendo.se → "apendo"
+for (const q of ['apendo', 'lynxeye', 'westander', 'netigate']) {
   try {
-    const res = await fetch(url, { headers: H, redirect: 'follow', signal: AbortSignal.timeout(15000), ...opts });
-    const raw = await res.text();
-    console.log(`  ${res.ok ? '✓' : '✗'} HTTP ${res.status} · ${label} · slutlig URL: ${res.url}`);
-    console.log(`     längd ${raw.length} · __NEXT_DATA__: ${raw.includes('__NEXT_DATA__')} · JSON-LD: ${raw.includes('application/ld+json')}`);
-    for (const re of SIGNALS) {
-      const hits = excerpts(raw, re);
-      if (hits.length) {
-        console.log(`     ✅ ${re.source}:`);
-        for (const h of hits) console.log(`        …${h}…`);
-      }
+    const r = await get(`https://www.allabolag.se/what/${encodeURIComponent(q)}`);
+    console.log(`\n▶ sök "${q}" → HTTP ${r.status} · ${r.url} · längd ${r.body.length}`);
+    const nd = nextData(r.body);
+    if (!nd) { console.log('   ingen __NEXT_DATA__ — annan sökväg krävs'); continue; }
+    // leta träfflistor: nycklar som ser ut som resultat
+    const hits = findPaths(nd, /^(legalName|orgnr|organisationNumber|companyId|name)$/i).slice(0, 14);
+    console.log(hits.length ? hits.map((h) => `   ${h}`).join('\n') : '   inga uppenbara träffält — dumpar toppnycklar:');
+    if (!hits.length) console.log('   props-nycklar:', Object.keys(nd.props?.pageProps ?? nd.props ?? {}).join(', '));
+  } catch (e) { console.log(`▶ sök "${q}": FEL ${e.message}`); }
+}
+
+console.log('\n═══════ B · PARSNING-KONTRAKTET: var bor siffrorna i bolagssidans __NEXT_DATA__? ═══════');
+try {
+  const r = await get('https://www.allabolag.se/5564374840');   // Apendo
+  console.log(`▶ Apendo-sidan → HTTP ${r.status} · ${r.url}`);
+  const nd = nextData(r.body);
+  if (nd) {
+    console.log('  props.pageProps-nycklar:', Object.keys(nd.props?.pageProps ?? {}).join(', '));
+    for (const [label, re] of [
+      ['revenue',   /^revenue$/i],
+      ['profit',    /^profit$/i],
+      ['employees', /^employees$/i],
+      ['orgnr',     /^(orgnr|organisationNumber)$/i],
+      ['legalName', /^legalName$/i],
+      ['år/period', /^(year|period|companyAccountsLastUpdatedDate)$/i],
+    ]) {
+      const paths = findPaths(nd, re).slice(0, 6);
+      console.log(`  ${label}:`);
+      for (const p of paths) console.log(`     ${p}`);
     }
-    return raw;
-  } catch (e) { console.log(`  ✗ FEL · ${label} — ${e.message}`); return ''; }
-}
-
-console.log('═══════ FRÅGA 1 v2 · rå-innehåll på bolagssidorna ═══════');
-for (const c of COMPANIES) {
-  const bare = c.orgnr.replace('-', '');
-  console.log(`\n▶ ${c.name} (${c.orgnr})`);
-  await probeRaw('allabolag.se', `https://www.allabolag.se/${bare}`);
-  await probeRaw('proff.se företag', `https://www.proff.se/foretag/-/-/-/${bare}`);   // proff redirectar på orgnr
-}
-
-// Bolagsverkets riktiga öppna kandidater (dokumenterade portaler, inte gissade API-vägar)
-console.log('\n═══════ Bolagsverket — vilka dörrar finns? ═══════');
-await probeRaw('portal.api.bolagsverket.se', 'https://portal.api.bolagsverket.se/');
-await probeRaw('bolagsverket öppna data-sida', 'https://bolagsverket.se/omoss/utvecklareochtestmiljoer/oppnadataochapierhosbolagsverket');
-
-console.log('\n═══════ FRÅGA 2 v2 · crt.sh med retry (var 502 förra passet) ═══════');
-const M365ISH = /autodiscover|lyncdiscover|enterpriseregistration|enterpriseenrollment|msoid|sip\.|adfs|sts\.|federation/i;
-for (const d of ['lynxeye.com', 'westander.se']) {
-  let done = false;
-  for (let attempt = 1; attempt <= 3 && !done; attempt++) {
-    try {
-      const res = await fetch(`https://crt.sh/?q=${encodeURIComponent('%.' + d)}&output=json`, { headers: { ...H, Accept: 'application/json' }, signal: AbortSignal.timeout(30000) });
-      if (!res.ok) { console.log(`▶ ${d} försök ${attempt}: HTTP ${res.status}`); await new Promise((r) => setTimeout(r, 5000 * attempt)); continue; }
-      const rows = await res.json();
-      const names = [...new Set(rows.flatMap((r) => (r.name_value || '').toLowerCase().split('\n')))];
-      const m365ish = names.filter((n) => M365ISH.test(n));
-      console.log(`▶ ${d}: ${rows.length} cert · ${names.length} unika namn`);
-      console.log(`   M365-aktiga: ${m365ish.length ? m365ish.join(', ') : 'INGA — datumet strukturellt omöjligt här'}`);
-      console.log(`   alla namn: ${names.slice(0, 12).join(', ')}`);
-      done = true;
-    } catch (e) { console.log(`▶ ${d} försök ${attempt}: ${e.message}`); await new Promise((r) => setTimeout(r, 5000 * attempt)); }
-  }
-}
+  } else console.log('  ingen __NEXT_DATA__');
+} catch (e) { console.log('▶ Apendo-sidan: FEL', e.message); }
 console.log('\n═══════ KLART ═══════');
