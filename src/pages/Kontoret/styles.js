@@ -634,6 +634,14 @@ export const IntakeDoors = styled.div`
 
 // Kopierbart adress-chip (grundarbeslut 2026-07-01): adressen ÄR hela poängen med vidarebefordra-
 // flödet — ett tryck kopierar den, med bekräftelse. Förr en ren div (user-select:all, klumpigt på mobil).
+// Vägledningsrad som ERSATTE kostnadskarte-rutnätet (grundarbeslut 2026-07-01): rutnätet var en
+// broschyr där halva (via offert) skyltade med det vi ännu inte kan prissätta — det spädde ut
+// trovärdigheten på första intrycket. En enda självsäker rad pekar mot där vi är vassa istället.
+export const StartHint = styled.p`
+  margin: 18px 2px 0; font-size: 13px; line-height: 1.6; color: ${theme.dossier.faintOnDark};
+  b { color: ${theme.dossier.mutedOnDark}; font-weight: 600; }
+`;
+
 export const AddressChipDark = styled.button`
   width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px;
   font-family:${MONO}; font-size:14px; letter-spacing:.01em; color:${theme.dossier.tealBright};

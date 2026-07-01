@@ -8,7 +8,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
-import { COST_CATEGORIES } from '../../lib/costCategories';
 import { groupBySupplier, supplierName, supplierDiagScore, computeActing } from '../../lib/holdings';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
@@ -19,12 +18,8 @@ import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
   SwitchVerdict, SwitchBtn, Watched, IntelQuiet, SignOff, Spinner,
-  CoverageMap, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
+  StartHint, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
-
-// Kostnadskartan läses från EN delad källa (src/lib/costCategories) — samma data som testa-fakturas
-// "Helhetsbild", så dörren och rummet aldrig kan säga olika saker (regel 5).
-const INTAKE_SEGMENTS = COST_CATEGORIES;
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -1180,25 +1175,11 @@ export default function Portfolio() {
               </div>
             </IntakeDoors>
 
-            {/* Kostnadskartan — demoterad till stödjande detalj UNDER handlingen (var pitch högst upp) */}
-            <CoverageMap>
-              <div className="cm-eyebrow">Vi täcker · {INTAKE_SEGMENTS.length} kategorier</div>
-              <div className="cm-grid">
-                {INTAKE_SEGMENTS.map((s) => (
-                  <div key={s.label} className={`cm-cell${s.mode === 'verdict' ? ' hot' : ''}`}>
-                    <div className="cm-top">
-                      <span className="cm-ico"><Icon name={s.icon} size={19} stroke={1.7} /></span>
-                      {s.mode === 'verdict'
-                        ? <span className="cm-tag">Börja här</span>
-                        : <span className="cm-tag offert">via offert</span>}
-                    </div>
-                    <span className="cm-label">{s.label}</span>
-                    <span className="cm-hint">{s.hint}</span>
-                    {s.know && <span className="cm-verified">{s.know}</span>}
-                  </div>
-                ))}
-              </div>
-            </CoverageMap>
+            {/* Vägledning (ersätter kostnadskarte-rutnätet): peka mot där vi är vassa, inte skylta med
+                det vi inte kan prissätta än. Reuser den beprövade "överbetalningen sitter oftast"-framen. */}
+            <StartHint>
+              Börja med det vi prissätter direkt mot verifierat marknadspris — <b>IT-licenser, telefoni, lön eller el</b>. Där sitter överbetalningen oftast.
+            </StartHint>
 
             <FortnoxTease>
               <span className="ft-ico"><Icon name="lock" size={18} stroke={1.7} /></span>
