@@ -1,0 +1,38 @@
+═══════ FRÅGA 1 · AFFÄRSHJÄRNAN — går affärsdata att hämta? ═══════
+
+▶ Apendo AB (556437-4840)
+  ✗ FEL · Bolagsverket sokforetagsinfo (POST) — fetch failed
+  ✓ HTTP 200 · allabolag.se
+     omsättning i svaret: nej · längd 352042
+  ✓ HTTP 200 · proff.se sök
+     omsättning i svaret: nej · längd 268810
+  ✓ HTTP 200 · merinfo.se
+     omsättning i svaret: nej · längd 71867
+
+▶ Lynxeye AB (556569-0087)
+  ✗ FEL · Bolagsverket sokforetagsinfo (POST) — fetch failed
+  ✓ HTTP 200 · allabolag.se
+     omsättning i svaret: nej · längd 346020
+  ✓ HTTP 200 · proff.se sök
+     omsättning i svaret: nej · längd 267236
+  ✓ HTTP 200 · merinfo.se
+     omsättning i svaret: nej · längd 71867
+
+▶ Netigate AB (556576-0997)
+  ✗ FEL · Bolagsverket sokforetagsinfo (POST) — fetch failed
+  ✓ HTTP 200 · allabolag.se
+     omsättning i svaret: nej · längd 363303
+  ✓ HTTP 200 · proff.se sök
+     omsättning i svaret: nej · längd 269342
+  ✓ HTTP 200 · merinfo.se
+     omsättning i svaret: nej · längd 71867
+
+═══════ FRÅGA 2 · KÄFTSLÄPPAREN — vad finns i CT-loggarna för M365-bolag utan datum? ═══════
+
+▶ lynxeye.com: crt.sh HTTP 502
+
+▶ netigate.se: fel — The operation was aborted due to timeout
+
+▶ westander.se: crt.sh HTTP 502
+
+═══════ KLART ═══════
