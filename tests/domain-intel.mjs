@@ -72,14 +72,42 @@ describe('buildRevealFindings · varje fynd bär en källa, inget fabriceras', (
     assert.equal(f.find((x) => x.kind === 'domain'), undefined);
   });
 
-  test('KVALITETSTRÖSKEL: generisk e-post (mx=other) ger INGET fynd — hellre tystnad än limp', () => {
+  // KVALITETSTRÖSKELN STÅR KVAR: en generisk e-postlösning (mx=other) blir ALDRIG ett limpt
+  // "om er"-fynd. Men avslöjandet får inte längre WHIFFA tomt (grundarbeslut 2026-07-01) — istället
+  // faller det på GOLVET: en källbelagd värde-brygga, aldrig ett fabricerat personligt påstående.
+  test('mx=other utan starka fynd → INGET limpt plattforms-fynd, men golvet bär (aldrig tomt)', () => {
     const f = buildRevealFindings({ domain: 'foo.se', posture: { mx: 'other' } }, { now: NOW });
-    assert.deepEqual(f, []);                              // "E-post via Anpassad e-postlösning" får aldrig visas
+    assert.equal(f.find((x) => x.kind === 'platform'), undefined);   // "E-post via Anpassad lösning" visas ALDRIG
+    assert.ok(f.length >= 1);                                        // men aldrig tomt
+    assert.equal(f[f.length - 1].kind, 'bridge');                   // golvet är en värde-brygga
+    assert.equal(f[f.length - 1].floor, true);
   });
 
-  test('tom posture → inga fynd (tystnad, inget fabricerat)', () => {
+  test('GOLV: tom posture → aldrig tomt, en källbelagd värde-brygga (aldrig ett fabricerat påstående)', () => {
     const f = buildRevealFindings({ domain: 'okänd.se', posture: { mx: 'unknown' } }, { now: NOW });
-    assert.deepEqual(f, []);
+    assert.equal(f.length, 1);
+    assert.equal(f[0].kind, 'bridge');
+    assert.equal(f[0].floor, true);
+    assert.ok(f[0].source && f[0].source.trim().length > 0);        // regel 3: golvet bär ändå källa
+    assert.match(f[0].source, /listpris/i);
+  });
+
+  test('GOLV tier 1: namnbar infrastruktur (nsDetail) namnges FÖRE värde-bryggan', () => {
+    const f = buildRevealFindings(
+      { domain: 'foo.se', posture: { mx: 'other', nsProvider: 'registrar', nsDetail: 'loopia' } }, { now: NOW });
+    const infra = f.find((x) => x.kind === 'infra');
+    assert.ok(infra);
+    assert.match(infra.title, /Loopia/);                            // versaliserat varumärke
+    assert.match(infra.source, /Namnservrarna/);
+    assert.equal(f[f.length - 1].kind, 'bridge');                  // bryggan ligger sist som säkerhet
+  });
+
+  test('GOLVET rör ALDRIG ett bolag som redan har starka fynd (ingen brygga vid M365-träff)', () => {
+    const f = buildRevealFindings(
+      { domain: 'lynxeye.se', posture: { mx: 'microsoft365', spfM365: true, dmarc: 'reject' },
+        domainReg: '2000-04-04', ct: { m365Since: '2021-04-15' } }, { now: NOW });
+    assert.equal(f.find((x) => x.kind === 'bridge'), undefined);    // golvet aktiveras bara när f är tomt
+    assert.equal(f.find((x) => x.kind === 'infra'), undefined);
   });
 
   test('VARJE producerat fynd har en icke-tom källa', () => {

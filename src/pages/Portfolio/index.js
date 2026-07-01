@@ -98,6 +98,7 @@ function resolveTestIdentity() {
   } catch { return null; }
 }
 
+const INBOX_ADDR = 'faktura@inbox.arvoflow.se';   // intag-adressen (vidarebefordra-dörren) — EN sanning
 const fmtNum   = (n) => (n == null ? '–' : Math.round(n).toLocaleString('sv-SE'));
 const fmtDate  = (iso) => (iso ? new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) : '');
 const monthYear = (d) => d.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
@@ -223,6 +224,7 @@ export default function Portfolio() {
   const [uploadNote, setUploadNote] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [testMode, setTestMode] = useState(false);
+  const [copiedInbox, setCopiedInbox] = useState(false);   // kopiera-bekräftelse för intag-adressen
   // Avslöjandet — kundens e-postdomän → källbelagt "hur visste de det?"-kort (gratis-vägen, DNS).
   const [revealEmail, setRevealEmail] = useState('');
   const [reveal, setReveal] = useState(null);
@@ -382,6 +384,12 @@ export default function Portfolio() {
   function toggle(id) {
     setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
+
+  const copyInbox = useCallback(async () => {
+    try { await navigator.clipboard.writeText(INBOX_ADDR); } catch { /* clipboard nekad — chippet är ändå läsbart */ }
+    setCopiedInbox(true);
+    setTimeout(() => setCopiedInbox(false), 2200);
+  }, []);
 
   async function runReveal(e) {
     e?.preventDefault?.();
@@ -1148,12 +1156,16 @@ export default function Portfolio() {
             </CoverageMap>
 
             <IntakeDoors>
-              <div className="door">
-                <div className="door-k">Snabbast · vidarebefordra</div>
+              <div className="door primary">
+                <div className="door-k">Vidarebefordra <span className="door-tag">Rekommenderas</span></div>
                 <h4>Töm månadens fakturor i ett mejl.</h4>
-                <p>Markera era leverantörsfakturor (PDF) i inkorgen och vidarebefordra allt på en gång — analyserna landar här.</p>
+                <p>Markera era leverantörsfakturor (PDF) i inkorgen och vidarebefordra allt på en gång — även 50 på en gång. Analyserna landar här.</p>
                 <div className="spacer" />
-                <AddressChipDark>faktura@inbox.arvoflow.se</AddressChipDark>
+                <AddressChipDark type="button" onClick={copyInbox} className={copiedInbox ? 'copied' : ''} aria-label={`Kopiera ${INBOX_ADDR}`}>
+                  <span className="ac-addr">{INBOX_ADDR}</span>
+                  <span className="ac-copy">{copiedInbox ? <>Kopierat <Icon name="check" size={13} stroke={2.4} /></> : 'Kopiera'}</span>
+                </AddressChipDark>
+                <p className="door-trust"><Icon name="lock" size={13} stroke={1.8} className="dt-ico" /><span>Vi läser fakturan, väger den mot marknaden och <b>sparar aldrig filen efter analysen</b> — bara resultatet.</span></p>
               </div>
 
               <div className="door">

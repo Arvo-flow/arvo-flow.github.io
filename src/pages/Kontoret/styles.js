@@ -609,20 +609,44 @@ export const IntakeDoors = styled.div`
   margin-top:20px; display:grid; gap:18px; grid-template-columns:1fr 1fr;
   ${appear(0.12)}
   @media (max-width:760px){ grid-template-columns:1fr; }
-  .door { border:1px solid ${theme.dossier.hairlineOnDark}; border-radius:${theme.size.radius.lg};
+  .door { position:relative; border:1px solid ${theme.dossier.hairlineOnDark}; border-radius:${theme.size.radius.lg};
     background:${theme.dossier.bgRaised}; padding:24px 24px 22px; display:flex; flex-direction:column; }
+  /* Vidarebefordra ÄR moaten (bulk 50–100 fakturor). Den rekommenderade dörren bär hjälte-vikt:
+     hot teal-ton + glöd, medan upload förblir den lugna sekundär-dörren (grundarbeslut 2026-07-01). */
+  .door.primary { border-color:rgba(43,196,172,.42);
+    background:linear-gradient(155deg, rgba(43,196,172,.10), rgba(23,138,123,.03));
+    box-shadow:0 0 0 1px rgba(43,196,172,.10); }
   .door-k { font-family:${MONO}; font-size:10px; letter-spacing:.24em; text-transform:uppercase;
-    color:${theme.dossier.teal}; margin-bottom:12px; }
+    color:${theme.dossier.teal}; margin-bottom:12px; display:flex; align-items:center; gap:9px; }
+  .door-tag { font-family:${MONO}; font-size:8.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:${theme.dossier.bg}; background:${theme.dossier.teal}; border-radius:${theme.size.radius.pill};
+    padding:3px 8px; }
   .door h4 { font-family:${SERIF}; font-weight:600; font-size:18px; letter-spacing:-.01em;
     color:${theme.dossier.inkOnDark}; margin:0 0 8px; }
   .door p { font-size:13px; line-height:1.55; color:${theme.dossier.mutedOnDark}; margin:0 0 16px; }
   .door .spacer { flex:1; }
+  /* Trygghet vid själva överlämnandet av data — Zero Trust betyder mest här (grundarbeslut 2026-07-01) */
+  .door-trust { margin:11px 0 0; font-size:11.5px; line-height:1.5; color:${theme.dossier.faintOnDark};
+    display:flex; gap:8px; align-items:baseline;
+    .dt-ico { flex-shrink:0; color:${theme.dossier.teal}; transform:translateY(2px); }
+    b { color:${theme.dossier.mutedOnDark}; font-weight:600; } }
 `;
 
-export const AddressChipDark = styled.div`
+// Kopierbart adress-chip (grundarbeslut 2026-07-01): adressen ÄR hela poängen med vidarebefordra-
+// flödet — ett tryck kopierar den, med bekräftelse. Förr en ren div (user-select:all, klumpigt på mobil).
+export const AddressChipDark = styled.button`
+  width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px;
   font-family:${MONO}; font-size:14px; letter-spacing:.01em; color:${theme.dossier.tealBright};
   background:rgba(43,196,172,.06); border:1px dashed rgba(43,196,172,.45);
-  border-radius:${theme.size.radius.md}; padding:13px 16px; text-align:center; user-select:all;
+  border-radius:${theme.size.radius.md}; padding:13px 16px; text-align:left; cursor:pointer;
+  transition:background .15s, border-color .15s;
+  &:hover { background:rgba(43,196,172,.12); border-color:${theme.dossier.tealBright}; }
+  &.copied { border-style:solid; border-color:${theme.dossier.tealBright}; }
+  .ac-addr { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ac-copy { flex-shrink:0; display:inline-flex; align-items:center; gap:6px;
+    font-family:${MONO}; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    color:${theme.dossier.faintOnDark}; }
+  &.copied .ac-copy { color:${theme.dossier.tealBright}; }
 `;
 
 export const Dropzone = styled.label`
