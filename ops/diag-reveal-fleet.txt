@@ -1,27 +1,40 @@
 Kör avslöjandet mot 20 riktiga svenska bolag…
 
-▽ GOLV  alumni.se  (mx: other)
-      · [bridge] Er kostnadssanning ligger ett mejl bort
+✅  alumni.se  (mx: other)
+      · [business] Ert bokslut 2025: 226,5 mkr i omsättning, 66 anställda
+      · [costline] Era kontorslicenser: från ~112 464 kr/år vid verifierat golvpris
 ✅  apendo.se  (mx: other)
+      · [business] Ert bokslut 2025: 52,9 mkr i omsättning, 30 anställda
+      · [costline] Era kontorslicenser: från ~51 120 kr/år vid verifierat golvpris
       · [onboarding] Er Microsoft 365 sattes upp september 2017
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  bimobject.com  (mx: google)
+      · [business] Ert bokslut 2024: 99,8 mkr i omsättning, 63 anställda
+      · [costline] Era kontorslicenser: från ~107 352 kr/år vid verifierat golvpris
       · [platform] Ni kör Google Workspace
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  castra.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  daresay.com  (mx: other)
+      · [business] Ert bokslut 2024: 84,8 mkr i omsättning, 61 anställda
+      · [costline] Era kontorslicenser: från ~103 944 kr/år vid verifierat golvpris
       · [domain] 27 års obruten digital närvaro
 ✅  halvarsson.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
+      · [onboarding] Er Microsoft 365 sattes upp oktober 2007
 ✅  implement.se  (mx: other)
+      · [cert] Digital närvaro sedan juni 2009
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  initgroup.com  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
+      · [domain] 10 års obruten digital närvaro
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  intelliplan.se  (mx: microsoft365)
+      · [business] Ert bokslut 2025: 80,9 mkr i omsättning, 30 anställda
+      · [costline] Era kontorslicenser: från ~51 120 kr/år vid verifierat golvpris
       · [platform] Ni kör Microsoft 365
+      · [cert] Digital närvaro sedan december 2008
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  jobbklar.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
@@ -34,15 +47,22 @@ Kör avslöjandet mot 20 riktiga svenska bolag…
       · [platform] Ni kör Microsoft 365
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  lynxeye.com  (mx: microsoft365)
+      · [business] Ert bokslut 2025: 221,9 mkr i omsättning, 54 anställda
+      · [costline] Era kontorslicenser: från ~92 016 kr/år vid verifierat golvpris
       · [platform] Ni kör Microsoft 365
       · [cert] Digital närvaro sedan oktober 2009
       · [domain] 26 års obruten digital närvaro
 ✅  netigate.se  (mx: microsoft365)
+      · [business] Ert bokslut 2024: 120,6 mkr i omsättning, 77 anställda
+      · [costline] Era kontorslicenser: från ~131 208 kr/år vid verifierat golvpris
       · [platform] Ni kör Microsoft 365
+      · [cert] Digital närvaro sedan februari 2007
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  netray.se  (mx: google)
       · [platform] Ni kör Google Workspace
 ✅  onepartnergroup.se  (mx: microsoft365)
+      · [business] Ert bokslut 2024: 168,9 mkr i omsättning, 9 anställda
+      · [costline] Era kontorslicenser: från ~15 336 kr/år vid verifierat golvpris
       · [platform] Ni kör Microsoft 365
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  sigmatechnology.com  (mx: microsoft365)
@@ -52,13 +72,15 @@ Kör avslöjandet mot 20 riktiga svenska bolag…
       · [platform] Ni kör Microsoft 365
 ✅  westander.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
+      · [onboarding] Er Microsoft 365 sattes upp februari 2016
       · [dmarc] Ert e-postskydd är redan aktivt
 
 ═══════ SAMMANFATTNING ═══════
 Bolag totalt:                        20
-✅ Starka "om er"-fynd:              19
-▽  Endast golv (brygga/infra):       1
+✅ Starka "om er"-fynd:              20
+▽  Endast golv (brygga/infra):       0
 ✗  Whiff (inget):                    0
    varav plattform (M365/Google):    16
-   varav M365-UPPSÄTTNINGSDATUM:      1   ← käftsläpparen
+   varav M365-UPPSÄTTNINGSDATUM:      3
+   varav AFFÄRSFYND (omsättning):     8   ← käftsläpparen
 ═══════════════════════════════════
