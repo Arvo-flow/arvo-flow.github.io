@@ -232,8 +232,14 @@ jobs:
             core.setOutput('pr_url',    pr.data.html_url);
             core.setOutput('pr_number', String(pr.data.number));
 
+      # AVSTÄNGT (grundarbeslut 2026-07-01): intern "manuell verifiering krävs"-notis via mejl till
+      # grundaren är avstängd — inga mejl om prisförändringar önskas. Detekterade ändringar syns
+      # ändå på GitHub (PR:en ovan + issue:n nedan), så inget bevis går förlorat; bara inkorgs-
+      # notisen tas bort. `scripts/send-alert-email.mjs` finns kvar orörd — sätt `if:` nedan till
+      # `steps.monitor.outcome == 'failure'` för att återaktivera. (Kundnotiser via
+      # scripts/notify-price-changes.mjs är en SEPARAT väg och OFÖRÄNDRAD.)
       - name: Send alert email
-        if: steps.monitor.outcome == 'failure'
+        if: false
         continue-on-error: true
         run: |
           PR_URL="${{ steps.create_pr.outputs.pr_url }}"
