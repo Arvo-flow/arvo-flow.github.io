@@ -11,7 +11,7 @@ import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
 import { groupBySupplier, supplierName, supplierDiagScore, computeActing } from '../../lib/holdings';
 import FindingCard from '../../components/FindingCard';
-import { RevealPrompt } from '../../components/RevealCard';
+import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
 import { greetingForHour } from '../../utils/format';
 import { useAuth } from '../../contexts/AuthContext';
@@ -1107,7 +1107,7 @@ export default function Portfolio() {
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
                 <h1>{ingesting > 0
                   ? <>Arvo analyserar<br />{ingesting} {ingesting === 1 ? 'faktura' : 'fakturor'}…</>
-                  : <>Ert kontor väntar<br />på första analysen.</>}</h1>
+                  : <>Se ert bolag<br />som marknaden ser det.</>}</h1>
               </Ident>
             </TopRow>
 
@@ -1119,42 +1119,18 @@ export default function Portfolio() {
                 <p className="work">Kontoret fylls i takt med att varje analys blir klar — sidan uppdateras automatiskt, ni behöver inte göra något. Det tar oftast någon minut.</p>
               </Verdict>
             ) : (
-              /* Avslöjandet — "hur visste de det?" före första fakturan (källbelagt, gratis-vägen) */
-              <RevealPrompt
-                email={revealEmail} setEmail={setRevealEmail} onSubmit={runReveal}
-                loading={revealLoading} reveal={reveal} note={revealNote}
-              />
+              /* Avslöjandet LEDER (grundarbeslut 2026-07-01): dörren bevisar intelligensen omedelbart
+                 istället för att pitcha. Teasern visar formen på magin innan man skrivit sin mejl. */
+              <>
+                <RevealPrompt
+                  email={revealEmail} setEmail={setRevealEmail} onSubmit={runReveal}
+                  loading={revealLoading} reveal={reveal} note={revealNote}
+                />
+                {!reveal && <RevealTeaser />}
+              </>
             )}
 
-            <Verdict>
-              <div className="eyebrow">Var pengarna oftast rinner</div>
-              <h2>Överbetalningen sitter oftast i <em>IT-licenser, telefoni och mjukvara.</em></h2>
-              <p className="work">
-                Börja där — en enda faktura räcker för ert första fynd, ofta inom minuter.
-                Lägg sedan till resten: ju fler avtal Arvo ser, desto skarpare blir bilden
-                av var ni betalar mer än marknaden.
-              </p>
-            </Verdict>
-
-            <CoverageMap>
-              <div className="cm-eyebrow">Er kostnadskarta · {INTAKE_SEGMENTS.length} kategorier</div>
-              <div className="cm-grid">
-                {INTAKE_SEGMENTS.map((s) => (
-                  <div key={s.label} className={`cm-cell${s.mode === 'verdict' ? ' hot' : ''}`}>
-                    <div className="cm-top">
-                      <span className="cm-ico"><Icon name={s.icon} size={19} stroke={1.7} /></span>
-                      {s.mode === 'verdict'
-                        ? <span className="cm-tag">Börja här</span>
-                        : <span className="cm-tag offert">via offert</span>}
-                    </div>
-                    <span className="cm-label">{s.label}</span>
-                    <span className="cm-hint">{s.hint}</span>
-                    {s.know && <span className="cm-verified">{s.know}</span>}
-                  </div>
-                ))}
-              </div>
-            </CoverageMap>
-
+            {/* Handlingen — dörrarna, flyttade UPP direkt efter avslöjandet */}
             <IntakeDoors>
               <div className="door primary">
                 <div className="door-k">Vidarebefordra <span className="door-tag">Rekommenderas</span></div>
@@ -1203,6 +1179,26 @@ export default function Portfolio() {
                 {uploadNote && <DropProgress><p className="dp-note">{uploadNote}</p></DropProgress>}
               </div>
             </IntakeDoors>
+
+            {/* Kostnadskartan — demoterad till stödjande detalj UNDER handlingen (var pitch högst upp) */}
+            <CoverageMap>
+              <div className="cm-eyebrow">Vi täcker · {INTAKE_SEGMENTS.length} kategorier</div>
+              <div className="cm-grid">
+                {INTAKE_SEGMENTS.map((s) => (
+                  <div key={s.label} className={`cm-cell${s.mode === 'verdict' ? ' hot' : ''}`}>
+                    <div className="cm-top">
+                      <span className="cm-ico"><Icon name={s.icon} size={19} stroke={1.7} /></span>
+                      {s.mode === 'verdict'
+                        ? <span className="cm-tag">Börja här</span>
+                        : <span className="cm-tag offert">via offert</span>}
+                    </div>
+                    <span className="cm-label">{s.label}</span>
+                    <span className="cm-hint">{s.hint}</span>
+                    {s.know && <span className="cm-verified">{s.know}</span>}
+                  </div>
+                ))}
+              </div>
+            </CoverageMap>
 
             <FortnoxTease>
               <span className="ft-ico"><Icon name="lock" size={18} stroke={1.7} /></span>

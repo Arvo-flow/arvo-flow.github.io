@@ -73,12 +73,63 @@ const Prompt = styled.form`
   .rp-note { margin: 12px 0 0; font-size: 13px; color: ${({ theme }) => theme.dossier.mutedOnDark}; }
 `;
 
+// Redakterad FÖRHANDSVISNING av avslöjandet — visar FORMEN på magin innan man skrivit sin mejl.
+// Ärlig: raderna är suddade (filter:blur), tydligt låsta, aldrig ett påstående om just denna besökare
+// (claims-ok: förhandsvisning, blurrad + märkt "Förhandsvisning", ej kundpåstående). Skapar
+// "hur visste de det?"-spänningen vid första ögonkastet istället för ett hopp i mörkret.
+const Teaser = styled.div`
+  position: relative; overflow: hidden;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  border: 1px dashed ${({ theme }) => theme.dossier.hairlineOnDark};
+  background: ${({ theme }) => theme.dossier.bgRaised};
+  padding: 22px 22px 20px; margin: 0 0 22px;
+
+  .tz-eyebrow { font-family: ${({ theme }) => theme.font.mono}; font-size: 10px; letter-spacing: .22em;
+    text-transform: uppercase; color: ${({ theme }) => theme.dossier.faintOnDark}; margin-bottom: 15px; }
+  .tz-find { padding: 12px 0; border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+    &:first-of-type { border-top: none; padding-top: 0; } }
+  .blur { filter: blur(5.5px); opacity: .55; user-select: none; pointer-events: none; }
+  .tz-title { font-family: ${({ theme }) => theme.font.display}; font-weight: 600; font-size: 17px;
+    color: ${({ theme }) => theme.dossier.inkOnDark}; line-height: 1.25; }
+  .tz-src { font-family: ${({ theme }) => theme.font.mono}; font-size: 11px;
+    color: ${({ theme }) => theme.dossier.faintOnDark}; margin-top: 6px; }
+  .tz-lock { margin: 15px 0 0; padding-top: 14px; border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+    display: flex; gap: 9px; align-items: baseline;
+    font-size: 13px; line-height: 1.5; color: ${({ theme }) => theme.dossier.mutedOnDark};
+    b { color: ${({ theme }) => theme.dossier.inkOnDark}; }
+    .tz-ico { flex-shrink: 0; color: ${({ theme }) => theme.dossier.teal}; transform: translateY(2px); } }
+`;
+
+// Två rader = formen anas, utan att bli ett stort dött suddblock (grundarbeslut 2026-07-01).
+const TEASER_ROWS = [
+  ['Ni kör Microsoft 365', 'Källa: er publika e-postuppsättning'],          // claims-ok: förhandsvisning, blurrad
+  ['Microsoft 365 sattes upp mars 2021', 'Källa: offentligt register'],      // claims-ok: förhandsvisning, blurrad
+];
+
+export function RevealTeaser() {
+  return (
+    <Teaser>
+      <div className="tz-eyebrow">Förhandsvisning · ert underlag</div>
+      {TEASER_ROWS.map(([t, s], i) => (
+        <div className="tz-find" key={i} aria-hidden="true">
+          <div className="tz-title blur">{t}</div>
+          <div className="tz-src blur">{s}</div>
+        </div>
+      ))}
+      <div className="tz-lock">
+        <svg className="tz-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+        <span>Detta är formen — inte ert faktiska underlag. <b>Skriv in er mejl ovan</b> så låser vi upp det på sekunder, innan ni delat något.</span>
+      </div>
+    </Teaser>
+  );
+}
+
 export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note }) {
   return (
     <>
       <Prompt onSubmit={onSubmit}>
         <div className="rp-k">Innan första fakturan</div>
-        <p className="rp-lede">Ett underlag om ert bolag ligger redan framme. Ange er <b>företagsmejl</b>, så öppnar vi det — hämtat ur öppna källor.</p>
+        <p className="rp-lede">Era leverantörer har redan bildat sig en uppfattning om er — och prissätter efter den. Skriv in er <b>företagsmejl</b>, så visar vi på sekunder vad de ser, ur öppna källor.</p>
         <div className="rp-row">
           <input
             type="email" inputMode="email" autoComplete="email"
