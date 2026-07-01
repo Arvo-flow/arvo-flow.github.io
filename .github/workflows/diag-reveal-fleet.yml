@@ -1,0 +1,29 @@
+name: Diag reveal fleet
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Reveal fleet
+        run: |
+          mkdir -p ops
+          node scripts/diag-reveal-fleet.mjs | tee ops/diag-reveal-fleet.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git pull --rebase origin main || true
+          git add ops/diag-reveal-fleet.txt
+          git commit -m "ops: diag-reveal-fleet [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
