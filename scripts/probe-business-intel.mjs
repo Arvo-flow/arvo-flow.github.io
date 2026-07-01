@@ -1,69 +1,74 @@
-// scripts/probe-business-intel.mjs — RESEARCH-sond (Actions, fri egress). Två frågor mot verkligheten:
+// scripts/probe-business-intel.mjs — RESEARCH-sond v2 (Actions, fri egress).
 //
-//  FRÅGA 1 · AFFÄRSHJÄRNAN: kan vi hämta svensk affärsdata (omsättning/resultat/anställda) för ett
-//  orgnr ur öppna/publika källor, rent och maskinellt? Provar Bolagsverkets öppna API-kandidater och
-//  publika bolagssidor (allabolag/proff/merinfo) med riktig browser-UA. Rapporterar HTTP-status +
-//  om omsättningssiffror faktiskt syns i svaret. INGEN auto-build — ren insamling för beslut.
-//
-//  FRÅGA 2 · KÄFTSLÄPPAREN: varför fyrar M365-uppsättningsdatumet bara 1/20? Dumpar de faktiska
-//  CT-loggnamnen för M365-bolag som SAKNADE datum — finns där något M365-format alls att matcha,
-//  eller är datumet strukturellt sällsynt (bara hybrid-Exchange utfärdar publika autodiscover-cert)?
+// v1-läxan: detektorn strippade <script> INNAN den letade omsättning — men allabolag/proff är
+// SPA:er som bär datan SOM JSON i script-taggar. v2 söker i RÅ HTML, dumpar utdrag runt träffarna
+// (så vi SER exakt vad som finns), skriver ut slutlig URL efter redirect, och kör crt.sh med retry.
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 const H = { 'User-Agent': UA, 'Accept-Language': 'sv-SE,sv;q=0.9', Accept: 'text/html,application/json;q=0.9,*/*;q=0.8' };
 
-// Riktiga bolag ur leads-filen (orgnr verifierade via allabolag 2026-06-06)
 const COMPANIES = [
   { name: 'Apendo AB',   orgnr: '556437-4840' },
   { name: 'Lynxeye AB',  orgnr: '556569-0087' },
-  { name: 'Netigate AB', orgnr: '556576-0997' },
 ];
 
-const strip = (html) => html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-// Omsättningssignal: "omsättning" nära ett tal (tkr/mkr/kr)
-const hasRevenue = (text) => /omsättning[^.]{0,80}\d[\d\s.,]*\s*(tkr|mkr|tsek|msek|kkr|kr|')/i.test(text) || /nettoomsättning/i.test(text);
+// Signaler i RÅ text (inkl. JSON i script): svenska + vanliga JSON-fältnamn
+const SIGNALS = [/nettoomsättning/i, /omsättning/i, /"revenue"/i, /netSales/i, /rörelseresultat/i, /"profit/i, /resultat efter finansnetto/i, /antal anställda/i, /"employees"/i];
 
-async function probe(label, url, opts = {}) {
-  try {
-    const res = await fetch(url, { headers: H, redirect: 'follow', signal: AbortSignal.timeout(15000), ...opts });
-    const body = await res.text();
-    const text = strip(body).slice(0, 400000);
-    const rev = hasRevenue(text);
-    console.log(`  ${res.ok ? '✓' : '✗'} HTTP ${res.status} · ${label}`);
-    console.log(`     omsättning i svaret: ${rev ? 'JA ✅' : 'nej'} · längd ${body.length}`);
-    if (rev) {
-      const m = text.match(/.{0,60}omsättning.{0,120}/i);
-      if (m) console.log(`     utdrag: "…${m[0].trim()}…"`);
-    }
-    return { ok: res.ok, rev };
-  } catch (e) { console.log(`  ✗ FEL · ${label} — ${e.message}`); return { ok: false, rev: false }; }
+function excerpts(raw, re, max = 2) {
+  const out = [];
+  let m, rx = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+  while ((m = rx.exec(raw)) && out.length < max) {
+    out.push(raw.slice(Math.max(0, m.index - 70), m.index + 130).replace(/\s+/g, ' '));
+  }
+  return out;
 }
 
-console.log('═══════ FRÅGA 1 · AFFÄRSHJÄRNAN — går affärsdata att hämta? ═══════');
+async function probeRaw(label, url, opts = {}) {
+  try {
+    const res = await fetch(url, { headers: H, redirect: 'follow', signal: AbortSignal.timeout(15000), ...opts });
+    const raw = await res.text();
+    console.log(`  ${res.ok ? '✓' : '✗'} HTTP ${res.status} · ${label} · slutlig URL: ${res.url}`);
+    console.log(`     längd ${raw.length} · __NEXT_DATA__: ${raw.includes('__NEXT_DATA__')} · JSON-LD: ${raw.includes('application/ld+json')}`);
+    for (const re of SIGNALS) {
+      const hits = excerpts(raw, re);
+      if (hits.length) {
+        console.log(`     ✅ ${re.source}:`);
+        for (const h of hits) console.log(`        …${h}…`);
+      }
+    }
+    return raw;
+  } catch (e) { console.log(`  ✗ FEL · ${label} — ${e.message}`); return ''; }
+}
+
+console.log('═══════ FRÅGA 1 v2 · rå-innehåll på bolagssidorna ═══════');
 for (const c of COMPANIES) {
   const bare = c.orgnr.replace('-', '');
   console.log(`\n▶ ${c.name} (${c.orgnr})`);
-  // Bolagsverkets öppna kandidater (gratis "Sök företagsinformation")
-  await probe('Bolagsverket sokforetagsinfo (POST)', 'https://sokforetagsinfo.bolagsverket.se/api/foretag', {
-    method: 'POST', headers: { ...H, 'Content-Type': 'application/json' }, body: JSON.stringify({ identitetsbeteckning: bare }),
-  });
-  await probe('allabolag.se', `https://www.allabolag.se/${bare}`);
-  await probe('proff.se sök', `https://www.proff.se/bransch-s%C3%B6k?q=${bare}`);
-  await probe('merinfo.se', `https://www.merinfo.se/search?q=${bare}`);
+  await probeRaw('allabolag.se', `https://www.allabolag.se/${bare}`);
+  await probeRaw('proff.se företag', `https://www.proff.se/foretag/-/-/-/${bare}`);   // proff redirectar på orgnr
 }
 
-console.log('\n═══════ FRÅGA 2 · KÄFTSLÄPPAREN — vad finns i CT-loggarna för M365-bolag utan datum? ═══════');
-const CT_DOMAINS = ['lynxeye.com', 'netigate.se', 'westander.se'];   // M365-verifierade, saknade datum i flottan
-const M365ISH = /autodiscover|lyncdiscover|enterpriseregistration|enterpriseenrollment|msoid|sip\.|adfs|sts\.|federation|exchange|mail\./i;
-for (const d of CT_DOMAINS) {
-  try {
-    const res = await fetch(`https://crt.sh/?q=${encodeURIComponent('%.' + d)}&output=json`, { headers: { ...H, Accept: 'application/json' }, signal: AbortSignal.timeout(25000) });
-    if (!res.ok) { console.log(`\n▶ ${d}: crt.sh HTTP ${res.status}`); continue; }
-    const rows = await res.json();
-    const names = [...new Set(rows.flatMap((r) => (r.name_value || '').toLowerCase().split('\n')))];
-    const m365ish = names.filter((n) => M365ISH.test(n));
-    console.log(`\n▶ ${d}: ${rows.length} cert · ${names.length} unika namn`);
-    console.log(`   M365-aktiga namn: ${m365ish.length ? m365ish.join(', ') : 'INGA — datumet är strukturellt omöjligt här'}`);
-    console.log(`   exempel på namn: ${names.slice(0, 8).join(', ')}`);
-  } catch (e) { console.log(`\n▶ ${d}: fel — ${e.message}`); }
+// Bolagsverkets riktiga öppna kandidater (dokumenterade portaler, inte gissade API-vägar)
+console.log('\n═══════ Bolagsverket — vilka dörrar finns? ═══════');
+await probeRaw('portal.api.bolagsverket.se', 'https://portal.api.bolagsverket.se/');
+await probeRaw('bolagsverket öppna data-sida', 'https://bolagsverket.se/omoss/utvecklareochtestmiljoer/oppnadataochapierhosbolagsverket');
+
+console.log('\n═══════ FRÅGA 2 v2 · crt.sh med retry (var 502 förra passet) ═══════');
+const M365ISH = /autodiscover|lyncdiscover|enterpriseregistration|enterpriseenrollment|msoid|sip\.|adfs|sts\.|federation/i;
+for (const d of ['lynxeye.com', 'westander.se']) {
+  let done = false;
+  for (let attempt = 1; attempt <= 3 && !done; attempt++) {
+    try {
+      const res = await fetch(`https://crt.sh/?q=${encodeURIComponent('%.' + d)}&output=json`, { headers: { ...H, Accept: 'application/json' }, signal: AbortSignal.timeout(30000) });
+      if (!res.ok) { console.log(`▶ ${d} försök ${attempt}: HTTP ${res.status}`); await new Promise((r) => setTimeout(r, 5000 * attempt)); continue; }
+      const rows = await res.json();
+      const names = [...new Set(rows.flatMap((r) => (r.name_value || '').toLowerCase().split('\n')))];
+      const m365ish = names.filter((n) => M365ISH.test(n));
+      console.log(`▶ ${d}: ${rows.length} cert · ${names.length} unika namn`);
+      console.log(`   M365-aktiga: ${m365ish.length ? m365ish.join(', ') : 'INGA — datumet strukturellt omöjligt här'}`);
+      console.log(`   alla namn: ${names.slice(0, 12).join(', ')}`);
+      done = true;
+    } catch (e) { console.log(`▶ ${d} försök ${attempt}: ${e.message}`); await new Promise((r) => setTimeout(r, 5000 * attempt)); }
+  }
 }
 console.log('\n═══════ KLART ═══════');
