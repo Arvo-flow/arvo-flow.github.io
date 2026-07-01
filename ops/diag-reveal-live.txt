@@ -8,6 +8,7 @@
       källa: Ert e-postsystem dirigeras till Microsoft — öppet i lynxeye.com:s publika uppgifter
   ✓ 26 års obruten digital närvaro
       källa: Det globala domänregistret
+  → rå payload sparad: ops/diag-reveal-live.json
 
 === namn@microsoft.com → HTTP 200 · domän=microsoft.com ===
   ✓ Ert bokslut 2025: 27 548,9 mkr i omsättning, 591 anställda
@@ -16,8 +17,6 @@
       källa: Verifierat publikt listpris (Microsoft 365) × antal anställda ur årsredovisningen
   ✓ Ni kör Microsoft 365
       källa: Ert e-postsystem dirigeras till Microsoft — öppet i microsoft.com:s publika uppgifter
-  ✓ Er Microsoft 365 sattes upp mars 2007
-      källa: Offentligt register, första daterade spår 2007-03-06
   ✓ 35 års obruten digital närvaro
       källa: Det globala domänregistret
   ✓ Ert e-postskydd är redan aktivt

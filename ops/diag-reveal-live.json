@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "domain": "lynxeye.com",
+  "platform": "microsoft365",
+  "findings": [
+    {
+      "kind": "business",
+      "confidence": "high",
+      "title": "Ert bokslut 2025: 221,9 mkr i omsättning, 54 anställda",
+      "detail": "Gäller Lynxeye AB — offentliga uppgifter, inget ni behövt dela. Vi läser era förutsättningar innan vi läser era fakturor.",
+      "source": "Offentliga årsredovisningsuppgifter (Bolagsverket) · Lynxeye AB · bokslutsår 2025"
+    },
+    {
+      "kind": "costline",
+      "confidence": "high",
+      "title": "Era kontorslicenser: från ~92 016 kr/år vid verifierat golvpris",
+      "detail": "1 704 kr/användare/år (verifierat golvpris) × era 54 anställda. De flesta betalar mer — dela en faktura så ser vi exakt var ni ligger.",
+      "source": "Verifierat publikt listpris (Microsoft 365) × antal anställda ur årsredovisningen"
+    },
+    {
+      "kind": "platform",
+      "confidence": "high",
+      "title": "Ni kör Microsoft 365",
+      "detail": "Bekräftat på flera oberoende spår.",
+      "source": "Ert e-postsystem dirigeras till Microsoft — öppet i lynxeye.com:s publika uppgifter"
+    },
+    {
+      "kind": "domain",
+      "confidence": "high",
+      "title": "26 års obruten digital närvaro",
+      "detail": "Er domän registrerades 2000-04-04.",
+      "source": "Det globala domänregistret"
+    }
+  ]
+}
