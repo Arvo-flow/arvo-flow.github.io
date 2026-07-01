@@ -101,9 +101,10 @@ const Teaser = styled.div`
 `;
 
 // Två rader = formen anas, utan att bli ett stort dött suddblock (grundarbeslut 2026-07-01).
+// Raderna speglar de VERKLIGA fyndens form — affärshjärnan (bokslutet) leder numera avslöjandet.
 const TEASER_ROWS = [
-  ['Ni kör Microsoft 365', 'Källa: er publika e-postuppsättning'],          // claims-ok: förhandsvisning, blurrad
-  ['Microsoft 365 sattes upp mars 2021', 'Källa: offentligt register'],      // claims-ok: förhandsvisning, blurrad
+  ['Ert bokslut 2025: 52,9 mkr i omsättning, 30 anställda', 'Källa: offentliga årsredovisningsuppgifter (Bolagsverket)'],   // claims-ok: förhandsvisning, blurrad
+  ['Era kontorslicenser: från ~51 120 kr/år vid verifierat golvpris', 'Källa: verifierat publikt listpris × anställda'],     // claims-ok: förhandsvisning, blurrad
 ];
 
 export function RevealTeaser() {
