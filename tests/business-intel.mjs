@@ -97,6 +97,13 @@ describe('business-intel · fynden (regel 2 + 3: kodräknat, källa på varje ra
     assert.match(biz.source, /Bolagsverket/);
     assert.ok(!/profit|resultat/i.test(biz.title + biz.detail), 'profit-fältet får aldrig nå copy (oklar etikett)');
   });
+
+  test('koncern-lärdomen: fyndet NAMNGER den juridiska enheten (detail + källa)', () => {
+    const f = buildBusinessFindings(facts, { p25PerUser: 1704 });
+    const biz = f.find((x) => x.kind === 'business');
+    assert.match(biz.detail, /Gäller Apendo AB/);          // exakt vilken enhet siffrorna gäller
+    assert.match(biz.source, /Apendo AB/);
+  });
   test('costline-bryggan: golvpris × anställda, deterministiskt, källbelagt', () => {
     const f = buildBusinessFindings(facts, { p25PerUser: 1704 });
     const c = f.find((x) => x.kind === 'costline');
