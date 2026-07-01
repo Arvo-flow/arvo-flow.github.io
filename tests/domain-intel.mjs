@@ -66,6 +66,30 @@ describe('buildRevealFindings · varje fynd bär en källa, inget fabriceras', (
     assert.match(d.source, /domänregistret/);
   });
 
+  test('LYNXEYE-LÄRDOMEN ordagrant: cert (2009) + äldre domänreg (2000) → ETT längd-fynd, aldrig två som grälar', () => {
+    // Grundarfynd 2026-07-01: "Digital närvaro sedan oktober 2009" bredvid "26 års obruten digital
+    // närvaro" delade språk men grälade om årtal — läste som en självmotsägelse på samma kort.
+    const f = buildRevealFindings(
+      { domain: 'lynxeye.com', posture: { mx: 'microsoft365' },
+        domainReg: '2000-04-04', ct: { oldestCert: '2009-10-14' } },
+      { now: new Date('2026-07-01') });
+    assert.ok(f.find((x) => x.kind === 'domain'), 'domän-fyndet (äldre, starkare) ska fyra');
+    assert.equal(f.find((x) => x.kind === 'cert'), undefined, 'cert-fyndet ska undertryckas när domänreg fyrar');
+  });
+
+  test('cert UTAN domänreg → cert-fyndet står kvar (inget att gräla med)', () => {
+    const f = buildRevealFindings(
+      { domain: 'ny.se', posture: {}, ct: { oldestCert: '2019-05-01' } }, { now: NOW });
+    assert.ok(f.find((x) => x.kind === 'cert'));
+  });
+
+  test('cert + UNG domänreg (<6 år, fyrar inte) → cert-fyndet står kvar', () => {
+    const f = buildRevealFindings(
+      { domain: 'ny.se', posture: {}, domainReg: '2023-01-01', ct: { oldestCert: '2023-02-01' } }, { now: NOW });
+    assert.ok(f.find((x) => x.kind === 'cert'));
+    assert.equal(f.find((x) => x.kind === 'domain'), undefined);
+  });
+
   test('ung domän (< 6 år) → utelämnas (inte anmärkningsvärt)', () => {
     const f = buildRevealFindings(
       { domain: 'ny.se', posture: {}, domainReg: '2023-01-01' }, { now: NOW });

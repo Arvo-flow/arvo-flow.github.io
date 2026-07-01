@@ -104,7 +104,7 @@ const Teaser = styled.div`
 // Raderna speglar de VERKLIGA fyndens form — affärshjärnan (bokslutet) leder numera avslöjandet.
 const TEASER_ROWS = [
   ['Ert bokslut 2025: 52,9 mkr i omsättning, 30 anställda', 'Källa: offentliga årsredovisningsuppgifter (Bolagsverket)'],   // claims-ok: förhandsvisning, blurrad
-  ['Era kontorslicenser: från ~51 120 kr/år vid verifierat golvpris', 'Källa: verifierat publikt listpris × anställda'],     // claims-ok: förhandsvisning, blurrad
+  ['Era kontorslicenser: från ~43 013 kr/år vid verifierat listpris', 'Källa: verifierat publikt listpris × anställda'],     // claims-ok: förhandsvisning, blurrad — 30 × 119,48 × 12
 ];
 
 export function RevealTeaser() {
