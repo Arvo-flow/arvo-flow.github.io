@@ -102,9 +102,11 @@ const Teaser = styled.div`
 
 // Två rader = formen anas, utan att bli ett stort dött suddblock (grundarbeslut 2026-07-01).
 // Raderna speglar de VERKLIGA fyndens form — affärshjärnan (bokslutet) leder numera avslöjandet.
+// Bara UPPTÄCKTA fakta i förhandsvisningen — aldrig en räknad rad (grundarbeslut 2026-07-01,
+// samma princip som i själva avslöjandet: dörren visar vad vi VET, analysen visar vad det kostar).
 const TEASER_ROWS = [
   ['Ert bokslut 2025: 52,9 mkr i omsättning, 30 anställda', 'Källa: offentliga årsredovisningsuppgifter (Bolagsverket)'],   // claims-ok: förhandsvisning, blurrad
-  ['Era Microsoft-licenser: 20 664–75 704 kr/år — beroende på plan', 'Källa: Microsofts publika prislista × anställda'],     // claims-ok: förhandsvisning, blurrad — 30 anst × Basic 57,40 → Premium 210,29 × 12
+  ['Ni kör Microsoft 365 — bekräftat på flera oberoende spår', 'Källa: er publika e-postuppsättning'],                       // claims-ok: förhandsvisning, blurrad
 ];
 
 export function RevealTeaser() {

@@ -10,7 +10,6 @@ import {
   extractNextData, extractSearchCompanies, extractCompanyFacts,
   buildBusinessFindings, mergeRevealFindings,
 } from '../lib/business-intel.js';
-import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 describe('business-intel · domän → SLD', () => {
   test('vanliga domäner', () => {
@@ -86,15 +85,9 @@ describe('business-intel · parsning (kontraktet ur sond v3)', () => {
 
 describe('business-intel · fynden (regel 2 + 3: kodräknat, källa på varje rad)', () => {
   const facts = { legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025' };
-  // Microsofts verifierade Business-planer (BRANCHINDEX-form): kr/anv/MÅN på årsavtal, microsoft.com
-  const msTiers = { tiers: [
-    { label: 'Business Basic', monthly: 57.40 },
-    { label: 'Business Standard', monthly: 119.48 },
-    { label: 'Business Premium', monthly: 210.29 },
-  ], lastVerified: '2026-06-14' };
 
   test('bokslutsfyndet: mkr-format, år, källa Bolagsverket — ALDRIG profit i copy', () => {
-    const f = buildBusinessFindings(facts, { msTiers });
+    const f = buildBusinessFindings(facts);
     const biz = f.find((x) => x.kind === 'business');
     assert.ok(biz);
     assert.match(biz.title, /52,9 mkr/);
@@ -105,44 +98,24 @@ describe('business-intel · fynden (regel 2 + 3: kodräknat, källa på varje ra
   });
 
   test('koncern-lärdomen: fyndet NAMNGER den juridiska enheten (detail + källa)', () => {
-    const f = buildBusinessFindings(facts, { msTiers });
+    const f = buildBusinessFindings(facts);
     const biz = f.find((x) => x.kind === 'business');
     assert.match(biz.detail, /Gäller Apendo AB/);          // exakt vilken enhet siffrorna gäller
     assert.match(biz.source, /Apendo AB/);
   });
-  test('costline: verifierat SPANN över Business-planerna — aldrig en antagen plan (grundarlärdom 2026-07-01)', () => {
-    const f = buildBusinessFindings(facts, { msTiers });
-    const c = f.find((x) => x.kind === 'costline');
-    assert.ok(c);
-    const sp = (s) => s.replace(/[  ]/g, ' ');   // sv-SE-format använder no-break space
-    assert.match(sp(c.title), /20 664–75 704/);            // 30×57,40×12=20 664 · 30×210,29×12=75 704,40
-    assert.match(sp(c.detail), /Business Basic 57,40 · Business Standard 119,48 · Business Premium 210,29/);
-    assert.match(c.detail, /årsavtal/);
-    assert.match(c.title, /beroende på plan/);
-    assert.match(c.detail, /ser vi på er första faktura/);
-    assert.match(c.source, /microsoft\.com, 2026-06-14/);
+  test('GRUNDARBESLUT 2026-07-01: costline är BORTTAGEN — avslöjandet bär ALDRIG en räknad rad', () => {
+    // Tre iterationer (p25-felmärkning → antagen plan → 3,7×-spann + Microsoft-priser åt
+    // Google-bolag) hade samma rot: raden var RÄKNAD, inte UPPTÄCKT. Dörren visar bara fakta;
+    // licensmatematiken bor i analysen där planen är känd (tests/saas-tier-detection.mjs).
+    const f = buildBusinessFindings(facts);
+    assert.equal(f.length, 1);
+    assert.equal(f[0].kind, 'business');
+    assert.equal(f.find((x) => x.kind === 'costline'), undefined);
+    const allText = f.map((x) => `${x.title} ${x.detail} ${x.source}`).join(' ');
+    assert.ok(!/kr\/år|listpris|golvpris|licenser/i.test(allText), 'kostnadsräknat språk får inte nå avslöjandet');
   });
-  test('utan planer (eller <2) → bara bokslutsfyndet · utan fakta → tomt', () => {
-    assert.equal(buildBusinessFindings(facts, {}).length, 1);
-    assert.equal(buildBusinessFindings(facts, { msTiers: { tiers: [{ label: 'X', monthly: 100 }] } }).length, 1);
-    assert.deepEqual(buildBusinessFindings(null, { msTiers }), []);
-  });
-  test('REGRESSIONSLÅS: "golvpris"-etiketten (p25 felmärkt som verifierad) får ALDRIG återkomma', () => {
-    const f = buildBusinessFindings(facts, { msTiers });
-    const allText = f.map((x) => `${x.title} ${x.detail} ${x.source}`).join(' ').replace(/\u00A0|\u202F/g, ' ');
-    assert.ok(!/golvpris/i.test(allText), 'p25/golvpris-språk i costline = regel 3-brott (fel proveniens)');
-    assert.ok(!/1 ?704/.test(allText), 'p25-talet 1704 får inte nå copy som pris');
-    const c = f.find((x) => x.kind === 'costline');
-    assert.ok(!/från ~/.test(c.title), 'ett "från"-golv byggt på EN antagen plan är inte ett sant golv (Basic är billigare)');
-    assert.match(c.title, /–/);   // spann, inte punkt: vi antar aldrig kundens plan
-  });
-  test('MASKINVAKT: BRANCHINDEX bär alla TRE Business-planerna (spannet costline vilar på)', () => {
-    const lt = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
-    for (const k of ['business-basic', 'business-standard', 'business-premium']) {
-      assert.ok(lt[k]?.msrpAnnual > 0, `${k}.msrpAnnual saknas — spannet bruten`);
-      assert.equal(lt[k].source, 'microsoft.com');
-      assert.ok(lt[k].lastVerified, `${k}.lastVerified saknas — priset kan inte källdateras`);
-    }
+  test('utan fakta → tomt', () => {
+    assert.deepEqual(buildBusinessFindings(null), []);
   });
 });
 

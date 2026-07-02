@@ -13,7 +13,7 @@ const domains = [...new Set(csv.split('\n')
 
 console.log(`Kör avslöjandet mot ${domains.length} riktiga svenska bolag…\n`);
 
-const STRONG = new Set(['platform', 'onboarding', 'cert', 'domain', 'dmarc', 'business', 'costline']);  // äkta "om er"-fynd
+const STRONG = new Set(['platform', 'onboarding', 'cert', 'domain', 'dmarc', 'business']);  // äkta "om er"-fynd
 const FLOOR  = new Set(['bridge', 'infra']);
 
 async function run(d) {
