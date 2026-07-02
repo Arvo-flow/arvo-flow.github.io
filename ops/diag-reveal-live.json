@@ -11,13 +11,6 @@
       "source": "Offentliga årsredovisningsuppgifter (Bolagsverket) · Lynxeye AB · bokslutsår 2025"
     },
     {
-      "kind": "costline",
-      "confidence": "high",
-      "title": "Era Microsoft-licenser: 37 195–136 268 kr/år för 54 platser — beroende på plan",
-      "detail": "Microsofts Business-planer på årsavtal (publik prislista): Business Basic 57,40 · Business Standard 119,48 · Business Premium 210,29 kr/användare/mån × era 54 anställda × 12 mån. Vilken plan ni betalar för — och om varje plats faktiskt används — ser vi på er första faktura.",
-      "source": "Microsofts publika prislista (microsoft.com, 2026-06-14) × antal anställda ur årsredovisningen"
-    },
-    {
       "kind": "platform",
       "confidence": "high",
       "title": "Ni kör Microsoft 365",
