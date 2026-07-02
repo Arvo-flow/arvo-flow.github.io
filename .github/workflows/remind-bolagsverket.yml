@@ -1,0 +1,30 @@
+name: Höst-påminnelse Bolagsverket
+# Bumpar issue #78 (Bolagsverkets API-registrering) 1 okt + reserv 2 nov 2026, ENDAST om öppet.
+# GitHub-cron är UTC: 07:17 UTC ≈ 09:17 svensk tid. OBS: GitHub pausar scheman efter 60 dagars
+# repo-inaktivitet — issuet i sig är det hållbara ankaret; detta är notisen.
+on:
+  schedule:
+    - cron: '17 7 1 10 *'    # 1 okt
+    - cron: '17 7 2 11 *'    # 2 nov (reserv om oktober-bumpen missas/ignoreras)
+  workflow_dispatch:
+permissions:
+  issues: write
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Bump issue if still open
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = 78;
+            const { data: issue } = await github.rest.issues.get({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number,
+            });
+            if (issue.state !== 'open') { console.log('Issue #78 stängt — ingen påminnelse behövs.'); return; }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number,
+              body: '🍂 **Höst-påminnelse:** dags för Bolagsverkets API-registrering (~5 min — stegen står i issue-beskrivningen ovan). När nyckeln ligger som secret: säg till Claude, som tar allt därifrån.',
+            });
+            console.log('Bump postad på #78.');
