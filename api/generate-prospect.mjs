@@ -13,6 +13,7 @@ import { getDb } from '../lib/db.js';
 import { mapSni } from '../lib/sni-mapper.js';
 import { estimateForProfile, bucketForSize } from '../lib/outbound-estimator.js';
 import { swMonthYear, monthsAgo, MX_LABELS } from '../lib/format.js';
+import { fetchBusinessFactsByOrgnr } from '../lib/business-intel.js';
 
 export const config = { maxDuration: 20 };
 
@@ -214,6 +215,15 @@ export default async function handler(req, res) {
   // Generate estimates — pass mxPlatform so M365 category is included when confirmed via DNS.
   // industry → lib/benchmark.js läskedja: prisbokens livedata används när den bär.
   const estimates = await estimateForProfile({ segment: profile.segment, sizeBucket, employees, mxPlatform, industry: profile.label });
+
+  // AFFÄRSHJÄRNAN via ORGNR (2026-07-02): leads-filens orgnr är en exakt, människoverifierad
+  // nyckel → bolagets offentliga bokslut (omsättning, anställda, år) leder dossiern. Ingen
+  // namngrind behövs (till skillnad från dörrens domän-väg). Misslyckas hämtningen → dossiern
+  // byggs som förr, utan bokslutsraden (fail-open, aldrig ett stopp).
+  if (orgNr) {
+    const business = await fetchBusinessFactsByOrgnr(orgNr).catch(() => null);
+    if (business) estimates.business = business;
+  }
 
   // Attach frozen intelligence metadata if provided
   if (foundedYear)      estimates.foundedYear      = parseInt(foundedYear, 10);

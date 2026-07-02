@@ -28,9 +28,12 @@ const csvFile   = args.find(a => !a.startsWith('--'));
 const rate      = parseInt(args.find(a => a.startsWith('--rate='))?.split('=')[1] ?? '20', 10);
 const dryRun    = args.includes('--dry-run');
 const noEmail   = args.includes('--no-email');
+// --only=<substräng>: generera enbart matchande bolag (skiftlägesokänsligt) — för gransknings-
+// dossierer innan hela batchen körs (grundarflöde 2026-07-02).
+const only      = (args.find((a) => a.startsWith('--only=')) ?? '').slice(7).toLowerCase() || null;
 
 if (!csvFile) {
-  console.error('Usage: node scripts/batch-prospects.mjs leads.csv [--rate=20] [--dry-run] [--no-email]');
+  console.error('Usage: node scripts/batch-prospects.mjs leads.csv [--rate=20] [--dry-run] [--no-email] [--only=namn]');
   process.exit(1);
 }
 
@@ -112,6 +115,10 @@ async function main() {
   } catch (err) {
     console.error(`Kunde inte läsa ${csvFile}: ${err.message}`);
     process.exit(1);
+  }
+  if (only) {
+    rows = rows.filter((r) => (r.company_name ?? '').toLowerCase().includes(only));
+    console.log(`--only=${only} → ${rows.length} matchande bolag`);
   }
   console.log(`Hittade ${rows.length} rader i CSV-filen\n`);
 

@@ -18,9 +18,13 @@ on:
         description: 'Skicka mail till contact_email (ja/nej)'
         required: false
         default: 'nej'
+      only:
+        description: 'Generera enbart bolag vars namn innehåller (t.ex. lynxeye) — för granskning'
+        required: false
+        default: ''
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate-prospects:
@@ -68,8 +72,27 @@ jobs:
             NO_EMAIL_FLAG=""
           fi
 
-          echo "Kör batch-prospects mot: $SCORED"
-          node scripts/batch-prospects.mjs "$SCORED" $NO_EMAIL_FLAG --rate=30000 2>&1 | tee /tmp/batch-output.txt
+          ONLY="${{ github.event.inputs.only || '' }}"
+          ONLY_FLAG=""
+          if [ -n "$ONLY" ]; then ONLY_FLAG="--only=$ONLY"; fi
+
+          echo "Kör batch-prospects mot: $SCORED $ONLY_FLAG"
+          node scripts/batch-prospects.mjs "$SCORED" $NO_EMAIL_FLAG $ONLY_FLAG --rate=30000 2>&1 | tee /tmp/batch-output.txt
+
+      - name: Spara dossier-payload för granskning (ops/prospect-review.json)
+        if: github.event.inputs.only != ''
+        continue-on-error: true
+        run: |
+          TOKEN=$(grep -oE 'https://arvoflow\.se/prospect/[a-zA-Z0-9_-]+' /tmp/batch-output.txt | head -1 | sed 's|.*/||')
+          if [ -z "$TOKEN" ]; then echo "ingen token hittad"; exit 0; fi
+          curl -s "https://arvoflow.se/api/prospect?token=$TOKEN" -o ops/prospect-review.json
+          echo "{\"token\": \"$TOKEN\"}" > ops/prospect-review-token.json
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Prospect Bot"
+          git pull --rebase origin main || true
+          git add ops/prospect-review.json ops/prospect-review-token.json
+          git commit -m "ops: prospect-review [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
 
       - name: Visa prospect-URLs i Summary
         run: |

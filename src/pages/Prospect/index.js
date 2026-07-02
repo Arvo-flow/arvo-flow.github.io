@@ -95,6 +95,17 @@ export default function Prospect() {
   const hasFindings = findings.length > 0;
 
   const signals = [];
+  // AFFÄRSHJÄRNAN LEDER (2026-07-02): bolagets eget bokslut som första signal — "vi gjorde
+  // hemläxan innan vi hörde av oss". Källa: offentliga årsredovisningsuppgifter (Bolagsverket),
+  // hämtade via exakt orgnr vid genereringen. fmtMkr: tkr → "221,9".
+  const business = estimates?.business;
+  if (business?.revenueTkr > 0) {
+    const mkr = (business.revenueTkr / 1000).toLocaleString('sv-SE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    signals.push({
+      text: `Ert bokslut ${business.year}: ${mkr} mkr i omsättning, ${business.employees} anställda — offentliga uppgifter (Bolagsverket), inget ni delat`,
+      key: 'business',
+    });
+  }
   findings.forEach(f => signals.push({ text: f, key: f }));
 
   if (!hasFindings && mxSince) {
@@ -110,9 +121,9 @@ export default function Prospect() {
   }
 
   const hasSignals = signals.length > 0;
-  const eyebrow    = hasFindings ? 'IDENTIFIERAT FYND' : 'INFRASTRUKTURANALYS';
+  const eyebrow    = (hasFindings || business) ? 'IDENTIFIERAT FYND' : 'INFRASTRUKTURANALYS';
 
-  const showIntelMeta = hasFindings && (mxPlatform || domainRegistered || mxSince);
+  const showIntelMeta = (hasFindings || business) && (mxPlatform || domainRegistered || mxSince);
 
   // Premien härleds alltid ur de kategorier som faktiskt byggde summan —
   // aldrig ur e-postplattformen (de kan vara olika saker).

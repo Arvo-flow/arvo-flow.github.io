@@ -6,7 +6,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  sldFromDomain, normalizeCompanyName, matchCompany,
+  sldFromDomain, normalizeCompanyName, matchCompany, normalizeOrgnr,
   extractNextData, extractSearchCompanies, extractCompanyFacts,
   buildBusinessFindings, mergeRevealFindings,
 } from '../lib/business-intel.js';
@@ -21,6 +21,17 @@ describe('business-intel · domän → SLD', () => {
     assert.equal(sldFromDomain('ab.se'), null);
     assert.equal(sldFromDomain(''), null);
     assert.equal(sldFromDomain(null), null);
+  });
+});
+
+describe('business-intel · orgnr-vägen (utåtriktade flödet — exakt nyckel, ingen grind)', () => {
+  test('normalisering: bindestreck bort, exakt 10 siffror krävs', () => {
+    assert.equal(normalizeOrgnr('556569-0087'), '5565690087');
+    assert.equal(normalizeOrgnr('5565690087'), '5565690087');
+    assert.equal(normalizeOrgnr('556569-008'), null);     // 9 siffror → aldrig en gissning
+    assert.equal(normalizeOrgnr('55 65 69-0087'), '5565690087');
+    assert.equal(normalizeOrgnr(''), null);
+    assert.equal(normalizeOrgnr(null), null);
   });
 });
 
