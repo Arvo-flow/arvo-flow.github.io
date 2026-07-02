@@ -1,0 +1,14 @@
+
+══════════ Kundanmälan (värdefulla datamängder) ══════════
+FEL: fetch failed
+
+══════════ API värdefulla datamängder (översikt) ══════════
+FEL: fetch failed
+
+══════════ API företagsinformation (översikt) ══════════
+FEL: fetch failed
+
+══════════ FAQ om API:erna ══════════
+FEL: fetch failed
+
+══════════ KLART ══════════
