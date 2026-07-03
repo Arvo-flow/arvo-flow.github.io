@@ -321,10 +321,11 @@ export const BigNumberNote = styled.div`
   margin-top: 10px;
 `;
 
-// ── Estimate cards (light section) ────────────────────────────────────────────
+// ── Estimate cards — RUMMETS mörka instrumentspråk (grundarbeslut 2026-07-02:
+// gränssnittet identiskt rummet; den ljusa kontrastsektionen utgick) ─────────────
 
 export const ContentArea = styled.div`
-  background: ${theme.dossier.surface};
+  background: ${theme.dossier.bg};
   padding: 56px 20px 48px;
 
   @media (min-width: 768px) {
@@ -339,20 +340,20 @@ export const BreakdownEyebrow = styled.div`
   letter-spacing: 0.30em;
   text-indent: 0.30em;
   text-transform: uppercase;
-  color: rgba(14,26,23,0.52);
+  color: ${theme.dossier.teal};
   margin-bottom: 26px;
   text-align: center;
 `;
 
 /* Dossier-kolumn — ett memo är aldrig bredare än läsbart, oavsett skärm */
 export const EstimateCard = styled.div`
-  background: ${theme.dossier.card};
-  border-radius: 24px;
+  background: ${theme.dossier.bgRaised};
+  border: 1px solid ${theme.dossier.hairlineOnDark};
+  border-radius: 20px;
   padding: 28px 24px 0;
   max-width: ${theme.dossier.column};
   margin: 0 auto 16px;
   overflow: hidden;
-  box-shadow: 0 2px 24px rgba(11,22,18,0.07);
 `;
 
 export const CategoryLabel = styled.div`
@@ -361,7 +362,7 @@ export const CategoryLabel = styled.div`
   font-weight: 600;
   letter-spacing: 0.20em;
   text-transform: uppercase;
-  color: ${theme.color.brand};
+  color: ${theme.dossier.teal};
   margin-bottom: 10px;
 `;
 
@@ -371,21 +372,21 @@ export const EstimateRow = styled.div`
   align-items: baseline;
   gap: 12px;
   padding: 13px 0;
-  border-bottom: 1px solid rgba(14,26,23,0.06);
+  border-bottom: 1px solid ${theme.dossier.hairlineOnDark};
 
   &:last-of-type { border-bottom: none; }
 `;
 
 export const EstimateDesc = styled.span`
   font-size: 13px;
-  color: rgba(14,26,23,0.55);
+  color: ${theme.dossier.mutedOnDark};
 `;
 
 export const EstimateVal = styled.span`
   font-family: ${MONO};
   font-size: 13px;
   font-weight: 600;
-  color: ${({ $highlight }) => $highlight ? theme.color.brand : 'rgba(14,26,23,0.84)'};
+  color: ${({ $highlight }) => $highlight ? theme.dossier.tealBright : theme.dossier.inkOnDark};
   text-align: right;
 `;
 
@@ -394,13 +395,14 @@ export const EstimateValNote = styled.span`
   font-family: 'Inter', sans-serif;
   font-size: 11px;
   font-weight: 400;
-  color: rgba(14,26,23,0.44);
+  color: ${theme.dossier.faintOnDark};
   margin-top: 2px;
 `;
 
 /* Premie-bandet bleedar till kortets kanter — en avslutning, inte en låda i lådan */
 export const SavingBand = styled.div`
-  background: ${theme.dossier.bgRaised};
+  background: ${theme.dossier.bg};
+  border-top: 1px solid ${theme.dossier.hairlineOnDark};
   margin: 18px -24px 0;
   padding: 18px 24px;
   display: flex;
@@ -434,7 +436,7 @@ export const SavingInterval = styled.div`
 
 export const SourceNote = styled.div`
   font-size: 11px;
-  color: rgba(14,26,23,0.46);
+  color: ${theme.dossier.faintOnDark};
   margin: 12px 0 0;
   padding-bottom: 16px;
 `;

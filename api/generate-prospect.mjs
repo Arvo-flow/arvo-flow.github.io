@@ -198,8 +198,19 @@ export default async function handler(req, res) {
   } = req.body ?? {};
 
   if (!companyName) return send(res, 400, { error: 'companyName required' });
-  const employees = parseInt(rawEmployees, 10);
+  let employees = parseInt(rawEmployees, 10);
   if (!employees || employees < 1) return send(res, 400, { error: 'employees required (integer ≥ 1)' });
+
+  // AFFÄRSHJÄRNAN via ORGNR (2026-07-02): exakt, människoverifierad nyckel → bolagets offentliga
+  // bokslut. Hämtas FÖRE estimaten så att Bolagsverkets anställda-siffra (färskast, auktoritativ)
+  // blir EN sanning för hela dossiern — hero, estimat och bokslutsrad kan aldrig säga olika tal
+  // (grundargranskning 2026-07-02: CSV sa 50, bokslutet 54 på samma sida). Fail-open: utan träff
+  // byggs dossiern som förr på CSV-siffran.
+  let business = null;
+  if (orgNr) {
+    business = await fetchBusinessFactsByOrgnr(orgNr).catch(() => null);
+    if (business?.employees > 0) employees = business.employees;
+  }
 
   // Resolve industry profile
   let profile = { label: rawIndustryLabel, segment: rawSegment, confidence: 1.0 };
@@ -216,14 +227,7 @@ export default async function handler(req, res) {
   // industry → lib/benchmark.js läskedja: prisbokens livedata används när den bär.
   const estimates = await estimateForProfile({ segment: profile.segment, sizeBucket, employees, mxPlatform, industry: profile.label });
 
-  // AFFÄRSHJÄRNAN via ORGNR (2026-07-02): leads-filens orgnr är en exakt, människoverifierad
-  // nyckel → bolagets offentliga bokslut (omsättning, anställda, år) leder dossiern. Ingen
-  // namngrind behövs (till skillnad från dörrens domän-väg). Misslyckas hämtningen → dossiern
-  // byggs som förr, utan bokslutsraden (fail-open, aldrig ett stopp).
-  if (orgNr) {
-    const business = await fetchBusinessFactsByOrgnr(orgNr).catch(() => null);
-    if (business) estimates.business = business;
-  }
+  if (business) estimates.business = business;
 
   // Attach frozen intelligence metadata if provided
   if (foundedYear)      estimates.foundedYear      = parseInt(foundedYear, 10);
