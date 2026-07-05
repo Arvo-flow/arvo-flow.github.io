@@ -516,7 +516,18 @@ export const SwitchVerdict = styled.div`
   .sv-v { font-family:${MONO}; font-size:13px; color:${theme.dossier.inkOnDark}; font-feature-settings:'tnum'; white-space:nowrap; }
   .sv-keep .sv-v { font-size:15px; color:${theme.dossier.tealBright}; }
 
-  .sv-act { margin-top:18px; }
+  .sv-act { margin-top:18px; display:flex; flex-direction:column; gap:11px; }
+  /* Avtalsuppladdningen (amber-lägets nästa drag) — tyst sekundärhandling under CTA:n */
+  .sv-upload { display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+    font-size:13px; font-weight:600; color:${theme.dossier.teal};
+    border:1px dashed rgba(43,196,172,.45); border-radius:${theme.size.radius.pill}; padding:11px 18px;
+    transition:background .15s, border-color .15s;
+    &:hover { background:rgba(43,196,172,.08); border-color:${theme.dossier.tealBright}; }
+    input { display:none; } }
+  .sv-upload-note { margin:10px 2px 0; font-size:12px; line-height:1.5;
+    &.done { color:${theme.dossier.tealBright}; }
+    &.work { color:${theme.dossier.faintOnDark}; }
+    &.fail { color:${theme.dossier.signal}; } }
 `;
 
 // "Bevakat — inte prissatt" (Liggare 2): disciplinmontern. Återhållsam, förtrolig — hederligheten

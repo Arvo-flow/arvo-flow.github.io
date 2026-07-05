@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {
   VILLKORSBOK, villkorForSupplier, addMonths,
   acceptExtractedContract, computeContractClock,
+  resolveContractRules, computeContractOutcome,
 } from '../lib/contract-intel.js';
 
 describe('villkorsboken · maskinvakt (prisbokens disciplin)', () => {
@@ -106,5 +107,54 @@ describe('kontraktsklockan · deterministisk rullning (handräknade fall)', () =
   test('ogiltig input → null (aldrig ett kast, aldrig en gissning)', () => {
     assert.equal(computeContractClock({ avtalsstart: 'igår', avtalstidMan: 12, uppsagningstidMan: 3 }, { today: TODAY }), null);
     assert.equal(computeContractClock({ avtalsstart: '2025-01-01', avtalstidMan: 0, uppsagningstidMan: 3 }, { today: TODAY }), null);
+  });
+});
+
+describe('regelupplösningen · avtalets villkor vinner, villkorsboken täcker, aldrig gissning', () => {
+  const bok = VILLKORSBOK.bahnhof;
+
+  test('avtalet anger uppsägningstid → avtalet vinner (källa: avtalet)', () => {
+    const r = resolveContractRules({ uppsagningstidMan: 1, forlangningMan: 12 }, bok);
+    assert.deepEqual(r, { uppsagningstidMan: 1, forlangningMan: 12, kalla: 'avtalet' });
+  });
+  test('avtalet tyst → villkorsboken täcker (källa: villkorsbok)', () => {
+    const r = resolveContractRules({ uppsagningstidMan: null, forlangningMan: null }, bok);
+    assert.deepEqual(r, { uppsagningstidMan: 3, forlangningMan: 3, kalla: 'villkorsbok' });
+  });
+  test('varken avtal eller bok → null-regler (källa: null) — aldrig en gissning', () => {
+    const r = resolveContractRules({ uppsagningstidMan: null }, null);
+    assert.deepEqual(r, { uppsagningstidMan: null, forlangningMan: null, kalla: null });
+  });
+  test('avtalets uppsägning + bokens förlängning kombineras (lucktäckning per fält)', () => {
+    const r = resolveContractRules({ uppsagningstidMan: 2, forlangningMan: null }, bok);
+    assert.deepEqual(r, { uppsagningstidMan: 2, forlangningMan: 3, kalla: 'avtalet' });
+  });
+});
+
+describe('computeContractOutcome · hela kedjan, ärlig vid regelluckor', () => {
+  const TODAY = new Date('2026-07-03T00:00:00Z');
+  const fields = { avtalsstart: '2025-01-15', avtalstidMan: 12 };
+
+  test('kända regler → full klocka med regelKalla', () => {
+    const o = computeContractOutcome(fields, { uppsagningstidMan: 3, forlangningMan: 3, kalla: 'villkorsbok' }, { today: TODAY });
+    assert.equal(o.deadline, '2026-07-15');
+    assert.equal(o.regelKalla, 'villkorsbok');
+    assert.equal(o.status, 'window-open');
+  });
+  test('okända regler → ENDAST initial bindning (faktum), deadline null, aldrig gissad förnyelse', () => {
+    const o = computeContractOutcome({ avtalsstart: '2026-01-15', avtalstidMan: 24 }, { uppsagningstidMan: null, forlangningMan: null, kalla: null }, { today: TODAY });
+    assert.equal(o.currentPeriodEnd, '2028-01-15');
+    assert.equal(o.deadline, null);
+    assert.equal(o.regelKalla, null);
+    assert.equal(o.status, 'expires');
+    assert.equal(o.renewals, 0);
+  });
+  test('okända regler + passerad bindning → expired (lagras aldrig som framtid)', () => {
+    const o = computeContractOutcome({ avtalsstart: '2023-01-01', avtalstidMan: 12 }, { uppsagningstidMan: null, kalla: null }, { today: TODAY });
+    assert.equal(o.status, 'expired');
+  });
+  test('ofullständiga fält → null', () => {
+    assert.equal(computeContractOutcome({ avtalsstart: null, avtalstidMan: 12 }, { uppsagningstidMan: 3 }, { today: TODAY }), null);
+    assert.equal(computeContractOutcome(null, { uppsagningstidMan: 3 }, { today: TODAY }), null);
   });
 });

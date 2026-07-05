@@ -220,6 +220,7 @@ export default function Portfolio() {
   const [dragOver, setDragOver] = useState(false);
   const [testMode, setTestMode] = useState(false);
   const [copiedInbox, setCopiedInbox] = useState(false);   // kopiera-bekräftelse för intag-adressen
+  const [avtalStatus, setAvtalStatus] = useState({});      // avtalsuppladdning per analys: { [id]: { phase, msg } }
   // Avslöjandet — kundens e-postdomän → källbelagt "hur visste de det?"-kort (gratis-vägen, DNS).
   const [revealEmail, setRevealEmail] = useState('');
   const [reveal, setReveal] = useState(null);
@@ -379,6 +380,33 @@ export default function Portfolio() {
   function toggle(id) {
     setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   }
+
+  // Avtalsuppladdning (C1): PDF → AI läser datumfälten → koden accepterar → klockan räknar →
+  // contract_end_date sätts → raden re-renderas i teal-läget ("vi vet exakt när").
+  const uploadContract = useCallback(async (analysisId, file) => {
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      setAvtalStatus((s) => ({ ...s, [analysisId]: { phase: 'fail', msg: 'Endast PDF stöds.' } }));
+      return;
+    }
+    setAvtalStatus((s) => ({ ...s, [analysisId]: { phase: 'work', msg: 'Läser avtalet…' } }));
+    try {
+      const pdfBase64 = await fileToBase64(file);
+      const res = await fetch('/api/contract-upload', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analysisId, pdfBase64, email: authEmail || apiEmail || undefined }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok) {
+        setAvtalStatus((s) => ({ ...s, [analysisId]: { phase: 'done', msg: `Läst — bindningen löper till ${data.clock.currentPeriodEnd}.` } }));
+        await loadOffice();   // teal-läget tänds ur färsk data
+      } else {
+        setAvtalStatus((s) => ({ ...s, [analysisId]: { phase: 'fail', msg: data.reason || data.error || 'Avtalet kunde inte läsas just nu.' } }));
+      }
+    } catch {
+      setAvtalStatus((s) => ({ ...s, [analysisId]: { phase: 'fail', msg: 'Avtalet kunde inte läsas just nu — försök igen om en stund.' } }));
+    }
+  }, [authEmail, apiEmail, loadOffice]);
 
   const copyInbox = useCallback(async () => {
     try { await navigator.clipboard.writeText(INBOX_ADDR); } catch { /* clipboard nekad — chippet är ändå läsbart */ }
@@ -1035,7 +1063,23 @@ export default function Portfolio() {
                                 <SwitchBtn as={Link} to="/aktivera">
                                   {known ? 'Aktivera bytet' : 'Förbered bytet'} <Icon name="arrow" size={16} />
                                 </SwitchBtn>
+                                {/* Amber-lägets nästa drag: avtalet in → AI läser datumen → koden räknar →
+                                    teal-läget tänds. Vid work/done/fail visas ärligt status-besked. */}
+                                {!known && (
+                                  <label className="sv-upload">
+                                    <Icon name="upload" size={14} stroke={1.9} />
+                                    {avtalStatus[a.id]?.phase === 'work' ? 'Läser avtalet…' : 'Ladda upp avtalet (PDF)'}
+                                    <input
+                                      type="file" accept="application/pdf"
+                                      disabled={avtalStatus[a.id]?.phase === 'work'}
+                                      onChange={(e) => { uploadContract(a.id, e.target.files?.[0]); e.target.value = ''; }}
+                                    />
+                                  </label>
+                                )}
                               </div>
+                              {!known && avtalStatus[a.id]?.msg && (
+                                <p className={`sv-upload-note ${avtalStatus[a.id].phase}`}>{avtalStatus[a.id].msg}</p>
+                              )}
                             </SwitchVerdict>
                           );
                         })()}
