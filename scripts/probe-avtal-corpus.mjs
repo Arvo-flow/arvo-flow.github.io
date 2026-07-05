@@ -13,12 +13,11 @@ const H = { 'User-Agent': UA, 'Accept-Language': 'sv-SE,sv;q=0.9', Accept: 'text
 
 // Villkors-indexsidor (publika). Sonden överlever döda länkar — varje källa är try/catch.
 const INDEX_PAGES = [
-  ['Tele2 företag villkor',   'https://www.tele2.se/foretag/villkor'],
-  ['Telia företag villkor',   'https://www.telia.se/foretag/om/villkor'],
-  ['Telenor företag villkor', 'https://www.telenor.se/foretag/kundservice/villkor/'],
-  ['Bahnhof villkor',         'https://bahnhof.se/foretag/villkor'],
-  ['Fortnox avtal & villkor', 'https://www.fortnox.se/om-fortnox/avtal-och-villkor'],
-  ['Telavox villkor',         'https://telavox.com/sv/legal/'],
+  ['Telia företag villkor',    'https://www.telia.se/foretag/om/villkor'],
+  ['Tele2 företag villkor v2', 'https://www.tele2.se/foretag/kundservice/villkor'],
+  ['Tele2 villkor (allmänt)',  'https://www.tele2.se/villkor'],
+  ['Telenor företag villkor',  'https://www.telenor.se/foretag/villkor'],
+  ['Telenor villkor (allmänt)','https://www.telenor.se/villkor'],
 ];
 
 const KEYWORDS = /bindningstid|uppsägningstid|uppsägning|förläng|avtalstid|avtalsperiod|brytavgift|förtida upphörande|initial period|löper.*tills vidare|automatiskt.*förnya/i;
@@ -62,16 +61,16 @@ for (const { source, url } of allPdfs.slice(0, 8)) {
     if (buf.length < 2000 || buf.length > 15_000_000) { console.log(`\n[${idx}] ${source}: orimlig storlek ${buf.length} — hoppar`); continue; }
     const p = `/tmp/avtal/doc${idx}.pdf`;
     writeFileSync(p, buf);
-    const text = execFileSync('pdftotext', ['-layout', p, '-'], { maxBuffer: 20_000_000 }).toString();
+    const text = execFileSync('pdftotext', ['-raw', p, '-'], { maxBuffer: 20_000_000 }).toString();
     console.log(`\n[${idx}] ${source} · ${Math.round(buf.length / 1024)} kB · ${text.length} tecken text`);
     console.log(`    ${url.slice(0, 120)}`);
     // Dumpa ±180 tecken runt varje nyckelordsträff (max 8 per dokument, dedup:ade)
     const seen = new Set();
     let m, hits = 0;
     const rx = new RegExp(KEYWORDS.source, 'gi');
-    while ((m = rx.exec(text)) && hits < 8) {
-      const ctx = text.slice(Math.max(0, m.index - 90), m.index + 180).replace(/\s+/g, ' ').trim();
-      const key = ctx.slice(0, 50);
+    while ((m = rx.exec(text)) && hits < 12) {
+      const ctx = text.slice(Math.max(0, m.index - 160), m.index + 420).replace(/\s+/g, ' ').trim();
+      const key = ctx.slice(0, 70);
       if (seen.has(key)) continue;
       seen.add(key); hits++;
       console.log(`    » …${ctx}…`);
