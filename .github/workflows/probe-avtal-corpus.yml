@@ -1,0 +1,33 @@
+name: Probe avtal corpus
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/probe-avtal-corpus.mjs'
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install poppler (pdftotext)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+      - name: Probe
+        run: |
+          mkdir -p ops
+          node scripts/probe-avtal-corpus.mjs | tee ops/probe-avtal-corpus.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git pull --rebase origin main || true
+          git add ops/probe-avtal-corpus.txt
+          git commit -m "ops: probe-avtal-corpus [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
