@@ -31,7 +31,15 @@ describe('villkorsboken · maskinvakt (prisbokens disciplin)', () => {
   test('uppslag via leverantörsnamn (skiftlägesokänsligt, delsträng)', () => {
     assert.equal(villkorForSupplier('Bahnhof Företag')?.supplier, 'Bahnhof');
     assert.equal(villkorForSupplier('BAHNHOF AB')?.supplier, 'Bahnhof');
-    assert.equal(villkorForSupplier('Telia Sverige AB'), null);   // medvetet: ingen post utan rent citat
+    assert.equal(villkorForSupplier('Telia Sverige AB')?.supplier, 'Telia');
+    assert.equal(villkorForSupplier('Tele2 Företag AB'), null);   // medvetet: bara privatvillkor funna (fel dokumentklass)
+  });
+  test('Telia-posten: tills-vidare-modellen, en (1) månad, gällande villkorsversion (260401)', () => {
+    const t = VILLKORSBOK.telia;
+    assert.equal(t.uppsagningstidMan, 1);
+    assert.equal(t.efterBindning, 'tillsvidare');
+    assert.match(t.citat, /en \(1\) månads uppsägningstid/);
+    assert.match(t.kalla, /260401/);                              // gällande version, inte de äldre (3 mån)
   });
 });
 
@@ -115,19 +123,19 @@ describe('regelupplösningen · avtalets villkor vinner, villkorsboken täcker, 
 
   test('avtalet anger uppsägningstid → avtalet vinner (källa: avtalet)', () => {
     const r = resolveContractRules({ uppsagningstidMan: 1, forlangningMan: 12 }, bok);
-    assert.deepEqual(r, { uppsagningstidMan: 1, forlangningMan: 12, kalla: 'avtalet' });
+    assert.deepEqual(r, { uppsagningstidMan: 1, forlangningMan: 12, efterBindning: 'forlangning', kalla: 'avtalet' });
   });
   test('avtalet tyst → villkorsboken täcker (källa: villkorsbok)', () => {
     const r = resolveContractRules({ uppsagningstidMan: null, forlangningMan: null }, bok);
-    assert.deepEqual(r, { uppsagningstidMan: 3, forlangningMan: 3, kalla: 'villkorsbok' });
+    assert.deepEqual(r, { uppsagningstidMan: 3, forlangningMan: 3, efterBindning: 'forlangning', kalla: 'villkorsbok' });
   });
   test('varken avtal eller bok → null-regler (källa: null) — aldrig en gissning', () => {
     const r = resolveContractRules({ uppsagningstidMan: null }, null);
-    assert.deepEqual(r, { uppsagningstidMan: null, forlangningMan: null, kalla: null });
+    assert.deepEqual(r, { uppsagningstidMan: null, forlangningMan: null, efterBindning: null, kalla: null });
   });
   test('avtalets uppsägning + bokens förlängning kombineras (lucktäckning per fält)', () => {
     const r = resolveContractRules({ uppsagningstidMan: 2, forlangningMan: null }, bok);
-    assert.deepEqual(r, { uppsagningstidMan: 2, forlangningMan: 3, kalla: 'avtalet' });
+    assert.deepEqual(r, { uppsagningstidMan: 2, forlangningMan: 3, efterBindning: 'forlangning', kalla: 'avtalet' });
   });
 });
 
@@ -156,5 +164,46 @@ describe('computeContractOutcome · hela kedjan, ärlig vid regelluckor', () => 
   test('ofullständiga fält → null', () => {
     assert.equal(computeContractOutcome({ avtalsstart: null, avtalstidMan: 12 }, { uppsagningstidMan: 3 }, { today: TODAY }), null);
     assert.equal(computeContractOutcome(null, { uppsagningstidMan: 3 }, { today: TODAY }), null);
+  });
+});
+
+describe('tills-vidare-modellen · Telia/Tele2-klassen (efter bindning: löper, upphör inte)', () => {
+  const TODAY = new Date('2026-07-03T00:00:00Z');
+  const rules = { uppsagningstidMan: 1, forlangningMan: null, efterBindning: 'tillsvidare', kalla: 'villkorsbok' };
+
+  test('FÖRE deadline: fönstret öppet — utträde VID bindningsslutet', () => {
+    const o = computeContractOutcome({ avtalsstart: '2025-01-15', avtalstidMan: 24 }, rules, { today: TODAY });
+    assert.equal(o.currentPeriodEnd, '2027-01-15');
+    assert.equal(o.deadline, '2026-12-15');            // slut − 1 mån varsel
+    assert.equal(o.status, 'window-open');
+    assert.equal(o.renewals, 0);
+  });
+
+  test('EFTER bindningen: rolling — tidigaste utträde = idag + varsel, ingen deadline-press', () => {
+    const o = computeContractOutcome({ avtalsstart: '2023-01-15', avtalstidMan: 24 }, rules, { today: TODAY });
+    assert.equal(o.status, 'rolling');
+    assert.equal(o.deadline, null);
+    assert.equal(o.currentPeriodEnd, '2026-08-03');    // idag (3 jul) + 1 mån varsel
+    assert.equal(o.daysToEnd, 31);
+  });
+
+  test('mellan deadline och bindningsslut: rolling med utträde vid max(slut, idag+varsel)', () => {
+    // slut 2026-07-20, deadline 2026-06-20 (passerad) → utträde = max(2026-07-20, 2026-08-03) = 2026-08-03
+    const o = computeContractOutcome({ avtalsstart: '2024-07-20', avtalstidMan: 24 }, rules, { today: TODAY });
+    assert.equal(o.status, 'rolling');
+    assert.equal(o.currentPeriodEnd, '2026-08-03');
+  });
+
+  test('utan uppsägningstid faller tills-vidare tillbaka till ärlig initial-bindning', () => {
+    const o = computeContractOutcome({ avtalsstart: '2025-01-15', avtalstidMan: 24 },
+      { uppsagningstidMan: null, efterBindning: 'tillsvidare', kalla: null }, { today: TODAY });
+    assert.equal(o.deadline, null);
+    assert.equal(o.regelKalla, null);
+  });
+
+  test('resolveContractRules bär efterBindning ur villkorsboken', () => {
+    const r = resolveContractRules({ uppsagningstidMan: null }, { uppsagningstidMan: 1, forlangningMan: null, efterBindning: 'tillsvidare' });
+    assert.equal(r.efterBindning, 'tillsvidare');
+    assert.equal(r.kalla, 'villkorsbok');
   });
 });
