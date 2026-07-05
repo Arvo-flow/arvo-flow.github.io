@@ -76,6 +76,18 @@ for (const { source, url } of allPdfs.slice(0, 8)) {
       console.log(`    » …${ctx}…`);
     }
     if (!hits) console.log('    (inga klausul-träffar — trolig marknadsförings-PDF)');
+    // MENINGS-DUMP: fullständiga meningar för ordagrann kuratering (villkorsbokens citat-krav)
+    const sentences = text.replace(/\s+/g, ' ').split(/(?<=[.!?])\s+(?=[A-ZÅÄÖ0-9])/);
+    const keySent = sentences.filter((x) => /uppsägningstid|tills vidare|förläng|bindningstid/i.test(x) && x.length < 500);
+    const sSeen = new Set();
+    console.log('    ── FULLSTÄNDIGA MENINGAR ──');
+    for (const sent of keySent) {
+      const k = sent.slice(0, 60);
+      if (sSeen.has(k)) continue;
+      sSeen.add(k);
+      console.log('    ¶ ' + sent.trim());
+      if (sSeen.size >= 10) break;
+    }
   } catch (e) { console.log(`\n[${idx}] ${source}: FEL ${e.message}`); }
 }
 console.log('\n═══════ KLART ═══════');
