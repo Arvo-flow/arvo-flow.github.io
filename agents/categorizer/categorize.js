@@ -11,6 +11,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, CATEGORIZE_TOOL } from './prompt.js';
 import { CATEGORIES } from './categories.js';
+import { guardToolPayload } from '../../lib/schema-guard.js';
 import { getFewShotExamples } from '../../lib/labeled-corrections.js';
 
 const MODEL = 'claude-sonnet-4-6';
@@ -530,6 +531,13 @@ export async function categorize(invoice, opts = {}) {
     throw new CategorizerError(
       'Inget tool_use-block i svaret — modellen avvek från instruktionerna'
     );
+  }
+
+  // Schemakravet (B2): döm AI-utfallet mot verktygets eget schema innan det når
+  // den räknande kedjan. SKUGGA → armeras via SCHEMAKRAV_ENFORCE=1.
+  const schemaVerdict = guardToolPayload({ agent: 'categorize', tool: CATEGORIZE_TOOL, payload: toolUse.input });
+  if (!schemaVerdict.ok) {
+    throw new CategorizerError('Kategoriseringen kunde inte struktureras tillförlitligt — försök igen.');
   }
 
   const result = toolUse.input;

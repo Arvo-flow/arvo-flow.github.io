@@ -14,6 +14,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, RECOMMEND_TOOL } from './prompt.js';
+import { guardToolPayload } from '../../lib/schema-guard.js';
 import { checkProseNumbers } from '../../lib/prose-guard.js';
 import { getBenchmark } from '../../lib/benchmark.js';
 import { CATEGORIES } from '../categorizer/categories.js';
@@ -1399,6 +1400,14 @@ export async function recommend(input, opts = {}) {
     throw new RecommenderError(
       'Inget tool_use-block i svaret — modellen avvek från instruktionerna'
     );
+  }
+
+  // Schemakravet (B2): döm AI-utfallet mot verktygets eget schema INNAN result
+  // muteras nedströms (shelfware m.fl. läggs på efteråt — de är kodskrivna, inte
+  // AI-utfall, och ska inte dömas). SKUGGA → armeras via SCHEMAKRAV_ENFORCE=1.
+  const schemaVerdict = guardToolPayload({ agent: 'recommend', tool: RECOMMEND_TOOL, payload: toolUse.input });
+  if (!schemaVerdict.ok) {
+    throw new RecommenderError('Rekommendationen kunde inte struktureras tillförlitligt — försök igen.');
   }
 
   const result = toolUse.input;

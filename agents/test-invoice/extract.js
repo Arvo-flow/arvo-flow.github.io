@@ -9,6 +9,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { judgeLineArithmetic, judgeProjection } from '../../lib/extraction-integrity.js';
+import { guardToolPayload } from '../../lib/schema-guard.js';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
@@ -381,7 +382,7 @@ ELFAKTUROR — extrahera dessa fält om fakturan är från en elleverantör:
     liknande slutsumma längst ner på fakturan. Om enbart ink. moms anges: dividera med 1.25.
     Sätt null om totalsumman ej är tydligt angiven eller ej kan fastställas med säkerhet.${FEWSHOT_EXAMPLES ? '\n\n' + FEWSHOT_EXAMPLES : ''}`;
 
-const EXTRACT_TOOL = {
+export const EXTRACT_TOOL = {
   name: 'extract_invoice',
   description: 'Extrahera semantiskt klassificerade raddata från en svensk leverantörsfaktura.',
   input_schema: {
@@ -1092,6 +1093,13 @@ export async function extractInvoice(input, opts = {}) {
     throw new ExtractorError(
       `Modellen returnerade inget verktygsanrop. stop_reason=${response.stop_reason}`
     );
+  }
+
+  // Schemakravet (B2): döm AI-utfallet mot verktygets eget schema innan det når
+  // den räknande kedjan. SKUGGA → armeras via SCHEMAKRAV_ENFORCE=1.
+  const schemaVerdict = guardToolPayload({ agent: 'extract', tool: EXTRACT_TOOL, payload: toolUseBlock.input });
+  if (!schemaVerdict.ok) {
+    throw new ExtractorError('Analysen kunde inte struktureras tillförlitligt — försök igen.');
   }
 
   const aggregated = aggregateLineItems(toolUseBlock.input);

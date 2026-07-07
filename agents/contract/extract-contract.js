@@ -19,7 +19,7 @@ function getClient() {
   return _client;
 }
 
-const CONTRACT_TOOL = {
+export const CONTRACT_TOOL = {
   name: 'extract_contract',
   description: 'Strukturerade avtalsfält lästa ur dokumentet — ENDAST vad som uttryckligen står.',
   input_schema: {
@@ -82,5 +82,13 @@ export async function extractContract({ pdfBase64 }, opts = {}) {
 
   const block = response.content.find((b) => b.type === 'tool_use' && b.name === 'extract_contract');
   if (!block) throw new ContractExtractError('Modellen returnerade inget extract_contract-anrop');
+
+  // Schemakravet (B2): döm AI-utfallet mot verktygets eget schema innan det når
+  // acceptansgrinden. SKUGGA → armeras via SCHEMAKRAV_ENFORCE=1.
+  const schemaVerdict = guardToolPayload({ agent: 'extract-contract', tool: CONTRACT_TOOL, payload: block.input });
+  if (!schemaVerdict.ok) {
+    throw new ContractExtractError('Avtalet kunde inte struktureras tillförlitligt — försök igen.');
+  }
+
   return block.input;
 }
