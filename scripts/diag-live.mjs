@@ -35,5 +35,7 @@ console.log(JSON.stringify({
   hasContractClockKey: Object.prototype.hasOwnProperty.call(data, 'contractClock'),
   contractClock:       data.contractClock?.title ?? null,
   servicePeriodEnd:    data.extracted?.servicePeriodEnd ?? null,
+  // B4-bevis: verifikationskvittot ska följa med auto-svaret (grindarnas domslut)
+  verifications:       (data.verifications ?? []).map((v) => `${v.id}:${v.status}`),
   error:               data.error,
 }, null, 2));

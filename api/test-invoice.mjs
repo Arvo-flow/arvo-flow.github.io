@@ -341,8 +341,8 @@ export default async function handler(req, res) {
 
   // ── Säkerhetslager ───────────────────────────────────────────────────────────
   const pdfHash  = createHash('sha256').update(pdfBytes).digest('hex');
-  // v5: invaliderar v4-cache (prorata-fix i like-for-like + pricePerSeatMonthly på run-rate)
-  const cacheKey = `pdf:result:v8:${pdfHash}:e${employeesNum}`;
+  // v9: invaliderar v8-cache (B4 — verifications[] i svaret; äldre cachade svar saknar kvittot)
+  const cacheKey = `pdf:result:v9:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
