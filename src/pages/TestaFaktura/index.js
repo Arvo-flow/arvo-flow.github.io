@@ -15,7 +15,7 @@ import {
   ProgressList, ProgressItem,
   BriefingHead, SavingsBlock, EstimateSavingsBlock, M365ReferenceBlock, AdvisoryCard, NoSwitchBlock, MonitoringBlock, CreditAlert, PriceNote, KV,
   Reasoning, LicenseOverageNote, TierOptAccordion, IntelligenceCard, SwitchCard, ScoreDiag, EmailGate, PortfolioBridge,
-  CalculationChain, SavingRangeBadge,
+  CalculationChain, SavingRangeBadge, VerificationReceipt,
   ModalOverlay, ModalCard, ActivationCard, QuoteLeadForm, RoamingInsight,
   BatchHeader, BatchProgressBar, BatchInvoiceList, BatchInvoiceCard, BatchSummary,
   FormReveal, CalcToggle,
@@ -191,6 +191,47 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
   reader.onerror = () => reject(new Error('Kunde inte läsa filen'));
   reader.readAsDataURL(file);
 });
+
+// B4 · Verifikationskvittot — renderar grindarnas VERKLIGA domslut (backend
+// emitterar dem ur routeExtraction). UI:t påstår aldrig en kontroll själv:
+// finns ingen rad, ritas ingen bock. 'ej_provbar' visas ärligt nedtonad —
+// hederligheten är premiumsignalen, inte en radda oförtjänta bockar.
+const VERIFICATION_LABELS = {
+  schemakrav: 'Strukturkontroll',
+  radsumma:   'Radsumma mot fakturatotal',
+  balanskrav: 'Antal × à-pris per rad',
+  projektion: 'Nästa periods belopp',
+};
+const VERIFICATION_GLYPHS = { ok: '✓', varning: '!', stopp: '✕', ej_provbar: '–' };
+
+function VerificationReceiptBlock({ items }) {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  const judged = items.filter((v) => v.status !== 'ej_provbar');
+  const passed = judged.filter((v) => v.status === 'ok');
+  const unjudged = items.length - judged.length;
+  return (
+    <VerificationReceipt>
+      <div className="vr-header">
+        <span className="vr-title">Maskinellt kontrollerad</span>
+        <span className="vr-count">
+          {passed.length} av {judged.length} kontroller gröna{unjudged > 0 ? ` · ${unjudged} ej prövbara` : ''}
+        </span>
+      </div>
+      <div className="vr-body">
+        {items.map((v) => (
+          <div key={v.id} className={`vr-row ${v.status}`}>
+            <span className={`vr-glyph ${v.status}`}>{VERIFICATION_GLYPHS[v.status] ?? '·'}</span>
+            <span className="vr-label">{VERIFICATION_LABELS[v.id] ?? v.id}</span>
+            <span className="vr-detalj">{v.detalj}</span>
+          </div>
+        ))}
+      </div>
+      <div className="vr-foot">
+        Varje kontroll ovan kördes deterministiskt på just den här fakturan — en kontroll som inte kunde prövas markeras, aldrig bockas.
+      </div>
+    </VerificationReceipt>
+  );
+}
 
 function CalculationChainBlock({ cc }) {
   const [open, setOpen] = React.useState(false);
@@ -1996,6 +2037,9 @@ const TestaFaktura = () => {
             )}
             {result.route === 'auto' && !result.categorized?.licensePending && result.calculationChain && (
               <CalculationChainBlock cc={result.calculationChain} />
+            )}
+            {result.route === 'auto' && (
+              <VerificationReceiptBlock items={result.verifications} />
             )}
             {result.extracted?.potentialMixedCategories && (
               <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 14, lineHeight: 1.5, fontStyle: 'italic' }}>

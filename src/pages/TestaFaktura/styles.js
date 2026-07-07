@@ -2252,6 +2252,71 @@ export const CalculationChain = styled.div`
   }
 `;
 
+// B4 — Verifikationskvittot: grindarnas verkliga domslut, synliga i kundytan.
+// Samma formspråk som CalculationChain (transparens-zonen). Endast theme-tokens (regel 6).
+export const VerificationReceipt = styled.div`
+  margin: 16px 0 20px;
+  border: 1px solid ${({ theme }) => theme.color.border ?? '#D5E2DC'};
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  overflow: hidden;
+
+  .vr-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 16px;
+    background: ${({ theme }) => theme.color.surface ?? '#F7FAF9'};
+    border-bottom: 1px solid ${({ theme }) => theme.color.border ?? '#D5E2DC'};
+  }
+  .vr-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: ${({ theme }) => theme.color.brand ?? '#1B6E66'};
+  }
+  .vr-count {
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .vr-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .vr-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 12px;
+    color: ${({ theme }) => theme.color.text ?? '#0E1A17'};
+  }
+  .vr-glyph {
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .vr-glyph.ok        { color: ${({ theme }) => theme.color.brand ?? '#1B6E66'}; }
+  .vr-glyph.varning   { color: #B45309; }
+  .vr-glyph.ej_provbar { color: #9CA3AF; }
+  .vr-label { font-weight: 600; }
+  .vr-detalj { color: #5C6E68; font-size: 11px; }
+  .vr-row.ej_provbar .vr-label,
+  .vr-row.ej_provbar .vr-detalj { color: #9CA3AF; }
+  .vr-foot {
+    padding: 8px 16px 11px;
+    font-size: 10px;
+    color: #888;
+    border-top: 1px dashed #E8F0EC;
+  }
+`;
+
 // P2.2 — Konfidensintervall-badge (för Kategori 2)
 export const SavingRangeBadge = styled.div`
   display: inline-flex;
