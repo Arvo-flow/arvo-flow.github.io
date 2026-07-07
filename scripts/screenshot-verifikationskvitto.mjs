@@ -25,7 +25,12 @@ const arlig = routeExtraction({
   projektionskrav: { provad: false, ok: true, grund: 'radsumma_deterministisk' },
 }).verifications;
 
-const LABELS = { schemakrav: 'Strukturkontroll', radsumma: 'Radsumma mot fakturatotal', balanskrav: 'Antal × à-pris per rad', projektion: 'Nästa periods belopp' };
+// Listpris-raden emitteras av API:t (api/test-invoice.mjs) efter benchmark-uppslag —
+// repron speglar API:ts två ordagranna utfall (real-public → ok, annars ej_provbar).
+frisk.push({ id: 'listpris', status: 'ok', detalj: 'jämförelsepriset är ett verifierat publikt listpris' });
+arlig.push({ id: 'listpris', status: 'ej_provbar', detalj: 'jämförelsepriset är ett märkt branschestimat — inget listprisanspråk' });
+
+const LABELS = { schemakrav: 'Strukturkontroll', radsumma: 'Radsumma mot fakturatotal', balanskrav: 'Antal × à-pris per rad', projektion: 'Nästa periods belopp', listpris: 'Jämförelsepris' };
 const GLYPHS = { ok: '✓', varning: '!', stopp: '✕', ej_provbar: '–' };
 const GLYPH_COLOR = { ok: '#1B6E66', varning: '#B45309', stopp: '#C0392B', ej_provbar: '#9CA3AF' };
 

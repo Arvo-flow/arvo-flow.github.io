@@ -47,7 +47,11 @@ const FORBIDDEN = [
   [/vi vet exakt vad ni betalar/i, 'Vi vet först när fakturan delats — regel 3'],
   // ×0,80-läxan (Svea 440192): frontend multiplicerade backendens besparingstal med
   // hårdkodade 0,80 → kundsiffran gick inte att räkna hem. Backend äger aritmetiken.
-  [/(estimatedAnnualSavings\w*|netSaving|grossSaving|savingPerYear)\s*\*\s*[\d.]/, 'Frontend får inte räkna om backendens besparingstal — backend äger aritmetiken (regel 1/2)', 'src-only'],
+  // KLASSREGEL (skärpt 2026-07-08 efter att tierOptimizationSaving×0,80 slank förbi
+  // den gamla fältlistan): VARJE identifierare som innehåller "saving"/"Saving" följd
+  // av × eller ÷ och en sifferliteral blockeras i src/ — felklassen kan aldrig
+  // återuppstå under ett nytt fältnamn. Backend emitterar färdiga tal (lib/fee.js).
+  [/\w*[Ss]aving\w*\s*[*/]\s*[\d.]/, 'Frontend får inte räkna om backendens besparingstal — backend äger aritmetiken (regel 1/2, lib/fee.js)', 'src-only'],
 ];
 
 // ── Kundvända ytor ────────────────────────────────────────────────────────────

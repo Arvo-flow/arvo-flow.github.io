@@ -22,6 +22,7 @@ import {
   markAlertSent,
 } from '../../lib/price-alert-store.js';
 import { computeImpactKr, parseCheckPrice } from '../../lib/price-impact.js';
+import { netOf } from '../../lib/fee.js';
 import { extractSupplierKeyword } from '../../lib/supplier-keyword.js';
 import { catLabel } from '../../lib/format.js';
 
@@ -157,7 +158,7 @@ export default async function handler(req, res) {
                 : null,
               action: {
                 label: 'Låt Arvo förhandla tillbaka priset', type: 'renegotiate',
-                estimatedNetSaving: impact && impact.impactKrYear > 0 ? Math.round(impact.impactKrYear * 0.80) : 0,
+                estimatedNetSaving: impact && impact.impactKrYear > 0 ? netOf(impact.impactKrYear) : 0,
               },
             };
             await db`

@@ -58,21 +58,6 @@ function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnn
   return null;
 }
 
-function detectHardwareInstallments(lineItems) {
-  if (!Array.isArray(lineItems)) return [];
-  const re = /[Mm]ånad\s+(\d+)\s+av\s+(\d+)|[Mm]onth\s+(\d+)\s+of\s+(\d+)/;
-  return lineItems.flatMap(li => {
-    const isHw = li.type === 'hardware' || li.description?.toLowerCase().includes('delbetalning');
-    if (!isHw) return [];
-    const m = re.exec(li.description ?? '');
-    if (!m) return [];
-    const current = parseInt(m[1] ?? m[3]);
-    const total   = parseInt(m[2] ?? m[4]);
-    if (isNaN(current) || isNaN(total) || total <= current) return [];
-    return [{ description: li.description, monthlyCost: li.amount ?? 0, monthsRemaining: total - current, remainingCost: (total - current) * (li.amount ?? 0) }];
-  });
-}
-
 function useCountUp(target, duration = 1600) {
   const [val, setVal] = React.useState(0);
   React.useEffect(() => {
@@ -201,6 +186,7 @@ const VERIFICATION_LABELS = {
   radsumma:   'Radsumma mot fakturatotal',
   balanskrav: 'Antal × à-pris per rad',
   projektion: 'Nästa periods belopp',
+  listpris:   'Jämförelsepris',
 };
 const VERIFICATION_GLYPHS = { ok: '✓', varning: '!', stopp: '✕', ej_provbar: '–' };
 
@@ -1003,22 +989,20 @@ const TestaFaktura = () => {
   const isOptimize = result?.recommendation?.recommendationType === 'optimize'
     && (result?.recommendation?.optimizationSaving ?? 0) > 0;
   const optSaving = result?.recommendation?.optimizationSaving ?? 0;
-  const optArvoFee = isOptimize ? Math.round(optSaving * 0.20) : 0;
-  const optNet = isOptimize ? optSaving - optArvoFee : 0;
+  const optArvoFee = isOptimize ? (result?.recommendation?.optimizationFee ?? 0) : 0;
+  const optNet = isOptimize ? (result?.recommendation?.optimizationNetSaving ?? 0) : 0;
 
-  // Hårdvarujustering: subtrahera delbetalningar ur besparingsbasen (beräknas först — används i diagAnnual)
-  const _hwItems        = detectHardwareInstallments(result?.extracted?.lineItems ?? []);
-  const _hwAnnualCost   = _hwItems.reduce((s, h) => s + h.monthlyCost * 12, 0);
-  const _hwTotalRemain  = _hwItems.reduce((s, h) => s + h.remainingCost, 0);
-  const hasHwAdj        = _hwAnnualCost > 0 && result?.recommendation?.shouldSwitch;
-  const adjAnnualCost   = hasHwAdj
-    ? Math.max(0, (result?.extracted?.annualCost ?? 0) - _hwAnnualCost)
-    : (result?.extracted?.annualCost ?? 0);
-  const adjGrossSaving  = hasHwAdj
-    ? Math.max(0, adjAnnualCost - (result?.recommendation?.suggestedAnnualCost ?? 0))
-    : (result?.recommendation?.grossSaving ?? 0);
-  const adjArvoFee      = Math.round(adjGrossSaving * 0.20);
-  const adjNetSaving    = adjGrossSaving - adjArvoFee;
+  // Hårdvarujusteringen räknas i BACKEND (lib/hardware-installments.js) och emitteras
+  // färdig i result.hardwareAdjustment — frontend renderar, räknar aldrig (×0,80-läxan).
+  const _hwAdj          = result?.hardwareAdjustment ?? null;
+  const _hwItems        = _hwAdj?.items ?? [];
+  const _hwAnnualCost   = _hwAdj?.hwAnnualCost ?? 0;
+  const _hwTotalRemain  = _hwAdj?.hwTotalRemaining ?? 0;
+  const hasHwAdj        = !!_hwAdj;
+  const adjAnnualCost   = hasHwAdj ? _hwAdj.adjAnnualCost  : (result?.extracted?.annualCost ?? 0);
+  const adjGrossSaving  = hasHwAdj ? _hwAdj.adjGrossSaving : (result?.recommendation?.grossSaving ?? 0);
+  const adjArvoFee      = hasHwAdj ? _hwAdj.adjArvoFee     : (result?.recommendation?.arvoFee ?? 0);
+  const adjNetSaving    = hasHwAdj ? _hwAdj.adjNetSaving   : (result?.recommendation?.netSaving ?? 0);
 
   const animatedNet = useCountUp(hasHwAdj ? adjNetSaving : (result?.recommendation?.netSaving ?? 0));
 
@@ -1362,7 +1346,7 @@ const TestaFaktura = () => {
               return (
                 <BatchSummary>
                   <div className="stat highlight">
-                    <div className="value">{formatKr(Math.round(totalNetSaving / 1000))}k</div>
+                    <div className="value">{formatKr(Math.round(totalNetSaving / 1000))}k</div>{/* claims-ok: enhetsskalning till k-visning (÷1000) — ingen omräkning av besparingen */}
                     <div className="label">Nettobesparing/år</div>
                   </div>
                   <div className="stat">
@@ -2130,16 +2114,13 @@ const TestaFaktura = () => {
                         </span>
                       )}
                     </p>
-                    {hasHwAdj && adjGrossSaving > 0 && (() => {
-                      const breakEvenYears = (_hwTotalRemain / adjGrossSaving).toFixed(1).replace('.', ',');
-                      return (
-                        <p style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-                          <strong>Break-even om skulden löses kontant:</strong>{' '}
-                          {formatNum(_hwTotalRemain)} kr ÷ {formatNum(adjGrossSaving)} kr/år = <strong>{breakEvenYears} år</strong>{' '}—{' '}
-                          fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering. Om ja är besparingen {formatKr(result.recommendation.netSaving)} kr/år netto från dag ett.
-                        </p>
-                      );
-                    })()}
+                    {hasHwAdj && _hwAdj.breakEvenYears != null && (
+                      <p style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+                        <strong>Break-even om skulden löses kontant:</strong>{' '}
+                        {formatNum(_hwTotalRemain)} kr ÷ {formatNum(adjGrossSaving)} kr/år = <strong>{String(_hwAdj.breakEvenYears).replace('.', ',')} år</strong>{' '}—{' '}
+                        fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering. Om ja är besparingen {formatKr(result.recommendation.netSaving)} kr/år netto från dag ett.
+                      </p>
+                    )}
                   </CreditAlert>
                 </div>
               )}
@@ -2552,7 +2533,7 @@ const TestaFaktura = () => {
                     <span className="acc-label">Licensoptimering</span>
                     {!tierOptOpen && <span className="acc-hint">Klicka för att se detaljer →</span>}
                   </span>
-                  <span className="acc-amount">ytterligare +{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto</span>
+                  <span className="acc-amount">ytterligare +{formatNum(result.recommendation.tierOptimizationNetSaving ?? 0)}&nbsp;kr/år netto</span>
                   <span className={`acc-chevron${tierOptOpen ? ' open' : ''}`}>
                     <Icon name="chevron-right" size={16} stroke={2.5} />
                   </span>
@@ -2561,8 +2542,8 @@ const TestaFaktura = () => {
                   <div className="acc-body">
                     <p className="acc-intro">
                       Ni kan spara ytterligare{' '}
-                      <strong>{formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto</strong>{' '}
-                      (efter Arvos arvode om {formatNum(Math.round(result.recommendation.tierOptimizationSaving * 0.20))}&nbsp;kr) genom att byta{' '}
+                      <strong>{formatNum(result.recommendation.tierOptimizationNetSaving ?? 0)}&nbsp;kr/år netto</strong>{' '}
+                      (efter Arvos arvode om {formatNum(result.recommendation.tierOptimizationFee ?? 0)}&nbsp;kr) genom att byta{' '}
                       från&nbsp;<strong>{TIER_DISPLAY[result.recommendation.tierOptimizationFromTier] ?? result.recommendation.tierOptimizationFromTier}</strong>{' '}
                       till&nbsp;<strong>{TIER_DISPLAY[result.recommendation.tierOptimizationToTier] ?? result.recommendation.tierOptimizationToTier}</strong>.
                     </p>
@@ -2595,7 +2576,7 @@ const TestaFaktura = () => {
                     <div className="acc-combined">
                       <span className="acc-combined-label">Totalt om ni gör båda åtgärderna</span>
                       <span className="acc-combined-amount">
-                        ca +{formatNum((result.recommendation.netSaving ?? 0) + Math.round(result.recommendation.tierOptimizationSaving * 0.80))}&nbsp;kr/år netto
+                        ca +{formatNum((result.recommendation.netSaving ?? 0) + (result.recommendation.tierOptimizationNetSaving ?? 0))}&nbsp;kr/år netto
                       </span>
                     </div>
                     <div className="acc-cta">

@@ -14,6 +14,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, RECOMMEND_TOOL } from './prompt.js';
+import { feeOf, netOf } from '../../lib/fee.js';
 import { guardToolPayload } from '../../lib/schema-guard.js';
 import { checkProseNumbers } from '../../lib/prose-guard.js';
 import { getBenchmark } from '../../lib/benchmark.js';
@@ -1311,8 +1312,8 @@ export async function recommend(input, opts = {}) {
         reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år är sämre än branschsnittet för er verksamhetsstorlek. Marknadspriset hos rikstäckande aktörer är väsentligt lägre. Arvo begär offert från ${alts} baserat på ert tömningsschema och fraktionsfördelning.`;
         suggestedAnnualCost = bm.p25;
         grossSaving = Math.max(0, annualCost - bm.p25);
-        arvoFee = Math.round(grossSaving * 0.20);
-        netSaving = grossSaving - arvoFee;
+        arvoFee = feeOf(grossSaving);
+        netSaving = netOf(grossSaving);
       } else {
         reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år är inom marknadsnormen för er verksamhetsstorlek (branschindex undre kvartil: ${bm.p25.toLocaleString('sv-SE')} kr/år, median: ${bm.median.toLocaleString('sv-SE')} kr/år). En offertförfrågan kan ändå ge bekräftelse — avfallspriser varierar med tömningsfrekvens, container och fraktioner.`;
       }

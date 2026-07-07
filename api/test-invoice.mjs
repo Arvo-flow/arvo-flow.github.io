@@ -26,6 +26,8 @@ import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
 import { storeAnalysis, storeTriaged } from '../lib/invoice-store.js';
 import { runIntegrityChecks } from '../lib/extraction-integrity.js';
+import { ARVO_FEE_RATE, feeOf, netOf } from '../lib/fee.js';
+import { computeHardwareAdjustment } from '../lib/hardware-installments.js';
 import { saveIntegrityOverrides, flagNewSupplier } from '../lib/labeled-corrections.js';
 import { upsertSupplier, recordSupplierPrice, recordContractTimeline } from '../lib/invoice-graph.js';
 import { validateCategory } from '../lib/category-validator.js';
@@ -341,8 +343,9 @@ export default async function handler(req, res) {
 
   // ── Säkerhetslager ───────────────────────────────────────────────────────────
   const pdfHash  = createHash('sha256').update(pdfBytes).digest('hex');
-  // v9: invaliderar v8-cache (B4 — verifications[] i svaret; äldre cachade svar saknar kvittot)
-  const cacheKey = `pdf:result:v9:${pdfHash}:e${employeesNum}`;
+  // v10: invaliderar v9 (fee-zonen: tierOptimization/optimization fee+net, hardwareAdjustment,
+  // listpris-raden i kvittot — äldre cachade svar saknar de färdigräknade fälten)
+  const cacheKey = `pdf:result:v10:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -1113,8 +1116,8 @@ export default async function handler(req, res) {
               shouldSwitch:        potentialSaving > 0,
               suggestedAnnualCost: elRec ? elRec.benchmarkAnnual : null,
               grossSaving:         potentialSaving,
-              arvoFee:             potentialSaving ? Math.round(potentialSaving * 0.20) : null,
-              netSaving:           potentialSaving ? Math.round(potentialSaving * 0.80) : null,
+              arvoFee:             potentialSaving ? feeOf(potentialSaving) : null,
+              netSaving:           potentialSaving ? netOf(potentialSaving) : null,
             },
             timing: { extractMs: timing.extractMs, categorizeMs: timing.categorizeMs },
           });
@@ -1466,8 +1469,21 @@ export default async function handler(req, res) {
     const primaryGross   = recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0;
     const secondaryGross = secondarySaving?.grossSaving ?? 0;
     const grossSaving    = primaryGross + secondaryGross;
-    const arvoFee        = categorized.licensePending ? 0 : Math.round(grossSaving * 0.20);
+    const arvoFee        = categorized.licensePending ? 0 : feeOf(grossSaving);
     const netSaving      = categorized.licensePending ? grossSaving : grossSaving - arvoFee;
+
+    // Fee-zonen (lib/fee.js — EN sanning): backend emitterar FÄRDIGA netto/arvode
+    // för varje besparingskanal. Frontend renderar, räknar aldrig (×0,80-läxan;
+    // maskinvakt: claims-audit klassregeln på *aving*-aritmetik i src/).
+    if ((recommendation.tierOptimizationSaving ?? 0) > 0) {
+      recommendation.tierOptimizationFee       = feeOf(recommendation.tierOptimizationSaving);
+      recommendation.tierOptimizationNetSaving = netOf(recommendation.tierOptimizationSaving);
+    }
+    if ((recommendation.optimizationSaving ?? 0) > 0) {
+      recommendation.optimizationFee       = feeOf(recommendation.optimizationSaving);
+      recommendation.optimizationNetSaving = netOf(recommendation.optimizationSaving);
+    }
+
 
     // Lagrar fullständig analys och returnerar analysisId för avtalsbevakning.
     // Placerad efter alla overrides så att grossSaving/netSaving är slutgiltiga värden.
@@ -1549,6 +1565,21 @@ export default async function handler(req, res) {
       ? Math.round((metrics.broadbandAddonMonthly ?? 0) * 12)
       : 0;
 
+    // Hårdvarujusteringen (lib/hardware-installments.js — FLYTTAD från frontend):
+    // delbetald hårdvara är en skuld som följer kunden vid byte — besparingsbasen,
+    // arvodet, nettot och break-even räknas HÄR och emitteras färdiga. Jämförelsen
+    // görs mot SAMMA suggestedAnnualCost som svaret bär (inkl. sekundär + addon-
+    // passthrough på kombifakturor) — identiskt med hur kundytan räknade tidigare.
+    const _responseSuggested = secondarySaving
+      ? (recommendation.suggestedAnnualCost ?? 0) + secondarySaving.suggestedAnnual + _bbAddonPassthrough
+      : (recommendation.suggestedAnnualCost ?? null);
+    const hardwareAdjustment = computeHardwareAdjustment({
+      lineItems:           extracted.lineItems,
+      annualCost:          extracted.annualCost,
+      suggestedAnnualCost: _responseSuggested,
+      shouldSwitch:        recommendation.shouldSwitch === true,
+    });
+
     // ── P2.1: BERÄKNINGSKEDJA (Calculation Chain) ────────────────────────────────
     // Visar exakt hur varje siffra härletts — nuläge, benchmark, besparing, arvode.
     // Kunden kan verifiera varje steg. Bygger förtroende och möjliggör extern revision.
@@ -1559,6 +1590,17 @@ export default async function handler(req, res) {
       tierKey:            null,
     });
     const _benchmarkType = BRANCHINDEX[categorized.category]?.priceSource ?? 'negotiated-target';
+
+    // B4 · listpris-domen i kvittot: prisbokens verkliga proveniens blir en kvittorad.
+    // Endast 'real-public' förtjänar bocken (verifierat publikt listpris) — ett märkt
+    // estimat får ALDRIG en bock (regel 3/4, prisbokens semantik). Raden emitteras bara
+    // när en jämförelse faktiskt görs (suggestedAnnualCost finns).
+    if (Array.isArray(routing.verifications) && recommendation.suggestedAnnualCost != null) {
+      routing.verifications.push(_benchmarkType === 'real-public'
+        ? { id: 'listpris', status: 'ok', detalj: 'jämförelsepriset är ett verifierat publikt listpris' }
+        : { id: 'listpris', status: 'ej_provbar', detalj: 'jämförelsepriset är ett märkt branschestimat — inget listprisanspråk' });
+    }
+
     const calculationChain = {
       currentAnnualCost: {
         value:  extracted.annualCost,
@@ -1576,7 +1618,7 @@ export default async function handler(req, res) {
         benchmarkType: _benchmarkType,
       } : null,
       grossSaving: { value: grossSaving },
-      arvoFee:     { value: arvoFee,    formula: `${grossSaving?.toLocaleString('sv-SE')} kr × 20 %` },
+      arvoFee:     { value: arvoFee,    formula: `${grossSaving?.toLocaleString('sv-SE')} kr × ${Math.round(ARVO_FEE_RATE * 100)} %` },
       netSaving:   { value: netSaving },
     };
 
@@ -1662,12 +1704,12 @@ export default async function handler(req, res) {
       recommendation: {
         recommendationType: recommendation.recommendationType ?? (recommendation.shouldSwitch ? 'switch' : 'no_action'),
         optimizationSaving: recommendation.optimizationSaving ?? null,
+        optimizationFee:       recommendation.optimizationFee       ?? null,
+        optimizationNetSaving: recommendation.optimizationNetSaving ?? null,
         requiresQuote: recommendation.requiresQuote ?? false,
         shouldSwitch: recommendation.shouldSwitch,
         suggestedSupplier: recommendation.suggestedSupplier ?? null,
-        suggestedAnnualCost: secondarySaving
-          ? (recommendation.suggestedAnnualCost ?? 0) + secondarySaving.suggestedAnnual + _bbAddonPassthrough
-          : recommendation.suggestedAnnualCost ?? null,
+        suggestedAnnualCost: _responseSuggested,
         secondarySaving: secondarySaving ?? null,
         grossSaving,
         arvoFee,
@@ -1685,6 +1727,8 @@ export default async function handler(req, res) {
         annualBillingSaving: recommendation.annualBillingSaving ?? null,
         nonPrimaryAnnual:    recommendation.nonPrimaryAnnual ?? 0,
         tierOptimizationSaving:   recommendation.tierOptimizationSaving   ?? null,
+        tierOptimizationFee:       recommendation.tierOptimizationFee       ?? null,
+        tierOptimizationNetSaving: recommendation.tierOptimizationNetSaving ?? null,
         tierOptimizationFromTier: recommendation.tierOptimizationFromTier ?? null,
         tierOptimizationToTier:   recommendation.tierOptimizationToTier   ?? null,
         clickRateAnalysis:        recommendation.clickRateAnalysis        ?? null,
@@ -1701,6 +1745,8 @@ export default async function handler(req, res) {
       // B4 · verifikationskvittot: grindarnas VERKLIGA domslut (routeExtraction
       // emitterar dem — UI:t får aldrig påstå en kontroll som inte körde).
       verifications: routing.verifications ?? [],
+      // Hårdvarujusteringen: färdigräknade justerade tal (null = ingen justering).
+      hardwareAdjustment: hardwareAdjustment ?? null,
       meta: analysisMeta,
       timing,
       analysisId: analysisId ?? undefined,

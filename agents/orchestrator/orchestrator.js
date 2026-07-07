@@ -18,6 +18,7 @@ import {
   STATES, TERMINAL_STATES, isValidTransition, assertTransition,
   buildEvent, isTerminal, findDueSwitches,
 } from './state-machine.js';
+import { ARVO_FEE_RATE } from '../../lib/fee.js';
 import { FileStore } from './store.js';
 import { generateFullmakt } from './fullmakt/generate.js';
 import { ScriveClient } from './clients/scrive.js';
@@ -45,7 +46,7 @@ export class Orchestrator {
     this.scrive = opts.scrive ?? new ScriveClient({ mode: 'stub' });
     this.supplier = opts.supplier ?? new SupplierClient({ mode: 'stub' });
     this.fortnox = opts.fortnox ?? new FortnoxWatchdog({ mode: 'stub' });
-    this.successFeeRate = opts.successFeeRate ?? 0.20; // 20% of year-1 saving
+    this.successFeeRate = opts.successFeeRate ?? ARVO_FEE_RATE; // 20 % av år-1-besparingen (lib/fee.js — EN sanning)
   }
 
   // === Internal state-transition helper ===

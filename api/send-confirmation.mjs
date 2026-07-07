@@ -5,6 +5,7 @@
 // POST { email, result }   — samma result-shape som send-analysis
 
 import { Resend } from 'resend';
+import { feeOf, netOf } from '../lib/fee.js';
 
 const FROM = process.env.RESEND_FROM ?? 'Arvo Flow <analys@arvoflow.se>';
 
@@ -85,8 +86,8 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
     : (CATEGORY_PARTNER_LABEL[cat?.category] ?? 'Verifierad leverantör');
 
   const saving    = isOptimize ? (r.optimizationSaving ?? 0) : (r.grossSaving ?? 0);
-  const arvoFee   = Math.round(saving * 0.20);
-  const netSaving = saving - arvoFee;
+  const arvoFee   = feeOf(saving);
+  const netSaving = netOf(saving);
 
   const heroTitle = isOptimize ? 'Avvecklingen är igångsatt.' : 'Bytet är igångsatt.';
   const heroSub   = isOptimize
