@@ -1698,6 +1698,9 @@ export default async function handler(req, res) {
       savingRange,
       priceAlert:   priceAlert   ?? null,
       marketIntel:  marketIntel  ?? null,
+      // B4 · verifikationskvittot: grindarnas VERKLIGA domslut (routeExtraction
+      // emitterar dem — UI:t får aldrig påstå en kontroll som inte körde).
+      verifications: routing.verifications ?? [],
       meta: analysisMeta,
       timing,
       analysisId: analysisId ?? undefined,

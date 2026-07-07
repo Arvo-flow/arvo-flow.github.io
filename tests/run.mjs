@@ -54,6 +54,7 @@ import './business-intel.mjs';
 import './contract-intel.mjs';
 import './korpusdiff.mjs';
 import './schemakrav.mjs';
+import './verifikationskvitto.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

@@ -825,9 +825,12 @@ export function aggregateLineItems(rawInput) {
   // Projektionskravet: utan prorata-rader får AI:ns projektion avvika max 2 %
   // från den deterministiska radsumman — annars är det ett AI-räknat tal på väg
   // in i den deterministiska kedjan (regel 2). SKUGGA → PROJEKTIONSKRAV_ENFORCE=1.
+  // Domen bärs ut (B4): kvittot byggs av verkliga domslut, aldrig av UI-text.
   let projected;
+  let projektionskrav;
   if (proRataLines.length > 0) {
     projected = recurringAmount + proRataProjected;
+    projektionskrav = { provad: false, ok: true, grund: 'prorata_deterministisk' };
   } else if (typeof raw.projectedRecurringAmount === 'number' && raw.projectedRecurringAmount > 0) {
     const pj = judgeProjection({
       projectedFromAI: raw.projectedRecurringAmount,
@@ -841,8 +844,10 @@ export function aggregateLineItems(rawInput) {
       );
     }
     projected = !pj.ok && enforce ? recurringAmount : raw.projectedRecurringAmount;
+    projektionskrav = { provad: true, ok: pj.ok, deviationPct: pj.deviationPct, grund: 'ai_projektion_mot_radsumma' };
   } else {
     projected = recurringAmount;
+    projektionskrav = { provad: false, ok: true, grund: 'radsumma_deterministisk' };
   }
 
   return {
@@ -870,6 +875,7 @@ export function aggregateLineItems(rawInput) {
     oneTimeFees,
     annualCost:               projected * multiplier,
     recurring:                recurringAmount > 0,
+    projektionskrav,
     confidenceScore:          raw.confidenceScore,
     confidenceNotes:          raw.confidenceNotes ?? null,
     outOfScope:               raw.outOfScope ?? false,
@@ -933,17 +939,36 @@ export function aggregateLineItems(rawInput) {
  *   2. Confidence threshold — fångar fall där AI:n själv signalerar osäkerhet
  */
 export function routeExtraction(extracted) {
+  // ── Verifikationsmanifestet (B4) ──────────────────────────────────────────
+  // Varje grind emitterar sitt domslut — även när den PASSERAR. Kvittot i
+  // kundytan byggs av dessa verkliga domar, aldrig av påstående UI-text
+  // (anti-Potemkin, hjärtslags-läxan 1C). En kontroll som inte kunde döma
+  // säger 'ej_provbar' — den påstår ALDRIG en bock den inte förtjänat
+  // (korpusdiff-läxan: 0 dömbara rader får inte se ut som 703 gröna).
+  const verifications = [];
+  const emit = (id, status, detalj) => verifications.push({ id, status, detalj });
+
   if (extracted.outOfScope) {
-    return { route: 'unsupported', reason: extracted.outOfScopeReason ?? 'out_of_scope' };
+    return { route: 'unsupported', reason: extracted.outOfScopeReason ?? 'out_of_scope', verifications };
+  }
+
+  // Schemakravet (B2, döms i extractInvoice — domen bärs hit)
+  if (extracted.schemakrav) {
+    emit('schemakrav', extracted.schemakrav.ok ? 'ok' : 'varning',
+      extracted.schemakrav.ok
+        ? 'AI-utfallet följer extraktionsschemat fältvis'
+        : `${extracted.schemakrav.brott} schemabrott (skugga)`);
+  } else {
+    emit('schemakrav', 'ej_provbar', 'analysen kördes utan schemadom');
   }
 
   // ── Ring 1: Matematisk ankartest ─────────────────────────────────────────
   // Om fakturan har ett "Att betala"-belopp ska summan av raderna stämma inom 3%.
   // Stor avvikelse indikerar missad rad, dubbel rad eller fel vid moms-hantering.
   // Tolerans: max(50 kr, 3 % av total) — absorberar avrundning och öresavrundning.
-  if (extracted.invoiceTotal > 0 && (extracted.lineItems ?? []).length > 0) {
+  {
     const lineSum = (extracted.lineItems ?? []).reduce((s, l) => s + (l.amount ?? 0), 0);
-    if (lineSum > 0) {
+    if (extracted.invoiceTotal > 0 && lineSum > 0) {
       const diff      = Math.abs(lineSum - extracted.invoiceTotal);
       const tolerance = Math.max(50, extracted.invoiceTotal * 0.03);
       // Vanligaste svenska mönstret: rader EXKL moms, "Att betala" INKL moms. Glappet ÄR momsen
@@ -951,12 +976,21 @@ export function routeExtraction(extracted) {
       const vatExplained = [0.25, 0.12, 0.06].some(
         (v) => Math.abs(lineSum * (1 + v) - extracted.invoiceTotal) <= tolerance,
       );
-      if (diff > tolerance && !vatExplained) {
+      if (diff <= tolerance) {
+        emit('radsumma', 'ok', `radsumman stämmer mot fakturatotalen (${lineSum.toLocaleString('sv-SE')} kr)`);
+      } else if (vatExplained) {
+        emit('radsumma', 'ok', 'radsumman stämmer mot fakturatotalen (skillnaden är momsen)');
+      } else {
+        emit('radsumma', 'stopp',
+          `radsumma ${lineSum.toLocaleString('sv-SE')} kr ≠ fakturatotal ${extracted.invoiceTotal.toLocaleString('sv-SE')} kr`);
         return {
           route:  'review_queue',
           reason: `Ring1: radsumma ${lineSum.toLocaleString('sv-SE')} kr ≠ fakturatotal ${extracted.invoiceTotal.toLocaleString('sv-SE')} kr (avvikelse ${diff.toLocaleString('sv-SE')} kr)`,
+          verifications,
         };
       }
+    } else {
+      emit('radsumma', 'ej_provbar', 'fakturan bär ingen prövbar totalsumma');
     }
   }
 
@@ -965,7 +999,13 @@ export function routeExtraction(extracted) {
   // utfall loggas alltid; stoppar enbart när BALANSKRAV_ENFORCE=1.
   {
     const b2 = judgeLineArithmetic(extracted);
-    if (!b2.balanced) {
+    if (b2.judged === 0) {
+      emit('balanskrav', 'ej_provbar', 'inga rader bär både antal och à-pris');
+    } else if (b2.balanced) {
+      emit('balanskrav', 'ok', `antal × à-pris ger radbeloppet på samtliga ${b2.judged} prövbara rader`);
+    } else {
+      emit('balanskrav', process.env.BALANSKRAV_ENFORCE === '1' ? 'stopp' : 'varning',
+        `${b2.violations.length} av ${b2.judged} prövbara rader obalanserade`);
       const detail = b2.violations
         .map(v => `"${(v.line ?? '').slice(0, 48)}" förväntat ${Math.round(v.expected)} kr, fick ${v.actual} kr (${v.reason})`)
         .join(' · ');
@@ -974,26 +1014,37 @@ export function routeExtraction(extracted) {
         return {
           route:  'review_queue',
           reason: `Balanskrav B2: ${b2.violations.length} rad(er) där antal × à-pris inte ger radbeloppet`,
+          verifications,
         };
       }
     }
   }
 
+  // Projektionskravet (döms i aggregateLineItems — domen bärs hit)
+  if (extracted.projektionskrav?.provad) {
+    emit('projektion', extracted.projektionskrav.ok ? 'ok' : 'varning',
+      extracted.projektionskrav.ok
+        ? 'nästa periods belopp verifierat mot radsumman (±2 %)'
+        : `AI-projektionen avviker ${extracted.projektionskrav.deviationPct} % från radsumman (skugga)`);
+  } else if (extracted.projektionskrav) {
+    emit('projektion', 'ok', 'nästa periods belopp beräknat deterministiskt ur raderna');
+  }
+
   // ── Lager 1: Sanity checks ────────────────────────────────────────────────
   if (!extracted.supplier || extracted.supplier.trim() === '') {
-    return { route: 'review_queue', reason: 'Leverantörsnamn saknas' };
+    return { route: 'review_queue', reason: 'Leverantörsnamn saknas', verifications };
   }
 
   if ((extracted.lineItems ?? []).length === 0) {
-    return { route: 'review_queue', reason: 'Inga kostnadsrader extraherades' };
+    return { route: 'review_queue', reason: 'Inga kostnadsrader extraherades', verifications };
   }
 
   if (extracted.billingPeriod === 'unknown') {
-    return { route: 'review_queue', reason: 'Faktureringsperiod okänd — annualisering otillförlitlig' };
+    return { route: 'review_queue', reason: 'Faktureringsperiod okänd — annualisering otillförlitlig', verifications };
   }
 
   if (extracted.annualCost === 0 && extracted.billingPeriod !== 'one_time') {
-    return { route: 'review_queue', reason: 'Beräknad årskostnad är 0 kr trots återkommande fakturering' };
+    return { route: 'review_queue', reason: 'Beräknad årskostnad är 0 kr trots återkommande fakturering', verifications };
   }
 
   // ── Lager 2: AI:ns self-reported confidence ───────────────────────────────
@@ -1001,10 +1052,11 @@ export function routeExtraction(extracted) {
     return {
       route:  'review_queue',
       reason: `Confidence ${extracted.confidenceScore.toFixed(2)} under tröskel ${CONFIDENCE_THRESHOLD}`,
+      verifications,
     };
   }
 
-  return { route: 'auto' };
+  return { route: 'auto', verifications };
 }
 
 let _client;
@@ -1097,11 +1149,16 @@ export async function extractInvoice(input, opts = {}) {
 
   // Schemakravet (B2): döm AI-utfallet mot verktygets eget schema innan det når
   // den räknande kedjan. SKUGGA → armeras via SCHEMAKRAV_ENFORCE=1.
+  // Domen bärs ut (B4) så kvittot visar det verkliga domslutet.
   const schemaVerdict = guardToolPayload({ agent: 'extract', tool: EXTRACT_TOOL, payload: toolUseBlock.input });
   if (!schemaVerdict.ok) {
     throw new ExtractorError('Analysen kunde inte struktureras tillförlitligt — försök igen.');
   }
 
   const aggregated = aggregateLineItems(toolUseBlock.input);
-  return { ...aggregated, usage: response.usage };
+  return {
+    ...aggregated,
+    schemakrav: { ok: schemaVerdict.violations.length === 0, brott: schemaVerdict.violations.length },
+    usage: response.usage,
+  };
 }
