@@ -343,9 +343,9 @@ export default async function handler(req, res) {
 
   // ── Säkerhetslager ───────────────────────────────────────────────────────────
   const pdfHash  = createHash('sha256').update(pdfBytes).digest('hex');
-  // v10: invaliderar v9 (fee-zonen: tierOptimization/optimization fee+net, hardwareAdjustment,
-  // listpris-raden i kvittot — äldre cachade svar saknar de färdigräknade fälten)
-  const cacheKey = `pdf:result:v10:${pdfHash}:e${employeesNum}`;
+  // v11: invaliderar v10 (priceSource-buggfixen ändrar savingRange ±12 %, källetikett
+  // och listpris-domen för real-public-kategorier — v10-cachen bär de felaktiga)
+  const cacheKey = `pdf:result:v11:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
