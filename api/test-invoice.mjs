@@ -1589,7 +1589,14 @@ export default async function handler(req, res) {
       suggestedAnnualCost: recommendation.suggestedAnnualCost,
       tierKey:            null,
     });
-    const _benchmarkType = BRANCHINDEX[categorized.category]?.priceSource ?? 'negotiated-target';
+    // BUGGFIX 2026-07-08 (exponerad av listpris-domens live-diag): fältet heter `source`
+    // i BRANCHINDEX — `priceSource` har aldrig existerat, så denna rad föll ALLTID
+    // tillbaka till 'negotiated-target'. Konsekvens sedan dag ett: savingRange visade
+    // ±25 % även för verifierade listpriskategorier (avsett ±12 %), källetiketten
+    // underdrev prisboken, och listpris-domen dömde fel. Konservativt fel — men fel.
+    const _benchmarkType = BRANCHINDEX[categorized.category]?.source === 'real-public'
+      ? 'real-public'
+      : 'negotiated-target';
 
     // B4 · listpris-domen i kvittot: prisbokens verkliga proveniens blir en kvittorad.
     // Endast 'real-public' förtjänar bocken (verifierat publikt listpris) — ett märkt
