@@ -9,6 +9,7 @@
 // Modellval: sonnet (samma klass som categorize) — fältläsning ur ett dokument, inte tolkning.
 
 import Anthropic from '@anthropic-ai/sdk';
+import { guardToolPayload } from '../../lib/schema-guard.js';
 
 const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 1500;

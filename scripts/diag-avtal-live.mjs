@@ -5,6 +5,7 @@
 // (verifieringsplikten): den riktiga maskinen, aldrig en modell av den.
 //
 // Kör på Actions (HTTP-egress + Vercel-deployen hunnit ikapp). Diagnostik, ingen prod-kod.
+// Körning 3 (2026-07-08): efter import-fixen av guardToolPayload i extract-contract.js.
 import { readFileSync } from 'node:fs';
 
 const BASE = process.env.ARVO_BASE_URL || 'https://arvoflow.se';

@@ -122,3 +122,37 @@ describe('FÄLLA 5 · Nordic Managed IT — 36 mån, 6 mån varsel, +24 mån fö
     assert.equal(out.regelKalla, 'avtalet');
   });
 });
+
+// ── SMOKE: hela extractContract-svarsvägen offline (mock-klient) ─────────────────
+// E2E-läxan 2026-07-08: schemakravets guard-anrop saknade IMPORT i just denna agent —
+// felet nådde produktion eftersom AI-svarsvägen aldrig exercerades offline (alla fem
+// fällor föll med "guardToolPayload is not defined"). Detta test kör den verkliga
+// funktionen med en injicerad mock-klient: en saknad import/referens i svarsvägen
+// fäller nu sviten, inte kunden.
+import { extractContract } from '../agents/contract/extract-contract.js';
+
+describe('extractContract · svarsvägen exerceras offline (mock-klient)', () => {
+  const payload = {
+    isContract: true, supplier: 'Bahnhof AB',
+    avtalsstart: '2025-01-15', avtalstidMan: 3, uppsagningstidMan: 3, uppsagningstidDagar: null, forlangningMan: 3,
+    citat: {
+      avtalsstart: 'Tecknat datum: 2025-01-15',
+      avtalstidMan: 'Avtalet löper i perioder om tre (3) månader',
+      uppsagningstidMan: 'senast tre (3) månader innan nästkommande treperiodskonstruktion påbörjas',
+      forlangningMan: 'bunden för nästkommande tre (3) månaders period',
+    },
+    confidence: 0.95,
+  };
+  const mockClient = {
+    messages: {
+      create: async () => ({ content: [{ type: 'tool_use', name: 'extract_contract', input: payload }] }),
+    },
+  };
+
+  test('tool_use-payloaden flödar genom guard + retur utan referensfel', async () => {
+    const out = await extractContract({ pdfBase64: 'ZGVtbw==' }, { client: mockClient });
+    assert.equal(out.isContract, true);
+    assert.equal(out.avtalstidMan, 3);
+    assert.equal(out.uppsagningstidDagar, null);
+  });
+});
