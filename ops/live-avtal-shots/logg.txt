@@ -1,5 +1,3 @@
 fingerprint fångat: 142d13ba34c7…
 innehav före: 1
-under läsning — knapptext: "Läser avtalet…"
-DOMEN: "Läst — bindningen löper till 2026-10-15."
-KLART — bilder i ops/live-avtal-shots
+INGEN uppladdningsyta — avbryter
