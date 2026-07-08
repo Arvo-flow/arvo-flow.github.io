@@ -464,6 +464,22 @@ export const SwitchTargets = styled.div`
     b { color:${theme.dossier.mutedOnDark}; } }
 `;
 
+// Avtalsuppladdningen — EN stil för båda hemvisterna (bytes-kortets amber-läge OCH
+// innehav utan bytesförslag). Uppladdningsluckan 2026-07-08: knappen fanns bara på
+// switch-kort, så innehav utan byte saknade helt väg in för avtalet.
+const uploadCss = css`
+  .sv-upload { display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
+    font-size:13px; font-weight:600; color:${theme.dossier.teal};
+    border:1px dashed rgba(43,196,172,.45); border-radius:${theme.size.radius.pill}; padding:11px 18px;
+    transition:background .15s, border-color .15s;
+    &:hover { background:rgba(43,196,172,.08); border-color:${theme.dossier.tealBright}; }
+    input { display:none; } }
+  .sv-upload-note { margin:10px 2px 0; font-size:12px; line-height:1.5;
+    &.done { color:${theme.dossier.tealBright}; }
+    &.work { color:${theme.dossier.faintOnDark}; }
+    &.fail { color:${theme.dossier.signal}; } }
+`;
+
 // Bytes-kortet, DOM-FÖRST. En asymmetrisk dom bär kortet (serif-hjälte); bevisen viks ner i en
 // <details> så domen reser sig ensam överst. Två lägen: $known=true (vi vet avtalsdatum → teal,
 // "vi avfyrar exakt då") / $known=false (datum saknas → varm signal, "ett drag kvar — skicka avtalet").
@@ -517,17 +533,18 @@ export const SwitchVerdict = styled.div`
   .sv-keep .sv-v { font-size:15px; color:${theme.dossier.tealBright}; }
 
   .sv-act { margin-top:18px; display:flex; flex-direction:column; gap:11px; }
-  /* Avtalsuppladdningen (amber-lägets nästa drag) — tyst sekundärhandling under CTA:n */
-  .sv-upload { display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;
-    font-size:13px; font-weight:600; color:${theme.dossier.teal};
-    border:1px dashed rgba(43,196,172,.45); border-radius:${theme.size.radius.pill}; padding:11px 18px;
-    transition:background .15s, border-color .15s;
-    &:hover { background:rgba(43,196,172,.08); border-color:${theme.dossier.tealBright}; }
-    input { display:none; } }
-  .sv-upload-note { margin:10px 2px 0; font-size:12px; line-height:1.5;
-    &.done { color:${theme.dossier.tealBright}; }
-    &.work { color:${theme.dossier.faintOnDark}; }
-    &.fail { color:${theme.dossier.signal}; } }
+  ${uploadCss}
+`;
+
+// Innehav UTAN bytesförslag men med okänd bindning: avtalsvägen in. Samma tysta
+// premiumspråk som bytes-kortet — vakten vill alltid veta bindningen (Maktkalendern).
+export const AvtalUpload = styled.div`
+  margin-top:16px; padding:16px 18px;
+  border:1px solid ${theme.dossier.hairlineOnDark}; border-radius:${theme.size.radius.md};
+  .au-eyebrow { font-family:${MONO}; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:${theme.dossier.faintOnDark}; margin-bottom:8px; }
+  .au-txt { margin:0 0 12px; font-size:12.5px; line-height:1.55; color:${theme.dossier.mutedOnDark}; }
+  ${uploadCss}
 `;
 
 // "Bevakat — inte prissatt" (Liggare 2): disciplinmontern. Återhållsam, förtrolig — hederligheten

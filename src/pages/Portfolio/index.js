@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
-  SwitchVerdict, SwitchBtn, Watched, IntelQuiet, SignOff, Spinner,
+  SwitchVerdict, SwitchBtn, AvtalUpload, Watched, IntelQuiet, SignOff, Spinner,
   StartHint, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
 
@@ -1083,6 +1083,32 @@ export default function Portfolio() {
                             </SwitchVerdict>
                           );
                         })()}
+
+                        {/* Avtalsvägen för innehav UTAN bytesförslag (uppladdningsluckan 2026-07-08:
+                            knappen fanns bara på switch-kort — innehav utan byte saknade helt väg in).
+                            Vakten vill alltid veta bindningen, oavsett om ett byte föreslås idag. */}
+                        {!saving && !a.contract_end_date && (
+                          <AvtalUpload>
+                            <div className="au-eyebrow">Bindningstiden är okänd</div>
+                            <p className="au-txt">
+                              Fakturan visar inte när ert avtal löper ut. Ladda upp avtalet, så läser
+                              vi datumen och räknar ut er sista uppsägningsdag — fönstret bevakas sedan
+                              i kontraktskalendern.
+                            </p>
+                            <label className="sv-upload">
+                              <Icon name="upload" size={14} stroke={1.9} />
+                              {avtalStatus[a.id]?.phase === 'work' ? 'Läser avtalet…' : 'Ladda upp avtalet (PDF)'}
+                              <input
+                                type="file" accept="application/pdf"
+                                disabled={avtalStatus[a.id]?.phase === 'work'}
+                                onChange={(e) => { uploadContract(a.id, e.target.files?.[0]); e.target.value = ''; }}
+                              />
+                            </label>
+                            {avtalStatus[a.id]?.msg && (
+                              <p className={`sv-upload-note ${avtalStatus[a.id].phase}`}>{avtalStatus[a.id].msg}</p>
+                            )}
+                          </AvtalUpload>
+                        )}
                       </HoldDetail>
                     )}
                   </HoldRow>
