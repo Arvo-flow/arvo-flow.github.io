@@ -568,6 +568,8 @@ export const AvtalLast = styled.div`
       i { font-style:normal; color:${theme.dossier.mutedOnDark}; }
       small { display:block; font-family:${MONO}; font-size:9.5px; letter-spacing:.12em;
         text-transform:uppercase; color:${theme.dossier.faintOnDark}; margin-bottom:2px; } } }
+  ${uploadCss}
+  .sv-upload { margin-top:14px; }
 `;
 
 // Innehav UTAN bytesförslag men med okänd bindning: avtalsvägen in. Samma tysta

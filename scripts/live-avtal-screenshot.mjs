@@ -3,8 +3,8 @@
 // äkta fingerprint-rum, äkta AI-läsning, äkta klocka, äkta pixlar (grundarens begäran
 // 2026-07-08: "ladda upp avtalet och skicka bilder på resultatet").
 //
-// Körning 3 (2026-07-08): leverantörsmatchningen — Bahnhof-avtalet på Tele2-innehavet ska
-// nu ge den ÄRLIGA FLAGGAN (fail-note), medan körning 2:s persisterade avsnitt står kvar.
+// Körning 4 (2026-07-08): "nyare avtal"-vägen i avsnittet (körning 3 fann att ett läst
+// avtal saknade ersättningsväg) — Bahnhof mot Tele2-innehavet ska ge den ÄRLIGA FLAGGAN.
 // Flöde: öppna rummet → fånga sidans egna fingerprint ur invoice-history-anropet →
 // mynta ett innehav via den vanliga fakturapipen (samma fingerprint) → ladda om →
 // expandera innehavet → ladda upp Bahnhof-fällan genom det riktiga UI:t → fotografera

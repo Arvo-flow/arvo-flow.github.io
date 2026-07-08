@@ -1149,6 +1149,20 @@ export default function Portfolio() {
                                   ))}
                                 </details>
                               )}
+                              {/* Avtal ersätts över tid (omteckning, nya villkor, felkoppling) —
+                                  ett läst avtal låser aldrig dörren för ett nyare. */}
+                              <label className="sv-upload">
+                                <Icon name="upload" size={14} stroke={1.9} />
+                                {avtalStatus[a.id]?.phase === 'work' ? 'Läser avtalet…' : 'Ladda upp ett nyare avtal (PDF)'}
+                                <input
+                                  type="file" accept="application/pdf"
+                                  disabled={avtalStatus[a.id]?.phase === 'work'}
+                                  onChange={(e) => { uploadContract(a.id, e.target.files?.[0]); e.target.value = ''; }}
+                                />
+                              </label>
+                              {avtalStatus[a.id]?.msg && (
+                                <p className={`sv-upload-note ${avtalStatus[a.id].phase}`}>{avtalStatus[a.id].msg}</p>
+                              )}
                             </AvtalLast>
                           );
                         })()}
