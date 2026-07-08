@@ -1,0 +1,3 @@
+token: OK
+analys: HTTP 200 · route auto · analysisId SAKNAS
+AVBRYTER — ingen analysrad att hänga avtalen på.
