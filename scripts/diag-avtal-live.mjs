@@ -5,7 +5,8 @@
 // (verifieringsplikten): den riktiga maskinen, aldrig en modell av den.
 //
 // Kör på Actions (HTTP-egress + Vercel-deployen hunnit ikapp). Diagnostik, ingen prod-kod.
-// Körning 3 (2026-07-08): efter import-fixen av guardToolPayload i extract-contract.js.
+// Körning 4 (2026-07-08): efter agents/contract/package.json ("type":"module") — mappen
+// saknade ESM-markören som alla syskon-agenter bär (ERR_REQUIRE_ESM i Vercels runtime).
 import { readFileSync } from 'node:fs';
 
 const BASE = process.env.ARVO_BASE_URL || 'https://arvoflow.se';
