@@ -536,6 +536,40 @@ export const SwitchVerdict = styled.div`
   ${uploadCss}
 `;
 
+// "Avtalet · läst och bevakat" — avtalsoptimeringens avsnitt. Renderas när termerna
+// är lästa (a.avtal ur API:t): bindning/uppsägning/förlängning, deadline stort i mono,
+// fällan namngiven, citaten nedvikta som proveniens. Dossier-språket rakt igenom.
+export const AvtalLast = styled.div`
+  margin-top:16px; padding:18px;
+  border:1px solid ${theme.dossier.hairlineOnDark}; border-radius:${theme.size.radius.md};
+  background: radial-gradient(480px 220px at 10% -20%, rgba(43,196,172,0.07), transparent 60%);
+  .al-eyebrow { display:flex; align-items:center; justify-content:space-between; gap:8px;
+    font-family:${MONO}; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:${theme.dossier.teal}; margin-bottom:12px;
+    span { color:${theme.dossier.faintOnDark}; letter-spacing:.08em; text-transform:none; } }
+  .al-facts { display:flex; flex-wrap:wrap; gap:6px 14px; margin-bottom:14px;
+    font-size:12px; color:${theme.dossier.mutedOnDark};
+    b { color:${theme.dossier.inkOnDark}; font-weight:600; } }
+  .al-deadline { padding:12px 14px; border:1px solid rgba(43,196,172,.28);
+    border-radius:${theme.size.radius.sm}; margin-bottom:12px;
+    font-size:13px; color:${theme.dossier.mutedOnDark}; line-height:1.5;
+    .al-date { font-family:${MONO}; font-size:15px; color:${theme.dossier.inkOnDark}; font-feature-settings:'tnum'; }
+    .al-days { font-family:${MONO}; color:${theme.dossier.tealBright}; }
+    &.akut .al-days { color:${theme.dossier.signal}; } }
+  .al-falla, .al-motdrag { margin:0 0 8px; font-size:12.5px; line-height:1.6;
+    color:${theme.dossier.mutedOnDark};
+    b { color:${theme.dossier.inkOnDark}; font-weight:600; } }
+  .al-citat { margin-top:12px;
+    summary { cursor:pointer; font-family:${MONO}; font-size:10.5px; letter-spacing:.14em;
+      text-transform:uppercase; color:${theme.dossier.faintOnDark};
+      &:hover { color:${theme.dossier.teal}; } }
+    .al-c { margin:10px 0 0; padding-left:12px; border-left:2px solid ${theme.dossier.hairlineOnDark};
+      font-size:11.5px; line-height:1.55; color:${theme.dossier.faintOnDark};
+      i { font-style:normal; color:${theme.dossier.mutedOnDark}; }
+      small { display:block; font-family:${MONO}; font-size:9.5px; letter-spacing:.12em;
+        text-transform:uppercase; color:${theme.dossier.faintOnDark}; margin-bottom:2px; } } }
+`;
+
 // Innehav UTAN bytesförslag men med okänd bindning: avtalsvägen in. Samma tysta
 // premiumspråk som bytes-kortet — vakten vill alltid veta bindningen (Maktkalendern).
 export const AvtalUpload = styled.div`

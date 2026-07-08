@@ -11,6 +11,7 @@ import { getMarketIntelligence } from '../lib/price-alert.js';
 import { pendingCountBySender, failedCountBySender, failedFilesBySender } from '../lib/ingest-queue.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding } from '../lib/contract-clock.js';
+import { buildAvtalView } from '../lib/contract-intel.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
 import { getSupplierCategoryChangesByKeyword, getRecentHike } from '../lib/price-db.js';
 import { getSegmentStats } from '../lib/price-alert-store.js';
@@ -98,6 +99,10 @@ export default async function handler(req, res) {
         servicePeriodEnd: a.contract_end_date ?? null,
         supplier:         a.normalized_supplier || a.supplier || null,
       }),
+      // "Avtalet · läst"-avsnittet: termerna (fields/rules/citat) är frysta FAKTA ur
+      // dokumentet; klockan (deadline, dagar kvar, nästa periodslut) räknas FÄRSK här.
+      avtal: a.contract_terms_json ? buildAvtalView(a.contract_terms_json) : null,
+      contract_terms_json: undefined,   // råtermerna behövs inte i klienten — vyn räcker
     }));
 
   // ── Kohort-intelligens: vad betalar bolag hos samma leverantör? ───────────

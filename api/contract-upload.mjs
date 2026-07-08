@@ -89,13 +89,33 @@ export default async function handler(req, res) {
   }
 
   // 5 · Lagra — SAMMA väg som save-contract (regel 1): contract_end_date på analysraden.
+  // PLUS avtalstermerna (fields/rules/citat — FAKTA ur dokumentet, frysta vid läsning):
+  // utan dem kunde rummet bara visa slutdatumet, aldrig VARFÖR, fällan eller citaten
+  // ("Avtalet · läst"-avsnittet). Klockan persisteras ALDRIG — den räknas färsk per läsning
+  // (deadlines rullar; en fryst deadline ljuger inom en period).
+  const contractTerms = {
+    supplier: extracted.supplier ?? row.supplier ?? null,
+    readAt:   new Date().toISOString(),
+    fields:   accepted.fields,
+    rules,
+    citat:    extracted.citat ?? null,
+  };
   try {
     const cleanEmail = email ? String(email).trim().toLowerCase() : null;
-    await db`
+    const doUpdate = () => db`
       UPDATE invoice_analyses
       SET contract_end_date = ${clock.currentPeriodEnd}::date,
+          contract_terms_json = ${JSON.stringify(contractTerms)}::jsonb,
           user_email = COALESCE(${cleanEmail}, user_email)
       WHERE id = ${analysisId}::uuid`;
+    try {
+      await doUpdate();
+    } catch (colErr) {
+      // Self-ensure (husmönstret, jfr lib/vakt.js): kolumnen läggs till vid första behovet.
+      if (!/contract_terms_json/.test(colErr.message)) throw colErr;
+      await db`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS contract_terms_json JSONB`;
+      await doUpdate();
+    }
   } catch (err) {
     console.error('[contract-upload] DB-fel:', err.message);
     return send(res, 500, { error: 'Kunde inte spara' });

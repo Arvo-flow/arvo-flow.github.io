@@ -15,6 +15,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   acceptExtractedContract, villkorForSupplier, resolveContractRules, computeContractOutcome,
+  buildAvtalView,
 } from '../lib/contract-intel.js';
 
 // Frusen "idag" = dagen avtalen lämnades in. Facit är handräknat mot detta datum.
@@ -154,5 +155,47 @@ describe('extractContract · svarsvägen exerceras offline (mock-klient)', () =>
     assert.equal(out.isContract, true);
     assert.equal(out.avtalstidMan, 3);
     assert.equal(out.uppsagningstidDagar, null);
+  });
+});
+
+// ── AVTALSVYN (steg 1 av avtalsoptimeringen): "Avtalet · läst"-avsnittets datakontrakt ──
+// Termerna fryses vid uppladdning; klockan räknas färsk per läsning. nastaPeriodSlut är
+// fällans andra halva: vad kunden är bunden till OM fönstret missas.
+describe('buildAvtalView · avsnittets datakontrakt (fällornas facit)', () => {
+  const view = (supplier, ext) => {
+    const acc = acceptExtractedContract(ext, { today: TODAY });
+    const rules = resolveContractRules(ext, villkorForSupplier(supplier));
+    return buildAvtalView({ supplier, readAt: '2026-07-08T12:00:00Z', fields: acc.fields, rules, citat: {} }, { today: TODAY });
+  };
+
+  test('Bahnhof 3+3: fällan = missat fönster binder till 2027-01-15', () => {
+    const v = view('Bahnhof AB', { avtalsstart: '2025-01-15', avtalstidMan: 3, uppsagningstidMan: 3, forlangningMan: 3 });
+    assert.equal(v.clock.deadline, '2026-07-15');
+    assert.equal(v.nastaPeriodSlut, '2027-01-15');
+    assert.equal(v.bindningLabel, '3 mån');
+    assert.equal(v.forlangningLabel, '+3 mån i taget');
+  });
+
+  test('Fortnox: uppsägningstiden etiketteras i DAGAR, aldrig konverterad', () => {
+    const v = view('Fortnox AB', { avtalsstart: '2025-08-15', avtalstidMan: 12, uppsagningstidDagar: 30, forlangningMan: 12 });
+    assert.equal(v.uppsagningLabel, '30 dagar');
+    assert.equal(v.nastaPeriodSlut, '2027-08-15');   // 2026-08-15 + 12 mån
+  });
+
+  test('GleSYS tills vidare: rolling utan fälla (ingen nastaPeriodSlut, ingen deadline)', () => {
+    const v = view('GleSYS AB', { avtalsstart: '2025-11-01', avtalstidMan: null, uppsagningstidMan: 1, forlangningMan: null });
+    assert.equal(v.clock.status, 'rolling');
+    assert.equal(v.nastaPeriodSlut, null);
+    assert.equal(v.bindningLabel, 'tills vidare');
+  });
+
+  test('Nordic: missat fönster = +24 mån → bunden till 2030-03-01', () => {
+    const v = view('Nordic Managed IT Services AB', { avtalsstart: '2025-03-01', avtalstidMan: 36, uppsagningstidMan: 6, forlangningMan: 24 });
+    assert.equal(v.nastaPeriodSlut, '2030-03-01');
+  });
+
+  test('trasiga termer → null, aldrig ett halvt avsnitt', () => {
+    assert.equal(buildAvtalView({}, { today: TODAY }), null);
+    assert.equal(buildAvtalView({ fields: { avtalsstart: 'trasigt' } }, { today: TODAY }), null);
   });
 });

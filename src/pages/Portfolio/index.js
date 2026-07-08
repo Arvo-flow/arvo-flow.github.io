@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
-  SwitchVerdict, SwitchBtn, AvtalUpload, Watched, IntelQuiet, SignOff, Spinner,
+  SwitchVerdict, SwitchBtn, AvtalUpload, AvtalLast, Watched, IntelQuiet, SignOff, Spinner,
   StartHint, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
 } from '../Kontoret/styles';
 
@@ -1081,6 +1081,73 @@ export default function Portfolio() {
                                 <p className={`sv-upload-note ${avtalStatus[a.id].phase}`}>{avtalStatus[a.id].msg}</p>
                               )}
                             </SwitchVerdict>
+                          );
+                        })()}
+
+                        {/* "Avtalet · läst och bevakat" — avtalsoptimeringen. Varje rad är ett
+                            dokumentburet faktum (regel 3): termerna lästa ur kundens eget avtal,
+                            klockan färskräknad i backend, citaten som proveniens. Fällan namnges
+                            med avtalets egna siffror; motdraget lovar bara det rummet faktiskt gör. */}
+                        {a.avtal && (() => {
+                          const v = a.avtal;
+                          const c = v.clock;
+                          const akut = c.status === 'window-open' && c.daysToDeadline != null && c.daysToDeadline <= 30;
+                          const CITAT_LABELS = {
+                            avtalsstart: 'Avtalsstart', avtalstidMan: 'Avtalstid',
+                            uppsagningstidMan: 'Uppsägningstid', uppsagningstidDagar: 'Uppsägningstid',
+                            forlangningMan: 'Förlängning',
+                          };
+                          const citatRows = Object.entries(v.citat ?? {}).filter(([, q]) => q);
+                          return (
+                            <AvtalLast>
+                              <div className="al-eyebrow">
+                                Avtalet · läst och bevakat
+                                {v.readAt && <span>läst {fmtDate(v.readAt)}</span>}
+                              </div>
+                              <div className="al-facts">
+                                <span>Bindning <b>{v.bindningLabel}</b></span>
+                                {v.uppsagningLabel && <span>Uppsägningstid <b>{v.uppsagningLabel}</b></span>}
+                                {v.forlangningLabel && <span>Förlängning <b>{v.forlangningLabel}</b></span>}
+                              </div>
+                              {c.status === 'window-open' && c.deadline && (
+                                <div className={`al-deadline${akut ? ' akut' : ''}`}>
+                                  Sista uppsägningsdag <span className="al-date">{fmtDate(c.deadline)}</span>
+                                  {' '}· <span className="al-days">{c.daysToDeadline} dagar kvar</span>
+                                </div>
+                              )}
+                              {c.status === 'window-open' && v.nastaPeriodSlut && (
+                                <p className="al-falla">
+                                  <b>Fällan i ert avtal:</b> missas fönstret förlängs avtalet automatiskt
+                                  och ni är bundna till {fmtDate(v.nastaPeriodSlut)}.
+                                </p>
+                              )}
+                              {c.status === 'rolling' && (
+                                <p className="al-falla">
+                                  Ingen deadline att missa — avtalet löper tills vidare och kan sägas upp
+                                  när som helst med {v.uppsagningLabel} varsel (tidigast {fmtDate(c.currentPeriodEnd)}).
+                                </p>
+                              )}
+                              {(c.status === 'expires' || c.status === 'expired') && (
+                                <p className="al-falla">
+                                  Avtalet löper ut {fmtDate(c.currentPeriodEnd)} utan automatisk förlängning.
+                                </p>
+                              )}
+                              <p className="al-motdrag">
+                                <b>Motdraget:</b> fönstret bevakas i Maktkalendern — rummet visar alltid
+                                exakt hur många dagar som återstår, och bytet förbereds mot rätt dag.
+                              </p>
+                              {citatRows.length > 0 && (
+                                <details className="al-citat">
+                                  <summary>Ordagrant ur ert avtal</summary>
+                                  {citatRows.map(([k, q]) => (
+                                    <p className="al-c" key={k}>
+                                      <small>{CITAT_LABELS[k] ?? k}</small>
+                                      <i>”{q}”</i>
+                                    </p>
+                                  ))}
+                                </details>
+                              )}
+                            </AvtalLast>
                           );
                         })()}
 
