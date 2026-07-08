@@ -1,3 +1,5 @@
 fingerprint fångat: 142d13ba34c7…
 innehav före: 1
-INGEN uppladdningsyta — avbryter
+under läsning — knapptext: "Läser avtalet…"
+DOMEN: "Avtalet ser ut att gälla Bahnhof AB, men det här innehavet avser Tele2 Bredband AB. Ladda upp avtalet på rätt leverantörs innehav — eller dela först en faktura från Bahnhof AB, så får avtalet ett eget innehav att bo på."
+KLART — bilder i ops/live-avtal-shots
