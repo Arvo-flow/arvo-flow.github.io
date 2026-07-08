@@ -1,0 +1,39 @@
+name: Live avtal-uppladdning (skarpa rummet, fotograferad)
+# Riktig uppladdning genom arvoflow.se/portfolio med Playwright — bilder committas
+# till ops/live-avtal-shots/. Självtriggar på skript-push (aldrig [skip ci] i den committen).
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/live-avtal-screenshot.mjs'
+permissions:
+  contents: write
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium --with-deps
+      - name: Vänta in ev. pågående Vercel-deploy
+        run: sleep 90
+      - name: Kör den riktiga uppladdningen
+        run: |
+          mkdir -p ops/live-avtal-shots
+          node scripts/live-avtal-screenshot.mjs | tee ops/live-avtal-shots/logg.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git pull --rebase origin main || true
+          git add ops/live-avtal-shots/
+          git commit -m "ops: live-avtal-shots [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
