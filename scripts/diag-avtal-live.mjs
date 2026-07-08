@@ -5,8 +5,8 @@
 // (verifieringsplikten): den riktiga maskinen, aldrig en modell av den.
 //
 // Kör på Actions (HTTP-egress + Vercel-deployen hunnit ikapp). Diagnostik, ingen prod-kod.
-// Körning 4 (2026-07-08): efter agents/contract/package.json ("type":"module") — mappen
-// saknade ESM-markören som alla syskon-agenter bär (ERR_REQUIRE_ESM i Vercels runtime).
+// Körning 5 (2026-07-08): efter avtalsstart-policyn i prompten (körning 4 gav 4/5 —
+// Bahnhofs "Tecknat datum" utan ikraftträdande-mening nullades av strikthetsregeln).
 import { readFileSync } from 'node:fs';
 
 const BASE = process.env.ARVO_BASE_URL || 'https://arvoflow.se';

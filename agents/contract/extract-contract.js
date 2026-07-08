@@ -56,6 +56,9 @@ const SYSTEM_PROMPT = `Du läser svenska B2B-avtal och orderbekräftelser åt Ar
 
 REGLER (absoluta):
 - Återge ENDAST vad dokumentet uttryckligen säger. Fält som inte står uttryckligen = null.
+- avtalsstart = dokumentets ikraftträdande-/leverans-/aktiverings-/giltighetsdatum. Anger
+  dokumentet inget sådant men ETT uttryckligt "Tecknat datum"/"Signeringsdatum" → använd det
+  (ett avtal utan annan angiven start börjar vid tecknandet). Helt utan datum → null.
 - RÄKNA ALDRIG datum framåt eller bakåt. Står "avtalstid 24 månader från leveransdagen 2025-03-01"
   är avtalsstart 2025-03-01 och avtalstidMan 24 — du beräknar INTE slutdatumet.
 - Svenska sifferord: "tre (3) månader" = 3. "tolv (12) månader" = 12. "trettio (30) dagar" = 30.
