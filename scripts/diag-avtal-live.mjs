@@ -49,11 +49,14 @@ const tr = await fetch(`${BASE}/api/token`, { method: 'POST' });
 const token = (await tr.json().catch(() => ({})))?.token ?? null;
 console.log('token:', token ? 'OK' : 'SAKNAS');
 
+// fingerprint krävs — storeAnalysis returnerar annars null och avtalen har ingen rad att
+// hänga på. employees 11 (≠ diag-live:s 10) ger egen cachenyckel → alltid färsk lagrad körning.
 const invRes = await fetch(`${BASE}/api/test-invoice`, {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     pdfBase64: readFileSync('test-pdfs/diag-bredband.pdf').toString('base64'),
-    industry: 'ovrigt', employees: 10, token,
+    industry: 'ovrigt', employees: 11, token,
+    fingerprint: 'diag-avtal-e2e-fingerprint',
   }),
 });
 const inv = await invRes.json().catch(() => ({}));
