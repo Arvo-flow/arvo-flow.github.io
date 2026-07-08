@@ -2,18 +2,30 @@ token: OK
 analys: HTTP 200 · route auto · analysisId eb0bcbd8-7617-48f2-9cbf-322d53587a40
 
 ═══ FÄLLA 1 · Telia Touchpoint (24 mån → +12, fönstret missat) ═══
-  ✗ AVVISAD (HTTP 500): okänt
+  AI läste  → {"avtalsstart":"2024-07-01","avtalstidMan":24,"uppsagningstidMan":3,"uppsagningstidDagar":null,"forlangningMan":12}
+  citat     → {"avtalsstart":"Avtalet träder i kraft på Tecknat datum","avtalstidMan":"löper med en initial bindningstid om tjugofyra (24) månader","uppsagningstidMan":"senast tre (3) månader före bindningstidens utgång","forlangningMan":"förlängs avtalet automatiskt med på varandra följande perioder om tolv (12) månader åt gången"}
+  klockan   → status window-open · slut 2027-07-01 · deadline 2027-04-01 · regler: avtalet
+  ✓ MATCHAR FACIT
 
 ═══ FÄLLA 2 · Bahnhof rullande 3+3 (AKUT fönster) ═══
-  ✗ AVVISAD (HTTP 500): okänt
+  ✗ AVVISAD (HTTP 200): Avtalsfälten klarade inte rimlighetskontrollen (avtalsstart saknas eller är inte ett giltigt ISO-datum). Vi granskar hellre manuellt än gissar.
 
 ═══ FÄLLA 3 · Fortnox årsvis (30 DAGAR — inte en månad) ═══
-  ✗ AVVISAD (HTTP 500): okänt
+  AI läste  → {"avtalsstart":"2025-08-15","avtalstidMan":12,"uppsagningstidMan":null,"uppsagningstidDagar":30,"forlangningMan":12}
+  citat     → {"avtalsstart":"Aktiveringsdatum: 2025-08-15","avtalstidMan":"Modulerna tillhandahålls på årsbasis.","uppsagningstidMan":null,"forlangningMan":"Avtalet förnyas automatiskt med ett (1) nytt år per den 15 augusti årligen"}
+  klockan   → status window-open · slut 2026-08-15 · deadline 2026-07-16 · regler: avtalet
+  ✓ MATCHAR FACIT
 
 ═══ FÄLLA 4 · GleSYS äkta tills vidare (1 mån varsel) ═══
-  ✗ AVVISAD (HTTP 500): okänt
+  AI läste  → {"avtalsstart":"2025-11-01","avtalstidMan":null,"uppsagningstidMan":1,"uppsagningstidDagar":null,"forlangningMan":null}
+  citat     → {"avtalsstart":"Giltigt från: 2025-11-01","avtalstidMan":null,"uppsagningstidMan":"Avtalet löper tills vidare med en ömsesidig uppsägningstid om en (1) månad räknat från sista dagen i den månad uppsägningen sker.","forlangningMan":null}
+  klockan   → status rolling · slut 2026-08-08 · deadline null · regler: avtalet
+  ✓ MATCHAR FACIT
 
 ═══ FÄLLA 5 · Nordic Managed IT (36 mån, 6 mån varsel, +24) ═══
-  ✗ AVVISAD (HTTP 500): okänt
+  AI läste  → {"avtalsstart":"2025-03-01","avtalstidMan":36,"uppsagningstidMan":6,"uppsagningstidDagar":null,"forlangningMan":24}
+  citat     → {"avtalsstart":"Signeringsdatum: 2025-03-01","avtalstidMan":"strikt bindande under en period om trettiosex (36) månader från Signeringsdatum (initial avtalsperiod)","uppsagningstidMan":"Uppsägning måste ske skriftligen via rekommenderat brev senast sex (6) månader före den initiala avtalsperiodens utgång","forlangningMan":"avtalet automatiskt förlängs med ytterligare tjugofyra (24) månader med oförändrade villkor"}
+  klockan   → status window-open · slut 2028-03-01 · deadline 2027-09-01 · regler: avtalet
+  ✓ MATCHAR FACIT
 
-═══ E2E-PROVETS DOM: 0/5 fällor klarade mot facit ═══
+═══ E2E-PROVETS DOM: 4/5 fällor klarade mot facit ═══
