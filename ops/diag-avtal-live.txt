@@ -2,18 +2,18 @@ token: OK
 analys: HTTP 200 · route auto · analysisId eb0bcbd8-7617-48f2-9cbf-322d53587a40
 
 ═══ FÄLLA 1 · Telia Touchpoint (24 mån → +12, fönstret missat) ═══
-  ✗ AVVISAD (HTTP 200): Avtalet kunde inte läsas just nu
+  ✗ AVVISAD (HTTP 500): okänt
 
 ═══ FÄLLA 2 · Bahnhof rullande 3+3 (AKUT fönster) ═══
-  ✗ AVVISAD (HTTP 200): Avtalet kunde inte läsas just nu
+  ✗ AVVISAD (HTTP 500): okänt
 
 ═══ FÄLLA 3 · Fortnox årsvis (30 DAGAR — inte en månad) ═══
-  ✗ AVVISAD (HTTP 200): Avtalet kunde inte läsas just nu
+  ✗ AVVISAD (HTTP 500): okänt
 
 ═══ FÄLLA 4 · GleSYS äkta tills vidare (1 mån varsel) ═══
-  ✗ AVVISAD (HTTP 200): Avtalet kunde inte läsas just nu
+  ✗ AVVISAD (HTTP 500): okänt
 
 ═══ FÄLLA 5 · Nordic Managed IT (36 mån, 6 mån varsel, +24) ═══
-  ✗ AVVISAD (HTTP 200): Avtalet kunde inte läsas just nu
+  ✗ AVVISAD (HTTP 500): okänt
 
 ═══ E2E-PROVETS DOM: 0/5 fällor klarade mot facit ═══
