@@ -1,0 +1,6 @@
+fingerprint fångat: 142d13ba34c7…
+innehav före: 0
+analys myntad: HTTP 200 · route auto · id 73beb556-3471-4cc8-821a-4fba8965550f
+under läsning — knapptext: "Läser avtalet…"
+DOMEN: "Läst — bindningen löper till 2026-10-15."
+KLART — bilder i ops/live-avtal-shots
