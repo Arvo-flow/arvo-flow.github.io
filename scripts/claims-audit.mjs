@@ -45,6 +45,9 @@ const FORBIDDEN = [
   [/klart inom 48/i,            'Automationslöfte utan automation (switch-orchestratorn har stubbar)'],
   [/garanterad besparing/i,     'Besparingar är estimat eller verifierade utfall — aldrig garantier'],
   [/vi vet exakt vad ni betalar/i, 'Vi vet först när fakturan delats — regel 3'],
+  // Switch-doktrinen: Arvo förhandlar ALDRIG (fullmakts-orkestrering, aldrig förhandlingsdisk).
+  // Kundens egen förhandling ("förhandlingsbar", "beväpnar er inför förhandlingen") är legitim.
+  [/låt arvo förhandla|arvo\s+(kan\s+)?förhandla(r)?\s+(åt|för|tillbaka)|och förhandlingen/i, 'Switch-doktrinen: Arvo förhandlar aldrig — vi förbereder, tajmar och verkställer via fullmakt'],
   // ×0,80-läxan (Svea 440192): frontend multiplicerade backendens besparingstal med
   // hårdkodade 0,80 → kundsiffran gick inte att räkna hem. Backend äger aritmetiken.
   // KLASSREGEL (skärpt 2026-07-08 efter att tierOptimizationSaving×0,80 slank förbi

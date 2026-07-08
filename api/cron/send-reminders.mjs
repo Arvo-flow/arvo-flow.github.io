@@ -12,6 +12,7 @@
 
 import { Resend } from 'resend';
 import { getDb } from '../../lib/db.js';
+import { deadlineReminderDecision } from '../../lib/deadline-reminder.js';
 
 export const config = { maxDuration: 30 };
 
@@ -81,7 +82,7 @@ function reminder30Html({ supplier, annualCost, netSaving, contractEndDate, anal
       </h2>
       <p style="color:#5C6E68;font-size:15px;line-height:1.65;margin:0 0 16px">
         Om ni inte agerar nu förlängs avtalet automatiskt på nuvarande villkor.
-        Arvo kan ta hand om hela bytet och förhandlingen — ni behöver inte lägga en timme på det.
+        Arvo tar hand om hela bytet — förberett, tajmat och signerat med BankID; ni behöver inte lägga en timme på det.
       </p>
       ${saving}
       <a href="${BASE_URL}/testa-faktura?analysisId=${analysisId}"
@@ -89,6 +90,43 @@ function reminder30Html({ supplier, annualCost, netSaving, contractEndDate, anal
                 background:linear-gradient(135deg,#F59E0B 0%,#D97706 100%);
                 color:#fff;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:24px">
         Aktivera leverantörsbytet nu →
+      </a>
+      <hr style="border:none;border-top:1px solid #E5E7EB;margin:28px 0" />
+      <p style="color:#9CA3AF;font-size:12px;line-height:1.5;margin:0">
+        <a href="${BASE_URL}/avsluta-bevakning?id=${analysisId}" style="color:#9CA3AF">Avsluta bevakning</a>
+      </p>
+    </div>
+  `;
+}
+
+// Deadline-vaktens mejl: sista uppsägningsdagen, fällan (vad ett missat fönster binder till)
+// och vägen till rummet. Inga besparingslöften här — bara avtalets egna, verifierbara datum.
+function deadlineReminderHtml({ supplier, view, analysisId }) {
+  const c = view.clock;
+  const fmtSv = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const falla = view.nastaPeriodSlut
+    ? `<p style="color:#5C6E68;font-size:15px;line-height:1.65;margin:0 0 16px">
+         <strong style="color:#0E1A17">Fällan i ert avtal:</strong> missas fönstret förlängs avtalet
+         automatiskt och ni är bundna till <strong>${fmtSv(view.nastaPeriodSlut)}</strong>.
+       </p>`
+    : '';
+  return `
+    <div style="font-family:-apple-system,Arial,sans-serif;max-width:520px;margin:0 auto;padding:40px 24px;color:#0E1A17">
+      <img src="${BASE_URL}/logo.png" alt="Arvo Flow" style="height:28px;margin-bottom:32px" />
+      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#D97706;margin:0 0 12px">Avtalsklockan · ${supplier}</p>
+      <h2 style="font-size:22px;font-weight:800;margin:0 0 12px;letter-spacing:-0.02em;line-height:1.3">
+        Sista uppsägningsdag ${fmtSv(c.deadline)} — ${c.daysToDeadline} dagar kvar
+      </h2>
+      <p style="color:#5C6E68;font-size:15px;line-height:1.65;margin:0 0 16px">
+        Datumet kommer ur ert eget avtal, som Arvo läst och bevakar. Vill ni lämna eller omteckna
+        är det här fönstret — efter det löper avtalet vidare.
+      </p>
+      ${falla}
+      <a href="${BASE_URL}/portfolio"
+         style="display:inline-block;padding:14px 28px;border-radius:100px;
+                background:linear-gradient(135deg,#2BC4AC 0%,#1B7A6E 100%);
+                color:#fff;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:24px">
+        Öppna ert rum — bytet är förberett →
       </a>
       <hr style="border:none;border-top:1px solid #E5E7EB;margin:28px 0" />
       <p style="color:#9CA3AF;font-size:12px;line-height:1.5;margin:0">
@@ -207,6 +245,56 @@ export default async function handler(req, res) {
     }
   } catch (err) {
     console.error('[send-reminders] reminder30 query failed:', err.message);
+  }
+
+  // ── 2b. DEADLINE-VAKTEN — 30/7 dagar före SISTA UPPSÄGNINGSDAGEN ──────────
+  // Regel 9-fyndet 2026-07-08: 60/30-mejlen ovan räknar mot PERIODSLUTET — för
+  // rullande avtal (Bahnhof 3+3) stänger fönstret långt tidigare. Denna gren
+  // räknar klockan FÄRSK ur avtalstermerna (lib/deadline-reminder.js, testlåst)
+  // och påminner mot deadlinen. Rullande avtal påminns per period (markören bär
+  // deadline-datumet och nollställs när klockan rullat).
+  try {
+    const rows = await db`
+      SELECT id, supplier, normalized_supplier, user_email, contract_terms_json, deadline_reminder_json
+      FROM invoice_analyses
+      WHERE contract_terms_json IS NOT NULL
+        AND user_email IS NOT NULL
+    `.catch(async (e) => {
+      if (!/deadline_reminder_json/.test(e.message)) throw e;
+      await db`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS deadline_reminder_json JSONB`;
+      return db`
+        SELECT id, supplier, normalized_supplier, user_email, contract_terms_json, deadline_reminder_json
+        FROM invoice_analyses
+        WHERE contract_terms_json IS NOT NULL AND user_email IS NOT NULL`;
+    });
+    for (const row of rows) {
+      try {
+        const { send30, send7, marker, view } = deadlineReminderDecision({
+          terms: row.contract_terms_json, marker: row.deadline_reminder_json,
+        });
+        if (!send30 && !send7) continue;
+        const supplier = row.normalized_supplier || row.supplier || 'leverantören';
+        const d = view.clock;
+        await resend.emails.send({
+          from:    FROM,
+          to:      row.user_email,
+          subject: send7
+            ? `⏳ ${d.daysToDeadline} dagar kvar: sista uppsägningsdag för ${supplier}-avtalet`
+            : `${d.daysToDeadline} dagar till sista uppsägningsdag för ${supplier}-avtalet`,
+          html:    deadlineReminderHtml({ supplier, view, analysisId: row.id }),
+        });
+        await db`
+          UPDATE invoice_analyses SET deadline_reminder_json = ${JSON.stringify(marker)}::jsonb WHERE id = ${row.id}
+        `;
+        stats.deadline = (stats.deadline ?? 0) + 1;
+      } catch (err) {
+        console.error('[send-reminders] deadline-vakten misslyckades för', row.id, err.message);
+        stats.errors++;
+      }
+    }
+  } catch (err) {
+    // Kolumnen contract_terms_json kan saknas i äldre miljöer — då finns inget att bevaka (ofarligt).
+    if (!/contract_terms_json/.test(err.message)) console.error('[send-reminders] deadline-vakt query failed:', err.message);
   }
 
   // ── 3. Utfallsenkät — 60 dagar efter analys ───────────────────────────────

@@ -157,7 +157,7 @@ export default async function handler(req, res) {
                 ? `Priset gick från ${fmt(impact.oldKrMonth)} till ${fmt(impact.newKrMonth)} kr/licens/mån.`
                 : null,
               action: {
-                label: 'Låt Arvo förhandla tillbaka priset', type: 'renegotiate',
+                label: 'Se Arvos förberedda motdrag', type: 'renegotiate',
                 estimatedNetSaving: impact && impact.impactKrYear > 0 ? netOf(impact.impactKrYear) : 0,
               },
             };
@@ -262,7 +262,7 @@ function buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefing
   <table cellpadding="0" cellspacing="0" style="margin:0 0 20px">
     <tr><td style="border-radius:10px;background:linear-gradient(135deg,#5DD6CA,#1B6E66)">
       <a href="${briefingUrl}" style="display:inline-block;color:#fff;font-weight:700;font-size:15px;padding:15px 36px;text-decoration:none">
-        ${isIncrease ? 'Låt Arvo förhandla tillbaka priset' : 'Se fullständig analys'} &rarr;
+        ${isIncrease ? 'Se Arvos förberedda motdrag' : 'Se fullständig analys'} &rarr;
       </a>
     </td></tr>
   </table>

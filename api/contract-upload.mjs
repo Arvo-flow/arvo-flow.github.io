@@ -13,7 +13,7 @@
 //  · 'expired' → ok:false ("avtalet har redan löpt ut") — vi lagrar aldrig ett passerat datum
 import { getDb } from '../lib/db.js';
 import { extractContract, ContractExtractError } from '../agents/contract/extract-contract.js';
-import { acceptExtractedContract, resolveContractRules, computeContractOutcome, villkorForSupplier } from '../lib/contract-intel.js';
+import { acceptExtractedContract, resolveContractRules, computeContractOutcome, villkorForSupplier, supplierNamesMatch } from '../lib/contract-intel.js';
 
 export const config = { maxDuration: 60 };
 
@@ -68,6 +68,16 @@ export default async function handler(req, res) {
   }
   if (!(extracted.confidence >= MIN_CONFIDENCE)) {
     return send(res, 200, { ok: false, reason: 'Vi kunde inte läsa avtalsfälten med tillräcklig säkerhet — vi granskar hellre manuellt än gissar. Hör av er så tar vi det därifrån.' });
+  }
+
+  // Leverantörsmatchningen (E2E-läxan 2026-07-08): fel avtal på fel innehav kopplas
+  // aldrig tyst — flaggas ärligt så kunden väljer rätt innehav i stället.
+  const invoiceSupplier = row.normalized_supplier || row.supplier || null;
+  if (!supplierNamesMatch(extracted.supplier, invoiceSupplier)) {
+    return send(res, 200, {
+      ok: false,
+      reason: `Avtalet ser ut att gälla ${extracted.supplier}, men det här innehavet avser ${invoiceSupplier}. Ladda upp avtalet på rätt leverantörs innehav — eller dela först en faktura från ${extracted.supplier}, så får avtalet ett eget innehav att bo på.`,
+    });
   }
 
   // 2 · Koden accepterar — orimliga fält stoppas med skäl.

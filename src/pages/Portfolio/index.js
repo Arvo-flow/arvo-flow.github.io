@@ -1133,8 +1133,10 @@ export default function Portfolio() {
                                 </p>
                               )}
                               <p className="al-motdrag">
-                                <b>Motdraget:</b> fönstret bevakas i Maktkalendern — rummet visar alltid
-                                exakt hur många dagar som återstår, och bytet förbereds mot rätt dag.
+                                <b>Motdraget:</b> fönstret bevakas i Maktkalendern
+                                {(authEmail || apiEmail)
+                                  ? <> — vi mejlar er 30 och 7 dagar före sista uppsägningsdagen, och rummet visar alltid exakt hur många dagar som återstår.</>
+                                  : <> — rummet visar alltid exakt hur många dagar som återstår, och bytet förbereds mot rätt dag. Logga in med er företagsmejl så påminner vi er även via mejl.</>}
                               </p>
                               {citatRows.length > 0 && (
                                 <details className="al-citat">

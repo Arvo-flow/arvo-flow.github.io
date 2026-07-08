@@ -57,6 +57,7 @@ import './schemakrav.mjs';
 import './verifikationskvitto.mjs';
 import './fee.mjs';
 import './avtal-fallor.mjs';
+import './deadline-reminder.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,
