@@ -63,7 +63,7 @@ describe('acceptansgrinden · AI-lästa fält släpps aldrig vidare orimliga', (
   test('giltigt avtal accepteras med normaliserade fält', () => {
     const r = acceptExtractedContract(ok, { today: TODAY });
     assert.equal(r.ok, true);
-    assert.deepEqual(r.fields, { avtalsstart: '2025-01-15', avtalstidMan: 12, uppsagningstidMan: 3, forlangningMan: 3 });
+    assert.deepEqual(r.fields, { avtalsstart: '2025-01-15', avtalstidMan: 12, uppsagningstidMan: 3, uppsagningstidDagar: null, forlangningMan: 3 });
   });
   test('trasigt/framtida/uråldrigt datum → avvisas med skäl', () => {
     assert.equal(acceptExtractedContract({ ...ok, avtalsstart: '15 jan 2025' }, { today: TODAY }).ok, false);
@@ -75,8 +75,13 @@ describe('acceptansgrinden · AI-lästa fält släpps aldrig vidare orimliga', (
     assert.equal(acceptExtractedContract({ ...ok, avtalstidMan: 121 }, { today: TODAY }).ok, false);
     assert.equal(acceptExtractedContract({ ...ok, uppsagningstidMan: 13 }, { today: TODAY }).ok, false);
   });
-  test('uppsägningstid ≥ avtalstid = ologiskt → manuell läsning, aldrig en gissning', () => {
+  test('uppsägningstid LIKA MED avtalstid = 3+3-fällan — fullt logisk, accepteras (E2E-läxan)', () => {
     const r = acceptExtractedContract({ ...ok, avtalstidMan: 3, uppsagningstidMan: 3 }, { today: TODAY });
+    assert.equal(r.ok, true);
+    assert.equal(r.fields.uppsagningstidMan, 3);
+  });
+  test('uppsägningstid STÖRRE än avtalstid = ologiskt → manuell läsning, aldrig en gissning', () => {
+    const r = acceptExtractedContract({ ...ok, avtalstidMan: 3, uppsagningstidMan: 4 }, { today: TODAY });
     assert.equal(r.ok, false);
     assert.match(r.reason, /manuell/);
   });
@@ -123,19 +128,19 @@ describe('regelupplösningen · avtalets villkor vinner, villkorsboken täcker, 
 
   test('avtalet anger uppsägningstid → avtalet vinner (källa: avtalet)', () => {
     const r = resolveContractRules({ uppsagningstidMan: 1, forlangningMan: 12 }, bok);
-    assert.deepEqual(r, { uppsagningstidMan: 1, forlangningMan: 12, efterBindning: 'forlangning', kalla: 'avtalet' });
+    assert.deepEqual(r, { uppsagningstidMan: 1, uppsagningstidDagar: null, forlangningMan: 12, efterBindning: 'forlangning', kalla: 'avtalet' });
   });
   test('avtalet tyst → villkorsboken täcker (källa: villkorsbok)', () => {
     const r = resolveContractRules({ uppsagningstidMan: null, forlangningMan: null }, bok);
-    assert.deepEqual(r, { uppsagningstidMan: 3, forlangningMan: 3, efterBindning: 'forlangning', kalla: 'villkorsbok' });
+    assert.deepEqual(r, { uppsagningstidMan: 3, uppsagningstidDagar: null, forlangningMan: 3, efterBindning: 'forlangning', kalla: 'villkorsbok' });
   });
   test('varken avtal eller bok → null-regler (källa: null) — aldrig en gissning', () => {
     const r = resolveContractRules({ uppsagningstidMan: null }, null);
-    assert.deepEqual(r, { uppsagningstidMan: null, forlangningMan: null, efterBindning: null, kalla: null });
+    assert.deepEqual(r, { uppsagningstidMan: null, uppsagningstidDagar: null, forlangningMan: null, efterBindning: null, kalla: null });
   });
   test('avtalets uppsägning + bokens förlängning kombineras (lucktäckning per fält)', () => {
     const r = resolveContractRules({ uppsagningstidMan: 2, forlangningMan: null }, bok);
-    assert.deepEqual(r, { uppsagningstidMan: 2, forlangningMan: 3, efterBindning: 'forlangning', kalla: 'avtalet' });
+    assert.deepEqual(r, { uppsagningstidMan: 2, uppsagningstidDagar: null, forlangningMan: 3, efterBindning: 'forlangning', kalla: 'avtalet' });
   });
 });
 

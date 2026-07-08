@@ -1,0 +1,36 @@
+name: Diag avtal E2E (fem fällor mot live-kedjan)
+# C1:s E2E-prov: grundarens fäll-avtal genom den LIVE-utlagda kedjan, maskindiffat mot facit.
+# Självtriggar på push av skriptet/korpusen (OBS: aldrig [skip ci] i den utlösande committen).
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/diag-avtal-live.mjs'
+      - 'test-pdfs/avtal/**'
+permissions:
+  contents: write
+jobs:
+  diag-avtal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Vänta in Vercel-deployen av samma push
+        run: sleep 100
+      - name: Kör E2E-provet mot live
+        run: |
+          mkdir -p ops
+          node scripts/diag-avtal-live.mjs | tee ops/diag-avtal-live.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git pull --rebase origin main || true
+          git add ops/diag-avtal-live.txt
+          git commit -m "ops: diag-avtal-live [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"

@@ -30,16 +30,18 @@ export const CONTRACT_TOOL = {
       supplier:          { type: ['string', 'null'], description: 'Leverantörens namn som det står i avtalet' },
       avtalsstart:       { type: ['string', 'null'], description: 'Avtalsstart/leveransdag som ISO-datum (YYYY-MM-DD). null om inget uttryckligt datum står.' },
       avtalstidMan:      { type: ['integer', 'null'], description: 'Initial avtalstid/bindningstid i HELA månader, exakt som dokumentet anger. null om ej angiven.' },
-      uppsagningstidMan: { type: ['integer', 'null'], description: 'Uppsägningstid i hela månader om uttryckligen angiven, annars null.' },
+      uppsagningstidMan: { type: ['integer', 'null'], description: 'Uppsägningstid i hela MÅNADER om dokumentet anger månader, annars null. Konvertera ALDRIG från dagar.' },
+      uppsagningstidDagar: { type: ['integer', 'null'], description: 'Uppsägningstid i DAGAR om dokumentet anger dagar (t.ex. "trettio (30) dagar"), annars null. Konvertera ALDRIG från månader. Exakt en av månads-/dagfälten sätts.' },
       forlangningMan:    { type: ['integer', 'null'], description: 'Automatisk förlängningsperiod i hela månader om uttryckligen angiven. 0 om avtalet uttryckligen löper ut utan förnyelse. null om ej angiven.' },
       citat: {
         type: 'object', additionalProperties: false,
         description: 'ORDAGRANNA korta citat ur dokumentet som belägger respektive fält (proveniens).',
         properties: {
-          avtalsstart:       { type: ['string', 'null'] },
-          avtalstidMan:      { type: ['string', 'null'] },
-          uppsagningstidMan: { type: ['string', 'null'] },
-          forlangningMan:    { type: ['string', 'null'] },
+          avtalsstart:         { type: ['string', 'null'] },
+          avtalstidMan:        { type: ['string', 'null'] },
+          uppsagningstidMan:   { type: ['string', 'null'] },
+          uppsagningstidDagar: { type: ['string', 'null'] },
+          forlangningMan:      { type: ['string', 'null'] },
         },
         required: ['avtalsstart', 'avtalstidMan', 'uppsagningstidMan', 'forlangningMan'],
       },
@@ -55,7 +57,11 @@ REGLER (absoluta):
 - Återge ENDAST vad dokumentet uttryckligen säger. Fält som inte står uttryckligen = null.
 - RÄKNA ALDRIG datum framåt eller bakåt. Står "avtalstid 24 månader från leveransdagen 2025-03-01"
   är avtalsstart 2025-03-01 och avtalstidMan 24 — du beräknar INTE slutdatumet.
-- Svenska sifferord: "tre (3) månader" = 3. "tolv (12) månader" = 12.
+- Svenska sifferord: "tre (3) månader" = 3. "tolv (12) månader" = 12. "trettio (30) dagar" = 30.
+- Uppsägningstidens ENHET läses exakt: månader → uppsagningstidMan, dagar → uppsagningstidDagar.
+  KONVERTERA ALDRIG mellan enheterna (30 dagar är INTE 1 månad). Exakt en av dem sätts, den andra null.
+- Löper avtalet tills vidare UTAN initial bindningstid → avtalstidMan: null (hitta inte på en period).
+  Rullande perioder ("löper i perioder om tre (3) månader") är avtalstidMan = periodlängden.
 - Varje icke-null-fält MÅSTE bära ett ordagrant kort citat i citat-objektet.
 - Är dokumentet inte ett avtal (faktura, broschyr, prislista) → isContract: false och alla fält null.`;
 
