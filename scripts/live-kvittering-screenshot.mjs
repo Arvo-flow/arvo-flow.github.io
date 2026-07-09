@@ -2,6 +2,7 @@
 // seedat rum → Bahnhof-avtalet upp på Bahnhof-innehavet → "Vi har sagt upp" → ångra →
 // "Vi stannar denna period" — varje läge fotograferat. Inga mockar.
 // Körs på Actions (DATABASE_URL för seed + egress). Länken tas som argv.
+// Körning 2: efter workflow-fixen (playwright-paketet saknades; tee svalde stderr+exit).
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 

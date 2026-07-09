@@ -28,11 +28,14 @@ jobs:
           mkdir -p ops/kvittering-shots
           node scripts/seed-avtal-testyta.mjs | tee ops/kvittering-shots/logg.txt
       - name: Install Playwright + Chromium
-        run: npx playwright install chromium --with-deps
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium --with-deps
       - name: Kör kvitteringsresan
         run: |
+          set -o pipefail
           URL=$(grep -o 'https://arvoflow.se/portfolio?magic=[a-f0-9]*' ops/kvittering-shots/logg.txt | head -1)
-          node scripts/live-kvittering-screenshot.mjs "$URL" | tee -a ops/kvittering-shots/logg.txt
+          node scripts/live-kvittering-screenshot.mjs "$URL" 2>&1 | tee -a ops/kvittering-shots/logg.txt
       - name: Commit
         if: always()
         continue-on-error: true
