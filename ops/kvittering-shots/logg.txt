@@ -6,7 +6,14 @@ Testytan nollställd (testyta@arvoflow.se): 5 rader bort.
   ✓ Nordic Managed IT Services AB    it-support     — FÄLLA 5 · 36 mån, 6 mån varsel, +24
 
 ═══════ AVTALS-TESTYTAN ÄR KLAR ═══════
-Rum: https://arvoflow.se/portfolio?magic=83dc7727c869f1334870151fe8bddd7b5861346d2d34f01e449dc2e223313c65
+Rum: https://arvoflow.se/portfolio?magic=31a315786cdc889f1d8824a8a935e06f74ad1c4adf053f762f9101cee79fac7f
 Giltig 24 h · fem innehav i amber · ladda upp fäll-avtalen (test-pdfs/avtal/) på respektive innehav.
 Testa även FEL avtal på FEL innehav — leverantörsflaggan ska fyras.
 MAILA INTE testyta@inbox under passet (auto-reset nollar ytan).
+avtal uppladdat — väntar på domen…
+dom: "Läst — bindningen löper till 2026-10-15."
+✓ läge 1: fönstret öppet med två handlingar
+✓ läge 2: uppsagt — nedräkning + om-vakt
+✓ ångra: fönstret öppet igen
+✓ läge 3: valt att stanna — nästa fönster bevakas
+KLART — bilder i ops/kvittering-shots
