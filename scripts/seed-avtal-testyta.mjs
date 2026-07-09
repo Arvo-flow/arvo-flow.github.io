@@ -1,4 +1,6 @@
 // scripts/seed-avtal-testyta.mjs — AVTALS-TESTYTAN: ett rent, förberett testrum för avtalsflödet.
+// Körning 2 (2026-07-09): färsk länk till grundaren (gårdagens 24h-token åldrad; mejlen till
+// testyta@arvoflow.se studsade — root-domänen saknar MX, inkorgen bor på inbox.arvoflow.se).
 //
 // Nollställer testytan (hårdkodat TEST_EMAIL — kan aldrig röra kunddata) och seedar FEM innehav,
 // ett per fäll-leverantör (test-pdfs/avtal/), så varje fäll-avtal kan laddas upp på RÄTT innehav
