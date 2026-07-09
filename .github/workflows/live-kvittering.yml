@@ -1,0 +1,45 @@
+name: Live kvittering (E2E genom testytan)
+# Seedar testytan, laddar Bahnhof-fällan och kör hela kvitteringsresan
+# (uppsagd → ångra → stannar) med foto per läge. Självtriggar på skript-push.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/live-kvittering-screenshot.mjs'
+permissions:
+  contents: write
+jobs:
+  kvittering:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Vänta in Vercel-deployen av samma push
+        run: sleep 110
+      - name: Seed testytan
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          mkdir -p ops/kvittering-shots
+          node scripts/seed-avtal-testyta.mjs | tee ops/kvittering-shots/logg.txt
+      - name: Install Playwright + Chromium
+        run: npx playwright install chromium --with-deps
+      - name: Kör kvitteringsresan
+        run: |
+          URL=$(grep -o 'https://arvoflow.se/portfolio?magic=[a-f0-9]*' ops/kvittering-shots/logg.txt | head -1)
+          node scripts/live-kvittering-screenshot.mjs "$URL" | tee -a ops/kvittering-shots/logg.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git pull --rebase origin main || true
+          git add ops/kvittering-shots/
+          git commit -m "ops: live-kvittering [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"

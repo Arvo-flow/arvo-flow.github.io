@@ -83,3 +83,54 @@ describe('leverantörsmatchningen · fel avtal på fel innehav flaggas', () => {
     assert.equal(supplierNamesMatch('Bahnhof AB', ''), true);
   });
 });
+
+// ── KVITTERINGEN (grundardesign 2026-07-09): uppsagd/stannar styr både vy och mejl ──
+import { buildAvtalView } from '../lib/contract-intel.js';
+
+describe('kvitteringen · uppsagd — nedräkning, tysta mejl, om-vaktens förutsättning', () => {
+  const uppsagd = { ...BAHNHOF_TERMS, kundStatus: { typ: 'uppsagd', deadline: '2026-07-15', exitDate: '2026-10-15', registrerad: '2026-07-09T10:00:00Z' } };
+
+  test('vyn blir nedräkning: terminating → utträdet 2026-10-15', () => {
+    const v = buildAvtalView(uppsagd, { today: at('2026-07-09') });
+    assert.equal(v.clock.status, 'terminating');
+    assert.equal(v.clock.currentPeriodEnd, '2026-10-15');
+    assert.equal(v.clock.deadline, null);
+  });
+
+  test('efter utträdesdatumet: terminated (om-vaktens läge)', () => {
+    const v = buildAvtalView(uppsagd, { today: at('2026-11-01') });
+    assert.equal(v.clock.status, 'terminated');
+  });
+
+  test('deadline-mejlen tystnar helt', () => {
+    const r = deadlineReminderDecision({ terms: uppsagd, marker: null, today: at('2026-07-09') });
+    assert.equal(r.send30, false);
+    assert.equal(r.send7, false);
+  });
+});
+
+describe('kvitteringen · stannar — tyst EXAKT denna period, väcks av sig själv', () => {
+  const stannar = { ...BAHNHOF_TERMS, kundStatus: { typ: 'stannar', deadline: '2026-07-15', registrerad: '2026-07-09T10:00:00Z' } };
+
+  test('denna period: stannarAktiv + nästa fönster 2026-10-15 + inga mejl', () => {
+    const v = buildAvtalView(stannar, { today: at('2026-07-09') });
+    assert.equal(v.stannarAktiv, true);
+    assert.equal(v.nastaFonster, '2026-10-15');
+    const r = deadlineReminderDecision({ terms: stannar, marker: null, today: at('2026-07-09') });
+    assert.equal(r.send7, false);
+  });
+
+  test('nästa period: nyckeln matchar inte längre — larmet väcks och mejlen går', () => {
+    const v = buildAvtalView(stannar, { today: at('2026-10-08') });
+    assert.equal(v.stannarAktiv, false);
+    assert.equal(v.clock.deadline, '2026-10-15');
+    const r = deadlineReminderDecision({ terms: stannar, marker: null, today: at('2026-10-08') });
+    assert.equal(r.send7, true);
+  });
+
+  test('angra (kundStatus null) → rått läge med varningar', () => {
+    const v = buildAvtalView({ ...BAHNHOF_TERMS, kundStatus: null }, { today: at('2026-07-09') });
+    assert.equal(v.stannarAktiv, false);
+    assert.equal(v.clock.status, 'window-open');
+  });
+});

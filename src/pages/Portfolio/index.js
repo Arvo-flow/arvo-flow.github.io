@@ -408,6 +408,27 @@ export default function Portfolio() {
     }
   }, [authEmail, apiEmail, loadOffice]);
 
+  // Kvitteringen: kundens registrerade handling på ett öppet fönster (uppsagd/stannar/angra).
+  // Servern äger alla datum — klienten skickar bara avsikten och renderar svaret.
+  const contractStatusAction = useCallback(async (analysisId, action) => {
+    setAvtalStatus((s) => ({ ...s, [analysisId]: { phase: 'work', msg: 'Registrerar…' } }));
+    try {
+      const res = await fetch('/api/contract-status', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ analysisId, action }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.ok) {
+        setAvtalStatus((s) => { const n = { ...s }; delete n[analysisId]; return n; });
+        await loadOffice();
+      } else {
+        setAvtalStatus((s) => ({ ...s, [analysisId]: { phase: 'fail', msg: data.reason || data.error || 'Kunde inte registrera just nu.' } }));
+      }
+    } catch {
+      setAvtalStatus((s) => ({ ...s, [analysisId]: { phase: 'fail', msg: 'Kunde inte registrera just nu — försök igen.' } }));
+    }
+  }, [loadOffice]);
+
   const copyInbox = useCallback(async () => {
     try { await navigator.clipboard.writeText(INBOX_ADDR); } catch { /* clipboard nekad — chippet är ändå läsbart */ }
     setCopiedInbox(true);
@@ -1109,35 +1130,101 @@ export default function Portfolio() {
                                 {v.uppsagningLabel && <span>Uppsägningstid <b>{v.uppsagningLabel}</b></span>}
                                 {v.forlangningLabel && <span>Förlängning <b>{v.forlangningLabel}</b></span>}
                               </div>
-                              {c.status === 'window-open' && c.deadline && (
-                                <div className={`al-deadline${akut ? ' akut' : ''}`}>
-                                  Sista uppsägningsdag <span className="al-date">{fmtDate(c.deadline)}</span>
-                                  {' '}· <span className="al-days">{c.daysToDeadline} dagar kvar</span>
-                                </div>
+                              {/* KVITTERAT: UPPSAGT — nedräkning till utträdet, om-vakten armerad */}
+                              {v.kundStatus?.typ === 'uppsagd' && (c.status === 'terminating' || c.status === 'terminated') && (
+                                <>
+                                  <div className="al-deadline lugn">
+                                    Avtalet upphör <span className="al-date">{fmtDate(c.currentPeriodEnd)}</span>
+                                    {c.status === 'terminating' && <> · <span className="al-days">{c.daysToEnd} dagar</span></>}
+                                  </div>
+                                  <p className="al-falla">
+                                    Markerad som uppsagd <b>av er · {fmtDate(v.kundStatus.registrerad)}</b>. Varningarna är tysta.
+                                  </p>
+                                  {v.omVaktLarm ? (
+                                    <p className="al-larm">
+                                      <b>Om-vakten larmar:</b> en faktura från {supplierName(a)} har landat efter
+                                      utträdesdatumet — kontrollera att uppsägningen verkligen gick igenom.
+                                    </p>
+                                  ) : (
+                                    <p className="al-motdrag">
+                                      <b>Om-vakten:</b> efter {fmtDate(c.currentPeriodEnd)} ska {supplierName(a)} försvinna
+                                      ur ert fakturaflöde — landar en faktura ändå larmar rummet.
+                                    </p>
+                                  )}
+                                  <button type="button" className="al-angra" onClick={() => contractStatusAction(a.id, 'angra')}>
+                                    ▸ Ångra — vi sade inte upp ändå
+                                  </button>
+                                </>
                               )}
-                              {c.status === 'window-open' && v.nastaPeriodSlut && (
-                                <p className="al-falla">
-                                  <b>Fällan i ert avtal:</b> missas fönstret förlängs avtalet automatiskt
-                                  och ni är bundna till {fmtDate(v.nastaPeriodSlut)}.
-                                </p>
+
+                              {/* KVITTERAT: STANNAR — lugnet registrerat, nästa fönster bevakas */}
+                              {v.stannarAktiv && (
+                                <>
+                                  <div className="al-deadline">
+                                    Nästa fönster <span className="al-date">{fmtDate(v.nastaFonster ?? c.deadline)}</span> · varnar igen då
+                                  </div>
+                                  <p className="al-falla">
+                                    Ni valde att behålla {supplierName(a)} <b>denna period · {fmtDate(v.kundStatus.registrerad)}</b>.
+                                    Larmet är tyst till nästa fönster — bevakningen fortsätter, och höjer leverantören
+                                    priset hör ni av oss direkt.
+                                  </p>
+                                  <button type="button" className="al-angra" onClick={() => contractStatusAction(a.id, 'angra')}>
+                                    ▸ Ångra — öppna fönstret igen
+                                  </button>
+                                </>
                               )}
-                              {c.status === 'rolling' && (
-                                <p className="al-falla">
-                                  Ingen deadline att missa — avtalet löper tills vidare och kan sägas upp
-                                  när som helst med {v.uppsagningLabel} varsel (tidigast {fmtDate(c.currentPeriodEnd)}).
-                                </p>
+
+                              {/* RÅTT LÄGE — fönster/rullande/utlöpande + handlingarna */}
+                              {!v.kundStatus?.typ && !v.stannarAktiv && (
+                                <>
+                                  {c.status === 'window-open' && c.deadline && (
+                                    <div className={`al-deadline${akut ? ' akut' : ''}`}>
+                                      Sista uppsägningsdag <span className="al-date">{fmtDate(c.deadline)}</span>
+                                      {' '}· <span className="al-days">{c.daysToDeadline} dagar kvar</span>
+                                    </div>
+                                  )}
+                                  {c.status === 'window-open' && v.nastaPeriodSlut && (
+                                    <p className="al-falla">
+                                      <b>Fällan i ert avtal:</b> missas fönstret förlängs avtalet automatiskt
+                                      och ni är bundna till {fmtDate(v.nastaPeriodSlut)}.
+                                    </p>
+                                  )}
+                                  {c.status === 'rolling' && (
+                                    <p className="al-falla">
+                                      Ingen deadline att missa — avtalet löper tills vidare och kan sägas upp
+                                      när som helst med {v.uppsagningLabel} varsel (tidigast {fmtDate(c.currentPeriodEnd)}).
+                                    </p>
+                                  )}
+                                  {(c.status === 'expires' || c.status === 'expired') && (
+                                    <p className="al-falla">
+                                      Avtalet löper ut {fmtDate(c.currentPeriodEnd)} utan automatisk förlängning.
+                                    </p>
+                                  )}
+                                  <p className="al-motdrag">
+                                    <b>Motdraget:</b> fönstret bevakas i Maktkalendern
+                                    {(authEmail || apiEmail)
+                                      ? <> — vi mejlar er 30 och 7 dagar före sista uppsägningsdagen, och rummet visar alltid exakt hur många dagar som återstår.</>
+                                      : <> — rummet visar alltid exakt hur många dagar som återstår, och bytet förbereds mot rätt dag. Logga in med er företagsmejl så påminner vi er även via mejl.</>}
+                                  </p>
+                                  {/* Kvitteringen: två handlingar när fönstret är öppet (eller rullande — uppsägbart när som helst) */}
+                                  {(c.status === 'window-open' || c.status === 'rolling') && (
+                                    <div className="al-actions">
+                                      <button type="button" className="al-btn primary"
+                                        disabled={avtalStatus[a.id]?.phase === 'work'}
+                                        onClick={() => contractStatusAction(a.id, 'uppsagd')}>
+                                        Vi har sagt upp ✓
+                                      </button>
+                                      {c.status === 'window-open' && (
+                                        <button type="button" className="al-btn"
+                                          disabled={avtalStatus[a.id]?.phase === 'work'}
+                                          onClick={() => contractStatusAction(a.id, 'stannar')}>
+                                          Vi stannar denna period
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </>
                               )}
-                              {(c.status === 'expires' || c.status === 'expired') && (
-                                <p className="al-falla">
-                                  Avtalet löper ut {fmtDate(c.currentPeriodEnd)} utan automatisk förlängning.
-                                </p>
-                              )}
-                              <p className="al-motdrag">
-                                <b>Motdraget:</b> fönstret bevakas i Maktkalendern
-                                {(authEmail || apiEmail)
-                                  ? <> — vi mejlar er 30 och 7 dagar före sista uppsägningsdagen, och rummet visar alltid exakt hur många dagar som återstår.</>
-                                  : <> — rummet visar alltid exakt hur många dagar som återstår, och bytet förbereds mot rätt dag. Logga in med er företagsmejl så påminner vi er även via mejl.</>}
-                              </p>
                               {citatRows.length > 0 && (
                                 <details className="al-citat">
                                   <summary>Ordagrant ur ert avtal</summary>

@@ -555,7 +555,23 @@ export const AvtalLast = styled.div`
     font-size:13px; color:${theme.dossier.mutedOnDark}; line-height:1.5;
     .al-date { font-family:${MONO}; font-size:15px; color:${theme.dossier.inkOnDark}; font-feature-settings:'tnum'; }
     .al-days { font-family:${MONO}; color:${theme.dossier.tealBright}; }
-    &.akut .al-days { color:${theme.dossier.signal}; } }
+    &.akut .al-days { color:${theme.dossier.signal}; }
+    &.lugn { border-color:rgba(43,196,172,.45); } }
+  .al-larm { margin:0 0 8px; font-size:12.5px; line-height:1.6; color:${theme.dossier.signal};
+    b { font-weight:700; } }
+  .al-actions { display:flex; gap:8px; margin:4px 0 10px; flex-wrap:wrap;
+    .al-btn { flex:1; min-width:150px; cursor:pointer; font-size:12.5px; font-weight:600;
+      color:${theme.dossier.mutedOnDark}; background:none;
+      border:1px solid ${theme.dossier.hairlineOnDark}; border-radius:${theme.size.radius.pill};
+      padding:11px 16px; transition:border-color .15s, color .15s;
+      &:hover { border-color:${theme.dossier.teal}; color:${theme.dossier.inkOnDark}; }
+      &:disabled { opacity:.5; cursor:default; }
+      &.primary { color:#06231d; border:none;
+        background:linear-gradient(135deg, ${theme.dossier.tealBright}, ${theme.dossier.teal}); } } }
+  .al-angra { display:block; cursor:pointer; background:none; border:none; padding:0; margin-top:4px;
+    font-family:${MONO}; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:${theme.dossier.faintOnDark}; text-align:left;
+    &:hover { color:${theme.dossier.teal}; } }
   .al-falla, .al-motdrag { margin:0 0 8px; font-size:12.5px; line-height:1.6;
     color:${theme.dossier.mutedOnDark};
     b { color:${theme.dossier.inkOnDark}; font-weight:600; } }

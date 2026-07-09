@@ -11,7 +11,7 @@ import { getMarketIntelligence } from '../lib/price-alert.js';
 import { pendingCountBySender, failedCountBySender, failedFilesBySender } from '../lib/ingest-queue.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding } from '../lib/contract-clock.js';
-import { buildAvtalView } from '../lib/contract-intel.js';
+import { buildAvtalView, supplierNamesMatch } from '../lib/contract-intel.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
 import { getSupplierCategoryChangesByKeyword, getRecentHike } from '../lib/price-db.js';
 import { getSegmentStats } from '../lib/price-alert-store.js';
@@ -104,6 +104,22 @@ export default async function handler(req, res) {
       avtal: a.contract_terms_json ? buildAvtalView(a.contract_terms_json) : null,
       contract_terms_json: undefined,   // råtermerna behövs inte i klienten — vyn räcker
     }));
+
+  // OM-VAKTEN (kvitteringen, claim → verify): "uppsagd" är kundens PÅSTÅENDE — vakten
+  // dubbelkollar. Har en NYARE faktura från samma leverantör landat EFTER utträdesdatumet
+  // larmar rummet: "ni sade upp, men leverantören fakturerar fortfarande". Rent läs-side,
+  // deterministiskt ur befintliga rader (samma liggar-delta-princip som success fee).
+  for (const a of analyses) {
+    const ks = a.avtal?.kundStatus;
+    if (ks?.typ !== 'uppsagd' || !ks.exitDate) continue;
+    const exit = new Date(`${ks.exitDate}T00:00:00Z`);
+    const sup = a.normalized_supplier || a.supplier;
+    const senareFaktura = merged.some((b) =>
+      b.id !== a.id
+      && supplierNamesMatch(b.normalized_supplier || b.supplier, sup)
+      && new Date(b.created_at) > exit);
+    if (senareFaktura) a.avtal.omVaktLarm = true;
+  }
 
   // ── Kohort-intelligens: vad betalar bolag hos samma leverantör? ───────────
   // Cross-customer-aggregat ur invoice_analyses (getMarketIntelligence gate:ar
