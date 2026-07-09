@@ -1,0 +1,45 @@
+name: Seed avtals-testytan
+# Nollställer testytan och seedar fem fäll-innehav + magic-länk in i testrummet,
+# och fotograferar det färdiga rummet. Självtriggar på skript-push (aldrig [skip ci]).
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/seed-avtal-testyta.mjs'
+permissions:
+  contents: write
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          mkdir -p ops/testyta-shots
+          node scripts/seed-avtal-testyta.mjs | tee ops/testyta-shots/logg.txt
+      - name: Install Playwright + Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium --with-deps
+      - name: Fota testrummet
+        run: |
+          URL=$(grep -o 'https://arvoflow.se/portfolio?magic=[a-f0-9]*' ops/testyta-shots/logg.txt | head -1)
+          node scripts/screenshot-testyta.mjs "$URL"
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Testyta Bot"
+          git pull --rebase origin main || true
+          git add ops/testyta-shots/
+          git commit -m "ops: seed-avtal-testyta [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
