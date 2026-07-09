@@ -1,0 +1,12 @@
+Testytan nollställd (testyta@arvoflow.se): 5 rader bort.
+  ✓ Telia Sverige AB                 molnvaxel      — FÄLLA 1 · 24 mån → +12, fönstret missat
+  ✓ Bahnhof AB                       bredband       — FÄLLA 2 · rullande 3+3 (AKUT fönster)
+  ✓ Fortnox AB                       saas-finance   — FÄLLA 3 · uppsägning i 30 DAGAR
+  ✓ GleSYS AB                        serverhosting  — FÄLLA 4 · äkta tills vidare + indexklausul
+  ✓ Nordic Managed IT Services AB    it-support     — FÄLLA 5 · 36 mån, 6 mån varsel, +24
+
+═══════ AVTALS-TESTYTAN ÄR KLAR ═══════
+Rum: https://arvoflow.se/portfolio?magic=83dc7727c869f1334870151fe8bddd7b5861346d2d34f01e449dc2e223313c65
+Giltig 24 h · fem innehav i amber · ladda upp fäll-avtalen (test-pdfs/avtal/) på respektive innehav.
+Testa även FEL avtal på FEL innehav — leverantörsflaggan ska fyras.
+MAILA INTE testyta@inbox under passet (auto-reset nollar ytan).
