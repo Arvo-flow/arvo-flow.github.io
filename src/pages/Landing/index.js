@@ -359,9 +359,11 @@ const Landing = () => {
               <em>Innan ni frågar.</em>
             </Headline>
             <Lede>
-              Era leverantörer justerar priser i det tysta. Arvo bevakar varje avtal dygnet runt
-              — och hör av sig i samma stund en kostnad börjar krypa uppåt, ofta innan ni
-              själva hunnit märka något. Vi identifierar läckaget. Ni tar beslutet.
+              Ni delar era fakturor och avtal. Arvo väger varje pris mot verifierat marknadspris,
+              läser varje bindningstid och säger till i tid när något är fel — med motdraget
+              förberett. När allt är rätt säger vi det också. Och för varje bolag som ansluter
+              växer den kollektiva sanningen om vad allt faktiskt kostar — ett övertag ingen
+              prislista kan ge.
             </Lede>
             <HeroActions>
               <Button as={Link} to="/testa-faktura" $variant="gradient" $size="lg">
@@ -372,9 +374,9 @@ const Landing = () => {
               </Button>
             </HeroActions>
             <HeroProof>
-              <div><strong>Aktivera en gång</strong><span>Arvo bevakar resten — klart på 2 min</span></div>
-              <div><strong>Aldrig utan er signatur</strong><span>ni behåller full kontroll</span></div>
-              <div><strong>Betala bara när ni sparat</strong><span>Switch: 0 kr tills bytet är klart</span></div>
+              <div><strong>Avtal som en jurist</strong><span>varje datum citatbelagt ur ert eget avtal</span></div>
+              <div><strong>Priser som en inköpschef</strong><span>vägda mot verifierat marknadspris</span></div>
+              <div><strong>Vaken varje natt</strong><span>så att ni slipper — larm bara när det behövs</span></div>
             </HeroProof>
           </div>
 
@@ -659,7 +661,11 @@ const Landing = () => {
         <SectionHead>
           <span className="kicker">Pris</span>
           <h2>Bevakning på prenumeration. Genomfört byte vid behov.</h2>
-          <p>Välj det som passar er — eller kombinera båda.</p>
+          <p>
+            Genomför vi ett byte tar vi 20 % av första årets besparing — fakturerat först när den
+            syns i era egna böcker. Vi tar aldrig ersättning från någon leverantör, så vi sitter
+            alltid på er sida av bordet.
+          </p>
         </SectionHead>
         <PricingTiers>
           <PricingTier $featured>
