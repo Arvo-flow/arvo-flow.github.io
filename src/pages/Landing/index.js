@@ -1,110 +1,66 @@
-import React, { useState, useRef, useEffect } from 'react';
+// src/pages/Landing/index.js — v5 "dossiern på skrivbordet" (grundarbeslut 2026-07-12).
+//
+// Dramaturgin i sex sektioner (känn → tro → förstå → köp → lugna → agera):
+//   Hero (ljust löfte, EN hjälte-CTA = dörren) → Dossiern (01 Avslöjandet · 02 Arvo-kontoret)
+//   → 03 Så fungerar det → 04 Priset → 05 Vanliga frågor → Sista ordet.
+// Vunnen ordning (Gemini-rundan 2026-07-12): mejl före faktura, faktura efter bevis.
+// Rörelse som telemetri (IntersectionObserver → inview; prefers-reduced-motion respekteras).
+// Kalender-artefakten är ett MÄRKT EXEMPEL (fällornas verkliga klockutfall, aldrig besökarens data).
+// Föregående sida: src/pages/LandingJuli26 (arkiv) + git-tagg landing-juli-26.
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
-import Button from '../../components/Button';
-import Icon from '../../components/Icon';
+import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import {
-  Page, Section, Hero, HeroBackdrop, HeroInner,
-  Eyebrow, Headline, Lede, HeroActions, HeroProof, HeroVisual,
-  HeroTimeline,
-  WaveDivider,
-  TrustStrip, TrustPillar,
-  AlgoTrust,
-  SectionHead, HowGrid, HowCard,
-  ScoreSubHead, ScoreGrid, ScoreLevelCard, ScoreGauge, ScoreGaugeCenter,
-
-  PricingTiers, PricingTier,
-  IntelligenceSection, IntelligenceInner, IntelligencePillars, IntelligencePillar, IntelligencePreview,
-  FoundingCard, FoundingLeft, FoundingForm, FoundingSuccess,
-  FaqWrap, FaqItem,
-  FinalCta,
-  BenchmarkSection, BenchmarkHead, BenchmarkMoatLine, BenchmarkFootnote,
-  Spectrum, SpectrumRows, SpectrumRow, SpectrumGap, SpectrumDot,
-  SpectrumAxisFoot, SpectrumSummary,
+  Page, Hero, DossierShell, Dossier, SectionKey, DoorBlock, RoomBlock, Artefakt,
+  Light, Steps, PriceSentence, PriceCards, Faq, LastWord,
 } from './styles';
 
-const HOW_STEPS = [
-  {
-    step: 'Steg 01',
-    title: 'Aktivera Arvo — klart på 2 min',
-    body: 'Ni sätter upp automatisk vidarebefordran från er faktura-inkorg. Varje ny leverantörsfaktura flödar in till Arvo — helt automatiskt, ingen IT-integration krävs. Vill ni ha fullständig täckning kopplar ni enkelt in Fortnox eller Visma som komplement.',
-    bullets: ['Noll IT-projekt', 'GDPR-säkrad infrastruktur i Sverige', 'Koppla bort när som helst'],
-  },
-  {
-    step: 'Steg 02',
-    title: 'Arvo bevakar. Ni lever era liv.',
-    body: 'Varje faktura analyseras mot verifierade marknadsdata och prisdata från jämförbara bolag i er bransch. Avviker ett pris — oavsett om det rör sig om ett par hundra eller tiotusentals kronor — identifieras det direkt.',
-    bullets: ['8 leverantörskategorier idag', 'Branschanpassad prisdata', 'Löpande bevakning — ingen engångsscan'],
-  },
-  {
-    step: 'Steg 03',
-    title: 'Vi hör av oss. Ni bestämmer.',
-    body: 'Identifierar Arvo en besparing skickar vi er en briefing med exakt vad ni betalar och vad som är möjligt. Varje pris är verifierat mot leverantörens officiella avtalspris — ni godkänner, Arvo förbereder hela bytet.',
-    bullets: ['Ni behåller full kontroll', 'Ni godkänner varje byte — inget sker utan er', 'Arvo Switch: 20 % av realiserad besparing'],
-  },
-];
-
-const CIRC_SM = 175.93; // 2π × 28
-
-const ScoreCircleMini = ({ score, color }) => {
-  const trackRef = useRef(null);
-  const offset = parseFloat((CIRC_SM * (1 - score / 100)).toFixed(2));
+// ── Rörelsekroken: lägger 'inview' när elementet observeras (en gång, sedan stilla) ──
+function useReveal(threshold = 0.18) {
+  const ref = useRef(null);
+  const [inview, setInview] = useState(false);
   useEffect(() => {
-    const id = requestAnimationFrame(() => {
-      if (trackRef.current) trackRef.current.style.strokeDashoffset = offset;
-    });
-    return () => cancelAnimationFrame(id);
-  }, [offset]);
-  return (
-    <ScoreGauge>
-      <svg viewBox="0 0 72 72">
-        <circle fill="none" stroke="#E5EFEA" strokeWidth="6" cx="36" cy="36" r="28" />
-        <circle
-          ref={trackRef}
-          fill="none"
-          stroke={color}
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeDasharray={CIRC_SM}
-          strokeDashoffset={CIRC_SM}
-          cx="36" cy="36" r="28"
-          style={{ transition: 'stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)' }}
-        />
-      </svg>
-      <ScoreGaugeCenter $color={color}>
-        <span className="num">{score}</span>
-        <span className="den">/100</span>
-      </ScoreGaugeCenter>
-    </ScoreGauge>
-  );
-};
+    const el = ref.current;
+    if (!el) return undefined;
+    if (typeof IntersectionObserver === 'undefined') { setInview(true); return undefined; }
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setInview(true); io.disconnect(); }
+    }, { threshold });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [threshold]);
+  return [ref, inview ? 'inview' : ''];
+}
 
-const SCORE_LEVELS = [
-  {
-    label: 'Optimalt',
-    color: '#1B7A6E',
-    score: 91,
-    desc: 'Ni har ett kostnadsoptimerat leverantörsnätverk. Ni betalar under eller i nivå med branschsnittet.',
-  },
-  {
-    label: 'Förbättringsläge',
-    color: '#65A30D',
-    score: 72,
-    desc: 'Ni betalar mer än marknadspriset — en meningsfull besparing som Arvo kan realisera åt er utan byråkrati.',
-  },
-  {
-    label: 'Suboptimerat',
-    color: '#D97706',
-    score: 54,
-    desc: 'Ni betalar klart mer än branschsnittet. Arvo kan göra ett byte som betalar sig från dag ett.',
-  },
-  {
-    label: 'Kritisk',
-    color: '#DC2626',
-    score: 28,
-    desc: 'Ni betalar kraftigt mer än marknadspriset och förlorar pengar varje faktura. Arvo identifierar läckan och genomför bytet åt er — utan förhandling, utan telefonköer.',
-  },
+// Dagar-räknaren: tickar in mot måltalet när raden syns (rörelse som telemetri).
+function useTickUp(target, active, duration = 900) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!active) return undefined;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setVal(target); return undefined;
+    }
+    const t0 = performance.now();
+    let raf;
+    const tick = (now) => {
+      const p = Math.min((now - t0) / duration, 1);
+      setVal(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, active, duration]);
+  return active ? val : 0;
+}
+
+// EXEMPEL-artefakten: fällornas verkliga klockutfall ur testkorpusen (tests/avtal-fallor.mjs).
+// Märks alltid "Exempel" i bildtexten — aldrig ett påstående om besökaren (regel 3/9).
+const EXEMPEL_RADER = [
+  { days: 6, akut: true, sup: 'Bahnhof AB', txt: 'Sista uppsägningsdag 15 juli — annars bundna till 15 januari.' },
+  { days: 7, akut: true, sup: 'Fortnox AB', txt: 'Trettio dagars varsel — räknat på dagen, aldrig avrundat.' },
+  { days: 266, akut: false, sup: 'Telia', txt: 'Ett redan missat fönster upptäckt — nästa bevakas: 1 april 2027.' },
 ];
 
 const FAQ = [
@@ -125,7 +81,7 @@ const FAQ = [
     a: 'Vår fee baseras på kontrakterade priser vid avtalssignering. Förändras marknadsläget efter bytet hjälper vi er med en ny analys — utan extra kostnad.',
   },
   {
-    q: 'Säger ni upp avtal autonomt utan min godkännande?',
+    q: 'Säger ni upp avtal autonomt utan mitt godkännande?',
     a: 'Aldrig. Varje byte kräver er BankID-signatur. Vi förbereder, ni godkänner. Det är en hård regel.',
   },
   {
@@ -138,688 +94,245 @@ const FAQ = [
   },
 ];
 
-
-// Kategorier Arvo bevakar — Nivå 1 genomför bytet, Nivå 2 förbereder det, Nivå 3 beväpnar.
-// Illustrativa intervall. Sorterade med största besparingsmöjligheten överst, "i nivå" sist.
-const BENCHMARK_ROWS = [
-  { cat: 'Mobilabonnemang',  unit: 'kr/SIM/år',  p25: 3408, median: 4200, p75: 5200, you: 5760, max: 7000, status: 'over' },
-  { cat: 'Skrivare & print', unit: 'kr/mån',     p25: 1800, median: 2400, p75: 3200, you: 3900, max: 4600, status: 'over' },
-  { cat: 'Microsoft 365',    unit: 'kr/seat/år', p25: 1320, median: 1680, p75: 2100, you: 2400, max: 2800, status: 'over' },
-  { cat: 'Företagsbredband', unit: 'kr/mån',     p25: 380,  median: 510,  p75: 650,  you: 730,  max: 880,  status: 'over' },
-  { cat: 'Fakturatjänst',    unit: 'kr/mån',     p25: 180,  median: 240,  p75: 320,  you: 360,  max: 440,  status: 'over' },
-  { cat: 'Elavtal',          unit: 'öre/kWh',    p25: 112,  median: 145,  p75: 178,  you: 195,  max: 230,  status: 'over' },
-  { cat: 'Kortterminal',     unit: 'kr/mån',     p25: 240,  median: 320,  p75: 420,  you: 298,  max: 520,  status: 'inline' },
-  { cat: 'Företagsleasing',  unit: 'kr/mån',     p25: 3200, median: 4100, p75: 5200, you: 3850, max: 6000, status: 'inline' },
-];
-
-// Animerad uppräkning av ett tal när elementet blir synligt
-const useCountUp = (target, active, duration = 1100, delay = 0) => {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    if (!active) return undefined;
-    let raf;
-    const timer = setTimeout(() => {
-      let start;
-      const tick = (t) => {
-        if (start === undefined) start = t;
-        const p = Math.min((t - start) / duration, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
-        setVal(Math.round(target * eased));
-        if (p < 1) raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-    }, delay);
-    return () => { clearTimeout(timer); if (raf) cancelAnimationFrame(raf); };
-  }, [target, active, duration, delay]);
-  return val;
-};
-
-// Normaliserar varje kategori mot sitt eget branschsnitt → en gemensam axel.
-// Branschsnitt-linjen ligger på 32 %, "marknadspris"-korridoren 8–35 %.
-const SPECTRUM_LINE = 32;
-const spectrumX = (you, median) => {
-  const ratio = you / median;
-  return Math.max(9, Math.min(94, SPECTRUM_LINE + (ratio - 1) * 68));
-};
-
-const BenchmarkRowItem = ({ row, i, visible }) => {
-  const over = row.status === 'over';
-  const delta = row.you - row.median;
-  const x = spectrumX(row.you, row.median);
-  const span = Math.abs(x - SPECTRUM_LINE);
-  // Prickstorlek efter hur långt över snittet — drar ögat till största blödningen
-  const sev = Math.max(0, row.you / row.median - 1);
-  const dotSize = over ? Math.round(12 + Math.min(sev * 10, 5)) : 12;
-  const gapDelay = `${i * 75 + 250}ms`;
-  const dotDelay = `${i * 75 + 420}ms`;
-  const count = useCountUp(delta, visible && over, 850, i * 75 + 450);
-
+function ArtefaktRad({ r, index, parentIn }) {
+  const dagar = useTickUp(r.days, parentIn, 700 + index * 150);
   return (
-    <SpectrumRow>
-      <div className="cat-col">
-        <span className="cat">{row.cat}</span>
-        <span className="unit">{row.unit}</span>
+    <div className={`a-row ${parentIn ? 'inview' : ''}`} style={{ transitionDelay: `${0.15 + index * 0.12}s` }}>
+      <span className={`a-days${r.akut ? ' akut' : ''}`}>{r.days === 266 ? dagar : dagar} dagar</span>
+      <div>
+        <div className="a-sup">{r.sup}</div>
+        <div className="a-txt">{r.txt}</div>
       </div>
-      <div className="axis">
-        <span className="zone" />
-        <span className="line" />
-        <SpectrumGap $over={over} $span={`${span}%`} $line={`${SPECTRUM_LINE}%`} $visible={visible} $delay={gapDelay} />
-        <SpectrumDot $x={`${x}%`} $size={dotSize} $over={over} $visible={visible} $delay={dotDelay} />
-      </div>
-      {over ? (
-        <div className="delta over">
-          <strong>+{(visible ? count : 0).toLocaleString('sv-SE')}</strong>
-          <small>sämre än snittet</small>
-        </div>
-      ) : (
-        <div className="delta inline">
-          <strong><Icon name="check" size={13} stroke={2.6} /> i nivå</strong>
-          <small>marknadspris</small>
-        </div>
-      )}
-    </SpectrumRow>
+    </div>
   );
-};
+}
 
-const BenchmarkViz = () => {
-  const [visible, setVisible] = useState(false);
-  const ref = useRef(null);
+export default function Landing() {
+  // Dörren — samma verkliga maskineri som rummets avslöjande (EN sanning: /api/reveal).
+  const [revealEmail, setRevealEmail] = useState('');
+  const [revealLoading, setRevealLoading] = useState(false);
+  const [reveal, setReveal] = useState(null);
+  const [revealNote, setRevealNote] = useState('');
+  const doorRef = useRef(null);
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.1 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  const overCount = BENCHMARK_ROWS.filter((r) => r.status === 'over').length;
-
-  return (
-    <Spectrum ref={ref}>
-      <div className="spectrum-head">
-        <span className="title">Er leverantörsportfölj</span>
-        <span className="sub">8 kategorier · bevakade dygnet runt</span>
-        <span className="tag">Exempel</span>
-      </div>
-
-      <SpectrumRows>
-        {BENCHMARK_ROWS.map((row, i) => (
-          <BenchmarkRowItem key={row.cat} row={row} i={i} visible={visible} />
-        ))}
-      </SpectrumRows>
-
-      <SpectrumAxisFoot>
-        <span className="axis-cell">
-          <span className="lbl zone">Marknadspris</span>
-          <span className="lbl mid">Branschsnitt</span>
-          <span className="lbl right">Sämre →</span>
-        </span>
-      </SpectrumAxisFoot>
-
-      <SpectrumSummary>
-        <div className="sum-meta">
-          <div className="sum-col bad">
-            <strong>{overCount}</strong>
-            <span>sämre än snittet</span>
-          </div>
-          <div className="sum-sep" />
-          <div className="sum-col good">
-            <strong>{BENCHMARK_ROWS.length - overCount}</strong>
-            <span>bättre än snittet</span>
-          </div>
-        </div>
-        <p>Sex av åtta kategorier kostar mer än bolag som betalar marknadspris i er bransch — höjningen sker gradvis och märks sällan i tid. Arvo identifierar det innan ni hunnit se det.</p>
-      </SpectrumSummary>
-    </Spectrum>
-  );
-};
-
-const validateFoundingForm = (form) => {
-  const errors = {};
-  if (!form.company.trim()) errors.company = 'Företagsnamn saknas.';
-  if (!form.name.trim()) errors.name = 'Namn saknas.';
-  if (!form.email.trim()) {
-    errors.email = 'E-post saknas.';
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-    errors.email = 'E-postadressen ser inte rätt ut.';
-  }
-  return errors;
-};
-
-// Community Benchmark — unit chart: 15 jämförbara bolag, 8 fick samma höjning.
-// Spritt mönster (ej en rad) så det läses som en population, inte ett betyg.
-const BENCH_TOTAL = 15;
-const BENCH_HIT = new Set([0, 2, 3, 5, 8, 9, 11, 13]); // 8 bolag som drabbades
-
-const Landing = () => {
-  const [form, setForm] = useState({ company: '', name: '', email: '' });
-  const [errors, setErrors] = useState({});
-  const [state, setState] = useState('idle'); // idle | submitting | success | error
-  const [intellVisible, setIntellVisible] = useState(false);
-  const intellRef = useRef(null);
-  const [heroCardVisible, setHeroCardVisible] = useState(false);
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setHeroCardVisible(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  useEffect(() => {
-    const el = intellRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setIntellVisible(true); obs.disconnect(); } },
-      { threshold: 0.1 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  const submitFounding = async (e) => {
-    e.preventDefault();
-    const validation = validateFoundingForm(form);
-    setErrors(validation);
-    if (Object.keys(validation).length > 0) return;
-
-    setState('submitting');
+  const runReveal = useCallback(async (e) => {
+    e?.preventDefault?.();
+    const email = revealEmail.trim();
+    if (!email || revealLoading) return;
+    setRevealLoading(true); setReveal(null); setRevealNote('');
     try {
-      const res = await fetch('/api/founding-member', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          company:   form.company.trim(),
-          name:      form.name.trim(),
-          email:     form.email.trim(),
-          referrer:  typeof document !== 'undefined' ? document.referrer || null : null,
-          timestamp: new Date().toISOString(),
-        }),
+      const res = await fetch('/api/reveal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
-      if (!res.ok) throw new Error('API ' + res.status);
-      setState('success');
-    } catch (err) {
-      setState('error');
+      const data = await res.json().catch(() => ({}));
+      if (data.ok && data.findings?.length) setReveal({ domain: data.domain, findings: data.findings });
+      else setRevealNote(data.note || data.error || 'Domänen bar inga öppna spår just nu — dela en faktura i stället, så läser vi de verkliga talen.');
+    } catch {
+      setRevealNote('Kunde inte läsa av domänen just nu — försök igen om en stund.');
+    } finally {
+      setRevealLoading(false);
     }
-  };
+  }, [revealEmail, revealLoading]);
+
+  // Hero-CTA:n ÄR dörren: mjukt scroll + fokus i fältet (två sekunder, noll formulär i vila).
+  const goToDoor = useCallback(() => {
+    doorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => doorRef.current?.querySelector('input')?.focus({ preventScroll: true }), 550);
+  }, []);
+
+  const [heroRef, heroIn] = useReveal(0.1);
+  const [dossierRef, dossierIn] = useReveal(0.12);
+  const [doorInRef, doorIn] = useReveal(0.2);
+  const [roomRef, roomIn] = useReveal(0.2);
+  const [artRef, artIn] = useReveal(0.3);
+  const [stepsRef, stepsIn] = useReveal(0.2);
+  const [prisRef, prisIn] = useReveal(0.2);
+  const [cardsRef, cardsIn] = useReveal(0.15);
+  const [lastRef, lastIn] = useReveal(0.2);
+
+  const [openFaq, setOpenFaq] = useState(null);
 
   return (
     <Page>
       <Nav variant="public" />
 
-      <Hero>
-        <HeroBackdrop />
-        <HeroInner>
-          <div>
-            <Eyebrow><span className="dot" /> Arvo Intelligence · Proaktiv finansdirektör för svenska bolag</Eyebrow>
-            <Headline>
-              <span className="line">Er finansdirektör.</span>
-              <em>Innan ni frågar.</em>
-            </Headline>
-            <Lede>
-              Ni delar era fakturor och avtal. Arvo väger varje pris mot verifierat marknadspris,
-              läser varje bindningstid och säger till i tid när något är fel — med motdraget
-              förberett. När allt är rätt säger vi det också. Och för varje bolag som ansluter
-              växer den kollektiva sanningen om vad allt faktiskt kostar — ett övertag ingen
-              prislista kan ge.
-            </Lede>
-            <HeroActions>
-              <Button as={Link} to="/testa-faktura" $variant="gradient" $size="lg">
-                Testa med en faktura <Icon name="arrow" size={18} />
-              </Button>
-              <Button as={Link} to="/intelligence" $variant="secondary" $size="lg">
-                Aktivera Arvo Intelligence
-              </Button>
-            </HeroActions>
-            <HeroProof>
-              <div><strong>Avtal som en jurist</strong><span>varje datum citatbelagt ur ert eget avtal</span></div>
-              <div><strong>Priser som en inköpschef</strong><span>vägda mot verifierat marknadspris</span></div>
-              <div><strong>Vaken varje natt</strong><span>så att ni slipper — larm bara när det behövs</span></div>
-            </HeroProof>
+      {/* ═══ HERO — löftet, en ljuspunkt ═══ */}
+      <Hero ref={heroRef}>
+        <div className={`eyebrow ${heroIn}`}>Arvo · finansiell intelligens för svenska bolag</div>
+        <h1 className={heroIn}>Er finansdirektör.<br /><em>Innan ni frågar.</em></h1>
+        <p className={`lede ${heroIn}`}>
+          Ni delar era fakturor och avtal. Vi väger varje pris mot verifierat marknadspris,
+          läser varje bindningstid — och säger till i tid, med motdraget förberett.
+          När allt är rätt säger vi det också.
+        </p>
+        <div className={`actions ${heroIn}`}>
+          <button type="button" className="cta" onClick={goToDoor}>
+            Se ert bolag som marknaden ser det →
+          </button>
+          <div className="sub">
+            två sekunder · öppna källor &nbsp;·&nbsp; <Link to="/testa-faktura">eller testa med en faktura</Link>
           </div>
-
-          <HeroVisual>
-            <HeroTimeline $visible={heroCardVisible}>
-              <div className="tl-head">
-                <span className="tl-brand">Arvo Intelligence</span>
-                <span className="tl-status"><Icon name="check" size={11} stroke={3} /> Exempel</span>
-              </div>
-
-              <div className="tl-body">
-                <div className="tl-step">
-                  <span className="tl-marker" />
-                  <div className="tl-body-text">
-                    <span className="tl-date">2 maj · 08:14</span>
-                    <span className="tl-title">Smyghöjning identifierad</span>
-                    <span className="tl-detail">Telia höjde er mobilflotta med 11&nbsp;% — utan att avisera</span>
-                  </div>
-                </div>
-                <div className="tl-step">
-                  <span className="tl-marker" />
-                  <div className="tl-body-text">
-                    <span className="tl-date">4 maj</span>
-                    <span className="tl-title">Ni godkände åtgärden</span>
-                    <span className="tl-detail">Arvo genomförde resten — ni behövde inte agera</span>
-                  </div>
-                </div>
-                <div className="tl-step done">
-                  <span className="tl-marker" />
-                  <div className="tl-body-text">
-                    <span className="tl-date">9 maj</span>
-                    <span className="tl-title">Nytt pris bekräftat</span>
-                    <span className="tl-detail">Priset sänkt 14&nbsp;% — besparingen säkrad</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="tl-foot">
-                <div className="tl-saving">
-                  <span className="tl-saving-label">Säkrad besparing</span>
-                  <span className="tl-saving-value">21&nbsp;360&nbsp;kr<span className="unit">/år</span></span>
-                </div>
-                <button className="tl-cta">Se hur Arvo löste det →</button>
-              </div>
-            </HeroTimeline>
-          </HeroVisual>
-        </HeroInner>
+        </div>
+        <div className={`proof ${heroIn}`}>
+          Avtal som en jurist &nbsp;·&nbsp; Priser som en inköpschef &nbsp;·&nbsp; Vaken varje natt
+        </div>
       </Hero>
 
-      <WaveDivider aria-hidden="true">
-        <svg viewBox="0 0 1440 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0,0 C480,56 960,56 1440,0 L1440,56 L0,56 Z" />
-        </svg>
-      </WaveDivider>
+      {/* ═══ DOSSIERN — det mörka föremålet på skrivbordet ═══ */}
+      <DossierShell>
+        <Dossier ref={dossierRef} className={dossierIn}>
+          <div className="inner">
 
-      <TrustStrip id="sakerhet">
-        <TrustPillar>
-          <div className="icon"><Icon name="lock" size={22} stroke={2} /></div>
-          <h3>Vi ser bara det ni delar</h3>
-          <p>
-            Ni vidarebefordrar era leverantörsfakturor — inget annat. Kundfakturor,
-            lönedata, bankkonton och personnummer når oss aldrig.
-          </p>
-          <ul>
-            <li className="group-label">Vad vi ser</li>
-            <li><Icon name="check" size={14} stroke={2.4} /> Leverantörsfakturor</li>
-            <li><Icon name="check" size={14} stroke={2.4} /> Avtal &amp; förfallodatum</li>
-            <li className="group-label blocked">Når oss aldrig</li>
-            <li className="no"><Icon name="lock" size={14} stroke={2} /> Lön &amp; personnummer</li>
-            <li className="no"><Icon name="lock" size={14} stroke={2} /> Kundfakturor</li>
-          </ul>
-        </TrustPillar>
+            {/* 01 · AVSLÖJANDET — dörren först (vunnen ordning: mejl före faktura) */}
+            <SectionKey>
+              <span className="k-num">01 · Avslöjandet</span>
+              <span className="k-note">60 sekunder · öppna källor</span>
+            </SectionKey>
+            <DoorBlock ref={(el) => { doorRef.current = el; doorInRef.current = el; }} className={doorIn}>
+              <h3>Se ert bolag <em>som marknaden ser det.</em></h3>
+              <RevealPrompt
+                email={revealEmail} setEmail={setRevealEmail}
+                onSubmit={runReveal} loading={revealLoading}
+                reveal={reveal} note={revealNote}
+              />
+              {!reveal && <RevealTeaser />}
+              {reveal && (
+                <p style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', margin: '18px 0 0', color: 'rgba(157,184,175,1)' }}>
+                  Det här såg vi utifrån.{' '}
+                  <Link to="/testa-faktura" style={{ color: '#5DE8D2', fontWeight: 600 }}>
+                    Dela en faktura, så räknar vi era exakta tal →
+                  </Link>
+                </p>
+              )}
+            </DoorBlock>
 
-        <TrustPillar>
-          <div className="icon"><Icon name="bolt" size={22} stroke={2} /></div>
-          <h3>Aktivera en gång. Arvo tar resten.</h3>
-          <p>
-            Ni kopplar in Arvo en enda gång. Därefter flödar varje ny leverantörsfaktura
-            in automatiskt och bevakas i realtid — ni behöver aldrig ladda upp något manuellt.
-          </p>
-          <strong>Klart på 2 minuter. Sen sköter Arvo resten.</strong>
-        </TrustPillar>
-
-        <TrustPillar>
-          <div className="icon"><Icon name="trend" size={22} stroke={2} /></div>
-          <h3>Betala bara för värdet</h3>
-          <p>
-            Arvo Switch är 100 % prestationsbaserat — 20 % av realiserad besparing,
-            fakturerat först när den syns i era egna böcker. Landar inget kostar Switch ingenting.
-          </p>
-          <strong>Gratis att starta. Ni betalar när ni sparat.</strong>
-        </TrustPillar>
-      </TrustStrip>
-
-      <AlgoTrust>
-        <div className="inner">
-          <div className="eyebrow"><Icon name="shield" size={13} stroke={2} /> Rankningspolicy</div>
-          <h2>100 % oberoende. Vår algoritm styrs av er besparing, inte provisioner.</h2>
-          <p>
-            Vi står på er sida, inte leverantörens. Arvo tar aldrig en krona från en leverantör —
-            noll provision, noll partner-avgift, ingen dörr in. Vår enda intäkt är er realiserade
-            besparing, så algoritmen kan bara prioritera en enda sak: era kronor. Det är
-            strukturell oberoende — inga dolda agendor, bara lägre kostnader.
-          </p>
-          <Link to="/bias" className="cta-link">
-            Läs hur vår algoritm rankar <Icon name="arrow" size={15} />
-          </Link>
-        </div>
-      </AlgoTrust>
-
-      <Section id="hur">
-        <SectionHead $left>
-          <span className="kicker">Så fungerar Arvo Flow</span>
-          <h2>Aktivera en gång. Vi sköter resten.</h2>
-          <p>Ni behöver inte byta system, lära er något nytt eller komma ihåg att kolla något. Arvo hör av sig — ni behöver inte fråga.</p>
-        </SectionHead>
-        <HowGrid>
-          {HOW_STEPS.map((s) => (
-            <HowCard key={s.step}>
-              <span className="step">{s.step}</span>
-              <h3>{s.title}</h3>
-              <p>{s.body}</p>
-              <ul>
-                {s.bullets.map((b) => (
-                  <li key={b}><Icon name="check" size={16} stroke={2} />{b}</li>
-                ))}
-              </ul>
-            </HowCard>
-          ))}
-        </HowGrid>
-
-        <ScoreSubHead>
-          <span className="kicker">Arvo Score™</span>
-          <h3>Vad berättar ert Score om era leverantörsavtal?</h3>
-          <p>
-            Varje kategori i er bokföring får ett Score mellan 0–100. Scoren baseras på hur ert avtalspris förhåller sig till branschsnittet — fyra nivåer avgör om ni är optimala eller betalar för mycket.
-          </p>
-        </ScoreSubHead>
-        <ScoreGrid>
-          {SCORE_LEVELS.map((lvl) => (
-            <ScoreLevelCard key={lvl.label} $color={lvl.color}>
-              <ScoreCircleMini score={lvl.score} color={lvl.color} />
-              <div className="text">
-                <strong className="level">{lvl.label}</strong>
-                <p>{lvl.desc}</p>
-              </div>
-            </ScoreLevelCard>
-          ))}
-        </ScoreGrid>
-      </Section>
-
-      {/* ── Arvo Intelligence ─────────────────────────────────────────────── */}
-      <IntelligenceSection id="intelligence">
-        <IntelligenceInner>
-          <div>
-            <span className="eyebrow">Arvo Intelligence</span>
-            <h2>Arvo märker det innan det kostar er.</h2>
-            <p className="sub">
-              Bokföringsprogram registrerar vad ni betalar.
-              Arvo Intelligence kontaktar er när ni håller på att betala för mycket.
-            </p>
-            <IntelligencePillars>
-              <IntelligencePillar>
-                <div className="pillar-icon">
-                  <Icon name="pulse" size={19} stroke={1.9} />
-                </div>
-                <div>
-                  <h4>Smyghöjningslarm</h4>
-                  <p>Vi jämför varje ny faktura mot föregående period. Avviker priset — kontaktar vi er samma dag.</p>
-                </div>
-              </IntelligencePillar>
-              <IntelligencePillar>
-                <div className="pillar-icon">
-                  <Icon name="benchmark" size={19} stroke={1.9} />
-                </div>
-                <div>
-                  <h4>Community Benchmark</h4>
-                  <p>Er prisdata mäts mot anonymiserade data från jämförbara bolag i er bransch. Ni vet alltid om ni betalar rätt.</p>
-                </div>
-              </IntelligencePillar>
-              <IntelligencePillar>
-                <div className="pillar-icon">
-                  <Icon name="calendar-clock" size={19} stroke={1.9} />
-                </div>
-                <div>
-                  <h4>Proaktiv avtalsbevakning</h4>
-                  <p>90 dagar innan ett avtal förnyas automatiskt varnar vi er — i tid att byta eller agera innan bindningen låser ännu ett år.</p>
-                </div>
-              </IntelligencePillar>
-            </IntelligencePillars>
-          </div>
-
-          <IntelligencePreview ref={intellRef} $visible={intellVisible}>
-            <div className="preview-header">
-              <span className="preview-brand"><span className="live" /> Arvo Intelligence</span>
-              <span className="preview-time">Exempel ur en briefing</span>
-            </div>
-
-            {/* Signal 1 — Smyghöjningslarm */}
-            <div className="signal alert">
-              <div className="signal-ico"><Icon name="pulse" size={16} stroke={2} /></div>
-              <div className="signal-main">
-                <span className="signal-tag">Smyghöjningslarm</span>
-                <div className="signal-line">
-                  Telia · Mobilflotta 24 abonnemang
-                  <span className="badge up">+11&nbsp;%</span>
-                </div>
-                <p className="signal-sub">Priset höjt mot förra perioden — utan avisering.</p>
-              </div>
-            </div>
-
-            {/* Signal 2 — Community Benchmark */}
-            <div className="signal">
-              <div className="signal-ico"><Icon name="benchmark" size={16} stroke={2} /></div>
-              <div className="signal-main">
-                <span className="signal-tag">Community Benchmark</span>
-                <div className="bench-grid" aria-hidden="true">
-                  {Array.from({ length: BENCH_TOTAL }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={BENCH_HIT.has(i) ? 'on' : ''}
-                      style={{ transitionDelay: `${560 + i * 38}ms` }}
-                    />
+            {/* 02 · ARVO-KONTORET — rummet som bevis */}
+            <RoomBlock ref={roomRef}>
+              <SectionKey>
+                <span className="k-num">02 · Arvo-kontoret</span>
+                <span className="k-note">Konfidentiellt · ett rum per kund</span>
+              </SectionKey>
+              <h2 className={roomIn}>Det ni just läste finns redan.<br /><em>Och det jobbar i natt.</em></h2>
+              <Artefakt ref={artRef} className={artIn}>
+                <div className="a-card">
+                  <div className="a-head">
+                    <span className="a-eyebrow">Kontraktskalendern</span>
+                    <span className="a-count">5 avtal lästa</span>
+                  </div>
+                  <div className="a-dom">Två fönster stänger <em>samma vecka.</em></div>
+                  {EXEMPEL_RADER.map((r, i) => (
+                    <ArtefaktRad key={r.sup} r={r} index={i} parentIn={!!artIn} />
                   ))}
                 </div>
-                <p className="signal-sub"><strong>8 av 15</strong> bolag i samma kohort fick höjningen — Arvo ser mönstret innan det når er.</p>
-              </div>
+                <div className="a-caption">
+                  Exempel ur ett Arvo-rum · maskinellt kontrollerad · varje datum ur kundens eget avtal
+                </div>
+              </Artefakt>
+            </RoomBlock>
+          </div>
+        </Dossier>
+      </DossierShell>
+
+      {/* ═══ 03 · SÅ FUNGERAR DET ═══ */}
+      <Light>
+        <SectionKey $light>
+          <span className="k-num">03 · Så fungerar det</span>
+          <span className="k-note">två minuter att komma igång</span>
+        </SectionKey>
+        <Steps ref={stepsRef}>
+          {[
+            ['I', 'Dela', 'Vidarebefordra en faktura eller släpp ett avtal i rummet. Det är allt ni gör.'],
+            ['II', 'Vakten läser', 'Varje pris vägs mot verifierat marknadspris. Varje bindningstid läses ord för ord, med citat som bevis.'],
+            ['III', 'Ni får domen', 'Rätt pris? Vi säger det. Fel pris eller ett fönster som stänger? Ni får larmet i tid — med motdraget förberett.'],
+          ].map(([n, t, d]) => (
+            <div className={`step ${stepsIn}`} key={n}>
+              <div className="s-num">{n}</div>
+              <div className="s-t">{t}</div>
+              <div className="s-d">{d}</div>
             </div>
-
-            {/* Signal 3 — Proaktiv avtalsbevakning */}
-            <div className="signal">
-              <div className="signal-ico"><Icon name="calendar-clock" size={16} stroke={2} /></div>
-              <div className="signal-main">
-                <span className="signal-tag">Avtalsbevakning</span>
-                <div className="signal-line sm">Avtalet förnyas automatiskt om <strong>23&nbsp;dagar</strong></div>
-                <p className="signal-sub">Arvo hinner agera innan bindningen låses ännu ett år.</p>
-              </div>
-            </div>
-
-            <div className="alert-saving">
-              <div className="saving-label">Möjlig besparing</div>
-              <div className="saving-amount">
-                21&nbsp;360&nbsp;kr<span className="unit">/år</span>
-              </div>
-            </div>
-
-            <div className="alert-actions">
-              <button className="btn-primary">Ja, Arvo agerar →</button>
-              <button className="btn-secondary">Visa underlag</button>
-            </div>
-          </IntelligencePreview>
-        </IntelligenceInner>
-      </IntelligenceSection>
-
-      {/* ── Benchmark — delat marknadsspann (data moat) ──────────────────── */}
-      <BenchmarkSection id="prisintelligens">
-        <BenchmarkHead>
-          <span className="kicker">Arvos prisintelligens</span>
-          <h2>Vi vet vad era leverantörer tar av andra.</h2>
-          <p>
-            Varje faktura Arvo analyserar gör bilden skarpare. Vi ser inte bara vad Telia
-            listar på sin hemsida — vi ser vad de faktiskt tar betalt av bolag i er bransch
-            och er storlek. Här är hela er leverantörsportfölj, mätt mot marknaden på en
-            och samma skala.
-          </p>
-        </BenchmarkHead>
-
-        <BenchmarkViz />
-
-        <BenchmarkMoatLine>
-          Ju fler fakturor Arvo ser, desto mer vet vi — och desto vassare blir varje
-          rekommendation. Ett försprång som inte går att kopiera.
-        </BenchmarkMoatLine>
-        <BenchmarkFootnote>
-          Visualiseringen är illustrativ — prisintervall baserade på verifierade
-          marknadsdata maj 2026.
-        </BenchmarkFootnote>
-      </BenchmarkSection>
-
-      {/* ── Priser — hybridmodell ─────────────────────────────────────────── */}
-      <Section id="priser">
-        <SectionHead>
-          <span className="kicker">Pris</span>
-          <h2>Bevakning på prenumeration. Genomfört byte vid behov.</h2>
-          <p>
-            Genomför vi ett byte tar vi 20 % av första årets besparing — fakturerat först när den
-            syns i era egna böcker. Vi tar aldrig ersättning från någon leverantör, så vi sitter
-            alltid på er sida av bordet.
-          </p>
-        </SectionHead>
-        <PricingTiers>
-          <PricingTier $featured>
-            <div className="tier-badge">Arvo Intelligence</div>
-            <h3>Er proaktiva finansdirektör.</h3>
-            <div className="tier-price">1&nbsp;995 kr<span className="period">/ mån</span></div>
-            <p className="tier-tagline">Löpande bevakning av samtliga leverantörsfakturor. Arvo hör av sig — ni behöver inte fråga.</p>
-            <ul>
-              <li><Icon name="check" size={15} stroke={2.4} /> Smyghöjningslarm — avvikelse detekteras direkt</li>
-              <li><Icon name="check" size={15} stroke={2.4} /> Community Benchmark mot er bransch</li>
-              <li><Icon name="check" size={15} stroke={2.4} /> Avtalsbevakning med 90-dagarsvarning</li>
-              <li><Icon name="check" size={15} stroke={2.4} /> Månadsvis briefing med konkreta insikter</li>
-            </ul>
-            <Button as={Link} to="/intelligence" $variant="gradient" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
-              Aktivera Arvo Intelligence →
-            </Button>
-            <p className="tier-note">Ingen bindningstid · Kom igång på 2 minuter</p>
-          </PricingTier>
-
-          <PricingTier>
-            <div className="tier-badge">Arvo Switch</div>
-            <h3>Genomfört leverantörsbyte.</h3>
-            <div className="tier-price">20 %<span className="period">av besparing</span></div>
-            <p className="tier-tagline">Varje pris verifieras mot leverantörens officiella avtalspris — ni godkänner, Arvo förbereder bytet.</p>
-            <ul>
-              <li><Icon name="check" size={15} stroke={2.4} /> Arvodet faktureras först när besparingen syns i era egna böcker</li>
-              <li><Icon name="check" size={15} stroke={2.4} /> Ni godkänner varje byte med BankID</li>
-              <li><Icon name="check" size={15} stroke={2.4} /> Fr.o.m. år 2 tillfaller hela besparingen er</li>
-              <li><Icon name="check" size={15} stroke={2.4} /> Hittar vi inget — kostar det inget</li>
-            </ul>
-            <Button as={Link} to="/testa-faktura" $variant="secondary" $size="lg" style={{ width: '100%', justifyContent: 'center' }}>
-              Testa med en faktura →
-            </Button>
-            <div className="tier-addon">
-              <strong>Tillägg för Intelligence-kunder</strong>
-              Aktivera ett byte direkt från er månadsbriefing. 20 % av realiserad besparing.
-            </div>
-          </PricingTier>
-        </PricingTiers>
-      </Section>
-
-      <Section id="founding-members">
-        <SectionHead>
-          <span className="kicker">Founding Members · Begränsade platser</span>
-          <h2>Vill du vara först ut?</h2>
-          <p>Vi tar in 50 svenska företag innan publik lansering. Du får personlig onboarding direkt med grundarna, tjänsten gratis de första 6 månaderna, och påverkan över vilka kategorier vi prioriterar härnäst.</p>
-        </SectionHead>
-        <FoundingCard>
-          <FoundingLeft>
-            <span className="kicker">Founding Member</span>
-            <h2>50 platser. Du får påverkan.</h2>
-            <p className="lede">Vi släpper Arvo Flow stegvis. Founding Members får tillgång först, tjänsten helt gratis de första 6 månaderna, och hjälper oss prioritera vilka leverantörskategorier som ska in härnäst.</p>
-            <ul className="benefits">
-              <li><Icon name="check" size={16} stroke={2.4} /> Personlig onboarding direkt med grundarna — 30 min Teams</li>
-              <li><Icon name="check" size={16} stroke={2.4} /> Tjänsten är helt gratis de första 6 månaderna — ingen success-fee, inga avgifter</li>
-              <li><Icon name="check" size={16} stroke={2.4} /> Du röstar på vilka kategorier vi öppnar nästa kvartal</li>
-              <li><Icon name="check" size={16} stroke={2.4} /> Garanterad förtur till försäkrings­byten när FI-licensen är klar</li>
-            </ul>
-          </FoundingLeft>
-          {state === 'success' ? (
-            <FoundingSuccess>
-              <div className="check"><Icon name="check" size={28} stroke={2.5} /></div>
-              <h3>Tack — du står på listan.</h3>
-              <p>Vi hör av oss inom 48 timmar för att boka en kort onboarding och hjälpa dig komma igång.</p>
-            </FoundingSuccess>
-          ) : (
-            <FoundingForm onSubmit={submitFounding} noValidate>
-              <label>
-                Företagsnamn
-                <input
-                  type="text"
-                  name="company"
-                  required
-                  autoComplete="organization"
-                  placeholder="t.ex. Lindberg VVS AB"
-                  value={form.company}
-                  onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
-                  aria-invalid={!!errors.company || undefined}
-                  disabled={state === 'submitting'}
-                />
-                {errors.company && <span className="error">{errors.company}</span>}
-              </label>
-              <label>
-                Namn
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  autoComplete="name"
-                  placeholder="t.ex. Johan Lindberg"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  aria-invalid={!!errors.name || undefined}
-                  disabled={state === 'submitting'}
-                />
-                {errors.name && <span className="error">{errors.name}</span>}
-              </label>
-              <label>
-                E-post
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  autoComplete="email"
-                  placeholder="johan@lindbergvvs.se"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  aria-invalid={!!errors.email || undefined}
-                  disabled={state === 'submitting'}
-                />
-                {errors.email && <span className="error">{errors.email}</span>}
-              </label>
-              <Button type="submit" $variant="gradient" $size="lg" disabled={state === 'submitting'}>
-                {state === 'submitting' ? 'Skickar…' : 'Reservera min plats'}
-                {state !== 'submitting' && <Icon name="arrow" size={18} />}
-              </Button>
-              {state === 'error' && (
-                <span className="error">Något gick fel — försök igen eller mejla hej@arvoflow.se.</span>
-              )}
-              <p className="fineprint">Vi använder dina uppgifter enbart för att kontakta dig om Founding Member-platsen och raderar dem om du tackar nej. Inga utskick utan ditt godkännande.</p>
-            </FoundingForm>
-          )}
-        </FoundingCard>
-      </Section>
-
-      <Section id="faq">
-        <SectionHead>
-          <span className="kicker">Vanliga frågor</span>
-          <h2>Det vi får oftast — rakt på.</h2>
-        </SectionHead>
-        <FaqWrap>
-          {FAQ.map((f, i) => (
-            <FaqItem key={f.q}>
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
-            </FaqItem>
           ))}
-        </FaqWrap>
-      </Section>
+        </Steps>
+      </Light>
 
-      <FinalCta>
-        <h2>Betalar ni för mycket just nu?</h2>
-        <p>Ni vet det inte förrän Arvo har tittat. Ladda upp en faktura på 60 sekunder — vi visar er exakt var ni står mot branschsnittet.</p>
-        <div className="actions">
-          <Button as={Link} to="/testa-faktura" $variant="gradient" $size="lg">
-            Testa med en faktura <Icon name="arrow" size={18} />
-          </Button>
+      {/* ═══ 04 · PRISET ═══ */}
+      <Light>
+        <SectionKey $light>
+          <span className="k-num">04 · Priset</span>
+          <span className="k-note">ingen bindningstid</span>
+        </SectionKey>
+        <PriceSentence ref={prisRef} className={prisIn}>
+          <div className="p-serif">
+            1 995 kr i månaden. Tjugo procent av besparingen —<br /><em>först när den syns i era böcker.</em>
+          </div>
+          <p className="p-sub">
+            Vi tar aldrig ersättning från någon leverantör. Vi sitter på er sida av bordet — det är hela affärsidén.
+          </p>
+        </PriceSentence>
+        <PriceCards ref={cardsRef}>
+          <div className={`pc dark ${cardsIn}`}>
+            <div className="pc-k">Arvo Intelligence</div>
+            <div className="pc-pris">1 995 kr <small>/ mån</small></div>
+            <div className="pc-lede">Er proaktiva finansdirektör — bevakningen som aldrig sover.</div>
+            {[
+              'Smyghöjningslarm — avvikelse fångas direkt',
+              'Avtalsklockan — sista uppsägningsdag bevakad',
+              'Priser vägda mot verifierat marknadspris',
+              'Månadsbrev med det som faktiskt hänt',
+            ].map((t) => <div className="pc-row" key={t}><span className="tick">✓</span> {t}</div>)}
+            <Link className="pc-cta" to="/intelligence">Aktivera Arvo Intelligence →</Link>
+          </div>
+          <div className={`pc lightc ${cardsIn}`}>
+            <div className="pc-k">Arvo Switch</div>
+            <div className="pc-pris">20 % <small>av realiserad besparing</small></div>
+            <div className="pc-lede">Genomfört eller förberett leverantörsbyte — tajmat och signerat med BankID.</div>
+            {[
+              'Arvodet faktureras först när besparingen syns i era böcker',
+              'Ni godkänner varje byte med BankID',
+              'Från år två tillfaller hela besparingen er',
+              'Hittar vi inget — kostar det inget',
+            ].map((t) => <div className="pc-row" key={t}><span className="tick">✓</span> {t}</div>)}
+            <Link className="pc-cta" to="/testa-faktura">Testa med en faktura →</Link>
+          </div>
+        </PriceCards>
+      </Light>
+
+      {/* ═══ 05 · VANLIGA FRÅGOR ═══ */}
+      <Light>
+        <SectionKey $light>
+          <span className="k-num">05 · Vanliga frågor</span>
+          <span className="k-note" />
+        </SectionKey>
+        <Faq>
+          {FAQ.map((f, i) => (
+            <div className="f-item" key={f.q}>
+              <button
+                type="button" className="f-q"
+                aria-expanded={openFaq === i}
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              >
+                {f.q}
+                <span className="f-plus">+</span>
+              </button>
+              <div className={`f-a${openFaq === i ? ' open' : ''}`}>
+                <p>{f.a}</p>
+              </div>
+            </div>
+          ))}
+        </Faq>
+      </Light>
+
+      {/* ═══ SISTA ORDET ═══ */}
+      <LastWord ref={lastRef}>
+        <div className={`lw-serif ${lastIn}`}>
+          Börja med en enda faktura.<br /><em>Resten sköter vakten.</em>
         </div>
-        <div className="fineprint">Inga kreditkortsuppgifter. Ingen bindningstid. Avsluta när ni vill.</div>
-      </FinalCta>
+        <br />
+        <Link className={`lw-cta ${lastIn}`} to="/testa-faktura">Testa med en faktura →</Link>
+        <div className="lw-sign">Finansiell intelligens som aldrig sover.</div>
+      </LastWord>
 
       <Footer />
     </Page>
   );
-};
-
-export default Landing;
+}
