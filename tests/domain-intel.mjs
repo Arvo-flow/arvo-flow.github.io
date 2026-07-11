@@ -144,3 +144,66 @@ describe('buildRevealFindings · varje fynd bär en källa, inget fabriceras', (
     for (const x of f) assert.ok(x.source && x.source.trim().length > 0, `fynd "${x.title}" saknar källa`);
   });
 });
+
+// ── SPF-LÄXAN (Lekia, 2026-07-12): SPF:en är en leverantörslista i klartext ──────────
+// Lekias VERKLIGA SPF-mekanismer som fixtur: mejl via säkerhetsgateway (MX ≠ Microsoft)
+// men SPF auktoriserar outlook.com → M365-familjen bekräftad bakom gatewayen, och fem
+// leverantörsrelationer synliga utifrån. Före fixen: trivia-golvet. Efter: två äkta fynd.
+import { suppliersFromSpf } from '../lib/domain-intel.js';
+
+const LEKIA_MECHANISMS = [
+  'ip4:31.216.224.122', 'include:spf.mandrillapp.com', 'include:mail.zendesk.com',
+  'include:spf.abicart.com', 'include:spf.protection.outlook.com',
+  'include:spf.mailanyone.net', 'include:amazonses.com', 'include:em7227.lekia.se',
+];
+
+describe('suppliersFromSpf · kurerad karta, aldrig en gissning', () => {
+  test('Lekias SPF ger fyra igenkända namn (Microsoft exkluderad — eget fynd)', () => {
+    assert.deepEqual(suppliersFromSpf(LEKIA_MECHANISMS), ['Zendesk', 'Mailchimp', 'Amazon SES', 'Abicart']);
+  });
+  test('okända includes namnges aldrig', () => {
+    assert.deepEqual(suppliersFromSpf(['include:spf.okand-tjanst.se', 'ip4:1.2.3.4']), []);
+  });
+  test('dubbletter slås ihop (mandrillapp + mailchimp = ett namn)', () => {
+    assert.deepEqual(suppliersFromSpf(['include:spf.mandrillapp.com', 'include:mailchimp.com']), ['Mailchimp']);
+  });
+});
+
+describe('buildRevealFindings · Lekia-fallet: gateway-MX men SPF bär sanningen', () => {
+  const posture = {
+    mx: 'other', spfM365: true, spfGoogle: false, spfGateway: 'FortiMail',
+    spfMechanisms: LEKIA_MECHANISMS, dmarc: 'none',
+  };
+  const f = buildRevealFindings({ domain: 'lekia.se', posture, domainReg: null, ct: null });
+
+  test('M365-fyndet föds ur SPF:en — nivåfrågan utan siffror, aldrig en påstådd nivå', () => {
+    const m365 = f.find((x) => x.kind === 'platform');
+    assert.ok(m365, 'plattformsfyndet saknas');
+    assert.equal(m365.title, 'Ni kör Microsoft 365');
+    assert.match(m365.detail, /bakom er mejlgateway/);
+    assert.match(m365.detail, /syns bara på fakturan/);
+    assert.doesNotMatch(m365.detail, /Business Standard|Basic|Premium|E3|E5/);
+    assert.match(m365.source, /SPF-posten/);
+  });
+
+  test('leverantörslistan: fyra namn, källbelagd, kräver ≥2', () => {
+    const sup = f.find((x) => x.kind === 'suppliers');
+    assert.ok(sup, 'leverantörsfyndet saknas');
+    assert.match(sup.title, /4 leverantörer/);
+    assert.match(sup.detail, /Zendesk · Mailchimp · Amazon SES · Abicart/);
+    assert.match(sup.source, /SPF-posten för lekia\.se/);
+  });
+
+  test('trivia-golvet inträder ALDRIG när äkta fynd finns', () => {
+    assert.equal(f.some((x) => x.kind === 'infra' || x.kind === 'bridge'), false);
+  });
+
+  test('ett ensamt SPF-namn bär inte listan (tröskel ≥2)', () => {
+    const f2 = buildRevealFindings({
+      domain: 'x.se',
+      posture: { mx: 'other', spfM365: false, spfMechanisms: ['include:mail.zendesk.com'] },
+      domainReg: null, ct: null,
+    });
+    assert.equal(f2.some((x) => x.kind === 'suppliers'), false);
+  });
+});

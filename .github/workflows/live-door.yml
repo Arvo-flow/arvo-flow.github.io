@@ -1,0 +1,39 @@
+name: Live door (Lekia-beviset)
+# Kör grundarens eget test mot skarpa dörren och fotar svaret. Självtriggar på skript-push.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/live-door-lekia.mjs'
+permissions:
+  contents: write
+jobs:
+  door:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium --with-deps
+      - name: Vänta in Vercel-deployen av samma push
+        run: sleep 110
+      - name: Kör dörren med Lekia
+        run: |
+          set -o pipefail
+          mkdir -p ops/door-shots
+          node scripts/live-door-lekia.mjs 2>&1 | tee ops/door-shots/logg.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git pull --rebase origin main || true
+          git add ops/door-shots/
+          git commit -m "ops: live-door [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
