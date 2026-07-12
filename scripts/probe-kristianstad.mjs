@@ -8,6 +8,7 @@
 import {
   sldFromDomain, matchCompany, normalizeCompanyName, foldToDomainAlphabet,
   extractNextData, extractSearchCompanies, extractCompanyFacts, fetchBusinessFacts,
+  fetchOrgnrFromWebsite, fetchBusinessFactsByOrgnr,
 } from '../lib/business-intel.js';
 import { revealFromDomain } from '../lib/domain-intel.js';
 
@@ -38,6 +39,11 @@ if (match) {
   console.log('status:', cRes.status);
   console.log('fakta:', JSON.stringify(extractCompanyFacts(extractNextData(await cRes.text()))));
 }
+
+console.log('═══ 3a · ORGNR-UR-SAJTEN (nya vägen) ═══');
+const siteOrgnr = await fetchOrgnrFromWebsite(DOMAIN);
+console.log('orgnr på bolagets egen sajt →', siteOrgnr);
+if (siteOrgnr) console.log('allabolag by orgnr →', JSON.stringify(await fetchBusinessFactsByOrgnr(siteOrgnr)));
 
 console.log('═══ 3b · fetchBusinessFacts (dörrens exakta anrop) ═══');
 console.log(JSON.stringify(await fetchBusinessFacts(DOMAIN)));

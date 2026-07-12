@@ -9,6 +9,7 @@ import {
   sldFromDomain, normalizeCompanyName, matchCompany, normalizeOrgnr, foldToDomainAlphabet,
   extractNextData, extractSearchCompanies, extractCompanyFacts,
   buildBusinessFindings, mergeRevealFindings,
+  luhnValidOrgnr, extractOrgnrCandidates, fetchOrgnrFromWebsite, fetchBusinessFacts,
 } from '../lib/business-intel.js';
 
 describe('business-intel · domän → SLD', () => {
@@ -84,6 +85,70 @@ describe('business-intel · matchningsgrinden (integritetskärnan)', () => {
     assert.equal(foldToDomainAlphabet('kristianstadsmåleri'), 'kristianstadsmaleri');
     assert.equal(foldToDomainAlphabet('Örebro Städ & Miljö'), 'orebrostadmiljo');
     assert.equal(foldToDomainAlphabet('Café Lundén'), 'cafelunden');
+  });
+});
+
+describe('business-intel · orgnr-ur-sajten (Kristianstad-läxan steg 2 — starkare än namnmatch)', () => {
+  test('Luhn: riktiga orgnr godkänns, påhittade fälls', () => {
+    for (const ok of ['5565690087', '5565760997', '5590665658', '5567037485']) {
+      assert.equal(luhnValidOrgnr(ok), true, ok);
+    }
+    assert.equal(luhnValidOrgnr('1234567890'), false);
+    assert.equal(luhnValidOrgnr('556569008'), false);    // 9 siffror
+  });
+
+  test('footer-format hittas: bindestreck, tätskrivet och moms-format (SE…01)', () => {
+    assert.deepEqual(extractOrgnrCandidates('Org.nr 556569-0087 · Stockholm'), ['5565690087']);
+    assert.deepEqual(extractOrgnrCandidates('orgnr: 5565690087'), ['5565690087']);
+    assert.deepEqual(extractOrgnrCandidates('VAT: SE556569008701'), ['5565690087']);
+  });
+
+  test('personnummer/datum/telefon fälls: månadsposition < 20 eller fel Luhn', () => {
+    assert.deepEqual(extractOrgnrCandidates('Född 851224-1234'), []);          // månad 12 < 20
+    assert.deepEqual(extractOrgnrCandidates('Tel 040-123 456, 070-1234567'), []);
+    assert.deepEqual(extractOrgnrCandidates('Beställning 202607-1211'), []);   // fel Luhn
+  });
+
+  test('dubbletter dedupas; TVÅ olika nummer på sajten → tvetydigt (hanteras i fetch-lagret)', () => {
+    const one = extractOrgnrCandidates('556569-0087 … samt org.nr 5565690087 igen');
+    assert.deepEqual(one, ['5565690087']);
+    const two = extractOrgnrCandidates('Vi: 556569-0087. Moderbolag: 559066-5658.');
+    assert.equal(two.length, 2);
+  });
+
+  test('fetchOrgnrFromWebsite: ETT unikt nummer → orgnr, TVÅ olika → null, ingen sida → null', async () => {
+    const page = (body) => Promise.resolve({ ok: true, text: () => Promise.resolve(body) });
+    const one = await fetchOrgnrFromWebsite('x.se', { fetchImpl: () => page('Org.nr 556569-0087') });
+    assert.equal(one, '5565690087');
+    const two = await fetchOrgnrFromWebsite('x.se', {
+      fetchImpl: () => page('556569-0087 och 559066-5658'),
+    });
+    assert.equal(two, null);
+    const none = await fetchOrgnrFromWebsite('x.se', { fetchImpl: () => Promise.reject(new Error('nät')) });
+    assert.equal(none, null);
+  });
+
+  test('fetchBusinessFacts tar orgnr-vägen FÖRST: å/ä/ö-bolag hittas utan sökträff', async () => {
+    const calls = [];
+    const fetchImpl = (url) => {
+      calls.push(String(url));
+      if (String(url).includes('kristianstadsmaleri.se')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve('Org.nr 556569-0087') });
+      }
+      if (String(url).includes('allabolag.se/5565690087')) {
+        const nd = { props: { pageProps: { company: {
+          legalName: 'Kristianstads Måleri AB', orgnr: '5565690087',
+          revenue: '12345', employees: 9, companyAccountsLastUpdatedDate: '2025-06-30',
+        } } } };
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(
+          `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify(nd)}</script>`) });
+      }
+      return Promise.resolve({ ok: false, text: () => Promise.resolve('') });
+    };
+    const facts = await fetchBusinessFacts('kristianstadsmaleri.se', { fetchImpl });
+    assert.equal(facts?.legalName, 'Kristianstads Måleri AB');
+    assert.equal(facts?.employees, 9);
+    assert.ok(!calls.some((u) => u.includes('/what/')), 'sökvägen ska inte behövas när orgnr-vägen bar');
   });
 });
 
