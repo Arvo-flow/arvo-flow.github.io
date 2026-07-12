@@ -13,7 +13,43 @@ orgnr på bolagets egen sajt → null
   kristianstadsmaleri.se/om → 404 · title="404 Not Found" · AB-strängar: [] · 6+4-siffror: []
 ═══ 3b · fetchBusinessFacts (dörrens exakta anrop) ═══
 {"legalName":"Kristianstads Måleri Aktiebolag","orgnr":"5562896430","revenueTkr":13976,"employees":14,"year":"2025"}
+═══ 5 · HISTORIK-KONTRAKTET (tillväxttrenden, sond) ═══
+status: 200
+company-nycklar: mainOffice · name · orgnr · businessUnitId · businessUnitType · companyId · listingId · customerId · phone · phone2 · mobile · mobile2 · faxNumber · homePage · email · marketingProtection · industries · location · currentIndustry · visitorAddress · postalAddress · description · advertType · logo · searchResultImage · legalName · revenue · currency · profit · companyAccountsLastUpdatedDate · employees · contactPerson · status · statusRemarks · certificates · rating · searchHighlights · purpose · naceIndustries · companyType · legalPhone · legalMobilePhone · contactFormUrl · webshopUrl · legalVisitorAddress · legalPostalAddress · domicile · corporateStructure · registrationDate · foundationDate · foundationYear · numberOfEmployees · shareCapital · estimatedTurnover · turnoverYear · registryStatusEntries · centralApproval · roles · signatories · procuration · companyAccounts · corporateAccounts · companyCacheFlows · corporateCacheFlows · openingHours · keywords · financialComments · keyFigureComments · isCustomer · externalLinks · references · distributors · contactPersons · socialMediaLinks · certifications · coverImage · backgroundImage · slideShow · tagLine · announcements · gaselle · shareholders · totalShareholders · shareholdersLastUpdatedDate · proffListingId · proffListingIds · businessUnitIds · mortgages · paymentRemarks · registeredAsEnterprise · registeredForVat · registeredForNav · registeredForVoluntary · registeredForPayrollTax · registeredForVatDescription · proffNames · annualReports · vehicles · mergers · openVacancies · availableReports · latestPublicAccountingPeriod · videos · hidePropertyInfo · businessUnits · alternativeNames
+   company.revenue = "13976"
+   company.companyAccountsLastUpdatedDate = "2025"
+   company.employees = "14"
+   company.foundationYear = "1987"
+   company.numberOfEmployees = "14"
+   company.turnoverYear = 2025
+   company.companyAccounts.0.year = "2025"
+   company.companyAccounts.0.period = "2025-08"
+   company.companyAccounts.0.periodStart = "2024-09-01"
+   company.companyAccounts.0.periodEnd = "2025-08-31"
+   company.companyAccounts.1.year = "2024"
+   company.companyAccounts.1.period = "2024-08"
+   company.companyAccounts.1.periodStart = "2023-09-01"
+   company.companyAccounts.1.periodEnd = "2024-08-31"
+   company.companyAccounts.2.year = "2023"
+   company.companyAccounts.2.period = "2023-08"
+   company.companyAccounts.2.periodStart = "2022-09-01"
+   company.companyAccounts.2.periodEnd = "2023-08-31"
+   company.companyAccounts.3.year = "2022"
+   company.companyAccounts.3.period = "2022-08"
+   company.companyAccounts.3.periodStart = "2021-09-01"
+   company.companyAccounts.3.periodEnd = "2022-08-31"
+   company.companyAccounts.4.year = "2021"
+   company.companyAccounts.4.period = "2021-08"
+   company.companyAccounts.4.periodStart = "2020-09-01"
+   company.companyAccounts.4.periodEnd = "2021-08-31"
+   company.annualReports.0.period = "2025-08"
+   company.annualReports.1.period = "2024-08"
+   company.annualReports.2.period = "2023-08"
+   company.annualReports.3.period = "2022-08"
+   company.annualReports.4.period = "2021-08"
+   company.latestPublicAccountingPeriod = null
+   hydrationData.settingsStore.accountingFigureDirection = "left"
 ═══ 4 · HELA AVSLÖJANDET ═══
   [business] Ert bokslut 2025: 14,0 mkr i omsättning, 14 anställda
-  [cert] Digital närvaro sedan september 2024
+  [spoofing] Mejl i ert namn kan förfalskas
   [market] Måttstocken vi väger mobilfakturor mot: 239 kr/mån per abonnemang
