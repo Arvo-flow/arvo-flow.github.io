@@ -65,6 +65,28 @@ for (const page of ['', 'kontakt', 'om-oss', 'kontakta-oss', 'om']) {
 console.log('═══ 3b · fetchBusinessFacts (dörrens exakta anrop) ═══');
 console.log(JSON.stringify(await fetchBusinessFacts(DOMAIN)));
 
+console.log('═══ 5 · HISTORIK-KONTRAKTET (tillväxttrenden, sond) ═══');
+// Var i company-JSON:en bor fleråriga bokslut? Dumpa alla vägar med år/omsättning så
+// trend-parsern byggs mot verkligheten (sond v3-mönstret), inte mot en gissning.
+function findPaths(obj, keyRe, path = '', out = [], depth = 0) {
+  if (!obj || typeof obj !== 'object' || depth > 9 || out.length > 60) return out;
+  for (const [k, v] of Object.entries(obj)) {
+    const p = path ? `${path}.${k}` : k;
+    if (keyRe.test(k) && (typeof v !== 'object' || v === null)) out.push(`${p} = ${JSON.stringify(v)?.slice(0, 90)}`);
+    if (typeof v === 'object') findPaths(v, keyRe, p, out, depth + 1);
+  }
+  return out;
+}
+const ORGNR = '5562896430';
+const hRes = await fetch(`https://www.allabolag.se/${ORGNR}`, { headers: H, redirect: 'follow', signal: AbortSignal.timeout(15000) });
+const nd = extractNextData(await hRes.text());
+console.log('status:', hRes.status);
+const company = nd?.props?.pageProps?.company;
+console.log('company-nycklar:', company ? Object.keys(company).join(' · ') : 'SAKNAS');
+for (const line of findPaths(nd?.props?.pageProps ?? {}, /revenue|omsattning|netSales|year|account|period|employees|history/i)) {
+  console.log('  ', line);
+}
+
 console.log('═══ 4 · HELA AVSLÖJANDET ═══');
 const r = await revealFromDomain(DOMAIN);
 for (const f of r.findings) console.log(`  [${f.kind}] ${f.title}`);
