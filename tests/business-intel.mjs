@@ -9,7 +9,7 @@ import {
   sldFromDomain, normalizeCompanyName, matchCompany, normalizeOrgnr, foldToDomainAlphabet,
   extractNextData, extractSearchCompanies, extractCompanyFacts,
   buildBusinessFindings, mergeRevealFindings,
-  luhnValidOrgnr, extractOrgnrCandidates, fetchOrgnrFromWebsite, fetchBusinessFacts,
+  luhnValidOrgnr, extractOrgnrCandidates, fetchOrgnrFromWebsite, fetchBusinessFacts, extractSiteCompanyName,
 } from '../lib/business-intel.js';
 
 describe('business-intel · domän → SLD', () => {
@@ -126,6 +126,62 @@ describe('business-intel · orgnr-ur-sajten (Kristianstad-läxan steg 2 — star
     assert.equal(two, null);
     const none = await fetchOrgnrFromWebsite('x.se', { fetchImpl: () => Promise.reject(new Error('nät')) });
     assert.equal(none, null);
+  });
+
+  test('stavningsoraklet: juridiska namnet plockas ur <title> (rättstavat med å/ä/ö)', () => {
+    assert.equal(
+      extractSiteCompanyName('<title>Kristianstads Måleri AB - Tradition & Kvalitet sedan 1928</title>'),
+      'Kristianstads Måleri AB');
+    assert.equal(
+      extractSiteCompanyName('<meta property="og:site_name" content="Örebro Städ Aktiebolag – hem" />'),
+      'Örebro Städ Aktiebolag');
+    assert.equal(extractSiteCompanyName('<title>Välkommen till oss</title>'), null);
+  });
+
+  test('KRISTIANSTAD-KEDJAN ordagrant: inget orgnr på sajten → titeln blir sökfrågan → grinden släpper', async () => {
+    const calls = [];
+    const nextData = (obj) => `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify(obj)}</script>`;
+    const fetchImpl = (url) => {
+      const u = String(url); calls.push(u);
+      if (u === 'https://kristianstadsmaleri.se/') {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(
+          '<title>Kristianstads Måleri AB - Tradition & Kvalitet sedan 1928</title> Ring 0706242272') });
+      }
+      if (u.includes('/what/')) {
+        // ascii-frågan ger 0 träffar (sondbevisat); den å-stavade träffar
+        const companies = decodeURIComponent(u).includes('Måleri')
+          ? [{ legalName: 'Kristianstads Måleri AB', orgnr: '5565690087' }]
+          : [];
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(nextData(
+          { props: { pageProps: { hydrationData: { searchStore: { companies: { companies } } } } } })) });
+      }
+      if (u.includes('allabolag.se/5565690087')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(nextData({ props: { pageProps: { company: {
+          legalName: 'Kristianstads Måleri AB', orgnr: '5565690087',
+          revenue: '9876', employees: 12, companyAccountsLastUpdatedDate: '2025-08-31',
+        } } } })) });
+      }
+      return Promise.resolve({ ok: false, text: () => Promise.resolve('') });
+    };
+    const facts = await fetchBusinessFacts('kristianstadsmaleri.se', { fetchImpl });
+    assert.equal(facts?.legalName, 'Kristianstads Måleri AB');
+    assert.equal(facts?.employees, 12);
+    assert.ok(calls.some((u) => decodeURIComponent(u).includes('Kristianstads Måleri AB')),
+      'sökfrågan ska vara det rättstavade namnet ur titeln');
+  });
+
+  test('oraklet lånar stavningen, ALDRIG förtroendet: titel-AB som inte matchar domänen ignoreras', async () => {
+    const calls = [];
+    const fetchImpl = (url) => {
+      const u = String(url); calls.push(u);
+      if (u === 'https://foo.se/') {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve('<title>Byggd av Webbyrån Pixel AB</title>') });
+      }
+      return Promise.resolve({ ok: false, text: () => Promise.resolve('') });
+    };
+    await fetchBusinessFacts('foo.se', { fetchImpl });
+    assert.ok(!calls.some((u) => decodeURIComponent(u).includes('Pixel')),
+      'ett AB-namn som inte viker till domänens SLD får aldrig bli sökfråga');
   });
 
   test('fetchBusinessFacts tar orgnr-vägen FÖRST: å/ä/ö-bolag hittas utan sökträff', async () => {
