@@ -1,6 +1,6 @@
 FYND lekia: ["Ert bokslut 2025: 264,6 mkr i omsättning, 29 anställda","Ni kör Microsoft 365","4 leverantörer syns i era publika mejlposter"]
 ✓ lekia mobil
 ✓ lekia desktop
-FYND kristianstadsmaleri: ["Digital närvaro sedan september 2024"]
+FYND kristianstadsmaleri: ["Ert bokslut 2025: 14,0 mkr i omsättning, 14 anställda","Loopia sköter er domän","Måttstocken vi väger mobilfakturor mot: 239 kr/mån per abonnemang"]
 ✓ kristianstadsmaleri mobil
 ✓ kristianstadsmaleri desktop
