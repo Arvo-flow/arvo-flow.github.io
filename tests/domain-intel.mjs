@@ -284,4 +284,15 @@ describe('Kristianstad-läxan · golvets ärlighet + marknadsankaret', () => {
     const a = buildMarketAnchorFinding(BM_OK);
     assert.doesNotMatch(a.title + a.detail, /ni betalar för mycket|er kostnad är/i);
   });
+
+  test('listpris-läsvägen: deterministisk real-public för mobil, null för oberäknade kategorier', async () => {
+    const { getPublicListBenchmark } = await import('../lib/benchmark.js');
+    const m = getPublicListBenchmark({ category: 'mobil' });
+    assert.equal(m.source, 'real-public');
+    assert.ok(m.p25 > 0);
+    assert.ok(m.alternatives?.[0]?.supplier, 'p25-bäraren måste vara namngiven');
+    assert.ok(buildMarketAnchorFinding(m), 'prisbokens mobil-listpris ska bära ett ankare');
+    assert.equal(getPublicListBenchmark({ category: 'it-support' }), null);        // ej real-public
+    assert.equal(getPublicListBenchmark({ category: 'forsakring-foretag' }), null);
+  });
 });
