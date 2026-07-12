@@ -346,7 +346,7 @@ describe('business-intel · trenden (Kristianstad-läxan del A — riktningen, k
     assert.equal(t.title, 'Er omsättning föll 26 % senaste bokslutsåret');
     assert.match(t.detail, /Från 18,9 till 14,0 mkr \(bokslutsåren 2024 → 2025\)/);
     assert.match(t.detail, /varje kostnadskrona dubbelt/);
-    assert.match(t.source, /Bolagsverket.*2024 och 2025/);
+    assert.match(t.source, /Bolagsverket.*2024–2025/);
   });
 
   test('tillväxt: +18 % med utvecklings-copyn', () => {
@@ -375,5 +375,76 @@ describe('business-intel · trenden (Kristianstad-läxan del A — riktningen, k
       { year: '2024', revenueTkr: 0, employees: 16 },
     ])).find((x) => x.kind === 'trend'), undefined);
     assert.equal(buildBusinessFindings(facts(undefined)).find((x) => x.kind === 'trend'), undefined);
+  });
+});
+
+describe('business-intel · kurvan i rad (punkt 1) + måttstocksbeslutet (punkt 2)', () => {
+  const facts = (h) => ({
+    legalName: 'X AB', orgnr: '1', revenueTkr: h[0].revenueTkr, employees: 10, year: h[0].year, history: h,
+  });
+
+  test('tredje växande året i rad: sviten räknas, rubrikprocenten är SENASTE årets, spannet hela kurvan', () => {
+    const f = buildBusinessFindings(facts([
+      { year: '2025', revenueTkr: 14200, employees: 10 },
+      { year: '2024', revenueTkr: 12000, employees: 9 },   // +18 %
+      { year: '2023', revenueTkr: 10500, employees: 8 },   // +14 %
+      { year: '2022', revenueTkr: 9200,  employees: 8 },   // +14 %
+    ]));
+    const t = f.find((x) => x.kind === 'trend');
+    assert.equal(t.title, 'Tredje växande året i rad (+18 % senast)');
+    assert.match(t.detail, /Från 9,2 till 14,2 mkr \(bokslutsåren 2022 → 2025\)/);
+    assert.match(t.source, /2022–2025/);
+  });
+
+  test('andra fallande året i rad — med fall-copyn', () => {
+    const f = buildBusinessFindings(facts([
+      { year: '2025', revenueTkr: 13976, employees: 14 },
+      { year: '2024', revenueTkr: 18905, employees: 16 },  // −26 %
+      { year: '2023', revenueTkr: 21000, employees: 17 },  // −10 %
+    ]));
+    const t = f.find((x) => x.kind === 'trend');
+    assert.equal(t.title, 'Andra fallande året i rad (−26 % senast)');
+    assert.match(t.detail, /kostnadskrona dubbelt/);
+    assert.match(t.detail, /Från 21,0 till 14,0 mkr \(bokslutsåren 2023 → 2025\)/);
+  });
+
+  test('riktningsbyte bryter sviten → enkelårs-rubriken', () => {
+    const f = buildBusinessFindings(facts([
+      { year: '2025', revenueTkr: 14200, employees: 10 },
+      { year: '2024', revenueTkr: 12000, employees: 9 },   // +18 %
+      { year: '2023', revenueTkr: 13000, employees: 9 },   // −8 % → brott
+    ]));
+    const t = f.find((x) => x.kind === 'trend');
+    assert.equal(t.title, 'Er omsättning växte 18 % senaste bokslutsåret');
+    assert.match(t.detail, /Från 12,0 till 14,2 mkr/);
+  });
+
+  test('brusgolvet: ett ±1 %-år räknas inte in i sviten', () => {
+    const f = buildBusinessFindings(facts([
+      { year: '2025', revenueTkr: 14200, employees: 10 },
+      { year: '2024', revenueTkr: 12000, employees: 9 },   // +18 %
+      { year: '2023', revenueTkr: 11900, employees: 9 },   // +0,8 % → bryter (varken tillväxt eller fall)
+    ]));
+    assert.match(f.find((x) => x.kind === 'trend').title, /^Er omsättning växte 18 %/);
+  });
+
+  test('fyra år i rad cappas språkligt vid "Fjärde"', () => {
+    const f = buildBusinessFindings(facts([
+      { year: '2025', revenueTkr: 16000, employees: 10 },
+      { year: '2024', revenueTkr: 14000, employees: 9 },
+      { year: '2023', revenueTkr: 12000, employees: 8 },
+      { year: '2022', revenueTkr: 10000, employees: 8 },
+      { year: '2021', revenueTkr: 8000,  employees: 7 },
+    ]));
+    assert.match(f.find((x) => x.kind === 'trend').title, /^Fjärde växande året i rad/);
+  });
+
+  test('MÅTTSTOCKSBESLUTET (grundardelegerat 2026-07-12): ankaret STÅR KVAR som avslutare även på kort med tre "om er"-rader', () => {
+    const biz = [{ kind: 'business', title: 'bokslut' }, { kind: 'trend', title: 'kurvan' }];
+    const dns = [{ kind: 'spoofing', title: 'lucka' }];
+    const anchor = { kind: 'market', title: 'måttstocken' };
+    const merged = mergeRevealFindings(biz, dns, anchor);
+    assert.equal(merged[merged.length - 1].kind, 'market', 'måttstocken laddar fotens CTA — den avslutar kortet');
+    assert.equal(merged.length, 4);
   });
 });
