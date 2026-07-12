@@ -6,7 +6,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  sldFromDomain, normalizeCompanyName, matchCompany, normalizeOrgnr,
+  sldFromDomain, normalizeCompanyName, matchCompany, normalizeOrgnr, foldToDomainAlphabet,
   extractNextData, extractSearchCompanies, extractCompanyFacts,
   buildBusinessFindings, mergeRevealFindings,
 } from '../lib/business-intel.js';
@@ -61,6 +61,29 @@ describe('business-intel · matchningsgrinden (integritetskärnan)', () => {
     assert.equal(normalizeCompanyName('Lynxeye AB'), 'lynxeye');
     assert.equal(normalizeCompanyName('ACME Aktiebolaget'), 'acme');
     assert.equal(normalizeCompanyName('Hallvarsson & Halvarsson AB'), 'hallvarssonhalvarsson');
+  });
+
+  // Kristianstad-läxan 2026-07-12: domäner kan aldrig bära å/ä/ö — utan vikningen fick VARJE
+  // svenskt bolag med å/ä/ö i namnet (Måleri, Städ, Elektriska …) aldrig sitt bokslutsfynd.
+  test('Kristianstad-fallet ordagrant: "Kristianstads Måleri AB" MATCHAR kristianstadsmaleri.se', () => {
+    const m = matchCompany('kristianstadsmaleri', [{ legalName: 'Kristianstads Måleri AB', orgnr: '5560001111' }]);
+    assert.equal(m?.orgnr, '5560001111');
+  });
+  test('bindestrecksdomän: svensk-bygg.se matchar "Svensk Bygg AB"', () => {
+    const m = matchCompany('svensk-bygg', [{ legalName: 'Svensk Bygg AB', orgnr: '5560002222' }]);
+    assert.equal(m?.orgnr, '5560002222');
+  });
+  test('vikningen vidgar alfabetet, ALDRIG toleransen: å/a-kollision → 2 träffar → null', () => {
+    const m = matchCompany('malarfirman', [
+      { legalName: 'Målarfirman AB', orgnr: '1' },
+      { legalName: 'Malarfirman AB', orgnr: '2' },
+    ]);
+    assert.equal(m, null);
+  });
+  test('foldToDomainAlphabet: å/ä→a, ö→o, é→e, allt utanför a-z0-9 bort', () => {
+    assert.equal(foldToDomainAlphabet('kristianstadsmåleri'), 'kristianstadsmaleri');
+    assert.equal(foldToDomainAlphabet('Örebro Städ & Miljö'), 'orebrostadmiljo');
+    assert.equal(foldToDomainAlphabet('Café Lundén'), 'cafelunden');
   });
 });
 
@@ -143,6 +166,31 @@ describe('business-intel · sammanfogning med DNS-fynden', () => {
   test('utan affärsfynd → DNS-fynden orörda (golvet står kvar)', () => {
     const merged = mergeRevealFindings([], dns);
     assert.equal(merged.length, 2);
+    assert.ok(merged.find((f) => f.floor));
+  });
+
+  // Marknadsankaret i dörren (Kristianstad-läxan): "om marknaden"-raden visas när "om er"-nätet
+  // är tunt — aldrig som utspädning av ett kort som redan bär plattforms-/leverantörsfynd.
+  const anchor = { kind: 'market', title: 'Måttstocken…' };
+
+  test('tunt nät (ingen plattform/leverantörer) → ankaret läggs SIST och bryggan faller bort', () => {
+    const thinDns = [{ kind: 'infra', title: 'Loopia' }, { kind: 'bridge', title: 'brygga', floor: true }];
+    const merged = mergeRevealFindings(biz, thinDns, anchor);
+    assert.equal(merged[merged.length - 1].kind, 'market');
+    assert.equal(merged.find((f) => f.floor), undefined);
+  });
+  test('kort med plattformsfynd (Lekia-klassen) → ankaret utelämnas (utspädning ≠ premium)', () => {
+    const merged = mergeRevealFindings(biz, dns, anchor);
+    assert.equal(merged.find((f) => f.kind === 'market'), undefined);
+  });
+  test('helt tomt "om er" (inte ens bokslut) → ankaret bär ensamt, bryggan behövs inte', () => {
+    const thinDns = [{ kind: 'bridge', title: 'brygga', floor: true }];
+    const merged = mergeRevealFindings([], thinDns, anchor);
+    assert.deepEqual(merged.map((f) => f.kind), ['market']);
+  });
+  test('utan ankare (prisboken onåbar) → bryggan står kvar som sista utväg', () => {
+    const thinDns = [{ kind: 'bridge', title: 'brygga', floor: true }];
+    const merged = mergeRevealFindings([], thinDns, null);
     assert.ok(merged.find((f) => f.floor));
   });
 });

@@ -4,7 +4,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { domainFromEmail, buildRevealFindings } from '../lib/domain-intel.js';
+import { domainFromEmail, buildRevealFindings, buildMarketAnchorFinding } from '../lib/domain-intel.js';
 
 describe('domainFromEmail', () => {
   test('plockar domän ur e-post', () => {
@@ -236,5 +236,52 @@ describe('buildRevealFindings · Lekia-fallet: gateway-MX men SPF bär sanningen
       domainReg: null, ct: null,
     });
     assert.equal(f2.some((x) => x.kind === 'suppliers'), false);
+  });
+});
+
+describe('Kristianstad-läxan · golvets ärlighet + marknadsankaret', () => {
+  const NOW2 = new Date('2026-07-12T12:00:00Z');
+
+  test('infra-raden påstår bara det namnservrarna bevisar: domänen, aldrig "er drift"', () => {
+    const f = buildRevealFindings(
+      { domain: 'foo.se', posture: { mx: 'other', nsProvider: 'registrar', nsDetail: 'loopia' } }, { now: NOW2 });
+    const infra = f.find((x) => x.kind === 'infra');
+    assert.match(infra.title, /Loopia sköter er domän/);
+    assert.doesNotMatch(infra.title, /drift/i);
+  });
+
+  test('bryggan är SIFFERLÖS — priset bor i prisboken, aldrig i en lokal kopia (regel 1)', () => {
+    const f = buildRevealFindings({ domain: 'okänd.se', posture: { mx: 'unknown' } }, { now: NOW2 });
+    const bridge = f.find((x) => x.kind === 'bridge');
+    assert.ok(bridge);
+    assert.doesNotMatch(bridge.detail, /\d/);
+    assert.doesNotMatch(bridge.detail, /Microsoft/);
+  });
+
+  const BM_OK = {
+    source: 'real-public', isTotal: false, p25: 2868, median: 3348,
+    alternatives: [{ supplier: 'Tele2 Företag' }],
+  };
+
+  test('marknadsankaret: p25 per enhet → kr/mån, leverantör ur prisboksdatat, källa namngiven', () => {
+    const a = buildMarketAnchorFinding(BM_OK);
+    assert.equal(a.kind, 'market');
+    assert.match(a.title, /239 kr\/mån per abonnemang/);      // 2868/12 — kod räknar, deterministiskt
+    assert.match(a.detail, /Tele2 Företag/);
+    assert.match(a.source, /Verifierat publikt listpris · Tele2 Företag/);
+  });
+
+  test('integritetslåset: ENDAST real-public per enhet — allt annat → inget ankare', () => {
+    assert.equal(buildMarketAnchorFinding(null), null);
+    assert.equal(buildMarketAnchorFinding({ ...BM_OK, source: 'estimated' }), null);
+    assert.equal(buildMarketAnchorFinding({ ...BM_OK, source: 'live_analyses' }), null);
+    assert.equal(buildMarketAnchorFinding({ ...BM_OK, isTotal: true }), null);      // totalsumma ≠ per enhet
+    assert.equal(buildMarketAnchorFinding({ ...BM_OK, p25: 0 }), null);
+    assert.equal(buildMarketAnchorFinding({ ...BM_OK, alternatives: [] }), null);   // listpris utan bärare ≠ källbelagt
+  });
+
+  test('ankaret gör ALDRIG en kundjämförelse — inga "ni betalar"-påståenden', () => {
+    const a = buildMarketAnchorFinding(BM_OK);
+    assert.doesNotMatch(a.title + a.detail, /ni betalar för mycket|er kostnad är/i);
   });
 });
