@@ -194,6 +194,15 @@ describe('buildRevealFindings · Lekia-fallet: gateway-MX men SPF bär sanningen
     assert.match(sup.source, /SPF-posten för lekia\.se/);
   });
 
+  test('påstår bara det SPF:en bevisar: sändningsrätt i ert namn — aldrig "avtalsrelation"', () => {
+    // Amazon SES-läxan: SES kan rida med transitivt via en annan tjänst — en CFO utan
+    // "Amazon-avtal" ska aldrig kunna falsifiera vårt fynd. SPF:ens exakta sanning är
+    // ofalsifierbar: tjänsten har rätt att skicka mejl i bolagets namn.
+    const sup = f.find((x) => x.kind === 'suppliers');
+    assert.match(sup.detail, /har rätt att skicka mejl i ert namn/);
+    assert.doesNotMatch(sup.detail, /avtalsrelation/);
+  });
+
   test('trivia-golvet inträder ALDRIG när äkta fynd finns', () => {
     assert.equal(f.some((x) => x.kind === 'infra' || x.kind === 'bridge'), false);
   });
