@@ -5,6 +5,12 @@ träffar: 0
 matchCompany → null
 ═══ 3a · ORGNR-UR-SAJTEN (nya vägen) ═══
 orgnr på bolagets egen sajt → null
+═══ 3a-diag · vad innehåller sajten egentligen? ═══
+  kristianstadsmaleri.se/ → 200 · title="Kristianstads Måleri AB - Tradition & Kvalitet sedan 1928" · AB-strängar: ["Kristianstads Måleri AB - Tradition & Kvalitet sedan 1928","meta name=\"description\" content=\"Kristianstads Måleri AB erbjuder professionell målning, tapetse","img src=\"Logga 2.jpg\" alt=\"Kristianstads Måleri AB\" class=\"logo-main\"","Kristianstads Måleri AB","Kristianstads Måleri AB har en lång och stolt historia av måler","Idag drivs Kristianstads Måleri AB av"] · 6+4-siffror: ["0706242272","0707586321"]
+  kristianstadsmaleri.se/kontakt → 404 · title="404 Not Found" · AB-strängar: [] · 6+4-siffror: []
+  kristianstadsmaleri.se/om-oss → 404 · title="404 Not Found" · AB-strängar: [] · 6+4-siffror: []
+  kristianstadsmaleri.se/kontakta-oss → 404 · title="404 Not Found" · AB-strängar: [] · 6+4-siffror: []
+  kristianstadsmaleri.se/om → 404 · title="404 Not Found" · AB-strängar: [] · 6+4-siffror: []
 ═══ 3b · fetchBusinessFacts (dörrens exakta anrop) ═══
 null
 ═══ 4 · HELA AVSLÖJANDET ═══
