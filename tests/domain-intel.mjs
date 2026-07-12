@@ -191,7 +191,29 @@ describe('buildRevealFindings · Lekia-fallet: gateway-MX men SPF bär sanningen
     assert.ok(sup, 'leverantörsfyndet saknas');
     assert.match(sup.title, /4 leverantörer/);
     assert.match(sup.detail, /Zendesk · Mailchimp · Amazon SES · Abicart/);
-    assert.match(sup.source, /SPF-posten för lekia\.se/);
+  });
+
+  test('pengabryggan: listan slutar i fakturadörren — samma dörr som M365-fyndet', () => {
+    const sup = f.find((x) => x.kind === 'suppliers');
+    assert.match(sup.detail, /rad i era kostnader/);
+    assert.match(sup.detail, /dela fakturorna, så läser vi dem exakt/);
+  });
+
+  test('källupprepningen vänd: när plattformsfyndet föddes ur SPF:en säger listan "Samma SPF-post"', () => {
+    const sup = f.find((x) => x.kind === 'suppliers');
+    assert.match(sup.source, /Samma SPF-post — en enda publik rad för lekia\.se/);
+  });
+
+  test('…men med MX-buret plattformsfynd citerar listan SPF:en fristående', () => {
+    const fMx = buildRevealFindings({
+      domain: 'y.se',
+      posture: { mx: 'microsoft365', spfM365: true, spfMechanisms: LEKIA_MECHANISMS },
+      domainReg: null, ct: null,
+    });
+    const sup = fMx.find((x) => x.kind === 'suppliers');
+    assert.ok(sup, 'leverantörsfyndet saknas i MX-fallet');
+    assert.match(sup.source, /SPF-posten för y\.se/);
+    assert.doesNotMatch(sup.source, /Samma SPF-post/);
   });
 
   test('påstår bara det SPF:en bevisar: sändningsrätt i ert namn — aldrig "avtalsrelation"', () => {
