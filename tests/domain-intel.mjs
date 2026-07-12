@@ -4,7 +4,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { domainFromEmail, buildRevealFindings, buildMarketAnchorFinding } from '../lib/domain-intel.js';
+import { domainFromEmail, buildRevealFindings, buildMarketAnchorFinding, _cachedLookup } from '../lib/domain-intel.js';
 
 describe('domainFromEmail', () => {
   test('plockar domän ur e-post', () => {
@@ -332,5 +332,48 @@ describe('Förfalskningsfyndet · DMARC-luckan sägs högt (fynd-motorns toppsig
     const f = buildRevealFindings({ domain: 'foo.se', posture: { ...base, dmarcAbsent: true } });
     assert.equal(f.find((x) => x.kind === 'bridge'), undefined);
     assert.equal(f.find((x) => x.kind === 'infra'), undefined);
+  });
+});
+
+describe('Flimmervakten · verifierade historiska svar minns, fel och tomhet cachas aldrig', () => {
+  const fakeKv = (store = new Map()) => ({
+    store,
+    async get(k) { return store.get(k) ?? null; },
+    async set(k, v) { store.set(k, v); },
+  });
+
+  test('lyckat innehållsbärande svar → cachas; nästa uppslag träffar minnet utan ny hämtning', async () => {
+    const kv = fakeKv();
+    let calls = 0;
+    const fetcher = async () => { calls++; return { oldestCert: '2014-05-06', m365Since: null }; };
+    const worth = (v) => Boolean(v?.oldestCert || v?.m365Since);
+    const first = await _cachedLookup('t:ct:x.se', fetcher, worth, kv);
+    assert.equal(first.oldestCert, '2014-05-06');
+    const second = await _cachedLookup('t:ct:x.se', fetcher, worth, kv);
+    assert.equal(second.oldestCert, '2014-05-06');
+    assert.equal(calls, 1, 'andra uppslaget ska bäras av minnet');
+  });
+
+  test('null/tomt svar (transient miss) → cachas ALDRIG; nästa besök försöker igen', async () => {
+    const kv = fakeKv();
+    let calls = 0;
+    const fetcher = async () => { calls++; return calls === 1 ? null : { oldestCert: '2014-05-06', m365Since: null }; };
+    const worth = (v) => Boolean(v?.oldestCert || v?.m365Since);
+    assert.equal(await _cachedLookup('t:ct:y.se', fetcher, worth, kv), null);
+    assert.equal(kv.store.size, 0, 'en miss får aldrig bli ett minne');
+    const retry = await _cachedLookup('t:ct:y.se', fetcher, worth, kv);
+    assert.equal(retry.oldestCert, '2014-05-06');
+    assert.equal(calls, 2);
+  });
+
+  test('utan KV (sandbox/test) → ren genomströmning, inga kast', async () => {
+    const v = await _cachedLookup('t:reg:z.se', async () => '2000-04-04', (x) => Boolean(x), null);
+    assert.equal(v, '2000-04-04');
+  });
+
+  test('trasig KV (get/set kastar) → genomströmning, aldrig ett fel mot kunden', async () => {
+    const brokenKv = { async get() { throw new Error('kv nere'); }, async set() { throw new Error('kv nere'); } };
+    const v = await _cachedLookup('t:reg:w.se', async () => '1999-01-01', (x) => Boolean(x), brokenKv);
+    assert.equal(v, '1999-01-01');
   });
 });
