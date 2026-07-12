@@ -86,6 +86,10 @@ console.log('company-nycklar:', company ? Object.keys(company).join(' · ') : 'S
 for (const line of findPaths(nd?.props?.pageProps ?? {}, /revenue|omsattning|netSales|year|account|period|employees|history/i)) {
   console.log('  ', line);
 }
+console.log('── companyAccounts[0] RÅ (fullt kontrakt) ──');
+console.log(JSON.stringify(company?.companyAccounts?.[0], null, 1)?.slice(0, 3500));
+console.log('── companyAccounts[1] RÅ ──');
+console.log(JSON.stringify(company?.companyAccounts?.[1], null, 1)?.slice(0, 2000));
 
 console.log('═══ 4 · HELA AVSLÖJANDET ═══');
 const r = await revealFromDomain(DOMAIN);

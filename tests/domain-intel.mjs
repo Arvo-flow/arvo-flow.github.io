@@ -296,3 +296,41 @@ describe('Kristianstad-läxan · golvets ärlighet + marknadsankaret', () => {
     assert.equal(getPublicListBenchmark({ category: 'forsakring-foretag' }), null);
   });
 });
+
+describe('Förfalskningsfyndet · DMARC-luckan sägs högt (fynd-motorns toppsignal in i dörren)', () => {
+  const base = { mx: 'other', nsDetail: 'loopia', nsProvider: 'registrar' };
+
+  test('DMARC-post saknas (definitivt) → fyndet med "saknar"-copyn och källa', () => {
+    const f = buildRevealFindings({ domain: 'foo.se', posture: { ...base, dmarcAbsent: true } });
+    const s = f.find((x) => x.kind === 'spoofing');
+    assert.ok(s, 'förfalskningsfyndet saknas');
+    assert.equal(s.title, 'Mejl i ert namn kan förfalskas');
+    assert.match(s.detail, /saknar DMARC-skydd/);
+    assert.match(s.detail, /kostnadsfri att stänga/);
+    assert.match(s.source, /DMARC-uppslaget för foo\.se/);
+  });
+
+  test('p=none → övervakningsläges-copyn (posten finns men stoppar inget)', () => {
+    const f = buildRevealFindings({ domain: 'foo.se', posture: { ...base, dmarc: 'none' } });
+    const s = f.find((x) => x.kind === 'spoofing');
+    assert.match(s.detail, /övervakningsläge \(p=none\)/);
+  });
+
+  test('reject/quarantine → det positiva skydds-fyndet, ALDRIG förfalskningsfyndet', () => {
+    const f = buildRevealFindings({ domain: 'foo.se', posture: { ...base, dmarc: 'reject' } });
+    assert.ok(f.find((x) => x.kind === 'dmarc'));
+    assert.equal(f.find((x) => x.kind === 'spoofing'), undefined);
+  });
+
+  test('transient DNS-miss (varken policy eller definitiv frånvaro) → TYSTNAD, aldrig ett påstående', () => {
+    const f = buildRevealFindings({ domain: 'foo.se', posture: { ...base } });
+    assert.equal(f.find((x) => x.kind === 'spoofing'), undefined);
+    assert.equal(f.find((x) => x.kind === 'dmarc'), undefined);
+  });
+
+  test('fyndet räknas som substans: golvet (infra/brygga) behövs inte när luckan bär', () => {
+    const f = buildRevealFindings({ domain: 'foo.se', posture: { ...base, dmarcAbsent: true } });
+    assert.equal(f.find((x) => x.kind === 'bridge'), undefined);
+    assert.equal(f.find((x) => x.kind === 'infra'), undefined);
+  });
+});
