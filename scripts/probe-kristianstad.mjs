@@ -45,6 +45,23 @@ const siteOrgnr = await fetchOrgnrFromWebsite(DOMAIN);
 console.log('orgnr på bolagets egen sajt →', siteOrgnr);
 if (siteOrgnr) console.log('allabolag by orgnr →', JSON.stringify(await fetchBusinessFactsByOrgnr(siteOrgnr)));
 
+console.log('═══ 3a-diag · vad innehåller sajten egentligen? ═══');
+for (const page of ['', 'kontakt', 'om-oss', 'kontakta-oss', 'om']) {
+  for (const host of [DOMAIN, `www.${DOMAIN}`]) {
+    try {
+      const res = await fetch(`https://${host}/${page}`, { headers: H, redirect: 'follow', signal: AbortSignal.timeout(8000) });
+      const body = await res.text();
+      const title = (body.match(/<title[^>]*>([^<]*)<\/title>/i) || [])[1]?.trim();
+      const abLines = [...body.matchAll(/[^<>{}\n]{0,60}\bAB\b[^<>{}\n]{0,40}/g)].map((m) => m[0].trim()).slice(0, 6);
+      const digitish = [...body.matchAll(/\d{6}\s?[-–]?\s?\d{4}/g)].map((m) => m[0]).slice(0, 6);
+      console.log(`  ${host}/${page} → ${res.status} · title="${title ?? ''}" · AB-strängar: ${JSON.stringify(abLines)} · 6+4-siffror: ${JSON.stringify(digitish)}`);
+      break;
+    } catch (e) {
+      console.log(`  ${host}/${page} → FEL ${e?.name ?? e}`);
+    }
+  }
+}
+
 console.log('═══ 3b · fetchBusinessFacts (dörrens exakta anrop) ═══');
 console.log(JSON.stringify(await fetchBusinessFacts(DOMAIN)));
 
