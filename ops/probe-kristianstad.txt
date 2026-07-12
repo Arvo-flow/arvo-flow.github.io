@@ -3,6 +3,8 @@ status: 200 → https://www.allabolag.se/bransch-s%C3%B6k?q=kristianstadsmaleri
 träffar: 0
 ═══ 2 · GRINDEN ═══
 matchCompany → null
+═══ 3a · ORGNR-UR-SAJTEN (nya vägen) ═══
+orgnr på bolagets egen sajt → null
 ═══ 3b · fetchBusinessFacts (dörrens exakta anrop) ═══
 null
 ═══ 4 · HELA AVSLÖJANDET ═══
