@@ -49,7 +49,396 @@ company-nycklar: mainOffice · name · orgnr · businessUnitId · businessUnitTy
    company.annualReports.4.period = "2021-08"
    company.latestPublicAccountingPeriod = null
    hydrationData.settingsStore.accountingFigureDirection = "left"
+── companyAccounts[0] RÅ (fullt kontrakt) ──
+{
+ "year": "2025",
+ "period": "2025-08",
+ "periodStart": "2024-09-01",
+ "periodEnd": "2025-08-31",
+ "length": "12",
+ "combined": false,
+ "currency": "SEK",
+ "remark": null,
+ "otherAuditComment": null,
+ "referenceUrl": null,
+ "accounts": [
+  {
+   "code": "ADI",
+   "amount": "16"
+  },
+  {
+   "code": "ADK",
+   "amount": "0"
+  },
+  {
+   "code": "ADR",
+   "amount": "16"
+  },
+  {
+   "code": "AK",
+   "amount": "100"
+  },
+  {
+   "code": "ANT",
+   "amount": "14"
+  },
+  {
+   "code": "avk_eget_kapital",
+   "amount": "48.3"
+  },
+  {
+   "code": "avk_totalt_kapital",
+   "amount": "21.7"
+  },
+  {
+   "code": "RPE",
+   "amount": "1087"
+  },
+  {
+   "code": "CPE",
+   "amount": "699"
+  },
+  {
+   "code": "DR",
+   "amount": "1058"
+  },
+  {
+   "code": "EK",
+   "amount": "-61"
+  },
+  {
+   "code": "EKA",
+   "amount": "44.9"
+  },
+  {
+   "code": "FI",
+   "amount": "15"
+  },
+  {
+   "code": "FK",
+   "amount": "0"
+  },
+  {
+   "code": "GG",
+   "amount": "1.23"
+  },
+  {
+   "code": "KBP",
+   "amount": "919"
+  },
+  {
+   "code": "LG",
+   "amount": "45"
+  },
+  {
+   "code": "loner_ovriga",
+   "amount": null
+  },
+  {
+   "code": "loner_styrelse_vd",
+   "amount": null
+  },
+  {
+   "code": "ORS",
+   "amount": "1349"
+  },
+  {
+   "code": "resultat_e_avskrivningar",
+   "amount": "1472"
+  },
+  {
+   "code": "resultat_e_finansnetto",
+   "amount": "1488"
+  },
+  {
+   "code": "RG",
+   "amount": "203.8"
+  },
+  {
+   "code": "SAP",
+   "amount": "0"
+  },
+  {
+   "code": "SDI",
+   "amount": "13976"
+  },
+  {
+   "code": "SED",
+   "amount": "6857"
+  },
+  {
+   "code": "SI",
+   "amount": "13960"
+  },
+  {
+   "code": "SEK",
+   "amount": "1159"
+  },
+  {
+   "code": "SF",
+   "amount": "3713"
+  },
+  {
+   "code": "SFA",
+   "amount": "103"
+  },
+  {
+   "code": "SGE",
+   "amount": "6857"
+  },
+  {
+   "code": "SIA",
+   "amount": "0"
+  },
+  {
+   "code": "SIK",
+   "amount": "1059"
+  },
+  {
+   "code": "SKG",
+   "amount": "3279"
+  },
+  {
+   "code": "SKGKI",
+   "amount": "0"
+  },
+  {
+   "code": "SKO",
+   "amount": "-291"
+  },
+  {
+   "code": "SLG",
+   "amount": "0"
+  },
+  {
+   "code": "SOM",
+   "amount": "6754"
+  },
+  {
+   "code": "SUB",
+   "amount": "0"
+  },
+  {
+   "code": "summa_finansiella_anltillg",
+   "amount": "0"
+  },
+  {
+   "code": "summa_langfristiga_skulder",
+   "amount": "0"
+  },
+  {
+   "code": "summa_rorelsekostnader",
+   "amount": "-13739"
+  },
+  {
+   "code": "SV",
+   "amount": "70"
+  },
+  {
+   "code": "SVD",
+   "amount": "103"
+  },
+  {
+   "code": "UTR",
+   "amount": "2420"
+  },
+  {
+   "code": "FSD",
+   "amount": "-139"
+  },
+  {
+   "code": "KB",
+   "amount": "0"
+  },
+  {
+   "code": "AWA",
+   "amount": "0"
+  },
+  {
+   "code": "IAC",
+   "amount": "0"
+  },
+  {
+   "code": "MIN",
+   "amount": null
+  },
+  {
+   "code": "BE",
+   "amount": "1235"
+  },
+  {
+   "code": "TR",
+   "amount": "10.6"
+  },
+  {
+   "code": "EBITDA",
+   "amount": "1533"
+  }
+ ],
+ "accIncompleteCode": null,
+ "accIncompleteDesc": null
+}
+── companyAccounts[1] RÅ ──
+{
+ "year": "2024",
+ "period": "2024-08",
+ "periodStart": "2023-09-01",
+ "periodEnd": "2024-08-31",
+ "length": "12",
+ "combined": false,
+ "currency": "SEK",
+ "remark": null,
+ "otherAuditComment": null,
+ "referenceUrl": null,
+ "accounts": [
+  {
+   "code": "ADI",
+   "amount": "108"
+  },
+  {
+   "code": "ADK",
+   "amount": "0"
+  },
+  {
+   "code": "ADR",
+   "amount": "108"
+  },
+  {
+   "code": "AK",
+   "amount": "100"
+  },
+  {
+   "code": "ANT",
+   "amount": "16"
+  },
+  {
+   "code": "avk_eget_kapital",
+   "amount": "45.3"
+  },
+  {
+   "code": "avk_totalt_kapital",
+   "amount": "23.0"
+  },
+  {
+   "code": "RPE",
+   "amount": "1075"
+  },
+  {
+   "code": "CPE",
+   "amount": "672"
+  },
+  {
+   "code": "DR",
+   "amount": "1182"
+  },
+  {
+   "code": "EK",
+   "amount": "-61"
+  },
+  {
+   "code": "EKA",
+   "amount": "50.9"
+  },
+  {
+   "code": "FI",
+   "amount": "87"
+  },
+  {
+   "code": "FK",
+   "amount": "0"
+  },
+  {
+   "code": "GG",
+   "amount": "0.97"
+  },
+  {
+   "code": "KBP",
+   "amount": "1490"
+  },
+  {
+   "code": "LG",
+   "amount": "117"
+  },
+  {
+   "code": "loner_ovriga",
+   "amount": null
+  },
+  {
+   "code": "loner_styrelse_vd",
+   "amount": null
+  },
+  {
+   "code": "ORS",
+   "amount": "1497"
+  },
+  {
+   "code": "resultat_e_avskrivningar",
+   "amount": "1315"
+  },
+  {
+   "code": "resultat_e_finansnetto",
+   "amount": "1402"
+  },
+  {
+   "code": "RG",
+   "amount": "221.2"
+  },
+  {
+   "code": "SAP",
+   "amount": "0"
+  },
+  {
+   "code": "SDI",
+   "amount": "18905"
+  },
+  {
+   "code": "SED",
+   "amount": "6084"
+  },
+  {
+   "code": "SI",
+   "amount": "18797"
+  },
+  {
+   "code": "SEK",
+   "amount": "1283"
+  },
+  {
+   "code": "SF",
+   "amount": "1656"
+  },
+  {
+   "code": "SFA",
+   "amount": "482"
+  },
+  {
+   "code": "SGE",
+   "amount": "6084"
+  },
+  {
+   "code": "SIA",
+   "amount": "0"
+  },
+  {
+   "code": "SIK",
+   "amount": "1183"
+  },
+  {
+   "code": "SKG",
+   "amount": "2520"
+  },
+  {
+   "code": "SKGKI",
+   "amount": "0"
+  },
+  {
+   "code": "SKO",
+   "amount": "-315"
+  },
+  {
+   "code"
 ═══ 4 · HELA AVSLÖJANDET ═══
   [business] Ert bokslut 2025: 14,0 mkr i omsättning, 14 anställda
+  [cert] Digital närvaro sedan september 2024
   [spoofing] Mejl i ert namn kan förfalskas
   [market] Måttstocken vi väger mobilfakturor mot: 239 kr/mån per abonnemang
