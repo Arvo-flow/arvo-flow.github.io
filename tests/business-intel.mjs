@@ -9,7 +9,7 @@ import {
   sldFromDomain, normalizeCompanyName, matchCompany, normalizeOrgnr, foldToDomainAlphabet,
   extractNextData, extractSearchCompanies, extractCompanyFacts,
   buildBusinessFindings, mergeRevealFindings,
-  luhnValidOrgnr, extractOrgnrCandidates, fetchOrgnrFromWebsite, fetchBusinessFacts, extractSiteCompanyName,
+  luhnValidOrgnr, extractOrgnrCandidates, fetchOrgnrFromWebsite, fetchBusinessFacts, extractSiteCompanyName, extractAccountHistory,
 } from '../lib/business-intel.js';
 
 describe('business-intel · domän → SLD', () => {
@@ -228,7 +228,7 @@ describe('business-intel · parsning (kontraktet ur sond v3)', () => {
   });
   test('bolagsfakta extraheras: revenue i TKR, employees, år', () => {
     const f = extractCompanyFacts(extractNextData(companyHtml));
-    assert.deepEqual(f, { legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025' });
+    assert.deepEqual(f, { legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025', history: [] });
   });
   test('ogiltiga fakta → null (revenue saknas / employees orimligt)', () => {
     const bad = (company) => extractCompanyFacts({ props: { pageProps: { company } } });
@@ -313,5 +313,67 @@ describe('business-intel · sammanfogning med DNS-fynden', () => {
     const thinDns = [{ kind: 'bridge', title: 'brygga', floor: true }];
     const merged = mergeRevealFindings([], thinDns, null);
     assert.ok(merged.find((f) => f.floor));
+  });
+});
+
+describe('business-intel · trenden (Kristianstad-läxan del A — riktningen, kodräknad)', () => {
+  const facts = (h) => ({
+    legalName: 'Kristianstads Måleri Aktiebolag', orgnr: '5562896430',
+    revenueTkr: 13976, employees: 14, year: '2025', history: h,
+  });
+
+  test('SDI-kontraktet ur sonden: historiken extraheras med år, omsättning (SDI) och anställda (ANT)', () => {
+    const companyAccounts = [
+      { year: '2025', accounts: [{ code: 'SDI', amount: '13976' }, { code: 'ANT', amount: '14' }, { code: 'EK', amount: '-61' }] },
+      { year: '2024', accounts: [{ code: 'SDI', amount: '18905' }, { code: 'ANT', amount: '16' }] },
+      { year: 'fel',  accounts: [{ code: 'SDI', amount: '99' }] },              // ogiltigt år → hoppas
+      { year: '2023', accounts: [{ code: 'ANT', amount: '15' }] },              // ingen SDI → hoppas
+    ];
+    assert.deepEqual(extractAccountHistory(companyAccounts), [
+      { year: '2025', revenueTkr: 13976, employees: 14 },
+      { year: '2024', revenueTkr: 18905, employees: 16 },
+    ]);
+    assert.deepEqual(extractAccountHistory(null), []);
+  });
+
+  test('KRISTIANSTAD ordagrant: 18 905 → 13 976 tkr = föll 26 % — respektfull copy, aldrig anklagelse', () => {
+    const f = buildBusinessFindings(facts([
+      { year: '2025', revenueTkr: 13976, employees: 14 },
+      { year: '2024', revenueTkr: 18905, employees: 16 },
+    ]));
+    const t = f.find((x) => x.kind === 'trend');
+    assert.ok(t, 'trendfyndet saknas');
+    assert.equal(t.title, 'Er omsättning föll 26 % senaste bokslutsåret');
+    assert.match(t.detail, /Från 18,9 till 14,0 mkr \(bokslutsåren 2024 → 2025\)/);
+    assert.match(t.detail, /varje kostnadskrona dubbelt/);
+    assert.match(t.source, /Bolagsverket.*2024 och 2025/);
+  });
+
+  test('tillväxt: +18 % med utvecklings-copyn', () => {
+    const f = buildBusinessFindings(facts([
+      { year: '2025', revenueTkr: 14160, employees: 14 },
+      { year: '2024', revenueTkr: 12000, employees: 12 },
+    ]));
+    const t = f.find((x) => x.kind === 'trend');
+    assert.equal(t.title, 'Er omsättning växte 18 % senaste bokslutsåret');
+    assert.match(t.detail, /Vi läser er utveckling/);
+  });
+
+  test('brus är inte ett fynd: < 5 % rörelse → tystnad', () => {
+    const f = buildBusinessFindings(facts([
+      { year: '2025', revenueTkr: 10300, employees: 10 },
+      { year: '2024', revenueTkr: 10000, employees: 10 },
+    ]));
+    assert.equal(f.find((x) => x.kind === 'trend'), undefined);
+  });
+
+  test('ett enda bokslutsår eller trasig historik → tystnad (aldrig en division med noll)', () => {
+    assert.equal(buildBusinessFindings(facts([{ year: '2025', revenueTkr: 13976, employees: 14 }]))
+      .find((x) => x.kind === 'trend'), undefined);
+    assert.equal(buildBusinessFindings(facts([
+      { year: '2025', revenueTkr: 13976, employees: 14 },
+      { year: '2024', revenueTkr: 0, employees: 16 },
+    ])).find((x) => x.kind === 'trend'), undefined);
+    assert.equal(buildBusinessFindings(facts(undefined)).find((x) => x.kind === 'trend'), undefined);
   });
 });
