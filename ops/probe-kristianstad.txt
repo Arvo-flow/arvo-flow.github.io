@@ -12,7 +12,8 @@ orgnr på bolagets egen sajt → null
   kristianstadsmaleri.se/kontakta-oss → 404 · title="404 Not Found" · AB-strängar: [] · 6+4-siffror: []
   kristianstadsmaleri.se/om → 404 · title="404 Not Found" · AB-strängar: [] · 6+4-siffror: []
 ═══ 3b · fetchBusinessFacts (dörrens exakta anrop) ═══
-null
+{"legalName":"Kristianstads Måleri Aktiebolag","orgnr":"5562896430","revenueTkr":13976,"employees":14,"year":"2025"}
 ═══ 4 · HELA AVSLÖJANDET ═══
-  [infra] Loopia sköter er domän
+  [business] Ert bokslut 2025: 14,0 mkr i omsättning, 14 anställda
+  [cert] Digital närvaro sedan september 2024
   [market] Måttstocken vi väger mobilfakturor mot: 239 kr/mån per abonnemang
