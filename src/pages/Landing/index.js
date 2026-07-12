@@ -135,7 +135,8 @@ export default function Landing() {
     }
   }, [revealEmail, revealLoading]);
 
-  // Hero-CTA:n ÄR dörren: mjukt scroll + fokus i fältet (två sekunder, noll formulär i vila).
+  // Hero-CTA:n ÄR dörren: mjukt scroll + fokus i fältet (noll formulär i vila).
+  // Tidslöftet mäts mot verkligheten (grundarmätning 2026-07-13: ~10 s) — aldrig ett önsketal (regel 9).
   const goToDoor = useCallback(() => {
     doorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => doorRef.current?.querySelector('input')?.focus({ preventScroll: true }), 550);
@@ -171,7 +172,7 @@ export default function Landing() {
             Se ert bolag som marknaden ser det →
           </button>
           <div className="sub">
-            två sekunder · öppna källor &nbsp;·&nbsp; <Link to="/testa-faktura">eller testa med en faktura</Link>
+            tio sekunder · öppna källor &nbsp;·&nbsp; <Link to="/testa-faktura">eller testa med en faktura</Link>
           </div>
         </div>
         <div className={`proof ${heroIn}`}>
