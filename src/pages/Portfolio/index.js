@@ -687,14 +687,24 @@ export default function Portfolio() {
               </Ident>
 
               <Radar>
+                {/* Urtavlan: den VERKLIGA sveptiden (vakt_events) i instrumentets nav — beviset att
+                    en maskin var vaken i natt bär rummet, aldrig en dekorativ animation. */}
                 <div className="radar-head">
                   <div className="disc">
-                    <svg width="46" height="46" viewBox="0 0 46 46">
-                      <circle cx="23" cy="23" r="21" fill="none" stroke="rgba(93,214,202,.18)" strokeWidth="1" />
-                      <circle cx="23" cy="23" r="13" fill="none" stroke="rgba(93,214,202,.14)" strokeWidth="1" />
-                      <circle cx="23" cy="23" r="2" fill="#5DD6CA" />
+                    <svg width="118" height="118" viewBox="0 0 118 118">
+                      <circle cx="59" cy="59" r="56" fill="none" stroke="rgba(93,214,202,.16)" strokeWidth="1" />
+                      <circle cx="59" cy="59" r="38" fill="none" stroke="rgba(93,214,202,.11)" strokeWidth="1" />
+                      <circle cx="59" cy="59" r="20" fill="none" stroke="rgba(93,214,202,.08)" strokeWidth="1" />
                     </svg>
                     <div className="sweep" />
+                    <div className="dial-center">
+                      <span className="dial-time">
+                        {vakt?.sweptAt
+                          ? new Date(vakt.sweptAt).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })
+                          : '· · ·'}
+                      </span>
+                      <span className="dial-k">{vakt?.sweptAt ? 'senaste svep' : 'bevakning aktiv'}</span>
+                    </div>
                   </div>
                   <div className="radar-title"><strong>Vakten</strong>bevakar era avtal</div>
                 </div>

@@ -24,9 +24,11 @@ export const Page = styled.main`
   -webkit-font-smoothing: antialiased;
   position: relative;
   overflow: hidden;
+  /* Materialskiktet (premium-lyftet 2026-07-13): kornet gör ytan till ett FÖREMÅL, inte en div.
+     Subtilt nog att kännas snarare än ses — kornets egen opacitet bor i SVG:n (0.04). */
   &::before {
     content: ''; position: absolute; inset: 0;
-    background: ${theme.dossier.aurora};
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"), ${theme.dossier.aurora};
     pointer-events: none;
   }
   &::after {
@@ -90,19 +92,28 @@ export const Radar = styled.div`
   padding: 18px 20px;
   @media (max-width: 820px) { width: 100%; }
 
-  .radar-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-  .disc { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
+  /* Urtavlan (premium-lyftet 2026-07-13): svepet är stort nog att BÄRA tidsstämpeln i centrum —
+     den verkliga tidpunkten ur vakt_events blir instrumentets nav, inte en fotnot. */
+  .radar-head { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .disc { position: relative; width: 118px; height: 118px; flex-shrink: 0; }
   .disc svg { position: absolute; inset: 0; }
   .disc .sweep {
     position: absolute; inset: 0; border-radius: 50%;
-    background: conic-gradient(from 0deg, transparent 0deg, rgba(93,214,202,.0) 270deg, rgba(93,214,202,.55) 360deg);
+    background: conic-gradient(from 0deg, transparent 0deg, rgba(93,214,202,.0) 270deg, rgba(93,214,202,.45) 360deg);
     animation: ${sweep} 3.2s linear infinite;
     mask: radial-gradient(circle, #000 62%, transparent 63%);
     -webkit-mask: radial-gradient(circle, #000 62%, transparent 63%);
   }
+  @media (prefers-reduced-motion: reduce) { .disc .sweep { animation: none; opacity: .35; } }
+  .dial-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    .dial-time { font-family: ${MONO}; font-size: 19px; color: ${theme.dossier.inkOnDark}; font-feature-settings: 'tnum'; }
+    .dial-k { font-family: ${MONO}; font-size: 7.5px; letter-spacing: .24em; text-transform: uppercase; color: ${theme.dossier.faintOnDark}; }
+  }
   .radar-title {
     font-family: ${MONO}; font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
-    color: ${theme.dossier.mutedOnDark}; line-height: 1.5;
+    color: ${theme.dossier.mutedOnDark}; line-height: 1.5; text-align: center;
     strong { color: ${theme.dossier.inkOnDark}; display: block; letter-spacing: .14em; }
   }
   /* Minimal separation (variant C): två namngivna grupper i SAMMA kort — era avtal vs marknaden.
@@ -313,9 +324,11 @@ export const Tally = styled(Card)`
   .tally-k { font-family: ${MONO}; font-size: 10px; letter-spacing: .24em; text-transform: uppercase;
     color: ${theme.dossier.teal}; margin-bottom: 14px; }
   .tally-num { font-family: ${SERIF}; font-weight: 600; font-size: clamp(36px, 6vw, 52px);
-    line-height: 1; letter-spacing: -.02em; color: ${theme.dossier.inkOnDark}; margin-bottom: 10px;
+    line-height: 1; letter-spacing: -.02em; margin-bottom: 10px;
+    background: ${theme.dossier.metallicText};
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     small { font-family: ${theme.font.sans}; font-size: 16px; color: ${theme.dossier.mutedOnDark};
-      font-weight: 400; margin-left: 6px; } }
+      font-weight: 400; margin-left: 6px; -webkit-text-fill-color: ${theme.dossier.mutedOnDark}; } }
   .tally-sub { font-size: 14px; line-height: 1.55; color: ${theme.dossier.mutedOnDark};
     b { color: ${theme.dossier.inkOnDark}; } }
 `;
