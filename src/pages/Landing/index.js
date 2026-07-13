@@ -113,20 +113,25 @@ export default function Landing() {
   const [revealLoading, setRevealLoading] = useState(false);
   const [reveal, setReveal] = useState(null);
   const [revealNote, setRevealNote] = useState('');
+  const [revealElapsed, setRevealElapsed] = useState(0);   // UPPMÄTT tid runt det verkliga anropet — kvittots enda källa
   const doorRef = useRef(null);
 
   const runReveal = useCallback(async (e) => {
     e?.preventDefault?.();
     const email = revealEmail.trim();
     if (!email || revealLoading) return;
-    setRevealLoading(true); setReveal(null); setRevealNote('');
+    setRevealLoading(true); setReveal(null); setRevealNote(''); setRevealElapsed(0);
+    const t0 = performance.now();
     try {
       const res = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
       const data = await res.json().catch(() => ({}));
-      if (data.ok && data.findings?.length) setReveal({ domain: data.domain, findings: data.findings });
+      if (data.ok && data.findings?.length) {
+        setRevealElapsed((performance.now() - t0) / 1000);
+        setReveal({ domain: data.domain, findings: data.findings });
+      }
       else setRevealNote(data.note || data.error || 'Domänen bar inga öppna spår just nu — dela en faktura i stället, så läser vi de verkliga talen.');
     } catch {
       setRevealNote('Kunde inte läsa av domänen just nu — försök igen om en stund.');
@@ -195,9 +200,9 @@ export default function Landing() {
               <RevealPrompt
                 email={revealEmail} setEmail={setRevealEmail}
                 onSubmit={runReveal} loading={revealLoading}
-                reveal={reveal} note={revealNote}
+                reveal={reveal} note={revealNote} elapsedS={revealElapsed}
               />
-              {!reveal && <RevealTeaser />}
+              {!reveal && !revealLoading && <RevealTeaser />}
               {reveal && (
                 <p style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', margin: '18px 0 0', color: 'rgba(157,184,175,1)' }}>
                   Det här såg vi utifrån.{' '}

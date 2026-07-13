@@ -1,7 +1,13 @@
 // src/components/RevealCard.js — "Avslöjandet": hur-visste-de-det-kortet vid första mötet.
 // Varje rad bär sin KÄLLA (regel 3) — det är källan som bygger trovärdigheten: inte att vi
 // påstår att vi är vassa, utan att vi visar exakt var vi läste av det. Dossier-mörkt (regel 6).
-import React from 'react';
+//
+// DE TIO SEKUNDERNA (premium-lyftet 2026-07-13): väntetiden ÄR demonstrationen — maskinen
+// arbetar synligt (verklig sekundräknare + de källor som faktiskt läses parallellt), raderna
+// materialiseras en i taget, och kortet stängs med ett KVITTO på uppmätt tid. Integritets-
+// linjen: inga fejkade per-stegs-bockar (klienten kan inte veta delmomentens status — att visa
+// dem vore Potemkin); timern är performance.now()-mätt, aldrig ett önsketal.
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 const Wrap = styled.section`
@@ -27,6 +33,19 @@ const Wrap = styled.section`
   .rv-find {
     padding: 13px 0; border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
     &:first-of-type { border-top: none; padding-top: 0; }
+    /* Raderna materialiseras en i taget — presentation av data som redan anlänt (ärlig stagger). */
+    opacity: 0; animation: rvrise .55s cubic-bezier(.16,1,.3,1) forwards;
+    @media (prefers-reduced-motion: reduce) { animation: none; opacity: 1; }
+  }
+  @keyframes rvrise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .rv-receipt {
+    margin: 16px 0 0; padding: 11px 14px;
+    border: 1px solid rgba(43,196,172,.28); border-radius: ${({ theme }) => theme.size.radius.md};
+    background: rgba(43,196,172,.05);
+    font-family: ${({ theme }) => theme.font.mono}; font-size: 10.5px; letter-spacing: .08em;
+    text-transform: uppercase; color: ${({ theme }) => theme.dossier.mutedOnDark};
+    b { color: ${({ theme }) => theme.dossier.tealBright}; }
   }
   .rv-title {
     font-family: ${({ theme }) => theme.font.display}; font-weight: 600; font-size: 17px;
@@ -127,7 +146,58 @@ export function RevealTeaser() {
   );
 }
 
-export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note }) {
+// Arbetsläget — maskinen läser, synligt. Sekundräknaren är VERKLIG (tickar med klockan);
+// källistan är de öppna källor /api/reveal faktiskt läser parallellt. Inga bockar, ingen
+// påhittad sekvens — bara äkta arbete med ljuset på.
+const Working = styled.section`
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  border: 1px solid rgba(43,196,172,.30);
+  background: ${({ theme }) => theme.dossier.bgRaised};
+  padding: 22px 22px 18px; margin: 0 0 22px;
+
+  .rw-eyebrow { font-family: ${({ theme }) => theme.font.mono}; font-size: 11px; letter-spacing: .18em;
+    text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; margin-bottom: 16px; }
+  .rw-beam { height: 2px; border-radius: 1px; overflow: hidden; background: ${({ theme }) => theme.dossier.hairlineOnDark};
+    span { display: block; height: 100%; width: 38%; background: linear-gradient(90deg, transparent, ${({ theme }) => theme.dossier.tealBright}, transparent);
+      animation: rwbeam 1.6s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) { span { animation: none; width: 100%; opacity: .4; } } }
+  @keyframes rwbeam { 0% { transform: translateX(-100%); } 100% { transform: translateX(280%); } }
+  .rw-status { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px;
+    font-family: ${({ theme }) => theme.font.mono}; font-size: 11px; color: ${({ theme }) => theme.dossier.mutedOnDark};
+    .rw-t { color: ${({ theme }) => theme.dossier.tealBright}; font-feature-settings: 'tnum'; } }
+  .rw-sources { font-family: ${({ theme }) => theme.font.mono}; font-size: 10.5px; line-height: 2;
+    color: ${({ theme }) => theme.dossier.faintOnDark}; margin-top: 4px; }
+  .rw-skel { padding: 14px 0; border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+    &:first-of-type { margin-top: 14px; }
+    .l1 { height: 11px; border-radius: 4px; background: linear-gradient(90deg, rgba(157,184,175,.13), rgba(157,184,175,.05)); }
+    .l2 { height: 8px; border-radius: 4px; background: rgba(157,184,175,.06); margin-top: 9px; } }
+`;
+
+// De öppna källor /api/reveal läser — EN sanning med backend-pipelinen (uppdateras ihop med den).
+const REVEAL_SOURCES = 'e-postpostur · Bolagsverket · certifikatregistret · domänregistret · prisboken';
+
+export function RevealWorking({ email }) {
+  const domain = (String(email || '').split('@')[1] || '').toLowerCase();
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    const start = performance.now();
+    const iv = setInterval(() => setT((performance.now() - start) / 1000), 100);
+    return () => clearInterval(iv);
+  }, []);
+  return (
+    <Working aria-live="polite">
+      <div className="rw-eyebrow">Underlag{domain ? ` · ${domain}` : ''}</div>
+      <div className="rw-beam"><span /></div>
+      <div className="rw-status"><span>läser öppna källor</span><span className="rw-t">{t.toFixed(1)} s</span></div>
+      <div className="rw-sources">{REVEAL_SOURCES}</div>
+      <div className="rw-skel"><div className="l1" style={{ width: '72%' }} /><div className="l2" style={{ width: '92%' }} /></div>
+      <div className="rw-skel"><div className="l1" style={{ width: '58%' }} /><div className="l2" style={{ width: '84%' }} /></div>
+      <div className="rw-skel"><div className="l1" style={{ width: '66%' }} /><div className="l2" style={{ width: '78%' }} /></div>
+    </Working>
+  );
+}
+
+export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note, elapsedS }) {
   return (
     <>
       <Prompt onSubmit={onSubmit}>
@@ -145,25 +215,32 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note 
         </div>
         {note && <p className="rp-note">{note}</p>}
       </Prompt>
-      {reveal && <RevealCard domain={reveal.domain} findings={reveal.findings} />}
+      {loading && <RevealWorking email={email} />}
+      {!loading && reveal && <RevealCard domain={reveal.domain} findings={reveal.findings} elapsedS={elapsedS} />}
     </>
   );
 }
 
-export default function RevealCard({ domain, findings }) {
+export default function RevealCard({ domain, findings, elapsedS }) {
   if (!domain || !findings?.length) return null;
   return (
     <Wrap>
       <div className="rv-eyebrow">Underlag · {domain}</div>
       {findings.map((f, i) => (
-        <div className="rv-find" key={i}>
+        <div className="rv-find" key={i} style={{ animationDelay: `${i * 0.14}s` }}>
           <div className="rv-title">{f.title}</div>
           {f.detail && <div className="rv-detail">{f.detail}</div>}
           <div className="rv-source"><b>Källa:</b> {f.source}</div>
         </div>
       ))}
+      {/* Kvittot: uppmätt tid (performance.now() runt det verkliga anropet) — aldrig ett önsketal. */}
+      {elapsedS > 0 && (
+        <div className="rv-receipt">
+          Sammanställt på <b>{elapsedS.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} s</b> ur öppna källor · innan ni delat något
+        </div>
+      )}
       <p className="rv-foot">
-        Allt ovan är <b>offentlig information</b>, sammanställd på sekunder — innan ni loggat in,
+        Allt ovan är <b>offentlig information</b>{elapsedS > 0 ? '' : ', sammanställd på sekunder'} — innan ni loggat in,
         utan att ni lämnat ifrån er något. Tänk er vad vakten ser den dag ni delar en faktura.
       </p>
     </Wrap>

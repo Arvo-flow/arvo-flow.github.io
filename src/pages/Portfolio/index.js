@@ -226,6 +226,7 @@ export default function Portfolio() {
   const [reveal, setReveal] = useState(null);
   const [revealLoading, setRevealLoading] = useState(false);
   const [revealNote, setRevealNote] = useState('');
+  const [revealElapsed, setRevealElapsed] = useState(0);   // uppmätt tid runt anropet — kvittots enda källa
 
   const magic = useMemo(() => new URLSearchParams(window.location.search).get('magic'), []);
   const { email: authEmail, sessionToken, logout: authLogout } = useAuth();
@@ -439,14 +440,18 @@ export default function Portfolio() {
     e?.preventDefault?.();
     const email = revealEmail.trim();
     if (!email || revealLoading) return;
-    setRevealLoading(true); setReveal(null); setRevealNote('');
+    setRevealLoading(true); setReveal(null); setRevealNote(''); setRevealElapsed(0);
+    const t0 = performance.now();
     try {
       const res = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
       const data = await res.json().catch(() => ({}));
-      if (data.findings?.length) setReveal(data);
+      if (data.findings?.length) {
+        setRevealElapsed((performance.now() - t0) / 1000);
+        setReveal(data);
+      }
       else setRevealNote(data.note || 'Vi kunde inte läsa av den domänen just nu — kontrollera adressen och försök igen.');
     } catch {
       setRevealNote('Vi når inte Arvo just nu — försök igen om en stund.');
@@ -1369,9 +1374,9 @@ export default function Portfolio() {
               <>
                 <RevealPrompt
                   email={revealEmail} setEmail={setRevealEmail} onSubmit={runReveal}
-                  loading={revealLoading} reveal={reveal} note={revealNote}
+                  loading={revealLoading} reveal={reveal} note={revealNote} elapsedS={revealElapsed}
                 />
-                {!reveal && <RevealTeaser />}
+                {!reveal && !revealLoading && <RevealTeaser />}
               </>
             )}
 
