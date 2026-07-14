@@ -356,7 +356,7 @@ describe('business-intel · trenden (Kristianstad-läxan del A — riktningen, k
     ]));
     const t = f.find((x) => x.kind === 'trend');
     assert.equal(t.title, 'Er omsättning växte 18 % senaste bokslutsåret');
-    assert.match(t.detail, /Vi läser er utveckling/);
+    assert.match(t.detail, /följer med upp och blir vanor/);
   });
 
   test('brus är inte ett fynd: < 5 % rörelse → tystnad', () => {
