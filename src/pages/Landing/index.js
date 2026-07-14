@@ -114,6 +114,7 @@ export default function Landing() {
   const [reveal, setReveal] = useState(null);
   const [revealNote, setRevealNote] = useState('');
   const [revealElapsed, setRevealElapsed] = useState(0);   // UPPMÄTT tid runt det verkliga anropet — kvittots enda källa
+  const [revealPending, setRevealPending] = useState(false); // våg 2 (djupregistren) arbetar fortfarande
   const doorRef = useRef(null);
 
   const runReveal = useCallback(async (e) => {
@@ -123,14 +124,32 @@ export default function Landing() {
     setRevealLoading(true); setReveal(null); setRevealNote(''); setRevealElapsed(0);
     const t0 = performance.now();
     try {
+      // Våg 1: snabbkällorna (bokslut/trend/mejlposter) på sekunder. Våg 2: fulla budgeten
+      // (certifikatregistret 25 s) — nya rader läggs SIST och materialiseras sent (dramat).
       const res = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, fast: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.ok && data.findings?.length) {
-        setRevealElapsed((performance.now() - t0) / 1000);
         setReveal({ domain: data.domain, findings: data.findings });
+        setRevealPending(true);
+        setRevealLoading(false);
+        // Våg 2 — fulla budgeten; enbart NYA rader (per titel) läggs på, sist och synligt.
+        try {
+          const res2 = await fetch('/api/reveal', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+          const d2 = await res2.json().catch(() => ({}));
+          if (d2.ok && d2.findings?.length) {
+            const seen = new Set(data.findings.map((f) => f.title));
+            const extra = d2.findings.filter((f) => !seen.has(f.title));
+            if (extra.length) setReveal({ domain: data.domain, findings: [...data.findings, ...extra] });
+          }
+        } catch { /* våg 1 står redan — dramat uteblir, kortet består */ }
+        setRevealElapsed((performance.now() - t0) / 1000);
+        setRevealPending(false);
       }
       else setRevealNote(data.note || data.error || 'Domänen bar inga öppna spår just nu — dela en faktura i stället, så läser vi de verkliga talen.');
     } catch {
@@ -200,7 +219,7 @@ export default function Landing() {
               <RevealPrompt
                 email={revealEmail} setEmail={setRevealEmail}
                 onSubmit={runReveal} loading={revealLoading}
-                reveal={reveal} note={revealNote} elapsedS={revealElapsed}
+                reveal={reveal} note={revealNote} elapsedS={revealElapsed} pending={revealPending}
               />
               {!reveal && !revealLoading && <RevealTeaser />}
               {reveal && (

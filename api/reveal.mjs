@@ -30,7 +30,7 @@ export default async function handler(req, res) {
   if (!input.trim()) return send(res, 400, { error: 'email eller domain krävs' });
 
   try {
-    const result = await revealFromDomain(input);
+    const result = await revealFromDomain(input, { fast: !!body.fast });
     if (!result.domain) {
       // Privat mejl eller ogiltig domän — ärligt: vi har inget bolag att läsa av.
       return send(res, 200, { ok: true, domain: null, findings: [],

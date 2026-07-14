@@ -227,6 +227,7 @@ export default function Portfolio() {
   const [revealLoading, setRevealLoading] = useState(false);
   const [revealNote, setRevealNote] = useState('');
   const [revealElapsed, setRevealElapsed] = useState(0);   // uppmätt tid runt anropet — kvittots enda källa
+  const [revealPending, setRevealPending] = useState(false); // våg 2 (djupregistren) arbetar fortfarande
 
   const magic = useMemo(() => new URLSearchParams(window.location.search).get('magic'), []);
   const { email: authEmail, sessionToken, logout: authLogout } = useAuth();
@@ -443,14 +444,31 @@ export default function Portfolio() {
     setRevealLoading(true); setReveal(null); setRevealNote(''); setRevealElapsed(0);
     const t0 = performance.now();
     try {
+      // Våg 1: snabbkällorna (bokslut/trend/mejlposter) på sekunder. Våg 2: fulla budgeten
+      // (certifikatregistret 25 s) — nya rader läggs SIST och materialiseras sent (dramat).
       const res = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, fast: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.findings?.length) {
-        setRevealElapsed((performance.now() - t0) / 1000);
         setReveal(data);
+        setRevealPending(true);
+        setRevealLoading(false);
+        try {
+          const res2 = await fetch('/api/reveal', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+          const d2 = await res2.json().catch(() => ({}));
+          if (d2.findings?.length) {
+            const seen = new Set(data.findings.map((f) => f.title));
+            const extra = d2.findings.filter((f) => !seen.has(f.title));
+            if (extra.length) setReveal({ ...data, findings: [...data.findings, ...extra] });
+          }
+        } catch { /* våg 1 står redan */ }
+        setRevealElapsed((performance.now() - t0) / 1000);
+        setRevealPending(false);
       }
       else setRevealNote(data.note || 'Vi kunde inte läsa av den domänen just nu — kontrollera adressen och försök igen.');
     } catch {
@@ -1374,7 +1392,7 @@ export default function Portfolio() {
               <>
                 <RevealPrompt
                   email={revealEmail} setEmail={setRevealEmail} onSubmit={runReveal}
-                  loading={revealLoading} reveal={reveal} note={revealNote} elapsedS={revealElapsed}
+                  loading={revealLoading} reveal={reveal} note={revealNote} elapsedS={revealElapsed} pending={revealPending}
                 />
                 {!reveal && !revealLoading && <RevealTeaser />}
               </>

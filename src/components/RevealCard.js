@@ -197,7 +197,7 @@ export function RevealWorking({ email }) {
   );
 }
 
-export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note, elapsedS }) {
+export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note, elapsedS, pending }) {
   return (
     <>
       <Prompt onSubmit={onSubmit}>
@@ -216,12 +216,12 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note,
         {note && <p className="rp-note">{note}</p>}
       </Prompt>
       {loading && <RevealWorking email={email} />}
-      {!loading && reveal && <RevealCard domain={reveal.domain} findings={reveal.findings} elapsedS={elapsedS} />}
+      {!loading && reveal && <RevealCard domain={reveal.domain} findings={reveal.findings} elapsedS={elapsedS} pending={pending} />}
     </>
   );
 }
 
-export default function RevealCard({ domain, findings, elapsedS }) {
+export default function RevealCard({ domain, findings, elapsedS, pending }) {
   if (!domain || !findings?.length) return null;
   return (
     <Wrap>
@@ -233,8 +233,15 @@ export default function RevealCard({ domain, findings, elapsedS }) {
           <div className="rv-source"><b>Källa:</b> {f.source}</div>
         </div>
       ))}
+      {/* Våg 2 pågår: de långsamma registren arbetar SYNLIGT vidare — sena rader är dramats
+          höjdpunkt ("hur visste de det?"), aldrig en väntetid. Ärligt: bara källor vi faktiskt läser. */}
+      {pending && (
+        <div className="rv-receipt" style={{ borderStyle: 'dashed' }}>
+          Djupare register arbetar fortfarande — certifikatregistret svarar långsamt. Fler rader kan landa här.
+        </div>
+      )}
       {/* Kvittot: uppmätt tid (performance.now() runt det verkliga anropet) — aldrig ett önsketal. */}
-      {elapsedS > 0 && (
+      {!pending && elapsedS > 0 && (
         <div className="rv-receipt">
           Sammanställt på <b>{elapsedS.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} s</b> ur öppna källor · innan ni delat något
         </div>
