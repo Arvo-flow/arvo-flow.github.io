@@ -448,3 +448,12 @@ describe('business-intel · kurvan i rad (punkt 1) + måttstocksbeslutet (punkt 
     assert.equal(merged.length, 4);
   });
 });
+
+describe('business-intel · Issa-läxan: singularen (aldrig "1 anställda" i en premiumyta)', () => {
+  test('1 anställd böjs rätt; flertal orört', () => {
+    const one = buildBusinessFindings({ legalName: 'Issa Group AB', orgnr: '1', revenueTkr: 9700, employees: 1, year: '2025', history: [] });
+    assert.match(one[0].title, /1 anställd$/);
+    const many = buildBusinessFindings({ legalName: 'X AB', orgnr: '2', revenueTkr: 9700, employees: 14, year: '2025', history: [] });
+    assert.match(many[0].title, /14 anställda$/);
+  });
+});
