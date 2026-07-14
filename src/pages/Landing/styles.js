@@ -86,11 +86,20 @@ export const Dossier = styled.section`
   &.inview { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce) { opacity: 1; transform: none; transition: none; }
 
+  /* Materialet (premium-lyftet 2026-07-13): korn + kantljus gör dossiern till ett FÖREMÅL.
+     Kornets opacitet bor i SVG:n (0.04) — det ska kännas, inte ses. */
   &::before {
     content: ''; position: absolute; inset: 0; pointer-events: none;
-    background: radial-gradient(1100px 480px at 50% -8%, rgba(43,196,172,.11), transparent 65%);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E"),
+      radial-gradient(1100px 480px at 50% -8%, rgba(43,196,172,.13), transparent 65%);
   }
-  .inner { max-width: 760px; margin: 0 auto; position: relative; }
+  /* Dubbel keyline — bokpärmen: en inre hårlinje 10px från kanten. */
+  &::after {
+    content: ''; position: absolute; inset: 10px; pointer-events: none;
+    border: 1px solid rgba(157,184,175,.09); border-radius: 21px;
+    @media (max-width: 640px) { inset: 7px; border-radius: 16px; }
+  }
+  .inner { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
 `;
 
 export const SectionKey = styled.div`
