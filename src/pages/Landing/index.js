@@ -310,8 +310,8 @@ export default function Landing() {
           </div>
           <div className={`pc lightc ${cardsIn}`}>
             <div className="pc-k">Arvo Switch</div>
-            <div className="pc-pris">20 % <small>av realiserad besparing</small></div>
-            <div className="pc-lede">Genomfört eller förberett leverantörsbyte — tajmat och signerat med BankID.</div>
+            <div className="pc-pris">20 % <small>av kontrakterad besparing</small></div>
+            <div className="pc-lede">Bytet förberett i sin helhet — tajmat mot avtalsklockan, signerat av er med BankID.</div>
             {[
               'Arvodet faktureras först när det nya avtalet börjat gälla',
               'Ni godkänner varje byte med BankID',
