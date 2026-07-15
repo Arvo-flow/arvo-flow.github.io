@@ -98,7 +98,7 @@ const Footer = () => (
     <Inner>
       <Brand>
         <Logo />
-        <p>Er proaktiva finansdirektör för leverantörskostnader. Bevakning på prenumeration — genomfört byte när ni vill.</p>
+        <p>Er proaktiva finansdirektör för leverantörskostnader. Bevakning på prenumeration — bytet förberett när ni vill, signerat av er.</p>
       </Brand>
       <Col>
         <h4>Produkt</h4>

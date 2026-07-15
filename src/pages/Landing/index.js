@@ -66,7 +66,7 @@ const EXEMPEL_RADER = [
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande bevakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: i kategorier där bytet är systematiserat genomför eller förbereder Arvo bytet åt er, och vi tar 20 % av realiserad besparing — fakturerat först när besparingen faktiskt syns i era egna böcker. Landar ingen besparing kostar Switch ingenting.',
+    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande bevakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: i kategorier där bytet är systematiserat förbereder Arvo hela bytet — uppsägning, nyteckning, tajming — och ni godkänner med BankID. Arvodet är 20 % av första årets kontrakterade besparing: skillnaden mellan ert gamla fakturapris och det nya avtalets pris, båda dokumenterade svart på vitt. Det faktureras först när det nya avtalet börjat gälla — och visar era fakturor senare att besparingen inte landat, justerar vi arvodet. Blir det ingen besparing kostar Switch ingenting.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
@@ -74,7 +74,7 @@ const FAQ = [
   },
   {
     q: 'Varför ska jag lita på era besparingskalkyler?',
-    a: 'Vi bygger på verifierade marknadsdata — offentliga listpriser, ramavtalsdata och faktiska operatörspriser. Och eftersom vi tar 20 % av realiserad besparing — den som faktiskt syns i era böcker, inte den vi gissar — har vi inget att vinna på att överdriva: en projektion som inte håller kostar oss förtroendet och arvodet. Vi tjänar mer på att lova lite och leverera fullt ut.',
+    a: 'Vi bygger på verifierade marknadsdata — offentliga listpriser, ramavtalsdata och faktiska operatörspriser. Och eftersom vårt arvode är 20 % av den kontrakterade besparingen — skillnaden mellan ert gamla fakturapris och det nya avtalets, båda dokumenterade — har vi inget att vinna på att överdriva: en projektion som inte håller kostar oss förtroendet och arvodet. Vi tjänar mer på att lova lite och leverera fullt ut.',
   },
   {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',
@@ -86,7 +86,7 @@ const FAQ = [
   },
   {
     q: 'Vilka kategorier täcker ni idag?',
-    a: 'Vi bevakar er kostnad i tre lägen. I el, mobil och företagsbredband genomför Arvo bytet åt er — ni godkänner med BankID, den vinnande leverantören sköter resten. I programvara / SaaS, kortterminaler, fakturatjänster och löneadministration förbereder Arvo hela bytet — ni formaliserar med ett klick. I försäkring, leasing, larm och tjänsteavtal levererar vi fyndet, tajmingen och det exakta motbudet och beväpnar er att agera (försäkringsbyten genomförs när vår FI-licens är klar). Fler kategorier läggs till varje kvartal baserat på var vi ser störst besparingar i kunddatan.',
+    a: 'Vi bevakar er kostnad i tre lägen. I el, mobil och företagsbredband förbereder Arvo hela bytet — uppsägning och nyteckning, färdigtajmat — ni godkänner med BankID, och den vinnande leverantören sköter inkopplingen enligt branschens regler. I programvara / SaaS, kortterminaler, fakturatjänster och löneadministration förbereder Arvo hela bytet — ni formaliserar med ett klick. I försäkring, leasing, larm och tjänsteavtal levererar vi fyndet, tajmingen och det exakta motbudet och beväpnar er att agera (försäkringsbyten genomförs när vår FI-licens är klar). Fler kategorier läggs till varje kvartal baserat på var vi ser störst besparingar i kunddatan.',
   },
   {
     q: 'Vad händer med min data?',
@@ -289,7 +289,7 @@ export default function Landing() {
         </SectionKey>
         <PriceSentence ref={prisRef} className={prisIn}>
           <div className="p-serif">
-            1 995 kr i månaden. Tjugo procent av besparingen —<br /><em>först när den syns i era böcker.</em>
+            1 995 kr i månaden. Tjugo procent av besparingen —<br /><em>dokumenterad i avtal, aldrig i löften.</em>
           </div>
           <p className="p-sub">
             Vi tar aldrig ersättning från någon leverantör. Vi sitter på er sida av bordet — det är hela affärsidén.
@@ -313,7 +313,7 @@ export default function Landing() {
             <div className="pc-pris">20 % <small>av realiserad besparing</small></div>
             <div className="pc-lede">Genomfört eller förberett leverantörsbyte — tajmat och signerat med BankID.</div>
             {[
-              'Arvodet faktureras först när besparingen syns i era böcker',
+              'Arvodet faktureras först när det nya avtalet börjat gälla',
               'Ni godkänner varje byte med BankID',
               'Från år två tillfaller hela besparingen er',
               'Hittar vi inget — kostar det inget',
