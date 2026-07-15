@@ -228,7 +228,7 @@ describe('business-intel · parsning (kontraktet ur sond v3)', () => {
   });
   test('bolagsfakta extraheras: revenue i TKR, employees, år', () => {
     const f = extractCompanyFacts(extractNextData(companyHtml));
-    assert.deepEqual(f, { legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025', foundationYear: f.foundationYear, history: [] });
+    assert.deepEqual(f, { legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025', foundationYear: f.foundationYear, koncern: null, history: [] });
   });
   test('ogiltiga fakta → null (revenue saknas / employees orimligt)', () => {
     const bad = (company) => extractCompanyFacts({ props: { pageProps: { company } } });
@@ -483,5 +483,25 @@ describe('business-intel · Issa-läxan: singularen (aldrig "1 anställda" i en 
     assert.match(one[0].title, /1 anställd$/);
     const many = buildBusinessFindings({ legalName: 'X AB', orgnr: '2', revenueTkr: 9700, employees: 14, year: '2025', history: [] });
     assert.match(many[0].title, /14 anställda$/);
+  });
+});
+
+describe('business-intel · koncernkartan (Issa-menyn punkt 3 — sondbevisat kontrakt 2026-07-13)', () => {
+  const base = { legalName: 'X AB', orgnr: '1', revenueTkr: 13976, employees: 14, year: '2025', history: [] };
+  test('KM-formen: dotterbolag med namngiven moder', () => {
+    const f = buildBusinessFindings({ ...base, koncern: { companies: 2, subsidiaries: null, parentName: 'Ksd Paint Service AB' } });
+    const kc = f.find((x) => x.kind === 'koncern');
+    assert.equal(kc.title, 'Ni ingår i en koncern om 2 bolag');
+    assert.match(kc.detail, /Moderbolag: Ksd Paint Service AB/);
+    assert.match(kc.source, /2 bolag i strukturen/);
+  });
+  test('Lekia-formen: moder med dotterbolag', () => {
+    const f = buildBusinessFindings({ ...base, koncern: { companies: 4, subsidiaries: 2, parentName: null } });
+    const kc = f.find((x) => x.kind === 'koncern');
+    assert.equal(kc.title, 'Er koncern rymmer 4 bolag');
+    assert.match(kc.detail, /2 dotterbolag/);
+  });
+  test('fristående bolag (Issa-formen: corporateStructure null) → tystnad', () => {
+    assert.equal(buildBusinessFindings({ ...base, koncern: null }).find((x) => x.kind === 'koncern'), undefined);
   });
 });
