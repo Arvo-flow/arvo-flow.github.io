@@ -12,7 +12,7 @@ orgnr på bolagets egen sajt → null
   kristianstadsmaleri.se/kontakta-oss → 404 · title="404 Not Found" · AB-strängar: [] · 6+4-siffror: []
   kristianstadsmaleri.se/om → 404 · title="404 Not Found" · AB-strängar: [] · 6+4-siffror: []
 ═══ 3b · fetchBusinessFacts (dörrens exakta anrop) ═══
-{"legalName":"Kristianstads Måleri Aktiebolag","orgnr":"5562896430","revenueTkr":13976,"employees":14,"year":"2025"}
+{"legalName":"Kristianstads Måleri Aktiebolag","orgnr":"5562896430","revenueTkr":13976,"employees":14,"year":"2025","foundationYear":1987,"history":[{"year":"2025","revenueTkr":13976,"employees":14},{"year":"2024","revenueTkr":18905,"employees":16},{"year":"2023","revenueTkr":13854,"employees":15},{"year":"2022","revenueTkr":13996,"employees":14},{"year":"2021","revenueTkr":11243,"employees":14}]}
 ═══ 5 · HISTORIK-KONTRAKTET (tillväxttrenden, sond) ═══
 status: 200
 company-nycklar: mainOffice · name · orgnr · businessUnitId · businessUnitType · companyId · listingId · customerId · phone · phone2 · mobile · mobile2 · faxNumber · homePage · email · marketingProtection · industries · location · currentIndustry · visitorAddress · postalAddress · description · advertType · logo · searchResultImage · legalName · revenue · currency · profit · companyAccountsLastUpdatedDate · employees · contactPerson · status · statusRemarks · certificates · rating · searchHighlights · purpose · naceIndustries · companyType · legalPhone · legalMobilePhone · contactFormUrl · webshopUrl · legalVisitorAddress · legalPostalAddress · domicile · corporateStructure · registrationDate · foundationDate · foundationYear · numberOfEmployees · shareCapital · estimatedTurnover · turnoverYear · registryStatusEntries · centralApproval · roles · signatories · procuration · companyAccounts · corporateAccounts · companyCacheFlows · corporateCacheFlows · openingHours · keywords · financialComments · keyFigureComments · isCustomer · externalLinks · references · distributors · contactPersons · socialMediaLinks · certifications · coverImage · backgroundImage · slideShow · tagLine · announcements · gaselle · shareholders · totalShareholders · shareholdersLastUpdatedDate · proffListingId · proffListingIds · businessUnitIds · mortgages · paymentRemarks · registeredAsEnterprise · registeredForVat · registeredForNav · registeredForVoluntary · registeredForPayrollTax · registeredForVatDescription · proffNames · annualReports · vehicles · mergers · openVacancies · availableReports · latestPublicAccountingPeriod · videos · hidePropertyInfo · businessUnits · alternativeNames
@@ -437,8 +437,15 @@ company-nycklar: mainOffice · name · orgnr · businessUnitId · businessUnitTy
   },
   {
    "code"
+═══ 6 · KONCERN/GASELL-KONTRAKTET (sond för Issa-menyn punkt 3) ═══
+  ── kristianstadsmaleri.se (5562896430) gaselle=false
+  corporateStructure: {"numberOfCompanies":2,"numberOfSubsidiaries":null,"parentCompanyName":"Ksd Paint Service AB","parentCompanyOrganisationNumber":"5565219952","parentCompanyCountryCode":"SE"}
+  ── lekia.se (5563064178) gaselle=false
+  corporateStructure: {"numberOfCompanies":4,"numberOfSubsidiaries":2,"parentCompanyName":null,"parentCompanyOrganisationNumber":null,"parentCompanyCountryCode":null}
+  ── issagroup.se (5592405012) gaselle=false
+  corporateStructure: null
 ═══ 4 · HELA AVSLÖJANDET ═══
   [business] Ert bokslut 2025: 14,0 mkr i omsättning, 14 anställda
-  [cert] Digital närvaro sedan september 2024
+  [trend] Er omsättning föll 26 % senaste bokslutsåret
+  [heritage] Grundat 1987 — 39 år i verksamhet
   [spoofing] Mejl i ert namn kan förfalskas
-  [market] Måttstocken vi väger mobilfakturor mot: 239 kr/mån per abonnemang
