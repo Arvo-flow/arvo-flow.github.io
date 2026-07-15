@@ -309,6 +309,14 @@ describe('business-intel · sammanfogning med DNS-fynden', () => {
     const merged = mergeRevealFindings([], thinDns, anchor);
     assert.deepEqual(merged.map((f) => f.kind), ['market']);
   });
+  test('Lynxeye-regeln för korsläsningen: cross-raden tränger undan den rena domän-längdraden', () => {
+    const biz = [{ kind: 'business', title: 'bokslut' }, { kind: 'cross', title: 'korsläsningen' }];
+    const dns = [{ kind: 'domain', title: '12 års obruten närvaro' }, { kind: 'spoofing', title: 'lucka' }];
+    const merged = mergeRevealFindings(biz, dns, null);
+    assert.equal(merged.find((x) => x.kind === 'domain'), undefined, 'två rader om samma årtal grälar');
+    assert.ok(merged.find((x) => x.kind === 'spoofing'));
+  });
+
   test('utan ankare (prisboken onåbar) → bryggan står kvar som sista utväg', () => {
     const thinDns = [{ kind: 'bridge', title: 'brygga', floor: true }];
     const merged = mergeRevealFindings([], thinDns, null);

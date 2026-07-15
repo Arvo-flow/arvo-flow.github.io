@@ -4,7 +4,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { domainFromEmail, buildRevealFindings, buildMarketAnchorFinding, _cachedLookup } from '../lib/domain-intel.js';
+import { domainFromEmail, buildRevealFindings, buildMarketAnchorFinding, buildCrossReading, _cachedLookup } from '../lib/domain-intel.js';
 
 describe('domainFromEmail', () => {
   test('plockar domän ur e-post', () => {
@@ -375,5 +375,26 @@ describe('Flimmervakten · verifierade historiska svar minns, fel och tomhet cac
     const brokenKv = { async get() { throw new Error('kv nere'); }, async set() { throw new Error('kv nere'); } };
     const v = await _cachedLookup('t:reg:w.se', async () => '1999-01-01', (x) => Boolean(x), brokenKv);
     assert.equal(v, '1999-01-01');
+  });
+});
+
+describe('Korsläsningen · domänens år mot tillväxtresans start (Issa-menyn punkt 4)', () => {
+  const grow = [
+    { year: '2025', revenueTkr: 9700 }, { year: '2024', revenueTkr: 3040 },
+    { year: '2023', revenueTkr: 1400 }, { year: '2022', revenueTkr: 900 }, { year: '2021', revenueTkr: 600 },
+  ];
+  test('domän 2014 + svit från 2021 → korsläsningen fyrar med båda källorna', () => {
+    const c = buildCrossReading({ domainReg: '2014-05-06', facts: { history: grow } });
+    assert.equal(c.title, 'Er domän är från 2014 — tillväxtresan började 2021');
+    assert.match(c.detail, /7 år äldre/);
+    assert.match(c.source, /domänregistret \(registrerad 2014-05-06\)/);
+    assert.match(c.source, /2021–2025/);
+  });
+  test('tystnadsgrindarna: gap < 5 år, fallande kurva, ingen svit, ingen domänreg → null', () => {
+    assert.equal(buildCrossReading({ domainReg: '2019-01-01', facts: { history: grow } }), null);
+    assert.equal(buildCrossReading({ domainReg: '2014-05-06', facts: { history: [
+      { year: '2025', revenueTkr: 900 }, { year: '2024', revenueTkr: 1400 }] } }), null);
+    assert.equal(buildCrossReading({ domainReg: '2014-05-06', facts: { history: grow.slice(0, 2).concat([{ year: '2023', revenueTkr: 3200 }]) } }), null);
+    assert.equal(buildCrossReading({ domainReg: null, facts: { history: grow } }), null);
   });
 });

@@ -91,6 +91,18 @@ console.log(JSON.stringify(company?.companyAccounts?.[0], null, 1)?.slice(0, 350
 console.log('── companyAccounts[1] RÅ ──');
 console.log(JSON.stringify(company?.companyAccounts?.[1], null, 1)?.slice(0, 2000));
 
+console.log('═══ 6 · KONCERN/GASELL-KONTRAKTET (sond för Issa-menyn punkt 3) ═══');
+for (const dom of ['kristianstadsmaleri.se', 'lekia.se', 'issagroup.se']) {
+  try {
+    const fx = await fetchBusinessFacts(dom);
+    if (!fx?.orgnr) { console.log(`  ${dom}: inga fakta`); continue; }
+    const cRes = await fetch(`https://www.allabolag.se/${fx.orgnr}`, { headers: H, redirect: 'follow', signal: AbortSignal.timeout(15000) });
+    const comp = extractNextData(await cRes.text())?.props?.pageProps?.company ?? {};
+    console.log(`  ── ${dom} (${fx.orgnr}) gaselle=${JSON.stringify(comp.gaselle)}`);
+    console.log('  corporateStructure:', JSON.stringify(comp.corporateStructure)?.slice(0, 1200));
+  } catch (e) { console.log(`  ${dom}: FEL ${e?.name}`); }
+}
+
 console.log('═══ 4 · HELA AVSLÖJANDET ═══');
 const r = await revealFromDomain(DOMAIN);
 for (const f of r.findings) console.log(`  [${f.kind}] ${f.title}`);
