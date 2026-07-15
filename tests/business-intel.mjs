@@ -505,3 +505,23 @@ describe('business-intel · koncernkartan (Issa-menyn punkt 3 — sondbevisat ko
     assert.equal(buildBusinessFindings({ ...base, koncern: null }).find((x) => x.kind === 'koncern'), undefined);
   });
 });
+
+describe('business-intel · taket (grundarbeslut 2026-07-13): max 5 rader, rankade — aldrig trunkerade', () => {
+  const F = (kind) => ({ kind, title: kind });
+  test('åtta kandidater → de fem starkaste, i rangordning', () => {
+    const biz = [F('business'), F('trend'), F('heritage'), F('koncern'), F('cross')];
+    const dns = [F('spoofing'), F('cert'), F('suppliers')];
+    const out = mergeRevealFindings(biz, dns, null);
+    assert.deepEqual(out.map((x) => x.kind), ['business', 'trend', 'cross', 'suppliers', 'spoofing']);
+  });
+  test('risken slår strukturen: spoofing vinner över koncern/heritage om sista platsen', () => {
+    const out = mergeRevealFindings([F('business'), F('trend'), F('koncern'), F('heritage')], [F('spoofing'), F('cert')], null);
+    assert.ok(out.find((x) => x.kind === 'spoofing'));
+    assert.equal(out.find((x) => x.kind === 'cert'), undefined, 'cert faller när kortet är fullt');
+    assert.equal(out.length, 5);
+  });
+  test('tunna kort påverkas inte: ankaret avslutar fortfarande (3 rader)', () => {
+    const out = mergeRevealFindings([F('business')], [{ kind: 'infra', title: 'i' }], { kind: 'market', title: 'm' });
+    assert.deepEqual(out.map((x) => x.kind), ['business', 'infra', 'market']);
+  });
+});

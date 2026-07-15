@@ -463,7 +463,8 @@ export default function Portfolio() {
           const d2 = await res2.json().catch(() => ({}));
           if (d2.findings?.length) {
             const seen = new Set(data.findings.map((f) => f.title));
-            const extra = d2.findings.filter((f) => !seen.has(f.title));
+            const extra = d2.findings.filter((f) => !seen.has(f.title))
+              .slice(0, Math.max(0, 5 - data.findings.length));   // taket (max 5) gäller totalen — sena rader landar bara om plats finns
             if (extra.length) setReveal({ ...data, findings: [...data.findings, ...extra] });
           }
         } catch { /* våg 1 står redan */ }
