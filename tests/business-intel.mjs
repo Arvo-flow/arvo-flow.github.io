@@ -228,7 +228,7 @@ describe('business-intel · parsning (kontraktet ur sond v3)', () => {
   });
   test('bolagsfakta extraheras: revenue i TKR, employees, år', () => {
     const f = extractCompanyFacts(extractNextData(companyHtml));
-    assert.deepEqual(f, { legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025', history: [] });
+    assert.deepEqual(f, { legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025', foundationYear: f.foundationYear, history: [] });
   });
   test('ogiltiga fakta → null (revenue saknas / employees orimligt)', () => {
     const bad = (company) => extractCompanyFacts({ props: { pageProps: { company } } });
@@ -439,13 +439,33 @@ describe('business-intel · kurvan i rad (punkt 1) + måttstocksbeslutet (punkt 
     assert.match(f.find((x) => x.kind === 'trend').title, /^Fjärde växande året i rad/);
   });
 
-  test('MÅTTSTOCKSBESLUTET (grundardelegerat 2026-07-12): ankaret STÅR KVAR som avslutare även på kort med tre "om er"-rader', () => {
+  test('SKÄRPTA GRINDEN (grundarbeslut 2026-07-13, ersätter gårdagens): ankaret utelämnas på kort med ≥3 "om er"-rader', () => {
     const biz = [{ kind: 'business', title: 'bokslut' }, { kind: 'trend', title: 'kurvan' }];
     const dns = [{ kind: 'spoofing', title: 'lucka' }];
     const anchor = { kind: 'market', title: 'måttstocken' };
     const merged = mergeRevealFindings(biz, dns, anchor);
-    assert.equal(merged[merged.length - 1].kind, 'market', 'måttstocken laddar fotens CTA — den avslutar kortet');
-    assert.equal(merged.length, 4);
+    assert.equal(merged.find((x) => x.kind === 'market'), undefined, 'kuratering är premium — starka kort bär sig själva');
+    assert.equal(merged.length, 3);
+  });
+
+  test('…men ett tunt kort (2 "om er"-rader) räddas fortfarande av ankaret — infra räknas inte som substans', () => {
+    const biz = [{ kind: 'business', title: 'bokslut' }];
+    const dns = [{ kind: 'infra', title: 'Loopia' }, { kind: 'spoofing', title: 'lucka' }];
+    const anchor = { kind: 'market', title: 'måttstocken' };
+    const merged = mergeRevealFindings(biz, dns, anchor);
+    assert.equal(merged[merged.length - 1].kind, 'market');
+  });
+
+  test('GRUNDAT-RADEN: ≥20 år fyrar med ålder och källa; ungt bolag → tystnad (trenden bär dem)', () => {
+    const base = { legalName: 'Kristianstads Måleri Aktiebolag', orgnr: '1', revenueTkr: 13976, employees: 14, year: '2025', history: [] };
+    const NOW = new Date('2026-07-13');
+    const old_ = buildBusinessFindings({ ...base, foundationYear: 1987 }, { now: NOW });
+    const h = old_.find((x) => x.kind === 'heritage');
+    assert.equal(h.title, 'Grundat 1987 — 39 år i verksamhet');
+    assert.match(h.detail, /sällan omprövade/);
+    assert.match(h.source, /grundandeår 1987/);
+    assert.equal(buildBusinessFindings({ ...base, foundationYear: 2019 }, { now: NOW }).find((x) => x.kind === 'heritage'), undefined);
+    assert.equal(buildBusinessFindings({ ...base, foundationYear: null }, { now: NOW }).find((x) => x.kind === 'heritage'), undefined);
   });
 });
 
