@@ -31,6 +31,9 @@ export default async function handler(req, res) {
 
   try {
     const result = await revealFromDomain(input, { fast: !!body.fast });
+    if (result.reason === 'no-such-domain') {
+      return send(res, 200, { ok: true, domain: result.domain, findings: [], note: result.note });
+    }
     if (!result.domain) {
       // Privat mejl eller ogiltig domän — ärligt: vi har inget bolag att läsa av.
       return send(res, 200, { ok: true, domain: null, findings: [],

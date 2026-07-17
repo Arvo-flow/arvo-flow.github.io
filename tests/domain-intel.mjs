@@ -298,7 +298,7 @@ describe('Kristianstad-läxan · golvets ärlighet + marknadsankaret', () => {
 });
 
 describe('Förfalskningsfyndet · DMARC-luckan sägs högt (fynd-motorns toppsignal in i dörren)', () => {
-  const base = { mx: 'other', nsDetail: 'loopia', nsProvider: 'registrar' };
+  const base = { mx: 'other', nsDetail: 'loopia', nsProvider: 'registrar', exists: true };
 
   test('DMARC-post saknas (definitivt) → fyndet med "saknar"-copyn och källa', () => {
     const f = buildRevealFindings({ domain: 'foo.se', posture: { ...base, dmarcAbsent: true } });
@@ -396,5 +396,16 @@ describe('Korsläsningen · domänens år mot tillväxtresans start (Issa-menyn 
       { year: '2025', revenueTkr: 900 }, { year: '2024', revenueTkr: 1400 }] } }), null);
     assert.equal(buildCrossReading({ domainReg: '2014-05-06', facts: { history: grow.slice(0, 2).concat([{ year: '2023', revenueTkr: 3200 }]) } }), null);
     assert.equal(buildCrossReading({ domainReg: null, facts: { history: grow } }), null);
+  });
+});
+
+describe('Spökdomän-läxan (hdssyjxdd.se, 2026-07-17): ett fantom får inget kort', () => {
+  test('förfalskningsfyndet kräver en EXISTERANDE domän — dmarcAbsent på ett fantom → tystnad', () => {
+    const f = buildRevealFindings({ domain: 'hdssyjxdd.se', posture: { mx: 'unknown', dmarcAbsent: true, exists: false } });
+    assert.equal(f.find((x) => x.kind === 'spoofing'), undefined);
+  });
+  test('på en existerande domän fyrar fyndet som förut', () => {
+    const f = buildRevealFindings({ domain: 'foo.se', posture: { mx: 'other', dmarcAbsent: true, exists: true } });
+    assert.ok(f.find((x) => x.kind === 'spoofing'));
   });
 });

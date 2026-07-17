@@ -11,6 +11,7 @@ mkdirSync(OUT, { recursive: true });
 const CASES = [
   { email: 'kontakt@lekia.se', tag: 'lekia' },
   { email: 'hej@kristianstadsmaleri.se', tag: 'kristianstadsmaleri' },
+  { email: 'x@hdssyjxdd.se', tag: 'spokdoman' },   // spökdomän-läxan: ska ge ärligt besked, inget kort
 ];
 
 const b = await chromium.launch({ headless: true });
@@ -29,6 +30,7 @@ for (const { email, tag } of CASES) {
     if (view === 'mobil') {
       const rows = await p.locator('.rv-title').allTextContents();
       console.log(`FYND ${tag}:`, JSON.stringify(rows));
+      if (!rows.length) console.log(`NOT ${tag}:`, JSON.stringify(await p.locator('.rp-note').allTextContents()));
     }
     await p.screenshot({ path: `${OUT}/${tag}-${view}.png`, fullPage: true });
     console.log(`✓ ${tag} ${view}`);
