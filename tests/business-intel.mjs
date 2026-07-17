@@ -228,7 +228,7 @@ describe('business-intel · parsning (kontraktet ur sond v3)', () => {
   });
   test('bolagsfakta extraheras: revenue i TKR, employees, år', () => {
     const f = extractCompanyFacts(extractNextData(companyHtml));
-    assert.deepEqual(f, { legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025', foundationYear: f.foundationYear, koncern: null, history: [] });
+    assert.deepEqual(f, { provenance: 'bolagsverket', legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025', foundationYear: f.foundationYear, koncern: null, history: [] });
   });
   test('ogiltiga fakta → null (revenue saknas / employees orimligt)', () => {
     const bad = (company) => extractCompanyFacts({ props: { pageProps: { company } } });
@@ -239,7 +239,7 @@ describe('business-intel · parsning (kontraktet ur sond v3)', () => {
 });
 
 describe('business-intel · fynden (regel 2 + 3: kodräknat, källa på varje rad)', () => {
-  const facts = { legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025' };
+  const facts = { provenance: 'bolagsverket', legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025' };
 
   test('bokslutsfyndet: mkr-format, år, källa Bolagsverket — ALDRIG profit i copy', () => {
     const f = buildBusinessFindings(facts);
@@ -326,7 +326,7 @@ describe('business-intel · sammanfogning med DNS-fynden', () => {
 
 describe('business-intel · trenden (Kristianstad-läxan del A — riktningen, kodräknad)', () => {
   const facts = (h) => ({
-    legalName: 'Kristianstads Måleri Aktiebolag', orgnr: '5562896430',
+    provenance: 'bolagsverket', legalName: 'Kristianstads Måleri Aktiebolag', orgnr: '5562896430',
     revenueTkr: 13976, employees: 14, year: '2025', history: h,
   });
 
@@ -388,7 +388,7 @@ describe('business-intel · trenden (Kristianstad-läxan del A — riktningen, k
 
 describe('business-intel · kurvan i rad (punkt 1) + måttstocksbeslutet (punkt 2)', () => {
   const facts = (h) => ({
-    legalName: 'X AB', orgnr: '1', revenueTkr: h[0].revenueTkr, employees: 10, year: h[0].year, history: h,
+    provenance: 'bolagsverket', legalName: 'X AB', orgnr: '1', revenueTkr: h[0].revenueTkr, employees: 10, year: h[0].year, history: h,
   });
 
   test('tredje växande året i rad: sviten räknas, rubrikprocenten är SENASTE årets, spannet hela kurvan', () => {
@@ -465,7 +465,7 @@ describe('business-intel · kurvan i rad (punkt 1) + måttstocksbeslutet (punkt 
   });
 
   test('GRUNDAT-RADEN: ≥20 år fyrar med ålder och källa; ungt bolag → tystnad (trenden bär dem)', () => {
-    const base = { legalName: 'Kristianstads Måleri Aktiebolag', orgnr: '1', revenueTkr: 13976, employees: 14, year: '2025', history: [] };
+    const base = { provenance: 'bolagsverket', legalName: 'Kristianstads Måleri Aktiebolag', orgnr: '1', revenueTkr: 13976, employees: 14, year: '2025', history: [] };
     const NOW = new Date('2026-07-13');
     const old_ = buildBusinessFindings({ ...base, foundationYear: 1987 }, { now: NOW });
     const h = old_.find((x) => x.kind === 'heritage');
@@ -479,15 +479,15 @@ describe('business-intel · kurvan i rad (punkt 1) + måttstocksbeslutet (punkt 
 
 describe('business-intel · Issa-läxan: singularen (aldrig "1 anställda" i en premiumyta)', () => {
   test('1 anställd böjs rätt; flertal orört', () => {
-    const one = buildBusinessFindings({ legalName: 'Issa Group AB', orgnr: '1', revenueTkr: 9700, employees: 1, year: '2025', history: [] });
+    const one = buildBusinessFindings({ provenance: 'bolagsverket', legalName: 'Issa Group AB', orgnr: '1', revenueTkr: 9700, employees: 1, year: '2025', history: [] });
     assert.match(one[0].title, /1 anställd$/);
-    const many = buildBusinessFindings({ legalName: 'X AB', orgnr: '2', revenueTkr: 9700, employees: 14, year: '2025', history: [] });
+    const many = buildBusinessFindings({ provenance: 'bolagsverket', legalName: 'X AB', orgnr: '2', revenueTkr: 9700, employees: 14, year: '2025', history: [] });
     assert.match(many[0].title, /14 anställda$/);
   });
 });
 
 describe('business-intel · koncernkartan (Issa-menyn punkt 3 — sondbevisat kontrakt 2026-07-13)', () => {
-  const base = { legalName: 'X AB', orgnr: '1', revenueTkr: 13976, employees: 14, year: '2025', history: [] };
+  const base = { provenance: 'bolagsverket', legalName: 'X AB', orgnr: '1', revenueTkr: 13976, employees: 14, year: '2025', history: [] };
   test('KM-formen: dotterbolag med namngiven moder', () => {
     const f = buildBusinessFindings({ ...base, koncern: { companies: 2, subsidiaries: null, parentName: 'Ksd Paint Service AB' } });
     const kc = f.find((x) => x.kind === 'koncern');
@@ -523,5 +523,18 @@ describe('business-intel · taket (grundarbeslut 2026-07-13): max 5 rader, ranka
   test('tunna kort påverkas inte: ankaret avslutar fortfarande (3 rader)', () => {
     const out = mergeRevealFindings([F('business')], [{ kind: 'infra', title: 'i' }], { kind: 'market', title: 'm' });
     assert.deepEqual(out.map((x) => x.kind), ['business', 'infra', 'market']);
+  });
+});
+
+describe('IDENTITETSINVARIANTEN (grundarbeslut 2026-07-16): påhittade företag är omöjliga på typnivå', () => {
+  test('bolagsfakta utan Bolagsverket-proveniens → TYSTNAD, oavsett hur kompletta de ser ut', () => {
+    const smuggled = { legalName: 'Fantasibolaget AB', orgnr: '5565690087', revenueTkr: 99999, employees: 50, year: '2025', history: [] };
+    assert.deepEqual(buildBusinessFindings(smuggled), []);
+    assert.deepEqual(buildBusinessFindings({ ...smuggled, provenance: 'ai' }), []);
+    assert.deepEqual(buildBusinessFindings({ ...smuggled, provenance: 'merinfo' }), []);
+  });
+  test('extractCompanyFacts är enda producenten av markören', () => {
+    const nd = { props: { pageProps: { company: { legalName: 'Riktig AB', orgnr: '5565690087', revenue: '1000', employees: 5, companyAccountsLastUpdatedDate: '2025' } } } };
+    assert.equal(extractCompanyFacts(nd).provenance, 'bolagsverket');
   });
 });

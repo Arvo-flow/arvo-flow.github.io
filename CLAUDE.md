@@ -332,6 +332,19 @@ signera", aldrig som ett verkställt löfte.)
    förbjudna påståenden i kundytor — listan VÄXER med varje incident. Legitim träff
    motiveras inline med `// claims-ok: <skäl>`. Exempel-innehåll märks alltid "Exempel".
 
+> **✅ GRUNDARBESLUT 2026-07-16 — IDENTITETSINVARIANTEN: inga påhittade företag, någonsin.**
+> Bolagsidentitet (namn, orgnr, omsättning, bokslut, koncern, grundandeår) får ENDAST komma från
+> **Bolagsverket-data via EN kanoniserad läsväg** (idag allabolag som transport — sanningskällan är
+> Bolagsverket, inte spegeln) och ENDAST genom **exakt-en-träff-grinden**. Aldrig flera speglar
+> samtidigt (merinfo/proff etc. — två källor som kan säga olika är sämre än en källa med hård grind).
+> Maskinlås: `extractCompanyFacts` är enda producenten av proveniens-markören `bolagsverket`;
+> `buildBusinessFindings` vägrar fakta utan den (tystnad, inte gissning). **Utgående** (vi väljer
+> målet): varje prospekt kräver människoverifierat orgnr i leads-filen (Luhn + org-markör, testlåst
+> i `tests/outbound-identity.mjs`) — inget orgnr, ingen sändning. **Inkommande** (besökaren skriver
+> sin egen mejl): DNS-only-kort utan bolagsmatch får stå — de namnger aldrig ett bolag ("er domän",
+> aldrig "X AB"). Känd gräns, medveten: orgnr-ur-sajten kan binda till en koncernenhet (t.ex. moder)
+> — därför namnger varje bolagsrad ALLTID den juridiska enheten ("Gäller X AB").
+
 ---
 
 ## Systemarkitektur — Full karta (uppdaterad 2026-06-10)

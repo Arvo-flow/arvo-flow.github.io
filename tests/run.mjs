@@ -51,6 +51,7 @@ import './stress-mork.mjs';
 import './watched-ledger.mjs';
 import './greeting.mjs';
 import './business-intel.mjs';
+import './outbound-identity.mjs';
 import './contract-intel.mjs';
 import './korpusdiff.mjs';
 import './schemakrav.mjs';
