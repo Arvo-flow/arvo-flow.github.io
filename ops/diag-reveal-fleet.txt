@@ -1,86 +1,131 @@
-Kör avslöjandet mot 20 riktiga svenska bolag…
+Kör avslöjandet mot 28 domäner (leads + adversariella klasser)…
 
 ✅  alumni.se  (mx: other)
       · [business] Ert bokslut 2025: 226,5 mkr i omsättning, 66 anställda
-      · [costline] Era kontorslicenser: från ~112 464 kr/år vid verifierat golvpris
+      · [trend] Er omsättning växte 7 % senaste bokslutsåret
+      · [platform] Ni kör Microsoft 365
+      · [spoofing] Mejl i ert namn kan förfalskas
+      · [koncern] Ni ingår i en koncern om 6 bolag
 ✅  apendo.se  (mx: other)
       · [business] Ert bokslut 2025: 52,9 mkr i omsättning, 30 anställda
-      · [costline] Era kontorslicenser: från ~51 120 kr/år vid verifierat golvpris
-      · [onboarding] Er Microsoft 365 sattes upp september 2017
-      · [dmarc] Ert e-postskydd är redan aktivt
+      · [platform] Ni kör Microsoft 365
+      · [suppliers] 2 leverantörer syns i era publika mejlposter
+      · [koncern] Ni ingår i en koncern om 3 bolag
+      · [heritage] Grundat 1991 — 35 år i verksamhet
 ✅  bimobject.com  (mx: google)
       · [business] Ert bokslut 2024: 99,8 mkr i omsättning, 63 anställda
-      · [costline] Era kontorslicenser: från ~107 352 kr/år vid verifierat golvpris
+      · [trend] Tredje växande året i rad (+12 % senast)
+      · [cross] Er domän är från 2008 — tillväxtresan började 2021
       · [platform] Ni kör Google Workspace
-      · [dmarc] Ert e-postskydd är redan aktivt
+      · [suppliers] 4 leverantörer syns i era publika mejlposter
 ✅  castra.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  daresay.com  (mx: other)
       · [business] Ert bokslut 2024: 84,8 mkr i omsättning, 61 anställda
-      · [costline] Era kontorslicenser: från ~103 944 kr/år vid verifierat golvpris
+      · [trend] Andra fallande året i rad (−18 % senast)
+      · [spoofing] Mejl i ert namn kan förfalskas
+      · [koncern] Ni ingår i en koncern om 146 bolag
       · [domain] 27 års obruten digital närvaro
 ✅  halvarsson.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
+      · [spoofing] Mejl i ert namn kan förfalskas
       · [onboarding] Er Microsoft 365 sattes upp oktober 2007
 ✅  implement.se  (mx: other)
       · [cert] Digital närvaro sedan juni 2009
       · [dmarc] Ert e-postskydd är redan aktivt
+      · [market] Måttstocken vi väger mobilfakturor mot: 239 kr/mån per abonnemang
 ✅  initgroup.com  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
       · [domain] 10 års obruten digital närvaro
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  intelliplan.se  (mx: microsoft365)
       · [business] Ert bokslut 2025: 80,9 mkr i omsättning, 30 anställda
-      · [costline] Era kontorslicenser: från ~51 120 kr/år vid verifierat golvpris
       · [platform] Ni kör Microsoft 365
-      · [cert] Digital närvaro sedan december 2008
-      · [dmarc] Ert e-postskydd är redan aktivt
+      · [suppliers] 2 leverantörer syns i era publika mejlposter
+      · [koncern] Ni ingår i en koncern om 9 bolag
+      · [heritage] Grundat 2000 — 26 år i verksamhet
 ✅  jobbklar.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
+      · [spoofing] Mejl i ert namn kan förfalskas
 ✅  jurek.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  kan.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
+      · [spoofing] Mejl i ert namn kan förfalskas
 ✅  knowit.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
       · [dmarc] Ert e-postskydd är redan aktivt
+✅  kristianstad.se  (mx: other)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  lekia.se  (mx: other)
+      · [business] Ert bokslut 2025: 264,6 mkr i omsättning, 29 anställda
+      · [platform] Ni kör Microsoft 365
+      · [suppliers] 4 leverantörer syns i era publika mejlposter
+      · [spoofing] Mejl i ert namn kan förfalskas
+      · [koncern] Er koncern rymmer 4 bolag
 ✅  lynxeye.com  (mx: microsoft365)
       · [business] Ert bokslut 2025: 221,9 mkr i omsättning, 54 anställda
-      · [costline] Era kontorslicenser: från ~92 016 kr/år vid verifierat golvpris
       · [platform] Ni kör Microsoft 365
-      · [cert] Digital närvaro sedan oktober 2009
-      · [domain] 26 års obruten digital närvaro
+      · [spoofing] Mejl i ert namn kan förfalskas
+      · [koncern] Ni ingår i en koncern om 4 bolag
+      · [heritage] Grundat 1999 — 27 år i verksamhet
 ✅  netigate.se  (mx: microsoft365)
       · [business] Ert bokslut 2024: 120,6 mkr i omsättning, 77 anställda
-      · [costline] Era kontorslicenser: från ~131 208 kr/år vid verifierat golvpris
       · [platform] Ni kör Microsoft 365
-      · [cert] Digital närvaro sedan februari 2007
-      · [dmarc] Ert e-postskydd är redan aktivt
+      · [suppliers] 2 leverantörer syns i era publika mejlposter
+      · [koncern] Ni ingår i en koncern om 20 bolag
+      · [heritage] Grundat 1999 — 27 år i verksamhet
 ✅  netray.se  (mx: google)
       · [platform] Ni kör Google Workspace
+      · [spoofing] Mejl i ert namn kan förfalskas
 ✅  onepartnergroup.se  (mx: microsoft365)
-      · [business] Ert bokslut 2024: 168,9 mkr i omsättning, 9 anställda
-      · [costline] Era kontorslicenser: från ~15 336 kr/år vid verifierat golvpris
+      · [business] Ert bokslut 2025: 174,5 mkr i omsättning, 9 anställda
+      · [platform] Ni kör Microsoft 365
+      · [suppliers] 2 leverantörer syns i era publika mejlposter
+      · [koncern] Ni ingår i en koncern om 42 bolag
+      · [dmarc] Ert e-postskydd är redan aktivt
+✅  seb.se  (mx: other)
       · [platform] Ni kör Microsoft 365
       · [dmarc] Ert e-postskydd är redan aktivt
 ✅  sigmatechnology.com  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
-      · [domain] 27 års obruten digital närvaro
+      · [suppliers] 2 leverantörer syns i era publika mejlposter
+      · [spoofing] Mejl i ert namn kan förfalskas
+✅  skatteverket.se  (mx: other)
+      · [dmarc] Ert e-postskydd är redan aktivt
+      · [market] Måttstocken vi väger mobilfakturor mot: 239 kr/mån per abonnemang
+✅  spotify.com  (mx: google)
+      · [business] Ert bokslut 2025: 114 519,0 mkr i omsättning, 1271 anställda
+      · [trend] Fjärde växande året i rad (+6 % senast)
+      · [platform] Ni kör Google Workspace
+      · [suppliers] 2 leverantörer syns i era publika mejlposter
+      · [koncern] Er koncern rymmer 28 bolag
+✅  svenskfotboll.se  (mx: microsoft365)
+      · [platform] Ni kör Microsoft 365
+      · [dmarc] Ert e-postskydd är redan aktivt
 ✅  trivector.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
+      · [spoofing] Mejl i ert namn kan förfalskas
+✗ WHIFF  volvo.se  (mx: other)
+      · [spoofing] Mejl i ert namn kan förfalskas
+      · [market] Måttstocken vi väger mobilfakturor mot: 239 kr/mån per abonnemang
 ✅  westander.se  (mx: microsoft365)
       · [platform] Ni kör Microsoft 365
       · [onboarding] Er Microsoft 365 sattes upp februari 2016
       · [dmarc] Ert e-postskydd är redan aktivt
+✗ WHIFF  xn--lnsfrskringar-bfbf9z.se  (mx: unknown)
+      · [spoofing] Mejl i ert namn kan förfalskas
+      · [market] Måttstocken vi väger mobilfakturor mot: 239 kr/mån per abonnemang
 
 ═══════ SAMMANFATTNING ═══════
-Bolag totalt:                        20
-✅ Starka "om er"-fynd:              20
+Bolag totalt:                        28
+✅ Starka "om er"-fynd:              26
 ▽  Endast golv (brygga/infra):       0
-✗  Whiff (inget):                    0
-   varav plattform (M365/Google):    16
-   varav M365-UPPSÄTTNINGSDATUM:      3
-   varav AFFÄRSFYND (omsättning):     8   ← käftsläpparen
+✗  Whiff (inget):                    2
+   varav plattform (M365/Google):    23
+   varav M365-UPPSÄTTNINGSDATUM:      2
+   varav AFFÄRSFYND (omsättning):     10   ← käftsläpparen
 ═══════════════════════════════════
