@@ -63,14 +63,14 @@ const Integritet = () => (
 
       <SectionTitle>Integritetspolicy</SectionTitle>
       <SectionLede>
-        Den här policyn beskriver hur Arvo Flow AB behandlar personuppgifter och företagsuppgifter
+        Den här policyn beskriver hur Arvo Flow (verksamhet under bildande) behandlar personuppgifter och företagsuppgifter
         i samband med att vi levererar Tjänsten.
       </SectionLede>
 
       <Clause>
         <h3>1. Personuppgiftsansvarig</h3>
         <p>
-          <strong>Arvo Flow AB</strong>, org.nr 559500-0000, är personuppgiftsansvarig för de
+          <strong>Arvo Flow</strong> (verksamhet under bildande; juridisk person uppdateras här vid registrering) är personuppgiftsansvarig för de
           uppgifter vi samlar in om dig som kund eller besökare. Kontakt:{' '}
           <a href="mailto:gdpr@arvo.flow">gdpr@arvo.flow</a>.
         </p>
@@ -241,7 +241,7 @@ const Integritet = () => (
       <Clause>
         <h3>1. Parter</h3>
         <p><strong>Personuppgiftsansvarig:</strong> Kunden.</p>
-        <p><strong>Personuppgiftsbiträde:</strong> Arvo Flow AB, org.nr 559500-0000.</p>
+        <p><strong>Personuppgiftsbiträde:</strong> Arvo Flow (verksamhet under bildande).</p>
       </Clause>
 
       <Clause>
@@ -288,7 +288,7 @@ const Integritet = () => (
       </Clause>
 
       <FineprintBar>
-        <strong>Arvo Flow AB</strong> · Org.nr 559500-0000 · Stockholm · Integritetspolicy &amp; DPA v1.4 ·
+        <strong>Arvo Flow</strong> · verksamhet under bildande · Stockholm · Integritetspolicy &amp; DPA v1.4 ·
         Senast uppdaterad 2026-05-19. <br />
         Frågor: <a href="mailto:gdpr@arvo.flow" style={{ color: 'inherit', textDecoration: 'underline' }}>gdpr@arvo.flow</a>.
       </FineprintBar>

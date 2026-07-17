@@ -17,7 +17,7 @@ const Villkor = () => (
       <Eyebrow><span className="dot" /> Allmänna villkor · Version 1.2 · Senast uppdaterad 2026-05-13</Eyebrow>
       <Headline>Klart, kort och <em>på din sida</em>.</Headline>
       <Lede>
-        Det här är hela avtalet mellan dig och Arvo Flow AB. Inga fasta avgifter, inga uppstartsavgifter,
+        Det här är hela avtalet mellan dig och Arvo Flow (verksamhet under bildande; juridisk person uppdateras här vid registrering). Inga fasta avgifter, inga uppstartsavgifter,
         ingen inlåsning. Vi tjänar pengar bara när du faktiskt sparar.
       </Lede>
     </Hero>
@@ -138,7 +138,7 @@ const Villkor = () => (
       </Clause>
 
       <FineprintBar>
-        <strong>Arvo Flow AB</strong> · Org.nr 559500-0000 · Stockholm · Allmänna villkor v1.2 ·
+        <strong>Arvo Flow</strong> · verksamhet under bildande · Stockholm · Allmänna villkor v1.2 ·
         Senast uppdaterad 2026-05-13. <br />
         Tidigare versioner finns tillgängliga på begäran från{' '}
         <a href="mailto:juridik@arvo.flow" style={{ color: 'inherit', textDecoration: 'underline' }}>juridik@arvo.flow</a>.

@@ -109,7 +109,7 @@ const Cookies = () => (
       </Clause>
 
       <FineprintBar>
-        <strong>Arvo Flow AB</strong> · Org.nr 559500-0000 · Stockholm · Cookie-policy v1.2 ·
+        <strong>Arvo Flow</strong> · verksamhet under bildande · Stockholm · Cookie-policy v1.2 ·
         Senast uppdaterad 2026-05-13. <br />
         Frågor: <a href="mailto:gdpr@arvo.flow" style={{ color: 'inherit', textDecoration: 'underline' }}>gdpr@arvo.flow</a>.
       </FineprintBar>

@@ -128,12 +128,11 @@ const Footer = () => (
       </Col>
     </Inner>
     <TrustRow>
-      <span><div className="dot" /> Ansvars- och cyberförsäkrade via <strong>Hiscox</strong></span>
       <span><div className="dot" /> GDPR-säkrad infrastruktur i <strong>Sverige</strong></span>
       <span><div className="dot" /> Krypterad data <strong>AES-256</strong></span>
     </TrustRow>
     <Bottom>
-      <span>© 2026 Arvo Flow AB · Org.nr 559500-0000</span>
+      <span>© 2026 Arvo Flow · verksamhet under bildande</span>
       <span>Stockholm · Made with care in Sweden</span>
     </Bottom>
   </Wrap>

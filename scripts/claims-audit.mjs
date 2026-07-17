@@ -20,6 +20,13 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
 // ── Förbudslistan — varje rad är en lärd läxa ─────────────────────────────────
 const FORBIDDEN = [
+  // Sanningsstädningen 2026-07-16 (grundarbesked: inget AB, ingen försäkring ÄNNU): ett påstått
+  // orgnr och en påstådd försäkring är exakt de falska påståenden dörren själv Luhn-fäller hos
+  // andra bolag. Raderna nedan får återinföras ENDAST med verkligt orgnr resp. försäkringsbrev
+  // i hand — då tas mönstren bort ur listan i SAMMA commit (motiveringen är beviset).
+  [/559500-0000/,               'Platshållar-orgnr: bolaget är inte registrerat — ett påhittat orgnr i kundyta är förbjudet tills det verkliga finns'],
+  [/Arvo Flow AB\b/,            'Bolagsformen AB får inte påstås förrän registreringen är klar (grundarbesked 2026-07-16)'],
+  [/Hiscox|f[öo]rs[äa]krade via/i, 'Försäkringspåstående utan tecknad försäkring är förbjudet — återinförs med försäkringsbrevet i hand'],
   [/partnern[äa]tverk/i,        'Neutralitets-moaten (grundarbeslut 2026-06-19): Arvo har inga partneravtal — aldrig'],
   // Neutralitets-moaten, stenhårt: Arvo tar ALDRIG leverantörspengar. Enda intäkten är kundens
   // success fee. Antyds leverantörsersättning/partnerskap i en kundyta är oberoendet — och vallgraven — död.
