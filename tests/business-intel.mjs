@@ -135,7 +135,9 @@ describe('business-intel · orgnr-ur-sajten (Kristianstad-läxan steg 2 — star
     assert.equal(
       extractSiteCompanyName('<meta property="og:site_name" content="Örebro Städ Aktiebolag – hem" />'),
       'Örebro Städ Aktiebolag');
-    assert.equal(extractSiteCompanyName('<title>Välkommen till oss</title>'), null);
+    // v2: segmentet returneras — FOLD-GRINDEN i fetchBusinessFacts ('Välkommen till oss' viker
+    // aldrig till någon SLD) är skyddet, inte extraktorn. Oraklet lånar stavning, grinden avgör.
+    assert.equal(extractSiteCompanyName('<title>Välkommen till oss</title>'), 'Välkommen till oss');
   });
 
   test('KRISTIANSTAD-KEDJAN ordagrant: inget orgnr på sajten → titeln blir sökfrågan → grinden släpper', async () => {
@@ -556,5 +558,35 @@ describe('Adversariella svepet 2026-07-17 · läsbarhet + IDN + orgnr', () => {
   });
   test('orgnr med em-streck hittas', () => {
     assert.deepEqual(extractOrgnrCandidates('Org.nr 556569\u20140087'), ['5565690087']);
+  });
+});
+
+describe('Täckningsläxan 2026-07-17 · grinden v2 (ord-prefix) — Gleerups-klassen utan att öppna kan.se-hålet', () => {
+  test('GLEERUPS: unikt ord-prefix → träff ("Gleerups Utbildning AB" för gleerups.se)', () => {
+    const m = matchCompany('gleerups', [{ legalName: 'Gleerups Utbildning AB', orgnr: '5560proben' }]);
+    assert.equal(m?.orgnr, '5560proben');
+  });
+  test('kan.se-fallet STÅR: "Kanmalmo AB" har ingen ordgräns vid "kan" → null', () => {
+    assert.equal(matchCompany('kan', [{ legalName: 'Kanmalmo AB', orgnr: '1' }]), null);
+  });
+  test('kort sld (<6) får aldrig prefix-matcha: volvo → null även vid unik kandidat', () => {
+    assert.equal(matchCompany('volvo', [{ legalName: 'Volvo Personvagnar AB', orgnr: '1' }]), null);
+  });
+  test('TVÅ prefix-kandidater → tystnad (tvetydighet vinner alltid)', () => {
+    assert.equal(matchCompany('gleerups', [
+      { legalName: 'Gleerups Utbildning AB', orgnr: '1' },
+      { legalName: 'Gleerups Fastigheter AB', orgnr: '2' },
+    ]), null);
+  });
+  test('EXAKT match vinner alltid över prefix (Netigate-fallet orört)', () => {
+    const m = matchCompany('netigate', [
+      { legalName: 'Netigate AB', orgnr: '5565760997' },
+      { legalName: 'Netigate Holding AB', orgnr: '5590665658' },
+    ]);
+    assert.equal(m?.orgnr, '5565760997');
+  });
+  test('oraklet v2: titel UTAN bolagsform ger första segmentet ("Skånska Byggvaror – Uterum")', () => {
+    assert.equal(extractSiteCompanyName('<title>Skånska Byggvaror – Uterum, fönster och dörrar</title>'), 'Skånska Byggvaror');
+    assert.equal(extractSiteCompanyName('<title>Gleerups | Läromedel</title>'), 'Gleerups');
   });
 });

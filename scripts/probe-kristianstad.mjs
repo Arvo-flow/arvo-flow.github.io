@@ -92,7 +92,7 @@ console.log('── companyAccounts[1] RÅ ──');
 console.log(JSON.stringify(company?.companyAccounts?.[1], null, 1)?.slice(0, 2000));
 
 console.log('═══ 6 · KONCERN/GASELL-KONTRAKTET (sond för Issa-menyn punkt 3) ═══');
-for (const dom of ['kristianstadsmaleri.se', 'lekia.se', 'issagroup.se']) {
+for (const dom of ['gleerups.se', 'skanskabyggvaror.se', 'besproud.com', 'kristianstadsmaleri.se']) {
   try {
     const fx = await fetchBusinessFacts(dom);
     if (!fx?.orgnr) { console.log(`  ${dom}: inga fakta`); continue; }
