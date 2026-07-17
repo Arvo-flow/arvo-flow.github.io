@@ -4,3 +4,7 @@ FYND lekia: ["Ert bokslut 2025: 264,6 mkr i omsättning, 29 anställda","Ni kör
 FYND kristianstadsmaleri: ["Ert bokslut 2025: 14,0 mkr i omsättning, 14 anställda","Er omsättning föll 26 % senaste bokslutsåret","Mejl i ert namn kan förfalskas","Ni ingår i en koncern om 2 bolag","Grundat 1987 — 39 år i verksamhet"]
 ✓ kristianstadsmaleri mobil
 ✓ kristianstadsmaleri desktop
+FYND spokdoman: []
+NOT spokdoman: ["Vi hittar ingen aktiv domän bakom hdssyjxdd.se — kontrollera stavningen, eller testa med en faktura så läser vi de verkliga talen."]
+✓ spokdoman mobil
+✓ spokdoman desktop
