@@ -9,7 +9,7 @@ import {
   sldFromDomain, normalizeCompanyName, matchCompany, normalizeOrgnr, foldToDomainAlphabet,
   extractNextData, extractSearchCompanies, extractCompanyFacts,
   buildBusinessFindings, mergeRevealFindings,
-  luhnValidOrgnr, extractOrgnrCandidates, fetchOrgnrFromWebsite, fetchBusinessFacts, extractSiteCompanyName, extractAccountHistory,
+  luhnValidOrgnr, extractOrgnrCandidates, fetchOrgnrFromWebsite, fetchBusinessFacts, extractSiteCompanyName, titleSpanMatchingSld, extractAccountHistory,
 } from '../lib/business-intel.js';
 
 describe('business-intel · domän → SLD', () => {
@@ -100,6 +100,7 @@ describe('business-intel · orgnr-ur-sajten (Kristianstad-läxan steg 2 — star
   test('footer-format hittas: bindestreck, tätskrivet och moms-format (SE…01)', () => {
     assert.deepEqual(extractOrgnrCandidates('Org.nr 556569-0087 · Stockholm'), ['5565690087']);
     assert.deepEqual(extractOrgnrCandidates('orgnr: 5565690087'), ['5565690087']);
+    assert.deepEqual(extractOrgnrCandidates('Organisationsnummer 556569-0087'), ['5565690087']);
     assert.deepEqual(extractOrgnrCandidates('VAT: SE556569008701'), ['5565690087']);
   });
 
@@ -110,9 +111,9 @@ describe('business-intel · orgnr-ur-sajten (Kristianstad-läxan steg 2 — star
   });
 
   test('dubbletter dedupas; TVÅ olika nummer på sajten → tvetydigt (hanteras i fetch-lagret)', () => {
-    const one = extractOrgnrCandidates('556569-0087 … samt org.nr 5565690087 igen');
+    const one = extractOrgnrCandidates('org.nr 556569-0087 … samt org.nr 5565690087 igen');
     assert.deepEqual(one, ['5565690087']);
-    const two = extractOrgnrCandidates('Vi: 556569-0087. Moderbolag: 559066-5658.');
+    const two = extractOrgnrCandidates('Org.nr: 556569-0087. Moderbolagets org.nr: 559066-5658.');
     assert.equal(two.length, 2);
   });
 
@@ -121,7 +122,7 @@ describe('business-intel · orgnr-ur-sajten (Kristianstad-läxan steg 2 — star
     const one = await fetchOrgnrFromWebsite('x.se', { fetchImpl: () => page('Org.nr 556569-0087') });
     assert.equal(one, '5565690087');
     const two = await fetchOrgnrFromWebsite('x.se', {
-      fetchImpl: () => page('556569-0087 och 559066-5658'),
+      fetchImpl: () => page('org.nr 556569-0087 och org.nr 559066-5658'),
     });
     assert.equal(two, null);
     const none = await fetchOrgnrFromWebsite('x.se', { fetchImpl: () => Promise.reject(new Error('nät')) });
@@ -168,7 +169,7 @@ describe('business-intel · orgnr-ur-sajten (Kristianstad-läxan steg 2 — star
     const facts = await fetchBusinessFacts('kristianstadsmaleri.se', { fetchImpl });
     assert.equal(facts?.legalName, 'Kristianstads Måleri AB');
     assert.equal(facts?.employees, 12);
-    assert.ok(calls.some((u) => decodeURIComponent(u).includes('Kristianstads Måleri AB')),
+    assert.ok(calls.some((u) => decodeURIComponent(u).includes('Kristianstads Måleri')),   // span-oraklet ger namnet utan bolagsform — stavningen är poängen
       'sökfrågan ska vara det rättstavade namnet ur titeln');
   });
 
@@ -588,5 +589,20 @@ describe('Täckningsläxan 2026-07-17 · grinden v2 (ord-prefix) — Gleerups-kl
   test('oraklet v2: titel UTAN bolagsform ger första segmentet ("Skånska Byggvaror – Uterum")', () => {
     assert.equal(extractSiteCompanyName('<title>Skånska Byggvaror – Uterum, fönster och dörrar</title>'), 'Skånska Byggvaror');
     assert.equal(extractSiteCompanyName('<title>Gleerups | Läromedel</title>'), 'Gleerups');
+  });
+});
+
+describe('Skånska Byggvaror-läxan 2026-07-17 · entiteter + span-skanning + kontextkrav', () => {
+  test('entitetskodad titel avkodas och namnet hittas VAR SOM HELST i titeln', () => {
+    const name = extractSiteCompanyName(
+      '<title>Byggvaror p&#229; n&#228;tet och i butik hos Sk&#229;nska Byggvaror</title>', 'skanskabyggvaror');
+    assert.equal(name, 'Skånska Byggvaror');
+  });
+  test('span-grinden: ett spann som inte viker till domänen godkänns aldrig', () => {
+    assert.equal(titleSpanMatchingSld('Byggvaror på nätet hos Skånska Byggvaror', 'gleerups'), null);
+  });
+  test('kontextkravet: Luhn-slumptal utan org.nr-markör räknas inte (besproud-fallet 1779373354)', () => {
+    assert.deepEqual(extractOrgnrCandidates('Artikelnr 177937-3354 i lager'), []);
+    assert.deepEqual(extractOrgnrCandidates('Org.nr 556569-0087'), ['5565690087']);
   });
 });
