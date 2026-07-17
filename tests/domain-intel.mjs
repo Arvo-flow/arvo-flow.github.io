@@ -4,7 +4,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { domainFromEmail, buildRevealFindings, buildMarketAnchorFinding, buildCrossReading, _cachedLookup } from '../lib/domain-intel.js';
+import { domainFromEmail, registrableDomain, buildRevealFindings, buildMarketAnchorFinding, buildCrossReading, _cachedLookup } from '../lib/domain-intel.js';
 
 describe('domainFromEmail', () => {
   test('plockar domän ur e-post', () => {
@@ -407,5 +407,22 @@ describe('Spökdomän-läxan (hdssyjxdd.se, 2026-07-17): ett fantom får inget k
   test('på en existerande domän fyrar fyndet som förut', () => {
     const f = buildRevealFindings({ domain: 'foo.se', posture: { mx: 'other', dmarcAbsent: true, exists: true } });
     assert.ok(f.find((x) => x.kind === 'spoofing'));
+  });
+});
+
+describe('Adversariella svepet 2026-07-17 · domänhärledningen', () => {
+  test('SUBDOMÄN-LÄXAN (identitetsklass): anna@mail.bolag.se → bolag.se — SLD:n blir aldrig "mail"', () => {
+    assert.equal(domainFromEmail('anna@mail.bolag.se'), 'bolag.se');
+    assert.equal(registrableDomain('smtp.mail.foretag.se'), 'foretag.se');
+    assert.equal(registrableDomain('webmail.bolag.co.uk'), 'bolag.co.uk');
+    // kirurgin skär ALDRIG i okända etiketter — bolaget.ab.se är någons domän, inte ett prefix
+    assert.equal(registrableDomain('bolaget.ab.se'), 'bolaget.ab.se');
+  });
+  test('IDN-LÄXAN: info@måleri.se är en företagsdomän (punycode för DNS), aldrig "privat inkorg"', () => {
+    assert.equal(domainFromEmail('info@måleri.se'), 'xn--mleri-mra.se');
+  });
+  test('städning: mailto-prefix och avslutande punkt', () => {
+    assert.equal(domainFromEmail('mailto:x@bolag.se'), 'bolag.se');
+    assert.equal(domainFromEmail('x@bolag.se.'), 'bolag.se');
   });
 });

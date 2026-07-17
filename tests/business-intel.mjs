@@ -538,3 +538,23 @@ describe('IDENTITETSINVARIANTEN (grundarbeslut 2026-07-16): påhittade företag 
     assert.equal(extractCompanyFacts(nd).provenance, 'bolagsverket');
   });
 });
+
+describe('Adversariella svepet 2026-07-17 · läsbarhet + IDN + orgnr', () => {
+  const B = { provenance: 'bolagsverket', legalName: 'X AB', orgnr: '1', revenueTkr: 500, employees: 1, year: '2025' };
+  test('extremtillväxt uttrycks som multipel — "+4 999 900 %" är sant men oläsbart', () => {
+    const f = buildBusinessFindings({ ...B, history: [
+      { year: '2025', revenueTkr: 500 }, { year: '2024', revenueTkr: 100 }] }, { now: new Date('2026-07-17') });
+    assert.equal(f.find((x) => x.kind === 'trend').title, 'Er omsättning 5-dubblade sig senaste bokslutsåret');
+  });
+  test('måttlig tillväxt behåller procentformen', () => {
+    const f = buildBusinessFindings({ ...B, history: [
+      { year: '2025', revenueTkr: 118 }, { year: '2024', revenueTkr: 100 }] }, { now: new Date('2026-07-17') });
+    assert.match(f.find((x) => x.kind === 'trend').title, /växte 18 %/);
+  });
+  test('IDN-SLD: xn--mleri-sra.se avkodas till "måleri" i matchningsnamnrummet', () => {
+    assert.equal(sldFromDomain('xn--mleri-mra.se'), 'måleri');
+  });
+  test('orgnr med em-streck hittas', () => {
+    assert.deepEqual(extractOrgnrCandidates('Org.nr 556569\u20140087'), ['5565690087']);
+  });
+});

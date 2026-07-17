@@ -11,7 +11,16 @@ const domains = [...new Set(csv.split('\n')
   .map((l) => (l.split(',')[1] || '').trim().replace(/^\*/, ''))
   .filter((d) => /^[a-z0-9.-]+\.[a-z]{2,}$/i.test(d)))];
 
-console.log(`Kör avslöjandet mot ${domains.length} riktiga svenska bolag…\n`);
+// ADVERSARIELLA KLASSERNA (egen-utvärderingen 2026-07-17): klasser valda för att spränga
+// grindarna — myndighet/kommun/förening (ska INTE få bokslut), IDN (punycode-vägen),
+// mejl-subdomän (registrableDomain-kirurgin), storbolag/bank (koncern/cap), .com-svenskt.
+import { domainFromEmail } from '../lib/domain-intel.js';
+const EXTRA = ['volvo.se', 'seb.se', 'skatteverket.se', 'kristianstad.se',
+  'länsförsäkringar.se', 'mail.lekia.se', 'spotify.com', 'svenskfotboll.se']
+  .map((d) => domainFromEmail(d)).filter(Boolean);
+domains.push(...EXTRA.filter((d) => !domains.includes(d)));
+
+console.log(`Kör avslöjandet mot ${domains.length} domäner (leads + adversariella klasser)…\n`);
 
 const STRONG = new Set(['platform', 'onboarding', 'cert', 'domain', 'dmarc', 'business']);  // äkta "om er"-fynd
 const FLOOR  = new Set(['bridge', 'infra']);
