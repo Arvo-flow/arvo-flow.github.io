@@ -1,59 +1,43 @@
 
-════════ skanskabyggvaror.se ════════
-sld = skanskabyggvaror · vikt = skanskabyggvaror
-  sajt skanskabyggvaror.se: HTTP 200
-  titel: "Byggvaror p&#229; n&#228;tet och i butik hos Sk&#229;nska Byggvaror"
-  orakel: "Byggvaror på nätet och i butik hos Skånska Byggvaror" · viker till sld? false
-  orgnr på startsidan: []
-  orgnr djupsidor: "5561001891"
-  sök "skanskabyggvaror": 0 träffar
-    grinden → null
-  sök "Byggvaror på nätet och i butik hos Skånska Byggvaror": 0 träffar
-    grinden → null
-  fetchBusinessFacts → {"provenance":"bolagsverket","legalName":"Skånska Byggvaror Aktiebolag","orgnr":"5561001891","revenueTkr":414295,"employees":83,"year":"2024","foundationYear":1965,"koncern":{"companies":11,"subsidiaries":0,"parentName":
-
-════════ besproud.com ════════
-sld = besproud · vikt = besproud
-  sajt besproud.com: HTTP 200
-  titel: "Sproud | THE ALT ALT M*LK"
-  orakel: "Sproud" · viker till sld? false
+════════ bastadgruppen.com ════════
+sld = bastadgruppen · vikt = bastadgruppen
+  sajt bastadgruppen.com: HTTP 200
+  titel: "Båstadgruppen – Arbetskläder & skyddsskor med komfort"
+  orakel: "Båstadgruppen" · viker till sld? true
   orgnr på startsidan: []
   orgnr djupsidor: null
-  sök "besproud": 2 träffar
-    · "Sproud International AB" (5591125454)
-    · "Bespro AB" (5569332934)
+  sök "bastadgruppen": 7 träffar
+    · "Båstadgruppen AB" (5565196135)
+    · "Fasadgruppen Norden AB" (5569498271)
+    · "Bostadsgruppen Helsingborg AB" (5592834278)
+    · "Fasadgruppen Group AB (publ)" (5591584122)
+    · "Bostadsgruppen 2HK AB" (5592844053)
+    · "Bostadsgruppen Höganäs AB" (5593988842)
+    grinden → "Båstadgruppen AB"
+  sök "Båstadgruppen": 5 träffar
+    · "Båstadgruppen AB" (5565196135)
+    · "Båstadgruppen Sverige AB" (5561330118)
+    · "Bostadsgruppen Helsingborg AB" (5592834278)
+    · "Bostadsgruppen 2HK AB" (5592844053)
+    · "Bostadsgruppen Höganäs AB" (5593988842)
+    grinden → "Båstadgruppen AB"
+  fetchBusinessFacts → {"provenance":"bolagsverket","legalName":"Båstadgruppen AB","orgnr":"5565196135","revenueTkr":625470,"employees":77,"year":"2024","foundationYear":1995,"koncern":{"companies":251,"subsidiaries":4,"parentName":"Storskogen
+
+════════ k-fastigheter.se ════════
+sld = k-fastigheter · vikt = kfastigheter
+  sajt k-fastigheter.se: HTTP 200
+  titel: "Ett ögonblick bara…"
+  orakel: "Ett ögonblick bara…" · viker till sld? false
+  orgnr på startsidan: []
+  orgnr djupsidor: null
+  sök "k-fastigheter": 25 träffar
+    · "ICA Fastigheter AB" (5560338518)
+    · "Masmästaren Fastigheter AB" (5566135421)
+    · "Aspelin-Ramm Fastigheter AB" (5565520805)
+    · "Hammersta Fastigheter AB" (5564937737)
+    · "ICA Fastigheter Holding AB" (5566045471)
+    · "LKAB Fastigheter AB" (5560098849)
     grinden → null
-  sök "Sproud": 25 träffar
-    · "Sproud International AB" (5591125454)
-    · "Sprout Technology AB" (5593835159)
-    · "ProAd Sweden AB" (5567582514)
-    · "We are proud AB" (5567891519)
-    · "This is Proud AB" (5595007872)
-    · "Sirous Investments AB" (5594917857)
+  sök "Ett ögonblick bara…": 0 träffar
     grinden → null
   fetchBusinessFacts → null
-
-════════ gleerups.se ════════
-sld = gleerups · vikt = gleerups
-  sajt gleerups.se: HTTP 200
-  titel: "Gleerups – läromedel för skolan och kurslitteratur för högskolan | Hem"
-  orakel: "Gleerups" · viker till sld? true
-  orgnr på startsidan: []
-  orgnr djupsidor: null
-  sök "gleerups": 13 träffar
-    · "Gleerups Utbildning Aktiebolag" (5560802133)
-    · "Gleerupska Förvaltnings Aktiebolaget" (5560301060)
-    · "Office Depot Svenska AB" (5560249558)
-    · "Gleerupska stipendiestiftelsen" (8024784319)
-    · "UNIONENKLUBBEN PÅ GLEERUPS UTBILDNING AB" (8024717269)
-    · "Stiftelsen Agnes och Artur Gleerups forskningsfond" (8024786694)
-    grinden → "Gleerups Utbildning Aktiebolag"
-  sök "Gleerups": 13 träffar
-    · "Gleerups Utbildning Aktiebolag" (5560802133)
-    · "Gleerupska Förvaltnings Aktiebolaget" (5560301060)
-    · "Office Depot Svenska AB" (5560249558)
-    · "Gleerupska stipendiestiftelsen" (8024784319)
-    · "UNIONENKLUBBEN PÅ GLEERUPS UTBILDNING AB" (8024717269)
-    · "Stiftelsen Agnes och Artur Gleerups forskningsfond" (8024786694)
-    grinden → "Gleerups Utbildning Aktiebolag"
-  fetchBusinessFacts → {"provenance":"bolagsverket","legalName":"Gleerups Utbildning Aktiebolag","orgnr":"5560802133","revenueTkr":257481,"employees":65,"year":"2024","foundationYear":1961,"koncern":{"companies":5,"subsidiaries":0,"parentName"
