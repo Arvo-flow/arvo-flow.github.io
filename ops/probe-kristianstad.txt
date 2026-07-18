@@ -38,6 +38,22 @@ sld = k-fastigheter · vikt = kfastigheter
     · "ICA Fastigheter Holding AB" (5566045471)
     · "LKAB Fastigheter AB" (5560098849)
     grinden → null
+  sök "kfastigheter": 25 träffar
+    · "ICA Fastigheter AB" (5560338518)
+    · "Masmästaren Fastigheter AB" (5566135421)
+    · "Aspelin-Ramm Fastigheter AB" (5565520805)
+    · "Hammersta Fastigheter AB" (5564937737)
+    · "ICA Fastigheter Holding AB" (5566045471)
+    · "LKAB Fastigheter AB" (5560098849)
+    grinden → "Kfastigheter Sverige AB"
+  sök "k fastigheter": 25 träffar
+    · "G & K Blanks Fastigheter AB" (5565530432)
+    · "K Öhlin Fastigheter AB" (5567393367)
+    · "John K Fastigheter AB" (5590571468)
+    · "K Larsson Fastigheter i Västervik AB" (5568175193)
+    · "Familjen K Westerberg Fastigheter AB" (5566468954)
+    · "K Öhlin Fastigheter Kyrkbyn AB" (5566547849)
+    grinden → null
   sök "Ett ögonblick bara…": 0 träffar
     grinden → null
   fetchBusinessFacts → null
