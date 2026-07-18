@@ -33,7 +33,8 @@ for (const DOMAIN of DOMAINS) {
   console.log('  orgnr djupsidor:', JSON.stringify(await fetchOrgnrFromWebsite(DOMAIN).catch(() => 'FEL')));
 
   // 2 · söket: ascii-frågan + orakelfrågan
-  for (const q of [sld, ...(oracle && oracle !== sld ? [oracle] : [])]) {
+  const qforms = [...new Set([sld, foldToDomainAlphabet(sld), sld.replace(/-/g, ' '), ...(oracle && oracle !== sld ? [oracle] : [])])];
+  for (const q of qforms) {
     try {
       const r = await fetch(`https://www.allabolag.se/what/${encodeURIComponent(q)}`, { headers: H, redirect: 'follow', signal: AbortSignal.timeout(15000) });
       const companies = extractSearchCompanies(extractNextData(await r.text()));

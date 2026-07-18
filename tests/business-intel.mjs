@@ -634,3 +634,31 @@ describe('Storkoncern-gränsen (Båstadgruppen-läxan, grundarbeslut 2026-07-18)
     assert.doesNotMatch(kc.detail, /volymen förhandlas sällan som en/);
   });
 });
+
+describe('K-Fastigheter-läxan 2026-07-18 · sökform-vidgning (grinden avgör alltid)', () => {
+  const nd = (companies) => JSON.stringify({ props: { pageProps: { hydrationData: { searchStore: { companies: { companies } } } } } });
+  const company = (obj) => `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps: { company: obj } } })}</script>`;
+
+  test('rå form ger fel bolag, hopvikt form surfacear rätt — grinden släpper den rätta', async () => {
+    const calls = [];
+    const fetchImpl = (url) => {
+      const u = decodeURIComponent(String(url)); calls.push(u);
+      if (u.includes('/what/k-fastigheter')) {                       // rå: allabolag tappar k-
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(
+          `<script id="__NEXT_DATA__" type="application/json">${nd([{ legalName: 'ICA Fastigheter AB', orgnr: '5560338518' }])}</script>`) });
+      }
+      if (u.includes('/what/kfastigheter')) {                        // hopvikt: rätt bolag surfacear
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(
+          `<script id="__NEXT_DATA__" type="application/json">${nd([{ legalName: 'K-Fastigheter AB', orgnr: '5590000000' }])}</script>`) });
+      }
+      if (u.includes('allabolag.se/5590000000')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(company({
+          legalName: 'K-Fastigheter AB', orgnr: '5590000000', revenue: '2500000', employees: 300, companyAccountsLastUpdatedDate: '2024' })) });
+      }
+      return Promise.resolve({ ok: false, text: () => Promise.resolve('') });   // bot-vägg på sajten
+    };
+    const facts = await fetchBusinessFacts('k-fastigheter.se', { fetchImpl });
+    assert.equal(facts?.legalName, 'K-Fastigheter AB');
+    assert.ok(calls.some((u) => u.includes('/what/kfastigheter')), 'hopvikta sökformen ska ha provats');
+  });
+});
