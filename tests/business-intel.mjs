@@ -639,7 +639,20 @@ describe('K-Fastigheter-läxan 2026-07-18 · sökform-vidgning (grinden avgör a
   const nd = (companies) => JSON.stringify({ props: { pageProps: { hydrationData: { searchStore: { companies: { companies } } } } } });
   const company = (obj) => `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps: { company: obj } } })}</script>`;
 
-  test('rå form ger fel bolag, hopvikt form surfacear rätt — grinden släpper den rätta', async () => {
+  test('K-FASTIGHETER-SKYDDET: vidgad form + ENDAST prefix-match → TYSTNAD (kunde inte bekräfta ägaren)', async () => {
+    // Verkligt fall: hopvikt sök gav "Kfastigheter Sverige AB" (prefix), sajten bot-vägg-skyddad.
+    // Ett prefix-fynd på en vidgad form utan bekräftelse är en gissning → tystnad, aldrig bokslut.
+    const nd = (companies) => JSON.stringify({ props: { pageProps: { hydrationData: { searchStore: { companies: { companies } } } } } });
+    const fetchImpl = (url) => {
+      const u = decodeURIComponent(String(url));
+      if (u.includes('/what/kfastigheter')) return Promise.resolve({ ok: true, text: () => Promise.resolve(
+        `<script id="__NEXT_DATA__" type="application/json">${nd([{ legalName: 'Kfastigheter Sverige AB', orgnr: '5590000000' }])}</script>`) });
+      return Promise.resolve({ ok: false, text: () => Promise.resolve('') });   // bot-vägg + tom rå-sök
+    };
+    assert.equal(await fetchBusinessFacts('k-fastigheter.se', { fetchImpl }), null);
+  });
+
+  test('men EXAKT-vikt-match på vidgad form släpps (namnet = domänen exakt, ingen gissning)', async () => {
     const calls = [];
     const fetchImpl = (url) => {
       const u = decodeURIComponent(String(url)); calls.push(u);
