@@ -606,3 +606,31 @@ describe('Skånska Byggvaror-läxan 2026-07-17 · entiteter + span-skanning + ko
     assert.deepEqual(extractOrgnrCandidates('Org.nr 556569-0087'), ['5565690087']);
   });
 });
+
+describe('Storkoncern-gränsen (Båstadgruppen-läxan, grundarbeslut 2026-07-18)', () => {
+  const base = { provenance: 'bolagsverket', legalName: 'Båstadgruppen AB', orgnr: '1', revenueTkr: 625500, employees: 77, year: '2024', history: [] };
+
+  test('BÅSTADGRUPPEN ordagrant: 251 bolag → "Ni ägs av en större koncern", lilla-kroken FÖRBJUDEN', () => {
+    const f = buildBusinessFindings({ ...base, koncern: { companies: 251, subsidiaries: null, parentName: 'Storskogen 3 Invest AB' } });
+    const kc = f.find((x) => x.kind === 'koncern');
+    assert.equal(kc.title, 'Ni ägs av en större koncern');
+    assert.match(kc.detail, /Storskogen 3 Invest AB/);
+    assert.match(kc.detail, /er juridiska enhet/);
+    assert.doesNotMatch(kc.detail, /volymen förhandlas sällan som en/, 'lilla-gruppens krok är FALSK för en serieförvärvare');
+    assert.match(kc.source, /251 bolag/);
+  });
+
+  test('gränsen är skarp: 24 bolag → lilla varianten, 25 → ägarvarianten', () => {
+    const small = buildBusinessFindings({ ...base, koncern: { companies: 24, subsidiaries: null, parentName: 'X Holding AB' } });
+    assert.match(small.find((x) => x.kind === 'koncern').title, /^Ni ingår i en koncern om 24 bolag$/);
+    const big = buildBusinessFindings({ ...base, koncern: { companies: 25, subsidiaries: null, parentName: 'X Holding AB' } });
+    assert.equal(big.find((x) => x.kind === 'koncern').title, 'Ni ägs av en större koncern');
+  });
+
+  test('stor moder utan parent (Storskogen själva skriver in sig) → neutral rad utan lilla-kroken', () => {
+    const f = buildBusinessFindings({ ...base, koncern: { companies: 251, subsidiaries: 250, parentName: null } });
+    const kc = f.find((x) => x.kind === 'koncern');
+    assert.equal(kc.title, 'Er koncern rymmer 251 bolag');
+    assert.doesNotMatch(kc.detail, /volymen förhandlas sällan som en/);
+  });
+});
