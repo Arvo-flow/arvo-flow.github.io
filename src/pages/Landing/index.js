@@ -135,19 +135,27 @@ export default function Landing() {
         setReveal({ domain: data.domain, findings: data.findings });
         setRevealPending(true);
         setRevealLoading(false);
-        // Våg 2 — fulla budgeten; enbart NYA rader (per titel) läggs på, sist och synligt.
+        // Våg 2 — fulla budgeten, men KLIENTKAPAD (18 s). K-Fastigheter-läxan 2026-07-18: en
+        // bot-vägg-skyddad domän kan hålla server-anropet länge; utan kap nås aldrig
+        // setRevealPending(false) och noten hänger kvar och lovar rader som inte kommer. Kapet
+        // garanterar att pending ALLTID resolveras till kvittot. En sen cert-rad som missas
+        // cachas ändå av flimmervakten till nästa besök.
         try {
-          const res2 = await fetch('/api/reveal', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-          });
-          const d2 = await res2.json().catch(() => ({}));
-          if (d2.ok && d2.findings?.length) {
-            const seen = new Set(data.findings.map((f) => f.title));
-            const extra = d2.findings.filter((f) => !seen.has(f.title))
-              .slice(0, Math.max(0, 5 - data.findings.length));   // taket (max 5) gäller totalen — sena rader landar bara om plats finns
-            if (extra.length) setReveal({ domain: data.domain, findings: [...data.findings, ...extra] });
-          }
+          const ctrl = new AbortController();
+          const cap = setTimeout(() => ctrl.abort(), 18000);
+          try {
+            const res2 = await fetch('/api/reveal', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email }), signal: ctrl.signal,
+            });
+            const d2 = await res2.json().catch(() => ({}));
+            if (d2.ok && d2.findings?.length) {
+              const seen = new Set(data.findings.map((f) => f.title));
+              const extra = d2.findings.filter((f) => !seen.has(f.title))
+                .slice(0, Math.max(0, 5 - data.findings.length));   // taket (max 5) gäller totalen
+              if (extra.length) setReveal({ domain: data.domain, findings: [...data.findings, ...extra] });
+            }
+          } finally { clearTimeout(cap); }
         } catch { /* våg 1 står redan — dramat uteblir, kortet består */ }
         setRevealElapsed((performance.now() - t0) / 1000);
         setRevealPending(false);

@@ -455,18 +455,24 @@ export default function Portfolio() {
         setReveal(data);
         setRevealPending(true);
         setRevealLoading(false);
+        // Klientkapad våg 2 (K-Fastigheter-läxan 2026-07-18): pending-noten måste ALLTID
+        // resolveras — en bot-vägg-skyddad domän får aldrig hålla noten hängande.
         try {
-          const res2 = await fetch('/api/reveal', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-          });
-          const d2 = await res2.json().catch(() => ({}));
-          if (d2.findings?.length) {
-            const seen = new Set(data.findings.map((f) => f.title));
-            const extra = d2.findings.filter((f) => !seen.has(f.title))
-              .slice(0, Math.max(0, 5 - data.findings.length));   // taket (max 5) gäller totalen — sena rader landar bara om plats finns
-            if (extra.length) setReveal({ ...data, findings: [...data.findings, ...extra] });
-          }
+          const ctrl = new AbortController();
+          const cap = setTimeout(() => ctrl.abort(), 18000);
+          try {
+            const res2 = await fetch('/api/reveal', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email }), signal: ctrl.signal,
+            });
+            const d2 = await res2.json().catch(() => ({}));
+            if (d2.findings?.length) {
+              const seen = new Set(data.findings.map((f) => f.title));
+              const extra = d2.findings.filter((f) => !seen.has(f.title))
+                .slice(0, Math.max(0, 5 - data.findings.length));   // taket (max 5) gäller totalen
+              if (extra.length) setReveal({ ...data, findings: [...data.findings, ...extra] });
+            }
+          } finally { clearTimeout(cap); }
         } catch { /* våg 1 står redan */ }
         setRevealElapsed((performance.now() - t0) / 1000);
         setRevealPending(false);
