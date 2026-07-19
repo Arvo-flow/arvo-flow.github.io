@@ -8,3 +8,7 @@ FYND spokdoman: []
 NOT spokdoman: ["Vi hittar ingen aktiv domän bakom hdssyjxdd.se — kontrollera stavningen, eller testa med en faktura så läser vi de verkliga talen."]
 ✓ spokdoman mobil
 ✓ spokdoman desktop
+PENDING KVAR kfast: 0 (ska vara 0)
+FYND kfast: ["Ni kör Microsoft 365","Ert e-postskydd är redan aktivt","Digital närvaro sedan april 2015"]
+✓ kfast mobil
+✓ kfast desktop
