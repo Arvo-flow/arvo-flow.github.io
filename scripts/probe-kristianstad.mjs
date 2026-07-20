@@ -6,7 +6,7 @@ import {
   extractOrgnrCandidates, fetchOrgnrFromWebsite,
 } from '../lib/business-intel.js';
 
-const DOMAINS = (process.env.PROBE_DOMAINS || 'bastadgruppen.com,k-fastigheter.se').split(',');
+const DOMAINS = (process.env.PROBE_DOMAINS || 'webmanuals.aero,nordlock.com').split(',');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 const H = { 'User-Agent': UA, 'Accept-Language': 'sv-SE,sv;q=0.9', Accept: 'text/html,*/*;q=0.8' };
 
