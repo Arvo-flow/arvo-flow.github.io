@@ -3,14 +3,16 @@ name: Verify price sources (factory)
 # EN workflow för HELA verifierar-fabriken. Job-matrisen härleds ur registryt
 # (scripts/verify.mjs --matrix) → lägg till en verifierare i lib/verifiers/registry.mjs så
 # vaktas den automatiskt här. Playwright/Chromium installeras bara för källor med needsBrowser.
+# SCHEMAT AVSTÄNGT (grundarbeslut 2026-07-20): den nattliga körningen failade återkommande och
+# spammade inkorgen. Fabriken finns kvar — men körs ENDAST manuellt (workflow_dispatch) tills
+# de drivande källorna reparerats. Ingen auto-körning = inga fail-mejl. Återinför cron först när
+# verifierarna är gröna igen.
 on:
   workflow_dispatch:
     inputs:
       id:
         description: 'Kör en enskild källa (id) eller "all"'
         default: 'all'
-  schedule:
-    - cron: '0 5 * * 1'   # måndagar 05:00 UTC
 
 jobs:
   discover:
