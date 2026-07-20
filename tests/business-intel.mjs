@@ -675,3 +675,27 @@ describe('K-Fastigheter-läxan 2026-07-18 · sökform-vidgning (grinden avgör a
     assert.ok(calls.some((u) => u.includes('/what/kfastigheter')), 'hopvikta sökformen ska ha provats');
   });
 });
+
+describe('Särskrivnings-klassen 2026-07-20 (sondbevisad: nordlock funkar, webmanuals tiger korrekt)', () => {
+  test('NORD-LOCK: bindestrecket viker bort -> Nord-Lock AB exakt-matchar nordlock, syskon utan effekt', () => {
+    const m = matchCompany('nordlock', [
+      { legalName: 'Nordlo Syd AB', orgnr: '5564720208' },
+      { legalName: 'Nord-Lock International AB', orgnr: '5566105739' },
+      { legalName: 'Nord-Lock AB', orgnr: '5561371054' },
+    ]);
+    assert.equal(m?.orgnr, '5561371054');
+  });
+
+  test('WEB MANUALS: fem syskonbolag, inget rent "Web Manuals AB" -> TYSTNAD (aldrig fel syskon)', () => {
+    const siblings = ['Sweden', 'International', 'Technologies', 'Americas', 'Innovation 1']
+      .map((suf, i) => ({ legalName: `Web Manuals ${suf} AB`, orgnr: `55600000${i}0` }));
+    assert.equal(matchCompany('webmanuals', siblings), null);
+  });
+
+  test('oraklet bryter inte namn pa inre bindestreck (All-in-One / Nord-Lock)', () => {
+    // span-scan hittar "Web Manuals" trots All-in-One i titeln
+    assert.equal(extractSiteCompanyName('<title>All-in-One Aviation | Web Manuals</title>', 'webmanuals'), 'Web Manuals');
+    // first-segment-fallbacken bryter INTE "All-in-One" till "All" (bindestreck ur delaruttrycket)
+    assert.equal(extractSiteCompanyName('<title>All-in-One System</title>'), 'All-in-One System');
+  });
+});
