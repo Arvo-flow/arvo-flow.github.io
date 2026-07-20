@@ -1,59 +1,38 @@
 
-════════ bastadgruppen.com ════════
-sld = bastadgruppen · vikt = bastadgruppen
-  sajt bastadgruppen.com: HTTP 200
-  titel: "Båstadgruppen – Arbetskläder & skyddsskor med komfort"
-  orakel: "Båstadgruppen" · viker till sld? true
+════════ webmanuals.aero ════════
+sld = webmanuals · vikt = webmanuals
+  sajt webmanuals.aero: HTTP 200
+  titel: "#1 All-in-One Aviation Document Management System | Web Manuals"
+  orakel: "#1 All" · viker till sld? false
   orgnr på startsidan: []
   orgnr djupsidor: null
-  sök "bastadgruppen": 7 träffar
-    · "Båstadgruppen AB" (5565196135)
-    · "Fasadgruppen Norden AB" (5569498271)
-    · "Bostadsgruppen Helsingborg AB" (5592834278)
-    · "Fasadgruppen Group AB (publ)" (5591584122)
-    · "Bostadsgruppen 2HK AB" (5592844053)
-    · "Bostadsgruppen Höganäs AB" (5593988842)
-    grinden → "Båstadgruppen AB"
-  sök "Båstadgruppen": 5 träffar
-    · "Båstadgruppen AB" (5565196135)
-    · "Båstadgruppen Sverige AB" (5561330118)
-    · "Bostadsgruppen Helsingborg AB" (5592834278)
-    · "Bostadsgruppen 2HK AB" (5592844053)
-    · "Bostadsgruppen Höganäs AB" (5593988842)
-    grinden → "Båstadgruppen AB"
-  fetchBusinessFacts → {"provenance":"bolagsverket","legalName":"Båstadgruppen AB","orgnr":"5565196135","revenueTkr":625470,"employees":77,"year":"2024","foundationYear":1995,"koncern":{"companies":251,"subsidiaries":4,"parentName":"Storskogen
-
-════════ k-fastigheter.se ════════
-sld = k-fastigheter · vikt = kfastigheter
-  sajt k-fastigheter.se: HTTP 200
-  titel: "Ett ögonblick bara…"
-  orakel: "Ett ögonblick bara…" · viker till sld? false
-  orgnr på startsidan: []
-  orgnr djupsidor: null
-  sök "k-fastigheter": 25 träffar
-    · "ICA Fastigheter AB" (5560338518)
-    · "Masmästaren Fastigheter AB" (5566135421)
-    · "Aspelin-Ramm Fastigheter AB" (5565520805)
-    · "Hammersta Fastigheter AB" (5564937737)
-    · "ICA Fastigheter Holding AB" (5566045471)
-    · "LKAB Fastigheter AB" (5560098849)
+  sök "webmanuals": 6 träffar
+    · "Web Manuals Sweden AB" (5568884992)
+    · "Web Manuals International AB" (5569422685)
+    · "Web Manuals Technologies AB" (5591551196)
+    · "Web Manuals Americas AB" (5593939779)
+    · "Web Manuals Innovation 1 AB" (5594562968)
+    · "Stiftelsen Web Manuals Foundation" (8024801402)
     grinden → null
-  sök "kfastigheter": 25 träffar
-    · "ICA Fastigheter AB" (5560338518)
-    · "Masmästaren Fastigheter AB" (5566135421)
-    · "Aspelin-Ramm Fastigheter AB" (5565520805)
-    · "Hammersta Fastigheter AB" (5564937737)
-    · "ICA Fastigheter Holding AB" (5566045471)
-    · "LKAB Fastigheter AB" (5560098849)
-    grinden → "Kfastigheter Sverige AB"
-  sök "k fastigheter": 25 träffar
-    · "G & K Blanks Fastigheter AB" (5565530432)
-    · "K Öhlin Fastigheter AB" (5567393367)
-    · "John K Fastigheter AB" (5590571468)
-    · "K Larsson Fastigheter i Västervik AB" (5568175193)
-    · "Familjen K Westerberg Fastigheter AB" (5566468954)
-    · "K Öhlin Fastigheter Kyrkbyn AB" (5566547849)
-    grinden → null
-  sök "Ett ögonblick bara…": 0 träffar
+  sök "#1 All": 0 träffar
     grinden → null
   fetchBusinessFacts → null
+
+════════ nordlock.com ════════
+sld = nordlock · vikt = nordlock
+  sajt nordlock.com: HTTP 200
+  titel: "Solutions for secure bolted joints - Nord-Lock Group"
+  orakel: "Solutions for secure bolted joints" · viker till sld? false
+  orgnr på startsidan: []
+  orgnr djupsidor: null
+  sök "nordlock": 25 träffar
+    · "Nordlo Syd AB" (5564720208)
+    · "Nordlo Advance AB" (5564861689)
+    · "Nordlo Elevate AB" (5566477617)
+    · "Nordlo Mitt AB" (5564562212)
+    · "Nord-Lock International AB" (5566105739)
+    · "Nord-Lock AB" (5561371054)
+    grinden → "Nord-Lock AB"
+  sök "Solutions for secure bolted joints": 0 träffar
+    grinden → null
+  fetchBusinessFacts → {"provenance":"bolagsverket","legalName":"Nord-Lock AB","orgnr":"5561371054","revenueTkr":469695,"employees":194,"year":"2025","foundationYear":1970,"koncern":{"companies":152,"subsidiaries":0,"parentName":"Nord-Lock Int
