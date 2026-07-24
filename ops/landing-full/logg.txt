@@ -1,0 +1,3 @@
+✓ a-exempel-mobil
+✓ b-personligt-mobil
+✓ b-personligt-desktop
