@@ -7,11 +7,12 @@
 // Rörelse som telemetri (IntersectionObserver → inview; prefers-reduced-motion respekteras).
 // Kalender-artefakten är ett MÄRKT EXEMPEL (fällornas verkliga klockutfall, aldrig besökarens data).
 // Föregående sida: src/pages/LandingJuli26 (arkiv) + git-tagg landing-juli-26.
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
+import { continuationPhrases, joinPhrases } from '../../lib/roomContinuation';
 import {
   Page, Hero, DossierShell, Dossier, SectionKey, DoorBlock, RoomBlock, Artefakt,
   Light, Steps, PriceSentence, PriceCards, Faq, LastWord,
@@ -57,10 +58,11 @@ function useTickUp(target, active, duration = 900) {
 
 // EXEMPEL-artefakten: fällornas verkliga klockutfall ur testkorpusen (tests/avtal-fallor.mjs).
 // Märks alltid "Exempel" i bildtexten — aldrig ett påstående om besökaren (regel 3/9).
+// Kalendern i den tysta veckan visar ÅTERFÖRSÄKRAN, inte larm: raden är hämtad ur testkorpusens
+// verkliga klockutfall (tests/avtal-fallor.mjs) och framing:en är produktens sanning — kunden
+// behöver inte minnas fönstret, motdraget ligger köat.
 const EXEMPEL_RADER = [
-  { days: 6, akut: true, sup: 'Bahnhof AB', txt: 'Sista uppsägningsdag 15 juli — annars bundna till 15 januari.' },
-  { days: 7, akut: true, sup: 'Fortnox AB', txt: 'Trettio dagars varsel — räknat på dagen, aldrig avrundat.' },
-  { days: 266, akut: false, sup: 'Telia', txt: 'Ett redan missat fönster upptäckt — nästa bevakas: 1 april 2027.' },
+  { days: 266, akut: false, sup: 'Telia', txt: 'Ett redan missat fönster upptäckt — nästa bevakas 1 april 2027. Motdraget ligger färdigt.' },
 ];
 
 const FAQ = [
@@ -175,6 +177,11 @@ export default function Landing() {
     setTimeout(() => doorRef.current?.querySelector('input')?.focus({ preventScroll: true }), 550);
   }, []);
 
+  // DEN LEVANDE FORTSÄTTNINGEN (02): dörrens fynd → rummets tråd. Rent härlett, aldrig
+  // fabricerat (src/lib/roomContinuation.js, testlåst i tests/room-continuation.mjs).
+  const roomPhrases  = useMemo(() => continuationPhrases(reveal?.findings), [reveal]);
+  const roomPersonal = Boolean(reveal?.domain && roomPhrases.length);
+
   const [heroRef, heroIn] = useReveal(0.1);
   const [dossierRef, dossierIn] = useReveal(0.12);
   const [doorInRef, doorIn] = useReveal(0.2);
@@ -241,26 +248,73 @@ export default function Landing() {
               )}
             </DoorBlock>
 
-            {/* 02 · ARVO-KONTORET — rummet som bevis */}
+            {/* 02 · ARVO-KONTORET — DEN TYSTA VECKAN SOM HJÄLTE (grundarbeslut 2026-07-21).
+                Bibelns tes gjord synlig: produkten är VAKTEN, inte fyndet. Kortet leder med
+                förtjänat lugn (hjärtslag → veckodom), inte med brådska. Kalendern degraderas
+                till ÅTERFÖRSÄKRAN ("köat, ni behöver inte minnas det").
+                Den LEVANDE FORTSÄTTNINGEN bor ENDAST här (aldrig i dörren, 01): har besökaren
+                öppnat underlaget fortsätter rummet tråden med deras EGNA nyss-avslöjade fakta —
+                annars visas exempelvarianten. Domen/kalendern är alltid märkta som FORM. */}
             <RoomBlock ref={roomRef}>
               <SectionKey>
                 <span className="k-num">02 · Arvo-kontoret</span>
                 <span className="k-note">Konfidentiellt · ett rum per kund</span>
               </SectionKey>
-              <h2 className={roomIn}>Det ni just läste finns redan.<br /><em>Och det jobbar i natt.</em></h2>
+              <h2 className={roomIn}>
+                {roomPersonal
+                  ? <>Det ni just såg blir rad ett.<br /><em>Sen vakar vi vidare — varje natt.</em></>
+                  : <>Det ni just läste finns redan.<br /><em>Och i natt var allt lugnt.</em></>}
+              </h2>
               <Artefakt ref={artRef} className={artIn}>
                 <div className="a-card">
-                  <div className="a-head">
-                    <span className="a-eyebrow">Kontraktskalendern</span>
-                    <span className="a-count">5 avtal lästa</span>
+                  {/* Takt 1 — vaktens hjärtslag: beviset att en maskin är vaken */}
+                  <div className="a-sec a-pulse">
+                    <span className="a-disc" aria-hidden="true"><span className="a-sweep" /></span>
+                    <span>
+                      <span className="a-plabel">
+                        {roomPersonal ? `Ert rum · ${reveal.domain} · förhandsvisning` : 'Vakten · exempelrum · aldrig av'}
+                      </span>
+                      <span className="a-pline">
+                        Vakten sveper <b>fyrtiotalet marknadskällor</b> varje natt — <em>även de tysta.</em>
+                      </span>
+                    </span>
                   </div>
-                  <div className="a-dom">Två fönster stänger <em>samma vecka.</em></div>
-                  {EXEMPEL_RADER.map((r, i) => (
-                    <ArtefaktRad key={r.sup} r={r} index={i} parentIn={!!artIn} />
-                  ))}
+
+                  {/* Takt 2 — veckodomen: det förtjänta lugnet, författat */}
+                  <div className="a-sec">
+                    <span className="a-eyebrow">Veckodomen · så läser en lugn vecka</span>
+                    <div className="a-dom">En vanlig vecka hos er. Ingenting kräver er — vi vägde era priser i natt, allt håller.</div>
+                  </div>
+
+                  {/* Takt 3 — den levande fortsättningen (endast efter öppnat underlag) */}
+                  {roomPersonal && (
+                    <div className="a-sec a-cont">
+                      Det ni just såg i dörren — {joinPhrases(roomPhrases)} — var första ögonkastet.
+                      I ert rum blir det <b>rad ett</b>, och vakten läser vidare <em>varje natt.</em>
+                    </div>
+                  )}
+
+                  {/* Takt 4 — kalendern som återförsäkran, aldrig som larm */}
+                  <div className="a-sec">
+                    <div className="a-head">
+                      <span className="a-eyebrow">Maktkalendern · motdraget köat</span>
+                      <span className="a-count">5 avtal lästa</span>
+                    </div>
+                    {EXEMPEL_RADER.map((r, i) => (
+                      <ArtefaktRad key={r.sup} r={r} index={i} parentIn={!!artIn} />
+                    ))}
+                    <div className="a-sum">Fyra avtal till under bevakning — inget av dem kräver er de närmaste månaderna.</div>
+                  </div>
+
+                  <div className="a-sec a-foot">
+                    Den vecka något faktiskt händer hör ni av oss — med draget redan gjort.{' '}
+                    <b>Tills dess sköter vi det åt er.</b>
+                  </div>
                 </div>
                 <div className="a-caption">
-                  Exempel ur ett Arvo-rum · maskinellt kontrollerad · varje datum ur kundens eget avtal
+                  {roomPersonal
+                    ? <>Domen och kalendern visar <b>formen</b> — de fylls när ni delat er första faktura · det ni redan vet om er är verifierat</>
+                    : <>Exempel — formen på ett Arvo-rum · maskinellt kontrollerad · varje datum ur kundens eget avtal</>}
                 </div>
               </Artefakt>
             </RoomBlock>

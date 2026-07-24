@@ -1,0 +1,39 @@
+name: Live sektion 02 (rummet)
+# Fotar 02 · Arvo-kontoret i båda lägen mot skarpa sajten. Självtriggar på skript-push.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/live-sektion02.mjs'
+permissions:
+  contents: write
+jobs:
+  shoot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium --with-deps
+      - name: Vänta in Vercel-deployen av samma push
+        run: sleep 120
+      - name: Fota sektion 02
+        run: |
+          set -o pipefail
+          mkdir -p ops/sek02-shots
+          node scripts/live-sektion02.mjs 2>&1 | tee ops/sek02-shots/logg.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git pull --rebase origin main || true
+          git add ops/sek02-shots/
+          git commit -m "ops: live-sektion02 [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"

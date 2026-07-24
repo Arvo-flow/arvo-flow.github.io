@@ -138,19 +138,66 @@ export const RoomBlock = styled.div`
   }
 `;
 
-/* Kalender-artefakten — smycket på sammeten */
+/* Rummets instrument — den tysta veckan som hjälte (grundarbeslut 2026-07-21).
+   Fyra takter i ETT föremål: vaktens hjärtslag → veckodomen → den levande fortsättningen
+   från dörren → kalendern som återförsäkran. Materialet (korn + inre keyline) som dossiern. */
 export const Artefakt = styled.div`
-  max-width: 620px; margin: 56px auto 0;
+  max-width: 640px; margin: 56px auto 0;
   ${riseIn} transition-delay: .1s;
 
   .a-card {
-    border: 1px solid rgba(43,196,172,.30); border-radius: 18px;
-    padding: 26px 28px;
-    background: radial-gradient(520px 240px at 12% -18%, rgba(43,196,172,.12), transparent 60%), ${D.bgRaised};
-    box-shadow: 0 40px 90px rgba(0,0,0,.55);
-    @media (max-width: 640px) { padding: 20px 18px; }
+    position: relative; overflow: hidden;
+    border: 1px solid rgba(43,196,172,.30); border-radius: 20px;
+    background: radial-gradient(560px 260px at 12% -18%, rgba(43,196,172,.13), transparent 60%), ${D.bgRaised};
+    box-shadow: 0 50px 110px rgba(0,0,0,.6);
   }
-  .a-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+  .a-card::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.045'/%3E%3C/svg%3E");
+  }
+  .a-card::after {
+    content: ''; position: absolute; inset: 9px; pointer-events: none;
+    border: 1px solid rgba(157,184,175,.08); border-radius: 13px;
+  }
+  .a-sec { position: relative; padding: 22px 30px; border-top: 1px solid ${D.hairlineOnDark};
+    &:first-child { border-top: none; }
+    @media (max-width: 640px) { padding: 18px 18px; } }
+
+  /* Vaktens hjärtslag — beviset att en maskin var vaken i natt */
+  .a-pulse { display: flex; align-items: center; gap: 15px; }
+  .a-disc { position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%;
+    border: 1px solid rgba(93,232,210,.18);
+    &::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; border: 1px solid rgba(93,232,210,.12); } }
+  .a-sweep { position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0deg, rgba(93,232,210,.0) 250deg, rgba(93,232,210,.5) 360deg);
+    mask: radial-gradient(circle, transparent 58%, #000 59%);
+    -webkit-mask: radial-gradient(circle, transparent 58%, #000 59%);
+    animation: asweep 3.4s linear infinite;
+    @media (prefers-reduced-motion: reduce) { animation: none; opacity: .55; } }
+  @keyframes asweep { to { transform: rotate(360deg); } }
+  .a-plabel { display: block; font-family: ${MONO}; font-size: 9px; letter-spacing: .24em;
+    text-transform: uppercase; color: ${D.faintOnDark}; margin-bottom: 3px; }
+  .a-pline { font-size: 13px; line-height: 1.5; color: ${D.inkOnDark};
+    b { font-weight: 600; } em { font-style: normal; color: ${D.tealBright}; } }
+
+  /* Veckodomen — förtjänat lugn, metallic som i rummet */
+  .a-dom { font-family: ${SERIF}; font-size: clamp(20px, 3.6vw, 25px); font-weight: 500;
+    line-height: 1.3; margin-top: 12px;
+    background: ${D.metallicText}; -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; }
+
+  /* Den levande fortsättningen från dörren */
+  .a-cont { font-size: 13.5px; line-height: 1.65; color: ${D.mutedOnDark};
+    b { color: ${D.inkOnDark}; font-weight: 600; }
+    em { font-style: normal; color: ${D.tealBright}; } }
+
+  .a-sum { font-size: 12.5px; line-height: 1.55; color: ${D.mutedOnDark};
+    padding-top: 12px; border-top: 1px solid ${D.hairlineOnDark}; }
+
+  .a-foot { font-size: 13px; line-height: 1.6; color: ${D.mutedOnDark};
+    b { color: ${D.inkOnDark}; font-weight: 600; } }
+
+  .a-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
   .a-eyebrow { font-family: ${MONO}; font-size: 9.5px; letter-spacing: .24em; text-transform: uppercase; color: ${D.teal};
     display: inline-flex; align-items: center; gap: 8px;
     &::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: ${D.tealBright};
@@ -158,9 +205,6 @@ export const Artefakt = styled.div`
   .a-count { font-family: ${MONO}; font-size: 9.5px; color: ${D.faintOnDark}; }
   @keyframes dotpulse { 0%{box-shadow:0 0 0 0 rgba(93,232,210,.45);} 70%{box-shadow:0 0 0 7px rgba(93,232,210,0);} 100%{box-shadow:0 0 0 0 rgba(93,232,210,0);} }
   @media (prefers-reduced-motion: reduce) { .a-eyebrow::before { animation: none; } }
-
-  .a-dom { font-family: ${SERIF}; font-size: 23px; color: ${D.inkOnDark}; font-weight: 500; margin-bottom: 18px;
-    em { font-style: italic; color: ${D.signal}; } }
 
   .a-row {
     display: flex; gap: 16px; align-items: baseline; padding: 13px 0;
@@ -177,7 +221,8 @@ export const Artefakt = styled.div`
   .a-txt { font-size: 12px; color: ${D.mutedOnDark}; margin-top: 2px; line-height: 1.5; }
   .a-caption {
     text-align: center; font-family: ${MONO}; font-size: 9.5px; letter-spacing: .18em;
-    text-transform: uppercase; color: ${D.faintOnDark}; margin-top: 17px; line-height: 1.9;
+    text-transform: uppercase; color: ${D.faintOnDark}; margin-top: 18px; line-height: 1.9;
+    b { color: ${D.mutedOnDark}; font-weight: 500; }
   }
 `;
 
