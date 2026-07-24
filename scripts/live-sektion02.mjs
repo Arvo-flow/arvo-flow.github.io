@@ -9,6 +9,12 @@ const BASE = process.env.ARVO_BASE_URL || 'https://arvoflow.se';
 const OUT = 'ops/sek02-shots';
 mkdirSync(OUT, { recursive: true });
 
+// Diagnos: vad svarar den publika pulsen? (bevisar om hjärtslaget har verklig data att visa)
+try {
+  const r = await fetch(`${BASE}/api/vakt-pulse`);
+  console.log('[puls] HTTP', r.status, '→', (await r.text()).slice(0, 200));
+} catch (e) { console.log('[puls] FEL', e?.message); }
+
 const b = await chromium.launch({ headless: true });
 
 async function shoot(tag, { openDoor }) {
