@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
-import { continuationPhrases, joinPhrases } from '../../lib/roomContinuation';
+import { continuationPhrases, continuationClause } from '../../lib/roomContinuation';
 import {
   Page, Hero, DossierShell, Dossier, SectionKey, DoorBlock, RoomBlock, Artefakt,
   Light, Steps, PriceSentence, PriceCards, Faq, LastWord,
@@ -96,6 +96,19 @@ const FAQ = [
   },
 ];
 
+// Svepets tidpunkt i människospråk: "i natt 21:52" / "i dag 06:10" / "22 juli 21:52".
+// Ren formattering av en VERKLIG tidsstämpel — aldrig ett påhittat klockslag.
+function svepTid(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const hm = d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+  const dag = (x) => { const c = new Date(x); c.setHours(0, 0, 0, 0); return c; };
+  const diff = Math.round((dag(new Date()) - dag(d)) / 86400000);
+  if (diff <= 0) return `i dag ${hm}`;
+  if (diff === 1) return `i natt ${hm}`;
+  return `${d.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })} ${hm}`;
+}
+
 function ArtefaktRad({ r, index, parentIn }) {
   const dagar = useTickUp(r.days, parentIn, 700 + index * 150);
   return (
@@ -175,6 +188,18 @@ export default function Landing() {
   const goToDoor = useCallback(() => {
     doorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => doorRef.current?.querySelector('input')?.focus({ preventScroll: true }), 550);
+  }, []);
+
+  // VAKTENS PULS (02): det VERKLIGA senaste svepet ur vakt_events — samma sanning som kundernas
+  // rum. null → generisk mening (aldrig ett påhittat klockslag). Hämtas tyst, blockerar inget.
+  const [pulse, setPulse] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/vakt-pulse')
+      .then((r) => r.json())
+      .then((d) => { if (alive && d?.sweep?.sweptAt) setPulse(d.sweep); })
+      .catch(() => {});
+    return () => { alive = false; };
   }, []);
 
   // DEN LEVANDE FORTSÄTTNINGEN (02): dörrens fynd → rummets tråd. Rent härlett, aldrig
@@ -262,7 +287,7 @@ export default function Landing() {
               </SectionKey>
               <h2 className={roomIn}>
                 {roomPersonal
-                  ? <>Det ni just såg blir rad ett.<br /><em>Sen vakar vi vidare — varje natt.</em></>
+                  ? <>Det ni just såg blir rad ett.<br /><em>Sedan vakar vi vidare — varje natt.</em></>
                   : <>Det ni just läste finns redan.<br /><em>Och i natt var allt lugnt.</em></>}
               </h2>
               <Artefakt ref={artRef} className={artIn}>
@@ -272,24 +297,32 @@ export default function Landing() {
                     <span className="a-disc" aria-hidden="true"><span className="a-sweep" /></span>
                     <span>
                       <span className="a-plabel">
-                        {roomPersonal ? `Ert rum · ${reveal.domain} · förhandsvisning` : 'Vakten · exempelrum · aldrig av'}
+                        {roomPersonal ? `Ert rum · ${reveal.domain} · förhandsvisning` : 'Vakten · exempelrum · alltid på'}
                       </span>
                       <span className="a-pline">
-                        Vakten sveper <b>fyrtiotalet marknadskällor</b> varje natt — <em>även de tysta.</em>
+                        {pulse ? (
+                          <>Senaste svep <b>{svepTid(pulse.sweptAt)}</b>
+                            {pulse.sources ? <> · <b>{pulse.sources} marknadskällor</b></> : null}
+                            {' — '}<em>{pulse.changes > 0
+                              ? `${pulse.changes} prisrörelser fångade`
+                              : 'allt lugnt'}</em>.</>
+                        ) : (
+                          <>Vakten sveper <b>fyrtiotalet marknadskällor</b> varje natt — <em>också de nätter då inget händer.</em></>
+                        )}
                       </span>
                     </span>
                   </div>
 
                   {/* Takt 2 — veckodomen: det förtjänta lugnet, författat */}
                   <div className="a-sec">
-                    <span className="a-eyebrow">Veckodomen · så läser en lugn vecka</span>
-                    <div className="a-dom">En vanlig vecka hos er. Ingenting kräver er — vi vägde era priser i natt, allt håller.</div>
+                    <span className="a-eyebrow">Veckodomen · så ser en lugn vecka ut</span>
+                    <div className="a-dom">En vanlig vecka hos er. Inget kräver er uppmärksamhet — vi vägde era priser i natt, och allt håller.</div>
                   </div>
 
                   {/* Takt 3 — den levande fortsättningen (endast efter öppnat underlag) */}
                   {roomPersonal && (
                     <div className="a-sec a-cont">
-                      Det ni just såg i dörren — {joinPhrases(roomPhrases)} — var första ögonkastet.
+                      Det ni just såg i dörren — {continuationClause(roomPhrases)} — var första ögonkastet.
                       I ert rum blir det <b>rad ett</b>, och vakten läser vidare <em>varje natt.</em>
                     </div>
                   )}
@@ -297,13 +330,13 @@ export default function Landing() {
                   {/* Takt 4 — kalendern som återförsäkran, aldrig som larm */}
                   <div className="a-sec">
                     <div className="a-head">
-                      <span className="a-eyebrow">Maktkalendern · motdraget köat</span>
+                      <span className="a-eyebrow">Maktkalendern · motdraget ligger klart</span>
                       <span className="a-count">5 avtal lästa</span>
                     </div>
                     {EXEMPEL_RADER.map((r, i) => (
                       <ArtefaktRad key={r.sup} r={r} index={i} parentIn={!!artIn} />
                     ))}
-                    <div className="a-sum">Fyra avtal till under bevakning — inget av dem kräver er de närmaste månaderna.</div>
+                    <div className="a-sum">Fyra avtal till står under bevakning — inget av dem behöver er de närmaste månaderna.</div>
                   </div>
 
                   <div className="a-sec a-foot">
@@ -313,7 +346,7 @@ export default function Landing() {
                 </div>
                 <div className="a-caption">
                   {roomPersonal
-                    ? <>Domen och kalendern visar <b>formen</b> — de fylls när ni delat er första faktura · det ni redan vet om er är verifierat</>
+                    ? <>Domen och kalendern visar <b>formen</b> — de fylls när ni delat er första faktura · raderna om ert bolag ovan är verifierade</>
                     : <>Exempel — formen på ett Arvo-rum · maskinellt kontrollerad · varje datum ur kundens eget avtal</>}
                 </div>
               </Artefakt>

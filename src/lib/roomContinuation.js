@@ -52,3 +52,26 @@ export function joinPhrases(phrases) {
   if (p.length === 1) return p[0];
   return `${p.slice(0, -1).join(', ')} och ${p[p.length - 1]}`;
 }
+
+// ── SVENSK SATSBYGGNAD (grundarrättelse 2026-07-24) ──────────────────────────
+// Fraserna radas i en löpande mening och behöver "att" för att läsa som svenska:
+// "att ni kör Microsoft 365, att fyra leverantörer syns …". Och små tal skrivs ut
+// i löptext (fyra, inte 4) — siffror hör hemma i tabeller, inte i en mening.
+const SMÅ_TAL = { 2: 'två', 3: 'tre', 4: 'fyra', 5: 'fem', 6: 'sex', 7: 'sju',
+  8: 'åtta', 9: 'nio', 10: 'tio', 11: 'elva', 12: 'tolv' };
+
+// Skriver ut fristående småtal som följs av ett gement ord ("4 bolag" → "fyra bolag").
+// Rör ALDRIG årtal, belopp eller produktnamn (365, 2025, 264,6) — de är >12 eller
+// bär skiljetecken, och mönstret kräver dessutom ett efterföljande gement ord.
+export function spellSmallNumbers(text) {
+  return String(text || '').replace(/\b(\d{1,2})\s+(?=[a-zåäö])/g, (m, n) => {
+    const w = SMÅ_TAL[Number(n)];
+    return w ? `${w} ` : m;
+  });
+}
+
+// Fraser → färdig bisats: "att A, att B och att C" (svensk uppräkning, utskrivna småtal).
+export function continuationClause(phrases) {
+  const p = (phrases || []).filter(Boolean).map((x) => `att ${spellSmallNumbers(x)}`);
+  return joinPhrases(p);
+}

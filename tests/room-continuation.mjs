@@ -4,7 +4,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { titleToPhrase, continuationPhrases, joinPhrases } from '../src/lib/roomContinuation.js';
+import { titleToPhrase, continuationPhrases, joinPhrases, spellSmallNumbers, continuationClause } from '../src/lib/roomContinuation.js';
 
 const LEKIA = [
   { kind: 'business', title: 'Ert bokslut 2025: 264,6 mkr i omsättning, 29 anställda' },
@@ -73,5 +73,25 @@ describe('roomContinuation · svensk uppräkning', () => {
     assert.equal(joinPhrases(['a', 'b']), 'a och b');
     assert.equal(joinPhrases(['a', 'b', 'c']), 'a, b och c');
     assert.equal(joinPhrases([]), '');
+  });
+});
+
+describe('roomContinuation · svensk satsbyggnad (grundarrättelse 2026-07-24)', () => {
+  test('småtal skrivs ut i löptext, men årtal/belopp/produktnamn lämnas orörda', () => {
+    assert.equal(spellSmallNumbers('4 leverantörer syns'), 'fyra leverantörer syns');
+    assert.equal(spellSmallNumbers('er koncern rymmer 4 bolag'), 'er koncern rymmer fyra bolag');
+    assert.equal(spellSmallNumbers('ni kör Microsoft 365'), 'ni kör Microsoft 365');
+    assert.equal(spellSmallNumbers('ert bokslut 2025'), 'ert bokslut 2025');
+    assert.equal(spellSmallNumbers('er omsättning föll 26 % senaste året'), 'er omsättning föll 26 % senaste året');
+  });
+
+  test('LEKIA-meningen läser som svenska: "att …, att … och att …"', () => {
+    const clause = continuationClause(continuationPhrases(LEKIA));
+    assert.equal(clause,
+      'att ni kör Microsoft 365, att fyra leverantörer syns i era publika mejlposter och att er koncern rymmer fyra bolag');
+  });
+
+  test('tomt in → tom sats (rummet visar exempelvarianten)', () => {
+    assert.equal(continuationClause([]), '');
   });
 });

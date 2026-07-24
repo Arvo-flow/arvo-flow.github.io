@@ -129,9 +129,11 @@ export const DoorBlock = styled.div`
 export const RoomBlock = styled.div`
   margin-top: 104px;
   @media (max-width: 640px) { margin-top: 72px; }
+  /* Centrerad som dörrens rubrik (grundarbeslut 2026-07-24) — de två akterna i dossiern
+     ska bära samma typografiska hållning, inte en centrerad och en vänsterställd. */
   h2 {
     font-family: ${SERIF}; font-size: clamp(30px, 4.8vw, 44px); font-weight: 500;
-    line-height: 1.18; margin: 46px 0 0;
+    line-height: 1.18; margin: 46px auto 0; max-width: 560px; text-align: center;
     color: ${D.inkOnDark};
     em { font-style: italic; color: ${D.tealBright}; }
     ${riseIn}
