@@ -1,0 +1,8 @@
+[a-exempel] hjärtslag: "Vakten · exempelrum · aldrig av"
+[a-exempel] veckodom : "En vanlig vecka hos er. Ingenting kräver er — vi vägde era priser i na"
+[a-exempel] fortsättning: (ingen — exempelläge)
+✓ a-exempel
+[b-personligt] hjärtslag: "Ert rum · lekia.se · förhandsvisning"
+[b-personligt] veckodom : "En vanlig vecka hos er. Ingenting kräver er — vi vägde era priser i na"
+[b-personligt] fortsättning: "Det ni just såg i dörren — ni kör Microsoft 365, 4 leverantörer syns i era publika mejlposter och er koncern rymmer 4 bolag — var "
+✓ b-personligt
