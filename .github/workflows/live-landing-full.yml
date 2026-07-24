@@ -1,0 +1,37 @@
+name: Live landing (hela sidan)
+# Fotar HELA landningssidan mot skarpa sajten i båda lägen (exempel + personaliserat).
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/live-landing-full.mjs'
+permissions:
+  contents: write
+jobs:
+  shoot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium --with-deps
+      - name: Fota hela sidan
+        run: |
+          set -o pipefail
+          mkdir -p ops/landing-full
+          node scripts/live-landing-full.mjs 2>&1 | tee ops/landing-full/logg.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git pull --rebase origin main || true
+          git add ops/landing-full/
+          git commit -m "ops: live-landing-full [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
