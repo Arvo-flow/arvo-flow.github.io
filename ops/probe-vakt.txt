@@ -1,0 +1,3 @@
+DB-anslutning: JA
+FRÅGE-FEL: Server error (HTTP status 402): {"message":"Your account or project has exceeded the compute time quota. Upgrade your plan to increase limits.","code":"","detail":null,"hint":null,"position":null,"internalPosition":null,"internalQuery":null,"severity":"","where":null,"table":null,"column":null,"schema":null,"dataType":null,"constraint":null,"file":null,"line":null,"routine":null,"neon:retryable":true}
+getLatestSweep() → null
