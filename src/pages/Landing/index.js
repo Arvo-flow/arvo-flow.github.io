@@ -301,11 +301,15 @@ export default function Landing() {
                       </span>
                       <span className="a-pline">
                         {pulse ? (
-                          // Endast det svepet BEVISAR: att det skedde, när och över hur många
-                          // källor. Antalet detektioner är ojurerat och sägs aldrig här.
+                          // Endast det svepet BEVISAR: att det skedde, när, över hur många källor —
+                          // och KEDJAN (obrutna nätter). Antalet detektioner är ojurerat och sägs
+                          // aldrig här. Kedjan påstås bara från två nätter och uppåt: en ensam natt
+                          // bär inget kontinuitetspåstående, och vi hittar aldrig på ett.
                           <>Senaste svep <b>{svepTid(pulse.sweptAt)}</b>
                             {pulse.sources ? <> · <b>{pulse.sources} marknadskällor</b> genomsökta</> : null}
-                            {' — '}<em>vakten var vaken medan ni sov.</em></>
+                            {pulse.streakNights >= 2
+                              ? <> · <b>{pulse.streakNights} nätter i rad</b> utan avbrott.</>
+                              : <>{' — '}<em>vakten var vaken medan ni sov.</em></>}</>
                         ) : (
                           <>Vakten sveper <b>fyrtiotalet marknadskällor</b> varje natt — <em>också de nätter då inget händer.</em></>
                         )}

@@ -622,8 +622,15 @@ export default function Portfolio() {
   // Det tysta veckans leverans — beviset att någon satt vaken på era pengar.
   const receipts = useMemo(() => {
     const rows = [];
+    // Hjärtslaget: svepet + KEDJAN (obrutna nätter) — uthållighet är beviset, inte ögonblicket.
+    // API:t serverar bara FÄRSKA svep, så en gammal tidsstämpel kan inte längre bära ett färskt
+    // löfte. `allClear` är den enda slutsats vi får dra om detektioner före verifieringsjuryn:
+    // noll kandidater ger bevisbart noll rörelser. Ett positivt antal säger ingenting och sägs
+    // därför aldrig — verifierade rörelser bor i marknadsrörelse-korten, efter juryn.
     rows.push({ tag: 'Bevakar', what: vakt?.sweptAt
-      ? <>Svepte <b>{vakt.sources} marknadskällor</b> {relSwept(vakt.sweptAt)} — {vakt.changes > 0 ? <><b>{vakt.changes}</b> {vakt.changes === 1 ? 'prisavvikelse' : 'prisavvikelser'} i marknaden fångad{vakt.changes === 1 ? '' : 'e'}.</> : 'allt lugnt, inget krävde er uppmärksamhet.'}</>
+      ? <>Svepte <b>{vakt.sources} marknadskällor</b> {relSwept(vakt.sweptAt)}
+          {vakt.streakNights >= 2 ? <> · <b>{vakt.streakNights} nätter i rad</b> utan avbrott</> : null}
+          {vakt.allClear ? ' — allt lugnt, inget krävde er uppmärksamhet.' : '.'}</>
       : <>Sveper marknaden nattligt mot fyrtiotalet marknadskällor — er bevakning är aktiv.</> });
     if (autoAnalyses.length > 0) {
       rows.push({ tag: 'Analys', what: <>Vägde <b>{autoAnalyses.length} {autoAnalyses.length === 1 ? 'faktura' : 'fakturor'}</b> mot verifierat marknadspris{latestDate ? <> · senast {latestDate}</> : null}.</> });
@@ -751,10 +758,12 @@ export default function Portfolio() {
                   <div className="rgroup-label">Marknaden</div>
                   <div className="foot-line">
                     <span className="live" />
+                    {/* Radarn bär kedjan: obrutna nätter är det ofejkbara beviset på uthållighet.
+                        Ojurerade detektioner nämns aldrig — bara den bevisbara nollan. */}
                     <span>{vakt?.sweptAt
-                      ? <>Senaste svep {relSwept(vakt.sweptAt)} · <b>{vakt.sources ?? 40} marknadskällor</b> svepta{vakt.changes > 0
-                          ? <> · {vakt.changes} {vakt.changes === 1 ? 'prisrörelse' : 'prisrörelser'} i marknaden</>
-                          : ' · allt lugnt'}</>
+                      ? <>Senaste svep {relSwept(vakt.sweptAt)} · <b>{vakt.sources ?? 40} marknadskällor</b> svepta
+                          {vakt.streakNights >= 2 ? <> · <b>{vakt.streakNights} nätter i rad</b></> : null}
+                          {vakt.allClear ? ' · allt lugnt' : ''}</>
                       : latestDate ? <>Senaste analys {latestDate} · bevakning aktiv</> : 'Bevakning aktiv'}</span>
                   </div>
                 </div>

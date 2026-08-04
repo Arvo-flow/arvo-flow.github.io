@@ -61,6 +61,29 @@ import './fee.mjs';
 import './avtal-fallor.mjs';
 import './deadline-reminder.mjs';
 
+// ── SVITENS TYSTA HÅL (grundarfynd 2026-08-04) ───────────────────────────────
+// Femton testfiler låg PÅ DISK men utanför sviten — inklusive dem bibeln kallar maskinlås:
+// balanskrav (attribueringslåset/683-felet), svea-print (faktura 440192), price-verdict
+// (verifieringsjuryn), branch-anchors, revisionsgrind. 181 gröna tester som aldrig kördes.
+// Samma failure mode som smygtystnaden i vakt_events: en vakt som FINNS men inte är inkopplad
+// är ingen vakt — och tystnaden ser identisk ut med "allt är bra". Nedanför står låset som
+// gör hålet omöjligt: sviten kontrollerar sin egen fullständighet mot filsystemet.
+import './balanskrav.mjs';
+import './branch-anchors.mjs';
+import './inbound-attachments.mjs';
+import './inbound-reply.mjs';
+import './ingest-bulk.mjs';
+import './market-movement.mjs';
+import './price-verdict.mjs';
+import './property.mjs';
+import './revisionsgrind.mjs';
+import './saas-like-for-like.mjs';
+import './saas-tier-detection.mjs';
+import './supplier-keyword.mjs';
+import './svea-print.mjs';
+import './test-surface.mjs';
+import './vakt.mjs';
+
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,
   ...f05, ...f06, ...f07, ...f08,
@@ -145,4 +168,23 @@ describe('07 · Edge cases & fällor', () => {
 
 describe('08 · Realistiska fakturor (100 st)', () => {
   for (const fx of f08) test(fx.id + ' — ' + fx.name, () => runFixture(fx));
+});
+
+// ── SVITENS SJÄLVKONTROLL ────────────────────────────────────────────────────
+// Regel 7: varje fel blir en tillgång. Felet var inte ett trasigt test — det var ett test som
+// aldrig kördes, i tysthet, i månader. En maskinvakt som inte är inkopplad ser exakt likadan ut
+// som en som säger "allt är bra". Därför läser sviten sin egen katalog och underkänner sig själv
+// om en testfil finns på disk men saknar import här. Nya testfiler kan inte längre glömmas bort.
+describe('00 · Sviten bevakar sig själv', () => {
+  test('varje tests/*.mjs är inkopplad i run.mjs (inga tysta hål)', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const dir = dirname(fileURLToPath(import.meta.url));
+    const kalla = readFileSync(join(dir, 'run.mjs'), 'utf8');
+    const glomda = readdirSync(dir)
+      .filter((f) => f.endsWith('.mjs') && f !== 'run.mjs')
+      .filter((f) => !kalla.includes(`'./${f}'`));
+    assert.deepEqual(glomda, [], `Testfiler utanför sviten (lägg till import): ${glomda.join(', ')}`);
+  });
 });

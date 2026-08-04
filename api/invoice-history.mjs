@@ -19,7 +19,7 @@ import { marketMovementFinding } from '../lib/market-movement.js';
 import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 import { catLabel } from '../lib/format.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
-import { getLatestSweep } from '../lib/vakt.js';
+import { getVaktHealth } from '../lib/vakt.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
@@ -157,9 +157,18 @@ export default async function handler(req, res) {
   // aldrig kundens nuvarande leverantör, aldrig estimat-kategorier (specs som fakta kräver källa).
   const switchTargets = buildSwitchTargets(analyses);
 
-  // ── Vaktens hjärtslag: senaste verkliga svep (tidsstämplat) → radarns "senaste svep" ──
-  // null tills första nattliga svepet registrerats; rummet faller då tillbaka på härledd text.
-  const vakt = await getLatestSweep();
+  // ── Vaktens hjärtslag: senaste verkliga svep + KEDJAN (obrutna nätter) → radarns "senaste svep" ──
+  // FÄRSKHETSGRINDEN (2026-08-04): ett svep äldre än 36 h serveras aldrig — rummet faller tillbaka
+  // på härledd text i stället för att visa ett gammalt klockslag bredvid ett färskt löfte. Det var
+  // precis vad smygtystnaden 19–31 juli hade gjort här, i den yta kunden BETALAR för.
+  // Råa detektioner (`changes`) når aldrig kunden — bara den bevisbara nollan (`allClear`).
+  const vaktHealth = await getVaktHealth();
+  const vakt = vaktHealth?.fresh ? {
+    sweptAt: vaktHealth.sweptAt,
+    sources: vaktHealth.sources,
+    streakNights: vaktHealth.streakNights,
+    allClear: vaktHealth.allClear,
+  } : null;
 
   // ── Pågående intag: fakturor PÅ VÄG (köade men ej klara) → rummet visar "analyserar N", ej tomt ──
   const ingesting = email ? await pendingCountBySender(email) : 0;
