@@ -15,6 +15,16 @@ if (db) {
       const r = await db`SELECT swept_at, sources, price_points, changes FROM vakt_events
                          ORDER BY swept_at DESC LIMIT 3`;
       console.log('senaste 3:', JSON.stringify(r));
+      // Hela svep-kalendern: en tom natt = svepet nådde aldrig databasen (t.ex. 402 kvot).
+      const all = await db`SELECT to_char(swept_at, 'YYYY-MM-DD') AS d FROM vakt_events
+                           WHERE event_type = 'sweep' ORDER BY swept_at ASC`;
+      console.log('svep-kalender:', all.map((x) => x.d).join(' '));
+    }
+    // Kvotdiagnos: svarar beräkningen alls, och vad säger servern om sig själv?
+    try {
+      const v = await db`SELECT now() AS nu, version() AS v`;
+      console.log('DB svarar NU:', v[0]?.nu, '·', String(v[0]?.v).slice(0, 60));
+    } catch (e) { console.log('DB SVARAR INTE:', e.message);
     }
   } catch (e) { console.log('FRÅGE-FEL:', e.message); }
 }
