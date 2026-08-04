@@ -25,7 +25,9 @@ export default async function handler(req, res) {
         sweptAt: s.sweptAt,
         sources: s.sources ?? null,
         pricePoints: s.pricePoints ?? null,
-        changes: s.changes ?? 0,
+        // `changes` (rå detektioner) exponeras MEDVETET INTE: de har inte passerat
+        // verifieringsjuryn och får därför aldrig påstås som marknadsrörelser i en kundyta
+        // (regel 3). Verifierade rörelser bor i supplier_price_history och visas i rummet.
       },
     }));
   } catch {

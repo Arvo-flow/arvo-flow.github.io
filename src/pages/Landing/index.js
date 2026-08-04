@@ -301,11 +301,11 @@ export default function Landing() {
                       </span>
                       <span className="a-pline">
                         {pulse ? (
+                          // Endast det svepet BEVISAR: att det skedde, när och över hur många
+                          // källor. Antalet detektioner är ojurerat och sägs aldrig här.
                           <>Senaste svep <b>{svepTid(pulse.sweptAt)}</b>
-                            {pulse.sources ? <> · <b>{pulse.sources} marknadskällor</b></> : null}
-                            {' — '}<em>{pulse.changes > 0
-                              ? `${pulse.changes} prisrörelser fångade`
-                              : 'allt lugnt'}</em>.</>
+                            {pulse.sources ? <> · <b>{pulse.sources} marknadskällor</b> genomsökta</> : null}
+                            {' — '}<em>vakten var vaken medan ni sov.</em></>
                         ) : (
                           <>Vakten sveper <b>fyrtiotalet marknadskällor</b> varje natt — <em>också de nätter då inget händer.</em></>
                         )}
