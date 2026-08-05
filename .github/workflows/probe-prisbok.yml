@@ -1,0 +1,28 @@
+name: Probe prisboken (återstående inaktuella källor)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: npm }
+      - run: npm ci --ignore-scripts
+      - name: Probe
+        run: |
+          mkdir -p ops
+          node scripts/probe-prisbok.mjs 2>&1 | tee ops/probe-prisbok.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git pull --rebase origin main || true
+          git add ops/probe-prisbok.txt
+          git commit -m "ops: probe-prisbok [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
