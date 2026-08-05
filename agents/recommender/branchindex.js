@@ -363,6 +363,16 @@ export const BRANCHINDEX = {
       //
       //   Google/Slack/   → USD-baspris × live SEK/USD (Riksbanken/ECB dagligen).
       //   Zoom/Atlassian    usdMonthly/usdAnnual anger publik MSRP i USD.
+      //
+      //   ⚠️ PÅHITTADE PARTNERRABATTER BORTTAGNA (grundarfynd 2026-08-05). Elva tiers bar
+      //   usdArvoAnnual = listpris × 0,85 — ett "Arvo-partnerpris" som ALDRIG existerat.
+      //   Fältet var inte vilande: recommend.js konverterar det till SEK (arvoAnnual) och
+      //   `bm.arvoAnnual ?? bm.msrpAnnual` gör det till MÅLPRISET kunden ser. Varje kund med
+      //   Slack/Zoom/Google/Pipedrive/HubSpot/Zoho fick alltså ett mål 15 % under verkligt
+      //   publikt listpris — en besparing byggd på en rabatt som inte finns.
+      //   Detta bryter mot neutralitets-moaten (GRUNDARBESLUT 2026-06-19, icke-förhandlingsbart):
+      //   arvoAnnual-vägen ska ALDRIG fyllas; enda ankaret är verifierat PUBLIKT listpris.
+      //   Maskinlås: tests/branchindex.mjs — ingen tier får bära ett arvo-pris under listpriset.
       //                    Källa: respektive prissida, verifierad nedan.
       //                    SEK-värdena (msrpMonthly/msrpAnnual) beräknas runtime
       //                    av recommend() via pricing.js — sparas EJ här.
@@ -435,17 +445,17 @@ export const BRANCHINDEX = {
       // USD-ankaret vaktas veckovis: lib/verifiers/google-workspace.mjs. usdMonthly = flex-månadspris.
       // NÄSTA VERIFIERING: 2026-09-01
       'google-starter': {
-        usdMonthly: 8.40,  usdAnnual: 7.00,  usdArvoAnnual: 5.95,
+        usdMonthly: 8.40,  usdAnnual: 7.00,
         currency: 'USD', sekPublic: false, lastVerified: '2026-06-17', source: 'workspace.google.com/intl/en',
         note: 'Google Workspace Business Starter — 30 GB Drive/user, Meet, Docs, Gemini AI. Publikt pris endast USD ($7 årsavtal); SEK ej publikt verifierbart.',
       },
       'google-standard': {
-        usdMonthly: 16.80, usdAnnual: 14.00, usdArvoAnnual: 11.90,
+        usdMonthly: 16.80, usdAnnual: 14.00,
         currency: 'USD', sekPublic: false, lastVerified: '2026-06-17', source: 'workspace.google.com/intl/en',
         note: 'Google Workspace Business Standard — 2 TB poolad Drive, Meet 150 deltagare + inspelning. Publikt pris endast USD ($14 årsavtal); SEK ej publikt verifierbart.',
       },
       'google-plus': {
-        usdMonthly: 26.40, usdAnnual: 22.00, usdArvoAnnual: 18.70,
+        usdMonthly: 26.40, usdAnnual: 22.00,
         currency: 'USD', sekPublic: false, lastVerified: '2026-06-17', source: 'workspace.google.com/intl/en',
         note: 'Google Workspace Business Plus — 5 TB poolad Drive, utökad säkerhet, eDiscovery. Publikt pris endast USD ($22 årsavtal); SEK ej publikt verifierbart.',
       },
@@ -454,26 +464,26 @@ export const BRANCHINDEX = {
       // Källa: slack.com/pricing (bekräftat via tech.co maj 2026).
       // NÄSTA VERIFIERING: 2026-09-01
       'slack-pro': {
-        usdMonthly: 8.75,  usdAnnual: 7.25,  usdArvoAnnual: 6.15,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'slack.com/pricing',
+        usdMonthly: 8.75,  usdAnnual: 7.25,
+        currency: 'USD', lastVerified: '2026-08-05', source: 'slack.com/pricing',
         note: 'Slack Pro — obegränsat meddelandehistorik, video-huddles, obegränsade integrationer.',
       },
       'slack-business-plus': {
-        usdMonthly: 18.00, usdAnnual: 18.00, usdArvoAnnual: 15.30,
-        currency: 'USD', lastVerified: '2026-05-28', source: 'slack.com/pricing',
-        note: 'Slack Business+ — SSO/SAML, kompliansexport, DLP, prioriterad support. OBS: Årsrabatten togs bort maj 2026 — månads- och årsplan kostar nu samma.',
+        usdMonthly: 18.00, usdAnnual: 15.00,
+        currency: 'USD', lastVerified: '2026-08-05', source: 'slack.com/pricing',
+        note: 'Slack Business+ — SSO/SAML, kompliansexport, DLP, prioriterad support. Årsavtal 15 USD vs månadsavtal 18 USD, verifierat live 2026-08-05 av lib/verifiers/slack.mjs (den tidigare noten "årsrabatten togs bort" var felaktig — prisboken övervärderade marknaden med 20 %).',
       },
 
       // Zoom — USD-baspris, konverteras runtime.
       // Källa: zoom.us/pricing (bekräftat via tech.co maj 2026).
       // NÄSTA VERIFIERING: 2026-09-01
       'zoom-pro': {
-        usdMonthly: 15.99, usdAnnual: 14.16, usdArvoAnnual: 12.04,
+        usdMonthly: 15.99, usdAnnual: 14.16,
         currency: 'USD', lastVerified: '2026-05-28', source: 'zoom.us/pricing',
         note: 'Zoom Pro — obegränsade möten, 1 GB moln-inspelning, schemaläggning.',
       },
       'zoom-business': {
-        usdMonthly: 19.99, usdAnnual: 18.33, usdArvoAnnual: 15.58,
+        usdMonthly: 19.99, usdAnnual: 18.33,
         currency: 'USD', lastVerified: '2026-05-22', source: 'zoom.us/pricing',
         note: 'Zoom Business — SSO, inspelningsutskrifter, branding, 300 deltagare.',
       },
@@ -571,24 +581,24 @@ export const BRANCHINDEX = {
       // Pipedrive — USD-baspris, konverteras runtime via pricing.js.
       // Källa: pipedrive.com/pricing (estimat juni 2026).
       'pipedrive-essential': {
-        usdMonthly: 14.00, usdAnnual: 14.00, usdArvoAnnual: 11.90,
+        usdMonthly: 14.00, usdAnnual: 14.00,
         currency: 'USD', lastVerified: '2026-06-04', source: 'pipedrive.com/pricing',
         note: 'Pipedrive Essential — pipeline, kontaktimport, standardrapporter, mobilapp.',
       },
       'pipedrive-advanced': {
-        usdMonthly: 29.00, usdAnnual: 29.00, usdArvoAnnual: 24.65,
+        usdMonthly: 29.00, usdAnnual: 29.00,
         currency: 'USD', lastVerified: '2026-06-04', source: 'pipedrive.com/pricing',
         note: 'Pipedrive Advanced — full e-postintegration, automatisering, grupputskick.',
       },
       // HubSpot CRM — USD-baspris, konverteras runtime.
       'hubspot-starter': {
-        usdMonthly: 20.00, usdAnnual: 20.00, usdArvoAnnual: 17.00,
+        usdMonthly: 20.00, usdAnnual: 20.00,
         currency: 'USD', lastVerified: '2026-06-04', source: 'hubspot.com/pricing',
         note: 'HubSpot Sales Hub Starter — kontakter, deals, e-postspårning.',
       },
       // Zoho CRM — USD-baspris.
       'zoho-crm-standard': {
-        usdMonthly: 20.00, usdAnnual: 14.00, usdArvoAnnual: 11.90,
+        usdMonthly: 20.00, usdAnnual: 14.00,
         currency: 'USD', lastVerified: '2026-06-04', source: 'zoho.com/crm/pricing',
         note: 'Zoho CRM Standard — leads, kontakter, konton, standardrapporter.',
       },

@@ -208,13 +208,30 @@ describe('BI-07 · usdToSek — konverteringsaritmetik', () => {
   test('Slack Business+ SEK-pris = round(usdMonthly × rate) (Salesforce-caset: USD→SEK)', () => {
     const tier = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks['slack-business-plus'];
     const rate = FALLBACK_RATE_USD_SEK;
-    const sekMonthly = usdToSek(tier.usdMonthly, rate);
-    const sekAnnual  = usdToSek(tier.usdAnnual,  rate);
-    // Arvo-pris ska vara < MSRP
-    const sekArvo    = usdToSek(tier.usdArvoAnnual, rate);
-    assert.strictEqual(sekMonthly, Math.round(tier.usdMonthly * rate));
-    assert.strictEqual(sekAnnual,  Math.round(tier.usdAnnual  * rate));
-    assert.ok(sekArvo < sekMonthly, 'arvoAnnual ska vara < msrpMonthly');
+    assert.strictEqual(usdToSek(tier.usdMonthly, rate), Math.round(tier.usdMonthly * rate));
+    assert.strictEqual(usdToSek(tier.usdAnnual,  rate), Math.round(tier.usdAnnual  * rate));
+  });
+
+  // ── NEUTRALITETSLÅSET (grundarfynd 2026-08-05) ──────────────────────────────
+  // Det här testet påstod tidigare motsatsen: "Arvo-pris ska vara < MSRP". Elva tiers bar
+  // usdArvoAnnual = listpris × 0,85 — ett partnerpris som aldrig funnits, och som via
+  // `bm.arvoAnnual ?? bm.msrpAnnual` blev MÅLPRISET kunden såg. Besparingar byggda på en
+  // rabatt vi inte har. Neutralitets-moaten (GRUNDARBESLUT 2026-06-19) är icke-förhandlingsbar:
+  // enda ankaret är verifierat PUBLIKT listpris. Låset nedan gör återfallet omöjligt.
+  test('NEUTRALITET: ingen tier bär ett arvo-pris under det publika listpriset', () => {
+    const brott = [];
+    for (const [kat, data] of Object.entries(BRANCHINDEX)) {
+      for (const [key, t] of Object.entries(data?.licenseTierBenchmarks ?? {})) {
+        if (t?.usdArvoAnnual != null && t.usdAnnual != null && t.usdArvoAnnual < t.usdAnnual) {
+          brott.push(`${kat}/${key}: usdArvoAnnual ${t.usdArvoAnnual} < usdAnnual ${t.usdAnnual}`);
+        }
+        if (t?.arvoAnnual != null && t.msrpAnnual != null && t.arvoAnnual < t.msrpAnnual) {
+          brott.push(`${kat}/${key}: arvoAnnual ${t.arvoAnnual} < msrpAnnual ${t.msrpAnnual}`);
+        }
+      }
+    }
+    assert.deepEqual(brott, [],
+      'Partnerpris i prisboken — vi tar aldrig leverantörsersättning och har ingen rabatt att visa:\n' + brott.join('\n'));
   });
 
   test('Zoom Pro: årsavtal billigare än månadsavtal efter konvertering', () => {
