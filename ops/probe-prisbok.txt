@@ -1,0 +1,64 @@
+
+════════ FORTNOX-LON ════════
+https://www.fortnox.se/produkter/lon
+HTTP 404 · html-längd 867966
+  → oåtkomlig i serverrenderad hämtning
+
+════════ FORTNOX-PRISER ════════
+https://www.fortnox.se/produkter/priser
+HTTP 404 · html-längd 867972
+  → oåtkomlig i serverrenderad hämtning
+
+════════ M365-ENTERPRISE ════════
+https://www.microsoft.com/sv-se/microsoft-365/enterprise/microsoft365-plans-and-pricing
+HTTP 200 · html-längd 714322
+  1 013,97 kr | …ör agenter; enhetlig säkerhet, identitet och efterlevnad; samt AI utformat för arbete ⟦PRIS⟧ användare/månad, betalas årsvis (Årligt åtagande) Pris …
+   641,18 kr | …sklass med AI, avancerad säkerhet, efterlevnad, analys och kapacitet för AI-beredskap ⟦PRIS⟧ användare/månad, betalas årsvis (Årligt åtagande) Pris …
+   286,80 kr | …fon- och webbsupport när du vill Boosta ditt abonnemang med Microsoft 365 Copilot för ⟦PRIS⟧ användare/månad, betalas årsvis. 4 Mer information Popu…
+   416,77 kr | …E3 Kraftfulla produktivitetsappar med utökade funktioner för säkerhet och efterlevnad ⟦PRIS⟧ användare/månad, betalas årsvis (Årligt åtagande) Pris …
+   932,24 kr | …ör agenter; enhetlig säkerhet, identitet och efterlevnad; samt AI utformat för arbete ⟦PRIS⟧ användare/månad, betalas årsvis (Årligt åtagande) Pris …
+   559,44 kr | …sklass med AI, avancerad säkerhet, efterlevnad, analys och kapacitet för AI-beredskap ⟦PRIS⟧ användare/månad, betalas årsvis (Årligt åtagande) Pris …
+   335,04 kr | …s) Kraftfulla produktivitetsappar med utökade funktioner för säkerhet och efterlevnad ⟦PRIS⟧ användare/månad, betalas årsvis (Årligt åtagande) Pris …
+  7 1 013,97 kr | …äljteamet Prata med en expert Compare plans /h2> "> Jämför abonnemang Microsoft 365 E ⟦PRIS⟧ användare/månad, betalas årsvis (Årligt åtagande) Pris …
+  5 641,18 kr | …akta säljteamet Den här produkten är inte tillgänglig på din marknad. Microsoft 365 E ⟦PRIS⟧ användare/månad, betalas årsvis (Årligt åtagande) Pris …
+  3 416,77 kr | …akta säljteamet Den här produkten är inte tillgänglig på din marknad. Microsoft 365 E ⟦PRIS⟧ användare/månad, betalas årsvis (Årligt åtagande) Pris …
+    81,73 kr | …ättra produktiviteten, effektiviteten och säkerheten Utforska mer Microsoft Teams EES ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förn…
+   286,80 kr | … Fristående Ingår i utvalda Microsoft 365 Enterprise-abonnemang Microsoft 365 Copilot ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förn…
+  365 143,40 kr | …ägg Kvalificerande Microsoft 365-prenumeration krävs. Ingår i Microsoft 365 E7. Agent ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förn…
+
+════════ SLACK ════════
+https://slack.com/pricing
+HTTP 200 · html-längd 722070
+          $0 | …Start over Step 1 of 5 Recommended for you Free A simpler way to chat and collaborate ⟦PRIS⟧ USD free forever Get Started Get Started 90 days of mes…
+       $8.75 | …vention Recommended for you Pro Drive productivity in one place 50% off for 3 months* ⟦PRIS⟧ $4.38 USD per user / month, when paying monthly $7.25 U…
+         $18 | … you Best value Business+ Best value Scale with AI-powered work 50% off for 3 months* ⟦PRIS⟧ $9 USD per user / month, when paying monthly $15 USD pe…
+
+════════ ZOOM ════════
+https://zoom.us/pricing
+HTTP 200 · html-längd 176513
+  → INGA priser i serverrenderad HTML (kräver rendering/JS — verifierare måste använda browser)
+
+════════ ATLASSIAN-JIRA ════════
+https://www.atlassian.com/software/jira/pricing
+HTTP 200 · html-längd 1190330
+  → INGA priser i serverrenderad HTML (kräver rendering/JS — verifierare måste använda browser)
+
+════════ ATLASSIAN-CONFLUENCE ════════
+https://www.atlassian.com/software/confluence/pricing
+HTTP 200 · html-längd 1080546
+  → INGA priser i serverrenderad HTML (kräver rendering/JS — verifierare måste använda browser)
+
+════════ PIPEDRIVE ════════
+https://www.pipedrive.com/en/pricing
+HTTP 403 · html-längd 196283
+  → oåtkomlig i serverrenderad hämtning
+
+════════ HUBSPOT ════════
+https://www.hubspot.com/pricing/crm
+HTTP 200 · html-längd 75037
+  → INGA priser i serverrenderad HTML (kräver rendering/JS — verifierare måste använda browser)
+
+════════ ZOHO-CRM ════════
+https://www.zoho.com/crm/zohocrm-pricing.html
+HTTP 200 · html-längd 76789
+         $20 | …e same page. Zoho CRMPlus Sales, marketing, service in one unified package. Starts at ⟦PRIS⟧ /user/month FREE TRIAL Looking to switch CRMs? We make …
