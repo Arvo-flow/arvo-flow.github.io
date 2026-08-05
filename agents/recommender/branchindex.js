@@ -579,16 +579,30 @@ export const BRANCHINDEX = {
     ],
     licenseTierBenchmarks: {
       // Pipedrive — USD-baspris, konverteras runtime via pricing.js.
-      // Källa: pipedrive.com/pricing (estimat juni 2026).
-      'pipedrive-essential': {
+      //
+      // ⚠️ TRE MOTSTRIDIGA SANNINGAR RÄTTADE 2026-08-05:
+      //  1. PLANERNA FANNS INTE. Nycklarna hette 'essential'/'advanced' — produkter Pipedrive
+      //     inte längre säljer. Live-lineupen (recon, ops/probe-sista-tre.txt) är
+      //     Lite · Growth · Premium · Ultimate. Ett pris utan en plan man kan namnge är
+      //     inget ankare, hur färskt datumet än ser ut.
+      //  2. ETIKETTEN LJÖG. Fältet source pekade på pipedrive.com/pricing — i prisboken
+      //     betyder det verifierat publikt listpris — medan kommentaren bredvid sa "estimat".
+      //     Två sanningsanspråk på samma rad, och maskinerna läser fältet, inte kommentaren.
+      //  3. REPOT MOTSADE SIG SJÄLVT. api/admin/run-migration.mjs seedade samma produkter med
+      //     helt andra tal (Essential 24/14, Advanced 44/29). Regel 1: en sanning per fråga.
+      //
+      // Nu: de faktiska planerna med faktiska, live-avlästa priser. Pipedrive anger priset
+      // som "Per seat per month, billed annually" med årssumman utskriven bredvid — därför är
+      // usdMonthly = usdAnnual här: det ÄR månadspriset vid årsbetalning, inte två olika tal.
+      'pipedrive-lite': {
         usdMonthly: 14.00, usdAnnual: 14.00,
-        currency: 'USD', lastVerified: '2026-06-04', source: 'pipedrive.com/pricing',
-        note: 'Pipedrive Essential — pipeline, kontaktimport, standardrapporter, mobilapp.',
+        currency: 'USD', lastVerified: '2026-08-05', source: 'pipedrive.com/en/pricing',
+        note: 'Pipedrive Lite — pipeline, kontaktimport, standardrapporter, mobilapp. US$168/plats/år. (Ersätter tidigare "Essential" som Pipedrive slutat sälja.)',
       },
-      'pipedrive-advanced': {
-        usdMonthly: 29.00, usdAnnual: 29.00,
-        currency: 'USD', lastVerified: '2026-06-04', source: 'pipedrive.com/pricing',
-        note: 'Pipedrive Advanced — full e-postintegration, automatisering, grupputskick.',
+      'pipedrive-growth': {
+        usdMonthly: 39.00, usdAnnual: 39.00,
+        currency: 'USD', lastVerified: '2026-08-05', source: 'pipedrive.com/en/pricing',
+        note: 'Pipedrive Growth — e-postintegration, automatisering, grupputskick. US$468/plats/år. (Ersätter tidigare "Advanced"; prisboken angav 29 USD för en plan som inte längre finns.)',
       },
       // HubSpot CRM — USD-baspris, konverteras runtime.
       'hubspot-starter': {

@@ -25,7 +25,7 @@ const KALLOR = [
     vantat: { 'atlassian-confluence-standard': T['atlassian-confluence-standard'], 'atlassian-confluence-premium': T['atlassian-confluence-premium'] },
     ord: ['Standard', 'Premium'] },
   { id: 'pipedrive', url: 'https://www.pipedrive.com/en/pricing',
-    vantat: { 'pipedrive-essential': C['pipedrive-essential'] ?? T['pipedrive-essential'], 'pipedrive-advanced': C['pipedrive-advanced'] ?? T['pipedrive-advanced'] },
+    vantat: { 'pipedrive-lite': C['pipedrive-lite'] ?? T['pipedrive-lite'], 'pipedrive-growth': C['pipedrive-growth'] ?? T['pipedrive-growth'] },
     ord: ['Essential', 'Advanced'] },
   { id: 'hubspot', url: 'https://www.hubspot.com/pricing/crm/starter',
     vantat: { 'hubspot-starter': C['hubspot-starter'] ?? T['hubspot-starter'] },
