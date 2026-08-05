@@ -3,7 +3,7 @@
 https://zoom.us/pricing
   prisbok zoom-pro: månad 15.99 · år 14.16 (verifierat 2026-05-28, källa zoom.us/pricing)
   prisbok zoom-business: månad 19.99 · år 18.33 (verifierat 2026-05-22, källa zoom.us/pricing)
-  status 200 · renderad text 9870 tecken
+  status 200 · renderad text 9872 tecken
   ── pristal med kontext ──
     $ 14.16 | …opulärast ¶ Workplace ¶ Pro ¶ Bäst för personligt bruk eller små team. ¶ ⟦PRIS⟧ ¶ /användare per månad · Faktureras årsvis‡ ¶ Köp nu ¶ Allt …
     $ 18.33 | …er ¶ Se tillägg ¶ Workplace ¶ Affärsverksamhet ¶ Bäst för större team. ¶ ⟦PRIS⟧ ¶ /användare per månad · Faktureras årsvis‡ ¶ Köp nu ¶ Allt …
@@ -53,7 +53,7 @@ https://www.atlassian.com/software/jira/pricing
 https://www.atlassian.com/software/confluence/pricing
   prisbok atlassian-confluence-standard: månad 6.5 · år null (verifierat 2026-05-22, källa featurebase.app)
   prisbok atlassian-confluence-premium: månad 12.53 · år null (verifierat 2026-05-22, källa featurebase.app)
-  status 200 · renderad text 6502 tecken
+  status 200 · renderad text 5861 tecken
   ── pristal med kontext ──
     $     0 | …Monthly ¶ Annually ¶ SAVE UP TO 17% ¶ Free ¶ Free forever for 10 users ¶ ⟦PRIS⟧ ¶ Start free trial ¶ Includes: ¶ Pages ¶ Spaces ¶ Organize a…
     $  5.42 | …p to 2 GB file storage ¶ Standard ¶ Everything you need to get started ¶ ⟦PRIS⟧ ¶ per user / month ¶ Start free trial ¶ Everything from Free…
@@ -140,9 +140,37 @@ https://www.zoho.com/crm/zohocrm-pricing.html
     "Standard"
     "Professional"
 
-══════════════ FORTNOX-PRISER ══════════════
-https://www.fortnox.se/priser
-  status 404 · renderad text 994 tecken
+══════════════ PIPEDRIVE-NAMN ══════════════
+https://www.pipedrive.com/en/pricing
+  status 200 · renderad text 12371 tecken
+  ── pristal med kontext ──
+    $   168 | …our sales in one simple, intuitive workspace ¶ US$ ¶ 14 ¶ One payment of ⟦PRIS⟧ per seat/year ¶ Per seat per month, billed annually ¶ Try it…
+    $   468 | …s and follow-ups so you can focus on closing ¶ US$ ¶ 39 ¶ One payment of ⟦PRIS⟧ per seat/year ¶ Per seat per month, billed annually ¶ Try it…
+    $   708 | …om lead to close with full-cycle sales tools ¶ US$ ¶ 59 ¶ One payment of ⟦PRIS⟧ per seat/year ¶ Per seat per month, billed annually ¶ Try it…
+    $   948 | …ance with our complete suite of capabilities ¶ US$ ¶ 79 ¶ One payment of ⟦PRIS⟧ per seat/year ¶ Per seat per month, billed annually ¶ Try it…
+    $ 32.50 | … more features ¶ LeadBooster add-on ¶ Capture more leads ¶ Starting from ⟦PRIS⟧ ¶ Opens in new window ¶ Projects add-on ¶ Deliver projects a…
+    $    16 | …goals faster ¶ Starting from ⟦PRIS⟧ ¶ Opens in new window ¶ Campaigns add-on ¶ Send awesome emai…
+    $ 13.33 | …ng campaigns ¶ Starting from ⟦PRIS⟧ ¶ Opens in new window ¶ Web Visitors add-on ¶ See who’s brow…
+    $    41 | …site ¶ Starting from ⟦PRIS⟧ ¶ Opens in new window ¶ Smart Docs add-on ¶ Manage all your …
+    $ 32.50 | …in one place ¶ Starting from ⟦PRIS⟧ ¶ Opens in new window ¶ 500+ integrations to boost workflows…
+    $   188 | …ew hours, the firm's representative contacted us and said, 'I just found ⟦PRIS⟧ K worth of revenue thanks to Pipedrive!' ¶ Tiffany Largie ¶ …
+    $   2.5 | …ur ¶ Amount Tiffany Largie grew her business ¶ ⟦PRIS⟧ m ¶ Number of employees ¶ 12 ¶ Rating: 5 of 5 ¶ I waited unt…
+    $   2.5 | …ur ¶ Amount Tiffany Largie grew her business ¶ ⟦PRIS⟧ m ¶ Number of employees ¶ 12 ¶ Frequently asked questions ¶ …
+    $   400 | …, implementation is free when you sign up for a pricing plan that’s over ⟦PRIS⟧ a year. Costs differ widely, so a thorough evaluation is ess…
+  ── rader som nämner planorden ──
+    "Lite"
+    "Growth"
+    "Lite plan +"
+    "Premium"
+    "Growth plan +"
+    "Ultimate"
+    "Premium plan +"
+    "I don't want to overpay for essential features"
+    "Growth since adopting Pipedrive"
+
+══════════════ FORTNOX-START ══════════════
+https://www.fortnox.se/
+  status 200 · renderad text 3800 tecken
   ── pristal med kontext ──
     (inga $-tal i renderad text — priset kan ligga bakom väljare/land)
   ── rader som nämner planorden ──
