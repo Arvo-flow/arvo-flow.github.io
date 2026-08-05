@@ -33,8 +33,13 @@ const KALLOR = [
   { id: 'zoho', url: 'https://www.zoho.com/crm/zohocrm-pricing.html',
     vantat: { 'zoho-crm-standard': C['zoho-crm-standard'] ?? T['zoho-crm-standard'] },
     ord: ['Standard', 'Professional'] },
-  // Bonus: Fortnox Lön — fabrikens verifierare säger "(saknas)" och båda prislist-URL:erna 404:ar.
-  { id: 'fortnox-priser', url: 'https://www.fortnox.se/priser', vantat: {}, ord: ['Lön', 'anställd'] },
+  // Pipedrive har DÖPT OM sina planer: sonden hittade priserna 14/39/59/79 men INGA av orden
+  // "Essential"/"Advanced" som prisbokens tier-nycklar bygger på. Ett pris utan en plan vi kan
+  // namnge är inget ankare — här söker vi namnen innan någon verifierare skrivs.
+  { id: 'pipedrive-namn', url: 'https://www.pipedrive.com/en/pricing', vantat: {},
+    ord: ['Lite', 'Growth', 'Premium', 'Ultimate', 'Essential', 'Advanced', 'Professional', 'Power'] },
+  // Fortnox: både /produkter/lon och /produkter/priser 404:ar. Leta rätt sida via startsidan.
+  { id: 'fortnox-start', url: 'https://www.fortnox.se/', vantat: {}, ord: ['Lön', 'pris', 'Priser'] },
 ];
 
 for (const k of KALLOR) {
