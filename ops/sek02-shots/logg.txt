@@ -1,4 +1,4 @@
-[puls] HTTP 200 → {"ok":true,"sweep":null}
+[puls] HTTP 200 → {"ok":true,"sweep":{"sweptAt":"2026-08-03T22:09:47.807Z","sources":36,"pricePoints":43,"streakNights":3}}
 [a-exempel] hjärtslag: "Vakten · exempelrum · alltid på"
 [a-exempel] veckodom : "En vanlig vecka hos er. Inget kräver er uppmärksamhet — vi vägde era p"
 [a-exempel] fortsättning: (ingen — exempelläge)
