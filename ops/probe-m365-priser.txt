@@ -1,36 +1,58 @@
-HTTP 200 · html-längd 681037
-flat-längd 46692
 
-──── Business Basic · 4 förekomst(er) ────
-  [0] "Business Basic Lättviktsversioner av webb- och mobilappar för att kickstarta din verksamhet 66,91 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive moms. Köp nu Prova kostnadsfritt Se villkor"
-  [1] "Business Basic EES (exkl. Teams) Lättviktsversioner av webb- och mobilappar för att kickstarta din verksamhet 51,61 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive moms. Köp nu Prova kostnad"
-  [2] "Business Basic 66,91 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive moms. Köp nu Prova kostnadsfritt Visa villkoren för utvärderingsversionen 2 (Årsprenumeration, förnyas automatiskt) 1 Pri"
-  [3] "Business Basic, Business Standard och Business Premium erbjuder avancerade verktyg och funktioner speciellt utformade för företag, bland annat: Professionell e-post för företag : Skapa och använd en varumärkesanpassad mejladress med d"
+════════ ÖVERSIKT ════════
+https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-plans-and-pricing
+HTTP 200 · html-längd 681202
+   305,87 kr | ditt företag behöver för ökad produktivitet och säkerhet, i kombination med Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
+   224,63 kr | opilot för företag Kraftfulla, dator-, webb- och mobilappar kombinerade med Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
+    66,91 kr | t​. Microsoft 365 Business Basic Lättviktsversioner av webb- och mobilappar för att kickstarta din verksamhet ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   275,19 kr | ditt företag behöver för ökad produktivitet och säkerhet, i kombination med Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
+   193,94 kr | opilot för företag Kraftfulla, dator-, webb- och mobilappar kombinerade med Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
+    51,61 kr | Business Basic EES (exkl. Teams) Lättviktsversioner av webb- och mobilappar för att kickstarta din verksamhet ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   120,00 kr | rmation Microsoft 365-applikationer för affärsverksamhet Populära skrivbordsappar, exklusive chatt och samtal ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   305,87 kr | Compare plans /h2> "> Jämför abonnemang Microsoft 365 Business Premium och Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
+   224,63 kr | ten är inte tillgänglig på din marknad. Microsoft 365 Business Standard och Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
+    66,91 kr | ris exklusive moms. Köp nu Den här produkten är inte tillgänglig på din marknad. Microsoft 365 Business Basic ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   120,00 kr | onen 2 Den här produkten är inte tillgänglig på din marknad. Microsoft 365-applikationer för affärsverksamhet ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   200,70 kr | iteten, effektiviteten och säkerheten Utforska mer Microsoft 365 Copilot för företag Originally starting from ⟦PRIS⟧ now starting from 172,03 kr 200,70 kr 172,03 kr användare/m  ⚠️ COPILOT-PAKET
+    95,60 kr | llägg Behörig Microsoft 365-prenumeration krävs. För upp till 300 användare. Microsoft Teams-telefon Standard ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+    28,70 kr | . Tillägg Kräver ett berättigat Microsoft 365-abonnemang eller en Teams-licens Microsoft Defender för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
 
-──── Business Standard · 4 förekomst(er) ────
-  [0] "Business Standard och Microsoft 365 Copilot för företag Kraftfulla, dator-, webb- och mobilappar kombinerade med Microsoft 365 Copilot för företag 224,63 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris e"
-  [1] "Business Standard EES (exkl. Teams) och Microsoft 365 Copilot för företag Kraftfulla, dator-, webb- och mobilappar kombinerade med Microsoft 365 Copilot för företag 193,94 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas aut"
-  [2] "Business Standard och Microsoft 365 Copilot för företag 224,63 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive moms. Köp nu (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive moms. Köp nu"
-  [3] "Business Standard och Business Premium erbjuder avancerade verktyg och funktioner speciellt utformade för företag, bland annat: Professionell e-post för företag : Skapa och använd en varumärkesanpassad mejladress med din företagsdomän (t"
+════════ BASIC ════════
+https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-business-basic
+HTTP 200 · html-längd 405392
+    66,91 kr | lus professionell e-post, fillagring i molnet, onlinemöten och AI-baserad chatt. Microsoft 365 Business Basic ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+    80,29 kr | fritt Se villkor för utvärderingsperiod 2 Den här produkten är inte tillgänglig på din marknad. Eller köp för ⟦PRIS⟧ användare/månad med en månadsprenumeration span data-token=
+    51,61 kr | rofessionell e-post, fillagring i molnet och AI-baserad chatt. Microsoft 365 Business Basic EES (exkl. Teams) ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+    61,93 kr | Visa villkoren för utvärderingsperioden 2 Den här produkten är inte tillgänglig på din marknad. Eller köp för ⟦PRIS⟧ användare/månad med en månadsprenumeration Tillbaka till fl
+    66,91 kr | abonnemang så att du kan välja det som passar bäst för dig. Med Teams Utan Teams Microsoft 365 Business Basic ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   133,82 kr | SharePoint: Skapa gruppwebbplatser och dela information, filer och resurser. Microsoft 365 Business Standard ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+    51,61 kr | apa gruppwebbplatser och dela information, filer och resurser. Microsoft 365 Business Basic EES (exkl. Teams) ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   103,13 kr | gruppwebbplatser och dela information, filer och resurser. Microsoft 365 Business Standard EES (exkl. Teams) ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
 
-──── Business Premium · 4 förekomst(er) ────
-  [0] "Business Premium och Microsoft 365 Copilot för företag Allt ditt företag behöver för ökad produktivitet och säkerhet, i kombination med Microsoft 365 Copilot för företag 305,87 kr användare/månad, betalas årsvis (Årsprenumeration, förny"
-  [1] "Business Premium EES (exkl. Teams) och Microsoft 365 Copilot för företag Allt ditt företag behöver för ökad produktivitet och säkerhet, i kombination med Microsoft 365 Copilot för företag 275,19 kr användare/månad, betalas årsvis (Årspr"
-  [2] "Business Premium och Microsoft 365 Copilot för företag 305,87 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive moms. Köp nu (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive moms. Köp nu"
-  [3] "Business Premium YTTERLIGARE RESURSER Meet the unique needs of your organization /h2> \"> Uppfyll din organisations unika behov Föregående bild Nästa bild Help me choose a Microsoft 365 plan /h3> \"> Välja abonnemang Hjälp mig välja ett M"
+════════ STANDARD ════════
+https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-business-standard
+HTTP 200 · html-längd 405675
+   133,82 kr | igering, e-post för företaget, molnlagring, onlinemöten och AI-baserad chatt. Microsoft 365 Business Standard ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   160,58 kr | Visa villkoren för utvärderingsperioden 2 Den här produkten är inte tillgänglig på din marknad. Eller köp för ⟦PRIS⟧ användare/månad med ett månatligt åtagande span data-token=
+   103,13 kr | ng, e-post för företaget, molnlagring och AI-baserad chatt. Microsoft 365 Business Standard EES (exkl. Teams) ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   123,76 kr | Visa villkoren för utvärderingsperioden 2 Den här produkten är inte tillgänglig på din marknad. Eller köp för ⟦PRIS⟧ användare/månad med en månadsprenumeration Tillbaka till fl
+   133,82 kr | nnemang så att du kan välja det som passar bäst för dig. Med Teams Utan Teams Microsoft 365 Business Standard ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   224,63 kr | h dela information, filer och resurser. Microsoft 365 Business Standard och Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
+   103,13 kr | n och kreativiteten med en säker AI-assistent för arbetet​. Microsoft 365 Business Standard EES (exkl. Teams) ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   193,94 kr | , filer och resurser. Microsoft 365 Business Standard EES (exkl. Teams) och Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
 
-──── Alla kr-belopp med kontext ────
-  305,87 kr :: …för ökad produktivitet och säkerhet, i kombination med Microsoft 365 Copilot för företag ⟦305,87 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  224,63 kr :: …raftfulla, dator-, webb- och mobilappar kombinerade med Microsoft 365 Copilot för företag ⟦224,63 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  66,91 kr :: …siness Basic Lättviktsversioner av webb- och mobilappar för att kickstarta din verksamhet ⟦66,91 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  275,19 kr :: …för ökad produktivitet och säkerhet, i kombination med Microsoft 365 Copilot för företag ⟦275,19 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  193,94 kr :: …raftfulla, dator-, webb- och mobilappar kombinerade med Microsoft 365 Copilot för företag ⟦193,94 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  51,61 kr :: …exkl. Teams) Lättviktsversioner av webb- och mobilappar för att kickstarta din verksamhet ⟦51,61 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  120,00 kr :: …5-applikationer för affärsverksamhet Populära skrivbordsappar, exklusive chatt och samtal ⟦120,00 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  305,87 kr :: …"> Jämför abonnemang Microsoft 365 Business Premium och Microsoft 365 Copilot för företag ⟦305,87 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  224,63 kr :: …lig på din marknad. Microsoft 365 Business Standard och Microsoft 365 Copilot för företag ⟦224,63 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  66,91 kr :: …Köp nu Den här produkten är inte tillgänglig på din marknad. Microsoft 365 Business Basic ⟦66,91 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  120,00 kr :: …kten är inte tillgänglig på din marknad. Microsoft 365-applikationer för affärsverksamhet ⟦120,00 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  200,70 kr :: …en och säkerheten Utforska mer Microsoft 365 Copilot för företag Originally starting from ⟦200,70 kr⟧ now starting from 172,03 kr 200,70 kr 172,03 kr användare/månad, betalas årsvis (Årsprenu…
-  95,60 kr :: …oft 365-prenumeration krävs. För upp till 300 användare. Microsoft Teams-telefon Standard ⟦95,60 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Pris exklusive…
-  28,70 kr :: …berättigat Microsoft 365-abonnemang eller en Teams-licens Microsoft Defender för företag ⟦28,70 kr⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt) 1 Se villkor för…
+════════ PREMIUM ════════
+https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-business-premium
+HTTP 200 · html-längd 457020
+   210,29 kr | retaget, molnlagring, onlinemöten, AI-baserad chatt och skydd i företagsklass. Microsoft 365 Business Premium ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   252,35 kr | Visa villkoren för utvärderingsperioden 2 Den här produkten är inte tillgänglig på din marknad. Eller köp för ⟦PRIS⟧ användare/månad med en månadsprenumeration span data-token=
+   179,60 kr | et, molnlagring, AI-baserad chatt och skydd i företagsklass. Microsoft 365 Business Premium EES (exkl. Teams) ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   215,52 kr | Visa villkoren för utvärderingsperioden 2 Den här produkten är inte tillgänglig på din marknad. Eller köp för ⟦PRIS⟧ användare/månad med en månadsprenumeration Tillbaka till fl
+   210,29 kr | onnemang så att du kan välja det som passar bäst för dig. Med Teams Utan Teams Microsoft 365 Business Premium ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   305,87 kr | a data på ett enkelt och effektivt sätt. Microsoft 365 Business Premium och Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
+   179,60 kr | are och effektivare att styra, skydda och hantera dina data. Microsoft 365 Business Premium EES (exkl. Teams) ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas
+   275,19 kr | lt och effektivt sätt. Microsoft 365 Business Premium EES (exkl. Teams) och Microsoft 365 Copilot för företag ⟦PRIS⟧ användare/månad, betalas årsvis (Årsprenumeration, förnyas  ⚠️ COPILOT-PAKET
+
+════════ ENTERPRISE ════════
+https://www.microsoft.com/sv-se/microsoft-365/enterprise/microsoft365-plans-and-pricing
+HTTP ERR AbortError · html-längd 0
