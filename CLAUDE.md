@@ -533,6 +533,23 @@ getBenchmark({ category, industry, employees })
 > farliga riktningen att ha fel åt — vi fakturerar på realiserad besparing, och en besparing som
 > aldrig fanns kan aldrig realiseras.
 >
+> **✅ STÄNGT 2026-08-06 03:xx — 17 AV 17 KÄLLOR GRÖNA, PRISAUDITEN 21 → 0 VARNINGAR.**
+> Fem nya vakter byggda (Slack · Zoom · HubSpot · Zoho · Pipedrive), två räddade (Atlassian ·
+> Fortnox Lön). Ingen post i prisboken står längre obevakad. Vakterna hittade vid första
+> ögonkastet: Slack Business+ 18 → 15 USD (vi övervärderade marknaden 20 %), **elva påhittade
+> partnerrabatter à −15 %** i målpriset kunden ser (neutralitetsbrott — se Affärsmodell),
+> Confluence 6,50 → 6,55 och 12,53 → 12,87 (källan var en tredjeparts blogg), Pipedrives planer
+> som inte längre säljs, och en Fortnox-vakt som larmat på en 404-sida i 76 dagar.
+>
+> **FEM FÄLLOR, STRUKTURELLT STÄNGDA** — alla samma sjukdom: två olika saker jämförda som om de
+> vore samma, eller en vakt som tystnar utan att säga ifrån.
+> · **Paket** (Copilot/EES) → `planPriceFromText` i fabrikens kärna, varje ny vakt ärver skyddet.
+> · **Kampanj** (HubSpot $7 vs $20) → högsta priset i blocket ÄR listpriset; en rabatt kan bara vara lägre.
+> · **Belopp** (Pipedrive 14 vs 168) → månad och år måste bekräfta varandra (år = 12 × månad).
+> · **Seat** (Atlassian 300 vs 110) → `#unit-count` ställs explicit; Jira stämde sedan PÅ ÖRET,
+>   vilket bevisade att rätt beslut ibland är att INTE ändra prisboken.
+> · **Hängning** (Zoho, 9 min utan utfall) → tidsbudget per källa i `scripts/verify.mjs`.
+>
 > Läxan är inte "sätt på schemat igen" utan: **ett larm som skriker på fel saker blir avstängt, och
 > en avstängd vakt är värre än ingen vakt — den ser ut som att någon tittar.** Schemat är återinfört
 > veckovis (`verify-sources.yml`, måndagar 06:00 CET). Blir det brusigt lagar vi verifieraren. Aldrig

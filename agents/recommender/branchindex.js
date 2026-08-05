@@ -171,7 +171,7 @@ export const BRANCHINDEX = {
 
   bredband: {
     source: 'real-public',
-    lastVerified: '2026-06-17',
+    lastVerified: '2026-08-05',
     verifiedVia: 'tele2-address-api',
     // GENOMBROTT 2026-06-14 (7 sond-rundor): Tele2:s adress→pris-API reverse-engineerat —
     // två rena publika JSON-endpoints (feasibility/addresses + broadband/products) som ger
@@ -479,12 +479,12 @@ export const BRANCHINDEX = {
       // NÄSTA VERIFIERING: 2026-09-01
       'zoom-pro': {
         usdMonthly: 15.99, usdAnnual: 14.16,
-        currency: 'USD', lastVerified: '2026-05-28', source: 'zoom.us/pricing',
+        currency: 'USD', lastVerified: '2026-08-05', source: 'zoom.us/pricing',
         note: 'Zoom Pro — obegränsade möten, 1 GB moln-inspelning, schemaläggning.',
       },
       'zoom-business': {
         usdMonthly: 19.99, usdAnnual: 18.33,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'zoom.us/pricing',
+        currency: 'USD', lastVerified: '2026-08-05', source: 'zoom.us/pricing',
         note: 'Zoom Business — SSO, inspelningsutskrifter, branding, 300 deltagare.',
       },
 
@@ -614,13 +614,13 @@ export const BRANCHINDEX = {
       // HubSpot CRM — USD-baspris, konverteras runtime.
       'hubspot-starter': {
         usdMonthly: 20.00, usdAnnual: 20.00,
-        currency: 'USD', lastVerified: '2026-06-04', source: 'hubspot.com/pricing',
+        currency: 'USD', lastVerified: '2026-08-05', source: 'hubspot.com/pricing/crm/starter',
         note: 'HubSpot Sales Hub Starter — kontakter, deals, e-postspårning.',
       },
       // Zoho CRM — USD-baspris.
       'zoho-crm-standard': {
         usdMonthly: 20.00, usdAnnual: 14.00,
-        currency: 'USD', lastVerified: '2026-06-04', source: 'zoho.com/crm/pricing',
+        currency: 'USD', lastVerified: '2026-08-05', source: 'zoho.com/crm/zohocrm-pricing.html',
         note: 'Zoho CRM Standard — leads, kontakter, konton, standardrapporter.',
       },
     },
@@ -736,7 +736,7 @@ export const BRANCHINDEX = {
 
   loneadmin: {
     source: 'real-public',
-    lastVerified: '2026-05-22',
+    lastVerified: '2026-08-05',
     verifiedVia: 'playwright',
     unit: 'kr/år',
     // Strukturerat verifierat ankare — det rätt-storleks-loben (lib/loneadmin-rightsizing.js)
