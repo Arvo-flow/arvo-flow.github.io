@@ -494,26 +494,33 @@ export const BRANCHINDEX = {
       //   Tier 101-200 users: Jira Premium $32 000/år totalt, Confluence Premium $23 000/år totalt.
       //   → För 110 users: årsavtal KOSTAR MER än månadsavtal. Byte till årsavtal rekommenderas EJ.
       //   → usdAnnual är null för alla Atlassian-produkter — ingen rättvis per-user-jämförelse möjlig.
-      //   Månadsriser verifierade direkt från atlassian.com för 110 users (maj 2026).
-      // NÄSTA VERIFIERING: 2026-09-01
+      //   Månadspriser verifierade direkt från atlassian.com för 110 users.
+      //
+      // ✅ OMVERIFIERAT LIVE 2026-08-05 med seat-väljaren (#unit-count) explicit satt till 110:
+      //   Jira Standard 8,92 och Premium 17,88 stämde PÅ ÖRET — prisbokens tal var rätta hela
+      //   tiden. (Sidans standardvy visar 300 users och gav 7,91/14,54; att "rätta" efter den
+      //   hade förstört fungerande data. Se SEAT-FÄLLAN i lib/verifiers/atlassian.mjs.)
+      //   Confluence avvek: 6,50 → 6,55 och 12,53 → 12,87. Just de två posterna hade källan
+      //   featurebase.app — en tredjeparts blogg. Andrahandskällan låg nära, men inte rätt.
+      //   Källan är nu Atlassian direkt, och talen är deras.
       'atlassian-jira-standard': {
         usdMonthly: 8.92,  usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'atlassian.com/software/jira/pricing',
+        currency: 'USD', lastVerified: '2026-08-05', source: 'atlassian.com/software/jira/pricing',
         note: 'Jira Software Cloud Standard — agile boards, backlog, roadmaps.',
       },
       'atlassian-jira-premium': {
         usdMonthly: 17.88, usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'atlassian.com/software/jira/pricing',
+        currency: 'USD', lastVerified: '2026-08-05', source: 'atlassian.com/software/jira/pricing',
         note: 'Jira Software Cloud Premium — avancerade roadmaps, sandbox, 24/7-support.',
       },
       'atlassian-confluence-standard': {
-        usdMonthly: 6.50,  usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'featurebase.app',
+        usdMonthly: 6.55,  usdAnnual: null, usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-08-05', source: 'atlassian.com/software/confluence/pricing',
         note: 'Confluence Cloud Standard — wiki, templates, Teams/Slack-integrationer.',
       },
       'atlassian-confluence-premium': {
-        usdMonthly: 12.53, usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-05-22', source: 'featurebase.app',
+        usdMonthly: 12.87, usdAnnual: null, usdArvoAnnual: null,
+        currency: 'USD', lastVerified: '2026-08-05', source: 'atlassian.com/software/confluence/pricing',
         note: 'Confluence Cloud Premium — analytics, sandbox, 24/7-support.',
       },
     },
