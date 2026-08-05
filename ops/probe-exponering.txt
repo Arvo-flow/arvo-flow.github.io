@@ -1,0 +1,66 @@
+
+── Analyser totalt · unika e-poster · unika fingerprints ──
+[
+ {
+  "analyser": 38,
+  "eposter": 3,
+  "fingerprints": 10,
+  "forsta": "2026-05-30T13:47:32.277Z",
+  "senaste": "2026-07-16T13:46:23.923Z"
+ }
+]
+
+── Per e-postdomän (vem är kunderna EGENTLIGEN?) ──
+[
+ {
+  "doman": "gmail.com",
+  "n": 28
+ },
+ {
+  "doman": "arvoflow.se",
+  "n": 6
+ },
+ {
+  "doman": "test",
+  "n": 1
+ }
+]
+
+── Analyser i DRABBADE kategorier (saas-productivity = M365/Google/Slack/Zoom) ──
+[
+ {
+  "category": "mobil",
+  "route": "auto",
+  "n": 13,
+  "senaste": "2026-06-26T15:13:19.061Z"
+ },
+ {
+  "category": "saas-productivity",
+  "route": "auto",
+  "n": 13,
+  "senaste": "2026-07-16T13:46:23.923Z"
+ }
+]
+
+── Utskickade prislarm (nådde något kunden?) ──
+[
+ {
+  "rader": 820,
+  "mail_skickade": 14,
+  "senaste": "2026-08-05T22:24:38.173Z"
+ }
+]
+
+── Aktiverade Intelligence-kunder (betalande relation) ──
+[
+ {
+  "n": 0
+ }
+]
+
+── Verifierade utfall / success fee (fakturerat på besparing?) ──
+[
+ {
+  "n": 0
+ }
+]
