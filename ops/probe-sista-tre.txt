@@ -1,0 +1,126 @@
+
+══════════ ATLASSIAN JIRA ══════════
+https://www.atlassian.com/software/jira/pricing
+  status 200
+  ── kontroller som kan styra antal användare ──
+    input | id=unit-count type=number value=300 | text=300
+    button |  | text=User roles and permissions
+    button |  | text=Per user automation limits (1,000 rule runs per month)
+    button |  | text=User limit per site
+    button |  | text=Number of sites
+    button |  | text=User roles and permissions
+    button |  | text=User counts
+    button |  | text=Centralized user subscriptions
+    button |  | text=Audit logs - user activity
+    button |  | text=About users & how you’re billed for them
+  ── textrader om användare ──
+    "users"
+    "Free forever for 10 users"
+    "Up to 10 users"
+    "per user / month"
+    "User roles and permissions"
+    "Up to 100,000 users per site"
+    "per user / month"
+    "Per user automation limits (1,000 rule runs per month)"
+    "User limit per site"
+    "10 users"
+    "100,000 users"
+    "100,000 users"
+    "100,000 users"
+    "User roles and permissions"
+    "25 Rovo credits per user per month"
+    "100 indexed objects per user"
+    "70 Rovo credits per user per month"
+    "250 indexed objects per user"
+
+══════════ ATLASSIAN CONFLUENCE ══════════
+https://www.atlassian.com/software/confluence/pricing
+  status 200
+  ── kontroller som kan styra antal användare ──
+    input | id=unit-count type=number value=300 | text=300
+    button |  | text=Up to 3 active whiteboards per user
+    button |  | text=User limit per site
+    button |  | text=Number of sites
+    button |  | text=User counts
+    button |  | text=Audit logs for user activity
+    button |  | text=Centralized per-user licensing
+    button |  | text=About users & how you're billed for them
+  ── textrader om användare ──
+    "users"
+    "Free forever for 10 users"
+    "Up to 3 active whiteboards per user"
+    "per user / month"
+    "Up to 250,000 users per site"
+    "per user / month"
+    "User limit per site"
+    "10 users"
+    "250,000 users"
+    "250,000 users"
+    "250,000 users"
+    "3 active whiteboards per user"
+    "10 active whiteboards per user"
+    "1,000 rule runs per user per month"
+    "25 Rovo credits per user per month"
+    "100 indexed objects per user"
+    "70 Rovo credits per user per month"
+    "250 indexed objects per user"
+
+══════════ PIPEDRIVE LINEUP ══════════
+  status 200
+  ── Lite (rad 13) ──
+     "Lite"
+     "Now with AI"
+     "Organize your sales in one simple, intuitive workspace"
+     "US$"
+     "14"
+     "One payment of US$ 168 per seat/year"
+     "Per seat per month, billed annually"
+     "Try it free"
+     "Free 14-day trial. No credit card required."
+  ── Growth (rad 32) ──
+     "Growth"
+     "Now with AI"
+     "Automate emails and follow-ups so you can focus on closing"
+     "US$"
+     "39"
+     "One payment of US$ 468 per seat/year"
+     "Per seat per month, billed annually"
+     "Try it free"
+     "Free 14-day trial. No credit card required."
+  ── Premium (rad 52) ──
+     "Premium"
+     "Now with AI"
+     "Drive success from lead to close with full-cycle sales tools"
+     "US$"
+     "59"
+     "One payment of US$ 708 per seat/year"
+     "Per seat per month, billed annually"
+     "Try it free"
+     "Free 14-day trial. No credit card required."
+  ── Ultimate (rad 73) ──
+     "Ultimate"
+     "Now with AI"
+     "Optimize performance with our complete suite of capabilities"
+     "US$"
+     "79"
+     "One payment of US$ 948 per seat/year"
+     "Per seat per month, billed annually"
+     "Try it free"
+     "Free 14-day trial. No credit card required."
+  Essential: (finns ej som egen rad)
+  Advanced: (finns ej som egen rad)
+  Professional: (finns ej som egen rad)
+
+══════════ FORTNOX — jakt på prissidan ══════════
+  startsidan status 200
+    https://www.fortnox.se/produkt/loneprogram  ← ""
+    https://www.fortnox.se/produkt/prislista  ← ""
+    https://www.fortnox.se/produkt/prislista  ← ""
+    https://www.fortnox.se/fortnox-foretagsguide/kalkylatorer/lon-efter-skatt  ← ""
+    https://www.fortnox.se/produkt/loneprogram  ← "Löneprogram Smidigt för dig och dina ans"
+    https://support.fortnox.se/hantera-fortnox/abonnemang-och-avtal  ← "Abonnemang"
+    prov https://www.fortnox.se/priser → 404
+    prov https://www.fortnox.se/prislista → 200
+    prov https://www.fortnox.se/produkter/fortnox-lon → 404
+    prov https://www.fortnox.se/lon → 404
+    prov https://www.fortnox.se/produkter/loneprogram → 404
