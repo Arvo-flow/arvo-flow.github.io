@@ -21,7 +21,12 @@ let report;
 try {
   report = JSON.parse(readFileSync(path, 'utf8'));
 } catch (err) {
-  console.log(`[vakt] ingen rapport att registrera (${path}): ${err.message} — hoppar över, exit 0`);
+  // Ingen rapport = svepet kraschade innan det hann skriva något. Vakten svepte INGENTING.
+  // Vi registrerar självklart inget hjärtslag (det vore ett påstått svep) — men det här är inte
+  // "inget att göra", det är en tyst natt. Workflowens rapportgrind fäller jobbet för det;
+  // härifrån räcker en otvetydig logg (steget bär continue-on-error och kan inte fälla något).
+  console.log(`[vakt] INGEN RAPPORT (${path}): ${err.message}`);
+  console.log('[vakt] → svepet kraschade, vakten var inte vaken i natt. Kedjan bryts. exit 0 (grinden fäller jobbet)');
   process.exit(0);
 }
 

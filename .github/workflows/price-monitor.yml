@@ -96,21 +96,30 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
 
-      # RAPPORTGRINDEN (grundarbeslut 2026-07-20): monitor.outcome == 'failure' är TVETYDIGT —
-      # det betyder ANTINGEN "avvikelse hittad (rapport skriven)" ELLER "svepet kraschade (ingen
-      # rapport)". Ett kraschat svep fällde tidigare jobbet (apply-steget läste en saknad rapport
-      # → exit 1 → fail-mejl). Gata i stället nedströmsstegen på att rapporten FINNS och bär
-      # avvikelser. Kraschat svep → has_alerts=false → inget nedströms → jobbet grönt → inget mejl.
+      # RAPPORTGRINDEN (grundarbeslut 2026-07-20, RÄTTAD 2026-08-04): monitor.outcome == 'failure'
+      # är TVETYDIGT — det betyder ANTINGEN "avvikelse hittad (rapport skriven)" ELLER "svepet
+      # kraschade (ingen rapport)". Grinden löste fail-mejlen men slog ihop TRE utfall till ett:
+      # den skrev bokstavligen "svepet var lugnt ELLER KRASCHADE" och gjorde båda gröna. Natten
+      # 4 aug kraschade svepet, ingen rapport skrevs, inget hjärtslag registrerades — och jobbet
+      # lyste grönt. En tyst vakt får aldrig se ut som en lugn vakt.
+      #
+      # Nu skiljs utfallen åt: rapport MED avvikelser → nedströmssteg. Rapport UTAN avvikelser →
+      # grönt, tyst, ingen mejl (den premiumladdade lugna natten). INGEN rapport → svepet gjorde
+      # ingenting → jobbet FÄLLS i sista steget, efter att kvitton hunnit skrivas. Den mejlen är
+      # sann och ska komma.
       - name: Check report
         id: report
         if: always()
         run: |
-          if [ -f /tmp/price-monitor-report.json ] && \
-             node -e "const r=require('/tmp/price-monitor-report.json'); process.exit((r.alerts||[]).length>0?0:1)"; then
+          if [ ! -f /tmp/price-monitor-report.json ]; then
+            echo "has_alerts=false" >> "$GITHUB_OUTPUT"
+            echo "crashed=true"     >> "$GITHUB_OUTPUT"
+            echo "::error::Svepet skrev ingen rapport — vakten svepte INGENTING i natt. Kedjan bryts."
+          elif node -e "const r=require('/tmp/price-monitor-report.json'); process.exit((r.alerts||[]).length>0?0:1)"; then
             echo "has_alerts=true"  >> "$GITHUB_OUTPUT"
           else
             echo "has_alerts=false" >> "$GITHUB_OUTPUT"
-            echo "Ingen rapport med avvikelser — svepet var lugnt eller kraschade. Inga nedströmssteg."
+            echo "Rapport skriven utan avvikelser — den lugna natten. Inga nedströmssteg, inget larm."
           fi
 
       # Vaktens hjärtslag (1C): registrera svepet ALLTID — även den tysta "allt lugnt"-natten
@@ -357,3 +366,15 @@ jobs:
       - name: All checks passed
         if: steps.monitor.outcome == 'success'
         run: echo "✅ Alla priskontroller godkända — inga åtgärder behövs."
+
+      # VAKTENS TYSTNAD ÄR ETT FEL (2026-08-04). Sist i jobbet, så kvitton/hjärtslag hinner skrivas
+      # först — men jobbet får ALDRIG lysa grönt en natt då vakten inte svepte. Det här är skillnaden
+      # mellan de fail-mejl vi stängde av (falska: "lugn natt" felrapporterad som fel) och det här
+      # (sant: vakten sov). Vi vill ha den mejlen — den är hela poängen med en vakt.
+      - name: Vaktens tystnad är ett fel
+        if: always() && steps.report.outputs.crashed == 'true'
+        run: |
+          echo "Svepet producerade ingen rapport. Vakten var inte vaken i natt."
+          echo "Kedjan (obrutna nätter) bryts och landningssidans hjärtslag faller tillbaka"
+          echo "på den generiska meningen efter 36 h — som den ska. Åtgärda svepet."
+          exit 1

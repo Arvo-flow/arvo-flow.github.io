@@ -491,7 +491,18 @@ async function checkSource(page, source) {
     return results;
   }
 
-  const text = await page.evaluate(() => document.body?.innerText ?? '');
+  // ISOLERINGSKRAVET (grundarfynd 2026-08-04): det här anropet låg UTANFÖR try/catch. En sida som
+  // navigerar om sig själv efter att goto() lugnat sig ger "Execution context was destroyed" — och
+  // kraschen dödade HELA svepet av ~40 källor, inte bara den sidan. Natten 4 aug svepte vakten
+  // därför ingenting alls, medan workflowen rapporterade success. En flakig leverantörssida får
+  // aldrig kunna tysta vakten: den blir en varning för SIN källa, resten av svepet fortsätter.
+  let text;
+  try {
+    text = await page.evaluate(() => document.body?.innerText ?? '');
+  } catch (err) {
+    results.warning = `Läsfel: ${err.message.split('\n')[0]}`;
+    return results;
+  }
 
   if (text.length < 500) {
     results.warning = `Sidan returnerade för lite text (${text.length} tecken) — möjlig omdirigering`;
