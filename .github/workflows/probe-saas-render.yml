@@ -1,0 +1,33 @@
+name: Probe SaaS-priser (renderad rekognosering)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: npm }
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe
+        continue-on-error: true
+        run: |
+          mkdir -p ops
+          node scripts/probe-saas-render.mjs 2>&1 | tee ops/probe-saas-render.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git pull --rebase origin main || true
+          git add ops/probe-saas-render.txt
+          git commit -m "ops: probe-saas-render [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
