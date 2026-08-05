@@ -354,13 +354,18 @@ jobs:
               console.log('Skapade ärende #' + issue.number);
             }
 
+      # ETT OLEVERERAT KUNDLARM ÄR INTE EN VARNING — DET ÄR PRODUKTEN SOM INTE GICK FRAM.
+      # `continue-on-error: true` gömde 2026-08-05 att varje larmmail dog på 403 (fel avsändar-
+      # domän) medan jobbet lyste grönt. Steget fäller nu jobbet när skriptet rapporterar
+      # misslyckade utskick. Den mejlen är sann och ska komma — till skillnad från de falska
+      # fail-mejl vi stängde av 20 juli.
       - name: Notify affected customers
         if: steps.report.outputs.has_alerts == 'true'
-        continue-on-error: true
         run: node scripts/notify-price-changes.mjs /tmp/price-monitor-report.json
         env:
           DATABASE_URL:    ${{ secrets.DATABASE_URL }}
           RESEND_API_KEY:  ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM:     Arvo Flow <analys@arvoflow.se>
           ARVO_BASE_URL:   https://arvoflow.se
 
       - name: All checks passed

@@ -47,6 +47,29 @@ describe('Tystnadsfel · en flakig sida får inte döda hela svepet', () => {
   });
 });
 
+describe('Tystnadsfel · avsändardomänen (kundlarmet som aldrig gick fram)', () => {
+  // 2026-08-05: notify-price-changes.mjs skickade från "arvo-flow.se" (BINDESTRECK) — en domän vi
+  // inte äger i Resend. Varje kundlarm dog på 403, steget bar continue-on-error, jobbet grönt.
+  // Ett tecken skilde produktens kärnlöfte från att fungera.
+  const KALLOR = [
+    'scripts/notify-price-changes.mjs', 'api/cron/run-price-alerts.mjs', 'api/cron/send-reminders.mjs',
+    'api/cron/generate-briefings.mjs', 'api/send-analysis.mjs', 'api/inbound-email.mjs',
+    'api/generate-prospect.mjs', 'api/briefing.mjs', 'api/send-report.mjs',
+    'api/activate-intelligence.mjs', 'api/auth/request-magic-link.mjs', 'lib/benchmark.js',
+  ];
+
+  for (const p of KALLOR) {
+    test(`${p} skickar från den verifierade domänen arvoflow.se`, () => {
+      const src = las(p);
+      const fel = [...src.matchAll(/[\w.+-]+@([\w.-]+\.\w+)/g)]
+        .map((m) => m[1])
+        .filter((d) => /arvo/i.test(d) && d !== 'arvoflow.se' && !d.endsWith('.arvoflow.se'));
+      assert.deepEqual([...new Set(fel)], [],
+        `Ej verifierad avsändardomän i ${p} — Resend svarar 403 och kunden får aldrig sitt larm.`);
+    });
+  }
+});
+
 describe('Tystnadsfel · en kraschad natt får inte se ut som en lugn natt', () => {
   const yml = las('.github/workflows/price-monitor.yml');
 

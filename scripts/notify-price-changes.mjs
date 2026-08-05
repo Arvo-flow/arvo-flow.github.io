@@ -37,7 +37,12 @@ import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 import { catLabel } from '../lib/format.js';
 
 const REPORT_PATH = process.argv[2] ?? '/tmp/price-monitor-report.json';
-const FROM        = process.env.RESEND_FROM    ?? 'Arvo Flow <analys@arvo-flow.se>';
+// VERIFIERAD AVSÄNDARDOMÄN (grundarfynd 2026-08-05): den här raden stod på "arvo-flow.se" med
+// BINDESTRECK — en domän vi inte äger i Resend. Resultat: varje kundlarm i den här vägen dog på
+// 403 "The arvo-flow.se domain is not verified", steget bar continue-on-error och jobbet lyste
+// grönt. Prisvarningen till kunden — kärnan i Arvo Intelligence — har aldrig kunnat levereras
+// härifrån. Repots övriga 21 avsändare använder arvoflow.se. Testlåst i tests/tystnadsfel.mjs.
+const FROM        = process.env.RESEND_FROM    ?? 'Arvo Flow <analys@arvoflow.se>';
 const BASE_URL    = process.env.ARVO_BASE_URL  ?? 'https://arvoflow.se';
 
 // ── Rapport-inläsning ─────────────────────────────────────────────────────────
