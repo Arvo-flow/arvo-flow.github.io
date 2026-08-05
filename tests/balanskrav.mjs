@@ -129,8 +129,8 @@ describe('Like-for-like — NMIT 8840219 (E3 + tilläggstjänster)', () => {
     const { computeLikeForLikeSaasTarget } = await import('../agents/recommender/recommend.js');
     const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
     const r = computeLikeForLikeSaasTarget(NMIT_LINES, BRANCHINDEX['saas-productivity'].licenseTierBenchmarks, NMIT_ANNUAL);
-    assert.equal(r.suggestedAnnualCost, 450_871);
-    assert.equal(r.savingPerYear, 24_569);
+    assert.equal(r.suggestedAnnualCost, 473_192);
+    assert.equal(r.savingPerYear, 2_248);
   });
 
   test('billedUnitMonthly = E3-radens à-pris 420 kr (inte blandade 683)', async () => {
@@ -171,18 +171,18 @@ describe('Attribueringslåset — buildLikeForLikeReasoning (NMIT 8840219)', () 
       supplier: 'Nordic Managed IT Services AB',
       lfl,
       annualCost: 475_440,
-      suggestedAnnualCost: 450_871,
-      savingPerYear: 24_569,
+      suggestedAnnualCost: 473_192,
+      savingPerYear: 2_248,
       billingCycleType: 'monthly',
     });
     // sv-SE-tusentalsavgränsare är hårt mellanslag (U+00A0/U+202F) — normalisera för asserts
     return text.replace(/[  ]/g, ' ');
   }
 
-  test('texten attribuerar rätt: 420 kr = E3-radens à-pris, 384,70 = årsavtalet', async () => {
+  test('texten attribuerar rätt: 420 kr = E3-radens à-pris, 416,77 = årsavtalet', async () => {
     const r = await buildNmitReasoning();
     assert.match(r, /420 kr per användare och månad för era 58 E3-licenser/);
-    assert.match(r, /årsavtalspris[^.]*384,70 kr/);
+    assert.match(r, /årsavtalspris[^.]*416,77 kr/);
   });
 
   test('683 (blandade per-seat-totalen) kan ALDRIG förekomma i texten', async () => {
@@ -190,9 +190,9 @@ describe('Attribueringslåset — buildLikeForLikeReasoning (NMIT 8840219)', () 
     assert.ok(!r.includes('683'), `683-attribueringen återuppstod: "${r}"`);
   });
 
-  test('årssiffrorna är kortets exakta tal: 475 440 → 450 871, gap 24 569', async () => {
+  test('årssiffrorna är kortets exakta tal: 475 440 → 473 192, gap 2 248', async () => {
     const r = await buildNmitReasoning();
-    assert.match(r, /475 440 kr i dag mot 450 871 kr för identisk licensmix — 24 569 kr/);
+    assert.match(r, /475 440 kr i dag mot 473 192 kr för identisk licensmix — 2 248 kr/);
   });
 
   test('tilläggen redovisas separat (183 120 kr/år) och E3-advisoryn är talfri', async () => {
@@ -204,7 +204,7 @@ describe('Attribueringslåset — buildLikeForLikeReasoning (NMIT 8840219)', () 
   test('varje tal i texten har källtäckning i LFL-fakta (prosakravet på oss själva)', async () => {
     const { checkProseNumbers } = await import('../lib/prose-guard.js');
     const r = await buildNmitReasoning();
-    const facts = '420 · 384,70 · 58 · 475 440 · 450 871 · 24 569 · 183 120 kr';
+    const facts = '420 · 416,77 · 58 · 475 440 · 473 192 · 2 248 · 183 120 kr';
     const check = checkProseNumbers(r, facts);
     assert.equal(check.ok, true, JSON.stringify(check.violations));
   });

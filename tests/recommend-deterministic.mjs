@@ -96,7 +96,7 @@ describe('RD-03 · getDominantSaasTierKey — dominant tier via belopp', () => {
 // ── RD-04 ────────────────────────────────────────────────────────────────────
 // computeLikeForLikeSaasTarget — E3-återförsäljaröverdebitering (20 seats)
 // Kund betalar 600 kr/seat/mån hos återförsäljare; MSRP årsavtal = 384,70 kr/seat/mån.
-// Besparing = 144 000 − 92 328 = 51 672 kr/år (prisgap, ej tierdowngrade).
+// Besparing = 144 000 − 100 025 = 43 975 kr/år (prisgap, ej tierdowngrade).
 describe('RD-04 · computeLikeForLikeSaasTarget — E3 återförsäljaröverdebitering', () => {
   const annualCost = 144000;  // 12 000 kr/mån × 12
   const li = [
@@ -111,20 +111,20 @@ describe('RD-04 · computeLikeForLikeSaasTarget — E3 återförsäljaröverdebi
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
     assert.strictEqual(result.dominantTierKey, 'e3');
   });
-  test('suggestedAnnualCost = Math.round(384,70 × 20 × 12) = 92 328', () => {
+  test('suggestedAnnualCost = Math.round(416,77 × 20 × 12) = 100 025', () => {
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
-    assert.strictEqual(result.suggestedAnnualCost, 92328);
+    assert.strictEqual(result.suggestedAnnualCost, 100025);
   });
-  test('savingPerYear = 144 000 − 92 328 = 51 672', () => {
+  test('savingPerYear = 144 000 − 100 025 = 43 975', () => {
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
-    assert.strictEqual(result.savingPerYear, 51672);
+    assert.strictEqual(result.savingPerYear, 43975);
   });
   test('tierLines innehåller rätt entry', () => {
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
     assert.strictEqual(result.tierLines.length, 1);
     assert.strictEqual(result.tierLines[0].key, 'e3');
     assert.strictEqual(result.tierLines[0].quantity, 20);
-    assert.strictEqual(result.tierLines[0].tierAnnual, 92328);
+    assert.strictEqual(result.tierLines[0].tierAnnual, 100025);
   });
   test('addonLines är tom', () => {
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
@@ -147,23 +147,23 @@ describe('RD-05 · computeLikeForLikeSaasTarget — blandad tier-faktura med add
     result = computeLikeForLikeSaasTarget(li, TIERS, annualCost);
     assert.notStrictEqual(result, null);
   });
-  test('dominantTierKey = "business-standard" (21 506 > 12 617)', () => {
+  test('dominantTierKey = "business-standard" (24 088 > 12 617)', () => {
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
     assert.strictEqual(result.dominantTierKey, 'business-standard');
   });
-  test('suggestedAnnualCost = 21 506 + 12 617 + 2 400 = 36 523', () => {
+  test('suggestedAnnualCost = 24 088 + 12 617 + 2 400 = 39 105', () => {
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
-    assert.strictEqual(result.suggestedAnnualCost, 36523);
+    assert.strictEqual(result.suggestedAnnualCost, 39105);
   });
-  test('savingPerYear = 39 600 − 36 523 = 3 077', () => {
+  test('savingPerYear = 39 600 − 39 105 = 495', () => {
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
-    assert.strictEqual(result.savingPerYear, 3077);
+    assert.strictEqual(result.savingPerYear, 495);
   });
-  test('Business Standard tierAnnual = Math.round(119,48 × 15 × 12) = 21 506', () => {
+  test('Business Standard tierAnnual = Math.round(133,82 × 15 × 12) = 24 088', () => {
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
     const bs = result.tierLines.find(t => t.key === 'business-standard');
     assert.ok(bs, 'business-standard rad saknas i tierLines');
-    assert.strictEqual(bs.tierAnnual, 21506);
+    assert.strictEqual(bs.tierAnnual, 24088);
   });
   test('Business Premium tierAnnual = Math.round(210,29 × 5 × 12) = 12 617', () => {
     result ??= computeLikeForLikeSaasTarget(li, TIERS, annualCost);
@@ -196,7 +196,7 @@ describe('RD-06 · computeLikeForLikeSaasTarget — edge cases', () => {
     const result = computeLikeForLikeSaasTarget(li, TIERS, 5736);
     assert.notStrictEqual(result, null);
     assert.strictEqual(result.savingPerYear, 0);
-    assert.strictEqual(result.suggestedAnnualCost, 6888);  // 57,40 × 10 × 12
+    assert.strictEqual(result.suggestedAnnualCost, 8029);  // 57,40 × 10 × 12
   });
 
   test('Slack Pro (icke-M365) klassas som add-on passthrough med billMult=12', () => {
@@ -209,7 +209,7 @@ describe('RD-06 · computeLikeForLikeSaasTarget — edge cases', () => {
     assert.strictEqual(result.dominantTierKey, 'business-basic');
     assert.strictEqual(result.addonLines.length, 1);
     assert.strictEqual(result.addonLines[0].addonAnnual, 2400);  // 200 × 12
-    assert.strictEqual(result.suggestedAnnualCost, 9288);         // 6888 + 2400
+    assert.strictEqual(result.suggestedAnnualCost, 10429);        // 8029 + 2400
   });
 });
 

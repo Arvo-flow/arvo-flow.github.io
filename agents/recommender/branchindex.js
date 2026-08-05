@@ -105,35 +105,43 @@ export const BRANCHINDEX = {
 
   mobil: {
     source: 'real-public',
-    lastVerified: '2026-06-14',
+    lastVerified: '2026-08-05',
     verifiedVia: 'playwright-live',
     unit: 'kr/år',
     // Prices are per user/year — lib/benchmark.js scales by seat count before the LLM sees it.
-    // Tele2 Företag mobilabonnemang — verifierat LIVE 2026-06-14 (Playwright, status 200,
-    // scripts/verify.mjs tele2-mobil (fabriken)). Renderade plan→pris (24 mån bindning = faktiskt B2B-pris):
-    //   60 GB           239 kr/mth = 2 868 kr/yr  ← p25   (ordinarie 399 kr utan bindning)
-    //   Obegränsad      279 kr/mth = 3 348 kr/yr  ← median (ordinarie 499 kr utan bindning)
-    //   Obegränsad Max  299 kr/mth = 3 588 kr/yr          (ordinarie 599 kr utan bindning)
+    // Tele2 Företag mobilabonnemang — verifierat LIVE 2026-08-05 (Playwright, status 200,
+    // scripts/verify.mjs tele2-mobil (fabriken)). Renderade 24-mån-priser (= faktiskt B2B-pris):
+    //
+    // ⚠️ TELE2 HÖJDE (2026-08-05): live 269, 299, 349 kr/mth mot prisbokens 239, 279, 299.
+    //   entrétier (lägsta)      239 → 269 kr/mth = 3 228 kr/yr  ← p25     (+12,6 %)
+    //   näst lägsta             279 → 299 kr/mth = 3 588 kr/yr  ← median  (+7,2 %)
+    //   tredje                  299 → 349 kr/mth                          (+16,7 %)
+    // Låg oupptäckt i 52 dagar (verifierar-schemat avstängt) — samma smyghöjning som M365.
+    //
+    // ANKARETS DEFINITION (skärpt 2026-08-05): p25 = LÄGSTA publicerade 24-mån-pris, median =
+    // NÄST LÄGSTA. Det är exakt vad verifieraren läser (sorterade priser), och det överlever
+    // att Tele2 döper om sina planer. Tidigare band noten talen till plannamn ("60 GB",
+    // "Obegränsad") som vakten aldrig kontrollerar — ett påstående utan täckning i mätningen.
     // Vi ankrar på 24-mån-priset (inte ordinarie sticker) eftersom ~all B2B-mobil säljs på
     // 24-mån bindning — det är vad bolag FAKTISKT betalar. Vakten går rött om priset/planen drivit.
     // Kollega-tillägg: 50 % rabatt på extra abonnemang kopplade till huvudabonnemang — publicerad
     //   rabatt men gäller sekundära SIM, ingår INTE i p25 (samma princip som tidigare volymrabatt).
     // NÄSTA VERIFIERING: vakten kör veckovis (måndagar) — manuell koll behövs bara vid rött bygge.
-    note: 'Per användare/år (exkl. moms). Källa: Tele2 Företag mobilabonnemang, verifierat live 2026-06-14 — 60 GB 239 kr/mth, Obegränsad 279 kr/mth, Obegränsad Max 299 kr/mth (24 mån bindning, faktiskt B2B-pris). p25 = entrétier 60 GB. Median = Obegränsad. Extra abonnemang via Kollega (50 % rabatt) ingår INTE i p25. Hårdvaruhyra klassificeras som hardware i extract.js och ingår INTE i besparingskalkylen.',
+    note: 'Per användare/år (exkl. moms). Källa: Tele2 Företag mobilabonnemang, verifierat live 2026-08-05 — publicerade 24-mån-priser 269, 299 och 349 kr/mth (24 mån bindning, faktiskt B2B-pris). p25 = lägsta publicerade 24-mån-pris. Median = näst lägsta. Extra abonnemang via Kollega (50 % rabatt) ingår INTE i p25. Hårdvaruhyra klassificeras som hardware i extract.js och ingår INTE i besparingskalkylen.',
     alternatives: [
-      { supplier: 'Tele2 Företag',   positioning: 'Entré 60 GB 239 kr/mth, Obegränsad 279 kr/mth (24 mån) — ofta lägst faktiskt B2B-pris bland rikstäckande operatörer', reliability: 0.93 },
+      { supplier: 'Tele2 Företag',   positioning: 'Entrétier 269 kr/mth, nästa nivå 299 kr/mth (24 mån) — ofta lägst faktiskt B2B-pris bland rikstäckande operatörer', reliability: 0.93 },
       { supplier: 'Tre Företag',     positioning: 'Stark datakapacitet, konkurrenskraftigt pris för obegränsad data',                                        reliability: 0.91 },
       { supplier: 'Telia Företag',   positioning: 'Rikstäckande nät, premium-support, volymavtal för större flottor',                                        reliability: 0.96 },
       { supplier: 'Telenor Företag', positioning: 'God täckning, flexibla volymavtal, konkurrenskraftig prissättning',                                       reliability: 0.92 },
     ],
     matrix: {
-      // p25 = Tele2 60 GB verifierat 24-mån-pris (239 kr/mth × 12 = 2 868 kr/år) — ALLA buckets.
-      // Median = Tele2 Obegränsad verifierat 24-mån-pris (279 kr/mth × 12 = 3 348 kr/år) — ALLA buckets.
+      // p25 = Tele2 lägsta verifierade 24-mån-pris (269 kr/mth × 12 = 3 228 kr/år) — ALLA buckets.
+      // Median = Tele2 näst lägsta verifierade 24-mån-pris (299 kr/mth × 12 = 3 588 kr/år) — ALLA buckets.
       // Volymrabatter (Kollega 50 % på sekundära SIM) är inte baserade på huvudpriset → ingår ej i p25.
-      byraer:      { micro: { median: 3348, p25: 2868 }, small: { median: 3348, p25: 2868 }, mid: { median: 3348, p25: 2868 } },
-      hantverkare: { micro: { median: 3348, p25: 2868 }, small: { median: 3348, p25: 2868 }, mid: { median: 3348, p25: 2868 } },
-      ehandel:     { micro: { median: 3348, p25: 2868 }, small: { median: 3348, p25: 2868 }, mid: { median: 3348, p25: 2868 } },
-      tillverkning:{ micro: { median: 3348, p25: 2868 }, small: { median: 3348, p25: 2868 }, mid: { median: 3348, p25: 2868 } },
+      byraer:      { micro: { median: 3588, p25: 3228 }, small: { median: 3588, p25: 3228 }, mid: { median: 3588, p25: 3228 } },
+      hantverkare: { micro: { median: 3588, p25: 3228 }, small: { median: 3588, p25: 3228 }, mid: { median: 3588, p25: 3228 } },
+      ehandel:     { micro: { median: 3588, p25: 3228 }, small: { median: 3588, p25: 3228 }, mid: { median: 3588, p25: 3228 } },
+      tillverkning:{ micro: { median: 3588, p25: 3228 }, small: { median: 3588, p25: 3228 }, mid: { median: 3588, p25: 3228 } },
     },
   },
 
@@ -361,22 +369,36 @@ export const BRANCHINDEX = {
       // ─────────────────────────────────────────────────────────────────────
 
       // Microsoft 365 — SEK-priser från microsoft.com/sv-se (publik prissida).
-      // Business-tiers re-verifierade live mot microsoft.com 2026-06-14
-      // (status 200, samtliga sex tal — års-/månadsavtal — oförändrade).
-      // arvoAnnual = msrpAnnual (inget partneravtal aktivt — uppdatera när avtal tecknas).
+      //
+      // ⚠️ MICROSOFT HÖJDE (verifierat live 2026-08-05, per-plan-sidorna, ops/probe-m365-priser.txt):
+      //   Business Basic     57,40 → 66,91 kr/anv/mån (årsavtal)  = +16,6 %
+      //   Business Standard 119,48 → 133,82 kr/anv/mån (årsavtal)  = +12,0 %
+      //   Business Premium  210,29 → 210,29 kr — OFÖRÄNDRAT
+      // Höjningen låg oupptäckt i 52 dagar (verifierar-schemat var avstängt) medan prisboken
+      // uppgav de gamla talen som "verifierat listpris". Smyghöjningen — i vårt eget ankare.
+      //
+      // COPILOT-FÄLLAN (varför fabriken sa "(saknas)" för Standard/Premium): översiktssidan
+      // (…/microsoft-365-plans-and-pricing) visar inte längre de rena planerna — bara
+      // "Business Standard OCH Microsoft 365 Copilot för företag" 224,63 kr resp. Premium+Copilot
+      // 305,87 kr. En slarvigare verifierare hade tagit 224,63 som Standard och jämfört kundens
+      // rena licens mot ett Copilot-paket. Att den vägrade var maskinen som SKYDDADE oss.
+      // Därför ankrar vi nu på PER-PLAN-sidorna, och verifieraren avvisar Copilot-kontext.
+      //
+      // arvoAnnual = msrpAnnual, ALLTID. Partner-/återförsäljarvägen är förkastad för alltid
+      // (GRUNDARBESLUT 2026-06-19, neutralitets-moaten) — fältet ska aldrig bära ett partnerpris.
       'business-basic': {
-        msrpMonthly: 68.88, msrpAnnual: 57.40, arvoAnnual: 57.40,
-        currency: 'SEK', lastVerified: '2026-06-14', source: 'microsoft.com',
+        msrpMonthly: 80.29, msrpAnnual: 66.91, arvoAnnual: 66.91,
+        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
         note: 'M365 Business Basic — Teams, Exchange, webb-appar, 1 TB OneDrive. Ingen desktop Office-suite.',
       },
       'business-standard': {
-        msrpMonthly: 143.38, msrpAnnual: 119.48, arvoAnnual: 119.48,
-        currency: 'SEK', lastVerified: '2026-06-14', source: 'microsoft.com',
+        msrpMonthly: 160.58, msrpAnnual: 133.82, arvoAnnual: 133.82,
+        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
         note: 'M365 Business Standard — full desktop Office, Teams, SharePoint, 1 TB OneDrive. Vanligast bland svenska SMF.',
       },
       'business-premium': {
         msrpMonthly: 252.35, msrpAnnual: 210.29, arvoAnnual: 210.29,
-        currency: 'SEK', lastVerified: '2026-06-14', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
         note: 'M365 Business Premium — inkl. Intune MDM + Microsoft Defender for Business. Rätt val vid säkerhetskrav.',
       },
       // OBS: Microsoft 365 E3/E5 ≠ Office 365 E3/E5 (separata produkter).
@@ -385,14 +407,22 @@ export const BRANCHINDEX = {
       // Office 365 E3 (äldre, utan säkerhetspaketet) kostar 256,34 kr/user/mth.
       // Månadsvis flex estimerat: årsavtal × 1,20 (konsekvent med Business-tiers).
       // Källa: microsoft.com/sv-se/microsoft-365/enterprise (enterprise plans page).
+      //
+      // ⚠️ ÄVEN ENTERPRISE HÖJDES (verifierat live 2026-08-05, ops/probe-prisbok.txt):
+      //   E3  384,70 → 416,77 kr/anv/mån (årligt åtagande) = +8,3 %
+      //   E5  609,10 → 641,18 kr/anv/mån (årligt åtagande) = +5,3 %
+      // Sidan listar även EES-varianter utan Teams (E3 335,04 · E5 559,44) och en ny E7-nivå
+      // (1 013,97) — INGA av dem är våra tiers och de får aldrig läsas som E3/E5.
+      // msrpMonthly är fortsatt ett MÄRKT estimat (årsavtal × 1,20) — Microsoft publicerar inte
+      // månadsåtagande för enterprise på sidan. Estimatet räknas om med det nya årspriset.
       'e3': {
-        msrpMonthly: 462, msrpAnnual: 384.70, arvoAnnual: 384.70,
-        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
+        msrpMonthly: 500.12, msrpAnnual: 416.77, arvoAnnual: 416.77,
+        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
         note: 'M365 E3 — enterprise compliance, eDiscovery, avancerat auditlogg, Purview. Sällan motiverat under 100 users. Förväxla ej med Office 365 E3 (256 kr).',
       },
       'e5': {
-        msrpMonthly: 731, msrpAnnual: 609.10, arvoAnnual: 609.10,
-        currency: 'SEK', lastVerified: '2026-05-27', source: 'microsoft.com',
+        msrpMonthly: 769.42, msrpAnnual: 641.18, arvoAnnual: 641.18,
+        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
         note: 'M365 E5 — full SIEM, Defender for Endpoint, Power BI Pro, avancerad analys. Förväxla ej med Office 365 E5 (424 kr).',
       },
 

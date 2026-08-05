@@ -393,9 +393,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   12564,
-      suggestedAnnual: 2868,
-      grossSaving:     9696,
-      netSaving:       7757,
+      suggestedAnnual: 3228,
+      grossSaving:     9336,
+      netSaving:       7469,
     },
   },
 
@@ -428,9 +428,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   20940,
-      suggestedAnnual: 2868,
-      grossSaving:     18072,
-      netSaving:       14458,
+      suggestedAnnual: 3228,
+      grossSaving:     17712,
+      netSaving:       14170,
     },
   },
 
@@ -440,9 +440,15 @@ export const fixtures = [
   // secAnnual=round(299*12)=3588, p25Total=round(2868*1)=2868 (1 seat)
   // gross=max(0,3588-2868)=720 ≥ 500 → saving satt
   // netSaving=round(720*0.80)=576
+  // ⚠️ MARKNADEN HANN IKAPP (2026-08-05): Tele2:s lägsta 24-mån-pris steg 239 → 269 kr, så
+  // p25-ankaret gick 2 868 → 3 228 kr/år. En kund på 299 kr/mån (3 588 kr/år) ligger nu bara
+  // 360 kr över ankaret — under 500-kronorströskeln → INGEN besparing visas.
+  // Detta är fixturens POÄNG efter höjningen: den gamla prisboken lovade 720 kr/år i besparing
+  // till en kund som i dag betalar marknadens medianpris. En inaktuell prisbok TILLVERKAR
+  // besparingar — och under 20 % success fee är det den farliga riktningen att ha fel åt.
   {
     id: 'brd-18',
-    name: 'Bredband combined — secondary gross=720 ≥ 500 → secondarySaving satt',
+    name: 'Bredband combined — secondary gross=720 ≥ 500 → ingen besparing (marknaden hann ikapp)',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Fiber 500/500 Mbit/s', amount: 699 },
       { type: 'recurring_subscription', description: 'mobilabonnemang 1 st', amount: 299 },
@@ -459,22 +465,21 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           1,
     },
-    secondary: {
-      category:        'mobil',
-      seatCount:       1,
-      currentAnnual:   3588,
-      suggestedAnnual: 2868,
-      grossSaving:     720,
-      netSaving:       576,
-    },
+    secondary: null,
   },
 
   // ── brd-19 ───────────────────────────────────────────────────────────────────
   // Bredband combined med 1 SIM (secondary 299 kr/mån = 3588 kr/år), p25=2868
-  // gross=max(0,3588-2868)=720 ≥ 500 → secondarySaving satt, net=round(720*0.80)=576
+  // gross=max(0,3588-2868)=720 ≥ 500 → ingen besparing (marknaden hann ikapp), net=round(720*0.80)=576
+  // ⚠️ MARKNADEN HANN IKAPP (2026-08-05): Tele2:s lägsta 24-mån-pris steg 239 → 269 kr, så
+  // p25-ankaret gick 2 868 → 3 228 kr/år. En kund på 299 kr/mån (3 588 kr/år) ligger nu bara
+  // 360 kr över ankaret — under 500-kronorströskeln → INGEN besparing visas.
+  // Detta är fixturens POÄNG efter höjningen: den gamla prisboken lovade 720 kr/år i besparing
+  // till en kund som i dag betalar marknadens medianpris. En inaktuell prisbok TILLVERKAR
+  // besparingar — och under 20 % success fee är det den farliga riktningen att ha fel åt.
   {
     id: 'brd-19',
-    name: 'Bredband + 1 SIM-rad 299 kr/mån → gross=720 → secondarySaving satt',
+    name: 'Bredband + 1 SIM-rad 299 kr/mån → gross=720 → ingen besparing (marknaden hann ikapp)',
     lineItems: [
       { type: 'recurring_subscription', description: 'Bahnhof Fiber 1 Gbit', amount: 995 },
       { type: 'recurring_subscription', description: 'mobilabonnemang bas', amount: 299 },
@@ -491,20 +496,13 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           1,
     },
-    secondary: {
-      category:        'mobil',
-      seatCount:       1,
-      currentAnnual:   3588,
-      suggestedAnnual: 2868,
-      grossSaving:     720,
-      netSaving:       576,
-    },
+    secondary: null,
   },
 
   // ── brd-20 ───────────────────────────────────────────────────────────────────
   // Bredband combined med 2 SIM-rader (secondary sum = 700 kr/mån = 8400 kr/år)
   // secondarySeatCount=2, p25Total=round(2868*2)=5736
-  // gross=max(0,8400-5736)=2664 ≥ 500 → secondarySaving satt
+  // gross=max(0,8400-5736)=2664 ≥ 500 → ingen besparing (marknaden hann ikapp)
   // netSaving=round(2664*0.80)=2131
   {
     id: 'brd-20',
@@ -530,9 +528,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       2,
       currentAnnual:   8400,
-      suggestedAnnual: 5736,
-      grossSaving:     2664,
-      netSaving:       2131,
+      suggestedAnnual: 6456,
+      grossSaving:     1944,
+      netSaving:       1555,
     },
   },
 
@@ -871,9 +869,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   21528,
-      suggestedAnnual: 2868,
-      grossSaving:     18660,
-      netSaving:       14928,
+      suggestedAnnual: 3228,
+      grossSaving:     18300,
+      netSaving:       14640,
     },
   },
 
@@ -907,9 +905,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   12564,
-      suggestedAnnual: 2868,
-      grossSaving:     9696,
-      netSaving:       7757,
+      suggestedAnnual: 3228,
+      grossSaving:     9336,
+      netSaving:       7469,
     },
   },
 
@@ -995,9 +993,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       3,
       currentAnnual:   12564,
-      suggestedAnnual: 8604,
-      grossSaving:     3960,
-      netSaving:       3168,
+      suggestedAnnual: 9684,
+      grossSaving:     2880,
+      netSaving:       2304,
     },
   },
 
@@ -1063,9 +1061,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       10,
       currentAnnual:   41880,
-      suggestedAnnual: 28680,
-      grossSaving:     13200,
-      netSaving:       10560,
+      suggestedAnnual: 32280,
+      grossSaving:     9600,
+      netSaving:       7680,
     },
   },
 

@@ -3,11 +3,21 @@ name: Verify price sources (factory)
 # EN workflow för HELA verifierar-fabriken. Job-matrisen härleds ur registryt
 # (scripts/verify.mjs --matrix) → lägg till en verifierare i lib/verifiers/registry.mjs så
 # vaktas den automatiskt här. Playwright/Chromium installeras bara för källor med needsBrowser.
-# SCHEMAT AVSTÄNGT (grundarbeslut 2026-07-20): den nattliga körningen failade återkommande och
-# spammade inkorgen. Fabriken finns kvar — men körs ENDAST manuellt (workflow_dispatch) tills
-# de drivande källorna reparerats. Ingen auto-körning = inga fail-mejl. Återinför cron först när
-# verifierarna är gröna igen.
+# SCHEMAT ÅTERINFÖRT (grundarbeslut 2026-08-05, efter 21 inaktuella prisposter).
+#
+# Historik: schemat stängdes av 2026-07-20 för att körningen failade återkommande och spammade
+# inkorgen. Det stoppade mejlen — men inte orsaken. Under de 16 dygn som följde höjde Microsoft
+# Business Basic +16,6 %, Business Standard +12,0 %, E3 +8,3 %, E5 +5,3 % och Tele2 sin mobil
+# +7–17 %, utan att någon såg det. Prisboken uppgav hela tiden de gamla talen som "verifierat
+# listpris". Smyghöjningen — i vårt eget ankare, i den produkt som säljer skydd mot den.
+#
+# Läxan är inte "sätt på schemat igen" utan: ett larm som skriker på fel saker blir avstängt, och
+# en avstängd vakt är värre än ingen vakt (den ser ut som att någon tittar). Därför kör schemat
+# VECKOVIS och rött betyder nu exakt en sak: en källa har drivit eller är oåtkomlig. Det är ett
+# sant larm och det ska komma. Blir det brusigt är svaret att laga verifieraren — aldrig att tysta den.
 on:
+  schedule:
+    - cron: '0 4 * * 1'          # måndagar 06:00 CET — före veckans första kundanalyser
   workflow_dispatch:
     inputs:
       id:

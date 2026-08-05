@@ -658,9 +658,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       3,
       currentAnnual:   10764,
-      suggestedAnnual: 8604,
-      grossSaving:     2160,
-      netSaving:       1728,
+      suggestedAnnual: 9684,
+      grossSaving:     1080,
+      netSaving:       864,
     },
   },
 
@@ -697,9 +697,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   20940,
-      suggestedAnnual: 2868,
-      grossSaving:     18072,
-      netSaving:       14458,
+      suggestedAnnual: 3228,
+      grossSaving:     17712,
+      netSaving:       14170,
     },
   },
 
@@ -730,9 +730,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   11988,
-      suggestedAnnual: 2868,
-      grossSaving:     9120,
-      netSaving:       7296,
+      suggestedAnnual: 3228,
+      grossSaving:     8760,
+      netSaving:       7008,
     },
   },
 
@@ -893,9 +893,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       1,
       currentAnnual:   4104,
-      suggestedAnnual: 2868,
-      grossSaving:     1236,
-      netSaving:       989,
+      suggestedAnnual: 3228,
+      grossSaving:     876,
+      netSaving:       701,
     },
   },
 
@@ -903,9 +903,15 @@ export const fixtures = [
   // bredband+mobil: 1 mobilrad 299 kr/mån
   // mobilP25=2868(byraer/micro), p25Total=2868, secAnnual=Math.round(299*12)=3588
   // gross=3588-2868=720 ≥ 500 → secondary satt, net=Math.round(720*0.80)=576
+  // ⚠️ MARKNADEN HANN IKAPP (2026-08-05): Tele2:s lägsta 24-mån-pris steg 239 → 269 kr, så
+  // p25-ankaret gick 2 868 → 3 228 kr/år. En kund på 299 kr/mån (3 588 kr/år) ligger nu bara
+  // 360 kr över ankaret — under 500-kronorströskeln → INGEN besparing visas.
+  // Detta är fixturens POÄNG efter höjningen: den gamla prisboken lovade 720 kr/år i besparing
+  // till en kund som i dag betalar marknadens medianpris. En inaktuell prisbok TILLVERKAR
+  // besparingar — och under 20 % success fee är det den farliga riktningen att ha fel åt.
   {
     id: 'edge-29',
-    name: 'Bredband+mobil: secAnnual=3588 vs p25Total=2868 → gross=720 → secondary satt',
+    name: 'Bredband+mobil: secAnnual=3588 vs p25Total=2868 → gross=720 → ingen besparing (marknaden hann ikapp)',
     lineItems: [
       { type: 'recurring_subscription', description: 'Fiber 500 Mbit', amount: 700 },
       { type: 'recurring_subscription', description: 'mobilabonnemang Business', amount: 299 },
@@ -923,14 +929,7 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: null,
       secondarySeatCount:           1,
     },
-    secondary: {
-      category:        'mobil',
-      seatCount:       1,
-      currentAnnual:   3588,
-      suggestedAnnual: 2868,
-      grossSaving:     720,
-      netSaving:       576,
-    },
+    secondary: null,
   },
 
   // ── edge-30 ──────────────────────────────────────────────────────────────────
@@ -967,9 +966,9 @@ export const fixtures = [
       category:        'mobil',
       seatCount:       4,
       currentAnnual:   16752,
-      suggestedAnnual: 11472,
-      grossSaving:     5280,
-      netSaving:       4224,
+      suggestedAnnual: 12912,
+      grossSaving:     3840,
+      netSaving:       3072,
     },
   },
 

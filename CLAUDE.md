@@ -517,9 +517,32 @@ getBenchmark({ category, industry, employees })
 
 **SNI → industri:** SNI 62/63/58 → `it-tech` → `byraer`-segment. SNI 69–78 → `konsult` → `byraer`-segment.
 
-**Nyckelpriser (real-public, 2026-06):**
-- M365 Business Standard: 119,48 kr/mån (årsavtal) · p25: 1 704 kr/anv/år · median: 2 040 kr/anv/år
-- Tele2 mobil Bas: 299 kr/mån · Plus: 349 kr/mån
+**Nyckelpriser (real-public, verifierade LIVE 2026-08-05):**
+- M365 Business Basic: 66,91 kr/mån · Standard: **133,82 kr/mån** · Premium: 210,29 kr/mån (årsavtal, exkl. moms)
+- M365 E3: 416,77 kr/mån · E5: 641,18 kr/mån (årligt åtagande)
+- Tele2 mobil, publicerade 24-mån-priser: **269 · 299 · 349 kr/mån** (p25 = lägsta, median = näst lägsta)
+
+> **⚠️ SMYGHÖJNINGEN DRABBADE OSS SJÄLVA (2026-08-05).** Verifierar-schemat stängdes av 2026-07-20
+> för att larmet var brusigt. Under de 16 dygn som följde höjde Microsoft Business Basic +16,6 %,
+> Standard +12,0 %, E3 +8,3 %, E5 +5,3 % och Tele2 sin mobil +7–17 % — utan att någon såg det.
+> Hela tiden uppgav prisboken de gamla talen som "verifierat listpris" till varje kund vi analyserade.
+>
+> **En inaktuell prisbok TILLVERKAR besparingar.** NMIT-fallet gick från 24 569 kr/år till 2 248 kr
+> när E3-ankaret rättades — vi hade lovat tio gånger för mycket. Tre fixturer tappade sin besparing
+> helt: kunder på 299 kr/mån betalar i dag marknadens medianpris. Under 20 % success fee är det den
+> farliga riktningen att ha fel åt — vi fakturerar på realiserad besparing, och en besparing som
+> aldrig fanns kan aldrig realiseras.
+>
+> Läxan är inte "sätt på schemat igen" utan: **ett larm som skriker på fel saker blir avstängt, och
+> en avstängd vakt är värre än ingen vakt — den ser ut som att någon tittar.** Schemat är återinfört
+> veckovis (`verify-sources.yml`, måndagar 06:00 CET). Blir det brusigt lagar vi verifieraren. Aldrig
+> tystar den.
+>
+> **COPILOT-FÄLLAN:** Microsofts översiktssida visar inte längre de rena planerna — bara
+> "Business Standard OCH Microsoft 365 Copilot för företag" (224,63 kr). En slarvig verifierare
+> hade tagit paketpriset som planpriset och jämfört kundens rena licens mot ett Copilot-paket.
+> `lib/verifiers/m365.mjs` läser därför per-plan-sidorna och avvisar paket-/variantkontext
+> (Copilot, "EES exkl. Teams"). Hellre "(saknas)" än fel SKU.
 
 ---
 

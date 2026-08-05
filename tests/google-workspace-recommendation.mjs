@@ -59,16 +59,16 @@ describe('M365-referens · bevisad data benchmarkar obevisad (enhetstester)', ()
     assert.equal(r.annualTotal, 1682 * 12);
     assert.match(r.source, /microsoft\.com/);
   });
-  test('Google Standard → M365 Business Standard, 119,48 × 10 = 1 195 kr/mån', () => {
+  test('Google Standard → M365 Business Standard, 133,82 × 10 = 1 338 kr/mån', () => {
     const r = m365EquivalentForGoogle('google-standard', 10);
     assert.equal(r.m365Tier, 'business-standard');
-    assert.equal(r.perSeatMonthly, 119.48);
-    assert.equal(r.monthlyTotal, 1195);          // round(119.48 × 10)
+    assert.equal(r.perSeatMonthly, 133.82);
+    assert.equal(r.monthlyTotal, 1338);          // round(133.82 × 10)
   });
   test('Google Starter → M365 Business Basic; utan säten visas bara per-säte (ingen total)', () => {
     const r = m365EquivalentForGoogle('google-starter', null);
     assert.equal(r.m365Tier, 'business-basic');
-    assert.equal(r.perSeatMonthly, 57.40);
+    assert.equal(r.perSeatMonthly, 66.91);
     assert.equal(r.seats, null);
     assert.equal(r.monthlyTotal, null);
   });
@@ -133,7 +133,7 @@ describe('Google Workspace · recommend() — google-sek-grind + verifierad M365
     assert.equal(r.m365Equivalent.m365Tier, 'business-basic');
     assert.equal(r.m365Equivalent.monthlyTotal, null);
     assert.match(r.reasoning, /Business Basic/);
-    assert.match(r.reasoning, /57,40 kr/);
+    assert.match(r.reasoning, /66,91 kr/);
     assert.match(r.reasoning, /inte ert Google-pris/);
   });
 

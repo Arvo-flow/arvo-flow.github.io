@@ -939,13 +939,13 @@ const e2eInput = (fx) => ({
 const runE2E = (fx) => recommend(e2eInput(fx), { client: stubAi, kvStore: stubKv });
 
 describe('05-saas · M365 rätt-storlek e2e (recommend() hela vägen, stubbad AI+FX)', () => {
-  test('E5 × 25 (saas-36) → m365Rightsizing inkopplat: Business Premium, 119 643 kr/år advisory', async () => {
+  test('E5 × 25 (saas-36) → m365Rightsizing inkopplat: Business Premium, 129 267 kr/år advisory', async () => {
     const r = await runE2E(byId('saas-36'));
     assert.ok(r.m365Rightsizing, 'm365Rightsizing ska finnas i recommend()-svaret (inkopplat e2e)');
     assert.equal(r.m365Rightsizing.currentTier, 'e5');
     assert.equal(r.m365Rightsizing.targetTier, 'business-premium');
     assert.equal(r.m365Rightsizing.seats, 25);
-    assert.equal(r.m365Rightsizing.annualSaving, 119643);
+    assert.equal(r.m365Rightsizing.annualSaving, 129267);
     assert.equal(r.m365Rightsizing.needsReview, true);
     // Advisory/review: ingen REALISERAD besparing förrän kunden bekräftat funktionsbehovet.
     // Den verifierade potentialen lever i m365Rightsizing (eget kort), aldrig som en hård siffra.
@@ -955,24 +955,24 @@ describe('05-saas · M365 rätt-storlek e2e (recommend() hela vägen, stubbad AI
     assert.equal(r.shouldSwitch, false);
   });
 
-  test('E3 × 40 (saas-37) → Business Premium, 83 717 kr/år advisory', async () => {
+  test('E3 × 40 (saas-37) → Business Premium, 99 110 kr/år advisory', async () => {
     const r = await runE2E(byId('saas-37'));
     assert.ok(r.m365Rightsizing);
     assert.equal(r.m365Rightsizing.currentTier, 'e3');
     assert.equal(r.m365Rightsizing.targetTier, 'business-premium');
     assert.equal(r.m365Rightsizing.seats, 40);
-    assert.equal(r.m365Rightsizing.annualSaving, 83717);
+    assert.equal(r.m365Rightsizing.annualSaving, 99110);
     assert.equal(r.optimizationSaving, null);
   });
 
-  test('E5 via återförsäljare (saas-38) → byte UTLÖST + tier-advisory i savingsBreakdown (119 643)', async () => {
+  test('E5 via återförsäljare (saas-38) → byte UTLÖST + tier-advisory i savingsBreakdown (129 267)', async () => {
     const r = await runE2E(byId('saas-38'));
     // Påslaget (>15 % över E5-listpris) utlöser det deterministiska bytet → savingsBreakdown byggs.
     assert.equal(r.shouldSwitch, true);
     assert.ok(r.savingsBreakdown, 'savingsBreakdown ska byggas på bytesvägen');
     // Tier-nedförsäljningen flödar in i breakdown som ADVISORY, aldrig inbakad i savingPerYear.
-    assert.equal(r.savingsBreakdown.tierOptimization, 119643);
-    assert.equal(r.m365Rightsizing.annualSaving, 119643);
+    assert.equal(r.savingsBreakdown.tierOptimization, 129267);
+    assert.equal(r.m365Rightsizing.annualSaving, 129267);
     // Fortsatt advisory: optimizationSaving null (realiseras först vid bekräftelse).
     assert.equal(r.optimizationSaving, null);
   });

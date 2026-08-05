@@ -10,23 +10,24 @@
 //
 // Fix (this file proves):
 //   computeLikeForLikeSaasTarget() mirrors the input license mix exactly.
-//   - Premium seats are benchmarked at Premium price (210,29 kr/mth, MS sv-se 2026-05-27).
-//   - Basic seats are benchmarked at Basic price (57,40 kr/mth).
+//   - Premium seats are benchmarked at Premium price (210,29 kr/mth, MS sv-se 2026-08-05 — oförändrat).
+//   - Basic seats are benchmarked at Basic price (66,91 kr/mth, MS sv-se 2026-08-05).
 //   - Backup add-on is passed through at invoice price (2 565 kr/mth × 12).
 //   - No tier downgrade is performed.
 //   - Pro-rata lines (one_time_fee + is_prorata) count at FULL quantity in the target —
 //     excluding them compares N licenses' cost against (N−k) licenses' target and
 //     inflates the saving by the new licenses' entire annual cost (CR-88412-buggen).
 //
-// IT-8821 arithmetic (Microsoft-priser verifierade 2026-05-27):
+// IT-8821 arithmetic (Microsoft-priser verifierade LIVE 2026-08-05 — Microsoft höjde Basic
+// 57,40 → 66,91 kr (+16,6 %); Premium oförändrat. Talen nedan är omräknade för hand.):
 //   tierAnnual(Premium)  = 210,29 × 45 × 12 = 113 557 kr
-//   tierAnnual(Basic)    =  57,40 × 12 × 12 =   8 266 kr
+//   tierAnnual(Basic)    =  66,91 × 12 × 12 =   9 635 kr
 //   addonAnnual(Backup)  = 2 565   × 12     =  30 780 kr
-//   suggestedAnnualCost  = 152 603 kr
+//   suggestedAnnualCost  = 153 972 kr
 //   annualCost           = 184 680 kr
-//   savingPerYear        =  32 077 kr
-//   arvoFee (20%)        =   6 415 kr
-//   netSaving            =  25 662 kr
+//   savingPerYear        =  30 708 kr
+//   arvoFee (20%)        =   6 142 kr
+//   netSaving            =  24 566 kr
 
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
@@ -54,17 +55,17 @@ const IT8821_ANNUAL = fixture.annualCost;  // 184 680
 
 describe('computeLikeForLikeSaasTarget — IT-8821 like-for-like kalkyl', () => {
 
-  test('returnerar korrekt suggestedAnnualCost = 152 603 kr', () => {
+  test('returnerar korrekt suggestedAnnualCost = 153 972 kr', () => {
     const result = computeLikeForLikeSaasTarget(IT8821_LINES, tierBm, IT8821_ANNUAL);
     assert.ok(result !== null, 'Ska ej returnera null när quantity finns');
-    assert.equal(result.suggestedAnnualCost, 152_603,
-      `Förväntat 152 603, fick ${result.suggestedAnnualCost}`);
+    assert.equal(result.suggestedAnnualCost, 153_972,
+      `Förväntat 153 972, fick ${result.suggestedAnnualCost}`);
   });
 
-  test('savingPerYear = 32 077 kr (ej 89 640 — ingen nedgradering)', () => {
+  test('savingPerYear = 30 708 kr (ej 89 640 — ingen nedgradering)', () => {
     const result = computeLikeForLikeSaasTarget(IT8821_LINES, tierBm, IT8821_ANNUAL);
-    assert.equal(result.savingPerYear, 32_077,
-      `Förväntat 32 077 kr, fick ${result.savingPerYear} — kontrollera att SAAS_DOWNGRADE_TARGET inte används`);
+    assert.equal(result.savingPerYear, 30_708,
+      `Förväntat 30 708 kr, fick ${result.savingPerYear} — kontrollera att SAAS_DOWNGRADE_TARGET inte används`);
   });
 
   test('dominantTierKey = business-premium (ingen nedgradering till standard)', () => {
@@ -75,8 +76,8 @@ describe('computeLikeForLikeSaasTarget — IT-8821 like-for-like kalkyl', () => 
 
   test('backup add-on ingår i suggestedAnnualCost (ej borttappad)', () => {
     const result = computeLikeForLikeSaasTarget(IT8821_LINES, tierBm, IT8821_ANNUAL);
-    // If backup were excluded, suggestedAnnualCost would be 113 557 + 8 266 = 121 823.
-    // With backup: 152 603. Difference = 30 780 = backup passthrough.
+    // If backup were excluded, suggestedAnnualCost would be 113 557 + 9 635 = 123 192.
+    // With backup: 153 972. Difference = 30 780 = backup passthrough.
     const backupPassthrough = result.suggestedAnnualCost
       - result.tierLines.reduce((s, t) => s + t.tierAnnual, 0);
     assert.equal(backupPassthrough, 30_780,
@@ -99,32 +100,32 @@ describe('computeLikeForLikeSaasTarget — IT-8821 like-for-like kalkyl', () => 
     assert.equal(premiumLine.tierAnnual, 113_557);
   });
 
-  test('tierLines: Basic 12 seats × 57,40 kr × 12 = 8 266 kr', () => {
+  test('tierLines: Basic 12 seats × 66,91 kr × 12 = 9 635 kr', () => {
     const result = computeLikeForLikeSaasTarget(IT8821_LINES, tierBm, IT8821_ANNUAL);
     const basicLine = result.tierLines.find(t => t.key === 'business-basic');
     assert.ok(basicLine, 'business-basic saknas i tierLines');
     assert.equal(basicLine.quantity, 12);
-    assert.equal(basicLine.benchmarkMonthly, 57.40);
-    assert.equal(basicLine.tierAnnual, 8_266);
+    assert.equal(basicLine.benchmarkMonthly, 66.91);
+    assert.equal(basicLine.tierAnnual, 9_635);
   });
 
 });
 
 describe('computeLikeForLikeSaasTarget — arvoFee och netSaving kalibrering', () => {
 
-  test('arvoFee (20%) = 6 415 kr', () => {
+  test('arvoFee (20%) = 6 142 kr', () => {
     const { savingPerYear } = computeLikeForLikeSaasTarget(IT8821_LINES, tierBm, IT8821_ANNUAL);
     const arvoFee = Math.round(savingPerYear * 0.20);
-    assert.equal(arvoFee, 6_415,
-      `Förväntat arvoFee 6 415 kr, fick ${arvoFee}`);
+    assert.equal(arvoFee, 6_142,
+      `Förväntat arvoFee 6 142 kr, fick ${arvoFee}`);
   });
 
-  test('netSaving = 25 662 kr', () => {
+  test('netSaving = 24 566 kr', () => {
     const { savingPerYear } = computeLikeForLikeSaasTarget(IT8821_LINES, tierBm, IT8821_ANNUAL);
     const arvoFee = Math.round(savingPerYear * 0.20);
     const netSaving = savingPerYear - arvoFee;
-    assert.equal(netSaving, 25_662,
-      `Förväntat netSaving 25 662 kr, fick ${netSaving}`);
+    assert.equal(netSaving, 24_566,
+      `Förväntat netSaving 24 566 kr, fick ${netSaving}`);
   });
 
 });
@@ -171,8 +172,8 @@ describe('computeLikeForLikeSaasTarget — single-tier utan add-ons', () => {
     const annualCost = 1_430 * 12;
     const result = computeLikeForLikeSaasTarget(lines, tierBm, annualCost);
     assert.equal(result.dominantTierKey, 'business-standard');
-    // 10 seats × 119,48 kr × 12 = 14 338
-    assert.equal(result.suggestedAnnualCost, 14_338);
+    // 10 seats × 119,48 kr × 12 = 16 058
+    assert.equal(result.suggestedAnnualCost, 16_058);
   });
 
 });
@@ -182,8 +183,8 @@ describe('computeLikeForLikeSaasTarget — single-tier utan add-ons', () => {
 // Verklig faktura 2026-05-31: 45 Premium + 20 Standard ordinarie, plus 5 Premium
 // och 3 Standard tillagda under perioden (prorata-rader, typade one_time_fee).
 // Pre-fix: prorata-raderna filtrerades bort ur målpriset → 65 licensers mål
-// (142 232 kr) jämfördes mot 73 licensers annualCost (184 260 kr) och
-// besparingen blåstes upp till 42 028 kr. Korrekt: 159 150 kr mål, 25 110 kr.
+// (145 674 kr) jämfördes mot 73 licensers annualCost (184 260 kr) och
+// besparingen blåstes upp till 42 028 kr. Korrekt: 163 108 kr mål, 21 152 kr.
 
 describe('computeLikeForLikeSaasTarget — prorata-rader (CR-88412)', () => {
 
@@ -195,23 +196,23 @@ describe('computeLikeForLikeSaasTarget — prorata-rader (CR-88412)', () => {
   ];
   const CR88412_ANNUAL = 184_260; // (13 725 ordinarie + 5×245 + 3×135 run-rate) × 12
 
-  test('prorata-licenser ingår i målpriset: 50 Premium + 23 Standard = 159 150 kr', () => {
+  test('prorata-licenser ingår i målpriset: 50 Premium + 23 Standard = 163 108 kr', () => {
     const result = computeLikeForLikeSaasTarget(CR88412_LINES, tierBm, CR88412_ANNUAL);
     assert.ok(result !== null);
-    assert.equal(result.suggestedAnnualCost, 159_150,
-      `Förväntat 159 150 kr (50×210,29 + 23×119,48 × 12), fick ${result.suggestedAnnualCost}`);
+    assert.equal(result.suggestedAnnualCost, 163_108,
+      `Förväntat 163 108 kr (50×210,29 + 23×119,48 × 12), fick ${result.suggestedAnnualCost}`);
   });
 
-  test('REGRESSION: målet är INTE 142 232 kr (65 licenser — buggen som gav 188 kr/anv)', () => {
+  test('REGRESSION: målet är INTE 145 674 kr (65 licenser — buggen som gav 188 kr/anv)', () => {
     const result = computeLikeForLikeSaasTarget(CR88412_LINES, tierBm, CR88412_ANNUAL);
-    assert.notEqual(result.suggestedAnnualCost, 142_232,
+    assert.notEqual(result.suggestedAnnualCost, 145_674,
       'Prorata-raderna har exkluderats ur målpriset — täljare/nämnare-mismatch är tillbaka');
   });
 
-  test('savingPerYear = 25 110 kr (ej uppblåsta 42 028 kr)', () => {
+  test('savingPerYear = 21 152 kr (ej uppblåsta 42 028 kr)', () => {
     const result = computeLikeForLikeSaasTarget(CR88412_LINES, tierBm, CR88412_ANNUAL);
-    assert.equal(result.savingPerYear, 25_110,
-      `Förväntat 25 110 kr, fick ${result.savingPerYear}`);
+    assert.equal(result.savingPerYear, 21_152,
+      `Förväntat 21 152 kr, fick ${result.savingPerYear}`);
   });
 
   test('tierLines slår ihop ordinarie + prorata per tier (50 resp. 23 licenser)', () => {
@@ -221,7 +222,7 @@ describe('computeLikeForLikeSaasTarget — prorata-rader (CR-88412)', () => {
     assert.equal(premium.quantity,  50, 'Premium: 45 ordinarie + 5 prorata');
     assert.equal(standard.quantity, 23, 'Standard: 20 ordinarie + 3 prorata');
     assert.equal(premium.tierAnnual,  126_174);
-    assert.equal(standard.tierAnnual, 32_976);
+    assert.equal(standard.tierAnnual, 36_934);
   });
 
   test('prorata-rad utan quantity → null (kräver offert, gissa aldrig)', () => {
@@ -237,10 +238,10 @@ describe('computeLikeForLikeSaasTarget — prorata-rader (CR-88412)', () => {
     const plain = CR88412_LINES.slice(0, 2);
     const annual = 13_725 * 12;
     const result = computeLikeForLikeSaasTarget(plain, tierBm, annual);
-    // 45×210,29×12 = 113 557 + 20×119,48×12 = 28 675 → 142 232 kr.
+    // 45×210,29×12 = 113 557 + 20×119,48×12 = 28 675 → 145 674 kr.
     // Samma tal som buggen gav för CR-88412 — men HÄR är det rätt: fakturan
     // har bara 65 licenser, och annualCost-baslinjen räknar samma 65.
-    assert.equal(result.suggestedAnnualCost, 142_232);
+    assert.equal(result.suggestedAnnualCost, 145_674);
   });
 
 });

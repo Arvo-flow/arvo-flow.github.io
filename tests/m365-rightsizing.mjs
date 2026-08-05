@@ -31,39 +31,39 @@ describe('M365 rätt-storlek · seat-härledning (kod räknar, aldrig employees)
 });
 
 describe('M365 rätt-storlek · verifierad prisskillnad (E3/E5 → Business Premium)', () => {
-  test('verifierade ankarpriser bär (E5 609,10 · E3 384,70 · Premium 210,29)', () => {
+  test('verifierade ankarpriser bär (E5 641,18 · E3 416,77 · Premium 210,29)', () => {
     const t = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
-    assert.equal(t.e5.msrpAnnual, 609.10);
-    assert.equal(t.e3.msrpAnnual, 384.70);
+    assert.equal(t.e5.msrpAnnual, 641.18);
+    assert.equal(t.e3.msrpAnnual, 416.77);
     assert.equal(t['business-premium'].msrpAnnual, 210.29);
   });
 
-  test('E5 × 25 → Business Premium: 398,81 kr/anv/mån × 12 × 25 = 119 643 kr/år', () => {
+  test('E5 × 25 → Business Premium: 430,89 kr/anv/mån × 12 × 25 = 129 267 kr/år', () => {
     const r = m365Rightsizing('e5', 25);
     assert.equal(r.currentTier, 'e5');
     assert.equal(r.targetTier, 'business-premium');
-    assert.equal(r.currentPerSeatMonthly, 609.10);
+    assert.equal(r.currentPerSeatMonthly, 641.18);
     assert.equal(r.targetPerSeatMonthly, 210.29);
-    assert.equal(r.perSeatDelta, 398.81);
+    assert.equal(r.perSeatDelta, 430.89);
     assert.equal(r.seats, 25);
-    assert.equal(r.annualSaving, 119643);
+    assert.equal(r.annualSaving, 129267);
     assert.equal(r.needsReview, true);
-    assert.equal(r.annualSavingLabel.replace(/\s/g, ''), '119643');
+    assert.equal(r.annualSavingLabel.replace(/\s/g, ''), '129267');
   });
 
-  test('E3 × 40 → Business Premium: 174,41 × 12 × 40 = 83 717 kr/år', () => {
+  test('E3 × 40 → Business Premium: 206,48 × 12 × 40 = 99 110 kr/år', () => {
     const r = m365Rightsizing('e3', 40);
     assert.equal(r.targetTier, 'business-premium');
-    assert.equal(r.perSeatDelta, 174.41);
-    assert.equal(r.annualSaving, 83717);            // round(174.41 × 12 × 40)
+    assert.equal(r.perSeatDelta, 206.48);
+    assert.equal(r.annualSaving, 99110);            // round(206.48 × 12 × 40)
   });
 
   test('reviewPrompt + note bär de verifierade talen + källa (ingen siffra utan källa)', () => {
     const r = m365Rightsizing('e5', 25);
-    assert.match(r.reviewPrompt, /Microsoft 365 E5 \(609,10 kr/);
+    assert.match(r.reviewPrompt, /Microsoft 365 E5 \(641,18 kr/);
     assert.match(r.reviewPrompt, /Business Premium \(210,29 kr/);
-    assert.match(r.reviewPrompt, /119\s*643 kr\/år/);
-    assert.match(r.note, /398,81 kr\/användare\/månad × 12 × 25/);
+    assert.match(r.reviewPrompt, /129\s*267 kr\/år/);
+    assert.match(r.note, /430,89 kr\/användare\/månad × 12 × 25/);
     assert.match(r.note, /microsoft\.com/);
     assert.match(r.note, /Förutsätter att behovet inte kräver enterprise-funktionerna/);
   });

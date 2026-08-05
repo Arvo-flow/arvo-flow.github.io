@@ -85,10 +85,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 21528,
-        "grossSaving": 4320,
-        "netSaving": 3456,
+        "grossSaving": 2160,
+        "netSaving": 1728,
         "seatCount": 6,
-        "suggestedAnnual": 17208
+        "suggestedAnnual": 19368
       }
     },
     {
@@ -113,10 +113,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 10764,
-        "grossSaving": 2160,
-        "netSaving": 1728,
+        "grossSaving": 1080,
+        "netSaving": 864,
         "seatCount": 3,
-        "suggestedAnnual": 8604
+        "suggestedAnnual": 9684
       }
     },
     {
@@ -519,10 +519,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 12564,
-        "grossSaving": 9696,
-        "netSaving": 7757,
+        "grossSaving": 9336,
+        "netSaving": 7469,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -547,10 +547,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 20940,
-        "grossSaving": 18072,
-        "netSaving": 14458,
+        "grossSaving": 17712,
+        "netSaving": 14170,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -572,14 +572,7 @@
         "secondarySeatCount": 1
       },
       "mixed": true,
-      "secondary": {
-        "category": "mobil",
-        "currentAnnual": 3588,
-        "grossSaving": 720,
-        "netSaving": 576,
-        "seatCount": 1,
-        "suggestedAnnual": 2868
-      }
+      "secondary": null
     },
     {
       "balanskrav": {
@@ -600,14 +593,7 @@
         "secondarySeatCount": 1
       },
       "mixed": true,
-      "secondary": {
-        "category": "mobil",
-        "currentAnnual": 3588,
-        "grossSaving": 720,
-        "netSaving": 576,
-        "seatCount": 1,
-        "suggestedAnnual": 2868
-      }
+      "secondary": null
     },
     {
       "balanskrav": {
@@ -631,10 +617,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 8400,
-        "grossSaving": 2664,
-        "netSaving": 2131,
+        "grossSaving": 1944,
+        "netSaving": 1555,
         "seatCount": 2,
-        "suggestedAnnual": 5736
+        "suggestedAnnual": 6456
       }
     },
     {
@@ -932,10 +918,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 21528,
-        "grossSaving": 18660,
-        "netSaving": 14928,
+        "grossSaving": 18300,
+        "netSaving": 14640,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -960,10 +946,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 12564,
-        "grossSaving": 9696,
-        "netSaving": 7757,
+        "grossSaving": 9336,
+        "netSaving": 7469,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -1030,10 +1016,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 12564,
-        "grossSaving": 3960,
-        "netSaving": 3168,
+        "grossSaving": 2880,
+        "netSaving": 2304,
         "seatCount": 3,
-        "suggestedAnnual": 8604
+        "suggestedAnnual": 9684
       }
     },
     {
@@ -1079,10 +1065,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 41880,
-        "grossSaving": 13200,
-        "netSaving": 10560,
+        "grossSaving": 9600,
+        "netSaving": 7680,
         "seatCount": 10,
-        "suggestedAnnual": 28680
+        "suggestedAnnual": 32280
       }
     },
     {
@@ -1905,10 +1891,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 12564,
-        "grossSaving": 9696,
-        "netSaving": 7757,
+        "grossSaving": 9336,
+        "netSaving": 7469,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -1933,10 +1919,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 21528,
-        "grossSaving": 18660,
-        "netSaving": 14928,
+        "grossSaving": 18300,
+        "netSaving": 14640,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -1961,10 +1947,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 4188,
-        "grossSaving": 1320,
-        "netSaving": 1056,
+        "grossSaving": 960,
+        "netSaving": 768,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -1989,10 +1975,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 4788,
-        "grossSaving": 1920,
-        "netSaving": 1536,
+        "grossSaving": 1560,
+        "netSaving": 1248,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -2017,10 +2003,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 8376,
-        "grossSaving": 2640,
-        "netSaving": 2112,
+        "grossSaving": 1920,
+        "netSaving": 1536,
         "seatCount": 2,
-        "suggestedAnnual": 5736
+        "suggestedAnnual": 6456
       }
     },
     {
@@ -2066,10 +2052,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 4080,
-        "grossSaving": 1212,
-        "netSaving": 970,
+        "grossSaving": 852,
+        "netSaving": 682,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -2094,10 +2080,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 4092,
-        "grossSaving": 1224,
-        "netSaving": 979,
+        "grossSaving": 864,
+        "netSaving": 691,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -2122,10 +2108,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 41880,
-        "grossSaving": 13200,
-        "netSaving": 10560,
+        "grossSaving": 9600,
+        "netSaving": 7680,
         "seatCount": 10,
-        "suggestedAnnual": 28680
+        "suggestedAnnual": 32280
       }
     },
     {
@@ -2171,10 +2157,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 8388,
-        "grossSaving": 5520,
-        "netSaving": 4416,
+        "grossSaving": 5160,
+        "netSaving": 4128,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -2199,10 +2185,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 8376,
-        "grossSaving": 5508,
-        "netSaving": 4406,
+        "grossSaving": 5148,
+        "netSaving": 4118,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -2248,10 +2234,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 215280,
-        "grossSaving": 212412,
-        "netSaving": 169930,
+        "grossSaving": 212052,
+        "netSaving": 169642,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -2276,10 +2262,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 12564,
-        "grossSaving": 3960,
-        "netSaving": 3168,
+        "grossSaving": 2880,
+        "netSaving": 2304,
         "seatCount": 3,
-        "suggestedAnnual": 8604
+        "suggestedAnnual": 9684
       }
     },
     {
@@ -2703,10 +2689,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 35880,
-        "grossSaving": 7200,
-        "netSaving": 5760,
+        "grossSaving": 3600,
+        "netSaving": 2880,
         "seatCount": 10,
-        "suggestedAnnual": 28680
+        "suggestedAnnual": 32280
       }
     },
     {
@@ -2731,10 +2717,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 33504,
-        "grossSaving": 10560,
-        "netSaving": 8448,
+        "grossSaving": 7680,
+        "netSaving": 6144,
         "seatCount": 8,
-        "suggestedAnnual": 22944
+        "suggestedAnnual": 25824
       }
     },
     {
@@ -2759,10 +2745,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 14352,
-        "grossSaving": 2880,
-        "netSaving": 2304,
+        "grossSaving": 1440,
+        "netSaving": 1152,
         "seatCount": 4,
-        "suggestedAnnual": 11472
+        "suggestedAnnual": 12912
       }
     },
     {
@@ -3312,10 +3298,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 10764,
-        "grossSaving": 2160,
-        "netSaving": 1728,
+        "grossSaving": 1080,
+        "netSaving": 864,
         "seatCount": 3,
-        "suggestedAnnual": 8604
+        "suggestedAnnual": 9684
       }
     },
     {
@@ -3340,10 +3326,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 20940,
-        "grossSaving": 18072,
-        "netSaving": 14458,
+        "grossSaving": 17712,
+        "netSaving": 14170,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -3368,10 +3354,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 11988,
-        "grossSaving": 9120,
-        "netSaving": 7296,
+        "grossSaving": 8760,
+        "netSaving": 7008,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -3494,10 +3480,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 4104,
-        "grossSaving": 1236,
-        "netSaving": 989,
+        "grossSaving": 876,
+        "netSaving": 701,
         "seatCount": 1,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 3228
       }
     },
     {
@@ -3519,14 +3505,7 @@
         "secondarySeatCount": 1
       },
       "mixed": true,
-      "secondary": {
-        "category": "mobil",
-        "currentAnnual": 3588,
-        "grossSaving": 720,
-        "netSaving": 576,
-        "seatCount": 1,
-        "suggestedAnnual": 2868
-      }
+      "secondary": null
     },
     {
       "balanskrav": {
@@ -3550,10 +3529,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 16752,
-        "grossSaving": 5280,
-        "netSaving": 4224,
+        "grossSaving": 3840,
+        "netSaving": 3072,
         "seatCount": 4,
-        "suggestedAnnual": 11472
+        "suggestedAnnual": 12912
       }
     },
     {
@@ -4845,10 +4824,10 @@
       "secondary": {
         "category": "mobil",
         "currentAnnual": 11976,
-        "grossSaving": 6240,
-        "netSaving": 4992,
+        "grossSaving": 5520,
+        "netSaving": 4416,
         "seatCount": 2,
-        "suggestedAnnual": 5736
+        "suggestedAnnual": 6456
       }
     },
     {
