@@ -65,6 +65,31 @@ const monitoredSupplierStrings = [
   ...monitorSrc.matchAll(/supplier:\s*'([^']+)'/g)
 ].map(m => m[1].toLowerCase());
 
+// ── VERIFIERARFABRIKEN RÄKNAS OCKSÅ SOM TÄCKNING (grundarfynd 2026-08-05) ─────
+// Auditen kände bara till price-monitor.mjs PRICE_CHECKS. Sedan dess finns en andra,
+// starkare vakt: verifierarfabriken (lib/verifiers/registry.mjs), som läser leverantörens
+// prissida och jämför tal för tal. En tier bevakad av fabriken flaggades ändå som
+// "saknar täckning" — och en tier som fabriken INTE bevakar kunde se täckt ut.
+// Två oberoende begrepp för "vaktas detta" är samma sjukdom som resten av natten:
+// mätaren säger något annat än verkligheten. Nu läser auditen båda registren.
+const verifierSupplierStrings = (() => {
+  try {
+    const reg = readFileSync(join(ROOT, 'lib/verifiers/registry.mjs'), 'utf8');
+    const moduler = [...reg.matchAll(/from\s+'\.\/([\w-]+)\.mjs'/g)].map((m) => m[1]);
+    const ord = new Set();
+    for (const mod of moduler) {
+      ord.add(mod.toLowerCase());
+      // Leverantörsnamnet står i modulens label — 'm365' måste kunna täcka 'microsoft'.
+      try {
+        const src = readFileSync(join(ROOT, `lib/verifiers/${mod}.mjs`), 'utf8');
+        const label = /label:\s*'([^']+)'/.exec(src)?.[1] ?? '';
+        for (const w of label.toLowerCase().split(/[^a-zåäö0-9]+/)) if (w.length > 2) ord.add(w);
+      } catch { /* modul saknas — id:t räcker */ }
+    }
+    return [...ord];
+  } catch { return []; }
+})();
+
 // ── Extrahera kategorier ur branchindex.js ────────────────────────────────────
 // Matcha top-level BRANCHINDEX-nycklar med tillhörande source, lastVerified, verifiedVia
 const categoryEntries = [];
@@ -130,7 +155,8 @@ for (const { tier, lastVerified, source } of tierEntries) {
   const vendor = /^(business|e[0-9])/.test(tier)
     ? 'microsoft'
     : tier.split('-')[0];
-  const hasCheck = monitoredSupplierStrings.some(s => s.includes(vendor));
+  const hasCheck = monitoredSupplierStrings.some(s => s.includes(vendor))
+                || verifierSupplierStrings.some(s => s.includes(vendor));
 
   if (!hasCheck) {
     const isEjVerifierat = source === 'ej-verifierat';
