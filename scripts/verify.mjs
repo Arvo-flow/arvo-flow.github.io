@@ -27,8 +27,18 @@ if (!targets.length) {
 let anyFail = false;
 for (const v of targets) {
   console.log(`\n=== [${v.id}] ${v.label} · ${v.category} ===`);
+  // TIDSTAKET (grundarfynd 2026-08-05): zoho-crm hängde 9+ minuter och sköts ned av jobbets
+  // 10-minuterstak — utan utfall, utan rad i loggen, utan att någon kunde se VARFÖR. En vakt som
+  // kan hänga är en vakt som tystnar, och tystnaden ser ut som "kör fortfarande". Varje källa får
+  // därför en egen budget: överskrids den är det ett RÖTT med skäl, inte ett dödat jobb.
+  const BUDGET_MS = Number(process.env.VERIFY_TIMEOUT_MS ?? 150000);
   let res;
-  try { res = await v.run(); }
+  try {
+    res = await Promise.race([
+      v.run(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error(`tidsbudget ${BUDGET_MS} ms överskriden — källan svarar inte i tid`)), BUDGET_MS)),
+    ]);
+  }
   catch (e) { console.error(`  ✗ körfel: ${e.message.split('\n')[0]}`); anyFail = true; continue; }
 
   // Källa som väntar på en credential (t.ex. en API-nyckel som ännu inte lagts in som secret)
@@ -59,3 +69,6 @@ if (anyFail) {
   process.exit(1);
 }
 console.log('\n[verify] ✓ alla körda verifierare håller mot sina källor — ankarena håller.');
+// En timeout:ad run() lever vidare i bakgrunden med en öppen browser och skulle annars hålla
+// processen vid liv tills jobbets tak dödar den — samma tysta hängning vi just byggt bort.
+process.exit(0);
