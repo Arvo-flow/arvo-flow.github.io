@@ -47,6 +47,34 @@ describe('Tystnadsfel · en flakig sida får inte döda hela svepet', () => {
   });
 });
 
+describe('Tystnadsfel · ett tomt rum får aldrig betyda "vi kunde inte läsa"', () => {
+  // 2026-08-06: getAnalysesByFingerprint/ByEmail returnerade [] vid databasfel. Är databasen nere
+  // öppnar kunden sitt rum och ser ETT TOMT KONTOR — "ni har inga fakturor" — när sanningen är
+  // "vi kunde inte läsa". I den yta kunden BETALAR för drar hen slutsatsen att underlaget är borta.
+  test('analysläsningarna kastar vid databasfel — returnerar aldrig tom lista', () => {
+    const src = las('lib/invoice-store.js');
+    for (const fn of ['getAnalysesByFingerprint', 'getAnalysesByEmail']) {
+      const i = src.indexOf(`export async function ${fn}`);
+      assert.ok(i > 0, `${fn} saknas i lib/invoice-store.js`);
+      // Funktionskroppen = fram till nästa toppnivådeklaration (eller filslut).
+      const nasta = src.indexOf('\nexport ', i + 10);
+      const kropp = src.slice(i, nasta > 0 ? nasta : src.length);
+      const c = kropp.indexOf('} catch');
+      assert.ok(c > 0, `${fn} saknar felhantering`);
+      const katch = kropp.slice(c);
+      assert.match(katch, /throw new Error\(/, `${fn} måste KASTA vid fel — [] betyder "inga fakturor".`);
+      assert.doesNotMatch(katch, /return\s*\[\]/, `${fn} får aldrig returnera tom lista vid databasfel.`);
+    }
+  });
+
+  test('rummets API svarar 503 med ärlig mening i stället för tomt kontor', () => {
+    const src = las('api/invoice-history.mjs');
+    assert.match(src, /503/, 'invoice-history måste svara med felstatus när underlaget inte gick att läsa');
+    assert.match(src, /kunde_inte_lasa/);
+    assert.match(src, /inget har försvunnit/, 'meddelandet ska lugna kunden om att data finns kvar');
+  });
+});
+
 describe('Tystnadsfel · avsändardomänen (kundlarmet som aldrig gick fram)', () => {
   // 2026-08-05: notify-price-changes.mjs skickade från "arvo-flow.se" (BINDESTRECK) — en domän vi
   // inte äger i Resend. Varje kundlarm dog på 403, steget bar continue-on-error, jobbet grönt.

@@ -244,7 +244,13 @@ export default function Portfolio() {
     }
     if (magic) params.set('magic', magic);
     const res = await fetch(`/api/invoice-history?${params.toString()}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      // Kunden ska läsa vad som HÄNT, inte en statuskod. API:t svarar 503 med en ärlig mening när
+      // underlaget inte gick att läsa — visa den. Ett tomt kontor får aldrig vara vad kunden ser
+      // när sanningen är "vi kunde inte läsa" (grundarfynd 2026-08-06).
+      const kropp = await res.json().catch(() => null);
+      throw new Error(kropp?.message || `Kunde inte hämta ert kontor just nu (HTTP ${res.status}).`);
+    }
     const data = await res.json();
     setAnalyses(data.analyses ?? []);
     setApiEmail(data.email ?? null);

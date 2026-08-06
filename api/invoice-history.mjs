@@ -69,10 +69,26 @@ export default async function handler(req, res) {
   const isTestRoom = email === TEST_EMAIL;
 
   // (watchedCard definieras på modulnivå nedan)
-  const [byFp, byEmail] = await Promise.all([
-    (hasFp && !isTestRoom) ? getAnalysesByFingerprint(fp) : [],
-    email ? getAnalysesByEmail(email)    : [],
-  ]);
+  //
+  // ETT TOMT RUM FÅR ALDRIG BETYDA "VI KUNDE INTE LÄSA" (grundarfynd 2026-08-06).
+  // Läsningarna kastar numera vid databasfel i stället för att returnera []. Fångas felet HÄR och
+  // svaras med 503 visar rummet sitt ärliga felläge ("kunde inte hämta") — inte ett kontor som ser
+  // tomt ut. Kunden ska aldrig kunna dra slutsatsen att hens underlag är borta för att vi hade en
+  // dålig minut. Allt ANNAT i svaret (kohort, ankare, prognoser) är redan fail-open med avsikt:
+  // de är tillägg, och ett saknat tillägg är inte samma sak som ett saknat underlag.
+  let byFp, byEmail;
+  try {
+    [byFp, byEmail] = await Promise.all([
+      (hasFp && !isTestRoom) ? getAnalysesByFingerprint(fp) : [],
+      email ? getAnalysesByEmail(email)    : [],
+    ]);
+  } catch (err) {
+    console.error('[invoice-history] kunde inte läsa analyser:', err.message);
+    return send(res, 503, {
+      error: 'kunde_inte_lasa',
+      message: 'Vi kunde inte läsa ert underlag just nu. Det är vårt fel, inte ert — inget har försvunnit. Försök om en stund.',
+    });
+  }
 
   // Slå ihop + dedupa (samma analys kan ha både fingerprint och user_email)
   const seen = new Set();
