@@ -1,0 +1,29 @@
+name: Probe Neon spend-spärr (dokumentationen, inte minnet)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: npm }
+      - run: npm ci --ignore-scripts
+      - name: Probe
+        continue-on-error: true
+        run: |
+          mkdir -p ops
+          node scripts/probe-neon-spend.mjs 2>&1 | tee ops/probe-neon-spend.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git pull --rebase origin main || true
+          git add ops/probe-neon-spend.txt
+          git commit -m "ops: probe-neon-spend [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
