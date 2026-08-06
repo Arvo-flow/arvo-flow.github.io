@@ -98,6 +98,38 @@ describe('Tystnadsfel · avsändardomänen (kundlarmet som aldrig gick fram)', (
   }
 });
 
+describe('Kostnadsspärren · databasen får inte väckas i onödan', () => {
+  // 2026-08-06: drain-ingest kör varje minut (vercel.json). Varje körning frågade Postgres, och en
+  // fråga var 60:e sekund gör att Neons beräkning ALDRIG autosuspendar — ~180 CU-timmar/månad för
+  // att fråga en tom kö. Det matchar nästan exakt förbrukningen som sprängde Free-taket 18 juli.
+  // Spärren: en KV-flagga (väcker ingen databas) avgör om det finns arbete.
+  test('drainen hoppar över Postgres när köflaggan är bevisat falsk', () => {
+    const src = las('api/cron/drain-ingest.mjs');
+    assert.match(src, /hasPendingFlag/, 'drainen måste läsa köflaggan innan den rör databasen');
+    assert.match(src, /flagga === false/,
+      'endast ett BEVISAT tomt läge får hoppa över — null (KV saknas) måste fråga Postgres');
+    assert.match(src, /sakerhetsslot/, 'en säkerhetsslot måste finnas så inget jobb kan strandsättas');
+  });
+
+  test('OKÄNT räknas aldrig som tomt — hasPendingFlag returnerar null utan KV', () => {
+    const src = las('lib/ingest-queue.js');
+    const fn = src.slice(src.indexOf('export async function hasPendingFlag'));
+    const kropp = fn.slice(0, fn.indexOf('\n}\n') + 3);
+    assert.match(kropp, /if \(!kv\) return null/, 'saknad KV måste ge null, aldrig false');
+    assert.match(kropp, /catch \{ return null/, 'ett KV-fel måste ge null, aldrig false');
+  });
+
+  test('båda köläggarna sätter flaggan — annars strandsätts arbete', () => {
+    const src = las('lib/ingest-queue.js');
+    for (const fn of ['enqueueJobs', 'retryFailedBySender']) {
+      const i = src.indexOf(`export async function ${fn}`);
+      const nasta = src.indexOf('\nexport ', i + 10);
+      const kropp = src.slice(i, nasta > 0 ? nasta : src.length);
+      assert.match(kropp, /markPending\(\)/, `${fn} måste sätta köflaggan när den lägger till arbete`);
+    }
+  });
+});
+
 describe('Tystnadsfel · en kraschad natt får inte se ut som en lugn natt', () => {
   const yml = las('.github/workflows/price-monitor.yml');
 

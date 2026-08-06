@@ -7,7 +7,7 @@
 // /testa-faktura och mail-in (regel 1), nycklad på avsändaren → landar i kundens kontor.
 
 import { createHash } from 'node:crypto';
-import { claimBatch, completeJob, failJob } from '../../lib/ingest-queue.js';
+import { claimBatch, completeJob, failJob, hasPendingFlag, clearPending } from '../../lib/ingest-queue.js';
 import { fetchInboundPdfByIndex } from '../inbound-email.mjs';
 
 export const config = { maxDuration: 60 };
@@ -23,6 +23,12 @@ const BATCH = Number(process.env.INGEST_DRAIN_BATCH) || CONCURRENCY;
 const TIME_BUDGET_MS = Number(process.env.INGEST_DRAIN_BUDGET_MS) || 45_000;
 // Per-faktura-tak: en hängande analys får inte äta hela budgeten (jobbet blir stale → reclaimas).
 const JOB_TIMEOUT_MS = Number(process.env.INGEST_DRAIN_JOB_TIMEOUT_MS) || 40_000;
+// SÄKERHETSSLOTEN: hur ofta vi frågar Postgres ÄVEN utan köflagga. Behövs av två skäl —
+// KV kan ha evinerats (då vet vi inte att arbete finns), och stale-reclaim (jobb som fastnat i
+// 'processing' >10 min) kräver att claimBatch faktiskt körs ibland. 15 min ger värsta-fall-latens
+// 15 min för ett strandsatt jobb, men inbound-email sparkar igång drainen direkt vid köläggning —
+// så den verkliga latensen för en kund är oförändrad.
+const SAFETY_EVERY_MIN = Number(process.env.INGEST_DRAIN_SAFETY_MIN) || 15;
 const sha16 = (s) => createHash('sha256').update(String(s)).digest('hex').slice(0, 16);
 
 function send(res, status, body) {
@@ -78,6 +84,17 @@ export default async function handler(req, res) {
     return send(res, 401, { error: 'unauthorized' });
   }
 
+  // ── SPÄRREN MOT ATT VÄCKA DATABASEN I ONÖDAN (grundarfynd 2026-08-06) ──────────────────────
+  // Cronen kör varje minut. Varje claimBatch är en Postgres-fråga, och en fråga var 60:e sekund
+  // gör att Neons beräkning aldrig autosuspendar — ~180 CU-timmar/månad för att fråga en tom kö.
+  // Är köflaggan bevisat FALSK och det inte är en säkerhetsslot rör vi inte databasen alls.
+  // null (KV saknas/felar) räknas ALDRIG som tomt: okänt är inte samma sak som tomt.
+  const flagga = await hasPendingFlag();
+  const sakerhetsslot = new Date().getUTCMinutes() % SAFETY_EVERY_MIN === 0;
+  if (flagga === false && !sakerhetsslot) {
+    return send(res, 200, { ok: true, skipped: 'tom kö enligt köflaggan — Postgres orörd' });
+  }
+
   const deadline = Date.now() + TIME_BUDGET_MS;
   let done = 0, failed = 0, claimed = 0, waves = 0;
 
@@ -92,6 +109,10 @@ export default async function handler(req, res) {
     for (const ok of results) { if (ok) done++; else failed++; }
   }
 
-  console.log(`[drain-ingest] klar: ${done} klara · ${failed} fel · ${claimed} claimade i ${waves} våg(or)`);
+  // Kön visade sig tom → släck flaggan, så nästa minut slipper väcka databasen.
+  if (claimed === 0) await clearPending();
+
+  console.log(`[drain-ingest] klar: ${done} klara · ${failed} fel · ${claimed} claimade i ${waves} våg(or)`
+    + `${flagga === null ? ' · köflagga okänd (KV saknas) → Postgres frågad' : ''}`);
   return send(res, 200, { ok: true, drained: done, failed, claimed, waves });
 }
