@@ -58,18 +58,65 @@ const WHITELISTED_IPS = new Set([
   '94.191.136.170',  // owner (dynamiskt — samma subnät)
 ]);
 
+// ── FAIL-CLOSED (grundarbeslut 2026-08-06) ────────────────────────────────────
+//
+// Den här funktionen returnerade tidigare false — "inte begränsad", alltså SLÄPP IGENOM — i tre
+// lägen: KV saknas, IP saknas, eller KV felar. Kommentaren löd "Non-fatal — låt analysen gå
+// igenom om KV failar". Följden: spärren försvann exakt när den behövdes mest.
+//
+// /testa-faktura är PUBLIK och kräver ingen inloggning. Varje uppladdad PDF startar två
+// Opus-anrop (extract + recommend). En KV-nedgång förvandlade alltså ett tak på 5 analyser/dygn
+// till obegränsad Opus-förbrukning — med stor sannolikhet det som stängde av vårt API-konto.
+//
+// Samma sjukdom som resten av veckan: en vakt som tyst upphör när något den beror på fallerar.
+// Kan vi inte RÄKNA får vi inte SLÄPPA IGENOM. Avvägningen är medveten: går KV ner blir den
+// publika tratten otillgänglig en stund. Det kostar oss i dag ingenting mätbart — en öppen
+// Opus-kran kostade oss redan ett avstängt konto.
+//
+// Returnerar null när allt är OK, annars en TERS orsakskod (för diagnos, regel 7).
 async function checkRateLimit(kv, ip) {
-  if (!kv || !ip) return false;
-  if (WHITELISTED_IPS.has(ip)) return false;
+  if (!kv) return 'kv-saknas';                    // kan inte räkna → släpper inte igenom
+  if (!ip) return 'ip-saknas';                    // kan inte identifiera → släpper inte igenom
+  if (WHITELISTED_IPS.has(ip)) return null;       // ägarens egna IP:n — men GLOBALTAKET gäller ändå
   const key = `ratelimit:ip:${createHash('sha256').update(ip).digest('hex').slice(0, 24)}`;
   try {
     const count = (await kv.get(key)) ?? 0;
-    if (count >= RATE_LIMIT_MAX) return true;
+    if (count >= RATE_LIMIT_MAX) return 'ip-tak';
     await kv.set(key, count + 1, { ex: RATE_WINDOW_TTL });
-  } catch {
-    // Non-fatal — låt analysen gå igenom om KV failar
+  } catch (err) {
+    console.error('[test-invoice] rate limit KV-fel — fail-closed:', err.message);
+    return 'kv-fel';                              // ett fel får aldrig bli ett fribiljett
   }
-  return false;
+  return null;
+}
+
+// ── GLOBALTAKET: andra nätet mot en skenande kran ─────────────────────────────
+//
+// Per-IP-taket skyddar mot EN besökare. Det skyddar inte mot många IP:n, en botnät-liknande
+// skursvans, eller mot att vi själva råkar loopa via en whitelistad adress. Globaltaket är därför
+// ett RUNAWAY-skydd, inte en kapacitetsgräns: det ska aldrig nås i normal drift, och när det nås
+// har något gått sönder. Gäller ALLA — även whitelist och bypass-nyckel.
+//
+// Default 200 analyser/dygn = 400 Opus-anrop. Piloten (20 kunder som laddar upp en batch) ryms
+// med marginal; en skenande loop gör det inte. Justeras med ANALYSIS_DAILY_CAP.
+const GLOBAL_DAILY_CAP = Number(process.env.ANALYSIS_DAILY_CAP) || 200;
+
+async function checkGlobalCap(kv) {
+  if (!kv) return 'kv-saknas';                    // samma princip: kan inte räkna → nej
+  const dag = new Date().toISOString().slice(0, 10);
+  const key = `ratelimit:global:${dag}`;
+  try {
+    const n = await kv.incr(key);
+    if (n === 1) await kv.expire(key, 48 * 60 * 60);
+    if (n > GLOBAL_DAILY_CAP) {
+      console.error(`[test-invoice] GLOBALTAKET NÅTT: ${n} analyser i dag (tak ${GLOBAL_DAILY_CAP}) — kranen stängd`);
+      return 'globaltak';
+    }
+  } catch (err) {
+    console.error('[test-invoice] globaltak KV-fel — fail-closed:', err.message);
+    return 'kv-fel';
+  }
+  return null;
 }
 
 // ── HMAC-tokenvalidering ──────────────────────────────────────────────────────
@@ -355,6 +402,22 @@ export default async function handler(req, res) {
   const clientIp = (req.headers['x-forwarded-for'] ?? req.socket?.remoteAddress ?? '').split(',')[0].trim();
   const isWhitelisted = WHITELISTED_IPS.has(clientIp);
 
+  // ── GLOBALTAKET GÄLLER ALLA, FÖRE ALLT ANNAT ───────────────────────────────────────────────
+  // Medvetet UTANFÖR isBypass-blocket: bypass-nyckeln hoppar över token, PDF-cache, rate limit
+  // och saving gate — men den får inte hoppa över kostnadsspärren. En skenande loop med rätt
+  // nyckel är fortfarande en skenande loop, och två Opus-anrop per varv kostar lika mycket
+  // oavsett vem som startade dem. Runaway-skydd, aldrig en kapacitetsgräns.
+  const capSkal = await checkGlobalCap(getKv());
+  if (capSkal) {
+    return send(res, 429, {
+      error: capSkal === 'globaltak'
+        ? 'Analysen är pausad för dygnet — vi har nått vårt eget säkerhetstak. Hör av er så öppnar vi.'
+        : 'Vi kan inte verifiera kvoten just nu. Det är vårt fel, inte ert — försök om en stund.',
+      rateLimited: true,
+      code: capSkal,
+    });
+  }
+
   if (!isBypass) {
     const _tokReason = tokenRejectReason(token);
     if (_tokReason) {
@@ -364,11 +427,20 @@ export default async function handler(req, res) {
 
     const kv = getKv();
 
-    // IP-baserad rate limiting: max 5 analyser per IP per 24h
-    if (await checkRateLimit(kv, clientIp)) {
+    // IP-baserad rate limiting (fail-closed): max 5 analyser per IP per 24h.
+    // Kan vi inte räkna släpper vi inte igenom — se checkRateLimit.
+    const rlSkal = await checkRateLimit(kv, clientIp);
+    if (rlSkal) {
+      const kvProblem = rlSkal === 'kv-saknas' || rlSkal === 'kv-fel';
+      console.log(`[test-invoice] 429 rate limit: ${rlSkal}`);
       return send(res, 429, {
-        error: 'Du har analyserat för många fakturor idag. Försök igen imorgon eller kontakta oss för att utöka din kvot.',
+        error: kvProblem
+          // Ärligt: det är vårt fel, inte kundens. Vi säger aldrig "du har gjort för många" till
+          // någon som inte har det (regel 3 — ett påstående om kunden kräver täckning).
+          ? 'Vi kan inte verifiera er kvot just nu. Det är vårt fel, inte ert — försök om en stund.'
+          : 'Du har analyserat för många fakturor idag. Försök igen imorgon eller kontakta oss för att utöka din kvot.',
         rateLimited: true,
+        code: rlSkal,
       });
     }
 

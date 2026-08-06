@@ -130,6 +130,40 @@ describe('Kostnadsspärren · databasen får inte väckas i onödan', () => {
   });
 });
 
+describe('Kostnadsspärren · Opus-kranen får aldrig stå öppen', () => {
+  // /testa-faktura är PUBLIK och kräver ingen inloggning. Varje uppladdad PDF startar TVÅ
+  // Opus-anrop (extract + recommend). Rate limiten returnerade tidigare false — "släpp igenom" —
+  // när KV saknades eller felade, med kommentaren "Non-fatal — låt analysen gå igenom om KV failar".
+  // Spärren försvann alltså exakt när den behövdes mest, och det är med stor sannolikhet vad som
+  // stängde av vårt Anthropic-konto. Kan vi inte RÄKNA får vi inte SLÄPPA IGENOM.
+  const src = las('api/test-invoice.mjs');
+
+  test('rate limiten är fail-closed: KV saknas eller felar → nekad, aldrig fri passage', () => {
+    const i = src.indexOf('async function checkRateLimit');
+    const kropp = src.slice(i, src.indexOf('\n}', i) + 2);
+    assert.match(kropp, /if \(!kv\) return 'kv-saknas'/, 'saknad KV måste neka, inte släppa igenom');
+    assert.match(kropp, /return 'kv-fel'/, 'ett KV-fel måste neka, inte släppa igenom');
+    assert.doesNotMatch(kropp, /Non-fatal[\s\S]*?\n\s*\}\s*\n\s*return false/,
+      'den gamla fail-open-vägen får aldrig återuppstå');
+  });
+
+  test('globaltaket finns, gäller ALLA och ligger före bypass-blocket', () => {
+    assert.match(src, /GLOBAL_DAILY_CAP/, 'ett globalt dygnstak måste finnas som andra nät');
+    const cap = src.indexOf('await checkGlobalCap(');
+    const bypassBlock = src.indexOf('if (!isBypass) {');
+    assert.ok(cap > 0 && bypassBlock > 0, 'både globaltak och bypass-block ska finnas');
+    assert.ok(cap < bypassBlock,
+      'globaltaket måste ligga FÖRE isBypass-blocket — en skenande loop med rätt nyckel är fortfarande en skenande loop');
+  });
+
+  test('kunden får aldrig höra "du har gjort för många" när felet är vårt', () => {
+    // Regel 3: ett påstående OM KUNDEN kräver täckning. Är det vår KV som ligger nere har kunden
+    // inte gjort något — då säger vi det.
+    assert.match(src, /Det är vårt fel, inte ert/,
+      'vid KV-problem ska meddelandet lägga felet där det hör hemma');
+  });
+});
+
 describe('Tystnadsfel · en kraschad natt får inte se ut som en lugn natt', () => {
   const yml = las('.github/workflows/price-monitor.yml');
 
