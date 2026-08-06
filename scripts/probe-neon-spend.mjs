@@ -10,7 +10,16 @@
 // OCH efter vad som gäller för marketplace-installationer.
 import { fetchText, stripHtml } from '../lib/verifiers/core.mjs';
 
+// GRUNDARENS FYND 2026-08-06: Neons konsol säger "Neon subscription managed by Vercel — your
+// subscription is managed directly in your Vercel account". Det finns alltså ingen spärr att sätta
+// inuti Neon. Den avgörande frågan blir därför: täcker Vercels On-Demand Budget ($40) även
+// MARKETPLACE-förbrukning (Neon), eller bara Vercels egna mätvärden? Täcker den inte, saknar Neon
+// utgiftsspärr helt — och då är kodens spärrar det enda skyddet.
 const SIDOR = [
+  ['vercel-spend-management', 'https://vercel.com/docs/spend-management'],
+  ['vercel-marketplace', 'https://vercel.com/docs/integrations/marketplace'],
+  ['vercel-marketplace-billing', 'https://vercel.com/docs/integrations/marketplace-product#billing'],
+  ['vercel-manage-usage', 'https://vercel.com/docs/manage-and-optimize-usage'],
   ['docs-billing', 'https://neon.com/docs/introduction/about-billing'],
   ['docs-monitor-usage', 'https://neon.com/docs/introduction/monitor-usage'],
   ['docs-manage-billing', 'https://neon.com/docs/introduction/manage-billing'],
