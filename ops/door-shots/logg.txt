@@ -1,31 +1,47 @@
 FYND lekia: ["Ni kör Microsoft 365","4 leverantörer syns i era publika mejlposter","Mejl i ert namn kan förfalskas"]
 ORDNING lekia: IDENT-FÖRE-KVITTO
 RÅA ORGNR lekia: [] (ska vara [])
+MITTLINJEN lekia mobil: kortets mitt 195.0 · sidans 195.0 · skevhet 0.0px · kant mot kolumnen 0.0px ✓
 ✓ lekia mobil
+MITTLINJEN lekia desktop: kortets mitt 860.0 · sidans 800.0 · skevhet 60.0px · kant mot kolumnen 160.0px ✗ FEL
 ✓ lekia desktop
 FYND kristianstadsmaleri: ["Ert bokslut 2025: 14,0 mkr i omsättning, 14 anställda","Er omsättning föll 26 % senaste bokslutsåret","Mejl i ert namn kan förfalskas","Ni ingår i en koncern om 2 bolag","Grundat 1987 — 39 år i verksamhet"]
 ORDNING kristianstadsmaleri: IDENT-FÖRE-KVITTO
 RÅA ORGNR kristianstadsmaleri: [] (ska vara [])
+MITTLINJEN kristianstadsmaleri mobil: kortets mitt 195.0 · sidans 195.0 · skevhet 0.0px · kant mot kolumnen 0.0px ✓
 ✓ kristianstadsmaleri mobil
+MITTLINJEN kristianstadsmaleri desktop: kortets mitt 860.0 · sidans 800.0 · skevhet 60.0px · kant mot kolumnen 160.0px ✗ FEL
 ✓ kristianstadsmaleri desktop
 FYND spokdoman: []
 NOT spokdoman: ["Vi hittar ingen aktiv domän bakom hdssyjxdd.se — kontrollera stavningen, eller testa med en faktura så läser vi de verkliga talen."]
 ORDNING spokdoman: ingetdera
 RÅA ORGNR spokdoman: [] (ska vara [])
+MITTLINJEN spokdoman mobil: inget kort på sidan — inget att mäta (laglig tystnad)
 ✓ spokdoman mobil
+MITTLINJEN spokdoman desktop: inget kort på sidan — inget att mäta (laglig tystnad)
 ✓ spokdoman desktop
 PENDING KVAR kfast: 0 (ska vara 0)
 FYND kfast: ["Ni kör Microsoft 365","Ert e-postskydd är redan aktivt","Digital närvaro sedan april 2015"]
 ORDNING kfast: kvitto-utan-ident
 RÅA ORGNR kfast: [] (ska vara [])
+MITTLINJEN kfast mobil: kortets mitt 195.0 · sidans 195.0 · skevhet 0.0px · kant mot kolumnen 0.0px ✓
 ✓ kfast mobil
+MITTLINJEN kfast desktop: kortets mitt 860.0 · sidans 800.0 · skevhet 60.0px · kant mot kolumnen 160.0px ✗ FEL
 ✓ kfast desktop
 FYND avida: ["Ni kör Microsoft 365","Ert e-postskydd är redan aktivt"]
 ORDNING avida: IDENT-FÖRE-KVITTO
 RÅA ORGNR avida: [] (ska vara [])
+MITTLINJEN avida mobil: kortets mitt 195.0 · sidans 195.0 · skevhet 0.0px · kant mot kolumnen 0.0px ✓
 ✓ avida mobil
 BLÄNDAREN avida: ["556230-9004Avida Bank AB (publ)Stockholm · Finansbolag, finansiella tjänster","559165-3182AVIDA ASSISTANS & OMSORG I SVERIGE ABÖrebro · Omvårdnad och omsorg","559017-7068Avida ABStockholm · Företagsutveckling"]
 VÄGVISARE avida: 0 (ska vara 0) · IGENKÄNNING: 3 av 3
 ✓ avida bländare mobil
+MITTLINJEN avida desktop: kortets mitt 860.0 · sidans 800.0 · skevhet 60.0px · kant mot kolumnen 160.0px ✗ FEL
 ✓ avida desktop
 ✓ avida bländare desktop
+
+✗ MÅTTSYSTEMET BRUTET — 4 avvikelse(r):
+   lekia/desktop: skevhet 60.0px · kantavvikelse 160.0px
+   kristianstadsmaleri/desktop: skevhet 60.0px · kantavvikelse 160.0px
+   kfast/desktop: skevhet 60.0px · kantavvikelse 160.0px
+   avida/desktop: skevhet 60.0px · kantavvikelse 160.0px
