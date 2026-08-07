@@ -73,10 +73,20 @@ for (const { email, tag, waitReceipt, openAperture } of CASES) {
     // det med ögat — ingen maskin sa ifrån, för geometri bor i utlagd CSS och når aldrig sviten.
     // Nu mäts två saker i DOM vid varje körning: att bilagan delar MITTLINJE med sidan, och att
     // den delar KANT med kolumnen som regeln ritar. Ett mått som glider isär fäller körningen.
+    //
+    // VAKTENS EGEN LÄXA (samma dag, en timme senare): första versionen kedjades vid klassen
+    // .rv-card — som bara fanns i den ännu ocommittade fixen. Den matchade ingenting på skarpa
+    // sajten, mätte noll fall, skrev noll rader och lät körningen bli GRÖN. Exakt prisbokens
+    // sjukdom: en vakt som tiger ser ut som en vakt som godkänner. Därför två regler här:
+    //   1 · ankra i INNEHÅLLET (.rv-find ÄR ett kort), aldrig i en kosmetisk klass som kan döpas om
+    //   2 · "kunde inte mäta" är ett FEL, aldrig en tyst passage. Bara "inget kort alls"
+    //       (spökdomänen) är en laglig tystnad — och den bevisas redan av FYND/NOT ovan.
     const matt = await p.evaluate(() => {
-      const kort = document.querySelector('.rv-card');
+      const rad = document.querySelector('.rv-find');
+      if (!rad) return { ingetKort: true };
+      const kort = rad.parentElement;
       const kolumn = document.querySelector('.inner');
-      if (!kort || !kolumn) return null;
+      if (!kort || !kolumn) return { trasig: kort ? 'ingen .inner-kolumn' : 'kortet saknar förälder' };
       const a = kort.getBoundingClientRect();
       const k = kolumn.getBoundingClientRect();
       return {
@@ -85,7 +95,12 @@ for (const { email, tag, waitReceipt, openAperture } of CASES) {
         kantAvvik: Math.max(Math.abs(a.left - k.left), Math.abs(a.right - k.right)),
       };
     });
-    if (matt) {
+    if (matt.ingetKort) {
+      console.log(`MITTLINJEN ${tag} ${view}: inget kort på sidan — inget att mäta (laglig tystnad)`);
+    } else if (matt.trasig) {
+      console.log(`MITTLINJEN ${tag} ${view}: ✗ KUNDE INTE MÄTA — ${matt.trasig}`);
+      fel.push(`${tag}/${view}: vakten kunde inte mäta (${matt.trasig})`);
+    } else {
       const skev = Math.abs(matt.kortMitt - matt.sidMitt);
       const ok = skev <= 1 && matt.kantAvvik <= 1;
       console.log(`MITTLINJEN ${tag} ${view}: kortets mitt ${matt.kortMitt.toFixed(1)} · sidans ${matt.sidMitt.toFixed(1)}`
