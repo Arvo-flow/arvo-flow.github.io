@@ -1,0 +1,65 @@
+
+══════════════ avida.se ══════════════
+sld: avida · vikt: avida
+sajt: (oåtkomlig) · 0 tecken
+
+── VÄG 1 · orgnr på sajten ──
+  VÄG 1 utfall: tyst
+
+── VÄG 2 · stavningsoraklet ──
+
+── VÄG 3 · sökformerna (vad ser grinden?) ──
+  "avida": 25 bolag i sökresultatet
+      5562309004   Avida Bank AB (publ)
+      5591653182   AVIDA ASSISTANS & OMSORG I SVERIGE AB
+      5590177068   Avida AB  ⬅ EXAKT VIKT MATCH
+                   vikt: "avida"
+      5567609259   Avidity Capital AB
+      5593654634   AviDal AB
+      5561974188   Bravida Sverige AB
+      5565138558   Vida Wood AB
+      5561468256   Vida Skog AB
+      5568550940   Avidly Sweden AB
+      5565158168   AVID Nordic AB
+      5568239585   Avidicare AB
+      5562884790   VIDA Energi AB
+      → grinden: SLÄPPER Avida AB (5590177068)
+
+── SKARPT UTFALL (fetchBusinessFacts) ──
+  {
+ "provenance": "bolagsverket",
+ "legalName": "Avida AB",
+ "orgnr": "5590177068",
+ "revenueTkr": 1899,
+ "employees": 1,
+ "year": "2025",
+ "foundationYear": 2015,
+ "koncern": null,
+ "history": [
+  {
+   "year": "2025",
+   "revenueTkr": 1899,
+   "employees": 1
+  },
+  {
+   "year": "2024",
+   "revenueTkr": 1793,
+   "employees": 1
+  },
+  {
+   "year": "2023",
+   "revenueTkr": 2208,
+   "employees": 1
+  },
+  {
+   "year": "2022",
+   "revenueTkr": 2118,
+   "employees": 1
+  },
+  {
+   "year": "2021",
+   "revenueTkr": 2130,
+   "employees": 1
+  }
+ ]
+}
