@@ -1,0 +1,74 @@
+
+══════════ avida.se (sld: avida) ══════════
+25 bolag i sökresultatet
+
+── FÄLT (namn : typer : ifyllnadsgrad) ──
+  advertType                         null               0/25
+  businessUnitId                     null               0/25
+  businessUnitType                   string             25/25
+  certificates                       array              25/25
+  companyAccountsLastUpdatedDate     string             25/25
+  companyId                          string             25/25
+  contactPerson                      object             25/25
+  currency                           string             25/25
+  currentIndustry                    object             25/25
+  customerId                         string             25/25
+  description                        null               0/25
+  email                              null               0/25
+  employees                          string             25/25
+  faxNumber                          null               0/25
+  homePage                           null               0/25
+  industries                         array              25/25
+  legalName                          string             25/25
+  listingId                          string             25/25
+  location                           object             25/25
+  logo                               null               0/25
+  mainOffice                         null               0/25
+  marketingProtection                boolean            25/25
+  mobile                             null               0/25
+  mobile2                            null               0/25
+  name                               string             25/25
+  orgnr                              string             25/25
+  phone                              null|string        13/25
+  phone2                             null               0/25
+  postalAddress                      object             25/25
+  profit                             string             25/25
+  rating                             null               0/25
+  revenue                            string             25/25
+  searchHighlights                   null               0/25
+  searchResultImage                  null               0/25
+  status                             null               0/25
+  statusRemarks                      array              25/25
+  visitorAddress                     object             25/25
+
+── KANDIDATERNA I KLARTEXT (de som bländaren skulle visa) ──
+
+  5562309004 Avida Bank AB (publ)
+  {"mainOffice":null,"name":"Avida Bank AB (publ)","orgnr":"5562309004","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2JZNL3GI5YE9Q","listingId":"2JZNL3GI5YE9Q","customerId":"5562309004","phone":null,"phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10002878","name":"Finansbolag, finansiella tjänster","description":null,"style":null,"companyId":"2JZNL3GI5YE9Q","salesRank":null}],"location":{"countryPart":"Hela Sverige","county":"Stockholm","municipality":"Stockholm","coordinates":[{"coordinateSystem":"EPSG:4326","xcoordinate":18.06948769,"ycoordinate":59.31361012}]},"currentIndustry":{"code":"10002878","name":"Finansbolag, finansiella tjänster","description":null,"companyId":null},"visitorAddress":{"addressLine":"Södermalmsallén 36","boxAddressLine":null,"zipCode":"118 28","postPlace":"
+
+  5591653182 AVIDA ASSISTANS & OMSORG I SVERIGE AB
+  {"mainOffice":null,"name":"AVIDA ASSISTANS & OMSORG I SVERIGE AB","orgnr":"5591653182","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2KH4J7II63IJQ","listingId":"2KH4J7II63IJQ","customerId":"5591653182","phone":null,"phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10241702","name":"Omvårdnad och omsorg","description":null,"style":null,"companyId":"2KH4J7II63IJQ","salesRank":null}],"location":{"countryPart":"Hela Sverige","county":"Örebro","municipality":"Örebro","coordinates":null},"currentIndustry":{"code":"10241702","name":"Omvårdnad och omsorg","description":null,"companyId":null},"visitorAddress":{"addressLine":null,"boxAddressLine":null,"zipCode":null,"postPlace":"Örebro"},"postalAddress":{"addressLine":"Box 22036","boxAddressLine":null,"zipCode":"702 02","postPlace":"Örebro"},"d
+
+  5590177068 Avida AB   ⬅ "närmast er domän"
+  {"mainOffice":null,"name":"Avida AB","orgnr":"5590177068","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2KG8W8CI5YEHU","listingId":"2KG8W8CI5YEHU","customerId":"5590177068","phone":null,"phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10003170","name":"Företagsutveckling","description":null,"style":null,"companyId":"2KG8W8CI5YEHU","salesRank":null}],"location":{"countryPart":"Hela Sverige","county":"Stockholm","municipality":"Stockholm","coordinates":[{"coordinateSystem":"EPSG:4326","xcoordinate":17.9950359894984,"ycoordinate":59.3049941123798}]},"currentIndustry":{"code":"10003170","name":"Företagsutveckling","description":null,"companyId":null},"visitorAddress":{"addressLine":"Hägerstensvägen 163 a","boxAddressLine":null,"zipCode":"126 53","postPlace":"Hägersten"},"postalAddress":{
+
+  5567609259 Avidity Capital AB
+  {"mainOffice":null,"name":"Avidity Capital AB","orgnr":"5567609259","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2K2T6SRI5YE9Q","listingId":"2K2T6SRI5YE9Q","customerId":"5567609259","phone":"0317740565","phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10002878","name":"Finansbolag, finansiella tjänster","description":null,"style":null,"companyId":"2K2T6SRI5YE9Q","salesRank":null},{"code":"10008544","name":"Värdepappershandel","description":null,"style":null,"companyId":"2K2T6SRI5YIN4","salesRank":null}],"location":{"countryPart":"Hela Sverige","county":"Stockholm","municipality":"Stockholm","coordinates":[{"coordinateSystem":"EPSG:4326","xcoordinate":18.0764138065496,"ycoordinate":59.3379248097706}]},"currentIndustry":{"code":"10002878","name":"Finansbolag, finansiella tjänster","de
+
+  5593654634 AviDal AB
+  {"mainOffice":null,"name":"AviDal AB","orgnr":"5593654634","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2KIBFJEI5YEHU","listingId":"2KIBFJEI5YEHU","customerId":"5593654634","phone":null,"phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10003170","name":"Företagsutveckling","description":null,"style":null,"companyId":"2KIBFJEI5YEHU","salesRank":null},{"code":"10003950","name":"Konsulter","description":null,"style":null,"companyId":"2KIBFJEI5YF3I","salesRank":null},{"code":"10007636","name":"Teknikkonsulter","description":null,"style":null,"companyId":"2KIBFJEI5YHXW","salesRank":null},{"code":"10001682","name":"Byggentreprenader-Infrastruktur","description":null,"style":null,"companyId":"2KIBFJEI5YDCI","salesRank":null}],"location":{"countryPart":"Hela Sverige","county":"Dalarna","muni
+
+  5561974188 Bravida Sverige AB
+  {"mainOffice":null,"name":"Bravida Sverige AB","orgnr":"5561974188","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2JZGER0I5YDDT","listingId":"2JZGER0I5YDDT","customerId":"5561974188","phone":"012014000","phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10001729","name":"Byggmästare","description":null,"style":null,"companyId":"2JZGER0I5YDDT","salesRank":null},{"code":"10002498","name":"Elinstallationer","description":null,"style":null,"companyId":"2JZGER0I5YDZ6","salesRank":null},{"code":"10008337","name":"Ventilation, luftbehandling","description":null,"style":null,"companyId":"2JZGER0I5YIHD","salesRank":null},{"code":"10001215","name":"Bevakningsföretag","description":null,"style":null,"companyId":"2JZGER0I5YCZJ","salesRank":null},{"code":"10241611","name":"Hushållsmaskiner och appa
+
+  5565138558 Vida Wood AB
+  {"mainOffice":null,"name":"Vida Wood AB","orgnr":"5565138558","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2K1C8E6I63IL2","listingId":"2K1C8E6I63IL2","customerId":"5565138558","phone":"047243900","phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10241750","name":"Trä och byggvaror - grossist","description":null,"style":null,"companyId":"2K1C8E6I63IL2","salesRank":null},{"code":"10007944","name":"Trävaror","description":null,"style":null,"companyId":"2K1C8E6I5YI6G","salesRank":null},{"code":"10241596","name":"Grossister","description":null,"style":null,"companyId":"2K1C8E6I63IGS","salesRank":null}],"location":{"countryPart":"Hela Sverige","county":"Kronoberg","municipality":"Alvesta","coordinates":[{"coordinateSystem":"EPSG:4326","xcoordinate":14.5368665420153,"ycoordinate":56.8955770
+
+  5561468256 Vida Skog AB
+  {"mainOffice":null,"name":"Vida Skog AB","orgnr":"5561468256","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2JZ5KDCI63IL2","listingId":"2JZ5KDCI63IL2","customerId":"5561468256","phone":"033233100","phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10241750","name":"Trä och byggvaror - grossist","description":null,"style":null,"companyId":"2JZ5KDCI63IL2","salesRank":null},{"code":"10007944","name":"Trävaror","description":null,"style":null,"companyId":"2JZ5KDCI5YI6G","salesRank":null},{"code":"10241596","name":"Grossister","description":null,"style":null,"companyId":"2JZ5KDCI63IGS","salesRank":null}],"location":{"countryPart":"Hela Sverige","county":"Västra Götaland","municipality":"Borås","coordinates":[{"coordinateSystem":"EPSG:4326","xcoordinate":13.0137516105174,"ycoordinate":57.885
+
+  5568550940 Avidly Sweden AB
+  {"mainOffice":null,"name":"Avidly Sweden AB","orgnr":"5568550940","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2K3DDEKI5YEHU","listingId":"2K3DDEKI5YEHU","customerId":"5568550940","phone":null,"phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10003170","name":"Företagsutveckling","description":null,"style":null,"companyId":"2K3DDEKI5YEHU","salesRank":null}],"location":{"countryPart":"Hela Sverige","county":"Stockholm","municipality":"Stockholm","coordinates":null},"currentIndustry":{"code":"10003170","name":"Företagsutveckling","description":null,"companyId":null},"visitorAddress":{"addressLine":"Virkesvägen 24 7 Tr","boxAddressLine":null,"zipCode":"120 30","postPlace":"Stockholm"},"postalAddress":{"addressLine":"Virkesvägen 24 7 Tr","boxAddressLine":null,"zipCode":"120 30","postPlac
+
+  5565158168 AVID Nordic AB
+  {"mainOffice":null,"name":"AVID Nordic AB","orgnr":"5565158168","businessUnitId":null,"businessUnitType":"MAIN","companyId":"2K1CNIWI5YG68","listingId":"2K1CNIWI5YG68","customerId":"5565158168","phone":"084425570","phone2":null,"mobile":null,"mobile2":null,"faxNumber":null,"homePage":null,"email":null,"marketingProtection":false,"industries":[{"code":"10005344","name":"Maskinförnödenheter","description":null,"style":null,"companyId":"2K1CNIWI5YG68","salesRank":null},{"code":"10241596","name":"Grossister","description":null,"style":null,"companyId":"2K1CNIWI63IGS","salesRank":null}],"location":{"countryPart":"Hela Sverige","county":"Skåne","municipality":"Malmö","coordinates":null},"currentIndustry":{"code":"10005344","name":"Maskinförnödenheter","description":null,"companyId":null},"visitorAddress":{"addressLine":"Gråbrödersgatan 9-11","boxAddressLine":null,"zipCode":"211 21","postPlace"
