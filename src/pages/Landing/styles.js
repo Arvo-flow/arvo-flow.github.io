@@ -163,9 +163,16 @@ export const RoomBlock = styled.div`
 /* Rummets instrument — den tysta veckan som hjälte (grundarbeslut 2026-07-21).
    Fyra takter i ETT föremål: vaktens hjärtslag → veckodomen → den levande fortsättningen
    från dörren → kalendern som återförsäkran. Materialet (korn + inre keyline) som dossiern. */
+/* Rummets kort delar bevismåttet med underlaget — de två bilagorna har samma kant, och
+   sektionsregeln ovanför dem båda ritar exakt den kanten. Låg tidigare på 640, 240px smalare än
+   sin tvilling, vilket läste som två olika system.
+   FOTNOT TILL MIG SJÄLV (2026-08-07): jag höll på att smalna tillbaka det till 640 på grundval
+   av min egen skärmbild — men den bilden var tagen i reduced-motion med dagräknaren fryst på 0
+   och nedskalad, alltså en bild av animationens startläge, inte av sidan. Grundaren såg den
+   RIKTIGA sidan och godkände 880. Läxan är inte om bredden: ett QA-verktyg som ljuger genom
+   utelämning är farligare än inget verktyg, för det får en att designa om fungerande arbete.
+   scripts/shot-mattsystem.mjs larmar därför numera om räknaren står på 0. */
 export const Artefakt = styled.div`
-  /* Rummets kort är dossierns ANDRA bilaga och delar därför bevismåttet med underlaget.
-     Låg tidigare på 640 — 240px smalare än sin tvilling, vilket läste som två olika system. */
   max-width: var(--matt-bevis); margin: 56px auto 0;
   ${riseIn} transition-delay: .1s;
 
