@@ -260,8 +260,17 @@ export default function Landing() {
           <button type="button" className="cta" onClick={goToDoor}>
             Se ert bolag som marknaden ser det →
           </button>
+          {/* ── INGET TIDSLÖFTE (grundarbeslut 2026-08-07) ────────────────────────────────
+              Här stod "tio sekunder". Sektionsnyckeln sa "60 sekunder". Kvittot MÄTTE 15,9 s.
+              Tre sanningar om samma sak på samma sida — regel 1 i kundytan — och vår egen
+              ärlighetsmekanism skrev ut beviset för att löftet ovanför var för stort.
+              Den uppenbara fixen vore att välja ett tal. Den rätta är att sluta lova ett:
+              ett LÖFTE inbjuder till jämförelse, en MÄTNING inbjuder till beundran. Kvittot
+              ("sammanställt på 15,9 s — innan ni delat något") är starkare efteråt än något
+              tal innan, och kan aldrig motsägas. Kvar står det som faktiskt är miraklet:
+              att det sker innan ni lämnat ifrån er något. */}
           <div className="sub">
-            tio sekunder · öppna källor &nbsp;·&nbsp; <Link to="/testa-faktura">eller testa med en faktura</Link>
+            innan ni delat något · öppna källor &nbsp;·&nbsp; <Link to="/testa-faktura">eller testa med en faktura</Link>
           </div>
         </div>
         <div className={`proof ${heroIn}`}>
@@ -277,7 +286,9 @@ export default function Landing() {
             {/* 01 · AVSLÖJANDET — dörren först (vunnen ordning: mejl före faktura) */}
             <SectionKey>
               <span className="k-num">01 · Avslöjandet</span>
-              <span className="k-note">60 sekunder · öppna källor</span>
+              {/* Inte heller här ett tidslöfte — differentiatorn är inte hastigheten utan
+                  att underlaget uppstår UTAN att kunden lämnat ifrån sig något. */}
+              <span className="k-note">öppna källor · innan ni delat något</span>
             </SectionKey>
             <DoorBlock ref={(el) => { doorRef.current = el; doorInRef.current = el; }} className={doorIn}>
               <h3>Se ert bolag <em>som marknaden ser det.</em></h3>

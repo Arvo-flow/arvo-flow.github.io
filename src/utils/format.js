@@ -37,3 +37,12 @@ export const MX_LABELS = {
   zoho:         'Zoho Mail',
   other:        'Anpassad e-postlösning',
 };
+
+
+// Svenskt organisationsnummer i dokumentform: 5562309004 → 556230-9004.
+// Vi strippar bindestrecket internt (normalizeOrgnr) för jämförelser — men en CFO läser
+// råa siffror som maskinutdata, inte som ett dokument. Bindestrecket tillbaka i VYN.
+export function fmtOrgnr(orgnr) {
+  const d = String(orgnr || '').replace(/\D/g, '');
+  return d.length === 10 ? `${d.slice(0, 6)}-${d.slice(6)}` : String(orgnr || '');
+}

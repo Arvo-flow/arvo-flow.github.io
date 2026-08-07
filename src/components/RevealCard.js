@@ -9,6 +9,7 @@
 // dem vore Potemkin); timern är performance.now()-mätt, aldrig ett önsketal.
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { fmtOrgnr } from '../utils/format';
 
 const Wrap = styled.section`
   border-radius: ${({ theme }) => theme.size.radius.lg};
@@ -311,37 +312,29 @@ export default function RevealCard({ domain, findings, elapsedS, pending, identi
           <div className="rv-source"><b>Källa:</b> {f.source}</div>
         </div>
       ))}
-      {/* Våg 2 pågår: de långsamma registren arbetar SYNLIGT vidare — sena rader är dramats
-          höjdpunkt ("hur visste de det?"), aldrig en väntetid. Ärligt: bara källor vi faktiskt läser. */}
-      {pending && (
-        <div className="rv-receipt" style={{ borderStyle: 'dashed' }}>
-          Djupare register arbetar fortfarande — certifikatregistret svarar långsamt. Fler rader kan landa här.
-        </div>
-      )}
-      {/* Kvittot: uppmätt tid (performance.now() runt det verkliga anropet) — aldrig ett önsketal. */}
-      {!pending && elapsedS > 0 && (
-        <div className="rv-receipt">
-          Sammanställt på <b>{elapsedS.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} s</b> ur öppna källor · innan ni delat något
-        </div>
-      )}
-      {/* ── IDENTITETSRADEN ────────────────────────────────────────────────────────────────
-          Namngav vi ett bolag säger vi VILKET, med orgnr — och erbjuder rättelsen i samma
-          andetag. Ett system som vet att det kan ha fel och låter dig styra är starkare än
-          ett som låtsas vara osvikligt. */}
+      {/* ── IDENTITETSTRÖSKELN (grundarbeslut 2026-08-07) ───────────────────────────────
+          Låg tidigare EFTER kvittot. Men kvittot är en FULLBORDAN — "sammanställt på 15,9 s"
+          sätter punkt. Att ställa identitetsfrågan efter den gjorde den till en fotnot på en
+          färdig produkt, och tog tillbaka halva vinsten med bländaren.
+          Frågan är inte en fotnot. Den är UPPLÅSNINGEN: svarar kunden får hen bokslut,
+          tillväxt, koncern, ålder — allt det som gör kortet tjockt. Den hör därför hemma
+          FÖRE kvittot, som en tröskel: "vi läste allt som går utan att veta vilka ni är —
+          säg vilket bolag, så läser vi resten." */}
       {identity?.confirmedName && !blandareOppen && (
         <p className="rv-ident">
-          Gäller <b>{identity.confirmedName}</b> <code>{identity.confirmed}</code>
+          Gäller <b>{identity.confirmedName}</b> <code>{fmtOrgnr(identity.confirmed)}</code>
           {identity.byHuman && ' · bekräftat av er'}
           {kanByta && <>. Inte ert bolag?<button type="button" onClick={() => setBlandareOppen(true)}>Byt →</button></>}
         </p>
       )}
 
-      {/* Tystnad OCH kandidater = grinden vägrade välja. Då är bländaren inte en rättelse utan
-          själva svaret: "vi såg dessa och gissade inte". Erbjuds direkt, utan att någon klickar. */}
       {!identity?.confirmedName && kanByta && !blandareOppen && (
         <p className="rv-ident">
-          Flera bolag delar er ordstam — <b>vi gissar aldrig vilket som är ert</b>.
-          <button type="button" onClick={() => setBlandareOppen(true)}>Visa vilka vi läste →</button>
+          {/* Inte "ordstam" — det är lingvistjargong och en CFO tänker inte i ordstammar. */}
+          Vi läste allt som går utan att veta vilka ni är. <b>Flera bolag heter något med
+          {' '}{(() => { const d = domain.split('.')[0]; return d.charAt(0).toUpperCase() + d.slice(1); })()}</b>,
+          och vi gissar aldrig vilket som är ert.
+          <button type="button" onClick={() => setBlandareOppen(true)}>Säg vilket — så läser vi resten →</button>
         </p>
       )}
 
@@ -355,18 +348,31 @@ export default function RevealCard({ domain, findings, elapsedS, pending, identi
             <button type="button" className="ap-row" key={k.orgnr}
               style={{ animationDelay: `${i * 0.07}s` }}
               onClick={() => { setBlandareOppen(false); onValjBolag(k.orgnr); }}>
-              <span className="ap-org">{k.orgnr}</span>
+              <span className="ap-org">{fmtOrgnr(k.orgnr)}</span>
               <span className="ap-namn">{k.legalName}</span>
               <span className="ap-narmast">{k.closest ? 'närmast er domän' : ''}</span>
             </button>
           ))}
           <p className="ap-foot">
-            Vi läste hela registret på er ordstam och lät bli att välja åt er — ett bolagsnamn som
-            liknar en domän är inte ett ägarbevis. Ert svar är det.
+            Vi läste hela registret och lät bli att välja åt er — ett bolagsnamn som liknar en
+            domän är inte ett ägarbevis. Ert svar är det.
           </p>
         </div>
       )}
 
+      {/* Våg 2 pågår: de långsamma registren arbetar SYNLIGT vidare — sena rader är dramats
+          höjdpunkt ("hur visste de det?"), aldrig en väntetid. Ärligt: bara källor vi faktiskt läser. */}
+      {pending && (
+        <div className="rv-receipt" style={{ borderStyle: 'dashed' }}>
+          Djupare register arbetar fortfarande — certifikatregistret svarar långsamt. Fler rader kan landa här.
+        </div>
+      )}
+      {/* Kvittot: uppmätt tid (performance.now() runt det verkliga anropet) — aldrig ett önsketal. */}
+      {!pending && elapsedS > 0 && (
+        <div className="rv-receipt">
+          Sammanställt på <b>{elapsedS.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} s</b> ur öppna källor · innan ni delat något
+        </div>
+      )}
       <p className="rv-foot">
         Allt ovan är <b>offentlig information</b>{elapsedS > 0 ? '' : ', sammanställd på sekunder'} — innan ni loggat in,
         utan att ni lämnat ifrån er något. Tänk er vad vakten ser den dag ni delar en faktura.
