@@ -1,0 +1,43 @@
+FACIT: 20 bolag med människoverifierat orgnr ur leads/stockholm-leads.csv
+
+RÄTT  westander.se               sajt✓  1 · orgnr på sajten          Westander PR Sverige AB
+TYST  halvarsson.se              sajt✓  3 · sökform                  (inget bolag)
+RÄTT  apendo.se                  sajt✓  2 · stavningsorakel          Apendo AB
+TYST  lynxeye.com                sajt✓  2 · stavningsorakel          (inget bolag)
+RÄTT  intelliplan.se             sajt✓  2 · stavningsorakel          Intelliplan AB
+RÄTT  netigate.se                sajt✓  2 · stavningsorakel          Netigate AB
+TYST  implement.se               sajt✗  3 · sökform (sajt oåtkomlig) (inget bolag)
+RÄTT  daresay.com                sajt✗  3 · sökform (sajt oåtkomlig) Daresay AB
+TYST  jurek.se                   sajt✓  2 · stavningsorakel          (inget bolag)
+TYST  alumni.se                  sajt✗  3 · sökform (sajt oåtkomlig) (inget bolag)
+TYST  castra.se                  sajt✓  2 · stavningsorakel          (inget bolag)
+TYST  knowit.se                  sajt✓  3 · sökform                  (inget bolag)
+TYST  kan.se                     sajt✓  2 · stavningsorakel          (inget bolag)
+RÄTT  bimobject.com              sajt✗  3 · sökform (sajt oåtkomlig) BIMobject AB
+TYST  onepartnergroup.se         sajt✓  2 · stavningsorakel          (inget bolag)
+RÄTT  jobbklar.se                sajt✗  3 · sökform (sajt oåtkomlig) Jobbklar Sverige AB
+TYST  trivector.se               sajt✓  3 · sökform                  (inget bolag)
+TYST  sigmatechnology.com        sajt✓  2 · stavningsorakel          (inget bolag)
+TYST  initgroup.com              sajt✓  2 · stavningsorakel          (inget bolag)
+TYST  netray.se                  sajt✓  2 · stavningsorakel          (inget bolag)
+
+══════════ SAMMANSTÄLLNING · 20 bolag ══════════
+  RÄTT bolag namngivet .......... 7 (35 %)
+  FEL bolag namngivet ........... 0 (0 %)   ← Avida-klassen
+  TYST .......................... 13 (65 %)
+  Sajt oåtkomlig (botmurad) ..... 5 (25 %)
+
+── OM VI KLIPPER BOTMURADE SAJTER ──
+  Förlorade RÄTTA namngivningar . 3 av 7 (43 % av magin)
+  Borttagna FELAKTIGA ............ 0 av 0
+  Netto på hela populationen ..... −3 sanna, −0 lögner
+
+── HUR SANN ÄR MAGIN I DAG? ──
+  Av 7 namngivna bolag är 0 FEL — felkvot 0 %
+  En falsk singelträff räknas som TÄCKNING men är en KATASTROF hos kunden.
+
+── PER VÄG (var uppstår felen?) ──
+  1 · orgnr på sajten            1 st · rätt 1 · fel 0 · tyst 0
+  3 · sökform                    3 st · rätt 0 · fel 0 · tyst 3
+  2 · stavningsorakel            11 st · rätt 3 · fel 0 · tyst 8
+  3 · sökform (sajt oåtkomlig)   5 st · rätt 3 · fel 0 · tyst 2
