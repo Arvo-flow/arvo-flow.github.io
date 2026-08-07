@@ -1,0 +1,33 @@
+name: Probe identitet · täckning vs sanning
+on:
+  workflow_dispatch:
+    inputs:
+      fil:
+        description: 'Leads-fil med facit'
+        default: 'leads/stockholm-leads.csv'
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: npm }
+      - run: npm ci --ignore-scripts
+      - name: Probe
+        continue-on-error: true
+        run: |
+          mkdir -p ops
+          node scripts/probe-identitet-tackning.mjs ${{ inputs.fil }} 2>&1 | tee ops/probe-identitet-tackning.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git pull --rebase origin main || true
+          git add ops/probe-identitet-tackning.txt
+          git commit -m "ops: probe-identitet-tackning [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
