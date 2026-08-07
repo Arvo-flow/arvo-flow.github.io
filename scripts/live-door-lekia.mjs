@@ -19,6 +19,9 @@ const CASES = [
   { email: 'info@avida.se', tag: 'avida', openAperture: true },
 ];
 
+// Geometrifel som ingen svit kan se — de bor i utlagd CSS, inte i JS. Samlas och fäller körningen.
+const fel = [];
+
 const b = await chromium.launch({ headless: true });
 for (const { email, tag, waitReceipt, openAperture } of CASES) {
   for (const [w, view] of [[390, 'mobil'], [1600, 'desktop']]) {
@@ -64,6 +67,32 @@ for (const { email, tag, waitReceipt, openAperture } of CASES) {
       });
       console.log(`RÅA ORGNR ${tag}:`, JSON.stringify(raOrgnr), '(ska vara [])');
     }
+    // ── MITTLINJEN (maskinvakt 2026-08-07, kväll) ────────────────────────────────────────────
+    // Underlaget stod 60px HÖGER om sidans mittlinje: en negativ marginal räknad för hand mot
+    // en förälder som antogs (.inner 680) men i verkligheten var DoorBlock (560). Grundaren såg
+    // det med ögat — ingen maskin sa ifrån, för geometri bor i utlagd CSS och når aldrig sviten.
+    // Nu mäts två saker i DOM vid varje körning: att bilagan delar MITTLINJE med sidan, och att
+    // den delar KANT med kolumnen som regeln ritar. Ett mått som glider isär fäller körningen.
+    const matt = await p.evaluate(() => {
+      const kort = document.querySelector('.rv-card');
+      const kolumn = document.querySelector('.inner');
+      if (!kort || !kolumn) return null;
+      const a = kort.getBoundingClientRect();
+      const k = kolumn.getBoundingClientRect();
+      return {
+        kortMitt: a.left + a.width / 2,
+        sidMitt: document.documentElement.clientWidth / 2,
+        kantAvvik: Math.max(Math.abs(a.left - k.left), Math.abs(a.right - k.right)),
+      };
+    });
+    if (matt) {
+      const skev = Math.abs(matt.kortMitt - matt.sidMitt);
+      const ok = skev <= 1 && matt.kantAvvik <= 1;
+      console.log(`MITTLINJEN ${tag} ${view}: kortets mitt ${matt.kortMitt.toFixed(1)} · sidans ${matt.sidMitt.toFixed(1)}`
+        + ` · skevhet ${skev.toFixed(1)}px · kant mot kolumnen ${matt.kantAvvik.toFixed(1)}px ${ok ? '✓' : '✗ FEL'}`);
+      if (!ok) fel.push(`${tag}/${view}: skevhet ${skev.toFixed(1)}px · kantavvikelse ${matt.kantAvvik.toFixed(1)}px`);
+    }
+
     await p.screenshot({ path: `${OUT}/${tag}-${view}.png`, fullPage: true });
     console.log(`✓ ${tag} ${view}`);
 
@@ -95,3 +124,11 @@ for (const { email, tag, waitReceipt, openAperture } of CASES) {
   }
 }
 await b.close();
+
+if (fel.length) {
+  console.log(`\n✗ MÅTTSYSTEMET BRUTET — ${fel.length} avvikelse(r):`);
+  fel.forEach((f) => console.log(`   ${f}`));
+  process.exitCode = 1;
+} else {
+  console.log('\n✓ Måttsystemet håller — bilagan delar mittlinje och kant i varje vy.');
+}
