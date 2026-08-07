@@ -10,6 +10,7 @@ import {
   extractNextData, extractSearchCompanies, extractCompanyFacts,
   buildBusinessFindings, mergeRevealFindings,
   luhnValidOrgnr, extractOrgnrCandidates, fetchOrgnrFromWebsite, fetchBusinessFacts, extractSiteCompanyName, titleSpanMatchingSld, extractAccountHistory,
+  identityCandidates,
 } from '../lib/business-intel.js';
 
 describe('business-intel · domän → SLD', () => {
@@ -738,5 +739,66 @@ describe('Särskrivnings-klassen 2026-07-20 (sondbevisad: nordlock funkar, webma
     assert.equal(extractSiteCompanyName('<title>All-in-One Aviation | Web Manuals</title>', 'webmanuals'), 'Web Manuals');
     // first-segment-fallbacken bryter INTE "All-in-One" till "All" (bindestreck ur delaruttrycket)
     assert.equal(extractSiteCompanyName('<title>All-in-One System</title>'), 'All-in-One System');
+  });
+});
+
+// ── BLÄNDARENS KANDIDATER — igenkänning, aldrig knuff (grundarbeslut 2026-08-07) ───────────
+// Fixturen är RIKTIG: exakt de tre Avida-posterna ur sökresultatet, med de fältvägar sonden
+// bevisade (ops/probe-kandidatfalt.txt 2026-08-07 — location.municipality, currentIndustry.name,
+// ifyllnadsgrad 25/25). Läxan som låses: "närmast er domän" satt på Avida AB (Företagsutveckling,
+// Hägersten) medan avida.se rimligen tillhör Avida Bank AB (publ) — vår egen fotnot avfärdade
+// samtidigt just den signalen. En knuff åt fel håll är identitetsinvariantens felläge, bara
+// utfört av kunden istället för av oss.
+describe('Bländaren · kandidater bär igenkänning, inte vägvisning (Avida-läxan 2026-08-07)', () => {
+  const AVIDA = [
+    { legalName: 'Avida Bank AB (publ)', orgnr: '5562309004',
+      location: { municipality: 'Stockholm' }, currentIndustry: { name: 'Finansbolag, finansiella tjänster' } },
+    { legalName: 'AVIDA ASSISTANS & OMSORG I SVERIGE AB', orgnr: '5591653182',
+      location: { municipality: 'Örebro' }, currentIndustry: { name: 'Omvårdnad och omsorg' } },
+    { legalName: 'Avida AB', orgnr: '5590177068',
+      location: { municipality: 'Stockholm' }, currentIndustry: { name: 'Företagsutveckling' } },
+    { legalName: 'Bravida Sverige AB', orgnr: '5561974188',
+      location: { municipality: 'Stockholm' }, currentIndustry: { name: 'Byggmästare' } },
+  ];
+
+  test('alla tre Avida-posterna surfacear — Bravida (infix, inte prefix) gör det inte', () => {
+    const k = identityCandidates('avida', AVIDA);
+    assert.deepEqual(k.map((x) => x.orgnr), ['5562309004', '5591653182', '5590177068']);
+  });
+
+  test('varje kandidat bär ort och bransch ur registerposten', () => {
+    const k = identityCandidates('avida', AVIDA);
+    assert.deepEqual(k[0], { orgnr: '5562309004', legalName: 'Avida Bank AB (publ)',
+      ort: 'Stockholm', bransch: 'Finansbolag, finansiella tjänster' });
+    assert.ok(k.every((x) => x.ort && x.bransch), 'ingen kandidat får sakna igenkänningsfälten');
+  });
+
+  test('INGEN kandidat bär ett vägvisar-märke — stavningslikhet får aldrig peka igen', () => {
+    const k = identityCandidates('avida', AVIDA);
+    for (const x of k) {
+      assert.equal(x.closest, undefined, 'closest/"närmast er domän" är avskaffad — den pekade fel på avida.se');
+      assert.deepEqual(Object.keys(x).sort(), ['bransch', 'legalName', 'orgnr', 'ort'],
+        'kandidatens form är låst: inga smygande rangordningsfält');
+    }
+  });
+
+  test('INGA tal i kandidaten — en siffra inbjuder till "stämmer den?", ort och bransch till "det är vi"', () => {
+    const medTal = [{ legalName: 'Avida AB', orgnr: '5590177068', revenue: '1900', employees: '1',
+      location: { municipality: 'Stockholm' }, currentIndustry: { name: 'Företagsutveckling' } }];
+    const [k] = identityCandidates('avida', medTal);
+    assert.equal(k.revenue, undefined);
+    assert.equal(k.employees, undefined);
+  });
+
+  test('registrets ordning bevaras — ingen sortering på storlek (Geminis gissning som förval)', () => {
+    const bakvant = [AVIDA[2], AVIDA[0], AVIDA[1]];
+    assert.deepEqual(identityCandidates('avida', bakvant).map((x) => x.orgnr),
+      ['5590177068', '5562309004', '5591653182']);
+  });
+
+  test('saknad ort/bransch blir null, aldrig en tom sträng eller en gissning', () => {
+    const [k] = identityCandidates('avida', [{ legalName: 'Avida AB', orgnr: '5590177068' }]);
+    assert.equal(k.ort, null);
+    assert.equal(k.bransch, null);
   });
 });

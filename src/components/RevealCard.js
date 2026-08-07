@@ -112,7 +112,7 @@ const Wrap = styled.section`
       span:last-child { color: ${({ theme }) => theme.dossier.faintOnDark}; letter-spacing: .14em; }
     }
     .ap-row {
-      display: grid; grid-template-columns: 104px minmax(0, 1fr) auto; gap: 14px; align-items: baseline;
+      display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; align-items: baseline;
       width: 100%; text-align: left; background: none; border: none; cursor: pointer;
       padding: 10px 8px; margin: 0 -8px; border-radius: 8px;
       opacity: 0; animation: rvrise .5s cubic-bezier(.16,1,.3,1) forwards;
@@ -121,15 +121,16 @@ const Wrap = styled.section`
       &:hover .ap-namn { color: ${({ theme }) => theme.dossier.tealBright}; }
     }
     .ap-org { font-family: ${({ theme }) => theme.font.mono}; font-size: 11.5px; color: ${({ theme }) => theme.dossier.faintOnDark}; }
-    .ap-namn { font-family: ${({ theme }) => theme.font.display}; font-size: 15.5px; color: ${({ theme }) => theme.dossier.inkOnDark}; line-height: 1.3; }
-    /* "Närmast er domän" är ett FAKTUM om stavning — aldrig ett påstående om ägarskap, och
-       aldrig ett förval. Kunden väljer; vi märker bara vad vi faktiskt kan mäta. */
-    .ap-narmast { font-family: ${({ theme }) => theme.font.mono}; font-size: 9.5px; letter-spacing: .16em;
-      text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; white-space: nowrap; }
+    .ap-namn { display: block; font-family: ${({ theme }) => theme.font.display}; font-size: 15.5px; color: ${({ theme }) => theme.dossier.inkOnDark}; line-height: 1.3; }
+    /* IGENKÄNNINGSRADEN — ort · verksamhet ur samma registerpost. Ersatte "närmast er domän",
+       som var stavningslikhet förklädd till vägvisare (och på avida.se pekade fel). Den här
+       raden pekar inte: den låter kunden känna igen sig själv. Inga tal — se identityCandidates. */
+    .ap-var { display: block; margin-top: 4px; font-family: ${({ theme }) => theme.font.mono};
+      font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.5;
+      color: ${({ theme }) => theme.dossier.faintOnDark}; }
     .ap-foot { margin: 12px 0 0; font-size: 12px; color: ${({ theme }) => theme.dossier.faintOnDark}; line-height: 1.6; }
     @media (max-width: 560px) {
-      .ap-row { grid-template-columns: 1fr auto; }
-      .ap-org { grid-column: 1 / -1; }
+      .ap-row { grid-template-columns: 1fr; gap: 5px; }
     }
   }
 
@@ -349,8 +350,12 @@ export default function RevealCard({ domain, findings, elapsedS, pending, identi
               style={{ animationDelay: `${i * 0.07}s` }}
               onClick={() => { setBlandareOppen(false); onValjBolag(k.orgnr); }}>
               <span className="ap-org">{fmtOrgnr(k.orgnr)}</span>
-              <span className="ap-namn">{k.legalName}</span>
-              <span className="ap-narmast">{k.closest ? 'närmast er domän' : ''}</span>
+              <span>
+                <span className="ap-namn">{k.legalName}</span>
+                {(k.ort || k.bransch) && (
+                  <span className="ap-var">{[k.ort, k.bransch].filter(Boolean).join(' · ')}</span>
+                )}
+              </span>
             </button>
           ))}
           <p className="ap-foot">

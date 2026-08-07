@@ -78,6 +78,12 @@ for (const { email, tag, waitReceipt, openAperture } of CASES) {
         if (view === 'mobil') {
           const rader = await p.locator('.ap-row').allTextContents();
           console.log(`BLÄNDAREN ${tag}:`, JSON.stringify(rader));
+          // Avida-läxan: bländaren får ALDRIG peka. Stavningslikhet ("närmast er domän") pekade
+          // på fel juridisk person; igenkänningsraden (ort · bransch) pekar inte, den låter
+          // kunden se sig själv. Båda mäts live så att knuffen inte kan smyga tillbaka.
+          const vagvisare = rader.filter((t) => /närmast/i.test(t)).length;
+          const medIgenkanning = await p.locator('.ap-var').count();
+          console.log(`VÄGVISARE ${tag}:`, vagvisare, '(ska vara 0) · IGENKÄNNING:', medIgenkanning, `av ${rader.length}`);
         }
         await p.screenshot({ path: `${OUT}/${tag}-blandare-${view}.png`, fullPage: true });
         console.log(`✓ ${tag} bländare ${view}`);
