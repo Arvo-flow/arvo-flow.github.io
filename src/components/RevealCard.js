@@ -304,7 +304,7 @@ export default function RevealCard({ domain, findings, elapsedS, pending, identi
   // Bländaren erbjuds bara när det FINNS något att välja mellan — aldrig som en tom gest.
   const kanByta = kandidater.length > 1 && typeof onValjBolag === 'function';
   return (
-    <Wrap className="breda">
+    <Wrap className="rv-card">
       <div className="rv-eyebrow">Underlag · {domain}</div>
       {findings.map((f, i) => (
         <div className="rv-find" key={i} style={{ animationDelay: `${i * 0.14}s` }}>

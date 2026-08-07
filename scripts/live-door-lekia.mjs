@@ -3,6 +3,7 @@
 // Kristianstads Måleri (tunt nät på Loopia — å/ä/ö-fallet + marknadsankaret).
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
+import { bedomMatt } from '../lib/mattsystem.js';
 
 const BASE = process.env.ARVO_BASE_URL || 'https://arvoflow.se';
 const OUT = 'ops/door-shots';
@@ -95,17 +96,18 @@ for (const { email, tag, waitReceipt, openAperture } of CASES) {
         kantAvvik: Math.max(Math.abs(a.left - k.left), Math.abs(a.right - k.right)),
       };
     });
-    if (matt.ingetKort) {
+    // Omdömet bor i lib/mattsystem.js och är testlåst (tests/mattsystem.mjs) — dörren MÄTER,
+    // domaren DÖMER. Delningen finns för att vaktens logik ska gå att prova utan en CI-körning:
+    // en vakt vars tänder aldrig provats är en vakt vi bara hoppas på.
+    const dom = bedomMatt(matt);
+    if (dom.tyst) {
       console.log(`MITTLINJEN ${tag} ${view}: inget kort på sidan — inget att mäta (laglig tystnad)`);
-    } else if (matt.trasig) {
-      console.log(`MITTLINJEN ${tag} ${view}: ✗ KUNDE INTE MÄTA — ${matt.trasig}`);
-      fel.push(`${tag}/${view}: vakten kunde inte mäta (${matt.trasig})`);
     } else {
-      const skev = Math.abs(matt.kortMitt - matt.sidMitt);
-      const ok = skev <= 1 && matt.kantAvvik <= 1;
-      console.log(`MITTLINJEN ${tag} ${view}: kortets mitt ${matt.kortMitt.toFixed(1)} · sidans ${matt.sidMitt.toFixed(1)}`
-        + ` · skevhet ${skev.toFixed(1)}px · kant mot kolumnen ${matt.kantAvvik.toFixed(1)}px ${ok ? '✓' : '✗ FEL'}`);
-      if (!ok) fel.push(`${tag}/${view}: skevhet ${skev.toFixed(1)}px · kantavvikelse ${matt.kantAvvik.toFixed(1)}px`);
+      const tal = typeof matt.kortMitt === 'number'
+        ? `kortets mitt ${matt.kortMitt.toFixed(1)} · sidans ${matt.sidMitt.toFixed(1)} · kant mot kolumnen ${matt.kantAvvik.toFixed(1)}px`
+        : '(ingen giltig mätning)';
+      console.log(`MITTLINJEN ${tag} ${view}: ${tal} ${dom.ok ? '✓' : `✗ FEL — ${dom.skal}`}`);
+      if (!dom.ok) fel.push(`${tag}/${view}: ${dom.skal}`);
     }
 
     await p.screenshot({ path: `${OUT}/${tag}-${view}.png`, fullPage: true });

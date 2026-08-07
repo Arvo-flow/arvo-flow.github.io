@@ -300,7 +300,7 @@ export default function Landing() {
               />
               {!reveal && !revealLoading && <RevealTeaser />}
               {reveal && (
-                <p style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', margin: '18px 0 0', color: 'rgba(157,184,175,1)' }}>
+                <p className="prosa" style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', margin: '18px auto 0', color: 'rgba(157,184,175,1)' }}>
                   Det här såg vi utifrån.{' '}
                   <Link to="/testa-faktura" style={{ color: '#5DE8D2', fontWeight: 600 }}>
                     Dela en faktura, så räknar vi era exakta tal →

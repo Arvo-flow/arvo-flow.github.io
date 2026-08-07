@@ -99,22 +99,23 @@ export const Dossier = styled.section`
     border: 1px solid rgba(157,184,175,.09); border-radius: 21px;
     @media (max-width: 640px) { inset: 7px; border-radius: 16px; }
   }
-  /* ── TVÅ MÅTT, INTE ETT (grundarbeslut 2026-08-07) ────────────────────────────────────────
-     .inner låg på 760px och satte samma tak på ALLT — rubrik, ingress OCH underlaget. Men 760
-     är ett BRÖDTEXTMÅTT, och underlaget är inte brödtext: det är strukturerad bevisning
-     (påstående · detalj · källa). Beviset stod i innehållet — källraderna radbröts och
-     .rv-source hade tvingats bära word-break: break-word — den defensiva egenskap man bara
-     lägger till när behållaren redan klämmer. Behållaren slogs mot innehållet.
-     Att bredda allt vore fel åt andra hållet: en ingress på 880px är oläsbar. Alltså två mått,
-     som i ett dokument — brödtext smal, bilagor breda. */
-  .inner { max-width: 680px; margin: 0 auto; position: relative; z-index: 1; }
-  /* Bevisningen får sitt eget, bredare mått. Bryter ut ur prosakolumnen utan att flytta den. */
-  .inner .breda { max-width: 880px; margin-left: auto; margin-right: auto;
-    /* Utbrottet kräver att dossiern faktiskt HAR plats: 1060px viewport ger ~952px inre
-       yta (1060 − 40 shell-padding − 68 dossier-padding) > 880. Under det: samma bredd
-       som prosan, inget utbrott, ingen överflödning. */
-    @media (min-width: 1060px) { width: 880px; margin-left: -100px; }
-  }
+  /* ── MÅTTSYSTEMET (grundarbeslut 2026-08-07, kväll) ───────────────────────────────────────
+     Dossiern bar FEM mått: regeln 680, rubrikerna 560, underlaget 880, rummets kort 640 — och
+     ett negativt marginalpåhitt som skulle bryta ut underlaget ur prosakolumnen. Utbrottet
+     räknade −100px mot .inner (680), men underlagets VERKLIGA förälder är DoorBlock (560).
+     Kortet landade därför 60px höger om sidans mittlinje: mätt live 420..1300, mitt 860 mot
+     sidans 800. Grundaren såg det med ögat; ingen maskin hade sagt ifrån.
+     Felet var inte talet −100. Felet var att ett mått räknades FÖR HAND mot en förälder som
+     antogs — samma sjukdom som en prisbok utan vakt. Botemedlet är inte ett rättat tal utan
+     ett system utan aritmetik:
+       bevismåttet — regeln OCH båda bilagorna (underlaget, rummets kort). Samma kant, alltid.
+       prosamåttet — rubrik, ingress, formulär. Centrerat inuti bevismåttet.
+     Ingen behållare har längre en egen marginal att räkna fel på: bilagan ÄR kolumnen.
+     Maskinvakt: MITTLINJEN i scripts/live-door-lekia.mjs mäter kortets mitt mot sidans i DOM,
+     i mobil och desktop, vid varje körning. */
+  --matt-bevis: 880px;
+  --matt-prosa: 560px;
+  .inner { max-width: var(--matt-bevis); margin: 0 auto; position: relative; z-index: 1; }
 `;
 
 export const SectionKey = styled.div`
@@ -131,14 +132,18 @@ export const SectionKey = styled.div`
   }
 `;
 
+/* Dörren spänner bevismåttet — men bara BILAGAN får fylla det. Rubrik, ingress och formulär
+   hålls på prosamåttet och centreras inuti; ett e-postfält på 880px är ett formulär, inte en
+   fråga. Måtten kommer uppifrån (Dossier), aldrig som lokala tal här. */
 export const DoorBlock = styled.div`
-  max-width: 560px; margin: 46px auto 0;
+  margin: 46px auto 0;
   ${riseIn}
   h3 {
     font-family: ${SERIF}; font-size: clamp(28px, 4.4vw, 38px); font-weight: 500;
     color: ${D.inkOnDark}; margin: 0 0 4px; line-height: 1.2; text-align: center;
     em { font-style: italic; }
   }
+  > h3, > form, > .prosa { max-width: var(--matt-prosa); margin-left: auto; margin-right: auto; }
 `;
 
 export const RoomBlock = styled.div`
@@ -148,7 +153,7 @@ export const RoomBlock = styled.div`
      ska bära samma typografiska hållning, inte en centrerad och en vänsterställd. */
   h2 {
     font-family: ${SERIF}; font-size: clamp(30px, 4.8vw, 44px); font-weight: 500;
-    line-height: 1.18; margin: 46px auto 0; max-width: 560px; text-align: center;
+    line-height: 1.18; margin: 46px auto 0; max-width: var(--matt-prosa); text-align: center;
     color: ${D.inkOnDark};
     em { font-style: italic; color: ${D.tealBright}; }
     ${riseIn}
@@ -159,7 +164,9 @@ export const RoomBlock = styled.div`
    Fyra takter i ETT föremål: vaktens hjärtslag → veckodomen → den levande fortsättningen
    från dörren → kalendern som återförsäkran. Materialet (korn + inre keyline) som dossiern. */
 export const Artefakt = styled.div`
-  max-width: 640px; margin: 56px auto 0;
+  /* Rummets kort är dossierns ANDRA bilaga och delar därför bevismåttet med underlaget.
+     Låg tidigare på 640 — 240px smalare än sin tvilling, vilket läste som två olika system. */
+  max-width: var(--matt-bevis); margin: 56px auto 0;
   ${riseIn} transition-delay: .1s;
 
   .a-card {

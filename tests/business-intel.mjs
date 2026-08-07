@@ -301,7 +301,12 @@ describe('business-intel · fynden (regel 2 + 3: kodräknat, källa på varje ra
     const f = buildBusinessFindings(facts);
     const biz = f.find((x) => x.kind === 'business');
     assert.match(biz.detail, /Gäller Apendo AB/);          // exakt vilken enhet siffrorna gäller
-    assert.match(biz.source, /Apendo AB/);
+    // Källan citerar REGISTRET och nyckeln — inte enheten en andra gång. Raden låste tidigare
+    // att namnet stod i BÅDE detalj och källa; det var en dubblering (namnet står dessutom en
+    // tredje gång i identitetsraden) och den kostade fyra radbrytningar i källspalten.
+    // Lärdomen som skulle låsas är att fyndet NAMNGER enheten — det gör detaljen ovan.
+    assert.match(biz.source, /^Bolagsverket · bokslutsår \d{4}$/);
+    assert.doesNotMatch(biz.source, /Apendo/);             // aldrig samma namn två gånger på ett kort
   });
   test('GRUNDARBESLUT 2026-07-01: costline är BORTTAGEN — avslöjandet bär ALDRIG en räknad rad', () => {
     // Tre iterationer (p25-felmärkning → antagen plan → 3,7×-spann + Microsoft-priser åt
