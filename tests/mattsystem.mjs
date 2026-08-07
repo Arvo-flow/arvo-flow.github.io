@@ -11,13 +11,22 @@ import { bedomMatt, MATT_TOLERANS_PX } from '../lib/mattsystem.js';
 describe('måttsystemet · domaren (MITTLINJEN-vaktens tänder)', () => {
   test('DET VERKLIGA FELET 2026-08-07: kortet 60px höger om mitten → UNDERKÄNT', () => {
     // .inner var 680 centrerad (460..1140) och kortet 880 med margin-left −100 räknat mot fel
-    // förälder (DoorBlock 560, 520..1080) → kortet landade 420..1300.
-    const d = bedomMatt({ kortMitt: 860, sidMitt: 800, kantAvvik: 40 });
+    // förälder (DoorBlock 560, 520..1080) → kortet landade 420..1300. Kantavvikelsen är MAX av
+    // sidorna: 40px vänster, 160px höger. Talen nedan är vaktens egna, uppmätta live mot den
+    // ofixade sajten i alla fyra korten (ops/door-shots/logg.txt, körning 2026-08-07):
+    //   "kortets mitt 860.0 · sidans 800.0 · skevhet 60.0px · kant mot kolumnen 160.0px ✗ FEL"
+    const d = bedomMatt({ kortMitt: 860, sidMitt: 800, kantAvvik: 160 });
     assert.equal(d.ok, false);
     assert.equal(d.tyst, false);
     assert.equal(d.skevhet, 60);
     assert.match(d.skal, /skevhet 60\.0px/);
-    assert.match(d.skal, /kantavvikelse 40\.0px/);
+    assert.match(d.skal, /kantavvikelse 160\.0px/);
+  });
+
+  test('mobilen var ALLTID rätt — felet bodde i ≥1060px-brytpunkten', () => {
+    // Samma körning, samma kort, 390px: "kortets mitt 195.0 · sidans 195.0 · skevhet 0.0px".
+    // Beviset för att utbrottets mediefråga var enda felkällan — inte kortet i sig.
+    assert.equal(bedomMatt({ kortMitt: 195, sidMitt: 195, kantAvvik: 0 }).ok, true);
   });
 
   test('efter fixen: kortet ÄR kolumnen → godkänt', () => {
