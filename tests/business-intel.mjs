@@ -48,6 +48,47 @@ describe('business-intel · matchningsgrinden (integritetskärnan)', () => {
     ]);
     assert.equal(m?.orgnr, '5565760997');
   });
+  // ── AVIDA-LÄXAN 2026-08-07 (sondbevisad, ops/probe-identitet.txt) ─────────────────────────
+  // avida.se gav 25 sökträffar. Exakt EN vek till "avida": "Avida AB" — 1,9 mkr, 1 anställd,
+  // grundat 2015. Grinden fyrade med full säkerhet. Men i SAMMA resultat låg "Avida Bank AB
+  // (publ)", som med all sannolikhet äger domänen; den vek till "avidabank" och sågs aldrig
+  // som konkurrent. Vi namngav ett litet bolag som en bank.
+  // Felet är systematiskt: den verkliga ägaren bär nästan alltid ett kvalificerande ord
+  // (X Bank/Finans/Sverige AB) medan något orelaterat "X AB" matchar domänen exakt.
+  test('AVIDA: exakt "Avida AB" men "Avida Bank AB" i samma resultat → TYSTNAD', () => {
+    const bolag = [
+      { legalName: 'Avida Bank AB (publ)', orgnr: '5562309004' },
+      { legalName: 'AVIDA ASSISTANS & OMSORG I SVERIGE AB', orgnr: '5591653182' },
+      { legalName: 'Avida AB', orgnr: '5590177068' },
+      { legalName: 'Bravida Sverige AB', orgnr: '5561974188' },
+    ];
+    assert.equal(matchCompany('avida', bolag), null,
+      'namnstavning är inte ägarskap — en exakt vikning är entydig först när ingen annan kandidat rimligen kan äga domänen');
+  });
+
+  test('STRUKTURORD är inte rivaler: Holding/International märker samma varumärke', () => {
+    // Gränsen mot Avida: "Holding" märker en annan ENHET i samma koncern; "Bank" kan vara en
+    // helt annan VERKSAMHET. Tystnad vid det senare, träff vid det förra.
+    assert.equal(matchCompany('netigate', [
+      { legalName: 'Netigate AB', orgnr: '5565760997' },
+      { legalName: 'Netigate Holding AB', orgnr: '5590665658' },
+    ])?.orgnr, '5565760997');
+    assert.equal(matchCompany('nordlock', [
+      { legalName: 'Nord-Lock AB', orgnr: '5561371054' },
+      { legalName: 'Nord-Lock International AB', orgnr: '5566105739' },
+    ])?.orgnr, '5561371054');
+  });
+
+  test('en heuristik får UPPHÄVA ett påstående, aldrig SKAPA ett', () => {
+    // Geminis förslag var att sortera på högst omsättning och välja den största. Det hade inte
+    // räddat Avida — grinden såg aldrig ens att Avida Bank fanns i resultatet — och det hade
+    // gjort identiteten till en gissning. Här bevisas den motsatta riktningen: vid rival tiger vi.
+    const medRival = [{ legalName: 'Foo AB', orgnr: '1' }, { legalName: 'Foo Bank AB', orgnr: '2' }];
+    assert.equal(matchCompany('foo', medRival), null);
+    const utanRival = [{ legalName: 'Foo AB', orgnr: '1' }, { legalName: 'Bar AB', orgnr: '2' }];
+    assert.equal(matchCompany('foo', utanRival)?.orgnr, '1');
+  });
+
   test('kan.se-fallet: "Kanmalmo AB" matchar INTE "kan" → null (aldrig en chansning)', () => {
     assert.equal(matchCompany('kan', [{ legalName: 'Kanmalmo AB', orgnr: '5566692983' }]), null);
   });
