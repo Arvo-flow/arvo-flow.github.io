@@ -7,7 +7,7 @@
 // Integritet: bara PUBLIK data, före all inloggning. Inget privat exponeras. Saknas en fakta
 // utelämnas den (regel 4). crt.sh/RDAP kräver HTTP-egress → körs på Vercel, inte i sandboxen.
 
-import { revealFromDomain } from '../lib/domain-intel.js';
+import { revealFromDomain, revealForConfirmedOrgnr } from '../lib/domain-intel.js';
 
 export const config = { maxDuration: 30 };
 
@@ -30,6 +30,15 @@ export default async function handler(req, res) {
   if (!input.trim()) return send(res, 400, { error: 'email eller domain krävs' });
 
   try {
+    // BEKRÄFTAT BOLAG (2026-08-07): kunden har pekat ut sin juridiska person i kandidatlistan.
+    // Det är den STARKASTE bindning vi kan få — starkare än allt vi skrapar (orgnr på sajten
+    // fyrar i 1 fall av 20). Vi bygger då om kortet mot det orgnr:et, utan namnmatchning.
+    if (body.orgnr) {
+      const bekraftat = await revealForConfirmedOrgnr(input, String(body.orgnr));
+      if (bekraftat) return send(res, 200, { ok: true, ...bekraftat });
+      return send(res, 200, { ok: false, error: 'Kunde inte läsa det bolaget just nu.' });
+    }
+
     const result = await revealFromDomain(input, { fast: !!body.fast });
     if (result.reason === 'no-such-domain') {
       return send(res, 200, { ok: true, domain: result.domain, findings: [], note: result.note });
@@ -39,7 +48,7 @@ export default async function handler(req, res) {
       return send(res, 200, { ok: true, domain: null, findings: [],
         note: 'En privat inkorg berättar inget om ert bolag. Ange er företagsmejl — vårt underlag gäller bolaget, inte personen.' });
     }
-    return send(res, 200, { ok: true, domain: result.domain, platform: result.platform, findings: result.findings });
+    return send(res, 200, { ok: true, domain: result.domain, platform: result.platform, findings: result.findings, identity: result.identity });
   } catch (err) {
     console.error('[reveal] fel:', err.message);
     return send(res, 200, { ok: false, error: 'Kunde inte läsa av domänen just nu.' });

@@ -132,6 +132,30 @@ export default function Landing() {
   const [revealPending, setRevealPending] = useState(false); // våg 2 (djupregistren) arbetar fortfarande
   const doorRef = useRef(null);
 
+  // ── KUNDEN PEKAR UT SITT BOLAG (grundarbeslut 2026-08-07) ─────────────────────────────────
+  // Mätningen (ops/probe-identitet-tackning.txt) visade att orgnr-på-sajten — vår starkaste
+  // bindning — fyrar i 1 fall av 20. Men personen som skrev sin egen företagsmejl VET vem hen är.
+  // Ett klick i bländaren ger oss därför en starkare bindning än allt vi kan skrapa. Vi minns
+  // valet per domän så frågan aldrig ställs två gånger.
+  const valjBolag = useCallback(async (orgnr) => {
+    const email = revealEmail.trim();
+    if (!email || !orgnr) return;
+    setRevealLoading(true);
+    try {
+      const r = await fetch('/api/reveal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, orgnr }),
+      });
+      const data = await r.json();
+      if (data?.ok && data.findings?.length) {
+        setReveal({ domain: data.domain, findings: data.findings, identity: data.identity });
+        setRevealPending(false);
+        try { localStorage.setItem(`arvo_bolag:${data.domain}`, orgnr); } catch { /* privatläge */ }
+      }
+    } catch { /* kortet står kvar som det var — aldrig ett tomt rum */ }
+    finally { setRevealLoading(false); }
+  }, [revealEmail]);
+
   const runReveal = useCallback(async (e) => {
     e?.preventDefault?.();
     const email = revealEmail.trim();
@@ -147,7 +171,7 @@ export default function Landing() {
       });
       const data = await res.json().catch(() => ({}));
       if (data.ok && data.findings?.length) {
-        setReveal({ domain: data.domain, findings: data.findings });
+        setReveal({ domain: data.domain, findings: data.findings, identity: data.identity });
         setRevealPending(true);
         setRevealLoading(false);
         // Våg 2 — fulla budgeten, men KLIENTKAPAD (18 s). K-Fastigheter-läxan 2026-07-18: en
@@ -168,7 +192,7 @@ export default function Landing() {
               const seen = new Set(data.findings.map((f) => f.title));
               const extra = d2.findings.filter((f) => !seen.has(f.title))
                 .slice(0, Math.max(0, 5 - data.findings.length));   // taket (max 5) gäller totalen
-              if (extra.length) setReveal({ domain: data.domain, findings: [...data.findings, ...extra] });
+              if (extra.length) setReveal((r) => ({ ...r, domain: data.domain, findings: [...data.findings, ...extra] }));
             }
           } finally { clearTimeout(cap); }
         } catch { /* våg 1 står redan — dramat uteblir, kortet består */ }
@@ -261,6 +285,7 @@ export default function Landing() {
                 email={revealEmail} setEmail={setRevealEmail}
                 onSubmit={runReveal} loading={revealLoading}
                 reveal={reveal} note={revealNote} elapsedS={revealElapsed} pending={revealPending}
+                onValjBolag={valjBolag}
               />
               {!reveal && !revealLoading && <RevealTeaser />}
               {reveal && (

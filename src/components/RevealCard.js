@@ -79,6 +79,59 @@ const Wrap = styled.section`
   }
   .rv-source b { color: ${({ theme }) => theme.dossier.teal}; font-weight: 600; }
 
+  /* ── BLÄNDAREN (grundarbeslut 2026-08-07) ────────────────────────────────────────────────
+     Det uppenbara vore en sökruta. Men en sökruta är ett FORMULÄR, och formulär stänger flikar.
+     Och vi hade redan svaret: när grinden tystnade hade den läst hela sökresultatet och sett
+     exakt vilka bolag som rimligen kunde äga domänen — vi kastade bara bort kunskapen.
+     "Byt" öppnar därför ingen sökning. Den VIDGAR BLÄNDAREN: kortet visar vad maskinen faktiskt
+     såg. Ögonblicket vänds från "vi misslyckades, hjälp oss" till "vi läste 25 bolag, dessa tre
+     kunde äga er domän, och vi vägrade gissa mellan dem". Tystnaden blir bevis på disciplin.
+     Raderna materialiseras med SAMMA stagger som fynden — det läser som mer bevisning som
+     anländer, aldrig som ett felmeddelande. */
+  .rv-ident {
+    margin: 14px 0 0; padding-top: 13px;
+    border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+    font-size: 12.5px; line-height: 1.6; color: ${({ theme }) => theme.dossier.mutedOnDark};
+    b { color: ${({ theme }) => theme.dossier.inkOnDark}; font-weight: 600; }
+    code { font-family: ${({ theme }) => theme.font.mono}; font-size: 11.5px; color: ${({ theme }) => theme.dossier.faintOnDark}; }
+    button {
+      background: none; border: none; padding: 0; margin-left: 6px; cursor: pointer;
+      font: inherit; color: ${({ theme }) => theme.dossier.tealBright};
+      border-bottom: 1px solid rgba(93,214,202,.35);
+      &:hover { border-bottom-color: ${({ theme }) => theme.dossier.tealBright}; }
+    }
+  }
+  .rv-aperture {
+    margin: 14px 0 0; padding-top: 13px;
+    border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+    .ap-k {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
+      font-family: ${({ theme }) => theme.font.mono}; font-size: 10px; letter-spacing: .22em;
+      text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; margin-bottom: 12px;
+      span:last-child { color: ${({ theme }) => theme.dossier.faintOnDark}; letter-spacing: .14em; }
+    }
+    .ap-row {
+      display: grid; grid-template-columns: 104px minmax(0, 1fr) auto; gap: 14px; align-items: baseline;
+      width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+      padding: 10px 8px; margin: 0 -8px; border-radius: 8px;
+      opacity: 0; animation: rvrise .5s cubic-bezier(.16,1,.3,1) forwards;
+      @media (prefers-reduced-motion: reduce) { animation: none; opacity: 1; }
+      &:hover, &:focus-visible { background: rgba(93,214,202,.07); outline: none; }
+      &:hover .ap-namn { color: ${({ theme }) => theme.dossier.tealBright}; }
+    }
+    .ap-org { font-family: ${({ theme }) => theme.font.mono}; font-size: 11.5px; color: ${({ theme }) => theme.dossier.faintOnDark}; }
+    .ap-namn { font-family: ${({ theme }) => theme.font.display}; font-size: 15.5px; color: ${({ theme }) => theme.dossier.inkOnDark}; line-height: 1.3; }
+    /* "Närmast er domän" är ett FAKTUM om stavning — aldrig ett påstående om ägarskap, och
+       aldrig ett förval. Kunden väljer; vi märker bara vad vi faktiskt kan mäta. */
+    .ap-narmast { font-family: ${({ theme }) => theme.font.mono}; font-size: 9.5px; letter-spacing: .16em;
+      text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; white-space: nowrap; }
+    .ap-foot { margin: 12px 0 0; font-size: 12px; color: ${({ theme }) => theme.dossier.faintOnDark}; line-height: 1.6; }
+    @media (max-width: 560px) {
+      .ap-row { grid-template-columns: 1fr auto; }
+      .ap-org { grid-column: 1 / -1; }
+    }
+  }
+
   .rv-foot {
     margin: 16px 0 0; padding-top: 14px; border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
     font-size: 13px; line-height: 1.55; color: ${({ theme }) => theme.dossier.mutedOnDark};
@@ -218,7 +271,7 @@ export function RevealWorking({ email }) {
   );
 }
 
-export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note, elapsedS, pending }) {
+export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note, elapsedS, pending, onValjBolag }) {
   return (
     <>
       <Prompt onSubmit={onSubmit}>
@@ -237,13 +290,17 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note,
         {note && <p className="rp-note">{note}</p>}
       </Prompt>
       {loading && <RevealWorking email={email} />}
-      {!loading && reveal && <RevealCard domain={reveal.domain} findings={reveal.findings} elapsedS={elapsedS} pending={pending} />}
+      {!loading && reveal && <RevealCard domain={reveal.domain} findings={reveal.findings} elapsedS={elapsedS} pending={pending} identity={reveal.identity} onValjBolag={onValjBolag} />}
     </>
   );
 }
 
-export default function RevealCard({ domain, findings, elapsedS, pending }) {
+export default function RevealCard({ domain, findings, elapsedS, pending, identity, onValjBolag }) {
+  const [blandareOppen, setBlandareOppen] = React.useState(false);
   if (!domain || !findings?.length) return null;
+  const kandidater = identity?.candidates ?? [];
+  // Bländaren erbjuds bara när det FINNS något att välja mellan — aldrig som en tom gest.
+  const kanByta = kandidater.length > 1 && typeof onValjBolag === 'function';
   return (
     <Wrap className="breda">
       <div className="rv-eyebrow">Underlag · {domain}</div>
@@ -267,6 +324,49 @@ export default function RevealCard({ domain, findings, elapsedS, pending }) {
           Sammanställt på <b>{elapsedS.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} s</b> ur öppna källor · innan ni delat något
         </div>
       )}
+      {/* ── IDENTITETSRADEN ────────────────────────────────────────────────────────────────
+          Namngav vi ett bolag säger vi VILKET, med orgnr — och erbjuder rättelsen i samma
+          andetag. Ett system som vet att det kan ha fel och låter dig styra är starkare än
+          ett som låtsas vara osvikligt. */}
+      {identity?.confirmedName && !blandareOppen && (
+        <p className="rv-ident">
+          Gäller <b>{identity.confirmedName}</b> <code>{identity.confirmed}</code>
+          {identity.byHuman && ' · bekräftat av er'}
+          {kanByta && <>. Inte ert bolag?<button type="button" onClick={() => setBlandareOppen(true)}>Byt →</button></>}
+        </p>
+      )}
+
+      {/* Tystnad OCH kandidater = grinden vägrade välja. Då är bländaren inte en rättelse utan
+          själva svaret: "vi såg dessa och gissade inte". Erbjuds direkt, utan att någon klickar. */}
+      {!identity?.confirmedName && kanByta && !blandareOppen && (
+        <p className="rv-ident">
+          Flera bolag delar er ordstam — <b>vi gissar aldrig vilket som är ert</b>.
+          <button type="button" onClick={() => setBlandareOppen(true)}>Visa vilka vi läste →</button>
+        </p>
+      )}
+
+      {blandareOppen && (
+        <div className="rv-aperture">
+          <div className="ap-k">
+            <span>Vilket bolag är ni?</span>
+            <span>{identity.readCount ? `${identity.readCount} lästa · ` : ''}{kandidater.length} möjliga</span>
+          </div>
+          {kandidater.map((k, i) => (
+            <button type="button" className="ap-row" key={k.orgnr}
+              style={{ animationDelay: `${i * 0.07}s` }}
+              onClick={() => { setBlandareOppen(false); onValjBolag(k.orgnr); }}>
+              <span className="ap-org">{k.orgnr}</span>
+              <span className="ap-namn">{k.legalName}</span>
+              <span className="ap-narmast">{k.closest ? 'närmast er domän' : ''}</span>
+            </button>
+          ))}
+          <p className="ap-foot">
+            Vi läste hela registret på er ordstam och lät bli att välja åt er — ett bolagsnamn som
+            liknar en domän är inte ett ägarbevis. Ert svar är det.
+          </p>
+        </div>
+      )}
+
       <p className="rv-foot">
         Allt ovan är <b>offentlig information</b>{elapsedS > 0 ? '' : ', sammanställd på sekunder'} — innan ni loggat in,
         utan att ni lämnat ifrån er något. Tänk er vad vakten ser den dag ni delar en faktura.
