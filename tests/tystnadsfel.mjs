@@ -164,6 +164,50 @@ describe('Kostnadsspärren · Opus-kranen får aldrig stå öppen', () => {
   });
 });
 
+describe('Analysmotorns hälsa · om vi inte kan analysera ska VI veta det först', () => {
+  // 2026-08-06/07: Anthropic-saldot gick i noll med auto-reload av, och API-åtkomsten spärrades
+  // för en obetald skuld på EN CENT. Under de dygnen hade varje faktureanalys dött — och vi hade
+  // fått veta det genom att en kund laddade upp en PDF och fick ett fel. Vakten kände sitt eget
+  // svep men inte att motorn som gör analysen var död. Sista instansen av veckans mönster.
+
+  test('saldo- och auth-fel är HÅRDA — de löser sig aldrig av att vi väntar', async () => {
+    const { klassificera } = await import('../scripts/health-anthropic.mjs');
+    const saldo = klassificera({ status: 400, message: 'Your credit balance is too low to access the API' });
+    assert.equal(saldo.typ, 'saldo');
+    assert.equal(saldo.hart, true, 'tomt saldo måste fälla jobbet — en människa måste agera');
+
+    const auth = klassificera({ status: 401, message: 'authentication_error' });
+    assert.equal(auth.hart, true, 'en avvisad nyckel måste fälla jobbet');
+  });
+
+  test('överbelastning är TRANSIENT — ett larm som skriker på fel saker blir avstängt', async () => {
+    const { klassificera } = await import('../scripts/health-anthropic.mjs');
+    for (const fall of [{ status: 529, message: 'overloaded_error' }, { status: 429, message: 'rate limit' }]) {
+      assert.equal(klassificera(fall).hart, false,
+        'transienta fel får inte väcka någon — det var så verify-sources blev avstängd');
+    }
+  });
+
+  test('okänt fel behandlas som hårt tills det är förstått', async () => {
+    const { klassificera } = await import('../scripts/health-anthropic.mjs');
+    assert.equal(klassificera({ status: 418, message: 'nåt nytt' }).hart, true);
+  });
+
+  test('kontrollen körs FÖRE svepet i det nattliga jobbet', () => {
+    const yml = las('.github/workflows/price-monitor.yml');
+    const halsa = yml.indexOf('Analysmotorns hälsa');
+    const svep = yml.indexOf('- name: Run price monitor');
+    assert.ok(halsa > 0, 'hälsokontrollen måste finnas i det nattliga jobbet');
+    assert.ok(halsa < svep, 'är motorn död vill vi veta det direkt — inte efter fem minuters Playwright');
+  });
+
+  test('kontrollen är billig: minsta möjliga anrop, aldrig en kostnadspost i sig', () => {
+    const src = las('scripts/health-anthropic.mjs');
+    assert.match(src, /max_tokens: 1\b/, 'hälsokontrollen ska kosta så nära noll som möjligt');
+    assert.match(src, /haiku/i, 'använd den billigaste modellen — vi mäter nåbarhet, inte kvalitet');
+  });
+});
+
 describe('Tystnadsfel · en kraschad natt får inte se ut som en lugn natt', () => {
   const yml = las('.github/workflows/price-monitor.yml');
 

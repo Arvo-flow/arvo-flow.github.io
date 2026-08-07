@@ -80,6 +80,18 @@ jobs:
           npm install playwright
           npx playwright install chromium --with-deps
 
+      # ── ANALYSMOTORNS HÄLSA (grundarfynd 2026-08-06/07) ────────────────────────────────────
+      # Anthropic-saldot gick i noll med auto-reload av och API-åtkomsten spärrades för en obetald
+      # skuld på en cent. Under de dygnen hade VARJE faktureanalys dött — och vi hade fått veta det
+      # genom att en kund laddade upp en PDF och fick ett fel. Vakten kände sitt eget svep men inte
+      # att motorn som gör analysen var död.
+      # Körs FÖRE svepet: är motorn död vill vi veta det direkt, inte efter fem minuters Playwright.
+      # Kalibrerat (läxan från verify-sources): saldo/auth = hårt fel, överbelastning = tyst varning.
+      - name: Analysmotorns hälsa (Anthropic)
+        run: node scripts/health-anthropic.mjs
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
       - name: Run price monitor
         id: monitor
         run: node scripts/price-monitor.mjs
