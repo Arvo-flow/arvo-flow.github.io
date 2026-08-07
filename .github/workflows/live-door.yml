@@ -27,13 +27,24 @@ jobs:
           set -o pipefail
           mkdir -p ops/door-shots
           node scripts/live-door-lekia.mjs 2>&1 | tee ops/door-shots/logg.txt
+      # BEVISET FÅR INTE TAPPAS BORT (2026-08-07): steget gjorde `git pull --rebase` med osparade
+      # ändringar (fel varje gång) och sedan EN push som förlorade varje kapplöpning mot en
+      # nyare main — "push miss", och dörrens mätning fanns ingenstans. En vakt vars protokoll
+      # tyst försvinner är lika illa som en vakt som tiger. Nu: spara filerna FÖRST, hämta
+      # senaste main, lägg bara ops/ ovanpå, och försök igen med backoff.
       - name: Commit
         if: always()
         continue-on-error: true
         run: |
           git config user.email "bot@arvoflow.se"
           git config user.name "Arvo Diag Bot"
-          git pull --rebase origin main || true
-          git add ops/door-shots/
-          git commit -m "ops: live-door [skip ci]" || echo "inget"
-          git push origin HEAD:main || echo "push miss"
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git stash -u -- ops/door-shots/ 2>/dev/null || true
+            git checkout -B ops-tmp origin/main
+            git checkout stash@{0} -- ops/door-shots/ 2>/dev/null || git stash pop || true
+            git add ops/door-shots/
+            git commit -m "ops: live-door [skip ci]" || echo "inget nytt"
+            if git push origin HEAD:main; then echo "protokollet sparat"; break; fi
+            echo "kapplöpning förlorad — försök $i"; sleep $((i * 6))
+          done
