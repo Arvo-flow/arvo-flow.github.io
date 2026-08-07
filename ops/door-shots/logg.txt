@@ -24,7 +24,8 @@ FYND avida: ["Ni kör Microsoft 365","Ert e-postskydd är redan aktivt"]
 ORDNING avida: IDENT-FÖRE-KVITTO
 RÅA ORGNR avida: [] (ska vara [])
 ✓ avida mobil
-BLÄNDAREN avida: ["556230-9004Avida Bank AB (publ)","559165-3182AVIDA ASSISTANS & OMSORG I SVERIGE AB","559017-7068Avida ABnärmast er domän"]
+BLÄNDAREN avida: ["556230-9004Avida Bank AB (publ)Stockholm · Finansbolag, finansiella tjänster","559165-3182AVIDA ASSISTANS & OMSORG I SVERIGE ABÖrebro · Omvårdnad och omsorg","559017-7068Avida ABStockholm · Företagsutveckling"]
+VÄGVISARE avida: 0 (ska vara 0) · IGENKÄNNING: 3 av 3
 ✓ avida bländare mobil
 ✓ avida desktop
 ✓ avida bländare desktop
