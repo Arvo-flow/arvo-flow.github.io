@@ -99,7 +99,22 @@ export const Dossier = styled.section`
     border: 1px solid rgba(157,184,175,.09); border-radius: 21px;
     @media (max-width: 640px) { inset: 7px; border-radius: 16px; }
   }
-  .inner { max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+  /* ── TVÅ MÅTT, INTE ETT (grundarbeslut 2026-08-07) ────────────────────────────────────────
+     .inner låg på 760px och satte samma tak på ALLT — rubrik, ingress OCH underlaget. Men 760
+     är ett BRÖDTEXTMÅTT, och underlaget är inte brödtext: det är strukturerad bevisning
+     (påstående · detalj · källa). Beviset stod i innehållet — källraderna radbröts och
+     .rv-source hade tvingats bära word-break: break-word — den defensiva egenskap man bara
+     lägger till när behållaren redan klämmer. Behållaren slogs mot innehållet.
+     Att bredda allt vore fel åt andra hållet: en ingress på 880px är oläsbar. Alltså två mått,
+     som i ett dokument — brödtext smal, bilagor breda. */
+  .inner { max-width: 680px; margin: 0 auto; position: relative; z-index: 1; }
+  /* Bevisningen får sitt eget, bredare mått. Bryter ut ur prosakolumnen utan att flytta den. */
+  .inner .breda { max-width: 880px; margin-left: auto; margin-right: auto;
+    /* Utbrottet kräver att dossiern faktiskt HAR plats: 1060px viewport ger ~952px inre
+       yta (1060 − 40 shell-padding − 68 dossier-padding) > 880. Under det: samma bredd
+       som prosan, inget utbrott, ingen överflödning. */
+    @media (min-width: 1060px) { width: 880px; margin-left: -100px; }
+  }
 `;
 
 export const SectionKey = styled.div`

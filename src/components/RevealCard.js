@@ -47,14 +47,35 @@ const Wrap = styled.section`
     text-transform: uppercase; color: ${({ theme }) => theme.dossier.mutedOnDark};
     b { color: ${({ theme }) => theme.dossier.tealBright}; }
   }
+  /* ── HIERARKIN (grundarbeslut 2026-08-07) ────────────────────────────────────────────────
+     Fyra fynd låg tidigare som fyra IDENTISKA block — samma titelstorlek, samma vikt, samma
+     hårlinje. Men "Ert bokslut 2025" är KONTEXT och "Ni kör Microsoft 365" är PENGAR; de får
+     inte bära samma auktoritet. Rangordningen fanns redan i koden (RANK i mergeRevealFindings)
+     men designen hedrade den inte. En lista där allt är lika högljutt är en lista där inget hörs.
+     Första fyndet är ledet — det bär mest vikt eftersom rangordningen redan sagt att det ska. */
   .rv-title {
-    font-family: ${({ theme }) => theme.font.display}; font-weight: 600; font-size: 17px;
+    font-family: ${({ theme }) => theme.font.display}; font-weight: 600; font-size: 16px;
     color: ${({ theme }) => theme.dossier.inkOnDark}; line-height: 1.25;
   }
+  .rv-find:first-of-type .rv-title { font-size: 21px; line-height: 1.2; letter-spacing: -.01em; }
+  .rv-find:first-of-type .rv-detail { font-size: 14.5px; }
+
   .rv-detail { font-size: 13.5px; line-height: 1.5; color: ${({ theme }) => theme.dossier.mutedOnDark}; margin-top: 3px; }
+
+  /* ── KÄLLAN SOM FOTNOT, INTE SOM RAD ─────────────────────────────────────────────────────
+     Källan var färgmässigt nedtonad men tog TVÅ RADER under varje påstående — alltså lika
+     mycket lodrätt utrymme som fyndet självt. Tyst i färg, skrikig i volym. I en dossier ska
+     källan vara TILLGÄNGLIG, inte närvarande. Vid breda mått flyttas den ur påståendets väg,
+     till en egen spalt. Den döljs ALDRIG — regel 3: varje påstående bär sin proveniens. */
   .rv-source {
     font-family: ${({ theme }) => theme.font.mono}; font-size: 11px; letter-spacing: .01em;
     color: ${({ theme }) => theme.dossier.faintOnDark}; margin-top: 6px; word-break: break-word;
+  }
+  @media (min-width: 900px) {
+    .rv-find { display: grid; grid-template-columns: minmax(0, 1fr) 236px; column-gap: 30px; align-items: start; }
+    .rv-title  { grid-column: 1; grid-row: 1; }
+    .rv-detail { grid-column: 1; grid-row: 2; }
+    .rv-source { grid-column: 2; grid-row: 1 / span 2; margin-top: 4px; line-height: 1.45; }
   }
   .rv-source b { color: ${({ theme }) => theme.dossier.teal}; font-weight: 600; }
 
@@ -224,7 +245,7 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note,
 export default function RevealCard({ domain, findings, elapsedS, pending }) {
   if (!domain || !findings?.length) return null;
   return (
-    <Wrap>
+    <Wrap className="breda">
       <div className="rv-eyebrow">Underlag · {domain}</div>
       {findings.map((f, i) => (
         <div className="rv-find" key={i} style={{ animationDelay: `${i * 0.14}s` }}>
