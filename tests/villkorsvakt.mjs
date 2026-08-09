@@ -53,6 +53,23 @@ describe('villkorsvakten · domaren', () => {
     assert.match(d.aktion, /dokumentSha256: 'c{64}'/);
   });
 
+  // Fällan: hämta dagens hash, klistra in, grönt. Då har vi ankrat ett dokument ingen läst.
+  test('ankare nyare än läsningen → OFÖRSEGLAD ("verifierat" måste förtjänas)', () => {
+    const d = bedomVillkorspost(
+      { ...POST, verifierad: '2026-07-03', forsegladDatum: '2026-08-09' },
+      { hamtadOk: true, hash: 'a'.repeat(64) }, IDAG);
+    assert.equal(d.utfall, VILLKOR_UTFALL.OFORSEGLAD);
+    assert.equal(d.ok, false);
+    assert.match(d.aktion, /Ett ankare utan läsning/);
+  });
+
+  test('ankare och läsning samma dag → förseglad', () => {
+    const d = bedomVillkorspost(
+      { ...POST, verifierad: '2026-07-03', forsegladDatum: '2026-07-03' },
+      { hamtadOk: true, hash: 'a'.repeat(64) }, IDAG);
+    assert.equal(d.ok, true);
+  });
+
   test('post utan proveniens fälls före allt annat (regel 3)', () => {
     for (const trasig of [{ ...POST, kalla: null }, { ...POST, citat: null }, { ...POST, verifierad: null }]) {
       assert.equal(bedomVillkorspost(trasig, { hamtadOk: true, hash: 'a'.repeat(64) }, IDAG).ok, false);
