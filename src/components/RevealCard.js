@@ -2,11 +2,14 @@
 // Varje rad bär sin KÄLLA (regel 3) — det är källan som bygger trovärdigheten: inte att vi
 // påstår att vi är vassa, utan att vi visar exakt var vi läste av det. Dossier-mörkt (regel 6).
 //
-// DE TIO SEKUNDERNA (premium-lyftet 2026-07-13): väntetiden ÄR demonstrationen — maskinen
-// arbetar synligt (verklig sekundräknare + de källor som faktiskt läses parallellt), raderna
-// materialiseras en i taget, och kortet stängs med ett KVITTO på uppmätt tid. Integritets-
-// linjen: inga fejkade per-stegs-bockar (klienten kan inte veta delmomentens status — att visa
-// dem vore Potemkin); timern är performance.now()-mätt, aldrig ett önsketal.
+// VÄNTETIDEN ÄR DEMONSTRATIONEN (premium-lyftet 2026-07-13): maskinen arbetar synligt — verklig
+// sekundräknare + de källor som faktiskt läses parallellt — och raderna materialiseras en i taget.
+// Integritetslinjen: inga fejkade per-stegs-bockar (klienten kan inte veta delmomentens status —
+// att visa dem vore Potemkin); timern är performance.now()-mätt, aldrig ett önsketal.
+//
+// KVITTOT MÄTER BREDD, INTE VÄNTAN (2026-08-07): tiden hörde hemma UNDER arbetet, aldrig i
+// kvittot efteråt. Som slutrad blev den ett mått som försämrades varje gång produkten
+// förbättrades (9,1 s → 21,9 s när fler register lades till). Kvittot namnger nu registren.
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { fmtOrgnr } from '../utils/format';
@@ -250,7 +253,12 @@ const Working = styled.section`
 `;
 
 // De öppna källor /api/reveal läser — EN sanning med backend-pipelinen (uppdateras ihop med den).
-const REVEAL_SOURCES = 'e-postpostur · Bolagsverket · certifikatregistret · domänregistret · prisboken';
+// De källor som FAKTISKT läses — en sanning (regel 1), konsumerad både av väntevyn och kvittot.
+// Antalet härleds ur listan så att texten aldrig kan driva från verkligheten.
+const REVEAL_SOURCE_LIST = ['e-postpostur', 'Bolagsverket', 'certifikatregistret', 'domänregistret', 'prisboken'];
+const REVEAL_SOURCES = REVEAL_SOURCE_LIST.join(' · ');
+const RAKNEORD = ['noll', 'ett', 'två', 'tre', 'fyra', 'fem', 'sex', 'sju', 'åtta', 'nio'];
+const antalKallor = RAKNEORD[REVEAL_SOURCE_LIST.length] ?? String(REVEAL_SOURCE_LIST.length);
 
 export function RevealWorking({ email }) {
   const domain = (String(email || '').split('@')[1] || '').toLowerCase();
@@ -273,7 +281,7 @@ export function RevealWorking({ email }) {
   );
 }
 
-export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note, elapsedS, pending, onValjBolag }) {
+export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note, pending, onValjBolag }) {
   return (
     <>
       <Prompt onSubmit={onSubmit}>
@@ -292,12 +300,12 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note,
         {note && <p className="rp-note">{note}</p>}
       </Prompt>
       {loading && <RevealWorking email={email} />}
-      {!loading && reveal && <RevealCard domain={reveal.domain} findings={reveal.findings} elapsedS={elapsedS} pending={pending} identity={reveal.identity} onValjBolag={onValjBolag} />}
+      {!loading && reveal && <RevealCard domain={reveal.domain} findings={reveal.findings} pending={pending} identity={reveal.identity} onValjBolag={onValjBolag} />}
     </>
   );
 }
 
-export default function RevealCard({ domain, findings, elapsedS, pending, identity, onValjBolag }) {
+export default function RevealCard({ domain, findings, pending, identity, onValjBolag }) {
   const [blandareOppen, setBlandareOppen] = React.useState(false);
   if (!domain || !findings?.length) return null;
   const kandidater = identity?.candidates ?? [];
@@ -372,14 +380,22 @@ export default function RevealCard({ domain, findings, elapsedS, pending, identi
           Djupare register arbetar fortfarande — certifikatregistret svarar långsamt. Fler rader kan landa här.
         </div>
       )}
-      {/* Kvittot: uppmätt tid (performance.now() runt det verkliga anropet) — aldrig ett önsketal. */}
-      {!pending && elapsedS > 0 && (
+      {/* ── KVITTOT MÄTER ARBETE, INTE VÄNTAN (grundarbeslut 2026-08-07, kväll) ─────────────────
+          Kvittot bar den uppmätta sekundtiden. Ärligt — men fel storhet: talet var 9,1 s när
+          kortet läste färre register och 21,9 s när det läste fler. Siffran blev alltså SÄMRE
+          varje gång produkten blev BÄTTRE, och ett kvitto som skryter med en växande väntetid
+          läser som en ursäkt. Vi slutade dessutom lova tid i hjärtat av sidan; att ändå
+          rapportera den som prestation var en kvarleva.
+          Rätt storhet är BREDD: vad maskinen hann läsa utan att kunden lämnat ifrån sig något.
+          Samma verkliga fakta, den enda som växer åt rätt håll — och listan är densamma som
+          väntevyn visar, aldrig en separat sanning. */}
+      {!pending && (
         <div className="rv-receipt">
-          Sammanställt på <b>{elapsedS.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} s</b> ur öppna källor · innan ni delat något
+          <b>{antalKallor} öppna register</b> lästa — {REVEAL_SOURCES} · innan ni delat något
         </div>
       )}
       <p className="rv-foot">
-        Allt ovan är <b>offentlig information</b>{elapsedS > 0 ? '' : ', sammanställd på sekunder'} — innan ni loggat in,
+        Allt ovan är <b>offentlig information</b> — innan ni loggat in,
         utan att ni lämnat ifrån er något. Tänk er vad vakten ser den dag ni delar en faktura.
       </p>
     </Wrap>

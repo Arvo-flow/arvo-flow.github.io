@@ -161,13 +161,25 @@ const Integritet = () => (
 
       <Clause>
         <h3>5. Var data lagras &amp; säkerhet</h3>
-        <p>All data lagras inom EU/EES, primärt hos Bahnhof i Stockholm. Vi använder:</p>
+        {/* RÄTTAT 2026-08-07: klausulen påstod "primärt hos Bahnhof i Stockholm" — och motsade
+            därmed sin EGEN underbiträdestabell två avsnitt ned, där Bahnhof korrekt står som
+            planerad och fyra amerikanska biträden står i drift. Kunden läser sammanfattningen,
+            inte tabellen, så det var sammanfattningen som ljög. Två bullets föll samtidigt:
+            "audit trail" och "penetrationstester årligen" saknar motsvarighet i systemet.
+            Ett säkerhetslöfte utan mekanik är regel 9 i ett juridiskt dokument. Kvar står bara
+            det vi faktiskt kan visa — och det som är planerat är märkt som planerat. */}
+        <p>Behandlingen sker inom EU/EES och i USA. Underbiträdena är namngivna i avsnitt 7 med
+          funktion och land; överföringar till USA sker under EU-kommissionens
+          standardavtalsklausuler (SCC). Vi driver i dag ingen egen serverhall — plattformarna
+          nedan är våra biträden, och vi listar dem hellre än att sammanfatta dem.</p>
         <ul>
-          <li>AES-256 kryptering i vila</li>
-          <li>TLS 1.3 för all dataöverföring</li>
+          <li>Kryptering i vila hos samtliga lagringsbiträden (Neon, Vercel KV)</li>
+          <li>TLS för all dataöverföring</li>
           <li>Tvåfaktorautentisering för all intern access</li>
-          <li>Loggning av all access till kunddata (audit trail)</li>
-          <li>Penetrationstester av oberoende part minst årligen</li>
+          <li>Analysresultat cachas i högst 6 timmar; Anthropic raderar API-data inom 30 dagar
+            och tränar inte modeller på den</li>
+          <li><em>Planerat, ännu ej i drift:</em> svensk hosting (Bahnhof), audit trail över all
+            access till kunddata, och årlig penetrationstest av oberoende part</li>
         </ul>
       </Clause>
 

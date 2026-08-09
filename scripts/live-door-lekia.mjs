@@ -39,8 +39,11 @@ for (const { email, tag, waitReceipt, openAperture } of CASES) {
     // Pending-läxan: vänta tills våg 2 resolverat till kvittot ("SAMMANSTÄLLT") och verifiera
     // att pending-noten ("arbetar fortfarande") ÄR BORTA — beviset att noten aldrig hänger kvar.
     if (waitReceipt) {
+      // Kvittot namnger registren (bytt 2026-08-07 från uppmätt tid, som blev sämre ju bättre
+      // kortet blev). Matchen följer med — en vakt som letar efter en text som inte längre finns
+      // slutar mäta i tysthet, och den fällan gick vi redan i en gång i dag.
       await p.waitForFunction(() => [...document.querySelectorAll('.rv-receipt')]
-        .some((e) => /SAMMANST/i.test(e.textContent)), { timeout: 30000 }).catch(() => {});
+        .some((e) => /ÖPPNA REGISTER/i.test(e.textContent)), { timeout: 30000 }).catch(() => {});
       const stillPending = await p.locator('.rv-receipt', { hasText: 'arbetar fortfarande' }).count();
       if (view === 'mobil') console.log(`PENDING KVAR ${tag}:`, stillPending, '(ska vara 0)');
     }

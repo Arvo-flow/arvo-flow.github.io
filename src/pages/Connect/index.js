@@ -5,7 +5,7 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import {
   Page, Wrap, Card, Step, Title, Lede,
-  DataContract, DataCol, NoWaste, ScanCounter, Reassurance,
+  DataContract, DataCol, NoWaste, Reassurance,
   BadgeStrip, Badge,
   ProfileSection, ProfileHeading, ProfileRow, ProfileField,
   ProviderRow, ProviderBtn, Actions, SmallNote, Spinner,
@@ -146,17 +146,22 @@ const Connect = () => {
               <strong>AES-256</strong>
               <span>Krypterad i vila & i transport</span>
             </Badge>
+            {/* RÄTTAT 2026-08-07: badgen sa "Data hos Bahnhof, Stockholm". Bahnhof är planerat,
+                inte i drift — biträdena är i dag Neon, Vercel, Anthropic och Resend, under SCC.
+                En trygghetsbadge som påstår fel land är värre än ingen badge alls. */}
             <Badge>
               <div className="icon"><Icon name="check" size={16} stroke={2.2} /></div>
-              <strong>Sverige</strong>
-              <span>Data hos Bahnhof, Stockholm</span>
+              <strong>EU/EES + SCC</strong>
+              <span>Varje biträde namngivet i policyn</span>
             </Badge>
           </BadgeStrip>
 
-          <ScanCounter>
-            <div className="live" />
-            <span><strong>1 247</strong> leverantörsfakturor analyserade denna vecka</span>
-          </ScanCounter>
+          {/* BORTTAGEN 2026-08-07: här stod "1 247 leverantörsfakturor analyserade denna vecka"
+              med en pulserande live-prick. Talet var påhittat — hela systemet har analyserat 38
+              fakturor sedan start. En falsk socialt-bevis-räknare på den yta där kunden ska
+              lämna ifrån sig bokföringsåtkomst är det dyraste stället vi kunde ljuga på.
+              Ingen ersättningssiffra: vi har inget volymbevis än, och då säger vi inget (regel 3).
+              Återinförs ENDAST kopplad mot en verklig räkning ur invoice_analyses. */}
 
           <ConsentRow $error={showConsentError && !consent}>
             <input

@@ -137,7 +137,7 @@ const FAQ = [
   },
   {
     q: 'Vad händer med min data?',
-    a: 'Arvo ser endast det ni vidarebefordrar — leverantörsfakturor, inget annat. Datan lagras krypterad i Sverige (Bahnhof Stockholm). Kopplar ni in Fortnox eller Visma gäller samma princip: enbart läs-rättigheter mot leverantörsfakturor. Vi säljer aldrig identifierbar data — anonymiserade branschindex är vår enda dataprodukt utöver tjänsten.',
+    a: 'Arvo ser endast det ni vidarebefordrar — leverantörsfakturor, inget annat. Behandlingen sker inom EU/EES och i USA hos namngivna underbiträden under EU-godkända standardavtalsklausuler (SCC) — varje biträde står listat med namn, funktion och land i vår integritetspolicy, inklusive de vi ännu inte tagit i drift. Kopplar ni in Fortnox eller Visma gäller samma princip: enbart läs-rättigheter mot leverantörsfakturor. Vi säljer aldrig identifierbar data — anonymiserade branschindex är vår enda dataprodukt utöver tjänsten.',
   },
 ];
 
