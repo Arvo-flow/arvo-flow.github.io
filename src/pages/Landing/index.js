@@ -393,7 +393,9 @@ export default function Landing() {
       </DossierShell>
 
       {/* ═══ 03 · SÅ FUNGERAR DET ═══ */}
-      <Light>
+      {/* Ankaret finns för footerns skull: dess länkar pekade på #hur och #priser, men sidan
+          hade inga id:n alls — fyra döda länkar på VARJE yta, dörren och rummet inkluderade. */}
+      <Light id="hur">
         <SectionKey $light>
           <span className="k-num">03 · Så fungerar det</span>
           <span className="k-note">två minuter att komma igång</span>
@@ -414,7 +416,7 @@ export default function Landing() {
       </Light>
 
       {/* ═══ 04 · PRISET ═══ */}
-      <Light>
+      <Light id="priser">
         <SectionKey $light>
           <span className="k-num">04 · Priset</span>
           <span className="k-note">ingen bindningstid</span>

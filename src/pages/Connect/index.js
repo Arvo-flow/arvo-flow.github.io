@@ -139,7 +139,10 @@ const Connect = () => {
             <Badge>
               <div className="icon"><Icon name="shield" size={16} stroke={2} /></div>
               <strong>GDPR</strong>
-              <span>Fullt regelefterlevnad</span>
+              {/* RÄTTAT 2026-08-07: "Fullt regelefterlevnad" är en självcertifiering ingen kan
+                  kontrollera — och den stod bredvid en badge som samtidigt påstod fel land för
+                  datan. Det vi FAKTISKT kan visa är dokumenten. */}
+              <span>Biträdesavtal &amp; registerförteckning publicerade</span>
             </Badge>
             <Badge>
               <div className="icon"><Icon name="lock" size={16} stroke={2} /></div>

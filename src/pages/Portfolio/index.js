@@ -634,10 +634,10 @@ export default function Portfolio() {
     // noll kandidater ger bevisbart noll rörelser. Ett positivt antal säger ingenting och sägs
     // därför aldrig — verifierade rörelser bor i marknadsrörelse-korten, efter juryn.
     rows.push({ tag: 'Bevakar', what: vakt?.sweptAt
-      ? <>Svepte <b>{vakt.sources} marknadskällor</b> {relSwept(vakt.sweptAt)}
+      ? <>Svepte {vakt.sources ? <><b>{vakt.sources} marknadskällor</b> </> : 'marknaden '}{relSwept(vakt.sweptAt)}
           {vakt.streakNights >= 2 ? <> · <b>{vakt.streakNights} nätter i rad</b> utan avbrott</> : null}
           {vakt.allClear ? ' — allt lugnt, inget krävde er uppmärksamhet.' : '.'}</>
-      : <>Sveper marknaden nattligt mot fyrtiotalet marknadskällor — er bevakning är aktiv.</> });
+      : <>Er bevakning är aktiv. Nattens svep visas här så snart körningen rapporterat — vi redovisar antalet källor först när vi har det, aldrig en ungefärlig siffra.</> });
     if (autoAnalyses.length > 0) {
       rows.push({ tag: 'Analys', what: <>Vägde <b>{autoAnalyses.length} {autoAnalyses.length === 1 ? 'faktura' : 'fakturor'}</b> mot verifierat marknadspris{latestDate ? <> · senast {latestDate}</> : null}.</> });
     }
@@ -767,7 +767,7 @@ export default function Portfolio() {
                     {/* Radarn bär kedjan: obrutna nätter är det ofejkbara beviset på uthållighet.
                         Ojurerade detektioner nämns aldrig — bara den bevisbara nollan. */}
                     <span>{vakt?.sweptAt
-                      ? <>Senaste svep {relSwept(vakt.sweptAt)} · <b>{vakt.sources ?? 40} marknadskällor</b> svepta
+                      ? <>Senaste svep {relSwept(vakt.sweptAt)} {vakt.sources ? <> · <b>{vakt.sources} marknadskällor</b> svepta</> : null}
                           {vakt.streakNights >= 2 ? <> · <b>{vakt.streakNights} nätter i rad</b></> : null}
                           {vakt.allClear ? ' · allt lugnt' : ''}</>
                       : latestDate ? <>Senaste analys {latestDate} · bevakning aktiv</> : 'Bevakning aktiv'}</span>

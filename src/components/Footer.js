@@ -105,15 +105,26 @@ const Footer = () => (
         <ul>
           <li><a href="/#hur">Så fungerar det</a></li>
           <li><a href="/#priser">Pris</a></li>
-          <li><a href="/#hur">Integrationer</a></li>
-          <li><a href="/#sakerhet">Säkerhet</a></li>
+          {/* "Integrationer" och "Säkerhet" pekade på #hur respektive #sakerhet. Sidan hade inga
+              id:n alls, så båda var döda — liksom de två ovan. Nu pekar de dit innehållet
+              faktiskt bor: kopplingarna på /connect, säkerheten i integritetspolicyn. */}
+          <li><Link to="/connect">Integrationer</Link></li>
+          <li><Link to="/integritet">Säkerhet</Link></li>
         </ul>
       </Col>
       <Col>
         <h4>Företag</h4>
         <ul>
           <li><Link to="/">Om oss</Link></li>
-          <li><Link to="/bias">Partners</Link></li>
+          {/* BORTTAGEN 2026-08-07: länken hette "Partners" och pekade på rankningspolicyn — sidan
+              som förklarar att vi ALDRIG tar en krona från en leverantör. Etiketten lovade alltså
+              raka motsatsen till sin egen destination, och antydde precis den sortens
+              leverantörsrelation som neutralitets-moaten förbjuder. Rankningspolicyn ligger kvar
+              under Juridik, där den hör hemma.
+              (Vakthunden fällde min FÖRSTA version av den här kommentaren, för att jag skrev ut
+              det förbjudna ordet i klartext. Jag skrev om meningen i stället för att lägga till
+              ett claims-ok-undantag — ett undantag hade gjort vakten en aning trubbigare för
+              alltid, och kommentaren behövde aldrig ordet.) */}
           <li><a href="mailto:hej@arvoflow.se">Kontakt</a></li>
         </ul>
       </Col>
@@ -127,9 +138,15 @@ const Footer = () => (
         </ul>
       </Col>
     </Inner>
+    {/* RÄTTAT 2026-08-07: här stod "GDPR-säkrad infrastruktur i Sverige" — och footern bärs av
+        VARJE yta, alltså även dörren och rummet. Infrastrukturen är Neon, Vercel, Anthropic och
+        Resend; svensk hosting är planerad, inte i drift. Samma påstående rättades samtidigt i
+        FAQ, Connect-badgen och integritetspolicyns §5, men footern var den som stod överallt.
+        Den ärliga versionen säljer dessutom bättre: ingen konkurrent namnger sina underbiträden
+        i footern. Transparens är ett premiumargument — svepande trygghetsord är det inte. */}
     <TrustRow>
-      <span><div className="dot" /> GDPR-säkrad infrastruktur i <strong>Sverige</strong></span>
-      <span><div className="dot" /> Krypterad data <strong>AES-256</strong></span>
+      <span><div className="dot" /> Varje underbiträde <strong>namngivet</strong> — EU/EES + USA under SCC</span>
+      <span><div className="dot" /> Krypterad i vila och i transport</span>
     </TrustRow>
     <Bottom>
       <span>© 2026 Arvo Flow · verksamhet under bildande</span>

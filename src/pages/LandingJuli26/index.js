@@ -32,7 +32,7 @@ const HOW_STEPS = [
     step: 'Steg 01',
     title: 'Aktivera Arvo — klart på 2 min',
     body: 'Ni sätter upp automatisk vidarebefordran från er faktura-inkorg. Varje ny leverantörsfaktura flödar in till Arvo — helt automatiskt, ingen IT-integration krävs. Vill ni ha fullständig täckning kopplar ni enkelt in Fortnox eller Visma som komplement.',
-    bullets: ['Noll IT-projekt', 'GDPR-säkrad infrastruktur i Sverige', 'Koppla bort när som helst'],
+    bullets: ['Noll IT-projekt', 'Varje underbiträde namngivet — EU/EES + USA under SCC', 'Koppla bort när som helst'],
   },
   {
     step: 'Steg 02',
