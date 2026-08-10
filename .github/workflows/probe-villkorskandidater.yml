@@ -12,7 +12,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node scripts/probe-villkorskandidater.mjs 2>&1 | tee ops/probe-villkorskandidater.txt
+      - run: npm install --no-save playwright && npx playwright install chromium --with-deps
+      # Skriv UTANFÖR repot: föregående version stashade filen och tappade den i checkouten,
+      # varpå git add föll med exit 128 — svalt av continue-on-error, och jobbet blev grönt ändå.
+      - run: |
+          set -o pipefail
+          node scripts/probe-villkorskandidater.mjs 2>&1 | tee /tmp/sond.txt
       - name: Spara sondsvaret
         if: always()
         continue-on-error: true
@@ -21,11 +26,12 @@ jobs:
           git config user.name "Arvo Diag Bot"
           for i in 1 2 3; do
             git fetch origin main
-            git stash -u -- ops/ 2>/dev/null || true
             git checkout -B sond origin/main
-            git checkout stash@{0} -- ops/ 2>/dev/null || git stash pop || true
+            mkdir -p ops && cp /tmp/sond.txt ops/probe-villkorskandidater.txt
             git add ops/probe-villkorskandidater.txt
             git commit -m "ops: sond villkorskandidater [skip ci]" || echo "inget nytt"
-            if git push origin HEAD:main; then echo "sondsvaret sparat"; break; fi
+            if git push origin HEAD:main; then echo "sondsvaret sparat"; SPARAT=1; break; fi
             sleep $((i * 6))
           done
+          # En tyst förlust av sondsvaret är samma sjukdom som en tyst vakt: säg ifrån.
+          [ "${SPARAT:-0}" = "1" ] || { echo "✗ sondsvaret kunde INTE sparas"; exit 1; }

@@ -17,6 +17,7 @@
 // på i verifierarfabriken (alltså en vi vet att våra kunder faktiskt har) eller en Nivå 1-aktör
 // där Arvo enligt Switch-doktrinen faktiskt avfyrar — och det är där avtalsklockan betyder mest.
 import { VILLKORSBOK } from '../lib/contract-intel.js';
+import { withPage } from '../lib/verifiers/core.mjs';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
@@ -34,13 +35,29 @@ const PRIVATMARKOR = /privat|konsument|consumer|private/i;
 const FORETAGSMARKOR = /foretag|företag|business|enterprise|corporate|brf/i;
 const AVTALSORD = /uppsägningstid|uppsagningstid|avtalstid|förlängs|forlangs|bindningstid/i;
 
-async function hamta(url, timeoutMs = 20000) {
+// ── BLINDHET FÅR ALDRIG SE UT SOM FRÅNVARO (rättat 2026-08-10) ──────────────────────────────
+// Första versionen läste RÅ HTML och rapporterade "0 villkorssidor hittade" för Tele2, Telenor,
+// Fortnox och Microsoft. Det var inte ett fynd — det var min crawlers blindhet. Julisonden hade
+// redan läst en villkors-PDF från tele2.se/villkor, så sidorna finns; mina kandidater är
+// JS-renderade och footern existerar inte i råmarkupen.
+//
+// Ett instrument som rapporterar FRÅNVARO när det menar BLINDHET är ett ljugande instrument, och
+// det är exakt den sjukdom vaktkontraktet finns för att förhindra — den här gången i mätverktyget
+// i stället för i vakten. Två saker rättas därför:
+//   1 · sidan RENDERAS (samma väg som prisvakterna använder mot JS-sidor)
+//   2 · totalt antal länkar redovisas ALLTID, så att "sidan bar 3 länkar" aldrig kan förväxlas
+//       med "sidan bar 180 länkar varav ingen nämnde villkor". Det förra är blindhet, det senare
+//       är ett fynd, och de får aldrig skrivas ut på samma sätt.
+async function hamta(url, timeoutMs = 30000) {
   try {
-    const r = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'text/html,application/pdf,*/*' }, redirect: 'follow', signal: AbortSignal.timeout(timeoutMs) });
-    if (!r.ok) return { ok: false, fel: `HTTP ${r.status}` };
-    return { ok: true, html: await r.text(), slutUrl: r.url, typ: r.headers.get('content-type') ?? '' };
+    const html = await withPage(url, async (page, status) => {
+      if (typeof status === 'number' && status >= 400) return null;
+      return page.content();
+    }, { timeoutMs, settleMs: 2500 });
+    if (!html) return { ok: false, fel: 'sidan svarade med fel eller tomt innehåll' };
+    return { ok: true, html };
   } catch (e) {
-    return { ok: false, fel: e.name === 'TimeoutError' ? 'timeout' : e.message.slice(0, 60) };
+    return { ok: false, fel: e.name === 'TimeoutError' ? 'timeout' : String(e.message).slice(0, 60) };
   }
 }
 
@@ -62,10 +79,19 @@ for (const k of KANDIDATER) {
   const start = await hamta(k.start);
   if (!start.ok) { console.log(`  ✗ startsidan gick inte att läsa (${start.fel})`); continue; }
 
-  const villkorslankar = lankar(start.html, k.start)
-    .filter((l) => NAMNER_VILLKOR.test(l.url) || NAMNER_VILLKOR.test(l.text));
-  const sidor = [...new Set(villkorslankar.map((l) => l.url))].slice(0, 12);
-  console.log(`  ${sidor.length} villkorssida(or) hittade från startsidan`);
+  const alla = lankar(start.html, k.start);
+  const villkorslankar = alla.filter((l) => NAMNER_VILLKOR.test(l.url) || NAMNER_VILLKOR.test(l.text));
+  // Totalen är skillnaden mellan blindhet och fynd — den skrivs alltid ut.
+  console.log(`  startsidan bar ${alla.length} länkar totalt, varav ${villkorslankar.length} nämner villkor`
+    + (alla.length < 10 ? '  ⚠ MISSTÄNKT FÅ — sidan kan vara blockerad, inte tom' : ''));
+
+  // Andra vägen: konventionella villkorsadresser PRÖVAS (inte gissas — en adress är bevisad först
+  // när den svarar och bär ett företagsdokument). Julisonden fann tele2.se/villkor just så.
+  const provade = [...new Set([...villkorslankar.map((l) => l.url),
+    ...['villkor', 'foretag/villkor', 'om/villkor', 'kundservice/villkor', 'legal', 'avtalsvillkor']
+      .map((v) => new URL(v, k.start).toString())])];
+  const sidor = provade.slice(0, 14);
+  console.log(`  ${sidor.length} sida(or) att pröva (upptäckta + konventionella)`);
 
   let hittatPdf = 0, hittatHtml = 0;
   for (const u of sidor) {
