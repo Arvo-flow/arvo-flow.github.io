@@ -64,7 +64,15 @@ for (const k of KANDIDATER) {
   const platt = text.replace(/\s+/g, ' ').trim();
   const f = rakna(platt, FORETAGSORD), p = rakna(platt, PRIVATORD), kl = rakna(platt, KLAUSULORD);
   console.log(`  ${bytes.length} byte · ${sidor} sidor · ${platt.length} tecken`);
-  console.log(`  kundtyp i TEXTEN: företagsord ${f} · privatord ${p}  → ${f > p * 2 ? 'FÖRETAG' : p > f * 2 ? 'PRIVAT (fel dokumentklass)' : 'OKLAR — får inte kureras'}`);
+  // TRÖSKELN RÄTTAD 2026-08-10: första versionen dömde på ren kvot (f > p*2), vilket gjorde
+  // 1 företagsord mot 0 privatord till "FÖRETAG". Ett enda ord är inget belägg — det är brus som
+  // passerar en division. En heuristik får UPPHÄVA ett påstående men aldrig SKAPA ett, och just
+  // Tele2 är dokumentet bibeln varnar för. Nu krävs en absolut miniminivå innan klassen uttalas.
+  const MIN_BELAGG = 5;
+  const klass = (f >= MIN_BELAGG && f > p * 2) ? 'FÖRETAG'
+    : (p >= MIN_BELAGG && p > f * 2) ? 'PRIVAT (fel dokumentklass)'
+    : `OKLAR — för svagt belägg (kräver minst ${MIN_BELAGG} träffar), får inte kureras`;
+  console.log(`  kundtyp i TEXTEN: företagsord ${f} · privatord ${p}  → ${klass}`);
   console.log(`  klausulord: ${kl}`);
   console.log(`  titel: «${platt.slice(0, 120)}»`);
 
