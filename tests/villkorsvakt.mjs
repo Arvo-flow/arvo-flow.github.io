@@ -168,6 +168,20 @@ describe('villkorsboken · varje post bär sin proveniens', () => {
         `${k}: läsning och ankare ska ha samma datum — de sker i samma sekund mot samma bytes`);
     });
 
+    // ── STEG 1 I MÅL (grundarkrav 2026-08-10) ────────────────────────────────────────────
+    // Avtalsmotorns gröna ljus kräver BÅDA lagren på varje post: förstalarmet på
+    // distributionspunkten (fångar en ny version på ny adress) OCH den lästa förseglingen
+    // (bevisar att klausulen står där). En post med bara det ena är halvvaktad, och halvvaktad
+    // ser ut som vaktad. Låset gäller varje framtida leverantör i steg 2 med.
+    test(`${k}: bär båda lagren — förstalarm och läst försegling`, () => {
+      const p = VILLKORSBOK[k];
+      assert.match(p.villkorssida ?? '', /^https:\/\//,
+        `${k} saknar villkorssida — förstalarmet finns inte, bara hashen`);
+      assert.match(p.dokumentSha256 ?? '', /^[0-9a-f]{64}$/,
+        `${k} saknar försegling — klausulen är inte bevisat läst`);
+      assert.ok((p.kontrollfras ?? '').length >= 20, `${k} saknar kontrollfras`);
+    });
+
     test(`${k}: är vaktbar — någon vakt kan faktiskt larma`, () => {
       const d = bedomVillkorspost(VILLKORSBOK[k], SETT({ hash: VILLKORSBOK[k].dokumentSha256 ?? 'x'.repeat(64) }), IDAG);
       assert.notEqual(d.utfall, VILLKOR_UTFALL.OVAKTBAR,
