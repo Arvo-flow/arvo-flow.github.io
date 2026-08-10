@@ -5,7 +5,7 @@
 // oläsbart dokument aldrig rapporteras som "klausulen är borta".
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { lasKlausul, normaliseraOrdagrant, LAS_UTFALL, MIN_TEXTLAGER } from '../lib/villkorslasare.js';
+import { lasKlausul, normaliseraOrdagrant, narmasteAvvikelse, LAS_UTFALL, MIN_TEXTLAGER } from '../lib/villkorslasare.js';
 
 const CITAT = 'Uppsägningstid är tre (3) månader. Efter Avtalstiden förlängs Avtalstiden automatiskt löpande med tre (3) månader.';
 const KONTROLL = 'Allmänna villkor för företag, bostadsrättsföreningar och fastighetsägare';
@@ -86,6 +86,33 @@ describe('villkorsläsaren · okänt är inte samma sak som saknas', () => {
     const d = lasKlausul({ text: utanCitat, citat: CITAT, kontrollfras: KONTROLL });
     assert.equal(d.utfall, LAS_UTFALL.SAKNAS);
     assert.match(d.skal, /läsningen fungerar/);
+  });
+
+  // ── BEVIS I STÄLLET FÖR UPPMJUKNING ──────────────────────────────────────────────────────
+  // Bahnhofs verkliga extraktion tappade ett ä ("Dessa villkor galler"). Ett SAKNAS kan alltså
+  // bero på att klausulen rört sig ELLER på att textlagret mist ett tecken. Svaret är aldrig att
+  // mjuka upp matchningen — det är att redovisa exakt var överensstämmelsen bryter.
+  test('SAKNAS bär bevis om var matchningen bröt', () => {
+    const nastan = CITAT.replace('automatiskt', 'automatlskt');   // ett tecken fel, som ett OCR-fel
+    const d = lasKlausul({ text: DOK(nastan), citat: CITAT, kontrollfras: KONTROLL });
+    assert.equal(d.utfall, LAS_UTFALL.SAKNAS);
+    assert.ok(d.brytpunkt > 40, 'brytpunkten ska visa hur långt texten stämde');
+    assert.match(d.bevis, /matchade \d+ av \d+ tecken/);
+    assert.match(d.bevis, /dokumentet har där/);
+  });
+
+  test('ingen överensstämmelse alls redovisas som just det', () => {
+    const helt_annat = `${fyll(30)} ${KONTROLL} ${fyll(30)}`;
+    const d = lasKlausul({ text: helt_annat, citat: CITAT, kontrollfras: KONTROLL });
+    assert.equal(d.utfall, LAS_UTFALL.SAKNAS);
+    assert.match(d.bevis, /ingen meningsfull överensstämmelse/);
+  });
+
+  test('bevisningen mjukar aldrig upp domen — SAKNAS förblir SAKNAS', () => {
+    // 109 av 110 tecken rätt är fortfarande fel. Ingen tröskel, ingen poäng, ingen tolkning.
+    const d = lasKlausul({ text: DOK(CITAT.replace('(3) månader.', '(3) månader,')), citat: CITAT, kontrollfras: KONTROLL });
+    assert.equal(d.ok, false);
+    assert.equal(d.utfall, LAS_UTFALL.SAKNAS);
   });
 
   test('ett för kort citat får aldrig kallas belägg', () => {

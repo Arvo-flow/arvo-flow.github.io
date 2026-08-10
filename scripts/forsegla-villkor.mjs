@@ -53,7 +53,9 @@ for (const [nyckel, post] of Object.entries(VILLKORSBOK)) {
   console.log(`  textlager: ${sidor} sidor · ${normaliseraOrdagrant(text).length} tecken (utan blanksteg)` + (stadnot ? ` · ${stadnot}` : ''));
 
   const dom = lasKlausul({ text, citat: post.citat, kontrollfras: post.kontrollfras });
-  console.log(`  läsning: ${dom.utfall.toUpperCase()} — ${dom.skal}`);
+  const ORD = { funnen: 'FUNNEN', saknas: 'SAKNAS', olasbar: 'OLÄSBAR' };
+  console.log(`  läsning: ${ORD[dom.utfall] ?? dom.utfall.toUpperCase()} — ${dom.skal}`);
+  if (dom.bevis) console.log(`  brytpunkt: ${dom.bevis}`);
 
   if (dom.utfall !== LAS_UTFALL.FUNNEN) {
     allaFunna = false;
