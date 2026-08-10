@@ -1,0 +1,110 @@
+
+═══════ tele2 · Allmänna Villkor Tele2 2026-04-16 ═══════
+  https://assets.ctfassets.net/nproz1mx87a8/11KpAbUpjcKtMeus3gWYNw/fb2477ab65dd0297d74f290e2a10bd89/Allmanna_Villkor_Tele2_2026-04-16.pdf
+Warning: TT: undefined function: 21
+Warning: TT: undefined function: 21
+  2809216 byte · 8 sidor · 40605 tecken
+  kundtyp i TEXTEN: företagsord 1 · privatord 0  → FÖRETAG
+  klausulord: 15
+  titel: «Abonnemangsvillkor för privattjänster Gäller fr.o.m. 2026-04-16 Villkor Villkor för privatabonnemang på Tele2s tjänster »
+  ── klausulomgivning ──
+  « - och/eller fakturaadress inom Sverige en (1) månad i förväg samt meddela ändring av telefonnummer och e - postadress. A 9 Avtalstid och uppsägning m.m. A 9.1 Uppsägningstiden för Avtalet är en (1) månad om inte bindningstid gäller för avtalet. Avtalet gäller för den bindningstid som framgår av specialbestämmelser i erbjudande eller av Kundens beställning. Efter bindningstiden»
+  ── klausulomgivning ──
+  «ngstid som framgår av specialbestämmelser i erbjudande eller av Kundens beställning. Efter bindningstidens utgång gäller Avtalet tills vidare med en (1) månads uppsägningstid. A 9.2 Om Tele2s rätt eller möjlighet att distribuera Tjänsten upphör för den fastighet där Tjänsten brukas av Kunden, upphör Avtalet utan särskild uppsägning. Tele2 ska dock om möjligt underrätta Kunden i»
+  ── klausulomgivning ──
+  «ring av telefonnummer tillhörande Mobiltjänsten kommer Mobiltjänsten att upphöra. Kunden är dock betalningsskyldig för eventuell återstående bindnings - /avtalsuppsägningstid. E 5 Utrustning E 5.1 Mobiltjänsten förutsätter att Kunden har nödvändig utrustning för nyttjande av Mobiltjänsten. Krav på speci fi k utrustning framgår i förekommande fall i då gällande beskrivning av Mo»
+
+═══════ telenor · General Terms Large Accounts TM 32 217 ═══════
+  https://assets.ctfassets.net/d48yc3frismn/6qvL3vnTfrVctA7xmVMzPb/a2bddf7727a1067c0e828f14fbbaac40/General_Terms_and_Conditions_Large_Accounts_-_TM_32_217_-_26-08.pdf
+Warning: TT: undefined function: 21
+Warning: TT: undefined function: 21
+  3550691 byte · 9 sidor · 189 tecken
+  kundtyp i TEXTEN: företagsord 0 · privatord 0  → OKLAR — får inte kureras
+  klausulord: 0
+  titel: «Sensitivity: Open Sensitivity: Open Sensitivity: Open Sensitivity: Open Sensitivity: Open Sensitivity: Open Sensitivity:»
+  (ingen träff på "uppsägningstid" — dokumentet bär troligen inte klockan)
+
+═══════ telenor · TD32109 ═══════
+  https://mediearkivet.telenor.se/Data/mw/Pdf/TD32109.pdf
+Warning: TT: undefined function: 32
+Warning: TT: undefined function: 32
+  1175908 byte · 4 sidor · 167 tecken
+  kundtyp i TEXTEN: företagsord 0 · privatord 0  → OKLAR — får inte kureras
+  klausulord: 0
+  titel: «Sensitivity: Open Data processing agreement Version D, 2025-05-19 2 Data processing agreement Version D, 2025-05-19 3 Da»
+  (ingen träff på "uppsägningstid" — dokumentet bär troligen inte klockan)
+
+═══════ telenor · TB31206 ═══════
+  https://mediearkivet.telenor.se/Data/mw/Pdf/TB31206.pdf
+  197596 byte · 4 sidor · 16109 tecken
+  kundtyp i TEXTEN: företagsord 15 · privatord 0  → FÖRETAG
+  klausulord: 3
+  titel: «telenor.se/foretag Kontokreditvillkor Företag Version B Giltiga fr o m 2022-12-16 1. Allmänt 1.1 Dessa kontokreditvillko»
+  ── klausulomgivning ──
+  «lenor, så länge skyldigheterna enligt Kontokreditavtalet inte är uppfyllda. 10. Uppsägning 10.1 Om inte annat avtalats gäller Abonnemangs- avtalets villkor och uppsägningstid även för Kontokredit- avtalet. Telenors Uppsägning av Kontokreditavtalet ska ske skriftligen om Kunden begär det. 10.2 Kreditgivaren har vidare rätt att säga upp Konto- kreditavtalet, med omedelbar verkan »
+
+═══════ telenor · TD32112 ═══════
+  https://mediearkivet.telenor.se/Data/mw/Pdf/TD32112.pdf
+Warning: TT: undefined function: 32
+Warning: TT: undefined function: 32
+  1150316 byte · 4 sidor · 167 tecken
+  kundtyp i TEXTEN: företagsord 0 · privatord 0  → OKLAR — får inte kureras
+  klausulord: 0
+  titel: «Sensitivity: Open Data processing agreement Version D, 2025-05-19 2 Data processing agreement Version D, 2025-05-19 3 Da»
+  (ingen träff på "uppsägningstid" — dokumentet bär troligen inte klockan)
+
+═══════ telenor · TA31210 ═══════
+  https://mediearkivet.telenor.se/Data/mw/Pdf/TA31210.pdf
+  204914 byte · 4 sidor · 17425 tecken
+  kundtyp i TEXTEN: företagsord 5 · privatord 0  → FÖRETAG
+  klausulord: 0
+  titel: «telenor.se/foretag Account Credit Terms Company Version A Valid from 2022-12-16 1. General 1.1 These account credit term»
+  (ingen träff på "uppsägningstid" — dokumentet bär troligen inte klockan)
+
+═══════ telenor · ctf 0883e3f1 ═══════
+  https://assets.ctfassets.net/d48yc3frismn/3bV6dN071TRUjztSrAEhYX/4ecafd5e0ab755b21d0f8e072925052e/0883e3f1-4e0e-434e-bc30-21c6bae6c25d.pdf
+  3181770 byte · 8 sidor · 440 tecken
+  kundtyp i TEXTEN: företagsord 7 · privatord 0  → FÖRETAG
+  klausulord: 0
+  titel: «Allmänna villkor I för tjänster till företag - SME I Version R Allmänna villkor I för tjänster till företag - SME I Vers»
+  (ingen träff på "uppsägningstid" — dokumentet bär troligen inte klockan)
+
+═══════ telenor · ctf a2f0c6c4 ═══════
+  https://assets.ctfassets.net/d48yc3frismn/3lFS3Owgm7Uf2ROqI5lkfk/2ddd6f707a33e4e10a20c7dd639cfe71/a2f0c6c4-5845-413b-90e3-f187a4bd6e8d.pdf
+Warning: TT: undefined function: 21
+Warning: TT: undefined function: 21
+  3210457 byte · 8 sidor · 171 tecken
+  kundtyp i TEXTEN: företagsord 0 · privatord 0  → OKLAR — får inte kureras
+  klausulord: 0
+  titel: «Sensitivity: Open Sensitivity: Open Sensitivity: Open Sensitivity: Open Sensitivity: Open Sensitivity: Open Sensitivity:»
+  (ingen träff på "uppsägningstid" — dokumentet bär troligen inte klockan)
+
+═══════ telenor · ctf bbef89f9 ═══════
+  https://assets.ctfassets.net/d48yc3frismn/4Cy4UHhf7vpAYIMSGy5Tms/77e25171ab047c24424f1b8feb5a95d0/bbef89f9-ec5f-4320-a1d2-c7502817f764.pdf
+  3468162 byte · 8 sidor · 468 tecken
+  kundtyp i TEXTEN: företagsord 0 · privatord 0  → OKLAR — får inte kureras
+  klausulord: 0
+  titel: «General Terms and Conditions for Services to Companies I Version N General Terms and Conditions for Services to Companie»
+  (ingen träff på "uppsägningstid" — dokumentet bär troligen inte klockan)
+
+═══════ spiris · Spiris användningsvillkor ═══════
+  https://www.spiris.se/globalassets/dokument/legal/anvandningsvillkor/spiris-anvandningsvillkor.pdf
+  438810 byte · 29 sidor · 65236 tecken
+  kundtyp i TEXTEN: företagsord 12 · privatord 0  → FÖRETAG
+  klausulord: 2
+  titel: «Spiris Användningsvillkor för Programvara Version 2.1, 2026  06  01 Innehållsförteckning Definitioner.................»
+  ── klausulomgivning ──
+  «arknad, med tolv månaders föregående meddelande, om inte den avvecklade tjänsten orsakades av force majeure-omständigheter som beskrivs i punkt 5.4, då kortare uppsägningstider kan gälla. Kunden har rätt till en proportionell återbetalning för eventuella Avgifter som betalats i förskott för tidsperioden efter avvecklingen. Kunden måste sluta använda programvaran efter meddeland»
+  ── klausulomgivning ──
+  «enskommits mellan Parterna, inklusive i Orderbekräftelsen, kan Parterna säga upp Licensavtalet för enkelhetens skull Sida 27 av 29 skriftligen med tre månaders uppsägningstid, med verkan från och med den sista dagen i den tredje månaden. 5.6.2. Spiris har alltid rätt att säga upp Licensavtalet med omedelbar verkan om (i) Kunden eller dess ledning har dömts eller misstänks bryta»
+
+═══════ spiris · Spiris särskilda villkor ═══════
+  https://www.spiris.se/globalassets/dokument/legal/spiris-sarskilda-villkor.pdf
+  319051 byte · 14 sidor · 39756 tecken
+  kundtyp i TEXTEN: företagsord 11 · privatord 0  → FÖRETAG
+  klausulord: 4
+  titel: «Spiris Särskilda villkor Version 1.2, 2026  06  01 När du beställer programvaror från Spiris  Visma Spiris AB  accep»
+  (ingen träff på "uppsägningstid" — dokumentet bär troligen inte klockan)
+
+Sonden kurerar ingenting. Ett dokument får bli villkorsbokspost först när det är
+bevisat FÖRETAGSdokument, har en bevisad distributionspunkt och en ordagrant läst klausul.
