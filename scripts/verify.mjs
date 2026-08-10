@@ -51,21 +51,24 @@ for (const v of targets) {
 
   for (const n of res.notes ?? []) console.log(`  · ${n}`);
   for (const c of res.checks ?? []) {
-    console.log(`  ${c.ok ? '✓' : '✗ DRIFT'} ${c.name}: prisbok ${c.expected} · live ${c.actual}`);
+    // Fabriken vaktar sedan 2026-08-09 två sorters böcker. En logg som kallar avtalsvillkor för
+    // "pris" läses fel klockan tre på natten — och en vakt tolkas efter sin logg, inte sin kod.
+    const bok = (v.kind ?? 'pris') === 'villkor' ? 'villkorsbok' : 'prisbok';
+    console.log(`  ${c.ok ? '✓' : '✗ DRIFT'} ${c.name}: ${bok} ${c.expected} · live ${c.actual}`);
   }
 
   const drift = (res.checks ?? []).filter((c) => !c.ok);
   const fatal = res.fatal || !(res.checks?.length); // oåtkomlig källa eller inga checkar = rött
   if (fatal || drift.length) {
     anyFail = true;
-    console.error(`  → RÖTT [${v.id}]: ${fatal ? 'källa oåtkomlig/parse-fel — kan inte verifiera' : `${drift.length} pris drivit`}`);
+    console.error(`  → RÖTT [${v.id}]: ${fatal ? 'källa oåtkomlig/parse-fel — kan inte verifiera' : `${drift.length} ${(v.kind ?? 'pris') === 'villkor' ? 'villkorspost(er) kräver en människa' : 'pris drivit'}`}`);
   } else {
     console.log(`  → ✓ [${v.id}] håller (${res.checks.length} tal verifierade mot källan)`);
   }
 }
 
 if (anyFail) {
-  console.error('\n[verify] FAIL — minst en källa drivit eller är oåtkomlig. Granska, uppdatera prisboken + bumpa lastVerified, kör testsviten.');
+  console.error('\n[verify] FAIL — minst en källa drivit eller är oåtkomlig. Granska, uppdatera pris-/villkorsboken + bumpa verifieringsdatum, kör testsviten.');
   process.exit(1);
 }
 console.log('\n[verify] ✓ alla körda verifierare håller mot sina källor — ankarena håller.');
