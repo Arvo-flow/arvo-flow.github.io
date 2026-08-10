@@ -40,12 +40,28 @@ describe('Verifierar-registry — fabrikens kontrakt', () => {
     }
   });
 
-  test('villkorsvakter pekar på en verklig post i villkorsboken', () => {
-    const villkorsvakter = VERIFIERS.filter((v) => v.kind === 'villkor');
-    for (const v of villkorsvakter) {
-      assert.ok(Object.keys(VILLKORSBOK).length >= 1,
-        `${v.id}: villkorsboken är tom — det finns inget att vakta`);
-    }
+  // TANDPROTES UTBYTT (2026-08-09): raden här asserterade bara att boken inte var tom, inuti en
+  // loop över vakterna — den band ingenting till någonting och passerade dessutom tomt om det
+  // inte fanns en enda villkorsvakt. Ett lås som såg ut som ett lås. Nu binds vakt till bok:
+  // varje post i VILLKORSBOK måste faktiskt nås av en vakt, annars faller sviten.
+  test('villkorsboken har en vakt (annars styr ovaktade regler uppsägningsdatum)', () => {
+    assert.ok(VERIFIERS.some((v) => v.kind === 'villkor'),
+      'ingen villkorsvakt registrerad — avtalsreglerna står obevakade');
+  });
+
+  // ÄRLIGHET OM VAD DEN HÄR RADEN ÄR: täckningen härleds ur samma bok den jämförs mot, så den
+  // kan aldrig fånga en NY post — den dokumenterar en konstruktion (vakten itererar hela boken)
+  // i stället för att bevaka en drift. Den får stå kvar som skydd mot att någon byter ut
+  // iterationen mot en handskriven lista, inget mer. Det verkliga låset mot en ovaktbar ny post
+  // bor i tests/villkorsvakt.mjs ("ingen post får vara ovaktbar") — där det biter.
+  test('varje post i villkorsboken täcks av en villkorsvakt (ingen post utanför)', () => {
+    const tackta = new Set(
+      VERIFIERS.filter((v) => v.kind === 'villkor')
+        .flatMap((v) => (typeof v.tacker === 'function' ? v.tacker() : [])),
+    );
+    const otackta = Object.keys(VILLKORSBOK).filter((k) => !tackta.has(k));
+    assert.deepEqual(otackta, [], `villkorsposter utan vakt: ${otackta.join(', ')}`);
+    assert.ok(tackta.size >= 1, 'villkorsvakten deklarerar ingen täckning alls');
   });
 
   test('varje verifierare deklarerar sin sort (ingen vakt utan hemvist)', () => {
