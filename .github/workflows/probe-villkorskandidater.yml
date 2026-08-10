@@ -1,6 +1,10 @@
 name: Sond · villkorskandidater (inför bokens utbyggnad)
 # Rekognoscering, inte kurering. Svarar på: finns ett FÖRETAGSvillkorsdokument, vilken
 # dokumentklass är det, och var ligger distributionspunkten. Kurerar aldrig något.
+# Utan detta block har github-actions[bot] ingen skrivrätt: spara-steget föll på 403 i tre
+# försök och sondsvaret gick förlorat — trots att jobbet lyste grönt.
+permissions:
+  contents: write
 on:
   workflow_dispatch:
 jobs:
@@ -18,9 +22,12 @@ jobs:
       - run: |
           set -o pipefail
           node scripts/probe-villkorskandidater.mjs 2>&1 | tee /tmp/sond.txt
+      # continue-on-error TOGS BORT 2026-08-10: tanden satt bara på loggraden. Steget skrev
+      # visserligen "✗ sondsvaret kunde INTE sparas" och avslutade med exit 1 — men jobbet blev
+      # ändå grönt, och ett förlorat bevis bakom en grön bock är precis den sjukdom vi jagar.
+      # Går beviset förlorat ska körningen vara röd.
       - name: Spara sondsvaret
         if: always()
-        continue-on-error: true
         run: |
           git config user.email "bot@arvoflow.se"
           git config user.name "Arvo Diag Bot"
