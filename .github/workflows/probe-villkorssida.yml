@@ -1,0 +1,19 @@
+name: Sond · villkorssidan (distributionspunkten)
+# Hittar sidan där leverantören LÄNKAR sina villkor. Beviset är binärt: sidan är rätt om den
+# bär exakt den PDF vi fastnålat. Ingen gissad URL får någonsin kureras in i villkorsboken.
+on:
+  workflow_dispatch:
+    inputs:
+      nycklar:
+        description: 'Villkorsbokens nycklar att sondera (tomt = alla utan villkorssida)'
+        default: ''
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/probe-villkorssida.mjs ${{ github.event.inputs.nycklar }}
