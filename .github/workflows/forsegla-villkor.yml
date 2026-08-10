@@ -1,0 +1,39 @@
+name: Försegla villkorsboken (läst, aldrig gissad)
+# Läser klausulen ORDAGRANT ur leverantörens PDF och förseglar endast vid träff.
+# Misslyckas läsningen med ett tecken förblir posten röd — det är hela poängen.
+on:
+  workflow_dispatch:
+    inputs:
+      forsegla:
+        description: 'Skriv in beviset i lib/contract-intel.js (annars bara läsning)'
+        default: 'nej'
+permissions:
+  contents: write
+jobs:
+  las:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save pdfjs-dist
+      - name: Läs klausulerna
+        run: node scripts/forsegla-villkor.mjs ${{ github.event.inputs.forsegla == 'ja' && '--forsegla' || '' }}
+      - name: Commit förseglingen
+        if: always() && github.event.inputs.forsegla == 'ja'
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          for i in 1 2 3; do
+            git fetch origin main
+            git stash -u -- lib/contract-intel.js 2>/dev/null || true
+            git checkout -B forsegling origin/main
+            git checkout stash@{0} -- lib/contract-intel.js 2>/dev/null || git stash pop || true
+            git add lib/contract-intel.js
+            git commit -m "villkorsbok: försegling förtjänad genom läsning [skip ci]" || echo "inget nytt"
+            if git push origin HEAD:main; then echo "förseglingen sparad"; break; fi
+            sleep $((i * 6))
+          done

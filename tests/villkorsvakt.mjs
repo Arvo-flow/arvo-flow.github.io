@@ -155,6 +155,19 @@ describe('villkorsboken · varje post bär sin proveniens', () => {
     // En post fastnålad vid en oföränderlig adress utan villkorssida har ingen vakt som ens KAN
     // larma. Den får inte finnas i boken — den skulle styra ett uppsägningsdatum med en
     // bevakning som bara är inbillad. Låset gäller varje befintlig OCH varje framtida post.
+    // ── BEVISBÖRDAN FÖR ETT FÖRTJÄNAT GRÖNT (grundarkrav 2026-08-09) ────────────────────
+    // En försegling betyder "citatet lästes ordagrant ur exakt dessa bytes". Utan kontrollfras
+    // kan läsningen inte bevisas ha fungerat — då får posten aldrig bära ett ankare. Låset gör
+    // det omöjligt att någonsin klistra in en hash utan att ha förtjänat den.
+    test(`${k}: förseglad ⇒ läst (ingen hash utan bevisad läsning)`, () => {
+      const p = VILLKORSBOK[k];
+      if (!p.dokumentSha256) return;                       // oförseglad post är redan röd
+      assert.ok((p.kontrollfras ?? '').length >= 20,
+        `${k} bär ett ankare men ingen kontrollfras — läsningen går inte att bevisa`);
+      assert.equal(p.forsegladDatum, p.verifierad,
+        `${k}: läsning och ankare ska ha samma datum — de sker i samma sekund mot samma bytes`);
+    });
+
     test(`${k}: är vaktbar — någon vakt kan faktiskt larma`, () => {
       const d = bedomVillkorspost(VILLKORSBOK[k], SETT({ hash: VILLKORSBOK[k].dokumentSha256 ?? 'x'.repeat(64) }), IDAG);
       assert.notEqual(d.utfall, VILLKOR_UTFALL.OVAKTBAR,
