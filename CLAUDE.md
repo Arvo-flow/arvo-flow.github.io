@@ -152,7 +152,26 @@ lika säkert som en påhittad besparing.
    namnge exakt vad som återstår att bevisa, och hämta beviset. Att redovisa en
    öppen lucka är styrka; att måla över den med en kvalificerad gissning är det
    brott plikten finns för att stoppa.
-5. **Tester och maskinvakter är minnet av varje bevisad sanning.** Ett fel är inte
+5. **Vaktens PREMISS, inte bara dess mekanism.** (Tillagd 2026-08-09 efter villkorsvakten.)
+   Innan något får kallas vakt ska två frågor besvaras i skrift, i koden:
+   **vilken verklig förändring UTLÖSER larmet — och vilken utlöser det INTE?**
+   Den andra frågan är den bärande. "Vad fångar den?" besvaras ur koden man just skrivit och
+   bekräftar alltid det man hoppades; "vad fångar den inte?" tvingar fram en inventering av hur
+   artefakten faktiskt kan förändras. Villkorsvakten var noggrant testad (blindad domare fällde
+   5 av 12), vackert motiverad — och oförmögen att någonsin larma, eftersom dokumentet låg på en
+   innehållsadresserad adress vars innehåll aldrig kan ändras. Testerna bevisade att MEKANISMEN
+   reagerade; de kunde aldrig bevisa att SIGNALEN någonsin rörde sig. Tänderna satt på fel axel.
+   **En vakt utan blindfläck existerar inte — påstår någon motsatsen är påståendet felet.**
+   Maskinvakt: `lib/vaktkontrakt.js` + `tests/vaktkontrakt.mjs` kräver `fangar` och `blind` av
+   varje registrerad verifierare, avvisar platshållare och allvetandeanspråk, och fäller sviten
+   för en odeklarerad vakt. Kontraktet är en TVINGANDE FRÅGA, aldrig ett bevis: maskinen kan se
+   att svaret finns, aldrig att det är sant. Beviset bor kvar i sabotaget som fäller sviten.
+6. **Granskarens blick är inte byggarens.** Samma modell som byggde villkorsvakten på en timme
+   hittade dess strukturella hål på en enda genomläsning — när uppdraget bytte från "leverera en
+   vakt" till "hitta var den kan bli grön på fel grund". Skillnaden var inte kunskap utan roll.
+   Därför: **en vakt är inte klar förrän den lästs en gång med det enda uppdraget att hitta var
+   det gröna kan vara osant.** Den vändan kostar minuter och har högst avkastning av allt vi gör.
+7. **Tester och maskinvakter är minnet av varje bevisad sanning.** Ett fel är inte
    åtgärdat förrän det är testlåst (regel 7). Lita på sviten, prosakravet,
    sifferrevisorn och claims-audit — och utöka dem när en ny sanning bevisats, så
    att nästa gissning fångas av en maskin och inte av tur.

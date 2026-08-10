@@ -87,6 +87,7 @@ import './tystnadsfel.mjs';
 import './plan-pris.mjs';
 import './mattsystem.mjs';
 import './villkorsvakt.mjs';
+import './vaktkontrakt.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,
