@@ -42,15 +42,15 @@ for (const [nyckel, post] of Object.entries(VILLKORSBOK)) {
   const hash = createHash('sha256').update(bytes).digest('hex');
   console.log(`  hämtat: ${bytes.length} byte · sha256 ${hash}`);
 
-  let text = '', sidor = 0;
+  let text = '', sidor = 0, stadnot = null;
   try {
-    ({ text, sidor } = await extraheraTextlager(bytes));
+    ({ text, sidor, stadnot } = await extraheraTextlager(bytes));
   } catch (e) {
     console.log(`  ✗ OLÄSBAR — textlagret gick inte att extrahera (${e.message.slice(0, 90)})`);
     allaFunna = false;
     continue;
   }
-  console.log(`  textlager: ${sidor} sidor · ${normaliseraOrdagrant(text).length} tecken (utan blanksteg)`);
+  console.log(`  textlager: ${sidor} sidor · ${normaliseraOrdagrant(text).length} tecken (utan blanksteg)` + (stadnot ? ` · ${stadnot}` : ''));
 
   const dom = lasKlausul({ text, citat: post.citat, kontrollfras: post.kontrollfras });
   console.log(`  läsning: ${dom.utfall.toUpperCase()} — ${dom.skal}`);
