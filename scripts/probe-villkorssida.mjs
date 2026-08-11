@@ -11,7 +11,15 @@
 //
 // Generisk med avsikt: villkorsboken ska växa från två till åtta leverantörer, och varje ny post
 // behöver samma bevis. En sond som bara klarade Bahnhof hade fått skrivas om åtta gånger.
+import { deklarera } from '../lib/sondkontrakt.js';
 import { VILLKORSBOK } from '../lib/contract-intel.js';
+
+// Sondkontraktet: mätningen får inte produceras omärkt (lib/sondkontrakt.js).
+deklarera({
+  namn: 'probe-villkorssida',
+  fangar: 'Vilken sida som faktiskt länkar vår fastnålade PDF — beviset är binärt och kräver ingen tolkning.',
+  blind: 'En villkorssida som bara nås via sökfunktion eller meny bakom JS-interaktion; sonden följer länkar, den klickar sig inte fram.',
+});
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 const NAMNER_VILLKOR = /villkor|avtalsvillkor|terms|allmanna|allmänna/i;
@@ -44,6 +52,7 @@ const poster = Object.entries(VILLKORSBOK).filter(([k, p]) => (nycklar.length ? 
 if (poster.length === 0) { console.log('Varje post har redan en kurerad villkorssida.'); process.exit(0); }
 
 let allaHittade = true;
+
 for (const [nyckel, post] of poster) {
   const start = new URL(post.kalla).origin + '/';
   console.log(`\n═══ ${nyckel} · ${post.supplier} ═══`);

@@ -89,6 +89,7 @@ import './mattsystem.mjs';
 import './villkorsvakt.mjs';
 import './vaktkontrakt.mjs';
 import './villkorslasare.mjs';
+import './sondkontrakt.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

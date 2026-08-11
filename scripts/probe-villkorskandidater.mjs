@@ -16,8 +16,16 @@
 // KANDIDATERNA ÄR GRUNDADE, INTE PÅHITTADE: varje leverantör nedan är en vi redan vaktar priset
 // på i verifierarfabriken (alltså en vi vet att våra kunder faktiskt har) eller en Nivå 1-aktör
 // där Arvo enligt Switch-doktrinen faktiskt avfyrar — och det är där avtalsklockan betyder mest.
+import { deklarera } from '../lib/sondkontrakt.js';
 import { VILLKORSBOK } from '../lib/contract-intel.js';
 import { withPage } from '../lib/verifiers/core.mjs';
+
+// Sondkontraktet: mätningen får inte produceras omärkt (lib/sondkontrakt.js).
+deklarera({
+  namn: 'probe-villkorskandidater',
+  fangar: 'Om en leverantör publicerar ett företagsvillkorsdokument som går att nå utloggad, och var distributionspunkten i så fall ligger.',
+  blind: 'Sidor bakom botmur, inloggning eller samtyckesvägg — Fortnox och Adobe gav noll respektive ett tecken. Det betyder OKÄNT, aldrig att villkoren saknas.',
+});
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
@@ -70,6 +78,7 @@ const pdfLankar = (html, bas) => [...html.matchAll(/(?:href|src)=["']([^"']+\.pd
   .filter(Boolean);
 
 const klass = (s) => (FORETAGSMARKOR.test(s) ? 'FÖRETAG' : PRIVATMARKOR.test(s) ? 'privat' : '?');
+
 
 for (const k of KANDIDATER) {
   console.log(`\n═══════ ${k.nyckel} · ${k.supplier} ═══════`);

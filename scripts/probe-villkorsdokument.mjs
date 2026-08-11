@@ -13,7 +13,15 @@
 //
 // Skriptet kurerar ingenting. Det läser, räknar och citerar — underlaget för ett kureringsbeslut
 // som en människa fattar på seende. Varje URL nedan kommer ur sondsvaret, ingen är påhittad.
+import { deklarera } from '../lib/sondkontrakt.js';
 import { extraheraTextlager } from '../lib/pdf-textlager.js';
+
+// Sondkontraktet: mätningen får inte produceras omärkt (lib/sondkontrakt.js).
+deklarera({
+  namn: 'probe-villkorsdokument',
+  fangar: 'Om ett kandidatdokument är företags- eller privatvillkor, och hur klausulen lyder ordagrant.',
+  blind: 'Betydelsen. Sonden räknar ord och citerar text — den avgör aldrig om en klausul JURIDISKT gäller kundens tjänst, och ett dokument kan vara företagsklassat men fel produkt.',
+});
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
@@ -46,6 +54,7 @@ const PRIVATORD = /\b(konsument|privatperson|consumer|distansavtalslagen|ångerr
 const KLAUSULORD = /uppsägningstid|uppsagningstid|avtalstid|bindningstid|förlängs|forlangs/gi;
 
 const rakna = (t, rx) => (t.match(rx) ?? []).length;
+
 
 for (const k of KANDIDATER) {
   console.log(`\n═══════ ${k.nyckel} · ${k.namn} ═══════`);
