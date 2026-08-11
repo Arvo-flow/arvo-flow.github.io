@@ -1,0 +1,42 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-saas-valuta
+║ FÅNGAR: Om en SaaS-leverantör publicerar ett publikt listpris i EUR eller SEK, och vilka tal som i så fall står där.
+║ BLIND FÖR: Priser som bara visas efter val av land i en inloggad kassa eller via geo-IP från Sverige — sonden kör från en GitHub-runner, inte från en svensk kontorsuppkoppling.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+
+═══════ pipedrive ═══════
+  · https://www.pipedrive.com/en/pricing
+      → 12206 tecken · valutamarkörer: EUR×4 · USD×18
+          [EUR] «…7 wins across the business. 174 of those were of a value of €50,000 or less. The overall turnover in that 12 months was…»
+          [EUR] «…€50,000 or less. The overall turnover in that 12 months was €11 million. So, we'd increased turnover from €7 million to…»
+          [EUR] «…12 months was €11 million. So, we'd increased turnover from €7 million to €11 million, which was brilliant. Paul McKenna…»
+          [EUR] «…€11 million. So, we'd increased turnover from €7 million to €11 million, which was brilliant. Paul McKenna Sales and Mar…»
+  · https://www.pipedrive.com/sv/priser
+      → oläsbar eller tom (0 tecken)
+  · https://www.pipedrive.com/de/preise
+      → oläsbar eller tom (0 tecken)
+
+═══════ hubspot ═══════
+  · https://www.hubspot.com/pricing/crm/starter
+      → 11621 tecken · valutamarkörer: USD×11
+  · https://www.hubspot.de/pricing/crm/starter
+      → 14278 tecken · valutamarkörer: EUR×11
+          [EUR] «…ösungen Lösungen Preise Ressourcen Ressourcen Jetzt starten EUR (€) Plattform-Lösungen Plattform Kostenlose Tools Bundle…»
+          [EUR] «…en Lösungen Preise Ressourcen Ressourcen Jetzt starten EUR (€) Plattform-Lösungen Plattform Kostenlose Tools Bundle zusa…»
+          [EUR] «…HubSpot. Kostenlose Version Basis-Tools für den Einstieg 0 €/Monat Kostenlos für bis zu 2 Benutzer. Keine Kreditkarte e…»
+          [EUR] «…rieb, Kundenservice sowie Content- und Datenmanagement Ab 7 €/Monat/Lizenz 20 €/Monat/Lizenz Abrechnungszeitraum Monatli…»
+  · https://www.hubspot.com/pricing/crm/starter?currency=EUR
+      → 11621 tecken · valutamarkörer: USD×11
+
+═══════ zoho ═══════
+  · https://www.zoho.com/crm/zohocrm-pricing.html
+      → 3555 tecken · valutamarkörer: USD×11
+  · https://www.zoho.com/se/crm/zohocrm-pricing.html
+      → oläsbar eller tom (0 tecken)
+  · https://www.zoho.com/eu/crm/zohocrm-pricing.html
+      → oläsbar eller tom (0 tecken)
+
+Sonden kurerar ingenting. Ett tal blir ett prisbokankare först när en verifierare i
+fabriken vaktar det veckovis — annars är det bara en siffra någon en gång såg.
