@@ -1,0 +1,36 @@
+name: Sond · SaaS-valuta (steg 0 för prisgrinden)
+# Prisgrinden kan bara fyra när prisboken bär en rad i SAMMA valuta som fakturan (FX är förbjudet).
+# saas-crm har i dag 4 rader, samtliga USD. Sonden svarar på om EUR/SEK-ankare ens existerar.
+permissions:
+  contents: write
+on:
+  workflow_dispatch:
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright && npx playwright install chromium --with-deps
+      - run: |
+          set -o pipefail
+          node scripts/probe-saas-valuta.mjs 2>&1 | tee /tmp/valuta.txt
+      # Inget continue-on-error: går beviset förlorat ska körningen vara röd.
+      - name: Spara sondsvaret
+        if: always()
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          for i in 1 2 3; do
+            git fetch origin main
+            git checkout -B sond origin/main
+            mkdir -p ops && cp /tmp/valuta.txt ops/probe-saas-valuta.txt
+            git add ops/probe-saas-valuta.txt
+            git commit -m "ops: sond saas-valuta [skip ci]" || echo "inget nytt"
+            if git push origin HEAD:main; then echo "sondsvaret sparat"; SPARAT=1; break; fi
+            sleep $((i * 6))
+          done
+          [ "${SPARAT:-0}" = "1" ] || { echo "✗ sondsvaret kunde INTE sparas"; exit 1; }
