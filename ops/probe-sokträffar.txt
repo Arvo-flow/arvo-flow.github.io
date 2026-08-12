@@ -1,0 +1,15 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-sokträffar
+║ FÅNGAR: Hur många bolag allabolags söksida lämnar ifrån sig per fråga — och därmed om "N lästa" var ett mätvärde eller en sidstorlek.
+║ BLIND FÖR: Hur många träffar som finns TOTALT bakom sidbrytningen. Sonden ser sidan vi hämtar, inte registret bakom den.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+  skanska         25 bolag i sidans träfflista
+  avida           25 bolag i sidans träfflista
+  trivector       17 bolag i sidans träfflista
+  westander       25 bolag i sidans träfflista
+  qwertzuiop       0 bolag i sidans träfflista
+
+  Samma tal för vanliga frågor = tak (sidstorlek). Fritt varierande tal = mätvärde.
+  Bara i det andra fallet får raden komma tillbaka till kundytan.
