@@ -217,6 +217,18 @@ OUT OF SCOPE — sätt outOfScope: true om fakturan avser tjänster utan
 
 KRITISKT:
   — Alla belopp EXKLUSIVE moms (svensk B2B-standard). Om bara ink. moms: dividera med 1.25.
+
+  — OBSERVATIONSFÄLTEN (moms_bas, moms_sats, amount_ore, unit_price_ore): dessa beskriver vad som
+    FAKTISKT STÅR på fakturan, FÖRE varje omräkning du gör ovan. Du får ALDRIG räkna om dem, aldrig
+    härleda dem, aldrig gissa dem. Står det inte på fakturan: sätt null. En tom ruta är alltid
+    korrekt; en ifylld ruta som bygger på en slutsats är alltid fel.
+      · moms_bas: "exkl" om radbeloppen på fakturan är angivna exklusive moms, "inkl" om de är
+        angivna inklusive moms. null om fakturan inte gör det entydigt klart.
+      · moms_sats: momssatsen som fakturan anger, som decimaltal (0.25, 0.12, 0.06). null om ingen
+        momssats står angiven. Anta ALDRIG 0.25 för att det är vanligast.
+      · amount_ore / unit_price_ore: radens belopp respektive à-pris i ÖRE (heltal), exakt som talet
+        står på fakturan — 133,82 kr blir 13382. Detta är enda stället där ören överlever; amount och
+        unitPrice är heltal kronor och tappar dem. null om raden saknar det talet.
   — currency: Valuta som fakturan är utfärdad i. Ange ISO-kod: "SEK", "EUR", "USD", "GBP" o.s.v.
     Default "SEK" om valuta inte framgår explicit. Ange ALDRIG null.
   — potentialMixedCategories: Sätt true om fakturan innehåller kostnader som tydligt tillhör FLERA
@@ -445,6 +457,20 @@ export const EXTRACT_TOOL = {
               type: 'boolean',
               description: 'true om raden är en pro-rata-debitering för licenser/abonnemang som tillkommit under pågående period (t.ex. "Prorata tillägg", "delsperiod", "aktiverad X datum"). Kräver att quantity och unitPrice är korrekt ifyllda — koden beräknar då framtida run-rate deterministiskt som quantity × unitPrice. false i övriga fall.',
             },
+            // ── ÖREPRECISIONEN (2026-08-12) ──────────────────────────────────────────────────
+            // amount/unitPrice är heltal KRONOR. M365 Business Standard kostar 133,82 kr/mån —
+            // fem licenser blir 669,10 kr, som heltal 669, och 669/5 = 133,80 ≠ 133,82. Ett
+            // per-licenspris kan alltså aldrig stämma exakt mot prisboken via kronorfälten.
+            // Dessa fält bär talet som det STÅR, i öre. De är rena observationer: aldrig omräknade,
+            // aldrig härledda ur varandra. Saknas talet på fakturan är null det enda rätta svaret.
+            amount_ore: {
+              type: ['integer', 'null'],
+              description: 'Radens belopp i ÖRE (heltal), exakt som det står på fakturan före varje omräkning. 669,10 kr → 66910. null om beloppet inte står med öresprecision.',
+            },
+            unit_price_ore: {
+              type: ['integer', 'null'],
+              description: 'Radens à-pris per enhet i ÖRE (heltal), exakt som det står på fakturan. 133,82 kr → 13382. null om à-pris inte anges på raden.',
+            },
           },
           required: ['description', 'amount', 'type', 'is_addon', 'is_prorata'],
         },
@@ -592,6 +618,21 @@ export const EXTRACT_TOOL = {
       currency: {
         type: 'string',
         description: 'Valutakod som fakturan är utfärdad i, t.ex. "SEK", "EUR", "USD". Default "SEK".',
+      },
+      // ── MOMSBASEN SOM OBSERVATION (2026-08-12) ───────────────────────────────────────────
+      // Prompten ovan ber modellen räkna om inkl-moms-belopp till exkl moms genom att dividera
+      // med 1,25. Efter den divisionen går det inte längre att se vad fakturan faktiskt sa — och
+      // 1,25 är dessutom en antagen sats (6 % och 12 % finns). Dessa två fält bevarar
+      // observationen: vad stod det, och vilken sats angavs. De används av avstämningsgrinden,
+      // som hellre tiger än stämmer av mot ett tal vars ursprung är okänt.
+      moms_bas: {
+        type: ['string', 'null'],
+        enum: ['exkl', 'inkl', null],
+        description: 'Om fakturans RADBELOPP är angivna exklusive eller inklusive moms — som fakturan visar dem, före varje omräkning. null om fakturan inte gör det entydigt klart. Gissa aldrig.',
+      },
+      moms_sats: {
+        type: ['number', 'null'],
+        description: 'Momssats som fakturan anger, som decimaltal (0.25, 0.12, 0.06). null om ingen sats står angiven. Anta ALDRIG 0.25 för att den är vanligast.',
       },
       potential_mixed_categories: {
         type: 'boolean',
@@ -867,6 +908,10 @@ export function aggregateLineItems(rawInput) {
       is_addon:    li.is_addon   ?? false,
       addon_type:  li.addon_type  ?? null,
       is_prorata:  li.is_prorata  ?? false,
+      // Observationer, aldrig omräkningar. Släpps igenom orörda — normalisering som "lagar"
+      // ett saknat värde skulle förvandla tystnad till ett påstående.
+      amountOre:   Number.isInteger(li.amount_ore)     ? li.amount_ore     : null,
+      unitPriceOre: Number.isInteger(li.unit_price_ore) ? li.unit_price_ore : null,
     })),
     amount:                   (raw.lineItems ?? []).reduce((s, l) => s + l.amount, 0),
     recurringAmount,
@@ -922,6 +967,10 @@ export function aggregateLineItems(rawInput) {
     cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,
     cancellationFeeExplicit:   raw.cancellation_fee_explicit ?? null,
     currency:                  raw.currency ?? 'SEK',
+    // Momsbasen får ALDRIG defaulta. `?? 'exkl'` hade varit bekvämt och hade gjort varje faktura
+    // avstämningsbar — genom att uppfinna den observation grinden finns för att kräva.
+    momsbas:                   (raw.moms_bas === 'exkl' || raw.moms_bas === 'inkl') ? raw.moms_bas : null,
+    momssats:                  typeof raw.moms_sats === 'number' ? raw.moms_sats : null,
     potentialMixedCategories:  raw.potential_mixed_categories ?? false,
 
     customerOrgNumber:         raw.customer_org_number ?? null,

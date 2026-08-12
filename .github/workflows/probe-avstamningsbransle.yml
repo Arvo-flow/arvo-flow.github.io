@@ -1,0 +1,41 @@
+name: Sond · avstämningsbränslet (kommer momsbas och ören fram?)
+# Ett schemafält är ett LÖFTE om en observation, inte observationen. Sonden kör den skarpa
+# extraktionen mot verkliga fakturor och räknar hur ofta fälten faktiskt fylls i — och hur många
+# rader som därmed når fram till avstämningsgrinden. Utan den här mätningen vet vi bara att
+# schemat ser komplett ut.
+permissions:
+  contents: write
+on:
+  workflow_dispatch:
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: |
+          set -o pipefail
+          node scripts/probe-avstamningsbransle.mjs 2>&1 | tee /tmp/bransle.txt
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      # Inget continue-on-error: går mätningen förlorad ska körningen vara röd.
+      - name: Spara sondsvaret
+        if: always()
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          for i in 1 2 3; do
+            git fetch origin main
+            git checkout -B sond origin/main
+            mkdir -p ops && cp /tmp/bransle.txt ops/probe-avstamningsbransle.txt
+            git add ops/probe-avstamningsbransle.txt
+            git commit -m "ops: sond avstämningsbränsle [skip ci]" || echo "inget nytt"
+            if git push origin HEAD:main; then echo "sondsvaret sparat"; SPARAT=1; break; fi
+            sleep $((i * 6))
+          done
+          [ "${SPARAT:-0}" = "1" ] || { echo "✗ sondsvaret kunde INTE sparas"; exit 1; }
