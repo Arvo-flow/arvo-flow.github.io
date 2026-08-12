@@ -1,15 +1,30 @@
 ╔═══════════════════════════════════════════════════════════════════════════════
-║ SOND: probe-sokträffar
-║ FÅNGAR: Hur många bolag allabolags söksida lämnar ifrån sig per fråga — och därmed om "N lästa" var ett mätvärde eller en sidstorlek.
-║ BLIND FÖR: Hur många träffar som finns TOTALT bakom sidbrytningen. Sonden ser sidan vi hämtar, inte registret bakom den.
+║ SOND: probe-bokslutsar
+║ FÅNGAR: Vilket år kortets bokslutsrad FAKTISKT bygger på, jämfört med räkenskapsårens egna årtal i samma post.
+║ BLIND FÖR: Om spegelns bokslutsdata i sin tur ligger efter Bolagsverkets original. Sonden jämför två fält i SAMMA post — den kan inte se om posten som helhet är gammal.
 ║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
 ║ ett påstående som låtsas vara ett faktum.
 ╚═══════════════════════════════════════════════════════════════════════════════
-  skanska         25 bolag i sidans träfflista
-  avida           25 bolag i sidans träfflista
-  trivector       17 bolag i sidans träfflista
-  westander       25 bolag i sidans träfflista
-  qwertzuiop       0 bolag i sidans träfflista
 
-  Samma tal för vanliga frågor = tak (sidstorlek). Fritt varierande tal = mätvärde.
-  Bara i det andra fallet får raden komma tillbaka till kundytan.
+═══ 5562309004 · Avida Bank AB (publ) — kortet som väckte frågan
+  rubrikens tal:        1209000 tkr · 162 anställda
+  uppdateringsstämpel:  2024   → kortet skriver "bokslut 2024"
+  räkenskapsåren i posten: 2024, 2023, 2022, 2021, 2020
+  senaste årets tal:    1209000 tkr · 162 anställda  (år 2024)
+  ⇒ Samma tal här — men av sammanträffande, inte av konstruktion.
+
+═══ 5560339086 · Skanska Sverige AB — visade 2025
+  rubrikens tal:        29888812 tkr · 5227 anställda
+  uppdateringsstämpel:  2025   → kortet skriver "bokslut 2025"
+  räkenskapsåren i posten: 2025, 2024, 2023, 2022, 2021
+  senaste årets tal:    29888812 tkr · 5227 anställda  (år 2025)
+  ⇒ Samma tal här — men av sammanträffande, inte av konstruktion.
+
+═══ 5560004615 · Skanska AB
+  rubrikens tal:        1398000 tkr · 151 anställda
+  uppdateringsstämpel:  2025   → kortet skriver "bokslut 2025"
+  räkenskapsåren i posten: 2025, 2024, 2023, 2022, 2021
+  senaste årets tal:    1398000 tkr · 151 anställda  (år 2025)
+  ⇒ Samma tal här — men av sammanträffande, inte av konstruktion.
+
+  Ett tal med fel etikett är samma fel som ett tal utan källa — det besvarar en annan fråga.
