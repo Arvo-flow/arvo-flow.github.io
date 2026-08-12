@@ -33,12 +33,8 @@ ORDNING avida: IDENT-FÖRE-KVITTO
 RÅA ORGNR avida: [] (ska vara [])
 MITTLINJEN avida mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
 ✓ avida mobil
-BLÄNDAREN avida: ["556230-9004Avida Bank AB (publ)Stockholm · Finansbolag, finansiella tjänster","559165-3182AVIDA ASSISTANS & OMSORG I SVERIGE ABÖrebro · Omvårdnad och omsorg","559017-7068Avida ABStockholm · Företagsutveckling"]
-VÄGVISARE avida: 0 (ska vara 0) · IGENKÄNNING: 3 av 3
-✓ avida bländare mobil
 MITTLINJEN avida desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
 ✓ avida desktop
-✓ avida bländare desktop
 FYND castra: ["Ni kör Microsoft 365","MailerLite · Brevo får skicka mejl i ert namn","Ert e-postskydd är redan aktivt"]
 ORDNING castra: IDENT-FÖRE-KVITTO
 RÅA ORGNR castra: [] (ska vara [])
