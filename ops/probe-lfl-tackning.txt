@@ -1,0 +1,47 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-lfl-tackning
+║ FÅNGAR: Hur ofta verkliga SaaS-fakturor saknar like-for-like-underlag, och om gissningsvägen ändå skapar ett kundsynligt tal.
+║ BLIND FÖR: test-pdfs/ är den korpus vi själva samlat — den speglar inte nödvändigtvis fördelningen i inkommande kundtrafik. Sonden mäter alltså vägvalet på VÅR korpus, inte marknadens. Den mäter inte heller om en tier-gissning är RÄTT, bara om den fick skapa ett tal.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+[google-sek-grind] Google Workspace (tier) saknar verifierat publikt SEK-pris → offert-läge (verifierad M365-referens)
+[billing-period] multi-unit quarterly override → monthly (2 rader med quantity≥5)
+
+  20 fakturor körda genom den skarpa pipelinen.
+
+  atea-m365-overskott.pdf              serverhosting        annan kategori
+  cloudreseller-norden.pdf             saas-productivity    LFL BÄR
+      2 tier-rad(er) → attribueringslåset kan fyra
+  crayon-m365-azure.pdf                serverhosting        annan kategori
+  dustin-m365-standard.pdf             saas-productivity    LFL BÄR
+      2 tier-rad(er) → attribueringslåset kan fyra
+  microsoft.pdf                        saas-productivity    LFL BÄR
+      1 tier-rad(er) → attribueringslåset kan fyra
+  microsoft-new.pdf                    saas-productivity    LFL BÄR
+      1 tier-rad(er) → attribueringslåset kan fyra
+  microsoft-direkt-usd.pdf             saas-productivity    LFL BÄR
+      1 tier-rad(er) → attribueringslåset kan fyra
+  azure-csp-reseller.pdf               serverhosting        annan kategori
+  google-workspace-arsbetalning.pdf    saas-productivity    LFL BÄR
+      0 tier-rad(er) → attribueringslåset kan fyra
+  omnicloud.pdf                        serverhosting        annan kategori
+  salesforce-enterprise.pdf            saas-crm             annan kategori
+  hubspot-marketing-pro.pdf            saas-crm             annan kategori
+  atlassian.pdf                        saas-devtools        annan kategori
+  atlassian-cloud-manad.pdf            saas-devtools        annan kategori
+  adobe-creative-cloud-ars.pdf         saas-creative        annan kategori
+  aws-reseller-komplex.pdf             serverhosting        annan kategori
+  Faktura_1.pdf                        mobil                annan kategori
+  Faktura_2.pdf                        saas-other           annan kategori
+  Faktura_3.pdf                        saas-other           annan kategori
+  Faktura_4.pdf                        —                    ej stödd
+
+  ── SUMMERING ──
+  saas-productivity: 6 fakturor
+  LFL bär:           6  → attribueringslåset fyrar, talet är bevisat per rad
+  LFL saknas:        0
+  …och gissningen skapade ändå ett tal: 0
+
+  BESLUTSUNDERLAG: att tysta gissningsvägen kostar 0 av 6 fakturor sitt tal.
+  Sonden rekommenderar ingenting. Den mäter priset på beslutet.
