@@ -845,6 +845,32 @@ Två läxor ur samma mätning, båda om att mäta rätt sak:
   funktion api-lagret kallar. Ett harness som matar något annat än produktionen matar mäter inte
   produktionen, hur grönt det än lyser.
 
+**✅ BRÄNSLET TILL AVSTÄMNINGSGRINDEN — 0 av 61 rader → 21 av 26 (2026-08-12).** Grinden
+(`lib/saas-avstamning.js`) kunde aldrig fyra, av två strukturella skäl: momsbasen fanns inte i
+extraktionsschemat, och kronorfältet kan inte bära ett per-licenspris (133,82 → 133 → 133,80).
+Båda stängda. `moms_bas`/`moms_sats` och `amount_ore`/`unit_price_ore` är nu **observationer** —
+aldrig omräknade, aldrig defaultade (`raw.moms_bas ?? 'exkl'` fäller sviten, SR-06, sabotage-bevisat).
+`lib/saas-rad.js` är mataren mellan extraktion och grind: den läser observationer eller säger nej
+med namngivet skäl, och härleder aldrig ett värde. Kvartal delas ALDRIG på tre (SR-03).
+
+**Den icke-cirkulära kontrollen (SR-07).** Bränslesonden kunde bara mäta att modellen SVARADE, inte
+att den läste rätt ruta — och ett hallucinerat öresbelopp ser identiskt ut med ett avläst, med
+precisionens auktoritet på köpet. Att kontrollera mot prisboken vore cirkulärt (prisboken är det
+grinden stämmer av MOT). Fakturans egna tal är däremot ett oberoende vittne: **à-pris × antal ÄR
+radbeloppet**, exakt, utan tolerans. Kontrollen fällde två rader på sin första körning — båda på
+CloudReseller-fakturan, alltså prorata-klassen (CR-88412), där ett delperiodsbelopp annars hade
+tolkats som ett per-licenspris.
+
+**Två läxor ur bränslemätningen:**
+- **Prompten lät AI:n räkna moms.** "Om bara ink. moms: dividera med 1.25" — en modell som utför
+  finansiell aritmetik (regel 2) på en ANTAGEN sats (6 % och 12 % finns), varefter det inte längre
+  går att se vad fakturan sa. Observationsfälten bevarar sanningen; själva divisionen för
+  `amount`/`unitPrice` står kvar och är en egen operation med egen mätning (öppen skuld).
+- **Modellifyllda observationer varierar mellan körningar.** Samma PDF, samma kod, två körningar:
+  `microsoft-direkt-usd` gav 0/2 rader med ören i den första och 2/2 i den andra. En grind vars
+  hela värde är exakthet får därför aldrig gå mot kundyta på enbart maskinifyllda fält —
+  **stickprovet mot pappret, läst av en människa, är den sista milen och är inte gjord.**
+
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI
 2. **E-post-ingest, nästa steg:** ~~extern setup (MX/webhook/env)~~ ✅ LIVE 2026-06-11 (verifierad end-to-end) → personliga skuggadresser per kund → Outlook OAuth (historisk skörd) → Gmail efter CASA. Kontorets dossier-UI byggs när ingesten ger innehåll
