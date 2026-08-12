@@ -20,7 +20,7 @@ jobs:
       - run: npm ci
       - run: |
           set -o pipefail
-          node scripts/probe-sokträffar.mjs 2>&1 | tee /tmp/soktraffar.txt
+          node scripts/probe-soktraffar.mjs 2>&1 | tee /tmp/soktraffar.txt
       # Inget continue-on-error: går mätningen förlorad ska körningen vara röd.
       - name: Spara sondsvaret
         if: always()
