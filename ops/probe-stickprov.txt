@@ -1,0 +1,94 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-stickprov
+║ FÅNGAR: Exakt vad extraktionen påstår om varje rad (antal, à-pris i öre, belopp i öre, momsbas) — underlaget för en oberoende avläsning av samma faktura.
+║ BLIND FÖR: Allt om sanningshalten. Sonden jämför ingenting och dömer ingenting; den lägger fram maskinens påstående. Domen kräver en andra avläsning av pappret, och den avläsningen görs inte här.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+
+═══════════ cloudreseller-norden.pdf ═══════════
+  leverantör: CloudReseller Norden AB · valuta: SEK
+  momsbas: exkl · momssats: — · period: monthly
+  fakturatotal (exkl moms, enligt extraktionen): 14472
+  [0] «Microsoft 365 Business Premium»
+      typ=recurring_subscription · prorata=false · antal=45
+      à-pris: 245,00 kr (24500 öre)   (kronorfält: 245)
+      belopp: 11025,00 kr (1102500 öre)   (kronorfält: 11025)
+      radaritmetik: 24500 × 45 = 1102500 = belopp ✓
+  [1] «Microsoft 365 Business Standard»
+      typ=recurring_subscription · prorata=false · antal=20
+      à-pris: 135,00 kr (13500 öre)   (kronorfält: 135)
+      belopp: 2700,00 kr (270000 öre)   (kronorfält: 2700)
+      radaritmetik: 13500 × 20 = 270000 = belopp ✓
+  [2] «Microsoft 365 Business Premium (Prorata tillägg)»
+      typ=one_time_fee · prorata=true · antal=5
+      à-pris: 245,00 kr (24500 öre)   (kronorfält: 245)
+      belopp: 612,50 kr (61250 öre)   (kronorfält: 613)
+      radaritmetik: 24500 × 5 = 122500 ≠ belopp 61250 ✗
+  [3] «Microsoft 365 Business Standard (Prorata tillägg)»
+      typ=one_time_fee · prorata=true · antal=3
+      à-pris: 135,00 kr (13500 öre)   (kronorfält: 135)
+      belopp: 135,00 kr (13500 öre)   (kronorfält: 135)
+      radaritmetik: 13500 × 3 = 40500 ≠ belopp 13500 ✗
+
+═══════════ dustin-m365-standard.pdf ═══════════
+  leverantör: Dustin AB · valuta: SEK
+  momsbas: exkl · momssats: 0.25 · period: monthly
+  fakturatotal (exkl moms, enligt extraktionen): 4200
+  [0] «Microsoft 365 Business Standard (32 licenser) Maj»
+      typ=recurring_subscription · prorata=false · antal=32
+      à-pris: 115,00 kr (11500 öre)   (kronorfält: 115)
+      belopp: 3680,00 kr (368000 öre)   (kronorfält: 3680)
+      radaritmetik: 11500 × 32 = 368000 = belopp ✓
+  [1] «Microsoft 365 Business Basic (8 licenser) Maj»
+      typ=recurring_subscription · prorata=false · antal=8
+      à-pris: 65,00 kr (6500 öre)   (kronorfält: 65)
+      belopp: 520,00 kr (52000 öre)   (kronorfält: 520)
+      radaritmetik: 6500 × 8 = 52000 = belopp ✓
+
+═══════════ microsoft.pdf ═══════════
+  leverantör: IT-Partner Sverige AB · valuta: SEK
+  momsbas: exkl · momssats: 0.25 · period: monthly
+  fakturatotal (exkl moms, enligt extraktionen): 17670
+  [0] «Microsoft 365 Business Premium (Månadsprenumeration)»
+      typ=recurring_subscription · prorata=false · antal=57
+      à-pris: 270,00 kr (27000 öre)   (kronorfält: 270)
+      belopp: 15390,00 kr (1539000 öre)   (kronorfält: 15390)
+      radaritmetik: 27000 × 57 = 1539000 = belopp ✓
+  [1] «Molnbackup för Microsoft 365 - Användarlicens»
+      typ=recurring_subscription · prorata=false · antal=57
+      à-pris: 40,00 kr (4000 öre)   (kronorfält: 40)
+      belopp: 2280,00 kr (228000 öre)   (kronorfält: 2280)
+      radaritmetik: 4000 × 57 = 228000 = belopp ✓
+
+═══════════ microsoft-new.pdf ═══════════
+  leverantör: IT-Partner Sverige AB · valuta: SEK
+  momsbas: exkl · momssats: 0.25 · period: monthly
+  fakturatotal (exkl moms, enligt extraktionen): 17670
+  [0] «Microsoft 365 Business Premium (Månadsprenumeration)»
+      typ=recurring_subscription · prorata=false · antal=57
+      à-pris: 270,00 kr (27000 öre)   (kronorfält: 270)
+      belopp: 15390,00 kr (1539000 öre)   (kronorfält: 15390)
+      radaritmetik: 27000 × 57 = 1539000 = belopp ✓
+  [1] «Molnbackup för Microsoft 365 - Användarlicens»
+      typ=recurring_subscription · prorata=false · antal=57
+      à-pris: 40,00 kr (4000 öre)   (kronorfält: 40)
+      belopp: 2280,00 kr (228000 öre)   (kronorfält: 2280)
+      radaritmetik: 4000 × 57 = 228000 = belopp ✓
+
+═══════════ microsoft-direkt-usd.pdf ═══════════
+  leverantör: Microsoft Ireland Operations Ltd · valuta: USD
+  momsbas: exkl · momssats: 0.25 · period: monthly
+  fakturatotal (exkl moms, enligt extraktionen): 8128
+  [0] «Microsoft 365 Business Premium (15 lic.) Maj USD»
+      typ=recurring_subscription · prorata=false · antal=15
+      à-pris: 22,00 kr (2200 öre)   (kronorfält: 22)
+      belopp: 330,00 kr (33000 öre)   (kronorfält: 330)
+      radaritmetik: 2200 × 15 = 33000 = belopp ✓
+  [1] «Microsoft Copilot for M365 (15 lic.) Maj USD»
+      typ=recurring_subscription · prorata=false · antal=15
+      à-pris: 30,00 kr (3000 öre)   (kronorfält: 30)
+      belopp: 450,00 kr (45000 öre)   (kronorfält: 450)
+      radaritmetik: 3000 × 15 = 45000 = belopp ✓
+
+Sonden lägger fram maskinens påstående. Domen kräver en andra avläsning av pappret.
