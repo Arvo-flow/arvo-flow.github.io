@@ -1,0 +1,34 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-ct-onboarding
+║ FÅNGAR: Om crt.sh svarar i tid, hur många certifikat domänen har, och om något av dem bär ett M365-värdnamn — per domän, med tid mätt.
+║ BLIND FÖR: Certifikat som aldrig loggats i Certificate Transparency (interna CA:er, äldre utfärdare före CT-kravet 2018). En domän utan träff kan ha satt upp M365 tidigare än något publikt logg-spår visar — frånvaro av spår är inte frånvaro av händelse.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+
+  domän                      tid   cert  utfall
+  skanska.se               722ms      0  — inga certifikat i registret
+  castra.se                497ms      0  — inga certifikat i registret
+  seb.se                   500ms      0  — inga certifikat i registret
+  volvo.se                 501ms      0  — inga certifikat i registret
+  skatteverket.se          504ms      0  — inga certifikat i registret
+  svenskfotboll.se       25000ms      0  ✗ TIMEOUT
+  trivector.se            9832ms      0  — inga certifikat i registret
+  westander.se            4405ms      0  — inga certifikat i registret
+  halvarsson.se            532ms      0  — inga certifikat i registret
+  lekia.se               25001ms      0  ✗ TIMEOUT
+  k-fastigheter.se         396ms      0  — inga certifikat i registret
+  sigmatechnology.com      562ms      0  — inga certifikat i registret
+  initgroup.com           4831ms      0  — inga certifikat i registret
+  bimobject.com          23888ms      0  — inga certifikat i registret
+  apendo.se              12272ms      0  — inga certifikat i registret
+  alumni.se              13582ms      0  — inga certifikat i registret
+
+  ── DIAGNOS ──
+  A · crt.sh svarade inte:        2 av 16
+  ✓ · M365-värdnamn hittat:       0 av 16
+  B · cert finns men inget M365:  0
+  C · …varav andra M365-typiska värdnamn sågs: 0
+  svarstid: median 722 ms · längst 23888 ms (budget 25 000)
+
+  Sonden mäter. Om raden går att lyfta avgörs av vilken bokstav som dominerar.
