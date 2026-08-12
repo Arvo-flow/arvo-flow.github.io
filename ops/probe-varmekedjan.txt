@@ -1,0 +1,23 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-varmekedjan
+║ FÅNGAR: Om certifikatvågen någon gång levererar raden live, om träffen cachas, och hur snabbt nästa besökare får den.
+║ BLIND FÖR: Renderingen på skärmen. Sonden läser HTTP-svar; att raden syns i kortet bevisas bara av ett foto som väntat in vågen (live-door, 32 s).
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+
+  Domän: skanska.se · upp till 8 försök
+
+  försök 1:  14309ms HTTP 200 — ingen rad
+  försök 2:  24892ms HTTP 200 — ingen rad
+  försök 3:   2121ms HTTP 200 — ingen rad
+  försök 4:  24719ms HTTP 200 — ingen rad
+  försök 5:   2387ms HTTP 200 — ingen rad
+  försök 6:   1993ms HTTP 200 — ingen rad
+  försök 7:   2090ms HTTP 200 — ingen rad
+  försök 8:   2085ms HTTP 200 — ingen rad
+
+  ── UTFALL ──
+  Källan vägrade 8 gånger i rad. Det är INTE ett underkänt bygge — det är den
+  verklighet värmaren finns för: ett nattligt jobb får försöka om och om igen, en
+  besökare får inte det. Ingen slutsats om vågen kan dras ur en källa som teg.
