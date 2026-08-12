@@ -5,7 +5,7 @@ MITTLINJEN lekia mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 
 ✓ lekia mobil
 MITTLINJEN lekia desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
 ✓ lekia desktop
-FYND kristianstadsmaleri: ["Ert bokslut 2025: 14,0 mkr i omsättning, 14 anställda","Er omsättning föll 26 % senaste bokslutsåret","Mejl i ert namn kan förfalskas","Ni ingår i en koncern om 2 bolag","Grundat 1987 — 39 år i verksamhet"]
+FYND kristianstadsmaleri: ["Ert bokslut 2025: 14,0 mkr i omsättning, 14 anställda","Er omsättning föll 26 % senaste bokslutsåret","96 474 kr/år skiljer billigaste från dyraste licensnivå — för era 14 anställda","Mejl i ert namn kan förfalskas","Ni ingår i en koncern om 2 bolag"]
 ORDNING kristianstadsmaleri: IDENT-FÖRE-KVITTO
 RÅA ORGNR kristianstadsmaleri: [] (ska vara [])
 MITTLINJEN kristianstadsmaleri mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
