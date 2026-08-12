@@ -17,7 +17,9 @@ const CASES = [
   // Bländaren: avida.se är fallet där grinden VÄGRAR välja (flera bolag heter något med Avida).
   // Fotas både stängd (tröskeln) och öppen (registret vi faktiskt läste) — det är den enda
   // ytan där vi visar vår egen osäkerhet, och därför den som måste se dyrast ut.
-  { email: 'info@avida.se', tag: 'avida', openAperture: true },
+  // BLÄNDAREN ÖPPEN AV SIG SJÄLV (2026-08-12): tidigare krävdes ett klick för att se den. Nu ska
+  // den stå öppen och FÖRST när identiteten är olöst — fotot ska visa just det, utan interaktion.
+  { email: 'info@avida.se', tag: 'avida' },
   // LEVERANTÖRSRUBRIKEN (2026-08-12): castra.se är fallet som avslöjade att ordboken var för
   // liten — 31 SPF-mekanismer, MailerLite och Brevo i klartext, noll igenkända namn. Kortet gav
   // 'Ni kör Microsoft 365' + DMARC. Nu ska rubriken bära namnen, och det ska SES ut som ett fynd

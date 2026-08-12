@@ -113,6 +113,16 @@ const Wrap = styled.section`
       font-family: ${({ theme }) => theme.font.mono}; font-size: 10px; letter-spacing: .22em;
       text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; margin-bottom: 12px;
       span:last-child { color: ${({ theme }) => theme.dossier.faintOnDark}; letter-spacing: .14em; }
+      /* Rubriken bär nu en hel mening när identiteten är olöst ("Vi läste 14 bolag som heter
+         något med Skanska. Vilket är ert?"). Versaler med .22em spärr är rätt för en etikett och
+         fel för en mening — den vill kunna radbrytas utan att se ut som ett larm. */
+      span:first-child { text-transform: none; letter-spacing: .04em; font-size: 12.5px; line-height: 1.45; }
+    }
+    /* Integritetshandlingen sägs högt, en gång, i samma format som kortets övriga källrader:
+       den är ett kvitto på ett val vi gjorde — inte en brasklapp. */
+    .ap-fot {
+      margin: 12px 0 0; font-size: 12px; line-height: 1.5;
+      color: ${({ theme }) => theme.dossier.faintOnDark};
     }
     .ap-row {
       display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; align-items: baseline;
@@ -306,14 +316,57 @@ export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note,
 }
 
 export default function RevealCard({ domain, findings, pending, identity, onValjBolag }) {
-  const [blandareOppen, setBlandareOppen] = React.useState(false);
+  const [oppnadManuellt, setOppnadManuellt] = React.useState(false);
+  const [stangdAvKund, setStangdAvKund] = React.useState(false);
   if (!domain || !findings?.length) return null;
   const kandidater = identity?.candidates ?? [];
   // Bländaren erbjuds bara när det FINNS något att välja mellan — aldrig som en tom gest.
   const kanByta = kandidater.length > 1 && typeof onValjBolag === 'function';
+
+  // ── TVETYDIGHETEN ÄR BEVISET, INTE URSÄKTEN (2026-08-12) ──────────────────────────────────
+  // Frågan låg hopvikt bakom en länk i grå text, formulerad som en begränsning: "vi gissar
+  // aldrig vilket som är ert". Men se vad som faktiskt hänt: vi har sökt i registret, hittat
+  // flera bolag med samma namn, och VÄGRAT välja — för att välja fel vore att visa någon annans
+  // bokslut. Det är det mest premiumladdade som sker på kortet, och det gömde vi.
+  //
+  // Nu står listan öppen och FÖRST när identiteten är olöst. Tre saker på en gång: bevis på
+  // arbete (här är bolagen vi läste, med orgnr), bevis på integritet (vi kunde ha gissat), och
+  // själva upplåsningen — ett klick ger bokslut, tillväxt, koncern, ålder.
+  //
+  // Att i stället visa INGENTING förrän kunden valt vore fel: dörren lovar "på sekunder", och
+  // att kräva mer innan vi gett något bryter det löftet. Fynden står kvar under listan.
+  const identitetOlost = !identity?.confirmedName && kanByta;
+  const visaBlandare = kanByta && ((identitetOlost && !stangdAvKund) || oppnadManuellt);
+  const setBlandareOppen = (v) => { setOppnadManuellt(v); setStangdAvKund(!v); };
+  const blandareOppen = visaBlandare;
+
+  const namnstam = (() => { const d = domain.split('.')[0]; return d.charAt(0).toUpperCase() + d.slice(1); })();
+  const blandare = visaBlandare ? (
+    <div className="rv-aperture">
+      <div className="ap-k">
+        <span>{identitetOlost ? `Vi läste ${kandidater.length} bolag som heter något med ${namnstam}. Vilket är ert?` : 'Vilket bolag är ni?'}</span>
+        <span>{identity.readCount ? `${identity.readCount} lästa · ` : ''}{kandidater.length} möjliga</span>
+      </div>
+      {kandidater.map((k, i) => (
+        <button type="button" className="ap-row" key={k.orgnr}
+          style={{ animationDelay: `${i * 0.07}s` }}
+          onClick={() => { setBlandareOppen(false); onValjBolag(k.orgnr); }}>
+          <span className="ap-org">{fmtOrgnr(k.orgnr)}</span>
+          <span className="ap-namn">{k.namn}</span>
+          {k.ort && <span className="ap-ort">{k.ort}{k.bransch ? ` · ${k.bransch}` : ''}</span>}
+        </button>
+      ))}
+      {identitetOlost && (
+        <p className="ap-fot">
+          Vi kunde ha gissat. Ett fel val hade visat er någon annans bokslut — därför frågar vi.
+        </p>
+      )}
+    </div>
+  ) : null;
   return (
     <Wrap className="rv-card">
       <div className="rv-eyebrow">Underlag · {domain}</div>
+      {identitetOlost && blandare}
       {findings.map((f, i) => (
         <div className="rv-find" key={i} style={{ animationDelay: `${i * 0.14}s` }}>
           <div className="rv-title">{f.title}</div>
@@ -337,41 +390,16 @@ export default function RevealCard({ domain, findings, pending, identity, onValj
         </p>
       )}
 
-      {!identity?.confirmedName && kanByta && !blandareOppen && (
+      {/* Den gamla ursäktsraden är borta: frågan står nu överst, öppen, som kortets första
+          innehåll. En hopvikt länk i grå text gjorde vår starkaste integritetshandling till en
+          fotnot. Har kunden stängt listan erbjuds den tillbaka — utan att be om ursäkt. */}
+      {identitetOlost && stangdAvKund && (
         <p className="rv-ident">
-          {/* Inte "ordstam" — det är lingvistjargong och en CFO tänker inte i ordstammar. */}
-          Vi läste allt som går utan att veta vilka ni är. <b>Flera bolag heter något med
-          {' '}{(() => { const d = domain.split('.')[0]; return d.charAt(0).toUpperCase() + d.slice(1); })()}</b>,
-          och vi gissar aldrig vilket som är ert.
-          <button type="button" onClick={() => setBlandareOppen(true)}>Säg vilket — så läser vi resten →</button>
+          <button type="button" onClick={() => setBlandareOppen(true)}>Välj ert bolag — så läser vi bokslutet →</button>
         </p>
       )}
 
-      {blandareOppen && (
-        <div className="rv-aperture">
-          <div className="ap-k">
-            <span>Vilket bolag är ni?</span>
-            <span>{identity.readCount ? `${identity.readCount} lästa · ` : ''}{kandidater.length} möjliga</span>
-          </div>
-          {kandidater.map((k, i) => (
-            <button type="button" className="ap-row" key={k.orgnr}
-              style={{ animationDelay: `${i * 0.07}s` }}
-              onClick={() => { setBlandareOppen(false); onValjBolag(k.orgnr); }}>
-              <span className="ap-org">{fmtOrgnr(k.orgnr)}</span>
-              <span>
-                <span className="ap-namn">{k.legalName}</span>
-                {(k.ort || k.bransch) && (
-                  <span className="ap-var">{[k.ort, k.bransch].filter(Boolean).join(' · ')}</span>
-                )}
-              </span>
-            </button>
-          ))}
-          <p className="ap-foot">
-            Vi läste hela registret och lät bli att välja åt er — ett bolagsnamn som liknar en
-            domän är inte ett ägarbevis. Ert svar är det.
-          </p>
-        </div>
-      )}
+      {!identitetOlost && blandare}
 
       {/* Våg 2 pågår: de långsamma registren arbetar SYNLIGT vidare — sena rader är dramats
           höjdpunkt ("hur visste de det?"), aldrig en väntetid. Ärligt: bara källor vi faktiskt läser. */}
