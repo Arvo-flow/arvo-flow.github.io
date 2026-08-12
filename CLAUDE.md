@@ -797,6 +797,33 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 - ✅ 6 nya regressionstester i `tests/balanskrav.mjs` låser NMIT-texten: 420 = E3-radens à-pris, 384,70 = årsavtalet, 683 förbjudet, varje tal källtäckt · cache → `pdf:result:v8` · sviten 1 276/1 276
 - **Princip befäst:** AI-prosa med kompletta deterministiska fakta ska GENERERAS av kod, inte verifieras i efterhand — verifiering (prosakrav) är skyddsnätet för fall där fakta inte räcker till en mall
 
+**⚠️ RÄTTELSE 2026-08-12 — ATTRIBUERINGSLÅSET VAR MÖRKT I TVÅ MÅNADER (och den här filen påstod motsatsen):**
+Låset ovan förklarades stängt 2026-06-11. Det hade aldrig fyrat i produktion. `api/test-invoice.mjs`
+byggde like-for-like-objektet med en **lokal kopia** av matten som utelämnade `tierLines`, och
+`buildLikeForLikeReasoning` returnerar null utan dem. Följden: (a) AI:ns egen text nådde varje kund —
+683-felklassen var öppen hela tiden, (b) promptblocket *"ANVÄND EXAKT DESSA TAL"* renderades med noll
+rader, så modellen beordrades hämta varje siffra ordagrant ur en tom lista och förbjöds räkna egna.
+Ett omöjligt uppdrag besvaras med en gissning. De sex regressionstesterna låste
+`computeLikeForLikeSaasTarget` — **en funktion produktionen aldrig anropade.**
+
+Obduktionen hittade totalt **fyra kopior** av samma matte (api ×2, dev-skript ×1) och två lås som
+skrevs över nedströms: ett efterhandsblock i api-lagret räknade om `suggestedAnnualCost`/`savingPerYear`
+UTAN prorata-korrigeringen (CR-88412) och satte `suggestedSupplier` ur en textgissad tier — vilket
+annullerade den uttryckliga låsraden i `recommend.js` (buggen 2026-06-28). Kortets prosa och kortets
+siffra hade skilda upphov. Allt rivet; produktionen kör nu den funktion sviten låser.
+
+**Läxan är inte "kopiera inte" — den är att vi mätte fel sak.** Testerna bevisade att MEKANISMEN
+reagerar när den matas. De kunde aldrig bevisa att den någonsin MATADES. Exakt villkorsvaktens
+sjukdom (Verifieringsplikten p.5), nu i fakturamotorns kärna. Därav den nya frågan i varje
+låsgranskning: *vilket objekt kommer fram till låset i produktion — och vem byggde det?*
+
+Maskinvakt: `tests/lfl-produktionsvag.mjs` (RD-07/08/09). Kopidetektorn skannar hela källträdet efter
+tier-regexer utanför `recommend.js` (undantag motiveras inline med `// kopia-ok: <skäl>`, samma mönster
+som claims-audit) — **sabotage-bevisad: en återinförd kopia i `lib/format.js` fällde sviten.** RD-07
+innehåller ett test som medvetet underkänner gårdagens objektform, så låset inte kan bli grönt på fel
+grund. RD-09 låser att bytesmålets NAMN härleds ur samma beräkning som dess TAL. Sonden som bevisade
+felet står kvar körbar: `scripts/probe-lfl-produktionsvag.mjs` (bär den gamla kopian som preparat).
+
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI
 2. **E-post-ingest, nästa steg:** ~~extern setup (MX/webhook/env)~~ ✅ LIVE 2026-06-11 (verifierad end-to-end) → personliga skuggadresser per kund → Outlook OAuth (historisk skörd) → Gmail efter CASA. Kontorets dossier-UI byggs när ingesten ger innehåll

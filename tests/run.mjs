@@ -91,6 +91,7 @@ import './vaktkontrakt.mjs';
 import './villkorslasare.mjs';
 import './sondkontrakt.mjs';
 import './saas-avstamning.mjs';
+import './lfl-produktionsvag.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

@@ -12,7 +12,7 @@ dotenv.config();
 import { extractInvoice, routeExtraction, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize } from '../agents/categorizer/categorize.js';
-import { recommend } from '../agents/recommender/recommend.js';
+import { recommend, computeLikeForLikeSaasTarget } from '../agents/recommender/recommend.js';
 import { computeSecondarySaving } from '../lib/secondary-savings.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { getSekRate, FALLBACK_RATE_USD_SEK, getEurSekRate, FALLBACK_RATE_EUR_SEK } from '../agents/recommender/pricing.js';
@@ -241,36 +241,16 @@ async function runPipeline(pdfPath) {
     };
   }
 
-  // LFL-target för saas-productivity
+  // LFL-target för saas-productivity — SAMMA funktion som produktionen (regel 1).
+  // Här låg t.o.m. 2026-08-12 en fjärde lokal kopia. En diagnostik som räknar annorlunda än
+  // produktionen mäter inte produktionen — den mäter sig själv, och ljuger med grön färg.
   let _lflTarget = null;
   if (categorized.category === 'saas-productivity') {
-    const _TIER_RE = [
-      { key: 'e5',                re: /\bE5\b/i },
-      { key: 'e3',                re: /\bE3\b/i },
-      { key: 'business-premium',  re: /business[\s-]premium/i },
-      { key: 'business-standard', re: /business[\s-]standard/i },
-      { key: 'business-basic',    re: /business[\s-]basic/i },
-    ];
-    const _tierBm    = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {};
-    const _lflLines  = (extracted.lineItems ?? []).filter(l => l.type === 'recurring_subscription');
-    const _lflPeriod = _lflLines.reduce((s, l) => s + (l.amount ?? 0), 0);
-    const _lflMult   = _lflPeriod > 0 ? extracted.annualCost / _lflPeriod : 12;
-    let _lflSuggested = 0, _lflOk = true, _lflDomKey = null, _lflDomAmt = 0;
-    for (const item of _lflLines) {
-      const match = _TIER_RE.find(p => p.re.test(item.description ?? ''));
-      if (match && _tierBm[match.key]) {
-        const qty = item.quantity;
-        if (qty == null) { _lflOk = false; break; }
-        const bench = _tierBm[match.key].arvoAnnual ?? _tierBm[match.key].msrpAnnual;
-        _lflSuggested += Math.round(bench * qty * 12);
-        if ((item.amount ?? 0) > _lflDomAmt) { _lflDomAmt = item.amount; _lflDomKey = match.key; }
-      } else {
-        _lflSuggested += Math.round((item.amount ?? 0) * _lflMult);
-      }
-    }
-    if (_lflOk && _lflSuggested > 0) {
-      _lflTarget = { suggestedAnnualCost: _lflSuggested, dominantTierKey: _lflDomKey };
-    }
+    _lflTarget = computeLikeForLikeSaasTarget(
+      extracted.lineItems ?? [],
+      BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {},
+      extracted.annualCost,
+    );
   }
 
   const t2 = Date.now();

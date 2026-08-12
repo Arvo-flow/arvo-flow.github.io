@@ -11,7 +11,7 @@ import { createHmac, createHash } from 'node:crypto';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
-import { recommend, RecommenderError } from '../agents/recommender/recommend.js';
+import { recommend, RecommenderError, computeLikeForLikeSaasTarget } from '../agents/recommender/recommend.js';
 import { isAudited } from '../lib/revision-gate.js';
 import { shadowReport } from '../lib/invoice-lines.js';
 import { storeDatapoint } from '../lib/benchmark.js';
@@ -1279,34 +1279,29 @@ export default async function handler(req, res) {
 
     // Pre-compute like-for-like target so recommend() can give the AI correct
     // pricing context before generating reasoning (price gap, not tier change).
+    //
+    // ── DEN MÖRKA LÅSNINGEN, RÄTTAD 2026-08-12 (regel 1 + Verifieringsplikten p.5) ──────────────
+    // Här låg en LOKAL KOPIA av like-for-like-matten med egen tier-regex. Kopian räknade rätt
+    // TOTAL men byggde ett fattigare objekt: { suggestedAnnualCost, dominantTierKey } — utan
+    // tierLines. Två konsekvenser, båda osynliga i sviten:
+    //   1. Attribueringslåset (buildLikeForLikeReasoning) returnerar null utan tierLines. Det har
+    //      alltså ALDRIG fyrat i produktion sedan det byggdes — AI:ns egen text nådde varje kund,
+    //      vilket är exakt 683-felklassen bibeln förklarat stängd.
+    //   2. Promptblocket "LIKE-FOR-LIKE PRISSÄTTNING — ANVÄND EXAKT DESSA TAL" itererar över
+    //      tierLines och renderades tomt: AI:n beordrades hämta varje siffra ordagrant ur en tom
+    //      lista, och förbjöds räkna egna. Ett omöjligt uppdrag besvaras med en gissning.
+    // Sviten låste `computeLikeForLikeSaasTarget` med 1 276 gröna tester — en funktion produktionen
+    // aldrig anropade. Mekanismen var bevisad, signalen rörde sig aldrig. Samma sjukdom som
+    // villkorsvakten. Mätt och bevisat av scripts/probe-lfl-produktionsvag.mjs.
+    // Kopian är borta. Produktionen kör nu samma funktion som sviten låser — och därmed också
+    // dess prorata-korrigering (CR-88412) och per-tier-avrundning, som kopian saknade.
     let _lflTarget = null;
     if (categorized.category === 'saas-productivity') {
-      const _LFL_TIER_RE = [
-        { key: 'e5',               re: /\bE5\b/i },
-        { key: 'e3',               re: /\bE3\b/i },
-        { key: 'business-premium', re: /business[\s-]premium/i },
-        { key: 'business-standard',re: /business[\s-]standard/i },
-        { key: 'business-basic',   re: /business[\s-]basic/i },
-      ];
-      const _lflTierBm    = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {};
-      const _lflLines     = (extracted.lineItems ?? []).filter(l => l.type === 'recurring_subscription');
-      const _lflPeriodTot = _lflLines.reduce((s, l) => s + (l.amount ?? 0), 0);
-      const _lflMult      = _lflPeriodTot > 0 ? extracted.annualCost / _lflPeriodTot : 12;
-      let _lflSuggested = 0, _lflOk = true, _lflDomKey = null, _lflDomAmt = 0;
-      for (const item of _lflLines) {
-        const m = _LFL_TIER_RE.find(p => p.re.test(item.description ?? ''));
-        if (m && _lflTierBm[m.key]) {
-          if (item.quantity == null) { _lflOk = false; break; }
-          const bm = _lflTierBm[m.key].arvoAnnual ?? _lflTierBm[m.key].msrpAnnual;
-          _lflSuggested += Math.round(bm * item.quantity * 12);
-          if ((item.amount ?? 0) > _lflDomAmt) { _lflDomAmt = item.amount; _lflDomKey = m.key; }
-        } else {
-          _lflSuggested += Math.round((item.amount ?? 0) * _lflMult);
-        }
-      }
-      if (_lflOk && _lflSuggested > 0) {
-        _lflTarget = { suggestedAnnualCost: _lflSuggested, dominantTierKey: _lflDomKey };
-      }
+      _lflTarget = computeLikeForLikeSaasTarget(
+        extracted.lineItems ?? [],
+        BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {},
+        extracted.annualCost,
+      );
     }
 
     const t2 = Date.now();
@@ -1374,88 +1369,24 @@ export default async function handler(req, res) {
       seatCount: extracted.seatCount ?? null,
     }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
-    // ── SAAS-PRODUCTIVITY LIKE-FOR-LIKE OVERRIDE ─────────────────────────────
-    // Guarantees correct M365 pricing reaches Vercel regardless of bundle cache.
-    // Rule: mirror the customer's license mix exactly — never downgrade a tier.
-    // Premium stays Premium, Basic stays Basic. Add-ons pass through at invoice price.
-    // Falls back gracefully when lineItems lack quantity (older extractions).
-    if (categorized.category === 'saas-productivity' && recommendation?.shouldSwitch) {
-      const _TIER_RE = [
-        { key: 'e5',               re: /\bE5\b/i },
-        { key: 'e3',               re: /\bE3\b/i },
-        { key: 'business-premium', re: /business[\s-]premium/i },
-        { key: 'business-standard',re: /business[\s-]standard/i },
-        { key: 'business-basic',   re: /business[\s-]basic/i },
-      ];
-      const _tierBm      = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {};
-      const _lines       = (extracted.lineItems ?? []).filter(l => l.type === 'recurring_subscription');
-      const _annualCost  = extracted.annualCost ?? 0;
-      const _periodTotal = _lines.reduce((s, l) => s + (l.amount ?? 0), 0);
-      const _billMult    = _periodTotal > 0 ? _annualCost / _periodTotal : 12;
-
-      let _suggestedAnnual   = 0;
-      let _allQtyKnown       = true;
-      let _dominantKey       = null;
-      let _dominantAmt       = 0;
-
-      for (const item of _lines) {
-        const match = _TIER_RE.find(p => p.re.test(item.description ?? ''));
-        if (match && _tierBm[match.key]) {
-          const qty = item.quantity;
-          if (qty == null) { _allQtyKnown = false; break; }
-          const benchMonthly = _tierBm[match.key].arvoAnnual ?? _tierBm[match.key].msrpAnnual;
-          const tierAnnual   = Math.round(benchMonthly * qty * 12);
-          _suggestedAnnual  += tierAnnual;
-          if ((item.amount ?? 0) > _dominantAmt) { _dominantAmt = item.amount; _dominantKey = match.key; }
-        } else {
-          _suggestedAnnual += Math.round((item.amount ?? 0) * _billMult);
-        }
-      }
-
-      if (_allQtyKnown && _suggestedAnnual > 0) {
-        recommendation.suggestedAnnualCost = _suggestedAnnual;
-        recommendation.savingPerYear       = Math.max(0, _annualCost - _suggestedAnnual);
-
-        const _tierLabels = {
-          'business-premium':  'Microsoft 365 Business Premium',
-          'business-standard': 'Microsoft 365 Business Standard',
-          'business-basic':    'Microsoft 365 Business Basic',
-          'e3':                'Microsoft 365 E3',
-          'e5':                'Microsoft 365 E5',
-        };
-        if (_dominantKey && _tierLabels[_dominantKey]) {
-          recommendation.suggestedSupplier = _tierLabels[_dominantKey];
-        }
-
-        // Advisory: how much more could they save by also downgrading tier?
-        const _DG_MAP = { 'business-premium': 'business-standard', 'e3': 'business-premium', 'e5': 'e3' };
-        const _dgToKey = _dominantKey ? _DG_MAP[_dominantKey] : null;
-        if (_dgToKey && _dgToKey !== _dominantKey) {
-          let _dgSuggested = 0;
-          let _dgOk = true;
-          for (const item of _lines) {
-            const m = _TIER_RE.find(p => p.re.test(item.description ?? ''));
-            if (m && _tierBm[m.key]) {
-              const dgKey = _DG_MAP[m.key] ?? m.key;
-              const dgBm  = _tierBm[dgKey];
-              if (!dgBm) { _dgOk = false; break; }
-              _dgSuggested += Math.round((dgBm.arvoAnnual ?? dgBm.msrpAnnual) * item.quantity * 12);
-            } else {
-              _dgSuggested += Math.round((item.amount ?? 0) * _billMult);
-            }
-          }
-          if (_dgOk && _dgSuggested > 0) {
-            const _dgTotal    = Math.max(0, _annualCost - _dgSuggested);
-            const _additional = Math.max(0, _dgTotal - recommendation.savingPerYear);
-            if (_additional > 0) {
-              recommendation.tierOptimizationSaving   = _additional;
-              recommendation.tierOptimizationFromTier = _dominantKey;
-              recommendation.tierOptimizationToTier   = _dgToKey;
-            }
-          }
-        }
-      }
-    }
+    // ── DEN EFTERHANDS-ÖVERSKRIVANDE GISSNINGSMOTORN — RIVEN 2026-08-12 ───────────────────────
+    // Här låg ett block som körde EFTER recommend() och skrev över kundens siffror med en tredje
+    // lokal kopia av like-for-like-matten. Det var inte en cache-försäkring (som kommentaren
+    // påstod) utan en parallell sanning med tre konkreta brott:
+    //
+    //   1. TALET. Kopian saknade prorata-korrigeringen (CR-88412) och per-tier-avrundningen.
+    //      På en faktura med prorata-rader räknade den ett ANNAT suggestedAnnualCost än den text
+    //      attribueringslåset skrev — kortets prosa och kortets siffra hade skilda upphov.
+    //   2. MÅLET. Den satte `suggestedSupplier` ur en textgissad tier och skrev därmed över den
+    //      lås-rad recommend.js sätter med uttrycklig motivering (buggen 2026-06-28: koden räknar
+    //      → koden namnger målet). Ett lås som skrivs över nedströms är inget lås.
+    //      Målnamnet härleds nu ur SAMMA beräkning som talet (recommend.js).
+    //   3. RÅDET. `tierOptimizationSaving` var en grövre andraversion av `m365Rightsizing` —
+    //      samma råd, två ytor, två tal (regel 5). Den deterministiska, testlåsta modulen står
+    //      kvar och renderas i sitt eget kort; accordion-dubbletten är borta.
+    //
+    // Ingen siffra försvann: recommend.js räknar redan suggestedAnnualCost/savingPerYear ur
+    // likeForLikeTarget. Det som försvann var en andra åsikt om samma faktura.
 
     // Strip any residual "Arvo CSP" language from AI-generated reasoning.
     if (recommendation.reasoning) {

@@ -1689,8 +1689,16 @@ export async function recommend(input, opts = {}) {
   // som suggestedSupplier MEDAN talet deterministiskt räknades mot M365-golvet (p25) → kortet sa
   // "byt till Google" med en M365-baserad siffra (regel 2: koden räknar → koden namnger målet).
   // Google-fakturor är redan grindade till offert-läge ovan; kvar här är M365-jämförbara byten.
+  //
+  // RÄTTAT 2026-08-12: raden hårdkodade "Business Standard" för VARJE kund — även en E3-kund vars
+  // besparing räknats like-for-like mot E3:s eget årsavtalspris. Namnet motsade alltså talet i
+  // precis den riktning låset byggdes för att stoppa, bara spegelvänt. Målet härleds nu ur samma
+  // beräkning som talet: LFL:s dominanta tier i första hand, benchmarkens tier i andra. Finns
+  // ingendera har vi inte räknat mot något namngivbart mål — då namnger vi inget (tystnad, regel 4).
   if (input.categorized.category === 'saas-productivity' && result.shouldSwitch) {
-    result.suggestedSupplier = 'Microsoft 365 Business Standard (årsavtal)';
+    const _malKey = input.invoice?.likeForLikeTarget?.dominantTierKey ?? saasLicenseTierKey;
+    const _malLabel = LFL_TIER_LABELS[_malKey] ?? null;
+    result.suggestedSupplier = _malLabel ? `Microsoft 365 ${_malLabel} (årsavtal)` : null;
   }
 
   // Arvo Score-underlag (bug #2-fix 2026-06-28): ett DETERMINISTISKT hälsotal ur fakturans prisläge
