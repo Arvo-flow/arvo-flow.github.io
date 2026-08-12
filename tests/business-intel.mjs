@@ -5,12 +5,13 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import {
   sldFromDomain, normalizeCompanyName, matchCompany, normalizeOrgnr, foldToDomainAlphabet,
   extractNextData, extractSearchCompanies, extractCompanyFacts,
   buildBusinessFindings, mergeRevealFindings,
   luhnValidOrgnr, extractOrgnrCandidates, fetchOrgnrFromWebsite, fetchBusinessFacts, extractSiteCompanyName, titleSpanMatchingSld, extractAccountHistory,
-  identityCandidates,
+  identityCandidates, buildLicensspannFinding,
 } from '../lib/business-intel.js';
 
 describe('business-intel · domän → SLD', () => {
@@ -805,5 +806,61 @@ describe('Bländaren · kandidater bär igenkänning, inte vägvisning (Avida-l�
     const [k] = identityCandidates('avida', [{ legalName: 'Avida AB', orgnr: '5590177068' }]);
     assert.equal(k.ort, null);
     assert.equal(k.bransch, null);
+  });
+});
+
+// ── LICENSSPANNET · KORTETS FÖRSTA KRONA (2026-08-12) ────────────────────────────────────────
+// Identitetskortet blev en dossier med fem rader och noll kronor. Den här raden är den enda
+// pengarad som går att säga innan en faktura delats utan att gissa: två VERIFIERADE fakta
+// multiplicerade — bolagets egna anställdatal och Microsofts publika listpriser.
+//
+// Testerna vaktar gränsen den lever på: den får aldrig påstå något om vad kunden BETALAR, aldrig
+// födas ur fakta utan Bolagsverket-proveniens, och varje tal ska gå att räkna hem med miniräknare.
+describe('buildLicensspannFinding · ett spann, aldrig ett påstående om fakturan', () => {
+  const TIERS = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
+  const FACTS = { provenance: 'bolagsverket', employees: 5227, legalName: 'Skanska Sverige AB', year: 2025 };
+
+  test('talet går att räkna hem ur källan', () => {
+    const f = buildLicensspannFinding(FACTS, TIERS);
+    // 641,18 − 66,91 = 574,27 kr/mån · ×12 = 6 891 kr/anställd/år · ×5 227 = 36 019 257 kr/år
+    // OBS \s, inte mellanslag: sv-SE-formatteringen ger HÅRT mellanslag (U+00A0) som
+    // tusentalsavgränsare. Det är rätt typografi — ett tal ska aldrig brytas mitt itu — men ett
+    // test som matchar på vanligt mellanslag faller på ett fel som inte finns.
+    assert.match(f.title, /36\s019\s257 kr\/år/);
+    assert.match(f.detail, /66,91–641,18 kr per användare och månad/);
+    assert.match(f.detail, /6\s891 kr per anställd och år/);
+  });
+
+  test('påstår ALDRIG vad kunden betalar eller sparar', () => {
+    const f = buildLicensspannFinding(FACTS, TIERS);
+    for (const forbjudet of [/ni betalar/i, /ni överbetalar/i, /ni kan spara/i, /besparing/i]) {
+      assert.doesNotMatch(`${f.title} ${f.detail}`, forbjudet,
+        'spannet är ett faktum om prislistan — aldrig ett påstående om fakturan');
+    }
+    assert.match(f.detail, /Vi påstår inget om er nivå/);
+  });
+
+  test('inget om kundens interna beslut — det kan vi inte belägga', () => {
+    const f = buildLicensspannFinding(FACTS, TIERS);
+    assert.doesNotMatch(f.detail, /valet gjordes|någon som inte såg|utan att veta/i,
+      'en CFO som valde medvetet ska aldrig kunna falsifiera vår text');
+  });
+
+  test('identitetsinvarianten gäller: utan Bolagsverket-proveniens ingen rad', () => {
+    assert.equal(buildLicensspannFinding({ employees: 500 }, TIERS), null);
+    assert.equal(buildLicensspannFinding({ provenance: 'gissning', employees: 500 }, TIERS), null);
+  });
+
+  test('utan anställdatal, med för få anställda, eller utan spann → tystnad', () => {
+    assert.equal(buildLicensspannFinding({ ...FACTS, employees: null }, TIERS), null);
+    assert.equal(buildLicensspannFinding({ ...FACTS, employees: 4 }, TIERS), null);
+    assert.equal(buildLicensspannFinding(FACTS, { bara: { currency: 'SEK', msrpAnnual: 100 } }), null);
+  });
+
+  test('källan namnger BÅDA leden — ett tal utan sina två ursprung är inte källbelagt', () => {
+    const f = buildLicensspannFinding(FACTS, TIERS);
+    assert.match(f.source, /Microsofts publika listpriser/);
+    assert.match(f.source, /anställdatal ur bokslutet/);
+    assert.match(f.source, /verifierade \d{4}-\d{2}-\d{2}/);
   });
 });
