@@ -36,17 +36,26 @@ const DOMANER = [
 const rader = [];
 
 for (const d of DOMANER) {
+  // ── SONDENS EGET TYSTA FEL, RÄTTAT INNAN NÅGON SLUTSATS DRAGITS ─────────────────────────────
+  // Första versionen registrerade HTTP-status och skrev aldrig ut den. Ett 429 eller 502 gav
+  // rows=null och fel=null, vilket i utskriften blev "inga certifikat i registret" — ett FYND.
+  // Sonden byggd för att diagnostisera en tyst tystnad hade fått en egen. Utfallet såg dessutom
+  // ut som ett svar: noll cert för volvo.se, seb.se och skatteverket.se, domäner med hundratals
+  // certifikat i CT. Ett resultat som inte kan vara sant ska granskas, inte rapporteras.
   const t0 = Date.now();
-  let status = null, rows = null, fel = null;
+  let status = null, rows = null, fel = null, kropp = null;
   try {
     const r = await fetch(`https://crt.sh/?q=${encodeURIComponent('%.' + d)}&output=json`,
       { headers: { Accept: 'application/json', 'User-Agent': UA }, signal: AbortSignal.timeout(25000) });
     status = r.status;
-    if (r.ok) rows = await r.json();
+    const text = await r.text();
+    kropp = { längd: text.length, start: text.slice(0, 90).replace(/\s+/g, ' ') };
+    if (r.ok) { try { rows = JSON.parse(text); } catch { fel = 'EJ JSON'; } }
+    else fel = `HTTP ${r.status}`;
   } catch (e) { fel = e.name === 'TimeoutError' ? 'TIMEOUT' : String(e.message).slice(0, 40); }
   const ms = Date.now() - t0;
 
-  if (!rows) { rader.push({ d, ms, status, fel, certs: 0, prod: null, extra: [] }); continue; }
+  if (!Array.isArray(rows)) { rader.push({ d, ms, status, fel: fel ?? 'INGET SVAR', kropp, certs: 0, prod: null, extra: [] }); continue; }
 
   // Exakt produktionens logik: namn ur name_value, prefixmatchning på fingeravtryck + punkt.
   let prod = null, via = null;
@@ -64,9 +73,9 @@ for (const d of DOMANER) {
 
 console.log(`\n  ${'domän'.padEnd(22)} ${'tid'.padStart(7)} ${'cert'.padStart(6)}  utfall`);
 for (const r of rader) {
-  const utfall = r.fel ? `✗ ${r.fel}`
+  const utfall = r.fel ? `✗ ${r.fel}${r.kropp ? ` · ${r.kropp.längd} tecken: «${r.kropp.start}»` : ''}`
     : r.prod ? `✓ ${r.prod} (via ${r.via})`
-    : r.certs === 0 ? '— inga certifikat i registret'
+    : r.certs === 0 ? `— HTTP ${r.status}: registret svarade med en TOM lista (inte ett fel, inte ett fynd)`
     : `— ${r.certs} cert, inget M365-värdnamn${r.extra.length ? ` · sedda: ${r.extra.join(',')}` : ''}`;
   console.log(`  ${r.d.padEnd(22)} ${String(r.ms + 'ms').padStart(7)} ${String(r.certs).padStart(6)}  ${utfall}`);
 }
@@ -77,6 +86,8 @@ const tomma = svar.filter((r) => !r.prod && r.certs > 0);
 const extraFinns = tomma.filter((r) => r.extra.length);
 console.log(`\n  ── DIAGNOS ──`);
 console.log(`  A · crt.sh svarade inte:        ${rader.length - svar.length} av ${rader.length}`);
+const tomtSvar = svar.filter((r) => r.certs === 0);
+if (tomtSvar.length) console.log(`      · varav HTTP 200 med tom lista: ${tomtSvar.length} — misstänk hastighetsspärr, inte tomhet`);
 console.log(`  ✓ · M365-värdnamn hittat:       ${traff.length} av ${rader.length}`);
 console.log(`  B · cert finns men inget M365:  ${tomma.length}`);
 console.log(`  C · …varav andra M365-typiska värdnamn sågs: ${extraFinns.length}`);
