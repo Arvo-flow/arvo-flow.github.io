@@ -23,6 +23,11 @@ const CASES = [
   // 'Ni kör Microsoft 365' + DMARC. Nu ska rubriken bära namnen, och det ska SES ut som ett fynd
   // och inte som en lista. Två namn wrappar; fotot är det enda som visar om det håller i 390 px.
   { email: 'hej@castra.se', tag: 'castra' },
+  // SKANSKA (2026-08-12): grundarens skärmbild. Kortet gav två artigheter — 'Ni kör Microsoft 365'
+  // och 'Ert e-postskydd är redan aktivt'. Mätningen visade att uppsättningsdatumet fanns hela
+  // tiden (1 721 certifikat, autodiscover sedan 2011-11-17) men låg bakom en 502:a från crt.sh.
+  // Med omförsöket ska raden nå kortet. Fotot är det enda som avgör om den gjorde det.
+  { email: 'asxbnasjnxasj@skanska.se', tag: 'skanska' },
 ];
 
 // Geometrifel som ingen svit kan se — de bor i utlagd CSS, inte i JS. Samlas och fäller körningen.
