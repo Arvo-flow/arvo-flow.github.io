@@ -19,7 +19,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
-import { computeLikeForLikeSaasTarget, buildLikeForLikeReasoning } from '../agents/recommender/recommend.js';
+import { recommend, computeLikeForLikeSaasTarget, buildLikeForLikeReasoning } from '../agents/recommender/recommend.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TIERS = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
@@ -203,5 +203,74 @@ describe('RD-09 · suggestedSupplier härleds ur like-for-like-tiern', () => {
       assert.ok(r.m365Rightsizing, 'E5-rådgivningen bygger inte på bytesbenchmarken och ska stå kvar');
       assert.equal(r.m365Rightsizing.currentTier, 'e5');
     });
+  });
+});
+
+// ── RD-11 · Avstämningsvetot är INKOPPLAT, inte bara byggt ────────────────────────────────────
+// Sviten var grön innan vetot fanns och är grön efteråt — exakt det tillstånd som lät
+// attribueringslåset stå mörkt i två månader. Testet nedan matar produktionsvägen med en faktura
+// där de två vittnena MÅSTE säga emot varandra, och kräver att vetot syns i svaret.
+describe('RD-11 · Aritmetiken granskar textgissningen i produktionsvägen', () => {
+  const stubAi = { messages: { create: async () => ({
+    content: [{ type: 'tool_use', input: { shouldSwitch: true, recommendationType: 'switch', reasoning: 'AI-text.' } }],
+    usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+  }) } };
+  const stubKv = { get: async () => ({ rate: 10.5, fetchedAt: new Date().toISOString() }) };
+
+  // 20 licenser à 133,82 kr = 2 676,40 kr. 133,82 ÄR Business Standards årsavtalspris —
+  // men raden PÅSTÅR E3, vars listpris är 416,77 kr. Vittnena pekar åt olika håll.
+  const rad = (beskrivning) => ([{
+    type: 'recurring_subscription', description: beskrivning,
+    quantity: 20, amount: 2_676, amountOre: 267_640, unitPriceOre: 13_382,
+  }]);
+
+  const kor = async (lines) => {
+    const annualCost = lines[0].amount * 12;
+    return recommend({
+      customer:    { industry: 'it-tech', employees: 20 },
+      categorized: { category: 'saas-productivity', subType: 'produktivitet', normalizedSupplier: 'IT-Partner AB', confidence: 0.95 },
+      invoice: {
+        amount: lines[0].amount, annualCost, billingPeriod: 'monthly', seatCount: 20, lineItems: lines,
+        currency: 'SEK', momsbas: 'exkl',
+        likeForLikeTarget: computeLikeForLikeSaasTarget(lines, TIERS, annualCost),
+      },
+    }, { client: stubAi, kvStore: stubKv });
+  };
+
+  test('texten säger E3 men priset är Business Standards listpris → bytet tystas', async () => {
+    const r = await kor(rad('Microsoft 365 E3'));
+    assert.ok(Array.isArray(r.avstamningsveto) && r.avstamningsveto.length > 0,
+      'vetot syns inte i svaret — då är motvittnet inte inkopplat, bara byggt');
+    assert.equal(r.avstamningsveto[0].textTier, 'e3');
+    assert.equal(r.avstamningsveto[0].prisTier, 'business-standard');
+    assert.equal(r.shouldSwitch, false);
+    assert.equal(r.suggestedSupplier, null, 'inget mål får namnges när vittnena är oense');
+    assert.ok(r.avstamningsveto[0].kalla, 'vetot ska bära källan till det pris det vilar på');
+  });
+
+  test('samma pris med rätt beskrivning → ingen motsägelse, utan bekräftelse', async () => {
+    const r = await kor(rad('Microsoft 365 Business Standard'));
+    assert.equal(r.avstamningsveto, undefined, 'överensstämmelse får aldrig läsas som motsägelse');
+    assert.ok(Array.isArray(r.avstamningsbekraftelse) && r.avstamningsbekraftelse.length > 0,
+      'priset bekräftar nivån — det ska noteras som proveniens');
+    assert.equal(r.avstamningsbekraftelse[0].tier, 'business-standard');
+  });
+
+  // SKRIVET OM 2026-08-12, samma dag som det skrevs. Första versionen krävde att E3 varken kunde
+  // fälla eller bekräfta — sant när testet skrevs, eftersom ingen verifierare läste E3. Under
+  // samma arbetspass bevisades Microsofts publika E3/E5-sida (scripts/probe-m365-enterprise.mjs)
+  // och verifieraren utökades. Premissen föråldrades alltså av att hålet stängdes, inte av att
+  // koden blev fel — och då ska testet följa världen, inte tvärtom.
+  // Egenskapen "obevakad nivå kan inte bevisa något" är kvar och låst i SR-09, där den prövas mot
+  // en uttryckligen begränsad deklaration i stället för mot dagens verifierare.
+  test('E3 är numera vaktat — en träff mot dess eget ankare bekräftar nivån', async () => {
+    const e3pris = rad('Microsoft 365 E3');
+    e3pris[0].unitPriceOre = 41_677;               // exakt E3:s eget listpris
+    e3pris[0].amountOre = 41_677 * 20;
+    e3pris[0].amount = Math.round(41_677 * 20 / 100);
+    const r = await kor(e3pris);
+    assert.equal(r.avstamningsveto, undefined, 'texten och priset är överens — det är ingen motsägelse');
+    assert.equal(r.avstamningsbekraftelse?.[0]?.tier, 'e3',
+      'E3 läses av m365-verifieraren sedan 2026-08-12 och kan därför bära ett bevis');
   });
 });

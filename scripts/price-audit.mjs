@@ -146,6 +146,37 @@ for (const { key, source } of categoryEntries) {
   }
 }
 
+// ── TÄCKNING PER NIVÅ, INTE PER LEVERANTÖR (rättat 2026-08-12) ───────────────
+// Kontrollen nedan frågade "finns en verifierare för den här LEVERANTÖREN?". Nyckeln 'e3'
+// mappades till 'microsoft', m365-modulen fanns, alltså grönt — medan modulen i själva verket
+// läste tre planer och inte E3/E5, prisbokens största tal. En täckningskontroll som mäter på
+// grövre granularitet än det den ska täcka rapporterar täckning den inte har.
+//
+// Verifierare som DEKLARERAR vad de läser (`bevakadeTiers`) kontrolleras nu mot den listan.
+// Odeklarerade moduler faller tillbaka på leverantörsnivån — och den luckan skrivs ut, för en
+// vakt som inte redovisar sin blindfläck ser likadan ut som en som inte har någon.
+let deklareradeTiers = null;
+let odeklarerade = [];
+try {
+  const { VERIFIERS } = await import('../lib/verifiers/registry.mjs');
+  deklareradeTiers = new Set();
+  for (const v of VERIFIERS) {
+    if (Array.isArray(v.bevakadeTiers)) for (const t of v.bevakadeTiers) deklareradeTiers.add(t);
+    else odeklarerade.push(v.id);
+  }
+} catch (e) {
+  warnings.push(`[TÄCKNING] Kunde inte läsa verifierarregistret (${String(e.message).slice(0, 60)}) — tier-täckningen föll tillbaka på leverantörsnivå.`);
+}
+
+// Vilka leverantörer omfattas av en deklaration? Härleds ur de deklarerade nycklarna med samma
+// vendor-regel som används nedan, så att deklaration och kontroll aldrig kan glida isär.
+const vendorAv = (t) => (/^(business|e[0-9])/.test(t) ? 'microsoft' : t.split('-')[0]);
+const deklareradeVendors = new Set([...(deklareradeTiers ?? [])].map(vendorAv));
+if (odeklarerade.length) {
+  console.log(`\x1b[2m  (täckning per nivå gäller ${[...deklareradeVendors].join(', ') || 'ingen'}; ` +
+    `${odeklarerade.length} verifierare saknar bevakadeTiers och prövas fortfarande på leverantörsnivå: ${odeklarerade.join(', ')})\x1b[0m`);
+}
+
 // ── Kontroll 2: Tier-täckning — licenseTierBenchmarks utan monitor-check ──────
 for (const { tier, lastVerified, source } of tierEntries) {
   // Extrahera leverantörsnamn från tier-nyckeln (första segmentet)
@@ -155,8 +186,15 @@ for (const { tier, lastVerified, source } of tierEntries) {
   const vendor = /^(business|e[0-9])/.test(tier)
     ? 'microsoft'
     : tier.split('-')[0];
-  const hasCheck = monitoredSupplierStrings.some(s => s.includes(vendor))
-                || verifierSupplierStrings.some(s => s.includes(vendor));
+  // Deklarationen är AUKTORITATIV för sin leverantör — den får inte vara ett OR med
+  // leverantörsnivån. Ett OR hade betytt att deklarationen bara kan lägga till täckning, aldrig
+  // avslöja en lucka: 'microsoft' matchar ändå på namnet och allt lyser grönt. Det var exakt det
+  // felet som lät E3/E5 stå obevakade. Säger en verifierare vad den läser, så gäller den listan.
+  const vendorArDeklarerad = deklareradeVendors.has(vendor);
+  const hasCheck = vendorArDeklarerad
+    ? deklareradeTiers.has(tier)
+    : (monitoredSupplierStrings.some(s => s.includes(vendor))
+       || verifierSupplierStrings.some(s => s.includes(vendor)));
 
   if (!hasCheck) {
     const isEjVerifierat = source === 'ej-verifierat';

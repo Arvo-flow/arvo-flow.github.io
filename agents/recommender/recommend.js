@@ -29,6 +29,8 @@ import { computeShelfware } from '../../lib/shelfware.js';
 import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
 import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
 import { m365Rightsizing, deriveM365Seats } from '../../lib/m365-rightsizing.js';
+import { granskaTierrader, vaktadeRaderUrPrisbok } from '../../lib/saas-rad.js';
+import m365Verifier from '../../lib/verifiers/m365.mjs';
 import { molnvaxelRecommendation } from '../../lib/molnvaxel-recommendation.js';
 import { loneadminRecommendation } from '../../lib/loneadmin-rightsizing.js';
 import { detectAdobePlan, adobeRightsizing, adobeListExVat, deriveAdobeSeats } from '../../lib/adobe-rightsizing.js';
@@ -1653,6 +1655,56 @@ export async function recommend(input, opts = {}) {
       result.lflGrind = 'saknat like-for-like-underlag — bytesbesparing kräver bevisat pris per licensrad';
     } else {
 
+    // ── MOTVITTNET: aritmetiken granskar textgissningen (2026-08-12) ──────────────────────────
+    // Like-for-like vilar på att en RADBESKRIVNING avgör vilken licensnivå raden är, och därmed
+    // vilket listpris besparingen räknas mot. Den avläsningen hade ingen andra åsikt.
+    // Nu ställs radens bevisade enhetspris (belopp ÷ antal, i öre) mot prisbokens VAKTADE nivåer.
+    // Säger texten E3 medan priset exakt motsvarar Business Standards listpris pekar vittnena åt
+    // olika håll — och då vet vi inte vilket som har rätt. Fail-closed.
+    //
+    // Grinden får ALDRIG omklassificera raden till den nivå priset antyder: likhet är inte
+    // identitet, och en produkt utanför boken är osynlig för matchningen. Bara veto.
+    // Ingen träff betyder ingenting — det normala fallet är en kund med påslag, vars pris inte
+    // motsvarar något listpris alls. Tystnad från motvittnet är alltså inget godkännande.
+    if (_useLfl) {
+      const _granskning = granskaTierrader({
+        lineItems: input.invoice?.lineItems ?? [],
+        tierNyckel: (d) => LFL_TIER_RE.find((p) => p.re.test(d ?? ''))?.key ?? null,
+        kontext: {
+          leverantor: 'microsoft',              // radens PRODUKTleverantör, inte återförsäljaren:
+          valuta:     input.invoice?.currency ?? null,   // de vaktade raderna ÄR Microsofts egna
+          momsbas:    input.invoice?.momsbas ?? null,    // listpriser. Ingen leverantörsgräns korsas.
+          period:     input.invoice?.billingPeriod ?? null,
+        },
+        vaktade: vaktadeRaderUrPrisbok(
+          BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {},
+          { leverantor: 'microsoft', bevakadeTiers: m365Verifier?.bevakadeTiers ?? [] },
+        ),
+      });
+      if (_granskning.motsagelser.length > 0) {
+        const m = _granskning.motsagelser[0];
+        console.log(`[avstamningsveto] «${m.beskrivning}»: texten säger ${m.textTier}, priset (${m.enhetOre} öre) motsvarar ${m.prisTier} — bytet tystas`);
+        result.shouldSwitch = false;
+        result.recommendationType = 'no_action';
+        result.suggestedAnnualCost = null;
+        result.suggestedSupplier = null;
+        result.savingPerYear = 0;
+        result.avstamningsveto = _granskning.motsagelser.map((x) => ({
+          beskrivning: x.beskrivning, textTier: x.textTier, prisTier: x.prisTier, kalla: x.kalla,
+        }));
+      } else if (_granskning.bekraftade.length > 0) {
+        // Positiv korroborering: priset bekräftar nivån texten påstod. Skapar inget tal — den
+        // noteras som proveniens, för ett bevis som ingen kan se är inget bevis.
+        result.avstamningsbekraftelse = _granskning.bekraftade.map((x) => ({
+          beskrivning: x.beskrivning, tier: x.prisTier, kalla: x.kalla,
+        }));
+      }
+    }
+
+    if (!result.shouldSwitch && result.avstamningsveto) {
+      // Vetot har redan nollat talen; hoppa över den finansiella överskrivningen nedan.
+    } else {
+
     const _benchBase = _useLfl
       ? _lflTarget.suggestedAnnualCost - addonAnnual  // strip addon pass-throughs already included in LFL total
       : Math.round(benchmark.p25 * scale);
@@ -1708,6 +1760,8 @@ export async function recommend(input, opts = {}) {
         result.reasoning = deterministicReasoning;
       }
     }
+
+    } // end else (avstämningsvetot)
 
     } // end else (LFL-grinden)
 

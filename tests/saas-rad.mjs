@@ -6,7 +6,9 @@
 // obligatoriskt fält finns ett test som bevisar att ett SAKNAT värde ger tystnad, inte ett default.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { byggAvstamningsrad, byggAvstamningsrader, MATNING, ORE_TOLERANS } from '../lib/saas-rad.js';
+import { byggAvstamningsrad, byggAvstamningsrader, vaktadeRaderUrPrisbok, MATNING, ORE_TOLERANS, FARSKHET_DAGAR } from '../lib/saas-rad.js';
+import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
+import m365Verifier from '../lib/verifiers/m365.mjs';
 import { stamAv, AVST } from '../lib/saas-avstamning.js';
 
 const KONTEXT = { leverantor: 'microsoft', valuta: 'SEK', momsbas: 'exkl', period: 'monthly' };
@@ -174,5 +176,41 @@ describe('SR-06 · Extraktionen får inte defaulta momsbasen', () => {
       'momsbasen får aldrig defaulta — då uppfinner extraktionen den observation grinden kräver');
     assert.match(kod, /raw\.moms_bas === 'exkl' \|\| raw\.moms_bas === 'inkl'/,
       'momsbasen ska släppas igenom endast när den är en av de två observerbara värdena');
+  });
+});
+
+// ── SR-09 · Vaktad status kommer ur vad verifieraren LÄSER ────────────────────────────────────
+// Grinden litar på `vaktad`. Om det fältet sätts av något annat än en maskin som faktiskt läser
+// priset, är hela avstämningen ett cirkelresonemang med extra steg.
+describe('SR-09 · Prisbokens vaktade rader speglar verifierarens deklaration', () => {
+  const TIERS = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
+  const rader = () => vaktadeRaderUrPrisbok(TIERS, {
+    leverantor: 'microsoft', bevakadeTiers: m365Verifier.bevakadeTiers, idag: new Date('2026-08-12T00:00:00Z'),
+  });
+
+  test('varje SEK-nivå ger både månads- och årsavtalsrad', () => {
+    const bs = rader().filter((r) => r.tierNyckel === 'business-standard');
+    assert.equal(bs.length, 2, 'båda avtalsformerna är listpris — att bara bära den ena döljer halva marknaden');
+    assert.deepEqual(bs.map((r) => r.prisOre).sort((a, b) => a - b), [13_382, 16_058]);
+  });
+
+  test('en nivå utanför verifierarens deklaration är INTE vaktad', () => {
+    const utan = vaktadeRaderUrPrisbok(TIERS, { leverantor: 'microsoft', bevakadeTiers: ['business-standard'], idag: new Date('2026-08-12T00:00:00Z') });
+    assert.equal(utan.find((r) => r.tierNyckel === 'e3')?.vaktad, false,
+      'vaktad får aldrig betyda "leverantören har en verifierare" — det var E3-hålet');
+  });
+
+  test('E3 och E5 är vaktade nu — hålet från 2026-08-12 är stängt', () => {
+    for (const nyckel of ['e3', 'e5']) {
+      assert.equal(rader().find((r) => r.tierNyckel === nyckel)?.vaktad, true,
+        `${nyckel} måste läsas av m365-verifieraren — det är prisbokens största tal`);
+    }
+  });
+
+  test('ett gammalt ankare är inte färskt, hur vaktat det än är', () => {
+    const gamla = vaktadeRaderUrPrisbok({ x: { msrpAnnual: 100, currency: 'SEK', lastVerified: '2026-01-01', source: 's' } },
+      { leverantor: 'microsoft', bevakadeTiers: ['x'], idag: new Date('2026-08-12T00:00:00Z') });
+    assert.equal(gamla[0].farsk, false);
+    assert.ok(FARSKHET_DAGAR <= 30, 'veckovis verifiering → mer än en månads tystnad är fyra missade körningar');
   });
 });

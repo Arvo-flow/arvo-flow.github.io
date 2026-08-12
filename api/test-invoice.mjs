@@ -1330,6 +1330,11 @@ export default async function handler(req, res) {
         description:          extracted.description ?? null,
         lineItems:            extracted.lineItems ?? null,
         likeForLikeTarget:    _lflTarget,
+        // Observationerna som avstämningsgrinden lever på. Skickas orörda vidare — normalisering
+        // eller default här hade uppfunnit just det grinden finns för att kräva.
+        currency:             extracted.currency ?? null,
+        momsbas:              extracted.momsbas ?? null,
+        billingPeriod:        extracted.billingPeriod ?? null,
         priceHistoryContext:  priceHistoryContext ?? null,
       },
       categorized,
