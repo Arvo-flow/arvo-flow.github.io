@@ -1,0 +1,25 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-koncernraden
+║ FÅNGAR: Vad källan FAKTISKT uppger som moderbolag, koncernstorlek, grundandeår och bokslut för de orgnr vi visar kort för.
+║ BLIND FÖR: Om källans uppgift stämmer med Bolagsverkets register. Sonden läser vår transportväg, inte myndighetens original — en spegel som ligger efter syns inte här.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+
+═══ 5560339086 · Skanska Sverige AB — kortet i grundarens skärmbild
+  legalName:    Skanska Sverige AB
+  orgnr:        5560339086
+  bokslut:      2025 · 29888812 tkr · 5227 anställda
+  grundandeår:  —
+  koncern:      moderbolag «Skanska Kraft AB» · 389 bolag
+  proveniens:   bolagsverket
+
+═══ 5560004615 · Skanska AB (publ) — den noterade toppen, referens
+  legalName:    Skanska AB
+  orgnr:        5560004615
+  bokslut:      2025 · 1398000 tkr · 151 anställda
+  grundandeår:  —
+  koncern:      moderbolag «—» · 389 bolag
+  proveniens:   bolagsverket
+
+Sonden lägger fram vad källan sa. Om raden ska stå kvar avgörs av om namnet är sant.
