@@ -890,6 +890,30 @@ Tre fynd som väger tyngre än siffran:
   precis på `ORE_TOLERANS`. Den som stramar åt "för säkerhets skull" fäller en korrekt faktura.
   Testlåst i SR-08 med de avlästa talen.
 
+**✅ GRINDEN INKOPPLAD + E3/E5 UNDER VAKT 2026-08-12.** Avstämningen kör nu i produktionsvägen som
+MOTVITTNE mot textgissningen: radens bevisade enhetspris (belopp ÷ antal, i öre) ställs mot
+prisbokens vaktade nivåer, och säger texten E3 medan priset exakt motsvarar Business Standards
+listpris tystas bytet (`[avstamningsveto]`). Grinden får ALDRIG omklassificera raden till den nivå
+priset antyder — bara veto. Ingen träff betyder ingenting: normalfallet är en kund med påslag vars
+pris inte motsvarar något listpris. Maskinvakt: RD-11, **sabotage-bevisad**.
+
+Under inkopplingen upptäcktes att **E3 och E5 — prisbokens största tal — lästes av ingen
+verifierare**. `m365.mjs` läste tre planer; prisauditen visade ändå grönt eftersom dess
+täckningskontroll var på LEVERANTÖRSNIVÅ ('e3' → 'microsoft' → verifieraren finns → täckt).
+*En kontroll som mäter på grövre granularitet än det den ska täcka rapporterar täckning den inte
+har.* Stängt i tre led: adresserna BEVISADES (`scripts/probe-m365-enterprise.mjs`, fyra kandidater
+föll, två höll), verifierare deklarerar nu vad de FAKTISKT läser (`bevakadeTiers`), och prisauditen
+är tier-medveten där deklarationen är **auktoritativ, inte ett OR** med leverantörsnivån — ett OR
+hade bara kunnat lägga till täckning, aldrig avslöja en lucka. Sabotage-bevisad. Live-utfall
+2026-08-12: `[m365] håller (5 tal verifierade mot källan)`, alla 18 källor gröna. Auditen skriver
+själv ut sin kvarvarande blindfläck: 17 verifierare saknar deklaration och prövas på leverantörsnivå.
+
+**En RÖD signal från fel maskin ljuger lika lätt som en grön.** Verifieraren kördes lokalt först och
+gav "(saknas)" på alla fem tal — inklusive de tre som hållit i månader. Sandlådans utgång får en
+annan sida: rå HTML saknade både "416,77" och " kr", och `stripHtml` gav 2 088 tecken av 201 kB.
+Slutsatsen "regression" hade varit lika ogrundad som ett obekräftat grönt. Verifieringsplikten p.2
+gäller åt båda hållen — hämta beviset från den riktiga maskinen även när det bekräftar en oro.
+
 **Kvarstående, uttalat:** Copilot-raden på USD-fakturan typas som vanlig licensrad
 (`recurring_subscription`) — prisbokens Copilot-fälla har alltså en spegelbild på fakturasidan, och
 en framtida grindträff mot ett USD-ankare måste kunna skilja tillägg från licens. Samma faktura
