@@ -27,14 +27,14 @@ const CASES = [
   // och 'Ert e-postskydd är redan aktivt'. Mätningen visade att uppsättningsdatumet fanns hela
   // tiden (1 721 certifikat, autodiscover sedan 2011-11-17) men låg bakom en 502:a från crt.sh.
   // Med omförsöket ska raden nå kortet. Fotot är det enda som avgör om den gjorde det.
-  { email: 'asxbnasjnxasj@skanska.se', tag: 'skanska' },
+  { email: 'asxbnasjnxasj@skanska.se', tag: 'skanska', waitOnboarding: true },
 ];
 
 // Geometrifel som ingen svit kan se — de bor i utlagd CSS, inte i JS. Samlas och fäller körningen.
 const fel = [];
 
 const b = await chromium.launch({ headless: true });
-for (const { email, tag, waitReceipt, openAperture } of CASES) {
+for (const { email, tag, waitReceipt, openAperture, waitOnboarding } of CASES) {
   for (const [w, view] of [[390, 'mobil'], [1600, 'desktop']]) {
     const p = await b.newPage({ viewport: { width: w, height: 1200 } });
     await p.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
@@ -48,6 +48,16 @@ for (const { email, tag, waitReceipt, openAperture } of CASES) {
     await p.waitForTimeout(1500);
     // Pending-läxan: vänta tills våg 2 resolverat till kvittot ("SAMMANSTÄLLT") och verifiera
     // att pending-noten ("arbetar fortfarande") ÄR BORTA — beviset att noten aldrig hänger kvar.
+    // CERTIFIKATVÅGEN LANDAR SENT (2026-08-12). Harnesset fotade efter 1,5 s medan vågen har 28 s
+    // på sig — ett kort utan raden bevisade därför ingenting om vågen, bara att fotot togs först.
+    // Ett foto som inte väntar in det man ändrat mäter inte ändringen.
+    if (waitOnboarding) {
+      await p.waitForFunction(() => [...document.querySelectorAll('.rv-title')]
+        .some((e) => /sattes upp/i.test(e.textContent)), { timeout: 32000 })
+        .then(() => console.log(`UPPSÄTTNINGSRADEN ${tag}: landade`))
+        .catch(() => console.log(`UPPSÄTTNINGSRADEN ${tag}: kom inte inom 32 s`));
+      await p.waitForTimeout(600);
+    }
     if (waitReceipt) {
       // Kvittot namnger registren (bytt 2026-08-07 från uppmätt tid, som blev sämre ju bättre
       // kortet blev). Matchen följer med — en vakt som letar efter en text som inte längre finns
