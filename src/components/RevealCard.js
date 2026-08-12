@@ -121,26 +121,38 @@ const Wrap = styled.section`
     /* Integritetshandlingen sägs högt, en gång — den är ett kvitto på ett val vi gjorde, inte
        en brasklapp. Använder kortets befintliga .ap-foot; en ny klass hade bara varit ännu ett
        namn att skriva fel. */
+    /* ── TÄTHETEN (2026-08-12) ─────────────────────────────────────────────────────────────
+       Sex kandidater à ~60 px tryckte första FYNDET under vikningen på mobil. Kortet bad då om
+       ett val innan det gav något — precis den invändning jag själv reste mot att dölja allt
+       tills kunden valt. Raderna är strama nu, inte färre: att korta listan hade varit att dölja
+       ett bolag som kunde vara deras. */
     .ap-row {
       display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; align-items: baseline;
       width: 100%; text-align: left; background: none; border: none; cursor: pointer;
-      padding: 10px 8px; margin: 0 -8px; border-radius: 8px;
+      padding: 6px 8px; margin: 0 -8px; border-radius: 8px;
       opacity: 0; animation: rvrise .5s cubic-bezier(.16,1,.3,1) forwards;
       @media (prefers-reduced-motion: reduce) { animation: none; opacity: 1; }
       &:hover, &:focus-visible { background: rgba(93,214,202,.07); outline: none; }
       &:hover .ap-namn { color: ${({ theme }) => theme.dossier.tealBright}; }
     }
     .ap-org { font-family: ${({ theme }) => theme.font.mono}; font-size: 11.5px; color: ${({ theme }) => theme.dossier.faintOnDark}; }
-    .ap-namn { display: block; font-family: ${({ theme }) => theme.font.display}; font-size: 15.5px; color: ${({ theme }) => theme.dossier.inkOnDark}; line-height: 1.3; }
+    .ap-namn { display: block; font-family: ${({ theme }) => theme.font.display}; font-size: 15px; color: ${({ theme }) => theme.dossier.inkOnDark}; line-height: 1.25; }
     /* IGENKÄNNINGSRADEN — ort · verksamhet ur samma registerpost. Ersatte "närmast er domän",
        som var stavningslikhet förklädd till vägvisare (och på avida.se pekade fel). Den här
        raden pekar inte: den låter kunden känna igen sig själv. Inga tal — se identityCandidates. */
-    .ap-var { display: block; margin-top: 4px; font-family: ${({ theme }) => theme.font.mono};
-      font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.5;
+    .ap-var { display: block; margin-top: 1px; font-family: ${({ theme }) => theme.font.mono};
+      font-size: 10px; letter-spacing: .07em; text-transform: uppercase; line-height: 1.35;
       color: ${({ theme }) => theme.dossier.faintOnDark}; }
     .ap-foot { margin: 12px 0 0; font-size: 12px; color: ${({ theme }) => theme.dossier.faintOnDark}; line-height: 1.6; }
+    /* MOBIL: orgnr på egen rad gav TRE rader per bolag — namn, nummer, ort — och det är därför
+       listan blev hög just där den har minst plats. Numret är dessutom inte det kunden känner
+       igen sig i; namnet är. Nu bär mobilen två rader: namnet först, och numret hopslaget med
+       ort och bransch på metaraden. Samma information, en tredjedel kortare. */
     @media (max-width: 560px) {
-      .ap-row { grid-template-columns: 1fr; gap: 5px; }
+      .ap-row { grid-template-columns: 1fr; gap: 0; padding: 7px 8px; }
+      .ap-org { display: none; }
+      .ap-var::before { content: attr(data-org) ' · '; }
+      .ap-namn { font-size: 14.5px; }
     }
   }
 
@@ -357,9 +369,11 @@ export default function RevealCard({ domain, findings, pending, identity, onValj
           <span className="ap-org">{fmtOrgnr(k.orgnr)}</span>
           <span>
             <span className="ap-namn">{k.legalName}</span>
-            {(k.ort || k.bransch) && (
-              <span className="ap-var">{[k.ort, k.bransch].filter(Boolean).join(' · ')}</span>
-            )}
+            {/* data-org: mobilvyn fäller in numret här (se .ap-var::before) i stället för att
+                ge det en egen rad — informationen är kvar, höjden är det inte. */}
+            <span className="ap-var" data-org={fmtOrgnr(k.orgnr)}>
+              {[k.ort, k.bransch].filter(Boolean).join(' · ')}
+            </span>
           </span>
         </button>
       ))}

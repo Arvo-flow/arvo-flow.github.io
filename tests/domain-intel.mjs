@@ -176,13 +176,27 @@ describe('buildRevealFindings · Lekia-fallet: gateway-MX men SPF bär sanningen
   };
   const f = buildRevealFindings({ domain: 'lekia.se', posture, domainReg: null, ct: null });
 
-  test('M365-fyndet föds ur SPF:en — nivåfrågan utan siffror, aldrig en påstådd nivå', () => {
+  // ── DOMEN SOM ÄNDRADES, OCH DEN SOM STÅR KVAR (2026-08-12) ─────────────────────────────────
+  // Grundardomen 2026-07-12 (costline-läxan) sa "en FRÅGA utan siffror i detaljen". Den ersattes
+  // av en ny order i dag: teasern var kortets svagaste mening ("avgör tusenlappar per anställd
+  // och år") och stod direkt under dess starkaste — de sex bolagen med orgnr. En hedge där kunden
+  // ännu inte investerat något är fel väg.
+  //
+  // Men bara HALVA domen ändrades. Kvar står det som gjorde den nödvändig: SPF/MX bevisar
+  // M365-FAMILJEN, aldrig nivån. Siffror om PRISLISTAN är alltså tillåtna; ett tal om KUNDENS
+  // kostnad eller en påstådd nivå är det inte, och det är vad testet nedan låser.
+  test('M365-fyndet föds ur SPF:en — spannet får synas, kundens nivå aldrig påstås', () => {
     const m365 = f.find((x) => x.kind === 'platform');
     assert.ok(m365, 'plattformsfyndet saknas');
     assert.equal(m365.title, 'Ni kör Microsoft 365');
     assert.match(m365.detail, /bakom er mejlgateway/);
-    assert.match(m365.detail, /syns bara på fakturan/);
-    assert.doesNotMatch(m365.detail, /Business Standard|Basic|Premium|E3|E5/);
+    assert.match(m365.detail, /står bara på fakturan/, 'nivån ska alltid sägas vara osynlig för oss');
+    assert.doesNotMatch(m365.detail, /Business Standard|Basic|Premium|E3|E5/,
+      'ingen NIVÅ får namnges som kundens — det var hela costline-läxan');
+    for (const forbjudet of [/ni betalar \d/i, /er kostnad/i, /ni överbetalar/i, /ni kan spara/i]) {
+      assert.doesNotMatch(m365.detail, forbjudet, 'spannet är ett faktum om prislistan, aldrig om fakturan');
+    }
+    assert.match(m365.detail, /per användare och månad/, 'talet ska bära sin enhet');
     assert.match(m365.source, /SPF-posten/);
   });
 
