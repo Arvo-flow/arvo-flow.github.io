@@ -354,7 +354,15 @@ export default function RevealCard({ domain, findings, pending, identity, onValj
     <div className="rv-aperture">
       <div className="ap-k">
         <span>{identitetOlost ? `Vi läste ${kandidater.length} bolag som heter något med ${namnstam}. Vilket är ert?` : 'Vilket bolag är ni?'}</span>
-        <span>{identity.readCount ? `${identity.readCount} lästa · ` : ''}{kandidater.length} möjliga</span>
+        {/* "N LÄSTA" ÄR BORTTAGET (2026-08-12). Talet kom ur söksidans träfflista — och både
+            avida.se och skanska.se visade exakt 25, vilket är hur en fast sidstorlek ser ut, inte
+            hur ett mätvärde ser ut. Det såg ut som ett kvitto på vårt arbete men var sannolikt
+            en artefakt av sidbrytning; ingen av oss kunde räkna hem det.
+            Asymmetrin avgjorde: ett tal som ser mätt ut men är en sidstorlek smittar VARJE annat
+            tal på kortet, och kortets hela värde är att talen går att lita på. "3 möjliga" står
+            kvar — det är vår egen grind som räknat, och det går att räkna hem mot listan under.
+            Kan täckningen bevisas variera hämtas raden tillbaka, med sitt bevis. */}
+        <span>{kandidater.length} möjliga</span>
       </div>
       {kandidater.map((k, i) => (
         <button type="button" className="ap-row" key={k.orgnr}
