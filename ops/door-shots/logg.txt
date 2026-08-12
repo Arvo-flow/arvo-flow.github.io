@@ -46,11 +46,13 @@ MITTLINJEN castra mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen
 ✓ castra mobil
 MITTLINJEN castra desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
 ✓ castra desktop
+UPPSÄTTNINGSRADEN skanska: kom inte inom 32 s
 FYND skanska: ["Ni kör Microsoft 365","Ert e-postskydd är redan aktivt"]
 ORDNING skanska: IDENT-FÖRE-KVITTO
 RÅA ORGNR skanska: [] (ska vara [])
 MITTLINJEN skanska mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
 ✓ skanska mobil
+UPPSÄTTNINGSRADEN skanska: kom inte inom 32 s
 MITTLINJEN skanska desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
 ✓ skanska desktop
 
