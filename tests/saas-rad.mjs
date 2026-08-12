@@ -90,6 +90,34 @@ describe('SR-04 · Två avläsningar av samma belopp måste vara överens', () =
   });
 });
 
+// ── SR-07 · Radens egen aritmetik — den icke-cirkulära kontrollen ─────────────────────────────
+// Sonden kunde mäta att öresfälten KOMMER FRAM, aldrig att modellen läste rätt ruta. Ett
+// hallucinerat öresbelopp ser identiskt ut med ett avläst och bär precisionens auktoritet.
+// Att jämföra mot prisboken vore cirkulärt — prisboken är det grinden stämmer av MOT. Fakturans
+// egna tal är däremot ett oberoende vittne: à-pris × antal ÄR radbeloppet.
+describe('SR-07 · À-pris × antal måste vara radbeloppet', () => {
+  test('rad som går ihop passerar', () => {
+    const ut = byggAvstamningsrad({ ...RAD, unitPriceOre: 13_382 }, KONTEXT);
+    assert.equal(ut.ok, true, ut.skal);   // 13 382 × 5 = 66 910
+  });
+
+  test('rad som inte går ihop avvisas — vi vet inte vilken avläsning som är fel', () => {
+    const ut = byggAvstamningsrad({ ...RAD, unitPriceOre: 13_000 }, KONTEXT);
+    assert.equal(ut.ok, false);
+    assert.equal(ut.skal, MATNING.RADEN_GAR_INTE_IHOP);
+  });
+
+  test('ingen tolerans — ett öre fel är fel', () => {
+    const ut = byggAvstamningsrad({ ...RAD, unitPriceOre: 13_383 }, KONTEXT);
+    assert.equal(ut.ok, false,
+      'med tolerans skulle grindens härledda enhetspris motsäga fakturans egna à-pris');
+  });
+
+  test('saknas à-pris kan kontrollen inte köras — och hittar då på inget', () => {
+    assert.equal(byggAvstamningsrad({ ...RAD, unitPriceOre: null }, KONTEXT).ok, true);
+  });
+});
+
 describe('SR-05 · Radsvepet redovisar varje rad, även de avvisade', () => {
   test('en avvisad rad försvinner inte tyst ur resultatet', () => {
     const ut = byggAvstamningsrader([RAD, { ...RAD, amountOre: null }], KONTEXT);

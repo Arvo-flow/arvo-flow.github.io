@@ -21,7 +21,7 @@ import { byggAvstamningsrader } from '../lib/saas-rad.js';
 deklarera({
   namn: 'probe-avstamningsbransle',
   fangar: 'Hur ofta modellen faktiskt fyller i momsbas och öresbelopp när fakturan visar dem — och hur många rader som därmed når fram till grinden.',
-  blind: 'Om ett ifyllt fält är RÄTT. Sonden ser att modellen svarade, inte att den läste rätt ruta på fakturan. Att verifiera sanningshalten kräver mänsklig avläsning av samma faktura — det är nästa steg, inte det här.',
+  blind: 'Om ett ifyllt fält är RÄTT mot pappret. Mataren kontrollerar numera fakturans egna tal mot varandra (à-pris × antal = radbelopp), vilket fäller inbördes motsägelser utan att fråga prisboken — men en avläsning som är konsekvent fel på BÅDA fälten passerar. Den sista milen kräver mänsklig avläsning av samma faktura.',
 });
 
 const KANDIDATER = [
