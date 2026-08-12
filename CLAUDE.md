@@ -925,6 +925,27 @@ ett giltigt SVAR (kategorivakter läser inga licensnivåer), men svaret måste f
 mellan "läser inga" och "ingen frågade" ska stå i koden. Sviten fäller ett register som innehåller
 en odeklarerad vakt. Sabotage-bevisat.
 
+**⚠️ MÄTINSTRUMENTET ÄR OFTARE FELET ÄN SYSTEMET (2026-08-12, sex fall på ett dygn).**
+Under dörrarbetet var mitt eget verktyg fel sex gånger — och systemet noll gånger av de sex:
+en väntare som vakade på "main ändrades" (min egen push utlöste den), en statusläsning som parade
+id/status/sha positionsvis ur en JSON-klump (gav en gammal körnings "success" på en ny körnings id),
+en sond som rapporterade crt.sh:s 502 som *"inga certifikat i registret"* — formulerat som ett FYND,
+kortets markup skriven ur minnet (`k.namn` finns inte, fältet heter `legalName` → sex tomma
+bolagsnamn i en kundyta), ett filnamn med `ä` som CI inte hittade, och två sonder som skrev till
+SAMMA utdatafil så att den ena mätningen förstördes innan den lästes.
+
+Alla sex har samma form: **ett antagande där en avläsning fanns att göra.** Det som fångade varje
+enskild gång var samma reflex — *stanna vid ett resultat som inte kan vara sant*: noll certifikat
+för volvo.se, "25 LÄSTA" på två olika domäner, sex tomma namn, två tysta sonder efter en rad
+lyckade. Reflexen är den enda kontroll som fungerar i högt tempo, och den måste ske FÖRE deploy på
+kundytor (regel 8) — en gång i dag fick grundaren agera QA, och en gång är en för mycket.
+
+**Följdfynd i kundytan:** "25 LÄSTA · 6 MÖJLIGA" var en SIDSTORLEK, inte ett mått på vårt arbete.
+Mätt: skanska/avida/westander gav alla exakt 25, trivector 17, ett nonsensord 0 — och det finns
+inte 25 bolag som heter Westander. Talet är borta ur kortet och fältet heter numera `sidtraffar`,
+så att ingen framtida yta kan råka lova något med det. Ett fält vars NAMN lovar mer än värdet är
+en lögn som väntar på en yta.
+
 **En RÖD signal från fel maskin ljuger lika lätt som en grön.** Verifieraren kördes lokalt först och
 gav "(saknas)" på alla fem tal — inklusive de tre som hållit i månader. Sandlådans utgång får en
 annan sida: rå HTML saknade både "416,77" och " kr", och `stripHtml` gav 2 088 tecken av 201 kB.
