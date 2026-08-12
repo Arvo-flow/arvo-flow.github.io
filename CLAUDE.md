@@ -908,6 +908,23 @@ hade bara kunnat lägga till täckning, aldrig avslöja en lucka. Sabotage-bevis
 2026-08-12: `[m365] håller (5 tal verifierade mot källan)`, alla 18 källor gröna. Auditen skriver
 själv ut sin kvarvarande blindfläck: 17 verifierare saknar deklaration och prövas på leverantörsnivå.
 
+**✅ DÖRREN STÄNGD 2026-08-12 — alla 18 vakter deklarerar sin räckvidd, leverantörsnivån är riven.**
+Mellanläget (deklaration för dem som hade en, leverantörsnamn för resten) var bara ett mindre hål:
+en odeklarerad modul kunde fortfarande täcka en post genom att *heta* rätt sak. Nu finns ingen
+fallback. Auditen ställer tre obligatoriska frågor — **odeklarerad vakt**, **obevakad post**,
+**föråldrad deklaration** — och alla tre är kritiska. Den tredje är den som annars ruttnar i tysthet:
+en nyckel som byter namn lämnar en deklaration som låter täckande men vaktar ingenting. Utfall:
+**20 deklarerade nycklar, 20 poster i prisboken, noll luckor åt någotdera hållet.** Listorna är
+HÄRLEDDA ur varje moduls egen sanningskälla (`TIERS`/`PRODUKTER`, delad konstant för hubspot/zoho) —
+en avskriven lista hade kunnat glida isär från vad modulen kör. Alla tre kontrollerna sabotage-bevisade.
+
+**Vaktkontraktet har fått sin tredje fråga:** `fangar` och `blind` beskriver vaktens FÖRMÅGA, aldrig
+dess RÄCKVIDD. En vakt kan vara fullständigt ärlig om sin blindfläck och ändå dölja ett hål, därför
+att frågan aldrig ställdes. `bevakadeTiers` är nu obligatorisk i `lib/vaktkontrakt.js`; tom lista är
+ett giltigt SVAR (kategorivakter läser inga licensnivåer), men svaret måste finnas — skillnaden
+mellan "läser inga" och "ingen frågade" ska stå i koden. Sviten fäller ett register som innehåller
+en odeklarerad vakt. Sabotage-bevisat.
+
 **En RÖD signal från fel maskin ljuger lika lätt som en grön.** Verifieraren kördes lokalt först och
 gav "(saknas)" på alla fem tal — inklusive de tre som hållit i månader. Sandlådans utgång får en
 annan sida: rå HTML saknade både "416,77" och " kr", och `stripHtml` gav 2 088 tecken av 201 kB.
