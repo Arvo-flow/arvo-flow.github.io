@@ -471,3 +471,48 @@ describe('suppliersFromSpf · ordboken växer utan att grinden mjuknar', () => {
     }
   });
 });
+
+// ── CT-OMFÖRSÖKET (mätt fram 2026-08-12) ─────────────────────────────────────────────────────
+// Uppsättningsdatumet fyrade 2 av 28. Mätningen visade att orsaken var uppströms: crt.sh svarade
+// 502/503/timeout i 15 fall av 16. Med paus och omförsök blev 1 av 16 till 5 av 16, och tre av de
+// fem träffarna kom på försök 2 eller 3.
+//
+// Testerna nedan låser BETEENDET, inte nätverket: ett 5xx är en strypning och ska försökas om,
+// ett 404 är ett svar och ska aldrig försökas om (annars bygger vi in brus mot en källa som redan
+// stryper oss), och ett totalt misslyckande ska ge null — aldrig ett halvt fynd.
+describe('getCtOnboarding · omförsök vid strypning, aldrig vid svar', () => {
+  const origFetch = globalThis.fetch;
+  const svar = (status, kropp) => ({ ok: status === 200, status, json: async () => kropp });
+  let anrop;
+
+  const kor = async (svarsFoljd) => {
+    anrop = 0;
+    globalThis.fetch = async () => { const s = svarsFoljd[Math.min(anrop, svarsFoljd.length - 1)]; anrop++; return s; };
+    const { getCtOnboarding } = await import('../lib/domain-intel.js');
+    const ut = await getCtOnboarding('exempel.se');
+    globalThis.fetch = origFetch;
+    return ut;
+  };
+
+  test('502 följt av träff → omförsöket räddar raden', async () => {
+    const ut = await kor([
+      svar(502, null),
+      svar(200, [{ not_before: '2011-11-17T00:00:00', name_value: 'autodiscover.exempel.se' }]),
+    ]);
+    assert.equal(anrop, 2, 'ett 5xx ska försökas om');
+    assert.equal(ut?.m365Since, '2011-11-17');
+    assert.equal(ut?.m365Via, 'autodiscover');
+  });
+
+  test('404 försöks ALDRIG om — det är ett svar, inte en strypning', async () => {
+    const ut = await kor([svar(404, null)]);
+    assert.equal(anrop, 1, 'omförsök mot ett svar är brus mot en källa som redan stryper oss');
+    assert.equal(ut, null);
+  });
+
+  test('alla försök misslyckas → null, aldrig ett halvt fynd', async () => {
+    const ut = await kor([svar(503, null)]);
+    assert.ok(anrop >= 2, 'strypning ska försökas om innan vi ger upp');
+    assert.equal(ut, null, 'utan svar finns inget datum — och null cachas aldrig av flimmervakten');
+  });
+});
