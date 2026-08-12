@@ -1,0 +1,16 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-ct-vag
+║ FÅNGAR: Vad den utlagda /api/reveal svarar i ctOnly-läget, per domän, med tid mätt — alltså om certifikatvågen levererar raden till en riktig besökare.
+║ BLIND FÖR: Om raden når SKÄRMEN. Sonden läser HTTP-svaret, inte kortet; renderingen bevisas bara av ett foto som faktiskt väntat in vågen.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+  skanska.se        18932ms  HTTP 200  — ingen rad
+  volvo.se           3226ms  HTTP 200  — ingen rad
+  seb.se              296ms  HTTP 200  — ingen rad
+  westander.se      20139ms  HTTP 200  — ingen rad
+  trivector.se      12359ms  HTTP 200  — ingen rad
+  castra.se           476ms  HTTP 200  — ingen rad
+
+  Andra körningen på samma domän ska vara SNABB — flimmervakten cachar träffen i 30 dagar.
+  Är den långsam igen cachas inget, och då är det cachen som ska lagas, inte vågen.
