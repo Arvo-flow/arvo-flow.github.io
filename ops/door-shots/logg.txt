@@ -1,4 +1,4 @@
-FYND lekia: ["Ni kör Microsoft 365","4 leverantörer syns i era publika mejlposter","Mejl i ert namn kan förfalskas"]
+FYND lekia: ["Ni kör Microsoft 365","Zendesk · Mailchimp · Amazon SES · Abicart får skicka mejl i ert namn","Mejl i ert namn kan förfalskas"]
 ORDNING lekia: IDENT-FÖRE-KVITTO
 RÅA ORGNR lekia: [] (ska vara [])
 MITTLINJEN lekia mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
@@ -21,7 +21,7 @@ MITTLINJEN spokdoman mobil: inget kort på sidan — inget att mäta (laglig tys
 MITTLINJEN spokdoman desktop: inget kort på sidan — inget att mäta (laglig tystnad)
 ✓ spokdoman desktop
 PENDING KVAR kfast: 0 (ska vara 0)
-FYND kfast: ["Ni kör Microsoft 365","Ert e-postskydd är redan aktivt","Digital närvaro sedan april 2015"]
+FYND kfast: ["Ni kör Microsoft 365","SendGrid · Mailgun får skicka mejl i ert namn","Ert e-postskydd är redan aktivt","Digital närvaro sedan april 2015"]
 ORDNING kfast: kvitto-utan-ident
 RÅA ORGNR kfast: [] (ska vara [])
 MITTLINJEN kfast mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
@@ -39,5 +39,12 @@ VÄGVISARE avida: 0 (ska vara 0) · IGENKÄNNING: 3 av 3
 MITTLINJEN avida desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
 ✓ avida desktop
 ✓ avida bländare desktop
+FYND castra: ["Ni kör Microsoft 365","MailerLite · Brevo får skicka mejl i ert namn","Ert e-postskydd är redan aktivt"]
+ORDNING castra: IDENT-FÖRE-KVITTO
+RÅA ORGNR castra: [] (ska vara [])
+MITTLINJEN castra mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
+✓ castra mobil
+MITTLINJEN castra desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
+✓ castra desktop
 
 ✓ Måttsystemet håller — bilagan delar mittlinje och kant i varje vy.
