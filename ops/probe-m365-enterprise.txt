@@ -1,0 +1,42 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-m365-enterprise
+║ FÅNGAR: Om Microsoft publicerar E3/E5-priset på en publik svensk sida, och exakt vilken text priset står i.
+║ BLIND FÖR: Sidor som kräver inloggning, geo-styrs bort från en GitHub-runner, eller renderar priset med JS efter interaktion. Ett uteblivet svar betyder "sonden såg det inte", aldrig "priset finns inte".
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+
+· https://www.microsoft.com/sv-se/microsoft-365/enterprise/microsoft365-plans-and-pricing
+    → 714288 tecken html · 69747 tecken text
+    [E3] 416,77 FINNS: «…365 E3 Kraftfulla produktivitetsappar med utökade funktioner för säkerhet och efterlevnad 416,77 kr användare/månad, betalas årsvis (Årligt åtagande)…»
+    [E5] 641,18 FINNS: «…ärldsklass med AI, avancerad säkerhet, efterlevnad, analys och kapacitet för AI-beredskap 641,18 kr användare/månad, betalas årsvis (Årligt åtagande)…»
+    kr-priser på sidan: 1 013,97 kr · 641,18 kr · 286,80 kr · 416,77 kr · 932,24 kr · 559,44 kr · 335,04 kr · 7 1 013,97 kr · 5 641,18 kr · 3 416,77 kr · 81,73 kr · 365 143,40 kr
+
+· https://www.microsoft.com/sv-se/microsoft-365/enterprise/e3
+    → 473469 tecken html · 33177 tecken text
+    [E3] 416,77 FINNS: «…g, samt utökad säkerhet, molnlagring och AI-chatt kopplad till webben. 1 Microsoft 365 E3 416,77 kr användare/månad, betalas årsvis (Årligt åtagande)…»
+    [E5] 641,18 FINNS: «…Purview: Styr, skydda och hantera data på ett enkelt och effektivt sätt. Microsoft 365 E5 641,18 kr användare/månad, betalas årsvis (Årligt åtagande)…»
+    kr-priser på sidan: 3 416,77 kr · 335,04 kr · 5 641,18 kr · 559,44 kr
+
+· https://www.microsoft.com/sv-se/microsoft-365/enterprise/e5
+    → 485870 tecken html · 33116 tecken text
+    [E3] 416,77 FINNS: «…Purview: Styr, skydda och hantera data på ett enkelt och effektivt sätt. Microsoft 365 E3 416,77 kr användare/månad, betalas årsvis (Årligt åtagande)…»
+    [E5] 641,18 FINNS: «…ncerad säkerhet, analys, molnlagring och AI-chatt kopplad till webben. 1 Microsoft 365 E5 641,18 kr användare/månad, betalas årsvis (Årligt åtagande)…»
+    kr-priser på sidan: 5 641,18 kr · 559,44 kr · 3 416,77 kr · 335,04 kr
+
+· https://www.microsoft.com/sv-se/microsoft-365/enterprise/office365-e3
+    → HTTP 404
+
+· https://www.microsoft.com/sv-se/microsoft-365/business/compare-all-microsoft-365-business-products
+    → 681119 tecken html · 68811 tecken text
+    [E3] 416,77 syns inte i texten
+    [E5] 641,18 syns inte i texten
+    kr-priser på sidan: 305,87 kr · 224,63 kr · 66,91 kr · 275,19 kr · 193,94 kr · 51,61 kr · 120,00 kr · 200,70 kr · 172,03 kr · 95,60 kr · 28,70 kr
+
+· https://www.microsoft.com/sv-se/microsoft-365/enterprise/microsoft365-plans-and-pricing?market=se
+    → 688706 tecken html · 67654 tecken text
+    [E3] 416,77 syns inte i texten
+    [E5] 641,18 syns inte i texten
+    kr-priser på sidan: (inga)
+
+Sonden bevisar adresser. Ett pris blir ankare först när en verifierare vaktar det.
