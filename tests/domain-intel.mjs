@@ -149,7 +149,7 @@ describe('buildRevealFindings · varje fynd bär en källa, inget fabriceras', (
 // Lekias VERKLIGA SPF-mekanismer som fixtur: mejl via säkerhetsgateway (MX ≠ Microsoft)
 // men SPF auktoriserar outlook.com → M365-familjen bekräftad bakom gatewayen, och fem
 // leverantörsrelationer synliga utifrån. Före fixen: trivia-golvet. Efter: två äkta fynd.
-import { suppliersFromSpf } from '../lib/domain-intel.js';
+import { suppliersFromSpf, SPF_SUPPLIER_MAP } from '../lib/domain-intel.js';
 
 const LEKIA_MECHANISMS = [
   'ip4:31.216.224.122', 'include:spf.mandrillapp.com', 'include:mail.zendesk.com',
@@ -189,8 +189,11 @@ describe('buildRevealFindings · Lekia-fallet: gateway-MX men SPF bär sanningen
   test('leverantörslistan: fyra namn, källbelagd, kräver ≥2', () => {
     const sup = f.find((x) => x.kind === 'suppliers');
     assert.ok(sup, 'leverantörsfyndet saknas');
-    assert.match(sup.title, /4 leverantörer/);
-    assert.match(sup.detail, /Zendesk · Mailchimp · Amazon SES · Abicart/);
+    // RUBRIKEN BÄR NAMNEN (2026-08-12): en siffra är en statistik, namnen är ögonblicket då en
+    // CFO undrar hur vi visste. Vi hade redan räknat fram dem och gömde dem på andra raden.
+    assert.match(sup.title, /Zendesk · Mailchimp · Amazon SES · Abicart/);
+    assert.match(sup.title, /får skicka mejl i ert namn/);
+    assert.match(sup.detail, /4 avsändare/, 'antalet får finnas kvar — men som stöd, inte som rubrik');
   });
 
   test('pengabryggan: listan slutar i fakturadörren — samma dörr som M365-fyndet', () => {
@@ -424,5 +427,47 @@ describe('Adversariella svepet 2026-07-17 · domänhärledningen', () => {
   test('städning: mailto-prefix och avslutande punkt', () => {
     assert.equal(domainFromEmail('mailto:x@bolag.se'), 'bolag.se');
     assert.equal(domainFromEmail('x@bolag.se.'), 'bolag.se');
+  });
+});
+
+// ── ORDBOKEN VÄXTE 15 → 57 NAMN (2026-08-12) ─────────────────────────────────────────────────
+// Fyndet som tvingade fram det: castra.se publicerar 31 SPF-mekanismer, däribland
+// `_spf.mlsend.com` (MailerLite) och `spf.sendinblue.com` (Brevo). Ordboken kände femton namn och
+// matchade noll — kortet föll tillbaka på "Ni kör Microsoft 365". Wow:et låg i klartext, oläst.
+//
+// Men varje nytt namn ökar risken för en FALSK träff, och en påhittad leverantör är ett påstående
+// om kundens affärer utan källa (regel 3). Därför bytte matchningen samtidigt från substräng till
+// domänetikett. Testerna nedan bevakar båda riktningarna: att vi läser mer, och att vi inte
+// börjar gissa. Ett namn för lite är en missad wow; ett namn för mycket är en lögn.
+describe('suppliersFromSpf · ordboken växer utan att grinden mjuknar', () => {
+  test('castra-fallet: MailerLite och Brevo läses nu', () => {
+    const namn = suppliersFromSpf(['include:_spf.mlsend.com', 'include:spf.sendinblue.com', 'include:spf.protection.outlook.com']);
+    assert.ok(namn.includes('MailerLite'), 'MailerLite ska läsas ur _spf.mlsend.com');
+    assert.ok(namn.includes('Brevo'), 'Brevo ska läsas ur spf.sendinblue.com');
+    assert.equal(namn.includes('Microsoft'), false, 'Microsoft bär eget plattformsfynd');
+  });
+
+  test('substräng-fällan: nålen måste vara en hel etikett', () => {
+    // 'lime' i 'sublimemail.com' och 'zoom' i 'zoomerang.example' är INTE våra leverantörer.
+    // Den gamla substrängmatchningen hade namngett båda.
+    assert.deepEqual(suppliersFromSpf(['include:spf.sublimemail.com']), []);
+    assert.deepEqual(suppliersFromSpf(['include:mail.zoomerang.example']), []);
+    assert.deepEqual(suppliersFromSpf(['include:notfortnoxish.se']), []);
+  });
+
+  test('etikett med bindestreck räknas som etikett', () => {
+    assert.deepEqual(suppliersFromSpf(['include:spf.rule-mailer.com']), ['Rule']);
+  });
+
+  test('bara mekanismer med värddomän läses — ip4/all namnger aldrig något', () => {
+    assert.deepEqual(suppliersFromSpf(['ip4:1.2.3.4', '-all', 'v=spf1']), []);
+  });
+
+  test('varje namn i kartan är unikt matchbart och kartan bär inga tomma nålar', () => {
+    for (const [nal, namn] of SPF_SUPPLIER_MAP) {
+      assert.ok(typeof nal === 'string' && nal.length >= 4, `nålen '${nal}' är för kort för att vara säker`);
+      assert.ok(typeof namn === 'string' && namn.trim(), `namnet för '${nal}' saknas`);
+      assert.ok(!nal.includes('.'), `nålen '${nal}' ska vara EN etikett, inte en domän`);
+    }
   });
 });
