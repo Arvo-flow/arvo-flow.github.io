@@ -16,7 +16,8 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { recommend } from '../../agents/recommender/recommend.js';
+import { recommend, computeLikeForLikeSaasTarget } from '../../agents/recommender/recommend.js';
+import { BRANCHINDEX } from '../../agents/recommender/branchindex.js';
 
 export const fixtures = [
 
@@ -928,14 +929,23 @@ const stubAi = { messages: { create: async () => ({
 const stubKv = { get: async () => ({ rate: 10.5, fetchedAt: new Date().toISOString() }) };
 
 const byId = (id) => fixtures.find((f) => f.id === id);
-const e2eInput = (fx) => ({
-  customer:    { industry: fx.industry, employees: fx.employees },
-  categorized: { category: 'saas-productivity', subType: 'produktivitet', normalizedSupplier: 'Microsoft', confidence: 0.95 },
-  invoice:     {
-    annualCost: fx.lineItems.reduce((s, l) => s + (l.amount ?? 0), 0) * 12,
-    billingPeriod: 'monthly', seatCount: fx.seatCount ?? null, lineItems: fx.lineItems,
-  },
-});
+// HARNESSET SPEGLAR PRODUKTIONEN (rättat 2026-08-12). Tidigare utelämnades likeForLikeTarget här,
+// vilket körde recommend() på ett tillstånd produktionen aldrig är i — exakt samma sjukdom som
+// api-kopian som gjorde attribueringslåset mörkt i två månader. Ett harness som matar något annat
+// än produktionen matar mäter inte produktionen. LFL byggs nu med samma funktion api-lagret kallar.
+const e2eInput = (fx) => {
+  const annualCost = fx.lineItems.reduce((s, l) => s + (l.amount ?? 0), 0) * 12;
+  return {
+    customer:    { industry: fx.industry, employees: fx.employees },
+    categorized: { category: 'saas-productivity', subType: 'produktivitet', normalizedSupplier: 'Microsoft', confidence: 0.95 },
+    invoice:     {
+      annualCost, billingPeriod: 'monthly', seatCount: fx.seatCount ?? null, lineItems: fx.lineItems,
+      likeForLikeTarget: computeLikeForLikeSaasTarget(
+        fx.lineItems, BRANCHINDEX['saas-productivity'].licenseTierBenchmarks, annualCost,
+      ),
+    },
+  };
+};
 const runE2E = (fx) => recommend(e2eInput(fx), { client: stubAi, kvStore: stubKv });
 
 describe('05-saas · M365 rätt-storlek e2e (recommend() hela vägen, stubbad AI+FX)', () => {

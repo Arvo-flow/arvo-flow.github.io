@@ -824,6 +824,27 @@ innehåller ett test som medvetet underkänner gårdagens objektform, så låset
 grund. RD-09 låser att bytesmålets NAMN härleds ur samma beräkning som dess TAL. Sonden som bevisade
 felet står kvar körbar: `scripts/probe-lfl-produktionsvag.mjs` (bär den gamla kopian som preparat).
 
+**✅ GISSNINGSVÄGEN STÄNGD 2026-08-12 — priset mättes FÖRE snittet.** Utan like-for-like byggdes
+bytesbesparingen ur `benchmark.p25 × scale`, där p25 kom ur en tier läst ur radens beskrivningstext
+och scale ur ett antaget antal anställda: två gissningar multiplicerade till en kundsynlig siffra.
+Innan vägen stängdes mättes vad tystnaden kostar — `scripts/probe-lfl-tackning.mjs` körde den skarpa
+pipelinen (riktig `extract.js`, riktig nyckel, GH Actions) mot 20 verkliga fakturor i `test-pdfs/`:
+**6 av 6 saas-productivity-fakturor bar LFL-underlag, 0 gick gissningsvägen.** Priset var noll.
+Nu fail-closed (`[lfl-grind]`): utan bevisat pris per licensrad utlöses inget byte, inget mål namnges.
+Rätt-storlek, licensrensning och kontraktsklockan räknas fristående och överlever grinden — testlåst,
+för en grind som kostar mer än den skyddar är ett sämre fel än det den lagade. Maskinvakt: RD-10 i
+`tests/lfl-produktionsvag.mjs`, **sabotage-bevisad** (grinden avaktiverad → sviten faller).
+
+Två läxor ur samma mätning, båda om att mäta rätt sak:
+- **Sonden ljög i sin egen etikett.** Den skrev "attribueringslåset kan fyra" för varje faktura med
+  ett LFL-objekt — men ett LFL-objekt kan bestå enbart av add-on-genomsläpp (noll tier-rader), och
+  då kan låset inte fyra. Etiketten var en gissning som passerade som en mätning, i själva verktyget
+  som byggts mot gissningar. **Ett mätinstrument måste granskas lika hårt som det det mäter.**
+- **E2E-harnesset matade ett tillstånd produktionen aldrig är i.** `tests/fixtures/05-saas.mjs`
+  utelämnade `likeForLikeTarget` — samma sjukdom som api-kopian. Harnesset bygger nu LFL med samma
+  funktion api-lagret kallar. Ett harness som matar något annat än produktionen matar mäter inte
+  produktionen, hur grönt det än lyser.
+
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI
 2. **E-post-ingest, nästa steg:** ~~extern setup (MX/webhook/env)~~ ✅ LIVE 2026-06-11 (verifierad end-to-end) → personliga skuggadresser per kund → Outlook OAuth (historisk skörd) → Gmail efter CASA. Kontorets dossier-UI byggs när ingesten ger innehåll

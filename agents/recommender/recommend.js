@@ -1627,6 +1627,32 @@ export async function recommend(input, opts = {}) {
     // (tier-mix-aware) rather than benchmark.p25 × scale (dominant tier only, wrong for mixed).
     const _lflTarget = input.invoice?.likeForLikeTarget;
     const _useLfl = isSaasProductivity && _lflTarget?.suggestedAnnualCost > 0;
+
+    // ── GISSNINGSVÄGEN STÄNGD 2026-08-12 (fail-closed, mätt pris: noll) ────────────────────────
+    // Utan LFL byggdes bytesbesparingen ur `benchmark.p25 × scale`, där p25 kommer ur en tier som
+    // LÄSTS UR RADENS BESKRIVNINGSTEXT och scale ur ett antaget antal anställda. Två gissningar
+    // som multipliceras till en kundsynlig siffra — och under 20 % success fee på REALISERAD
+    // besparing är det den farliga riktningen att ha fel åt.
+    //
+    // Priset mättes före snittet (scripts/probe-lfl-tackning.mjs, skarp pipeline mot 20 verkliga
+    // fakturor): 6 av 6 saas-productivity-fakturor bar LFL-underlag, 0 gick gissningsvägen. Att
+    // stänga den kostade alltså noll fakturor sitt tal på vår korpus. Mätningens gräns står i
+    // sondens blindrad: vår korpus är inte marknadens fördelning — därför fail-closed, inte
+    // "tillräckligt sällan för att strunta i".
+    //
+    // Vad som INTE tystnar: rätt-storlek (m365Rightsizing), licensrensning (shelfware) och
+    // kontraktsklockan räknas fristående och lever kvar. Det enda som faller bort är påståendet
+    // "byt leverantör och spara X" när vi inte kan visa X per rad.
+    if (isSaasProductivity && !_useLfl) {
+      console.log('[lfl-grind] saas-productivity utan like-for-like-underlag → inget bytestal (fail-closed)');
+      result.shouldSwitch = false;
+      result.recommendationType = 'no_action';
+      result.suggestedAnnualCost = null;
+      result.suggestedSupplier = null;
+      result.savingPerYear = 0;
+      result.lflGrind = 'saknat like-for-like-underlag — bytesbesparing kräver bevisat pris per licensrad';
+    } else {
+
     const _benchBase = _useLfl
       ? _lflTarget.suggestedAnnualCost - addonAnnual  // strip addon pass-throughs already included in LFL total
       : Math.round(benchmark.p25 * scale);
@@ -1682,6 +1708,8 @@ export async function recommend(input, opts = {}) {
         result.reasoning = deterministicReasoning;
       }
     }
+
+    } // end else (LFL-grinden)
 
     } // end else (combined+null guard)
   }

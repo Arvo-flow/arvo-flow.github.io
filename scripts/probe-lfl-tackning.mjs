@@ -111,7 +111,15 @@ console.log(`\n  ${rader.length} fakturor körda genom den skarpa pipelinen.\n`)
 for (const r of rader) {
   const huvud = `  ${r.fil.padEnd(36)} ${String(r.kategori).padEnd(20)} ${r.status}`;
   console.log(huvud);
-  if (r.status === 'LFL BÄR') console.log(`      ${r.tierRader} tier-rad(er) → attribueringslåset kan fyra`);
+  // ETIKETTEN RÄTTAD 2026-08-12: första versionen skrev "attribueringslåset kan fyra" för varje
+  // rad med LFL-objekt. Falskt — låset kräver TIER-rader, och ett LFL-objekt kan bestå enbart av
+  // add-on-genomsläpp (Google-fakturan i första körningen: LFL bär, noll tier-rader). Sondens
+  // etikett var en gissning som passerade som en mätning. Precis det felet sonden finns för.
+  if (r.status === 'LFL BÄR') {
+    console.log(r.tierRader > 0
+      ? `      ${r.tierRader} tier-rad(er) → attribueringslåset kan fyra`
+      : '      0 tier-rader — LFL bär enbart add-on-genomsläpp; låset kan INTE fyra här');
+  }
   if (r.status === 'LFL SAKNAS') {
     console.log(`      tier-rader utan quantity: ${r.utanAntal.length ? r.utanAntal.join(' · ') : '(ingen — LFL föll av annat skäl)'}`);
     console.log(`      gissningsvägen skapade: ${r.gissningensTal == null ? 'INGET TAL (tyst ändå)' : `${r.gissningensTal} kr/år`}`);

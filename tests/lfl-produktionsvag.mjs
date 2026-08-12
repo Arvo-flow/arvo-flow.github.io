@@ -174,4 +174,34 @@ describe('RD-09 · suggestedSupplier härleds ur like-for-like-tiern', () => {
     assert.doesNotMatch(r.suggestedSupplier, /Business Standard/,
       'att namnge Business Standard när talet räknats mot E5 är namn-mot-tal-motsägelsen');
   });
+
+  // ── RD-10 · Gissningsvägen är stängd (fail-closed) ──────────────────────────────────────────
+  // Utan LFL byggdes bytestalet ur en tier läst ur beskrivningstexten × ett antaget antal
+  // anställda. Två gissningar multiplicerade till en kundsynlig siffra. Priset för att stänga
+  // vägen mättes först: 0 av 6 verkliga fakturor gick den (scripts/probe-lfl-tackning.mjs).
+  describe('RD-10 · utan like-for-like-underlag skapas inget bytestal', () => {
+    // Samma faktura som ovan, men tier-raden saknar quantity → computeLikeForLikeSaasTarget = null.
+    const UTAN_ANTAL = [{ type: 'recurring_subscription', description: 'Microsoft 365 E5', amount: 22_500 }];
+
+    test('LFL blir null när tier-raden saknar antal', () => {
+      assert.equal(computeLikeForLikeSaasTarget(UTAN_ANTAL, TIERS, UTAN_ANTAL[0].amount * 12), null);
+    });
+
+    test('recommend() tiger om bytet i stället för att gissa fram ett tal', async () => {
+      const r = await kor(UTAN_ANTAL, null);
+      assert.equal(r.shouldSwitch, false, 'ett byte utan bevisat pris per licensrad får aldrig utlösas');
+      assert.equal(r.savingPerYear, 0);
+      assert.equal(r.suggestedAnnualCost, null);
+      assert.equal(r.suggestedSupplier, null, 'inget mål får namnges när inget tal räknats');
+      assert.match(r.lflGrind ?? '', /like-for-like/, 'tystnaden ska bära sitt skäl, aldrig vara ett tyst hopp');
+    });
+
+    // Rätt-storleken är en FRISTÅENDE beräkning och får inte tystna med bytet — annars har
+    // grinden kostat mer än den skyddade.
+    test('rätt-storlek och licensrensning överlever grinden', async () => {
+      const r = await kor(UTAN_ANTAL, null);
+      assert.ok(r.m365Rightsizing, 'E5-rådgivningen bygger inte på bytesbenchmarken och ska stå kvar');
+      assert.equal(r.m365Rightsizing.currentTier, 'e5');
+    });
+  });
 });
