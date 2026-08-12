@@ -18,6 +18,11 @@ const CASES = [
   // Fotas både stängd (tröskeln) och öppen (registret vi faktiskt läste) — det är den enda
   // ytan där vi visar vår egen osäkerhet, och därför den som måste se dyrast ut.
   { email: 'info@avida.se', tag: 'avida', openAperture: true },
+  // LEVERANTÖRSRUBRIKEN (2026-08-12): castra.se är fallet som avslöjade att ordboken var för
+  // liten — 31 SPF-mekanismer, MailerLite och Brevo i klartext, noll igenkända namn. Kortet gav
+  // 'Ni kör Microsoft 365' + DMARC. Nu ska rubriken bära namnen, och det ska SES ut som ett fynd
+  // och inte som en lista. Två namn wrappar; fotot är det enda som visar om det håller i 390 px.
+  { email: 'hej@castra.se', tag: 'castra' },
 ];
 
 // Geometrifel som ingen svit kan se — de bor i utlagd CSS, inte i JS. Samlas och fäller körningen.
