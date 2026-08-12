@@ -7,28 +7,28 @@
 ╚═══════════════════════════════════════════════════════════════════════════════
 
   domän                      tid   cert  utfall
-  skanska.se             20101ms      0  ✗ HTTP 503 · 1762 tecken: «<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><HTML><HEAD><TITLE>crt.sh | »
-  castra.se               9165ms      0  ✗ HTTP 503 · 1761 tecken: «<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><HTML><HEAD><TITLE>crt.sh | »
-  seb.se                 25001ms      0  ✗ TIMEOUT
-  volvo.se                8746ms    133  ✓ 2013-04-09 (via lyncdiscover)
-  skatteverket.se          256ms      0  ✗ HTTP 404 · 253 tecken: «<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"> <html><head> <title>404 Not Found</titl»
-  svenskfotboll.se       25001ms      0  ✗ TIMEOUT
-  trivector.se            9793ms      0  ✗ HTTP 503 · 3159 tecken: «<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><HTML><HEAD><TITLE>crt.sh | »
-  westander.se           25000ms      0  ✗ TIMEOUT
-  halvarsson.se            251ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
-  lekia.se                 500ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
-  k-fastigheter.se         500ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
-  sigmatechnology.com      500ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
-  initgroup.com            500ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
-  bimobject.com            499ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
-  apendo.se               9580ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
-  alumni.se              12841ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  skanska.se             14500ms   1721  ✓ 2011-11-17 (via autodiscover, försök 1)
+  castra.se               2399ms      0  ✗ HTTP 404 · 253 tecken: «<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"> <html><head> <title>404 Not Found</titl»
+  seb.se                 70499ms   1663  ✓ 2017-12-05 (via lyncdiscover, försök 3)
+  volvo.se                8428ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  skatteverket.se         8510ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  svenskfotboll.se       68318ms      0  ✗ TIMEOUT · 1762 tecken: «<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><HTML><HEAD><TITLE>crt.sh | »
+  trivector.se           21170ms    416  ✓ 2011-04-27 (via autodiscover, försök 2)
+  westander.se            8717ms    276  ✓ 2016-02-09 (via autodiscover, försök 1)
+  halvarsson.se          20751ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  lekia.se               19919ms      0  ✗ HTTP 503 · 1761 tecken: «<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><HTML><HEAD><TITLE>crt.sh | »
+  k-fastigheter.se       33376ms      0  ✗ HTTP 503 · 1761 tecken: «<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><HTML><HEAD><TITLE>crt.sh | »
+  sigmatechnology.com    46816ms      0  ✗ TIMEOUT · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  initgroup.com          19076ms      0  ✗ HTTP 404 · 253 tecken: «<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"> <html><head> <title>404 Not Found</titl»
+  bimobject.com          52408ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  apendo.se              10242ms    271  ✓ 2017-09-14 (via autodiscover, försök 2)
+  alumni.se              33340ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
 
   ── DIAGNOS ──
-  A · crt.sh svarade inte:        15 av 16
-  ✓ · M365-värdnamn hittat:       1 av 16
+  A · crt.sh svarade inte:        11 av 16
+  ✓ · M365-värdnamn hittat:       5 av 16
   B · cert finns men inget M365:  0
   C · …varav andra M365-typiska värdnamn sågs: 0
-  svarstid: median 8746 ms · längst 8746 ms (budget 25 000)
+  svarstid: median 14500 ms · längst 70499 ms (budget 25 000)
 
   Sonden mäter. Om raden går att lyfta avgörs av vilken bokstav som dominerar.
