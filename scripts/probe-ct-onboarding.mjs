@@ -42,20 +42,32 @@ for (const d of DOMANER) {
   // Sonden byggd för att diagnostisera en tyst tystnad hade fått en egen. Utfallet såg dessutom
   // ut som ett svar: noll cert för volvo.se, seb.se och skatteverket.se, domäner med hundratals
   // certifikat i CT. Ett resultat som inte kan vara sant ska granskas, inte rapporteras.
+  // ── ÄR STRYPNINGEN VÅR EGEN? (mätning 2 · 2026-08-12) ───────────────────────────────────────
+  // Första mätningen gav åtta raka 502:or på ~500 ms. Det mönstret ser ut som en tjänst som
+  // stryper en skursvit, inte som en tjänst som är nere — och skillnaden avgör fixen: är det vår
+  // takt kan produktionen laga sig själv med paus och omförsök, är det tjänsten kan den inte.
+  // Därför pausar sonden mellan domäner och försöker om vid 5xx. Rena mätvärden; inget kureras.
+  const PAUS_MS = 2000, FORSOK = 3;
   const t0 = Date.now();
-  let status = null, rows = null, fel = null, kropp = null;
-  try {
-    const r = await fetch(`https://crt.sh/?q=${encodeURIComponent('%.' + d)}&output=json`,
-      { headers: { Accept: 'application/json', 'User-Agent': UA }, signal: AbortSignal.timeout(25000) });
-    status = r.status;
-    const text = await r.text();
-    kropp = { längd: text.length, start: text.slice(0, 90).replace(/\s+/g, ' ') };
-    if (r.ok) { try { rows = JSON.parse(text); } catch { fel = 'EJ JSON'; } }
-    else fel = `HTTP ${r.status}`;
-  } catch (e) { fel = e.name === 'TimeoutError' ? 'TIMEOUT' : String(e.message).slice(0, 40); }
+  let status = null, rows = null, fel = null, kropp = null, forsokAnvanda = 0;
+  for (let f = 1; f <= FORSOK; f++) {
+    forsokAnvanda = f;
+    try {
+      const r = await fetch(`https://crt.sh/?q=${encodeURIComponent('%.' + d)}&output=json`,
+        { headers: { Accept: 'application/json', 'User-Agent': UA }, signal: AbortSignal.timeout(25000) });
+      status = r.status;
+      const text = await r.text();
+      kropp = { längd: text.length, start: text.slice(0, 90).replace(/\s+/g, ' ') };
+      if (r.ok) { try { rows = JSON.parse(text); fel = null; break; } catch { fel = 'EJ JSON'; break; } }
+      fel = `HTTP ${r.status}`;
+      if (r.status < 500) break;                       // 404 är ett svar, inte en strypning
+    } catch (e) { fel = e.name === 'TimeoutError' ? 'TIMEOUT' : String(e.message).slice(0, 40); }
+    if (f < FORSOK) await new Promise((r) => setTimeout(r, PAUS_MS * f));
+  }
+  await new Promise((r) => setTimeout(r, PAUS_MS));    // artighet mot nästa domän
   const ms = Date.now() - t0;
 
-  if (!Array.isArray(rows)) { rader.push({ d, ms, status, fel: fel ?? 'INGET SVAR', kropp, certs: 0, prod: null, extra: [] }); continue; }
+  if (!Array.isArray(rows)) { rader.push({ d, ms, status, fel: fel ?? 'INGET SVAR', kropp, forsokAnvanda, certs: 0, prod: null, extra: [] }); continue; }
 
   // Exakt produktionens logik: namn ur name_value, prefixmatchning på fingeravtryck + punkt.
   let prod = null, via = null;
@@ -68,13 +80,13 @@ for (const d of DOMANER) {
     }
     for (const fp of EXTRA) if (names.some((n) => n.startsWith(fp + '.'))) extraTraffar.add(fp);
   }
-  rader.push({ d, ms, status, fel: null, certs: rows.length, prod: prod?.slice(0, 10) ?? null, via, extra: [...extraTraffar] });
+  rader.push({ d, ms, status, fel: null, forsokAnvanda, certs: rows.length, prod: prod?.slice(0, 10) ?? null, via, extra: [...extraTraffar] });
 }
 
 console.log(`\n  ${'domän'.padEnd(22)} ${'tid'.padStart(7)} ${'cert'.padStart(6)}  utfall`);
 for (const r of rader) {
   const utfall = r.fel ? `✗ ${r.fel}${r.kropp ? ` · ${r.kropp.längd} tecken: «${r.kropp.start}»` : ''}`
-    : r.prod ? `✓ ${r.prod} (via ${r.via})`
+    : r.prod ? `✓ ${r.prod} (via ${r.via}, försök ${r.forsokAnvanda})`
     : r.certs === 0 ? `— HTTP ${r.status}: registret svarade med en TOM lista (inte ett fel, inte ett fynd)`
     : `— ${r.certs} cert, inget M365-värdnamn${r.extra.length ? ` · sedda: ${r.extra.join(',')}` : ''}`;
   console.log(`  ${r.d.padEnd(22)} ${String(r.ms + 'ms').padStart(7)} ${String(r.certs).padStart(6)}  ${utfall}`);
