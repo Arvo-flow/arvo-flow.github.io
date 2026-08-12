@@ -1,0 +1,24 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-egress
+║ FÅNGAR: Om crt.sh behandlar GitHub-runnerns utgående adress annorlunda än Vercels — mätt genom två samtidiga anrop om samma domän.
+║ BLIND FÖR: Vilken egenskap hos avsändaren som i så fall avgör (IP-rykte, hastighetsspärr, user-agent). Sonden visar ATT det skiljer, aldrig varför — och ett enstaka sammanträffande i tid kan förklara en enskild rad.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+
+═══ skanska.se — båda anropen startas samtidigt
+  runner → crt.sh    25003ms  ✗ TIMEOUT
+  runner → Vercel    25095ms  HTTP 200 · ingen rad
+  ⇒ Ingen av dem fick svar — källan teg för alla. Ingen slutsats om avsändaren.
+
+═══ volvo.se — båda anropen startas samtidigt
+  runner → crt.sh    25001ms  ✗ TIMEOUT
+  runner → Vercel    16838ms  HTTP 200 · ingen rad
+  ⇒ Ingen av dem fick svar — källan teg för alla. Ingen slutsats om avsändaren.
+
+═══ westander.se — båda anropen startas samtidigt
+  runner → crt.sh      251ms  HTTP 502 · — cert
+  runner → Vercel     2399ms  HTTP 200 · ingen rad
+  ⇒ Ingen av dem fick svar — källan teg för alla. Ingen slutsats om avsändaren.
+
+  Skiljer utfallet konsekvent hör värmaren hemma i GitHub Actions, inte i Vercel-cron.
