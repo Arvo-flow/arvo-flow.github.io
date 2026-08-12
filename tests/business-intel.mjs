@@ -272,15 +272,50 @@ describe('business-intel · parsning (kontraktet ur sond v3)', () => {
     assert.equal(list.length, 1);
     assert.equal(list[0].orgnr, '5565690087');
   });
-  test('bolagsfakta extraheras: revenue i TKR, employees, år', () => {
+  // ── ÅRET KOMMER UR RÄKENSKAPSÅRET, INTE UR UPPDATERINGSSTÄMPELN (2026-08-12) ───────────────
+  // Testerna nedan kodifierade tidigare buggen: de krävde att year hämtades ur
+  // companyAccountsLastUpdatedDate. Grundaren fångade felet på ett kort där Avida sa "bokslut
+  // 2024" och Skanska "2025" — två olika storheter under samma etikett. Nu låser de motsatsen.
+  test('utan bokslutshistorik finns inget källbelagt år — rubrikens tal står kvar, året utelämnas', () => {
     const f = extractCompanyFacts(extractNextData(companyHtml));
-    assert.deepEqual(f, { provenance: 'bolagsverket', legalName: 'Apendo AB', orgnr: '5564374840', revenueTkr: 52874, employees: 30, year: '2025', foundationYear: f.foundationYear, koncern: null, history: [] });
+    assert.equal(f.year, null, 'en uppdateringsstämpel är inte ett räkenskapsår och får aldrig visas som ett');
+    assert.equal(f.revenueTkr, 52874);
+    assert.equal(f.employees, 30);
+  });
+  test('med bokslutshistorik: år OCH tal ur SAMMA post', () => {
+    const html = `<html><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+      props: { pageProps: { company: {
+        legalName: 'Apendo AB', orgnr: '5564374840', revenue: '99999', employees: '99',
+        companyAccountsLastUpdatedDate: '2026',
+        companyAccounts: [
+          { year: '2024', accounts: [{ code: 'SDI', amount: 52874 }, { code: 'ANT', amount: 30 }] },
+          { year: '2023', accounts: [{ code: 'SDI', amount: 48000 }, { code: 'ANT', amount: 28 }] },
+        ],
+      } } },
+    })}</script></html>`;
+    const f = extractCompanyFacts(extractNextData(html));
+    assert.equal(f.year, '2024', 'året ska komma ur räkenskapsårets eget fält, inte ur stämpeln 2026');
+    assert.equal(f.revenueTkr, 52874, 'talet ska komma ur SAMMA post som året — aldrig ur rubriken (99999)');
+    assert.equal(f.employees, 30, 'samma post, annars är etiketten fel på ett nytt sätt');
+  });
+  test('bokslut utan anställdatal → talet utelämnas, lånas aldrig från rubriken', () => {
+    const html = `<html><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+      props: { pageProps: { company: {
+        legalName: 'X AB', orgnr: '5564374840', revenue: '1', employees: '77',
+        companyAccounts: [{ year: '2025', accounts: [{ code: 'SDI', amount: 4200 }] }],
+      } } },
+    })}</script></html>`;
+    const f = extractCompanyFacts(extractNextData(html));
+    assert.equal(f.year, '2025');
+    assert.equal(f.revenueTkr, 4200);
+    assert.equal(f.employees, null, 'rubrikens 77 hör till en annan period — att låna det vore samma fel igen');
+    const rad = buildBusinessFindings(f)[0];
+    assert.match(rad.title, /Ert bokslut 2025: 4,2 mkr i omsättning$/, 'meningen ska sluta rent utan anställdatal');
   });
   test('ogiltiga fakta → null (revenue saknas / employees orimligt)', () => {
     const bad = (company) => extractCompanyFacts({ props: { pageProps: { company } } });
-    assert.equal(bad({ revenue: null, employees: '30', companyAccountsLastUpdatedDate: '2025' }), null);
-    assert.equal(bad({ revenue: '100', employees: '0', companyAccountsLastUpdatedDate: '2025' }), null);
-    assert.equal(bad({ revenue: '100', employees: '30', companyAccountsLastUpdatedDate: 'okänt' }), null);
+    assert.equal(bad({ revenue: null, employees: '30' }), null);
+    assert.equal(bad({ revenue: '100', employees: '0' }), null);
   });
 });
 
