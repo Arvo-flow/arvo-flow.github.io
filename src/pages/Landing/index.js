@@ -194,6 +194,34 @@ export default function Landing() {
             }
           } finally { clearTimeout(cap); }
         } catch { /* våg 1 står redan — dramat uteblir, kortet består */ }
+
+        // ── TREDJE VÅGEN: CERTIFIKATREGISTRET, MED EGET TAK (2026-08-12) ─────────────────────
+        // Uppsättningsdatumet är kortets vassaste rad och nådde det aldrig. Orsaken var inte
+        // datat — Skanska bär 1 721 certifikat och autodiscover sedan 2011-11-17 — utan att
+        // servern får ~25 s medan kapet ovan avbryter efter 18. Att bara höja kapet hade låtit
+        // VARJE besökare vänta längre på ett kort som oftast inte vinner en rad. I stället gör
+        // den här vågen en enda sak (ctOnly) och får därför kosta mer tid utan att försena
+        // något annat. Raden landar sent och synligt — det är dramat, inte en eftersläntrare.
+        try {
+          const ctrl3 = new AbortController();
+          const cap3 = setTimeout(() => ctrl3.abort(), 28000);
+          try {
+            const res3 = await fetch('/api/reveal', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, ctOnly: true }), signal: ctrl3.signal,
+            });
+            const d3 = await res3.json().catch(() => ({}));
+            if (d3.ok && d3.findings?.length) {
+              setReveal((r) => {
+                if (!r?.findings) return r;
+                const seen = new Set(r.findings.map((f) => f.title));
+                const nya = d3.findings.filter((f) => !seen.has(f.title));
+                return nya.length ? { ...r, findings: [...r.findings, ...nya] } : r;
+              });
+            }
+          } finally { clearTimeout(cap3); }
+        } catch { /* certifikatregistret svarade inte — kortet står, raden kommer nästa besök */ }
+
         setRevealPending(false);
       }
       else setRevealNote(data.note || data.error || 'Domänen bar inga öppna spår just nu — dela en faktura i stället, så läser vi de verkliga talen.');
