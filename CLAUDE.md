@@ -869,7 +869,32 @@ tolkats som ett per-licenspris.
 - **Modellifyllda observationer varierar mellan körningar.** Samma PDF, samma kod, två körningar:
   `microsoft-direkt-usd` gav 0/2 rader med ören i den första och 2/2 i den andra. En grind vars
   hela värde är exakthet får därför aldrig gå mot kundyta på enbart maskinifyllda fält —
-  **stickprovet mot pappret, läst av en människa, är den sista milen och är inte gjord.**
+  stickprovet mot pappret är den sista milen.
+
+**✅ STICKPROVET GJORT 2026-08-12 — 26 av 26 radvärden stämmer mot pappret.** Det andra vittnet är
+fakturans **textlager**, utvunnet deterministiskt med pdfjs (`lib/pdf-textlager.js`) — inga
+modellanrop, inga prompter, bara tecknen som står i filen. Det är en genuint oberoende väg fram till
+samma papper, och därför starkare än att låta en modell kontrollera en modell.
+`scripts/probe-stickprov.mjs` lägger fram maskinens påstående rad för rad i öre; textlagret lägger
+fram fakturans. Utfall på fem fakturor (CloudReseller, Dustin, IT-Partner ×2, Microsoft Ireland):
+**noll avvikelser** i antal, à-pris, belopp, valuta och momsbas.
+
+Tre fynd som väger tyngre än siffran:
+- **Modellen uppfann INTE en momssats där fakturan saknar en.** CloudReseller-fakturan anger ingen
+  momssats; extraktionen svarade `null`. Övriga anger "Moms (25 %)" och fick 0,25. Instruktionen
+  "anta ALDRIG 0,25" höll där den prövades.
+- **SR-07 fällde exakt rätt rader.** De två avvisade på CloudReseller är prorata-raderna
+  (612,50 kr för 5 licenser i 15 dagar). Hade de passerat vore kundens "per-licenspris" 122,50 kr —
+  ett halvmånadsbelopp draget som en prislapp. Det ÄR CR-88412, fångad av fakturans egen aritmetik.
+- **Toleransen är lastbärande.** 612,50 kr avrundas till 613 i kronorfältet = exakt 50 öres avstånd,
+  precis på `ORE_TOLERANS`. Den som stramar åt "för säkerhets skull" fäller en korrekt faktura.
+  Testlåst i SR-08 med de avlästa talen.
+
+**Kvarstående, uttalat:** Copilot-raden på USD-fakturan typas som vanlig licensrad
+(`recurring_subscription`) — prisbokens Copilot-fälla har alltså en spegelbild på fakturasidan, och
+en framtida grindträff mot ett USD-ankare måste kunna skilja tillägg från licens. Samma faktura
+anger både "Moms (25 %)" och "reverse charge" och motsäger sig själv; vi läser bara `momsbas` i dag,
+men en framtida användning av `momssats` får inte lita på den blint.
 
 **Känd skuld (rankad — beta inte av som program, fixa när ytan ändå rörs eller när fasen kräver det):**
 1. **Identitet (full):** magic link-kontot som primärnyckel överallt — light-varianten klar (e-postnycklad historik via tokenbevis); kvarstår: session som överlever 24h-tokens, konto-UI

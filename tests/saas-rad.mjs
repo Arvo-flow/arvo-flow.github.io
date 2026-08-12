@@ -129,6 +129,41 @@ describe('SR-05 · Radsvepet redovisar varje rad, även de avvisade', () => {
   });
 });
 
+// ── SR-08 · CR-88412 låst mot pappret ─────────────────────────────────────────────────────────
+// Talen nedan är AVLÄSTA ur fakturans textlager (deterministisk pdfjs-extraktion, ingen modell i
+// loopen) och stämde exakt mot vad extraktionen påstod i stickprovet 2026-08-12. De är därmed
+// verifierade mot källan, inte mot vår egen pipeline.
+//
+// Raden som gör testet nödvändigt är prorata-raden: 612,50 kr avrundas till 613 kr i kronorfältet,
+// vilket ger EXAKT 50 öres avstånd — precis på ORE_TOLERANS-gränsen. Den som "stramar åt för
+// säkerhets skull" till 49 fäller en helt korrekt faktura. Konstanten är alltså lastbärande, och
+// nu vet nästa läsare varför.
+describe('SR-08 · CloudReseller CR-88412 — verifierad mot fakturans textlager', () => {
+  const KTX = { leverantor: 'cloudreseller', valuta: 'SEK', momsbas: 'exkl', period: 'monthly' };
+
+  test('hela licensrader passerar (45 × 245,00 = 11 025,00)', () => {
+    const ut = byggAvstamningsrad(
+      { description: 'Microsoft 365 Business Premium', quantity: 45, amount: 11_025, amountOre: 1_102_500, unitPriceOre: 24_500 }, KTX);
+    assert.equal(ut.ok, true, ut.skal);
+    assert.equal(ut.rad.beloppOre / ut.rad.antal, 24_500, 'härlett enhetspris ska vara fakturans à-pris');
+  });
+
+  test('prorata-raden avvisas — 612,50 kr för 5 licenser är inte ett licenspris', () => {
+    const ut = byggAvstamningsrad(
+      { description: 'Microsoft 365 Business Premium (Prorata tillägg)', quantity: 5, amount: 613, amountOre: 61_250, unitPriceOre: 24_500 }, KTX);
+    assert.equal(ut.ok, false);
+    assert.equal(ut.skal, MATNING.RADEN_GAR_INTE_IHOP);
+    // Hade den passerat: 61 250 / 5 = 12 250 öre = 122,50 kr, presenterat som kundens
+    // per-licenspris för Business Premium. Ett halvmånadsbelopp draget som en prislapp.
+  });
+
+  test('kronor-mot-öre-toleransen är exakt tillräcklig för 612,50 → 613', () => {
+    // 613 × 100 − 61 250 = 50. Precis på gränsen. Stramas ORE_TOLERANS åt fälls en korrekt faktura.
+    assert.equal(Math.abs(61_250 - Math.round(613 * 100)), ORE_TOLERANS,
+      'CR-88412:s prorata-rad ligger exakt på toleransgränsen — konstanten är lastbärande');
+  });
+});
+
 describe('SR-06 · Extraktionen får inte defaulta momsbasen', () => {
   // Den farligaste enskilda raden i hela kedjan vore `momsbas: raw.moms_bas ?? "exkl"`. Den hade
   // gjort varje faktura avstämningsbar och sett fullständigt oskyldig ut i en diff.
