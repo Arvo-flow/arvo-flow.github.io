@@ -7,28 +7,28 @@
 ╚═══════════════════════════════════════════════════════════════════════════════
 
   domän                      tid   cert  utfall
-  skanska.se               722ms      0  — inga certifikat i registret
-  castra.se                497ms      0  — inga certifikat i registret
-  seb.se                   500ms      0  — inga certifikat i registret
-  volvo.se                 501ms      0  — inga certifikat i registret
-  skatteverket.se          504ms      0  — inga certifikat i registret
-  svenskfotboll.se       25000ms      0  ✗ TIMEOUT
-  trivector.se            9832ms      0  — inga certifikat i registret
-  westander.se            4405ms      0  — inga certifikat i registret
-  halvarsson.se            532ms      0  — inga certifikat i registret
-  lekia.se               25001ms      0  ✗ TIMEOUT
-  k-fastigheter.se         396ms      0  — inga certifikat i registret
-  sigmatechnology.com      562ms      0  — inga certifikat i registret
-  initgroup.com           4831ms      0  — inga certifikat i registret
-  bimobject.com          23888ms      0  — inga certifikat i registret
-  apendo.se              12272ms      0  — inga certifikat i registret
-  alumni.se              13582ms      0  — inga certifikat i registret
+  skanska.se             20101ms      0  ✗ HTTP 503 · 1762 tecken: «<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><HTML><HEAD><TITLE>crt.sh | »
+  castra.se               9165ms      0  ✗ HTTP 503 · 1761 tecken: «<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><HTML><HEAD><TITLE>crt.sh | »
+  seb.se                 25001ms      0  ✗ TIMEOUT
+  volvo.se                8746ms    133  ✓ 2013-04-09 (via lyncdiscover)
+  skatteverket.se          256ms      0  ✗ HTTP 404 · 253 tecken: «<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"> <html><head> <title>404 Not Found</titl»
+  svenskfotboll.se       25001ms      0  ✗ TIMEOUT
+  trivector.se            9793ms      0  ✗ HTTP 503 · 3159 tecken: «<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><HTML><HEAD><TITLE>crt.sh | »
+  westander.se           25000ms      0  ✗ TIMEOUT
+  halvarsson.se            251ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  lekia.se                 500ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  k-fastigheter.se         500ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  sigmatechnology.com      500ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  initgroup.com            500ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  bimobject.com            499ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  apendo.se               9580ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
+  alumni.se              12841ms      0  ✗ HTTP 502 · 552 tecken: «<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</»
 
   ── DIAGNOS ──
-  A · crt.sh svarade inte:        2 av 16
-  ✓ · M365-värdnamn hittat:       0 av 16
+  A · crt.sh svarade inte:        15 av 16
+  ✓ · M365-värdnamn hittat:       1 av 16
   B · cert finns men inget M365:  0
   C · …varav andra M365-typiska värdnamn sågs: 0
-  svarstid: median 722 ms · längst 23888 ms (budget 25 000)
+  svarstid: median 8746 ms · längst 8746 ms (budget 25 000)
 
   Sonden mäter. Om raden går att lyfta avgörs av vilken bokstav som dominerar.
