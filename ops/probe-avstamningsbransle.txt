@@ -1,15 +1,15 @@
 ╔═══════════════════════════════════════════════════════════════════════════════
 ║ SOND: probe-avstamningsbransle
 ║ FÅNGAR: Hur ofta modellen faktiskt fyller i momsbas och öresbelopp när fakturan visar dem — och hur många rader som därmed når fram till grinden.
-║ BLIND FÖR: Om ett ifyllt fält är RÄTT. Sonden ser att modellen svarade, inte att den läste rätt ruta på fakturan. Att verifiera sanningshalten kräver mänsklig avläsning av samma faktura — det är nästa steg, inte det här.
+║ BLIND FÖR: Om ett ifyllt fält är RÄTT mot pappret. Mataren kontrollerar numera fakturans egna tal mot varandra (à-pris × antal = radbelopp), vilket fäller inbördes motsägelser utan att fråga prisboken — men en avläsning som är konsekvent fel på BÅDA fälten passerar. Den sista milen kräver mänsklig avläsning av samma faktura.
 ║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
 ║ ett påstående som låtsas vara ett faktum.
 ╚═══════════════════════════════════════════════════════════════════════════════
-  cloudreseller-norden.pdf           saas-productivity    momsbas=exkl sats=— · 4/4 rader med ören · 4/4 nådde grinden
+  cloudreseller-norden.pdf           saas-productivity    momsbas=exkl sats=— · 4/4 rader med ören · 2/4 nådde grinden
   dustin-m365-standard.pdf           saas-productivity    momsbas=exkl sats=0.25 · 2/2 rader med ören · 2/2 nådde grinden
   microsoft.pdf                      saas-productivity    momsbas=exkl sats=0.25 · 2/2 rader med ören · 2/2 nådde grinden
   microsoft-new.pdf                  saas-productivity    momsbas=exkl sats=0.25 · 2/2 rader med ören · 2/2 nådde grinden
-  microsoft-direkt-usd.pdf           saas-productivity    momsbas=exkl sats=0.25 · 0/2 rader med ören · 0/2 nådde grinden
+  microsoft-direkt-usd.pdf           saas-productivity    momsbas=exkl sats=0.25 · 2/2 rader med ören · 2/2 nådde grinden
   atea-m365-overskott.pdf            serverhosting        momsbas=exkl sats=0.25 · 3/3 rader med ören · 3/3 nådde grinden
   crayon-m365-azure.pdf              serverhosting        momsbas=exkl sats=0.25 · 3/3 rader med ören · 3/3 nådde grinden
   salesforce-enterprise.pdf          saas-crm             momsbas=exkl sats=0 · 3/3 rader med ören · 0/3 nådde grinden
@@ -20,12 +20,12 @@
   ── SUMMERING ──
   fakturor med momsbas ifylld:  10 av 10
   fakturor med momssats ifylld: 9 av 10
-  rader med öresbelopp:         24 av 26
+  rader med öresbelopp:         26 av 26
   rader som NÅDDE grinden:      21 av 26
 
   Varför de andra föll:
       3 × radens debiteringsperiod är varken månad eller år
-      2 × raden saknar belopp i öresprecision — kronorfältet kan inte bära ett per-licenspris
+      2 × radens à-pris × antal är inte radens belopp — fakturans egna tal motsäger varandra
 
   Sonden mäter om bränslet kommer fram. Att det är RÄTT bränsle är en annan fråga,
   och den står i blindraden överst.
