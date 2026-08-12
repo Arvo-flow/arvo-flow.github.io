@@ -560,7 +560,9 @@ export function getDominantSaasTierKey(lineItems, fallbackLicenseType, fallbackP
 }
 
 // Tier patterns reused for like-for-like calculation.
-const LFL_TIER_RE = [
+// EXPORTERAD 2026-08-12: den som behöver veta "är detta en tier-rad?" ska LÅNA mönstret härifrån,
+// aldrig skriva av det. Fyra avskrifter av den här listan kostade oss ett mörkt lås i två månader.
+export const LFL_TIER_RE = [
   { key: 'e5',               re: /\bE5\b/i },
   { key: 'e3',               re: /\bE3\b/i },
   { key: 'business-premium', re: /business[\s-]premium/i },
