@@ -146,71 +146,63 @@ for (const { key, source } of categoryEntries) {
   }
 }
 
-// ── TÄCKNING PER NIVÅ, INTE PER LEVERANTÖR (rättat 2026-08-12) ───────────────
-// Kontrollen nedan frågade "finns en verifierare för den här LEVERANTÖREN?". Nyckeln 'e3'
-// mappades till 'microsoft', m365-modulen fanns, alltså grönt — medan modulen i själva verket
-// läste tre planer och inte E3/E5, prisbokens största tal. En täckningskontroll som mäter på
-// grövre granularitet än det den ska täcka rapporterar täckning den inte har.
+// ── TÄCKNING PER NIVÅ — LEVERANTÖRSNIVÅN ÄR BORTA (stängt 2026-08-12) ────────
+// Kontrollen frågade förr "finns en verifierare för den här LEVERANTÖREN?". Nyckeln 'e3' mappades
+// till 'microsoft', m365-modulen fanns, alltså grönt — medan modulen läste tre planer och inte
+// E3/E5, prisbokens största tal. En täckningskontroll som mäter på grövre granularitet än det den
+// ska täcka rapporterar täckning den inte har.
 //
-// Verifierare som DEKLARERAR vad de läser (`bevakadeTiers`) kontrolleras nu mot den listan.
-// Odeklarerade moduler faller tillbaka på leverantörsnivån — och den luckan skrivs ut, för en
-// vakt som inte redovisar sin blindfläck ser likadan ut som en som inte har någon.
-let deklareradeTiers = null;
-let odeklarerade = [];
+// Mellanläget (deklaration för dem som hade en, leverantörsnamn för resten) var bara ett mindre
+// hål: en odeklarerad modul kunde fortfarande täcka en post genom att heta rätt sak. Nu finns
+// ingen fallback alls. Tre frågor, alla obligatoriska:
+//   1. Deklarerar VARJE verifierare vad den läser?      (odeklarerad = kritiskt)
+//   2. Är VARJE prisbokspost deklarerad av någon?        (obevakad post = kritiskt)
+//   3. Pekar VARJE deklaration på en post som finns?     (föråldrad deklaration = kritiskt)
+// Fråga 3 är den som annars ruttnar i tysthet: en nyckel som byter namn lämnar en deklaration som
+// låter täckande men vaktar ingenting — ett grönt sken utan innehåll, precis det vi stänger.
+let deklarationer = new Map();
 try {
   const { VERIFIERS } = await import('../lib/verifiers/registry.mjs');
-  deklareradeTiers = new Set();
   for (const v of VERIFIERS) {
-    if (Array.isArray(v.bevakadeTiers)) for (const t of v.bevakadeTiers) deklareradeTiers.add(t);
-    else odeklarerade.push(v.id);
+    if (!Array.isArray(v.bevakadeTiers)) {
+      critical.push(
+        `[ODEKLARERAD VAKT] Verifieraren '${v.id}' saknar bevakadeTiers.\n` +
+        `                   Åtgärd: deklarera vilka prisboksnycklar modulen LÄSER (tom lista om inga).`
+      );
+      continue;
+    }
+    for (const t of v.bevakadeTiers) deklarationer.set(t, v.id);
   }
 } catch (e) {
-  warnings.push(`[TÄCKNING] Kunde inte läsa verifierarregistret (${String(e.message).slice(0, 60)}) — tier-täckningen föll tillbaka på leverantörsnivå.`);
+  critical.push(`[TÄCKNING] Verifierarregistret kunde inte läsas (${String(e.message).slice(0, 70)}) — täckningen går inte att bevisa.`);
 }
 
-// Vilka leverantörer omfattas av en deklaration? Härleds ur de deklarerade nycklarna med samma
-// vendor-regel som används nedan, så att deklaration och kontroll aldrig kan glida isär.
-const vendorAv = (t) => (/^(business|e[0-9])/.test(t) ? 'microsoft' : t.split('-')[0]);
-const deklareradeVendors = new Set([...(deklareradeTiers ?? [])].map(vendorAv));
-if (odeklarerade.length) {
-  console.log(`\x1b[2m  (täckning per nivå gäller ${[...deklareradeVendors].join(', ') || 'ingen'}; ` +
-    `${odeklarerade.length} verifierare saknar bevakadeTiers och prövas fortfarande på leverantörsnivå: ${odeklarerade.join(', ')})\x1b[0m`);
-}
-
-// ── Kontroll 2: Tier-täckning — licenseTierBenchmarks utan monitor-check ──────
+// ── Kontroll 2: varje prisbokspost måste vara deklarerad av en verifierare ────
 for (const { tier, lastVerified, source } of tierEntries) {
-  // Extrahera leverantörsnamn från tier-nyckeln (första segmentet)
-  // Exempel: 'google-starter' → 'google', 'atlassian-jira-standard' → 'atlassian',
-  //          'business-basic' → 'microsoft' (Microsoft 365 Business-tiers)
-  //          'e3' / 'e5' → 'microsoft'
-  const vendor = /^(business|e[0-9])/.test(tier)
-    ? 'microsoft'
-    : tier.split('-')[0];
-  // Deklarationen är AUKTORITATIV för sin leverantör — den får inte vara ett OR med
-  // leverantörsnivån. Ett OR hade betytt att deklarationen bara kan lägga till täckning, aldrig
-  // avslöja en lucka: 'microsoft' matchar ändå på namnet och allt lyser grönt. Det var exakt det
-  // felet som lät E3/E5 stå obevakade. Säger en verifierare vad den läser, så gäller den listan.
-  const vendorArDeklarerad = deklareradeVendors.has(vendor);
-  const hasCheck = vendorArDeklarerad
-    ? deklareradeTiers.has(tier)
-    : (monitoredSupplierStrings.some(s => s.includes(vendor))
-       || verifierSupplierStrings.some(s => s.includes(vendor)));
+  if (source === 'ej-verifierat') {
+    critical.push(
+      `[EJ VERIFIERAT] Tier '${tier}' har source:'ej-verifierat'.\n` +
+      `                Åtgärd: verifiera mot leverantörens prissida och uppdatera source + lastVerified`
+    );
+    continue;
+  }
+  if (!deklarationer.has(tier)) {
+    critical.push(
+      `[OBEVAKAD POST] Tier '${tier}' (källa: ${source}, verifierat: ${lastVerified ?? 'okänt'}) ` +
+      `deklareras av ingen verifierare.\n` +
+      `                Åtgärd: lägg nyckeln i rätt moduls bevakadeTiers — och se till att modulen faktiskt läser den.`
+    );
+  }
+}
 
-  if (!hasCheck) {
-    const isEjVerifierat = source === 'ej-verifierat';
-    const age = daysOld(lastVerified);
-    if (isEjVerifierat) {
-      critical.push(
-        `[EJ VERIFIERAT] Tier '${tier}' har source:'ej-verifierat'.\n` +
-        `                Åtgärd: verifiera mot leverantörens prissida och uppdatera source + lastVerified`
-      );
-    } else if (!hasCheck) {
-      critical.push(
-        `[TÄCKNING] Tier '${tier}' (källa: ${source}, verifierat: ${lastVerified ?? 'okänt'}) ` +
-        `saknar price-monitor-check.\n` +
-        `           Åtgärd: lägg till URL + regex i PRICE_CHECKS`
-      );
-    }
+// ── Kontroll 2b: varje deklaration måste peka på en post som finns ───────────
+const bokensNycklar = new Set(tierEntries.map((t) => t.tier));
+for (const [tier, vid] of deklarationer) {
+  if (!bokensNycklar.has(tier)) {
+    critical.push(
+      `[FÖRÅLDRAD DEKLARATION] '${vid}' säger sig bevaka '${tier}', som inte finns i prisboken.\n` +
+      `                        Åtgärd: rätta deklarationen — den vaktar ingenting och döljer det.`
+    );
   }
 }
 

@@ -14,6 +14,7 @@ const OK = {
   id: 'exempel',
   fangar: 'Leverantören ändrar det publika listpriset på sidan som vakten renderar varje vecka.',
   blind: 'Ett förhandlat avtalspris hos kunden, som aldrig syns i den publika prislistan vakten läser.',
+  bevakadeTiers: ['exempel-tier'],
 };
 
 describe('vaktkontraktet · domaren', () => {
@@ -87,4 +88,35 @@ describe('vaktkontraktet · varje registrerad vakt har svarat', () => {
       assert.equal(d.ok, true, d.brister.join(' · '));
     });
   }
+});
+
+// ── DEN TREDJE FRÅGAN: RÄCKVIDDEN ─────────────────────────────────────────────────────────────
+// fangar/blind beskriver vaktens FÖRMÅGA, aldrig dess RÄCKVIDD. E3 och E5 stod obevakade i
+// månader bakom en grön audit därför att ingen frågade vilka poster m365-modulen faktiskt läste.
+// En vakt kan vara fullständigt ärlig om sin blindfläck och ändå dölja ett hål.
+describe('vaktkontraktet · räckvidden måste deklareras', () => {
+  test('saknad deklaration fälls — det är den tredje överhoppade frågan', () => {
+    const d = bedomVaktkontrakt({ ...OK, bevakadeTiers: undefined });
+    assert.equal(d.ok, false);
+    assert.match(d.brister.join(' '), /bevakadeTiers/);
+  });
+
+  test('tom lista är ett giltigt SVAR — kategorivakter läser inga licensnivåer', () => {
+    assert.equal(bedomVaktkontrakt({ ...OK, bevakadeTiers: [] }).ok, true,
+      'skillnaden mellan "läser inga" och "ingen frågade" måste få uttryckas');
+  });
+
+  test('dubbletter fälls — så överdrivs täckning av slarv', () => {
+    assert.equal(bedomVaktkontrakt({ ...OK, bevakadeTiers: ['a', 'a'] }).ok, false);
+  });
+
+  test('en tom nyckel är ingen nyckel', () => {
+    assert.equal(bedomVaktkontrakt({ ...OK, bevakadeTiers: ['  '] }).ok, false);
+  });
+
+  // Låset som gör att nästa verifierare inte kan smita in odeklarerad.
+  test('VARJE registrerad verifierare deklarerar sin räckvidd', () => {
+    const utan = VERIFIERS.filter((v) => !Array.isArray(v.bevakadeTiers)).map((v) => v.id);
+    assert.deepEqual(utan, [], `Odeklarerade vakter: ${utan.join(', ')}`);
+  });
 });
