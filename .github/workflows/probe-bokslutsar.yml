@@ -30,8 +30,8 @@ jobs:
           for i in 1 2 3; do
             git fetch origin main
             git checkout -B sond origin/main
-            mkdir -p ops && cp /tmp/bokslutsar.txt ops/probe-sokträffar.txt
-            git add ops/probe-sokträffar.txt
+            mkdir -p ops && cp /tmp/bokslutsar.txt ops/probe-bokslutsar.txt
+            git add ops/probe-bokslutsar.txt
             git commit -m "ops: sond bokslutsar [skip ci]" || echo "inget nytt"
             if git push origin HEAD:main; then echo "sondsvaret sparat"; SPARAT=1; break; fi
             sleep $((i * 6))
