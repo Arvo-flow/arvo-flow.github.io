@@ -118,12 +118,9 @@ const Wrap = styled.section`
          fel för en mening — den vill kunna radbrytas utan att se ut som ett larm. */
       span:first-child { text-transform: none; letter-spacing: .04em; font-size: 12.5px; line-height: 1.45; }
     }
-    /* Integritetshandlingen sägs högt, en gång, i samma format som kortets övriga källrader:
-       den är ett kvitto på ett val vi gjorde — inte en brasklapp. */
-    .ap-fot {
-      margin: 12px 0 0; font-size: 12px; line-height: 1.5;
-      color: ${({ theme }) => theme.dossier.faintOnDark};
-    }
+    /* Integritetshandlingen sägs högt, en gång — den är ett kvitto på ett val vi gjorde, inte
+       en brasklapp. Använder kortets befintliga .ap-foot; en ny klass hade bara varit ännu ett
+       namn att skriva fel. */
     .ap-row {
       display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; align-items: baseline;
       width: 100%; text-align: left; background: none; border: none; cursor: pointer;
@@ -351,13 +348,23 @@ export default function RevealCard({ domain, findings, pending, identity, onValj
         <button type="button" className="ap-row" key={k.orgnr}
           style={{ animationDelay: `${i * 0.07}s` }}
           onClick={() => { setBlandareOppen(false); onValjBolag(k.orgnr); }}>
+          {/* MARKUPEN ÄR ORIGINALETS, ORDAGRANT (rättat 2026-08-12). Jag skrev om den ur minnet
+              när bländaren flyttades: fältet heter legalName, inte namn — sex bolag renderades
+              som sex tomma namn under sina orgnr — och wrappern som håller ihop tvåkolumns-
+              rutnätet (104px | 1fr) föll bort, så varje rad kollapsade på höjden. Klassen heter
+              .ap-var, inte .ap-ort. Att flytta ett element är inte en anledning att skriva om
+              det; det enda som skulle ändras var VAR listan står och NÄR den öppnas. */}
           <span className="ap-org">{fmtOrgnr(k.orgnr)}</span>
-          <span className="ap-namn">{k.namn}</span>
-          {k.ort && <span className="ap-ort">{k.ort}{k.bransch ? ` · ${k.bransch}` : ''}</span>}
+          <span>
+            <span className="ap-namn">{k.legalName}</span>
+            {(k.ort || k.bransch) && (
+              <span className="ap-var">{[k.ort, k.bransch].filter(Boolean).join(' · ')}</span>
+            )}
+          </span>
         </button>
       ))}
       {identitetOlost && (
-        <p className="ap-fot">
+        <p className="ap-foot">
           Vi kunde ha gissat. Ett fel val hade visat er någon annans bokslut — därför frågar vi.
         </p>
       )}
