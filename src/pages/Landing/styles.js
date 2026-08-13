@@ -138,25 +138,6 @@ export const SectionKey = styled.div`
 export const DoorBlock = styled.div`
   margin: 46px auto 0;
   ${riseIn}
-
-  /* ── HANDLINGEN ÄR KORTETS SLUTSATS, INTE ETT SYSKON (grundarbeslut 2026-08-13) ────────────
-     Bryggan låg som ett fristående block 24 px under kortet — och ett fristående block kan
-     skummas förbi. Fäst vid kortets underkant, utan lucka och med delad kant, blir den kortets
-     avslutning: "här är vad vi fann → här är vad ni gör". Man kan hoppa över ett block bredvid;
-     man kan inte hoppa över en fortsättning.
-     Fogen görs på FÖRÄLDERN och bara när bryggan finns — RevealCard bor i tre ytor (Landing,
-     Portfolio ×2) och får inte ändra form för de andra två. */
-  &.har-brygga {
-    .rv-card {
-      margin-bottom: 0;
-      border-bottom-left-radius: 0; border-bottom-right-radius: 0;
-      border-bottom: none;
-    }
-    .rv-brygga {
-      margin-top: 0;
-      border-top-left-radius: 0; border-top-right-radius: 0;
-    }
-  }
   h3 {
     font-family: ${SERIF}; font-size: clamp(28px, 4.4vw, 38px); font-weight: 500;
     color: ${D.inkOnDark}; margin: 0 0 4px; line-height: 1.2; text-align: center;

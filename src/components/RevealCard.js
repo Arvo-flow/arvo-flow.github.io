@@ -215,78 +215,79 @@ const Prompt = styled.form`
 // Ingen tidsutfästelse här: sidan slutade lova sekunder 2026-08-07, och ett kvitto efteråt är
 // starkare än ett löfte innan.
 const Brygga = styled.div`
-  margin: 24px 0 0;
+  /* ── TVÅ SUBTRAKTIVA JUSTERINGAR (2026-08-13, efter grundarens dom) ────────────────────────
+     Försöket att skilja ut bryggan med en LJUS yta föll: den lästes som en annons, inte som en
+     dossier — precis den risk som stod skriven här när den byggdes. Läxan är att premium inte
+     nås genom mer signal utan genom mindre. Kvar står ursprunget, med två BORTTAG:
+       · mer luft ovanför (24 → 40 px). Ett nytt anslag markeras med tystnad, inte med färg.
+       · glödringen borta. Bryggan bar hårlinje PLUS en teal ring PLUS en radiell teal-tvätt PLUS
+         accentlinjen — fyra signaler för ett block. Ringen fick den att härma kortets hela ram
+         och därmed läsa som ett syskon. Utan den är bryggan LUGNARE än kortet och blir paradoxalt
+         nog tydligare: den slutar konkurrera och börjar avsluta. */
+  margin: 40px 0 0;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-
-  /* ── LJUS INSATS I ETT MÖRKT DOKUMENT (grundarbeslut 2026-08-13) ────────────────────────────
-     Bryggan var sjunde mörka, rundade, teal-accentuerade blocket i rad. Den annonserade aldrig
-     att läget byter från BEVIS till HANDLING — och den låg i en dalgång: kortets första rad är
-     21 px, bryggans rubrik 28 px, och 02:s rubrik strax under 44 px CENTRERAD. Ögat lämnade
-     kortet, fick syn på den största rubriken på skärmen och hoppade över handlingen i språnget.
-     Sidan hade spenderat allt utom ETT register: en ljus yta. Den är den enda kvarvarande
-     högkontrastsignalen, och den betyder "handling" utan att skrika. Metaforen håller i en
-     dossier: ett inklistrat papper i en mapp.
-     RISKEN, uttalad: en ljus ruta i ett mörkt dokument kan läsa som en annons — precis det
-     SaaS-bannerregister sajten undviker. Skyddet är att TYPOGRAFIN är oförändrad (samma serif,
-     samma mono-etikett, samma mått); bara ytan inverteras. Läser den ändå som reklam är vägen
-     fel och ska bort — det avgörs av ögat, och sedan av tratten (kort_visat → adress_kopierad). */
-  background: linear-gradient(180deg, ${({ theme }) => theme.color.surface}, #F2F7F4);
-  border: 1px solid rgba(14,26,23,.10);
-  box-shadow: 0 22px 54px rgba(6,14,12,.42);
-  padding: 26px 26px 22px;
+  border: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+  box-shadow: 0 18px 48px rgba(6,14,12,.45);
+  background:
+    radial-gradient(120% 130% at 0% 0%, rgba(43,196,172,.11), transparent 62%),
+    ${({ theme }) => theme.dossier.bgRaised};
+  padding: 24px 24px 20px;
   position: relative; overflow: hidden;
+  /* Accentlinjen i överkant: samma signal som radarns svep — riktning, inte dekor. */
   &::before {
-    content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px;
-    background: ${({ theme }) => theme.color.brandGradient};
+    content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+    background: linear-gradient(90deg, ${({ theme }) => theme.dossier.tealBright}, rgba(43,196,172,0) 72%);
   }
 
   .br-k {
     font-family: ${({ theme }) => theme.font.mono}; font-size: 10px; letter-spacing: .22em;
-    text-transform: uppercase; color: ${({ theme }) => theme.color.brand}; margin-bottom: 14px;
+    text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; margin-bottom: 14px;
   }
   .br-h {
     font-family: ${({ theme }) => theme.font.display}; font-weight: 600;
-    font-size: clamp(23px, 3.4vw, 30px); line-height: 1.2; letter-spacing: -.012em;
-    color: ${({ theme }) => theme.color.ink};
-    em { display: block; font-style: italic; font-weight: 500; color: ${({ theme }) => theme.color.brand}; }
+    font-size: clamp(22px, 3.2vw, 28px); line-height: 1.22; letter-spacing: -.01em;
+    color: ${({ theme }) => theme.dossier.inkOnDark};
+    em { display: block; font-style: italic; font-weight: 500; color: ${({ theme }) => theme.dossier.tealBright}; }
   }
   .br-p { margin-top: 12px; max-width: 62ch; font-size: 13.5px; line-height: 1.65;
-    color: ${({ theme }) => theme.color.mutedSoft}; b { color: ${({ theme }) => theme.color.ink}; } }
+    color: ${({ theme }) => theme.dossier.mutedOnDark}; b { color: ${({ theme }) => theme.dossier.inkOnDark}; } }
 
+  /* Adressen är en ADRESS, inte ett fält. Den gamla full­breda rutan såg ut som något man skulle
+     skriva i — en falsk affordans mitt i sidans viktigaste handling. Nu hugger den om texten,
+     bär ett kuvert och står bredvid den enda knapp som gör något. */
   .br-adr { margin-top: 18px; display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
   .br-mail {
     flex: 0 1 auto; display: inline-flex; align-items: center; gap: 10px;
-    padding: 0 16px; min-height: 50px; border-radius: ${({ theme }) => theme.size.radius.md};
-    border: 1px dashed rgba(27,122,110,.42); background: rgba(27,122,110,.05);
-    font-family: ${({ theme }) => theme.font.mono}; font-size: 14.5px;
-    color: ${({ theme }) => theme.color.ink}; word-break: break-all;
-    svg { flex: none; color: ${({ theme }) => theme.color.brand}; }
+    padding: 0 16px; min-height: 48px; border-radius: ${({ theme }) => theme.size.radius.md};
+    border: 1px dashed rgba(43,196,172,.34); background: ${({ theme }) => theme.dossier.bg};
+    font-family: ${({ theme }) => theme.font.mono}; font-size: 14.5px; letter-spacing: .01em;
+    color: ${({ theme }) => theme.dossier.inkOnDark}; word-break: break-all;
+    svg { flex: none; color: ${({ theme }) => theme.dossier.teal}; }
   }
   .br-adr button {
     flex: 0 0 auto; cursor: pointer; border: none; font-family: inherit; font-weight: 600;
-    font-size: 13.5px; padding: 0 24px; min-height: 50px;
+    font-size: 13.5px; padding: 0 22px; min-height: 48px;
     border-radius: ${({ theme }) => theme.size.radius.md};
-    background: ${({ theme }) => theme.color.brandGradient}; color: ${({ theme }) => theme.color.surface};
-    box-shadow: 0 10px 26px rgba(27,122,110,.26);
+    background: ${({ theme }) => theme.dossier.tealBright}; color: #05231F;
     transition: transform .16s ease, box-shadow .16s ease;
-    &:hover { transform: translateY(-1px); box-shadow: 0 14px 32px rgba(27,122,110,.34); }
+    &:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(43,196,172,.28); }
     &:disabled { opacity: .8; cursor: default; transform: none; }
   }
   @media (max-width: 560px) {
-    padding: 22px 18px 20px;
+    padding: 20px 18px 18px;
     .br-mail { flex: 1 1 100%; font-size: 13.5px; }
     .br-adr button { flex: 1 1 100%; }
   }
 
   .br-avtal {
-    margin-top: 18px; padding-top: 15px; border-top: 1px solid rgba(14,26,23,.10);
-    font-size: 12.5px; line-height: 1.6; color: ${({ theme }) => theme.color.mutedSoft};
-    b { color: ${({ theme }) => theme.color.ink}; }
+    margin-top: 18px; padding-top: 15px; border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+    font-size: 12.5px; line-height: 1.6; color: ${({ theme }) => theme.dossier.mutedOnDark};
+    b { color: ${({ theme }) => theme.dossier.inkOnDark}; }
   }
   .br-alt {
-    margin-top: 10px; font-size: 12.5px; color: ${({ theme }) => theme.color.mutedSoft};
-    a { color: ${({ theme }) => theme.color.brand}; font-weight: 600; text-decoration: none;
-      border-bottom: 1px solid rgba(27,122,110,.32); &:hover { border-bottom-color: currentColor; } }
+    margin-top: 10px; font-size: 12.5px; color: ${({ theme }) => theme.dossier.mutedOnDark};
+    a { color: ${({ theme }) => theme.dossier.tealBright}; font-weight: 600; text-decoration: none;
+      border-bottom: 1px solid rgba(93,214,202,.3); &:hover { border-bottom-color: currentColor; } }
   }
 `;
 
@@ -336,7 +337,7 @@ export function RumBryggan() {
     setTimeout(() => setKopierad(false), 2200);
   };
   return (
-    <Brygga className="rv-brygga">
+    <Brygga>
       <div className="br-k">Nästa steg · ert eget rum</div>
       {/* ── MENINGEN (omskriven 2026-08-13) ────────────────────────────────────────────────
           Stod: "Skicka en faktura. / Ni får ert eget rum i retur."
