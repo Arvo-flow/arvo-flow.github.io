@@ -11,10 +11,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
-import { HeroDoor } from '../../components/RevealCard';
+import RevealCard, { HeroDoor } from '../../components/RevealCard';
 import { continuationPhrases, continuationClause } from '../../lib/roomContinuation';
 import {
-  Page, Hero, DossierShell, Dossier, SectionKey, RoomBlock, Artefakt,
+  Page, Hero, DossierShell, Dossier, SectionKey, Underlag, RoomBlock, Artefakt,
   Light, Steps, PriceSentence, PriceCards, Faq, LastWord,
 } from './styles';
 
@@ -156,6 +156,9 @@ export default function Landing() {
     finally { setRevealLoading(false); }
   }, [revealDoman]);
 
+  // Målet för scrollen när underlaget landat (01 i dossiern).
+  const underlagRef = useRef(null);
+
   const runReveal = useCallback(async (e) => {
     e?.preventDefault?.();
     const doman = revealDoman.trim();
@@ -173,6 +176,10 @@ export default function Landing() {
         setReveal({ domain: data.domain, findings: data.findings, identity: data.identity });
         setRevealPending(true);
         setRevealLoading(false);
+        // Underlaget landar i dossiern, under vikningen. Utan den här flytten hade besökaren
+        // tryckt på knappen och sett hjälten stå still — svaret får aldrig ske utom synhåll.
+        // rAF räcker inte: sektionen finns inte i DOM förrän React committat reveal-tillståndet.
+        setTimeout(() => underlagRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 90);
         // Våg 2 — fulla budgeten, men KLIENTKAPAD (18 s). K-Fastigheter-läxan 2026-07-18: en
         // bot-vägg-skyddad domän kan hålla server-anropet länge; utan kap nås aldrig
         // setRevealPending(false) och noten hänger kvar och lovar rader som inte kommer. Kapet
@@ -298,8 +305,7 @@ export default function Landing() {
           <HeroDoor
             domain={revealDoman} setDomain={setRevealDoman}
             onSubmit={runReveal} loading={revealLoading}
-            reveal={reveal} note={revealNote} pending={revealPending}
-            onValjBolag={valjBolag}
+            reveal={reveal} note={revealNote}
           />
         </div>
         <div className={`proof ${heroIn}`}>
@@ -312,13 +318,33 @@ export default function Landing() {
         <Dossier ref={dossierRef} className={dossierIn}>
           <div className="inner">
 
-            {/* ── SEKTION 01 ÄR BORTA (2026-08-13) ─────────────────────────────────────────
-                Här låg dörren, under en EGEN rubrik ("Se ert bolag som marknaden ser det") med
-                ett eget led som sa samma sak som hjälten. Två rubriker, två underrubriker, en
-                idé — och idén halverades av att sägas två gånger. Sidan lovade avslöjandet
-                högst upp och levererade det här nere; klicket däremellan var ren scroll.
-                Dörren bor nu i hjälten. Dossiern öppnar i stället med kontoret, som är svaret
-                på frågan avslöjandet just väckte: "och sedan då?" */}
+            {/* ── 01 · AVSLÖJANDET — SAMMANSLAGET MED 02 (grundarorder 2026-08-13) ─────────
+                Sektionens gamla rubrik ("Se ert bolag som marknaden ser det") är borta för gott:
+                den sa samma sak som hjälten, och en idé halveras av att sägas två gånger. Men
+                RESULTATET hörde aldrig hemma uppe i den ljusa hjälten — där blev det ett andra
+                mörkt föremål på sidan, och besökaren läste två produkter i stället för en.
+                Underlaget bor därför här, på SAMMA ark som rummet: 01 är sida ett, 02 sida två,
+                en enda mörk yta. Hjälten frågar, dossiern svarar.
+                Villkoret är strikt: ingen ram ritas innan det finns ett svar (lag 2 i HeroDoor).
+                Utan reveal öppnar dossiern med kontoret precis som förut — inget tomt löfte. */}
+            {reveal && (
+              <div ref={underlagRef}>
+                <SectionKey>
+                  <span className="k-num">01 · Avslöjandet</span>
+                  <span className="k-note">öppna källor · innan ni delat något</span>
+                </SectionKey>
+                <Underlag>
+                  <RevealCard
+                    domain={reveal.domain} findings={reveal.findings} pending={revealPending}
+                    identity={reveal.identity} onValjBolag={valjBolag}
+                  />
+                  <p className="u-bridge">
+                    Det här såg vi utifrån.{' '}
+                    <Link to="/testa-faktura">Dela en faktura, så räknar vi era exakta tal →</Link>
+                  </p>
+                </Underlag>
+              </div>
+            )}
 
             {/* 02 · ARVO-KONTORET — DEN TYSTA VECKAN SOM HJÄLTE (grundarbeslut 2026-07-21).
                 Bibelns tes gjord synlig: produkten är VAKTEN, inte fyndet. Kortet leder med

@@ -135,6 +135,22 @@ export const SectionKey = styled.div`
 /* Dörren spänner bevismåttet — men bara BILAGAN får fylla det. Rubrik, ingress och formulär
    hålls på prosamåttet och centreras inuti; ett e-postfält på 880px är ett formulär, inte en
    fråga. Måtten kommer uppifrån (Dossier), aldrig som lokala tal här. */
+/* 01 · Avslöjandet, sammanslaget med 02 (2026-08-13). Bilagan ÄR kolumnen — måttet kommer
+   uppifrån (--matt-bevis via .inner), aldrig som ett tal här; bryggan hålls på prosamåttet.
+   Ingen egen bakgrund, ingen egen ram: sektionen är en SIDA i dossiern, inte ett kort i den. */
+export const Underlag = styled.div`
+  margin-top: 34px;
+  animation: uGrow .55s cubic-bezier(.16,1,.3,1) both;
+  @keyframes uGrow { from { opacity: 0; transform: translateY(14px) scale(.99); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+
+  .u-bridge {
+    margin: 20px auto 0; max-width: var(--matt-prosa); text-align: center;
+    font-size: 13.5px; line-height: 1.6; color: ${D.mutedOnDark};
+    a { color: ${D.tealBright}; font-weight: 600; text-decoration: none; }
+  }
+`;
+
 export const DoorBlock = styled.div`
   margin: 46px auto 0;
   ${riseIn}

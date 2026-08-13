@@ -413,18 +413,26 @@ const Invite = styled.div`
   .iv-note { margin: 16px 0 0; font-size: 13px; color: ${({ theme }) => theme.color.mutedSoft}; text-align: center; }
 `;
 
-// Kortet växer FRAM, det byts inte in. Rörelsen är telemetri, aldrig dekor: en kort resning som
-// säger "detta hände nyss", inte en effekt som säger "titta vad vi kan".
-const Grown = styled.div`
-  margin-top: 26px; text-align: left;
-  animation: hdgrow .55s cubic-bezier(.16,1,.3,1) both;
-  @keyframes hdgrow { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+// ── KORTET VÄXER INTE HÄR LÄNGRE (2026-08-13, grundarorder) ──────────────────────────────────
+// Resultatet renderades tidigare inne i hjälten, som en MÖRK yta mitt i den ljusa. Två mörka
+// föremål på samma sida — kortet här uppe och dossiern längre ned — och besökaren fick läsa det
+// som två produkter. Kortet bor nu överst I dossiern (01 · Avslöjandet), på samma ark som rummet
+// (02): en yta, två sidor. Hjälten behåller fältet, väntan och inbjudan; den lovar, dossiern
+// levererar. Landing scrollar dit när våg 1 landat, så att svaret aldrig sker utom synhåll.
+//
+// Kvarstår oförändrat: hjälten är hel utan input (lag 1), ingen ram lovar en rad som kanske inte
+// kommer (lag 2), och fältet frågar efter domän, aldrig mejl (lag 3).
+const Opened = styled.p`
+  margin: 22px 0 0; display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: ${({ theme }) => theme.font.mono}; font-size: 10.5px; letter-spacing: .2em;
+  text-transform: uppercase; color: ${({ theme }) => theme.color.mutedSoft};
+  animation: hdopen .5s cubic-bezier(.16,1,.3,1) both;
+  @keyframes hdopen { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { animation: none; }
-
-  .hd-bridge {
-    margin: 18px auto 0; max-width: 60ch; text-align: center;
-    font-size: 13.5px; line-height: 1.6; color: ${({ theme }) => theme.color.mutedSoft};
-    a { color: ${({ theme }) => theme.color.brand}; font-weight: 600; text-decoration: none; }
+  .op-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex: none;
+    background: ${({ theme }) => theme.color.brand};
+    box-shadow: 0 0 0 4px rgba(27,122,110,.12);
   }
 `;
 
@@ -434,7 +442,7 @@ const KALLOR = [
   ['Prisboken', 'Marknadspris', 'Verifierade publika listpriser, lästa varje vecka.'],
 ];
 
-export function HeroDoor({ domain, setDomain, onSubmit, loading, reveal, note, pending, onValjBolag }) {
+export function HeroDoor({ domain, setDomain, onSubmit, loading, reveal, note }) {
   const rent = String(domain || '').trim();
   return (
     <HeroDoorShell>
@@ -481,17 +489,10 @@ export function HeroDoor({ domain, setDomain, onSubmit, loading, reveal, note, p
         </Invite>
       )}
 
+      {/* Kvittot på att något HÄNDE, för den som scrollar tillbaka upp. Inget påstående om
+          innehållet — bara var det står. Kortet självt bor i dossiern (01). */}
       {!loading && reveal && (
-        <Grown>
-          <RevealCard
-            domain={reveal.domain} findings={reveal.findings} pending={pending}
-            identity={reveal.identity} onValjBolag={onValjBolag}
-          />
-          <p className="hd-bridge">
-            Det här såg vi utifrån.{' '}
-            <Link to="/testa-faktura">Dela en faktura, så räknar vi era exakta tal →</Link>
-          </p>
-        </Grown>
+        <Opened><span className="op-dot" />Underlaget öppnat · står i dossiern nedan</Opened>
       )}
     </HeroDoorShell>
   );
