@@ -328,7 +328,7 @@ export default function Landing() {
                   att underlaget uppstår UTAN att kunden lämnat ifrån sig något. */}
               <span className="k-note">öppna källor · innan ni delat något</span>
             </SectionKey>
-            <DoorBlock ref={(el) => { doorRef.current = el; doorInRef.current = el; }} className={doorIn}>
+            <DoorBlock ref={(el) => { doorRef.current = el; doorInRef.current = el; }} className={`${doorIn}${reveal ? ' har-brygga' : ''}`}>
               <h3>Se ert bolag <em>som marknaden ser det.</em></h3>
               <RevealPrompt
                 doman={revealDoman} setDoman={setRevealDoman}
