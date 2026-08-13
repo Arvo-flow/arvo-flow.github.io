@@ -11,10 +11,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
-import RevealCard, { HeroDoor } from '../../components/RevealCard';
+import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import { continuationPhrases, continuationClause } from '../../lib/roomContinuation';
 import {
-  Page, Hero, DossierShell, Dossier, SectionKey, Underlag, RoomBlock, Artefakt,
+  Page, Hero, DossierShell, Dossier, SectionKey, DoorBlock, RoomBlock, Artefakt,
   Light, Steps, PriceSentence, PriceCards, Faq, LastWord,
 } from './styles';
 
@@ -124,13 +124,12 @@ function ArtefaktRad({ r, index, parentIn }) {
 
 export default function Landing() {
   // Dörren — samma verkliga maskineri som rummets avslöjande (EN sanning: /api/reveal).
-  // Hette revealEmail. Fältet bär numera en DOMÄN, och ett fält vars NAMN lovar något annat än
-  // värdet är en lögn som väntar på en yta (bibeln 2026-08-12, "25 LÄSTA"-fallet).
-  const [revealDoman, setRevealDoman] = useState('');
+  const [revealEmail, setRevealEmail] = useState('');
   const [revealLoading, setRevealLoading] = useState(false);
   const [reveal, setReveal] = useState(null);
   const [revealNote, setRevealNote] = useState('');
   const [revealPending, setRevealPending] = useState(false); // våg 2 (djupregistren) arbetar fortfarande
+  const doorRef = useRef(null);
 
   // ── KUNDEN PEKAR UT SITT BOLAG (grundarbeslut 2026-08-07) ─────────────────────────────────
   // Mätningen (ops/probe-identitet-tackning.txt) visade att orgnr-på-sajten — vår starkaste
@@ -138,13 +137,13 @@ export default function Landing() {
   // Ett klick i bländaren ger oss därför en starkare bindning än allt vi kan skrapa. Vi minns
   // valet per domän så frågan aldrig ställs två gånger.
   const valjBolag = useCallback(async (orgnr) => {
-    const doman = revealDoman.trim();
-    if (!doman || !orgnr) return;
+    const email = revealEmail.trim();
+    if (!email || !orgnr) return;
     setRevealLoading(true);
     try {
       const r = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: doman, orgnr }),
+        body: JSON.stringify({ email, orgnr }),
       });
       const data = await r.json();
       if (data?.ok && data.findings?.length) {
@@ -154,32 +153,25 @@ export default function Landing() {
       }
     } catch { /* kortet står kvar som det var — aldrig ett tomt rum */ }
     finally { setRevealLoading(false); }
-  }, [revealDoman]);
-
-  // Målet för scrollen när underlaget landat (01 i dossiern).
-  const underlagRef = useRef(null);
+  }, [revealEmail]);
 
   const runReveal = useCallback(async (e) => {
     e?.preventDefault?.();
-    const doman = revealDoman.trim();
-    if (!doman || revealLoading) return;
+    const email = revealEmail.trim();
+    if (!email || revealLoading) return;
     setRevealLoading(true); setReveal(null); setRevealNote('');
     try {
       // Våg 1: snabbkällorna (bokslut/trend/mejlposter) på sekunder. Våg 2: fulla budgeten
       // (certifikatregistret 25 s) — nya rader läggs SIST och materialiseras sent (dramat).
       const res = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ domain: doman, fast: true }),
+        body: JSON.stringify({ email, fast: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.ok && data.findings?.length) {
         setReveal({ domain: data.domain, findings: data.findings, identity: data.identity });
         setRevealPending(true);
         setRevealLoading(false);
-        // Underlaget landar i dossiern, under vikningen. Utan den här flytten hade besökaren
-        // tryckt på knappen och sett hjälten stå still — svaret får aldrig ske utom synhåll.
-        // rAF räcker inte: sektionen finns inte i DOM förrän React committat reveal-tillståndet.
-        setTimeout(() => underlagRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 90);
         // Våg 2 — fulla budgeten, men KLIENTKAPAD (18 s). K-Fastigheter-läxan 2026-07-18: en
         // bot-vägg-skyddad domän kan hålla server-anropet länge; utan kap nås aldrig
         // setRevealPending(false) och noten hänger kvar och lovar rader som inte kommer. Kapet
@@ -191,7 +183,7 @@ export default function Landing() {
           try {
             const res2 = await fetch('/api/reveal', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ domain: doman }), signal: ctrl.signal,
+              body: JSON.stringify({ email }), signal: ctrl.signal,
             });
             const d2 = await res2.json().catch(() => ({}));
             if (d2.ok && d2.findings?.length) {
@@ -216,7 +208,7 @@ export default function Landing() {
           try {
             const res3 = await fetch('/api/reveal', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ domain: doman, ctOnly: true }), signal: ctrl3.signal,
+              body: JSON.stringify({ email, ctOnly: true }), signal: ctrl3.signal,
             });
             const d3 = await res3.json().catch(() => ({}));
             if (d3.ok && d3.findings?.length) {
@@ -238,10 +230,14 @@ export default function Landing() {
     } finally {
       setRevealLoading(false);
     }
-  }, [revealDoman, revealLoading]);
+  }, [revealEmail, revealLoading]);
 
   // Hero-CTA:n ÄR dörren: mjukt scroll + fokus i fältet (noll formulär i vila).
   // Tidslöftet mäts mot verkligheten (grundarmätning 2026-07-13: ~10 s) — aldrig ett önsketal (regel 9).
+  const goToDoor = useCallback(() => {
+    doorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => doorRef.current?.querySelector('input')?.focus({ preventScroll: true }), 550);
+  }, []);
 
   // VAKTENS PULS (02): det VERKLIGA senaste svepet ur vakt_events — samma sanning som kundernas
   // rum. null → generisk mening (aldrig ett påhittat klockslag). Hämtas tyst, blockerar inget.
@@ -262,6 +258,7 @@ export default function Landing() {
 
   const [heroRef, heroIn] = useReveal(0.1);
   const [dossierRef, dossierIn] = useReveal(0.12);
+  const [doorInRef, doorIn] = useReveal(0.2);
   const [roomRef, roomIn] = useReveal(0.2);
   const [artRef, artIn] = useReveal(0.3);
   const [stepsRef, stepsIn] = useReveal(0.2);
@@ -279,16 +276,15 @@ export default function Landing() {
       <Hero ref={heroRef}>
         <div className={`eyebrow ${heroIn}`}>Arvo · finansiell intelligens för svenska bolag</div>
         <h1 className={heroIn}>Er finansdirektör.<br /><em>Innan ni frågar.</em></h1>
-        {/* ── LEDET BÄR ASYMMETRIN (2026-08-13) ────────────────────────────────────────────
-            Här stod en beskrivning av tjänsten ("Ni delar era fakturor och avtal…"). Vacker,
-            men den beskriver en relation besökaren ännu inte har. Asymmetrin beskriver ett
-            läge hen REDAN lever i — och är därför den enda mening på sidan som skapar
-            brådska hen inte gick in med. Rubriken är orörd; bara ledet bytte uppgift. */}
         <p className={`lede ${heroIn}`}>
-          Era leverantörer har redan läst de öppna registren om er — och prissätter efter det.
-          <b> Det har inte ni.</b> Skriv in er domän, så visar vi vad de ser — innan ni delat något.
+          Ni delar era fakturor och avtal. Vi väger varje pris mot verifierat marknadspris,
+          läser varje bindningstid — och säger till i tid, med motdraget förberett.
+          När allt är rätt säger vi det också.
         </p>
         <div className={`actions ${heroIn}`}>
+          <button type="button" className="cta" onClick={goToDoor}>
+            Se ert bolag som marknaden ser det →
+          </button>
           {/* ── INGET TIDSLÖFTE (grundarbeslut 2026-08-07) ────────────────────────────────
               Här stod "tio sekunder". Sektionsnyckeln sa "60 sekunder". Kvittot MÄTTE 15,9 s.
               Tre sanningar om samma sak på samma sida — regel 1 i kundytan — och vår egen
@@ -298,15 +294,9 @@ export default function Landing() {
               ("sammanställt på 15,9 s — innan ni delat något") är starkare efteråt än något
               tal innan, och kan aldrig motsägas. Kvar står det som faktiskt är miraklet:
               att det sker innan ni lämnat ifrån er något. */}
-          {/* DÖRREN ÄR HJÄLTEN. Sidan beskrev avslöjandet två gånger (här och i 01) och
-              LEVERERADE det en gång, under vikningen. Nu sker det ovanför den, med fältet
-              där ögat redan är. Se HeroDoor i components/RevealCard.js för de tre lagarna
-              som håller det ärligt — främst: hjälten är hel även om ingen skriver något. */}
-          <HeroDoor
-            domain={revealDoman} setDomain={setRevealDoman}
-            onSubmit={runReveal} loading={revealLoading}
-            reveal={reveal} note={revealNote}
-          />
+          <div className="sub">
+            innan ni delat något · öppna källor &nbsp;·&nbsp; <Link to="/testa-faktura">eller testa med en faktura</Link>
+          </div>
         </div>
         <div className={`proof ${heroIn}`}>
           Avtal som en jurist &nbsp;·&nbsp; Priser som en inköpschef &nbsp;·&nbsp; Vaken varje natt
@@ -318,33 +308,31 @@ export default function Landing() {
         <Dossier ref={dossierRef} className={dossierIn}>
           <div className="inner">
 
-            {/* ── 01 · AVSLÖJANDET — SAMMANSLAGET MED 02 (grundarorder 2026-08-13) ─────────
-                Sektionens gamla rubrik ("Se ert bolag som marknaden ser det") är borta för gott:
-                den sa samma sak som hjälten, och en idé halveras av att sägas två gånger. Men
-                RESULTATET hörde aldrig hemma uppe i den ljusa hjälten — där blev det ett andra
-                mörkt föremål på sidan, och besökaren läste två produkter i stället för en.
-                Underlaget bor därför här, på SAMMA ark som rummet: 01 är sida ett, 02 sida två,
-                en enda mörk yta. Hjälten frågar, dossiern svarar.
-                Villkoret är strikt: ingen ram ritas innan det finns ett svar (lag 2 i HeroDoor).
-                Utan reveal öppnar dossiern med kontoret precis som förut — inget tomt löfte. */}
-            {reveal && (
-              <div ref={underlagRef}>
-                <SectionKey>
-                  <span className="k-num">01 · Avslöjandet</span>
-                  <span className="k-note">öppna källor · innan ni delat något</span>
-                </SectionKey>
-                <Underlag>
-                  <RevealCard
-                    domain={reveal.domain} findings={reveal.findings} pending={revealPending}
-                    identity={reveal.identity} onValjBolag={valjBolag}
-                  />
-                  <p className="u-bridge">
-                    Det här såg vi utifrån.{' '}
-                    <Link to="/testa-faktura">Dela en faktura, så räknar vi era exakta tal →</Link>
-                  </p>
-                </Underlag>
-              </div>
-            )}
+            {/* 01 · AVSLÖJANDET — dörren först (vunnen ordning: mejl före faktura) */}
+            <SectionKey>
+              <span className="k-num">01 · Avslöjandet</span>
+              {/* Inte heller här ett tidslöfte — differentiatorn är inte hastigheten utan
+                  att underlaget uppstår UTAN att kunden lämnat ifrån sig något. */}
+              <span className="k-note">öppna källor · innan ni delat något</span>
+            </SectionKey>
+            <DoorBlock ref={(el) => { doorRef.current = el; doorInRef.current = el; }} className={doorIn}>
+              <h3>Se ert bolag <em>som marknaden ser det.</em></h3>
+              <RevealPrompt
+                email={revealEmail} setEmail={setRevealEmail}
+                onSubmit={runReveal} loading={revealLoading}
+                reveal={reveal} note={revealNote} pending={revealPending}
+                onValjBolag={valjBolag}
+              />
+              {!reveal && !revealLoading && <RevealTeaser />}
+              {reveal && (
+                <p className="prosa" style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', margin: '18px auto 0', color: 'rgba(157,184,175,1)' }}>
+                  Det här såg vi utifrån.{' '}
+                  <Link to="/testa-faktura" style={{ color: '#5DE8D2', fontWeight: 600 }}>
+                    Dela en faktura, så räknar vi era exakta tal →
+                  </Link>
+                </p>
+              )}
+            </DoorBlock>
 
             {/* 02 · ARVO-KONTORET — DEN TYSTA VECKAN SOM HJÄLTE (grundarbeslut 2026-07-21).
                 Bibelns tes gjord synlig: produkten är VAKTEN, inte fyndet. Kortet leder med
