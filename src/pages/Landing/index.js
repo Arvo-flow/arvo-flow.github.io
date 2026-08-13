@@ -11,7 +11,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
-import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
+import { RevealPrompt, RevealTeaser, RumBryggan } from '../../components/RevealCard';
 import { continuationPhrases, continuationClause } from '../../lib/roomContinuation';
 import {
   Page, Hero, DossierShell, Dossier, SectionKey, DoorBlock, RoomBlock, Artefakt,
@@ -324,14 +324,13 @@ export default function Landing() {
                 onValjBolag={valjBolag}
               />
               {!reveal && !revealLoading && <RevealTeaser />}
-              {reveal && (
-                <p className="prosa" style={{ fontSize: 13.5, lineHeight: 1.6, textAlign: 'center', margin: '18px auto 0', color: 'rgba(157,184,175,1)' }}>
-                  Det här såg vi utifrån.{' '}
-                  <Link to="/testa-faktura" style={{ color: '#5DE8D2', fontWeight: 600 }}>
-                    Dela en faktura, så räknar vi era exakta tal →
-                  </Link>
-                </p>
-              )}
+              {/* ── HANDOFFEN (grundarbeslut 2026-08-13) ─────────────────────────────────
+                  Här stod en grå 13,5 px-rad som bad besökaren lämna sidan, leta upp en PDF
+                  och ladda upp den — som svar på sidans starkaste ögonblick. Målet är att
+                  kunden skickar in fakturor och avtal och får sitt eget rum; bryggan säger nu
+                  det, och pekar på den väg som FINNS (mejl-intaget, live sedan 2026-06-11)
+                  i stället för den svåraste. Avtalen bor i rummet — se noten i RumBryggan. */}
+              {reveal && <RumBryggan />}
             </DoorBlock>
 
             {/* 02 · ARVO-KONTORET — DEN TYSTA VECKAN SOM HJÄLTE (grundarbeslut 2026-07-21).

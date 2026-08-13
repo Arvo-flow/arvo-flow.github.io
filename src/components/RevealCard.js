@@ -12,6 +12,7 @@
 // förbättrades (9,1 s → 21,9 s när fler register lades till). Kvittot namnger nu registren.
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 import { fmtOrgnr } from '../utils/format';
 
 const Wrap = styled.section`
@@ -194,6 +195,73 @@ const Prompt = styled.form`
 // Ärlig: raderna är suddade (filter:blur), tydligt låsta, aldrig ett påstående om just denna besökare
 // (claims-ok: förhandsvisning, blurrad + märkt "Förhandsvisning", ej kundpåstående). Skapar
 // "hur visste de det?"-spänningen vid första ögonkastet istället för ett hopp i mörkret.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// BRYGGAN TILL RUMMET (grundarbeslut 2026-08-13): kunden ska skicka in fakturor och avtal — och
+// få sitt eget rum.
+//
+// Kortet slutade tidigare i en grå 13,5 px-rad som bad besökaren lämna sidan, leta upp en PDF och
+// ladda upp den. Vi tog emot sidans starkaste ögonblick och gav tillbaka en administrativ uppgift.
+//
+// VAD SOM FAKTISKT FINNS, OCH DÄRFÖR VAD VI FÅR LOVA (regel 9):
+//  · FAKTUROR PER MEJL → RUMMET är byggt och verifierat end-to-end sedan 2026-06-11:
+//    api/inbound-email tar emot PDF:en, kör SAMMA pipeline som testa-faktura, och svarar
+//    avsändaren med analysen plus en personlig magic-länk till /portfolio. Vidarebefordran är
+//    dessutom EN handling från mobilen — uppladdning kräver dator, filhantering och ett sidbyte.
+//  · AVTAL PER MEJL FINNS INTE. api/contract-upload kräver ett analysisId: ett avtal kan bara
+//    läsas INNE i rummet, mot en leverantörsrad som kom ur en faktura. Ett mejlat avtal hade gått
+//    genom fakturapipelinen och blivit skräp. Därför säger copyn fakturor i mejlet och avtal i
+//    rummet — inte för att det låter bättre, utan för att det är det som händer.
+// Ingen tidsutfästelse här: sidan slutade lova sekunder 2026-08-07, och ett kvitto efteråt är
+// starkare än ett löfte innan.
+const Brygga = styled.div`
+  margin: 22px 0 0;
+  border-radius: ${({ theme }) => theme.size.radius.lg};
+  border: 1px solid ${({ theme }) => theme.dossier.teal};
+  background: linear-gradient(180deg, rgba(43,196,172,.07), rgba(43,196,172,.02));
+  padding: 22px 22px 20px;
+
+  .br-k {
+    font-family: ${({ theme }) => theme.font.mono}; font-size: 10px; letter-spacing: .22em;
+    text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; margin-bottom: 12px;
+  }
+  .br-h {
+    font-family: ${({ theme }) => theme.font.display}; font-weight: 600; font-size: 21px;
+    line-height: 1.25; color: ${({ theme }) => theme.dossier.inkOnDark};
+    em { font-style: italic; color: ${({ theme }) => theme.dossier.tealBright}; }
+  }
+  .br-p { margin-top: 9px; font-size: 13.5px; line-height: 1.6; color: ${({ theme }) => theme.dossier.mutedOnDark}; }
+
+  .br-adr {
+    margin-top: 16px; display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap;
+    .br-mail {
+      flex: 1 1 260px; min-width: 0; display: flex; align-items: center; padding: 0 15px; min-height: 46px;
+      border-radius: ${({ theme }) => theme.size.radius.md};
+      border: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+      background: ${({ theme }) => theme.dossier.bg};
+      font-family: ${({ theme }) => theme.font.mono}; font-size: 14px;
+      color: ${({ theme }) => theme.dossier.inkOnDark}; word-break: break-all;
+    }
+    button {
+      flex: 0 0 auto; cursor: pointer; border: none; font-family: inherit; font-weight: 600;
+      font-size: 13px; padding: 0 20px; min-height: 46px;
+      border-radius: ${({ theme }) => theme.size.radius.md};
+      background: ${({ theme }) => theme.dossier.tealBright}; color: #05231F;
+      transition: transform .16s ease, opacity .16s ease;
+      &:hover { transform: translateY(-1px); }
+      &:disabled { opacity: .75; cursor: default; transform: none; }
+    }
+  }
+  .br-avtal {
+    margin-top: 15px; padding-top: 14px; border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+    font-size: 12.5px; line-height: 1.6; color: ${({ theme }) => theme.dossier.mutedOnDark};
+    b { color: ${({ theme }) => theme.dossier.inkOnDark}; }
+  }
+  .br-alt {
+    margin-top: 11px; font-size: 12.5px; color: ${({ theme }) => theme.dossier.faintOnDark};
+    a { color: ${({ theme }) => theme.dossier.tealBright}; font-weight: 600; text-decoration: none; }
+  }
+`;
+
 const Teaser = styled.div`
   position: relative; overflow: hidden;
   border-radius: ${({ theme }) => theme.size.radius.lg};
@@ -225,6 +293,42 @@ const TEASER_ROWS = [
   ['Ert bokslut 2025: 52,9 mkr i omsättning, 30 anställda', 'Källa: offentliga årsredovisningsuppgifter (Bolagsverket)'],   // claims-ok: förhandsvisning, blurrad
   ['Ni kör Microsoft 365 — bekräftat på flera oberoende spår', 'Källa: er publika e-postuppsättning'],                       // claims-ok: förhandsvisning, blurrad
 ];
+
+// EN sanning för intagsadressen — samma konstant som rummet använder (regel 1).
+export const INBOX_ADDR = 'faktura@inbox.arvoflow.se';
+
+export function RumBryggan() {
+  const [kopierad, setKopierad] = useState(false);
+  const kopiera = async () => {
+    try { await navigator.clipboard.writeText(INBOX_ADDR); } catch { /* nekad clipboard — adressen står ändå läsbar */ }
+    setKopierad(true);
+    setTimeout(() => setKopierad(false), 2200);
+  };
+  return (
+    <Brygga>
+      <div className="br-k">Nästa steg · ert eget rum</div>
+      <div className="br-h">Skicka en faktura.<br /><em>Ni får ert eget rum i retur.</em></div>
+      <p className="br-p">
+        Vidarebefordra en leverantörsfaktura från inkorgen ni redan har öppen. Arvo läser den, väger
+        varje pris mot verifierat marknadspris och svarar med analysen — och en personlig länk till
+        ert rum, där er historik och er bevakning bor.
+      </p>
+      <div className="br-adr">
+        <span className="br-mail">{INBOX_ADDR}</span>
+        <button type="button" onClick={kopiera} aria-live="polite">
+          {kopierad ? 'Kopierad ✓' : 'Kopiera adressen'}
+        </button>
+      </div>
+      <p className="br-avtal">
+        <b>Avtalen släpper ni i rummet.</b> Där läser vi bindningstiden ord för ord, med citat som
+        bevis, och sätter klockan på sista uppsägningsdag.
+      </p>
+      <p className="br-alt">
+        Sitter ni vid datorn med fakturan framme? <Link to="/testa-faktura">Testa med en faktura →</Link>
+      </p>
+    </Brygga>
+  );
+}
 
 export function RevealTeaser() {
   return (
