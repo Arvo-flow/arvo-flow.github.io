@@ -21,7 +21,30 @@ async function shoot(tag, w, { openDoor }) {
     // aria-label — den beskriver VAD fältet är, inte hur det råkar vara typat, så en
     // attributändring kan inte tysta sonden. En sond som letar efter ett fält som inte
     // finns rapporterar sin egen inaktualitet som ett fel i sajten.
-    const input = p.locator('input[aria-label="Er företagsdomän"]').first();
+    //
+    // ── SKILJ "TRASIG SAJT" FRÅN "DEPLOYEN HANN INTE" (2026-08-13) ────────────────────────
+    // Sonden föll med en naken TimeoutError 90 sekunder efter en push: Vercel serverade
+    // fortfarande föregående bygge, alltså ett fält utan denna aria-label. Utfallet var
+    // oskiljbart från en verkligt trasig dörr — ett mätfel som läser som ett produktionsfel.
+    // Vi laddar därför om några gånger och namnger orsaken när den ändå uteblir.
+    const SEL = 'input[aria-label="Er företagsdomän"]';
+    let hittad = false;
+    for (let f = 1; f <= 6 && !hittad; f++) {
+      hittad = await p.locator(SEL).first().waitFor({ state: 'attached', timeout: 15000 })
+        .then(() => true).catch(() => false);
+      if (!hittad) {
+        console.log(`  · domänfältet ännu inte serverat (försök ${f}) — laddar om`);
+        await p.reload({ waitUntil: 'domcontentloaded' });
+        await p.waitForTimeout(2000);
+      }
+    }
+    if (!hittad) {
+      const harMejlfalt = await p.locator('input[type=email]').count();
+      throw new Error(harMejlfalt
+        ? `${BASE} serverar fortfarande en ÄLDRE version (e-postfältet finns, domänfältet saknas) — deployen har inte landat, dörren är inte trasig`
+        : `${BASE} visar varken domän- eller e-postfält — dörren är verkligt trasig`);
+    }
+    const input = p.locator(SEL).first();
     await input.scrollIntoViewIfNeeded();
     await p.waitForTimeout(600);
     await input.fill('lekia.se');

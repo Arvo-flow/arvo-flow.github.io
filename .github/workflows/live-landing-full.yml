@@ -26,12 +26,20 @@ jobs:
           mkdir -p ops/landing-full
           node scripts/live-landing-full.mjs 2>&1 | tee ops/landing-full/logg.txt
       # ── BEVISET FÅR INTE FÖRSVINNA TYST (2026-08-13) ────────────────────────────────────────
-      # Steget var grönt medan det inte pushade någonting: `git pull --rebase` avbröt på egna
-      # ostagade filer (logg.txt skrevs FÖRE `git add`), pushen förlorade kapplöpningen mot en
-      # annan körning, och `|| echo "push miss"` svalde felet. Tre skärmdumpar mot skarpa sajten
-      # togs och kastades — och jobbet såg ut exakt som ett som lyckats.
-      # Ordningen är nu add → commit → rebase → push, med omförsök, och sista försöket får FÄLLA
-      # steget. En vakt som inte kan larma är ingen vakt (Verifieringsplikten p.5).
+      # Version 1 var grön medan den inte pushade någonting: `git pull --rebase` avbröt på egna
+      # ostagade filer, pushen förlorade kapplöpningen mot en samtidig körning, och
+      # `|| echo "push miss"` svalde felet. Tre skärmdumpar togs och kastades.
+      #
+      # Version 2 (add → commit → rebase → push, med omförsök och ::error::) bytte en TYST
+      # förlust mot en HÖGLJUDD — bättre, men fortfarande en förlust: två körningar som skjuter
+      # nya PNG:er mot samma sökväg ger en BINÄRKONFLIKT i rebasen, och när rebasen väl står
+      # olöst faller alla fem omförsöken på exakt samma tillstånd. Larmet var rätt; åtgärden fanns
+      # inte.
+      #
+      # Version 3 tar bort konfliktbegreppet helt. Skärmdumpar är GENERERADE artefakter, inte
+      # kod: det finns ingen sammanslagning att göra, senaste körningen vinner alltid. Vi flyttar
+      # därför bara vår commit till toppen av main (`reset --soft`) och skriver om den med VÅRA
+      # filer — ingen merge, ingen rebase, inget som kan hamna i ett halvläge.
       - name: Commit
         if: always()
         run: |
@@ -40,7 +48,13 @@ jobs:
           git add ops/landing-full/
           git commit -m "ops: live-landing-full [skip ci]" || { echo "inget att committa"; exit 0; }
           for i in 1 2 3 4 5; do
-            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            git fetch origin main
+            git reset --soft FETCH_HEAD          # basen blir senaste main; våra filer står kvar
+            git reset                             # avstaga allt — bara ops/ ska med
+            git add ops/landing-full/
+            if git diff --cached --quiet; then echo "identiskt med main — inget att pusha"; exit 0; fi
+            git commit -m "ops: live-landing-full [skip ci]"
+            git push origin HEAD:main && exit 0
             echo "försök $i misslyckades — väntar"; sleep $((i * 5))
           done
           echo "::error::skärmdumparna kunde inte pushas — beviset gick förlorat"
