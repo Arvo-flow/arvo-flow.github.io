@@ -17,10 +17,14 @@ async function shoot(tag, w, { openDoor }) {
   await p.waitForTimeout(2500);
 
   if (openDoor) {
-    const input = p.locator('input[type=email]').first();
+    // Fältet var type=email och tog en arbetsmejl. Dörren frågar sedan 2026-08-13 efter en
+    // DOMÄN (type=text) — en sond som letar efter det gamla fältet rapporterar "sajten trasig"
+    // om sin egen inaktualitet. Selektorn hänger nu på aria-label, som beskriver VAD fältet är
+    // och inte hur det råkar vara typat.
+    const input = p.locator('input[aria-label="Er företagsdomän"]').first();
     await input.scrollIntoViewIfNeeded();
     await p.waitForTimeout(600);
-    await input.fill('kontakt@lekia.se');
+    await input.fill('lekia.se');
     await p.locator('button:has-text("Öppna underlaget")').click();
     await p.waitForSelector('.rv-find', { timeout: 45000 });
     await p.waitForFunction(() => [...document.querySelectorAll('.rv-receipt')]
