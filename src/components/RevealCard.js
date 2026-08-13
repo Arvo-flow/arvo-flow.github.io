@@ -214,51 +214,73 @@ const Prompt = styled.form`
 // Ingen tidsutfästelse här: sidan slutade lova sekunder 2026-08-07, och ett kvitto efteråt är
 // starkare än ett löfte innan.
 const Brygga = styled.div`
-  margin: 22px 0 0;
+  margin: 24px 0 0;
   border-radius: ${({ theme }) => theme.size.radius.lg};
-  border: 1px solid ${({ theme }) => theme.dossier.teal};
-  background: linear-gradient(180deg, rgba(43,196,172,.07), rgba(43,196,172,.02));
-  padding: 22px 22px 20px;
+  /* HANDLING, INTE BEVIS: kortet ovanför bär en hel teal ram. Bar bryggan samma ram lästes de
+     som syskon — två likvärdiga bevis — när den ena är evidens och den andra är nästa steg.
+     Bryggan får därför hårlinje + en glödring; den lyser, den ropar inte. */
+  border: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+  box-shadow: 0 0 0 1px rgba(43,196,172,.14), 0 18px 48px rgba(6,14,12,.45);
+  background:
+    radial-gradient(120% 130% at 0% 0%, rgba(43,196,172,.11), transparent 62%),
+    ${({ theme }) => theme.dossier.bgRaised};
+  padding: 24px 24px 20px;
+  position: relative; overflow: hidden;
+  /* Accentlinjen i överkant: samma signal som radarns svep — riktning, inte dekor. */
+  &::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+    background: linear-gradient(90deg, ${({ theme }) => theme.dossier.tealBright}, rgba(43,196,172,0) 72%);
+  }
 
   .br-k {
     font-family: ${({ theme }) => theme.font.mono}; font-size: 10px; letter-spacing: .22em;
-    text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; margin-bottom: 12px;
+    text-transform: uppercase; color: ${({ theme }) => theme.dossier.teal}; margin-bottom: 14px;
   }
   .br-h {
-    font-family: ${({ theme }) => theme.font.display}; font-weight: 600; font-size: 21px;
-    line-height: 1.25; color: ${({ theme }) => theme.dossier.inkOnDark};
-    em { font-style: italic; color: ${({ theme }) => theme.dossier.tealBright}; }
+    font-family: ${({ theme }) => theme.font.display}; font-weight: 600;
+    font-size: clamp(22px, 3.2vw, 28px); line-height: 1.22; letter-spacing: -.01em;
+    color: ${({ theme }) => theme.dossier.inkOnDark};
+    em { display: block; font-style: italic; font-weight: 500; color: ${({ theme }) => theme.dossier.tealBright}; }
   }
-  .br-p { margin-top: 9px; font-size: 13.5px; line-height: 1.6; color: ${({ theme }) => theme.dossier.mutedOnDark}; }
+  .br-p { margin-top: 12px; max-width: 62ch; font-size: 13.5px; line-height: 1.65;
+    color: ${({ theme }) => theme.dossier.mutedOnDark}; b { color: ${({ theme }) => theme.dossier.inkOnDark}; } }
 
-  .br-adr {
-    margin-top: 16px; display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap;
-    .br-mail {
-      flex: 1 1 260px; min-width: 0; display: flex; align-items: center; padding: 0 15px; min-height: 46px;
-      border-radius: ${({ theme }) => theme.size.radius.md};
-      border: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
-      background: ${({ theme }) => theme.dossier.bg};
-      font-family: ${({ theme }) => theme.font.mono}; font-size: 14px;
-      color: ${({ theme }) => theme.dossier.inkOnDark}; word-break: break-all;
-    }
-    button {
-      flex: 0 0 auto; cursor: pointer; border: none; font-family: inherit; font-weight: 600;
-      font-size: 13px; padding: 0 20px; min-height: 46px;
-      border-radius: ${({ theme }) => theme.size.radius.md};
-      background: ${({ theme }) => theme.dossier.tealBright}; color: #05231F;
-      transition: transform .16s ease, opacity .16s ease;
-      &:hover { transform: translateY(-1px); }
-      &:disabled { opacity: .75; cursor: default; transform: none; }
-    }
+  /* Adressen är en ADRESS, inte ett fält. Den gamla full­breda rutan såg ut som något man skulle
+     skriva i — en falsk affordans mitt i sidans viktigaste handling. Nu hugger den om texten,
+     bär ett kuvert och står bredvid den enda knapp som gör något. */
+  .br-adr { margin-top: 18px; display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
+  .br-mail {
+    flex: 0 1 auto; display: inline-flex; align-items: center; gap: 10px;
+    padding: 0 16px; min-height: 48px; border-radius: ${({ theme }) => theme.size.radius.md};
+    border: 1px dashed rgba(43,196,172,.34); background: ${({ theme }) => theme.dossier.bg};
+    font-family: ${({ theme }) => theme.font.mono}; font-size: 14.5px; letter-spacing: .01em;
+    color: ${({ theme }) => theme.dossier.inkOnDark}; word-break: break-all;
+    svg { flex: none; color: ${({ theme }) => theme.dossier.teal}; }
   }
+  .br-adr button {
+    flex: 0 0 auto; cursor: pointer; border: none; font-family: inherit; font-weight: 600;
+    font-size: 13.5px; padding: 0 22px; min-height: 48px;
+    border-radius: ${({ theme }) => theme.size.radius.md};
+    background: ${({ theme }) => theme.dossier.tealBright}; color: #05231F;
+    transition: transform .16s ease, box-shadow .16s ease;
+    &:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(43,196,172,.28); }
+    &:disabled { opacity: .8; cursor: default; transform: none; }
+  }
+  @media (max-width: 560px) {
+    padding: 20px 18px 18px;
+    .br-mail { flex: 1 1 100%; font-size: 13.5px; }
+    .br-adr button { flex: 1 1 100%; }
+  }
+
   .br-avtal {
-    margin-top: 15px; padding-top: 14px; border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
+    margin-top: 18px; padding-top: 15px; border-top: 1px solid ${({ theme }) => theme.dossier.hairlineOnDark};
     font-size: 12.5px; line-height: 1.6; color: ${({ theme }) => theme.dossier.mutedOnDark};
     b { color: ${({ theme }) => theme.dossier.inkOnDark}; }
   }
   .br-alt {
-    margin-top: 11px; font-size: 12.5px; color: ${({ theme }) => theme.dossier.faintOnDark};
-    a { color: ${({ theme }) => theme.dossier.tealBright}; font-weight: 600; text-decoration: none; }
+    margin-top: 10px; font-size: 12.5px; color: ${({ theme }) => theme.dossier.mutedOnDark};
+    a { color: ${({ theme }) => theme.dossier.tealBright}; font-weight: 600; text-decoration: none;
+      border-bottom: 1px solid rgba(93,214,202,.3); &:hover { border-bottom-color: currentColor; } }
   }
 `;
 
@@ -307,14 +329,28 @@ export function RumBryggan() {
   return (
     <Brygga>
       <div className="br-k">Nästa steg · ert eget rum</div>
-      <div className="br-h">Skicka en faktura.<br /><em>Ni får ert eget rum i retur.</em></div>
+      {/* ── MENINGEN (omskriven 2026-08-13) ────────────────────────────────────────────────
+          Stod: "Skicka en faktura. / Ni får ert eget rum i retur."
+          Tre fel. (1) "i retur" är lagerspråk — det man säger om ett returnerat paket, inte
+          något en finansdirektör säger. (2) Konstruktionen gör rummet till en MOTPRESTATION:
+          du ger, vi ger tillbaka. Rummet är inte betalning för en faktura, det är deras plats
+          hos oss. (3) Första raden namngav besväret i stället för värdet.
+          Nu: handlingen först, med skalan inbakad ("Eller femtio" — bulk-vägen tar upp till
+          hundra PDF:er per mejl, MAX_BULK_PDFS i api/inbound-email), och äganderätten som
+          löfte: rummet ÄR deras, från den allra första fakturan. */}
+      <div className="br-h">Vidarebefordra en faktura. Eller femtio.<em>Rummet är ert från den första.</em></div>
       <p className="br-p">
-        Vidarebefordra en leverantörsfaktura från inkorgen ni redan har öppen. Arvo läser den, väger
-        varje pris mot verifierat marknadspris och svarar med analysen — och en personlig länk till
-        ert rum, där er historik och er bevakning bor.
+        Arvo läser varje faktura, väger priset mot verifierat marknadspris och lägger resultatet
+        i ert rum. Länken dit kommer i svaret på ert mejl — den är personlig.
+        {' '}<b>Upp till hundra fakturor i samma mejl</b>; vi tar dem en och en.
       </p>
       <div className="br-adr">
-        <span className="br-mail">{INBOX_ADDR}</span>
+        <span className="br-mail">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <rect x="2.5" y="5" width="19" height="14" rx="2.5" /><path d="m3 7 9 6 9-6" />
+          </svg>
+          {INBOX_ADDR}
+        </span>
         <button type="button" onClick={kopiera} aria-live="polite">
           {kopierad ? 'Kopierad ✓' : 'Kopiera adressen'}
         </button>
