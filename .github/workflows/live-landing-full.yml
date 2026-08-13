@@ -25,13 +25,23 @@ jobs:
           set -o pipefail
           mkdir -p ops/landing-full
           node scripts/live-landing-full.mjs 2>&1 | tee ops/landing-full/logg.txt
+      # ── BEVISET FÅR INTE FÖRSVINNA TYST (2026-08-13) ────────────────────────────────────────
+      # Steget var grönt medan det inte pushade någonting: `git pull --rebase` avbröt på egna
+      # ostagade filer (logg.txt skrevs FÖRE `git add`), pushen förlorade kapplöpningen mot en
+      # annan körning, och `|| echo "push miss"` svalde felet. Tre skärmdumpar mot skarpa sajten
+      # togs och kastades — och jobbet såg ut exakt som ett som lyckats.
+      # Ordningen är nu add → commit → rebase → push, med omförsök, och sista försöket får FÄLLA
+      # steget. En vakt som inte kan larma är ingen vakt (Verifieringsplikten p.5).
       - name: Commit
         if: always()
-        continue-on-error: true
         run: |
           git config user.email "bot@arvoflow.se"
           git config user.name "Arvo Diag Bot"
-          git pull --rebase origin main || true
           git add ops/landing-full/
-          git commit -m "ops: live-landing-full [skip ci]" || echo "inget"
-          git push origin HEAD:main || echo "push miss"
+          git commit -m "ops: live-landing-full [skip ci]" || { echo "inget att committa"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "försök $i misslyckades — väntar"; sleep $((i * 5))
+          done
+          echo "::error::skärmdumparna kunde inte pushas — beviset gick förlorat"
+          exit 1
