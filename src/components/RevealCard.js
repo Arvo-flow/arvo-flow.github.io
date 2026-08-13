@@ -336,9 +336,13 @@ export function RumBryggan() {
           du ger, vi ger tillbaka. Rummet är inte betalning för en faktura, det är deras plats
           hos oss. (3) Första raden namngav besväret i stället för värdet.
           Nu: handlingen först, med skalan inbakad ("Eller femtio" — bulk-vägen tar upp till
-          hundra PDF:er per mejl, MAX_BULK_PDFS i api/inbound-email), och äganderätten som
-          löfte: rummet ÄR deras, från den allra första fakturan. */}
-      <div className="br-h">Vidarebefordra en faktura. Eller femtio.<em>Rummet är ert från den första.</em></div>
+          hundra PDF:er per mejl, MAX_BULK_PDFS i api/inbound-email), och utfallet som ett
+          konstaterande.
+          Mellanledet "Rummet är ert från den första" föll på en ellips: läsaren fick själv
+          fylla i "fakturan", och "den första" kan i en halv sekund läsas som ett datum. En rad
+          som ska bära äganderätten till rummet får inte kosta läsaren en tolkning.
+          (Grundarval 2026-08-13 bland fyra formuleringar.) */}
+      <div className="br-h">Vidarebefordra en faktura. Eller femtio.<em>Sedan har ni ett eget rum hos Arvo.</em></div>
       <p className="br-p">
         Arvo läser varje faktura, väger priset mot verifierat marknadspris och lägger resultatet
         i ert rum. Länken dit kommer i svaret på ert mejl — den är personlig.
