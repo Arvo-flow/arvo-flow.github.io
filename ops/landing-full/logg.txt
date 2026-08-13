@@ -5,11 +5,13 @@ node:internal/modules/run_main:123
 
 locator.scrollIntoViewIfNeeded: Timeout 30000ms exceeded.
 Call log:
-  - waiting for locator('input[type=email]').first()
+  - waiting for locator('input[aria-label="Er företagsdomän"]').first()
 
-    at shoot (/home/runner/work/arvo-flow.github.io/arvo-flow.github.io/scripts/live-landing-full.mjs:21:17)
-    at async file:///home/runner/work/arvo-flow.github.io/arvo-flow.github.io/scripts/live-landing-full.mjs:45:1 {
-  log: [ "  - waiting for locator('input[type=email]').first()" ],
+    at shoot (/home/runner/work/arvo-flow.github.io/arvo-flow.github.io/scripts/live-landing-full.mjs:25:17)
+    at async file:///home/runner/work/arvo-flow.github.io/arvo-flow.github.io/scripts/live-landing-full.mjs:49:1 {
+  log: [
+    `  - waiting for locator('input[aria-label="Er företagsdomän"]').first()`
+  ],
   name: 'TimeoutError'
 }
 
