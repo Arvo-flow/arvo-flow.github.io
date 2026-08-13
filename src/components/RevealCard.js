@@ -11,6 +11,7 @@
 // kvittot efteråt. Som slutrad blev den ett mått som försämrades varje gång produkten
 // förbättrades (9,1 s → 21,9 s när fler register lades till). Kvittot namnger nu registren.
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { fmtOrgnr } from '../utils/format';
 
@@ -297,6 +298,202 @@ export function RevealWorking({ email }) {
       <div className="rw-skel"><div className="l1" style={{ width: '58%' }} /><div className="l2" style={{ width: '84%' }} /></div>
       <div className="rw-skel"><div className="l1" style={{ width: '66%' }} /><div className="l2" style={{ width: '78%' }} /></div>
     </Working>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// HJÄLTEDÖRREN (2026-08-13) — sidan slutar BESKRIVA avslöjandet och UTFÖR det, ovanför vikningen.
+//
+// Varför en egen komponent och inte en variant av RevealPrompt: prompten bor i tre ytor (Landing,
+// Portfolio ×2) och är stylad för det MÖRKA dossier-rummet. Hjälten är ljus. Att tvinga in en
+// variant hade gjort en komponent till två halvdana; en egen shell håller båda hela.
+//
+// Tre lagar styr det här gränssnittet:
+//
+//  1. HJÄLTEN ÄR HEL UTAN INPUT. Fältet är en INBJUDAN, aldrig en grind. Skriver besökaren
+//     ingenting står ändå ett komplett, vackert löfte kvar. Sidan får aldrig bli gisslan hos
+//     /api/reveal — och den hänger i sin tur på crt.sh, som vi MÄTT svarar ~30 % av gångerna.
+//
+//  2. ALDRIG EN RAM SOM LOVAR EN RAD SOM KANSKE INTE KOMMER. Den gamla laddningsvyn ritar tre
+//     skelettrader — den lovar tre fynd innan något svar finns. Här är väntan ett enda andetag:
+//     en stråle och en tickande klocka. Kommer tre rader blir det en glädje; kommer en är det
+//     ingen besvikelse. Skillnaden mellan förväntan och löfte är hela anti-Potemkin-doktrinen.
+//
+//  3. DOMÄN, INTE MEJL. api/reveal LAGRAR INGENTING och använder mejlen enbart för att plocka ut
+//     domänen (domainFromEmail tar redan en naken domän). Att be om en personlig arbetsmejl för
+//     att visa OFFENTLIGA uppgifter om ett BOLAG — och samtidigt skriva "innan ni delat något" —
+//     är en motsägelse besökaren känner innan hen kan formulera den. Mejlen frågas efter EFTER
+//     beviset, där den är ett erbjudande i stället för en kostnad.
+const HeroDoorShell = styled.div`
+  margin: 36px auto 0; max-width: 660px;
+
+  form { display: flex; gap: 12px; align-items: stretch; }
+  @media (max-width: 560px) { form { flex-direction: column; } }
+
+  .hd-field {
+    flex: 1 1 auto; min-width: 0; position: relative;
+    display: flex; align-items: center;
+    background: ${({ theme }) => theme.color.surface};
+    border: 1px solid ${({ theme }) => theme.color.line};
+    border-radius: ${({ theme }) => theme.size.radius.lg};
+    box-shadow: 0 14px 34px rgba(27,122,110,.10);
+    transition: border-color .18s ease, box-shadow .18s ease;
+    &:focus-within {
+      border-color: ${({ theme }) => theme.color.brand};
+      box-shadow: 0 16px 40px rgba(27,122,110,.20);
+    }
+    input {
+      width: 100%; border: none; outline: none; background: none;
+      font-family: inherit; font-size: 17px; color: ${({ theme }) => theme.color.ink};
+      padding: 20px 20px; letter-spacing: -.005em;
+      &::placeholder { color: #9BAAA4; }
+    }
+  }
+  button[type="submit"] {
+    flex: 0 0 auto; border: none; cursor: pointer; font-family: inherit;
+    font-size: 15px; font-weight: 600; color: ${({ theme }) => theme.color.surface};
+    padding: 0 28px; min-height: 62px;
+    border-radius: ${({ theme }) => theme.size.radius.lg};
+    background: ${({ theme }) => theme.color.brandGradient};
+    box-shadow: 0 14px 34px rgba(27,122,110,.28);
+    transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+    &:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 18px 44px rgba(27,122,110,.36); }
+    &:disabled { opacity: .55; cursor: default; }
+  }
+
+  .hd-sub {
+    margin-top: 14px; font-size: 12.5px; color: ${({ theme }) => theme.color.mutedSoft};
+    a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  }
+  .hd-note { margin: 14px 0 0; font-size: 13.5px; color: ${({ theme }) => theme.color.mutedSoft}; }
+
+  /* Väntan: ETT andetag, inga skelettrader (lag 2 ovan). */
+  .hd-wait {
+    margin-top: 22px; display: flex; align-items: center; gap: 14px; justify-content: center;
+    font-family: ${({ theme }) => theme.font.mono}; font-size: 10.5px; letter-spacing: .2em;
+    text-transform: uppercase; color: ${({ theme }) => theme.color.mutedSoft};
+  }
+  .hd-beam {
+    width: 120px; height: 2px; border-radius: 1px; overflow: hidden;
+    background: rgba(27,122,110,.14); position: relative;
+    span {
+      position: absolute; inset: 0; width: 42%; border-radius: 1px;
+      background: ${({ theme }) => theme.color.brandGradient};
+      animation: hdsweep 1.15s cubic-bezier(.55,0,.45,1) infinite;
+    }
+  }
+  @keyframes hdsweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } }
+  @media (prefers-reduced-motion: reduce) { .hd-beam span { animation: none; width: 100%; opacity: .5; } }
+`;
+
+// Inbjudan i stället för attrapp. Den suddade förhandsvisningen var ÄRLIG (märkt, blurrad, utan
+// påstående) men den var en KRYCKA — den argumenterade för produkten med en platshållare när det
+// riktiga kortet finns ett tangenttryck bort. Chipsen säger vad vi LÄSER, aldrig vad vi hittat.
+const Invite = styled.div`
+  margin-top: 30px;
+  .iv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 620px) { .iv-grid { grid-template-columns: 1fr; } }
+  .iv-chip {
+    text-align: left; padding: 17px 18px 16px;
+    background: ${({ theme }) => theme.color.surface};
+    border: 1px solid ${({ theme }) => theme.color.line};
+    border-radius: ${({ theme }) => theme.size.radius.lg};
+    box-shadow: 0 8px 24px rgba(27,122,110,.06);
+    transition: transform .2s ease, box-shadow .2s ease;
+    &:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(27,122,110,.11); }
+  }
+  .iv-k {
+    font-family: ${({ theme }) => theme.font.mono}; font-size: 9.5px; letter-spacing: .18em;
+    text-transform: uppercase; color: ${({ theme }) => theme.color.brand}; margin-bottom: 9px;
+  }
+  .iv-t { font-family: ${({ theme }) => theme.font.display}; font-size: 17px; line-height: 1.25;
+    color: ${({ theme }) => theme.color.ink}; }
+  .iv-d { margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: ${({ theme }) => theme.color.mutedSoft}; }
+  .iv-note { margin: 16px 0 0; font-size: 13px; color: ${({ theme }) => theme.color.mutedSoft}; text-align: center; }
+`;
+
+// Kortet växer FRAM, det byts inte in. Rörelsen är telemetri, aldrig dekor: en kort resning som
+// säger "detta hände nyss", inte en effekt som säger "titta vad vi kan".
+const Grown = styled.div`
+  margin-top: 26px; text-align: left;
+  animation: hdgrow .55s cubic-bezier(.16,1,.3,1) both;
+  @keyframes hdgrow { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+
+  .hd-bridge {
+    margin: 18px auto 0; max-width: 60ch; text-align: center;
+    font-size: 13.5px; line-height: 1.6; color: ${({ theme }) => theme.color.mutedSoft};
+    a { color: ${({ theme }) => theme.color.brand}; font-weight: 600; text-decoration: none; }
+  }
+`;
+
+const KALLOR = [
+  ['Bolagsverket', 'Bokslut & koncern', 'Omsättning, anställda, ägarstruktur — offentligt.'],
+  ['E-postpostur', 'Leverantörsspår', 'Vilka som får skicka mejl i ert namn — i klartext.'],
+  ['Prisboken', 'Marknadspris', 'Verifierade publika listpriser, lästa varje vecka.'],
+];
+
+export function HeroDoor({ domain, setDomain, onSubmit, loading, reveal, note, pending, onValjBolag }) {
+  const rent = String(domain || '').trim();
+  return (
+    <HeroDoorShell>
+      <form onSubmit={onSubmit}>
+        <div className="hd-field">
+          {/* type=text, inte email: vi ber om en DOMÄN. En e-postvalidering hade avvisat
+              "ertbolag.se" — exakt det vi vill ha. Mejlen frågas efter först efter beviset. */}
+          <input
+            type="text" inputMode="url" autoComplete="off" autoCapitalize="off" spellCheck="false"
+            aria-label="Er företagsdomän"
+            placeholder="ertbolag.se" value={domain}
+            onChange={(e) => setDomain(e.target.value)} disabled={loading}
+          />
+        </div>
+        <button type="submit" disabled={loading || !rent}>
+          {loading ? 'Läser…' : 'Öppna underlaget →'}
+        </button>
+      </form>
+
+      <div className="hd-sub">
+        innan ni delat något · öppna källor &nbsp;·&nbsp; <Link to="/testa-faktura">eller testa med en faktura</Link>
+      </div>
+      {note && <p className="hd-note">{note}</p>}
+
+      {loading && (
+        <div className="hd-wait" aria-live="polite">
+          <span className="hd-beam"><span /></span>
+          <span>läser öppna register</span>
+        </div>
+      )}
+
+      {!loading && !reveal && (
+        <Invite>
+          <div className="iv-grid">
+            {KALLOR.map(([k, t, d]) => (
+              <div className="iv-chip" key={k}>
+                <div className="iv-k">{k}</div>
+                <div className="iv-t">{t}</div>
+                <div className="iv-d">{d}</div>
+              </div>
+            ))}
+          </div>
+          <p className="iv-note">Skriv in er domän ovan — underlaget växer fram här, innan ni delat något.</p>
+        </Invite>
+      )}
+
+      {!loading && reveal && (
+        <Grown>
+          <RevealCard
+            domain={reveal.domain} findings={reveal.findings} pending={pending}
+            identity={reveal.identity} onValjBolag={onValjBolag}
+          />
+          <p className="hd-bridge">
+            Det här såg vi utifrån.{' '}
+            <Link to="/testa-faktura">Dela en faktura, så räknar vi era exakta tal →</Link>
+          </p>
+        </Grown>
+      )}
+    </HeroDoorShell>
   );
 }
 
