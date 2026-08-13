@@ -12,17 +12,44 @@ MITTLINJEN kristianstadsmaleri mobil: kortets mitt 195.0 · sidans 195.0 · kant
 ✓ kristianstadsmaleri mobil
 MITTLINJEN kristianstadsmaleri desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
 ✓ kristianstadsmaleri desktop
-node:internal/modules/run_main:123
-    triggerUncaughtException(
-    ^
+FYND spokdoman: []
+NOT spokdoman: ["Vi hittar ingen aktiv domän bakom hdssyjxdd.se — kontrollera stavningen, eller testa med en faktura så läser vi de verkliga talen."]
+ORDNING spokdoman: ingetdera
+RÅA ORGNR spokdoman: [] (ska vara [])
+MITTLINJEN spokdoman mobil: inget kort på sidan — inget att mäta (laglig tystnad)
+✓ spokdoman mobil
+MITTLINJEN spokdoman desktop: inget kort på sidan — inget att mäta (laglig tystnad)
+✓ spokdoman desktop
+PENDING KVAR kfast: 0 (ska vara 0)
+FYND kfast: ["Ert bokslut 2024: 131,0 mkr i omsättning, 78 anställda","Andra växande året i rad (+30 % senast)","537 498 kr/år skiljer billigaste från dyraste licensnivå — för era 78 anställda","Ni kör Microsoft 365","SendGrid · Mailgun får skicka mejl i ert namn"]
+ORDNING kfast: IDENT-FÖRE-KVITTO
+RÅA ORGNR kfast: [] (ska vara [])
+MITTLINJEN kfast mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
+✓ kfast mobil
+MITTLINJEN kfast desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
+✓ kfast desktop
+FYND avida: ["Ni kör Microsoft 365","Ert e-postskydd är redan aktivt"]
+ORDNING avida: IDENT-FÖRE-KVITTO
+RÅA ORGNR avida: [] (ska vara [])
+MITTLINJEN avida mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
+✓ avida mobil
+MITTLINJEN avida desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
+✓ avida desktop
+FYND castra: ["Ni kör Microsoft 365","MailerLite · Brevo får skicka mejl i ert namn","Ert e-postskydd är redan aktivt"]
+ORDNING castra: IDENT-FÖRE-KVITTO
+RÅA ORGNR castra: [] (ska vara [])
+MITTLINJEN castra mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
+✓ castra mobil
+MITTLINJEN castra desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
+✓ castra desktop
+UPPSÄTTNINGSRADEN skanska: kom inte inom 32 s
+FYND skanska: ["Ni kör Microsoft 365","Ert e-postskydd är redan aktivt"]
+ORDNING skanska: IDENT-FÖRE-KVITTO
+RÅA ORGNR skanska: [] (ska vara [])
+MITTLINJEN skanska mobil: kortets mitt 195.0 · sidans 195.0 · kant mot kolumnen 0.0px ✓
+✓ skanska mobil
+UPPSÄTTNINGSRADEN skanska: kom inte inom 32 s
+MITTLINJEN skanska desktop: kortets mitt 800.0 · sidans 800.0 · kant mot kolumnen 0.0px ✓
+✓ skanska desktop
 
-page.waitForSelector: Timeout 45000ms exceeded.
-Call log:
-  - waiting for locator('.rv-find, .rp-note') to be visible
-
-    at /home/runner/work/arvo-flow.github.io/arvo-flow.github.io/scripts/live-door-lekia.mjs:52:13 {
-  log: [ "  - waiting for locator('.rv-find, .rp-note') to be visible" ],
-  name: 'TimeoutError'
-}
-
-Node.js v20.20.2
+✓ Måttsystemet håller — bilagan delar mittlinje och kant i varje vy.
