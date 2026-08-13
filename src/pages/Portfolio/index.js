@@ -222,7 +222,7 @@ export default function Portfolio() {
   const [copiedInbox, setCopiedInbox] = useState(false);   // kopiera-bekräftelse för intag-adressen
   const [avtalStatus, setAvtalStatus] = useState({});      // avtalsuppladdning per analys: { [id]: { phase, msg } }
   // Avslöjandet — kundens e-postdomän → källbelagt "hur visste de det?"-kort (gratis-vägen, DNS).
-  const [revealEmail, setRevealEmail] = useState('');
+  const [revealDoman, setRevealDoman] = useState('');
   const [reveal, setReveal] = useState(null);
   const [revealLoading, setRevealLoading] = useState(false);
   const [revealNote, setRevealNote] = useState('');
@@ -445,8 +445,8 @@ export default function Portfolio() {
 
   async function runReveal(e) {
     e?.preventDefault?.();
-    const email = revealEmail.trim();
-    if (!email || revealLoading) return;
+    const doman = revealDoman.trim();
+    if (!doman || revealLoading) return;
     setRevealLoading(true); setReveal(null); setRevealNote(''); setRevealElapsed(0);
     const t0 = performance.now();
     try {
@@ -454,7 +454,7 @@ export default function Portfolio() {
       // (certifikatregistret 25 s) — nya rader läggs SIST och materialiseras sent (dramat).
       const res = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, fast: true }),
+        body: JSON.stringify({ domain: doman, fast: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.findings?.length) {
@@ -469,7 +469,7 @@ export default function Portfolio() {
           try {
             const res2 = await fetch('/api/reveal', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email }), signal: ctrl.signal,
+              body: JSON.stringify({ domain: doman }), signal: ctrl.signal,
             });
             const d2 = await res2.json().catch(() => ({}));
             if (d2.findings?.length) {
@@ -1413,7 +1413,7 @@ export default function Portfolio() {
                  istället för att pitcha. Teasern visar formen på magin innan man skrivit sin mejl. */
               <>
                 <RevealPrompt
-                  email={revealEmail} setEmail={setRevealEmail} onSubmit={runReveal}
+                  doman={revealDoman} setDoman={setRevealDoman} onSubmit={runReveal}
                   loading={revealLoading} reveal={reveal} note={revealNote} elapsedS={revealElapsed} pending={revealPending}
                 />
                 {!reveal && !revealLoading && <RevealTeaser />}

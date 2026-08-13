@@ -72,10 +72,14 @@ for (const [w, vy] of [[390, 'mobil'], [1600, 'desktop']]) {
   await p.route('**/api/reveal', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(SVAR) }));
   await p.goto('http://localhost:4173/flow/', { waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(1500);
-  const input = p.locator('input[type=email]').first();
+  // Dörren frågar efter en DOMÄN (type=text) sedan 2026-08-13. Selektorn hänger på
+  // aria-label — den beskriver VAD fältet är, inte hur det råkar vara typat, så en
+  // attributändring kan inte tysta sonden. En sond som letar efter ett fält som inte
+  // finns rapporterar sin egen inaktualitet som ett fel i sajten.
+  const input = p.locator('input[aria-label="Er företagsdomän"]').first();
   await input.scrollIntoViewIfNeeded();
   await p.waitForTimeout(600);
-  await input.fill('info@avida.se');
+  await input.fill('avida.se');
   await p.locator('button:has-text("Öppna underlaget")').click();
   await p.waitForSelector('.rv-find', { timeout: 15000 });
   await p.waitForTimeout(1600);

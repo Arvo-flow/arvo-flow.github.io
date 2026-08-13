@@ -41,7 +41,11 @@ for (const { email, tag, waitReceipt, openAperture, waitOnboarding } of CASES) {
     const p = await b.newPage({ viewport: { width: w, height: 1200 } });
     await p.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await p.waitForTimeout(2500);
-    const input = p.locator('input[type=email]').first();
+    // Dörren frågar efter en DOMÄN (type=text) sedan 2026-08-13. Selektorn hänger på
+    // aria-label — den beskriver VAD fältet är, inte hur det råkar vara typat, så en
+    // attributändring kan inte tysta sonden. En sond som letar efter ett fält som inte
+    // finns rapporterar sin egen inaktualitet som ett fel i sajten.
+    const input = p.locator('input[aria-label="Er företagsdomän"]').first();
     await input.scrollIntoViewIfNeeded();
     await p.waitForTimeout(800);
     await input.fill(email);

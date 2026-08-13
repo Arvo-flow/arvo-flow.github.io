@@ -23,10 +23,14 @@ async function shoot(tag, { openDoor }) {
   await p.waitForTimeout(2500);
 
   if (openDoor) {
-    const input = p.locator('input[type=email]').first();
+    // Dörren frågar efter en DOMÄN (type=text) sedan 2026-08-13. Selektorn hänger på
+    // aria-label — den beskriver VAD fältet är, inte hur det råkar vara typat, så en
+    // attributändring kan inte tysta sonden. En sond som letar efter ett fält som inte
+    // finns rapporterar sin egen inaktualitet som ett fel i sajten.
+    const input = p.locator('input[aria-label="Er företagsdomän"]').first();
     await input.scrollIntoViewIfNeeded();
     await p.waitForTimeout(600);
-    await input.fill('kontakt@lekia.se');
+    await input.fill('lekia.se');
     await p.locator('button:has-text("Öppna underlaget")').click();
     await p.waitForSelector('.rv-find', { timeout: 45000 });
     // vänta in kvittot (våg 2 klar) så kortet är i sitt slutliga läge

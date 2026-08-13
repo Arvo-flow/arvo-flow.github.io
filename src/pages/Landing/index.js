@@ -124,7 +124,7 @@ function ArtefaktRad({ r, index, parentIn }) {
 
 export default function Landing() {
   // Dörren — samma verkliga maskineri som rummets avslöjande (EN sanning: /api/reveal).
-  const [revealEmail, setRevealEmail] = useState('');
+  const [revealDoman, setRevealDoman] = useState('');
   const [revealLoading, setRevealLoading] = useState(false);
   const [reveal, setReveal] = useState(null);
   const [revealNote, setRevealNote] = useState('');
@@ -133,17 +133,17 @@ export default function Landing() {
 
   // ── KUNDEN PEKAR UT SITT BOLAG (grundarbeslut 2026-08-07) ─────────────────────────────────
   // Mätningen (ops/probe-identitet-tackning.txt) visade att orgnr-på-sajten — vår starkaste
-  // bindning — fyrar i 1 fall av 20. Men personen som skrev sin egen företagsmejl VET vem hen är.
+  // bindning — fyrar i 1 fall av 20. Men personen som skrev in sin egen domän VET vilket bolag hen driver.
   // Ett klick i bländaren ger oss därför en starkare bindning än allt vi kan skrapa. Vi minns
   // valet per domän så frågan aldrig ställs två gånger.
   const valjBolag = useCallback(async (orgnr) => {
-    const email = revealEmail.trim();
-    if (!email || !orgnr) return;
+    const doman = revealDoman.trim();
+    if (!doman || !orgnr) return;
     setRevealLoading(true);
     try {
       const r = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, orgnr }),
+        body: JSON.stringify({ domain: doman, orgnr }),
       });
       const data = await r.json();
       if (data?.ok && data.findings?.length) {
@@ -153,19 +153,19 @@ export default function Landing() {
       }
     } catch { /* kortet står kvar som det var — aldrig ett tomt rum */ }
     finally { setRevealLoading(false); }
-  }, [revealEmail]);
+  }, [revealDoman]);
 
   const runReveal = useCallback(async (e) => {
     e?.preventDefault?.();
-    const email = revealEmail.trim();
-    if (!email || revealLoading) return;
+    const doman = revealDoman.trim();
+    if (!doman || revealLoading) return;
     setRevealLoading(true); setReveal(null); setRevealNote('');
     try {
       // Våg 1: snabbkällorna (bokslut/trend/mejlposter) på sekunder. Våg 2: fulla budgeten
       // (certifikatregistret 25 s) — nya rader läggs SIST och materialiseras sent (dramat).
       const res = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, fast: true }),
+        body: JSON.stringify({ domain: doman, fast: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.ok && data.findings?.length) {
@@ -183,7 +183,7 @@ export default function Landing() {
           try {
             const res2 = await fetch('/api/reveal', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email }), signal: ctrl.signal,
+              body: JSON.stringify({ domain: doman }), signal: ctrl.signal,
             });
             const d2 = await res2.json().catch(() => ({}));
             if (d2.ok && d2.findings?.length) {
@@ -208,7 +208,7 @@ export default function Landing() {
           try {
             const res3 = await fetch('/api/reveal', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email, ctOnly: true }), signal: ctrl3.signal,
+              body: JSON.stringify({ domain: doman, ctOnly: true }), signal: ctrl3.signal,
             });
             const d3 = await res3.json().catch(() => ({}));
             if (d3.ok && d3.findings?.length) {
@@ -230,7 +230,7 @@ export default function Landing() {
     } finally {
       setRevealLoading(false);
     }
-  }, [revealEmail, revealLoading]);
+  }, [revealDoman, revealLoading]);
 
   // Hero-CTA:n ÄR dörren: mjukt scroll + fokus i fältet (noll formulär i vila).
   // Tidslöftet mäts mot verkligheten (grundarmätning 2026-07-13: ~10 s) — aldrig ett önsketal (regel 9).
@@ -318,7 +318,7 @@ export default function Landing() {
             <DoorBlock ref={(el) => { doorRef.current = el; doorInRef.current = el; }} className={doorIn}>
               <h3>Se ert bolag <em>som marknaden ser det.</em></h3>
               <RevealPrompt
-                email={revealEmail} setEmail={setRevealEmail}
+                doman={revealDoman} setDoman={setRevealDoman}
                 onSubmit={runReveal} loading={revealLoading}
                 reveal={reveal} note={revealNote} pending={revealPending}
                 onValjBolag={valjBolag}

@@ -226,7 +226,7 @@ export default function Portfolio() {
   const [copiedInbox, setCopiedInbox] = useState(false);   // kopiera-bekräftelse för intag-adressen
   const [avtalStatus, setAvtalStatus] = useState({});      // avtalsuppladdning per analys: { [id]: { phase, msg } }
   // Avslöjandet — kundens e-postdomän → källbelagt "hur visste de det?"-kort (gratis-vägen, DNS).
-  const [revealEmail, setRevealEmail] = useState('');
+  const [revealDoman, setRevealDoman] = useState('');
   const [reveal, setReveal] = useState(null);
   const [revealLoading, setRevealLoading] = useState(false);
   const [revealNote, setRevealNote] = useState('');
@@ -441,13 +441,13 @@ export default function Portfolio() {
 
   async function runReveal(e) {
     e?.preventDefault?.();
-    const email = revealEmail.trim();
-    if (!email || revealLoading) return;
+    const doman = revealDoman.trim();
+    if (!doman || revealLoading) return;
     setRevealLoading(true); setReveal(null); setRevealNote('');
     try {
       const res = await fetch('/api/reveal', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ domain: doman }),
       });
       const data = await res.json().catch(() => ({}));
       if (data.findings?.length) setReveal(data);
@@ -1362,7 +1362,7 @@ export default function Portfolio() {
                  istället för att pitcha. Teasern visar formen på magin innan man skrivit sin mejl. */
               <>
                 <RevealPrompt
-                  email={revealEmail} setEmail={setRevealEmail} onSubmit={runReveal}
+                  doman={revealDoman} setDoman={setRevealDoman} onSubmit={runReveal}
                   loading={revealLoading} reveal={reveal} note={revealNote}
                 />
                 {!reveal && <RevealTeaser />}

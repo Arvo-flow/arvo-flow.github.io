@@ -238,7 +238,7 @@ export function RevealTeaser() {
       ))}
       <div className="tz-lock">
         <svg className="tz-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-        <span>Detta är formen — inte ert faktiska underlag. <b>Skriv in er mejl ovan</b> så låser vi upp det på sekunder, innan ni delat något.</span>
+        <span>Detta är formen — inte ert faktiska underlag. <b>Skriv in er domän ovan</b> så låser vi upp det på sekunder, innan ni delat något.</span>
       </div>
     </Teaser>
   );
@@ -279,8 +279,10 @@ const REVEAL_SOURCES = REVEAL_SOURCE_LIST.join(' · ');
 const RAKNEORD = ['noll', 'ett', 'två', 'tre', 'fyra', 'fem', 'sex', 'sju', 'åtta', 'nio'];
 const antalKallor = RAKNEORD[REVEAL_SOURCE_LIST.length] ?? String(REVEAL_SOURCE_LIST.length);
 
-export function RevealWorking({ email }) {
-  const domain = (String(email || '').split('@')[1] || '').toLowerCase();
+export function RevealWorking({ doman }) {
+  // Fältet ber om en domän men besökaren kan klistra in en mejl — läs av båda formerna, gissa aldrig.
+  const rent = String(doman || '').trim().toLowerCase();
+  const domain = (rent.includes('@') ? rent.split('@')[1] : rent).replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
   const [t, setT] = useState(0);
   useEffect(() => {
     const start = performance.now();
@@ -300,25 +302,33 @@ export function RevealWorking({ email }) {
   );
 }
 
-export function RevealPrompt({ email, setEmail, onSubmit, loading, reveal, note, pending, onValjBolag }) {
+// ── DOMÄN, INTE MEJL (grundarbeslut 2026-08-13) ──────────────────────────────────────────────
+// api/reveal LAGRAR ingenting och använde mejlen enbart för att plocka ut domänen (den tar redan
+// en naken domän — body.email || body.domain). Att be om en personlig arbetsmejl för att visa
+// OFFENTLIGA uppgifter om ett BOLAG, i samma andetag som vi skriver "innan ni delat något", är en
+// motsägelse besökaren känner innan hen hinner formulera den. Mejlen frågas efter EFTER beviset,
+// där den är ett erbjudande i stället för en kostnad.
+// type=text, inte email: en e-postvalidering hade avvisat "ertbolag.se" — exakt det vi vill ha.
+export function RevealPrompt({ doman, setDoman, onSubmit, loading, reveal, note, pending, onValjBolag }) {
   return (
     <>
       <Prompt onSubmit={onSubmit}>
         <div className="rp-k">Innan första fakturan</div>
-        <p className="rp-lede">Era leverantörer har redan bildat sig en uppfattning om er — och prissätter efter den. Skriv in er <b>företagsmejl</b>, så visar vi på sekunder vad de ser, ur öppna källor.</p>
+        <p className="rp-lede">Era leverantörer har redan bildat sig en uppfattning om er — och prissätter efter den. Skriv in er <b>domän</b>, så visar vi på sekunder vad de ser, ur öppna källor.</p>
         <div className="rp-row">
           <input
-            type="email" inputMode="email" autoComplete="email"
-            placeholder="namn@ertbolag.se" value={email}
-            onChange={(e) => setEmail(e.target.value)} disabled={loading}
+            type="text" inputMode="url" autoComplete="off" autoCapitalize="off" spellCheck="false"
+            aria-label="Er företagsdomän"
+            placeholder="ertbolag.se" value={doman}
+            onChange={(e) => setDoman(e.target.value)} disabled={loading}
           />
-          <button type="submit" disabled={loading || !email.trim()}>
+          <button type="submit" disabled={loading || !doman.trim()}>
             {loading ? 'Öppnar…' : 'Öppna underlaget →'}
           </button>
         </div>
         {note && <p className="rp-note">{note}</p>}
       </Prompt>
-      {loading && <RevealWorking email={email} />}
+      {loading && <RevealWorking doman={doman} />}
       {!loading && reveal && <RevealCard domain={reveal.domain} findings={reveal.findings} pending={pending} identity={reveal.identity} onValjBolag={onValjBolag} />}
     </>
   );
