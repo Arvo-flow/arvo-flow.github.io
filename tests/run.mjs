@@ -94,6 +94,7 @@ import './saas-avstamning.mjs';
 import './lfl-produktionsvag.mjs';
 import './saas-rad.mjs';
 import './ct-ko.mjs';
+import './dorrstat.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

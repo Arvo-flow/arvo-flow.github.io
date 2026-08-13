@@ -13,6 +13,7 @@ import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import { RevealPrompt, RevealTeaser, RumBryggan } from '../../components/RevealCard';
 import { continuationPhrases, continuationClause } from '../../lib/roomContinuation';
+import { spara } from '../../lib/dorrstat';
 import {
   Page, Hero, DossierShell, Dossier, SectionKey, DoorBlock, RoomBlock, Artefakt,
   Light, Steps, PriceSentence, PriceCards, Faq, LastWord,
@@ -160,6 +161,7 @@ export default function Landing() {
     const doman = revealDoman.trim();
     if (!doman || revealLoading) return;
     setRevealLoading(true); setReveal(null); setRevealNote('');
+    spara('doman_skickad');            // steg 2 — aldrig VILKEN domän, bara att en skickades
     try {
       // Våg 1: snabbkällorna (bokslut/trend/mejlposter) på sekunder. Våg 2: fulla budgeten
       // (certifikatregistret 25 s) — nya rader läggs SIST och materialiseras sent (dramat).
@@ -169,6 +171,7 @@ export default function Landing() {
       });
       const data = await res.json().catch(() => ({}));
       if (data.ok && data.findings?.length) {
+        spara('kort_visat', { fynd: data.findings.length });   // steg 3a — antal fynd, inget om vem
         setReveal({ domain: data.domain, findings: data.findings, identity: data.identity });
         setRevealPending(true);
         setRevealLoading(false);
@@ -224,7 +227,12 @@ export default function Landing() {
 
         setRevealPending(false);
       }
-      else setRevealNote(data.note || data.error || 'Domänen bar inga öppna spår just nu — dela en faktura i stället, så läser vi de verkliga talen.');
+      else {
+        // Steg 3b — det ärliga tomma beskedet är ett UTFALL vi vill kunna räkna, inte ett fel:
+        // en hög andel här betyder att dörren lovar mer än registren kan hålla för våra besökare.
+        spara('kort_tomt');
+        setRevealNote(data.note || data.error || 'Domänen bar inga öppna spår just nu — dela en faktura i stället, så läser vi de verkliga talen.');
+      }
     } catch {
       setRevealNote('Kunde inte läsa av domänen just nu — försök igen om en stund.');
     } finally {
@@ -238,6 +246,11 @@ export default function Landing() {
     doorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => doorRef.current?.querySelector('input')?.focus({ preventScroll: true }), 550);
   }, []);
+
+  // ── DÖRRENS TRATT (2026-08-13) ────────────────────────────────────────────────────────────
+  // Vi visste ingenting om sidans viktigaste konverteringspunkt. Steg 1 av fyra: sidan visad.
+  // Domänfritt, IP-fritt, förstahands — se lib/dorrstat.js för integritetslinjen.
+  useEffect(() => { spara('dorr_visad', { engang: true }); }, []);
 
   // VAKTENS PULS (02): det VERKLIGA senaste svepet ur vakt_events — samma sanning som kundernas
   // rum. null → generisk mening (aldrig ett påhittat klockslag). Hämtas tyst, blockerar inget.

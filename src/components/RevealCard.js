@@ -14,6 +14,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { fmtOrgnr } from '../utils/format';
+import { spara } from '../lib/dorrstat';
 
 const Wrap = styled.section`
   border-radius: ${({ theme }) => theme.size.radius.lg};
@@ -323,6 +324,9 @@ export function RumBryggan() {
   const [kopierad, setKopierad] = useState(false);
   const kopiera = async () => {
     try { await navigator.clipboard.writeText(INBOX_ADDR); } catch { /* nekad clipboard — adressen står ändå läsbar */ }
+    // Steg 4a i tratten. Vi räknar UNIKA sessioner i avläsningen, så tre tryck är fortfarande
+    // en besökare — annars hade konverteringsgraden kunnat passera 100 % (lib/dorrstat.js).
+    spara('adress_kopierad');
     setKopierad(true);
     setTimeout(() => setKopierad(false), 2200);
   };
@@ -364,7 +368,8 @@ export function RumBryggan() {
         bevis, och sätter klockan på sista uppsägningsdag.
       </p>
       <p className="br-alt">
-        Sitter ni vid datorn med fakturan framme? <Link to="/testa-faktura">Testa med en faktura →</Link>
+        Sitter ni vid datorn med fakturan framme?{' '}
+        <Link to="/testa-faktura" onClick={() => spara('faktura_lank')}>Testa med en faktura →</Link>
       </p>
     </Brygga>
   );
