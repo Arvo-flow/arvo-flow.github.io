@@ -23,7 +23,11 @@ const till = process.argv[2];
 if (!till || !till.includes('@')) { console.error('Ange mottagaradress som argument.'); process.exit(1); }
 
 const BASE = process.env.ARVO_BASE_URL ?? 'https://arvoflow.se';
-const FROM = process.env.RESEND_FROM ?? 'Arvo Intelligence <analys@arvoflow.se>';
+// ?? faller bara tillbaka på null/undefined. GitHub Actions sätter en SAKNAD hemlighet till en
+// TOM STRÄNG, och '' ?? x är ''. Avsändaren blev därför tom och Resend svarade 422 "The domain is
+// invalid" — ett fel jag höll på att rapportera som ett fel i vårt Resend-konto. Båda domänerna
+// var verifierade hela tiden. || behandlar tomt som saknat, vilket är vad vi menar.
+const FROM = (process.env.RESEND_FROM || '').trim() || 'Arvo Intelligence <analys@arvoflow.se>';
 const mask = (e) => { const [l, d] = String(e).split('@'); return `${l.slice(0, 2)}***@${d}`; };
 
 const db = getDb();
