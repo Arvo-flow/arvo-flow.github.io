@@ -8,7 +8,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
-import { groupBySupplier, supplierName, supplierDiagScore, computeActing } from '../../lib/holdings';
+import { groupBySupplier, supplierName, supplierDiagScore, computeActing, roomCounts } from '../../lib/holdings';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
@@ -18,7 +18,7 @@ import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
   SwitchVerdict, SwitchBtn, AvtalUpload, AvtalLast, Watched, IntelQuiet, SignOff, Spinner,
-  StartHint, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease,
+  StartHint, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease, MoreIntake,
 } from '../Kontoret/styles';
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -96,6 +96,9 @@ function resolveTestIdentity() {
 const INBOX_ADDR = 'faktura@inbox.arvoflow.se';   // intag-adressen (vidarebefordra-dörren) — EN sanning
 const fmtNum   = (n) => (n == null ? '–' : Math.round(n).toLocaleString('sv-SE'));
 const fmtDate  = (iso) => (iso ? new Date(iso).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) : '');
+// Svensk kort månad bär sin egen punkt ("14 aug."). En mening som slutar på den ska INTE lägga på
+// en till — en punkt räcker för både förkortning och mening. Det var så "senast 14 aug.." uppstod.
+const slutpunkt = (svans) => (String(svans ?? '').trim().endsWith('.') ? '' : '.');
 const monthYear = (d) => d.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
 
 // Relativ tid för vaktens "senaste svep" — verklig tidsstämpel ur vakt_events, mänskligt formaterad.
@@ -124,12 +127,18 @@ const PUBLIC_SOURCE_LABEL = {
 };
 const fmtUnit = (n) => (n == null ? '–' : Number(n).toLocaleString('sv-SE', { maximumFractionDigits: 2 }));
 
+// ── VI TILLVERKAR INGET BOLAGSNAMN (grundargranskning 2026-08-15) ───────────────────────────
+// Funktionen kapitaliserade domänens första led och satte resultatet i rubriken under ordet
+// KONFIDENTIELLT: "Konfidentiellt · Nordiskbygg · 15 AUG 2026". Det är varken en juridisk enhet
+// eller Bolagsverket-härlett — det är en sträng vi hittade på, presenterad som identitet, i den
+// mest auktoritativa raden i hela rummet. Identitetsinvarianten säger att bolagsnamn ENDAST får
+// komma från Bolagsverket via den kanoniserade läsvägen; något sådant har rummet inte.
+// Domänen däremot är ett FAKTUM (den står i kundens egen adress), så vi visar den som den är.
 function companyFromEmail(email) {
   if (!email) return null;
   const domain = (email.split('@')[1] ?? '').toLowerCase();
   if (!domain || GENERIC_DOMAINS.has(domain)) return null;
-  const name = domain.split('.')[0];
-  return name.charAt(0).toUpperCase() + name.slice(1);
+  return domain;
 }
 
 // Gruppering + visningsnamn bor i src/lib/holdings (ren, testbar) — EN sanning (regel 1).
@@ -510,6 +519,10 @@ export default function Portfolio() {
     return [...m.values()];
   }, [watched]);
 
+  // Radarns räknare — EN enhet (fakturor) och en summa som alltid går ihop. Avgörandet bor i
+  // src/lib/holdings.js (ren, testlåst) — se motiveringen där.
+  const counts = useMemo(() => roomCounts({ autoAnalyses, watched: watched ?? [] }), [autoAnalyses, watched]);
+
   // Forensik-inversionen i rummet: starkaste mekanism-fyndet (ur kundens egna rader) leder domen.
   // Zero Trust — talet kommer från fakturaraden, persisterat i lead_finding_json. Tomt → inget kort.
   const roomFinding = useMemo(() => {
@@ -637,13 +650,23 @@ export default function Portfolio() {
     // löfte. `allClear` är den enda slutsats vi får dra om detektioner före verifieringsjuryn:
     // noll kandidater ger bevisbart noll rörelser. Ett positivt antal säger ingenting och sägs
     // därför aldrig — verifierade rörelser bor i marknadsrörelse-korten, efter juryn.
+    // ── KVITTOT UPPREPAR INTE RADARN (grundargranskning 2026-08-15) ─────────────────────────
+    // Raden löd förut nästan ordagrant som radarns fot-rad, tre skärmhöjder isär: samma klockslag,
+    // samma antal källor, samma kedja. Två identiska påståenden läser som utfyllnad, inte som två
+    // bevis. Arbetsfördelningen nu: radarn bär LÄGET (när, hur många källor, allt lugnt), kvittot
+    // bär UTHÅLLIGHETEN och vad svepet betydde för kunden.
     rows.push({ tag: 'Bevakar', what: vakt?.sweptAt
-      ? <>Svepte {vakt.sources ? <><b>{vakt.sources} marknadskällor</b> </> : 'marknaden '}{relSwept(vakt.sweptAt)}
-          {vakt.streakNights >= 2 ? <> · <b>{vakt.streakNights} nätter i rad</b> utan avbrott</> : null}
-          {vakt.allClear ? ' — allt lugnt, inget krävde er uppmärksamhet.' : '.'}</>
+      ? <>{vakt.streakNights >= 2
+            ? <><b>{vakt.streakNights} nätter i rad</b> utan ett avbrott i bevakningen. </>
+            : <>Bevakningen gick igenom i natt. </>}
+          {vakt.allClear
+            ? 'Inget av det marknaden gjorde rörde era priser — det tysta beskedet är också ett besked.'
+            : 'Nattens svep är avläst; det som berör er reser sig som ett eget kort här ovan.'}</>
       : <>Er bevakning är aktiv. Nattens svep visas här så snart körningen rapporterat — vi redovisar antalet källor först när vi har det, aldrig en ungefärlig siffra.</> });
     if (autoAnalyses.length > 0) {
-      rows.push({ tag: 'Analys', what: <>Vägde <b>{autoAnalyses.length} {autoAnalyses.length === 1 ? 'faktura' : 'fakturor'}</b> mot verifierat marknadspris{latestDate ? <> · senast {latestDate}</> : null}.</> });
+      // slutpunkt(): "14 aug." bär redan sin förkortningspunkt. Meningen lade på en till och rummet
+      // skrev "senast 14 aug..". En punkt räcker för både förkortning och mening (svensk standard).
+      rows.push({ tag: 'Analys', what: <>Vägde <b>{autoAnalyses.length} {autoAnalyses.length === 1 ? 'faktura' : 'fakturor'}</b> mot verifierat marknadspris{latestDate ? <> · senast {latestDate}</> : null}{slutpunkt(latestDate)}</> });
     }
     if (featured) {
       rows.push({ tag: 'Kohort', what: <>Jämförde era priser mot <b>{featured.n} bolag</b> hos {featured.supplier} via nätverket — sanningen ingen jämförelsesajt kan ge.</> });
@@ -671,13 +694,13 @@ export default function Portfolio() {
             : <>Ni betalar <em>mer än marknaden</em> — {switchables.length} avtal drar mest.</>)
       : <>Era avtal står sig — men vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda.</>;
   const verdictWork = !acting
-    ? <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
+    ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat marknadspris.
         Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>
     : hasSwitchAction
-      ? <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris.
+      ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat marknadspris.
           <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
           största bytet tar två minuter att signera. Resten håller måttet; dem rör vi inte.</>
-      : <>Vi jämförde era <b>{suppliers.length} leverantörer</b> mot verifierat marknadspris — priserna står sig.
+      : <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat marknadspris — priserna står sig.
           Men vi läste varje rad på era fakturor och fångade en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
           se vad domen bygger på nedan.</>;
 
@@ -776,23 +799,28 @@ export default function Portfolio() {
                   <div className="radar-title"><strong>Vakten</strong>bevakar era avtal</div>
                 </div>
                 {/* Variant C — grupp 1: ERA AVTAL (intaget). Aldrig blandat med marknaden. */}
+                {/* EN enhet (fakturor) och en summa kunden kan göra i huvudet: prissatta +
+                    bevakade = fakturor. "Bevakade" heter samma sak som sektionen längre ned
+                    ("Bevakat — inte prissatt"); det hette "Under uppsikt" här och tvingade kunden
+                    att själv lista ut att det var samma rader. */}
                 <div className="radar-stats">
-                  <div className="rgroup-label">Era avtal</div>
-                  <div className="rstat"><span>Leverantörer</span><span className="v">{suppliers.length}</span></div>
-                  <div className="rstat"><span>{watched.length > 0 ? 'Prissatta' : 'Analyser'}</span><span className="v">{autoAnalyses.length}</span></div>
+                  <div className="rgroup-label">Ert underlag</div>
+                  {counts.bevakade > 0 && <div className="rstat"><span>Fakturor</span><span className="v">{counts.fakturor}</span></div>}
+                  <div className="rstat"><span>{counts.bevakade > 0 ? 'Prissatta' : 'Fakturor'}</span><span className="v">{counts.prissatta}</span></div>
                   {/* Bevakat — inte prissatt: triagade fakturor syns i räknaren så intaget aldrig läser som bortfall */}
-                  {watched.length > 0 && <div className="rstat"><span>Under uppsikt</span><span className="v">{watched.length}</span></div>}
+                  {counts.bevakade > 0 && <div className="rstat"><span>Bevakade</span><span className="v">{counts.bevakade}</span></div>}
                 </div>
                 {/* Variant C — grupp 2: MARKNADEN (svepet). Marknadskällor folds in i svep-raden där den hör hemma. */}
                 <div className="radar-foot">
                   <div className="rgroup-label">Marknaden</div>
                   <div className="foot-line">
                     <span className="live" />
-                    {/* Radarn bär kedjan: obrutna nätter är det ofejkbara beviset på uthållighet.
+                    {/* Radarn bär LÄGET: när, hur många källor, och den bevisbara nollan.
+                        Kedjan (obrutna nätter) bor i kvittot — den är uthållighet, inte läge, och
+                        stod tidigare på båda ställena i identisk formulering.
                         Ojurerade detektioner nämns aldrig — bara den bevisbara nollan. */}
                     <span>{vakt?.sweptAt
                       ? <>Senaste svep {relSwept(vakt.sweptAt)} {vakt.sources ? <> · <b>{vakt.sources} marknadskällor</b> svepta</> : null}
-                          {vakt.streakNights >= 2 ? <> · <b>{vakt.streakNights} nätter i rad</b></> : null}
                           {vakt.allClear ? ' · allt lugnt' : ''}</>
                       : latestDate ? <>Senaste analys {latestDate} · bevakning aktiv</> : 'Bevakning aktiv'}</span>
                   </div>
@@ -811,15 +839,31 @@ export default function Portfolio() {
               <div className="eyebrow">Arvo bedömer</div>
               <h2>{verdictHead}</h2>
               <p className="work">{verdictWork}</p>
+              {/* ── KÄLLAN MÅSTE FÖLJA DOMEN (grundargranskning 2026-08-15) ────────────────────
+                  Raden var hårdkodad till "publika listpriser". När domen bärs av ett forensiskt
+                  fynd kommer rubriktalet inte därifrån — det kommer ur kundens EGEN fakturarad
+                  (regel 3: rätt siffra, men fel proveniens är fortfarande fel). Nu följer källan
+                  med grenen: marknadsjämförelsen bär listpriserna, fyndet bär fakturan. */}
               <Confidence>
-                <span className="pct">Verifierat</span> · grundat på {suppliers.length} analyserade leverantörer · publika listpriser
+                {acting && !hasSwitchAction
+                  ? <><span className="pct">Ur er egen faktura</span> · talet står på raden i fyndet ovan · inget marknadspris inblandat</>
+                  : <><span className="pct">Verifierat</span> · grundat på {suppliers.length} analyserade leverantörer · publika listpriser</>}
               </Confidence>
             </Verdict>
 
             {/* ── Instrument: Arvo Score + likräkning ─────────────────────── */}
             <Grid>
               <Index>
-                <div className="card-eyebrow"><span>Arvo Score</span><span className="src">mot verifierat listpris</span></div>
+                {/* Talet är kostnadsviktat över de PRISSATTA fakturorna. Står fyra av nio utanför
+                    ska det stå i etiketten — annars läser 90/100 som ett omdöme om hela boken. */}
+                <div className="card-eyebrow">
+                  <span>Arvo Score</span>
+                  <span className="src">
+                    {counts.bevakade > 0
+                      ? `${counts.prissatta} av ${counts.fakturor} fakturor prissatta`
+                      : 'mot verifierat listpris'}
+                  </span>
+                </div>
                 <div className="idx-main">
                   <span className="idx-num">{arvoScore}</span>
                   <span className="idx-denom">/100</span>
@@ -1046,7 +1090,7 @@ export default function Portfolio() {
 
             {/* ── Innehavet — leverantörer, Switch inbakad i raden ────────── */}
             <Holdings>
-              <div className="h-eyebrow">Innehavet · {suppliers.length} analyserade leverantörer</div>
+              <div className="h-eyebrow">Innehavet · {suppliers.length} prissatta leverantörer</div>
               {suppliers.map((g) => {
                 const a = g.latest, meta = getCategoryMeta(a.category);
                 const score = supplierDiagScore(a), color = scoreColor(score);
@@ -1369,10 +1413,22 @@ export default function Portfolio() {
             {watched.length > 0 && (
               <Watched>
                 <div className="w-eyebrow">Bevakat — inte prissatt · {watched.length}</div>
+                {/* ── TVÅ MENINGAR SOM MÅSTE BORT (grundargranskning 2026-08-15) ────────────────
+                    1. "Inget föll mellan stolarna" var ett LÖFTE OM FULLSTÄNDIGHET som ingen kod
+                       kunde belägga. Rummet kan räkna det som landat (prissatt, bevakat, på väg,
+                       misslyckat) — men en faktura som avslutades UTAN att bokföra sitt beslut syns
+                       i ingen av de fyra. Exakt den formen inträffade: nätavgifts-grinden svarade
+                       ok:true utan att skriva en rad, och kunden såg nio av tio med den här
+                       meningen ovanför. Ett löfte utan mekanik är förbjudet (regel 9), och när
+                       mekaniken saknas är det MENINGEN som ska bort, inte kravet.
+                    2. Manifestet räknade upp skälen ("utländsk valuta eller en kategori utan
+                       verifierat svenskt golv"). Det finns nu tre — balansfelet kom till — och
+                       introt motsade kortet det introducerade. Skälen bor i korten, ett per kort.
+                       Introt äger disciplinen; korten äger sina egna sanningar. */}
                 <p className="w-manifesto">
-                  Vi läste varje faktura ni skickade. Dessa <b>{watched.length}</b> prissätter vi medvetet inte —
-                  vi gissar aldrig på utländsk valuta eller en kategori utan verifierat svenskt golv. Vakten
-                  håller dem under uppsikt, med ett ärligt skäl och en väg framåt. Inget föll mellan stolarna.
+                  Dessa <b>{watched.length}</b> prissätter vi medvetet inte. Vart och ett bär sitt eget skäl
+                  nedan — vi sätter hellre ingen siffra än en vi inte kan stå för. Vakten håller dem under
+                  uppsikt och säger till när underlaget bär.
                 </p>
                 {watchedGroups.map((g) => (
                   <div className="w-row" key={g.kind}>
@@ -1388,6 +1444,58 @@ export default function Portfolio() {
                 ))}
               </Watched>
             )}
+
+            {/* ── Intaget finns kvar när rummet är fyllt (grundargranskning 2026-08-15) ──────
+                Samma adress, samma dropzone och samma handlers som tomma rummet — ingen kopia
+                av logiken, bara en andra plats den syns på (regel 1). */}
+            <MoreIntake>
+              <div className="mi-k">Fyll på rummet</div>
+              <h3 className="mi-h">Fler leverantörer, fler avtal — samma väg in.</h3>
+              <p className="mi-p">
+                Vidarebefordra nästa bunt leverantörsfakturor, eller släpp dem här. Ju fler avtal
+                vakten ser, desto mer av er kostnad står under uppsikt.
+              </p>
+              <div className="mi-grid">
+                <div>
+                  <p className="mi-or">Vidarebefordra — även 50 på en gång</p>
+                  <AddressChipDark type="button" onClick={copyInbox} className={copiedInbox ? 'copied' : ''} aria-label={`Kopiera ${INBOX_ADDR}`}>
+                    <span className="ac-addr">{INBOX_ADDR}</span>
+                    <span className="ac-copy">{copiedInbox ? <>Kopierat <Icon name="check" size={13} stroke={2.4} /></> : 'Kopiera'}</span>
+                  </AddressChipDark>
+                </div>
+                <div>
+                  <p className="mi-or">Eller ladda upp direkt</p>
+                  <Dropzone
+                    className={`${uploading ? 'busy' : ''}${dragOver ? ' over' : ''}`}
+                    onDrop={onDrop} onDragOver={onDragOver} onDragLeave={onDragLeave}
+                  >
+                    <span className="dz-ico"><Icon name="upload" size={20} stroke={1.7} /></span>
+                    <span className="dz-t">{uploading ? 'Analyserar…' : dragOver ? 'Släpp här' : 'Släpp eller välj PDF-fakturor'}</span>
+                    <span className="dz-s">Flera samtidigt går bra · vi sparar aldrig filen</span>
+                    <input type="file" accept="application/pdf" multiple disabled={uploading} onChange={onPick} />
+                  </Dropzone>
+                </div>
+              </div>
+              {uploads.length > 0 && (
+                <DropProgress>
+                  {uploads.map((u, i) => (
+                    <div className="dp-row" key={`${u.name}-${i}`}>
+                      <span className="dp-name">{u.name}</span>
+                      <span
+                        className={`dp-stat ${u.status === 'done' ? 'done' : (u.status === 'work' || u.status === 'gate' || u.status === 'review') ? 'work' : 'fail'}`}
+                        title={u.status === 'fail' ? (u.hint || '') : ''}
+                      >
+                        {u.status === 'done' ? 'Klar'
+                          : u.status === 'review' ? 'Manuell granskning'
+                          : u.status === 'fail' ? (u.label || 'Misslyckades')
+                          : u.status === 'gate' ? 'Gräns nådd' : 'Analyserar…'}
+                      </span>
+                    </div>
+                  ))}
+                </DropProgress>
+              )}
+              {uploadNote && <DropProgress><p className="dp-note">{uploadNote}</p></DropProgress>}
+            </MoreIntake>
 
             {/* ── Arvo Intelligence — tyst avslutande pitch ───────────────── */}
             <IntelQuiet>

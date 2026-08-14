@@ -787,5 +787,24 @@ export const FortnoxTease = styled.div`
     border-radius:${theme.size.radius.pill}; padding:5px 11px; white-space:nowrap; }
 `;
 
+// ── INTAGET I DET FYLLDA RUMMET (grundargranskning 2026-08-15) ──────────────────────────────
+// Adressen, dropzonen och instruktionen fanns BARA i det tomma rummet. Kunden som just läst sin
+// dom och ville skicka faktura elva hade ingen väg — rummets enda tillväxtmotor var osynlig i
+// exakt det ögonblick kunden var mest övertygad. Medvetet dämpad: samma bgRaised och hårlinje som
+// övriga kort, ingen invertering, ingen glöd. Det ska vara SJÄLVKLART, inte skrika (den ljusa
+// varianten av bryggan förkastades av precis det skälet).
+export const MoreIntake = styled.section`
+  margin-top:26px; padding:22px 24px; border:1px solid ${theme.dossier.hairlineOnDark};
+  border-radius:${theme.size.radius.lg}; background:${theme.dossier.bgRaised}; ${appear(0.16)}
+  .mi-k { font-family:${MONO}; font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+    color:${theme.dossier.tealBright}; }
+  .mi-h { margin:10px 0 4px; font-family:${theme.font.display}; font-weight:600;
+    font-size:clamp(18px,2.6vw,22px); line-height:1.25; color:${theme.dossier.inkOnDark}; }
+  .mi-p { margin:0 0 16px; font-size:13.5px; line-height:1.6; color:${theme.dossier.mutedOnDark}; }
+  .mi-grid { display:grid; gap:14px; grid-template-columns:1fr 1fr; align-items:start; }
+  @media (max-width:760px){ .mi-grid { grid-template-columns:1fr; } }
+  .mi-or { font-size:12px; color:${theme.dossier.faintOnDark}; margin:0 0 8px; }
+`;
+
 export const shimmerCss = shimmer;
 export const blipCss = blip;

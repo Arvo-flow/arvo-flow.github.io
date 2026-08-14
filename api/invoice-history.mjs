@@ -20,8 +20,9 @@ import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 import { catLabel } from '../lib/format.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { getVaktHealth } from '../lib/vakt.js';
+import { refineFinding } from '../lib/forensics.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
-import { getBenchmark } from '../lib/benchmark.js';
+import { getPublicListBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
 
@@ -133,6 +134,10 @@ export default async function handler(req, res) {
     // varje gång rummet öppnas. Zero Trust: bara rader med ett verkligt bindningsslut bär klocka.
     .map((a) => ({
       ...a,
+      // Fyndet frystes vid analystillfället. Skärps en mekanism i dag ska den gälla även rader
+      // som redan ligger inne — sanningen om kundens rad ändrades ju inte. EN producent
+      // (lib/forensics.js DETECTORS), aldrig en omräkning i klienten.
+      lead_finding_json: refineFinding(a.lead_finding_json),
       contractClock: contractClockFinding({
         servicePeriodEnd: a.contract_end_date ?? null,
         supplier:         a.normalized_supplier || a.supplier || null,
@@ -370,11 +375,18 @@ export async function buildBranchAnchors(analyses) {
     seen.add(a.category);
     if (seen.size > 8) break;
     try {
-      const b = await getBenchmark({ category: a.category, industry: a.industry, employees: a.employees });
-      // ENDAST 'real-public' (BRANCHINDEX verifierat publikt listpris) — det är den enda källan
-      // vars median är PER ENHET och matchar unitLabel. 'real' (invoice_datapoints) och
-      // 'live_analyses' percentilerar TOTAL årskostnad → fel enhet för per-enhet-frasen, exkluderas.
-      if (b && b.median > 0 && !b.isTotal && b.source === 'real-public') {
+      // ── ANKARET FRÅGADE FEL MASKIN (grundargranskning 2026-08-15) ──────────────────────────
+      // Här stod `getBenchmark(...)` och därefter ett filter på source === 'real-public'.
+      // getBenchmark är prisboken FÖR EN BESPARINGSBERÄKNING: den föredrar — helt riktigt —
+      // livedata när den finns (invoice_datapoints ≥10, invoice_analyses ≥5). Men livedatan är
+      // TOTALSUMMOR, och ett ankare vars etikett lovar "per användare/år" får aldrig bära en
+      // totalsumma. Filtret gjorde alltså rätt sak av fel svar: det KASTADE ankaret i stället för
+      // att hämta rätt källa. Följden var bakvänd — ju mer nätverksdata vi samlade, desto oftare
+      // gick "den kollektiva sanningen" tyst, det lager bibeln säger aldrig kan vara tomt.
+      // getPublicListBenchmark läser BRANCHINDEX direkt och returnerar ENDAST verifierat publikt
+      // listpris per enhet. Samma funktion som dörrens avslöjande redan använde (regel 1).
+      const b = getPublicListBenchmark({ category: a.category });
+      if (b && b.median > 0) {
         // seats = antal enheter ur kundens egen faktura. median (per enhet) × seats = bransch-TOTAL,
         // jämförbar med kundens annual_cost (bägge totaler, samma enhet). null → ingen total-jämförelse.
         const seats = (typeof a.seat_count === 'number' && a.seat_count > 0) ? a.seat_count : null;

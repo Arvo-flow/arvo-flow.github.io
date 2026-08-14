@@ -7,8 +7,22 @@
 //      vars median är PER ENHET och matchar unitLabel. Aldrig estimat/mock/total.
 //   3. unitLabel är per-enhet ("per användare/år", "per abonnemang/år") — aldrig en total.
 //
-// Körs offline mot den RIKTIGA BRANCHINDEX (ingen DB → getBenchmark faller till mock-tiern,
-// som bär kategorins verkliga källtagg). Guldmyntfoten är den deployade pipelinen; detta låser logiken.
+// ⚠️ VAD DEN HÄR SVITEN INTE KUNDE SE (grundargranskning 2026-08-15) — och varför det är läxan:
+// Ankaret byggdes tidigare via `getBenchmark()`, prisbokens läsväg för en BESPARINGSBERÄKNING.
+// Den föredrar — helt riktigt — livedata när den finns (invoice_datapoints ≥10, invoice_analyses
+// ≥5), och livedatan är TOTALSUMMOR. Filtret på source === 'real-public' gjorde då rätt sak av
+// fel svar: det kastade ankaret i stället för att hämta rätt källa. Följden var bakvänd — ju mer
+// nätverksdata vi samlade, desto oftare gick "den kollektiva sanningen" tyst, det lager bibeln
+// säger aldrig kan vara tomt. I grundarens skarpa rum var kortet borta.
+//
+// Sviten var grön hela tiden, och kunde inte ha varit annat: den kör UTAN DB, och utan DB fanns
+// ingen livedata som kunde vinna över real-public. Testerna bevisade att mekanismen svarar rätt
+// i ett tillstånd produktionen inte är i — exakt villkorsvaktens och LFL-harnessets sjukdom.
+// Åtgärden var att göra frågan oberoende av tillståndet: `getPublicListBenchmark()` läser
+// BRANCHINDEX direkt och kan bara svara med verifierat publikt listpris per enhet. Nu är offline
+// och produktion samma väg — och BA-08 nedan låser att den gamla vägen inte kan smyga tillbaka.
+//
+// Körs offline mot den RIKTIGA BRANCHINDEX. Guldmyntfoten är den deployade pipelinen; detta låser logiken.
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
@@ -65,5 +79,22 @@ describe('Branschankaret · enhet + källa', () => {
         `${cat}: median ${out[cat].median} ser ut som en total, inte ett per-enhet-pris`);
       assert.match(out[cat].unitLabel, /per (användare|abonnemang|anslutning)\/år/);
     }
+  });
+
+  test('BA-08 · ankaret får ALDRIG gå via prisbokens prioritetskedja', async () => {
+    // Det var den vägen som tystade kortet i skarpt läge: getBenchmark föredrar livedata
+    // (totalsummor), ankaret krävde per-enhet — och kastade i stället för att fråga rätt källa.
+    // Vakten läser källtexten, för buggen syns bara i VILKEN funktion som anropas: båda
+    // returnerar ju ett giltigt ankare i en DB-lös testmiljö.
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../api/invoice-history.mjs'), 'utf8');
+    const fn = src.slice(src.indexOf('export async function buildBranchAnchors'));
+    const kropp = fn.slice(0, fn.indexOf('\n}\n'));
+    assert.doesNotMatch(kropp, /await getBenchmark\(|[^c]getBenchmark\(\{/,
+      'ankaret frågar prisbokens besparingsväg igen — då tystnar det så fort livedata finns');
+    assert.match(kropp, /getPublicListBenchmark\(/,
+      'ankaret ska läsa verifierat publikt listpris direkt (samma källa dörrens avslöjande använder)');
   });
 });

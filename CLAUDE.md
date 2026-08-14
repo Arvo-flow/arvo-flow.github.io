@@ -368,6 +368,33 @@ signera", aldrig som ett verkställt löfte.)
    förbjudna påståenden i kundytor — listan VÄXER med varje incident. Legitim träff
    motiveras inline med `// claims-ok: <skäl>`. Exempel-innehåll märks alltid "Exempel".
 
+   > **✅ HELHETSKRAVET (2026-08-15, ur rumsgranskningen): ett påstående som är sant om SIN DEL
+   > kan vara osant om HELHETEN — och kunden läser helheten.** Grundaren lät granska fyra
+   > skärmbilder av sitt eget rum, komponent för komponent. Ingen enskild siffra var falsk. Ändå
+   > gick rummet inte ihop på fyra ställen, alla med samma form: **radarn** visade "Leverantörer 5 ·
+   > Prissatta 5 · Under uppsikt 4" — tre frågor i två enheter, aritmetiskt omöjligt läst uppifrån;
+   > **disciplinmontern** lovade "Inget föll mellan stolarna" ovanför nio fakturor av tio, en
+   > fullständighet ingen kod kunde belägga (en faktura vars beslut aldrig bokfördes syns varken som
+   > prissatt, bevakad, pågående eller misslyckad — därför ska LÖFTET bort, inte kravet); samma
+   > stycke **räknade upp de tysta skälen** och motsade kortet direkt under så snart ett tredje skäl
+   > tillkom; och **domens konfidensrad** sa "publika listpriser" även när rubriktalet kom ur kundens
+   > egen fakturarad — rätt siffra, fel proveniens, vilket regel 3 räknar som fel.
+   > Maskinvakt: `tests/rumsredovisning.mjs` (räknarnas invariant prövas genom att anropa
+   > `roomCounts`; löfte, skäluppräkning, proveniens och intagsvägen är källtextvakter).
+   > Sabotage-bevisad i fyra riktningar. **Regeln: varje tal i en yta ska ha en enhet, och tal som
+   > står bredvid varandra ska gå att addera.**
+   >
+   > **Följdfyndet väger tyngre än de fyra:** "den kollektiva sanningen" — lagret bibeln säger
+   > ALDRIG kan vara tomt — var borta ur rummet. Ankaret läste prisboken via `getBenchmark()`, som
+   > helt riktigt föredrar livedata, och livedatan är TOTALSUMMOR. Filtret på `real-public` gjorde
+   > då rätt sak av fel svar: det kastade ankaret i stället för att hämta rätt källa. Effekten var
+   > bakvänd — **ju mer nätverksdata vi samlade, desto oftare tystnade moaten.** `tests/branch-anchors.mjs`
+   > var grön hela tiden och kunde inte ha varit annat: den kör utan DB, och utan DB finns ingen
+   > livedata som kan vinna. Tredje gången samma sjukdom (villkorsvakten, LFL-harnesset, nu ankaret):
+   > **en svit som bara körs i ett tillstånd produktionen inte är i bevisar att mekanismen svarar,
+   > aldrig att den svarar i verkligheten.** Åtgärd: `getPublicListBenchmark()` — samma funktion
+   > dörrens avslöjande redan använde (regel 1) — gör frågan tillståndsoberoende. BA-08 låser vägen.
+
 > **✅ GRUNDARBESLUT 2026-07-16 — IDENTITETSINVARIANTEN: inga påhittade företag, någonsin.**
 > Bolagsidentitet (namn, orgnr, omsättning, bokslut, koncern, grundandeår) får ENDAST komma från
 > **Bolagsverket-data via EN kanoniserad läsväg** (idag allabolag som transport — sanningskällan är

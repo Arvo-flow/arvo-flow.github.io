@@ -78,7 +78,14 @@ describe('Forensik · avbetald hårdvara (Månad X/Y, X > Y → ni äger den red
     assert.equal(f[0].severity, 'high');                 // skarpare än vanlig avbetalning (medium)
     assert.equal(f[0].annualImpact, 6720);               // 560 × 12 — ren förlust för redan ägd hårdvara
     assert.match(f[0].text, /månad 37 av 36/);
-    assert.match(f[0].text, /redan slutbetald/);
+    // Copyn skärptes 2026-08-15: "redan slutbetald" → "slutbetald och utrustningen är redan er",
+    // plus det retroaktiva kravet. Kravet är det enda i fyndet kunden kan hämta hem I DAG, så det
+    // låses här och inte bara i rumsredovisningen.
+    assert.match(f[0].text, /slutbetald/);
+    assert.match(f[0].text, /redan er/);
+    assert.equal(f[0].monthsOverpaid, 1);
+    assert.equal(f[0].overpaidToDate, 560);              // 1 månad × 560 kr ur kundens egen rad
+    assert.match(f[0].text, /560 kr/);
     assert.match(f[0].title, /redan äger/);
   });
   test('"Månad 12/36" (inom plan) → degraderar korrekt till hardware_financing (guard faller)', () => {

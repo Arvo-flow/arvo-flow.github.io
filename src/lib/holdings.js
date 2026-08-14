@@ -67,6 +67,22 @@ export function computeActing({ switchablesCount, roomFinding }) {
   return { hasSwitchAction, hasFindingAction, acting: hasSwitchAction || hasFindingAction };
 }
 
+// ── RUMMETS RÄKNARE (grundargranskning 2026-08-15) ──────────────────────────────────────────
+// Radarn visade "Leverantörer 5 · Prissatta 5 · Under uppsikt 4" och gick inte ihop för någon
+// som läste den uppifrån: fem leverantörer, varav fem prissatta, plus fyra till. Två fel i ett:
+//   1. "Leverantörer" räknade bara de PRISSATTA (groupBySupplier över auto-analyser) — de fyra
+//      bevakade fanns inte i talet, fast de stod på raden under.
+//   2. Stacken blandade enheter: "Leverantörer" räknade leverantörer, "Prissatta" räknade
+//      ANALYSER. Två Telia-fakturor gav 1 / 2, vilket ser ut som ett fel även när det stämmer.
+//
+// Enheten är nu FAKTUROR rakt igenom — det kunden själv skickade in och tänker i — och summan
+// går alltid ihop: prissatta + bevakade = fakturor. Ren funktion så invarianten kan testlåsas.
+export function roomCounts({ autoAnalyses = [], watched = [] } = {}) {
+  const prissatta = autoAnalyses.length;
+  const bevakade = watched.length;
+  return { fakturor: prissatta + bevakade, prissatta, bevakade };
+}
+
 export function groupBySupplier(analyses) {
   const groups = new Map();
   for (const a of analyses ?? []) {
