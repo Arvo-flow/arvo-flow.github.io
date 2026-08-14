@@ -24,6 +24,10 @@
     8  done          1  INV_9920_Ellevio_AB.pdf                   
     9  done          1  INV_9921_Tre_Foretag.pdf                  
 
+  RUMSLÄNKAR (magic_tokens) senaste dygnet: 1
+     11:44:56  note=inbound-email-reply  använd=nej
+     ✓ länk(ar) skapade — felet ligger i utskicket eller leveransen, inte i länkbygget
+
   analyser som landade:
      Salesforce.com             uncategorized      — kr  väg=review_queue
      Fortnox AB                 loneadmin          — kr  väg=review_queue
@@ -52,6 +56,12 @@
     7  done          1  INV_9922_Google_Ireland_Ltd.pdf           
     8  done          1  INV_9920_Ellevio_AB.pdf                   
     9  done          1  INV_9921_Tre_Foretag.pdf                  
+
+  RUMSLÄNKAR (magic_tokens) senaste dygnet: 3
+     11:26:35  note=inbound-email-reply  använd=ja
+     21:52:05  note=price-alert:2026-08-13T21:45:21.431Z:telenor  använd=nej
+     21:52:03  note=price-alert:2026-08-13T21:45:21.431Z:telia  använd=nej
+     ✓ länk(ar) skapade — felet ligger i utskicket eller leveransen, inte i länkbygget
 
   analyser som landade:
      IT-Partner Sverige AB      saas-productivity  184680 kr  väg=auto
