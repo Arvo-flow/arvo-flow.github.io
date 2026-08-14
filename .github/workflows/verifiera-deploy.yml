@@ -1,5 +1,13 @@
 name: Verifiera deploy
 on: { workflow_dispatch: {} }
+
+# Att säga "ladda om" innan Vercel hunnit publicera är att göra grundaren till QA (regel 8).
+# Workflowen frågar den SKARPA sajten — Actions har nät, sandlådan har det inte.
+#
+# Sedan 2026-08-15 räcker det inte att rutten lever: vi läser den utlagda JS-bundlen och letar
+# efter de meningar ändringen faktiskt införde, plus de meningar den skulle TA BORT. En deploy
+# som "gick igenom" utan att bära den nya copyn ser annars exakt ut som en lyckad deploy.
+# OBS: bundlen escapar icke-ASCII (\xe4 osv) — markörerna nedan är därför medvetet ASCII-rena.
 jobs:
   kolla:
     runs-on: ubuntu-latest
@@ -12,5 +20,28 @@ jobs:
           echo "── /api/invoice-history utan nycklar (ska ge 400, bevisar att rutten lever) ──"
           curl -s -o /tmp/r.json -w "status=%{http_code}\n" "https://arvoflow.se/api/invoice-history"
           cat /tmp/r.json; echo
-          echo "── landningssidans bundle ──"
-          curl -s https://arvoflow.se/ | grep -o 'main\.[a-z0-9]*\.js' | head -1
+
+          echo "── hämtar utlagd bundle ──"
+          BUNDLE=$(curl -s https://arvoflow.se/ | grep -o '/static/js/main\.[a-z0-9]*\.js' | head -1)
+          echo "bundle: $BUNDLE"
+          curl -s "https://arvoflow.se${BUNDLE}" -o /tmp/main.js
+          wc -c /tmp/main.js
+
+          FEL=0
+          echo "── SKA FINNAS (rumsgranskningen 2026-08-15) ──"
+          for s in "Ur er egen faktura" "fakturor prissatta" "Fler leverant" "vi kunde priss" "eget sk"; do
+            if grep -qF "$s" /tmp/main.js; then echo "  ✓ $s"; else echo "  ⛔ SAKNAS: $s"; FEL=1; fi
+          done
+
+          echo "── SKA VARA BORTA ──"
+          for s in "mellan stolarna"; do
+            if grep -qF "$s" /tmp/main.js; then echo "  ⛔ FINNS KVAR: $s"; FEL=1; else echo "  ✓ borta: $s"; fi
+          done
+
+          if [ "$FEL" = "1" ]; then
+            echo ""
+            echo "Deployen bär INTE den granskade versionen — be inte grundaren ladda om."
+            exit 1
+          fi
+          echo ""
+          echo "✓ Den utlagda sajten bär rumsgranskningens ändringar."
