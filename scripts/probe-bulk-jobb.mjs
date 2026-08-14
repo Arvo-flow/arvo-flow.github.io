@@ -65,6 +65,23 @@ for (const [sender, rader] of perSender) {
   for (const r of rader) {
     console.log(`  ${String(r.attachment_index).padStart(3)}  ${String(r.status).padEnd(9)} ${String(r.attempts).padStart(5)}  ${String(r.filename).slice(0, 40).padEnd(40)}  ${r.error ? String(r.error).slice(0, 90) : ''}`);
   }
+  // ── DELAR FELDOMÄNEN I TVÅ (2026-08-14) ──────────────────────────────────────────────────
+  // Grundaren fick inget mejl med rumslänk. mintPortalLink SKRIVER en rad i magic_tokens innan
+  // Resend anropas (note='inbound-email-reply'). Finns raden är länken skapad och felet ligger i
+  // UTSKICKET eller LEVERANSEN; saknas den nådde koden aldrig dit. Utan Vercel-loggen är det här
+  // den enda avläsning som skiljer de två — och skillnaden avgör vilken fix som är rätt.
+  const tokens = await db`
+    SELECT note, created_at, expires_at, used_at
+    FROM magic_tokens WHERE email = ${sender} AND created_at > NOW() - interval '24 hours'
+    ORDER BY created_at DESC
+  `.catch((e) => { console.log('  magic_tokens-fel:', e.message); return []; });
+  console.log(`\n  RUMSLÄNKAR (magic_tokens) senaste dygnet: ${tokens.length}`);
+  for (const t of tokens) {
+    console.log(`     ${new Date(t.created_at).toISOString().slice(11, 19)}  note=${t.note ?? '—'}  använd=${t.used_at ? 'ja' : 'nej'}`);
+  }
+  if (!tokens.length) console.log('     ⛔ ingen länk skapad — koden nådde aldrig mintPortalLink, eller den föll');
+  else console.log('     ✓ länk(ar) skapade — felet ligger i utskicket eller leveransen, inte i länkbygget');
+
   console.log(`\n  analyser som landade:`);
   for (const a of analyser) {
     console.log(`     ${(a.normalized_supplier || a.supplier || '?').slice(0, 26).padEnd(26)} ${(a.category || '—').padEnd(18)} ${a.annual_cost ?? '—'} kr  väg=${a.route}`);
