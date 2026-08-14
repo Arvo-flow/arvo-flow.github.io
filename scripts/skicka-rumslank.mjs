@@ -19,8 +19,13 @@ import { randomBytes } from 'node:crypto';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 
-const till = process.argv[2];
-if (!till || !till.includes('@')) { console.error('Ange mottagaradress som argument.'); process.exit(1); }
+// Två adresser, medvetet åtskilda: RUMMET tillhör en identitet (den som fakturorna är nycklade
+// på), men BREVET måste gå dit posten faktiskt kommer fram. När Hotmail tystar oss ska kunden
+// inte bli utelåst från sitt eget rum — länken är giltig oavsett vilken inkorg den anländer i.
+const rumFor = process.argv[2];
+const till = process.argv[3] || rumFor;
+if (!rumFor || !rumFor.includes('@')) { console.error('Ange rumsidentitet som argument 1.'); process.exit(1); }
+if (!till.includes('@')) { console.error('Ogiltig mottagaradress (argument 2).'); process.exit(1); }
 
 const BASE = process.env.ARVO_BASE_URL ?? 'https://arvoflow.se';
 // ?? faller bara tillbaka på null/undefined. GitHub Actions sätter en SAKNAD hemlighet till en
@@ -37,10 +42,10 @@ if (!db) { console.error('Ingen DATABASE_URL.'); process.exit(1); }
 const token = randomBytes(32).toString('hex');
 await db`
   INSERT INTO magic_tokens (token, email, note, expires_at)
-  VALUES (${token}, ${till}, ${'manuell-rumslank'}, ${new Date(Date.now() + 24 * 3600 * 1000)})
+  VALUES (${token}, ${rumFor}, ${'manuell-rumslank'}, ${new Date(Date.now() + 24 * 3600 * 1000)})
 `;
 const lank = `${BASE}/portfolio?magic=${token}`;
-console.log(`✓ rumslänk skapad för ${mask(till)} (token loggas aldrig)`);
+console.log(`✓ rumslänk skapad för RUMMET ${mask(rumFor)} → levereras till ${mask(till)} (token loggas aldrig)`);
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

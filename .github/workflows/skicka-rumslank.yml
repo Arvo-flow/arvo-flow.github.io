@@ -4,9 +4,12 @@ name: Skicka rumslänk
 on:
   workflow_dispatch:
     inputs:
-      till:
-        description: 'Mottagaradress'
+      rum_for:
+        description: 'Rumsidentitet (adressen fakturorna är nycklade på)'
         required: true
+      till:
+        description: 'Leverera brevet till (tom = samma som rumsidentiteten)'
+        required: false
 jobs:
   skicka:
     runs-on: ubuntu-latest
@@ -18,7 +21,7 @@ jobs:
           node-version: '20'
       - run: npm ci
       - name: Skicka
-        run: node scripts/skicka-rumslank.mjs "${{ inputs.till }}"
+        run: node scripts/skicka-rumslank.mjs "${{ inputs.rum_for }}" "${{ inputs.till }}"
         env:
           DATABASE_URL:    ${{ secrets.DATABASE_URL }}
           RESEND_API_KEY:  ${{ secrets.RESEND_API_KEY }}
