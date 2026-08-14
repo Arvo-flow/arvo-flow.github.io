@@ -17,6 +17,7 @@
 import { deklarera } from '../lib/sondkontrakt.js';
 import { getDb } from '../lib/db.js';
 import { kravKolumner, aldrigTyst } from '../lib/sondvakt.js';
+import { markPending } from '../lib/ingest-queue.js';
 
 deklarera({
   namn: 'koa-om-fil',
@@ -58,6 +59,13 @@ const { rows: [ny] = [] } = { rows: await aldrigTyst(db`
   WHERE id = ${jobb.id} RETURNING id, status
 `, 'omköning av jobbet') };
 
-console.log(`\n✓ Jobb ${ny.id} satt till '${ny.status}'. Drainen betar av det inom ett par minuter.`);
+// ── VÄCK DRAINEN (mätt fel 2026-08-14) ────────────────────────────────────────────────────────
+// Första versionen satte status='pending' i SQL och stannade där. Jobbet låg kvar OMKÖAT MEN
+// ORÖRT i en timme: drainen frågar inte Postgres varje tick, den lyssnar på en köflagga i KV och
+// faller tillbaka på en säkerhetsslot först var femtonde minut. retryFailedBySender anropar
+// markPending() av exakt det skälet ("omköade jobb är också arbete") — jag läste den raden och
+// tog ändå inte med den. Ett jobb som ingen väcker är inte omköat, det är parkerat.
+await markPending();
+console.log(`\n✓ Jobb ${ny.id} satt till '${ny.status}' OCH köflaggan satt — drainen väcks nu.`);
 console.log(`  Rotorsaken (nätavgifts-grinden utan storeTriaged) är fixad och testlåst — den här`);
 console.log(`  körningen ska därför lämna en rad, inte tystnad. Kontrollera med probe-bulk-jobb.`);
