@@ -28,7 +28,7 @@ const db = getDb();
 if (!db) { console.log('Ingen DATABASE_URL — exit 0'); process.exit(0); }
 
 const jobb = await db`
-  SELECT sender, filename, status, attempts, attachment_index, created_at, updated_at
+  SELECT sender, filename, status, attempts, attachment_index, error, created_at, claimed_at, done_at
   FROM ingest_jobs
   WHERE created_at > NOW() - interval '24 hours'
   ORDER BY sender, attachment_index ASC
@@ -50,7 +50,7 @@ for (const [sender, rader] of perSender) {
 
   const status = rader.reduce((m, r) => ((m[r.status] = (m[r.status] || 0) + 1), m), {});
   const tider = rader
-    .map((r) => (new Date(r.updated_at) - new Date(r.created_at)) / 1000)
+    .map((r) => (r.done_at ? (new Date(r.done_at) - new Date(r.created_at)) / 1000 : NaN))
     .filter((s) => Number.isFinite(s) && s >= 0).sort((a, b) => a - b);
 
   console.log(`\n═══════ ${mask(sender)} ═══════`);
@@ -61,9 +61,9 @@ for (const [sender, rader] of perSender) {
   if (tider.length) {
     console.log(`  kötid: median ${tider[Math.floor(tider.length / 2)].toFixed(1)} s · längst ${tider.at(-1).toFixed(1)} s`);
   }
-  console.log(`\n  idx  status    försök  filnamn`);
+  console.log(`\n  idx  status    försök  filnamn                                   fel`);
   for (const r of rader) {
-    console.log(`  ${String(r.attachment_index).padStart(3)}  ${String(r.status).padEnd(9)} ${String(r.attempts).padStart(5)}  ${r.filename}`);
+    console.log(`  ${String(r.attachment_index).padStart(3)}  ${String(r.status).padEnd(9)} ${String(r.attempts).padStart(5)}  ${String(r.filename).slice(0, 40).padEnd(40)}  ${r.error ? String(r.error).slice(0, 90) : ''}`);
   }
   console.log(`\n  analyser som landade:`);
   for (const a of analyser) {
