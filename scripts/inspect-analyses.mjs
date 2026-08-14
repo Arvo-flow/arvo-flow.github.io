@@ -18,6 +18,18 @@ const testRows = await db`
 `.catch((e) => { console.log('testyta-fel:', e.message); return []; });
 
 const kr0 = (n) => (n == null ? '—' : Number(n).toLocaleString('sv-SE'));
+
+// ── ADRESSER MASKERAS I UTSKRIFTEN (2026-08-13) ──────────────────────────────────────────────
+// Resultatet av den här granskningen COMMITTAS till repot (ops/inspect-result.txt) och Actions-
+// loggen sparas. En kunds — eller grundarens egen — fullständiga e-postadress hörde aldrig hemma
+// i någondera. Vi behöver kunna SKILJA avsändare åt för att felsöka, inte kunna läsa dem: två
+// tecken plus domän räcker för det, och räcker inte för att peka ut en person i en logg.
+const mask = (e) => {
+  if (!e) return '(ingen)';
+  const [lokal, dom] = String(e).split('@');
+  if (!dom) return '***';
+  return `${lokal.slice(0, 2)}***@${dom}`;
+};
 console.log(`\n═══════ TESTYTAN (${TEST_EMAIL}): ${testRows.length} analyser ═══════`);
 console.log('   tid    leverantör                 kategori          årskostnad   →förslag    nettospar   flaggor');
 let sumCost = 0, sumSave = 0, nSwitch = 0;
@@ -93,7 +105,7 @@ const recent = await db`
 console.log(`\n═══════ ANALYSER SENASTE 60 MIN (${recent.length}) ═══════`);
 for (const r of recent) {
   const when = new Date(r.created_at).toISOString().slice(11, 16);
-  console.log(`   ${when}  ${(r.normalized_supplier||'?').slice(0,22).padEnd(22)} ${(r.category||'?').slice(0,16).padEnd(16)} ${String(r.annual_cost).padStart(8)} kr  email=${r.email||'(ingen)'}  fp=${r.fp}`);
+  console.log(`   ${when}  ${(r.normalized_supplier||'?').slice(0,22).padEnd(22)} ${(r.category||'?').slice(0,16).padEnd(16)} ${String(r.annual_cost).padStart(8)} kr  email=${mask(r.email)}  fp=${r.fp}`);
 }
 console.log('═══════════════════════════════════════════════════\n');
 
