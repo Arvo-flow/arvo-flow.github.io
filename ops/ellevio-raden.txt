@@ -9,7 +9,7 @@
 ═══ RADER FÖR NÄTLEVERANTÖREN (3 dygn): 0 ═══
 
   ⛔ (a) INGEN RAD SKREVS. Grinden nåddes inte, eller storeTriaged föll tyst
-     (den anropas med .catch(() => {})). Nästa avläsning är Vercel-loggen för
+     (anropet har en sväljande catch). Nästa avläsning är Vercel-loggen för
      det interna /api/test-invoice-anropet — inte ännu en gissning här.
 
 ═══ ANDRA TRIAGERADE RADER (jämförelsepunkt): 7 ═══
