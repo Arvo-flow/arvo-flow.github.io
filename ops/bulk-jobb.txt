@@ -7,10 +7,10 @@
 ╚═══════════════════════════════════════════════════════════════════════════════
 
 ═══════ me***@hotmail.com ═══════
-  köade jobb: 10   status: {"done":9,"pending":1}
+  köade jobb: 10   status: {"done":10}
   analyser i invoice_analyses: 9
   GLAPP: 1 ⛔ jobb utan analys — tyst förlust
-  kötid: median 22.6 s · längst 41.5 s
+  kötid: median 33.9 s · längst 39666.0 s
 
   idx  status    försök  filnamn                                   fel
     0  done          1  INV_9924_Tele2_Foretag.pdf                
@@ -21,10 +21,11 @@
     5  done          1  INV_9917_Microsoft_Ireland.pdf            
     6  done          1  INV_9919_Fortnox_AB.pdf                   
     7  done          1  INV_9922_Google_Ireland_Ltd.pdf           
-    8  pending       0  INV_9920_Ellevio_AB.pdf                   
+    8  done          1  INV_9920_Ellevio_AB.pdf                   
     9  done          1  INV_9921_Tre_Foretag.pdf                  
 
-  RUMSLÄNKAR (magic_tokens) senaste dygnet: 7
+  RUMSLÄNKAR (magic_tokens) senaste dygnet: 8
+     22:40:08  note=manuell-rumslank  använd=ja
      22:31:53  note=manuell-rumslank  använd=ja
      17:03:18  note=manuell-rumslank  använd=ja
      14:25:17  note=manuell-rumslank  använd=ja
