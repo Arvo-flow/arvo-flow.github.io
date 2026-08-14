@@ -1,31 +1,75 @@
 
-═══════ TESTYTAN (testyta@arvoflow.se): 3 analyser ═══════
+═══════ TESTYTAN (testyta@arvoflow.se): 6 analyser ═══════
    tid    leverantör                 kategori          årskostnad   →förslag    nettospar   flaggor
-   11:50  Telavox AB                molnvaxel           101 100          —          —  
-   11:50  Fortnox AB                faktura-tjanst        2 388          —          —  
-   11:50  HubSpot, Inc.             uncategorized             —          —          —  väg=review_queue
+   13:46  CloudReseller Norden AB   saas-productivit    184 260    142 232     33 622  
+   00:34  Nordic Managed IT Service it-support          180 000          —          —  
+   00:34  GleSYS AB                 serverhosting        46 800          —          —  
+   00:34  Fortnox AB                saas-finance         21 600          —          —  
+   00:34  Bahnhof AB                bredband             58 800          —          —  
+   00:34  Telia Sverige AB          molnvaxel           114 000          —          —  
    ─────────────────────────────────────────────────────────────────────────────
-   AGGREGAT: 3 fakturor · 0 med byte · total årskostnad 103 488 kr · total nettobesparing 0 kr
-   Kategorier: molnvaxel:1 · faktura-tjanst:1 · uncategorized:1
+   AGGREGAT: 6 fakturor · 1 med byte · total årskostnad 605 460 kr · total nettobesparing 33 622 kr
+   Kategorier: saas-productivity:1 · it-support:1 · serverhosting:1 · saas-finance:1 · bredband:1 · molnvaxel:1
 ═══════════════════════════════════════════════════════
 
 
 ═══════ INGEST-KÖ (ingest_jobs) ═══════
-   done        7   senast 2026-06-28 11:50
+   done        23   senast 2026-08-14 11:44
 ═══════════════════════════════════════
 
 
-═══════ ANALYSER SENASTE 60 MIN (0) ═══════
+═══════ ANALYSER SENASTE 60 MIN (18) ═══════
+   11:45  Telia Företag          mobil              119520 kr  email=me***@hotmail.com  fp=ab3c347bb93a84caa98dd5
+   11:45  Tre Foretag            mobil               14940 kr  email=me***@hotmail.com  fp=ab3c347bb93a84caa98dd5
+   11:45  Slack Technologies     uncategorized        null kr  email=me***@hotmail.com  fp=ab3c347bb93a84caa98dd5
+   11:45  Google Ireland Ltd     saas-productivit    72900 kr  email=me***@hotmail.com  fp=ab3c347bb93a84caa98dd5
+   11:45  Microsoft Ireland      saas-productivit    45600 kr  email=me***@hotmail.com  fp=ab3c347bb93a84caa98dd5
+   11:45  Tele2 Företag          mobil               35880 kr  email=me***@hotmail.com  fp=ab3c347bb93a84caa98dd5
+   11:45  Binero Group AB        serverhosting        null kr  email=me***@hotmail.com  fp=ab3c347bb93a84caa98dd5
+   11:45  Fortnox AB             loneadmin            null kr  email=me***@hotmail.com  fp=ab3c347bb93a84caa98dd5
+   11:45  Salesforce.com         uncategorized        null kr  email=me***@hotmail.com  fp=ab3c347bb93a84caa98dd5
+   11:27  Microsoft Ireland      saas-productivit    45600 kr  email=me***@gmail.com  fp=20cc41dae2abea80c6053b
+   11:27  Telia Företag          mobil              119520 kr  email=me***@gmail.com  fp=20cc41dae2abea80c6053b
+   11:26  Salesforce.com         uncategorized        null kr  email=me***@gmail.com  fp=20cc41dae2abea80c6053b
+   11:26  Tele2 Företag          mobil               35880 kr  email=me***@gmail.com  fp=20cc41dae2abea80c6053b
+   11:26  Tre Foretag            mobil               14940 kr  email=me***@gmail.com  fp=20cc41dae2abea80c6053b
+   11:26  Google Ireland Ltd     saas-productivit    72900 kr  email=me***@gmail.com  fp=20cc41dae2abea80c6053b
+   11:26  Binero Group AB        serverhosting        null kr  email=me***@gmail.com  fp=20cc41dae2abea80c6053b
+   11:26  Fortnox AB             faktura-tjanst       2388 kr  email=me***@gmail.com  fp=20cc41dae2abea80c6053b
+   11:26  Slack Technologies     uncategorized        null kr  email=me***@gmail.com  fp=20cc41dae2abea80c6053b
 ═══════════════════════════════════════════════════
 
 
-═══════ SENASTE 33 ANALYSER (av frågade 40) ═══════
-Med e-post (mail-in eller registrerad): 32
-Väg-fördelning: {"auto":31,"review_queue":2}
+═══════ SENASTE 40 ANALYSER (av frågade 40) ═══════
+Med e-post (mail-in eller registrerad): 37
+Väg-fördelning: {"auto":32,"review_queue":8}
 ───────────────────────────────────────────────────────────────
-📧 2026-06-28 11:50  Telavox AB                 molnvaxel            101 100 kr/år  —
-📧 2026-06-28 11:50  Fortnox AB                 faktura-tjanst         2 388 kr/år  —
-📧 2026-06-28 11:50  HubSpot, Inc.              uncategorized              — kr/år  —  ⚠️ review_queue
+📧 2026-08-14 11:45  Telia Företag              mobil                119 520 kr/år  —
+📧 2026-08-14 11:45  Tre Foretag                mobil                 14 940 kr/år  —
+📧 2026-08-14 11:45  Slack Technologies         uncategorized              — kr/år  —  ⚠️ review_queue
+📧 2026-08-14 11:45  Google Ireland Ltd         saas-productivity     72 900 kr/år  —
+📧 2026-08-14 11:45  Microsoft Ireland          saas-productivity     45 600 kr/år  —
+📧 2026-08-14 11:45  Tele2 Företag              mobil                 35 880 kr/år  —
+📧 2026-08-14 11:45  Binero Group AB            serverhosting              — kr/år  —  ⚠️ review_queue
+📧 2026-08-14 11:45  Fortnox AB                 loneadmin                  — kr/år  —  ⚠️ review_queue
+📧 2026-08-14 11:45  Salesforce.com             uncategorized              — kr/år  —  ⚠️ review_queue
+📧 2026-08-14 11:27  Microsoft Ireland          saas-productivity     45 600 kr/år  —
+📧 2026-08-14 11:27  Telia Företag              mobil                119 520 kr/år  —
+📧 2026-08-14 11:26  Salesforce.com             uncategorized              — kr/år  —  ⚠️ review_queue
+📧 2026-08-14 11:26  Tele2 Företag              mobil                 35 880 kr/år  —
+📧 2026-08-14 11:26  Tre Foretag                mobil                 14 940 kr/år  —
+📧 2026-08-14 11:26  Google Ireland Ltd         saas-productivity     72 900 kr/år  —
+📧 2026-08-14 11:26  Binero Group AB            serverhosting              — kr/år  —  ⚠️ review_queue
+📧 2026-08-14 11:26  Fortnox AB                 faktura-tjanst         2 388 kr/år  —
+📧 2026-08-14 11:26  Slack Technologies         uncategorized              — kr/år  —  ⚠️ review_queue
+📧 2026-07-16 13:46  CloudReseller Norden AB    saas-productivity    184 260 kr/år  spar 33 622
+📧 2026-07-13 00:34  Nordic Managed IT Services it-support           180 000 kr/år  —
+📧 2026-07-13 00:34  GleSYS AB                  serverhosting         46 800 kr/år  —
+📧 2026-07-13 00:34  Fortnox AB                 saas-finance          21 600 kr/år  —
+📧 2026-07-13 00:34  Bahnhof AB                 bredband              58 800 kr/år  —
+📧 2026-07-13 00:34  Telia Sverige AB           molnvaxel            114 000 kr/år  —
+🌐 2026-07-08 14:51  Tele2 Bredband AB          bredband              23 388 kr/år  spar 9 408
+🌐 2026-07-08 09:21  Tele2 Bredband AB          bredband              23 388 kr/år  spar 9 408
 📧 2026-06-28 11:47  DiagFn AB                  molnvaxel                  — kr/år  —  ⚠️ review_queue
 📧 2026-06-26 15:13  Tele2 Företag AB           mobil                439 740 kr/år  —
 📧 2026-06-26 15:12  Microsoft Ireland Operatio saas-productivity    352 296 kr/år  spar 242
@@ -40,22 +84,6 @@ Väg-fördelning: {"auto":31,"review_queue":2}
 📧 2026-06-12 00:09  Telia Företag              mobil                 58 092 kr/år  spar 6 230
 📧 2026-06-11 23:40  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
 🌐 2026-06-11 23:22  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
-📧 2026-06-11 22:10  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
-📧 2026-06-11 12:31  Svea Kontorsprint & Leasin skrivarleasing        58 800 kr/år  —
-📧 2026-06-10 21:39  Nordic Managed IT Services saas-productivity    475 440 kr/år  spar 19 655
-📧 2026-06-08 18:52  CloudReseller Norden AB    saas-productivity    184 260 kr/år  spar 33 622
-📧 2026-06-03 21:59  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
-📧 2026-06-03 21:56  Telia Sverige AB           mobil                269 460 kr/år  —
-📧 2026-06-02 23:18  IT-Partner Sverige AB      saas-productivity    212 040 kr/år  spar 32 674
-📧 2026-06-02 09:12  Telia Sverige AB           mobil                269 460 kr/år  —
-📧 2026-06-01 22:43  Telia Företag              mobil                 58 092 kr/år  spar 6 230
-📧 2026-06-01 21:39  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
-📧 2026-06-01 12:33  Telenor Sverige AB         mobil                125 580 kr/år  —
-📧 2026-06-01 04:53  Telenor Sverige AB         mobil                125 580 kr/år  spar 5 040
-📧 2026-05-31 22:13  Telenor Sverige AB         mobil                125 580 kr/år  —
-📧 2026-05-31 20:36  Telia Sverige AB           mobil                188 460 kr/år  spar 28 080
-📧 2026-05-31 18:18  SveaMobil Företag AB       mobil                188 160 kr/år  spar 21 840
-📧 2026-05-30 13:47  IT-Partner Sverige AB      saas-productivity    184 680 kr/år  spar 25 662
 ═══════════════════════════════════════════════════════════════
 
 Läs: 📧=mail-in · 🌐=webb · ⚠️=ej auto (kö/ej stödd) · "spar"=rekommenderat byte med nettogap
