@@ -32,9 +32,9 @@ if (!db) { console.log('Ingen DATABASE_URL — exit 0'); process.exit(0); }
 // därför att den frågade efter updated_at, som inte finns — ett SQL-fel förklätt till ett
 // påstående om produktionen. Nu får man veta vilka kolumner som finns i stället för ett tomt svar.
 await kravKolumner(db, 'ingest_jobs',
-  ['sender', 'filename', 'status', 'attempts', 'attachment_index', 'error', 'created_at', 'done_at']);
+  ['sender', 'filename', 'status', 'attempts', 'attachment_index', 'error', 'created_at', 'done_at', 'outcome']);
 const jobb = await aldrigTyst(db`
-  SELECT sender, filename, status, attempts, attachment_index, error, created_at, claimed_at, done_at
+  SELECT sender, filename, status, attempts, attachment_index, error, outcome, created_at, claimed_at, done_at
   FROM ingest_jobs
   WHERE created_at > NOW() - interval '24 hours'
   ORDER BY sender, attachment_index ASC
@@ -68,9 +68,9 @@ for (const [sender, rader] of perSender) {
   if (tider.length) {
     console.log(`  kötid: median ${tider[Math.floor(tider.length / 2)].toFixed(1)} s · längst ${tider.at(-1).toFixed(1)} s`);
   }
-  console.log(`\n  idx  status    försök  filnamn                                   fel`);
+  console.log(`\n  idx  status    försök  filnamn                                   utfall / fel`);
   for (const r of rader) {
-    console.log(`  ${String(r.attachment_index).padStart(3)}  ${String(r.status).padEnd(9)} ${String(r.attempts).padStart(5)}  ${String(r.filename).slice(0, 40).padEnd(40)}  ${r.error ? String(r.error).slice(0, 90) : ''}`);
+    console.log(`  ${String(r.attachment_index).padStart(3)}  ${String(r.status).padEnd(9)} ${String(r.attempts).padStart(5)}  ${String(r.filename).slice(0, 40).padEnd(40)}  ${r.error ? String(r.error).slice(0, 90) : (r.outcome ?? '(ingen dom bokförd)')}`);
   }
   // ── DELAR FELDOMÄNEN I TVÅ (2026-08-14) ──────────────────────────────────────────────────
   // Grundaren fick inget mejl med rumslänk. mintPortalLink SKRIVER en rad i magic_tokens innan

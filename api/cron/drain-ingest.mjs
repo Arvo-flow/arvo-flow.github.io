@@ -7,7 +7,7 @@
 // /testa-faktura och mail-in (regel 1), nycklad på avsändaren → landar i kundens kontor.
 
 import { createHash } from 'node:crypto';
-import { claimBatch, completeJob, failJob, hasPendingFlag, clearPending } from '../../lib/ingest-queue.js';
+import { claimBatch, completeJob, failJob, hasPendingFlag, clearPending, utfallFranSvar } from '../../lib/ingest-queue.js';
 import { fetchInboundPdfByIndex } from '../inbound-email.mjs';
 
 export const config = { maxDuration: 60 };
@@ -68,7 +68,9 @@ async function processJob(job) {
       clearTimeout(timer);
     }
     const a = await r.json().catch(() => null);
-    if (a?.ok) { await completeJob(job.id); return true; }
+    // Drainen HAR pipelinens dom i handen och kastade bort den. Nu följer den med jobbet,
+    // så kön kan svara på "vad hände med min tionde faktura?" utan Vercel-loggen.
+    if (a?.ok) { await completeJob(job.id, utfallFranSvar(a)); return true; }
     await failJob(job.id, `analys misslyckades (HTTP ${r.status})`);
     return false;
   } catch (err) {
