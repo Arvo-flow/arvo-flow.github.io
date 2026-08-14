@@ -45,3 +45,12 @@ jobs:
           fi
           echo ""
           echo "✓ Den utlagda sajten bär rumsgranskningens ändringar."
+
+      - name: Kontext kring en oväntad träff
+        if: failure()
+        run: |
+          BUNDLE=$(curl -s https://arvoflow.se/ | grep -o '/static/js/main\.[a-z0-9]*\.js' | head -1)
+          curl -s "https://arvoflow.se${BUNDLE}" -o /tmp/main.js
+          echo "── 200 tecken runt varje träff på 'mellan stolarna' ──"
+          grep -o "mellan stolarna" /tmp/main.js | wc -l
+          grep -o ".\{160\}mellan stolarna.\{60\}" /tmp/main.js | head -3
