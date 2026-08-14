@@ -39,9 +39,36 @@ const lank = `${BASE}/portfolio?magic=${token}`;
 console.log(`✓ rumslänk skapad för ${mask(till)} (token loggas aldrig)`);
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// ── FRÅGA RESEND VILKA DOMÄNER SOM FAKTISKT FÅR SKICKA (2026-08-14) ──────────────────────────
+// Första körningen fick 422 "The domain is invalid". Det är ett svar om VÅRT konto, inte om
+// mottagaren — och det betyder att avsändaradressens domän inte är en verifierad sändardomän.
+// Vi slutar gissa vilken den är och frågar API:t. Listan skrivs ut; nycklar aldrig.
+const domaner = await resend.domains.list().catch((e) => ({ error: { message: e.message } }));
+const lista = domaner?.data?.data ?? domaner?.data ?? [];
+console.log('\n── VERIFIERADE SÄNDARDOMÄNER HOS RESEND ──');
+if (Array.isArray(lista) && lista.length) {
+  for (const d of lista) console.log(`   ${String(d.name).padEnd(28)} status=${d.status}  region=${d.region ?? '—'}`);
+} else {
+  console.log('   (kunde inte läsas)', JSON.stringify(domaner?.error ?? domaner).slice(0, 200));
+}
+
+// Välj avsändare som FAKTISKT får skicka: den konfigurerade om dess domän är verifierad, annars
+// den första verifierade. Att skicka från en overifierad domän ger 422 varje gång — och tystnad
+// mot kunden, vilket är precis felet vi utreder.
+const fromDom = (FROM.match(/@([^>\s]+)/) || [])[1];
+const verifierade = (Array.isArray(lista) ? lista : []).filter((d) => d.status === 'verified');
+let avsandare = FROM;
+if (fromDom && !verifierade.some((d) => d.name === fromDom)) {
+  const val = verifierade[0];
+  if (!val) { console.error(`\n⛔ Ingen verifierad sändardomän på kontot — inget brev kan skickas.`); process.exit(1); }
+  avsandare = `Arvo Intelligence <analys@${val.name}>`;
+  console.log(`\n⚠️  ${fromDom} är inte verifierad → skickar i stället från ${val.name}`);
+}
+
 const t0 = Date.now();
 const svar = await resend.emails.send({
-  from: FROM,
+  from: avsandare,
   to: till,
   // Reply-To på en domän som FAKTISKT tar emot post. arvoflow.se saknar MX i apex — ett
   // avsändarnamn som inte kan svara är en klassisk spamsignal, särskilt hos Microsoft.
@@ -64,7 +91,7 @@ const svar = await resend.emails.send({
 const ms = Date.now() - t0;
 
 // HELA svaret skrivs ut. Det är den avläsning vi aldrig gjort — och den som avgör vems fel det är.
-console.log(`\n── RESENDS SVAR (${ms} ms) ──`);
+console.log(`\n── RESENDS SVAR (${ms} ms) · from=${avsandare} ──`);
 console.log(JSON.stringify({ data: svar?.data ?? null, error: svar?.error ?? null }, null, 2));
 if (svar?.error) {
   console.log('\n⛔ Resend VÄGRADE brevet — felet är vårt/kontots, inte mottagarens.');
