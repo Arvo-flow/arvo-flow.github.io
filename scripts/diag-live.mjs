@@ -7,14 +7,14 @@ const BASE = process.env.ARVO_BASE_URL || 'https://arvoflow.se';
 const pdfBase64 = readFileSync('test-pdfs/diag-bredband.pdf').toString('base64');
 
 const tr = await fetch(`${BASE}/api/token`, { method: 'POST' });
-const token = (await tr.json().catch(() => ({})))?.token ?? null;
+const token = (await tr.json().catch(() => ({})))?.token ?? null;   // sondvakt-ok: ett svar utan JSON är ett mätvärde (ingen token) och rapporteras som sådant
 console.log('token:', token ? 'OK' : 'SAKNAS');
 
 const res = await fetch(`${BASE}/api/test-invoice`, {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ pdfBase64, industry: 'ovrigt', employees: 10, token }),
 });
-const data = await res.json().catch(() => ({}));
+const data = await res.json().catch(() => ({}));   // sondvakt-ok: ett svar utan JSON är ett mätvärde och rapporteras som sådant
 
 console.log('=== LIVE-RESULTAT (arvoflow.se) ===');
 console.log('HTTP', res.status);

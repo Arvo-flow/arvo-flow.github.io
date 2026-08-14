@@ -48,7 +48,7 @@ const FACIT = [
 
 // 1 · Mynta ett analysId genom den vanliga fakturapipen (avtalsuppladdningen hänger på en analysrad).
 const tr = await fetch(`${BASE}/api/token`, { method: 'POST' });
-const token = (await tr.json().catch(() => ({})))?.token ?? null;
+const token = (await tr.json().catch(() => ({})))?.token ?? null;   // sondvakt-ok: ett svar utan JSON är ett mätvärde (ingen token) och rapporteras som sådant
 console.log('token:', token ? 'OK' : 'SAKNAS');
 
 // fingerprint krävs — storeAnalysis returnerar annars null och avtalen har ingen rad att
@@ -61,7 +61,7 @@ const invRes = await fetch(`${BASE}/api/test-invoice`, {
     fingerprint: 'diag-avtal-e2e-fingerprint',
   }),
 });
-const inv = await invRes.json().catch(() => ({}));
+const inv = await invRes.json().catch(() => ({}));   // sondvakt-ok: ett svar utan JSON är ett mätvärde och rapporteras som sådant
 const analysisId = inv.analysisId ?? null;
 console.log(`analys: HTTP ${invRes.status} · route ${inv.route} · analysisId ${analysisId ?? 'SAKNAS'}`);
 if (!analysisId) { console.log('AVBRYTER — ingen analysrad att hänga avtalen på.'); process.exit(1); }
@@ -74,7 +74,7 @@ for (const c of FACIT) {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ analysisId, pdfBase64: readFileSync(c.pdf).toString('base64') }),
   });
-  const data = await res.json().catch(() => ({}));
+  const data = await res.json().catch(() => ({}));   // sondvakt-ok: ett svar utan JSON är ett mätvärde och rapporteras som sådant
   if (!data.ok) {
     console.log(`  ✗ AVVISAD (HTTP ${res.status}): ${data.reason ?? data.error ?? 'okänt'}`);
     fail++; continue;

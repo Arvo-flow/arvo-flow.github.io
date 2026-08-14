@@ -44,12 +44,12 @@ for (const domain of DOMANER) {
     let cands = extractOrgnrCandidates(siteHtml);
     console.log(`  startsidan: ${cands.length} orgnr-kandidat(er) ${kort(cands)}`);
     if (cands.length === 0) {
-      const deep = await fetchOrgnrFromWebsite(domain).catch(() => null);
+      const deep = await fetchOrgnrFromWebsite(domain).catch(() => null);   // sondvakt-ok: en domän som inte går att läsa ÄR utfallet sonden mäter
       console.log(`  djupläsning (/kontakt, /om-oss): ${deep ?? '(inget)'}`);
       if (deep) cands = [deep];
     }
     if (cands.length === 1) {
-      vag1 = await fetchBusinessFactsByOrgnr(cands[0]).catch(() => null);
+      vag1 = await fetchBusinessFactsByOrgnr(cands[0]).catch(() => null);   // sondvakt-ok: ett orgnr utan träff ÄR utfallet sonden mäter
       console.log(`  → uppslag på ${cands[0]}: ${vag1 ? `${vag1.legalName} · ${vag1.revenueTkr} tkr · ${vag1.employees} anst` : '(ingen fakta)'}`);
     } else if (cands.length > 1) {
       console.log('  → FLERA kandidater — vägen ger tystnad (rätt beteende)');

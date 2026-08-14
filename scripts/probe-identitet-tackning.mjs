@@ -55,7 +55,7 @@ for (const rad of rader) {
   if (nabar) {
     let cands = extractOrgnrCandidates(siteHtml);
     if (cands.length === 0) {
-      const deep = await fetchOrgnrFromWebsite(rad.domain).catch(() => null);
+      const deep = await fetchOrgnrFromWebsite(rad.domain).catch(() => null);   // sondvakt-ok: en domän som inte går att läsa ÄR utfallet sonden mäter
       if (deep) cands = [deep];
     }
     if (cands.length === 1) vag = '1 · orgnr på sajten';
@@ -69,7 +69,7 @@ for (const rad of rader) {
   }
 
   // Det SKARPA utfallet.
-  const facts = await fetchBusinessFacts(rad.domain).catch(() => null);
+  const facts = await fetchBusinessFacts(rad.domain).catch(() => null);   // sondvakt-ok: en domän utan bolagsfakta ÄR utfallet sonden mäter
   const traff = facts?.orgnr ? normalizeOrgnr(facts.orgnr) : null;
   const utfall = !traff ? 'TYST' : (traff === rad.facit ? 'RÄTT' : 'FEL');
 

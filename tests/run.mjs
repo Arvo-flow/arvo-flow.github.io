@@ -96,6 +96,7 @@ import './saas-rad.mjs';
 import './ct-ko.mjs';
 import './dorrstat.mjs';
 import './triage-bokforing.mjs';
+import './sondvakt.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

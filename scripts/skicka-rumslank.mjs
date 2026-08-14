@@ -18,6 +18,7 @@
 import { randomBytes } from 'node:crypto';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
+import { kravEnv, kravKolumner, aldrigTyst } from '../lib/sondvakt.js';
 
 // Två adresser, medvetet åtskilda: RUMMET tillhör en identitet (den som fakturorna är nycklade
 // på), men BREVET måste gå dit posten faktiskt kommer fram. När Hotmail tystar oss ska kunden
@@ -27,12 +28,12 @@ const till = process.argv[3] || rumFor;
 if (!rumFor || !rumFor.includes('@')) { console.error('Ange rumsidentitet som argument 1.'); process.exit(1); }
 if (!till.includes('@')) { console.error('Ogiltig mottagaradress (argument 2).'); process.exit(1); }
 
-const BASE = process.env.ARVO_BASE_URL ?? 'https://arvoflow.se';
+const BASE = kravEnv('ARVO_BASE_URL', { fallback: 'https://arvoflow.se' });
 // ?? faller bara tillbaka på null/undefined. GitHub Actions sätter en SAKNAD hemlighet till en
 // TOM STRÄNG, och '' ?? x är ''. Avsändaren blev därför tom och Resend svarade 422 "The domain is
 // invalid" — ett fel jag höll på att rapportera som ett fel i vårt Resend-konto. Båda domänerna
 // var verifierade hela tiden. || behandlar tomt som saknat, vilket är vad vi menar.
-const FROM = (process.env.RESEND_FROM || '').trim() || 'Arvo Intelligence <analys@arvoflow.se>';
+const FROM = kravEnv('RESEND_FROM', { fallback: 'Arvo Intelligence <analys@arvoflow.se>' });
 const mask = (e) => { const [l, d] = String(e).split('@'); return `${l.slice(0, 2)}***@${d}`; };
 
 const db = getDb();

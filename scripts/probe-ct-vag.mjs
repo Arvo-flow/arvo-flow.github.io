@@ -24,7 +24,7 @@ for (const d of DOMANER) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: `x@${d}`, ctOnly: true }), signal: AbortSignal.timeout(40000),
     });
-    const j = await r.json().catch(() => ({}));
+    const j = await r.json().catch(() => ({}));   // sondvakt-ok: ett svar utan JSON är ett mätvärde och rapporteras som sådant
     const rad = j.findings?.[0];
     console.log(`  ${d.padEnd(16)} ${String(Date.now() - t0 + 'ms').padStart(8)}  HTTP ${r.status}  ${rad ? `✓ «${rad.title}»` : '— ingen rad'}`);
     if (rad) console.log(`  ${''.padEnd(16)} ${''.padStart(8)}  källa: ${rad.source}`);

@@ -13,6 +13,7 @@
 // Läser bara. Inga skrivningar, ingen retry — diagnosen först, åtgärden sedan.
 import { deklarera } from '../lib/sondkontrakt.js';
 import { getDb } from '../lib/db.js';
+import { kravKolumner, aldrigTyst } from '../lib/sondvakt.js';
 
 deklarera({
   namn: 'probe-bulk-jobb',
@@ -27,12 +28,17 @@ const mask = (e) => { const [l, d] = String(e || '').split('@'); return d ? `${l
 const db = getDb();
 if (!db) { console.log('Ingen DATABASE_URL — exit 0'); process.exit(0); }
 
-const jobb = await db`
+// Schemat läses FÖRE frågan. Den här sonden rapporterade en gång "Inga jobb senaste dygnet"
+// därför att den frågade efter updated_at, som inte finns — ett SQL-fel förklätt till ett
+// påstående om produktionen. Nu får man veta vilka kolumner som finns i stället för ett tomt svar.
+await kravKolumner(db, 'ingest_jobs',
+  ['sender', 'filename', 'status', 'attempts', 'attachment_index', 'error', 'created_at', 'done_at']);
+const jobb = await aldrigTyst(db`
   SELECT sender, filename, status, attempts, attachment_index, error, created_at, claimed_at, done_at
   FROM ingest_jobs
   WHERE created_at > NOW() - interval '24 hours'
   ORDER BY sender, attachment_index ASC
-`.catch((e) => { console.log('ingest_jobs-fel:', e.message); return []; });
+`, 'läsning av ingest_jobs');
 
 if (!jobb.length) { console.log('Inga jobb senaste dygnet.'); process.exit(0); }
 
@@ -43,10 +49,11 @@ for (const j of jobb) {
 }
 
 for (const [sender, rader] of perSender) {
-  const analyser = await db`
+  // En DB-läsning som sväljs blir noll analyser — och noll analyser läses som DATAFÖRLUST.
+  const analyser = await aldrigTyst(db`
     SELECT supplier, normalized_supplier, category, annual_cost, route, created_at
     FROM invoice_analyses WHERE user_email = ${sender} ORDER BY created_at ASC
-  `.catch(() => []);
+  `, `läsning av invoice_analyses för en avsändare`);
 
   const status = rader.reduce((m, r) => ((m[r.status] = (m[r.status] || 0) + 1), m), {});
   const tider = rader
@@ -70,11 +77,11 @@ for (const [sender, rader] of perSender) {
   // Resend anropas (note='inbound-email-reply'). Finns raden är länken skapad och felet ligger i
   // UTSKICKET eller LEVERANSEN; saknas den nådde koden aldrig dit. Utan Vercel-loggen är det här
   // den enda avläsning som skiljer de två — och skillnaden avgör vilken fix som är rätt.
-  const tokens = await db`
+  const tokens = await aldrigTyst(db`
     SELECT note, created_at, expires_at, used_at
     FROM magic_tokens WHERE email = ${sender} AND created_at > NOW() - interval '24 hours'
     ORDER BY created_at DESC
-  `.catch((e) => { console.log('  magic_tokens-fel:', e.message); return []; });
+  `, 'läsning av magic_tokens');
   console.log(`\n  RUMSLÄNKAR (magic_tokens) senaste dygnet: ${tokens.length}`);
   for (const t of tokens) {
     console.log(`     ${new Date(t.created_at).toISOString().slice(11, 19)}  note=${t.note ?? '—'}  använd=${t.used_at ? 'ja' : 'nej'}`);

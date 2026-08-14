@@ -48,7 +48,7 @@ try {
   // Välj första förslaget i listboxen.
   const opt = page.locator('[role="option"], [role="listbox"] li, [class*="option" i], [class*="suggestion" i]').first();
   try { if (await opt.isVisible({ timeout: 3000 })) { await opt.click({ timeout: 3000 }); } else { await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter'); } }
-  catch { await page.keyboard.press('ArrowDown').catch(() => {}); await page.keyboard.press('Enter').catch(() => {}); }
+  catch { await page.keyboard.press('ArrowDown').catch(() => {}); await page.keyboard.press('Enter').catch(() => {}); }   // sondvakt-ok: tangenttryck är ett bästa-försök i UI-navigering, inte en mätning
   await page.waitForTimeout(6000); // tillgänglighets/pris-API fyr
 } catch (e) { console.log('  combobox-fel:', e.message.split('\n')[0]); }
 console.log('drove combobox:', drove);

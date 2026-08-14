@@ -31,7 +31,7 @@ const anrop = async () => {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: `x@${DOMAN}`, ctOnly: true }), signal: AbortSignal.timeout(40000),
     });
-    const j = await r.json().catch(() => ({}));
+    const j = await r.json().catch(() => ({}));   // sondvakt-ok: ett svar utan JSON är ett mätvärde och rapporteras som sådant
     return { ms: Date.now() - t0, status: r.status, rad: j.findings?.[0] ?? null };
   } catch (e) { return { ms: Date.now() - t0, status: null, fel: e.name === 'TimeoutError' ? 'TIMEOUT' : String(e.message).slice(0, 40) }; }
 };

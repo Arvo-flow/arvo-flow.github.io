@@ -11,7 +11,7 @@ for (const email of ['namn@lynxeye.com', 'namn@microsoft.com', 'namn@gmail.com']
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email }),
   });
-  const data = await res.json().catch(() => ({}));
+  const data = await res.json().catch(() => ({}));   // sondvakt-ok: ett svar utan JSON är ett mätvärde och rapporteras som sådant
   console.log(`\n=== ${email} → HTTP ${res.status} · domän=${data.domain ?? '(ingen)'} ===`);
   if (data.note) console.log('note:', data.note);
   for (const f of data.findings ?? []) console.log(`  ✓ ${f.title}\n      källa: ${f.source}`);

@@ -41,7 +41,7 @@ const viaVercel = async (d) => {
     const r = await fetch(`${BAS}/api/reveal`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: `x@${d}`, ctOnly: true }), signal: AbortSignal.timeout(40000) });
-    const j = await r.json().catch(() => ({}));
+    const j = await r.json().catch(() => ({}));   // sondvakt-ok: ett svar utan JSON är precis det egress-sonden mäter
     return { ms: Date.now() - t0, status: r.status, rad: j.findings?.[0]?.title ?? null };
   } catch (e) { return { ms: Date.now() - t0, status: null, fel: e.name === 'TimeoutError' ? 'TIMEOUT' : String(e.message).slice(0, 30) }; }
 };
