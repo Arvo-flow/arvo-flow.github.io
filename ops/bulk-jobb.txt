@@ -1,0 +1,9 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-bulk-jobb
+║ FÅNGAR: Per avsändare: antal köade jobb, deras sluttillstånd, filnamn, försök, och vilka filnamn som saknar en analysrad. Samt kötid från skapat till uppdaterat.
+║ BLIND FÖR: Sonden ser bara det som KÖADES. En PDF som aldrig blev ett jobb — för stor, feltypad, eller tappad av bilagelistningen hos Resend — lämnar inget spår här alls. Frånvaro i kön skiljer alltså inte "aldrig mottagen" från "aldrig köad", och den skillnaden måste läsas ur Vercel-loggen för inbound-email.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+ingest_jobs-fel: column "updated_at" does not exist
+Inga jobb senaste dygnet.
