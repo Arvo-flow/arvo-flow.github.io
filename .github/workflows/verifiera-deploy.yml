@@ -1,0 +1,16 @@
+name: Verifiera deploy
+on: { workflow_dispatch: {} }
+jobs:
+  kolla:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Är fixarna ute?
+        run: |
+          set -e
+          echo "── /api/invoice-history utan nycklar (ska ge 400, bevisar att rutten lever) ──"
+          curl -s -o /tmp/r.json -w "status=%{http_code}\n" "https://arvoflow.se/api/invoice-history"
+          cat /tmp/r.json; echo
+          echo "── landningssidans bundle ──"
+          curl -s https://arvoflow.se/ | grep -o 'main\.[a-z0-9]*\.js' | head -1
