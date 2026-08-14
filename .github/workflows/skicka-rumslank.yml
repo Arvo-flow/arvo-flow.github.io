@@ -1,0 +1,26 @@
+name: Skicka rumslänk
+# Mintar en färsk rumslänk och skickar den — och skriver ut Resends fullständiga svar.
+# Token loggas aldrig. Mottagaren anges vid körning.
+on:
+  workflow_dispatch:
+    inputs:
+      till:
+        description: 'Mottagaradress'
+        required: true
+jobs:
+  skicka:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Skicka
+        run: node scripts/skicka-rumslank.mjs "${{ inputs.till }}"
+        env:
+          DATABASE_URL:    ${{ secrets.DATABASE_URL }}
+          RESEND_API_KEY:  ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM:     ${{ secrets.RESEND_FROM }}
+          ARVO_BASE_URL:   https://arvoflow.se
