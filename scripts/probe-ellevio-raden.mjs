@@ -5,8 +5,8 @@
 // alltså inte tillräcklig, eller så var den inte rotorsaken.
 //
 // Två helt olika fel ser likadana ut i probe-bulk-jobb, som räknar rader per AVSÄNDARE:
-//   (a) raden skrevs ALDRIG  → grinden nåddes inte, eller storeTriaged föll (den anropas med
-//       .catch(() => {}) — ett svalt fel lämnar inget spår någonstans).
+//   (a) raden skrevs ALDRIG  → grinden nåddes inte, eller storeTriaged föll (anropet har en
+//       sväljande catch, så ett fel där lämnar inget spår någonstans).
 //   (b) raden skrevs UTAN identitet → user_email är null/annat, raden finns men når aldrig rummet.
 // Åtgärderna är olika (fixa skrivningen vs fixa identiteten), så gissningen har ingen plats här.
 //
@@ -48,7 +48,7 @@ for (const r of rader) {
 
 if (!rader.length) {
   console.log('\n  ⛔ (a) INGEN RAD SKREVS. Grinden nåddes inte, eller storeTriaged föll tyst');
-  console.log('     (den anropas med .catch(() => {})). Nästa avläsning är Vercel-loggen för');
+  console.log('     (anropet har en sväljande catch). Nästa avläsning är Vercel-loggen för');
   console.log('     det interna /api/test-invoice-anropet — inte ännu en gissning här.');
 } else if (rader.every((r) => !r.user_email)) {
   console.log('\n  ⛔ (b) RADEN FINNS MEN SAKNAR IDENTITET — den kan aldrig nå kundens rum.');

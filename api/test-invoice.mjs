@@ -392,7 +392,10 @@ export default async function handler(req, res) {
   const pdfHash  = createHash('sha256').update(pdfBytes).digest('hex');
   // v11: invaliderar v10 (priceSource-buggfixen ändrar savingRange ±12 %, källetikett
   // och listpris-domen för real-public-kategorier — v10-cachen bär de felaktiga)
-  const cacheKey = `pdf:result:v11:${pdfHash}:e${employeesNum}`;
+  // v12 (2026-08-15): el-grenens två framgångsutgångar lagrar numera en rad i kundens liggare.
+  // Svarsformen är oförändrad — men ett CACHAT svar hoppar över lagringen, så en kund som laddar
+  // upp samma elfaktura igen hade fått samma tystnad som förut. Bumpen tvingar en riktig körning.
+  const cacheKey = `pdf:result:v12:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -1163,6 +1166,18 @@ export default async function handler(req, res) {
           const monDate = new Date(elEnd);
           monDate.setMonth(monDate.getMonth() - 3);
           const potentialSaving = elRec ? Math.max(0, elRec.grossSaving) : null;
+          // ── BOKFÖR ÄVEN FRAMGÅNGEN (2026-08-15) ────────────────────────────────────────
+          // Bokföringsplikten skrevs efter Ellevio-fallet och stängde tio TRIAGE-utgångar.
+          // Den ställde aldrig frågan om FRAMGÅNGSutgångarna — och el-grenens två låg öppna:
+          // den här (bundet fastprisavtal) och auto-utgången nedan. Ett bundet elavtal är
+          // precis den rad kunden vill se i rummet: "vi vet att ni är låsta, och vi vet till
+          // när". Utan raden ser det ut som att fakturan försvann.
+          await storeAnalysis({
+            fingerprint, pdfHash, extracted, categorized,
+            recommendation: { shouldSwitch: false, reasoning: '' },
+            route: 'monitoring', industry, employees: employeesNum,
+            userEmail: body.userEmail, seatCount: extracted.seatCount ?? null,
+          }).catch((err) => console.error('[test-invoice] storeAnalysis (el fastpris) failed:', err.message));
           timing.totalMs = Date.now() - t0;
           return send(res, 200, {
             ok: true, route: 'monitoring',
@@ -1237,6 +1252,27 @@ export default async function handler(req, res) {
       }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
       const { arvoFee, netSaving } = elRec;
+
+      // ── DEN ALLVARLIGASTE LUCKAN AV ALLA (2026-08-15) ──────────────────────────────────
+      // Den här grenen är en FULLSTÄNDIG, lyckad el-analys — och den skrev en anonym
+      // datapunkt till branschpoolen (storeDatapoint ovan) utan att skriva en enda rad i
+      // KUNDENS egen liggare. Vi lärde alltså av kundens faktura och gav ingenting tillbaka:
+      // den syntes varken i innehavet, i scoren eller i räknarna. El är dessutom Nivå 1 —
+      // kategorin vi lovar att faktiskt GENOMFÖRA bytet i (Switch-doktrinen). Att just den
+      // aldrig landade i rummet är löftet utan mekanik i sin renaste form (regel 9).
+      await storeAnalysis({
+        fingerprint: typeof fingerprint === 'string' ? fingerprint : null,
+        pdfHash, extracted, categorized,
+        recommendation: {
+          shouldSwitch: elRec.shouldSwitch ?? (netSaving > 0),
+          reasoning: '',
+          grossSaving: elRec.grossSaving,
+          netSaving,
+        },
+        route: 'auto', industry, employees: employeesNum,
+        userEmail: typeof body.userEmail === 'string' ? body.userEmail.trim().toLowerCase() : null,
+        seatCount: extracted.seatCount ?? null,
+      }).catch((err) => console.error('[test-invoice] storeAnalysis (el auto) failed:', err.message));
 
       return send(res, 200, {
         ok: true, route: 'auto',
@@ -1696,6 +1732,11 @@ export default async function handler(req, res) {
         })
       : null;
 
+    // triage-ok: huvudvägens bokföring sker i `const analysisId = await storeAnalysis({…})` ovan,
+    // placerad där för att grossSaving/netSaving ska vara slutgiltiga efter alla overrides. Den
+    // ligger drygt 200 rader före det här svarsobjektet, alltså utanför vaktens sökfönster — och
+    // fönstret ska INTE vidgas: då kan en utgång låna FÖREGÅENDE utgångs bokföring och vakten blir
+    // grön på fel grund. Undantaget är motiverat här, i koden, precis som claims-audit kräver.
     const autoResponse = {
       ok:    true,
       route: 'auto',

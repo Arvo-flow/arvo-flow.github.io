@@ -81,4 +81,77 @@ describe('TRIAGE-BOKFÖRING · ett beslut vi inte bokför har vi inte fattat', (
     const n = triageUtgangar().length;
     assert.ok(n >= 8, `hittade bara ${n} triage-utgångar — mönstret matchar inte längre koden`);
   });
+
+  // ── VAKTEN STÄLLDE FEL FRÅGA (2026-08-15) ──────────────────────────────────────────────────
+  // TB-01–03 skrevs efter Ellevio-fallet och stängde tio TRIAGE-utgångar. De var gröna hela
+  // tiden — och Ellevio försvann ÄNDÅ i nästa omkörning. Sonden visade noll rader för
+  // nätleverantören, och genomläsningen hittade två utgångar till i el-grenen:
+  //   · route 'monitoring' vid bundet fastprisavtal — svarade ok:true utan att lagra något
+  //   · route 'auto' efter en FULLSTÄNDIG el-rekommendation — skrev en anonym datapunkt till
+  //     branschpoolen men INGEN rad i kundens egen liggare
+  // Den andra är den allvarligaste vi hittat: vi lärde av kundens faktura och gav ingenting
+  // tillbaka. El är dessutom Nivå 1 — kategorin vi lovar att faktiskt genomföra bytet i.
+  //
+  // Frågan jag ställde var "bokför varje TRIAGE-utgång?". Frågan som skulle ställts var
+  // "lämnar varje ok:true-utgång ett spår?". Vakten var ärlig om sin blindfläck och dolde ändå
+  // hålet, därför att ingen ställde den bredare frågan (samma form som `bevakadeTiers`).
+  //
+  //   FÅNGAR: en ok:true-utgång i api/test-invoice.mjs — oavsett route — utan storeTriaged
+  //           ELLER storeAnalysis i sitt block.
+  //   BLIND:  fortfarande att raden LANDAR (db null, sväljande .catch), och den ser inte
+  //           utgångar i andra filer. storeDatapoint räknas ALDRIG som bokföring: den skriver
+  //           till branschpoolen, inte till kundens rum — det var precis förväxlingen som
+  //           gjorde el-utgången osynlig.
+  function alltUtgangar() {
+    const ut = [];
+    for (let i = 0; i < RADER.length; i++) {
+      const m = RADER[i].match(/route:\s*'(unsupported|review_queue|auto|monitoring)'/);
+      if (!m) continue;
+      // Skriv-anropen bär också route: '...'. Står raden inuti ett storeTriaged/storeAnalysis
+      // är det en bokföring, inte en utgång.
+      const fore = RADER.slice(Math.max(0, i - 8), i + 1).join('\n');
+      const sisteAnrop = Math.max(fore.lastIndexOf('storeTriaged('), fore.lastIndexOf('storeAnalysis('));
+      if (sisteAnrop >= 0 && !fore.slice(sisteAnrop).includes('})')) continue;
+      ut.push({ rad: i + 1, route: m[1] });
+    }
+    return ut;
+  }
+
+  test('TB-04 · VARJE ok:true-utgång lämnar ett spår, inte bara triage-utgångarna', () => {
+    const saknar = [];
+    for (const u of alltUtgangar()) {
+      const start = Math.max(0, u.rad - 1 - FONSTER);
+      const block = RADER.slice(start, u.rad).join('\n');
+      if (/\/\/\s*triage-ok:/.test(block)) continue;
+      if (!block.includes('storeTriaged') && !block.includes('storeAnalysis')) {
+        saknar.push(`rad ${u.rad} (route '${u.route}')`);
+      }
+    }
+    assert.deepEqual(saknar, [],
+      `Utgång utan spår i kundens liggare — fakturan ser ut att ha försvunnit:\n  ${saknar.join('\n  ')}`);
+  });
+
+  test('TB-05 · el-grenens båda framgångsutgångar bokför i KUNDENS liggare', () => {
+    // Regressionen som gav upphov till TB-04. storeDatapoint duger inte: den skriver till
+    // branschpoolen. Kravet är storeAnalysis — raden kunden faktiskt ser.
+    // Ankaret måste vara UNIKT för el-auto-utgången. `computeElRecommendation` förekommer två
+    // gånger (även i fastprisgrenen) och findIndex tar den första — då mäter testet fel gren.
+    const i = RADER.findIndex((r) => /const \{ arvoFee, netSaving \} = elRec;/.test(r));
+    assert.ok(i > 0, 'el-auto-utgången hittades inte — har den flyttat eller döpts om?');
+    const gren = RADER.slice(i, i + 40).join('\n');
+    assert.match(gren, /storeAnalysis\(\{[\s\S]{0,900}route:\s*'auto'/,
+      'el-auto skriver bara en anonym datapunkt — kundens rum får ingenting');
+
+    const j = RADER.findIndex((r) => /elContractType === 'fixed'/.test(r));
+    assert.ok(j > 0, 'fastprisgrenen hittades inte');
+    assert.match(RADER.slice(j, j + 40).join('\n'), /storeAnalysis/,
+      'ett bundet elavtal ska synas i rummet — det är just den raden kunden vill se');
+  });
+
+  test('TB-06 · den bredare vakten hittar fler utgångar än den smala', () => {
+    // Utan detta kan TB-04 bli grön av att mönstret slutat matcha framgångsutgångarna —
+    // exakt den tomhet TB-03 finns för att stoppa, en nivå upp.
+    const bred = alltUtgangar().length, smal = triageUtgangar().length;
+    assert.ok(bred > smal, `bred vakt hittade ${bred}, smal ${smal} — den bredare matchar inte auto/monitoring`);
+  });
 });
