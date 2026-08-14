@@ -226,13 +226,43 @@ export function watchedCard(a) {
   const supplierName = a.normalized_supplier || a.supplier || 'Okänd leverantör';
   let kind, headline, detail, action;
 
+  // Namnlistan används numera ENBART för att välja etikett när skälet redan säger valuta.
   const INTL_SAAS = /hubspot|slack|zoom|salesforce|\baws\b|amazon web|atlassian|notion|figma|datadog|stripe|dropbox|\bbox\b|monday|asana|miro/;
-  if (reason.startsWith('foreign_currency') || INTL_SAAS.test(sup)) {
-    const cur = (a.triage_reason || '').split(':')[1] || 'USD';
+
+  // ── SKÄLET STYR, ALDRIG NAMNET (grundarfynd 2026-08-14) ─────────────────────────────────
+  // Grenen fyrade på LEVERANTÖRSNAMNET (Slack, Salesforce matchar INTL_SAAS) och plockade sedan
+  // split(':')[1] ur ett triage_reason som tillhörde ett HELT ANNAT fel — balanskravets
+  // radsummekontroll. Kunden fick läsa: "Leverantörens publika listpris finns bara i radsumma
+  // 3 991 kr ≠ fakturatotal 382 kr (avvikelse 3 609 kr)". Obegripligt, och värre: vi angav FEL
+  // SKÄL för vår tystnad. Ärlig tystnad kräver ett ärligt skäl, annars är disciplinen en pose.
+  // Namnet får numera bara VÄLJA ETIKETT när skälet redan säger valuta; det får aldrig ensamt
+  // avgöra vad vi påstår om fakturan.
+  // Namnet får fånga NÄR INGET SKÄL FINNS — det är en avsiktlig, testlåst regel (watched-ledger):
+  // vi vet att Slack, HubSpot, Zoom och AWS prissätter i USD, och utan konkurrerande skäl är det
+  // en ärlig slutsats. Vad namnet ALDRIG får är att överrida ett skäl som säger något annat.
+  // Ett bart vägnamn ('review_queue'/'unsupported') räknas som INGET skäl — det säger bara att
+  // raden triagerades, inte varför.
+  const valutaSkal = reason.startsWith('foreign_currency');
+  const oklartSkal = !reason || reason === 'review_queue' || reason === 'unsupported';
+  if (valutaSkal || (oklartSkal && INTL_SAAS.test(sup))) {
+    // Valutakoden tas ur skälet ENDAST om den ser ut som en valutakod. En felsträng är inte en
+    // valuta, och hellre ett kort utan kod än ett kort med skräp i.
+    const rå = (a.triage_reason || '').split(':')[1]?.trim() ?? '';
+    const cur = /^[A-Za-z]{3}$/.test(rå) ? rå.toUpperCase() : null;
     kind = 'Internationell SaaS';
-    headline = `Prissatt i utländsk valuta — vi gissar aldrig kursen`;
-    detail = `Leverantörens publika listpris finns bara i ${cur}. Att räkna om till en svensk besparing via dagskurs vore en gissning — och vi sätter aldrig en siffra vi inte kan stå för.`;
+    headline = 'Prissatt i utländsk valuta — vi gissar aldrig kursen';
+    detail = cur
+      ? `Leverantörens publika listpris finns bara i ${cur}. Att räkna om till en svensk besparing via dagskurs vore en gissning — och vi sätter aldrig en siffra vi inte kan stå för.`
+      : 'Leverantörens publika listpris finns bara i utländsk valuta. Att räkna om till en svensk besparing via dagskurs vore en gissning — och vi sätter aldrig en siffra vi inte kan stå för.';
     action = 'Koppla avtalet så jämför vi mot ert faktiska pris i kronor.';
+  } else if (reason.includes('lineSum') || reason.includes('radsumma') || reason.includes('≠')) {
+    // Fakturans egna tal går inte ihop — radsumman möter inte totalen. Det är en HELT annan sak
+    // än valuta, och kunden ska få veta vilken. Inga belopp här: siffrorna är interna mätvärden.
+    kind = 'Fakturan går inte ihop';
+    headline = 'Fakturans egna tal stämmer inte — vi prissätter inte på ett osäkert underlag';
+    detail = 'Raderna summerar inte till fakturans totalbelopp. Innan vi vet vilket tal som gäller '
+      + 'sätter vi ingen siffra alls — en jämförelse mot fel underlag är värre än ingen jämförelse.';
+    action = 'Vi läser om fakturan manuellt och återkommer.';
   } else if (reason.includes('credit_note')) {
     kind = 'Kreditnota';
     headline = 'En kreditfaktura — ingen kostnad att prissätta';

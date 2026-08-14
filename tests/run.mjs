@@ -98,6 +98,7 @@ import './dorrstat.mjs';
 import './triage-bokforing.mjs';
 import './sondvakt.mjs';
 import './rumsidentitet.mjs';
+import './bevakat-kort.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

@@ -1,0 +1,23 @@
+name: Köa om en fil
+# Kör om EN namngiven fil från EN namngiven avsändare. Vägrar vid annat än exakt en träff.
+on:
+  workflow_dispatch:
+    inputs:
+      avsandare:
+        description: 'Avsändaradress'
+        required: true
+      filnamn:
+        description: 'Exakt filnamn (inga jokertecken)'
+        required: true
+jobs:
+  koa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci
+      - run: node scripts/koa-om-fil.mjs "${{ inputs.avsandare }}" "${{ inputs.filnamn }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
