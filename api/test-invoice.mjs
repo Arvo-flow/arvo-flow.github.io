@@ -1124,6 +1124,17 @@ export default async function handler(req, res) {
       // Nätavgiften är ett reglerat geografiskt monopol — ingen elleverantör kan påverka den.
       // Returnera specifikt unsupported-svar istället för att köra el-analysen.
       if (extracted.elInvoiceType === 'natavgift') {
+        // ── BOKFÖR BEDÖMNINGEN (2026-08-14, efter Ellevio-fyndet) ───────────────────────────
+        // Den här grinden var den ENDA av tio triage-utgångar som svarade ok:true utan att
+        // skriva en rad. Följden syntes först i skarpt läge: en kund skickade tio fakturor,
+        // fick nio i rummet, och den tionde försvann utan förklaring — trots att vi gjort det
+        // vassaste draget i hela bunten och konstaterat att nätavgiften är ett reglerat
+        // monopol ingen kan sänka. Beslutet var rätt; bokföringen saknades, och ett beslut
+        // som inte bokförs är för kunden omöjligt att skilja från ett tapp.
+        // Maskinvakt: tests/triage-bokforing.mjs kräver att VARJE triage-utgång skriver först.
+        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier,
+          category: categorized.category ?? null, route: 'unsupported', reason: 'natavgift',
+          userEmail: body.userEmail }).catch(() => {});
         timing.totalMs = Date.now() - t0;
         return send(res, 200, {
           ok:     true,
@@ -1198,6 +1209,11 @@ export default async function handler(req, res) {
 
       const elRec = computeElRecommendation(extracted, industry);
       if (!elRec) {
+        // Samma klass som nätavgiften: elfakturan lästes, men underlaget räckte inte till en
+        // rekommendation. Kunden ska se att vi tittat och varför vi tiger — inte en lucka.
+        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier,
+          category: categorized.category ?? null, route: 'review_queue', reason: 'el_data_missing',
+          userEmail: body.userEmail }).catch(() => {});
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'el_data_missing',
           extracted: {
@@ -1458,6 +1474,13 @@ export default async function handler(req, res) {
       if (!sanity.pass) {
         console.error(`[sanity] BLOCKED method=${sanity.method} reason=${sanity.reason}`);
         notifyReviewQueue(extracted, `[Sanity ${sanity.method}] ${categorized.category}: saving=${_savingPct}% flaggad som orimlig — reason=${sanity.reason}`).catch(() => {});
+        // DEN VIKTIGASTE AV DE TRE ATT BOKFÖRA: här fångade vi OSS SJÄLVA på väg att påstå en
+        // orimlig besparing. Utan raden går det inte att mäta hur ofta sanitetsvakten fyrar, och
+        // en kvalitetsvakt vars utfall aldrig räknas är en vakt vi inte kan förbättra. Vi lärde
+        // oss samma sak av smyghöjningen: ett larm som ingen mäter blir förr eller senare avstängt.
+        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier,
+          category: categorized.category ?? null, route: 'review_queue', reason: 'sanity_check_failed',
+          userEmail: body.userEmail }).catch(() => {});
         timing.totalMs = Date.now() - t0;
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'sanity_check_failed',

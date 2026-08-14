@@ -341,6 +341,23 @@ signera", aldrig som ett verkställt löfte.)
    (c) vid tolkningsfel: ett few-shot-exempel i flywheeln. Bumpa cache-versioner
    (`pdf:result:vN`, `bm:vN`) vid varje pipelineändring som påverkar resultat.
 
+   > **✅ BOKFÖRINGSPLIKTEN (2026-08-14, ur Ellevio-fallet): ett beslut vi inte bokför har vi
+   > inte fattat — vi har bara tänkt det.** En kund skickade tio fakturor. Nio landade i rummet;
+   > den tionde försvann utan spår. Kön sa `done`, ett försök, tomt felfält — och drainen hade
+   > rätt: pipelinen hade svarat `ok: true`. Den hade nämligen gjort bunten s vassaste drag och
+   > känt igen en **nätavgift** — ett reglerat geografiskt monopol som ingen leverantör kan
+   > påverka. Rätt beslut. Men grinden var den enda av tio triage-utgångar som returnerade utan
+   > `storeTriaged`, så bedömningen kastades. **För kunden är ett obokfört beslut omöjligt att
+   > skilja från ett tapp.** Vi gjorde det smartaste vi kunde och såg ut att ha tappat en faktura.
+   > Maskinvakt: `tests/triage-bokforing.mjs` kräver att VARJE triage-utgång skriver en rad innan
+   > den svarar (undantag motiveras inline med `// triage-ok: <skäl>`), och att vakten faktiskt
+   > hittar utgångarna — en vakt som matchar noll blir grön av tomhet. Sabotage-bevisad i båda
+   > riktningarna. Den fällde **två hål till** på sin första körning: `el_data_missing` och
+   > `sanity_check_failed`. Det andra är det allvarligaste av alla tre — där fångar vi OSS SJÄLVA
+   > på väg att påstå en orimlig besparing, och utan raden går det inte att mäta hur ofta
+   > sanitetsvakten fyrar. En kvalitetsvakt vars utfall aldrig räknas är en vakt vi inte kan
+   > förbättra — och förr eller senare stängs den av, precis som smyghöjningsvakten 2026-07-20.
+
 8. **Visuell verifiering före deploy.** UI-ändringar screenshotas i mobil (390px) OCH
    desktop (1600px) före push — mönster: `scripts/screenshot-prospect.mjs`.
    Användaren är aldrig vår QA.
