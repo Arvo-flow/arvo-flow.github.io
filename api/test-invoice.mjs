@@ -323,6 +323,15 @@ async function checkSavingGate(kv, { orgNumber, email, netSaving }) {
   return false;
 }
 
+// ── EN MISSLYCKAD BOKFÖRING FÅR INTE VARA TYST (2026-08-15) ──────────────────────────────────
+// Alla tretton storeTriaged-anrop hade `.catch(() => {})`. Avsikten var rätt — en faktura ska
+// aldrig falla för att en logg-skrivning fallerar — men följden var att exakt det fel vi jagar
+// blir osynligt: rummet visar nio av tio, kön säger `done`, och ingenstans finns ett spår av att
+// skrivningen ens försöktes. Vi letade i timmar efter något som skulle ha stått i loggen.
+// Nu sväljs felet fortfarande (svaret till kunden är oförändrat) men det SÄGS. Ett fel man kan
+// läsa är en tillgång; ett fel som ingen skriver ner har man inte haft.
+const bokforFel = (err) => console.error('[test-invoice] storeTriaged misslyckades:', err?.message ?? err);
+
 function send(res, status, body) {
   if (res.headersSent) return; // guard mot dubbel-send vid timeout-race
   res.statusCode = status;
@@ -528,7 +537,7 @@ export default async function handler(req, res) {
     // Guard: kreditnotor (negativt totalt fakturabelopp)
     if (extracted.amount < 0) {
       await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
-        route: 'unsupported', reason: 'credit_note', userEmail: body.userEmail }).catch(() => {});
+        route: 'unsupported', reason: 'credit_note', userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok: true, route: 'unsupported', reason: 'credit_note',
         extracted: { supplier: extracted.supplier, date: extracted.date },
@@ -595,7 +604,7 @@ export default async function handler(req, res) {
         (err) => console.error('[test-invoice] notifyReviewQueue (currency) threw:', err.message)
       );
       await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
-        route: 'review_queue', reason: `foreign_currency:${extracted.currency}`, userEmail: body.userEmail }).catch(() => {});
+        route: 'review_queue', reason: `foreign_currency:${extracted.currency}`, userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok: true, route: 'review_queue', reason: 'foreign_currency',
         currency: extracted.currency,
@@ -621,7 +630,7 @@ export default async function handler(req, res) {
         console.error(`[guard:belopp] Orimliga belopp — annualCost=${extracted.annualCost} amount=${extracted.amount} currency=${extracted.currency}`);
         notifyReviewQueue(extracted, `[Beloppsvalidering] Orimliga belopp (annualCost=${(extracted.annualCost ?? 0).toLocaleString('sv-SE')} kr) — troligt valutatransformationsfel`).catch(() => {});
         await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
-          route: 'review_queue', reason: 'implausible_amounts', userEmail: body.userEmail }).catch(() => {});
+          route: 'review_queue', reason: 'implausible_amounts', userEmail: body.userEmail }).catch(bokforFel);
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'implausible_amounts',
           extracted: {
@@ -685,7 +694,7 @@ export default async function handler(req, res) {
         (err) => console.error('[test-invoice] notifyReviewQueue threw:', err.message)
       );
       await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
-        route: 'review_queue', reason: routing.reason, userEmail: body.userEmail }).catch(() => {});
+        route: 'review_queue', reason: routing.reason, userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok:     true,
         route:  'review_queue',
@@ -704,7 +713,7 @@ export default async function handler(req, res) {
 
     if (routing.route === 'unsupported') {
       await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
-        route: 'unsupported', reason: routing.reason ?? 'out_of_scope', userEmail: body.userEmail }).catch(() => {});
+        route: 'unsupported', reason: routing.reason ?? 'out_of_scope', userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok:    true,
         route: 'unsupported',
@@ -766,7 +775,7 @@ export default async function handler(req, res) {
         console.error(`[fingerprint] MISMATCH key=${fp.key} ai_category='${categorized.category}' expected=[${fp.expectedCategories.join(', ')}]`);
         notifyReviewQueue(extracted, `[Fingerprint] ${fp.key}: AI gav '${categorized.category}', förväntat [${fp.expectedCategories.join(', ')}]`).catch(() => {});
         await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
-          route: 'review_queue', reason: 'fingerprint_mismatch', userEmail: body.userEmail }).catch(() => {});
+          route: 'review_queue', reason: 'fingerprint_mismatch', userEmail: body.userEmail }).catch(bokforFel);
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'fingerprint_mismatch',
           extracted: {
@@ -814,7 +823,7 @@ export default async function handler(req, res) {
           notifyReviewQueue(extracted, `[P1.1 Dual-model] Kategorikonflikt: Sonnet='${categorized.category}', Haiku='${_validation.validatorCategory}' — manuell granskning krävs`).catch(() => {});
           timing.totalMs = Date.now() - t0;
           await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
-            route: 'review_queue', reason: 'categorization_conflict', userEmail: body.userEmail }).catch(() => {});
+            route: 'review_queue', reason: 'categorization_conflict', userEmail: body.userEmail }).catch(bokforFel);
           return send(res, 200, {
             ok: true, route: 'review_queue', reason: 'categorization_conflict',
             extracted: {
@@ -843,7 +852,7 @@ export default async function handler(req, res) {
         notifyReviewQueue(extracted, `[P1.2 Price Intel] ${_priceCheck.detail}`).catch(() => {});
         timing.totalMs = Date.now() - t0;
         await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
-          route: 'review_queue', reason: 'price_anomaly', userEmail: body.userEmail }).catch(() => {});
+          route: 'review_queue', reason: 'price_anomaly', userEmail: body.userEmail }).catch(bokforFel);
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'price_anomaly',
           extracted: {
@@ -1063,7 +1072,7 @@ export default async function handler(req, res) {
       }
 
       await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
-        route: 'review_queue', reason: 'volume_data_required', userEmail: body.userEmail }).catch(() => {});
+        route: 'review_queue', reason: 'volume_data_required', userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok:     true,
         route:  'review_queue',
@@ -1099,7 +1108,7 @@ export default async function handler(req, res) {
         console.error('[test-invoice] alert failed:', e.message)
       );
       await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
-        route: 'review_queue', reason: 'no_benchmark', userEmail: body.userEmail }).catch(() => {});
+        route: 'review_queue', reason: 'no_benchmark', userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok:     true,
         route:  'review_queue',
@@ -1137,7 +1146,7 @@ export default async function handler(req, res) {
         // Maskinvakt: tests/triage-bokforing.mjs kräver att VARJE triage-utgång skriver först.
         await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier,
           category: categorized.category ?? null, route: 'unsupported', reason: 'natavgift',
-          userEmail: body.userEmail }).catch(() => {});
+          userEmail: body.userEmail }).catch(bokforFel);
         timing.totalMs = Date.now() - t0;
         return send(res, 200, {
           ok:     true,
@@ -1228,7 +1237,7 @@ export default async function handler(req, res) {
         // rekommendation. Kunden ska se att vi tittat och varför vi tiger — inte en lucka.
         await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier,
           category: categorized.category ?? null, route: 'review_queue', reason: 'el_data_missing',
-          userEmail: body.userEmail }).catch(() => {});
+          userEmail: body.userEmail }).catch(bokforFel);
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'el_data_missing',
           extracted: {
@@ -1516,7 +1525,7 @@ export default async function handler(req, res) {
         // oss samma sak av smyghöjningen: ett larm som ingen mäter blir förr eller senare avstängt.
         await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier,
           category: categorized.category ?? null, route: 'review_queue', reason: 'sanity_check_failed',
-          userEmail: body.userEmail }).catch(() => {});
+          userEmail: body.userEmail }).catch(bokforFel);
         timing.totalMs = Date.now() - t0;
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'sanity_check_failed',
