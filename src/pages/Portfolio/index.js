@@ -210,6 +210,9 @@ export default function Portfolio() {
   const [ingesting, setIngesting] = useState(0);   // fakturor på väg (köade, ej klara) → "analyserar N"
   const [ingestFailed, setIngestFailed] = useState(0);   // fakturor som föll → ärligt bortfalls-besked
   const [ingestFailedFiles, setIngestFailedFiles] = useState([]);   // namnen på de fallna
+  // Analyser som ligger på DEN HÄR DATORNS fingerprint men inte på kundens e-post. De visas inte
+  // längre i rummet (rummet tillhör identiteten, inte datorn) — men det som inte visas ska sägas.
+  const [franDennaEnhet, setFranDennaEnhet] = useState(0);
   const [retrying, setRetrying] = useState(false);
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
@@ -265,6 +268,7 @@ export default function Portfolio() {
     setIngesting(data.ingesting ?? 0);
     setIngestFailed(data.ingestFailed ?? 0);
     setIngestFailedFiles(data.ingestFailedFiles ?? []);
+    setFranDennaEnhet(Number(data.frånDennaEnhet) || 0);
   }, [fingerprint, magic, sessionToken]);
 
   // "Försök igen": Arvo kör om de fallna fakturorna själv (re-köar jobben) — inget nytt mejl behövs.
@@ -683,6 +687,26 @@ export default function Portfolio() {
         {/* Riktig inloggning: vem är inne, logga ut/byt konto (varaktig session, ej fingerprint-gissning) */}
         <AccountBar email={authEmail} onLogout={handleLogout} />
         {/* Bortfalls-besked: aldrig tyst tapp. Namnger VILKA föll + Arvo kör om dem på ett klick. */}
+        {/* ── DET SOM INTE VISAS SÄGS (2026-08-14) ──────────────────────────────────────────
+            Rummet slog tidigare ihop e-postens historik med webbläsarens. En kund som mejlat in
+            tio fakturor såg elva leverantörer och ett fynd om hårdvara hen aldrig skickat. Nu
+            tillhör rummet identiteten — men enhetens rader får inte försvinna i tysthet. Vi
+            RÄKNAR dem och säger det. Ingen knapp: en länkningsfunktion finns inte ännu, och en
+            knapp som inte gör något är ett löfte utan mekanik (regel 9). */}
+        {franDennaEnhet > 0 && (
+          <div style={{
+            border: '1px solid rgba(157,184,175,0.22)', borderRadius: 12,
+            background: 'rgba(157,184,175,0.05)', padding: '14px 18px', margin: '0 0 18px',
+            color: 'rgba(236,244,241,0.80)', fontSize: 13, lineHeight: 1.6,
+          }}>
+            <strong style={{ color: '#EAF2EF' }}>
+              {franDennaEnhet} {franDennaEnhet === 1 ? 'analys' : 'analyser'} till finns på den här datorn
+            </strong>{' '}
+            — de hör inte till {apiEmail ?? 'ert konto'} och visas därför inte här. Rummet visar
+            det ni delat med oss, inget annat.
+          </div>
+        )}
+
         {ingestFailed > 0 && (
           <div style={{
             border: '1px solid rgba(245,180,90,0.45)', borderRadius: 12, background: 'rgba(245,180,90,0.07)',

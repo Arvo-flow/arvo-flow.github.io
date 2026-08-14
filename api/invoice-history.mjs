@@ -90,11 +90,33 @@ export default async function handler(req, res) {
     });
   }
 
-  // Slå ihop + dedupa (samma analys kan ha både fingerprint och user_email)
+  // ── IDENTITETEN KOMMER UR INKORGEN, INTE UR WEBBLÄSAREN (grundarbeslut 2026-08-14) ─────────
+  // Sammanslagningen av fingerprint- och e-posthistorik var rätt när rummet var ENHETSBUNDET:
+  // kunden laddade upp i en webbläsare och kom tillbaka till samma. Med mejl-intaget som
+  // huvudväg är den fel — och den visade sig i skarpt läge: grundaren mejlade in tio fakturor,
+  // öppnade rummet med sin magic-länk och möttes av ELVA leverantörer och ett fynd om en iPad
+  // han aldrig skickat. Raderna kom från webbläsarens egen historik.
+  //
+  // Tre skäl till att det måste sluta:
+  //   1. Kunden kan inte skilja sitt eget underlag från datorns. Ingenting märker raderna.
+  //   2. På en delad kontorsdator blandas två personers underlag i samma vy.
+  //   3. Vi lovar "ett eget rum". Det vi levererade var deras plus vad datorn råkade minnas.
+  //
+  // Regeln nu: är e-postägarskapet BEVISAT (magic-token eller signerad session) är e-posten
+  // identiteten — punkt. Enhetens historik slås inte in, den REDOVISAS separat och ärligt.
+  // Utan bevisad e-post är rummet fortfarande enhetsbundet, precis som förut.
+  const identitetBevisad = Boolean(email);
   const seen = new Set();
-  const merged = [...byEmail, ...byFp]
+  const merged = [...byEmail, ...(identitetBevisad ? [] : byFp)]
     .filter((a) => (seen.has(a.id) ? false : seen.add(a.id)))
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  // Det som INTE visas ska sägas, aldrig sväljas (regel 9). Vi räknar bara — inget löfte om en
+  // knapp som inte finns, och inga uppgifter om vad de innehåller.
+  const epostIdn = new Set(byEmail.map((a) => a.id));
+  const frånDennaEnhet = identitetBevisad
+    ? byFp.filter((a) => !epostIdn.has(a.id)).length
+    : 0;
 
   // "Bevakat — inte prissatt" (Liggare 2): fakturor vi SÅG men medvetet inte prissatte (triagade).
   // Disciplinmontern — Zero Trust gjort synligt: vi gissar aldrig på utländsk valuta eller en kategori
@@ -192,7 +214,7 @@ export default async function handler(req, res) {
   const ingestFailed = email ? await failedCountBySender(email) : 0;
   const ingestFailedFiles = ingestFailed > 0 ? await failedFilesBySender(email) : [];
 
-  return send(res, 200, { ok: true, analyses, watched, cohort, publicBench, forecasts, branchAnchors, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, email: email ?? undefined });
+  return send(res, 200, { ok: true, analyses, watched, cohort, publicBench, forecasts, branchAnchors, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, email: email ?? undefined, frånDennaEnhet });
 }
 
 // "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.
