@@ -5,5 +5,91 @@
 ║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
 ║ ett påstående som låtsas vara ett faktum.
 ╚═══════════════════════════════════════════════════════════════════════════════
-ingest_jobs-fel: column "updated_at" does not exist
-Inga jobb senaste dygnet.
+
+═══════ me***@hotmail.com ═══════
+  köade jobb: 10   status: {"done":10}
+  analyser i invoice_analyses: 9
+  GLAPP: 1 ⛔ jobb utan analys — tyst förlust
+  kötid: median 31.7 s · längst 41.5 s
+
+  idx  status    försök  filnamn                                   fel
+    0  done          1  INV_9924_Tele2_Foretag.pdf                
+    1  done          1  INV_9918_Binero_Group_AB.pdf              
+    2  done          1  INV_9916_Telia_Foretag.pdf                
+    3  done          1  INV_9923_Slack_Technologies.pdf           
+    4  done          1  INV_9915_Salesforce.com.pdf               
+    5  done          1  INV_9917_Microsoft_Ireland.pdf            
+    6  done          1  INV_9919_Fortnox_AB.pdf                   
+    7  done          1  INV_9922_Google_Ireland_Ltd.pdf           
+    8  done          1  INV_9920_Ellevio_AB.pdf                   
+    9  done          1  INV_9921_Tre_Foretag.pdf                  
+
+  analyser som landade:
+     Salesforce.com             uncategorized      — kr  väg=review_queue
+     Fortnox AB                 loneadmin          — kr  väg=review_queue
+     Binero Group AB            serverhosting      — kr  väg=review_queue
+     Tele2 Företag              mobil              35880 kr  väg=auto
+     Microsoft Ireland          saas-productivity  45600 kr  väg=auto
+     Google Ireland Ltd         saas-productivity  72900 kr  väg=auto
+     Slack Technologies         uncategorized      — kr  väg=review_queue
+     Tre Foretag                mobil              14940 kr  väg=auto
+     Telia Företag              mobil              119520 kr  väg=auto
+
+═══════ me***@gmail.com ═══════
+  köade jobb: 10   status: {"done":10}
+  analyser i invoice_analyses: 37
+  GLAPP: -27 ⛔ jobb utan analys — tyst förlust
+  kötid: median 22.3 s · längst 29.8 s
+
+  idx  status    försök  filnamn                                   fel
+    0  done          1  INV_9924_Tele2_Foretag.pdf                
+    1  done          1  INV_9918_Binero_Group_AB.pdf              
+    2  done          1  INV_9916_Telia_Foretag.pdf                
+    3  done          1  INV_9923_Slack_Technologies.pdf           
+    4  done          1  INV_9915_Salesforce.com.pdf               
+    5  done          1  INV_9917_Microsoft_Ireland.pdf            
+    6  done          1  INV_9919_Fortnox_AB.pdf                   
+    7  done          1  INV_9922_Google_Ireland_Ltd.pdf           
+    8  done          1  INV_9920_Ellevio_AB.pdf                   
+    9  done          1  INV_9921_Tre_Foretag.pdf                  
+
+  analyser som landade:
+     IT-Partner Sverige AB      saas-productivity  184680 kr  väg=auto
+     SveaMobil Företag AB       mobil              188160 kr  väg=auto
+     Telia Sverige AB           mobil              188460 kr  väg=auto
+     Telenor Sverige AB         mobil              125580 kr  väg=auto
+     Telenor Sverige AB         mobil              125580 kr  väg=auto
+     Telenor Sverige AB         mobil              125580 kr  väg=auto
+     IT-Partner Sverige AB      saas-productivity  184680 kr  väg=auto
+     Telia Företag              mobil              58092 kr  väg=auto
+     Telia Sverige AB           mobil              269460 kr  väg=auto
+     IT-Partner Sverige AB      saas-productivity  212040 kr  väg=auto
+     Telia Sverige AB           mobil              269460 kr  väg=auto
+     IT-Partner Sverige AB      saas-productivity  184680 kr  väg=auto
+     CloudReseller Norden AB    saas-productivity  184260 kr  väg=auto
+     Nordic Managed IT Services saas-productivity  475440 kr  väg=auto
+     Svea Kontorsprint & Leasin skrivarleasing     58800 kr  väg=auto
+     Nordic Managed IT Services saas-productivity  475440 kr  väg=auto
+     IT-Partner Sverige AB      saas-productivity  184680 kr  väg=auto
+     Telia Företag              mobil              58092 kr  väg=auto
+     Telia Sverige AB           mobil              269460 kr  väg=auto
+     Svea Kontorsprint & Leasin skrivarleasing     58800 kr  väg=auto
+     Tele2 Företag AB           mobil              146580 kr  väg=auto
+     Tele2 Bredband AB          bredband           23388 kr  väg=auto
+     Microsoft Ireland Operatio saas-productivity  332160 kr  väg=auto
+     Tele2 Företag AB           mobil              373800 kr  väg=auto
+     Tele2 Bredband AB          bredband           116940 kr  väg=auto
+     Microsoft Ireland Operatio saas-productivity  332160 kr  väg=auto
+     Microsoft Ireland Operatio saas-productivity  352296 kr  väg=auto
+     Tele2 Företag AB           mobil              439740 kr  väg=auto
+     Slack Technologies         uncategorized      — kr  väg=review_queue
+     Fortnox AB                 faktura-tjanst     2388 kr  väg=auto
+     Binero Group AB            serverhosting      — kr  väg=review_queue
+     Google Ireland Ltd         saas-productivity  72900 kr  väg=auto
+     Tre Foretag                mobil              14940 kr  väg=auto
+     Tele2 Företag              mobil              35880 kr  väg=auto
+     Salesforce.com             uncategorized      — kr  väg=review_queue
+     Telia Företag              mobil              119520 kr  väg=auto
+     Microsoft Ireland          saas-productivity  45600 kr  väg=auto
+
+  Sonden ser bara det som KÖADES — se deklarationens blindfläck innan någon slutsats dras.
