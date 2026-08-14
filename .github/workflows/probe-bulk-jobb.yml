@@ -1,0 +1,37 @@
+name: Probe bulk-jobb
+# Vart tog fakturan vägen? Läser ingest_jobs + invoice_analyses per avsändare. Inga skrivningar.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Sondera
+        run: |
+          mkdir -p ops
+          node scripts/probe-bulk-jobb.mjs 2>&1 | tee ops/bulk-jobb.txt
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Commit
+        if: always()
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Diag Bot"
+          git add ops/bulk-jobb.txt
+          git commit -m "ops: bulk-jobb [skip ci]" || { echo "inget"; exit 0; }
+          for i in 1 2 3 4 5; do
+            git fetch origin main; git reset --soft FETCH_HEAD; git reset; git add ops/bulk-jobb.txt
+            if git diff --cached --quiet; then echo "identiskt"; exit 0; fi
+            git commit -m "ops: bulk-jobb [skip ci]"
+            git push origin HEAD:main && exit 0
+            sleep $((i * 5))
+          done
+          echo "::error::resultatet kunde inte pushas"; exit 1
