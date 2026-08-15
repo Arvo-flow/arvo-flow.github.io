@@ -10,19 +10,19 @@
   köade jobb: 10   status: {"done":10}
   analyser i invoice_analyses: 9
   GLAPP: 1 ⛔ jobb utan analys — tyst förlust
-  kötid: median 33.9 s · längst 39666.0 s
+  kötid: median 33.9 s · längst 44166.6 s
 
-  idx  status    försök  filnamn                                   fel
-    0  done          1  INV_9924_Tele2_Foretag.pdf                
-    1  done          1  INV_9918_Binero_Group_AB.pdf              
-    2  done          1  INV_9916_Telia_Foretag.pdf                
-    3  done          1  INV_9923_Slack_Technologies.pdf           
-    4  done          1  INV_9915_Salesforce.com.pdf               
-    5  done          1  INV_9917_Microsoft_Ireland.pdf            
-    6  done          1  INV_9919_Fortnox_AB.pdf                   
-    7  done          1  INV_9922_Google_Ireland_Ltd.pdf           
-    8  done          1  INV_9920_Ellevio_AB.pdf                   
-    9  done          1  INV_9921_Tre_Foretag.pdf                  
+  idx  status    försök  filnamn                                   utfall / fel
+    0  done          1  INV_9924_Tele2_Foretag.pdf                (ingen dom bokförd)
+    1  done          1  INV_9918_Binero_Group_AB.pdf              (ingen dom bokförd)
+    2  done          1  INV_9916_Telia_Foretag.pdf                (ingen dom bokförd)
+    3  done          1  INV_9923_Slack_Technologies.pdf           (ingen dom bokförd)
+    4  done          1  INV_9915_Salesforce.com.pdf               (ingen dom bokförd)
+    5  done          1  INV_9917_Microsoft_Ireland.pdf            (ingen dom bokförd)
+    6  done          1  INV_9919_Fortnox_AB.pdf                   (ingen dom bokförd)
+    7  done          1  INV_9922_Google_Ireland_Ltd.pdf           (ingen dom bokförd)
+    8  done          1  INV_9920_Ellevio_AB.pdf                   auto:saas-productivity
+    9  done          1  INV_9921_Tre_Foretag.pdf                  (ingen dom bokförd)
 
   RUMSLÄNKAR (magic_tokens) senaste dygnet: 8
      22:40:08  note=manuell-rumslank  använd=ja
@@ -52,17 +52,17 @@
   GLAPP: -27 ⛔ jobb utan analys — tyst förlust
   kötid: median 22.3 s · längst 29.8 s
 
-  idx  status    försök  filnamn                                   fel
-    0  done          1  INV_9924_Tele2_Foretag.pdf                
-    1  done          1  INV_9918_Binero_Group_AB.pdf              
-    2  done          1  INV_9916_Telia_Foretag.pdf                
-    3  done          1  INV_9923_Slack_Technologies.pdf           
-    4  done          1  INV_9915_Salesforce.com.pdf               
-    5  done          1  INV_9917_Microsoft_Ireland.pdf            
-    6  done          1  INV_9919_Fortnox_AB.pdf                   
-    7  done          1  INV_9922_Google_Ireland_Ltd.pdf           
-    8  done          1  INV_9920_Ellevio_AB.pdf                   
-    9  done          1  INV_9921_Tre_Foretag.pdf                  
+  idx  status    försök  filnamn                                   utfall / fel
+    0  done          1  INV_9924_Tele2_Foretag.pdf                (ingen dom bokförd)
+    1  done          1  INV_9918_Binero_Group_AB.pdf              (ingen dom bokförd)
+    2  done          1  INV_9916_Telia_Foretag.pdf                (ingen dom bokförd)
+    3  done          1  INV_9923_Slack_Technologies.pdf           (ingen dom bokförd)
+    4  done          1  INV_9915_Salesforce.com.pdf               (ingen dom bokförd)
+    5  done          1  INV_9917_Microsoft_Ireland.pdf            (ingen dom bokförd)
+    6  done          1  INV_9919_Fortnox_AB.pdf                   (ingen dom bokförd)
+    7  done          1  INV_9922_Google_Ireland_Ltd.pdf           (ingen dom bokförd)
+    8  done          1  INV_9920_Ellevio_AB.pdf                   (ingen dom bokförd)
+    9  done          1  INV_9921_Tre_Foretag.pdf                  (ingen dom bokförd)
 
   RUMSLÄNKAR (magic_tokens) senaste dygnet: 3
      21:31:29  note=price-alert:2026-08-14T21:25:30.189Z:telenor  använd=nej
