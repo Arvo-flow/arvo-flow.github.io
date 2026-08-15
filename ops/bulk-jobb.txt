@@ -10,7 +10,7 @@
   köade jobb: 10   status: {"done":10}
   analyser i invoice_analyses: 9
   GLAPP: 1 ⛔ jobb utan analys — tyst förlust
-  kötid: median 33.9 s · längst 44166.6 s
+  kötid: median 33.9 s · längst 45022.5 s
 
   idx  status    försök  filnamn                                   utfall / fel
     0  done          1  INV_9924_Tele2_Foretag.pdf                (ingen dom bokförd)
@@ -21,7 +21,7 @@
     5  done          1  INV_9917_Microsoft_Ireland.pdf            (ingen dom bokförd)
     6  done          1  INV_9919_Fortnox_AB.pdf                   (ingen dom bokförd)
     7  done          1  INV_9922_Google_Ireland_Ltd.pdf           (ingen dom bokförd)
-    8  done          1  INV_9920_Ellevio_AB.pdf                   auto:saas-productivity
+    8  done          1  INV_9920_Ellevio_AB.pdf                   auto:saas-productivity·lagrad
     9  done          1  INV_9921_Tre_Foretag.pdf                  (ingen dom bokförd)
 
   RUMSLÄNKAR (magic_tokens) senaste dygnet: 8
