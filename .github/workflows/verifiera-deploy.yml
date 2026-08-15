@@ -43,6 +43,7 @@ jobs:
           echo "── SKA FINNAS (rumsgranskningen 2026-08-15) ──"
           for s in "Ur er egen faktura" "fakturor prissatta" "Fler leverant" "vi kunde priss" "eget sk" \
                    "Marknadsankaret" "Vi skrev brevet" "Att beg" "i fyndet ovan" \
+                   "Vad ing" "pande per" \
                    "verifierat " "faktura $"; do
             if grep -qF "$s" /tmp/main.js; then echo "  ✓ $s"; else echo "  ⛔ SAKNAS: $s"; FEL=1; fi
           done

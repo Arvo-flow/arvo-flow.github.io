@@ -1,0 +1,24 @@
+name: Köa om hela bunten
+# Kör om ALLA jobb för EN avsändare, så raderna bär dagens fält (uppdelning, fakturanummer).
+on:
+  workflow_dispatch:
+    inputs:
+      avsandare:
+        description: 'Avsändaradress'
+        required: true
+      tak:
+        description: 'Max antal jobb att köra om (skydd mot fel bunt)'
+        default: '15'
+        required: false
+jobs:
+  koa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci
+      - run: node scripts/koa-om-alla.mjs "${{ inputs.avsandare }}" "${{ inputs.tak }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
