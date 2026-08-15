@@ -395,6 +395,28 @@ signera", aldrig som ett verkställt löfte.)
    > aldrig att den svarar i verkligheten.** Åtgärd: `getPublicListBenchmark()` — samma funktion
    > dörrens avslöjande redan använde (regel 1) — gör frågan tillståndsoberoende. BA-08 låser vägen.
 
+   > **✅ RESERVKORTET FÅR INTE PÅSTÅ ETT SKÄL (2026-08-15, ur Fortnox-fallet).** `watchedCard`
+   > kände inte igen koden `fingerprint_mismatch` och delade ut sitt reservkort: *"Mottagen och
+   > klassad — men utan verifierat golv att prissätta mot."* Varje led var falskt. Fakturan blev
+   > inte klassad utan FELklassad (vår leverantörskontroll sa emot vår egen kategorisering), golvet
+   > FINNS (`loneadmin` är `real-public`), och samma PDF prissattes auto från en annan adress.
+   > Detta var den blindfläck sviten själv hade **deklarerat** i klartext — ärligheten om hålet
+   > hindrade inte hålet. Regeln nu: ett reservkort vet per definition inte varför vi stoppade och
+   > får därför bara säga att vi stoppade, att skälet är tekniskt och att en människa tar vid.
+   > **En tystnad med rätt motivering är premium; en tystnad med påhittad motivering är en pose.**
+   > Maskinvakt: BK-06/BK-07 i `tests/bevakat-kort.mjs`, sabotage-bevisade. Det sanna skälet visade
+   > sig dessutom vara vassare än gissningen — att vi stoppar när våra egna kontroller är oense ÄR
+   > premiumsignalen.
+   >
+   > **En jämförelse som bara kan säga en sak är inte intelligens.** Ankarkortet ställde kundens
+   > FRAMFÖRHANDLADE pris mot leverantörens SKYLTPRIS. Nästan alla företag ligger under listpris,
+   > så kortet kunde bara producera ett enda budskap ("ni betalar mindre än typiskt") — aritmetik
+   > förklädd till insikt, och en CFO genomskådar den på tre sekunder. Kortet heter numera
+   > **Marknadsankaret** (kohortnamnet är reserverat för kort som bärs av verkliga fakturor), säger
+   > att ett pris under listpris är väntat, och skiljer de två sidorna åt: att ligga ÖVER
+   > leverantörens eget listpris är ovanligt och rummets vassaste besked. Den grenen fångades i
+   > **min egen skärmdump**, inte av en kund — regel 8 betalade sig samma kväll den skrevs.
+
 > **✅ GRUNDARBESLUT 2026-07-16 — IDENTITETSINVARIANTEN: inga påhittade företag, någonsin.**
 > Bolagsidentitet (namn, orgnr, omsättning, bokslut, koncern, grundandeår) får ENDAST komma från
 > **Bolagsverket-data via EN kanoniserad läsväg** (idag allabolag som transport — sanningskällan är

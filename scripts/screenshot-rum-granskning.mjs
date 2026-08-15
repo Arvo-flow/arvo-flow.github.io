@@ -57,10 +57,11 @@ const WATCHED = [
     headline: 'Ingen verifierad prisnivå ännu — under bevakning',
     detail: 'Webbhotell, domän och hosting är en splittrad marknad utan ett verifierat svenskt golv vi kan jämföra mot. Vi flaggar hellre än gissar.',
     action: 'Ladda upp avtalet/specen så bygger vi en ärlig jämförelse.' },
-  { supplier: 'Fortnox AB', category: null, reasonCode: 'review_queue', kind: 'Ej prissatt kategori',
-    headline: 'Mottagen och klassad — men utan verifierat golv att prissätta mot',
-    detail: 'Vi såg fakturan och la den under uppsikt. Vi sätter ingen siffra förrän vi har en verifierad marknadsreferens — aldrig en gissning.',
-    action: 'Under bevakning — vi prissätter så snart ett verifierat golv finns.' },
+  { supplier: 'Fortnox AB', category: null, reasonCode: 'fingerprint_mismatch',
+    kind: 'Våra kontroller sa emot varandra',
+    headline: 'Vi blev inte överens med oss själva om vad fakturan är',
+    detail: 'Vår leverantörskontroll och vår kategorisering gav olika svar om vilken sorts kostnad det här är. Vi prissätter aldrig när våra egna kontroller är oense — att jämföra mot fel marknad är värre än att vänta.',
+    action: 'En människa läser om fakturan och vi återkommer med rätt jämförelse.' },
 ];
 
 const VAKT = { sweptAt: '2026-08-14T21:25:00Z', sources: 36, streakNights: 8, allClear: true };

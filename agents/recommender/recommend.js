@@ -1007,7 +1007,11 @@ export async function recommend(input, opts = {}) {
   // oreviderade offert-kategorier (egna rader ≠ marknadstal; revisionsgrindens tystnad gäller ej dem).
   // Sätts ALDRIG i reasoning-copyn — lever i forensicFindings/leadFinding (sifferrevisorns talfri-krav intakt).
   const _forensicPeriod = input.invoice?.billingPeriod === 'annual' ? 1 : 12;
-  const forensicFindings = detectForensicFindings(input.invoice?.lineItems, { periodMultiplier: _forensicPeriod });
+  const forensicFindings = detectForensicFindings(input.invoice?.lineItems, {
+    periodMultiplier: _forensicPeriod,
+    // Leverantören behövs för kravbrevets adressat — samma namn kortet visar.
+    supplier: input.normalizedSupplier || input.invoice?.supplier || null,
+  });
   const leadFinding = forensicFindings[0] ?? null;
   const withForensics = (resp) => (resp && typeof resp === 'object' ? { ...resp, forensicFindings, leadFinding } : resp);
 

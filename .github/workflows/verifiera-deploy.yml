@@ -29,12 +29,13 @@ jobs:
 
           FEL=0
           echo "── SKA FINNAS (rumsgranskningen 2026-08-15) ──"
-          for s in "Ur er egen faktura" "fakturor prissatta" "Fler leverant" "vi kunde priss" "eget sk"; do
+          for s in "Ur er egen faktura" "fakturor prissatta" "Fler leverant" "vi kunde priss" "eget sk" \
+                   "Marknadsankaret" "Vi skrev brevet" "Att beg" "i fyndet ovan"; do
             if grep -qF "$s" /tmp/main.js; then echo "  ✓ $s"; else echo "  ⛔ SAKNAS: $s"; FEL=1; fi
           done
 
           echo "── SKA VARA BORTA ──"
-          for s in "mellan stolarna"; do
+          for s in "mellan stolarna" "domen bygger pa nedan"; do
             if grep -qF "$s" /tmp/main.js; then echo "  ⛔ FINNS KVAR: $s"; FEL=1; else echo "  ✓ borta: $s"; fi
           done
 

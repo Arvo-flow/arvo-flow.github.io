@@ -137,7 +137,9 @@ export default async function handler(req, res) {
       // Fyndet frystes vid analystillfället. Skärps en mekanism i dag ska den gälla även rader
       // som redan ligger inne — sanningen om kundens rad ändrades ju inte. EN producent
       // (lib/forensics.js DETECTORS), aldrig en omräkning i klienten.
-      lead_finding_json: refineFinding(a.lead_finding_json),
+      lead_finding_json: refineFinding(a.lead_finding_json, {
+        supplier: a.normalized_supplier || a.supplier || null,
+      }),
       contractClock: contractClockFinding({
         servicePeriodEnd: a.contract_end_date ?? null,
         supplier:         a.normalized_supplier || a.supplier || null,
@@ -268,6 +270,21 @@ export function watchedCard(a) {
     detail = 'Raderna summerar inte till fakturans totalbelopp. Innan vi vet vilket tal som gäller '
       + 'sätter vi ingen siffra alls — en jämförelse mot fel underlag är värre än ingen jämförelse.';
     action = 'Vi läser om fakturan manuellt och återkommer.';
+  } else if (reason.includes('fingerprint_mismatch') || reason.includes('categorization_conflict')) {
+    // ── VÅR EGEN KONTROLL, INTE KUNDENS FAKTURA (grundargranskning 2026-08-15) ────────────────
+    // Fortnox-fakturan bar `fingerprint_mismatch` — vår leverantörskontroll sa emot vår egen
+    // kategorisering. Kunden fick läsa "utan verifierat golv att prissätta mot", och varje led
+    // var falskt: fakturan blev inte klassad utan FELklassad, och golvet finns (loneadmin ligger
+    // i prisboken som real-public). Samma PDF prissattes dessutom auto från en annan adress.
+    // Det sanna skälet är dessutom vassare än gissningen — att vi stoppar när våra egna
+    // kontroller är oense ÄR premiumsignalen. Vi ska säga det, inte dölja det bakom en
+    // marknadsförklaring som inte stämmer.
+    kind = 'Våra kontroller sa emot varandra';
+    headline = 'Vi blev inte överens med oss själva om vad fakturan är';
+    detail = 'Vår leverantörskontroll och vår kategorisering gav olika svar om vilken sorts kostnad '
+      + 'det här är. Vi prissätter aldrig när våra egna kontroller är oense — att jämföra mot fel '
+      + 'marknad är värre än att vänta.';
+    action = 'En människa läser om fakturan och vi återkommer med rätt jämförelse.';
   } else if (reason.includes('credit_note')) {
     kind = 'Kreditnota';
     headline = 'En kreditfaktura — ingen kostnad att prissätta';
@@ -288,11 +305,27 @@ export function watchedCard(a) {
     headline = 'Ingen verifierad prisnivå ännu — under bevakning';
     detail = 'Webbhotell, domän och hosting är en splittrad marknad utan ett verifierat svenskt golv vi kan jämföra mot. Vi flaggar hellre än gissar.';
     action = 'Ladda upp avtalet/specen så bygger vi en ärlig jämförelse.';
-  } else {
+  } else if (reason.includes('no_benchmark') || reason.includes('out_of_scope') || reason.includes('unsupported_category')) {
+    // Efter de leverantörsspecifika grenarna: en KÄND leverantör med ett känt skäl (elnätet,
+    // webbhotellen) ska bära sin egen, mer precisa förklaring. Först när namnet inte säger något
+    // är "ingen verifierad marknadsreferens" den mest specifika sanning vi har.
     kind = 'Ej prissatt kategori';
     headline = 'Mottagen och klassad — men utan verifierat golv att prissätta mot';
     detail = 'Vi såg fakturan och la den under uppsikt. Vi sätter ingen siffra förrän vi har en verifierad marknadsreferens — aldrig en gissning.';
     action = 'Under bevakning — vi prissätter så snart ett verifierat golv finns.';
+  } else {
+    // ── RESERVKORTET FÅR INTE PÅSTÅ ETT SKÄL (grundargranskning 2026-08-15) ───────────────────
+    // Här stod tidigare "utan verifierat golv att prissätta mot" — en SUBSTANTIELL förklaring,
+    // utdelad till varje kod ingen tänkt på. För `fingerprint_mismatch` blev det en osanning i
+    // kundyta, och den formen kan uppstå igen med nästa nya kod: reservkortet vet per definition
+    // INTE varför vi stoppade. Det enda ärliga en okänd kod kan bära är att vi stoppade, att
+    // skälet är tekniskt, och att en människa tar vid. En tystnad med rätt motivering är
+    // premium; en tystnad med påhittad motivering är en pose (bevakat-kortets läxa, andra gången).
+    kind = 'Under granskning';
+    headline = 'Mottagen — men vi stoppade prissättningen';
+    detail = 'Vi såg fakturan och la den under uppsikt. Skälet är tekniskt, och vi översätter det '
+      + 'hellre inte till ett påstående om ert avtal som vi inte kan stå för.';
+    action = 'En människa läser om fakturan och vi återkommer.';
   }
   return { supplier: supplierName, category: a.category ?? null, reasonCode: reason, kind, headline, detail, action };
 }

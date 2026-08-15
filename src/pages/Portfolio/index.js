@@ -661,7 +661,9 @@ export default function Portfolio() {
             : <>Bevakningen gick igenom i natt. </>}
           {vakt.allClear
             ? 'Inget av det marknaden gjorde rörde era priser — det tysta beskedet är också ett besked.'
-            : 'Nattens svep är avläst; det som berör er reser sig som ett eget kort här ovan.'}</>
+            : roomMovement
+              ? 'Nattens svep är avläst — det som berör er står som ett eget kort här ovan.'
+              : 'Nattens svep är avläst. Ingenting i det krävde er uppmärksamhet.'}</>
       : <>Er bevakning är aktiv. Nattens svep visas här så snart körningen rapporterat — vi redovisar antalet källor först när vi har det, aldrig en ungefärlig siffra.</> });
     if (autoAnalyses.length > 0) {
       // slutpunkt(): "14 aug." bär redan sin förkortningspunkt. Meningen lade på en till och rummet
@@ -702,7 +704,7 @@ export default function Portfolio() {
           största bytet tar två minuter att signera. Resten håller måttet; dem rör vi inte.</>
       : <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat marknadspris — priserna står sig.
           Men vi läste varje rad på era fakturor och fångade en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
-          se vad domen bygger på nedan.</>;
+          se vad domen bygger på i fyndet ovan.</>;
 
   return (
     <Page>
@@ -820,7 +822,7 @@ export default function Portfolio() {
                         stod tidigare på båda ställena i identisk formulering.
                         Ojurerade detektioner nämns aldrig — bara den bevisbara nollan. */}
                     <span>{vakt?.sweptAt
-                      ? <>Senaste svep {relSwept(vakt.sweptAt)} {vakt.sources ? <> · <b>{vakt.sources} marknadskällor</b> svepta</> : null}
+                      ? <>{vakt.sources ? <><b>{vakt.sources} marknadskällor</b> svepta</> : <>Marknaden svept</>}
                           {vakt.allClear ? ' · allt lugnt' : ''}</>
                       : latestDate ? <>Senaste analys {latestDate} · bevakning aktiv</> : 'Bevakning aktiv'}</span>
                   </div>
@@ -878,7 +880,11 @@ export default function Portfolio() {
                 <p className="idx-note">
                   {switchables.length > 0
                     ? <>Sammanvägt {arvoScore >= 67 ? 'starkt' : arvoScore >= 45 ? 'godkänt' : 'svagt'} — men <b>{switchables.length} avtal kostar mer än marknaden</b>. De ligger förberedda i innehavet nedan.</>
-                    : <>Era priser ligger <b>i nivå med eller bättre än verifierat listpris</b>. Inget enskilt avtal sticker ut i dag.</>}
+                    : standing.label === 'Bättre än marknaden'
+                      ? <>Ni ligger <b>bättre än marknaden</b> mot verifierat listpris. Inget enskilt avtal sticker ut i dag.</>
+                      : standing.label === 'I nivå'
+                        ? <>Ni ligger <b>i nivå med marknaden</b> mot verifierat listpris. Inget enskilt avtal sticker ut i dag.</>
+                        : <>Ni ligger <b>sämre än marknaden</b> — men inget enskilt avtal bär ett byte vi kan belägga i dag.</>}
                 </p>
               </Index>
 
@@ -1010,23 +1016,52 @@ export default function Portfolio() {
                   const cost  = branchAnchor.customerCost;
                   const branschTotal = seats > 0 ? branchAnchor.median * seats : null;
                   const comparable = branschTotal != null && cost > 0;
+                  const perEnhet = comparable ? Math.round(cost / seats) : null;
+                  const overList = comparable && perEnhet > branchAnchor.median;
                   return (
                   <Truth $full={renewals.length === 0}>
+                    {/* ── KORTET HETER DET DET ÄR (grundargranskning 2026-08-15) ──────────────────
+                        Rubriken löd "Den kollektiva sanningen" medan fotnoten i samma kort erkände
+                        motsatsen: "Ett ankare, inte er exakta position … När fler bolag delar sina
+                        fakturor blir det här er levande kohort." Rubriken lovade alltså moaten och
+                        brödtexten tog tillbaka löftet. Kohortnamnet är reserverat för kortet som
+                        bärs av VERKLIGA fakturor (featured/publicFeatured ovan); det här är ett
+                        listprisankare och ska heta så tills volymen finns. */}
                     <div className="card-eyebrow">
-                      <span>Den kollektiva sanningen</span>
-                      <span className="src">branschestimat</span>
+                      <span>Marknadsankaret</span>
+                      <span className="src">verifierat listpris</span>
                     </div>
                     {comparable ? (
                       <>
+                        {/* ── OCH JÄMFÖRELSEN SÄGER VAD DEN FAKTISKT ÄR ────────────────────────────
+                            Förut: "Branschen betalar typiskt X" — men X är leverantörens SKYLTPRIS
+                            × antal enheter, och kundens tal är ett FRAMFÖRHANDLAT pris. I princip
+                            varje företag ligger under listpris, så kortet kunde bara säga en enda
+                            sak: "ni betalar mindre än typiskt". Det är aritmetik, inte intelligens,
+                            och en CFO genomskådar den på tre sekunder. Nu leder per-enhet-priset
+                            (samma enhet ankaret faktiskt bär) och avståndet kallas vid sitt namn. */}
+                        {/* ── VILKEN SIDA AV LISTPRISET? (2026-08-15, ur egen skärmdump) ─────────
+                            Första versionen antog att kunden ligger UNDER listpris och skrev en not
+                            om att det är normalt. I renderingen låg kunden ÖVER — och noten tog då
+                            udden av rummets vassaste möjliga besked. Att betala mer än leverantörens
+                            eget skyltpris är ovanligt och alltid värt att ifrågasätta; att ligga
+                            under är väntat. Samma kort, två helt olika sanningar — de får inte dela
+                            en enda text. */}
                         <h3>
-                          Ni betalar <em>{fmtNum(cost)} kr/år</em> för {cat}. Branschen betalar typiskt{' '}
-                          <em>{fmtNum(branschTotal)} kr/år</em> för motsvarande {seats} {seats === 1 ? branchAnchor.unitNoun : branchAnchor.unitNounPl}.
+                          {overList
+                            ? <>Ni betalar <em>{fmtNum(perEnhet)} kr</em> {branchAnchor.unitLabel} för {cat} — <em>mer än
+                              leverantörens eget listpris</em> på {fmtNum(branchAnchor.median)} kr.</>
+                            : <>Ni betalar <em>{fmtNum(perEnhet)} kr</em> {branchAnchor.unitLabel} för {cat}.
+                              Leverantörens publika listpris är <em>{fmtNum(branchAnchor.median)} kr</em>.</>}
                         </h3>
                         {(() => {
-                          const max = Math.max(cost, branschTotal) || 1;
+                          // Per enhet — samma enhet som ankaret bär. Två totaler som skiljer sig
+                          // med en handfull procent gav dessutom två nästan identiska staplar; per
+                          // enhet blir skillnaden den som faktiskt betyder något.
+                          const max = Math.max(perEnhet, branchAnchor.median) || 1;
                           const rows = [
-                            { lbl: 'Ni betalar', amt: cost, you: true },
-                            { lbl: 'Branschen typiskt', amt: branschTotal, you: false },
+                            { lbl: 'Ni betalar', amt: perEnhet, you: true },
+                            { lbl: 'Publikt listpris', amt: branchAnchor.median, you: false },
                           ];
                           return (
                             <div className="bars">
@@ -1041,15 +1076,21 @@ export default function Portfolio() {
                           );
                         })()}
                         <p className="truth-note">
-                          Branschtypiskt = verifierat publikt listpris ({fmtNum(branchAnchor.median)} kr {branchAnchor.unitLabel})
-                          {' '}× era {seats} {seats === 1 ? branchAnchor.unitNoun : branchAnchor.unitNounPl}. Ett ankare, inte er exakta
-                          position — den står i innehavet nedan. När fler bolag i er bransch delar sina fakturor blir det här <b>er levande kohort</b>.
+                          Ert pris är räknat på era {seats} {seats === 1 ? branchAnchor.unitNoun : branchAnchor.unitNounPl}
+                          {' '}({fmtNum(cost)} kr/år) mot verifierat publikt listpris.{' '}
+                          {overList
+                            ? <><b>De flesta företag ligger under listpris</b> — ni ligger över. Det är ovanligt nog att
+                              alltid vara värt en fråga till leverantören: vilken rabatt gäller för er volym?</>
+                            : <><b>Nästan alla företag ligger under listpris</b>, så avståndet hit säger inte att ni
+                              förhandlat väl — bara att ni förhandlat.</>}
+                          {' '}Svaret på om ni betalar rätt kommer när fler bolag i er bransch delar sina fakturor — då byts
+                          det här kortet mot <b>vad de faktiskt betalar</b>.
                         </p>
                       </>
                     ) : (
                       <>
                         <h3>
-                          Branschen betalar typiskt <em>{fmtNum(branchAnchor.median)} kr</em> {branchAnchor.unitLabel} för {cat} — verifierat publikt listpris.
+                          Leverantörernas publika listpris för {cat} är <em>{fmtNum(branchAnchor.median)} kr</em> {branchAnchor.unitLabel}.
                         </h3>
                         {cost > 0 && (
                           <p className="truth-note" style={{ borderTop: 'none', paddingTop: 0, marginTop: 4 }}>
@@ -1057,9 +1098,9 @@ export default function Portfolio() {
                           </p>
                         )}
                         <p className="truth-note">
-                          Branschtypiskt {branchAnchor.unitLabel}, ur verifierade publika listpriser — ett ankare, inte er
-                          exakta position (den står i innehavet nedan). När fler bolag i er bransch delar sina fakturor blir
-                          det här <b>er levande kohort</b>.
+                          Verifierat publikt listpris {branchAnchor.unitLabel} — ett ankare, inte er exakta position (den står
+                          i innehavet nedan). Nästan alla företag ligger under listpris, så ankaret är ett tak att mäta mot,
+                          inte ett facit. Facit kommer när fler bolag i er bransch delar sina fakturor.
                         </p>
                       </>
                     )}
@@ -1412,7 +1453,12 @@ export default function Portfolio() {
             {/* ── Liggare 2: "Bevakat — inte prissatt" — disciplinmontern (Zero Trust gjort synligt) ── */}
             {watched.length > 0 && (
               <Watched>
-                <div className="w-eyebrow">Bevakat — inte prissatt · {watched.length}</div>
+                {/* Talet räknade fakturor medan blocken nedan är SKÄL — fyra fakturor i tre block
+                    ser ut som ett räknefel. Båda enheterna sägs ut, precis som i radarn. */}
+                <div className="w-eyebrow">
+                  Bevakat — inte prissatt · {watched.length} {watched.length === 1 ? 'faktura' : 'fakturor'}
+                  {watchedGroups.length !== watched.length && <> · {watchedGroups.length} skäl</>}
+                </div>
                 {/* ── TVÅ MENINGAR SOM MÅSTE BORT (grundargranskning 2026-08-15) ────────────────
                     1. "Inget föll mellan stolarna" var ett LÖFTE OM FULLSTÄNDIGHET som ingen kod
                        kunde belägga. Rummet kan räkna det som landat (prissatt, bevakat, på väg,

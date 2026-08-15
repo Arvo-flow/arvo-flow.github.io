@@ -120,6 +120,52 @@ describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
     assert.match(fyllt, /<Dropzone/, 'uppladdningen saknas i det fyllda rummet');
   });
 
+  test('RR-13 · pekarna i domen pekar åt samma håll som layouten', () => {
+    // Brödtexten sa "se vad domen bygger på NEDAN" medan fyndkortet renderas OVANFÖR domen — och
+    // konfidensraden två centimeter under sa "i fyndet OVAN". Två pekare, samma kort, motsatta håll.
+    const iFynd = RUM.indexOf('<FindingCard finding={roomFinding}');
+    const iDom  = RUM.indexOf('<Verdict>', iFynd);
+    assert.ok(iFynd > 0 && iDom > iFynd, 'fyndkortet ska renderas före domen — har ordningen ändrats?');
+    const domtext = RUM.slice(RUM.indexOf('const verdictWork'), iFynd);
+    assert.doesNotMatch(domtext, /domen bygger på nedan/,
+      'domen pekar nedåt mot ett kort som står ovanför den');
+  });
+
+  test('RR-14 · scorens prosa hämtar sin valör ur samma källa som mätaren', () => {
+    // Noten hedgade ("i nivå med eller bättre än") under en mätare som redan tagit ställning.
+    const not = RUM.slice(RUM.indexOf('className="idx-note"'), RUM.indexOf('className="idx-note"') + 900);
+    assert.match(not, /standing\.label/,
+      'noten läser inte standing — då kan prosan och instrumentet säga olika saker om samma tal');
+    assert.doesNotMatch(not, /i nivå med eller bättre/, 'hedgen ska bort när mätaren tagit ställning');
+  });
+
+  test('RR-15 · klockslaget står på ETT ställe i radarn', () => {
+    const radar = RUM.slice(RUM.indexOf('<Radar>'), RUM.indexOf('</Radar>'));
+    const traffar = (radar.match(/relSwept\(vakt\.sweptAt\)/g) || []).length;
+    assert.equal(traffar, 0,
+      'fotraden upprepar urtavlans tid — samma klockslag två gånger i ett kort på 100 px');
+    assert.match(radar, /toLocaleTimeString/, 'urtavlan ska fortfarande bära tiden');
+  });
+
+  test('RR-16 · marknadsankaret utger sig inte för att vara kohorten', () => {
+    const start = RUM.indexOf('{branchAnchor && (() => {');
+    const ankare = RUM.slice(start, RUM.indexOf('</Truth>', start));
+    assert.ok(ankare.length > 1000, 'ankarkortet hittades inte');
+    assert.doesNotMatch(ankare, /<span>Den kollektiva sanningen<\/span>/,
+      'ankaret bär kohortens namn medan dess egen fotnot erkänner att kohorten inte finns än');
+    assert.match(ankare, /Marknadsankaret/, 'kortet ska heta det det är');
+    const platt = ankare.replace(/\s+/g, ' ');
+    assert.match(platt, /nästan alla företag ligger under/i,
+      'kortet ska säga att ett pris under listpris är normalt — annars är jämförelsen smickrande brus');
+    // Och det motsatta fallet får INTE dela text med det normala. Att ligga över leverantörens
+    // eget skyltpris är ovanligt och rummets vassaste möjliga besked; en not om att "de flesta
+    // ligger under" skulle ta udden av det. Fångades i min egen skärmdump, inte av en kund.
+    assert.match(platt, /overList/,
+      'kortet skiljer inte på om kunden ligger över eller under listpris — samma text för två motsatta sanningar');
+    assert.match(platt, /mer än\s*(?:<\/em>)?\s*leverantörens eget listpris|ni ligger över/i,
+      'över-listpris-fallet ska namnges som det fynd det är');
+  });
+
   test('RR-08 · datumet får inte sluta på dubbel punkt', () => {
     // "senast 14 aug.." — svensk kort månad bär sin egen punkt och meningen la på en till.
     assert.match(RUM, /const slutpunkt =/, 'hjälpen som avgör punkten saknas');
@@ -136,8 +182,12 @@ describe('FORENSIKEN · det retroaktiva kravet och citatet', () => {
     assert.equal(f.type, 'hardware_overpaid');
     assert.equal(f.monthsOverpaid, 2, 'månad 38 av 36 = två månader utöver planen');
     assert.equal(f.overpaidToDate, 580, '2 × 290 kr — ur kundens egen rad, ingen marknadssiffra');
-    assert.match(f.text, /580 kr/, 'kravet ska nå kundens text, annars är talet en tystnad med extra steg');
-    assert.match(f.text, /kredit/i, 'kunden ska få veta att den kan begäras tillbaka');
+    // Kravet bärs numera av kortets nyckeltal och av kravbrevet — inte av prosan (den läste som
+    // två tal av samma sort bredvid varandra). Guarden flyttade dit talet flyttade.
+    assert.doesNotMatch(f.text, /580 kr/, 'beloppet ska inte upprepas i prosan');
+    assert.ok(f.letter, 'ett bevisat krav ska bära ett färdigt brev — annars är fyndet en observation');
+    assert.match(f.letter.body, /580 kr/, 'brevet ska bära beloppet');
+    assert.match(f.letter.body, /[Kk]reditering/, 'brevet ska begära kreditering');
   });
 
   test('RR-10 · texten citerar inte raden — fyndkortet gör det redan', () => {
@@ -159,11 +209,47 @@ describe('FORENSIKEN · det retroaktiva kravet och citatet', () => {
       title: 'Avbetald hårdvara — ni betalar för utrustning ni redan äger',
       text: 'Raden "Delbetalning iPad Air (Manad 38/36)" visar månad 38 av 36 — avbetalningen är redan slutbetald.',
     };
-    const ny = refineFinding(gammalt);
+    const ny = refineFinding(gammalt, { supplier: 'Telia' });
     assert.equal(ny.overpaidToDate, 580);
-    assert.match(ny.text, /580 kr/);
+    assert.match(ny.letter.body, /580 kr/, 'omräkningen ska ge även brevet, inte bara talet');
+    assert.match(ny.letter.body, /Till Telia/, 'brevet ska adresseras till leverantören på raden');
     assert.equal(ny.annualImpact, 3480, 'fakta ur analysen får aldrig skrivas om vid läsning');
     assert.equal(ny.severity, 'high');
+  });
+
+  test('RR-17 · kravbrevet är mekanik, aldrig ett löfte om att VI skickar det', () => {
+    // Nivå 3 i Switch-doktrinen: Arvo BEVÄPNAR. Vi har ingen kanal mot leverantörens kundtjänst
+    // och får därför aldrig antyda att brevet går iväg av sig självt (regel 9 — löftet och koden
+    // levereras tillsammans). Kunden kopierar och skickar i eget namn.
+    const [f] = detectForensicFindings(
+      [{ description: 'Delbetalning iPad Air (Manad 38/36)', amount: 290 }],
+      { periodMultiplier: 12, supplier: 'Telia' });
+    const allt = `${f.letter.subject} ${f.letter.body}`;
+    assert.doesNotMatch(allt, /vi (?:skickar|har skickat|kontaktar|mejlar)|å era vägnar|automatiskt/i,
+      'brevet antyder att Arvo utför något vi inte har mekanik för');
+    assert.match(f.letter.body, /Till Telia/, 'brevet ska adresseras till leverantören på raden');
+    assert.match(f.letter.body, /månad 38 av en avbetalningsplan på 36/,
+      'kravet ska bära sitt eget bevis — planens position ur kundens egen rad');
+
+    const kortet = readFileSync(join(ROOT, 'src/components/FindingCard.js'), 'utf8');
+    assert.match(kortet, /Vi skrev brevet/, 'knappen ska säga vad vi FAKTISKT gjorde: skrev det');
+    assert.doesNotMatch(kortet, /Skicka brevet|Vi skickar/,
+      'en knapp som säger "skicka" lovar en kanal som inte finns');
+  });
+
+  test('RR-18 · inget krav utan bevisat underlag (fail-closed)', () => {
+    // En avbetalning INOM planen har inget att kräva tillbaka. Ett brev där vore en tillverkad
+    // fordran i kundens namn — värre än tystnad.
+    const [inomPlan] = detectForensicFindings(
+      [{ description: 'Avbetalning surfplattor (Månad 12/36)', amount: 200 }],
+      { periodMultiplier: 12, supplier: 'Dustin' });
+    assert.equal(inomPlan.letter, undefined, 'inget krav finns → inget brev får skrivas');
+    assert.equal(inomPlan.overpaidToDate, undefined);
+
+    // Och utan känt radbelopp kan kravet inte räknas — då ska brevet utebli, inte gissa.
+    assert.equal(refineFinding({
+      type: 'hardware_overpaid', lineDescription: 'Delbetalning (Månad 38/36)', monthly: null,
+    }, { supplier: 'X' }).letter, undefined);
   });
 
   test('RR-12 · omräkningen är fail-open och rör aldrig ett fynd den inte äger', () => {

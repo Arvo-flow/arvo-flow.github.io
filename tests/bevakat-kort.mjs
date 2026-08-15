@@ -85,6 +85,31 @@ describe('BEVAKAT-KORT · rätt skäl, noll siffror', () => {
       'INTL_SAAS-namnet får inte ensamt avgöra vad vi påstår om fakturan');
   });
 
+  test('BK-06 · en teknisk kod förklaras aldrig som ett marknadsproblem (Fortnox-fallet)', () => {
+    // Skarpt läge 2026-08-15: Fortnox-fakturan bar `fingerprint_mismatch` — VÅR leverantörs-
+    // kontroll sa emot VÅR kategorisering. Kunden fick läsa "utan verifierat golv att prissätta
+    // mot". Fakturan blev inte klassad utan FELklassad, golvet finns (loneadmin = real-public),
+    // och samma PDF prissattes auto från en annan adress. Tre påståenden, noll sanna.
+    const k = watchedCard({ normalized_supplier: 'Fortnox AB', route: 'review_queue',
+      triage_reason: 'fingerprint_mismatch' });
+    assert.doesNotMatch(text(k), /verifierat golv|marknadsreferens|prisnivå/i,
+      'ett fel i VÅRA kontroller får aldrig förklaras som en lucka i marknadsdatan');
+    assert.match(text(k), /oense|emot varandra|överens/i,
+      'kunden ska få veta det sanna skälet — att vi stoppade när vi inte var överens med oss själva');
+  });
+
+  test('BK-07 · reservkortet påstår INGET skäl alls (blindfläcken, stängd)', () => {
+    // Vaktens deklarerade blindfläck blev verklig: en kod ingen tänkt på fick fallback-kortets
+    // substantiella förklaring och den var fel. Nu får reservkortet bara säga att vi stoppade.
+    for (const kod of ['nagot_helt_nytt', 'schema_drift_v9', 'okand_kod_2027']) {
+      const t = text(watchedCard({ normalized_supplier: 'Okänt AB', route: 'review_queue', triage_reason: kod }));
+      assert.doesNotMatch(t, /verifierat golv|marknadsreferens|utländsk valuta|reglerad|splittrad marknad|kreditering/i,
+        `reservkortet gissar ett skäl för '${kod}' — det är exakt formen som gav en osanning i kundyta`);
+      assert.match(t, /tekniskt/i, 'det ärliga svaret för en okänd kod är att skälet är tekniskt');
+      assert.match(t, /människa/i, 'och att en människa tar vid');
+    }
+  });
+
   test('BK-05 · nätavgiften bär sitt eget, sanna skäl', () => {
     const k = watchedCard({ normalized_supplier: 'Ellevio AB', route: 'unsupported', triage_reason: 'natavgift' });
     assert.match(text(k), /reglerad|monopol|nät/i,

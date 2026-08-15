@@ -85,7 +85,10 @@ describe('Forensik · avbetald hårdvara (Månad X/Y, X > Y → ni äger den red
     assert.match(f[0].text, /redan er/);
     assert.equal(f[0].monthsOverpaid, 1);
     assert.equal(f[0].overpaidToDate, 560);              // 1 månad × 560 kr ur kundens egen rad
-    assert.match(f[0].text, /560 kr/);
+    // Beloppet flyttades 2026-08-15 UT ur prosan och in i kortets eget nyckeltal + kravbrevet:
+    // det låg begravt mitt i en mening medan run-raten fick all typografi. Kravet ska fortfarande
+    // NÅ kunden — bara på en plats där det syns. Guarden flyttar med, den försvinner inte.
+    assert.doesNotMatch(f[0].text, /560 kr/, 'beloppet bärs av kortets nyckeltal, inte av prosan');
     assert.match(f[0].title, /redan äger/);
   });
   test('"Månad 12/36" (inom plan) → degraderar korrekt till hardware_financing (guard faller)', () => {

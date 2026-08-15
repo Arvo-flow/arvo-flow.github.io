@@ -16,6 +16,11 @@ const SUPPLIER_ALIASES = [
   [/\btelia\b/i,            'Telia'],
   [/\btele\s*2\b/i,         'Tele2'],
   [/\btelenor\b/i,          'Telenor'],
+  // "Tre Foretag" (utan ö) stod i innehavet och läste som VÅRT stavfel, fast det var kundens
+  // extraherade sträng. I en yta stämplad KONFIDENTIELLT är ett skevt varumärkesnamn en
+  // precisionssignal som pekar åt fel håll. Ordgränsen är obligatorisk: 'tre' är ett vanligt
+  // svenskt ord och får aldrig fånga "Trelleborg" eller "Centre".
+  [/(?:^|\s)tre(?:\s|$)|\btre\s+f[öo]retag\b/i, 'Tre'],
   [/\bmicrosoft\b/i,        'Microsoft'],
   [/\bgoogle\b/i,           'Google'],
   [/\badobe\b/i,            'Adobe'],
