@@ -44,8 +44,24 @@ describe('KÖBOKFÖRING · `done` måste säga vad som hände', () => {
     assert.equal(utfallFranSvar({ route: 'review_queue', reason: 'sanity_check_failed' }), 'review_queue:sanity_check_failed');
     // Framgångsvägen har inget `reason` — då är kategorin/leverantören domen. Ett bart "auto"
     // hade varit precis lika oanvändbart som ett bart "done".
-    assert.equal(utfallFranSvar({ route: 'auto', categorized: { category: 'mobil' } }), 'auto:mobil');
-    assert.equal(utfallFranSvar({ route: 'auto', extracted: { supplier: 'Telia' } }), 'auto:Telia');
+    assert.match(utfallFranSvar({ route: 'auto', categorized: { category: 'mobil' } }), /^auto:mobil/);
+    assert.match(utfallFranSvar({ route: 'auto', extracted: { supplier: 'Telia' } }), /^auto:Telia/);
+  });
+
+  test('KB-07 · framgångsvägen säger om raden LANDADE, inte bara vad den beslutade', () => {
+    // Fallet som tvingade fram markören: kön svarade `auto:saas-productivity` för den försvunna
+    // fakturan — alltså huvudvägen, där storeAnalysis alltid ska ge ett id. Ändå fanns ingen rad.
+    // Skillnaden mellan "vi beslutade" och "beslutet landade" låg bara i Vercel-loggen.
+    assert.match(utfallFranSvar({ route: 'auto', categorized: { category: 'mobil' }, analysisId: 4711 }),
+      /·lagrad$/, 'en lagrad analys ska synas som lagrad');
+    assert.match(utfallFranSvar({ route: 'auto', categorized: { category: 'saas-productivity' } }),
+      /·EJ_LAGRAD$/, 'utan analysisId har raden inte landat — det är fyndet, inte brus');
+    assert.match(utfallFranSvar({ route: 'monitoring', categorized: { category: 'el' } }),
+      /·EJ_LAGRAD$/, 'även den bevakade vägen ska svara på om raden landade');
+    // Triage-vägarna returnerar aldrig ett id till klienten. En markör som alltid säger samma
+    // sak är inget svar — den ska därför INTE sättas där.
+    assert.doesNotMatch(utfallFranSvar({ route: 'review_queue', reason: 'no_benchmark' }), /LAGRAD|lagrad/);
+    assert.doesNotMatch(utfallFranSvar({ route: 'unsupported', reason: 'natavgift' }), /LAGRAD|lagrad/);
   });
 
   test('KB-03 · ett tomt eller trasigt svar blir ETT UTTALAT OKÄNT, aldrig en tom dom', () => {
