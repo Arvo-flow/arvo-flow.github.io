@@ -327,7 +327,12 @@ export function watchedCard(a) {
       + 'hellre inte till ett påstående om ert avtal som vi inte kan stå för.';
     action = 'En människa läser om fakturan och vi återkommer.';
   }
-  return { supplier: supplierName, category: a.category ?? null, reasonCode: reason, kind, headline, detail, action };
+  // Fakturanumret följer med kortet: vi säger att vi INTE prissatte den här fakturan, och då
+  // måste ekonomichefen kunna slå upp exakt rätt papper. Med två Slack-fakturor i pärmen är
+  // leverantörsnamnet ensamt inte en adress. Numret är grindat i pipelinen (lib/fakturanummer.js)
+  // — når det hit har det bekräftats mot dokumentets textlager.
+  return { supplier: supplierName, invoiceNumber: a.invoice_number ?? null,
+    category: a.category ?? null, reasonCode: reason, kind, headline, detail, action };
 }
 
 function buildSwitchTargets(analyses) {

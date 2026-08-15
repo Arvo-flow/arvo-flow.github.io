@@ -8,6 +8,8 @@
 
 import { Resend } from 'resend';
 import { createHmac, createHash } from 'node:crypto';
+import { extraheraTextlager } from '../lib/pdf-textlager.js';
+import { verifieraFakturanummer } from '../lib/fakturanummer.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
@@ -482,6 +484,40 @@ export default async function handler(req, res) {
     const t0 = Date.now();
     const extracted = await extractInvoice({ pdfBytes });
     timing.extractMs = Date.now() - t0;
+
+    // ── FAKTURANUMRET MÅSTE STÅ PÅ PAPPRET (grundarbeslut 2026-08-15) ────────────────────────
+    // Numret pekar ut EXAKT ett dokument, så ekonomichefen kan slå upp rätt papper när vi säger
+    // att vi inte prissatte en faktura. Det är också det farligaste fältet vi har: ett
+    // hallucinerat nummer ser identiskt ut med ett avläst och bär precisionens auktoritet — en
+    // kund som letar efter "Faktura 9923" och inte hittar den drar slutsatsen att vi har fel om
+    // allt annat också.
+    //
+    // Därför prövas modellens påstående mot dokumentets TEXTLAGER: pdfjs läser tecknen
+    // deterministiskt, utan modell och utan prompt. Ett genuint oberoende vittne — att låta en
+    // modell kontrollera en modell vore att mäta med samma linjal två gånger (samma princip som
+    // SR-07 och öres-stickprovet). Mätt före inkoppling: 72 av 72 bekräftade på riktiga fakturor,
+    // noll fabrikat, och formgrinden fällde ändå en avhuggen läsning ("SEC-2026-05-").
+    //
+    // FAIL-CLOSED FÖR FÄLTET, FAIL-OPEN FÖR PIPELINEN: faller textutvinningen tappar vi numret,
+    // aldrig analysen. En faktura ska aldrig gå förlorad för att en bekvämlighet inte gick att
+    // bekräfta. Kostnad: ~15 ms per faktura efter modulens första laddning.
+    {
+      const t = Date.now();
+      let textlager = null;
+      try {
+        ({ text: textlager } = await extraheraTextlager(pdfBytes));
+      } catch (err) {
+        console.error('[fakturanummer] textlagret kunde inte läsas:', err.message);
+      }
+      const dom = verifieraFakturanummer(extracted.invoiceNumber, textlager);
+      if (extracted.invoiceNumber && !dom.nummer) {
+        // Varje avvisning SÄGS. En grind vars utfall aldrig räknas kan aldrig förbättras — och
+        // stängs förr eller senare av, precis som smyghöjningsvakten 2026-07-20.
+        console.log(`[fakturanummer] avvisat (${dom.skal})`);
+      }
+      extracted.invoiceNumber = dom.nummer;
+      timing.fakturanummerMs = Date.now() - t;
+    }
     console.log('[test-invoice] extracted:', JSON.stringify({
       supplier:        extracted.supplier,
       description:     extracted.description,
@@ -536,7 +572,7 @@ export default async function handler(req, res) {
 
     // Guard: kreditnotor (negativt totalt fakturabelopp)
     if (extracted.amount < 0) {
-      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+      await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: extracted.category ?? null,
         route: 'unsupported', reason: 'credit_note', userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok: true, route: 'unsupported', reason: 'credit_note',
@@ -603,7 +639,7 @@ export default async function handler(req, res) {
       notifyReviewQueue(extracted, `[Utländsk valuta] ${extracted.currency}`).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue (currency) threw:', err.message)
       );
-      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+      await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: extracted.category ?? null,
         route: 'review_queue', reason: `foreign_currency:${extracted.currency}`, userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok: true, route: 'review_queue', reason: 'foreign_currency',
@@ -629,7 +665,7 @@ export default async function handler(req, res) {
       if (_implausible) {
         console.error(`[guard:belopp] Orimliga belopp — annualCost=${extracted.annualCost} amount=${extracted.amount} currency=${extracted.currency}`);
         notifyReviewQueue(extracted, `[Beloppsvalidering] Orimliga belopp (annualCost=${(extracted.annualCost ?? 0).toLocaleString('sv-SE')} kr) — troligt valutatransformationsfel`).catch(() => {});
-        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+        await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: extracted.category ?? null,
           route: 'review_queue', reason: 'implausible_amounts', userEmail: body.userEmail }).catch(bokforFel);
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'implausible_amounts',
@@ -693,7 +729,7 @@ export default async function handler(req, res) {
       notifyReviewQueue(extracted, routing.reason).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue threw:', err.message)
       );
-      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+      await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: extracted.category ?? null,
         route: 'review_queue', reason: routing.reason, userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok:     true,
@@ -712,7 +748,7 @@ export default async function handler(req, res) {
     }
 
     if (routing.route === 'unsupported') {
-      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: extracted.category ?? null,
+      await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: extracted.category ?? null,
         route: 'unsupported', reason: routing.reason ?? 'out_of_scope', userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok:    true,
@@ -774,7 +810,7 @@ export default async function handler(req, res) {
       if (fp.matched && !fp.categoryOk) {
         console.error(`[fingerprint] MISMATCH key=${fp.key} ai_category='${categorized.category}' expected=[${fp.expectedCategories.join(', ')}]`);
         notifyReviewQueue(extracted, `[Fingerprint] ${fp.key}: AI gav '${categorized.category}', förväntat [${fp.expectedCategories.join(', ')}]`).catch(() => {});
-        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+        await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: categorized.category ?? null,
           route: 'review_queue', reason: 'fingerprint_mismatch', userEmail: body.userEmail }).catch(bokforFel);
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'fingerprint_mismatch',
@@ -822,7 +858,7 @@ export default async function handler(req, res) {
           console.error(`[P1.1:dual-model] KONFLIKT: primär='${categorized.category}' validator='${_validation.validatorCategory}' supplier='${extracted.supplier}'`);
           notifyReviewQueue(extracted, `[P1.1 Dual-model] Kategorikonflikt: Sonnet='${categorized.category}', Haiku='${_validation.validatorCategory}' — manuell granskning krävs`).catch(() => {});
           timing.totalMs = Date.now() - t0;
-          await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+          await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: categorized.category ?? null,
             route: 'review_queue', reason: 'categorization_conflict', userEmail: body.userEmail }).catch(bokforFel);
           return send(res, 200, {
             ok: true, route: 'review_queue', reason: 'categorization_conflict',
@@ -851,7 +887,7 @@ export default async function handler(req, res) {
         console.error(`[P1.2:price-intel] ANOMALI: ${_priceCheck.detail}`);
         notifyReviewQueue(extracted, `[P1.2 Price Intel] ${_priceCheck.detail}`).catch(() => {});
         timing.totalMs = Date.now() - t0;
-        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+        await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: categorized.category ?? null,
           route: 'review_queue', reason: 'price_anomaly', userEmail: body.userEmail }).catch(bokforFel);
         return send(res, 200, {
           ok: true, route: 'review_queue', reason: 'price_anomaly',
@@ -1071,7 +1107,7 @@ export default async function handler(req, res) {
         }
       }
 
-      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+      await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: categorized.category ?? null,
         route: 'review_queue', reason: 'volume_data_required', userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok:     true,
@@ -1107,7 +1143,7 @@ export default async function handler(req, res) {
       notifyReviewQueue(extracted, `[Ingen benchmark] Kategori '${categorized.category}' saknas i branschindex`).catch((e) =>
         console.error('[test-invoice] alert failed:', e.message)
       );
-      await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier, category: categorized.category ?? null,
+      await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier, category: categorized.category ?? null,
         route: 'review_queue', reason: 'no_benchmark', userEmail: body.userEmail }).catch(bokforFel);
       return send(res, 200, {
         ok:     true,
@@ -1144,7 +1180,7 @@ export default async function handler(req, res) {
         // monopol ingen kan sänka. Beslutet var rätt; bokföringen saknades, och ett beslut
         // som inte bokförs är för kunden omöjligt att skilja från ett tapp.
         // Maskinvakt: tests/triage-bokforing.mjs kräver att VARJE triage-utgång skriver först.
-        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier,
+        await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier,
           category: categorized.category ?? null, route: 'unsupported', reason: 'natavgift',
           userEmail: body.userEmail }).catch(bokforFel);
         timing.totalMs = Date.now() - t0;
@@ -1235,7 +1271,7 @@ export default async function handler(req, res) {
       if (!elRec) {
         // Samma klass som nätavgiften: elfakturan lästes, men underlaget räckte inte till en
         // rekommendation. Kunden ska se att vi tittat och varför vi tiger — inte en lucka.
-        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier,
+        await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier,
           category: categorized.category ?? null, route: 'review_queue', reason: 'el_data_missing',
           userEmail: body.userEmail }).catch(bokforFel);
         return send(res, 200, {
@@ -1523,7 +1559,7 @@ export default async function handler(req, res) {
         // orimlig besparing. Utan raden går det inte att mäta hur ofta sanitetsvakten fyrar, och
         // en kvalitetsvakt vars utfall aldrig räknas är en vakt vi inte kan förbättra. Vi lärde
         // oss samma sak av smyghöjningen: ett larm som ingen mäter blir förr eller senare avstängt.
-        await storeTriaged({ fingerprint, pdfHash, supplier: extracted.supplier,
+        await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, supplier: extracted.supplier,
           category: categorized.category ?? null, route: 'review_queue', reason: 'sanity_check_failed',
           userEmail: body.userEmail }).catch(bokforFel);
         timing.totalMs = Date.now() - t0;

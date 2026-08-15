@@ -514,7 +514,11 @@ export default function Portfolio() {
     for (const w of (watched ?? [])) {
       if (!m.has(w.kind)) m.set(w.kind, { kind: w.kind, headline: w.headline, detail: w.detail, action: w.action, suppliers: [] });
       const g = m.get(w.kind);
-      if (!g.suppliers.includes(w.supplier)) g.suppliers.push(w.supplier);
+      // Leverantör + fakturanummer när vi har det: "Slack Technologies (faktura 9923)".
+      // Numret är kundens egen identifierare och gör vår tystnad kontrollerbar — utan det måste
+      // en ekonomichef med två Slack-fakturor gissa vilken vi menar.
+      const etikett = w.invoiceNumber ? `${w.supplier} (faktura ${w.invoiceNumber})` : w.supplier;
+      if (!g.suppliers.includes(etikett)) g.suppliers.push(etikett);
     }
     return [...m.values()];
   }, [watched]);
@@ -1154,7 +1158,11 @@ export default function Portfolio() {
                       </RingWrap>
                       <div>
                         <div className="h-name">{supplierName(a)}</div>
-                        <div className="h-cat">{meta.label} · {fmtDate(a.created_at)}{g.count > 1 ? ` · ${g.count} analyser` : ''}</div>
+                        <div className="h-cat">
+                          {meta.label} · {fmtDate(a.created_at)}
+                          {a.invoice_number ? ` · faktura ${a.invoice_number}` : ''}
+                          {g.count > 1 ? ` · ${g.count} analyser` : ''}
+                        </div>
                       </div>
                       <div className="h-cost">{a.annual_cost != null ? `${fmtNum(a.annual_cost)} kr/år` : ''}</div>
                       <div className={`h-badge ${saving ? 'save' : 'watch'}`}>

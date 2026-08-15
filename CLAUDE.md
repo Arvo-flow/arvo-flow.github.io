@@ -417,6 +417,29 @@ signera", aldrig som ett verkställt löfte.)
    > leverantörens eget listpris är ovanligt och rummets vassaste besked. Den grenen fångades i
    > **min egen skärmdump**, inte av en kund — regel 8 betalade sig samma kväll den skrevs.
 
+   > **✅ TVÅ HALVOR AV SAMMA REGEL (2026-08-15, ur Geminis granskning av rummet).**
+   > **(a) Ordet "verifierat" kräver ett datum.** Ankarkortet sa "verifierat publikt listpris" utan
+   > att kunna säga verifierat NÄR — och datumet är den enda halvan av påståendet kunden kan
+   > kontrollera. Prisboken bar `lastVerified` hela tiden; `getBenchmark` släppte det aldrig igenom.
+   > Sommarens smyghöjning är hela skälet. Kategorier som daterar per licensnivå ärver sin
+   > **stalaste** nivå, aldrig sin färskaste — att välja det färskaste vore att smickra oss själva
+   > (`saas-productivity` visar därför 17 juni, vilket är obekvämt och sant). Ingen ny färskhetsvakt
+   > byggd: `price-audit` gör redan den kontrollen, och en andra kopia hade bara kunnat glida isär
+   > från den första. BA-09/BA-10.
+   >
+   > **(b) Ett påhittat fakturanummer är värre än inget.** Rummet säger "vi prissätter inte de här
+   > två" och namnger leverantören; med två Slack-fakturor i pärmen är det ingen adress. Numret
+   > pekar ut exakt ett dokument och kommer ur kundens eget papper. Det är också det farligaste
+   > fältet vi har: ett hallucinerat nummer ser identiskt ut med ett avläst och bär precisionens
+   > auktoritet. **Vi mätte innan vi visade** — 72 av 72 bekräftade mot dokumentets textlager på
+   > riktiga fakturor, noll fabrikat, och formgrinden fällde ändå en avhuggen läsning
+   > (`SEC-2026-05-`). Grinden är fail-closed för FÄLTET och fail-open för PIPELINEN: utan ett
+   > andra vittne visas inget nummer, men ingen faktura går förlorad. `pdfjs-dist` ligger nu i
+   > produktionsberoendena (~15 ms per faktura efter modulladdning) — och därmed finns ett
+   > **oberoende vittne i request-vägen** för allt annat vi vill bekräfta framöver: öresbelopp,
+   > radposter, villkorstext. Kvarstående blindfläck, uttalad: textlagret bevisar att numret står
+   > på pappret, inte att det är rätt FÄLT. FN-01..13.
+
 > **✅ GRUNDARBESLUT 2026-07-16 — IDENTITETSINVARIANTEN: inga påhittade företag, någonsin.**
 > Bolagsidentitet (namn, orgnr, omsättning, bokslut, koncern, grundandeår) får ENDAST komma från
 > **Bolagsverket-data via EN kanoniserad läsväg** (idag allabolag som transport — sanningskällan är

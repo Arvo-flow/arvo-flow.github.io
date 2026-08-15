@@ -21,6 +21,18 @@ jobs:
           curl -s -o /tmp/r.json -w "status=%{http_code}\n" "https://arvoflow.se/api/invoice-history"
           cat /tmp/r.json; echo
 
+          echo "── /api/test-invoice bootar? (pdfjs lades i produktionsbundlen 2026-08-15) ──"
+          # Om bundlen spränger Vercels gräns dör HUVUDFUNNELN, inte rummet — och det syns inte
+          # i någon annan kontroll här. GET ska ge 405 (endast POST stöds); allt annat, särskilt
+          # 500 eller timeout, betyder att funktionen inte längre startar.
+          TI=$(curl -s -o /dev/null -w "%{http_code}" https://arvoflow.se/api/test-invoice)
+          echo "  status=$TI"
+          if [ "$TI" != "405" ] && [ "$TI" != "400" ]; then
+            echo "  ⛔ /api/test-invoice svarar $TI — funktionen bootar inte. FAKTURAANALYSEN ÄR NERE."
+            exit 1
+          fi
+          echo "  ✓ analysfunktionen lever"
+
           echo "── hämtar utlagd bundle ──"
           BUNDLE=$(curl -s https://arvoflow.se/ | grep -o '/static/js/main\.[a-z0-9]*\.js' | head -1)
           echo "bundle: $BUNDLE"
@@ -30,7 +42,8 @@ jobs:
           FEL=0
           echo "── SKA FINNAS (rumsgranskningen 2026-08-15) ──"
           for s in "Ur er egen faktura" "fakturor prissatta" "Fler leverant" "vi kunde priss" "eget sk" \
-                   "Marknadsankaret" "Vi skrev brevet" "Att beg" "i fyndet ovan"; do
+                   "Marknadsankaret" "Vi skrev brevet" "Att beg" "i fyndet ovan" \
+                   "verifierat " "faktura $"; do
             if grep -qF "$s" /tmp/main.js; then echo "  ✓ $s"; else echo "  ⛔ SAKNAS: $s"; FEL=1; fi
           done
 

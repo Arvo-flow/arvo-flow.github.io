@@ -36,20 +36,20 @@ const IPAD = refineFinding({
 });
 
 const ANALYSES = [
-  A(1, 'Telia',        'mobil',              119520, '2026-08-14T09:00:00Z', { health_score: 96, lead_finding_json: IPAD }),
+  A(1, 'Telia',        'mobil',              119520, '2026-08-14T09:00:00Z', { health_score: 96, lead_finding_json: IPAD, invoice_number: '9948211' }),
   A(2, 'Tre Foretag',  'mobil',               14940, '2026-08-14T09:01:00Z', { health_score: 96 }),
   A(3, 'Google',       'saas-productivity',   72900, '2026-08-14T09:02:00Z', { health_score: 75 }),
-  A(4, 'Microsoft',    'saas-productivity',   45600, '2026-08-14T09:03:00Z', { health_score: 92 }),
+  A(4, 'Microsoft',    'saas-productivity',   45600, '2026-08-14T09:03:00Z', { health_score: 92, invoice_number: 'INV-2026-0412' }),
   A(5, 'Tele2',        'mobil',               35880, '2026-08-14T09:04:00Z', { health_score: 96 }),
 ];
 
 // Bevakade — samma fyra slag rummet visade. Formen är watchedCard():s utdata.
 const WATCHED = [
-  { supplier: 'Slack Technologies', category: null, reasonCode: 'radsumma', kind: 'Fakturan går inte ihop',
+  { supplier: 'Slack Technologies', invoiceNumber: 'SLK-2026-04412', category: null, reasonCode: 'radsumma', kind: 'Fakturan går inte ihop',
     headline: 'Fakturans egna tal stämmer inte — vi prissätter inte på ett osäkert underlag',
     detail: 'Raderna summerar inte till fakturans totalbelopp. Innan vi vet vilket tal som gäller sätter vi ingen siffra alls — en jämförelse mot fel underlag är värre än ingen jämförelse.',
     action: 'Vi läser om fakturan manuellt och återkommer.' },
-  { supplier: 'Salesforce.com', category: null, reasonCode: 'radsumma', kind: 'Fakturan går inte ihop',
+  { supplier: 'Salesforce.com', invoiceNumber: '9923', category: null, reasonCode: 'radsumma', kind: 'Fakturan går inte ihop',
     headline: 'Fakturans egna tal stämmer inte — vi prissätter inte på ett osäkert underlag',
     detail: 'Raderna summerar inte till fakturans totalbelopp. Innan vi vet vilket tal som gäller sätter vi ingen siffra alls — en jämförelse mot fel underlag är värre än ingen jämförelse.',
     action: 'Vi läser om fakturan manuellt och återkommer.' },
@@ -57,7 +57,7 @@ const WATCHED = [
     headline: 'Ingen verifierad prisnivå ännu — under bevakning',
     detail: 'Webbhotell, domän och hosting är en splittrad marknad utan ett verifierat svenskt golv vi kan jämföra mot. Vi flaggar hellre än gissar.',
     action: 'Ladda upp avtalet/specen så bygger vi en ärlig jämförelse.' },
-  { supplier: 'Fortnox AB', category: null, reasonCode: 'fingerprint_mismatch',
+  { supplier: 'Fortnox AB', invoiceNumber: 'FTX-118842', category: null, reasonCode: 'fingerprint_mismatch',
     kind: 'Våra kontroller sa emot varandra',
     headline: 'Vi blev inte överens med oss själva om vad fakturan är',
     detail: 'Vår leverantörskontroll och vår kategorisering gav olika svar om vilken sorts kostnad det här är. Vi prissätter aldrig när våra egna kontroller är oense — att jämföra mot fel marknad är värre än att vänta.',
@@ -68,7 +68,7 @@ const VAKT = { sweptAt: '2026-08-14T21:25:00Z', sources: 36, streakNights: 8, al
 
 // Branschankaret ska nu bära igen — mobil finns i BRANCH_ANCHOR_UNIT och i BRANCHINDEX real-public.
 const BRANCH_ANCHORS = {
-  mobil: { category: 'mobil', median: 3588, p25: 3588, source: 'real-public',
+  mobil: { category: 'mobil', median: 3588, p25: 3588, source: 'real-public', lastVerified: '2026-08-05',
     unitLabel: 'per abonnemang/år', unitNoun: 'abonnemang', unitNounPl: 'abonnemang',
     customerCost: 119520, seats: 30 },
 };

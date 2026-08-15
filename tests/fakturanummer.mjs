@@ -21,6 +21,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { harFakturanummerform, finnsITextlager, verifieraFakturanummer } from '../lib/fakturanummer.js';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 describe('FAKTURANUMMER · formen', () => {
   test('FN-01 · verkliga nummerformat passerar', () => {
@@ -90,5 +92,57 @@ describe('FAKTURANUMMER · grinden (fail-closed)', () => {
     // Regressionen vakten finns för: modellen påstår ett nummer som inte står i dokumentet.
     const r = verifieraFakturanummer('INV-9999', 'Fakturanummer: 4711\nTelia Sverige AB');
     assert.equal(r.nummer, null, 'ett nummer utan täckning i dokumentet får aldrig visas');
+  });
+});
+
+describe('FAKTURANUMMER · hela vägen från pappret till rummet', () => {
+  const ROT = new URL('..', import.meta.url).pathname;
+  const las = (f) => readFileSync(join(ROT, f), 'utf8');
+
+  test('FN-10 · grinden körs i PRODUKTIONSVÄGEN, inte bara i sonden', () => {
+    // Läxan från attribueringslåset: en mekanism som bara matas av ett testharness kan vara
+    // perfekt och samtidigt mörk i två månader. Frågan är alltid vilket objekt som kommer fram
+    // till grinden i produktion — och vem som byggde det.
+    const api = las('api/test-invoice.mjs');
+    assert.match(api, /verifieraFakturanummer\(extracted\.invoiceNumber, textlager\)/,
+      'grinden måste köras på extraktionens påstående i request-vägen');
+    assert.match(api, /extraheraTextlager\(pdfBytes\)/,
+      'det oberoende vittnet måste hämtas ur den faktiska PDF:en');
+    assert.match(api, /extracted\.invoiceNumber = dom\.nummer;/,
+      'grindens dom måste ERSÄTTA modellens påstående — annars är den dekoration');
+  });
+
+  test('FN-11 · pdfjs är en deklarerad produktionsdependency', () => {
+    // Utan den kastar textutvinningen i produktion, numret tappas tyst, och grinden ser ut att
+    // fungera medan den aldrig bekräftar något. Ett fail-closed fält som alltid failar är inte
+    // säkert — det är trasigt, och skillnaden syns inte i någon logg.
+    const pkg = JSON.parse(las('package.json'));
+    assert.ok(pkg.dependencies?.['pdfjs-dist'],
+      'pdfjs-dist måste ligga i dependencies, inte devDependencies');
+  });
+
+  test('FN-12 · numret NÅR båda liggarna (lagrat och osynligt är ingen leverans)', () => {
+    const store = las('lib/invoice-store.js');
+    assert.match(store, /SELECT[\s\S]{0,400}invoice_number/,
+      'läsvägen måste hämta kolumnen — annars är numret lagrat och osynligt');
+    assert.match(store, /ADD COLUMN IF NOT EXISTS invoice_number TEXT/,
+      'kolumnen ska självläka; en migrering som kräver att någon minns den körs inte');
+
+    const api = las('api/invoice-history.mjs');
+    assert.match(api, /invoiceNumber: a\.invoice_number/,
+      'bevakat-kortet måste bära numret — det är kortet där vår tystnad ska gå att kontrollera');
+
+    const rum = las('src/pages/Portfolio/index.js');
+    assert.match(rum, /faktura \$\{w\.invoiceNumber\}/, 'bevakat-listan ska visa numret');
+    assert.match(rum, /faktura \$\{a\.invoice_number\}/, 'innehavets rad ska visa numret');
+  });
+
+  test('FN-13 · varje triage-utgång bär numret vidare', () => {
+    const api = las('api/test-invoice.mjs');
+    const anrop = api.match(/storeTriaged\(\{ fingerprint, pdfHash,/g) ?? [];
+    const med = api.match(/storeTriaged\(\{ fingerprint, pdfHash, invoiceNumber:/g) ?? [];
+    assert.ok(anrop.length >= 10, `hittade bara ${anrop.length} triage-anrop — matchar mönstret koden?`);
+    assert.equal(med.length, anrop.length,
+      'en triagerad faktura är just den kunden vill slå upp — alla utgångar måste bära numret');
   });
 });
