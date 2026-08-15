@@ -27,7 +27,11 @@ deklarera({
 
 const KORPUS = 'test-pdfs';
 const filer = readdirSync(KORPUS).filter((f) => f.toLowerCase().endsWith('.pdf')).sort();
-const max = Number(process.env.MAX_PDF ?? filer.length);
+// || och inte ??: GitHub Actions sätter en ANGIVEN-MEN-TOM input till tom sträng, och
+// '' ?? x är ''. Number('') är 0 → slice(0,0) → NOLL fakturor mätta, och sonden hade rapporterat
+// "0 prövade" som om korpusen vore tom. Exakt samma fälla som 422-felet i skicka-rumslank —
+// och sondvakten (SV-06) fällde mig på den igen, i samma session som jag skrev vakten.
+const max = Number(process.env.MAX_PDF || filer.length);
 const urval = filer.slice(0, max);
 
 console.log(`\n═══ FAKTURANUMMER · ${urval.length} riktiga fakturor ═══\n`);
