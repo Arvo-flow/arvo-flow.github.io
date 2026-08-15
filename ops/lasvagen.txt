@@ -1,0 +1,28 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-lasvagen
+║ FÅNGAR: Vilka kolumner invoice_analyses FAKTISKT har i produktion, om den primära SELECT-satsen går igenom eller kastar, och — om den kastar — exakt vilka fält reserven tappar (health_score, lead_finding_json, triage_reason).
+║ BLIND FÖR: Sonden prövar SELECT-satserna som de ser ut i koden just nu. Har någon ändrat dem sedan deployen mäter den den nya koden mot den gamla databasen, vilket är rätt fråga men inte samma fråga. Den ser heller inte hur MÅNGA kunder som drabbats — bara att vägen är trasig eller hel.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+
+═══ invoice_analyses: 28 kolumner ═══
+  annual_cost, billing_period, category, contract_end_date, contract_terms_json, created_at, deadline_reminder_json, employees, fingerprint, gross_saving, health_score, id, industry, lead_finding_json, net_saving, normalized_supplier, outcome_email_sent_at, pdf_hash, price_per_seat_monthly, reminder_30_sent_at, reminder_60_sent_at, route, seat_count, should_switch, suggested_annual_cost, supplier, triage_reason, user_email
+
+═══ DE KOLUMNER LÄSVÄGEN BEROR PÅ ═══
+  ⛔ SAKNAS  invoice_number
+  ✓  health_score
+  ✓  lead_finding_json
+  ✓  triage_reason
+  ✓  contract_terms_json
+  ✓  contract_end_date
+
+═══ PRIMÄR SELECT ═══
+  ⛔ KASTAR: column "invoice_number" does not exist
+  → läsvägen faller till reserven, som INTE hämtar health_score,
+    lead_finding_json eller triage_reason. Alla score blir fallback 75.
+
+═══ DATAN SJÄLV ═══
+  rader: 56 · med health_score: 11
+  → Talen FINNS i databasen. Felet är alltså LÄSVÄGEN, inte analysen.
+    Rummet visar 75 för att det inte får se dem, inte för att de saknas.
