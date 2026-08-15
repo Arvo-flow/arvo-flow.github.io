@@ -7,10 +7,10 @@
 ╚═══════════════════════════════════════════════════════════════════════════════
 
 ═══════ me***@hotmail.com ═══════
-  köade jobb: 10   status: {"done":10}
+  köade jobb: 10   status: {"done":9,"pending":1}
   analyser i invoice_analyses: 9
   GLAPP: 1 ⛔ jobb utan analys — tyst förlust
-  kötid: median 33.9 s · längst 45022.5 s
+  kötid: median 22.6 s · längst 41.5 s
 
   idx  status    försök  filnamn                                   utfall / fel
     0  done          1  INV_9924_Tele2_Foretag.pdf                (ingen dom bokförd)
@@ -21,7 +21,7 @@
     5  done          1  INV_9917_Microsoft_Ireland.pdf            (ingen dom bokförd)
     6  done          1  INV_9919_Fortnox_AB.pdf                   (ingen dom bokförd)
     7  done          1  INV_9922_Google_Ireland_Ltd.pdf           (ingen dom bokförd)
-    8  done          1  INV_9920_Ellevio_AB.pdf                   auto:saas-productivity·lagrad
+    8  pending       0  INV_9920_Ellevio_AB.pdf                   auto:saas-productivity·lagrad#1638753b-edce-480c-a0a8-d4508ce15dc1
     9  done          1  INV_9921_Tre_Foretag.pdf                  (ingen dom bokförd)
 
   RUMSLÄNKAR (magic_tokens) senaste dygnet: 8
