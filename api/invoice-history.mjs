@@ -21,6 +21,7 @@ import { catLabel } from '../lib/format.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { getVaktHealth } from '../lib/vakt.js';
 import { refineFinding } from '../lib/forensics.js';
+import { byggUppdelning } from '../lib/fakturarader.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getPublicListBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
@@ -140,6 +141,14 @@ export default async function handler(req, res) {
       lead_finding_json: refineFinding(a.lead_finding_json, {
         supplier: a.normalized_supplier || a.supplier || null,
       }),
+      // VAD ÅRSKOSTNADEN BESTÅR AV — ur kundens egna rader, och bara när summan går att räkna
+      // hem mot det tal kortet visar. Byggs HÄR, inte i klienten: rummet ska aldrig göra egen
+      // aritmetik på pengar (regel 2), och uppdelningen är en avstämning, inte en formattering.
+      uppdelning: byggUppdelning(a.line_items_json, {
+        annualCost:    a.annual_cost,
+        billingPeriod: a.billing_period,
+      }),
+      line_items_json: undefined,     // råraderna behövs inte i klienten — uppdelningen räcker
       contractClock: contractClockFinding({
         servicePeriodEnd: a.contract_end_date ?? null,
         supplier:         a.normalized_supplier || a.supplier || null,

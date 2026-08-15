@@ -18,7 +18,7 @@ import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
   SwitchVerdict, SwitchBtn, AvtalUpload, AvtalLast, Watched, IntelQuiet, SignOff, Spinner,
-  StartHint, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease, MoreIntake,
+  StartHint, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease, MoreIntake, Uppdelning,
 } from '../Kontoret/styles';
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -1179,6 +1179,63 @@ export default function Portfolio() {
                             <div className="dtxt" dangerouslySetInnerHTML={{ __html: buildReasoning(a) }} />
                           </div>
                         </div>
+
+                        {/* ── VAD INGÅR I ÅRSKOSTNADEN (grundarbeslut 2026-08-15) ──────────────
+                            "72 900 kr/år · RÄTT PRISSATT" är ett omdöme utan underlag; en
+                            finansdirektör kan inte analysera en post på det. Här står kundens EGNA
+                            rader, ordagrant, med antal och à-pris — och summeringen ned till exakt
+                            det tal som står i rubriken. Uppdelningen byggs i api-lagret
+                            (lib/fakturarader.js) och är FAIL-CLOSED: går den inte att räkna hem
+                            visas den inte alls. Hellre inget underlag än ett som inte adderar. */}
+                        {a.uppdelning && (() => {
+                          const u = a.uppdelning;
+                          const per = u.periodOrd;
+                          return (
+                            <Uppdelning data-uppdelning>
+                              <div className="u-k">Vad ingår i {fmtNum(a.annual_cost)} kr/år</div>
+                              {u.lopande.map((r, i) => (
+                                <div className="u-rad" key={`l${i}`}>
+                                  <span className="u-txt">{r.beskrivning}</span>
+                                  <span className="u-spec">
+                                    {r.antal > 0 && r.aPris > 0
+                                      ? <>{fmtNum(r.antal)} × {fmtUnit(r.aPris)} kr</>
+                                      : null}
+                                    {r.prorata ? ' · delperiod, årstakten använder fullt pris' : ''}
+                                  </span>
+                                  <span className="u-bel">{fmtNum(r.fulltBelopp ?? r.belopp)} kr</span>
+                                </div>
+                              ))}
+                              <div className="u-summa">
+                                <span>Löpande per {per}</span>
+                                <span className="u-bel">{fmtNum(u.lopandePerPeriod)} kr</span>
+                              </div>
+                              <div className="u-summa total">
+                                <span>× {u.multiplikator} {u.periodOrdPlural}</span>
+                                <span className="u-bel">{fmtNum(u.arstakt)} kr/år</span>
+                              </div>
+                              {u.engangs.length > 0 && (
+                                <div className="u-utanfor">
+                                  <div className="u-k">Ingår inte i årstakten</div>
+                                  {u.engangs.map((r, i) => (
+                                    <div className="u-rad" key={`e${i}`}>
+                                      <span className="u-txt">{r.beskrivning}</span>
+                                      <span className="u-spec">engångs eller rörlig</span>
+                                      <span className="u-bel">{fmtNum(r.belopp)} kr</span>
+                                    </div>
+                                  ))}
+                                  <p className="u-not">
+                                    Poster som inte återkommer varje {per} räknas aldrig in i årskostnaden —
+                                    att annualisera dem hade blåst upp både er kostnad och vår besparing.
+                                  </p>
+                                </div>
+                              )}
+                              <p className="u-not">
+                                Talen är hämtade ur er egen faktura, ordagrant. Summan går att räkna efter
+                                med miniräknare — annars visar vi den inte.
+                              </p>
+                            </Uppdelning>
+                          );
+                        })()}
 
                         {/* Faktatabell — råa tal en gång. Priset bor i Switch-kortet
                             när ett byte finns; annars här. */}

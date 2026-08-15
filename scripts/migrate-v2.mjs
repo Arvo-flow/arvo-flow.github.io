@@ -38,6 +38,10 @@ await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS invoice_number T
 // miljö hade fått exakt samma tysta nedgradering som 75-felet, utan att någon rört koden.
 // Hittad av LK-01 första gången den kördes: vakten betalade sig direkt.
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS contract_terms_json JSONB`;
+// Fakturaraderna (2026-08-15). Utan dem kan rummet inte svara på "vad ingår i 72 900 kr/år" —
+// och en finansdirektör kan inte analysera en post på ett omdöme utan underlag. Raderna är
+// kundens EGNA tal, ordagrant; inget marknadstal, inget estimat.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS line_items_json JSONB`;
 
 await sql`
   CREATE INDEX IF NOT EXISTS idx_analyses_supplier_seats

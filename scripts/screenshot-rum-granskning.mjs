@@ -16,6 +16,7 @@ import http from 'http';
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { refineFinding } from '../lib/forensics.js';
+import { byggUppdelning } from '../lib/fakturarader.js';
 
 const BUILD = path.resolve('build');
 
@@ -38,7 +39,13 @@ const IPAD = refineFinding({
 const ANALYSES = [
   A(1, 'Telia',        'mobil',              119520, '2026-08-14T09:00:00Z', { health_score: 96, lead_finding_json: IPAD, invoice_number: '9948211' }),
   A(2, 'Tre Foretag',  'mobil',               14940, '2026-08-14T09:01:00Z', { health_score: 96 }),
-  A(3, 'Google',       'saas-productivity',   72900, '2026-08-14T09:02:00Z', { health_score: 75 }),
+  A(3, 'Google',       'saas-productivity',   72900, '2026-08-14T09:02:00Z', { health_score: 75,
+    seat_count: 36, price_per_seat_monthly: 169, billing_period: 'monthly',
+    // Uppdelningen byggs med SAMMA funktion api-lagret använder — annars visar bilden något
+    // produktionen aldrig skickar (stub-läxan 2026-08-14).
+    uppdelning: byggUppdelning([
+      { type:'recurring_subscription', description:'Google Workspace Business Standard', quantity:36, unitPrice:168.75, amount:6075 },
+    ], { annualCost: 72900, billingPeriod: 'monthly' }) }),
   A(4, 'Microsoft',    'saas-productivity',   45600, '2026-08-14T09:03:00Z', { health_score: 92, invoice_number: 'INV-2026-0412' }),
   A(5, 'Tele2',        'mobil',               35880, '2026-08-14T09:04:00Z', { health_score: 96 }),
 ];
@@ -109,7 +116,21 @@ for (const [name, viewport] of [['desktop', { width: 1600, height: 1000 }], ['mo
   const page = await browser.newPage({ viewport, deviceScaleFactor: 1.5 });
   await page.goto('http://localhost:4176/flow/portfolio', { waitUntil: 'networkidle' });
   await page.waitForTimeout(1800);
+  // Expandera Google-raden: uppdelningen bor i det ÖPPNADE kortet, och det är den som granskas.
+  try {
+    await page.getByText('Google', { exact: true }).first().click();
+    await page.waitForTimeout(700);
+  } catch { /* raden hittades inte — bilden tas ändå, men utan uppdelningen */ }
   await page.screenshot({ path: `/tmp/rum-${name}.png`, fullPage: true });
+  // Och en närbild på det ÖPPNADE innehavskortet — uppdelningen är det som ska granskas, och att
+  // klippa ut den ur helskärmsbilden på gissade koordinater gav en svart ruta. Vi frågar
+  // webbläsaren var elementet ligger i stället för att räkna ut det själva.
+  if (name === 'desktop') {
+    try {
+      const kort = page.locator('[data-uppdelning]').first();
+      await kort.screenshot({ path: '/tmp/uppdelning.png' });
+    } catch (e) { console.log('(kunde inte fånga uppdelningen:', e.message.slice(0, 60), ')'); }
+  }
   await page.close();
 }
 await browser.close();

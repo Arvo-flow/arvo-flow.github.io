@@ -808,3 +808,29 @@ export const MoreIntake = styled.section`
 
 export const shimmerCss = shimmer;
 export const blipCss = blip;
+
+// ── VAD INGÅR I ÅRSKOSTNADEN (2026-08-15) ────────────────────────────────────────────────────
+// "Google · 72 900 kr/år · RÄTT PRISSATT" är ett omdöme utan underlag. En finansdirektör måste se
+// posterna: hur många licenser, till vilket à-pris, vad som är löpande och vad som är engångs.
+// Talen är kundens egna, ordagrant, och summan går alltid att räkna hem — uppdelningen visas
+// aldrig annars (lib/fakturarader.js är fail-closed).
+export const Uppdelning = styled.div`
+  margin-top:18px; padding-top:16px; border-top:1px solid ${theme.dossier.hairlineOnDark};
+  .u-k { font-family:${MONO}; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:${theme.dossier.tealBright}; margin-bottom:12px; }
+  .u-rad { display:grid; grid-template-columns:1fr auto auto; gap:8px 14px; align-items:baseline;
+    padding:7px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:13px; }
+  .u-rad:last-of-type { border-bottom:none; }
+  .u-txt { color:${theme.dossier.mutedOnDark}; }
+  .u-spec { font-family:${MONO}; font-size:11.5px; color:${theme.dossier.faintOnDark}; white-space:nowrap; }
+  .u-bel { font-family:${MONO}; font-size:13px; font-feature-settings:'tnum';
+    color:${theme.dossier.inkOnDark}; white-space:nowrap; text-align:right; }
+  /* Summeringen är kvittot: kunden ska kunna följa raderna ned till talet i rubriken. */
+  .u-summa { display:grid; grid-template-columns:1fr auto; gap:14px; align-items:baseline;
+    margin-top:10px; padding-top:10px; border-top:1px solid ${theme.dossier.hairlineOnDark};
+    font-size:13px; color:${theme.dossier.mutedOnDark}; }
+  .u-summa.total .u-bel, .u-summa.total { color:${theme.dossier.inkOnDark}; font-weight:600; }
+  .u-not { margin:12px 0 0; font-size:12px; line-height:1.55; color:${theme.dossier.faintOnDark}; }
+  .u-utanfor { margin-top:16px; padding-top:14px; border-top:1px dashed ${theme.dossier.hairlineOnDark}; }
+  @media (max-width:480px){ .u-rad { grid-template-columns:1fr auto; } .u-spec { grid-column:1 / -1; } }
+`;
