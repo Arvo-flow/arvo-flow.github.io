@@ -79,7 +79,10 @@ console.log(`\n═══ ALLA RADER I FÖNSTRET (utan filter): ${alla.length} �
 const perHash = new Map();
 for (const r of alla) {
   perHash.set(r.pdf_hash, (perHash.get(r.pdf_hash) ?? 0) + 1);
-  console.log(`  ${new Date(r.created_at).toISOString().slice(5, 19)}  ${mask(r.user_email).padEnd(24)}`
+  // id:t SKA skrivas ut: köns dom bär numera `·lagrad#<id>`, och matchningen mellan dem är hela
+  // svaret. Jag hämtade kolumnen men glömde skriva den — en avläsning som inte når papperet är
+  // ingen avläsning (samma klass av instrumentfel som sonden som rapporterade en sidstorlek).
+  console.log(`  id=${String(r.id).padEnd(6)} ${new Date(r.created_at).toISOString().slice(5, 19)}  ${mask(r.user_email).padEnd(24)}`
     + ` ${String(r.supplier).slice(0, 24).padEnd(24)} kat=${String(r.category ?? '—').padEnd(18)}`
     + ` väg=${String(r.route).padEnd(12)} pdf=${String(r.pdf_hash ?? '').slice(0, 10)}`);
 }
