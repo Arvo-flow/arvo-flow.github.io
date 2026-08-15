@@ -59,6 +59,30 @@ try {
   console.log('    lead_finding_json eller triage_reason. Alla score blir fallback 75.');
 }
 
+// ── BÄR RADERNA DAGENS FÄLT? (2026-08-16) ──────────────────────────────────────────────────
+// Uppdelningen ("vad ingår i 72 900 kr/år") kräver LAGRADE fakturarader, fakturanumret kräver
+// sin kolumn, och scoren kräver health_score. Fält som lagts till i kväll finns bara på rader
+// som analyserats DÄREFTER — en gammal rad är korrekt tyst, inte trasig. Skillnaden mellan
+// "tomt för att vi inte vet" och "tomt för att koden är trasig" måste gå att läsa av.
+try {
+  const [t] = await db`
+    SELECT COUNT(*)::int AS rader,
+           COUNT(line_items_json)::int AS med_rader,
+           COUNT(invoice_number)::int  AS med_nummer,
+           COUNT(health_score)::int    AS med_score
+    FROM invoice_analyses WHERE created_at > NOW() - interval '7 days'
+  `;
+  console.log(`\n═══ FÄLTTÄCKNING (7 dygn) ═══`);
+  console.log(`  rader: ${t.rader}`);
+  console.log(`  med fakturarader (uppdelningen) . ${t.med_rader}`);
+  console.log(`  med fakturanummer ............... ${t.med_nummer}`);
+  console.log(`  med health_score ................ ${t.med_score}`);
+  if (t.med_rader === 0) {
+    console.log('  → Ingen rad bär uppdelningen ännu. Antingen har ingen faktura analyserats');
+    console.log('    sedan kolumnen skapades, eller så skriver pipelinen inte fältet.');
+  }
+} catch (err) { console.log(`  (fälttäckning kunde inte läsas: ${err.message.slice(0, 80)})`); }
+
 // Hur många rader HAR ett health_score? Om primären kastar spelar det ingen roll för kunden —
 // men det avgör om felet är läsvägen eller data, och de kräver olika åtgärder.
 try {
