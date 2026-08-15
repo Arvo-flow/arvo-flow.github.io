@@ -482,6 +482,7 @@ export default async function handler(req, res) {
   const timing = {};
   try {
     const t0 = Date.now();
+    let fakturanummerSkal = null;
     const extracted = await extractInvoice({ pdfBytes });
     timing.extractMs = Date.now() - t0;
 
@@ -510,6 +511,10 @@ export default async function handler(req, res) {
         console.error('[fakturanummer] textlagret kunde inte läsas:', err.message);
       }
       const dom = verifieraFakturanummer(extracted.invoiceNumber, textlager);
+      // Skälet bärs i SVARET, inte bara i loggen. Vercel-loggen når varken sonderna eller jag, och
+      // ett fail-closed fält som ALLTID failar ser identiskt ut med ett som fungerar — det var
+      // hela poängen med FN-11. Kön bokför skälet (utfallFranSvar) och då blir det läsbart.
+      fakturanummerSkal = dom.nummer ? null : (dom.skal ?? 'inget_pastaende');
       if (extracted.invoiceNumber && !dom.nummer) {
         // Varje avvisning SÄGS. En grind vars utfall aldrig räknas kan aldrig förbättras — och
         // stängs förr eller senare av, precis som smyghöjningsvakten 2026-07-20.
@@ -1785,6 +1790,7 @@ export default async function handler(req, res) {
     const autoResponse = {
       ok:    true,
       route: 'auto',
+      fakturanummerSkal,
       contractClock,
       extracted: {
         supplier:        extracted.supplier,
