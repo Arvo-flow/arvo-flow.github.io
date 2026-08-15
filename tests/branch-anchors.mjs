@@ -81,6 +81,45 @@ describe('Branschankaret · enhet + källa', () => {
     }
   });
 
+  test('BA-09 · ordet "verifierat" kräver ett datum — annars ska ordet bort', async () => {
+    // Kortet sa "verifierat publikt listpris" utan att kunna säga verifierat NÄR. Datumet är den
+    // enda halvan av det påståendet kunden kan kontrollera, och prisboken hade det hela tiden —
+    // det släpptes bara aldrig igenom. Sommarens smyghöjning är skälet: prisboken stod stilla i
+    // 16 dygn medan Microsoft höjde 16,6 %, och varje kund fick de gamla talen som "verifierade".
+    const out = await buildBranchAnchors([a({ category: 'mobil', annual_cost: 58092 })]);
+    assert.ok(out.mobil, 'mobil ska ge ett ankare');
+    assert.match(String(out.mobil.lastVerified), /^\d{4}-\d{2}-\d{2}$/,
+      'ankaret måste bära ett verifieringsdatum — utan det får kundytan inte säga "verifierat"');
+
+    // En kategori vars datum bor per licensnivå ska få det HÄRLETT, inte tappa det.
+    const saas = await buildBranchAnchors([a({ category: 'saas-productivity', annual_cost: 120000 })]);
+    assert.match(String(saas['saas-productivity'].lastVerified), /^\d{4}-\d{2}-\d{2}$/,
+      'saas-productivity daterar per nivå — kategorin ska ärva den STALASTE nivåns datum');
+
+    // Och kundytan måste degradera ordet när datumet saknas, inte visa det ändå.
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const rum = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../src/pages/Portfolio/index.js'), 'utf8');
+    const kort = rum.slice(rum.indexOf('<span>Marknadsankaret</span>'), rum.indexOf('<span>Marknadsankaret</span>') + 500);
+    assert.match(kort, /branchAnchor\.lastVerified/,
+      'etiketten måste villkoras av datumet');
+    assert.match(kort, /'publikt listpris'/,
+      'utan datum ska ordet "verifierat" falla bort — ett svagare men sant påstående');
+  });
+
+  test('BA-10 · kategorins datum är dess STALASTE nivå, aldrig dess färskaste', async () => {
+    // Att välja det nyaste datumet vore att smickra oss själva: har en nivå inte kontrollerats
+    // sedan juni är kategorins påstående bara så gott som juni.
+    const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
+    const tiers = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {};
+    const datum = Object.values(tiers).map((t) => t?.lastVerified).filter(Boolean).sort();
+    assert.ok(datum.length >= 2, 'saas-productivity ska ha flera daterade nivåer att välja mellan');
+    const out = await buildBranchAnchors([a({ category: 'saas-productivity' })]);
+    assert.equal(out['saas-productivity'].lastVerified, datum[0],
+      `ankaret ska bära ${datum[0]} (stalaste), inte ${datum.at(-1)} (färskaste)`);
+  });
+
   test('BA-08 · ankaret får ALDRIG gå via prisbokens prioritetskedja', async () => {
     // Det var den vägen som tystade kortet i skarpt läge: getBenchmark föredrar livedata
     // (totalsummor), ankaret krävde per-enhet — och kastade i stället för att fråga rätt källa.

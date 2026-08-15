@@ -408,6 +408,14 @@ export const EXTRACT_TOOL = {
         type: 'string',
         description: 'Fakturadatum i ISO-format YYYY-MM-DD',
       },
+      invoiceNumber: {
+        type: ['string', 'null'],
+        description: 'Fakturanumret EXAKT som det står tryckt på fakturan, tecken för tecken '
+          + '(t.ex. "9923", "INV-2026-0412", "F 44019-2"). Vanliga etiketter: "Fakturanr", '
+          + '"Fakturanummer", "Invoice no", "Invoice number", "Faktura #". '
+          + 'KONSTRUERA ALDRIG ett nummer och härled det aldrig ur filnamn, OCR-brus eller '
+          + 'kundnummer/OCR-referens — det är andra fält. Står det inte tryckt: null.',
+      },
       description: {
         type: 'string',
         description: 'Kort övergripande beskrivning av fakturans huvudändamål, t.ex. "Mobilabonnemang mars 2025" eller "Skrivarleasing Q2 2025"',
@@ -894,6 +902,12 @@ export function aggregateLineItems(rawInput) {
   return {
     supplier:                 raw.supplier,
     date:                     raw.date,
+    // OBSERVATION, aldrig härledd (samma disciplin som moms_bas/amount_ore i avstämningsgrinden):
+    // vi bär vidare exakt det modellen läste, och låter en oberoende kontroll avgöra om det stod
+    // på pappret. Ett hallucinerat fakturanummer ser identiskt ut med ett avläst — med
+    // precisionens auktoritet på köpet — och det är värre än inget nummer alls.
+    invoiceNumber:            typeof raw.invoiceNumber === 'string' && raw.invoiceNumber.trim()
+      ? raw.invoiceNumber.trim() : null,
     description:              raw.description,
     account:                  raw.account ?? null,
     billingPeriod,

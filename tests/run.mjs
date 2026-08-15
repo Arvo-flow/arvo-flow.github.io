@@ -101,6 +101,7 @@ import './rumsidentitet.mjs';
 import './bevakat-kort.mjs';
 import './rumsredovisning.mjs';
 import './kobokforing.mjs';
+import './fakturanummer.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

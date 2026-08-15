@@ -1,0 +1,39 @@
+name: Probe fakturanummer
+# Ljuger modellen om fakturanumret? Prövar modellens påstående mot dokumentets TEXTLAGER
+# (pdfjs, deterministiskt) över hela korpusen. Skriver ingenting, rör inte produktionen.
+on:
+  workflow_dispatch:
+    inputs:
+      max_pdf:
+        description: 'Antal fakturor att pröva (tomt = alla)'
+        required: false
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: npm ci
+      # pdfjs-dist är inte en produktionsdependency (bundlestorleken är inte värd ett fält) —
+      # den installeras bara där mätningen körs, precis som i forsegla-villkor.
+      - run: npm install --no-save pdfjs-dist
+      - name: Mät
+        run: |
+          mkdir -p ops
+          node scripts/probe-fakturanummer.mjs 2>&1 | tee ops/fakturanummer.txt
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MAX_PDF: ${{ inputs.max_pdf }}
+      - name: Commit
+        if: always()
+        run: |
+          git config user.name 'Arvo Diag Bot'; git config user.email 'bot@arvoflow.se'
+          git add ops/fakturanummer.txt
+          git commit -m "ops: fakturanummer [skip ci]" || { echo "inget"; exit 0; }
+          git push || { git fetch origin main; git reset --soft FETCH_HEAD; git reset
+            git add ops/fakturanummer.txt
+            git commit -m "ops: fakturanummer [skip ci]"; git push; }

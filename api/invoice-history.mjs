@@ -426,6 +426,10 @@ export async function buildBranchAnchors(analyses) {
         out[a.category] = {
           category: a.category, median: b.median, p25: b.p25 ?? null,
           source: b.source, unitLabel: unit.label, unitNoun: unit.noun, unitNounPl: unit.nounPl,
+          // ORDET "VERIFIERAT" KRÄVER ETT DATUM (2026-08-15). Kortet sa "verifierat publikt
+          // listpris" utan att kunna säga verifierat NÄR — och det är exakt den halvan av
+          // påståendet kunden kan kontrollera. Saknas datumet ska ordet bort, inte datumet döljas.
+          lastVerified: b.lastVerified ?? null,
           customerCost: a.annual_cost ?? null, seats,
         };
       }

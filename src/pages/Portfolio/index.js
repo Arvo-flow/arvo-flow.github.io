@@ -1027,9 +1027,15 @@ export default function Portfolio() {
                         brödtexten tog tillbaka löftet. Kohortnamnet är reserverat för kortet som
                         bärs av VERKLIGA fakturor (featured/publicFeatured ovan); det här är ett
                         listprisankare och ska heta så tills volymen finns. */}
+                    {/* Ordet "verifierat" bärs bara när vi kan säga NÄR. Utan datum degraderas
+                        etiketten till "publikt listpris" — ett svagare men sant påstående. */}
                     <div className="card-eyebrow">
                       <span>Marknadsankaret</span>
-                      <span className="src">verifierat listpris</span>
+                      <span className="src">
+                        {branchAnchor.lastVerified
+                          ? <>verifierat {fmtDate(branchAnchor.lastVerified)}</>
+                          : 'publikt listpris'}
+                      </span>
                     </div>
                     {comparable ? (
                       <>
@@ -1077,7 +1083,9 @@ export default function Portfolio() {
                         })()}
                         <p className="truth-note">
                           Ert pris är räknat på era {seats} {seats === 1 ? branchAnchor.unitNoun : branchAnchor.unitNounPl}
-                          {' '}({fmtNum(cost)} kr/år) mot verifierat publikt listpris.{' '}
+                          {' '}({fmtNum(cost)} kr/år) mot {branchAnchor.lastVerified
+                            ? <>leverantörens publika listpris, senast kontrollerat av oss <b>{fmtDate(branchAnchor.lastVerified)}</b></>
+                            : <>leverantörens publika listpris</>}.{' '}
                           {overList
                             ? <><b>De flesta företag ligger under listpris</b> — ni ligger över. Det är ovanligt nog att
                               alltid vara värt en fråga till leverantören: vilken rabatt gäller för er volym?</>

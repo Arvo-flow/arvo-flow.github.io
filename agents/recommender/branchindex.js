@@ -1045,6 +1045,23 @@ export const BRANCHINDEX = {
  * Look up benchmark for a customer + category.
  * Returns null if category isn't covered.
  */
+// ── EN KATEGORI ÄR BARA SÅ VERIFIERAD SOM SIN STALASTE NIVÅ ─────────────────────────────────
+// molnvaxel och saas-productivity är märkta 'real-public' men saknar lastVerified på
+// KATEGORINIVÅ — datumet bor per licensnivå (licenseTierBenchmarks). Ankaret läser kategorin och
+// kunde därför inte visa något datum alls för dem, trots att varje enskilt pris är daterat.
+// Vi härleder i stället för att skriva av (regel 1: en sanning — en avskriven kopia glider isär).
+// ÄLDSTA nivån vinner, inte den nyaste: har en nivå inte kontrollerats sedan juni är kategorins
+// påstående bara så gott som juni. Att välja det färskaste datumet vore att smickra oss själva.
+function aldstaTierDatum(cat) {
+  const tiers = cat?.licenseTierBenchmarks;
+  if (!tiers || typeof tiers !== 'object') return null;
+  const datum = Object.values(tiers)
+    .map((t) => t?.lastVerified)
+    .filter((d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort();
+  return datum[0] ?? null;
+}
+
 export function getBenchmark({ category, industry, employees }) {
   const cat = BRANCHINDEX[category];
   if (!cat) return null;
@@ -1063,6 +1080,12 @@ export function getBenchmark({ category, industry, employees }) {
     industry: ind,
     size,
     source: cat.source ?? 'mock',
+    // NÄR priset senast bevisades. Fanns i prisboken men släpptes aldrig igenom till någon
+    // konsument — så kundytan kunde säga "verifierat listpris" utan att kunna säga verifierat NÄR.
+    // Sommarens smyghöjning är hela skälet: prisboken stod stilla i 16 dygn medan Microsoft höjde
+    // 16,6 %, och varje kund fick de gamla talen presenterade som verifierade. Ett datum är den
+    // enda del av det påståendet som kunden kan kontrollera.
+    lastVerified: cat.lastVerified ?? aldstaTierDatum(cat),
     unit: cat.unit,
     note: cat.note,
     median: cell.median,
