@@ -13,24 +13,24 @@
      det interna /api/test-invoice-anropet — inte ännu en gissning här.
 
 ═══ ALLA RADER I FÖNSTRET (utan filter): 18 ═══
-  08-14T11:45:35  me***@hotmail.com        Telia Företag            kat=mobil              väg=auto         pdf=bfec01273b
-  08-14T11:45:35  me***@hotmail.com        Tre Foretag              kat=mobil              väg=auto         pdf=0334889263
-  08-14T11:45:28  me***@hotmail.com        Slack Technologies       kat=uncategorized      väg=review_queue pdf=07371b9a1c
-  08-14T11:45:25  me***@hotmail.com        Google Ireland Ltd       kat=saas-productivity  väg=auto         pdf=f5cda50816
-  08-14T11:45:16  me***@hotmail.com        Microsoft Ireland        kat=saas-productivity  väg=auto         pdf=3b5121759e
-  08-14T11:45:14  me***@hotmail.com        Tele2 Företag            kat=mobil              väg=auto         pdf=5b928662bc
-  08-14T11:45:12  me***@hotmail.com        Binero Group AB          kat=serverhosting      väg=review_queue pdf=2a5f861ea3
-  08-14T11:45:08  me***@hotmail.com        Fortnox AB               kat=loneadmin          väg=review_queue pdf=2aff58ccaa
-  08-14T11:45:08  me***@hotmail.com        Salesforce.com           kat=uncategorized      väg=review_queue pdf=b981d9cfd8
-  08-14T11:27:03  me***@gmail.com          Microsoft Ireland        kat=saas-productivity  väg=auto         pdf=3b5121759e
-  08-14T11:27:01  me***@gmail.com          Telia Företag            kat=mobil              väg=auto         pdf=bfec01273b
-  08-14T11:26:55  me***@gmail.com          Salesforce.com           kat=uncategorized      väg=review_queue pdf=b981d9cfd8
-  08-14T11:26:55  me***@gmail.com          Tele2 Företag            kat=mobil              väg=auto         pdf=5b928662bc
-  08-14T11:26:54  me***@gmail.com          Tre Foretag              kat=mobil              väg=auto         pdf=0334889263
-  08-14T11:26:52  me***@gmail.com          Google Ireland Ltd       kat=saas-productivity  väg=auto         pdf=f5cda50816
-  08-14T11:26:49  me***@gmail.com          Binero Group AB          kat=serverhosting      väg=review_queue pdf=2a5f861ea3
-  08-14T11:26:47  me***@gmail.com          Fortnox AB               kat=faktura-tjanst     väg=auto         pdf=2aff58ccaa
-  08-14T11:26:46  me***@gmail.com          Slack Technologies       kat=uncategorized      väg=review_queue pdf=07371b9a1c
+  id=e695d392-a431-4769-afd3-5869eb94b9e0 08-14T11:45:35  me***@hotmail.com        Telia Företag            kat=mobil              väg=auto         pdf=bfec01273b
+  id=b094b42a-68eb-470c-a2de-7916e4d737d8 08-14T11:45:35  me***@hotmail.com        Tre Foretag              kat=mobil              väg=auto         pdf=0334889263
+  id=7b115ce0-b3fc-48fd-aaa8-853991cf8c1d 08-14T11:45:28  me***@hotmail.com        Slack Technologies       kat=uncategorized      väg=review_queue pdf=07371b9a1c
+  id=1638753b-edce-480c-a0a8-d4508ce15dc1 08-14T11:45:25  me***@hotmail.com        Google Ireland Ltd       kat=saas-productivity  väg=auto         pdf=f5cda50816
+  id=eb125ae8-b1e5-4ef2-a5e0-4c61dc94ddaf 08-14T11:45:16  me***@hotmail.com        Microsoft Ireland        kat=saas-productivity  väg=auto         pdf=3b5121759e
+  id=a00311f7-afef-4590-8ae9-615b0386f5ba 08-14T11:45:14  me***@hotmail.com        Tele2 Företag            kat=mobil              väg=auto         pdf=5b928662bc
+  id=32c0a254-7cd4-46c8-b4bb-2f8b2beb7bf9 08-14T11:45:12  me***@hotmail.com        Binero Group AB          kat=serverhosting      väg=review_queue pdf=2a5f861ea3
+  id=c0ac9c31-a429-49af-a243-3ba90841806f 08-14T11:45:08  me***@hotmail.com        Fortnox AB               kat=loneadmin          väg=review_queue pdf=2aff58ccaa
+  id=954e4bf1-f466-433a-9bea-63640e80aba6 08-14T11:45:08  me***@hotmail.com        Salesforce.com           kat=uncategorized      väg=review_queue pdf=b981d9cfd8
+  id=1a978a5d-00a9-4598-8c31-9d949a6ae18f 08-14T11:27:03  me***@gmail.com          Microsoft Ireland        kat=saas-productivity  väg=auto         pdf=3b5121759e
+  id=fa0cc384-9cb7-408a-a5a0-313ebba4b809 08-14T11:27:01  me***@gmail.com          Telia Företag            kat=mobil              väg=auto         pdf=bfec01273b
+  id=eec754c4-f182-4653-85ac-bc4abd3bf318 08-14T11:26:55  me***@gmail.com          Salesforce.com           kat=uncategorized      väg=review_queue pdf=b981d9cfd8
+  id=4f27ae93-d68e-4684-8c37-dbf7d0f65ee5 08-14T11:26:55  me***@gmail.com          Tele2 Företag            kat=mobil              väg=auto         pdf=5b928662bc
+  id=d6321470-9a74-4f72-bc17-13f06874cf75 08-14T11:26:54  me***@gmail.com          Tre Foretag              kat=mobil              väg=auto         pdf=0334889263
+  id=35d75b5f-ce9b-428d-b8ab-ca45177d8f2c 08-14T11:26:52  me***@gmail.com          Google Ireland Ltd       kat=saas-productivity  väg=auto         pdf=f5cda50816
+  id=92113573-cf04-46ee-92aa-dfb67876e253 08-14T11:26:49  me***@gmail.com          Binero Group AB          kat=serverhosting      väg=review_queue pdf=2a5f861ea3
+  id=6bebe813-516a-4197-81b5-8e15ecd74ab9 08-14T11:26:47  me***@gmail.com          Fortnox AB               kat=faktura-tjanst     väg=auto         pdf=2aff58ccaa
+  id=1976765a-e50d-430f-ada9-e846584538c7 08-14T11:26:46  me***@gmail.com          Slack Technologies       kat=uncategorized      väg=review_queue pdf=07371b9a1c
   ⚠️ 9 pdf_hash förekommer mer än en gång — upserten kan ha slagit ihop rader
 
 ═══ ANDRA TRIAGERADE RADER (jämförelsepunkt): 7 ═══
