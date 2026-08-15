@@ -1,0 +1,206 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-fakturanummer
+║ FÅNGAR: Hur ofta modellen påstår ett fakturanummer, hur ofta påståendet har giltig form, och hur ofta numret FAKTISKT står i dokumentets textlager. Skiljer tystnad (inget nummer) från fabrikation (ett nummer som inte finns på pappret).
+║ BLIND FÖR: Textlagret är bara ett vittne för PDF:er som HAR ett textskikt. En skannad faktura ger tom text, och då kan sonden varken bekräfta eller avfärda — de fallen räknas separat som "okontrollerbara" och får aldrig blandas in i felprocenten. Sonden vet heller inte om numret modellen läste är rätt FÄLT: står både kundnummer och fakturanummer på pappret bekräftar textlagret båda, och en förväxling ser ut som en träff.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
+
+═══ FAKTURANUMMER · 75 riktiga fakturor ═══
+
+  1. Faktura_1.pdf                      ✓  "9948211"
+  2. Faktura_2.pdf                      ✓  "CT-99120"
+  3. Faktura_3.pdf                      ✓  "CT-99120"
+  4. Faktura_4.pdf                      ✓  "10001"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+  5. adobe-creative-cloud-ars.pdf       ✓  "ADBE-2026-INV-SE-00234"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+  6. ald-billeasing-outofscope.pdf      ✓  "ALD-2026-05-SE-441123"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+  7. atea-m365-overskott.pdf            ✓  "ATEA-2026-05-MIC-7712"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+  8. atlassian-cloud-manad.pdf          ✓  "ATL-INV-SE-2026-05-77221"
+  9. atlassian.pdf                      ✓  "ATL-6619284"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 10. aws-reseller-komplex.pdf           ✓  "CYG-2026-05-AWS-00441"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 11. aws-startup-kredit.pdf             ✓  "AWS-INV-SE-2026-05-00998"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 12. azure-csp-reseller.pdf             ✓  "ADV-2026-05-AZ-77123"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 13. bahnhof-fiber-ren.pdf              ✓  "BHF-2026-05-44123"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 14. bevakning-outofscope.pdf           ⚠️  ogiltig form: "SEC-2026-05-"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 15. bredband-nytt-avtal-rabatt.pdf     ✓  "TEL-FIB-2026-05-0099"
+ 16. bredband_1_baseline.pdf            ✓  "20264010"
+ 17. bredband_2_sveakom.pdf             ✓  "88129934"
+ 18. bredband_3.pdf                     ✓  "5543201"
+ 19. bredband_4.pdf                     ✓  "104599"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 20. bredbandsbolaget-kampanj.pdf       ✓  "BBL-2026-05-119944"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 21. canon-hog-klickratio.pdf           ✓  "CAN-2026-05-0077123"
+ 22. cloudreseller-norden.pdf           ✓  "CR-88412"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 23. comhem-mobil-bredband-kombinerad.pdf ✓  "CHM-2026-05-554433"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 24. comviq-data-tal.pdf                ✓  "CVQ-2026-05-009912"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 25. comviq-mobil-budget.pdf            ✓  "CVQ-2026-05-003341"
+ 26. connectsverige.pdf                 ✓  "CS-991200"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 27. crayon-m365-azure.pdf              ✓  "CRY-2026-05-SE-44123"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 28. dhl-frakt-standard.pdf             ✓  "DHL-2026-05-SE-0088123"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 29. diag-bredband.pdf                  ✓  "TLE-BB-20260514-305003"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 30. dustin-m365-standard.pdf           ✓  "DST-2026-05-0099112"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 31. eon-el-solceller.pdf               ✓  "EON-2026-05-SOL-0044"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 32. eon-el-spot-se3.pdf                ✓  "EON-2026-05-0088123"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 33. fortum-el-fastpris.pdf             ✓  "FRT-2026-05-334411"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 34. globalcom-mobil-hog-roaming.pdf    ✓  "GCN-MAJ26-00441"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 35. google-workspace-arsbetalning.pdf  ✓  "GGL-2026-INV-SE-00441"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+[billing-period] multi-unit quarterly override → monthly (2 rader med quantity≥5)
+ 36. hubspot-marketing-pro.pdf          ✓  "HS-2026-Q2-SE-00881"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 37. iponly-fiber-addon-stack.pdf       ✓  "IPO-2026-05-008841"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 38. konica-minolta-klick.pdf           ✓  "KM-2026-05-SE-44231"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 39. konsult-it-oklar.pdf               ✓  "TSK-2026-05-00441"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 40. kraftringen-el-lokalt.pdf          ✓  "KRF-2026-05-11234"
+ 41. kristianstad.pdf                   ?  "112233" · inget textlager att pröva mot
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 42. microsoft-direkt-usd.pdf           ✓  "MS-INV-20260501-SE-78231"
+ 43. microsoft-new.pdf                  ✓  "MS-2026-05"
+ 44. microsoft.pdf                      ✓  "MS-2026-05"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 45. mixad-it-frakt.pdf                 ✓  "ALP-2026-05-0044"
+ 46. nordiclogistik.pdf                 ✓  "NL-10442"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 47. oklar-blandad-faktura.pdf          ✓  "DTIT-2026-05-0088"
+ 48. omnicloud.pdf                      ✓  "OC-5511"
+ 49. outofscope.pdf                     ✓  "2026-1044"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 50. postnord-brev-paket.pdf            ✓  "PN-2026-05-0044123"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+[projektionskrav] SKUGGA: AI-projektion 59364 avviker 11.9 % från radsumman 53064 utan prorata-rader
+ 51. restaurang-mat-outofscope.pdf      ✓  "SMK-2026-05-0334"
+ 52. ricoh.pdf                          ✓  "9988776"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 53. salesforce-enterprise.pdf          ✓  "SF-INV-SE-2026-Q2-00441"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 54. stadbolag-outofscope.pdf           ✓  "PSS-2026-05-0712"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 55. stadsnät-koaxial-tv.pdf            ✓  "SNO-2026-05-00234"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 56. tele2-mobil-arsavtal.pdf           ✓  "TLE-2026-ARS-0421"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 57. tele2-mobil-bredband-kombinerad.pdf ✓  "TLE-20260501-KOMB-0044"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 58. tele2-mobil-enkel.pdf              ✓  "TLE-20260501-001"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 59. tele2-mobil-kreditfaktura.pdf      ✓  "TLE-KRED-20260501-0088"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 60. tele2-mobil-roaming.pdf            ✓  "TLE-20260501-002"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 61. telenor-mobil-bredband-kombinerad.pdf ✓  "TEL-2026-05-KOMB-0078"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 62. telenor-mobil-prorata.pdf          ✓  "TEL-2026-05-9944"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 63. telenor-mobil-standard.pdf         ✓  "TEL-2026-05-8821"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 64. telenor-molnvaxel-stor.pdf         ✓  "TEL-2026-05-PBXL-0044"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 65. telia-fiber-statisk-ip.pdf         ✓  "TEL-FIB-20260501-77221"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 66. telia-mobil-bredband-kombinerad.pdf ✓  "TEL-2026-05-KOMB-SE-0091"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 67. telia-mobil-hardvara.pdf           ✓  "TEL-20260501-881234"
+ 68. telia.pdf                          ✓  "TE-445511"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 69. tibber-el-timavrakning.pdf         ✓  "TIB-2026-05-A87123"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 70. tre-mobil-molnvaxel.pdf            ✓  "3-INV-2605-44821"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 71. tryggel.pdf                        ✓  "443211"
+ 72. unclear.pdf                        — inget nummer påstått
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 73. vattenfall-el-se4.pdf              ✓  "VTF-2026-05-0091234"
+ 74. vattenfall.pdf                     ✓  "11223344"
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+ 75. xerox-managed-print-it.pdf         ✓  "XRX-2026-05-SE-0023441"
+
+═══ UTFALL ═══
+  inget nummer påstått ....... 1
+  ogiltig form (grindad) ..... 1
+  okontrollerbart (ingen text) 1
+  extraktionsfel ............. 0
+  ── prövade mot pappret: 72 ──
+  BEKRÄFTADE ................. 72
+  FABRICERADE ................ 0
+
+  Fabrikationsfrekvens: 0.0 % av de prövade.
+  → Noll fabrikat. Fältet kan visas för kund, MED textlagergrinden kvar som lås.
