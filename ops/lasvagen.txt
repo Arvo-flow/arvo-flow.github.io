@@ -20,5 +20,11 @@
 ═══ PRIMÄR SELECT ═══
   ✓ går igenom — rummet får health_score, fyndet och triage-skälen
 
+═══ FÄLTTÄCKNING (7 dygn) ═══
+  rader: 19
+  med fakturarader (uppdelningen) . 6
+  med fakturanummer ............... 0
+  med health_score ................ 8
+
 ═══ DATAN SJÄLV ═══
-  rader: 56 · med health_score: 11
+  rader: 57 · med health_score: 11
