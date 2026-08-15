@@ -18,7 +18,7 @@ import { kravKolumner, aldrigTyst } from '../lib/sondvakt.js';
 deklarera({
   namn: 'probe-bulk-jobb',
   fangar: 'Per avsändare: antal köade jobb, deras sluttillstånd, filnamn, försök, och vilka filnamn som saknar en analysrad. Samt kötid från skapat till uppdaterat.',
-  blind: 'Sonden ser bara det som KÖADES. En PDF som aldrig blev ett jobb — för stor, feltypad, eller tappad av bilagelistningen hos Resend — lämnar inget spår här alls. Frånvaro i kön skiljer alltså inte "aldrig mottagen" från "aldrig köad", och den skillnaden måste läsas ur Vercel-loggen för inbound-email.',
+  blind: 'Sonden ser sju dygn bakåt; äldre bunt är osynlig. Den ser bara det som KÖADES. En PDF som aldrig blev ett jobb — för stor, feltypad, eller tappad av bilagelistningen hos Resend — lämnar inget spår här alls. Frånvaro i kön skiljer alltså inte "aldrig mottagen" från "aldrig köad", och den skillnaden måste läsas ur Vercel-loggen för inbound-email.',
 });
 
 // Maskerad utskrift: resultatet hamnar i ops/ och i en Actions-logg. Vi ska kunna SKILJA
@@ -36,11 +36,14 @@ await kravKolumner(db, 'ingest_jobs',
 const jobb = await aldrigTyst(db`
   SELECT sender, filename, status, attempts, attachment_index, error, outcome, created_at, claimed_at, done_at
   FROM ingest_jobs
-  WHERE created_at > NOW() - interval '24 hours'
+  WHERE created_at > NOW() - interval '7 days'
   ORDER BY sender, attachment_index ASC
 `, 'läsning av ingest_jobs');
 
-if (!jobb.length) { console.log('Inga jobb senaste dygnet.'); process.exit(0); }
+// FÖNSTRET VAR 24 TIMMAR och gjorde sonden blind för grundarens egen bunt när den var två dygn
+// gammal — den svarade "Inga jobb senaste dygnet", vilket var sant och samtidigt oanvändbart.
+// Ett mätinstrument vars räckvidd är kortare än frågans livslängd besvarar aldrig frågan.
+if (!jobb.length) { console.log('Inga jobb senaste sju dygnen.'); process.exit(0); }
 
 const perSender = new Map();
 for (const j of jobb) {
