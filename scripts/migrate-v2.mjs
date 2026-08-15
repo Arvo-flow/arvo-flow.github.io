@@ -27,6 +27,17 @@ const sql = neon(url);
 // att leverantören höjt priset. Utan normalisering flaggas skalning som höjning.
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS seat_count INTEGER`;
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS price_per_seat_monthly INTEGER`;
+// Fakturanumret (2026-08-15). Kolumnen SAKNADES i produktion när den lades i den primära
+// SELECT-satsen — satsen kastade, läsvägen föll till sin reserv, och reserven hämtar varken
+// health_score, lead_finding_json eller triage_reason. Följden i kundens rum: varje leverantör
+// visade 75 (fallback-talet), fyndkortet försvann och bevakade rader tappade sitt skäl.
+// Talen fanns hela tiden i databasen — rummet fick bara inte se dem.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS invoice_number TEXT`;
+// contract_terms_json skapades ENBART som en självläkning inne i api/contract-upload — alltså
+// bara i en miljö där någon råkat ladda upp ett avtal. Den LÄSES av rummets huvudsats, så en ny
+// miljö hade fått exakt samma tysta nedgradering som 75-felet, utan att någon rört koden.
+// Hittad av LK-01 första gången den kördes: vakten betalade sig direkt.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS contract_terms_json JSONB`;
 
 await sql`
   CREATE INDEX IF NOT EXISTS idx_analyses_supplier_seats

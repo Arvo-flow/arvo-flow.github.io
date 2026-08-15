@@ -102,6 +102,7 @@ import './bevakat-kort.mjs';
 import './rumsredovisning.mjs';
 import './kobokforing.mjs';
 import './fakturanummer.mjs';
+import './lasvagens-kolumner.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,
