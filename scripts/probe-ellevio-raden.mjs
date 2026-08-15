@@ -18,7 +18,7 @@ import { kravKolumner, aldrigTyst } from '../lib/sondvakt.js';
 deklarera({
   namn: 'probe-ellevio-raden',
   fangar: 'Om det finns någon rad i invoice_analyses för nätleverantören de senaste dygnen, oavsett vilken identitet den bär — och i så fall vilken väg, vilket triage-skäl och vilken (maskerad) e-post den nycklats på. Skiljer "aldrig skriven" från "skriven utan identitet".',
-  blind: 'Sonden ser bara DATABASEN. Nådde pipelinen aldrig fram till någon lagring — t.ex. för att extraktionen föll före kategoriseringen — ser det identiskt ut med en skrivning som kastades. Den skillnaden bor i Vercel-loggen för det interna anropet, inte här. Sonden vet heller inte vilken PDF drainen faktiskt matade in; den matchar på leverantörsnamn, så en faktura vars leverantör lästes som något annat är osynlig för den här frågan.',
+  blind: 'Sonden ser bara DATABASEN, och dess LEVERANTÖRSFILTER är blint för en faktura vars leverantör lästes som något annat — därför listas numera även alla färska rader utan filter. Nådde pipelinen aldrig fram till någon lagring — t.ex. för att extraktionen föll före kategoriseringen — ser det identiskt ut med en skrivning som kastades. Den skillnaden bor i Vercel-loggen för det interna anropet, inte här. Sonden vet heller inte vilken PDF drainen faktiskt matade in; den matchar på leverantörsnamn, så en faktura vars leverantör lästes som något annat är osynlig för den här frågan.',
 });
 
 const mask = (e) => { const [l, d] = String(e || '').split('@'); return d ? `${l.slice(0, 2)}***@${d}` : '(ingen/NULL)'; };
@@ -57,6 +57,36 @@ if (!rader.length) {
   console.log('\n  ✓ Rad med identitet finns. Når den inte rummet är felet i LÄSVÄGEN');
   console.log('    (invoice-history: triage-filter, route-lista eller identitetsgrinden).');
 }
+
+// ── VAD KÖN SVARADE, OCH VARFÖR DET FLYTTAR FRÅGAN (2026-08-15) ──────────────────────────────
+// Med utfallet bokfört sa kön: `auto:saas-productivity`. Ellevio-fakturan går alltså ALDRIG via
+// el-grenen — den kategoriseras som SaaS och tar huvudvägen, där storeAnalysis är en ren upsert
+// som alltid returnerar ett id. pdf_hash är sha256 över råa bytes, så en krock är utesluten.
+//
+// Kvar står två möjligheter, och sondens leverantörsfilter kan inte skilja dem (dess deklarerade
+// blindfläck): raden skrevs aldrig (INSERT kastade), eller raden finns under ett HELT ANNAT
+// leverantörsnamn — vilket är precis vad en faktura läst som SaaS skulle få.
+// Därför listas alla rader i fönstret utan filter. Tio rader = felet bor i LÄSVÄGEN eller i
+// namnet; nio rader = skrivningen föll.
+const alla = await aldrigTyst(db`
+  SELECT id, user_email, supplier, normalized_supplier, category, route, annual_cost,
+         created_at, pdf_hash
+  FROM invoice_analyses
+  WHERE created_at > NOW() - interval '3 days'
+  ORDER BY created_at DESC LIMIT 40
+`, 'läsning av alla färska rader');
+console.log(`\n═══ ALLA RADER I FÖNSTRET (utan filter): ${alla.length} ═══`);
+const perHash = new Map();
+for (const r of alla) {
+  perHash.set(r.pdf_hash, (perHash.get(r.pdf_hash) ?? 0) + 1);
+  console.log(`  ${new Date(r.created_at).toISOString().slice(5, 19)}  ${mask(r.user_email).padEnd(24)}`
+    + ` ${String(r.supplier).slice(0, 24).padEnd(24)} kat=${String(r.category ?? '—').padEnd(18)}`
+    + ` väg=${String(r.route).padEnd(12)} pdf=${String(r.pdf_hash ?? '').slice(0, 10)}`);
+}
+const dubbletter = [...perHash.entries()].filter(([, n]) => n > 1);
+console.log(dubbletter.length
+  ? `  ⚠️ ${dubbletter.length} pdf_hash förekommer mer än en gång — upserten kan ha slagit ihop rader`
+  : '  ✓ varje pdf_hash är unik — ingen upsert har slagit ihop två fakturor');
 
 // Kontrollfråga: hur ser en FUNGERANDE triagerad rad ut för samma avsändare? Utan jämförelsepunkt
 // går det inte att se vad som skiljer — och det är skillnaden, inte raden, som bär svaret.
