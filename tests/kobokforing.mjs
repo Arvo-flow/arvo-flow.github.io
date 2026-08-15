@@ -53,7 +53,7 @@ describe('KÖBOKFÖRING · `done` måste säga vad som hände', () => {
     // fakturan — alltså huvudvägen, där storeAnalysis alltid ska ge ett id. Ändå fanns ingen rad.
     // Skillnaden mellan "vi beslutade" och "beslutet landade" låg bara i Vercel-loggen.
     assert.match(utfallFranSvar({ route: 'auto', categorized: { category: 'mobil' }, analysisId: 4711 }),
-      /·lagrad$/, 'en lagrad analys ska synas som lagrad');
+      /·lagrad#4711$/, 'id:t måste med — två jobb med samma id är samma PDF under två filnamn');
     assert.match(utfallFranSvar({ route: 'auto', categorized: { category: 'saas-productivity' } }),
       /·EJ_LAGRAD$/, 'utan analysisId har raden inte landat — det är fyndet, inte brus');
     assert.match(utfallFranSvar({ route: 'monitoring', categorized: { category: 'el' } }),
