@@ -417,6 +417,23 @@ signera", aldrig som ett verkställt löfte.)
    > leverantörens eget listpris är ovanligt och rummets vassaste besked. Den grenen fångades i
    > **min egen skärmdump**, inte av en kund — regel 8 betalade sig samma kväll den skrevs.
 
+   > **✅ EN TYST RESERV ÄR INGEN RESERV (2026-08-15, ur 75-felet).** Grundaren frågade varför
+   > VARJE leverantör i rummet visade Arvo Score 75. 75 är inget räknat tal — det är
+   > `supplierDiagScore`:s fallback när `health_score` saknas. Talen fanns i databasen; rummet
+   > fick bara inte se dem. Orsak: en ny kolumn (`invoice_number`) lades i den primära
+   > SELECT-satsen men självläkte bara vid SKRIVNING, och ingen ny faktura hade skrivits. Satsen
+   > kastade, läsvägen föll till sin reserv — och reserven hämtar varken `health_score`,
+   > `lead_finding_json` eller `triage_reason`. Score till fallback, fyndkortet borta, bevakade
+   > rader utan skäl. **En reserv som tyst hämtar färre fält är inte ett skyddsnät utan en tyst
+   > kvalitetsnedgradering — och den ser identisk ut med "kunden har inga bra avtal".** Ett halvt
+   > svar med full auktoritet, samma familj som smygtystnaden och den avstängda verifieraren.
+   > Regeln: en saknad kolumn LÄKS, den kringgås inte, och reserven är aldrig tyst. Maskinvakt:
+   > `tests/lasvagens-kolumner.mjs` (LK-01 kräver att varje läst kolumn skapas av en MIGRERING —
+   > en självläkning någon annanstans i koden räknas inte, för det var precis den som aldrig kördes).
+   > Sabotage-bevisad i tre riktningar, och LK-01 hittade ett andra hål på sin första körning:
+   > `contract_terms_json` skapades enbart av en självläkning i `api/contract-upload`, alltså bara
+   > i en miljö där någon råkat ladda upp ett avtal.
+
    > **✅ TVÅ HALVOR AV SAMMA REGEL (2026-08-15, ur Geminis granskning av rummet).**
    > **(a) Ordet "verifierat" kräver ett datum.** Ankarkortet sa "verifierat publikt listpris" utan
    > att kunna säga verifierat NÄR — och datumet är den enda halvan av påståendet kunden kan
