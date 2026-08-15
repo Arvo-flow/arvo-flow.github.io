@@ -1,7 +1,7 @@
 ╔═══════════════════════════════════════════════════════════════════════════════
 ║ SOND: probe-ellevio-raden
 ║ FÅNGAR: Om det finns någon rad i invoice_analyses för nätleverantören de senaste dygnen, oavsett vilken identitet den bär — och i så fall vilken väg, vilket triage-skäl och vilken (maskerad) e-post den nycklats på. Skiljer "aldrig skriven" från "skriven utan identitet".
-║ BLIND FÖR: Sonden ser bara DATABASEN. Nådde pipelinen aldrig fram till någon lagring — t.ex. för att extraktionen föll före kategoriseringen — ser det identiskt ut med en skrivning som kastades. Den skillnaden bor i Vercel-loggen för det interna anropet, inte här. Sonden vet heller inte vilken PDF drainen faktiskt matade in; den matchar på leverantörsnamn, så en faktura vars leverantör lästes som något annat är osynlig för den här frågan.
+║ BLIND FÖR: Sonden ser bara DATABASEN, och dess LEVERANTÖRSFILTER är blint för en faktura vars leverantör lästes som något annat — därför listas numera även alla färska rader utan filter. Nådde pipelinen aldrig fram till någon lagring — t.ex. för att extraktionen föll före kategoriseringen — ser det identiskt ut med en skrivning som kastades. Den skillnaden bor i Vercel-loggen för det interna anropet, inte här. Sonden vet heller inte vilken PDF drainen faktiskt matade in; den matchar på leverantörsnamn, så en faktura vars leverantör lästes som något annat är osynlig för den här frågan.
 ║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
 ║ ett påstående som låtsas vara ett faktum.
 ╚═══════════════════════════════════════════════════════════════════════════════
@@ -11,6 +11,27 @@
   ⛔ (a) INGEN RAD SKREVS. Grinden nåddes inte, eller storeTriaged föll tyst
      (anropet har en sväljande catch). Nästa avläsning är Vercel-loggen för
      det interna /api/test-invoice-anropet — inte ännu en gissning här.
+
+═══ ALLA RADER I FÖNSTRET (utan filter): 18 ═══
+  08-14T11:45:35  me***@hotmail.com        Telia Företag            kat=mobil              väg=auto         pdf=bfec01273b
+  08-14T11:45:35  me***@hotmail.com        Tre Foretag              kat=mobil              väg=auto         pdf=0334889263
+  08-14T11:45:28  me***@hotmail.com        Slack Technologies       kat=uncategorized      väg=review_queue pdf=07371b9a1c
+  08-14T11:45:25  me***@hotmail.com        Google Ireland Ltd       kat=saas-productivity  väg=auto         pdf=f5cda50816
+  08-14T11:45:16  me***@hotmail.com        Microsoft Ireland        kat=saas-productivity  väg=auto         pdf=3b5121759e
+  08-14T11:45:14  me***@hotmail.com        Tele2 Företag            kat=mobil              väg=auto         pdf=5b928662bc
+  08-14T11:45:12  me***@hotmail.com        Binero Group AB          kat=serverhosting      väg=review_queue pdf=2a5f861ea3
+  08-14T11:45:08  me***@hotmail.com        Fortnox AB               kat=loneadmin          väg=review_queue pdf=2aff58ccaa
+  08-14T11:45:08  me***@hotmail.com        Salesforce.com           kat=uncategorized      väg=review_queue pdf=b981d9cfd8
+  08-14T11:27:03  me***@gmail.com          Microsoft Ireland        kat=saas-productivity  väg=auto         pdf=3b5121759e
+  08-14T11:27:01  me***@gmail.com          Telia Företag            kat=mobil              väg=auto         pdf=bfec01273b
+  08-14T11:26:55  me***@gmail.com          Salesforce.com           kat=uncategorized      väg=review_queue pdf=b981d9cfd8
+  08-14T11:26:55  me***@gmail.com          Tele2 Företag            kat=mobil              väg=auto         pdf=5b928662bc
+  08-14T11:26:54  me***@gmail.com          Tre Foretag              kat=mobil              väg=auto         pdf=0334889263
+  08-14T11:26:52  me***@gmail.com          Google Ireland Ltd       kat=saas-productivity  väg=auto         pdf=f5cda50816
+  08-14T11:26:49  me***@gmail.com          Binero Group AB          kat=serverhosting      väg=review_queue pdf=2a5f861ea3
+  08-14T11:26:47  me***@gmail.com          Fortnox AB               kat=faktura-tjanst     väg=auto         pdf=2aff58ccaa
+  08-14T11:26:46  me***@gmail.com          Slack Technologies       kat=uncategorized      väg=review_queue pdf=07371b9a1c
+  ⚠️ 9 pdf_hash förekommer mer än en gång — upserten kan ha slagit ihop rader
 
 ═══ ANDRA TRIAGERADE RADER (jämförelsepunkt): 7 ═══
   08-14T11:45:28  me***@hotmail.com        Slack Technologies     väg=review_queue skäl=Ring1: radsumma 3 991 kr ≠ fakturatotal 382 kr (avvikelse 3 609 kr)
