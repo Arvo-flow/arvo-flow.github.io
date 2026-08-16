@@ -12,23 +12,21 @@
   GLAPP: 0 ✓
 
   idx  status    försök  filnamn                                   utfall / fel
-    0  failed        3  INV_9924_Tele2_Foretag.pdf                analys misslyckades (HTTP 422)
-    1  failed        3  INV_9918_Binero_Group_AB.pdf              analys misslyckades (HTTP 422)
-    2  failed        3  INV_9916_Telia_Foretag.pdf                analys misslyckades (HTTP 422)
-    3  failed        3  INV_9923_Slack_Technologies.pdf           analys misslyckades (HTTP 422)
-    4  failed        3  INV_9915_Salesforce.com.pdf               analys misslyckades (HTTP 422)
-    5  failed        3  INV_9917_Microsoft_Ireland.pdf            analys misslyckades (HTTP 422)
-    6  failed        3  INV_9919_Fortnox_AB.pdf                   analys misslyckades (HTTP 422)
-    7  failed        3  INV_9922_Google_Ireland_Ltd.pdf           analys misslyckades (HTTP 422)
-    8  failed        3  INV_9920_Ellevio_AB.pdf                   analys misslyckades (HTTP 422)
-    9  failed        3  INV_9921_Tre_Foretag.pdf                  analys misslyckades (HTTP 422)
+    0  failed        3  INV_9924_Tele2_Foretag.pdf                HTTP 422 · extract: Analysen misslyckades — försök igen.
+    1  failed        3  INV_9918_Binero_Group_AB.pdf              HTTP 422 · extract: Analysen misslyckades — försök igen.
+    2  failed        3  INV_9916_Telia_Foretag.pdf                HTTP 422 · extract: Analysen misslyckades — försök igen.
+    3  failed        3  INV_9923_Slack_Technologies.pdf           HTTP 422 · extract: Analysen misslyckades — försök igen.
+    4  failed        3  INV_9915_Salesforce.com.pdf               HTTP 422 · extract: Analysen misslyckades — försök igen.
+    5  failed        3  INV_9917_Microsoft_Ireland.pdf            HTTP 422 · extract: Analysen misslyckades — försök igen.
+    6  failed        3  INV_9919_Fortnox_AB.pdf                   HTTP 422 · extract: Analysen misslyckades — försök igen.
+    7  failed        3  INV_9922_Google_Ireland_Ltd.pdf           HTTP 422 · extract: Analysen misslyckades — försök igen.
+    8  failed        3  INV_9920_Ellevio_AB.pdf                   HTTP 422 · extract: Analysen misslyckades — försök igen.
+    9  failed        3  INV_9921_Tre_Foretag.pdf                  HTTP 422 · extract: Analysen misslyckades — försök igen.
 
-  RUMSLÄNKAR (magic_tokens) senaste dygnet: 5
+  RUMSLÄNKAR (magic_tokens) senaste dygnet: 3
      21:48:39  note=manuell-rumslank  använd=ja
      11:45:42  note=manuell-rumslank  använd=nej
      11:45:42  note=manuell-rumslank  använd=ja
-     00:41:14  note=manuell-rumslank  använd=nej
-     00:41:03  note=manuell-rumslank  använd=ja
      ✓ länk(ar) skapade — felet ligger i utskicket eller leveransen, inte i länkbygget
 
   analyser som landade:
