@@ -91,9 +91,20 @@ export default async function handler(req, res) {
   // gör att Neons beräkning aldrig autosuspendar — ~180 CU-timmar/månad för att fråga en tom kö.
   // Är köflaggan bevisat FALSK och det inte är en säkerhetsslot rör vi inte databasen alls.
   // null (KV saknas/felar) räknas ALDRIG som tomt: okänt är inte samma sak som tomt.
+  // ── EN KÖ SOM FYLLS UTANFÖR FLAGGAN BLIR OSYNLIG (grundarfall 2026-08-16) ─────────────────
+  // Tio omköade jobb låg pending i över en timme. Drainen svarade "tom kö enligt köflaggan" varje
+  // gång: omköningsverktyget sätter status i SQL, men kunde inte sätta KV-flaggan (inga nycklar i
+  // dess miljö), och drainen litade på ett DEFINITIVT falskt värde. Spärren var rätt byggd för
+  // sitt syfte — den skyddar Neon från 43 000 väckningar i månaden — men den gjorde flaggan till
+  // sanningen om kön i stället för en gissning om den.
+  //
+  // `force` är operatörens spak: en manuell "töm nu" som HOPPAR ÖVER flaggan och frågar Postgres.
+  // Den ändrar ingenting annat — samma claim, samma batch, samma budget. Utan den är enda vägen
+  // att vänta på att minuten råkar bli delbar med säkerhetsintervallet.
+  const force = req.query?.force === '1' || req.query?.force === 'true';
   const flagga = await hasPendingFlag();
   const sakerhetsslot = new Date().getUTCMinutes() % SAFETY_EVERY_MIN === 0;
-  if (flagga === false && !sakerhetsslot) {
+  if (flagga === false && !sakerhetsslot && !force) {
     return send(res, 200, { ok: true, skipped: 'tom kö enligt köflaggan — Postgres orörd' });
   }
 
