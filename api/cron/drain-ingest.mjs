@@ -71,7 +71,14 @@ async function processJob(job) {
     // Drainen HAR pipelinens dom i handen och kastade bort den. Nu följer den med jobbet,
     // så kön kan svara på "vad hände med min tionde faktura?" utan Vercel-loggen.
     if (a?.ok) { await completeJob(job.id, utfallFranSvar(a)); return true; }
-    await failJob(job.id, `analys misslyckades (HTTP ${r.status})`);
+    // SKÄLET STOD I SVARET OCH KASTADES BORT. Kön sparade "analys misslyckades (HTTP 422)" för
+    // tio fakturor i rad — en statuskod utan innehåll, medan pipelinen returnerade både `error`
+    // och `stage` i samma svar. 422 betyder ett KÄNT fel (extract/categorize/recommend), och utan
+    // meddelandet går det inte att skilja "Resend har inte mejlet kvar" från "vi har brutit
+    // extraktionen för alla kunder". De två kräver rakt motsatta åtgärder. Samma bokföringsplikt
+    // som gällde analysens beslut gäller kösnas fel.
+    const skal = [a?.stage, a?.error].filter(Boolean).join(': ').slice(0, 150);
+    await failJob(job.id, `HTTP ${r.status}${skal ? ` · ${skal}` : ' · svaret bar inget skäl'}`);
     return false;
   } catch (err) {
     await failJob(job.id, err.message);
