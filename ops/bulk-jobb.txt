@@ -7,21 +7,21 @@
 ╚═══════════════════════════════════════════════════════════════════════════════
 
 ═══════ me***@hotmail.com ═══════
-  köade jobb: 10   status: {"pending":10}
+  köade jobb: 10   status: {"failed":10}
   analyser i invoice_analyses: 10
   GLAPP: 0 ✓
 
   idx  status    försök  filnamn                                   utfall / fel
-    0  pending       0  INV_9924_Tele2_Foretag.pdf                (ingen dom bokförd)
-    1  pending       0  INV_9918_Binero_Group_AB.pdf              (ingen dom bokförd)
-    2  pending       0  INV_9916_Telia_Foretag.pdf                (ingen dom bokförd)
-    3  pending       0  INV_9923_Slack_Technologies.pdf           (ingen dom bokförd)
-    4  pending       0  INV_9915_Salesforce.com.pdf               (ingen dom bokförd)
-    5  pending       0  INV_9917_Microsoft_Ireland.pdf            (ingen dom bokförd)
-    6  pending       0  INV_9919_Fortnox_AB.pdf                   (ingen dom bokförd)
-    7  pending       0  INV_9922_Google_Ireland_Ltd.pdf           (ingen dom bokförd)
-    8  pending       0  INV_9920_Ellevio_AB.pdf                   (ingen dom bokförd)
-    9  pending       0  INV_9921_Tre_Foretag.pdf                  (ingen dom bokförd)
+    0  failed        3  INV_9924_Tele2_Foretag.pdf                analys misslyckades (HTTP 422)
+    1  failed        3  INV_9918_Binero_Group_AB.pdf              analys misslyckades (HTTP 422)
+    2  failed        3  INV_9916_Telia_Foretag.pdf                analys misslyckades (HTTP 422)
+    3  failed        3  INV_9923_Slack_Technologies.pdf           analys misslyckades (HTTP 422)
+    4  failed        3  INV_9915_Salesforce.com.pdf               analys misslyckades (HTTP 422)
+    5  failed        3  INV_9917_Microsoft_Ireland.pdf            analys misslyckades (HTTP 422)
+    6  failed        3  INV_9919_Fortnox_AB.pdf                   analys misslyckades (HTTP 422)
+    7  failed        3  INV_9922_Google_Ireland_Ltd.pdf           analys misslyckades (HTTP 422)
+    8  failed        3  INV_9920_Ellevio_AB.pdf                   analys misslyckades (HTTP 422)
+    9  failed        3  INV_9921_Tre_Foretag.pdf                  analys misslyckades (HTTP 422)
 
   RUMSLÄNKAR (magic_tokens) senaste dygnet: 5
      21:48:39  note=manuell-rumslank  använd=ja
