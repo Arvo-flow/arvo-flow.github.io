@@ -1,0 +1,28 @@
+name: Kör drainen manuellt
+# Grundarens tio jobb låg pending med NOLL försök i fyrtio minuter — även efter att köflaggan
+# fixats. Noll försök betyder att claimBatch aldrig körde: drainen exekverar inte, och då spelar
+# flaggan ingen roll. Vercel-cronens faktiska kadens når vi inte härifrån, så vi anropar endpointen
+# själva. Svaret avgör saken: drar den jobb är KODEN hel och det är SCHEMAT som inte fyrar.
+on:
+  workflow_dispatch:
+    inputs:
+      varv:
+        description: 'Antal vågor (varje våg tar upp till 5 jobb)'
+        default: '4'
+permissions: { contents: read }
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Anropa drainen
+        run: |
+          set -e
+          N=${{ inputs.varv }}
+          for i in $(seq 1 ${N:-4}); do
+            echo "── våg $i ──"
+            curl -s -X POST "https://arvoflow.se/api/cron/drain-ingest" \
+              -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+              -w "\nstatus=%{http_code}\n" | head -40
+            sleep 20
+          done
