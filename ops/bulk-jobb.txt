@@ -1,8 +1,112 @@
 ╔═══════════════════════════════════════════════════════════════════════════════
 ║ SOND: probe-bulk-jobb
 ║ FÅNGAR: Per avsändare: antal köade jobb, deras sluttillstånd, filnamn, försök, och vilka filnamn som saknar en analysrad. Samt kötid från skapat till uppdaterat.
-║ BLIND FÖR: Sonden ser bara det som KÖADES. En PDF som aldrig blev ett jobb — för stor, feltypad, eller tappad av bilagelistningen hos Resend — lämnar inget spår här alls. Frånvaro i kön skiljer alltså inte "aldrig mottagen" från "aldrig köad", och den skillnaden måste läsas ur Vercel-loggen för inbound-email.
+║ BLIND FÖR: Sonden ser sju dygn bakåt; äldre bunt är osynlig. Den ser bara det som KÖADES. En PDF som aldrig blev ett jobb — för stor, feltypad, eller tappad av bilagelistningen hos Resend — lämnar inget spår här alls. Frånvaro i kön skiljer alltså inte "aldrig mottagen" från "aldrig köad", och den skillnaden måste läsas ur Vercel-loggen för inbound-email.
 ║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
 ║ ett påstående som låtsas vara ett faktum.
 ╚═══════════════════════════════════════════════════════════════════════════════
-Inga jobb senaste dygnet.
+
+═══════ me***@hotmail.com ═══════
+  köade jobb: 10   status: {"pending":10}
+  analyser i invoice_analyses: 10
+  GLAPP: 0 ✓
+
+  idx  status    försök  filnamn                                   utfall / fel
+    0  pending       0  INV_9924_Tele2_Foretag.pdf                (ingen dom bokförd)
+    1  pending       0  INV_9918_Binero_Group_AB.pdf              (ingen dom bokförd)
+    2  pending       0  INV_9916_Telia_Foretag.pdf                (ingen dom bokförd)
+    3  pending       0  INV_9923_Slack_Technologies.pdf           (ingen dom bokförd)
+    4  pending       0  INV_9915_Salesforce.com.pdf               (ingen dom bokförd)
+    5  pending       0  INV_9917_Microsoft_Ireland.pdf            (ingen dom bokförd)
+    6  pending       0  INV_9919_Fortnox_AB.pdf                   (ingen dom bokförd)
+    7  pending       0  INV_9922_Google_Ireland_Ltd.pdf           (ingen dom bokförd)
+    8  pending       0  INV_9920_Ellevio_AB.pdf                   (ingen dom bokförd)
+    9  pending       0  INV_9921_Tre_Foretag.pdf                  (ingen dom bokförd)
+
+  RUMSLÄNKAR (magic_tokens) senaste dygnet: 5
+     21:48:39  note=manuell-rumslank  använd=ja
+     11:45:42  note=manuell-rumslank  använd=nej
+     11:45:42  note=manuell-rumslank  använd=ja
+     00:41:14  note=manuell-rumslank  använd=nej
+     00:41:03  note=manuell-rumslank  använd=ja
+     ✓ länk(ar) skapade — felet ligger i utskicket eller leveransen, inte i länkbygget
+
+  analyser som landade:
+     Salesforce.com             uncategorized      — kr  väg=review_queue
+     Fortnox AB                 loneadmin          — kr  väg=review_queue
+     Binero Group AB            serverhosting      — kr  väg=review_queue
+     Tele2 Företag              mobil              35880 kr  väg=auto
+     Microsoft Ireland          saas-productivity  45600 kr  väg=auto
+     Google Ireland Ltd         saas-productivity  72900 kr  väg=auto
+     Slack Technologies         uncategorized      — kr  väg=review_queue
+     Tre Foretag                mobil              14940 kr  väg=auto
+     Telia Företag              mobil              119520 kr  väg=auto
+     Ellevio AB                 el                 — kr  väg=unsupported
+
+═══════ me***@gmail.com ═══════
+  köade jobb: 10   status: {"done":10}
+  analyser i invoice_analyses: 37
+  GLAPP: -27 ⛔ jobb utan analys — tyst förlust
+  kötid: median 22.3 s · längst 29.8 s
+
+  idx  status    försök  filnamn                                   utfall / fel
+    0  done          1  INV_9924_Tele2_Foretag.pdf                (ingen dom bokförd)
+    1  done          1  INV_9918_Binero_Group_AB.pdf              (ingen dom bokförd)
+    2  done          1  INV_9916_Telia_Foretag.pdf                (ingen dom bokförd)
+    3  done          1  INV_9923_Slack_Technologies.pdf           (ingen dom bokförd)
+    4  done          1  INV_9915_Salesforce.com.pdf               (ingen dom bokförd)
+    5  done          1  INV_9917_Microsoft_Ireland.pdf            (ingen dom bokförd)
+    6  done          1  INV_9919_Fortnox_AB.pdf                   (ingen dom bokförd)
+    7  done          1  INV_9922_Google_Ireland_Ltd.pdf           (ingen dom bokförd)
+    8  done          1  INV_9920_Ellevio_AB.pdf                   (ingen dom bokförd)
+    9  done          1  INV_9921_Tre_Foretag.pdf                  (ingen dom bokförd)
+
+  RUMSLÄNKAR (magic_tokens) senaste dygnet: 6
+     21:27:37  note=price-alert:2026-08-15T21:21:41.638Z:telenor  använd=nej
+     21:27:36  note=price-alert:2026-08-15T21:21:41.638Z:telia  använd=nej
+     21:10:28  note=price-alert:2026-08-15T21:04:52.194Z:telenor  använd=nej
+     21:10:27  note=price-alert:2026-08-15T21:04:52.194Z:telia  använd=nej
+     21:09:01  note=price-alert:2026-08-15T21:02:57.636Z:telenor  använd=nej
+     21:09:00  note=price-alert:2026-08-15T21:02:57.636Z:telia  använd=nej
+     ✓ länk(ar) skapade — felet ligger i utskicket eller leveransen, inte i länkbygget
+
+  analyser som landade:
+     IT-Partner Sverige AB      saas-productivity  184680 kr  väg=auto
+     SveaMobil Företag AB       mobil              188160 kr  väg=auto
+     Telia Sverige AB           mobil              188460 kr  väg=auto
+     Telenor Sverige AB         mobil              125580 kr  väg=auto
+     Telenor Sverige AB         mobil              125580 kr  väg=auto
+     Telenor Sverige AB         mobil              125580 kr  väg=auto
+     IT-Partner Sverige AB      saas-productivity  184680 kr  väg=auto
+     Telia Företag              mobil              58092 kr  väg=auto
+     Telia Sverige AB           mobil              269460 kr  väg=auto
+     IT-Partner Sverige AB      saas-productivity  212040 kr  väg=auto
+     Telia Sverige AB           mobil              269460 kr  väg=auto
+     IT-Partner Sverige AB      saas-productivity  184680 kr  väg=auto
+     CloudReseller Norden AB    saas-productivity  184260 kr  väg=auto
+     Nordic Managed IT Services saas-productivity  475440 kr  väg=auto
+     Svea Kontorsprint & Leasin skrivarleasing     58800 kr  väg=auto
+     Nordic Managed IT Services saas-productivity  475440 kr  väg=auto
+     IT-Partner Sverige AB      saas-productivity  184680 kr  väg=auto
+     Telia Företag              mobil              58092 kr  väg=auto
+     Telia Sverige AB           mobil              269460 kr  väg=auto
+     Svea Kontorsprint & Leasin skrivarleasing     58800 kr  väg=auto
+     Tele2 Företag AB           mobil              146580 kr  väg=auto
+     Tele2 Bredband AB          bredband           23388 kr  väg=auto
+     Microsoft Ireland Operatio saas-productivity  332160 kr  väg=auto
+     Tele2 Företag AB           mobil              373800 kr  väg=auto
+     Tele2 Bredband AB          bredband           116940 kr  väg=auto
+     Microsoft Ireland Operatio saas-productivity  332160 kr  väg=auto
+     Microsoft Ireland Operatio saas-productivity  352296 kr  väg=auto
+     Tele2 Företag AB           mobil              439740 kr  väg=auto
+     Slack Technologies         uncategorized      — kr  väg=review_queue
+     Fortnox AB                 faktura-tjanst     2388 kr  väg=auto
+     Binero Group AB            serverhosting      — kr  väg=review_queue
+     Google Ireland Ltd         saas-productivity  72900 kr  väg=auto
+     Tre Foretag                mobil              14940 kr  väg=auto
+     Tele2 Företag              mobil              35880 kr  väg=auto
+     Salesforce.com             uncategorized      — kr  väg=review_queue
+     Telia Företag              mobil              119520 kr  väg=auto
+     Microsoft Ireland          saas-productivity  45600 kr  väg=auto
+
+  Sonden ser bara det som KÖADES — se deklarationens blindfläck innan någon slutsats dras.
