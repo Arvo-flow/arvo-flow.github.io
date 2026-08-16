@@ -22,3 +22,9 @@ jobs:
       - run: node scripts/koa-om-alla.mjs "${{ inputs.avsandare }}" "${{ inputs.tak }}"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Utan KV är markPending() en TYST NOLLHANDLING: getKv() returnerar null och funktionen
+          # returnerar direkt. Jag lade in väckningen i skriptet och körde den sedan i en miljö där
+          # den inte kunde väcka något — jobben låg pending med noll försök tills säkerhetsslotten
+          # råkade fyra. Samma klass som felet väckningen skrevs för att laga.
+          KV_REST_API_URL:   ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
