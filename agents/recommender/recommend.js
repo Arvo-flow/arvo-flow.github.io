@@ -17,6 +17,7 @@ import { SYSTEM_PROMPT, RECOMMEND_TOOL } from './prompt.js';
 import { feeOf, netOf } from '../../lib/fee.js';
 import { guardToolPayload } from '../../lib/schema-guard.js';
 import { checkProseNumbers } from '../../lib/prose-guard.js';
+import { klassificera, kundmening } from '../../lib/motorhalsa.js';
 import { getBenchmark } from '../../lib/benchmark.js';
 import { CATEGORIES } from '../categorizer/categories.js';
 import { getElIntelligence } from '../../lib/el-intelligence.js';
@@ -1398,7 +1399,15 @@ export async function recommend(input, opts = {}) {
         throw new RecommenderError('Tjänsten är tillfälligt överbelastad — försök igen om en stund.', { cause: err });
       }
       if (err instanceof Anthropic.APIError) {
-        throw new RecommenderError('Analysen misslyckades — försök igen.', { cause: err });
+        // Samma klassificering som extract och den nattliga hälsokontrollen (regel 1). Ett tomt
+        // saldo och en taktgräns är två olika fel med två olika råd till kunden — "försök igen"
+        // är rätt bara för det ena.
+        const h = klassificera(err);
+        console.error(`[recommend] modellanropet föll · ${h.typ} · ${h.skal} · status=${err.status ?? 'ingen'} · modell=${MODEL}`);
+        const fel = new RecommenderError(kundmening(h), { cause: err });
+        fel.kod = h.typ;
+        fel.hart = h.hart;
+        throw fel;
       }
       throw err;
     }

@@ -10,6 +10,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { judgeLineArithmetic, judgeProjection } from '../../lib/extraction-integrity.js';
 import { guardToolPayload } from '../../lib/schema-guard.js';
+import { klassificera, kundmening } from '../../lib/motorhalsa.js';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
@@ -1200,20 +1201,22 @@ export async function extractInvoice(input, opts = {}) {
       // finns för att stoppa. Ett 401 (nyckel), ett 404 (modell) och ett 429 (kvot) ser identiska
       // ut för den som bara ser den vänliga meningen, och kräver tre helt olika åtgärder.
       //
-      // Loggen bär status + feltyp + modellnamn. ALDRIG nyckeln, aldrig fakturans innehåll,
+      // Loggen bär feltyp, status och modellnamn. ALDRIG nyckeln, aldrig fakturans innehåll,
       // aldrig kundens adress — repot är publikt och loggen läses av Actions.
+      //
+      // Klassificeringen kommer från lib/motorhalsa.js — SAMMA funktion som den nattliga
+      // hälsokontrollen använder (regel 1). Den fanns redan och kunde redan skilja ett tomt
+      // saldo från en återkallad nyckel från en taktgräns; request-vägen hade bara aldrig
+      // frågat den. Den 2026-08-18 låg saldot i noll: svepet dog tre nätter, tio omkörda
+      // fakturor föll, och live-sonden gav 422 — allt med samma intetsägande mening.
+      const h = klassificera(err);
       const status = err?.status ?? err?.statusCode ?? null;
-      const typ = err?.error?.type ?? err?.name ?? 'okänd';
-      console.error(`[extract] modellanropet föll efter ${attempt} försök · status=${status ?? 'ingen'} · typ=${typ} · modell=${MODEL}`);
-      const fel = new ExtractorError(
-        overloaded
-          ? 'Tjänsten är tillfälligt överbelastad — försök igen om en stund.'
-          : 'Analysen misslyckades — försök igen.',
-        { cause: err }
-      );
-      // Maskinläsbar kod på felet: kundens mening förblir vänlig, men svaret bär ett skäl som
-      // går att agera på (samma mönster som köns outcome-rad).
-      fel.kod = status ? `model_${status}` : `model_${typ}`;
+      console.error(`[extract] modellanropet föll efter ${attempt} försök · ${h.typ} · ${h.skal} · status=${status ?? 'ingen'} · modell=${MODEL}`);
+      const fel = new ExtractorError(kundmening(h), { cause: err });
+      // Maskinläsbart skäl på felet: kundens mening är mänsklig, men svaret bär något som går
+      // att agera på (samma mönster som köns outcome-rad).
+      fel.kod = h.typ;
+      fel.hart = h.hart;
       throw fel;
     }
   }

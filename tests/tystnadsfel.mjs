@@ -193,6 +193,56 @@ describe('Analysmotorns hälsa · om vi inte kan analysera ska VI veta det förs
     assert.equal(klassificera({ status: 418, message: 'nåt nytt' }).hart, true);
   });
 
+  // ── VAKTEN VISSTE, REQUEST-VÄGEN FRÅGADE ALDRIG (2026-08-18) ───────────────────────────────
+  // Klassificeringen fanns och var bra — men bodde i den nattliga hälsokontrollen. Request-vägen
+  // hade sin egen, tystare hantering: modellfelet fångades, orsaken lades i ett `{ cause: err }`
+  // som aldrig lästes, och varje kund fick "Analysen misslyckades — försök igen" oavsett skäl.
+  // Så såg det ut den 18 augusti när saldot låg i noll: svepet dog tre nätter i rad, tio omkörda
+  // fakturor föll, live-sonden gav 422 — och ingen av dem kunde säga varför.
+  //
+  // VAKTENS PREMISS:
+  //   FÅNGAR: att request-vägen bygger en egen klassificering i stället för att fråga den enda
+  //           (regel 1), och att ett HÅRT fel ber kunden "försök igen" — ett råd som inte kan
+  //           fungera, alltså ett löfte utan mekanik (regel 9).
+  //   BLIND:  vakten vet inte om KLASSIFICERINGEN är rätt för ett fel vi aldrig sett. Ett nytt
+  //           felsvar från Anthropic faller på 'okänt' → hårt, vilket är rätt default men inte
+  //           ett bevis. Den vet heller inte om koden når kundens skärm — bara att den finns i
+  //           svaret; ytan är testad på annat håll.
+  test('request-vägen frågar SAMMA klassificering som vakten (ingen andra sanning)', () => {
+    for (const fil of ['agents/test-invoice/extract.js', 'agents/recommender/recommend.js']) {
+      const src = las(fil);
+      assert.match(src, /from '\.\.\/\.\.\/lib\/motorhalsa\.js'/,
+        `${fil} ska importera klassificeringen, inte bygga en egen`);
+      assert.match(src, /klassificera\(err\)/, `${fil} ska faktiskt anropa den`);
+    }
+  });
+
+  test('ett HÅRT fel ber ALDRIG kunden försöka igen', async () => {
+    const { klassificera, kundmening } = await import('../lib/motorhalsa.js');
+    for (const fall of [
+      { status: 400, message: 'Your credit balance is too low to access the API' },
+      { status: 401, message: 'authentication_error' },
+      { status: 418, message: 'nåt nytt' },
+    ]) {
+      const h = klassificera(fall);
+      assert.equal(h.hart, true);
+      assert.doesNotMatch(kundmening(h), /försök igen/i,
+        'saldot fylls inte på av att kunden laddar upp samma PDF igen — rådet är en vägg');
+    }
+    // Och tvärtom: vid ett transient fel ÄR "försök igen" rätt råd och ska stå kvar.
+    const mjukt = klassificera({ status: 529, message: 'overloaded_error' });
+    assert.match(kundmening(mjukt), /försök igen/i);
+  });
+
+  test('kunden får aldrig veta VARFÖR motorn är nere — men aldrig heller att det är deras fel', async () => {
+    const { klassificera, kundmening } = await import('../lib/motorhalsa.js');
+    const m = kundmening(klassificera({ status: 400, message: 'Your credit balance is too low' }));
+    for (const lackage of [/saldo/i, /betal/i, /faktur.*obetald/i, /anthropic/i, /api[- ]?nyckel/i]) {
+      assert.doesNotMatch(m, lackage, 'vår leverantörsrelation är vår sak, inte kundens');
+    }
+    assert.match(m, /vår sida/i, 'men vems felet är ska stå klart — annars misstänker kunden sin egen faktura');
+  });
+
   test('kontrollen körs FÖRE svepet i det nattliga jobbet', () => {
     const yml = las('.github/workflows/price-monitor.yml');
     const halsa = yml.indexOf('Analysmotorns hälsa');

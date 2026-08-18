@@ -19,29 +19,14 @@
 // Ett larm som skriker på fel saker blir avstängt, och en avstängd vakt är värre än ingen vakt.
 
 import Anthropic from '@anthropic-ai/sdk';
+// Klassificeringen bor i lib/motorhalsa.js — samma funktion som request-vägen kör (regel 1).
+// En kopia här hade kunnat glida isär från den som faktiskt möter kunden.
+import { klassificera } from '../lib/motorhalsa.js';
+
+export { klassificera };
 
 const MODEL = 'claude-haiku-4-5';
 const FORSOK = Number(process.env.HEALTH_ANTHROPIC_RETRIES) || 3;
-
-// Klassificera ett fel: är det VÅRT (kräver människa) eller LEVERANTÖRENS (transient)?
-export function klassificera(err) {
-  const status = err?.status ?? err?.statusCode ?? null;
-  const text = `${err?.message ?? ''} ${JSON.stringify(err?.error ?? '')}`.toLowerCase();
-
-  if (/credit balance|insufficient|unpaid|billing|add funds|purchase/.test(text)) {
-    return { typ: 'saldo', hart: true, skal: 'Saldot är slut eller obetalt — API-åtkomsten är spärrad.' };
-  }
-  if (status === 401 || status === 403 || /authentication|api key|permission/.test(text)) {
-    return { typ: 'auth', hart: true, skal: 'Nyckeln avvisas — felaktig, återkallad eller saknar behörighet.' };
-  }
-  if (status === 429 || /rate limit/.test(text)) {
-    return { typ: 'takt', hart: false, skal: 'Taktgräns nådd — transient.' };
-  }
-  if (status === 529 || status === 503 || status === 500 || /overloaded|unavailable/.test(text)) {
-    return { typ: 'överbelastning', hart: false, skal: 'Anthropic är överbelastat — transient.' };
-  }
-  return { typ: 'okänt', hart: true, skal: `Oväntat fel (status ${status ?? '—'}) — behandlas som hårt tills det är förstått.` };
-}
 
 async function main() {
   if (!process.env.ANTHROPIC_API_KEY) {
