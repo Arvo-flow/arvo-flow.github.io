@@ -48,5 +48,7 @@ console.log(JSON.stringify({
   bmMedian:            data.recommendation?.benchmark?.median ?? null,
   bmVerifierat:        data.recommendation?.benchmark?.lastVerified ?? null,
   bmKalla:             data.recommendation?.benchmark?.source ?? null,
+  stage:               data.stage ?? null,
+  kod:                 data.kod ?? null,
   error:               data.error,
 }, null, 2));

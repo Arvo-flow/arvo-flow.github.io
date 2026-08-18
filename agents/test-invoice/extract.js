@@ -1192,12 +1192,29 @@ export async function extractInvoice(input, opts = {}) {
         await new Promise((r) => setTimeout(r, attempt * 1500));
         continue;
       }
-      throw new ExtractorError(
+      // ── ETT FEL VI INTE BOKFÖR HAR VI INTE SETT (2026-08-18) ────────────────────────────────
+      // Här kastades orsaken in i `{ cause: err }` och försvann: den loggades aldrig och nådde
+      // aldrig svaret. Kunden fick "Analysen misslyckades — försök igen", vi fick ingenting.
+      // Tio omkörda fakturor och en live-sond föll alla på samma 422 utan att det gick att säga
+      // VARFÖR — en tyst utgång i pipelinens första steg, precis den klass bokföringsplikten
+      // finns för att stoppa. Ett 401 (nyckel), ett 404 (modell) och ett 429 (kvot) ser identiska
+      // ut för den som bara ser den vänliga meningen, och kräver tre helt olika åtgärder.
+      //
+      // Loggen bär status + feltyp + modellnamn. ALDRIG nyckeln, aldrig fakturans innehåll,
+      // aldrig kundens adress — repot är publikt och loggen läses av Actions.
+      const status = err?.status ?? err?.statusCode ?? null;
+      const typ = err?.error?.type ?? err?.name ?? 'okänd';
+      console.error(`[extract] modellanropet föll efter ${attempt} försök · status=${status ?? 'ingen'} · typ=${typ} · modell=${MODEL}`);
+      const fel = new ExtractorError(
         overloaded
           ? 'Tjänsten är tillfälligt överbelastad — försök igen om en stund.'
           : 'Analysen misslyckades — försök igen.',
         { cause: err }
       );
+      // Maskinläsbar kod på felet: kundens mening förblir vänlig, men svaret bär ett skäl som
+      // går att agera på (samma mönster som köns outcome-rad).
+      fel.kod = status ? `model_${status}` : `model_${typ}`;
+      throw fel;
     }
   }
 

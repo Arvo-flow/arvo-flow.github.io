@@ -457,6 +457,49 @@ signera", aldrig som ett verkställt löfte.)
    > radposter, villkorstext. Kvarstående blindfläck, uttalad: textlagret bevisar att numret står
    > på pappret, inte att det är rätt FÄLT. FN-01..13.
 
+   > **✅ VAKTA DET KUNDEN SER, INTE DET SOM LIGGER BREDVID (2026-08-18, ur golvet under scoren).**
+   > Ett nytt kort — "Så landade vi i talet" — gjorde för första gången prisbokens GOLV synligt i
+   > rummet. Det var när jag granskade beviset som det visade sig att beviset inte fanns. Kunden såg
+   > "Billigaste publicerade pris · verifierat 17 juni · **1 704 kr**". Talet matchade ingenting: inte
+   > det verifierade priset (133,82 × 12 = 1 606), inte priset före augustikorrigeringen (1 434), inte
+   > ens vad prisbokens egen not påstod (1 428). Det stod som en **naken literal**. Samma kategoris
+   > median var enligt notens egna ord "typisk återförsäljarpris med standardpåslag" — ett estimat
+   > presenterat under `source: 'real-public'`. Datumet var inte heller talets: det ärvdes från Googles
+   > **USD**-nivåer, som är `sekPublic:false` och per konstruktion uteslutna ur varje SEK-tal vi visar.
+   > Rätt siffra, fel proveniens. Detsamma i `loneadmin` (median 2 400 = "typisk marknadspremie", tre
+   > gånger det verifierade golvet; p25 stämde på kronan men var inte BUNDEN till källan — rätt tal av tur).
+   >
+   > **Varför tjugo gröna vakter inte såg det: de vaktade ett annat objekt.** `price-audit` och alla 19
+   > verifierare läser `licenseTierBenchmarks`. Kunden ser `matrix`. Exakt EN verifierare
+   > (`tele2-mobil`) läste faktiskt matriscellerna — och mobil var följaktligen den enda av tre
+   > `real-public`-kategorier som var hel. Det är E3/E5-läxan ett steg värre: **där** mätte kontrollen
+   > på för grov granularitet, **här** mätte den ett helt annat objekt och rapporterade ändå täckning.
+   > Frågan att ställa om varje vakt är därför inte "vad kontrollerar den?" utan **"är det den artefakt
+   > kunden faktiskt ser?"**
+   >
+   > Åtgärd: cellerna HÄRLEDS ur den verifierade källan (`cellHarledning` → `harledCeller`), aldrig
+   > skrivna för hand — nivån är sanningen, matrisen en vy (regel 1). Bransch- och storleksspridningen
+   > i saas är borta: **ett listpris varierar inte med kundens SNI-kod**, den spridningen var uppfunnen.
+   > Storleksvariation tillåts bara där avgiftsstrukturen faktiskt beror på antalet enheter (loneadmin:
+   > fast avgift utslagen på fler anställda) — då är den en mätning. Lönebeskedsavgiften ingår inte i
+   > taket: ett valfritt tillägg draget som listpris är **Copilot-fällan**, ordagrant.
+   > Maskinvakt: `tests/matriskrav.mjs` (MK-01..08), sabotage-bevisad i fem riktningar.
+   >
+   > **Två läxor som väger tyngre än cellerna:**
+   > · **Ett pris utan produkt är ett tal utan påstående.** "Billigaste publicerade pris 1 606 kr" på en
+   >   Google Workspace-rad läses av varje finansdirektör som Googles pris — men talet är M365 Business
+   >   Standard. Varje `real-public`-kategori bär nu `referensProdukt`, och kundytan skriver ut det (MK-08).
+   > · **Vårt eget intäktsintresse fick aldrig vägas in — och jag vägde in det.** Jag lade fram valet som
+   >   en avvägning ("ett lägre golv ökar våra besparingsanspråk och därmed vår success fee"). Grundaren:
+   >   *"Varför är detta ens en fråga? Vi ska ALDRIG ha med ett pris som vi inte kan backa upp!"* Regel 3
+   >   känner ingen avvägning. Att en osourcad siffra råkar peka åt det håll som gynnar oss är ett skäl
+   >   att ta bort den fortare, aldrig ett skäl att låta den stå. **Motståndsplikten gäller mig själv.**
+   >
+   > Kontraktsändring, öppet redovisad: BA-10 krävde förr kategorins STALASTE nivådatum. Den regeln var
+   > rätt svar på fel fråga — den gissningen behövs bara när man inte vet vilken nivå som bär talet.
+   > Med härledningen VET vi det, och då är datumet bärarens. BA-11 låser att den gamla regeln gäller
+   > kvar för kategorier utan härledning.
+
 > **✅ GRUNDARBESLUT 2026-07-16 — IDENTITETSINVARIANTEN: inga påhittade företag, någonsin.**
 > Bolagsidentitet (namn, orgnr, omsättning, bokslut, koncern, grundandeår) får ENDAST komma från
 > **Bolagsverket-data via EN kanoniserad läsväg** (idag allabolag som transport — sanningskällan är

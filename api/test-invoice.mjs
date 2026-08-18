@@ -1911,6 +1911,10 @@ export default async function handler(req, res) {
       || err instanceof RecommenderError;
     return send(res, isKnown ? 422 : 500, {
       error: err.message ?? 'Internt fel',
+      // Maskinläsbart skäl (2026-08-18). Kundens mening är vänlig och opersonlig — men ett svar
+      // utan skäl gör felet omöjligt att skilja från nästa. `kod` sätts av det led som faktiskt
+      // vet varför (t.ex. model_401 / model_429), aldrig gissat här.
+      kod: err.kod ?? undefined,
       stage:
         err instanceof ExtractorError ? 'extract'
         : err instanceof CategorizerError ? 'categorize'
