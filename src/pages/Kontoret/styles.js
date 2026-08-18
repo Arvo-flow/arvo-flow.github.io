@@ -846,6 +846,10 @@ export const Underlag = styled.div`
   .u-rad { display:grid; grid-template-columns:1fr auto auto; gap:8px 14px; align-items:baseline;
     padding:7px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:13px; }
   .u-txt { color:${theme.dossier.mutedOnDark}; }
+  /* Referensprodukten står under sin rad, inte som en parentes i den — den är svaret på "priset
+     på VAD?", och den frågan ska inte behöva letas upp. */
+  .u-prod { display:block; font-style:normal; font-family:${MONO}; font-size:11px;
+    letter-spacing:.02em; color:${theme.dossier.faintOnDark}; margin-top:3px; }
   .u-spec { font-family:${MONO}; font-size:11.5px; color:${theme.dossier.faintOnDark}; white-space:nowrap; }
   .u-bel { font-family:${MONO}; font-size:13px; font-feature-settings:'tnum';
     color:${theme.dossier.inkOnDark}; white-space:nowrap; text-align:right; }

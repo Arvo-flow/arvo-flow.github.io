@@ -1211,8 +1211,15 @@ export default function Portfolio() {
                                 <span className="u-spec">{p.unitLabel}</span>
                                 <span className="u-bel">{fmtNum(p.perEnhet)} kr</span>
                               </div>
+                              {/* Referensprodukten NAMNGES. Utan den läses "billigaste publicerade
+                                  pris" som kundens egen leverantörs pris — och på en Google-rad är
+                                  talet M365 Business Standard. Ett pris utan produkt är ett tal
+                                  utan påstående (MK-08). */}
                               <div className="u-rad">
-                                <span className="u-txt">Billigaste publicerade pris</span>
+                                <span className="u-txt">
+                                  Billigaste publicerade pris
+                                  {p.referensProdukt ? <em className="u-prod">{p.referensProdukt}</em> : null}
+                                </span>
                                 <span className="u-spec">
                                   {p.lastVerified ? `verifierat ${fmtDate(p.lastVerified)}` : 'publikt listpris'}
                                 </span>
@@ -1220,7 +1227,7 @@ export default function Portfolio() {
                               </div>
                               {p.median > 0 && p.median !== p.golv && (
                                 <div className="u-rad">
-                                  <span className="u-txt">Vanligaste publicerade pris</span>
+                                  <span className="u-txt">Samma licens utan bindning</span>
                                   <span className="u-spec">samma källa</span>
                                   <span className="u-bel">{fmtNum(p.median)} kr</span>
                                 </div>

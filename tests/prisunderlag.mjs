@@ -28,17 +28,24 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { byggPrisunderlag } from '../lib/prisunderlag.js';
 
-const ANKARE = { p25: 1704, median: 2880, unitLabel: 'per användare/år', lastVerified: '2026-06-17' };
+// Ankaret som produktionen faktiskt ger sedan 2026-08-18: talen härleds ur M365 Business Standard
+// (133,82 kr/mån årsavtal × 12 = 1 606 · 160,58 kr/mån utan bindning × 12 = 1 927), och datumet är
+// den nivåns. Tidigare stod här p25 1704 / median 2880 / 17 juni — tal utan källa och ett datum
+// lånat från Googles USD-nivåer. Se tests/matriskrav.mjs.
+const ANKARE = {
+  p25: 1606, median: 1927, unitLabel: 'per användare/år', lastVerified: '2026-08-05',
+  referensProdukt: 'Microsoft 365 Business Standard',
+};
 
 describe('PRISUNDERLAG · så landade vi i talet', () => {
   test('PU-01 · grundarens Google-rad, tal för tal', () => {
     // 45 licenser × 135 kr/mån = 6 075 kr/mån = 72 900 kr/år → 1 620 kr per användare/år.
     const u = byggPrisunderlag({ annualCost: 72900, seats: 45, ankare: ANKARE });
     assert.equal(u.perEnhet, 1620);
-    assert.equal(u.golv, 1704);
-    assert.equal(u.underGolv, true, 'de ligger UNDER det billigaste publicerade priset');
-    assert.equal(u.avstandPct, -5);
-    assert.equal(u.lastVerified, '2026-06-17', 'datumet är den halva kunden kan kontrollera');
+    assert.equal(u.golv, 1606);
+    assert.equal(u.underGolv, false, 'mot det VERIFIERADE golvet ligger de strax över, inte under');
+    assert.equal(u.avstandPct, 1);
+    assert.equal(u.lastVerified, '2026-08-05', 'datumet är den halva kunden kan kontrollera');
   });
 
   test('PU-02 · jämförelsen sker PER ENHET, aldrig total mot styckpris', () => {
@@ -61,7 +68,7 @@ describe('PRISUNDERLAG · så landade vi i talet', () => {
 
   test('PU-04 · utan verifierat golv, antal eller kostnad visas ingenting', () => {
     assert.equal(byggPrisunderlag({ annualCost: 72900, seats: 45, ankare: null }), null);
-    assert.equal(byggPrisunderlag({ annualCost: 72900, seats: 45, ankare: { median: 2880 } }), null,
+    assert.equal(byggPrisunderlag({ annualCost: 72900, seats: 45, ankare: { median: 1927 } }), null,
       'median utan p25 är inget golv — scoren mäts mot p25');
     assert.equal(byggPrisunderlag({ annualCost: 72900, seats: null, ankare: ANKARE }), null,
       'utan antal enheter går priset per enhet inte att räkna — då gissar vi inte');
@@ -77,6 +84,16 @@ describe('PRISUNDERLAG · så landade vi i talet', () => {
     for (const nyckel of Object.keys(u)) {
       assert.doesNotMatch(nyckel, /score|poang|betyg/i, `underlaget bär ett score-liknande fält: ${nyckel}`);
     }
+  });
+
+  test('PU-07 · golvet bär namnet på produkten det är priset PÅ', () => {
+    // Utan produktnamnet läser en finansdirektör "billigaste publicerade pris" på en Google-rad
+    // som Googles pris — men talet är M365 Business Standard. Ett pris utan produkt är ett tal
+    // utan påstående. Prisboken tvingas bära namnet av MK-08; här låses att det når underlaget.
+    const u = byggPrisunderlag({ annualCost: 72900, seats: 45, ankare: ANKARE });
+    assert.equal(u.referensProdukt, 'Microsoft 365 Business Standard');
+    const utan = byggPrisunderlag({ annualCost: 72900, seats: 45, ankare: { p25: 1606, median: 1927 } });
+    assert.equal(utan.referensProdukt, null, 'saknas namnet ska fältet vara null — aldrig gissat');
   });
 
   test('PU-06 · vad talet jämförs med står utskrivet (aldrig "marknaden")', () => {

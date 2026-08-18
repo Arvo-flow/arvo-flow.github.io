@@ -74,11 +74,27 @@ describe('BI-02 · getBenchmark — matrix-lookup', () => {
     assert.strictEqual(bm.median, 16800);
   });
 
-  test('saas-productivity + konsult + 10 anst → byraer.small { p25:1704, median:2640 }', () => {
+  test('saas-productivity + konsult + 10 anst → { p25:1606, median:1927 } ur den verifierade nivån', () => {
+    // KONTRAKTET ÄNDRADES 2026-08-18 (grundarbeslut: "vi ska ALDRIG ha med ett pris som vi inte
+    // kan backa upp"). Testet låste p25:1704 / median:2640 — två tal som inte gick att härleda ur
+    // någonting. 1 704 matchade varken det verifierade priset (133,82 × 12 = 1 606), priset före
+    // augustikorrigeringen (1 434) eller vad prisbokens egen not påstod (1 428). Medianen var
+    // enligt notens ord "typisk återförsäljarpris med standardpåslag" — ett estimat under
+    // source:'real-public'. Testet var alltså grönt kring uppfunna tal i två månader; det bevisade
+    // att uppslagningen FUNGERAR, aldrig att talen var sanna.
+    //
+    // Nu härleds båda ur M365 Business Standard, samma sida och samma datum:
+    //   p25    = 133,82 kr/mån årsavtal        × 12 = 1 606  (billigaste publicerade sättet att köpa den)
+    //   median = 160,58 kr/mån utan bindning   × 12 = 1 927  (ordinarie listpris — taket)
+    // Maskinvakt mot drift: tests/matriskrav.mjs (MK-03).
     const bm = getBenchmark({ category: 'saas-productivity', industry: 'konsult', employees: 10 });
     assert.notStrictEqual(bm, null);
-    assert.strictEqual(bm.p25,    1704);
-    assert.strictEqual(bm.median, 2640);
+    assert.strictEqual(bm.p25,    1606);
+    assert.strictEqual(bm.median, 1927);
+    // Storleksbandet får inte längre ändra ett listpris — Microsoft tar inte olika betalt av ett
+    // 5-mannabolag och ett 40-mannabolag för samma licens.
+    const micro = getBenchmark({ category: 'saas-productivity', industry: 'konsult', employees: 5 });
+    assert.deepEqual({ p25: micro.p25, median: micro.median }, { p25: 1606, median: 1927 });
   });
 
   test('okänd kategori → null', () => {

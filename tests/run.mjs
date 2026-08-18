@@ -105,6 +105,7 @@ import './fakturanummer.mjs';
 import './lasvagens-kolumner.mjs';
 import './fakturarader.mjs';
 import './prisunderlag.mjs';
+import './matriskrav.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

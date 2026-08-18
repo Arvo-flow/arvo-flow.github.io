@@ -459,6 +459,10 @@ export async function buildBranchAnchors(analyses) {
           // listpris" utan att kunna säga verifierat NÄR — och det är exakt den halvan av
           // påståendet kunden kan kontrollera. Saknas datumet ska ordet bort, inte datumet döljas.
           lastVerified: b.lastVerified ?? null,
+          // VAD TALET ÄR PRISET PÅ (2026-08-18). "Billigaste publicerade pris 1 606 kr" på en
+          // Google Workspace-rad läses som Googles pris — men talet är M365 Business Standard.
+          // Utan produktnamnet är raden en antydan, inte en jämförelse. Maskinvakt: MK-08.
+          referensProdukt: b.referensProdukt ?? null,
           customerCost: a.annual_cost ?? null, seats,
         };
       }

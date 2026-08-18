@@ -108,16 +108,60 @@ describe('Branschankaret · enhet + källa', () => {
       'utan datum ska ordet "verifierat" falla bort — ett svagare men sant påstående');
   });
 
-  test('BA-10 · kategorins datum är dess STALASTE nivå, aldrig dess färskaste', async () => {
-    // Att välja det nyaste datumet vore att smickra oss själva: har en nivå inte kontrollerats
-    // sedan juni är kategorins påstående bara så gott som juni.
-    const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
-    const tiers = BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? {};
+  test('BA-10 · datumet tillhör den nivå som BÄR talet — inte den stalaste av alla', async () => {
+    // ── KONTRAKTET ÄNDRADES 2026-08-18, OCH SKÄLET SKA STÅ HÄR ────────────────────────────────
+    // Testet krävde tidigare kategorins STALASTE nivådatum, med motiveringen att välja det
+    // färskaste vore att smickra sig själv. Motiveringen var god men frågan var fel: "vilken nivå
+    // är stalast?" är en gissning man tvingas göra när man inte vet vilken nivå som bär talet.
+    //
+    // Effekten blev fel proveniens i kundytan. saas-productivity ärvde 2026-06-17 från Googles
+    // USD-nivåer — nivåer som är sekPublic:false och per konstruktion uteslutna ur varje SEK-tal
+    // vi visar (google-sek-grind). Rummet skrev alltså "verifierat 17 juni" bredvid ett
+    // Microsoft-pris verifierat 5 augusti. Rätt siffra, fel proveniens; regel 3 räknar det som fel.
+    //
+    // Sedan cellerna härleds (cellHarledning) VET vi vilken nivå som bär talet, och då är datumet
+    // den nivåns datum — inget val mellan nivåer kvarstår. Det kan inte heller smickra oss: bara
+    // EN nivå bär talet. Googles staleness är fortfarande sann och rapporteras fortfarande, på sin
+    // egen rad, av price-audit och av verifieraren.
+    const { BRANCHINDEX, harledCeller } = await import('../agents/recommender/branchindex.js');
+    const cat = BRANCHINDEX['saas-productivity'];
+    const tiers = cat?.licenseTierBenchmarks ?? {};
     const datum = Object.values(tiers).map((t) => t?.lastVerified).filter(Boolean).sort();
     assert.ok(datum.length >= 2, 'saas-productivity ska ha flera daterade nivåer att välja mellan');
+    assert.notEqual(datum[0], datum.at(-1), 'nivåerna ska ha OLIKA datum — annars prövar testet ingenting');
+
+    const bararens = harledCeller(cat).lastVerified;
     const out = await buildBranchAnchors([a({ category: 'saas-productivity' })]);
-    assert.equal(out['saas-productivity'].lastVerified, datum[0],
-      `ankaret ska bära ${datum[0]} (stalaste), inte ${datum.at(-1)} (färskaste)`);
+    assert.equal(out['saas-productivity'].lastVerified, bararens,
+      `ankaret ska bära bärarnivåns datum (${bararens}), inte den stalastes (${datum[0]})`);
+
+    // Och det ska vara ett verkligt datum ur en verkligt verifierad nivå — inte bara "något".
+    assert.equal(bararens, tiers[cat.cellHarledning.referensTier].lastVerified,
+      'datumet ska komma ur exakt den nivå härledningen namnger');
+  });
+
+  test('BA-11 · UTAN härledning gäller stalaste nivån fortfarande', async () => {
+    // Den gamla regeln är inte fel — den är svaret på "vad gäller när vi INTE vet vilken nivå som
+    // bär talet". Det fallet finns kvar för varje kategori som inte deklarerat en härledning, och
+    // då är försiktighet rätt: kategorin är bara så verifierad som sin stalaste nivå.
+    const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
+    const { getBenchmark } = await import('../agents/recommender/branchindex.js');
+    const fejk = {
+      source: 'estimated', unit: 'kr/år', note: 'x', alternatives: [],
+      licenseTierBenchmarks: {
+        gammal: { msrpAnnual: 100, currency: 'SEK', lastVerified: '2026-01-01' },
+        farsk:  { msrpAnnual: 200, currency: 'SEK', lastVerified: '2026-08-05' },
+      },
+      matrix: { byraer: { micro: { median: 2400, p25: 1200 } } },
+    };
+    BRANCHINDEX['__test-utan-harledning'] = fejk;
+    try {
+      const bm = getBenchmark({ category: '__test-utan-harledning', industry: 'konsult', employees: 5 });
+      assert.equal(bm.lastVerified, '2026-01-01',
+        'utan härledning ska kategorin bära sin stalaste nivå, aldrig sin färskaste');
+    } finally {
+      delete BRANCHINDEX['__test-utan-harledning'];
+    }
   });
 
   test('BA-08 · ankaret får ALDRIG gå via prisbokens prioritetskedja', async () => {

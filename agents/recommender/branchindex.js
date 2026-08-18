@@ -108,6 +108,10 @@ export const BRANCHINDEX = {
     lastVerified: '2026-08-05',
     verifiedVia: 'playwright-live',
     unit: 'kr/år',
+    // Vad talet är priset PÅ — kundytan skriver ut det, så att "billigaste publicerade pris"
+    // aldrig läses som kundens egen leverantörs pris. Cellerna vaktas av lib/verifiers/tele2-mobil.mjs,
+    // som läser matrisen direkt mot live-sidan (den enda verifieraren som gjorde det före 2026-08-18).
+    referensProdukt: 'Tele2 Företag mobilabonnemang',
     // Prices are per user/year — lib/benchmark.js scales by seat count before the LLM sees it.
     // Tele2 Företag mobilabonnemang — verifierat LIVE 2026-08-05 (Playwright, status 200,
     // scripts/verify.mjs tele2-mobil (fabriken)). Renderade 24-mån-priser (= faktiskt B2B-pris):
@@ -337,11 +341,47 @@ export const BRANCHINDEX = {
   'saas-productivity': {
     source: 'real-public',
     unit: 'kr/år',
-    // p25 = M365 Business Standard Microsoft årsavtal maj 2026: 119 kr/mth × 12 = 1 428 kr/år/user (exkl. moms).
-    // Källa: microsoft.com/sv-se direkt, verifierat 2026-05-26.
-    // Median = typisk SMF-betalning via återförsäljare med standardpåslag (~220–240 kr/mth).
-    // Gäller: M365, Google Workspace, Zoom, Slack — produktivitetsverktyg med jämförbar per-user-prissättning.
-    note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard. Källa: microsoft.com maj 2026 — 119 kr/mth årsavtal = 1 428 kr/år/user. Median = typisk återförsäljarpris med standardpåslag.',
+    // ── TALEN HÄRLEDS UR DEN VERIFIERADE NIVÅN — ALDRIG SKRIVNA FÖR HAND ──────────────────────
+    // GRUNDARBESLUT 2026-08-18: "Vi ska ALDRIG ha med ett pris som vi inte kan backa upp."
+    //
+    // Här stod `p25: 1704` och `median: 2880` som nakna literaler i matrisen. p25 matchade INGET
+    // verifierat pris — inte det aktuella (133,82 × 12 = 1 606), inte det före augustikorrigeringen
+    // (119,48 × 12 = 1 434), och inte ens vad notten själv påstod (1 428). Talet gick inte att
+    // härleda ur någonting i repot. Median var enligt notens egna ord "typisk återförsäljarpris
+    // med standardpåslag" — ett estimat, presenterat under source: 'real-public'.
+    //
+    // Båda nådde kunden. Ankarkortet skrev ut medianen som "leverantörernas publika listpris", och
+    // scoren mäts mot p25 (`_floor = benchmark.p25 × seats` i recommend.js). Ett osourcat golv gör
+    // varje score som vilar på det osourcat — och den 2026-08-16 blev golvet dessutom SYNLIGT i
+    // rummet ("Så landade vi i talet"), vilket är vad som avslöjade det.
+    //
+    // VARFÖR INGEN VAKT FÅNGADE DET: price-audit och alla 19 verifierare läser
+    // `licenseTierBenchmarks`. Kunden ser `matrix`. Ingen kontroll i repot rörde matrisen — tjugo
+    // gröna vakter som bevakade tal som aldrig når kundytan. Samma sjukdom som E3/E5-luckan, men
+    // ett steg värre: där mätte kontrollen på för grov granularitet, här mätte den ett annat objekt.
+    // Maskinvakt: tests/matriskrav.mjs (varje real-public-cell måste räknas hem mot en verifierad
+    // nivå via `cellHarledning` nedan).
+    //
+    // Bransch-/storleksvariationen (byraer 2 880 · hantverkare 2 400 · micro/small/mid…) är också
+    // borta. Microsoft tar inte olika betalt av en byrå och en hantverkare — spridningen var
+    // uppfunnen. Ett LISTPRIS varierar inte med kundens SNI-kod. Den dagen vi har kohortdata
+    // återkommer variationen som en MÄTNING, med "median av verifierade fakturor" i etiketten.
+    //
+    // De två talen är två verkliga sätt att köpa SAMMA licens, båda publika, båda från samma sida
+    // och samma datum:
+    //   p25    = årsavtal (billigaste publicerade sättet att köpa den)
+    //   median = månadsvis utan bindning (ordinarie listpris — taket att mäta mot)
+    // Vad talet är priset PÅ. En CFO som läser "billigaste publicerade pris" på en Google-rad
+    // antar annars att det är Googles pris — det är det inte. Ett pris utan produkt är ett tal
+    // utan påstående, och kundytan måste kunna skriva ut det.
+    referensProdukt: 'Microsoft 365 Business Standard',
+    cellHarledning: {
+      referensTier: 'business-standard',
+      p25Falt:      'msrpAnnual',      // årsavtal → billigaste publicerade pris
+      medianFalt:   'msrpMonthly',     // månadsvis → ordinarie listpris utan bindning
+      faktor:       12,                // per månad → per användare/år
+    },
+    note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard (microsoft.com). Billigaste publicerade pris = årsavtal 133,82 kr/mån × 12 = 1 606 kr/år. Listpris utan bindning = 160,58 kr/mån × 12 = 1 927 kr/år. Verifierat 2026-08-05.',
     alternatives: [
       { supplier: 'Microsoft 365 Business Standard',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
       { supplier: 'Google Workspace Business Standard',          positioning: 'Starkaste alternativet till M365 — 2 TB Drive, Meet, Docs. Ofta 30–40 % billigare än M365.',            reliability: 0.96 },
@@ -524,11 +564,14 @@ export const BRANCHINDEX = {
         note: 'Confluence Cloud Premium — analytics, sandbox, 24/7-support.',
       },
     },
+    // Cellerna fylls av tillampaCellHarledning() nedan ur licenseTierBenchmarks — segment- och
+    // storleksnycklarna står kvar (de bär matrisens FORM), men talen skrivs aldrig här.
+    // Ett tomt objekt vore fel: formen är en del av kontraktet, och en saknad cell ger null-benchmark.
     matrix: {
-      byraer:      { micro: { median: 2880, p25: 1704 }, small: { median: 2640, p25: 1704 }, mid: { median: 2400, p25: 1704 } },
-      hantverkare: { micro: { median: 2400, p25: 1704 }, small: { median: 2160, p25: 1704 }, mid: { median: 1920, p25: 1704 } },
-      ehandel:     { micro: { median: 2640, p25: 1704 }, small: { median: 2400, p25: 1704 }, mid: { median: 2160, p25: 1704 } },
-      tillverkning:{ micro: { median: 2400, p25: 1704 }, small: { median: 2160, p25: 1704 }, mid: { median: 1920, p25: 1704 } },
+      byraer:      { micro: {}, small: {}, mid: {} },
+      hantverkare: { micro: {}, small: {}, mid: {} },
+      ehandel:     { micro: {}, small: {}, mid: {} },
+      tillverkning:{ micro: {}, small: {}, mid: {} },
     },
   },
 
@@ -751,13 +794,39 @@ export const BRANCHINDEX = {
       perEmployeeMonthly: 25,    // kr/anställd/mån
       perPayslip:         5,     // kr/lönebesked (Kivra-utskick) — redovisas separat, ingår ej i golvet
     },
+    // ── CELLERNA HÄRLEDS UR AVGIFTSSTRUKTUREN OVAN (grundarbeslut 2026-08-18) ─────────────────
+    // p25 stod som literaler (780 · 420 · 324) och stämde faktiskt på kronan mot Fortnox verifierade
+    // avgifter — men ingenting i koden band ihop dem, så en prisändring hos Fortnox hade uppdaterat
+    // `fortnoxLonVerified` (verifieraren läser den) och lämnat kundens golv orört. Rätt tal av tur.
+    //
+    // MEDIAN VAR DÄREMOT UPPFUNNEN: 2 400 · 1 800 · 1 200 kr/anställd/år, enligt notens egna ord
+    // "typisk marknadspremie för system utan Fortnox-integration" — ett estimat presenterat under
+    // source:'real-public', och tre gånger det verifierade golvet. Den är borta. Vi har EN verifierad
+    // leverantör i den här kategorin, alltså har vi ett pris och ingen fördelning.
+    //
+    // Lönebeskedsavgiften ingår INTE i taket. Att lägga ett valfritt tillägg (Kivra-utskick) på
+    // listpriset och kalla summan "listpris" är Copilot-fällan, ordagrant — ett paketpris draget
+    // som planpris. En kund utan Kivra betalar faktiskt det lägre talet.
+    //
+    // Storleksvariationen är här ÄKTA, till skillnad från saas: den fasta avgiften slås ut på fler
+    // anställda. `representant` säger rakt ut vilket antal per band vi räknar på — bandets mitt,
+    // inte dess kant. Känd gräns: ett bolag med 3 anställda betalar 1 096 kr/anst/år, inte 780.
+    referensProdukt: 'Fortnox Lön',
+    cellHarledning: {
+      kalla:            'fortnoxLonVerified',
+      fastFalt:         'fixedMonthly',
+      rorligtFalt:      'perEmployeeMonthly',
+      representant:     { micro: 5, small: 20, mid: 100 },   // band 1–9 · 10–49 · 50–249
+      faktor:           12,
+      medianLikaMedP25: true,
+    },
     // Verifierat: Fortnox Lön listpris maj 2026 (exkl. moms): 199 kr/mån fast + 25 kr/anställd/mån.
     // p25 = Fortnox-priset per anställd/år vid representativt anställningsantal per bucket:
     //   micro  (n=5):   (199 + 5×25)×12/5   =  780 kr/anst/år
     //   small  (n=20):  (199 + 20×25)×12/20 =  420 kr/anst/år
     //   mid    (n=100): (199 + 100×25)×12/100= 324 kr/anst/år
     // Median = vad marknaden faktiskt betalar (Visma, Hogia, Azets-nivå).
-    note: 'Per anställd/år. Källa p25: Fortnox Lön verifierat listpris maj 2026 — 199 kr/mån fast + 25 kr/anst/mån + 5 kr/lönebesked (Kivra-utskick). Median = typisk marknadspremie för system utan Fortnox-integration.',
+    note: 'Per anställd/år. Källa: Fortnox Lön verifierat publikt listpris (fortnox.se/produkt/lon, 2026-05-22) — 199 kr/mån fast + 25 kr/anställd/mån, utslaget per storleksband. Lönebeskedsavgiften (5 kr, Kivra-utskick) är ett valfritt tillägg och ingår inte. En verifierad leverantör i kategorin, alltså ett pris och ingen fördelning.',
     alternatives: [
       { supplier: 'Fortnox Lön',   positioning: 'Verifierat lägst — 199 kr/mån + 25 kr/anst/mån. Direkt integrerat i Fortnox.',  reliability: 0.96 },
       { supplier: 'Visma Lön',     positioning: 'Stark integration med Visma eEkonomi, bred support — offert krävs',              reliability: 0.94 },
@@ -1040,6 +1109,86 @@ export const BRANCHINDEX = {
     matrix: {},
   },
 };
+
+// ── EN CELL SOM KUNDEN SER SKA GÅ ATT RÄKNA HEM MOT EN VERIFIERAD NIVÅ ──────────────────────
+// GRUNDARBESLUT 2026-08-18: "Vi ska ALDRIG ha med ett pris som vi inte kan backa upp."
+//
+// Kategorier som deklarerar `cellHarledning` får sina matrisceller UTRÄKNADE ur den namngivna
+// licensnivån i stället för handskrivna. Det är regel 1 tillämpad på prisboken själv: nivån är
+// enda sanningen, matrisen är en vy. En handskriven cell kan glida ifrån nivån utan att någon
+// märker det — och glider den, glider varje score som mäts mot den.
+//
+// Funktionen är exporterad så vakten (tests/matriskrav.mjs) kan pröva SAMMA väg produktionen kör,
+// inte en modell av den.
+// Två deklarationsformer, båda ren DATA (aldrig en funktion i prisboken — en funktion som vakten
+// anropar bevisar bara att mekanismen svarar, aldrig att svaret är sant; det var villkorsvaktens fel):
+//
+//   A · NIVÅ    — priset står som ett fält på en licensnivå (saas-productivity → M365-nivåerna).
+//                 Samma tal, alla storleksband: ett listpris varierar inte med kundens storlek.
+//   B · FORMEL  — priset är fast avgift + rörlig avgift och beror därför ÄKTA på antalet enheter
+//                 (loneadmin → Fortnox Lön: 199 kr/mån fast + 25 kr/anst/mån). Här är
+//                 storleksvariationen en MÄTNING, inte en uppfinning, och `representant` säger
+//                 rakt ut vilket antal per band vi räknar på.
+//
+// Returnerar { [storleksband]: {p25, median} } + nivåns datum/källa.
+export function harledCeller(cat) {
+  const h = cat?.cellHarledning;
+  if (!h) return null;
+  const f = h.faktor ?? 1;
+
+  // A · fältplock ur en namngiven licensnivå
+  if (h.referensTier) {
+    const tier = cat?.licenseTierBenchmarks?.[h.referensTier];
+    if (!tier) return null;
+    const p25 = tier[h.p25Falt];
+    const median = tier[h.medianFalt];
+    if (!(p25 > 0) || !(median > 0)) return null;
+    const a = Math.round(p25 * f);
+    const b = Math.round(median * f);
+    // Golvet får aldrig ligga över taket — vore det så är fälten förväxlade, och en förväxling
+    // här vänder hela jämförelsen upp och ned i kundytan.
+    if (a > b) return null;
+    return { alla: { p25: a, median: b }, lastVerified: tier.lastVerified ?? null, source: tier.source ?? null };
+  }
+
+  // B · formel över en verifierad avgiftsstruktur
+  if (h.kalla) {
+    const k = cat?.[h.kalla];
+    const fast = k?.[h.fastFalt];
+    const rorligt = k?.[h.rorligtFalt];
+    if (!(fast >= 0) || !(rorligt > 0) || !h.representant) return null;
+    const per = {};
+    for (const [band, n] of Object.entries(h.representant)) {
+      if (!(n > 0)) return null;
+      const v = Math.round((fast / n + rorligt) * f);
+      // EN verifierad leverantör = ingen fördelning att visa. Att sätta ett tak vi inte kan belägga
+      // vore att uppfinna precis det tal den här ändringen finns för att ta bort.
+      per[band] = { p25: v, median: h.medianLikaMedP25 ? v : null };
+      if (per[band].median == null) return null;
+    }
+    return { per, lastVerified: k.lastVerified ?? null, source: k.source ?? null };
+  }
+  return null;
+}
+
+function tillampaCellHarledning() {
+  for (const cat of Object.values(BRANCHINDEX)) {
+    const h = harledCeller(cat);
+    if (!h) continue;
+    for (const seg of Object.values(cat.matrix ?? {})) {
+      for (const storlek of Object.keys(seg)) {
+        const v = h.alla ?? h.per?.[storlek];
+        if (v) seg[storlek] = { median: v.median, p25: v.p25 };
+      }
+    }
+    // Kategorins datum är nivåns datum — inte det stalaste av alla nivåer. aldstaTierDatum ärvde
+    // förr datumet från Googles USD-nivåer, som är sekPublic:false och per konstruktion uteslutna
+    // ur varje SEK-tal vi visar. Rummet skrev därför "verifierat 17 juni" bredvid ett Microsoft-pris
+    // verifierat 5 augusti: rätt siffra, fel proveniens (regel 3 räknar det som fel).
+    if (h.lastVerified) cat.lastVerified = h.lastVerified;
+  }
+}
+tillampaCellHarledning();
 
 /**
  * Look up benchmark for a customer + category.
