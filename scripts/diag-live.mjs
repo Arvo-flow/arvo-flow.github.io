@@ -4,7 +4,11 @@
 import { readFileSync } from 'node:fs';
 
 const BASE = process.env.ARVO_BASE_URL || 'https://arvoflow.se';
-const pdfBase64 = readFileSync('test-pdfs/diag-bredband.pdf').toString('base64');
+// PDF valbar: prisbokens tal kan bara läsas ur en kategori som faktiskt prissätts, så en
+// saas-faktura krävs för att se saas-productivity-ankaret som SERVERN har (inte som disken har).
+const PDF = process.env.PDF || 'test-pdfs/diag-bredband.pdf';
+console.log('pdf:', PDF);
+const pdfBase64 = readFileSync(PDF).toString('base64');
 
 const tr = await fetch(`${BASE}/api/token`, { method: 'POST' });
 const token = (await tr.json().catch(() => ({})))?.token ?? null;   // sondvakt-ok: ett svar utan JSON är ett mätvärde (ingen token) och rapporteras som sådant
@@ -37,5 +41,12 @@ console.log(JSON.stringify({
   servicePeriodEnd:    data.extracted?.servicePeriodEnd ?? null,
   // B4-bevis: verifikationskvittot ska följa med auto-svaret (grindarnas domslut)
   verifications:       (data.verifications ?? []).map((v) => `${v.id}:${v.status}`),
+  // PRISBOKEN SOM SERVERN HAR (2026-08-18). Golvet och taket är de tal kundens score mäts mot;
+  // efter cellhärledningen ska saas-productivity svara p25 1606 · median 1927 · 2026-08-05.
+  // Att läsa dem på min disk bevisar ingenting om vad Vercel kör.
+  bmP25:               data.recommendation?.benchmark?.p25 ?? null,
+  bmMedian:            data.recommendation?.benchmark?.median ?? null,
+  bmVerifierat:        data.recommendation?.benchmark?.lastVerified ?? null,
+  bmKalla:             data.recommendation?.benchmark?.source ?? null,
   error:               data.error,
 }, null, 2));

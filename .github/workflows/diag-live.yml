@@ -4,6 +4,10 @@ name: Diag LIVE (verifiera utlagd Vercel-sajt)
 # route + dom. Bevisar att fixen faktiskt är deployad. Diagnostik (workflow_dispatch).
 on:
   workflow_dispatch:
+    inputs:
+      pdf:
+        description: 'PDF att posta (sökväg i repot)'
+        default: 'test-pdfs/diag-bredband.pdf'
 
 permissions:
   contents: read
@@ -18,4 +22,6 @@ jobs:
         with:
           node-version: '20'
       - name: Hit live arvoflow.se
+        env:
+          PDF: ${{ inputs.pdf }}
         run: node scripts/diag-live.mjs
