@@ -109,8 +109,20 @@ describe('supplierDiagScore · scoren följer SAMMA tal som besparings-pillen (r
     assert.equal(supplierDiagScore({ should_switch: true, net_saving: 5000, annual_cost: 100000, health_score: 90 }), 79);
   });
 
-  test('bug #2-fix: utan health_score (äldre rad) → neutralt 75, ALDRIG det degenererade 82', () => {
-    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000 }), 75);
+  test('utan health_score → INTE SATT (null), aldrig ett tal (grundarfråga 2026-08-16)', () => {
+    // KONTRAKTET ÄNDRADES, och avsikten skärptes. Testet låste tidigare fallbacken 75 — infört mot
+    // "det degenererade 82" som gav VARJE rätt-prissatt faktura samma tal. Problemet var att 75
+    // löste fel halva: talen blev olika, men ett OMÄTT avtal såg fortfarande mätt ut. Värre: 75
+    // ligger inom det giltiga intervallet, så ett räknat 75 och ett okänt gick inte att skilja åt.
+    //
+    // I skarpt läge visade grundarens Google-rad 75 medan det räknade talet var 90 — en oförtjänt
+    // precision som dessutom underskattade kunden. null ritas som ett streck: ett okänt ser okänt ut.
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000 }), null);
+    assert.equal(supplierDiagScore({ annual_cost: 0 }), null);
+    // Den ursprungliga avsikten står kvar: ett MÄTT tal ska vara differentierat, aldrig ett
+    // hårdkodat 82 för alla.
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 91 }), 91);
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 64 }), 64);
   });
 
   test('monitoring → 72', () => {

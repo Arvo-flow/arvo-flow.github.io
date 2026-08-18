@@ -54,8 +54,14 @@ export function supplierDiagScore(a) {
   }
   const gross = a.gross_saving ?? (a.net_saving != null ? a.net_saving / 0.8 : 0);
   if (!a.should_switch || !a.annual_cost || !(gross > 0)) {
-    // Fallback (ingen verifierad benchmark, t.ex. äldre rader utan health_score): neutralt, inte 82.
-    return a.annual_cost > 0 ? 75 : 50;
+    // ── ETT OMÄTT AVTAL FÅR INTE SE MÄTT UT (grundarfråga 2026-08-16) ────────────────────────
+    // Här stod `return a.annual_cost > 0 ? 75 : 50;`. Ringen ritade 75 exakt som ett förtjänat 96,
+    // och kunden kunde inte skilja "vi mätte, ni ligger bra" från "vi har inget mått". Värre: 75
+    // kolliderar med det giltiga intervallet, så ett RÄKNAT 75 och ett okänt såg identiska ut.
+    // Grundarens Google-rad visade 75 medan det räknade talet var 90 — en oförtjänt precision
+    // som dessutom underskattade kunden.
+    // null betyder "inte satt" och ritas som ett streck. Ett okänt ska se okänt ut.
+    return null;
   }
   const ovPct = Math.round((gross / a.annual_cost) * 100);   // marknadsgapet som besparingen representerar
   const raw   = Math.max(5, Math.round(100 - ovPct * 1.5));
@@ -66,6 +72,9 @@ export function supplierDiagScore(a) {
 // forensik-upptäckt (t.ex. avbetald hårdvara, 16 800 kr/år) UTAN ett tillgängligt leverantörsbyte
 // fick domen att ändå säga "Allt är under kontroll" — rakt motsägande fyndkortet direkt under.
 // En kostnad är lika mycket "agerande krävs" som ett byte. Ren funktion = regressionstestbar.
+// Sammanvägningen hoppar över omätta rader. Att räkna in dem med ett påhittat 75 hade gjort
+// helhetstalet till en blandning av mätning och gissning — och ingen hade kunnat se vilken del
+// som var vilken.
 export function computeActing({ switchablesCount, roomFinding }) {
   const hasSwitchAction = (switchablesCount ?? 0) > 0;
   const hasFindingAction = !!(roomFinding && (roomFinding.annualImpact ?? 0) > 0);

@@ -22,6 +22,7 @@ import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { getVaktHealth } from '../lib/vakt.js';
 import { refineFinding } from '../lib/forensics.js';
 import { byggUppdelning } from '../lib/fakturarader.js';
+import { byggPrisunderlag } from '../lib/prisunderlag.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getPublicListBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
@@ -198,6 +199,20 @@ export default async function handler(req, res) {
   // vad branschen TYPISKT betalar ur verifierade publika listpriser (BRANCHINDEX) — tydligt märkt
   // branschestimat, aldrig "X bolag betalar". Ersätts av den verkliga kohorten när volymen kommer.
   const branchAnchors = await buildBranchAnchors(analyses);
+
+  // ── HUR LANDADE VI I TALET? (grundarbeslut 2026-08-16) ─────────────────────────────────────
+  // Ringen visar ett score och etiketten säger RÄTT PRISSATT. En finansdirektör kan inte ta
+  // ställning till det utan att se jämförelsen: vad betalar vi per enhet, vad är det verifierade
+  // golvet, hur långt ifrån ligger vi, och när kontrollerades priset. Underlaget byggs HÄR ur
+  // samma ankare kortet redan använder — aldrig i klienten, och det producerar aldrig ett eget
+  // score (talet bor i recommend.js, regel 1).
+  for (const a of analyses) {
+    a.prisunderlag = byggPrisunderlag({
+      annualCost: a.annual_cost,
+      seats:      a.seat_count,
+      ankare:     branchAnchors[a.category] ?? null,
+    });
+  }
 
   // ── Marknadsrörelsen: "Telia höjde — X av Y bolag vi följer för <kategori> ligger hos Telia" ──
   // Den vassaste "hur visste de det?": en VERIFIERAD publik höjning (supplier_price_history) korsad

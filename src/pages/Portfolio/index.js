@@ -18,7 +18,7 @@ import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
   Grid, Index, Tally, Truth, Calendar, Receipts, Holdings, HoldRow, HoldHead, RingWrap, HoldDetail,
   SwitchVerdict, SwitchBtn, AvtalUpload, AvtalLast, Watched, IntelQuiet, SignOff, Spinner,
-  StartHint, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease, MoreIntake, Uppdelning,
+  StartHint, IntakeDoors, AddressChipDark, Dropzone, DropProgress, FortnoxTease, MoreIntake, Uppdelning, Underlag,
 } from '../Kontoret/styles';
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -144,14 +144,19 @@ function companyFromEmail(email) {
 // Gruppering + visningsnamn bor i src/lib/holdings (ren, testbar) — EN sanning (regel 1).
 
 // Totalpoäng = kostnadsviktat snitt av radernas poäng (går alltid att räkna hem).
+// Sammanvägt score över de MÄTTA raderna. En omätt rad (supplierDiagScore → null) räknas inte
+// in: att väga in ett påhittat 75 hade gjort helhetstalet till en blandning av mätning och
+// gissning, utan att någon kunde se vilken del som var vilken. Returnerar null när ingen rad är
+// mätt — då säger kortet det i stället för att visa ett tal.
 function computeArvoScore(suppliers) {
-  if (!suppliers.length) return 0;
+  const matta = suppliers.filter((g) => supplierDiagScore(g.latest) != null);
+  if (!matta.length) return null;
   let w = 0, s = 0;
-  for (const g of suppliers) {
+  for (const g of matta) {
     const weight = g.latest.annual_cost > 0 ? g.latest.annual_cost : 0;
     w += weight; s += supplierDiagScore(g.latest) * weight;
   }
-  if (w === 0) return Math.round(suppliers.reduce((acc, g) => acc + supplierDiagScore(g.latest), 0) / suppliers.length);
+  if (w === 0) return Math.round(matta.reduce((acc, g) => acc + supplierDiagScore(g.latest), 0) / matta.length);
   return Math.round(s / w);
 }
 
@@ -159,12 +164,16 @@ function computeArvoScore(suppliers) {
 // Skalan löper Sämre (vänster) → Bättre än marknaden (höger), så ett högt score sitter på
 // den gynnsamma (högra) sidan. "Bättre/Sämre" bär valören direkt — klarare än "över/under".
 function marketStanding(score) {
+  // Utan ett mätt score finns ingen position att peka ut. Att låta pekaren landa någonstans
+  // ändå vore att uppfinna ett läge — samma oförtjänta precision som 75-fallbacken var.
+  if (score == null) return { pointer: null, label: null, satt: false };
   const pointer = Math.max(4, Math.min(96, score));
   const label = score >= 67 ? 'Bättre än marknaden' : score >= 45 ? 'I nivå' : 'Sämre än marknaden';
-  return { pointer, label };
+  return { pointer, label, satt: true };
 }
 
 function scoreColor(score) {
+  if (score == null) return 'rgba(157,184,175,.45)';   // inte satt — aldrig en signalfärg
   if (score < 45) return '#E06A4D';
   if (score < 65) return '#E0A23C';
   if (score < 80) return '#5DD6CA';
@@ -173,12 +182,14 @@ function scoreColor(score) {
 
 const RING_R = 17;
 function Ring({ score, size = 42, r = RING_R, sw = 3.2 }) {
+  // score === null betyder INTE SATT. Ringen ritas då tom och grå: ett okänt ska se okänt ut.
   const c = 2 * Math.PI * r, color = scoreColor(score);
+  const andel = score == null ? 0 : score / 100;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth={sw} />
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round"
-        strokeDasharray={`${(score/100)*c} ${c}`}
+        strokeDasharray={`${andel * c} ${c}`}
         style={{ transform:'rotate(-90deg)', transformOrigin:'center', transition:'stroke-dasharray 1s ease' }} />
     </svg>
   );
@@ -871,18 +882,22 @@ export default function Portfolio() {
                   </span>
                 </div>
                 <div className="idx-main">
-                  <span className="idx-num">{arvoScore}</span>
-                  <span className="idx-denom">/100</span>
+                  <span className="idx-num">{arvoScore ?? '—'}</span>
+                  {arvoScore != null && <span className="idx-denom">/100</span>}
                 </div>
-                <div className="mkt-k">Marknadsläge</div>
-                <div className="mkt-track"><span className="mkt-ptr" style={{ left: `${standing.pointer}%` }} /></div>
-                <div className="mkt-scale">
+                <div className="mkt-k">{standing.satt ? 'Marknadsläge' : 'Marknadsläge · inte satt'}</div>
+                {standing.satt && <div className="mkt-track"><span className="mkt-ptr" style={{ left: `${standing.pointer}%` }} /></div>}
+                {standing.satt && <div className="mkt-scale">
                   <span className={standing.label === 'Sämre än marknaden' ? 'on' : ''}>Sämre</span>
                   <span className={standing.label === 'I nivå' ? 'on' : ''}>I nivå</span>
                   <span className={standing.label === 'Bättre än marknaden' ? 'on' : ''}>Bättre</span>
-                </div>
+                </div>}
                 <p className="idx-note">
-                  {switchables.length > 0
+                  {!standing.satt
+                    ? <>Vi har inget verifierat golv för era kategorier ännu, så vi sätter ingen poäng.
+                      <b> Ett tal utan mätning är värre än inget tal.</b> Så snart en av era kategorier
+                      får ett verifierat pris räknas det fram — och ni ser exakt hur.</>
+                    : switchables.length > 0
                     ? <>Sammanvägt {arvoScore >= 67 ? 'starkt' : arvoScore >= 45 ? 'godkänt' : 'svagt'} — men <b>{switchables.length} avtal kostar mer än marknaden</b>. De ligger förberedda i innehavet nedan.</>
                     : standing.label === 'Bättre än marknaden'
                       ? <>Ni ligger <b>bättre än marknaden</b> mot verifierat listpris. Inget enskilt avtal sticker ut i dag.</>
@@ -1154,7 +1169,7 @@ export default function Portfolio() {
                     <HoldHead $open={isOpen} onClick={() => toggle(a.id)} aria-expanded={isOpen}>
                       <RingWrap>
                         <Ring score={score} />
-                        <span className="v" style={{ color }}>{score}</span>
+                        <span className="v" style={{ color }}>{score ?? '—'}</span>
                       </RingWrap>
                       <div>
                         <div className="h-name">{supplierName(a)}</div>
@@ -1179,6 +1194,51 @@ export default function Portfolio() {
                             <div className="dtxt" dangerouslySetInnerHTML={{ __html: buildReasoning(a) }} />
                           </div>
                         </div>
+
+                        {/* ── SÅ LANDADE VI I TALET (grundarbeslut 2026-08-16) ─────────────────
+                            Ringen visade ett tal och etiketten sa RÄTT PRISSATT. En finansdirektör
+                            kan inte ta ställning till det utan jämförelsen: vad betalar vi per
+                            enhet, vad är det verifierade golvet, hur långt ifrån ligger vi och när
+                            kontrollerades priset. Underlaget byggs i api-lagret (lib/prisunderlag.js)
+                            och producerar ALDRIG ett eget score — talet bor i recommend.js. */}
+                        {a.prisunderlag && (() => {
+                          const p = a.prisunderlag;
+                          return (
+                            <Underlag data-underlag>
+                              <div className="u-k">Så landade vi i talet</div>
+                              <div className="u-rad">
+                                <span className="u-txt">Ni betalar</span>
+                                <span className="u-spec">{p.unitLabel}</span>
+                                <span className="u-bel">{fmtNum(p.perEnhet)} kr</span>
+                              </div>
+                              <div className="u-rad">
+                                <span className="u-txt">Billigaste publicerade pris</span>
+                                <span className="u-spec">
+                                  {p.lastVerified ? `verifierat ${fmtDate(p.lastVerified)}` : 'publikt listpris'}
+                                </span>
+                                <span className="u-bel">{fmtNum(p.golv)} kr</span>
+                              </div>
+                              {p.median > 0 && p.median !== p.golv && (
+                                <div className="u-rad">
+                                  <span className="u-txt">Vanligaste publicerade pris</span>
+                                  <span className="u-spec">samma källa</span>
+                                  <span className="u-bel">{fmtNum(p.median)} kr</span>
+                                </div>
+                              )}
+                              <div className={`u-slut${p.underGolv ? ' bra' : ''}`}>
+                                {p.underGolv
+                                  ? <>Ni ligger <b>{Math.abs(p.avstandPct)} % under</b> det billigaste priset
+                                    som går att köpa över disk. Det kräver att någon har förhandlat.</>
+                                  : <>Ni ligger <b>{p.avstandPct} % över</b> det billigaste priset som går
+                                    att köpa över disk.</>}
+                              </div>
+                              <p className="u-not">
+                                Scoren mäts mot det här golvet — inte mot vad andra bolag faktiskt betalar.
+                                Den jämförelsen kommer när fler i er bransch delar sina fakturor.
+                              </p>
+                            </Underlag>
+                          );
+                        })()}
 
                         {/* ── VAD INGÅR I ÅRSKOSTNADEN (grundarbeslut 2026-08-15) ──────────────
                             "72 900 kr/år · RÄTT PRISSATT" är ett omdöme utan underlag; en

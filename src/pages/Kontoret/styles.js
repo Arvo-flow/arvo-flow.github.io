@@ -834,3 +834,27 @@ export const Uppdelning = styled.div`
   .u-utanfor { margin-top:16px; padding-top:14px; border-top:1px dashed ${theme.dossier.hairlineOnDark}; }
   @media (max-width:480px){ .u-rad { grid-template-columns:1fr auto; } .u-spec { grid-column:1 / -1; } }
 `;
+
+// ── SÅ LANDADE VI I TALET (2026-08-16) ───────────────────────────────────────────────────────
+// Ringen visade ett score och etiketten RÄTT PRISSATT — ett omdöme utan bevis. Här står de fyra
+// rader en CFO behöver: vårt pris per enhet, det verifierade golvet, avståndet, och datumet.
+// Ärver Uppdelningens rutnät medvetet: två block med samma form läses som ETT resonemang.
+export const Underlag = styled.div`
+  margin-top:18px; padding-top:16px; border-top:1px solid ${theme.dossier.hairlineOnDark};
+  .u-k { font-family:${MONO}; font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:${theme.dossier.tealBright}; margin-bottom:12px; }
+  .u-rad { display:grid; grid-template-columns:1fr auto auto; gap:8px 14px; align-items:baseline;
+    padding:7px 0; border-bottom:1px solid rgba(255,255,255,.04); font-size:13px; }
+  .u-txt { color:${theme.dossier.mutedOnDark}; }
+  .u-spec { font-family:${MONO}; font-size:11.5px; color:${theme.dossier.faintOnDark}; white-space:nowrap; }
+  .u-bel { font-family:${MONO}; font-size:13px; font-feature-settings:'tnum';
+    color:${theme.dossier.inkOnDark}; white-space:nowrap; text-align:right; }
+  .u-slut { margin-top:12px; padding:10px 12px; border-radius:${theme.size.radius.md};
+    font-size:13.5px; line-height:1.5; color:${theme.dossier.mutedOnDark};
+    border:1px solid ${theme.dossier.hairlineOnDark};
+    b { color:${theme.dossier.inkOnDark}; } }
+  .u-slut.bra { border-color:rgba(43,196,172,.30); background:rgba(43,196,172,.06);
+    b { color:${theme.dossier.tealBright}; } }
+  .u-not { margin:12px 0 0; font-size:12px; line-height:1.55; color:${theme.dossier.faintOnDark}; }
+  @media (max-width:480px){ .u-rad { grid-template-columns:1fr auto; } .u-spec { grid-column:1 / -1; } }
+`;
