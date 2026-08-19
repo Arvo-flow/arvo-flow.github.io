@@ -1221,7 +1221,7 @@ export default function Portfolio() {
                                   utan påstående (MK-08). */}
                               <div className="u-rad">
                                 <span className="u-txt">
-                                  Billigaste publicerade pris
+                                  {p.nivaBekraftad ? 'Listpris för er nivå' : 'Billigaste publicerade pris'}
                                   {p.referensProdukt ? <em className="u-prod">{p.referensProdukt}</em> : null}
                                 </span>
                                 <span className="u-spec">
@@ -1237,16 +1237,28 @@ export default function Portfolio() {
                                 </div>
                               )}
                               <div className={`u-slut${p.underGolv ? ' bra' : ''}`}>
-                                {p.underGolv
-                                  ? <>Ni ligger <b>{Math.abs(p.avstandPct)} % under</b> det billigaste priset
-                                    som går att köpa över disk. Det kräver att någon har förhandlat.</>
-                                  : <>Ni ligger <b>{p.avstandPct} % över</b> det billigaste priset som går
-                                    att köpa över disk.</>}
+                                {p.nivaBekraftad
+                                  ? (p.underGolv
+                                    ? <>Ni ligger <b>{Math.abs(p.avstandPct)} % under</b> listpriset för
+                                      er egen licensnivå. Det kräver att någon har förhandlat.</>
+                                    : <>Ni ligger <b>{p.avstandPct} % över</b> listpriset för er egen
+                                      licensnivå — samma produkt, högre pris.</>)
+                                  : (p.underGolv
+                                    ? <>Ni ligger <b>{Math.abs(p.avstandPct)} % under</b> det billigaste priset
+                                      som går att köpa över disk. Det kräver att någon har förhandlat.</>
+                                    : <>Ni ligger <b>{p.avstandPct} % över</b> det billigaste priset som går
+                                      att köpa över disk.</>)}
                               </div>
                               <p className="u-not">
-                                Scoren mäts mot det billigaste publicerade priset ovan — inte mot vad andra
-                                bolag faktiskt betalar.
-                                Den jämförelsen kommer när fler i er bransch delar sina fakturor.
+                                {p.nivaBekraftad
+                                  ? <>Er licensnivå är läst ur fakturans egen radtext, så jämförelsen gäller
+                                     samma produkt. Scoren mäts mot det priset — inte mot vad andra bolag
+                                     faktiskt betalar.</>
+                                  : <>Vi har inte kunnat bekräfta vilken licensnivå ni har, så jämförelsen
+                                     görs mot den billigaste jämförbara produkten. Har ni en dyrare nivå är
+                                     avståndet mindre än det ser ut — dela avtalet så låser vi jämförelsen.
+                                     Scoren mäts mot priset ovan, inte mot vad andra bolag faktiskt betalar.</>}
+                                {' '}Den jämförelsen kommer när fler i er bransch delar sina fakturor.
                               </p>
                             </Underlag>
                           );

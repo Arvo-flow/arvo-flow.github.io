@@ -23,6 +23,7 @@ import { getVaktHealth } from '../lib/vakt.js';
 import { refineFinding } from '../lib/forensics.js';
 import { byggUppdelning } from '../lib/fakturarader.js';
 import { byggPrisunderlag, scoreUrUnderlag } from '../lib/prisunderlag.js';
+import { lasLicensniva, nivaGolv } from '../lib/licensniva.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getPublicListBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
@@ -149,6 +150,9 @@ export default async function handler(req, res) {
         annualCost:    a.annual_cost,
         billingPeriod: a.billing_period,
       }),
+      // Nivån läses ur radtexten nedan (lasLicensniva) INNAN raderna strippas. Vi behåller dem
+      // därför på ett internt fält som aldrig serialiseras till klienten.
+      _rader: a.line_items_json,
       line_items_json: undefined,     // råraderna behövs inte i klienten — uppdelningen räcker
       contractClock: contractClockFinding({
         servicePeriodEnd: a.contract_end_date ?? null,
@@ -207,11 +211,23 @@ export default async function handler(req, res) {
   // samma ankare kortet redan använder — aldrig i klienten, och det producerar aldrig ett eget
   // score (talet bor i recommend.js, regel 1).
   for (const a of analyses) {
+    // ── LIKE-FOR-LIKE ÅT BÅDA HÅLL (grundarfynd 2026-08-19) ─────────────────────────────────
+    // Går kundens licensnivå att BEVISA ur fakturans egen radtext mäter vi mot den nivåns
+    // verifierade listpris. En E3-kund jämfördes tidigare mot Business Standards golv och fick
+    // "+184 % över lägsta pris" med score 15 — sanningen var −9 % mot sin egen nivå.
+    // Fail-closed: kan nivån inte bevisas faller vi tillbaka på kategorins golv, och kortet
+    // säger rakt ut att nivån inte är bekräftad.
+    let rader = a._rader;
+    if (typeof rader === 'string') { try { rader = JSON.parse(rader); } catch { rader = null; } }
+    const niva = lasLicensniva(rader);
+    const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
     a.prisunderlag = byggPrisunderlag({
       annualCost: a.annual_cost,
       seats:      a.seat_count,
       ankare:     branchAnchors[a.category] ?? null,
+      niva:       golv ? { ...golv, kalla: niva.kalla } : null,
     });
+    a._rader = undefined;
     // SCOREN HÄRLEDS UR SAMMA JÄMFÖRELSE KORTET VISAR (2026-08-19). Tidigare läste rummet det
     // LAGRADE health_score, räknat vid analystillfället mot getBenchmark — som föredrar livedata,
     // och livedatan är totalsummor. Följden var ett score på 92 ovanför ett bevis som sa +184 %.
