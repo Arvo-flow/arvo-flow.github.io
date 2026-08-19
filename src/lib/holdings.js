@@ -166,7 +166,7 @@ export function buildReasoning(a) {
       + `dela en ny faktura vid nästa avtalsperiod så kontrollerar Arvo igen.`;
   }
   // Utan underlag har vi ingen verifierad jämförelse — då påstår vi ingenting om prisläget.
-  return `Fakturan är mottagen och klassad som ${label}. Arvo har inget verifierat publikt golv `
-    + `att prissätta den mot i dag, så vi gör inget påstående om prisläget — raden står under `
+  return `Fakturan är mottagen och klassad som ${label}. Arvo har inget verifierat publikt pris `
+    + `att jämföra den mot i dag, så vi gör inget påstående om prisläget — raden står under `
     + `bevakning och kontrolleras när underlaget bär.`;
 }

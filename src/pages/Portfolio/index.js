@@ -878,7 +878,7 @@ export default function Portfolio() {
                 </div>}
                 <p className="idx-note">
                   {!standing.satt
-                    ? <>Vi har inget verifierat golv för era kategorier ännu, så vi sätter ingen poäng.
+                    ? <>Vi har inget verifierat jämförelsepris för era kategorier ännu, så vi sätter ingen poäng.
                       <b> Ett tal utan mätning är värre än inget tal.</b> Så snart en av era kategorier
                       får ett verifierat pris räknas det fram — och ni ser exakt hur.</>
                     : switchables.length > 0
@@ -1178,7 +1178,7 @@ export default function Portfolio() {
                           && a.prisunderlag.avstandPct > 15;
                         const etikett = saving ? `+${fmtNum(a.net_saving)} kr/år`
                           : a.route === 'monitoring' ? 'Avtalsbevakad'
-                          : over ? `${a.prisunderlag.avstandPct} % över golvet`
+                          : over ? `${a.prisunderlag.avstandPct} % över lägsta pris`
                           : a.prisunderlag ? 'Rätt prissatt'
                           : 'Mottagen';
                         return (
@@ -1244,7 +1244,8 @@ export default function Portfolio() {
                                     att köpa över disk.</>}
                               </div>
                               <p className="u-not">
-                                Scoren mäts mot det här golvet — inte mot vad andra bolag faktiskt betalar.
+                                Scoren mäts mot det billigaste publicerade priset ovan — inte mot vad andra
+                                bolag faktiskt betalar.
                                 Den jämförelsen kommer när fler i er bransch delar sina fakturor.
                               </p>
                             </Underlag>

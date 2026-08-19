@@ -133,6 +133,27 @@ describe('SCOREKRAV · talet och dess bevis kan inte säga emot varandra', () =>
     assert.match(u, /inget påstående om prisläget/i);
   });
 
+  test('SK-09 · kundens text bär aldrig vårt interna ord "golv"', () => {
+    // Grundaren 2026-08-19: "Jag gillar inte termen 'över golvet'." Rätt — "golv" är VÅRT ord för
+    // p25 i prisboken. En finansdirektör tänker inte i golv, och ett internt begrepp i kundytan
+    // låter som att vi förutsätter att kunden känner vår modell. Fältet får heta golv i koden;
+    // texten ska säga "billigaste publicerade pris" eller "lägsta pris".
+    //
+    // Vakten prövar domens prosa direkt. UTTALAD GRÄNS: den ser inte JSX-strängarna i rummet
+    // (pillen, noten under underlaget) — de är renderingskod och kan inte anropas härifrån.
+    // De byttes för hand i samma commit och skyddas bara av den här kommentaren.
+    for (const rad of [
+      { category: 'saas-productivity', annual_cost: 45600, should_switch: false,
+        prisunderlag: byggPrisunderlag({ annualCost: 45600, seats: 10, ankare: ANKARE }) },
+      { category: 'saas-productivity', annual_cost: 15000, should_switch: false,
+        prisunderlag: byggPrisunderlag({ annualCost: 15000, seats: 10, ankare: ANKARE }) },
+      { category: 'saas-productivity', annual_cost: 45600, should_switch: false, prisunderlag: null },
+    ]) {
+      assert.doesNotMatch(buildReasoning(rad), /golv/i,
+        'internt begrepp läckte till kundens text');
+    }
+  });
+
   test('SK-07 · utan underlag finns inget score (fail-closed)', () => {
     assert.equal(scoreUrUnderlag(null), null);
     assert.equal(scoreUrUnderlag({ perEnhet: 0, golv: 1606 }), null);
