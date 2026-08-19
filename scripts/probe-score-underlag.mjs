@@ -41,7 +41,8 @@ function raknaScore(kostnad, golv) {
 
 const rows = await db`
   SELECT id, created_at, user_email, supplier, normalized_supplier, category,
-         annual_cost, seat_count, employees, health_score, should_switch, net_saving, route
+         annual_cost, seat_count, employees, health_score, should_switch, net_saving, route,
+         suggested_annual_cost, suggested_supplier, line_items_json
   FROM invoice_analyses
   WHERE route = 'auto' AND annual_cost > 0
   ORDER BY created_at DESC
@@ -99,6 +100,34 @@ for (const r of rows) {
     );
   }
 }
+
+// ── VARFÖR SAKNAS ETT BYTESMÅL? (grundarfråga 2026-08-19) ────────────────────────────────────
+// Pillen visar KRONOR så fort vi kan bevisa dem — procenten är bara reservläget. Frågan är alltså
+// inte vad reservläget ska heta, utan hur ofta vi hamnar där och varför. Här mäts det: har raden
+// radposter alls, går licensnivån att läsa ur dem, och finns ett lagrat bytesmål?
+const TIER = /\b(business\s+(basic|standard|premium)|e[35]\b|enterprise|starter|plus)\b/i;
+let medMal = 0, utanMalOverGolv = 0, utanRader = 0, tierLasbar = 0;
+console.log('\n═══ VARFÖR SAKNAS BYTESMÅL? ═══\n');
+for (const r of rows) {
+  const seats = Number(r.seat_count) > 0 ? Number(r.seat_count) : null;
+  const bm = seats ? getPublicListBenchmark({ category: r.category, employees: seats }) : null;
+  if (!bm?.p25) continue;
+  const over = Math.round(((Math.round(Number(r.annual_cost) / seats) - bm.p25) / bm.p25) * 100);
+  const harMal = r.should_switch && Number(r.net_saving) > 0;
+  if (harMal) { medMal++; continue; }
+  if (over <= 15) continue;                       // ligger rätt → inget mål behövs
+  utanMalOverGolv++;
+  let rader = [];
+  try { rader = typeof r.line_items_json === 'string' ? JSON.parse(r.line_items_json) : (r.line_items_json ?? []); } catch { rader = []; }
+  if (!rader.length) { utanRader++; }
+  const tier = rader.map((l) => l?.description ?? '').find((d) => TIER.test(d));
+  if (tier) tierLasbar++;
+  console.log(`  ${(r.normalized_supplier || r.supplier || '?').slice(0,22).padEnd(22)} +${over}% · radposter ${String(rader.length).padStart(2)} · nivå ur text: ${tier ? '"'+tier.slice(0,42)+'"' : '(ingen)'}`);
+}
+console.log(`\n  rader MED bevisat bytesmål (pillen visar kr):      ${medMal}`);
+console.log(`  rader över golvet UTAN mål (pillen visar %):       ${utanMalOverGolv}`);
+console.log(`    ...varav helt utan radposter:                    ${utanRader}`);
+console.log(`    ...varav licensnivå LÄSBAR ur radtexten:         ${tierLasbar}`);
 
 console.log('─'.repeat(70));
 console.log(`rader utan ankare (ingen mätning möjlig): ${utanAnkare}`);
