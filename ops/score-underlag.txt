@@ -1,18 +1,96 @@
-DB-fel: column "suggested_supplier" does not exist
 
-═══ SCORE vs UNDERLAG · 0 auto-analyser ═══
+═══ SCORE vs UNDERLAG · 48 auto-analyser ═══
+
+  avviker  Telia Företag          mobil             
+    kostnad   119 520 kr/år · platser(faktura)   40 · anställda   10
+    per enhet   2988 kr · golv   3228 kr (Tele2 Företag mobilabonnemang) · avstånd -7 %
+    LAGRAT score  96 · omräknat m. platser  91 · omräknat m. anställda  15
+    GOLVET scoren mätte mot: getBenchmark p25=35880 source=real isTotal=true n=83
+    GOLVET underlaget visar:  getPublicListBenchmark p25=3228 (per enhet)
+    me***@hotmail.com · 2026-08-14
+
+  avviker  Tre Foretag            mobil             
+    kostnad    14 940 kr/år · platser(faktura)    5 · anställda   10
+    per enhet   2988 kr · golv   3228 kr (Tele2 Företag mobilabonnemang) · avstånd -7 %
+    LAGRAT score  96 · omräknat m. platser  91 · omräknat m. anställda  96
+    GOLVET scoren mätte mot: getBenchmark p25=35880 source=real isTotal=true n=83
+    GOLVET underlaget visar:  getPublicListBenchmark p25=3228 (per enhet)
+    me***@hotmail.com · 2026-08-14
+
+‼ MOTSÄGER Microsoft Ireland      saas-productivity 
+    kostnad    45 600 kr/år · platser(faktura)   10 · anställda   10
+    per enhet   4560 kr · golv   1606 kr (Microsoft 365 Business Standard) · avstånd +184 %
+    LAGRAT score  92 · omräknat m. platser  15 · omräknat m. anställda  15
+    GOLVET scoren mätte mot: getBenchmark p25=184680 source=real isTotal=true n=24
+    GOLVET underlaget visar:  getPublicListBenchmark p25=1606 (per enhet)
+    me***@hotmail.com · 2026-08-14
+
+  avviker  Tele2 Företag          mobil             
+    kostnad    35 880 kr/år · platser(faktura)   10 · anställda   10
+    per enhet   3588 kr · golv   3228 kr (Tele2 Företag mobilabonnemang) · avstånd +11 %
+    LAGRAT score  96 · omräknat m. platser  77 · omräknat m. anställda  77
+    GOLVET scoren mätte mot: getBenchmark p25=35880 source=real isTotal=true n=83
+    GOLVET underlaget visar:  getPublicListBenchmark p25=3228 (per enhet)
+    me***@hotmail.com · 2026-08-14
+
+‼ MOTSÄGER Microsoft Ireland      saas-productivity 
+    kostnad    45 600 kr/år · platser(faktura)   10 · anställda   10
+    per enhet   4560 kr · golv   1606 kr (Microsoft 365 Business Standard) · avstånd +184 %
+    LAGRAT score  92 · omräknat m. platser  15 · omräknat m. anställda  15
+    GOLVET scoren mätte mot: getBenchmark p25=184680 source=real isTotal=true n=24
+    GOLVET underlaget visar:  getPublicListBenchmark p25=1606 (per enhet)
+    me***@gmail.com · 2026-08-14
+
+  avviker  Telia Företag          mobil             
+    kostnad   119 520 kr/år · platser(faktura)   40 · anställda   10
+    per enhet   2988 kr · golv   3228 kr (Tele2 Företag mobilabonnemang) · avstånd -7 %
+    LAGRAT score  96 · omräknat m. platser  91 · omräknat m. anställda  15
+    GOLVET scoren mätte mot: getBenchmark p25=35880 source=real isTotal=true n=83
+    GOLVET underlaget visar:  getPublicListBenchmark p25=3228 (per enhet)
+    me***@gmail.com · 2026-08-14
+
+  avviker  Tele2 Företag          mobil             
+    kostnad    35 880 kr/år · platser(faktura)   10 · anställda   10
+    per enhet   3588 kr · golv   3228 kr (Tele2 Företag mobilabonnemang) · avstånd +11 %
+    LAGRAT score  96 · omräknat m. platser  77 · omräknat m. anställda  77
+    GOLVET scoren mätte mot: getBenchmark p25=35880 source=real isTotal=true n=83
+    GOLVET underlaget visar:  getPublicListBenchmark p25=3228 (per enhet)
+    me***@gmail.com · 2026-08-14
+
+  avviker  Tre Foretag            mobil             
+    kostnad    14 940 kr/år · platser(faktura)    5 · anställda   10
+    per enhet   2988 kr · golv   3228 kr (Tele2 Företag mobilabonnemang) · avstånd -7 %
+    LAGRAT score  96 · omräknat m. platser  91 · omräknat m. anställda  96
+    GOLVET scoren mätte mot: getBenchmark p25=35880 source=real isTotal=true n=83
+    GOLVET underlaget visar:  getPublicListBenchmark p25=3228 (per enhet)
+    me***@gmail.com · 2026-08-14
+
+‼ MOTSÄGER CloudReseller Norden A saas-productivity 
+    kostnad   184 260 kr/år · platser(faktura)   73 · anställda    5
+    per enhet   2524 kr · golv   1606 kr (Microsoft 365 Business Standard) · avstånd +57 %
+    LAGRAT score  88 · omräknat m. platser  38 · omräknat m. anställda  15
+    GOLVET scoren mätte mot: getBenchmark p25=1606 source=real-public isTotal=false n=0
+    GOLVET underlaget visar:  getPublicListBenchmark p25=1606 (per enhet)
+    te***@arvoflow.se · 2026-07-16
 
 
 ═══ VARFÖR SAKNAS BYTESMÅL? ═══
 
+  Microsoft Ireland      +184% · radposter  2 · nivå ur text: "Microsoft 365 E3"
+  Microsoft Ireland      +184% · radposter  0 · nivå ur text: (ingen)
+  Tele2 Företag AB       +30% · radposter  0 · nivå ur text: (ingen)
+  Microsoft Ireland Oper +83% · radposter  0 · nivå ur text: (ingen)
+  Microsoft Ireland Oper +107% · radposter  0 · nivå ur text: (ingen)
+  Microsoft Ireland Oper +107% · radposter  0 · nivå ur text: (ingen)
+  Tele2 Företag AB       +30% · radposter  0 · nivå ur text: (ingen)
 
-  rader MED bevisat bytesmål (pillen visar kr):      0
-  rader över golvet UTAN mål (pillen visar %):       0
-    ...varav helt utan radposter:                    0
-    ...varav licensnivå LÄSBAR ur radtexten:         0
+  rader MED bevisat bytesmål (pillen visar kr):      10
+  rader över golvet UTAN mål (pillen visar %):       7
+    ...varav helt utan radposter:                    6
+    ...varav licensnivå LÄSBAR ur radtexten:         1
 ──────────────────────────────────────────────────────────────────────
-rader utan ankare (ingen mätning möjlig): 0
-rader där platser(faktura) ≠ anställda:   0
-rader där lagrat score ≠ omräknat (>3):   0
-RADER DÄR SCORE MOTSÄGER SITT UNDERLAG:   0   ← det kunden ser
+rader utan ankare (ingen mätning möjlig): 22
+rader där platser(faktura) ≠ anställda:   17
+rader där lagrat score ≠ omräknat (>3):   9
+RADER DÄR SCORE MOTSÄGER SITT UNDERLAG:   3   ← det kunden ser
 ──────────────────────────────────────────────────────────────────────
