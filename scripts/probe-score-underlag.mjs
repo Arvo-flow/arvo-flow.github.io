@@ -23,6 +23,13 @@
 // Inga skrivningar. E-post maskeras (publikt repo).
 import { getDb } from '../lib/db.js';
 import { getPublicListBenchmark, getBenchmark } from '../lib/benchmark.js';
+// ── EN TYST NOLLA ÄR INTE ETT MÄTVÄRDE (2026-08-19) ─────────────────────────────────────────
+// Första körningen av det utökade urvalet gav 0 rader — där det nyss gav 48. Orsaken var en
+// kolumn som inte finns (`suggested_supplier`), och min egen `.catch((e) => { log; return []; })`
+// gjorde felet till en tom lista som rapporterades som "0 motsägelser". Grön av tomhet, i sondens
+// egen rapport, och samma sjukdom som läsvägens reserv-SELECT två dagar tidigare.
+// aldrigTyst är husets sanktionerade väg (regel 1) — den kastar vidare i stället för att svälja.
+import { aldrigTyst } from '../lib/sondvakt.js';
 
 const db = getDb();
 if (!db) { console.log('Ingen DATABASE_URL — exit 0'); process.exit(0); }
@@ -39,7 +46,7 @@ function raknaScore(kostnad, golv) {
   return Math.max(15, Math.round(40 - (ratio - 1.5) * 30));
 }
 
-const rows = await db`
+const rows = await aldrigTyst(db`
   SELECT id, created_at, user_email, supplier, normalized_supplier, category,
          annual_cost, seat_count, employees, health_score, should_switch, net_saving, route,
          suggested_annual_cost, line_items_json
@@ -47,15 +54,7 @@ const rows = await db`
   WHERE route = 'auto' AND annual_cost > 0
   ORDER BY created_at DESC
   LIMIT 200
-`.catch((e) => { console.error('DB-fel:', e.message); return null; });
-
-// ── EN TYST NOLLA ÄR INTE ETT MÄTVÄRDE (2026-08-19) ─────────────────────────────────────────
-// Första körningen av det utökade urvalet gav 0 rader — där den nyss gav 48. Orsaken var en
-// kolumn som inte finns (`suggested_supplier`), och `.catch(() => [])` förvandlade felet till en
-// tom lista som rapporterades som "0 motsägelser". Grön av tomhet, i sondens egen rapport, och
-// exakt samma sjukdom som läsvägens reserv-SELECT två dagar tidigare. Nu skiljs "inga rader" från
-// "kunde inte läsa": ett fel avslutar med exit 1 i stället för att bli en siffra.
-if (rows === null) { console.error('Sonden mätte INGENTING — behandla inte utfallet som ett resultat.'); process.exit(1); }
+`, 'läsning av invoice_analyses');
 
 console.log(`\n═══ SCORE vs UNDERLAG · ${rows.length} auto-analyser ═══\n`);
 

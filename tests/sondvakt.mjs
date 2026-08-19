@@ -94,9 +94,26 @@ describe('SONDVAKT · instrumenten hålls till samma krav som produktionen', () 
     const brott = [];
     for (const [namn, kod] of sondFiler()) {
       kod.split('\n').forEach((rad, i) => {
-        // .catch(() => []) / .catch(() => null) / .catch(() => ({})) — felet blir ett resultat.
-        if (/\.catch\(\s*\(\s*\)\s*=>\s*(\[\s*\]|null|\{\s*\}|\(\s*\{\s*\}\s*\))\s*\)/.test(rad)
-            && !/sondvakt-ok:/.test(rad)) {
+        // Kommentarsrader hoppas över. Utan det fällde vakten sin egen dokumentation — den rad
+        // som BESKRIVER mönstret för nästa läsare. En vakt som larmar på förklaringen får folk
+        // att radera förklaringen, och då är läxan borta men buggen kvar.
+        if (/^\s*(\/\/|\*|\/\*)/.test(rad)) return;
+        // ── VAKTEN SÅG BARA DEN NAKNA FORMEN (utökad 2026-08-19) ──────────────────────────
+        // Regexen matchade enbart `.catch(() => [])` — noll argument. Den 19 augusti skrev jag
+        // `.catch((e) => { console.log('DB-fel:', e.message); return []; })` i en ny sond, och
+        // vakten var grön. Den formen är den INSIDIÖSARE av de två: den loggar, alltså ser den
+        // ansvarsfull ut, och ändå blir felet ett tomt resultat som rapporteras som "0 fynd".
+        // Precis så hände det: en kolumn som inte fanns gjorde 48 rader till 0 motsägelser.
+        // Nu fångas båda formerna — med parameter, med blockkropp, med logg.
+        //   (a) .catch(() => [])                             naken
+        //   (b) .catch((e) => { ...; return []; })           parameter + block + logg
+        const naken = /\.catch\(\s*\(?\s*\w*\s*\)?\s*=>\s*(\[\s*\]|null|\{\s*\}|\(\s*\{\s*\}\s*\))\s*\)/.test(rad);
+        // OBS: `[^)]*` fungerar INTE här — parameterlistan `(e)` innehåller själv en parentes,
+        // så mönstret nådde aldrig fram till pilen. Första vidgningen såg därför fortfarande inte
+        // den loggande formen, trots att kommentaren påstod det. Sabotaget avslöjade det; ett
+        // grönt test på den ändringen hade varit grönt på fel grund.
+        const block = /\.catch\(\s*\(?\s*\w*\s*\)?\s*=>\s*\{[^}]*\breturn\s+(\[\s*\]|null|\{\s*\})\s*;?\s*\}/.test(rad);
+        if ((naken || block) && !/sondvakt-ok:/.test(rad)) {
           brott.push(`${namn}:${i + 1}`);
         }
       });
