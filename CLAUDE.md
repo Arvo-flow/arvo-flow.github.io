@@ -500,6 +500,56 @@ signera", aldrig som ett verkställt löfte.)
    > Med härledningen VET vi det, och då är datumet bärarens. BA-11 låser att den gamla regeln gäller
    > kvar för kategorier utan härledning.
 
+   > **✅ EN FIX SOM INTE FÖLJS TILL ALLA KONSUMENTER ÄR EN HALV FIX (2026-08-19, ur "184 % över, score 92").**
+   > Grundaren: *"Hur kan man ha ett avtal som ligger 184 % över marknadspris och ändå få 92 i Arvo
+   > Score?"* Mätt ur hans egen rad mot produktionsdatabasen:
+   > `scorens golv = getBenchmark p25 184 680 kr × 10 platser = 1 846 800 kr` (→ score 96) mot
+   > `bevisets golv = getPublicListBenchmark p25 1 606 kr × 10 = 16 060 kr` (→ score 15).
+   > 184 680 kr är en **totalsumma** ur `invoice_datapoints` — vad hela bolag betalar per år — som
+   > scoren behandlade som ett styckpris och multiplicerade med antalet licenser. Golvet blev 115
+   > gånger för högt, kvoten nära noll, och talet fastnade i taket **oavsett vad kunden betalade**.
+   >
+   > **Det är ankarkortets bugg ett lager ned, och jag hade redan fixat den — på ett ställe.** Den 15
+   > augusti konstaterades att ankaret läste `getBenchmark` (som riktigt föredrar livedata, och
+   > livedatan är totalsummor) och byttes till `getPublicListBenchmark`. Jag frågade aldrig **vilka
+   > ANDRA konsumenter som gick samma väg.** Scoren gjorde det. Regeln: när en läsväg visar sig ge
+   > fel sorts tal, är fixen inte klar förrän varje konsument av den vägen är inventerad — grep:a
+   > funktionsnamnet, inte bara ytan som råkade avslöja felet.
+   >
+   > **Inventeringen gjord, och den gav mer än den ena raden.** Fem konsumenter av `getBenchmark`:
+   > ankaret (rättat 15 aug), scorens golv (rättat nu), `domain-intel` (avvisade redan `isTotal`),
+   > `score-leads` (läser den SYNKRONA BRANCHINDEX-varianten — livedata kan aldrig nå den, safe), och
+   > `recommend.js` rad 77/206 som skalar benchmarken i AI-promptens faktatext. De två sista *läste*
+   > `isTotal` korrekt — men flaggan saknades på `invoice_datapoints`-grenen, så de multiplicerade
+   > också totalsummor med antalet platser. **Att sätta flaggan rättade alltså två konsumenter till,
+   > som ingen visste var trasiga.** En kontroll som finns men inte är satt är en kontroll som inte finns.
+   >
+   > **Tre ytor sa samma osanning av samma skäl.** Ringen (92), pillen (RÄTT PRISSATT) och domens
+   > prosa ("Priset är konkurrenskraftigt") läste alla *"ingen besparing att erbjuda"* och översatte
+   > det till *"priset är bra"*. Det är inte samma sak: **frånvaron av ett verifierat bytesmål säger
+   > ingenting om huruvida kunden betalar rätt.** Alla tre härleds nu ur prisunderlaget.
+   >
+   > Kontraktsändring: `lib/prisunderlag.js` fick tidigare ALDRIG producera ett score (PU-05), med
+   > motiveringen regel 1. Motiveringen var rätt men **uppdelningen var det som gjorde glidningen
+   > möjlig**. Talet bor nu i samma funktionskedja som jämförelsen — ett score som motsäger sitt
+   > underlag är inte längre ett fel som kan uppstå, utan ett tillstånd koden inte kan representera.
+   > Att det räknas vid LÄSNING rättade dessutom alla 48 befintliga rader utan backfill.
+   > `isTotal` sattes på `invoice_datapoints`-grenen — flaggan fanns för att förhindra exakt den här
+   > förväxlingen, den var bara inte satt där. Maskinvakt: `tests/scorekrav.mjs` (SK-01..08),
+   > sabotage-bevisad i fyra riktningar; SK-02 prövar invarianten över hela prisspannet.
+   >
+   > **Två läxor om vakterna själva:**
+   > · **Ett test som matar sitt eget indata bevisar bara vidarebefordran.** `tests/holdings.mjs`
+   >   matade `health_score` direkt och var grönt i månader — det kunde aldrig se att talet räknats
+   >   mot fel golv. Samma sjukdom som LFL-obduktionen: mekanismen prövad, matningen aldrig.
+   > · **En vakt som mäter vokabulär i stället för innebörd larmar på rätt beteende.** SK-08:s första
+   >   version bannlyste ordet "konkurrenskraftig" och fällde den KORREKTA meningen *"priset är inte
+   >   konkurrenskraftigt"*. Förbjud påståendet, aldrig ordet.
+   >
+   > **Och det som gör hela fyndet möjligt:** talet var lika fel dagen innan. Det som förändrades var
+   > att underlaget gjorde det **granskningsbart**. Ett omdöme som bär sitt bevis kan motsägas — och
+   > det är hela poängen med att visa beviset.
+
    > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
    > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
    > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det
