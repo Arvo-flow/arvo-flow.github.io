@@ -500,6 +500,36 @@ signera", aldrig som ett verkställt löfte.)
    > Med härledningen VET vi det, och då är datumet bärarens. BA-11 låser att den gamla regeln gäller
    > kvar för kategorier utan härledning.
 
+   > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
+   > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
+   > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det
+   > håll som gynnar oss** (lägre golv = större påvisad överbetalning = högre success fee), vilket är
+   > ett skäl att vara mer noggrann, aldrig mindre.
+   >
+   > **55 fixturer flyttade sig, och det var där risken låg.** Ett testvärde som anpassas till koden är
+   > ingen vakt längre. Därför skrevs inget om för hand: ett skript körde sviten i vågor och tillät
+   > ENDAST det delta prissänkningen förutsäger — `suggestedAnnual −480`, `grossSaving +480`,
+   > `netSaving +384` — och hade stannat vid allt annat. Tre vågor, noll oväntade deltan. **Det är
+   > skillnaden mellan att uppdatera ett facit och att bevisa en propagering.**
+   >
+   > **Det verkliga fyndet var gränsen som nästan försvann.** Tre fixturer vippade från "ingen
+   > besparing" till "besparing" när golvet sjönk. Utfallet är korrekt — men just de fixturerna var
+   > det som bevisade att vi INTE hävdar en besparing under tröskeln, och under 20 % success fee är
+   > det den dyraste grenen att tappa täckning på. Ingen vakt hade sagt ifrån: sviten hade blivit grön
+   > med grenen oprövad. Regeln: **när en tröskel rör sig, flytta gränsfixturen — ändra dess INDATA så
+   > att den prövar samma sak mot det nya golvet, i stället för att låta den vippa över.** `edge-25`
+   > behöll sitt utfall och bytte pris (275 → 235 kr/mån, samma gross 432); `comb-55` pinnar gränsen på
+   > nytt. En grön svit efter en golvändring säger ingenting förrän man frågat *vilka grenar som slutade
+   > prövas*.
+   >
+   > Sidofynd med egen vakt (BI-09): tre fixturfilers dokumenterade p25-tabell hade legat FEL i månader
+   > — headern sa `500:3828` medan assertionerna korrekt använde 3348. En kommentar kan inte falla, men
+   > nästa läsare räknar efter den. Samma sjukdom som prisbokens osourcade golv, bara i dokumentationen.
+   > Vakten läser raden ur källtexten och jämför mot den levande härledningen. Sabotage-bevisad, inklusive
+   > "tabellen raderas" (grön av tomhet). Uttalad lucka: per-fixtur-kommentarernas egna uträkningar
+   > vaktas inte — de är resonemang, inte en tabell — och flera citerar ett `mobilP25` som varit
+   > inaktuellt sedan 5 aug. Den driften är redovisad, inte städad.
+
 > **✅ GRUNDARBESLUT 2026-07-16 — IDENTITETSINVARIANTEN: inga påhittade företag, någonsin.**
 > Bolagsidentitet (namn, orgnr, omsättning, bokslut, koncern, grundandeår) får ENDAST komma från
 > **Bolagsverket-data via EN kanoniserad läsväg** (idag allabolag som transport — sanningskällan är
