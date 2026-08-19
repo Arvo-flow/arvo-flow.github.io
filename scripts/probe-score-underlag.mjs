@@ -22,7 +22,7 @@
 //
 // Inga skrivningar. E-post maskeras (publikt repo).
 import { getDb } from '../lib/db.js';
-import { getPublicListBenchmark } from '../lib/benchmark.js';
+import { getPublicListBenchmark, getBenchmark } from '../lib/benchmark.js';
 
 const db = getDb();
 if (!db) { console.log('Ingen DATABASE_URL — exit 0'); process.exit(0); }
@@ -64,6 +64,15 @@ for (const r of rows) {
   const perEnhet  = Math.round(kostnad / seats);
   const avstandPct = Math.round(((perEnhet - bmUnderlag.p25) / bmUnderlag.p25) * 100);
 
+  // ── VILKET GOLV MÄTTE SCOREN MOT? ──────────────────────────────────────────────────────
+  // recommend.js läser `getBenchmark()` — prisbokens väg för en BESPARINGSBERÄKNING, som
+  // helt riktigt FÖREDRAR livedata när den finns. Livedatan är TOTALSUMMOR (isTotal:true).
+  // Underlaget läser `getPublicListBenchmark()` — verifierat publikt listpris PER ENHET.
+  // Är det två olika tal mäter scoren och dess bevis två olika saker. Exakt den sjukdom som
+  // tystade ankarkortet 2026-08-15 — fixad där, aldrig kontrollerad här.
+  let bmScore = null;
+  try { bmScore = await getBenchmark({ category: r.category, industry: r.industry, employees: emps ?? 5 }); } catch { /* mätvärde saknas */ }
+
   // Scoren, omräknad med SAMMA enhetsmängd som underlaget delar på.
   const scoreMedSeats = raknaScore(kostnad, bmUnderlag.p25 * seats);
   // Och med anställda i stället — recommend.js faller tillbaka dit när seatCount saknas.
@@ -84,6 +93,8 @@ for (const r of rows) {
       `    kostnad ${kostnad.toLocaleString('sv-SE').padStart(9)} kr/år · platser(faktura) ${String(seats).padStart(4)} · anställda ${String(emps ?? '—').padStart(4)}\n` +
       `    per enhet ${String(perEnhet).padStart(6)} kr · golv ${String(bmUnderlag.p25).padStart(6)} kr (${bmUnderlag.referensProdukt ?? '?'}) · avstånd ${avstandPct > 0 ? '+' : ''}${avstandPct} %\n` +
       `    LAGRAT score ${String(lagrat ?? '—').padStart(3)} · omräknat m. platser ${String(scoreMedSeats).padStart(3)} · omräknat m. anställda ${String(scoreMedEmps ?? '—').padStart(3)}\n` +
+      `    GOLVET scoren mätte mot: getBenchmark p25=${bmScore?.p25 ?? '—'} source=${bmScore?.source ?? '—'} isTotal=${bmScore?.isTotal ?? false} n=${bmScore?.n ?? '—'}\n` +
+      `    GOLVET underlaget visar:  getPublicListBenchmark p25=${bmUnderlag.p25} (per enhet)\n` +
       `    ${mask(r.user_email)} · ${new Date(r.created_at).toISOString().slice(0, 10)}\n`,
     );
   }
