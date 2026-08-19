@@ -22,7 +22,7 @@ import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { getVaktHealth } from '../lib/vakt.js';
 import { refineFinding } from '../lib/forensics.js';
 import { byggUppdelning } from '../lib/fakturarader.js';
-import { byggPrisunderlag } from '../lib/prisunderlag.js';
+import { byggPrisunderlag, scoreUrUnderlag } from '../lib/prisunderlag.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getPublicListBenchmark } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
@@ -212,6 +212,13 @@ export default async function handler(req, res) {
       seats:      a.seat_count,
       ankare:     branchAnchors[a.category] ?? null,
     });
+    // SCOREN HÄRLEDS UR SAMMA JÄMFÖRELSE KORTET VISAR (2026-08-19). Tidigare läste rummet det
+    // LAGRADE health_score, räknat vid analystillfället mot getBenchmark — som föredrar livedata,
+    // och livedatan är totalsummor. Följden var ett score på 92 ovanför ett bevis som sa +184 %.
+    // Nu kan de inte säga emot varandra: talet ÄR en funktion av perEnhet och golv. Att det räknas
+    // vid LÄSNING är dessutom det enda ärliga: prisboken rör sig (Tele2 sänkte i går), och ett
+    // fruset score mot ett golv rummet inte längre visar är per definition inaktuellt.
+    a.arvoScore = scoreUrUnderlag(a.prisunderlag);
   }
 
   // ── Marknadsrörelsen: "Telia höjde — X av Y bolag vi följer för <kategori> ligger hos Telia" ──

@@ -8,6 +8,9 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
+// buildReasoning bor i lib så den kan prövas DIREKT av sviten (tests/scorekrav.mjs SK-08),
+// inte via en regex på den här filens källtext. Domen är logik, inte rendering.
+import { buildReasoning } from '../../lib/holdings';
 import { groupBySupplier, supplierName, supplierDiagScore, computeActing, roomCounts } from '../../lib/holdings';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
@@ -196,25 +199,6 @@ function Ring({ score, size = 42, r = RING_R, sw = 3.2 }) {
 }
 
 // Deterministisk bedömning per leverantör (regel 2: kod skriver, ingen AI).
-function buildReasoning(a) {
-  const meta = getCategoryMeta(a.category);
-  const label = (meta?.label ?? a.category).toLowerCase();
-  if (a.route === 'monitoring')
-    return `Avtalet är tidsbegränsat. Arvo bevakar och förbereder bytet inför förnyelsen — ni betalar konkurrenskraftigt till dess.`;
-  if (a.route === 'review_queue')
-    return `Kategorin kräver manuell granskning — Arvo inhämtar offert för exakt prisjämförelse. Ni kontaktas när det är klart.`;
-  if (a.should_switch && (a.net_saving ?? 0) > 0) {
-    const ovPct = a.annual_cost > 0 && a.suggested_annual_cost > 0
-      ? Math.round((a.annual_cost - a.suggested_annual_cost) / a.annual_cost * 100) : 0;
-    // Magnitudmedvetet: full bytesrekommendation reserveras för gap som bär den.
-    if (ovPct >= 10) {
-      return `Ni betalar <b>${ovPct}% mer</b> än verifierat marknadspris för ${label}. Arvo rekommenderar byte — det lägre priset finns förberett nedan.`;
-    }
-    return `Ni betalar ${ovPct > 0 ? `${ovPct}% mer` : 'något mer'} än verifierat marknadspris för ${label} — ett litet gap. Ett lägre avtalspris finns att säkra om ni vill, men ingen brådska; avvärjt är ändå avvärjt.`;
-  }
-  return `Priset är konkurrenskraftigt mot verifierat marknadspris för ${label}. Inget byte rekommenderas i dag — dela en ny faktura vid nästa avtalsperiod så kontrollerar Arvo igen.`;
-}
-
 // ── component ────────────────────────────────────────────────────────────────
 export default function Portfolio() {
   const [analyses, setAnalyses] = useState(null);
@@ -1180,9 +1164,29 @@ export default function Portfolio() {
                         </div>
                       </div>
                       <div className="h-cost">{a.annual_cost != null ? `${fmtNum(a.annual_cost)} kr/år` : ''}</div>
-                      <div className={`h-badge ${saving ? 'save' : 'watch'}`}>
-                        {saving ? `+${fmtNum(a.net_saving)} kr/år` : a.route === 'monitoring' ? 'Avtalsbevakad' : 'Rätt prissatt'}
-                      </div>
+                      {/* ── ETIKETTEN MÅSTE FÖLJA BEVISET (grundarfynd 2026-08-19) ─────────────
+                          Här stod "Rätt prissatt" för VARJE rad utan besparing — oavsett vad
+                          underlaget sa. Grundarens Microsoft-rad bar därför RÄTT PRISSATT rakt
+                          ovanför "Ni ligger 184 % över det billigaste priset". Etiketten läste
+                          bara om vi kunde erbjuda ett byte, aldrig om priset var rimligt.
+                          Frånvaron av en bytesväg är inte ett friskintyg: den betyder att vi inte
+                          har ett verifierat alternativ att peka på, inte att kunden betalar rätt.
+                          Nu härleds den ur samma jämförelse kortet skriver ut. Utan underlag
+                          påstår vi ingenting (regel 4: tystnad hellre än ett omdöme utan grund). */}
+                      {(() => {
+                        const over = a.prisunderlag && !a.prisunderlag.underGolv
+                          && a.prisunderlag.avstandPct > 15;
+                        const etikett = saving ? `+${fmtNum(a.net_saving)} kr/år`
+                          : a.route === 'monitoring' ? 'Avtalsbevakad'
+                          : over ? `${a.prisunderlag.avstandPct} % över golvet`
+                          : a.prisunderlag ? 'Rätt prissatt'
+                          : 'Mottagen';
+                        return (
+                          <div className={`h-badge ${saving ? 'save' : over ? 'over' : 'watch'}`}>
+                            {etikett}
+                          </div>
+                        );
+                      })()}
                       <span className="h-chev"><Icon name="chevron-down" size={16} stroke={2} /></span>
                     </HoldHead>
 

@@ -1,3 +1,5 @@
+import { getCategoryMeta } from './categoryMeta.js';
+
 // src/lib/holdings.js — gruppering av analyser till leverantörskort i Arvo-kontoret.
 //
 // Nyckeln = (normaliserad leverantör || rå leverantör) + KATEGORI, så att:
@@ -44,11 +46,22 @@ export function supplierName(a) {
 // (samma källa som net_saving som pillen visar) → score och pill kan aldrig motsäga varandra.
 export function supplierDiagScore(a) {
   if (a.route === 'monitoring') return 72;
-  // Bug #2-fix (2026-06-28): deterministiskt hälsotal ur fakturans prisläge mot verifierat golv,
-  // räknat i recommend() (regel 2). Ersätter det hårdkodade 82 som gjorde att VARJE rätt-prissatt
-  // faktura fick exakt samma tal. Finns det → använd det (förtjänat, differentierat, källa = prisläget).
-  if (a.health_score != null && Number.isFinite(Number(a.health_score))) {
-    const hs = Number(a.health_score);
+  // ── TALET KOMMER UR SAMMA JÄMFÖRELSE KORTET VISAR (grundarfynd 2026-08-19) ──────────────────
+  // Här lästes tidigare det LAGRADE health_score, räknat vid analystillfället mot getBenchmark —
+  // prisbokens väg för en besparingsberäkning, som helt riktigt föredrar livedata. Livedatan är
+  // TOTALSUMMOR. Scoren behandlade totalen som ett styckpris och multiplicerade den med antalet
+  // licenser, så golvet blev 115 gånger för högt och talet fastnade i taket. Grundarens rad visade
+  // 92 och RÄTT PRISSATT ovanför sitt eget bevis: "Ni ligger 184 % över det billigaste priset".
+  //
+  // arvoScore räknas nu i api-lagret ur prisunderlaget (lib/prisunderlag.js) — samma perEnhet och
+  // samma golv som kortet skriver ut. Talet och beviset kan inte längre glida isär, och eftersom
+  // det räknas vid LÄSNING följer det prisboken när den rör sig i stället för att frysa mot ett
+  // golv rummet inte längre visar.
+  //
+  // health_score läses INTE längre. Kolumnen står kvar som historik, men ett andra tal som får
+  // vinna ibland är exakt det som skapade motsägelsen.
+  if (a.arvoScore != null && Number.isFinite(Number(a.arvoScore))) {
+    const hs = Number(a.arvoScore);
     // Ett rekommenderat byte ska aldrig visa ett högt "allt är bra"-tal — taklägg vid 79.
     return (a.should_switch && (a.net_saving ?? 0) > 0) ? Math.min(hs, 79) : hs;
   }
@@ -109,4 +122,51 @@ export function groupBySupplier(analyses) {
     }
   }
   return [...groups.values()].sort((x, y) => (y.latest.net_saving ?? 0) - (x.latest.net_saving ?? 0));
+}
+
+// ── ARVO BEDÖMER: domens prosa ─────────────────────────────────────────────────────────────
+// Flyttad hit från Portfolio 2026-08-19 så den kan prövas direkt av sviten. Se SK-08.
+export function buildReasoning(a) {
+  const meta = getCategoryMeta(a.category);
+  const label = (meta?.label ?? a.category).toLowerCase();
+  if (a.route === 'monitoring')
+    return `Avtalet är tidsbegränsat. Arvo bevakar och förbereder bytet inför förnyelsen — ni betalar konkurrenskraftigt till dess.`;
+  if (a.route === 'review_queue')
+    return `Kategorin kräver manuell granskning — Arvo inhämtar offert för exakt prisjämförelse. Ni kontaktas när det är klart.`;
+  if (a.should_switch && (a.net_saving ?? 0) > 0) {
+    const ovPct = a.annual_cost > 0 && a.suggested_annual_cost > 0
+      ? Math.round((a.annual_cost - a.suggested_annual_cost) / a.annual_cost * 100) : 0;
+    // Magnitudmedvetet: full bytesrekommendation reserveras för gap som bär den.
+    if (ovPct >= 10) {
+      return `Ni betalar <b>${ovPct}% mer</b> än verifierat marknadspris för ${label}. Arvo rekommenderar byte — det lägre priset finns förberett nedan.`;
+    }
+    return `Ni betalar ${ovPct > 0 ? `${ovPct}% mer` : 'något mer'} än verifierat marknadspris för ${label} — ett litet gap. Ett lägre avtalspris finns att säkra om ni vill, men ingen brådska; avvärjt är ändå avvärjt.`;
+  }
+  // ── PROSAN MÅSTE FÖLJA BEVISET (grundarfynd 2026-08-19) ───────────────────────────────────
+  // Här returnerades "Priset är konkurrenskraftigt mot verifierat marknadspris" för VARJE rad
+  // utan bytesrekommendation — även när underlaget rakt under sa "Ni ligger 184 % över det
+  // billigaste priset". Tre ytor sa samma osanning: ringen (92), pillen (RÄTT PRISSATT) och den
+  // här meningen. Alla tre läste "finns ingen besparing att erbjuda" och översatte det till
+  // "priset är bra". Det är inte samma sak: frånvaron av ett verifierat alternativ säger
+  // ingenting om huruvida kunden betalar rätt.
+  //
+  // Nu skiljs de två fallen åt, och ordet "konkurrenskraftigt" reserveras för rader som faktiskt
+  // ligger på eller under det verifierade golvet. Ligger de över säger vi det — och varför vi
+  // ändå inte pekar på ett byte, vilket är ett ärligare och vassare besked än beröm.
+  const u = a.prisunderlag;
+  if (u && !u.underGolv && u.avstandPct > 15) {
+    return `Ni betalar <b>${u.avstandPct}% mer</b> än det billigaste publicerade priset för ${label}`
+      + `${u.referensProdukt ? ` (${u.referensProdukt})` : ''}. Arvo har inget verifierat bytesmål `
+      + `att lägga fram för just den här raden i dag — men priset är inte konkurrenskraftigt, och `
+      + `underlaget nedan visar exakt vad jämförelsen bygger på.`;
+  }
+  if (u) {
+    return `Priset ligger på eller under det billigaste publicerade priset för ${label}`
+      + `${u.referensProdukt ? ` (${u.referensProdukt})` : ''}. Inget byte rekommenderas i dag — `
+      + `dela en ny faktura vid nästa avtalsperiod så kontrollerar Arvo igen.`;
+  }
+  // Utan underlag har vi ingen verifierad jämförelse — då påstår vi ingenting om prisläget.
+  return `Fakturan är mottagen och klassad som ${label}. Arvo har inget verifierat publikt golv `
+    + `att prissätta den mot i dag, så vi gör inget påstående om prisläget — raden står under `
+    + `bevakning och kontrolleras när underlaget bär.`;
 }

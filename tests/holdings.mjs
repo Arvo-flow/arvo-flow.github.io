@@ -101,12 +101,27 @@ describe('supplierDiagScore · scoren följer SAMMA tal som besparings-pillen (r
     assert.equal(s, 79);                                  // följer pillen (gross_saving), inte suggested
   });
 
-  test('bug #2-fix: health_score (förtjänat tal ur prisläget) styr — inte ett hårdkodat 82', () => {
-    // Vid golvet ~88, under golvet upp mot 96, mot median fallande — differentierat per faktura.
-    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 92 }), 92);
-    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 61 }), 61);
+  test('det HÄRLEDDA talet styr — aldrig det frusna health_score', () => {
+    // KONTRAKTET ÄNDRADES 2026-08-19, och skälet ska stå här. Testet låste att health_score styr.
+    // Det talet räknades vid analystillfället mot getBenchmark, som föredrar livedata — och
+    // livedatan är TOTALSUMMOR. Scoren behandlade totalen som ett styckpris och multiplicerade
+    // med antalet licenser. Mätt ur grundarens rad: golvet blev 1 846 800 kr i stället för
+    // 16 060 kr, 115 gånger för högt, och talet fastnade i taket. Rummet visade 92 och RÄTT
+    // PRISSATT ovanför sitt eget bevis: "Ni ligger 184 % över det billigaste priset".
+    //
+    // Testet var grönt hela tiden och kunde inte ha varit annat: det matade health_score direkt
+    // och bevisade bara att SIFFRAN FÖRS VIDARE — aldrig att den var räknad mot rätt golv.
+    // Samma sjukdom som LFL-obduktionen: mekanismen prövad, matningen aldrig.
+    //
+    // arvoScore härleds nu ur prisunderlaget vid läsning — samma perEnhet och samma golv som
+    // kortet skriver ut. Vidarebefordran prövas här; att talet är RÄTT prövas i tests/scorekrav.mjs
+    // mot den verkliga jämförelsen.
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, arvoScore: 92 }), 92);
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, arvoScore: 61 }), 61);
     // Ett rekommenderat byte får aldrig visa ett högt "allt bra"-tal → taklägg vid 79.
-    assert.equal(supplierDiagScore({ should_switch: true, net_saving: 5000, annual_cost: 100000, health_score: 90 }), 79);
+    assert.equal(supplierDiagScore({ should_switch: true, net_saving: 5000, annual_cost: 100000, arvoScore: 90 }), 79);
+    // Och det frusna talet får ALDRIG vinna — två producenter var hela felet.
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, arvoScore: 15, health_score: 92 }), 15);
   });
 
   test('utan health_score → INTE SATT (null), aldrig ett tal (grundarfråga 2026-08-16)', () => {
@@ -121,8 +136,10 @@ describe('supplierDiagScore · scoren följer SAMMA tal som besparings-pillen (r
     assert.equal(supplierDiagScore({ annual_cost: 0 }), null);
     // Den ursprungliga avsikten står kvar: ett MÄTT tal ska vara differentierat, aldrig ett
     // hårdkodat 82 för alla.
-    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 91 }), 91);
-    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 64 }), 64);
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, arvoScore: 91 }), 91);
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, arvoScore: 64 }), 64);
+    // Ett fruset health_score utan härlett tal fyller INTE tomrummet (2026-08-19).
+    assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 92 }), null);
   });
 
   test('monitoring → 72', () => {

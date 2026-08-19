@@ -106,6 +106,7 @@ import './lasvagens-kolumner.mjs';
 import './fakturarader.mjs';
 import './prisunderlag.mjs';
 import './matriskrav.mjs';
+import './scorekrav.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

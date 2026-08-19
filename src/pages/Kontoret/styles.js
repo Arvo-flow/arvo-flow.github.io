@@ -393,6 +393,10 @@ export const HoldHead = styled.button`
     /* sparbadgen bär ett tal (kr/år) → aldrig versaler; statusord versaliseras */
     &.save { color:${theme.dossier.bg}; background:${theme.dossier.tealBright}; border-color:transparent; font-weight:600; font-feature-settings:'tnum'; }
     &.watch { color:${theme.dossier.mutedOnDark}; text-transform:uppercase; }
+    /* "X % över golvet" bär ett tal → aldrig versaler. Dämpad varningston, inte larmröd: det är
+       ett konstaterande ur verifierat listpris, inte ett larm — och kortet under bär beviset. */
+    &.over { color:${theme.dossier.inkOnDark}; border-color:rgba(224,160,90,.45);
+             background:rgba(224,160,90,.10); font-feature-settings:'tnum'; }
     /* pillen högerställs under kostnaden → kostnad + pill bildar en ren högerkolumn (i linje) */
     @media (max-width:760px){ grid-column:2; grid-row:2; justify-self:end; } }
   .h-chev { color:${theme.dossier.faintOnDark}; display:flex; transition:transform .22s ease;

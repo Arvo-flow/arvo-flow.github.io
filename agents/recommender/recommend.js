@@ -18,7 +18,7 @@ import { feeOf, netOf } from '../../lib/fee.js';
 import { guardToolPayload } from '../../lib/schema-guard.js';
 import { checkProseNumbers } from '../../lib/prose-guard.js';
 import { klassificera, kundmening } from '../../lib/motorhalsa.js';
-import { getBenchmark } from '../../lib/benchmark.js';
+import { getBenchmark, getPublicListBenchmark } from '../../lib/benchmark.js';
 import { CATEGORIES } from '../categorizer/categories.js';
 import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX, bredbandSpeedBenchmark } from './branchindex.js';
@@ -1804,10 +1804,34 @@ export async function recommend(input, opts = {}) {
   // Nu: vid golvet ~88, under golvet upp mot 96, mot median fallande, i bytesläge lågt. Källan ÄR
   // prisläget (inget estimat). Bara för kategorier med verifierad benchmark; annars null → frontend
   // faller till neutral. Talet räknas i kod (regel 2), aldrig av AI.
-  if (benchmark && benchmark.p25 > 0 && !categoryDef?.licensePending) {
-    const _perUser = (benchmark.note ?? '').toLowerCase().includes('per användare');
+  // ── GOLVET MÅSTE VARA ETT STYCKPRIS, ALDRIG EN TOTALSUMMA (grundarfynd 2026-08-19) ──────────
+  // Här stod `benchmark.p25` — talet ur getBenchmark(), prisbokens väg för en BESPARINGSBERÄKNING.
+  // Den föredrar helt riktigt livedata när den finns, och livedatan är TOTALSUMMOR: vad hela bolag
+  // betalar per år. Raden nedan multiplicerade sedan totalen med antalet licenser.
+  //
+  // Mätt ur grundarens egen rad (scripts/probe-score-underlag.mjs):
+  //   getBenchmark p25 = 184 680 kr (source 'real', n=24) × 10 platser = 1 846 800 kr
+  //   → ratio 0,02 → score 96, medan det verifierade golvet ger ratio 2,84 → score 15.
+  // Golvet var 115 gånger för högt, kvoten nära noll, och talet fastnade i taket oavsett pris.
+  // Kunden såg RÄTT PRISSATT ovanför "Ni ligger 184 % över det billigaste priset".
+  //
+  // Det är ankarkortets bugg ett lager ned. Den 15 augusti byttes kortet till
+  // getPublicListBenchmark just för att getBenchmark ger totalsummor — men ingen frågade om
+  // SCOREN gick samma väg. Den gjorde det. Nu läser den samma verifierade per-enhet-golv som
+  // beviset i rummet, och `isTotal`-fällan kan inte nås härifrån.
+  //
+  // Rummet räknar dessutom om talet vid läsning ur prisunderlaget (lib/prisunderlag.js). Det här
+  // lagrade värdet är historik och underlag för sonder — men ett lagrat tal som är tyst fel är
+  // ändå fel, så det räknas rätt här också.
+  const _golvBm = getPublicListBenchmark({
+    category: input.categorized?.category,
+    employees: input.invoice?.seatCount ?? input.customer?.employees ?? 5,
+  });
+  if (_golvBm && _golvBm.p25 > 0 && !categoryDef?.licensePending) {
+    const _perUser = (_golvBm.note ?? '').toLowerCase().includes('per användare')
+      || (_golvBm.note ?? '').toLowerCase().includes('per anställd');
     const _seats = _perUser ? (input.invoice?.seatCount ?? input.customer?.employees ?? 1) : 1;
-    const _floor = benchmark.p25 * _seats;
+    const _floor = _golvBm.p25 * _seats;
     const _cost = input.invoice?.primaryComponentMonthly != null
       ? Math.round(input.invoice.primaryComponentMonthly * 12)
       : (input.invoice?.annualCost ?? input.invoice?.amount ?? 0);
