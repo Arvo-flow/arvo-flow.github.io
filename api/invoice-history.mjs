@@ -425,6 +425,12 @@ export const BRANCH_ANCHOR_UNIT = {
   'saas-crm':          { label: 'per användare/år', noun: 'användare',   nounPl: 'användare' },
   mobil:               { label: 'per abonnemang/år', noun: 'abonnemang', nounPl: 'abonnemang' },
   bredband:            { label: 'per anslutning/år', noun: 'anslutning', nounPl: 'anslutningar' },
+  // loneadmin saknades här till 2026-08-19 — kategorin är real-public med ett verifierat golv
+  // (Fortnox Lön, härlett ur avgiftsstrukturen), men utan en enhet i listan skippar
+  // buildBranchAnchors den och rummet kunde aldrig visa golvet. Enheten är INTE gissad: prisboken
+  // säger "Per anställd/år" i klartext, och härledningen räknar per anställd. Allowlistan finns
+  // för att vi aldrig ska gissa enheten — inte för att tiga om en vi känner.
+  loneadmin:           { label: 'per anställd/år',   noun: 'anställd',   nounPl: 'anställda' },
 };
 
 export async function buildBranchAnchors(analyses) {
@@ -447,7 +453,13 @@ export async function buildBranchAnchors(analyses) {
       // gick "den kollektiva sanningen" tyst, det lager bibeln säger aldrig kan vara tomt.
       // getPublicListBenchmark läser BRANCHINDEX direkt och returnerar ENDAST verifierat publikt
       // listpris per enhet. Samma funktion som dörrens avslöjande redan använde (regel 1).
-      const b = getPublicListBenchmark({ category: a.category });
+      // Kundens egen storlek följer med: för kategorier med äkta storleksberoende golv (loneadmin)
+      // är micro-golvet fel population för ett bolag med tolv anställda. seat_count är enheterna
+      // ur kundens egen faktura — aldrig en gissad personalstyrka.
+      const b = getPublicListBenchmark({
+        category: a.category,
+        employees: (typeof a.seat_count === 'number' && a.seat_count > 0) ? a.seat_count : 5,
+      });
       if (b && b.median > 0) {
         // seats = antal enheter ur kundens egen faktura. median (per enhet) × seats = bransch-TOTAL,
         // jämförbar med kundens annual_cost (bägge totaler, samma enhet). null → ingen total-jämförelse.

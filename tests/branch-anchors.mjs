@@ -77,7 +77,11 @@ describe('Branschankaret · enhet + källa', () => {
       if (!out[cat]) continue;                       // saknar real-public-tier i någon miljö → hoppa
       assert.ok(out[cat].median > 0 && out[cat].median < 20000,
         `${cat}: median ${out[cat].median} ser ut som en total, inte ett per-enhet-pris`);
-      assert.match(out[cat].unitLabel, /per (användare|abonnemang|anslutning)\/år/);
+      // Listan utökas MEDVETET, en enhet i taget — den finns för att en okänd enhet aldrig ska
+      // slinka igenom som ett per-enhet-tal. 'anställd' tillkom 2026-08-19 med loneadmin, vars
+      // prisbok säger "Per anställd/år" i klartext. Att vakten fällde tillägget är den som gör
+      // sitt jobb; att bara vidga regexen utan att veta enheten hade varit att stänga av den.
+      assert.match(out[cat].unitLabel, /per (användare|abonnemang|anslutning|anställd)\/år/);
     }
   });
 
@@ -138,6 +142,31 @@ describe('Branschankaret · enhet + källa', () => {
     // Och det ska vara ett verkligt datum ur en verkligt verifierad nivå — inte bara "något".
     assert.equal(bararens, tiers[cat.cellHarledning.referensTier].lastVerified,
       'datumet ska komma ur exakt den nivå härledningen namnger');
+  });
+
+  test('BA-12 · ankarets golv följer kundens egen storlek när avgiften gör det', async () => {
+    // FÅNGAT FÖRE LEVERANS 2026-08-19. loneadmin lades till i enhets-allowlistan så rummet äntligen
+    // kunde visa dess verifierade golv — men getPublicListBenchmark hämtade alltid micro-bucketen.
+    // Ett bolag med tolv anställda hade jämförts mot femmannaföretagets golv (778 kr/anställd/år)
+    // när dess verkliga är 419. Ett tal 86 % för högt, presenterat som "billigaste publicerade pris".
+    // Samma klass som enhetsfelet: rätt sorts tal, fel population.
+    //
+    // Storleksberoendet är ÄKTA här (fast avgift utslagen på fler anställda), till skillnad från ett
+    // listpris. Därför måste ankaret följa kunden — och för listprisbaserade kategorier får det
+    // ALDRIG göra det, annars har vi återinfört den uppfunna spridningen MK-07 tog bort.
+    const litet = await buildBranchAnchors([a({ category: 'loneadmin', annual_cost: 4500, seat_count: 5 })]);
+    const stort = await buildBranchAnchors([a({ category: 'loneadmin', annual_cost: 30000, seat_count: 80 })]);
+    assert.equal(litet.loneadmin.p25, 778, '(199/5 + 25) × 12');
+    assert.equal(stort.loneadmin.p25, 324, '(199/100 + 25) × 12 — mid-bandet');
+    assert.ok(stort.loneadmin.p25 < litet.loneadmin.p25,
+      'den fasta avgiften slås ut på fler anställda — golvet måste sjunka');
+
+    // Ett LISTPRIS varierar inte med kundens storlek. Skulle det börja göra det är den uppfunna
+    // spridningen tillbaka, och då är det här testet det som säger ifrån.
+    const saasSmatt = await buildBranchAnchors([a({ category: 'saas-productivity', annual_cost: 8000, seat_count: 5 })]);
+    const saasStort = await buildBranchAnchors([a({ category: 'saas-productivity', annual_cost: 130000, seat_count: 80 })]);
+    assert.equal(saasSmatt['saas-productivity'].p25, saasStort['saas-productivity'].p25,
+      'M365 Business Standard kostar lika mycket för 5 som för 80 användare');
   });
 
   test('BA-11 · UTAN härledning gäller stalaste nivån fortfarande', async () => {
