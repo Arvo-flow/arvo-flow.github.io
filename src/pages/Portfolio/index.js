@@ -667,7 +667,7 @@ export default function Portfolio() {
     if (autoAnalyses.length > 0) {
       // slutpunkt(): "14 aug." bär redan sin förkortningspunkt. Meningen lade på en till och rummet
       // skrev "senast 14 aug..". En punkt räcker för både förkortning och mening (svensk standard).
-      rows.push({ tag: 'Analys', what: <>Vägde <b>{autoAnalyses.length} {autoAnalyses.length === 1 ? 'faktura' : 'fakturor'}</b> mot verifierat marknadspris{latestDate ? <> · senast {latestDate}</> : null}{slutpunkt(latestDate)}</> });
+      rows.push({ tag: 'Analys', what: <>Vägde <b>{autoAnalyses.length} {autoAnalyses.length === 1 ? 'faktura' : 'fakturor'}</b> mot verifierat publikt listpris{latestDate ? <> · senast {latestDate}</> : null}{slutpunkt(latestDate)}</> });
     }
     if (featured) {
       rows.push({ tag: 'Kohort', what: <>Jämförde era priser mot <b>{featured.n} bolag</b> hos {featured.supplier} via nätverket — sanningen ingen jämförelsesajt kan ge.</> });
@@ -695,13 +695,13 @@ export default function Portfolio() {
             : <>Ni betalar <em>mer än marknaden</em> — {switchables.length} avtal drar mest.</>)
       : <>Era avtal står sig — men vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda.</>;
   const verdictWork = !acting
-    ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat marknadspris.
+    ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat publikt listpris.
         Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>
     : hasSwitchAction
-      ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat marknadspris.
+      ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat publikt listpris.
           <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
           största bytet tar två minuter att signera. Resten håller måttet; dem rör vi inte.</>
-      : <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat marknadspris — priserna står sig.
+      : <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat publikt listpris — priserna står sig.
           Men vi läste varje rad på era fakturor och fångade en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
           se vad domen bygger på i fyndet ovan.</>;
 
@@ -1728,7 +1728,7 @@ export default function Portfolio() {
             {ingesting > 0 ? (
               <Verdict>
                 <div className="eyebrow"><span className="live" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#5DD6CA', marginRight: 8 }} />Arbetar nu</div>
-                <h2>Vi väger era <em>{ingesting} {ingesting === 1 ? 'faktura' : 'fakturor'}</em> mot verifierat marknadspris.</h2>
+                <h2>Vi väger era <em>{ingesting} {ingesting === 1 ? 'faktura' : 'fakturor'}</em> mot verifierat publikt listpris.</h2>
                 <p className="work">Kontoret fylls i takt med att varje analys blir klar — sidan uppdateras automatiskt, ni behöver inte göra något. Det tar oftast någon minut.</p>
               </Verdict>
             ) : (
@@ -1796,7 +1796,7 @@ export default function Portfolio() {
             {/* Vägledning (ersätter kostnadskarte-rutnätet): peka mot där vi är vassa, inte skylta med
                 det vi inte kan prissätta än. Reuser den beprövade "överbetalningen sitter oftast"-framen. */}
             <StartHint>
-              Börja med det vi prissätter direkt mot verifierat marknadspris — <b>IT-licenser, telefoni, lön eller el</b>. Där sitter överbetalningen oftast.
+              Börja med det vi prissätter direkt mot verifierat publikt listpris — <b>IT-licenser, telefoni, lön eller el</b>. Där sitter överbetalningen oftast.
             </StartHint>
 
             <FortnoxTease>

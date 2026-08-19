@@ -136,11 +136,19 @@ export function buildReasoning(a) {
   if (a.should_switch && (a.net_saving ?? 0) > 0) {
     const ovPct = a.annual_cost > 0 && a.suggested_annual_cost > 0
       ? Math.round((a.annual_cost - a.suggested_annual_cost) / a.annual_cost * 100) : 0;
-    // Magnitudmedvetet: full bytesrekommendation reserveras för gap som bär den.
+    // ── "MARKNADSPRIS" ÄR ETT PÅSTÅENDE VI INTE KAN BACKA UPP (grundarfråga 2026-08-19) ──────
+    // Här stod "än verifierat marknadspris". Marknadspris betyder i vanligt affärsspråk vad
+    // marknaden FAKTISKT betalar — ett mittvärde. Vi jämför mot det billigaste verifierade
+    // alternativ vi hittat, alltså ett golv. Att kalla ett golv för marknadspris överdriver
+    // överbetalningen, och överdriver den ÅT VÅRT HÅLL: större gap → större påstådd besparing →
+    // högre success fee. Rummets egen not tre rader ned säger dessutom raka motsatsen ("inte mot
+    // vad andra bolag faktiskt betalar"), så meningen motsade sitt eget kort.
+    // Den riktiga kohortjämförelsen kommer när fler bolag delar sina fakturor. Till dess säger vi
+    // vad vi verkligen mäter mot.
     if (ovPct >= 10) {
-      return `Ni betalar <b>${ovPct}% mer</b> än verifierat marknadspris för ${label}. Arvo rekommenderar byte — det lägre priset finns förberett nedan.`;
+      return `Ni betalar <b>${ovPct}% mer</b> än det billigaste verifierade alternativet för ${label}. Arvo rekommenderar byte — det lägre priset finns förberett nedan.`;
     }
-    return `Ni betalar ${ovPct > 0 ? `${ovPct}% mer` : 'något mer'} än verifierat marknadspris för ${label} — ett litet gap. Ett lägre avtalspris finns att säkra om ni vill, men ingen brådska; avvärjt är ändå avvärjt.`;
+    return `Ni betalar ${ovPct > 0 ? `${ovPct}% mer` : 'något mer'} än det billigaste verifierade alternativet för ${label} — ett litet gap. Ett lägre avtalspris finns att säkra om ni vill, men ingen brådska; avvärjt är ändå avvärjt.`;
   }
   // ── PROSAN MÅSTE FÖLJA BEVISET (grundarfynd 2026-08-19) ───────────────────────────────────
   // Här returnerades "Priset är konkurrenskraftigt mot verifierat marknadspris" för VARJE rad

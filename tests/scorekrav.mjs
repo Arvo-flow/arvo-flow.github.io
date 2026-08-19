@@ -154,6 +154,33 @@ describe('SCOREKRAV · talet och dess bevis kan inte säga emot varandra', () =>
     }
   });
 
+  test('SK-10 · vi kallar aldrig ett GOLV för "marknadspris"', () => {
+    // Grundaren 2026-08-19: "Kan man inte skriva 184 % över marknadspris?" Nej — och frågan
+    // avslöjade att termen redan stod i det live rummet ("än verifierat marknadspris").
+    //
+    // Marknadspris betyder i vanligt affärsspråk vad marknaden FAKTISKT betalar: ett mittvärde.
+    // Vi jämför mot det billigaste verifierade priset — ett golv. Att kalla ett golv för
+    // marknadspris överdriver överbetalningen, och överdriver den ÅT VÅRT HÅLL: större gap →
+    // större påstådd besparing → högre success fee. Rummets egen not säger dessutom raka
+    // motsatsen ("inte mot vad andra bolag faktiskt betalar"), så meningen motsade sitt eget kort.
+    //
+    // Ordet får återkomma den dag kohorten bär en verklig fördelning — då är det sant.
+    const fall = [
+      { category: 'saas-productivity', annual_cost: 45600, should_switch: true, net_saving: 8000,
+        suggested_annual_cost: 30000 },
+      { category: 'saas-productivity', annual_cost: 45600, should_switch: true, net_saving: 900,
+        suggested_annual_cost: 43000 },
+      { category: 'saas-productivity', annual_cost: 45600, should_switch: false,
+        prisunderlag: byggPrisunderlag({ annualCost: 45600, seats: 10, ankare: ANKARE }) },
+    ];
+    for (const rad of fall) {
+      assert.doesNotMatch(buildReasoning(rad), /marknadspris/i,
+        'ett golv får inte presenteras som marknadens pris');
+    }
+    // Och bytesfallet ska säga vad det FAKTISKT jämför mot.
+    assert.match(buildReasoning(fall[0]), /billigaste verifierade alternativet/i);
+  });
+
   test('SK-07 · utan underlag finns inget score (fail-closed)', () => {
     assert.equal(scoreUrUnderlag(null), null);
     assert.equal(scoreUrUnderlag({ perEnhet: 0, golv: 1606 }), null);
