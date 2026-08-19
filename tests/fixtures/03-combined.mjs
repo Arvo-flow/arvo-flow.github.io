@@ -32,7 +32,8 @@
 //     secondarySeatCount = secondaryLines.length (if >0)
 //
 //   computeSecondarySaving:
-//     category='mobil' (bredband-sekundär): p25={100→3156,250→3156,500→3828,1000→4020}[speedMbit] (verifierad Tele2)
+//     category='mobil' (bredband-sekundär): bredbandSpeedBenchmark p25 (ur tele2Verified): {100:2388, 250:2388, 500:2868, 1000:3348}
+//     ⚠ Raden vaktas av BI-09 mot den levande härledningen — skriv inte om den för hand.
 //       secAnnual=Math.round(secondaryMonthly*12), gross=Math.max(0,secAnnual-p25)
 //       gross<500 → null; netSaving=Math.round(gross*0.80)
 //     category='bredband': mobilP25 by segment+bucket
@@ -79,9 +80,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   10788,
-      suggestedAnnual: 3348,
-      grossSaving:     7440,
-      netSaving:       5952,
+      suggestedAnnual: 2868,
+      grossSaving: 7920,
+      netSaving: 6336,
     },
   },
 
@@ -112,9 +113,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   6588,
-      suggestedAnnual: 2868,
-      grossSaving:     3720,
-      netSaving:       2976,
+      suggestedAnnual: 2388,
+      grossSaving: 4200,
+      netSaving: 3360,
     },
   },
 
@@ -144,9 +145,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   4200,
-      suggestedAnnual: 2868,
-      grossSaving:     1332,
-      netSaving:       1066,
+      suggestedAnnual: 2388,
+      grossSaving: 1812,
+      netSaving: 1450,
     },
   },
 
@@ -177,9 +178,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10188,
-      suggestedAnnual: 3828,
-      grossSaving:     6360,
-      netSaving:       5088,
+      suggestedAnnual: 3348,
+      grossSaving: 6840,
+      netSaving: 5472,
     },
   },
 
@@ -212,9 +213,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   9588,
-      suggestedAnnual: 3828,
-      grossSaving:     5760,
-      netSaving:       4608,
+      suggestedAnnual: 3348,
+      grossSaving: 6240,
+      netSaving: 4992,
     },
   },
 
@@ -247,9 +248,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   8988,
-      suggestedAnnual: 3348,
-      grossSaving:     5640,
-      netSaving:       4512,
+      suggestedAnnual: 2868,
+      grossSaving: 6120,
+      netSaving: 4896,
     },
   },
 
@@ -281,9 +282,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   6588,
-      suggestedAnnual: 2868,
-      grossSaving:     3720,
-      netSaving:       2976,
+      suggestedAnnual: 2388,
+      grossSaving: 4200,
+      netSaving: 3360,
     },
   },
 
@@ -314,9 +315,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   8388,
-      suggestedAnnual: 3348,
-      grossSaving:     5040,
-      netSaving:       4032,
+      suggestedAnnual: 2868,
+      grossSaving: 5520,
+      netSaving: 4416,
     },
   },
 
@@ -347,19 +348,25 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 3828,
-      grossSaving:     8112,
-      netSaving:       6490,
+      suggestedAnnual: 3348,
+      grossSaving: 8592,
+      netSaving: 6874,
     },
   },
 
   // ── comb-10 ──────────────────────────────────────────────────────────────────
   // Bredbandsrad matchar "adsl": "ADSL 50 Mbit anslutning" 249
   //   desc /adsl/ → secondaryLine; speed: "50 Mbit" → n=50, mbit=50, snap 50≤100 → 100
-  //   secAnnual=Math.round(249*12)=2988, p25=3156, gross=max(0,2988-3156)=0 → secondary=null
+  //   secAnnual=Math.round(249*12)=2988, p25=2388, gross=2988-2388=600 ≥ 500 → secondary satt
+  //   VÄNDE 2026-08-18: Tele2 sänkte Max-familjen 40 kr/mån (verifierat mot adress-API:t, tre
+  //   adresser, två nätter). Golvet för 100 Mbit gick 2 868 → 2 388, och den här kunden ligger nu
+  //   600 kr/år över det billigaste verifierade publika priset i stället för under det.
+  //   Fixturens EGENTLIGA syfte — att "adsl" känns igen och att 50 Mbit snappas till 100 — är
+  //   oförändrat och prövas av metrics nedan. Att golvet passerades var alltid en bieffekt.
+  //   Gränsfallet (under tröskeln → null) bevakas nu av comb-55, pinnat mot det NYA golvet.
   {
     id: 'comb-10',
-    name: '"adsl" keyword + låg hastighet snappas till 100 Mbit — under p25 → secondary=null',
+    name: '"adsl" keyword + låg hastighet snappas till 100 Mbit — över nya golvet → secondary satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Telenor Jobbmobil (5 st)', amount: 1745 },
       { type: 'recurring_subscription', description: 'ADSL 50 Mbit anslutning', amount: 249 },
@@ -373,6 +380,39 @@ export const fixtures = [
       broadbandAddonMonthly:        null,
       primaryComponentMonthly:      1745,
       secondaryComponentMonthly:    249,
+      secondaryConnectionSpeedMbit: 100,
+      secondarySeatCount:           null,
+    },
+    secondary: {
+      category: 'bredband', speedMbit: 100,
+      currentAnnual: 2988, suggestedAnnual: 2388, grossSaving: 600, netSaving: 480,
+    },
+  },
+
+  // ── comb-55 ──────────────────────────────────────────────────────────────────
+  // GRÄNSEN, PINNAD MOT DET NYA GOLVET (2026-08-18). När Tele2:s sänkning flyttade golvet
+  // 2 868 → 2 388 vippade tre fixturer från null till besparing. Det är rätt — men det hade
+  // tyst tagit bort täckningen av grenen "kunden ligger under tröskeln → hävda ingenting",
+  // och det är den gren som skyddar mot att påstå en besparing som inte finns. Under 20 %
+  // success fee är det den dyraste grenen att tappa.
+  //   secAnnual=Math.round(235*12)=2820, p25=2388, gross=432 < 500 → secondary=null
+  // Samma gross (432) som edge-25 hade före sänkningen: gränsen är flyttad, inte borttagen.
+  {
+    id: 'comb-55',
+    name: 'Bredband 100 Mbit strax under tröskeln mot NYA golvet — gross=432 < 500 → secondary=null',
+    lineItems: [
+      { type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (5 st)', amount: 1745 },
+      { type: 'recurring_subscription', description: 'Bredband 100/100 Mbit', amount: 235 },
+    ],
+    category: 'mobil',
+    mixed: true,
+    industry: 'konsult',
+    employees: 5,
+    metrics: {
+      mobileAddonMonthly:           null,
+      broadbandAddonMonthly:        null,
+      primaryComponentMonthly:      1745,
+      secondaryComponentMonthly:    235,
       secondaryConnectionSpeedMbit: 100,
       secondarySeatCount:           null,
     },
@@ -434,18 +474,25 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   16776,
-      suggestedAnnual: 3348,
-      grossSaving:     13428,
-      netSaving:       10742,
+      suggestedAnnual: 2868,
+      grossSaving: 13908,
+      netSaving: 11126,
     },
   },
 
   // ── comb-13 ──────────────────────────────────────────────────────────────────
-  // Mobil med PBX + bredband UNDER benchmark: "Bredband 100 Mbit" 275 kr
-  //   speed=100, secAnnual=Math.round(275*12)=3300, p25=2868, gross=432 < 500 → secondary=null
+  // Mobil med PBX + bredband: "Bredband 100 Mbit" 275 kr
+  //   speed=100, secAnnual=Math.round(275*12)=3300, p25=2388, gross=912 ≥ 500 → secondary satt
+  //   VÄNDE 2026-08-18: Tele2 sänkte Max-familjen 40 kr/mån (verifierat mot adress-API:t, tre
+  //   adresser, två nätter i rad). Golvet för 100 Mbit gick 2 868 → 2 388, så kunden ligger nu
+  //   912 kr/år ÖVER det billigaste verifierade publika priset i stället för under det.
+  //   Fixturens egentliga syfte — att PBX-raden klassas som addon och inte som sekundärlinje —
+  //   är oförändrat och prövas av metrics nedan.
+  //   Gränsen (under tröskeln → null) är flyttad, inte borttagen: comb-55 pinnar den mot det nya
+  //   golvet med exakt samma gross (432) som den här fixturen bar före sänkningen.
   {
     id: 'comb-13',
-    name: 'Mobil + PBX + bredband 100 Mbit under p25 — secondary=null',
+    name: 'Mobil + PBX + bredband 100 Mbit över nya golvet — secondary satt',
     lineItems: [
       { type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (5 st)', amount: 1745 },
       { type: 'recurring_subscription', description: 'Molnväxel Business', amount: 890, is_addon: true, addon_type: 'pbx' },
@@ -463,7 +510,10 @@ export const fixtures = [
       secondaryConnectionSpeedMbit: 100,
       secondarySeatCount:           null,
     },
-    secondary: null,
+    secondary: {
+      category: 'bredband', speedMbit: 100,
+      currentAnnual: 3300, suggestedAnnual: 2388, grossSaving: 912, netSaving: 730,
+    },
   },
 
   // ── comb-14 ──────────────────────────────────────────────────────────────────
@@ -522,9 +572,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   8988,
-      suggestedAnnual: 3348,
-      grossSaving:     5640,
-      netSaving:       4512,
+      suggestedAnnual: 2868,
+      grossSaving: 6120,
+      netSaving: 4896,
     },
   },
 
@@ -555,9 +605,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 3828,
-      grossSaving:     8112,
-      netSaving:       6490,
+      suggestedAnnual: 3348,
+      grossSaving: 8592,
+      netSaving: 6874,
     },
   },
 
@@ -589,9 +639,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7188,
-      suggestedAnnual: 3348,
-      grossSaving:     3840,
-      netSaving:       3072,
+      suggestedAnnual: 2868,
+      grossSaving: 4320,
+      netSaving: 3456,
     },
   },
 
@@ -622,9 +672,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7440,
-      suggestedAnnual: 3348,
-      grossSaving:     4092,
-      netSaving:       3274,
+      suggestedAnnual: 2868,
+      grossSaving: 4572,
+      netSaving: 3658,
     },
   },
 
@@ -655,9 +705,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10200,
-      suggestedAnnual: 3828,
-      grossSaving:     6372,
-      netSaving:       5098,
+      suggestedAnnual: 3348,
+      grossSaving: 6852,
+      netSaving: 5482,
     },
   },
 
@@ -688,9 +738,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7704,
-      suggestedAnnual: 3348,
-      grossSaving:     4356,
-      netSaving:       3485,
+      suggestedAnnual: 2868,
+      grossSaving: 4836,
+      netSaving: 3869,
     },
   },
 
@@ -720,9 +770,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7200,
-      suggestedAnnual: 3348,
-      grossSaving:     3852,
-      netSaving:       3082,
+      suggestedAnnual: 2868,
+      grossSaving: 4332,
+      netSaving: 3466,
     },
   },
 
@@ -752,9 +802,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7692,
-      suggestedAnnual: 3348,
-      grossSaving:     4344,
-      netSaving:       3475,
+      suggestedAnnual: 2868,
+      grossSaving: 4824,
+      netSaving: 3859,
     },
   },
 
@@ -812,9 +862,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 3828,
-      grossSaving:     8112,
-      netSaving:       6490,
+      suggestedAnnual: 3348,
+      grossSaving: 8592,
+      netSaving: 6874,
     },
   },
 
@@ -873,9 +923,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   59940,
-      suggestedAnnual: 3828,
-      grossSaving:     56112,
-      netSaving:       44890,
+      suggestedAnnual: 3348,
+      grossSaving: 56592,
+      netSaving: 45274,
     },
   },
 
@@ -906,9 +956,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   4788,
-      suggestedAnnual: 2868,
-      grossSaving:     1920,
-      netSaving:       1536,
+      suggestedAnnual: 2388,
+      grossSaving: 2400,
+      netSaving: 1920,
     },
   },
 
@@ -940,9 +990,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   8388,
-      suggestedAnnual: 3348,
-      grossSaving:     5040,
-      netSaving:       4032,
+      suggestedAnnual: 2868,
+      grossSaving: 5520,
+      netSaving: 4416,
     },
   },
 
@@ -974,9 +1024,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   10788,
-      suggestedAnnual: 3348,
-      grossSaving:     7440,
-      netSaving:       5952,
+      suggestedAnnual: 2868,
+      grossSaving: 7920,
+      netSaving: 6336,
     },
   },
 
@@ -1007,9 +1057,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   9588,
-      suggestedAnnual: 3348,
-      grossSaving:     6240,
-      netSaving:       4992,
+      suggestedAnnual: 2868,
+      grossSaving: 6720,
+      netSaving: 5376,
     },
   },
 
@@ -1586,9 +1636,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   8388,
-      suggestedAnnual: 3348,
-      grossSaving:     5040,
-      netSaving:       4032,
+      suggestedAnnual: 2868,
+      grossSaving: 5520,
+      netSaving: 4416,
     },
   },
 
@@ -1623,9 +1673,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   17976,
-      suggestedAnnual: 3348,
-      grossSaving:     14628,
-      netSaving:       11702,
+      suggestedAnnual: 2868,
+      grossSaving: 15108,
+      netSaving: 12086,
     },
   },
 
@@ -1656,9 +1706,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   11940,
-      suggestedAnnual: 3828,
-      grossSaving:     8112,
-      netSaving:       6490,
+      suggestedAnnual: 3348,
+      grossSaving: 8592,
+      netSaving: 6874,
     },
   },
 
@@ -1691,9 +1741,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   8388,
-      suggestedAnnual: 3348,
-      grossSaving:     5040,
-      netSaving:       4032,
+      suggestedAnnual: 2868,
+      grossSaving: 5520,
+      netSaving: 4416,
     },
   },
 
@@ -1756,9 +1806,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   9588,
-      suggestedAnnual: 3348,
-      grossSaving:     6240,
-      netSaving:       4992,
+      suggestedAnnual: 2868,
+      grossSaving: 6720,
+      netSaving: 5376,
     },
   },
 
@@ -1792,9 +1842,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   26364,
-      suggestedAnnual: 3348,
-      grossSaving:     23016,
-      netSaving:       18413,
+      suggestedAnnual: 2868,
+      grossSaving: 23496,
+      netSaving: 18797,
     },
   },
 
@@ -1854,9 +1904,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   10788,
-      suggestedAnnual: 3348,
-      grossSaving:     7440,
-      netSaving:       5952,
+      suggestedAnnual: 2868,
+      grossSaving: 7920,
+      netSaving: 6336,
     },
   },
 

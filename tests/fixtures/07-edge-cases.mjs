@@ -26,7 +26,11 @@
 //     secondaryLines = base where desc MATCHES /\bsim\b|mobilabonnemang|mobiltelefoni/i
 //     secondarySeatCount = secondaryLines.length
 //
-//   bredbandSpeedBenchmark p25 (ur tele2Verified): {100:3156, 250:3156, 500:3828, 1000:4020}
+//   bredbandSpeedBenchmark p25 (ur tele2Verified): {100:2388, 250:2388, 500:2868, 1000:3348}
+//   ⚠ SKRIV ALDRIG OM DEN HÄR RADEN FÖR HAND UTAN ATT KÖRA SVITEN: BI-09 läser raden ur
+//   källtexten och jämför mot den levande härledningen. Tabellen låg fel i månader (den sa
+//   500:3828 medan assertionerna korrekt använde 3348) — en not som motsäger sitt eget tal
+//   är samma fel som prisbokens osourcade golv, bara i dokumentationen.
 //   mobil p25 byraer: micro(1-9)=3588, small(10-49)=3408, mid(50-249)=3228
 //   mobil p25 hantverkare: micro=3588, small=3408
 
@@ -271,9 +275,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7692,
-      suggestedAnnual: 3348,
-      grossSaving:     4344,
-      netSaving:       3475,
+      suggestedAnnual: 2868,
+      grossSaving: 4824,
+      netSaving: 3859,
     },
   },
 
@@ -305,9 +309,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7704,
-      suggestedAnnual: 3348,
-      grossSaving:     4356,
-      netSaving:       3485,
+      suggestedAnnual: 2868,
+      grossSaving: 4836,
+      netSaving: 3869,
     },
   },
 
@@ -482,9 +486,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10740,
-      suggestedAnnual: 3828,
-      grossSaving:     6912,
-      netSaving:       5530,
+      suggestedAnnual: 3348,
+      grossSaving: 7392,
+      netSaving: 5914,
     },
   },
 
@@ -515,9 +519,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   5400,
-      suggestedAnnual: 2868,
-      grossSaving:     2532,
-      netSaving:       2026,
+      suggestedAnnual: 2388,
+      grossSaving: 3012,
+      netSaving: 2410,
     },
   },
 
@@ -548,9 +552,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   4560,
-      suggestedAnnual: 2868,
-      grossSaving:     1692,
-      netSaving:       1354,
+      suggestedAnnual: 2388,
+      grossSaving: 2172,
+      netSaving: 1738,
     },
   },
 
@@ -581,9 +585,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10200,
-      suggestedAnnual: 3828,
-      grossSaving:     6372,
-      netSaving:       5098,
+      suggestedAnnual: 3348,
+      grossSaving: 6852,
+      netSaving: 5482,
     },
   },
 
@@ -615,9 +619,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   17940,
-      suggestedAnnual: 3828,
-      grossSaving:     14112,
-      netSaving:       11290,
+      suggestedAnnual: 3348,
+      grossSaving: 14592,
+      netSaving: 11674,
     },
   },
 
@@ -764,24 +768,32 @@ export const fixtures = [
 
   // ── edge-25 ──────────────────────────────────────────────────────────────────
   // mixed=true, category='mobil', secondary bredband-rad med litet belopp → gross < 500
-  // Fiber 100 Mbit 275 kr/mån → secAnnual=3300, p25=2868, gross=432 < 500 → null
+  // Fiber 100 Mbit 235 kr/mån → secAnnual=2820, p25=2388, gross=432 < 500 → null
+  //
+  // FLYTTAD, INTE OMTOLKAD (2026-08-18). Tele2 sänkte Max-familjen 40 kr/mån (verifierat mot
+  // adress-API:t, tre adresser, två nätter), så golvet för 100 Mbit gick 2 868 → 2 388. Den här
+  // fixturens identitet ÄR tröskeln — den finns för att bevisa att vi inte hävdar en besparing
+  // under 500 kr. Därför ändras INTE dess utfall utan dess indata: 275 → 235 kr/mån ger exakt
+  // samma gross (432) mot det nya golvet. Hade jag i stället låtit den vippa över till en
+  // besparing hade grenen "hävda ingenting" tappat sin kant här — och under 20 % success fee är
+  // det den dyraste grenen att tappa täckning på.
   {
     id: 'edge-25',
-    name: 'Mobil mixed: bredband 100 Mbit 275 kr/mån → gross=432 < 500 → secondary=null',
+    name: 'Mobil mixed: bredband 100 Mbit 235 kr/mån → gross=432 < 500 → secondary=null',
     lineItems: [
       { type: 'recurring_subscription', description: 'Telenor Business (5 st)', amount: 1745 },
-      { type: 'recurring_subscription', description: 'Fiber 100 Mbit billigt', amount: 275 },
+      { type: 'recurring_subscription', description: 'Fiber 100 Mbit billigt', amount: 235 },
     ],
     category: 'mobil',
     mixed: true,
     employees: 5,
     industry: 'konsult',
-    // secAnnual=Math.round(275*12)=3300, p25=2868, gross=432 < 500 → null
+    // secAnnual=Math.round(235*12)=2820, p25=2388, gross=432 < 500 → null
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
       primaryComponentMonthly:      1745,
-      secondaryComponentMonthly:    275,
+      secondaryComponentMonthly:    235,
       secondaryConnectionSpeedMbit: 100,
       secondarySeatCount:           null,
     },
@@ -824,9 +836,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   5904,
-      suggestedAnnual: 2868,
-      grossSaving:     3036,
-      netSaving:       2429,
+      suggestedAnnual: 2388,
+      grossSaving: 3516,
+      netSaving: 2813,
     },
   },
 
@@ -857,9 +869,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   5892,
-      suggestedAnnual: 2868,
-      grossSaving:     3024,
-      netSaving:       2419,
+      suggestedAnnual: 2388,
+      grossSaving: 3504,
+      netSaving: 2803,
     },
   },
 

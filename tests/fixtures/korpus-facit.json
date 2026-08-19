@@ -1093,10 +1093,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10788,
-        "grossSaving": 7440,
-        "netSaving": 5952,
+        "grossSaving": 7920,
+        "netSaving": 6336,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1121,10 +1121,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 6588,
-        "grossSaving": 3720,
-        "netSaving": 2976,
+        "grossSaving": 4200,
+        "netSaving": 3360,
         "speedMbit": 250,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -1149,10 +1149,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 4200,
-        "grossSaving": 1332,
-        "netSaving": 1066,
+        "grossSaving": 1812,
+        "netSaving": 1450,
         "speedMbit": 100,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -1177,10 +1177,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10188,
-        "grossSaving": 6360,
-        "netSaving": 5088,
+        "grossSaving": 6840,
+        "netSaving": 5472,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -1205,10 +1205,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 9588,
-        "grossSaving": 5760,
-        "netSaving": 4608,
+        "grossSaving": 6240,
+        "netSaving": 4992,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -1233,10 +1233,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 8988,
-        "grossSaving": 5640,
-        "netSaving": 4512,
+        "grossSaving": 6120,
+        "netSaving": 4896,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1261,10 +1261,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 6588,
-        "grossSaving": 3720,
-        "netSaving": 2976,
+        "grossSaving": 4200,
+        "netSaving": 3360,
         "speedMbit": 250,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -1289,10 +1289,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 8388,
-        "grossSaving": 5040,
-        "netSaving": 4032,
+        "grossSaving": 5520,
+        "netSaving": 4416,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1317,10 +1317,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 11940,
-        "grossSaving": 8112,
-        "netSaving": 6490,
+        "grossSaving": 8592,
+        "netSaving": 6874,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -1342,7 +1342,14 @@
         "secondarySeatCount": null
       },
       "mixed": true,
-      "secondary": null
+      "secondary": {
+        "category": "bredband",
+        "currentAnnual": 2988,
+        "grossSaving": 600,
+        "netSaving": 480,
+        "speedMbit": 100,
+        "suggestedAnnual": 2388
+      }
     },
     {
       "balanskrav": {
@@ -1387,10 +1394,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 16776,
-        "grossSaving": 13428,
-        "netSaving": 10742,
+        "grossSaving": 13908,
+        "netSaving": 11126,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1412,7 +1419,14 @@
         "secondarySeatCount": null
       },
       "mixed": true,
-      "secondary": null
+      "secondary": {
+        "category": "bredband",
+        "currentAnnual": 3300,
+        "grossSaving": 912,
+        "netSaving": 730,
+        "speedMbit": 100,
+        "suggestedAnnual": 2388
+      }
     },
     {
       "balanskrav": {
@@ -1457,10 +1471,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 8988,
-        "grossSaving": 5640,
-        "netSaving": 4512,
+        "grossSaving": 6120,
+        "netSaving": 4896,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1485,10 +1499,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 11940,
-        "grossSaving": 8112,
-        "netSaving": 6490,
+        "grossSaving": 8592,
+        "netSaving": 6874,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -1513,10 +1527,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 7188,
-        "grossSaving": 3840,
-        "netSaving": 3072,
+        "grossSaving": 4320,
+        "netSaving": 3456,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1541,10 +1555,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 7440,
-        "grossSaving": 4092,
-        "netSaving": 3274,
+        "grossSaving": 4572,
+        "netSaving": 3658,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1569,10 +1583,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10200,
-        "grossSaving": 6372,
-        "netSaving": 5098,
+        "grossSaving": 6852,
+        "netSaving": 5482,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -1597,10 +1611,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 7704,
-        "grossSaving": 4356,
-        "netSaving": 3485,
+        "grossSaving": 4836,
+        "netSaving": 3869,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1625,10 +1639,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 7200,
-        "grossSaving": 3852,
-        "netSaving": 3082,
+        "grossSaving": 4332,
+        "netSaving": 3466,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1653,10 +1667,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 7692,
-        "grossSaving": 4344,
-        "netSaving": 3475,
+        "grossSaving": 4824,
+        "netSaving": 3859,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1702,10 +1716,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 11940,
-        "grossSaving": 8112,
-        "netSaving": 6490,
+        "grossSaving": 8592,
+        "netSaving": 6874,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -1751,10 +1765,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 59940,
-        "grossSaving": 56112,
-        "netSaving": 44890,
+        "grossSaving": 56592,
+        "netSaving": 45274,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -1779,10 +1793,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 4788,
-        "grossSaving": 1920,
-        "netSaving": 1536,
+        "grossSaving": 2400,
+        "netSaving": 1920,
         "speedMbit": 100,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -1807,10 +1821,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 8388,
-        "grossSaving": 5040,
-        "netSaving": 4032,
+        "grossSaving": 5520,
+        "netSaving": 4416,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1835,10 +1849,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10788,
-        "grossSaving": 7440,
-        "netSaving": 5952,
+        "grossSaving": 7920,
+        "netSaving": 6336,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -1863,10 +1877,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 9588,
-        "grossSaving": 6240,
-        "netSaving": 4992,
+        "grossSaving": 6720,
+        "netSaving": 5376,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -2311,10 +2325,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 8388,
-        "grossSaving": 5040,
-        "netSaving": 4032,
+        "grossSaving": 5520,
+        "netSaving": 4416,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -2339,10 +2353,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 17976,
-        "grossSaving": 14628,
-        "netSaving": 11702,
+        "grossSaving": 15108,
+        "netSaving": 12086,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -2367,10 +2381,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 11940,
-        "grossSaving": 8112,
-        "netSaving": 6490,
+        "grossSaving": 8592,
+        "netSaving": 6874,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -2395,10 +2409,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 8388,
-        "grossSaving": 5040,
-        "netSaving": 4032,
+        "grossSaving": 5520,
+        "netSaving": 4416,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -2444,10 +2458,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 9588,
-        "grossSaving": 6240,
-        "netSaving": 4992,
+        "grossSaving": 6720,
+        "netSaving": 5376,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -2472,10 +2486,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 26364,
-        "grossSaving": 23016,
-        "netSaving": 18413,
+        "grossSaving": 23496,
+        "netSaving": 18797,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -2510,6 +2524,27 @@
       "id": "comb-55",
       "industry": "konsult",
       "metrics": {
+        "broadbandAddonMonthly": null,
+        "mobileAddonMonthly": null,
+        "primaryComponentMonthly": 1745,
+        "secondaryComponentMonthly": 235,
+        "secondaryConnectionSpeedMbit": 100,
+        "secondarySeatCount": null
+      },
+      "mixed": true,
+      "secondary": null
+    },
+    {
+      "balanskrav": {
+        "balanced": true,
+        "judged": 0,
+        "violations": 0
+      },
+      "category": "mobil",
+      "employees": 5,
+      "id": "comb-55",
+      "industry": "konsult",
+      "metrics": {
         "broadbandAddonMonthly": 149,
         "mobileAddonMonthly": 994,
         "primaryComponentMonthly": 1745,
@@ -2521,10 +2556,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10788,
-        "grossSaving": 7440,
-        "netSaving": 5952,
+        "grossSaving": 7920,
+        "netSaving": 6336,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -2549,10 +2584,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10200,
-        "grossSaving": 6372,
-        "netSaving": 5098,
+        "grossSaving": 6852,
+        "netSaving": 5482,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -2577,10 +2612,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 5040,
-        "grossSaving": 2172,
-        "netSaving": 1738,
+        "grossSaving": 2652,
+        "netSaving": 2122,
         "speedMbit": 100,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -2605,10 +2640,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 5940,
-        "grossSaving": 3072,
-        "netSaving": 2458,
+        "grossSaving": 3552,
+        "netSaving": 2842,
         "speedMbit": 250,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -2633,10 +2668,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 7200,
-        "grossSaving": 3852,
-        "netSaving": 3082,
+        "grossSaving": 4332,
+        "netSaving": 3466,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -2661,10 +2696,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 9000,
-        "grossSaving": 5652,
-        "netSaving": 4522,
+        "grossSaving": 6132,
+        "netSaving": 4906,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -2773,10 +2808,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10800,
-        "grossSaving": 6972,
-        "netSaving": 5578,
+        "grossSaving": 7452,
+        "netSaving": 5962,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -2801,10 +2836,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10740,
-        "grossSaving": 6912,
-        "netSaving": 5530,
+        "grossSaving": 7392,
+        "netSaving": 5914,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -2997,10 +3032,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 7692,
-        "grossSaving": 4344,
-        "netSaving": 3475,
+        "grossSaving": 4824,
+        "netSaving": 3859,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -3025,10 +3060,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 7704,
-        "grossSaving": 4356,
-        "netSaving": 3485,
+        "grossSaving": 4836,
+        "netSaving": 3869,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -3158,10 +3193,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10740,
-        "grossSaving": 6912,
-        "netSaving": 5530,
+        "grossSaving": 7392,
+        "netSaving": 5914,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -3186,10 +3221,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 5400,
-        "grossSaving": 2532,
-        "netSaving": 2026,
+        "grossSaving": 3012,
+        "netSaving": 2410,
         "speedMbit": 100,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -3214,10 +3249,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 4560,
-        "grossSaving": 1692,
-        "netSaving": 1354,
+        "grossSaving": 2172,
+        "netSaving": 1738,
         "speedMbit": 100,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -3242,10 +3277,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10200,
-        "grossSaving": 6372,
-        "netSaving": 5098,
+        "grossSaving": 6852,
+        "netSaving": 5482,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -3270,10 +3305,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 17940,
-        "grossSaving": 14112,
-        "netSaving": 11290,
+        "grossSaving": 14592,
+        "netSaving": 11674,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -3395,7 +3430,7 @@
         "broadbandAddonMonthly": null,
         "mobileAddonMonthly": null,
         "primaryComponentMonthly": 1745,
-        "secondaryComponentMonthly": 275,
+        "secondaryComponentMonthly": 235,
         "secondaryConnectionSpeedMbit": 100,
         "secondarySeatCount": null
       },
@@ -3424,10 +3459,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 5904,
-        "grossSaving": 3036,
-        "netSaving": 2429,
+        "grossSaving": 3516,
+        "netSaving": 2813,
         "speedMbit": 250,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -3452,10 +3487,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 5892,
-        "grossSaving": 3024,
-        "netSaving": 2419,
+        "grossSaving": 3504,
+        "netSaving": 2803,
         "speedMbit": 250,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -4733,10 +4768,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 4680,
-        "grossSaving": 1812,
-        "netSaving": 1450,
+        "grossSaving": 2292,
+        "netSaving": 1834,
         "speedMbit": 100,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -4852,10 +4887,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10740,
-        "grossSaving": 6912,
-        "netSaving": 5530,
+        "grossSaving": 7392,
+        "netSaving": 5914,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -5447,10 +5482,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10788,
-        "grossSaving": 7440,
-        "netSaving": 5952,
+        "grossSaving": 7920,
+        "netSaving": 6336,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     },
     {
@@ -5475,10 +5510,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 11940,
-        "grossSaving": 8112,
-        "netSaving": 6490,
+        "grossSaving": 8592,
+        "netSaving": 6874,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -5503,10 +5538,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 5400,
-        "grossSaving": 2532,
-        "netSaving": 2026,
+        "grossSaving": 3012,
+        "netSaving": 2410,
         "speedMbit": 100,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -7442,10 +7477,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 10188,
-        "grossSaving": 6360,
-        "netSaving": 5088,
+        "grossSaving": 6840,
+        "netSaving": 5472,
         "speedMbit": 1000,
-        "suggestedAnnual": 3828
+        "suggestedAnnual": 3348
       }
     },
     {
@@ -7470,10 +7505,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 6000,
-        "grossSaving": 3132,
-        "netSaving": 2506,
+        "grossSaving": 3612,
+        "netSaving": 2890,
         "speedMbit": 250,
-        "suggestedAnnual": 2868
+        "suggestedAnnual": 2388
       }
     },
     {
@@ -7582,10 +7617,10 @@
       "secondary": {
         "category": "bredband",
         "currentAnnual": 8400,
-        "grossSaving": 5052,
-        "netSaving": 4042,
+        "grossSaving": 5532,
+        "netSaving": 4426,
         "speedMbit": 500,
-        "suggestedAnnual": 3348
+        "suggestedAnnual": 2868
       }
     }
   ],
@@ -7597,8 +7632,8 @@
       "judged": 0,
       "violations": 0
     },
-    "fixtureCount": 333,
-    "lineCount": 703
+    "fixtureCount": 334,
+    "lineCount": 705
   },
   "version": 1
 }

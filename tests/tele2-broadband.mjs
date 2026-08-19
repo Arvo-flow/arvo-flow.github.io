@@ -42,9 +42,15 @@ describe('Tele2-bredband — verifierade priser låsta i prisboken', () => {
   test('tele2Verified bär de live-verifierade ankarpriserna (exkl moms)', () => {
     const tv = BRANCHINDEX.bredband.tele2Verified;
     assert.ok(tv && Array.isArray(tv.verifyAddresses) && tv.verifyAddresses.length >= 3);
-    assert.equal(tv.max[1200], 319);
-    // Bindningstid sänkt 24 → 12 mån, verifierad 2026-06-17 via COAX-sonden (319-priset
-    // bärs av 12-mån-raden på alla tre adresser; 0-mån-raden ligger på 439).
+    // ANDRA SÄNKNINGEN, verifierad 2026-08-18: 319 → 279 kr/mån (hela Max-familjen −40 kr).
+    // Vakten larmade två nätter i rad med identiska tal på alla tre adresser — stabilitet över
+    // tid OCH geografisk bekräftelse, ur ett JSON-API utan modellanrop. Talet är avläst.
+    // Riktningen gynnar oss inte (lägre golv = mindre påvisad överbetalning = lägre success
+    // fee) och det ändrar ingenting: prisboken följer källan.
+    assert.equal(tv.max[1200], 279);
+    assert.equal(tv.max[250], 199);
+    assert.equal(tv.max[500], 239);
+    // Bindningstid 12 mån, verifierad 2026-06-17 via COAX-sonden och oförändrad sedan dess.
     assert.equal(tv.max.bindingMonths, 12);
     assert.equal(tv.standard[1000], 487);
     assert.equal(tv.standard.bindingMonths, 12);

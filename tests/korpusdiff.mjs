@@ -51,8 +51,13 @@ describe('B3 · korpusdiff-selen', () => {
     assert.strictEqual(live.stats.balanskrav.violations, 0);
   });
 
-  test('korpusens omfång är låst (333 fixturer, 703 rader)', () => {
-    assert.strictEqual(live.stats.fixtureCount, 333);
-    assert.strictEqual(live.stats.lineCount, 703);
+  test('korpusens omfång är låst (334 fixturer, 705 rader)', () => {
+    // +1 fixtur 2026-08-18: comb-55. Tele2:s verifierade prissänkning flyttade bredbandsgolvet
+    // 2 868 → 2 388, vilket vippade tre gränsfixturer från "ingen besparing" till "besparing".
+    // Det är rätt utfall — men utan en ny fixtur hade grenen "kunden ligger under tröskeln →
+    // hävda ingenting" tappat sin kant. comb-55 pinnar gränsen mot det NYA golvet med exakt
+    // samma gross (432 kr) som de gamla fixturerna bar mot det gamla.
+    assert.strictEqual(live.stats.fixtureCount, 334);
+    assert.strictEqual(live.stats.lineCount, 705);
   });
 });

@@ -272,13 +272,62 @@ describe('BI-08 · Bredband bredbandSpeedBenchmark (härledd ur tele2Verified)',
       assert.ok(t.p25 < t.median, `${s} Mbit: p25 (${t.p25}) >= median (${t.median})`);
     });
   }
-  test('1000 Mbit: p25 = 3 828 (Tele2 COAX 1200 319×12), median = 5 844 (öppen fiber 1000 487×12)', () => {
+  test('1000 Mbit: p25 = 3 348 (Tele2 COAX 1200 279×12), median = 5 844 (öppen fiber 1000 487×12)', () => {
+    // Golvet sänkt 3 828 → 3 348 efter Tele2:s andra prissänkning, verifierad 2026-08-18 mot
+    // adress-API:t på tre adresser två nätter i rad (319 → 279 kr/mån). Taket är oförändrat:
+    // öppen fiber drev inte. Aritmetiken står här så att en framtida ändring måste passera en
+    // människa som ser vad den ändrar — inte bara ett test som följer med automatiskt.
     const t = bredbandSpeedBenchmark(1000);
-    assert.strictEqual(t.p25,    3828);
+    assert.strictEqual(t.p25,    3348);
     assert.strictEqual(t.median, 5844);
   });
   test('utan giltig hastighet → null (Zero Trust: ingen gissad siffra)', () => {
     assert.strictEqual(bredbandSpeedBenchmark(0), null);
     assert.strictEqual(bredbandSpeedBenchmark(null), null);
+  });
+});
+
+// ── BI-09 · EN NOT SOM MOTSÄGER SITT EGET TAL ÄR SAMMA FEL SOM ETT OSOURCAT TAL ──────────────
+// Tre fixturfiler bar en dokumenterad p25-tabell i sin header. Den hade legat FEL i månader:
+// den sa 500:3828 medan fixturernas egna assertioner korrekt använde 3348. Ingen märkte det,
+// för en kommentar kan inte falla. Nästa läsare räknar dock EFTER den tabellen när hen skriver
+// en ny fixtur — och får ett tal som ser härlett ut men inte är det.
+//
+// Det är exakt kvällens sjukdom (prisbokens not påstod 1 428 medan cellen bar 1 704), fast i
+// dokumentationen i stället för i produkten. Vakten läser raden ur källtexten och jämför mot
+// den LEVANDE härledningen, så tabellen inte kan glida isär igen.
+//
+// VAKTENS PREMISS:
+//   FÅNGAR: en dokumenterad p25-tabell som inte längre stämmer med bredbandSpeedBenchmark —
+//           antingen för att priset drivit eller för att någon skrivit om raden för hand.
+//   BLIND:  vakten läser BARA header-tabellen. De per-fixtur inlinekommentarer som räknar ut
+//           enskilda besparingar ("secAnnual=…, p25=3828, gross=…") vaktas inte och kan vara
+//           inaktuella — de är resonemang, inte en tabell, och kan inte plockas ut maskinellt
+//           utan att gissa. Att den luckan finns ska stå här, inte upptäckas av nästa läsare.
+describe('BI-09 · fixturernas dokumenterade bredbandstabell speglar härledningen', () => {
+  test('varje header-tabell stämmer med bredbandSpeedBenchmark, tal för tal', async () => {
+    const { readFileSync, readdirSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const dir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures');
+
+    let hittade = 0;
+    for (const f of readdirSync(dir).filter((n) => n.endsWith('.mjs'))) {
+      const src = readFileSync(join(dir, f), 'utf8');
+      const rad = src.match(/bredbandSpeedBenchmark p25 \(ur tele2Verified\):\s*\{([^}]*)\}/);
+      if (!rad) continue;
+      hittade++;
+      for (const par of rad[1].split(',')) {
+        const [sp, v] = par.split(':').map((x) => Number(x.trim()));
+        assert.ok(Number.isFinite(sp) && Number.isFinite(v), `${f}: oläsbart par "${par}"`);
+        const levande = bredbandSpeedBenchmark(sp);
+        assert.ok(levande, `${f}: ${sp} Mbit ger ingen benchmark`);
+        assert.strictEqual(levande.p25, v,
+          `${f}: dokumenterad p25 för ${sp} Mbit är ${v}, härledningen ger ${levande.p25}`);
+      }
+    }
+    // En vakt som matchar noll filer blir grön av tomhet — det var triage-bokföringens
+    // första fällda antagande.
+    assert.ok(hittade >= 3, `förväntade minst 3 fixturfiler med tabellen, hittade ${hittade}`);
   });
 });

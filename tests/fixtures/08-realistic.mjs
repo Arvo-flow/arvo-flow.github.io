@@ -2,7 +2,11 @@
 // 70 realistiska faktura-fixtures — vanliga svenska SMF-scenarion
 //
 // Beräkningsreferens för kombinerade fakturor (mixed=true):
-//   bredbandSpeedBenchmark p25 (ur tele2Verified): {100:3156, 250:3156, 500:3828, 1000:4020}
+//   bredbandSpeedBenchmark p25 (ur tele2Verified): {100:2388, 250:2388, 500:2868, 1000:3348}
+//   ⚠ SKRIV ALDRIG OM DEN HÄR RADEN FÖR HAND UTAN ATT KÖRA SVITEN: BI-09 läser raden ur
+//   källtexten och jämför mot den levande härledningen. Tabellen låg fel i månader (den sa
+//   500:3828 medan assertionerna korrekt använde 3348) — en not som motsäger sitt eget tal
+//   är samma fel som prisbokens osourcade golv, bara i dokumentationen.
 //   mobil p25 (alla segment): micro(1-9)=3588, small(10-49)=3408, mid(50-249)=3228
 //   INDUSTRY_SEGMENT_MAP: konsult→byraer, it-tech→byraer, hotell→byraer, vard→byraer, ovrigt→byraer
 //                         bygg→hantverkare, transport→hantverkare
@@ -145,9 +149,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   8400,
-      suggestedAnnual: 3348,
-      grossSaving:     5052,
-      netSaving:       4042,
+      suggestedAnnual: 2868,
+      grossSaving: 5532,
+      netSaving: 4426,
     },
   },
 
@@ -249,9 +253,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10188,
-      suggestedAnnual: 3828,
-      grossSaving:     6360,
-      netSaving:       5088,
+      suggestedAnnual: 3348,
+      grossSaving: 6840,
+      netSaving: 5472,
     },
   },
 
@@ -282,9 +286,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   6000,
-      suggestedAnnual: 2868,
-      grossSaving:     3132,
-      netSaving:       2506,
+      suggestedAnnual: 2388,
+      grossSaving: 3612,
+      netSaving: 2890,
     },
   },
 
@@ -1037,9 +1041,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10200,
-      suggestedAnnual: 3828,
-      grossSaving:     6372,
-      netSaving:       5098,
+      suggestedAnnual: 3348,
+      grossSaving: 6852,
+      netSaving: 5482,
     },
   },
 
@@ -1070,9 +1074,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   5040,
-      suggestedAnnual: 2868,
-      grossSaving:     2172,
-      netSaving:       1738,
+      suggestedAnnual: 2388,
+      grossSaving: 2652,
+      netSaving: 2122,
     },
   },
 
@@ -1103,9 +1107,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   5940,
-      suggestedAnnual: 2868,
-      grossSaving:     3072,
-      netSaving:       2458,
+      suggestedAnnual: 2388,
+      grossSaving: 3552,
+      netSaving: 2842,
     },
   },
 
@@ -1136,9 +1140,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7200,
-      suggestedAnnual: 3348,
-      grossSaving:     3852,
-      netSaving:       3082,
+      suggestedAnnual: 2868,
+      grossSaving: 4332,
+      netSaving: 3466,
     },
   },
 
@@ -1169,9 +1173,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   9000,
-      suggestedAnnual: 3348,
-      grossSaving:     5652,
-      netSaving:       4522,
+      suggestedAnnual: 2868,
+      grossSaving: 6132,
+      netSaving: 4906,
     },
   },
 
@@ -1328,9 +1332,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10800,
-      suggestedAnnual: 3828,
-      grossSaving:     6972,
-      netSaving:       5578,
+      suggestedAnnual: 3348,
+      grossSaving: 7452,
+      netSaving: 5962,
     },
   },
 
@@ -1361,9 +1365,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10740,
-      suggestedAnnual: 3828,
-      grossSaving:     6912,
-      netSaving:       5530,
+      suggestedAnnual: 3348,
+      grossSaving: 7392,
+      netSaving: 5914,
     },
   },
 
@@ -1752,9 +1756,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   4680,
-      suggestedAnnual: 2868,
-      grossSaving:     1812,
-      netSaving:       1450,
+      suggestedAnnual: 2388,
+      grossSaving: 2292,
+      netSaving: 1834,
     },
   },
 
@@ -1897,9 +1901,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10740,
-      suggestedAnnual: 3828,
-      grossSaving:     6912,
-      netSaving:       5530,
+      suggestedAnnual: 3348,
+      grossSaving: 7392,
+      netSaving: 5914,
     },
   },
 
