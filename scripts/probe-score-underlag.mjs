@@ -42,12 +42,20 @@ function raknaScore(kostnad, golv) {
 const rows = await db`
   SELECT id, created_at, user_email, supplier, normalized_supplier, category,
          annual_cost, seat_count, employees, health_score, should_switch, net_saving, route,
-         suggested_annual_cost, suggested_supplier, line_items_json
+         suggested_annual_cost, line_items_json
   FROM invoice_analyses
   WHERE route = 'auto' AND annual_cost > 0
   ORDER BY created_at DESC
   LIMIT 200
-`.catch((e) => { console.log('DB-fel:', e.message); return []; });
+`.catch((e) => { console.error('DB-fel:', e.message); return null; });
+
+// ── EN TYST NOLLA ÄR INTE ETT MÄTVÄRDE (2026-08-19) ─────────────────────────────────────────
+// Första körningen av det utökade urvalet gav 0 rader — där den nyss gav 48. Orsaken var en
+// kolumn som inte finns (`suggested_supplier`), och `.catch(() => [])` förvandlade felet till en
+// tom lista som rapporterades som "0 motsägelser". Grön av tomhet, i sondens egen rapport, och
+// exakt samma sjukdom som läsvägens reserv-SELECT två dagar tidigare. Nu skiljs "inga rader" från
+// "kunde inte läsa": ett fel avslutar med exit 1 i stället för att bli en siffra.
+if (rows === null) { console.error('Sonden mätte INGENTING — behandla inte utfallet som ett resultat.'); process.exit(1); }
 
 console.log(`\n═══ SCORE vs UNDERLAG · ${rows.length} auto-analyser ═══\n`);
 
