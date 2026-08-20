@@ -24,6 +24,7 @@ jobs:
         run: |
           mkdir -p ops
           node scripts/probe-score-underlag.mjs | tee ops/score-underlag.txt
+          node scripts/probe-grindmatning.mjs | tee ops/grindmatning.txt
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Committa resultatet (läsbart via git)
@@ -32,6 +33,6 @@ jobs:
         run: |
           git config user.email "bot@arvoflow.se"
           git config user.name "Arvo Probe Bot"
-          git add ops/score-underlag.txt
+          git add ops/score-underlag.txt ops/grindmatning.txt
           git commit -m "ops: score-vs-underlag [skip ci]" || echo "inget att committa"
           git push origin HEAD:main || echo "push misslyckades"
