@@ -30,6 +30,9 @@ import { getPublicListBenchmark, getBenchmark } from '../lib/benchmark.js';
 // egen rapport, och samma sjukdom som läsvägens reserv-SELECT två dagar tidigare.
 // aldrigTyst är husets sanktionerade väg (regel 1) — den kastar vidare i stället för att svälja.
 import { aldrigTyst } from '../lib/sondvakt.js';
+import { lasLicensniva, nivaGolv } from '../lib/licensniva.js';
+import { byggPrisunderlag, scoreUrUnderlag } from '../lib/prisunderlag.js';
+import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 const db = getDb();
 if (!db) { console.log('Ingen DATABASE_URL — exit 0'); process.exit(0); }
@@ -135,6 +138,33 @@ console.log(`\n  rader MED bevisat bytesmål (pillen visar kr):      ${medMal}`)
 console.log(`  rader över golvet UTAN mål (pillen visar %):       ${utanMalOverGolv}`);
 console.log(`    ...varav helt utan radposter:                    ${utanRader}`);
 console.log(`    ...varav licensnivå LÄSBAR ur radtexten:         ${tierLasbar}`);
+
+// ── VAD BLIR SCOREN I RUMMET, RAD FÖR RAD? (grundarfråga 2026-08-19) ────────────────────────
+// Rummet visar det HÄRLEDDA talet ur prisunderlaget, med licensnivån läst ur fakturans radtext
+// när den går att bevisa. Här räknas exakt samma kedja på de lagrade raderna, så svaret på
+// "vad blev scoren?" kommer ur produktionsdata och inte ur ett renderingsharness.
+console.log('\n═══ SCOREN SOM RUMMET VISAR ═══\n');
+for (const r of rows) {
+  const seats = Number(r.seat_count) > 0 ? Number(r.seat_count) : null;
+  const ank = seats ? getPublicListBenchmark({ category: r.category, employees: seats }) : null;
+  if (!ank?.p25) continue;
+  let rader = r.line_items_json;
+  if (typeof rader === 'string') { try { rader = JSON.parse(rader); } catch { rader = null; } }
+  const n = lasLicensniva(rader);
+  const g = n ? nivaGolv(n, BRANCHINDEX[r.category]?.licenseTierBenchmarks) : null;
+  const u = byggPrisunderlag({
+    annualCost: r.annual_cost, seats,
+    ankare: { ...ank, unitLabel: 'per enhet/år' },
+    niva: g ? { ...g, kalla: n.kalla } : null,
+  });
+  if (!u) continue;
+  console.log(
+    `  ${(r.normalized_supplier || r.supplier || '?').slice(0,22).padEnd(22)} ${new Date(r.created_at).toISOString().slice(0,10)}` +
+    ` · ${String(r.annual_cost).padStart(7)} kr · ${String(seats).padStart(3)} enh` +
+    ` · nivå ${u.nivaBekraftad ? (u.nivaNamn ?? '?').padEnd(30) : '(EJ BEKRÄFTAD)'.padEnd(30)}` +
+    ` · golv ${String(u.golv).padStart(6)} · ${(u.avstandPct > 0 ? '+' : '') + u.avstandPct}%` +
+    ` · SCORE ${String(scoreUrUnderlag(u)).padStart(3)}`);
+}
 
 console.log('─'.repeat(70));
 console.log(`rader utan ankare (ingen mätning möjlig): ${utanAnkare}`);
