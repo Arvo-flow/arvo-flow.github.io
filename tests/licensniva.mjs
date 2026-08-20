@@ -78,9 +78,11 @@ describe('LICENSNIVÅ · jämförelsen gäller kundens egen produkt', () => {
 
   test('LN-05 · blandad faktura → ingen enskild nivå att mäta helheten mot', () => {
     // Två olika nivåer på samma faktura: årskostnaden hör inte till någon av dem ensam.
-    const u = bygg([{ description: 'Microsoft 365 E3' }, { description: 'Business Premium' }]);
+    // Båda raderna bär produktfamiljen — annars prövar testet inte blandningen utan familjekravet.
+    const blandad = [{ description: 'Microsoft 365 E3' }, { description: 'Microsoft 365 Business Premium' }];
+    const u = bygg(blandad);
     assert.equal(u.nivaBekraftad, false, 'hellre kategorins golv än fel nivå');
-    assert.equal(lasLicensniva([{ description: 'Microsoft 365 E3' }, { description: 'Business Premium' }]), null);
+    assert.equal(lasLicensniva(blandad), null);
     // Samma nivå på flera rader är däremot entydigt.
     assert.equal(lasLicensniva([{ description: 'Microsoft 365 E3' }, { description: 'Microsoft 365 E3 tillägg' }]).nyckel, 'e3');
   });
@@ -98,6 +100,38 @@ describe('LICENSNIVÅ · jämförelsen gäller kundens egen produkt', () => {
     assert.equal(nivaGolv({ nyckel: 'google-standard', namn: 'x' }, TIERS), null);
     assert.equal(nivaGolv({ nyckel: 'finns-inte', namn: 'x' }, TIERS), null);
     assert.equal(nivaGolv(null, TIERS), null);
+  });
+
+  test('LN-09 · en ANNAN leverantörs nivå med samma namn är aldrig vår', () => {
+    // FÅNGAT AV SONDEN MOT PRODUKTIONSDATA, samma dag modulen skrevs. Första versionen krävde
+    // produktfamiljen bara för E3/E5. En Google Workspace-faktura ("Google Workspace Business
+    // Standard") lästes därför som Microsoft 365 Business Standard och fick Microsofts golv —
+    // exakt fel-produkt-felet modulen byggdes för att ta bort, återinfört spegelvänt inom en timme.
+    //
+    // Google Workspace Business Standard finns på riktigt och kostar $14/anv/mån. Vi har inget
+    // verifierat SEK-pris för den (sekPublic:false), så den får aldrig bära ett svenskt golv.
+    for (const text of [
+      'Google Workspace Business Standard',
+      'Zoho Workplace Business Standard',
+      'Dropbox Business Standard',
+    ]) {
+      assert.equal(lasLicensniva([{ description: text }]), null, `${text} är inte Microsofts nivå`);
+    }
+    // Och nivån UTAN familjen bevisar ingenting — "Business Standard" säljs av flera.
+    assert.equal(lasLicensniva([{ description: 'Business Standard 10 st' }]), null);
+
+    // ── DÄR LEVERANTÖRSSPÄRREN ÄR DET ENDA SOM HÅLLER ────────────────────────────────────
+    // Familjekravet ensamt räcker inte här: raden bär BÅDE "Microsoft 365 Business Standard"
+    // OCH en annan leverantörs namn. Återförsäljarfakturor buntar rutinmässigt flera produkter
+    // i en radbeskrivning, och då vet vi inte vilken av dem beloppet avser. Utan den här
+    // spärren skulle vi tro oss veta. (Sabotaget på spärren fällde inget förrän det här fallet
+    // fanns — en vakt vars sabotage inte fäller är ingen vakt.)
+    assert.equal(lasLicensniva([{ description: 'Microsoft 365 Business Standard + Google Workspace' }]), null,
+      'blandad radbeskrivning → vi vet inte vilken produkt beloppet avser');
+    assert.equal(lasLicensniva([{ description: 'M365 E3 och Zoom Pro, paket' }]), null);
+    // Med familjen i texten är den däremot entydig.
+    assert.equal(lasLicensniva([{ description: 'Microsoft 365 Business Standard' }]).nyckel, 'business-standard');
+    assert.equal(lasLicensniva([{ description: 'M365 Business Premium' }]).nyckel, 'business-premium');
   });
 
   test('LN-08 · kundytan skiljer bekräftad nivå från obekräftad', async () => {
