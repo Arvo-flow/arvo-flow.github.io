@@ -6,6 +6,7 @@
 //
 // Exit 1 om någon källa drivit eller är oåtkomlig (regel 4: hellre rött än tyst osäkerhet).
 import { VERIFIERS, getVerifier } from '../lib/verifiers/registry.mjs';
+import { bedomVerifierarutfall, UTFALL } from '../lib/verifierarutfall.js';
 
 const args = process.argv.slice(2);
 
@@ -43,25 +44,27 @@ for (const v of targets) {
 
   // Källa som väntar på en credential (t.ex. en API-nyckel som ännu inte lagts in som secret)
   // är varken verifierad eller drivande — den är pending. Neutral skip, aldrig rött.
-  if (res.skipped) {
-    for (const n of res.notes ?? []) console.log(`  · ${n}`);
-    console.log(`  → ⏭ [${v.id}] väntar (tänds när källans credential finns)`);
+  // Beslutet bor i lib/verifierarutfall.js så det kan prövas genom att ANROPAS, inte läsas.
+  // Den inline:ade versionen kunde bara vaktas med en källtextmatchning — och den vakten
+  // överlevde sitt eget sabotage (ordet fanns kvar i en console.log medan grenen var avstängd).
+  for (const n of res.notes ?? []) console.log(`  · ${n}`);
+  const dom = bedomVerifierarutfall(res);
+
+  if (dom.utfall === UTFALL.VANTAR) {
+    console.log(`  → ⏭ [${v.id}] väntar · ${dom.skal}`);
     continue;
   }
 
-  for (const n of res.notes ?? []) console.log(`  · ${n}`);
   for (const c of res.checks ?? []) {
-    // Fabriken vaktar sedan 2026-08-09 två sorters böcker. En logg som kallar avtalsvillkor för
-    // "pris" läses fel klockan tre på natten — och en vakt tolkas efter sin logg, inte sin kod.
+    // Fabriken vaktar två sorters böcker. En logg som kallar avtalsvillkor för "pris" läses fel
+    // klockan tre på natten — och en vakt tolkas efter sin logg, inte sin kod.
     const bok = (v.kind ?? 'pris') === 'villkor' ? 'villkorsbok' : 'prisbok';
     console.log(`  ${c.ok ? '✓' : '✗ DRIFT'} ${c.name}: ${bok} ${c.expected} · live ${c.actual}`);
   }
 
-  const drift = (res.checks ?? []).filter((c) => !c.ok);
-  const fatal = res.fatal || !(res.checks?.length); // oåtkomlig källa eller inga checkar = rött
-  if (fatal || drift.length) {
+  if (dom.utfall === UTFALL.ROTT) {
     anyFail = true;
-    console.error(`  → RÖTT [${v.id}]: ${fatal ? 'källa oåtkomlig/parse-fel — kan inte verifiera' : `${drift.length} ${(v.kind ?? 'pris') === 'villkor' ? 'villkorspost(er) kräver en människa' : 'pris drivit'}`}`);
+    console.error(`  → RÖTT [${v.id}]: ${dom.skal}`);
   } else {
     console.log(`  → ✓ [${v.id}] håller (${res.checks.length} tal verifierade mot källan)`);
   }
