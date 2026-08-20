@@ -171,7 +171,10 @@ function marketStanding(score) {
   // ändå vore att uppfinna ett läge — samma oförtjänta precision som 75-fallbacken var.
   if (score == null) return { pointer: null, label: null, satt: false };
   const pointer = Math.max(4, Math.min(96, score));
-  const label = score >= 67 ? 'Bättre än marknaden' : score >= 45 ? 'I nivå' : 'Sämre än marknaden';
+  // "Marknaden" är fel ord av samma skäl som i domens prosa (2026-08-19): talet mäts mot
+  // verifierat publikt LISTPRIS, inte mot vad marknaden faktiskt betalar. Skalan säger nu vad
+  // den mäter. Ordet får återkomma när kohorten bär en verklig fördelning.
+  const label = score >= 67 ? 'Bättre än listpris' : score >= 45 ? 'I nivå med listpris' : 'Sämre än listpris';
   return { pointer, label, satt: true };
 }
 
@@ -1174,11 +1177,16 @@ export default function Portfolio() {
                           Nu härleds den ur samma jämförelse kortet skriver ut. Utan underlag
                           påstår vi ingenting (regel 4: tystnad hellre än ett omdöme utan grund). */}
                       {(() => {
-                        const over = a.prisunderlag && !a.prisunderlag.underGolv
+                        // ovissNiva = vi vet vad kunden betalar och vad billigaste jämförbara
+                        // kostar, men inte om det är samma produkt. Då hävdar vi inget avstånd:
+                        // en E5-kund som betalar exakt listpris hade annars fått "+379 % över".
+                        const oviss = a.prisunderlag?.ovissNiva === true;
+                        const over = a.prisunderlag && !oviss && !a.prisunderlag.underGolv
                           && a.prisunderlag.avstandPct > 15;
                         const etikett = saving ? `+${fmtNum(a.net_saving)} kr/år`
                           : a.route === 'monitoring' ? 'Avtalsbevakad'
                           : over ? `${a.prisunderlag.avstandPct} % över lägsta pris`
+                          : oviss ? 'Nivå ej bekräftad'
                           : a.prisunderlag ? 'Rätt prissatt'
                           : 'Mottagen';
                         return (
@@ -1237,7 +1245,13 @@ export default function Portfolio() {
                                 </div>
                               )}
                               <div className={`u-slut${p.underGolv ? ' bra' : ''}`}>
-                                {p.nivaBekraftad
+                                {p.ovissNiva
+                                  ? <>Vad ni betalar och vad den billigaste jämförbara licensen
+                                     kostar står ovan. <b>Hur långt ifrån ni ligger kan vi inte
+                                     säga</b> förrän vi vet vilken nivå ni har — priserna i den
+                                     här kategorin skiljer nästan tio gånger mellan billigaste och
+                                     dyraste. Dela avtalet, så låser vi jämförelsen.</>
+                                  : p.nivaBekraftad
                                   ? (p.underGolv
                                     ? <>Ni ligger <b>{Math.abs(p.avstandPct)} % under</b> listpriset för
                                       er egen licensnivå. Det kräver att någon har förhandlat.</>
@@ -1254,10 +1268,13 @@ export default function Portfolio() {
                                   ? <>Er licensnivå är läst ur fakturans egen radtext, så jämförelsen gäller
                                      samma produkt. Scoren mäts mot det priset — inte mot vad andra bolag
                                      faktiskt betalar.</>
-                                  : <>Vi har inte kunnat bekräfta vilken licensnivå ni har, så jämförelsen
-                                     görs mot den billigaste jämförbara produkten. Har ni en dyrare nivå är
-                                     avståndet mindre än det ser ut — dela avtalet så låser vi jämförelsen.
-                                     Scoren mäts mot priset ovan, inte mot vad andra bolag faktiskt betalar.</>}
+                                  : p.ovissNiva
+                                  ? <>Vi sätter varken avstånd eller poäng här. Priserna i kategorin skiljer
+                                     nästan tio gånger mellan billigaste och dyraste licens, så ett tal mot
+                                     det billigaste hade mätt vilken produkt ni valt — inte vad ni betalar
+                                     för den. Med avtalet i handen blir jämförelsen exakt.</>
+                                  : <>Jämförelsen görs mot den billigaste jämförbara produkten. Scoren mäts
+                                     mot priset ovan, inte mot vad andra bolag faktiskt betalar.</>}
                                 {' '}Den jämförelsen kommer när fler i er bransch delar sina fakturor.
                               </p>
                             </Underlag>

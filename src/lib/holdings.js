@@ -45,7 +45,12 @@ export function supplierName(a) {
 // (en låg score 49 bredvid en liten besparing +6 230 / ~13 %). Nu härleds marknadsgapet ur gross_saving
 // (samma källa som net_saving som pillen visar) → score och pill kan aldrig motsäga varandra.
 export function supplierDiagScore(a) {
-  if (a.route === 'monitoring') return 72;
+  // ── 72 VAR SAMMA OFÖRTJÄNTA KONSTANT SOM 75:AN (granskning 2026-08-20) ─────────────────────
+  // Här stod `if (a.route === 'monitoring') return 72;` — ovillkorligt, FÖRE det härledda talet.
+  // En bevakad rad med ett verkligt räknat score på 15 visade alltså 72, och 72 ritas i ringen
+  // exakt som ett förtjänat 92. Konstanten skrev över en mätning, vilket är värre än 75:an som
+  // bara fyllde ett tomrum. Nu gäller: finns ett härlett tal vinner det; annars inget tal.
+  // Att raden är avtalsbevakad syns på pillen ("Avtalsbevakad"), inte genom ett påhittat betyg.
   // ── TALET KOMMER UR SAMMA JÄMFÖRELSE KORTET VISAR (grundarfynd 2026-08-19) ──────────────────
   // Här lästes tidigare det LAGRADE health_score, räknat vid analystillfället mot getBenchmark —
   // prisbokens väg för en besparingsberäkning, som helt riktigt föredrar livedata. Livedatan är
@@ -162,6 +167,15 @@ export function buildReasoning(a) {
   // ligger på eller under det verifierade golvet. Ligger de över säger vi det — och varför vi
   // ändå inte pekar på ett byte, vilket är ett ärligare och vassare besked än beröm.
   const u = a.prisunderlag;
+  // Utan bekräftad produktnivå i en kategori där produktvalet avgör talet finns inget avstånd
+  // att uttala sig om. Att skriva "Ni betalar X % mer" hade mätt vilken licens kunden valt.
+  if (u && u.ovissNiva) {
+    return `Ni betalar ${Math.round(u.perEnhet).toLocaleString('sv-SE')} kr ${u.unitLabel ?? 'per enhet/år'} `
+      + `för ${label}. Billigaste jämförbara licens kostar ${u.golv.toLocaleString('sv-SE')} kr`
+      + `${u.referensProdukt ? ` (${u.referensProdukt})` : ''} — men priserna i kategorin skiljer `
+      + `nästan tio gånger mellan billigaste och dyraste, så vi säger inget om avståndet förrän vi `
+      + `vet vilken nivå ni har. <b>Dela avtalet, så låser vi jämförelsen.</b>`;
+  }
   if (u && !u.underGolv && u.avstandPct > 15) {
     return `Ni betalar <b>${u.avstandPct}% mer</b> än det billigaste publicerade priset för ${label}`
       + `${u.referensProdukt ? ` (${u.referensProdukt})` : ''}. Arvo har inget verifierat bytesmål `

@@ -181,6 +181,82 @@ describe('SCOREKRAV · talet och dess bevis kan inte säga emot varandra', () =>
     assert.match(buildReasoning(fall[0]), /billigaste verifierade alternativet/i);
   });
 
+  test('SK-14 · prosan hävdar inget avstånd när nivån är oviss', () => {
+    // Utan den här grenen faller texten igenom till "Priset ligger på eller under det billigaste
+    // publicerade priset" — ett BERÖM vi inte kan belägga, på exakt de rader där vi vet minst.
+    // (Sabotaget på grenen fällde ingenting förrän det här testet fanns.)
+    const kravAnkare = { ...ANKARE, kraverBekraftadNiva: true };
+    const rad = { category: 'saas-productivity', annual_cost: 76940, should_switch: false,
+      prisunderlag: byggPrisunderlag({ annualCost: 76940, seats: 10, ankare: kravAnkare }) };
+    const text = buildReasoning(rad);
+    assert.doesNotMatch(text, /på eller under det billigaste/i,
+      'ett pris vi inte kan bedöma får aldrig berömmas');
+    assert.doesNotMatch(text, /\d+% mer/, 'och inget avstånd får påstås');
+    assert.match(text, /säger inget om avståndet/i, 'säg rakt ut att vi inte kan bedöma det');
+    assert.match(text, /Dela avtalet/i, 'och be om det som skulle låsa jämförelsen');
+    // Talen vi FAKTISKT vet ska stå kvar — tystnaden gäller påståendet, inte fakta.
+    // OBS: toLocaleString('sv-SE') separerar med HÅRT mellanslag (U+00A0), inte vanligt. Ett
+    // test som matchar "7 694" med vanligt blanksteg faller på ett korrekt tal — och den fällan
+    // är lätt att "lösa" genom att ta bort assertionen i stället för att laga den.
+    const platt = text.replace(/\u00a0/g, ' ');
+    assert.match(platt, /7 694/, 'kundens pris per enhet');
+    assert.match(platt, /1 606/, 'billigaste jämförbara');
+  });
+
+  test('SK-11 · ett falsklarm PER KONSTRUKTION får inte finnas (granskning 2026-08-20)', () => {
+    // En kund som betalar EXAKT listpris för E5 (7 694 kr/anv/år) mätt mot kategorins golv
+    // (Business Standard 1 606) hamnar +379 % över och får score 15. Talet mäter då inte priset
+    // utan vilken PRODUKT kunden valt — spännvidden i kategorin är 9,6 gånger.
+    // Uppmätt, inte tyckt: business-basic 803 · standard 1 606 · premium 2 523 · E3 5 001 · E5 7 694.
+    const kravAnkare = { ...ANKARE, kraverBekraftadNiva: true };
+    const oviss = byggPrisunderlag({ annualCost: 76940, seats: 10, ankare: kravAnkare });
+    assert.equal(oviss.ovissNiva, true);
+    assert.equal(oviss.avstandPct, null, 'inget avstånd får hävdas utan bekräftad produkt');
+    assert.equal(oviss.underGolv, null);
+    assert.equal(scoreUrUnderlag(oviss), null, 'och därmed inget score');
+    // Fakta står kvar — det är PÅSTÅENDET om avstånd som uteblir, inte talen.
+    assert.equal(oviss.perEnhet, 7694);
+    assert.equal(oviss.golv, 1606);
+
+    // Med bekräftad nivå blir samma kund korrekt bedömd: exakt på listpris → högt tal.
+    const bekr = byggPrisunderlag({ annualCost: 76940, seats: 10, ankare: kravAnkare,
+      niva: { arsprisPerEnhet: 7694, manadsprisPerEnhet: 9233, namn: 'Microsoft 365 E5', lastVerified: '2026-08-05' } });
+    assert.equal(bekr.avstandPct, 0);
+    assert.equal(scoreUrUnderlag(bekr), 88);
+
+    // Och i en kategori UTAN bred spridning (mobil, 1,1×) gäller kategorins golv som förut.
+    const smal = byggPrisunderlag({ annualCost: 35880, seats: 10, ankare: { p25: 3228, median: 3588 } });
+    assert.equal(smal.ovissNiva, false);
+    assert.equal(smal.avstandPct, 11, 'smal kategori → golvet är rätt jämförelse');
+  });
+
+  test('SK-12 · per enhet måste vara ett pris, och enheter ett heltal', () => {
+    // Med ett orimligt antal enheter (extraktionen läser ett belopp som kvantitet) avrundades
+    // priset per enhet till 0 och kortet hade visat "Ni betalar 0 kr · −100 %" utan score —
+    // ett fail-open mitt i en kedja som är fail-closed överallt annars.
+    assert.equal(byggPrisunderlag({ annualCost: 45600, seats: 1e9, ankare: ANKARE }), null);
+    // En licensmängd är ett heltal. 0,5 platser gav +5 579 % — ett extraktionsfel, inte ett pris.
+    assert.equal(byggPrisunderlag({ annualCost: 45600, seats: 0.5, ankare: ANKARE }), null);
+    assert.equal(byggPrisunderlag({ annualCost: 45600, seats: 10.5, ankare: ANKARE }), null);
+    // Heltal duger fortfarande.
+    assert.ok(byggPrisunderlag({ annualCost: 45600, seats: 10, ankare: ANKARE }));
+  });
+
+  test('SK-13 · ingen oförtjänt konstant får skriva över ett räknat tal', () => {
+    // route==='monitoring' returnerade 72 OVILLKORLIGT, före det härledda talet. En bevakad rad
+    // med ett verkligt score på 15 visade alltså 72 — och 72 ritas i ringen exakt som ett
+    // förtjänat 92. Värre än 75-fallbacken, som åtminstone bara fyllde ett tomrum.
+    assert.equal(supplierDiagScore({ route: 'monitoring', arvoScore: 15 }), 15,
+      'mätningen vinner över konstanten');
+    assert.equal(supplierDiagScore({ route: 'monitoring' }), null,
+      'utan mätning: inget tal, inte ett påhittat');
+    // Och ingen kvarvarande konstant i intervallet får returneras utan underlag.
+    for (const rad of [{ route: 'monitoring' }, { annual_cost: 100000 }, {}]) {
+      const v = supplierDiagScore(rad);
+      assert.ok(v === null, `oförtjänt tal ${v} returnerades för ${JSON.stringify(rad)}`);
+    }
+  });
+
   test('SK-07 · utan underlag finns inget score (fail-closed)', () => {
     assert.equal(scoreUrUnderlag(null), null);
     assert.equal(scoreUrUnderlag({ perEnhet: 0, golv: 1606 }), null);

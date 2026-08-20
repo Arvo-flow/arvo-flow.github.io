@@ -153,6 +153,30 @@ describe('MATRISKRAV · varje kundsynligt pris ska gå att räkna hem', () => {
     }
   });
 
+  test('MK-09 · kategorier med bred produktspridning kräver bekräftad nivå — mätt, inte tyckt', () => {
+    // Deklarationen kraverBekraftadNiva avgör om vi får hävda ett avstånd mot kategorins golv
+    // utan att veta vilken produkt kunden har. Den ska följa den UPPMÄTTA spännvidden mellan
+    // kategorins verifierade nivåer, inte någons magkänsla.
+    //
+    // saas-productivity: 803 → 7 694 = 9,6× → en E5-kund på exakt listpris hamnade +379 % över.
+    // mobil:           3 228 → 3 588 = 1,1× → produkterna är utbytbara, golvet är rätt jämförelse.
+    const GRANS = 3;   // över detta avgör produktvalet talet mer än priset gör
+    for (const k of realPublicKategorier()) {
+      const cat = BRANCHINDEX[k];
+      const tiers = Object.values(cat.licenseTierBenchmarks ?? {})
+        .filter((t) => t?.currency === 'SEK' && t?.msrpAnnual > 0)
+        .map((t) => Math.round(t.msrpAnnual * 12));
+      if (tiers.length < 2) continue;                 // ingen spridning att mäta
+      const spridning = Math.max(...tiers) / Math.min(...tiers);
+      const kraver = cat.kraverBekraftadNiva === true;
+      assert.equal(kraver, spridning > GRANS,
+        `${k}: spridning ${spridning.toFixed(1)}× men kraverBekraftadNiva=${kraver} — `
+        + `deklarationen följer inte mätningen`);
+    }
+    // Vakten ska faktiskt hitta fallet, annars är den grön av tomhet.
+    assert.equal(BRANCHINDEX['saas-productivity'].kraverBekraftadNiva, true);
+  });
+
   test('MK-07 · inget kundsynligt pris får uppfinna en bransch- eller storleksspridning', () => {
     // Ett LISTPRIS varierar inte med kundens SNI-kod. saas-productivity hade byraer 2 880 mot
     // hantverkare 2 400 — Microsoft tar inte olika betalt av en byrå och en hantverkare.

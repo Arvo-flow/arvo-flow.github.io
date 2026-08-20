@@ -498,6 +498,9 @@ export async function buildBranchAnchors(analyses) {
           // Google Workspace-rad läses som Googles pris — men talet är M365 Business Standard.
           // Utan produktnamnet är raden en antydan, inte en jämförelse. Maskinvakt: MK-08.
           referensProdukt: b.referensProdukt ?? null,
+          // Kategorier med bred produktspridning kräver en BEKRÄFTAD licensnivå innan vi hävdar
+          // ett avstånd. Utan flaggan här skulle underlaget hävda det ändå (granskning 2026-08-20).
+          kraverBekraftadNiva: b.kraverBekraftadNiva === true,
           customerCost: a.annual_cost ?? null, seats,
         };
       }

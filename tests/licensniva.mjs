@@ -140,8 +140,13 @@ describe('LICENSNIVÅ · jämförelsen gäller kundens egen produkt', () => {
     const { dirname, join } = await import('node:path');
     const rum = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../src/pages/Portfolio/index.js'), 'utf8');
     assert.match(rum, /nivaBekraftad/, 'rummet måste läsa flaggan');
-    assert.match(rum, /inte kunnat bekräfta vilken licensnivå/i,
-      'utan bekräftad nivå ska kunden få veta att jämförelsen kanske inte är like-for-like');
+    // Formuleringen skärptes 2026-08-20: i en kategori med bred produktspridning hävdar vi inte
+    // längre ett avstånd alls utan bekräftad nivå — vi säger att vi inte kan säga det, och ber
+    // om avtalet. Vakten prövar att den meningen finns, inte den gamla reservationen.
+    assert.match(rum, /ovissNiva/, 'rummet måste läsa flaggan för obekräftad nivå');
+    assert.match(rum, /kan vi inte\s+säga|säger inget om avståndet/i,
+      'utan bekräftad nivå ska rummet säga att avståndet inte går att uttala sig om');
+    assert.match(rum, /Dela avtalet/i, 'och be om det som skulle låsa jämförelsen');
     assert.match(rum, /Listpris för er nivå/,
       'med bekräftad nivå ska raden säga att det är DERAS nivå, inte kategorins billigaste');
   });

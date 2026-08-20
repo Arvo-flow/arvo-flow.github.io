@@ -142,8 +142,14 @@ describe('supplierDiagScore · scoren följer SAMMA tal som besparings-pillen (r
     assert.equal(supplierDiagScore({ should_switch: false, annual_cost: 100000, health_score: 92 }), null);
   });
 
-  test('monitoring → 72', () => {
-    assert.equal(supplierDiagScore({ route: 'monitoring' }), 72);
+  test('monitoring → INGET tal (72 var en oförtjänt konstant)', () => {
+    // KONTRAKTET ÄNDRADES 2026-08-20. Testet låste `route==='monitoring' → 72`, en konstant som
+    // returnerades OVILLKORLIGT och därmed skrev över ett verkligt räknat score. En bevakad rad
+    // med ett härlett tal på 15 visade 72 — och 72 ritas i ringen exakt som ett förtjänat 92.
+    // Det är värre än 75-fallbacken: den fyllde ett tomrum, den här ersatte en mätning.
+    // Att raden är avtalsbevakad syns på pillen ("Avtalsbevakad"), inte genom ett påhittat betyg.
+    assert.equal(supplierDiagScore({ route: 'monitoring' }), null);
+    assert.equal(supplierDiagScore({ route: 'monitoring', arvoScore: 15 }), 15, 'mätningen vinner');
   });
 
   test('faller tillbaka på net_saving om gross saknas', () => {

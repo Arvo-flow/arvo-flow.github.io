@@ -550,6 +550,40 @@ signera", aldrig som ett verkställt löfte.)
    > att underlaget gjorde det **granskningsbart**. Ett omdöme som bär sitt bevis kan motsägas — och
    > det är hela poängen med att visa beviset.
 
+   > **✅ ETT FALSKLARM PER KONSTRUKTION (2026-08-20, ur helgranskningen av scoren).**
+   > Grundaren bad om en granskning ner på minsta beståndsdel. Sju fynd, och det tyngsta var inte en
+   > bugg utan en **designfelaktighet som producerade falsklarm med matematisk säkerhet**:
+   > en kund som betalar EXAKT listpris för Microsoft 365 E5 (7 694 kr/anv/år) mätt mot kategorins
+   > golv (Business Standard, 1 606 kr) hamnar **+379 % över** och får score 15. Talet mätte då inte
+   > priset utan **vilken produkt kunden valt** — spännvidden i kategorin är 9,6 gånger.
+   > 6 av 7 uppmätta rader saknade bekräftad nivå, alltså gällde det nästan alla.
+   >
+   > Jämför mobil: 1,1× mellan billigaste och dyraste abonnemang. Där ÄR kategorins golv rätt
+   > jämförelse. **Skillnaden är mätt, inte tyckt** — och regeln (`kraverBekraftadNiva`) deklareras i
+   > prisboken med MK-09 som kräver att deklarationen följer den uppmätta spridningen.
+   > Utan bekräftad nivå visar rummet nu vad kunden betalar och vad billigaste jämförbara kostar,
+   > men **hävdar inget avstånd och sätter inget score**. Fakta står kvar; påståendet uteblir.
+   >
+   > **De sex andra fynden, alla samma familj — ett tal som ser mätt ut utan att vara det:**
+   > · `route === 'monitoring'` returnerade **72 ovillkorligt, före det härledda talet** — en konstant
+   >   som SKREV ÖVER en verklig mätning (en rad med räknat 15 visade 72). Värre än 75-fallbacken,
+   >   som åtminstone bara fyllde ett tomrum.
+   > · `perEnhet` kunde avrundas till **0** vid orimligt antal enheter → "Ni betalar 0 kr · −100 %".
+   >   Ett fail-open mitt i en kedja som är fail-closed överallt annars.
+   > · **Bråkdelsplatser** (0,5) gav +5 579 %. En licensmängd är ett heltal; bråkdel är ett extraktionsfel.
+   > · Marknadslägeskortet sa **"Bättre/Sämre än marknaden"** — samma överdrift som i prosan, kvar i
+   >   en yta jag inte grep:ade igenom. Nu "Bättre än listpris".
+   > · Domens prosa saknade gren för det ovissa fallet och föll igenom till *"Priset ligger på eller
+   >   under det billigaste"* — ett BERÖM på exakt de rader där vi vet minst.
+   > · Nivåläsaren krävde produktfamiljen bara för E3/E5, så **Google Workspace Business Standard**
+   >   lästes som Microsofts nivå. Fel-produkt-felet återinfört spegelvänt inom en timme.
+   >
+   > **Läxan om granskningen själv:** fem av sju fynd kom ur att köra funktionerna med FIENTLIGA
+   > indata och mäta produktionsdata — inte ur att läsa koden. Och sabotaget avslöjade att två av
+   > mina nya vakter var gröna på fel grund: prosans gren var oskyddad, och leverantörsspärren
+   > fälldes inte förrän jag skrev det fall där den är det enda som håller. **En vakt vars sabotage
+   > inte fäller är ingen vakt** — den ska antingen förtjäna sin plats eller tas bort.
+
    > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
    > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
    > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det

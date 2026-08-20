@@ -388,6 +388,22 @@ export const BRANCHINDEX = {
     // antar annars att det är Googles pris — det är det inte. Ett pris utan produkt är ett tal
     // utan påstående, och kundytan måste kunna skriva ut det.
     referensProdukt: 'Microsoft 365 Business Standard',
+    // ── ETT GOLV DUGER BARA NÄR PRODUKTVALET INTE AVGÖR TALET (granskning 2026-08-20) ────────
+    // Uppmätt spännvidd mellan kategorins billigaste och dyraste verifierade SEK-nivå:
+    //   business-basic 803 · business-standard 1 606 · business-premium 2 523 · E3 5 001 · E5 7 694
+    //   → 9,6 gånger mellan lägst och högst.
+    // En kund som betalar EXAKT listpris för E5 hamnar därför +379 % över kategorins golv och får
+    // score 15. Det är inte en mätning av priset — det är en mätning av vilken produkt kunden valt,
+    // förklädd till ett omdöme om vad hen betalar. Och det slår åt kundens nackdel.
+    //
+    // Jämför mobil (1,1× mellan billigaste och dyraste abonnemang): där ÄR kategorins golv rätt
+    // jämförelse, för produkterna är utbytbara. Skillnaden är mätt, inte tyckt.
+    //
+    // Regeln: i den här kategorin krävs en BEKRÄFTAD licensnivå för att vi ska hävda ett avstånd
+    // eller sätta ett score. Utan den visar vi vad kunden betalar och vad billigaste jämförbara
+    // kostar — men gör inget påstående om hur långt ifrån de ligger.
+    // Maskinvakt: tests/matriskrav.mjs MK-09 kräver att flaggan matchar den uppmätta spännvidden.
+    kraverBekraftadNiva: true,
     cellHarledning: {
       referensTier: 'business-standard',
       p25Falt:      'msrpAnnual',      // årsavtal → billigaste publicerade pris
