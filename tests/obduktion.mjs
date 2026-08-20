@@ -19,6 +19,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { stamAv, AVST, SKAL } from '../lib/saas-avstamning.js';
 import { bedomVerifierarutfall, UTFALL } from '../lib/verifierarutfall.js';
+import { judgeLineArithmetic } from '../lib/extraction-integrity.js';
+import { judgeSchema } from '../lib/schema-guard.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const VERIFIERARE = join(ROT, 'lib', 'verifiers');
@@ -144,6 +146,29 @@ describe('OBDUKTION · hål som fanns innan granskningen 2026-08-20', () => {
       'rate limit måste svara avsändaren — en tyst 200 gör kunden till den som förlorar fakturan');
     assert.match(gren, /console\.(warn|error)/,
       'och den måste bokföras: ett beslut vi inte skriver ned har vi inte fattat');
+  });
+
+  test('OB-09 · en grind som kraschar har inte godkänt något', () => {
+    // judgeLineArithmetic hade `catch { return { balanced: true } }`. Ett undantag mitt i
+    // radgranskningen rapporterades alltså som GODKÄND BALANS — fail-open i en grind vars hela
+    // syfte är att fälla. Den som läser utfallet kunde inte skilja "alla rader gick ihop" från
+    // "jag kraschade på rad tre".
+    const dom = judgeLineArithmetic({
+      // En rad vars .type-getter kastar → undantag inuti loopen.
+      lineItems: [new Proxy({}, { get(_, p) { if (p === 'quantity') return 1; if (p === 'unitPrice') return 1; throw new Error('trasig rad'); } })],
+    });
+    assert.equal(dom.balanced, false, 'en krasch får aldrig rapporteras som balanserad');
+    assert.match(dom.violations[0]?.reason ?? '', /kraschade/, 'och skälet ska vara bokfört');
+  });
+
+  test('OB-10 · en okänd typdeklaration godkänner inte allt', () => {
+    // schema-guard returnerade `true` för en typ den inte kände igen, med motiveringen att
+    // lintToolSchema fångar den. Men linten är en ANNAN körning: den som deployar ett schema med
+    // ett stavfel ('strng') fick en grind som tyst godkände varje värde.
+    // En kontroll som inte förstår sin egen deklaration har inte kontrollerat något.
+    const schema = { type: 'object', properties: { belopp: { type: 'strng' } } };
+    const brott = judgeSchema(schema, { belopp: { helt: 'fel', form: true } });
+    assert.ok(brott.length > 0, 'en okänd typdeklaration måste fälla, inte släppa igenom');
   });
 
   test('OB-05 · fabriken använder den delade domen, inte en egen kopia', () => {
