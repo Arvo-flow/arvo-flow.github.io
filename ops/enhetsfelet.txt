@@ -31,4 +31,11 @@ per-användare-kategorier i prisboken: mobil, vaxel, molnvaxel, saas-productivit
   saas-productivity: 17 rader · 10 med byte · 13 med besparing > 0
   molnvaxel: 1 rader · 0 med byte · 0 med besparing > 0
 
+=== NÄR TIPPADE CELLEN, OCH HUR MÅNGA RADER KOM EFTER ===
+  mobil · byraer · micro: tippade 2026-05-29 → 19 analyser efter det (6 med byte, 13 utan besparing)
+  mobil · byraer · small: tippade 2026-06-26 → 6 analyser efter det (0 med byte, 6 utan besparing)
+  saas-productivity · hantverkare · small: tippade 2026-06-02 → 15 analyser efter det (8 med byte, 4 utan besparing)
+  saas-productivity · byraer · small: tippade 2026-06-03 → 14 analyser efter det (7 med byte, 4 utan besparing)
+  bredband · byraer · small: tippade 2026-06-26 → 3 analyser efter det (2 med byte, 1 utan besparing)
+
 Sonden skriver inget och läser ingen kundidentitet.
