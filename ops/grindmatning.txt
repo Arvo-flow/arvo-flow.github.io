@@ -1,0 +1,14 @@
+
+═══ BALANSKRAVET (B2) MOT VERKLIGA RADER · 6 fakturor med radposter ═══
+
+
+────────────────────────────────────────────────────────────────────────
+fakturor med dömbara rader (antal OCH à-pris):  6
+rader dömda:                                    11
+rader FÄLLDA:                                   0
+fakturor som skulle STOPPAS om grinden armeras: 0
+fällandeandel per rad:                          0.0 %
+────────────────────────────────────────────────────────────────────────
+Tolkning: en LÅG andel betyder att grinden kan armeras — den skulle sällan stoppa en
+faktura. En HÖG andel betyder att den fäller korrekta fakturor och måste lagas först.
+Sonden avgör INTE vilket; den ger talet som beslutet ska vila på.
