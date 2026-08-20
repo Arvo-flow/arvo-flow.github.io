@@ -19,6 +19,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { stamAv, AVST, SKAL } from '../lib/saas-avstamning.js';
 import { routeExtraction } from '../agents/test-invoice/extract.js';
+import { judgeProjection } from '../lib/extraction-integrity.js';
+import { guardToolPayload } from '../lib/schema-guard.js';
 import { bedomVerifierarutfall, UTFALL } from '../lib/verifierarutfall.js';
 import { judgeLineArithmetic } from '../lib/extraction-integrity.js';
 import { judgeSchema } from '../lib/schema-guard.js';
@@ -246,5 +248,92 @@ describe('OB · Momsgrinden läser satsen i stället för att prova tre', () => 
     const rad = (r.verifications ?? []).find((v) => v.id === 'radsumma');
     assert.equal(rad?.status, 'ok',
       'fail-closed för FÄLTET, fail-open för PIPELINEN: saknad observation får skärpa ingenting');
+  });
+});
+
+// ── OB-15..17 · PROJEKTIONSKRAVET: EN KRASCH VAR INTE ATT SKILJA FRÅN EN PERFEKT TRÄFF ────────
+// judgeProjection bar `catch { return { ok: true, deviationPct: 0 } }` — exakt samma svar som en
+// AI-projektion som stämde PÅ KRONAN mot radsumman. Anroparen bokförde `provad: true`, och
+// kvittot fick bocken «nästa periods belopp verifierat mot radsumman (±2 %)». Samma fel som
+// judgeLineArithmetic bar (OB-09), i grannfunktionen — hittat genom att söka felFAMILJEN i stället
+// för att nöja sig med det enskilda fyndet.
+//
+// FÅNGAR: att ett undantag i projektionsdomen rapporteras som en godkänd kontroll, och att
+//   kraschgrenen faller igenom till kvittotexten «beräknat deterministiskt ur raderna» — som är
+//   falsk, för talet kom från AI:n.
+// BLIND: vakten prövar den kastade vägen med en framtvingad krasch. Den kan inte säga hur ofta
+//   funktionen kastar i produktion; det syns bara i `[projektionskrav]`-loggen.
+describe('OB · Projektionskravet skiljer krasch från träff', () => {
+  test('OB-15 · en krasch ger ok:false med skälet bokfört, aldrig avvikelse 0', () => {
+    // Framtvingar undantaget inne i try-blocket via en getter som kastar när värdet läses.
+    const giftigt = { recurringAmount: 1000, proRataCount: 0 };
+    Object.defineProperty(giftigt, 'projectedFromAI', {
+      get() { throw new Error('framtvingad krasch'); }, enumerable: true,
+    });
+    const r = judgeProjection(giftigt);
+    assert.equal(r.ok, false, 'en kontroll som kraschade har inte godkänt något');
+    assert.equal(r.kraschade, true);
+    assert.notEqual(r.deviationPct, 0, 'noll avvikelse är svaret på en PERFEKT träff — inte på en krasch');
+    assert.match(r.skal ?? '', /kastade/);
+  });
+
+  test('OB-16 · en projektion som stämmer exakt ger fortfarande ok med avvikelse 0', () => {
+    const r = judgeProjection({ projectedFromAI: 1000, recurringAmount: 1000, proRataCount: 0 });
+    assert.equal(r.ok, true);
+    assert.equal(r.deviationPct, 0);
+    assert.notEqual(r.kraschade, true, 'de två tillstånden måste gå att skilja åt åt BÅDA hållen');
+  });
+
+  test('OB-17 · kvittot påstår aldrig «deterministiskt» om en kraschad kontroll', () => {
+    // Första versionen letade strängen 'projektionskrav_kraschade' i källtexten — och stod kvar
+    // GRÖN när kvittots kraschgren revs, eftersom strängen fanns kvar på tilldelningsstället.
+    // En vakt vars sabotage inte fäller är ingen vakt. Nu prövas BETEENDET: domen matas in och
+    // kvittoraden läses ut.
+    const kvitto = (projektionskrav) => (routeExtraction({
+      supplier: 'Testleverantör AB', invoiceTotal: 10_000, annualCost: 120_000,
+      lineItems: [{ description: 'Abonnemang', amount: 10_000, type: 'recurring_subscription' }],
+      projektionskrav,
+    }).verifications ?? []).find((v) => v.id === 'projektion');
+
+    const kraschad = kvitto({ provad: false, ok: false, grund: 'projektionskrav_kraschade', skal: 'x' });
+    assert.equal(kraschad?.status, 'ej_provbar',
+      'en kontroll som kraschade får varken bocken «verifierat mot radsumman» eller påståendet ' +
+      '«beräknat deterministiskt ur raderna» — talet kom från AI:n');
+    assert.doesNotMatch(kraschad.detalj, /deterministiskt/);
+
+    // Motprovet: den ÄKTA deterministiska vägen ska fortfarande få sin bock.
+    assert.equal(kvitto({ provad: false, ok: true, grund: 'radsumma_deterministisk' })?.status, 'ok');
+  });
+});
+
+// ── OB-18 · VAKTENS EGET SKYDDSNÄT SATT PÅ FEL SIDA OM ARGUMENTLÄSNINGEN ──────────────────────
+// Upptäckt av OB-15, som försökte framtvinga en krasch i judgeProjection och i stället avslöjade
+// att undantaget kastades i PARAMETERLISTANS destrukturering — alltså innan try-blocket började.
+// Vaktens catch finns just för att vakten aldrig ska bli produktionsrisken; med destruktureringen
+// utanför kunde `judgeProjection(null)` riva hela extraktionen. Samma mönster i guardToolPayload.
+// Granskarens blick, inte byggarens: felet syntes först när uppdraget var att FÅ testet att fälla.
+//
+// FÅNGAR: en grind vars fail-open-nät inte täcker dess egen argumentläsning.
+// BLIND: hittar bara mönstret `export function namn({...}) { try` i lib/. En destrukturering i en
+//   inre hjälpfunktion, eller en icke-exporterad grind, ses inte.
+describe('OB-18 · Grindarnas skyddsnät täcker deras egen argumentläsning', () => {
+  test('judgeProjection och guardToolPayload överlever ett tomt anrop', () => {
+    assert.doesNotThrow(() => judgeProjection(null),
+      'grinden får inte riva pipelinen på ett tomt anrop — det är precis vad dess catch finns för');
+    assert.doesNotThrow(() => guardToolPayload(null));
+    assert.doesNotThrow(() => judgeProjection(undefined));
+  });
+
+  test('ingen grind i lib/ destrukturerar utanför sitt try-block', () => {
+    const brott = [];
+    for (const f of readdirSync(join(ROT, 'lib')).filter((n) => n.endsWith('.js') || n.endsWith('.mjs'))) {
+      const src = readFileSync(join(ROT, 'lib', f), 'utf8');
+      if (!src.includes('catch')) continue;
+      const re = /export function (\w+)\(\s*\{[^)]*\}\s*(?:=\s*\{\})?\s*\)\s*\{\s*(?:\/\/[^\n]*\n\s*)*try\b/g;
+      for (const m of src.matchAll(re)) brott.push(`lib/${f}: ${m[1]}`);
+    }
+    assert.deepEqual(brott, [],
+      'funktionen har ett try-block som första sats — men destrukturerar sina argument i ' +
+      'parameterlistan, alltså UTANFÖR nätet. Flytta destruktureringen in i try:\n' + brott.join('\n'));
   });
 });

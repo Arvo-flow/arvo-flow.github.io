@@ -893,8 +893,13 @@ export function aggregateLineItems(rawInput) {
         `[projektionskrav]${enforce ? '' : ' SKUGGA:'} AI-projektion ${raw.projectedRecurringAmount} avviker ${pj.deviationPct} % från radsumman ${recurringAmount} utan prorata-rader${enforce ? ' — radsumman används' : ''}`,
       );
     }
+    if (pj.kraschade) console.warn(`[projektionskrav] kontrollen kunde inte utföras — ${pj.skal}`);
     projected = !pj.ok && enforce ? recurringAmount : raw.projectedRecurringAmount;
-    projektionskrav = { provad: true, ok: pj.ok, deviationPct: pj.deviationPct, grund: 'ai_projektion_mot_radsumma' };
+    // `provad` speglar om kontrollen FAKTISKT gick att göra. En krasch bokfördes förut som en
+    // prövad och godkänd projektion — ett grönt som betyder «jag tittade inte».
+    projektionskrav = pj.kraschade
+      ? { provad: false, ok: false, grund: 'projektionskrav_kraschade', skal: pj.skal }
+      : { provad: true, ok: pj.ok, deviationPct: pj.deviationPct, grund: 'ai_projektion_mot_radsumma' };
   } else {
     projected = recurringAmount;
     projektionskrav = { provad: false, ok: true, grund: 'radsumma_deterministisk' };
@@ -1117,6 +1122,13 @@ export function routeExtraction(extracted) {
       extracted.projektionskrav.ok
         ? 'nästa periods belopp verifierat mot radsumman (±2 %)'
         : `AI-projektionen avviker ${extracted.projektionskrav.deviationPct} % från radsumman (skugga)`);
+  } else if (extracted.projektionskrav?.grund === 'projektionskrav_kraschade') {
+    // Den här grenen fanns inte: en krasch bokfördes som `provad: true, ok: true` och fick
+    // bocken «verifierat mot radsumman». Rättades kraschen till provad:false hade den i stället
+    // fallit hit och fått «beräknat deterministiskt ur raderna» — också falskt, för talet kom
+    // från AI:n. Reservkortets läxa (2026-08-15): en rad som inte vet vad som hände får bara
+    // säga att den inte vet.
+    emit('projektion', 'ej_provbar', 'projektionskontrollen kunde inte utföras');
   } else if (extracted.projektionskrav) {
     emit('projektion', 'ok', 'nästa periods belopp beräknat deterministiskt ur raderna');
   }

@@ -109,5 +109,48 @@ for (const kategori of ['mobil', 'saas-productivity', 'bredband']) {
   }
 }
 
+console.log('\n=== FICK DE HÄR KUNDERNA FEL SVAR? (omräkning mot det verifierade golvet) ===');
+// Den enda frågan som betyder något. För varje lagrad rad i en per-användare-kategori:
+// vad blev jämförelsegolvet med den GAMLA skalan (livedatans total × antal enheter) och vad blir
+// det med prisbokens verifierade per-enhet-golv? Kunde bytet nollas av finansgrinden
+// (suggested >= annualCost) på grund av skalan, och inte på grund av kundens pris?
+const { getPublicListBenchmark } = await import('../lib/benchmark.js');
+for (const kategori of ['mobil', 'saas-productivity']) {
+  const rader = await db`
+    SELECT id, annual_cost, seat_count, employees, industry, should_switch,
+           COALESCE(net_saving, 0) AS net_saving, created_at
+    FROM invoice_analyses
+    WHERE category = ${kategori} AND route = 'auto' AND annual_cost > 0
+    ORDER BY created_at DESC LIMIT 40
+  `;
+  let tystade = 0, provbara = 0;
+  for (const r of rader) {
+    const enheter = r.seat_count ?? r.employees ?? 0;
+    if (!(enheter > 0)) continue;
+    const live = await getBenchmark({ category: kategori, industry: r.industry, employees: r.employees ?? enheter });
+    if (!live || live.isTotal !== true) continue;         // ingen livedata bar → felet kunde inte uppstå
+    if (!(live.note ?? '').toLowerCase().includes('per användare')) continue;
+    provbara++;
+    const gammaltGolv = live.p25 * enheter;               // så räknade koden före fixen
+    const nyttGolv    = live.p25;                         // isTotal → skalan är 1
+    // Finansgrinden nollar bytet när golvet är minst lika stort som kundens kostnad.
+    const nolladesAvGammalt = gammaltGolv >= r.annual_cost;
+    const nolladesAvNytt    = nyttGolv    >= r.annual_cost;
+    if (nolladesAvGammalt && !nolladesAvNytt) {
+      tystade++;
+      console.log(`  ⚠ rad ${String(r.id).slice(0, 8)} (${new Date(r.created_at).toISOString().slice(0, 10)}): ` +
+        `kostnad ${r.annual_cost} kr · ${enheter} enheter · gammalt golv ${gammaltGolv} kr (nollade bytet) ` +
+        `· rätt golv ${nyttGolv} kr (nollar inte)`);
+    }
+  }
+  console.log(`  ${kategori}: ${provbara} rader kunde drabbas · ${tystade} fick sitt byte nollat ENBART av skalan`);
+}
+
+// Prisbokens verifierade golv som referens — det är talet rummets bevis visar.
+for (const k of ['mobil', 'saas-productivity']) {
+  const pub = getPublicListBenchmark({ category: k, employees: 10 });
+  console.log(`  referens · ${k}: verifierat publikt p25 = ${pub?.p25 ?? '(saknas)'} kr/enhet/år (${pub?.lastVerified ?? 'odaterat'})`);
+}
+
 console.log('\nSonden skriver inget och läser ingen kundidentitet.');
 process.exit(0);
