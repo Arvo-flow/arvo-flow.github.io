@@ -169,13 +169,22 @@ function computeArvoScore(suppliers) {
 function marketStanding(score) {
   // Utan ett mätt score finns ingen position att peka ut. Att låta pekaren landa någonstans
   // ändå vore att uppfinna ett läge — samma oförtjänta precision som 75-fallbacken var.
-  if (score == null) return { pointer: null, label: null, satt: false };
+  if (score == null) return { pointer: null, label: null, niva: null, satt: false };
   const pointer = Math.max(4, Math.min(96, score));
+  // ── NYCKEL, INTE ETIKETT (granskning 2026-08-20) ──────────────────────────────────────────
+  // Domens rubrik jämförde mot etikettsträngen ('Bättre än marknaden'). När etiketterna byttes
+  // till listpris-språk blev ALLA tre jämförelser falska, och varje kund — även den som låg
+  // bättre än listpris — fick rubriken "Ni betalar mer än marknaden". Ett falskt påstående i
+  // rummets största text, orsakat av en strängmatchning på en visningsetikett.
+  // Det är samma fälla som tierNyckel finns för att undvika: en etikett kan skrivas om, en
+  // nyckel kan det inte. Konsumenter branschar på `niva`.
+  const niva = score >= 67 ? 'battre' : score >= 45 ? 'i-niva' : 'samre';
   // "Marknaden" är fel ord av samma skäl som i domens prosa (2026-08-19): talet mäts mot
   // verifierat publikt LISTPRIS, inte mot vad marknaden faktiskt betalar. Skalan säger nu vad
   // den mäter. Ordet får återkomma när kohorten bär en verklig fördelning.
-  const label = score >= 67 ? 'Bättre än listpris' : score >= 45 ? 'I nivå med listpris' : 'Sämre än listpris';
-  return { pointer, label, satt: true };
+  const label = niva === 'battre' ? 'Bättre än listpris'
+    : niva === 'i-niva' ? 'I nivå med listpris' : 'Sämre än listpris';
+  return { pointer, label, niva, satt: true };
 }
 
 function scoreColor(score) {
@@ -689,13 +698,13 @@ export default function Portfolio() {
   // Rubriken HÅLLER MED mätaren (samma källa: standing): leder med var ni står sammantaget,
   // med de N avtalen som den fokuserade möjligheten — aldrig en motsägelse mot gaugen nedan.
   const verdictHead = !acting
-    ? <>Håll kursen. Era priser <em>står sig mot marknaden.</em></>
+    ? <>Håll kursen. Era priser <em>står sig mot verifierat listpris.</em></>
     : hasSwitchAction
-      ? (standing.label === 'Bättre än marknaden'
+      ? (standing.niva === 'battre'
           ? <>Sammantaget står ni <em>starkt</em> — men {switchables.length} avtal kostar mer än de borde.</>
-          : standing.label === 'I nivå'
-            ? <>Ni ligger <em>i nivå</em> med marknaden — {switchables.length} avtal kan skärpas.</>
-            : <>Ni betalar <em>mer än marknaden</em> — {switchables.length} avtal drar mest.</>)
+          : standing.niva === 'i-niva'
+            ? <>Ni ligger <em>i nivå</em> med verifierat listpris — {switchables.length} avtal kan skärpas.</>
+            : <>Ni betalar <em>mer än listpris</em> — {switchables.length} avtal drar mest.</>)
       : <>Era avtal står sig — men vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda.</>;
   const verdictWork = !acting
     ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat publikt listpris.
@@ -703,9 +712,10 @@ export default function Portfolio() {
     : hasSwitchAction
       ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat publikt listpris.
           <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
-          största bytet tar två minuter att signera. Resten håller måttet; dem rör vi inte.</>
+          största bytet tar två minuter att signera. Övriga avtal har vi inget byte att lägga fram
+          för i dag.</>
       : <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat publikt listpris — priserna står sig.
-          Men vi läste varje rad på era fakturor och fångade en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
+          Men i underlaget vi kunde läsa fångade vi en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
           se vad domen bygger på i fyndet ovan.</>;
 
   return (
@@ -875,9 +885,11 @@ export default function Portfolio() {
                 <div className="mkt-k">{standing.satt ? 'Marknadsläge' : 'Marknadsläge · inte satt'}</div>
                 {standing.satt && <div className="mkt-track"><span className="mkt-ptr" style={{ left: `${standing.pointer}%` }} /></div>}
                 {standing.satt && <div className="mkt-scale">
-                  <span className={standing.label === 'Sämre än marknaden' ? 'on' : ''}>Sämre</span>
-                  <span className={standing.label === 'I nivå' ? 'on' : ''}>I nivå</span>
-                  <span className={standing.label === 'Bättre än marknaden' ? 'on' : ''}>Bättre</span>
+                  {/* Nyckel, aldrig etikett — se OB-06. Omdöpningen av etiketterna gjorde alla
+                      tre jämförelserna falska, så INGEN position markerades i skalan. */}
+                  <span className={standing.niva === 'samre' ? 'on' : ''}>Sämre</span>
+                  <span className={standing.niva === 'i-niva' ? 'on' : ''}>I nivå</span>
+                  <span className={standing.niva === 'battre' ? 'on' : ''}>Bättre</span>
                 </div>}
                 <p className="idx-note">
                   {!standing.satt
@@ -885,12 +897,12 @@ export default function Portfolio() {
                       <b> Ett tal utan mätning är värre än inget tal.</b> Så snart en av era kategorier
                       får ett verifierat pris räknas det fram — och ni ser exakt hur.</>
                     : switchables.length > 0
-                    ? <>Sammanvägt {arvoScore >= 67 ? 'starkt' : arvoScore >= 45 ? 'godkänt' : 'svagt'} — men <b>{switchables.length} avtal kostar mer än marknaden</b>. De ligger förberedda i innehavet nedan.</>
-                    : standing.label === 'Bättre än marknaden'
-                      ? <>Ni ligger <b>bättre än marknaden</b> mot verifierat listpris. Inget enskilt avtal sticker ut i dag.</>
-                      : standing.label === 'I nivå'
-                        ? <>Ni ligger <b>i nivå med marknaden</b> mot verifierat listpris. Inget enskilt avtal sticker ut i dag.</>
-                        : <>Ni ligger <b>sämre än marknaden</b> — men inget enskilt avtal bär ett byte vi kan belägga i dag.</>}
+                    ? <>Sammanvägt {arvoScore >= 67 ? 'starkt' : arvoScore >= 45 ? 'godkänt' : 'svagt'} — men <b>{switchables.length} avtal kostar mer än verifierat listpris</b>. De ligger förberedda i innehavet nedan.</>
+                    : standing.niva === 'battre'
+                      ? <>Ni ligger <b>bättre än verifierat listpris</b>. Inget enskilt avtal sticker ut i dag.</>
+                      : standing.niva === 'i-niva'
+                        ? <>Ni ligger <b>i nivå med verifierat listpris</b>. Inget enskilt avtal sticker ut i dag.</>
+                        : <>Ni ligger <b>över verifierat listpris</b> — men inget enskilt avtal bär ett byte vi kan belägga i dag.</>}
                 </p>
               </Index>
 

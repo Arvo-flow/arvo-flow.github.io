@@ -134,8 +134,13 @@ describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
   test('RR-14 · scorens prosa hämtar sin valör ur samma källa som mätaren', () => {
     // Noten hedgade ("i nivå med eller bättre än") under en mätare som redan tagit ställning.
     const not = RUM.slice(RUM.indexOf('className="idx-note"'), RUM.indexOf('className="idx-note"') + 900);
-    assert.match(not, /standing\.label/,
-      'noten läser inte standing — då kan prosan och instrumentet säga olika saker om samma tal');
+    // KONTRAKTET SKÄRPTES 2026-08-20. Testet krävde `standing.label` — alltså att prosan läser
+    // samma källa som mätaren. Avsikten är rätt och står kvar, men mekanismen var fel: en
+    // jämförelse mot en visningsETIKETT slutade tyst fungera när etiketterna döptes om, och då
+    // föll varje kund igenom till "Ni betalar mer än marknaden". Nyckeln (`niva`) kan inte
+    // skrivas om av en copyändring. Se OB-06.
+    assert.match(not, /standing\.niva/,
+      'noten måste läsa standings NYCKEL — en etikettjämförelse dör tyst vid nästa omdöpning');
     assert.doesNotMatch(not, /i nivå med eller bättre/, 'hedgen ska bort när mätaren tagit ställning');
   });
 

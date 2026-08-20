@@ -88,6 +88,40 @@ describe('OBDUKTION · hål som fanns innan granskningen 2026-08-20', () => {
     assert.equal(f({ checks: [{ ok: true }, { ok: true }] }), UTFALL.GRON);
   });
 
+  test('OB-06 · rummets dom branschar på NYCKEL, aldrig på en visningsetikett', () => {
+    // LIVE-BUGG, orsakad av min egen omdöpning en timme tidigare. Domens rubrik jämförde mot
+    // etikettsträngen ('Bättre än marknaden'). När etiketterna byttes till listpris-språk blev
+    // ALLA TRE jämförelser falska, och varje kund — även den som låg bättre än listpris — fick
+    // rubriken "Ni betalar mer än marknaden". Ett falskt påstående i rummets största text.
+    //
+    // Samma fälla som tierNyckel finns för att undvika: en etikett kan skrivas om, en nyckel
+    // kan det inte. Vakten läser källtexten eftersom rubriken är renderingskod.
+    const rum = readFileSync(join(ROT, 'src/pages/Portfolio/index.js'), 'utf8');
+    const kod = rum.split('\n').filter((r) => !r.trim().startsWith('//') && !r.trim().startsWith('*')).join('\n');
+
+    assert.doesNotMatch(kod, /standing\.label\s*===/,
+      'domen får aldrig jämföra mot en visningsetikett — byt till standing.niva');
+    assert.match(kod, /standing\.niva\s*===\s*'battre'/, 'rubriken ska branscha på nyckeln');
+    assert.match(kod, /niva:\s*null/, 'utan mätt score finns ingen nivå att peka ut');
+
+    // Och nyckelns tre värden måste finnas som grenar — annars faller någon tyst igenom.
+    for (const n of ['battre', 'i-niva']) {
+      assert.match(kod, new RegExp(`standing\\.niva\\s*===\\s*'${n}'`), `grenen ${n} saknas`);
+    }
+  });
+
+  test('OB-07 · rummet påstår aldrig att vi läst VARJE rad', () => {
+    // 6 av 7 uppmätta rader saknar radposter helt. "Vi läste varje rad på era fakturor" var
+    // därför ett absolut påstående vi inte kunde backa på majoriteten av underlaget — och
+    // absoluta påståenden är det första en finansdirektör prövar.
+    // Samma sak med "Resten håller måttet": ett omdöme om rader vi uttryckligen avstått från
+    // att bedöma (ovissNiva → inget score), vilket är precis felet vi tog bort ett lager ned.
+    const rum = readFileSync(join(ROT, 'src/pages/Portfolio/index.js'), 'utf8');
+    const kod = rum.split('\n').filter((r) => !r.trim().startsWith('//') && !r.trim().startsWith('*')).join('\n');
+    assert.doesNotMatch(kod, /läste varje rad/i, 'vi läser inte varje rad på varje faktura');
+    assert.doesNotMatch(kod, /Resten håller måttet/i, 'ett omdöme om rader vi inte bedömt');
+  });
+
   test('OB-05 · fabriken använder den delade domen, inte en egen kopia', () => {
     const kod = readFileSync(join(ROT, 'scripts', 'verify.mjs'), 'utf8')
       .split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
