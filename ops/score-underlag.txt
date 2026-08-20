@@ -88,6 +88,35 @@
   rader över golvet UTAN mål (pillen visar %):       7
     ...varav helt utan radposter:                    6
     ...varav licensnivå LÄSBAR ur radtexten:         1
+
+═══ SCOREN SOM RUMMET VISAR ═══
+
+  Telia Företag          2026-08-14 ·  119520 kr ·  40 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · -7% · SCORE  91
+  Tre Foretag            2026-08-14 ·   14940 kr ·   5 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · -7% · SCORE  91
+  Google Ireland Ltd     2026-08-14 ·   72900 kr ·  45 enh · nivå Microsoft 365 Business Standard · golv   1606 · +1% · SCORE  87
+  Microsoft Ireland      2026-08-14 ·   45600 kr ·  10 enh · nivå Microsoft 365 E3               · golv   5001 · -9% · SCORE  92
+  Tele2 Företag          2026-08-14 ·   35880 kr ·  10 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · +11% · SCORE  77
+  Microsoft Ireland      2026-08-14 ·   45600 kr ·  10 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +184% · SCORE  15
+  Telia Företag          2026-08-14 ·  119520 kr ·  40 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · -7% · SCORE  91
+  Tele2 Företag          2026-08-14 ·   35880 kr ·  10 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · +11% · SCORE  77
+  Tre Foretag            2026-08-14 ·   14940 kr ·   5 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · -7% · SCORE  91
+  Google Ireland Ltd     2026-08-14 ·   72900 kr ·  45 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +1% · SCORE  87
+  CloudReseller Norden A 2026-07-16 ·  184260 kr ·  73 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +57% · SCORE  38
+  Tele2 Företag AB       2026-06-26 ·  439740 kr · 105 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · +30% · SCORE  59
+  Microsoft Ireland Oper 2026-06-26 ·  352296 kr · 120 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +83% · SCORE  30
+  Microsoft Ireland Oper 2026-06-22 ·  332160 kr · 100 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +107% · SCORE  23
+  Tele2 Företag AB       2026-06-20 ·  373800 kr ·  85 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · +36% · SCORE  53
+  Microsoft Ireland Oper 2026-06-20 ·  332160 kr · 100 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +107% · SCORE  23
+  Tele2 Företag AB       2026-06-15 ·  146580 kr ·  35 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · +30% · SCORE  59
+  Telia Sverige AB       2026-06-13 ·  269460 kr ·  75 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · +11% · SCORE  77
+  Telia Företag          2026-06-12 ·   58092 kr ·   8 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · +125% · SCORE  18
+  IT-Partner Sverige AB  2026-06-11 ·  184680 kr ·  57 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +102% · SCORE  24
+  Nordic Managed IT Serv 2026-06-11 ·  475440 kr ·  58 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +410% · SCORE  15
+  Nordic Managed IT Serv 2026-06-11 ·  475440 kr ·  58 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +410% · SCORE  15
+  Nordic Managed IT Serv 2026-06-10 ·  475440 kr ·  58 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +410% · SCORE  15
+  CloudReseller Norden A 2026-06-08 ·  184260 kr ·  73 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +57% · SCORE  38
+  Telenor Sverige AB     2026-06-01 ·  125580 kr ·  35 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · +11% · SCORE  77
+  IT-Partner Sverige AB  2026-05-30 ·  184680 kr ·  57 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · +102% · SCORE  24
 ──────────────────────────────────────────────────────────────────────
 rader utan ankare (ingen mätning möjlig): 22
 rader där platser(faktura) ≠ anställda:   17
