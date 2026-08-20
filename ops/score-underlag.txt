@@ -117,6 +117,18 @@
   CloudReseller Norden A 2026-06-08 ·  184260 kr ·  73 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · null% · SCORE null
   Telenor Sverige AB     2026-06-01 ·  125580 kr ·  35 enh · nivå (EJ BEKRÄFTAD)                 · golv   3228 · +11% · SCORE  77
   IT-Partner Sverige AB  2026-05-30 ·  184680 kr ·  57 enh · nivå (EJ BEKRÄFTAD)                 · golv   1606 · null% · SCORE null
+
+── ÖVERHOPPADE RADER, MED SKÄL ──
+    7 · mobil · seat_count saknas   (Telia Sverige AB, Telia Sverige AB, Telia Företag)
+    4 · bredband · kategorin har inget verifierat per-enhet-golv   (Tele2 Bredband AB, Tele2 Bredband AB, Tele2 Bredband AB)
+    3 · saas-productivity · seat_count saknas   (IT-Partner Sverige AB, IT-Partner Sverige AB, IT-Partner Sverige AB)
+    2 · skrivarleasing · kategorin har inget verifierat per-enhet-golv   (Svea Kontorsprint & Le, Svea Kontorsprint & Le)
+    1 · faktura-tjanst · kategorin har inget verifierat per-enhet-golv   (Fortnox AB)
+    1 · it-support · seat_count saknas   (Nordic Managed IT Serv)
+    1 · serverhosting · seat_count saknas   (GleSYS AB)
+    1 · saas-finance · seat_count saknas   (Fortnox AB)
+    1 · bredband · seat_count saknas   (Bahnhof AB)
+    1 · molnvaxel · seat_count saknas   (Telia Sverige AB)
 ──────────────────────────────────────────────────────────────────────
 rader utan ankare (ingen mätning möjlig): 22
 rader där platser(faktura) ≠ anställda:   17
