@@ -18,6 +18,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { stamAv, AVST, SKAL } from '../lib/saas-avstamning.js';
+import { routeExtraction } from '../agents/test-invoice/extract.js';
 import { bedomVerifierarutfall, UTFALL } from '../lib/verifierarutfall.js';
 import { judgeLineArithmetic } from '../lib/extraction-integrity.js';
 import { judgeSchema } from '../lib/schema-guard.js';
@@ -189,5 +190,61 @@ describe('OBDUKTION · hål som fanns innan granskningen 2026-08-20', () => {
       assert.match(kod, /skippSkal\s*:/,
         `${f}: returnerar skipped utan skippSkal — en skip utan skäl är en självutfärdad dispens`);
     }
+  });
+});
+
+// ── OB-11..14 · MOMSGRINDEN GISSADE SATSEN SOM FAKTURAN SKRIVER UT ────────────────────────────
+// Ring 1 (radsumma = fakturatotal) förklarade bort ett glapp som «moms» om NÅGON av satserna
+// 25/12/6 % passade inom toleransen. Med tolerans max(50 kr, 3 % av totalen) blir det ett fönster
+// från ~3 % till ~9 % av fakturan där en SAKNAD RAD godkänns som moms — och kunden får bocken
+// «radsumman stämmer mot fakturatotalen». Fakturan säger ju vilken sats den använder:
+// `moms_sats` är ett observationsfält sedan 12 augusti, avläst och aldrig härlett.
+//
+// FÅNGAR: att grinden accepterar en annan sats än den fakturan anger; att en 0 %-faktura
+//   (reverse charge) får sitt glapp bortförklarat som moms; att motsägelsen mellan fakturans
+//   momsuppgift och dess egen aritmetik passerar obokförd.
+// BLIND: vakten kan inte se om den AVLÄSTA satsen är rätt avläst. Hallucinerar modellen 0,25 på
+//   en 6 %-faktura dömer grinden mot fel sats — lika säkert som förr, bara med en annan orsak.
+//   Textlagret (lib/pdf-textlager.js) är det oberoende vittne som skulle kunna stänga det;
+//   det används i dag bara för fakturanumret. Uttalad, ostängd.
+describe('OB · Momsgrinden läser satsen i stället för att prova tre', () => {
+  const bas = (extra) => ({
+    supplier: 'Testleverantör AB', invoiceTotal: 10_000, annualCost: 120_000,
+    lineItems: [{ description: 'Abonnemang', amount: 9_400, type: 'recurring_subscription' }],
+    ...extra,
+  });
+
+  test('OB-11 · fakturan säger 25 % men glappet motsvarar 6 % → bokförd motsägelse, inte bock', () => {
+    // lineSum 9 400, total 10 000 → glapp 600 (6,4 %). Tolerans = 300. 6 % förklarar; 25 % inte.
+    const r = routeExtraction(bas({ momssats: 0.25 }));
+    const rad = (r.verifications ?? []).find((v) => v.id === 'radsumma');
+    assert.equal(rad?.status, 'varning',
+      'fakturans egen momsuppgift förklarade inte glappet — då är «radsumman stämmer» ett påstående vi inte kan belägga');
+    assert.match(rad.detalj, /25 %/);
+    assert.notEqual(r.route, 'review_queue', 'motsägelsen får bokföras utan att kosta kunden fakturan');
+  });
+
+  test('OB-12 · fakturan säger 6 % och glappet är 6 % → bocken står, med satsen namngiven', () => {
+    const r = routeExtraction(bas({ momssats: 0.06 }));
+    const rad = (r.verifications ?? []).find((v) => v.id === 'radsumma');
+    assert.equal(rad?.status, 'ok');
+    assert.match(rad.detalj, /6 % enligt fakturan/,
+      'ordet «verifierat» kräver ett underlag — säger vi att glappet är momsen ska vi säga vilken sats');
+  });
+
+  test('OB-13 · reverse charge (0 %) får inte få sitt glapp bortförklarat som moms', () => {
+    // Det farligaste fallet: fakturan säger uttryckligen att ingen moms tas ut, och ändå gick
+    // 25/12/6 %-provningen igång och kunde godkänna glappet.
+    const r = routeExtraction(bas({ momssats: 0 }));
+    const rad = (r.verifications ?? []).find((v) => v.id === 'radsumma');
+    assert.notEqual(rad?.status, 'ok',
+      'en faktura som säger 0 % moms kan inte ha ett glapp som «är momsen»');
+  });
+
+  test('OB-14 · utan avläst sats står tre-satsprovningen kvar (ingen faktura går förlorad)', () => {
+    const r = routeExtraction(bas({ momssats: null }));
+    const rad = (r.verifications ?? []).find((v) => v.id === 'radsumma');
+    assert.equal(rad?.status, 'ok',
+      'fail-closed för FÄLTET, fail-open för PIPELINEN: saknad observation får skärpa ingenting');
   });
 });

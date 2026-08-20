@@ -1035,15 +1035,42 @@ export function routeExtraction(extracted) {
     if (extracted.invoiceTotal > 0 && lineSum > 0) {
       const diff      = Math.abs(lineSum - extracted.invoiceTotal);
       const tolerance = Math.max(50, extracted.invoiceTotal * 0.03);
-      // Vanligaste svenska mönstret: rader EXKL moms, "Att betala" INKL moms. Glappet ÄR momsen
-      // (25/12/6 %), inte en saknad rad — erkänn det innan vi flaggar, annars fastnar enkla fakturor.
-      const vatExplained = [0.25, 0.12, 0.06].some(
-        (v) => Math.abs(lineSum * (1 + v) - extracted.invoiceTotal) <= tolerance,
-      );
+      // Vanligaste svenska mönstret: rader EXKL moms, "Att betala" INKL moms. Glappet ÄR momsen,
+      // inte en saknad rad — erkänn det innan vi flaggar, annars fastnar enkla fakturor.
+      //
+      // ── SATSEN LÄSES, DEN GISSAS INTE (obduktionen 2026-08-20) ────────────────────────────
+      // Raden provade [0,25 · 0,12 · 0,06] och godkände om NÅGON passade. Med toleransen på
+      // 3 % blir det ett fönster från ~3 % till ~9 % av totalen där en SAKNAD RAD förklaras
+      // bort som moms — och kunden får bocken «radsumman stämmer». Fakturan säger ju vilken
+      // sats den använder: `moms_sats` är ett observationsfält sedan 12 augusti, avläst och
+      // aldrig härlett. Att prova tre satser när en står tryckt på pappret är samma mönster
+      // som återkommit genom hela obduktionen — ett antagande där en avläsning fanns att göra.
+      // `>= 0` och inte `> 0`: en faktura som anger 0 % (reverse charge) HAR läst av en sats, och
+      // just den fakturan får absolut inte falla tillbaka på tre-satsprovningen — då skulle ett
+      // glapp godkännas som «moms» på en faktura som säger att ingen moms tas ut.
+      const avlastSats = typeof extracted.momssats === 'number' && extracted.momssats >= 0
+        ? extracted.momssats : null;
+      const forklarar = (v) => Math.abs(lineSum * (1 + v) - extracted.invoiceTotal) <= tolerance;
+      // Den avlästa satsen SKÄRPER, den vidgar aldrig: satsen får avgöra vilken sats som prövas,
+      // aldrig göra ett glapp godtagbart som annars inte vore det. (Bibelns varning 12 aug: en
+      // faktura kan ange både «Moms 25 %» och «reverse charge» och motsäga sig själv.)
+      const vatExplained = avlastSats != null ? forklarar(avlastSats) : [0.25, 0.12, 0.06].some(forklarar);
+      // Om fakturans egen momsuppgift INTE förklarar glappet men en annan sats gör det, är
+      // fakturans momsrad och dess aritmetik oense. Det stoppar ingenting (samma utfall som
+      // förr), men det bokförs — en motsägelse vi inte räknar kan vi aldrig förbättra.
+      const satsMotsagelse = avlastSats != null && !vatExplained
+        && [0.25, 0.12, 0.06].some((v) => v !== avlastSats && forklarar(v));
       if (diff <= tolerance) {
         emit('radsumma', 'ok', `radsumman stämmer mot fakturatotalen (${lineSum.toLocaleString('sv-SE')} kr)`);
       } else if (vatExplained) {
-        emit('radsumma', 'ok', 'radsumman stämmer mot fakturatotalen (skillnaden är momsen)');
+        emit('radsumma', 'ok', avlastSats != null
+          ? `radsumman stämmer mot fakturatotalen (skillnaden är momsen, ${Math.round(avlastSats * 100)} % enligt fakturan)`
+          : 'radsumman stämmer mot fakturatotalen (skillnaden är momsen)');
+      } else if (satsMotsagelse) {
+        console.warn(`[radsumma] fakturan anger ${Math.round(avlastSats * 100)} % moms, men glappet ` +
+          `(${Math.round(diff)} kr) motsvarar en annan sats — fakturans momsuppgift och dess aritmetik är oense`);
+        emit('radsumma', 'varning',
+          `fakturan anger ${Math.round(avlastSats * 100)} % moms men glappet motsvarar en annan sats`);
       } else {
         emit('radsumma', 'stopp',
           `radsumma ${lineSum.toLocaleString('sv-SE')} kr ≠ fakturatotal ${extracted.invoiceTotal.toLocaleString('sv-SE')} kr`);

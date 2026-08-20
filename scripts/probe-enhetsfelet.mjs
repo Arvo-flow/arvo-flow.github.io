@@ -82,5 +82,32 @@ if (perAnvKategorier.length > 0) {
   for (const r of rader) console.log(`  ${r.category}: ${r.n} rader · ${r.med_byte} med byte · ${r.med_besparing} med besparing > 0`);
 }
 
+console.log('\n=== NÄR TIPPADE CELLEN, OCH HUR MÅNGA RADER KOM EFTER ===');
+// Felet blev verkligt först den dag en cell passerade MIN_POINTS (10). Datumet för den tionde
+// datapunkten är alltså startskottet — och varje analys i samma kategori efter det datumet
+// jämfördes mot ett golv som var multiplicerat med antalet enheter.
+for (const kategori of ['mobil', 'saas-productivity', 'bredband']) {
+  const trosklar = await db`
+    SELECT industry, size_bucket, MIN(created_at) AS tippade FROM (
+      SELECT industry, size_bucket, created_at,
+             ROW_NUMBER() OVER (PARTITION BY industry, size_bucket ORDER BY created_at) AS rn
+      FROM invoice_datapoints WHERE category = ${kategori}
+    ) t WHERE rn = 10 GROUP BY 1,2 ORDER BY 3
+  `;
+  if (trosklar.length === 0) { console.log(`  ${kategori}: ingen cell har nått tio datapunkter.`); continue; }
+  for (const t of trosklar) {
+    const efter = await db`
+      SELECT COUNT(*)::int AS n,
+             COUNT(*) FILTER (WHERE should_switch = true)::int AS med_byte,
+             COUNT(*) FILTER (WHERE COALESCE(net_saving, 0) = 0)::int AS utan_besparing
+      FROM invoice_analyses
+      WHERE category = ${kategori} AND route = 'auto' AND created_at >= ${t.tippade}
+    `;
+    const e = efter[0];
+    console.log(`  ${kategori} · ${t.industry} · ${t.size_bucket}: tippade ${new Date(t.tippade).toISOString().slice(0, 10)} ` +
+      `→ ${e.n} analyser efter det (${e.med_byte} med byte, ${e.utan_besparing} utan besparing)`);
+  }
+}
+
 console.log('\nSonden skriver inget och läser ingen kundidentitet.');
 process.exit(0);
