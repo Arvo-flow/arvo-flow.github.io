@@ -406,7 +406,7 @@ export default async function handler(req, res) {
   // v12 (2026-08-15): el-grenens två framgångsutgångar lagrar numera en rad i kundens liggare.
   // Svarsformen är oförändrad — men ett CACHAT svar hoppar över lagringen, så en kund som laddar
   // upp samma elfaktura igen hade fått samma tystnad som förut. Bumpen tvingar en riktig körning.
-  const cacheKey = `pdf:result:v12:${pdfHash}:e${employeesNum}`;
+  const cacheKey = `pdf:result:v13:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
