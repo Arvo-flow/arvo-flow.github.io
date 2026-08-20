@@ -122,6 +122,30 @@ describe('OBDUKTION · hål som fanns innan granskningen 2026-08-20', () => {
     assert.doesNotMatch(kod, /Resten håller måttet/i, 'ett omdöme om rader vi inte bedömt');
   });
 
+  test('OB-08 · ingen kundfaktura tappas tyst i ytterdörren', () => {
+    // api/inbound-email.mjs returnerade `{ ok: true, skipped: 'rate limit' }` UTAN logg och UTAN
+    // svarsmail. En kund som vidarebefordrade sin bunt och passerade taket fick absolut tystnad:
+    // hen tror att Arvo tagit emot fakturorna, Arvo tror att ingenting hänt, fakturorna är borta.
+    //
+    // Det är den tysta tappen i ytterdörren — och värre än de vi städat inne i pipelinen, för
+    // här har kunden gjort allt rätt. Taket (40/dygn) krockar dessutom med löftet vi säljer
+    // bulk-intaget på: "50–100 fakturor på en gång".
+    const src = readFileSync(join(ROT, 'api', 'inbound-email.mjs'), 'utf8');
+    const kod = src.split('\n').filter((r) => !r.trim().startsWith('//') && !r.trim().startsWith('*')).join('\n');
+
+    // ANKARET MÅSTE VARA GRENEN, INTE KONSTANTEN. Första versionen matchade
+    // 'RATE_LIMIT_PER_DAY)' och landade på deklarationen `= Number(...) || 40;` högst upp i
+    // filen — 1 100 tecken från koden den skulle vakta. Vakten fällde då på fel grund och hade
+    // varit lika värdelös om den blivit grön. Ett mätinstrument granskas lika hårt som det det mäter.
+    const i = kod.indexOf('n > RATE_LIMIT_PER_DAY');
+    assert.ok(i > 0, 'rate limit-GRENEN hittades inte — har villkoret skrivits om?');
+    const gren = kod.slice(i, i + 1800);
+    assert.match(gren, /resend\.emails\.send/,
+      'rate limit måste svara avsändaren — en tyst 200 gör kunden till den som förlorar fakturan');
+    assert.match(gren, /console\.(warn|error)/,
+      'och den måste bokföras: ett beslut vi inte skriver ned har vi inte fattat');
+  });
+
   test('OB-05 · fabriken använder den delade domen, inte en egen kopia', () => {
     const kod = readFileSync(join(ROT, 'scripts', 'verify.mjs'), 'utf8')
       .split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');

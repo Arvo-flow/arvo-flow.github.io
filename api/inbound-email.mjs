@@ -341,7 +341,42 @@ export default async function handler(req, res) {
       const rk = `inbound:rate:${sha16(sender)}`;
       const n  = await kv.incr(rk);
       if (n === 1) await kv.expire(rk, 86400);
-      if (n > RATE_LIMIT_PER_DAY) return send(res, 200, { ok: true, skipped: 'rate limit' });
+      if (n > RATE_LIMIT_PER_DAY) {
+        // ── EN TAPPAD FAKTURA MÅSTE KUNDEN FÅ VETA OM (obduktion 2026-08-20) ────────────────
+        // Raden returnerade tyst 200: ingen logg, inget svarsmail. En kund som vidarebefordrade
+        // sin bunt och passerade taket fick ABSOLUT TYSTNAD. Hen tror att Arvo tagit emot dem;
+        // Arvo tror att ingenting hänt. Fakturorna är borta.
+        //
+        // Det är den tysta tappen i ytterdörren — samma klass som bokföringsplikten finns för att
+        // stoppa, men värre: här är det kunden som gjort allt rätt.
+        //
+        // Och taket krockar med löftet: vi säljer bulk-intaget som "50–100 fakturor på en gång"
+        // medan gränsen är 40 per dygn. Den kollisionen är designad, inte olycklig — men den får
+        // aldrig lösas med tystnad.
+        console.warn(`[inbound-email] RATE LIMIT för ${sha16(sender)}: ${n} > ${RATE_LIMIT_PER_DAY} — svarar avsändaren`);
+        try {
+          const resend = getResend();
+          if (resend) {
+            await resend.emails.send({
+              from: FROM,
+              to: sender,
+              subject: 'Vi tog inte emot det här mejlet — dagsgränsen är nådd',
+              html: `<p>Hej,</p>
+<p>Vi har tagit emot ${RATE_LIMIT_PER_DAY} fakturor från er adress det senaste dygnet, vilket är
+vår nuvarande gräns. <strong>Det här mejlet analyserades därför inte</strong> — vi har det inte,
+och ni behöver skicka om det.</p>
+<p>Vidarebefordra det igen om ett dygn, eller svara på det här mejlet så höjer vi gränsen för er.</p>
+<p>Vi säger hellre ifrån än låter en faktura försvinna tyst.</p>
+<p>— Arvo</p>`,
+            });
+          } else {
+            console.error('[inbound-email] RATE LIMIT: RESEND_API_KEY saknas — kunden kunde INTE varnas');
+          }
+        } catch (err) {
+          console.error('[inbound-email] RATE LIMIT: varningsmail misslyckades:', err.message);
+        }
+        return send(res, 200, { ok: true, skipped: 'rate limit', avsandareVarnad: true });
+      }
     } catch { /* non-fatal */ }
   }
 
