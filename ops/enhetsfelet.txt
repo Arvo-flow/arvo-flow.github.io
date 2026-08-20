@@ -38,4 +38,26 @@ per-användare-kategorier i prisboken: mobil, vaxel, molnvaxel, saas-productivit
   saas-productivity · byraer · small: tippade 2026-06-03 → 14 analyser efter det (7 med byte, 4 utan besparing)
   bredband · byraer · small: tippade 2026-06-26 → 3 analyser efter det (2 med byte, 1 utan besparing)
 
+=== FICK DE HÄR KUNDERNA FEL SVAR? (omräkning mot det verifierade golvet) ===
+  ⚠ rad e695d392 (2026-08-14): kostnad 119520 kr · 40 enheter · gammalt golv 1435200 kr (nollade bytet) · rätt golv 35880 kr (nollar inte)
+  ⚠ rad fa0cc384 (2026-08-14): kostnad 119520 kr · 40 enheter · gammalt golv 1435200 kr (nollade bytet) · rätt golv 35880 kr (nollar inte)
+  ⚠ rad e2b70b03 (2026-06-26): kostnad 439740 kr · 105 enheter · gammalt golv 3767400 kr (nollade bytet) · rätt golv 35880 kr (nollar inte)
+  ⚠ rad 098c111d (2026-06-15): kostnad 146580 kr · 35 enheter · gammalt golv 1255800 kr (nollade bytet) · rätt golv 35880 kr (nollar inte)
+  ⚠ rad 4a66a01b (2026-06-13): kostnad 269460 kr · 75 enheter · gammalt golv 2691000 kr (nollade bytet) · rätt golv 35880 kr (nollar inte)
+  ⚠ rad 73979648 (2026-06-12): kostnad 58092 kr · 8 enheter · gammalt golv 287040 kr (nollade bytet) · rätt golv 35880 kr (nollar inte)
+  ⚠ rad 59ac4b21 (2026-06-03): kostnad 269460 kr · 45 enheter · gammalt golv 1614600 kr (nollade bytet) · rätt golv 35880 kr (nollar inte)
+  ⚠ rad caff5c9d (2026-06-02): kostnad 269460 kr · 45 enheter · gammalt golv 1614600 kr (nollade bytet) · rätt golv 35880 kr (nollar inte)
+  ⚠ rad ec112017 (2026-06-01): kostnad 125580 kr · 35 enheter · gammalt golv 2033220 kr (nollade bytet) · rätt golv 58092 kr (nollar inte)
+  ⚠ rad 35c1b1ec (2026-06-01): kostnad 125580 kr · 35 enheter · gammalt golv 2033220 kr (nollade bytet) · rätt golv 58092 kr (nollar inte)
+  ⚠ rad 005c1a4a (2026-05-31): kostnad 125580 kr · 35 enheter · gammalt golv 2033220 kr (nollade bytet) · rätt golv 58092 kr (nollar inte)
+  ⚠ rad 67eca5de (2026-05-31): kostnad 188460 kr · 45 enheter · gammalt golv 2614140 kr (nollade bytet) · rätt golv 58092 kr (nollar inte)
+  ⚠ rad 4ea3129a (2026-05-31): kostnad 188160 kr · 35 enheter · gammalt golv 1255800 kr (nollade bytet) · rätt golv 35880 kr (nollar inte)
+  mobil: 18 rader kunde drabbas · 13 fick sitt byte nollat ENBART av skalan
+  ⚠ rad 900908c0 (2026-06-26): kostnad 352296 kr · 120 enheter · gammalt golv 22161600 kr (nollade bytet) · rätt golv 184680 kr (nollar inte)
+  ⚠ rad b2f51442 (2026-06-22): kostnad 332160 kr · 100 enheter · gammalt golv 18468000 kr (nollade bytet) · rätt golv 184680 kr (nollar inte)
+  ⚠ rad 56cee27d (2026-06-11): kostnad 475440 kr · 58 enheter · gammalt golv 10711440 kr (nollade bytet) · rätt golv 184680 kr (nollar inte)
+  saas-productivity: 12 rader kunde drabbas · 3 fick sitt byte nollat ENBART av skalan
+  referens · mobil: verifierat publikt p25 = 3228 kr/enhet/år (2026-08-05)
+  referens · saas-productivity: verifierat publikt p25 = 1606 kr/enhet/år (2026-08-05)
+
 Sonden skriver inget och läser ingen kundidentitet.
