@@ -1,0 +1,34 @@
+=== CELLER DÄR ENHETSFELET KUNDE DETONERA ===
+(livedata returnerad · noten säger per användare · alltså p25 × antal enheter)
+
+invoice_datapoints-celler över tröskeln (≥10): 5
+  mobil · byraer · small — n=83
+  bredband · byraer · small — n=33
+  saas-productivity · byraer · small — n=24
+  mobil · byraer · micro — n=18
+  saas-productivity · hantverkare · small — n=17
+
+invoice_analyses-kategorier över tröskeln (≥5): 3
+  mobil — n=19
+  saas-productivity — n=17
+  bredband — n=5
+
+=== VAD getBenchmark FAKTISKT SVARAR NU (den riktiga läsvägen) ===
+  ⚠ mobil · it-tech · micro: source=real isTotal=true perAnvändare=true p25=58092 → gammal kod: 58092 × 5 = 290460 kr
+  ⚠ mobil · konsult · micro: source=real isTotal=true perAnvändare=true p25=58092 → gammal kod: 58092 × 5 = 290460 kr
+  ⚠ mobil · ovrigt · micro: source=real isTotal=true perAnvändare=true p25=58092 → gammal kod: 58092 × 5 = 290460 kr
+  ⚠ mobil · it-tech · small: source=real isTotal=true perAnvändare=true p25=35880 → gammal kod: 35880 × 25 = 897000 kr
+  ⚠ mobil · konsult · small: source=real isTotal=true perAnvändare=true p25=35880 → gammal kod: 35880 × 25 = 897000 kr
+  ⚠ mobil · ovrigt · small: source=real isTotal=true perAnvändare=true p25=35880 → gammal kod: 35880 × 25 = 897000 kr
+  ⚠ saas-productivity · it-tech · small: source=real isTotal=true perAnvändare=true p25=184680 → gammal kod: 184680 × 25 = 4617000 kr
+  ⚠ saas-productivity · konsult · small: source=real isTotal=true perAnvändare=true p25=184680 → gammal kod: 184680 × 25 = 4617000 kr
+  ⚠ saas-productivity · ovrigt · small: source=real isTotal=true perAnvändare=true p25=184680 → gammal kod: 184680 × 25 = 4617000 kr
+  9 cellkombination(er) uppfyllde alla tre villkoren.
+
+=== LAGRADE RADER I SKOTTLINJEN ===
+per-användare-kategorier i prisboken: mobil, vaxel, molnvaxel, saas-productivity, saas-crm
+  mobil: 19 rader · 6 med byte · 6 med besparing > 0
+  saas-productivity: 17 rader · 10 med byte · 13 med besparing > 0
+  molnvaxel: 1 rader · 0 med byte · 0 med besparing > 0
+
+Sonden skriver inget och läser ingen kundidentitet.
