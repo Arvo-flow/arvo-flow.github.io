@@ -144,10 +144,24 @@ console.log(`    ...varav licensnivå LÄSBAR ur radtexten:         ${tierLasbar
 // när den går att bevisa. Här räknas exakt samma kedja på de lagrade raderna, så svaret på
 // "vad blev scoren?" kommer ur produktionsdata och inte ur ett renderingsharness.
 console.log('\n═══ SCOREN SOM RUMMET VISAR ═══\n');
+// ── EN ÖVERHOPPAD RAD ÄR OCKSÅ ETT MÄTVÄRDE (2026-08-20) ────────────────────────────────────
+// Första versionen `continue`:ade tyst förbi rader utan ankare eller utan platser, och
+// rapporterade dem bara som en klumpsumma. Följden: två av grundarens sju leverantörer
+// (Visma och Fortnox, löneadministration) saknades helt ur redovisningen, och jag kunde inte
+// säga VARFÖR utan att gissa. Ett instrument som utelämnar sitt bortfall döljer det som är fel.
+const overhoppade = new Map();
+const hoppa = (r, skal) => {
+  const nyckel = `${r.category} · ${skal}`;
+  const v = overhoppade.get(nyckel) ?? { n: 0, exempel: [] };
+  v.n += 1;
+  if (v.exempel.length < 3) v.exempel.push((r.normalized_supplier || r.supplier || '?').slice(0, 22));
+  overhoppade.set(nyckel, v);
+};
 for (const r of rows) {
   const seats = Number(r.seat_count) > 0 ? Number(r.seat_count) : null;
-  const ank = seats ? getPublicListBenchmark({ category: r.category, employees: seats }) : null;
-  if (!ank?.p25) continue;
+  if (!seats) { hoppa(r, 'seat_count saknas'); continue; }
+  const ank = getPublicListBenchmark({ category: r.category, employees: seats });
+  if (!ank?.p25) { hoppa(r, 'kategorin har inget verifierat per-enhet-golv'); continue; }
   let rader = r.line_items_json;
   if (typeof rader === 'string') { try { rader = JSON.parse(rader); } catch { rader = null; } }
   const n = lasLicensniva(rader);
@@ -164,6 +178,11 @@ for (const r of rows) {
     ` · nivå ${u.nivaBekraftad ? (u.nivaNamn ?? '?').padEnd(30) : '(EJ BEKRÄFTAD)'.padEnd(30)}` +
     ` · golv ${String(u.golv).padStart(6)} · ${(u.avstandPct > 0 ? '+' : '') + u.avstandPct}%` +
     ` · SCORE ${String(scoreUrUnderlag(u)).padStart(3)}`);
+}
+
+console.log('\n── ÖVERHOPPADE RADER, MED SKÄL ──');
+for (const [nyckel, v] of [...overhoppade.entries()].sort((a, b) => b[1].n - a[1].n)) {
+  console.log(`  ${String(v.n).padStart(3)} · ${nyckel}   (${v.exempel.join(', ')})`);
 }
 
 console.log('─'.repeat(70));
