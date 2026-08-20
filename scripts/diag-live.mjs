@@ -31,7 +31,12 @@ console.log(JSON.stringify({
   recommendationType:  data.recommendation?.recommendationType,
   requiresQuote:       data.recommendation?.requiresQuote,
   suggestedAnnualCost: data.recommendation?.suggestedAnnualCost,
-  savingPerYear:       data.recommendation?.savingPerYear,
+  // `savingPerYear` fanns aldrig i svaret — auto-svaret bär grossSaving/netSaving. Sonden läste
+  // ett fält som inte finns och skrev tyst ingenting (JSON.stringify utelämnar undefined), så
+  // raden såg ut att saknas i stället för att vara felmätt. Sjunde gången under obduktionen som
+  // mätinstrumentet var felet och inte systemet.
+  grossSaving:         data.recommendation?.grossSaving ?? null,
+  netSaving:           data.recommendation?.netSaving ?? null,
   // Serialiserings-bevis: dessa fält droppades tidigare ur auto-svaret (FindingCard ritade tomt).
   hasLeadFindingKey:   Object.prototype.hasOwnProperty.call(data.recommendation ?? {}, 'leadFinding'),
   leadFindingTitle:    data.recommendation?.leadFinding?.title ?? null,
@@ -41,13 +46,16 @@ console.log(JSON.stringify({
   servicePeriodEnd:    data.extracted?.servicePeriodEnd ?? null,
   // B4-bevis: verifikationskvittot ska följa med auto-svaret (grindarnas domslut)
   verifications:       (data.verifications ?? []).map((v) => `${v.id}:${v.status}`),
-  // PRISBOKEN SOM SERVERN HAR (2026-08-18). Golvet och taket är de tal kundens score mäts mot;
-  // efter cellhärledningen ska saas-productivity svara p25 1606 · median 1927 · 2026-08-05.
-  // Att läsa dem på min disk bevisar ingenting om vad Vercel kör.
-  bmP25:               data.recommendation?.benchmark?.p25 ?? null,
-  bmMedian:            data.recommendation?.benchmark?.median ?? null,
-  bmVerifierat:        data.recommendation?.benchmark?.lastVerified ?? null,
-  bmKalla:             data.recommendation?.benchmark?.source ?? null,
+  // JÄMFÖRELSENS PROVENIENS SOM SERVERN HAR (2026-08-18, lagad 2026-08-20).
+  // Sonden läste tidigare `recommendation.benchmark.*` — ett objekt som ALDRIG serialiserats till
+  // svaret. Fyra tysta null lästes som mätvärden ("servern har ingen prisbok") i två dygn, i det
+  // verktyg som byggdes med motiveringen att disken inte bevisar vad Vercel kör. Nu läses fältet
+  // api-lagret faktiskt skickar, och det är samma objekt som kvittoraden döms ur.
+  kallaGrund:          data.recommendation?.jamforelseKalla?.grund ?? null,
+  kallaSource:         data.recommendation?.jamforelseKalla?.source ?? null,
+  kallaVerifierat:     data.recommendation?.jamforelseKalla?.lastVerified ?? null,
+  kallaArTotalsumma:   data.recommendation?.jamforelseKalla?.isTotal ?? null,
+  kallaListprisansprak: data.recommendation?.jamforelseKalla?.listprisanspraak ?? null,
   stage:               data.stage ?? null,
   kod:                 data.kod ?? null,
   error:               data.error,

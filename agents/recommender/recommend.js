@@ -31,6 +31,7 @@ import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
 import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
 import { m365Rightsizing, deriveM365Seats } from '../../lib/m365-rightsizing.js';
 import { granskaTierrader, vaktadeRaderUrPrisbok } from '../../lib/saas-rad.js';
+import { jamforelsensKalla, jamforelseSkala } from '../../lib/jamforelsekalla.js';
 import m365Verifier from '../../lib/verifiers/m365.mjs';
 import { molnvaxelRecommendation } from '../../lib/molnvaxel-recommendation.js';
 import { loneadminRecommendation } from '../../lib/loneadmin-rightsizing.js';
@@ -72,9 +73,8 @@ function formatBenchmark(benchmark, seatCount, employees) {
   // Per-user categories: use actual seat count from invoice when available,
   // fall back to employee count. Ensures apples-to-apples comparison.
   const isPerUser = benchmark.note.toLowerCase().includes('per användare');
-  const effectiveSeats = seatCount ?? employees;
-  // isTotal: live_analyses data is already company-level totals — do NOT multiply by seats
-  const scale = (isPerUser && effectiveSeats > 0 && !benchmark.isTotal) ? effectiveSeats : 1;
+  // EN sanning för skalan (lib/jamforelsekalla.js) — isTotal-skyddet kan inte glömmas här.
+  const scale = jamforelseSkala({ benchmark, seatCount, employees });
   const totalMedian = benchmark.median * scale;
   const totalP25 = benchmark.p25 * scale;
   const scaleLabel = seatCount != null ? `${seatCount} licenser` : `${employees} anställda`;
@@ -201,9 +201,8 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
   const isAccountingSystem = categorized.subType === 'affärssystem';
   const bm = benchmark;
   const isPerUser = bm && bm.note.toLowerCase().includes('per användare');
-  const effectiveSeats = seatCount ?? employees;
-  // isTotal: live_analyses data is already company-level totals — do NOT multiply by seats
-  const scale = (isPerUser && effectiveSeats > 0 && !bm?.isTotal) ? effectiveSeats : 1;
+  // EN sanning för skalan (lib/jamforelsekalla.js) — isTotal-skyddet kan inte glömmas här.
+  const scale = jamforelseSkala({ benchmark: bm, seatCount, employees });
   const totalMedian = bm ? bm.median * scale : null;
   const totalP25    = bm ? bm.p25    * scale : null;
   const isRealData       = bm?.source === 'real';
@@ -1589,14 +1588,22 @@ export async function recommend(input, opts = {}) {
     const annualCost = input.invoice.annualCost ?? input.invoice.amount ?? 0;
     const employees = input.customer.employees ?? 1;
     const seatCount = input.invoice.seatCount ?? null;
-    const isPerUser = benchmark.note.toLowerCase().includes('per användare');
-    const effectiveSeats = seatCount ?? employees;
+    // (isPerUser/effectiveSeats bodde här som lösa kopior av skalans villkor — borta nu när
+    // jamforelseSkala äger frågan. Kvarlämnade halvor av en flyttad uträkning läses av nästa
+    // person som om de vore i bruk.)
     // For saas-productivity: scale against employees (the correct headcount), not seatCount
     // (which may be inflated by add-on/overage licenses on the invoice).
     const isSaasProductivity = input.categorized.category === 'saas-productivity';
-    const scale = isPerUser && effectiveSeats > 0
-      ? (isSaasProductivity ? employees : effectiveSeats)
-      : 1;
+    // ── DEN TREDJE KONSUMENTEN — DEN SOM RÄKNAR KUNDENS PENGAR (obduktionen 2026-08-20) ───────
+    // Raden byggde sin egen skala utan `!benchmark.isTotal`, till skillnad från de två ovan.
+    // Livedatans p25/median ÄR bolagets hela årskostnad medan noten ärvd ur prisboken säger
+    // «per användare» — så en TOTALSUMMA multiplicerades med antalet anställda, rakt in i
+    // suggestedAnnualCost, savingPerYear och overpaymentPercent. Finansgrinden nedan
+    // (suggested >= annualCost → tystnad) döljer den grova formen genom att nolla bytet, vilket
+    // gör felet TYST i stället för synligt: kunden ser «ingen besparing» på en jämförelse som
+    // var hundrafalt fel. Skalan bor numera i EN funktion, så en fjärde konsument inte kan
+    // glömma flaggan som den tredje gjorde.
+    const scale = jamforelseSkala({ benchmark, seatCount, employees, forceEmployees: isSaasProductivity });
 
     // For mobile/broadband invoices with add-on services, the benchmark covers
     // the base product only (bare SIM / bare fiber). Exclude the add-on from the
@@ -1721,6 +1728,16 @@ export async function recommend(input, opts = {}) {
     const _benchBase = _useLfl
       ? _lflTarget.suggestedAnnualCost - addonAnnual  // strip addon pass-throughs already included in LFL total
       : Math.round(benchmark.p25 * scale);
+
+    // Proveniensen följer med talet ut (obduktionen 2026-08-20). Api-lagret gissade den tidigare
+    // ur BRANCHINDEX[kategori].source — den statiska tabellraden, inte det objekt som räknade.
+    // Här, på raden där jämförelsepriset VÄLJS, är svaret känt utan gissning.
+    result.jamforelseKalla = jamforelsensKalla({
+      useLfl: _useLfl,
+      benchmark,
+      tierLines: _lflTarget?.tierLines ?? null,
+      tierBenchmarks: BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? null,
+    });
 
     result.suggestedAnnualCost = _benchBase + addonAnnual;
     result.savingPerYear = Math.max(0, Math.round(comparableAnnualCost - _benchBase));

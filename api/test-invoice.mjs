@@ -1706,23 +1706,48 @@ export default async function handler(req, res) {
       suggestedAnnualCost: recommendation.suggestedAnnualCost,
       tierKey:            null,
     });
-    // BUGGFIX 2026-07-08 (exponerad av listpris-domens live-diag): fältet heter `source`
-    // i BRANCHINDEX — `priceSource` har aldrig existerat, så denna rad föll ALLTID
-    // tillbaka till 'negotiated-target'. Konsekvens sedan dag ett: savingRange visade
-    // ±25 % även för verifierade listpriskategorier (avsett ±12 %), källetiketten
-    // underdrev prisboken, och listpris-domen dömde fel. Konservativt fel — men fel.
-    const _benchmarkType = BRANCHINDEX[categorized.category]?.source === 'real-public'
-      ? 'real-public'
-      : 'negotiated-target';
+    // ── PROVENIENSEN LÄSES UR DET SOM RÄKNADE (obduktionen 2026-08-20) ────────────────────────
+    // Raden läste tidigare BRANCHINDEX[kategori].source — den STATISKA tabellraden. Men
+    // jämförelsepriset kommer ur recommend.js: antingen like-for-like mot licenseTierBenchmarks,
+    // eller benchmark.p25, vars läsväg FÖREDRAR livedata (invoice_datapoints 'real' och
+    // invoice_analyses 'live_analyses', båda isTotal). Tabellraden sa 'real-public' oavsett —
+    // så en jämförelse som vilade på andra bolags totalsummor fick ändå bocken «verifierat
+    // publikt listpris» och listprisets SMALARE konfidensintervall (±12 % i stället för ±25 %).
+    // Rätt siffra kanske, fel proveniens — vilket regel 3 räknar som fel — med överdriven
+    // precision ovanpå. Buggfixen i juli rörde exakt den här raden och bytte `priceSource` mot
+    // `source`: rätt fältnamn på fel objekt lämnade felet på plats.
+    //
+    // Fail-closed: en väg som inte bokför sin källa får ingen bock. Bocken är ett påstående om
+    // proveniens, och ett påstående utan underlag ska utebli (regel 3/4) — inte antas.
+    const _kalla = recommendation.jamforelseKalla ?? null;
+    const _benchmarkType = _kalla?.listprisanspraak === true ? 'real-public' : 'negotiated-target';
 
     // B4 · listpris-domen i kvittot: prisbokens verkliga proveniens blir en kvittorad.
     // Endast 'real-public' förtjänar bocken (verifierat publikt listpris) — ett märkt
     // estimat får ALDRIG en bock (regel 3/4, prisbokens semantik). Raden emitteras bara
     // när en jämförelse faktiskt görs (suggestedAnnualCost finns).
+    // OCH RESERVKORTETS LÄXA (2026-08-15) EN GÅNG TILL: ej_provbar-raden sa ALLTID «ett märkt
+    // branschestimat». Det var ett påstått skäl, inte ett känt. Är källan livedata är underlaget
+    // STARKARE än ett estimat — det är bara inte ett listpris — och är den obokförd vet vi inte
+    // alls. En rad som talar om varför vi avstår måste säga det sanna skälet eller inget skäl.
     if (Array.isArray(routing.verifications) && recommendation.suggestedAnnualCost != null) {
-      routing.verifications.push(_benchmarkType === 'real-public'
-        ? { id: 'listpris', status: 'ok', detalj: 'jämförelsepriset är ett verifierat publikt listpris' }
-        : { id: 'listpris', status: 'ej_provbar', detalj: 'jämförelsepriset är ett märkt branschestimat — inget listprisanspråk' });
+      if (_benchmarkType === 'real-public') {
+        routing.verifications.push({
+          id: 'listpris', status: 'ok',
+          detalj: `jämförelsepriset är ett verifierat publikt listpris (verifierat ${_kalla.lastVerified})`,
+        });
+      } else {
+        const _skal = _kalla == null
+          ? 'jämförelsens källa är inte bokförd — inget listprisanspråk görs'
+          : _kalla.isTotal
+            ? 'jämförelsepriset kommer ur andra bolags totalkostnader, inte ur ett listpris'
+            : _kalla.source === 'estimated' || _kalla.source === 'mock'
+              ? 'jämförelsepriset är ett märkt branschestimat — inget listprisanspråk'
+              : _kalla.lastVerified == null
+                ? 'jämförelsepriset saknar verifieringsdatum — odaterat pris kallas aldrig verifierat'
+                : `jämförelsepriset kommer ur källan «${_kalla.source}» — inget publikt listprisanspråk`;
+        routing.verifications.push({ id: 'listpris', status: 'ej_provbar', detalj: _skal });
+      }
     }
 
     const calculationChain = {
@@ -1867,6 +1892,11 @@ export default async function handler(req, res) {
         // två fält ritar FindingCard i testa-faktura tomt. Zero Trust, får rida med alltid.
         leadFinding:      recommendation.leadFinding      ?? null,
         forensicFindings: recommendation.forensicFindings ?? null,
+        // Jämförelsens proveniens (2026-08-20). Beviset bakom kvittoraden och intervallbredden —
+        // vilken källa som bar talet, vilket datum den verifierades och om den är en totalsumma.
+        // Ett bevis som ingen kan se är inget bevis; och live-sonden kunde tidigare inte läsa
+        // prisboken ur den utlagda servern alls, för `benchmark` serialiserades aldrig hit.
+        jamforelseKalla:  recommendation.jamforelseKalla ?? null,
       },
       calculationChain,
       savingRange,

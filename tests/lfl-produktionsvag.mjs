@@ -120,9 +120,14 @@ describe('RD-08 · Ingen lokal kopia av like-for-like-matten', () => {
   //   varje skrivning hade fällt de ärliga vakterna och tvingat fram att de togs bort.
   test('api-lagret räknar inte om kundens tal ur prisbokens tier-priser', () => {
     const kod = readFileSync(join(ROT, 'api/test-invoice.mjs'), 'utf8');
+    // Vakten dömer KOD, aldrig prosa (2026-08-20): en kommentar som FÖRKLARAR varifrån
+    // tier-priserna kommer fällde den här kontrollen. Det är SK-08:s läxa i ny form — förbjud
+    // handlingen, inte ordet. En vakt som fäller på en kommentar lär nästa läsare att skriva
+    // om kommentaren i stället för att titta på koden, och då är vakten värre än ingen.
+    const arKommentar = (r) => /^\s*(\/\/|\*|\/\*)/.test(r);
     const rader = kod.split('\n')
       .map((r, i) => ({ r, n: i + 1 }))
-      .filter(({ r }) => r.includes('licenseTierBenchmarks'));
+      .filter(({ r }) => r.includes('licenseTierBenchmarks') && !arKommentar(r));
     // Enda tillåtna referensen: att LÄMNA prisboken vidare till den delade funktionen.
     const otillatna = rader.filter(({ n }) => {
       const omgivning = kod.split('\n').slice(Math.max(0, n - 4), n + 1).join('\n');
