@@ -90,3 +90,21 @@ Sonden skriver inget och läser ingen kundidentitet.
   — analyser sedan 1 augusti, per fingerprint-prefix (maskerat) —
   ab3c3…: 10 · senast 2026-08-15
   20cc4…: 9 · senast 2026-08-14
+
+=== DEN AVGÖRANDE KORSNINGEN ===
+  jobb done · 2026-06-26: 3
+  jobb done · 2026-08-14: 10
+  jobb failed · 2026-08-14: 10
+  — ALLA fingerprint-prefix i liggaren (maskerade) —
+  20cc4…: 19 rader · 2026-06-11 → 2026-08-14
+  b4b85…: 11 rader · 2026-05-31 → 2026-06-20
+  ab3c3…: 10 rader · 2026-08-14 → 2026-08-15
+  seed:…: 5 rader · 2026-07-13 → 2026-07-13
+  055c8…: 4 rader · 2026-05-30 → 2026-06-02
+  92eee…: 3 rader · 2026-05-31 → 2026-06-02
+  b3beb…: 1 rader · 2026-07-16 → 2026-07-16
+  c21f9…: 1 rader · 2026-07-08 → 2026-07-08
+  a74af…: 1 rader · 2026-06-11 → 2026-06-11
+  cebd3…: 1 rader · 2026-07-08 → 2026-07-08
+  4e5bd…: 1 rader · 2026-06-28 → 2026-06-28
+  → INGEN rad i liggaren har någonsin burit mail:-fingerprint.
