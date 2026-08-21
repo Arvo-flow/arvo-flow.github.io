@@ -112,3 +112,15 @@ Sonden skriver inget och läser ingen kundidentitet.
   cebd3…: 1 rader · 2026-07-08 → 2026-07-08
   4e5bd…: 1 rader · 2026-06-28 → 2026-06-28
   → 29 rader matchar en mail-avsändare · 2026-06-11 → 2026-08-15
+
+=== HUR MÅNGA AV PRISBOKENS DATAPUNKTER BÄR ETT ANTAGET SEGMENT? ===
+  mobil: 10 datapunkt(er) matchar en mail-in-analys
+  saas-productivity: 1 datapunkt(er) matchar en mail-in-analys
+  bredband: 1 datapunkt(er) matchar en mail-in-analys
+  faktura-tjanst: 1 datapunkt(er) matchar en mail-in-analys
+  skrivarleasing: 1 datapunkt(er) matchar en mail-in-analys
+  → 14 av 292 datapunkter (5 %) kan härledas till en analys vars segment aldrig observerades.
+  (Matchningen är approximativ: kategori + årskostnad + 30 s. Den kan både missa och
+   överskatta — men den mäter samma sak i båda riktningarna och ger en storleksordning.)
+  cellen mobil · byraer · small rymmer 83 datapunkter — det är den cell varje
+  mail-in-faktura hamnar i, oavsett kundens verkliga bransch och storlek.
