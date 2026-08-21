@@ -61,3 +61,17 @@ per-användare-kategorier i prisboken: mobil, vaxel, molnvaxel, saas-productivit
   referens · saas-productivity: verifierat publikt p25 = 1606 kr/enhet/år (2026-08-05)
 
 Sonden skriver inget och läser ingen kundidentitet.
+
+=== HUR MYCKET AV PRISBOKEN ÄR MÄRKT MED DEFAULTVÄRDEN? ===
+  mobil: 19 analyser · 0 via mail-in (0 %) · 10 med employees=10
+  saas-productivity: 17 analyser · 0 via mail-in (0 %) · 8 med employees=10
+  bredband: 5 analyser · 0 via mail-in (0 %) · 1 med employees=10
+  skrivarleasing: 2 analyser · 0 via mail-in (0 %) · 1 med employees=10
+  it-support: 1 analyser · 0 via mail-in (0 %) · 0 med employees=10
+  serverhosting: 1 analyser · 0 via mail-in (0 %) · 0 med employees=10
+  molnvaxel: 1 analyser · 0 via mail-in (0 %) · 0 med employees=10
+  saas-finance: 1 analyser · 0 via mail-in (0 %) · 0 med employees=10
+  faktura-tjanst: 1 analyser · 0 via mail-in (0 %) · 1 med employees=10
+  SUMMA: 48 auto-analyser · 0 via mail-in · 21 med employees exakt 10
+  (employees=10 kan vara sant för en riktig kund — talet är en ÖVRE gräns för hur
+   många rader som kan bära ett antaget segment, inte ett bevis på att de gör det.)
