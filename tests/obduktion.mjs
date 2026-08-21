@@ -374,3 +374,66 @@ describe('OB · Bytesetiketten kan inte överleva ett nollat beslut', () => {
       'ställe som sätter typen får inte kunna kringgå den (regel 1)');
   });
 });
+
+// ── OB-21..23 · ETT ANTAGET SEGMENT FÅR INTE BLI PRISBOKENS SANNING ──────────────────────────
+// Båda mail-in-vägarna skickar `industry: 'ovrigt'` och `employees: 10` — inte för att det är
+// sant, utan för att fälten krävs. 'ovrigt' mappar till segmentet `byraer` och 10 anställda till
+// bandet `small`, så VARJE mail-in-faktura hade skrivits till prisbokens cell `byraer · small`
+// oavsett vem kunden är. Cellen svämmar då över med bolag av alla storlekar och branscher, och
+// dess p25/median blir meningslös — men ser precis lika auktoritativ ut. Det är «ett tal som ser
+// mätt ut utan att vara det», i den enda tabell som bär den kollektiva sanningen.
+//
+// Mätt mot produktionsdatabasen 2026-08-21: 0 av 48 lagrade auto-analyser kom den vägen. Skadan
+// är alltså ÄNNU inte skedd — och just därför är den värd att stänga nu: mail-in är bulkvägen,
+// och i samma sekund den används på riktigt börjar det hända.
+//
+// FÅNGAR: att en mail-in-väg slutar deklarera sitt antagande, och att spärren i storeDatapoint
+//   tas bort eller görs verkningslös.
+// BLIND: vakten ser bara de två kända mail-in-vägarna vid namn. En TREDJE väg som hårdkodar
+//   segmentet skulle inte fällas — och den vet heller ingenting om huruvida ett INSKICKAT
+//   segment är sant, bara om avsändaren påstod att det var okänt.
+describe('OB · Prisboken tar inte emot ett antaget segment', () => {
+  const MAILVAGAR = ['api/inbound-email.mjs', 'api/cron/drain-ingest.mjs'];
+
+  test('OB-21 · båda mail-in-vägarna deklarerar att segmentet är antaget', () => {
+    for (const f of MAILVAGAR) {
+      const kod = readFileSync(join(ROT, f), 'utf8');
+      // Bara vägar som FAKTISKT hårdkodar segmentet behöver flaggan — deklarationen ska följa
+      // koden, inte tvärtom (annars vaktar vi en regel ingen längre bryter mot).
+      const hardkodar = /industry:\s*'ovrigt'/.test(kod) && /employees:\s*\d+/.test(kod);
+      if (!hardkodar) continue;
+      assert.match(kod, /segmentOkant:\s*true/,
+        `${f} skickar ett hårdkodat industry/employees till pipelinen utan att säga att det är ` +
+        'antaget. Prisboken kan då inte skilja ett avläst segment från ett påhittat (regel 3).');
+    }
+  });
+
+  test('OB-22 · storeDatapoint vägrar skriva när segmentet är antaget', async () => {
+    // Beteendevakt, inte källtextvakt: funktionen anropas och får inte nå någon skrivning.
+    // Utan DATABASE_URL returnerar den ändå tidigt, så testet prövar att spärren ligger FÖRE
+    // varje annan gren och inte kastar.
+    const { storeDatapoint } = await import('../lib/benchmark.js');
+    await assert.doesNotReject(() => storeDatapoint({
+      category: 'mobil', supplier: 'Tele2', annualCost: 119_520,
+      industry: 'ovrigt', employees: 10, seatCount: 40, segmentOkant: true,
+    }));
+    const kod = readFileSync(join(ROT, 'lib', 'benchmark.js'), 'utf8')
+      .split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
+    const i = kod.indexOf('export async function storeDatapoint');
+    const spärr = kod.indexOf('if (segmentOkant)', i);
+    const forsta = kod.indexOf('INSERT INTO invoice_datapoints', i);
+    assert.ok(spärr > i, 'spärren saknas i storeDatapoint');
+    assert.ok(forsta === -1 || spärr < forsta,
+      'spärren måste ligga FÖRE skrivningen — annars hinner raden in i prisboken');
+  });
+
+  test('OB-23 · ett OBSERVERAT segment spärras aldrig', () => {
+    // Motprovet. En spärr som fäller allt är lika värdelös som ingen spärr: testa-faktura låter
+    // kunden VÄLJA 'ovrigt' som bransch, och den raden är avläst och ska in i prisboken.
+    const kod = readFileSync(join(ROT, 'api', 'test-invoice.mjs'), 'utf8')
+      .split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
+    assert.match(kod, /segmentOkant\s*=\s*body\?\.segmentOkant\s*===\s*true/,
+      'flaggan måste komma från AVSÄNDAREN — bara den vet om talet är avläst. Härleds den ur ' +
+      "industry === 'ovrigt' spärras varje kund som själv valde «övrigt» i formuläret.");
+  });
+});

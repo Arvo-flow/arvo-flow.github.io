@@ -361,6 +361,21 @@ export default async function handler(req, res) {
   }
 
   const { pdfBase64, industry, employees, revenue, token, fingerprint, bypass, email } = body;
+  // ── SEGMENTET ÄR ANTAGET, INTE OBSERVERAT (obduktionen 2026-08-21) ──────────────────────────
+  // Mail-in-vägarna (api/inbound-email.mjs och api/cron/drain-ingest.mjs) skickar
+  // `industry: 'ovrigt'` och `employees: 10` — inte för att det är sant, utan för att fälten
+  // krävs. 'ovrigt' mappar till segmentet `byraer` och 10 anställda till bandet `small`, så VARJE
+  // mail-in-faktura skulle skrivas till prisbokens cell `byraer · small` oavsett vem kunden är.
+  // Cellen svämmar då över med bolag av alla storlekar och branscher, och dess p25/median blir
+  // meningslös — men ser precis lika auktoritativ ut. Det är «ett tal som ser mätt ut utan att
+  // vara det», i den enda tabell som bär den kollektiva sanningen.
+  //
+  // Mätt 2026-08-21: 0 av 48 lagrade auto-analyser kom den vägen, alltså är skadan ÄNNU inte
+  // skedd. Men mail-in är bulkvägen — moaten — och i samma sekund den används på riktigt börjar
+  // det hända. Flaggan är avsändarens ansvar, för bara avsändaren vet om talet är avläst.
+  // Kunden påverkas inte: analysen körs, lagras i kundens egen liggare och besvaras som vanligt.
+  // Det enda som uteblir är en rad i prisboken som ingen kan belägga (regel 3).
+  const segmentOkant = body?.segmentOkant === true;
 
   if (!pdfBase64 || typeof pdfBase64 !== 'string') {
     return send(res, 400, { error: 'pdfBase64 är obligatoriskt' });
@@ -1299,6 +1314,7 @@ export default async function handler(req, res) {
       storeDatapoint({
         category: 'el', supplier: categorized.normalizedSupplier,
         annualCost: elRec.currentAnnualGross, industry, employees: employeesNum,
+        segmentOkant,
       }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
       const { arvoFee, netSaving } = elRec;
@@ -1473,6 +1489,7 @@ export default async function handler(req, res) {
       annualCost: extracted.annualCost ?? extracted.amount,
       industry,
       employees: employeesNum,
+      segmentOkant,
       seatCount: extracted.seatCount ?? null,
     }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 

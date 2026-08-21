@@ -181,6 +181,36 @@ console.log(`  SUMMA: ${tot[0].n} auto-analyser · ${tot[0].via_mail} via mail-i
 console.log('  (employees=10 kan vara sant för en riktig kund — talet är en ÖVRE gräns för hur');
 console.log('   många rader som kan bära ett antaget segment, inte ett bevis på att de gör det.)');
 
+console.log('\n=== MAIL-IN: DÖRREN TILL KONTORET, TIO VECKOR EFTER LANSERING ===');
+// 0 av 48 auto-analyser kom via mail-in (fingerprint `mail:<sha16>`). Dörren har varit live sedan
+// 11 juni. Antingen har ingen mejlat, eller så fastnar mejlen på vägen — och de två kräver rakt
+// motsatta åtgärder. Frågan är värd att ställa: mail-in är bulkvägen, alltså moatens bränsle.
+const mailRader = await db`
+  SELECT route, COUNT(*)::int AS n, MAX(created_at) AS senast
+  FROM invoice_analyses WHERE fingerprint LIKE 'mail:%' GROUP BY 1 ORDER BY 2 DESC
+`;
+if (mailRader.length === 0) {
+  console.log('  Ingen analys alls med mail-fingerprint — ingen faktura har nått pipelinen den vägen.');
+} else {
+  for (const r of mailRader) {
+    console.log(`  route=${r.route}: ${r.n} rader · senast ${new Date(r.senast).toISOString().slice(0, 10)}`);
+  }
+}
+// Kön är den andra halvan av svaret: ett jobb kan ha köats utan att någonsin bli en analys.
+try {
+  const jobb = await db`
+    SELECT status, COUNT(*)::int AS n, MAX(created_at) AS senast
+    FROM ingest_jobs GROUP BY 1 ORDER BY 2 DESC
+  `;
+  if (jobb.length === 0) console.log('  ingest_jobs är tom — inget bulk-jobb har någonsin köats.');
+  for (const j of jobb) {
+    console.log(`  kö · ${j.status}: ${j.n} jobb · senast ${new Date(j.senast).toISOString().slice(0, 10)}`);
+  }
+} catch (err) {
+  // Tabellen kan saknas i den här miljön — det är ett MÄTVÄRDE, inte ett fel att svälja.
+  console.log(`  ingest_jobs kunde inte läsas: ${err.message}`);
+}
+
 // process.exit(0) står SIST — den låg tidigare mitt i filen och gjorde allt som lades till
 // efteråt till död kod. Sonden rapporterade "klar" utan att ha kört mätningen, och utfallet såg
 // identiskt ut med ett utfall som mätt. Åttonde gången under obduktionen som mätinstrumentet

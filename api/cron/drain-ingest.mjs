@@ -62,6 +62,9 @@ async function processJob(job) {
           email:       job.sender,
           userEmail:   job.sender,
           fingerprint: `mail:${sha16(job.sender)}`,
+          // industry/employees ovan är ANTAGNA, inte avlästa — flaggan hindrar att de skrivs
+          // till prisboken som om de vore observerade (regel 3). Analysen och kundens svar rörs inte.
+          segmentOkant: true,
         }),
       });
     } finally {

@@ -496,6 +496,9 @@ och ni behöver skicka om det.</p>
           email:       identityEmail,
           userEmail:   identityEmail,
           fingerprint: identityFp,
+          // industry/employees ovan är ANTAGNA, inte avlästa — flaggan hindrar att de skrivs
+          // till prisboken som om de vore observerade (regel 3). Analysen och kundens svar rörs inte.
+          segmentOkant: true,
         }),
       });
       const a = await r.json().catch(() => null);
