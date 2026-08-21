@@ -62,22 +62,26 @@ per-användare-kategorier i prisboken: mobil, vaxel, molnvaxel, saas-productivit
 
 Sonden skriver inget och läser ingen kundidentitet.
 
+(korsar mot 2 hashad(e) mail-avsändare ur kön)
+
 === HUR MYCKET AV PRISBOKEN ÄR MÄRKT MED DEFAULTVÄRDEN? ===
-  mobil: 19 analyser · 0 via mail-in (0 %) · 10 med employees=10
-  saas-productivity: 17 analyser · 0 via mail-in (0 %) · 8 med employees=10
-  bredband: 5 analyser · 0 via mail-in (0 %) · 1 med employees=10
-  skrivarleasing: 2 analyser · 0 via mail-in (0 %) · 1 med employees=10
+  mobil: 19 analyser · 10 via mail-in (53 %) · 10 med employees=10
+  saas-productivity: 17 analyser · 8 via mail-in (47 %) · 8 med employees=10
+  bredband: 5 analyser · 1 via mail-in (20 %) · 1 med employees=10
+  skrivarleasing: 2 analyser · 1 via mail-in (50 %) · 1 med employees=10
   it-support: 1 analyser · 0 via mail-in (0 %) · 0 med employees=10
   serverhosting: 1 analyser · 0 via mail-in (0 %) · 0 med employees=10
   molnvaxel: 1 analyser · 0 via mail-in (0 %) · 0 med employees=10
   saas-finance: 1 analyser · 0 via mail-in (0 %) · 0 med employees=10
-  faktura-tjanst: 1 analyser · 0 via mail-in (0 %) · 1 med employees=10
-  SUMMA: 48 auto-analyser · 0 via mail-in · 21 med employees exakt 10
+  faktura-tjanst: 1 analyser · 1 via mail-in (100 %) · 1 med employees=10
+  SUMMA: 48 auto-analyser · 21 via mail-in · 21 med employees exakt 10
   (employees=10 kan vara sant för en riktig kund — talet är en ÖVRE gräns för hur
    många rader som kan bära ett antaget segment, inte ett bevis på att de gör det.)
 
 === MAIL-IN: DÖRREN TILL KONTORET, TIO VECKOR EFTER LANSERING ===
-  Ingen analys alls med mail-fingerprint — ingen faktura har nått pipelinen den vägen.
+  route=auto: 21 rader · senast 2026-08-14
+  route=review_queue: 7 rader · senast 2026-08-14
+  route=unsupported: 1 rader · senast 2026-08-15
   kö · done: 13 jobb · senast 2026-08-14
   kö · failed: 10 jobb · senast 2026-08-14
 
@@ -107,4 +111,4 @@ Sonden skriver inget och läser ingen kundidentitet.
   a74af…: 1 rader · 2026-06-11 → 2026-06-11
   cebd3…: 1 rader · 2026-07-08 → 2026-07-08
   4e5bd…: 1 rader · 2026-06-28 → 2026-06-28
-  → INGEN rad i liggaren har någonsin burit mail:-fingerprint.
+  → 29 rader matchar en mail-avsändare · 2026-06-11 → 2026-08-15
