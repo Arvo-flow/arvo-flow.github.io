@@ -584,6 +584,59 @@ signera", aldrig som ett verkställt löfte.)
    > fälldes inte förrän jag skrev det fall där den är det enda som håller. **En vakt vars sabotage
    > inte fäller är ingen vakt** — den ska antingen förtjäna sin plats eller tas bort.
 
+   > **✅ ARITMETISKT KORREKT ÄR INTE SAMMA SAK SOM JÄMFÖRBART (2026-08-21, ur obduktionen).**
+   > Grundaren frös kodbasen och bad om en fullständig obduktion. Det tyngsta fyndet var enhetsfelet
+   > en tredje gång: `recommend.js` räknade sin skala på **tre ställen**, två bar `!benchmark.isTotal`
+   > och den tredje — den som bygger `suggestedAnnualCost`, `savingPerYear` och `overpaymentPercent`,
+   > alltså kundens pengar — bar den inte. Båda DB-grenarna i `lib/benchmark.js` sätter `isTotal`, men
+   > `note` ärvs från prisbokens mock och säger «per användare»: den kombinationen multiplicerade en
+   > TOTALSUMMA med antalet anställda. Mätt: **9 cellkombinationer var live**, och 16 av 30 prövbara
+   > lagrade rader fick sitt byte nollat enbart av skalan. Finansgrinden nedströms döljer den grova
+   > formen genom att nolla bytet — vilket gör felet **tyst i stället för synligt**: kunden ser «ingen
+   > besparing» på en jämförelse som var tjugofem gånger fel.
+   >
+   > **Och sedan var min egen fix bara halva vägen.** Med skalan satt till 1 blev aritmetiken rätt —
+   > men livedatans p25 för mobil i bandet 10–49 anställda är 35 880 kr/år, alltså **75 kr/mån per
+   > anställd**. Inget mobilabonnemang i Sverige kostar det. Talet är en total där kohortens bolag har
+   > färre SIM än anställda; kundens 40-SIM-total ställdes mot en kohort vars enhetsantal ingen
+   > normaliserat. Jag stannade vid den första fixen därför att talet då var *aritmetiskt korrekt*.
+   > **Regeln: en siffra som går att räkna hem kan fortfarande jämföra fel saker — fråga alltid vad
+   > talet är per, inte bara om det stämmer.** Regeln fanns dessutom redan, för ett annat kort:
+   > branschankaret (25 juni) tillåter bara `real-public`, «aldrig totalsumma → fel enhet», och scoren
+   > flyttades dit 19 augusti. Bytesmålet var den TREDJE konsumenten av samma läsväg och gick kvar den
+   > gamla vägen. `bytesgolv()` är fail-closed och tystnaden bär sitt skäl. Riktningen är den säkra:
+   > mot kohorttotalen hade en rad fått 83 640 kr i påstådd besparing; mot det verifierade golvet
+   > finns ingen, för kunden ligger under listpris.
+   >
+   > **Tre fler fynd ur samma obduktion, alla samma familj — ett grönt som betyder «jag tittade inte»:**
+   > · **Proveniensen gissades nedströms.** Kvittots bock «verifierat publikt listpris» och
+   >   savingRange-bredden härleddes ur `BRANCHINDEX[kategori].source` — den statiska tabellraden, inte
+   >   objektet som räknade. 156 rader upp i samma fil läser sanity-verifieraren rätt objekt (regel 1).
+   >   Juli-fixen rörde exakt den raden och bytte fältnamn **på fel objekt**; det lämnade felet på plats.
+   > · **Momsgrinden gissade satsen som står tryckt på fakturan.** Radsumman förklarade bort ett glapp
+   >   som «moms» om någon av 25/12/6 % passade — ett fönster där en saknad rad på 3–9 % av fakturan
+   >   godkänns. `moms_sats` är ett avläst observationsfält sedan 12 augusti. Den avlästa satsen
+   >   SKÄRPER nu, den vidgar aldrig; `>= 0` är lastbärande, för en 0 %-faktura (reverse charge) fick
+   >   förut sitt glapp bortförklarat av tre-satsprovningen.
+   > · **Vaktens eget skyddsnät satt på fel sida om argumentläsningen.** Det hittade inte jag — mitt
+   >   test gjorde det. `judgeProjection` destrukturerade i PARAMETERLISTAN, alltså före `try`, så
+   >   `judgeProjection(null)` kunde riva hela extraktionen förbi den catch som finns just för att
+   >   vakten aldrig ska bli produktionsrisken. Samma sak i `guardToolPayload`. OB-18 skannar nu hela
+   >   `lib/` efter mönstret. **Granskarens blick igen: hålet syntes först när uppdraget var att få
+   >   testet att FÄLLA, inte att bli grönt.**
+   >
+   > **Läxan om sviten, för fjärde gången:** ingen av 1 822 gröna tester såg någondera, och kunde inte
+   > ha gjort det — hela sviten kör utan `DATABASE_URL`, och utan databas kan `isTotal` aldrig bli sant.
+   > Villkorsvakten, LFL-harnesset, ankaret, nu denna. Nya tester matar tillståndet uttryckligen, och
+   > besluten bor i rena funktioner (`lib/jamforelsekalla.js`) just därför att sviten annars inte kan nå dem.
+   >
+   > **Och en av mina egna nya vakter var grön på fel grund.** OB-17:s första version letade en sträng i
+   > källtexten och överlevde sitt sabotage — strängen fanns kvar på tilldelningsstället. Bytt mot en
+   > beteendevakt med motprov. Två ankare fällde dessutom på fel rad (RD-08 på en kommentar, JK-12 på
+   > `===` i stället för tilldelningen). **Mätinstrumentet var felet oftare än systemet, sjunde gången
+   > denna vecka** — live-sonden läste `recommendation.benchmark.*`, ett objekt som aldrig serialiserats,
+   > och fyra tysta `null` lästes som mätvärden i två dygn.
+
    > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
    > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
    > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det
