@@ -337,3 +337,40 @@ describe('OB-18 · Grindarnas skyddsnät täcker deras egen argumentläsning', (
       'parameterlistan, alltså UTANFÖR nätet. Flytta destruktureringen in i try:\n' + brott.join('\n'));
   });
 });
+
+// ── OB-19..20 · ETIKETTEN FICK INTE MOTSÄGA BESLUTET ─────────────────────────────────────────
+// Live-svaret 2026-08-21 bar `recommendationType: "switch"` tillsammans med `grossSaving: 0`.
+// Orsak: de finansiella grindarna nollar `shouldSwitch`/`suggestedAnnualCost`/`savingPerYear`
+// men rörde aldrig typfältet, och serialiseringen använde `??` — ett 'switch' som recommend.js
+// redan satt stod alltså kvar efter att systemet självt beslutat att INTE byta.
+//
+// Ingen kundyta läser just 'switch' i dag (konsumenterna testar === 'optimize'), så ingen lögn
+// syntes i rummet. Men svaret lagras och läses av sonder, mail och framtida ytor: ett fält som
+// kan motsäga sitt eget beslut är ett fel som väntar på en yta. Samma mekanism som fällde tre
+// ytor den 19 augusti — ett tillstånd nollas på ett ställe, ett annat fält behåller påståendet.
+//
+// FÅNGAR: att grindarna slutar sätta typen, och att serialiseringens invariant görs om till en
+//   fallback som släpper igenom ett 'switch' utan levande bytesbeslut.
+// BLIND: prövar källtexten i api-lagret, inte ett verkligt svar (serialiseringen ligger mitt i en
+//   700-raders handler som kräver AI-anrop). Att invarianten FINNS bevisas här; att den håller i
+//   produktion bevisas av diag-live.
+describe('OB · Bytesetiketten kan inte överleva ett nollat beslut', () => {
+  const api = readFileSync(join(ROT, 'api', 'test-invoice.mjs'), 'utf8');
+  const kod = api.split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
+
+  test('OB-19 · varje finansiell grind som nollar shouldSwitch sätter också typen', () => {
+    const grindar = [...kod.matchAll(/recommendation\.shouldSwitch\s*=\s*false;([\s\S]{0,400}?)(?:\n\s*\}|\n\s*if\s)/g)];
+    assert.ok(grindar.length >= 2, `hittade bara ${grindar.length} nollande grindar — vakten mäter fel objekt`);
+    for (const g of grindar) {
+      assert.match(g[1], /recommendationType\s*=\s*'no_action'/,
+        'en grind som beslutar att INTE byta måste ta med sig etiketten — annars säger svaret ' +
+        '«switch» om en analys vars besparing är noll');
+    }
+  });
+
+  test('OB-20 · serialiseringen kan inte uttrycka «switch» utan bytesbeslut', () => {
+    assert.match(kod, /recommendationType\s*===\s*'switch'\s*&&\s*recommendation\.shouldSwitch\s*!==\s*true/,
+      'invarianten måste ligga i serialiseringen också — grindarna är källan, men ett fjärde ' +
+      'ställe som sätter typen får inte kunna kringgå den (regel 1)');
+  });
+});

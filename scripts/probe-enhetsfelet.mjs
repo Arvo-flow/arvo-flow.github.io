@@ -154,3 +154,30 @@ for (const k of ['mobil', 'saas-productivity']) {
 
 console.log('\nSonden skriver inget och läser ingen kundidentitet.');
 process.exit(0);
+
+console.log('\n=== HUR MYCKET AV PRISBOKEN ÄR MÄRKT MED DEFAULTVÄRDEN? ===');
+// Båda mail-in-vägarna (api/inbound-email.mjs och api/cron/drain-ingest.mjs) skickar
+// `industry: 'ovrigt'` och `employees: 10` — inte observerat, utan antaget. 'ovrigt' mappar till
+// segmentet 'byraer' och 10 anställda till storleksbandet 'small'. Varje mail-in-faktura hamnar
+// alltså i cellen byraer · small oavsett vem kunden är. Frågan är hur stor andel av prisbokens
+// största celler som består av rader vars segment aldrig observerades.
+const mail = await db`
+  SELECT category,
+         COUNT(*)::int AS totalt,
+         COUNT(*) FILTER (WHERE fingerprint LIKE 'mail:%')::int AS via_mail,
+         COUNT(*) FILTER (WHERE employees = 10)::int AS exakt_tio
+  FROM invoice_analyses WHERE route = 'auto' GROUP BY 1 ORDER BY 2 DESC LIMIT 12
+`;
+for (const r of mail) {
+  const andel = r.totalt > 0 ? Math.round((r.via_mail / r.totalt) * 100) : 0;
+  console.log(`  ${r.category}: ${r.totalt} analyser · ${r.via_mail} via mail-in (${andel} %) · ${r.exakt_tio} med employees=10`);
+}
+const tot = await db`
+  SELECT COUNT(*)::int AS n,
+         COUNT(*) FILTER (WHERE fingerprint LIKE 'mail:%')::int AS via_mail,
+         COUNT(*) FILTER (WHERE employees = 10)::int AS exakt_tio
+  FROM invoice_analyses WHERE route = 'auto'
+`;
+console.log(`  SUMMA: ${tot[0].n} auto-analyser · ${tot[0].via_mail} via mail-in · ${tot[0].exakt_tio} med employees exakt 10`);
+console.log('  (employees=10 kan vara sant för en riktig kund — talet är en ÖVRE gräns för hur');
+console.log('   många rader som kan bära ett antaget segment, inte ett bevis på att de gör det.)');

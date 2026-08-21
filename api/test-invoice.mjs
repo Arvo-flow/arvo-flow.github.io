@@ -1530,6 +1530,10 @@ export default async function handler(req, res) {
         recommendation.shouldSwitch        = false;
         recommendation.suggestedAnnualCost = null;
         recommendation.savingPerYear       = 0;
+        // Grinden nollade beslutet men lät ETIKETTEN stå (obduktionen 2026-08-21). Det är samma
+        // mekanism som fällde tre ytor den 19 augusti: ett tillstånd nollas på ett ställe medan
+        // ett annat fält behåller det gamla påståendet.
+        recommendation.recommendationType  = 'no_action';
       }
     }
     if (recommendation.shouldSwitch) {
@@ -1538,6 +1542,7 @@ export default async function handler(req, res) {
       if (_primGross + _secGross <= 0) {
         console.error(`[guard:finansiell] Ingen positiv besparing (prim=${_primGross} sek=${_secGross}) — override shouldSwitch=false`);
         recommendation.shouldSwitch = false;
+        recommendation.recommendationType = 'no_action';
       }
     }
 
@@ -1857,7 +1862,14 @@ export default async function handler(req, res) {
         licensePending: categorized.licensePending,
       },
       recommendation: {
-        recommendationType: recommendation.recommendationType ?? (recommendation.shouldSwitch ? 'switch' : 'no_action'),
+        // INVARIANT, inte en fallback: `??` lät ett 'switch' som recommend.js satt stå kvar efter
+        // att grinden nollat beslutet — live-svaret bar «switch» tillsammans med grossSaving 0.
+        // Ingen kundyta läser just 'switch' i dag, så ingen lögn syntes; men svaret lagras och
+        // läses av sonder, mail och framtida ytor. Ett fält som kan motsäga sitt eget beslut är
+        // ett fel som väntar på en yta (regel 3). 'switch' kräver numera ett levande bytesbeslut.
+        recommendationType: (recommendation.recommendationType === 'switch' && recommendation.shouldSwitch !== true)
+          ? 'no_action'
+          : (recommendation.recommendationType ?? (recommendation.shouldSwitch ? 'switch' : 'no_action')),
         optimizationSaving: recommendation.optimizationSaving ?? null,
         optimizationFee:       recommendation.optimizationFee       ?? null,
         optimizationNetSaving: recommendation.optimizationNetSaving ?? null,
