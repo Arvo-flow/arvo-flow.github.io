@@ -46,3 +46,12 @@ export function fmtOrgnr(orgnr) {
   const d = String(orgnr || '').replace(/\D/g, '');
   return d.length === 10 ? `${d.slice(0, 6)}-${d.slice(6)}` : String(orgnr || '');
 }
+
+// ── SINGULAR/PLURAL (2026-08-21) ─────────────────────────────────────────────────────────────
+// Rummet skrev «Vi jämförde de 1 fakturor» och «1 PRISSATTA» efter att räknarna delats upp.
+// Grammatiken är inte kosmetik i den här produkten: en finansdirektör som ser ett brutet
+// numerus läser hela sidan som maskingenererad, och då tappar varje siffra sin auktoritet.
+// EN källa (regel 1) så nästa yta inte skriver sin egen böjning.
+export function plural(n, singular, pluralform) {
+  return Number(n) === 1 ? singular : pluralform;
+}

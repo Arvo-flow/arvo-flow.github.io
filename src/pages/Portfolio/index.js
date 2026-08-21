@@ -15,7 +15,7 @@ import { groupBySupplier, supplierName, supplierDiagScore, computeActing, roomCo
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
-import { greetingForHour } from '../../utils/format';
+import { greetingForHour, plural } from '../../utils/format';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   Page, Shell, TopRow, Ident, Radar, Verdict, Confidence,
@@ -679,7 +679,11 @@ export default function Portfolio() {
     if (autoAnalyses.length > 0) {
       // slutpunkt(): "14 aug." bär redan sin förkortningspunkt. Meningen lade på en till och rummet
       // skrev "senast 14 aug..". En punkt räcker för både förkortning och mening (svensk standard).
-      rows.push({ tag: 'Analys', what: <>Vägde <b>{autoAnalyses.length} {autoAnalyses.length === 1 ? 'faktura' : 'fakturor'}</b> mot verifierat publikt listpris{latestDate ? <> · senast {latestDate}</> : null}{slutpunkt(latestDate)}</> });
+      // «Vägde N fakturor mot verifierat publikt listpris» räknade varje auto-rad — även de vi
+      // tog emot men aldrig kunde prissätta. Kvittot är arbetets bevis; det får inte påstå ett
+      // arbete vi inte utfört (regel 9). Talet är nu detsamma som rubriken ovanför.
+      const _vagda = roomCounts({ autoAnalyses, watched: watched ?? [] }).prissatta;
+      rows.push({ tag: 'Analys', what: <>Vägde <b>{_vagda} {plural(_vagda, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris{latestDate ? <> · senast {latestDate}</> : null}{slutpunkt(latestDate)}</> });
     }
     if (featured) {
       rows.push({ tag: 'Kohort', what: <>Jämförde era priser mot <b>{featured.n} bolag</b> hos {featured.supplier} via nätverket — sanningen ingen jämförelsesajt kan ge.</> });
@@ -697,8 +701,27 @@ export default function Portfolio() {
   }, [suppliers.length, autoAnalyses.length, latestDate, vakt, featured, roomMovement, roomForecast, roomClock]);
   // Rubriken HÅLLER MED mätaren (samma källa: standing): leder med var ni står sammantaget,
   // med de N avtalen som den fokuserade möjligheten — aldrig en motsägelse mot gaugen nedan.
+  // ── RUBRIKEN HÖLL INTE MED MÄTAREN, TROTS ATT KOMMENTAREN INTYGADE DET (2026-08-21) ────────
+  // `!acting`-grenen läste ALDRIG `standing` — den sa «era priser står sig» så snart det saknades
+  // ett byte att lägga fram. Skärmdumpen visade rubriken «Håll kursen. Era priser står sig»
+  // rakt ovanför Arvo Score 15/100 och MARKNADSLÄGE: SÄMRE, i samma vy.
+  //
+  // Det är 19 augusti-felet en gång till, i den yta jag inte grep:ade igenom då: frånvaron av ett
+  // verifierat bytesmål säger ingenting om huruvida kunden betalar rätt. Ringen och pillen
+  // rättades; veckodomens rubrik gjorde det inte — och kommentaren ovan PÅSTOD att den höll med
+  // mätaren. En kommentar som intygar en invariant koden inte håller är värre än ingen kommentar:
+  // nästa läsare kontrollerar den inte.
+  //
+  // Fail-closed på det omätta fallet: utan score finns ingen position att påstå (samma disciplin
+  // som marketStanding självt har).
   const verdictHead = !acting
-    ? <>Håll kursen. Era priser <em>står sig mot verifierat listpris.</em></>
+    ? (!standing.satt
+        ? <>Vi vaktar era avtal — men <em>er position mot listpris kunde inte mätas</em> i dag.</>
+        : standing.niva === 'battre'
+          ? <>Håll kursen. Era priser <em>står sig mot verifierat listpris.</em></>
+          : standing.niva === 'i-niva'
+            ? <>Ni ligger <em>i nivå med verifierat listpris</em> — inget byte att lägga fram i dag.</>
+            : <>Ni betalar <em>mer än verifierat listpris</em> — men inget avtal bär ett byte vi kan belägga i dag.</>)
     : hasSwitchAction
       ? (standing.niva === 'battre'
           ? <>Sammantaget står ni <em>starkt</em> — men {switchables.length} avtal kostar mer än de borde.</>
@@ -707,14 +730,18 @@ export default function Portfolio() {
             : <>Ni betalar <em>mer än listpris</em> — {switchables.length} avtal drar mest.</>)
       : <>Era avtal står sig — men vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda.</>;
   const verdictWork = !acting
-    ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat publikt listpris.
-        Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>
+    ? (standing.satt && standing.niva === 'samre'
+        ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
+            Ni ligger över golvet, men vi har inget bytesmål vi kan belägga — och vi lägger aldrig fram
+            en besparing vi inte kan räkna hem. Vi bevakar och hör av oss så snart ett mål går att styrka.</>
+        : <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
+            Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>)
     : hasSwitchAction
-      ? <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat publikt listpris.
+      ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
           <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
           största bytet tar två minuter att signera. Övriga avtal har vi inget byte att lägga fram
           för i dag.</>
-      : <>Vi jämförde de <b>{suppliers.length} leverantörer</b> vi kunde prissätta mot verifierat publikt listpris — priserna står sig.
+      : <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris — priserna står sig.
           Men i underlaget vi kunde läsa fångade vi en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
           se vad domen bygger på i fyndet ovan.</>;
 
@@ -787,7 +814,13 @@ export default function Portfolio() {
                 <div className="confidential">Konfidentiellt · {companyName ?? 'Ert konto'} · {today}{testMode ? ' · TESTKONTO (?reset=off för skarpt)' : ''}</div>
                 {/* Hälsningen leder ALLTID (tidsanpassad), sedan dagens läge — samma struktur i
                     båda grenar (grundarbeslut 2026-06-30). Rad 1 vit metallic, lägesraden mint. */}
-                <h1>{greeting}.<br />{acting ? 'Ett par drag väntar på er.' : 'Allt är under kontroll.'}</h1>
+                {/* «Allt är under kontroll» stod kvar även vid Arvo Score 15 — fjärde ytan i samma
+                    vy som översatte «inget byte att lägga fram» till «ert pris är bra» (2026-08-21).
+                    Vid samre säger vi vad vi FAKTISKT gör (vi vaktar) i stället för att uttala oss
+                    om priset. Ett neutralt sant påstående slår ett lugnande falskt. */}
+                <h1>{greeting}.<br />{acting
+                  ? 'Ett par drag väntar på er.'
+                  : (standing.satt && standing.niva === 'samre' ? 'Vi vaktar era avtal.' : 'Allt är under kontroll.')}</h1>
               </Ident>
 
               <Radar>
@@ -820,7 +853,11 @@ export default function Portfolio() {
                 <div className="radar-stats">
                   <div className="rgroup-label">Ert underlag</div>
                   {counts.bevakade > 0 && <div className="rstat"><span>Fakturor</span><span className="v">{counts.fakturor}</span></div>}
-                  <div className="rstat"><span>{counts.bevakade > 0 ? 'Prissatta' : 'Fakturor'}</span><span className="v">{counts.prissatta}</span></div>
+                  {/* Etiketten måste namnge det tal som står under den. «Fakturor» över
+                      counts.prissatta blev osant i samma sekund som räknaren skilde prissatta
+                      från mottagna (2026-08-21) — helhetskravets kärna: varje tal i en yta ska
+                      ha en enhet, och enheten ska vara den etiketten säger. */}
+                  <div className="rstat"><span>{(counts.bevakade > 0 || counts.mottagna > 0) ? 'Prissatta' : 'Fakturor'}</span><span className="v">{counts.prissatta}</span></div>
                   {/* Bevakat — inte prissatt: triagade fakturor syns i räknaren så intaget aldrig läser som bortfall */}
                   {counts.bevakade > 0 && <div className="rstat"><span>Bevakade</span><span className="v">{counts.bevakade}</span></div>}
                 </div>
@@ -861,7 +898,7 @@ export default function Portfolio() {
               <Confidence>
                 {acting && !hasSwitchAction
                   ? <><span className="pct">Ur er egen faktura</span> · talet står på raden i fyndet ovan · inget marknadspris inblandat</>
-                  : <><span className="pct">Verifierat</span> · grundat på {suppliers.length} analyserade leverantörer · publika listpriser</>}
+                  : <><span className="pct">Verifierat</span> · grundat på {counts.prissatta} {plural(counts.prissatta, 'prissatt faktura', 'prissatta fakturor')} · publika listpriser</>}
               </Confidence>
             </Verdict>
 
@@ -920,7 +957,10 @@ export default function Portfolio() {
                     ? <><b>{switchables.length} byte{switchables.length > 1 ? 'n' : ''} förberedda</b> · netto efter Arvos arvode (20% av första årets besparing). Från år två är hela besparingen er.</>
                     : acting
                       ? <>Inget leverantörsbyte krävs — kostnaden åtgärdas direkt mot fakturan. Se fyndet ovan.</>
-                      : <>Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.</>}
+                      : (standing.satt && standing.niva === 'samre'
+                          ? <>Ni ligger över verifierat listpris, men inget av avtalen bär ett byte vi kan belägga.
+                              Vi vaktar dem tills ett mål går att styrka.</>
+                          : <>Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.</>)}
                 </div>
               </Tally>
             </Grid>
@@ -1157,7 +1197,16 @@ export default function Portfolio() {
 
             {/* ── Innehavet — leverantörer, Switch inbakad i raden ────────── */}
             <Holdings>
-              <div className="h-eyebrow">Innehavet · {suppliers.length} prissatta leverantörer</div>
+              {/* «Prissatta» räknade varje leverantör i innehavet — även de vars kort säger
+                  «Mottagen». Rubriken påstod alltså ett pris på rader rummet självt märkt som
+                  obedömda. Nu står de två talen isär, och när alla är prissatta sägs bara det
+                  ena (ett noll behöver ingen egen rad). */}
+              <div className="h-eyebrow">
+                Innehavet · {counts.prissatta} {plural(counts.prissatta, 'prissatt', 'prissatta')}
+                {counts.mottagna > 0
+                  ? ` · ${counts.mottagna} ${plural(counts.mottagna, 'mottagen', 'mottagna')}, inte ${plural(counts.mottagna, 'prissatt', 'prissatta')}`
+                  : ` ${plural(counts.prissatta, 'leverantör', 'leverantörer')}`}
+              </div>
               {suppliers.map((g) => {
                 const a = g.latest, meta = getCategoryMeta(a.category);
                 const score = supplierDiagScore(a), color = scoreColor(score);

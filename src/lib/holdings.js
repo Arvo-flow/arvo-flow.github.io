@@ -110,9 +110,23 @@ export function computeActing({ switchablesCount, roomFinding }) {
 // Enheten är nu FAKTUROR rakt igenom — det kunden själv skickade in och tänker i — och summan
 // går alltid ihop: prissatta + bevakade = fakturor. Ren funktion så invarianten kan testlåsas.
 export function roomCounts({ autoAnalyses = [], watched = [] } = {}) {
-  const prissatta = autoAnalyses.length;
+  const analyserade = autoAnalyses.length;
   const bevakade = watched.length;
-  return { fakturor: prissatta + bevakade, prissatta, bevakade };
+  // ── «PRISSATT» BETYDER SAMMA SAK SOM I KORTET (2026-08-21, ur regel 8-genomgången) ─────────
+  // Räknaren sa `prissatta = autoAnalyses.length` — alltså varje auto-rad, oavsett om den fick
+  // ett pris. Kortet dömer på något annat: utan `prisunderlag` skriver det «Mottagen». En rad
+  // rummet självt märker MOTTAGEN räknades alltså som PRISSATT i rubriken ovanför den. Två
+  // sanningar om samma fråga (regel 1), och den kundsynliga använde den lösare.
+  //
+  // Gapet var litet förr och växte av mitt eget arbete samma dag: totalgrinden nollar bytet när
+  // kohortdatan är en totalsumma, och `ovissNiva` håller tillbaka scoren när produktnivån inte
+  // är bekräftad. Båda ger auto-rader UTAN prisunderlag — alltså fler «Mottagen» som räknades
+  // som prissatta. En fix som gör ett gammalt redovisningsfel vanligare måste stänga det också.
+  const prissatta = autoAnalyses.filter((a) => a?.prisunderlag != null).length;
+  const mottagna = analyserade - prissatta;
+  // `fakturor` är oförändrad (analyserade + bevakade) — invarianten prissatt + bevakat = totalt
+  // gäller nu med mottagna inräknade, och RR-01 prövar den formen.
+  return { fakturor: analyserade + bevakade, analyserade, prissatta, mottagna, bevakade };
 }
 
 export function groupBySupplier(analyses) {

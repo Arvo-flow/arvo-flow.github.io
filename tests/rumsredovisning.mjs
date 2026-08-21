@@ -37,22 +37,37 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const RUM = readFileSync(join(ROOT, 'src/pages/Portfolio/index.js'), 'utf8');
 
 describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
-  test('RR-01 · prissatt + bevakat = totalt, alltid (produktionsfallet 5/4/9)', () => {
+  test('RR-01 · prissatt + mottaget + bevakat = totalt, alltid (produktionsfallet 5/4/9)', () => {
+    // ── KONTRAKTSÄNDRING, ÖPPET REDOVISAD (2026-08-21) ──────────────────────────────────────
+    // Invarianten var `prissatta + bevakade = fakturor` med `prissatta = varje auto-rad`. Men
+    // kortet skriver «Mottagen» på en auto-rad UTAN prisunderlag, så rubriken räknade som
+    // prissatta rader rummet självt märkte mottagna. Räknaren skiljer nu på de två, och
+    // invarianten har fått en tredje term. Vakten fällde ändringen på sin första körning —
+    // vilket är precis vad den finns för.
+    const rad = (medPris) => (medPris ? { id: 1, prisunderlag: { perEnhet: 4560, golv: 1606 } } : { id: 2 });
     const fall = [
-      { auto: 5, watched: 4 },   // grundarens rum: fem prissatta, fyra bevakade
-      { auto: 0, watched: 3 },   // bara triagerat — får aldrig läsa som ett tomt rum
-      { auto: 7, watched: 0 },   // inget bevakat
-      { auto: 0, watched: 0 },
+      { prissatta: 5, mottagna: 0, watched: 4 },   // grundarens rum: fem prissatta, fyra bevakade
+      { prissatta: 0, mottagna: 0, watched: 3 },   // bara triagerat — får aldrig läsa som ett tomt rum
+      { prissatta: 7, mottagna: 0, watched: 0 },   // inget bevakat
+      { prissatta: 0, mottagna: 0, watched: 0 },
+      { prissatta: 1, mottagna: 1, watched: 0 },   // fallet ur skärmdumpen: en prissatt, en mottagen
+      { prissatta: 0, mottagna: 4, watched: 2 },   // allt obedömt — får ALDRIG läsa som fyra prissatta
     ];
     for (const f of fall) {
       const c = roomCounts({
-        autoAnalyses: Array.from({ length: f.auto }, (_, i) => ({ id: i })),
+        autoAnalyses: [
+          ...Array.from({ length: f.prissatta }, () => rad(true)),
+          ...Array.from({ length: f.mottagna }, () => rad(false)),
+        ],
         watched: Array.from({ length: f.watched }, (_, i) => ({ supplier: `S${i}` })),
       });
-      assert.equal(c.prissatta + c.bevakade, c.fakturor,
+      assert.equal(c.prissatta + c.mottagna + c.bevakade, c.fakturor,
         `räknarna går inte ihop för ${JSON.stringify(f)} — det var exakt felet kunden såg`);
-      assert.equal(c.prissatta, f.auto);
+      assert.equal(c.prissatta, f.prissatta,
+        'en rad utan prisunderlag får aldrig räknas som prissatt — kortet kallar den «Mottagen»');
+      assert.equal(c.mottagna, f.mottagna);
       assert.equal(c.bevakade, f.watched);
+      assert.equal(c.analyserade, f.prissatta + f.mottagna);
     }
   });
 
@@ -265,4 +280,34 @@ describe('FORENSIKEN · det retroaktiva kravet och citatet', () => {
     const utanPlan = { type: 'hardware_overpaid', lineDescription: 'Avbetalning utan månadsangivelse', monthly: 100, text: 'gammal text' };
     assert.equal(refineFinding(utanPlan).text, 'gammal text');
   });
+  test('RR-09 · ingen kundsynlig räknare renderar suppliers.length', () => {
+    // 2026-08-21, ur regel 8-genomgången. `suppliers.length` räknar varje leverantör i innehavet
+    // — även de vars kort säger «Mottagen». Fyra ytor citerade det som «prissatta»/«vi kunde
+    // prissätta», alltså ett arbete vi inte utfört på de raderna. roomCounts är den enda källan.
+    //
+    // Villkor (`suppliers.length > 0`) är legitima och fälls inte; vakten letar efter talet
+    // RENDERAT bredvid en enhet.
+    const brott = [];
+    RUM.split('\n').forEach((rad, i) => {
+      if (/^\s*(\/\/|\*|\/\*)/.test(rad.trim())) return;
+      if (/\{suppliers\.length\}\s*[A-Za-zÅÄÖåäö]/.test(rad)) brott.push(`rad ${i + 1}: ${rad.trim().slice(0, 90)}`);
+    });
+    assert.deepEqual(brott, [],
+      'ett kundsynligt tal om hur många fakturor vi PRISSATT måste komma ur roomCounts — ' +
+      'suppliers.length räknar även de mottagna:\n  ' + brott.join('\n  '));
+  });
+
+  test('RR-10 · räknaretiketten namnger det tal som står under den', () => {
+    // «Fakturor» stod över counts.prissatta. Det var sant så länge de två alltid var lika —
+    // och blev osant i samma sekund räknaren skilde prissatta från mottagna. En etikett som
+    // bara råkar stämma är inte en etikett (helhetskravet).
+    // Ankaret är etikettvalet självt, inte «rstat» — det senare förekommer flera gånger och
+    // första träffen var en annan rad. En vakt som ankrar för brett fäller på fel grund.
+    const i = RUM.indexOf("'Prissatta' : 'Fakturor'");
+    assert.ok(i > 0, 'hittade inte radarns etikettval — vakten mäter fel objekt');
+    const block = RUM.slice(Math.max(0, i - 120), i + 160);
+    assert.match(block, /counts\.mottagna/,
+      'etiketten måste växla till «Prissatta» så snart någon rad är mottagen men inte prissatt');
+  });
+
 });
