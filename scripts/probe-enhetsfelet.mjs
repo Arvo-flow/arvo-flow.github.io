@@ -297,6 +297,43 @@ console.log(mailTraff[0].n === 0
   ? '  → Ingen rad i liggaren matchar någon hashad mail-avsändare ur kön.'
   : `  → ${mailTraff[0].n} rader matchar en mail-avsändare · ${new Date(mailTraff[0].forsta).toISOString().slice(0, 10)} → ${new Date(mailTraff[0].senast).toISOString().slice(0, 10)}`);
 
+console.log('\n=== HUR MÅNGA AV PRISBOKENS DATAPUNKTER BÄR ETT ANTAGET SEGMENT? ===');
+// 21 av 48 auto-analyser (44 %) kom via mail-in, och varje auto-analys anropar storeDatapoint.
+// invoice_datapoints är anonymiserad och saknar fingerprint, så tabellerna kan inte korsas på
+// identitet. De skrivs däremot i SAMMA request: en datapunkt matchar sin analys på kategori,
+// årskostnad och en tidsstämpel inom några sekunder. Det är en korsning, inte en gissning —
+// men den är approximativ och redovisas som sådan.
+try {
+  const par = await db`
+    SELECT dp.category, COUNT(*)::int AS n
+    FROM invoice_datapoints dp
+    JOIN invoice_analyses ia
+      ON ia.category = dp.category
+     AND ia.annual_cost = dp.annual_cost
+     AND ABS(EXTRACT(EPOCH FROM (ia.created_at - dp.created_at))) < 30
+    WHERE ia.fingerprint = ANY(${mailFps})
+    GROUP BY 1 ORDER BY 2 DESC
+  `;
+  const tot = await db`SELECT COUNT(*)::int AS n FROM invoice_datapoints`;
+  const summa = par.reduce((s, r) => s + r.n, 0);
+  for (const r of par) console.log(`  ${r.category}: ${r.n} datapunkt(er) matchar en mail-in-analys`);
+  console.log(`  → ${summa} av ${tot[0].n} datapunkter (${Math.round((summa / Math.max(1, tot[0].n)) * 100)} %) ` +
+    'kan härledas till en analys vars segment aldrig observerades.');
+  console.log('  (Matchningen är approximativ: kategori + årskostnad + 30 s. Den kan både missa och');
+  console.log('   överskatta — men den mäter samma sak i båda riktningarna och ger en storleksordning.)');
+} catch (err) {
+  console.log(`  korsningen kunde inte köras: ${err.message}`);
+}
+// Och den enda cellen som faktiskt bär livedata i dag — hur mycket av DEN är antaget?
+try {
+  const cell = await db`
+    SELECT COUNT(*)::int AS n FROM invoice_datapoints
+    WHERE category = 'mobil' AND industry = 'byraer' AND size_bucket = 'small'
+  `;
+  console.log(`  cellen mobil · byraer · small rymmer ${cell[0].n} datapunkter — det är den cell varje`);
+  console.log('  mail-in-faktura hamnar i, oavsett kundens verkliga bransch och storlek.');
+} catch (err) { console.log(`  cellmätning misslyckades: ${err.message}`); }
+
 // process.exit(0) står SIST — den låg tidigare mitt i filen och gjorde allt som lades till
 // efteråt till död kod. Sonden rapporterade "klar" utan att ha kört mätningen, och utfallet såg
 // identiskt ut med ett utfall som mätt. Åttonde gången under obduktionen som mätinstrumentet
