@@ -370,9 +370,13 @@ export default async function handler(req, res) {
   // meningslös — men ser precis lika auktoritativ ut. Det är «ett tal som ser mätt ut utan att
   // vara det», i den enda tabell som bär den kollektiva sanningen.
   //
-  // Mätt 2026-08-21: 0 av 48 lagrade auto-analyser kom den vägen, alltså är skadan ÄNNU inte
-  // skedd. Men mail-in är bulkvägen — moaten — och i samma sekund den används på riktigt börjar
-  // det hända. Flaggan är avsändarens ansvar, för bara avsändaren vet om talet är avläst.
+  // RÄTTELSE 2026-08-21: jag skrev först «0 av 48 lagrade auto-analyser kom den vägen, alltså är
+  // skadan ännu inte skedd». Det talet var osant. Sonden frågade `fingerprint LIKE 'mail:%'`,
+  // men lib/invoice-store.js HASHAR fingerprinten före lagring — kolumnen kan aldrig innehålla
+  // prefixet, så frågan var dömd att svara noll oavsett verkligheten. Hur stor exponeringen är
+  // vet jag alltså inte; kön visar 13 genomförda bulk-jobb (3 den 26 juni, 10 den 14 augusti).
+  // Spärren nedan är rätt oavsett svaret — men den vilar på regel 3, inte på en mätning.
+  // Flaggan är avsändarens ansvar, för bara avsändaren vet om talet är avläst.
   // Kunden påverkas inte: analysen körs, lagras i kundens egen liggare och besvaras som vanligt.
   // Det enda som uteblir är en rad i prisboken som ingen kan belägga (regel 3).
   const segmentOkant = body?.segmentOkant === true;

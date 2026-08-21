@@ -13,20 +13,29 @@ try {
     VALUES ('diagfp00000000000000000000000000','diaghash',' DiagCo','diagco','uncategorized','review_queue','diag@test','diag_reason_test',false)
     ON CONFLICT (fingerprint, pdf_hash) DO UPDATE SET triage_reason = EXCLUDED.triage_reason`;
   console.log('INSERT med triage_reason: OK');
-  const r = await db`SELECT triage_reason FROM invoice_analyses WHERE fingerprint='diagfp00000000000000000000000000'`;
+  const r = await db`SELECT triage_reason FROM invoice_analyses WHERE fingerprint='diagfp00000000000000000000000000'`;   // sondvakt-ok: den här grenen INSERTar själv med det råa värdet (rent schematest av kolumnen), alltså är det rätt nyckel att läsa på
   console.log('LÄST triage_reason:', JSON.stringify(r[0]?.triage_reason));
-  await db`DELETE FROM invoice_analyses WHERE fingerprint='diagfp00000000000000000000000000'`;
+  await db`DELETE FROM invoice_analyses WHERE fingerprint='diagfp00000000000000000000000000'`;   // sondvakt-ok: samma råa nyckel som INSERTen ovan skrev
 } catch (e) {
   console.log('INSERT-FEL:', e.message);
 }
 // Kör den RIKTIGA produktions-storeTriaged (samma kod som Vercel) och läs tillbaka skälet.
 import { storeTriaged } from '../lib/invoice-store.js';
+import { createHash } from 'node:crypto';
+const DIAG_FP = 'diagfn00000000000000000000000000';
 try {
-  const ok = await storeTriaged({ fingerprint: 'diagfn00000000000000000000000000', pdfHash: 'diaghash2',
+  const ok = await storeTriaged({ fingerprint: DIAG_FP, pdfHash: 'diaghash2',
     supplier: 'DiagFn AB', category: 'molnvaxel', route: 'review_queue', reason: 'categorization_conflict', userEmail: 'diag@test' });
   console.log('storeTriaged returnerade:', ok);
-  const r = await db`SELECT route, triage_reason FROM invoice_analyses WHERE fingerprint='diagfn00000000000000000000000000'`;
+  // ── SONDEN KUNDE BARA SVARA «NEJ» (2026-08-21, fångad av SV-09 på dess första körning) ────
+  // storeTriaged HASHAR fingerprinten före lagring (lib/invoice-store.js hashFp). Läsningen
+  // härunder använde det RÅA värdet och kunde därför aldrig hitta raden den just skrev — sonden
+  // skrev ut «route= undefined triage_reason= undefined» och såg ut att bevisa att storeTriaged
+  // INTE lagrar skälet. En sond vars enda möjliga svar är ett larm är inget mätinstrument.
+  // (DELETE-raden städade följaktligen heller ingenting.)
+  const fpRatt = createHash('sha256').update(DIAG_FP).digest('hex').slice(0, 32);
+  const r = await db`SELECT route, triage_reason FROM invoice_analyses WHERE fingerprint=${fpRatt}`;
   console.log('LÄST tillbaka: route=', JSON.stringify(r[0]?.route), ' triage_reason=', JSON.stringify(r[0]?.triage_reason));
-  await db`DELETE FROM invoice_analyses WHERE fingerprint='diagfn00000000000000000000000000'`;
+  await db`DELETE FROM invoice_analyses WHERE fingerprint=${fpRatt}`;
 } catch (e) { console.log('storeTriaged-FEL:', e.message); }
 console.log('KLART.');

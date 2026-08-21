@@ -150,8 +150,36 @@ describe('SONDVAKT · instrumenten hålls till samma krav som produktionen', () 
       'mätt, och utfallet är omöjligt att skilja från en körning som mätte:\n  ' + brott.join('\n  '));
   });
 
-  test('SV-08 · källvakten läser faktiskt några sonder (annars grön av tomhet)', () => {
+  test('SV-10 · källvakten läser faktiskt några sonder (annars grön av tomhet)', () => {
     const n = sondFiler().length;
     assert.ok(n >= 10, `hittade bara ${n} sondfiler — mönstret matchar inte längre katalogen`);
   });
+
+  test('SV-09 · ingen sond frågar på ett RÅTT fingerprint', () => {
+    // 2026-08-21: sonden frågade `fingerprint LIKE 'mail:%'` och svarade «0 av 48 kom via
+    // mail-in». Men lib/invoice-store.js HASHAR fingerprinten före lagring (sha256, 32 tecken),
+    // så kolumnen kan ALDRIG innehålla prefixet — frågan var dömd att svara noll oavsett
+    // verkligheten. Jag höll på att bygga slutsatsen «13 tysta förluster i moaten» på det talet.
+    //
+    // Det är den farligaste sorten av mätfel: ett värde som pekar åt ett dramatiskt håll och
+    // råkar bekräfta hypotesen man redan har. Nionde gången under obduktionen som instrumentet
+    // var felet och inte systemet.
+    const brott = [];
+    for (const [namn, kod] of sondFiler()) {
+      kod.split('\n').forEach((rad, i) => {
+        if (/^\s*(\/\/|\*|\/\*)/.test(rad.trim())) return;
+        // Fångar `fingerprint LIKE '...'` och `fingerprint = 'literal'` — båda jämför mot ett
+        // värde som aldrig kan stå i kolumnen. En jämförelse mot en HASHAD variabel är rätt
+        // och fälls inte.
+        if (/\bfingerprint\s+LIKE\s+'/i.test(rad) || /\bfingerprint\s*=\s*'/i.test(rad)) {
+          if (!/sondvakt-ok:/.test(rad)) brott.push(`${namn}:${i + 1}`);
+        }
+      });
+    }
+    assert.deepEqual(brott, [],
+      'fingerprint-kolumnen bär en sha256-hash (lib/invoice-store.js hashFp). En fråga mot ett ' +
+      'rått värde kan bara svara noll — och ett noll som ser ut som ett fynd är värre än inget ' +
+      'mätvärde alls. Hasha först:\n  ' + brott.join('\n  '));
+  });
+
 });

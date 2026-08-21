@@ -383,9 +383,11 @@ describe('OB · Bytesetiketten kan inte överleva ett nollat beslut', () => {
 // dess p25/median blir meningslös — men ser precis lika auktoritativ ut. Det är «ett tal som ser
 // mätt ut utan att vara det», i den enda tabell som bär den kollektiva sanningen.
 //
-// Mätt mot produktionsdatabasen 2026-08-21: 0 av 48 lagrade auto-analyser kom den vägen. Skadan
-// är alltså ÄNNU inte skedd — och just därför är den värd att stänga nu: mail-in är bulkvägen,
-// och i samma sekund den används på riktigt börjar det hända.
+// RÄTTELSE 2026-08-21: min första mätning sa «0 av 48 kom den vägen» och den var osann — sonden
+// frågade `fingerprint LIKE 'mail:%'` medan lib/invoice-store.js HASHAR fingerprinten före
+// lagring, så frågan kunde bara svara noll. Omfattningen är alltså okänd; kön visar 13
+// genomförda bulk-jobb. Spärren nedan vilar på regel 3 (ett segment vi inte observerat får inte
+// påstås), inte på en mätning av hur ofta det hänt.
 //
 // FÅNGAR: att en mail-in-väg slutar deklarera sitt antagande, och att spärren i storeDatapoint
 //   tas bort eller görs verkningslös.

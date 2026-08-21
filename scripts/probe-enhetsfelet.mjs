@@ -16,6 +16,16 @@
 import { getDb } from '../lib/db.js';
 import { getBenchmark } from '../lib/benchmark.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
+import { createHash } from 'node:crypto';
+
+// ── SONDEN MÄTTE FEL KOLUMNINNEHÅLL (2026-08-21) ────────────────────────────────────────────
+// De första körningarna frågade `fingerprint LIKE 'mail:%'` och svarade «0 av 48 via mail-in».
+// Men lib/invoice-store.js HASHAR fingerprinten före lagring (sha256, 32 tecken), så kolumnen
+// kan aldrig innehålla prefixet — frågan var dömd att svara noll oavsett verkligheten. Jag höll
+// på att bygga slutsatsen «13 tysta förluster i moaten» på det talet. Nionde gången under
+// obduktionen som mätinstrumentet var felet och inte systemet, och den farligaste av dem:
+// ett mätvärde som pekade åt ett dramatiskt håll och råkade bekräfta min hypotes.
+const hashFp = (fp) => createHash('sha256').update(fp).digest('hex').slice(0, 32);
 
 const db = getDb();
 if (!db) { console.log('INGEN DATABASE_URL — sonden kan inte mäta produktionens tillstånd.'); process.exit(0); }
@@ -154,6 +164,16 @@ for (const k of ['mobil', 'saas-productivity']) {
 
 console.log('\nSonden skriver inget och läser ingen kundidentitet.');
 
+// Avsändarna hämtas ur kön och hashas på samma sätt som lagringen gör — det är enda vägen att
+// korsa kön mot liggaren när kolumnen bär en hash. Ingen adress skrivs ut; repot är publikt.
+let mailFps = ['(ingen)'];
+try {
+  const avsandare = await db`SELECT DISTINCT sender FROM ingest_jobs`;
+  const fps = avsandare.map((a) => hashFp(`mail:${createHash('sha256').update(String(a.sender)).digest('hex').slice(0, 16)}`));
+  if (fps.length > 0) mailFps = fps;
+  console.log(`\n(korsar mot ${fps.length} hashad(e) mail-avsändare ur kön)`);
+} catch (err) { console.log(`\nkunde inte hämta avsändare ur kön: ${err.message}`); }
+
 console.log('\n=== HUR MYCKET AV PRISBOKEN ÄR MÄRKT MED DEFAULTVÄRDEN? ===');
 // Båda mail-in-vägarna (api/inbound-email.mjs och api/cron/drain-ingest.mjs) skickar
 // `industry: 'ovrigt'` och `employees: 10` — inte observerat, utan antaget. 'ovrigt' mappar till
@@ -163,7 +183,7 @@ console.log('\n=== HUR MYCKET AV PRISBOKEN ÄR MÄRKT MED DEFAULTVÄRDEN? ===');
 const mail = await db`
   SELECT category,
          COUNT(*)::int AS totalt,
-         COUNT(*) FILTER (WHERE fingerprint LIKE 'mail:%')::int AS via_mail,
+         COUNT(*) FILTER (WHERE fingerprint = ANY(${mailFps}))::int AS via_mail,
          COUNT(*) FILTER (WHERE employees = 10)::int AS exakt_tio
   FROM invoice_analyses WHERE route = 'auto' GROUP BY 1 ORDER BY 2 DESC LIMIT 12
 `;
@@ -173,7 +193,7 @@ for (const r of mail) {
 }
 const tot = await db`
   SELECT COUNT(*)::int AS n,
-         COUNT(*) FILTER (WHERE fingerprint LIKE 'mail:%')::int AS via_mail,
+         COUNT(*) FILTER (WHERE fingerprint = ANY(${mailFps}))::int AS via_mail,
          COUNT(*) FILTER (WHERE employees = 10)::int AS exakt_tio
   FROM invoice_analyses WHERE route = 'auto'
 `;
@@ -187,7 +207,7 @@ console.log('\n=== MAIL-IN: DÖRREN TILL KONTORET, TIO VECKOR EFTER LANSERING ==
 // motsatta åtgärder. Frågan är värd att ställa: mail-in är bulkvägen, alltså moatens bränsle.
 const mailRader = await db`
   SELECT route, COUNT(*)::int AS n, MAX(created_at) AS senast
-  FROM invoice_analyses WHERE fingerprint LIKE 'mail:%' GROUP BY 1 ORDER BY 2 DESC
+  FROM invoice_analyses WHERE fingerprint = ANY(${mailFps}) GROUP BY 1 ORDER BY 2 DESC
 `;
 if (mailRader.length === 0) {
   console.log('  Ingen analys alls med mail-fingerprint — ingen faktura har nått pipelinen den vägen.');
@@ -267,10 +287,15 @@ console.log('  — ALLA fingerprint-prefix i liggaren (maskerade) —');
 for (const r of allaFp) {
   console.log(`  ${r.fp}…: ${r.n} rader · ${new Date(r.forsta).toISOString().slice(0, 10)} → ${new Date(r.senast).toISOString().slice(0, 10)}`);
 }
-const mailNagonsin = allaFp.filter((r) => r.fp.startsWith('mail'));
-console.log(mailNagonsin.length === 0
-  ? '  → INGEN rad i liggaren har någonsin burit mail:-fingerprint.'
-  : `  → ${mailNagonsin.reduce((s, r) => s + r.n, 0)} rader bär mail:-fingerprint.`);
+// Prefix-listan ovan säger INGENTING om mail-in: kolumnen bär hashar, så inget prefix kan
+// avslöja ursprunget. Den korrekta korsningen är den hashade avsändarlistan.
+const mailTraff = await db`
+  SELECT COUNT(*)::int AS n, MIN(created_at) AS forsta, MAX(created_at) AS senast
+  FROM invoice_analyses WHERE fingerprint = ANY(${mailFps})
+`;
+console.log(mailTraff[0].n === 0
+  ? '  → Ingen rad i liggaren matchar någon hashad mail-avsändare ur kön.'
+  : `  → ${mailTraff[0].n} rader matchar en mail-avsändare · ${new Date(mailTraff[0].forsta).toISOString().slice(0, 10)} → ${new Date(mailTraff[0].senast).toISOString().slice(0, 10)}`);
 
 // process.exit(0) står SIST — den låg tidigare mitt i filen och gjorde allt som lades till
 // efteråt till död kod. Sonden rapporterade "klar" utan att ha kört mätningen, och utfallet såg
