@@ -80,3 +80,13 @@ Sonden skriver inget och läser ingen kundidentitet.
   Ingen analys alls med mail-fingerprint — ingen faktura har nått pipelinen den vägen.
   kö · done: 13 jobb · senast 2026-08-14
   kö · failed: 10 jobb · senast 2026-08-14
+
+=== 13 JOBB BOKFÖRDA «DONE» — VAR TOG DE VÄGEN? ===
+  done · (ingen dom bokförd): 13
+  failed · (ingen dom bokförd): 10
+  — misslyckandenas skäl —
+  HTTP 422 · extract: Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi är på det och hör av oss så snart den är uppe igen. Ni behöver inte gö: 10
+  2 distinkt(a) avsändare · första 2026-06-26 · senast 2026-08-14
+  — analyser sedan 1 augusti, per fingerprint-prefix (maskerat) —
+  ab3c3…: 10 · senast 2026-08-15
+  20cc4…: 9 · senast 2026-08-14
