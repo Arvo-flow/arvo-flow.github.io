@@ -211,6 +211,40 @@ try {
   console.log(`  ingest_jobs kunde inte läsas: ${err.message}`);
 }
 
+console.log('\n=== 13 JOBB BOKFÖRDA «DONE» — VAR TOG DE VÄGEN? ===');
+// Kön säger att bulk-intaget HAR använts (13 done, 10 failed, senast 14 augusti) medan
+// invoice_analyses inte har en enda rad med mail-fingerprint. `done` betyder att pipelinen
+// svarade ok:true. Om ingen av dem finns i kundens liggare är det Ellevio-fallet igen, fast
+// för hela bunten — och `outcome`-kolumnen (införd 15 augusti just för detta) bär domen.
+try {
+  const utfall = await db`
+    SELECT status, COALESCE(outcome, '(ingen dom bokförd)') AS dom, COUNT(*)::int AS n
+    FROM ingest_jobs GROUP BY 1, 2 ORDER BY 3 DESC
+  `;
+  for (const u of utfall) console.log(`  ${u.status} · ${u.dom}: ${u.n}`);
+  const fel = await db`
+    SELECT COALESCE(error, '(inget skäl bokfört)') AS skal, COUNT(*)::int AS n
+    FROM ingest_jobs WHERE status = 'failed' GROUP BY 1 ORDER BY 2 DESC
+  `;
+  console.log('  — misslyckandenas skäl —');
+  for (const f of fel) console.log(`  ${f.skal}: ${f.n}`);
+  // Avsändaren maskeras: repot är publikt.
+  const avs = await db`
+    SELECT COUNT(DISTINCT sender)::int AS n, MIN(created_at) AS forsta, MAX(created_at) AS senast
+    FROM ingest_jobs
+  `;
+  console.log(`  ${avs[0].n} distinkt(a) avsändare · första ${new Date(avs[0].forsta).toISOString().slice(0, 10)} · senast ${new Date(avs[0].senast).toISOString().slice(0, 10)}`);
+} catch (err) {
+  console.log(`  kunde inte läsas: ${err.message}`);
+}
+// Den avgörande korsningen: finns analyserna alls, under NÅGON fingerprint?
+const nyaste = await db`
+  SELECT LEFT(fingerprint, 5) AS fp_prefix, COUNT(*)::int AS n, MAX(created_at) AS senast
+  FROM invoice_analyses WHERE created_at >= '2026-08-01' GROUP BY 1 ORDER BY 2 DESC
+`;
+console.log('  — analyser sedan 1 augusti, per fingerprint-prefix (maskerat) —');
+for (const r of nyaste) console.log(`  ${r.fp_prefix}…: ${r.n} · senast ${new Date(r.senast).toISOString().slice(0, 10)}`);
+
 // process.exit(0) står SIST — den låg tidigare mitt i filen och gjorde allt som lades till
 // efteråt till död kod. Sonden rapporterade "klar" utan att ha kört mätningen, och utfallet såg
 // identiskt ut med ett utfall som mätt. Åttonde gången under obduktionen som mätinstrumentet
