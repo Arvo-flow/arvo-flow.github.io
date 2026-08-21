@@ -1,4 +1,4 @@
-// tests/jamforelsekalla.mjs — JK-01..JK-12
+// tests/jamforelsekalla.mjs — JK-01..JK-17
 //
 // Obduktionen 2026-08-20 hittade två fel som levde bredvid varandra i samma jämförelse:
 //
@@ -31,7 +31,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { jamforelseSkala, jamforelsensKalla } from '../lib/jamforelsekalla.js';
+import { jamforelseSkala, jamforelsensKalla, bytesgolv } from '../lib/jamforelsekalla.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -136,6 +136,61 @@ describe('JK · Proveniensen bärs, aldrig gissad', () => {
     });
     assert.equal(k.listprisanspraak, false,
       'ett odaterat pris i summan gör summan odaterad, hur många av de andra som än bär ett datum');
+  });
+});
+
+
+describe('JK-13..17 · En totalsumma bär aldrig ett bytesmål i en per-enhet-kategori', () => {
+  // Mätt mot produktionsdatabasen 2026-08-20: livedatans p25 för mobil i bandet 10–49 anställda
+  // är 35 880 kr/år. Per anställd blir det 897 kr — 75 kr/mån. Inget mobilabonnemang i Sverige
+  // kostar 75 kr/mån. Talet är en TOTAL där kohortens bolag har färre SIM än anställda, och att
+  // sätta det som bytesmål vore ett löfte om en besparing som inte finns.
+  const kohort  = { source: 'real', isTotal: true, note: PER_ANVANDARE, p25: 35_880, median: 42_000 };
+  const publikt = { source: 'real-public', lastVerified: '2026-08-05', note: PER_ANVANDARE, p25: 3_228, median: 3_588 };
+
+  test('JK-13 · kohorttotalen byts mot det verifierade publika golvet', () => {
+    const r = bytesgolv({ benchmark: kohort, publiktGolv: publikt, seatCount: 40, employees: 40 });
+    assert.equal(r.byttUt, true);
+    assert.equal(r.golv.p25, 3_228, 'golvet ska vara priset PER ENHET, inte kohortens totalsumma');
+    assert.equal(r.skala, 40);
+    assert.equal(r.golv.p25 * r.skala, 129_120);
+    assert.equal(r.tystnad, null);
+  });
+
+  test('JK-14 · utan verifierat publikt golv sätts inget bytesmål alls', () => {
+    for (const utan of [null, { source: 'estimated', note: PER_ANVANDARE }, { p25: 0, note: PER_ANVANDARE }]) {
+      const r = bytesgolv({ benchmark: kohort, publiktGolv: utan, seatCount: 40, employees: 40 });
+      assert.equal(r.golv, null, 'fail-closed: hellre inget mål än ett mål mot fel enhet');
+      assert.ok((r.tystnad ?? '').length > 0, 'tystnaden måste bära sitt skäl (bokföringsplikten)');
+    }
+  });
+
+  test('JK-15 · en benchmark som INTE är en totalsumma rörs inte', () => {
+    const r = bytesgolv({ benchmark: publikt, publiktGolv: publikt, seatCount: 40, employees: 40 });
+    assert.equal(r.byttUt, false);
+    assert.equal(r.golv, publikt);
+    assert.equal(r.skala, 40);
+  });
+
+  test('JK-16 · kategorier som inte prissätts per enhet jämför total mot total som förr', () => {
+    // Bredband: en total mot en total ÄR rätt jämförelse — grinden får inte fälla den.
+    const total = { source: 'real', isTotal: true, note: 'Kr/år för hela abonnemanget.', p25: 9_000 };
+    const r = bytesgolv({ benchmark: total, publiktGolv: null, seatCount: 40, employees: 40 });
+    assert.equal(r.byttUt, false);
+    assert.equal(r.tystnad, null, 'grinden gäller bara per-enhet-kategorier');
+    assert.equal(r.skala, 1);
+  });
+
+  test('JK-17 · riktningen är den säkra: listprisgolvet ger MINDRE påvisad besparing', () => {
+    // Under 20 % success fee är en överdriven besparing det farliga felet. Kundens kostnad
+    // 119 520 kr mot kohorttotalen 35 880 hade påstått 83 640 kr i besparing; mot det
+    // verifierade golvet 129 120 kr finns ingen — och det är svaret vi kan belägga.
+    const r = bytesgolv({ benchmark: kohort, publiktGolv: publikt, seatCount: 40, employees: 40 });
+    const kundensKostnad = 119_520;
+    const motKohort = kundensKostnad - kohort.p25;
+    const motGolvet = kundensKostnad - r.golv.p25 * r.skala;
+    assert.ok(motGolvet < motKohort, 'det verifierade golvet måste ge en mer konservativ besparing');
+    assert.ok(motGolvet < 0, 'kunden ligger under listpris — då finns ingen besparing att lova');
   });
 });
 

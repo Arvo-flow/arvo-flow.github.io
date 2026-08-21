@@ -31,7 +31,7 @@ import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
 import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
 import { m365Rightsizing, deriveM365Seats } from '../../lib/m365-rightsizing.js';
 import { granskaTierrader, vaktadeRaderUrPrisbok } from '../../lib/saas-rad.js';
-import { jamforelsensKalla, jamforelseSkala } from '../../lib/jamforelsekalla.js';
+import { jamforelsensKalla, jamforelseSkala, bytesgolv } from '../../lib/jamforelsekalla.js';
 import m365Verifier from '../../lib/verifiers/m365.mjs';
 import { molnvaxelRecommendation } from '../../lib/molnvaxel-recommendation.js';
 import { loneadminRecommendation } from '../../lib/loneadmin-rightsizing.js';
@@ -1725,25 +1725,73 @@ export async function recommend(input, opts = {}) {
       // Vetot har redan nollat talen; hoppa över den finansiella överskrivningen nedan.
     } else {
 
+    // ── EN TOTALSUMMA FÅR ALDRIG BÄRA ETT BYTESMÅL I EN PER-ENHET-KATEGORI ───────────────────
+    // (Obduktionen 2026-08-20, mätt mot produktionsdatabasen.) Att sätta skalan till 1 gjorde
+    // ARITMETIKEN rätt men lämnade JÄMFÖRELSEN äppel-mot-päron. Livedatans p25 för mobil i
+    // storleksbandet 10–49 anställda är 35 880 kr/år — 897 kr per anställd, alltså 75 kr/mån.
+    // Inget mobilabonnemang i Sverige kostar 75 kr/mån. Talet är inte ett per-enhet-pris: det är
+    // en TOTAL där kohortens bolag har färre SIM än anställda, och kundens 40-SIM-total ställs
+    // mot en kohort vars enhetsantal ingen normaliserat. Att lova ett byte dit vore att lova en
+    // besparing som inte finns.
+    //
+    // Regeln finns redan — för ett annat kort. Branschankaret (2026-06-25) tillåter ENDAST
+    // 'real-public', «aldrig real/live_analyses (totalsumma → fel enhet)», och scoren flyttades
+    // till getPublicListBenchmark den 19 augusti av exakt samma skäl. Bytesmålet var den tredje
+    // konsumenten av samma läsväg och gick kvar den gamla vägen. Nu går alla tre samma väg (regel 1).
+    //
+    // Fail-closed: finns inget verifierat publikt golv utlöses inget byte (samma disciplin som
+    // lfl-grinden). Riktningen är dessutom den säkra under 20 % success fee — listpriset ger en
+    // MINDRE påvisad besparing än kohorttotalen, och en besparing vi inte kan belägga ska utebli.
+    const _bg = bytesgolv({
+      benchmark,
+      publiktGolv: getPublicListBenchmark({
+        category: input.categorized.category,
+        employees: input.customer.employees ?? 1,
+      }),
+      seatCount, employees, forceEmployees: isSaasProductivity,
+    });
+    let _golvBenchmark = _bg.golv;
+    let _golvSkala = _bg.skala;
+    if (_bg.tystnad) {
+      console.log(`[totalgrind] ${_bg.tystnad} → inget bytestal (fail-closed)`);
+      result.shouldSwitch = false;
+      result.recommendationType = 'no_action';
+      result.suggestedAnnualCost = null;
+      result.suggestedSupplier = null;
+      result.savingPerYear = 0;
+      result.totalgrind = _bg.tystnad;
+    } else if (_bg.byttUt) {
+      console.log(`[totalgrind] livedatans p25 (${benchmark.p25} kr) är en totalsumma — ` +
+        `bytesmålet räknas mot det verifierade publika golvet ${_golvBenchmark.p25} kr/enhet × ${_golvSkala}`);
+    }
+
+    if (result.totalgrind) {
+      // Grinden har redan nollat talen; hoppa över beräkningen nedan.
+      result.jamforelseKalla = jamforelsensKalla({ useLfl: false, benchmark: null });
+    } else {
+
     const _benchBase = _useLfl
       ? _lflTarget.suggestedAnnualCost - addonAnnual  // strip addon pass-throughs already included in LFL total
-      : Math.round(benchmark.p25 * scale);
+      : Math.round(_golvBenchmark.p25 * _golvSkala);
 
     // Proveniensen följer med talet ut (obduktionen 2026-08-20). Api-lagret gissade den tidigare
     // ur BRANCHINDEX[kategori].source — den statiska tabellraden, inte det objekt som räknade.
-    // Här, på raden där jämförelsepriset VÄLJS, är svaret känt utan gissning.
+    // Här, på raden där jämförelsepriset VÄLJS, är svaret känt utan gissning. Notera att det är
+    // `_golvBenchmark` och inte `benchmark` som bokförs: byter totalgrinden ut golvet är det den
+    // NYA källan som bar talet, och kvittot ska säga det.
     result.jamforelseKalla = jamforelsensKalla({
       useLfl: _useLfl,
-      benchmark,
+      benchmark: _golvBenchmark,
       tierLines: _lflTarget?.tierLines ?? null,
       tierBenchmarks: BRANCHINDEX['saas-productivity']?.licenseTierBenchmarks ?? null,
     });
 
     result.suggestedAnnualCost = _benchBase + addonAnnual;
     result.savingPerYear = Math.max(0, Math.round(comparableAnnualCost - _benchBase));
-    result.overpaymentPercent = benchmark.median > 0
-      ? Math.round(((comparableAnnualCost - benchmark.median * scale) / (benchmark.median * scale)) * 100)
+    result.overpaymentPercent = _golvBenchmark.median > 0
+      ? Math.round(((comparableAnnualCost - _golvBenchmark.median * _golvSkala) / (_golvBenchmark.median * _golvSkala)) * 100)
       : (result.overpaymentPercent ?? 0);
+    }
 
     // Licensrensning (shelfware) räknas fristående ovan, oberoende av shouldSwitch —
     // result.overageSavings är redan satt och plockas upp av savingsBreakdown nedan.
