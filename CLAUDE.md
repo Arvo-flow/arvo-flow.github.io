@@ -637,6 +637,52 @@ signera", aldrig som ett verkställt löfte.)
    > denna vecka** — live-sonden läste `recommendation.benchmark.*`, ett objekt som aldrig serialiserats,
    > och fyra tysta `null` lästes som mätvärden i två dygn.
 
+   > **✅ ETT NOLL SOM BEKRÄFTAR HYPOTESEN ÄR DET FARLIGASTE MÄTVÄRDET (2026-08-21, forts. obduktionen).**
+   > Tre fynd till, och det tyngsta är ett fel jag själv gjorde och rättade i samma pass.
+   >
+   > · **Bytesetiketten överlevde ett nollat beslut.** Live-svaret bar `recommendationType: "switch"`
+   >   bredvid `grossSaving: 0`. De finansiella grindarna nollar `shouldSwitch`, `suggestedAnnualCost`
+   >   och `savingPerYear` — men rörde aldrig typfältet, och serialiseringen använde `??`. Ingen kundyta
+   >   läser just `'switch'` (konsumenterna testar `'optimize'`), så ingen lögn syntes i rummet: det var
+   >   en LATENT motsägelse i svaret, och det ska sägas som det är. Men svaret lagras och läses av
+   >   sonder, mail och framtida ytor. **Ett fält som kan motsäga sitt eget beslut är ett fel som väntar
+   >   på en yta.** Grindarna är källan; serialiseringen bär en invariant som inte kan uttrycka
+   >   påståendet. OB-19/OB-20.
+   >
+   > · **Ett antaget segment blev prisbokens sanning.** Båda mail-in-vägarna skickar `industry: 'ovrigt'`
+   >   och `employees: 10` — inte för att det är sant, utan för att fälten krävs. `'ovrigt'` mappar till
+   >   segmentet `byraer`, 10 anställda till bandet `small`: **varje mail-in-faktura hamnar i cellen
+   >   `byraer · small` oavsett vem kunden är.** `segmentOkant` är numera avsändarens ansvar — bara
+   >   avsändaren vet om talet är avläst — och `storeDatapoint` vägrar skriva när flaggan är satt.
+   >   Fail-closed på prisboken, fail-open på kunden. Flaggan får ALDRIG härledas ur `industry ===
+   >   'ovrigt'`: testa-faktura låter kunden själv VÄLJA «övrigt», och den raden är avläst (OB-23 är
+   >   motprovet — en spärr som fäller allt är lika värdelös som ingen spärr). OB-21..23.
+   >
+   > · **RÄTTELSEN, och den väger tyngst av de tre.** Jag skrev först: *«Mätt 2026-08-21: 0 av 48
+   >   lagrade auto-analyser kom via mail-in — skadan är alltså ännu inte skedd.»* Talet var osant.
+   >   Sonden frågade `fingerprint LIKE 'mail:%'` medan `lib/invoice-store.js` **hashar** fingerprinten
+   >   före lagring; kolumnen kan aldrig innehålla prefixet, så frågan var dömd att svara noll oavsett
+   >   verkligheten. Med rätt nyckel blev svaret det MOTSATTA: **21 av 48 auto-analyser (44 %) kom via
+   >   mail-in, och alla 21 bär `employees = 10`.** Skadan var skedd, inte latent. I prisbokens
+   >   datapunkter är den mindre — 14 av 292 (5 %), approximativt korsat på kategori + årskostnad +
+   >   30 s — men cellen `mobil · byraer · small` rymmer 83 punkter varav 10 från mail-in.
+   >
+   > **Läxan är inte «hasha rätt» utan hur nollan uppträdde.** Den pekade åt ett dramatiskt håll och
+   > bekräftade hypotesen jag redan hade; jag var en rapport ifrån att skriva «13 tysta förluster i
+   > moaten». **Ett mätvärde som bekräftar det man misstänker ska granskas hårdare än ett som motsäger
+   > det, inte mjukare.** Det som stoppade det var att gräva ett steg till i stället för att rapportera.
+   > Nionde gången under obduktionen som instrumentet var felet och inte systemet — och de nio har en
+   > gemensam form: ett resultat som betyder «jag mätte inte», återgivet som en mätning.
+   > Maskinvakt: SV-09 (ingen sond frågar på ett rått fingerprint), som fällde ett riktigt fel på sin
+   > FÖRSTA körning — `scripts/diag-triaged.mjs` skrev via `storeTriaged` (som hashar) och läste
+   > tillbaka rått, alltså kunde den bara rapportera att skälet saknades. **En sond vars enda möjliga
+   > svar är ett larm är inget mätinstrument.** SV-08 låser dessutom att ingen sond bär död kod efter
+   > `process.exit` — mitt eget tillägg hamnade där och rapporterade «klar» utan att ha mätt.
+   >
+   > **Öppet, grundarens beslut:** de 14 datapunkterna med antaget segment ligger kvar. Jag raderar dem
+   > inte på eget bevåg — matchningen är approximativ (30-sekundersfönster), en radering är
+   > oåterkallelig, och 5 % brus väger lättare än risken att ta bort rätt rader. Spärren stoppar nya.
+
    > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
    > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
    > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det
