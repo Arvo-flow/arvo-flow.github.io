@@ -122,6 +122,34 @@ describe('SONDVAKT · instrumenten hålls till samma krav som produktionen', () 
       `Fel sväljs och blir ett tomt fynd (använd aldrigTyst, eller motivera med // sondvakt-ok:):\n  ${brott.join('\n  ')}`);
   });
 
+  test('SV-08 · ingen sond bär död kod efter process.exit', () => {
+    // 2026-08-21: jag la till en ny mätning i probe-enhetsfelet.mjs — EFTER filens
+    // `process.exit(0)`. Sonden kördes, rapporterade «klar», och producerade exakt samma utfall
+    // som förra körningen. Det gröna såg identiskt ut med ett grönt som faktiskt mätt, och bara
+    // «nothing to commit» i workflow-loggen avslöjade att ingenting nytt hade räknats.
+    //
+    // Det är samma sjukdom som hela obduktionen handlar om, i mätinstrumentet: ett utfall som
+    // betyder «jag tittade inte», återgivet som «jag tittade». Åttonde gången under obduktionen
+    // som verktyget var felet och inte systemet.
+    const brott = [];
+    for (const [namn, kod] of sondFiler()) {
+      const rader = kod.split('\n');
+      // Ett `process.exit` inuti en gren (if/else, en rad med `{`) är ett legitimt tidigt avbrott.
+      // Vakten letar bara efter den TOPPNIVÅ-sats som avslutar filen och sedan följs av kod.
+      const sista = rader.findIndex((r) => /^process\.exit\(/.test(r));
+      if (sista === -1) continue;
+      const efter = rader.slice(sista + 1)
+        .filter((r) => r.trim() !== '' && !/^\s*(\/\/|\*|\/\*)/.test(r.trim()));
+      if (efter.length > 0) {
+        brott.push(`${namn}: ${efter.length} kodrad(er) efter process.exit på rad ${sista + 1} — ` +
+          `första: «${efter[0].trim().slice(0, 60)}»`);
+      }
+    }
+    assert.deepEqual(brott, [],
+      'kod efter ett toppnivå-process.exit körs aldrig. Sonden rapporterar «klar» utan att ha ' +
+      'mätt, och utfallet är omöjligt att skilja från en körning som mätte:\n  ' + brott.join('\n  '));
+  });
+
   test('SV-08 · källvakten läser faktiskt några sonder (annars grön av tomhet)', () => {
     const n = sondFiler().length;
     assert.ok(n >= 10, `hittade bara ${n} sondfiler — mönstret matchar inte längre katalogen`);

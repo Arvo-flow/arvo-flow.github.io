@@ -153,7 +153,6 @@ for (const k of ['mobil', 'saas-productivity']) {
 }
 
 console.log('\nSonden skriver inget och läser ingen kundidentitet.');
-process.exit(0);
 
 console.log('\n=== HUR MYCKET AV PRISBOKEN ÄR MÄRKT MED DEFAULTVÄRDEN? ===');
 // Båda mail-in-vägarna (api/inbound-email.mjs och api/cron/drain-ingest.mjs) skickar
@@ -181,3 +180,9 @@ const tot = await db`
 console.log(`  SUMMA: ${tot[0].n} auto-analyser · ${tot[0].via_mail} via mail-in · ${tot[0].exakt_tio} med employees exakt 10`);
 console.log('  (employees=10 kan vara sant för en riktig kund — talet är en ÖVRE gräns för hur');
 console.log('   många rader som kan bära ett antaget segment, inte ett bevis på att de gör det.)');
+
+// process.exit(0) står SIST — den låg tidigare mitt i filen och gjorde allt som lades till
+// efteråt till död kod. Sonden rapporterade "klar" utan att ha kört mätningen, och utfallet såg
+// identiskt ut med ett utfall som mätt. Åttonde gången under obduktionen som mätinstrumentet
+// var felet och inte systemet.
+process.exit(0);
