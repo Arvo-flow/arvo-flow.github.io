@@ -75,3 +75,8 @@ Sonden skriver inget och läser ingen kundidentitet.
   SUMMA: 48 auto-analyser · 0 via mail-in · 21 med employees exakt 10
   (employees=10 kan vara sant för en riktig kund — talet är en ÖVRE gräns för hur
    många rader som kan bära ett antaget segment, inte ett bevis på att de gör det.)
+
+=== MAIL-IN: DÖRREN TILL KONTORET, TIO VECKOR EFTER LANSERING ===
+  Ingen analys alls med mail-fingerprint — ingen faktura har nått pipelinen den vägen.
+  kö · done: 13 jobb · senast 2026-08-14
+  kö · failed: 10 jobb · senast 2026-08-14
