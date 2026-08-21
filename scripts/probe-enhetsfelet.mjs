@@ -245,6 +245,33 @@ const nyaste = await db`
 console.log('  — analyser sedan 1 augusti, per fingerprint-prefix (maskerat) —');
 for (const r of nyaste) console.log(`  ${r.fp_prefix}…: ${r.n} · senast ${new Date(r.senast).toISOString().slice(0, 10)}`);
 
+console.log('\n=== DEN AVGÖRANDE KORSNINGEN ===');
+// isBypass hoppar över PDF-cachen, så en cacheträff kan inte förklara de saknade raderna.
+// Två hypoteser återstår och de kräver rakt motsatta åtgärder:
+//   (a) de 13 done-jobben är ÄLDRE än den nuvarande mail:-fingerprinten → historia, inget hål
+//   (b) analyser skapas i dag utan att bära mail:-fingerprint → tyst förlust i kundens rum
+try {
+  const perDatum = await db`
+    SELECT status, DATE(created_at) AS dag, COUNT(*)::int AS n
+    FROM ingest_jobs GROUP BY 1, 2 ORDER BY 2
+  `;
+  for (const d of perDatum) console.log(`  jobb ${d.status} · ${new Date(d.dag).toISOString().slice(0, 10)}: ${d.n}`);
+} catch (err) { console.log(`  jobb per datum kunde inte läsas: ${err.message}`); }
+
+const allaFp = await db`
+  SELECT LEFT(fingerprint, 5) AS fp, COUNT(*)::int AS n,
+         MIN(created_at) AS forsta, MAX(created_at) AS senast
+  FROM invoice_analyses GROUP BY 1 ORDER BY 2 DESC
+`;
+console.log('  — ALLA fingerprint-prefix i liggaren (maskerade) —');
+for (const r of allaFp) {
+  console.log(`  ${r.fp}…: ${r.n} rader · ${new Date(r.forsta).toISOString().slice(0, 10)} → ${new Date(r.senast).toISOString().slice(0, 10)}`);
+}
+const mailNagonsin = allaFp.filter((r) => r.fp.startsWith('mail'));
+console.log(mailNagonsin.length === 0
+  ? '  → INGEN rad i liggaren har någonsin burit mail:-fingerprint.'
+  : `  → ${mailNagonsin.reduce((s, r) => s + r.n, 0)} rader bär mail:-fingerprint.`);
+
 // process.exit(0) står SIST — den låg tidigare mitt i filen och gjorde allt som lades till
 // efteråt till död kod. Sonden rapporterade "klar" utan att ha kört mätningen, och utfallet såg
 // identiskt ut med ett utfall som mätt. Åttonde gången under obduktionen som mätinstrumentet
