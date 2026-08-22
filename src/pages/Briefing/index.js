@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { briefingLage, lovarInsikter, visaSparbelopp } from '../../lib/briefinglage';
 import { useParams, Link } from 'react-router-dom';
 
 import {
@@ -199,6 +200,16 @@ export default function Briefing() {
   const insights = briefing?.insights ?? [];
   const totalCards = 1 + insights.length + 1; // cover + insights + summary
   const anyActionTaken = Object.keys(actionsTaken).length > 0;
+  // Läget bor i src/lib/briefinglage.js så det kan prövas genom att ANROPAS (samma mönster som
+  // domslut.js i rummet och diagnos.js i huvudfunneln — tredje ytan, samma sats).
+  const _lage = briefingLage({
+    antalInsikter: insights.length,
+    sparbelopp: briefing?.totalSavingPotential,
+    harAgerat: anyActionTaken,
+  });
+  const _lovarInsikter = lovarInsikter(_lage);
+  const _visaBelopp = visaSparbelopp(_lage);
+
 
   // ── Render: ready ───────────────────────────────────────────────────────────
   return (
@@ -226,21 +237,46 @@ export default function Briefing() {
           <CoverEyebrow>Arvo Intelligence</CoverEyebrow>
           <CoverPeriod>{formatPeriod(briefing?.period)}</CoverPeriod>
 
-          <SavingLabel>Potentiell besparing</SavingLabel>
-          <SavingNumber>
-            {fmt(animatedSaving)}<SavingUnit>kr/år</SavingUnit>
-          </SavingNumber>
+          {/* ── DEN TYSTA MÅNADEN ÄR LEVERANSEN, INTE ETT MISSLYCKANDE (2026-08-22) ──────────
+              Med noll insikter visade omslaget «POTENTIELL BESPARING · 0 kr/år» som hjältesiffra,
+              «Arvo har identifierat 0 besparingsinsikter» och «Scrolla för att se insikterna» —
+              en uppmaning att scrolla till ingenting. Det är den yta som går ut som MAIL varje
+              månad. En finansdirektör vars brev har «0 kr» i största texten frågar sig vad hen
+              betalar för.
+              Bibeln: «Gör inget» är den mest premiumladdade leveransen — men bara om lugnet är
+              förtjänat och VISAT. Nu visar vi arbetet i stället för nollan. */}
+          {_visaBelopp ? (
+            <>
+              <SavingLabel>Potentiell besparing</SavingLabel>
+              <SavingNumber>
+                {fmt(animatedSaving)}<SavingUnit>kr/år</SavingUnit>
+              </SavingNumber>
+            </>
+          ) : (
+            <>
+              <SavingLabel>Månadens dom</SavingLabel>
+              <SavingNumber style={{ fontSize: '0.52em', lineHeight: 1.25 }}>
+                Allt håller
+              </SavingNumber>
+            </>
+          )}
 
           <InsightCount>
-            Arvo har identifierat{' '}
-            <strong>{insights.length} {insights.length === 1 ? 'besparingsinsikt' : 'besparingsinsikter'}</strong>
-            {' '}för ert bolag
+            {_lovarInsikter
+              ? <>Arvo har identifierat{' '}
+                  <strong>{insights.length} {insights.length === 1 ? 'besparingsinsikt' : 'besparingsinsikter'}</strong>
+                  {' '}för ert bolag</>
+              : <>Vi vägde era priser och läste era avtalsklockor den här månaden.{' '}
+                  <strong>Inget kräver er uppmärksamhet</strong> — och det är den vanligaste
+                  leveransen från en vakt som fungerar.</>}
           </InsightCount>
 
-          <ScrollHint>
-            <ScrollHintText>Scrolla för att se insikterna</ScrollHintText>
-            <ScrollArrow><ArrowDown /></ScrollArrow>
-          </ScrollHint>
+          {_lovarInsikter && (
+            <ScrollHint>
+              <ScrollHintText>Scrolla för att se insikterna</ScrollHintText>
+              <ScrollArrow><ArrowDown /></ScrollArrow>
+            </ScrollHint>
+          )}
         </CoverCard>
 
         {/* ── Insight cards ────────────────────────────────────────────────── */}
@@ -333,7 +369,9 @@ export default function Briefing() {
           <SummaryBody>
             {anyActionTaken
               ? 'Bra jobbat — ni har aktiverat Arvo. Vi granskar era avtal och återkommer med en konkret handlingsplan.'
-              : 'Era insikter väntar på er. Ni kan alltid komma tillbaka till denna sida via länken i mailet.'}
+              : _lovarInsikter
+                ? 'Era insikter väntar på er. Ni kan alltid komma tillbaka till denna sida via länken i mailet.'
+                : 'Ingenting krävde ett drag den här månaden. Vi bevakar vidare och hör av oss den månad något rör sig — ni behöver inte göra något. Sidan finns kvar via länken i mailet.'}
           </SummaryBody>
 
           {anyActionTaken && (

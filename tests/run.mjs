@@ -112,6 +112,7 @@ import './obduktion.mjs';
 import './jamforelsekalla.mjs';
 import './domslut.mjs';
 import './diagnos.mjs';
+import './briefinglage.mjs';
 import './verifieringsstampel.mjs';
 
 const ALL = [
