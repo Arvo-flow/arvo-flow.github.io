@@ -27,10 +27,13 @@
 //   månaden bevisas av vakt_events (lib/vakt.js), inte här — och en briefing som säger «vi vägde
 //   era priser» utan att ha gjort det är ett löfte utan mekanik som den här modulen inte ser.
 
+// `positivtPastaende` och `omatt` är påståendekontraktets fält (src/lib/pastaendekontrakt.js).
+// Det lugna läget är månadsbrevets OMÄTTA: vi har inget fynd att lägga fram, och då påstår vi
+// ingenting om kundens läge — bara om vårt eget arbete.
 export const BRIEFINGLAGEN = {
-  fynd:      { lovarInsikter: true,  visaSparbelopp: true  },
-  lugn:      { lovarInsikter: false, visaSparbelopp: false },
-  agerat:    { lovarInsikter: false, visaSparbelopp: true  },
+  fynd:   { lovarInsikter: true,  visaSparbelopp: true,  positivtPastaende: true },
+  lugn:   { lovarInsikter: false, visaSparbelopp: false, positivtPastaende: false, omatt: true },
+  agerat: { lovarInsikter: false, visaSparbelopp: true,  positivtPastaende: false },
 };
 
 /**

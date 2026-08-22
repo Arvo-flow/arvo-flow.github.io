@@ -113,6 +113,7 @@ import './jamforelsekalla.mjs';
 import './domslut.mjs';
 import './diagnos.mjs';
 import './briefinglage.mjs';
+import './pastaendekontrakt.mjs';
 import './verifieringsstampel.mjs';
 
 const ALL = [

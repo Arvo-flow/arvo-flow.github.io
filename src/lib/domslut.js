@@ -34,19 +34,22 @@
  * Lägena veckodomen kan stå i. `positivtPrispastaende` är deklarationen vakten prövar:
  * säger texten något gott om kundens PRIS, eller bara om vad vi gör?
  */
+// `positivtPastaende` är påståendekontraktets fältnamn (src/lib/pastaendekontrakt.js) — samma
+// fråga som resten av kundytorna svarar på, med samma ord. `positivtPrispastaende` behålls som
+// alias så befintliga konsumenter inte tyst byter innebörd vid namnbytet.
 export const DOMLAGEN = {
   // Inget att agera på
-  lugn_battre:      { positivtPrispastaende: true,  kravNiva: 'battre' },
-  lugn_i_niva:      { positivtPrispastaende: false, kravNiva: 'i-niva' },
-  lugn_over_golvet: { positivtPrispastaende: false, kravNiva: 'samre'  },
-  lugn_omatt:       { positivtPrispastaende: false, kravNiva: null     },
+  lugn_battre:      { positivtPastaende: true,  positivtPrispastaende: true,  kravNiva: 'battre' },
+  lugn_i_niva:      { positivtPastaende: false, positivtPrispastaende: false, kravNiva: 'i-niva' },
+  lugn_over_golvet: { positivtPastaende: false, positivtPrispastaende: false, kravNiva: 'samre'  },
+  lugn_omatt:       { positivtPastaende: false, positivtPrispastaende: false, kravNiva: null, omatt: true },
   // Byte på bordet
-  byte_battre:      { positivtPrispastaende: true,  kravNiva: 'battre' },
-  byte_i_niva:      { positivtPrispastaende: false, kravNiva: 'i-niva' },
-  byte_samre:       { positivtPrispastaende: false, kravNiva: 'samre'  },
-  byte_omatt:       { positivtPrispastaende: false, kravNiva: null     },
+  byte_battre:      { positivtPastaende: true,  positivtPrispastaende: true,  kravNiva: 'battre' },
+  byte_i_niva:      { positivtPastaende: false, positivtPrispastaende: false, kravNiva: 'i-niva' },
+  byte_samre:       { positivtPastaende: false, positivtPrispastaende: false, kravNiva: 'samre'  },
+  byte_omatt:       { positivtPastaende: false, positivtPrispastaende: false, kravNiva: null, omatt: true },
   // Fynd utan byte
-  fynd:             { positivtPrispastaende: false, kravNiva: null     },
+  fynd:             { positivtPastaende: false, positivtPrispastaende: false, kravNiva: null     },
 };
 
 /**

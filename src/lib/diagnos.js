@@ -26,6 +26,19 @@
 //   produkt är licensnivåns och kraverBekraftadNiva:s ansvar; att källan är ett listpris är
 //   jamforelsekalla.js.
 
+// Påståendekontraktets register (src/lib/pastaendekontrakt.js). Analyssidan har två lägen och
+// det omätta är det som gav score 85 och «bättre än branschsnittet» på fakturor vi aldrig kunde
+// jämföra. Registret gör frågan explicit i stället för att bo i en boolean.
+export const DIAGNOSLAGEN = {
+  matt:  { positivtPastaende: true },
+  omatt: { positivtPastaende: false, omatt: true },
+};
+
+/** Läget som en nyckel — samma form som rummets och månadsbrevets register. */
+export function diagnosLage(p) {
+  return diagnos(p).matt ? 'matt' : 'omatt';
+}
+
 /**
  * @param {{ annual: number, suggested: number|null, clickPriceScore: number|null,
  *           shouldSwitch: boolean, netSaving: number|null }} p
