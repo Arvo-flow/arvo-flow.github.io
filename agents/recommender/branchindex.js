@@ -175,7 +175,7 @@ export const BRANCHINDEX = {
 
   bredband: {
     source: 'real-public',
-    lastVerified: '2026-08-05',
+    lastVerified: '2026-08-22',
     verifiedVia: 'tele2-address-api',
     // GENOMBROTT 2026-06-14 (7 sond-rundor): Tele2:s adress→pris-API reverse-engineerat —
     // två rena publika JSON-endpoints (feasibility/addresses + broadband/products) som ger
