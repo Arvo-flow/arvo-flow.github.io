@@ -574,22 +574,22 @@ export const BRANCHINDEX = {
       //   Källan är nu Atlassian direkt, och talen är deras.
       'atlassian-jira-standard': {
         usdMonthly: 8.92,  usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-08-05', source: 'atlassian.com/software/jira/pricing',
+        currency: 'USD', lastVerified: '2026-08-22', source: 'atlassian.com/software/jira/pricing',
         note: 'Jira Software Cloud Standard — agile boards, backlog, roadmaps.',
       },
       'atlassian-jira-premium': {
         usdMonthly: 17.88, usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-08-05', source: 'atlassian.com/software/jira/pricing',
+        currency: 'USD', lastVerified: '2026-08-22', source: 'atlassian.com/software/jira/pricing',
         note: 'Jira Software Cloud Premium — avancerade roadmaps, sandbox, 24/7-support.',
       },
       'atlassian-confluence-standard': {
         usdMonthly: 6.55,  usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-08-05', source: 'atlassian.com/software/confluence/pricing',
+        currency: 'USD', lastVerified: '2026-08-22', source: 'atlassian.com/software/confluence/pricing',
         note: 'Confluence Cloud Standard — wiki, templates, Teams/Slack-integrationer.',
       },
       'atlassian-confluence-premium': {
         usdMonthly: 12.87, usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-08-05', source: 'atlassian.com/software/confluence/pricing',
+        currency: 'USD', lastVerified: '2026-08-22', source: 'atlassian.com/software/confluence/pricing',
         note: 'Confluence Cloud Premium — analytics, sandbox, 24/7-support.',
       },
     },
