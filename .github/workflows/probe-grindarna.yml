@@ -1,0 +1,46 @@
+name: Probe grindarna (falsklarmsfrekvens)
+
+# Kör den SKARPA pipelinen mot hela test-pdfs/ och räknar hur ofta de avväpnade grindarna skulle
+# fälla. Det är den mätning som saknats sedan 2026-06-10 — fixturkorpusen dömer på metric-nivå,
+# grindarna på extraktionsnivå, och DB:n har bara 6 fakturor med radposter.
+on:
+  workflow_dispatch:
+    inputs:
+      max:
+        description: 'Max antal fakturor (kostar ett modellanrop styck)'
+        default: '999'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Kör grindmätningen
+        run: |
+          mkdir -p ops
+          node scripts/probe-grindarna.mjs | tee ops/grindarna.txt
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GRIND_MAX: ${{ inputs.max }}
+      - name: Committa resultatet
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git add ops/grindarna.txt
+          git commit -m "ops: grindarnas falsklarmsfrekvens [skip ci]" || echo "inget att committa"
+          git checkout -- . 2>/dev/null || true
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep $((i*4))
+          done
+          echo "push misslyckades"
