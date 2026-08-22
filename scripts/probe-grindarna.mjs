@@ -48,7 +48,7 @@ const MAX = Number(process.env.GRIND_MAX) || 999;
 
 // GRIND_FILER låter en uppföljning köra bara de fakturor som föll — utan att betala för hela
 // korpusen igen. Mätningen ska kunna borra utan att kosta 75 modellanrop per fråga.
-const URVAL = (process.env.GRIND_FILER ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+const URVAL = (process.env.GRIND_FILER || '').split(',').map((x) => x.trim()).filter(Boolean);
 const filer = URVAL.length > 0
   ? URVAL
   : readdirSync(KORPUS).filter((f) => f.toLowerCase().endsWith('.pdf')).sort().slice(0, MAX);

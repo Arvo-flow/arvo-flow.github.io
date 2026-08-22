@@ -439,3 +439,89 @@ describe('OB · Prisboken tar inte emot ett antaget segment', () => {
       "industry === 'ovrigt' spärras varje kund som själv valde «övrigt» i formuläret.");
   });
 });
+
+// ── OB-24..27 · BALANSKRAVET MÄTTE I KRONOR OCH FÄLLDE VARJE ELFAKTURA ────────────────────────
+// Den första riktiga grindmätningen (75 verkliga fakturor, 2026-08-22): balanskravet fällde
+// 8 av 69 — och SJU var elfakturor. Orsaken var inte fakturorna utan grinden:
+//
+//   Fortum  3400 kWh × 1 kr = 3400, belopp 3808  → verkligt à-pris 1,12 kr
+//   Tibber  2100 kWh × 1 kr = 2100, belopp 1751  → verkligt 0,834 kr
+//   Tryggel 3100 kWh × 2 kr = 6200, belopp 5735  → verkligt 1,85 kr
+//   Tele2   1 × 898 kr = 898,       belopp −898  → kreditering
+//
+// `unitPrice` är ett HELTALSFÄLT i kronor och elpriser ligger på 0,80–1,90 kr/kWh. Avrundningen
+// ensam gör aritmetiken omöjlig. Fältet som löser det fanns redan — `unit_price_ore`/`amount_ore`
+// infördes 12 augusti för exakt den förväxlingen — men bara avstämningsgrinden fick fixen.
+//
+// FÅNGAR: att grinden räknar på det avrundade kronorfältet när öresfälten finns, och att en
+//   kreditering (negativt belopp) räknas som ett aritmetikfel.
+// BLIND: prövar aritmetiken, aldrig om det AVLÄSTA öresbeloppet är rätt läst. Det är SR-07:s
+//   uppgift (à-pris × antal = radbelopp mot fakturans egna tal) och stickprovet mot textlagret.
+describe('OB · Balanskravet räknar i öre och känner igen en kreditering', () => {
+  const rad = (o) => ({ description: 'El', quantity: 3400, type: 'recurring_subscription', ...o });
+
+  test('OB-24 · elraden går ihop när öresfälten finns', () => {
+    // Fortum, med det verkliga à-priset i öre: 3400 × 112 öre = 380 800 öre = 3 808 kr.
+    const r = judgeLineArithmetic({ lineItems: [rad({
+      unitPrice: 1, amount: 3808, unit_price_ore: 112, amount_ore: 380_800,
+    })] });
+    assert.equal(r.judged, 1);
+    assert.equal(r.balanced, true,
+      'grinden fällde en korrekt elfaktura därför att den räknade på det avrundade kronorfältet');
+  });
+
+  test('OB-25 · MOTPROVET: en verkligt obalanserad rad fälls fortfarande i öre', () => {
+    // En spärr som godkänner allt är lika värdelös som ingen spärr.
+    const r = judgeLineArithmetic({ lineItems: [rad({
+      unitPrice: 1, amount: 9999, unit_price_ore: 112, amount_ore: 999_900,
+    })] });
+    assert.equal(r.balanced, false);
+    assert.equal(r.violations[0].reason, 'antal_x_apris_matchar_inte_radbelopp');
+  });
+
+  test('OB-26 · en kreditering prövas på beloppets storlek, inte dess tecken', () => {
+    // Tele2:s kreditfaktura: 1 × 898 kr, belopp −898. Grinden såg 1 796 kr fel.
+    const r = judgeLineArithmetic({ lineItems: [{
+      description: 'Kreditering: dubbelfakturering', quantity: 1, unitPrice: 898,
+      amount: -898, type: 'one_time_fee',
+    }] });
+    assert.equal(r.judged, 1);
+    assert.equal(r.balanced, true, 'ett negativt belopp är en kreditering, inte ett aritmetikfel');
+  });
+
+  test('OB-27 · en kreditering med FEL belopp fälls, och skälet namnger den', () => {
+    const r = judgeLineArithmetic({ lineItems: [{
+      description: 'Kreditering', quantity: 1, unitPrice: 898, amount: -1500, type: 'one_time_fee',
+    }] });
+    assert.equal(r.balanced, false);
+    assert.equal(r.violations[0].reason, 'kreditering_matchar_inte_radbelopp',
+      'skälet måste skilja en felaktig kreditering från en felaktig debitering — de utreds olika');
+  });
+
+  test('OB-28 · utan öresfält är ett litet à-pris ODÖMBART, inte godkänt', () => {
+    // Första fixen vidgade kronortoleransen till 0,5 kr per enhet i stället. Matematiskt rätt —
+    // men 3 400 kWh ger 1 700 kr tolerans, och då godkänner grinden nästan vad som helst. Mitt
+    // sabotage visade det: att stänga av öresvägen ändrade ingenting. En grind som är grön för
+    // att den slutat titta är samma sjukdom som resten av obduktionen.
+    const utanOre = judgeLineArithmetic({ lineItems: [rad({ unitPrice: 1, amount: 3808 })] });
+    assert.equal(utanOre.judged, 0,
+      'ett kronorfält på 1 kr kan vara allt från 0,50 till 1,49 — raden går inte att döma');
+    assert.equal(utanOre.balanced, true, 'odömbar är inte fälld — fail-closed på FÄLTET, fail-open på pipelinen');
+  });
+
+  test('OB-29 · ett stort à-pris döms fortfarande utan öresfält', () => {
+    // Motprovet: vid 898 kr är avrundningen ≤ 0,06 % och kronorfältet fullt användbart.
+    // Utan det här testet vore spärren ovan en tyst avstängning av halva grinden.
+    const ok = judgeLineArithmetic({ lineItems: [{
+      description: 'Licens', quantity: 10, unitPrice: 898, amount: 8980, type: 'recurring_subscription',
+    }] });
+    assert.equal(ok.judged, 1);
+    assert.equal(ok.balanced, true);
+    const fel = judgeLineArithmetic({ lineItems: [{
+      description: 'Licens', quantity: 10, unitPrice: 898, amount: 12_000, type: 'recurring_subscription',
+    }] });
+    assert.equal(fel.judged, 1);
+    assert.equal(fel.balanced, false, 'ett verkligt fel på en stor rad måste fortfarande falla');
+  });
+});
+
