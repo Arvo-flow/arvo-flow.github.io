@@ -16,6 +16,8 @@ jobs:
       - run: npm ci
       - name: Sondera
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/probe-lasvagen.mjs 2>&1 | tee ops/lasvagen.txt
         env:

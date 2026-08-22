@@ -14,6 +14,8 @@ jobs:
           node-version: '20'
       - name: Source
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/source-telco-prices.mjs | tee ops/source-telco-prices.txt
       - name: Commit

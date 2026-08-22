@@ -182,4 +182,24 @@ describe('SONDVAKT · instrumenten hålls till samma krav som produktionen', () 
       'mätvärde alls. Hasha först:\n  ' + brott.join('\n  '));
   });
 
+  test('SV-11 · varje workflow som pipar en sond genom tee sätter pipefail', () => {
+    // 2026-08-22: probe-grindarna dog på FÖRSTA raden (absolut sökväg som inte finns på
+    // runnern), och steget rapporterade ändå success. Orsak: `node … | tee fil` returnerar
+    // TEE:s exit-kod, alltid 0. Sonden var död i 35 sekunder och såg ut att ha mätt 75 fakturor.
+    //
+    // Det är obduktionens kärnsjukdom i mätapparaten själv — ett resultat som betyder «jag körde
+    // inte» återgivet som «jag körde och allt gick bra» — samma dag jag skrev in den i bibeln.
+    // Mätt vid införandet: 35 av 75 workflows saknade pipefail, alltså nästan halva sondflottan.
+    const brott = [];
+    const dir = join(ROOT, '.github', 'workflows');
+    for (const f of readdirSync(dir).filter((n) => n.endsWith('.yml'))) {
+      const t = readFileSync(join(dir, f), 'utf8');
+      if (!/\|\s*tee\s/.test(t)) continue;
+      if (!/set -o pipefail/.test(t)) brott.push(f);
+    }
+    assert.deepEqual(brott, [],
+      'dessa workflows pipar en sond genom `tee` utan `set -o pipefail` — stegets exit-kod blir ' +
+      'tee:s (alltid 0), så en kraschad sond rapporterar framgång:\n  ' + brott.join('\n  '));
+  });
+
 });

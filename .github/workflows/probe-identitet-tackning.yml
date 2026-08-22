@@ -19,6 +19,8 @@ jobs:
       - name: Probe
         continue-on-error: true
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/probe-identitet-tackning.mjs ${{ inputs.fil }} 2>&1 | tee ops/probe-identitet-tackning.txt
       - name: Commit

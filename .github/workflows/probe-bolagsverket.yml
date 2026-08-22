@@ -17,6 +17,8 @@ jobs:
           node-version: '20'
       - name: Probe
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/probe-bolagsverket.mjs | tee ops/probe-bolagsverket.txt
       - name: Commit

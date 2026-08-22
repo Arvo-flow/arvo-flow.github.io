@@ -19,6 +19,8 @@ jobs:
           node-version: '20'
       - name: Hit live /api/reveal
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/diag-reveal.mjs | tee ops/diag-reveal-live.txt
       - name: Commit

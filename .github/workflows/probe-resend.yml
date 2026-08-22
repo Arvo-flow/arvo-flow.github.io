@@ -27,6 +27,8 @@ jobs:
         run: npm ci
       - name: Probe
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/probe-resend-attachments.mjs | tee ops/probe-result.txt
         env:

@@ -13,6 +13,8 @@ jobs:
         with: { node-version: '20', cache: npm }
       - name: Install Playwright + Chromium
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           npm ci
           npm install playwright
           npx playwright install chromium --with-deps

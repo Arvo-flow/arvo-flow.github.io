@@ -20,6 +20,8 @@ jobs:
       - run: npm ci
       - name: Diag
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/diag-saas-bugs.mjs \
             test-pdfs/bulk26/INV_9917_Microsoft_Ireland.pdf \

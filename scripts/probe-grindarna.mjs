@@ -28,7 +28,8 @@
 //   avgör heller ALDRIG om en fälld rad är ett sant fel eller ett falsklarm — det kräver att en
 //   människa läser fakturan. Sonden ger talet beslutet ska vila på, inte beslutet.
 import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { deklarera } from '../lib/sondkontrakt.js';
 import { extractInvoice, routeExtraction } from '../agents/test-invoice/extract.js';
 import { judgeLineArithmetic } from '../lib/extraction-integrity.js';
@@ -39,7 +40,10 @@ deklarera({
   blind: 'test-pdfs/ är vår egen korpus och speglar inte nödvändigtvis kundtrafikens fördelning. Sonden avgör aldrig om en fälld rad är ett sant fel eller ett falsklarm — det kräver att en människa läser fakturan. Prosakravet mäts inte här: det dömer AI:ns reasoning mot promptens fakta och kräver hela recommend-steget, alltså ett andra modellanrop per faktura.',
 });
 
-const KORPUS = '/home/user/arvo-flow.github.io/test-pdfs';
+// Sökvägen härleds ur filens EGEN plats. Den var absolut och pekade på min lokala disk —
+// på GitHub Actions finns den katalogen inte, så readdirSync kastade direkt. Sonden dog på
+// första raden och rapporterade ändå framgång (se `pipefail` i workflowen).
+const KORPUS = join(dirname(fileURLToPath(import.meta.url)), '..', 'test-pdfs');
 const MAX = Number(process.env.GRIND_MAX) || 999;
 
 const filer = readdirSync(KORPUS).filter((f) => f.toLowerCase().endsWith('.pdf')).sort().slice(0, MAX);

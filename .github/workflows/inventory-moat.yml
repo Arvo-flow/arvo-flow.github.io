@@ -15,6 +15,8 @@ jobs:
       - run: npm ci
       - name: Inventory
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/inventory-moat.mjs | tee ops/inventory-moat.txt
         env:

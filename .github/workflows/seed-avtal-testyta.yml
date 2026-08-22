@@ -23,6 +23,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops/testyta-shots
           node scripts/seed-avtal-testyta.mjs | tee ops/testyta-shots/logg.txt
       - name: Install Playwright + Chromium

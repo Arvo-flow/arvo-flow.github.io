@@ -38,6 +38,8 @@ jobs:
       - name: Kör score-leads
         id: score
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           FILE="leads/${{ github.event.inputs.csv_file || 'stockholm-leads.csv' }}"
           echo "Kör mot: $FILE"
           node scripts/score-leads.mjs "$FILE" 2>&1 | tee /tmp/score-output.txt

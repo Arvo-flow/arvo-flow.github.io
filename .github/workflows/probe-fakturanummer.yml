@@ -23,6 +23,8 @@ jobs:
       - run: npm install --no-save pdfjs-dist
       - name: Mät
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/probe-fakturanummer.mjs 2>&1 | tee ops/fakturanummer.txt
         env:

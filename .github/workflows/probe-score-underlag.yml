@@ -22,6 +22,8 @@ jobs:
       - run: npm ci
       - name: Kör sonden
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/probe-score-underlag.mjs | tee ops/score-underlag.txt
           node scripts/probe-grindmatning.mjs | tee ops/grindmatning.txt

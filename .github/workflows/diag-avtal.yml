@@ -22,6 +22,8 @@ jobs:
         run: sleep 100
       - name: Kör E2E-provet mot live
         run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
           mkdir -p ops
           node scripts/diag-avtal-live.mjs | tee ops/diag-avtal-live.txt
       - name: Commit
