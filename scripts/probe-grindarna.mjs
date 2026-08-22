@@ -27,7 +27,7 @@
 //   inkommande kundtrafik. Sonden mäter alltså grindarna på vår korpus, inte marknadens. Den
 //   avgör heller ALDRIG om en fälld rad är ett sant fel eller ett falsklarm — det kräver att en
 //   människa läser fakturan. Sonden ger talet beslutet ska vila på, inte beslutet.
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deklarera } from '../lib/sondkontrakt.js';
@@ -60,8 +60,11 @@ const utfall = {
 for (const fil of filer) {
   let ex;
   try {
-    const pdfBase64 = readFileSync(join(KORPUS, fil)).toString('base64');
-    ex = await extractInvoice({ pdfBase64 });
+    // extractInvoice tar `pdfPath` eller `pdfBytes` — inte `pdfBase64` (det är api-lagrets form).
+    // Mitt första anrop skickade fel fält och 75 fakturor föll på rad ett. Skillnaden mot förra
+    // körningen är att felet nu SYNS: sonden bokför varje misslyckande med sitt skäl, och
+    // pipefail gör att steget inte längre kan rapportera framgång på en död körning.
+    ex = await extractInvoice({ pdfPath: join(KORPUS, fil) });
     utfall.lasta++;
   } catch (err) {
     utfall.extraktionsfel++;
@@ -123,3 +126,19 @@ console.log(`               stoppfrekvens ${pct(utfall.radsumma.stopp, utfall.la
 console.log(`────────────────────────────────────────────────────────────────────────`);
 console.log('Sonden avgör INTE om en fälld faktura är ett sant fel eller ett falsklarm.');
 console.log('Den ger talet beslutet ska vila på — läs de namngivna fakturorna mot pappret först.');
+
+// ── EN SOND SOM INTE LÄSTE NÅGOT HAR INTE MÄTT NÅGOT (2026-08-22) ───────────────────────────
+// Första körningen dog på rad ett och rapporterade framgång. Den andra körde, men mitt anrop
+// hade fel argumentform och 75 av 75 fakturor föll — och tabellen hade ändå skrivits ut, full av
+// nollor, som om «0 % fällda» vore ett mätvärde. Det är samma sjukdom som allt annat under
+// obduktionen: ett resultat som betyder «jag mätte inte», återgivet som en mätning.
+//
+// Tröskeln är medvetet låg (hälften): sonden ska fälla på ett systemfel, inte på att enstaka
+// fakturor är svårlästa — några extraktionsfel i en korpus på 75 är normalt och ska rapporteras,
+// inte stoppa.
+const misslyckadeAndel = filer.length > 0 ? utfall.extraktionsfel / filer.length : 1;
+if (utfall.lasta === 0 || misslyckadeAndel > 0.5) {
+  console.error(`\n[grindsond] RÖTT — ${utfall.extraktionsfel} av ${filer.length} fakturor kunde inte läsas.`);
+  console.error('Talen ovan är inte en mätning av grindarna, utan av att sonden inte kom fram. Armera ingenting på dem.');
+  process.exit(1);
+}
