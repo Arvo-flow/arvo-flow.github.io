@@ -111,6 +111,7 @@ import './licensniva.mjs';
 import './obduktion.mjs';
 import './jamforelsekalla.mjs';
 import './domslut.mjs';
+import './diagnos.mjs';
 import './verifieringsstampel.mjs';
 
 const ALL = [

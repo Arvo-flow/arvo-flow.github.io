@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr } from '../../utils/format';
+import { diagnos } from '../../lib/diagnos';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
 import FindingCard from '../../components/FindingCard';
@@ -1008,23 +1009,24 @@ const TestaFaktura = () => {
 
   const diagAnnual  = adjAnnualCost;
   const diagSugg    = result?.recommendation?.suggestedAnnualCost ?? 0;
-  const diagOvPct   = diagAnnual > 0 && diagSugg > 0 && diagSugg < diagAnnual
-    ? Math.round((diagAnnual - diagSugg) / diagAnnual * 100)
-    : 0;
-  // "Över marknadspris" = (pris − mål)/mål — ALDRIG andel-av-priset (Svea/85-felet är låst).
-  // diagOvPct (besparingsandel) driver score-gaugen; diagOverMarketPct är det ärliga "över marknad"-talet.
-  const diagOverMarketPct = diagAnnual > 0 && diagSugg > 0 && diagSugg < diagAnnual
-    ? Math.round((diagAnnual - diagSugg) / diagSugg * 100)
-    : 0;
+  // ── UTAN MÄTT JÄMFÖRELSETAL FINNS INGET OMDÖME ATT GE (2026-08-22) ────────────────────────
+  // `diagOvPct` blev 0 när suggested saknades, `diagScoreRaw` blev 100, och scoren landade på 85
+  // — vilket gav texten «Ni har ett marknadsmässigt avtal — bättre än branschsnittet.» Men
+  // suggested = 0 betyder inte att kunden betalar bra; det betyder att VI inte kunde räkna fram
+  // ett mål. Samma sats som fällde rummet i fyra ytor samma dag, här i huvudfunneln.
+  // Beslutet bor i src/lib/diagnos.js så det kan prövas genom att ANROPAS.
   const _clickPriceScore = result?.recommendation?.clickRateAnalysis?.priceGapScore ?? null;
-  const diagScoreRaw = _clickPriceScore ?? Math.max(5, Math.round(100 - diagOvPct * 1.5));
-  const diagScore    = _clickPriceScore != null
-    ? _clickPriceScore
-    : (!result?.recommendation?.shouldSwitch
-        ? Math.min(diagScoreRaw, 85)
-        : (result?.recommendation?.netSaving ?? 0) > 0
-          ? Math.min(diagScoreRaw, 79)  // cap vid 79 → "Förbättringsläge" när vi rekommenderar byte
-          : diagScoreRaw);
+  const _diag = diagnos({
+    annual: diagAnnual, suggested: diagSugg, clickPriceScore: _clickPriceScore,
+    shouldSwitch: result?.recommendation?.shouldSwitch,
+    netSaving: result?.recommendation?.netSaving,
+  });
+  const diagOvPct   = _diag.ovPct;
+  // "Över marknadspris" = (pris − mål)/mål — ALDRIG andel-av-priset (Svea/85-felet är låst).
+  const diagOverMarketPct = _diag.overMarketPct;
+  const diagMatt    = _diag.matt;
+  // Gaugen ritas på 0 när talet är omätt; siffran visas som "—" (samma disciplin som rummet).
+  const diagScore   = _diag.score ?? 0;
   const diagC       = diagScore < 45
     ? { dot: '#DC2626', num: '#DC2626', label: 'Kritisk',         labelClr: '#991B1B', txt: '#7F1D1D', bg: '#FEF2F2', border: 'rgba(220,38,38,.18)' }
     : diagScore < 65
@@ -1062,7 +1064,11 @@ const TestaFaktura = () => {
   const _bmPhrase = diagOvPct >= 15
     ? (_effectiveMeta.smfBenchmark ?? 'ett lägre verifierat marknadspris finns att hämta')
     : 'samma avtal kostar mindre till leverantörens publika årsavtalspris';
-  const diagInsight = _isSecondaryOnlySwitch
+  // Utan mätt tal säger vi vad vi VET (kundens kostnad) och vad vi inte kunde göra — aldrig ett
+  // omdöme om priset. Grenen ligger FÖRST så ingen av de score-baserade texterna kan nås.
+  const diagInsight = !diagMatt
+    ? `Vi har läst er faktura och ert nuläge — men ${_diag.skal}. Vi hävdar därför inget om er prisnivå i dag, och lägger aldrig fram en besparing vi inte kan räkna hem.`
+    : _isSecondaryOnlySwitch
     ? `Ert ${getCategoryMeta(result?.categorized?.category ?? 'uncategorized').label.toLowerCase()} är konkurrenskraftigt — ${_secLabel ?? 'sekundärtjänsten'} kan optimeras.`
     : result?.route === 'monitoring'
       ? monitoringDatePast
@@ -1454,7 +1460,7 @@ const TestaFaktura = () => {
                       />
                     </svg>
                     <div className="gauge-num" style={{ color: diagC.dot }}>
-                      <span className="gauge-val">{diagScore}</span>
+                      <span className="gauge-val">{diagMatt ? diagScore : '—'}</span>
                       <span className="gauge-denom">/100</span>
                     </div>
                   </div>
@@ -1887,8 +1893,11 @@ const TestaFaktura = () => {
                               />
                             </svg>
                             <div className="gauge-num" style={{ color: diagC.dot }}>
-                              <span className="gauge-val">{animScoreVal}</span>
-                              <span className="gauge-denom">/100</span>
+                              {/* Ett omätt tal visas som «—», aldrig som 85. Utan jämförelsetal
+                                  finns ingen position att peka ut — samma disciplin som
+                                  marketStanding i rummet. */}
+                              <span className="gauge-val">{diagMatt ? animScoreVal : '—'}</span>
+                              {diagMatt && <span className="gauge-denom">/100</span>}
                             </div>
                           </div>
                           <div className="diag-body">
