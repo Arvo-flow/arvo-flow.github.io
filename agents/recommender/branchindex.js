@@ -75,7 +75,7 @@ export const BRANCHINDEX = {
     // Källa: Eurostat 2025-S2, verifierat live 2026-06-14 (216,01 / 125,87 / 107,06 öre/kWh).
     eurostatBands: {
       source: 'eurostat', sourceRef: 'nrg_pc_205', period: '2025-S2',
-      lastVerified: '2026-06-14', basis: 'icke-hushåll, SE, allt-in exkl. moms',
+      lastVerified: '2026-08-22', basis: 'icke-hushåll, SE, allt-in exkl. moms',
       unit: 'kr_per_kwh',
       bands: [
         { maxMwh: 20,       allInKwh: 2.1601, label: '< 20 MWh/år (små bolag)' },
