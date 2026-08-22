@@ -57,6 +57,11 @@ console.log(`═══ GRINDARNA MOT ${filer.length} VERKLIGA FAKTUROR ═══
 const utfall = {
   lasta: 0, extraktionsfel: 0,
   balans: { provbara: 0, fallda: 0, rader: 0, radfel: 0, filer: [] },
+  // TÄCKNINGEN, inte bara utfallet. Öres-fixen gör en rad ODÖMBAR när modellen inte fyllt
+  // unit_price_ore/amount_ore — och bibeln (12 aug) säger att de fälten varierar mellan
+  // körningar på samma PDF. Utan det här talet vet vi inte om grinden blev vass eller TYST.
+  // En vakt vars täckning ingen mäter är en vakt som kan tystna utan att någon märker det.
+  tackning: { rader: 0, medOre: 0, odombaraSmaApris: 0 },
   projektion: { provbara: 0, fallda: 0, filer: [] },
   schema: { provbara: 0, fallda: 0, filer: [] },
   radsumma: { ok: 0, stopp: 0, ejProvbar: 0, varning: 0 },
@@ -75,6 +80,15 @@ for (const fil of filer) {
     utfall.extraktionsfel++;
     console.log(`  ✗ ${fil}: extraktionen föll — ${err.message.split('\n')[0].slice(0, 70)}`);
     continue;
+  }
+
+  // TÄCKNINGSMÄTNING — samma villkor som grinden själv använder.
+  for (const l of ex.lineItems ?? []) {
+    if (l.quantity == null || !(l.quantity > 0) || l.type === 'variable_usage') continue;
+    utfall.tackning.rader++;
+    const harOre = Number.isFinite(l.unit_price_ore) && Number.isFinite(l.amount_ore);
+    if (harOre) utfall.tackning.medOre++;
+    else if (l.unitPrice != null && l.unitPrice > 0 && l.unitPrice < 10) utfall.tackning.odombaraSmaApris++;
   }
 
   // BALANSKRAVET — döms direkt på det extraherade utfallet.
@@ -131,6 +145,8 @@ console.log(`BALANSKRAVET   prövbara ${utfall.balans.provbara} fakturor · ${ut
 console.log(`               skulle STOPPA ${utfall.balans.fallda} fakturor (${pct(utfall.balans.fallda, utfall.balans.provbara)})`);
 console.log(`               fällda rader: ${utfall.balans.radfel} (${pct(utfall.balans.radfel, utfall.balans.rader)})`);
 for (const f of utfall.balans.filer.slice(0, 10)) console.log(`                 · ${f}`);
+console.log(`               TÄCKNING: ${utfall.tackning.medOre} av ${utfall.tackning.rader} rader bar öresfält (${pct(utfall.tackning.medOre, utfall.tackning.rader)})`);
+console.log(`               ${utfall.tackning.odombaraSmaApris} rader odömbara (à-pris < 10 kr utan öresfält) — grinden TIGER där, den godkänner inte`);
 console.log(`\nPROJEKTIONSKRAV prövbara ${utfall.projektion.provbara} · fäller ${utfall.projektion.fallda} (${pct(utfall.projektion.fallda, utfall.projektion.provbara)})`);
 for (const f of utfall.projektion.filer.slice(0, 10)) console.log(`                 · ${f}`);
 console.log(`\nSCHEMAKRAVET    prövbara ${utfall.schema.provbara} · fäller ${utfall.schema.fallda} (${pct(utfall.schema.fallda, utfall.schema.provbara)})`);
