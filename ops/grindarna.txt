@@ -5,87 +5,34 @@
 ║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
 ║ ett påstående som låtsas vara ett faktum.
 ╚═══════════════════════════════════════════════════════════════════════════════
-═══ GRINDARNA MOT 75 VERKLIGA FAKTUROR ═══
+═══ GRINDARNA MOT 8 VERKLIGA FAKTUROR ═══
 
-..............  ✗ bredband-nytt-avtal-rabatt.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ bredband_1_baseline.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ bredband_2_sveakom.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ bredband_3.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ bredband_4.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ bredbandsbolaget-kampanj.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ canon-hog-klickratio.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ cloudreseller-norden.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ comhem-mobil-bredband-kombinerad.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ comviq-data-tal.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ comviq-mobil-budget.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ connectsverige.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ crayon-m365-azure.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ dhl-frakt-standard.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ diag-bredband.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ dustin-m365-standard.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ eon-el-solceller.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ eon-el-spot-se3.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ fortum-el-fastpris.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ globalcom-mobil-hog-roaming.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ google-workspace-arsbetalning.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ hubspot-marketing-pro.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ iponly-fiber-addon-stack.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ konica-minolta-klick.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ konsult-it-oklar.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ kraftringen-el-lokalt.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ kristianstad.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ microsoft-direkt-usd.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ microsoft-new.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ microsoft.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ mixad-it-frakt.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ nordiclogistik.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ oklar-blandad-faktura.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ omnicloud.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ outofscope.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ postnord-brev-paket.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ restaurang-mat-outofscope.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ ricoh.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ salesforce-enterprise.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ stadbolag-outofscope.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ stadsnät-koaxial-tv.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ tele2-mobil-arsavtal.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ tele2-mobil-bredband-kombinerad.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ tele2-mobil-enkel.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ tele2-mobil-kreditfaktura.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ tele2-mobil-roaming.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ telenor-mobil-bredband-kombinerad.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ telenor-mobil-prorata.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ telenor-mobil-standard.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ telenor-molnvaxel-stor.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ telia-fiber-statisk-ip.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ telia-mobil-bredband-kombinerad.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ telia-mobil-hardvara.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ telia.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ tibber-el-timavrakning.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ tre-mobil-molnvaxel.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ tryggel.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ unclear.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ vattenfall-el-se4.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ vattenfall.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ xerox-managed-print-it.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
 
 
 ────────────────────────────────────────────────────────────────────────
-fakturor lästa: 14 · extraktionsfel: 61
+fakturor lästa: 0 · extraktionsfel: 8
 
-BALANSKRAVET   prövbara 12 fakturor · 24 rader
-               skulle STOPPA 0 fakturor (0.0 %)
-               fällda rader: 0 (0.0 %)
-               TÄCKNING: 0 av 27 rader bar öresfält (0.0 %)
+BALANSKRAVET   prövbara 0 fakturor · 0 rader
+               skulle STOPPA 0 fakturor (—)
+               fällda rader: 0 (—)
+               TÄCKNING: 0 av 0 rader bar öresfält (—)
                0 rader odömbara (à-pris < 10 kr utan öresfält) — grinden TIGER där, den godkänner inte
 
-PROJEKTIONSKRAV prövbara 12 · fäller 0 (0.0 %)
+PROJEKTIONSKRAV prövbara 0 · fäller 0 (—)
 
-SCHEMAKRAVET    prövbara 14 · fäller 0 (0.0 %)
+SCHEMAKRAVET    prövbara 0 · fäller 0 (—)
 
 RING 1 (radsumma, REDAN ARMERAD — referensmåttet)
-               ok 13 · stopp 0 · varning 0 · ej prövbar 0
-               stoppfrekvens 0.0 % — en armerad grinds verkliga nivå
+               ok 0 · stopp 0 · varning 0 · ej prövbar 0
+               stoppfrekvens — — en armerad grinds verkliga nivå
 ────────────────────────────────────────────────────────────────────────
 Sonden avgör INTE om en fälld faktura är ett sant fel eller ett falsklarm.
 Den ger talet beslutet ska vila på — läs de namngivna fakturorna mot pappret först.
