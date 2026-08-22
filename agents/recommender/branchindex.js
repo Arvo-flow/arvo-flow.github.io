@@ -467,17 +467,17 @@ export const BRANCHINDEX = {
       // (GRUNDARBESLUT 2026-06-19, neutralitets-moaten) — fältet ska aldrig bära ett partnerpris.
       'business-basic': {
         msrpMonthly: 80.29, msrpAnnual: 66.91, arvoAnnual: 66.91,
-        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-08-22', source: 'microsoft.com',
         note: 'M365 Business Basic — Teams, Exchange, webb-appar, 1 TB OneDrive. Ingen desktop Office-suite.',
       },
       'business-standard': {
         msrpMonthly: 160.58, msrpAnnual: 133.82, arvoAnnual: 133.82,
-        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-08-22', source: 'microsoft.com',
         note: 'M365 Business Standard — full desktop Office, Teams, SharePoint, 1 TB OneDrive. Vanligast bland svenska SMF.',
       },
       'business-premium': {
         msrpMonthly: 252.35, msrpAnnual: 210.29, arvoAnnual: 210.29,
-        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-08-22', source: 'microsoft.com',
         note: 'M365 Business Premium — inkl. Intune MDM + Microsoft Defender for Business. Rätt val vid säkerhetskrav.',
       },
       // OBS: Microsoft 365 E3/E5 ≠ Office 365 E3/E5 (separata produkter).
@@ -496,12 +496,12 @@ export const BRANCHINDEX = {
       // månadsåtagande för enterprise på sidan. Estimatet räknas om med det nya årspriset.
       'e3': {
         msrpMonthly: 500.12, msrpAnnual: 416.77, arvoAnnual: 416.77,
-        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-08-22', source: 'microsoft.com',
         note: 'M365 E3 — enterprise compliance, eDiscovery, avancerat auditlogg, Purview. Sällan motiverat under 100 users. Förväxla ej med Office 365 E3 (256 kr).',
       },
       'e5': {
         msrpMonthly: 769.42, msrpAnnual: 641.18, arvoAnnual: 641.18,
-        currency: 'SEK', lastVerified: '2026-08-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-08-22', source: 'microsoft.com',
         note: 'M365 E5 — full SIEM, Defender for Endpoint, Power BI Pro, avancerad analys. Förväxla ej med Office 365 E5 (424 kr).',
       },
 
