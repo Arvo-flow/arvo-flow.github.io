@@ -241,7 +241,7 @@ export const BRANCHINDEX = {
       source: 'telia.se/foretag/vaxlar/vaxel-sma-foretag',
       vatBasis: 'exkl',
       vatConfirmedAt: '2026-06-18',
-      lastVerified: '2026-06-18',
+      lastVerified: '2026-08-22',
       // kr/användare/mån EXKL moms — "från" (instegsgolv). T3 = skräddarsy/offert (inget fast listpris).
       tiers: {
         T1: { plan: 'Smart Connect uppsättning 1', fromMonthly: 89 },
