@@ -7,6 +7,14 @@
 // Exit 1 om någon källa drivit eller är oåtkomlig (regel 4: hellre rött än tyst osäkerhet).
 import { VERIFIERS, getVerifier } from '../lib/verifiers/registry.mjs';
 import { bedomVerifierarutfall, UTFALL } from '../lib/verifierarutfall.js';
+import { stampelbeslut, stamplaKalla } from '../lib/verifieringsstampel.js';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const BRANCHINDEX_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'agents', 'recommender', 'branchindex.js');
+const IDAG = new Date().toISOString().slice(0, 10);
+const stamplade = [];
 
 const args = process.argv.slice(2);
 
@@ -67,6 +75,27 @@ for (const v of targets) {
     console.error(`  → RÖTT [${v.id}]: ${dom.skal}`);
   } else {
     console.log(`  → ✓ [${v.id}] håller (${res.checks.length} tal verifierade mot källan)`);
+    // ── STÄMPELN: «verifierat» ska betyda vad ordet lovar (2026-08-21) ────────────────────────
+    // `lastVerified` uppdaterades bara när ett pris ÄNDRADES, så ett STABILT pris larmade i
+    // price-audit efter 60 dagar — för alltid, hur många gånger vakten än bekräftat det. Ett
+    // larm som går av på rätt beteende är exakt det som fick smyghöjningsvakten avstängd.
+    // Beslutet bor i lib/verifieringsstampel.js så det kan prövas genom att ANROPAS.
+    const st = stampelbeslut({ verifierare: v, resultat: res, idag: IDAG });
+    if (!st.stampla) {
+      console.log(`  · stämpel utebliven: ${st.skal}`);
+    } else {
+      const kalla = readFileSync(BRANCHINDEX_PATH, 'utf8');
+      const { kalla: ny, andrade, oforandrade } = stamplaKalla(kalla, st.nycklar, IDAG);
+      if (andrade.length > 0) {
+        writeFileSync(BRANCHINDEX_PATH, ny, 'utf8');
+        console.log(`  · stämplade ${andrade.length} nivå(er) med ${IDAG}: ${andrade.join(', ')}`);
+        stamplade.push(...andrade);
+      }
+      // Nycklar som inte gick att stämpla är ett MÄTVÄRDE, inte en tystnad: en deklarerad nivå
+      // som saknas i prisboken är precis den föråldrade deklaration prisauditen finns för.
+      const saknade = oforandrade.filter((k) => !kalla.includes(`'${k}':`));
+      if (saknade.length > 0) console.warn(`  · ⚠ deklarerade nivåer saknas i prisboken: ${saknade.join(', ')}`);
+    }
   }
 }
 
@@ -75,6 +104,9 @@ if (anyFail) {
   process.exit(1);
 }
 console.log('\n[verify] ✓ alla körda verifierare håller mot sina källor — ankarena håller.');
+if (stamplade.length > 0) {
+  console.log(`[verify] ${stamplade.length} nivå(er) fick nytt verifieringsdatum ${IDAG} — prisboken behöver committas.`);
+}
 // En timeout:ad run() lever vidare i bakgrunden med en öppen browser och skulle annars hålla
 // processen vid liv tills jobbets tak dödar den — samma tysta hängning vi just byggt bort.
 process.exit(0);

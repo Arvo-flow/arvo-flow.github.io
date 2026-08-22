@@ -24,6 +24,10 @@ on:
         description: 'Kör en enskild källa (id) eller "all"'
         default: 'all'
 
+# Stämpeln skriver tillbaka verifieringsdatum till prisboken — det kräver skrivrättighet.
+permissions:
+  contents: write
+
 jobs:
   discover:
     runs-on: ubuntu-latest
@@ -75,3 +79,30 @@ jobs:
       - name: Verifiera ${{ matrix.source.id }}
         if: ${{ !matrix.source.needsStealth }}
         run: node scripts/verify.mjs ${{ matrix.source.id }}
+      # ── STÄMPELN (2026-08-21) ────────────────────────────────────────────────────────────
+      # `lastVerified` uppdaterades bara när ett pris ÄNDRADES, så ett STABILT pris larmade i
+      # price-audit efter 60 dagar — för alltid, hur många gånger vakten än bekräftat det. Ett
+      # larm som går av på rätt beteende är precis det som fick smyghöjningsvakten avstängd.
+      # verify.mjs skriver nu dagens datum på de nivåer en GRÖN vakt faktiskt läste; det här
+      # steget committar ändringen. Ingen ändring → ingen commit (`git diff --quiet`).
+      #
+      # `--rebase` + retry: matrisens jobb kör parallellt och kan alla vilja skriva samma fil.
+      # continue-on-error så en misslyckad stämpling ALDRIG kan färga verifieringen röd —
+      # bokföringen får inte bli produktionsrisken.
+      - name: Committa nya verifieringsdatum
+        if: always()
+        continue-on-error: true
+        run: |
+          if git diff --quiet -- agents/recommender/branchindex.js; then
+            echo "inga nya verifieringsdatum — prisboken orörd"
+            exit 0
+          fi
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Verify Bot"
+          git add agents/recommender/branchindex.js
+          git commit -m "verifiering: ${{ matrix.source.id }} bekräftade sina nivåer mot källan [skip ci]"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "push $i misslyckades — väntar $((i*3))s"; sleep $((i*3))
+          done
+          echo "kunde inte pusha stämpeln efter 5 försök"; exit 0
