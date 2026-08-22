@@ -548,12 +548,12 @@ export const BRANCHINDEX = {
       // NÄSTA VERIFIERING: 2026-09-01
       'zoom-pro': {
         usdMonthly: 15.99, usdAnnual: 14.16,
-        currency: 'USD', lastVerified: '2026-08-05', source: 'zoom.us/pricing',
+        currency: 'USD', lastVerified: '2026-08-22', source: 'zoom.us/pricing',
         note: 'Zoom Pro — obegränsade möten, 1 GB moln-inspelning, schemaläggning.',
       },
       'zoom-business': {
         usdMonthly: 19.99, usdAnnual: 18.33,
-        currency: 'USD', lastVerified: '2026-08-05', source: 'zoom.us/pricing',
+        currency: 'USD', lastVerified: '2026-08-22', source: 'zoom.us/pricing',
         note: 'Zoom Business — SSO, inspelningsutskrifter, branding, 300 deltagare.',
       },
 
