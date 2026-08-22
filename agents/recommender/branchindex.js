@@ -692,7 +692,7 @@ export const BRANCHINDEX = {
       // Zoho CRM — USD-baspris.
       'zoho-crm-standard': {
         usdMonthly: 20.00, usdAnnual: 14.00,
-        currency: 'USD', lastVerified: '2026-08-05', source: 'zoho.com/crm/zohocrm-pricing.html',
+        currency: 'USD', lastVerified: '2026-08-22', source: 'zoho.com/crm/zohocrm-pricing.html',
         note: 'Zoho CRM Standard — leads, kontakter, konton, standardrapporter.',
       },
     },
