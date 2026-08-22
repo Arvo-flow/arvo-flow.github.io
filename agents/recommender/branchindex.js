@@ -534,12 +534,12 @@ export const BRANCHINDEX = {
       // NÄSTA VERIFIERING: 2026-09-01
       'slack-pro': {
         usdMonthly: 8.75,  usdAnnual: 7.25,
-        currency: 'USD', lastVerified: '2026-08-05', source: 'slack.com/pricing',
+        currency: 'USD', lastVerified: '2026-08-22', source: 'slack.com/pricing',
         note: 'Slack Pro — obegränsat meddelandehistorik, video-huddles, obegränsade integrationer.',
       },
       'slack-business-plus': {
         usdMonthly: 18.00, usdAnnual: 15.00,
-        currency: 'USD', lastVerified: '2026-08-05', source: 'slack.com/pricing',
+        currency: 'USD', lastVerified: '2026-08-22', source: 'slack.com/pricing',
         note: 'Slack Business+ — SSO/SAML, kompliansexport, DLP, prioriterad support. Årsavtal 15 USD vs månadsavtal 18 USD, verifierat live 2026-08-05 av lib/verifiers/slack.mjs (den tidigare noten "årsrabatten togs bort" var felaktig — prisboken övervärderade marknaden med 20 %).',
       },
 
