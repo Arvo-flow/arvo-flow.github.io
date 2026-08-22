@@ -46,7 +46,12 @@ deklarera({
 const KORPUS = join(dirname(fileURLToPath(import.meta.url)), '..', 'test-pdfs');
 const MAX = Number(process.env.GRIND_MAX) || 999;
 
-const filer = readdirSync(KORPUS).filter((f) => f.toLowerCase().endsWith('.pdf')).sort().slice(0, MAX);
+// GRIND_FILER låter en uppföljning köra bara de fakturor som föll — utan att betala för hela
+// korpusen igen. Mätningen ska kunna borra utan att kosta 75 modellanrop per fråga.
+const URVAL = (process.env.GRIND_FILER ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+const filer = URVAL.length > 0
+  ? URVAL
+  : readdirSync(KORPUS).filter((f) => f.toLowerCase().endsWith('.pdf')).sort().slice(0, MAX);
 console.log(`═══ GRINDARNA MOT ${filer.length} VERKLIGA FAKTUROR ═══\n`);
 
 const utfall = {
@@ -81,6 +86,16 @@ for (const fil of filer) {
     if (!b2.balanced) {
       utfall.balans.fallda++;
       utfall.balans.filer.push(`${fil} (${b2.violations.length}/${b2.judged} rader: ${b2.violations[0]?.reason ?? '?'})`);
+      // Ett tal utan sin rad går inte att bedöma. Mätningen 2026-08-22 visade att 7 av 8 fällda
+      // fakturor var ELFAKTUROR — ett mönster, inte slump — och då är nästa fråga VILKA rader.
+      // Utan dem hade beslutet «armera eller laga» vilat på en gissning om orsaken.
+      if (URVAL.length > 0) {
+        for (const v of b2.violations) {
+          const rad = (ex.lineItems ?? []).find((l) => l.description === v.line);
+          console.log(`\n    ↳ ${fil} · «${String(v.line).slice(0, 46)}»`);
+          console.log(`      typ=${rad?.type ?? '?'} antal=${rad?.quantity} à=${rad?.unitPrice} belopp=${rad?.amount} · förväntat ${Math.round(v.expected)}`);
+        }
+      }
     }
   }
 

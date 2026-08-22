@@ -9,6 +9,9 @@ on:
       max:
         description: 'Max antal fakturor (kostar ett modellanrop styck)'
         default: '999'
+      filer:
+        description: 'Kommaseparerade filnamn — kör bara dessa (för att borra i ett utfall)'
+        default: ''
 
 permissions:
   contents: write
@@ -32,6 +35,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GRIND_MAX: ${{ inputs.max }}
+          GRIND_FILER: ${{ inputs.filer }}
       - name: Committa resultatet
         if: always()
         continue-on-error: true
