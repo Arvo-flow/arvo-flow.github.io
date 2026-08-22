@@ -132,7 +132,26 @@ describe('Branschankaret · enhet + källa', () => {
     const tiers = cat?.licenseTierBenchmarks ?? {};
     const datum = Object.values(tiers).map((t) => t?.lastVerified).filter(Boolean).sort();
     assert.ok(datum.length >= 2, 'saas-productivity ska ha flera daterade nivåer att välja mellan');
-    assert.notEqual(datum[0], datum.at(-1), 'nivåerna ska ha OLIKA datum — annars prövar testet ingenting');
+
+    // ── TESTET FICK INTE BERO PÅ ATT PRISBOKEN RÅKAR SPRETA (2026-08-22) ──────────────────────
+    // Kravet stod tidigare på prisbokens verkliga datum: «nivåerna ska ha OLIKA datum — annars
+    // prövar testet ingenting». Det var en RIKTIG vakt mot tomhet, och den fällde sig själv i det
+    // ögonblick verifieringsstämpeln daterade alla M365-nivåer samma dag. Rätt beteende gjorde
+    // testet omöjligt att köra.
+    //
+    // Samma läxa som Tele2-sänkningen 18 augusti: när verkligheten flyttar sig, flytta testets
+    // INDATA så att det prövar samma sak — låt det inte vippa på ett tillstånd du inte styr.
+    // Skillnaden matas nu in explicit, så BA-10 prövar valet även den dag hela prisboken är
+    // verifierad i samma körning (vilket numera är normalfallet).
+    const ref = cat.cellHarledning.referensTier;
+    const spretiga = Object.fromEntries(Object.entries(tiers).map(([k, t], i) => [
+      k, { ...t, lastVerified: k === ref ? '2026-08-05' : `2026-0${(i % 6) + 1}-17` },
+    ]));
+    const matad = { ...cat, licenseTierBenchmarks: spretiga };
+    const matadeDatum = Object.values(spretiga).map((t) => t.lastVerified).sort();
+    assert.notEqual(matadeDatum[0], matadeDatum.at(-1), 'harnesset matar inte olika datum — då prövas ingenting');
+    assert.equal(harledCeller(matad).lastVerified, '2026-08-05',
+      'härledningen ska ta REFERENSNIVÅNS datum, inte den stalaste av de matade');
 
     const bararens = harledCeller(cat).lastVerified;
     const out = await buildBranchAnchors([a({ category: 'saas-productivity' })]);
