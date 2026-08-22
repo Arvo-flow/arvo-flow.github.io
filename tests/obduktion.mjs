@@ -525,3 +525,56 @@ describe('OB · Balanskravet räknar i öre och känner igen en kreditering', ()
   });
 });
 
+// ── OB-30..32 · ÖRESVÄGEN VAR STÄNGD AV ETT BELOPP SOM VAR EXAKT ─────────────────────────────
+// Täckningsmätningen svarade «0 av 27 rader bar öresfält» — alltså skulle öres-fixen vara död
+// kod och elfakturorna bara ha blivit ODÖMBARA i stället för fällda. En tyst nedgradering, precis
+// det täckningsmätningen byggdes för att upptäcka.
+//
+// Textlagret gav sanningen utan ett enda modellanrop: fakturan skriver «kWh 1,12» i klartext.
+// Talet fanns hela tiden. Felet var mitt: grinden krävde BÅDA öresfälten, men schemat säger
+// `amount_ore: null om beloppet inte står med öresprecision` — och Fortums belopp ÄR jämna
+// 3 808 kr. Modellen svarade korrekt null, och grinden läste det som «inga öresdata».
+//
+// Ett belopp i hela kronor är EXAKT i öre (× 100). Det är en enhetskonvertering av ett känt tal,
+// inte en härledning av ett okänt — och därför räcker `unit_price_ore`.
+//
+// FÅNGAR: att öresvägen stängs av ett saknat amount_ore, och att den öppnas så brett att ett
+//   verkligt fel slipper igenom.
+// BLIND: prövar aritmetiken, aldrig om det avlästa öresbeloppet är RÄTT läst — det är SR-07 och
+//   stickprovet mot textlagret. Och `unit_price_ore` är heltal öre: Tibbers 0,834 kr blir 83, så
+//   grinden dömer mot ett à-pris som är 0,4 % fel. Toleransen bär det; en kategori med ännu
+//   finare priser skulle inte gå att döma alls.
+describe('OB · Öresvägen bär de verkliga elfakturorna', () => {
+  test('OB-30 · à-pris i öre räcker — beloppet får stå i hela kronor', () => {
+    // Fortum, exakt som fakturan ser ut: «kWh 1,12», belopp jämna 3 808 kr, inget amount_ore.
+    const r = judgeLineArithmetic({ lineItems: [{
+      description: 'Fortum Fastpris', quantity: 3400, unitPrice: 1, amount: 3808,
+      unit_price_ore: 112, amount_ore: null, type: 'recurring_subscription',
+    }] });
+    assert.equal(r.judged, 1, 'raden blev odömbar trots att à-priset står i klartext på fakturan');
+    assert.equal(r.balanced, true, '3400 × 112 öre = 380 800 öre = 3 808 kr — det går ihop på öret');
+  });
+
+  test('OB-31 · modellens öresavrundning ryms i toleransen', () => {
+    // Tibbers 0,834 kr/kWh kan inte uttryckas i heltal öre — modellen svarar 83. 2100 × 83 =
+    // 1 743 kr mot fakturans 1 751. Skillnaden (0,46 %) är avrundningen, inte ett fel.
+    const r = judgeLineArithmetic({ lineItems: [{
+      description: 'Tibber Spot', quantity: 2100, unitPrice: 1, amount: 1751,
+      unit_price_ore: 83, amount_ore: null, type: 'recurring_subscription',
+    }] });
+    assert.equal(r.judged, 1);
+    assert.equal(r.balanced, true);
+  });
+
+  test('OB-32 · MOTPROVET: öresvägen släpper inte igenom ett verkligt fel', () => {
+    // Utan detta vore fixen ovan en tyst avstängning av grinden — samma sjukdom som den lagar.
+    const r = judgeLineArithmetic({ lineItems: [{
+      description: 'Fel', quantity: 3400, unitPrice: 1, amount: 9999,
+      unit_price_ore: 112, amount_ore: null, type: 'recurring_subscription',
+    }] });
+    assert.equal(r.judged, 1);
+    assert.equal(r.balanced, false);
+  });
+});
+
+
