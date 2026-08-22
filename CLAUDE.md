@@ -734,6 +734,51 @@ signera", aldrig som ett verkställt löfte.)
    > redundant eftersom `else if` fångade `undefined` ändå. Två grenar som ser ut som två lager men
    > är ett räknar ett skydd vi inte har.
 
+   > **✅ TALET VAR INTE SVARET — GRINDEN MÄTTE FEL SAK (2026-08-22, den första riktiga grindmätningen).**
+   > Fyra integritetsgrindar stod i skuggläge sedan 10 juni, alla med samma motivering i koden:
+   > «armeras när falsklarmsfrekvensen är uppmätt». Mätningen gjordes aldrig — fixturkorpusen dömer
+   > på METRIC-nivå medan grindarna dömer på EXTRAKTIONS-nivå, och DB:n hade sex fakturor med
+   > radposter. Vägen som bar var att köra den skarpa pipelinen mot 75 verkliga fakturor:
+   >
+   > | grind | prövbara | fällda |
+   > |---|---|---|
+   > | schemakravet | 75 | 0 (0,0 %) |
+   > | projektionskravet | 69 | 1 (1,4 %) |
+   > | balanskravet | 69 | 8 (11,6 %) |
+   > | **Ring 1 (redan armerad)** | 75 | **1 (1,3 %) ← referensmåttet** |
+   >
+   > **Men talet var inte svaret.** Sju av de åtta balanskravsfallen var ELFAKTUROR — ett mönster,
+   > inte slump — och detaljmätningen gav orsaken: `Fortum 3400 kWh × 1 kr = 3400, belopp 3808`
+   > (verkligt à-pris 1,12), `Tibber 0,834`, `Tryggel 1,85`. **`unitPrice` är ett heltalsfält i
+   > kronor och elpriser ligger på 0,80–1,90 kr/kWh**; avrundningen ensam gör aritmetiken omöjlig.
+   > Grinden mätte fel sak, och 7 av 8 utfall var falsklarm per konstruktion — E5-fallets läxa
+   > (20 aug) i en ny kategori. Fältet som löser det, `unit_price_ore`, infördes 12 augusti för
+   > exakt den förväxlingen; avstämningsgrinden fick fixen då, balanskravet fick den aldrig.
+   > Den åttonde var en KREDITFAKTURA: ett negativt belopp är en kreditering per konstruktion, och
+   > aritmetiken ska prövas på beloppets storlek — tecknet är inte grindens fråga.
+   >
+   > **Regeln som föll ut: mät aldrig bara HUR OFTA en vakt fäller — fråga alltid VILKA, och läs
+   > dem.** «11,6 % falsklarm» hade lett till slutsatsen «grinden är för känslig, vänta med att
+   > armera». Filnamnen ledde till «grinden räknar i fel enhet, laga den». Ett aggregat utan sina
+   > fall är ett tal som ser ut som ett beslutsunderlag.
+   >
+   > **Och min första fix var fel — sabotaget avslöjade det.** Jag vidgade kronortoleransen till
+   > 0,5 kr per enhet, matematiskt korrekt eftersom så stort KAN avrundningsfelet vara. Men 3 400
+   > kWh ger då 1 700 kr tolerans: att stänga av öresvägen ändrade ingenting, testet var grönt på
+   > fel grund, och grinden hade blivit blind vid höga kvantiteter. **En grind som är grön för att
+   > den slutat titta är samma sjukdom som allt annat i obduktionen.** Rätt svar är fail-closed på
+   > FÄLTET: utan öresfält är ett à-pris under 10 kr obrukbart och raden är ODÖMBAR, inte godkänd.
+   > Sonden mäter numera sin egen TÄCKNING — hur många rader som bar öresfält — för annars vet
+   > ingen om fixen gjorde grinden vass eller tyst.
+   >
+   > **Mätapparaten var felet tre gånger under samma mätning.** Sonden dog på rad ett (absolut
+   > sökväg) och rapporterade framgång, eftersom `node … | tee fil` returnerar TEE:s exit-kod —
+   > **35 av 75 workflows saknade `set -o pipefail`**, alltså kunde nästan halva sondflottan
+   > rapportera framgång på en död sond, och jag hade läst deras utfall som mätvärden hela dagen.
+   > Sedan kom sonden fram men anropade `extractInvoice` med fel argumentform: 75 av 75 föll, och
+   > tabellen skrevs ändå ut full av nollor som om «0 % fällda» vore ett mätvärde. SV-11 låser
+   > pipefail; sonden fäller nu när den inte kom fram.
+
    > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
    > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
    > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det
