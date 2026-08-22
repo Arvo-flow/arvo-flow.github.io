@@ -7,7 +7,7 @@
 // Exit 1 om någon källa drivit eller är oåtkomlig (regel 4: hellre rött än tyst osäkerhet).
 import { VERIFIERS, getVerifier } from '../lib/verifiers/registry.mjs';
 import { bedomVerifierarutfall, UTFALL } from '../lib/verifierarutfall.js';
-import { stampelbeslut, stamplaKalla } from '../lib/verifieringsstampel.js';
+import { stampelbeslut, stamplaKalla, stamplaKategori } from '../lib/verifieringsstampel.js';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -95,6 +95,20 @@ for (const v of targets) {
       // som saknas i prisboken är precis den föråldrade deklaration prisauditen finns för.
       const saknade = oforandrade.filter((k) => !kalla.includes(`'${k}':`));
       if (saknade.length > 0) console.warn(`  · ⚠ deklarerade nivåer saknas i prisboken: ${saknade.join(', ')}`);
+      // Kategoriposten har sitt EGET datum (top-level i BRANCHINDEX) och ruttnade i tysthet på
+      // samma sätt som nivåernas. molnvaxel låg 66 dagar gammal medan telia-vaxel-vakten körde
+      // veckovis och bekräftade priset varje gång.
+      if (st.kategori) {
+        const nuvarande = readFileSync(BRANCHINDEX_PATH, 'utf8');
+        const kat = stamplaKategori(nuvarande, st.kategori, IDAG);
+        if (kat.andrad) {
+          writeFileSync(BRANCHINDEX_PATH, kat.kalla, 'utf8');
+          console.log(`  · stämplade kategorin ${st.kategori}: ${kat.skal}`);
+          stamplade.push(st.kategori);
+        } else {
+          console.log(`  · kategorin ${st.kategori} ej stämplad: ${kat.skal}`);
+        }
+      }
     }
   }
 }

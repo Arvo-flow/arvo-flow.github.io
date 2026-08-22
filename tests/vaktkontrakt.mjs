@@ -15,6 +15,7 @@ const OK = {
   fangar: 'Leverantören ändrar det publika listpriset på sidan som vakten renderar varje vecka.',
   blind: 'Ett förhandlat avtalspris hos kunden, som aldrig syns i den publika prislistan vakten läser.',
   bevakadeTiers: ['exempel-tier'],
+  bevakadKategori: 'exempel-kategori',
 };
 
 describe('vaktkontraktet · domaren', () => {
@@ -119,4 +120,32 @@ describe('vaktkontraktet · räckvidden måste deklareras', () => {
     const utan = VERIFIERS.filter((v) => !Array.isArray(v.bevakadeTiers)).map((v) => v.id);
     assert.deepEqual(utan, [], `Odeklarerade vakter: ${utan.join(', ')}`);
   });
+  test('KATEGORIN: en vakt utan bevakadKategori fälls — «null» är ett svar, tomhet är det inte', () => {
+    // 2026-08-22. Kategoriposternas datum ruttnade i tysthet på samma sätt som nivåernas:
+    // molnvaxel låg 66 dagar gammal medan telia-vaxel-vakten körde veckovis och bekräftade
+    // priset varje gång. Ingen frågade vem som daterade kategoriposten, så ingen gjorde det.
+    const { bevakadKategori, ...utan } = OK;
+    const d = bedomVaktkontrakt(utan);
+    assert.equal(d.ok, false, 'en vakt som inte säger vilken kategoripost den daterar passerade');
+    assert.match(d.brister.join(' '), /bevakadKategori/);
+    // Kontrollen är EN gren, inte två: `undefined` och `''` fälls av samma villkor. En tidigare
+    // version hade en separat `in`-kontroll som var redundant — och testet var grönt på fel
+    // grund tills sabotaget visade att den kunde tas bort utan att något fälldes.
+
+    // Motprovet: null ÄR ett giltigt svar (villkorsboken daterar ingen prispost).
+    assert.equal(bedomVaktkontrakt({ ...OK, bevakadKategori: null }).ok, true,
+      'null måste få passera — annars tvingas en vakt hitta på en kategori den inte vaktar');
+    // Men tomhet är inte ett svar.
+    for (const tomt of ['', '   ', 0, false, []]) {
+      assert.equal(bedomVaktkontrakt({ ...OK, bevakadKategori: tomt }).ok, false,
+        `«${JSON.stringify(tomt)}» accepterades som kategorideklaration`);
+    }
+  });
+
+  test('KATEGORIN: varje registrerad vakt har svarat', () => {
+    const utan = VERIFIERS.filter((v) => !('bevakadKategori' in v)).map((v) => v.id);
+    assert.deepEqual(utan, [],
+      'dessa vakter daterar kanske en kategoripost utan att någon vet vilken:\n  ' + utan.join('\n  '));
+  });
+
 });

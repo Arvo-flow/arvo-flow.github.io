@@ -22,7 +22,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { stampelbeslut, stamplaKalla } from '../lib/verifieringsstampel.js';
+import { stampelbeslut, stamplaKalla, stamplaKategori } from '../lib/verifieringsstampel.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const IDAG = '2026-08-21';
@@ -127,6 +127,31 @@ describe('VS · Skrivningen träffar exakt den nyckel den ska', () => {
     const { kalla } = stamplaKalla(KALLA, ['google-starter'], IDAG);
     const { andrade } = stamplaKalla(kalla, ['google-starter'], IDAG);
     assert.deepEqual(andrade, [], 'en oförändrad skrivning får inte se ut som en ny verifiering');
+  });
+});
+
+describe('VS-12..13 · Kategorins datum, inte en licensnivås', () => {
+  const KALLA = readFileSync(join(ROT, 'agents', 'recommender', 'branchindex.js'), 'utf8');
+
+  test('VS-12 · en kategoripost med eget datum stämplas', () => {
+    const r = stamplaKategori(KALLA, 'molnvaxel', IDAG);
+    assert.equal(r.andrad, true, 'molnvaxel bär ett eget lastVerified i sitt huvud och ska kunna dateras');
+    // Läs ut datumet direkt ur blocket i stället för att bygga ett regex med escape-tecken —
+    // två tidigare försök i den här filen dog på att `\s` skrevs bort av strängformateringen.
+    const i = r.kalla.search(/^ {2}'?molnvaxel'?\s*:\s*\{/m);
+    const datum = r.kalla.slice(i).match(/lastVerified:\s*'([^']+)'/)?.[1];
+    assert.equal(datum, IDAG, 'molnvaxels egna datum flyttades inte');
+  });
+
+  test('VS-13 · en kategori vars första datum tillhör en LICENSNIVÅ stämplas aldrig', () => {
+    // Mätt i prisboken: saas-productivity har inget eget lastVerified före licenseTierBenchmarks
+    // (första träffen ligger på offset 8882, tiers börjar på 1216). Utan spärren skriver stämpeln
+    // en NIVÅS datum och får det att se ut som kategorins — sabotaget bekräftade att den då
+    // «lyckas» med 2026-08-05 → i dag. Det är precis förväxlingen funktionen finns för.
+    const r = stamplaKategori(KALLA, 'saas-productivity', IDAG);
+    assert.equal(r.andrad, false);
+    assert.match(r.skal, /eget datum före licensnivåerna/);
+    assert.equal(r.kalla, KALLA, 'källan rördes trots att inget eget datum fanns');
   });
 });
 
