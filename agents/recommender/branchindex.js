@@ -615,7 +615,7 @@ export const BRANCHINDEX = {
     // de-momsa aldrig ett pris som redan är exkl; jämför aldrig Team-faktura mot individpris = falsk besparing).
     // Endast NORMALPRIS — intro/promo (t.ex. 466,16 första 3 mån) ignoreras. INGEN FX (äkta SEK).
     adobeVerified: {
-      source: 'adobe.com/se', method: 'stealth (playwright-extra)', lastVerified: '2026-06-18',
+      source: 'adobe.com/se', method: 'stealth (playwright-extra)', lastVerified: '2026-08-22',
       teamExVatMonthly: {            // SEK/mån/licens, EXKL moms (årsplan, fakt. månadsvis) — ankras direkt
         'all-apps':   985,           // Creative Cloud Pro (Alla program)
         'single-app': 381,           // Fristående program (Single App), "från"
