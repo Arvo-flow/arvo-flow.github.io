@@ -1,0 +1,7 @@
+╔═══════════════════════════════════════════════════════════════════════════════
+║ SOND: probe-grindarna
+║ FÅNGAR: Hur ofta balanskravet, projektionskravet och schemakravet skulle fälla verkliga fakturor — talet som avgör om de fyra ENFORCE-flaggorna kan sättas.
+║ BLIND FÖR: test-pdfs/ är vår egen korpus och speglar inte nödvändigtvis kundtrafikens fördelning. Sonden avgör aldrig om en fälld rad är ett sant fel eller ett falsklarm — det kräver att en människa läser fakturan. Prosakravet mäts inte här: det dömer AI:ns reasoning mot promptens fakta och kräver hela recommend-steget, alltså ett andra modellanrop per faktura.
+║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
+║ ett påstående som låtsas vara ett faktum.
+╚═══════════════════════════════════════════════════════════════════════════════
