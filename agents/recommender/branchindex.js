@@ -711,7 +711,7 @@ export const BRANCHINDEX = {
     // Driftvakten (scripts/verify.mjs fortnox · fabriken) bekräftar dessa veckovis — rött vid drift.
     // Fortnox är marknadsledande för svensk SMF-bokföring → starkaste publika ankaret i kategorin.
     fortnoxVerified: {
-      source: 'fortnox-prislista', lastVerified: '2026-06-17', unit: 'kr_per_manad_exkl_moms',
+      source: 'fortnox-prislista', lastVerified: '2026-08-22', unit: 'kr_per_manad_exkl_moms',
       url: 'https://www.fortnox.se/produkt/prislista',
       // Paket = det bolag faktiskt köper (det vi ankrar på).
       paket: { Mini: 209, Liten: 349, Mellan: 490, Stor: 710, 'Mini+': 369, 'Mellan+': 659, 'Stor+': 919, Byråpartner: 499 },
