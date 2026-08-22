@@ -683,6 +683,57 @@ signera", aldrig som ett verkställt löfte.)
    > inte på eget bevåg — matchningen är approximativ (30-sekundersfönster), en radering är
    > oåterkallelig, och 5 % brus väger lättare än risken att ta bort rätt rader. Spärren stoppar nya.
 
+   > **✅ TVÅ LARM SOM GICK AV PÅ RÄTT BETEENDE (2026-08-22, ur "är detta verkligen 0,1 %?").**
+   > Grundaren frågade om dagens arbete höll måttet. Svaret var nej, av tre skäl jag inte hade sagt
+   > högt: jag hade lagat tolv fel i backend utan att **en enda gång** titta på vad kunden ser
+   > (regel 8), jag hade behandlat tolv instanser av samma sjukdom som tolv buggar i stället för att
+   > namnge den, och jag hade sett price-audits varning **tolv gånger** och kallat den brus.
+   >
+   > · **Rummet ljög i fyra ytor, och första skärmdumpen visade det.** «Håll kursen. Era priser står
+   >   sig mot verifierat listpris» stod rakt ovanför **Arvo Score 15/100 · MARKNADSLÄGE: SÄMRE**,
+   >   med «Allt är under kontroll» som rubrik. Rubrikens `!acting`-gren läste ALDRIG mätaren — och
+   >   kommentaren rakt ovanför raden intygade att den gjorde det. **En kommentar som garanterar en
+   >   invariant koden inte håller är värre än ingen: nästa läsare kontrollerar den inte.** Tredje
+   >   gången samma sats: *frånvaron av ett verifierat bytesmål säger ingenting om huruvida kunden
+   >   betalar rätt.* Åtgärd på rätt nivå: `src/lib/domslut.js` — varje läge deklarerar om det gör ett
+   >   positivt PRISPÅSTÅENDE, och DL-01 prövar invarianten över hela fältet. Följdfyndet var mitt
+   >   eget arbete: räknaren sa `prissatta = varje auto-rad` medan kortet skriver «Mottagen» utan
+   >   prisunderlag — och totalgrinden + `ovissNiva` gjorde just det läget vanligare samma dag.
+   >   **En fix som gör ett gammalt redovisningsfel vanligare måste stänga det också.**
+   >
+   > · **«Verifierat» betydde «senast ändrat».** `lastVerified` uppdaterades bara när ett pris
+   >   ÄNDRADES, så ett STABILT pris larmade efter 60 dagar — för alltid, hur många gånger vakten än
+   >   bekräftat det. Verifieraren körde veckovis och sa att Google höll; datumet stod still sedan
+   >   17 juni. Ett fält vars NAMN lovar mer än värdet, och en yta som läser namnet (samma familj som
+   >   «25 LÄSTA»). `lib/verifieringsstampel.js`: en grön vakt som faktiskt läste tal daterar de
+   >   nivåer den DEKLARERAT sig bevaka. Live-utfall: prisauditen **3 varningar → ALLT OK**.
+   >
+   > · **Och stämpeln avslöjade ett tredje larm som ljög.** Google-vakten rapporterade
+   >   «✗ DRIFT … live (saknas) → 3 post(er) har drivit». Priserna hade inte drivit — sidan gick inte
+   >   att läsa, femton minuter efter att samma vakt läst den grönt. Båda är röda, men de kräver rakt
+   >   MOTSATTA åtgärder: drift → rätta prisboken, oläsbar → laga vakten. **Ett larm som säger att
+   >   priset ändrats när det inte har det urholkar varje framtida larm** — det är exakt så
+   >   smyghöjningsvakten stängdes av, till en kostnad av 16 dygn osedda prishöjningar.
+   >
+   > **Den strukturella läxan, som väger tyngre än de tre:** varje fel under obduktionen hade samma
+   > form — *ett tillstånd som betyder «okänt / misslyckades / inte mätt» representerat med ett värde
+   > som är omöjligt att skilja från ett giltigt svar.* `catch → balanced: true`, `?? 75`, `?? 72`,
+   > `employees: 10`, `LIKE 'mail:%'` → 0, fyra oserialiserade `null`, reservkortets påhittade skäl,
+   > `'switch'` efter nollning, «DRIFT» för en oläsbar sida. **Systemet saknade ett sätt att säga
+   > «jag vet inte», så det lånade ett giltigt värde.** Rätt drag är aldrig att lappa nästa instans —
+   > det är att göra tillståndet omöjligt att representera.
+   >
+   > **Vaktkontraktets fjärde fråga:** `bevakadKategori`. `bevakadeTiers` beskrev räckvidden i
+   > licensnivåer, men ingen frågade vilken KATEGORIPOST vakten daterar — så ingen gjorde det, och
+   > molnvaxel låg 66 dagar gammal medan dess vakt bekräftade priset varje vecka. Deklarationen är
+   > HÄRLEDD ur var nycklarna faktiskt bor i prisboken, inte mappad på namn.
+   >
+   > **Och nitton gånger under obduktionen var mätinstrumentet felet, inte systemet.** Tre av mina
+   > egna nya vakter var gröna på fel grund och avslöjades bara av sabotaget: ett fönster som fångade
+   > `standing` från grannens gren, ett ankare som träffade fel element, och en `in`-kontroll som var
+   > redundant eftersom `else if` fångade `undefined` ändå. Två grenar som ser ut som två lager men
+   > är ett räknar ett skydd vi inte har.
+
    > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
    > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
    > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det
