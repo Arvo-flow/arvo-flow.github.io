@@ -101,6 +101,11 @@ jobs:
           git config user.name "Arvo Verify Bot"
           git add agents/recommender/branchindex.js
           git commit -m "verifiering: ${{ matrix.source.id }} bekräftade sina nivåer mot källan [skip ci]"
+          # Stealth-/browser-jobben kör `npm install`, vilket lämnar package.json och
+          # package-lock.json ändrade. `git pull --rebase` vägrar då med "You have unstaged
+          # changes" och stämpeln föll — telia-vaxel var GRÖN, hade räknat fram sitt datum, och
+          # kunde ändå inte skriva det. Installationsartefakterna är inte data; de kastas.
+          git checkout -- . 2>/dev/null || true
           for i in 1 2 3 4 5; do
             git pull --rebase origin main && git push origin HEAD:main && exit 0
             echo "push $i misslyckades — väntar $((i*3))s"; sleep $((i*3))

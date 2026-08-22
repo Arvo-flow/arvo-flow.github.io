@@ -67,7 +67,9 @@ for (const v of targets) {
     // Fabriken vaktar två sorters böcker. En logg som kallar avtalsvillkor för "pris" läses fel
     // klockan tre på natten — och en vakt tolkas efter sin logg, inte sin kod.
     const bok = (v.kind ?? 'pris') === 'villkor' ? 'villkorsbok' : 'prisbok';
-    console.log(`  ${c.ok ? '✓' : '✗ DRIFT'} ${c.name}: ${bok} ${c.expected} · live ${c.actual}`);
+    // «kunde inte läsa» och «har ändrats» kräver motsatta åtgärder och får inte dela ord.
+    const märke = c.ok ? '✓' : (String(c.actual ?? '') === '(saknas)' ? '✗ OLÄSBAR' : '✗ DRIFT');
+    console.log(`  ${märke} ${c.name}: ${bok} ${c.expected} · live ${c.actual}`);
   }
 
   if (dom.utfall === UTFALL.ROTT) {
@@ -114,7 +116,7 @@ for (const v of targets) {
 }
 
 if (anyFail) {
-  console.error('\n[verify] FAIL — minst en källa drivit eller är oåtkomlig. Granska, uppdatera pris-/villkorsboken + bumpa verifieringsdatum, kör testsviten.');
+  console.error('\n[verify] FAIL — minst en källa drivit eller kunde inte läsas. DRIFT: rätta pris-/villkorsboken. OLÄSBAR: laga vakten eller kontrollera källsidan — priset kan mycket väl vara oförändrat.');
   process.exit(1);
 }
 console.log('\n[verify] ✓ alla körda verifierare håller mot sina källor — ankarena håller.');

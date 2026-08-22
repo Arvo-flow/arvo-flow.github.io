@@ -23,6 +23,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stampelbeslut, stamplaKalla, stamplaKategori } from '../lib/verifieringsstampel.js';
+import { bedomVerifierarutfall } from '../lib/verifierarutfall.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const IDAG = '2026-08-21';
@@ -152,6 +153,49 @@ describe('VS-12..13 · Kategorins datum, inte en licensnivås', () => {
     assert.equal(r.andrad, false);
     assert.match(r.skal, /eget datum före licensnivåerna/);
     assert.equal(r.kalla, KALLA, 'källan rördes trots att inget eget datum fanns');
+  });
+});
+
+describe('VS-14..16 · «Kunde inte läsa» är inte «har drivit»', () => {
+  // Google-vakten rapporterade 2026-08-22: `✗ DRIFT … prisbok finns · live (saknas)` och
+  // «3 post(er) har drivit». Priserna hade inte drivit — sidan gick inte att läsa. Femton
+  // minuter tidigare läste samma vakt samma sida grönt.
+  //
+  // Båda är RÖDA (vi kan inte bekräfta priset) men kräver motsatta åtgärder: drift → rätta
+  // prisboken, oläsbar → laga vakten eller kontrollera sidan. Ett larm som säger att priset
+  // ändrats när det inte har det urholkar varje framtida larm — det är precis så
+  // smyghöjningsvakten blev avstängd, till en kostnad av 16 dygn osedda prishöjningar.
+  const saknas = { checks: [
+    { name: 'Business Starter', expected: 'finns', actual: '(saknas)', ok: false },
+    { name: 'Business Standard', expected: 'finns', actual: '(saknas)', ok: false },
+  ] };
+  const drivit = { checks: [{ name: 'Business Starter', expected: '$7', actual: '$9', ok: false }] };
+
+  test('VS-14 · en oläsbar källa säger INTE att priset drivit', () => {
+    const d = bedomVerifierarutfall(saknas);
+    assert.equal(d.utfall, 'rott', 'oläsbar källa måste fortfarande vara röd — vi vet inte om priset håller');
+    assert.match(d.skal, /kunde inte läsas/);
+    assert.doesNotMatch(d.skal, /har drivit/,
+      'ett falskt driftlarm urholkar varje framtida larm — det var så smyghöjningsvakten stängdes av');
+    assert.equal(d.drift, 0, 'noll poster har faktiskt drivit');
+  });
+
+  test('VS-15 · verklig drift säger fortfarande att priset drivit', () => {
+    // Motprovet: en spärr som döper om ALLA larm till «oläsbar» är lika värdelös som ingen.
+    const d = bedomVerifierarutfall(drivit);
+    assert.equal(d.utfall, 'rott');
+    assert.match(d.skal, /har drivit/);
+    assert.equal(d.drift, 1);
+  });
+
+  test('VS-16 · en blandning namnger båda, var för sig', () => {
+    const d = bedomVerifierarutfall({ checks: [...saknas.checks, ...drivit.checks] });
+    assert.match(d.skal, /har drivit/);
+    assert.match(d.skal, /kunde inte läsas/);
+    assert.equal(d.drift, 1);
+    assert.equal(d.olasbara, 2);
+    // Och ingendera stämplar.
+    assert.equal(stampelbeslut({ verifierare: v, resultat: { checks: [...saknas.checks, ...drivit.checks] }, idag: IDAG }).stampla, false);
   });
 });
 
