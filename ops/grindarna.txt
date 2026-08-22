@@ -7,97 +7,32 @@
 ╚═══════════════════════════════════════════════════════════════════════════════
 ═══ GRINDARNA MOT 75 VERKLIGA FAKTUROR ═══
 
-  ✗ Faktura_1.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ Faktura_2.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ Faktura_3.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ Faktura_4.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ adobe-creative-cloud-ars.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ ald-billeasing-outofscope.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ atea-m365-overskott.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ atlassian-cloud-manad.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ atlassian.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ aws-reseller-komplex.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ aws-startup-kredit.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ azure-csp-reseller.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ bahnhof-fiber-ren.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ bevakning-outofscope.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ bredband-nytt-avtal-rabatt.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ bredband_1_baseline.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ bredband_2_sveakom.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ bredband_3.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ bredband_4.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ bredbandsbolaget-kampanj.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ canon-hog-klickratio.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ cloudreseller-norden.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ comhem-mobil-bredband-kombinerad.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ comviq-data-tal.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ comviq-mobil-budget.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ connectsverige.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ crayon-m365-azure.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ dhl-frakt-standard.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ diag-bredband.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ dustin-m365-standard.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ eon-el-solceller.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ eon-el-spot-se3.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ fortum-el-fastpris.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ globalcom-mobil-hog-roaming.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ google-workspace-arsbetalning.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ hubspot-marketing-pro.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ iponly-fiber-addon-stack.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ konica-minolta-klick.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ konsult-it-oklar.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ kraftringen-el-lokalt.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ kristianstad.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ microsoft-direkt-usd.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ microsoft-new.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ microsoft.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ mixad-it-frakt.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ nordiclogistik.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ oklar-blandad-faktura.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ omnicloud.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ outofscope.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ postnord-brev-paket.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ restaurang-mat-outofscope.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ ricoh.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ salesforce-enterprise.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ stadbolag-outofscope.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ stadsnät-koaxial-tv.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ tele2-mobil-arsavtal.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ tele2-mobil-bredband-kombinerad.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ tele2-mobil-enkel.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ tele2-mobil-kreditfaktura.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ tele2-mobil-roaming.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ telenor-mobil-bredband-kombinerad.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ telenor-mobil-prorata.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ telenor-mobil-standard.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ telenor-molnvaxel-stor.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ telia-fiber-statisk-ip.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ telia-mobil-bredband-kombinerad.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ telia-mobil-hardvara.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ telia.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ tibber-el-timavrakning.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ tre-mobil-molnvaxel.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ tryggel.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ unclear.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ vattenfall-el-se4.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ vattenfall.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-  ✗ xerox-managed-print-it.pdf: extraktionen föll — Antingen pdfPath eller pdfBytes måste anges
-
+...................................[billing-period] multi-unit quarterly override → monthly (2 rader med quantity≥5)
+........................................
 
 ────────────────────────────────────────────────────────────────────────
-fakturor lästa: 0 · extraktionsfel: 75
+fakturor lästa: 75 · extraktionsfel: 0
 
-BALANSKRAVET   prövbara 0 fakturor · 0 rader
-               skulle STOPPA 0 fakturor (—)
-               fällda rader: 0 (—)
+BALANSKRAVET   prövbara 69 fakturor · 165 rader
+               skulle STOPPA 8 fakturor (11.6 %)
+               fällda rader: 9 (5.5 %)
+                 · eon-el-solceller.pdf (2/3 rader: antal_x_apris_matchar_inte_radbelopp)
+                 · eon-el-spot-se3.pdf (1/2 rader: antal_x_apris_matchar_inte_radbelopp)
+                 · fortum-el-fastpris.pdf (1/2 rader: antal_x_apris_matchar_inte_radbelopp)
+                 · kraftringen-el-lokalt.pdf (1/2 rader: antal_x_apris_matchar_inte_radbelopp)
+                 · tele2-mobil-kreditfaktura.pdf (1/2 rader: antal_x_apris_matchar_inte_radbelopp)
+                 · tibber-el-timavrakning.pdf (1/2 rader: antal_x_apris_matchar_inte_radbelopp)
+                 · tryggel.pdf (1/2 rader: antal_x_apris_matchar_inte_radbelopp)
+                 · vattenfall-el-se4.pdf (1/2 rader: antal_x_apris_matchar_inte_radbelopp)
 
-PROJEKTIONSKRAV prövbara 0 · fäller 0 (—)
+PROJEKTIONSKRAV prövbara 69 · fäller 1 (1.4 %)
+                 · konsult-it-oklar.pdf (avvikelse 79.6 %)
 
-SCHEMAKRAVET    prövbara 0 · fäller 0 (—)
+SCHEMAKRAVET    prövbara 75 · fäller 0 (0.0 %)
 
 RING 1 (radsumma, REDAN ARMERAD — referensmåttet)
-               ok 0 · stopp 0 · varning 0 · ej prövbar 0
-               stoppfrekvens — — en armerad grinds verkliga nivå
+               ok 69 · stopp 1 · varning 0 · ej prövbar 1
+               stoppfrekvens 1.3 % — en armerad grinds verkliga nivå
 ────────────────────────────────────────────────────────────────────────
 Sonden avgör INTE om en fälld faktura är ett sant fel eller ett falsklarm.
 Den ger talet beslutet ska vila på — läs de namngivna fakturorna mot pappret först.
