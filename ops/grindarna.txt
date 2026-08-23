@@ -5,20 +5,21 @@
 ║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
 ║ ett påstående som låtsas vara ett faktum.
 ╚═══════════════════════════════════════════════════════════════════════════════
-═══ GRINDARNA MOT 8 VERKLIGA FAKTUROR ═══
+═══ GRINDARNA MOT 9 VERKLIGA FAKTUROR ═══
 
-  ✗ eon-el-solceller.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ eon-el-spot-se3.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
+  ✗ konsult-it-oklar.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ fortum-el-fastpris.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ kraftringen-el-lokalt.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ tele2-mobil-kreditfaktura.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ tibber-el-timavrakning.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ tryggel.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
+  ✗ tele2-mobil-kreditfaktura.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
+  ✗ eon-el-solceller.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
+  ✗ eon-el-spot-se3.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
+  ✗ kraftringen-el-lokalt.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
   ✗ vattenfall-el-se4.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
 
 
 ────────────────────────────────────────────────────────────────────────
-fakturor lästa: 0 · extraktionsfel: 8
+fakturor lästa: 0 · extraktionsfel: 9
 
 BALANSKRAVET   prövbara 0 fakturor · 0 rader
                skulle STOPPA 0 fakturor (—)
