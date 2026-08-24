@@ -779,6 +779,32 @@ signera", aldrig som ett verkställt löfte.)
    > tabellen skrevs ändå ut full av nollor som om «0 % fällda» vore ett mätvärde. SV-11 låser
    > pipefail; sonden fäller nu när den inte kom fram.
 
+   > **✅ EN AGENT FÅR ALDRIG ANSVARA FÖR SIN EGEN PERSISTENS (2026-08-24, grundarkrav).**
+   > Tre obduktionssvep dog och tog agentarbete med sig. Min första åtgärd — *«skriv rapporten till
+   > disk INNAN du returnerar»* — var otillräcklig **på premissen**: en skrivning som ligger sist
+   > skyddar bara mot en död *efter* att allt är klart, och spärren slår mitt i (869 650 tokens och
+   > 118 verktygsanrop brändes utan att nå disk). Värre: sex agenter kunde inte skriva
+   > **överhuvudtaget** — permission-handlern strippade varje obligatorisk parameter, så `Read`,
+   > `Bash`, `Write` och `StructuredOutput` avvisades före verktyget. **En instruktion kan aldrig
+   > rädda en agent som är oförmögen att lyda den.**
+   >
+   > Harnesset skriver däremot transkriptet rad för rad *medan* agenten arbetar, oavsett hur den
+   > sedan dör — den enda artefakt som finns i BÅDA felfallen. `scripts/skorda-agentarbete.mjs`
+   > (`npm run skorda`) räddar uppdraget, varje slutsats och varje kört kommando **med utfall**,
+   > utan agentens medverkan. Utfall: **15 av 94 agenter bar arbete** (tre med 90, 61 och 56 körda
+   > kommandon); 13 av dem hade jag avskrivit som förlorade. Rutinen står i `ops/AGENTSVEP.md`:
+   > kanariefågel före fan-out, vågor om ~6, skörda ALLTID efteråt.
+   >
+   > **Skördens eget fel, rättat i samma pass och värt mer än verktyget:** första versionen räknade
+   > «har minst en slutsats» som «bar arbete» och rapporterade **94 av 94**. Åttio av dem innehöll
+   > EN rad: *«You've hit your session limit»*. Skörden räknade en **gravsten som ett fynd** — och
+   > det är det farligaste möjliga utfallet, ett tal som fick mig att tro att ingenting gick
+   > förlorat. Felfamiljen, i det verktyg som byggdes mot den. Klassningen vilar nu på BEVIS (körda
+   > kommandon eller substantiell text); feltexten används bara för att NAMNGE dödsorsaken, aldrig
+   > för att avgöra om arbete finns. Maskinvakt `tests/skordkontrakt.mjs` (SKÖ-01..05),
+   > sabotage-bevisad i tre riktningar. **Och en dödsruna är inte en tom skörd:** skörden kan rädda
+   > allt som utfördes, aldrig arbete som aldrig blev av — de två får aldrig se likadana ut.
+
    > **✅ ETT OMDÖPT FÄLT ÄR EN TYST FÖRLUST — TVÅ GÅNGER PÅ EN DAG, EN AV DEM MIN EGEN (2026-08-24).**
    > Öresfixen i balanskravet (22 aug) var **död kod i två dygn**. Den läste modellens råstavning
    > `unit_price_ore`; produktionen skickar den AGGREGERADE raden, där `aggregateLineItems` döpt om
