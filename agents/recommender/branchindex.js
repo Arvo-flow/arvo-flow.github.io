@@ -832,7 +832,7 @@ export const BRANCHINDEX = {
 
   loneadmin: {
     source: 'real-public',
-    lastVerified: '2026-08-22',
+    lastVerified: '2026-08-24',
     verifiedVia: 'playwright',
     unit: 'kr/år',
     // Strukturerat verifierat ankare — det rätt-storleks-loben (lib/loneadmin-rightsizing.js)
