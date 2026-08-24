@@ -1,4 +1,4 @@
-// tests/radobservation.mjs — RO-01..05: att fakturaradens öresobservation når fram i PRODUKTIONENS
+// tests/radobservation.mjs — RO-01..08: att fakturaradens öresobservation når fram i PRODUKTIONENS
 // objektform, inte bara i testernas.
 //
 // VARFÖR (2026-08-24). Öresfixen i balanskravet (22 aug) var död kod i två dygn. Den läste
@@ -79,7 +79,56 @@ describe('RO · Radobservationen — öresfältet i produktionens objektform', (
     assert.equal(radensOre({ amount: 3808 }).beloppOre, 380_800);
   });
 
-  test('RO-05: ingen konsument läser öresfälten utanför den kanoniska läsvägen', () => {
+  // ── TOLERANSEN (2026-08-24) ───────────────────────────────────────────────────────────────
+  // Öresvägens tolerans var `max(100, expected × 0,005)` under kommentaren «i öre är aritmetiken
+  // exakt — då räcker en öresavrundning per rad». En procentsats är fel FORM: felet är inte
+  // proportionellt mot radbeloppet utan ett fast belopp per enhet. Den var därför fel åt båda
+  // hållen samtidigt, och båda riktningarna låses här — en tolerans som bara prövas åt ena hållet
+  // kan alltid vidgas «för säkerhets skull» tills grinden slutat titta.
+  const bygg = (rad) => judgeLineArithmetic(aggregateLineItems({
+    supplier: 'X', date: '2026-05-31', description: 'd', billing_period: 'monthly',
+    confidenceScore: 0.9, lineItems: [rad],
+  }));
+
+  test('RO-06: en aritmetiskt perfekt elhandelsrad fälls ALDRIG av heltalsöret', () => {
+    // 20 000 kWh × 0,915 kr. `unit_price_ore` är heltal, så 91,5 öre blir 92 (eller 91) och
+    // avrundningen blir 10 000 öre = 100 kr på raden. Den gamla relativa toleransen gav 9 200
+    // och fällde en faktura där ingenting är fel. För VARJE à-pris under 1,00 kr är procent-
+    // toleransen strukturellt smalare än avrundningens tak — och elhandelns band (0,80–1,90 kr)
+    // ligger till hälften där.
+    const kwh = 20_000, aprisKr = 0.915;
+    const dom = bygg({
+      description: 'Elhandel rörligt', type: 'recurring_subscription', quantity: kwh,
+      unitPrice: 1, unit_price_ore: Math.round(aprisKr * 100), amount: Math.round(kwh * aprisKr),
+      amount_ore: null,
+    });
+    assert.equal(dom.judged, 1);
+    assert.equal(dom.balanced, true,
+      'grinden fäller en korrekt rad — toleransen absorberar inte heltalsöret vid stora kvantiteter');
+  });
+
+  test('RO-07: ett verkligt fel på 10 kr i en licensrad fälls (skärpningen biter)', () => {
+    // Motprovet. Den gamla toleransen gav 1 338 öre på 20 licenser där avrundningen är 10 öre —
+    // ett fel på tio kronor i kundens egen prisrad passerade osett. En tolerans som bara prövas
+    // för falsklarm blir alltid för vid.
+    //
+    // Beloppet är valt så att den GAMLA toleransen släppte igenom det (1 040 < 1 338). Mitt första
+    // exempel låg på 1 340 öre och fälldes av båda — det hade sett ut som ett bevis utan att vara
+    // ett, för sabotaget kunde inte skilja den nya grinden från den gamla.
+    const fel = bygg({
+      description: 'M365 Business Standard', type: 'recurring_subscription', quantity: 20,
+      unitPrice: 134, amount: 2_666, unit_price_ore: 13_382, amount_ore: 266_600,
+    });
+    assert.equal(fel.balanced, false, '20 × 133,82 kr = 2 676,40 kr — 2 666 kr är ett verkligt fel på 10,40 kr');
+
+    const ratt = bygg({
+      description: 'M365 Business Standard', type: 'recurring_subscription', quantity: 20,
+      unitPrice: 134, amount: 2_676, unit_price_ore: 13_382, amount_ore: 267_640,
+    });
+    assert.equal(ratt.balanced, true, 'den korrekta raden måste gå fri — annars är skärpningen ett falsklarm');
+  });
+
+  test('RO-08: ingen konsument läser öresfälten utanför den kanoniska läsvägen', () => {
     // Vakten mot nästa stavfel. Skrivarna (schemat + aggregeringen) och läsvägen får nämna
     // fälten; alla andra ska fråga radensOre(). En legitim träff motiveras inline med
     // `// ore-ok: <skäl>` — samma mönster som claims-audit och kopidetektorn.
