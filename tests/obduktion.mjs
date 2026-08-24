@@ -212,6 +212,12 @@ describe('OBDUKTION · hål som fanns innan granskningen 2026-08-20', () => {
 describe('OB · Momsgrinden läser satsen i stället för att prova tre', () => {
   const bas = (extra) => ({
     supplier: 'Testleverantör AB', invoiceTotal: 10_000, annualCost: 120_000,
+    // `confidenceScore` tillkom 2026-08-24: fixturen utelämnade det, och när konfidensgrinden
+    // gjordes fail-closed (`undefined < 0,70` är false → route 'auto') routades den om till
+    // review_queue och OB-11 föll. Fältet är obligatoriskt i verktygsschemat, alltså bär varje
+    // produktionsfaktura det — fixturen prövar samma momsgren mot den riktiga kedjan.
+    confidenceScore: 0.95,
+    billingPeriod: 'monthly',
     lineItems: [{ description: 'Abonnemang', amount: 9_400, type: 'recurring_subscription' }],
     ...extra,
   });

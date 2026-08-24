@@ -108,6 +108,7 @@ import './prisunderlag.mjs';
 import './matriskrav.mjs';
 import './scorekrav.mjs';
 import './radobservation.mjs';
+import './enhetsantagandet.mjs';
 import './licensniva.mjs';
 import './obduktion.mjs';
 import './jamforelsekalla.mjs';

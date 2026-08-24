@@ -725,7 +725,14 @@ function applyDeterministicRules(raw) {
   // Partition sub-lines into archived and active — archived accounts must never count.
   // "Archived User" = reduced-cost storage for ex-employees, not an active seat.
   // Source: google-workspace-arsbetalning — AI sometimes includes 5 archived in seatCount.
-  const ARCHIVED_RE = /archived?\s+(user|licens|license|account)|arkiverad\s+an/i;
+  // Enheter som bevisligen INTE räknar användare. Står någon av dem i radens text mäter
+// kvantiteten något annat än licenser, och raden får inte sätta seatCount.
+// Listan VÄXER med varje kategori vi lär oss läsa — den är avsiktligt konservativ: en enhet
+// som saknas här ger samma beteende som före 24 augusti, aldrig ett nytt fel.
+const ICKE_ANVANDARENHET_RE =
+  /\bkwh\b|\bmwh\b|förbrukning|spotpris|rörligt elpris|\bsidor?\b|utskrift|\bpall(?:ar)?\b|\bkolli\b|\bpaket\b|\bton\b|\bkg\b|\bgb\b|\btb\b|\bmbit\b|\btimmar?\b|\bkm\b|\bliter\b/i;
+
+const ARCHIVED_RE = /archived?\s+(user|licens|license|account)|arkiverad\s+an/i;
   const archivedSubLines = subLineItems.filter((l) => ARCHIVED_RE.test(l.description ?? ''));
   const activeSubLines   = subLineItems.filter((l) => !ARCHIVED_RE.test(l.description ?? ''));
   const effectiveLines   = activeSubLines.length > 0 ? activeSubLines : subLineItems;
@@ -734,9 +741,26 @@ function applyDeterministicRules(raw) {
   // When line items have per-module quantities (Fortnox, Visma etc.), the
   // dominant module (most users) determines seatCount — not the sum of modules.
   // Source: customer-fortnox — AI returned 12 (5+5+2) ignoring K&U module (60 users).
+  //
+  // ⚠️ EN KVANTITET ÄR INTE ETT ANTAL ANVÄNDARE (2026-08-24). Regeln tog max-kvantiteten på VILKEN
+  // löpande rad som helst, utan att veta vad kvantiteten mäter. Elförbrukning klassas enligt
+  // promptens egen instruktion som `recurring_subscription` («Förbrukning X kWh», «Rörligt elpris»)
+  // — så en elfaktura på 3 400 kWh gav `seatCount: 3400`. Mätt genom produktionskedjan. Samma sak
+  // väntar på sidor, pallar, kolli och gigabyte.
+  //
+  // Talet är inte kosmetiskt: `seatCount` matar `jamforelseSkala` (skalan som multiplicerar
+  // prisboken), per-licensberäkningarna i recommend.js och korsvalideringen i integritetskontroll 4.
+  // Modellen svarar korrekt `null` på en elfaktura — regeln UPPFANN ett antal där observationen sa
+  // «inga». Det är felfamiljen: ett okänt som lånar ett fullt giltigt värde.
+  //
+  // Enheten står i radens egen text. Bär raden en icke-användarenhet får regeln inte fyra på den;
+  // modellens egen observation (`raw.seatCount`) står kvar orörd, inklusive dess `null`.
   if (effectiveLines.length > 0) {
-    const maxQty = Math.max(...effectiveLines.map((l) => l.quantity));
-    if (seatCount == null || maxQty > seatCount) seatCount = maxQty;
+    const licensrader = effectiveLines.filter((l) => !ICKE_ANVANDARENHET_RE.test(l.description ?? ''));
+    if (licensrader.length > 0) {
+      const maxQty = Math.max(...licensrader.map((l) => l.quantity));
+      if (seatCount == null || maxQty > seatCount) seatCount = maxQty;
+    }
   }
 
   // RULE: If archived lines were present, always recompute seatCount from active lines.
@@ -1151,6 +1175,21 @@ export function routeExtraction(extracted) {
   }
 
   // ── Lager 2: AI:ns self-reported confidence ───────────────────────────────
+  // ── EN SAKNAD KONFIDENS ÄR INTE EN HÖG KONFIDENS (2026-08-24) ─────────────────────────────
+  // `undefined < 0.70` är `false`, så en extraktion utan konfidenspoäng gled rakt igenom grinden
+  // till route `auto` — utan att någon rad bokfördes. Grinden är fail-open i en kedja som är
+  // fail-closed överallt annars, och den ser identisk ut med «modellen var säker». Fältet är
+  // obligatoriskt i verktygsschemat, så det här ska aldrig hända — men «ska aldrig hända» är
+  // exakt vad som sades om varje annan instans av felfamiljen. Mätt: `confidenceScore: undefined`
+  // → route 'auto', utan skäl.
+  if (!Number.isFinite(extracted.confidenceScore)) {
+    return {
+      route: 'review_queue',
+      reason: 'Konfidenspoäng saknas i extraktionen — kontrollen kunde inte utföras',
+      verifications,
+    };
+  }
+
   if (extracted.confidenceScore < CONFIDENCE_THRESHOLD) {
     return {
       route:  'review_queue',
