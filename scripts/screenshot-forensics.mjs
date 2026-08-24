@@ -45,7 +45,7 @@ function card(name, findings) {
   </div>`;
 }
 
-const cards = CASES.map((c) => card(c.name, detectForensicFindings(c.lines, { periodMultiplier: 12 }))).join('');
+const cards = CASES.map((c) => card(c.name, detectForensicFindings(c.lines, { billingPeriod: 'monthly' }))).join('');
 const wrap = `<body style="margin:0;padding:24px;background:#F1F6F3;font-family:${T.sans}"><div style="max-width:640px;margin:0 auto">${cards}</div></body>`;
 
 mkdirSync('/tmp/forensics-shots', { recursive: true });

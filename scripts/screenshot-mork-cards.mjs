@@ -23,7 +23,7 @@ const SCENARIOS = [
     lines: [L('Företagsabonnemang 50GB', 299, 80), L('Faktureringsavgift Papper', 49, 1)] },
 ];
 
-const lead = (lines) => detectForensicFindings(lines, { periodMultiplier: 12 })[0];
+const lead = (lines) => detectForensicFindings(lines, { billingPeriod: 'monthly' })[0];
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.map': 'application/json', '.woff2': 'font/woff2' };
 

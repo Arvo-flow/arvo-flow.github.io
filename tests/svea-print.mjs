@@ -127,7 +127,34 @@ describe('Ny avgift-detektorn — detectFeeSignals', () => {
   });
 
   test('annualImpact följer fakturaperioden', () => {
-    assert.equal(detectFeeSignals([{ description: 'Ny avgift', amount: 100 }], 4)[0].annualImpact, 400);
+    assert.equal(detectFeeSignals(
+      [{ description: 'Ny avgift', amount: 100, type: 'recurring_subscription' }], 4)[0].annualImpact, 400);
+  });
+
+  test('en rad UTAN radtyp hävdar inget årstal (2026-08-24)', () => {
+    // `type` är obligatoriskt i extraktionsschemat, så en typlös rad kommer inte från
+    // produktionsvägen. Då vet vi inte om den återkommer — och ett årstal vore ett påstående
+    // om något vi inte mätt. Fixturen ovan saknade typen och låste därmed in ×-antagandet.
+    assert.equal(detectFeeSignals([{ description: 'Ny avgift', amount: 100 }], 4)[0].annualImpact, null);
+  });
+
+  test('en ENGÅNGSAVGIFT annualiseras aldrig', () => {
+    const s = detectFeeSignals([{ description: 'Ny avgift — startavgift', amount: 4500, type: 'one_time_fee' }], 12);
+    assert.equal(s[0].annualImpact, null, '4 500 kr startavgift blev förr «54 000 kr/år» i kundens prosa');
+    assert.equal(s[0].engangsbelopp, true);
+  });
+
+  test('UTELÄMNAD period hävdar inget årstal (defaultvärdet, inte bara ett explicit null)', () => {
+    // Sabotaget avslöjade hålet: mitt null-test skickade null UTTRYCKLIGEN, vilket döljer
+    // parameterns default. Att sätta tillbaka `= 12` gjorde ingen skillnad — grenen som lånar
+    // ett giltigt värde åt «jag vet inte» var oprövad, i vakten mot just det.
+    assert.equal(detectFeeSignals(
+      [{ description: 'Ny avgift', amount: 100, type: 'recurring_subscription' }])[0].annualImpact, null);
+  });
+
+  test('obestämd period (null) hävdar inget årstal', () => {
+    assert.equal(detectFeeSignals(
+      [{ description: 'Ny avgift', amount: 100, type: 'recurring_subscription' }], null)[0].annualImpact, null);
   });
 
   test('fail-open: null kraschar aldrig', () => {

@@ -198,7 +198,7 @@ describe('FORENSIKEN · det retroaktiva kravet och citatet', () => {
   const rad = { description: 'Delbetalning iPad Air (Manad 38/36)', amount: 290 };
 
   test('RR-09 · slutbetald avbetalning räknar fram vad som REDAN är överbetalt', () => {
-    const [f] = detectForensicFindings([rad], { periodMultiplier: 12 });
+    const [f] = detectForensicFindings([rad], { billingPeriod: 'monthly' });
     assert.equal(f.type, 'hardware_overpaid');
     assert.equal(f.monthsOverpaid, 2, 'månad 38 av 36 = två månader utöver planen');
     assert.equal(f.overpaidToDate, 580, '2 × 290 kr — ur kundens egen rad, ingen marknadssiffra');
@@ -213,7 +213,7 @@ describe('FORENSIKEN · det retroaktiva kravet och citatet', () => {
   test('RR-10 · texten citerar inte raden — fyndkortet gör det redan', () => {
     // Kortet renderar lineDescription i en egen monospace-chip. Stod raden även i prosan såg
     // kundens egen stavning ("Manad" utan å) ut som vårt fel.
-    const [f] = detectForensicFindings([rad], { periodMultiplier: 12 });
+    const [f] = detectForensicFindings([rad], { billingPeriod: 'monthly' });
     assert.doesNotMatch(f.text, /Delbetalning iPad Air/,
       'radtexten står två gånger i samma kort — andra gången mitt i vår egen mening');
     assert.equal(f.lineDescription, rad.description, 'chipen ska fortfarande bära citatet ordagrant');
@@ -243,7 +243,7 @@ describe('FORENSIKEN · det retroaktiva kravet och citatet', () => {
     // levereras tillsammans). Kunden kopierar och skickar i eget namn.
     const [f] = detectForensicFindings(
       [{ description: 'Delbetalning iPad Air (Manad 38/36)', amount: 290 }],
-      { periodMultiplier: 12, supplier: 'Telia' });
+      { billingPeriod: 'monthly', supplier: 'Telia' });
     const allt = `${f.letter.subject} ${f.letter.body}`;
     assert.doesNotMatch(allt, /vi (?:skickar|har skickat|kontaktar|mejlar)|å era vägnar|automatiskt/i,
       'brevet antyder att Arvo utför något vi inte har mekanik för');
@@ -262,7 +262,7 @@ describe('FORENSIKEN · det retroaktiva kravet och citatet', () => {
     // fordran i kundens namn — värre än tystnad.
     const [inomPlan] = detectForensicFindings(
       [{ description: 'Avbetalning surfplattor (Månad 12/36)', amount: 200 }],
-      { periodMultiplier: 12, supplier: 'Dustin' });
+      { billingPeriod: 'monthly', supplier: 'Dustin' });
     assert.equal(inomPlan.letter, undefined, 'inget krav finns → inget brev får skrivas');
     assert.equal(inomPlan.overpaidToDate, undefined);
 

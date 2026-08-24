@@ -24,6 +24,7 @@ import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX, bredbandSpeedBenchmark } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
+import { perioderPerAr } from '../../lib/faktureringsperiod.js';
 import { detectForensicFindings } from '../../lib/forensics.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
@@ -673,7 +674,6 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
 // (c) ett syntetiskt intervall (benchmark × 1,15), (d) billingMult-heuristik.
 // Allt här är nu bandbaserat, deterministiskt och miniräknar-reproducerbart.
 
-const PRINT_PERIOD_MULTIPLIER = { monthly: 12, quarterly: 4, annual: 1 };
 
 // ── Attribueringslåset: LFL-resonemanget skrivs av KOD, inte AI ────────────────
 //
@@ -800,10 +800,17 @@ export function analyzeClickRates(lineItems, supplierName, invoiceData = null) {
   const parts = [];
 
   // Ny avgift/tariff-signal först — leverantörens egen dokumenterade höjning är fyndet.
-  const periodMultiplier = PRINT_PERIOD_MULTIPLIER[invoiceData?.billingPeriod] ?? 12;
+  // Samma sanning som forensiken (regel 1). PRINT_PERIOD_MULTIPLIER saknade 'one_time' och
+  // 'unknown', så `?? 12` annualiserade en engångsfaktura tolv gånger.
+  const periodMultiplier = perioderPerAr(invoiceData?.billingPeriod);
   const feeSignals = detectFeeSignals(lineItems, periodMultiplier);
   for (const sig of feeSignals) {
-    parts.push(`Notera: leverantören har själv markerat en ny avgift på fakturan — "${sig.description}", ${sig.amount.toLocaleString('sv-SE')} kr/mån = ${sig.annualImpact.toLocaleString('sv-SE')} kr/år. En nyinförd kostnadspost är alltid förhandlingsbar.`);
+    // Enheten var påstådd, inte avläst: «kr/mån» skrevs ut även på kvartals- och årsfakturor, och
+    // årstalet räknades ur en gissad faktor. Utan bestämd period och löpande rad hävdar vi inget
+    // årstal alls — beloppet står kvar med sin sanna enhet.
+    parts.push(sig.annualImpact != null
+      ? `Notera: leverantören har själv markerat en ny avgift på fakturan — "${sig.description}", ${sig.amount.toLocaleString('sv-SE')} kr per faktureringsperiod = ${sig.annualImpact.toLocaleString('sv-SE')} kr/år. En nyinförd kostnadspost är alltid förhandlingsbar.`
+      : `Notera: leverantören har själv markerat en ny avgift på fakturan — "${sig.description}", ${sig.amount.toLocaleString('sv-SE')} kr. En nyinförd kostnadspost är alltid förhandlingsbar.`);
   }
 
   if (colorRate && colorRate > bm.color.high) {
@@ -1006,9 +1013,10 @@ export async function recommend(input, opts = {}) {
   // Category-agnostiskt, Zero Trust (talet ur kundens egen rad) → får rida med på VARJE svar, även
   // oreviderade offert-kategorier (egna rader ≠ marknadstal; revisionsgrindens tystnad gäller ej dem).
   // Sätts ALDRIG i reasoning-copyn — lever i forensicFindings/leadFinding (sifferrevisorns talfri-krav intakt).
-  const _forensicPeriod = input.invoice?.billingPeriod === 'annual' ? 1 : 12;
+  // Perioden skickas som den ÄR; forensiken härleder faktorn ur lib/faktureringsperiod.js.
+  // Här stod `billingPeriod === 'annual' ? 1 : 12`, vilket gångade varje KVARTALSfaktura med 12.
   const forensicFindings = detectForensicFindings(input.invoice?.lineItems, {
-    periodMultiplier: _forensicPeriod,
+    billingPeriod: input.invoice?.billingPeriod ?? null,
     // Leverantören behövs för kravbrevets adressat — samma namn kortet visar.
     supplier: input.normalizedSupplier || input.invoice?.supplier || null,
   });

@@ -11,7 +11,7 @@ const line = (description, amount, quantity) => ({ type: 'recurring_subscription
 
 describe('Forensik · leverantörens egen dokumenterade höjning (smyghöjning på pränt)', () => {
   test('"prisjustering"-rad → high-fynd med årsimpact ur kundens egen rad', () => {
-    const f = detectForensicFindings([line('Prisjustering enligt index', 500, 1)], { periodMultiplier: 12 });
+    const f = detectForensicFindings([line('Prisjustering enligt index', 500, 1)], { billingPeriod: 'monthly' });
     assert.equal(f.length, 1);
     assert.equal(f[0].type, 'supplier_documented_hike');
     assert.equal(f[0].severity, 'high');
@@ -21,8 +21,41 @@ describe('Forensik · leverantörens egen dokumenterade höjning (smyghöjning p
   });
 
   test('årsfaktura → periodMultiplier 1 (ingen dubblering)', () => {
-    const f = detectForensicFindings([line('Ny tariff miljöavgift', 5940, 1)], { periodMultiplier: 1 });
+    const f = detectForensicFindings([line('Ny tariff miljöavgift', 5940, 1)], { billingPeriod: 'annual' });
     assert.equal(f[0].annualImpact, 5940);
+  });
+
+  test('KVARTALSfaktura → ×4, inte ×12 (buggen 2026-08-24)', () => {
+    // Anroparen räknade förr `billingPeriod === 'annual' ? 1 : 12`, så varje kvartalsfaktura
+    // gångades med tolv. 500 kr per kvartal är 2 000 kr/år, aldrig 6 000.
+    const f = detectForensicFindings([line('Prisjustering enligt index', 500, 1)], { billingPeriod: 'quarterly' });
+    assert.equal(f[0].annualImpact, 2000);
+  });
+
+  test('ENGÅNGSRAD får inget årstal — den återkommer inte', () => {
+    // En startavgift på 4 500 kr blev «54 000 kr/år» på rummets fyndkort. Nu bär fyndet sitt
+    // sanna belopp med sin sanna enhet, och hävdar inget årstal alls.
+    const f = detectForensicFindings(
+      [{ type: 'one_time_fee', description: 'Ny avgift — startavgift', amount: 4500, quantity: 1 }],
+      { billingPeriod: 'monthly' });
+    assert.equal(f.length, 1, 'fyndet ska stå kvar — fail-closed på PÅSTÅENDET, inte på pipelinen');
+    assert.equal(f[0].annualImpact, null);
+    assert.equal(f[0].engangsbelopp, true);
+    assert.match(f[0].metricText, /engångsbelopp/);
+  });
+
+  test('OBESTÄMD period → inget årstal hävdas', () => {
+    const f = detectForensicFindings([line('Prisjustering enligt index', 500, 1)], { billingPeriod: 'unknown' });
+    assert.equal(f[0].annualImpact, null);
+  });
+
+  test('det BORTTAGNA fältnamnet kastar — en ignorerad nyckel är en tyst förlust', () => {
+    // Sabotaget avslöjade att kastet inte prövades av något test: jag hade rättat alla anropare,
+    // så ingen skickade längre den gamla nyckeln, och vakten kunde tas bort utan att sviten
+    // märkte det. En vakt vars sabotage inte fäller är ingen vakt.
+    assert.throws(
+      () => detectForensicFindings([line('Prisjustering enligt index', 500, 1)], { periodMultiplier: 12 }),
+      /periodMultiplier/);
   });
 
   test('ingen höjningsmarkör → inget fynd', () => {
@@ -32,7 +65,7 @@ describe('Forensik · leverantörens egen dokumenterade höjning (smyghöjning p
 
 describe('Forensik · hårdvaruavbetalning förklädd till löpande tjänst', () => {
   test('"avbetalning"-rad → medium-fynd', () => {
-    const f = detectForensicFindings([line('Avbetalning telefoner', 280, 5)], { periodMultiplier: 12 });
+    const f = detectForensicFindings([line('Avbetalning telefoner', 280, 5)], { billingPeriod: 'monthly' });
     assert.equal(f.length, 1);
     assert.equal(f[0].type, 'hardware_financing');
     assert.equal(f[0].annualImpact, 3360);   // 280 × 12
@@ -46,7 +79,7 @@ describe('Forensik · hårdvaruavbetalning förklädd till löpande tjänst', ()
 
 describe('Forensik · valutapåslag (leverantören tar betalt för växlingen)', () => {
   test('"valutapåslag"-rad → high-fynd', () => {
-    const f = detectForensicFindings([line('Valutapåslag USD', 240, 1)], { periodMultiplier: 12 });
+    const f = detectForensicFindings([line('Valutapåslag USD', 240, 1)], { billingPeriod: 'monthly' });
     assert.equal(f[0].type, 'fx_surcharge');
     assert.equal(f[0].severity, 'high');
     assert.equal(f[0].annualImpact, 2880);
@@ -59,7 +92,7 @@ describe('Forensik · valutapåslag (leverantören tar betalt för växlingen)',
 
 describe('Forensik · administrativ tilläggsavgift (junk fee)', () => {
   test('"faktureringsavgift" → medium-fynd', () => {
-    const f = detectForensicFindings([line('Faktureringsavgift pappersfaktura', 49, 1)], { periodMultiplier: 12 });
+    const f = detectForensicFindings([line('Faktureringsavgift pappersfaktura', 49, 1)], { billingPeriod: 'monthly' });
     assert.equal(f[0].type, 'junk_fee');
     assert.equal(f[0].severity, 'medium');
     assert.equal(f[0].annualImpact, 588);
@@ -72,7 +105,7 @@ describe('Forensik · administrativ tilläggsavgift (junk fee)', () => {
 
 describe('Forensik · avbetald hårdvara (Månad X/Y, X > Y → ni äger den redan)', () => {
   test('"Månad 37/36" → high-fynd hardware_overpaid med skoningslös copy', () => {
-    const f = detectForensicFindings([line('Delbetalning iPhone 13 (Månad 37/36)', 560, 2)], { periodMultiplier: 12 });
+    const f = detectForensicFindings([line('Delbetalning iPhone 13 (Månad 37/36)', 560, 2)], { billingPeriod: 'monthly' });
     assert.equal(f.length, 1);
     assert.equal(f[0].type, 'hardware_overpaid');
     assert.equal(f[0].severity, 'high');                 // skarpare än vanlig avbetalning (medium)
@@ -92,7 +125,7 @@ describe('Forensik · avbetald hårdvara (Månad X/Y, X > Y → ni äger den red
     assert.match(f[0].title, /redan äger/);
   });
   test('"Månad 12/36" (inom plan) → degraderar korrekt till hardware_financing (guard faller)', () => {
-    const f = detectForensicFindings([line('Avbetalning surfplattor (Månad 12/36)', 200, 1)], { periodMultiplier: 12 });
+    const f = detectForensicFindings([line('Avbetalning surfplattor (Månad 12/36)', 200, 1)], { billingPeriod: 'monthly' });
     assert.equal(f[0].type, 'hardware_financing');        // INTE overpaid — planen löper ännu
     assert.equal(f[0].severity, 'medium');
   });
@@ -106,7 +139,7 @@ describe('Forensik · avbetald hårdvara (Månad X/Y, X > Y → ni äger den red
 
 describe('Forensik · valutapåslag på engelska/cross-border (USD-fakturor)', () => {
   test('"Foreign Transaction / Currency Conversion Fee" → fx_surcharge (annars osynligt)', () => {
-    const f = detectForensicFindings([line('Foreign Transaction / Currency Conversion Fee', 28.5, 1)], { periodMultiplier: 12 });
+    const f = detectForensicFindings([line('Foreign Transaction / Currency Conversion Fee', 28.5, 1)], { billingPeriod: 'monthly' });
     assert.equal(f[0].type, 'fx_surcharge');
     assert.equal(f[0].severity, 'high');
   });
@@ -117,7 +150,7 @@ describe('Forensik · valutapåslag på engelska/cross-border (USD-fakturor)', (
 
 describe('Forensik · dedup per rad (en rad ger högst ett fynd, högst prioritet vinner)', () => {
   test('rad som matchar både höjning och junk → ETT high-fynd', () => {
-    const f = detectForensicFindings([line('Prisjustering faktureringsavgift', 60, 1)], { periodMultiplier: 12 });
+    const f = detectForensicFindings([line('Prisjustering faktureringsavgift', 60, 1)], { billingPeriod: 'monthly' });
     assert.equal(f.length, 1);
     assert.equal(f[0].type, 'supplier_documented_hike');   // high vinner över junk
   });
@@ -128,7 +161,7 @@ describe('Forensik · rangordning (high före medium, störst årsimpact först)
     const f = detectForensicFindings([
       line('Avbetalning skrivare', 900, 1),       // medium, hög impact
       line('Indexuppräkning', 200, 1),            // high, lägre impact
-    ], { periodMultiplier: 12 });
+    ], { billingPeriod: 'monthly' });
     assert.equal(f[0].type, 'supplier_documented_hike');  // high vinner
     assert.equal(f[1].type, 'hardware_financing');
   });
