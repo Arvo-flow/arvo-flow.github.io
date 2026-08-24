@@ -779,6 +779,72 @@ signera", aldrig som ett verkställt löfte.)
    > tabellen skrevs ändå ut full av nollor som om «0 % fällda» vore ett mätvärde. SV-11 låser
    > pipefail; sonden fäller nu när den inte kom fram.
 
+   > **✅ ETT OMDÖPT FÄLT ÄR EN TYST FÖRLUST — TVÅ GÅNGER PÅ EN DAG, EN AV DEM MIN EGEN (2026-08-24).**
+   > Öresfixen i balanskravet (22 aug) var **död kod i två dygn**. Den läste modellens råstavning
+   > `unit_price_ore`; produktionen skickar den AGGREGERADE raden, där `aggregateLineItems` döpt om
+   > fältet till `unitPriceOre`. Fortum-raden — själva fallet fixen byggdes för — blev `judged: 0`
+   > i stället för godkänd, och grinden var lika blind som före fixen. Körbart bevis:
+   > `judgeLineArithmetic(rådata)` → `judged: 1`, `judgeLineArithmetic(aggregateLineItems(...))` → `judged: 0`.
+   > **Min egen täckningssond bar samma fel** och hade rapporterat «0 av N rader bär öre» för samtliga
+   > 75 fakturor — vilket jag hade läst som att modellen inte fyller fälten. Tjugonde gången under
+   > obduktionen som mätinstrumentet är felet, inte systemet.
+   >
+   > Sviten var grön hela tiden av det nu välkända skälet: **testerna matade rådataformen DIREKT till
+   > funktionen.** Mekanismen prövad, matningen aldrig — fjärde gången (LFL-produktionsvägen 12 aug,
+   > `holdings.mjs` 19 aug, obduktionens DB-lösa svit 21 aug, nu denna). RO-01 är därför skriven som en
+   > KEDJA: rådata → `aggregateLineItems` → `judgeLineArithmetic`. Ett test som bygger sitt eget indata
+   > kan aldrig fälla ett namnbyte i steget emellan.
+   >
+   > **Och sedan begick jag exakt samma fel själv, i samma session.** När `periodMultiplier` byttes mot
+   > `billingPeriod` i forensiken fortsatte **sex anropare** skicka det gamla namnet — fyra av dem
+   > TESTER, som förblev gröna. JavaScript ignorerar en okänd nyckel, så ett fält som inte läses är
+   > omöjligt att skilja från ett fält som inte fanns. Regeln som föll ut: **när ett fält byter namn ska
+   > det gamla namnet SMÄLLA, inte ignoreras** (`detectForensicFindings` kastar på `periodMultiplier`).
+   > Läsvägen bor nu på ett ställe (`lib/radobservation.js`, RO-08 förbjuder direkt fältläsning).
+   >
+   > **Toleransen var en procentsats där taket är ett fast belopp per enhet.** Öresvägens tolerans
+   > `max(100, expected × 0,005)` stod under kommentaren «i öre är aritmetiken exakt — då räcker en
+   > öresavrundning per rad»: en kommentar som intygade en invariant koden inte höll. Mätt åt båda hållen:
+   > 20 000 kWh × 0,915 kr fälldes trots att raden är perfekt (tolerans 9 200 mot avrundningens tak
+   > 10 000), medan en M365-rad fick 13,38 kr tolerans där avrundningen är 10 öre — ett tiokronorsfel i
+   > kundens egen prisrad passerade osett. För **varje à-pris under 1,00 kr** är procenttoleransen
+   > strukturellt smalare än avrundningens tak, och elhandelns band (0,80–1,90) ligger till hälften där;
+   > korpusens Tibber-rad klarade sig på 71 öres marginal, av tur. Taket härleds nu ur två kända källor
+   > (heltalsöret ≤ 0,5 öre/enhet + kronorfältets ≤ 50 öre) och grinden blev **vassare** där kundens
+   > pengar bor och slutade falsklarma där enheten är liten. Ingen avvägning — samma tal räknat rätt.
+   > **Mitt första motprov var värdelöst:** felet låg på 1 340 öre mot gamla toleransens 1 338 och
+   > fälldes av båda grindarna. Det hade sett ut som ett bevis utan att vara ett.
+
+   > **✅ VAD ÄR TALET PER? — EN ENGÅNGSAVGIFT ANNUALISERADES ×12 I RUMMET (2026-08-24).**
+   > `detectForensicFindings` gav varje träffad rad `amount × multiplikator` **utan att väga in radens
+   > egen typ**. En startavgift på 4 500 kr blev «54 000 kr/år» på `FindingCard` och i Portfolios rubrik
+   > *«vi fångade N kr/år värt att åtgärda»*. Anroparen räknade dessutom `billingPeriod === 'annual' ? 1 : 12`,
+   > så varje **kvartalsfaktura** gångades med tolv i stället för fyra. Kundsynlig siffra utan täckning
+   > (regel 3), och riktningen är den farliga under 20 % success fee: vi överdrev vad som fanns att hämta.
+   > Samma sjukdom i prosan (`kr/mån` som påstådd enhet på kvartals- och årsfakturor) och i
+   > `PRINT_PERIOD_MULTIPLIER`, som saknade `one_time`/`unknown` så `?? 12` annualiserade en
+   > engångsfaktura tolv gånger. Nu: bara LÖPANDE rader annualiseras, perioden härleds ur EN sanning
+   > (`lib/faktureringsperiod.js`), och utan bestämd period hävdas **inget årstal alls** — fyndet står
+   > kvar med sitt sanna belopp och sin sanna enhet (fail-closed på PÅSTÅENDET, fail-open på pipelinen).
+   >
+   > **Det tysta syskonfyndet: flywheeln lärde sig ur en bugg som inte fanns.** Integritetskontroll 5
+   > läste `monthsBetween(extracted.billingPeriod) ?? 1`. `billingPeriod` är ett ENUM efter aggregeringen,
+   > och `monthsBetween` splittar på `/[-–]/` och kräver två delar — ett ISO-intervall ger sex. Funktionen
+   > kunde alltså **inte parsa någon indata överhuvudtaget**, och `?? 1` gjorde tystnaden till
+   > multiplikator 12. Mätt genom produktionskedjan: kvartalsfaktura 120 000 → «korrigerad» till 360 000,
+   > årsfaktura 144 000 → 1 728 000. Kundens tal ändras aldrig (severity `info`, `result` skrivs inte) —
+   > **och det ska sägas som det är** — men varje sådan rad gick till `labeled_corrections`, vars
+   > `getPatterns()` deriverar regler. En falsk korrektion på varje kvartals- och årsfaktura vi någonsin
+   > analyserat. `?? 1` som lånar ett fullt giltigt värde åt «jag kunde inte mäta» är felfamiljen i sin
+   > renaste form.
+   >
+   > **Två av mina egna nya vakter var gröna på fel grund, och bara sabotaget avslöjade det:** kastet för
+   > det omdöpta fältet prövades av inget test (jag hade rättat alla anropare, så ingen skickade den gamla
+   > nyckeln), och `detectFeeSignals` defaultvärde doldes av ett test som skickade `null` uttryckligen —
+   > ett explicit argument prövar aldrig en parameters default. Och tomhetsspärren i RO-08 (`filer.length > 100`)
+   > höll när skanningen kapades till enbart `lib/`, eftersom lib/ ensam har över hundra filer:
+   > **ett totaltal kan inte mäta täckning per katalog.**
+
    > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
    > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
    > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det
