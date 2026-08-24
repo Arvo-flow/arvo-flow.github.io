@@ -17,6 +17,7 @@ import { deklarera } from '../lib/sondkontrakt.js';
 import { extractInvoice, routeExtraction } from '../agents/test-invoice/extract.js';
 import { categorize } from '../agents/categorizer/categorize.js';
 import { byggAvstamningsrader } from '../lib/saas-rad.js';
+import { radensOre } from '../lib/radobservation.js';
 
 deklarera({
   namn: 'probe-avstamningsbransle',
@@ -46,7 +47,7 @@ for (const fil of KANDIDATER) {
   } catch (e) { console.log(`  ${fil.padEnd(34)} → fel: ${String(e.message).slice(0, 50)}`); continue; }
 
   const rader = ex.lineItems ?? [];
-  const ore = rader.filter((l) => Number.isInteger(l.amountOre)).length;
+  const ore = rader.filter((l) => Number.isInteger(radensOre(l).beloppOreAvlast)).length;
   if (ex.momsbas) medMomsbas++;
   if (ex.momssats != null) medSats++;
   radTotalt += rader.length;

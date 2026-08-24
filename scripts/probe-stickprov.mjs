@@ -10,6 +10,7 @@
 import { readFileSync } from 'node:fs';
 import { deklarera } from '../lib/sondkontrakt.js';
 import { extractInvoice } from '../agents/test-invoice/extract.js';
+import { radensOre } from '../lib/radobservation.js';
 
 deklarera({
   namn: 'probe-stickprov',
@@ -39,11 +40,14 @@ for (const fil of FAKTUROR) {
   for (const [i, l] of (ex.lineItems ?? []).entries()) {
     console.log(`  [${i}] «${l.description}»`);
     console.log(`      typ=${l.type} · prorata=${l.is_prorata} · antal=${l.quantity ?? '—'}`);
-    console.log(`      à-pris: ${ore(l.unitPriceOre)}   (kronorfält: ${l.unitPrice ?? '—'})`);
-    console.log(`      belopp: ${ore(l.amountOre)}   (kronorfält: ${l.amount ?? '—'})`);
-    if (Number.isInteger(l.unitPriceOre) && Number.isInteger(l.quantity) && Number.isInteger(l.amountOre)) {
-      const produkt = l.unitPriceOre * l.quantity;
-      console.log(`      radaritmetik: ${l.unitPriceOre} × ${l.quantity} = ${produkt} ${produkt === l.amountOre ? '= belopp ✓' : `≠ belopp ${l.amountOre} ✗`}`);
+    // Via den kanoniska läsvägen (24 aug): ett mätinstrument som läser fältnamnet direkt kan
+    // rapportera «modellen fyllde inget» när sanningen är att instrumentet stavar fel.
+    const obs = radensOre(l);
+    console.log(`      à-pris: ${ore(obs.aprisOre)}   (kronorfält: ${l.unitPrice ?? '—'})`);
+    console.log(`      belopp: ${ore(obs.beloppOreAvlast)}   (kronorfält: ${l.amount ?? '—'})`);
+    if (Number.isInteger(obs.aprisOre) && Number.isInteger(l.quantity) && Number.isInteger(obs.beloppOreAvlast)) {
+      const produkt = obs.aprisOre * l.quantity;
+      console.log(`      radaritmetik: ${obs.aprisOre} × ${l.quantity} = ${produkt} ${produkt === obs.beloppOreAvlast ? '= belopp ✓' : `≠ belopp ${obs.beloppOreAvlast} ✗`}`);
     }
   }
 }

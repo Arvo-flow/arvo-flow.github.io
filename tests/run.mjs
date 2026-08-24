@@ -107,6 +107,7 @@ import './fakturarader.mjs';
 import './prisunderlag.mjs';
 import './matriskrav.mjs';
 import './scorekrav.mjs';
+import './radobservation.mjs';
 import './licensniva.mjs';
 import './obduktion.mjs';
 import './jamforelsekalla.mjs';

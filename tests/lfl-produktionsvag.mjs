@@ -270,8 +270,8 @@ describe('RD-11 · Aritmetiken granskar textgissningen i produktionsvägen', () 
   // en uttryckligen begränsad deklaration i stället för mot dagens verifierare.
   test('E3 är numera vaktat — en träff mot dess eget ankare bekräftar nivån', async () => {
     const e3pris = rad('Microsoft 365 E3');
-    e3pris[0].unitPriceOre = 41_677;               // exakt E3:s eget listpris
-    e3pris[0].amountOre = 41_677 * 20;
+    e3pris[0].unitPriceOre = 41_677;               // ore-ok: FÖRFATTAR fixturen (skriver fältet), läser det aldrig
+    e3pris[0].amountOre = 41_677 * 20;             // ore-ok: samma fixturförfattande
     e3pris[0].amount = Math.round(41_677 * 20 / 100);
     const r = await kor(e3pris);
     assert.equal(r.avstamningsveto, undefined, 'texten och priset är överens — det är ingen motsägelse');

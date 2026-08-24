@@ -33,6 +33,7 @@ import { fileURLToPath } from 'node:url';
 import { deklarera } from '../lib/sondkontrakt.js';
 import { extractInvoice, routeExtraction } from '../agents/test-invoice/extract.js';
 import { judgeLineArithmetic } from '../lib/extraction-integrity.js';
+import { radensOre } from '../lib/radobservation.js';
 
 deklarera({
   namn: 'probe-grindarna',
@@ -86,7 +87,12 @@ for (const fil of filer) {
   for (const l of ex.lineItems ?? []) {
     if (l.quantity == null || !(l.quantity > 0) || l.type === 'variable_usage') continue;
     utfall.tackning.rader++;
-    const harOre = Number.isFinite(l.unit_price_ore) && Number.isFinite(l.amount_ore);
+    // RÄTTELSE 2026-08-24: raden läste `l.unit_price_ore` på det AGGREGERADE objektet, där
+    // fältet heter `unitPriceOre`. Sonden hade rapporterat «0 av N rader bär öre» för samtliga
+    // 75 fakturor — och jag hade läst det som att modellen inte fyller fälten, i stället för att
+    // min mätning läser fel namn. Nu via samma läsväg som grinden själv (regel 1), så att
+    // täckningsmåttet inte kan glida isär från det den mäter.
+    const { iOre: harOre } = radensOre(l);
     if (harOre) utfall.tackning.medOre++;
     else if (l.unitPrice != null && l.unitPrice > 0 && l.unitPrice < 10) utfall.tackning.odombaraSmaApris++;
   }
