@@ -699,12 +699,12 @@ export const BRANCHINDEX = {
       // usdMonthly = usdAnnual här: det ÄR månadspriset vid årsbetalning, inte två olika tal.
       'pipedrive-lite': {
         usdMonthly: 14.00, usdAnnual: 14.00,
-        currency: 'USD', lastVerified: '2026-08-22', source: 'pipedrive.com/en/pricing',
+        currency: 'USD', lastVerified: '2026-08-24', source: 'pipedrive.com/en/pricing',
         note: 'Pipedrive Lite — pipeline, kontaktimport, standardrapporter, mobilapp. US$168/plats/år. (Ersätter tidigare "Essential" som Pipedrive slutat sälja.)',
       },
       'pipedrive-growth': {
         usdMonthly: 39.00, usdAnnual: 39.00,
-        currency: 'USD', lastVerified: '2026-08-22', source: 'pipedrive.com/en/pricing',
+        currency: 'USD', lastVerified: '2026-08-24', source: 'pipedrive.com/en/pricing',
         note: 'Pipedrive Growth — e-postintegration, automatisering, grupputskick. US$468/plats/år. (Ersätter tidigare "Advanced"; prisboken angav 29 USD för en plan som inte längre finns.)',
       },
       // HubSpot CRM — USD-baspris, konverteras runtime.
