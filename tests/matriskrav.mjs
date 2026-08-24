@@ -38,7 +38,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { BRANCHINDEX, harledCeller } from '../agents/recommender/branchindex.js';
+import { BRANCHINDEX, harledCeller , bucketForSize } from '../agents/recommender/branchindex.js';
+import { getPublicListBenchmark } from '../lib/benchmark.js';
 
 const HAR = dirname(fileURLToPath(import.meta.url));
 const VERIFIERARE = join(HAR, '..', 'lib', 'verifiers');
@@ -201,3 +202,55 @@ describe('MATRISKRAV · varje kundsynligt pris ska gå att räkna hem', () => {
     }
   });
 });
+
+// ── MK-10..12 · STORLEKSBANDET FÅR INTE FALLA TILL DET MINSTA ────────────────────────────────
+// Ur den fulla obduktionens fan-out (2026-08-22). `bucketForSize` löd `…?.id ?? 'micro'`, och
+// bucketarna slutar vid 249 — så VARJE bolag över det föll till mikrocellen, samma segment som
+// ett bolag med fem anställda. Ännu en instans av felfamiljen: en fallback omöjlig att skilja
+// från ett äkta svar.
+//
+// Mätt före fixen: bucketForSize(249) → 'mid', bucketForSize(250) → 'micro'. I loneadmin — den
+// enda kategori där avgiften FAKTISKT beror på antalet enheter — gav det p25 778 i stället för
+// 324. Ett golv 2,4 gånger för högt. Vägen är nåbar: fältet tar max 5000 och hinten under det
+// säger «Prisnivån varierar med bolagets storlek».
+//
+// FÅNGAR: att ett stort bolag hamnar i mikrocellen, och att fallbacken görs tyst igen.
+// BLIND: prövar bandvalet, inte om bandens GRÄNSER är rätt satta. Att 250+ approximeras med
+//   50–249 är en redovisad approximation — den blir sann först den dag prisboken får en egen
+//   cell för stora bolag.
+describe('MK · Storleksbandet faller aldrig till det minsta', () => {
+  test('MK-10 · ett bolag över högsta bandet får det STÖRSTA bandet, inte det minsta', () => {
+    for (const n of [250, 500, 3000, 5000]) {
+      assert.equal(bucketForSize(n), 'mid',
+        `${n} anställda hamnade i «${bucketForSize(n)}» — ett stort bolag får inte mikrobolagets golv`);
+    }
+  });
+
+  test('MK-11 · MOTPROVET: banden inom intervallet är oförändrade', () => {
+    // En fix som skickar allt till samma band är lika värdelös som den tysta fallbacken.
+    assert.equal(bucketForSize(5), 'micro');
+    assert.equal(bucketForSize(9), 'micro');
+    assert.equal(bucketForSize(10), 'small');
+    assert.equal(bucketForSize(49), 'small');
+    assert.equal(bucketForSize(50), 'mid');
+    assert.equal(bucketForSize(249), 'mid');
+  });
+
+  test('MK-12 · ogiltigt antal ger det minsta bandet — men aldrig NaN eller undefined', () => {
+    for (const n of [0, -5, NaN, null, undefined, 'abc', 0.5]) {
+      const b = bucketForSize(n);
+      assert.ok(['micro', 'small', 'mid'].includes(b), `«${String(n)}» gav «${b}»`);
+    }
+  });
+
+  test('MK-13 · loneadmins golv följer storleken hela vägen upp', () => {
+    // Kategorin där felet fick numerisk verkan: fast avgift utslagen på fler anställda.
+    const litet = getPublicListBenchmark({ category: 'loneadmin', employees: 5 })?.p25;
+    const stort = getPublicListBenchmark({ category: 'loneadmin', employees: 500 })?.p25;
+    assert.ok(litet > 0 && stort > 0, 'golvet saknas — vakten mäter fel objekt');
+    assert.ok(stort < litet,
+      `ett bolag med 500 anställda fick golvet ${stort} kr och ett med 5 fick ${litet} kr — ` +
+      'den fasta avgiften ska slås ut på fler anställda, inte färre');
+  });
+});
+

@@ -22,8 +22,17 @@ describe('BI-01 · bucketForSize — storleksbuckets', () => {
     [1, 'micro'], [5, 'micro'], [9, 'micro'],
     [10, 'small'], [20, 'small'], [49, 'small'],
     [50, 'mid'], [100, 'mid'], [249, 'mid'],
-    [250, 'micro'],  // faller utanför → fallback 'micro'
-    [500, 'micro'],
+    // ── DET HÄR TESTET LÅSTE IN FELET SOM AVSETT BETEENDE (rättat 2026-08-22) ────────────────
+    // Raderna löd `[250, 'micro'], // faller utanför → fallback 'micro'` och `[500, 'micro']`.
+    // Kommentaren beskrev en TYST FALLBACK som om den vore ett krav — och därför var sviten grön
+    // medan varje bolag över 249 anställda fick mikrobolagets prisgolv. I loneadmin, den enda
+    // kategori där avgiften faktiskt beror på antalet enheter, betydde det p25 778 kr i stället
+    // för 324: ett golv 2,4 gånger för högt.
+    //
+    // Läxan är inte «rätta talet» utan att ett testfall som dokumenterar en fallback SOM ETT KRAV
+    // gör felet osynligt för hela sviten. Ett förväntat värde ska vara det RÄTTA värdet, aldrig
+    // det värde koden råkar producera.
+    [250, 'mid'], [500, 'mid'], [3000, 'mid'],
   ];
   for (const [n, expected] of cases) {
     test(`${n} anst → '${expected}'`, () => assert.strictEqual(bucketForSize(n), expected));

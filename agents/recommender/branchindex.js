@@ -45,8 +45,32 @@ export const SIZE_BUCKETS = [
   { id: 'mid',   label: '50–249 anställda',min: 50, max: 249 },
 ];
 
+// ── `?? 'micro'` GAV DET STÖRSTA BOLAGET DET MINSTA BOLAGETS GOLV (2026-08-22) ────────────────
+// Raden löd `…?.id ?? 'micro'`. Bucketarna slutar vid 249, så VARJE bolag över det föll till
+// mikrocellen — samma segment som ett bolag med fem anställda. Mätt:
+//   bucketForSize(249) → 'mid'    ·  bucketForSize(250) → 'micro'  ·  bucketForSize(3000) → 'micro'
+//
+// För listpriskategorier (mobil, saas) spelar det ingen roll: ett listpris varierar inte med
+// kundens storlek, och cellerna är därför identiska. Men i `loneadmin` — den enda kategori där
+// avgiftsstrukturen FAKTISKT beror på antalet enheter (fast avgift utslagen på fler anställda) —
+// ger 249 p25 = 324 kr medan 250 ger 778 kr. Ett golv 2,4 gånger för högt.
+//
+// Vägen är nåbar: fältet i testa-faktura är `type="number" max="5000"`, och hinten under det
+// säger ordagrant «Prisnivån varierar med bolagets storlek». Ett påstående koden inte höll.
+//
+// Riktningen är den konservativa (ett för högt golv UNDERSKATTAR kundens överbetalning), men
+// regel 3 känner ingen avvägning: ett tal vi inte kan belägga ska inte visas.
+//
+// Fallbacken är nu EXPLICIT och går till NÄRMASTE band i båda riktningarna — inte till en tyst
+// default. Ett bolag med 500 anställda liknar ett med 249 långt mer än ett med 5, och det är en
+// redovisad approximation i stället för en förväxling.
 export function bucketForSize(employees) {
-  return SIZE_BUCKETS.find((b) => employees >= b.min && employees <= b.max)?.id ?? 'micro';
+  const n = Number(employees);
+  if (!Number.isFinite(n) || n < 1) return SIZE_BUCKETS[0].id;
+  const traff = SIZE_BUCKETS.find((b) => n >= b.min && n <= b.max);
+  if (traff) return traff.id;
+  // Över högsta bandet: närmaste band uppåt, alltså det STÖRSTA — aldrig det minsta.
+  return SIZE_BUCKETS[SIZE_BUCKETS.length - 1].id;
 }
 
 // All values SEK/year unless the note says "per användare/år".
