@@ -1,4 +1,4 @@
-// tests/enhetsantagandet.mjs — EA-01..06: en KVANTITET är inte ett antal användare, och en
+// tests/enhetsantagandet.mjs — EA-01..07: en KVANTITET är inte ett antal användare, och en
 // SAKNAD konfidens är inte en hög konfidens.
 //
 // VARFÖR (2026-08-24, ur obduktionens spaning på extraktionsgrindarna).
@@ -28,6 +28,8 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { aggregateLineItems, routeExtraction } from '../agents/test-invoice/extract.js';
+import { runIntegrityChecks } from '../lib/extraction-integrity.js';
+import { readFileSync } from 'node:fs';
 
 const rad = (description, quantity, amount, extra = {}) =>
   ({ description, quantity, amount, unitPrice: Math.round(amount / quantity) || 1,
@@ -70,6 +72,37 @@ describe('EA · Enhetsantagandet — en kvantitet är inte ett antal användare'
     // ett avläst tal, och en GB-rad bredvid får inte radera det.
     const ex = bygg([rad('Företagsmobil 50 GB/mån', 50, 4000)], { seatCount: 8 });
     assert.equal(ex.seatCount, 8);
+  });
+});
+
+describe('EA · En vakt som jämför ett tal med sig självt', () => {
+  test('EA-07: ingen integritetskontroll jämför radsumman mot det HÄRLEDDA beloppet', () => {
+    // Kontroll 3 ställde `lineItems.reduce(...amount)` mot `extracted.amount` — men aggregeringen
+    // SÄTTER `amount` till exakt den summan. Avvikelsen var per konstruktion 0. Mekanismen
+    // svarade när den matades för hand; signalen kunde aldrig röra sig i produktionsvägen.
+    // Ring 1 i routeExtraction gör den riktiga kontrollen mot `invoiceTotal` (det AVLÄSTA
+    // beloppet), och en död dubblett räknar ett skydd vi inte har.
+    const ex = bygg([rad('En rad', 1, 1000)]);
+    ex.invoiceTotal = 5000;                       // 4 000 kr saknas i raderna
+    const { overrides } = runIntegrityChecks(ex);
+    assert.equal(overrides.some((o) => /lineItem/i.test(o.field ?? '')), false);
+
+    // ── VARFÖR BETEENDET INTE RÄCKER SOM VAKT ────────────────────────────────────────────────
+    // Assertionen ovan var min FÖRSTA version, och sabotaget avslöjade att den är grön på fel
+    // grund: en återinförd självjämförande kontroll kan ju inte fyra, så «ingen override» ser
+    // exakt likadan ut som «kontrollen borttagen». Testet kunde inte skilja en DÖD vakt från en
+    // FRÅNVARANDE — vilket är precis den förväxling hela fyndet handlar om.
+    // Det som faktiskt ska förbjudas är KODFORMEN: ett larm på fältet får inte återinföras utan
+    // att någon läser den här förklaringen först.
+    const kalla = readFileSync(new URL('../lib/extraction-integrity.js', import.meta.url), 'utf8');
+    const kod = kalla.split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
+    assert.equal(/['\`]lineItemsTotal['\`]/.test(kod), false,
+      'lineItemsTotal-larmet är borttaget med flit: det jämförde radsumman mot extracted.amount, '
+      + 'som ÄR radsumman. Ska det återinföras måste det mäta mot invoiceTotal — och då dubblerar '
+      + 'det Ring 1 i routeExtraction, som redan gör kontrollen på rätt axel.');
+
+    // Motprovet: Ring 1 fångar samma faktura på rätt axel. Utan det vore borttagningen en förlust.
+    assert.equal(routeExtraction(ex).route, 'review_queue');
   });
 });
 
