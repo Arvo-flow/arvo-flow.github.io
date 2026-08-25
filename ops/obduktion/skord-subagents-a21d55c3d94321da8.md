@@ -432,7 +432,7 @@ grep -n "Arvo Intelligence\|aktivera\|intelligence_connected" /home/user/arvo-fl
 ```
 
 ```
-259:      setUploadNote('Ni har nått gränsen för fria analyser. Vidarebefordra resten till faktura@inbox.arvoflow.se — eller aktivera ert konto — så fortsätter vi.');
+259:      setUploadNote('Ni har nått gränsen för fria analyser. Vidarebefordra resten till <e-post maskerad> — eller aktivera ert konto — så fortsätter vi.');
 593:                              <div className="si-step"><span className="si-n">1</span><span className="si-body"><span className="si-t">Ni aktiverar bytet</span><span className="si-d">Ett klick — Arvo tar det därifrån.</span></span></div>
 605:                            <SwitchBtn as={Link} to="/aktivera">
 617:            {/* ── Arvo Intelligence — tyst avslutande pitch ───────────────── */}

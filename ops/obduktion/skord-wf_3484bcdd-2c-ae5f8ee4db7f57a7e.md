@@ -166,7 +166,7 @@ cd /tmp/claude-0/-home-user-arvo-flow-github-io/fa040f29-a1de-55e0-a9e2-8fa77114
 
 ```
 24:      return Promise.resolve([{ n: /ILIKE/i.test(q) ? 1 : Number(process.env.SEG_TOTAL ?? 7) }]);
-[run-price-alerts] email failed: kund@exempel.se {"name":"application_error","statusCode":403,"message":"Internal server error. We are unable to process your request right now, please try again later."}
+[run-price-alerts] email failed: <e-post maskerad> {"name":"application_error","statusCode":403,"message":"Internal server error. We are unable to process your request right now, please try again later."}
 SVAR: 200 {"ok":true,"processed":1,"sent":0,"skipped":0,"failed":1}
 handler returnerade utan att kasta
 ```
@@ -1119,7 +1119,7 @@ handler returnerade utan att kasta
 
 === D) alla utskick misslyckas (403, som 2026-08-05) ===
 SUBJECT: Tele2: +14 400 kr/år — Arvo har detekterat en prishöjning
-[run-price-alerts] email failed: kund@exempel.se {"statusCode":403,"message":"The arvoflow.se domain is not verified"}
+[run-price-alerts] email failed: <e-post maskerad> {"statusCode":403,"message":"The arvoflow.se domain is not verified"}
 >>> markAlertSent SKREV en rad i price_alerts_sent (idempotensen brand): ["2026-08-24T01:14:00.000Z","tele2","mobil",0,14400,"{\"actionRequired\":\"confirmed\",\"extractedNumeric\":329,\"extractedPrice\":\"329 kr/mth\"}"]
 SVAR: 200 {"ok":true,"processed":1,"sent":0,"skipped":0,"failed":1}
 handler returnerade utan att kasta

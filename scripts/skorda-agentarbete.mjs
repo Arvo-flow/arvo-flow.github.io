@@ -83,6 +83,29 @@ function hittaKorningar() {
 /** Agenter som redan skördats ur en workflow-katalog — så samma agent inte räknas dubbelt. */
 const REDAN_SKORDAD = new Set();
 
+// ── SKÖRDEN MASKAR VID KÄLLAN (2026-08-24) ───────────────────────────────────────────────────
+// Hemlighetsvakten (scripts/hemlighetsvakt.mjs) blockerade min egen commit och hade rätt: en
+// skördfil bar GRUNDARENS PERSONLIGA E-POSTADRESS, på väg in i ett publikt repo. Agenten hade
+// använt den som testdata — fullt rimligt i sitt sammanhang, katastrofalt i ett offentligt arkiv.
+//
+// Skörden räddar godtycklig kommandoutdata. Då måste den också MASKA, och den måste göra det vid
+// källan: en fil som aldrig innehåller uppgiften kan inte läcka den, oavsett vem som senare
+// committar den eller vart den kopieras. Vakten i pre-commit är sista linjen, aldrig den första.
+const MASKA = [
+  [/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '<e-post maskerad>'],
+  [/((?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis|rediss):\/\/)[^\s:@/]+:[^\s@/]+@/g, '$1<uppgifter maskerade>@'],
+  [/(sk-ant-[A-Za-z0-9_-]{6})[A-Za-z0-9_-]{10,}/g, '$1<maskerad>'],
+  [/(re_[A-Za-z0-9]{4})[A-Za-z0-9]{12,}/g, '$1<maskerad>'],
+  [/(gh[pousr]_[A-Za-z0-9]{4})[A-Za-z0-9]{16,}/g, '$1<maskerad>'],
+  [/([?&]magic=)[A-Za-z0-9_-]{12,}/g, '$1<maskerad>'],
+  [/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, '<jwt maskerad>'],
+];
+function maska(str) {
+  let ut = String(str ?? '');
+  for (const [re, ers] of MASKA) ut = ut.replace(re, ers);
+  return ut;
+}
+
 const text = (block) => (block?.type === 'text' ? String(block.text ?? '') : '');
 
 /** Läser en agents transkript till { uppdrag, slutsatser[], korningar[], sista } */
@@ -228,7 +251,7 @@ function skorda(katalog) {
     ].join('\n');
 
     const filnamn = `skord-${run.slice(0, 14)}-${omrade.replace(/[^a-zA-Z0-9åäöÅÄÖ-]+/g, '-').slice(0, 40)}.md`;
-    writeFileSync(join(UT, filnamn), ut);
+    writeFileSync(join(UT, filnamn), maska(ut));
     REDAN_SKORDAD.add(agentId);
     rader.push({ omrade, slutsatser: slutsatser.length, korningar: korningar.length, fil: filnamn, harInnehall, klass, orsak });
   }

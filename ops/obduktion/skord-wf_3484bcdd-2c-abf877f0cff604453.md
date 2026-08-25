@@ -2763,7 +2763,7 @@ grep -rn "storeGateEmail" --include=* . 2>/dev/null | grep -v node_modules | gre
 28-
 29-export const config = { maxDuration: 60 };
 30-
-31-const FROM     = process.env.RESEND_FROM    ?? 'Arvo Flow <analys@arvoflow.se>';
+31-const FROM     = process.env.RESEND_FROM    ?? 'Arvo Flow <<e-post maskerad>>';
 32-const BASE_URL = process.env.ARVO_BASE_URL  ?? 'https://arvoflow.se';
 33-
 34-function send(res, status, body) {
