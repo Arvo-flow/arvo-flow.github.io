@@ -49,22 +49,39 @@ const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 // Utkatalogen är överstyrbar så att skördkontraktet (tests/skordkontrakt.mjs) kan pröva verktyget
 // mot syntetiska transkript utan att skriva i repot.
 const UT = process.env.SKORD_UT || join(ROT, 'ops', 'obduktion');
-const PROJEKT = '/root/.claude/projects/-home-user-arvo-flow-github-io';
+// Projektroten är överstyrbar av samma skäl som utkatalogen: UPPTÄCKTEN är där en tyst lucka bor
+// (skörden missade varje Agent-verktygs-subagent i sin första version), och en lucka i upptäckten
+// kan inte prövas utan att kunna peka verktyget på ett syntetiskt träd.
+const PROJEKT = process.env.SKORD_PROJEKT || '/root/.claude/projects/-home-user-arvo-flow-github-io';
 
-/** Alla workflow-transkriptkataloger under projektets sessioner. */
+/** Alla transkriptkataloger: workflow-körningar OCH Agent-verktygets subagenter.
+ *
+ * Agent-verktygets subagenter skriver direkt under `subagents/`, inte under `subagents/workflows/`.
+ * Första versionen skannade bara workflows och hade missat varje agent startad med Agent-verktyget
+ * — alltså precis den väg som visade sig FUNGERA när workflow-subagenternas verktygslager var
+ * trasigt. En skörd som bara täcker den trasiga vägen är ingen skörd. */
 function hittaKorningar() {
   const träffar = [];
   if (!existsSync(PROJEKT)) return träffar;
   for (const session of readdirSync(PROJEKT)) {
-    const wf = join(PROJEKT, session, 'subagents', 'workflows');
-    if (!existsSync(wf)) continue;
-    for (const run of readdirSync(wf)) {
-      const d = join(wf, run);
-      try { if (statSync(d).isDirectory()) träffar.push(d); } catch { /* borta */ }
+    const sub = join(PROJEKT, session, 'subagents');
+    if (!existsSync(sub)) continue;
+    const wf = join(sub, 'workflows');
+    if (existsSync(wf)) {
+      for (const run of readdirSync(wf)) {
+        const d = join(wf, run);
+        try { if (statSync(d).isDirectory()) träffar.push(d); } catch { /* borta */ }
+      }
     }
+    // `subagents/` rymmer ALLA agenter, även workflow-körningarnas. Den skördas sist och
+    // dedupliceras på agent-id, så en agent aldrig räknas två gånger.
+    träffar.push(sub);
   }
   return träffar;
 }
+
+/** Agenter som redan skördats ur en workflow-katalog — så samma agent inte räknas dubbelt. */
+const REDAN_SKORDAD = new Set();
 
 const text = (block) => (block?.type === 'text' ? String(block.text ?? '') : '');
 
@@ -125,13 +142,23 @@ function omradeAv(uppdrag, fallback) {
 
 function skorda(katalog) {
   const run = basename(katalog);
-  const filer = readdirSync(katalog).filter((f) => f.startsWith('agent-') && f.endsWith('.jsonl'));
+  const filer = readdirSync(katalog)
+    .filter((f) => f.startsWith('agent-') && f.endsWith('.jsonl'))
+    .filter((f) => !REDAN_SKORDAD.has(f.replace(/^agent-|\.jsonl$/g, '')));
   const rader = [];
   let medInnehall = 0;
 
   for (const f of filer) {
     const agentId = f.replace(/^agent-|\.jsonl$/g, '');
-    const { uppdrag, slutsatser, korningar } = lasAgent(join(katalog, f));
+    const sokvag = join(katalog, f);
+    const { uppdrag, slutsatser, korningar } = lasAgent(sokvag);
+    // ── EN NYSTARTAD AGENT ÄR INTE EN DÖD (tredje rättelsen, 2026-08-24) ────────────────────
+    // En mid-flight-skörd läste tre agenter som just startat och märkte dem DÖDSRUNA — de hade
+    // hunnit skriva en rad. «Nystartad» och «dog direkt» såg likadana ut, samma förväxling som
+    // resten. Ett transkript som växte för mindre än två minuter sedan PÅGÅR; skörden ska då
+    // säga det, inte utfärda en dödsattest.
+    const alderMs = Date.now() - statSync(sokvag).mtimeMs;
+    const pagar = alderMs < 120_000;
     const omrade = omradeAv(uppdrag, agentId);
 
     // ── EN DÖDSRUNA ÄR INTE ETT ARBETE (rättelse i samma pass) ──────────────────────────────
@@ -160,7 +187,7 @@ function skorda(katalog) {
     const textmangd = slutsatser.reduce((n, t) => n + t.length, 0);
     const doedsmarkor = slutsatser.length <= 2 && /session limit|rate.?limit|permission handler|retry cap|Request was aborted/i.test(slutsatser.join(' '));
     const harInnehall = korningar.length > 0 || (textmangd >= 400 && !doedsmarkor);
-    const klass = !harInnehall ? 'dodsruna' : (verktygsfel ? 'verktygsfel' : 'analys');
+    const klass = pagar && !harInnehall ? 'pagar' : !harInnehall ? 'dodsruna' : (verktygsfel ? 'verktygsfel' : 'analys');
     if (klass === 'analys') medInnehall++;
     const orsak = doedsmarkor ? slutsatser.join(' ').replace(/\s+/g, ' ').slice(0, 120) : null;
 
@@ -173,7 +200,8 @@ function skorda(katalog) {
       '',
       `· körning: \`${run}\` · agent: \`${agentId}\``,
       `· slutsatser: ${slutsatser.length} · körda kommandon: ${korningar.length}`,
-      klass === 'analys' ? '· **bär analys**'
+      klass === 'pagar' ? '· **PÅGÅR — transkriptet växer fortfarande; skörda igen när agenten landat**'
+        : klass === 'analys' ? '· **bär analys**'
         : klass === 'verktygsfel'
           ? `· **VERKTYGSFEL — agenten levde men varje anrop avvisades (${avvisade} avvisade, ${produktiva} produktiva). Arbetet är en ärlig felrapport, INTE en granskning av området.**`
           : `· **DÖDSRUNA — inget arbete hann utföras**${orsak ? `\n· orsak enligt transkriptet: \`${orsak}\`` : ''}`,
@@ -201,6 +229,7 @@ function skorda(katalog) {
 
     const filnamn = `skord-${run.slice(0, 14)}-${omrade.replace(/[^a-zA-Z0-9åäöÅÄÖ-]+/g, '-').slice(0, 40)}.md`;
     writeFileSync(join(UT, filnamn), ut);
+    REDAN_SKORDAD.add(agentId);
     rader.push({ omrade, slutsatser: slutsatser.length, korningar: korningar.length, fil: filnamn, harInnehall, klass, orsak });
   }
   return { run, filer: filer.length, medInnehall, rader };
@@ -220,25 +249,29 @@ if (kataloger.length === 0) {
   process.exit(1);
 }
 
-let totaltAgenter = 0, totaltMedInnehall = 0, totaltVerktygsfel = 0;
+let totaltAgenter = 0, totaltMedInnehall = 0, totaltVerktygsfel = 0, totaltPagar = 0;
 for (const d of kataloger) {
   const r = skorda(d);
   totaltAgenter += r.filer;
   totaltMedInnehall += r.medInnehall;
   totaltVerktygsfel += r.rader.filter((x) => x.klass === 'verktygsfel').length;
+  totaltPagar += r.rader.filter((x) => x.klass === 'pagar').length;
   console.log(`\n═══ ${r.run} — ${r.filer} agenter, ${r.medInnehall} med analys ═══`);
   for (const rad of r.rader.sort((a, b) => (b.harInnehall - a.harInnehall) || (b.korningar - a.korningar))) {
-    const märke = rad.klass === 'analys' ? '✓ analys   ' : rad.klass === 'verktygsfel' ? '⚠ verktygsfel' : '· dödsruna  ';
+    const märke = rad.klass === 'analys' ? '✓ analys   '
+      : rad.klass === 'verktygsfel' ? '⚠ verktygsfel'
+        : rad.klass === 'pagar' ? '↻ pågår     ' : '· dödsruna  ';
     console.log(`  ${märke} ${String(rad.slutsatser).padStart(3)} slutsatser · ${String(rad.korningar).padStart(3)} körningar  ${rad.omrade}`);
   }
 }
 
 console.log(`\n── SKÖRD ── ${totaltMedInnehall} av ${totaltAgenter} agenter bar ANALYS; ` +
   `${totaltVerktygsfel} föll på verktygslagret (ärlig felrapport, ingen granskning); ` +
-  `${totaltAgenter - totaltMedInnehall - totaltVerktygsfel} var dödsrunor.`);
+  `${totaltPagar} pågår fortfarande; ` +
+  `${totaltAgenter - totaltMedInnehall - totaltVerktygsfel - totaltPagar} var dödsrunor.`);
 console.log('   Skörden räddar det som utfördes. Den kan inte rädda arbete som aldrig blev av —');
 console.log('   och den ska aldrig få de två att se likadana ut.');
-if (totaltMedInnehall === 0) {
+if (totaltMedInnehall === 0 && totaltPagar === 0) {
   // En skörd som räddade noll får ALDRIG rapportera framgång — det är exakt den tystnad
   // verktyget finns för att göra omöjlig.
   console.error('✗ Noll agenter bar arbete. Det är ett larm, inte ett resultat.');

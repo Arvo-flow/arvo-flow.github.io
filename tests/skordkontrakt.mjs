@@ -30,7 +30,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, readdirSync, readFileSync, rmSync, utimesSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -41,6 +41,15 @@ const SKRIPT = join(ROT, 'scripts', 'skorda-agentarbete.mjs');
 /** Bygger ett syntetiskt agenttranskript i harnessets format. */
 function transkript(rader) {
   return rader.map((r) => JSON.stringify(r)).join('\n') + '\n';
+}
+
+/** Skriver ett transkript som en LANDAD agent (gammal mtime). Skörden klassar färska filer som
+ *  «pågår» — ett transkript som växte nyss är inte en död agent — så ett test som prövar
+ *  dödsruna/analys måste säga att agenten landat. Att låta mtime vara «nu» hade prövat fel sak. */
+function landad(sokvag, innehall) {
+  writeFileSync(sokvag, innehall);
+  const gammal = new Date(Date.now() - 10 * 60_000);
+  utimesSync(sokvag, gammal, gammal);
 }
 const assistentText = (t) => ({ type: 'assistant', message: { content: [{ type: 'text', text: t }] } });
 const bashAnrop = (id, kommando) =>
@@ -79,7 +88,7 @@ describe('SKÖ · Skördkontraktet — en dödsruna är inte ett arbete', () => 
   test('SKÖ-01: en agent som KÖRDE kommandon klassas som arbete och bevisen följer med', () => {
     const { bas, korning, utkatalog } = baddar();
     try {
-      writeFileSync(join(korning, 'agent-aaa1.jsonl'), transkript([
+      landad(join(korning, 'agent-aaa1.jsonl'), transkript([
         uppdrag('price-alert'),
         assistentText('Jag misstänker att larmet läser fel fält.'),
         bashAnrop('t1', 'node -e "console.log(42)"'),
@@ -100,7 +109,7 @@ describe('SKÖ · Skördkontraktet — en dödsruna är inte ett arbete', () => 
   test('SKÖ-02: en ren dödsruna räknas ALDRIG som arbete', () => {
     const { bas, korning, utkatalog } = baddar();
     try {
-      writeFileSync(join(korning, 'agent-bbb1.jsonl'), transkript([
+      landad(join(korning, 'agent-bbb1.jsonl'), transkript([
         uppdrag('el-kedjan'),
         assistentText("You've hit your session limit · resets 11pm (UTC)"),
       ]));
@@ -121,7 +130,7 @@ describe('SKÖ · Skördkontraktet — en dödsruna är inte ett arbete', () => 
     // gravsten är TRE tillstånd, och de får aldrig se likadana ut.
     const { bas, korning, utkatalog } = baddar();
     try {
-      writeFileSync(join(korning, 'agent-ccc1.jsonl'), transkript([
+      landad(join(korning, 'agent-ccc1.jsonl'), transkript([
         uppdrag('saas-avstamning'),
         assistentText('Jag försöker läsa filen.'),
         bashAnrop('t1', 'grep -n x lib/saas-avstamning.js'),
@@ -141,19 +150,74 @@ describe('SKÖ · Skördkontraktet — en dödsruna är inte ett arbete', () => 
   test('SKÖ-04: blandad körning räknas rätt åt båda hållen', () => {
     const { bas, korning, utkatalog } = baddar();
     try {
-      writeFileSync(join(korning, 'agent-ddd1.jsonl'), transkript([
+      landad(join(korning, 'agent-ddd1.jsonl'), transkript([
         uppdrag('a'), bashAnrop('t1', 'ls'), bashSvar('t1', 'fil.txt'),
       ]));
-      writeFileSync(join(korning, 'agent-ddd2.jsonl'), transkript([
+      landad(join(korning, 'agent-ddd2.jsonl'), transkript([
         uppdrag('b'), assistentText("You've hit your session limit"),
       ]));
-      writeFileSync(join(korning, 'agent-ddd3.jsonl'), transkript([
+      landad(join(korning, 'agent-ddd3.jsonl'), transkript([
         uppdrag('c'), assistentText("You've hit your session limit"),
       ]));
       const r = kor(korning, utkatalog);
       assert.match(r.ut, /1 av 3 agenter bar ANALYS/);
       assert.match(r.ut, /2 var dödsrunor/);
       assert.equal(r.filer.length, 3, 'varje agent ska få en fil — även dödsrunorna, som bevis på vad som hände');
+    } finally { rmSync(bas, { recursive: true, force: true }); }
+  });
+
+  test('SKÖ-06: en NYSTARTAD agent är inte en död — den märks som pågående', () => {
+    // Mid-flight-skörden läste tre nyss startade agenter och utfärdade dödsattest: de hade hunnit
+    // skriva en rad. «Nystartad» och «dog direkt» såg likadana ut. Filen ska säga att den pågår,
+    // och skörden ska inte larma om att allt gick förlorat.
+    const { bas, korning, utkatalog } = baddar();
+    try {
+      writeFileSync(join(korning, 'agent-eee1.jsonl'), transkript([uppdrag('vakt-hjartslag')]));  // färsk mtime
+      const r = kor(korning, utkatalog);
+      assert.equal(r.kod, 0, 'en pågående agent är inget larm');
+      assert.match(r.ut, /1 pågår fortfarande/);
+      assert.match(readFileSync(join(utkatalog, r.filer[0]), 'utf8'), /PÅGÅR/);
+    } finally { rmSync(bas, { recursive: true, force: true }); }
+  });
+
+  test('SKÖ-07: upptäckten når BÅDA agentvägarna — workflow och Agent-verktyget', () => {
+    // Skördens första version skannade bara `subagents/workflows/` och missade varje agent startad
+    // med Agent-verktyget — alltså precis den väg som visade sig FUNGERA när workflow-subagenternas
+    // verktygslager var trasigt. Mätt på riktigt: 6 analyser synliga i stället för 23. En skörd som
+    // bara täcker den trasiga vägen är ingen skörd, och luckan sitter i UPPTÄCKTEN, inte i läsningen.
+    const bas = mkdtempSync(join(tmpdir(), 'skordproj-'));
+    try {
+      const sess = join(bas, 'session-1');
+      const sub = join(sess, 'subagents');
+      const wf = join(sub, 'workflows', 'wf_x-1');
+      mkdirSync(wf, { recursive: true });
+      const utkatalog = join(bas, 'ut'); mkdirSync(utkatalog);
+
+      const wTranskript = transkript([
+        uppdrag('via-workflow'), bashAnrop('t1', 'echo w'), bashSvar('t1', 'w'),
+      ]);
+      landad(join(wf, 'agent-w1.jsonl'), wTranskript);
+      // Speglar den VERKLIGA layouten: subagents/ rymmer även workflow-körningarnas agenter, så
+      // samma agent finns på två ställen. Min första fixtur la bara den direkta agenten där, och
+      // då kunde dubbelräkningen aldrig uppstå — sabotaget överlevde, alltså prövade testet inget.
+      landad(join(sub, 'agent-w1.jsonl'), wTranskript);
+      landad(join(sub, 'agent-d1.jsonl'), transkript([
+        uppdrag('via-agentverktyget'), bashAnrop('t2', 'echo d'), bashSvar('t2', 'd'),
+      ]));
+
+      let ut = '';
+      try {
+        ut = execFileSync('node', [SKRIPT], {
+          encoding: 'utf8', env: { ...process.env, SKORD_UT: utkatalog, SKORD_PROJEKT: bas },
+        });
+      } catch (e) { ut = String(e.stdout ?? '') + String(e.stderr ?? ''); }
+
+      assert.match(ut, /2 av 2 agenter bar ANALYS/, 'båda vägarna måste hittas');
+      const filer = readdirSync(utkatalog);
+      assert.equal(filer.some((f) => f.includes('via-agentverktyget')), true,
+        'Agent-verktygets subagent skördades inte — den bor direkt under subagents/');
+      assert.equal(filer.some((f) => f.includes('via-workflow')), true);
+      assert.equal(filer.length, 2, 'samma agent får aldrig skördas två gånger (subagents/ rymmer båda)');
     } finally { rmSync(bas, { recursive: true, force: true }); }
   });
 
