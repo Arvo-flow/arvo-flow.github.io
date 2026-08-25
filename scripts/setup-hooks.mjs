@@ -52,6 +52,12 @@ if [ $STATUS -eq 0 ]; then
   STATUS=$?
 fi
 
+# Hemlighetsvakten — inget hemligt får nå ett publikt repo (nycklar, DB-URL:er, magic-tokens)
+if [ $STATUS -eq 0 ]; then
+  node scripts/hemlighetsvakt.mjs
+  STATUS=$?
+fi
+
 # Bedömningskravet — en prognos/bedömning når kunden bara med grund + konfidens + asymmetri (regel 4)
 if [ $STATUS -eq 0 ]; then
   node scripts/bedomningskrav.mjs
