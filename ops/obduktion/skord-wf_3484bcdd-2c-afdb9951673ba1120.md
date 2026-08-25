@@ -6,7 +6,7 @@
 
 · körning: `wf_3484bcdd-2c0` · agent: `afdb9951673ba1120`
 · slutsatser: 4 · körda kommandon: 55
-· **bär arbete**
+· **bär analys**
 
 ## Uppdraget
 

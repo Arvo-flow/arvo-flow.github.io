@@ -5,8 +5,8 @@
 > motprövning med ett körbart bevis, precis som för varje annan hypotes.
 
 · körning: `wf_d55b6f1b-a70` · agent: `ac16b865d6a8e317b`
-· slutsatser: 7 · körda kommandon: 2
-· **bär arbete**
+· slutsatser: 8 · körda kommandon: 2
+· **VERKTYGSFEL — agenten levde men varje anrop avvisades (2 avvisade, 0 produktiva). Arbetet är en ärlig felrapport, INTE en granskning av området.**
 
 ## Uppdraget
 
@@ -209,6 +209,70 @@ Formulerade ur felfamiljens form, inte ur koden — de ska behandlas som frågor
 5. **`price_alerts_sent` — ser "skickat" och "försökt" likadana ut?** Skrivs idempotensraden före Resend-anropet är ett misslyckat utskick omöjligt att skilja från ett levererat: kunden får aldrig larmet, systemet tror att det gick fram. Kör vägen med ett kastande Resend-stub.
 
 **Åtgärd som krävs innan omkörning:** permission-handlern (canUseTool/PermissionRequest-hook) måste lagas — den returnerar `updatedInput` utan de obligatoriska fälten. Ingen agent kan arbeta i den här sessionen förrän den är fixad.
+
+### 8
+
+```json
+{
+  "omrade": "price-alert",
+  "hypoteser": [
+    {
+      "rubrik": "Verktygslagret avvisade varje anrop - spaningen genomfordes aldrig",
+      "fil": "(ingen - verktygslagret)",
+      "pastaende": "Read, Bash, Grep, Glob och Write avvisades alla av permission-handlern med felet att den obligatoriska parametern saknas, trots att den skickades. Noll rader lasta ur lib/price-alert.js, lib/price-alert-store.js och api/cron/run-price-alerts.mjs; noll funktioner korda; och den obligatoriska filen ops/obduktion/spana-price-alert.md kunde inte skrivas. Samma haveri som CLAUDE.md bokforde 2026-08-24.",
+      "sabevis": "Fem verktyg, fem identiska avvisningar: Read(file_path=lib/price-alert.js) -> parameter file_path missing; Bash(command=wc -l ...) -> command missing; Grep(pattern=.) -> pattern missing; Glob(pattern=lib/price-alert*.js) -> pattern missing; Write(file_path,content) -> bada missing. Read provades tva ganger med olika argument, alltsa inte intermittent.",
+      "dom": "haller",
+      "allvar": "vakt-pa-fel-grund",
+      "domskal": "Bevisat genom upprepning i fem verktyg. Det farliga ar att en misslyckad spaning ser identisk ut med en spaning utan fynd - felfamiljen begangen av matapparaten. Omradet price-alert far inte raknas som granskat."
+    },
+    {
+      "rubrik": "detectPriceAlert: kan saknat tidigare pris bli ett giltigt delta?",
+      "fil": "lib/price-alert.js",
+      "pastaende": "Oprovad hypotes, ingen kod last. Misstanke enligt felfamiljens form: gammalt pris null, 0 eller undefined kan producera ett larm eller kr/ar-tal som ar omojligt att skilja fran en verklig hojning.",
+      "sabevis": "Ingen. Kravs: kor detectPriceAlert med (null,349), (0,349), (349,null) och (undefined,undefined) och mat om nagot larm produceras.",
+      "dom": "kunde-inte-provas",
+      "allvar": "kundsynlig-siffra",
+      "domskal": "Kunde varken lasas eller koras."
+    },
+    {
+      "rubrik": "getAffectedCustomers: vad ar talet PER - kunder, fingerprints eller fakturor?",
+      "fil": "lib/price-alert-store.js",
+      "pastaende": "Oprovad hypotes. Kedjan fingerprint -> gate_emails -> invoice_analyses ar manga-till-manga; ett aggregat raknat pa fel nyckel ar aritmetiskt korrekt men inte jamforbart.",
+      "sabevis": "Ingen. Kravs: kor fragan mot en rigg dar en kund har tre fakturor och tva e-postadresser, mat om kunden raknas flera ganger, och faststall vad namnaren Y ar per.",
+      "dom": "kunde-inte-provas",
+      "allvar": "kundsynlig-siffra",
+      "domskal": "Kunde varken lasas eller koras."
+    },
+    {
+      "rubrik": "computeImpactKr i cron-vagen: annualiseras engangsposter, varifran kommer seats?",
+      "fil": "api/cron/run-price-alerts.mjs",
+      "pastaende": "Oprovad hypotes. Formeln (nytt-gammalt) x seats x 12 bar tva kanda fallor ur bibeln: engangsavgiften som annualiserades 24 aug, och det antagna enhetsantalet (employees: 10) som blev sanning 21 aug.",
+      "sabevis": "Ingen. Kravs: kor med seats undefined/0/0.5 och med en kvartals- respektive engangspost, och mat vilket kr/ar-tal som nar alert-mailet.",
+      "dom": "kunde-inte-provas",
+      "allvar": "kundsynlig-siffra",
+      "domskal": "Kunde varken lasas eller koras."
+    },
+    {
+      "rubrik": "Matar testerna produktionens objektform eller sin egen?",
+      "fil": "lib/price-alert.js",
+      "pastaende": "Oprovad hypotes. Fyra ganger i bibeln har ett gront test bevisat att mekanismen svarar nar den matas, aldrig att den matas. Price-alert har samma riskprofil: DB-beroende lasvag och en svit som kor utan DATABASE_URL.",
+      "sabevis": "Ingen. Kravs: las testfilerna, se om de bygger sitt eget indata, och sabotera detektorn for att se om sviten faller.",
+      "dom": "kunde-inte-provas",
+      "allvar": "vakt-pa-fel-grund",
+      "domskal": "Kunde varken lasas eller koras."
+    },
+    {
+      "rubrik": "price_alerts_sent: ser skickat och forsokt likadana ut?",
+      "fil": "lib/price-alert-store.js",
+      "pastaende": "Oprovad hypotes. Om idempotensraden skrivs fore utskicket ar ett misslyckat utskick omojligt att skilja fran ett levererat - kunden far aldrig larmet medan systemet tror att det gick fram. Smyghojningsvaktens dodsorsak i ny form.",
+      "sabevis": "Ingen. Kravs: las ordningen mellan insert och utskick och kor vagen med ett kastande Resend-stub, mat sedan tabellens innehall.",
+      "dom": "kunde-inte-provas",
+      "allvar": "tyst-datafel",
+      "domskal": "Kunde varken lasas eller koras."
+    }
+  ]
+}
+```
 
 ## Vad agenten faktiskt körde — de körbara bevisen
 

@@ -1,4 +1,4 @@
-// tests/skordkontrakt.mjs — SK-01..05: skörden får aldrig påstå att arbete räddades när det inte
+// tests/skordkontrakt.mjs — SKÖ-01..05: skörden får aldrig påstå att arbete räddades när det inte
 // gjordes, och aldrig tappa arbete som gjordes.
 //
 // VARFÖR (2026-08-24, grundarkrav: «arbetet från samtliga agenter MÅSTE sparas, ej förhandlingsbart»).
@@ -88,12 +88,12 @@ describe('SKÖ · Skördkontraktet — en dödsruna är inte ett arbete', () => 
       ]));
       const r = kor(korning, utkatalog);
       assert.equal(r.kod, 0);
-      assert.match(r.ut, /1 av 1 agenter bar ARBETE/);
+      assert.match(r.ut, /1 av 1 agenter bar ANALYS/);
       const innehall = readFileSync(join(utkatalog, r.filer[0]), 'utf8');
       assert.match(innehall, /price-alert/, 'området ska följa med ur uppdraget');
       assert.match(innehall, /console\.log\(42\)/, 'det körbara beviset måste räddas');
       assert.match(innehall, /^42$/m, 'kommandots UTFALL är halva beviset');
-      assert.match(innehall, /bär arbete/);
+      assert.match(innehall, /bär analys/);
     } finally { rmSync(bas, { recursive: true, force: true }); }
   });
 
@@ -106,25 +106,35 @@ describe('SKÖ · Skördkontraktet — en dödsruna är inte ett arbete', () => 
       ]));
       const r = kor(korning, utkatalog);
       assert.equal(r.kod, 2, 'noll räddat arbete är ett LARM, inte ett resultat');
-      assert.match(r.ut, /0 av 1 agenter bar ARBETE/);
+      assert.match(r.ut, /0 av 1 agenter bar ANALYS/);
       const innehall = readFileSync(join(utkatalog, r.filer[0]), 'utf8');
       assert.match(innehall, /DÖDSRUNA/);
       assert.match(innehall, /session limit/, 'dödsorsaken ska stå i klartext');
     } finally { rmSync(bas, { recursive: true, force: true }); }
   });
 
-  test('SKÖ-03: en agent vars VERKTYGSLAGER var trasigt bär ändå sitt arbete', () => {
-    // Sex agenter kunde inte köra ett enda kommando men skrev en lång, korrekt felanalys — det var
-    // så permission-buggen upptäcktes. Noll körningar får inte betyda noll arbete.
+  test('SKÖ-03: en agent vars VERKTYGSLAGER var trasigt räknas ALDRIG som en granskning', () => {
+    // Andra rättelsen. Sex agenter i våg 1 klassades först «bär arbete» — literalt sant, de hade
+    // text och körda kommandon. Men varje anrop avvisades av permission-handlern, så arbetet var
+    // en ärlig FELRAPPORT, inte en granskning av området. Sammanfattningen «6 av 6» hade fått mig
+    // att tro att sex områden var täckta. Dödsrune-läxan ett steg in: analys, felrapport och
+    // gravsten är TRE tillstånd, och de får aldrig se likadana ut.
     const { bas, korning, utkatalog } = baddar();
     try {
       writeFileSync(join(korning, 'agent-ccc1.jsonl'), transkript([
         uppdrag('saas-avstamning'),
-        assistentText('Jag kan inte slutföra uppdraget. '.repeat(30)),
+        assistentText('Jag försöker läsa filen.'),
+        bashAnrop('t1', 'grep -n x lib/saas-avstamning.js'),
+        bashSvar('t1', 'The permission handler returned updatedInput for Bash that failed schema validation'),
+        assistentText('Jag kan inte slutföra uppdraget — verktygslagret avvisar varje anrop. '.repeat(8)),
       ]));
       const r = kor(korning, utkatalog);
-      assert.equal(r.kod, 0);
-      assert.match(r.ut, /1 av 1 agenter bar ARBETE/);
+      assert.equal(r.kod, 2, 'noll ANALYSER är ett larm, även när agenten skrev mycket');
+      assert.match(r.ut, /0 av 1 agenter bar ANALYS/);
+      assert.match(r.ut, /1 föll på verktygslagret/);
+      const innehall = readFileSync(join(utkatalog, r.filer[0]), 'utf8');
+      assert.match(innehall, /VERKTYGSFEL/);
+      assert.match(innehall, /INTE en granskning/, 'filen måste säga vad den INTE är');
     } finally { rmSync(bas, { recursive: true, force: true }); }
   });
 
@@ -141,7 +151,7 @@ describe('SKÖ · Skördkontraktet — en dödsruna är inte ett arbete', () => 
         uppdrag('c'), assistentText("You've hit your session limit"),
       ]));
       const r = kor(korning, utkatalog);
-      assert.match(r.ut, /1 av 3 agenter bar ARBETE/);
+      assert.match(r.ut, /1 av 3 agenter bar ANALYS/);
       assert.match(r.ut, /2 var dödsrunor/);
       assert.equal(r.filer.length, 3, 'varje agent ska få en fil — även dödsrunorna, som bevis på vad som hände');
     } finally { rmSync(bas, { recursive: true, force: true }); }

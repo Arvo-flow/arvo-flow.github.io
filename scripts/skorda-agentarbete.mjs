@@ -143,10 +143,25 @@ function skorda(katalog) {
     // Klassningen vilar på BEVIS, inte på att känna igen en engelsk felmening: ett arbete har
     // körda kommandon eller substantiell text. Feltexten identifieras separat, bara för att kunna
     // NAMNGE dödsorsaken — aldrig för att avgöra om arbete finns.
+    // ── EN RÄDDAD FELRAPPORT ÄR INTE EN RÄDDAD ANALYS (andra rättelsen, 2026-08-24) ─────────
+    // Våg 1: sex agenter klassades «bär arbete» och jag skrev «6 av 6». Literalt sant — de hade
+    // text och körda kommandon. Men VARJE verktygsanrop avvisades av permission-handlern, så
+    // arbetet bestod i att ärligt diagnosticera att ingenting kunde prövas. Sammanfattningen hade
+    // fått mig att tro att sex områden var granskade. Samma läxa som dödsrunan, ett steg in:
+    // tre tillstånd måste kunna skiljas åt — analys, felrapport, gravsten.
+    //
+    // Klassningen vilar på BEVIS: ett produktivt kommando är ett vars utfall inte är ett
+    // avvisningsmeddelande. Noll produktiva utfall + minst en avvisning = verktygsfel.
+    const AVVISAD = /permission handler|failed schema validation|required parameter .* is missing/i;
+    const produktiva = korningar.filter((k) => k.utfall && !AVVISAD.test(k.utfall)).length;
+    const avvisade = korningar.filter((k) => k.utfall && AVVISAD.test(k.utfall)).length;
+    const verktygsfel = produktiva === 0 && (avvisade > 0 || AVVISAD.test(slutsatser.join(' ')));
+
     const textmangd = slutsatser.reduce((n, t) => n + t.length, 0);
     const doedsmarkor = slutsatser.length <= 2 && /session limit|rate.?limit|permission handler|retry cap|Request was aborted/i.test(slutsatser.join(' '));
     const harInnehall = korningar.length > 0 || (textmangd >= 400 && !doedsmarkor);
-    if (harInnehall) medInnehall++;
+    const klass = !harInnehall ? 'dodsruna' : (verktygsfel ? 'verktygsfel' : 'analys');
+    if (klass === 'analys') medInnehall++;
     const orsak = doedsmarkor ? slutsatser.join(' ').replace(/\s+/g, ' ').slice(0, 120) : null;
 
     const ut = [
@@ -158,9 +173,10 @@ function skorda(katalog) {
       '',
       `· körning: \`${run}\` · agent: \`${agentId}\``,
       `· slutsatser: ${slutsatser.length} · körda kommandon: ${korningar.length}`,
-      harInnehall
-        ? '· **bär arbete**'
-        : `· **DÖDSRUNA — inget arbete hann utföras**${orsak ? `\n· orsak enligt transkriptet: \`${orsak}\`` : ''}`,
+      klass === 'analys' ? '· **bär analys**'
+        : klass === 'verktygsfel'
+          ? `· **VERKTYGSFEL — agenten levde men varje anrop avvisades (${avvisade} avvisade, ${produktiva} produktiva). Arbetet är en ärlig felrapport, INTE en granskning av området.**`
+          : `· **DÖDSRUNA — inget arbete hann utföras**${orsak ? `\n· orsak enligt transkriptet: \`${orsak}\`` : ''}`,
       '',
       '## Uppdraget',
       '',
@@ -185,7 +201,7 @@ function skorda(katalog) {
 
     const filnamn = `skord-${run.slice(0, 14)}-${omrade.replace(/[^a-zA-Z0-9åäöÅÄÖ-]+/g, '-').slice(0, 40)}.md`;
     writeFileSync(join(UT, filnamn), ut);
-    rader.push({ omrade, slutsatser: slutsatser.length, korningar: korningar.length, fil: filnamn, harInnehall, orsak });
+    rader.push({ omrade, slutsatser: slutsatser.length, korningar: korningar.length, fil: filnamn, harInnehall, klass, orsak });
   }
   return { run, filer: filer.length, medInnehall, rader };
 }
@@ -204,20 +220,22 @@ if (kataloger.length === 0) {
   process.exit(1);
 }
 
-let totaltAgenter = 0, totaltMedInnehall = 0;
+let totaltAgenter = 0, totaltMedInnehall = 0, totaltVerktygsfel = 0;
 for (const d of kataloger) {
   const r = skorda(d);
   totaltAgenter += r.filer;
   totaltMedInnehall += r.medInnehall;
-  console.log(`\n═══ ${r.run} — ${r.filer} agenter, ${r.medInnehall} med innehåll ═══`);
+  totaltVerktygsfel += r.rader.filter((x) => x.klass === 'verktygsfel').length;
+  console.log(`\n═══ ${r.run} — ${r.filer} agenter, ${r.medInnehall} med analys ═══`);
   for (const rad of r.rader.sort((a, b) => (b.harInnehall - a.harInnehall) || (b.korningar - a.korningar))) {
-    const märke = rad.harInnehall ? '✓ arbete ' : '· dödsruna';
+    const märke = rad.klass === 'analys' ? '✓ analys   ' : rad.klass === 'verktygsfel' ? '⚠ verktygsfel' : '· dödsruna  ';
     console.log(`  ${märke} ${String(rad.slutsatser).padStart(3)} slutsatser · ${String(rad.korningar).padStart(3)} körningar  ${rad.omrade}`);
   }
 }
 
-console.log(`\n── SKÖRD ── ${totaltMedInnehall} av ${totaltAgenter} agenter bar ARBETE; ` +
-  `${totaltAgenter - totaltMedInnehall} var dödsrunor (ingen kod hann köras).`);
+console.log(`\n── SKÖRD ── ${totaltMedInnehall} av ${totaltAgenter} agenter bar ANALYS; ` +
+  `${totaltVerktygsfel} föll på verktygslagret (ärlig felrapport, ingen granskning); ` +
+  `${totaltAgenter - totaltMedInnehall - totaltVerktygsfel} var dödsrunor.`);
 console.log('   Skörden räddar det som utfördes. Den kan inte rädda arbete som aldrig blev av —');
 console.log('   och den ska aldrig få de två att se likadana ut.');
 if (totaltMedInnehall === 0) {

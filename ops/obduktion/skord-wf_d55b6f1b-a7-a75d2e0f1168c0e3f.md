@@ -6,7 +6,7 @@
 
 · körning: `wf_d55b6f1b-a70` · agent: `a75d2e0f1168c0e3f`
 · slutsatser: 8 · körda kommandon: 2
-· **bär arbete**
+· **VERKTYGSFEL — agenten levde men varje anrop avvisades (2 avvisade, 0 produktiva). Arbetet är en ärlig felrapport, INTE en granskning av området.**
 
 ## Uppdraget
 
