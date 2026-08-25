@@ -185,9 +185,11 @@ export default async function handler(req, res) {
         ? `${supplierName}: +${fmt(impact.impactKrYear)} kr/år — Arvo har detekterat en prishöjning`
         : `Arvo har noterat en prisändring hos ${supplierName}`;
 
-      const html = buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefingUrl, date: reportDate });
-
+      // Renderingen ligger INNANFÖR try: ett fel i ett mail får aldrig riva hela larmkörningen
+      // för varje annan kund i varje annan grupp. Fail-open på KÖRNINGEN, fail-closed på det
+      // enskilda mailet — motsatsen kostade oss allt när `category` kastade.
       try {
+        const html = buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefingUrl, date: reportDate, category });
         const { error } = await resend.emails.send({ from: FROM, to: customer.email, subject, html });
         if (error) throw new Error(JSON.stringify(error));
         groupSent++;
@@ -205,7 +207,19 @@ export default async function handler(req, res) {
 }
 
 // ── Bloomberg Terminal alert-mail ─────────────────────────────────────────────
-function buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefingUrl, date }) {
+// ── `category` ÄR EN PARAMETER, INTE EN FÖRHOPPNING (2026-08-24) ────────────────────────────
+// Funktionen läste `category` ur ingenting: variabeln är block-scopad i handlerns for-of
+// (`for (const [, { keyword, category, items }] of alertGroups)`) och en funktionsdeklaration på
+// modulnivå ser den aldrig. Så länge `segStats.total < 3` är moat-meningen tom sträng och raden
+// utvärderas aldrig — men i samma sekund som den kollektiva sanningen bär kastar den
+// ReferenceError. Körbart bevis: total=2 renderade 3 567 tecken, total=14 gav
+// «ReferenceError: category is not defined».
+//
+// Grenen är databeroende åt fel håll: JU MER NÄTVERKSDATA VI SAMLAR, DESTO SÄKRARE KRASCHAR
+// LARMET. Samma form som ankaret 15 augusti («ju mer data, desto oftare tystnade moaten»), men
+// värre — här är utfallet inte tystnad utan totalt bortfall: anropet låg utanför try-blocket,
+// alltså revs hela larmkörningen och ingen kund i NÅGON grupp fick mail.
+function buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefingUrl, date, category }) {
   const hasImpact  = impact && impact.impactKrYear > 0;
   const isIncrease = hasImpact;
 

@@ -110,6 +110,7 @@ import './scorekrav.mjs';
 import './radobservation.mjs';
 import './enhetsantagandet.mjs';
 import './skordkontrakt.mjs';
+import './alertmail.mjs';
 import './licensniva.mjs';
 import './obduktion.mjs';
 import './jamforelsekalla.mjs';

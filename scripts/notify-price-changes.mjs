@@ -212,12 +212,14 @@ for (const [groupKey, { keyword, category, items: groupAlerts }] of alertGroups)
       ? `${supplierName} sänkte priset — ${fmt(Math.abs(impactKrYear))} kr/år påverkan`
       : `Arvo har noterat en prisändring hos ${supplierName}`;
 
-    const html = buildAlertEmail({
-      customer, supplierName, groupAlerts, segStats,
-      impact, briefingUrl, date: reportDate,
-    });
-
+    // Renderingen ligger INNANFÖR try: ett fel i ett mail får aldrig riva hela larmkörningen för
+    // varje annan kund i varje annan grupp. Fail-open på KÖRNINGEN, fail-closed på det enskilda
+    // mailet — motsatsen kostade oss allt när `category` kastade.
     try {
+      const html = buildAlertEmail({
+        customer, supplierName, groupAlerts, segStats,
+        impact, briefingUrl, date: reportDate, category,
+      });
       const { error } = await resend.emails.send({ from: FROM, to: customer.email, subject, html });
       if (error) throw new Error(JSON.stringify(error));
       console.log(`  ✅ Skickat till ${customer.email}${impactKrYear ? ` (impact: ${fmt(impactKrYear)} kr/år)` : ''}`);
@@ -297,7 +299,19 @@ function buildPriceAlertInsight({ keyword, category, supplierName, customer, gro
 // ── Alert-mail HTML — Bloomberg Terminal-standard ───────────────────────────
 // Princip: ett exakt tal, ett beslut, en knapp. Inget generiskt.
 // En CFO fattar beslut på siffror, inte på "kan ha förändrats".
-function buildAlertEmail({ customer, supplierName, groupAlerts, segStats, impact, briefingUrl, date }) {
+// ── `category` ÄR EN PARAMETER, INTE EN FÖRHOPPNING (2026-08-24) ────────────────────────────
+// Funktionen läste `category` ur ingenting: variabeln är block-scopad i handlerns for-of
+// (`for (const [, { keyword, category, items }] of alertGroups)`) och en funktionsdeklaration på
+// modulnivå ser den aldrig. Så länge `segStats.total < 3` är moat-meningen tom sträng och raden
+// utvärderas aldrig — men i samma sekund som den kollektiva sanningen bär kastar den
+// ReferenceError. Körbart bevis: total=2 renderade 3 567 tecken, total=14 gav
+// «ReferenceError: category is not defined».
+//
+// Grenen är databeroende åt fel håll: JU MER NÄTVERKSDATA VI SAMLAR, DESTO SÄKRARE KRASCHAR
+// LARMET. Samma form som ankaret 15 augusti («ju mer data, desto oftare tystnade moaten»), men
+// värre — här är utfallet inte tystnad utan totalt bortfall: anropet låg utanför try-blocket,
+// alltså revs hela larmkörningen och ingen kund i NÅGON grupp fick mail.
+function buildAlertEmail({ customer, supplierName, groupAlerts, segStats, impact, briefingUrl, date, category }) {
   const brand   = '#1B7A6E';
   const brandDk = '#1B6E66';
   const ink     = '#0E1A17';
