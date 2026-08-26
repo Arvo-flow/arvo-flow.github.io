@@ -106,6 +106,13 @@ export function computeActing({ switchablesCount, roomFinding }) {
   // återinfört genom en ny dörr: talet försvann, inte fyndet. Frågan «finns något att åtgärda?»
   // får aldrig ställas som «bär fyndet ett årstal?». Ett belopp finns alltid (monthly är
   // kundens egen rad); det är bara ÅRSTAKTEN vi ibland inte kan hävda.
+  // GRANNFALLEN PRÖVADE OCH FRIADE (samma pass): tre kort till renderas ovillkorligt bredvid
+  // fyndkortet — roomMovement, roomClock, roomForecast. Kan de motsäga «håll kursen»? Nej: alla
+  // tre bär tone:'watch' och annualImpact:0, och klockans egen text lägger arbetet på OSS
+  // («Arvo bevakar förfallodatumet och hör av sig i god tid före en tyst förnyelse»). Domen
+  // «ni behöver inte göra något» är sann bredvid dem. roomFinding är det enda kort som
+  // representerar något KUNDEN ska agera på — därför är räckvidden här rätt.
+  // Ett friat grannfall är också ett resultat, men bara när friandet är skrivet.
   const hasFindingAction = !!(roomFinding
     && ((roomFinding.annualImpact ?? 0) > 0 || (Number(roomFinding.monthly) || 0) > 0));
   return { hasSwitchAction, hasFindingAction, acting: hasSwitchAction || hasFindingAction };
