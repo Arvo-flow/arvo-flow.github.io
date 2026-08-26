@@ -324,16 +324,42 @@ export default async function handler(req, res) {
   const kv = getKv();
   const mailId = data.email_id ?? data.id ?? sha16(JSON.stringify(data).slice(0, 2000));
 
-  // Idempotens — webhook-retries får aldrig dubbelköra analys eller dubbelsvara
+  // ── EN PÅBÖRJAD BEHANDLING ÄR INTE EN AVSLUTAD (2026-08-24) ────────────────────────────────
+  // Nyckeln hette `inbound:done:` och sattes HÄR — i samma sekund mejlet togs EMOT. Dör
+  // invokationen efter det men före svaret (maxDuration 60 s, två inline-analyser utan egen
+  // timeout), avvisas Resends omleverans som «redan hanterad». Fakturan är borta, kunden får
+  // aldrig något svarsmail, och loggraden är identisk med den för en äkta dubblett — ett värde
+  // som betyder «påbörjat» lagrat på en plats som läses som «avslutat».
+  //
+  // Nu två nycklar med skilda innebörder:
+  //   inbound:done:<id>     — satt EFTER att svaret gått iväg. Bara den avvisar en omleverans.
+  //   inbound:started:<id>  — satt här, kort TTL. Fångar den ÄKTA samtidiga dubbletten (Resend
+  //                           levererar om inom sekunder) utan att göra ett krascharv permanent.
+  // En omleverans efter att `started` löpt ut kör alltså om analysen. Det är rätt avvägning:
+  // en dubbelanalys kostar ett API-anrop och dedupas på pdf_hash i invoice-store; en tappad
+  // faktura kostar kundens förtroende och syns aldrig. (Rate-limit-grenen valde redan samma
+  // sida: «vi säger hellre ifrån än låter en faktura försvinna tyst».)
+  const STARTED_TTL_S = 120;
   if (kv) {
     try {
-      const seen = await kv.set(`inbound:done:${mailId}`, 1, { ex: 86400, nx: true });
-      if (seen === null) {
-        console.log(`[inbound-email] hoppar över: ${mailId} redan hanterad (idempotens)`);
+      const klar = await kv.get(`inbound:done:${mailId}`);
+      if (klar) {
+        console.log(`[inbound-email] hoppar över: ${mailId} redan SLUTFÖRT (idempotens)`);
         return send(res, 200, { ok: true, skipped: 'redan hanterad' });
+      }
+      const pagar = await kv.set(`inbound:started:${mailId}`, 1, { ex: STARTED_TTL_S, nx: true });
+      if (pagar === null) {
+        console.log(`[inbound-email] hoppar över: ${mailId} PÅGÅR redan (samtidig leverans)`);
+        return send(res, 200, { ok: true, skipped: 'pågår redan' });
       }
     } catch { /* non-fatal */ }
   }
+  // Markerar SLUTFÖRT. Anropas på varje väg som faktiskt svarat kunden — aldrig i en catch som
+  // inte hann svara, för då vore vi tillbaka i att ett avbrott ser ut som ett avslut.
+  const markeraSlutfort = async () => {
+    if (!kv) return;
+    try { await kv.set(`inbound:done:${mailId}`, 1, { ex: 86400 }); } catch { /* non-fatal */ }
+  };
 
   // Rate limit per avsändare
   if (kv) {
@@ -375,7 +401,8 @@ och ni behöver skicka om det.</p>
         } catch (err) {
           console.error('[inbound-email] RATE LIMIT: varningsmail misslyckades:', err.message);
         }
-        return send(res, 200, { ok: true, skipped: 'rate limit', avsandareVarnad: true });
+        await markeraSlutfort();          // kunden ÄR besvarad (varningsmail) — en omleverans vore en dubblett
+    return send(res, 200, { ok: true, skipped: 'rate limit', avsandareVarnad: true });
       }
     } catch { /* non-fatal */ }
   }
@@ -433,7 +460,8 @@ och ni behöver skicka om det.</p>
       }
     } catch (err) { console.error('[inbound-email] bulk-kvitto misslyckades:', err.message); }
     console.log(`[inbound-email] BULK från=${sha16(sender)}: köade ${added}/${pdfAtts.length} jobb`);
-    return send(res, 200, { ok: true, mode: 'async', queued: added });
+    await markeraSlutfort();            // jobben ligger i kön och kvittot är skickat — arbetet ÄR utfört
+  return send(res, 200, { ok: true, mode: 'async', queued: added });
   }
 
   // Inline-innehåll om Resend någonsin skickar det — annars hämtas via Attachments-API:t
@@ -548,5 +576,6 @@ och ni behöver skicka om det.</p>
     console.error('[inbound-email] svarsmail misslyckades:', err.message);
   }
 
+  await markeraSlutfort();            // svarsmailet har gått iväg — först NU är mejlet slutbehandlat
   return send(res, 200, { ok: true, analyzed: okCount, total: results.length });
 }

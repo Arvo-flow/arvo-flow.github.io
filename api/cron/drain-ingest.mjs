@@ -123,9 +123,14 @@ export default async function handler(req, res) {
 
   // Loopa vågor tills kön är tom ELLER vi närmar oss 60s-taket. claimBatch är atomisk
   // (FOR UPDATE SKIP LOCKED) → överlappande invokationer/vågor dubbel-claimar aldrig.
+  let koStatusOkand = false;
   while (Date.now() < deadline) {
     const jobs = await claimBatch(BATCH);
-    if (!jobs.length) break;                        // kön tom → klart
+    // `null` = claimBatch kunde inte fråga databasen. Det är INTE en tom kö, och får därför
+    // aldrig leda till att köflaggan släcks — då hoppar nästa kvart över Postgres på grund av
+    // ett fel vi inte ens vet omfattningen av. Vi avbryter vågen men lämnar flaggan tänd.
+    if (jobs === null) { koStatusOkand = true; break; }
+    if (!jobs.length) break;                        // kön BEVISAT tom → klart
     claimed += jobs.length;
     waves++;
     const results = await Promise.all(jobs.map(processJob));   // bunden parallell våg (BATCH ≤ CONCURRENCY)
@@ -133,7 +138,9 @@ export default async function handler(req, res) {
   }
 
   // Kön visade sig tom → släck flaggan, så nästa minut slipper väcka databasen.
-  if (claimed === 0) await clearPending();
+  // Men BARA när tomheten är bevisad: ett DB-fel vet ingenting om kön.
+  if (claimed === 0 && !koStatusOkand) await clearPending();
+  if (koStatusOkand) console.warn('[drain-ingest] köstatus OKÄND (databasen svarade inte) — köflaggan lämnas tänd');
 
   console.log(`[drain-ingest] klar: ${done} klara · ${failed} fel · ${claimed} claimade i ${waves} våg(or)`
     + `${flagga === null ? ' · köflagga okänd (KV saknas) → Postgres frågad' : ''}`);

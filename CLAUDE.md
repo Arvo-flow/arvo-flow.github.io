@@ -871,6 +871,31 @@ signera", aldrig som ett verkställt löfte.)
    > höll när skanningen kapades till enbart `lib/`, eftersom lib/ ensam har över hundra filer:
    > **ett totaltal kan inte mäta täckning per katalog.**
 
+   > **✅ EN PÅBÖRJAD BEHANDLING ÄR INTE EN AVSLUTAD (2026-08-24, ur ingest-spaningen).**
+   > Två fel i kundens fakturaväg, båda felfamiljen, båda i den mekanik bibeln kallar nyckelstenen.
+   >
+   > · **Idempotensnyckeln hette `inbound:done:` och sattes i samma sekund mejlet togs EMOT.** Dog
+   >   invokationen efter det men före svaret — fullt möjligt med `maxDuration: 60` och två inline-
+   >   analyser utan egen timeout — avvisades Resends omleverans som «redan hanterad». **Fakturan
+   >   borta, inget svarsmail, och loggraden identisk med en äkta dubblett.** Ett värde som betyder
+   >   «påbörjat» lagrat på en plats som läses som «avslutat». Nu två nycklar: `started` med kort
+   >   TTL fångar den samtidiga dubbletten, `done` sätts först EFTER att kunden fått svar. En
+   >   omleverans efter timeout kör om analysen — en dubbelanalys kostar ett API-anrop och dedupas
+   >   på pdf_hash; en tappad faktura kostar förtroendet och syns aldrig. Samma sida som
+   >   rate-limit-grenen redan valt: *«vi säger hellre ifrån än låter en faktura försvinna tyst».*
+   > · **`claimBatch` svarade `[]` på DB-fel**, och drainen läser det som «kön är tom»: den bryter
+   >   loopen och RADERAR köflaggan — kundens enda signal om att arbete finns — varpå de följande
+   >   ~14 cron-minuterna hoppar över Postgres helt. Modulen bär regeln i klartext femtio rader upp
+   >   (*«OKÄNT ÄR INTE SAMMA SAK SOM TOMT»*) och tillämpar den korrekt på köflaggan. **Den bröts i
+   >   samma fil.** `null` = okänt; bara ett bevisat tomt svar får släcka flaggan.
+   >
+   > **Syskonfallsregeln tillämpad direkt** (Fable 5:s läxa samma dag): grep på `claimBatch` gav en
+   > enda anropare — rättad; `!db`-grenen bar samma sjukdom och rättades med; och `failedFilesBySender`
+   > prövades och **friades med redovisat skäl** — antalet kommer ur en separat fråga, så ett fel där
+   > kan bara ge namn som saknas bredvid ett korrekt antal, aldrig ett falskt «allt klart». Att fria
+   > ett grannfall är också ett resultat, men bara när friandet är skrivet.
+   > Maskinvakt: `tests/ingestkontrakt.mjs` (IK-01..05), sabotage-bevisad i fem riktningar.
+
    > **✅ GRANSKAREN FANN GRANSKARENS FEL (2026-08-24, Fable 5:s fientliga granskning av veckans fixar).**
    > Grundaren frös kodbasen och lät en andra modell granska den förstas arbete. Trettio minuters
    > fientliga sonder mot VECKANS EGNA FIXAR gav sex bekräftade fel — och mönstret är läxan:
