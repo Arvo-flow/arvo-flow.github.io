@@ -142,6 +142,10 @@ export default async function handler(req, res) {
       // (lib/forensics.js DETECTORS), aldrig en omräkning i klienten.
       lead_finding_json: refineFinding(a.lead_finding_json, {
         supplier: a.normalized_supplier || a.supplier || null,
+        // Underlaget för omräkningen av årstalet: utan det behåller fyndet sitt lagrade tal,
+        // och det lagrade talet kan vara räknat med den gissade ×12-faktorn (24 aug).
+        billingPeriod: a.billing_period,
+        lineItems: a.line_items_json,
       }),
       // VAD ÅRSKOSTNADEN BESTÅR AV — ur kundens egna rader, och bara när summan går att räkna
       // hem mot det tal kortet visar. Byggs HÄR, inte i klienten: rummet ska aldrig göra egen

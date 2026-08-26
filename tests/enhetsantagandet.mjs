@@ -1,4 +1,4 @@
-// tests/enhetsantagandet.mjs — EA-01..07: en KVANTITET är inte ett antal användare, och en
+// tests/enhetsantagandet.mjs — EA-01..10: en KVANTITET är inte ett antal användare, och en
 // SAKNAD konfidens är inte en hög konfidens.
 //
 // VARFÖR (2026-08-24, ur obduktionens spaning på extraktionsgrindarna).
@@ -103,6 +103,62 @@ describe('EA · En vakt som jämför ett tal med sig självt', () => {
 
     // Motprovet: Ring 1 fångar samma faktura på rätt axel. Utan det vore borttagningen en förlust.
     assert.equal(routeExtraction(ex).route, 'review_queue');
+  });
+});
+
+describe('EA · Kontroll 5 var en dubblett vars enda gren var falsklarm (Fable 5:s granskning)', () => {
+  test('EA-08: annualCost-larmet är borttaget och en prorata-faktura ger INGEN override', () => {
+    // annualCost ÄR per konstruktion projected × multiplier, så «annualCost vs recurring × perAr»
+    // är algebraiskt identisk med «projected vs recurring» — projektionskravets fråga. Kontrollens
+    // enda nåbara gren (prorata) «korrigerade» det KORREKTA talet till det felaktiga och skrev
+    // raden till labeled_corrections: hundraprocentigt falsklarm in i flywheeln.
+    const ex = bygg([
+      { description: 'M365 Business Premium', amount: 1000, type: 'recurring_subscription', quantity: 5, unitPrice: 200 },
+      { description: 'M365 Business Premium (Prorata tillägg)', amount: 500, type: 'one_time_fee', quantity: 5, unitPrice: 200, is_prorata: true },
+    ]);
+    assert.equal(ex.annualCost, 24_000, 'prorata-projektionen är deterministisk och korrekt: (1000+1000)×12');
+    const { overrides } = runIntegrityChecks(ex);
+    assert.equal(overrides.some((o) => o.field === 'annualCost'), false,
+      'det korrekta talet får aldrig «korrigeras» till det felaktiga');
+
+    // Kodformslåsen: larmet får inte återinföras, och karantänen i getPatterns får inte tas bort.
+    const kod = readFileSync(new URL('../lib/extraction-integrity.js', import.meta.url), 'utf8')
+      .split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
+    assert.equal(/annual_cost_deviates/.test(kod), false,
+      'annualCost-larmet är borttaget med flit — dess enda nåbara gren var prorata, där det alltid hade fel');
+    const lc = readFileSync(new URL('../lib/labeled-corrections.js', import.meta.url), 'utf8');
+    assert.match(lc, /NOT LIKE 'annual_cost_deviates/,
+      'de historiska förgiftade raderna måste förbli karantänerade i getPatterns');
+  });
+
+  test('EA-09: seatCount är ALLTID heltal eller null — bråkdel är ett extraktionsfel', () => {
+    // Max-regeln kunde sätta seatCount 2,5 → jämförelseskalan 2,5 → kundens golv 25 % av det korrekta.
+    const urRegeln = bygg([rad('Licens tilläggsmodul', 2.5, 500)]);
+    assert.equal(urRegeln.seatCount, null, 'bråkdel ur max-regeln ska bli null, aldrig ett tal');
+    const urModellen = bygg([rad('Licens', 1, 500)], { seatCount: 2.5 });
+    assert.equal(urModellen.seatCount, null, 'även modellens egen observation grindas — 2,5 licenser finns inte');
+    const heltal = bygg([rad('Licens', 1, 500)], { seatCount: 8 });
+    assert.equal(heltal.seatCount, 8, 'motprovet: ett giltigt heltal passerar orört');
+  });
+
+  test('EA-10: en FELTYPAD prorata-rad överlever PROJEKTIONSKRAV_ENFORCE=1', () => {
+    // proRataCount var hårdkodad 0 i AI-grenen. En prorata-rad typad recurring (mot promptens
+    // instruktion) nådde den grenen, och med armering hade AI:ns KORREKTA fullprisprojektion
+    // skrivits över av delperiodssumman. Nu räknas varje is_prorata-rad, oavsett typ.
+    const fore = process.env.PROJEKTIONSKRAV_ENFORCE;
+    process.env.PROJEKTIONSKRAV_ENFORCE = '1';
+    try {
+      const ex = bygg([
+        { description: 'M365', amount: 1000, type: 'recurring_subscription', quantity: 5, unitPrice: 200 },
+        { description: 'M365 (Prorata)', amount: 250, type: 'recurring_subscription', quantity: 5, unitPrice: 200, is_prorata: true },
+      ], { projectedRecurringAmount: 2000 });
+      assert.equal(ex.projectedRecurringAmount, 2000,
+        'AI-projektionen är korrekt (fullpris) och får inte skrivas över av delperiodssumman');
+      assert.equal(ex.projektionskrav?.ok, true, 'prorata-närvaron gör avvikelsen legitim');
+    } finally {
+      if (fore === undefined) delete process.env.PROJEKTIONSKRAV_ENFORCE;
+      else process.env.PROJEKTIONSKRAV_ENFORCE = fore;
+    }
   });
 });
 

@@ -808,6 +808,15 @@ const ARCHIVED_RE = /archived?\s+(user|licens|license|account)|arkiverad\s+an/i;
     if (simCount > 0) seatCount = simCount;
   }
 
+  // ── SLUTGRIND: ETT LICENSANTAL ÄR ETT HELTAL (2026-08-24, ur Fable 5:s granskning) ─────────
+  // Max-regeln kunde sätta seatCount = 2,5 ur en bråkdelskvantitet — och 2,5 är ingen
+  // observation utan ett extraktionsfel (obduktionen 20 aug: «en licensmängd är ett heltal»).
+  // Talet matar jämförelseskalan som multiplicerar prisboken: seatCount 2,5 gav ett golv på
+  // 25 % av det korrekta. Grinden ligger SIST så den täcker VARJE väg in — modellens egen
+  // observation, max-regeln, arkivomräkningen, CRM-summan och SIM-räkningen. Fail-closed på
+  // talet: null, aldrig en avrundning — en avrundning vore att tillverka en observation.
+  if (seatCount != null && (!Number.isInteger(seatCount) || seatCount < 1)) seatCount = null;
+
   return { ...raw, lineItems, seatCount };
 }
 
@@ -909,7 +918,13 @@ export function aggregateLineItems(rawInput) {
     const pj = judgeProjection({
       projectedFromAI: raw.projectedRecurringAmount,
       recurringAmount,
-      proRataCount: 0,
+      // Räknar VARJE is_prorata-rad, oavsett typ. Grenen nås bara när inga one_time-typade
+      // prorata-rader finns — men en FELTYPAD prorata-rad (recurring + is_prorata) hamnar här,
+      // och med hårdkodad nolla skulle PROJEKTIONSKRAV_ENFORCE=1 skriva över AI:ns korrekta
+      // fullprisprojektion med delperiodssumman. Den deterministiska vägen utvidgas medvetet
+      // INTE till feltypade rader: deras delbelopp ligger redan i recurringAmount, och att
+      // addera fullpris ovanpå vore en dubbelräkning.
+      proRataCount: (raw.lineItems ?? []).filter((l) => l.is_prorata === true).length,
     });
     const enforce = process.env.PROJEKTIONSKRAV_ENFORCE === '1';
     if (!pj.ok) {

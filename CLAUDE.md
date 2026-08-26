@@ -871,6 +871,45 @@ signera", aldrig som ett verkställt löfte.)
    > höll när skanningen kapades till enbart `lib/`, eftersom lib/ ensam har över hundra filer:
    > **ett totaltal kan inte mäta täckning per katalog.**
 
+   > **✅ GRANSKAREN FANN GRANSKARENS FEL (2026-08-24, Fable 5:s fientliga granskning av veckans fixar).**
+   > Grundaren frös kodbasen och lät en andra modell granska den förstas arbete. Trettio minuters
+   > fientliga sonder mot VECKANS EGNA FIXAR gav sex bekräftade fel — och mönstret är läxan:
+   > **varje fix var verifierad mot fallet som avslöjade buggen, aldrig mot grannfallet.**
+   >
+   > · **Kontroll 5 var en dubblett med fel etikett.** `annualCost` ÄR per konstruktion
+   >   `projected × multiplier`, så «annualCost mot recurring × perAr» är algebraiskt identisk med
+   >   «projected mot recurring» — projektionskravets fråga. Kontrollens enda nåbara gren (prorata)
+   >   «korrigerade» det KORREKTA talet 18 000 till det felaktiga 12 000 och skrev raden till
+   >   flywheeln: hundraprocentigt falsklarm. Morgonens fix (perioderPerAr) gjorde den mindre fel
+   >   men lämnade formen — kontroll 3-sjukan ett steg in, upptäckt timmar efter att kontroll 3
+   >   togs bort för exakt det. Borttagen; getPatterns karantänerar de historiska raderna
+   >   (radering är grundarens beslut, aldrig kodens). EA-08.
+   > · **Lagrade fynd behöll sina uppblåsta tal.** Producenten rättades (engångsavgift ×12), men
+   >   `refineFinding` sa «rör aldrig annualImpact — fakta ur analysen», och meningen var falsk:
+   >   talet räknades analysdagen med den gissade faktorn. **Ett lagrat fel är inte ett faktum.**
+   >   Årstalet härleds nu VID LÄSNING ur analysens egna rader + period; utan underlag hävdas
+   >   inget årstal. Samma drag som scoren 19 aug — räkna vid läsning rättar alla rader utan backfill.
+   > · **Heltalsgrinden saknades i den nya seatCount-regeln.** 2,5 licenser passerade — obduktionens
+   >   egen regel («en licensmängd är ett heltal», 20 aug) bruten i en fix skriven 24 aug. Mätt:
+   >   seatCount 2,5 gav kundens jämförelsegolv 25 % av det korrekta. Slutgrind SIST i kedjan så
+   >   den täcker varje väg in. EA-09.
+   > · **`proRataCount: 0` var hårdkodad i AI-grenen.** En feltypad prorata-rad nådde grenen, och
+   >   armering av projektionskravet — som står på skuldlistan — hade skrivit över AI:ns KORREKTA
+   >   fullprisprojektion med delperiodssumman. En armeringsblockerare som bara syntes när
+   >   uppdraget var att få den att fälla. EA-10.
+   > · **Hemlighetsvaktens källkod bar en rå NUL-byte** (trasig Python-escape). Vakten fungerade —
+   >   men grep, git-diff och varje källtextsvakt läste filen som BINÄR och hoppade tyst över den.
+   >   **En vakt som verktygen inte kan läsa är en vakt ingen granskning ser.** HV-01.
+   > · **Loggraden «utan prorata-rader» skrevs på en faktura MED prorata-rad** — en kommentar som
+   >   intygade en invariant koden inte höll, i själva varningsmeddelandet.
+   >
+   > **Metodfyndet väger tyngst:** alla sex hittades genom att köra fixarnas GRANNFALL — prorata
+   > bredvid kvartal, bråkdel bredvid kWh, lagrad data bredvid producenten, sabotage med det gamla
+   > felet återinfört. Regeln som föll ut: **en fix är inte klar förrän dess syskonfall är körda.**
+   > Och två gånger under själva granskningen var mätinstrumentet felet (en sond med feltypad
+   > prorata-rad; ett sabotage vars byte-ersättning var en no-op) — domen fick inte fällas förrän
+   > sonden själv var friad.
+
    > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
    > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
    > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det

@@ -111,6 +111,7 @@ import './radobservation.mjs';
 import './enhetsantagandet.mjs';
 import './skordkontrakt.mjs';
 import './alertmail.mjs';
+import './hemlighetsvakt.mjs';
 import './licensniva.mjs';
 import './obduktion.mjs';
 import './jamforelsekalla.mjs';

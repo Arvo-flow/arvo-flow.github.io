@@ -5,7 +5,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { detectForensicFindings } from '../lib/forensics.js';
+import { detectForensicFindings, refineFinding } from '../lib/forensics.js';
 
 const line = (description, amount, quantity) => ({ type: 'recurring_subscription', description, amount, quantity });
 
@@ -169,5 +169,47 @@ describe('Forensik · rangordning (high före medium, störst årsimpact först)
   test('tom/saknad faktura → tom lista (fail-open)', () => {
     assert.deepEqual(detectForensicFindings(null, {}), []);
     assert.deepEqual(detectForensicFindings([], {}), []);
+  });
+});
+
+describe('Forensik · lagrade fynd räknas om vid läsning (Fable 5:s granskning)', () => {
+  // Producenten rättades 24 aug, men varje REDAN lagrat fynd behöll sitt uppblåsta tal:
+  // refineFinding sa «rör aldrig annualImpact — fakta ur analysen», och den meningen var falsk.
+  // Talet räknades analysdagen med en gissad faktor. Ett lagrat fel är inte ett faktum.
+
+  test('lagrad engångsavgift ×12 nollas när radens typ visar att den inte återkommer', () => {
+    const lagrat = { type: 'junk_fee', severity: 'medium', title: 'x', negotiable: true,
+      lineDescription: 'Uppläggningsavgift', monthly: 4500, annualImpact: 54_000 };
+    const nytt = refineFinding(lagrat, {
+      billingPeriod: 'monthly',
+      lineItems: [{ description: 'Uppläggningsavgift', type: 'one_time_fee', amount: 4500 }],
+    });
+    assert.equal(nytt.annualImpact, null, '4 500 kr engångs får aldrig stå som 54 000 kr/år i rummet');
+    assert.equal(nytt.engangsbelopp, true);
+    assert.match(nytt.metricText, /engångsbelopp/);
+  });
+
+  test('lagrad kvartalsrad ×12 räknas om till ×4', () => {
+    const lagrat = { type: 'supplier_documented_hike', severity: 'high', title: 'x', negotiable: true,
+      lineDescription: 'Prisjustering enligt index', monthly: 500, annualImpact: 6_000 };
+    const nytt = refineFinding(lagrat, {
+      billingPeriod: 'quarterly',
+      lineItems: [{ description: 'Prisjustering enligt index', type: 'recurring_subscription', amount: 500 }],
+    });
+    assert.equal(nytt.annualImpact, 2_000, '500 kr/kvartal är 2 000 kr/år, aldrig 6 000');
+  });
+
+  test('utan underlag lämnas det lagrade talet orört — dokumenterad blindfläck, inte en gissning', () => {
+    const lagrat = { type: 'junk_fee', severity: 'medium', title: 'x', negotiable: true,
+      lineDescription: 'Aviavgift', monthly: 49, annualImpact: 588 };
+    assert.equal(refineFinding(lagrat, {}).annualImpact, 588);
+  });
+
+  test('rad som inte återfinns i underlaget → inget årstal hävdas (fail-closed på påståendet)', () => {
+    const lagrat = { type: 'junk_fee', severity: 'medium', title: 'x', negotiable: true,
+      lineDescription: 'Aviavgift', monthly: 49, annualImpact: 588 };
+    const nytt = refineFinding(lagrat, { billingPeriod: 'monthly', lineItems: [{ description: 'Annan rad', type: 'recurring_subscription' }] });
+    assert.equal(nytt.annualImpact, null);
+    assert.match(nytt.metricText, /belopp ur analysen/);
   });
 });
