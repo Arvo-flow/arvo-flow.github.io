@@ -380,6 +380,7 @@ export default async function handler(req, res) {
         // medan gränsen är 40 per dygn. Den kollisionen är designad, inte olycklig — men den får
         // aldrig lösas med tystnad.
         console.warn(`[inbound-email] RATE LIMIT för ${sha16(sender)}: ${n} > ${RATE_LIMIT_PER_DAY} — svarar avsändaren`);
+        let varnad = false;
         try {
           const resend = getResend();
           if (resend) {
@@ -395,14 +396,21 @@ och ni behöver skicka om det.</p>
 <p>Vi säger hellre ifrån än låter en faktura försvinna tyst.</p>
 <p>— Arvo</p>`,
             });
+            varnad = true;
           } else {
             console.error('[inbound-email] RATE LIMIT: RESEND_API_KEY saknas — kunden kunde INTE varnas');
           }
         } catch (err) {
           console.error('[inbound-email] RATE LIMIT: varningsmail misslyckades:', err.message);
         }
-        await markeraSlutfort();          // kunden ÄR besvarad (varningsmail) — en omleverans vore en dubblett
-    return send(res, 200, { ok: true, skipped: 'rate limit', avsandareVarnad: true });
+        // ── «KUNDEN ÄR BESVARAD» VAR ETT PÅSTÅENDE KODEN INTE HÖLL (2026-08-24) ──────────────
+        // Min egen kommentar intygade att varningsmailet gått iväg — men både den saknade
+        // API-nyckeln och ett kastande utskick faller hit. Då markerade vi ÄNDÅ mejlet som
+        // slutfört, vilket gör Resends omleverans till en tyst dubblett: kunden får varken
+        // analys eller besked, för alltid. Och svaret påstod `avsandareVarnad: true`.
+        // Slutfört betyder «kunden vet något» — annars ska omleveransen få försöka igen.
+        if (varnad) await markeraSlutfort();
+    return send(res, 200, { ok: true, skipped: 'rate limit', avsandareVarnad: varnad });
       }
     } catch { /* non-fatal */ }
   }

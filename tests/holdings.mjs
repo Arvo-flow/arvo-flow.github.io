@@ -4,6 +4,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { groupBySupplier, supplierName, supplierDiagScore, computeActing } from '../src/lib/holdings.js';
 
 const a = (o) => ({ net_saving: 0, category: 'mobil', created_at: '2025-06-01', ...o });
@@ -180,5 +181,42 @@ describe('computeActing · domen får aldrig ljuga mot sitt eget bevis (grundarl
   test('fynd utan kr-belopp (annualImpact 0/null) räknas INTE som agerande — bara verkliga kostnader', () => {
     assert.equal(computeActing({ switchablesCount: 0, roomFinding: { title: 'Kreditnota', annualImpact: 0 } }).acting, false);
     assert.equal(computeActing({ switchablesCount: 0, roomFinding: { title: 'X' } }).acting, false);
+  });
+});
+
+describe('Rummet · ett fynd utan årstal är fortfarande ett fynd (Fable 5:s granskningsspår)', () => {
+  // Fable 5 hann köra sonden men inte fälla domen innan krediterna tog slut. Utfallet: när
+  // årstalet blev fail-closed (en engångsavgift hävdar inget kr/år) bar ett VERKLIGT fynd
+  // plötsligt `null`, och `hasFindingAction` — som frågade `annualImpact > 0` — svarade nej.
+  // Rummet föll till acting:false och sa «Håll kursen, era priser står sig mot marknaden»
+  // medan fyndkortet rakt under visade «Uppläggningsavgift · 4 500 kr · engångsbelopp».
+  // 22 augusti-felet återinfört genom en ny dörr: talet försvann, inte fyndet.
+  test('engångsfynd utan årstal ger ändå acting (rummet får inte berömma sig)', () => {
+    const f = { type: 'junk_fee', lineDescription: 'Uppläggningsavgift', monthly: 4500, annualImpact: null };
+    const a = computeActing({ switchablesCount: 0, roomFinding: f });
+    assert.equal(a.hasFindingAction, true, 'beloppet finns i kundens egen rad — bara ÅRSTAKTEN saknas');
+    assert.equal(a.acting, true, 'ett rum som visar ett fyndkort får aldrig samtidigt säga «håll kursen»');
+  });
+
+  test('motprovet: utan fynd är rummet fortfarande lugnt', () => {
+    // En fix som gör allt till «acting» är lika värdelös som den som gjorde inget till det.
+    assert.equal(computeActing({ switchablesCount: 0, roomFinding: null }).acting, false);
+    assert.equal(computeActing({ switchablesCount: 0, roomFinding: { monthly: 0, annualImpact: null } }).acting, false);
+  });
+});
+
+describe('Ingest · «kunden är besvarad» måste vara sant (Fable 5:s tredje sond)', () => {
+  test('rate limit markerar slutfört ENDAST när varningsmailet faktiskt gick iväg', () => {
+    const k = readFileSync(new URL('../api/inbound-email.mjs', import.meta.url), 'utf8');
+    assert.match(k, /if \(varnad\) await markeraSlutfort\(\);/,
+      'utan skickat varningsmail vet kunden ingenting — då måste omleveransen få försöka igen');
+    assert.match(k, /avsandareVarnad: varnad/,
+      'svaret får aldrig påstå att avsändaren varnats när utskicket föll');
+    // Vakten dömer KOD, aldrig prosa: min första version fällde på min egen KOMMENTAR som
+    // citerar det gamla felet. Exakt RD-08:s läxa (bibeln 21 aug) — ett ankare som träffar en
+    // kommentar mäter inte det det tror sig mäta.
+    const kod = k.split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
+    assert.equal(/avsandareVarnad: true/.test(kod), false,
+      'den hårdkodade sanningen var ett påstående koden inte höll när utskicket föll');
   });
 });

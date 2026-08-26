@@ -95,7 +95,19 @@ export function supplierDiagScore(a) {
 // som var vilken.
 export function computeActing({ switchablesCount, roomFinding }) {
   const hasSwitchAction = (switchablesCount ?? 0) > 0;
-  const hasFindingAction = !!(roomFinding && (roomFinding.annualImpact ?? 0) > 0);
+  // ── ETT FYND UTAN ÅRSTAL ÄR FORTFARANDE ETT FYND (2026-08-24, Fable 5:s granskningsspår) ──
+  // Raden löd `(roomFinding.annualImpact ?? 0) > 0`. Sedan årstalet blev fail-closed — en
+  // engångsavgift hävdar inget kr/år — bar ett VERKLIGT fynd plötsligt `null`, och rummet
+  // föll till `acting: false`: rubriken sa «Håll kursen, era priser står sig mot marknaden»
+  // medan fyndkortet rakt under visade «Uppläggningsavgift · 4 500 kr · engångsbelopp».
+  // Mätt: samma fynd gav acting=true före fixen och acting=false efter.
+  //
+  // Det är 22 augusti-felet igen — rummet som beröm-formulerar sig ovanför sin egen motsägelse —
+  // återinfört genom en ny dörr: talet försvann, inte fyndet. Frågan «finns något att åtgärda?»
+  // får aldrig ställas som «bär fyndet ett årstal?». Ett belopp finns alltid (monthly är
+  // kundens egen rad); det är bara ÅRSTAKTEN vi ibland inte kan hävda.
+  const hasFindingAction = !!(roomFinding
+    && ((roomFinding.annualImpact ?? 0) > 0 || (Number(roomFinding.monthly) || 0) > 0));
   return { hasSwitchAction, hasFindingAction, acting: hasSwitchAction || hasFindingAction };
 }
 
