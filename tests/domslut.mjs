@@ -129,3 +129,36 @@ describe('DL-07 · Rummets fyra ytor är villkorade på mätaren', () => {
     kravVillkorad('bevakning', kod.slice(Math.max(0, i - 340), i));
   });
 });
+
+// ── DL-09: «PRISERNA STÅR SIG» KRÄVER ATT NÅGOT FAKTISKT JÄMFÖRTS ───────────────────────────
+// Funnet i live-granskningen 2026-08-24 (regel 8 — jag tittade på rummet i 1600 px). Rummet sa:
+//   «Vi jämförde 0 fakturor mot verifierat publikt listpris — priserna står sig.»
+// Meningen motsäger sig själv: noll jämförelser bär inget prispåstående. Och rakt under stod
+// scoren och sa motsatsen, ärligt: «Vi har inget verifierat jämförelsepris för era kategorier
+// ännu ... ett tal utan mätning är värre än inget tal», plus vaktens kvitto «Vägde 0 fakturor».
+//
+// Lägesregistret DEKLARERADE redan att läget inte gör något prispåstående (fynd:
+// positivtPrispastaende: false) — men prosan gjorde det ändå. Registret och texten var oense,
+// vilket är exakt den blindfläck domslut.js skrev ut om sig själv. DL-09 stänger den för det
+// läge som faktiskt bar motsägelsen.
+//
+// BLIND: vakten läser den ROUTADE sidans källtext. PortfolioJuli26 bär en snarlik mening men är
+// inte routad (grep: ingen referens utanför dess egen katalog) — död kod, uttalat.
+describe('DL · Ett prispåstående kräver en jämförelse (live-granskningen 2026-08-24)', () => {
+  test('DL-09 · «priserna står sig» är villkorat av att prissatta > 0', async () => {
+    const { readFileSync } = await import('node:fs');
+    const kalla = readFileSync(new URL('../src/pages/Portfolio/index.js', import.meta.url), 'utf8');
+    const kod = kalla.split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
+
+    const i = kod.indexOf('priserna står sig');
+    assert.notEqual(i, -1, 'hittade inte meningen — testet får inte bli grönt av tomhet');
+    // Villkoret måste stå MELLAN grenens början och påståendet, inte någon annanstans i filen.
+    const fore = kod.slice(Math.max(0, i - 400), i);
+    assert.match(fore, /counts\.prissatta > 0/,
+      'ett positivt prispåstående får aldrig renderas när noll fakturor jämförts');
+
+    // Och nollgrenen måste finnas och vara ärlig.
+    assert.match(kod, /inget verifierat jämförelsepris/,
+      'utan jämförelse ska rummet säga att det inte hävdar något — inte tiga om att det inte vet');
+  });
+});

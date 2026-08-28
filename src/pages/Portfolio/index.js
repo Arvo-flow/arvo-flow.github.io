@@ -741,9 +741,23 @@ export default function Portfolio() {
           <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
           största bytet tar två minuter att signera. Övriga avtal har vi inget byte att lägga fram
           för i dag.</>
-      : <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris — priserna står sig.
-          Men i underlaget vi kunde läsa fångade vi en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
-          se vad domen bygger på i fyndet ovan.</>;
+      // ── «PRISERNA STÅR SIG» KRÄVER ATT NÅGOT FAKTISKT JÄMFÖRTS (2026-08-24, live-granskningen) ──
+      // Raden löd ovillkorligt «Vi jämförde {prissatta} fakturor mot verifierat publikt listpris —
+      // priserna står sig». Med prissatta = 0 blev meningen självmotsägande i sig själv: noll
+      // jämförelser bär inget prispåstående. Och rakt under stod scoren och sa motsatsen, ärligt:
+      // «Vi har inget verifierat jämförelsepris för era kategorier ännu ... ett tal utan mätning är
+      // värre än inget tal», med vaktens kvitto «Vägde 0 fakturor».
+      //
+      // Lägesregistret (src/lib/domslut.js) deklarerar redan `fynd: positivtPrispastaende: false`.
+      // Registret och texten var oense — precis den blindfläck domslut.js själv skrev ut: «modulen
+      // dömer LÄGET, inte den slutliga svenskan». Här stängs den för det läge som faktiskt bar den.
+      : counts.prissatta > 0
+        ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris — priserna står sig.
+            Men i underlaget vi kunde läsa fångade vi en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
+            se vad domen bygger på i fyndet ovan.</>
+        : <>Vi har ännu <b>inget verifierat jämförelsepris</b> för era kategorier — därför hävdar vi
+            ingenting om er prisnivå. Men i underlaget vi kunde läsa fångade vi en kostnad
+            värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> — se vad domen bygger på i fyndet ovan.</>;
 
   return (
     <Page>
