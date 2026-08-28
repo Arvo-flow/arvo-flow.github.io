@@ -1654,6 +1654,9 @@ export default async function handler(req, res) {
           normalizedSupplier:  categorized.normalizedSupplier,
           pricePerSeatMonthly: extracted.pricePerSeatMonthly,
           category:            categorized.category,
+          // Radtexterna bär nivån. Utan dem kan golvet inte veta VILKEN produkt kunden har, och
+          // en kategori med stort spann (saas 9,6×) mäter då produktvalet i stället för priset.
+          lineItems:           extracted.lineItems,
         }).catch(() => null),
         getMarketIntelligence({
           normalizedSupplier: categorized.normalizedSupplier,

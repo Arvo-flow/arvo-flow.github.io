@@ -871,6 +871,36 @@ signera", aldrig som ett verkställt löfte.)
    > höll när skanningen kapades till enbart `lib/`, eftersom lib/ ensam har över hundra filer:
    > **ett totaltal kan inte mäta täckning per katalog.**
 
+   > **✅ KUNDMAILET STÄLLDE LÄGRE BEVISKRAV ÄN PRISBOKEN (2026-08-24, ur Fable 5:s H2/H5).**
+   > Verifieringsjuryn gatar vad vi LAGRAR — konfidens ≥ 0,85, stabilitet över två nätter,
+   > konsensus. Kundmailet konsumerade Haikus **råa JSON ogranskat**. Vi ställde alltså hårdare
+   > beviskrav på vår egen databas än på vad vi PÅSTOD FÖR KUNDEN, bakvänt mot regel 3 och mot
+   > juryns egen asymmetri-motivering. Sju grenar mätta genom den riktiga notify-vägen:
+   > `haiku` saknades helt (filtret `actionRequired !== 'false_positive'` är SANT för `undefined`,
+   > så «AI:n svarade inte» blev «AI:n bekräftade»); `verify_manually` med konfidens 0,10 blev
+   > «Arvo har detekterat en prishöjning»; `percentage` — som står i Haikus EGEN enum — saknade
+   > case och blev kronor; en tom sträng blev ett kronbelopp; och `'usd'` mot `'USD'` **vände
+   > tecknet**, så en höjning rapporterades som «Tele2 sänkte priset — 66 384 kr/år».
+   > `lib/larmunderlag.js` har tre nivåer där **obekräftad betyder tystnad**, konfidensgolvet
+   > IMPORTERAS från juryn (en kopia kan glida isär och då är kundytan lägre igen), och tecknet
+   > härleds ur TALEN aldrig ur texten — en motsägelse är ett okänt, inte ett val. LU-01..15.
+   >
+   > **Och golvet mätte kundens PRODUKTVAL, inte kundens pris.** `ORDER BY price_monthly ASC
+   > LIMIT 1` hämtade kategorins billigaste produkt oavsett vad kunden har: en E3-kund som betalar
+   > EXAKT E3:s listpris flaggades **+571 %** mot Basic. Tre av fyra kunder som betalar
+   > leverantörens egen publicerade prislapp fick larm om att de blöder. Det är E3/E5-fyndet från
+   > 20 augusti ordagrant, i en modul som aldrig fick spärren — och `kraverBekraftadNiva` fanns
+   > redan, deklarerad i prisboken, mätt per kategori (saas 9,6× spann kräver nivå, mobil 1,1×
+   > gör det inte). LU-16..18.
+   >
+   > **Metodfyndet: granskningen flyttades FÖRE bygget.** Fable 5 skrev en kirurgisk arbetsorder
+   > (`ops/ARBETSORDER-LANSERING.md`) där varje designbeslut redan var fattat och motiverat —
+   > importera tröskeln, aldrig kopiera; tecknet ur talen; syskonfallen och sabotagen listade som
+   > beviskrav. Bygget behövde ingen andra granskningsvända. Två gånger under bygget var
+   > mätinstrumentet ändå felet: ett testfönster på 400 tecken nådde inte förbi en kommentar, och
+   > jag trodde en ersättning träffat två ställen när den träffat ett. **Att mäta efteråt är
+   > billigare än att anta — även när ordern är perfekt.**
+
    > **✅ EN PÅBÖRJAD BEHANDLING ÄR INTE EN AVSLUTAD (2026-08-24, ur ingest-spaningen).**
    > Två fel i kundens fakturaväg, båda felfamiljen, båda i den mekanik bibeln kallar nyckelstenen.
    >

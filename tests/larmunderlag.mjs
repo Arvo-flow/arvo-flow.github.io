@@ -124,3 +124,49 @@ describe('LU · Båda larmvägarna gatar (regel 5 — dubbla alertvägar)', () =
     }
   });
 });
+
+// ── H5: GOLVET MÅSTE MÄTA KUNDENS PRIS, INTE KUNDENS PRODUKTVAL ──────────────────────────────
+// `ORDER BY price_monthly ASC LIMIT 1` hämtade kategorins BILLIGASTE produkt oavsett vad kunden
+// har. Fable 5:s körning mot de fyra Microsoft-raderna i seed-price-db:
+//   E3-kund på EXAKT E3:s listpris (462 kr)  → percentOver 571, golv 69 (Basic)
+//   Premium på exakt listpris (252,35)       → percentOver 266, golv 69
+//   Standard på exakt listpris (143,38)      → percentOver 108, golv 69
+//   Basic på exakt listpris (68,88)          → null (korrekt)
+// Tre av fyra kunder som betalar leverantörens EGEN prislapp flaggades som att de blöder.
+//
+// Testet prövar KOPPLINGEN utan databas: att spärren läses ur prisboken (mätt, inte tyckt), att
+// nivåläsaren är den delade (regel 1) och att anroparen matar radtexterna. Själva SQL-grenen
+// kräver Postgres och prövas av sonden — men utan de tre nedan kan grenen aldrig nås rätt.
+describe('LU · Golvet kräver bekräftad nivå där spänningen är mätt (H5)', () => {
+  test('LU-16 · spärren läses ur PRISBOKEN, hårdkodas inte per kategori', async () => {
+    const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
+    // saas: 9,6× spann mellan Basic och E5 → nivå krävs. mobil: 1,1× → kategorigolv duger.
+    assert.equal(BRANCHINDEX['saas-productivity']?.kraverBekraftadNiva, true,
+      'saas har 9,6× spann — utan bekräftad nivå mäter golvet produktvalet');
+    assert.notEqual(BRANCHINDEX['mobil']?.kraverBekraftadNiva, true,
+      'mobil har 1,1× spann — där ÄR kategorigolvet rätt jämförelse. Spärren är mätt, inte tyckt');
+
+    const kod = readFileSync(new URL('../lib/price-alert.js', import.meta.url), 'utf8')
+      .split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
+    assert.match(kod, /BRANCHINDEX\[category\]\?\.kraverBekraftadNiva/,
+      'deklarationen måste läsas ur prisboken — en lista per kategori här kan glida isär');
+  });
+
+  test('LU-17 · nivån läses med den DELADE läsaren, inte en ny tier-regex', () => {
+    const kod = readFileSync(new URL('../lib/price-alert.js', import.meta.url), 'utf8');
+    assert.match(kod, /import \{ lasLicensniva \} from '\.\/licensniva\.js'/,
+      'regel 1: en sanning per fråga — ingen andra tier-läsning');
+    assert.match(kod, /nivaOviss/, 'utan bevisad nivå ska fakta stå kvar men PÅSTÅENDET utebli');
+  });
+
+  test('LU-18 · anroparen matar radtexterna — utan dem kan nivån aldrig bevisas', () => {
+    const api = readFileSync(new URL('../api/test-invoice.mjs', import.meta.url), 'utf8');
+    // Fönstret måste sluta vid anropets SLUT, inte efter N tecken: min första version tog 400
+    // tecken och nådde inte förbi kommentaren ovanför raden. Mätinstrumentet var felet, inte koden.
+    const start = api.indexOf('detectPriceAlert({');
+    assert.notEqual(start, -1, 'hittade inget anrop — testet får inte bli grönt av tomhet');
+    const anrop = api.slice(start, api.indexOf('}).catch', start));
+    assert.match(anrop, /lineItems:\s+extracted\.lineItems/,
+      'grinden är verkningslös om anroparen inte skickar underlaget — LFL-läxan 12 aug');
+  });
+});
