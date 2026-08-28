@@ -40,9 +40,28 @@ const MAX_PDFS_PER_MAIL  = 2;            // ≤ detta antal analyseras INLINE (s
 const INLINE_LIMIT       = 2;            // > detta → ASYNK kö (bulk: 50–100 fakturor på en gång).
 const MAX_BULK_PDFS      = 100;          // tak per mail i bulk-läge
 const MAX_PDF_BYTES      = 6 * 1024 * 1024;
-// Env-överstyrbar; höjd default för testpass. I bulk-läge är detta mindre relevant (en kund kan
-// mata in många i ETT mail). Sätt INBOUND_RATE_LIMIT_PER_DAY i Vercel för att justera.
-const RATE_LIMIT_PER_DAY = Number(process.env.INBOUND_RATE_LIMIT_PER_DAY) || 40;
+// ── TAKET RÄKNAR MAIL, INTE FAKTUROR (mätt 2026-08-24, före testkundslanseringen) ─────────────
+// `kv.incr` körs EN gång per invokation, före bilage-loopen. Taket är alltså «N MAIL per
+// avsändare och dygn» — och ett enda mail får bära upp till MAX_BULK_PDFS = 100 fakturor.
+//
+// Det upphäver den kollision bibeln bokfört («vi säljer 50–100 fakturor medan gränsen är 40»):
+// en kund som vidarebefordrar hela pärmen i ETT mail förbrukar 1 av 40. Jag påstod motsatsen för
+// grundaren och hade fel — läst, inte mätt.
+//
+// Den VERKLIGA risken är den motsatta: droppvis vidarebefordran. En kund som skickar fakturorna
+// en och en medan hen går igenom mappen — minst lika naturligt som att zippa ihop dem — slår i
+// väggen vid 40. Det är onboardingens vanligaste beteende, och där får produkten inte säga nej.
+//
+// 150 tar bort den väggen och behåller det taket faktiskt skyddar mot: en vidarebefordringsloop
+// (en auto-forward-regel genererar tusentals, inte hundratals), inte budgeten.
+//
+// UTTALAD, OSTÄNGD LUCKA: taket bounder INTE antalet analyser. 150 mail × 100 PDF = upp till
+// 15 000 analyser per avsändare och dygn, och varje analys är tre modellanrop (opus extract,
+// sonnet categorize, opus recommend — kostnaden loggas som `cost_usd` per steg men har aldrig
+// aggregerats). För 20 KÄNDA testkunder är exponeringen bunden av verkligheten, inte av grinden.
+// Före publik lansering behövs ett tak på FAKTUROR, inte på mail. Det är ett medvetet uppskjutet
+// beslut, inte ett förbisett.
+const RATE_LIMIT_PER_DAY = Number(process.env.INBOUND_RATE_LIMIT_PER_DAY) || 150;
 
 function send(res, status, body) {
   res.statusCode = status;
