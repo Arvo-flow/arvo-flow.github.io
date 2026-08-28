@@ -157,6 +157,13 @@ describe('DL · Ett prispåstående kräver en jämförelse (live-granskningen 2
     assert.match(fore, /counts\.prissatta > 0/,
       'ett positivt prispåstående får aldrig renderas när noll fakturor jämförts');
 
+    // SYSKONFALLET: rubriken bär samma påstående två rader upp. Jag fixade brödtexten och
+    // missade rubriken — funnet först i mobilskärmdumpen. Båda måste villkoras.
+    const j = kod.indexOf('Era avtal står sig');
+    assert.notEqual(j, -1, 'hittade inte rubriken');
+    assert.match(kod.slice(Math.max(0, j - 400), j), /counts\.prissatta > 0/,
+      'rubriken «Era avtal står sig» är ett PRISpåstående och kräver samma villkor som brödtexten');
+
     // Och nollgrenen måste finnas och vara ärlig.
     assert.match(kod, /inget verifierat jämförelsepris/,
       'utan jämförelse ska rummet säga att det inte hävdar något — inte tiga om att det inte vet');

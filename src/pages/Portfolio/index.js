@@ -728,7 +728,14 @@ export default function Portfolio() {
           : standing.niva === 'i-niva'
             ? <>Ni ligger <em>i nivå</em> med verifierat listpris — {switchables.length} avtal kan skärpas.</>
             : <>Ni betalar <em>mer än listpris</em> — {switchables.length} avtal drar mest.</>)
-      : <>Era avtal står sig — men vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda.</>;
+      // SYSKONFALLET, funnet i MOBILSKÄRMDUMPEN efter att brödtexten redan fixats (2026-08-24):
+      // «Era avtal står sig» är ett positivt PRISpåstående — och stod två rader ovanför meningen
+      // som just gjorts ärlig («vi har ännu inget verifierat jämförelsepris ... därför hävdar vi
+      // ingenting om er prisnivå»). Jag lagade verdictWork och missade verdictHead i samma
+      // rendering. Utan jämförelse säger rubriken bara vad vi FANN, aldrig hur priset står sig.
+      : counts.prissatta > 0
+        ? <>Era avtal står sig — men vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda.</>
+        : <>Vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda på era fakturor.</>;
   const verdictWork = !acting
     ? (standing.satt && standing.niva === 'samre'
         ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
