@@ -35,6 +35,7 @@ import { getAffectedCustomers, getSegmentStats, hasAlertBeenSent, markAlertSent 
 import { computeImpactKr, parseCheckPrice } from '../lib/price-impact.js';
 import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 import { catLabel } from '../lib/format.js';
+import { bedomLarmunderlag } from '../lib/larmunderlag.js';
 
 const REPORT_PATH = process.argv[2] ?? '/tmp/price-monitor-report.json';
 // VERIFIERAD AVSÄNDARDOMÄN (grundarfynd 2026-08-05): den här raden stod på "arvo-flow.se" med
@@ -54,12 +55,22 @@ try {
   process.exit(0);
 }
 
-const alerts = (report.alerts ?? []).filter(a => {
-  // Skicka bara alert för bekräftade prisändringar eller osäkra ändringar.
-  // false_positive hoppar vi över — pris-mönstret hittades inte men priset verkar detsamma.
-  if (a.haiku?.actionRequired === 'false_positive') return false;
-  return true;
+// ── LARMUNDERLAGET GATAR KUNDUTSKICKET (2026-08-24, H2) ────────────────────────────────────
+// Filtret löd `haiku?.actionRequired !== 'false_positive'`, vilket är SANT för `undefined`:
+// «modellen svarade inte» släpptes igenom som «modellen bekräftade». Sju bevisade grenar gav
+// påhittade kr/år-tal i kundens inkorg, en av dem med VÄNT TECKEN («Tele2 sänkte priset» på en
+// höjning). Kundmailet får aldrig ställa lägre beviskrav än prisboken — juryn gatar vad vi
+// LAGRAR, den här grinden gatar vad vi PÅSTÅR. Obekräftat = tystnad, aldrig ett tal.
+const larmutfall = { verifierad: 0, avvisad: 0, obekraftad: 0 };
+const alerts = (report.alerts ?? []).filter((a) => {
+  const { niva, skal } = bedomLarmunderlag(a.haiku);
+  larmutfall[niva] = (larmutfall[niva] ?? 0) + 1;
+  if (niva !== 'verifierad') {
+    console.warn(`[larmunderlag] ${niva} (${skal}) — ${a.check ?? 'okänd check'}: inget kundutskick`);
+  }
+  return niva === 'verifierad';
 });
+console.log(`[larmunderlag] ${larmutfall.verifierad} verifierade · ${larmutfall.obekraftad} obekräftade · ${larmutfall.avvisad} avvisade`);
 
 if (!alerts.length) {
   console.log('Inga prisändringar att notifiera om.');

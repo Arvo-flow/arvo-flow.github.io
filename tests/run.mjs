@@ -113,6 +113,7 @@ import './skordkontrakt.mjs';
 import './alertmail.mjs';
 import './hemlighetsvakt.mjs';
 import './ingestkontrakt.mjs';
+import './larmunderlag.mjs';
 import './licensniva.mjs';
 import './obduktion.mjs';
 import './jamforelsekalla.mjs';

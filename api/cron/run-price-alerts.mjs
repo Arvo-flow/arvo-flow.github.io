@@ -14,6 +14,7 @@
 
 import crypto from 'crypto';
 import { Resend } from 'resend';
+import { bedomLarmunderlag } from '../../lib/larmunderlag.js';
 import { getDb } from '../../lib/db.js';
 import {
   getAffectedCustomers,
@@ -63,9 +64,19 @@ export default async function handler(req, res) {
   const report = await readBody(req);
   if (!report?.alerts) return send(res, 400, { error: 'Ogiltig rapport-payload' });
 
-  const alerts = (report.alerts ?? []).filter(
-    a => a.haiku?.actionRequired !== 'false_positive',
-  );
+  // ── LARMUNDERLAGET GATAR KUNDUTSKICKET (2026-08-24, H2) ────────────────────────────────────
+  // Filtret löd `haiku?.actionRequired !== 'false_positive'`, vilket är SANT för `undefined`:
+  // «modellen svarade inte» släpptes igenom som «modellen bekräftade». Sju bevisade grenar gav
+  // påhittade kr/år-tal i kundens inkorg, en av dem med VÄNT TECKEN («Tele2 sänkte priset» på en
+  // höjning). Kundmailet får aldrig ställa lägre beviskrav än prisboken — juryn gatar vad vi
+  // LAGRAR, den här grinden gatar vad vi PÅSTÅR. Obekräftat = tystnad, aldrig ett tal.
+  const alerts = (report.alerts ?? []).filter((a) => {
+    const { niva, skal } = bedomLarmunderlag(a.haiku);
+    if (niva !== 'verifierad') {
+      console.warn(`[larmunderlag] ${niva} (${skal}) — ${a.check ?? 'okänd check'}: inget kundutskick`);
+    }
+    return niva === 'verifierad';
+  });
 
   if (!alerts.length) {
     return send(res, 200, { ok: true, processed: 0, sent: 0, skipped: 0, failed: 0 });
