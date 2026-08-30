@@ -115,6 +115,7 @@ import './hemlighetsvakt.mjs';
 import './ingestkontrakt.mjs';
 import './larmunderlag.mjs';
 import './switcharvode.mjs';
+import './arvodeskorning.mjs';
 import './licensniva.mjs';
 import './obduktion.mjs';
 import './jamforelsekalla.mjs';

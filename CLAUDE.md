@@ -251,7 +251,12 @@ bytesdatum är avtalet demonstrabelt inte aktiverat, och då finns ingen avgift 
 faktiskt uppstår»). Spärren är det som håller ihop §3.1 och §3.2. Skillnaden mot att kräva bevis är
 medveten: **tystnad — en kund som slutat vidarebefordra fakturor — stoppar oss inte.** Fail-closed på
 KONFLIKTEN, fail-open på tystnaden. Maskinvakt: `lib/switcharvode.js` + `tests/switcharvode.mjs`
-(SA-01..08), sabotage-bevisad.
+(SA-01..09), sabotage-bevisad.
+
+Frågan ställs av en maskin, inte av ett minne: `lib/arvodeskorning.js` + `api/cron/arvodeskorning`
+(dagligen 08:00) betar av liggaren och bygger kön. Den **fakturerar inte** — den producerar ett
+underlag, och ingen post flyttas till `SUCCESS_FEE_DUE` där: att flytta tillståndet vore att påstå
+att arvodet är taget. Domaren för bok först när fakturan finns.
 
 **Switch-doktrinen (GRUNDARBESLUT 2026-06-21, icke-förhandlingsbart): Arvo förhandlar
 aldrig och köar aldrig — Arvo är en stående fullmakt.** Switch genomförs som en
@@ -993,6 +998,32 @@ signera", aldrig som ett verkställt löfte.)
    > prorata-rad; ett sabotage vars byte-ersättning var en no-op) — domen fick inte fällas förrän
    > sonden själv var friad.
 
+   > **✅ `new Date(null)` ÄR 1970 — INTE ETT OGILTIGT DATUM (2026-08-30, ur arvodeskörningen).**
+   > Arvodesgrinden (SA-01..08, sabotage-bevisad tre dagar tidigare) hade ett hål ingen av dess åtta
+   > tester kunde se, därför att de alla matade ett riktigt datum. Ett byte **utan** utförandedatum —
+   > `null`, `0` eller `false` — blev `new Date(null)` = 1970-01-01, ett fullständigt giltigt datum.
+   > Karensen räknades då till ~20 000 dagar, och posten gick rakt in i faktureringskön. Mätt:
+   > `switchArvode({tillstand:'applied_new', arsbesparing:12000, arbeteUtfortAt:null})` →
+   > `{fakturerbar:true, belopp:2400}`. Riktningen är den farligaste vi har — **vi hade fakturerat
+   > en kund utan att veta att arbetet någonsin utfördes.** Bara en `Date` eller en icke-tom sträng
+   > är en datering; allt annat är ett OKÄNT och håller arvodet. Felfamiljen i sin renaste form, och
+   > **den hittades av körningens test, inte av grindens** — AK-03 frågade vad som händer när
+   > historiken saknar sin `applied_new`-övergång, en fråga grindens egen svit aldrig ställde.
+   > *Ett grannfall är inte samma sak som ett gränsfall: SA-05 prövade `arsbesparing: null` men
+   > aldrig `arbeteUtfortAt: null`, för fältet bredvid kändes redan täckt.*
+   >
+   > **Och liggaren cronen skulle läsa var en Potemkin.** `FileStore` skriver en JSON-fil per switch
+   > till en gitignorerad lokal katalog som dör med varje Vercel-invokation. Ett dagligt cron mot den
+   > hade svarat «0 fakturerbara» varje dag för alltid — omöjligt att skilja från «inga byten är
+   > mogna än». **Villkorsvaktens sjukdom ordagrant: en mekanism som reagerar korrekt när den matas,
+   > monterad på en signal som aldrig kan röra sig.** `lib/switchliggare.js` (`PgStore`, samma
+   > gränssnitt) flyttar liggaren till Postgres, och skiljer `[]` (bevisat tom) från `null` (okänd —
+   > ingen databas). Cronen svarar då 503 utan tal, aldrig «0 kr». Maskinvakt:
+   > `tests/arvodeskorning.mjs` (AK-01..12), sabotage-bevisad i sju riktningar. **Uttalad blindfläck,
+   > som står i modulhuvudet:** så länge Switch-rälsen är `mode:'stub'` är tabellen tom av RÄTT skäl;
+   > blir rälsen skarp utan att orkestratorn instansieras med `PgStore` blir den tom av FEL skäl, och
+   > de två ser likadana ut härifrån. Därför rapporterar cronen alltid liggarens storlek bredvid köns.
+   >
    > **✅ NÄR ETT GOLV FLYTTAR SIG KAN EN GREN TYST TAPPA SIN TÄCKNING (2026-08-18, ur Tele2-sänkningen).**
    > Vakten larmade rött två nätter i rad: Tele2 sänkte hela Max-familjen 40 kr/mån, identiska tal på
    > tre adresser båda nätterna, ur ett JSON-API utan modellanrop. Prisboken följde källan — **åt det
@@ -1378,6 +1409,7 @@ dessa oroutade filer — Landing och TestaFaktura är frikopplade (`src/utils/fo
 |--------|----------|-----|
 | `0 6 * * *` | `api/cron/update-fx-rate.mjs` | Hämtar USD/EUR→SEK (FX för priskalkyl) |
 | `0 7 * * *` | `api/cron/send-reminders.mjs` | 60/30-dagars kontrakts­påminnelser |
+| `0 8 * * *` | `api/cron/arvodeskorning.mjs` | Vilka utförda byten har passerat 90-dagarskarensen? (underlag, aldrig en faktura) |
 | `0 9 1 * *` | `api/cron/generate-briefings.mjs` | Månadsvis CFO-brief till alla kunder |
 
 ---

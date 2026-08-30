@@ -24,6 +24,10 @@
     {
       "path": "/api/cron/warm-ct",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/arvodeskorning",
+      "schedule": "0 8 * * *"
     }
   ],
   "functions": {

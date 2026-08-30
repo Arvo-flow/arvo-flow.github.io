@@ -64,6 +64,24 @@ describe('SA · Arvodet utgår på utfört arbete, aldrig på förberedelse', ()
 });
 
 describe('SA · Motbevisspärren — tystnad stoppar inte, motsägelse gör det', () => {
+  test('SA-09 · ett ODATERAT byte fakturerar vi aldrig — `new Date(null)` är 1970, inte ogiltigt', () => {
+    // Hittat av AK-03 (2026-08-30). `new Date(null)`, `new Date(0)` och `new Date(false)` ger alla
+    // epoch — ett fullt giltigt datum. Ett byte utan utförandedatum blev därför «utfört för 20 000
+    // dagar sedan, karensen passerad» och gick rakt in i faktureringskön. Riktningen är den
+    // farligaste vi har: vi hade fakturerat en kund utan att veta att arbetet någonsin utfördes.
+    for (const v of [null, undefined, 0, false, '', '   ', NaN, {}]) {
+      const r = switchArvode({ ...BAS, arbeteUtfortAt: v });
+      assert.equal(r.fakturerbar, false, `odaterat (${JSON.stringify(v)}) får aldrig faktureras`);
+      assert.equal(r.skal, 'utforandedatum_saknas');
+    }
+    // Motprovet: en riktig datering går fortfarande igenom, i båda formerna.
+    assert.equal(switchArvode({ ...BAS, arbeteUtfortAt: dagarSedan(120) }).fakturerbar, true);
+    assert.equal(
+      switchArvode({ ...BAS, arbeteUtfortAt: dagarSedan(120).toISOString() }).fakturerbar, true,
+      'ISO-strängen är liggarens format och måste bära',
+    );
+  });
+
   test('SA-06 · gamla leverantören fakturerar EFTER bytet → arvodet hålls', () => {
     // Det enda scenario som kan skada oss: en faktura till en kund vars byte demonstrabelt inte
     // genomfördes. Här, och bara här, väger kundens papper tyngre än vår egen liggare.
