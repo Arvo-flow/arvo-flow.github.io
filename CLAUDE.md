@@ -225,6 +225,34 @@ all kundyte-copy som antyder leverantörsersättning eller partnerskap.
 > KONCEPT-val som alltid böjer sig mot den mest hjälpsamma 0,1%-versionen. Bibeln är ett
 > verktyg, aldrig en bromskloss (se preambeln).
 
+**Arvodesmekaniken (GRUNDARBESLUT 2026-08-28 — ersätter liggar-delta-mekaniken från 06-21):
+arvodet utgår på UTFÖRT ARBETE + 90 dagars karens, aldrig på en enkät.** Vad som FANNS var värre än
+den obyggda Fortnox-vägen: `arvo_outcomes.source DEFAULT 'customer'` plus en 60-dagarsenkät — **vi bad
+kunden självrapportera det tal vi fakturerar dem på.** Det gör intäkten beroende av att de svarar, och
+det är moatens raka motsats: vi är de enda som ser vad bolag faktiskt betalar.
+
+Triggern är nu **Arvos egen liggare**: `APPLIED_NEW` betyder att fullmakten är signerad med BankID,
+gamla leverantören uppsagd och ansökan inlämnad hos den nya. Vi frågar inte om bytet skedde — vi vet,
+för vi utförde det. Att kunden formellt är avtalspart ändrar vem som binds, aldrig vem som gjorde
+arbetet. **Rätten till arvodet kommer ur avtalet; talet kommer ur vår egen beräkning vid förberedelsen**
+(år-1-besparingen × `ARVO_FEE_RATE` — en sanning, `lib/fee.js`).
+
+**Detta är inte en ändring av villkoren — det ÄR villkoren.** §3.2 har hela tiden sagt
+*«Besparingsavgiften faktureras som en engångsavgift, 3 månader efter att det nya avtalet aktiverats.»*
+Det var LANDNINGSSIDANS marknadstext som glidit ifrån kontraktet och lovat något strängare
+(«fakturerat först när besparingen faktiskt syns i era egna böcker»). Copyn är nu riktad mot avtalet.
+Läxan: **när kundyta och villkor säger olika är det inte självklart ytan som har rätt — läs kontraktet
+innan du argumenterar.** Jag argumenterade mot grundaren med marknadstexten i handen; villkoren backade
+honom.
+
+**MOTBEVISSPÄRREN — det enda vi vägrar fakturera.** Vi kräver INTE bevis för att fakturera, men vi
+fakturerar aldrig mot ett bevis som säger emot: fortsätter den GAMLA leverantören fakturera efter
+bytesdatum är avtalet demonstrabelt inte aktiverat, och då finns ingen avgift (§3.1: «den skillnad som
+faktiskt uppstår»). Spärren är det som håller ihop §3.1 och §3.2. Skillnaden mot att kräva bevis är
+medveten: **tystnad — en kund som slutat vidarebefordra fakturor — stoppar oss inte.** Fail-closed på
+KONFLIKTEN, fail-open på tystnaden. Maskinvakt: `lib/switcharvode.js` + `tests/switcharvode.mjs`
+(SA-01..08), sabotage-bevisad.
+
 **Switch-doktrinen (GRUNDARBESLUT 2026-06-21, icke-förhandlingsbart): Arvo förhandlar
 aldrig och köar aldrig — Arvo är en stående fullmakt.** Switch genomförs som en
 *fullmakts- och BankID-orkestrering* (`agents/orchestrator/orchestrator.js`:

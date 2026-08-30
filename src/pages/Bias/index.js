@@ -15,13 +15,13 @@ import {
 // Arvo tar aldrig en krona från en leverantör (neutralitets-moaten). Vad vi GÖR
 // och hur vi betalas, öppet redovisat.
 const CATEGORY_MODEL = [
-  { cat: 'Elavtal',             detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av realiserad besparing' },
-  { cat: 'Mobilabonnemang',     detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av realiserad besparing' },
-  { cat: 'Företagsbredband',    detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av realiserad besparing' },
-  { cat: 'Programvara / SaaS',  detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av realiserad besparing' },
-  { cat: 'Kortterminal',        detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av realiserad besparing' },
-  { cat: 'Fakturatjänst',       detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av realiserad besparing' },
-  { cat: 'Löneadministration',  detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av realiserad besparing' },
+  { cat: 'Elavtal',             detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Mobilabonnemang',     detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Företagsbredband',    detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Programvara / SaaS',  detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Kortterminal',        detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Fakturatjänst',       detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Löneadministration',  detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
   { cat: 'Företagsförsäkring',  detail: 'Arvo beväpnar er med exakt motbud',  pay: 'Ingår i prenumerationen' },
   { cat: 'Företagsleasing',     detail: 'Arvo beväpnar er med exakt motbud',  pay: 'Ingår i prenumerationen' },
 ];
@@ -87,7 +87,7 @@ const Bias = () => (
         <div>
           <h3>Ett erbjudande. Inga val, inga krångel.</h3>
           <p>
-            Vi tar <strong>20 % av realiserad besparing</strong> — och fakturerar först när
+            Vi tar <strong>20 % av besparingen (fakturerat 3 mån efter genomfört byte)</strong> — och fakturerar först när
             besparingen faktiskt syns i dina egna böcker (den gamla leverantörsraden försvinner,
             den nya dyker upp). Aldrig på en siffra vi bara gissat. Landar ingen besparing kostar
             Switch ingenting. Det är det enda du behöver godkänna.

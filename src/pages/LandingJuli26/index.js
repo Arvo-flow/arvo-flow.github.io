@@ -44,7 +44,7 @@ const HOW_STEPS = [
     step: 'Steg 03',
     title: 'Vi hör av oss. Ni bestämmer.',
     body: 'Identifierar Arvo en besparing skickar vi er en briefing med exakt vad ni betalar och vad som är möjligt. Varje pris är verifierat mot leverantörens officiella avtalspris — ni godkänner, Arvo förbereder hela bytet.',
-    bullets: ['Ni behåller full kontroll', 'Ni godkänner varje byte — inget sker utan er', 'Arvo Switch: 20 % av realiserad besparing'],
+    bullets: ['Ni behåller full kontroll', 'Ni godkänner varje byte — inget sker utan er', 'Arvo Switch: 20 % av besparingen — fakturerat först tre månader efter genomfört byte'],
   },
 ];
 
@@ -113,7 +113,7 @@ const SCORE_LEVELS = [
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande bevakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: i kategorier där bytet är systematiserat genomför eller förbereder Arvo bytet åt er, och vi tar 20 % av realiserad besparing — fakturerat först när besparingen faktiskt syns i era egna böcker. Landar ingen besparing kostar Switch ingenting.',
+    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande bevakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: i kategorier där bytet är systematiserat genomför eller förbereder Arvo bytet åt er, och vi tar 20 % av den årliga besparingen — fakturerat först tre månader efter att bytet är genomfört. Blir det inget byte kostar Switch ingenting, och genomförs bytet inte i praktiken fakturerar vi inte heller.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
@@ -121,7 +121,7 @@ const FAQ = [
   },
   {
     q: 'Varför ska jag lita på era besparingskalkyler?',
-    a: 'Vi bygger på verifierade marknadsdata — offentliga listpriser, ramavtalsdata och faktiska operatörspriser. Och eftersom vi tar 20 % av realiserad besparing — den som faktiskt syns i era böcker, inte den vi gissar — har vi inget att vinna på att överdriva: en projektion som inte håller kostar oss förtroendet och arvodet. Vi tjänar mer på att lova lite och leverera fullt ut.',
+    a: 'Vi bygger på verifierade marknadsdata — offentliga listpriser, ramavtalsdata och faktiska operatörspriser. Och eftersom arvodet först utgår tre månader efter ett genomfört byte har vi inget att vinna på att överdriva: en besparing som inte håller möter ni på er nästa faktura, och då är det vårt förtroende som står på spel. Vi tjänar mer på att lova lite och leverera fullt ut.',
   },
   {
     q: 'Vad händer om den nya leverantören höjer priset efter bytet?',
@@ -467,7 +467,7 @@ const Landing = () => {
           <div className="icon"><Icon name="trend" size={22} stroke={2} /></div>
           <h3>Betala bara för värdet</h3>
           <p>
-            Arvo Switch är 100 % prestationsbaserat — 20 % av realiserad besparing,
+            Arvo Switch är 100 % prestationsbaserat — 20 % av besparingen, fakturerat tre månader efter genomfört byte,
             fakturerat först när den syns i era egna böcker. Landar inget kostar Switch ingenting.
           </p>
           <strong>Gratis att starta. Ni betalar när ni sparat.</strong>
@@ -704,7 +704,7 @@ const Landing = () => {
             </Button>
             <div className="tier-addon">
               <strong>Tillägg för Intelligence-kunder</strong>
-              Aktivera ett byte direkt från er månadsbriefing. 20 % av realiserad besparing.
+              Aktivera ett byte direkt från er månadsbriefing. 20 % av besparingen, fakturerat tre månader efter genomfört byte.
             </div>
           </PricingTier>
         </PricingTiers>

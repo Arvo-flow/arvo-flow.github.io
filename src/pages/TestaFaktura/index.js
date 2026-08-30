@@ -1844,7 +1844,7 @@ const TestaFaktura = () => {
                           {quoteState === 'submitting' ? 'Startar...' : 'Starta offertprocessen →'}
                         </Button>
                         <p className="qlf-zero-risk">
-                          Ni betalar ingenting om vi inte hittar besparingar — 20&nbsp;% av realiserad besparing.
+                          Ni betalar ingenting om vi inte hittar besparingar — 20&nbsp;% av besparingen, fakturerat tre månader efter genomfört byte.
                         </p>
                       </>
                     )}
@@ -2602,7 +2602,7 @@ const TestaFaktura = () => {
 
           </Card>
 
-          {/* ── Arvo Switch — Layer 2 · 20 % av realiserad besparing ────────── */}
+          {/* ── Arvo Switch — Layer 2 · 20 % av besparingen (fakturerat 3 mån efter genomfört byte) ────────── */}
           {_showSwitch && (
             <SwitchCard>
               <div className="switch-eyebrow">Arvo Switch</div>
