@@ -15,12 +15,26 @@ const HEMLIGHET = process.env.CRON_SECRET || '';
 
 let fel = 0;
 
-// ── 1. Routning: utan auth ska endpointen finnas OCH neka ────────────────────────────────────
+// ── 1. Routning ──────────────────────────────────────────────────────────────────────────────
+// VAD DEN HÄR MÄTNINGEN BEVISAR, OCH VAD DEN INTE GÖR: ett 401 utan auth-header bevisar att
+// endpointen är DEPLOYAD och att grinden kör. Den bevisar INTE att den är skyddad — grinden
+// jämför mot `Bearer ${CRON_SECRET}`, och är hemligheten osatt i Vercel blir strängen
+// «Bearer undefined», vilket också nekar allt. De två tillstånden är omöjliga att skilja
+// utifrån. Sondens första version skrev «✓ routad och skyddad» och påstod alltså det andra
+// på det förstas bevis — samma överklagande som obduktionen jagat i tre veckor.
 const utanAuth = await fetch(URL_).catch((e) => ({ status: 0, _fel: e.message }));
 console.log(`[routning] utan auth → HTTP ${utanAuth.status}${utanAuth._fel ? ` (${utanAuth._fel})` : ''}`);
 if (utanAuth.status === 404) { console.error('✗ endpointen är INTE deployad (404)'); fel++; }
+else if (utanAuth.status === 200) { console.error('✗ ENDPOINTEN ÄR ÖPPEN — den svarade 200 utan auth'); fel++; }
 else if (utanAuth.status !== 401) { console.error(`✗ förväntade 401 utan auth, fick ${utanAuth.status}`); fel++; }
-else console.log('✓ routad och skyddad');
+else console.log('✓ deployad och grinden kör (att den är SKYDDAD kräver att CRON_SECRET är satt i Vercel — det kan inte mätas härifrån)');
+
+// Tom bärartoken, exakt som kor-drainen.yml skickade 16 aug när den avslöjade att
+// drain-endpointen var oautentiserad. Svarar den 200 är grinden verkningslös.
+const tomBearer = await fetch(URL_, { headers: { Authorization: 'Bearer ' } })
+  .catch((e) => ({ status: 0, _fel: e.message }));
+console.log(`[routning] tom bärartoken → HTTP ${tomBearer.status}`);
+if (tomBearer.status === 200) { console.error('✗ ENDPOINTEN SLÄPPER IGENOM EN TOM BÄRARTOKEN'); fel++; }
 
 // ── 2. Körningen med auth ────────────────────────────────────────────────────────────────────
 if (!HEMLIGHET) {
