@@ -1673,6 +1673,18 @@ men en framtida användning av `momssats` får inte lita på den blint.
 5. **extraction-integrity som GATE:** varnar idag, ska stoppa obalanserade analyser → granskningskö ("balanskravet")
 6. ~~30 pre-existerande testfel~~ — ✅ KLART 2026-06-11 (sviten 1 270/1 270). Nästa: kategorier ut ur revisionsgrindens tystnad en i taget — priset är alltid fixturfaktura + svit + grönt i sifferrevisorn
 7. **Migrationer:** 4 filer som körs i ordning ur minnet — en samlad migrate-runner
+8. **⚠️ CRON_SECRET — GRUNDARÅTGÄRD, öppen sedan 2026-08-16, mätt igen 2026-08-30.** Hemligheten
+   finns INTE som GitHub-hemlighet (Actions-loggen visar `CRON_SECRET:` tomt), och de två cron-
+   grindarna har MOTSATT form, vilket gör konsekvensen olika och båda fel:
+   · `api/cron/drain-ingest.mjs`: `if (secret && auth !== ...)` — **fail-OPEN**. En osatt hemlighet
+     stänger AV autentiseringen. Det var därför endpointen svarade 200 på en tom bärartoken 16 aug.
+     Felfamiljen på säkerhetsnivå: «ingen hemlighet konfigurerad» blev «alla släpps in».
+   · Alla övriga (inkl. `arvodeskorning`): `NODE_ENV==='production' && auth !== ...` — **fail-closed**.
+     Mätt live 2026-08-30: 401 både utan header och på tom bärartoken. Men om hemligheten är osatt
+     i Vercel nekas då även **Vercels egen cron**, och jobbet fyrar aldrig — tyst.
+   Åtgärd (kräver grundaren, kan inte göras med verktygen härifrån): sätt `CRON_SECRET` i Vercel OCH
+   som GitHub-hemlighet. Först därefter ska drainens grind göras fail-closed — att flippa den innan
+   hemligheten finns skulle stoppa kundernas fakturaingest.
 
 > **✅ STRATEGISKT VÄGVAL — AVGJORT 2026-06-19: NEUTRALITETS-MOATEN, STENHÅRT.**
 > **Partner-/återförsäljarmodellen är förkastad — för alltid.** Arvo tar aldrig en
