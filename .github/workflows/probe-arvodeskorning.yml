@@ -1,0 +1,27 @@
+name: Sond — arvodeskörningen live
+
+# Träffar den utlagda /api/cron/arvodeskorning och rapporterar liggarens storlek bredvid köns.
+# Bevisar att endpointen är routad i produktion och vad liggaren faktiskt innehåller där.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Hit live arvodeskörning
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        # pipefail: utan den returnerar en pipe TEE:s exit-kod och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-arvodeskorning.mjs
