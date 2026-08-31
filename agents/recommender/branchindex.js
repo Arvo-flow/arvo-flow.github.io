@@ -296,7 +296,7 @@ export const BRANCHINDEX = {
     // veckovis av scripts/verify.mjs kortterminal (fabriken). Roll: ankra rate-bandet (det
     // verifierbara). kr/år-matrisen förblir estimat (kortvolym saknar offentlig källa, som el:s kWh).
     verifiedRates: {
-      source: 'official_web', lastVerified: '2026-08-24',
+      source: 'official_web', lastVerified: '2026-08-31',
       basis: 'card-present, Sverige, exkl. moms',
       rates: [
         { supplier: 'Stripe Terminal',  pct: 1.40, fixed: 1.00, url: 'https://stripe.com/se/terminal',     note: 'EES-kort; non-EES online 2,9 % + 1 kr' },
