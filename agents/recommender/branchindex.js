@@ -539,17 +539,17 @@ export const BRANCHINDEX = {
       // NÄSTA VERIFIERING: 2026-09-01
       'google-starter': {
         usdMonthly: 8.40,  usdAnnual: 7.00,
-        currency: 'USD', sekPublic: false, lastVerified: '2026-08-24', source: 'workspace.google.com/intl/en',
+        currency: 'USD', sekPublic: false, lastVerified: '2026-08-31', source: 'workspace.google.com/intl/en',
         note: 'Google Workspace Business Starter — 30 GB Drive/user, Meet, Docs, Gemini AI. Publikt pris endast USD ($7 årsavtal); SEK ej publikt verifierbart.',
       },
       'google-standard': {
         usdMonthly: 16.80, usdAnnual: 14.00,
-        currency: 'USD', sekPublic: false, lastVerified: '2026-08-24', source: 'workspace.google.com/intl/en',
+        currency: 'USD', sekPublic: false, lastVerified: '2026-08-31', source: 'workspace.google.com/intl/en',
         note: 'Google Workspace Business Standard — 2 TB poolad Drive, Meet 150 deltagare + inspelning. Publikt pris endast USD ($14 årsavtal); SEK ej publikt verifierbart.',
       },
       'google-plus': {
         usdMonthly: 26.40, usdAnnual: 22.00,
-        currency: 'USD', sekPublic: false, lastVerified: '2026-08-24', source: 'workspace.google.com/intl/en',
+        currency: 'USD', sekPublic: false, lastVerified: '2026-08-31', source: 'workspace.google.com/intl/en',
         note: 'Google Workspace Business Plus — 5 TB poolad Drive, utökad säkerhet, eDiscovery. Publikt pris endast USD ($22 årsavtal); SEK ej publikt verifierbart.',
       },
 
