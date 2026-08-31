@@ -129,7 +129,7 @@ export const BRANCHINDEX = {
 
   mobil: {
     source: 'real-public',
-    lastVerified: '2026-08-24',
+    lastVerified: '2026-08-31',
     verifiedVia: 'playwright-live',
     unit: 'kr/år',
     // Vad talet är priset PÅ — kundytan skriver ut det, så att "billigaste publicerade pris"
