@@ -710,7 +710,7 @@ export const BRANCHINDEX = {
       // HubSpot CRM — USD-baspris, konverteras runtime.
       'hubspot-starter': {
         usdMonthly: 20.00, usdAnnual: 20.00,
-        currency: 'USD', lastVerified: '2026-08-24', source: 'hubspot.com/pricing/crm/starter',
+        currency: 'USD', lastVerified: '2026-08-31', source: 'hubspot.com/pricing/crm/starter',
         note: 'HubSpot Sales Hub Starter — kontakter, deals, e-postspårning.',
       },
       // Zoho CRM — USD-baspris.
