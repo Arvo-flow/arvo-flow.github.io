@@ -1,4 +1,4 @@
-// tests/arvodeskorning.mjs — AK-01..10: arvodeskörningen som betar av liggaren.
+// tests/arvodeskorning.mjs — AK-01..14: arvodeskörningen som betar av liggaren.
 //
 // `lib/switcharvode.js` (SA-01..08) dömer EN switch. Den här sviten prövar KÖRNINGEN: att rätt
 // datum läses, att inget arvode köas två gånger, att en trasig post inte river faktureringen och
@@ -38,6 +38,15 @@ function post({
     },
   };
 }
+
+/** Kör fn med varje DB-URL borttagen ur miljön. Modulnivå: flera sviter behöver den. */
+const DB_NYCKLAR = ['DATABASE_URL', 'POSTGRES_URL', 'POSTGRES_URL_DATABASE_URL', 'POSTGRES_PRISMA_URL'];
+const utanDb = async (fn) => {
+  const spar = {};
+  for (const k of DB_NYCKLAR) { spar[k] = process.env[k]; delete process.env[k]; }
+  try { return await fn(); }
+  finally { for (const k of DB_NYCKLAR) if (spar[k] !== undefined) process.env[k] = spar[k]; }
+};
 
 describe('AK · Datumet läses ur historiken, aldrig ur updatedAt', () => {
   test('AK-01 · en post som rörts i dag men bytte för 120 dagar sedan ÄR fakturerbar', () => {
@@ -139,14 +148,6 @@ describe('AK · En trasig post river aldrig körningen', () => {
 });
 
 describe('AK · Liggaren: OKÄND är inte samma sak som TOM', () => {
-  const DB_NYCKLAR = ['DATABASE_URL', 'POSTGRES_URL', 'POSTGRES_URL_DATABASE_URL', 'POSTGRES_PRISMA_URL'];
-  const utanDb = async (fn) => {
-    const spar = {};
-    for (const k of DB_NYCKLAR) { spar[k] = process.env[k]; delete process.env[k]; }
-    try { return await fn(); }
-    finally { for (const k of DB_NYCKLAR) if (spar[k] !== undefined) process.env[k] = spar[k]; }
-  };
-
   test('AK-11 · utan databas svarar liggaren null (okänd), aldrig en tom lista', async () => {
     // `claimBatch` bröt exakt den här regeln 24 aug: `[]` på ett DB-fel lästes som «kön är tom»,
     // och drainen raderade kundens enda signal om att arbete fanns. En körning som inte kan fråga
@@ -167,6 +168,34 @@ describe('AK · Liggaren: OKÄND är inte samma sak som TOM', () => {
     assert.equal(svar.kropp.skal, 'liggare_okand');
     assert.equal(svar.kropp.summa, undefined, 'ett okänt tillstånd får aldrig bära ett belopp');
     assert.equal(svar.kropp.liggarePoster, undefined, 'och aldrig ett antal');
+  });
+});
+
+describe('AK · Orkestratorns default-liggare är den durabla', () => {
+  test('AK-13 · en switch skriven utan uttryckligt store hamnar ALDRIG på en döende disk', async () => {
+    // Blindfläcken jag deklarerade 30 aug och lämnade kvar: orkestratorns default var
+    // `new FileStore()` — en gitignorerad katalog som dör med invokationen — medan
+    // arvodeskörningen läser Postgres. «Inga byten har gjorts» hade sett exakt likadant ut som
+    // «varje byte försvann». En deklarerad fälla är fortfarande en fälla.
+    const { Orchestrator } = await import('../agents/orchestrator/orchestrator.js');
+    const { PgStore } = await import('../lib/switchliggare.js');
+    assert.ok(new Orchestrator().store instanceof PgStore,
+      'defaulten måste vara den durabla liggaren, inte en fil på disken');
+
+    // Motprovet: den som vill ha en annan liggare får det — lokala verktyg skickar in sin egen.
+    const egen = { save() {}, load() {}, list() { return []; } };
+    assert.equal(new Orchestrator({ store: egen }).store, egen);
+  });
+
+  test('AK-14 · utan databas KASTAR sparningen — den lyckas aldrig mot ingenting', async () => {
+    const { PgStore } = await import('../lib/switchliggare.js');
+    await utanDb(async () => {
+      await assert.rejects(
+        () => new PgStore().save({ id: 'sw_x', state: 'proposed' }),
+        /databas/,
+        'fail-closed på PÅSTÅENDET att switchen är sparad',
+      );
+    });
   });
 });
 

@@ -19,7 +19,7 @@ import {
   buildEvent, isTerminal, findDueSwitches,
 } from './state-machine.js';
 import { ARVO_FEE_RATE } from '../../lib/fee.js';
-import { FileStore } from './store.js';
+import { PgStore } from '../../lib/switchliggare.js';
 import { generateFullmakt } from './fullmakt/generate.js';
 import { ScriveClient } from './clients/scrive.js';
 import { SupplierClient } from './clients/supplier.js';
@@ -42,7 +42,20 @@ export class OrchestratorError extends Error {
 
 export class Orchestrator {
   constructor(opts = {}) {
-    this.store = opts.store ?? new FileStore();
+    // LANDMINAN JAG SJÄLV LADE, OCH SEDAN TOG BORT (2026-09-01).
+    // Defaulten var `new FileStore()` — en gitignorerad lokal katalog som dör med varje
+    // Vercel-invokation. Arvodeskörningen läser Postgres. Blev rälsen skarp utan att någon
+    // uttryckligen skickade in `PgStore` hade switcharna skrivits till en döende disk medan
+    // liggaren förblev tom — och «inga byten har gjorts» hade sett exakt likadant ut som
+    // «varje byte försvann». Jag deklarerade blindfläcken i modulhuvudet till switchliggare.js
+    // och lämnade den kvar; en deklarerad fälla är fortfarande en fälla (jfr Fortnox-fallet
+    // 15 aug: ärligheten om hålet hindrade inte hålet).
+    //
+    // Defaulten är därför den DURABLA. `PgStore.save` kastar utan databas i stället för att
+    // lyckas mot ingenting — fail-closed på PÅSTÅENDET att en switch är sparad. De lokala
+    // verktygen (cli.js, eval.js, cron.test.js) skickar redan in `FileStore` uttryckligen och
+    // påverkas inte: den som vill ha en fil på disken ska behöva säga det högt.
+    this.store = opts.store ?? new PgStore();
     this.scrive = opts.scrive ?? new ScriveClient({ mode: 'stub' });
     this.supplier = opts.supplier ?? new SupplierClient({ mode: 'stub' });
     this.fortnox = opts.fortnox ?? new FortnoxWatchdog({ mode: 'stub' });
