@@ -87,3 +87,36 @@ describe('Revisionsgrinden — tystnadsgarantin', () => {
   });
 
 });
+
+describe('RG · Bibelns lista får aldrig glida från koden', () => {
+  test('RG-BIB · CLAUDE.md räknar upp exakt de kategorier som faktiskt talar', async () => {
+    // 2026-09-01: bibeln listade «saas-productivity, mobil, bredband, el, skrivarleasing,
+    // kortterminal». Koden sa något annat — skrivarleasing gatades 14 juni (ingen publik källa
+    // för SMF-klickpriser) och fyra kategorier hade tillkommit. En avskriven lista glider isär
+    // från den den beskriver; samma sjukdom som prisbokens osourcade golv, i dokumentationen.
+    // Rättelsen i bibeln räknar SJÄLV upp nio namn och kunde alltså drifta likadant — därför
+    // detta lås, som gör uppräkningen till ett kontrollerat påstående i stället för en minnesbild.
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const rot = join(dirname(fileURLToPath(import.meta.url)), '..');
+    const bibel = readFileSync(join(rot, 'CLAUDE.md'), 'utf8');
+
+    // Läser EXAKT kodspannet efter meningen — inte fritext. En bred ordregex hade matchat varje
+    // svenskt ord i stycket och blivit grön av tomhet, vilket är den vaktsjukdom obduktionen
+    // fällde tre gånger: ett test som inte kan misslyckas mäter ingenting.
+    const efter = bibel.split('som faktiskt talar är')[1];
+    assert.ok(efter, 'bibelns mening om vilka kategorier som talar hittades inte — bytte den lydelse?');
+    const span = efter.match(/`([^`]+)`/);
+    assert.ok(span, 'uppräkningen ska stå i ett kodspann, så att den går att läsa maskinellt');
+    // Blockcitatets '>' på fortsättningsraden är legitim markdown — den strippas, inte fälls på.
+    const namnda = span[1].split('·').map((x) => x.replace(/[>\s]+/g, ' ').trim()).filter(Boolean);
+
+    const faktiska = [...REVIDERADE_KATEGORIER.keys()].sort();
+    assert.deepEqual(namnda.sort(), faktiska,
+      'bibelns uppräkning och REVIDERADE_KATEGORIER måste vara identiska');
+    // Motprovet: en gatad kategori får aldrig stå i uppräkningen.
+    assert.ok(!namnda.includes('skrivarleasing'),
+      'skrivarleasing är gatad sedan 14 juni — den får aldrig stå bland dem som talar');
+  });
+});

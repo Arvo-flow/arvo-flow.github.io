@@ -1490,7 +1490,24 @@ ARVO_BASE_URL         — bas-URL för mail-länkar
 - ✅ Regressionssvit `tests/svea-print.mjs` (18 tester) låser faktura 440192 för alltid
 
 **Åtgärdat (revisionsgrinden + sifferrevisorn — 2026-06-11):**
-- ✅ **Revisionsgrinden** (`lib/revision-gate.js`): regel 4 som ARKITEKTUR — oreviderade kategorier kortsluter i `recommend()` till talfritt offert-läge FÖRE all beräkning och AI. Endast kategorier med dedikerad regressionssvit (`REVIDERADE_KATEGORIER`: saas-productivity, mobil, bredband, el, skrivarleasing, kortterminal) får visa siffror. Okända fel kan inte längre nå kund — de kan bara drabba ytor som redan bär maskinlås
+- ✅ **Revisionsgrinden** (`lib/revision-gate.js`): regel 4 som ARKITEKTUR — oreviderade kategorier kortsluter i `recommend()` till talfritt offert-läge FÖRE all beräkning och AI. Endast kategorier med dedikerad regressionssvit (`REVIDERADE_KATEGORIER`) får visa siffror.
+
+  > **⚠️ LISTAN HÄR DRIFTADE FRÅN KODEN (rättad 2026-09-01).** Bibeln räknade upp «saas-productivity,
+  > mobil, bredband, el, skrivarleasing, kortterminal». Koden säger något annat: **skrivarleasing
+  > gatades 2026-06-14** (managed print är offertbaserat — det finns ingen publik källa för
+  > SMF-klickpriser), och fyra kategorier har tillkommit. De nio som faktiskt talar är
+  > `saas-productivity · saas-finance · saas-creative · mobil · bredband · el · kortterminal ·
+  > molnvaxel · loneadmin`. En avskriven lista glider isär från den den beskriver — samma sjukdom
+  > som prisbokens osourcade golv, bara i dokumentationen. **Räkna aldrig upp en lista i prosa när
+  > koden äger den; hänvisa till konstanten.**
+  >
+  > **Och varför de nitton andra tiger är inte en lucka utan en mätning:** varje kategori med
+  > `source: 'real-public'` talar redan. De tysta saknar ett **verifierat publikt SEK-golv** — och
+  > den mest lovande av dem, `saas-crm`, är det tydligaste fallet: Pipedrive, HubSpot och Zoho har
+  > alla färskt verifierade priser (31 aug) men prissätter i **USD**. Det är google-sek-grindens
+  > situation ordagrant, och samma svar gäller: ett SEK-tal ur en USD-lista via en runtime-kurs är
+  > inte ett verifierat listpris. **Vägen ut ur tystnaden går alltså inte genom kod utan genom
+  > prisdata** — en publik svensk prislista, en verifierare och ett vaktkontrakt per kategori. Okända fel kan inte längre nå kund — de kan bara drabba ytor som redan bär maskinlås
 - ✅ **Sifferrevisorn** (`scripts/sifferrevisor.mjs`, pre-commit): bevisar tystnadsgarantin maskinellt — kör `recommend()` offline för VARJE oreviderad kategori (21 st) och underkänner commit om någon läcker en siffra (fält eller copy); verifierar att varje grindad kategori pekar på sviter som existerar. Fångade sitt första fel på första körningen (`saas-devtools` fanns inte i CATEGORIES)
 - ✅ **Städpass skuld #6 KLAR:** alla 30 röda tester gröna — 24 fixturer + BI-03/BI-08 hade driftat från medvetna priskorrigeringar (bredband-p25 9 000→10 200 = Tele2 849×12 verifierat; mobil-p25 →3 588 = Tele2 Bas 299×12). 7 fixturer fick `secondary: null` — kunder på verifierat listpris ska inte loviseras besparingar. Sviten: **1 270/1 270 grönt, 0 fel**
 - ✅ Pre-commit-kedjan nu: price-audit → claims-audit → sifferrevisorn · cache bumpat till `pdf:result:v7`
