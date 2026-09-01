@@ -5,35 +5,28 @@
 ║ Läs aldrig siffrorna nedan utan raden ovanför. En mätning utan sin gräns är
 ║ ett påstående som låtsas vara ett faktum.
 ╚═══════════════════════════════════════════════════════════════════════════════
-═══ GRINDARNA MOT 9 VERKLIGA FAKTUROR ═══
+═══ GRINDARNA MOT 75 VERKLIGA FAKTUROR ═══
 
-  ✗ konsult-it-oklar.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ fortum-el-fastpris.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ tibber-el-timavrakning.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ tryggel.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ tele2-mobil-kreditfaktura.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ eon-el-solceller.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ eon-el-spot-se3.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ kraftringen-el-lokalt.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-  ✗ vattenfall-el-se4.pdf: extraktionen föll — Vår analysmotor är nere just nu — det är vår sida, inte er faktura. Vi
-
+...................................[billing-period] multi-unit quarterly override → monthly (2 rader med quantity≥5)
+........................................
 
 ────────────────────────────────────────────────────────────────────────
-fakturor lästa: 0 · extraktionsfel: 9
+fakturor lästa: 75 · extraktionsfel: 0
 
-BALANSKRAVET   prövbara 0 fakturor · 0 rader
-               skulle STOPPA 0 fakturor (—)
-               fällda rader: 0 (—)
-               TÄCKNING: 0 av 0 rader bar öresfält (—)
+BALANSKRAVET   prövbara 69 fakturor · 181 rader
+               skulle STOPPA 1 fakturor (1.4 %)
+               fällda rader: 1 (0.6 %)
+                 · eon-el-spot-se3.pdf (1/4 rader: antal_x_apris_matchar_inte_radbelopp)
+               TÄCKNING: 185 av 191 rader bar öresfält (96.9 %)
                0 rader odömbara (à-pris < 10 kr utan öresfält) — grinden TIGER där, den godkänner inte
 
-PROJEKTIONSKRAV prövbara 0 · fäller 0 (—)
+PROJEKTIONSKRAV prövbara 69 · fäller 0 (0.0 %)
 
-SCHEMAKRAVET    prövbara 0 · fäller 0 (—)
+SCHEMAKRAVET    prövbara 75 · fäller 0 (0.0 %)
 
 RING 1 (radsumma, REDAN ARMERAD — referensmåttet)
-               ok 0 · stopp 0 · varning 0 · ej prövbar 0
-               stoppfrekvens — — en armerad grinds verkliga nivå
+               ok 69 · stopp 1 · varning 0 · ej prövbar 1
+               stoppfrekvens 1.3 % — en armerad grinds verkliga nivå
 ────────────────────────────────────────────────────────────────────────
 Sonden avgör INTE om en fälld faktura är ett sant fel eller ett falsklarm.
 Den ger talet beslutet ska vila på — läs de namngivna fakturorna mot pappret först.
