@@ -1696,9 +1696,22 @@ men en framtida användning av `momssats` får inte lita på den blint.
    · `api/cron/drain-ingest.mjs`: `if (secret && auth !== ...)` — **fail-OPEN**. En osatt hemlighet
      stänger AV autentiseringen. Det var därför endpointen svarade 200 på en tom bärartoken 16 aug.
      Felfamiljen på säkerhetsnivå: «ingen hemlighet konfigurerad» blev «alla släpps in».
-   · Alla övriga (inkl. `arvodeskorning`): `NODE_ENV==='production' && auth !== ...` — **fail-closed**.
-     Mätt live 2026-08-30: 401 både utan header och på tom bärartoken. Men om hemligheten är osatt
-     i Vercel nekas då även **Vercels egen cron**, och jobbet fyrar aldrig — tyst.
+   · Alla övriga (inkl. `arvodeskorning`): `NODE_ENV==='production' && auth !== ...`. Mätt live
+     2026-08-30: 401 både utan header och på tom bärartoken. Om hemligheten är osatt i Vercel nekas
+     även **Vercels egen cron**, och jobbet fyrar aldrig — tyst.
+     **⚠️ RÄTTELSE 2026-09-01 (Fable 5.1:s granskning): den här grinden kallades «fail-closed —
+     nekar allt». Påståendet var skrivet, inte mätt.** Med osatt hemlighet blir mallsträngen
+     bokstavligen `Bearer undefined`, och en anropare som skickar exakt den strängen SLÄPPS IN:
+     `'Bearer undefined' !== \`Bearer ${undefined}\`` → **false**. Felfamiljen som lösenord — «ingen
+     hemlighet» lånade ett giltigt, gissbart värde. Sonden 30 aug skickade `Bearer ` (tom), aldrig
+     `Bearer undefined`, och «bevisade» därför ett skydd den inte prövat. Nu EN grind i
+     `lib/cronvakt.js` för alla tre endpoints: en osatt hemlighet nekar utan jämförelse. SL-04/05.
+   · **Samma granskning fällde «samma gränssnitt som FileStore»** i `lib/switchliggare.js`:
+     `FileStore.list()` ger **ID:n**, `PgStore.list()` gav **poster**. Orkestratorns `list()`,
+     `findBySigningDocId()` (Scrive-webhooken) och `findDueScheduled()` (cron) itererar id:n och
+     anropar `load(id)` — alla tre hade brutit samma dag PgStore blev default, och AK-13 prövade bara
+     `instanceof`. Ett kontrakt som står i en kommentar är inte prövat. SL-01..03 låser metodparitet
+     och returform mot en fejkad db; `listRecords()` bär arvodeskörningens väg.
    Åtgärd (kräver grundaren, kan inte göras med verktygen härifrån): sätt `CRON_SECRET` i Vercel OCH
    som GitHub-hemlighet. Först därefter ska drainens grind göras fail-closed — att flippa den innan
    hemligheten finns skulle stoppa kundernas fakturaingest.

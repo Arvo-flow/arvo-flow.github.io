@@ -14,6 +14,7 @@ import { getDb }                    from '../../lib/db.js';
 import { generateBriefingInsights } from '../../lib/briefing-generator.js';
 import { Resend }                   from 'resend';
 import crypto                       from 'crypto';
+import { cronAnropTillatet } from '../../lib/cronvakt.js';
 
 const FROM     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
 const BASE_URL = process.env.ARVO_BASE_URL    ?? 'https://arvoflow.se';
@@ -21,12 +22,8 @@ const BASE_URL = process.env.ARVO_BASE_URL    ?? 'https://arvoflow.se';
 export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
-  if (
-    process.env.NODE_ENV === 'production' &&
-    req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
-    return res.status(401).json({ error: 'unauthorized' });
-  }
+  // Grinden bor i lib/cronvakt.js: en osatt hemlighet nekar, den blir aldrig strängen «undefined».
+  if (!cronAnropTillatet(req)) return res.status(401).json({ error: 'unauthorized' });
 
   const db = getDb();
   if (!db) return res.status(503).json({ error: 'DB ej tillgänglig' });

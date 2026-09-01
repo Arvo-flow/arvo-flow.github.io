@@ -5,17 +5,14 @@
 // vercel.json: { "crons": [{ "path": "/api/cron/update-fx-rate", "schedule": "0 6 * * *" }] }
 
 import { fetchLiveSekRate, fetchLiveEurSekRate } from '../../agents/recommender/pricing.js';
+import { cronAnropTillatet } from '../../lib/cronvakt.js';
 
 export const config = { maxDuration: 15 };
 
 export default async function handler(req, res) {
   // Vercel Cron skickar Authorization-header; blockera externa anrop.
-  if (
-    process.env.NODE_ENV === 'production' &&
-    req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
-    return res.status(401).json({ error: 'unauthorized' });
-  }
+  // Grinden bor i lib/cronvakt.js: en osatt hemlighet nekar, den blir aldrig strängen «undefined».
+  if (!cronAnropTillatet(req)) return res.status(401).json({ error: 'unauthorized' });
 
   try {
     const { kv } = await import('@vercel/kv');

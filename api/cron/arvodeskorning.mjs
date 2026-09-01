@@ -24,6 +24,7 @@
 
 import { arvodeskoen } from '../../lib/arvodeskorning.js';
 import { hamtaLiggare } from '../../lib/switchliggare.js';
+import { cronAnropTillatet } from '../../lib/cronvakt.js';
 
 export const config = { maxDuration: 30 };
 
@@ -32,12 +33,8 @@ const maskera = (e) => (typeof e === 'string' && e.includes('@')
   ? `${e.slice(0, 2)}***@${e.split('@')[1]}` : null);
 
 export default async function handler(req, res) {
-  if (
-    process.env.NODE_ENV === 'production' &&
-    req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
-    return res.status(401).json({ error: 'unauthorized' });
-  }
+  // Grinden bor i lib/cronvakt.js: en osatt hemlighet nekar, den blir aldrig strängen «undefined».
+  if (!cronAnropTillatet(req)) return res.status(401).json({ error: 'unauthorized' });
 
   try {
     const liggare = await hamtaLiggare();
