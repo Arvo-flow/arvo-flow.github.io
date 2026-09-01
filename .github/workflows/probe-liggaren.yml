@@ -1,0 +1,29 @@
+name: Sond — switchliggaren + arvodeskön (produktions-DB)
+
+# Mäter vad liggaren FAKTISKT innehåller i produktion och vilken arvodeskö den ger.
+# Går via DATABASE_URL i stället för cron-endpointen, som kräver en CRON_SECRET vi inte har här.
+# Läser bara — skapar aldrig tabellen (en mätning som ändrar det den mäter är ingen mätning).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Mät liggaren
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # pipefail: utan den returnerar en pipe TEE:s exit-kod och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-liggaren.mjs

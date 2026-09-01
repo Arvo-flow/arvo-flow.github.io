@@ -112,4 +112,23 @@ await sql`
 `;
 
 console.log('✓ activation_outcomes: skapad (fee_kr = 20% av verified_saving_kr, genererad kolumn)');
+
+// ── switch_records — switchliggaren (2026-08-30) ────────────────────────────────────────────
+// Arvodeskörningen läser den här tabellen. Den skapas av en MIGRERING, inte enbart av
+// självläkningen i lib/switchliggare.js — LK-01:s läxa: `invoice_number` självläkte i SKRIV-
+// vägen, ingen ny rad skrevs, och LÄSvägen kastade. En självläkning någon annanstans i koden
+// är inget bevis för att kolumnen finns där den läses. Självläkningen står kvar som det den
+// ska vara: räddningen för en miljö där migreringen släpat efter, aldrig ersättningen för den.
+await sql`
+  CREATE TABLE IF NOT EXISTS switch_records (
+    id           TEXT        PRIMARY KEY,
+    state        TEXT        NOT NULL,
+    record       JSONB       NOT NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS switch_records_state_idx ON switch_records (state)`;
+console.log('✓ switch_records: skapad (switchliggaren — underlag för arvodeskörningen)');
+
 console.log('\n✅ Arvo Intelligence Fas 1-migreringar klara.');
