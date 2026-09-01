@@ -64,6 +64,12 @@ if [ $STATUS -eq 0 ]; then
   STATUS=$?
 fi
 
+# Påståendevakten — ett nytt mekanismpåstående i koden måste peka på ett test som finns
+if [ $STATUS -eq 0 ]; then
+  node scripts/pastaendevakt.mjs
+  STATUS=$?
+fi
+
 if [ $STATUS -ne 0 ]; then
   echo ""
   echo "  Commit blockerad av price-audit. Åtgärda felen ovan och försök igen."
@@ -75,6 +81,15 @@ exit $STATUS
 
 writeFileSync(PRE_COMMIT, PRE_COMMIT_CONTENT, 'utf8');
 chmodSync(PRE_COMMIT, 0o755);
+
+// ── commit-msg ─────────────────────────────────────────────────────────────────
+// En beteendeändring i lib/ eller api/ ska namnge sitt syskonfall och sitt sabotage.
+const COMMIT_MSG = join(HOOKS_DIR, 'commit-msg');
+writeFileSync(COMMIT_MSG, `#!/bin/sh
+# Installerad av scripts/setup-hooks.mjs — redigera inte manuellt.
+node scripts/commitkrav.mjs "$1"
+`, 'utf8');
+chmodSync(COMMIT_MSG, 0o755);
 
 console.log('✓ pre-commit hook installerad →', PRE_COMMIT);
 console.log('  Kör price-audit vid varje commit (blockerar vid täckningsluckor)');

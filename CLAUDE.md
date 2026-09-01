@@ -120,6 +120,50 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 
 ---
 
+## Bevisplikten · Ett påstående skrivs efter att det körts, aldrig före
+
+> **✅ GRUNDARBESLUT 2026-09-01, efter att Fable 5.1 granskat Opus 5:s vecka.** Grundaren:
+> *«Opus 5 gör alldeles för många misstag. Vi har inte råd med något feltrapp.»* Diagnosen kom ur
+> felens FORM, inte ur modellen. Fable hittade två fel på fyra verktygsanrop; Opus hittade ~25 i
+> sitt eget arbete under obduktionen. Nästan alla har samma form:
+>
+> **Ett påstående skrevs ner — i en kommentar, i bibeln, i en commit — INNAN det kördes.**
+> *«samma gränssnitt»* (list() gav poster, inte ID:n · tre anropare hade kraschat) ·
+> *«fail-closed — nekar allt»* (`Bearer undefined` släpptes in) · *«routad och skyddad»* (bevisade
+> routning, påstod skydd) · *«sabotage-bevisad»* (med ett sabotage som var en no-op).
+>
+> Det är inte kunskapsbrist — Opus skrev reglerna. Felet är att **bygga och granska i samma
+> andetag** och sedan merga direkt till `main`. Bibeln säger själv att granskarens blick inte är
+> byggarens, men strukturen tvingade aldrig fram bytet av blick.
+>
+> 1. **Ingen merge till `main` utan en andra blick** för `lib/`, `api/`, `agents/`. Byggaren
+>    stannar på branchen; en SEPARAT session med enda uppdraget *«hitta var det gröna är osant»*
+>    körs före merge. Rollen gör jobbet, inte modellen. (Detta ersätter den gamla raden «merga
+>    alltid till main direkt efter varje commit».)
+> 2. **Ett mekanismpåstående i koden bär sitt test-ID.** Maskinvakt: `lib/pastaendevakt.js` +
+>    `scripts/pastaendevakt.mjs` (pre-commit). Ordlistan bär BARA mekanismpåståenden — mätt på
+>    20 commits gav «aldrig» 25 träffar och hade fällt nästan varje commit; en vakt som skriker på
+>    rätt beteende blir avstängd. Ett citerat ID måste stå som TESTTITEL i `tests/`.
+> 3. **En beteendeändring i `lib/` eller `api/` namnger sitt syskonfall och sitt sabotage — med ett
+>    TAL.** Maskinvakt: `lib/commitkrav.js` + `scripts/commitkrav.mjs` (commit-msg). Ett sabotage
+>    som fäller noll tester är ingen prövning. Rena kommentarändringar undantas: en vakt som kräver
+>    ett sabotage för en rättstavning kringgås med `--no-verify`, och då är den sämre än ingen.
+> 4. **Ett sabotage skrivs med `assert old in s`.** Två av Opus sabotage var no-ops — strängen
+>    matchade inte, sviten förblev grön, och det gröna betydde «jag testade inte».
+>
+> **Vakten fällde sin egen byggare på första skarpa körningen.** `ZZ-99` godkändes, eftersom
+> uppslaget sökte ID:t var som helst i `tests/` och träffade den fixtur som just skrivits. En vakt
+> grön på fel grund, i precis den sjukdom den byggdes mot — och den syntes bara för att provet gick
+> genom `git`, inte genom sviten. PV-09 låser det. PV-01..09 + CK-01..05, sabotage-bevisade i fyra
+> riktningar (varav ett var en no-op som `assert` fångade, vilket är hela punkt 4).
+>
+> **Uttalad blindfläck:** båda vakterna läser ORD, aldrig innebörd. *«Syskonfall: inga»* passerar,
+> ett citerat ID kan peka på ett test som prövar något annat, och ett påstående formulerat utan
+> orden syns inte. De flyttar bevisbördan till något en granskare kan slå upp — de bär den inte.
+> Punkt 1 är den enda som faktiskt granskar; punkt 2–4 gör bara fusket synligt.
+
+---
+
 ## Verifieringsplikten · Aldrig en gissning
 
 > *En gissning som låter rätt är farligare än ett erkänt "jag vet inte" — för den
@@ -307,7 +351,7 @@ signera", aldrig som ett verkställt löfte.)
 
 *Commit aldrig `.env` eller credentials · Kör aldrig `scripts/stress-test.mjs` utan explicit OK*
 
-*Merga alltid till `main` direkt efter varje commit — lämna aldrig ändringar enbart på en feature branch.*
+*Merga till `main` FÖRST efter en andra blick (Bevisplikten p.1) för ändringar i `lib/`, `api/`, `agents/` — lämna aldrig ändringar enbart på en feature branch när granskningen är gjord.*
 
 *Kör alltid `npm run deploy` efter push till `main` — frontend-bygget ska alltid vara uppdaterat.*
 
