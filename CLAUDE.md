@@ -1685,6 +1685,11 @@ men en framtida användning av `momssats` får inte lita på den blint.
    Åtgärd (kräver grundaren, kan inte göras med verktygen härifrån): sätt `CRON_SECRET` i Vercel OCH
    som GitHub-hemlighet. Först därefter ska drainens grind göras fail-closed — att flippa den innan
    hemligheten finns skulle stoppa kundernas fakturaingest.
+   **MÄTNINGEN behövde den däremot aldrig:** `scripts/probe-liggaren.mjs` går via `DATABASE_URL`
+   (som finns i Actions) och mäter DATAN i stället för HTTP-routen — den bättre vägen ändå, eftersom
+   routen är bevisad separat. Utfall 2026-09-01: `switch_records` finns i produktion, **0 poster**,
+   kön tom av rätt skäl. *Läxan: när en mätning blockeras av en saknad hemlighet, fråga först om
+   hemligheten var nödvändig för MÄTNINGEN eller bara för den väg jag råkade välja.*
 
 > **✅ STRATEGISKT VÄGVAL — AVGJORT 2026-06-19: NEUTRALITETS-MOATEN, STENHÅRT.**
 > **Partner-/återförsäljarmodellen är förkastad — för alltid.** Arvo tar aldrig en
