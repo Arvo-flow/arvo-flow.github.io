@@ -1,0 +1,12 @@
+═══ GleSYS · serverhosting · 1 sida(or) ═══
+
+──── https://glesys.se/priser
+  status 200 · cookie-vägg: button:has-text("Tillåt alla")
+  RÅ HTML: 0/0 tal fanns utan JS
+  PAKET → PRIS (0 par, 0 ur tabell):
+   (INGA — priserna går inte att koppla till en produkt maskinellt)
+  MOMS:    (inget momsord — momsbasen är OKÄND)
+  KAMPANJ: (inget)
+  HINDER:  (inga)
+
+[probe-prislista] GleSYS klar
