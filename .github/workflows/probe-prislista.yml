@@ -49,6 +49,10 @@ jobs:
           git config user.name "Arvo Probe Bot"
           git add ops/prislistor/ || true
           git commit -m "ops: prislista ${{ inputs.leverantor }} [skip ci]" --no-verify || echo "inget att spara"
+          # `npm install playwright` smutsar package.json, och då vägrar rebasen: "cannot pull with
+          # rebase: You have unstaged changes". Kanariefågeln föll på exakt det, två körningar i rad,
+          # och utfallet blev kvar i en logg som roterar. Samma mönster som probe-grindarna redan löst.
+          git checkout -- . 2>/dev/null || true
           for i in 1 2 3; do
             git pull --rebase origin main && git push origin HEAD:main && exit 0
             sleep $((i*4))
