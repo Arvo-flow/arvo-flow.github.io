@@ -1,0 +1,19 @@
+═══ Bokio · faktura-tjanst · 1 sida(or) ═══
+
+──── https://www.bokio.se/priser/
+  status 200 · cookie-vägg: button:has-text("Acceptera")
+  RÅ HTML: 23/23 tal fanns utan JS
+  PAKET → PRIS (8 par, 0 ur tabell):
+   § [kort] 599 → Kvartalsvis betalning: 1797 kr
+   § [kort] 459 → Årlig betalning: 5508 kr
+   § [kort] 359 → Årlig betalning: 4308 kr
+   § [kort] 269 → Årlig betalning: 3228 kr
+   § [kort] Plus → 599 kr/mån
+   § [kort] Business → 459 kr/mån
+   § [kort] Premium → 359 kr/mån
+   § [kort] Basic → 269 kr/mån
+  MOMS:    (inget momsord — momsbasen är OKÄND)
+  KAMPANJ: (inget)
+  HINDER:  (inga)
+
+[probe-prislista] Bokio klar
