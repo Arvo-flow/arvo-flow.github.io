@@ -82,6 +82,15 @@ exit $STATUS
 writeFileSync(PRE_COMMIT, PRE_COMMIT_CONTENT, 'utf8');
 chmodSync(PRE_COMMIT, 0o755);
 
+// ── pre-push ───────────────────────────────────────────────────────────────────
+// Bevisplikten p.1 var prosa tills en underagent pushade lib/ till main. Nu en grind.
+const PRE_PUSH = join(HOOKS_DIR, 'pre-push');
+writeFileSync(PRE_PUSH, `#!/bin/sh
+# Installerad av scripts/setup-hooks.mjs — redigera inte manuellt.
+node scripts/mainvakt.mjs
+`, 'utf8');
+chmodSync(PRE_PUSH, 0o755);
+
 // ── commit-msg ─────────────────────────────────────────────────────────────────
 // En beteendeändring i lib/ eller api/ ska namnge sitt syskonfall och sitt sabotage.
 const COMMIT_MSG = join(HOOKS_DIR, 'commit-msg');
