@@ -1,6 +1,24 @@
-═══ Binero · serverhosting · 1 sida(or) ═══
+═══ Binero · serverhosting · 3 sida(or) ═══
 
-──── https://www.binero.se/webbhotell
+──── https://www.binero.se/webbhotell/priser
+  status 200 · cookie-vägg: ingen
+  RÅ HTML: 0/0 tal fanns utan JS
+  PAKET → PRIS (0 par, 0 ur tabell):
+   (INGA — priserna går inte att koppla till en produkt maskinellt)
+  MOMS:    (inget momsord — momsbasen är OKÄND)
+  KAMPANJ: (inget)
+  HINDER:  (inga)
+
+──── https://www.binero.se/priser
+  status 200 · cookie-vägg: ingen
+  RÅ HTML: 0/0 tal fanns utan JS
+  PAKET → PRIS (0 par, 0 ur tabell):
+   (INGA — priserna går inte att koppla till en produkt maskinellt)
+  MOMS:    (inget momsord — momsbasen är OKÄND)
+  KAMPANJ: (inget)
+  HINDER:  (inga)
+
+──── https://www.binero.se/webbhotell/jamfor-paket
   status 200 · cookie-vägg: ingen
   RÅ HTML: 0/0 tal fanns utan JS
   PAKET → PRIS (0 par, 0 ur tabell):
