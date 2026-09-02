@@ -1,6 +1,6 @@
-═══ GleSYS · serverhosting · 1 sida(or) ═══
+═══ GleSYS · serverhosting · 3 sida(or) ═══
 
-──── https://glesys.se/priser
+──── https://glesys.se/vps
   status 200 · cookie-vägg: button:has-text("Tillåt alla")
   RÅ HTML: 0/0 tal fanns utan JS
   PAKET → PRIS (0 par, 0 ur tabell):
@@ -9,4 +9,8 @@
   KAMPANJ: (inget)
   HINDER:  (inga)
 
+──── https://glesys.se/priser/vps
+  status 404 · cookie-vägg: ingen
+──── https://glesys.se/tjanster/vps
+  status 404 · cookie-vägg: ingen
 [probe-prislista] GleSYS klar
