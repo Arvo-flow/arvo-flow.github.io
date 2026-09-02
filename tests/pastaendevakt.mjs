@@ -13,9 +13,10 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  domRad, granskaDiff, citeradeTestId, tillagdaRader, arRiktigtTest, PASTAENDEORD, BEVAKADE,
+  domRad, granskaDiff, citeradeTestId, tillagdaRader, arRiktigtTest, pastaendetext, motiveradeRader,
+  PASTAENDEORD, BEVAKADE,
 } from '../lib/pastaendevakt.js';
-import { granskaCommit, arBeteendeandring } from '../lib/commitkrav.js';
+import { granskaCommit, arBeteendeandring, KRAVDA_KATALOGER } from '../lib/commitkrav.js';
 
 /** En riktig `git diff --cached -U0` i miniatyr — kedjan prövas, inte bara domaren. */
 const diffMed = (fil, rader) =>
@@ -119,6 +120,78 @@ describe('PV · Uppslaget får inte träffa sin egen fixtur', () => {
   });
 });
 
+describe('PV · Fable 5.1:s granskning 2026-09-02 — sju hål i vakten själv', () => {
+  test('PV-11 · en TOM motivering tystar inte längre ett verkligt påstående', () => {
+    // «pastaende-ok: ja» släppte förr igenom vad som helst. Undantaget finns kvar — men det ska
+    // KOSTA en mening, och skalet skriver ut varje undantag så att en granskare ser dem.
+    const utan = granskaDiff(diffMed('lib/x.js', ['// grinden är fail-closed. // pastaende-ok: ja']));
+    assert.equal(utan.length, 1, 'en motivering utan innehåll är ingen motivering');
+    const med = granskaDiff(diffMed('lib/x.js',
+      ['// grinden är fail-closed. // pastaende-ok: citerar ett fällt påstående']));
+    assert.deepEqual(med, [], 'MOTPROVET — en riktig motivering ska fortfarande bära');
+  });
+
+  test('PV-12 · utskrifter och feltexter ÄR påståenden — en tilldelning är det inte', () => {
+    // «✓ routad och skyddad» stod i en console.log i en sond, och var ett av granskningens fynd.
+    // Det är den text grundaren faktiskt läser som ett resultat.
+    assert.equal(domRad('  console.log("klar — fail-closed");').brott, true, 'utskrift');
+    assert.equal(domRad('  throw new Error("fail-closed");').brott, true, 'feltext');
+    assert.equal(domRad('  const x = 1; // grinden är fail-closed').brott, true, 'efterställd kommentar');
+    // MOTPROVEN: data är ingen utsaga, och ett snedstreck i en URL är ingen kommentar.
+    assert.equal(domRad("  const läge = 'fail-closed';").brott, false, 'tilldelning är data');
+    assert.equal(domRad('  const u = "https://x.se//fail-closed";').brott, false, 'URL är ingen kommentar');
+    assert.deepEqual(pastaendetext('  const x = 1;'), [], 'en ren kodrad bär ingen utsaga');
+  });
+
+  test('PV-13 · ordlistan fångar nu fem av obduktionens åtta — och tre står kvar, uttalat', () => {
+    // Fable matade obduktionens EGNA falska påståenden genom vakten: sex av åtta passerade.
+    // Ordlistan var vald ur de fel jag redan sett. Nu fälls fem; de tre kvarvarande saknar varje
+    // påståendeord och kan bara fångas av en granskare (Bevisplikten p.1).
+    const falls = [
+      '// rubriken läser alltid mätaren innan den väljer gren',
+      '// kolumnen självläker vid skrivning, så den finns alltid när vi läser',
+      '// balanced: true — kontrollen är utförd',
+      '// samma gränssnitt som FileStore',
+      '// grinden är fail-closed',
+    ];
+    for (const r of falls) assert.equal(domRad(r).brott, true, `borde fällas: ${r}`);
+
+    // DE TRE SOM STÅR KVAR. Testet låser att vi VET om dem — inte att de är okej.
+    const passerar = [
+      '// i öre är aritmetiken exakt — då räcker en öresavrundning per rad',  // ordföljd
+      '// rör aldrig annualImpact — fakta ur analysen',                        // «aldrig»: 25 träffar
+      '// utan prorata-rader',                                                 // helt utan påståendeord
+    ];
+    for (const r of passerar) assert.equal(domRad(r).brott, false, `deklarerad blindfläck: ${r}`);
+
+    // Och varför ordlistan inte får växa mer: mätt 2026-09-02 gav «exakt» ensamt 16 träffar på
+    // 40 commits, «aldrig» 25. Ett ord i den klassen fäller rätt beteende och stänger av vakten.
+    for (const ord of ['exakt', 'aldrig', 'alltid']) {
+      assert.ok(!PASTAENDEORD.includes(ord), `«${ord}» är för vanligt och skulle stänga av vakten`);
+    }
+  });
+
+  test('PV-15 · varje tystat påstående skrivs ut — ett tyst undantag granskas av ingen', () => {
+    const rader = motiveradeRader(diffMed('lib/x.js', [
+      '// grinden är fail-closed. // pastaende-ok: citerar ett fällt påstående',
+      '// en helt vanlig kommentar',
+    ]));
+    assert.equal(rader.length, 1, 'bara rader där motiveringen faktiskt tystade ett påstående');
+    // MOTPROVET: en rad som bär «pastaende-ok:» utan att tysta något är brus, inte ett undantag.
+    // Utan denna gren rapporterade listan vaktens egen regexdefinition som ett tystat påstående.
+    assert.deepEqual(motiveradeRader(diffMed('lib/y.js',
+      ['const M = /pastaende-ok:/;  // pastaende-ok: definitionen är ingen tystning'])), []);
+    assert.equal(rader[0].fil, 'lib/x.js');
+    assert.match(rader[0].skal, /citerar ett fällt påstående/,
+      'skälet ska nå utskriften — annars kan granskaren inte bedöma undantaget');
+  });
+
+  test('PV-14 · test-ID med fler än två siffror räknas (CR-88412, IT-8821 finns i sviten)', () => {
+    assert.deepEqual(granskaDiff(diffMed('lib/x.js', ['// fail-closed enligt CR-88412.'])), []);
+    assert.deepEqual(citeradeTestId(diffMed('lib/x.js', ['// fail-closed enligt CR-88412.'])), ['CR-88412']);
+  });
+});
+
 describe('CK · Commit-kravet: syskonfallet och sabotaget redovisas', () => {
   const kodDiff = 'diff --git a/lib/x.js b/lib/x.js\n--- a/lib/x.js\n+++ b/lib/x.js\n@@ -1,0 +2,1 @@\n+  return null;\n';
   const komDiff = 'diff --git a/lib/x.js b/lib/x.js\n--- a/lib/x.js\n+++ b/lib/x.js\n@@ -1,0 +2,1 @@\n+  // bara en kommentar\n';
@@ -150,9 +223,37 @@ describe('CK · Commit-kravet: syskonfallet och sabotaget redovisas', () => {
     assert.equal(granskaCommit('Rättar en stavning', komDiff).ok, true);
   });
 
-  test('CK-05 · kataloger utanför lib/ och api/ kräver inga rubriker', () => {
+  test('CK-06 · agents/ räknas — landminan 30 aug bodde där', () => {
+    // Orkestratorns FileStore-default var en beteendeändring i agents/orchestrator/orchestrator.js.
+    // Bevisplikten p.1 nämner agents/; p.3:s maskinvakt gjorde det inte. (Fable 5.1:s F7.)
+    const agentDiff = 'diff --git a/agents/orchestrator/o.js b/agents/orchestrator/o.js\n--- a/agents/orchestrator/o.js\n+++ b/agents/orchestrator/o.js\n@@ -1,0 +2,1 @@\n+  this.store = new FileStore();\n';
+    assert.equal(arBeteendeandring(agentDiff), true);
+    assert.equal(granskaCommit('byter default', agentDiff).ok, false);
+    assert.ok(KRAVDA_KATALOGER.test('agents/x.js') && !KRAVDA_KATALOGER.test('src/x.js'));
+  });
+
+  test('CK-07 · ATT TA BORT EN GRIND är sabotagets egen form — och den var osynlig', () => {
+    // Första versionen läste bara `+`-rader. En commit som RADERAR `if (!secret) return false;`
+    // hade noll tillagda kodrader och slapp varje rubrik. Det allvarligaste av Fables sju fynd.
+    const del = 'diff --git a/lib/x.js b/lib/x.js\n--- a/lib/x.js\n+++ b/lib/x.js\n@@ -5,1 +5,0 @@\n-  if (!secret) return false;\n';
+    assert.equal(arBeteendeandring(del), true, 'en raderad kodrad är en beteendeändring');
+    assert.equal(granskaCommit('tar bort grinden', del).ok, false);
+    // MOTPROVET: filhuvudet «--- a/…» börjar också med bindestreck och får inte räknas som kod.
+    const baraKomm = 'diff --git a/lib/x.js b/lib/x.js\n--- a/lib/x.js\n+++ b/lib/x.js\n@@ -5,1 +5,0 @@\n-  // en kommentar\n';
+    assert.equal(arBeteendeandring(baraKomm), false, 'en raderad kommentar är ingen beteendeändring');
+  });
+
+  test('CK-08 · NOLL är precis det tal som bevisar att sabotaget var en no-op', () => {
+    const med = (t) => granskaCommit(`m\n\nSyskonfall: x\nSabotage som fällde: ${t}`, kodDiff).ok;
+    assert.equal(med('X → 0 tester föll'), false, 'noll fällda tester är ingen prövning');
+    assert.equal(med('kördes 2026-09-01'), false, 'ett årtal är inget testtal');
+    assert.equal(med('X → 3 tester föll'), true, 'MOTPROVET');
+    assert.equal(med('A → 1 test föll'), true, 'singular räknas');
+  });
+
+  test('CK-05 · kataloger utanför lib/, api/ och agents/ kräver inga rubriker', () => {
     const srcDiff = 'diff --git a/src/a.js b/src/a.js\n--- a/src/a.js\n+++ b/src/a.js\n@@ -1,0 +2,1 @@\n+  return 1;\n';
-    assert.equal(arBeteendeandring(srcDiff), false, 'bred vakt = avstängd vakt');
+    assert.equal(arBeteendeandring(srcDiff), false, 'bred vakt = avstängd vakt · src/ står utanför');
     assert.equal(granskaCommit('Ändrar en yta', srcDiff).ok, true);
   });
 });

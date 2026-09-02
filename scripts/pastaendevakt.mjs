@@ -9,7 +9,7 @@ import { execSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { granskaDiff, citeradeTestId, arRiktigtTest } from '../lib/pastaendevakt.js';
+import { granskaDiff, citeradeTestId, arRiktigtTest, motiveradeRader } from '../lib/pastaendevakt.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -30,6 +30,11 @@ const testkallor = readdirSync(join(ROT, 'tests'))
 
 const brott = granskaDiff(diff);
 const uppdiktade = citeradeTestId(diff).filter((id) => !arRiktigtTest(id, testkallor));
+
+// Undantagen skrivs ALLTID ut, även när allt är grönt — ett tyst undantag granskas av ingen.
+for (const m of motiveradeRader(diff)) {
+  console.log(`  ⓘ påstående tystat i ${m.fil}:${m.nr} — «${m.skal}»`);
+}
 
 if (brott.length === 0 && uppdiktade.length === 0) {
   console.log('✓ Påståendevakten — varje nytt mekanismpåstående pekar på ett test som finns');
