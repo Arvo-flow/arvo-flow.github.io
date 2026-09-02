@@ -34,11 +34,18 @@ try {
   indata = '';
 }
 
-// Ingen indata = inget att döma. Att neka en push vi inte kan läsa vore att göra vakten till ett
-// hinder i stället för en grind — men vi säger ifrån, så tystnaden aldrig ser ut som ett godkännande.
+// ⚠️ FÖRSTA VERSIONEN SLÄPPTE IGENOM HÄR, och motiveringen löd «att neka en push vi inte kan läsa
+// vore att göra vakten till ett hinder». Det är ordagrant det resonemang som producerat varje
+// fail-open-bugg i den här kodbasen  // pastaende-ok: beskriver ett fällt resonemang, gör inget anspråk
+//
+// Och det farliga fallet är precis det här. Git matar ALLTID refarna på stdin när den anropar
+// hooken — är stdin tom körs vi från något annat, och «något annat» är just den agent som redan
+// pushade förbi regeln en gång. En opröv­bar push till ett okänt mål nekas. Undantaget är samma
+// som för allt annat: ARVO_GRANSKAD=1, en medveten handling. (MV-05.)
 if (!indata.trim()) {
-  console.error('[mainvakt] kunde inte läsa refarna — ingen bedömning gjord');
-  process.exit(0);
+  if (process.env.ARVO_GRANSKAD === '1') process.exit(0);
+  console.error('[mainvakt] kunde inte läsa refarna — okänt mål nekas (ARVO_GRANSKAD=1 för att gå förbi)');
+  process.exit(1);
 }
 
 const brott = [];

@@ -64,6 +64,20 @@ describe('MV · Main-vakten: en andra blick före mekanik', () => {
       'en grind som fäller varje push blir avstängd');
   });
 
+  test('MV-05 · TOM stdin nekar — «kunde inte läsa» får aldrig bli «allt klart»', () => {
+    // Första versionen svarade exit 0 här, med motiveringen att en vakt som nekar det den inte
+    // kan läsa blir «ett hinder». Det är ordagrant resonemanget bakom varje fail-open-bugg i den
+    // här kodbasen — och det farliga fallet är precis detta: git matar ALLTID refarna på stdin,
+    // så tom stdin betyder att någon ANNAN kör hooken. «Någon annan» var agenten som redan
+    // pushade förbi regeln en gång.
+    const r = kor('');
+    assert.equal(r.kod, 1, 'en opröv­bar push nekas');
+    assert.match(r.ut, /okänt mål nekas/);
+    // MOTPROVET: den medvetna handlingen släpper igenom, samma undantag som för allt annat.
+    const g = kor('', { ARVO_GRANSKAD: '1' });
+    assert.equal(g.kod, 0, 'ARVO_GRANSKAD=1 är den medvetna vägen förbi');
+  });
+
   test('MV-04 · ett OKÄNT innehåll nekar — grinden godkänner aldrig det den inte kunde läsa', () => {
     // fail-closed på PÅSTÅENDET att pushen är ofarlig: kan diffen inte läsas vet vi inte vad den
     // bär, och «jag kunde inte mäta» får aldrig se ut som «inget att stoppa». (MV-04.)
