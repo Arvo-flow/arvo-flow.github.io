@@ -1,0 +1,44 @@
+{
+  "_om": "Flottans måltavla. En rad per leverantör. Sonden körs med workflow probe-prislista.yml.",
+  "_regel": "PRISSIDOR, aldrig översiktssidor. Kanariefågeln mätte 9 av 21 tal i rå HTML på prissidan mot 0 av 6 på översiktssidan — prissidan går ofta att läsa utan webbläsare, vilket gör verifieraren billigare.",
+  "_urval": "Prisbokens egna alternatives är delvis biased mot utländska leverantörer (Hetzner/OVH i euro, Pipedrive/HubSpot/Zoho i dollar). Ett SEK-golv kräver en aktör som prissätter i kronor. Därför kompletteras listan med svenska aktörer per kategori.",
+  "_status": "OPRÖVAD tills sonden kört. En rad här är en HYPOTES om att leverantören publicerar priser — aldrig ett påstående om att den gör det.",
+
+  "vagor": [
+    {
+      "vag": 1,
+      "kategori": "serverhosting",
+      "motivering": "Bekräftad av kanariefågeln: Loopia publicerar SEK-listpris öppet. Kategorin är därmed den enda tysta med ett bevisat golv — vi kompletterar med grannarna för att se om det finns fler ankare.",
+      "leverantorer": [
+        { "namn": "Loopia", "urler": "https://www.loopia.se/webbhotell/priser/", "status": "BEKRÄFTAD 2026-09-02" },
+        { "namn": "Binero", "urler": "https://www.binero.se/webbhotell", "status": "oprövad" },
+        { "namn": "GleSYS", "urler": "https://glesys.se/priser", "status": "oprövad" },
+        { "namn": "Oderland", "urler": "https://www.oderland.se/webbhotell/", "status": "oprövad" },
+        { "namn": "Miss Hosting", "urler": "https://misshosting.com/webbhotell", "status": "oprövad" },
+        { "namn": "One.com", "urler": "https://www.one.com/sv/webbhotell", "status": "oprövad" }
+      ]
+    },
+    {
+      "vag": 2,
+      "kategori": "faktura-tjanst",
+      "motivering": "Fortnox och Visma publicerar SEK-prislistor — Fortnox gör det redan i prisboken (saas-finance). Frågan är om FAKTURA-tjänsten som egen kategori har ett eget publikt golv.",
+      "leverantorer": [
+        { "namn": "Billogram", "urler": "https://billogram.com/sv/priser", "status": "oprövad" },
+        { "namn": "Fakturino", "urler": "https://www.fakturino.se/priser", "status": "oprövad" },
+        { "namn": "Frilans Finans", "urler": "https://www.frilansfinans.se/priser/", "status": "oprövad" },
+        { "namn": "Bokio", "urler": "https://www.bokio.se/priser/", "status": "oprövad" }
+      ]
+    },
+    {
+      "vag": 3,
+      "kategori": "transport-frakt",
+      "motivering": "PostNord och DHL publicerar prislistor i kronor. RISK, uttalad: nästan alla företag har framförhandlade rabatter, så listpriset kan bli en jämförelse som bara kan säga en sak (bibelns marknadsankar-läxa). Sonden avgör om priset finns; om det BÖR användas som golv är ett separat beslut.",
+      "leverantorer": [
+        { "namn": "PostNord", "urler": "https://www.postnord.se/vara-losningar/skicka-paket/skicka-foretagspaket", "status": "oprövad" },
+        { "namn": "DHL Freight", "urler": "https://www.dhl.com/se-sv/home/vara-divisioner/freight.html", "status": "oprövad" },
+        { "namn": "Bring", "urler": "https://www.bring.se/tjanster/paket", "status": "oprövad" },
+        { "namn": "Budbee Business", "urler": "https://business.budbee.com/se", "status": "oprövad" }
+      ]
+    }
+  ]
+}
