@@ -1,0 +1,37 @@
+name: Probe Loopia priser
+
+# Recon: publicerar Loopia SEK-listpriser för företag på öppen sida? Ren spaning, rör ingen prisbok.
+# loopia.se är blockerad av sandlådans egress-proxy — den riktiga maskinen är GH Actions.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright + Chromium
+        run: |
+          npm ci
+          npm install playwright
+          npx playwright install chromium --with-deps
+      - name: Probe Loopia priser
+        run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+          set -o pipefail
+          mkdir -p ops
+          node scripts/probe-loopia-priser.mjs 2>&1 | tee ops/probe-loopia-priser.txt
+      - name: Commit
+        if: always()
+        continue-on-error: true
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git pull --rebase origin main || true
+          git add ops/probe-loopia-priser.txt
+          git commit -m "ops: probe-loopia-priser [skip ci]" || echo "inget"
+          git push origin HEAD:main || echo "push miss"
