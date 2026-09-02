@@ -1,12 +1,69 @@
-═══ Oderland · serverhosting · 1 sida(or) ═══
+═══ Oderland · serverhosting · 2 sida(or) ═══
 
-──── https://www.oderland.se/webbhotell/
+──── https://www.oderland.se/webbhotell/priser/
   status 200 · cookie-vägg: button:has-text("Tillåt alla")
-  RÅ HTML: 4/4 tal fanns utan JS
-  PAKET → PRIS (0 par, 0 ur tabell):
-   (INGA — priserna går inte att koppla till en produkt maskinellt)
+  RÅ HTML: 0/137 tal fanns utan JS
+  PAKET → PRIS (40 par, 40 ur tabell):
+   § [tabell] REGISTRERING · .se → 229,00 kr
+   § [tabell] FÖRNYELSE · .se → 229,00 kr
+   § [tabell] ÖVERFÖR · .se → 0,00 kr
+   § [tabell] REGISTRERING · .nu → 229,00 kr
+   § [tabell] FÖRNYELSE · .nu → 229,00 kr
+   § [tabell] ÖVERFÖR · .nu → 0,00 kr
+   § [tabell] REGISTRERING · .com → 209,00 kr
+   § [tabell] FÖRNYELSE · .com → 209,00 kr
+   § [tabell] ÖVERFÖR · .com → 209,00 kr
+   § [tabell] REGISTRERING · .store → 9,00 kr
+   § [tabell] FÖRNYELSE · .store → 796,00 kr
+   § [tabell] ÖVERFÖR · .store → 796,00 kr
+   § [tabell] REGISTRERING · .online → 9,00 kr
+   § [tabell] FÖRNYELSE · .online → 496,00 kr
+   § [tabell] ÖVERFÖR · .online → 496,00 kr
+   § [tabell] REGISTRERING · .net → 189,00 kr
+   § [tabell] FÖRNYELSE · .net → 189,00 kr
+   § [tabell] ÖVERFÖR · .net → 189,00 kr
+   § [tabell] REGISTRERING · .org → 179,00 kr
+   § [tabell] FÖRNYELSE · .org → 179,00 kr
+   § [tabell] ÖVERFÖR · .org → 179,00 kr
+   § [tabell] REGISTRERING · .eu → 139,00 kr
+   § [tabell] FÖRNYELSE · .eu → 139,00 kr
+   § [tabell] ÖVERFÖR · .eu → 139,00 kr
+   § [tabell] REGISTRERING · .fi → 169,00 kr
   MOMS:    flytthjälp från din nuvarande leverantör Svenska Kontakta oss Priser exkl. moms Webbhotell Server Cloud Domäner Hemsida
-  KAMPANJ: Skulle du därefter vilja uppgradera och fortsätta med ditt paket gör du det smidigt direkt i vår k
+  KAMPANJ: (inget)
+  HINDER:  (inga)
+
+──── https://www.oderland.se/priser/
+  status 200 · cookie-vägg: ingen
+  RÅ HTML: 0/137 tal fanns utan JS
+  PAKET → PRIS (40 par, 40 ur tabell):
+   § [tabell] REGISTRERING · .se → 229,00 kr
+   § [tabell] FÖRNYELSE · .se → 229,00 kr
+   § [tabell] ÖVERFÖR · .se → 0,00 kr
+   § [tabell] REGISTRERING · .nu → 229,00 kr
+   § [tabell] FÖRNYELSE · .nu → 229,00 kr
+   § [tabell] ÖVERFÖR · .nu → 0,00 kr
+   § [tabell] REGISTRERING · .com → 209,00 kr
+   § [tabell] FÖRNYELSE · .com → 209,00 kr
+   § [tabell] ÖVERFÖR · .com → 209,00 kr
+   § [tabell] REGISTRERING · .store → 9,00 kr
+   § [tabell] FÖRNYELSE · .store → 796,00 kr
+   § [tabell] ÖVERFÖR · .store → 796,00 kr
+   § [tabell] REGISTRERING · .online → 9,00 kr
+   § [tabell] FÖRNYELSE · .online → 496,00 kr
+   § [tabell] ÖVERFÖR · .online → 496,00 kr
+   § [tabell] REGISTRERING · .net → 189,00 kr
+   § [tabell] FÖRNYELSE · .net → 189,00 kr
+   § [tabell] ÖVERFÖR · .net → 189,00 kr
+   § [tabell] REGISTRERING · .org → 179,00 kr
+   § [tabell] FÖRNYELSE · .org → 179,00 kr
+   § [tabell] ÖVERFÖR · .org → 179,00 kr
+   § [tabell] REGISTRERING · .eu → 139,00 kr
+   § [tabell] FÖRNYELSE · .eu → 139,00 kr
+   § [tabell] ÖVERFÖR · .eu → 139,00 kr
+   § [tabell] REGISTRERING · .fi → 169,00 kr
+  MOMS:    flytthjälp från din nuvarande leverantör Svenska Kontakta oss Priser exkl. moms Webbhotell Server Cloud Domäner Hemsida
+  KAMPANJ: (inget)
   HINDER:  (inga)
 
 [probe-prislista] Oderland klar
