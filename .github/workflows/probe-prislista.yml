@@ -1,0 +1,56 @@
+name: Sond — publik prislista (prisdata-flottan)
+
+# En sond för hela flottan. Kör den per leverantör; utfallet sparas i ops/prislistor/.
+# Kanariefågeln (Loopia) saknade skrivrättighet och kunde inte spara sitt utfall — resultatet
+# fanns bara i körloggen, och loggar roterar. Därför `contents: write` här.
+on:
+  workflow_dispatch:
+    inputs:
+      leverantor:
+        description: 'Leverantörens namn (t.ex. Binero)'
+        required: true
+      kategori:
+        description: 'Kategorinyckel (t.ex. serverhosting)'
+        required: true
+      urler:
+        description: 'Kommaseparerade prissidor — PRISSIDOR, inte översiktssidor'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Playwright + Chromium
+        run: npm install playwright && npx playwright install chromium --with-deps
+      - name: Mät prislistan
+        shell: bash
+        env:
+          PRIS_LEVERANTOR: ${{ inputs.leverantor }}
+          PRIS_KATEGORI: ${{ inputs.kategori }}
+          PRIS_URLER: ${{ inputs.urler }}
+        # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          mkdir -p ops/prislistor
+          namn=$(echo "${{ inputs.leverantor }}" | tr '[:upper:] ' '[:lower:]-' | tr -cd 'a-z0-9-')
+          node scripts/probe-prislista.mjs 2>&1 | tee "ops/prislistor/$namn.txt"
+      - name: Spara utfallet
+        if: always()
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git add ops/prislistor/ || true
+          git commit -m "ops: prislista ${{ inputs.leverantor }} [skip ci]" --no-verify || echo "inget att spara"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep $((i*4))
+          done
+          echo "push misslyckades — utfallet finns i körloggen"
