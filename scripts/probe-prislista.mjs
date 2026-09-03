@@ -57,37 +57,6 @@ const HINDER_RE = /(beg[äa]r offert|kontakta oss f[öo]r pris|priser? p[åa] f[
 
 console.log(`═══ ${LEV} · ${KAT} · ${MAL.length} sida(or) ═══\n`);
 
-// ── STEG 0 · HITTA PRISSIDAN I STÄLLET FÖR ATT GISSA DEN ────────────────────────────────────
-// Mätt över tre vågor: 7 av 16 sonderade sidor svarade 404 eller 530 — 44 % av flottans arbete
-// gick till adresser JAG gissat fel. Flaskhalsen var aldrig leverantörerna utan mitt minne.
-// Sonden letar därför själv: startsidans länkar med «pris» i text eller adress är leverantörens
-// egen anvisning till sin prissida, och den är alltid mer tillförlitlig än min gissning.
-async function hittaPrislankar(nagonUrl) {
-  try {
-    const rot = new URL(nagonUrl).origin;
-    const r = await fetch(rot, { headers: { 'user-agent': UA, 'accept-language': 'sv-SE,sv;q=0.9' }, redirect: 'follow' });
-    if (!r.ok) return [];
-    const html = await r.text();
-    const funna = new Set();
-    for (const m of html.matchAll(/<a[^>]+href=["']([^"'#]+)["'][^>]*>([\s\S]{0,120}?)<\/a>/gi)) {
-      const [, href, txt] = m;
-      const etikett = txt.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (!/pris|pricing|kostnad|abonnemang|plans?\b/i.test(`${href} ${etikett}`)) continue;
-      try { funna.add(new URL(href, rot).href.split('?')[0]); } catch { /* ogiltig href */ }
-    }
-    return [...funna].filter((u) => u.startsWith(rot)).slice(0, 6);
-  } catch { return []; }
-}
-
-const kandidater = await hittaPrislankar(MAL[0]);
-if (kandidater.length) {
-  console.log(`  KANDIDATER PÅ STARTSIDAN: ${kandidater.join(' · ')}`);
-  for (const k of kandidater) if (!MAL.includes(k)) MAL.push(k);
-  console.log(`  → sonderar ${MAL.length} sidor totalt\n`);
-} else {
-  console.log('  KANDIDATER PÅ STARTSIDAN: (inga länkar med pris-ord hittades)\n');
-}
-
 // ── STEG 1 · rå HTML, ingen webbläsare ──────────────────────────────────────────────────────
 const raFrag = {};
 for (const url of MAL) {
@@ -128,6 +97,27 @@ for (const url of MAL) {
   }
   console.log(`  status ${status} · cookie-vägg: ${cookie ?? 'ingen'}`);
   if (typeof status !== 'number' || status >= 400) continue;
+
+  // ── HITTA PRISSIDAN I STÄLLET FÖR ATT GISSA DEN ──────────────────────────────────────────
+  // Mätt över tre vågor: 7 av 16 sonderade sidor svarade 404 eller 530 — 44 % av flottans
+  // arbete gick till adresser JAG gissat fel. Flaskhalsen var aldrig leverantörerna utan mitt
+  // minne, så sonden ska följa leverantörens EGEN anvisning till sin prissida.
+  //
+  // ⚠️ FÖRSTA VERSIONEN LÄSTE RÅ HTML MED fetch() — och gav «inga länkar» på fyra av fyra
+  // sajter, Fortnox inräknad. Orsaken stod i mina egna mätdata: «RÅ HTML: 0/0» för Binero,
+  // Billogram, GleSYS, Fortnox och Miss Hosting i tre vågor i rad. Sajterna renderar med
+  // JavaScript, så den råa HTML:en bär varken priser ELLER länkar. Jag byggde alltså bort en
+  // gissning med en metod jag redan hade mätt som blind på precis de sajter den skulle rädda.
+  // Länkarna läses nu ur den RENDERADE sidan, samma kanal som priserna. (2026-09-03.)
+  if (url === MAL[0] && MAL.length < 6) {
+    const kand = await page.evaluate(() => [...document.querySelectorAll('a[href]')]
+      .filter((a) => /pris|pricing|kostnad|abonnemang|plans?\b/i.test(`${a.getAttribute('href')} ${a.innerText}`))
+      .map((a) => a.href.split('?')[0].split('#')[0])
+      .filter((h) => h.startsWith(location.origin)));
+    const nya = [...new Set(kand)].filter((k) => !MAL.includes(k)).slice(0, 4);
+    console.log(`  KANDIDATER (renderat): ${nya.join(' · ') || '(inga)'}`);
+    for (const k of nya) MAL.push(k);
+  }
 
   const text = await page.evaluate(() => document.body.innerText || '');
 
