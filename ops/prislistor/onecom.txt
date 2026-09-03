@@ -1,0 +1,15 @@
+═══ One.com · serverhosting · 1 sida(or) ═══
+
+──── https://www.one.com/sv/webbhotell
+  status 200 · cookie-vägg: button:has-text("Tillåt alla")
+  RÅ HTML: 2/2 tal fanns utan JS
+  PAKET → PRIS (4 par, 0 ur tabell):
+   § [kort] .se → 9 kr / 1:a året*
+   § [kort] *Gratis med hosting → 9 kr / 1:a året*
+   § [kort] .com → 99 kr / 1:a året*
+   § [kort] *Gratis med hosting → 99 kr / 1:a året*
+  MOMS:    (inget momsord — momsbasen är OKÄND)
+  KAMPANJ: (inget)
+  HINDER:  (inga)
+
+[probe-prislista] One.com klar
