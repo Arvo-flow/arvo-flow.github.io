@@ -1,5 +1,14 @@
 ═══ Miss Hosting · serverhosting · 1 sida(or) ═══
 
-──── https://misshosting.com/webbhotell
-  status 404 · cookie-vägg: ingen
+  KANDIDATER PÅ STARTSIDAN: (inga länkar med pris-ord hittades)
+
+──── https://misshosting.com/
+  status 200 · cookie-vägg: ingen
+  RÅ HTML: 0/0 tal fanns utan JS
+  PAKET → PRIS (0 par, 0 ur tabell):
+   (INGA — priserna går inte att koppla till en produkt maskinellt)
+  MOMS:    (inget momsord — momsbasen är OKÄND)
+  KAMPANJ: (inget)
+  HINDER:  (inga)
+
 [probe-prislista] Miss Hosting klar
