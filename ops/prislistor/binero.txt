@@ -1,9 +1,8 @@
 ═══ Binero · serverhosting · 1 sida(or) ═══
 
-  KANDIDATER PÅ STARTSIDAN: (inga länkar med pris-ord hittades)
-
 ──── https://www.binero.se/
   status 200 · cookie-vägg: ingen
+  KANDIDATER (renderat): (inga)
   RÅ HTML: 0/0 tal fanns utan JS
   PAKET → PRIS (0 par, 0 ur tabell):
    (INGA — priserna går inte att koppla till en produkt maskinellt)
