@@ -48,10 +48,45 @@ const fragment = (text) => [...new Set([...platt(text).matchAll(PRIS_RE)].map((m
 
 const traffa = (text, re) => [...new Set([...platt(text).matchAll(re)].map((m) => m[0].trim().slice(0, 160)))];
 const MOMS_RE = /[^.]{0,70}(exkl\.?\s*moms|inkl\.?\s*moms|ex\.?\s*moms|moms tillkommer)[^.]{0,40}/gi;
-const KAMPANJ_RE = /[^.]{0,80}(f[öo]rsta [åa]ret|d[äa]refter|ordinarie pris|introduktionspris|kampanj|f[öo]rnyelsepris)[^.]{0,80}/gi;
+// One.coms sida skriver «9 kr / 1:a året*» och detektorn sa «(inget)» — den letade bara den
+// utskrivna formen «första året». Kampanjfältet är det farligaste vi läser: tas 9 kr som listpris
+// blir varje kund en påstådd överbetalare. En detektor som missar sitt eget huvudfall är värre än
+// ingen, för den ger ett lugnande «(inget)».
+const KAMPANJ_RE = /[^.]{0,80}(f[öo]rsta [åa]ret|1:a [åa]ret|d[äa]refter|ordinarie pris|introduktionspris|introduktionserbjudande|kampanj|f[öo]rnyelsepris|f[öo]rnyas för)[^.]{0,80}/gi;
 const HINDER_RE = /(beg[äa]r offert|kontakta oss f[öo]r pris|priser? p[åa] f[öo]rfr[åa]gan|logga in f[öo]r pris|v[äa]lj (?:din )?dom[äa]n)/gi;
 
 console.log(`═══ ${LEV} · ${KAT} · ${MAL.length} sida(or) ═══\n`);
+
+// ── STEG 0 · HITTA PRISSIDAN I STÄLLET FÖR ATT GISSA DEN ────────────────────────────────────
+// Mätt över tre vågor: 7 av 16 sonderade sidor svarade 404 eller 530 — 44 % av flottans arbete
+// gick till adresser JAG gissat fel. Flaskhalsen var aldrig leverantörerna utan mitt minne.
+// Sonden letar därför själv: startsidans länkar med «pris» i text eller adress är leverantörens
+// egen anvisning till sin prissida, och den är alltid mer tillförlitlig än min gissning.
+async function hittaPrislankar(nagonUrl) {
+  try {
+    const rot = new URL(nagonUrl).origin;
+    const r = await fetch(rot, { headers: { 'user-agent': UA, 'accept-language': 'sv-SE,sv;q=0.9' }, redirect: 'follow' });
+    if (!r.ok) return [];
+    const html = await r.text();
+    const funna = new Set();
+    for (const m of html.matchAll(/<a[^>]+href=["']([^"'#]+)["'][^>]*>([\s\S]{0,120}?)<\/a>/gi)) {
+      const [, href, txt] = m;
+      const etikett = txt.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!/pris|pricing|kostnad|abonnemang|plans?\b/i.test(`${href} ${etikett}`)) continue;
+      try { funna.add(new URL(href, rot).href.split('?')[0]); } catch { /* ogiltig href */ }
+    }
+    return [...funna].filter((u) => u.startsWith(rot)).slice(0, 6);
+  } catch { return []; }
+}
+
+const kandidater = await hittaPrislankar(MAL[0]);
+if (kandidater.length) {
+  console.log(`  KANDIDATER PÅ STARTSIDAN: ${kandidater.join(' · ')}`);
+  for (const k of kandidater) if (!MAL.includes(k)) MAL.push(k);
+  console.log(`  → sonderar ${MAL.length} sidor totalt\n`);
+} else {
+  console.log('  KANDIDATER PÅ STARTSIDAN: (inga länkar med pris-ord hittades)\n');
+}
 
 // ── STEG 1 · rå HTML, ingen webbläsare ──────────────────────────────────────────────────────
 const raFrag = {};
@@ -144,7 +179,19 @@ for (const url of MAL) {
       const rader = (el.innerText || '').split('\n').map(ren).filter(Boolean);
       const namn = rader.find((r) => !kr.test(r) && r.length >= 3 && r.length <= 48);
       const pris = rader.find((r) => kr.test(r));
-      if (namn && pris) ut.push({ form: 'kort', kontext: '', paket: namn, rad: '', pris });
+      if (!namn || !pris) continue;
+      // KORTEN BEHÖVDE SAMMA KONTEXT SOM TABELLERNA. Tabellfixen räckte inte: One.com visade
+      // «.se → 9 kr / 1:a året» i KORTFORM, alltså domänpriser utan rubrik, på en sida vi
+      // sonderade för webbhotell. Samma falska träff, en form längre bort.
+      let kctx = '';
+      let m = el;
+      for (let steg = 0; steg < 25 && m && !kctx; steg += 1) {
+        m = m.previousElementSibling || m.parentElement;
+        if (!m) break;
+        if (/^H[1-4]$/.test(m.tagName)) kctx = ren(m.innerText);
+        else { const h = m.querySelector?.('h1,h2,h3'); if (h) kctx = ren(h.innerText); }
+      }
+      ut.push({ form: 'kort', kontext: kctx.slice(0, 60), paket: namn, rad: '', pris });
     }
 
     const sedd = new Set();
