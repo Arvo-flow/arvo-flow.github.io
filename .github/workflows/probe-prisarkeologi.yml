@@ -1,0 +1,55 @@
+name: Sond — prisarkeologi (historik ur webbarkivet)
+
+# Kan vi läsa en leverantörs prishistorik ur webbarkivet? Maktkalendern kräver 3 verifierade
+# höjningar per leverantör och har noll. Arkivet bär leverantörens egen prissida, tidsstämplad
+# av tredje part — skillnaden mellan två ögonblicksbilder ÄR en prisändring med datum.
+on:
+  workflow_dispatch:
+    inputs:
+      leverantor:
+        description: 'Leverantörens namn'
+        required: true
+      url:
+        description: 'Prissidans adress (den som ska sökas i arkivet)'
+        required: true
+      fran:
+        description: 'Från vilket år'
+        default: '2021'
+
+permissions:
+  contents: write
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Gräv i arkivet
+        shell: bash
+        env:
+          ARK_LEVERANTOR: ${{ inputs.leverantor }}
+          ARK_URL: ${{ inputs.url }}
+          ARK_FRAN: ${{ inputs.fran }}
+        # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          mkdir -p ops/prisarkeologi
+          namn=$(echo "${{ inputs.leverantor }}" | tr '[:upper:] ' '[:lower:]-' | tr -cd 'a-z0-9-')
+          node scripts/probe-prisarkeologi.mjs 2>&1 | tee "ops/prisarkeologi/$namn.txt"
+      - name: Spara utfallet
+        if: always()
+        run: |
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Probe Bot"
+          git add ops/prisarkeologi/ || true
+          git commit -m "ops: prisarkeologi ${{ inputs.leverantor }} [skip ci]" --no-verify || echo "inget att spara"
+          git checkout -- . 2>/dev/null || true
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep $((i*4))
+          done
+          echo "push misslyckades — utfallet finns i körloggen"
