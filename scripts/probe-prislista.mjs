@@ -104,9 +104,26 @@ for (const url of MAL) {
 
     // FORM A · TABELL. Paketnamnen är kolumnrubriker; priset står i samma kolumnindex.
     // Loopias prissida är den här formen, och den är osynlig för en rubrikbaserad läsare.
+    //
+    // ⚠️ VARJE TABELL BÄR SIN KONTEXT. Oderlands prissida (2026-09-02) gav 40 par som alla var
+    // DOMÄNPRISER — .se 229 kr, .store 796 kr — på en sida vi sonderade för webbhotell. Sonden
+    // rapporterade dem med full auktoritet, och «40 par» såg ut som det bästa utfallet i vågen.
+    // Ett pris utan sin tabellkontext är samma fel som ett pris utan produkt: ett tal som ser ut
+    // som ett svar. Kontexten är närmaste föregående rubrik — sonden mäter, människan avgör
+    // relevansen.
     for (const tab of document.querySelectorAll('table')) {
       const rader = [...tab.querySelectorAll('tr')];
       if (rader.length < 2) continue;
+      let kontext = ren(tab.querySelector('caption')?.innerText || '');
+      if (!kontext) {
+        let n = tab;
+        for (let steg = 0; steg < 40 && n && !kontext; steg += 1) {
+          n = n.previousElementSibling || n.parentElement;
+          if (!n) break;
+          if (/^H[1-4]$/.test(n.tagName)) kontext = ren(n.innerText);
+          else { const h = n.querySelector?.('h1,h2,h3,h4'); if (h) kontext = ren(h.innerText); }
+        }
+      }
       const rubrik = [...rader[0].querySelectorAll('th,td')].map((c) => ren(c.innerText));
       for (const rad of rader.slice(1)) {
         const celler = [...rad.querySelectorAll('th,td')].map((c) => ren(c.innerText));
@@ -114,7 +131,7 @@ for (const url of MAL) {
         for (let i = 1; i < celler.length; i += 1) {
           if (!kr.test(celler[i])) continue;
           const namn = ren(rubrik[i] || '');
-          if (namn) ut.push({ form: 'tabell', paket: namn, rad: etikett, pris: celler[i] });
+          if (namn) ut.push({ form: 'tabell', kontext: kontext.slice(0, 60) || '(ingen rubrik)', paket: namn, rad: etikett, pris: celler[i] });
         }
       }
     }
@@ -127,11 +144,11 @@ for (const url of MAL) {
       const rader = (el.innerText || '').split('\n').map(ren).filter(Boolean);
       const namn = rader.find((r) => !kr.test(r) && r.length >= 3 && r.length <= 48);
       const pris = rader.find((r) => kr.test(r));
-      if (namn && pris) ut.push({ form: 'kort', paket: namn, rad: '', pris });
+      if (namn && pris) ut.push({ form: 'kort', kontext: '', paket: namn, rad: '', pris });
     }
 
     const sedd = new Set();
-    return ut.filter((p) => { const k = `${p.paket}|${p.rad}|${p.pris}`; if (sedd.has(k)) return false; sedd.add(k); return true; }).slice(0, 40);
+    return ut.filter((p) => { const k = `${p.kontext}|${p.paket}|${p.rad}|${p.pris}`; if (sedd.has(k)) return false; sedd.add(k); return true; }).slice(0, 40);
   });
 
   const frag = fragment(text);
@@ -141,8 +158,11 @@ for (const url of MAL) {
   console.log(`  RÅ HTML: ${ra?.frag ? `${iRa}/${frag.length} tal fanns utan JS` : `EJ MÄTT (${ra?.status})`}`);
   const tabellPar = par.filter((p) => p.form === 'tabell');
   console.log(`  PAKET → PRIS (${par.length} par, ${tabellPar.length} ur tabell):`);
+  const kontexter = [...new Set(par.map((p) => p.kontext).filter(Boolean))];
+  if (kontexter.length) console.log(`  TABELLER PÅ SIDAN: ${kontexter.join(' | ')}`);
   for (const p of par.slice(0, 25)) {
-    console.log(`   § [${p.form}] ${p.paket}${p.rad ? ` · ${p.rad}` : ''} → ${p.pris}`);
+    const k = p.kontext ? `«${p.kontext}» ` : '';
+    console.log(`   § [${p.form}] ${k}${p.paket}${p.rad ? ` · ${p.rad}` : ''} → ${p.pris}`);
   }
   if (par.length === 0) console.log('   (INGA — priserna går inte att koppla till en produkt maskinellt)');
   console.log(`  MOMS:    ${traffa(text, MOMS_RE).slice(0, 3).join(' | ') || '(inget momsord — momsbasen är OKÄND)'}`);
