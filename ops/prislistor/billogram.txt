@@ -1,18 +1,9 @@
-═══ Billogram · faktura-tjanst · 3 sida(or) ═══
+═══ Billogram · faktura-tjanst · 1 sida(or) ═══
+
+  KANDIDATER PÅ STARTSIDAN: (inga länkar med pris-ord hittades)
 
 ──── https://billogram.com/sv
   status 200 · cookie-vägg: #onetrust-accept-btn-handler
-  RÅ HTML: 0/0 tal fanns utan JS
-  PAKET → PRIS (0 par, 0 ur tabell):
-   (INGA — priserna går inte att koppla till en produkt maskinellt)
-  MOMS:    (inget momsord — momsbasen är OKÄND)
-  KAMPANJ: (inget)
-  HINDER:  (inga)
-
-──── https://billogram.com/sv/pris
-  status 404 · cookie-vägg: ingen
-──── https://billogram.com/pricing
-  status 200 · cookie-vägg: ingen
   RÅ HTML: 0/0 tal fanns utan JS
   PAKET → PRIS (0 par, 0 ur tabell):
    (INGA — priserna går inte att koppla till en produkt maskinellt)
