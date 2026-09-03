@@ -1,14 +1,56 @@
 ═══ Fortnox Fakturering · faktura-tjanst · 1 sida(or) ═══
 
-  KANDIDATER PÅ STARTSIDAN: (inga länkar med pris-ord hittades)
-
 ──── https://www.fortnox.se/
   status 200 · cookie-vägg: ingen
+  KANDIDATER (renderat): https://www.fortnox.se/fortnox-foretagsguide/starta-foretag/tips/sa-skriver-du-en-affarsplan · https://www.fortnox.se/produkt/prislista
   RÅ HTML: 0/0 tal fanns utan JS
   PAKET → PRIS (0 par, 0 ur tabell):
    (INGA — priserna går inte att koppla till en produkt maskinellt)
   MOMS:    (inget momsord — momsbasen är OKÄND)
   KAMPANJ: (inget)
+  HINDER:  (inga)
+
+──── https://www.fortnox.se/fortnox-foretagsguide/starta-foretag/tips/sa-skriver-du-en-affarsplan
+  status 200 · cookie-vägg: button:has-text("Acceptera alla")
+  RÅ HTML: EJ MÄTT (undefined)
+  PAKET → PRIS (0 par, 0 ur tabell):
+   (INGA — priserna går inte att koppla till en produkt maskinellt)
+  MOMS:    (inget momsord — momsbasen är OKÄND)
+  KAMPANJ: Därefter byggs planen upp med olika avsnitt, bland annat affärsidé och vision, men också
+  HINDER:  (inga)
+
+──── https://www.fortnox.se/produkt/prislista
+  status 200 · cookie-vägg: ingen
+  RÅ HTML: EJ MÄTT (undefined)
+  PAKET → PRIS (40 par, 0 ur tabell):
+  TABELLER PÅ SIDAN: prislista för fortnox program och tjänster
+   § [kort] «prislista för fortnox program och tjänster» 1-99 st → 29 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» 100-999 st → 99 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» 1000+ st → 199 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» 0 st → 9 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Mini → 209 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Liten → 349 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Mellan → 490 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Stor → 710 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Mini+ → 369 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Mellan+ → 659 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Stor+ → 919 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Byråpartner → 499 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Löpande Bas → 269 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Löpande Mini → 149 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Gör det själv Mini → 159 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Gör det själv Bas → 269 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Attest & Koll → 119 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Anläggningsregister → 129 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Arkivplats (10GB) → 109 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Autogiro → 109 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Avstämning → 139 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Bokföring → 189 kr/mån
+   § [kort] «prislista för fortnox program och tjänster» Bokföring Attest & Läs → 99 kr/mån
+   § [kort] Bokslut & Skatt för byråer → 349 kr/mån
+   § [kort] Bokslut & Skatt för företag → 349 kr/mån
+  MOMS:    (inget momsord — momsbasen är OKÄND)
+  KAMPANJ: Fortnox Förening 319 kr/mån Listat pris avser första användaren, därefter ordinarie licenspriser
   HINDER:  (inga)
 
 [probe-prislista] Fortnox Fakturering klar
