@@ -88,6 +88,76 @@ describe('PP · Ett pris binds till sin produkt', () => {
   });
 });
 
+describe('PP · Produktens identitet är paket + rad, aldrig paket ensamt', () => {
+  test('PP-09 · två RADER i samma tabell är inte en prisändring över tid', () => {
+    // Det dyraste felet i hela prisdata-arbetet, funnet mot Fortnox arkiverade fakturaservice-
+    // tabell. Där är KOLUMNRUBRIKEN en kostnadstyp och RADETIKETTEN produkten — så en gruppering
+    // på enbart `paket` samlade varje rads pris i en serie och rapporterade skillnaderna MELLAN
+    // RADER som höjningar över tid: «Kostnad för fakturautställare: 2 → 90 kr (+4400 %) ·
+    // 2022-03-15 → 2022-03-15». Samma datum på båda sidor. 151 «ändringar», nästan alla brus.
+    // Hade det matat Maktkalendern hade vi sagt till kunden att Fortnox höjt 4 400 %.
+    const enOgonblicksbild = [{
+      datum: '2022-03-15',
+      par: [
+        { paket: 'Kostnad för fakturautställare', rad: 'Fakturaservice postal faktura', listpris: 12 },
+        { paket: 'Kostnad för fakturautställare', rad: '-Tillägg för A-post', listpris: 2 },
+        { paket: 'Kostnad för fakturautställare', rad: 'Påminnelseservice', listpris: 90 },
+      ],
+    }];
+    assert.deepEqual(prisandringar(enOgonblicksbild), [],
+      'tre rader i EN ögonblicksbild är tre produkter, inte två prisändringar');
+
+    // MOTPROVET: samma produkt (paket + rad) över TVÅ datum är en riktig ändring.
+    const overTid = prisandringar([
+      { datum: '2022-03-15', par: [{ paket: 'Kostnad för fakturautställare', rad: 'Påminnelseservice', listpris: 90 }] },
+      { datum: '2024-01-23', par: [{ paket: 'Kostnad för fakturautställare', rad: 'Påminnelseservice', listpris: 99 }] },
+    ]);
+    assert.equal(overTid.length, 1);
+    assert.equal(overTid[0].rad, 'Påminnelseservice', 'radetiketten måste följa med i utfallet');
+    assert.equal(overTid[0].procent, 10);
+  });
+
+  test('PP-11 · IDENTITETEN ensam lastbärande: samma paket, olika rad, över TVÅ datum', () => {
+    // PP-09 kunde inte skilja de två vakterna åt: tog jag bort identitetsnyckeln räddades testet
+    // av datumspärren, och tvärtom. Två vakter som maskerar varandra är två OPRÖVADE vakter —
+    // «en vakt vars sabotage inte fäller är ingen vakt». Här är datumspärren verkningslös, så
+    // bara den sammansatta nyckeln kan hålla.
+    const oforandrat = [
+      { datum: '2022-03-15', par: [
+        { paket: 'Kostnad för fakturautställare', rad: 'A-post', listpris: 12 },
+        { paket: 'Kostnad för fakturautställare', rad: 'Påminnelse', listpris: 90 },
+      ] },
+      { datum: '2024-01-23', par: [
+        { paket: 'Kostnad för fakturautställare', rad: 'A-post', listpris: 12 },
+        { paket: 'Kostnad för fakturautställare', rad: 'Påminnelse', listpris: 90 },
+      ] },
+    ];
+    assert.deepEqual(prisandringar(oforandrat), [],
+      'inget pris rörde sig — varje «ändring» här vore ett hopp mellan två olika produkter');
+  });
+
+  test('PP-12 · DATUMSPÄRREN ensam lastbärande: samma produkt två gånger i EN bild', () => {
+    // Här är identitetsnyckeln verkningslös (samma paket OCH samma rad), så bara datumspärren
+    // kan hindra att en dubblerad tabellrad blir en prisändring.
+    const dubblett = [{ datum: '2022-01-01', par: [
+      { paket: 'X', rad: 'r', listpris: 10 },
+      { paket: 'X', rad: 'r', listpris: 20 },
+    ] }];
+    assert.deepEqual(prisandringar(dubblett), [],
+      'två avläsningar i samma ögonblicksbild är samma mätpunkt, aldrig en förändring');
+  });
+
+  test('PP-10 · ett nollpris ger ingen procent — «+Infinity %» är inget mätvärde', () => {
+    const a = prisandringar([
+      { datum: '2022-01-01', par: [{ paket: 'X', rad: '', listpris: 0 }] },
+      { datum: '2023-01-01', par: [{ paket: 'X', rad: '', listpris: 60 }] },
+    ]);
+    assert.equal(a.length, 1, 'ändringen finns — 0 till 60 kr är en verklig förändring');
+    assert.equal(a[0].procent, null, 'men procenten är ODEFINIERAD, inte Infinity');
+    assert.equal(a[0].tillPris, 60);
+  });
+});
+
 describe('PP · En prisändring kräver TVÅ lästa tal', () => {
   test('PP-08 · ett saknat pris är aldrig en ändring, och ingenting interpoleras', () => {
     // Att en arkiverad ögonblicksbild inte bär produkten kan betyda att arkivet missade den
@@ -105,7 +175,7 @@ describe('PP · En prisändring kräver TVÅ lästa tal', () => {
     ]);
     assert.equal(andringar.length, 1, 'två lästa tal ger EN ändring, inte två');
     assert.deepEqual(andringar[0], {
-      paket: 'Mini', fran: '2024-12-08', till: '2026-08-22',
+      paket: 'Mini', rad: '', fran: '2024-12-08', till: '2026-08-22',
       franPris: 169, tillPris: 209, procent: 23.7,
     });
 
