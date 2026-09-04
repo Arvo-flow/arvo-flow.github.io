@@ -55,17 +55,27 @@ console.log(`sida: ${MALSIDA}\nfrån: ${FRAN}\n`);
 const cdx = `http://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(MALSIDA)}`
   + `&output=json&from=${FRAN}&filter=statuscode:200&collapse=timestamp:6&limit=80`;
 
+// Arkivet är en gratis allmänning och stryper trafik: första körningen gick igenom, den andra
+// fick 503. Ett övergående fel får inte se ut som «ingen historik finns» — sonden försöker om
+// med växande paus, och säger tydligt ifrån när den ger upp.
 let poster = [];
-try {
-  const r = await fetch(cdx, { headers: { 'user-agent': UA } });
-  if (!r.ok) {
-    console.error(`✗ CDX svarade ${r.status} — arkivets index kunde inte läsas (OKÄNT, inte «inga poster»)`);
-    process.exit(1);
+let sistaFel = null;
+for (let forsok = 1; forsok <= 4; forsok += 1) {
+  try {
+    const r = await fetch(cdx, { headers: { 'user-agent': UA } });
+    if (r.ok) { poster = (await r.json()).slice(1).map((rad) => ({ ts: rad[1], url: rad[2] })); sistaFel = null; break; }
+    sistaFel = `status ${r.status}`;
+  } catch (err) {
+    sistaFel = err.message.slice(0, 60);
   }
-  const rader = await r.json();
-  poster = rader.slice(1).map((rad) => ({ ts: rad[1], url: rad[2] }));
-} catch (err) {
-  console.error(`✗ CDX gick inte att nå: ${err.message} — inget mätvärde`);
+  if (forsok < 4) {
+    console.log(`  CDX ${sistaFel} — försök ${forsok}/4, väntar ${forsok * 15} s`);
+    await new Promise((r) => setTimeout(r, forsok * 15000));
+  }
+}
+if (sistaFel) {
+  console.error(`✗ CDX gav upp efter 4 försök (${sistaFel}) — arkivets index kunde inte läsas.`);
+  console.error('  Detta är ett OKÄNT, aldrig «ingen historik finns». Kör om senare.');
   process.exit(1);
 }
 
