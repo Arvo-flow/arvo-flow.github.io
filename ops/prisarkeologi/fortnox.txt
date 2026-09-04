@@ -2,4 +2,128 @@
 sida: https://www.fortnox.se/produkt/prislista
 från: 2022
 
-✗ CDX svarade 503 — arkivets index kunde inte läsas (OKÄNT, inte «inga poster»)
+ÖGONBLICKSBILDER: 22 (en per månad, statuskod 200)
+  äldsta: 20220315 · nyaste: 20260822
+
+  2022-03-15  62 produkt→pris-par:
+      Kostnad för fakturamottagare · Fakturaservice postal faktura (B-post)* → 0 kr
+      Kostnad för fakturautställare · Fakturaservice postal faktura (B-post)* → 12 kr
+      Kostnad för fakturamottagare · -Tillägg för A-post → 0 kr
+      Kostnad för fakturautställare · -Tillägg för A-post → 2 kr
+      Kostnad för fakturamottagare · Fakturaservice e-faktura/e-post → 0 kr
+      Kostnad för fakturautställare · Fakturaservice e-faktura/e-post → 90 kr
+      Kostnad för fakturamottagare · Påminnelseservice → 0 kr
+      Kostnad för fakturautställare · Påminnelseservice → 90 kr
+  2022-12-01  106 produkt→pris-par:
+      Pris · Fortnox Bas → 159 kr
+      Pris vid 3 månaders avtalsperiod · Fortnox Bas → 179 kr
+      Pris · Fortnox Standard → 229 kr
+      Pris vid 3 månaders avtalsperiod · Fortnox Standard → 249 kr
+      Pris · Fortnox Plus → 329 kr
+      Pris vid 3 månaders avtalsperiod · Fortnox Plus → 359 kr
+      Pris · Byråpartner → 239 kr
+      Pris vid 3 månaders avtalsperiod · Byråpartner → 259 kr
+  2024-01-23  19 produkt→pris-par:
+      Fortnox Enkel → 129 kr
+      Fortnox Bas → 199 kr
+      Fortnox Standard → 299 kr
+      Fortnox Plus → 399 kr
+      Byråpartner → 269 kr
+      Byråpartner med Avstämning & Rapportering → 408 kr
+      Byråpartner med Bokslut & Skatt → 618 kr
+      Löpande Bas → 159 kr
+  2024-12-08  29 produkt→pris-par:
+      Mini → 169 kr
+      Liten → 299 kr
+      Mellan → 449 kr
+      Stor → 669 kr
+      Mini+ → 299 kr
+      Liten+ → 399 kr
+      Mellan+ → 549 kr
+      Stor+ → 799 kr
+  2025-05-12  29 produkt→pris-par:
+      Mini → 189 kr
+      Liten → 319 kr
+      Mellan → 489 kr
+      Stor → 709 kr
+      Mini+ → 329 kr
+      Liten+ → 439 kr
+      Mellan+ → 589 kr
+      Stor+ → 839 kr
+  2025-10-08  27 produkt→pris-par:
+      Byråpartner → 499 kr
+      Löpande Bas → 239 kr
+      Löpande Mini → 119 kr
+      Gör det själv Mini → 129 kr
+      Gör det själv Bas → 239 kr
+      Attest & Koll → 99 kr
+      Arkivplats (10GB) → 109 kr
+      Avstämning → 139 kr
+  2026-02-06  28 produkt→pris-par:
+      Mini → 209 kr
+      Liten → 349 kr
+      Mellan → 529 kr
+      Stor → 749 kr
+      Mini+ → 369 kr
+      Liten+ → 479 kr
+      Mellan+ → 659 kr
+      Stor+ → 919 kr
+  2026-08-22  28 produkt→pris-par:
+      1-99 st → 29 kr
+      100-999 st → 99 kr
+      1000+ st → 199 kr
+      0 st → 9 kr
+      Mini → 209 kr
+      Liten → 349 kr
+      Mellan → 490 kr
+      Stor → 710 kr
+
+═══ PRISÄNDRINGAR ur 8 avläsningar: 151 ═══
+  ↑ Kostnad för fakturamottagare: 0 → 60 kr (+Infinity %) · 2022-03-15 → 2022-03-15
+  ↑ Kostnad för fakturamottagare: 60 → 180 kr (+200 %) · 2022-03-15 → 2022-03-15
+  ↓ Kostnad för fakturamottagare: 180 → 0 kr (-100 %) · 2022-03-15 → 2022-03-15
+  ↑ Kostnad för fakturamottagare: 0 → 380 kr (+Infinity %) · 2022-03-15 → 2022-03-15
+  ↓ Kostnad för fakturamottagare: 380 → 300 kr (-21.1 %) · 2022-03-15 → 2022-03-15
+  ↑ Kostnad för fakturamottagare: 300 → 600 kr (+100 %) · 2022-03-15 → 2022-03-15
+  ↑ Kostnad för fakturamottagare: 600 → 1000 kr (+66.7 %) · 2022-03-15 → 2022-03-15
+  ↓ Kostnad för fakturamottagare: 1000 → 170 kr (-83 %) · 2022-03-15 → 2022-03-15
+  ↓ Kostnad för fakturamottagare: 170 → 60 kr (-64.7 %) · 2022-03-15 → 2022-03-15
+  ↓ Kostnad för fakturamottagare: 60 → 0 kr (-100 %) · 2022-03-15 → 2022-12-01
+  ↑ Kostnad för fakturamottagare: 0 → 60 kr (+Infinity %) · 2022-12-01 → 2022-12-01
+  ↑ Kostnad för fakturamottagare: 60 → 180 kr (+200 %) · 2022-12-01 → 2022-12-01
+  ↓ Kostnad för fakturamottagare: 180 → 0 kr (-100 %) · 2022-12-01 → 2022-12-01
+  ↑ Kostnad för fakturamottagare: 0 → 380 kr (+Infinity %) · 2022-12-01 → 2022-12-01
+  ↓ Kostnad för fakturamottagare: 380 → 300 kr (-21.1 %) · 2022-12-01 → 2022-12-01
+  ↑ Kostnad för fakturamottagare: 300 → 600 kr (+100 %) · 2022-12-01 → 2022-12-01
+  ↑ Kostnad för fakturamottagare: 600 → 1000 kr (+66.7 %) · 2022-12-01 → 2022-12-01
+  ↓ Kostnad för fakturamottagare: 1000 → 170 kr (-83 %) · 2022-12-01 → 2022-12-01
+  ↓ Kostnad för fakturamottagare: 170 → 60 kr (-64.7 %) · 2022-12-01 → 2022-12-01
+  ↓ Kostnad för fakturautställare: 12 → 2 kr (-83.3 %) · 2022-03-15 → 2022-03-15
+  ↑ Kostnad för fakturautställare: 2 → 90 kr (+4400 %) · 2022-03-15 → 2022-03-15
+  ↓ Kostnad för fakturautställare: 90 → 0 kr (-100 %) · 2022-03-15 → 2022-03-15
+  ↑ Kostnad för fakturautställare: 0 → 2 kr (+Infinity %) · 2022-03-15 → 2022-03-15
+  ↑ Kostnad för fakturautställare: 2 → 12 kr (+500 %) · 2022-03-15 → 2022-12-01
+  ↓ Kostnad för fakturautställare: 12 → 2 kr (-83.3 %) · 2022-12-01 → 2022-12-01
+  ↑ Kostnad för fakturautställare: 2 → 90 kr (+4400 %) · 2022-12-01 → 2022-12-01
+  ↓ Kostnad för fakturautställare: 90 → 0 kr (-100 %) · 2022-12-01 → 2022-12-01
+  ↑ Kostnad för fakturautställare: 0 → 2 kr (+Infinity %) · 2022-12-01 → 2022-12-01
+  ↑ Kostnad för fakturautställare vid lyckat ärende: 0 → 400 kr (+Infinity %) · 2022-03-15 → 2022-03-15
+  ↓ Kostnad för fakturautställare vid lyckat ärende: 400 → 0 kr (-100 %) · 2022-03-15 → 2022-03-15
+
+PRODUKTER MED ≥3 ÄNDRINGAR (prognosmotorns minimum): 14
+  Kostnad för fakturamottagare: 19 ändringar
+  Kostnad för fakturautställare: 9 ändringar
+  Kostnad för fakturautställare vid lyckat ärende: 12 ändringar
+  Kostnad för fakturautställare vid misslyckat ärende*: 17 ändringar
+  Kostnad för fakturamottagaren: 5 ändringar
+  Pris: 21 ändringar
+  Pris vid 3 månaders avtalsperiod: 21 ändringar
+  Byråpartner: 3 ändringar
+  Löpande Bas: 3 ändringar
+  Löpande Mini: 3 ändringar
+  Gör det själv Bas: 3 ändringar
+  Bokföring Attest & Läs: 3 ändringar
+  Mellan: 3 ändringar
+  Stor: 3 ändringar
+
+[probe-prisarkeologi] Fortnox klar
