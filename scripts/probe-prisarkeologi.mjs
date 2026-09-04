@@ -52,8 +52,17 @@ console.log(`sida: ${MALSIDA}\nfrån: ${FRAN}\n`);
 // ── STEG 1 · vilka ögonblicksbilder finns? ──────────────────────────────────────────────────
 // CDX-API:t listar arkivets egna poster. `collapse=timestamp:6` ger en per månad — vi vill se
 // TÄCKNINGEN, inte varje enskild hämtning.
+// ── DIGEST-DRAGET ───────────────────────────────────────────────────────────────────────────
+// Första versionen tog en ögonblicksbild per MÅNAD och läste åtta av dem — ett urval, alltså ett
+// GOLV för antalet höjningar, aldrig facit. Att i stället ladda alla 22 blint hade varit att läsa
+// samma oförändrade sida om och om igen.
+//
+// Arkivets index bär en `digest`: en innehållshash per ögonblicksbild. Ett pris kan omöjligen ha
+// ändrats mellan två byte-identiska sidor. `collapse=digest` ger därför EXAKT de tidpunkter där
+// innehållet faktiskt rörde sig — färre laddningar OCH fullständigare täckning på samma gång.
+// Den som samplar hoppar över ändringar; den som följer digesten kan inte göra det.
 const cdx = `http://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(MALSIDA)}`
-  + `&output=json&from=${FRAN}&filter=statuscode:200&collapse=timestamp:6&limit=80`;
+  + `&output=json&from=${FRAN}&filter=statuscode:200&fl=timestamp,original,digest&collapse=digest&limit=200`;
 
 // Arkivet är en gratis allmänning och stryper trafik: första körningen gick igenom, den andra
 // fick 503. Ett övergående fel får inte se ut som «ingen historik finns» — sonden försöker om
@@ -63,7 +72,7 @@ let sistaFel = null;
 for (let forsok = 1; forsok <= 4; forsok += 1) {
   try {
     const r = await fetch(cdx, { headers: { 'user-agent': UA } });
-    if (r.ok) { poster = (await r.json()).slice(1).map((rad) => ({ ts: rad[1], url: rad[2] })); sistaFel = null; break; }
+    if (r.ok) { poster = (await r.json()).slice(1).map((rad) => ({ ts: rad[0], url: rad[1], digest: rad[2] })); sistaFel = null; break; }
     sistaFel = `status ${r.status}`;
   } catch (err) {
     sistaFel = err.message.slice(0, 60);
@@ -85,7 +94,7 @@ if (poster.length === 0) {
   process.exit(0);
 }
 
-console.log(`ÖGONBLICKSBILDER: ${poster.length} (en per månad, statuskod 200)`);
+console.log(`INNEHÅLLSVERSIONER: ${poster.length} (en per unik digest — sidor där något faktiskt ändrades)`);
 console.log(`  äldsta: ${poster[0].ts.slice(0, 8)} · nyaste: ${poster[poster.length - 1].ts.slice(0, 8)}\n`);
 
 // ── STEG 2 · läs PRODUKT → PRIS ur ett urval ögonblicksbilder ───────────────────────────────
@@ -96,8 +105,14 @@ console.log(`  äldsta: ${poster[0].ts.slice(0, 8)} · nyaste: ${poster[poster.l
 //
 // Läsningen är DEN SAMMA som prislistesonden använder (lib/prisparning.js). En kopia hade kunnat
 // glida isär, och då hade historiken och nuläget mätts med olika linjaler.
-const urval = poster.length <= 8 ? poster
-  : [0, 1, 2, 3, 4, 5, 6, 7].map((i) => poster[Math.floor((i * (poster.length - 1)) / 7)]);
+// Inget urval längre: varje innehållsversion laddas. Taket finns bara för att arkivet är en
+// gratis allmänning — nås det säger sonden ifrån i stället för att tyst mäta halva historiken.
+const TAK = Number(process.env.ARK_MAX) || 40;
+const urval = poster.slice(0, TAK);
+if (poster.length > TAK) {
+  console.log(`  ⚠ ${poster.length} versioner men taket är ${TAK} — historiken blir ETT GOLV, inte facit.`);
+  console.log('    Höj ARK_MAX för fullständig täckning.');
+}
 
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext({ userAgent: UA, locale: 'sv-SE', timezoneId: 'Europe/Stockholm' });

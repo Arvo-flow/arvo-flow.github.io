@@ -15,6 +15,9 @@ on:
       fran:
         description: 'Från vilket år'
         default: '2021'
+      max:
+        description: 'Max antal innehållsversioner att ladda'
+        default: '40'
 
 permissions:
   contents: write
@@ -22,7 +25,7 @@ permissions:
 jobs:
   sond:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,6 +39,7 @@ jobs:
           ARK_LEVERANTOR: ${{ inputs.leverantor }}
           ARK_URL: ${{ inputs.url }}
           ARK_FRAN: ${{ inputs.fran }}
+          ARK_MAX: ${{ inputs.max }}
         # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
         run: |
           set -o pipefail
