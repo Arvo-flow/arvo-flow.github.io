@@ -2,6 +2,8 @@
 sida: https://www.fortnox.se/produkt/prislista
 från: 2022
 
+  CDX status 503 — försök 1/4, väntar 15 s
+  CDX status 503 — försök 2/4, väntar 30 s
 ÖGONBLICKSBILDER: 22 (en per månad, statuskod 200)
   äldsta: 20220315 · nyaste: 20260822
 
@@ -78,46 +80,39 @@ från: 2022
       Mellan → 490 kr
       Stor → 710 kr
 
-═══ PRISÄNDRINGAR ur 8 avläsningar: 151 ═══
-  ↑ Kostnad för fakturamottagare: 0 → 60 kr (+Infinity %) · 2022-03-15 → 2022-03-15
-  ↑ Kostnad för fakturamottagare: 60 → 180 kr (+200 %) · 2022-03-15 → 2022-03-15
-  ↓ Kostnad för fakturamottagare: 180 → 0 kr (-100 %) · 2022-03-15 → 2022-03-15
-  ↑ Kostnad för fakturamottagare: 0 → 380 kr (+Infinity %) · 2022-03-15 → 2022-03-15
-  ↓ Kostnad för fakturamottagare: 380 → 300 kr (-21.1 %) · 2022-03-15 → 2022-03-15
-  ↑ Kostnad för fakturamottagare: 300 → 600 kr (+100 %) · 2022-03-15 → 2022-03-15
-  ↑ Kostnad för fakturamottagare: 600 → 1000 kr (+66.7 %) · 2022-03-15 → 2022-03-15
-  ↓ Kostnad för fakturamottagare: 1000 → 170 kr (-83 %) · 2022-03-15 → 2022-03-15
-  ↓ Kostnad för fakturamottagare: 170 → 60 kr (-64.7 %) · 2022-03-15 → 2022-03-15
-  ↓ Kostnad för fakturamottagare: 60 → 0 kr (-100 %) · 2022-03-15 → 2022-12-01
-  ↑ Kostnad för fakturamottagare: 0 → 60 kr (+Infinity %) · 2022-12-01 → 2022-12-01
-  ↑ Kostnad för fakturamottagare: 60 → 180 kr (+200 %) · 2022-12-01 → 2022-12-01
-  ↓ Kostnad för fakturamottagare: 180 → 0 kr (-100 %) · 2022-12-01 → 2022-12-01
-  ↑ Kostnad för fakturamottagare: 0 → 380 kr (+Infinity %) · 2022-12-01 → 2022-12-01
-  ↓ Kostnad för fakturamottagare: 380 → 300 kr (-21.1 %) · 2022-12-01 → 2022-12-01
-  ↑ Kostnad för fakturamottagare: 300 → 600 kr (+100 %) · 2022-12-01 → 2022-12-01
-  ↑ Kostnad för fakturamottagare: 600 → 1000 kr (+66.7 %) · 2022-12-01 → 2022-12-01
-  ↓ Kostnad för fakturamottagare: 1000 → 170 kr (-83 %) · 2022-12-01 → 2022-12-01
-  ↓ Kostnad för fakturamottagare: 170 → 60 kr (-64.7 %) · 2022-12-01 → 2022-12-01
-  ↓ Kostnad för fakturautställare: 12 → 2 kr (-83.3 %) · 2022-03-15 → 2022-03-15
-  ↑ Kostnad för fakturautställare: 2 → 90 kr (+4400 %) · 2022-03-15 → 2022-03-15
-  ↓ Kostnad för fakturautställare: 90 → 0 kr (-100 %) · 2022-03-15 → 2022-03-15
-  ↑ Kostnad för fakturautställare: 0 → 2 kr (+Infinity %) · 2022-03-15 → 2022-03-15
-  ↑ Kostnad för fakturautställare: 2 → 12 kr (+500 %) · 2022-03-15 → 2022-12-01
-  ↓ Kostnad för fakturautställare: 12 → 2 kr (-83.3 %) · 2022-12-01 → 2022-12-01
-  ↑ Kostnad för fakturautställare: 2 → 90 kr (+4400 %) · 2022-12-01 → 2022-12-01
-  ↓ Kostnad för fakturautställare: 90 → 0 kr (-100 %) · 2022-12-01 → 2022-12-01
-  ↑ Kostnad för fakturautställare: 0 → 2 kr (+Infinity %) · 2022-12-01 → 2022-12-01
-  ↑ Kostnad för fakturautställare vid lyckat ärende: 0 → 400 kr (+Infinity %) · 2022-03-15 → 2022-03-15
-  ↓ Kostnad för fakturautställare vid lyckat ärende: 400 → 0 kr (-100 %) · 2022-03-15 → 2022-03-15
+═══ PRISÄNDRINGAR ur 8 avläsningar: 47 ═══
+  ↑ Byråpartner: 269 → 299 kr (+11.2 %) · 2024-01-23 → 2024-12-08
+  ↑ Byråpartner: 299 → 329 kr (+10 %) · 2024-12-08 → 2025-05-12
+  ↑ Byråpartner: 329 → 499 kr (+51.7 %) · 2025-05-12 → 2025-10-08
+  ↑ Byråpartner med Bokslut & Skatt: 618 → 648 kr (+4.9 %) · 2024-01-23 → 2024-12-08
+  ↑ Byråpartner med Bokslut & Skatt: 648 → 678 kr (+4.6 %) · 2024-12-08 → 2025-05-12
+  ↑ Löpande Bas: 159 → 219 kr (+37.7 %) · 2024-01-23 → 2024-12-08
+  ↑ Löpande Bas: 219 → 239 kr (+9.1 %) · 2024-12-08 → 2025-05-12
+  ↑ Löpande Bas: 239 → 269 kr (+12.6 %) · 2025-10-08 → 2026-02-06
+  ↑ Löpande Mini: 79 → 109 kr (+38 %) · 2024-01-23 → 2024-12-08
+  ↑ Löpande Mini: 109 → 119 kr (+9.2 %) · 2024-12-08 → 2025-05-12
+  ↑ Löpande Mini: 119 → 149 kr (+25.2 %) · 2025-10-08 → 2026-02-06
+  ↑ Gör det själv Bas: 189 → 219 kr (+15.9 %) · 2024-01-23 → 2024-12-08
+  ↑ Gör det själv Bas: 219 → 239 kr (+9.1 %) · 2024-12-08 → 2025-05-12
+  ↑ Gör det själv Bas: 239 → 269 kr (+12.6 %) · 2025-10-08 → 2026-02-06
+  ↑ Gör det själv Mini: 109 → 129 kr (+18.3 %) · 2024-12-08 → 2025-05-12
+  ↑ Gör det själv Mini: 129 → 159 kr (+23.3 %) · 2025-10-08 → 2026-02-06
+  ↑ Anläggningsregister: 109 → 129 kr (+18.3 %) · 2025-05-12 → 2026-02-06
+  ↑ Bokföring: 129 → 149 kr (+15.5 %) · 2024-12-08 → 2025-05-12
+  ↑ Bokföring: 149 → 189 kr (+26.8 %) · 2025-10-08 → 2026-02-06
+  ↑ Bokföring Attest & Läs: 65 → 69 kr (+6.2 %) · 2024-01-23 → 2024-12-08
+  ↑ Bokföring Attest & Läs: 69 → 79 kr (+14.5 %) · 2024-12-08 → 2025-05-12
+  ↑ Bokföring Attest & Läs: 79 → 99 kr (+25.3 %) · 2025-05-12 → 2026-02-06
+  ↑ Fakturering: 119 → 139 kr (+16.8 %) · 2024-01-23 → 2024-12-08
+  ↑ Fakturering: 139 → 149 kr (+7.2 %) · 2024-12-08 → 2025-05-12
+  ↑ Mini: 169 → 189 kr (+11.8 %) · 2024-12-08 → 2025-05-12
+  ↑ Mini: 189 → 209 kr (+10.6 %) · 2025-05-12 → 2026-02-06
+  ↑ Liten: 299 → 319 kr (+6.7 %) · 2024-12-08 → 2025-05-12
+  ↑ Liten: 319 → 349 kr (+9.4 %) · 2025-05-12 → 2026-02-06
+  ↑ Mellan: 449 → 489 kr (+8.9 %) · 2024-12-08 → 2025-05-12
+  ↑ Mellan: 489 → 529 kr (+8.2 %) · 2025-05-12 → 2026-02-06
 
-PRODUKTER MED ≥3 ÄNDRINGAR (prognosmotorns minimum): 14
-  Kostnad för fakturamottagare: 19 ändringar
-  Kostnad för fakturautställare: 9 ändringar
-  Kostnad för fakturautställare vid lyckat ärende: 12 ändringar
-  Kostnad för fakturautställare vid misslyckat ärende*: 17 ändringar
-  Kostnad för fakturamottagaren: 5 ändringar
-  Pris: 21 ändringar
-  Pris vid 3 månaders avtalsperiod: 21 ändringar
+PRODUKTER MED ≥3 ÄNDRINGAR (prognosmotorns minimum): 7
   Byråpartner: 3 ändringar
   Löpande Bas: 3 ändringar
   Löpande Mini: 3 ändringar
