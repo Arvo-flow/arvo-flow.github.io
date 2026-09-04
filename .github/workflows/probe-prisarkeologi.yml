@@ -22,12 +22,14 @@ permissions:
 jobs:
   sond:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
+      - name: Playwright + Chromium
+        run: npm install playwright && npx playwright install chromium --with-deps
       - name: Gräv i arkivet
         shell: bash
         env:

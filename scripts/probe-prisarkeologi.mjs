@@ -33,6 +33,9 @@
 //   Och den interpolerar aldrig mellan två ögonblicksbilder: ett pris mellan två mätpunkter är
 //   uppfunnet, inte avläst.
 
+import { chromium } from 'playwright';
+import { parFranTabell, parFranKort, prisandringar } from '../lib/prisparning.js';
+
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 const MALSIDA = process.env.ARK_URL || '';
 const LEV = process.env.ARK_LEVERANTOR || '(namnlös)';
@@ -75,35 +78,84 @@ if (poster.length === 0) {
 console.log(`ÖGONBLICKSBILDER: ${poster.length} (en per månad, statuskod 200)`);
 console.log(`  äldsta: ${poster[0].ts.slice(0, 8)} · nyaste: ${poster[poster.length - 1].ts.slice(0, 8)}\n`);
 
-// ── STEG 2 · läs priserna ur ett urval ──────────────────────────────────────────────────────
-// Vi läser den RÅA arkiverade HTML:en. Arkivet sparar sidan som den levererades, alltså före
-// JavaScript — vilket är samma blindhet som drabbade prislistesonden. Skillnaden mäts och
-// rapporteras hellre än döljs: ser vi noll tal i en ögonblicksbild vet vi inte om priset saknades
-// eller om sidan var JS-renderad. Båda är «EJ LÄSBAR», aldrig «inga priser».
-const PRIS_RE = /(\d{1,3}(?:[  ]?\d{3})*(?:[.,]\d{1,2})?)\s*kr/gi;
+// ── STEG 2 · läs PRODUKT → PRIS ur ett urval ögonblicksbilder ───────────────────────────────
+// Första versionen läste NAKNA TAL ur den arkiverade HTML:en. Den bevisade att priserna finns
+// (Fortnox: alla åtta paketpriser återfanns i den färskaste bilden) men gav ingen koppling till
+// produkt — och ett tal utan produkt är ett tal utan påstående. Sidan renderas dessutom med
+// JavaScript, precis som i dag, så den måste laddas i en webbläsare.
+//
+// Läsningen är DEN SAMMA som prislistesonden använder (lib/prisparning.js). En kopia hade kunnat
+// glida isär, och då hade historiken och nuläget mätts med olika linjaler.
 const urval = poster.length <= 8 ? poster
   : [0, 1, 2, 3, 4, 5, 6, 7].map((i) => poster[Math.floor((i * (poster.length - 1)) / 7)]);
 
+const browser = await chromium.launch({ headless: true });
+const ctx = await browser.newContext({ userAgent: UA, locale: 'sv-SE', timezoneId: 'Europe/Stockholm' });
+const page = await ctx.newPage();
+const avlasningar = [];
+
 for (const p of [...new Map(urval.map((x) => [x.ts, x])).values()]) {
-  const arkivUrl = `http://web.archive.org/web/${p.ts}id_/${p.url}`;
-  let tal = null;
-  let status = null;
-  try {
-    const r = await fetch(arkivUrl, { headers: { 'user-agent': UA }, redirect: 'follow' });
-    status = r.status;
-    if (r.ok) {
-      const html = await r.text();
-      const text = html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ');
-      tal = [...new Set([...text.replace(/\s+/g, ' ').matchAll(PRIS_RE)].map((m) => m[1]))];
-    }
-  } catch (err) {
-    status = `FEL ${err.message.slice(0, 40)}`;
-  }
   const datum = `${p.ts.slice(0, 4)}-${p.ts.slice(4, 6)}-${p.ts.slice(6, 8)}`;
-  if (tal === null) console.log(`  ${datum}  status ${status} · EJ LÄSBAR`);
-  else if (tal.length === 0) console.log(`  ${datum}  status ${status} · 0 tal (JS-renderad eller prislös — EJ LÄSBAR, inte «inga priser»)`);
-  else console.log(`  ${datum}  status ${status} · ${tal.length} tal: ${tal.slice(0, 14).join(' · ')}`);
-  await new Promise((r) => setTimeout(r, 1200));   // arkivet är en gratis allmänning — vi tar den varsamt
+  const arkivUrl = `https://web.archive.org/web/${p.ts}/${p.url}`;
+  let ravaror = null;
+  try {
+    const r = await page.goto(arkivUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    if (!r || r.status() >= 400) { console.log(`  ${datum}  status ${r ? r.status() : '?'} · EJ LÄSBAR`); continue; }
+    await page.waitForTimeout(3000);
+    ravaror = await page.evaluate(() => {
+      const ren = (t) => String(t || '').replace(/\s+/g, ' ').trim();
+      const rubrikOver = (el) => {
+        let n = el;
+        for (let i = 0; i < 30 && n; i += 1) {
+          n = n.previousElementSibling || n.parentElement;
+          if (!n) break;
+          if (/^H[1-4]$/.test(n.tagName)) return ren(n.innerText);
+          const h = n.querySelector?.('h1,h2,h3,h4');
+          if (h) return ren(h.innerText);
+        }
+        return '';
+      };
+      const tabeller = [...document.querySelectorAll('table')].map((t) => {
+        const rader = [...t.querySelectorAll('tr')].map((r) => [...r.querySelectorAll('th,td')].map((c) => ren(c.innerText)));
+        return { kontext: rubrikOver(t), rubriker: rader[0] ?? [], rader: rader.slice(1) };
+      });
+      const kort = [...document.querySelectorAll('div,section,article,li')]
+        .filter((el) => { const t = ren(el.innerText); return t && t.length <= 260 && /\d\s*kr/i.test(t); })
+        .filter((el) => ![...el.children].some((c) => /\d\s*kr/i.test(ren(c.innerText)) && ren(c.innerText).length > 40))
+        .slice(0, 60)
+        .map((el) => ({ kontext: rubrikOver(el), rader: (el.innerText || '').split('\n').map(ren).filter(Boolean) }));
+      return { tabeller, kort };
+    });
+  } catch (err) {
+    console.log(`  ${datum}  EJ LÄSBAR: ${err.message.slice(0, 60)}`);
+    continue;
+  }
+
+  const par = [];
+  for (const t of ravaror.tabeller) par.push(...parFranTabell(t.rubriker, t.rader, t.kontext));
+  for (const k of ravaror.kort) { const x = parFranKort(k.rader, k.kontext); if (x) par.push(x); }
+  const unika = [...new Map(par.filter((x) => Number.isFinite(x.listpris)).map((x) => [`${x.paket}|${x.rad}`, x])).values()];
+  avlasningar.push({ datum, par: unika });
+
+  console.log(`  ${datum}  ${unika.length} produkt→pris-par` + (unika.length ? ':' : ' (EJ LÄSBAR — inte «inga priser»)'));
+  for (const x of unika.slice(0, 8)) {
+    console.log(`      ${x.paket}${x.rad ? ' · ' + x.rad : ''} → ${x.listpris} kr` + (x.kampanj ? ` (kampanj ${x.kampanjpris})` : ''));
+  }
+  await new Promise((r) => setTimeout(r, 1500));   // arkivet är en gratis allmänning — varsamt
 }
+await browser.close();
+
+// ── STEG 3 · skillnaderna ÄR historiken ─────────────────────────────────────────────────────
+const andringar = prisandringar(avlasningar);
+console.log(`\n═══ PRISÄNDRINGAR ur ${avlasningar.length} avläsningar: ${andringar.length} ═══`);
+for (const a of andringar.slice(0, 30)) {
+  const tecken = a.tillPris > a.franPris ? '↑' : '↓';
+  console.log(`  ${tecken} ${a.paket}: ${a.franPris} → ${a.tillPris} kr (${a.procent > 0 ? '+' : ''}${a.procent} %) · ${a.fran} → ${a.till}`);
+}
+const perPaket = {};
+for (const a of andringar) perPaket[a.paket] = (perPaket[a.paket] ?? 0) + 1;
+const mogna = Object.entries(perPaket).filter(([, n]) => n >= 3);
+console.log(`\nPRODUKTER MED ≥3 ÄNDRINGAR (prognosmotorns minimum): ${mogna.length}`);
+for (const [namn, n] of mogna) console.log(`  ${namn}: ${n} ändringar`);
 
 console.log(`\n[probe-prisarkeologi] ${LEV} klar`);
