@@ -1,0 +1,79 @@
+═══ PRISARKEOLOGI · Microsoft 365 ═══
+sida: https://www.microsoft.com/sv-se/microsoft-365/business/compare-all-microsoft-365-business-products
+från: 2020
+
+  CDX status 503 — försök 1/4, väntar 15 s
+  CDX status 504 — försök 2/4, väntar 30 s
+INNEHÅLLSVERSIONER: 13 (en per unik digest — sidor där något faktiskt ändrades)
+  äldsta: 20210122 · nyaste: 20250418
+
+  2021-01-22  6 produkt→pris-par:
+      Microsoft 365 Business Basic · 43,70 kr användare/månad (årsabonnemang) Microsoft 365 Business Basic, 43,70 kr användare/månad (årsabonnemang) → 109.2 kr
+      Microsoft 365 Business Standard · 43,70 kr användare/månad (årsabonnemang) Microsoft 365 Business Basic, 43,70 kr användare/månad (årsabonnemang) → 174.7 kr
+      Microsoft 365 Business Premium · 43,70 kr användare/månad (årsabonnemang) Microsoft 365 Business Basic, 43,70 kr användare/månad (årsabonnemang) → 90.5 kr
+      Microsoft 365 Business Basic · Köp nu Eller köp för 52,40 kr per användare/månad med ett månadsabonnemang → 131.1 kr
+      Microsoft 365 Business Premium · Köp nu Eller köp för 52,40 kr per användare/månad med ett månadsabonnemang → 108.6 kr
+      användare/månad → 90.5 kr
+  2021-03-07  2 produkt→pris-par:
+      (årsabonnemang) → 90.5 kr
+      användare/månad → 90.5 kr
+  2021-05-24  2 produkt→pris-par:
+      (årsabonnemang) → 90.5 kr
+      användare/månad → 90.5 kr
+  2021-06-26  2 produkt→pris-par:
+      (årsabonnemang) → 90.5 kr
+      användare/månad → 90.5 kr
+  2021-10-29  5 produkt→pris-par:
+      användare/månad → 174.7 kr
+      Microsoft 365 Business Basic → 43.7 kr
+      Microsoft 365 Business Standard → 109.2 kr
+      Microsoft 365 Business Premium → 174.7 kr
+      Microsoft 365-applikationer för affärsverksamhet → 90.5 kr
+  2021-12-10  5 produkt→pris-par:
+      användare/månad → 174.7 kr
+      Microsoft 365 Business Basic → 43.7 kr
+      Microsoft 365 Business Standard → 109.2 kr
+      Microsoft 365 Business Premium → 174.7 kr
+      Microsoft 365-applikationer för affärsverksamhet → 90.5 kr
+  2023-10-16  4 produkt→pris-par:
+      Microsoft 365 Business Basic 60,30 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 60.3 kr
+      Microsoft 365 Business Standard 125,60 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 125.6 kr
+      Microsoft 365 Business Premium 221,00 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 221 kr
+      Omfattar endast appar Microsoft 365-applikationer för affärsverksamhet 104,10 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 104.1 kr
+  2024-01-18  4 produkt→pris-par:
+      Microsoft 365 Business Basic 60,30 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 60.3 kr
+      Copilot för Microsoft 365 finns som ett tillägg.* Microsoft 365 Business Standard 125,60 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 125.6 kr
+      Copilot för Microsoft 365 finns som tillägg.* Microsoft 365 Business Premium 221,00 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 221 kr
+      Omfattar endast appar Microsoft 365-applikationer för affärsverksamhet 104,10 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 104.1 kr
+  2024-04-18  4 produkt→pris-par:
+      Microsoft 365 Business Basic 66,30 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 66.3 kr
+      Copilot för Microsoft 365 finns som tillägg.3 Microsoft 365 Business Standard 138,10 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 138.1 kr
+      Copilot för Microsoft 365 finns som tillägg.3 Microsoft 365 Business Premium 243,10 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 243.1 kr
+      Omfattar endast appar Microsoft 365-applikationer för affärsverksamhet 114,50 kr användare/månad (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 114.5 kr
+  2024-07-16  4 produkt→pris-par:
+      Microsoft 365 Business Basic 66,30 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 66.3 kr
+      Microsoft 365 Business Standard 138,10 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 138.1 kr
+      Microsoft 365 Business Premium 243,10 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 243.1 kr
+      Omfattar endast appar Microsoft 365-applikationer för affärsverksamhet 114,50 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 114.5 kr
+  2024-09-07  4 produkt→pris-par:
+      Microsoft 365 Business Basic 66,30 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 66.3 kr
+      Microsoft 365 Business Standard 138,10 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 138.1 kr
+      Microsoft 365 Business Premium 243,10 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 243.1 kr
+      Omfattar endast appar Microsoft 365-applikationer för affärsverksamhet 114,50 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 114.5 kr
+  2024-09-17  4 produkt→pris-par:
+      Microsoft 365 Business Basic 66,30 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 66.3 kr
+      Microsoft 365 Business Standard 138,10 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 138.1 kr
+      Microsoft 365 Business Premium 243,10 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 243.1 kr
+      Omfattar endast appar Microsoft 365-applikationer för affärsverksamhet 114,50 kr användare/månad (Betalas årligen – förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 114.5 kr
+  2025-04-18  4 produkt→pris-par:
+      Microsoft 365 Business Basic 66,30 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 66.3 kr
+      Microsoft 365 Business Standard 138,10 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 138.1 kr
+      Microsoft 365 Business Premium 243,10 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 243.1 kr
+      Omfattar endast appar Microsoft 365-applikationer för affärsverksamhet 114,50 kr användare/månad, betalas årsvis (Årsprenumeration, förnyas automatiskt)1 Pris exklusive moms. Köp nu Eller prova gratis i en månad Se villkor för utvärderingsperiod2 Mer information → 114.5 kr
+
+═══ PRISÄNDRINGAR ur 13 avläsningar: 1 ═══
+  ↑ användare/månad: 90.5 → 174.7 kr (+93 %) · 2021-06-26 → 2021-10-29
+
+PRODUKTER MED ≥3 ÄNDRINGAR (prognosmotorns minimum): 0
+
+[probe-prisarkeologi] Microsoft 365 klar
