@@ -1,0 +1,319 @@
+═══ PRISARKEOLOGI · Loopia webbhotell ═══
+sida: https://www.loopia.se/webbhotell/priser/
+från: 2020
+
+  CDX status 503 — försök 1/4, väntar 15 s
+INNEHÅLLSVERSIONER: 30 (en per unik digest — sidor där något faktiskt ändrades)
+  äldsta: 20200804 · nyaste: 20260515
+
+  2020-08-04  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 295 kr
+      Webbhotell Företag · Startavgift → 295 kr
+      Webbhotell Företag Plus · Startavgift → 295 kr
+      E-post · Pris / mån (årsvis fakturering) → 40 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 48 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 80 kr
+  2020-10-21  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 295 kr
+      Webbhotell Företag · Startavgift → 295 kr
+      Webbhotell Företag Plus · Startavgift → 295 kr
+      E-post · Pris / mån (årsvis fakturering) → 40 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 48 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 80 kr
+  2021-01-26  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 39 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 49 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 89 kr (kampanj 39)
+  2021-04-10  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 39 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 49 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 89 kr (kampanj 39)
+  2021-06-12  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 39 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 49 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 89 kr (kampanj 39)
+  2021-09-23  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 39 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 49 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 89 kr (kampanj 39)
+  2022-01-19  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 39 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 49 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 89 kr (kampanj 39)
+  2022-05-22  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 39 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 49 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 89 kr (kampanj 39)
+  2022-09-28  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 49 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 59 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 99 kr (kampanj 39)
+  2023-01-22  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 49 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 59 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 99 kr (kampanj 39)
+  2023-01-27  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 49 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 59 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 99 kr (kampanj 39)
+  2023-02-08  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 49 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 59 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 99 kr (kampanj 39)
+  2023-03-05  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 49 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 59 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 99 kr (kampanj 39)
+  2023-06-02  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 49 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 59 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 99 kr (kampanj 39)
+  2023-10-02  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 49 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 59 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 99 kr (kampanj 39)
+  2024-02-25  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 49 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 59 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 119 kr (kampanj 39)
+  2024-06-22  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 59 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 79 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 119 kr (kampanj 39)
+  2024-10-13  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 59 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 79 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 119 kr (kampanj 39)
+  2025-01-17  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 69 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 139 kr (kampanj 19)
+  2025-02-17  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 69 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 139 kr (kampanj 39)
+  2025-05-19  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 69 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 139 kr (kampanj 39)
+  2025-06-02  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 69 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 139 kr (kampanj 39)
+  2025-06-17  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 69 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 139 kr (kampanj 39)
+  2025-10-10  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 69 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 139 kr (kampanj 39)
+  2026-02-02  21 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 79 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 149 kr (kampanj 19)
+  2026-02-18  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 79 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 149 kr (kampanj 39)
+  2026-03-31  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 79 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 149 kr (kampanj 39)
+  2026-03-31  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 79 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 149 kr (kampanj 39)
+  2026-04-05  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 79 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 149 kr (kampanj 39)
+  2026-05-15  20 produkt→pris-par:
+      E-post · Startavgift → 0 kr
+      Loopia Starter · Startavgift → 0 kr
+      Webbhotell Privat · Startavgift → 0 kr
+      Webbhotell Företag · Startavgift → 0 kr
+      Webbhotell Företag Plus · Startavgift → 0 kr
+      E-post · Pris / mån (årsvis fakturering) → 79 kr
+      Loopia Starter · Pris / mån (årsvis fakturering) → 89 kr
+      Webbhotell Privat · Pris / mån (årsvis fakturering) → 149 kr (kampanj 39)
+
+═══ PRISÄNDRINGAR ur 30 avläsningar: 64 ═══
+  ↓ Webbhotell Privat: 295 → 0 kr (-100 %) · 2020-10-21 → 2021-01-26
+  ↓ Webbhotell Företag: 295 → 0 kr (-100 %) · 2020-10-21 → 2021-01-26
+  ↓ Webbhotell Företag Plus: 295 → 0 kr (-100 %) · 2020-10-21 → 2021-01-26
+  ↓ E-post: 40 → 39 kr (-2.5 %) · 2020-10-21 → 2021-01-26
+  ↑ E-post: 39 → 49 kr (+25.6 %) · 2022-05-22 → 2022-09-28
+  ↑ E-post: 49 → 59 kr (+20.4 %) · 2024-02-25 → 2024-06-22
+  ↑ E-post: 59 → 69 kr (+16.9 %) · 2024-10-13 → 2025-01-17
+  ↑ E-post: 69 → 79 kr (+14.5 %) · 2025-10-10 → 2026-02-02
+  ↑ Loopia Starter: 48 → 49 kr (+2.1 %) · 2020-10-21 → 2021-01-26
+  ↑ Loopia Starter: 49 → 59 kr (+20.4 %) · 2022-05-22 → 2022-09-28
+  ↑ Loopia Starter: 59 → 79 kr (+33.9 %) · 2024-02-25 → 2024-06-22
+  ↑ Loopia Starter: 79 → 89 kr (+12.7 %) · 2024-10-13 → 2025-01-17
+  ↑ Webbhotell Privat: 80 → 89 kr (+11.3 %) · 2020-10-21 → 2021-01-26
+  ↑ Webbhotell Privat: 89 → 99 kr (+11.2 %) · 2022-05-22 → 2022-09-28
+  ↑ Webbhotell Privat: 99 → 119 kr (+20.2 %) · 2023-10-02 → 2024-02-25
+  ↑ Webbhotell Privat: 119 → 139 kr (+16.8 %) · 2024-10-13 → 2025-01-17
+  ↑ Webbhotell Privat: 139 → 149 kr (+7.2 %) · 2025-10-10 → 2026-02-02
+  ↑ Webbhotell Företag: 160 → 178 kr (+11.3 %) · 2020-10-21 → 2021-01-26
+  ↑ Webbhotell Företag: 178 → 199 kr (+11.8 %) · 2022-05-22 → 2022-09-28
+  ↑ Webbhotell Företag: 199 → 229 kr (+15.1 %) · 2023-10-02 → 2024-02-25
+  ↑ Webbhotell Företag: 229 → 239 kr (+4.4 %) · 2024-10-13 → 2025-01-17
+  ↑ Webbhotell Företag: 239 → 259 kr (+8.4 %) · 2025-10-10 → 2026-02-02
+  ↓ Webbhotell Företag Plus: 640 → 398 kr (-37.8 %) · 2020-10-21 → 2021-01-26
+  ↑ Webbhotell Företag Plus: 398 → 449 kr (+12.8 %) · 2023-10-02 → 2024-02-25
+  ↑ Webbhotell Företag Plus: 449 → 489 kr (+8.9 %) · 2024-10-13 → 2025-01-17
+  ↓ E-post: 59 → 49 kr (-16.9 %) · 2020-10-21 → 2021-01-26
+  ↑ Loopia Starter: 56 → 59 kr (+5.4 %) · 2020-10-21 → 2021-01-26
+  ↑ Webbhotell Företag: 176 → 192 kr (+9.1 %) · 2020-10-21 → 2021-01-26
+  ↓ Webbhotell Företag Plus: 656 → 438 kr (-33.2 %) · 2020-10-21 → 2021-01-26
+  ↑ E-post: 55.2 → 59 kr (+6.9 %) · 2020-10-21 → 2021-01-26
+
+PRODUKTER MED ≥3 ÄNDRINGAR (prognosmotorns minimum): 5
+  Webbhotell Privat: 14 ändringar
+  Webbhotell Företag: 15 ändringar
+  Webbhotell Företag Plus: 10 ändringar
+  E-post: 14 ändringar
+  Loopia Starter: 11 ändringar
+
+[probe-prisarkeologi] Loopia webbhotell klar
