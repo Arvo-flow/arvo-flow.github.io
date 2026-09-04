@@ -117,6 +117,7 @@ import './larmunderlag.mjs';
 import './switcharvode.mjs';
 import './switchliggare.mjs';
 import './pastaendevakt.mjs';
+import './prisparning.mjs';
 import './mainvakt.mjs';
 import './arvodeskorning.mjs';
 import './licensniva.mjs';
