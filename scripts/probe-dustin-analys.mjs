@@ -53,7 +53,7 @@ const kolumner = new Set(
   (await db`SELECT column_name FROM information_schema.columns WHERE table_name = 'invoice_analyses'`)
     .map((r) => r.column_name)
 );
-for (const k of ['supplier', 'category', 'created_at', 'lead_finding_json', 'line_items_json']) {
+for (const k of ['supplier', 'category', 'created_at', 'triage_reason', 'lead_finding_json', 'line_items_json']) {
   if (!kolumner.has(k)) {
     console.error(`✗ kolumnen ${k} saknas i invoice_analyses — migreringen har inte körts fullt ut.`);
     console.error('  Sonden avbryter hellre än mäter ett halvt schema och kallar det ett utfall.');
@@ -62,7 +62,7 @@ for (const k of ['supplier', 'category', 'created_at', 'lead_finding_json', 'lin
 }
 
 const rader = await db`
-  SELECT id, supplier, category, created_at, route, lead_finding_json, line_items_json
+  SELECT id, supplier, category, created_at, route, triage_reason, lead_finding_json, line_items_json
   FROM invoice_analyses
   WHERE supplier ILIKE '%dustin%'
   ORDER BY created_at DESC
@@ -79,7 +79,7 @@ if (rader.length === 0) {
 
 for (const r of rader) {
   console.log(`\n── ${r.created_at?.toISOString?.() ?? r.created_at} · id=${r.id} ─────────────`);
-  console.log(`leverantör: ${r.supplier} · kategori: ${r.category} · rutt: ${r.route}`);
+  console.log(`leverantör: ${r.supplier} · kategori: ${r.category} · rutt: ${r.route} · skäl: ${r.triage_reason ?? '—'}`);
 
   const poster = r.line_items_json;
   if (!Array.isArray(poster)) {
