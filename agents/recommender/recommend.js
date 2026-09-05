@@ -359,9 +359,25 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
         lines.push(`    ${tLabel}: ${t.quantity} licenser · ${billed}${t.benchmarkMonthly} kr/mån (Microsoft årsavtal) = ${t.tierAnnual.toLocaleString('sv-SE')} kr/år`);
       }
       lines.push(`    Marknadspris SAMMA licensmix (inkl. licenser tillagda under perioden): ${lfl.suggestedAnnualCost.toLocaleString('sv-SE')} kr/år`);
-      lines.push(`    → HELA besparingen kommer från PRISGAPET — kunden överprisas av sin nuvarande återförsäljare för exakt samma licenser.`);
-      lines.push(`    → KRITISKT: Nämn INTE tier-byte eller nedgradering i main reasoning. Tier-alternativ är valfri extraoptimering som visas separat i gränssnittet.`);
-      lines.push(`    → Reasoning ska förklara: Varför betalar kunden markant mer än marknadspriset för ${tierLabel}-licenser? Återförsäljarens marginal? Månadsavtal vs årsavtal?`);
+      // ⚠️ PREMISSEN FÅR BARA STÅ I DEN GREN DÄR RADERNAS EGNA TAL BÄR DEN (2026-09-05, Atea-kortet).
+      // Raderna nedan slog tidigare fast «kunden överprisas» för VARJE faktura med LFL-underlag och
+      // bad modellen förklara VARFÖR — även när kunden låg under Microsofts eget listpris. Modellen
+      // svarade på frågan den fick. Se lflPrisgap() för hela obduktionen.
+      const _gap = lflPrisgap(lfl);
+      if (_gap?.riktning === 'over') {
+        lines.push(`    → HELA besparingen kommer från PRISGAPET — kunden överprisas av sin nuvarande återförsäljare för exakt samma licenser.`);
+        lines.push(`    → KRITISKT: Nämn INTE tier-byte eller nedgradering i main reasoning. Tier-alternativ är valfri extraoptimering som visas separat i gränssnittet.`);
+        lines.push(`    → Reasoning ska förklara: Varför betalar kunden markant mer än marknadspriset för ${tierLabel}-licenser? Återförsäljarens marginal? Månadsavtal vs årsavtal?`);
+      } else if (_gap) {
+        const _lage = _gap.riktning === 'lika' ? 'EXAKT PÅ' : 'UNDER';
+        lines.push(`    → KUNDEN LIGGER ${_lage} Microsofts publika årsavtalspris för exakt samma licenser. Det finns INGET prisgap och INGET bytesmål.`);
+        lines.push(`    → FÖRBJUDET: påstå att Microsofts, marknadens eller någon annan leverantörs pris är lägre än kundens, och rekommendera ALDRIG ett byte, en ombindning eller en omförhandling av licenspriset. Att ligga under listpris är väntat — konstatera det och stanna där.`);
+        lines.push(`    → KRITISKT: Nämn INTE tier-byte eller nedgradering i main reasoning. Tier-alternativ är valfri extraoptimering som visas separat i gränssnittet.`);
+      } else {
+        // Utan fakturerat à-pris vet vi inte kundens pris per licens. Då hävdas ingen riktning alls.
+        lines.push(`    → Kundens à-pris per licens går inte att läsa ur fakturaraderna. Hävda därför INGEN riktning: säg varken att kunden betalar mer eller mindre än marknaden, och rekommendera inget byte på prisargument.`);
+        lines.push(`    → KRITISKT: Nämn INTE tier-byte eller nedgradering i main reasoning. Tier-alternativ är valfri extraoptimering som visas separat i gränssnittet.`);
+      }
       lines.push(`    → FÖRBJUDET: räkna egna per-användare-, procent- eller besparingstal i reasoning. Varje siffra du nämner ska vara hämtad ordagrant från raderna ovan eller från "Aktuellt pris/seat".`);
       lines.push(`    → ATTRIBUERING: "Aktuellt pris/seat" är kundens TOTALA kostnad per användare inkl. eventuella tilläggstjänster (support, säkerhet) — kalla den ALDRIG licenspris. Licensprisjämförelser görs ENDAST mellan tier-radens fakturerade à-pris och årsavtalspriset ovan.`);
     }
@@ -684,6 +700,58 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
 // Enda hållbara låset: när like-for-like-fakta finns kompletta skrivs hela
 // resonemanget deterministiskt — en maskinskriven mening kan inte felattribuera.
 
+/**
+ * PRISGAPETS RIKTNING ur LFL-raderna — EN sanning, läst av både prompten och prosan.
+ *
+ * ⚠️ VARFÖR DEN HÄR FUNKTIONEN FINNS (2026-09-05, ur Atea-kortet).
+ * Grundaren visade ett kort där rubriken sa «Marknadsmässigt pris — vi hittar inget prisgap»
+ * och brödtexten rakt under sa *«Microsofts eget publika listpris för exakt samma E3-licenser
+ * på årsavtal är LÄGRE … Bind om till Microsoft årsavtal så försvinner mellanhandens påslag.»*
+ * Mätt: kunden betalade 410,00 kr/anv/mån, Microsofts publika årsavtalspris för E3 är
+ * **416,77 kr** (prisboken, `msrpAnnual`). Påståendet var alltså falskt med 6,77 kr per licens
+ * och månad — och åtgärden vi föreslog hade KOSTAT kunden pengar.
+ *
+ * Det var inte modellen som hittade på. **Vi beordrade den.** Promptblocket nedan renderades
+ * för VARJE faktura med LFL-underlag och slog fast som premiss att «kunden överprisas», följt
+ * av frågan «Varför betalar kunden markant mer än marknadspriset?». En modell som får en falsk
+ * premiss och en ledande fråga svarar på frågan. Samma form som den tomma «ANVÄND EXAKT DESSA
+ * TAL»-listan (12 aug): ett block skrivet för en gren, renderat i båda.
+ *
+ * Rätt mönster fanns redan 40 rader upp i samma fil — Atlassian-grenen skriver
+ * «KUNDEN ÄR UNDER LISTPRIS. Inget bytespotential.» Regel 1: en sanning per fråga.
+ *
+ * Toleransen är HÄRLEDD, inte vald: `billedUnitMonthly` avrundas till två decimaler, så
+ * avläsningens egen osäkerhet är ≤ 0,005 kr per licens och månad. Allt över 0,01 kr är en
+ * verklig skillnad; allt under är samma pris.
+ *
+ * FÅNGAR: att vi påstår ett prisgap åt fel håll när radernas egna tal säger motsatsen.
+ * BLIND: kräver `billedUnitMonthly` på minst en rad. Utan fakturerat à-pris vet vi inte kundens
+ *   pris per licens och returnerar `null` — OKÄNT, aldrig 'under'. Den som läser `null` som
+ *   «inget gap» återinför precis felet funktionen finns för.
+ *
+ * @returns {{ billedAnnual, benchmarkAnnual, gapAnnual, riktning: 'over'|'under'|'lika' }|null}
+ */
+export function lflPrisgap(lfl) {
+  const tiers = (lfl?.tierLines ?? []).filter(
+    (t) => t.quantity > 0 && t.benchmarkMonthly != null && t.billedUnitMonthly != null
+  );
+  if (tiers.length === 0) return null;          // okänt är inte samma sak som noll
+
+  const billedAnnual    = tiers.reduce((s, t) => s + t.billedUnitMonthly * t.quantity * 12, 0);
+  const benchmarkAnnual = tiers.reduce((s, t) => s + t.benchmarkMonthly  * t.quantity * 12, 0);
+  const platser = tiers.reduce((s, t) => s + t.quantity, 0);
+  // Skillnaden mätt DÄR avläsningen bor: kr per licens och månad.
+  const perEnhet = (billedAnnual - benchmarkAnnual) / platser / 12;
+  const riktning = Math.abs(perEnhet) <= 0.01 ? 'lika' : (perEnhet > 0 ? 'over' : 'under');
+
+  return {
+    billedAnnual:    Math.round(billedAnnual),
+    benchmarkAnnual: Math.round(benchmarkAnnual),
+    gapAnnual:       Math.round(billedAnnual - benchmarkAnnual),
+    riktning,
+  };
+}
+
 export const LFL_TIER_LABELS = {
   'business-premium': 'Business Premium', 'business-standard': 'Business Standard',
   'business-basic': 'Business Basic', 'e3': 'E3', 'e5': 'E5',
@@ -693,11 +761,82 @@ const fmtKrUnit = (n) => Number.isInteger(n)
   ? n.toLocaleString('sv-SE')
   : n.toFixed(2).replace('.', ',');
 
+/**
+ * Den kodskrivna texten när LFL-fakta är kompletta och avståndet till golvet INTE är en besparing.
+ *
+ * Vad vi vet, och därför får säga: kundens fakturerade à-pris per licens (avläst ur radbeloppet,
+ * bevisat mot fakturans egen aritmetik, SR-07) och Microsofts publika årsavtalspris för samma
+ * licens. Vad vi INTE får säga: att priset är «bra» eller «konkurrenskraftigt» — frånvaron av ett
+ * bytesmål säger ingenting om huruvida kunden betalar rätt (bibeln 19 + 22 aug, tre ytor samma
+ * osanning). Och att ligga UNDER listpris är väntat, inte en triumf: nästan alla företag gör det
+ * (Marknadsankaret, 15 aug). Texten säger det rakt ut, så att konstaterandet inte läses som beröm.
+ *
+ * Ordet «verifierat» används medvetet INTE: det kräver ett datum (BA-09), och `tierLines` bär
+ * inget. Formuleringen är därför samma som gap-grenens — «Microsofts publika årsavtalspris».
+ */
+function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
+  const gap = lflPrisgap(lfl);
+  if (!gap) return null;                       // utan à-pris kan vi inte säga vad kunden betalar
+
+  const supplierName = supplier || 'er nuvarande leverantör';
+  const dominant = tiers.find(t => t.key === lfl.dominantTierKey && t.billedUnitMonthly != null)
+    ?? tiers.find(t => t.billedUnitMonthly != null);
+  if (!dominant) return null;
+  const dLabel = LFL_TIER_LABELS[dominant.key] ?? dominant.key;
+
+  const parts = [
+    `Ni betalar ${fmtKrUnit(dominant.billedUnitMonthly)} kr per användare och månad för era ` +
+    `${dominant.quantity} ${dLabel}-licenser via ${supplierName} — Microsofts publika ` +
+    `årsavtalspris för exakt samma licens är ${fmtKrUnit(dominant.benchmarkMonthly)} kr.`,
+  ];
+
+  if (gap.riktning === 'under') {
+    parts.push(
+      `Ni ligger alltså under Microsofts eget listpris` +
+      (billingCycleType === 'monthly' ? `, och det utan årsåtagande` : ``) + `.`
+    );
+    parts.push(
+      `Att ligga under listpris är väntat — de flesta företag förhandlar ned det — så det är ` +
+      `inget kvitto på att priset är rätt. Det vi kan säga är att vi inte hittar något publikt ` +
+      `pris som är lägre än ert, och därför inget byte som sänker kostnaden.`
+    );
+  } else if (gap.riktning === 'lika') {
+    parts.push(
+      `Ni betalar alltså exakt Microsofts listpris — inget återförsäljarpåslag, men heller ingen ` +
+      `rabatt. Det finns inget publikt pris att byta ned till; utrymmet ligger i förhandling, ` +
+      `inte i ett byte.`
+    );
+  } else {
+    // ⚠️ HÄR STOD «— under den gräns där ett leverantörsbyte är operationellt motiverat».
+    // Det var en PÅHITTAD MOTIVERING: funktionen känner inte 500-kronorsgolvet, och grenen är
+    // nåbar av flera skäl (avstämningsvetot, add-ons i basen, golvet). Med 450 mot 416,77 kr på
+    // 25 licenser blev talet 9 969 kr/år och meningen sa att det låg under en gräns på 500 kr.
+    // Reservkortsfelet ordagrant (BK-06/BK-07, 15 aug), begånget i en rättning skriven mot det:
+    // en gren som inte VET varför vi stannade får bara säga ATT vi stannade. Att ligga över
+    // leverantörens eget listpris är däremot rummets vassaste besked och sägs rakt ut.
+    parts.push(
+      `Ert à-pris ligger alltså ${Math.abs(gap.gapAnnual).toLocaleString('sv-SE')} kr per år över ` +
+      `Microsofts eget listpris — ovanligt, och värt att ta upp med ${supplierName}. Vår ` +
+      `bytesberäkning landar ändå inte i ett verifierat bytesmål i dag, så vi föreslår inget byte ` +
+      `här: fyndet går vidare till granskning.`
+    );
+  }
+
+  return parts.join(' ');
+}
+
 export function buildLikeForLikeReasoning({
   supplier, lfl, annualCost, suggestedAnnualCost, savingPerYear, billingCycleType,
 }) {
   const tiers = (lfl?.tierLines ?? []).filter(t => t.quantity > 0 && t.benchmarkMonthly != null);
-  if (tiers.length === 0 || !(savingPerYear > 0)) return null;
+  if (tiers.length === 0) return null;
+  // ⚠️ «INGEN BESPARING» ÄR INTE «INGET UNDERLAG» (2026-09-05, Atea-kortet).
+  // Raden löd `tiers.length === 0 || !(savingPerYear > 0)` — alltså returnerade låset null i
+  // precis det läge där fakta är som MEST kompletta: vi känner kundens à-pris per licens OCH
+  // det publika golvet, och har just räknat fram att avståndet är noll eller negativt. AI:ns
+  // egen text gick då ut oredigerad till webbkortet, PDF:en och mailet. Felfamiljen i sin
+  // renaste form: ett räknat svar som råkar vara noll representerat som «jag vet inget».
+  if (!(savingPerYear > 0)) return buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType });
 
   const supplierName = supplier || 'er nuvarande leverantör';
   const dominant = tiers.find(t => t.key === lfl.dominantTierKey) ?? tiers[0];
@@ -1830,7 +1969,10 @@ export async function recommend(input, opts = {}) {
     // Attribueringslåset: när LFL-fakta är kompletta ersätts AI:ns resonemang med
     // den kodskrivna versionen — 683-felklassen (blandad per-seat-total kallad
     // licenspris) kan inte återuppstå i en maskinskriven mening.
-    if (_useLfl && result.shouldSwitch) {
+    // ⚠️ `&& result.shouldSwitch` STOD HÄR (borttaget 2026-09-05, Atea-kortet). Låset fyrade alltså
+    // bara när vi PÅSTOD en besparing — aldrig när vi avstod från att påstå en. Just då gick AI:ns
+    // egen text ut till kortets «ARVO BEDÖMER», till PDF:en (api/send-analysis.mjs) och till mailet.
+    if (_useLfl) {
       const deterministicReasoning = buildLikeForLikeReasoning({
         supplier:            input.categorized.normalizedSupplier,
         lfl:                 _lflTarget,
@@ -1852,6 +1994,41 @@ export async function recommend(input, opts = {}) {
     } // end else (LFL-grinden)
 
     } // end else (combined+null guard)
+  }
+
+  // ── ATTRIBUERINGSLÅSET UTANFÖR AI:NS EGEN GRIND (2026-09-05, Atea-kortet) ────────────────────
+  // Hela det deterministiska blocket ovan öppnas av `if (result.shouldSwitch && benchmark)` — och
+  // `shouldSwitch` kommer från MODELLEN. Sa modellen «inget byte» kördes alltså ingen kodskriven
+  // logik alls, och modellens egen prosa VAR hela kortet. Det var därför Atea-kunden fick läsa
+  // «Microsofts listpris är lägre … bind om till årsavtal» när radernas egna tal sa motsatsen.
+  //
+  // Låset flyttas därför ut hit, där det inte kan grindas av det svar det ska granska. Passet rör
+  // ENBART fallet den inre grenen omöjligt kan nå (ingen räknad besparing) — switch-vägen skriver
+  // sin text kvar där uppe, med sina egna tal.
+  //
+  // Fail-closed på PÅSTÅENDET (RK-02), fail-open på pipelinen: utan läsbart à-pris returnerar
+  // buildLikeForLikeReasoning null och AI:ns text står kvar.
+  // MÄTT 2026-09-05, inte antaget: produktionens ENDA byggare av likeForLikeTarget är
+  // computeLikeForLikeSaasTarget (api/test-invoice.mjs:1427 — kopian revs 12 aug, RD-07), och den
+  // returnerar null redan när en tier-rad saknar `quantity`. Varje tierLine den producerar bär
+  // därför ett härlett `billedUnitMonthly`. Null-grenen är alltså ett skyddsnät för en framtida
+  // andra byggare, inte ett öppet hål i dag — och den dagen någon skriver en sådan byggare är
+  // prompt-grenens neutrala instruktion det som håller. RK-05 låser premissen.
+  if (input.categorized.category === 'saas-productivity'
+      && input.invoice?.likeForLikeTarget?.suggestedAnnualCost > 0
+      && !(result.savingPerYear > 0)) {
+    const _inteGap = buildLikeForLikeReasoning({
+      supplier:            input.categorized.normalizedSupplier,
+      lfl:                 input.invoice.likeForLikeTarget,
+      annualCost:          input.invoice.annualCost,
+      suggestedAnnualCost: input.invoice.likeForLikeTarget.suggestedAnnualCost,
+      savingPerYear:       0,
+      billingCycleType:    input.invoice.billingPeriod === 'monthly' ? 'monthly' : null,
+    });
+    if (_inteGap && result.reasoning !== _inteGap) {
+      console.log('[attribueringslås] AI-reasoning ersatt — inget prisgap, kodskriven text');
+      result.reasoning = _inteGap;
+    }
   }
 
   // Bytesmålet för saas-productivity LÅSES till M365-golvet som besparingen räknas mot — aldrig en

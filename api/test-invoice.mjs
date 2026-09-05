@@ -430,7 +430,10 @@ export default async function handler(req, res) {
   // verklig Dustin-faktura. Fixen ÄNDRAR RESULTATET för varje faktura med en leasingrad, alltså
   // måste versionen bumpas: annars serverar cachen det gamla, tomma svaret och fixen ser ut att
   // ha misslyckats. (Regel 7 — bumpa vid varje pipelineändring som påverkar resultat.)
-  const cacheKey = `pdf:result:v15:${pdfHash}:e${employeesNum}`;
+  // v16 (2026-09-05): riktningskravet. En saas-productivity-analys utan räknad besparing får nu
+  // kodskriven prosa i stället för modellens (Atea-kortet — se lflPrisgap i recommend.js). Utan
+  // bump hade varje redan analyserad faktura fortsatt servera den falska meningen ur cachen.
+  const cacheKey = `pdf:result:v16:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'

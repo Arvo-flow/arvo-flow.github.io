@@ -44,6 +44,19 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'gamla svar utan fyndet, och fixen ser ut att ha misslyckats');
   });
 
+  test('CV-03 · riktningskravet och cache-versionen hänger ihop', () => {
+    // Samma koppling, ny resultatändring (2026-09-05, Atea-kortet): finns den kodskrivna
+    // inte-gap-texten i recommend.js MÅSTE cachen ha bumpats förbi v15. Annars läser en kund som
+    // laddar upp samma PDF igen kvar den falska meningen «Microsofts listpris är lägre» ur cachen,
+    // och rättningen ser ut att ha misslyckats — exakt CV-01:s sjukdom, en version senare.
+    const REC = readFileSync(join(ROT, 'agents/recommender/recommend.js'), 'utf8');
+    const harRiktningskrav = /function buildInteGapReasoning/.test(REC) && /export function lflPrisgap/.test(REC);
+    if (!harRiktningskrav) return;              // rättningen borttagen → RK-02 äger det fallet
+    assert.ok(cacheVersion() >= 16,
+      `riktningskravet finns men pdf:result står på v${cacheVersion()} — cachen serverar då den `
+      + 'gamla, falska prosan för varje redan analyserad faktura');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

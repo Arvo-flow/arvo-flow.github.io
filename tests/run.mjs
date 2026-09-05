@@ -92,6 +92,7 @@ import './villkorslasare.mjs';
 import './sondkontrakt.mjs';
 import './saas-avstamning.mjs';
 import './lfl-produktionsvag.mjs';
+import './riktningskrav.mjs';
 import './saas-rad.mjs';
 import './ct-ko.mjs';
 import './dorrstat.mjs';
