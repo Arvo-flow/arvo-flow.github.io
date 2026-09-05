@@ -68,6 +68,19 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'utan fynd för varje redan analyserad faktura, och fixen ser ut att ha misslyckats');
   });
 
+  test('CV-05 · fyndrättens rättelse och cache-versionen hänger ihop', () => {
+    // CV-04 krävde bara >= 17, och en ny RESULTATÄNDRING passerade därför obemärkt: sabotaget
+    // «lämna cachen obumpad» fällde noll tester. Varje koppling måste bindas till SIN version,
+    // annars är kedjan bara så stark som den första länken — och en vakt vars sabotage inte
+    // fäller är ingen vakt.
+    const harRattelse = /reason: 'categorization_conflict'/.test(API)
+      && /tillitTillRader: true,[\s\S]{0,200}?reason: 'categorization_conflict'/.test(API);
+    if (!harRattelse) return;                   // rättelsen borttagen → UK-11 äger det fallet
+    assert.ok(cacheVersion() >= 18,
+      `categorization_conflict bär nu sitt fynd men pdf:result står på v${cacheVersion()} — `
+      + 'cachen serverar då den gamla tystnaden för varje redan analyserad faktura');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

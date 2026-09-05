@@ -106,7 +106,7 @@ describe('UK · Strukturen — ingen utgång kan kringgå kuvertet', () => {
 
   test('UK-07 · varje svara()-anrop deklarerar sin tillit', () => {
     const anrop = [...API.matchAll(/return svara\(/g)].length;
-    const deklarationer = [...API.matchAll(/^\s*tillitTillRader: (true|false),$/gm)].length;
+    const deklarationer = [...API.matchAll(/^\s*tillitTillRader: (?:true|false|routing\.tillitTillRader \?\? false),$/gm)].length;
     assert.ok(anrop >= 15, `bara ${anrop} svara()-anrop hittades — vakten mäter inte det den påstår`);
     assert.equal(deklarationer, anrop - 1,
       'en utgång saknar tillitTillRader (−1 = den som sprider ...autoResponse och bär sin egen)');
@@ -115,8 +115,12 @@ describe('UK · Strukturen — ingen utgång kan kringgå kuvertet', () => {
   test('UK-08 · varje deklaration bär ett skrivet skäl på raden ovanför', () => {
     const rader = API.split('\n');
     const utan = rader
-      .map((l, i) => ({ n: i + 1, l, fore: rader[i - 1] ?? '' }))
-      .filter(({ l }) => /^\s*tillitTillRader: (true|false),$/.test(l))
+      // Blocket ovanför, inte bara RADEN ovanför. Första versionen krävde att `// tillit:` stod
+      // på exakt föregående rad — och fällde därmed de två deklarationer som har den UTFÖRLIGASTE
+      // motiveringen, eftersom deras kommentar är flera rader lång. En vakt som straffar mer
+      // motivering straffar rätt beteende (SK-08: förbjud påståendet, aldrig formen).
+      .map((l, i) => ({ n: i + 1, l, fore: rader.slice(Math.max(0, i - 14), i).join('\n') }))
+      .filter(({ l }) => /^\s*tillitTillRader: (?:true|false|routing\.tillitTillRader \?\? false),$/.test(l))
       .filter(({ fore }) => !/\/\/ tillit: \S.{20,}/.test(fore));
     assert.deepEqual(utan.map((u) => u.n), [],
       'en deklaration utan motivering är en gissning med maskinstöd — skälet ska gå att granska');
@@ -139,5 +143,54 @@ describe('UK · Strukturen — ingen utgång kan kringgå kuvertet', () => {
     assert.match(STORE, /SET line_items_json = \$\{JSON\.stringify\(lineItems\)\}::jsonb/);
     assert.match(API, /lineItems: extracted\.lineItems,/,
       'anroparna måste faktiskt skicka raderna — ett fält som ingen fyller är ett fält som inte finns');
+  });
+});
+
+// ── UK-11..13 · FYNDRÄTTEN RÄTTAD (2026-09-05, mätt i produktion samma dag) ─────────────────
+// Sonden mot produktions-DB gav skälet `categorization_conflict` på Dustin-raden — inte den
+// generiska grenen jag gissat ur kortets copy. Och den utgången hade jag själv deklarerat
+// `false`, med motiveringen «våra kontroller är oense». Konflikten är mellan Sonnets och Haikus
+// KATEGORI: båda läste samma rader och bråkade om etiketten.
+//
+// Det är samma sammanblandning som buggen fixen byggdes mot, en nivå ned — och den begicks i
+// fixen, inom en timme. Testerna nedan låser de tre exakta fallen så att de inte kan glida
+// tillbaka, och de är skrivna att FÄLLA gårdagens kod.
+describe('UK · Fyndrätten — etikettstrid är inte avläsningstvivel', () => {
+  const API2 = readFileSync(join(ROT, 'api/test-invoice.mjs'), 'utf8');
+  const EXTRACT = readFileSync(join(ROT, 'agents/test-invoice/extract.js'), 'utf8');
+
+  /** Deklarationen som står närmast FÖRE en given reason-sträng i källtexten. */
+  const deklarationFor = (kalla, reason) => {
+    // lastIndexOf, inte indexOf: samma reason-sträng står FÖRST i storeTriaged-anropet, där
+    // ingen deklaration finns. Att läsa den förekomsten gav «ingen deklaration» — mitt eget
+    // mätinstrument som letade på fel ställe, för tjugoandra gången den här veckan.
+    const i = kalla.lastIndexOf(reason);
+    assert.ok(i > 0, `hittade inte ${reason} i källan — vakten mäter inte det den påstår`);
+    const fore = kalla.slice(Math.max(0, i - 1400), i);
+    const m = [...fore.matchAll(/tillitTillRader: (true|false|routing\.tillitTillRader[^,]*),/g)];
+    assert.ok(m.length > 0, `ingen deklaration före ${reason}`);
+    return m[m.length - 1][1];
+  };
+
+  test('UK-11 · categorization_conflict bär sitt fynd (etikettstrid, inte talstrid)', () => {
+    assert.equal(deklarationFor(API2, "reason: 'categorization_conflict'"), 'true',
+      'Sonnet och Haiku bråkar om KATEGORIN; båda läste samma rader. Fyndet är '
+      + 'kategoriagnostiskt per konstruktion — 29 400 kr tystades av just den här raden.');
+  });
+
+  test('UK-12 · fingerprint_mismatch likaså — den jämför kategorier, inte tal', () => {
+    assert.equal(deklarationFor(API2, "reason: 'fingerprint_mismatch'"), 'true');
+  });
+
+  test('UK-13 · den som VET varför den stannar deklarerar — inte anroparen', () => {
+    // Min kommentar på den generiska grenen löd «skälet är inte känt på den här raden». Osant:
+    // routing.reason låg i scope. Nu deklarerar routeExtraction per skäl, och api-lagret läser.
+    assert.match(API2, /tillitTillRader: routing\.tillitTillRader \?\? false,/,
+      'api-lagret ska LÄSA routeExtractions deklaration, inte gissa en egen');
+    const konfidensgren = EXTRACT.slice(EXTRACT.indexOf('under tröskel ${CONFIDENCE_THRESHOLD}'));
+    assert.match(konfidensgren.slice(0, 800), /tillitTillRader: false,/,
+      'en konfidens under tröskeln ÄR ett avläsningstvivel — den enda av de sex som är det');
+    assert.match(EXTRACT, /Konfidenspoäng saknas[\s\S]{0,400}?tillitTillRader: true,/,
+      'OKÄNT är inte LÅGT — en kontroll som inte kunde utföras har inte sagt nej');
   });
 });

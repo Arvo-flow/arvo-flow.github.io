@@ -439,7 +439,10 @@ export default async function handler(req, res) {
   // v17 (2026-09-05): utgångskuvertet. Sexton svarsvägar bär nu leadFinding/forensicFindings som
   // de aldrig kunde bära förut (Dustin: 29 400 kr osynliga). Ett cachat v16-svar saknar fälten,
   // och ett svar utan fynd är omöjligt att skilja från en faktura utan fynd — därför ny version.
-  const cacheKey = `pdf:result:v17:${pdfHash}:e${employeesNum}`;
+  // v18 (2026-09-05): fyndrätten rättad. categorization_conflict och fingerprint_mismatch är
+  // ETIKETTSTRIDER, inte tvivel om radernas tal — de bär nu sitt fynd. Ett cachat v17-svar tiger
+  // fortfarande, och tystnad är omöjlig att skilja från «ingen faktura hade ett fynd».
+  const cacheKey = `pdf:result:v18:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -819,8 +822,12 @@ export default async function handler(req, res) {
       await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: extracted.category ?? null,
         route: 'review_queue', reason: routing.reason, userEmail: body.userEmail }).catch(bokforFel);
       return svara({
-        // tillit: generisk routing-avvisning — skälet är inte känt på den här raden, alltså tiger vi (UK-02)
-        tillitTillRader: false,
+        // tillit: routeExtraction DEKLARERAR själv, per skäl — den är det enda stället som vet
+        // vilken av sina sex utgångar som fyrade. Här stod «skälet är inte känt på den här raden»,
+        // och det var osant: `routing.reason` ligger i scope på raden ovanför. Jag skrev en
+        // motivering utan att läsa det som fanns att läsa, och byggde sedan en vakt som kräver
+        // att motiveringen FINNS, aldrig att den är sann (UK-13).
+        tillitTillRader: routing.tillitTillRader ?? false,
         ok:     true,
         route:  'review_queue',
         reason: routing.reason,
@@ -904,8 +911,11 @@ export default async function handler(req, res) {
         await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: categorized.category ?? null,
           route: 'review_queue', reason: 'fingerprint_mismatch', userEmail: body.userEmail }).catch(bokforFel);
         return svara({
-          // tillit: leverantörskontrollen säger emot vår egen kategorisering — när vittnena är oense tiger vi (BK-06/BK-07)
-          tillitTillRader: false,
+          // tillit: JA, av samma skäl som categorization_conflict. Kontrollen jämför den KÄNDA
+          // leverantörens förväntade kategorier mot AI:ns valda kategori — den säger ingenting om
+          // radernas tal. BK-06/BK-07 handlar om att inte PÅSTÅ ETT SKÄL vi inte känner; att visa
+          // ett fynd ur kundens egen rad är inget påstående om varför vi stannade.
+          tillitTillRader: true,
           ok: true, route: 'review_queue', reason: 'fingerprint_mismatch',
           extracted: {
             supplier:        extracted.supplier,
@@ -954,8 +964,17 @@ export default async function handler(req, res) {
           await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: categorized.category ?? null,
             route: 'review_queue', reason: 'categorization_conflict', userEmail: body.userEmail }).catch(bokforFel);
           return svara({
-            // tillit: två av våra kontroller är oense om vad fakturan är
-            tillitTillRader: false,
+            // tillit: JA. Konflikten är mellan Sonnets och Haikus KATEGORI — båda läste samma
+            // rader och är oense om ETIKETTEN. Fyndet är kategoriagnostiskt per konstruktion
+            // (lib/forensics.js), så en etikettstrid rör det inte.
+            //
+            // ⚠️ HÄR STOD `false`, och det var samma sammanblandning som buggen den här fixen
+            // byggdes mot: `requiresVolumeData` blandade ihop «kan inte JÄMFÖRA» med «kan inte
+            // LÄSA»; jag blandade ihop «vet inte VAD fakturan är» med «litar inte på TALEN».
+            // Mätt i produktion 2026-09-05: Dustin-raden fick skäl categorization_conflict och
+            // 29 400 kr tystades av min egen deklaration, en timme efter att jag diagnostiserat
+            // felfamiljen. UK-11 låser fallet.
+            tillitTillRader: true,
             ok: true, route: 'review_queue', reason: 'categorization_conflict',
             extracted: {
               supplier:        extracted.supplier,

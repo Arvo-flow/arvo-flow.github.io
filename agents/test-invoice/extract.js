@@ -1174,19 +1174,27 @@ export function routeExtraction(extracted) {
 
   // ── Lager 1: Sanity checks ────────────────────────────────────────────────
   if (!extracted.supplier || extracted.supplier.trim() === '') {
-    return { route: 'review_queue', reason: 'Leverantörsnamn saknas', verifications };
+    // tillit: ett saknat LEVERANTÖRSNAMN säger ingenting om radernas tal. Fyndet kan visas;
+    // kravbrevet saknar däremot adressat och får inte påstå en mottagare.
+    return { route: 'review_queue', reason: 'Leverantörsnamn saknas', tillitTillRader: true, verifications };
   }
 
   if ((extracted.lineItems ?? []).length === 0) {
-    return { route: 'review_queue', reason: 'Inga kostnadsrader extraherades', verifications };
+    // tillit: utan rader finns inget fynd att visa — deklarationen är därför utan verkan här,
+    // men den måste finnas: skillnaden mellan «inget att visa» och «ingen frågade» ska stå i koden.
+    return { route: 'review_queue', reason: 'Inga kostnadsrader extraherades', tillitTillRader: true, verifications };
   }
 
   if (extracted.billingPeriod === 'unknown') {
-    return { route: 'review_queue', reason: 'Faktureringsperiod okänd — annualisering otillförlitlig', verifications };
+    // tillit: perioden rör ANNUALISERINGEN, inte avläsningen. Forensiken hanterar redan en okänd
+    // period genom att inte hävda något årstal (metricText bär radens sanna belopp och enhet).
+    return { route: 'review_queue', reason: 'Faktureringsperiod okänd — annualisering otillförlitlig', tillitTillRader: true, verifications };
   }
 
   if (extracted.annualCost === 0 && extracted.billingPeriod !== 'one_time') {
-    return { route: 'review_queue', reason: 'Beräknad årskostnad är 0 kr trots återkommande fakturering', verifications };
+    // tillit: en årskostnad på 0 kr är en HÄRLEDNING som gått fel, inte en avläsning. Radernas
+    // egna belopp står kvar och kan prövas mot fakturans egen aritmetik.
+    return { route: 'review_queue', reason: 'Beräknad årskostnad är 0 kr trots återkommande fakturering', tillitTillRader: true, verifications };
   }
 
   // ── Lager 2: AI:ns self-reported confidence ───────────────────────────────
@@ -1201,6 +1209,9 @@ export function routeExtraction(extracted) {
     return {
       route: 'review_queue',
       reason: 'Konfidenspoäng saknas i extraktionen — kontrollen kunde inte utföras',
+      // tillit: OKÄNT är inte LÅGT. Kontrollen kunde inte utföras, alltså har den inte sagt nej —
+      // att läsa dess tystnad som ett misstroende är samma «grön av tomhet» som allt annat.
+      tillitTillRader: true,
       verifications,
     };
   }
@@ -1209,6 +1220,11 @@ export function routeExtraction(extracted) {
     return {
       route:  'review_queue',
       reason: `Confidence ${extracted.confidenceScore.toFixed(2)} under tröskel ${CONFIDENCE_THRESHOLD}`,
+      // tillit: NEJ — och det är den enda av de sex som faktiskt handlar om avläsningen. Modellen
+      // säger själv att den är osäker på vad den läste, och fyndet vilar på radens beskrivningstext
+      // («Månad 48 av 36»), som ingen aritmetik kan bekräfta. Fakturans egna tal är ett oberoende
+      // vittne för BELOPPEN, aldrig för TEXTEN.
+      tillitTillRader: false,
       verifications,
     };
   }
