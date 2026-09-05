@@ -425,7 +425,12 @@ export default async function handler(req, res) {
   // v12 (2026-08-15): el-grenens två framgångsutgångar lagrar numera en rad i kundens liggare.
   // Svarsformen är oförändrad — men ett CACHAT svar hoppar över lagringen, så en kund som laddar
   // upp samma elfaktura igen hade fått samma tystnad som förut. Bumpen tvingar en riktig körning.
-  const cacheKey = `pdf:result:v14:${pdfHash}:e${employeesNum}`;
+  // v15 (2026-09-05): forensiken ser nu «Leasing … (Månad 48 av 36)». Ordet «leasing» saknades i
+  // AMORT_OVERPAID_RE, så ett slutbetalt leasingavtal gav noll fynd — 29 400 kr osynliga på en
+  // verklig Dustin-faktura. Fixen ÄNDRAR RESULTATET för varje faktura med en leasingrad, alltså
+  // måste versionen bumpas: annars serverar cachen det gamla, tomma svaret och fixen ser ut att
+  // ha misslyckats. (Regel 7 — bumpa vid varje pipelineändring som påverkar resultat.)
+  const cacheKey = `pdf:result:v15:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'

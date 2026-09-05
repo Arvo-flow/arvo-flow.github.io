@@ -118,6 +118,7 @@ import './switcharvode.mjs';
 import './switchliggare.mjs';
 import './pastaendevakt.mjs';
 import './prisparning.mjs';
+import './cacheversion.mjs';
 import './mainvakt.mjs';
 import './arvodeskorning.mjs';
 import './licensniva.mjs';
