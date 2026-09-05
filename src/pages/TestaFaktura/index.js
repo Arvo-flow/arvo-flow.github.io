@@ -1667,11 +1667,30 @@ const TestaFaktura = () => {
                   </>
                 ) : (
                   <>
-                    <strong>Fakturan behöver djupare analys.</strong>
+                    {/* ── HELHETSKRAVET (2026-09-05, grundargranskning) ────────────────────────
+                        Rutan stod under ett fyndkort som just visat ett exakt belopp, ett citat
+                        ur kundens rad och ett färdigskrivet kravbrev — och sa sedan «vår algoritm
+                        är inte tillräckligt säker». Båda blocken sanna om sin egen del; helheten
+                        gick inte ihop. En CFO läser: «ni sa precis exakt vad som är fel och skrev
+                        brevet åt mig, och nu säger ni att ni är osäkra?» Samma form som domens
+                        rubrik mot mätaren (22 aug), ett lager ut.
+                        Rutan erkänner nu fyndet och skiljer de två frågorna åt: vad vi LÄSTE
+                        (säkert) mot vad det BETYDER i marknadstermer (osäkert). Då blir tystnaden
+                        om prisnivån ett integritetsbevis i stället för ett självtvivel. */}
+                    <strong>
+                      {result.leadFinding
+                        ? 'Raden ovan läste vi säkert. Prisnivån kan vi inte bedöma.'
+                        : 'Fakturan behöver djupare analys.'}
+                    </strong>
                     <p>
-                      Vår algoritm är inte tillräckligt säker på klassificeringen för att
-                      visa automatiska besparingssiffror. Koppla Fortnox / Visma för en komplett,
-                      felfri analys av hela er leverantörsreskontra.
+                      {result.leadFinding
+                        ? 'Fyndet ovan kommer ur er egen fakturarad och kräver ingen marknadsdata. '
+                          + 'Vad vi INTE kan säga är om ni betalar rätt pris — våra modeller är oense '
+                          + 'om hur fakturan ska klassas, och ett marknadstal här vore en gissning. '
+                          + 'Koppla Fortnox / Visma så jämför vi hela er leverantörsreskontra.'
+                        : 'Vår algoritm är inte tillräckligt säker på klassificeringen för att '
+                          + 'visa automatiska besparingssiffror. Koppla Fortnox / Visma för en komplett '
+                          + 'analys av hela er leverantörsreskontra.'}
                     </p>
                   </>
                 )}

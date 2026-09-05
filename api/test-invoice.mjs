@@ -442,7 +442,12 @@ export default async function handler(req, res) {
   // v18 (2026-09-05): fyndrätten rättad. categorization_conflict och fingerprint_mismatch är
   // ETIKETTSTRIDER, inte tvivel om radernas tal — de bär nu sitt fynd. Ett cachat v17-svar tiger
   // fortfarande, och tystnad är omöjlig att skilja från «ingen faktura hade ett fynd».
-  const cacheKey = `pdf:result:v18:${pdfHash}:e${employeesNum}`;
+  // v19 (2026-09-05): fyndkortet ombyggt. Rubriktalet är nu det RETROAKTIVA kravet i stället för
+  // årstakten, framåtblicken bär egen enhet, och fyndet daterar när avbetalningen var slutbetald.
+  // Ett cachat v18-svar saknar `slutbetald` och `manadsbelopp` — kortet renderar då sin gamla,
+  // kolliderande form, och en korrekt fix osynliggjord av en cache är omöjlig att skilja från en
+  // trasig fix.
+  const cacheKey = `pdf:result:v19:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -619,6 +624,10 @@ export default async function handler(req, res) {
     const _forensik = detectForensicFindings(extracted.lineItems, {
       billingPeriod: extracted.billingPeriod ?? null,
       supplier: extracted.supplier || null,
+      // Fakturadatumet är det andra av två avlästa fält som gör datumpåståendet möjligt
+      // («avbetalningen var slutbetald i september 2025»). Utan det hävdas ingen månad —
+      // fail-closed på PÅSTÅENDET, aldrig på fyndet (FO-05).
+      fakturadatum: extracted.date ?? null,
     });
 
     /**

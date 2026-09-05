@@ -81,6 +81,19 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'cachen serverar då den gamla tystnaden för varje redan analyserad faktura');
   });
 
+  test('CV-06 · daterat fynd och cache-versionen hänger ihop', () => {
+    const FOR = readFileSync(join(ROT, 'lib/forensics.js'), 'utf8');
+    // ⚠️ VILLKORET INNEHÖLL DET SOM SABOTERADES. Första versionen krävde BÅDE funktionen OCH
+    // kopplingen — så «ta bort kopplingen» fick vakten att hoppa över sig själv i stället för att
+    // fälla. Grön av tomhet, i en vakt skriven samma timme. Villkoret är nu bara funktionens
+    // existens; kopplingen är FO-10:s hårda assertion.
+    const harDatum = /export function slutbetaldManad/.test(FOR);
+    if (!harDatum) return;                      // datumet borttaget → FO-04 äger det fallet
+    assert.ok(cacheVersion() >= 19,
+      `fyndet daterar nu slutbetalningen men pdf:result står på v${cacheVersion()} — cachen `
+      + 'serverar då den odaterade formen, och kortet renderar sin gamla kolliderande layout');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

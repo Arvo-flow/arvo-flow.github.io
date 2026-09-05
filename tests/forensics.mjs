@@ -5,6 +5,9 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { detectForensicFindings, refineFinding } from '../lib/forensics.js';
 
 const line = (description, amount, quantity) => ({ type: 'recurring_subscription', description, amount, quantity });
@@ -250,5 +253,111 @@ describe('FO · Leasing saknades i ordlistan — 29 400 kr osynliga (2026-09-05)
       'en normal leasingrad ska inte bli ett finansieringsfynd');
     // MOTPROVET: den smala listan fungerar fortfarande för sina egna ord.
     assert.ok(rad('Avbetalning iPad (Månad 12 av 36)').some((x) => x.type === 'hardware_financing'));
+  });
+});
+
+// ── FO-04..09 · DATUMET OCH TALKOLLISIONEN (2026-09-05, grundargranskning av kortet) ─────────
+// Kortet visade «29 400 kr/år» i rubriken och «ATT BEGÄRA TILLBAKA 29 400 kr» strax under. Två
+// HELT olika storheter — årstakt framåt och redan betalt bakåt — som råkade bli identiska i just
+// den fakturan, eftersom överbetalningen råkade vara exakt tolv månader. Den starkaste meningen
+// vi äger (det finns BÅDE ett krav bakåt OCH en kostnad framåt) försvann i talkollisionen.
+//
+// Och «tolv månader utöver planen» är ett abstrakt tal. «Avbetalningen var slutbetald i
+// september 2025» är ett datum kunden kan slå upp i sin egen bokföring. Ren aritmetik på två
+// avlästa fält — fakturadatum minus antalet månader över planen.
+describe('FO · Datumet och de två tidsaxlarna', () => {
+  const RAD = [{ type: 'recurring_subscription', description: 'Leasing Server (Månad 48 av 36)',
+    quantity: 1, unitPrice: 2450, amount: 2450 }];
+  const kor = (opts) => detectForensicFindings(RAD, { billingPeriod: 'monthly', supplier: 'Dustin Sverige AB', ...opts })[0];
+
+  test('FO-04 · slutbetald månad räknas ur fakturadatum minus månader över planen', () => {
+    const f = kor({ fakturadatum: '2026-09-04' });
+    assert.equal(f.slutbetald, 'september 2025', 'månad 48 av 36 på en septemberfaktura 2026 → september 2025');
+    assert.equal(f.slutbetaldIso, '2025-09');
+    assert.match(f.text, /slutbetald i september 2025/);
+  });
+
+  test('FO-05 · utan fakturadatum hävdas INGEN månad — men fyndet står kvar', () => {
+    const f = kor({ fakturadatum: null });
+    assert.equal(f.slutbetald, undefined, 'ett okänt datum får aldrig låna ett giltigt');
+    assert.equal(f.overpaidToDate, 29_400, 'fail-closed på PÅSTÅENDET, aldrig på fyndet');
+    assert.doesNotMatch(f.text, /\b(19|20)\d\d\b/, 'ingen årtalssiffra får smyga in utan källa');
+  });
+
+  test('FO-06 · ett oläsbart datum är ett okänt datum, inte 1970', () => {
+    // new Date(null) = 1970-01-01 är ett fullständigt GILTIGT datum. Samma fälla som fällde
+    // arvodesgrinden 30 augusti — ett okänt tillstånd som lånar ett giltigt värde.
+    for (const trasigt of [null, 0, false, '', '   ', 'inte-ett-datum', NaN]) {
+      const f = kor({ fakturadatum: trasigt });
+      assert.equal(f.slutbetald, undefined, `«${String(trasigt)}» får inte ge en månad`);
+    }
+  });
+
+  test('FO-07 · månadslängdsfällan: 31 mars minus en månad landar inte i mars', () => {
+    const f = detectForensicFindings(
+      [{ type: 'recurring_subscription', description: 'Leasing (Månad 37 av 36)', quantity: 1, unitPrice: 500, amount: 500 }],
+      { billingPeriod: 'monthly', fakturadatum: '2026-03-31' })[0];
+    assert.equal(f.slutbetald, 'februari 2026',
+      'dag 1 i UTC används just för att undvika att en kort månad kastar tillbaka datumet');
+  });
+
+  test('FO-08 · de två talen bärs SEPARAT, med var sitt fält', () => {
+    const f = kor({ fakturadatum: '2026-09-04' });
+    assert.equal(f.overpaidToDate, 29_400, 'redan betalt: 12 månader utöver planen × 2 450');
+    assert.equal(f.annualImpact,   29_400, 'årstakt framåt: 12 månader per år × 2 450');
+    assert.equal(f.manadsbelopp,   2_450,
+      'månadsbeloppet måste bäras eget — annars måste ytan räkna, och regel 2 säger att koden räknar');
+    // Att de är LIKA här är en slump i just den här fakturan. Testet nedan bevisar att de skiljer
+    // sig så snart överbetalningen inte råkar vara exakt tolv månader — vilket är hela skälet till
+    // att de aldrig får renderas som ett och samma tal.
+    const tva = detectForensicFindings(
+      [{ type: 'recurring_subscription', description: 'Leasing Server (Månad 38 av 36)', quantity: 1, unitPrice: 2450, amount: 2450 }],
+      { billingPeriod: 'monthly', fakturadatum: '2026-09-04' })[0];
+    assert.equal(tva.overpaidToDate, 4_900, 'två månader utöver planen');
+    assert.equal(tva.annualImpact,   29_400, 'årstakten är oförändrad — de mäter olika tidsaxlar');
+    assert.notEqual(tva.overpaidToDate, tva.annualImpact);
+  });
+
+  test('FO-09 · texten säger vad varje ytterligare månad kostar', () => {
+    const f = kor({ fakturadatum: '2026-09-04' });
+    assert.match(f.text, /varje månad den står kvar kostar lika mycket till/,
+      'urgensen ska finnas i prosan — men BELOPPET bärs av kortets chip (regeln från 15 aug: '
+      + 'prosan upprepar aldrig ett nyckeltal, den förklarar varför det finns)');
+    assert.doesNotMatch(f.text, /2\s?450/,
+      'det gamla testet fällde precis det här: med kortets framåtrad hade talet stått tre gånger');
+  });
+});
+
+// ── FO-10..11 · MATNINGEN OCH YTAN (2026-09-05) ─────────────────────────────────────────────
+// Två sabotage fällde noll tester på första försöket: «api-lagret slutar skicka fakturadatumet»
+// och «rubriken visar åter årstakten». Båda halvorna av dagens arbete var alltså OPRÖVADE — den
+// ena i matningen, den andra i ytan. Det är villkorsvaktens sjukdom i sin renaste form:
+// mekanismen prövad, matningen aldrig, och ingen som tittade på vad kunden faktiskt ser.
+describe('FO · Matningen och ytan — inte bara mekanismen', () => {
+  const ROT2 = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+  test('FO-10 · produktionsvägen skickar faktiskt fakturadatumet', () => {
+    const API = readFileSync(join(ROT2, 'api/test-invoice.mjs'), 'utf8');
+    const REC = readFileSync(join(ROT2, 'agents/recommender/recommend.js'), 'utf8');
+    assert.match(API, /fakturadatum: extracted\.date \?\? null,/,
+      'utan matningen är slutbetaldManad död kod — attribueringslåsets exakta öde, två månader mörkt');
+    assert.match(REC, /fakturadatum: input\.invoice\?\.date \?\? null,/,
+      'recommend():s egen beräkningsväg (cli, batch, sviten) måste mata samma fält');
+  });
+
+  test('FO-11 · kortets rubrik bär KRAVET när det finns, aldrig årstakten', () => {
+    const KORT = readFileSync(join(ROT2, 'src/components/FindingCard.js'), 'utf8');
+    assert.match(KORT, /const harKrav = finding\.overpaidToDate > 0;/);
+    assert.match(KORT, /const hasImpact = !harKrav && finding\.annualImpact > 0;/,
+      'utan `!harKrav` visar rubriken årstakten bredvid ett identiskt krav — talkollisionen '
+      + 'som fick två olika storheter att se ut som samma siffra');
+    assert.match(KORT, /harKrav[\s\S]{0,120}?fmt\(finding\.overpaidToDate\)/,
+      'rubriktalet ska vara det retroaktiva kravet — det enda kunden kan hämta hem i dag');
+    // className, inte bara strängen: `fc-framat` står ÄVEN i CSS-blocket, så ett /fc-framat/
+    // matchade stilen och överlevde att JSX-raden togs bort. Sabotaget avslöjade det.
+    assert.match(KORT, /className="fc-framat"/,
+      'framåtblicken ska ha en EGEN rad med egen enhet, aldrig samma slot som kravet');
+    assert.match(KORT, /finding\.manadsbelopp[\s\S]{0,200}?kr\/mån/,
+      'raden ska bära månadsbeloppet MED sin enhet — det är enheten som skiljer de två talen åt');
   });
 });

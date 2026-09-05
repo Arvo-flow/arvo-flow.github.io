@@ -80,6 +80,18 @@ const Card = styled.section`
       ? css`color: ${theme.dossier.mutedOnDark}; border: 1px solid ${theme.dossier.hairlineOnDark};`
       : css`color: ${theme.color.inkSoft}; background: ${theme.color.surface}; border: 1px solid ${theme.color.border};`)}
   }
+  .fc-framat {
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: ${({ theme, $variant }) => ($variant === 'dossier' ? theme.dossier.mutedOnDark : theme.color.muted)};
+    strong {
+      font-family: ${({ theme }) => theme.font.mono};
+      font-weight: 600;
+      color: ${({ theme, $variant }) => ($variant === 'dossier' ? theme.dossier.inkOnDark : theme.color.ink)};
+    }
+  }
+
   .fc-line {
     display: inline-block; font-family: ${({ theme }) => theme.font.mono}; font-size: 11.5px;
     border-radius: ${({ theme }) => theme.size.radius.sm}; padding: 3px 8px; margin-bottom: 10px; word-break: break-word;
@@ -117,15 +129,32 @@ export default function FindingCard({ finding, extraCount = 0, variant = 'light'
     ? 'Avtalsbevakning'
     : (variant === 'dossier' ? 'Fynd på era fakturor' : 'Fynd på er faktura');
   const label = eyebrow ?? defaultLabel;
-  const hasImpact = finding.annualImpact > 0;
+  // ── TVÅ TAL PÅ SAMMA TIDSAXEL SER UT ATT GÅ ATT ADDERA (2026-09-05, grundargranskning) ────
+  // Kortet visade «29 400 kr/år» i rubriken och «ATT BEGÄRA TILLBAKA 29 400 kr» strax under.
+  // Två HELT olika storheter — årstakt framåt (2 450 × 12 månader per år) och redan betalt
+  // (2 450 × 12 månader utöver planen) — som råkade bli identiska i just den fakturan, eftersom
+  // överbetalningen råkade vara exakt tolv månader. En CFO läser 29 400 två gånger och drar en
+  // av två slutsatser: «de dubbelräknar» eller «det är samma siffra». Båda är fel, och den
+  // starkaste meningen vi äger — att det finns BÅDE ett krav bakåt OCH en kostnad framåt —
+  // försvann i talkollisionen. Rumsredovisningens regel (15 aug): varje tal ska ha sin enhet,
+  // och tal som står bredvid varandra ska gå att addera.
+  //
+  // Rubriken bär nu det RETROAKTIVA kravet när det finns: det är det enda i rummet kunden kan
+  // hämta hem i dag, och det unika. Årstakten flyttar ned till en egen rad med egen enhet.
+  // De summeras ALDRIG: kravet är avläst fakta, årstakten en projektion som förutsätter att
+  // posten inte tas bort. Ett summerat tal hade blandat precision med bedömning (regel 4).
+  const harKrav = finding.overpaidToDate > 0;
+  const hasImpact = !harKrav && finding.annualImpact > 0;
   return (
     <Card $variant={variant} $tone={tone}>
       <div className="fc-eyebrow">{label}</div>
       <div className="fc-row">
         <div className="fc-title">{finding.title}</div>
-        {hasImpact
-          ? <div className="fc-impact">{fmt(finding.annualImpact)} kr/år</div>
-          : finding.metricText ? <div className="fc-impact">{finding.metricText}</div> : null}
+        {harKrav
+          ? <div className="fc-impact">{fmt(finding.overpaidToDate)} kr</div>
+          : hasImpact
+            ? <div className="fc-impact">{fmt(finding.annualImpact)} kr/år</div>
+            : finding.metricText ? <div className="fc-impact">{finding.metricText}</div> : null}
       </div>
       {finding.lineDescription && <div className="fc-line">”{finding.lineDescription}”</div>}
       {/* Kravet före förklaringen: det som går att hämta hem i dag ska läsas först. Brevet är
@@ -133,7 +162,7 @@ export default function FindingCard({ finding, extraCount = 0, variant = 'light'
           Renderas bara när koden faktiskt producerat ett brev ur kundens egen rad. */}
       {finding.overpaidToDate > 0 && (
         <div className="fc-claim">
-          <span className="fc-claim-k">Att begära tillbaka</span>
+          <span className="fc-claim-k">Redan betalt — kräv tillbaka</span>
           <span className="fc-claim-v">{fmt(finding.overpaidToDate)} kr</span>
           {finding.letter && (
             <button
@@ -154,6 +183,15 @@ export default function FindingCard({ finding, extraCount = 0, variant = 'light'
       )}
       {visarBrev && finding.letter && (
         <div className="fc-letter">{finding.letter.subject}{'\n\n'}{finding.letter.body}</div>
+      )}
+      {/* Framåtblicken som EGEN rad med EGEN enhet. Den bär «/mån» och «/år» explicit, så att
+          den aldrig kan läsas som samma storhet som kravet ovanför. Renderas bara när koden
+          räknat båda — ett saknat tal ger tystnad, aldrig ett lånat. */}
+      {harKrav && finding.manadsbelopp > 0 && finding.annualImpact > 0 && (
+        <div className="fc-framat">
+          <strong>{fmt(finding.manadsbelopp)} kr/mån</strong> löper vidare tills posten är borta
+          — <strong>{fmt(finding.annualImpact)} kr/år</strong>.
+        </div>
       )}
       <p className="fc-text">{finding.text}</p>
       {extraCount > 0 && (

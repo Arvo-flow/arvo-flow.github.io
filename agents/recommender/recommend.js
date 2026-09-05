@@ -1166,6 +1166,7 @@ export async function recommend(input, opts = {}) {
       billingPeriod: input.invoice?.billingPeriod ?? null,
       // Leverantören behövs för kravbrevets adressat — samma namn kortet visar.
       supplier: input.normalizedSupplier || input.invoice?.supplier || null,
+      fakturadatum: input.invoice?.date ?? null,
     });
   const leadFinding = forensicFindings[0] ?? null;
   const withForensics = (resp) => (resp && typeof resp === 'object' ? { ...resp, forensicFindings, leadFinding } : resp);
