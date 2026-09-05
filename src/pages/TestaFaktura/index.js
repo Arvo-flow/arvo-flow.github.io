@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr } from '../../utils/format';
+import { grindPausad } from '../../utils/grindpaus';
 import { diagnos } from '../../lib/diagnos';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
@@ -627,7 +628,10 @@ const TestaFaktura = () => {
 
   const runAnalysis = async (overrideEmail = null) => {
     if (!file) { setError('Välj en PDF-faktura först.'); return; }
-    const isUnlocked = !!(sessionStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_gate_passed'));
+    // grindPausad(): grundarbeslut 2026-09-05, öppet fönster t.o.m. 6 sep 18:00 UTC. Fönstret
+    // stänger sig SJÄLVT — se lib/grindpaus.js. Ingen behöver komma ihåg att sätta tillbaka den.
+    const isUnlocked = grindPausad()
+      || !!(sessionStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_gate_passed'));
     if (!overrideEmail && !isUnlocked) {
       const hadSaving     = localStorage.getItem('arvo_had_saving');
       const successCount  = parseInt(localStorage.getItem('arvo_successful_count') ?? '0');

@@ -15,6 +15,7 @@ import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
 import { recommend, RecommenderError, computeLikeForLikeSaasTarget } from '../agents/recommender/recommend.js';
 import { isAudited } from '../lib/revision-gate.js';
+import { grindPausad } from '../lib/grindpaus.js';
 import { shadowReport } from '../lib/invoice-lines.js';
 import { storeDatapoint } from '../lib/benchmark.js';
 import { BRANCHINDEX, INDUSTRY_SEGMENT_MAP, bucketForSize } from '../agents/recommender/branchindex.js';
@@ -1958,19 +1959,32 @@ export default async function handler(req, res) {
 
     // Saving gate: kontrollera kvot efter analysen (vi behöver netSaving och orgNumber).
     // Vitlistade IPs (ägare/intern) hoppar över gate precis som rate limit.
+    // grindPausad(): grundarbeslut 2026-09-05 — e-postgrinden öppen t.o.m. 6 sep 18:00 UTC, sedan
+    // stänger fönstret sig självt (lib/grindpaus.js). Att bara pausa frontendens modal hade varit
+    // en halv öppning: servern hade fortsatt svara `gate: true` efter 25 000 kr kumulativ
+    // besparing, och testet hade tagit slut mitt i utan att någon förstod varför.
+    // Rate limit och globaltak står KVAR — det som pausas är kravet på e-postadress, aldrig
+    // kostnadsskyddet.
     if (!isBypass && !isWhitelisted) {
       const kv = getKv();
-      const gateHit = await checkSavingGate(kv, {
-        orgNumber: extracted.customerOrgNumber,
-        email: typeof email === 'string' ? email : null,
-        netSaving,
-      });
-      if (gateHit) {
-        return send(res, 200, {
-          ...autoResponse,
-          gate: true,
-          gateType: 'saving_limit',
+      // grindPausad() ligger HÄR INNE och inte i villkoret ovan, med flit: cacheskrivningen tre
+      // rader ned bor i samma block, och en paus av e-postgrinden får inte råka slå av
+      // PDF-cachen. Första versionen av den här ändringen gjorde precis det.
+      // Konsekvens, uttalad: under fönstret räknas heller inga savegate-summor upp — grinden är
+      // av, alltså mäter den inte. Det är innebörden av beslutet, inte en bieffekt.
+      if (!grindPausad()) {
+        const gateHit = await checkSavingGate(kv, {
+          orgNumber: extracted.customerOrgNumber,
+          email: typeof email === 'string' ? email : null,
+          netSaving,
         });
+        if (gateHit) {
+          return send(res, 200, {
+            ...autoResponse,
+            gate: true,
+            gateType: 'saving_limit',
+          });
+        }
       }
       // PDF-fingerprintcache: lagra resultatet för 24h så identiska fakturor
       // returneras direkt utan att köra AI-pipelinen igen.
