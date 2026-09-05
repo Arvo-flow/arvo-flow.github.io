@@ -13,7 +13,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  listprisUrCell, parFranTabell, parFranKort, prisandringar, harPris,
+  listprisUrCell, parFranTabell, parFranKort, prisandringar, harPris, beskrivAndring,
 } from '../lib/prisparning.js';
 
 describe('PP · Kampanjpriset är aldrig listpriset', () => {
@@ -155,6 +155,35 @@ describe('PP · Produktens identitet är paket + rad, aldrig paket ensamt', () =
     assert.equal(a.length, 1, 'ändringen finns — 0 till 60 kr är en verklig förändring');
     assert.equal(a[0].procent, null, 'men procenten är ODEFINIERAD, inte Infinity');
     assert.equal(a[0].tillPris, 60);
+  });
+});
+
+describe('PP · Utskriften får aldrig tappa identiteten', () => {
+  test('PP-13 · en borttagen STARTAVGIFT får inte läsas som en gratis produkt', () => {
+    // Arkeologin mot Loopia skrev «↓ Webbhotell Privat: 295 → 0 kr (-100 %)», vilket läses som
+    // att produkten blev gratis. Datan var HELT KORREKT — paret var «Webbhotell Privat ·
+    // Startavgift → 295 kr», och Loopia tog bort sin startavgift. Utskriften tappade `rad` och
+    // gjorde ett sant tal till ett falskt påstående. Jag var nära att rapportera en
+    // parsningsbugg som inte fanns.
+    const rad = beskrivAndring({
+      paket: 'Webbhotell Privat', rad: 'Startavgift',
+      fran: '2020-10-21', till: '2021-01-26', franPris: 295, tillPris: 0, procent: -100,
+    });
+    assert.match(rad, /Startavgift/, 'radetiketten ÄR skillnaden mellan sant och falskt här');
+    assert.match(rad, /Webbhotell Privat · Startavgift/);
+    assert.match(rad, /295 → 0 kr/);
+  });
+
+  test('PP-14 · en ändring utan radetikett skrivs utan skiljetecken, och null-procent blir «—»', () => {
+    assert.equal(
+      beskrivAndring({ paket: 'Mini', rad: '', fran: '2024-12-08', till: '2026-08-22', franPris: 169, tillPris: 209, procent: 23.7 }),
+      '↑ Mini: 169 → 209 kr (+23.7 %) · 2024-12-08 → 2026-08-22',
+    );
+    // Nollpriset ger procent null (PP-10) — utskriften får inte skriva «null %».
+    assert.match(
+      beskrivAndring({ paket: 'X', rad: '', fran: 'a', till: 'b', franPris: 0, tillPris: 60, procent: null }),
+      /\(—\)/,
+    );
   });
 });
 

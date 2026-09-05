@@ -34,7 +34,7 @@
 //   uppfunnet, inte avläst.
 
 import { chromium } from 'playwright';
-import { parFranTabell, parFranKort, prisandringar } from '../lib/prisparning.js';
+import { parFranTabell, parFranKort, prisandringar, beskrivAndring } from '../lib/prisparning.js';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 const MALSIDA = process.env.ARK_URL || '';
@@ -72,7 +72,22 @@ let sistaFel = null;
 for (let forsok = 1; forsok <= 4; forsok += 1) {
   try {
     const r = await fetch(cdx, { headers: { 'user-agent': UA } });
-    if (r.ok) { poster = (await r.json()).slice(1).map((rad) => ({ ts: rad[0], url: rad[1], digest: rad[2] })); sistaFel = null; break; }
+    if (r.ok) {
+      poster = (await r.json()).slice(1).map((rad) => ({ ts: rad[0], url: rad[1], digest: rad[2] }));
+      // ⚠️ ETT TOMT LYCKAT SVAR EFTER EN STRYPNING ÄR INTE ETT MÄTVÄRDE.
+      // Telia-körningen fick 503 på försök 1, och ett senare försök svarade 200 med tom lista.
+      // Sonden rapporterade då «sidan finns inte arkiverad» — ett påstående om verkligheten,
+      // byggt på ett svar som lika gärna kan vara arkivet under fortsatt belastning. Jag byggde
+      // återförsöket för STATUSKODER och missade att tomheten bär samma tvetydighet.
+      // Regeln: en tom lista är bara ett mätvärde när INGET försök i körningen har felat.
+      if (poster.length === 0 && sistaFel) {
+        if (forsok < 4) { console.log(`  tomt svar efter tidigare fel — försök ${forsok}/4, väntar ${forsok * 15} s`); await new Promise((r2) => setTimeout(r2, forsok * 15000)); continue; }
+        console.error('✗ CDX gav tomt svar i en körning som redan felat — OKÄNT, inte «ingen historik».');
+        process.exit(1);
+      }
+      sistaFel = null;
+      break;
+    }
     sistaFel = `status ${r.status}`;
   } catch (err) {
     sistaFel = err.message.slice(0, 60);
@@ -174,8 +189,7 @@ await browser.close();
 const andringar = prisandringar(avlasningar);
 console.log(`\n═══ PRISÄNDRINGAR ur ${avlasningar.length} avläsningar: ${andringar.length} ═══`);
 for (const a of andringar.slice(0, 30)) {
-  const tecken = a.tillPris > a.franPris ? '↑' : '↓';
-  console.log(`  ${tecken} ${a.paket}: ${a.franPris} → ${a.tillPris} kr (${a.procent > 0 ? '+' : ''}${a.procent} %) · ${a.fran} → ${a.till}`);
+  console.log(`  ${beskrivAndring(a)}`);
 }
 const perPaket = {};
 for (const a of andringar) perPaket[a.paket] = (perPaket[a.paket] ?? 0) + 1;
