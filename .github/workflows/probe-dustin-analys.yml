@@ -1,0 +1,29 @@
+name: Sond — Dustin-analysen (produktions-DB)
+
+# Kortet visade inget fyndkort trots att leasing-fixen är deployad. Kortet ensamt kan inte skilja
+# «motorn hittade aldrig fyndet» från «motorn hittade det, ytan visar det inte». Sonden läser den
+# LAGRADE analysen och svarar. Läser bara — skriver aldrig. PDF:en skickas aldrig hit.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Mät den lagrade analysen
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # pipefail: utan den returnerar en pipe TEE:s exit-kod och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-dustin-analys.mjs
