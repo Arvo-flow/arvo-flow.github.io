@@ -68,11 +68,25 @@ describe('GP · Grindpausen stänger sig själv', () => {
     const api = readFileSync(join(ROT, 'api/test-invoice.mjs'), 'utf8');
     // OBS: anropet är `checkGlobalCap(getKv())` — en naiv `\([^)]*\)` stannar på den INRE
     // parentesen och matchar aldrig. Mitt eget mätinstrument var felet först, som så ofta.
+    // ⚠️ VAKTEN MÄTTE POSITION, INTE EGENSKAP (rättad 2026-09-05). Första versionen krävde att
+    // `grindPausad()` inte förekom någonstans FÖRE globaltakets anrop. Det var en proxy, och den
+    // fälldes av en ändring som bevarade egenskapen: IP-takets `takPerDygn()`-helper definieras
+    // högst upp i filen och rör bara per-IP-gränsen. En vakt som fäller rätt beteende blir
+    // avstängd — så den mäter nu det den faktiskt vill skydda: att GLOBALTAKET aldrig är
+    // betingat av pausen.
     const capRad = api.match(/const capSkal = await checkGlobalCap\(.*?\);/);
     assert.ok(capRad, 'globaltakets anrop hittades inte — bytte det form?');
-    const foreCap = api.slice(0, api.indexOf(capRad[0]));
-    assert.ok(!/grindPausad\(\)/.test(foreCap),
-      'grindPausad() står FÖRE globaltaket — då kan pausen kringgå kostnadsskyddet');
+
+    const capFn = api.slice(api.indexOf('async function checkGlobalCap'), api.indexOf('async function checkGlobalCap') + 900);
+    assert.ok(!/grindPausad/.test(capFn),
+      'checkGlobalCap får aldrig känna till pausen — då kan ett testfönster öppna kostnadskranen');
+
+    const capIdx = api.indexOf(capRad[0]);
+    const runtOmkring = api.slice(Math.max(0, capIdx - 700), capIdx);
+    assert.ok(!/if \([^)]*grindPausad\(\)/.test(runtOmkring),
+      'globaltakets anrop ligger inuti en grindPausad()-gren — då hoppas skyddet över under fönstret');
+    assert.ok(!/GLOBAL_DAILY_CAP[^\n]*grindPausad/.test(api),
+      'globaltakets VÄRDE får inte härledas ur pausen');
     assert.match(api, /if \(WHITELISTED_IPS\.has\(ip\)\) return null;/,
       'rate limit-vägen ska vara oförändrad');
   });

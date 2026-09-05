@@ -54,6 +54,19 @@ const FREE_SAVING_ANALYSES  = 2;                  // Alltid fria analyser med be
 const SAVING_GATE_THRESHOLD = 25_000;             // Kr kumulativ nettobesparing
 const PIPELINE_TIMEOUT_MS = 55_000;             // 5 s marginal mot Vercels 60 s hard kill
 const RATE_LIMIT_MAX        = 5;                  // Max analyser per IP per 24h
+// ── MITT EGET OMDÖME VAR FÖR KONSERVATIVT (2026-09-05) ────────────────────────────────────────
+// När grundaren bad om e-postgrinden borttagen i 24 h för att «testa för fullt» behöll jag
+// IP-taket och skrev att kostnadsskyddet stod kvar. Det lät disciplinerat och blockerade exakt
+// det som efterfrågades: han slog i taket efter fem uppladdningar av samma faktura.
+//
+// Taket på fem finns för att en anonym besökare inte ska bränna budgeten. GLOBALTAKET (200/dygn,
+// checkGlobalCap) är det som faktiskt skyddar plånboken, och det är ORÖRT. Under det uttalade
+// testfönstret är IP-taket alltså en spärr utan skyddsvärde.
+//
+// Höjt, inte borttaget — och bundet till samma fönster som grindpausen, så det stänger sig självt
+// (GP-03). Ingen ny tidsgräns att glömma.
+const RATE_LIMIT_TEST       = 25;                 // under grindpausens fönster
+const takPerDygn = () => (grindPausad() ? RATE_LIMIT_TEST : RATE_LIMIT_MAX);
 const RATE_WINDOW_TTL       = 24 * 60 * 60;      // 24 timmar
 
 // ── IP-baserad rate limiting ──────────────────────────────────────────────────
@@ -87,7 +100,7 @@ async function checkRateLimit(kv, ip) {
   const key = `ratelimit:ip:${createHash('sha256').update(ip).digest('hex').slice(0, 24)}`;
   try {
     const count = (await kv.get(key)) ?? 0;
-    if (count >= RATE_LIMIT_MAX) return 'ip-tak';
+    if (count >= takPerDygn()) return 'ip-tak';
     await kv.set(key, count + 1, { ex: RATE_WINDOW_TTL });
   } catch (err) {
     console.error('[test-invoice] rate limit KV-fel — fail-closed:', err.message);
@@ -483,6 +496,24 @@ export default async function handler(req, res) {
 
     const kv = getKv();
 
+    // ══ EN CACHETRÄFF FÅR INTE KOSTA EN KVOT (2026-09-05) ═══════════════════════════════════
+    // Cacheläsningen låg EFTER rate-limitern, som RÄKNAR UPP kundens kvot. En kund som öppnade
+    // samma faktura igen brände alltså en av sina fem dagliga analyser på noll AI-anrop — vi tog
+    // betalt i kvot för arbete vi inte utförde. Felfamiljen på kvotnivå: ett tillstånd
+    // («analys utförd») bokfört för något som inte hände.
+    //
+    // Läsningen ligger nu FÖRE räkningen. Token-kontrollen står kvar ovanför: ett cachat svar är
+    // fortfarande ett svar, och auth flyttas inte.
+    if (kv) {
+      try {
+        const cached = await kv.get(cacheKey);
+        if (cached) {
+          console.log('[cache] träff — kvoten röres inte, ingen AI kördes');
+          return send(res, 200, { ...cached, cached: true });
+        }
+      } catch { /* non-fatal */ }
+    }
+
     // IP-baserad rate limiting (fail-closed): max 5 analyser per IP per 24h.
     // Kan vi inte räkna släpper vi inte igenom — se checkRateLimit.
     const rlSkal = await checkRateLimit(kv, clientIp);
@@ -497,15 +528,11 @@ export default async function handler(req, res) {
           : 'Du har analyserat för många fakturor idag. Försök igen imorgon eller kontakta oss för att utöka din kvot.',
         rateLimited: true,
         code: rlSkal,
+        // Taket följer med svaret. «max 5/dag» stod hårdkodat i frontend medan backend ägde
+        // talet — höjde vi taket ljög ytan för kunden om hens egen kvot. Två sanningar om samma
+        // fråga, och den som visades var fel (regel 1).
+        takPerDygn: kvProblem ? null : takPerDygn(),
       });
-    }
-
-    // PDF-fingerprintcache: identisk faktura inom 24h → returnera cachat svar
-    if (kv) {
-      try {
-        const cached = await kv.get(cacheKey);
-        if (cached) return send(res, 200, { ...cached, cached: true });
-      } catch { /* non-fatal */ }
     }
 
     // Saving gate körs efter analysen — se checkSavingGate() nedan.
@@ -644,6 +671,17 @@ export default async function handler(req, res) {
       const lead = visa ? (_forensik[0] ?? null) : null;
       if (_forensik.length > 0 && !visa) {
         console.log(`[utgångskuvert] ${_forensik.length} fynd hålls tillbaka — skäl: ${skal}`);
+      }
+      // ── TRIAGERADE SVAR CACHAS OCKSÅ (2026-09-05) ────────────────────────────────────────
+      // Cacheskrivningen låg bara på den lyckade vägen, långt nedanför varje triage-gren. Följden:
+      // de MEST tvetydiga fakturorna — de som triageras — var de enda som aldrig fick ett snabbt,
+      // stabilt svar, och varje omladdning kostade två modellanrop till. Utgångsförlusten, en
+      // gång till, i cachen. `svara()` är enda utgången, alltså är det här enda stället den kan
+      // stängas för alla grenar samtidigt.
+      const _svar = { ...rest, leadFinding: lead, forensicFindings: visa ? _forensik : [], fyndSkal: skal };
+      const kvRef = getKv();   // `kv` ovan är scopad i !isBypass-blocket; getKv() är memoiserad
+      if (kvRef && !isBypass && !isWhitelisted) {
+        kvRef.set(cacheKey, _svar, { ex: PDF_CACHE_TTL }).catch(() => {});
       }
       return send(res, 200, {
         ...rest,

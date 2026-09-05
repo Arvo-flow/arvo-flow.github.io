@@ -717,7 +717,12 @@ const TestaFaktura = () => {
       // Rate limit nådd
       if (res.status === 429 || data.rateLimited) {
         setPhase(null);
-        setError('Du har analyserat för många fakturor idag (max 5/dag). Kontakta oss på hej@arvoflow.se för att utöka din kvot.');
+        // Talet kommer från servern, aldrig härifrån: «max 5/dag» stod hårdkodat här medan
+        // backend ägde gränsen, så en höjning gjorde ytans besked falskt. Saknas talet nämner
+        // vi inget — hellre tyst än en siffra utan täckning (regel 3).
+        setError(data?.takPerDygn
+          ? `Du har analyserat för många fakturor idag (max ${data.takPerDygn}/dag). Kontakta oss på hej@arvoflow.se för att utöka din kvot.`
+          : 'Du har analyserat för många fakturor idag. Kontakta oss på hej@arvoflow.se för att utöka din kvot.');
         return;
       }
 

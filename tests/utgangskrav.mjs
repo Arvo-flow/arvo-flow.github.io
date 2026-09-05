@@ -194,3 +194,52 @@ describe('UK · Fyndrätten — etikettstrid är inte avläsningstvivel', () => 
       'OKÄNT är inte LÅGT — en kontroll som inte kunde utföras har inte sagt nej');
   });
 });
+
+// ── UK-14..17 · KVOTEN OCH CACHEN (2026-09-05, grundaren slog i taket) ───────────────────────
+// Grundaren fick «max 5/dag» mitt i det testfönster han själv bett om. Tre fel bakom det:
+//   1. Cacheläsningen låg EFTER rate-limitern, som räknar upp kvoten. En kund som öppnade samma
+//      faktura igen brände en av fem analyser på NOLL AI-anrop — vi tog betalt i kvot för arbete
+//      vi inte utförde.
+//   2. Triagerade svar cachades aldrig (de returnerar före cacheskrivningen), så de mest
+//      tvetydiga fakturorna var de enda som aldrig fick ett snabbt, stabilt svar.
+//   3. «max 5/dag» stod hårdkodat i frontend medan backend ägde talet — höjde vi taket ljög ytan.
+describe('UK · Kvoten tas bara ut för arbete vi faktiskt utför', () => {
+  const API3 = readFileSync(join(ROT, 'api/test-invoice.mjs'), 'utf8');
+
+  test('UK-14 · cachen läses FÖRE kvoten räknas upp', () => {
+    const cache = API3.indexOf('const cached = await kv.get(cacheKey);');
+    const kvot  = API3.indexOf('const rlSkal = await checkRateLimit(kv, clientIp);');
+    assert.ok(cache > 0 && kvot > 0, 'ankarna hittades inte — vakten mäter inte det den påstår');
+    assert.ok(cache < kvot,
+      'rate-limitern RÄKNAR UPP kvoten; ligger den före cacheläsningen debiteras kunden för '
+      + 'ett svar vi hämtade ur minnet');
+    assert.equal((API3.match(/const cached = await kv\.get\(cacheKey\);/g) ?? []).length, 1,
+      'två cacheläsningar är två sanningar — den som bumpas är inte nödvändigtvis den som läses');
+  });
+
+  test('UK-15 · svara() cachar även triagerade svar', () => {
+    assert.match(API3, /kvRef\.set\(cacheKey, _svar, \{ ex: PDF_CACHE_TTL \}\)/,
+      'utgången är enda stället cachen kan stängas för ALLA grenar samtidigt');
+  });
+
+  test('UK-16 · IP-taket är bundet till grindpausens fönster och stänger sig självt', () => {
+    assert.match(API3, /const takPerDygn = \(\) => \(grindPausad\(\) \? RATE_LIMIT_TEST : RATE_LIMIT_MAX\);/,
+      'ett höjt tak utan självstängning är ett tillstånd någon måste minnas att återställa');
+    assert.match(API3, /if \(count >= takPerDygn\(\)\) return 'ip-tak';/,
+      'räknaren måste läsa det DYNAMISKA taket — annars är höjningen död kod');
+    assert.doesNotMatch(API3, /if \(count >= RATE_LIMIT_MAX\)/);
+  });
+
+  test('UK-17 · taket ägs av backend och ytan har ingen egen kopia', () => {
+    // Kommentarrader strippas först: vakten fällde sin egen förklaring av felet den vaktar mot.
+    // En ordvakt som läser kommentarer straffar den som dokumenterar (SK-08, tredje gången i dag).
+    const FRONT = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8')
+      .split('\n').filter((r) => !/^\s*(\/\/|\*|\/\*)/.test(r)).join('\n');
+    assert.match(API3, /takPerDygn: kvProblem \? null : takPerDygn\(\),/,
+      'svaret måste bära talet, annars kan ytan bara gissa');
+    assert.doesNotMatch(FRONT, /max 5\/dag/,
+      'en hårdkodad kopia av backendens gräns blir falsk i samma sekund gränsen ändras');
+    assert.match(FRONT, /data\?\.takPerDygn/,
+      'och utan tal från servern ska ytan tiga om siffran, aldrig hitta på en');
+  });
+});
