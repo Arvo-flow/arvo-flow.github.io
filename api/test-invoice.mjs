@@ -17,6 +17,7 @@ import { recommend, RecommenderError, computeLikeForLikeSaasTarget } from '../ag
 import { isAudited } from '../lib/revision-gate.js';
 import { grindPausad } from '../lib/grindpaus.js';
 import { farVisaFynd } from '../lib/fyndratt.js';
+import { kategoriNyckel, lasBeslut, byggBeslut, KATEGORI_TTL } from '../lib/kategoribeslut.js';
 import { detectForensicFindings } from '../lib/forensics.js';
 import { shadowReport } from '../lib/invoice-lines.js';
 import { storeDatapoint } from '../lib/benchmark.js';
@@ -873,7 +874,33 @@ export default async function handler(req, res) {
     }
 
     const t1 = Date.now();
-    const categorized = await categorize({
+    // ══ SAMMA DOKUMENT, SAMMA SVAR (2026-09-05) ═════════════════════════════════════════════
+    // Grundaren fick tre olika kort på EXAKT samma PDF. Orsaken är mätt: Dustin har varken
+    // deterministicMatch eller ett leverantörsfingeravtryck, så kategorin avgörs av tre
+    // modellutdata i rad (Sonnets kategori, Haikus validering, Sonnets konfidens mot 0,8).
+    // Beslutet binds därför till DOKUMENTET, inte till körningen. Se lib/kategoribeslut.js —
+    // reproducerbart, aldrig «rätt»: ett stabilt fel går att mäta och rätta, ett slumpmässigt inte.
+    const _katNyckel = kategoriNyckel(pdfHash);
+    let _fryst = null;
+    if (kv) {
+      try { _fryst = lasBeslut(await kv.get(_katNyckel)); }
+      catch (err) { console.error('[kategoricache] läsning felade:', err.message); }
+    }
+    if (_fryst) console.log(`[kategoricache] träff — '${_fryst.categorized.category}' (fryst på dokumentet)`);
+
+    /**
+     * Fryser beslutet på dokumentet. Anropas så snart validatorutfallet är känt — FÖRE de grenar
+     * som returnerar, eftersom flera av dem gör det. Ett beslut som bara skrevs på den lyckade
+     * vägen hade lämnat precis de TRIAGERADE fakturorna ostabila, och det är hela felet vi lagar:
+     * utgångsförlusten, en gång till, i cachen.
+     */
+    const _frysBeslut = (validatorKategori) => {
+      if (!kv || _fryst) return;
+      kv.set(_katNyckel, byggBeslut(categorized, validatorKategori ?? null), { ex: KATEGORI_TTL })
+        .catch((err) => console.error('[kategoricache] skrivning felade:', err.message));
+    };
+
+    const categorized = _fryst?.categorized ?? await categorize({
       supplier: extracted.supplier,
       amount: extracted.amount,
       date: extracted.date,
@@ -887,7 +914,7 @@ export default async function handler(req, res) {
       confidence: categorized.confidence,
       normalizedSupplier: categorized.normalizedSupplier,
     }));
-    {
+    if (!_fryst) {
       const u = categorized.usage ?? {};
       // Haiku 4.5: $0.80/MTok in, $4/MTok out
       const cost = (
@@ -948,13 +975,27 @@ export default async function handler(req, res) {
     // Fail-open: timeout eller API-fel blockerar aldrig en korrekt analys.
     {
       const _fpCheck = checkSupplierFingerprint(categorized.normalizedSupplier, extracted.supplier, categorized.category);
+      // Matchade leverantörer hoppar över validatorn — men kategorin kommer fortfarande ur en
+      // modell och måste frysas ändå. Utan den här raden hade halva leverantörsregistret behållit
+      // sin tärning, och vakten hade varit grön på ett fall den inte täckte.
+      if (_fpCheck.matched) _frysBeslut(null);
       if (!_fpCheck.matched) {
-        const _validation = await validateCategory({
-          supplier:         extracted.supplier,
-          amount:           extracted.amount,
-          lineItems:        extracted.lineItems,
-          proposedCategory: categorized.category,
-        });
+        // Validatorn fryses MED kategorin. Att bara frysa kategorin hade gjort halva beslutet
+        // stabilt: Haiku hade fortsatt rulla tärning, och konflikten kunnat uppstå och försvinna
+        // mellan körningar trots att kategorin låg still — samma kort, olika rutt, igen.
+        const _validation = _fryst
+          ? { validatorCategory: _fryst.validatorKategori,
+              conflict: _fryst.validatorKategori != null && _fryst.validatorKategori !== categorized.category }
+          : await validateCategory({
+            supplier:         extracted.supplier,
+            amount:           extracted.amount,
+            lineItems:        extracted.lineItems,
+            proposedCategory: categorized.category,
+          });
+        // Skrivs FÖRE grenarna nedan: flera av dem returnerar direkt, och ett beslut som bara
+        // lagras på den lyckade vägen hade lämnat precis de triagerade fakturorna ostabila —
+        // vilket är hela felet vi lagar. Utgångsförlusten, i cachen.
+        _frysBeslut(_validation.validatorCategory);
         // #3-fix (2026-06-28): en validator-oenighet får ALDRIG veta över en GRANSKAD + konfident
         // primärkategori. En granskad kategori (molnvaxel, mobil, loneadmin…) har egen regressionssvit
         // + verifierat pris — revisionsgrinden litar på den. Validatorn är skyddsnät för OSÄKra/

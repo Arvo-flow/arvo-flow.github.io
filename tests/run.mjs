@@ -95,6 +95,7 @@ import './lfl-produktionsvag.mjs';
 import './riktningskrav.mjs';
 import './grindpaus.mjs';
 import './utgangskrav.mjs';
+import './kategoribeslut.mjs';
 import './saas-rad.mjs';
 import './ct-ko.mjs';
 import './dorrstat.mjs';
