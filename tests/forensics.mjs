@@ -213,3 +213,42 @@ describe('Forensik · lagrade fynd räknas om vid läsning (Fable 5:s granskning
     assert.match(nytt.metricText, /belopp ur analysen/);
   });
 });
+
+describe('FO · Leasing saknades i ordlistan — 29 400 kr osynliga (2026-09-05)', () => {
+  const rad = (desc) => detectForensicFindings(
+    [{ type: 'recurring_subscription', description: desc, quantity: 1, unitPrice: 2450, amount: 2450 }],
+    { billingPeriod: 'monthly' },
+  );
+
+  test('FO-01 · en VERKLIG Dustin-rad: «Leasing Server (Månad 48 av 36)»', () => {
+    // Ordagrant ur faktura DUS-112233. Månadsräknaren gick att läsa och guarden hade passerat,
+    // men detektorn krävde FÖRST ett ord ur AMORT_RE — och det vanligaste svenska ordet för
+    // saken saknades. Mätt på samma rad, bara ordet utbytt: «Leasing» gav 0 fynd, «Avbetalning»
+    // gav 1 fynd och 29 400 kr. Kundens pengar, osynliga för att leverantören valde ett annat ord.
+    const f = rad('Leasing Server (Månad 48 av 36)');
+    assert.equal(f.length, 1, 'raden säger själv att den passerat sin plan');
+    assert.equal(f[0].type, 'hardware_overpaid');
+    assert.equal(f[0].monthsOverpaid, 12, '48 − 36 = tolv månader utöver planen');
+    assert.equal(f[0].overpaidToDate, 29400, '12 × 2 450 kr redan betalt');
+  });
+
+  test('FO-02 · SYSKONFALLET — en vanlig leasingrad UTAN överskridande fäller inte', () => {
+    // Det farliga med att vidga en ordlista är att detektorn börjar fälla allt. Guarden bär
+    // hela bevisbördan: bara en rad som SJÄLV säger paid > total får fyra.
+    assert.deepEqual(rad('Leasing Server (Månad 12 av 36)'), [],
+      'månad 12 av 36 är en helt normal leasingrad');
+    assert.deepEqual(rad('Leasing Server'), [], 'utan månadsräknare finns inget bevis');
+    assert.deepEqual(rad('Leasing Server (Månad 36 av 36)'), [],
+      'sista månaden i planen är inte ett överskridande');
+  });
+
+  test('FO-03 · den SMALA listan rörs inte — hardware_financing fäller inte varje leasingrad', () => {
+    // Vidgningen gäller ENDAST hardware_overpaid. Hade AMORT_RE vidgats hade varje leasingrad i
+    // landet blivit ett medium-fynd, och en detektor som fäller allt är lika värdelös som ingen.
+    const f = rad('Leasing Server (Månad 12 av 36)');
+    assert.ok(!f.some((x) => x.type === 'hardware_financing'),
+      'en normal leasingrad ska inte bli ett finansieringsfynd');
+    // MOTPROVET: den smala listan fungerar fortfarande för sina egna ord.
+    assert.ok(rad('Avbetalning iPad (Månad 12 av 36)').some((x) => x.type === 'hardware_financing'));
+  });
+});

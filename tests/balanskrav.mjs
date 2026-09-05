@@ -256,3 +256,36 @@ describe('Prosakravet — checkProseNumbers', () => {
   });
 
 });
+
+describe('BK · «Jag dömde ingenting» får inte se ut som «allt stämmer» (2026-09-05)', () => {
+  test('BK-01 · balanced är null när judged är 0 — aldrig true', () => {
+    // Funktionen svarade `balanced: true` på skräpindata, på fel objektform, och på en faktura
+    // utan dömbara rader. Produktionens enda anropare kontrollerar `judged === 0` först och
+    // rapporterar «ej_provbar», så ingen luras i dag — men värdet självt var en fälla för nästa
+    // läsare. Felfamiljen: ett OKÄNT representerat med ett värde omöjligt att skilja från ett
+    // giltigt svar. Funnet under analysen av Dustin-fakturan DUS-112233.
+    for (const skrap of [null, undefined, 'hej', [], { lineItems: [] }]) {
+      const r = judgeLineArithmetic(skrap);
+      assert.equal(r.judged, 0, `judged ska vara 0 för ${JSON.stringify(skrap)}`);
+      assert.equal(r.provbar, false, 'ingenting dömdes — påståendet är OKÄNT, inte godkänt');
+      assert.equal(r.balanced, true,
+        'FAIL-OPEN PÅ PIPELINEN står kvar med flit: en faktura får aldrig blockeras för att '
+        + 'grinden inte kunde döma. Sanningen bor i `provbar`, inte i `balanced`.');
+    }
+  });
+
+  test('BK-02 · MOTPROVET — en dömbar faktura ger fortfarande true respektive false', () => {
+    const ok = judgeLineArithmetic({ lineItems: [
+      { type: 'hardware_purchase', quantity: 2, unitPrice: 14500, amount: 29000 },
+    ] });
+    assert.equal(ok.judged, 1);
+    assert.equal(ok.provbar, true, 'en dömd rad ÄR prövbar');
+    assert.equal(ok.balanced, true, 'en korrekt rad ska godkännas');
+
+    const fel = judgeLineArithmetic({ lineItems: [
+      { type: 'hardware_purchase', quantity: 2, unitPrice: 14500, amount: 99999 },
+    ] });
+    assert.equal(fel.balanced, false, 'en obalanserad rad ska fällas');
+    assert.equal(fel.violations.length, 1);
+  });
+});
