@@ -1154,11 +1154,19 @@ export async function recommend(input, opts = {}) {
   // Sätts ALDRIG i reasoning-copyn — lever i forensicFindings/leadFinding (sifferrevisorns talfri-krav intakt).
   // Perioden skickas som den ÄR; forensiken härleder faktorn ur lib/faktureringsperiod.js.
   // Här stod `billingPeriod === 'annual' ? 1 : 12`, vilket gångade varje KVARTALSfaktura med 12.
-  const forensicFindings = detectForensicFindings(input.invoice?.lineItems, {
-    billingPeriod: input.invoice?.billingPeriod ?? null,
-    // Leverantören behövs för kravbrevets adressat — samma namn kortet visar.
-    supplier: input.normalizedSupplier || input.invoice?.supplier || null,
-  });
+  // ── EN BERÄKNING PER FAKTURA (2026-09-05) ─────────────────────────────────────────────────
+  // api-lagret räknar numera forensiken FÖRE triage-grenarna, så att de 16 utgångar som
+  // returnerar innan den här raden också kan bära sitt fynd. Räknade vi om den här hade vi två
+  // beräkningar av samma sak i produktionsvägen — LFL-felets form (fyra kopior av samma matte,
+  // varav produktionen körde den sviten inte låste). Skickas `input.forensik` in använder vi
+  // den; annars räknar vi själva, så att cli, batch och sviten fungerar oförändrat.
+  const forensicFindings = Array.isArray(input.forensik)
+    ? input.forensik
+    : detectForensicFindings(input.invoice?.lineItems, {
+      billingPeriod: input.invoice?.billingPeriod ?? null,
+      // Leverantören behövs för kravbrevets adressat — samma namn kortet visar.
+      supplier: input.normalizedSupplier || input.invoice?.supplier || null,
+    });
   const leadFinding = forensicFindings[0] ?? null;
   const withForensics = (resp) => (resp && typeof resp === 'object' ? { ...resp, forensicFindings, leadFinding } : resp);
 

@@ -57,6 +57,17 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'gamla, falska prosan för varje redan analyserad faktura');
   });
 
+  test('CV-04 · utgångskuvertet och cache-versionen hänger ihop', () => {
+    // Sexton svarsvägar bär nu leadFinding/forensicFindings som de aldrig kunde bära förut.
+    // Ett cachat v16-svar saknar fälten — och ett svar UTAN fynd är omöjligt att skilja från en
+    // faktura utan fynd. Samma koppling, tredje resultatändringen.
+    const harKuvert = /const svara = \(kropp\)/.test(API) && /forensicFindings: visa \? _forensik/.test(API);
+    if (!harKuvert) return;                     // kuvertet borttaget → UK-06 äger det fallet
+    assert.ok(cacheVersion() >= 17,
+      `utgångskuvertet finns men pdf:result står på v${cacheVersion()} — cachen serverar då svar `
+      + 'utan fynd för varje redan analyserad faktura, och fixen ser ut att ha misslyckats');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

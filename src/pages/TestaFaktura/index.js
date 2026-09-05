@@ -1438,9 +1438,14 @@ const TestaFaktura = () => {
             </BriefingHead>
 
             {/* Forensik-inversionen: mekanismen leder, ur kundens egen rad. Delad komponent (ljust ansikte). */}
+            {/* EN adress för fyndet (2026-09-05). Raden läste `result.recommendation.leadFinding`,
+                och rutter utan recommendation — review_queue, monitoring, unsupported — har ingen
+                sådan. Dustin-fakturans 29 400 kr fanns aldrig här att rendera. Kuvertet lägger
+                fyndet på toppnivå för VARJE utgång; recommendation-vägen behålls som reserv för
+                lagrade svar från före ändringen. */}
             <FindingCard
-              finding={result.recommendation?.leadFinding}
-              extraCount={(result.recommendation?.forensicFindings?.length ?? 0) - 1}
+              finding={result.leadFinding ?? result.recommendation?.leadFinding}
+              extraCount={((result.forensicFindings ?? result.recommendation?.forensicFindings)?.length ?? 0) - 1}
               variant="light"
             />
 
