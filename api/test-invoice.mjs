@@ -461,7 +461,10 @@ export default async function handler(req, res) {
   // Ett cachat v18-svar saknar `slutbetald` och `manadsbelopp` — kortet renderar då sin gamla,
   // kolliderande form, och en korrekt fix osynliggjord av en cache är omöjlig att skilja från en
   // trasig fix.
-  const cacheKey = `pdf:result:v19:${pdfHash}:e${employeesNum}`;
+  // v20 (2026-09-06): fyndprosan lovar inte längre en bevakning vi inte byggt. Ett cachat
+  // v19-svar bär den gamla meningen «Vi bevakar att den försvinner» — ett kundlöfte utan mekanik
+  // som annars serveras vidare för varje redan analyserad faktura (regel 9).
+  const cacheKey = `pdf:result:v20:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'

@@ -94,6 +94,15 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'serverar då den odaterade formen, och kortet renderar sin gamla kolliderande layout');
   });
 
+  test('CV-07 · den borttagna bevakningsutfästelsen och cache-versionen hänger ihop', () => {
+    const FOR = readFileSync(join(ROT, 'lib/forensics.js'), 'utf8');
+    const harMekanik = /Skicka nästa faktura till oss/.test(FOR);
+    if (!harMekanik) return;                    // ändringen borttagen → FO-12 äger det fallet
+    assert.ok(cacheVersion() >= 20,
+      `prosan lovar inte längre en bevakning men pdf:result står på v${cacheVersion()} — cachen `
+      + 'serverar då det gamla löftet vidare för varje redan analyserad faktura');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

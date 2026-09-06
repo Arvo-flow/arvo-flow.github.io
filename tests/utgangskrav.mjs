@@ -269,3 +269,31 @@ describe('UK · Rutan under fyndet erkänner det, på varje gren', () => {
       'en ovillkorlig «kräver offert»-rubrik under ett levererat fynd är motsägelsen vi lagade');
   });
 });
+
+// ── UK-19 · ETT MISSLYCKANDE FÅR INTE BÄRA EN BOCK (2026-09-06) ──────────────────────────────
+// `catch { setReviewQueueEmailState('sent'); } // non-fatal — show success anyway`
+// Misslyckades anropet visade ytan «✓ Vi hör av oss när analysen är klar!» medan ingenting
+// lagrades. Felfamiljen i sin renaste kundvända form — ett misslyckande som bär ett giltigt
+// värde — och kommentaren intygade att det var avsiktligt.
+describe('UK · Ett misslyckande syns som ett misslyckande', () => {
+  // Kommentarrader strippas: vakten fällde annars den kommentar som FÖRKLARAR felet den vaktar
+  // mot. Tredje gången i dag att en ordvakt straffar den som dokumenterar — därför samma
+  // strippning som UK-17, och därför står den här raden här som en påminnelse om mönstret.
+  const KALLA = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
+  const FRONT2 = KALLA.split('\n').filter((r) => !/^\s*(\/\/|\*|\/\*)/.test(r)).join('\n');
+
+  test('UK-19 · review_queue-mejlet visar aldrig framgång på ett fel', () => {
+    assert.doesNotMatch(FRONT2, /setReviewQueueEmailState\('sent'\);\s*\n\s*\}/,
+      'ett catch-block som sätter «sent» är den lögn vi tog bort — mätt på KODEN, inte på ordet');
+    assert.match(KALLA, /HÄR STOD `catch \{ setReviewQueueEmailState\('sent'\); \}/,
+      'skälet ska stå kvar i koden — annars återinför nästa läsare mönstret i god tro');
+    assert.match(FRONT2, /setReviewQueueEmailState\(svar\.ok \? 'sent' : 'failed'\);/,
+      'en 200:a är inte ett kvitto om kroppen säger nej — svaret måste LÄSAS, inte antas');
+    assert.match(FRONT2, /catch \{\s*\n\s*setReviewQueueEmailState\('failed'\);/,
+      'ett kastat anrop är ett misslyckande, aldrig en tyst framgång');
+    assert.match(FRONT2, /reviewQueueEmailState === 'failed'/,
+      'ytan måste ha ett läge för felet — annars finns tillståndet men syns inte');
+    assert.match(FRONT2, /det är vårt fel, inte ert/,
+      'skulden är vår; vi säger aldrig till kunden att hen gjort fel (regel 3)');
+  });
+});

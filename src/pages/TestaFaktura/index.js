@@ -888,14 +888,22 @@ const TestaFaktura = () => {
     if (!reviewQueueEmail || reviewQueueEmailState !== 'idle') return;
     setReviewQueueEmailState('submitting');
     try {
-      await fetch('/api/waitlist', {
+      // ⚠️ HÄR STOD `catch { setReviewQueueEmailState('sent'); } // show success anyway`
+      // (rättat 2026-09-06). Misslyckades anropet visade ytan «✓ Vi hör av oss när analysen är
+      // klar!» medan ingenting lagrades. Felfamiljen i sin renaste kundvända form — ett
+      // misslyckande som bär ett giltigt värde — och kommentaren intygade att det var avsiktligt.
+      //
+      // Svaret läses nu också: en 200:a är inte ett kvitto om kroppen säger nej. Ett fel är ett
+      // FEL, med en väg vidare som kunden själv kan gå (regel 3: ett påstående om kunden kräver
+      // täckning, och «vi har er adress» är ett påstående om kunden).
+      const svar = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: reviewQueueEmail, source: 'review_queue', reason: result?.reason }),
       });
-      setReviewQueueEmailState('sent');
+      setReviewQueueEmailState(svar.ok ? 'sent' : 'failed');
     } catch {
-      setReviewQueueEmailState('sent'); // non-fatal — show success anyway
+      setReviewQueueEmailState('failed');
     }
   };
 
@@ -1718,6 +1726,13 @@ const TestaFaktura = () => {
                 {reviewQueueEmailState === 'sent' ? (
                   <p style={{ fontSize: 13, color: '#1B6E66', fontWeight: 600, marginTop: 14, marginBottom: 0 }}>
                     ✓ Vi hör av oss när analysen är klar!
+                  </p>
+                ) : reviewQueueEmailState === 'failed' ? (
+                  /* Ett fel är ett fel — och det är VÅRT, inte kundens. Vägen vidare är en adress
+                     kunden kan använda direkt, inte en uppmaning att försöka igen i blindo. */
+                  <p style={{ fontSize: 13, color: '#B45309', fontWeight: 600, marginTop: 14, marginBottom: 0 }}>
+                    Vi kunde inte spara er adress just nu — det är vårt fel, inte ert.
+                    Mejla <a href="mailto:hej@arvoflow.se" style={{ color: '#B45309' }}>hej@arvoflow.se</a> så tar vi det därifrån.
                   </p>
                 ) : (
                   <form

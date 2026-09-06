@@ -361,3 +361,35 @@ describe('FO · Matningen och ytan — inte bara mekanismen', () => {
       'raden ska bära månadsbeloppet MED sin enhet — det är enheten som skiljer de två talen åt');
   });
 });
+
+// ── FO-12 · ETT LÖFTE UTAN MEKANIK FÅR INTE STÅ I PROSAN (2026-09-06) ────────────────────────
+// Texten löd «Vi bevakar att den försvinner». Grep gav EN enda träff i hela kodbasen: strängen
+// själv. Ingen rad i contract_timelines, inget schemalagt återbesök, ingenting som kunde upptäcka
+// att posten stod kvar. Ett kundlöfte utan mekanik (regel 9) — i den modul vars hela uppgift är
+// att bara säga det kundens egen rad bär.
+//
+// Ersatt av mail-in-ingesten, som är live och verifierad end-to-end sedan 11 juni: en inbjudan
+// till en mekanism i stället för ett löfte om en.
+describe('FO · Prosan lovar inget vi inte gör', () => {
+  const RAD = [{ type: 'recurring_subscription', description: 'Leasing Server (Månad 48 av 36)',
+    quantity: 1, unitPrice: 2450, amount: 2450 }];
+
+  test('FO-12 · fyndtexten utlovar ingen bevakning vi inte har byggt', () => {
+    const f = detectForensicFindings(RAD, { billingPeriod: 'monthly', fakturadatum: '2026-09-06' })[0];
+    assert.doesNotMatch(f.text, /vi bevakar/i,
+      'ett löfte om bevakning kräver en bevakning — och det finns ingen (regel 9: löftet och '
+      + 'koden levereras tillsammans)');
+    assert.match(f.text, /Skicka nästa faktura till oss/,
+      'vägen vidare ska peka på en mekanism vi FAKTISKT äger — mail-in-ingesten, live sedan 11 juni');
+  });
+
+  // Motprovet: vakten får inte bli ett förbud mot ORDET. Den dag en verklig bevakning byggs ska
+  // texten kunna säga det — men då ska den mekaniken finnas, och det är ett eget beslut med egen
+  // vakt. Testet nedan låser att förbudet gäller PÅSTÅENDET i den här prosan, inte vokabulären
+  // i modulen (SK-08: förbjud påståendet, aldrig ordet).
+  test('FO-12b · förbudet gäller kundtexten, inte modulens vokabulär', () => {
+    const kalla = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'lib/forensics.js'), 'utf8');
+    assert.match(kalla, /VI BEVAKAR ATT DEN FÖRSVINNER» STOD HÄR/,
+      'skälet ska stå kvar i koden — annars återinför nästa läsare löftet i god tro');
+  });
+});
