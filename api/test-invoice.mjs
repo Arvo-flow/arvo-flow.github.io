@@ -464,7 +464,10 @@ export default async function handler(req, res) {
   // v20 (2026-09-06): fyndprosan lovar inte längre en bevakning vi inte byggt. Ett cachat
   // v19-svar bär den gamla meningen «Vi bevakar att den försvinner» — ett kundlöfte utan mekanik
   // som annars serveras vidare för varje redan analyserad faktura (regel 9).
-  const cacheKey = `pdf:result:v20:${pdfHash}:e${employeesNum}`;
+  // v21 (2026-09-06): riktningen mäts per licensnivå. Ett cachat v20-svar kan bära meningen
+  // «500 kr … 416,77 kr … alltså under» på en blandad licensmix — en kundsynlig motsägelse som
+  // annars serveras vidare för varje redan analyserad faktura.
+  const cacheKey = `pdf:result:v21:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -512,6 +515,23 @@ export default async function handler(req, res) {
         const cached = await kv.get(cacheKey);
         if (cached) {
           console.log('[cache] träff — kvoten röres inte, ingen AI kördes');
+          // ⚠️ MIN EGEN REGRESSION (rättad 2026-09-06, Fables granskning). Triagerade svar
+          // cachades ALDRIG förut, så en triagerad faktura bokfördes alltid. När `svara()` började
+          // cacha dem fick nästa kund svaret men INGEN rad i sin liggare — bokföringsplikten
+          // (14 aug) bruten av min egen cachefix. Ett obokfört beslut är för kunden omöjligt att
+          // skilja från ett tapp.
+          if (cached.route && cached.route !== 'auto') {
+            storeTriaged({
+              fingerprint, pdfHash,
+              invoiceNumber: cached.extracted?.invoiceNumber ?? null,
+              lineItems:     cached.extracted?.lineItems ?? null,
+              supplier:      cached.extracted?.supplier ?? null,
+              category:      cached.categorized?.category ?? null,
+              route:         cached.route,
+              reason:        cached.reason ?? null,
+              userEmail:     body.userEmail,
+            }).catch(bokforFel);
+          }
           return send(res, 200, { ...cached, cached: true });
         }
       } catch { /* non-fatal */ }
@@ -710,8 +730,12 @@ export default async function handler(req, res) {
       await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: extracted.category ?? null,
         route: 'unsupported', reason: 'credit_note', userEmail: body.userEmail }).catch(bokforFel);
       return svara({
-        // tillit: en kreditnota är ett NEGATIVT belopp, inte ett tvivel om avläsningen — forensiken filtrerar negativa rader ändå
-        tillitTillRader: true,
+        // tillit: NEJ tills vidare. Motiveringen löd «forensiken filtrerar negativa rader ändå» —
+        // men filtret (`amount <= 0`) sitter på RADEN, och en kreditnota listar ofta sina rader
+        // POSITIVA med negativ total. Då kan «ni betalar för utrustning ni redan äger» visas på ett
+        // dokument som betalar TILLBAKA. Jag har ingen verklig kreditnota att mäta mot, och när
+        // mätningen saknas tiger vi hellre (UK-20a). Öppnas igen när en riktig kreditnota körts.
+        tillitTillRader: false,
         ok: true, route: 'unsupported', reason: 'credit_note',
         extracted: { supplier: extracted.supplier, date: extracted.date },
         categorized: { category: 'uncategorized' },
@@ -991,6 +1015,12 @@ export default async function handler(req, res) {
       if (fp.matched && !fp.categoryOk) {
         console.error(`[fingerprint] MISMATCH key=${fp.key} ai_category='${categorized.category}' expected=[${fp.expectedCategories.join(', ')}]`);
         notifyReviewQueue(extracted, `[Fingerprint] ${fp.key}: AI gav '${categorized.category}', förväntat [${fp.expectedCategories.join(', ')}]`).catch(() => {});
+        // ⚠️ DEN HÄR UTGÅNGEN FRÖS ALDRIG SITT BESLUT (rättat 2026-09-06, Fables granskning).
+        // Den returnerar 26 rader FÖRE första `_frysBeslut`, så en faktura kunde få mismatch ena
+        // körningen och match nästa — tärningen kvar på exakt den gren KB-06 påstod var täckt.
+        // Vakten räknade två anrop och var grön på ett fall den inte såg.
+        // `null` är här det SANNA validatorsvaret: på den här vägen körs validatorn aldrig.
+        _frysBeslut(null);
         await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: categorized.category ?? null,
           route: 'review_queue', reason: 'fingerprint_mismatch', userEmail: body.userEmail }).catch(bokforFel);
         return svara({
@@ -2188,9 +2218,10 @@ export default async function handler(req, res) {
           });
         }
       }
-      // PDF-fingerprintcache: lagra resultatet för 24h så identiska fakturor
-      // returneras direkt utan att köra AI-pipelinen igen.
-      if (kv) kv.set(cacheKey, autoResponse, { ex: PDF_CACHE_TTL }).catch(() => {});
+      // Cacheskrivningen bor numera i `svara()` — ETT ställe för alla utgångar. Här stod en andra
+      // skrivning av `autoResponse`, som SAKNAR kuvertets toppnivåfält (leadFinding,
+      // forensicFindings). Två skrivningar av samma nyckel i olika form utan ordningsgaranti:
+      // misslyckas den senare ligger den magrare formen kvar, och kortet tappar sitt fynd.
     }
 
     // Sista utgången går samma väg som de sexton andra — annars är det den som glöms nästa gång.

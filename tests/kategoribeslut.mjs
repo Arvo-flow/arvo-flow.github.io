@@ -72,12 +72,29 @@ describe('KB · Kategoribeslutet fryses på dokumentet', () => {
       'kategorifrysningen måste hämta sin egen klient — den ligger utanför `kv`:s block');
   });
 
-  test('KB-06 · BÅDA leverantörsvägarna fryser sitt beslut', () => {
-    const anrop = [...API.matchAll(/_frysBeslut\(/g)].length;
-    assert.equal(anrop, 2,
-      'en väg saknar frysning. Fingeravtrycksmatchade leverantörer hoppar över validatorn men '
-      + 'kategorin kommer fortfarande ur en modell — utan frysning behåller halva '
-      + 'leverantörsregistret sin tärning, och vakten är grön på ett fall den inte täcker');
+  // ⚠️ DEN HÄR VAKTEN LÅSTE ETT ANTAL, INTE EN EGENSKAP (rättad 2026-09-06, Fables granskning).
+  // Första versionen krävde exakt TVÅ `_frysBeslut`-anrop och var grön — medan
+  // `fingerprint_mismatch` returnerade 26 rader före det första. Ett låst tal säger ingenting om
+  // täckning: det är grönt tills någon lägger till en väg, och tyst om de vägar som redan fanns.
+  // Vakten mäter nu att VARJE utgång som kan returnera efter kategoriseringen har en frysning
+  // FÖRE sig — samma indexmätning som KB-07, tillämpad på alla tre.
+  test('KB-06 · varje utgång efter kategoriseringen fryser FÖRE den returnerar', () => {
+    const UTGANGAR = [
+      ["reason: 'fingerprint_mismatch', userEmail", 'leverantörskontrollen säger emot AI:ns kategori'],
+      ["reason: 'categorization_conflict', userEmail", 'Sonnet och Haiku är oense om etiketten'],
+    ];
+    const frysningar = [...API.matchAll(/_frysBeslut\(/g)].map((m) => m.index);
+    assert.ok(frysningar.length >= 3,
+      `bara ${frysningar.length} frysningar — minst tre vägar kan returnera efter kategoriseringen`);
+
+    for (const [ankare, vad] of UTGANGAR) {
+      const utgang = API.indexOf(ankare);
+      assert.ok(utgang > 0, `ankaret «${ankare}» hittades inte — vakten mäter inte det den påstår`);
+      assert.ok(frysningar.some((f) => f < utgang),
+        `utgången «${vad}» returnerar utan att ha fryst sitt beslut — tärningen ligger kvar på `
+        + 'precis den väg vakten påstår är täckt');
+    }
+    // Och den fingeravtrycksMATCHADE vägen, som hoppar över validatorn helt.
     assert.match(API, /if \(_fpCheck\.matched\) _frysBeslut\(null\);/);
     assert.match(API, /_frysBeslut\(_validation\.validatorCategory\);/);
   });

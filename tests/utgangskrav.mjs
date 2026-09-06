@@ -297,3 +297,47 @@ describe('UK · Ett misslyckande syns som ett misslyckande', () => {
       'skulden är vår; vi säger aldrig till kunden att hen gjort fel (regel 3)');
   });
 });
+
+// ── UK-20 · TRE FIXAR SOM VAR OPRÖVADE (2026-09-06, sabotaget avslöjade det) ─────────────────
+// Efter Fables granskning rättade jag fem fel. Tre av sabotagen fällde NOLL tester — alltså var
+// tre av fixarna gröna på fel grund, i samma pass som de skrevs.
+describe('UK · Fables tre plausibla — nu låsta', () => {
+  const K = readFileSync(join(ROT, 'api/test-invoice.mjs'), 'utf8');
+
+  test('UK-20a · kreditnotan visar inget fynd förrän vi mätt en riktig', () => {
+    // Motiveringen löd «forensiken filtrerar negativa rader ändå» — men filtret (`amount <= 0`)
+    // sitter på RADEN, och en kreditnota listar ofta sina rader POSITIVA med negativ total. Då
+    // kan «ni betalar för utrustning ni redan äger» visas på ett dokument som betalar TILLBAKA.
+    // lastIndexOf: samma reason-sträng står FÖRST i storeTriaged-anropet, där ingen deklaration
+    // finns. Tredje gången jag gör exakt det felet i den här filen — mätinstrumentet som letar på
+    // fel förekomst. Att skriva ner det här är billigare än att göra om det en fjärde gång.
+    const i = K.lastIndexOf("reason: 'credit_note'");
+    assert.ok(i > 0, 'ankaret hittades inte — vakten mäter inte det den påstår');
+    const fore = K.slice(Math.max(0, i - 1200), i);
+    const m = [...fore.matchAll(/tillitTillRader: (true|false),/g)];
+    assert.equal(m[m.length - 1]?.[1], 'false',
+      'utan en verklig kreditnota att mäta mot är fail-closed rätt sida (regel 4: tystnad när '
+      + 'vi varken har fakta eller en grundad uppfattning)');
+  });
+
+  test('UK-20b · en cacheträff bokförs — annars är beslutet osynligt för nästa kund', () => {
+    // Triagerade svar cachades ALDRIG förut, så de bokfördes alltid. När svara() började cacha
+    // dem fick nästa kund svaret men INGEN rad i sin liggare — bokföringsplikten (14 aug) bruten
+    // av min egen cachefix. Ett obokfört beslut är omöjligt att skilja från ett tapp.
+    const i = K.indexOf("console.log('[cache] träff");
+    assert.ok(i > 0);
+    const block = K.slice(i, i + 1400);
+    assert.match(block, /storeTriaged\(\{/,
+      'cacheträffen returnerar utan att bokföra — nästa kund ser inget beslut i sin liggare');
+    assert.match(block, /cached\.route && cached\.route !== 'auto'/,
+      'bara triage-rutterna bokförs här; auto-vägens analysrad är en egen, äldre lucka');
+  });
+
+  test('UK-20c · cacheKey skrivs på EXAKT ett ställe', () => {
+    const skrivningar = [...K.matchAll(/\.set\(cacheKey,/g)].length;
+    assert.equal(skrivningar, 1,
+      `${skrivningar} skrivningar av samma nyckel. Den andra skrev \`autoResponse\`, som SAKNAR `
+      + 'kuvertets toppnivåfält — utan ordningsgaranti kan den magrare formen bli den som ligger '
+      + 'kvar, och kortet tappar sitt fynd');
+  });
+});

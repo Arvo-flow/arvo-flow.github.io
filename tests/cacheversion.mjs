@@ -103,6 +103,14 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'serverar då det gamla löftet vidare för varje redan analyserad faktura');
   });
 
+  test('CV-08 · per-nivå-riktningen och cache-versionen hänger ihop', () => {
+    const REC = readFileSync(join(ROT, 'agents/recommender/recommend.js'), 'utf8');
+    if (!/dominantRiktning/.test(REC)) return;   // rättningen borttagen → RK-09 äger det fallet
+    assert.ok(cacheVersion() >= 21,
+      `riktningen mäts per nivå men pdf:result står på v${cacheVersion()} — cachen serverar då den `
+      + 'gamla motsägelsen på varje blandad licensmix');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

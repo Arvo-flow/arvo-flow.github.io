@@ -223,3 +223,60 @@ describe('RK-08 · ingen påhittad motivering i över-grenen', () => {
       'att ligga över leverantörens eget listpris är rummets vassaste besked och ska sägas rakt ut');
   });
 });
+
+// ── RK-09..11 · BLANDADE LICENSNIVÅER (2026-09-06, Fables granskning) ────────────────────────
+// Varje fixtur i RK-01..08 bar EN nivå. Med två nivåer föll fixen isär: `lflPrisgap` mätte
+// riktningen på AGGREGATET medan prosan citerar den DOMINANTA nivåns tal. Kört av Fable:
+// 5 E3 à 500 kr (över 416,77) + 40 Basic à 55 kr (under 66,91) gav meningen
+//     «Ni betalar 500 kr … listpris 416,77 kr. Ni ligger alltså UNDER Microsofts listpris.»
+// 500 > 416,77 i samma mening som säger under — Atea-motsägelsen återinförd av fixen för den.
+describe('RK · Riktningen mäts på den nivå prosan citerar', () => {
+  const BLANDAD = { dominantTierKey: 'e3', tierLines: [
+    { key: 'e3',             quantity:  5, benchmarkMonthly: E3_LISTA, billedUnitMonthly: 500 },
+    { key: 'business-basic', quantity: 40, benchmarkMonthly: 66.91,    billedUnitMonthly:  55 },
+  ], addonLines: [] };
+
+  test('RK-09 · dominantRiktning följer den citerade nivån, inte summan', () => {
+    const g = lflPrisgap(BLANDAD);
+    assert.equal(g.riktning, 'under', 'aggregatet ÄR under — det är sant och styr promptens premiss');
+    assert.equal(g.dominantRiktning, 'over',
+      '500 > 416,77 på den nivå prosan citerar; att beskriva den med summan är motsägelsen');
+    assert.equal(g.blandad, true, 'nivåerna pekar åt olika håll — det är ett fynd, inte brus');
+  });
+
+  test('RK-10 · prosan motsäger aldrig sina egna tal', () => {
+    const t = buildLikeForLikeReasoning({ supplier: 'X', lfl: BLANDAD, annualCost: 1,
+      suggestedAnnualCost: 1, savingPerYear: 0, billingCycleType: 'monthly' });
+    assert.match(t, /500 kr per användare/);
+    assert.match(t, /över\s+Microsofts eget listpris/,
+      'den citerade nivån ligger ÖVER — meningen måste säga det');
+    assert.doesNotMatch(t, /ligger alltså under Microsofts eget listpris/,
+      'exakt den mening Fable körde fram: «500 kr … 416,77 kr … alltså under»');
+    assert.match(t, /övriga licensnivåer ligger åt andra hållet/,
+      'blandningen namnges — att jämna ut den till ett medeltal gömmer fyndet');
+  });
+
+  test('RK-11 · årsgapet är den citerade nivåns eget, aldrig aggregatets', () => {
+    const g = lflPrisgap(BLANDAD);
+    assert.equal(g.dominantGapArs, Math.round((500 - E3_LISTA) * 5 * 12),
+      '(500 − 416,77) × 5 licenser × 12 mån = den dominanta nivåns eget gap');
+    assert.notEqual(g.dominantGapArs, g.gapAnnual,
+      'aggregatet och nivån skiljer sig här — samma fel, andra fältet');
+    const t = buildLikeForLikeReasoning({ supplier: 'X', lfl: BLANDAD, annualCost: 1,
+      suggestedAnnualCost: 1, savingPerYear: 0, billingCycleType: 'monthly' });
+    assert.match(t, new RegExp(String(Math.abs(g.dominantGapArs)).replace(/\B(?=(\d{3})+(?!\d))/g, '\\s')));
+  });
+
+  // Motprovet: en-nivå-fallet får inte ändras av rättningen (RK-01..08 äger det, men en
+  // regression där hade varit osynlig eftersom aggregat och nivå sammanfaller).
+  test('RK-12 · med EN nivå är aggregat och nivå samma, och inget blandat-tillägg skrivs', () => {
+    const en = { dominantTierKey: 'e3', tierLines: [
+      { key: 'e3', quantity: 25, benchmarkMonthly: E3_LISTA, billedUnitMonthly: 410 }], addonLines: [] };
+    const g = lflPrisgap(en);
+    assert.equal(g.riktning, g.dominantRiktning);
+    assert.equal(g.blandad, false);
+    const t = buildLikeForLikeReasoning({ supplier: 'Atea Sverige AB', lfl: en, annualCost: 123_000,
+      suggestedAnnualCost: 125_031, savingPerYear: 0, billingCycleType: 'monthly' });
+    assert.doesNotMatch(t, /åt andra hållet/, 'ingen blandning finns — då nämns ingen');
+  });
+});

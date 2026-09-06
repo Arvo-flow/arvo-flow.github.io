@@ -744,11 +744,33 @@ export function lflPrisgap(lfl) {
   const perEnhet = (billedAnnual - benchmarkAnnual) / platser / 12;
   const riktning = Math.abs(perEnhet) <= 0.01 ? 'lika' : (perEnhet > 0 ? 'over' : 'under');
 
+  // ⚠️ AGGREGATETS RIKTNING FICK BESKRIVA DEN DOMINANTA NIVÅNS TAL (rättat 2026-09-06, Fables
+  // granskning). Prosan citerar ALLTID den dominanta nivåns à-pris och golv — men riktningen
+  // togs på summan av alla nivåer. Kört: 5 E3 à 500 kr (ÖVER 416,77) + 40 Basic à 55 kr (under
+  // 66,91) gav meningen
+  //     «Ni betalar 500 kr … listpris 416,77 kr. Ni ligger alltså UNDER Microsofts listpris.»
+  // 500 > 416,77 i samma mening som säger under. Det är Atea-motsägelsen ordagrant, återinförd
+  // av fixen för den — och RK-01..08 kunde inte se den, eftersom varje fixtur bar EN nivå.
+  //
+  // Riktningen mäts nu per nivå. `riktning` (aggregatet) styr promptens premiss, som handlar om
+  // BESPARINGEN och därför är en summa. `dominantRiktning` styr PROSAN, som citerar en nivå.
+  const riktningFor = (t) => {
+    const per = t.billedUnitMonthly - t.benchmarkMonthly;
+    return Math.abs(per) <= 0.01 ? 'lika' : (per > 0 ? 'over' : 'under');
+  };
+  const dom = tiers.find((t) => t.key === lfl.dominantTierKey) ?? tiers[0];
+
   return {
     billedAnnual:    Math.round(billedAnnual),
     benchmarkAnnual: Math.round(benchmarkAnnual),
     gapAnnual:       Math.round(billedAnnual - benchmarkAnnual),
     riktning,
+    dominantRiktning: riktningFor(dom),
+    // Den dominanta nivåns EGET årsgap — prosan får aldrig beskriva ett citerat à-pris med
+    // summan av alla nivåer. Samma fel, andra fältet.
+    dominantGapArs:  Math.round((dom.billedUnitMonthly - dom.benchmarkMonthly) * dom.quantity * 12),
+    // Nivåerna pekar åt olika håll. Det är ett FYND, inte något att jämna ut till ett medeltal.
+    blandad: new Set(tiers.map(riktningFor)).size > 1,
   };
 }
 
@@ -790,7 +812,12 @@ function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
     `årsavtalspris för exakt samma licens är ${fmtKrUnit(dominant.benchmarkMonthly)} kr.`,
   ];
 
-  if (gap.riktning === 'under') {
+  // Blandade nivåer namnges — att beskriva dem med ett medeltal är att gömma fyndet.
+  const blandatTillagg = gap.blandad
+    ? ' Era övriga licensnivåer ligger åt andra hållet, så den samlade bilden är blandad.'
+    : '';
+
+  if (gap.dominantRiktning === 'under') {
     parts.push(
       `Ni ligger alltså under Microsofts eget listpris` +
       (billingCycleType === 'monthly' ? `, och det utan årsåtagande` : ``) + `.`
@@ -800,7 +827,7 @@ function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
       `inget kvitto på att priset är rätt. Det vi kan säga är att vi inte hittar något publikt ` +
       `pris som är lägre än ert, och därför inget byte som sänker kostnaden.`
     );
-  } else if (gap.riktning === 'lika') {
+  } else if (gap.dominantRiktning === 'lika') {
     parts.push(
       `Ni betalar alltså exakt Microsofts listpris — inget återförsäljarpåslag, men heller ingen ` +
       `rabatt. Det finns inget publikt pris att byta ned till; utrymmet ligger i förhandling, ` +
@@ -815,14 +842,14 @@ function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
     // en gren som inte VET varför vi stannade får bara säga ATT vi stannade. Att ligga över
     // leverantörens eget listpris är däremot rummets vassaste besked och sägs rakt ut.
     parts.push(
-      `Ert à-pris ligger alltså ${Math.abs(gap.gapAnnual).toLocaleString('sv-SE')} kr per år över ` +
+      `Ert à-pris ligger alltså ${Math.abs(gap.dominantGapArs).toLocaleString('sv-SE')} kr per år över ` +
       `Microsofts eget listpris — ovanligt, och värt att ta upp med ${supplierName}. Vår ` +
       `bytesberäkning landar ändå inte i ett verifierat bytesmål i dag, så vi föreslår inget byte ` +
       `här: fyndet går vidare till granskning.`
     );
   }
 
-  return parts.join(' ');
+  return parts.join(' ') + blandatTillagg;
 }
 
 export function buildLikeForLikeReasoning({
