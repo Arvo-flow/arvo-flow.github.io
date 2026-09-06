@@ -280,3 +280,57 @@ describe('RK · Riktningen mäts på den nivå prosan citerar', () => {
     assert.doesNotMatch(t, /åt andra hållet/, 'ingen blandning finns — då nämns ingen');
   });
 });
+
+// ── RK-13..15 · ETT ABSOLUT PÅSTÅENDE BREDVID EN NIVÅ SOM MOTSÄGER DET (2026-09-06) ──────────
+// Fables ANDRA granskning, av fixen för hans första. Båda fynden är samma fel i var sin gren:
+// en sats om HELHETEN placerad bredvid en nivå som säger emot den. Att lägga till en nyansering
+// («era övriga nivåer ligger åt andra hållet») upphäver inte ett absolut påstående — den ställer
+// det bara bredvid sin egen motsägelse.
+describe('RK · Absoluta påståenden skopas till den nivå som citeras', () => {
+  // Dominant UNDER golvet, en mindre nivå ÖVER → ingen räknad besparing.
+  const A = { dominantTierKey: 'e3', tierLines: [
+    { key: 'e3',             quantity: 40, benchmarkMonthly: E3_LISTA, billedUnitMonthly: 400 },
+    { key: 'business-basic', quantity:  5, benchmarkMonthly: 66.91,    billedUnitMonthly: 100 },
+  ], addonLines: [] };
+
+  // Dominant UNDER golvet, MEN hela gapet bärs av en annan nivå → besparing > 0, switch-grenen.
+  const B = { dominantTierKey: 'e3', tierLines: [
+    { key: 'e3',             quantity:  5, benchmarkMonthly: E3_LISTA, billedUnitMonthly: 400, tierAnnual: 1 },
+    { key: 'business-basic', quantity: 40, benchmarkMonthly: 66.91,    billedUnitMonthly: 100, tierAnnual: 1 },
+  ], addonLines: [] };
+
+  const text = (lfl, saving) => buildLikeForLikeReasoning({
+    supplier: 'X', lfl, annualCost: 60_000, suggestedAnnualCost: 40_000,
+    savingPerYear: saving, billingCycleType: 'monthly',
+  });
+
+  test('RK-13 · under-grenen påstår inte att INGET lägre pris finns när ett gör det', () => {
+    const t = text(A, 0);
+    assert.doesNotMatch(t, /inte hittar något publikt pris som är lägre än ert,/,
+      'den absoluta satsen stod bredvid «era övriga nivåer ligger åt andra hållet» — alltså '
+      + '«det finns inget lägre pris» och «det finns ett lägre pris» i samma stycke');
+    assert.match(t, /lägre än ert för era E3-licenser/,
+      'satsen ska skopas till den nivå prosan citerar');
+    assert.match(t, /åt andra hållet/, 'blandningen ska fortfarande namnges');
+  });
+
+  test('RK-14 · switch-grenen påstår inte «helt» när en nivå ligger under golvet', () => {
+    const t = text(B, 20_000);
+    assert.doesNotMatch(t, /Skillnaden ligger helt i fakturerat à-pris/,
+      'ledande nivå är 400 kr mot golvet 416,77 — «helt» är osant när hela gapet bärs av en annan');
+    assert.match(t, /Gapet bärs av era Business Basic-licenser/,
+      'den nivå som BÄR gapet ska namnges');
+  });
+
+  // Motprovet: ledningen får INTE bytas. Att citera en annan nivå än den dominanta kan ställa
+  // namnet (suggestedSupplier, RD-09) mot talet — precis det låset finns för att stoppa.
+  test('RK-15 · den citerade nivån är fortfarande den dominanta', () => {
+    assert.match(text(B, 20_000), /^Ni betalar 400 kr per användare och månad för era 5 E3-licenser/,
+      'texten leder med dominantTierKey; bara PÅSTÅENDET om helheten justeras');
+    // Och en-nivå-fallet är oförändrat: `helt` är sant när alla nivåer ligger över.
+    const en = { dominantTierKey: 'e3', tierLines: [
+      { key: 'e3', quantity: 25, benchmarkMonthly: E3_LISTA, billedUnitMonthly: 500, tierAnnual: 1 }], addonLines: [] };
+    assert.match(text(en, 20_000), /Skillnaden ligger helt i fakturerat à-pris/,
+      'med alla nivåer över golvet ÄR skillnaden helt i à-priset — vakten får inte förbjuda ordet');
+  });
+});

@@ -111,6 +111,14 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'gamla motsägelsen på varje blandad licensmix');
   });
 
+  test('CV-09 · de skopade påståendena och cache-versionen hänger ihop', () => {
+    const REC = readFileSync(join(ROT, 'agents/recommender/recommend.js'), 'utf8');
+    if (!/Gapet bärs av era/.test(REC)) return;   // rättningen borttagen → RK-14 äger det fallet
+    assert.ok(cacheVersion() >= 22,
+      `påståendena skopas nu till den citerade nivån men pdf:result står på v${cacheVersion()} — `
+      + 'cachen serverar då den gamla självmotsägelsen på varje blandad licensmix');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

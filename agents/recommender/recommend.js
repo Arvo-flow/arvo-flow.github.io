@@ -822,10 +822,19 @@ function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
       `Ni ligger alltså under Microsofts eget listpris` +
       (billingCycleType === 'monthly' ? `, och det utan årsåtagande` : ``) + `.`
     );
+    // ⚠️ «INGET PUBLIKT PRIS SOM ÄR LÄGRE ÄN ERT» ÄR ETT PÅSTÅENDE OM HELHETEN (rättat
+    // 2026-09-06, Fables andra granskning). Med blandade nivåer stod det bredvid meningen «era
+    // övriga licensnivåer ligger åt andra hållet» — alltså: det finns inget lägre pris, och det
+    // finns ett lägre pris, i samma stycke. Fixen som NAMNGAV blandningen lämnade den absoluta
+    // satsen kvar; att lägga till en nyansering framför ett absolut påstående upphäver det inte.
+    // Satsen skopas nu till den nivå prosan faktiskt citerar.
+    const dLabelKort = LFL_TIER_LABELS[dominant.key] ?? dominant.key;
     parts.push(
       `Att ligga under listpris är väntat — de flesta företag förhandlar ned det — så det är ` +
       `inget kvitto på att priset är rätt. Det vi kan säga är att vi inte hittar något publikt ` +
-      `pris som är lägre än ert, och därför inget byte som sänker kostnaden.`
+      (gap.blandad
+        ? `pris som är lägre än ert för era ${dLabelKort}-licenser.`
+        : `pris som är lägre än ert, och därför inget byte som sänker kostnaden.`)
     );
   } else if (gap.dominantRiktning === 'lika') {
     parts.push(
@@ -889,8 +898,24 @@ export function buildLikeForLikeReasoning({
     parts.push(`${label}: ${t.quantity} licenser ${billed}mot årsavtalspriset ${fmtKrUnit(t.benchmarkMonthly)} kr.`);
   }
 
+  // ⚠️ «SKILLNADEN LIGGER HELT I À-PRISET» ÄR ETT PÅSTÅENDE OM ALLA NIVÅER (rättat 2026-09-06).
+  // Texten leder med den DOMINANTA nivån (störst spend — rätt för namngivningen, RD-09), men den
+  // nivån kan ligga UNDER golvet medan hela gapet bärs av en annan. Kört: E3 à 400 kr (under
+  // 416,77) + 40 Basic à 100 kr (över 66,91) gav «Ni betalar 400 kr … 416,77 kr … Skillnaden
+  // ligger HELT i fakturerat à-pris». Talen står där och går att räkna — men ordet «helt» är
+  // osant, och det är spegelbilden av under-grenens fel i den andra grenen.
+  //
+  // Ledningen ändras INTE: att byta citerad nivå hade kunnat ställa namnet mot talet, vilket är
+  // precis det RD-09 låser. I stället namnges den nivå som BÄR gapet.
+  const overTiers = tiers.filter(t => t.billedUnitMonthly != null
+    && t.billedUnitMonthly - t.benchmarkMonthly > 0.01);
+  const barGapet = overTiers.length > 0 && overTiers.length < tiers.length
+    ? overTiers.map(t => LFL_TIER_LABELS[t.key] ?? t.key).join(' och ')
+    : null;
   parts.push(
-    `Skillnaden ligger helt i fakturerat à-pris mot Microsofts publika årsavtalspris för samma licens` +
+    (barGapet
+      ? `Gapet bärs av era ${barGapet}-licenser; övriga nivåer ligger på eller under Microsofts publika årsavtalspris`
+      : `Skillnaden ligger helt i fakturerat à-pris mot Microsofts publika årsavtalspris för samma licens`) +
     (billingCycleType === 'monthly' ? ` — ni faktureras månadsvis utan årsåtagande, vilket är en del av gapet.` : `.`)
   );
 
