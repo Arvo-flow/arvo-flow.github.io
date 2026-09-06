@@ -64,7 +64,12 @@ describe('KB · Kategoribeslutet fryses på dokumentet', () => {
   test('KB-05 · produktionsvägen läser det frysta beslutet före modellanropet', () => {
     assert.match(API, /const categorized = _fryst\?\.categorized \?\? await categorize\(\{/,
       'utan läsningen är hela modulen död kod — attribueringslåsets öde, två månader mörkt');
-    assert.match(API, /lasBeslut\(await kv\.get\(_katNyckel\)\)/);
+    // `_kv`, inte `kv`: den egna klienthämtningen finns just för att `kv` deklareras inne i
+    // !isBypass-blocket och INTE är i scope här. Att skriva `kv` gav ReferenceError i produktion
+    // 6 september — och den här raden fällde omdöpningen, vilket är precis vad en källvakt ska.
+    assert.match(API, /lasBeslut\(await _kv\.get\(_katNyckel\)\)/);
+    assert.match(API, /const _kv = getKv\(\);/,
+      'kategorifrysningen måste hämta sin egen klient — den ligger utanför `kv`:s block');
   });
 
   test('KB-06 · BÅDA leverantörsvägarna fryser sitt beslut', () => {

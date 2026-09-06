@@ -919,24 +919,17 @@ export default async function handler(req, res) {
     // Beslutet binds därför till DOKUMENTET, inte till körningen. Se lib/kategoribeslut.js —
     // reproducerbart, aldrig «rätt»: ett stabilt fel går att mäta och rätta, ett slumpmässigt inte.
     const _katNyckel = kategoriNyckel(pdfHash);
+    // Egen klienthämtning: `kv` deklareras inne i !isBypass-blocket långt ovanför och är INTE i
+    // scope här. Att skriva `kv` gav `ReferenceError: kv is not defined` i produktion —
+    // ett kast som inget test kunde se, eftersom hela sviten kör utan KV och utan handler.
+    const _kv = getKv();
     let _fryst = null;
-    if (kv) {
-      try { _fryst = lasBeslut(await kv.get(_katNyckel)); }
+    if (_kv) {
+      try { _fryst = lasBeslut(await _kv.get(_katNyckel)); }
       catch (err) { console.error('[kategoricache] läsning felade:', err.message); }
     }
     if (_fryst) console.log(`[kategoricache] träff — '${_fryst.categorized.category}' (fryst på dokumentet)`);
 
-    /**
-     * Fryser beslutet på dokumentet. Anropas så snart validatorutfallet är känt — FÖRE de grenar
-     * som returnerar, eftersom flera av dem gör det. Ett beslut som bara skrevs på den lyckade
-     * vägen hade lämnat precis de TRIAGERADE fakturorna ostabila, och det är hela felet vi lagar:
-     * utgångsförlusten, en gång till, i cachen.
-     */
-    const _frysBeslut = (validatorKategori) => {
-      if (!kv || _fryst) return;
-      kv.set(_katNyckel, byggBeslut(categorized, validatorKategori ?? null), { ex: KATEGORI_TTL })
-        .catch((err) => console.error('[kategoricache] skrivning felade:', err.message));
-    };
 
     const categorized = _fryst?.categorized ?? await categorize({
       supplier: extracted.supplier,
@@ -946,6 +939,19 @@ export default async function handler(req, res) {
       description: extracted.description,
       recurring: extracted.recurring,
     });
+
+    /**
+     * Fryser beslutet på dokumentet. Anropas så snart validatorutfallet är känt — FÖRE de grenar
+     * som returnerar, eftersom flera av dem gör det. Ett beslut som bara skrevs på den lyckade
+     * vägen hade lämnat precis de TRIAGERADE fakturorna ostabila, och det är hela felet vi lagar:
+     * utgångsförlusten, en gång till, i cachen.
+     */
+    const _frysBeslut = (validatorKategori) => {
+      if (!_kv || _fryst) return;
+      _kv.set(_katNyckel, byggBeslut(categorized, validatorKategori ?? null), { ex: KATEGORI_TTL })
+        .catch((err) => console.error('[kategoricache] skrivning felade:', err.message));
+    };
+
     timing.categorizeMs = Date.now() - t1;
     console.log('[test-invoice] categorized:', JSON.stringify({
       category: categorized.category,

@@ -203,3 +203,30 @@ describe('SONDVAKT · instrumenten hålls till samma krav som produktionen', () 
   });
 
 });
+
+// ── SV-12..13 · SCOPVAKTEN (2026-09-06) ─────────────────────────────────────────────────────
+// En odefinierad kv-referens nådde produktion och visades för kunden som ett rått felmeddelande.
+// Ingen av 2 136 tester kunde se det, och kunde inte ha gjort det: sviten anropar aldrig
+// handler(req, res). Den prövar rena funktioner, källtext och kontrakt — aldrig api-modulens
+// exekverbara väg. Villkorsvaktens sjukdom en sista gång: varenda mekanism prövad, själva
+// vägen genom filen aldrig.
+describe('SV · Scopvakten — statiska fel fälls före deploy', () => {
+  const ROT2 = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+  test('SV-12 · vakten är INKOPPLAD i pre-commit-kedjan', () => {
+    // En vakt som finns men inte körs är ingen vakt — och tystnaden ser identisk ut med «allt är
+    // bra» (bibeln, svitens tysta hål 2026-08-04).
+    const hooks = readFileSync(join(ROT2, 'scripts/setup-hooks.mjs'), 'utf8');
+    assert.match(hooks, /node scripts\/scopvakt\.mjs/,
+      'scopvakten ligger utanför pre-commit — då fångas nästa scope-fel av en kund, inte av oss');
+  });
+
+  test('SV-13 · vakten skiljer «rent» från «kunde inte köras»', () => {
+    const vakt = readFileSync(join(ROT2, 'scripts/scopvakt.mjs'), 'utf8');
+    assert.match(vakt, /Cannot find module\|command not found/,
+      'saknas eslint måste vakten SÄGA IFRÅN — ett verktyg som inte kom fram får aldrig läsas '
+      + 'som ett godkännande (samma princip som varje annan sond)');
+    assert.match(vakt, /'no-undef': 'error'/,
+      'regeln som faktiskt fällde produktionsfelet måste vara den som körs');
+  });
+});

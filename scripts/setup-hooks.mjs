@@ -70,6 +70,14 @@ if [ $STATUS -eq 0 ]; then
   STATUS=$?
 fi
 
+# Scopvakten — en identifierare utanför sitt scope kastar i runtime, före all logik, och når
+# kunden som ett rått felmeddelande. Sviten kan strukturellt inte se det: den anropar aldrig
+# handler(req, res). (2026-09-06: en odefinierad kv-referens nadde produktion.)
+if [ $STATUS -eq 0 ]; then
+  node scripts/scopvakt.mjs
+  STATUS=$?
+fi
+
 if [ $STATUS -ne 0 ]; then
   echo ""
   echo "  Commit blockerad av price-audit. Åtgärda felen ovan och försök igen."
