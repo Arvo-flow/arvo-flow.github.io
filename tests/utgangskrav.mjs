@@ -243,3 +243,29 @@ describe('UK · Kvoten tas bara ut för arbete vi faktiskt utför', () => {
       'och utan tal från servern ska ytan tiga om siffran, aldrig hitta på en');
   });
 });
+
+// ── UK-18 · HELHETSKRAVET PÅ ALLA GRENAR (2026-09-06) ────────────────────────────────────────
+// Jag lagade den generiska review_queue-grenen 5 september och rapporterade det som klart. Kortet
+// kunden FAKTISKT fick renderades av `volume_data_required`, som stod orörd: under ett exakt fynd
+// med färdigskrivet kravbrev stod «Kräver offert — våra experter kikar på detta», vilket läses som
+// att vi drar tillbaka det vi just sagt. Bibeln 19 aug: en fix som inte följs till ALLA konsumenter
+// är en halv fix — och jag rapporterade halvan som helheten.
+describe('UK · Rutan under fyndet erkänner det, på varje gren', () => {
+  const FRONT = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
+
+  test('UK-18 · varje review_queue-rubrik läser _harFynd, ingen har en egen kopia', () => {
+    // EN läsväg. En kopia per gren var precis det som gjorde halvfixen möjlig.
+    assert.match(FRONT, /const _harFynd = !!\(result\?\.leadFinding \?\? result\?\.recommendation\?\.leadFinding\);/,
+      'flaggan måste läsa SAMMA väg som FindingCard — annars kan rubriken erkänna ett fynd som '
+      + 'inte renderas, eller tiga om ett som gör det');
+
+    const rubriker = [...FRONT.matchAll(/<strong>\{_harFynd/g)].length;
+    assert.ok(rubriker >= 3,
+      `bara ${rubriker} rubriker läser _harFynd — minst tre review_queue-grenar kan visa ett fynd `
+      + '(volume_data_required, no_benchmark, den generiska fallbacken)');
+
+    // Motprovet: den gamla, motsägande rubriken får inte stå kvar OVILLKORLIGT någonstans.
+    assert.doesNotMatch(FRONT, /<strong>Kräver offert — våra experter kikar på detta\.<\/strong>/,
+      'en ovillkorlig «kräver offert»-rubrik under ett levererat fynd är motsägelsen vi lagade');
+  });
+});

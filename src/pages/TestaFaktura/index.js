@@ -1047,6 +1047,10 @@ const TestaFaktura = () => {
   const daysUntilEnd = result?.servicePeriodEnd
     ? Math.ceil((new Date(result.servicePeriodEnd) - new Date()) / (1000 * 60 * 60 * 24))
     : null;
+  // Samma läsväg som FindingCard använder — toppnivå först, recommendation som reserv för
+  // lagrade svar från före utgångskuvertet. En andra läsväg hade kunnat glida isär från den
+  // som faktiskt renderar kortet, och då hade rubriken erkänt ett fynd som inte visas.
+  const _harFynd = !!(result?.leadFinding ?? result?.recommendation?.leadFinding);
   const _secSaving   = result?.recommendation?.secondarySaving ?? null;
   const _primGross   = _secSaving
     ? (result?.recommendation?.grossSaving ?? 0) - _secSaving.grossSaving
@@ -1630,11 +1634,22 @@ const TestaFaktura = () => {
                 )}
               </NoSwitchBlock>
             ) : result.route === 'review_queue' ? (
+              // ── HELHETSKRAVET, NU PÅ ALLA GRENAR (2026-09-06) ─────────────────────────────
+              // Jag lagade fallback-grenen i går och rapporterade det som klart. Kortet kunden
+              // faktiskt fick renderades av `volume_data_required`, som stod orörd: under ett
+              // exakt fynd med färdigt kravbrev stod «Kräver offert — våra experter kikar på
+              // detta», vilket läses som att vi drar tillbaka det vi just sa. Bibeln 19 aug:
+              // en fix som inte följs till ALLA konsumenter är en halv fix.
+              // Rubriken bor nu på ETT ställe (_fyndRubrik) och läses av varje gren — en kopia
+              // per gren var precis det som gjorde halvfixen möjlig.
               <NoSwitchBlock>
                 {result.reason === 'volume_data_required' ? (
                   <>
-                    <strong>Kräver offert — våra experter kikar på detta.</strong>
+                    <strong>{_harFynd
+                      ? 'Raden ovan läste vi säkert. Prisnivån kan vi inte bedöma.'
+                      : 'Kräver offert — våra experter kikar på detta.'}</strong>
                     <p>
+                      {_harFynd && 'Fyndet ovan kommer ur er egen fakturarad och kräver ingen marknadsdata. Vad vi inte kan säga är om prisnivån är rimlig: '}
                       {result.volumeDataNote ||
                         'Kostnaden för denna kategori styrs av specifika volymer och specifikationer, inte antalet anställda. Våra experter kikar på detta manuellt för att ge er en rättvis analys.'}
                     </p>
@@ -1664,8 +1679,11 @@ const TestaFaktura = () => {
                   </>
                 ) : result.reason === 'no_benchmark' ? (
                   <>
-                    <strong>Utanför vår nuvarande täckning.</strong>
+                    <strong>{_harFynd
+                      ? 'Raden ovan läste vi säkert. Prisnivån kan vi inte bedöma.'
+                      : 'Utanför vår nuvarande täckning.'}</strong>
                     <p>
+                      {_harFynd && 'Fyndet ovan kommer ur er egen fakturarad och kräver ingen marknadsdata. '}
                       Vi har ännu inte benchmarkdata för denna leverantörskategori.
                       Vi noterar fakturan och återkommer när vi kan göra en fullständig analys.
                     </p>
@@ -1682,13 +1700,11 @@ const TestaFaktura = () => {
                         Rutan erkänner nu fyndet och skiljer de två frågorna åt: vad vi LÄSTE
                         (säkert) mot vad det BETYDER i marknadstermer (osäkert). Då blir tystnaden
                         om prisnivån ett integritetsbevis i stället för ett självtvivel. */}
-                    <strong>
-                      {result.leadFinding
-                        ? 'Raden ovan läste vi säkert. Prisnivån kan vi inte bedöma.'
-                        : 'Fakturan behöver djupare analys.'}
-                    </strong>
+                    <strong>{_harFynd
+                      ? 'Raden ovan läste vi säkert. Prisnivån kan vi inte bedöma.'
+                      : 'Fakturan behöver djupare analys.'}</strong>
                     <p>
-                      {result.leadFinding
+                      {_harFynd
                         ? 'Fyndet ovan kommer ur er egen fakturarad och kräver ingen marknadsdata. '
                           + 'Vad vi INTE kan säga är om ni betalar rätt pris — våra modeller är oense '
                           + 'om hur fakturan ska klassas, och ett marknadstal här vore en gissning. '
