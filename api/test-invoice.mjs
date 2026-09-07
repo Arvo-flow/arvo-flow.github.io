@@ -30,7 +30,7 @@ import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.
 import { contractClockFinding } from '../lib/contract-clock.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
-import { storeAnalysis, storeTriaged } from '../lib/invoice-store.js';
+import { storeAnalysis, storeTriaged, storeLeadFinding } from '../lib/invoice-store.js';
 import { runIntegrityChecks } from '../lib/extraction-integrity.js';
 import { ARVO_FEE_RATE, feeOf, netOf } from '../lib/fee.js';
 import { computeHardwareAdjustment } from '../lib/hardware-installments.js';
@@ -534,6 +534,9 @@ export default async function handler(req, res) {
               reason:        cached.reason ?? null,
               userEmail:     body.userEmail,
             }).catch(bokforFel);
+            // Samma fynd som servas, aldrig en ny bedömning: `cached.leadFinding` är redan
+            // filtrerat av fyndrätten i den körning som skapade svaret.
+            storeLeadFinding({ fingerprint, pdfHash, leadFinding: cached.leadFinding }).catch(bokforFel);
           }
           return send(res, 200, { ...cached, cached: true });
         }
@@ -705,6 +708,10 @@ export default async function handler(req, res) {
       // gång till, i cachen. `svara()` är enda utgången, alltså är det här enda stället den kan
       // stängas för alla grenar samtidigt.
       const _svar = { ...rest, leadFinding: lead, forensicFindings: visa ? _forensik : [], fyndSkal: skal };
+      // Fyndet sparas DÄR BESLUTET FATTAS. `storeTriaged` körs före den här raden och vet inte om
+      // farVisaFynd släppte fyndet igenom — hade den skrivit, hade tystade fynd återuppstått i
+      // rummet. Fire-and-forget: rummets rad får aldrig fälla kundens svar.
+      storeLeadFinding({ fingerprint, pdfHash, leadFinding: lead }).catch(bokforFel);
       const kvRef = getKv();   // `kv` ovan är scopad i !isBypass-blocket; getKv() är memoiserad
       if (kvRef && !isBypass && !isWhitelisted) {
         kvRef.set(cacheKey, _svar, { ex: PDF_CACHE_TTL }).catch(() => {});

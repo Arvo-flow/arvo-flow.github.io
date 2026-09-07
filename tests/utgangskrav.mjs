@@ -341,3 +341,59 @@ describe('UK · Fables tre plausibla — nu låsta', () => {
       + 'kvar, och kortet tappar sitt fynd');
   });
 });
+
+// ── UK-21 · ETT VISAT FYND MÅSTE NÅ RUMMET (2026-09-07) ──────────────────────────────────────
+// Mätt i produktion: den triagerade Dustin-raden hade sina rader lagrade men `lead_finding_json`
+// NULL. Fyndet nådde kundens KORT men aldrig kundens RUM (api/invoice-history läser kolumnen).
+// Utgångsförlusten ett lager ned — samma familj, ny yta.
+//
+// Den uppenbara fixen hade varit FEL: låter man `storeTriaged` skriva fyndet återuppstår precis de
+// fynd farVisaFynd medvetet tystade, i den enda yta där ingen ser att de tystats. `storeTriaged`
+// körs FÖRE `svara()` och känner inte beslutet.
+describe('UK · Fyndet sparas där beslutet fattas', () => {
+  const K = readFileSync(join(ROT, 'api/test-invoice.mjs'), 'utf8');
+  const STORE = readFileSync(join(ROT, 'lib/invoice-store.js'), 'utf8');
+
+  test('UK-21a · skrivningen ligger i svara(), efter fyndrättens dom', () => {
+    // ⚠️ FÖRSTA VERSIONEN LÅSTE EN ANROPSPLATS POSITION, INTE EGENSKAPEN. Sabotaget «lägg till en
+    // skrivning FÖRE domen» fällde noll: den gamla anropsplatsen låg kvar efter domen, och vakten
+    // såg bara den. En vakt som mäter ETT anrop är blind för ett ANDRA.
+    // Egenskapen som måste hålla: VARJE storeLeadFinding-anrop matas med ett fynd som passerat
+    // fyndrätten — `lead` (efter domen) eller `cached.leadFinding` (filtrerat av körningen som
+    // skapade svaret). Varje annat argument är per definition ett ofiltrerat fynd.
+    const TILLATNA = ['leadFinding: lead })', 'leadFinding: cached.leadFinding })'];
+    const anrop = [...K.matchAll(/storeLeadFinding\(\{[^)]*\}\)/g)].map((m) => m[0]);
+    assert.ok(anrop.length >= 2, `bara ${anrop.length} anrop — vakten mäter inte det den påstår`);
+    for (const a of anrop) {
+      assert.ok(TILLATNA.some((t) => a.endsWith(t)),
+        `ett storeLeadFinding-anrop matas med ett OFILTRERAT fynd: ${a} — då hamnar precis de `
+        + 'fynd farVisaFynd tystade i rummet, den enda yta där ingen ser att de tystats');
+    }
+    const dom = K.indexOf('const { visa, skal } = farVisaFynd(');
+    const skriv = K.indexOf('storeLeadFinding({ fingerprint, pdfHash, leadFinding: lead })');
+    assert.ok(dom > 0 && skriv > 0 && dom < skriv,
+      'skrivningen av `lead` måste ligga efter domen som producerar den');
+    assert.doesNotMatch(STORE, /storeTriaged\(\{[\s\S]{0,900}?lead_finding_json/,
+      'storeTriaged får ALDRIG skriva fyndet: den körs före beslutet och skulle återuppväcka '
+      + 'precis de fynd vi tystat');
+  });
+
+  test('UK-21b · cacheträffen sparar samma fynd den servar', () => {
+    const i = K.indexOf("console.log('[cache] träff");
+    assert.match(K.slice(i, i + 1800), /storeLeadFinding\(\{ fingerprint, pdfHash, leadFinding: cached\.leadFinding \}\)/,
+      'utan den får andra kunden svaret men inget fynd i sitt rum — samma hål, cachevägen');
+  });
+
+  test('UK-21c · inget fynd skriver INGENTING, aldrig null', () => {
+    assert.match(STORE, /if \(!leadFinding \|\| typeof leadFinding !== 'object' \|\| !leadFinding\.type\) return null;/,
+      'att skriva null hade kunnat radera ett fynd en annan väg lagt — tystnad är inte en radering');
+    // Skopat till FUNKTIONSKROPPEN: `hashFp` används även av storeTriaged/storeAnalysis, så ett
+    // filbrett /hashFp\(fingerprint\)/ var grönt även när just den här funktionen slutat hasha.
+    // Femte gången samma instrumentfel — jag mäter fel förekomst. Därför skopas det nu.
+    const kropp = STORE.slice(STORE.indexOf('export async function storeLeadFinding'),
+      STORE.indexOf('export async function storeTriaged'));
+    assert.ok(kropp.length > 200, 'funktionskroppen hittades inte — vakten mäter inte det den påstår');
+    assert.match(kropp, /hashFp\(fingerprint\)/,
+      'fingerprinten HASHAS före uppslaget; kolumnen kan aldrig innehålla den råa (SV-09)');
+  });
+});
