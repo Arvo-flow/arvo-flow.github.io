@@ -91,22 +91,33 @@ describe('FB · Går fakturan ihop med sig själv?', () => {
     assert.equal(lasTrycktaSummor('Netto exkl moms: 6 662,90\nAtt betala: 8 328,63').momsbelopp, null);
   });
 
-  test('FB-05 · PRODUKTIONSVÄGEN kör domen och bär den i SVARET', async () => {
-    // Villkorsvaktens läxa: FB-01 bevisar att mekanismen svarar när den matas. Det här provet
-    // bevisar att den MATAS — och att domen når någon. En dom som bara finns i Vercel-loggen är
-    // en dom varken sonderna eller kunden kan läsa (FN-11:s exakta skäl).
+  test('FB-05 · MODULEN ÄR AVKOPPLAD — mätvärdena står här, inte i en TODO', async () => {
+    // ── ANDRA BLICKEN FÖRE MERGE (2026-09-08) ────────────────────────────────────────────────
+    // Här stod ett prov att pipelinen kör domen. Den GJORDE det. Granskningen mätte vad domen
+    // säger om VERKLIGA fakturor, och svaret kopplade bort den:
+    //   · falsklarm på 7 av 9 realistiska KORREKTA svenska fakturaformer
+    //   · «Att betala EXKL. MOMS» (test-pdfs/Faktura_2.pdf, Faktura_3.pdf) lästes som slutsumma
+    //     — momsregexen har uteslutningen exkl|netto|underlag|bas, TOTALregexen har ingen
+    //   · en VALUTAKURS lästes som momsbelopp (salesforce-enterprise.pdf → 10,40) eftersom
+    //     «ex. moms» inte fångas av uteslutningen
+    //   · över alla 75 fakturor kunde båda talen läsas på 5 (7 %); 19 av 24 snapshot-par blev
+    //     `ovittnesbar`. En vakt som tiger i 93 % och skriker fel i resten är sämre än ingen.
+    //
+    // Modulen står kvar som SPECIFIKATION med sina mätvärden. 3-kronorsglappet på grundarens
+    // faktura är ett VERKLIGT fynd som fortfarande är öppet — det är vakten som inte höll, inte
+    // fyndet. Provet låser att den inte är inkopplad, så ingen råkar armera den igen.
     const { readFileSync } = await import('node:fs');
     const ra = readFileSync(new URL('../api/test-invoice.mjs', import.meta.url), 'utf8');
-    // Kommentarer strippas TILL RADSLUT — en bortkommenterad rad räknas inte som kod (KV-08:s läxa).
     const api = ra.split('\n').map((r) => r.replace(/\/\/.*$/, '')).join('\n');
-    assert.match(ra, /import \{[^}]*\bbedomFakturabalans\b[^}]*\} from '\.\.\/lib\/fakturabalans\.js'/,
-      'pipelinen måste importera domen');
-    assert.match(api, /bedomFakturabalans\(\{/, 'domen måste faktiskt anropas');
-    // Två gånger i svarsvägen: en gång i det cachade objektet, en gång i svaret som skickas.
-    const iSvar = [...api.matchAll(/fakturabalans:\s*fakturabalans/g)].length;
-    assert.ok(iSvar >= 2,
-      `domen bärs på ${iSvar} ställe(n) i svarsvägen — cachen och svaret måste bära samma dom, `
-      + 'annars serverar en cacheträff den domlösa formen');
+    assert.doesNotMatch(api, /bedomFakturabalans\(/,
+      'avkopplad tills etikettläsningen är mätt mot korpusen — 7 av 9 korrekta fakturor falsklarmade');
+
+    // Kravet nästa version ska uppfylla, skrivet som ett prov som FÄLLER i dag om det vänds:
+    // «Att betala exkl. moms» får aldrig läsas som slutsumman.
+    const { total } = lasTrycktaSummor('Att betala exkl. moms: 124 000,00 SEK');
+    assert.equal(total, 124000,
+      'DOKUMENTERAR DAGENS BRIST: totalregexen saknar exkl-uteslutningen och läser momsBASEN som '
+      + 'slutsumma. Den dagen detta blir null får modulen kopplas in igen — inte förr.');
   });
 
   test('FB-06 · toleransen är ett FAST belopp, aldrig en procentsats', () => {

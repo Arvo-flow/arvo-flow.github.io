@@ -133,20 +133,46 @@ describe('KV · Ett antal som modellen räknade fram får inte driva pengar', ()
     assert.equal(rader[0].quantity, 10);
   });
 
-  test('KV-06 · PENGAGRINDEN: en icke-avläst rad blir add-on, inte ett bytesmål', () => {
-    // Kärnan. Rad 1 är härledd → den bär sina pengar i baslinjen men får aldrig hävda en
-    // besparing. Rad 2 är avläst → den prissätts som förut.
-    const rader = [
-      { description: 'Microsoft 365 Business Premium', quantity: 10, unitPrice: 210.29, amount: 2102.90,
-        type: 'recurring_subscription', kvantitetProveniens: PROVENIENS.HARLEDD },
-      { description: 'Microsoft 365 Business Standard', quantity: 12, unitPrice: 180, amount: 2160,
-        type: 'recurring_subscription', kvantitetProveniens: PROVENIENS.AVLAST },
-    ];
-    const lfl = computeLikeForLikeSaasTarget(rader, TIERS, (2102.90 + 2160) * 12);
-    assert.deepEqual(lfl.tierLines.map((t) => t.key), ['business-standard'],
-      'den härledda raden får inte bli en prissatt tier-rad');
-    assert.ok(lfl.addonLines.some((a) => /Business Premium/.test(a.description)),
-      'dess pengar ska ändå ligga i baslinjen — fail-open på pipelinen');
+  test('KV-06 · GRINDEN ÄR INTE ARMERAD — och det är ett mätvärde, inte ett förbiseende', async () => {
+    // ── ANDRA BLICKEN FÖRE MERGE (2026-09-08) ────────────────────────────────────────────────
+    // Här stod ett prov som visade att en `harledd`-märkt rad blir add-on i stället för ett
+    // bytesmål. Mekanismen SVARADE. Granskningen mätte vad som händer när den MATAS av verkliga
+    // PDF:er, och svaret rev grinden:
+    //
+    //   pdfjs lägger VARJE TABELLCELL på egen rad. I test-pdfs/microsoft.pdf står antalet «57»
+    //   på rad 29 och beloppet «15 390,00» på rad 33 — fyra rader isär. Mitt ±1-fönster kunde
+    //   aldrig nå det.
+    //     · 0 av 75 fakturor har den radform PAPPRET nedan matar
+    //     · 62 av 75 har antalet i en EGEN textlagerrad
+    //     · 55 % av radposterna kunde ALDRIG bli `avlast`
+    //
+    //   Följden på en KORREKT faktura: 40 842 kr/år bytesmål tystat; `_useLfl` fortfarande sant
+    //   så tystnaden bar inget skäl; och `buildLikeForLikeReasoning` föll till null → AI:ns egen
+    //   text ut till kunden. Det är 683-klassen återöppnad av en fix mot fabricerade tal.
+    //
+    // Det är villkorsvaktens sjukdom i vakten mot den: SVITEN MATADE ETT TILLSTÅND PRODUKTIONEN
+    // ALDRIG ÄR I. Klassificeringen körs kvar i skugga och loggas; grinden armeras först när
+    // vittnet läser KOLUMNER (pdfjs ger x/y per token) i stället för rader.
+    //
+    // Provet nedan låser att grinden INTE är armerad — så att ingen återinför den utan att först
+    // ha bytt axel. Att ta bort provet vore att glömma varför den revs.
+    const { readFileSync } = await import('node:fs');
+    const rec = readFileSync(new URL('../agents/recommender/recommend.js', import.meta.url), 'utf8');
+    const kod = rec.split('\n').map((r) => r.replace(/\/\/.*$/, '')).join('\n');
+    assert.doesNotMatch(kod, /farBaraPengar\(/,
+      'pengagrinden är riven tills vittnet är kolumnmedvetet — mätt: 55 % av verkliga radposter '
+      + 'kunde aldrig bli avlast, och en korrekt faktura tappade 40 842 kr/år');
+
+    // Och den RIKTIGA radformen ur en verklig PDF måste klassas rätt innan grinden får återinföras.
+    // Det här är kravet nästa version ska uppfylla — i dag fäller det, alltså är det skippat med
+    // ett uttalat skäl i stället för dolt.
+    const riktigForm = ['Microsoft 365 Business Premium', '(Månadsprenumeration)', ' ', '57', ' ',
+      '270,00', ' ', '15 390,00'].join('\n');
+    const d = klassaKvantitet({ description: 'Microsoft 365 Business Premium', quantity: 57,
+      unitPrice: 270, amount: 15390, dokumenttext: riktigForm });
+    assert.equal(d.proveniens, PROVENIENS.HARLEDD,
+      'DOKUMENTERAR DAGENS BRIST: en KORREKT avläst 57:a klassas härledd på pdfjs verkliga '
+      + 'radform. Den dagen detta blir `avlast` får grinden armeras igen — inte förr.');
   });
 
   test('KV-07 · ingen märkning = oförändrat beteende (fixturer får inte tystas)', () => {

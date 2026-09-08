@@ -25,7 +25,6 @@ import { BRANCHINDEX, bredbandSpeedBenchmark } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
 import { radensNiva, annanLicensprodukt } from '../../lib/licensniva.js';
-import { PROVENIENS, farBaraPengar } from '../../lib/kvantitetsvittne.js';
 import { perioderPerAr } from '../../lib/faktureringsperiod.js';
 import { detectForensicFindings } from '../../lib/forensics.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
@@ -651,9 +650,19 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
     // aldrig bar. Finns det, är bara `avlast` giltigt för ett PENGAPÅSTÅENDE; övriga rader
     // faller till add-on-grenen och bär sina pengar i baslinjen utan att hävda en besparing.
     // Fail-closed på påståendet, fail-open på pipelinen (KV-06, KV-07).
-    const provKvant = item.kvantitetProveniens;
-    const kvantitetDuger = provKvant == null || farBaraPengar(provKvant);
-    if (tierKey && tierBenchmarks[tierKey] && kvantitetDuger) {
+    // ⚠️ GRINDEN ÄR RIVEN (2026-09-08, andra blicken före merge). Den krävde
+    // `farBaraPengar(item.kvantitetProveniens)`, och vittnet klarar inte verkliga PDF:er:
+    // pdfjs lägger VARJE TABELLCELL på egen rad, så antalet står 4 rader från beloppet
+    // (microsoft.pdf: «57» rad 29, «15 390,00» rad 33). Mätt: 0 av 75 fakturor har den radform
+    // mitt test matade, 62 av 75 har antalet i egen rad, och 55 % av radposterna kunde ALDRIG
+    // bli `avlast`. Följden på en KORREKT faktura: 40 842 kr/år bytesmål tystat, `_useLfl`
+    // fortfarande sant så tystnaden bar inget skäl, och `buildLikeForLikeReasoning` föll till
+    // null → AI:ns egen text ut till kunden. Det är 683-klassen återöppnad av en fix mot
+    // fabricerade tal. Riktningen var säker (ingen påhittad besparing) men priset var för högt.
+    // Klassificeringen körs kvar i SKUGGA i api/test-invoice.mjs och loggas; den armeras först
+    // när vittnet läser KOLUMNER (pdfjs ger x/y per token) i stället för rader. KV-06 äger nu
+    // dokumentationen av varför den inte är armerad.
+    if (tierKey && tierBenchmarks[tierKey]) {
       const match = { key: tierKey };
       const qty = item.quantity;
       if (qty == null) return null;  // can't compute like-for-like without seat count

@@ -11,7 +11,6 @@ import { createHmac, createHash } from 'node:crypto';
 import { extraheraTextlager } from '../lib/pdf-textlager.js';
 import { verifieraFakturanummer } from '../lib/fakturanummer.js';
 import { markKvantiteter } from '../lib/kvantitetsvittne.js';
-import { bedomFakturabalans, BALANS } from '../lib/fakturabalans.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
@@ -609,7 +608,6 @@ export default async function handler(req, res) {
     // aldrig analysen. En faktura ska aldrig gå förlorad för att en bekvämlighet inte gick att
     // bekräfta. Kostnad: ~15 ms per faktura efter modulens första laddning.
     let _textlager = null;
-    let fakturabalans = null;
     {
       const t = Date.now();
       let textlager = null;
@@ -649,21 +647,17 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── GÅR FAKTURAN IHOP MED SIG SJÄLV? (2026-09-08) ───────────────────────────────────────
-    // Ring 1 jämför radsumman mot `invoiceTotal` med toleransen max(50 kr, 3 % av totalen) och
-    // förklarar bort glapp genom att RÄKNA radsumma × (1 + sats). Vi läser alltså momsens SATS
-    // men aldrig dess BELOPP — trots att beloppet står tryckt bredvid. Grundarens faktura begär
-    // 3,00 kr som ingen rad motiverar, och båda vägar modellen kan läsa totalen passerade.
-    // En procentsats där felrymden är ett fast belopp: på 8 331 kr släpps 250 kr igenom, på
-    // 200 000 kr släpps 6 000 kr igenom. Fakturans EGNA tryckta tal är ett oberoende vittne som
-    // inte kan hallucinera. FAIL-OPEN: domen blockerar aldrig, den bärs i svaret (FB-05).
-    {
-      const radsumma = (extracted.lineItems ?? []).reduce((s2, l) => s2 + (Number(l?.amount) || 0), 0);
-      fakturabalans = bedomFakturabalans({ radsumma, dokumenttext: _textlager });
-      if (fakturabalans.utfall === BALANS.GLAPP) {
-        console.log(`[fakturabalans] ${fakturabalans.skal}`);
-      }
-    }
+    // ── FAKTURABALANSEN ÄR AVKOPPLAD (2026-09-08, andra blicken före merge) ─────────────────
+    // Domen läste fakturans tryckta moms och slutsumma ur textlagret. Mätt mot verkliga PDF:er
+    // falsklarmade den på 7 av 9 korrekta svenska fakturaformer: «Att betala EXKL. MOMS»
+    // (Faktura_2/3.pdf) lästes som slutsumma, öresavrundningsrader, tre momssatser på samma
+    // faktura, «varav moms», dubbla «Att betala» (påminnelse först), och rader i SEK mot en
+    // total i USD. Värre: momsregexens uteslutning saknar «ex. moms», så en VALUTAKURS lästes
+    // som momsbelopp (salesforce-enterprise.pdf → 10,40). Och över alla 75 fakturor kunde den
+    // läsa båda talen på 5 (7 %) — en vakt som är tyst i 93 % av fallen och skriker fel i
+    // resten är sämre än ingen. `lib/fakturabalans.js` står kvar som SPECIFIKATION med sina
+    // mätvärden; den kopplas in när etikettläsningen är kolumnmedveten och mätt mot korpusen.
+    // 3-kronorsglappet på grundarens faktura är ETT VERKLIGT FYND som fortfarande är öppet.
     console.log('[test-invoice] extracted:', JSON.stringify({
       supplier:        extracted.supplier,
       description:     extracted.description,
@@ -750,12 +744,7 @@ export default async function handler(req, res) {
       // stabilt svar, och varje omladdning kostade två modellanrop till. Utgångsförlusten, en
       // gång till, i cachen. `svara()` är enda utgången, alltså är det här enda stället den kan
       // stängas för alla grenar samtidigt.
-      // Fakturabalansen bärs i SVARET, inte bara i loggen. Vercel-loggen når varken sonderna
-      // eller kunden, och en dom som ingen kan läsa är en dom ingen kan förbättra — precis
-      // skälet till att fakturanummergrindens skäl flyttades hit (FN-11). Bara ett GLAPP bär
-      // ett påstående; `stammer` och `ovittnesbar` skickas som de är och påstår ingenting (FB-05).
-      const _svar = { ...rest, leadFinding: lead, forensicFindings: visa ? _forensik : [], fyndSkal: skal,
-        fakturabalans: fakturabalans ?? null };
+      const _svar = { ...rest, leadFinding: lead, forensicFindings: visa ? _forensik : [], fyndSkal: skal };
       // Fyndet sparas DÄR BESLUTET FATTAS. `storeTriaged` körs före den här raden och vet inte om
       // farVisaFynd släppte fyndet igenom — hade den skrivit, hade tystade fynd återuppstått i
       // rummet. Fire-and-forget: rummets rad får aldrig fälla kundens svar.
@@ -772,7 +761,6 @@ export default async function handler(req, res) {
         leadFinding:      lead,
         forensicFindings: visa ? _forensik : [],
         fyndSkal:         skal,
-        fakturabalans:    fakturabalans ?? null,
       });
     };
 
