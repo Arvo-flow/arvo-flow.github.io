@@ -11,6 +11,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { judgeLineArithmetic, judgeProjection } from '../../lib/extraction-integrity.js';
 import { guardToolPayload } from '../../lib/schema-guard.js';
 import { klassificera, kundmening } from '../../lib/motorhalsa.js';
+import { extraheraTextlager } from '../../lib/pdf-textlager.js';
+import { korrigeraAntalUrKolumn } from '../../lib/fakturakolumner.js';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
@@ -825,7 +827,41 @@ const ARCHIVED_RE = /archived?\s+(user|licens|license|account)|arkiverad\s+an/i;
  * Alla aggregerade fält som categorize.js och recommend.js förväntar sig
  * genereras här — modellen räknar aldrig ut dem själv.
  */
-export function aggregateLineItems(rawInput) {
+export function aggregateLineItems(rawInput, tokens) {
+  // ── ORDNINGEN ÄR FIXEN, INTE ETT PÅSTÅENDE OM ORDNINGEN (2026-09-08, fynd 4) ──────────────
+  // Kolumnläsaren låg först hos api-lagret, EFTER extraktionen; `seatCount` härleds i
+  // `applyDeterministicRules` ur `l.quantity` och räknades aldrig om. Min första rättning
+  // flyttade anropet hit upp i `extractInvoice` och lät ett TEST vakta ordningen — men
+  // sabotaget «flytta tillbaka det» fällde NOLL tester: indexprovet läste den första
+  // TEXTFÖREKOMSTEN, inte den som körs. En källtextvakt kan inte se exekveringsordning.
+  //
+  // Därför bor korrigeringen här, som första steg i samma funktion som härleder talet.
+  // Flyttas den efter `applyDeterministicRules` blir `seatCount` räknat på modellens tal och
+  // FK-11 fäller — ett BETEENDEPROV, inte ett påstående.
+  //
+  // Andra argumentet är OBLIGATORISKT med flit. `undefined` kastar: en anropare ska tvingas
+  // svara på om dokumentet fanns, aldrig råka utelämna korrigeringen tyst (RO-08:s läxa — ett
+  // fält som inte läses är omöjligt att skilja från ett fält som inte fanns). `null` betyder
+  // «inget dokument här» och är ett giltigt svar; `[]` betyder «dokumentet bar inga tokens».
+  if (tokens === undefined) {
+    throw new TypeError(
+      'aggregateLineItems(raw, tokens): andra argumentet är obligatoriskt. Skicka dokumentets '
+      + 'positionerade tokens, eller null om de inte finns — utan svar hoppas kolumnläsaren '
+      + 'över tyst och seatCount härleds ur modellens gissning (fynd 4, 2026-09-08).');
+  }
+  if (Array.isArray(tokens) && tokens.length > 0 && Array.isArray(rawInput?.lineItems)) {
+    const r = korrigeraAntalUrKolumn(rawInput.lineItems, tokens);
+    for (const o of r.oenigheter) {
+      console.log(`[kolumnlasare] «${o.text}» modellen sa ${o.modellen}, `
+        + `pappret säger ${o.pappret} — pappret vinner`);
+    }
+    // Varje utfall SÄGS, inte bara träffarna: en grind vars tystnad aldrig räknas går inte att
+    // förbättra, och `olasbar_cell` mot `tom_cell` är just det tal doktrinen behöver.
+    if (Object.keys(r.utfall).length > 0) {
+      console.log(`[kolumnlasare] ${r.avlast} avlästa, ${r.oeniga} oeniga · `
+        + JSON.stringify(r.utfall));
+    }
+  }
   const raw = applyDeterministicRules(rawInput);
   const sum = (type) =>
     (raw.lineItems ?? [])
@@ -971,6 +1007,11 @@ export function aggregateLineItems(rawInput) {
       // ett saknat värde skulle förvandla tystnad till ett påstående.
       amountOre:   Number.isInteger(li.amount_ore)     ? li.amount_ore     : null,
       unitPriceOre: Number.isInteger(li.unit_price_ore) ? li.unit_price_ore : null,
+      // Kvantitetens PROVENIENS ur kolumnläsaren: avlast · olasbar_cell · tom_cell · delrad ·
+      // rad_ej_funnen · ingen_tabell. Fältet skrevs förut på den AGGREGERADE raden av api-lagret
+      // och överlevde därför; nu skrivs det före aggregeringen, och en vitlista som inte känner
+      // det hade tappat det tyst (RO-01:s sjukdom, ny riktning). `null` = läsaren kördes inte.
+      antalKalla:  li.antalKalla ?? null,
     })),
     amount:                   (raw.lineItems ?? []).reduce((s, l) => s + l.amount, 0),
     recurringAmount,
@@ -1347,9 +1388,30 @@ export async function extractInvoice(input, opts = {}) {
     throw new ExtractorError('Analysen kunde inte struktureras tillförlitligt — försök igen.');
   }
 
-  const aggregated = aggregateLineItems(toolUseBlock.input);
+  // ── DOKUMENTET LÄSES EN GÅNG, HÄR ────────────────────────────────────────────────────────
+  // Både fakturanummergrinden (api-lagret) och kolumnläsaren (aggregeringen) behöver samma
+  // textlager. Två parses vore två sanningar om samma dokument (FK-08), så parsen bor här och
+  // bärs ut i svaret. FAIL-OPEN PÅ PIPELINEN (FK-12): går textlagret inte att läsa tappar vi
+  // korrigeringen och numret, aldrig analysen.
+  //
+  // ⚠️ KORRIGERINGEN GÖRS INTE HÄR. Min första rättning av fynd 4 anropade
+  // `korrigeraAntalUrKolumn` på den här raden, före `aggregateLineItems`, och lät ett test vakta
+  // ordningen. Sabotaget «flytta tillbaka anropet» fällde NOLL tester — indexprovet läste den
+  // första textförekomsten, inte den som körs. Korrigeringen bor därför INNE i aggregeringen,
+  // som första steg i samma funktion som härleder `seatCount`, och prövas av ett beteendeprov.
+  let _textlager = null;
+  let _tokens = [];
+  try {
+    ({ text: _textlager, tokens: _tokens } = await extraheraTextlager(pdfBytes));
+  } catch (err) {
+    console.error('[textlager] kunde inte läsas:', err.message);
+  }
+
+  const aggregated = aggregateLineItems(toolUseBlock.input, _tokens);
   return {
     ...aggregated,
+    textlager: _textlager,
+    tokens: _tokens,
     schemakrav: { ok: schemaVerdict.violations.length === 0, brott: schemaVerdict.violations.length },
     usage: response.usage,
   };

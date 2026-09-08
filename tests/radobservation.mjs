@@ -39,7 +39,7 @@ const FORTUM_RA = () => ({
 describe('RO · Radobservationen — öresfältet i produktionens objektform', () => {
   test('RO-01: KEDJAN rådata → aggregateLineItems → balanskravet dömer Fortum-raden och godkänner den', () => {
     // Det här är hela testet. Kör INTE judgeLineArithmetic på rådatan — då prövas bara mekanismen.
-    const produktionsObjekt = aggregateLineItems(FORTUM_RA());
+    const produktionsObjekt = aggregateLineItems(FORTUM_RA(), null);
     const dom = judgeLineArithmetic(produktionsObjekt);
 
     assert.equal(dom.judged, 1,
@@ -49,7 +49,7 @@ describe('RO · Radobservationen — öresfältet i produktionens objektform', (
   });
 
   test('RO-02: aggregeringen bevarar talet, bara namnet byter form', () => {
-    const rad = aggregateLineItems(FORTUM_RA()).lineItems[0];
+    const rad = aggregateLineItems(FORTUM_RA(), null).lineItems[0];
     assert.equal(rad.unitPriceOre, 112, 'öresobservationen får aldrig gå förlorad i normaliseringen');
     assert.equal(rad.unit_price_ore, undefined, 'råstavningen finns INTE efter aggregering — det var precis felet');
     assert.equal(radensOre(rad).aprisOre, 112, 'läsvägen måste känna den aggregerade stavningen');
@@ -68,7 +68,7 @@ describe('RO · Radobservationen — öresfältet i produktionens objektform', (
     // Att räkna 1 × 100 = 100 öre vore att tillverka den precision grinden ska pröva.
     const utanOre = FORTUM_RA();
     utanOre.lineItems[0].unit_price_ore = null;
-    const dom = judgeLineArithmetic(aggregateLineItems(utanOre));
+    const dom = judgeLineArithmetic(aggregateLineItems(utanOre, null));
     assert.equal(dom.judged, 0, 'utan avläst à-pris i öre är raden ODÖMBAR, aldrig godkänd och aldrig fälld');
     assert.equal(radensOre(utanOre.lineItems[0]).aprisOre, null);
 
@@ -88,7 +88,7 @@ describe('RO · Radobservationen — öresfältet i produktionens objektform', (
   const bygg = (rad) => judgeLineArithmetic(aggregateLineItems({
     supplier: 'X', date: '2026-05-31', description: 'd', billing_period: 'monthly',
     confidenceScore: 0.9, lineItems: [rad],
-  }));
+  }, null));
 
   test('RO-06: en aritmetiskt perfekt elhandelsrad fälls ALDRIG av heltalsöret', () => {
     // 20 000 kWh × 0,915 kr. `unit_price_ore` är heltal, så 91,5 öre blir 92 (eller 91) och

@@ -105,12 +105,24 @@ describe('FAKTURANUMMER · hela vägen från pappret till rummet', () => {
     // perfekt och samtidigt mörk i två månader. Frågan är alltid vilket objekt som kommer fram
     // till grinden i produktion — och vem som byggde det.
     const api = las('api/test-invoice.mjs');
-    assert.match(api, /verifieraFakturanummer\(extracted\.invoiceNumber, textlager\)/,
+    assert.match(api, /verifieraFakturanummer\(extracted\.invoiceNumber, _textlager\)/,
       'grinden måste köras på extraktionens påstående i request-vägen');
-    assert.match(api, /extraheraTextlager\(pdfBytes\)/,
-      'det oberoende vittnet måste hämtas ur den faktiska PDF:en');
     assert.match(api, /extracted\.invoiceNumber = dom\.nummer;/,
       'grindens dom måste ERSÄTTA modellens påstående — annars är den dekoration');
+
+    // ⚠️ PARSEN FLYTTADE (2026-09-08, fynd 4). Textlagret läses numera i `extractInvoice`,
+    // eftersom kolumnläsaren behöver samma tokens FÖRE härledningen av `seatCount`. Provet
+    // följer med — men det får inte nöja sig med att api-lagret läser NÅGOT textlager: det
+    // måste komma ur samma parse som tokens, annars är vi tillbaka i två sanningar (FK-08).
+    assert.match(api, /const _textlager = extracted\.textlager/,
+      'api-lagret ska ÄRVA textlagret ur extraktionen, aldrig göra en andra parse');
+    assert.doesNotMatch(api, /extraheraTextlager\s*\(/,
+      'en andra parse i api-lagret är två sanningar om samma dokument');
+
+    const ex = las('agents/test-invoice/extract.js');
+    assert.match(ex, /await extraheraTextlager\(pdfBytes\)/,
+      'det oberoende vittnet måste hämtas ur den faktiska PDF:en');
+    assert.match(ex, /textlager: _textlager/, 'och bäras ut till den som dömer numret');
   });
 
   test('FN-11 · pdfjs är en deklarerad produktionsdependency', () => {

@@ -30,7 +30,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { extraheraTextlager } from '../lib/pdf-textlager.js';
 import {
-  lasAntalskolumn, antalForRad, grupperaRader, hittaRubrikrad,
+  lasAntalskolumn, antalForRad, grupperaRader, hittaRubrikrad, korrigeraAntalUrKolumn,
   AVLASNING, arObservation, bevisarTomhet,
 } from '../lib/fakturakolumner.js';
 import { korpusText } from './korpus.mjs';
@@ -176,10 +176,17 @@ describe('FK · Koden läser antalet ur fakturans egen kolumn', () => {
     assert.ok(hittaRubrikrad(riktig), 'Antal + Belopp ÄR en tabellrubrik');
   });
 
-  test('FK-07 · MOT HELA KORPUSEN: läsbarheten är mätt, inte gissad', async () => {
+  test('FK-07 · MOT HELA KORPUSEN: läsbarheten är LÅST, inte ungefärlig', async () => {
     // Villkorsvaktens läxa: FK-01..06 bevisar att mekanismen svarar. Det här provet mäter att
-    // den svarar på det VERKLIGA fakturor innehåller — och låser talet, så att en framtida
-    // ändring som halverar täckningen inte kan passera som grön svit.
+    // den svarar på det VERKLIGA fakturor innehåller.
+    //
+    // ⚠️ FÖRSTA VERSIONEN VAR TANDLÖS (fynd 3, granskningen 8 sep). Trösklarna var `≥55` och
+    // `≥150` mot mätvärdena 64 och 187 — alltså 14 % respektive 20 % luft. Sabotaget «strama
+    // RUBRIKER.antal till /^antal$/i» tappade tre VERKLIGA fakturor och lämnade hela sviten
+    // grön (2 212/2 212). En vakt vars sabotage inte fäller är ingen vakt.
+    //
+    // Talen är därför EXAKTA. En korpusändring fäller provet med flit: då ska någon mäta om och
+    // skriva in det nya talet, inte låta en glidning rymmas i en marginal.
     const filer = readdirSync(PDFS).filter((f) => f.endsWith('.pdf')).sort();
     let medTabell = 0, avlastaRader = 0;
     for (const f of filer) {
@@ -190,37 +197,219 @@ describe('FK · Koden läser antalet ur fakturans egen kolumn', () => {
       medTabell++;
       avlastaRader += t.rader.filter((r) => r.antal != null).length;
     }
-    assert.ok(filer.length >= 70, 'korpusen måste vara fylld — annars mäter provet tomhet');
-    assert.ok(medTabell >= 55,
-      `bara ${medTabell} av ${filer.length} fakturor har läsbar tabell (mätt till 64 den 8 sep). `
-      + 'Ett kraftigt fall betyder att rubrikigenkänningen tappat täckning.');
-    assert.ok(avlastaRader >= 150,
-      `bara ${avlastaRader} rader bär ett avläst antal (mätt till 187). Faller detta läser vi `
-      + 'färre antal själva och lutar oss mer på modellens gissning — fel riktning.');
+    assert.equal(filer.length, 75,
+      'korpusen har ändrats — mät om medTabell och avlastaRader och skriv in de nya talen');
+    assert.equal(medTabell, 64,
+      `${medTabell} av ${filer.length} fakturor har läsbar tabell (mätt till 64 den 8 sep). `
+      + 'Ett fall betyder att rubrikigenkänningen tappat täckning.');
+    assert.equal(avlastaRader, 187,
+      `${avlastaRader} rader bär ett avläst antal (mätt till 187). Faller detta läser vi färre `
+      + 'antal själva och lutar oss mer på modellens gissning — fel riktning.');
   });
 
-  test('FK-09 · PRODUKTIONSVÄGEN läser kolumnen och låter pappret vinna', async () => {
+  test('FK-07b · VARJE rubrikform bärs av ett prov — inte sex sjundedelar oprövade', async () => {
+    // Fynd 3, andra halvan: `RUBRIKER.antal` har SJU alternativ och FK-01..07 prövade bara
+    // «Antal». Sex sjundedelar av regexen var alltså oskyddad — och det är precis den halvan
+    // som gör att en löptextrad kan bli rubrikrad (fynd 2).
+    //
+    // ⚠️ FORMERNA STÅR SOM LITERALER, ALDRIG ITERERADE UR RUBRIKER. HK-03:s läxa: ett prov som
+    // itererar listan det vaktar mäter listan mot sig själv, och «ta bort ett alternativ» fäller
+    // då noll. Varje form nedan är ett självständigt ankare.
+    for (const rubrik of ['Antal', 'Ant.', 'St', 'Styck', 'Mängd', 'Qty', 'Quantity']) {
+      const rader = grupperaRader([
+        { sida: 1, x: 300, y: 500, text: rubrik },
+        { sida: 1, x: 500, y: 500, text: 'Belopp' },
+      ]);
+      assert.ok(hittaRubrikrad(rader), `«${rubrik}» måste kännas igen som Antal-kolumn`);
+    }
+
+    // Och tre VERKLIGA fakturor vars rubrik INTE är ordet «Antal» ensamt. De är beviset att
+    // formerna bär i produktion och inte bara i en handskriven rad — sabotaget S7 tappade
+    // exakt dessa tre, och två av dem åberopade jag själv som grundsanning i commit-meddelandet.
+    for (const [namn, varfor] of [
+      ['cloudreseller-norden', '«Antal / Period» — CR-88412, prorata-fakturan'],
+      ['nordiclogistik',       '«Antal/Vikt»'],
+      ['bredband_3',           '«Mängd»'],
+    ]) {
+      assert.ok(lasAntalskolumn(await tokensFor(namn)),
+        `${namn} (${varfor}) tappade sin tabell — rubrikigenkänningen har krympt`);
+    }
+  });
+
+  test('FK-09 · PRODUKTIONSVÄGEN läser kolumnen FÖRE härledningen och låter pappret vinna', async () => {
     // Villkorsvaktens läxa: FK-01..07 bevisar att mekanismen svarar. Det här provet bevisar att
     // den MATAS — och att den är en KORRIGERING, inte en grind. Utan det sista kravet kunde
     // någon göra om den till ett veto, och då är vi tillbaka i morgonens 40 842-kronorsfel.
+    //
+    // ⚠️ OCH DEN MÅSTE KÖRA I RÄTT ORDNING (fynd 4, granskningen 8 sep). Loopen låg i api-lagret
+    // EFTER `extractInvoice()`, som härleder `seatCount` ur `l.quantity` inne i sig. Talet
+    // räknades aldrig om — i exakt de fall läsaren fyrade bar svaret två tal som inte gick att
+    // addera. ORDNINGEN är fixen, alltså är ordningen det provet mäter.
     const { readFileSync } = await import('node:fs');
-    const ra = readFileSync(new URL('../api/test-invoice.mjs', import.meta.url), 'utf8');
-    const api = ra.split('\n').map((r) => r.replace(/\/\/.*$/, '')).join('\n');
+    const raEx = readFileSync(new URL('../agents/test-invoice/extract.js', import.meta.url), 'utf8');
+    const ex = raEx.split('\n').map((r) => r.replace(/\/\/.*$/, '')).join('\n');
+    const api = readFileSync(new URL('../api/test-invoice.mjs', import.meta.url), 'utf8')
+      .split('\n').map((r) => r.replace(/\/\/.*$/, '')).join('\n');
 
-    assert.match(ra, /import \{[^}]*\bantalForRad\b[^}]*\} from '\.\.\/lib\/fakturakolumner\.js'/,
-      'pipelinen måste låna läsaren');
-    assert.match(api, /antalForRad\(_tokens/, 'läsaren måste faktiskt anropas på dokumentets tokens');
-    assert.match(api, /l\.quantity = d2\.antal/, 'ett avläst antal måste ERSÄTTA modellens tal');
+    assert.match(raEx, /import \{ korrigeraAntalUrKolumn \} from '\.\.\/\.\.\/lib\/fakturakolumner\.js'/,
+      'extraktionen måste låna läsaren — en lokal kopia kan glida isär (regel 1)');
+    assert.match(ex, /\{ text: _textlager, tokens: _tokens \} = await extraheraTextlager\(pdfBytes\)/,
+      'koordinaterna måste plockas ur samma parse som texten (FK-08)');
+    assert.match(ex, /aggregateLineItems\(toolUseBlock\.input, _tokens\)/,
+      'dokumentets tokens måste NÅ FRAM till aggregeringen — annars läser den ingenting');
 
-    // Och tokens måste nå fram — utan dem läser den ingenting och blir tyst i tysthet.
-    assert.match(api, /tokens: _tokens \} = await extraheraTextlager/,
-      'koordinaterna måste plockas ur samma parse som texten');
+    // ⚠️ HÄR STOD ETT INDEXPROV, OCH DET VAR GRÖNT PÅ FEL GRUND. Första rättningen av fynd 4
+    // anropade korrigeringen i `extractInvoice` före `aggregateLineItems` och lät `indexOf`
+    // vakta ordningen. Sabotaget «flytta tillbaka anropet» fällde NOLL tester: indexOf hittar
+    // den första TEXTFÖREKOMSTEN, även en som ligger i en död gren. En källtextvakt kan inte se
+    // exekveringsordning. Ordningen är därför strukturell — korrigeringen är första steget INNE
+    // i `aggregateLineItems` — och bevisas av FK-11, som är ett beteendeprov.
+    //
+    // Det som ÄR en källtextfråga: att inget lager har kvar en egen kopia av loopen.
+    assert.doesNotMatch(api, /antalForRad\s*\(/,
+      'api-lagret ska inte läsa kolumnen själv — korrigeringen bor i aggregeringen');
+    assert.doesNotMatch(ex, /korrigeraAntalUrKolumn\([^)]*toolUseBlock/,
+      'en andra korrigering i extractInvoice vore två sanningar om samma radposter');
+
+    // Och api-lagret får inte ha kvar en kopia av loopen: två korrigeringar är två sanningar,
+    // och den som ändras är inte nödvändigtvis den som kör.
+    assert.doesNotMatch(api, /antalForRad\s*\(/,
+      'api-lagret ska inte längre läsa kolumnen själv — korrigeringen bor i extraktionen');
 
     // KORRIGERING, INTE GRIND: bara `avlast` får röra talet, och inget utfall får nolla det.
-    assert.match(api, /d2\.utfall !== AVLASNING\.AVLAST\) continue/,
+    const FK = readFileSync(new URL('../lib/fakturakolumner.js', import.meta.url), 'utf8')
+      .split('\n').map((r) => r.replace(/\/\/.*$/, '')).join('\n');
+    assert.match(FK, /d\.utfall !== AVLASNING\.AVLAST\) continue/,
       'endast ett AVLÄST antal får ändra kundens tal');
-    assert.doesNotMatch(api, /l\.quantity = null|quantity = null/,
+    assert.doesNotMatch(FK, /l\.quantity = null|quantity = null/,
       'ingen gren får NOLLA ett antal — det tystade en korrekt faktura i morse (KV-06)');
+  });
+
+  test('FK-10 · TOMHET ÄR INTE OFÖRMÅGA — mätt mot hela korpusen', async () => {
+    // ══ FYND 1 (granskningen 8 sep) ═══════════════════════════════════════════════════════
+    // `antal: null` sattes när cellen var TOM eller när `heltal()` inte kunde läsa den, och
+    // BÅDA mappades till `tom_cell` — det enda utfall som är dokumenterat som «bevisar tomhet».
+    // Vi påstod alltså «inget står tryckt» om rader där antalet stod tryckt.
+    //
+    // MÄTT genom antalForRad över korpusens alla cellstal, EFTER splitten:
+    //     avlast 447 · olasbar_cell 70 · tom_cell 5 · delrad 2
+    // Alltså: 70 av 75 tidigare «bevisade tomheter» (93 %) var i själva verket «jag läste inte».
+    const fall = [
+      // CR-88412 — prorata-fakturan hela LFL-fixen vilar på. Fyra rader, alla med antalet
+      // TRYCKT i kolumncellen, alla tidigare deklarerade som bevisad tomhet.
+      ['cloudreseller-norden', 11025, '45 st (1 Maj - 31 Maj)'],
+      ['cloudreseller-norden', 2700,  '20 st (1 Maj - 31 Maj)'],
+      ['cloudreseller-norden', 612.5, '5 st (16 Maj - 31 Maj, 15 dgr)'],
+      // Och den rad vars grundsanning jag skrev FEL i commit-meddelandet: jag påstod
+      // «kolumncellen ÄR tom». Dumpen säger x305:«45 pallar (Zon 1-3)». Ett påstående skrivet
+      // före körning, i den commit som bär vakten mot precis den formen (Bevisplikten p.1).
+      ['nordiclogistik', 18500, '45 pallar (Zon 1-3)'],
+      ['nordiclogistik', 7639.6, '28,4 %'],
+      ['bredband_3', 899, '1 mån'],
+    ];
+    for (const [namn, belopp, text] of fall) {
+      const d = antalForRad(await tokensFor(namn), { amount: belopp });
+      assert.equal(d.utfall, AVLASNING.OLASBAR_CELL,
+        `${namn}/${belopp}: cellen bär «${text}» — att kalla det tom_cell är ett falskt `
+        + 'tomhetspåstående, och tom_cell är det enda utfall som får nolla ett antal');
+      assert.equal(d.cellText, text, 'skälet ska gå att LÄSA, inte gissas ur ett utfallsnamn');
+      assert.equal(bevisarTomhet(d.utfall), false, 'en oläsbar cell bevisar ingen tomhet');
+      assert.equal(d.antal, null, 'och den fyller ALDRIG luckan — det var hela felet');
+    }
+
+    // MOTPROVET: en verkligt tom cell måste fortfarande ge tom_cell. En split som gör tom_cell
+    // omöjligt vore lika fel som den som gjorde det oundvikligt — då hade vi bara flyttat
+    // lögnen till andra sidan.
+    const tomma = [
+      { sida: 1, x: 100, y: 500, text: 'Beskrivning' },
+      { sida: 1, x: 300, y: 500, text: 'Antal' },
+      { sida: 1, x: 500, y: 500, text: 'Belopp' },
+      { sida: 1, x: 100, y: 460, text: 'Licens' },       // ingen cell vid x=300
+      { sida: 1, x: 500, y: 460, text: '1 000,00' },
+    ];
+    const t = antalForRad(tomma, { amount: 1000 });
+    assert.equal(t.utfall, AVLASNING.TOM_CELL, 'ingen cell på kolumnens x ÄR bevisad tomhet');
+    assert.equal(bevisarTomhet(t.utfall), true);
+
+    // OCH VI VIDGAR ALDRIG heltal() FÖR ATT SLIPPA UTFALLET. «45 st (…)» bär ett avläsbart 45 —
+    // men samma vidgning gör «3 mån» till 3 och «12400 GB» till 12 400, alltså ett licensantal
+    // ur en månad respektive ett datamått. Hellre ett ärligt «jag kunde inte läsa».
+    for (const [namn, belopp] of [['bredband_4', 1497], ['aws-startup-kredit', 310]]) {
+      const d = antalForRad(await tokensFor(namn), { amount: belopp });
+      assert.notEqual(d.utfall, AVLASNING.AVLAST,
+        `${namn}: en enhet som inte räknar användare får aldrig bli ett antal`);
+    }
+  });
+
+  test('FK-11 · KEDJAN: pappret vinner HELA vägen fram till seatCount', async () => {
+    // ⚠️ ETT TEST SOM MATAR SITT EGET INDATA BEVISAR BARA VIDAREBEFORDRAN (holdings.mjs 19 aug,
+    // RO-01 24 aug). Provet kör därför hela kedjan: modellens råa radposter → korrigeringen →
+    // `aggregateLineItems`, som är där `seatCount` faktiskt härleds. Utan sista ledet kunde
+    // fynd 4 komma tillbaka utan att någon vakt sa ifrån.
+    const { aggregateLineItems } = await import('../agents/test-invoice/extract.js');
+    const tokens = await tokensFor('microsoft');
+
+    // Modellens fel, ordagrant som grundarens faktura: kvoten i stället för det tryckta talet.
+    const raw = {
+      supplier: 'Microsoft', seatCount: 10,
+      lineItems: [
+        { description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+          quantity: 10, amount: 15390 },
+        { description: 'Molnbackup för Microsoft 365 - Användarlicens',
+          type: 'recurring_subscription', quantity: 10, amount: 2280 },
+      ],
+    };
+    const utan = aggregateLineItems(JSON.parse(JSON.stringify(raw)), null);
+    assert.equal(utan.seatCount, 10, 'utan dokument härleds seatCount ur modellens tal');
+
+    // ANDRA ARGUMENTET ÄR OBLIGATORISKT. En anropare som glömmer det ska SMÄLLA, inte tyst
+    // hoppa över korrigeringen — ett fält som inte läses är omöjligt att skilja från ett fält
+    // som inte fanns (RO-08). Det var precis så fynd 4 kunde uppstå.
+    assert.throws(() => aggregateLineItems(JSON.parse(JSON.stringify(raw))), /obligatoriskt/,
+      'en utelämnad tokens-parameter måste kasta, aldrig godtas som «inget dokument»');
+
+    const r = korrigeraAntalUrKolumn(JSON.parse(JSON.stringify(raw)).lineItems, tokens);
+    assert.equal(r.avlast, 2, 'båda raderna står tryckta i kolumnen');
+    assert.equal(r.oeniga, 2, 'och båda motsäger modellen');
+
+    // KEDJAN, i ETT anrop — precis den väg produktionen går. Flyttas korrigeringen efter
+    // `applyDeterministicRules` inne i funktionen räknas seatCount på modellens 10 och det här
+    // provet fäller. Det är skillnaden mot indexprovet som var grönt på fel grund.
+    const med = aggregateLineItems(raw, tokens);
+    assert.equal(med.seatCount, 57,
+      'pappret trycker 57 — och seatCount MÅSTE följa med, annars bär svaret två tal som inte '
+      + 'går att addera (fynd 4: jamforelseSkala, supplier_prices och contract_timelines matas '
+      + 'av just det talet)');
+    for (const l of med.lineItems) assert.equal(l.quantity, 57, 'radposterna bär samma sanning');
+    assert.equal(med.lineItems[0].antalKalla, AVLASNING.AVLAST, 'proveniensen följer med raden');
+  });
+
+  test('FK-12 · FAIL-OPEN PÅ PIPELINEN: ett oläsbart textlager tappar aldrig analysen', async () => {
+    // Gränsen är densamma som för fakturanumret: fail-closed för FÄLTET, fail-open för
+    // PIPELINEN. En faktura får aldrig gå förlorad för att en förbättring inte gick att göra.
+    // Påståendet stod som en KOMMENTAR i extract.js utan bevis — påståendevakten fällde det,
+    // och den hade rätt: en kommentar som garanterar ett beteende är värre än ingen, för nästa
+    // läsare kontrollerar den inte (Atea-kortets läxa, 22 aug).
+    const { aggregateLineItems } = await import('../agents/test-invoice/extract.js');
+    const raw = () => ({
+      supplier: 'Microsoft', seatCount: 10, billingPeriod: 'monthly', confidenceScore: 0.9,
+      lineItems: [{ description: 'M365 Business Premium', type: 'recurring_subscription',
+        quantity: 10, amount: 15390 }],
+    });
+    // De två sätt textlagret kan misslyckas på: parsen kastade (tokens = []), eller dokumentet
+    // finns inte alls (null). Båda måste ge en HEL analys, bara utan korrigeringen.
+    for (const [namn, tokens] of [['parsen kastade', []], ['inget dokument', null]]) {
+      const r = aggregateLineItems(raw(), tokens);
+      assert.equal(r.annualCost, 15390 * 12, `${namn}: analysen måste vara hel`);
+      assert.equal(r.seatCount, 10, `${namn}: modellens tal står kvar — vi tystar inget`);
+      assert.equal(r.lineItems[0].quantity, 10, `${namn}: raden bär kvar sitt antal`);
+      assert.equal(r.lineItems[0].antalKalla, null,
+        `${namn}: och proveniensen säger ärligt att läsaren aldrig kördes`);
+    }
+    // MOTPROVET: med tokens SKA den korrigera. Utan det kunde fail-open-provet bli grönt av att
+    // korrigeringen är avstängd överallt.
+    const med = aggregateLineItems(raw(), await tokensFor('microsoft'));
+    assert.equal(med.seatCount, 57, 'med dokument vinner pappret — annars mäter provet tomhet');
   });
 
   test('FK-08 · texten och koordinaterna kommer ur SAMMA parse', async () => {

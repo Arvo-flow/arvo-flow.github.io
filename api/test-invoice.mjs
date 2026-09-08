@@ -8,10 +8,8 @@
 
 import { Resend } from 'resend';
 import { createHmac, createHash } from 'node:crypto';
-import { extraheraTextlager } from '../lib/pdf-textlager.js';
 import { verifieraFakturanummer } from '../lib/fakturanummer.js';
 import { markKvantiteter } from '../lib/kvantitetsvittne.js';
-import { antalForRad, AVLASNING } from '../lib/fakturakolumner.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
@@ -608,18 +606,15 @@ export default async function handler(req, res) {
     // FAIL-CLOSED FÖR FÄLTET, FAIL-OPEN FÖR PIPELINEN: faller textutvinningen tappar vi numret,
     // aldrig analysen. En faktura ska aldrig gå förlorad för att en bekvämlighet inte gick att
     // bekräfta. Kostnad: ~15 ms per faktura efter modulens första laddning.
-    let _textlager = null;
-    let _tokens = [];
+    //
+    // ⚠️ TEXTLAGRET LÄSES INTE HÄR LÄNGRE (2026-09-08, fynd 4). `extractInvoice` behöver samma
+    // tokens FÖRE sin egen härledning av `seatCount`, så parsen bor där och bärs ut. En andra
+    // parse här hade varit två sanningar om samma dokument (FK-08) — och dessutom 15 ms extra.
+    const _textlager = extracted.textlager ?? null;
+    const _tokens = extracted.tokens ?? [];
     {
       const t = Date.now();
-      let textlager = null;
-      try {
-        ({ text: textlager, tokens: _tokens } = await extraheraTextlager(pdfBytes));
-      } catch (err) {
-        console.error('[fakturanummer] textlagret kunde inte läsas:', err.message);
-      }
-      _textlager = textlager;
-      const dom = verifieraFakturanummer(extracted.invoiceNumber, textlager);
+      const dom = verifieraFakturanummer(extracted.invoiceNumber, _textlager);
       // Skälet bärs i SVARET, inte bara i loggen. Vercel-loggen når varken sonderna eller jag, och
       // ett fail-closed fält som ALLTID failar ser identiskt ut med ett som fungerar — det var
       // hela poängen med FN-11. Kön bokför skälet (utfallFranSvar) och då blir det läsbart.
@@ -649,38 +644,13 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── DÄR PAPPRET TALAR ÄR PAPPRET SANNINGEN (2026-09-08) ─────────────────────────────────
+    // ── DÄR PAPPRET TALAR ÄR PAPPRET SANNINGEN — OCH DET SÄGS FÖRE HÄRLEDNINGEN ─────────────
     // Kolumnläsaren (`lib/fakturakolumner.js`) återskapar fakturans tabell ur pdfjs koordinater
-    // och LÄSER antalet ur Antal-kolumnen. Modellens tal blir därmed en korskontroll, aldrig
-    // källan — regel 2 («AI tolkar, kod räknar») blir strukturell i stället för en promptregel.
-    //
-    // KORRIGERING, INTE GRIND. Mätt över 38 radposter i verkliga fakturor: 24 % går att läsa
-    // (`avlast`), 5 % har bevisat tom cell, och resten kan vi inte läsa. Att NOLLA på tom cell
-    // hade tystat en fraktrad vars antal står i beskrivningen; att KRÄVA avläsning hade tystat
-    // tre fjärdedelar. Båda är fel. Därför: där kolumnen talar vinner den, där den tiger ändras
-    // ingenting. Riktningen är ren vinst — en gissning ersätts av en avläsning, aldrig tvärtom.
-    //
-    // Oenighet LOGGAS men rättas tyst: det är först i produktionen vi får veta hur ofta modellen
-    // gissar fel, och det talet avgör om `tom_cell` någon gång får nolla ett antal (FK-02).
-    {
-      let korrigerade = 0, oeniga = 0;
-      for (const l of extracted.lineItems ?? []) {
-        const d2 = antalForRad(_tokens, { amount: l?.amount });
-        l.antalKalla = d2.utfall;
-        if (d2.utfall !== AVLASNING.AVLAST) continue;
-        if (l.quantity !== d2.antal) {
-          oeniga++;
-          console.log(`[kolumnlasare] «${String(l.description ?? '').slice(0, 40)}» `
-            + `modellen sa ${l.quantity}, pappret säger ${d2.antal} — pappret vinner`);
-        }
-        l.quantity = d2.antal;      // avläst ur kolumnen; ersätter modellens tal
-        korrigerade++;
-      }
-      if (korrigerade > 0 || oeniga > 0) {
-        console.log(`[kolumnlasare] ${korrigerade} antal avlästa ur kolumnen, ${oeniga} oeniga`);
-      }
-    }
-
+    // och LÄSER antalet ur Antal-kolumnen. Den satt HÄR fram till granskningen 8 sep — alltså
+    // efter `extractInvoice()`, som härleder `seatCount` ur `l.quantity` inne i sig. Talet
+    // räknades aldrig om, och i exakt de fall läsaren fyrade bar svaret två tal som inte gick
+    // att addera (fynd 4). Loopen bor numera i `extractInvoice`, före `aggregateLineItems`, så
+    // att ordningen är fixen och inte en efterhandsberäkning någon kan glömma.
     // ── FAKTURABALANSEN ÄR AVKOPPLAD (2026-09-08, andra blicken före merge) ─────────────────
     // Domen läste fakturans tryckta moms och slutsumma ur textlagret. Mätt mot verkliga PDF:er
     // falsklarmade den på 7 av 9 korrekta svenska fakturaformer: «Att betala EXKL. MOMS»
@@ -951,9 +921,12 @@ export default async function handler(req, res) {
         if (!seatResult.ok) {
           notifyReviewQueue(
             extracted,
-            `[Ring2 Seat Oracle] seatCount Opus=${seatResult.opusCount} ≠ Haiku=${seatResult.oracleCount} (diff=${seatResult.diff})`,
+            // «Opus=» var etiketten innan kolumnläsaren fanns. Talet kan numera komma ur
+          // fakturans egen Antal-kolumn, och ett internlarm som namnger fel upphov skickar
+          // granskaren åt fel håll — samma sjukdom som reservkortets påhittade skäl.
+          `[Ring2 Seat Oracle] seatCount pipeline=${seatResult.opusCount} ≠ Haiku=${seatResult.oracleCount} (diff=${seatResult.diff})`,
           ).catch(() => {});
-          console.error(`[ring2:seat-oracle] ALERT: opus=${seatResult.opusCount} haiku=${seatResult.oracleCount}`);
+          console.error(`[ring2:seat-oracle] ALERT: pipeline=${seatResult.opusCount} haiku=${seatResult.oracleCount}`);
         }
       }).catch((err) => console.warn('[ring2:seat-oracle] fail-open:', err.message));
     }

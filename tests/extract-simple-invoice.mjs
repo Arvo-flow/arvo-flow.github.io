@@ -21,7 +21,7 @@ const teleRaw = () => ({
 
 describe('Enkel faktura · periodlös abonnemangsfaktura → antaget månadsvis (ej kö)', () => {
   test('aggregateLineItems: unknown + recurring + inga datum → monthly, markerat antaget', () => {
-    const r = aggregateLineItems(teleRaw());
+    const r = aggregateLineItems(teleRaw(), null);
     assert.equal(r.billingPeriod, 'monthly');
     assert.equal(r.billingPeriodAssumed, true);
     assert.equal(r.billingPeriodSource, 'rule:recurring-default');
@@ -30,7 +30,7 @@ describe('Enkel faktura · periodlös abonnemangsfaktura → antaget månadsvis 
   });
 
   test('routeExtraction: den härledda fakturan → auto (inte review_queue)', () => {
-    const r = aggregateLineItems(teleRaw());
+    const r = aggregateLineItems(teleRaw(), null);
     assert.equal(routeExtraction(r).route, 'auto');
   });
 });
@@ -63,7 +63,7 @@ describe('Spärren bevaras · genuint periodlös icke-abonnemang → fortfarande
       supplier: 'X AB', billingPeriod: 'unknown', billing_period_start: null, billing_period_end: null,
       invoiceTotal: 5000, confidenceScore: 0.9,
       lineItems: [{ description: 'Installationsavgift', amount: 5000, quantity: 1, unitPrice: 5000, type: 'one_time_fee' }],
-    });
+    }, null);
     assert.equal(r.billingPeriod, 'unknown');
     assert.equal(r.billingPeriodAssumed, false);
     assert.equal(routeExtraction(r).route, 'review_queue');

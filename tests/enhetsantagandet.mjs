@@ -38,7 +38,7 @@ const rad = (description, quantity, amount, extra = {}) =>
 const bygg = (rader, raw = {}) => aggregateLineItems({
   supplier: 'X', date: '2026-05-31', description: 'd', billingPeriod: 'monthly',
   confidenceScore: 0.95, ...raw, lineItems: rader,
-});
+}, null);   // null = inget dokument i provet
 
 describe('EA · Enhetsantagandet — en kvantitet är inte ett antal användare', () => {
   test('EA-01: elförbrukning sätter INTE seatCount (3 400 kWh blev 3 400 licenser)', () => {
