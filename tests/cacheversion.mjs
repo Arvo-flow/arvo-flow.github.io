@@ -142,6 +142,17 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'serverar då den domlösa formen för varje redan analyserad faktura');
   });
 
+  test('CV-12 · kolumnläsaren och cache-versionen hänger ihop', () => {
+    // Antalet läses nu ur fakturans egen kolumn och ERSÄTTER modellens tal. Ett cachat v24-svar
+    // bär kvar det gissade antalet — och därmed en `suggestedAnnualCost` byggd på det. Samma
+    // koppling som CV-03..11: rätt fix, osynliggjord av en cache.
+    const FK = readFileSync(join(ROT, 'lib/fakturakolumner.js'), 'utf8');
+    if (!/export function antalForRad/.test(FK)) return;   // borttagen → FK-01 äger fallet
+    assert.ok(cacheVersion() >= 25,
+      `kolumnläsaren ersätter nu modellens antal men pdf:result står på v${cacheVersion()} — `
+      + 'cachen serverar då det gissade talet för varje redan analyserad faktura');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

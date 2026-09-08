@@ -11,6 +11,7 @@ import { createHmac, createHash } from 'node:crypto';
 import { extraheraTextlager } from '../lib/pdf-textlager.js';
 import { verifieraFakturanummer } from '../lib/fakturanummer.js';
 import { markKvantiteter } from '../lib/kvantitetsvittne.js';
+import { antalForRad, AVLASNING } from '../lib/fakturakolumner.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
@@ -477,7 +478,7 @@ export default async function handler(req, res) {
   // v22 (2026-09-06): absoluta påståenden skopas till den citerade nivån. Ett cachat v21-svar kan
   // bära «vi hittar inget publikt pris som är lägre än ert» BREDVID «era övriga nivåer ligger åt
   // andra hållet» — en självmotsägelse som annars serveras vidare på varje blandad licensmix.
-  const cacheKey = `pdf:result:v24:${pdfHash}:e${employeesNum}`;
+  const cacheKey = `pdf:result:v25:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -608,11 +609,12 @@ export default async function handler(req, res) {
     // aldrig analysen. En faktura ska aldrig gå förlorad för att en bekvämlighet inte gick att
     // bekräfta. Kostnad: ~15 ms per faktura efter modulens första laddning.
     let _textlager = null;
+    let _tokens = [];
     {
       const t = Date.now();
       let textlager = null;
       try {
-        ({ text: textlager } = await extraheraTextlager(pdfBytes));
+        ({ text: textlager, tokens: _tokens } = await extraheraTextlager(pdfBytes));
       } catch (err) {
         console.error('[fakturanummer] textlagret kunde inte läsas:', err.message);
       }
@@ -644,6 +646,38 @@ export default async function handler(req, res) {
       if (ejAvlasta > 0) {
         // Varje avvisning SÄGS — ett utfall som aldrig räknas går inte att förbättra.
         console.log('[kvantitetsvittne] ' + JSON.stringify(rakning));
+      }
+    }
+
+    // ── DÄR PAPPRET TALAR ÄR PAPPRET SANNINGEN (2026-09-08) ─────────────────────────────────
+    // Kolumnläsaren (`lib/fakturakolumner.js`) återskapar fakturans tabell ur pdfjs koordinater
+    // och LÄSER antalet ur Antal-kolumnen. Modellens tal blir därmed en korskontroll, aldrig
+    // källan — regel 2 («AI tolkar, kod räknar») blir strukturell i stället för en promptregel.
+    //
+    // KORRIGERING, INTE GRIND. Mätt över 38 radposter i verkliga fakturor: 24 % går att läsa
+    // (`avlast`), 5 % har bevisat tom cell, och resten kan vi inte läsa. Att NOLLA på tom cell
+    // hade tystat en fraktrad vars antal står i beskrivningen; att KRÄVA avläsning hade tystat
+    // tre fjärdedelar. Båda är fel. Därför: där kolumnen talar vinner den, där den tiger ändras
+    // ingenting. Riktningen är ren vinst — en gissning ersätts av en avläsning, aldrig tvärtom.
+    //
+    // Oenighet LOGGAS men rättas tyst: det är först i produktionen vi får veta hur ofta modellen
+    // gissar fel, och det talet avgör om `tom_cell` någon gång får nolla ett antal (FK-02).
+    {
+      let korrigerade = 0, oeniga = 0;
+      for (const l of extracted.lineItems ?? []) {
+        const d2 = antalForRad(_tokens, { amount: l?.amount });
+        l.antalKalla = d2.utfall;
+        if (d2.utfall !== AVLASNING.AVLAST) continue;
+        if (l.quantity !== d2.antal) {
+          oeniga++;
+          console.log(`[kolumnlasare] «${String(l.description ?? '').slice(0, 40)}» `
+            + `modellen sa ${l.quantity}, pappret säger ${d2.antal} — pappret vinner`);
+        }
+        l.quantity = d2.antal;      // avläst ur kolumnen; ersätter modellens tal
+        korrigerade++;
+      }
+      if (korrigerade > 0 || oeniga > 0) {
+        console.log(`[kolumnlasare] ${korrigerade} antal avlästa ur kolumnen, ${oeniga} oeniga`);
       }
     }
 
