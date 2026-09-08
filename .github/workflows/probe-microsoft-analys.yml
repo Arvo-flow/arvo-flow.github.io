@@ -5,6 +5,12 @@ name: Sond — Microsoft-fakturans lagrade analys
 # ALDRIG hit — repot är publikt. Sonden ser bara vad databasen redan innehåller.
 on:
   workflow_dispatch:
+  # workflow_dispatch registreras bara för workflows som finns på DEFAULT-branchen — den här
+  # ligger på en feature branch och gav 404. Push-triggern fyrar från branchen själv, samma
+  # mönster som inspect-analyses.yml redan använder. Egen sökväg → ingen loop.
+  push:
+    paths:
+      - 'ops/microsoft-sond.trigger'
 
 permissions:
   contents: read
