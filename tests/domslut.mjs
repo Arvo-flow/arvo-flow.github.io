@@ -188,10 +188,20 @@ describe('DL · Ett prispåstående kräver en jämförelse (live-granskningen 2
 //   något en granskare kan slå upp; den bär den inte. Ett påstående om PRISET hör hemma bakom
 //   `beromsLage()`, och det är den regeln — inte den här ordlistan — som är skyddet.
 describe('DL-10 · Beslutet får beskrivas, priset får inte dömas utan mätning', () => {
+  // Ytor som bär ett PRISOMDÖME till kunden. Granskningen 8 sep: listan hade två, men TRE ytor
+  // renderar prisprosan — `api/send-analysis.mjs` skriver samma `recommendation.reasoning` till
+  // både PDF:en (:256) och mailet (:412). Den har ingen EGEN rubrik i dag, och det är just därför
+  // den ska stå här: vakten finns för att en framtida hårdkodad rubrik inte ska kunna smyga in
+  // på den yta ingen tittade på. (Prosan själv vaktas av RK-16/RK-17, som prövar betydelsen.)
   const YTOR = [
     '../src/pages/TestaFaktura/index.js',
     '../api/inbound-email.mjs',
+    '../api/send-analysis.mjs',
   ];
+  // De ytor som har en EGEN rubrik och därför måste ge ett eget besked. send-analysis renderar
+  // den delade prosan och har ingen rubrik att kräva — att kräva en av den vore att kräva en
+  // andra sanning om samma faktura (regel 1).
+  const YTOR_MED_EGEN_RUBRIK = YTOR.slice(0, 2);
 
   test('DL-10 · «marknadsmässigt pris» står inte i någon kundyta', async () => {
     const { readFileSync } = await import('node:fs');
@@ -209,12 +219,13 @@ describe('DL-10 · Beslutet får beskrivas, priset får inte dömas utan mätnin
 
   test('DL-10b · och grenen säger fortfarande något — tystnad är inte fixen', async () => {
     const { readFileSync } = await import('node:fs');
-    for (const y of YTOR) {
+    for (const y of YTOR_MED_EGEN_RUBRIK) {
       const kalla = readFileSync(new URL(y, import.meta.url), 'utf8');
       assert.match(kalla, /Inget byte att rekommendera/,
         `${y} måste fortfarande ge kunden ett besked om vad vi BESLUTAT`);
     }
     // Mailet och webben får aldrig säga olika saker (regel 5) — därför prövas båda, inte en.
-    assert.equal(YTOR.length, 2, 'båda ytorna prövas; en ensam yta räcker inte (regel 5)');
+    assert.equal(YTOR_MED_EGEN_RUBRIK.length, 2, 'båda rubrikytorna prövas (regel 5)');
+    assert.equal(YTOR.length, 3, 'och ordvakten täcker alla tre ytor som bär prisprosan');
   });
 });

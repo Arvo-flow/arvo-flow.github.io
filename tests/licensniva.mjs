@@ -227,6 +227,19 @@ describe('LICENSNIVÅ · jämförelsen gäller kundens egen produkt', () => {
 
     // (b) Motprovet: den läser fortfarande det den ska.
     assert.equal(radensNiva('Microsoft 365 E3'), 'e3');
+    // ── OCH DE RADER SOM TYSTNADE UTAN ATT NÅGON MÄTTE DET (granskningen 8 sep) ──────────────
+    // Familjen var INBAKAD i E3/E5-mönstret, alltså krävdes den omedelbart intill nivån, medan
+    // business-nivåerna nöjde sig med `kravFamilj`. Modulhuvudet lovade EN regel; koden körde TVÅ.
+    // Följden: vi tystnade på de rader som är MEST entydiga — inklusive produktens officiella
+    // namn. Och `ms365` saknade sitt mellanslag, så samma stavning gav olika utfall.
+    assert.equal(radensNiva('Microsoft 365 Enterprise E3'), 'e3',
+      'produktens OFFICIELLA namn får inte vara det vi tystnar på');
+    assert.equal(radensNiva('M365 Enterprise E3 25 st'), 'e3');
+    assert.equal(radensNiva('E3 (Microsoft 365)'), 'e3',
+      'familjen står i texten — kravet är familj i raden, inte familj intill nivån');
+    assert.equal(radensNiva('MS 365 Business Standard'), 'business-standard',
+      '«MS365» gick igenom och «MS 365» tystades — samma stavning, olika utfall');
+    assert.equal(radensNiva('M365 E5 Enterprise'), 'e5');
     assert.equal(radensNiva('M365 Business Premium'), 'business-premium');
     assert.equal(radensNiva('Microsoft 365 Business Standard'), 'business-standard');
 
@@ -242,7 +255,10 @@ describe('LICENSNIVÅ · jämförelsen gäller kundens egen produkt', () => {
     const lasningar = [...rec.matchAll(/LFL_TIER_RE\s*\.\s*(?:find|some|filter)\b/g)];
     assert.deepEqual(lasningar.map((m) => m[0]), [],
       'LFL_TIER_RE används som LÄSARE i recommend.js — frågan ska ställas till radensNiva()');
-    assert.match(rec, /import \{ radensNiva \} from '\.\.\/\.\.\/lib\/licensniva\.js'/,
+    // Vakten prövar att läsaren LÅNAS, inte hur importraden råkar se ut i dag: den fälldes en
+    // gång på att `annanLicensprodukt` lades till bredvid. En vakt som låser formuleringen i
+    // stället för egenskapen larmar på rätt beteende — bibelns SK-08-läxa, i mitt eget test.
+    assert.match(rec, /import \{[^}]*\bradensNiva\b[^}]*\} from '\.\.\/\.\.\/lib\/licensniva\.js'/,
       'recommend.js måste låna läsaren, aldrig skriva av mönstren');
 
     // (d) Och LFL:en ska faktiskt bygga rätt rader ur grundarens faktura — beteende, inte källtext.

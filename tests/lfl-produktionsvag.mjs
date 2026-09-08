@@ -80,14 +80,31 @@ describe('RD-07 · Attribueringslåset matas — inte bara byggt', () => {
 // Felet uppstod inte ur en trasig funktion utan ur en KOPIA. Regel 1 förbjuder lokala kopior av
 // delad logik; ingen maskin kontrollerade det. Nu gör en det.
 describe('RD-08 · Ingen lokal kopia av like-for-like-matten', () => {
-  const AGARE = join(ROT, 'agents/recommender/recommend.js');
+  // ── ÄGAREN FLYTTADE (2026-09-08) ──────────────────────────────────────────────────────────
+  // Vakten sa «endast recommend.js definierar M365-tierregexen», och det var sant den dag den
+  // skrevs. Sedan visade grundarens Microsoft-kort att recommend.js ägde den SÄMRE av två
+  // läsare: `LFL_TIER_RE` matchade ett bart /\bE3\b/ utan familjekrav, så «Office 365 E3» fick
+  // Microsoft 365 E3:s listpris rakt in i kundens text. Den vaktade läsaren låg i
+  // lib/licensniva.js — och `licensniva` är numera ENDA svaret på frågan «vilken nivå är den här
+  // raden?». recommend.js lånar den (LN-11).
+  //
+  // Vakten fällde alltså rätt form på fel fil: den skyddade en kopia och pekade ut originalet.
+  // Ägaren är nu lib/licensniva.js. recommend.js får behålla LFL_TIER_RE som DEKLARATION av
+  // vilka nivåer LFL:en kan prissätta — LN-11 vaktar att den aldrig används som läsare igen —
+  // och undantaget är därför motiverat här, inte tyst.
+  const AGARE = join(ROT, 'lib/licensniva.js');
+  const DEKLARATION = join(ROT, 'agents/recommender/recommend.js');
   // En tier-regexlista känns igen på att den binder minst två M365-nivåer till nycklar.
   const TIER_MONSTER = [/business\[\\s-\]premium/, /business\[\\s-\]standard/, /\\bE5\\b/, /\\bE3\\b/];
 
-  test('endast recommend.js definierar M365-tierregexen', () => {
+  test('endast lib/licensniva.js definierar M365-tierregexen', () => {
     const brott = [];
     for (const fil of kallfiler()) {
       if (fil === AGARE) continue;
+      // recommend.js bär listan som DEKLARATION, inte som läsare. LN-11 är beviset: den fäller
+      // varje `LFL_TIER_RE.find/some/filter` och kräver att `radensNiva` importeras. Undantaget
+      // vilar alltså på en annan vakt, inte på en förhoppning.
+      if (fil === DEKLARATION) continue;
       const kod = readFileSync(fil, 'utf8');
       // Undantag måste motiveras inline — samma mönster som claims-audit.
       if (kod.includes('// kopia-ok:')) continue;
@@ -95,7 +112,8 @@ describe('RD-08 · Ingen lokal kopia av like-for-like-matten', () => {
       if (traffar >= 2) brott.push(relative(ROT, fil));
     }
     assert.deepEqual(brott, [],
-      `Lokal kopia av tier-regexen (regel 1). Importera från recommend.js, eller motivera med "// kopia-ok: <skäl>": ${brott.join(', ')}`);
+      `Lokal kopia av tier-regexen (regel 1). Importera radensNiva från lib/licensniva.js, `
+      + `eller motivera med "// kopia-ok: <skäl>": ${brott.join(', ')}`);
   });
 
   test('api/test-invoice.mjs anropar den delade funktionen', () => {

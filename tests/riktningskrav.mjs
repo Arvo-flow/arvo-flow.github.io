@@ -392,6 +392,101 @@ describe('RK · Absoluta påståenden skopas till den nivå som citeras', () => 
     assert.equal(g3.heterogen, false, 'båda ligger under — inget att reservera');
   });
 
+  test('RK-17 · granskningens fyra fynd: prosan uttalar sig om HELA fakturan', () => {
+    // ── EN ANDRA BLICK PÅ MIN EGEN FIX (2026-09-08, Bevisplikten p.1) ───────────────────────
+    // RK-16 rättade «lika är inte en riktning». En separat granskningssession körde grannfallen
+    // och hittade fyra hål — alla samma rot: PROSAN UTTALAR SIG OM HELA FAKTURAN MEDAN `gap`
+    // BARA BESKRIVER TIER-RADERNA, och «era övriga nivåer» är en ALLMÄN sats som räknades
+    // EXISTENTIELLT. Var och en verifierad med egen körning innan den rättades.
+    const P = TIERS['business-premium'].msrpAnnual;
+    const BA = TIERS['business-basic'].msrpAnnual;
+    const E3 = TIERS['e3'].msrpAnnual;
+    const prosa = (lfl) => buildLikeForLikeReasoning({ supplier: 'X', lfl, annualCost: 1,
+      suggestedAnnualCost: 1, savingPerYear: 0, billingCycleType: 'monthly' });
+
+    // FYND 1 · 'lika'-grenens absoluta påstående var OSKOPAT. Jag skopade under-grenen och
+    // lämnade den här — halva fixen, i samma commit där jag skrev att en halv fix är sjukdomen.
+    // Mätt: Premium exakt på listpris + Basic 4 kr över = 480 kr/år FINNS att byta ned till,
+    // medan meningen sa att inget fanns.
+    const likaGren = { dominantTierKey: 'business-premium', addonLines: [], tierLines: [
+      { key: 'business-premium', quantity: 20, benchmarkMonthly: P,  billedUnitMonthly: P },
+      { key: 'business-basic',   quantity: 10, benchmarkMonthly: BA, billedUnitMonthly: BA + 4 },
+    ]};
+    assert.equal(lflPrisgap(likaGren).heterogen, true);
+    assert.doesNotMatch(prosa(likaGren), /Det finns inget publikt pris att byta ned till/,
+      'satsen gäller HELA fakturan men en annan nivå ligger över sitt golv');
+    assert.match(prosa(likaGren), /För era Business Premium-licenser finns inget publikt pris/,
+      'skopad till den nivå meningen faktiskt citerar');
+
+    // FYND 2 + 3 · «Era ÖVRIGA licensnivåer …» är en ALLMÄN sats. Den räknades med `some`.
+    // Vid tre nivåer blev båda varianterna falska — och «åt andra hållet» om en nivå som ligger
+    // EXAKT på listpris är grundarens ursprungliga fel, återinfört av fixen för det.
+    const treNivaer = { dominantTierKey: 'e3', addonLines: [], tierLines: [
+      { key: 'e3',               quantity: 10, benchmarkMonthly: E3, billedUnitMonthly: E3 - 30 },
+      { key: 'business-premium', quantity: 5,  benchmarkMonthly: P,  billedUnitMonthly: P + 40 },
+      { key: 'business-basic',   quantity: 5,  benchmarkMonthly: BA, billedUnitMonthly: BA },
+    ]};
+    assert.equal(lflPrisgap(treNivaer).ovrigaLage, 'olika',
+      'en över och en exakt på listpris är varken «alla motsatta» eller «alla lika»');
+    const t3 = prosa(treNivaer);
+    assert.doesNotMatch(t3, /åt andra hållet/,
+      'Basic ligger EXAKT på listpris — «åt andra hållet» är falskt om den');
+    assert.doesNotMatch(t3, /övriga licensnivåer ligger exakt på listpris/,
+      'Premium ligger ÖVER — «alla exakt på listpris» är lika falskt');
+    assert.match(t3, /ligger olika i förhållande till listpris/,
+      'det uttömmande, sanna beskedet');
+
+    // Och de rena fallen ska fortfarande ge sitt EGNA besked — tystnad är inte fixen.
+    const allaMotsatt = { dominantTierKey: 'e3', addonLines: [], tierLines: [
+      { key: 'e3',               quantity: 10, benchmarkMonthly: E3, billedUnitMonthly: E3 - 30 },
+      { key: 'business-premium', quantity: 5,  benchmarkMonthly: P,  billedUnitMonthly: P + 40 },
+    ]};
+    assert.equal(lflPrisgap(allaMotsatt).ovrigaLage, 'alla-motsatt');
+    assert.match(prosa(allaMotsatt), /åt andra hållet/);
+    const allaLika = { dominantTierKey: 'e3', addonLines: [], tierLines: [
+      { key: 'e3',               quantity: 10, benchmarkMonthly: E3, billedUnitMonthly: E3 - 30 },
+      { key: 'business-premium', quantity: 5,  benchmarkMonthly: P,  billedUnitMonthly: P },
+    ]};
+    assert.equal(lflPrisgap(allaLika).ovrigaLage, 'alla-lika');
+    assert.match(prosa(allaLika), /övriga licensnivåer ligger exakt på listpris/);
+    const allaSamma = { dominantTierKey: 'business-basic', addonLines: [], tierLines: [
+      { key: 'business-basic',   quantity: 30, benchmarkMonthly: BA, billedUnitMonthly: BA - 6 },
+      { key: 'business-premium', quantity: 5,  benchmarkMonthly: P,  billedUnitMonthly: P - 20 },
+    ]};
+    assert.equal(lflPrisgap(allaSamma).ovrigaLage, 'alla-samma');
+    assert.doesNotMatch(prosa(allaSamma), /övriga licensnivåer/,
+      'inget att reservera när alla pekar åt samma håll — då skrivs inget tillägg');
+
+    // FYND 4 · GRUNDARENS EGEN FAKTURA. En DISKVALIFICERAD rad passerar LFL:ens else-gren och
+    // blir en add-on till fakturapris. Den försvann därmed ur varje fält — och på hans faktura
+    // var det 54 720 kr/år, 68 % av pengarna, medan prosan påstod ABSOLUT att inget fanns att
+    // byta ned till. `lasLicensniva` stängde exakt den luckan samma dag («en diskvalificerad rad
+    // gör fakturan blandad — den försvinner inte»); computeLikeForLikeSaasTarget hade den öppen.
+    const grundaren = computeLikeForLikeSaasTarget([
+      { description: 'Microsoft 365 Business Premium', quantity: 10, unitPrice: P, amount: P * 10, type: 'recurring_subscription' },
+      { description: 'Office 365 E3', quantity: 12, unitPrice: 380, amount: 4560, type: 'recurring_subscription' },
+    ], TIERS, (P * 10 + 4560) * 12);
+    const g4 = lflPrisgap(grundaren);
+    assert.deepEqual(g4.oprissattaLicensrader, ['Office 365 E3'],
+      'raden är osynlig i talen — då måste den åtminstone vara synlig som oprissatt');
+    const t4 = prosa(grundaren);
+    assert.doesNotMatch(t4, /Det finns inget publikt pris att byta ned till/,
+      'ett absolut besked om en faktura där 68 % av pengarna inte gick att prissätta');
+    assert.match(t4, /Office 365 E3 prissätter vi inte/,
+      'det vi INTE kunde belägga sägs, med skälet — det är premiumsignalen, inte en brasklapp');
+    assert.match(t4, /inget verifierat publikt svenskt listpris/, 'och skälet är det sanna');
+
+    // MOTPROVET: en vanlig add-on (backup, support) är INTE en annan licensprodukt och får
+    // aldrig utlösa reservationen. En spärr som fäller allt är lika värdelös som ingen spärr.
+    const medBackup = computeLikeForLikeSaasTarget([
+      { description: 'Microsoft 365 Business Premium', quantity: 10, unitPrice: P, amount: P * 10, type: 'recurring_subscription' },
+      { description: 'Molnbackup 1 TB', quantity: 1, unitPrice: 400, amount: 400, type: 'recurring_subscription' },
+    ], TIERS, (P * 10 + 400) * 12);
+    assert.deepEqual(lflPrisgap(medBackup).oprissattaLicensrader, [],
+      'en backup-rad är ingen licensprodukt vi borde ha prissatt');
+    assert.doesNotMatch(prosa(medBackup), /prissätter vi inte/);
+  });
+
   test('RK-15 · den citerade nivån är fortfarande den dominanta', () => {
     assert.match(text(B, 20_000), /^Ni betalar 400 kr per användare och månad för era 5 E3-licenser/,
       'texten leder med dominantTierKey; bara PÅSTÅENDET om helheten justeras');

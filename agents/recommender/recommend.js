@@ -24,7 +24,7 @@ import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX, bredbandSpeedBenchmark } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
-import { radensNiva } from '../../lib/licensniva.js';
+import { radensNiva, annanLicensprodukt } from '../../lib/licensniva.js';
 import { perioderPerAr } from '../../lib/faktureringsperiod.js';
 import { detectForensicFindings } from '../../lib/forensics.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
@@ -795,15 +795,49 @@ export function lflPrisgap(lfl) {
     blandad:   tiers.some((t) => riktningFor(t) === 'over')
             && tiers.some((t) => riktningFor(t) === 'under'),
     heterogen: new Set(tiers.map(riktningFor)).size > 1,
-    // Finns en nivå som ligger EXAKT på listpris bredvid den citerade? Det är ett eget, sant
-    // besked — och det som skulle ha stått på grundarens kort i stället för «åt andra hållet».
-    harLika: tiers.some((t) => riktningFor(t) === 'lika' && t.key !== dom.key),
+    // ── EN ALLMÄN SATS FÅR INTE RÄKNAS EXISTENTIELLT (2026-09-08, granskningens fynd 2 + 3) ──
+    // Första rättningen gav `harLika: tiers.some(... === 'lika' && t.key !== dom.key)`, och prosan
+    // skrev «Era ÖVRIGA licensnivåer ligger exakt på listpris» — en sats om ALLA övriga, räknad
+    // på att NÅGON är det. Vid tre nivåer blir den falsk, och `blandad` bar samma form: med
+    // Premium över, E3 under och Basic exakt på listpris sa kortet «Era övriga licensnivåer
+    // ligger åt andra hållet» om en nivå som ligger precis på. Det är grundarens ursprungliga
+    // fel, återinfört av fixen för det — en nivå ned.
+    //
+    // `ovrigaLage` beskriver därför de övriga nivåerna UTTÖMMANDE, så varje mening prosan kan
+    // bygga är sann per konstruktion i stället för sann i det fall jag råkade prova.
+    ovrigaLage: (() => {
+      const ovriga = tiers.filter((t) => t !== dom).map(riktningFor);
+      if (ovriga.length === 0) return 'inga';
+      const domR = riktningFor(dom);
+      const motsatt = domR === 'under' ? 'over' : domR === 'over' ? 'under' : null;
+      if (motsatt && ovriga.every((r) => r === motsatt)) return 'alla-motsatt';
+      if (ovriga.every((r) => r === 'lika')) return 'alla-lika';
+      if (ovriga.every((r) => r === domR)) return 'alla-samma';
+      return 'olika';
+    })(),
+    // ── PENGAR VI MEDVETET INTE PRISSATTE (granskningens fynd 4) ────────────────────────────
+    // En rad som namnger en annan licensierad produkt (Office 365, Copilot, Google…) passerar
+    // LFL:ens `else`-gren och blir en add-on till fakturapris. Den försvinner alltså ur varje
+    // fält här — och på grundarens egen faktura var det 68 % av pengarna, medan prosan påstod
+    // absolut att «det finns inget publikt pris att byta ned till». `lasLicensniva` stängde
+    // exakt den luckan 8 sep («en diskvalificerad rad gör fakturan blandad — den försvinner
+    // inte»); `computeLikeForLikeSaasTarget` hade den kvar öppen. Samma sjukdom, andra modulen.
+    oprissattaLicensrader: (lfl?.addonLines ?? [])
+      .filter((a) => annanLicensprodukt(a?.description))
+      .map((a) => a.description),
   };
 }
 
 export const LFL_TIER_LABELS = {
   'business-premium': 'Business Premium', 'business-standard': 'Business Standard',
   'business-basic': 'Business Basic', 'e3': 'E3', 'e5': 'E5',
+};
+
+/** "A", "A och B", "A, B och C" — svensk uppräkning, aldrig en kommalista med «och» sist. */
+const listaPaSvenska = (rader) => {
+  const u = [...new Set(rader.map((r) => String(r).trim()).filter(Boolean))];
+  if (u.length <= 1) return u[0] ?? '';
+  return `${u.slice(0, -1).join(', ')} och ${u[u.length - 1]}`;
 };
 
 const fmtKrUnit = (n) => Number.isInteger(n)
@@ -839,14 +873,26 @@ function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
     `årsavtalspris för exakt samma licens är ${fmtKrUnit(dominant.benchmarkMonthly)} kr.`,
   ];
 
-  // Blandade nivåer namnges — att beskriva dem med ett medeltal är att gömma fyndet. Men bara
-  // en STRIKT motsatt riktning är «åt andra hållet»; en nivå som ligger exakt på listpris får
-  // sitt eget, sanna besked (RK-16, grundarens kort 8 sep).
-  const blandatTillagg = gap.blandad
-    ? ' Era övriga licensnivåer ligger åt andra hållet, så den samlade bilden är blandad.'
-    : gap.harLika
-      ? ' Era övriga licensnivåer ligger exakt på listpris.'
-      : '';
+  // ── VARJE MENING OM «ÖVRIGA NIVÅER» ÄR SANN PER KONSTRUKTION ────────────────────────────
+  // Satsen är ALLMÄN («era övriga…»), så den måste räknas allmänt. `ovrigaLage` är uttömmande;
+  // varje gren nedan säger exakt vad det läget är. Se lflPrisgap för varför.
+  const blandatTillagg = {
+    'inga':         '',
+    'alla-samma':   '',
+    'alla-motsatt': ' Era övriga licensnivåer ligger åt andra hållet, så den samlade bilden är blandad.',
+    'alla-lika':    ' Era övriga licensnivåer ligger exakt på listpris.',
+    'olika':        ' Era övriga licensnivåer ligger olika i förhållande till listpris, så den samlade bilden är blandad.',
+  }[gap.ovrigaLage] ?? '';
+
+  // ── DET VI INTE PRISSATTE SÄGS, DET TIGS INTE IHJÄL ──────────────────────────────────────
+  // En rad som namnger en annan licensierad produkt blev en add-on till fakturapris och syns
+  // inte i något tal ovan. På grundarens faktura var det 68 % av pengarna. Att nämna den är
+  // inte en brasklapp utan premiumsignalen: vi säger vad vi INTE kunde belägga, med skälet.
+  const oprissatta = gap.oprissattaLicensrader ?? [];
+  const oprissattTillagg = oprissatta.length
+    ? ` Era rader för ${listaPaSvenska(oprissatta)} prissätter vi inte — vi har inget verifierat `
+      + `publikt svenskt listpris för den produkten, och gissar hellre inte.`
+    : '';
 
   if (gap.dominantRiktning === 'under') {
     parts.push(
@@ -867,15 +913,26 @@ function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
       // Satsen skopades bara vid en STRIKT motsättning. Men den är absolut om HELA fakturan, och
       // så snart någon nivå skiljer sig från den citerade — 'lika' inräknat — är den obelagd om
       // de andra. Att skopa är aldrig fel; att inte skopa är fel så fort nivåerna skiljer sig.
-      (gap.heterogen
+      // Oprissatta licensrader skopar lika hårt som en avvikande nivå: satsen är absolut om
+      // hela fakturan, och rader vi inte kunde prissätta är per definition obelagda (fynd 4).
+      ((gap.heterogen || (gap.oprissattaLicensrader?.length ?? 0) > 0)
         ? `pris som är lägre än ert för era ${dLabelKort}-licenser.`
         : `pris som är lägre än ert, och därför inget byte som sänker kostnaden.`)
     );
   } else if (gap.dominantRiktning === 'lika') {
+    // ⚠️ SATSEN VAR OSKOPAD (rättat 2026-09-08, granskningens fynd 1). «Det finns inget publikt
+    // pris att byta ned till» gäller HELA fakturan. Jag skopade under-grenen och lämnade den här
+    // — halva fixen, i samma commit där jag skrev att en halv fix är sjukdomen. Mätt: Premium på
+    // exakt listpris + Basic 4 kr över gav 480 kr/år att byta ned till, medan meningen sa att
+    // inget fanns. Samma skopning gäller även när rader lämnats oprissatta.
+    const skopa = gap.heterogen || (gap.oprissattaLicensrader?.length ?? 0) > 0;
     parts.push(
       `Ni betalar alltså exakt Microsofts listpris — inget återförsäljarpåslag, men heller ingen ` +
-      `rabatt. Det finns inget publikt pris att byta ned till; utrymmet ligger i förhandling, ` +
-      `inte i ett byte.`
+      `rabatt. ` + (skopa
+        ? `För era ${dLabel}-licenser finns inget publikt pris att byta ned till; utrymmet ligger `
+          + `i förhandling, inte i ett byte.`
+        : `Det finns inget publikt pris att byta ned till; utrymmet ligger i förhandling, `
+          + `inte i ett byte.`)
     );
   } else {
     // ⚠️ HÄR STOD «— under den gräns där ett leverantörsbyte är operationellt motiverat».
@@ -893,7 +950,7 @@ function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
     );
   }
 
-  return parts.join(' ') + blandatTillagg;
+  return parts.join(' ') + blandatTillagg + oprissattTillagg;
 }
 
 export function buildLikeForLikeReasoning({
