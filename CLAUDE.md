@@ -1179,7 +1179,9 @@ api/test-invoice.mjs          ← orchestrerar hela pipelinen, maxDuration 60s
         └─ lib/price-alert.js/getMarketIntelligence (cross-customer aggregat, ≥3 analyser)
 ```
 
-**Gate-logik:** Gratis för 2 analyser med besparing. Därefter "savings gate": kumulativ nettobesparing ≥ 25 000 kr → registrering krävs. Rate limit: 5 analyser/IP/24h (whitelist för ägarens IP:er).
+**Gate-logik (GRUNDARBESLUT 2026-09-08 — tio försök):** Gratis för **10** analyser. Därefter "savings gate": kumulativ nettobesparing ≥ 25 000 kr → registrering krävs. Rate limit: **10** analyser/IP/24h (whitelist för ägarens IP:er); globaltaket 200/dygn orört.
+
+> ⚠️ **TALET BODDE PÅ TRE STÄLLEN, OCH ETT VILLKOR GJORDE DET VERKNINGSLÖST.** Att bara ändra konstanten hade sett klart ut och inte varit det. `FREE_SUCCESSFUL` (frontend), `FREE_SAVING_ANALYSES` (backend) och `RATE_LIMIT_MAX` står i SERIE — den lägsta vinner. Värre: villkoret löd `hadSaving || successCount >= FREE_SUCCESSFUL`, och `arvo_had_saving` sätts så fort EN analys hittar en besparing. Grinden fyrade därför på uppladdning TVÅ för varje besökare som fick en träff, oavsett konstanten — tio fria försök hade getts enbart till dem som ALDRIG hittar något, alltså precis fel målgrupp. Bibeln sa «gratis för 2 analyser med besparing»; koden gav 1. Maskinvakt: `tests/grindkvot.mjs` (GK-01..05), sabotage-bevisad i fem riktningar.
 
 ---
 

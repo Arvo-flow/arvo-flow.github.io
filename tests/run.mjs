@@ -94,6 +94,7 @@ import './saas-avstamning.mjs';
 import './lfl-produktionsvag.mjs';
 import './riktningskrav.mjs';
 import './grindpaus.mjs';
+import './grindkvot.mjs';
 import './utgangskrav.mjs';
 import './kategoribeslut.mjs';
 import './saas-rad.mjs';

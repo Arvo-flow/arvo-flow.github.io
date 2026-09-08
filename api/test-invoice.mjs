@@ -50,10 +50,16 @@ const CATEGORIZE_MODEL = 'claude-sonnet-4-6';
 const RECOMMEND_MODEL  = 'claude-opus-4-8';
 const PDF_CACHE_TTL         = 6 * 60 * 60;       // 6 h (GDPR-avvägning: kortare retain)
 const GATE_WINDOW_TTL       = 30 * 24 * 60 * 60; // 30 dagar
-const FREE_SAVING_ANALYSES  = 2;                  // Alltid fria analyser med besparing
+// Grundarbeslut 2026-09-08: tio försök. Måste följa frontendens FREE_SUCCESSFUL — annars passerar
+// kunden modalen och slår i DEN HÄR grinden i stället, med annan copy. Två grindar på samma tal är
+// en halvfix som ser hel ut.
+const FREE_SAVING_ANALYSES  = 10;                 // Alltid fria analyser med besparing
 const SAVING_GATE_THRESHOLD = 25_000;             // Kr kumulativ nettobesparing
 const PIPELINE_TIMEOUT_MS = 55_000;             // 5 s marginal mot Vercels 60 s hard kill
-const RATE_LIMIT_MAX        = 5;                  // Max analyser per IP per 24h
+// Höjt 5 → 10 (2026-09-08) för att tio försök ska gå att ta i ETT svep. Utan den här raden hade
+// besökaren fått fem i dag och fem i morgon — begäran uppfylld på pappret, inte i verkligheten.
+// GLOBALTAKET (200/dygn) är orört och förblir det som skyddar plånboken.
+const RATE_LIMIT_MAX        = 10;                 // Max analyser per IP per 24h
 // ── MITT EGET OMDÖME VAR FÖR KONSERVATIVT (2026-09-05) ────────────────────────────────────────
 // När grundaren bad om e-postgrinden borttagen i 24 h för att «testa för fullt» behöll jag
 // IP-taket och skrev att kostnadsskyddet stod kvar. Det lät disciplinerat och blockerade exakt

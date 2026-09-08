@@ -107,7 +107,9 @@ function useRevealedScore(target, delay = 200) {
 
 const MAX_PDF_SIZE   = 3 * 1024 * 1024;
 const FREE_ANALYSES    = 3; // speglar serverns konstant
-const FREE_SUCCESSFUL  = 2; // max lyckade auto-analyser innan gate
+// Grundarbeslut 2026-09-08: tio försök innan grinden. Se villkoret nedan — talet var i praktiken
+// verkningslöst så länge `hadSaving` kortslöt det.
+const FREE_SUCCESSFUL  = 10; // max lyckade auto-analyser innan gate
 
 async function getBrowserFingerprint() {
   const raw = [
@@ -633,9 +635,16 @@ const TestaFaktura = () => {
     const isUnlocked = grindPausad()
       || !!(sessionStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_bypass') ?? localStorage.getItem('arvo_gate_passed'));
     if (!overrideEmail && !isUnlocked) {
-      const hadSaving     = localStorage.getItem('arvo_had_saving');
+      // ⚠️ `hadSaving ||` STOD HÄR OCH GJORDE FREE_SUCCESSFUL NÄSTAN DÖD (2026-09-08).
+      // `arvo_had_saving` sätts så fort EN analys hittar en besparing (raden längre ned). Villkoret
+      // fyrade därför på uppladdning nummer TVÅ för varje besökare som fick en träff — oavsett vad
+      // konstanten stod på. Tio fria försök hade alltså getts enbart till dem som ALDRIG hittar
+      // något, vilket är precis fel målgrupp: den som får en träff är den vi vill ska fortsätta.
+      //
+      // Bibeln säger «gratis för 2 analyser med besparing» — koden gav 1. Grinden räknar nu
+      // försök, som avsett, och nyckeln skrivs kvar som signal utan att grinda (se GK-02).
       const successCount  = parseInt(localStorage.getItem('arvo_successful_count') ?? '0');
-      if (hadSaving || successCount >= FREE_SUCCESSFUL) {
+      if (successCount >= FREE_SUCCESSFUL) {
         setGateReason('quota');
         setGateOpen(true);
         return;
