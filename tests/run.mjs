@@ -134,6 +134,7 @@ import './diagnos.mjs';
 import './briefinglage.mjs';
 import './pastaendekontrakt.mjs';
 import './verifieringsstampel.mjs';
+import './kvantitetsvittne.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

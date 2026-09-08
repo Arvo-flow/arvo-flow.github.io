@@ -10,6 +10,7 @@ import { Resend } from 'resend';
 import { createHmac, createHash } from 'node:crypto';
 import { extraheraTextlager } from '../lib/pdf-textlager.js';
 import { verifieraFakturanummer } from '../lib/fakturanummer.js';
+import { markKvantiteter } from '../lib/kvantitetsvittne.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
@@ -606,6 +607,7 @@ export default async function handler(req, res) {
     // FAIL-CLOSED FÖR FÄLTET, FAIL-OPEN FÖR PIPELINEN: faller textutvinningen tappar vi numret,
     // aldrig analysen. En faktura ska aldrig gå förlorad för att en bekvämlighet inte gick att
     // bekräfta. Kostnad: ~15 ms per faktura efter modulens första laddning.
+    let _textlager = null;
     {
       const t = Date.now();
       let textlager = null;
@@ -614,6 +616,7 @@ export default async function handler(req, res) {
       } catch (err) {
         console.error('[fakturanummer] textlagret kunde inte läsas:', err.message);
       }
+      _textlager = textlager;
       const dom = verifieraFakturanummer(extracted.invoiceNumber, textlager);
       // Skälet bärs i SVARET, inte bara i loggen. Vercel-loggen når varken sonderna eller jag, och
       // ett fail-closed fält som ALLTID failar ser identiskt ut med ett som fungerar — det var
@@ -626,6 +629,22 @@ export default async function handler(req, res) {
       }
       extracted.invoiceNumber = dom.nummer;
       timing.fakturanummerMs = Date.now() - t;
+    }
+
+    // ── KVANTITETENS PROVENIENS (2026-09-08) ────────────────────────────────────────────────
+    // Samma textlager, andra frågan. Grundarens faktura hade en TOM Antal-kolumn på
+    // Premium-raden; maskinen lagrade `antal=10` = 2 102,90 ÷ 210,29. Modellen utförde
+    // finansiell aritmetik (regel 2) och talet gick inte att skilja från ett avläst — och det
+    // är just det talet som öppnar LFL-grinden och därmed bytesmålet, besparingen och avgiften.
+    // Mätt: `quantity: null` ger LFL = null (fail-closed, ingen avgift — KV-06); det härledda talet
+    // låser upp hela vägen. Märkningen KORRIGERAR aldrig ett antal, den bara namnger vad det är.
+    {
+      const rakning = markKvantiteter(extracted.lineItems, _textlager);
+      const ejAvlasta = (rakning.harledd ?? 0) + (rakning.ovittnad ?? 0) + (rakning.ovittnesbar ?? 0);
+      if (ejAvlasta > 0) {
+        // Varje avvisning SÄGS — ett utfall som aldrig räknas går inte att förbättra.
+        console.log('[kvantitetsvittne] ' + JSON.stringify(rakning));
+      }
     }
     console.log('[test-invoice] extracted:', JSON.stringify({
       supplier:        extracted.supplier,

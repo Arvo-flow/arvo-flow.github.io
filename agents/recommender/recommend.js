@@ -25,6 +25,7 @@ import { BRANCHINDEX, bredbandSpeedBenchmark } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
 import { radensNiva, annanLicensprodukt } from '../../lib/licensniva.js';
+import { PROVENIENS, farBaraPengar } from '../../lib/kvantitetsvittne.js';
 import { perioderPerAr } from '../../lib/faktureringsperiod.js';
 import { detectForensicFindings } from '../../lib/forensics.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
@@ -639,7 +640,20 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
 
   for (const item of lines) {
     const tierKey = radensNiva(item.description ?? '');
-    if (tierKey && tierBenchmarks[tierKey]) {
+    // ── ETT ANTAL FÅR DRIVA PENGAR BARA OM DET STÅR PÅ PAPPRET (2026-09-08) ─────────────────
+    // `if (qty == null) return null` nedan ÄR korrekt fail-closed (KV-06) — och besegras av att modellen
+    // FYLLER fältet. Grundarens faktura: Antal-kolumnen tom, maskinen skrev 10 = belopp ÷ à-pris.
+    // Balanskravet kan inte fånga det (en härledd kvantitet är självkonsistent per
+    // konstruktion), och talet öppnar bytesmålet, besparingen och success fee.
+    //
+    // Märkningen sätts i api/test-invoice.mjs ur dokumentets textlager. SAKNAS fältet helt är
+    // beteendet oförändrat — äldre anropare och fixturer får inte tystas av en märkning de
+    // aldrig bar. Finns det, är bara `avlast` giltigt för ett PENGAPÅSTÅENDE; övriga rader
+    // faller till add-on-grenen och bär sina pengar i baslinjen utan att hävda en besparing.
+    // Fail-closed på påståendet, fail-open på pipelinen (KV-06, KV-07).
+    const provKvant = item.kvantitetProveniens;
+    const kvantitetDuger = provKvant == null || farBaraPengar(provKvant);
+    if (tierKey && tierBenchmarks[tierKey] && kvantitetDuger) {
       const match = { key: tierKey };
       const qty = item.quantity;
       if (qty == null) return null;  // can't compute like-for-like without seat count
