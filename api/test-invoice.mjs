@@ -11,6 +11,7 @@ import { createHmac, createHash } from 'node:crypto';
 import { extraheraTextlager } from '../lib/pdf-textlager.js';
 import { verifieraFakturanummer } from '../lib/fakturanummer.js';
 import { markKvantiteter } from '../lib/kvantitetsvittne.js';
+import { bedomFakturabalans, BALANS } from '../lib/fakturabalans.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
@@ -477,7 +478,7 @@ export default async function handler(req, res) {
   // v22 (2026-09-06): absoluta påståenden skopas till den citerade nivån. Ett cachat v21-svar kan
   // bära «vi hittar inget publikt pris som är lägre än ert» BREDVID «era övriga nivåer ligger åt
   // andra hållet» — en självmotsägelse som annars serveras vidare på varje blandad licensmix.
-  const cacheKey = `pdf:result:v23:${pdfHash}:e${employeesNum}`;
+  const cacheKey = `pdf:result:v24:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -608,6 +609,7 @@ export default async function handler(req, res) {
     // aldrig analysen. En faktura ska aldrig gå förlorad för att en bekvämlighet inte gick att
     // bekräfta. Kostnad: ~15 ms per faktura efter modulens första laddning.
     let _textlager = null;
+    let fakturabalans = null;
     {
       const t = Date.now();
       let textlager = null;
@@ -644,6 +646,22 @@ export default async function handler(req, res) {
       if (ejAvlasta > 0) {
         // Varje avvisning SÄGS — ett utfall som aldrig räknas går inte att förbättra.
         console.log('[kvantitetsvittne] ' + JSON.stringify(rakning));
+      }
+    }
+
+    // ── GÅR FAKTURAN IHOP MED SIG SJÄLV? (2026-09-08) ───────────────────────────────────────
+    // Ring 1 jämför radsumman mot `invoiceTotal` med toleransen max(50 kr, 3 % av totalen) och
+    // förklarar bort glapp genom att RÄKNA radsumma × (1 + sats). Vi läser alltså momsens SATS
+    // men aldrig dess BELOPP — trots att beloppet står tryckt bredvid. Grundarens faktura begär
+    // 3,00 kr som ingen rad motiverar, och båda vägar modellen kan läsa totalen passerade.
+    // En procentsats där felrymden är ett fast belopp: på 8 331 kr släpps 250 kr igenom, på
+    // 200 000 kr släpps 6 000 kr igenom. Fakturans EGNA tryckta tal är ett oberoende vittne som
+    // inte kan hallucinera. FAIL-OPEN: domen blockerar aldrig, den bärs i svaret (FB-05).
+    {
+      const radsumma = (extracted.lineItems ?? []).reduce((s2, l) => s2 + (Number(l?.amount) || 0), 0);
+      fakturabalans = bedomFakturabalans({ radsumma, dokumenttext: _textlager });
+      if (fakturabalans.utfall === BALANS.GLAPP) {
+        console.log(`[fakturabalans] ${fakturabalans.skal}`);
       }
     }
     console.log('[test-invoice] extracted:', JSON.stringify({
@@ -732,7 +750,12 @@ export default async function handler(req, res) {
       // stabilt svar, och varje omladdning kostade två modellanrop till. Utgångsförlusten, en
       // gång till, i cachen. `svara()` är enda utgången, alltså är det här enda stället den kan
       // stängas för alla grenar samtidigt.
-      const _svar = { ...rest, leadFinding: lead, forensicFindings: visa ? _forensik : [], fyndSkal: skal };
+      // Fakturabalansen bärs i SVARET, inte bara i loggen. Vercel-loggen når varken sonderna
+      // eller kunden, och en dom som ingen kan läsa är en dom ingen kan förbättra — precis
+      // skälet till att fakturanummergrindens skäl flyttades hit (FN-11). Bara ett GLAPP bär
+      // ett påstående; `stammer` och `ovittnesbar` skickas som de är och påstår ingenting (FB-05).
+      const _svar = { ...rest, leadFinding: lead, forensicFindings: visa ? _forensik : [], fyndSkal: skal,
+        fakturabalans: fakturabalans ?? null };
       // Fyndet sparas DÄR BESLUTET FATTAS. `storeTriaged` körs före den här raden och vet inte om
       // farVisaFynd släppte fyndet igenom — hade den skrivit, hade tystade fynd återuppstått i
       // rummet. Fire-and-forget: rummets rad får aldrig fälla kundens svar.
@@ -749,6 +772,7 @@ export default async function handler(req, res) {
         leadFinding:      lead,
         forensicFindings: visa ? _forensik : [],
         fyndSkal:         skal,
+        fakturabalans:    fakturabalans ?? null,
       });
     };
 

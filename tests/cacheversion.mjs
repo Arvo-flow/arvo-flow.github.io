@@ -132,6 +132,16 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'det gamla avståndspåståendet för varje redan analyserad faktura');
   });
 
+  test('CV-11 · fakturabalansen och cache-versionen hänger ihop', () => {
+    // Svaret bär nu `fakturabalans`. Ett cachat v23-svar saknar fältet — och ett svar UTAN dom
+    // är omöjligt att skilja från en faktura som går ihop. Samma koppling som CV-03..10.
+    const FB = readFileSync(join(ROT, 'lib/fakturabalans.js'), 'utf8');
+    if (!/export function bedomFakturabalans/.test(FB)) return;   // borttagen → FB-01 äger fallet
+    assert.ok(cacheVersion() >= 24,
+      `fakturabalansen bärs nu i svaret men pdf:result står på v${cacheVersion()} — cachen `
+      + 'serverar då den domlösa formen för varje redan analyserad faktura');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);
