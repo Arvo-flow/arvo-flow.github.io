@@ -161,6 +161,26 @@ const kr = (v) => (v == null ? '—' : Number(v).toLocaleString('sv-SE'));
 
 for (const r of rader) {
   console.log(`\n── ${r.created_at?.toISOString?.() ?? r.created_at} · id=${r.id} ─────────────────`);
+  // ── FACIT GÄLLER EN FAKTURA, INTE ALLA (rättat efter första skarpa körningen) ─────────────
+  // Frågan hämtar VARJE Microsoft-analys, men PAPPRET är grundarens ENA faktura. Första
+  // körningen jämförde därför en analys från 14 augusti mot 8 septembers papper och skrev
+  // «⚠ ingen Business Premium-rad lagrad, trots att den står på fakturan» plus «lagrad radsumma
+  // 3 950 (pappret: 6 662,9)». Båda raderna SER ut som fynd och är artefakter av att jag höll
+  // fel facit mot fel faktura. Tjugoförsta gången mätinstrumentet är felet, i sonden jag byggde
+  // för att sluta modellera. Facit tillämpas nu bara på den rad som ÄR fakturan.
+  const arFakturan = (() => {
+    if (r.invoice_number && r.invoice_number === PAPPRET.fakturanummer) return true;
+    const p = Array.isArray(r.line_items_json) ? r.line_items_json : null;
+    if (!p || p.length !== PAPPRET.rader.length) return false;
+    // Radsumman inom en krona (kronorfälten avrundar) OCH båda beskrivningarna matchar.
+    const summa = p.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+    if (Math.abs(summa - PAPPRET.radsumma) > 1) return false;
+    return PAPPRET.rader.every((pr) =>
+      p.some((x) => String(x.description ?? '').toLowerCase().includes(pr.beskrivning.toLowerCase())));
+  })();
+  console.log(arFakturan
+    ? '  ✓ DETTA ÄR grundarens faktura — pappret gäller som facit nedan'
+    : '  (annan Microsoft-analys — pappret gäller INTE här, inga facit-jämförelser görs)');
   console.log(`leverantör: ${r.supplier} · kategori: ${r.category} · rutt: ${r.route}`
     + ` · skäl: ${r.triage_reason ?? '—'}`);
 
@@ -168,7 +188,7 @@ for (const r of rader) {
   const nr = r.invoice_number ?? null;
   console.log(`fakturanummer: ${nr ?? '(inget)'} `
     + (nr == null ? '— formgrinden höll tillbaka det (fail-closed på fältet)'
-      : nr === PAPPRET.fakturanummer ? `✓ stämmer mot textlagret` : `✗ AVVIKER från pappret (${PAPPRET.fakturanummer})`));
+      : nr === PAPPRET.fakturanummer ? '✓ stämmer mot textlagret' : ''));
 
   // ── FRÅGA 1: raderna, mot pappret rad för rad ───────────────────────────────────────────
   const poster = Array.isArray(r.line_items_json) ? r.line_items_json : null;
@@ -181,8 +201,14 @@ for (const r of rader) {
         + `| à=${p.unitPrice ?? '—'} | belopp=${p.amount ?? '—'} | type=${p.type ?? '—'}`);
     }
     // Premium-raden är provet: Antal-kolumnen är TOM på pappret.
-    const prem = poster.find((p) => /business\s+premium/i.test(String(p.description ?? '')));
-    if (!prem) {
+    const prem = arFakturan
+      ? poster.find((p) => /business\s+premium/i.test(String(p.description ?? '')))
+      : null;
+    if (!arFakturan) {
+      // Tyst med FLIT: utan facit finns ingen fråga att besvara, och ett larm här hade varit
+      // ett larm om fel faktura. Att inte säga något är rätt svar; att säga något vore ett fynd
+      // ur tomhet.
+    } else if (!prem) {
       console.log('   → ⚠ ingen Business Premium-rad lagrad, trots att den står på fakturan');
     } else if (prem.quantity == null) {
       console.log('   → ✓ Premium-radens antal är null — maskinen hittade inte på ett tal som saknas');
@@ -194,14 +220,15 @@ for (const r of rader) {
         : 'Talet finns varken tryckt eller härlett — det är en ren gissning.'}`);
     }
     const radsumma = poster.reduce((s, p) => s + (Number(p.amount) || 0), 0);
-    console.log(`   → lagrad radsumma ${kr(radsumma.toFixed(2))} (pappret: ${kr(PAPPRET.radsumma)})`);
+    console.log(`   → lagrad radsumma ${kr(radsumma.toFixed(2))}`
+      + (arFakturan ? ` (pappret: ${kr(PAPPRET.radsumma)})` : ''));
   }
 
   // ── FRÅGA 2 + 3: seat_count och perioden ────────────────────────────────────────────────
-  console.log(`seat_count: ${r.seat_count ?? 'null'} `
-    + `(enda TRYCKTA antalet på fakturan är 12 — Premium-radens antal saknas)`);
-  console.log(`billing_period: ${r.billing_period ?? 'null'} `
-    + `— fakturan anger INGEN period; ett årstal utan bestämd period får inte hävdas`);
+  console.log(`seat_count: ${r.seat_count ?? 'null'}`
+    + (arFakturan ? ' (enda TRYCKTA antalet på fakturan är 12 — Premium-radens antal saknas)' : ''));
+  console.log(`billing_period: ${r.billing_period ?? 'null'}`
+    + (arFakturan ? ' — fakturan anger INGEN period; ett årstal utan bestämd period får inte hävdas' : ''));
   console.log(`annual_cost: ${kr(r.annual_cost)} kr · pris/plats/mån: ${kr(r.price_per_seat_monthly)}`);
   console.log(`suggested: ${kr(r.suggested_annual_cost)} kr · bruttobesparing: ${kr(r.gross_saving)} kr `
     + `· shouldSwitch: ${r.should_switch}`);

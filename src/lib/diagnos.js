@@ -34,6 +34,46 @@ export const DIAGNOSLAGEN = {
   omatt: { positivtPastaende: false, omatt: true },
 };
 
+// ── ANALYSKORTETS RUBRIKER — TEXTEN BOR BREDVID DEKLARATIONEN (2026-09-08) ──────────────────
+//
+// GRANSKNINGENS FYND 5. `DL-10` i tests/domslut.mjs vaktade frasen «marknadsmässigt pris» i
+// kundytorna. Granskaren visade att vakten är EN REDIGERING BRED: skrev man i stället «Ert pris
+// ligger i linje med marknaden» passerade både DL-10 och hela pre-commit-kedjan. Vakten läser
+// ord, aldrig innebörd — det stod deklarerat i dess huvud, men en deklarerad blindfläck är
+// fortfarande en blindfläck.
+//
+// Påståendekontraktet (src/lib/pastaendekontrakt.js) namnger själv exakt det här hålet i sin
+// BLIND-rad: «det ser inte en yta som gör sina påståenden UTAN lägesmodul; att nya ytor går via
+// en är en granskningsfråga, inte en maskinfråga.» Analyskortets rubrik var en sådan yta — en
+// hårdkodad sträng i JSX, utan läge, utan deklaration, utan fråga.
+//
+// Registret gör frågan TVINGANDE i stället för att lita på en ordlista: en ny rubrik måste läggas
+// här, och då måste den svara på om den påstår något om KUNDENS PRIS eller bara om VÅRT BESLUT.
+// Texten bor bredvid deklarationen just för att avståndet ska vara noll — kontraktets egen
+// motivering, tillämpad på den yta kunden möter först.
+//
+// FÅNGAR: en rubrik vars text påstår något om priset i ett läge som deklarerats neutralt, och en
+//   rubrik som renderas utan att stå i registret.
+// BLIND: kontraktet ser deklarationen, aldrig svenskan. `AR-02` prövar vokabulären som ett
+//   BACKSTOPP, men den som skriver en berömmande mening OCH deklarerar den `true` har svarat på
+//   frågan — och då är det granskarens jobb, inte maskinens. Skillnaden mot förut är att frågan
+//   nu MÅSTE ställas.
+export const ANALYSRUBRIKER = {
+  // Inget bytesmål hittades. Det säger något om VÅRT underlag, aldrig om kundens pris.
+  inget_byte: {
+    positivtPastaende: false,
+    rubrik: 'Inget byte att rekommendera.',
+    text: 'Vi hittar inget publikt pris att byta ned till för de licensrader vi kunnat prissätta '
+        + '— det är ett besked om vårt underlag, inte ett omdöme om ert pris.',
+  },
+  // Kategorin saknar revisionsgrindens täckning: vi visar inga tal alls.
+  kategori_omatt: {
+    positivtPastaende: false,
+    rubrik: 'Kategorin är under analys.',
+    text: 'Koppla Fortnox / Visma så mappar vi era volymer mot marknadens bästa priser direkt.',
+  },
+};
+
 /** Läget som en nyckel — samma form som rummets och månadsbrevets register. */
 export function diagnosLage(p) {
   return diagnos(p).matt ? 'matt' : 'omatt';

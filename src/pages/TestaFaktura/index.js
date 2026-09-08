@@ -7,7 +7,7 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
-import { diagnos } from '../../lib/diagnos';
+import { diagnos, ANALYSRUBRIKER } from '../../lib/diagnos';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { COST_CATEGORIES } from '../../lib/costCategories';
 import FindingCard from '../../components/FindingCard';
@@ -2023,8 +2023,8 @@ const TestaFaktura = () => {
               </>
             ) : result.categorized?.category === 'uncategorized' ? (
               <NoSwitchBlock>
-                <strong>Kategorin är under analys.</strong>
-                <p>Koppla Fortnox / Visma så mappar vi era volymer mot marknadens bästa priser direkt.</p>
+                <strong>{ANALYSRUBRIKER.kategori_omatt.rubrik}</strong>
+                <p>{ANALYSRUBRIKER.kategori_omatt.text}</p>
               </NoSwitchBlock>
             ) : (
               <>
@@ -2042,9 +2042,8 @@ const TestaFaktura = () => {
                     kortet gjorde det aldrig. Rubriken beskriver nu vårt BESLUT (som alltid är
                     sant i grenen), inte kundens pris (som grenen inte vet något om). */}
                 <NoSwitchBlock style={{ marginTop: 0 }}>
-                  <strong>Inget byte att rekommendera.</strong>{' '}
-                  {result.recommendation?.monitoringNote
-                    ?? 'Vi hittar inget prisgap mot marknadens bästa verifierade nivå — Arvo rekommenderar inget byte i dag.'}
+                  <strong>{ANALYSRUBRIKER.inget_byte.rubrik}</strong>{' '}
+                  {result.recommendation?.monitoringNote ?? ANALYSRUBRIKER.inget_byte.text}
                 </NoSwitchBlock>
                 {!result.recommendation?.shouldSwitch && result.recommendation?.reasoning && (
                   <Reasoning>

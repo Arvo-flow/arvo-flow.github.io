@@ -219,10 +219,17 @@ describe('DL-10 · Beslutet får beskrivas, priset får inte dömas utan mätnin
 
   test('DL-10b · och grenen säger fortfarande något — tystnad är inte fixen', async () => {
     const { readFileSync } = await import('node:fs');
+    // ⚠️ VAKTEN LÅSTE STRÄNGENS PLATS, INTE EGENSKAPEN (rättat 2026-09-08). Den krävde literalen
+    // i varje ytfil — och fällde när rubriken flyttades till sitt REGISTER (ANALYSRUBRIKER i
+    // src/lib/diagnos.js), alltså när ytan blev BÄTTRE. En vakt som larmar på rätt beteende blir
+    // avstängd; egenskapen är att kunden får ett besked, inte var strängen råkar bo.
+    const { ANALYSRUBRIKER } = await import('../src/lib/diagnos.js');
+    assert.match(ANALYSRUBRIKER.inget_byte.rubrik, /Inget byte att rekommendera/,
+      'registret måste bära beskedet om vad vi BESLUTAT');
     for (const y of YTOR_MED_EGEN_RUBRIK) {
       const kalla = readFileSync(new URL(y, import.meta.url), 'utf8');
-      assert.match(kalla, /Inget byte att rekommendera/,
-        `${y} måste fortfarande ge kunden ett besked om vad vi BESLUTAT`);
+      assert.ok(/Inget byte att rekommendera/.test(kalla) || /ANALYSRUBRIKER/.test(kalla),
+        `${y} måste ge kunden ett besked — direkt, eller via ANALYSRUBRIKER`);
     }
     // Mailet och webben får aldrig säga olika saker (regel 5) — därför prövas båda, inte en.
     assert.equal(YTOR_MED_EGEN_RUBRIK.length, 2, 'båda rubrikytorna prövas (regel 5)');

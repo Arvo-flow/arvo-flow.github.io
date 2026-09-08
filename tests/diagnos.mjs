@@ -125,3 +125,74 @@ describe('DG-08 · Analyssidan läser den delade domen', () => {
       'den omätta grenen måste ligga FÖRST — annars kan en score-baserad text nås först');
   });
 });
+
+// ── AR · ANALYSKORTETS RUBRIKER ÄR DEKLARERADE, INTE HÅRDKODADE ─────────────────────────────
+//
+// GRANSKNINGENS FYND 5 (2026-09-08). DL-10 i tests/domslut.mjs vaktade frasen «marknadsmässigt
+// pris» i kundytorna. Granskaren visade att vakten är EN REDIGERING BRED: «Ert pris ligger i
+// linje med marknaden» passerade både DL-10, claims-audit och hela pre-commit-kedjan. Att lappa
+// ordlistan hade gett samma vakt en ord längre lista — och nästa formulering hade passerat den.
+//
+// Påståendekontraktet namnger själv hålet i sin BLIND-rad: det ser inte en yta som gör sina
+// påståenden UTAN lägesmodul. Analyskortets rubrik var en sådan yta: en hårdkodad sträng i JSX.
+// `ANALYSRUBRIKER` gör frågan tvingande — en ny rubrik måste läggas i registret, och där måste
+// den svara på om den påstår något om KUNDENS PRIS eller bara om VÅRT BESLUT.
+//
+// FÅNGAR: en rubrik som renderas utan att stå i registret, och en neutralt deklarerad rubrik
+//   vars text ändå dömer priset.
+// BLIND: AR-02 är ett BACKSTOPP som läser vokabulär. Den som skriver ett prisomdöme OCH
+//   deklarerar det `positivtPastaende: true` har svarat på frågan — då är det granskarens jobb.
+//   Skillnaden mot förut är att frågan inte längre KAN hoppas över.
+describe('AR · Analyskortets rubriker svarar i påståendekontraktet', () => {
+  test('AR-01 · varje rubrik är deklarerad, och kontraktet dömer registret', async () => {
+    const { ANALYSRUBRIKER } = await import('../src/lib/diagnos.js');
+    const { bedomPastaendekontrakt } = await import('../src/lib/pastaendekontrakt.js');
+    const nycklar = Object.keys(ANALYSRUBRIKER);
+    assert.ok(nycklar.length >= 2, 'registret får inte vara tomt — då är vakten grön av tomhet');
+
+    for (const [k, r] of Object.entries(ANALYSRUBRIKER)) {
+      assert.equal(typeof r.positivtPastaende, 'boolean',
+        `${k}: rubriken måste SVARA på om den påstår något om kundens pris`);
+      assert.ok(typeof r.rubrik === 'string' && r.rubrik.trim().length > 0, `${k}: saknar rubriktext`);
+      assert.ok(typeof r.text === 'string' && r.text.trim().length > 0, `${k}: saknar brödtext`);
+    }
+
+    // Samma dom som varje annan lägesmodul får. `omatt` markeras på de lägen som inte mätt
+    // kundens pris — kontraktet kräver att minst ett sådant finns (en modul utan omätt läge har
+    // inte tänkt igenom sitt eget okända).
+    const lagen = Object.fromEntries(Object.entries(ANALYSRUBRIKER).map(([k, r]) =>
+      [k, { positivtPastaende: r.positivtPastaende, omatt: r.positivtPastaende === false }]));
+    const dom = bedomPastaendekontrakt({ namn: 'ANALYSRUBRIKER', lagen, natt: nycklar });
+    assert.deepEqual(dom.brister, [], 'registret bryter mot påståendekontraktet');
+    assert.equal(dom.ok, true);
+  });
+
+  test('AR-02 · en neutralt deklarerad rubrik dömer inte priset (backstopp)', async () => {
+    const { ANALYSRUBRIKER } = await import('../src/lib/diagnos.js');
+    // Vokabulär som gör ett påstående om KUNDENS PRIS. Listan är ett skyddsnät under
+    // deklarationen, aldrig skyddet självt — jämför SK-08:s läxa: förbjud PÅSTÅENDET, inte ordet,
+    // och därför prövas den bara på lägen som deklarerat att de INTE påstår något.
+    const PRISOMDOME = /marknadsmässig|i linje med marknaden|bra betalt|konkurrenskraftig|priset är rätt|förmånligt|bättre än (?:snittet|branschsnittet)/i;
+    for (const [k, r] of Object.entries(ANALYSRUBRIKER)) {
+      if (r.positivtPastaende) continue;          // deklarerat påstående → granskarens fråga
+      const helText = `${r.rubrik} ${r.text}`;
+      assert.doesNotMatch(helText, PRISOMDOME,
+        `${k} är deklarerat neutralt men texten dömer priset: "${helText}"`);
+    }
+  });
+
+  test('AR-03 · kundytan renderar registret, inte en egen sträng', async () => {
+    const { readFileSync } = await import('node:fs');
+    const kalla = readFileSync(new URL('../src/pages/TestaFaktura/index.js', import.meta.url), 'utf8');
+    assert.match(kalla, /import \{[^}]*\bANALYSRUBRIKER\b[^}]*\} from '\.\.\/\.\.\/lib\/diagnos'/,
+      'kortet måste låna rubrikerna, aldrig skriva av dem');
+    const { ANALYSRUBRIKER } = await import('../src/lib/diagnos.js');
+    for (const k of Object.keys(ANALYSRUBRIKER)) {
+      assert.match(kalla, new RegExp(`ANALYSRUBRIKER\\.${k}\\.rubrik`),
+        `rubriken ${k} finns i registret men renderas inte — ett oanvänt läge är ett läge ingen granskar`);
+    }
+    // Och den gamla hårdkodade formen får inte komma tillbaka bredvid registret.
+    assert.doesNotMatch(kalla, /<strong>Inget byte att rekommendera\.<\/strong>/,
+      'rubriken ska komma ur registret, inte ur en literal som kan glida isär från det');
+  });
+});
