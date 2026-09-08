@@ -169,3 +169,52 @@ describe('DL · Ett prispåstående kräver en jämförelse (live-granskningen 2
       'utan jämförelse ska rummet säga att det inte hävdar något — inte tiga om att det inte vet');
   });
 });
+
+// ── DL-10 · INGEN KUNDYTA FÅR DÖMA PRISET I EN GREN SOM BARA VET ATT INGET BYTE FANNS ────────
+//
+// GRUNDARENS MICROSOFT-KORT (2026-09-08). Rubriken sa «Marknadsmässigt pris.» — ovillkorligt, i
+// den gren som fyrar så snart inget byte hittas. Rakt under stod brödtexten: «Att ligga under
+// listpris är väntat … så det är INGET KVITTO PÅ ATT PRISET ÄR RÄTT.» Rubriken motsade sin egen
+// kropp, på samma kort, i samma ögonblick.
+//
+// Satsen är bibelns, nu tredje gången (19 aug ringen/pillen/prosan, 22 aug veckodomen, nu
+// analyskortet + mailet): FRÅNVARON AV ETT VERIFIERAT BYTESMÅL SÄGER INGENTING OM HURUVIDA
+// KUNDEN BETALAR RÄTT. DL-01..09 låste rummet. De två ytor kunden möter FÖRST — analyskortet på
+// /testa-faktura och svarsmailet — hade aldrig frågat samma fråga.
+//
+// FÅNGAR: att frasen «marknadsmässigt pris» (i valfri kasus) återinförs i någon kundyta.
+// BLIND: vakten läser ORD, aldrig innebörd. En ny formulering med samma påstående
+//   («ni har bra betalt», «priset är i linje») syns inte härifrån. Den flyttar bevisbördan till
+//   något en granskare kan slå upp; den bär den inte. Ett påstående om PRISET hör hemma bakom
+//   `beromsLage()`, och det är den regeln — inte den här ordlistan — som är skyddet.
+describe('DL-10 · Beslutet får beskrivas, priset får inte dömas utan mätning', () => {
+  const YTOR = [
+    '../src/pages/TestaFaktura/index.js',
+    '../api/inbound-email.mjs',
+  ];
+
+  test('DL-10 · «marknadsmässigt pris» står inte i någon kundyta', async () => {
+    const { readFileSync } = await import('node:fs');
+    const traffar = [];
+    for (const y of YTOR) {
+      const kalla = readFileSync(new URL(y, import.meta.url), 'utf8');
+      // Kommentarer räknas inte: de förklarar varför frasen ÄR borta (och den här filens egen
+      // motivering skulle annars fälla sitt eget prov).
+      const kod = kalla.split('\n').filter((r) => !r.trim().startsWith('//') && !r.trim().startsWith('*')).join('\n');
+      if (/marknadsmässigt pris/i.test(kod)) traffar.push(y);
+    }
+    assert.deepEqual(traffar, [],
+      'ett positivt prispåstående i en gren som bara vet att inget bytesmål fanns');
+  });
+
+  test('DL-10b · och grenen säger fortfarande något — tystnad är inte fixen', async () => {
+    const { readFileSync } = await import('node:fs');
+    for (const y of YTOR) {
+      const kalla = readFileSync(new URL(y, import.meta.url), 'utf8');
+      assert.match(kalla, /Inget byte att rekommendera/,
+        `${y} måste fortfarande ge kunden ett besked om vad vi BESLUTAT`);
+    }
+    // Mailet och webben får aldrig säga olika saker (regel 5) — därför prövas båda, inte en.
+    assert.equal(YTOR.length, 2, 'båda ytorna prövas; en ensam yta räcker inte (regel 5)');
+  });
+});

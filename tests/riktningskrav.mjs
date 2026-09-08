@@ -324,6 +324,74 @@ describe('RK · Absoluta påståenden skopas till den nivå som citeras', () => 
 
   // Motprovet: ledningen får INTE bytas. Att citera en annan nivå än den dominanta kan ställa
   // namnet (suggestedSupplier, RD-09) mot talet — precis det låset finns för att stoppa.
+  test('RK-16 · «lika» är inte en motsatt riktning — grundarens Microsoft-kort', () => {
+    // ── VAD KORTET SA (2026-09-08) ──────────────────────────────────────────────────────────
+    // «Era övriga licensnivåer ligger åt andra hållet, så den samlade bilden är blandad.»
+    // Den «övriga nivån» var Business Premium på 210,29 kr — EXAKT Microsofts listpris, på öret.
+    // «Åt andra hållet» från «under» betyder ÖVER. Kunden låg varken över eller under; de låg
+    // precis på. Meningen var alltså falsk om den enda nivå den beskrev.
+    //
+    // Orsaken är mitt eget fält från samma morgon: `blandad` räknades som
+    // `new Set(tiers.map(riktningFor)).size > 1` — och 'lika' är ett av tre värden i den mängden.
+    // Ett tillstånd som betyder «varken över eller under» behandlat som en RIKTNING.
+    //
+    // Två fält, två frågor, för de styr olika meningar:
+    //   `blandad`      — finns en STRIKT MOTSATT riktning? (styr «åt andra hållet»)
+    //   `heterogen`    — skiljer sig NÅGON nivå från den dominanta? (styr att det absoluta
+    //                    påståendet skopas till den citerade nivån — att skopa är aldrig fel,
+    //                    att inte skopa är fel så snart nivåerna skiljer sig alls)
+    const PREMIUM_LISTA = TIERS['business-premium'].msrpAnnual;
+    const BASIC_LISTA   = TIERS['business-basic'].msrpAnnual;
+    const paListpris = { dominantTierKey: 'business-basic', addonLines: [], tierLines: [
+      { key: 'business-basic',   quantity: 30, benchmarkMonthly: BASIC_LISTA,   billedUnitMonthly: 60 },
+      { key: 'business-premium', quantity: 5,  benchmarkMonthly: PREMIUM_LISTA, billedUnitMonthly: PREMIUM_LISTA },
+    ]};
+    const g = lflPrisgap(paListpris);
+    assert.equal(g.dominantRiktning, 'under', 'den citerade nivån ligger under sitt golv');
+    assert.equal(g.blandad, false,
+      'den andra nivån ligger EXAKT på listpris — det är inte «åt andra hållet»');
+    assert.equal(g.heterogen, true,
+      'nivåerna skiljer sig ändå åt, så det absoluta påståendet måste skopas');
+
+    const t = buildLikeForLikeReasoning({ supplier: 'X', lfl: paListpris, annualCost: 1,
+      suggestedAnnualCost: 1, savingPerYear: 0, billingCycleType: 'monthly' });
+    assert.doesNotMatch(t, /åt andra hållet/,
+      'meningen påstod en riktning som ingen nivå har — exakt vad grundarens kort gjorde');
+    assert.match(t, /exakt på listpris/,
+      'det sanna beskedet om den nivån ska stå kvar, inte bara tystas');
+    // Och det absoluta påståendet får ändå inte gälla hela fakturan (RK-13:s regel, ny utlösare).
+    // ⚠️ FÖRSTA VERSIONEN SÖKTE «inget publikt pris» — prosan säger «NÅGOT publikt pris».
+    // Assertionen kunde alltså aldrig matcha, och sabotaget «skopa på blandad i stället för
+    // heterogen» passerade grönt. Ett prov vars enda möjliga svar är «godkänt» är inget prov.
+    // Nu prövas BÅDA halvorna: den skopade satsen ska finnas, den oskopade får inte.
+    assert.match(t, /lägre än ert för era Business Basic-licenser\./,
+      'satsen måste namnge nivån den gäller');
+    assert.doesNotMatch(t, /lägre än ert, och därför inget byte som sänker kostnaden/,
+      'den oskopade, fakturaomfattande satsen får inte stå när nivåerna skiljer sig');
+
+    // ── MOTPROVET: en ÄKTA motsatt riktning ska fortfarande namnges ────────────────────────
+    // En spärr som tystar «åt andra hållet» överallt vore lika fel som den som sa det överallt.
+    const aktaMotsats = { dominantTierKey: 'business-basic', addonLines: [], tierLines: [
+      { key: 'business-basic',   quantity: 30, benchmarkMonthly: BASIC_LISTA,   billedUnitMonthly: 60 },
+      { key: 'business-premium', quantity: 5,  benchmarkMonthly: PREMIUM_LISTA, billedUnitMonthly: PREMIUM_LISTA + 50 },
+    ]};
+    const g2 = lflPrisgap(aktaMotsats);
+    assert.equal(g2.blandad, true, 'en nivå under och en ÖVER är en verklig motsättning');
+    assert.equal(g2.heterogen, true);
+    assert.match(buildLikeForLikeReasoning({ supplier: 'X', lfl: aktaMotsats, annualCost: 1,
+      suggestedAnnualCost: 1, savingPerYear: 0, billingCycleType: 'monthly' }),
+      /åt andra hållet/, 'den verkliga blandningen ska fortfarande namnges');
+
+    // Och enhetligt fall: inget tillägg alls.
+    const enhetlig = { dominantTierKey: 'business-basic', addonLines: [], tierLines: [
+      { key: 'business-basic',   quantity: 30, benchmarkMonthly: BASIC_LISTA,   billedUnitMonthly: 60 },
+      { key: 'business-premium', quantity: 5,  benchmarkMonthly: PREMIUM_LISTA, billedUnitMonthly: PREMIUM_LISTA - 20 },
+    ]};
+    const g3 = lflPrisgap(enhetlig);
+    assert.equal(g3.blandad, false);
+    assert.equal(g3.heterogen, false, 'båda ligger under — inget att reservera');
+  });
+
   test('RK-15 · den citerade nivån är fortfarande den dominanta', () => {
     assert.match(text(B, 20_000), /^Ni betalar 400 kr per användare och månad för era 5 E3-licenser/,
       'texten leder med dominantTierKey; bara PÅSTÅENDET om helheten justeras');

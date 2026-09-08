@@ -185,6 +185,77 @@ describe('LICENSNIVÅ · jämförelsen gäller kundens egen produkt', () => {
       'business-premium', 'en ren enproduktsfaktura svarar som förut');
   });
 
+  test('LN-11 · det finns EN läsare av "vilken nivå är den här raden?"', async () => {
+    // ── GRUNDARENS KORT 2026-09-08 ──────────────────────────────────────────────────────────
+    // Kortet skrev: «era 12 E3-licenser … Microsofts publika årsavtalspris för exakt samma
+    // licens är 416,77 kr». Fakturan sa **Office 365 E3**. 416,77 kr är **Microsoft 365 E3**,
+    // och prisbokens egen not på just den posten säger «Förväxla ej med Office 365 E3».
+    //
+    // Regeln fanns sedan 19 augusti — i DEN HÄR modulen. `LFL_TIER_RE` i recommend.js matchade
+    // `/\bE3\b/i` utan familjekrav och utan diskvalificering, och det var den listan som byggde
+    // meningen kunden läste. Två läsare av samma fråga; den OVAKTADE stod framför kunden.
+    //
+    // Mätt över hela fixturkorpusen (494 radtexter) gav den gamla läsaren tre träffar den nya
+    // avvisar — och ingen av de tre var en Microsoft-licens:
+    //   "Google Workspace Business Standard (15 lic)"   → fick M365 Business Standards SEK-pris
+    //   "mobilabonnemang Tele2 Business Premium 1"      → fick M365 Business Premiums licenspris
+    //   "mobilabonnemang Tele2 Business Premium 2"      → dito
+    // Noll legitima tier-träffar tappade. Kostnaden var alltså inte täckning utan tre fel.
+    const { radensNiva } = await import('../lib/licensniva.js');
+
+    // (a) Fällorna: en nivå utan sin produktfamilj bevisar ingenting.
+    assert.equal(radensNiva('Office 365 E3'), null, 'Office 365 E3 ≠ Microsoft 365 E3');
+    assert.equal(radensNiva('E3'), null, 'ett bart E3 räcker aldrig');
+    assert.equal(radensNiva('Google Workspace Business Standard (15 lic)'), null,
+      'en Google-rad får aldrig Microsofts listpris');
+    assert.equal(radensNiva('mobilabonnemang Tele2 Business Premium 1'), null,
+      'ett mobilabonnemang är ingen M365-licensnivå');
+    assert.equal(radensNiva('Microsoft 365 Copilot'), null, 'ett paket/tillägg är ingen plan');
+
+    // ── DE FALL DÄR DISKVALIFICERINGEN ÄR DET ENDA SOM HÅLLER ────────────────────────────────
+    // Sabotaget «ta bort DISKVALIFICERAR» fällde först INGET test: raderna ovan avvisas redan av
+    // familjekravet, så spärren bar ingenting. En vakt vars sabotage inte fäller är ingen vakt
+    // (LN-09 lärde sig exakt detta om leverantörsspärren 20 augusti). Här är raderna där
+    // familjen FINNS, nivån FINNS, och bara diskvalificeringen står emellan — och det är
+    // återförsäljarnas normalformuleringar, inte konstruerade fall.
+    assert.equal(radensNiva('Microsoft 365 Business Standard med Copilot'), null,
+      'Copilot-fällan: paketets pris är inte planens pris');
+    assert.equal(radensNiva('Microsoft 365 E3 (migrerad från Office 365 E3)'), null,
+      'raden namnger två produkter — då vet vi inte vilken beloppet avser');
+    assert.equal(radensNiva('Microsoft 365 Business Premium exkl. Teams'), null,
+      'EES-varianten är en egen SKU med eget pris');
+
+    // (b) Motprovet: den läser fortfarande det den ska.
+    assert.equal(radensNiva('Microsoft 365 E3'), 'e3');
+    assert.equal(radensNiva('M365 Business Premium'), 'business-premium');
+    assert.equal(radensNiva('Microsoft 365 Business Standard'), 'business-standard');
+
+    // (c) EN LÄSARE, INTE TVÅ. Kärnan: `LFL_TIER_RE` får stå kvar som deklaration av vilka
+    // nivåer LFL:en kan prissätta, men den får aldrig användas för att SVARA på frågan. Det var
+    // uppdelningen som gjorde glidningen möjlig — samma sak som prisunderlaget 19 augusti, där
+    // ett score som motsäger sitt underlag inte längre är ett tillstånd koden kan representera.
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const rot = join(dirname(fileURLToPath(import.meta.url)), '..');
+    const rec = readFileSync(join(rot, 'agents/recommender/recommend.js'), 'utf8');
+    const lasningar = [...rec.matchAll(/LFL_TIER_RE\s*\.\s*(?:find|some|filter)\b/g)];
+    assert.deepEqual(lasningar.map((m) => m[0]), [],
+      'LFL_TIER_RE används som LÄSARE i recommend.js — frågan ska ställas till radensNiva()');
+    assert.match(rec, /import \{ radensNiva \} from '\.\.\/\.\.\/lib\/licensniva\.js'/,
+      'recommend.js måste låna läsaren, aldrig skriva av mönstren');
+
+    // (d) Och LFL:en ska faktiskt bygga rätt rader ur grundarens faktura — beteende, inte källtext.
+    const { computeLikeForLikeSaasTarget } = await import('../agents/recommender/recommend.js');
+    const lfl = computeLikeForLikeSaasTarget([
+      { description: 'Microsoft 365 Business Premium', quantity: 10, unitPrice: 210.29, amount: 2102.90, type: 'recurring_subscription' },
+      { description: 'Office 365 E3',                  quantity: 12, unitPrice: 380.00, amount: 4560.00, type: 'recurring_subscription' },
+    ], TIERS, 6662.90 * 12);
+    assert.deepEqual(lfl.tierLines.map((t) => t.key), ['business-premium'],
+      'Office 365 E3 får aldrig bli en prissatt tier-rad — den passerar som add-on till fakturapris');
+    assert.equal(lfl.dominantTierKey, 'business-premium');
+  });
+
   test('LN-08 · kundytan skiljer bekräftad nivå från obekräftad', async () => {
     const { readFileSync } = await import('node:fs');
     const { fileURLToPath } = await import('node:url');

@@ -47,12 +47,18 @@ describe('Mejlsvaret — replyHtml', () => {
     assert.ok(!/Inget tydligt prisgap/.test(html), 'motsägelsen kan aldrig återuppstå');
   });
 
-  test('utan besparing: "Marknadsmässigt pris" (webbens besked) — och inget marknadspris-rad', () => {
+  test('utan besparing: mailet säger vad vi BESLUTAT, inte vad priset är — och ingen marknadspris-rad', () => {
     const html = norm(replyHtml({
       results: [{ ...NMIT_RESULT, netSaving: 0, suggestedAnnualCost: 475_440 }],
       portalLink: null,
     }));
-    assert.match(html, /Marknadsmässigt pris — inget prisgap mot verifierat marknadspris/);
+    // ⚠️ STOD «Marknadsmässigt pris — inget prisgap» (rättat 2026-09-08). Rubriken var ett
+    // PRISOMDÖME i en gren som bara vet att inget bytesmål hittades. Frånvaron av ett verifierat
+    // bytesmål säger ingenting om huruvida kunden betalar rätt (bibeln 19 + 22 aug, nu tredje
+    // ytan). Mailet och webben ska aldrig säga olika saker (regel 5), så båda beskriver beslutet.
+    assert.match(html, /Inget byte att rekommendera/);
+    assert.doesNotMatch(html, /Marknadsmässigt pris/,
+      'ett positivt prispåstående får inte stå i en gren som inte mätt priset');
     assert.ok(!/Marknadspris, samma tjänst/.test(html));
   });
 

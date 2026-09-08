@@ -24,6 +24,7 @@ import { getElIntelligence } from '../../lib/el-intelligence.js';
 import { BRANCHINDEX, bredbandSpeedBenchmark } from './branchindex.js';
 import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
+import { radensNiva } from '../../lib/licensniva.js';
 import { perioderPerAr } from '../../lib/faktureringsperiod.js';
 import { detectForensicFindings } from '../../lib/forensics.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
@@ -581,6 +582,12 @@ export function getDominantSaasTierKey(lineItems, fallbackLicenseType, fallbackP
 // Tier patterns reused for like-for-like calculation.
 // EXPORTERAD 2026-08-12: den som behöver veta "är detta en tier-rad?" ska LÅNA mönstret härifrån,
 // aldrig skriva av det. Fyra avskrifter av den här listan kostade oss ett mörkt lås i två månader.
+// ⚠️ MÖNSTERLISTAN ÄR INTE LÄNGRE LÄSAREN (2026-09-08). Den står kvar som DEKLARATION av vilka
+// nivåer LFL:en kan prissätta — men frågan «är den här radtexten den nivån?» besvaras av
+// `radensNiva` i lib/licensniva.js, som ensam äger familjekravet och diskvalificeringarna.
+// Skälet står i den modulens huvud: den här listan matchade `/\bE3\b/i` och gav «Office 365 E3»
+// Microsoft 365 E3:s listpris rakt in i kundens kort. Två läsare av samma fråga, den ovaktade
+// framför kunden. LN-11 låser att de aldrig kan säga emot varandra igen.
 export const LFL_TIER_RE = [
   { key: 'e5',               re: /\bE5\b/i },
   { key: 'e3',               re: /\bE3\b/i },
@@ -631,8 +638,9 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
   let addonAnnualTotal = 0;
 
   for (const item of lines) {
-    const match = LFL_TIER_RE.find(p => p.re.test(item.description ?? ''));
-    if (match && tierBenchmarks[match.key]) {
+    const tierKey = radensNiva(item.description ?? '');
+    if (tierKey && tierBenchmarks[tierKey]) {
+      const match = { key: tierKey };
       const qty = item.quantity;
       if (qty == null) return null;  // can't compute like-for-like without seat count
 
@@ -769,8 +777,27 @@ export function lflPrisgap(lfl) {
     // Den dominanta nivåns EGET årsgap — prosan får aldrig beskriva ett citerat à-pris med
     // summan av alla nivåer. Samma fel, andra fältet.
     dominantGapArs:  Math.round((dom.billedUnitMonthly - dom.benchmarkMonthly) * dom.quantity * 12),
-    // Nivåerna pekar åt olika håll. Det är ett FYND, inte något att jämna ut till ett medeltal.
-    blandad: new Set(tiers.map(riktningFor)).size > 1,
+    // ── «LIKA» ÄR INTE EN RIKTNING (rättat 2026-09-08, grundarens Microsoft-kort) ─────────────
+    // Här stod `new Set(tiers.map(riktningFor)).size > 1`, och 'lika' är ett av tre värden i den
+    // mängden. Följden stod på kortet: «Era övriga licensnivåer ligger åt andra hållet» — där den
+    // «övriga nivån» var Business Premium på 210,29 kr, EXAKT Microsofts listpris på öret. Åt
+    // andra hållet från «under» betyder ÖVER. Kunden låg varken över eller under; de låg precis
+    // på. Ett tillstånd som betyder «varken över eller under» behandlat som en riktning —
+    // felfamiljen i ett fält jag själv skrev samma morgon.
+    //
+    // Två fält, för de styr olika meningar och får aldrig slås ihop igen:
+    //   blandad   — finns en STRIKT MOTSATT riktning (en över och en under)? Styr påståendet
+    //               «åt andra hållet», som annars namnger en riktning ingen nivå har.
+    //   heterogen — skiljer sig NÅGON nivå från den dominanta, 'lika' inräknat? Styr att det
+    //               absoluta påståendet skopas till den citerade nivån. Att skopa är aldrig fel;
+    //               att INTE skopa är fel så snart nivåerna skiljer sig alls (RK-13:s regel,
+    //               vars utlösare var för smal).
+    blandad:   tiers.some((t) => riktningFor(t) === 'over')
+            && tiers.some((t) => riktningFor(t) === 'under'),
+    heterogen: new Set(tiers.map(riktningFor)).size > 1,
+    // Finns en nivå som ligger EXAKT på listpris bredvid den citerade? Det är ett eget, sant
+    // besked — och det som skulle ha stått på grundarens kort i stället för «åt andra hållet».
+    harLika: tiers.some((t) => riktningFor(t) === 'lika' && t.key !== dom.key),
   };
 }
 
@@ -812,10 +839,14 @@ function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
     `årsavtalspris för exakt samma licens är ${fmtKrUnit(dominant.benchmarkMonthly)} kr.`,
   ];
 
-  // Blandade nivåer namnges — att beskriva dem med ett medeltal är att gömma fyndet.
+  // Blandade nivåer namnges — att beskriva dem med ett medeltal är att gömma fyndet. Men bara
+  // en STRIKT motsatt riktning är «åt andra hållet»; en nivå som ligger exakt på listpris får
+  // sitt eget, sanna besked (RK-16, grundarens kort 8 sep).
   const blandatTillagg = gap.blandad
     ? ' Era övriga licensnivåer ligger åt andra hållet, så den samlade bilden är blandad.'
-    : '';
+    : gap.harLika
+      ? ' Era övriga licensnivåer ligger exakt på listpris.'
+      : '';
 
   if (gap.dominantRiktning === 'under') {
     parts.push(
@@ -832,7 +863,11 @@ function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
     parts.push(
       `Att ligga under listpris är väntat — de flesta företag förhandlar ned det — så det är ` +
       `inget kvitto på att priset är rätt. Det vi kan säga är att vi inte hittar något publikt ` +
-      (gap.blandad
+      // ── UTLÖSAREN VAR FÖR SMAL (rättat 2026-09-08) ────────────────────────────────────
+      // Satsen skopades bara vid en STRIKT motsättning. Men den är absolut om HELA fakturan, och
+      // så snart någon nivå skiljer sig från den citerade — 'lika' inräknat — är den obelagd om
+      // de andra. Att skopa är aldrig fel; att inte skopa är fel så fort nivåerna skiljer sig.
+      (gap.heterogen
         ? `pris som är lägre än ert för era ${dLabelKort}-licenser.`
         : `pris som är lägre än ert, och därför inget byte som sänker kostnaden.`)
     );
@@ -1897,7 +1932,7 @@ export async function recommend(input, opts = {}) {
     if (_useLfl) {
       const _granskning = granskaTierrader({
         lineItems: input.invoice?.lineItems ?? [],
-        tierNyckel: (d) => LFL_TIER_RE.find((p) => p.re.test(d ?? ''))?.key ?? null,
+        tierNyckel: (d) => radensNiva(d ?? ''),   // samma läsare som bygger tierLines (regel 1)
         kontext: {
           leverantor: 'microsoft',              // radens PRODUKTleverantör, inte återförsäljaren:
           valuta:     input.invoice?.currency ?? null,   // de vaktade raderna ÄR Microsofts egna

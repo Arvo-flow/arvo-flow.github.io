@@ -2029,9 +2029,20 @@ const TestaFaktura = () => {
             ) : (
               <>
                 {/* Inget prisgap = ett BESKED, inte ett tomt kort. En finansdirektör
-                    som granskat och funnit avtalet bra säger det — och bevakar. */}
+                    som granskat och funnit avtalet bra säger det — och bevakar.
+
+                    ⚠️ RUBRIKEN VAR ETT PRISOMDÖME (rättat 2026-09-08, grundarens Microsoft-kort).
+                    Här stod ett OMDÖME OM PRISET — ovillkorligt, i den gren som fyrar så snart
+                    inget byte hittas. På grundarens kort stod det rakt ovanför brödtexten «det är
+                    inget kvitto på att priset är rätt». Rubriken motsade alltså sin egen kropp.
+                    (DL-10 vaktar frasen; den citeras därför inte här.)
+                    Det är bibelns sats för tredje gången: FRÅNVARON AV ETT VERIFIERAT BYTESMÅL
+                    SÄGER INGENTING OM HURUVIDA KUNDEN BETALAR RÄTT (19 aug + 22 aug), och regeln
+                    är redan kodad i src/lib/domslut.js — men rummet konsulterade den och det här
+                    kortet gjorde det aldrig. Rubriken beskriver nu vårt BESLUT (som alltid är
+                    sant i grenen), inte kundens pris (som grenen inte vet något om). */}
                 <NoSwitchBlock style={{ marginTop: 0 }}>
-                  <strong>Marknadsmässigt pris.</strong>{' '}
+                  <strong>Inget byte att rekommendera.</strong>{' '}
                   {result.recommendation?.monitoringNote
                     ?? 'Vi hittar inget prisgap mot marknadens bästa verifierade nivå — Arvo rekommenderar inget byte i dag.'}
                 </NoSwitchBlock>

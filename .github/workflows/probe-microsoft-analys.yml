@@ -1,0 +1,30 @@
+name: Sond — Microsoft-fakturans lagrade analys
+
+# Läser vad maskinen FAKTISKT skrev för grundarens Microsoft-faktura och ställer det mot
+# pappret (PDF:ens råa textoperatorer). Skriver ALDRIG till databasen, och PDF:en skickas
+# ALDRIG hit — repot är publikt. Sonden ser bara vad databasen redan innehåller.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Läs den lagrade analysen
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # pipefail: utan den returnerar en pipe TEE:s exit-kod och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-microsoft-analys.mjs

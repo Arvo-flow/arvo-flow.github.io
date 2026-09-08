@@ -223,7 +223,7 @@ export function replyHtml({ results, portalLink }) {
           </table>`
         : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
             <tr><td align="center" bgcolor="${M.band}" style="background:${M.band};border-radius:10px;padding:14px 18px;">
-              <p style="margin:0;font-family:${M.sans};font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);">Marknadsmässigt pris — inget prisgap mot verifierat marknadspris</p>
+              <p style="margin:0;font-family:${M.sans};font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);">Inget byte att rekommendera — vi hittar inget verifierat pris att byta ned till</p>
             </td></tr>
           </table>`;
 
