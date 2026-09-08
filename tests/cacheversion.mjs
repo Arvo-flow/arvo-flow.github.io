@@ -119,6 +119,19 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'cachen serverar då den gamla självmotsägelsen på varje blandad licensmix');
   });
 
+  test('CV-10 · den blandade fakturans tystnad och cache-versionen hänger ihop', () => {
+    // `lasLicensniva` returnerar nu null när en igenkänd nivå står bredvid en DISKVALIFICERAD
+    // licensrad (grundarens Microsoft-faktura 8 sep: Business Premium + Office 365 E3). Nivån
+    // matar `detectPriceAlert` i analysvägen, vars svar cachas — ett v22-svar bär alltså kvar
+    // det gamla `percentOver` mot Premiums golv, räknat på hela årskostnaden. Samma koppling
+    // som CV-03..09: rätt fix, osynliggjord av en cache, omöjlig att skilja från en trasig fix.
+    const LN = readFileSync(join(ROT, 'lib/licensniva.js'), 'utf8');
+    if (!/if \(annanProdukt\) return null;/.test(LN)) return;   // borttagen → LN-10 äger fallet
+    assert.ok(cacheVersion() >= 23,
+      `blandade fakturor tystas nu men pdf:result står på v${cacheVersion()} — cachen serverar då `
+      + 'det gamla avståndspåståendet för varje redan analyserad faktura');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

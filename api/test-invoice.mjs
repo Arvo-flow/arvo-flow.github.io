@@ -476,7 +476,7 @@ export default async function handler(req, res) {
   // v22 (2026-09-06): absoluta påståenden skopas till den citerade nivån. Ett cachat v21-svar kan
   // bära «vi hittar inget publikt pris som är lägre än ert» BREDVID «era övriga nivåer ligger åt
   // andra hållet» — en självmotsägelse som annars serveras vidare på varje blandad licensmix.
-  const cacheKey = `pdf:result:v22:${pdfHash}:e${employeesNum}`;
+  const cacheKey = `pdf:result:v23:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'

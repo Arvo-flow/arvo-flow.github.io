@@ -134,6 +134,57 @@ describe('LICENSNIVÅ · jämförelsen gäller kundens egen produkt', () => {
     assert.equal(lasLicensniva([{ description: 'M365 Business Premium' }]).nyckel, 'business-premium');
   });
 
+  test('LN-10 · en DISKVALIFICERAD licensrad gör fakturan blandad — den försvinner inte', () => {
+    // ── GRUNDARENS MICROSOFT-FAKTURA 2026-09-08 ─────────────────────────────────────────────
+    //   MS-PREM  Microsoft 365 Business Premium         210,29   2 102,90   ← 32 % av pengarna
+    //   MS-E3    Office 365 E3                    12    380,00   4 560,00   ← 68 % av pengarna
+    //
+    // `DISKVALIFICERAR` gör rätt sak med rad 2: Office 365 E3 ≠ Microsoft 365 E3, och raden får
+    // aldrig bära M365 E3:s golv. Men den `continue`:ades — raden blev OSYNLIG i stället för att
+    // räknas. Kvar stod exakt EN träff, alltså passerade `traffar.size !== 1`, och hela fakturans
+    // årskostnad jämfördes mot Business Premiums listpris:
+    //
+    //   seats 22 → +44 %      seats 12 → +164 %      seats 10 → +217 %
+    //
+    // Tre svar ur samma faktura, alla med `nivaBekraftad: true`. Spännvidden ÄR beviset att talet
+    // inte är en mätning. Sanningen: Premium-raden ligger på ÖRET på listpris (210,29), och för
+    // Office 365 E3 har prisboken inget verifierat svenskt golv alls.
+    //
+    // LN-05 vaktade «två IGENKÄNDA nivåer». Det här är samma sjukdom en nivå ned, och bibelns
+    // centrala felfamilj: «jag kunde bara läsa en del av fakturan» representerat med ett värde
+    // omöjligt att skilja från «jag läste hela».
+    const grundarensFaktura = [
+      { description: 'Microsoft 365 Business Premium', quantity: null, unitPrice: 210.29, amount: 2102.90 },
+      { description: 'Office 365 E3',                  quantity: 12,   unitPrice: 380.00, amount: 4560.00 },
+    ];
+    assert.equal(lasLicensniva(grundarensFaktura), null,
+      'en igenkänd nivå bredvid en diskvalificerad licensrad får aldrig representera hela fakturan');
+
+    // Samma sak när den andra raden är en ANNAN LEVERANTÖRS licens (återförsäljarfakturan).
+    assert.equal(lasLicensniva([
+      { description: 'Microsoft 365 Business Standard' },
+      { description: 'Google Workspace Business Starter' },
+    ]), null, 'M365 + Google på samma faktura är blandad — inte en ren Business Standard-faktura');
+
+    // Och när tillägget är Copilot: kundens årskostnad bär då BÅDA produkterna, så att mäta den
+    // mot enbart Business Standards golv ger samma falska överbetalning.
+    assert.equal(lasLicensniva([
+      { description: 'Microsoft 365 Business Standard' },
+      { description: 'Microsoft 365 Copilot' },
+    ]), null, 'ett Copilot-tillägg ingår i årskostnaden — då är planens golv inte hela sanningen');
+
+    // ── MOTPROVET: spärren får INTE fälla en vanlig faktura ──────────────────────────────────
+    // En spärr som tystar allt är lika värdelös som ingen spärr (OB-23:s läxa). Rader som bara
+    // saknar en nivåträff — support, frakt, avgifter — är inte andra produkter och tystar inget.
+    assert.equal(lasLicensniva([
+      { description: 'Microsoft 365 E3' },
+      { description: 'Support' },
+      { description: 'Fraktavgift' },
+    ])?.nyckel, 'e3', 'rader utan nivåträff är inte andra licenser — de får aldrig tysta oss');
+    assert.equal(lasLicensniva([{ description: 'Microsoft 365 Business Premium' }])?.nyckel,
+      'business-premium', 'en ren enproduktsfaktura svarar som förut');
+  });
+
   test('LN-08 · kundytan skiljer bekräftad nivå från obekräftad', async () => {
     const { readFileSync } = await import('node:fs');
     const { fileURLToPath } = await import('node:url');
