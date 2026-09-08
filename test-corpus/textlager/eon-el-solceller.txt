@@ -1,0 +1,72 @@
+E.ON Energilösningar AB
+
+Org.nr: 556570-2650
+Malmöhusvägen 1, 205 09 Malmö
+
+FAKTURA
+
+Fakturanr: EON-2026-05-SOL-0044
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Fastighetsutvecklaren Grön AB
+Solvägen 14, 222 40 Lund
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Köpt el Rörligt — April 2026 — 3 200 kWh
+ 
+3200
+ 
+kWh 0,712
+ 
+2 278,40
+Såld solcellsel — kreditering 1 800 kWh × 0,54
+ 
+-1800
+ 
+kWh 0,54
+ 
+" 972,00
+Nätabonnemang 3×25A (fast avgift)
+ 
+1
+ 
+mån 545,00
+ 
+545,00
+Nätöverföring (netto) — 1 400 kWh × 0,194 kr/kWh
+ 
+1400
+ 
+kWh 0,194
+ 
+271,60
+Energiskatt (köpt) — 3 200 kWh × 0,428 kr/kWh
+ 
+3200
+ 
+kWh 0,428
+ 
+1 369,60
+Summa exkl. moms:
+ 
+3 492,60 kr
+Moms (25 %)
+ 
+873,15 kr
+
+ATT BETALA:
+ 
+4 365,75 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Solcellsproduktion krediteras per kWh. Nettomätning april 2026: köpt 3 200 kWh, producerat och sålt 1 800 kWh. Elområde SE4.

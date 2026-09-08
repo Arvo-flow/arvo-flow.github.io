@@ -136,6 +136,7 @@ import './pastaendekontrakt.mjs';
 import './verifieringsstampel.mjs';
 import './kvantitetsvittne.mjs';
 import './fakturabalans.mjs';
+import './korpus.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

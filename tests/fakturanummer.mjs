@@ -21,6 +21,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { harFakturanummerform, finnsITextlager, verifieraFakturanummer } from '../lib/fakturanummer.js';
+import { korpusText, korpusNamn } from './korpus.mjs';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -144,5 +145,46 @@ describe('FAKTURANUMMER · hela vägen från pappret till rummet', () => {
     assert.ok(anrop.length >= 10, `hittade bara ${anrop.length} triage-anrop — matchar mönstret koden?`);
     assert.equal(med.length, anrop.length,
       'en triagerad faktura är just den kunden vill slå upp — alla utgångar måste bära numret');
+  });
+});
+
+// ── FN-14 · GRINDEN ÄR ARMERAD I PRODUKTION — MÄT DEN MOT VERKLIGT UTFALL ───────────────────
+//
+// Korpusvakten (KO-03) fällde den här filen på sin första körning: fakturanummergrinden har
+// varit ARMERAD sedan 15 augusti och prövades enbart mot handskrivna strängar. Samma
+// valideringsfiktion som gjorde två vakter skadliga den 8 september — men här på en grind som
+// redan står i request-vägen och tystar fält för riktiga kunder.
+//
+// Mätt mot pdfjs faktiska utfall för 74 verkliga fakturor: 68 bär ett kandidatnummer i texten,
+// grinden GODKÄNNER 53 och AVVISAR 15 (`ogiltig_form`). Avvisningarna är fail-closed — inget
+// nummer visas — vilket är den deklarerade och avsedda formen. Talet står här så att en framtida
+// ändring som halverar täckningen inte kan passera som «grön svit».
+describe('FN-14 · Grinden mätt mot verkligt pdfjs-utfall', () => {
+  test('FN-14 · täckningen över korpusen kollapsar inte i tysthet', () => {
+    let godkanda = 0, avvisade = 0;
+    for (const namn of korpusNamn()) {
+      const t = korpusText(namn);
+      const m = t.match(/(?:faktura(?:nummer|nr)|invoice\s*(?:no|number))[^\n]*?([A-Z0-9][A-Z0-9\/-]{3,20})/i);
+      if (!m) continue;
+      if (verifieraFakturanummer(m[1], t).nummer) godkanda++; else avvisade++;
+    }
+    assert.ok(godkanda + avvisade >= 50,
+      'korpusen måste bära kandidatnummer — annars mäter provet tomhet, inte täckning');
+    assert.ok(godkanda >= 40,
+      `grinden godkänner ${godkanda} av ${godkanda + avvisade} verkliga fakturanummer. Mätt till `
+      + '53 den 8 september. Ett kraftigt fall betyder att en ändring tystat fältet för kunder '
+      + 'som HAR ett läsbart nummer — fail-closed är rätt, men inte till vilket pris som helst.');
+  });
+
+  test('FN-14b · ett VERKLIGT nummer ur korpusen passerar hela vägen', () => {
+    // Inte ett konstruerat fall: numret står tryckt i en riktig faktura, och textlagret är det
+    // pdfjs faktiskt producerar för den.
+    const t = korpusText('Faktura_1');
+    const dom = verifieraFakturanummer('9948211', t);
+    assert.equal(dom.nummer, '9948211',
+      'ett avläst nummer ur en verklig faktura måste passera — annars är grinden för snäv');
+    // Och motprovet: ett nummer som INTE står i just den fakturan avvisas.
+    assert.equal(verifieraFakturanummer('SEC-2026-0001', t).nummer, null,
+      'ett nummer utan vittne i dokumentet får aldrig passera');
   });
 });

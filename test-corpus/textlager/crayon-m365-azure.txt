@@ -1,0 +1,61 @@
+Crayon AS (Swedish Branch)
+
+Org.nr: 556975-2234
+Sveavägen 9, 111 57 Stockholm
+
+FAKTURA
+
+Fakturanr: CRY-2026-05-SE-44123
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Logistikbolaget Nord AB
+Fjärdingsgatan 4, 831 37 Östersund
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Microsoft 365 E3 (28 licenser) — Maj 2026
+ 
+28
+ 
+lic
+ 
+380,00
+ 
+10 640,00
+Microsoft Azure — Förbrukning april 2026 (SEK)
+ 
+1
+ 
+mån 8 441,50
+ 
+8 441,50
+Crayon Managed Services (Azure-förvaltning)
+ 
+1
+ 
+mån 2 500,00
+ 
+2 500,00
+Summa exkl. moms:
+ 
+21 581,50 kr
+Moms (25 %)
+ 
+5 395,375 kr
+
+ATT BETALA:
+ 
+26 976,875 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Azure-förbrukning specificeras i separat Azure Cost Report. Crayon Managed Services inkluderar driftövervakning, patchning och
+kostnadsoptimering.

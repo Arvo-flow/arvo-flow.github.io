@@ -1,0 +1,65 @@
+Tibber AB
+
+Org.nr: 556975-6529
+Kungsgatan 8, 111 43 Stockholm
+
+FAKTURA
+
+Fakturanr: TIB-2026-05-A87123
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+IT-Konsulten Eriksson AB
+Lidingövägen 14, 114 22 Stockholm
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Tibber Spot Timavräkning — April 2026 — 2 100 kWh
+ 
+2100
+ 
+kWh 0,834
+ 
+1 751,40
+Tibber-avgift (app + tjänst) — April 2026
+ 
+1
+ 
+mån 39,00
+ 
+39,00
+Nätöverföring SE3 — 2 100 kWh × 0,211 kr/kWh
+ 
+2100
+ 
+kWh 0,211
+ 
+443,10
+Energiskatt — 2 100 kWh × 0,428 kr/kWh
+ 
+2100
+ 
+kWh 0,428
+ 
+898,80
+Summa exkl. moms:
+ 
+3 132,30 kr
+Moms (25 %)
+ 
+783,075 kr
+
+ATT BETALA:
+ 
+3 915,375 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Tibber timavräkning — pris varierar per timme baserat på Nordpool spotpris. Genomsnittspris april: 83,4 öre/kWh. Elområde SE3.

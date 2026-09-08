@@ -1,0 +1,66 @@
+Salesforce.com EMEA Ltd
+
+Org.nr: IE9816989N
+Salesforce Tower, North Dock, Dublin 1
+
+FAKTURA
+
+Fakturanr: SF-INV-SE-2026-
+Q2-00441
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Säljbolaget Sverige AB
+Kungsgatan 4, 111 22 Stockholm
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Salesforce Sales Cloud Enterprise (25 lic.) Q2 2026
+ 
+25
+ 
+lic
+ 
+4 250,00
+ 
+106 250,00
+Salesforce Service Cloud Enterprise (10 lic.) Q2 2026
+ 
+10
+ 
+lic
+ 
+4 250,00
+ 
+42 500,00
+Salesforce Einstein Analytics (25 lic.) Q2 2026
+ 
+25
+ 
+lic
+ 
+1 200,00
+ 
+30 000,00
+Summa exkl. moms:
+ 
+178 750,00 kr
+Moms (0 %)
+ 
+0,00 kr
+
+ATT BETALA:
+ 
+178 750,00 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Kvartalsfaktura — avser perioden 2026-04-01–2026-06-30. Reverse charge. Belopp ex. moms i SEK (kurs 10,40 SEK/USD, fakturadatum
+2026-05-01).

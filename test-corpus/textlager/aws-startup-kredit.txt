@@ -1,0 +1,73 @@
+Amazon Web Services EMEA SARL
+
+Org.nr: LU24682234
+38 Avenue John F. Kennedy, L-1855 Luxembourg
+
+FAKTURA
+
+Fakturanr: AWS-INV-
+SE-2026-05-00998
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+AI Startup AB
+Kistagången 20, 164 40 Kista
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+AWS EC2 Computing (p3.2xlarge × 720h) — Maj
+ 
+720
+ 
+h
+ 
+28,41
+ 
+20 455,20
+AWS SageMaker — Modellträning 440h GPU
+ 
+440
+ 
+h
+ 
+14,22
+ 
+6 256,80
+AWS S3 Intelligent-Tiering — 12,4 TB
+ 
+12400 GB
+ 
+0,025
+ 
+310,00
+AWS Activate Startup Credit (återstår: $8 200)
+ 
+1
+ 
+st
+ 
+" 18 000,00
+ 
+" 18 000,00
+Summa exkl. moms:
+ 
+9 022,00 kr
+Moms (25 %)
+ 
+2 255,50 kr
+
+ATT BETALA:
+ 
+11 277,50 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+AWS Activate for Startups kredit: $8 200 kvar (ursprungligen $25 000). Kreditförbrukning: $1 730/mån. Kreditperiod upphör 2026-11-30 eller
+vid nollsaldo.

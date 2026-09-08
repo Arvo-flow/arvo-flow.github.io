@@ -1,0 +1,533 @@
+{
+  "beskrivning": "pdfjs faktiska utfall för test-pdfs/. Fryst deterministiskt, inga modellanrop.",
+  "fryst": "2026-09-08",
+  "antal": 75,
+  "medTextlager": 74,
+  "filer": [
+    {
+      "pdf": "Faktura_1.pdf",
+      "textlager": "Faktura_1.txt",
+      "rader": 41,
+      "tecken": 383,
+      "fel": null
+    },
+    {
+      "pdf": "Faktura_2.pdf",
+      "textlager": "Faktura_2.txt",
+      "rader": 25,
+      "tecken": 361,
+      "fel": null
+    },
+    {
+      "pdf": "Faktura_3.pdf",
+      "textlager": "Faktura_3.txt",
+      "rader": 25,
+      "tecken": 361,
+      "fel": null
+    },
+    {
+      "pdf": "Faktura_4.pdf",
+      "textlager": "Faktura_4.txt",
+      "rader": 21,
+      "tecken": 253,
+      "fel": null
+    },
+    {
+      "pdf": "adobe-creative-cloud-ars.pdf",
+      "textlager": "adobe-creative-cloud-ars.txt",
+      "rader": 57,
+      "tecken": 785,
+      "fel": null
+    },
+    {
+      "pdf": "ald-billeasing-outofscope.pdf",
+      "textlager": "ald-billeasing-outofscope.txt",
+      "rader": 67,
+      "tecken": 894,
+      "fel": null
+    },
+    {
+      "pdf": "atea-m365-overskott.pdf",
+      "textlager": "atea-m365-overskott.txt",
+      "rader": 65,
+      "tecken": 830,
+      "fel": null
+    },
+    {
+      "pdf": "atlassian-cloud-manad.pdf",
+      "textlager": "atlassian-cloud-manad.txt",
+      "rader": 66,
+      "tecken": 865,
+      "fel": null
+    },
+    {
+      "pdf": "atlassian.pdf",
+      "textlager": "atlassian.txt",
+      "rader": 94,
+      "tecken": 1075,
+      "fel": null
+    },
+    {
+      "pdf": "aws-reseller-komplex.pdf",
+      "textlager": "aws-reseller-komplex.txt",
+      "rader": 91,
+      "tecken": 1002,
+      "fel": null
+    },
+    {
+      "pdf": "aws-startup-kredit.pdf",
+      "textlager": "aws-startup-kredit.txt",
+      "rader": 73,
+      "tecken": 893,
+      "fel": null
+    },
+    {
+      "pdf": "azure-csp-reseller.pdf",
+      "textlager": "azure-csp-reseller.txt",
+      "rader": 59,
+      "tecken": 841,
+      "fel": null
+    },
+    {
+      "pdf": "bahnhof-fiber-ren.pdf",
+      "textlager": "bahnhof-fiber-ren.txt",
+      "rader": 44,
+      "tecken": 555,
+      "fel": null
+    },
+    {
+      "pdf": "bevakning-outofscope.pdf",
+      "textlager": "bevakning-outofscope.txt",
+      "rader": 60,
+      "tecken": 645,
+      "fel": null
+    },
+    {
+      "pdf": "bredband-nytt-avtal-rabatt.pdf",
+      "textlager": "bredband-nytt-avtal-rabatt.txt",
+      "rader": 60,
+      "tecken": 767,
+      "fel": null
+    },
+    {
+      "pdf": "bredband_1_baseline.pdf",
+      "textlager": "bredband_1_baseline.txt",
+      "rader": 55,
+      "tecken": 439,
+      "fel": null
+    },
+    {
+      "pdf": "bredband_2_sveakom.pdf",
+      "textlager": "bredband_2_sveakom.txt",
+      "rader": 83,
+      "tecken": 784,
+      "fel": null
+    },
+    {
+      "pdf": "bredband_3.pdf",
+      "textlager": "bredband_3.txt",
+      "rader": 58,
+      "tecken": 680,
+      "fel": null
+    },
+    {
+      "pdf": "bredband_4.pdf",
+      "textlager": "bredband_4.txt",
+      "rader": 59,
+      "tecken": 532,
+      "fel": null
+    },
+    {
+      "pdf": "bredbandsbolaget-kampanj.pdf",
+      "textlager": "bredbandsbolaget-kampanj.txt",
+      "rader": 53,
+      "tecken": 691,
+      "fel": null
+    },
+    {
+      "pdf": "canon-hog-klickratio.pdf",
+      "textlager": "canon-hog-klickratio.txt",
+      "rader": 61,
+      "tecken": 876,
+      "fel": null
+    },
+    {
+      "pdf": "cloudreseller-norden.pdf",
+      "textlager": "cloudreseller-norden.txt",
+      "rader": 58,
+      "tecken": 708,
+      "fel": null
+    },
+    {
+      "pdf": "comhem-mobil-bredband-kombinerad.pdf",
+      "textlager": "comhem-mobil-bredband-kombinerad.txt",
+      "rader": 70,
+      "tecken": 825,
+      "fel": null
+    },
+    {
+      "pdf": "comviq-data-tal.pdf",
+      "textlager": "comviq-data-tal.txt",
+      "rader": 72,
+      "tecken": 686,
+      "fel": null
+    },
+    {
+      "pdf": "comviq-mobil-budget.pdf",
+      "textlager": "comviq-mobil-budget.txt",
+      "rader": 54,
+      "tecken": 573,
+      "fel": null
+    },
+    {
+      "pdf": "connectsverige.pdf",
+      "textlager": "connectsverige.txt",
+      "rader": 52,
+      "tecken": 416,
+      "fel": null
+    },
+    {
+      "pdf": "crayon-m365-azure.pdf",
+      "textlager": "crayon-m365-azure.txt",
+      "rader": 61,
+      "tecken": 817,
+      "fel": null
+    },
+    {
+      "pdf": "dhl-frakt-standard.pdf",
+      "textlager": "dhl-frakt-standard.txt",
+      "rader": 83,
+      "tecken": 925,
+      "fel": null
+    },
+    {
+      "pdf": "diag-bredband.pdf",
+      "textlager": "diag-bredband.txt",
+      "rader": 61,
+      "tecken": 767,
+      "fel": null
+    },
+    {
+      "pdf": "dustin-m365-standard.pdf",
+      "textlager": "dustin-m365-standard.txt",
+      "rader": 55,
+      "tecken": 693,
+      "fel": null
+    },
+    {
+      "pdf": "eon-el-solceller.pdf",
+      "textlager": "eon-el-solceller.txt",
+      "rader": 72,
+      "tecken": 918,
+      "fel": null
+    },
+    {
+      "pdf": "eon-el-spot-se3.pdf",
+      "textlager": "eon-el-spot-se3.txt",
+      "rader": 65,
+      "tecken": 837,
+      "fel": null
+    },
+    {
+      "pdf": "fortum-el-fastpris.pdf",
+      "textlager": "fortum-el-fastpris.txt",
+      "rader": 65,
+      "tecken": 831,
+      "fel": null
+    },
+    {
+      "pdf": "globalcom-mobil-hog-roaming.pdf",
+      "textlager": "globalcom-mobil-hog-roaming.txt",
+      "rader": 64,
+      "tecken": 766,
+      "fel": null
+    },
+    {
+      "pdf": "google-workspace-arsbetalning.pdf",
+      "textlager": "google-workspace-arsbetalning.txt",
+      "rader": 55,
+      "tecken": 737,
+      "fel": null
+    },
+    {
+      "pdf": "hubspot-marketing-pro.pdf",
+      "textlager": "hubspot-marketing-pro.txt",
+      "rader": 65,
+      "tecken": 824,
+      "fel": null
+    },
+    {
+      "pdf": "iponly-fiber-addon-stack.pdf",
+      "textlager": "iponly-fiber-addon-stack.txt",
+      "rader": 72,
+      "tecken": 934,
+      "fel": null
+    },
+    {
+      "pdf": "konica-minolta-klick.pdf",
+      "textlager": "konica-minolta-klick.txt",
+      "rader": 65,
+      "tecken": 908,
+      "fel": null
+    },
+    {
+      "pdf": "konsult-it-oklar.pdf",
+      "textlager": "konsult-it-oklar.txt",
+      "rader": 58,
+      "tecken": 760,
+      "fel": null
+    },
+    {
+      "pdf": "kraftringen-el-lokalt.pdf",
+      "textlager": "kraftringen-el-lokalt.txt",
+      "rader": 65,
+      "tecken": 739,
+      "fel": null
+    },
+    {
+      "pdf": "kristianstad.pdf",
+      "textlager": null,
+      "rader": 0,
+      "tecken": 0,
+      "fel": null
+    },
+    {
+      "pdf": "microsoft-direkt-usd.pdf",
+      "textlager": "microsoft-direkt-usd.txt",
+      "rader": 61,
+      "tecken": 870,
+      "fel": null
+    },
+    {
+      "pdf": "microsoft-new.pdf",
+      "textlager": "microsoft-new.txt",
+      "rader": 48,
+      "tecken": 450,
+      "fel": null
+    },
+    {
+      "pdf": "microsoft.pdf",
+      "textlager": "microsoft.txt",
+      "rader": 48,
+      "tecken": 450,
+      "fel": null
+    },
+    {
+      "pdf": "mixad-it-frakt.pdf",
+      "textlager": "mixad-it-frakt.txt",
+      "rader": 66,
+      "tecken": 864,
+      "fel": null
+    },
+    {
+      "pdf": "nordiclogistik.pdf",
+      "textlager": "nordiclogistik.txt",
+      "rader": 39,
+      "tecken": 375,
+      "fel": null
+    },
+    {
+      "pdf": "oklar-blandad-faktura.pdf",
+      "textlager": "oklar-blandad-faktura.txt",
+      "rader": 62,
+      "tecken": 720,
+      "fel": null
+    },
+    {
+      "pdf": "omnicloud.pdf",
+      "textlager": "omnicloud.txt",
+      "rader": 35,
+      "tecken": 357,
+      "fel": null
+    },
+    {
+      "pdf": "outofscope.pdf",
+      "textlager": "outofscope.txt",
+      "rader": 50,
+      "tecken": 463,
+      "fel": null
+    },
+    {
+      "pdf": "postnord-brev-paket.pdf",
+      "textlager": "postnord-brev-paket.txt",
+      "rader": 80,
+      "tecken": 801,
+      "fel": null
+    },
+    {
+      "pdf": "restaurang-mat-outofscope.pdf",
+      "textlager": "restaurang-mat-outofscope.txt",
+      "rader": 60,
+      "tecken": 766,
+      "fel": null
+    },
+    {
+      "pdf": "ricoh.pdf",
+      "textlager": "ricoh.txt",
+      "rader": 63,
+      "tecken": 553,
+      "fel": null
+    },
+    {
+      "pdf": "salesforce-enterprise.pdf",
+      "textlager": "salesforce-enterprise.txt",
+      "rader": 66,
+      "tecken": 842,
+      "fel": null
+    },
+    {
+      "pdf": "stadbolag-outofscope.pdf",
+      "textlager": "stadbolag-outofscope.txt",
+      "rader": 63,
+      "tecken": 648,
+      "fel": null
+    },
+    {
+      "pdf": "stadsnät-koaxial-tv.pdf",
+      "textlager": "stadsnät-koaxial-tv.txt",
+      "rader": 58,
+      "tecken": 714,
+      "fel": null
+    },
+    {
+      "pdf": "tele2-mobil-arsavtal.pdf",
+      "textlager": "tele2-mobil-arsavtal.txt",
+      "rader": 55,
+      "tecken": 721,
+      "fel": null
+    },
+    {
+      "pdf": "tele2-mobil-bredband-kombinerad.pdf",
+      "textlager": "tele2-mobil-bredband-kombinerad.txt",
+      "rader": 78,
+      "tecken": 928,
+      "fel": null
+    },
+    {
+      "pdf": "tele2-mobil-enkel.pdf",
+      "textlager": "tele2-mobil-enkel.txt",
+      "rader": 54,
+      "tecken": 530,
+      "fel": null
+    },
+    {
+      "pdf": "tele2-mobil-kreditfaktura.pdf",
+      "textlager": "tele2-mobil-kreditfaktura.txt",
+      "rader": 74,
+      "tecken": 857,
+      "fel": null
+    },
+    {
+      "pdf": "tele2-mobil-roaming.pdf",
+      "textlager": "tele2-mobil-roaming.txt",
+      "rader": 81,
+      "tecken": 760,
+      "fel": null
+    },
+    {
+      "pdf": "telenor-mobil-bredband-kombinerad.pdf",
+      "textlager": "telenor-mobil-bredband-kombinerad.txt",
+      "rader": 80,
+      "tecken": 995,
+      "fel": null
+    },
+    {
+      "pdf": "telenor-mobil-prorata.pdf",
+      "textlager": "telenor-mobil-prorata.txt",
+      "rader": 69,
+      "tecken": 848,
+      "fel": null
+    },
+    {
+      "pdf": "telenor-mobil-standard.pdf",
+      "textlager": "telenor-mobil-standard.txt",
+      "rader": 73,
+      "tecken": 815,
+      "fel": null
+    },
+    {
+      "pdf": "telenor-molnvaxel-stor.pdf",
+      "textlager": "telenor-molnvaxel-stor.txt",
+      "rader": 82,
+      "tecken": 947,
+      "fel": null
+    },
+    {
+      "pdf": "telia-fiber-statisk-ip.pdf",
+      "textlager": "telia-fiber-statisk-ip.txt",
+      "rader": 52,
+      "tecken": 675,
+      "fel": null
+    },
+    {
+      "pdf": "telia-mobil-bredband-kombinerad.pdf",
+      "textlager": "telia-mobil-bredband-kombinerad.txt",
+      "rader": 79,
+      "tecken": 988,
+      "fel": null
+    },
+    {
+      "pdf": "telia-mobil-hardvara.pdf",
+      "textlager": "telia-mobil-hardvara.txt",
+      "rader": 73,
+      "tecken": 793,
+      "fel": null
+    },
+    {
+      "pdf": "telia.pdf",
+      "textlager": "telia.txt",
+      "rader": 65,
+      "tecken": 551,
+      "fel": null
+    },
+    {
+      "pdf": "tibber-el-timavrakning.pdf",
+      "textlager": "tibber-el-timavrakning.txt",
+      "rader": 65,
+      "tecken": 836,
+      "fel": null
+    },
+    {
+      "pdf": "tre-mobil-molnvaxel.pdf",
+      "textlager": "tre-mobil-molnvaxel.txt",
+      "rader": 82,
+      "tecken": 865,
+      "fel": null
+    },
+    {
+      "pdf": "tryggel.pdf",
+      "textlager": "tryggel.txt",
+      "rader": 82,
+      "tecken": 506,
+      "fel": null
+    },
+    {
+      "pdf": "unclear.pdf",
+      "textlager": "unclear.txt",
+      "rader": 126,
+      "tecken": 573,
+      "fel": null
+    },
+    {
+      "pdf": "vattenfall-el-se4.pdf",
+      "textlager": "vattenfall-el-se4.txt",
+      "rader": 65,
+      "tecken": 842,
+      "fel": null
+    },
+    {
+      "pdf": "vattenfall.pdf",
+      "textlager": "vattenfall.txt",
+      "rader": 39,
+      "tecken": 331,
+      "fel": null
+    },
+    {
+      "pdf": "xerox-managed-print-it.pdf",
+      "textlager": "xerox-managed-print-it.txt",
+      "rader": 73,
+      "tecken": 884,
+      "fel": null
+    }
+  ]
+}

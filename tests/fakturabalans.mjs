@@ -31,6 +31,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { bedomFakturabalans, lasTrycktaSummor, BALANS, ORESTOLERANS } from '../lib/fakturabalans.js';
+import { korpusText, korpusNamn } from './korpus.mjs';
 
 const PAPPRET = [
   'Artikelnr    Beskrivning                              Antal   A-pris    Belopp',
@@ -118,6 +119,30 @@ describe('FB · Går fakturan ihop med sig själv?', () => {
     assert.equal(total, 124000,
       'DOKUMENTERAR DAGENS BRIST: totalregexen saknar exkl-uteslutningen och läser momsBASEN som '
       + 'slutsumma. Den dagen detta blir null får modulen kopplas in igen — inte förr.');
+  });
+
+  test('FB-07 · MOT VERKLIGT pdfjs-UTFALL: tystnaden är mätt, inte gissad', () => {
+    // Modulen är avkopplad. Det här provet mäter VARFÖR mot verkliga textlager, så att siffran
+    // står i sviten och inte i ett commit-meddelande ingen läser om ett halvår.
+    let lasbara = 0, tysta = 0;
+    for (const namn of korpusNamn()) {
+      const { momsbelopp, total } = lasTrycktaSummor(korpusText(namn));
+      if (momsbelopp != null && total != null) lasbara++; else tysta++;
+    }
+    assert.ok(lasbara + tysta >= 70, 'korpusen måste vara fylld — annars mäter provet tomhet');
+    assert.ok(lasbara <= 20,
+      `${lasbara} av ${lasbara + tysta} fakturor är läsbara. Om detta STIGER kraftigt har `
+      + 'etikettläsningen blivit bättre — mät om falsklarmen och överväg att koppla in modulen.');
+
+    // Och det farliga fallet, bevisat mot en RIKTIG faktura: «Att betala exkl. moms» finns i
+    // korpusen och läses som slutsumma. Det är den exakta orsaken till avkopplingen.
+    const medExkl = korpusNamn().filter((n) => /att\s+betala\s+exkl/i.test(korpusText(n)));
+    if (medExkl.length) {
+      const { total } = lasTrycktaSummor(korpusText(medExkl[0]));
+      assert.notEqual(total, null,
+        `${medExkl[0]} bär «Att betala exkl. moms» och läses som slutsumma — DAGENS BRIST, mätt `
+        + 'mot en verklig faktura. Blir detta null får modulen kopplas in igen.');
+    }
   });
 
   test('FB-06 · toleransen är ett FAST belopp, aldrig en procentsats', () => {

@@ -1,0 +1,35 @@
+OmniCloud Hosting (AWS Partner)
+
+Invoice: OC-5511
+
+Billing Period: May 1 - May 31, 2026
+
+Currency: USD
+
+Service Description
+ 
+Usage
+ 
+Amount (USD)
+
+Compute Instances (EC2)
+ 
+3,450 Hrs
+ 
+2,800.00
+
+Relational Database Service (RDS)
+ 
+744 Hrs
+ 
+1,400.00
+
+Startup Program Credit Applied
+ 
+-
+ 
+- 4,200.00
+
+Total Due: $ 0.00
+
+Remaining Credit Balance: $ 12,400.00

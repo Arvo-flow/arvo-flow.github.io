@@ -1,0 +1,66 @@
+Allservice Partner AB
+
+Org.nr: 556399-1234
+Servicegatan 1, 504 34 Borås
+
+FAKTURA
+
+Fakturanr: ALP-2026-05-0044
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Grossisten i Borås AB
+Industrivägen 8, 504 62 Borås
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Molntjänst ERP-system (Microsoft Dynamics 365)
+ 
+1
+ 
+mån 8 900,00
+ 
+8 900,00
+Lagerhållning och plockning — maj 2026
+ 
+1
+ 
+mån 12 000,00
+ 
+12 000,00
+Frakt inrikes (enligt fraktlista bilaga 3)
+ 
+1
+ 
+mån 6 400,00
+ 
+6 400,00
+IT-support och helpdesk — maj 2026
+ 
+1
+ 
+mån 3 500,00
+ 
+3 500,00
+Summa exkl. moms:
+ 
+30 800,00 kr
+Moms (25 %)
+ 
+7 700,00 kr
+
+ATT BETALA:
+ 
+38 500,00 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Kombinerad leverantör: IT-system + logistiktjänster. Specifikation per tjänstepost i bilaga 1-4. Kontakta kundansvarig för separata avtal per
+kategori.

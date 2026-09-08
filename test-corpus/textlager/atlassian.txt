@@ -1,0 +1,94 @@
+Atlassian Pty Ltd
+
+c/o Atlassian Netherlands B.V.
+Singel 250, 1016 AB Amsterdam
+Netherlands
+VAT: NL856291048B01
+
+FAKTURA
+
+Fakturanummer:
+ 
+ATL-6619284
+
+Datum: 2026-05-08
+
+FAKTURERAS TILL
+
+Innovatech Sweden AB
+
+Org.nr: 556123-4567
+
+Kungsgatan 12
+
+111 43 Stockholm
+
+Sverige
+
+VAT: SE556123456701
+
+PERIOD & BETALNING
+
+Period:
+ 
+2026-05-08 - 2026-06-07
+
+Betalningsvillkor:
+ 
+Netto 30 dagar
+
+Förfallodatum:
+ 
+2026-05-31
+
+Status:
+ 
+Betald (Kreditkort via Stripe)
+
+BESKRIVNING
+ 
+ANTAL
+ 
+PRIS/ENHET
+ 
+BELOPP
+
+Jira Software Cloud - Premium Tier
+
+Projekt- och ärendehantering för produkt- och dev-
+team. Publika listpriser.
+
+110
+ 
+150.00 SEK
+ 
+16500.00
+SEK
+
+Confluence Cloud - Premium Tier
+
+Central kunskapsbank och team-samarbete. Publika
+listpriser.
+
+110
+ 
+100.00 SEK
+ 
+11000.00
+SEK
+
+Netto:
+ 
+27500.00 SEK
+
+Moms (0% - Reverse Charge):
+ 
+0.00 SEK
+
+Totalt att betala:
+ 
+27500.00 SEK
+
+Omvänd skattskyldighet för mervärdesskatt gäller (Reverse Charge). Mottagaren är redovisningsskyldig för moms.
+
+Tack för ert förtroende! Vid frågor gällande denna faktura, vänligen kontakta vår support.

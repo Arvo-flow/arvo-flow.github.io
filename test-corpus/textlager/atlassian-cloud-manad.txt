@@ -1,0 +1,66 @@
+Atlassian Network Services, Inc.
+
+Org.nr: US-EIN-98-1234567
+c/o Atlassian Pty Ltd, Sydney NSW 2000, Australia
+
+FAKTURA
+
+Fakturanr: ATL-INV-
+SE-2026-05-77221
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Produktbolaget Digital AB
+Kungsträdgårdsgatan 10, 111 47 Stockholm
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Jira Software Cloud Standard (35 användare) Maj
+ 
+35
+ 
+lic
+ 
+71,50
+ 
+2 502,50
+Confluence Cloud Standard (35 användare) Maj
+ 
+35
+ 
+lic
+ 
+52,00
+ 
+1 820,00
+Jira Service Management Cloud Team (10 ag.) Maj
+ 
+10
+ 
+lic
+ 
+213,00
+ 
+2 130,00
+Summa exkl. moms:
+ 
+6 452,50 kr
+Moms (25 %)
+ 
+1 613,125 kr
+
+ATT BETALA:
+ 
+8 065,625 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Faktura i SEK (konverterad från USD vid kurs 10,31). Reverse charge — köparen redovisar moms enligt 1 kap. 2 § ML. Cloud-region: EU
+(Frankfurt).

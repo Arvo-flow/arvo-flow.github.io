@@ -1,0 +1,91 @@
+Cygate AB (AWS Advanced Partner)
+
+Org.nr: 556552-0234
+Kilsgatan 4, 411 04 Göteborg
+
+FAKTURA
+
+Fakturanr: CYG-2026-05-
+AWS-00441
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Fintech Startup AB
+Kungsgatan 62, 111 22 Stockholm
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+AWS EC2 — Compute (r6i.2xlarge × 720h)
+ 
+720
+ 
+h
+ 
+5,12
+ 
+3 686,40
+AWS RDS PostgreSQL (db.r6g.large × 720h)
+ 
+720
+ 
+h
+ 
+2,84
+ 
+2 044,80
+AWS S3 Standard — 8,4 TB lagring
+ 
+8400
+ 
+GB
+ 
+0,023
+ 
+193,20
+AWS CloudFront — 2,1 TB datatrafik
+ 
+2100
+ 
+GB
+ 
+0,085
+ 
+178,50
+Cygate Managed Cloud (driftövervakning + patching)
+ 
+1
+ 
+mån 4 500,00
+ 
+4 500,00
+AWS Savings Plan kredit (committment rabatt)
+ 
+1
+ 
+st
+ 
+" 1 840,00
+ 
+" 1 840,00
+Summa exkl. moms:
+ 
+8 762,90 kr
+Moms (25 %)
+ 
+2 190,725 kr
+
+ATT BETALA:
+ 
+10 953,625 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Konverterat från USD (kurs 10,42 SEK/USD). Detaljerad AWS Cost Report bifogas separat. Managed Services avtal 12 mån t.o.m.
+2026-12-31.

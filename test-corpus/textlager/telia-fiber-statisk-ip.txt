@@ -1,0 +1,52 @@
+Telia Sverige AB
+
+Org.nr: 556103-4249
+Stjärntorget 1, 169 79 Solna
+
+FAKTURA
+
+Fakturanr: TEL-
+FIB-20260501-77221
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Revisionsbyrån Olsson & Partners AB
+Kungsgatan 9, 252 21 Helsingborg
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Telia Bredband Företag 500/500 Mbit/s — Maj 2026
+ 
+1
+ 
+mån 649,00
+ 
+649,00
+Telia Statisk IP-adress (1 st) — Maj 2026
+ 
+1
+ 
+mån 149,00
+ 
+149,00
+Summa exkl. moms:
+ 
+798,00 kr
+Moms (25 %)
+ 
+199,50 kr
+
+ATT BETALA:
+ 
+997,50 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Avtal: 24 månader t.o.m. 2027-08-31 | IP-adress: 46.21.XX.XX (konfiguration medföljer separat)

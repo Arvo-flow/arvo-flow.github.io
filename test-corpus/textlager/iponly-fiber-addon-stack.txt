@@ -1,0 +1,72 @@
+IP-Only Networks AB
+
+Org.nr: 556619-9015
+Marieviksgatan 19, 117 43 Stockholm
+
+FAKTURA
+
+Fakturanr: IPO-2026-05-008841
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Mediehuset Norr AB
+Södra Kungsgatan 10, 803 11 Gävle
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+IP-Only Fiber Företag Pro 1000/1000 Mbit/s — Maj
+ 
+1
+ 
+mån 1 199,00
+ 
+1 199,00
+SLA Platinum (2h inställelsetid, 99,9% SLA) — Maj
+ 
+1
+ 
+mån 799,00
+ 
+799,00
+Fasta IP-adresser /29 (6 användbara) — Maj
+ 
+1
+ 
+mån 399,00
+ 
+399,00
+Managed Firewall Fortinet FortiGate 60F — Maj
+ 
+1
+ 
+mån 599,00
+ 
+599,00
+DDoS-skydd Bas (upp till 10 Gbit/s) — Maj
+ 
+1
+ 
+mån 299,00
+ 
+299,00
+Summa exkl. moms:
+ 
+3 295,00 kr
+Moms (25 %)
+ 
+823,75 kr
+
+ATT BETALA:
+ 
+4 118,75 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Kombinerad faktura: Fiberanslutning + Managed tjänster. Avtal 36 mån t.o.m. 2028-05-31. SLA gäller fysisk anslutning, ej Internet-backbone.

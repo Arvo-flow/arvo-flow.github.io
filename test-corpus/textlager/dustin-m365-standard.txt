@@ -1,0 +1,55 @@
+Dustin AB
+
+Org.nr: 556404-2528
+Johanneslundsvägen 2, 194 81 Upplands Väsby
+
+FAKTURA
+
+Fakturanr: DST-2026-05-0099112
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Advokatbyrån Lindqvist AB
+Strandvägen 29, 114 56 Stockholm
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Microsoft 365 Business Standard (32 licenser) Maj
+ 
+32
+ 
+lic
+ 
+115,00
+ 
+3 680,00
+Microsoft 365 Business Basic (8 licenser) Maj
+ 
+8
+ 
+lic
+ 
+65,00
+ 
+520,00
+Summa exkl. moms:
+ 
+4 200,00 kr
+Moms (25 %)
+ 
+1 050,00 kr
+
+ATT BETALA:
+ 
+5 250,00 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+CSP-återförsäljare: Dustin AB | Licensperiod: 2026-05-01–2026-05-31 | Microsoft Tenant-ID: M-SE-88421

@@ -1,0 +1,55 @@
+Google Ireland Limited
+
+Org.nr: IE6388047V
+Gordon House, Barrow Street, Dublin 4
+
+FAKTURA
+
+Fakturanr: GGL-2026-INV-SE-00441
+Fakturadatum: 2026-01-01
+Förfallodatum: 2026-01-31
+
+Faktureras till:
+
+DesignbyrånStröm AB
+Malmskillnadsgatan 36, 111 57 Stockholm
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Google Workspace Business Plus — Årslic. 2026 (20 lic)
+ 
+20
+ 
+lic
+ 
+1 404,00
+ 
+28 080,00
+Google Workspace Archived User (5 lic.) 2026
+ 
+5
+ 
+lic
+ 
+216,00
+ 
+1 080,00
+Summa exkl. moms:
+ 
+29 160,00 kr
+Moms (25 %)
+ 
+7 290,00 kr
+
+ATT BETALA:
+ 
+36 450,00 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Årsbetalning — licenser gäller 2026-01-01 t.o.m. 2026-12-31. Faktureras i SEK via Google reseller. Reverse charge tillämpas.

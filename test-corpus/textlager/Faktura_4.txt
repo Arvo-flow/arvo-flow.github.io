@@ -1,0 +1,21 @@
+FAKTURA
+
+Leverantörsinformation saknas/otydlig
+
+Fakturanummer: 10001
+
+Fakturadatum: 2026-05-16
+
+Beskrivning
+ 
+Belopp (SEK)
+
+Konsulttjänster, serverdrift och licenshantering Q1-Q2
+ 
+650 000,00
+
+Övriga utlägg
+ 
+12 500,00
+
+Totalt exkl. moms: 662 500,00 SEK

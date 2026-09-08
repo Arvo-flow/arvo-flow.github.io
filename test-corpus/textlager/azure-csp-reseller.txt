@@ -1,0 +1,59 @@
+Advania Sverige AB (Microsoft CSP)
+
+Org.nr: 556818-0840
+Frösundaviks Allé 1, 169 70 Solna
+
+FAKTURA
+
+Fakturanr: ADV-2026-05-AZ-77123
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Industribolaget Svensson AB
+Fabriksvägen 10, 504 34 Borås
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Microsoft Azure — Förbrukning april 2026 (SEK)
+ 
+1
+ 
+mån 24 412,00
+ 
+24 412,00
+Azure Hybrid Benefit rabatt (Windows Server)
+ 
+1
+ 
+mån " 3 200,00
+ 
+" 3 200,00
+Advania Cloud Management (månatlig tjänst)
+ 
+1
+ 
+mån 5 500,00
+ 
+5 500,00
+Summa exkl. moms:
+ 
+26 712,00 kr
+Moms (25 %)
+ 
+6 678,00 kr
+
+ATT BETALA:
+ 
+33 390,00 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Azure-förbrukning specificeras i Azure Cost Management portal. Hybrid Benefit aktiverat för 8 Windows Server-licenser (SA-berättigade).
+CSP-ID: ADV-SE-441.

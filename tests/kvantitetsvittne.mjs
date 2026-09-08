@@ -32,6 +32,7 @@ import assert from 'node:assert/strict';
 import { klassaKvantitet, markKvantiteter, farBaraPengar, PROVENIENS } from '../lib/kvantitetsvittne.js';
 import { computeLikeForLikeSaasTarget } from '../agents/recommender/recommend.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
+import { korpusText, korpusNamn } from './korpus.mjs';
 
 const TIERS = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
 
@@ -173,6 +174,32 @@ describe('KV · Ett antal som modellen räknade fram får inte driva pengar', ()
     assert.equal(d.proveniens, PROVENIENS.HARLEDD,
       'DOKUMENTERAR DAGENS BRIST: en KORREKT avläst 57:a klassas härledd på pdfjs verkliga '
       + 'radform. Den dagen detta blir `avlast` får grinden armeras igen — inte förr.');
+  });
+
+  test('KV-10 · MOT VERKLIGT pdfjs-UTFALL: här är beviset för att grinden är riven', () => {
+    // Korpusen (test-corpus/textlager/) bär pdfjs FAKTISKA utfall. Det här provet mäter vad
+    // vittnet gör med den formen — och utfallet ÄR skälet till att pengagrinden inte är armerad.
+    const text = korpusText('microsoft');
+    // pdfjs lägger varje cell på egen rad: «57» står ensamt, beloppet fyra rader bort.
+    assert.match(text, /^57$/m, 'korpusen måste bära den verkliga formen, annars mäter provet inget');
+
+    const d = klassaKvantitet({ description: 'Microsoft 365 Business Premium', quantity: 57,
+      unitPrice: 270, amount: 15390, dokumenttext: text });
+    assert.equal(d.proveniens, PROVENIENS.HARLEDD,
+      'DAGENS BRIST, mätt mot verkligt utfall: en KORREKT avläst 57:a klassas härledd. Blir detta '
+      + '`avlast` får pengagrinden armeras igen — inte förr.');
+
+    // Och bredden på problemet, så att ingen tror det är ett enskilt fall: över hela korpusen
+    // hittar radfönstret nästan aldrig antalet, eftersom formen är kolumner och inte rader.
+    let traffar = 0;
+    for (const namn of korpusNamn().slice(0, 20)) {
+      const t = korpusText(namn);
+      // Ett rimligt antal (2–99) som står ensamt på en rad — den form pdfjs faktiskt ger.
+      if (/^\s*\d{1,2}\s*$/m.test(t)) traffar++;
+    }
+    assert.ok(traffar >= 10,
+      `bara ${traffar} av 20 fakturor har ett antal i egen rad — om detta sjunker har korpusen `
+      + 'bytt form och KV-10:s mätning betyder inte längre det den säger');
   });
 
   test('KV-07 · ingen märkning = oförändrat beteende (fixturer får inte tystas)', () => {

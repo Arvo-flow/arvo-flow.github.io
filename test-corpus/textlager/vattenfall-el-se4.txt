@@ -1,0 +1,65 @@
+Vattenfall Eldistribution AB
+
+Org.nr: 556417-0024
+Evenemangsgatan 13, 169 79 Solna
+
+FAKTURA
+
+Fakturanr: VTF-2026-05-0091234
+Fakturadatum: 2026-05-01
+Förfallodatum: 2026-05-30
+
+Faktureras till:
+
+Skånska Livs AB
+Stortorget 3, 211 23 Malmö
+
+Beskrivning
+ 
+Antal
+ 
+À-pris
+ 
+Belopp (ex. moms)
+
+Vattenfall Rörligt Företag — April 2026 — 6 800 kWh
+ 
+6800
+ 
+kWh 0,712
+ 
+4 841,60
+Elnätabonnemang 3×25A (fast avgift)
+ 
+1
+ 
+mån 545,00
+ 
+545,00
+Nätöverföring SE4 — 6 800 kWh × 0,187 kr/kWh
+ 
+6800
+ 
+kWh 0,187
+ 
+1 271,60
+Energiskatt — 6 800 kWh × 0,428 kr/kWh
+ 
+6800
+ 
+kWh 0,428
+ 
+2 910,40
+Summa exkl. moms:
+ 
+9 568,60 kr
+Moms (25 %)
+ 
+2 392,15 kr
+
+ATT BETALA:
+ 
+11 960,75 kr
+
+Betalning: Bankgiro 5555-5555 · Referens: Fakturanummer
+Elområde SE4 (Malmö/Skåne) | Rörligt spotprisavtal | Genomsnittspris april: 71,2 öre/kWh | Anläggnings-ID: 7352298411234567
