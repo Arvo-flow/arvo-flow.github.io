@@ -137,6 +137,40 @@ describe('FAKTURANUMMER · hela vägen från pappret till rummet', () => {
       'pdfjs-dist måste ligga i dependencies, inte devDependencies');
   });
 
+  test('FN-15 · pdfjs OPTIONELLA beroenden är obligatoriska för OSS', () => {
+    // ══ TEXTLAGRET VAR DÖTT I PRODUKTION I TRE VECKOR (2026-09-09) ═══════════════════════════
+    // Grundaren skickade in 25 fakturor skarpt. NOLL bar ett fakturanummer. Vercels runtime-logg:
+    //     [textlager] kunde inte läsas — ingen kolumnkorrigering: DOMMatrix is not defined
+    //     [fakturanummer] avvisat (inget_textlager_att_bekrafta_mot)
+    //
+    // `@napi-rs/canvas` är en OPTIONAL dependency hos pdfjs-dist. Den installeras lokalt och i
+    // GitHub Actions — men inte på Vercel. Utan den kan pdfjs inte polyfilla `DOMMatrix`, och
+    // `extraheraTextlager` kastar på VARJE faktura. Återskapat lokalt genom att flytta undan
+    // paketet: samma felmeddelande, ord för ord.
+    //
+    // ⚠️ OCH DÄRFÖR HAR GRINDEN ALDRIG FUNGERAT SKARPT. De «72 av 72 bekräftade» från 15 augusti
+    // mättes med `scripts/probe-fakturanummer.mjs` i GitHub Actions — en miljö produktionen inte
+    // är i. Mekanismen svarade när den matades; ingen mätning bevisade att den matades i
+    // produktion. Villkorsvaktens sjukdom (Verifieringsplikten p.5), i en mekanik vi litat på i
+    // tre veckor. Det som avslöjade den var den FÖRSTA skarpa mätningen, inte ett test.
+    //
+    // REGELN: ett beroende som pdfjs kallar «optional» är inte optional för OSS, för vår kod
+    // KASTAR utan det. Vi deklarerar det själva så att varje installation får det.
+    const pkg = JSON.parse(las('package.json'));
+    const pdfjs = JSON.parse(las('node_modules/pdfjs-dist/package.json'));
+    for (const namn of Object.keys(pdfjs.optionalDependencies ?? {})) {
+      assert.ok(pkg.dependencies?.[namn],
+        `${namn} är optional hos pdfjs-dist och installeras därför inte överallt. Vår kod kastar `
+        + 'utan den (DOMMatrix is not defined) — deklarera den i dependencies.');
+    }
+
+    // ⚠️ VAD DEN HÄR VAKTEN INTE KAN: den läser ett MANIFEST, aldrig en körande miljö. Att
+    // paketet står i package.json bevisar inte att Vercel installerade det, och det var precis
+    // den skillnaden som kostade tre veckor. Det enda beviset är en skarp mätning —
+    // `mcp__Vercel__get_runtime_logs` efter en deploy, eller en faktura genom den live-utlagda
+    // sajten. Vakten flyttar bevisbördan; den bär den inte.
+  });
+
   test('FN-12 · numret NÅR båda liggarna (lagrat och osynligt är ingen leverans)', () => {
     const store = las('lib/invoice-store.js');
     assert.match(store, /SELECT[\s\S]{0,400}invoice_number/,
