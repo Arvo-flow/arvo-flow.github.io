@@ -1,0 +1,54 @@
+name: Rensa rum
+
+# Rensar ETT rum i skarpa miljön på grundarens begäran (25 fakturor ska in via mejl, rummet ska
+# vara rent). Skriptet bär bara en sha256-summa av adressen och maskerar den i varje utskrift — repot
+# och Actions-loggen är PUBLIKA, och en e-postadress i en publik logg går inte att ta tillbaka.
+#
+# TORRKÖRNING ÄR DEFAULT. Skarpt läge kräver att triggerfilen innehåller ordet SKARPT, vilket gör
+# valet auditerbart i git-historiken i stället för att bo i ett kommando någon körde en gång.
+#
+# Resultatet committas MEDVETET INTE tillbaka: inventeringen läses ur körloggen och behöver inte
+# ligga i publik historik för alltid.
+on:
+  workflow_dispatch:
+    inputs:
+      skarpt:
+        description: 'Skriv SKARPT för att faktiskt radera (annars torrkörning)'
+        required: false
+        default: ''
+  push:
+    paths:
+      - 'ops/rensa.trigger'
+
+jobs:
+  rensa:
+    name: Rensa rum
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Avgör läge
+        id: lage
+        run: |
+          set -o pipefail
+          LAGE=""
+          if [ -f ops/rensa.trigger ] && grep -q "SKARPT" ops/rensa.trigger; then LAGE="1"; fi
+          if [ "${{ inputs.skarpt }}" = "SKARPT" ]; then LAGE="1"; fi
+          echo "skarpt=$LAGE" >> "$GITHUB_OUTPUT"
+          echo "Läge: ${LAGE:+SKARPT}${LAGE:-torrkörning}"
+      - name: Rensa
+        run: |
+          # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar
+          # framgång, och 35 av 75 workflows saknade den (SV-11, 22 aug).
+          set -o pipefail
+          node scripts/rensa-rummet.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RENSA_SKARPT: ${{ steps.lage.outputs.skarpt }}
