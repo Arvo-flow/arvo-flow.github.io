@@ -122,7 +122,10 @@ describe('FAKTURANUMMER · hela vägen från pappret till rummet', () => {
     const ex = las('agents/test-invoice/extract.js');
     assert.match(ex, /await extraheraTextlager\(pdfBytes\)/,
       'det oberoende vittnet måste hämtas ur den faktiska PDF:en');
-    assert.match(ex, /textlager: _textlager/, 'och bäras ut till den som dömer numret');
+    // Textlagret bärs ut — men som ett ICKE-UPPRÄKNINGSBART fält, så att kundens fakturatext
+    // inte kan följa med i en spridning eller en logg (FK-13). Grinden når det ändå.
+    assert.match(ex, /\[\['textlager', _textlager\], \['tokens', _tokens\]\]/,
+      'och bäras ut till den som dömer numret');
   });
 
   test('FN-11 · pdfjs är en deklarerad produktionsdependency', () => {

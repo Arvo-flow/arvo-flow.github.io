@@ -496,4 +496,88 @@ describe('RK · Absoluta påståenden skopas till den nivå som citeras', () => 
     assert.match(text(en, 20_000), /Skillnaden ligger helt i fakturerat à-pris/,
       'med alla nivåer över golvet ÄR skillnaden helt i à-priset — vakten får inte förbjuda ordet');
   });
+
+  test('RK-18 · en kund på EXAKT listpris får aldrig en riktning ur avrundningen', () => {
+    // ══ ÖRESFIXEN (2026-09-09) ═══════════════════════════════════════════════════════════════
+    // `amountOre`/`unitPriceOre` infördes 12 augusti som observationer och lästes av NOLL
+    // konsumenter i recommend.js. Run-raten byggdes på kronorfältet, som avrundar varje rad till
+    // ±0,50 kr — delat på antalet licenser blir det ±0,50/qty per licens och månad, alltså
+    // femtio gånger den fasta toleransen 0,01 vid en enda licens.
+    //
+    // MÄTT genom computeLikeForLikeSaasTarget, kund som betalar EXAKT Business Premiums
+    // verifierade listpris (210,29 kr/mån), dominantRiktning per licensmängd FÖRE fixen:
+    //     1 → under (−3 kr/år) · 2 → over (+5) · 3 → over · 5 → under (−5) · 8 → under
+    //     10 → over · 12 → under · 20 → over · 25 → lika · 40 → over · 45 → lika · 57 → over
+    // Tio av tolv gav en FALSK riktning, och riktningen kastade godtyckligt med antalet. Talet
+    // styr prosan OCH «era övriga licensnivåer ligger åt andra hållet» — brus som omdöme, på en
+    // kund som betalar precis rätt pris.
+    const P = TIERS['business-premium'].msrpAnnual;
+    for (const qty of [1, 2, 3, 5, 8, 10, 12, 20, 25, 40, 45, 57]) {
+      const exakt = P * qty;
+      const amount = Math.round(exakt);          // det kronorfältet kan bära
+      const lfl = computeLikeForLikeSaasTarget([{
+        description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+        quantity: qty, amount, unitPrice: Math.round(P),
+        amountOre: Math.round(exakt * 100),
+      }], TIERS, amount * 12);
+      const g = lflPrisgap(lfl);
+      assert.equal(g.dominantRiktning, 'lika',
+        `${qty} licenser à exakt ${P} kr gav «${g.dominantRiktning}» — en riktning ur `
+        + 'kronorfältets avrundning, inte ur kundens pris');
+      assert.equal(g.dominantGapArs, 0, 'och gapet måste vara noll, inte en avrundning');
+      assert.equal(lfl.tierLines[0].tolerans, 0.01,
+        'med öret avläst ÄR toleransen den 0,01 kommentaren alltid påstod');
+    }
+  });
+
+  test('RK-19 · MOTPROVET: den härledda toleransen slutar aldrig larma', () => {
+    // En tolerans som växer tills grinden slutat titta är samma sjukdom som den lagar — det var
+    // precis så min första balanskravsfix blev blind vid höga kvantiteter (24 aug). Utan öre är
+    // toleransen 0,50/qty + 0,01, och den måste absorbera avrundningen UTAN att svälja ett gap.
+    const P = TIERS['business-premium'].msrpAnnual;
+    const bygg = (qty, krPerEnhet, medOre) => {
+      const kr = krPerEnhet * qty;
+      const rad = { description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+        quantity: qty, amount: Math.round(kr), unitPrice: Math.round(krPerEnhet) };
+      // Fixturen SKRIVER fältet i den aggregerade formen — det är formen produktionen matar
+      // recommend.js med. RO-08 vaktar mot att LÄSA det utanför radensOre; att bygga indatan
+      // är ingen läsväg som kan glida isär.
+      if (medOre) rad.amountOre = Math.round(kr * 100);   // ore-ok: fixturen skriver, läser inte
+      return lflPrisgap(computeLikeForLikeSaasTarget([rad], TIERS, Math.round(kr) * 12));
+    };
+    // Utan öre: exakt listpris tystas (rätt), men verkliga gap åt BÅDA håll står kvar.
+    assert.equal(bygg(1, P, false).dominantRiktning, 'lika', 'avrundningen ska absorberas');
+    assert.equal(bygg(1, 250, false).dominantRiktning, 'over', '+39,71 kr är ett verkligt gap');
+    assert.equal(bygg(5, 200, false).dominantRiktning, 'under', '−10,29 kr likaså');
+    // Och ett LITET äkta gap överlever — även utan öre, även vid en enda licens.
+    assert.equal(bygg(1, P + 1, false).dominantRiktning, 'over',
+      'en krona över listpris är dubbelt toleransen vid qty 1 och måste synas');
+    // Med öre är grinden VASSARE, inte trubbigare: 20 öre fångas där kronorfältet inte kan se det.
+    assert.equal(bygg(10, P + 0.2, true).dominantRiktning, 'over');
+    assert.equal(bygg(10, P + 0.2, true).dominantGapArs, 24);
+  });
+
+  test('RK-20 · ett tal får aldrig motsäga sin egen dom', () => {
+    // Öresmätningen avslöjade en sista lögn: `riktning: 'lika'` bredvid `dominantGapArs: -3`.
+    // Domen sa «samma pris», talet sa «tre kronor billigare». OB-19:s form ordagrant
+    // (`recommendationType: 'switch'` bredvid `grossSaving: 0`) — och en yta som läser det ena
+    // bredvid en yta som läser det andra producerar precis grundarens kortmotsägelse.
+    const P = TIERS['business-premium'].msrpAnnual;
+    // Utan öre vid qty 1: billedUnitMonthly blir 210, golvet 210,29 → domen «lika», och DÅ måste
+    // varje tal i svaret vara noll. Det är fallet som bar lögnen.
+    const g = lflPrisgap(computeLikeForLikeSaasTarget([{
+      description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+      quantity: 1, amount: Math.round(P), unitPrice: Math.round(P),
+    }], TIERS, Math.round(P) * 12));
+    assert.equal(g.riktning, 'lika');
+    assert.equal(g.gapAnnual, 0, 'aggregatets gap får inte motsäga aggregatets riktning');
+    assert.equal(g.dominantGapArs, 0, 'och nivåns gap inte nivåns riktning');
+    // MOTPROVET: när domen INTE är «lika» ska talet vara det verkliga, aldrig nollat.
+    const h = lflPrisgap(computeLikeForLikeSaasTarget([{
+      description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+      quantity: 10, amount: 2500, unitPrice: 250,
+    }], TIERS, 2500 * 12));
+    assert.equal(h.riktning, 'over');
+    assert.ok(h.gapAnnual > 4000, `ett verkligt gap ska stå kvar orört, fick ${h.gapAnnual}`);
+  });
 });

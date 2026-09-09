@@ -26,6 +26,7 @@ import { getSekRate, usdToSek, FALLBACK_RATE_USD_SEK } from './pricing.js';
 import { detectFeeSignals } from '../../lib/fee-signals.js';
 import { radensNiva, annanLicensprodukt } from '../../lib/licensniva.js';
 import { perioderPerAr } from '../../lib/faktureringsperiod.js';
+import { radensOre } from '../../lib/radobservation.js';
 import { detectForensicFindings } from '../../lib/forensics.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
@@ -624,12 +625,72 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
 
   // Run-rate per faktureringsperiod för en rad: prorata till fullt pris
   // (quantity × unitPrice — inte det fakturerade delperiodsbeloppet), övriga radbelopp.
-  const runRate = (l) => (l.is_prorata === true && l.quantity != null && l.unitPrice != null)
-    ? l.quantity * l.unitPrice
-    : (l.amount ?? 0);
+  // ── ÖRESAVLÄSNINGEN VAR INFÖRD MEN ALDRIG LÄST (2026-09-09) ──────────────────────────────
+  // `amountOre`/`unitPriceOre` skrevs av extraktionen 12 augusti — som OBSERVATIONER, aldrig
+  // omräknade — och `grep` gav noll läsare i recommend.js. Run-raten byggdes alltså på
+  // kronorfältet, som avrundar varje rad till ±0,50 kr. Delat på antalet licenser blir det
+  // ±0,50/qty kr per licens och månad, alltså FEMTIO gånger toleransen vid en enda licens.
+  //
+  // MÄTT genom den här funktionen, kund som betalar EXAKT Microsofts verifierade listpris
+  // (Business Premium 210,29 kr/mån) — dominantRiktning per licensmängd:
+  //     qty  1 → «under» (−3 kr/år)   ·  2 → «over» (+5)   ·  5 → «under» (−5)
+  //     qty 45 → «lika» (0)           · 57 → «over» (+7)
+  // Tio av tolv mängder gav en FALSK riktning, och riktningen kastade godtyckligt med antalet.
+  // Talet styr både prosan och «era övriga licensnivåer ligger åt andra hållet» — brus
+  // presenterat som ett omdöme, på en kund som betalar precis rätt pris.
+  //
+  // Öret är fakturans egen exakthet. Där observationen finns räknar vi i den; där den saknas
+  // räknar vi som förut men BÄR FELBUDGETEN vidare, så att toleransen kan härledas ur den
+  // verkliga avrundningen i stället för ur en gissning (se `tolerans` nedan).
+  //
+  // ⚠️ MIN FÖRSTA VERSION LÄSTE `l.amountOre` DIREKT, och RO-08 fällde den. Vakten har rätt:
+  // fältet stavas snake_case i modellens råform och camelCase efter aggregeringen, och en
+  // felstavad läsning ger `undefined` — omöjlig att skilja från «modellen fyllde aldrig fältet».
+  // Precis så var öresfixen i balanskravet DÖD KOD i två dygn (24 aug). En kanonisk läsväg.
+  //
+  // `beloppOreAvlast`, inte `beloppOre`: det senare faller tillbaka på kronor × 100, vilket är en
+  // korrekt enhetskonvertering men INTE en öresavläsning — och hade gjort felbudgeten noll för
+  // rader vars precision vi saknar. Det vore att påstå exakthet vi inte har.
+  const runRate = (l) => {
+    const o = radensOre(l);
+    if (l.is_prorata === true && l.quantity != null) {
+      if (o.aprisOre != null) return l.quantity * (o.aprisOre / 100);
+      if (l.unitPrice != null) return l.quantity * l.unitPrice;
+    }
+    if (o.beloppOreAvlast != null) return o.beloppOreAvlast / 100;
+    return l.amount ?? 0;
+  };
 
-  const periodicTotal = lines.reduce((s, l) => s + runRate(l), 0);
-  const billMult = periodicTotal > 0 ? annualCost / periodicTotal : 12;
+  /**
+   * Radens största möjliga avrundningsfel i kronor. Noll när öret bär — då ÄR talet exakt.
+   * Utan öre avrundas kronorfältet till närmaste krona: som mest 0,50 kr per rad, och för en
+   * prorata-rad 0,50 kr per ENHET eftersom felet ligger i à-priset som multipliceras.
+   */
+  const felBudget = (l) => {
+    const o = radensOre(l);
+    if (l.is_prorata === true && l.quantity != null) {
+      if (o.aprisOre != null) return 0;
+      if (l.unitPrice != null) return 0.5 * l.quantity;
+    }
+    return o.beloppOreAvlast != null ? 0 : 0.5;
+  };
+
+  // ── ATT LAGA runRate ENSAMT VAR EN HALV FIX (mätt 2026-09-09) ────────────────────────────
+  // Med öret inläst i run-raten ändrades INGENTING i utfallet — alla tolv mängderna gav samma
+  // falska riktningar. Skälet: `billMult = annualCost / periodicTotal`, och `annualCost` byggs i
+  // `aggregateLineItems` genom att summera samma KRONORFÄLT. Ett exakt täljarvärde delat med ett
+  // avrundat nämnarvärde ger tillbaka avrundningen. Fixen var alltså inte klar förrän varje led
+  // i kedjan var mätt — «en fix som inte följs till alla konsumenter är en halv fix» (19 aug),
+  // den här gången inom samma uttryck.
+  //
+  // Delningen är principiell, inte en kompromiss: `billMult` är en PERIODMULTIPLIKATOR (12 för
+  // en månadsfaktura) och måste räknas med samma enhet i täljare och nämnare, annars mäter den
+  // avrundning i stället för period. Nivåns fakturerade belopp är en annan fråga, och där bor
+  // exaktheten. `annualCost` lämnas orörd: dess avrundning är ≤ 0,50 kr per rad på ett årstal,
+  // medan per-licenspriset är just där en halv krona vänder en riktning.
+  const kronorPeriodicTotal = lines.reduce((s, l) => s + ((l.is_prorata === true
+    && l.quantity != null && l.unitPrice != null) ? l.quantity * l.unitPrice : (l.amount ?? 0)), 0);
+  const billMult = kronorPeriodicTotal > 0 ? annualCost / kronorPeriodicTotal : 12;
 
   // Summera quantity per tier (ordinarie + prorata på samma tier slås ihop),
   // beräkna tierAnnual EN gång per tier — en avrundning per tier, inte per rad.
@@ -668,9 +729,10 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
       if (qty == null) return null;  // can't compute like-for-like without seat count
 
       const bm = tierBenchmarks[match.key];
-      tierAcc[match.key] = tierAcc[match.key] ?? { quantity: 0, billedRunRate: 0, benchmarkMonthly: bm.arvoAnnual ?? bm.msrpAnnual };
+      tierAcc[match.key] = tierAcc[match.key] ?? { quantity: 0, billedRunRate: 0, felBudgetKr: 0, benchmarkMonthly: bm.arvoAnnual ?? bm.msrpAnnual };
       tierAcc[match.key].quantity += qty;
       tierAcc[match.key].billedRunRate += runRate(item);
+      tierAcc[match.key].felBudgetKr += felBudget(item);
     } else {
       // Add-on / unrecognised: pass through at invoice run-rate
       const addonAnnual = Math.round(runRate(item) * billMult);
@@ -693,6 +755,18 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
     // Ges till AI:n så att licensjämförelser görs på RADENS pris, aldrig på den
     // blandade per-seat-totalen (683-kronorsfelet: totalkostnad kallades licenspris).
     billedUnitMonthly: Math.round((t.billedRunRate * billMult / 12 / t.quantity) * 100) / 100,
+    // ── TOLERANSEN HÄRLEDS UR KÄLLANS AVRUNDNING, INTE UR VÅR EGEN (2026-09-09) ────────────
+    // Här stod en fast 0,01 med motiveringen «härledd, inte vald: billedUnitMonthly avrundas
+    // till två decimaler». Den härledningen var rätt räknad på FEL avrundning — vår egen, inte
+    // källans. Kronorfältets ±0,50 per rad är femtio gånger större vid en licens, och det var
+    // därför en kund på exakt listpris kunde få «under» respektive «over» beroende på hur många
+    // licenser hen råkade ha. Exakt balanskravets läxa (24 aug), i en annan modul.
+    //
+    // Två termer, båda mätbara: källans fel skalat till kr/licens/mån, plus vår egen
+    // två-decimalsavrundning. Bär raderna öre är första termen NOLL och toleransen blir just
+    // den 0,01 kommentaren alltid påstod. Grinden blir alltså VASSARE där fakturan är exakt och   // RK-19
+    // slutar falsklarma där den inte är det — ingen avvägning, samma tal räknat rätt.
+    tolerans: Math.round(((t.felBudgetKr * billMult / 12 / t.quantity) + 0.01) * 10000) / 10000,
     tierAnnual:       Math.round(t.benchmarkMonthly * t.quantity * 12),
   }));
 
@@ -773,7 +847,13 @@ export function lflPrisgap(lfl) {
   const platser = tiers.reduce((s, t) => s + t.quantity, 0);
   // Skillnaden mätt DÄR avläsningen bor: kr per licens och månad.
   const perEnhet = (billedAnnual - benchmarkAnnual) / platser / 12;
-  const riktning = Math.abs(perEnhet) <= 0.01 ? 'lika' : (perEnhet > 0 ? 'over' : 'under');
+  // Aggregatets tolerans är summan av nivåernas felbudgetar, mätt i samma enhet som perEnhet:
+  // varje nivås tolerans gånger dess platser, delat på alla platser. En nivå som bär öre bidrar
+  // med sin rena 0,01; en som saknar öre bidrar med sin verkliga avrundning (se `tolerans`).
+  const TOL_FALLBACK = 0.01;   // gamla fasta toleransen — bara för en tierLine utan fältet
+  const tolFor = (t) => (Number.isFinite(t.tolerans) ? t.tolerans : TOL_FALLBACK);
+  const aggTolerans = tiers.reduce((s, t) => s + tolFor(t) * t.quantity, 0) / platser;
+  const riktning = Math.abs(perEnhet) <= aggTolerans ? 'lika' : (perEnhet > 0 ? 'over' : 'under');
 
   // ⚠️ AGGREGATETS RIKTNING FICK BESKRIVA DEN DOMINANTA NIVÅNS TAL (rättat 2026-09-06, Fables
   // granskning). Prosan citerar ALLTID den dominanta nivåns à-pris och golv — men riktningen
@@ -787,19 +867,32 @@ export function lflPrisgap(lfl) {
   // BESPARINGEN och därför är en summa. `dominantRiktning` styr PROSAN, som citerar en nivå.
   const riktningFor = (t) => {
     const per = t.billedUnitMonthly - t.benchmarkMonthly;
-    return Math.abs(per) <= 0.01 ? 'lika' : (per > 0 ? 'over' : 'under');
+    return Math.abs(per) <= tolFor(t) ? 'lika' : (per > 0 ? 'over' : 'under');
   };
   const dom = tiers.find((t) => t.key === lfl.dominantTierKey) ?? tiers[0];
 
+  // ── ETT TAL FÅR ALDRIG MOTSÄGA SIN EGEN DOM (2026-09-09) ─────────────────────────────────
+  // Öresmätningen visade en sista lögn: en kund på exakt listpris utan öresavläsning fick
+  // `riktning: 'lika'` bredvid `dominantGapArs: -3`. Domen sa «samma pris», talet sa «tre kronor
+  // billigare». Det är OB-19:s form ordagrant — `recommendationType: 'switch'` bredvid
+  // `grossSaving: 0` — och en yta som läser det ena bredvid en yta som läser det andra
+  // producerar precis den motsägelse grundarens kort bar.
+  //
+  // «Lika» BETYDER att skillnaden ligger inom vad avläsningen kan bevisa. Då är det enda ärliga
+  // talet noll: att visa −3 vore att påstå en precision toleransen just sagt att vi saknar.
+  // Invarianten byggs in i returen, så tillståndet inte kan uppstå — aldrig lappas nedströms.
+  const domR = riktningFor(dom);
+  const gapArs = domR === 'lika'
+    ? 0 : Math.round((dom.billedUnitMonthly - dom.benchmarkMonthly) * dom.quantity * 12);
   return {
     billedAnnual:    Math.round(billedAnnual),
     benchmarkAnnual: Math.round(benchmarkAnnual),
-    gapAnnual:       Math.round(billedAnnual - benchmarkAnnual),
+    gapAnnual:       riktning === 'lika' ? 0 : Math.round(billedAnnual - benchmarkAnnual),
     riktning,
-    dominantRiktning: riktningFor(dom),
+    dominantRiktning: domR,
     // Den dominanta nivåns EGET årsgap — prosan får aldrig beskriva ett citerat à-pris med
     // summan av alla nivåer. Samma fel, andra fältet.
-    dominantGapArs:  Math.round((dom.billedUnitMonthly - dom.benchmarkMonthly) * dom.quantity * 12),
+    dominantGapArs:  gapArs,
     // ── «LIKA» ÄR INTE EN RIKTNING (rättat 2026-09-08, grundarens Microsoft-kort) ─────────────
     // Här stod `new Set(tiers.map(riktningFor)).size > 1`, och 'lika' är ett av tre värden i den
     // mängden. Följden stod på kortet: «Era övriga licensnivåer ligger åt andra hållet» — där den

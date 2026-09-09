@@ -162,6 +162,24 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > orden syns inte. De flyttar bevisbördan till något en granskare kan slå upp — de bär den inte.
 > Punkt 1 är den enda som faktiskt granskar; punkt 2–4 gör bara fusket synligt.
 
+> **✅ GRUNDARBESLUT 2026-09-08: «ETT GRÖNT SOM BETYDER *JAG TITTADE INTE* ÄR FARLIGARE ÄN ETT RÖTT.»**
+> Raden är grundarens egen, fälld när jag vägrade committa en okänd ändring som dykt upp i trädet
+> mitt under en granskning. Den generaliserar hela obduktionens felfamilj till vakterna själva: ett
+> rött larm kostar en granskning, ett falskt grönt kostar förtroendet — och det gröna syns aldrig.
+>
+> **Mätt samma dygn, tre gånger i mitt eget arbete:**
+> · **En vakt vars sabotage inte fäller.** FK-07:s täckningströsklar (`≥55`, `≥150`) låg 14 % och
+>   20 % under mätvärdena 64/187. Att strama rubrikregexen till `/^antal$/i` tappade tre verkliga
+>   fakturor och lämnade **hela sviten grön**. Trösklar är luft; exakta tal är en mätning.
+> · **En källtextvakt som inte kan se exekveringsordning.** Jag vaktade «korrigeringen körs före
+>   härledningen» med `indexOf`. Sabotaget «flytta tillbaka anropet» fällde noll — `indexOf` hittar
+>   den första TEXTFÖREKOMSTEN, även en i en död gren. **Ordningsinvarianter kan bara bevisas av
+>   beteende.** Rätt drag var att flytta korrigeringen in i funktionen som härleder talet.
+> · **Ett sabotage som är en no-op.** `assert old in s` fångar en sträng som inte finns — aldrig ett
+>   sabotage som inte ändrar något. Mitt S3 var no-op **två gånger** (en tillagd kommentarrad, sedan
+>   en tillagd variabel som inte rörde kedjan) innan det var en verklig omkastning. **Efter varje
+>   sabotage: fråga inte bara om strängen byttes, utan om BETEENDET gjorde det.**
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning
@@ -471,6 +489,59 @@ signera", aldrig som ett verkställt löfte.)
    > **en svit som bara körs i ett tillstånd produktionen inte är i bevisar att mekanismen svarar,
    > aldrig att den svarar i verkligheten.** Åtgärd: `getPublicListBenchmark()` — samma funktion
    > dörrens avslöjande redan använde (regel 1) — gör frågan tillståndsoberoende. BA-08 låser vägen.
+
+   > **✅ ANTALSDOKTRINEN — ETT ANTAL ÄR EN AVLÄSNING, ELLER SÅ FINNS DET INTE (grundarbeslut 2026-09-09).**
+   > Grundarens fråga: *får systemet någonsin räkna baklänges (Belopp ÷ À-pris = Antal) när
+   > Antal-kolumnen är tom?* Svaret är nej, och det är **mätt** genom kolumnläsaren mot de 75
+   > verkliga fakturorna: **18 av 23** rader utan avläst antal ger ett rent heltal vid
+   > bakåträkning — och **noll** av dem är ett antal enheter. Metoden fyrar på fyra rader av fem
+   > och har noll rätt.
+   >
+   > **Varför, och det är hela argumentet:** `539,60 ÷ 28,40 = 19` — men **19 är kr/GB och 28,4 är
+   > antalet GB**. På roamingrader står mängden i Antal-kolumnen och priset i À-pris-kolumnen, så
+   > kvoten ger tillbaka PRISET och kallar det ett antal. Divisionen kan inte veta vilket av de två
+   > talen som är mängden. Aritmetiken är exakt, tolkningen inverterad — och ett tal som är
+   > matematiskt korrekt och semantiskt omvänt bär precisionens auktoritet utan att gå att skilja
+   > från en avläsning. Övriga träffar är «12,4 TB» → 12 400 licenser och «3 mån» → 3.
+   >
+   > Regeln: ett bakåträknat tal får ALDRIG driva `seatCount`, jämförelsegolvet, ett bytesmål, ett
+   > arvode eller en fullmakt. Identiteten får sägas som ett påstående om TALEN («2 102,90 = 10 ×
+   > 210,29»), aldrig om ANTALET. Tystnaden är svaret. Maskinvakt: `tests/antalsdoktrinen.mjs`
+   > (AD-01..05, sabotage-bevisad) + sonden `scripts/probe-bakatrakning.mjs`, som står kvar körbar —
+   > ett mätvärde utan sitt instrument är ett påstående.
+   >
+   > **Förutsättningen var att `tom_cell` slutade ljuga.** Utfallet påstod «bevisad tomhet» även när
+   > cellen bar text vi inte kunde läsa: mätt på produktionsvägen var **70 av 75** sådana fall (93 %)
+   > i själva verket «jag läste inte» — inklusive CR-88412:s fyra rader, där antalet står tryckt som
+   > «45 st (1 Maj - 31 Maj)». Att bygga en doktrin på den premissen hade varit dödfött. `olasbar_cell`
+   > är nu ett eget utfall, och `heltal()` vidgas ALDRIG för att slippa det: samma vidgning gör
+   > «3 mån» till 3 och «12400 GB» till 12 400.
+
+   > **✅ EN TOLERANS SOM ÄR «HÄRLEDD» KAN VARA HÄRLEDD UR FEL AVRUNDNING (2026-09-09, öresfixen).**
+   > `amountOre`/`unitPriceOre` infördes 12 augusti som observationer och lästes av **noll**
+   > konsumenter i `recommend.js`. Prisgapet byggdes på kronorfältet, som avrundar varje rad till
+   > ±0,50 kr; delat på antalet licenser blir det ±0,50/qty per licens och månad, alltså **femtio
+   > gånger** den fasta toleransen 0,01 vid en enda licens. Kommentaren intygade att toleransen var
+   > «HÄRLEDD, inte vald» — och den var rätt räknad på VÅR EGEN tvådecimalsavrundning i stället för
+   > på KÄLLANS. Balanskravets läxa (24 aug) i en annan modul.
+   >
+   > **Mätt: en kund som betalar EXAKT Microsofts verifierade listpris fick fel riktning i 10 av 12
+   > licensmängder**, och riktningen kastade godtyckligt med antalet (1 → «under», 2 → «over»,
+   > 5 → «under», 45 → «lika», 57 → «over»). Talet styr både prosan och «era övriga licensnivåer
+   > ligger åt andra hållet» — brus presenterat som ett omdöme, på en kund som betalar rätt pris.
+   >
+   > **Att laga läsvägen ensam var en halv fix, och mätningen visade det direkt:** utfallet ändrades
+   > inte alls, eftersom `billMult = annualCost / periodicTotal` och `annualCost` summerar samma
+   > kronorfält. Ett exakt täljarvärde delat med ett avrundat nämnarvärde ger tillbaka avrundningen.
+   > Fixen var inte klar förrän varje led i uttrycket var mätt. Toleransen härleds nu ur källans egen
+   > avrundning och blir **vassare** där fakturan bär öre (0,01) och slutar falsklarma där den inte
+   > gör det — ingen avvägning, samma tal räknat rätt. Motprovet är låst: verkliga gap åt båda håll,
+   > ner till 20 öre, står kvar. RK-18..20, sabotage-bevisade.
+   >
+   > **Och en sista lögn föll ut ur mätningen:** `riktning: 'lika'` bredvid `dominantGapArs: -3`.
+   > Domen sa «samma pris», talet sa «tre kronor billigare» — OB-19:s form ordagrant. «Lika» betyder
+   > att skillnaden ligger inom vad avläsningen kan bevisa, och då är noll det enda ärliga talet.
+   > Invarianten bor i returen, aldrig lappad nedströms.
 
    > **✅ RESERVKORTET FÅR INTE PÅSTÅ ETT SKÄL (2026-08-15, ur Fortnox-fallet).** `watchedCard`
    > kände inte igen koden `fingerprint_mismatch` och delade ut sitt reservkort: *"Mottagen och

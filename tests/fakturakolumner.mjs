@@ -412,6 +412,42 @@ describe('FK · Koden läser antalet ur fakturans egen kolumn', () => {
     assert.equal(med.seatCount, 57, 'med dokument vinner pappret — annars mäter provet tomhet');
   });
 
+  test('FK-13 · råtexten kan inte läcka genom en spridning eller en serialisering', async () => {
+    // `textlager` är hela fakturans text, `tokens` varje positionerat fragment — kundens
+    // dokument i klartext, på ett objekt som skickas runt i hela pipelinen. Varje konsument
+    // bygger i dag en vitlista, så ingenting läcker. Men ett enda framtida `{ ...extracted }`
+    // eller `JSON.stringify(extracted)` hade tagit med hela fakturan, i loggar som läses ur ett
+    // PUBLIKT repo. Fälten är därför icke-uppräkningsbara: direkt åtkomst fungerar, men de kan
+    // inte råka följa med.
+    //
+    // ⚠️ PROVET FÅR INTE MÄTA MIN EGEN FUNKTION MOT SIG SJÄLV. Vi bygger objektet med SAMMA
+    // konstruktion som produktionen och prövar det utifrån — de tre vägar en läcka faktiskt
+    // tar: spridning, JSON, och Object.keys (loggning).
+    const HEMLIG = 'Fakturamottagare: Exempelbolaget AB · Org 556000-0000';
+    const ex = { supplier: 'X', annualCost: 1000 };
+    for (const [namn, varde] of [['textlager', HEMLIG], ['tokens', [{ x: 1, y: 2, text: HEMLIG }]]]) {
+      Object.defineProperty(ex, namn, { value: varde, enumerable: false, writable: true, configurable: true });
+    }
+    assert.equal(ex.textlager, HEMLIG, 'den som FRÅGAR efter texten ska få den');
+    assert.equal(ex.tokens.length, 1, 'och tokens likaså — pipelinen behöver dem');
+    assert.doesNotMatch(JSON.stringify({ ...ex }), /Exempelbolaget/,
+      'en spridning får aldrig ta med råtexten');
+    assert.doesNotMatch(JSON.stringify(ex), /Exempelbolaget/,
+      'en serialisering får aldrig ta med råtexten — det är loggvägen');
+    assert.deepEqual(Object.keys(ex), ['supplier', 'annualCost'],
+      'och den syns inte för den som räknar upp fälten');
+
+    // Och att produktionen FAKTISKT bygger objektet så. Utan den här raden prövar provet bara
+    // att JavaScript fungerar — villkorsvaktens sjukdom i miniatyr.
+    const { readFileSync } = await import('node:fs');
+    const ex2 = readFileSync(new URL('../agents/test-invoice/extract.js', import.meta.url), 'utf8');
+    assert.match(ex2, /\[\['textlager', _textlager\], \['tokens', _tokens\]\]/,
+      'extractInvoice måste dölja BÅDA fälten');
+    assert.match(ex2, /enumerable: false/, 'och dölja dem genom att göra dem ouppräkningsbara');
+    assert.doesNotMatch(ex2.replace(/\/\/.*$/gm, ''), /^\s*textlager: _textlager,\s*$/m,
+      'de får inte ligga som vanliga fält på returobjektet');
+  });
+
   test('FK-08 · texten och koordinaterna kommer ur SAMMA parse', async () => {
     // Två parses vore två sanningar, och den som ändras är inte nödvändigtvis den som läses.
     // Textlagret i korpusen och tokens måste beskriva samma dokument.

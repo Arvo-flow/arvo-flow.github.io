@@ -139,6 +139,7 @@ import './fakturabalans.mjs';
 import './korpus.mjs';
 import './halsokontroll.mjs';
 import './fakturakolumner.mjs';
+import './antalsdoktrinen.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

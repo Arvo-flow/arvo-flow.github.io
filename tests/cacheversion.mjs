@@ -153,6 +153,24 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'cachen serverar då det gissade talet för varje redan analyserad faktura');
   });
 
+  test('CV-13 · öresfixen och cache-versionen hänger ihop', () => {
+    // Öresavläsningen ändrar `billedUnitMonthly`, `riktning`, `gapAnnual` och `dominantGapArs` —
+    // alltså kortets dom OCH dess tal. Ett cachat svar från före fixen bär kvar den falska
+    // riktningen för varje redan analyserad faktura. Samma koppling som CV-03..12.
+    //
+    // ⚠️ INGEN NY BUMP, OCH SKÄLET SKA STÅ SKRIVET. Tre resultatändringar delar v25 —
+    // kolumnläsaren, seatCount-ordningen och öresfixen — därför att alla tre ligger på SAMMA
+    // omergade branch och når produktionen i ett enda steg v24 → v25. Det finns alltså inga
+    // v25-svar att servera, och en andra bump hade bara kastat cachen utan att skydda något.
+    // CV-05:s läxa gäller ändå: kopplingen bokförs HÄR, så att en FJÄRDE resultatändring inte
+    // kan åka snålskjuts på ett tal som redan är förbrukat.
+    const REC = readFileSync(join(ROT, 'agents/recommender/recommend.js'), 'utf8');
+    if (!/const felBudget = \(l\) =>/.test(REC)) return;   // fixen borttagen → RK-18 äger fallet
+    assert.ok(cacheVersion() >= 25,
+      `öresfixen finns men pdf:result står på v${cacheVersion()} — cachen serverar då den `
+      + 'avrundningsdrivna riktningen för varje redan analyserad faktura');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

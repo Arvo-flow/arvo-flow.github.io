@@ -1408,11 +1408,26 @@ export async function extractInvoice(input, opts = {}) {
   }
 
   const aggregated = aggregateLineItems(toolUseBlock.input, _tokens);
-  return {
+  const resultat = {
     ...aggregated,
-    textlager: _textlager,
-    tokens: _tokens,
     schemakrav: { ok: schemaVerdict.violations.length === 0, brott: schemaVerdict.violations.length },
     usage: response.usage,
   };
+
+  // ── RÅMATERIALET FÅR INTE KUNNA LÄCKA AV MISSTAG (2026-09-09) ────────────────────────────
+  // `textlager` är HELA fakturans text och `tokens` är varje positionerat fragment — kundens
+  // dokument i klartext. Jag gick igenom varje konsument: svarskuvertet, `storeAnalysis`,
+  // `buildAlertHtml` och loggraden bygger alla en VITLISTA, så ingenting läcker i dag. Men det
+  // är tur, inte konstruktion: ett enda framtida `{ ...extracted }` eller
+  // `JSON.stringify(extracted)` hade tagit med hela fakturan — i loggar som läses av Actions,
+  // i ett PUBLIKT repo, eller rakt ut i ett svar.
+  //
+  // Fälten är därför ICKE-UPPRÄKNINGSBARA. `extracted.textlager` fungerar precis som förut för
+  // den som frågar EFTER det; en spridning eller en serialisering kan inte längre råka få med
+  // det. Tillståndet «råtexten följde med utan att någon bad om den» är inte längre möjligt att
+  // representera — samma drag som obligatoriska `tokens`-argumentet, en nivå ned. FK-13.
+  for (const [namn, varde] of [['textlager', _textlager], ['tokens', _tokens]]) {
+    Object.defineProperty(resultat, namn, { value: varde, enumerable: false, writable: true, configurable: true });
+  }
+  return resultat;
 }
