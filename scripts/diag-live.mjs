@@ -66,31 +66,55 @@ console.log(JSON.stringify({
   stage:               data.stage ?? null,
   kod:                 data.kod ?? null,
   error:               data.error,
-  // ── DAGENS TRE FRÅGOR (2026-09-09) ────────────────────────────────────────────────────────
-  // 1. LEVER TEXTLAGRET? Numret bekräftas mot pdfjs textlager. Saknades det på 25 av 25 fakturor
-  //    därför att `@napi-rs/canvas` inte fanns i Vercels funktionsbundle (DOMMatrix is not
-  //    defined). Ett nummer här är beviset att polyfillen nådde produktionen.
-  fakturanummer:       data.extracted?.invoiceNumber ?? null,
-  // 2. TIGER RING 1? `invoiceTotal` konverterades aldrig, så radsumman (SEK) jämfördes mot
-  //    totalen (EUR/USD) och fällde Google, Slack, Atlassian och AWS. En `route` som inte är
-  //    review_queue med ett Ring1-skäl är beviset.
-  originalvaluta:      data.extracted?.originalCurrency ?? null,
-  fxKurs:              data.extracted?.fxRate ?? null,
-  // 3. SITTER PRISET? Öresfälten konverterades inte heller — Googles per-licenspris blev
-  //    11,50 kr i stället för 131,90. Talet ska ligga kring 132 kr, inte kring 11.
+  // ── DAGENS FRÅGOR (2026-09-09) ────────────────────────────────────────────────────────────
+  // ⚠️ TRE FÄLT ÄR BORTTAGNA HÄRIFRÅN, och skälet är hela sondens läxa. `invoiceNumber`,
+  // `originalCurrency` och `fxRate` lästes här från 9 sep — och MÄTT genom att räkna deras
+  // förekomster i api-lagret serialiseras de aldrig: 0, 0 respektive 1 (den cachade grenen, som
+  // läser fältet ur svarskuvertet — ett objekt som aldrig burit det). Sondens enda möjliga svar
+  // var «null» i varje gren, oavsett verkligheten, och dess egen alla-null-larmrad pekade då ut
+  // fältnamnen som misstänkt. **Ett fält som inte kan mätas ska inte stå i utfallet**: en rad som
+  // alltid säger null är inte tystnad, den är brus som ser ut som ett mätvärde.
+  //
+  // 1. LEVER TEXTLAGRET? Rätt vittne är radposternas `antalKalla` — kolumnläsarens proveniens,
+  //    härledd ur pdfjs-tokens, alltså ur samma polyfill som fakturanumret. Till skillnad från
+  //    numret FÖLJER den med i `extracted.lineItems`, som auto- och no_benchmark-grenarna båda
+  //    serialiserar. Utfallet redovisas som en fördelning, aldrig som ett ja/nej: en rad utan
+  //    läsbar antalskolumn är ett giltigt utfall (`olasbar_cell`) och inte ett dött textlager.
+  radersAntalKalla:    (data.extracted?.lineItems ?? [])
+    .map((l) => l?.antalKalla ?? '(saknas)'),
+  // 2. SITTER PRISET? Öresfälten konverterades inte — Googles per-licenspris blev 11,50 kr i
+  //    stället för 131,90. Talet ska ligga i kronor per licens och månad, inte i ental.
   prisPerLicens:       data.extracted?.pricePerSeatMonthly ?? null,
   antalLicenser:       data.extracted?.seatCount ?? null,
+  // 3. TIGER RING 1? Mäts på `route` + `verifications`, inte på ett valutafält: `radsumma:ok`
+  //    bredvid `route: auto` ÄR beviset att radsumman gick ihop med totalen.
 }, null, 2));
 
 // ⚠️ FYRA TYSTA `null` LÄSTES EN GÅNG SOM MÄTVÄRDEN I TVÅ DYGN (20 aug), i det här verktyget.
-// Om alla tre av dagens frågor svarar `null` är det troligen fältnamnen som är fel, inte
-// systemet — och då ska sonden säga det i stället för att rapportera tre nollor som ett utfall.
-const tre = [data.extracted?.invoiceNumber, data.extracted?.originalCurrency,
-             data.extracted?.pricePerSeatMonthly];
-if (tre.every((v) => v == null)) {
-  console.log('\n⚠ ALLA TRE MÄTVÄRDEN ÄR null. Innan det tolkas som ett utfall: kontrollera att');
+// Larmet stod kvar men VAKTADE FEL FÄLT: två av de tre det läste kunde aldrig vara annat än null,
+// så det fyrade på varje körning och pekade ut fältnamnen som misstänkt även när svaret var helt
+// friskt. Ett larm som alltid går är samma sjukdom som ett som aldrig går — det slutar läsas.
+// Nu läser det bara fält som BEVISLIGEN serialiseras.
+const matbara = [data.extracted?.lineItems, data.extracted?.pricePerSeatMonthly,
+                 data.extracted?.seatCount];
+if (matbara.every((v) => v == null)) {
+  console.log('\n⚠ INGET AV MÄTVÄRDENA FINNS. Innan det tolkas som ett utfall: kontrollera att');
   console.log('  fälten finns i svaret. Nycklar under `extracted`:');
   console.log(' ', Object.keys(data.extracted ?? {}).join(', ') || '(inget extracted-objekt alls)');
+}
+
+// Fördelningen av radposternas antalsproveniens. Skrivs SEPARAT och alltid, för det är den enda
+// avläsning som säger om pdfjs-polyfillen nådde Vercels runtime — och den ska gå att läsa utan att
+// tolka en tabell. `(saknas)` betyder att raden inte bär fältet alls: ingen kolumnläsning skedde.
+const kallor = (data.extracted?.lineItems ?? []).map((l) => l?.antalKalla ?? '(saknas)');
+if (kallor.length) {
+  const raknat = kallor.reduce((m, k) => ({ ...m, [k]: (m[k] ?? 0) + 1 }), {});
+  const utan = kallor.filter((k) => k === '(saknas)').length;
+  console.log(`\nTEXTLAGRET · antalsproveniens på ${kallor.length} radpost(er):`);
+  for (const [k, n] of Object.entries(raknat)) console.log(`  ${String(k).padEnd(16)} ${n}`);
+  console.log(utan === kallor.length
+    ? '  → INGEN rad bar fältet. Förenligt med att kolumnläsaren aldrig kördes (död polyfill).'
+    : '  → Minst en rad bar kolumnläsarens proveniens: pdfjs kunde läsas i produktionen.');
 }
 
 // ══ EN CACHETRÄFF MÄTER INGEN DEPLOY (2026-09-09) ═══════════════════════════════════════════
