@@ -142,4 +142,47 @@ if (utfall['(ej körd)'] === radposter && radposter > 0) {
   console.log('    så når korrigeringen inte lagringen — och då är dagens arbete mörkt i produktion,');
   console.log('    precis som attribueringslåset var i två månader (12 aug).');
 }
+// ── VARFÖR TYSTNADE VAR OCH EN? Det är den enda fråga som betyder något ────────────────────
+// «1 av 25 prissatta» är ett tal utan sina fall — och ett aggregat utan sina fall är ett tal som
+// ser ut som ett beslutsunderlag (grindmätningen 22 aug). Varje rad får därför en NAMNGIVEN
+// orsak, och orsakerna kräver rakt olika åtgärder:
+//   · revisionsgrinden  — kategorin är medvetet tyst (inget verifierat SEK-golv finns)
+//   · kategorisering    — vi kände inte igen leverantören alls; allt nedströms är då dömt
+//   · Ring 1            — vår egen avstämning fällde fakturan
+//   · utanför scope     — korrekt tystnad (resa, hotell, nätavgift)
+//   · inget golv        — kategorin talar, men vi hittade inget att jämföra mot
+const { REVIDERADE_KATEGORIER } = await import('../lib/revision-gate.js');
+const orsak = (r) => {
+  if (r.route === 'unsupported') return `utanför scope (${r.triage_reason ?? '—'})`;
+  if (String(r.triage_reason ?? '').startsWith('Ring1')) return 'Ring 1 — VÅR avstämning fällde den';
+  if (r.category === 'uncategorized') return 'KATEGORISERING misslyckades';
+  if (!REVIDERADE_KATEGORIER.has(r.category)) return `revisionsgrinden tystar «${r.category}»`;
+  if (!(Number(r.suggested_annual_cost) > 0)) return `inget golv i «${r.category}»`;
+  return 'prissatt';
+};
+const orsaker = {};
+for (const r of rader) { const o = orsak(r); orsaker[o] = (orsaker[o] ?? 0) + 1; }
+console.log('\n── VARFÖR INGEN PRISSÄTTNING? (per orsak) ──');
+for (const [o, n] of Object.entries(orsaker).sort((a, b) => b[1] - a[1])) {
+  console.log(`  ${String(n).padStart(3)} × ${o}`);
+}
+console.log('\n── PER FAKTURA ──');
+rader.forEach((r, i) => {
+  console.log(`  ${String(i + 1).padStart(2)} ${String(r.normalized_supplier ?? r.supplier ?? '').slice(0, 28).padEnd(29)}`
+    + `${String(r.category ?? '—').padEnd(20)} ${orsak(r)}`);
+});
+
+// ── FAKTURANUMRET ÄR PROXY FÖR TEXTLAGRET ─────────────────────────────────────────────────
+// Numret bekräftas mot pdfjs textlager. Saknas det på ALLA rader har textlagret fallit — och då
+// är det samma orsak som att kolumnläsaren inte körde, inte två separata fel.
+const medNummer = rader.filter((r) => r.invoice_number).length;
+console.log(`\n── TEXTLAGRET (proxy: fakturanummer) ──`);
+console.log(`  ${medNummer} av ${rader.length} bär ett bekräftat fakturanummer`);
+if (medNummer === 0 && rader.length > 0) {
+  console.log('  ⚠ INGEN bär ett nummer. Textlagret har fallit på varje faktura — samma orsak som');
+  console.log('    att kolumnläsaren inte körde. EN diagnos, inte två.');
+} else if (medNummer > 0) {
+  console.log('  → Textlagret FUNGERAR. Att antalKalla saknas har alltså en annan orsak:');
+  console.log('    koden var inte deployad när fakturorna kördes.');
+}
 console.log('');
