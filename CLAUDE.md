@@ -162,6 +162,34 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > orden syns inte. De flyttar bevisbördan till något en granskare kan slå upp — de bär den inte.
 > Punkt 1 är den enda som faktiskt granskar; punkt 2–4 gör bara fusket synligt.
 
+> **✅ GRUNDARBESLUT 2026-09-09 — STOPPREGELN: [KUND] BLOCKERAR, [VAKT] MERGAS OCH LAGAS FRAMÅT.**
+> Bevisplikten p.1 säger att ingen `lib/`-, `api/`- eller `agents/`-ändring får merga utan en andra
+> blick. Den sa inte NÄR granskningen är klar — och utan den halvan blir regeln en oändlig rekursion:
+> varje granskning hittar något, varje fix behöver en ny granskning, och koden når aldrig kunden.
+>
+> **Mätt över tre granskningsvarv på samma arbete:** daec5cd gav 4 blockerande fynd, a0ae40a gav 4,
+> 48fcd7f gav 1 blockerande + 5 verkliga. Basfrekvensen är i praktiken 100 % — men fynden har en
+> FORM: nästan alla sitter i **vakterna**, inte i kundbeteendet. Ett sabotage som fäller noll, en
+> oprövad gren, en kommentar som överdriver. Fixarna själva har hållit varje gång de mätts om.
+>
+> Därför klassificeras varje fynd i exakt en av två klasser, och klassen avgör:
+> · **[KUND]** — ett tal, en dom, en text eller ett arvode som når kunden blir fel. **Blockerar merge.**
+> · **[VAKT]** — en vakt är svagare än den påstår, men inget kundsynligt ändras. **Blockerar inte.**
+>   Mergas och lagas framåt.
+>
+> Frågan som avgör klassen: *ändras ett tal eller en mening som en kund läser?* Nej → [VAKT].
+>
+> **Motiveringen är asymmetrin, samma som i regel 4.** Att INTE merga har också en mätt kostnad: när
+> regeln skrevs körde produktionen v24, alltså fick en kund på exakt verifierat listpris fel riktning
+> i 10 av 12 licensmängder, `seatCount` kunde säga emot radposterna i samma svar, och en falsk
+> rubrikrad kunde höja arvodet 46 396 kr åt VÅRT håll. Risken att merga är att en vakt är svagare än
+> den låter — vilket inte ändrar en enda kundsiffra. Grundaren: *«vi offrar inte kundens sanning i
+> produktion för akademisk testperfektion i labbet.»*
+>
+> **Gränsen är knivskarp och får inte glida:** [VAKT] betyder att felet är i BEVISET, aldrig i
+> BETEENDET. Så snart ett fynd rör ett tal kunden ser är det [KUND], hur litet det än är — och en
+> felklassning kostar antingen en kund eller en dag. Vid tvekan: [KUND].
+
 > **✅ GRUNDARBESLUT 2026-09-08: «ETT GRÖNT SOM BETYDER *JAG TITTADE INTE* ÄR FARLIGARE ÄN ETT RÖTT.»**
 > Raden är grundarens egen, fälld när jag vägrade committa en okänd ändring som dykt upp i trädet
 > mitt under en granskning. Den generaliserar hela obduktionens felfamilj till vakterna själva: ett
