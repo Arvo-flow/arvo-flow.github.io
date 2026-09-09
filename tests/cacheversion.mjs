@@ -171,6 +171,23 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'avrundningsdrivna riktningen för varje redan analyserad faktura');
   });
 
+  test('CV-14 · granskningsfixarna och cache-versionen hänger ihop', () => {
+    // ══ GRANSKNINGENS FYND 6 (2026-09-09) ════════════════════════════════════════════════════
+    // CV-13 skrev själv regeln: «En fjärde ändring kan inte åka snålskjuts på det talet.» Sedan
+    // lade jag två resultatändringar till på v25 utan vare sig bump eller rad — jag skrev regeln
+    // och följde den inte. Att argumentera för undantaget («inga v25-svar finns ännu») är
+    // billigare än att följa regeln, och det är precis därför regeln finns.
+    //
+    // Ändringarna: en prorata-rad utan fullpris tystar numera nivån (fynd 4 — en kund på exakt
+    // listpris fick förut «under»), och promptens premiss säger «blandad bild» där aggregatet
+    // döljer en nivå över golvet (fynd 3). Båda ändrar kortets dom.
+    const REC = readFileSync(join(ROT, 'agents/recommender/recommend.js'), 'utf8');
+    if (!/const oprisbarProrata = /.test(REC)) return;   // fixen borttagen → RK-27 äger fallet
+    assert.ok(cacheVersion() >= 26,
+      `prorata-tystnaden och den blandade premissen finns men pdf:result står på `
+      + `v${cacheVersion()} — cachen serverar då den gamla domen för varje redan analyserad faktura`);
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

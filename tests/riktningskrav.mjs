@@ -27,7 +27,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import {
-  recommend, computeLikeForLikeSaasTarget, buildLikeForLikeReasoning, lflPrisgap,
+  recommend, computeLikeForLikeSaasTarget, buildLikeForLikeReasoning, lflPrisgap, tolFor,
 } from '../agents/recommender/recommend.js';
 
 const TIERS = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
@@ -696,6 +696,129 @@ describe('RK · Absoluta påståenden skopas till den nivå som citeras', () => 
     // Ankaret för själva talen, så att fallet inte tyst slutar diskriminera.
     assert.equal(lfl.tierLines.find((t) => t.key === 'business-premium').tolerans, 0.51);
     assert.equal(lfl.tierLines.find((t) => t.key === 'e3').tolerans, 0.015);
+  });
+
+  test('RK-28 · PROMPTEN säger aldrig «inget prisgap» när en nivå ligger över', async () => {
+    // ══ GRANSKNINGENS FYND 3, ANDRA HALVAN ═══════════════════════════════════════════════════
+    // RK-26 prövar att `nagonOver` bär sanningen. Det räcker inte: sabotaget «ta bort den
+    // blandade premissgrenen» fällde NOLL tester, eftersom inget prov läste den PROMPT modellen
+    // faktiskt får. Mekanismen prövad, matningen aldrig — fjärde gången samma sjukdom.
+    //
+    // Fallet är granskarens: E3 40 kr över + Basic 10 kr under. Summan tar ut sig («lika»),
+    // nivåerna gör det inte. Den gamla grenen sa då «Det finns INGET prisgap» och FÖRBJÖD
+    // modellen att nämna ett lägre pris — medan prosan i samma svar namngav gapet.
+    const BASIC = TIERS['business-basic'].msrpAnnual;
+    const { prompt } = await kor([
+      { description: 'Microsoft 365 E3', type: 'recurring_subscription',
+        quantity: 10, amount: Math.round((E3_LISTA + 40) * 10), unitPrice: 457 },
+      { description: 'Microsoft 365 Business Basic', type: 'recurring_subscription',
+        quantity: 40, amount: Math.round((BASIC - 10) * 40), unitPrice: 57 },
+    ]);
+    assert.match(prompt, /BLANDAD BILD/,
+      'aggregatet säger «lika» men en nivå ligger över — premissen måste säga det');
+    assert.doesNotMatch(prompt, /Det finns INGET prisgap/,
+      'att påstå att inget gap finns när en nivå bär ett är samma motsägelse som Atea-kortet, '
+      + 'bara flyttad från prosan till premissen');
+    assert.doesNotMatch(prompt, /kunden överprisas/,
+      'och åt andra hållet får premissen inte generalisera den ena nivån till hela fakturan');
+  });
+
+  test('RK-27 · en prorata-rad utan fullpris TYSTAR nivån — CR-88412 kan inte återinföras', () => {
+    // ══ GRANSKNINGENS FYND 4 (2026-09-09) ════════════════════════════════════════════════════
+    // `runRate` hade två prorata-grenar (öre, sedan `unitPrice`) och föll därefter igenom till
+    // `l.amount` — DELPERIODSBELOPPET. Det är exakt CR-88412: ett halvmånadsbelopp draget som
+    // ett per-licenspris. MÄTT genom funktionen, kund på EXAKT listpris:
+    //     45 lic à 210,29 + prorata 5 lic à 526 kr (halv månad, inget à-pris)
+    //     → billedUnitMonthly 199,78 mot golvet 210,29, tolerans 0,03 → «UNDER»
+    // Vi hade alltså sagt till en kund som betalar precis rätt pris att hen ligger under det.
+    //
+    // ⚠️ OCH FIXEN VAR OPRÖVAD: sabotaget «sätt aldrig oprisbar-flaggan» fällde NOLL tester,
+    // eftersom RK-21 bara kör prorata MED à-pris. En fix vars felfall ingen kör är en halv fix.
+    const P = TIERS['business-premium'].msrpAnnual;
+    const ord = { description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+      quantity: 45, amount: Math.round(P * 45), unitPrice: Math.round(P) };
+    const utan = { description: 'Microsoft 365 Business Premium (Prorata tillägg)',
+      type: 'one_time_fee', is_prorata: true, quantity: 5, amount: 526 };   // inget à-pris
+
+    const lfl = computeLikeForLikeSaasTarget([ord, utan], TIERS, (ord.amount + 526) * 12);
+    const t = lfl.tierLines.find((x) => x.key === 'business-premium');
+    assert.equal(t.billedUnitMonthly, null,
+      'går radens FULLPRIS inte att fastställa kan nivån inte bära ett per-licenspris — '
+      + `fick ${t.billedUnitMonthly}, vilket är delperiodsbeloppet draget som en prislapp`);
+    assert.equal(lflPrisgap(lfl), null,
+      'och då hävdas ingen riktning alls: tystnad, aldrig ett falskt «under»');
+
+    // MOTPROVET: samma faktura MED à-pris ska prissättas normalt. En spärr som tystar allt är
+    // lika värdelös som ingen spärr (OB-23:s regel), och prorata ÄR CR-88412:s egen faktura.
+    const med = { ...utan, unitPrice: 210 };
+    const lfl2 = computeLikeForLikeSaasTarget([ord, med], TIERS, (ord.amount + 5 * 210) * 12);
+    const t2 = lfl2.tierLines.find((x) => x.key === 'business-premium');
+    assert.ok(Number.isFinite(t2.billedUnitMonthly), 'med à-pris ska nivån prissättas');
+    assert.equal(lflPrisgap(lfl2).dominantRiktning, 'lika',
+      'kunden betalar exakt listpris på båda raderna — prorata räknad till FULLT pris');
+  });
+
+  test('RK-25 · PRODUKTIONEN kan aldrig nå toleransens fallback', () => {
+    // ══ GRANSKNINGENS FYND 5 (2026-09-09) ════════════════════════════════════════════════════
+    // Instrumenterad räkning över hela sviten: 330 av 623 `tolFor`-anrop (53 %) tog
+    // `TOL_FALLBACK`, alla från handbyggda tierLines i den här filen. Sviten prövade alltså till
+    // hälften en gren produktionen aldrig tar — samma sjukdom som «ett test som matar sitt eget
+    // indata bevisar bara vidarebefordran» (holdings.mjs 19 aug).
+    //
+    // Fixen är inte att lappa 28 fixturer. Den är att göra fallbacken ONÅBAR i produktion och
+    // BEVISA det, så att dess enda kvarvarande användning — handbyggda objekt i prov — är ett
+    // deklarerat val i stället för en olycka. Provet kör den enda producenten över hela fältet.
+    const P = TIERS['business-premium'].msrpAnnual;
+    const fall = [
+      ['en nivå, med öre', [{ description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+        quantity: 10, amount: Math.round(P * 10), unitPrice: 210,
+        amountOre: Math.round(P * 10 * 100) }]],   // ore-ok: fixturen skriver, läser inte
+      ['en nivå, utan öre', [{ description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+        quantity: 3, amount: Math.round(P * 3), unitPrice: 210 }]],
+      ['två nivåer', [
+        { description: 'Microsoft 365 Business Premium', type: 'recurring_subscription', quantity: 5, amount: 1052, unitPrice: 210 },
+        { description: 'Microsoft 365 E3', type: 'recurring_subscription', quantity: 20, amount: 8340, unitPrice: 417 }]],
+      ['med prorata', [
+        { description: 'Microsoft 365 Business Premium', type: 'recurring_subscription', quantity: 45, amount: Math.round(P * 45), unitPrice: 210 },
+        { description: 'Microsoft 365 Business Premium (Prorata)', type: 'one_time_fee', is_prorata: true, quantity: 5, unitPrice: 210, amount: 526 }]],
+    ];
+    for (const [namn, rader] of fall) {
+      const arskostnad = rader.reduce((s, r) => s + (r.is_prorata ? r.quantity * r.unitPrice : r.amount), 0) * 12;
+      const lfl = computeLikeForLikeSaasTarget(rader, TIERS, arskostnad);
+      assert.ok(lfl?.tierLines?.length > 0, `${namn}: inget underlag byggdes`);
+      for (const t of lfl.tierLines) {
+        assert.ok(Number.isFinite(t.tolerans),
+          `${namn}/${t.key}: producenten lämnade nivån utan tolerans — då faller den tyst till `
+          + 'TOL_FALLBACK, och en gren produktionen inte ska nå blir plötsligt produktionens gren');
+      }
+    }
+    // Och att fallbacken FINNS kvar för det den är till för: ett handbyggt eller äldre objekt.
+    // Att den används i prov är ett val, inte en olycka — och det står här.
+    assert.equal(tolFor({ quantity: 1, benchmarkMonthly: 1, billedUnitMonthly: 1 }), 0.01,
+      'ett objekt utan tolerans får den gamla fasta gränsen — dokumenterat, aldrig gissat');
+  });
+
+  test('RK-26 · aggregatet får inte tala för en nivå det inte beskriver', () => {
+    // GRANSKNINGENS FYND 3: E3 över + Basic under ger `riktning: 'lika'` (summan tar ut sig)
+    // bredvid `dominantRiktning: 'over'`. Prompten sa då «Det finns INGET prisgap» och FÖRBJÖD
+    // modellen att nämna ett lägre pris — medan den kodskrivna prosan i samma svar namngav en
+    // nivå 4 804 kr över. Min kommentar påstod att det inte kunde uppstå. Det var ett påstående.
+    const rader = [
+      { description: 'Microsoft 365 E3', type: 'recurring_subscription',
+        quantity: 10, amount: Math.round((E3_LISTA + 40) * 10), unitPrice: 457 },
+      { description: 'Microsoft 365 Business Basic', type: 'recurring_subscription',
+        quantity: 40, amount: Math.round((TIERS['business-basic'].msrpAnnual - 10) * 40), unitPrice: 57 },
+    ];
+    const lfl = computeLikeForLikeSaasTarget(rader, TIERS, rader.reduce((s, r) => s + r.amount, 0) * 12);
+    const g = lflPrisgap(lfl);
+    assert.equal(g.blandad, true, 'fallet ska vara blandat — annars prövar provet fel gren');
+    assert.equal(g.nagonOver, true,
+      'minst en nivå ligger över golvet, och det får aggregatet aldrig dölja');
+    // Invarianten: hävdar NÅGON nivå ett gap får ingen yta säga att inget gap finns.
+    if (g.riktning !== 'over') {
+      assert.equal(g.nagonOver, true,
+        'aggregatet säger inte «over» — då MÅSTE nagonOver bära sanningen vidare till premissen');
+    }
   });
 
   test('RK-20 · ett tal får aldrig motsäga sin egen dom', () => {

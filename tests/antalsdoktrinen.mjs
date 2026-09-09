@@ -95,39 +95,189 @@ const kod = (s) => s.split('\n').map((r) => r.replace(/\/\/.*$/, '')).join('\n')
  */
 const BAKATRAKNING = /\/\s*\(?\s*(?:[A-Za-z_$][\w$]*\s*\??\.\s*)?(?:unitPrice|unit_price|unitPriceOre|unit_price_ore|aPris|apris|aprisOre)\b/;
 
+/**
+ * Blankar innehållet i strängar, mallsträngar, regexlitteraler och kommentarer — men BEHÅLLER
+ * `${…}`-interpolationen, för där bor riktig kod. Radbrytningar bevaras så att radnummer håller.
+ *
+ * ══ VARFÖR EN LEXER OCH INTE ETT HACK (granskningens fynd 1 + 2, 2026-09-09) ═══════════════
+ * Första versionen hoppade över mallsträngar genom att räkna BACKTICK-PARITET per rad. Två fel,
+ * båda mätta, båda i den vakt jag skrev mot precis den formen:
+ *
+ *   · **Den kunde stängas av utan att ett test föll.** Sabotage `const varIMall = iMall` →
+ *     `= true` gör att vakten hoppar över VARJE rad och skannar ingenting — `# fail 0`,
+ *     identiskt med baslinjen. Grön av tomhet, i vakten mot grön-av-tomhet.
+ *   · **Och min motivering var osann.** Jag skrev «den kostar täckning, aldrig falsklarm —
+ *     säkra riktningen». MÄTT: 4 455 av 38 119 rader (11,7 %) blindades, `prompt.js` tappade
+ *     342 av 357. Åt andra hållet förskjuter en escapead backtick pariteten så att ren
+ *     promptprosa FÄLLS som division. Båda riktningarna, alltså — ett påstående skrivet före
+ *     mätning, i kommentaren om att aldrig skriva påståenden före mätning.
+ *
+ * Lexern har ett eget känt fel: `/`-diskrimineringen mellan division och regexlitteral är en
+ * heuristik (föregående icke-blanka tecken avgör). Skillnaden mot pariteten är att felet nu är
+ * MÄTBART — AD-06 pinnar exakt hur många rader som blankas, så en tyst blindhet inte kan växa.
+ */
+export function strippaStrangar(kalla) {
+  const ut = Array.from(kalla);
+  const OPERAND_FORE = /[)\]}\w$]/;      // står detta före ett `/` är det division, inte regex
+  let lage = 'kod';
+  const mallStack = [];                  // ${} kan nästlas i mallsträngar
+  let klammerDjup = 0;
+  let sistaKod = '';                     // senaste icke-blanka tecknet i kodläge
+  for (let i = 0; i < kalla.length; i += 1) {
+    const c = kalla[i], n = kalla[i + 1];
+    const blanka = () => { if (c !== '\n') ut[i] = ' '; };
+    if (lage === 'kod') {
+      if (c === '/' && n === '/') { lage = 'radkommentar'; blanka(); continue; }
+      if (c === '/' && n === '*') { lage = 'blockkommentar'; blanka(); continue; }
+      if (c === '/' && !OPERAND_FORE.test(sistaKod)) { lage = 'regex'; blanka(); continue; }
+      if (c === "'") { lage = 'enkel'; blanka(); continue; }
+      if (c === '"') { lage = 'dubbel'; blanka(); continue; }
+      if (c === '`') { lage = 'mall'; blanka(); continue; }
+      // ⚠️ DJUPET RÄKNADES FEL MED ETT STEG i första versionen: `${` pushade djupet OCH ökade
+      // det, så den avslutande `}` aldrig matchade. Följden var värre än ett missat `}` — den
+      // efterföljande backticken lästes som en NY mallsträng och blindade raden efter. Provets
+      // rad 7 (`const t = belopp / apris;`) försvann, och det var så buggen syntes.
+      if (c === '}' && mallStack.length > 0 && klammerDjup === mallStack[mallStack.length - 1]) {
+        mallStack.pop(); lage = 'mall'; blanka(); continue;
+      }
+      if (c === '{') klammerDjup += 1;
+      if (c === '}') klammerDjup -= 1;
+      if (c.trim() !== '') sistaKod = c;
+      continue;
+    }
+    if (lage === 'radkommentar') { if (c === '\n') lage = 'kod'; else blanka(); continue; }
+    if (lage === 'blockkommentar') {
+      blanka();
+      if (c === '*' && n === '/') { ut[i + 1] = ' '; i += 1; lage = 'kod'; }
+      continue;
+    }
+    if (lage === 'regex') {
+      blanka();
+      if (c === '\\') { if (kalla[i + 1] !== '\n') ut[i + 1] = ' '; i += 1; continue; }
+      if (c === '/' ) { lage = 'kod'; sistaKod = '/'; }
+      if (c === '\n') lage = 'kod';        // en regex kan inte spänna över rader
+      continue;
+    }
+    // strängtillstånden
+    blanka();
+    if (c === '\\') { if (kalla[i + 1] !== '\n') ut[i + 1] = ' '; i += 1; continue; }
+    if (lage === 'enkel' && c === "'") { lage = 'kod'; sistaKod = "'"; continue; }
+    if (lage === 'dubbel' && c === '"') { lage = 'kod'; sistaKod = '"'; continue; }
+    if (lage === 'mall') {
+      if (c === '`') { lage = 'kod'; sistaKod = '`'; continue; }
+      if (c === '$' && n === '{') {       // interpolationen ÄR kod och ska skannas
+        ut[i + 1] = '{'; mallStack.push(klammerDjup); lage = 'kod'; i += 1;
+      }
+    }
+  }
+  return ut.join('');
+}
+
+/** Rader (1-indexerade) där en bakåträkning står i KOD. `// antal-ok:` är den motiverade utvägen. */
+export function hittaBakatrakning(kalla) {
+  const kod = strippaStrangar(kalla).split('\n');
+  const original = kalla.split('\n');
+  const ut = [];
+  kod.forEach((rad, i) => {
+    if (!BAKATRAKNING.test(rad)) return;
+    if (/antal-ok:/.test(original[i] ?? '')) return;
+    ut.push({ rad: i + 1, text: (original[i] ?? '').trim().slice(0, 90) });
+  });
+  return ut;
+}
+
 describe('AD · Antalsdoktrinen — ett antal är en avläsning, eller så finns det inte', () => {
   test('AD-01 · ingen dividerar ett belopp med ett à-pris', () => {
     // Formen doktrinen förbjuder. `// antal-ok: <skäl>` på raden är den motiverade utvägen,
     // samma mönster som claims-audit och kopidetektorn — en vakt utan utväg kringgås med
     // --no-verify, och då är den sämre än ingen.
     //
-    // ⚠️ MALLSTRÄNGAR HOPPAS ÖVER. Första körningen fällde `agents/test-invoice/extract.js:232`
-    // — en rad i SYSTEM_PROMPT som BESKRIVER fälten för modellen («amount_ore / unit_price_ore:
-    // radens belopp respektive à-pris i ÖRE»). Det är prosa, inte en division, och en vakt som
-    // larmar på sin egen dokumentation blir avstängd. Backtick-pariteten är en approximation,
-    // och det ska sägas: en mallsträng med ojämnt antal backticks på en rad kan förskjuta
-    // räkningen. Den kostar täckning, aldrig falsklarm — säkra riktningen.
+    // ⚠️ PROMPTPROSA ÄR INTE KOD, men skiljandet görs av en LEXER (se `strippaStrangar`), inte
+    // av backtick-paritet. Pariteten kunde stängas av utan att ett test föll och blindade
+    // 11,7 % av kodbasen — se modulkommentaren för mätningen.
     const traffar = [];
+    let radkallor = 0;
     for (const katalog of ['lib', 'api', 'agents']) {
       for (const fil of jsFiler(join(ROT, katalog))) {
-        const rader = readFileSync(fil, 'utf8').split('\n');
-        let iMall = false;
-        rader.forEach((rad, i) => {
-          const varIMall = iMall;
-          if ((rad.match(/`/g) ?? []).length % 2 === 1) iMall = !iMall;
-          if (varIMall) return;                       // promptprosa är inte kod
-          const ren = rad.replace(/\/\/.*$/, '');
-          if (!BAKATRAKNING.test(ren)) return;
-          if (/antal-ok:/.test(rad)) return;
-          traffar.push(`${relative(ROT, fil)}:${i + 1} — ${rad.trim().slice(0, 90)}`);
-        });
+        const kalla = readFileSync(fil, 'utf8');
+        radkallor += kalla.split('\n').length;
+        for (const t of hittaBakatrakning(kalla)) {
+          traffar.push(`${relative(ROT, fil)}:${t.rad} — ${t.text}`);
+        }
       }
     }
+    // TOMHETSSPÄRR: en vakt som skannar noll rader är grön av tomhet, och det var precis vad
+    // paritetssabotaget gjorde. Talet är ett golv, inte ett facit — det växer med kodbasen.
+    assert.ok(radkallor > 30_000,
+      `vakten skannade bara ${radkallor} rader — den ser inte kodbasen längre`);
     assert.deepEqual(traffar, [],
       'bakåträkning av ett antal ur belopp ÷ à-pris. Mätt på korpusen: metoden fyrar på 18 av '
       + '23 rader och har noll rätt — den ger tillbaka PRISET och kallar det ett antal '
       + '(539,60 ÷ 28,40 = 19 kr/GB, av 28,4 GB). Motivera med `// antal-ok: <skäl>` om raden '
       + 'gör något annat.');
+  });
+
+  test('AD-06 · POSITIVKONTROLLEN: skannern hittar kod och tiger om prosa', () => {
+    // ══ GRANSKNINGENS FYND 1 (2026-09-09) ════════════════════════════════════════════════════
+    // AD-01 prövade bara att listan är TOM. En vakt som slutat titta ger också en tom lista —
+    // och sabotaget «hoppa över varje rad» gav `# fail 0`, identiskt med baslinjen. AD-02 kunde
+    // inte se det: den prövar REGEXEN, aldrig skanningen. Det här provet är den saknade halvan.
+    // Varje fall är en påstådd egenskap hos lexern, prövad med ett svar som inte kan bli tomt.
+    const KALLA = [
+      "const a = l.amount / l.unitPrice;",                    // 1  KOD → ska hittas
+      "// kommentar: l.amount / l.unitPrice är förbjudet",    // 2  kommentar → tyst
+      "const p = `· amount_ore / unit_price_ore: prosa`;",    // 3  mallsträng → tyst
+      "const q = 'text med / unitPrice inuti';",              // 4  sträng → tyst
+      'const r = "dubbel / unit_price också";',               // 5  sträng → tyst
+      "const s = `pris ${ total / rad.unitPrice } kr`;",      // 6  ${} ÄR kod → ska hittas
+      "const t = belopp / apris;",                            // 7  efter mallsträng → ska hittas
+      "const v = li.amount / li.unitPrice;   // antal-ok: prövad",  // 8  utväg → tyst
+      "const w = /regex med ' inuti/.test(z);",               // 9  regexlitteral → tyst
+      "const y2 = summa / rad.apris;",                        // 10 efter regexen → ska hittas
+      "const z2 = `y ${ f(`nästlad ${ a / b.unitPrice } kr`) } slut`;",  // 11 nästlad → hittas
+      "const q3 = kostnad / platser;",                         // 12 tillåten riktning → tyst
+    ].join('\n');
+    const funna = hittaBakatrakning(KALLA).map((t) => t.rad);
+    assert.deepEqual(funna, [1, 6, 7, 10, 11],
+      'skannern ska hitta division i KOD (även inuti nästlade ${…}) och tiga om kommentar, '
+      + 'sträng, mallsträng, regexlitteral och motiverad utväg. Fick: ' + JSON.stringify(funna));
+
+    // Rad 7 och 10 är de bärande: de ligger EFTER en mallsträng respektive en regex med
+    // citattecken. Försvinner de har tillståndsmaskinen läckt — och att läcka framåt genom
+    // filen var paritetens värsta felläge (342 av 357 rader osynliga i prompt.js).
+    assert.ok(funna.includes(7) && funna.includes(10),
+      'ett avslutat literal får aldrig blinda raderna efter sig');
+
+    // MOTPROVET åt andra hållet: den tillåtna riktningen får aldrig fällas, ens i kod.
+    assert.deepEqual(hittaBakatrakning('const pris = annualCost / seats / 12;'), []);
+  });
+
+  test('AD-07 · en avslutad mallsträng blindar aldrig koden efter sig', () => {
+    // ══ GRANSKNINGENS FYND 2 (2026-09-09) ════════════════════════════════════════════════════
+    // Paritetens värsta felläge var inte att den blankade promptprosa — det är RÄTT — utan att
+    // den kunde LÄCKA framåt och blinda resten av filen. Mätt: `agents/recommender/prompt.js`
+    // 342 av 357 rader osynliga, `agents/test-invoice/extract.js` 341 av 1 440.
+    //
+    // ⚠️ TVÅ AV MINA EGNA MÅTT VAR FEL INNAN DET HÄR SATT. Först räknade jag «andel rader som
+    // bär kod efter strippning» (40,7 %) — men kommentarrader blankas legitimt, och kodbasen är
+    // kommentartung. Sedan räknade jag «rader som ser ut som kod» (82 av 318 i prompt.js) — men
+    // i en promptfil ÄR nästan allt innehåll en sträng, och att blanka det är hela poängen.
+    // Båda måtten mätte lexern mot fel referens. Det som FAKTISKT ska hålla är en enda sak, och
+    // den är falsifierbar: känd kod som ligger EFTER en stor mallsträng måste fortfarande synas.
+    const ANKARE = [
+      ['agents/recommender/prompt.js', 'export const RECOMMEND_TOOL'],
+      ['agents/categorizer/prompt.js', 'export const CATEGORIZE_TOOL'],
+      ['agents/test-invoice/extract.js', 'export function aggregateLineItems'],
+      ['agents/test-invoice/extract.js', 'export async function extractInvoice'],
+      ['api/quote-request.mjs', 'export default async function'],
+    ];
+    for (const [fil, kod2] of ANKARE) {
+      const kalla = readFileSync(join(ROT, fil), 'utf8');
+      assert.ok(kalla.includes(kod2), `${fil} saknar ankaret «${kod2}» — flytta ankaret, inte provet`);
+      assert.ok(strippaStrangar(kalla).includes(kod2),
+        `${fil}: «${kod2}» blev osynlig efter strippning. Tillståndsmaskinen läcker förbi en `
+        + 'mallsträng, och då skannar vakten inte längre den kod den finns för att skanna.');
+    }
   });
 
   test('AD-02 · den TILLÅTNA riktningen är orörd — pris per känd enhet', () => {

@@ -370,6 +370,14 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
         lines.push(`    → HELA besparingen kommer från PRISGAPET — kunden överprisas av sin nuvarande återförsäljare för exakt samma licenser.`);
         lines.push(`    → KRITISKT: Nämn INTE tier-byte eller nedgradering i main reasoning. Tier-alternativ är valfri extraoptimering som visas separat i gränssnittet.`);
         lines.push(`    → Reasoning ska förklara: Varför betalar kunden markant mer än marknadspriset för ${tierLabel}-licenser? Återförsäljarens marginal? Månadsavtal vs årsavtal?`);
+      } else if (_gap?.nagonOver) {
+        // ⚠️ AGGREGATET SA «LIKA», EN NIVÅ LÅG ÖVER (fynd 3). Den gamla else-grenen skrev då
+        // «Det finns INGET prisgap» och förbjöd modellen att nämna ett lägre pris — samtidigt
+        // som prosan namngav den nivå som bär gapet. Premissen läser numera samma faktum som
+        // prosan: summan kan ta ut sig, nivåerna gör det inte.
+        lines.push(`    → BLANDAD BILD: sammantaget ligger kunden ${_gap.riktning === 'lika' ? 'i nivå med' : 'under'} Microsofts publika årsavtalspris, MEN minst en licensnivå ligger över det.`);
+        lines.push(`    → Skopa varje påstående till den nivå det gäller. FÖRBJUDET: säga att kunden generellt betalar för mycket ELLER att det inte finns något prisgap alls — båda är osanna om helheten.`);
+        lines.push(`    → KRITISKT: Nämn INTE tier-byte eller nedgradering i main reasoning. Tier-alternativ är valfri extraoptimering som visas separat i gränssnittet.`);
       } else if (_gap) {
         const _lage = _gap.riktning === 'lika' ? 'EXAKT PÅ' : 'UNDER';
         lines.push(`    → KUNDEN LIGGER ${_lage} Microsofts publika årsavtalspris för exakt samma licenser. Det finns INGET prisgap och INGET bytesmål.`);
@@ -661,6 +669,23 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
     return l.amount ?? 0;
   };
 
+  // ── CR-88412 KUNDE ÅTERINFÖRAS GENOM EN LUCKA (2026-09-09, granskningens fynd 4) ──────────
+  // En prorata-rad UTAN både öresavläsning och `unitPrice` föll igenom båda grenarna ovan och
+  // landade på `l.amount` — DELPERIODSBELOPPET. Det är precis felet hela like-for-like-fixen
+  // finns för: ett halvmånadsbelopp draget som ett per-licenspris. MÄTT genom funktionen:
+  //     45 lic à exakt listpris + prorata 5 lic à 526 kr (halv månad, inget à-pris)
+  //     → billedUnitMonthly 199,78 mot golvet 210,29, tolerans 0,03 → «UNDER»
+  // En kund som betalar exakt Microsofts listpris fick alltså beskedet att hen ligger under det.
+  // Riktningen är den säkra för arvodet, men påståendet är lika falskt åt det hållet — och en
+  // kreditrad vänder det.
+  //
+  // FAIL-CLOSED PÅ FÄLTET (RK-27): går radens FULLPRIS inte att fastställa kan nivån inte bära
+  // ett per-licenspris, och då säger vi inget alls om den (`billedUnitMonthly: null` filtreras
+  // bort av `lflPrisgap`). Fakturan analyseras vidare — fail-open på pipelinen (RK-27:s motprov
+  // visar att samma faktura MED à-pris prissätts som vanligt).
+  const oprisbarProrata = (l) => l.is_prorata === true && l.quantity != null
+    && radensOre(l).aprisOre == null && l.unitPrice == null;
+
   /**
    * Radens största möjliga avrundningsfel i kronor. Noll när öret bär — då ÄR talet exakt.
    * Utan öre avrundas kronorfältet till närmaste krona: som mest 0,50 kr per rad, och för en
@@ -729,10 +754,11 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
       if (qty == null) return null;  // can't compute like-for-like without seat count
 
       const bm = tierBenchmarks[match.key];
-      tierAcc[match.key] = tierAcc[match.key] ?? { quantity: 0, billedRunRate: 0, felBudgetKr: 0, benchmarkMonthly: bm.arvoAnnual ?? bm.msrpAnnual };
+      tierAcc[match.key] = tierAcc[match.key] ?? { quantity: 0, billedRunRate: 0, felBudgetKr: 0, oprisbar: false, benchmarkMonthly: bm.arvoAnnual ?? bm.msrpAnnual };
       tierAcc[match.key].quantity += qty;
       tierAcc[match.key].billedRunRate += runRate(item);
       tierAcc[match.key].felBudgetKr += felBudget(item);
+      if (oprisbarProrata(item)) tierAcc[match.key].oprisbar = true;   // fynd 4
     } else {
       // Add-on / unrecognised: pass through at invoice run-rate
       const addonAnnual = Math.round(runRate(item) * billMult);
@@ -754,7 +780,11 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
     // Fakturerat à-pris (kr/mån) — normaliserat via billMult oavsett faktureringsperiod.
     // Ges till AI:n så att licensjämförelser görs på RADENS pris, aldrig på den
     // blandade per-seat-totalen (683-kronorsfelet: totalkostnad kallades licenspris).
-    billedUnitMonthly: Math.round((t.billedRunRate * billMult / 12 / t.quantity) * 100) / 100,
+    // `null` = nivåns per-licenspris går inte att fastställa (fynd 4: en prorata-rad utan
+    // fullpris). `lflPrisgap` filtrerar bort den — tystnad, aldrig ett halvmånadsbelopp draget
+    // som en prislapp.
+    billedUnitMonthly: t.oprisbar
+      ? null : Math.round((t.billedRunRate * billMult / 12 / t.quantity) * 100) / 100,
     // ── TOLERANSEN HÄRLEDS UR KÄLLANS AVRUNDNING, INTE UR VÅR EGEN (2026-09-09) ────────────
     // Här stod en fast 0,01 med motiveringen «härledd, inte vald: billedUnitMonthly avrundas
     // till två decimaler». Den härledningen var rätt räknad på FEL avrundning — vår egen, inte
@@ -949,6 +979,14 @@ export function lflPrisgap(lfl) {
     //               vars utlösare var för smal).
     blandad:   tiers.some((t) => riktningFor(t) === 'over')
             && tiers.some((t) => riktningFor(t) === 'under'),
+    // ── AGGREGATET FÅR INTE TALA FÖR NIVÅER DET INTE BESKRIVER (fynd 3, 2026-09-09) ─────────
+    // Jag skrev att «när nivåerna säger olika finns ingen motsägelse att göra». Det var ett
+    // påstående, inte en mätning, och granskaren fällde det: E3 40 kr över + Basic 10 kr under
+    // ger `riktning: 'lika'` (summan tar ut sig) bredvid `dominantRiktning: 'over'`. Prompten
+    // sa då «Det finns INGET prisgap» och FÖRBJÖD modellen att nämna ett lägre pris — medan den
+    // kodskrivna prosan i samma svar sa «4 804 kr per år över». Två ytor, två sanningar.
+    // Fältet finns för att premissen ska kunna se det aggregatet döljer.
+    nagonOver: tiers.some((t) => riktningFor(t) === 'over'),
     heterogen: new Set(tiers.map(riktningFor)).size > 1,
     // ── EN ALLMÄN SATS FÅR INTE RÄKNAS EXISTENTIELLT (2026-09-08, granskningens fynd 2 + 3) ──
     // Första rättningen gav `harLika: tiers.some(... === 'lika' && t.key !== dom.key)`, och prosan
