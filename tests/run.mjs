@@ -140,6 +140,7 @@ import './korpus.mjs';
 import './halsokontroll.mjs';
 import './fakturakolumner.mjs';
 import './antalsdoktrinen.mjs';
+import './valutakrav.mjs';
 
 const ALL = [
   ...f01, ...f02, ...f03, ...f04,

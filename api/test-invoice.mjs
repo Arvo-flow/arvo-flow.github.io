@@ -9,6 +9,7 @@
 import { Resend } from 'resend';
 import { createHmac, createHash } from 'node:crypto';
 import { verifieraFakturanummer } from '../lib/fakturanummer.js';
+import { konverteraTillSek } from '../lib/valutakonvertering.js';
 import { markKvantiteter } from '../lib/kvantitetsvittne.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
@@ -587,7 +588,9 @@ export default async function handler(req, res) {
   try {
     const t0 = Date.now();
     let fakturanummerSkal = null;
-    const extracted = await extractInvoice({ pdfBytes });
+    // `let`, inte `const`: valutakonverteringen returnerar ett NYTT objekt i stället för att
+    // mutera (rena funktioner är lättare att pröva), och då måste bindningen kunna peka om.
+    let extracted = await extractInvoice({ pdfBytes });
     timing.extractMs = Date.now() - t0;
 
     // ── FAKTURANUMRET MÅSTE STÅ PÅ PAPPRET (grundarbeslut 2026-08-15) ────────────────────────
@@ -802,53 +805,23 @@ export default async function handler(req, res) {
     // USD → SaaS-priser (Atlassian, Zoom, Slack) konverteras av recommend.js. Kategorier som
     //       träffar requiresVolumeData (cloud-infra) konverteras separat i det blocket nedan.
     // Övriga valutor → review_queue.
-    if (extracted.currency === 'EUR') {
+    // ── EN LISTA, INTE TVÅ (2026-09-09) ───────────────────────────────────────────────────
+    // Här stod två handskrivna fältlistor, en per valuta, och båda var ofullständiga på olika
+    // sätt. `invoiceTotal` konverterades ALDRIG — och Ring 1 jämför radsumman mot just den, så
+    // fyra av grundarens 25 fakturor fälldes med kvoten 11,47 (EUR) respektive 10,42 (USD).
+    // Öresfälten konverterades inte heller, och EUR-grenen glömde `unitPrice`: Googles faktura
+    // gav kundens per-licenspris 11,50 kr i stället för 131,90 kr. Listan bor nu i
+    // `lib/valutakonvertering.js` och VK-01 kräver att varje penningfält i schemat är klassat.
+    if (extracted.currency === 'EUR' || extracted.currency === 'USD') {
       const kv = getKv();
-      const eurFx = await getEurSekRate(kv).catch(() => ({ rate: FALLBACK_RATE_EUR_SEK, source: 'fallback', date: null }));
-      const sekPerEur = eurFx.rate ?? FALLBACK_RATE_EUR_SEK;
-      const cvt = (v) => (v != null ? Math.round(v * sekPerEur) : null);
-      extracted.originalCurrency    = 'EUR';
-      extracted.fxRate              = sekPerEur;
-      extracted.fxSource            = eurFx.source;
-      extracted.fxDate              = eurFx.date;
-      extracted.currency            = 'SEK';
-      extracted.amount              = cvt(extracted.amount);
-      extracted.recurringAmount     = cvt(extracted.recurringAmount);
-      extracted.variableCharges     = cvt(extracted.variableCharges);
-      extracted.oneTimeFees         = cvt(extracted.oneTimeFees);
-      extracted.annualCost          = cvt(extracted.annualCost);
-      extracted.pricePerSeatMonthly = extracted.pricePerSeatMonthly != null ? Math.round(extracted.pricePerSeatMonthly * sekPerEur) : null;
-      extracted.lineItems           = (extracted.lineItems ?? []).map(li => ({
-        ...li,
-        amount: li.amount != null ? Math.round(li.amount * sekPerEur) : null,
+      const arEur = extracted.currency === 'EUR';
+      const fx = await (arEur ? getEurSekRate(kv) : getSekRate(kv)).catch(() => ({
+        rate: arEur ? FALLBACK_RATE_EUR_SEK : FALLBACK_RATE_USD_SEK, source: 'fallback', date: null,
       }));
-      console.log(`[test-invoice] EUR→SEK konvertering: rate=${sekPerEur} source=${eurFx.source}`);
-    } else if (extracted.currency === 'USD') {
-      // USD-fakturor (Salesforce, HubSpot, övriga SaaS i USD) konverteras här till SEK.
-      // recommend.js konverterar bara benchmark-tier-priser (USD-kolumner i branchindex) —
-      // det berör inte input-beloppen, så ingen dubbelkonvertering sker.
-      const kv = getKv();
-      const usdFx = await getSekRate(kv).catch(() => ({ rate: FALLBACK_RATE_USD_SEK, source: 'fallback', date: null }));
-      const sekPerUsd = usdFx.rate ?? FALLBACK_RATE_USD_SEK;
-      const cvt = (v) => (v != null ? Math.round(v * sekPerUsd) : null);
-      extracted.originalCurrency    = 'USD';
-      extracted.fxRate              = sekPerUsd;
-      extracted.fxSource            = usdFx.source;
-      extracted.fxDate              = usdFx.date;
-      extracted.currency            = 'SEK';
-      extracted.amount              = cvt(extracted.amount);
-      extracted.recurringAmount     = cvt(extracted.recurringAmount);
-      extracted.variableCharges     = cvt(extracted.variableCharges);
-      extracted.oneTimeFees         = cvt(extracted.oneTimeFees);
-      extracted.annualCost          = cvt(extracted.annualCost);
-      extracted.pricePerSeatMonthly = extracted.pricePerSeatMonthly != null
-        ? Math.round(extracted.pricePerSeatMonthly * sekPerUsd) : null;
-      extracted.lineItems = (extracted.lineItems ?? []).map(li => ({
-        ...li,
-        amount:    li.amount    != null ? Math.round(li.amount    * sekPerUsd) : null,
-        unitPrice: li.unitPrice != null ? Math.round(li.unitPrice * sekPerUsd) : null,
-      }));
-      console.log(`[test-invoice] USD→SEK konvertering: rate=${sekPerUsd} source=${usdFx.source}`);
+      const kurs = fx.rate ?? (arEur ? FALLBACK_RATE_EUR_SEK : FALLBACK_RATE_USD_SEK);
+      const valuta = extracted.currency;
+      extracted = konverteraTillSek(extracted, { rate: kurs, valuta, source: fx.source, date: fx.date });
+      console.log(`[test-invoice] ${valuta}→SEK konvertering: rate=${kurs} source=${fx.source}`);
     } else if (extracted.currency && !['SEK'].includes(extracted.currency)) {
       notifyReviewQueue(extracted, `[Utländsk valuta] ${extracted.currency}`).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue (currency) threw:', err.message)
@@ -1371,20 +1344,20 @@ export default async function handler(req, res) {
       // USD-konvertering: requiresVolumeData-routen når aldrig recommend.js som normalt hanterar detta.
       // Cloud-fakturor med startup-krediter: annualCost = creditBurn × 12 är mer representativt
       // än recurringAmount × 12 (som bara fångar fast supportavgift, inte compute/lagring/DB).
+      // ── TREDJE KOPIAN AV FÄLTLISTAN, hittad av VK-04 på dess första körning ───────────────
+      // Den här grenen (requiresVolumeData/cloud) hade en EGEN uppräkning som saknade
+      // `invoiceTotal`, `pricePerSeatMonthly`, radposterna OCH öresfälten. Jag såg den inte när
+      // jag slog ihop EUR- och USD-blocken — vakten gjorde det. Kredit-logiken är den enda äkta
+      // skillnaden och står kvar; fältlistan är gemensam.
       if (extracted.currency === 'USD') {
         const kv = getKv();
         const usdFx = await getSekRate(kv).catch(() => ({ rate: FALLBACK_RATE_USD_SEK, source: 'fallback', date: null }));
         const sekPerUsd = usdFx.rate ?? FALLBACK_RATE_USD_SEK;
-        const cvt = (v) => (v != null ? Math.round(v * sekPerUsd) : null);
-        extracted.currency        = 'SEK';
-        extracted.fxRate          = sekPerUsd;
-        extracted.annualCost      = creditBurn > 0
-          ? Math.round(creditBurn * 12 * sekPerUsd)
-          : cvt(extracted.annualCost);
-        extracted.amount          = cvt(extracted.amount);
-        extracted.recurringAmount = cvt(extracted.recurringAmount);
-        extracted.variableCharges = cvt(extracted.variableCharges);
-        extracted.oneTimeFees     = cvt(extracted.oneTimeFees);
+        extracted = konverteraTillSek(extracted, { rate: sekPerUsd, valuta: 'USD', source: usdFx.source, date: usdFx.date });
+        // Cloud-fakturor med startup-krediter: annualCost = creditBurn × 12 är mer representativt
+        // än recurringAmount × 12 (som bara fångar fast supportavgift, inte compute/lagring/DB).
+        // `creditBurn` sparades i USD FÖRE omräkningen, så kursen appliceras här.
+        if (creditBurn > 0) extracted.annualCost = Math.round(creditBurn * 12 * sekPerUsd);
         console.log(`[test-invoice] USD→SEK (requiresVolumeData): rate=${sekPerUsd} source=${usdFx.source} creditBurn=${creditBurn}`);
       }
 
