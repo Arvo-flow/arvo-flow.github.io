@@ -17,6 +17,11 @@ on:
         required: false
         default: ''
   push:
+    # ⚠️ ENDAST main. Första körningen pushades till BÅDE branchen och main, och workflowen fyrade
+    # två gånger parallellt på en DESTRUKTIV operation. Utfallet blev korrekt men delades mellan
+    # körningarna (37 analyser i den ena, 13 jobb i den andra) — en race på en radering är tur,
+    # inte konstruktion.
+    branches: [main]
     paths:
       - 'ops/rensa.trigger'
 
