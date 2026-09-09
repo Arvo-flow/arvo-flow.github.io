@@ -825,9 +825,17 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
  * Rätt mönster fanns redan 40 rader upp i samma fil — Atlassian-grenen skriver
  * «KUNDEN ÄR UNDER LISTPRIS. Inget bytespotential.» Regel 1: en sanning per fråga.
  *
- * Toleransen är HÄRLEDD, inte vald: `billedUnitMonthly` avrundas till två decimaler, så
- * avläsningens egen osäkerhet är ≤ 0,005 kr per licens och månad. Allt över 0,01 kr är en
- * verklig skillnad; allt under är samma pris.
+ * ⚠️ HÄR STOD: *«Toleransen är HÄRLEDD, inte vald … Allt över 0,01 kr är en verklig skillnad.»*
+ * Härledningen var rätt räknad på FEL avrundning — vår egen tvådecimalsavrundning i stället för
+ * KÄLLANS. Kronorfältet avrundar varje rad till ±0,50 kr, alltså ±0,50/qty per licens och månad:
+ * MÄTT 0,51 vid en licens, femtio gånger den påstådda gränsen. Följden var att en kund på exakt
+ * verifierat listpris fick fel riktning i 10 av 12 licensmängder. Kommentaren överlevde fixen i
+ * granskningen och intygade då en gräns koden inte längre hade — precis den sortens rad som gör
+ * att nästa läsare inte kontrollerar (fynd 2, 2026-09-09).
+ *
+ * Toleransen är nu HÄRLEDD UR KÄLLAN, per nivå: `felBudgetKr × billMult / 12 / quantity + 0,01`.
+ * Bär raden ett avläst öre är första termen noll och gränsen ÄR de 0,01 som alltid påstods.
+ * `tolFor` är enda läsvägen (fyra kopior fanns; en följde inte med och nådde kundprosan).
  *
  * FÅNGAR: att vi påstår ett prisgap åt fel håll när radernas egna tal säger motsatsen.
  * BLIND: kräver `billedUnitMonthly` på minst en rad. Utan fakturerat à-pris vet vi inte kundens
@@ -836,6 +844,24 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
  *
  * @returns {{ billedAnnual, benchmarkAnnual, gapAnnual, riktning: 'over'|'under'|'lika' }|null}
  */
+/**
+ * Nivåns tolerans i kr/licens/mån — härledd av `computeLikeForLikeSaasTarget` ur källans egen
+ * avrundning. `TOL_FALLBACK` gäller BARA en tierLine som saknar fältet: ett handbyggt objekt
+ * eller ett cachat svar från före 2026-09-09; 0,01 var då gränsen för alla nivåer (RK-19).
+ *
+ * Den bor på modulnivå därför att den hade FYRA kopior — `lflPrisgap` (aggregat och per nivå),
+ * `buildLikeForLikeReasoning` och den fasta literalen i prosans `overTiers`. Den sista följde
+ * inte med öresfixen och namngav i kundtexten en nivå domen just kallat «lika» (fynd 3).
+ */
+const TOL_FALLBACK = 0.01;
+export const tolFor = (t) => (Number.isFinite(t?.tolerans) ? t.tolerans : TOL_FALLBACK);
+
+/** Nivåns dom: över, under eller på samma pris — mot SIN EGEN tolerans, aldrig en annan. */
+export const riktningFor = (t) => {
+  const per = t.billedUnitMonthly - t.benchmarkMonthly;
+  return Math.abs(per) <= tolFor(t) ? 'lika' : (per > 0 ? 'over' : 'under');
+};
+
 export function lflPrisgap(lfl) {
   const tiers = (lfl?.tierLines ?? []).filter(
     (t) => t.quantity > 0 && t.benchmarkMonthly != null && t.billedUnitMonthly != null
@@ -850,10 +876,9 @@ export function lflPrisgap(lfl) {
   // Aggregatets tolerans är summan av nivåernas felbudgetar, mätt i samma enhet som perEnhet:
   // varje nivås tolerans gånger dess platser, delat på alla platser. En nivå som bär öre bidrar
   // med sin rena 0,01; en som saknar öre bidrar med sin verkliga avrundning (se `tolerans`).
-  const TOL_FALLBACK = 0.01;   // gamla fasta toleransen — bara för en tierLine utan fältet
-  const tolFor = (t) => (Number.isFinite(t.tolerans) ? t.tolerans : TOL_FALLBACK);
   const aggTolerans = tiers.reduce((s, t) => s + tolFor(t) * t.quantity, 0) / platser;
-  const riktning = Math.abs(perEnhet) <= aggTolerans ? 'lika' : (perEnhet > 0 ? 'over' : 'under');
+  const aggRiktning = Math.abs(perEnhet) <= aggTolerans
+    ? 'lika' : (perEnhet > 0 ? 'over' : 'under');
 
   // ⚠️ AGGREGATETS RIKTNING FICK BESKRIVA DEN DOMINANTA NIVÅNS TAL (rättat 2026-09-06, Fables
   // granskning). Prosan citerar ALLTID den dominanta nivåns à-pris och golv — men riktningen
@@ -865,11 +890,25 @@ export function lflPrisgap(lfl) {
   //
   // Riktningen mäts nu per nivå. `riktning` (aggregatet) styr promptens premiss, som handlar om
   // BESPARINGEN och därför är en summa. `dominantRiktning` styr PROSAN, som citerar en nivå.
-  const riktningFor = (t) => {
-    const per = t.billedUnitMonthly - t.benchmarkMonthly;
-    return Math.abs(per) <= tolFor(t) ? 'lika' : (per > 0 ? 'over' : 'under');
-  };
   const dom = tiers.find((t) => t.key === lfl.dominantTierKey) ?? tiers[0];
+
+  // ── TVÅ VÄGAR TILL SAMMA STORHET GAV TVÅ DOMAR (2026-09-09, granskningens fynd 1) ─────────
+  // Jag skrev att invarianten «byggs in i returen, så tillståndet inte kan uppstå». Det var ett
+  // påstående, inte en mätning. Granskaren fällde det med EN nivå:
+  //     5 lic Business Premium, amount 1052 kr/mån  →  riktning 'lika', dominantRiktning 'over'
+  //     perEnhet = 0.10999999999997574   per nivå = 0.11000000000001364   tolerans = 0.11
+  // `perEnhet` gick via `billedAnnual − benchmarkAnnual` (summera, multiplicera, dividera) medan
+  // nivån subtraherar direkt. Flyttalens associativitet lade de två på var sin sida om exakt
+  // samma tröskel. Jag band `dominantGapArs` till `domR` och `gapAnnual` till `riktning` — men
+  // aldrig `domR` till `riktning`, alltså kvarstod motsägelsen mellan de två domarna.
+  //
+  // Rätt drag är inte en tredje bindning utan att ta bort den andra vägen: när alla nivåer är
+  // ense ÄR deras gemensamma dom aggregatets dom. Aggregatberäkningen används bara när nivåerna
+  // faktiskt säger olika, och då finns ingen motsägelse att göra. Med EN nivå kan de två per
+  // konstruktion aldrig skilja sig.
+  const nivaRiktningar = tiers.map(riktningFor);
+  const eniga = new Set(nivaRiktningar).size === 1;
+  const riktning = eniga ? nivaRiktningar[0] : aggRiktning;
 
   // ── ETT TAL FÅR ALDRIG MOTSÄGA SIN EGEN DOM (2026-09-09) ─────────────────────────────────
   // Öresmätningen visade en sista lögn: en kund på exakt listpris utan öresavläsning fick
@@ -1115,8 +1154,14 @@ export function buildLikeForLikeReasoning({
   //
   // Ledningen ändras INTE: att byta citerad nivå hade kunnat ställa namnet mot talet, vilket är
   // precis det RD-09 låser. I stället namnges den nivå som BÄR gapet.
+  // ── EN TREDJE TOLERANS FÖLJDE INTE MED ÖRESFIXEN (2026-09-09, granskningens fynd 3) ───────
+  // Jag inventerade öresFÄLTEN och missade det fixen faktiskt ändrade: TOLERANSEN. Här stod en
+  // fjärde kopia av den fasta 0,01. Mätt: en Business Premium-nivå med tolerans 0,26 och
+  // avvikelse 0,21 döms 'lika' av `lflPrisgap` men namngavs ändå i kundprosan — «Gapet bärs av
+  // era Business Premium-licenser» om en nivå vi just sagt ligger på samma pris. Två sanningar
+  // om samma fråga (regel 1), och den ena når kunden.
   const overTiers = tiers.filter(t => t.billedUnitMonthly != null
-    && t.billedUnitMonthly - t.benchmarkMonthly > 0.01);
+    && t.billedUnitMonthly - t.benchmarkMonthly > tolFor(t));
   const barGapet = overTiers.length > 0 && overTiers.length < tiers.length
     ? overTiers.map(t => LFL_TIER_LABELS[t.key] ?? t.key).join(' och ')
     : null;

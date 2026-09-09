@@ -611,7 +611,9 @@ export default async function handler(req, res) {
     // tokens FÖRE sin egen härledning av `seatCount`, så parsen bor där och bärs ut. En andra
     // parse här hade varit två sanningar om samma dokument (FK-08) — och dessutom 15 ms extra.
     const _textlager = extracted.textlager ?? null;
-    const _tokens = extracted.tokens ?? [];
+    // Tokens läses inte här: korrigeringen bor i `aggregateLineItems`. De bärs ut på svaret
+    // (icke-uppräkningsbart, FK-13) för den som behöver dem, och `null` betyder att textlagret
+    // inte gick att läsa — aldrig samma sak som en tom lista (fynd 10).
     {
       const t = Date.now();
       const dom = verifieraFakturanummer(extracted.invoiceNumber, _textlager);

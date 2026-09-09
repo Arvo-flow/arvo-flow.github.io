@@ -557,6 +557,147 @@ describe('RK · Absoluta påståenden skopas till den nivå som citeras', () => 
     assert.equal(bygg(10, P + 0.2, true).dominantGapArs, 24);
   });
 
+  test('RK-21 · PRORATA-halvan av öresfixen är prövad — den var det inte', () => {
+    // ══ GRANSKNINGENS FYND 6 (2026-09-09) ════════════════════════════════════════════════════
+    // Sex sabotage mot öresfixens egen kod fällde NOLL tester, och alla sex låg i prorata-grenen:
+    // hela `felBudget`s prorata-fall borttaget, prorata-felbudgeten ×100, `runRate`s
+    // prorata-öresgren avstängd. Prorata ÄR CR-88412 — fakturan hela like-for-like-fixen vilar
+    // på — och dess halva av öresfixen var oprövad. En fix vars grannfall inte körs är en halv
+    // fix, och här var grannfallet det viktigaste fallet.
+    const P = TIERS['business-premium'].msrpAnnual;      // 210,29
+    // CR-88412:s form: ordinarie rader + en prorata-rad för licenser tillagda mitt i perioden.
+    // Prorata räknas till FULLT pris (quantity × à-pris), aldrig det fakturerade delbeloppet.
+    const bygg = (medOre) => {
+      const prorata = { description: 'Microsoft 365 Business Premium (Prorata tillägg)',
+        type: 'one_time_fee', is_prorata: true, quantity: 5, unitPrice: 210,
+        amount: 1052 };                                   // delperiodsbeloppet, ska INTE användas
+      // ore-ok: fixturen skriver den aggregerade formen, läser inte
+      if (medOre) prorata.unitPriceOre = Math.round(P * 100);   // ore-ok: fixturen skriver, läser inte
+      const ordinarie = { description: 'Microsoft 365 Business Premium',
+        type: 'recurring_subscription', quantity: 45, amount: Math.round(P * 45),
+        unitPrice: Math.round(P) };
+      // ore-ok: samma sak för den ordinarie raden
+      if (medOre) ordinarie.amountOre = Math.round(P * 45 * 100);   // ore-ok: fixturen skriver, läser inte
+      // ⚠️ FIXTUREN MÅSTE VARA INTERNT KONSISTENT. Min första version satte årskostnaden ur
+      // prorata-radens DELPERIODSBELOPP (1 052) medan `billMult`-nämnaren räknar full pris
+      // (5 × 210). billMult blev 12,0023 i stället för 12, à-priset 210,33 och domen «over» —
+      // ett falsklarm ur min egen fixtur, inte ur koden. Mätt innan jag rörde koden.
+      const arskostnad = (Math.round(P * 45) + 5 * 210) * 12;
+      return computeLikeForLikeSaasTarget([ordinarie, prorata], TIERS, arskostnad);
+    };
+
+    const med = bygg(true);
+    const t = med.tierLines[0];
+    assert.equal(t.quantity, 50, 'ordinarie + prorata slås ihop på samma nivå');
+    assert.equal(t.tolerans, 0.01,
+      'bär BÅDA raderna öre är felbudgeten noll och toleransen den rena tvådecimalsgränsen — '
+      + 'faller detta läser prorata-grenen inte öret');
+    assert.equal(lflPrisgap(med).dominantRiktning, 'lika',
+      'kunden betalar exakt listpris på båda raderna, prorata till fullt pris');
+
+    // UTAN öre: prorata-radens à-pris avrundas per ENHET, så felbudgeten är 0,50 × antalet
+    // enheter på raden — inte 0,50 för raden. Att den skillnaden finns är hela grenens poäng.
+    const utan = bygg(false);
+    assert.ok(utan.tierLines[0].tolerans > 0.01,
+      'utan öre måste prorata-raden BÄRA sin avrundning — annars påstår vi exakthet vi saknar');
+    // Härledningen, räknad för hand och sedan MÄTT (jag skrev först 0,06 och glömde den
+    // ordinarie radens egen halvkrona — talet var mitt fel, inte kodens):
+    //     ordinarie raden   0,50 kr            (ett kronorbelopp avrundas en gång)
+    //   + prorata-raden     0,50 × 5 = 2,50 kr (à-priset avrundas och multipliceras med 5)
+    //   = 3,00 kr / 50 platser = 0,06  + tvådecimalsgränsen 0,01  = 0,07
+    assert.equal(Math.round(utan.tierLines[0].tolerans * 1000) / 1000, 0.07,
+      'felbudgeten skalas per ENHET på en prorata-rad, aldrig per rad');
+  });
+
+  test('RK-22 · aggregatets tolerans viktas per plats, och kan inte svälja en enig dom', () => {
+    // Granskningens fynd 2: viktningen `tolerans × quantity / platser` prövades aldrig. Och
+    // fynd 1 visade att aggregatet KUNDE säga «lika» medan nivån sa «over» — två vägar till
+    // samma storhet, skilda av flyttalens associativitet. Riktningen härleds numera ur nivåerna
+    // när de är eniga; aggregatberäkningen används bara när de faktiskt säger olika.
+    const P = TIERS['business-premium'].msrpAnnual;
+    const E3 = TIERS['e3'].msrpAnnual;
+    // Granskarens exakta motfall — en enda nivå, där de två vägarna hamnade på var sin sida.
+    const en = computeLikeForLikeSaasTarget([{
+      description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+      quantity: 5, amount: 1052, unitPrice: 210 }], TIERS, 12624);
+    const g = lflPrisgap(en);
+    assert.equal(g.riktning, g.dominantRiktning,
+      'med EN nivå kan aggregatet och nivån per konstruktion aldrig säga olika');
+    assert.equal(g.gapAnnual > 0, g.dominantGapArs > 0, 'och talen får inte peka åt olika håll');
+
+    // Två nivåer som BÅDA ligger över: aggregatet får aldrig döma «lika» när alla är eniga —
+    // det var vägen in i motsägelsen.
+    const raderna = [
+      { description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+        quantity: 5, amount: Math.round((P + 0.3) * 5), unitPrice: 211 },
+      { description: 'Microsoft 365 E3', type: 'recurring_subscription',
+        quantity: 40, amount: Math.round((E3 + 0.3) * 40), unitPrice: 417 },
+    ];
+    // Årskostnaden härleds ur raderna, aldrig satt på måfå: ett godtyckligt tal gör billMult
+    // till en skalfaktor och då mäter provet sin egen fixtur (samma fel som i RK-21 ovan).
+    const tva = computeLikeForLikeSaasTarget(
+      raderna, TIERS, raderna.reduce((s2, r) => s2 + r.amount, 0) * 12);
+    const h = lflPrisgap(tva);
+    assert.equal(h.riktning, 'over', 'två eniga nivåer över golvet ÄR ett aggregat över golvet');
+    assert.equal(h.heterogen, false, 'och de är eniga');
+  });
+
+  test('RK-23 · prosan namnger aldrig en nivå domen kallat «lika» (granskningens fynd 3)', () => {
+    // ÖRESFIXEN MISSADE EN FJÄRDE TOLERANS. Jag inventerade öresFÄLTEN och inte det fixen
+    // faktiskt ändrade — TOLERANSEN. `overTiers` i kundprosan bar kvar en fast `> 0.01`.
+    // Mätt: Business Premium med 2 licenser får tolerans 0,26 (kronorfältets halva krona delad
+    // på två) och en avvikelse på 0,21. `lflPrisgap` dömer «lika» — men prosan skrev
+    // «Gapet bärs av era E3 och Business Premium-licenser». Två sanningar om samma fråga, och
+    // den ena når kunden.
+    const P = TIERS['business-premium'].msrpAnnual;
+    const bp = { description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+      quantity: 2, amount: Math.round((P + 0.21) * 2), unitPrice: 210 };
+    const e3 = { description: 'Microsoft 365 E3', type: 'recurring_subscription',
+      quantity: 20, amount: Math.round((E3_LISTA + 30) * 20), unitPrice: 447 };
+    const arskostnad = (bp.amount + e3.amount) * 12;
+    const lfl = computeLikeForLikeSaasTarget([bp, e3], TIERS, arskostnad);
+    const bpLine = lfl.tierLines.find((t) => t.key === 'business-premium');
+    assert.equal(bpLine.tolerans, 0.26, 'fallet står och faller med den härledda toleransen');
+    assert.ok(Math.abs(bpLine.billedUnitMonthly - bpLine.benchmarkMonthly) <= bpLine.tolerans,
+      'BP ligger INOM sin tolerans — alltså «lika», och får inte namnges som gapbärare');
+
+    const prosa = buildLikeForLikeReasoning({
+      supplier: 'Atea', lfl, annualCost: arskostnad,
+      suggestedAnnualCost: lfl.suggestedAnnualCost, savingPerYear: 5000,
+      billingCycleType: 'monthly',
+    });
+    assert.match(prosa, /Gapet bärs av era E3-licenser/, 'E3 ÄR gapbäraren, 29,98 kr över golvet');
+    assert.doesNotMatch(prosa, /Gapet bärs av[^.;]*Business Premium/,
+      'en nivå domen kallat «lika» får aldrig namnges som gapbärare i kundtexten');
+  });
+
+  test('RK-24 · aggregatets tolerans viktas per PLATS — inte per nivå', () => {
+    // Granskningens fynd 6: sabotaget «ta bort kvantitetsviktningen» fällde noll tester.
+    // Viktningen avgör bara när nivåerna SÄGER OLIKA (annars ärver aggregatet deras eniga dom),
+    // och inget prov nådde den grenen. Fallet är uträknat för hand och sedan mätt:
+    //
+    //   Business Premium  1 plats   210,00 mot 210,29   tolerans 0,51   → «lika»
+    //   E3              100 platser 416,87 mot 416,77   tolerans 0,015  → «over»
+    //   perEnhet = 0,09614   ·   VIKTAD tolerans 0,01990   ·   oviktad 0,26250
+    //
+    // Viktad → «over» (rätt: 100 av 101 platser ligger över, och deras avläsning är exakt).
+    // Oviktad → «lika» (fel: en enda plats med grov avläsning skulle tysta hundra exakta).
+    // Att medelvärdet av toleranser INTE är aggregatets tolerans är hela poängen.
+    const bp = { description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+      quantity: 1, amount: 210, unitPrice: 210 };
+    const e3 = { description: 'Microsoft 365 E3', type: 'recurring_subscription',
+      quantity: 100, amount: 41_687, unitPrice: 417 };
+    const lfl = computeLikeForLikeSaasTarget([bp, e3], TIERS, (210 + 41_687) * 12);
+    const g = lflPrisgap(lfl);
+    assert.equal(g.heterogen, true, 'nivåerna säger olika — annars nås aggregatgrenen aldrig');
+    assert.equal(g.riktning, 'over',
+      'med platsviktning väger 100 exakta platser tyngre än 1 grovt avläst. Faller detta har '
+      + 'viktningen tagits bort, och en enda licens kan tysta hundra.');
+    // Ankaret för själva talen, så att fallet inte tyst slutar diskriminera.
+    assert.equal(lfl.tierLines.find((t) => t.key === 'business-premium').tolerans, 0.51);
+    assert.equal(lfl.tierLines.find((t) => t.key === 'e3').tolerans, 0.015);
+  });
+
   test('RK-20 · ett tal får aldrig motsäga sin egen dom', () => {
     // Öresmätningen avslöjade en sista lögn: `riktning: 'lika'` bredvid `dominantGapArs: -3`.
     // Domen sa «samma pris», talet sa «tre kronor billigare». OB-19:s form ordagrant

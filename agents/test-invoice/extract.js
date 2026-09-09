@@ -1399,12 +1399,18 @@ export async function extractInvoice(input, opts = {}) {
   // ordningen. Sabotaget «flytta tillbaka anropet» fällde NOLL tester — indexprovet läste den
   // första textförekomsten, inte den som körs. Korrigeringen bor därför INNE i aggregeringen,
   // som första steg i samma funktion som härleder `seatCount`, och prövas av ett beteendeprov.
+  //
+  // ⚠️ `[]` BETYDDE TVÅ SAKER (granskningens fynd 10). Vid ett kast behölls `_tokens = []`,
+  // medan `lib/fakturakolumner.js` beskriver `[]` som «dokumentet bar inga tokens». Två
+  // tillstånd med samma värde — felfamiljen, i konstruktionen byggd mot den. Skadan var låg
+  // (båda ger ingen korrigering), men skillnaden är precis den vi behöver för att veta om en
+  // utebliven korrigering är en tom PDF eller en trasig parse. `null` = kunde inte läsa.
   let _textlager = null;
-  let _tokens = [];
+  let _tokens = null;
   try {
     ({ text: _textlager, tokens: _tokens } = await extraheraTextlager(pdfBytes));
   } catch (err) {
-    console.error('[textlager] kunde inte läsas:', err.message);
+    console.error('[textlager] kunde inte läsas — ingen kolumnkorrigering:', err.message);
   }
 
   const aggregated = aggregateLineItems(toolUseBlock.input, _tokens);

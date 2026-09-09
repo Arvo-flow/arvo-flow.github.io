@@ -49,10 +49,17 @@
 //   UTLÖSER INTE: division MED ett antal (`årskostnad / seats`) — det är att räkna pris per
 //     enhet ur ett känt antal, doktrinens motsatta och tillåtna riktning. Inte heller en
 //     kommentar som DISKUTERAR bakåträkning; vakten läser kod, inte prosa.
-//   BLIND, uttalat: vakten läser ORD, aldrig innebörd. En bakåträkning skriven med mellanled
-//     (`const k = a; const n = k / p;`) eller via en beräknad nyckel syns inte. Den flyttar
-//     bevisbördan till något en granskare kan slå upp — den bär den inte. Det verkliga skyddet
-//     är att kolumnläsaren aldrig FYLLER ett antal (AD-03), och det är ett beteendeprov.
+//   BLIND, uttalat och MÄTT (granskningens fynd 4, 2026-09-09 — blindfläcken var värre än jag
+//     först skrev). Vakten läser ORD, aldrig innebörd. Följande slipper igenom, alla provade:
+//       `const k = l.amount; const n = k / p;`   mellanled
+//       `const { unitPrice: p } = l; a / p;`     destrukturering
+//       `l.amount / l[falt]`                     beräknad nyckel
+//       `li.amount / li.unitPrice`               annat radnamn — och `li` är kodbasens EGET
+//                                                (agents/test-invoice/extract.js:997)
+//       `l.amount /\n  l.unitPrice`              radbrytning; vakten läser en rad i taget
+//     Vakten flyttar alltså bevisbördan till något en granskare kan slå upp — den bär den inte.
+//     DET VERKLIGA SKYDDET är att kolumnläsaren aldrig FYLLER ett antal (AD-03), och det är ett
+//     beteendeprov. AD-01 är en påminnelse, aldrig ett bevis; att tro motsatsen är felet.
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
@@ -76,19 +83,41 @@ function jsFiler(katalog, ut = []) {
 const kod = (s) => s.split('\n').map((r) => r.replace(/\/\/.*$/, '')).join('\n')
   .replace(/\/\*[\s\S]*?\*\//g, '');
 
+/**
+ * Den förbjudna formen: division MED ett à-pris. Valfritt objektprefix, så att `l.`, `li.`,
+ * `rad.`, `raw.` och en naken variabel alla fångas — granskningen mätte att `li` är kodbasens
+ * eget radnamn (agents/test-invoice/extract.js:997) och att den gamla regexen missade det.
+ *
+ * ⚠️ EN ENDA DEFINITION, MED FLIT. Första versionen hade regexen i AD-01 och en KOPIA i AD-02,
+ * vars uttalade syfte var att hindra att AD-01 blir «grön av tomhet». Granskaren neutraliserade
+ * AD-01:s regex till `/FINNS_ALDRIG/` och hela sviten förblev grön — motprovet prövade sin egen
+ * kopia. Två sanningar om samma fråga (regel 1), i vakten mot precis den formen.
+ */
+const BAKATRAKNING = /\/\s*\(?\s*(?:[A-Za-z_$][\w$]*\s*\??\.\s*)?(?:unitPrice|unit_price|unitPriceOre|unit_price_ore|aPris|apris|aprisOre)\b/;
+
 describe('AD · Antalsdoktrinen — ett antal är en avläsning, eller så finns det inte', () => {
   test('AD-01 · ingen dividerar ett belopp med ett à-pris', () => {
     // Formen doktrinen förbjuder. `// antal-ok: <skäl>` på raden är den motiverade utvägen,
     // samma mönster som claims-audit och kopidetektorn — en vakt utan utväg kringgås med
     // --no-verify, och då är den sämre än ingen.
-    const FORBJUDET = /\/\s*\(?\s*(?:l|rad|item|line)?\.?(?:unitPrice|unit_price|aPris|apris|unitPriceOre|aprisOre)\b/;
+    //
+    // ⚠️ MALLSTRÄNGAR HOPPAS ÖVER. Första körningen fällde `agents/test-invoice/extract.js:232`
+    // — en rad i SYSTEM_PROMPT som BESKRIVER fälten för modellen («amount_ore / unit_price_ore:
+    // radens belopp respektive à-pris i ÖRE»). Det är prosa, inte en division, och en vakt som
+    // larmar på sin egen dokumentation blir avstängd. Backtick-pariteten är en approximation,
+    // och det ska sägas: en mallsträng med ojämnt antal backticks på en rad kan förskjuta
+    // räkningen. Den kostar täckning, aldrig falsklarm — säkra riktningen.
     const traffar = [];
     for (const katalog of ['lib', 'api', 'agents']) {
       for (const fil of jsFiler(join(ROT, katalog))) {
         const rader = readFileSync(fil, 'utf8').split('\n');
+        let iMall = false;
         rader.forEach((rad, i) => {
+          const varIMall = iMall;
+          if ((rad.match(/`/g) ?? []).length % 2 === 1) iMall = !iMall;
+          if (varIMall) return;                       // promptprosa är inte kod
           const ren = rad.replace(/\/\/.*$/, '');
-          if (!FORBJUDET.test(ren)) return;
+          if (!BAKATRAKNING.test(ren)) return;
           if (/antal-ok:/.test(rad)) return;
           traffar.push(`${relative(ROT, fil)}:${i + 1} — ${rad.trim().slice(0, 90)}`);
         });
@@ -106,14 +135,19 @@ describe('AD · Antalsdoktrinen — ett antal är en avläsning, eller så finns
     // `årskostnad / seats` är doktrinens MOTSATTA riktning: ett känt antal används för att
     // härleda ett pris. Den ska inte fällas, och att den inte fälls måste prövas — annars vet
     // ingen om AD-01 är snäv eller bara tyst.
-    const FORBJUDET = /\/\s*\(?\s*(?:l|rad|item|line)?\.?(?:unitPrice|unit_price|aPris|apris|unitPriceOre|aprisOre)\b/;
-    assert.equal(FORBJUDET.test('const pris = annualCost / seats / 12;'), false,
+    assert.equal(BAKATRAKNING.test('const pris = annualCost / seats / 12;'), false,
       'pris per känd enhet är tillåtet och måste förbli det');
-    assert.equal(FORBJUDET.test('const perEnhet = gap / platser / 12;'), false);
+    assert.equal(BAKATRAKNING.test('const perEnhet = gap / platser / 12;'), false);
     // Och att den FAKTISKT fäller den förbjudna formen — annars är AD-01 grön av tomhet.
-    assert.equal(FORBJUDET.test('const antal = l.amount / l.unitPrice;'), true,
+    assert.equal(BAKATRAKNING.test('const antal = l.amount / l.unitPrice;'), true,
       'den förbjudna formen måste fällas, annars mäter AD-01 ingenting');
-    assert.equal(FORBJUDET.test('seatCount = amount / unit_price;'), true);
+    assert.equal(BAKATRAKNING.test('seatCount = amount / unit_price;'), true);
+    // Formerna granskningen mätte att den GAMLA regexen missade (fynd 4) — nu ankrade, så att
+    // en framtida förenkling av mönstret fäller i stället för att tyst krympa täckningen.
+    assert.equal(BAKATRAKNING.test('const n = li.amount / li.unitPrice;'), true,
+      '`li` är kodbasens eget radnamn i extract.js — det får inte vara en fribiljett');
+    assert.equal(BAKATRAKNING.test('raw.amount / raw.unit_price_ore'), true);   // ore-ok: sträng i ett prov, ingen fältläsning
+    assert.equal(BAKATRAKNING.test('belopp / apris'), true, 'en naken variabel räknas också');
   });
 
   test('AD-03 · kolumnläsaren FYLLER aldrig ett antal — beteendeprovet', () => {
