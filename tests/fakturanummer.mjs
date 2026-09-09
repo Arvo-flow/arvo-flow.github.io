@@ -171,6 +171,36 @@ describe('FAKTURANUMMER · hela vägen från pappret till rummet', () => {
     // sajten. Vakten flyttar bevisbördan; den bär den inte.
   });
 
+  test('FN-16 · polyfillen är EXPLICIT och paketeras med funktionen', () => {
+    // ══ ATT DEKLARERA PAKETET RÄCKTE INTE (2026-09-09, andra försöket) ══════════════════════
+    // FN-15 la @napi-rs/canvas i dependencies. Nästa deploy gav SAMMA produktionsfel:
+    //     Cannot find module '@napi-rs/canvas'
+    //     Require stack: /var/task/node_modules/pdfjs-dist/legacy/build/pdf.mjs
+    // Vercels filspårare följer STATISKA importer; pdfjs laddar canvas dynamiskt och optionellt.
+    // Paketet installerades vid bygget och kopierades aldrig in i funktionens node_modules.
+    // «Står i package.json» är inte samma sak som «finns i bundlen» — ett manifest är inte en
+    // körande miljö, vilket är dagens genomgående läxa.
+    //
+    // ⚠️ VAD DET HÄR PROVET ÄR OCH INTE ÄR. Fixen är en PAKETERINGSFIX, och testmiljön har alltid
+    // canvas installerad — därför kan inget beteendeprov skilja en fungerande bundle från en
+    // trasig. Provet håller de två DEKLARATIONER som gör paketeringen möjlig, så att de inte kan
+    // tas bort i tysthet. Det bevisar inte att Vercel paketerade dem; det beviset finns bara i en
+    // skarp mätning (Vercels runtime-logg efter deploy).
+    const lager = las('lib/pdf-textlager.js');
+    assert.match(lager, /await import\('@napi-rs\/canvas'\)/,
+      'importen måste vara explicit — en dynamisk import inne i pdfjs kan spåraren inte följa');
+    assert.match(lager, /globalThis\[namn\] = canvas\[namn\]/,
+      'globalerna ska sättas ur den RIKTIGA implementationen, aldrig handrullas: kolumnläsaren '
+      + 'läser kolumner ur transform-matrisen, och en nästan rätt matris ger nästan rätt tal');
+    assert.match(lager, /await sakerstallDOMMatrix\(\)/,
+      'och den måste köras FÖRE pdfjs laddas, annars hinner polyfillen inte fram');
+
+    const vercel = JSON.parse(las('vercel.json'));
+    assert.match(vercel.functions?.['api/test-invoice.mjs']?.includeFiles ?? '', /@napi-rs/,
+      'den native binären (canvas-linux-x64-gnu) resolvas också dynamiskt — includeFiles är '
+      + 'bältet till den explicita importens hängsle');
+  });
+
   test('FN-12 · numret NÅR båda liggarna (lagrat och osynligt är ingen leverans)', () => {
     const store = las('lib/invoice-store.js');
     assert.match(store, /SELECT[\s\S]{0,400}invoice_number/,

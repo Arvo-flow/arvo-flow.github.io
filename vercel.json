@@ -32,7 +32,8 @@
   ],
   "functions": {
     "api/test-invoice.mjs": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "node_modules/@napi-rs/**"
     },
     "api/founding-member.mjs": {
       "maxDuration": 15
