@@ -59,4 +59,29 @@ console.log(JSON.stringify({
   stage:               data.stage ?? null,
   kod:                 data.kod ?? null,
   error:               data.error,
+  // ── DAGENS TRE FRÅGOR (2026-09-09) ────────────────────────────────────────────────────────
+  // 1. LEVER TEXTLAGRET? Numret bekräftas mot pdfjs textlager. Saknades det på 25 av 25 fakturor
+  //    därför att `@napi-rs/canvas` inte fanns i Vercels funktionsbundle (DOMMatrix is not
+  //    defined). Ett nummer här är beviset att polyfillen nådde produktionen.
+  fakturanummer:       data.extracted?.invoiceNumber ?? null,
+  // 2. TIGER RING 1? `invoiceTotal` konverterades aldrig, så radsumman (SEK) jämfördes mot
+  //    totalen (EUR/USD) och fällde Google, Slack, Atlassian och AWS. En `route` som inte är
+  //    review_queue med ett Ring1-skäl är beviset.
+  originalvaluta:      data.extracted?.originalCurrency ?? null,
+  fxKurs:              data.extracted?.fxRate ?? null,
+  // 3. SITTER PRISET? Öresfälten konverterades inte heller — Googles per-licenspris blev
+  //    11,50 kr i stället för 131,90. Talet ska ligga kring 132 kr, inte kring 11.
+  prisPerLicens:       data.extracted?.pricePerSeatMonthly ?? null,
+  antalLicenser:       data.extracted?.seatCount ?? null,
 }, null, 2));
+
+// ⚠️ FYRA TYSTA `null` LÄSTES EN GÅNG SOM MÄTVÄRDEN I TVÅ DYGN (20 aug), i det här verktyget.
+// Om alla tre av dagens frågor svarar `null` är det troligen fältnamnen som är fel, inte
+// systemet — och då ska sonden säga det i stället för att rapportera tre nollor som ett utfall.
+const tre = [data.extracted?.invoiceNumber, data.extracted?.originalCurrency,
+             data.extracted?.pricePerSeatMonthly];
+if (tre.every((v) => v == null)) {
+  console.log('\n⚠ ALLA TRE MÄTVÄRDEN ÄR null. Innan det tolkas som ett utfall: kontrollera att');
+  console.log('  fälten finns i svaret. Nycklar under `extracted`:');
+  console.log(' ', Object.keys(data.extracted ?? {}).join(', ') || '(inget extracted-objekt alls)');
+}
