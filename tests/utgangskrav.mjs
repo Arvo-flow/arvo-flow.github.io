@@ -137,7 +137,12 @@ describe('UK · Strukturen — ingen utgång kan kringgå kuvertet', () => {
 
   test('UK-10 · en triagerad faktura behåller sina rader', () => {
     const STORE = readFileSync(join(ROT, 'lib/invoice-store.js'), 'utf8');
-    assert.match(STORE, /storeTriaged\(\{[^)]*lineItems = null \}\)/,
+    // ⚠️ MÖNSTRET VAKTADE POSITIONEN, INTE KRAVET (2026-09-09). Det krävde att `lineItems = null`
+    // var SISTA parametern (`… \}\)`), och fälldes därför när `db: dbIn = null` lades till för att
+    // göra satsen prövbar — en ändring som inte rör raderna alls. Kravet är att parametern FINNS
+    // med sin default; var i listan den står är en formfråga vakten aldrig hade något ärende i.
+    // En vakt som fäller på rätt beteende blir avstängd, och då skyddar den ingenting.
+    assert.match(STORE, /storeTriaged\(\{[^)]*\blineItems = null\b/,
       'utan raderna går en tystad faktura inte att rädda när grinden lagas — mätt i produktion: '
       + 'Dustin-raden hade line_items_json = NULL');
     assert.match(STORE, /SET line_items_json = \$\{JSON\.stringify\(lineItems\)\}::jsonb/);

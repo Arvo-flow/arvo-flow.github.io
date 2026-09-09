@@ -188,6 +188,43 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + `v${cacheVersion()} — cachen serverar då den gamla domen för varje redan analyserad faktura`);
   });
 
+  // ══ CV-15..17 · TRE ÄNDRINGAR SOM NÅDDE PRODUKTION UTAN BUMP (2026-09-09) ═══════════════════
+  // Skillnaden mot CV-13:s undantag är MÄTT, inte antagen. Där delade tre ändringar en bump
+  // därför att de låg på samma omergade branch och nådde produktionen i ETT steg — det fanns
+  // inga svar av mellanversionen att servera. Här deployades var och en för sig till `main`, och
+  // beviset finns i Vercel-listan: fyra READY-deployer på v26. Cachen fylldes alltså mellan varje
+  // fix, och `diag-live` run 19 fick tillbaka run 18:s dom med `cached: true`.
+  //
+  // Alla tre kräver >= 27 och inte tre skilda tal: EN bump ogiltigförklarar alla v26-svar, och
+  // ett andra kast hade inte skyddat något. Kopplingarna bokförs var för sig ändå — det är hela
+  // CV-05:s poäng, att en fjärde ändring inte kan åka snålskjuts på ett tal som redan bär last.
+
+  test('CV-15 · textlagret i produktion och cache-versionen hänger ihop', () => {
+    const TL = readFileSync(join(ROT, 'lib/pdf-textlager.js'), 'utf8');
+    if (!/async function sakerstallDOMMatrix/.test(TL)) return;   // borttagen → FN-* äger fallet
+    assert.ok(cacheVersion() >= 27,
+      `textlagret lever men pdf:result står på v${cacheVersion()} — cachen serverar då svar utan `
+      + 'fakturanummer och utan `antalKalla`, och den blinda OCR:en ser ut att vara kvar');
+  });
+
+  test('CV-16 · valutakonverteringen och cache-versionen hänger ihop', () => {
+    const VK = readFileSync(join(ROT, 'lib/valutakonvertering.js'), 'utf8');
+    if (!/export function konverteraTillSek/.test(VK)) return;    // borttagen → VK-* äger fallet
+    assert.ok(cacheVersion() >= 27,
+      `valutakonverteringen finns men pdf:result står på v${cacheVersion()} — cachen serverar då `
+      + 'det okonverterade per-licenspriset (11,50 kr i stället för 131,90) för varje utländsk faktura');
+  });
+
+  test('CV-17 · Ring 1 i ursprungsenheter och cache-versionen hänger ihop', () => {
+    // Den här ändrar ROUTNINGEN, inte bara ett tal: ett cachat v26-svar bär `review_queue` med
+    // ett Ring1-skäl som inte längre gäller. En korrekt fix osynliggjord av en cache — och den
+    // här gången bevisligen, för det var precis så mätningen av fixen misslyckades.
+    if (!/ursprungsbelopp/.test(readFileSync(join(ROT, 'agents/test-invoice/extract.js'), 'utf8'))) return;
+    assert.ok(cacheVersion() >= 27,
+      `Ring 1 dömer i ursprungsenheter men pdf:result står på v${cacheVersion()} — cachen serverar `
+      + 'då den gamla valutamotsägelsens review_queue för varje redan analyserad utländsk faktura');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

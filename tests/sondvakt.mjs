@@ -14,6 +14,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { kravEnv, kravKolumner, aldrigTyst } from '../lib/sondvakt.js';
@@ -228,5 +230,92 @@ describe('SV · Scopvakten — statiska fel fälls före deploy', () => {
       + 'som ett godkännande (samma princip som varje annan sond)');
     assert.match(vakt, /'no-undef': 'error'/,
       'regeln som faktiskt fällde produktionsfelet måste vara den som körs');
+  });
+});
+
+// ── SV-14..16 · CACHETRÄFFEN (2026-09-09) ────────────────────────────────────────────────────
+// `scripts/diag-live.mjs` finns för EN sak: bevisa att en fix nått den utlagda koden. Den skrev
+// `cached: true` i sitt eget utfall och drog ändå slutsatser ur talen — run 19 fick tillbaka
+// run 18:s dom två sekunder efter Ring 1-omläggningen, och sondens larmrad pekade ut fältnamnen
+// som misstänkt när hela svaret var producerat av gårdagens kod.
+//
+// PRÖVAS SOM BETEENDE, INTE SOM TEXT. En källtextvakt hade bara kunnat se att ordet `cached`
+// står i filen — och ordningsinvarianter och avbrott är precis det källtext inte kan bevisa
+// (bibeln, 2026-09-09: «ordningsinvarianter kan bara bevisas av beteende»). Sonden körs därför
+// mot en riktig HTTP-server som svarar det vi vill pröva, och det som mäts är EXITKODEN.
+//
+// FÅNGAR: att sonden avslutar 0 på ett cachat svar, alltså rapporterar en grön körning som inte
+//   mätt någon deploy.
+// BLIND: allt om vad talen BETYDER. Vakten vet bara om sonden vägrade, aldrig om den mätte rätt
+//   sak när den inte vägrade.
+describe('SV · sonden får aldrig rapportera ett cachat svar som en mätning', () => {
+  /** Startar en attrapp av arvoflow.se som svarar `svar` på /api/test-invoice. */
+  async function medServer(svar, fn, drojMs = 0) {
+    const server = createServer((req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      if (req.url.startsWith('/api/token')) return res.end(JSON.stringify({ token: 'attrapp' }));
+      req.resume();
+      req.on('end', () => setTimeout(() => res.end(JSON.stringify(svar)), drojMs));
+    });
+    await new Promise((r) => server.listen(0, '127.0.0.1', r));
+    try { return await fn(`http://127.0.0.1:${server.address().port}`); }
+    finally { server.close(); }
+  }
+
+  /** Kör sonden skarpt och returnerar dess exitkod — det enda som räknas i CI. */
+  function korSonden(bas) {
+    return new Promise((resolve) => {
+      const p = spawn(process.execPath, [join(ROOT, 'scripts/diag-live.mjs')], {
+        cwd: ROOT,
+        env: { ...process.env, ARVO_BASE_URL: bas, PDF: 'test-pdfs/microsoft-direkt-usd.pdf' },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      let ut = '';
+      p.stdout.on('data', (d) => { ut += d; });
+      p.stderr.on('data', (d) => { ut += d; });
+      p.on('close', (kod) => resolve({ kod, ut }));
+    });
+  }
+
+  const FARSKT = {
+    route: 'auto', cached: false,
+    extracted: { invoiceNumber: 'MS-1', originalCurrency: 'USD', pricePerSeatMonthly: 131.9 },
+    recommendation: {},
+  };
+
+  test('SV-14 · ett cachat svar ger RÖTT, inte en varningsrad', async () => {
+    const { kod, ut } = await medServer({ ...FARSKT, cached: true }, korSonden);
+    assert.equal(kod, 1,
+      'sonden avslutade 0 på ett cachat svar — en grön körning läses som ett bevis, och ett '
+      + 'bevis som betyder «jag mätte inte» är farligare än ett rött');
+    assert.match(ut, /INGEN DEPLOY ÄR MÄTT/, 'skälet måste stå i loggen, inte bara i exitkoden');
+  });
+
+  test('SV-15 · ett färskt svar ger GRÖNT — vakten fäller inte allt', async () => {
+    // Motprovet. En spärr som fäller varje körning är lika värdelös som ingen spärr (OB-23).
+    const { kod, ut } = await medServer(FARSKT, korSonden);
+    assert.equal(kod, 0, `sonden fällde ett färskt svar:\n${ut}`);
+    assert.match(ut, /Färsk analys/);
+  });
+
+  test('SV-17 · svarstiden är en riktig klockavläsning, inte en nolla', async () => {
+    // Det andra vittnet mot serverns egen utsaga. Ett observationsfält som tyst kan bli 0 är
+    // precis den familj som gav «25 LÄSTA» och de fyra tysta null:en — och till skillnad från
+    // dem syns en nolla här som ett trovärdigt tal. Servern dröjer därför 400 ms, och sonden
+    // måste rapportera minst 0,3 s: ett sabotage som nollar klockan fäller nu.
+    const langsam = { ...FARSKT };
+    const { ut } = await medServer(langsam, korSonden, 400);
+    const m = ut.match(/svarstid (\d+[.,]\d) s/);
+    assert.ok(m, `svarstiden skrevs inte ut alls:\n${ut}`);
+    assert.ok(Number(m[1].replace(',', '.')) >= 0.3,
+      `svarstiden rapporterades som ${m[1]} s för ett svar som dröjde 400 ms — vittnet mäter inte`);
+  });
+
+  test('SV-16 · ett svar UTAN cache-fält behandlas som färskt, inte som cachat', async () => {
+    // Gränsfallet åt andra hållet: `cached` saknas helt (en äldre svarsform, eller ett felsvar).
+    // Att läsa `undefined` som «cachat» hade gjort varje felsvar till ett cachelarm och därmed
+    // dolt det verkliga felet bakom fel diagnos — samma sjukdom som larmet vi just lagade.
+    const { kod } = await medServer({ route: 'auto', extracted: { invoiceNumber: 'MS-1' } }, korSonden);
+    assert.equal(kod, 0);
   });
 });

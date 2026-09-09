@@ -477,7 +477,18 @@ export default async function handler(req, res) {
   // v22 (2026-09-06): absoluta påståenden skopas till den citerade nivån. Ett cachat v21-svar kan
   // bära «vi hittar inget publikt pris som är lägre än ert» BREDVID «era övriga nivåer ligger åt
   // andra hållet» — en självmotsägelse som annars serveras vidare på varje blandad licensmix.
-  const cacheKey = `pdf:result:v26:${pdfHash}:e${employeesNum}`;
+  // v27 (2026-09-09): TRE resultatändringar som var för sig nådde produktion utan bump, och
+  // felet upptäcktes av att live-sonden mätte NOLL: den fick tillbaka run 18:s dom med
+  // `cached: true` två sekunder efter Ring 1-omläggningen, alltså ett svar från koden FÖRE fixen.
+  //   · textlagret lever (4ea3a90 + 64852ae) — svaret bär nu `invoiceNumber` och radernas
+  //     `antalKalla`. Ett cachat v26-svar saknar båda, och ett svar utan fakturanummer är omöjligt
+  //     att skilja från en faktura som inte trycker sitt nummer.
+  //   · valutakonverteringen (392849c) — `invoiceTotal`, `unitPrice` och öresfälten räknas nu om.
+  //     Ett cachat v26-svar bär Googles per-licenspris som 11,50 kr i stället för 131,90.
+  //   · Ring 1 dömer i ursprungsenheter (28ecd62) — routningen själv ändras: fyra av grundarens
+  //     fakturor gick till review_queue på en motsägelse som var vår, inte fakturans.
+  // Regel 7 säger detta, CV-14 skrev läxan i går, och jag gick i den ändå — fyra commits i rad.
+  const cacheKey = `pdf:result:v27:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'

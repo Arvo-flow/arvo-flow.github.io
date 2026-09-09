@@ -11,10 +11,21 @@
 //
 // Testerna nedan låser 1 och 2 på källkodsnivå: de fäller varje återfall till "svälj felet och
 // returnera ett tal som ser ut som ett svar".
+//
+// ⚠️ PUNKT 3 LÅSTES ALDRIG, OCH DEN ÅTERKOM (2026-09-09). Raden ovan säger «låst i run.mjs», och
+// det var sant om de femton filerna — men ingen vakt hindrade en SEXTONDE. I dag skrev jag
+// `tests/rumsrad.mjs`, körde den för hand, fick tio gröna och lade den aldrig i importlistan. Den
+// hade legat i repot som ett maskinlås ingen kör: grönt när det kördes för hand, osynligt i CI,
+// och skillnaden syns ingenstans. En fix utan vakt är ett minne, och minnen tar slut.
+//
+// Mätt före bygget (bibelns krav på varje ny vakt): 118 testfiler, 117 importerade, **exakt en**
+// utanför — min egen. Vakten fäller alltså 1 och falsklarmar 0. Motsatt profil mot en vakt som
+// skriker på rätt beteende, och därför värd att ha: varje toppnivåfil i `tests/` ÄR ett testfall
+// (fixturer bor i `tests/fixtures/`), så det finns ingen legitim anledning att stå utanför.
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -273,5 +284,31 @@ describe('Tystnadsfel · en kraschad natt får inte se ut som en lugn natt', () 
     assert.match(steg, /steps\.report\.outputs\.crashed == 'true'/);
     assert.match(steg, /exit 1/,
       'En natt då vakten inte svepte måste fälla jobbet — den mejlen är sann och ska komma.');
+  });
+});
+
+// ── TF-SVIT · INGEN TESTFIL FÅR LIGGA UTANFÖR SVITEN ────────────────────────────────────────
+// FÅNGAR: en toppnivåfil i `tests/` som inte importeras av `run.mjs` — alltså ett maskinlås som
+//   aldrig körs i CI och vars gröna bara betyder «någon körde den för hand en gång».
+// BLIND: att en IMPORTERAD fil faktiskt prövar något. Vakten räknar filer, aldrig assertioner —
+//   en tom testfil i listan passerar. Och den ser bara toppnivån: en fil under `tests/fixtures/`
+//   som borde varit ett testfall är osynlig här, med flit (fixturer importeras av sina sviter).
+describe('TF-SVIT · varje maskinlås körs faktiskt', () => {
+  test('TF-10 · varje testfil i tests/ importeras av run.mjs', () => {
+    const kat = join(ROOT, 'tests');
+    const run = readFileSync(join(kat, 'run.mjs'), 'utf8');
+    const importerade = new Set([...run.matchAll(/^import '\.\/([^']+)'/gm)].map((m) => m[1]));
+    const filer = readdirSync(kat).filter((f) => f.endsWith('.mjs') && f !== 'run.mjs');
+
+    // Tomhetsspärr: matchar regexen noll importer har vakten slutat läsa listan och blir grön av
+    // tomhet — samma sjukdom den finns mot (BI-09:s «tabellen raderas»).
+    assert.ok(importerade.size > 100,
+      `run.mjs gav bara ${importerade.size} importer — importmönstret har ändrats och vakten läser fel`);
+    assert.ok(filer.length > 100, `hittade bara ${filer.length} testfiler — katalogen lästes inte`);
+
+    const utanfor = filer.filter((f) => !importerade.has(f));
+    assert.deepEqual(utanfor, [],
+      'testfiler som inte importeras av run.mjs körs aldrig i CI. Ett grönt från en handkörning '
+      + 'är inte ett grönt från sviten — lägg till dem i importlistan:\n  ' + utanfor.join('\n  '));
   });
 });

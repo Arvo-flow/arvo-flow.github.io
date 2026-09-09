@@ -105,6 +105,7 @@ import './sondvakt.mjs';
 import './rumsidentitet.mjs';
 import './bevakat-kort.mjs';
 import './rumsredovisning.mjs';
+import './rumsrad.mjs';
 import './kobokforing.mjs';
 import './fakturanummer.mjs';
 import './lasvagens-kolumner.mjs';

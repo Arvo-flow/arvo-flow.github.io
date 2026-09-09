@@ -14,14 +14,21 @@ const tr = await fetch(`${BASE}/api/token`, { method: 'POST' });
 const token = (await tr.json().catch(() => ({})))?.token ?? null;   // sondvakt-ok: ett svar utan JSON är ett mätvärde (ingen token) och rapporteras som sådant
 console.log('token:', token ? 'OK' : 'SAKNAS');
 
+// SVARSTIDEN ÄR DET ANDRA VITTNET om cacheträffen, och den kostar en klockavläsning: en
+// cacheträff svarar på ~2 s, en riktig analys på ~15 (två Opus-anrop). Den fäller ingenting —
+// en tidsgräns i CI är ett falsklarm som väntar på en långsam runner — men den gör det synligt
+// när `cached: false` står bredvid en svarstid som omöjligt kan rymma en analys, och det är den
+// enda avläsning som kan motsäga serverns egen utsaga om sitt svar.
+const t0 = Date.now();
 const res = await fetch(`${BASE}/api/test-invoice`, {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ pdfBase64, industry: 'ovrigt', employees: 10, token }),
 });
 const data = await res.json().catch(() => ({}));   // sondvakt-ok: ett svar utan JSON är ett mätvärde och rapporteras som sådant
+const svarstidMs = Date.now() - t0;
 
 console.log('=== LIVE-RESULTAT (arvoflow.se) ===');
-console.log('HTTP', res.status);
+console.log('HTTP', res.status, `· svarstid ${(svarstidMs / 1000).toFixed(1)} s`);
 console.log(JSON.stringify({
   route:               data.route,
   reason:              data.reason,
@@ -85,3 +92,37 @@ if (tre.every((v) => v == null)) {
   console.log('  fälten finns i svaret. Nycklar under `extracted`:');
   console.log(' ', Object.keys(data.extracted ?? {}).join(', ') || '(inget extracted-objekt alls)');
 }
+
+// ══ EN CACHETRÄFF MÄTER INGEN DEPLOY (2026-09-09) ═══════════════════════════════════════════
+// Sondens ENDA uppgift står i filhuvudet: «bevisar att fixen faktiskt är deployad». Ett cachat
+// svar är per definition producerat av den kod som körde när cachen fylldes — alltså kan det
+// aldrig säga något om koden som körs nu. Sonden SKREV redan ut `cached: true` två rader ovanför
+// sin egen larmrad och drog ändå slutsatser ur talen. Mätt: run 19 (efter Ring 1-omläggningen)
+// fick tillbaka run 18:s dom på två sekunder, och nyckellistan i larmet pekade ut fältnamnen som
+// misstänkt när hela svaret var gammalt. Larmet hade rätt om att något var fel och fel om vad.
+//
+// Rött, inte en varningsrad: en grön körning läses som ett bevis, och ett bevis som betyder «jag
+// mätte inte» är farligare än ett rött (grundarbeslut 2026-09-08). Sonden kan inte kringgå
+// cachen själv — bypass kräver en hemlighet Actions inte bär — så det ärliga svaret är att säga
+// att mätningen uteblev och namnge åtgärden.
+//
+// FÅNGAR: att svaret kommer ur KV och inte ur den utlagda koden.
+// BLIND, två saker, och båda ska stå skrivna:
+//   · Att den utlagda koden är en ANNAN än den man tror. Sonden läser aldrig vilken commit Vercel
+//     kör — bumpas versionen men deployen har inte landat mäts föregående deploy, rent och grönt.
+//     Den kontrollen bor i deploylistan, inte här.
+//   · Att fältet självt är sant. Vakten vilar på SERVERNS EGEN utsaga om sitt svar. Slutar
+//     api-lagret sätta `cached`, eller sätter det fel, är sonden blind på exakt samma sätt som
+//     före den här raden — och den blir det TYST, för `undefined` läses som färskt (SV-16, och
+//     det är rätt val: att läsa varje felsvar som ett cachelarm hade dolt det verkliga felet
+//     bakom fel diagnos). Det andra vittnet är därför SVARSTIDEN, som skrivs ut på HTTP-raden:
+//     den kommer ur sondens egen klocka och inte ur serverns utsaga, och en analys kan inte
+//     rymmas på två sekunder. Den fäller ingenting — se motiveringen vid mätningen.
+if (data.cached) {
+  console.log('\n✗ SVARET KOM UR CACHEN (`cached: true`) — INGEN DEPLOY ÄR MÄTT.');
+  console.log('  Talen ovan producerades av koden som körde när cachen fylldes, inte av den som');
+  console.log('  körs nu. Åtgärd: bumpa `pdf:result:vN` i api/test-invoice.mjs (regel 7 kräver');
+  console.log('  det ändå vid varje resultatändring) och kör om när deployen är READY.');
+  process.exit(1);
+}
+console.log('\n✓ Färsk analys (`cached: false`) — talen ovan kommer ur den utlagda koden.');
