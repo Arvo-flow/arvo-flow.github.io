@@ -698,6 +698,46 @@ describe('RK · Absoluta påståenden skopas till den nivå som citeras', () => 
     assert.equal(lfl.tierLines.find((t) => t.key === 'e3').tolerans, 0.015);
   });
 
+  test('RK-29 · ett ofastställbart pris ger KODSKRIVEN text — aldrig AI:ns egen, aldrig en riktning', () => {
+    // ══ GRANSKNINGENS K1 + K3 (2026-09-09) ═══════════════════════════════════════════════════
+    // Fynd 4:s fix gjorde en nivå oprissättbar. Rätt om FÄLTET — men jag följde inte tillståndet
+    // till dess konsumenter, och två grenar gick fel åt var sitt håll:
+    //
+    //   savingPerYear > 0  → prosan skrev «prissätts ÖVER Microsofts publika årsavtalspris …
+    //                        Skillnaden ligger helt i fakturerat à-pris» om exakt det tal koden
+    //                        just kallat ofastställbart (K3).
+    //   annars             → låset returnerade null, båda attribueringslåsen hoppade över, och
+    //                        MODELLENS RÅTEXT gick ut i rummet, PDF:en och mailet (K1).
+    //                        683-klassen återöppnad — det bibeln kallar värre än ett fel tal.
+    const P = TIERS['business-premium'].msrpAnnual;
+    const ord = { description: 'Microsoft 365 Business Premium', type: 'recurring_subscription',
+      quantity: 45, amount: Math.round(P * 45), unitPrice: Math.round(P) };
+    const pro = { description: 'Microsoft 365 Business Premium (Prorata)',
+      type: 'one_time_fee', is_prorata: true, quantity: 5, amount: 526 };
+    const lfl = computeLikeForLikeSaasTarget([ord, pro], TIERS, (ord.amount + 526) * 12);
+    assert.equal(lfl.tierLines[0].billedUnitMonthly, null, 'fallet ska vara oprissättbart');
+
+    // BÅDA grenarna måste ge text — låset får aldrig lämna ett hål åt modellen.
+    for (const saving of [5000, 0]) {
+      const prosa = buildLikeForLikeReasoning({
+        supplier: 'Atea', lfl, annualCost: (ord.amount + 526) * 12,
+        suggestedAnnualCost: lfl.suggestedAnnualCost, savingPerYear: saving,
+        billingCycleType: 'monthly',
+      });
+      assert.ok(typeof prosa === 'string' && prosa.length > 0,
+        `savingPerYear=${saving}: låset returnerade null — då når AI:ns egen text kunden, och `
+        + 'det är 683-klassen återöppnad');
+      assert.match(prosa, /går inte att prissätta per licens/,
+        `savingPerYear=${saving}: texten ska SÄGA att priset inte gick att läsa`);
+      // Ingen riktning, ingen attribution — talen finns inte att bygga dem på.
+      assert.doesNotMatch(prosa, /prissätts över|ligger.{0,12}under|Skillnaden ligger helt/i,
+        `savingPerYear=${saving}: en riktning hävdad ur ett tal vi saknar`);
+      assert.match(prosa, /hävdar ingen riktning/, 'och tystnaden ska bära sitt skäl');
+      assert.match(prosa, new RegExp(String(P).replace('.', ',')),
+        'golvet är känt och får stå — det är kundens pris som saknas, inte marknadens');
+    }
+  });
+
   test('RK-28 · PROMPTEN säger aldrig «inget prisgap» när en nivå ligger över', async () => {
     // ══ GRANSKNINGENS FYND 3, ANDRA HALVAN ═══════════════════════════════════════════════════
     // RK-26 prövar att `nagonOver` bär sanningen. Det räcker inte: sabotaget «ta bort den
@@ -747,6 +787,18 @@ describe('RK · Absoluta påståenden skopas till den nivå som citeras', () => 
       + `fick ${t.billedUnitMonthly}, vilket är delperiodsbeloppet draget som en prislapp`);
     assert.equal(lflPrisgap(lfl), null,
       'och då hävdas ingen riktning alls: tystnad, aldrig ett falskt «under»');
+
+    // K2 (granskningen 9 sep): `oprisbarProrata` testade `l.unitPrice == null`, och `0 == null`
+    // är FALSKT. Schemat tillåter `integer|null`, så `unitPrice: 0` gick rakt genom spärren och
+    // lät delperiodsbeloppet bära nivån — MÄTT 199,78 mot golvet 210,29 → «under», sagt till en
+    // kund som betalar exakt listpris. CR-88412 ordagrant, i fixen mot CR-88412. Frågan är inte
+    // «finns fältet» utan «bär det ett pris», och det svaret är ett tal > 0.
+    for (const [namn, apris] of [['noll', 0], ['negativt', -210], ['NaN', Number.NaN]]) {
+      const lflNoll = computeLikeForLikeSaasTarget(
+        [ord, { ...utan, unitPrice: apris }], TIERS, (ord.amount + 526) * 12);
+      assert.equal(lflNoll.tierLines.find((x) => x.key === 'business-premium').billedUnitMonthly, null,
+        `unitPrice: ${namn} är inget à-pris — nivån måste tystas, inte prissättas ur delperioden`);
+    }
 
     // MOTPROVET: samma faktura MED à-pris ska prissättas normalt. En spärr som tystar allt är
     // lika värdelös som ingen spärr (OB-23:s regel), och prorata ÄR CR-88412:s egen faktura.

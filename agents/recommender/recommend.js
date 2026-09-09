@@ -659,11 +659,22 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
   // `beloppOreAvlast`, inte `beloppOre`: det senare faller tillbaka på kronor × 100, vilket är en
   // korrekt enhetskonvertering men INTE en öresavläsning — och hade gjort felbudgeten noll för
   // rader vars precision vi saknar. Det vore att påstå exakthet vi inte har.
+  // ── `!= null` SLÄPPTE IGENOM NOLL (granskningens K2, 2026-09-09) ─────────────────────────
+  // `oprisbarProrata` testade `l.unitPrice == null`, och `0 == null` är FALSKT. Schemat tillåter
+  // `integer|null`, så en prorata-rad med `unitPrice: 0` gick rakt genom spärren, föll till
+  // `l.quantity * 0` och lät delperiodsbeloppet bära nivån. MÄTT: billedUnitMonthly 199,78 mot
+  // golvet 210,29 → «under», och kundprosan sa «Ni ligger alltså under Microsofts eget listpris»
+  // till en kund som betalar exakt listpris. CR-88412 ordagrant, i fixen mot CR-88412.
+  //
+  // Ett à-pris på noll är dessutom självmotsägande på en rad med ett belopp: 5 × 0 ≠ 526.
+  // Frågan är inte «finns fältet» utan «bär det ett pris» — och det svaret är ett tal > 0.
+  const anvandbartApris = (l) => Number.isFinite(l?.unitPrice) && l.unitPrice > 0;
+
   const runRate = (l) => {
     const o = radensOre(l);
     if (l.is_prorata === true && l.quantity != null) {
       if (o.aprisOre != null) return l.quantity * (o.aprisOre / 100);
-      if (l.unitPrice != null) return l.quantity * l.unitPrice;
+      if (anvandbartApris(l)) return l.quantity * l.unitPrice;
     }
     if (o.beloppOreAvlast != null) return o.beloppOreAvlast / 100;
     return l.amount ?? 0;
@@ -684,7 +695,7 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
   // bort av `lflPrisgap`). Fakturan analyseras vidare — fail-open på pipelinen (RK-27:s motprov
   // visar att samma faktura MED à-pris prissätts som vanligt).
   const oprisbarProrata = (l) => l.is_prorata === true && l.quantity != null
-    && radensOre(l).aprisOre == null && l.unitPrice == null;
+    && radensOre(l).aprisOre == null && !anvandbartApris(l);
 
   /**
    * Radens största möjliga avrundningsfel i kronor. Noll när öret bär — då ÄR talet exakt.
@@ -695,7 +706,7 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
     const o = radensOre(l);
     if (l.is_prorata === true && l.quantity != null) {
       if (o.aprisOre != null) return 0;
-      if (l.unitPrice != null) return 0.5 * l.quantity;
+      if (anvandbartApris(l)) return 0.5 * l.quantity;
     }
     return o.beloppOreAvlast != null ? 0 : 0.5;
   };
@@ -714,7 +725,7 @@ export function computeLikeForLikeSaasTarget(lineItems, tierBenchmarks, annualCo
   // exaktheten. `annualCost` lämnas orörd: dess avrundning är ≤ 0,50 kr per rad på ett årstal,
   // medan per-licenspriset är just där en halv krona vänder en riktning.
   const kronorPeriodicTotal = lines.reduce((s, l) => s + ((l.is_prorata === true
-    && l.quantity != null && l.unitPrice != null) ? l.quantity * l.unitPrice : (l.amount ?? 0)), 0);
+    && l.quantity != null && anvandbartApris(l)) ? l.quantity * l.unitPrice : (l.amount ?? 0)), 0);
   const billMult = kronorPeriodicTotal > 0 ? annualCost / kronorPeriodicTotal : 12;
 
   // Summera quantity per tier (ordinarie + prorata på samma tier slås ihop),
@@ -1050,14 +1061,55 @@ const fmtKrUnit = (n) => Number.isInteger(n)
  * Ordet «verifierat» används medvetet INTE: det kräver ett datum (BA-09), och `tierLines` bär
  * inget. Formuleringen är därför samma som gap-grenens — «Microsofts publika årsavtalspris».
  */
+/**
+ * KODSKRIVEN TEXT NÄR PRISET INTE GICK ATT FASTSTÄLLA — tystnad är inte ett alternativ här.
+ *
+ * ══ GRANSKNINGENS K1 + K3 (2026-09-09) ═════════════════════════════════════════════════════
+ * Fynd 4:s fix gjorde en nivå oprissättbar (`billedUnitMonthly: null`) — rätt beslut om FÄLTET,
+ * men jag följde inte tillståndet till dess konsumenter. Två grenar, två olika fel, båda mätta
+ * genom produktionsvägen:
+ *
+ *   · `savingPerYear > 0`  → `buildLikeForLikeReasoning` tog sin else-gren och skrev till kunden
+ *     *«Era 50 Business Premium-licenser prissätts ÖVER Microsofts publika årsavtalspris …
+ *     Skillnaden ligger helt i fakturerat à-pris»* — en RIKTNING och en ATTRIBUTION byggd på
+ *     exakt det tal koden just deklarerat ofastställbart.
+ *   · annars → `buildInteGapReasoning` returnerade `null`, båda attribueringslåsen hoppade över,
+ *     och MODELLENS RÅTEXT gick ut i rummet, PDF:en och mailet. Det är 683-klassen återöppnad —
+ *     det bibeln själv kallar värre än ett felriktat påstående.
+ *
+ * «En fix som inte följs till alla konsumenter är en halv fix» (19 aug), citerad i min egen
+ * commit och bruten i samma. Låset måste förbli ARMERAT även när vi inget vet: vi skriver då
+ * vad vi VET (antal, nivå, golv) och säger rakt ut att priset per licens inte gick att läsa.
+ * Ingen riktning, ingen attribution, inget bytesmål — men aldrig modellens egen text.
+ */
+function buildOfaststalltPrisReasoning({ supplier, lfl, tiers }) {
+  const t = tiers.find((x) => x.key === lfl?.dominantTierKey) ?? tiers[0];
+  if (!t) return null;                         // inget underlag alls → LFL-grinden äger fallet
+  const label = LFL_TIER_LABELS[t.key] ?? t.key;
+  const namn = supplier || 'er nuvarande leverantör';
+  return `Era ${t.quantity} ${label}-licenser via ${namn} går inte att prissätta per licens: `
+    + `fakturan bär en delperiodsrad utan à-pris, och ett delperiodsbelopp är inte en prislapp. `
+    + `Microsofts publika årsavtalspris för samma licens är ${fmtKrUnit(t.benchmarkMonthly)} kr `
+    + `per användare och månad — men vi hävdar ingen riktning mot det talet förrän ert eget `
+    + `à-pris går att läsa ur fakturaraderna, och rekommenderar därför inget byte på prisargument.`;
+}
+
 function buildInteGapReasoning({ supplier, lfl, tiers, billingCycleType }) {
   const gap = lflPrisgap(lfl);
-  if (!gap) return null;                       // utan à-pris kan vi inte säga vad kunden betalar
+  // ⚠️ `return null` HÄR SLÄPPTE UT MODELLENS EGEN TEXT (K1). Utan à-pris vet vi inte vad kunden
+  // betalar — men att veta ingenting är ett besked vi ska SKRIVA, aldrig ett hål vi lämnar åt AI:n.
+  if (!gap) return buildOfaststalltPrisReasoning({ supplier, lfl, tiers });
 
   const supplierName = supplier || 'er nuvarande leverantör';
   const dominant = tiers.find(t => t.key === lfl.dominantTierKey && t.billedUnitMonthly != null)
     ?? tiers.find(t => t.billedUnitMonthly != null);
-  if (!dominant) return null;
+  // ONÅBAR PER KONSTRUKTION, och det ska stå skrivet i stället för att se prövat ut: `gap` är
+  // icke-null bara om `lflPrisgap` hittade minst en nivå med `billedUnitMonthly`, och `tiers` är
+  // samma mängd. Sabotaget «returnera null här» fäller därför NOLL tester — inte för att grenen
+  // är oskyddad utan för att den inte kan nås. Den står kvar som skyddsnät, aldrig som bevis.
+  // (Kommentaren på rad ~2360 påstod en gång att en annan null-gren «inte är ett öppet hål i
+  // dag». Fynd 4:s fix gjorde den nåbar samma dag. Därför: skäl, inte försäkran.)
+  if (!dominant) return buildOfaststalltPrisReasoning({ supplier, lfl, tiers });
   const dLabel = LFL_TIER_LABELS[dominant.key] ?? dominant.key;
 
   const parts = [
@@ -1172,10 +1224,11 @@ export function buildLikeForLikeReasoning({
       `för exakt samma licens är ${fmtKrUnit(dominant.benchmarkMonthly)} kr.`
     );
   } else {
-    parts.push(
-      `Era ${dominant.quantity} ${dLabel}-licenser via ${supplierName} prissätts över Microsofts ` +
-      `publika årsavtalspris ${fmtKrUnit(dominant.benchmarkMonthly)} kr per användare och månad.`
-    );
+    // ⚠️ HÄR STOD «prissätts ÖVER Microsofts publika årsavtalspris» (granskningens K3). Grenen
+    // var dokumenterad som onåbar; fynd 4:s fix gjorde den nåbar, och då påstod den en RIKTNING
+    // om exakt det tal koden just kallat ofastställbart. Utan à-pris finns ingen riktning att
+    // hävda — hela texten byts mot den ärliga, aldrig bara meningen.
+    return buildOfaststalltPrisReasoning({ supplier, lfl, tiers });
   }
   for (const t of rest) {
     const label = LFL_TIER_LABELS[t.key] ?? t.key;
