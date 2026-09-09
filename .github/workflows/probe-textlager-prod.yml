@@ -1,0 +1,38 @@
+name: Probe textlager i produktion
+
+# Läser produktionens invoice_analyses och svarar på EN fråga: kunde Vercels runtime läsa
+# PDF:ernas textlager? Ren läsning — inga skrivningar, och INGEN push tillbaka till main.
+#
+# ⚠️ MEDVETET UTAN `git push origin HEAD:main`. Tio andra workflows i repot avslutar med just den
+# raden och är samtidigt `workflow_dispatch`-bara på vilken ref som helst — dispatchar man en av
+# dem på en feature branch pushas den branchen till `main`, tyst (`|| echo "push miss"`), förbi
+# hela granskningsgrinden i Bevisplikten p.1. Den här sonden ärver inte det mönstret.
+on:
+  workflow_dispatch:
+    inputs:
+      n:
+        description: 'Antal senaste analyser att läsa'
+        required: false
+        default: '25'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Mät
+        # pipefail: utan den blir stegets exit-kod tee:s (alltid 0), och en död sond rapporterar
+        # framgång. 35 av 75 workflows saknade den 22 aug — halva sondflottan kunde ljuga grönt.
+        run: |
+          set -o pipefail
+          node scripts/probe-textlager-prod.mjs "${{ inputs.n || '25' }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
