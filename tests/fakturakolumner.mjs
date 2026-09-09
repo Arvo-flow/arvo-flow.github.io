@@ -412,6 +412,47 @@ describe('FK · Koden läser antalet ur fakturans egen kolumn', () => {
     assert.equal(med.seatCount, 57, 'med dokument vinner pappret — annars mäter provet tomhet');
   });
 
+  test('FK-14 · en löptextrad blir aldrig rubrikrad — och skadan är mätt', async () => {
+    // ══ GRANSKNINGENS FYND 2 (8 sep), STÄNGT 9 sep ═══════════════════════════════════════════
+    // `RUBRIKER.antal` matchar `/^st\b/i`, `belopp` matchar `/^summa\b/i`. En adressrad plus en
+    // slutsumma på samma y godtogs därför som tabellhuvud, positionskolumnen «Pos» blev
+    // Antal-kolumn, och E3-raden lästes som 1 där pappret trycker 40. Bytesmålet kollapsar 97 %
+    // och ARVODET STIGER 46 396 kr — åt vårt eget håll. Det är den riktning bibeln kallar
+    // farligast under 20 % success fee.
+    const bygg = (a, b) => grupperaRader([
+      { sida: 1, x: 70, y: 700, text: a },
+      { sida: 1, x: 400, y: 700, text: b },
+    ]);
+    for (const [a, b, varfor] of [
+      ['St Eriksgatan 4', 'Summa att betala', 'gatuadress med nummer'],
+      ['Antal anställda: 45', 'Total', 'brödtext som börjar med Antal'],
+      ['Styckegods 120 kolli', 'Summa', 'radbeskrivning som börjar med Styck'],
+      ['St. Olofsgatan 12 B', 'Totalt', 'förkortad adress med nummer'],
+      // ⚠️ LÄNGDGRÄNSEN FÖRTJÄNADE INTE SIN PLATS FÖRRÄN HÄR. Sabotaget «ta bort ≤ 20» fällde
+      // NOLL tester — sifferregeln gjorde hela jobbet, och en gren som inget skyddar är precis
+      // den sortens vakt bibeln säger ska tas bort eller förtjäna sin plats. Den här raden är
+      // skälet den får stanna: en fotnot som BÖRJAR med ett rubrikord men är löptext, utan en
+      // enda siffra. Korpusens längsta verkliga etikett är 14 tecken; 20 är mätt marginal.
+      ['Antal enheter specificeras i bilaga', 'Summa exklusive mervärdesskatt', 'lång fotnot utan siffror'],
+    ]) {
+      assert.equal(hittaRubrikrad(bygg(a, b)), null,
+        `«${a}» + «${b}» (${varfor}) godtogs som tabellhuvud — en falsk rubrik gör en `
+        + 'positionskolumn till Antal-kolumn och höjer arvodet på kundens bekostnad');
+    }
+
+    // MOTPROVET, och det är det som gör provet till en vakt: varje VERKLIG rubrikform måste
+    // passera. En regel som dödar löptext men också tabellen är värre än ingen regel.
+    for (const rubrik of ['Antal', 'ANTAL', 'Antal / Period', 'Antal/Vikt', 'Mängd', 'St', 'Qty']) {
+      assert.ok(hittaRubrikrad(bygg(rubrik, 'Belopp')),
+        `«${rubrik}» är en verklig rubrikform i korpusen och måste kännas igen`);
+    }
+    // Och de tre verkliga fakturor vars rubrik inte är ordet «Antal» ensamt — CR-88412 bland dem.
+    for (const namn of ['cloudreseller-norden', 'nordiclogistik', 'bredband_3', 'bredband_2_sveakom']) {
+      assert.ok(lasAntalskolumn(await tokensFor(namn)),
+        `${namn} tappade sin tabell — etikettregeln är för snäv`);
+    }
+  });
+
   test('FK-13 · råtexten kan inte läcka genom en spridning eller en serialisering', async () => {
     // `textlager` är hela fakturans text, `tokens` varje positionerat fragment — kundens
     // dokument i klartext, på ett objekt som skickas runt i hela pipelinen. Varje konsument
