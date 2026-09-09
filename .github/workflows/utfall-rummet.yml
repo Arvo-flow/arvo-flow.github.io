@@ -1,0 +1,28 @@
+name: Utfall rum
+
+# Läs-bar avstämning efter ett ingest-pass: kom alla fakturor fram, och vad sa vi om dem?
+# Inga skrivningar. Resultatet läses ur körloggen och committas inte tillbaka.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ops/utfall.trigger'
+
+jobs:
+  utfall:
+    name: Utfall rum
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Mät utfallet
+        run: |
+          set -o pipefail
+          node scripts/utfall-rummet.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
