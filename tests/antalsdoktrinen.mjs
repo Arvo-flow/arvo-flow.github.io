@@ -112,13 +112,33 @@ const BAKATRAKNING = /\/\s*\(?\s*(?:[A-Za-z_$][\w$]*\s*\??\.\s*)?(?:unitPrice|un
  *     promptprosa FÄLLS som division. Båda riktningarna, alltså — ett påstående skrivet före
  *     mätning, i kommentaren om att aldrig skriva påståenden före mätning.
  *
- * Lexern har ett eget känt fel: `/`-diskrimineringen mellan division och regexlitteral är en
- * heuristik (föregående icke-blanka tecken avgör). Skillnaden mot pariteten är att felet nu är
- * MÄTBART — AD-06 pinnar exakt hur många rader som blankas, så en tyst blindhet inte kan växa.
+ * KVARSTÅENDE KÄND SVAGHET, uttalad: `/`-diskrimineringen mellan division och regexlitteral är
+ * en heuristik — föregående icke-blanka tecken avgör, plus en nyckelordslista (`return /re/`
+ * lexades först som division; tre verkliga fall i kodbasen). Kvar är `/` i en teckenklass
+ * (`[/]`) som avslutar regexen för tidigt, och regexflaggor som kan läcka. Riktningen är
+ * mätt: 0 tecken KOD blankas felaktigt; det som läcker är literalinnehåll, vilket kan ge ett
+ * FALSKLARM men aldrig blindhet. Skillnaden mot pariteten är att felet är mätbart och att
+ * invarianten «samma längd, samma radantal» prövas mot hela kodbasen (AD-08).
  */
 export function strippaStrangar(kalla) {
-  const ut = Array.from(kalla);
+  // ⚠️ `Array.from` ITERERAR KODPUNKTER, `kalla[i]` INDEXERAR KODENHETER (granskningens V3,
+  // 2026-09-09). Vid första astrala tecknet — en emoji i en kommentar räcker — blir utdata ETT
+  // element kortare än indata, och därefter skrivs varje blankning på fel position. MÄTT över
+  // lib/, api/ och agents/: 3 filer av 218 desynkade och **180 rader försvann helt** ur
+  // skanningen (`api/send-report.mjs` 607 → 480). En injicerad `l.amount / l.unitPrice` i det
+  // området missas alltså rakt av — vakten var blind på 180 rader utan att någon räknade dem.
+  //
+  // `split('')` delar på KODENHETER och håller därför exakt samma index som `kalla[i]` och
+  // `kalla.length`. Ett surrogatpar blir två element som båda blankas — visuellt samma resultat,
+  // och positionerna håller. Felfamiljen igen: två sätt att räkna samma sträng, och det ena
+  // svaret gick inte att skilja från det andra förrän någon mätte radantalet.
+  const ut = kalla.split('');
   const OPERAND_FORE = /[)\]}\w$]/;      // står detta före ett `/` är det division, inte regex
+  // ⚠️ ETT NYCKELORD SLUTAR PÅ EN BOKSTAV (granskningens V4). `return /regex/` såg ut som en
+  // division eftersom `sistaKod` var `n` — tre verkliga fall i kodbasen, och en regex som lexas
+  // som division läcker sitt innehåll ut i den skannade texten. Ett nyckelord är inte en operand.
+  const NYCKELORD = /\b(?:return|typeof|instanceof|case|in|of|do|else|yield|await|delete|void|new|throw)$/;
+  let sistaOrd = '';                     // senaste ordet i kodläge, för nyckelordskontrollen
   let lage = 'kod';
   const mallStack = [];                  // ${} kan nästlas i mallsträngar
   let klammerDjup = 0;
@@ -129,7 +149,9 @@ export function strippaStrangar(kalla) {
     if (lage === 'kod') {
       if (c === '/' && n === '/') { lage = 'radkommentar'; blanka(); continue; }
       if (c === '/' && n === '*') { lage = 'blockkommentar'; blanka(); continue; }
-      if (c === '/' && !OPERAND_FORE.test(sistaKod)) { lage = 'regex'; blanka(); continue; }
+      if (c === '/' && (!OPERAND_FORE.test(sistaKod) || NYCKELORD.test(sistaOrd))) {
+        lage = 'regex'; blanka(); continue;
+      }
       if (c === "'") { lage = 'enkel'; blanka(); continue; }
       if (c === '"') { lage = 'dubbel'; blanka(); continue; }
       if (c === '`') { lage = 'mall'; blanka(); continue; }
@@ -143,6 +165,11 @@ export function strippaStrangar(kalla) {
       if (c === '{') klammerDjup += 1;
       if (c === '}') klammerDjup -= 1;
       if (c.trim() !== '') sistaKod = c;
+      // ⚠️ ETT BLANKSTEG FICK GLÖMMA ORDET. Första versionen nollställde `sistaOrd` på VARJE
+      // icke-ordtecken, alltså även mellanslaget i `return /re/` — och då hann nyckelordet
+      // försvinna innan `/` nåddes. Provet fällde det. Blanktecken bevarar ordet; allt annat
+      // avslutar det.
+      if (/[\w$]/.test(c)) sistaOrd += c; else if (c.trim() !== '') sistaOrd = '';
       continue;
     }
     if (lage === 'radkommentar') { if (c === '\n') lage = 'kod'; else blanka(); continue; }
@@ -236,9 +263,14 @@ describe('AD · Antalsdoktrinen — ett antal är en avläsning, eller så finns
       "const y2 = summa / rad.apris;",                        // 10 efter regexen → ska hittas
       "const z2 = `y ${ f(`nästlad ${ a / b.unitPrice } kr`) } slut`;",  // 11 nästlad → hittas
       "const q3 = kostnad / platser;",                         // 12 tillåten riktning → tyst
+      // 13 return-regex med ett CITATTECKEN i sig. Lexas den som division (så var det innan
+      //    nyckelordslistan) öppnar apostrofen en STRÄNG som löper vidare och blindar rad 14.
+      //    Det är den verkliga skadan: inte ett falsklarm utan tystnad, och tystnad syns aldrig.
+      'function f() { return /[\'"]/.test(s); }',
+      "const w3 = faktura.amount / faktura.unitPrice;",        // 14 efter return-regex → hittas
     ].join('\n');
     const funna = hittaBakatrakning(KALLA).map((t) => t.rad);
-    assert.deepEqual(funna, [1, 6, 7, 10, 11],
+    assert.deepEqual(funna, [1, 6, 7, 10, 11, 14],
       'skannern ska hitta division i KOD (även inuti nästlade ${…}) och tiga om kommentar, '
       + 'sträng, mallsträng, regexlitteral och motiverad utväg. Fick: ' + JSON.stringify(funna));
 
@@ -250,6 +282,51 @@ describe('AD · Antalsdoktrinen — ett antal är en avläsning, eller så finns
 
     // MOTPROVET åt andra hållet: den tillåtna riktningen får aldrig fällas, ens i kod.
     assert.deepEqual(hittaBakatrakning('const pris = annualCost / seats / 12;'), []);
+  });
+
+  test('AD-08 · ett astralt tecken förskjuter aldrig skanningen', () => {
+    // ══ GRANSKNINGENS V3 (2026-09-09) ════════════════════════════════════════════════════════
+    // `Array.from(kalla)` itererar KODPUNKTER medan `kalla[i]` indexerar KODENHETER. Vid första
+    // astrala tecknet — en emoji i en kommentar räcker — blir utdata ett element kortare, och
+    // därefter blankas fel position. MÄTT över lib/, api/, agents/: 3 filer av 218 desynkade och
+    // 180 rader FÖRSVANN ur skanningen (`api/send-report.mjs` 607 → 480 rader).
+    //
+    // Provet är det som avslöjade felet: en riktig division BORTOM ett astralt tecken. Den fanns
+    // i produktionskoden och missades rakt av.
+    const KALLA = [
+      "// ✅ en emoji i en kommentar — ett surrogatpar, två kodenheter, EN kodpunkt",
+      "const a = kostnad / seats;",
+      "const b = l.amount / l.unitPrice;",     // 3 → MÅSTE hittas trots emojin ovan
+    ].join('\n');
+    assert.deepEqual(hittaBakatrakning(KALLA).map((t) => t.rad), [3],
+      'divisionen ligger bortom ett astralt tecken och måste hittas ändå — annars läser vakten '
+      + 'varje rad efter emojin mot fel originalrad, och blir blind utan att säga det');
+
+    // INVARIANTEN, som är billigare att pröva än varje enskilt tecken: strippningen bevarar
+    // längd och radantal exakt. Håller det kan positionerna per definition inte glida.
+    for (const [namn, kalla] of [
+      ['emoji i kommentar', "// ✅ ok\nconst a = x / y.unitPrice;"],
+      ['emoji i sträng', "const s = '🎉';\nconst a = x / y.unitPrice;"],
+      ['emoji i mallsträng', "const s = `🎉 ${ a / b.unitPrice }`;"],
+      ['flera surrogatpar', "// 🔨🧪📊\nconst a = x / y.unitPrice;"],
+    ]) {
+      const s = strippaStrangar(kalla);
+      assert.equal(s.length, kalla.length, `${namn}: strippningen ändrade LÄNGDEN`);
+      assert.equal(s.split('\n').length, kalla.split('\n').length,
+        `${namn}: strippningen ändrade RADANTALET — då pekar varje träff på fel rad`);
+    }
+
+    // Och att invarianten håller för HELA den verkliga kodbasen, inte bara fixturerna.
+    let desynk = 0;
+    for (const katalog of ['lib', 'api', 'agents']) {
+      for (const fil of jsFiler(join(ROT, katalog))) {
+        const kalla = readFileSync(fil, 'utf8');
+        const s = strippaStrangar(kalla);
+        if (s.length !== kalla.length || s.split('\n').length !== kalla.split('\n').length) desynk += 1;
+      }
+    }
+    assert.equal(desynk, 0,
+      `${desynk} fil(er) desynkar fortfarande — mätt till 3 före fixen, med 180 förlorade rader`);
   });
 
   test('AD-07 · en avslutad mallsträng blindar aldrig koden efter sig', () => {
