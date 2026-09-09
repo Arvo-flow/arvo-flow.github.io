@@ -1116,10 +1116,54 @@ export function routeExtraction(extracted) {
   // Stor avvikelse indikerar missad rad, dubbel rad eller fel vid moms-hantering.
   // Tolerans: max(50 kr, 3 % av total) — absorberar avrundning och öresavrundning.
   {
-    const lineSum = (extracted.lineItems ?? []).reduce((s, l) => s + (l.amount ?? 0), 0);
-    if (extracted.invoiceTotal > 0 && lineSum > 0) {
-      const diff      = Math.abs(lineSum - extracted.invoiceTotal);
-      const tolerance = Math.max(50, extracted.invoiceTotal * 0.03);
+    // ── RING 1 DÖMER I FAKTURANS EGNA ENHETER (grundarbeslut 2026-09-09) ────────────────────
+    // Frågan «går raderna ihop med totalen?» handlar om PAPPRET och kräver ingen valutakurs.
+    // Så länge båda sidor kommer ur samma extraktion kan ingen omräkning ställa dem mot
+    // varandra — oavsett vilken valuta modellen råkade läsa totalen i.
+    //
+    // MÄTT, OCH DET VAR MIN EGEN FIX SOM AVSLÖJADE DET. `invoiceTotal` konverterades aldrig,
+    // så Ring 1 fällde Google, Slack, Atlassian och AWS (radsumma i SEK mot total i EUR/USD).
+    // Jag konverterade den — och bröt `microsoft-direkt-usd`, vars textlager trycker BÅDA:
+    //     «Belopp i USD exkl. moms. SEK-motvärde: 330 USD × 10,42 = 3 438,60 kr | 450 × 10,42 = 4 689 kr»
+    // Modellen läste 8 128 (SEK-motvärdet) som total medan raderna är 780 USD. Före fixen
+    // matchade de av en slump; efter den blev totalen 84 694 och grinden fällde.
+    //
+    // DEN VERKLIGA DEFEKTEN: `invoiceTotal` bär INGEN DEKLARERAD VALUTA. Att konvertera den är
+    // en gissning, och att låta bli är också en gissning — felfamiljen i sin renaste form, ett
+    // tal utan sin enhet. Att lappa åt något håll gör bara felet mindre synligt.
+    //
+    // `ursprungsbelopp` sätts av `lib/valutakonvertering.js` FÖRE omräkningen och bär båda
+    // sidorna i samma valuta. Finns det används det; annars är fakturan i SEK och de aktuella
+    // fälten ÄR ursprungsvärdena. Ingen gren gissar en enhet.
+    const ursprung = extracted.ursprungsbelopp ?? null;
+    const lineSum = ursprung
+      ? ursprung.radsumma
+      : (extracted.lineItems ?? []).reduce((s, l) => s + (l.amount ?? 0), 0);
+    const totalen = ursprung ? ursprung.invoiceTotal : extracted.invoiceTotal;
+    const enhet = ursprung?.valuta && ursprung.valuta !== 'SEK' ? ursprung.valuta : 'kr';
+    // ── TOTALEN HAR EXAKT TVÅ MÖJLIGA ENHETER — INTE MÅNGA (2026-09-09) ────────────────────
+    // Att döma i originalvaluta räckte inte, och mätningen visade varför: `microsoft-direkt-usd`
+    // trycker BÅDE «330 USD» och «SEK-motvärde 3 438,60 kr», och modellen läste motvärdet som
+    // total. I USD blir det då 780 mot 8 128 — genuint oense, fast fakturan är korrekt.
+    //
+    // Men tvetydigheten är SLUTEN: totalen står antingen i fakturans valuta eller i dess
+    // SEK-motvärde. Att pröva båda är en UTTÖMMANDE UPPRÄKNING av två kända enheter, inte en
+    // vidgad tolerans och inte en gissning bland många — skillnaden är densamma som mellan att
+    // läsa momssatsen på pappret och att prova tre satser (obduktionen 20 aug).
+    //
+    // Håller ingen av de två läsningarna är fakturan verkligt oense, och då fäller grinden.
+    const kurs = Number(extracted.fxRate);
+    const alternativTotal = ursprung && Number.isFinite(kurs) && kurs > 0 && totalen > 0
+      ? totalen / kurs : null;   // totalen tolkad som SEK-motvärde, tillbakaräknad till radernas valuta
+    if (totalen > 0 && lineSum > 0) {
+      const rakDiff = Math.abs(lineSum - totalen);
+      const altDiff = alternativTotal != null ? Math.abs(lineSum - alternativTotal) : Infinity;
+      // Den läsning som stämmer BÄST är den modellen rimligen gjorde; båda prövas mot samma
+      // tolerans, och den som väljs namnges i utfallet så tystnaden bär sitt skäl.
+      const viaMotvarde = altDiff < rakDiff;
+      const totalIEnhet = viaMotvarde ? alternativTotal : totalen;
+      const diff      = Math.min(rakDiff, altDiff);
+      const tolerance = Math.max(50, totalIEnhet * 0.03);
       // Vanligaste svenska mönstret: rader EXKL moms, "Att betala" INKL moms. Glappet ÄR momsen,
       // inte en saknad rad — erkänn det innan vi flaggar, annars fastnar enkla fakturor.
       //
@@ -1135,7 +1179,7 @@ export function routeExtraction(extracted) {
       // glapp godkännas som «moms» på en faktura som säger att ingen moms tas ut.
       const avlastSats = typeof extracted.momssats === 'number' && extracted.momssats >= 0
         ? extracted.momssats : null;
-      const forklarar = (v) => Math.abs(lineSum * (1 + v) - extracted.invoiceTotal) <= tolerance;
+      const forklarar = (v) => Math.abs(lineSum * (1 + v) - totalIEnhet) <= tolerance;
       // Den avlästa satsen SKÄRPER, den vidgar aldrig: satsen får avgöra vilken sats som prövas,
       // aldrig göra ett glapp godtagbart som annars inte vore det. (Bibelns varning 12 aug: en
       // faktura kan ange både «Moms 25 %» och «reverse charge» och motsäga sig själv.)
@@ -1146,7 +1190,8 @@ export function routeExtraction(extracted) {
       const satsMotsagelse = avlastSats != null && !vatExplained
         && [0.25, 0.12, 0.06].some((v) => v !== avlastSats && forklarar(v));
       if (diff <= tolerance) {
-        emit('radsumma', 'ok', `radsumman stämmer mot fakturatotalen (${lineSum.toLocaleString('sv-SE')} kr)`);
+        emit('radsumma', 'ok', `radsumman stämmer mot fakturatotalen (${lineSum.toLocaleString('sv-SE')} ${enhet}`
+          + `${viaMotvarde ? ', totalen läst som SEK-motvärde' : ''})`);
       } else if (vatExplained) {
         emit('radsumma', 'ok', avlastSats != null
           ? `radsumman stämmer mot fakturatotalen (skillnaden är momsen, ${Math.round(avlastSats * 100)} % enligt fakturan)`
@@ -1158,10 +1203,10 @@ export function routeExtraction(extracted) {
           `fakturan anger ${Math.round(avlastSats * 100)} % moms men glappet motsvarar en annan sats`);
       } else {
         emit('radsumma', 'stopp',
-          `radsumma ${lineSum.toLocaleString('sv-SE')} kr ≠ fakturatotal ${extracted.invoiceTotal.toLocaleString('sv-SE')} kr`);
+          `radsumma ${lineSum.toLocaleString('sv-SE')} ${enhet} ≠ fakturatotal ${Math.round(totalIEnhet).toLocaleString('sv-SE')} ${enhet}`);
         return {
           route:  'review_queue',
-          reason: `Ring1: radsumma ${lineSum.toLocaleString('sv-SE')} kr ≠ fakturatotal ${extracted.invoiceTotal.toLocaleString('sv-SE')} kr (avvikelse ${diff.toLocaleString('sv-SE')} kr)`,
+          reason: `Ring1: radsumma ${lineSum.toLocaleString('sv-SE')} ${enhet} ≠ fakturatotal ${Math.round(totalIEnhet).toLocaleString('sv-SE')} ${enhet} (avvikelse ${Math.round(diff).toLocaleString('sv-SE')} ${enhet})`,
           verifications,
         };
       }

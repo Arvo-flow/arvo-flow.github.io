@@ -114,6 +114,61 @@ describe('VK · En faktura i främmande valuta räknas om HELT, eller inte alls'
     assert.equal(konverteraTillSek(inn, { rate: 11.47, valuta: 'EUR' }).currency, 'SEK');
   });
 
+  test('VK-07 · RING 1 dömer i fakturans egna enheter, och totalen har TVÅ möjliga', async () => {
+    // ══ GRUNDARBESLUT 2026-09-09 ═════════════════════════════════════════════════════════════
+    // Att konvertera `invoiceTotal` lagade Google/Slack/AWS och BRÖT `microsoft-direkt-usd`,
+    // vars textlager trycker båda valutorna:
+    //     «Belopp i USD exkl. moms. SEK-motvärde: 330 USD × 10,42 = 3 438,60 kr | 450 × 10,42 = 4 689 kr»
+    // Modellen läste 8 128 (motvärdet) som total medan raderna är 780 USD. Före fixen matchade
+    // de av en slump; efter den blev totalen 84 694 och grinden fällde en korrekt faktura.
+    //
+    // Den verkliga defekten: `invoiceTotal` bär ingen deklarerad valuta. Att konvertera är en
+    // gissning, att låta bli likaså. Ring 1 dömer därför i URSPRUNGSENHETERNA — frågan «går
+    // raderna ihop med totalen?» handlar om pappret och behöver ingen kurs — och tvetydigheten
+    // är SLUTEN: totalen står i fakturans valuta ELLER i dess SEK-motvärde. Att pröva båda är en
+    // uttömmande uppräkning av två kända enheter, inte en vidgad tolerans.
+    const { routeExtraction } = await import('../agents/test-invoice/extract.js');
+    const bygg = (total, rader) => konverteraTillSek({
+      currency: 'USD', supplier: 'X', billingPeriod: 'monthly', confidenceScore: 0.95,
+      invoiceTotal: total, annualCost: 9360, recurringAmount: rader.reduce((a, b) => a + b, 0),
+      lineItems: rader.map((a, i) => ({ description: `rad${i}`, type: 'recurring_subscription', quantity: 15, amount: a })),
+    }, { rate: 10.42, valuta: 'USD' });
+
+    // 1. Ursprunget bevaras — båda sidorna som de stod på pappret, i samma valuta.
+    const m = bygg(8128, [330, 450]);
+    assert.deepEqual(m.ursprungsbelopp, { valuta: 'USD', radsumma: 780, invoiceTotal: 8128 });
+    assert.equal(m.lineItems[0].amount, 3439, 'raderna räknas ändå om för allt nedströms');
+
+    // 2. Microsoft-fallet: totalen ÄR SEK-motvärdet → grinden ska släppa igenom.
+    const dom = routeExtraction(m);
+    assert.equal(dom.route, 'auto',
+      'en korrekt faktura vars total står i SEK-motvärde får inte fällas — det var vår egen '
+      + 'valutablandning som gjorde den till ett fel');
+    // ⚠️ VILKEN LÄSNING SOM VALDES ÄR LASTBÄRANDE, inte kosmetiskt: toleransen räknas på den
+    // valda totalen (3 % av 780 USD, inte av 8 128), och en tystnad ska bära sitt skäl. Utan den
+    // här raden fällde sabotaget «ta bort motvärdesläsningen» NOLL tester — grinden accepterade
+    // ändå, men med en tolerans räknad på fel skala.
+    const radsumma = (dom.verifications ?? []).find((x) => x.id === 'radsumma');
+    assert.equal(radsumma?.status, 'ok');
+    assert.match(radsumma.detalj, /totalen läst som SEK-motvärde/,
+      'utfallet ska namnge VILKEN av de två enheterna som stämde');
+    // Och normalfallet får INTE påstå motvärdesläsning — annars är etiketten alltid sann.
+    const normal = routeExtraction(bygg(780, [330, 450]));
+    assert.doesNotMatch(
+      (normal.verifications ?? []).find((x) => x.id === 'radsumma')?.detalj ?? '',
+      /SEK-motvärde/, 'en total i fakturans egen valuta ska inte kallas motvärde');
+
+    // 3. Normalfallet: totalen i fakturans valuta → också igenom.
+    assert.equal(routeExtraction(bygg(780, [330, 450])).route, 'auto');
+
+    // 4. MOTPROVET, och det bärande: en GENUINT oense faktura fälls fortfarande. En grind som
+    //    släpper igenom allt är lika värdelös som ingen grind (OB-23:s regel).
+    const trasig = routeExtraction(bygg(2000, [330, 450]));
+    assert.equal(trasig.route, 'review_queue', 'en saknad rad ska fortfarande fällas');
+    assert.match(trasig.reason, /USD/, 'och skälet ska namnge enheten det dömde i');
+    assert.doesNotMatch(trasig.reason, /kr/, 'aldrig «kr» om domen skedde i USD');
+  });
+
   test('VK-06 · KEDJAN: omräknad faktura ger rätt per-licenspris hela vägen', () => {
     // Ett test som matar sitt eget indata bevisar bara vidarebefordran (holdings.mjs 19 aug).
     // Provet kör därför omräkning → aggregering, och kontrollerar talet kunden faktiskt får.
