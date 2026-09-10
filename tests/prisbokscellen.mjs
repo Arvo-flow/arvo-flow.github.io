@@ -110,6 +110,41 @@ describe('Prisbokscellen — får den tala?', () => {
     assert.equal(bm.p25, 40000);
   });
 
+  test('PB-10 · en tystad cell säger VARFÖR den tystnar', async () => {
+    // Fientlig granskning 2026-09-10: loggraden hade inget test — att ta bort den fällde noll.
+    // Den är inte kosmetik. En cell som tystnar utan skäl är omöjlig att förbättra, och förr eller
+    // senare sänker någon tröskeln för att «det blev för tyst» i stället för att fråga vilken av
+    // de två bristerna det var — för få rader (mer data hjälper) eller för lite spridning (bara
+    // MER VARIERAD data hjälper). De två kräver motsatta åtgärder, och skälet är enda skillnaden.
+    //
+    // ⚠️ Första versionen var GRÖN PÅ FEL GRUND åt andra hållet: `finally` återställde console.log
+    // synkront, alltså INNAN den asynkrona läsvägen hunnit logga, och listan var tom av fel skäl.
+    const rader = [];
+    const original = console.log;
+    console.log = (...a) => rader.push(a.join(' '));
+    try {
+      const db = fejkDb({ punkter: { n: 24, skilda: 2, median: 184680, p25: 184680 } });
+      await getBenchmark({ category: 'saas-productivity', industry: 'konsult', employees: 20, db });
+    } finally {
+      console.log = original;
+    }
+    const skalrad = rader.find((r) => r.includes('[prisboken]'));
+    assert.ok(skalrad, 'tystnaden loggade inget skäl alls');
+    assert.match(skalrad, /saas-productivity·byraer·small/, 'skälet måste namnge cellen');
+    assert.match(skalrad, /SKILDA belopp \(2 av 24 rader/, 'och säga VILKEN av bristerna det var');
+
+    // Motprovet: en cell som BÄR loggar ingen tystnad — annars vore raden brus i varje analys.
+    const tysta = [];
+    console.log = (...a) => tysta.push(a.join(' '));
+    try {
+      const db2 = fejkDb({ punkter: { n: 83, skilda: 15, median: 119520, p25: 35880 } });
+      await getBenchmark({ category: 'mobil', industry: 'konsult', employees: 20, db: db2 });
+    } finally {
+      console.log = original;
+    }
+    assert.equal(tysta.find((r) => r.includes('[prisboken]')), undefined, 'en bärande cell ska inte logga en tystnad');
+  });
+
   test('PB-09 · analysgrenens fråga räknar en rad per DOKUMENT (källtextvakt)', () => {
     // ⚠️ DEKLARERAD SVAGHET: detta är en KÄLLTEXTVAKT. Den ser att frågan är skriven per dokument,
     // aldrig att databasen svarar så. Beteendebeviset bor i `scripts/probe-dubbletter.mjs`, som

@@ -183,6 +183,21 @@ describe('TK · kursen kommer från pappret, inte från oss', () => {
     assert.equal(lasTryckKurs('Belopp ex. moms i SEK (kurs 10,40 SEK/USD, fakturadatum 2026-05-01).', 'USD')?.kurs, 10.4);
   });
 
+  test('TK-15 · kursordet måste stå OMEDELBART före talet — avståndet är invarianten', () => {
+    // Granskningen visade att `KURSORD_MAXLANGD` inte är en tröskel: sabotage 28 → 200 fällde noll
+    // test. Det som BÄR är `$`-ankaret i KURSORD — mellan ordet och talet får bara blanksteg,
+    // kolon eller likhetstecken stå. Det är den invarianten som prövas här, inte konstanten.
+    const fyll = 'x'.repeat(150);
+    assert.equal(lasTryckKurs(`kurs för april: ${fyll} 10,42 SEK/USD`, 'USD'), null,
+      'ett kursord 150 tecken bort hör till en annan mening och får aldrig adoptera talet');
+    assert.equal(lasTryckKurs('kurs för perioden avser en annan post 10,42 SEK/USD', 'USD'), null,
+      'ett kursord med text emellan kvalificerar inte');
+    // Motprovet — separatorerna som SKA släppa igenom, annars fäller vakten verkliga fakturor:
+    assert.equal(lasTryckKurs('växlingskurs: 10,42 SEK/USD', 'USD')?.kurs, 10.42);
+    assert.equal(lasTryckKurs('Valutakurs = 10,42 SEK/USD', 'USD')?.kurs, 10.42);
+    assert.equal(lasTryckKurs('kurs  10,42 SEK/USD', 'USD')?.kurs, 10.42);
+  });
+
   test('TK-10 · sonden som bar mätningen står kvar körbar', () => {
     // Ett mätvärde utan sitt instrument är ett påstående (antalsdoktrinens läxa).
     const sond = readFileSync(join(ROT, 'scripts/probe-tryckkurs.mjs'), 'utf8');

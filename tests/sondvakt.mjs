@@ -19,6 +19,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { kravEnv, kravKolumner, aldrigTyst } from '../lib/sondvakt.js';
+import { prissattningsdom } from '../lib/prissattningsdom.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -347,15 +348,41 @@ describe('SV · grindarnas samlade pris mäts före commit', () => {
       'kraschlarmet måste nå människan i hooken, inte bara exitkoden');
   });
 
-  test('SV-20 · domen jämför HELA sammanfattningen, inte bara prissatt', () => {
-    // Granskarens bevis: en grind som KASTADE för bredband gav fel 0 → 77 och tystad 163 → 86
-    // medan prissatt stod still på 131 — och mätaren svarade «✓ Oförändrad mot facit», exitkod 0.
-    // Tjugotre procent av korpusen kraschade och mätinstrumentet sa att allt stod still.
+  test('SV-20 · domen jämför HELA sammanfattningen — prövad genom ANROP, inte genom ord', () => {
+    // ⚠️ FÖRRA VERSIONEN VAR EN KÄLLTEXTVAKT (`assert.match` mot två strängar) och gick att göra
+    // HELT OVERKSAM på tre sätt utan att röra en enda av dem (fientlig granskning 2026-09-10):
+    //   `if (false && sammanfattning.fel > …)` · samma på avvikelsekontrollen · filtret begränsat
+    //   till nyckeln 'prissatt'. Det sista ÅTERINFÖR precis den brist granskningen av a6f776b
+    //   stängde — 77 kraschade fixturer rapporterade som «✓ Oförändrad». Alla tre: 0 fällda test.
+    // Domen bor därför i `lib/prissattningsdom.js` och prövas här av BETEENDE.
+    const facit = { matt: '2026-09-10', fixturer: 334, prissatt: 131, tystad: 163, offert: 40, fel: 0 };
+    const oforandrad = { fixturer: 334, prissatt: 131, tystad: 163, offert: 40, fel: 0 };
+    assert.equal(prissattningsdom(oforandrad, facit).blockerar, false, 'en oförändrad korpus ska passera');
+
+    // GRANSKARENS EGET FALL, med hans mätta tal: en grind som KASTAR för bredband. `prissatt` står
+    // still — det är hela poängen — och en dom som bara läser den nyckeln säger «oförändrad».
+    const kraschad = { fixturer: 334, prissatt: 131, tystad: 86, offert: 40, fel: 77 };
+    const d = prissattningsdom(kraschad, facit);
+    assert.equal(d.blockerar, true, '77 kraschade fixturer måste blockera');
+    assert.equal(d.kod, 'krasch', 'en krasch får en EGEN kod — den ska aldrig kunna frysas bort som en flyttad gräns');
+
+    // Varje nyckel måste bära: en ändring i ENBART `tystad` (en grind som väljer tystnad utan att
+    // krascha) är lika osynlig för en dom som bara läser `prissatt`.
+    for (const nyckel of ['fixturer', 'tystad', 'offert']) {
+      const ett = { ...oforandrad, [nyckel]: oforandrad[nyckel] - 1 };
+      assert.equal(prissattningsdom(ett, facit).blockerar, true, `en ändring i ${nyckel} måste blockera`);
+      assert.equal(prissattningsdom(ett, facit).kod, 'avvikelse');
+    }
+
+    // Motprovet: utan facit får domen ALDRIG blockera — första körningen i en ny miljö är inte
+    // ett fel, och en spärr som fäller allt är lika värdelös som ingen (OB-23:s läxa).
+    assert.equal(prissattningsdom(oforandrad, null).blockerar, false);
+    assert.equal(prissattningsdom(oforandrad, null).kod, 'ingen_facit');
+
+    // Och skriptet måste faktiskt ANVÄNDA domen — en ren funktion ingen anropar är död kod.
     const src = readFileSync(join(ROOT, 'scripts/prissattningsgrad.mjs'), 'utf8');
-    assert.match(src, /Object\.keys\(sammanfattning\)/,
-      'varje nyckel i sammanfattningen måste jämföras mot facit');
-    assert.match(src, /sammanfattning\.fel > \(facit\.fel \?\? 0\)/,
-      'och ett FEL måste ha ett eget, hårdare larm — en kraschad fixtur är inte ett mätvärde');
+    assert.match(src, /prissattningsdom\(sammanfattning, facit\)/, 'skriptet måste anropa domen');
+    assert.match(src, /if \(dom\.blockerar\) process\.exit\(1\)/, 'och dess utfall måste styra exitkoden');
   });
 
   test('SV-19 · facit finns och bär sina fyra utfall åtskilda', () => {
