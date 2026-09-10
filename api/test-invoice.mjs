@@ -10,6 +10,7 @@ import { Resend } from 'resend';
 import { createHmac, createHash } from 'node:crypto';
 import { verifieraFakturanummer } from '../lib/fakturanummer.js';
 import { konverteraTillSek } from '../lib/valutakonvertering.js';
+import { fxFarskhet } from '../lib/fxfarskhet.js';
 import { markKvantiteter } from '../lib/kvantitetsvittne.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
@@ -832,7 +833,24 @@ export default async function handler(req, res) {
       const kurs = fx.rate ?? (arEur ? FALLBACK_RATE_EUR_SEK : FALLBACK_RATE_USD_SEK);
       const valuta = extracted.currency;
       extracted = konverteraTillSek(extracted, { rate: kurs, valuta, source: fx.source, date: fx.date });
-      console.log(`[test-invoice] ${valuta}→SEK konvertering: rate=${kurs} source=${fx.source}`);
+
+      // ══ EN INAKTUELL KURS FÅR INTE BÄRA ETT BESPARINGSPÅSTÅENDE (2026-09-10) ═══════════════
+      // Fakturan analyseras och visas som vanligt — kundens egna tal är kundens egna. Men det
+      // enda vi SÄLJER på är skillnaden mot ett alternativ, och den skillnaden går genom kursen.
+      // MÄTT på Microsoft-fakturan 9 sep: besparingen var 3 414 kr av 97 531 = **3,5 %**. Ett
+      // kursfel på några procent är alltså lika stort som hela påståendet och kan vända dess
+      // tecken. Att hävda en besparing genom en kurs vi inte kan datera är samma sorts fel som
+      // en osourcad siffra i prisboken (regel 3) — och åt det håll som gynnar oss.
+      //
+      // Fail-closed på PÅSTÅENDET, fail-open på pipelinen: ingen faktura går förlorad (FX-15).
+      const fxDom = fxFarskhet({ rate: kurs, source: fx.source, date: fx.date });
+      extracted.fxFarskhet = fxDom.niva;
+      extracted.fxAlderDygn = fxDom.alderDygn;
+      if (fxDom.niva !== 'farsk') {
+        extracted.prispastaendeSparrat = `fx_${fxDom.niva}`;
+        console.warn(`[fx-grind] ${valuta}: ${fxDom.skal} — fakturan analyseras, men inget besparingspåstående görs`);
+      }
+      console.log(`[test-invoice] ${valuta}→SEK konvertering: rate=${kurs} source=${fx.source} datum=${fx.date ?? '(inget)'} farskhet=${fxDom.niva}`);
     } else if (extracted.currency && !['SEK'].includes(extracted.currency)) {
       notifyReviewQueue(extracted, `[Utländsk valuta] ${extracted.currency}`).catch(
         (err) => console.error('[test-invoice] notifyReviewQueue (currency) threw:', err.message)
@@ -1700,7 +1718,9 @@ export default async function handler(req, res) {
     }
 
     const t2 = Date.now();
+    // Valutagrinden avgörs INNE i recommend(): bytesmålets namn och tal ägs där (RD-08).
     const recommendation = await recommend({
+      fxSparr: extracted.prispastaendeSparrat ?? null,
       // EN beräkning per faktura (regel 1): kuvertet räknades före triage-grenarna, och
       // recommend() får den i stället för att räkna om samma rader en andra gång. Två
       // beräkningar av samma sak i produktionsvägen är LFL-felets form.
@@ -1843,6 +1863,7 @@ export default async function handler(req, res) {
         recommendation.recommendationType = 'no_action';
       }
     }
+
 
     // ── LAGER 3: ADVERSARIAL HAIKU SANITY CHECK ──────────────────────────────────
     // En AI kontrollerar en annan AI. Fångar orimliga besparingssiffror som

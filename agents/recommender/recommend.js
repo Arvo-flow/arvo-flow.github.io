@@ -1537,7 +1537,38 @@ function storageSubstitutionResponse(sub) {
   };
 }
 
+// ══ VALUTAGRINDEN BOR HÄR, INTE I API-LAGRET (2026-09-10) ═══════════════════════════════════
+// Första versionen nollade bytesmålet i `api/test-invoice.mjs`. RD-08 fällde den omedelbart, och
+// vakten hade rätt: bytesmålets NAMN ägs av den här modulen, som också räknar dess TAL (regel 2).
+// Skrivs namnet någon annanstans kan namn och tal peka på olika nivåer — det var buggen 28 juni,
+// och att jag satte fältet till `null` snarare än till ett namn gör inte api-lagret till ägare.
+//
+// Grinden sitter därför som ett hölje runt HELA `recommend()`. Fem av returvägarna går utanför
+// `withForensics`, så den var ingen strypning; höljet är den enda punkt varje väg måste passera.
+//
+// VAD DEN GÖR: en kurs som inte får prissätta (lib/fxfarskhet.js) river hela påståendet — beslut,
+// tal, mål OCH etikett. Kundens egna belopp står kvar; det är bara SKILLNADEN mot ett alternativ
+// som går genom kursen, och den skillnaden är vad vi säljer på. Mätt på Microsoft-fakturan 9 sep:
+// besparingen var 3 414 kr av 97 531 = 3,5 %, alltså i samma storleksordning som ett kursfel på
+// några procent. Fail-closed på PÅSTÅENDET, fail-open på pipelinen (FX-15, motprov i samma test).
 export async function recommend(input, opts = {}) {
+  const svar = await recommendUtanValutagrind(input, opts);
+  if (!input?.fxSparr || !svar || typeof svar !== 'object') return svar;
+  console.warn(`[guard:fx] ${input.fxSparr} — besparingspåståendet rivs: en kurs vi inte kan datera `
+    + 'får inte bära kundens pengar');
+  return {
+    ...svar,
+    shouldSwitch: false,
+    recommendationType: 'no_action',
+    savingPerYear: null,
+    estimatedAnnualSaving: null,
+    suggestedAnnualCost: null,
+    suggestedSupplier: null,
+    fxSparr: input.fxSparr,
+  };
+}
+
+async function recommendUtanValutagrind(input, opts = {}) {
   if (!input?.customer || !input?.categorized) {
     throw new RecommenderError(
       'input måste innehålla customer + categorized + invoice'

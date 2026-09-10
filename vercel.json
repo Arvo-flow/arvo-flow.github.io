@@ -33,7 +33,7 @@
   "functions": {
     "api/test-invoice.mjs": {
       "maxDuration": 60,
-      "includeFiles": "node_modules/@napi-rs/**"
+      "includeFiles": "node_modules/{@napi-rs,pdfjs-dist}/**"
     },
     "api/founding-member.mjs": {
       "maxDuration": 15

@@ -201,6 +201,34 @@ describe('FAKTURANUMMER · hela vägen från pappret till rummet', () => {
       + 'bältet till den explicita importens hängsle');
   });
 
+  test('FN-17 · pdfjs WORKER-modul förladdas och packas — nästa vägg efter DOMMatrix', () => {
+    // ══ MÄTT I PRODUKTION EFTER ATT DOMMATRIX-FIXEN DEPLOYATS (2026-09-10) ═════════════════
+    // Polyfillen fungerade — canvas-felet var borta — och textlagret var ÄNDÅ dött, nu med ett
+    // helt annat fel i samma familj:
+    //
+    //   Setting up fake worker failed: "Cannot find module
+    //   '/var/task/node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs'"
+    //
+    // pdfjs kör utan riktig worker i Node och laddar sin worker-modul DYNAMISKT. Spåraren följer
+    // statiska importer och såg den aldrig. Samma recept som canvas: explicit import + includeFiles.
+    //
+    // GRÄNSEN, uttalad: det här provet håller DEKLARATIONERNA. Att Vercel faktiskt packade filen
+    // kan bara en skarp mätning visa (runtime-loggen efter deploy) — precis som för canvas, där
+    // första fixen såg komplett ut och ändå inte räckte.
+    const lager = las('lib/pdf-textlager.js');
+    assert.match(lager, /await import\('pdfjs-dist\/legacy\/build\/pdf\.worker\.mjs'\)/,
+      'worker-modulen måste importeras explicit — pdfjs egen import är dynamisk och osynlig för spåraren');
+    assert.match(lager, /await sakerstallWorker\(\)/,
+      'och förladdningen måste köras före pdfjs laddas, annars hinner den inte fram');
+
+    const inc = JSON.parse(las('vercel.json')).functions?.['api/test-invoice.mjs']?.includeFiles ?? '';
+    assert.match(inc, /pdfjs-dist/,
+      'includeFiles är bältet: worker-filen ligger utanför den statiska importgrafen');
+    assert.match(inc, /@napi-rs/,
+      'och canvas får INTE tappas när pdfjs läggs till — båda behövs, och en brace-lista som '
+      + 'råkar ersätta den ena är precis den sortens tysta förlust vi jagar');
+  });
+
   test('FN-12 · numret NÅR båda liggarna (lagrat och osynligt är ingen leverans)', () => {
     const store = las('lib/invoice-store.js');
     assert.match(store, /SELECT[\s\S]{0,400}invoice_number/,

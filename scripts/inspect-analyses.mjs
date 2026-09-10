@@ -133,3 +133,44 @@ for (const r of rows) {
 }
 console.log('═══════════════════════════════════════════════════════════════\n');
 console.log('Läs: 📧=mail-in · 🌐=webb · ⚠️=ej auto (kö/ej stödd) · "spar"=rekommenderat byte med nettogap');
+
+// ══ PRISBOKENS CELLER — VARFÖR KASTAS VARJE NY DATAPUNKT? (2026-09-10) ═══════════════════════
+// Produktionsloggen: `outlier dropped — annualCost=272880 z=1028.99 mean=184663 stddev=86 n=24`.
+// En standardavvikelse på 86 kr kring ett medelvärde på 184 663 kr är inte en fördelning — det är
+// 24 näst intill identiska tal. Med ett så smalt spann blir VARJE nytt värde ett extremvärde, och
+// 3σ-spärren stänger dörren hårdare ju mer data vi samlar.
+//
+// Innan vakten skrivs om måste det MÄTAS om felet sitter i vakten eller i datan: är de 24 punkterna
+// dubbletter av samma faktura, eller är cellen genuint homogen? Ett aggregat utan sina fall är
+// inget beslutsunderlag (bibeln, grindmätningen 22 aug).
+console.log('\n═══ PRISBOKENS CELLER · spridning och dubbletter ═══════════════');
+const celler = await db`
+  SELECT category, industry, size_bucket,
+         COUNT(*)::int                      AS n,
+         COUNT(DISTINCT annual_cost)::int   AS unika,
+         COUNT(DISTINCT supplier)::int      AS levarantorer,
+         ROUND(AVG(annual_cost))::bigint    AS medel,
+         ROUND(STDDEV(annual_cost))::bigint AS stdav,
+         MIN(annual_cost)::bigint           AS lagst,
+         MAX(annual_cost)::bigint           AS hogst
+  FROM invoice_datapoints
+  GROUP BY category, industry, size_bucket
+  HAVING COUNT(*) >= 5
+  ORDER BY COUNT(*) DESC
+  LIMIT 15
+`.catch((e) => { console.log('FEL:', e.message); return []; });
+
+if (celler.length === 0) {
+  console.log('(inga celler med ≥5 punkter — mätningen säger ingenting om spärren)');
+} else {
+  console.log('kategori/segment/band                n  unika  lev   medel      stdav    min→max');
+  for (const c of celler) {
+    const nyckel = `${c.category}·${c.industry}·${c.size_bucket}`.slice(0, 34).padEnd(34);
+    const spann = `${Number(c.lagst).toLocaleString('sv-SE')}→${Number(c.hogst).toLocaleString('sv-SE')}`;
+    console.log(`${nyckel} ${String(c.n).padStart(3)} ${String(c.unika).padStart(5)} `
+      + `${String(c.levarantorer).padStart(4)}  ${String(Number(c.medel).toLocaleString('sv-SE')).padStart(9)}`
+      + `  ${String(Number(c.stdav).toLocaleString('sv-SE')).padStart(7)}  ${spann}`);
+  }
+  console.log('\nLäs: unika ≪ n betyder dubbletter av samma belopp — då är det DATAN som är felet,');
+  console.log('     inte spärren. unika ≈ n med litet stdav betyder en genuint homogen cell.');
+}
