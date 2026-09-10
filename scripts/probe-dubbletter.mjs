@@ -15,6 +15,8 @@
 // INGA SKRIVNINGAR. Inga adresser, inga fingerprints, inga hashar i utskriften (repot är publikt).
 
 import { getDb } from '../lib/db.js';
+import { cellenBar } from '../lib/benchmark.js';
+import { getBenchmark as getMockBenchmark } from '../agents/recommender/branchindex.js';
 
 // ── KLASSIFICERAREN, REN OCH SJÄLVPRÖVAD ────────────────────────────────────────────────────
 // En sond vars enda möjliga svar är ett larm är inget mätinstrument (SV-09-läxan). Klassificeraren
@@ -230,6 +232,32 @@ console.log(`  BEVISADE OMANALYSER (rader−dok):     ${totKanda - totDok}`);
 console.log(`  OKÄNDA (varken eller):               ${punkter.length - totKanda}`);
 const sbod = rader.reduce((s, r) => s + r.sammaBeloppOlikaDok, 0);
 console.log(`  SKILDA dokument med SAMMA belopp:    ${sbod}   ← dessa hade en dedup-på-värde förstört`);
+
+// ── STEG 4: FÖRE / EFTER MED GRINDEN, ÖVER ALLA CELLER ──────────────────────────────────────
+// Frågan grundaren ställde: vad händer med VARJE cell, och vilken källa faller den tillbaka på?
+// En cell som tystnar faller inte i tomhet — den faller på verifierat publikt listpris, och det
+// talet ska stå här bredvid, annars är «tystnad» ett ord utan konsekvens.
+const REPRESENTANT = { micro: 5, small: 20, mid: 100, large: 400 };
+console.log('\n═══════ STEG 4 · FÖRE/EFTER MED GRINDEN (alla celler) ═══════');
+console.log('  cell'.padEnd(46) + 'n  skilda   p25_före   med_före  BÄR?  → faller på');
+let tystade = 0, barande = 0;
+for (const r of rader) {
+  const belopp = r.ps.map((p) => Number(p.annual_cost));
+  const skilda = new Set(belopp).size;
+  const dom = cellenBar({ n: r.ps.length, skilda });
+  const [kategori, industri, bucket] = r.nyckel.split('·');
+  let fallback = '—';
+  if (!dom.bar) {
+    const m = getMockBenchmark({ category: kategori, industry: industri, employees: REPRESENTANT[bucket] ?? 20 });
+    fallback = m ? `${m.source} · p25 ${m.p25} ${m.unit ?? ''}`.trim() : 'ingen prisbokspost (tystnad)';
+  }
+  if (dom.bar) barande++; else if (r.ps.length >= 10) tystade++;
+  console.log(`  ${r.nyckel.padEnd(44)}${String(r.ps.length).padStart(3)}${String(skilda).padStart(8)}`
+    + `${String(p25(belopp)).padStart(11)}${String(median(belopp)).padStart(11)}`
+    + `${(dom.bar ? '  JA' : '  nej').padStart(6)}  ${fallback}`);
+}
+console.log(`\n  celler som talar efter grinden: ${barande}`);
+console.log(`  celler som nådde radtröskeln men TYSTNAR på spridningskravet: ${tystade}`);
 
 // ── LÄSVÄG 2.5: invoice_analyses ────────────────────────────────────────────────────────────
 // Den andra grenen i getBenchmark räknar RADER i invoice_analyses, och där är pdf_hash NOT NULL

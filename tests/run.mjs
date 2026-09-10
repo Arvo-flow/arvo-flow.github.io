@@ -107,6 +107,7 @@ import './bevakat-kort.mjs';
 import './rumsredovisning.mjs';
 import './rumsrad.mjs';
 import './avvikelsevakten.mjs';
+import './prisbokscellen.mjs';
 import './fxfarskhet.mjs';
 import './tryckkurs.mjs';
 import './kobokforing.mjs';
