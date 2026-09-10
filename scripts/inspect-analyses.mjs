@@ -143,6 +143,26 @@ console.log('Läs: 📧=mail-in · 🌐=webb · ⚠️=ej auto (kö/ej stödd) �
 // Innan vakten skrivs om måste det MÄTAS om felet sitter i vakten eller i datan: är de 24 punkterna
 // dubbletter av samma faktura, eller är cellen genuint homogen? Ett aggregat utan sina fall är
 // inget beslutsunderlag (bibeln, grindmätningen 22 aug).
+// ── SCHEMAT FÖRE DATAN (2026-09-10) ────────────────────────────────────────────────────────
+// Den fientliga granskaren bevisade att `pdf_hash` INTE fanns i produktionen medan koden som
+// kräver den låg redo att mergas. Migreringens «success» bevisar inte att just den satsen körde —
+// bara att skriptet inte kastade. Schemat läses därför direkt, före allt annat.
+const schema = await db`
+  SELECT
+    (SELECT COUNT(*)::int FROM information_schema.columns
+      WHERE table_name='invoice_datapoints' AND column_name='pdf_hash')        AS har_kolumn,
+    (SELECT COUNT(*)::int FROM pg_indexes
+      WHERE tablename='invoice_datapoints' AND indexname='idx_datapoints_dokument') AS har_index
+`.catch((e) => { console.log('SCHEMAFRÅGAN FÖLL:', e.message); return []; });
+const sk = schema[0] ?? {};
+console.log('\n═══ DEDUP-SCHEMAT I PRODUKTION ═════════════════════════════════');
+console.log(`  pdf_hash-kolumn:          ${sk.har_kolumn ? '✓ finns' : '✗ SAKNAS'}`);
+console.log(`  idx_datapoints_dokument:  ${sk.har_index ? '✓ finns' : '✗ SAKNAS'}`);
+if (!sk.har_kolumn || !sk.har_index) {
+  console.log('  → KODEN FÅR INTE DEPLOYAS. Kör migrate-all.yml först — annars kastar dedup-INSERTen');
+  console.log('    och varje ny datapunkt skrivs utan dedup (fail-open, AV-13) med SCHEMAFEL i loggen.');
+}
+
 console.log('\n═══ PRISBOKENS CELLER · spridning och dubbletter ═══════════════');
 const celler = await db`
   SELECT category, industry, size_bucket,
