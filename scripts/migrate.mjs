@@ -42,6 +42,23 @@ await sql`
 // "ni betalar Y/anv, marknaden X" utan en rad efterhandsarbete. ADD COLUMN IF NOT EXISTS = idempotent.
 await sql`ALTER TABLE invoice_datapoints ADD COLUMN IF NOT EXISTS per_user_monthly_exvat NUMERIC`;
 await sql`ALTER TABLE invoice_datapoints ADD COLUMN IF NOT EXISTS tier TEXT`;
+
+// ── PRISBOKEN SAMLADE DUBBLETTER (2026-09-10, oraklets spricka 4) ─────────────────────────
+// Produktionsloggen: `avvikelsevakten avstod — för få SKILDA belopp (2 av 24 rader)`. Cellen
+// var inte homogen; den var SAMMA FAKTURA lagrad tolv gånger. Vakten avstår numera korrekt,
+// men skrivningen fortsatte lägga en ny rad för varje omanalys av samma dokument — moaten
+// själv fylldes med kopior, och nu utan att något stoppade dem.
+//
+// Dedupliceringen satt i DOMEN, inte i SKRIVNINGEN. Nyckeln är dokumentet plus kategorin:
+// EN faktura kan legitimt ge en datapunkt per kategori (blandad faktura), aldrig två i samma.
+// Partiellt index: äldre rader saknar pdf_hash och ska förbli orörda — en radering är
+// grundarens beslut, aldrig kodens.
+await sql`ALTER TABLE invoice_datapoints ADD COLUMN IF NOT EXISTS pdf_hash TEXT`;
+await sql`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_datapoints_dokument
+    ON invoice_datapoints (pdf_hash, category)
+    WHERE pdf_hash IS NOT NULL
+`;
 await sql`
   CREATE INDEX IF NOT EXISTS idx_datapoints_tier_segment
     ON invoice_datapoints (category, tier, industry, size_bucket)

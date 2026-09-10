@@ -38,6 +38,12 @@ const KANDIDATER = [
   ['ecb-sdmx-csv', 'https://data-api.ecb.europa.eu/service/data/EXR/D.USD.SEK.SP00.A?lastNObservations=1&format=csvdata'],
   ['ecb-eur-sek-sdmx', 'https://data-api.ecb.europa.eu/service/data/EXR/D.SEK.EUR.SP00.A?lastNObservations=1&format=jsondata'],
   ['frankfurter-ecb-spegel', 'https://api.frankfurter.app/latest?from=USD&to=SEK'],
+  // ── ANDRA VÄNDAN (2026-09-10): EUR-serien var INTE mätt i första körningen. Att anta att
+  // `Observations/Latest/SEKEURPMI` fungerar för att `SEKUSDPMI` gör det är en familjelikhet,
+  // inte en avläsning — och hela poängen med sonden är att inte byta URL på en gissning.
+  ['riksbank-EUR-latest', 'https://api.riksbank.se/swea/v1/Observations/Latest/SEKEURPMI'],
+  ['riksbank-EUR-gammal (nuvarande)', 'https://api.riksbank.se/swea/v1/observations/SEKEURPMI/latest'],
+  ['frankfurter-EUR-spegel', 'https://api.frankfurter.app/latest?from=EUR&to=SEK'],
 ];
 
 console.log('\n=== FX-KÄLLOR · vad svarar de FAKTISKT? ===\n');
