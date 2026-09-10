@@ -16,6 +16,7 @@ on:
   push:
     paths:
       - 'scripts/probe-dubbletter.mjs'
+      - 'scripts/probe-motpart.mjs'
       - '.github/workflows/probe-dubbletter.yml'
 
 jobs:
@@ -31,6 +32,10 @@ jobs:
       - run: npm ci
       - name: Mät
         run: node scripts/probe-dubbletter.mjs "${{ inputs.fonster || '30' }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Motpartens tillstånd (kan korsningen göras alls?)
+        run: node scripts/probe-motpart.mjs
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - name: Mät med vidare fönster (känslighetsprov)
