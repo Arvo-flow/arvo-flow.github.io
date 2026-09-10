@@ -1,0 +1,23 @@
+name: Granskning tmp DB check
+
+on:
+  push:
+    branches: [granskning3-tmp-db]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Mät
+        run: node scripts/_granskning_tmp_db_check.mjs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
