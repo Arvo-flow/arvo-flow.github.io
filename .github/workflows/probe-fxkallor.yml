@@ -1,0 +1,26 @@
+name: Probe FX-källor
+
+# Mäter vilka valutakurs-endpoints som faktiskt svarar. HTTP-egress finns bara här och på Vercel;
+# sandlådan blockerar den, så ett URL-byte kan inte verifieras lokalt.
+#
+# Ren läsning. Ingen push tillbaka till main — se probe-textlager-prod.yml för varför.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Mät
+        # pipefail: utan den blir stegets exit-kod tee:s (alltid 0) och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-fxkallor.mjs
