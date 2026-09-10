@@ -143,6 +143,46 @@ describe('TK · kursen kommer från pappret, inte från oss', () => {
     assert.match(VK, /tryckkursRad:/, 'och citatet är en sträng, inte ett belopp');
   });
 
+  // ══ TK-11..14: FIENTLIG GRANSKNING AV a6f776b (2026-09-10) ════════════════════════════════
+  // Granskaren körde den riktiga kedjan med två kurser på samma papper och fick Ring 1 att FRIA
+  // fakturan med skälet «skillnaden är momsen» — på en USD-faktura med reverse charge som inte
+  // har någon moms. Läsaren tog FÖRSTA träffen och frågade aldrig om det fanns en andra.
+
+  test('TK-11 · två motstridiga kurser på pappret ger ingen läsning', () => {
+    const t = 'Aprilperioden växlades till kurs 9,10 SEK/USD. Majperioden: växlingskurs 10,42 SEK/USD per 2026-05-01';
+    assert.equal(lasTryckKurs(t, 'USD'), null, 'pappret säger emot sig självt — då är kursen okänd');
+  });
+
+  test('TK-12 · SAMMA kurs upprepad är ingen konflikt', () => {
+    // Motprovet. En spärr som fäller allt är lika värdelös som ingen spärr (OB-23:s läxa), och
+    // en faktura som nämner sin kurs två gånger är det normala, inte det misstänkta.
+    const t = 'Omräknat med kurs 10,42 SEK/USD. Summa i SEK enligt omräkningskurs 10,42 SEK/USD.';
+    assert.equal(lasTryckKurs(t, 'USD')?.kurs, 10.42);
+  });
+
+  test('TK-13 · en tresiffrig kurs kringgår inte bandet genom att kapas', () => {
+    // «110,42 SEK/USD» läste `\d{1,2}` som «10» och fick 10,42 — bandet [5,20] kringgicks genom
+    // att LÄGGA TILL en siffra. Ett tal utanför bandet är inte en kurs, hur det än står skrivet.
+    // VEM som håller det är mätt, inte antaget: KURSORD, inte en lookbehind. Fönstret slutar
+    // omedelbart före talet, så står en siffra där kan fönstret aldrig sluta med ett kursord.
+    // Sabotaget «ta bort kursordskravet» fäller det här testet; den `(?<!\d)` jag först skrev
+    // fällde noll och är borta.
+    assert.equal(lasTryckKurs('växlingskurs 110,42 SEK/USD', 'USD'), null);
+    assert.equal(lasTryckKurs('kurs USD/SEK 110,42', 'USD'), null);
+  });
+
+  test('TK-14 · valutaparet räcker inte — pappret måste SÄGA att talet är en kurs', () => {
+    // «Belopp SEK/USD 15,00» är en beloppskolumn med parvis rubrik, inte en växelkurs.
+    assert.equal(lasTryckKurs('Belopp SEK/USD 15,00', 'USD'), null);
+    assert.equal(lasTryckKurs('Total SEK/USD 12,50 för perioden', 'USD'), null);
+    // MÄTT över alla 75 fakturor i test-pdfs/: kursordskravet kostar noll träffar. De tre som
+    // finns bär alla ordet — «kurs 10,42 SEK/USD» (aws), «växlingskurs 10,42 SEK/USD» (microsoft),
+    // «kurs 10,40 SEK/USD» (salesforce). Strängheten är gratis på verkligheten.
+    assert.equal(lasTryckKurs('Konverterat från USD (kurs 10,42 SEK/USD). Detaljerad', 'USD')?.kurs, 10.42);
+    assert.equal(lasTryckKurs('OBS: Faktura i USD — växlingskurs 10,42 SEK/USD per 2026-05-01', 'USD')?.kurs, 10.42);
+    assert.equal(lasTryckKurs('Belopp ex. moms i SEK (kurs 10,40 SEK/USD, fakturadatum 2026-05-01).', 'USD')?.kurs, 10.4);
+  });
+
   test('TK-10 · sonden som bar mätningen står kvar körbar', () => {
     // Ett mätvärde utan sitt instrument är ett påstående (antalsdoktrinens läxa).
     const sond = readFileSync(join(ROT, 'scripts/probe-tryckkurs.mjs'), 'utf8');

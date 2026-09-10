@@ -35,7 +35,13 @@ function kallfiler() {
   const ut = [];
   const gå = (d) => {
     for (const namn of readdirSync(d)) {
-      if (['node_modules', '.git', 'build', 'tests'].includes(namn)) continue;
+      // ⚠️ PUNKTKATALOGER HOPPAS ÖVER SOM KLASS, inte som uppräkning (2026-09-10).
+      // `.git` stod i listan; `.claude` gjorde det inte. En fientlig granskare som kör i en
+      // ISOLERAD git-worktree lägger en FULL kopia av repot under `.claude/worktrees/…`, och
+      // kopidetektorn läste den som riktiga källfiler: RD-08 föll på en «lokal kopia» som var
+      // dess egen. Mätinstrumentet var felet, inte systemet — och en uppräkning av kataloger man
+      // råkat tänka på blir förr eller senare inaktuell. Klassen är den enda hållbara regeln.
+      if (namn.startsWith('.') || ['node_modules', 'build', 'tests'].includes(namn)) continue;
       const p = join(d, namn);
       if (statSync(p).isDirectory()) gå(p);
       else if (namn.endsWith('.js') || namn.endsWith('.mjs')) ut.push(p);
