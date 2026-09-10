@@ -3,6 +3,9 @@ name: Probe dubbletter
 # Mäter prisbokens DOKUMENTIDENTITET före dedupliceringen (grundarmandat 2026-09-10, steg 1).
 # Inga skrivningar, ingen push. Utskriften bär bara kategori/segment/belopp/antal — aldrig
 # adresser, fingerprints eller hashar (repot är publikt och Actions-loggen med det).
+# workflow_dispatch kan inte nå en workflow som ännu inte finns på default-branchen (GitHubs
+# regel, mätt: 404 på dispatches). Push-triggern är den enda vägen härifrån — samma git-väg som
+# inspect-analyses redan använder när API:t inte räcker.
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +13,10 @@ on:
         description: 'Tidsfönster i sekunder för korsningen mot invoice_analyses'
         required: false
         default: '30'
+  push:
+    paths:
+      - 'scripts/probe-dubbletter.mjs'
+      - '.github/workflows/probe-dubbletter.yml'
 
 jobs:
   probe:
