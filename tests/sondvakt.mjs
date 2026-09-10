@@ -393,9 +393,22 @@ describe('SV · grindarnas samlade pris mäts före commit', () => {
     }
     // Och det gäller ÄVEN när en krasch samtidigt är dold: utan `fel` finns inget att jämföra.
     assert.equal(prissattningsdom({ fixturer: 334, prissatt: 131, tystad: 86, offert: 40 }, facit).kod, 'omatt');
-    // Ett tomt facit är inget facit — `{}` är sant i JS och hade annars lästs som «allt stämmer».
-    assert.equal(prissattningsdom(oforandrad, {}).kod, 'ingen_facit');
-    assert.equal(prissattningsdom(oforandrad, {}).blockerar, false);
+    // ── TREDJE VARVET: SAMMA HÅL PÅ FACIT-SIDAN. Granskarens bevis, med hans egna tal: ett facit
+    // med BARA `fixturer` godkände en korpus där prissättningsgraden kollapsat till NOLL.
+    const halvt = prissattningsdom({ fixturer: 334, prissatt: 0, tystad: 0, offert: 0, fel: 0 }, { fixturer: 334 });
+    assert.equal(halvt.blockerar, true, 'ett halvt facit får aldrig godkänna en mätning');
+    assert.equal(halvt.kod, 'trasigt_facit', 'och det är TRASIGT, inte «inget facit» — de kräver motsatta åtgärder');
+    // Tre tillstånd som aldrig får se likadana ut:
+    assert.equal(prissattningsdom(oforandrad, {}).kod, 'ingen_facit', 'tomt facit = första körningen');
+    assert.equal(prissattningsdom(oforandrad, {}).blockerar, false, 'och den blockerar inte');
+    assert.equal(prissattningsdom(oforandrad, { ...facit }).kod, 'ok', 'ett helt facit jämför');
+    // Ett tal som blivit sträng är inte ett tal: `'334'` gav förut texten «fixturer: 334 → 334».
+    assert.equal(prissattningsdom(oforandrad, { ...facit, fixturer: '334' }).kod, 'trasigt_facit');
+    for (const saknad of ['prissatt', 'tystad', 'offert', 'fel']) {
+      const stympat = { ...facit };
+      delete stympat[saknad];
+      assert.equal(prissattningsdom(oforandrad, stympat).kod, 'trasigt_facit', `facit utan ${saknad} måste fällas`);
+    }
 
     // Och skriptet måste faktiskt ANVÄNDA domen — en ren funktion ingen anropar är död kod.
     const src = readFileSync(join(ROOT, 'scripts/prissattningsgrad.mjs'), 'utf8');
