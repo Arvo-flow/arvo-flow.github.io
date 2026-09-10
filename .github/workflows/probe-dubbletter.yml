@@ -38,7 +38,3 @@ jobs:
         run: node scripts/probe-motpart.mjs
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      - name: Mät med vidare fönster (känslighetsprov)
-        run: node scripts/probe-dubbletter.mjs 300
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
