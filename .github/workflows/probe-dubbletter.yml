@@ -1,0 +1,32 @@
+name: Probe dubbletter
+
+# Mäter prisbokens DOKUMENTIDENTITET före dedupliceringen (grundarmandat 2026-09-10, steg 1).
+# Inga skrivningar, ingen push. Utskriften bär bara kategori/segment/belopp/antal — aldrig
+# adresser, fingerprints eller hashar (repot är publikt och Actions-loggen med det).
+on:
+  workflow_dispatch:
+    inputs:
+      fonster:
+        description: 'Tidsfönster i sekunder för korsningen mot invoice_analyses'
+        required: false
+        default: '30'
+
+jobs:
+  probe:
+    name: Dokumentidentitet i prisboken
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Mät
+        run: node scripts/probe-dubbletter.mjs "${{ inputs.fonster || '30' }}"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Mät med vidare fönster (känslighetsprov)
+        run: node scripts/probe-dubbletter.mjs 300
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
