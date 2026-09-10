@@ -506,7 +506,11 @@ export default async function handler(req, res) {
   //
   // `vN` står kvar och tas ALDRIG bort: utanför Vercel (lokalt, i tester, i sonder) saknas
   // SHA:n, och då är versionen det enda som skiljer generationerna. CV-01..17 vaktar den kvar.
-  const deploySha = (process.env.VERCEL_GIT_COMMIT_SHA ?? 'lokal').slice(0, 8);
+  // `||`, inte `??` (2026-09-10, fientlig granskning): en env-variabel som finns men är TOM är
+  // inte en sha, och `??` hade låtit '' passera → cachenyckeln blir densamma för varje deploy.
+  // Ingen regression i dag (Vercel sätter antingen värdet eller ingenting), men skillnaden mellan
+  // «osatt» och «tom» får aldrig avgöra om cachen kan servera ett gammalt svar.
+  const deploySha = (process.env.VERCEL_GIT_COMMIT_SHA || 'lokal').slice(0, 8);
   const cacheKey = `pdf:result:v27:${deploySha}:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.

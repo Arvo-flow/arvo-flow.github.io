@@ -234,8 +234,12 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
     // Rätt fråga var «varför kan en cache överleva en deploy alls?». Nyckeln bär nu SHA:n, så en
     // ny deploy ÄR en ny nyckel. `vN` står kvar för miljöer utan SHA — utanför Vercel är
     // versionen det enda som skiljer generationerna, och CV-01..17 vaktar den kvar.
-    assert.match(API, /const deploySha = \(process\.env\.VERCEL_GIT_COMMIT_SHA \?\? 'lokal'\)/,
-      'SHA:n måste läsas ur miljön — och sakna den ska ge en NAMNGIVEN reserv, aldrig undefined');
+    // ⚠️ `||`, INTE `??` (skärpt 2026-09-10 efter fientlig granskning). `??` faller bara tillbaka
+    // på null/undefined — en env-variabel som finns men är TOM hade då gett `''`, och nyckeln
+    // blivit identisk för varje deploy. Skillnaden mellan «osatt» och «tom» får aldrig avgöra om
+    // cachen kan servera ett gammalt svar; båda betyder «ingen sha» och ska ge samma namngivna reserv.
+    assert.match(API, /const deploySha = \(process\.env\.VERCEL_GIT_COMMIT_SHA \|\| 'lokal'\)/,
+      'SHA:n måste läsas ur miljön med ||-reserv — ?? släpper igenom en tom sträng som «sha»');
     assert.match(API, /const cacheKey = `pdf:result:v\d+:\$\{deploySha\}:/,
       'och den måste sitta I NYCKELN — annars är den en variabel ingen använder');
   });

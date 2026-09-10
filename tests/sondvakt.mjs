@@ -334,7 +334,28 @@ describe('SV · grindarnas samlade pris mäts före commit', () => {
     const hook = readFileSync(join(ROOT, 'scripts/setup-hooks.mjs'), 'utf8');
     assert.match(hook, /node scripts\/prissattningsgrad\.mjs/,
       'en mätare som inte körs är ingen mätare — samma sjukdom som en testfil utanför sviten');
-    assert.match(hook, /STATUS=\$\?/, 'och dess exitkod måste kunna stoppa commiten');
+    // ⚠️ FÖRSTA VERSIONEN LETADE `STATUS=$?` VAR SOM HELST I FILEN (rättat 2026-09-10, fientlig
+    // granskning). Kedjan har åtta grindar och var och en har raden — att ta bort den ur JUST
+    // prissättningsblocket fällde noll test. En vakt som matchar grannens rad vaktar grannen.
+    const block = hook.slice(hook.indexOf('node scripts/prissattningsgrad.mjs'));
+    const slut = block.indexOf('fi');
+    assert.match(block.slice(0, slut), /STATUS=\$\?/,
+      'exitkoden måste fångas i prissättningsblocket självt — annars kan mätaren aldrig stoppa commiten');
+    // Larmraderna måste dessutom SYNAS. Grepet filtrerade bort FEL-raderna, så en människa såg
+    // «✓ Oförändrad» medan 77 fixturer kraschade — samma blindhet som domen hade.
+    assert.match(block.slice(0, slut), /FIXTURER KRASCHAR/,
+      'kraschlarmet måste nå människan i hooken, inte bara exitkoden');
+  });
+
+  test('SV-20 · domen jämför HELA sammanfattningen, inte bara prissatt', () => {
+    // Granskarens bevis: en grind som KASTADE för bredband gav fel 0 → 77 och tystad 163 → 86
+    // medan prissatt stod still på 131 — och mätaren svarade «✓ Oförändrad mot facit», exitkod 0.
+    // Tjugotre procent av korpusen kraschade och mätinstrumentet sa att allt stod still.
+    const src = readFileSync(join(ROOT, 'scripts/prissattningsgrad.mjs'), 'utf8');
+    assert.match(src, /Object\.keys\(sammanfattning\)/,
+      'varje nyckel i sammanfattningen måste jämföras mot facit');
+    assert.match(src, /sammanfattning\.fel > \(facit\.fel \?\? 0\)/,
+      'och ett FEL måste ha ett eget, hårdare larm — en kraschad fixtur är inte ett mätvärde');
   });
 
   test('SV-19 · facit finns och bär sina fyra utfall åtskilda', () => {

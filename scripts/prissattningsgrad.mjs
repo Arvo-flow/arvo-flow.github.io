@@ -118,12 +118,29 @@ if (process.argv.includes('--update')) {
   try { facit = JSON.parse(readFileSync(FACIT, 'utf8')); } catch { /* saknas → första körningen */ }
   if (!facit) {
     console.log('\n⚠ Inget facit finns än. Kör med --update för att frysa dagens tal.');
-  } else if (facit.prissatt !== sammanfattning.prissatt) {
-    const delta = sammanfattning.prissatt - facit.prissatt;
-    console.log(`\n✗ PRISSÄTTNINGSGRADEN ÄNDRADES: ${facit.prissatt} → ${sammanfattning.prissatt} (${delta > 0 ? '+' : ''}${delta})`);
-    console.log('  Är ändringen avsedd: kör --update och REDOVISA talet i commit-meddelandet.');
-    process.exit(1);
   } else {
-    console.log(`\n✓ Oförändrad mot facit (${facit.prissatt} prissatta, fryst ${facit.matt}).`);
+    // ⚠️ DOMEN LÄSTE BARA `prissatt` (fixat 2026-09-10 efter fientlig granskning av a6f776b).
+    // Granskaren lade in en grind som KASTADE för 'bredband' — vars 40 fixturer alla var tystade.
+    // Utfall: `fel 0 → 77`, `tystad 163 → 86`, `prissatt 131` OFÖRÄNDRAT → exitkod 0 och
+    // «✓ Oförändrad mot facit». Tjugotre procent av korpusen kraschade och mätaren sa att allt
+    // stod still. En grind kan tysta en faktura på TVÅ sätt — genom att välja tystnad, och genom
+    // att dö — och mätaren såg bara det ena. Samma blindhet åt andra hållet: en fixtur som
+    // RADERAS sänker `fixturer` utan att röra `prissatt`. Hela sammanfattningen jämförs nu.
+    const avvikelser = Object.keys(sammanfattning)
+      .filter((k) => facit[k] !== undefined && facit[k] !== sammanfattning[k])
+      .map((k) => `${k}: ${facit[k]} → ${sammanfattning[k]}`);
+    // Ett FEL är aldrig en avsedd ändring att frysa bort. Det får ett eget, hårdare larm — en
+    // kraschad fixtur är inte ett mätvärde, det är frånvaron av ett.
+    if (sammanfattning.fel > (facit.fel ?? 0)) {
+      console.log(`\n✗ FIXTURER KRASCHAR: ${facit.fel ?? 0} → ${sammanfattning.fel}. En kraschad fixtur mäter ingenting.`);
+      console.log('  Detta fryses ALDRIG bort med --update utan att orsaken är förklarad.');
+      process.exit(1);
+    }
+    if (avvikelser.length) {
+      console.log(`\n✗ KORPUSENS UTFALL ÄNDRADES: ${avvikelser.join(' · ')}`);
+      console.log('  Är ändringen avsedd: kör --update och REDOVISA talen i commit-meddelandet.');
+      process.exit(1);
+    }
+    console.log(`\n✓ Oförändrad mot facit (${facit.fixturer ?? '?'} fixturer, ${facit.prissatt} prissatta, fryst ${facit.matt}).`);
   }
 }

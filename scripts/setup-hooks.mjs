@@ -75,7 +75,7 @@ fi
 # tester och tysta trettio procent av fakturorna, och ingen såg det förrän en människa räknade
 # i rummet. Nu måste varje grind visa sin kostnad i ett TAL före commit.
 if [ $STATUS -eq 0 ]; then
-  node scripts/prissattningsgrad.mjs 2>/dev/null | grep -E "PRISSÄTTNINGSGRADEN ÄNDRADES|Oförändrad mot facit|Inget facit" || true
+  node scripts/prissattningsgrad.mjs 2>/dev/null | grep -E "KORPUSENS UTFALL ÄNDRADES|FIXTURER KRASCHAR|Oförändrad mot facit|Inget facit|FEL \\(räknas" || true
   node scripts/prissattningsgrad.mjs >/dev/null 2>&1
   STATUS=$?
 fi

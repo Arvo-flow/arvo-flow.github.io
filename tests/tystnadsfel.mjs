@@ -349,7 +349,15 @@ describe('TF-11 · granskningsgrinden går inte att kringgå via workflow_dispat
       medPush += 1;
       // Steget som bär pushen måste ha villkoret. Vi läser hela filen: ett `github.ref`-villkor
       // någon annanstans i filen räknas inte, så kontrollen sker per STEG.
-      const steg = kalla.split(/\n(?=\s+- (?:name|run):)/);
+      // ⚠️ STEGDELNINGEN KÄNDE BARA IGEN `- name:` OCH `- run:` (rättat 2026-09-10, fientlig
+      // granskning). Ett steg som börjar med `- if:` gled ihop med FÖREGÅENDE steg och ÄRVDE
+      // dess `github.ref`-villkor. Granskaren bevisade det: ett `- if: always()`-steg med en
+      // push till main → js-yaml sa OSKYDDAT, TF-11 sa ok. Vakten känner nu igen ett steg på
+      // att det ÄR ett sekvenselement, inte på vilken nyckel som råkar stå först — samma
+      // KLASS-i-stället-för-uppräkning som punktkatalogerna i RD-08.
+      // Mätt över alla workflows: båda delarna ger 59 filer med push och 0 brott, så skärpningen
+      // ändrar ingen dom i dag; den stänger en form som inte fanns än.
+      const steg = kalla.split(/\n(?=\s+- )/);
       for (const s of steg) {
         if (!/push origin HEAD:main/.test(s)) continue;
         if (!/github\.ref\s*==\s*'refs\/heads\/main'/.test(s)) brott.push(namn);
