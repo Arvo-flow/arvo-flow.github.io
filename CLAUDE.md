@@ -518,6 +518,38 @@ signera", aldrig som ett verkställt löfte.)
    > aldrig att den svarar i verkligheten.** Åtgärd: `getPublicListBenchmark()` — samma funktion
    > dörrens avslöjande redan använde (regel 1) — gör frågan tillståndsoberoende. BA-08 låser vägen.
 
+   > **✅ ETT RADANTAL ÄR INGEN FÖRDELNING (2026-09-10, ur prisbokens dokumentmätning).**
+   > Grundaren: mät INNAN du deduplicerar. Frågan var om prisbokens 297 rader är samma dokument
+   > lagrat om och om igen. Svaret på den frågan blev **okänt och det är i sig mätningen**: bara
+   > **9 av 297** rader gick att knyta till ett dokument, eftersom motparten (`invoice_analyses`)
+   > rymde 20 rader när korsningen kördes. 30-sekundersfönstret och 300-sekundersfönstret gav
+   > identiskt utfall — begränsningen var motparten, inte fönstret. **Ett «ingen träff» som beror
+   > på att motparten är tom är ett utfall om MOTPARTEN**, och att läsa det som «raden är ett eget
+   > dokument» hade varit felfamiljen i själva mätinstrumentet.
+   >
+   > **Men formen på cellerna svarade på en vassare fråga.** Fem celler nådde radtröskeln. Deras
+   > antal SKILDA belopp: **15, 3, 2, 4 och 1**. `saas-productivity·hantverkare·small` bar sjutton
+   > rader och ETT belopp — p25 = median = 184 680 kr, ett tal kopierat sjutton gånger och
+   > presenterat för kunden som «vad er bransch betalar». Och cellen med 24 rader / 2 belopp är
+   > exakt den vars produktionslogg redan sa *«avvikelsevakten avstod — för få SKILDA belopp
+   > (2 av 24 rader)»*. **Vakten vägrade döma på cellen medan läsvägen sålde den.** Två delar av
+   > samma modul, oense om huruvida cellen är ett underlag; kravet är nu ETT (regel 1).
+   >
+   > **Grinden deduplicerar INTE, och det är hela finessen.** Percentilerna räknas fortfarande över
+   > varje rad: två bolag som betalar samma listpris ÄR två observationer, och en dedup på VÄRDE
+   > hade kollapsat dem systematiskt kring just listprisklumpen — åt det håll som ökar våra egna
+   > besparingsanspråk. `cellenBar` avgör OM cellen är en fördelning, aldrig vad fördelningen är.
+   > I `invoice_analyses` är dokumentidentiteten däremot KÄND (`pdf_hash` NOT NULL), och där
+   > dedupliceras det — `DISTINCT ON (pdf_hash)`, äldsta raden vinner, eftersom ett snitt av två
+   > avläsningar av samma papper är ett tal som aldrig lästes.
+   >
+   > Fyra av fem bärande celler faller nu på verifierat publikt listpris. **Det är rätt utfall och
+   > tröskeln sänks inte.** Maskinvakt: `tests/prisbokscellen.mjs` (PB-01..09), sabotage-bevisad i
+   > sex riktningar. `db` gjordes injicerbar i `getBenchmark` av ett enda skäl: hela sviten kör utan
+   > `DATABASE_URL`, alltså hade ingen av de två grenarna någonsin prövats — femte gången samma
+   > sjukdom. Sonden `scripts/probe-dubbletter.mjs` står kvar körbar; ett mätvärde utan sitt
+   > instrument är ett påstående.
+
    > **✅ ANTALSDOKTRINEN — ETT ANTAL ÄR EN AVLÄSNING, ELLER SÅ FINNS DET INTE (grundarbeslut 2026-09-09).**
    > Grundarens fråga: *får systemet någonsin räkna baklänges (Belopp ÷ À-pris = Antal) när
    > Antal-kolumnen är tom?* Svaret är nej, och det är **mätt** genom kolumnläsaren mot de 75
@@ -1253,7 +1285,7 @@ Alla tabeller skapas av `scripts/migrate.mjs` + `migrate-v2.mjs` + `migrate-pric
 | `activation_outcomes` | Layer 2 utfallsspårning — success fee (20 % av verifierad besparing). |
 | `invoice_benchmarks` | Aggregerade marknadsdata per kategori/bransch/storlek. |
 
-**Cache:** Vercel KV (Redis). Nyckel: `bm:v2:{category}:{industry}:{sizeBucket}`. TTL 6h. Invalideras vid `storeDatapoint()`. Läses i `lib/benchmark.js` före Postgres.
+**Cache:** Vercel KV (Redis). Nyckel: `bm:v3:{category}:{industry}:{sizeBucket}`. TTL 6h. Invalideras vid `storeDatapoint()`. Läses i `lib/benchmark.js` före Postgres.
 
 ---
 
