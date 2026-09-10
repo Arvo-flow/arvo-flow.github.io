@@ -379,6 +379,24 @@ describe('SV · grindarnas samlade pris mäts före commit', () => {
     assert.equal(prissattningsdom(oforandrad, null).blockerar, false);
     assert.equal(prissattningsdom(oforandrad, null).kod, 'ingen_facit');
 
+    // ── ANDRA GRANSKNINGSVARVET (2026-09-10): NYCKEL-BORTTAGNING, inte bara nyckel-BEGRÄNSNING.
+    // Granskaren tog bort `fel:` och `tystad:` ur skriptets `sammanfattning`-literal och tvingade
+    // en verklig krasch i fixturen `mob-13`. Domen svarade «✓ Oförändrad», exit 0 — samma felbild
+    // som SV-20 just stängt, en nivå djupare: `Object.keys(sammanfattning)` frågar INDATA vilka
+    // nycklar som ska jämföras, och ett objekt som saknar en nyckel tystar sin egen avvikelse.
+    for (const borttagen of ['fel', 'tystad', 'fixturer', 'prissatt', 'offert']) {
+      const stympad = { ...oforandrad };
+      delete stympad[borttagen];
+      const s = prissattningsdom(stympad, facit);
+      assert.equal(s.blockerar, true, `en saknad nyckel (${borttagen}) måste blockera`);
+      assert.equal(s.kod, 'omatt', 'en saknad nyckel är ett OKÄNT — aldrig en avvikelse att frysa bort');
+    }
+    // Och det gäller ÄVEN när en krasch samtidigt är dold: utan `fel` finns inget att jämföra.
+    assert.equal(prissattningsdom({ fixturer: 334, prissatt: 131, tystad: 86, offert: 40 }, facit).kod, 'omatt');
+    // Ett tomt facit är inget facit — `{}` är sant i JS och hade annars lästs som «allt stämmer».
+    assert.equal(prissattningsdom(oforandrad, {}).kod, 'ingen_facit');
+    assert.equal(prissattningsdom(oforandrad, {}).blockerar, false);
+
     // Och skriptet måste faktiskt ANVÄNDA domen — en ren funktion ingen anropar är död kod.
     const src = readFileSync(join(ROOT, 'scripts/prissattningsgrad.mjs'), 'utf8');
     assert.match(src, /prissattningsdom\(sammanfattning, facit\)/, 'skriptet måste anropa domen');
