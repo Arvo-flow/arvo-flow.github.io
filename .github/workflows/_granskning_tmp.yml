@@ -2,6 +2,8 @@ name: Granskning tmp ECB parse
 
 on:
   workflow_dispatch:
+  push:
+    branches: [granskning3-tmp-ecb]
 
 permissions:
   contents: read
