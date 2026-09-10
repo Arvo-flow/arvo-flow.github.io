@@ -23,10 +23,32 @@
 //   4. Vid total nätverksfel: faller tillbaka på FALLBACK_RATE med tydlig logg.
 
 // ── USD / SEK ──────────────────────────────────────────────────────────────────
+// ── ADRESSERNA BYTTA PÅ EN MÄTNING, INTE EN GISSNING (2026-09-10) ─────────────────────────
+// Skäl-loggningen gav rotorsaken på första körningen i produktion:
+//     [pricing] Live FX-hämtning misslyckades — riksbank: HTTP 400 · ecb: HTTP 404
+// Båda endpoints var fel, och det hade varit osynligt i fyra dygn bakom två tysta `catch`.
+//
+// `scripts/probe-fxkallor.mjs` mätte sju kandidater i GitHub Actions (sandlådan har ingen
+// egress). Utfallet, ordagrant:
+//     riksbank .../observations/SEKUSDPMI/latest     HTTP 400   ← vår gamla
+//     riksbank .../Observations/Latest/SEKUSDPMI     HTTP 200   {"date":"2026-09-09","value":9.56874}
+//     riksbank .../Observations/Latest/SEKEURPMI     HTTP 200   {"date":"2026-09-09","value":11.1495}
+//     ecb .../EXR/D.USD.SEK.SP00.A                   HTTP 404   ← vår gamla
+//     ecb .../EXR/D.SEK.EUR.SP00.A                   HTTP 200
+//     frankfurter (ECB-spegel) USD 9,5687 · EUR 11,1495          ← bekräftar båda på fyra decimaler
+//
+// Riksbanken bytte alltså BÅDE sökväg och form: svaret är nu ETT OBJEKT `{date, value}`, inte en
+// array. Formen spelar roll — `date` är det som gör kursen daterbar, och utan datum klassar
+// `lib/fxfarskhet.js` den som «ingen kurs» hur färsk den än är.
 const RIKSBANK_USD_URL =
-  'https://api.riksbank.se/swea/v1/observations/SEKUSDPMI/latest';
-const ECB_USD_URL =
-  'https://data-api.ecb.europa.eu/service/data/EXR/D.USD.SEK.SP00.A?lastNObservations=1&format=jsondata';
+  'https://api.riksbank.se/swea/v1/Observations/Latest/SEKUSDPMI';
+// ⚠️ INGEN USD-RESERV, och det är ett VAL. ECB publicerar ingen direkt SEK/USD-serie; talet
+// skulle behöva räknas fram ur två andra (SEK/EUR ÷ USD/EUR). Frankfurter svarar perfekt men är
+// en TREDJEPARTSSPEGEL, och en tjänst som säger «verifierat» ska inte låta en aggregator bära
+// kundens pengar (sondens egen deklarerade blindfläck). Faller Riksbanken finns alltså ingen
+// USD-kurs — och då är tystnaden svaret, precis som `fxfarskhet` föreskriver. Fakturan analyseras
+// ändå; det är bara besparingspåståendet som uteblir.
+const ECB_USD_URL = null;
 
 // Fallback: ECB-snitt maj 2026 (uppdateras manuellt vid stor avvikelse >5 %)
 export const FALLBACK_RATE_USD_SEK = 10.42;
@@ -47,7 +69,10 @@ export async function fetchLiveSekRate() {
       skal.push(`riksbank: HTTP ${res.status}`);
     } else {
       const data = await res.json();
-      const obs  = data?.observations?.[0] ?? data?.[0];
+      // Nya formen är ETT OBJEKT `{date, value}`; den gamla var en array. Båda läses, så en
+      // återgång inte tyst tappar kursen — och `obs.date` är det som gör den daterbar.
+      const obs  = (data && !Array.isArray(data) && data.value != null) ? data
+        : (data?.observations?.[0] ?? data?.[0]);
       const rate = obs ? parseFloat(obs.value ?? obs.SEK ?? obs.sekusdpmi) : null;
       if (rate && rate > 5 && rate < 20) {
         return { rate, source: 'riksbank', date: obs.date ?? new Date().toISOString().slice(0, 10) };
@@ -58,7 +83,9 @@ export async function fetchLiveSekRate() {
     }
   } catch (err) { skal.push(`riksbank: ${err.name === 'TimeoutError' ? 'timeout 4s' : err.message}`); }
 
-  try {
+  if (!ECB_USD_URL) {
+    skal.push('ecb: ingen direkt SEK/USD-serie finns — medvetet ingen reserv, se kommentaren vid URL:erna');
+  } else try {
     const res  = await fetch(ECB_USD_URL, { signal: AbortSignal.timeout(4000) });
     if (!res.ok) {
       skal.push(`ecb: HTTP ${res.status}`);
@@ -120,9 +147,11 @@ export function usdToSek(usdPerUserMonth, sekPerUsd) {
 
 // ── EUR / SEK ──────────────────────────────────────────────────────────────────
 const RIKSBANK_EUR_URL =
-  'https://api.riksbank.se/swea/v1/observations/SEKEURPMI/latest';
+  'https://api.riksbank.se/swea/v1/Observations/Latest/SEKEURPMI';
+// ECB:s EXR kvoterar «valuta per EUR», så serien D.SEK.EUR ÄR SEK per euro — vår kurs, direkt
+// och utan mellanräkning. Mätt HTTP 200. Den gamla D.EUR.SEK finns inte och svarade 404.
 const ECB_EUR_URL =
-  'https://data-api.ecb.europa.eu/service/data/EXR/D.EUR.SEK.SP00.A?lastNObservations=1&format=jsondata';
+  'https://data-api.ecb.europa.eu/service/data/EXR/D.SEK.EUR.SP00.A?lastNObservations=1&format=jsondata';
 
 // Fallback: ECB-snitt maj 2026 (uppdateras manuellt vid stor avvikelse >5 %)
 export const FALLBACK_RATE_EUR_SEK = 11.47;
@@ -139,7 +168,10 @@ export async function fetchLiveEurSekRate() {
       skal.push(`riksbank: HTTP ${res.status}`);
     } else {
       const data = await res.json();
-      const obs  = data?.observations?.[0] ?? data?.[0];
+      // Nya formen är ETT OBJEKT `{date, value}`; den gamla var en array. Båda läses, så en
+      // återgång inte tyst tappar kursen — och `obs.date` är det som gör den daterbar.
+      const obs  = (data && !Array.isArray(data) && data.value != null) ? data
+        : (data?.observations?.[0] ?? data?.[0]);
       const rate = obs ? parseFloat(obs.value ?? obs.SEK ?? obs.sekeurpmi) : null;
       if (rate && rate > 8 && rate < 16) {
         return { rate, source: 'riksbank', date: obs.date ?? new Date().toISOString().slice(0, 10) };

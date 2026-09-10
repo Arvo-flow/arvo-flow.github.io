@@ -30,6 +30,53 @@ const GRUNDARENS_CELL = Array.from({ length: 24 }, (_, i) => 184663 + (i % 3) - 
 /** En cell med genuin fördelning — tolv olika bolags årskostnader. */
 const VERKLIG_CELL = [1000, 1200, 1500, 1800, 2000, 2200, 2500, 3000, 3500, 4000, 4200, 4500];
 
+// ── AV-09..10 · DEDUPLICERINGEN BOR OCKSÅ I SKRIVNINGEN (2026-09-10) ────────────────────────
+// Avvikelsevakten deduplicerar innan den dömer. Men skrivningen fortsatte lägga en ny rad för
+// varje omanalys av samma dokument, så cellen blev bara mer degenererad över tid — vakten
+// avstod alltså allt oftare, och moaten fylldes med kopior utan att något stoppade dem.
+// Nyckeln är dokumentet plus kategorin: en blandad faktura får ge en punkt per kategori.
+describe('AV · prisboken samlar inte dubbletter av samma dokument', () => {
+  test('AV-09 · skrivningen dedupar på (pdf_hash, category)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const rot = join(dirname(fileURLToPath(import.meta.url)), '..');
+    const BM = readFileSync(join(rot, 'lib/benchmark.js'), 'utf8');
+    assert.match(BM, /ON CONFLICT \(pdf_hash, category\) WHERE pdf_hash IS NOT NULL DO NOTHING/,
+      'utan spärren växer cellen med en kopia per omanalys, och vakten avstår allt oftare');
+    assert.match(BM, /pdfHash = null/,
+      'och utan pdfHash skrivs raden som förut — fail-open, hellre en dubblett än en tappad punkt');
+  });
+
+  test('AV-10 · kolumnen skapas av en MIGRERING, inte av en självläkning', async () => {
+    // LK-01:s läxa: en självläkning någon annanstans i koden räknas inte — det var precis den
+    // som aldrig kördes när `invoice_number` saknades och hela rummet tyst degraderade.
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const rot = join(dirname(fileURLToPath(import.meta.url)), '..');
+    const MIG = readFileSync(join(rot, 'scripts/migrate.mjs'), 'utf8');
+    assert.match(MIG, /ADD COLUMN IF NOT EXISTS pdf_hash TEXT/);
+    assert.match(MIG, /CREATE UNIQUE INDEX IF NOT EXISTS idx_datapoints_dokument/,
+      'ON CONFLICT kräver ett unikt index — utan det kastar satsen i produktion');
+    assert.match(MIG, /WHERE pdf_hash IS NOT NULL/,
+      'partiellt: äldre rader saknar hash och ska förbli orörda — radering är grundarens beslut');
+  });
+
+  test('AV-11 · anroparna SKICKAR dokumentet — annars är spärren död kod', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const rot = join(dirname(fileURLToPath(import.meta.url)), '..');
+    const API = readFileSync(join(rot, 'api/test-invoice.mjs'), 'utf8');
+    const anrop = [...API.matchAll(/storeDatapoint\(\{[\s\S]{0,400}?\}\)/g)].map((m) => m[0]);
+    assert.ok(anrop.length >= 2, `hittade ${anrop.length} storeDatapoint-anrop — mönstret matchar inte längre`);
+    for (const a of anrop) {
+      assert.match(a, /pdfHash/, 'ett anrop utan pdfHash skriver en dubblett vid varje omanalys');
+    }
+  });
+});
+
 describe('AV · avvikelsevakten mäter en fördelning, aldrig en klump', () => {
   test('AV-01 · grundarens cell fäller INTE längre ett korrekt pris', () => {
     // Det exakta talet ur produktionsloggen. Faller det här har vi återinfört felet.

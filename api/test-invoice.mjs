@@ -1634,7 +1634,7 @@ export default async function handler(req, res) {
       storeDatapoint({
         category: 'el', supplier: categorized.normalizedSupplier,
         annualCost: elRec.currentAnnualGross, industry, employees: employeesNum,
-        segmentOkant,
+        segmentOkant, pdfHash,
       }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
       const { arvoFee, netSaving } = elRec;
@@ -1817,7 +1817,7 @@ export default async function handler(req, res) {
       annualCost: extracted.annualCost ?? extracted.amount,
       industry,
       employees: employeesNum,
-      segmentOkant,
+      segmentOkant, pdfHash,
       seatCount: extracted.seatCount ?? null,
     }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 

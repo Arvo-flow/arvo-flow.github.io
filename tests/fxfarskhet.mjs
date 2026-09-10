@@ -113,6 +113,43 @@ describe('FX · källan får inte tvättas av transporten (pricing.js)', () => {
       + 'majkonstanten omöjlig att skilja från en hämtad kurs i varje konsument nedströms');
   });
 
+  test('FX-17 · adresserna är de MÄTTA, och formen läses som objekt', () => {
+    // ══ MÄTT I ACTIONS 2026-09-10 (scripts/probe-fxkallor.mjs) ═══════════════════════════
+    //   .../observations/SEKUSDPMI/latest  HTTP 400   ← den gamla
+    //   .../Observations/Latest/SEKUSDPMI  HTTP 200   {"date":"2026-09-09","value":9.56874}
+    //   .../Observations/Latest/SEKEURPMI  HTTP 200   {"date":"2026-09-09","value":11.1495}
+    // Riksbanken bytte BÅDE sökväg och form. Läser vi bara arrayformen tappar vi kursen tyst.
+    // ⚠️ RÅTEXT HÄR, INTE LEXAD — och skälet är lärorikt. Lexern blankar STRÄNGINNEHÅLL, så en
+    // URL försvinner ur den lexade texten. Första versionen läste `PRICING` (lexad) och fällde
+    // därför på sitt eget prov. Rätt verktyg beror på vad man vaktar: kod → lexad, literaler →
+    // rå. Och för att råtexten innehåller kommentarer som NÄMNER den gamla sökvägen riktas
+    // mönstren mot TILLDELNINGEN, som ingen prosa kan efterlikna.
+    const RA = readFileSync(join(ROT, 'agents/recommender/pricing.js'), 'utf8');
+    assert.match(RA, /RIKSBANK_USD_URL =\s*\n?\s*'[^']*Observations\/Latest\/SEKUSDPMI'/);
+    assert.match(RA, /RIKSBANK_EUR_URL =\s*\n?\s*'[^']*Observations\/Latest\/SEKEURPMI'/);
+    assert.doesNotMatch(RA, /_URL =\s*\n?\s*'[^']*observations\/SEK\w+PMI\/latest'/,
+      'den gamla sökvägen svarar 400 — den får inte smyga tillbaka i en tilldelning');
+    // ⚠️ RÄKNAT, INTE «FINNS». Första versionen krävde bara att mönstret fanns NÅGONSTANS, och
+    // sabotaget «ta bort objektläsningen ur USD-grenen» fällde då NOLL test — EUR-grenen hade
+    // kvar sin och regexen var nöjd. Det är syskonfallssjukan i vakten själv: en fix på ett
+    // ställe av två, och kontrollen kan inte se skillnaden. Båda valutorna måste ha den.
+    const objektlasningar = (PRICING.match(/!Array\.isArray\(data\) && data\.value != null/g) ?? []).length;
+    assert.equal(objektlasningar, 2,
+      `${objektlasningar} av 2 valutagrenar läser objektformen — den som saknar den tappar kursen `
+      + 'tyst på ett HTTP 200, vilket är det svåraste felet av alla att upptäcka');
+  });
+
+  test('FX-18 · USD saknar reserv MEDVETET, och skälet står i loggen', () => {
+    // ECB publicerar ingen direkt SEK/USD-serie, och en tredjepartsspegel får inte bära kundens
+    // pengar i en tjänst som säger «verifierat». Faller Riksbanken blir det tystnad — men
+    // tystnaden måste BÄRA SITT SKÄL, annars är den omöjlig att skilja från ett nätverksfel.
+    assert.match(PRICING, /const ECB_USD_URL = null/);   // kod → lexad text duger
+    // Skälets TEXT är en strängliteral och blankas av lexern — råtexten är rätt källa här.
+    assert.match(readFileSync(join(ROT, 'agents/recommender/pricing.js'), 'utf8'),
+      /skal\.push\('ecb: ingen direkt SEK\/USD-serie finns/,
+      'ett utelämnat försök ska rapporteras som ett val, aldrig utelämnas ur skälen');
+  });
+
   test('FX-11 · inget catch-block i FX-hämtningen är tomt', () => {
     // ⚠️ FÖRSTA VERSIONEN VAR VAKUÖS, och lexningen är just vad som avslöjade det. Den letade
     // strängen `catch { /* fall through */ }` — men lexern BLANKAR kommentarer, så mönstret kan
