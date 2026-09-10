@@ -77,6 +77,94 @@ describe('AV · prisboken samlar inte dubbletter av samma dokument', () => {
   });
 });
 
+// ── AV-12 · KODEN FÖRE SITT SCHEMA FÅR ALDRIG TAPPA DATA TYST (2026-09-10) ──────────────────
+// Den fientliga granskaren körde dedup-INSERTen mot produktionens Neon-databas i en tillbakarullad
+// transaktion: `column "pdf_hash" of relation "invoice_datapoints" does not exist`. Migreringen
+// hade inte körts sedan 1 september. Satsen kastar alltså på den SAKNADE KOLUMNEN, inte bara vid
+// en verklig konflikt — och funktionens yttre catch loggade och gick vidare, så 100 % av nya
+// datapunkter hade tappats tyst från deploy till dess någon råkade köra migreringen.
+//
+// Sviten var grön hela tiden. Den läser migreringsskriptets TEXT, aldrig produktionens schema —
+// och det är exakt den blindfläck AV-10 deklarerar. Att den var deklarerad hindrade inte hålet.
+describe('AV · ett schemafel är inte ett databasfel', () => {
+  const kod = (async () => {
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    return readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'lib/benchmark.js'), 'utf8');
+  })();
+
+  test('AV-13 · BETEENDET: en saknad kolumn tappar INTE datapunkten', async () => {
+    // ⚠️ AV-12 ÄR EN KÄLLTEXTVAKT OCH KAN INTE SE ATT ETT VÄRDE ÄR DÖTT. Sabotaget «sätt
+    // schemafel = false men lämna kvar SQLSTATE-strängarna i en oanvänd variabel» fällde NOLL
+    // test — mönstren fanns kvar i filen och regexen var nöjd. Beslutet måste därför prövas som
+    // BETEENDE, med en db som faktiskt kastar det fel produktionen kastade.
+    const { storeDatapoint } = await import('../lib/benchmark.js');
+    const satser = [];
+    const fejkDb = async (strings, ...v) => {
+      const sql = strings.join('?');
+      satser.push(sql);
+      if (/SELECT annual_cost/.test(sql)) return [];          // tom cell → vakten avstår
+      if (/INSERT/.test(sql) && /ON CONFLICT/.test(sql)) {
+        const e = new Error('column "pdf_hash" of relation "invoice_datapoints" does not exist');
+        e.code = '42703';                                     // exakt felet ur produktionen
+        throw e;
+      }
+      return [];
+    };
+    await storeDatapoint({
+      category: 'mobil', supplier: 'Telia', annualCost: 50_000,
+      industry: 'konsult', employees: 10, pdfHash: 'hash-1', db: fejkDb,
+    });
+    const insertar = satser.filter((x) => /INSERT INTO invoice_datapoints/.test(x));
+    assert.equal(insertar.length, 2,
+      `${insertar.length} INSERT-försök — efter ett schemafel MÅSTE ett andra försök utan dedup ske, `
+      + 'annars tappas datapunkten tyst (100 % av dem, i produktion, tills någon kör migreringen)');
+    assert.match(insertar[0], /ON CONFLICT/);
+    assert.doesNotMatch(insertar[1], /ON CONFLICT/,
+      'reservskrivningen måste sakna dedup-satsen — annars kastar den på samma saknade kolumn');
+  });
+
+  test('AV-14 · ett ANNAT databasfel tystas inte av schemagrenen', async () => {
+    // Motprovet. En gren som sväljer allt hade bytt ett tyst tapp mot ett annat.
+    const { storeDatapoint } = await import('../lib/benchmark.js');
+    let forsok = 0;
+    const fejkDb = async (strings) => {
+      const sql = strings.join('?');
+      if (/SELECT annual_cost/.test(sql)) return [];
+      if (/INSERT/.test(sql)) { forsok += 1; throw new Error('connection terminated unexpectedly'); }
+      return [];
+    };
+    await storeDatapoint({
+      category: 'mobil', supplier: 'Telia', annualCost: 50_000,
+      industry: 'konsult', employees: 10, pdfHash: 'hash-2', db: fejkDb,
+    });
+    assert.equal(forsok, 1,
+      'ett nätverksfel får INTE utlösa reservskrivningen — bara ett schemafel betyder «koden ligger '
+      + 'före sitt schema», och att skriva om vid allt hade dolt verkliga fel');
+  });
+
+  test('AV-12 · en saknad kolumn loggas SÄRSKILT och datapunkten skrivs ändå', async () => {
+    const BM = await kod;
+    assert.match(BM, /42703/, 'undefined_column måste kännas igen på sin SQLSTATE');
+    assert.match(BM, /42P10/, 'och ON CONFLICT utan index på sin');
+    assert.match(BM, /does not exist\|no unique or exclusion constraint/,
+      'neon-drivern skickar inte alltid vidare SQLSTATE — texten måste läsas också');
+    assert.match(BM, /SCHEMAFEL/,
+      'markören måste vara EGEN och greppbar: «koden ligger före sitt schema» kräver en människa, '
+      + 'till skillnad från ett vanligt databasfel');
+    assert.match(BM, /if \(!schemafel\) throw err;/,
+      'ett ANNAT fel får inte tystas av den här grenen — då hade vi bytt ett tyst tapp mot ett annat');
+    // Och det andra försöket måste sakna dedup-satsen, annars kastar det likadant.
+    const efter = BM.slice(BM.indexOf('SCHEMAFEL'));
+    const andra = efter.slice(0, efter.indexOf('`;') + 2);
+    assert.doesNotMatch(andra, /ON CONFLICT/,
+      'reservskrivningen måste vara utan dedup — annars kastar den på samma saknade kolumn');
+    assert.match(andra, /INSERT INTO invoice_datapoints/,
+      'och den måste faktiskt skriva: datapunkten är kundens, inte vår att tappa');
+  });
+});
+
 describe('AV · avvikelsevakten mäter en fördelning, aldrig en klump', () => {
   test('AV-01 · grundarens cell fäller INTE längre ett korrekt pris', () => {
     // Det exakta talet ur produktionsloggen. Faller det här har vi återinfört felet.
