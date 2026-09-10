@@ -108,6 +108,7 @@ import './rumsredovisning.mjs';
 import './rumsrad.mjs';
 import './avvikelsevakten.mjs';
 import './fxfarskhet.mjs';
+import './tryckkurs.mjs';
 import './kobokforing.mjs';
 import './fakturanummer.mjs';
 import './lasvagens-kolumner.mjs';

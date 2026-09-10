@@ -90,7 +90,9 @@ jobs:
       # continue-on-error så en misslyckad stämpling ALDRIG kan färga verifieringen röd —
       # bokföringen får inte bli produktionsrisken.
       - name: Committa nya verifieringsdatum
-        if: always()
+        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
+        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
+        if: always() && github.ref == 'refs/heads/main'
         continue-on-error: true
         run: |
           if git diff --quiet -- agents/recommender/branchindex.js; then

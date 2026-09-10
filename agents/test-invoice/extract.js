@@ -12,6 +12,7 @@ import { judgeLineArithmetic, judgeProjection } from '../../lib/extraction-integ
 import { guardToolPayload } from '../../lib/schema-guard.js';
 import { klassificera, kundmening } from '../../lib/motorhalsa.js';
 import { extraheraTextlager } from '../../lib/pdf-textlager.js';
+import { lasTryckKurs } from '../../lib/tryckkurs.js';
 import { korrigeraAntalUrKolumn } from '../../lib/fakturakolumner.js';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
@@ -1152,9 +1153,23 @@ export function routeExtraction(extracted) {
     // läsa momssatsen på pappret och att prova tre satser (obduktionen 20 aug).
     //
     // Håller ingen av de två läsningarna är fakturan verkligt oense, och då fäller grinden.
-    const kurs = Number(extracted.fxRate);
+    // ⚠️ KURSEN MÅSTE VARA FAKTURANS EGEN, INTE VÅR (2026-09-10, oraklets spricka 1).
+    // Raden löd `Number(extracted.fxRate)` — VÅR dagskurs. Men SEK-talet på pappret räknades
+    // fram av LEVERANTÖREN med DERAS kurs, så provet jämförde två olika kurser och lät toleransen
+    // absorbera skillnaden. Att det stämde berodde på att fixturen skrevs med samma konstant som
+    // kodens fallback (10,42) — en tautologi mellan fixtur och fallback, inte en verifiering.
+    //
+    // MÄTT över kursbandet (`scripts/probe-tryckkurs.mjs`): vid 9,50 och 9,70 FRIADES fakturan
+    // ändå — med skälet «skillnaden är momsen». En valutadrift på 3–9 % tvättades av
+    // tre-satsprovningen, alltså exakt det fönster obduktionen dömde ut 20 augusti, en gång till
+    // och på en ny axel. Felet var inte att grinden fäller för lätt utan att den FRIAR PÅ FEL GRUND.
+    //
+    // Utan tryckt kurs finns läsningen inte. Två okända (totalens enhet OCH kursen) och en
+    // ekvation är inte prövbart, och då är tystnaden svaret: fakturan går till granskning med
+    // ett ärligt skäl i stället för ett «radsumman stämmer» som vilar på vår egen dagskurs.
+    const kurs = Number(extracted.tryckkurs);
     const alternativTotal = ursprung && Number.isFinite(kurs) && kurs > 0 && totalen > 0
-      ? totalen / kurs : null;   // totalen tolkad som SEK-motvärde, tillbakaräknad till radernas valuta
+      ? totalen / kurs : null;   // totalen tolkad som SEK-motvärde, tillbakaräknad med PAPPRETS kurs
     if (totalen > 0 && lineSum > 0) {
       const rakDiff = Math.abs(lineSum - totalen);
       const altDiff = alternativTotal != null ? Math.abs(lineSum - alternativTotal) : Infinity;
@@ -1459,8 +1474,17 @@ export async function extractInvoice(input, opts = {}) {
   }
 
   const aggregated = aggregateLineItems(toolUseBlock.input, _tokens);
+  // ── FAKTURANS EGEN VÄXELKURS ÄR EN OBSERVATION, INTE EN HÄRLEDNING (2026-09-10) ──────────
+  // Ring 1 prövar totalen som ett SEK-motvärde genom att räkna tillbaka den. Med VÅR kurs blir
+  // det provet approximativt — och mätt över kursbandet friade det Microsoft-fakturan med
+  // skälet «skillnaden är momsen» så snart kursen gled 3 %. Med PAPPRETS kurs blir det exakt.
+  // Läses den inte finns den läsningen inte alls; `null` betyder «fakturan trycker ingen kurs»
+  // och aldrig något annat. Samma form som `moms_sats` och öresfälten: avläst eller frånvarande.
+  const tryckkurs = lasTryckKurs(_textlager, aggregated.currency);
   const resultat = {
     ...aggregated,
+    tryckkurs: tryckkurs?.kurs ?? null,
+    tryckkursRad: tryckkurs?.rad ?? null,
     schemakrav: { ok: schemaVerdict.violations.length === 0, brott: schemaVerdict.violations.length },
     usage: response.usage,
   };

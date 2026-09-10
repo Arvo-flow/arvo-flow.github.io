@@ -225,6 +225,21 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       + 'då den gamla valutamotsägelsens review_queue för varje redan analyserad utländsk faktura');
   });
 
+  test('CV-18 · nyckeln bär deployens SHA — bumpen är inte längre ett minne', () => {
+    // ══ ORAKLETS SPRICKA 5 (2026-09-10) ═══════════════════════════════════════════════════
+    // Fyra glömda bumpar på ett dygn, och en cachad dom från gårdagens kod nådde en mätning som
+    // såg ut som ett svar. CV-vakten fångar bara kopplingar någon redan bokfört; den generiska
+    // varianten mättes och förkastades (24 av 36 backend-commits fällda, 20 av dem korrekta).
+    //
+    // Rätt fråga var «varför kan en cache överleva en deploy alls?». Nyckeln bär nu SHA:n, så en
+    // ny deploy ÄR en ny nyckel. `vN` står kvar för miljöer utan SHA — utanför Vercel är
+    // versionen det enda som skiljer generationerna, och CV-01..17 vaktar den kvar.
+    assert.match(API, /const deploySha = \(process\.env\.VERCEL_GIT_COMMIT_SHA \?\? 'lokal'\)/,
+      'SHA:n måste läsas ur miljön — och sakna den ska ge en NAMNGIVEN reserv, aldrig undefined');
+    assert.match(API, /const cacheKey = `pdf:result:v\d+:\$\{deploySha\}:/,
+      'och den måste sitta I NYCKELN — annars är den en variabel ingen använder');
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);

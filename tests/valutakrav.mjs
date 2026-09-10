@@ -128,8 +128,18 @@ describe('VK · En faktura i främmande valuta räknas om HELT, eller inte alls'
     // är SLUTEN: totalen står i fakturans valuta ELLER i dess SEK-motvärde. Att pröva båda är en
     // uttömmande uppräkning av två kända enheter, inte en vidgad tolerans.
     const { routeExtraction } = await import('../agents/test-invoice/extract.js');
+    // ⚠️ FIXTUREN FLYTTAD 2026-09-10, INTE UTFALLET. Motvärdesläsningen kräver numera fakturans
+    // EGEN tryckta kurs (`tryckkurs`), inte vår — annars jämför provet två olika kurser och låter
+    // toleransen absorbera skillnaden. Utan `tryckkurs` föll det här testet, och det var vakten
+    // som gjorde sitt jobb: fixturen hade slutat likna produktionen.
+    //
+    // Den verkliga microsoft-direkt-usd trycker kursen i klartext — «växlingskurs 10,42 SEK/USD
+    // per 2026-05-01» — så fixturen bär den nu också och prövar SAMMA sak mot den nya
+    // förutsättningen. Att i stället luckra upp grinden hade varit att flytta facit efter koden
+    // (Tele2-läxan 18 aug). Fallet UTAN tryckt kurs ägs av TK-05.
     const bygg = (total, rader) => konverteraTillSek({
       currency: 'USD', supplier: 'X', billingPeriod: 'monthly', confidenceScore: 0.95,
+      tryckkurs: 10.42,
       invoiceTotal: total, annualCost: 9360, recurringAmount: rader.reduce((a, b) => a + b, 0),
       lineItems: rader.map((a, i) => ({ description: `rad${i}`, type: 'recurring_subscription', quantity: 15, amount: a })),
     }, { rate: 10.42, valuta: 'USD' });

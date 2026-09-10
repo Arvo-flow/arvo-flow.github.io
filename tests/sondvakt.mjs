@@ -319,3 +319,33 @@ describe('SV · sonden får aldrig rapportera ett cachat svar som en mätning', 
     assert.equal(kod, 0);
   });
 });
+
+// ── SV-18..19 · KOSTNADSMÄTAREN (2026-09-10, oraklets spricka 8) ─────────────────────────────
+// Varje grind har ett test som bevisar att den fäller rätt sak. Ingen mätte deras SAMLADE pris.
+// En ny grind kunde merga med noll fällda tester och tysta trettio procent av fakturorna —
+// grundarens enda KPI — utan att någon såg det förrän en människa räknade i rummet.
+//
+// FÅNGAR: att mätaren kopplas ur pre-commit, eller att facit försvinner.
+// BLIND: om FACIT uppdateras utan att någon läser diffen ser mätaren inget alls. Ett facit som
+//   anpassas till koden är ingen mätning längre — den kontrollen är mänsklig och kan inte
+//   automatiseras bort, och därför skriver skriptet ut den varningen vid varje `--update`.
+describe('SV · grindarnas samlade pris mäts före commit', () => {
+  test('SV-18 · mätaren är inkopplad i pre-commit-kedjan', () => {
+    const hook = readFileSync(join(ROOT, 'scripts/setup-hooks.mjs'), 'utf8');
+    assert.match(hook, /node scripts\/prissattningsgrad\.mjs/,
+      'en mätare som inte körs är ingen mätare — samma sjukdom som en testfil utanför sviten');
+    assert.match(hook, /STATUS=\$\?/, 'och dess exitkod måste kunna stoppa commiten');
+  });
+
+  test('SV-19 · facit finns och bär sina fyra utfall åtskilda', () => {
+    const facit = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/prissattningsgrad-facit.json'), 'utf8'));
+    for (const k of ['fixturer', 'prissatt', 'tystad', 'offert', 'fel']) {
+      assert.equal(typeof facit[k], 'number', `facit saknar ${k}`);
+    }
+    assert.equal(facit.fel, 0,
+      'ett FEL får aldrig frysas in som normalläge — då blir en krasch omöjlig att skilja från '
+      + 'ett medvetet beslut, vilket är hela felfamiljen mätaren finns mot');
+    assert.equal(facit.fixturer, facit.prissatt + facit.tystad + facit.offert + facit.fel,
+      'delarna måste summera till helheten — annars räknas någon fixtur två gånger eller inte alls');
+  });
+});

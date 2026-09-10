@@ -82,7 +82,9 @@ jobs:
           node scripts/batch-prospects.mjs "$SCORED" $NO_EMAIL_FLAG $ONLY_FLAG --rate=30000 2>&1 | tee /tmp/batch-output.txt
 
       - name: Spara dossier-payload för granskning (ops/prospect-review.json)
-        if: github.event.inputs.only != ''
+        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
+        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
+        if: github.event.inputs.only != '' && github.ref == 'refs/heads/main'
         continue-on-error: true
         run: |
           TOKEN=$(grep -oE 'https://arvoflow\.se/prospect/[a-zA-Z0-9_-]+' /tmp/batch-output.txt | head -1 | sed 's|.*/||')

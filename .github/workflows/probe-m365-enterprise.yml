@@ -23,7 +23,9 @@ jobs:
           node scripts/probe-m365-enterprise.mjs 2>&1 | tee /tmp/m365ent.txt
       # Inget continue-on-error: går mätningen förlorad ska körningen vara röd.
       - name: Spara sondsvaret
-        if: always()
+        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
+        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
+        if: always() && github.ref == 'refs/heads/main'
         run: |
           git config user.email "bot@arvoflow.se"
           git config user.name "Arvo Diag Bot"

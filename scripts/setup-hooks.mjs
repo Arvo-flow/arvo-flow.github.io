@@ -70,6 +70,16 @@ if [ $STATUS -eq 0 ]; then
   STATUS=$?
 fi
 
+# Prissättningsgraden — VAD KOSTAR GRINDARNA? Varje grind har ett test som bevisar att den
+# fäller rätt sak; ingen mätte deras SAMLADE pris. En ny grind kunde merga med noll fällda
+# tester och tysta trettio procent av fakturorna, och ingen såg det förrän en människa räknade
+# i rummet. Nu måste varje grind visa sin kostnad i ett TAL före commit.
+if [ $STATUS -eq 0 ]; then
+  node scripts/prissattningsgrad.mjs 2>/dev/null | grep -E "PRISSÄTTNINGSGRADEN ÄNDRADES|Oförändrad mot facit|Inget facit" || true
+  node scripts/prissattningsgrad.mjs >/dev/null 2>&1
+  STATUS=$?
+fi
+
 # Scopvakten — en identifierare utanför sitt scope kastar i runtime, före all logik, och når
 # kunden som ett rått felmeddelande. Sviten kan strukturellt inte se det: den anropar aldrig
 # handler(req, res). (2026-09-06: en odefinierad kv-referens nadde produktion.)

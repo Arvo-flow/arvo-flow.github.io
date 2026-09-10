@@ -489,7 +489,25 @@ export default async function handler(req, res) {
   //   · Ring 1 dömer i ursprungsenheter (28ecd62) — routningen själv ändras: fyra av grundarens
   //     fakturor gick till review_queue på en motsägelse som var vår, inte fakturans.
   // Regel 7 säger detta, CV-14 skrev läxan i går, och jag gick i den ändå — fyra commits i rad.
-  const cacheKey = `pdf:result:v27:${pdfHash}:e${employeesNum}`;
+  // ══ BUMPEN ÄR INTE LÄNGRE ETT MINNE (2026-09-10, oraklets spricka 5) ══════════════════════
+  // Regel 7 säger «bumpa vid varje resultatändring». Jag glömde det FYRA GÅNGER PÅ EN DAG, och
+  // en cachad dom från gårdagens kod nådde en mätning som såg ut som ett svar. CV-vakten fångar
+  // det bara för kopplingar någon redan bokfört — den deklarerar själv att den inte kan gissa
+  // framtiden. Och den generiska varianten mättes och förkastades: den hade fällt 24 av 36
+  // backend-commits, varav 20 helt korrekta.
+  //
+  // Rätt fråga var aldrig «vilken commit ändrar ett resultat» utan **«varför kan en cache
+  // överleva en deploy alls?»** Nyckeln bär nu deployens commit-SHA, som Vercel sätter i varje
+  // körning. Då finns ingen mänsklig bump att glömma: en ny deploy ÄR en ny nyckel.
+  //
+  // Priset är mätt och litet: cacheträffar går förlorade över deploygränser. Med dagens takt
+  // (elva produktionsdeployer det senaste dygnet) är den kostnaden mindre än EN kund som får
+  // gårdagens dom serverad som färsk.
+  //
+  // `vN` står kvar och tas ALDRIG bort: utanför Vercel (lokalt, i tester, i sonder) saknas
+  // SHA:n, och då är versionen det enda som skiljer generationerna. CV-01..17 vaktar den kvar.
+  const deploySha = (process.env.VERCEL_GIT_COMMIT_SHA ?? 'lokal').slice(0, 8);
+  const cacheKey = `pdf:result:v27:${deploySha}:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'

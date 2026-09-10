@@ -312,3 +312,53 @@ describe('TF-SVIT · varje maskinlås körs faktiskt', () => {
       + 'är inte ett grönt från sviten — lägg till dem i importlistan:\n  ' + utanfor.join('\n  '));
   });
 });
+
+// ── TF-11 · INGEN PUSH TILL main UTAN ATT VARA PÅ main (2026-09-10) ─────────────────────────
+// ══ VARFÖR ═════════════════════════════════════════════════════════════════════════════════
+// Sextio workflows avslutar med `git push origin HEAD:main`, och varje `workflow_dispatch` går
+// att köra på VILKEN REF SOM HELST. Dispatchas en av dem på en feature branch pushas den
+// branchen till `main` — tyst, eftersom raden bär `|| echo "push miss"` — och därmed förbi hela
+// granskningsgrinden i Bevisplikten p.1. Jag var själv tre minuter från att avfyra den.
+//
+// ⚠️ OCH MIN EGEN MÄTNING VAR FEL FÖRST. Jag rapporterade «tio workflows» till grundaren; talet
+// kom ur en `grep | head` vars utdata jag läste som hela listan. Sanningen är 60 — sex gånger
+// fler. Ett trunkerat mätvärde återgivet som ett fullständigt är felfamiljen i mätinstrumentet,
+// och det är därför den här vakten räknar SJÄLV i stället för att lita på ett tal i en kommentar.
+//
+// FÅNGAR: ett steg som pushar till main utan `github.ref`-villkor.
+// BLIND: andra vägar till main än just den kommandoformen — en `gh api`-merge, en `git push`
+//   med annan syntax, eller en action som pushar åt oss. Vakten stänger den form vi faktiskt
+//   har, inte kategorin «kod kan nå main».
+describe('TF-11 · granskningsgrinden går inte att kringgå via workflow_dispatch', () => {
+  test('TF-11 · varje steg som pushar till main kräver att refen ÄR main', () => {
+    const kat = join(ROOT, '.github/workflows');
+    const filer = readdirSync(kat).filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'));
+    assert.ok(filer.length > 40, `hittade bara ${filer.length} workflows — katalogen lästes inte`);
+
+    const brott = [];
+    let medPush = 0;
+    for (const namn of filer) {
+      // ⚠️ KOMMENTARER BLANKAS FÖRST. Vakten fällde `probe-textlager-prod.yml` — det workflow
+      // som MEDVETET saknar pushen och SKRIVER det i sitt filhuvud. En vakt som inte skiljer kod
+      // från prosa larmar på beskrivningen av felet i stället för på felet (RD-08:s form, tredje
+      // gången samma dygn). YAML-kommentarer är radbaserade, så en radvis strykning räcker och
+      // rör aldrig en `run:`-rad som faktiskt pushar.
+      const kalla = readFileSync(join(kat, namn), 'utf8')
+        .split('\n').map((r) => (r.trimStart().startsWith('#') ? '' : r)).join('\n');
+      if (!/push origin HEAD:main/.test(kalla)) continue;
+      medPush += 1;
+      // Steget som bär pushen måste ha villkoret. Vi läser hela filen: ett `github.ref`-villkor
+      // någon annanstans i filen räknas inte, så kontrollen sker per STEG.
+      const steg = kalla.split(/\n(?=\s+- (?:name|run):)/);
+      for (const s of steg) {
+        if (!/push origin HEAD:main/.test(s)) continue;
+        if (!/github\.ref\s*==\s*'refs\/heads\/main'/.test(s)) brott.push(namn);
+      }
+    }
+    assert.ok(medPush >= 40,
+      `bara ${medPush} workflows med push hittades — mönstret matchar inte längre, och en vakt `
+      + 'som söker fel sträng blir grön av tomhet');
+    assert.deepEqual(brott, [],
+      `${brott.length} workflow(s) kan pusha en godtycklig branch till main:\n  ${brott.join('\n  ')}`);
+  });
+});
