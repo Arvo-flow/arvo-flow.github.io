@@ -214,3 +214,27 @@ describe('FX · en osäker kurs river hela påståendet, inte halva', () => {
     assert.equal(med.fxSparr, 'fx_ingen', 'skälet måste följa med — en tystnad utan skäl är en pose');
   });
 });
+
+// ── FX-16 · SIDOKANALEN (granskningens fynd 1, 2026-09-10) ──────────────────────────────────
+// Den fientliga granskaren såg att höljet i `recommend()` inte nollar `grossSaving`/`netSaving`
+// och kallade det [VAKT] — inget kundsynligt ändras. Den skarpaste instansen låg ett steg bort
+// och är [KUND]: kundens `grossSaving` byggs i api-lagret som `primär + sekundär`, och
+// sekundär-overriden SÄTTER TILLBAKA `shouldSwitch = true` så snart den sekundära är positiv.
+//
+// En FX-spärrad faktura hade alltså kunnat få tillbaka sitt byte via sidokanalen, med ett tal
+// räknat ur exakt samma odaterbara kurs — `metrics` kommer ur radposter som redan konverterats.
+// Att en fix håller för fallet som avslöjade buggen men inte för grannfallet är veckans läxa.
+describe('FX · spärren håller även i sidokanalen', () => {
+  const API = strippaStrangar(readFileSync(join(ROT, 'api/test-invoice.mjs'), 'utf8'));
+
+  test('FX-16 · den sekundära besparingen beräknas inte för en spärrad faktura', () => {
+    assert.match(API, /const secondarySaving = extracted\.prispastaendeSparrat \? null : computeSecondarySaving/,
+      'utan spärren här kan sekundär-overriden återuppliva bytet med ett tal ur samma kurs');
+    // Och overriden måste fortfarande vara den enda vägen tillbaka — hittar vi en andra väg som
+    // sätter shouldSwitch=true ur secondarySaving är den här vakten inte fullständig.
+    const aterupplivningar = [...API.matchAll(/shouldSwitch\s*=\s*true/g)].length;
+    assert.ok(aterupplivningar <= 1,
+      `${aterupplivningar} ställen sätter shouldSwitch=true i api-lagret — spärren täcker bara den `
+      + 'kända vägen, och en andra väg måste granskas innan den här vakten kan kallas hel');
+  });
+});

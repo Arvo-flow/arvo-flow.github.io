@@ -1215,7 +1215,16 @@ export default async function handler(req, res) {
 
     // ── Sekundär kategori-besparing (kombinerade fakturor) ───────────────────
     const metrics_with_mixed = { ...metrics, secondaryComponentMonthly: metrics.secondaryComponentMonthly };
-    const secondarySaving = computeSecondarySaving({
+    // ── VALUTASPÄRREN GÄLLER ÄVEN DEN SEKUNDÄRA KANALEN (2026-09-10, granskningens fynd 1) ──
+    // Grinden i `recommend()` river primärpåståendet, men kundens `grossSaving` byggs här som
+    // `primär + sekundär` — och rad ~1834 SÄTTER TILLBAKA `shouldSwitch = true` så snart den
+    // sekundära är positiv. En FX-spärrad faktura hade alltså kunnat få tillbaka sitt byte via
+    // sidokanalen, med ett tal räknat ur samma odaterbara kurs. OB-19:s form, en kanal bort.
+    //
+    // `metrics` kommer ur radposter som redan konverterats med kursen, så den sekundära
+    // besparingen vilar på exakt samma tal som den primära. Den tystas därför med, och en spärrad
+    // faktura kan inte längre bära något besparingspåstående alls (FX-16).
+    const secondarySaving = extracted.prispastaendeSparrat ? null : computeSecondarySaving({
       metrics,
       category:                 categorized.category,
       potentialMixedCategories: extracted.potentialMixedCategories ?? false,
