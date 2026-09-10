@@ -190,6 +190,31 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > BETEENDET. Så snart ett fynd rör ett tal kunden ser är det [KUND], hur litet det än är — och en
 > felklassning kostar antingen en kund eller en dag. Vid tvekan: [KUND].
 
+> **✅ ETT SKYDD BAKOM ETT ANNAT SKYDD ÄR INTE TVÅ LAGER — DET ÄR ETT (2026-09-10, tre gånger på ett dygn).**
+> Tre av mina egna vakter var döda samma dag, alla med samma FORM: en yttre kontroll gjorde den inre
+> **omöjlig att observera**, så sabotaget mot den inre fällde noll test.
+> · `(?<!\d)` framför kursmönstren — kursordsfönstret slutar omedelbart före talet, så står en siffra
+>   där kan fönstret aldrig sluta med ett kursord. Lookbehinden var strukturellt onåbar bakom KURSORD.
+> · `KURSORD_FONSTER = 28` — såg ut som en tröskel; `$`-ankaret gör att ett kursord 150 tecken bort
+>   aldrig kvalificerar, oavsett fönsterstorlek. En konstant vars NAMN lovar en mekanik den inte har.
+> · `NYCKLAR` i prissättningsdomens filter — en grind ovanför garanterade redan att varje nyckel fanns,
+>   så att byta filtret mot indatas egna nycklar ändrade ingenting.
+>
+> **Rätt drag är inte att ta bort skyddet utan att göra det till DET ENDA.** Domen bygger nu sin lista i
+> EN slinga i stället för två; då fäller sabotaget. Där en rad ändå saknar egen tand står det **utskrivet
+> i modulen** — en rad som ser ut som ett skydd utan att vara det är sämre än ingen rad, för nästa läsare
+> kontrollerar den inte. Bibeln sa redan «två grenar som ser ut som två lager men är ett räknar ett skydd
+> vi inte har» (22 aug); det nya är att **djupförsvar är den vanligaste källan till den formen**, och att
+> frågan «vilken indata når den här raden om raden ovanför gör sitt jobb?» hittar den på sekunder.
+>
+> **Och samma dygn föll jag för själva grundfelet igen:** docstringen i `lib/prissattningsdom.js` sa
+> «VARJE nyckel jämförs». Den var SKRIVEN, inte körd — koden itererade `Object.keys(sammanfattning)`,
+> alltså bara de nycklar som RÅKADE finnas i indata. Granskaren bevisade hålet genom den riktiga
+> pre-commit-vägen: två borttagna nycklar plus 77 verkligt kraschade fixturer gav «Oförändrad», exit 0.
+> **En jämförelse kan bara vara fullständig om den vet vilka nycklar som SKA finnas; frågar den indata
+> får den svaret indata vill ge.** Domänen deklareras nu, en saknad nyckel är ett `omatt` som blockerar,
+> och ett tomt facit (`{}`, sant i JS) är inte ett facit. SV-20, sabotage-bevisad i fem riktningar.
+
 > **✅ GRUNDARBESLUT 2026-09-08: «ETT GRÖNT SOM BETYDER *JAG TITTADE INTE* ÄR FARLIGARE ÄN ETT RÖTT.»**
 > Raden är grundarens egen, fälld när jag vägrade committa en okänd ändring som dykt upp i trädet
 > mitt under en granskning. Den generaliserar hela obduktionens felfamilj till vakterna själva: ett
