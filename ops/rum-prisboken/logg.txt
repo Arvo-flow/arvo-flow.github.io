@@ -1,12 +1,24 @@
 
 ═══════ RUMMET (https://arvoflow.se/portfolio) ═══════
-rader i vyn: 0 · mobil 0 tecken · desktop 0 tecken
+rader i vyn: 77 · mobil 2431 tecken · desktop 2431 tecken
 
 RADER SOM RÖR PRISBOKEN:
+  · BEVAKAR ERA AVTAL
+  · Prissatta
+  · MARKNADEN
+  · 36 marknadskällor svepta
+  · Vi vaktar era avtal — men er position mot listpris kunde inte mätas i dag.
+  · Vi jämförde 0 fakturor mot verifierat publikt listpris. Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.
+  · Verifierat
+  · · grundat på 0 prissatta fakturor · publika listpriser
+  · ARVO SCORE
+  · MOT VERIFIERAT LISTPRIS
+  · MARKNADSLÄGE · INTE SATT
+  · Vi har inget verifierat jämförelsepris för era kategorier ännu, så vi sätter ingen poäng. Ett tal utan mätning är värre än inget tal. Så snart en av era kategorier får ett verifierat pris räknas det fram — och ni ser exakt hur.
+  · Vi har inget verifierat jämförelsepris för era kategorier än, så vi hävdar ingenting om er prisnivå. Avtalen är bevakade — vi hör av oss så snart ett mål går att styrka.
+  · BEVAKAR
+  · Vägde 0 fakturor mot verifierat publikt listpris · senast 11 sep.
+  · INNEHAVET · 0 PRISSATTA · 5 MOTTAGNA, INTE PRISSATTA
 
-✗ RUMMET ÄR INTE FRISKT:
-   mobil: JS-fel i kundytan — Cannot access 'Xe' before initialization
-   mobil: sidan är i praktiken tom (0 tecken) — rummet renderade inte
-   desktop: JS-fel i kundytan — Cannot access 'Xe' before initialization
-   desktop: sidan är i praktiken tom (0 tecken) — rummet renderade inte
-   radarn saknas helt — rummet bär inget bevakningslager
+✓ Rummet renderar i båda bredderna, utan JS-fel och utan felläge.
+  Bilder: ops/rum-prisboken/rummet-mobil-390.png · ops/rum-prisboken/rummet-desktop-1600.png
