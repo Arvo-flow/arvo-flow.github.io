@@ -53,7 +53,7 @@ export default async function handler(req, res) {
         COUNT(*) FILTER (WHERE should_switch = true)         AS switch_recommended,
         ROUND(AVG(net_saving) FILTER (WHERE net_saving > 0)) AS avg_net_saving,
         COUNT(DISTINCT fingerprint)                          AS unique_users
-      FROM invoice_analyses
+      FROM invoice_analyses   -- liggare: internt: admin-översikt, ingen kundyta
     `.catch(() => [{}]),
   ]);
 

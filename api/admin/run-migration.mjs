@@ -359,7 +359,7 @@ export default async function handler(req, res) {
             ELSE                         'mid'
           END,
           ia.id
-        FROM invoice_analyses ia
+        FROM invoice_analyses ia   -- liggare: internt: engångsbackfill, körs av admin med explicit avsikt
         WHERE ia.route       = 'auto'
           AND ia.annual_cost > 500
           AND ia.annual_cost < 5000000

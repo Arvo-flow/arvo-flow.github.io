@@ -42,9 +42,10 @@ export default async function handler(req, res) {
   // Alla unika emails med analyser förra månaden (max 50/körning)
   const emails = await db`
     SELECT DISTINCT user_email
-    FROM invoice_analyses
+    FROM invoice_analyses   -- liggare: kundvy
     WHERE user_email  IS NOT NULL
       AND route        = 'auto'
+      AND arkiverad_at IS NULL
       AND created_at  >= ${periodStart}
       AND created_at   < ${periodEnd}
     LIMIT 50

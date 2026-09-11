@@ -40,7 +40,7 @@ export default async function handler(req, res) {
   let row;
   try {
     const rows = await db`
-      SELECT id, contract_terms_json FROM invoice_analyses WHERE id = ${analysisId}::uuid LIMIT 1`;
+      SELECT id, contract_terms_json FROM invoice_analyses /* liggare: internt: uppslag på ett id kunden själv skickar in */ WHERE id = ${analysisId}::uuid LIMIT 1`;
     row = rows[0];
   } catch { return send(res, 400, { error: 'Ogiltigt analysisId' }); }
   if (!row) return send(res, 404, { error: 'Analysen hittades inte' });

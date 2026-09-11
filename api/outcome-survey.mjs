@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     const analyses = await db`
       SELECT id, supplier, normalized_supplier, category,
              annual_cost, suggested_annual_cost, net_saving, user_email
-      FROM invoice_analyses
+      FROM invoice_analyses   -- liggare: internt: uppslag på ett id kunden bär i sin egen enkätlänk, aldrig en lista
       WHERE id = ${analysisId}::uuid
       LIMIT 1
     `;

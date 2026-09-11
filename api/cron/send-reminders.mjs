@@ -191,9 +191,10 @@ export default async function handler(req, res) {
   try {
     const rows = await db`
       SELECT id, supplier, annual_cost, net_saving, contract_end_date, user_email
-      FROM invoice_analyses
+      FROM invoice_analyses   -- liggare: kundvy
       WHERE contract_end_date BETWEEN CURRENT_DATE + 59 AND CURRENT_DATE + 61
         AND reminder_60_sent_at IS NULL
+        AND arkiverad_at IS NULL
         AND user_email IS NOT NULL
     `;
     for (const row of rows) {
@@ -221,9 +222,10 @@ export default async function handler(req, res) {
   try {
     const rows = await db`
       SELECT id, supplier, annual_cost, net_saving, contract_end_date, user_email
-      FROM invoice_analyses
+      FROM invoice_analyses   -- liggare: kundvy
       WHERE contract_end_date BETWEEN CURRENT_DATE + 29 AND CURRENT_DATE + 31
         AND reminder_30_sent_at IS NULL
+        AND arkiverad_at IS NULL
         AND user_email IS NOT NULL
     `;
     for (const row of rows) {
@@ -256,16 +258,17 @@ export default async function handler(req, res) {
   try {
     const rows = await db`
       SELECT id, supplier, normalized_supplier, user_email, contract_terms_json, deadline_reminder_json
-      FROM invoice_analyses
+      FROM invoice_analyses   -- liggare: kundvy
       WHERE contract_terms_json IS NOT NULL
+        AND arkiverad_at IS NULL
         AND user_email IS NOT NULL
     `.catch(async (e) => {
       if (!/deadline_reminder_json/.test(e.message)) throw e;
       await db`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS deadline_reminder_json JSONB`;
       return db`
         SELECT id, supplier, normalized_supplier, user_email, contract_terms_json, deadline_reminder_json
-        FROM invoice_analyses
-        WHERE contract_terms_json IS NOT NULL AND user_email IS NOT NULL`;
+        FROM invoice_analyses   -- liggare: kundvy
+        WHERE contract_terms_json IS NOT NULL AND arkiverad_at IS NULL AND user_email IS NOT NULL`;
     });
     for (const row of rows) {
       try {
@@ -301,8 +304,9 @@ export default async function handler(req, res) {
   try {
     const rows = await db`
       SELECT id, supplier, net_saving, user_email
-      FROM invoice_analyses
+      FROM invoice_analyses   -- liggare: kundvy
       WHERE route = 'auto'
+        AND arkiverad_at IS NULL
         AND created_at BETWEEN NOW() - INTERVAL '61 days' AND NOW() - INTERVAL '59 days'
         AND outcome_email_sent_at IS NULL
         AND user_email IS NOT NULL

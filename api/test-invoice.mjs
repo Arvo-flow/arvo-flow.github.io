@@ -1269,7 +1269,7 @@ export default async function handler(req, res) {
           // kors-leverantör om kunden bytt (t.ex. Telia → Tele2, samma kategori).
           const _prevRows = await _db`
             SELECT annual_cost, seat_count, created_at
-            FROM invoice_analyses
+            FROM invoice_analyses   -- liggare: internt: dedup mot kundens egen tidigare analys
             WHERE fingerprint        = ${_fpHash}
               AND category           = ${categorized.category}
               AND normalized_supplier = ${categorized.normalizedSupplier ?? ''}

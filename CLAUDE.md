@@ -595,6 +595,31 @@ signera", aldrig som ett verkställt löfte.)
    > använde. **Regeln: en huvudinsert får aldrig bero på en kolumn som kanske inte är migrerad —
    > valfria kolumner skrivs i egna satser med egen catch.**
    >
+   > **✅ OCH GRANSKAREN FÄLLDE MIG PÅ MIN EGEN REGEL, SAMMA SESSION.** Domen blev BLOCKERAR med tre
+   > [KUND]: jag hade stängt TVÅ dörrar och lämnat ELVA öppna. Testidentitetsgrinden satt på
+   > `storeDatapoint` (→ `invoice_datapoints`) — men **`invoice_analyses` är en EGEN prisbokskälla
+   > med LÄGRE tröskel** (5 mot 10), alltså lättare att förorena än den väg jag just stängt. Och
+   > arkivfiltret satt i 2 av 11 kundsynliga läsvägar: månadsbriefingen, avtalspåminnelserna,
+   > utfallsenkäten och prislarmens mottagarlista kunde alla mejla om rader kunden fått veta var
+   > borttagna — **arkiveringen hade varit en lögn i fyra ytor.**
+   >
+   > Det är bibelns egen 19-augustiregel bruten i samma andetag som den citerades: *en fix som inte
+   > följs till alla konsumenter är en halv fix — grep:a funktionsnamnet, inte bara ytan som råkade
+   > avslöja felet.* Jag grep:ade `storeDatapoint` och aldrig `invoice_analyses`.
+   >
+   > **Svaret blev inte elva lappar utan en KLASSNING maskinen tvingar fram.** Varje läsväg mot
+   > liggaren bär nu en markör som säger vad den ÄR, och `tests/liggarvillkor.mjs` (LV-01..05) kräver
+   > klassens villkor: `kundvy` → `arkiverad_at IS NULL`; `moat` → testidentiteten utesluten;
+   > `internt: <skäl>` → inget krav, men skälet måste stå skrivet. **Den tolfte konsumenten hittas
+   > alltså av en maskin, inte av nästa granskare.** 29 läsvägar i 14 filer klassade, sabotage-bevisad
+   > i fem riktningar, med motprov (det FINNS interna undantag — annars vaktar LV-05 ingenting).
+   >
+   > Tre småfel ur samma pass, alla värda en rad: en **backtick i en SQL-kommentar** avslutade
+   > JS-mallen och sänkte modulen (kommentaren bröt koden); vakten **fällde regelns egen
+   > dokumentation**, eftersom den inte skiljer kod från prosa — och `strippaStrangar` är fel verktyg
+   > här, för satserna vi vaktar ÄR mallsträngar; och ett importinfogande som letade «sista raden som
+   > börjar med import» kan landa mitt i en mall.
+   >
    > Maskinvakt: `tests/testidentitet.mjs` (TI-01..08), sabotage-bevisad i **tretton** riktningar, med
    > motprov i båda ändar (en riktig kund måste få bidra; en anonym uppladdning är en legitim
    > observation). Kortet är dessutom SETT i en lokal rendering mot det byggda paketet — och den
