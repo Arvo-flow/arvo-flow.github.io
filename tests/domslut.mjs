@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { domensLage, beromsLage, DOMLAGEN } from '../src/lib/domslut.js';
+import { domensLage, beromsLage, omattLage, DOMLAGEN } from '../src/lib/domslut.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const st = (niva) => (niva == null ? { satt: false, niva: null } : { satt: true, niva });
@@ -179,6 +179,53 @@ describe('DL · Ett prispåstående kräver en jämförelse (live-granskningen 2
 //
 // Satsen är bibelns, nu tredje gången (19 aug ringen/pillen/prosan, 22 aug veckodomen, nu
 // analyskortet + mailet): FRÅNVARON AV ETT VERIFIERAT BYTESMÅL SÄGER INGENTING OM HURUVIDA
+// ── DL-10/DL-11 · DET OMÄTTA LÄGET (2026-09-11, funnet i skärmdumpen av det SKARPA rummet) ──
+// Regel 8 efter prisboksgrinden. Rummet visade samtidigt:
+//   rubrik      «God kväll. Allt är under kontroll.»
+//   domen       «Vi vaktar era avtal — men er position mot listpris kunde inte mätas i dag.»
+//   bevakningen «Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt …»
+// Två ytor bar en TVÅVÄGSGREN (`satt && niva === 'samre' ? … : <positivt>`) på ett TREVÄRT
+// tillstånd och föll därför till det positiva när positionen var OMÄTT. Registret deklarerade
+// `lugn_omatt` hela tiden — ingen frågade det. Prisboksgrinden gör läget VANLIGARE (fyra av fem
+// bärande celler tystnade), och bibeln är tydlig: en fix som gör ett gammalt redovisningsfel
+// vanligare måste stänga det också.
+describe('DL-10/11 · omätt läge får aldrig bli ett positivt påstående', () => {
+  test('DL-10 · omattLage är sann för BÅDA omätta lägena och falsk för alla andra', () => {
+    const omatta = Object.keys(DOMLAGEN).filter((l) => omattLage(l));
+    assert.deepEqual(omatta.sort(), ['byte_omatt', 'lugn_omatt'],
+      'exakt de två lägen som saknar mätning ska räknas som omätta');
+    for (const lage of omatta) {
+      assert.equal(beromsLage(lage), false, `${lage} får aldrig bära ett positivt prispåstående`);
+    }
+    // Motprovet: ett MÄTT lugnt läge är inte omätt — annars tystar vakten rätt beteende.
+    assert.equal(omattLage('lugn_battre'), false);
+    assert.equal(omattLage('lugn_i_niva'), false);
+  });
+
+  test('DL-11 · rummets två ytor frågar registret i stället för att gissa', () => {
+    // KÄLLTEXTVAKT, uttalat: den ser att grenen är trevärd, aldrig vad den renderar. Beteendet
+    // bevisas av skärmdumpen (ops/rum-prisboken/) — de två mätningarna kompletterar varandra.
+    const rummet = readFileSync(join(ROT, 'src/pages/Portfolio/index.js'), 'utf8');
+    assert.match(rummet, /import \{ domensLage, omattLage \}/, 'rummet måste importera registret');
+    assert.match(rummet, /const omatt\s+= omattLage\(domLage\)/, 'läget härleds EN gång');
+    // Rubriken och bevakningskortet — båda måste bära det omätta villkoret.
+    assert.match(rummet, /omatt \|\| \(standing\.satt && standing\.niva === 'samre'\).*Vi vaktar era avtal/s,
+      'rubriken får inte säga «allt är under kontroll» när positionen inte gick att mäta');
+    // ⚠️ MITT FÖRSTA FÖNSTER VAR EN GISSNING, INTE EN MÄTNING, och det fällde på fel grund:
+    // jag skar från «Avtal under bevakning» (offset 58832) till «Vaktens kvitton» — som ligger
+    // FÖRE kortet i filen (36133). Utsnittet blev tomt, alltså grönt-av-tomhet i vardande.
+    // Ankaret är nu komponenten själv, och att det finns EXAKT ett <Tally> mäts i testet.
+    assert.equal((rummet.match(/<Tally>/g) ?? []).length, 1, 'flera <Tally> — utsnittet nedan vaktar fel kort');
+    const tally = rummet.slice(rummet.indexOf('<Tally>'), rummet.indexOf('</Tally>'));
+    assert.ok(tally.length > 500, `utsnittet är ${tally.length} tecken — en vakt kan inte bli grön av tomhet`);
+    assert.match(tally, /omatt/, 'bevakningskortet måste fråga om läget är omätt');
+    const positiv = tally.indexOf('Era priser står sig');
+    const omattGren = tally.indexOf('omatt');
+    assert.ok(omattGren >= 0 && omattGren < positiv,
+      'det omätta fallet måste prövas FÖRE den positiva grenen — annars fångar den allt');
+  });
+});
+
 // KUNDEN BETALAR RÄTT. DL-01..09 låste rummet. De två ytor kunden möter FÖRST — analyskortet på
 // /testa-faktura och svarsmailet — hade aldrig frågat samma fråga.
 //

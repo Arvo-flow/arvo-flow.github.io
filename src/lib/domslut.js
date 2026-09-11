@@ -72,3 +72,22 @@ export function domensLage({ acting, hasSwitchAction, standing } = {}) {
 export function beromsLage(lage) {
   return DOMLAGEN[lage]?.positivtPrispastaende === true;
 }
+
+/**
+ * Är läget OMÄTT — alltså: kunde positionen mot listpris inte mätas alls?
+ *
+ * ⚠️ FUNNEN I SKÄRMDUMPEN AV DET SKARPA RUMMET (2026-09-11, regel 8 efter prisboksgrinden).
+ * Registret deklarerade `lugn_omatt` redan — men rummets rubrik och bevakningskortet FRÅGADE
+ * det aldrig. Båda bar en TVÅVÄGSGREN på ett TREVÄRT tillstånd:
+ *   `standing.satt && standing.niva === 'samre' ? … : <positivt påstående>`
+ * och föll därför till det positiva när positionen inte gick att mäta. Kunden läste samtidigt
+ * «er position mot listpris kunde inte mätas i dag» och «Allt är under kontroll» + «Era priser
+ * står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.»
+ *
+ * Det är 22-augustifyndet för FJÄRDE gången i samma fil, och varje tidigare gång lagades bara
+ * det fall som avslöjade den. Den här funktionen finns för att grenen ska bli TREVÄRD vid
+ * källan i stället för att härledas om på varje yta.
+ */
+export function omattLage(lage) {
+  return DOMLAGEN[lage]?.omatt === true;
+}

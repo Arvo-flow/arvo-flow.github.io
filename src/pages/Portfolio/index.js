@@ -12,6 +12,7 @@ import { getCategoryMeta } from '../../lib/categoryMeta';
 // inte via en regex på den här filens källtext. Domen är logik, inte rendering.
 import { buildReasoning } from '../../lib/holdings';
 import { groupBySupplier, supplierName, supplierDiagScore, computeActing, roomCounts } from '../../lib/holdings';
+import { domensLage, omattLage } from '../../lib/domslut';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
@@ -572,6 +573,11 @@ export default function Portfolio() {
   const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
   const arvoScore    = computeArvoScore(suppliers);
   const standing     = marketStanding(arvoScore);
+  // Domens LÄGE, härlett EN gång ur registret (src/lib/domslut.js). Ytorna nedan frågar det i
+  // stället för att var och en gissa om tillståndet är mätt — det var precis den gissningen som
+  // lät «Allt är under kontroll» och «Era priser står sig» stå kvar när positionen var OMÄTT.
+  const domLage      = domensLage({ acting, hasSwitchAction, standing });
+  const omatt        = omattLage(domLage);
   const companyName  = companyFromEmail(apiEmail);
   const switchables  = suppliers.filter((g) => g.latest.should_switch && (g.latest.net_saving ?? 0) > 0);
 
@@ -841,7 +847,7 @@ export default function Portfolio() {
                     om priset. Ett neutralt sant påstående slår ett lugnande falskt. */}
                 <h1>{greeting}.<br />{acting
                   ? 'Ett par drag väntar på er.'
-                  : (standing.satt && standing.niva === 'samre' ? 'Vi vaktar era avtal.' : 'Allt är under kontroll.')}</h1>
+                  : (omatt || (standing.satt && standing.niva === 'samre') ? 'Vi vaktar era avtal.' : 'Allt är under kontroll.')}</h1>
               </Ident>
 
               <Radar>
@@ -978,10 +984,13 @@ export default function Portfolio() {
                     ? <><b>{switchables.length} byte{switchables.length > 1 ? 'n' : ''} förberedda</b> · netto efter Arvos arvode (20% av första årets besparing). Från år två är hela besparingen er.</>
                     : acting
                       ? <>Inget leverantörsbyte krävs — kostnaden åtgärdas direkt mot fakturan. Se fyndet ovan.</>
-                      : (standing.satt && standing.niva === 'samre'
-                          ? <>Ni ligger över verifierat listpris, men inget av avtalen bär ett byte vi kan belägga.
-                              Vi vaktar dem tills ett mål går att styrka.</>
-                          : <>Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.</>)}
+                      : (omatt
+                          ? <>Vi har inget verifierat jämförelsepris för era kategorier än, så vi hävdar ingenting om
+                              er prisnivå. Avtalen är bevakade — vi hör av oss så snart ett mål går att styrka.</>
+                          : standing.satt && standing.niva === 'samre'
+                            ? <>Ni ligger över verifierat listpris, men inget av avtalen bär ett byte vi kan belägga.
+                                Vi vaktar dem tills ett mål går att styrka.</>
+                            : <>Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.</>)}
                 </div>
               </Tally>
             </Grid>
