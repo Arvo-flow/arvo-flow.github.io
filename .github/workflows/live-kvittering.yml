@@ -26,7 +26,9 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           mkdir -p ops/kvittering-shots
-          node scripts/seed-avtal-testyta.mjs | tee ops/kvittering-shots/logg.txt
+          # Magic-länken får ALDRIG nå den publika loggen — den är ett ägarskapsbevis i 24 h.
+          node scripts/seed-avtal-testyta.mjs > ops/kvittering-shots/logg.txt
+          sed 's/magic=[a-f0-9]*/magic=<REDIGERAD>/g' ops/kvittering-shots/logg.txt
       - name: Install Playwright + Chromium
         run: |
           npm install --no-save playwright

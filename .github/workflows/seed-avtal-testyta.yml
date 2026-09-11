@@ -26,7 +26,9 @@ jobs:
           # pipefail: utan den är stegets exit-kod tee:s (alltid 0) — en död sond rapporterar framgång.
           set -o pipefail
           mkdir -p ops/testyta-shots
-          node scripts/seed-avtal-testyta.mjs | tee ops/testyta-shots/logg.txt
+          # Magic-länken får ALDRIG nå den publika loggen — den är ett ägarskapsbevis i 24 h.
+          node scripts/seed-avtal-testyta.mjs > ops/testyta-shots/logg.txt
+          sed 's/magic=[a-f0-9]*/magic=<REDIGERAD>/g' ops/testyta-shots/logg.txt
       - name: Install Playwright + Chromium
         run: |
           npm install --no-save playwright

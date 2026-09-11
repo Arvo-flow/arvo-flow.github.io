@@ -1,0 +1,57 @@
+name: Rummet efter prisboksgrinden (regel 8)
+
+# Seedar den SKARPA testytan, öppnar det riktiga rummet via magic-länk och fotograferar det i
+# mobil (390) och desktop (1600). Bevismaterial för prisboksgrinden 2026-09-10 — tre
+# granskningsvarv prövade mekaniken, ingen tittade på kundens vy.
+# Identitet: testyta@arvoflow.se. Aldrig en personlig adress (publikt repo, publik logg).
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/screenshot-rummet-prisboken.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  rummet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Seed den skarpa testytan
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -o pipefail
+          mkdir -p ops/rum-prisboken
+          # Magic-länken får ALDRIG nå den publika loggen — den är ett ägarskapsbevis i 24 h.
+          node scripts/seed-avtal-testyta.mjs > ops/rum-prisboken/seed.txt
+          sed 's/magic=[a-f0-9]*/magic=<REDIGERAD>/g' ops/rum-prisboken/seed.txt
+      - name: Install Playwright + Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install chromium --with-deps
+      - name: Fotografera rummet
+        run: |
+          set -o pipefail
+          URL=$(grep -o 'https://arvoflow.se/portfolio?magic=[a-f0-9]*' ops/rum-prisboken/seed.txt | head -1)
+          if [ -z "$URL" ]; then echo "ingen magic-länk ur seeden — sonden kom aldrig fram"; exit 1; fi
+          node scripts/screenshot-rummet-prisboken.mjs "$URL" 2>&1 | tee ops/rum-prisboken/logg.txt
+      - name: Commit bevismaterialet
+        # ⚠️ ENDAST FRÅN main — utan villkoret pushar ett dispatch på en feature branch DEN
+        #    branchen till main, förbi granskningsgrinden (merge-hålet, 2026-09-10).
+        #    Magic-länken tvättas ur seed-loggen: den är ett giltigt ägarskapsbevis i 24 h.
+        if: always() && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          sed -i 's/magic=[a-f0-9]*/magic=<REDIGERAD>/g' ops/rum-prisboken/*.txt || true
+          git config user.email "bot@arvoflow.se"
+          git config user.name "Arvo Rum Bot"
+          git add ops/rum-prisboken
+          git commit -m "ops: rummet efter prisboksgrinden [skip ci]" || echo "inget att committa"
+          git push origin HEAD:main || echo "push misslyckades"
