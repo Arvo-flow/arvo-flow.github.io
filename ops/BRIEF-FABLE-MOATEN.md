@@ -62,6 +62,29 @@ som ökar våra egna besparingsanspråk. Grinden avgör *om* cellen är en förd
 
 Rummet är fotograferat efter ändringen (`ops/rum-prisboken/`) — regel 8, och bifogat.
 
+### Och bilden gav ett [KUND]-fynd som ingen av de tre granskningarna kunde se
+
+Rummet visade tre meningar samtidigt:
+
+> rubrik: **«God kväll. Allt är under kontroll.»**
+> domen: «Vi vaktar era avtal — men **er position mot listpris kunde inte mätas** i dag.»
+> bevakningen: **«Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt
+> är också en leverans.»**
+
+Vi påstod att kundens priser står sig i samma vy som vi sa att vi inte kunde mäta dem.
+
+Rotorsaken är värd din uppmärksamhet, för den är strukturell och den kan finnas på fler ställen:
+`src/lib/domslut.js` **deklarerade redan** `lugn_omatt` som `positivtPrispastaende: false`. Rummets
+två ytor frågade aldrig registret — båda bar en TVÅVÄGSGREN på ett TREVÄRT tillstånd och föll till
+det positiva när positionen var omätt. `verdictHead` i samma komponent gör rätt. **En deklaration
+som ingen konsument frågar är ingen deklaration**, och DL-01 kunde inte se det: den prövade
+registret, inte ytorna som kunden läser.
+
+Det är fjärde upprepningen av samma sats i samma fil, och min egen ändring gjorde läget VANLIGARE
+(fyra av fem celler tystnade). Lagat vid källan (`omattLage()`), DL-10/DL-11, sabotage-bevisat i
+fem riktningar. Men frågan jag inte kan svara på själv: **hur många andra register i den här
+kodbasen deklarerar en sanning som ingen yta frågar?**
+
 ---
 
 ## Fråga 1 — HISTORIKER-FÄLLAN. Är tystnad rätt drag, eller bara bekvämt?

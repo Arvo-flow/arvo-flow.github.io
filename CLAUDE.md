@@ -967,6 +967,33 @@ signera", aldrig som ett verkställt löfte.)
    > redundant eftersom `else if` fångade `undefined` ändå. Två grenar som ser ut som två lager men
    > är ett räknar ett skydd vi inte har.
 
+   > **✅ EN DEKLARATION SOM INGEN KONSUMENT FRÅGAR ÄR INGEN DEKLARATION (2026-09-11, ur rumsbilden).**
+   > Efter prisboksgrinden fotograferades det skarpa rummet — regel 8, tre granskningsvarv hade prövat
+   > mekaniken och ingen hade tittat på kundens vy. Bilden visade tre meningar samtidigt: rubriken
+   > **«Allt är under kontroll»**, domen «er position mot listpris **kunde inte mätas** i dag», och
+   > bevakningskortet **«Era priser står sig — inga byten på bordet just nu.»** Vi påstod att priserna
+   > stod sig i samma vy som vi sa att vi inte kunde mäta dem.
+   >
+   > `src/lib/domslut.js` byggdes 22 augusti för exakt detta och **deklarerade redan** `lugn_omatt`
+   > som `positivtPrispastaende: false`. Två ytor frågade aldrig registret: båda bar en **TVÅVÄGSGREN
+   > på ett TREVÄRT tillstånd** (`satt && niva === 'samre' ? … : <positivt>`) och föll till det
+   > positiva när mätningen saknades. `verdictHead` i SAMMA komponent gör rätt — en gren trevärd, två
+   > tvåvägs. **DL-01 kunde inte se det: den prövade REGISTRET, kunden läser YTORNA.** Det är
+   > 18-augustiläxan applicerad på en deklaration — *är det den artefakt kunden faktiskt ser?*
+   >
+   > Två regler faller ut. **(a) Ett trevärt tillstånd får aldrig läsas av en tvåvägsgren** — den
+   > tredje utgången hamnar i `else`, och `else` är alltid det mest generösa påståendet. **(b) När ett
+   > register deklarerar en sanning ska konsumenterna IMPORTERA den, aldrig härleda om den** (regel 1
+   > på påståendenivå). `omattLage()` finns nu och rummet härleder läget en gång. DL-10/DL-11,
+   > sabotage-bevisade i fem riktningar.
+   >
+   > **Och min egen ändring gjorde felet vanligare**, vilket är hela skälet att det upptäcktes nu:
+   > fyra av fem bärande celler tystnade, alltså hamnar fler kunder i det omätta läget. Regeln från
+   > 22 augusti gällde ordagrant — *en fix som gör ett gammalt redovisningsfel vanligare måste stänga
+   > det också*. **DL-11:s första fönster var dessutom en gissning:** det skar till «Vaktens kvitton»,
+   > som ligger FÖRE kortet i filen, så utsnittet var tomt — grönt-av-tomhet i ett test skrivet mot
+   > just den sjukdomen. Ankaret är nu komponenten, och utsnittets längd MÄTS.
+
    > **✅ TALET VAR INTE SVARET — GRINDEN MÄTTE FEL SAK (2026-08-22, den första riktiga grindmätningen).**
    > Fyra integritetsgrindar stod i skuggläge sedan 10 juni, alla med samma motivering i koden:
    > «armeras när falsklarmsfrekvensen är uppmätt». Mätningen gjordes aldrig — fixturkorpusen dömer
