@@ -1,4 +1,4 @@
-Testytan nollställd (testyta@arvoflow.se): 6 rader bort.
+Testytan nollställd (testyta@arvoflow.se): 5 rader bort.
   ✓ Telia Sverige AB                 molnvaxel      — FÄLLA 1 · 24 mån → +12, fönstret missat
   ✓ Bahnhof AB                       bredband       — FÄLLA 2 · rullande 3+3 (AKUT fönster)
   ✓ Fortnox AB                       saas-finance   — FÄLLA 3 · uppsägning i 30 DAGAR
