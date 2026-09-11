@@ -573,11 +573,6 @@ export default function Portfolio() {
   const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
   const arvoScore    = computeArvoScore(suppliers);
   const standing     = marketStanding(arvoScore);
-  // Domens LÄGE, härlett EN gång ur registret (src/lib/domslut.js). Ytorna nedan frågar det i
-  // stället för att var och en gissa om tillståndet är mätt — det var precis den gissningen som
-  // lät «Allt är under kontroll» och «Era priser står sig» stå kvar när positionen var OMÄTT.
-  const domLage      = domensLage({ acting, hasSwitchAction, standing });
-  const omatt        = omattLage(domLage);
   const companyName  = companyFromEmail(apiEmail);
   const switchables  = suppliers.filter((g) => g.latest.should_switch && (g.latest.net_saving ?? 0) > 0);
 
@@ -656,6 +651,19 @@ export default function Portfolio() {
   // Veckodomen — deterministisk ur verkligt läge. Avgörandet bor i lib/holdings.js (ren, testbar) —
   // regressionstestat efter grundarlärdomen 2026-06-30 (domen fick aldrig ljuga mot sitt eget bevis).
   const { hasSwitchAction, hasFindingAction, acting } = computeActing({ switchablesCount: switchables.length, roomFinding });
+  // Domens LÄGE, härlett EN gång ur registret (src/lib/domslut.js). Ytorna nedan FRÅGAR det i
+  // stället för att var och en gissa om tillståndet är mätt — det var den gissningen som lät
+  // «Allt är under kontroll» och «Era priser står sig» stå kvar när positionen var OMÄTT.
+  //
+  // ⚠️ RADEN LÅG FÖRST VID `standing` (rad 575) OCH SLOG UT HELA RUMMET: `acting` och
+  // `hasSwitchAction` deklareras HÄR, åttio rader senare, så referensen hamnade i det temporala
+  // dödläget — «Cannot access before initialization», vit skärm, noll tecken renderade i
+  // produktion. Sviten kunde inte se det (den renderar aldrig komponenten) och scopvakten inte
+  // heller (den skannar api/lib/agents, inte src/). Det var rumssonden som fällde det, på sin
+  // första skarpa körning efter ändringen — och den kostade en [KUND]-textrad att laga med ett
+  // [KUND]-haveri. Härledningen hör hemma efter sina beroenden, aldrig bredvid sitt ämne.
+  const domLage = domensLage({ acting, hasSwitchAction, standing });
+  const omatt = omattLage(domLage);
 
   // Vaktens kvitton (arbetets kvitton) — vad maskinen GJORDE, byggt strikt ur verkligt rumsdata.
   // Inga mock-rader (det var Kontoret-prototypens synd): varje rad är sann eller utelämnas.
