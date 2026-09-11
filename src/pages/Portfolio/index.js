@@ -220,6 +220,7 @@ export default function Portfolio() {
   const [publicBench, setPublicBench] = useState({});
   const [forecasts, setForecasts] = useState({});
   const [branchAnchors, setBranchAnchors] = useState({});
+  const [tackning, setTackning] = useState({});
   const [movements, setMovements] = useState({});
   const [switchTargets, setSwitchTargets] = useState({});
   const [watched, setWatched] = useState([]);   // "Bevakat — inte prissatt" (Liggare 2): triagade fakturor
@@ -278,6 +279,7 @@ export default function Portfolio() {
     setPublicBench(data.publicBench ?? {});
     setForecasts(data.forecasts ?? {});
     setBranchAnchors(data.branchAnchors ?? {});
+    setTackning(data.tackning ?? {});
     setMovements(data.movements ?? {});
     setSwitchTargets(data.switchTargets ?? {});
     setWatched(data.watched ?? []);
@@ -631,6 +633,23 @@ export default function Portfolio() {
     }
     return best;
   }, [featured, publicFeatured, suppliers, branchAnchors]);
+
+  // ── TÄCKNINGSPÅSTÅENDET (grundarbeslut 2026-09-11, ur Fable 5.1:s dom) ────────────────────
+  // När prisbokens cell inte bär gick rummet tidigare tyst om underlaget. Ingen mätning kan
+  // motsäga en tystnad — därför är den bekväm, och priset betalas av kunden, inte av oss. Kortet
+  // säger i stället vad vi HAR, i en enhet vi kan belägga: rader och skilda belopp.
+  // ALDRIG «bolag»: prisboken är anonymiserad och bär ingen kundidentitet, så ett bolagstal
+  // vore ett tal utan källa i just det kort som byggts för att vara ärligt om tunn data.
+  const tackningsKort = useMemo(() => {
+    let best = null;
+    for (const g of suppliers) {
+      const t = tackning[g.latest.category];
+      if (!t || !(t.rader > 0)) continue;
+      const material = g.latest.annual_cost ?? 0;
+      if (!best || material > best._material) best = { ...t, _material: material };
+    }
+    return best;
+  }, [suppliers, tackning]);
 
   // Maktkalendern — årsavtal med uppskattat förnyelsefönster (created_at + 12 mån).
   // Estimat, tydligt märkt (regel 3) — inga fabricerade sannolikheter.
@@ -1012,7 +1031,11 @@ export default function Portfolio() {
             </Receipts>
 
             {/* ── Kohort-sanningen + Maktkalendern (gate:ade till verklig data) ── */}
-            {(featured || publicFeatured || branchAnchor || renewals.length > 0) && (
+            {/* ⚠️ `tackningsKort` MÅSTE stå i villkoret (2026-09-11). Utan det renderades hela
+                sektionen bort när kunden saknade både fynd och ankare — alltså exakt i det läge
+                täckningskortet finns för. Bevisat i den lokala renderingen: kortet nådde inte
+                kunden, trots att data fanns. En deklaration som ingen yta frågar igen. */}
+            {(featured || publicFeatured || branchAnchor || tackningsKort || renewals.length > 0) && (
               <Grid>
                 {publicFeatured && (
                   <Truth $full={renewals.length === 0}>
@@ -1098,6 +1121,46 @@ export default function Portfolio() {
                     <p className="truth-note">
                       Den här raden kräver att man ser <b>många bolags faktiska fakturor samtidigt</b>.
                       Ingen jämförelsesajt och ingen konsult kan ge den — bara Arvo, tack vare nätverket.
+                    </p>
+                  </Truth>
+                )}
+
+                {/* ── TÄCKNINGEN, NÄR CELLEN INTE BÄR (grundarbeslut 2026-09-11) ──────────────
+                    Fable 5.1:s dom: tystnad kan aldrig bevisas fel, alltså är den den bekvämaste
+                    positionen — och den kostar kunden, inte oss. Kortet säger därför vad vi HAR.
+                    ⚠️ ENHETEN: rader och skilda BELOPP, aldrig BOLAG. `invoice_datapoints` är
+                    anonymiserad och bär ingen kundidentitet — ett bolagstal hade varit ett tal
+                    utan källa i just det kort som byggts för att vara ärligt om tunn data. */}
+                {tackningsKort && (
+                  <Truth>
+                    <div className="card-eyebrow">
+                      <span>Underlaget i er bransch</span>
+                      <span className="src">{getCategoryMeta(tackningsKort.category)?.label || tackningsKort.category}</span>
+                    </div>
+                    <h3>Vi har <em>{tackningsKort.rader} {tackningsKort.rader === 1 ? 'prispunkt' : 'prispunkter'}</em> i den
+                      här kategorin — men bara <em>{tackningsKort.skilda} {tackningsKort.skilda === 1 ? 'skilt belopp' : 'skilda belopp'}</em>.</h3>
+                    <Underlag>
+                      <div className="u-k">Så mycket ser vi</div>
+                      <div className="u-rad">
+                        <span className="u-txt">Lagrade prispunkter</span>
+                        <span className="u-spec">observationer</span>
+                        <span className="u-bel">{tackningsKort.rader}</span>
+                      </div>
+                      <div className="u-rad">
+                        <span className="u-txt">Varav skilda belopp</span>
+                        <span className="u-spec">vår tröskel: {tackningsKort.krav}</span>
+                        <span className="u-bel">{tackningsKort.skilda}</span>
+                      </div>
+                      <div className="u-slut">
+                        Det räcker inte för en marknadsjämförelse, och vi säger det hellre än räknar på det.
+                        Ett fåtal belopp är inte en fördelning — det blir ett tal som <b>ser</b> mätt ut.
+                        Tills underlaget bär jämför vi mot <b>verifierat publikt listpris</b> i stället.
+                      </div>
+                    </Underlag>
+                    <p className="truth-note">
+                      Talen är vad vi faktiskt lagrat i den här cellen — <b>inte antal bolag</b>. Våra
+                      prispunkter är anonymiserade, så vi kan inte påstå hur många företag de kommer
+                      från, och då gör vi det inte heller.
                     </p>
                   </Truth>
                 )}

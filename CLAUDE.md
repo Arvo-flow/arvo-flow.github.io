@@ -543,6 +543,64 @@ signera", aldrig som ett verkställt löfte.)
    > aldrig att den svarar i verkligheten.** Åtgärd: `getPublicListBenchmark()` — samma funktion
    > dörrens avslöjande redan använde (regel 1) — gör frågan tillståndsoberoende. BA-08 låser vägen.
 
+   > **✅ TRE DEFENSIVA GRUNDARBESLUT (2026-09-11, ur Fable 5.1:s strategiska dom över moaten).**
+   > Oraklet fick frågan om prisboksgrinden var rätt drag och svarade med tre saker bibeln — författad
+   > i augusti — inte hade begrepp för. Grundaren: *«Vår moat är i dag ett löfte, inte en tillgång. Vi
+   > bygger den defensiva mekaniken för att skydda det lilla vi har.»*
+   >
+   > **1 · TESTIDENTITETEN ÄR ETT BEGREPP, INTE EN E-POSTSTRÄNG.** En testfaktura får ALDRIG skriva
+   > till `invoice_datapoints` eller påverka p25/medianen. Skyddet som FANNS var en bieffekt: mail-in
+   > skickar `segmentOkant: true`, alltså nådde testytans fakturor aldrig prisboken. Men det gäller
+   > MAIL-vägen, inte identiteten — en testfaktura uppladdad via `/testa-faktura` med vald bransch och
+   > storlek hade skrivit rakt in i moaten. Fable: *«`segmentOkant` svarar på om SEGMENTET är avläst,
+   > inte på om fakturan är en marknadsobservation. En testfaktura med korrekt segment är fortfarande
+   > en lögn om marknaden.»* `arTestidentitet()` (`lib/test-surface.js`) är en EGEN fråga och
+   > `storeDatapoint` ställer den. **`userEmail` är obligatorisk och saknar defaultvärde med flit:**
+   > `undefined` (anroparen glömde) KASTAR, `null` (anonym uppladdning) skrivs, testytan vägras med
+   > skäl. Ett defaultvärde hade gjort «ingen frågade» omöjligt att skilja från «anonym» — felfamiljen.
+   > Grinden fällde tre befintliga anropare på första körningen; den kan alltså inte glömmas i tysthet.
+   >
+   > **2 · ANALYSER ARKIVERAS, DE RADERAS ALDRIG.** Proveniensen måste bestå för moatens skull. När ett
+   > rum rensades 9 september försvann motparten som bar dokumentidentiteten, och **288 datapunkter blev
+   > permanent spårlösa**. Felet var inte beslutet utan att systemet saknade ett sätt att utföra det:
+   > «rensa ett rum» och «radera bevisen» var SAMMA operation. `arkiverad_at` skiljer dem åt — satt =
+   > borta ur kundens vy, kvar som bevis. Alla sex rumsläsningarna filtrerar (även reserverna: en reserv
+   > som visar arkiverade rader är en tyst återuppståndelse). **Gränsen är knivskarp:** kötillstånd
+   > (`ingest_jobs`) raderas fortfarande — ett avbetat jobb bevisar ingenting om marknaden.
+   > *Grannfallet, funnet under bygget:* en arkiverad faktura som skickas in PÅ NYTT hade uppdaterat den
+   > arkiverade raden och förblivit osynlig — ett tyst tapp. Alla tre upsertarna sätter nu
+   > `arkiverad_at = NULL`: arkivering döljer HISTORIK, aldrig något kunden just skickat in.
+   >
+   > **3 · TÄCKNINGSPÅSTÅENDET ERSÄTTER TOM TYSTNAD.** När cellen inte bär redovisar rummet underlaget
+   > i stället för att gå tyst. Fables argument: *tystnad kan aldrig bevisas fel, alltså är den den
+   > bekvämaste positionen för den som är rädd för regel 3 — och den kostar kunden, inte oss.*
+   >
+   > **⚠️ MEN ENHETEN ÄR MÄTT, INTE VALD, och det är den enda halvan jag och grundaren var oense om.**
+   > Ordern löd «Vi bevakar X BOLAG i denna kategori». **Det talet finns inte.** `invoice_datapoints`
+   > bär `category · supplier · annual_cost · industry · size_bucket · source · created_at ·
+   > per_user_monthly_exvat · tier · pdf_hash` — **ingen kundidentitet**, anonymiserad by design. Ett
+   > bolagstal härlett ur radantalet hade varit exakt den sjukdom kortet finns MOT: 33 rader i
+   > `bredband·byraer·small` är bevisat inte 33 bolag, eftersom 288 av 297 rader saknar bevisad
+   > dokumentidentitet. Kortet säger därför vad vi KAN belägga — «24 prispunkter · 2 skilda belopp ·
+   > vår tröskel: 10» — och skriver ut att talen **inte är antal bolag**. Regel 3 känner ingen
+   > avvägning, inte ens när formuleringen kommer uppifrån (motståndsplikten gäller mig själv,
+   > 18 augusti).
+   >
+   > **Och grannfallet fällde mig en gång till, på mig själv.** Väckningen (`arkiverad_at = NULL`)
+   > låg först INNE i `ON CONFLICT`-satsen. Saknas kolumnen — glappet mellan deploy och migrering —
+   > kastar då HELA upserten, `storeAnalysis` yttre catch returnerar `null`, och **kundens faktura
+   > landar aldrig i rummet**. Det är pdf_hash-fallet 10 september ordagrant: kod före sitt schema,
+   > och ett tyst tapp som ser ut som att inget hände. Väckningen bor nu i en egen fail-open
+   > hjälpare (`vackArkiverad`), samma mönster som `invoice_number` och `line_items_json` redan
+   > använde. **Regeln: en huvudinsert får aldrig bero på en kolumn som kanske inte är migrerad —
+   > valfria kolumner skrivs i egna satser med egen catch.**
+   >
+   > Maskinvakt: `tests/testidentitet.mjs` (TI-01..08), sabotage-bevisad i **tretton** riktningar, med
+   > motprov i båda ändar (en riktig kund måste få bidra; en anonym uppladdning är en legitim
+   > observation). Kortet är dessutom SETT i en lokal rendering mot det byggda paketet — och den
+   > renderingen fällde ett verkligt fel: sektionsvillkoret kände inte till kortet, så det försvann
+   > i exakt det läge det finns för. *En deklaration som ingen yta frågar, för andra gången på två dygn.*
+
    > **✅ ETT RADANTAL ÄR INGEN FÖRDELNING (2026-09-10, ur prisbokens dokumentmätning).**
    > Grundaren: mät INNAN du deduplicerar. Frågan var om prisbokens 297 rader är samma dokument
    > lagrat om och om igen. Svaret på den frågan blev **okänt och det är i sig mätningen**: bara

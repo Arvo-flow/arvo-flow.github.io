@@ -25,7 +25,7 @@ import { byggUppdelning } from '../lib/fakturarader.js';
 import { byggPrisunderlag, scoreUrUnderlag } from '../lib/prisunderlag.js';
 import { lasLicensniva, nivaGolv } from '../lib/licensniva.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
-import { getPublicListBenchmark } from '../lib/benchmark.js';
+import { getPublicListBenchmark, kohortTackning } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
 
@@ -207,6 +207,9 @@ export default async function handler(req, res) {
   // vad branschen TYPISKT betalar ur verifierade publika listpriser (BRANCHINDEX) — tydligt märkt
   // branschestimat, aldrig "X bolag betalar". Ersätts av den verkliga kohorten när volymen kommer.
   const branchAnchors = await buildBranchAnchors(analyses);
+  // TÄCKNINGSPÅSTÅENDET (grundarbeslut 2026-09-11): en tystad cell ska säga vad vi HAR, inte
+  // ingenting. Talen är rader och skilda belopp — aldrig bolag, som prisboken inte kan belägga.
+  const tackning = await buildTackning(analyses);
 
   // ── HUR LANDADE VI I TALET? (grundarbeslut 2026-08-16) ─────────────────────────────────────
   // Ringen visar ett score och etiketten säger RÄTT PRISSATT. En finansdirektör kan inte ta
@@ -272,7 +275,7 @@ export default async function handler(req, res) {
   const ingestFailed = email ? await failedCountBySender(email) : 0;
   const ingestFailedFiles = ingestFailed > 0 ? await failedFilesBySender(email) : [];
 
-  return send(res, 200, { ok: true, analyses, watched, cohort, publicBench, forecasts, branchAnchors, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, email: email ?? undefined, frånDennaEnhet });
+  return send(res, 200, { ok: true, analyses, watched, cohort, publicBench, forecasts, branchAnchors, tackning, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, email: email ?? undefined, frånDennaEnhet });
 }
 
 // "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.
@@ -459,6 +462,37 @@ export const BRANCH_ANCHOR_UNIT = {
   // för att vi aldrig ska gissa enheten — inte för att tiga om en vi känner.
   loneadmin:           { label: 'per anställd/år',   noun: 'anställd',   nounPl: 'anställda' },
 };
+
+/**
+ * TÄCKNINGEN PER KATEGORI — underlaget bakom tystnaden, som ett tal kunden kan kontrollera.
+ *
+ * Fable 5.1:s dom 2026-09-11: när cellen inte bär ska rummet inte gå tyst, det ska REDOVISA.
+ * «Vi bevakar tre bolag» går inte att belägga (prisboken bär ingen kundidentitet) — men
+ * «24 prispunkter, 2 skilda belopp, tröskeln är 10» är en avläsning, och den säger samma sak
+ * om tunnheten utan att uppfinna en enhet.
+ *
+ * Bara celler som INTE bär redovisas: bär cellen talar den redan, och då vore raden brus.
+ */
+export async function buildTackning(analyses) {
+  const seen = new Set();
+  const out = {};
+  for (const a of analyses) {
+    if (a.route !== 'auto' || !a.category || seen.has(a.category)) continue;
+    seen.add(a.category);
+    if (seen.size > 8) break;
+    try {
+      const t = await kohortTackning({
+        category: a.category, industry: a.industry, employees: a.employees,
+      });
+      // null = okänt (ingen databas eller ett fel) — då påstår vi ingenting alls.
+      // bar = cellen talar redan; rader = 0 → vi har inget att redovisa.
+      if (t && !t.bar && t.rader > 0) out[a.category] = t;
+    } catch (err) {
+      console.error('[invoice-history] tackning:', a.category, err.message);
+    }
+  }
+  return out;
+}
 
 export async function buildBranchAnchors(analyses) {
   const seen = new Set();

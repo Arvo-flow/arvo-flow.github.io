@@ -422,6 +422,7 @@ describe('OB · Prisboken tar inte emot ett antaget segment', () => {
     // varje annan gren och inte kastar.
     const { storeDatapoint } = await import('../lib/benchmark.js');
     await assert.doesNotReject(() => storeDatapoint({
+      userEmail: null,   // anonym uppladdning — inte testidentitet (grinden 2026-09-11)
       category: 'mobil', supplier: 'Tele2', annualCost: 119_520,
       industry: 'ovrigt', employees: 10, seatCount: 40, segmentOkant: true,
     }));

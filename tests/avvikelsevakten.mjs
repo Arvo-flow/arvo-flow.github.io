@@ -69,10 +69,22 @@ describe('AV · prisboken samlar inte dubbletter av samma dokument', () => {
     const { dirname, join } = await import('node:path');
     const rot = join(dirname(fileURLToPath(import.meta.url)), '..');
     const API = readFileSync(join(rot, 'api/test-invoice.mjs'), 'utf8');
-    const anrop = [...API.matchAll(/storeDatapoint\(\{[\s\S]{0,400}?\}\)/g)].map((m) => m[0]);
-    assert.ok(anrop.length >= 2, `hittade ${anrop.length} storeDatapoint-anrop — mönstret matchar inte längre`);
+    // ⚠️ FÖNSTRET VAR EN GISSNING (rättat 2026-09-11). Mönstret sköt 400 tecken framåt; två
+    // tillagda kommentarrader i ett anrop räckte för att det skulle falla utanför, och vakten
+    // rapporterade «1 anrop» — den hade tystnat på ett anrop den skulle vakta. Ankaret är nu
+    // anropets VERKLIGA slut (`}).catch(`), och ANTALET är mätt, inte antaget.
+    const anrop = [];
+    for (let i = API.indexOf('storeDatapoint({'); i !== -1; i = API.indexOf('storeDatapoint({', i + 1)) {
+      const slut = API.indexOf('}).catch(', i);
+      assert.ok(slut > i, 'ett storeDatapoint-anrop saknar sitt `}).catch(` — ankaret håller inte längre');
+      anrop.push(API.slice(i, slut));
+    }
+    assert.equal(anrop.length, 2, `hittade ${anrop.length} storeDatapoint-anrop i api/test-invoice.mjs — mätt: 2`);
     for (const a of anrop) {
       assert.match(a, /pdfHash/, 'ett anrop utan pdfHash skriver en dubblett vid varje omanalys');
+      // TESTIDENTITETSGRINDEN (2026-09-11): utan `userEmail` kastar storeDatapoint i produktion.
+      // Källtextvakten fäller det vid commit — kastet fäller det i körning. Två axlar, inte två lager.
+      assert.match(a, /userEmail/, 'ett anrop utan userEmail kan inte prövas mot testidentiteten');
     }
   });
 });
@@ -113,6 +125,7 @@ describe('AV · ett schemafel är inte ett databasfel', () => {
       return [];
     };
     await storeDatapoint({
+      userEmail: null,   // anonym uppladdning — inte testidentitet (grinden 2026-09-11)
       category: 'mobil', supplier: 'Telia', annualCost: 50_000,
       industry: 'konsult', employees: 10, pdfHash: 'hash-1', db: fejkDb,
     });
@@ -136,6 +149,7 @@ describe('AV · ett schemafel är inte ett databasfel', () => {
       return [];
     };
     await storeDatapoint({
+      userEmail: null,   // anonym uppladdning — inte testidentitet (grinden 2026-09-11)
       category: 'mobil', supplier: 'Telia', annualCost: 50_000,
       industry: 'konsult', employees: 10, pdfHash: 'hash-2', db: fejkDb,
     });

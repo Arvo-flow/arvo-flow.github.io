@@ -20,9 +20,11 @@
 //      frågan träffat något annat än det jag tror. Hellre stanna än radera brett.
 //   3. TORRKÖRNING SOM DEFAULT. Utan `RENSA_SKARPT=1` mäts allt och raderas ingenting.
 //
-// ── VAD SOM RADERAS, OCH VAD SOM MEDVETET INTE GÖR DET ────────────────────────────────────
-// RADERAS (samma omfång som testytans egen, beprövade radering i `lib/test-surface.js`):
+// ── VAD SOM ARKIVERAS, VAD SOM RADERAS, OCH VAD SOM MEDVETET INTE RÖRS ───────────────────
+// ⚠️ ÄNDRAT 2026-09-11 (grundarbeslut): analyser ARKIVERAS, de raderas aldrig.
+// ARKIVERAS (`arkiverad_at = NOW()` — försvinner ur kundens rum, består som proveniens):
 //   · `invoice_analyses WHERE user_email = <adressen>`  — rummets innehåll
+// RADERAS (kötillstånd, aldrig bevis — ett avbetat jobb bevisar ingenting om marknaden):
 //   · `ingest_jobs WHERE sender = <adressen>`           — köade/misslyckade jobb
 //
 // RADERAS INTE, med skäl:
@@ -116,11 +118,20 @@ if (totalt > TAK) {
 // ── SPÄRR 3: torrkörning som default ──────────────────────────────────────────────────────
 if (!SKARPT) {
   console.log(`\n✓ TORRKÖRNING KLAR — ingenting raderat. ${totalt} analyser och `
-    + `${jobb.reduce((s, r) => s + r.n, 0)} jobb skulle tas bort med RENSA_SKARPT=1.\n`);
+    + `${jobb.reduce((s, r) => s + r.n, 0)} jobb skulle arkiveras med RENSA_SKARPT=1.\n`);
   process.exit(0);
 }
 
-const rader = await db`DELETE FROM invoice_analyses WHERE user_email = ${EPOST} RETURNING id`;
+// ── ARKIVERING, INTE RADERING (grundarbeslut 2026-09-11) ─────────────────────────────────────
+// Den här raden var ett `DELETE` fram till i dag, och den kostade moaten sin proveniens: när
+// rummet rensades 9 september försvann motparten som hade burit dokumentidentiteten, och 288
+// datapunkter blev permanent spårlösa. Fable 5.1: «Analyserna är prisbokens proveniens.»
+// Kunden får sitt rena rum — läsvägarna i `lib/invoice-store.js` filtrerar `arkiverad_at IS NULL`
+// i alla sex satserna, inklusive reserverna — och bevisen står kvar.
+const rader = await db`
+  UPDATE invoice_analyses SET arkiverad_at = NOW()
+  WHERE user_email = ${EPOST} AND arkiverad_at IS NULL
+  RETURNING id`;
 let raderadeJobb = 0;
 try {
   const j = await db`DELETE FROM ingest_jobs WHERE sender = ${EPOST} RETURNING id`;

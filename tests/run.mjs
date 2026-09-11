@@ -82,6 +82,7 @@ import './saas-tier-detection.mjs';
 import './supplier-keyword.mjs';
 import './svea-print.mjs';
 import './test-surface.mjs';
+import './testidentitet.mjs';
 import './vakt.mjs';
 import './tystnadsfel.mjs';
 import './plan-pris.mjs';

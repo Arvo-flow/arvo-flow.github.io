@@ -1639,6 +1639,8 @@ export default async function handler(req, res) {
         category: 'el', supplier: categorized.normalizedSupplier,
         annualCost: elRec.currentAnnualGross, industry, employees: employeesNum,
         segmentOkant, pdfHash,
+        // OBLIGATORISK: testidentitetsgrinden i storeDatapoint kan inte fråga utan den (2026-09-11).
+        userEmail: body.userEmail ?? null,
       }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
       const { arvoFee, netSaving } = elRec;
@@ -1822,6 +1824,8 @@ export default async function handler(req, res) {
       industry,
       employees: employeesNum,
       segmentOkant, pdfHash,
+      // OBLIGATORISK: testidentitetsgrinden i storeDatapoint kan inte fråga utan den (2026-09-11).
+      userEmail: body.userEmail ?? null,
       seatCount: extracted.seatCount ?? null,
     }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 

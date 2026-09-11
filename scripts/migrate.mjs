@@ -191,6 +191,22 @@ await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS health_score INT
 // så ingen kundfaktura faller tyst (regel 9). Idempotent.
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS triage_reason TEXT`;
 
+// ── ANALYSER ARKIVERAS, DE RADERAS ALDRIG (grundarbeslut 2026-09-11) ─────────────────────────
+// Fable 5.1: «Analyserna är prisbokens PROVENIENS.» Rensningen av ett rum 9 september tog med sig
+// motparten som hade burit dokumentidentiteten — och gjorde 288 datapunkter permanent spårlösa.
+// Problemet var inte beslutet utan att systemet saknade ett sätt att utföra det: «rensa ett rum»
+// och «radera bevisen» var SAMMA operation.
+//
+// `arkiverad_at` skiljer dem åt. Satt = raden syns inte i kundens rum; raden finns kvar som
+// proveniens för moaten. NULL = aktiv. Kolumnen skapas av en MIGRERING, aldrig av en självläkning
+// (LK-01: självläkningen kördes aldrig, och det var precis felet 15 augusti).
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS arkiverad_at TIMESTAMPTZ`;
+await sql`
+  CREATE INDEX IF NOT EXISTS idx_analyses_aktiva
+    ON invoice_analyses (user_email, created_at DESC)
+    WHERE arkiverad_at IS NULL
+`;
+
 await sql`
   CREATE INDEX IF NOT EXISTS idx_analyses_user_email
     ON invoice_analyses (user_email, created_at DESC)
