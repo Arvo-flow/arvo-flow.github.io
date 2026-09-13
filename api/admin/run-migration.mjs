@@ -1,6 +1,7 @@
 // api/admin/run-migration.mjs — Engångsanrop för att skapa nya DB-tabeller.
 // Anropas EN gång via admin-sidan, sedan kan den lämnas kvar (skyddad av ADMIN_TOKEN).
 import { getDb } from '../../lib/db.js';
+import { TEST_EXAKTA, TEST_DOMAN, TEST_LOKALDELAR } from '../../lib/test-surface.js';
 import { upsertPrice } from '../../lib/price-db.js';
 
 function send(res, status, body) {
@@ -359,8 +360,19 @@ export default async function handler(req, res) {
             ELSE                         'mid'
           END,
           ia.id
-        FROM invoice_analyses ia   -- liggare: internt: engångsbackfill, körs av admin med explicit avsikt
-        WHERE ia.route       = 'auto'
+        FROM invoice_analyses ia   -- liggare: moat
+        -- ⚠️ STOD SOM «internt: körs av admin med explicit avsikt» TILL 2026-09-13. Det skälet
+        -- svarar på VEM SOM TRYCKER, aldrig på VAD RADERNA BLIR. Satsen är den ANDRA av exakt två
+        -- skrivare till prisboken (den första är «storeDatapoint», grindad sedan 6cd359f) — och
+        -- den hade ingen grind alls: varken testidentitet, segmentOkant, enhetskarantän eller
+        -- avvikelsevakt. En testfaktura hade backfillats rakt in i den tabell som bär den HÖGRE
+        -- tröskeln (10), permanent. Testidentiteten utesluts nu med samma villkor som varje annan
+        -- moat-sats; enhetskarantänen och segmentfrågan är kvar som öppen skuld, uttalat.
+        WHERE (ia.user_email IS NULL OR NOT (
+                lower(trim(ia.user_email)) = ANY(${TEST_EXAKTA})
+                OR (split_part(lower(trim(ia.user_email)), '@', 2) = ${TEST_DOMAN}
+                    AND split_part(split_part(lower(trim(ia.user_email)), '@', 1), '+', 1) = ANY(${TEST_LOKALDELAR}))))
+          AND ia.route       = 'auto'
           AND ia.annual_cost > 500
           AND ia.annual_cost < 5000000
           AND ia.employees   > 0

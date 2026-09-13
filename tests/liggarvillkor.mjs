@@ -26,8 +26,9 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
-import { KLASSER, MOAT_UTESLUT_TEST } from '../lib/liggarvillkor.js';
-import { TEST_EMAIL } from '../lib/test-surface.js';
+import { KLASSER } from '../lib/liggarvillkor.js';
+import { EJ_TESTIDENTITET_SKELETT, normaliseraSQL, arTestidentitet,
+         TEST_EXAKTA, TEST_DOMAN, TEST_LOKALDELAR } from '../lib/test-surface.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -57,15 +58,40 @@ function lasvagar() {
     // ett falsklarm är högljutt och lätt att rätta, medan en tyst miss är den farliga riktningen.
     if (fil.endsWith('lib/liggarvillkor.js')) continue;
     const kod = readFileSync(fil, 'utf8');
-    for (let i = kod.indexOf('FROM invoice_analyses'); i !== -1; i = kod.indexOf('FROM invoice_analyses', i + 1)) {
+    // ⚠️ MÖNSTRET SÅG VARKEN BLANKSTEG ELLER JOIN TILL 2026-09-13. Granskaren visade det med två
+    // sabotage som båda lämnade sviten grön: en ny kundvy med `FROM   invoice_analyses` (tre
+    // blanksteg) och en med `JOIN invoice_analyses`. Två VERKLIGA läsvägar var oklassade av precis
+    // det skälet — `api/admin/dashboard.mjs:27` och `lib/labeled-corrections.js:83` — i filer där
+    // grannraden var klassad. En vakt vars mönster är smalare än språket räknar ett skydd vi inte har.
+    for (const m of kod.matchAll(/\b(?:FROM|JOIN)\s+invoice_analyses\b/g)) {
+      const i = m.index;
       // Utsnittet går till mallens slut (backtick) eller 700 tecken — vilket som kommer först.
       // Backticken är satsens VERKLIGA gräns; teckentaket är bara ett tak, aldrig ankaret.
       const slutBacktick = kod.indexOf('`', i);
-      const slut = slutBacktick === -1 ? i + 700 : Math.min(slutBacktick, i + 700);
-      ut.push({ fil: relative(ROT, fil), rad: kod.slice(0, i).split('\n').length, sats: kod.slice(i, slut) });
+      const slut = slutBacktick === -1 ? i + 1400 : Math.min(slutBacktick, i + 1400);
+      // Satsens BÖRJAN behövs också: `INSERT INTO invoice_datapoints … SELECT … FROM
+      // invoice_analyses` har skrivmålet FÖRE läsningen, så ett utsnitt som börjar vid FROM kan
+      // aldrig se att satsen skriver till prisboken (LV-06 var grön av just det).
+      const startBacktick = kod.lastIndexOf('`', i);
+      const start = startBacktick === -1 ? Math.max(0, i - 700) : Math.max(startBacktick, i - 700);
+      ut.push({
+        fil: relative(ROT, fil),
+        rad: kod.slice(0, i).split('\n').length,
+        sats: kod.slice(i, slut),
+        hela: kod.slice(start, slut),
+      });
     }
   }
   return ut;
+}
+
+/**
+ * Ta bort SQL-kommentarer så bara AKTIV sats återstår. Markörerna (`-- liggare: …`) är själva
+ * SQL-kommentarer, så de läses ur RÅTEXTEN och villkoren ur den strippade — två frågor, två
+ * texter. Utan det här kunde en bortkommenterad klausul räknas som närvarande.
+ */
+function aktivSQL(sats) {
+  return sats.split('\n').map((r) => r.replace(/--.*$/, '')).join('\n');
 }
 
 describe('LV · liggarens läsvägar är klassade', () => {
@@ -86,19 +112,79 @@ describe('LV · liggarens läsvägar är klassade', () => {
   test('LV-03 · en KUNDVY filtrerar alltid bort arkiverade rader', () => {
     // Arkivering betyder «borta ur kundens vy». En yta som ändå räknar raden gör arkiveringen
     // till en lögn — och kunden får ett mail om en faktura hen bad oss ta bort.
-    const brott = vagar.filter((v) => v.sats.includes('liggare: kundvy') && !v.sats.includes('arkiverad_at IS NULL'));
+    //
+    // ⚠️ SQL-KOMMENTARER STRIPPAS FÖRST, och det är inte kosmetik. Granskaren bortkommenterade
+    // `-- AND arkiverad_at IS NULL` och sviten förblev grön: `includes()` ser strängen kvar i
+    // texten. SQL-radkommentar är dessutom exakt den syntax markörerna själva använder, alltså
+    // den mest sannolika formen av att ta bort en klausul. En vakt som räknar TOKEN i stället för
+    // MEKANIK vaktar det som står skrivet, aldrig det som körs.
+    const brott = vagar.filter((v) => v.sats.includes('liggare: kundvy') && !normaliseraSQL(aktivSQL(v.sats)).includes('arkiverad_at IS NULL'));
     assert.deepEqual(brott.map((v) => `${v.fil}:${v.rad}`), [],
       'en kundvy utan arkivfilter visar rader kunden fått veta är borttagna');
   });
 
-  test('LV-04 · ett MOAT-aggregat utesluter alltid testidentiteten', () => {
-    // En testfaktura är inte en marknadsobservation, hur äkta talet än är. Och den här tabellen
-    // är en egen prisbokskälla med LÄGRE tröskel än datapunkterna — lättare att förorena.
-    const brott = vagar.filter((v) => v.sats.includes('liggare: moat') && !v.sats.includes('MOAT_UTESLUT_TEST'));
+  test('LV-04 · ett MOAT-aggregat bär HELA testidentitetsvillkoret, tecken för tecken', () => {
+    // ⚠️ PRÖVADE FÖRR BARA ATT NAMNET `MOAT_UTESLUT_TEST` STOD I SATSEN — och den konstanten var
+    // EN e-poststräng medan `arTestidentitet` känner fem adresser plus varje `+tag`-variant. Fem
+    // av sex testidentiteter passerade alltså grinden. «Testidentiteten är ett begrepp, inte en
+    // e-poststräng» hade återkollapsat till en e-poststräng i SQL-halvan.
+    //
+    // Driven binder nya `${}` som PARAMETRAR, så villkoret måste skrivas ut i varje sats — en
+    // kopia som språket tvingar fram. Då gäller bibelns regel: en kopia får finnas bara med en
+    // maskin som bevisar att kopiorna är identiska. Här jämförs SKELETTET (interpolationer → `?`,
+    // blanksteg kollapsade) mot den enda normen, efter att kommentarer strippats.
+    // Tabellalias normaliseras bort (`ia.user_email` → `user_email`): backfillen i
+    // `api/admin/run-migration.mjs` joinar med alias, och det är en skillnad i STAVNING, inte i
+    // mekanik. Normaliseringen är medvetet SMAL — bara prefixet framför just `user_email`.
+    const utanAlias = (t) => t.replace(/\b[a-z_][a-z0-9_]*\.user_email\b/gi, 'user_email');
+    const brott = vagar.filter((v) => v.sats.includes('liggare: moat')
+      && !utanAlias(normaliseraSQL(aktivSQL(v.sats))).includes(EJ_TESTIDENTITET_SKELETT.replace(/^\(|\)$/g, '')));
     assert.deepEqual(brott.map((v) => `${v.fil}:${v.rad}`), [],
-      'ett tvärkunds-aggregat utan testidentitetsspärr kan prissätta på våra egna testfakturor');
-    // Och spärren måste peka på testytans EGNA konstant — en kopierad sträng glider isär.
-    assert.equal(MOAT_UTESLUT_TEST, TEST_EMAIL, 'moat-spärren måste vara samma identitet som testytan använder');
+      'ett moat-aggregat måste bära HELA villkoret — en avvikande stavning är en kopia som glidit isär');
+
+    // Motprovet: normen får inte vara tom, annars matchar `includes` allt och LV-04 vaktar noll.
+    assert.ok(EJ_TESTIDENTITET_SKELETT.length > 120, `normen är ${EJ_TESTIDENTITET_SKELETT.length} tecken — för kort för att vara ett villkor`);
+    // Och det MÅSTE finnas moat-satser, annars är testet grönt av tomhet.
+    assert.ok(vagar.some((v) => v.sats.includes('liggare: moat')), 'inga moat-satser alls — kontrollera mönstret');
+
+    // Skelettet ska täcka varje form `arTestidentitet` känner. Uppräkningen här är INTE ett
+    // andra facit: den fäller om någon vidgar JS-predikatet utan att vidga SQL-normen.
+    for (const adr of ['testyta@arvoflow.se', 'test@inbox.arvoflow.se', 'testyta@inbox.arvoflow.se',
+                       'nollstall@inbox.arvoflow.se', 'demo@inbox.arvoflow.se', 'test+bunt2@inbox.arvoflow.se']) {
+      assert.ok(arTestidentitet(adr), `${adr} måste vara en testidentitet`);
+    }
+    assert.equal(arTestidentitet('kund@riktigt.se'), false, 'en riktig kund måste få bidra till moaten');
+    assert.equal(arTestidentitet(null), false, 'en anonym uppladdning är en legitim marknadsobservation');
+  });
+
+  test('LV-06 · en sats som SKRIVER till prisboken kan aldrig vara internt', () => {
+    // ⚠️ HÅLET SOM GRANSKAREN HITTADE, OCH SOM LV-04 INTE KAN SE. Backfillen i
+    // api/admin/run-migration.mjs bar «internt: körs av admin med explicit avsikt» och var i
+    // själva verket den ANDRA av exakt två skrivare till prisboken — utan någon grind alls.
+    // Sabotaget «klassa om den till internt igen» fällde NOLL: LV-04 prövar bara satser som
+    // redan ÄR märkta moat, så en felmärkning gömmer sig från precis den kontroll den behöver.
+    //
+    // Det här är den enda halvan som går att mekanisera: vakten kan aldrig läsa INNEBÖRDEN i ett
+    // skäl, men den kan se att satsen skriver till `invoice_datapoints`. En läsning ur liggaren
+    // som matar prisboken ÄR ett moat-aggregat, oavsett vem som trycker på knappen.
+    const skrivare = vagar.filter((v) => /INSERT\s+INTO\s+invoice_datapoints/i.test(v.hela));
+    const felklassade = skrivare.filter((v) => !v.sats.includes('liggare: moat'));
+    assert.deepEqual(felklassade.map((v) => `${v.fil}:${v.rad}`), [],
+      'en sats som skriver till prisboken är moat — «vem som trycker» svarar inte på «vad raderna blir»');
+    // Motprovet: det MÅSTE finnas en sådan sats, annars är LV-06 grön av tomhet.
+    assert.ok(skrivare.length >= 1, `hittade ${skrivare.length} prisboksskrivare — mätt 2026-09-13: 1`);
+  });
+
+  test('LV-07 · testidentitetens LISTOR är inte tomma (skelettet ser form, aldrig värden)', () => {
+    // Skelettjämförelsen i LV-04 normaliserar bort varje `${…}` — den bevisar alltså att
+    // villkoret har rätt FORM, aldrig att listorna innehåller något. Sabotaget «töm TEST_EXAKTA»
+    // fällde följaktligen noll. Den halvan vaktas här, vid källan.
+    assert.ok(TEST_EXAKTA.length >= 1, 'utan exakta adresser släpper villkoret igenom testytan');
+    assert.ok(TEST_LOKALDELAR.length >= 4, `${TEST_LOKALDELAR.length} lokaldelar — mätt: 4 (test, testyta, nollstall, demo)`);
+    assert.equal(TEST_DOMAN, 'inbox.arvoflow.se');
+    // Och listorna måste beskriva samma mängd som JS-predikatet faktiskt känner.
+    for (const e of TEST_EXAKTA) assert.ok(arTestidentitet(e), `${e} står i listan men är inte en testidentitet`);
+    for (const l of TEST_LOKALDELAR) assert.ok(arTestidentitet(`${l}@${TEST_DOMAN}`), `${l}@${TEST_DOMAN} står i listan men känns inte igen`);
   });
 
   test('LV-05 · ett INTERNT undantag bär alltid sitt skäl', () => {

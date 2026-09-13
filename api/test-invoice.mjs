@@ -1269,8 +1269,15 @@ export default async function handler(req, res) {
           // kors-leverantör om kunden bytt (t.ex. Telia → Tele2, samma kategori).
           const _prevRows = await _db`
             SELECT annual_cost, seat_count, created_at
-            FROM invoice_analyses   -- liggare: internt: dedup mot kundens egen tidigare analys
-            WHERE fingerprint        = ${_fpHash}
+            FROM invoice_analyses   -- liggare: kundvy
+            -- ⚠️ STOD SOM «internt: dedup» TILL 2026-09-13, och skälet beskrev en annan mekanik än
+            -- koden utför. Det HÄR är smyghöjningsdetekteringen, och raden blir en OBLIGATORISK
+            -- kundmening i rekommenderarens prompt: «Vi noterade att er kostnad hos X stigit med
+            -- Y % sedan vår senaste analys». En arkiverad faktura som underlag betyder att kunden
+            -- får ett prispåstående mätt mot ett dokument hen fått veta är borttaget — och inte
+            -- kan granska. Det är precis den lögn arkiveringsbeslutet stänger i fyra andra ytor.
+            WHERE arkiverad_at       IS NULL
+              AND fingerprint        = ${_fpHash}
               AND category           = ${categorized.category}
               AND normalized_supplier = ${categorized.normalizedSupplier ?? ''}
               AND route              = 'auto'

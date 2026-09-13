@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     db`
       SELECT id, supplier, normalized_supplier, category, route,
              annual_cost, net_saving, industry, employees, created_at
-      FROM   invoice_analyses
+      FROM   invoice_analyses   -- liggare: internt: admins granskningskö, ingen kundyta läser den
       WHERE  route = 'review_queue'
       ORDER  BY created_at DESC
       LIMIT  100
