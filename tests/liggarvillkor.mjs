@@ -57,13 +57,19 @@ function lasvagar() {
     // UTTALAD BLINDFLÄCK: prosa i en ANNAN fil som nämner frasen ger fortfarande falsklarm — men
     // ett falsklarm är högljutt och lätt att rätta, medan en tyst miss är den farliga riktningen.
     if (fil.endsWith('lib/liggarvillkor.js')) continue;
-    const kod = readFileSync(fil, 'utf8');
+    // ⚠️ SKIFTLÄGESOKÄNSLIGHETEN GJORDE VAKTEN PROSAKÄNSLIG. `lib/price-alert.js` har raden
+    // «cross-customer aggregation from invoice_analyses» i en JS-kommentar, och den räknades som
+    // en oklassad läsväg. Samma form som när vakten fällde regelns egen dokumentation (11 sept) —
+    // JS-kommentarrader blankas därför ut FÖRE sökningen, med samma längd så radnummer står kvar.
+    // (SQL-kommentarer får INTE blankas här: markörerna ÄR SQL-kommentarer. Två olika frågor.)
+    const kod = readFileSync(fil, 'utf8').split('\n')
+      .map((r) => (/^\s*(\/\/|\*|\/\*)/.test(r) ? ' '.repeat(r.length) : r)).join('\n');
     // ⚠️ MÖNSTRET SÅG VARKEN BLANKSTEG ELLER JOIN TILL 2026-09-13. Granskaren visade det med två
     // sabotage som båda lämnade sviten grön: en ny kundvy med `FROM   invoice_analyses` (tre
     // blanksteg) och en med `JOIN invoice_analyses`. Två VERKLIGA läsvägar var oklassade av precis
     // det skälet — `api/admin/dashboard.mjs:27` och `lib/labeled-corrections.js:83` — i filer där
     // grannraden var klassad. En vakt vars mönster är smalare än språket räknar ett skydd vi inte har.
-    for (const m of kod.matchAll(/\b(?:FROM|JOIN)\s+invoice_analyses\b/g)) {
+    for (const m of kod.matchAll(/\b(?:FROM|JOIN)\s+invoice_analyses\b/gi)) {
       const i = m.index;
       // Utsnittet går till mallens slut (backtick) eller 700 tecken — vilket som kommer först.
       // Backticken är satsens VERKLIGA gräns; teckentaket är bara ett tak, aldrig ankaret.
@@ -73,7 +79,7 @@ function lasvagar() {
       // invoice_analyses` har skrivmålet FÖRE läsningen, så ett utsnitt som börjar vid FROM kan
       // aldrig se att satsen skriver till prisboken (LV-06 var grön av just det).
       const startBacktick = kod.lastIndexOf('`', i);
-      const start = startBacktick === -1 ? Math.max(0, i - 700) : Math.max(startBacktick, i - 700);
+      const start = startBacktick === -1 ? Math.max(0, i - 3000) : Math.max(startBacktick, i - 3000);
       ut.push({
         fil: relative(ROT, fil),
         rad: kod.slice(0, i).split('\n').length,
@@ -91,16 +97,19 @@ function lasvagar() {
  * texter. Utan det här kunde en bortkommenterad klausul räknas som närvarande.
  */
 function aktivSQL(sats) {
-  return sats.split('\n').map((r) => r.replace(/--.*$/, '')).join('\n');
+  // ⚠️ STRIPPADE FÖRR BARA `--`. Granskaren kommenterade bort en klausul med `/* … */` och sviten
+  // förblev grön — och blockformen är redan husstil i `lib/test-surface.js`. Båda formerna nu.
+  return sats.replace(/\/\*[\s\S]*?\*\//g, ' ').split('\n').map((r) => r.replace(/--.*$/, '')).join('\n');
 }
 
 describe('LV · liggarens läsvägar är klassade', () => {
   const vagar = lasvagar();
 
   test('LV-01 · vakten hittar läsvägarna alls (aldrig grön av tomhet)', () => {
-    // Mätt 2026-09-11: 29 förekomster i 14 filer. Ett tal, inte en tröskel — sjunker det har
-    // antingen en läsväg försvunnit eller mönstret slutat matcha, och båda ska synas.
-    assert.ok(vagar.length >= 25, `hittade ${vagar.length} läsvägar — mätt: 29. En vakt som matchar noll blir grön av tomhet`);
+    // ⚠️ TALET SA 29 OCH TRÖSKELN 25 — sex lediga platser, alltså kunde sex läsvägar försvinna
+    // tyst. Ommätt 2026-09-13 med det vidgade mönstret (FROM|JOIN, blanksteg, skiftläge): **31**
+    // (internt 9 · moat 5 · kundvy 17). Tröskeln följer mätningen; ett tal, inte en tröskel.
+    assert.ok(vagar.length >= 31, `hittade ${vagar.length} läsvägar — mätt 2026-09-13: 31. Sjunker talet har antingen en läsväg försvunnit eller mönstret slutat matcha, och båda ska synas`);
   });
 
   test('LV-02 · varje läsväg bär en klassmarkör', () => {
@@ -118,7 +127,12 @@ describe('LV · liggarens läsvägar är klassade', () => {
     // texten. SQL-radkommentar är dessutom exakt den syntax markörerna själva använder, alltså
     // den mest sannolika formen av att ta bort en klausul. En vakt som räknar TOKEN i stället för
     // MEKANIK vaktar det som står skrivet, aldrig det som körs.
-    const brott = vagar.filter((v) => v.sats.includes('liggare: kundvy') && !normaliseraSQL(aktivSQL(v.sats)).includes('arkiverad_at IS NULL'));
+    // ⚠️ SAMMA DELSTRÄNGSFEL SOM LV-04 HADE: `arkiverad_at IS NULL OR TRUE` innehåller strängen
+    // och fällde noll. Filtret måste stå som en egen konjunkt — `WHERE`/`AND` följt av villkoret
+    // och sedan ett nytt `AND` eller satsens slut, aldrig ett `OR` som gör det verkningslöst.
+    const egenKonjunkt = /\b(?:WHERE|AND)\s+arkiverad_at IS NULL(?:\s+(?:AND|ORDER|GROUP|LIMIT|\)|$))/i;
+    const brott = vagar.filter((v) => v.sats.includes('liggare: kundvy')
+      && !egenKonjunkt.test(normaliseraSQL(aktivSQL(v.sats)) + ' '));
     assert.deepEqual(brott.map((v) => `${v.fil}:${v.rad}`), [],
       'en kundvy utan arkivfilter visar rader kunden fått veta är borttagna');
   });
@@ -137,8 +151,13 @@ describe('LV · liggarens läsvägar är klassade', () => {
     // `api/admin/run-migration.mjs` joinar med alias, och det är en skillnad i STAVNING, inte i
     // mekanik. Normaliseringen är medvetet SMAL — bara prefixet framför just `user_email`.
     const utanAlias = (t) => t.replace(/\b[a-z_][a-z0-9_]*\.user_email\b/gi, 'user_email');
+    // ⚠️ JÄMFÖRDE FÖRR EN DELSTRÄNG UTAN SINA YTTERPARENTESER, och då bevisade den NÄRVARO men
+    // aldrig ROLL. Granskaren vände hela grinden — `AND NOT (user_email IS NULL OR NOT (…))`, så
+    // att prisbokens livegren byggdes UTESLUTANDE av testidentiteter — och sviten förblev grön.
+    // Samma sak med `AND` → `OR`. Villkoret måste därför stå som en EGEN konjunkt: `AND ` följt av
+    // hela normen inklusive ytterparenteser. Då kan ingen yttre operator ändra dess roll.
     const brott = vagar.filter((v) => v.sats.includes('liggare: moat')
-      && !utanAlias(normaliseraSQL(aktivSQL(v.sats))).includes(EJ_TESTIDENTITET_SKELETT.replace(/^\(|\)$/g, '')));
+      && !['AND', 'WHERE'].some((k) => utanAlias(normaliseraSQL(aktivSQL(v.sats))).includes(`${k} ${EJ_TESTIDENTITET_SKELETT}`)));
     assert.deepEqual(brott.map((v) => `${v.fil}:${v.rad}`), [],
       'ett moat-aggregat måste bära HELA villkoret — en avvikande stavning är en kopia som glidit isär');
 

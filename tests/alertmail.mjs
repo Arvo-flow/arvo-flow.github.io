@@ -97,7 +97,12 @@ describe('AM · Larmmailet — moat-meningen får inte spränga körningen', () 
       // total >= 3 är tröskeln där segLine faktiskt utvärderas. Det var grenen som kastade.
       const html = bygg({ ...BAS, segStats: { total: 14, withSupplier: 8 } });
       assert.equal(typeof html, 'string');
-      assert.match(html, /8 av 14 bolag vi följer/,
+      // ORDET «FÖLJER» BYTT 2026-09-13, och det är en AVSIKTLIG copyändring, inte ett facit som
+      // anpassats till koden: getSegmentStats räknar (korrekt, enligt provenienbeslutet) även
+      // arkiverade rader, medan mottagarlistan är arkivfiltrerad — «följer» lovade alltså en
+      // pågående bevakning för bolag vi slutat larma. X/Y-FORMEN står kvar oförändrad; det är den
+      // invarianten testet finns för, och båda alertvägarna prövas mot samma sträng (regel 5).
+      assert.match(html, /8 av 14 bolag vi sett fakturor från/,
         'moat-meningen ska stå i mailet — det är den enda mening ingen konkurrent kan skriva');
     });
 

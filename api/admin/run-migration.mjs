@@ -369,9 +369,9 @@ export default async function handler(req, res) {
         -- tröskeln (10), permanent. Testidentiteten utesluts nu med samma villkor som varje annan
         -- moat-sats; enhetskarantänen och segmentfrågan är kvar som öppen skuld, uttalat.
         WHERE (ia.user_email IS NULL OR NOT (
-                lower(trim(ia.user_email)) = ANY(${TEST_EXAKTA})
-                OR (split_part(lower(trim(ia.user_email)), '@', 2) = ${TEST_DOMAN}
-                    AND split_part(split_part(lower(trim(ia.user_email)), '@', 1), '+', 1) = ANY(${TEST_LOKALDELAR}))))
+                lower(regexp_replace(ia.user_email, '^[[:space:]]+|[[:space:]]+$', '', 'g')) = ANY(${TEST_EXAKTA})
+                OR (split_part(lower(regexp_replace(ia.user_email, '^[[:space:]]+|[[:space:]]+$', '', 'g')), '@', 2) = ${TEST_DOMAN}
+                    AND split_part(split_part(lower(regexp_replace(ia.user_email, '^[[:space:]]+|[[:space:]]+$', '', 'g')), '@', 1), '+', 1) = ANY(${TEST_LOKALDELAR}))))
           AND ia.route       = 'auto'
           AND ia.annual_cost > 500
           AND ia.annual_cost < 5000000

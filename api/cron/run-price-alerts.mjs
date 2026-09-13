@@ -234,11 +234,15 @@ function buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefing
   const hasImpact  = impact && impact.impactKrYear > 0;
   const isIncrease = hasImpact;
 
-  // Segment intelligence — "X av Y bolag vi följer för <kategori>" (kategori-scopat, inte industri:
+  // Segment intelligence — "X av Y bolag vi sett fakturor från för <kategori>" (kategori-scopat,
+  // inte industri: getSegmentStats räknar per kategori). «Följer» byttes 2026-09-13 — talet
+  // räknar även arkiverade rader medan mottagarlistan är arkivfiltrerad, så ordet lovade en
+  // pågående bevakning för bolag vi slutat larma. Surface-paritet med lib/market-movement.js.
+  // (gamla noten:
   // getSegmentStats räknar per kategori → den ärliga frasen är kategorin, aldrig "bransch"/"segment").
   const segLine = segStats.total >= 3
     ? `<tr><td colspan="2" style="padding:12px 14px;background:#EEF9F7;border-radius:8px;font-size:13px;color:#1B7A6E;font-weight:600;margin-bottom:20px;display:block">
-        Arvo ser samma höjning hos ${segStats.withSupplier} av ${segStats.total} bolag vi följer för ${catLabel(category)}
+        Arvo ser samma höjning hos ${segStats.withSupplier} av ${segStats.total} bolag vi sett fakturor från för ${catLabel(category)}
        </td></tr>`
     : '';
 
