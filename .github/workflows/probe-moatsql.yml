@@ -1,0 +1,30 @@
+name: Sond — moat-SQL vs arTestidentitet (produktions-DB)
+
+# Kör testidentitetsvillkoret mot den RIKTIGA databasen och jämför mot JS-predikatet, form för
+# form. Behövs för att `lib/benchmark.js` FÅNGAR ett SQL-fel och faller till listpris — en trasig
+# moat-sats ser därför ut som «cellen bar inte», och varken sviten eller diag-live kan se det.
+# Läser bara (SELECT mot konstanter) — rör ingen tabell.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev --ignore-scripts
+      - name: Mät villkoret
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # pipefail: utan den returnerar en pipe tee:s exit-kod och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-moatsql.mjs
