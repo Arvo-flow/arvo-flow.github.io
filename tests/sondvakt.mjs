@@ -13,11 +13,12 @@
 //           två mönster som FAKTISKT fällde oss, inte kategorin "sonden ljuger".
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { kravEnv, kravKolumner, aldrigTyst } from '../lib/sondvakt.js';
 import { prissattningsdom } from '../lib/prissattningsdom.js';
 
@@ -224,13 +225,30 @@ describe('SV · Scopvakten — statiska fel fälls före deploy', () => {
       'scopvakten ligger utanför pre-commit — då fångas nästa scope-fel av en kund, inte av oss');
   });
 
+  // ⚠️ OMSKRIVEN TILL BETEENDE 2026-09-13. Den gamla versionen letade strängen
+  // `Cannot find module|command not found` i källtexten — alltså EN specifik felmening ur
+  // CLI:ns utdata. När vakten lades om till ESLints Node-API försvann strängen och testet föll,
+  // trots att skyddet blivit BREDARE (ett try/catch runt lintFiles fångar varje sätt att
+  // misslyckas, inte bara det ena). En källtextvakt som pinnar en FELMENING mäter implementation,
+  // inte invariant. Det som faktiskt ska hålla är: kom vakten inte fram, avslutar den skilt
+  // från noll. Det prövas genom att KÖRA den där den inte kan hitta något att skanna.
   test('SV-13 · vakten skiljer «rent» från «kunde inte köras»', () => {
+    const tom = mkdtempSync(join(tmpdir(), 'scopvakt-tom-'));
+    const r = spawnSync(process.execPath, [join(ROT2, 'scripts/scopvakt.mjs')], { cwd: tom, encoding: 'utf8' });
+    rmSync(tom, { recursive: true, force: true });
+    assert.notEqual(r.status, 0,
+      'noll filer att skanna är «kunde inte köras», aldrig «inga fel» — en vakt som blir grön av '
+      + 'tomhet är grön precis när den behövs som mest');
+    assert.match(`${r.stdout}${r.stderr}`, /INTE ett godkännande|grön av tomhet|kunde inte köras/,
+      'utfallet måste SÄGA att det inte är ett godkännande, inte bara returnera en kod');
+  });
+
+  test('SV-13b · båda tänderna körs — no-undef OCH TDZ', () => {
+    // Motprovet mot att en tand tyst faller bort: vakten fällde två skilda produktionsfel
+    // (6 september odefinierad identifierare, 10 september TDZ i src/) och båda måste finnas kvar.
     const vakt = readFileSync(join(ROT2, 'scripts/scopvakt.mjs'), 'utf8');
-    assert.match(vakt, /Cannot find module\|command not found/,
-      'saknas eslint måste vakten SÄGA IFRÅN — ett verktyg som inte kom fram får aldrig läsas '
-      + 'som ett godkännande (samma princip som varje annan sond)');
-    assert.match(vakt, /'no-undef': 'error'/,
-      'regeln som faktiskt fällde produktionsfelet måste vara den som körs');
+    assert.match(vakt, /'no-undef': 'error'/, 'regeln som fällde 6-septemberfelet måste köras');
+    assert.match(vakt, /klassaTdz/, 'TDZ-tanden som fällde 10-septemberfelet måste köras');
   });
 });
 
