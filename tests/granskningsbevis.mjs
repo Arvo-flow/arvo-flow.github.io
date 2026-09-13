@@ -23,6 +23,7 @@ const SHA_B = 'b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3';
 
 const bevis = (kropp) => `<!-- granskning\n${kropp}\n-->\n\n# Fynd\n...`;
 const friande = (...shas) => bevis(`commits: ${shas.join(' ')}\ndom: MERGAS\ngranskare: X\ndatum: 2026-09-13`);
+const medDatum = (dom, datum, ...shas) => bevis(`commits: ${shas.join(' ')}\ndom: ${dom}\ngranskare: X\ndatum: ${datum}`);
 
 describe('GB · granskningsbeviset', () => {
   test('GB-01 · ett giltigt bevis läses: commits + dom', () => {
@@ -40,7 +41,7 @@ describe('GB · granskningsbeviset', () => {
   });
 
   test('GB-03 · ett bevis utan dom är inget bevis', () => {
-    const p = parsaBevis(bevis(`commits: ${SHA_A}\ngranskare: X`));
+    const p = parsaBevis(bevis(`commits: ${SHA_A}\ngranskare: X\ndatum: 2026-09-13`));
     assert.equal(p.giltigt, false);
     assert.match(p.skal, /dom/);
   });
@@ -48,13 +49,13 @@ describe('GB · granskningsbeviset', () => {
   test('GB-04 · en OKÄND dom lånar aldrig ett giltigt värde', () => {
     // Felfamiljen: «KANSKE» eller «OK» får inte bete sig som MERGAS. Ett okänt är ett okänt.
     for (const d of ['OK', 'KANSKE', 'GODKÄND', 'ja']) {
-      const p = parsaBevis(bevis(`commits: ${SHA_A}\ndom: ${d}`));
+      const p = parsaBevis(bevis(`commits: ${SHA_A}\ndom: ${d}\ndatum: 2026-09-13`));
       assert.equal(p.giltigt, false, `domen «${d}» måste avvisas`);
     }
   });
 
   test('GB-05 · ett bevis utan namngivna commits är inget bevis', () => {
-    const p = parsaBevis(bevis('commits: alla\ndom: MERGAS'));
+    const p = parsaBevis(bevis('commits: alla\ndom: MERGAS\ndatum: 2026-09-13'));
     assert.equal(p.giltigt, false, 'ordet «alla» är inte en sha — ett bevis måste peka på något');
     assert.match(p.skal, /sha/);
   });
@@ -71,7 +72,7 @@ describe('GB · granskningsbeviset', () => {
 
   test('GB-07 · BLOCKERAR räknas ALDRIG som täckning', () => {
     // En rapport som FINNS är inte en rapport som friade — och de två får aldrig se likadana ut.
-    const r = granskningstackning([SHA_A], [{ fil: 'r.md', text: bevis(`commits: ${SHA_A}\ndom: BLOCKERAR`) }]);
+    const r = granskningstackning([SHA_A], [{ fil: 'r.md', text: medDatum('BLOCKERAR', '2026-09-13', SHA_A) }]);
     assert.equal(r.ok, false);
     assert.equal(r.blockerade.length, 1);
     assert.equal(r.otackta.length, 0, 'blockerad är ett eget utfall, inte «saknas»');
@@ -81,8 +82,8 @@ describe('GB · granskningsbeviset', () => {
     // Motprovet mot GB-07: annars kunde ett åtgärdat fynd aldrig mergas, och grinden vore ett
     // hinder i stället för en grind — den formen kringgås med --no-verify på sin första dag.
     const r = granskningstackning([SHA_A], [
-      { fil: 'varv1.md', text: bevis(`commits: ${SHA_A}\ndom: BLOCKERAR`) },
-      { fil: 'varv2.md', text: friande(SHA_A) },
+      { fil: 'varv1.md', text: medDatum('BLOCKERAR', '2026-09-12', SHA_A) },
+      { fil: 'varv2.md', text: medDatum('MERGAS', '2026-09-13', SHA_A) },
     ]);
     assert.equal(r.ok, true, JSON.stringify(r));
   });
@@ -95,11 +96,40 @@ describe('GB · granskningsbeviset', () => {
     assert.equal(fel.ok, false);
   });
 
+
+  test('GB-11 · ett bevis UTAN datum är inget bevis — domar måste gå att ordna i tid', () => {
+    const p = parsaBevis(bevis(`commits: ${SHA_A}\ndom: MERGAS\ngranskare: X`));
+    assert.equal(p.giltigt, false);
+    assert.match(p.skal, /datum/);
+  });
+
+  test('GB-12 · den SENASTE domen vinner — även när den är BLOCKERAR', () => {
+    // ⚠️ GB-08 HETTE «vinner över ett TIDIGARE blockerande» men koden kände ingen ordning alls:
+    // utfallet var identiskt i båda riktningarna, alltså var ordet «tidigare» oprövat och ett
+    // BLOCKERAR kunde ALDRIG upphäva ett MERGAS. Granskaren mätte det. Nu avgör datumet.
+    const r = granskningstackning([SHA_A], [
+      { fil: 'varv1.md', text: medDatum('MERGAS', '2026-09-12', SHA_A) },
+      { fil: 'varv2.md', text: medDatum('BLOCKERAR', '2026-09-13', SHA_A) },
+    ]);
+    assert.equal(r.ok, false, 'en senare blockerande dom måste upphäva ett tidigare godkännande');
+    assert.equal(r.blockerade.length, 1);
+  });
+
+  test('GB-13 · vid SAMMA datum väger BLOCKERAR tyngst', () => {
+    // Två domar samma dag går inte att ordna. Då är det strängare svaret det enda ärliga —
+    // att välja det mildare vore att låta en oavgjord fråga se ut som ett godkännande.
+    const r = granskningstackning([SHA_A], [
+      { fil: 'a.md', text: medDatum('MERGAS', '2026-09-13', SHA_A) },
+      { fil: 'b.md', text: medDatum('BLOCKERAR', '2026-09-13', SHA_A) },
+    ]);
+    assert.equal(r.ok, false);
+  });
+
   test('GB-10 · KÄND BLINDFLÄCK: innehållet prövas aldrig, bara artefakten', () => {
     // En tom rapport med rätt rubrik PASSERAR. Det är inte en miss — det är gränsen, och den är
     // skriven i lib/granskningsbevis.js. Maskinen ser att svaret finns, aldrig att det är sant.
     // Skillnaden mot flaggan är att artefakten går att öppna och hålla mot koden i efterhand.
-    const tom = granskningstackning([SHA_A], [{ fil: 'r.md', text: bevis(`commits: ${SHA_A}\ndom: MERGAS`) }]);
+    const tom = granskningstackning([SHA_A], [{ fil: 'r.md', text: friande(SHA_A) }]);
     assert.equal(tom.ok, true, 'ändra inte utfallet utan att ändra den deklarerade blindfläcken');
     assert.equal(BEVIS_KATALOG, 'ops/granskningar');
   });

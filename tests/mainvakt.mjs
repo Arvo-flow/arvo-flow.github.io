@@ -42,6 +42,30 @@ function kor(rad, env = {}) {
 
 const sha = (ref) => execSync(`git rev-parse ${ref}`, { cwd: ROT, encoding: 'utf8' }).trim();
 
+/** Som commitMedBevis, men med godtyckliga filer — för att bygga fientliga fixturer. */
+function commitMedFil(foralder, sokvag, innehall) {
+  return commitMedFiler(foralder, [[sokvag, innehall]]);
+}
+
+function commitMedFiler(foralder, filer, foraldrar = null) {
+  const tmpIndex = join(mkdtempSync(join(tmpdir(), 'mainvakt-')), 'index');
+  const env = { ...process.env, GIT_INDEX_FILE: tmpIndex };
+  const g = (cmd, opts = {}) => execSync(cmd, { cwd: ROT, encoding: 'utf8', env, ...opts }).trim();
+  try {
+    g(`git read-tree ${foralder}`);
+    for (const [sokvag, innehall] of filer) {
+      const blob = execSync('git hash-object -w --stdin', { cwd: ROT, encoding: 'utf8', env, input: innehall }).trim();
+      g(`git update-index --add --cacheinfo 100644,${blob},${sokvag}`);
+    }
+    const p = (foraldrar ?? [foralder]).map((x) => `-p ${x}`).join(' ');
+    return execSync(`git commit-tree ${g('git write-tree')} ${p} -m "prov"`, {
+      cwd: ROT, encoding: 'utf8', env,
+    }).trim();
+  } finally {
+    rmSync(dirname(tmpIndex), { recursive: true, force: true });
+  }
+}
+
 /**
  * Bygg en SYNTETISK commit ovanpå `foralder` som lägger till ett granskningsbevis — helt i
  * objektdatabasen, utan att röra HEAD, indexet eller arbetsträdet. Samma form som verkligheten:
@@ -115,6 +139,80 @@ describe('MV · Main-vakten: en andra blick före mekanik', () => {
     // Den tystaste formen: en rapport finns i katalogen, ser korrekt ut, och gäller något annat.
     const r = kor(medBevisRad(`commits: ${'d'.repeat(40)}\ndom: MERGAS\ngranskare: test\ndatum: 2026-09-13`));
     assert.equal(r.kod, 1, 'ett bevis om en annan commit är inget bevis om den här');
+    assert.match(r.ut, /Utan bevis/);
+  });
+
+  // ── MV-09..12 · DE FYRA VÄGAR FÖRBI SOM GRANSKAREN MÄTTE (2026-09-13) ────────────────────
+  // Alla fyra släppte ogranskad mekanik till `main` utan flagga och utan --no-verify, i samma
+  // commit där jag skrev «ingen förbigångsflagga finns kvar». Påståendet före körningen, i den
+  // grind som byggdes mot just den sjukdomen.
+
+  test('MV-09 · en OKÄND fjärr-sha nekas — den kunde förut släppa ALLT', () => {
+    // `git diff --name-only <sha>` (utan spann) jämför mot ARBETSTRÄDET, inte mot föräldern. Ett
+    // rent träd gav tom diff → exit 0 innan ett enda bevis lästes. Nåbart med
+    // `git push origin main:master` när master saknas på fjärren, eller `--all`.
+    // MV-04 var grön på fel grund: den matade en sha som inte FINNS, så git kastade.
+    //
+    // ⚠️ ALTERNATIVET I MÖNSTRET GJORDE KONTROLLEN OBSERVERBAR — men bara nästan. Första
+    // versionen godtog «går inte att pröva ELLER okänt nekas», och sabotaget «ta bort den
+    // explicita kontrollen» fällde då NOLL: `git rev-list <nollsha>..<sha>` kastar ändå, så
+    // `neka()` nåddes via en ANNAN gren med ett annat skäl. Ett skydd bakom ett annat skydd är
+    // inte två lager (bibeln 10 sept). Testet kräver därför den EXAKTA formuleringen, så att
+    // den explicita grenen är den enda som kan producera den.
+    const h = sha('HEAD');
+    const r = kor(`${h} ${h} refs/heads/main ${NOLL}`);
+    assert.equal(r.kod, 1, 'ett okänt fjärrläge går inte att pröva och ska nekas');
+    assert.match(r.ut, /finns inte på fjärren/, 'skälet ska säga VAD som är okänt, inte bara att något var det');
+    // Och samma sak när fjärr-shan saknas HELT (en ofullständig rad) — den grenen kastar inte
+    // ens i git, så utan den explicita kontrollen finns ingen tand alls.
+    const utan = kor(`${h} ${h} refs/heads/main`);
+    assert.equal(utan.kod, 1, 'en rad utan fjärr-sha går inte att pröva');
+  });
+
+  test('MV-10 · en MERGE-COMMITS egen mekanik räknas', () => {
+    // `git log --name-only` listar INGA filer för en merge — en konfliktlösning i en lib/-fil
+    // nådde alltså aldrig kravet. `diff-tree -m` diffar mot varje förälder, så den syns.
+    // Prövas som BETEENDE mot en syntetisk merge, aldrig som källtext.
+    // Formen som lurade den gamla koden: sidogrenens commit ÄR täckt av rapporten, men MERGEN
+    // för in en EGEN lib/-ändring (en konfliktlösning). `git log --name-only` visar inga filer
+    // för en merge, så den ändringen var osynlig och pushen gick igenom.
+    const gren = commitMedFil(sha('HEAD'), 'lib/_prov_gren.js', '// gren\n');
+    const merge = commitMedFiler(gren, [['lib/_prov_konflikt.js', '// löst i mergen\n']], [sha('HEAD'), gren]);
+    const medBevis = commitMedBevis(merge, `commits: ${gren}\ndom: MERGAS\ngranskare: test\ndatum: 2026-09-13`);
+    const r = kor(`${medBevis} ${medBevis} refs/heads/main ${sha('HEAD')}`);
+    assert.equal(r.kod, 1, 'en merges EGEN lib/-ändring måste kräva eget bevis');
+    assert.match(r.ut, /Utan bevis/);
+  });
+
+  test('MV-11 · beviset måste ligga på DEN REF som bär mekaniken', () => {
+    // `pushadSha` skrevs över per ref medan commitsen ackumulerades — så rapporten kunde ligga på
+    // en ANNAN gren i samma push (`git push --all`). Domen fälls nu per ref.
+    const mekanik = execSync(`git log --format=%H ${franRef()}~1..HEAD`, { cwd: ROT, encoding: 'utf8' })
+      .trim().split('\n');
+    const medBevis = commitMedBevis(sha('HEAD'), `commits: ${mekanik.join(' ')}\ndom: MERGAS\ngranskare: test\ndatum: 2026-09-13`);
+    // main bär mekaniken UTAN rapport; master bär rapporten men ingen mekanik.
+    const r = kor(
+      `${sha('HEAD')} ${sha('HEAD')} refs/heads/main ${franRef()}~1\n`
+      + `${medBevis} ${medBevis} refs/heads/master ${sha('HEAD')}`,
+    );
+    assert.equal(r.kod, 1, 'ett bevis på en annan ref täcker inte mekaniken på den här');
+  });
+
+  test('MV-12 · ett filnamn på 40 hex kan inte föreställa en commit-gräns', () => {
+    // Commit-gränsen lästes med /^[0-9a-f]{40}$/ mot loggens TEXT — som också matchar ett
+    // FILNAMN. En sådan fil i roten sorteras före lib/ och sköt in en falsk, KONSTANT sha i
+    // mängden: en rapport, en gång, för alltid. Uppräkningen går nu via rev-list, aldrig text.
+    // Formen som lurade den gamla koden: BÅDA filerna i SAMMA commit. `git log --name-only`
+    // listar rotfilen först (sorteras före `lib/`), regexen läste den som en ny commit-gräns,
+    // och lib/-filen tillskrevs då den FALSKA shan — en konstant, alltså ett bevis för alltid.
+    // HELA bypassen: en rapport som namnger den FALSKA shan. Eftersom den är en konstant räcker
+    // EN rapport, EN gång, för ALLA framtida mekanikcommits som bär filen — och rapporten får
+    // ligga i en ren ops/-commit, som enligt vaktens egen hjälptext inte kräver eget bevis.
+    const falsk = 'c'.repeat(40);
+    const c2 = commitMedFiler(sha('HEAD'), [[falsk, 'lurendrejeri\n'], ['lib/_prov_bakdorr.js', '// BAKDÖRR\n']]);
+    const medBevis = commitMedBevis(c2, `commits: ${falsk}\ndom: MERGAS\ngranskare: test\ndatum: 2026-09-13`);
+    const r = kor(`${medBevis} ${medBevis} refs/heads/main ${sha('HEAD')}`);
+    assert.equal(r.kod, 1, 'en huvudnyckel får inte kunna tillverkas ur ett hex-filnamn');
     assert.match(r.ut, /Utan bevis/);
   });
 
