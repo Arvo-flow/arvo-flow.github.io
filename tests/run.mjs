@@ -134,6 +134,7 @@ import './pastaendevakt.mjs';
 import './prisparning.mjs';
 import './cacheversion.mjs';
 import './mainvakt.mjs';
+import './granskningsbevis.mjs';
 import './arvodeskorning.mjs';
 import './licensniva.mjs';
 import './obduktion.mjs';

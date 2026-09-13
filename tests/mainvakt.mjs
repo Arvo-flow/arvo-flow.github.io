@@ -6,14 +6,22 @@
 // Sviten kör det RIKTIGA skriptet med refar på stdin — samma väg git använder. En modell av
 // grinden hade bevisat att logiken svarar, aldrig att hooken gör det (villkorsvaktens läxa).
 //
-// FÅNGAR: en push till main som bär lib/, api/ eller agents/ utan uttryckligt godkännande, och en
-//   grind som släpper igenom en push vars innehåll den inte kunde läsa.
-// BLIND: sviten ser inte OM en granskning faktiskt gjorts — bara att flaggan sattes. Och den ser
-//   bara pushar genom repots egen hook; Actions och webbgränssnittet passerar oberörda.
+// ⚠️ FLAGGAN ERSATT AV ETT ARTEFAKTBEVIS 2026-09-13. `ARVO_GRANSKAD=1` var ett hedersord: jag
+// satte den själv och pushade fem mekanikcommits till main på mitt eget ord. Kravet är nu en
+// rapport i `ops/granskningar/` som NAMNGER varje mekanikcommit — läst ur den PUSHADE
+// trädversionen, så en lokal ocommittad fil inte duger.
+//
+// FÅNGAR: en push till main som bär lib/, api/ eller agents/ utan en rapport som namnger just den
+//   commiten; en grind som släpper igenom en push vars innehåll den inte kunde läsa.
+// BLIND: sviten ser att rapporten FINNS och namnger rätt sha — aldrig att någon faktiskt granskade
+//   eller granskade väl. Och den ser bara pushar genom repots egen hook; Actions och
+//   webbgränssnittet passerar oberörda.
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, execSync } from 'node:child_process';
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, mkdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -33,16 +41,43 @@ function kor(rad, env = {}) {
 }
 
 const sha = (ref) => execSync(`git rev-parse ${ref}`, { cwd: ROT, encoding: 'utf8' }).trim();
+
+/**
+ * Bygg en SYNTETISK commit ovanpå `foralder` som lägger till ett granskningsbevis — helt i
+ * objektdatabasen, utan att röra HEAD, indexet eller arbetsträdet. Samma form som verkligheten:
+ * rapporten är en SENARE commit som namnger de tidigare mekanikcommitsen.
+ */
+function commitMedBevis(foralder, rubrik) {
+  const tmpIndex = join(mkdtempSync(join(tmpdir(), 'mainvakt-')), 'index');
+  const env = { ...process.env, GIT_INDEX_FILE: tmpIndex };
+  const g = (cmd, opts = {}) => execSync(cmd, { cwd: ROT, encoding: 'utf8', env, ...opts }).trim();
+  try {
+    g(`git read-tree ${foralder}`);
+    const blob = execSync('git hash-object -w --stdin', {
+      cwd: ROT, encoding: 'utf8', env, input: `<!-- granskning\n${rubrik}\n-->\n\n# Fynd\nInga.\n`,
+    }).trim();
+    g(`git update-index --add --cacheinfo 100644,${blob},ops/granskningar/prov.md`);
+    const tree = g('git write-tree');
+    return execSync(`git commit-tree ${tree} -p ${foralder} -m "prov: granskningsbevis"`, {
+      cwd: ROT, encoding: 'utf8', env,
+    }).trim();
+  } finally {
+    rmSync(dirname(tmpIndex), { recursive: true, force: true });
+  }
+}
 const NOLL = '0'.repeat(40);
 
 describe('MV · Main-vakten: en andra blick före mekanik', () => {
   // Ett spann som garanterat bär lib/-ändringar: vaktfixarna 2026-09-02.
-  const bar = () => {
-    const till = sha('HEAD');
-    const fran = execSync(
-      'git log --format=%H -n 40 -- lib/pastaendevakt.js | tail -1', { cwd: ROT, encoding: 'utf8' },
-    ).trim();
-    return `${till} ${till} refs/heads/main ${fran}~1`;
+  const franRef = () => execSync(
+    'git log --format=%H -n 40 -- lib/pastaendevakt.js | tail -1', { cwd: ROT, encoding: 'utf8' },
+  ).trim();
+  const bar = () => `${sha('HEAD')} ${sha('HEAD')} refs/heads/main ${franRef()}~1`;
+
+  // Samma spann, men med en syntetisk bevis-commit ovanpå HEAD. `namnger` avgör täckningen.
+  const medBevisRad = (rubrik) => {
+    const c = commitMedBevis(sha('HEAD'), rubrik);
+    return `${c} ${c} refs/heads/main ${franRef()}~1`;
   };
 
   test('MV-01 · en push till main med lib/-ändringar NEKAS', () => {
@@ -52,10 +87,45 @@ describe('MV · Main-vakten: en andra blick före mekanik', () => {
     assert.match(r.ut, /lib\//, 'filerna ska namnges — annars vet ingen vad som stoppades');
   });
 
-  test('MV-02 · MOTPROVET — samma push släpps med ARVO_GRANSKAD=1', () => {
+  test('MV-02 · MOTPROVET — samma push SLÄPPS när ett bevis namnger commiten', () => {
     // Utan den här grenen vore vakten ett hinder, inte en grind: den som FAKTISKT granskat måste
-    // kunna leverera på en rad, annars kringgås hooken med --no-verify och blir värre än ingen.
-    assert.equal(kor(bar(), { ARVO_GRANSKAD: '1' }).kod, 0);
+    // kunna leverera, annars kringgås hooken med --no-verify och blir värre än ingen.
+    // Beviset byggs som en SYNTETISK commit i objektdatabasen — samma väg som i verkligheten
+    // (rapporten är en senare commit som namnger de tidigare), utan att röra repot.
+    // Rapporten måste namnge VARJE mekanikcommit i spannet, inte bara den sista — det är hela
+    // skärpan i «per commit, aldrig per push».
+    const mekanik = execSync(`git log --format=%H ${franRef()}~1..HEAD`, { cwd: ROT, encoding: 'utf8' })
+      .trim().split('\n');
+    const r = kor(medBevisRad(`commits: ${mekanik.join(' ')}\ndom: MERGAS\ngranskare: test\ndatum: 2026-09-13`));
+    assert.equal(r.kod, 0, `beviset skulle ha täckt commitsen:\n${r.ut}`);
+    assert.match(r.ut, /täckta av granskningsbevis/);
+  });
+
+  test('MV-06 · en rapport med domen BLOCKERAR släpper INTE igenom', () => {
+    // En rapport som FINNS är inte en rapport som friade. Utan det här kunde en blockerad
+    // granskning se ut exakt som en godkänd — felfamiljen, i grinden mot felfamiljen.
+    const mekanik = execSync(`git log --format=%H ${franRef()}~1..HEAD`, { cwd: ROT, encoding: 'utf8' })
+      .trim().split('\n');
+    const r = kor(medBevisRad(`commits: ${mekanik.join(' ')}\ndom: BLOCKERAR\ngranskare: test\ndatum: 2026-09-13`));
+    assert.equal(r.kod, 1, 'BLOCKERAR får aldrig räknas som täckning');
+    assert.match(r.ut, /BLOCKERAD/);
+  });
+
+  test('MV-07 · ett bevis som namnger FEL commit täcker ingenting', () => {
+    // Den tystaste formen: en rapport finns i katalogen, ser korrekt ut, och gäller något annat.
+    const r = kor(medBevisRad(`commits: ${'d'.repeat(40)}\ndom: MERGAS\ngranskare: test\ndatum: 2026-09-13`));
+    assert.equal(r.kod, 1, 'ett bevis om en annan commit är inget bevis om den här');
+    assert.match(r.ut, /Utan bevis/);
+  });
+
+  test('MV-08 · flaggan ARVO_GRANSKAD är borta ur skriptet — en escape vore den verkliga mekanismen', () => {
+    // Kommentarer strippas: filen FÖRKLARAR varför flaggan togs bort, och den prosan får inte
+    // fälla kontrollen (samma form som när liggarvakten fällde sin egen dokumentation).
+    const rader = readFileSync(VAKT, 'utf8').split('\n').filter((r) => !/^\s*(\/\/|\*|\/\*)/.test(r));
+    const kod = rader.join('\n');
+    assert.ok(kod.length > 800, `efter strippning återstod ${kod.length} tecken — ett tomt utsnitt vaktar inget`);
+    assert.ok(!/ARVO_GRANSKAD/.test(kod), 'en förbigångsflagga gör rapporten till dekoration');
+    assert.match(kod, /granskningstackning/, 'vakten måste använda den prövade domen, aldrig en egen kopia');
   });
 
   test('MV-03 · MOTPROVET — en feature branch rör inte vakten', () => {
@@ -71,11 +141,12 @@ describe('MV · Main-vakten: en andra blick före mekanik', () => {
     // så tom stdin betyder att någon ANNAN kör hooken. «Någon annan» var agenten som redan
     // pushade förbi regeln en gång.
     const r = kor('');
-    assert.equal(r.kod, 1, 'en opröv­bar push nekas');
+    assert.equal(r.kod, 1, 'en oprövbar push nekas');
     assert.match(r.ut, /okänt mål nekas/);
-    // MOTPROVET: den medvetna handlingen släpper igenom, samma undantag som för allt annat.
-    const g = kor('', { ARVO_GRANSKAD: '1' });
-    assert.equal(g.kod, 0, 'ARVO_GRANSKAD=1 är den medvetna vägen förbi');
+    // ⚠️ UNDANTAGET ÄR BORTTAGET 2026-09-13. Förut släppte ARVO_GRANSKAD=1 igenom här. En escape
+    // som finns ÄR den verkliga mekanismen — och den här grenen handlar inte ens om granskning,
+    // utan om att vi inte kunde läsa vad pushen bär. Ett okänt nekar, utan väg förbi.
+    assert.equal(kor('', { ARVO_GRANSKAD: '1' }).kod, 1, 'den gamla flaggan får inte längre öppna någon dörr');
   });
 
   test('MV-04 · ett OKÄNT innehåll nekar — grinden godkänner aldrig det den inte kunde läsa', () => {

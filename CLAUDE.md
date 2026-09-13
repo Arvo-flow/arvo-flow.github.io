@@ -162,6 +162,39 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > orden syns inte. De flyttar bevisbördan till något en granskare kan slå upp — de bär den inte.
 > Punkt 1 är den enda som faktiskt granskar; punkt 2–4 gör bara fusket synligt.
 
+> **✅ ETT HEDERSORD ÄR INGEN MEKANISM (grundarbeslut 2026-09-13).** Bevisplikten p.1 skyddades av
+> `scripts/mainvakt.mjs`, som krävde `ARVO_GRANSKAD=1` för att släppa mekanik till `main`. Den
+> 13 september satte jag den flaggan **själv**, på mitt eget ord om att granskningen var gjord, och
+> pushade fem mekanikcommits. Granskningen VAR gjord — två varv — men **grinden kunde inte veta det,
+> och en grind som inte kan veta vaktar ingenting.** Grundaren: *«Hedersord förklätt till mekanism är
+> en arkitektonisk svaghet.»*
+>
+> Det är bibelns egen felfamilj i toppen av kedjan: ett grönt som betyder «jag tittade inte», i själva
+> grinden som finns mot den sjukdomen. Vaktens docstring **deklarerade hålet i klartext** — *«grinden
+> kan inte se OM granskningen faktiskt gjorts»* — och att det var deklarerat hindrade det inte.
+> Villkorsvaktens läxa en gång till: en deklarerad blindfläck är fortfarande en blindfläck.
+>
+> **Kravet är nu ett FYSISKT BEVIS som reser med pushen.** En rapport i `ops/granskningar/` med en
+> maskinläsbar rubrik (`commits:` + `dom:`) som NAMNGER varje mekanikcommit. Tre egenskaper bär hela
+> skärpan:
+> · **Per commit, aldrig per push.** «Granska en gång och lägg tyst på en commit till» är därmed
+>   omöjligt — den nya commiten är omärkt och nekas.
+> · **Läst ur den PUSHADE trädversionen** (`git show <sha>:<fil>`), aldrig ur arbetsträdet. En lokal
+>   ocommittad fil vore lika flyktig som flaggan den ersätter.
+> · **`BLOCKERAR` räknas aldrig som täckning.** Att en rapport FINNS är inte att den friade.
+>
+> **Ingen förbigångsflagga finns kvar, med flit.** Lämnas en escape är DEN mekanismen och rapporten
+> dekoration (10 sept: ett skydd bakom ett annat skydd är inte två lager). Även den gamla
+> «kunde inte läsa refarna»-grenen nekar nu utan väg förbi.
+>
+> **Uttalad blindfläck, och den är ärlig:** grinden läser en ARTEFAKT, aldrig en granskning. En tom
+> rapport med rätt rubrik passerar (GB-10 låser det som ett KÄNT utfall). Maskinen ser att svaret
+> finns, aldrig att det är sant — samma gräns som vaktkontraktet. **Skillnaden mot flaggan är ändå
+> avgörande: ett påstående på disk kan öppnas och hållas mot koden i efterhand; en miljövariabel
+> försvinner i samma sekund den satts.** Maskinvakt: `lib/granskningsbevis.js` + `tests/granskningsbevis.mjs`
+> (GB-01..10) + `tests/mainvakt.mjs` (MV-01..08), sabotage-bevisad i sju riktningar — inklusive
+> «återinför den gamla flaggan», som fäller två tester.
+
 > **✅ GRUNDARBESLUT 2026-09-09 — STOPPREGELN: [KUND] BLOCKERAR, [VAKT] MERGAS OCH LAGAS FRAMÅT.**
 > Bevisplikten p.1 säger att ingen `lib/`-, `api/`- eller `agents/`-ändring får merga utan en andra
 > blick. Den sa inte NÄR granskningen är klar — och utan den halvan blir regeln en oändlig rekursion:
