@@ -310,3 +310,40 @@ await sql`CREATE INDEX IF NOT EXISTS idx_contract_timelines_supplier ON contract
 await sql`ALTER TABLE labeled_corrections ADD COLUMN IF NOT EXISTS operator_reasoning TEXT`;
 
 console.log('Fas 3 klar — labeled_corrections, suppliers, supplier_prices, contract_timelines redo.');
+
+// ══ EFTERKONTROLLEN — «KLAR» FÅR INTE BETYDA «JAG TITTADE INTE» (2026-09-13) ═════════════════
+//
+// Migreringen kunde hittills bara rapportera att SATSERNA kördes utan att kasta. Det är inte samma
+// sak som att kolumnerna finns. Domen bor i `lib/schemakontroll.js` som en REN funktion — inline
+// här hade ingen svit kunnat köra den, och mina första två «sabotage» fällde följaktligen noll
+// tester. Skriptet MATAR kontrollen; det dömer inte själv.
+//
+// Kravlistan HÄRLEDS ur `VALFRIA_KOLUMNER` i lib/invoice-store.js — den enda sanningen om vilka
+// kolumner rumsläsningarna faktiskt rör (regel 1). En avskriven lista hade kunnat glida isär.
+const { VALFRIA_KOLUMNER } = await import('../lib/invoice-store.js');
+const { schemaRacker } = await import('../lib/schemakontroll.js');
+
+const faktiska = await sql`
+  SELECT column_name FROM information_schema.columns
+   WHERE table_name = 'invoice_analyses'
+`;
+
+// Indexet rapporteras men FÄLLER INTE: det är prestanda, inte sanning. En vakt som blandar de två
+// lär läsaren att ignorera den — därför står det utskrivet i stället för att se ut som ett skydd.
+const index = await sql`
+  SELECT indexname FROM pg_indexes
+   WHERE tablename = 'invoice_analyses' AND indexname = 'idx_analyses_aktiva'
+`;
+
+const dom = schemaRacker(VALFRIA_KOLUMNER.map(([namn]) => namn), faktiska.map((r) => r.column_name));
+console.log(`Efterkontroll — ${faktiska.length} kolumner i invoice_analyses · idx_analyses_aktiva: ${index.length ? 'finns' : 'SAKNAS (prestanda, ej sanning)'}`);
+
+if (!dom.ok) {
+  console.error(`\n✗ MIGRERINGEN ÄR INTE KLAR [${dom.kod}] — ${dom.skal}`);
+  for (const namn of dom.saknade) console.error(`    · ${namn}`);
+  console.error('\n  Läsvägarna faller till sin reserv, som hämtar färre fält — och en tyst');
+  console.error('  kvalitetsnedgradering ser identisk ut med «kunden har inga bra avtal».');
+  process.exit(1);
+}
+
+console.log(`✓ Efterkontroll klar — ${dom.skal}.`);
