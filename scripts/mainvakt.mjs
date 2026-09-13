@@ -39,7 +39,11 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { granskningstackning, BEVIS_KATALOG } from '../lib/granskningsbevis.js';
 
-const KRAVDA = /^(lib|api|agents)\//;
+// ⚠️ VAKTENS EGNA VERKSTÄLLARE INGÅR SEDAN 2026-09-13 (granskarens K3). Förut låg
+// `scripts/mainvakt.mjs` UTANFÖR kravet: ett enda steg — ersätt filen med `process.exit(0)`,
+// committa, pusha — tog bort grinden för varje framtida klon. Inget `--no-verify`, ingen flagga.
+// En vakt som inte vaktar sin egen avstängning är ett hedersord en nivå upp.
+const KRAVDA = /^(lib|api|agents)\/|^scripts\/(mainvakt|setup-hooks)\.mjs$/;
 const NOLL = '0000000000000000000000000000000000000000';
 
 let indata = '';
@@ -93,13 +97,10 @@ function neka(skal) {
   process.exit(1);
 }
 
-let nagotProvat = false;
-
 for (const rad of indata.trim().split('\n')) {
   const [, lokalSha, fjarrRef, fjarrSha] = rad.split(/\s+/);
   if (!/refs\/heads\/(main|master)$/.test(fjarrRef ?? '')) continue;
   if (lokalSha === NOLL) continue;                      // radering av grenen, inte en leverans
-  nagotProvat = true;
 
   // ── VILKA COMMITS PUSHAS? ──────────────────────────────────────────────────────────────────
   // Ett okänt fjärrläge går inte att pröva, och då nekas det (MV-09).
@@ -114,6 +115,19 @@ for (const rad of indata.trim().split('\n')) {
   // fjärren första gången; sker det ska en människa ta ställning, inte en regex.
   if (!fjarrSha || fjarrSha === NOLL) {
     neka(`${fjarrRef} finns inte på fjärren — ett spann går inte att bilda, alltså går pushen inte att pröva`);
+  }
+  // ⚠️ EN REWIND ÄR OSYNLIG FÖR `rev-list` (granskarens K2, en regression jag själv införde).
+  // `rev-list <fjarr>..<lokal>` är TOMT när lokal är förfader till fjärr — alltså såg grinden
+  // noll commits medan pushen RADERADE `lib/`-filer ur main, och svarade exit 0. Den gamla
+  // `git diff`-vägen såg borttagningen. Mätt: rev-list 0 rader, git diff 1 rad.
+  //
+  // En icke-fast-forward-push till main kan inte prövas som ett spann och nekas därför. Att i
+  // stället pröva `A...B` hade krävt bevis för commits som ALDRIG pushas, vilket är obrukbart —
+  // och en rewind av main är ett beslut en människa ska fatta, inte en regex. MV-14.
+  try {
+    git(['merge-base', '--is-ancestor', fjarrSha, lokalSha]);
+  } catch {
+    neka(`${fjarrRef} skulle skrivas över (icke-fast-forward) — en rewind går inte att pröva som ett spann`);
   }
   let commits;
   try {
@@ -131,7 +145,17 @@ for (const rad of indata.trim().split('\n')) {
   for (const c of commits) {
     let filer;
     try {
-      filer = git(['diff-tree', '-r', '-m', '--no-commit-id', '--name-only', c]).split('\n').filter(Boolean);
+      // `--root`: utan den skriver `diff-tree` INGENTING för en parentlös commit. Blindheten är
+      // verklig och mätt — repot är shallow, och den graftade commiten ger 0 rader utan flaggan
+      // mot 1 127 med (granskarens K1).
+      //
+      // ⚠️ MEN DEN HAR INGEN EGEN TAND I PUSH-VÄGEN, och jag skrev först «LASTBÄRANDE» utan att
+      // ha kört det. Mätt: tas BARA `--root` bort är sviten grön; först när fast-forward-kontrollen
+      // OCKSÅ tas bort faller MV-13. Skälet är strukturellt — en parentlös commit kan aldrig ha
+      // fjärrens sha som förfader, så den nekas en rad tidigare. Raden står kvar för att
+      // fillistan ska vara sann om vakten någon gång anropas på annat sätt, men den räknas INTE
+      // som ett skydd: ett skydd bakom ett annat skydd är inte två lager (bibeln 10 sept).
+      filer = git(['diff-tree', '-r', '-m', '--root', '--no-commit-id', '--name-only', c]).split('\n').filter(Boolean);
     } catch {
       neka(`kunde inte läsa filerna i ${c.slice(0, 8)}`);
     }
@@ -198,8 +222,7 @@ for (const rad of indata.trim().split('\n')) {
   process.exit(1);
 }
 
-if (!nagotProvat) {
-  // Inga main/master-refar i pushen alls — en feature branch rör inte vakten.
-  process.exit(0);
-}
+// Inga main/master-refar i pushen, eller alla täckta: en feature branch rör aldrig vakten.
+// (`nagotProvat` togs bort 2026-09-13 — båda dess grenar avslutade 0, alltså var den död kod
+// som SÅG UT som ett beslut. Granskarens [VAKT] 2.)
 process.exit(0);

@@ -16,7 +16,7 @@
 //     KÄNT utfall så att nästa läsare inte tror att den är täckt.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { parsaBevis, granskningstackning, BEVIS_KATALOG } from '../lib/granskningsbevis.js';
+import { parsaBevis, granskningstackning, BEVIS_KATALOG, arVerkligtDatum } from '../lib/granskningsbevis.js';
 
 const SHA_A = 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678';
 const SHA_B = 'b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3';
@@ -123,6 +123,43 @@ describe('GB · granskningsbeviset', () => {
       { fil: 'b.md', text: medDatum('BLOCKERAR', '2026-09-13', SHA_A) },
     ]);
     assert.equal(r.ok, false);
+  });
+
+
+  test('GB-14 · ett FRAMTIDA datum upphäver inte en blockerande dom', () => {
+    // ⚠️ HÅLET SOM GJORDE HELA GB-13 MENINGSLÖS: ett egenhändigt «MERGAS 2099-01-01» vann över
+    // ett verkligt «BLOCKERAR» — ett dygn räckte för att neutralisera regeln koden själv kallade
+    // «det enda ärliga». En granskning som inte har skett kan inte väga tyngst.
+    const framtid = parsaBevis(medDatum('MERGAS', '2099-01-01', SHA_A));
+    assert.equal(framtid.giltigt, false);
+    assert.match(framtid.skal, /framtiden/);
+    const r = granskningstackning([SHA_A], [
+      { fil: 'blockad.md', text: medDatum('BLOCKERAR', '2026-09-13', SHA_A) },
+      { fil: 'fusk.md', text: medDatum('MERGAS', '2099-01-01', SHA_A) },
+    ]);
+    assert.equal(r.ok, false, 'ett framtida datum får inte kunna tillverka täckning');
+  });
+
+  test('GB-15 · ett datum som inte finns är inget datum', () => {
+    // Regexen räknade bara SIFFROR, så «2026-13-45» godtogs och kunde sorteras högst av alla.
+    for (const d of ['2026-13-45', '2026-02-30', '2026-00-10', '2026-01-32']) {
+      assert.equal(arVerkligtDatum(d), false, `${d} är inte en dag`);
+      assert.equal(parsaBevis(medDatum('MERGAS', d, SHA_A)).giltigt, false, `${d} måste avvisas`);
+    }
+    // Motprovet: ett verkligt skottdagsdatum MÅSTE godtas, annars fäller vakten rätt beteende.
+    assert.equal(arVerkligtDatum('2024-02-29'), true);
+    assert.equal(parsaBevis(medDatum('MERGAS', '2024-02-29', SHA_A)).giltigt, true);
+  });
+
+  test('GB-16 · commits: får stå på flera rader', () => {
+    // En lång lista radbryts naturligt. Förut lästes bara FÖRSTA raden, så resten av commitsen
+    // blev tyst otäckta — ett oförklarligt nej på en korrekt rapport, och det är så en vakt
+    // kringgås med --no-verify.
+    const flerradig = bevis(`commits: ${SHA_A}\ncommits: ${SHA_B}\ndom: MERGAS\ngranskare: X\ndatum: 2026-09-13`);
+    const p = parsaBevis(flerradig);
+    assert.equal(p.giltigt, true, p.skal);
+    assert.deepEqual(p.commits, [SHA_A, SHA_B]);
+    assert.equal(granskningstackning([SHA_A, SHA_B], [{ fil: 'r.md', text: flerradig }]).ok, true);
   });
 
   test('GB-10 · KÄND BLINDFLÄCK: innehållet prövas aldrig, bara artefakten', () => {

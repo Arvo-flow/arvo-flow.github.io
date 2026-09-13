@@ -42,6 +42,22 @@ function kor(rad, env = {}) {
 
 const sha = (ref) => execSync(`git rev-parse ${ref}`, { cwd: ROT, encoding: 'utf8' }).trim();
 
+/** En PARENTLÖS commit — den form `diff-tree` är blind för utan `--root`. */
+function commitUtanForalder(filer) {
+  const tmpIndex = join(mkdtempSync(join(tmpdir(), 'mainvakt-')), 'index');
+  const env = { ...process.env, GIT_INDEX_FILE: tmpIndex };
+  try {
+    for (const [sokvag, innehall] of filer) {
+      const blob = execSync('git hash-object -w --stdin', { cwd: ROT, encoding: 'utf8', env, input: innehall }).trim();
+      execSync(`git update-index --add --cacheinfo 100644,${blob},${sokvag}`, { cwd: ROT, encoding: 'utf8', env });
+    }
+    const tree = execSync('git write-tree', { cwd: ROT, encoding: 'utf8', env }).trim();
+    return execSync(`git commit-tree ${tree} -m "prov: rot"`, { cwd: ROT, encoding: 'utf8', env }).trim();
+  } finally {
+    rmSync(dirname(tmpIndex), { recursive: true, force: true });
+  }
+}
+
 /** Som commitMedBevis, men med godtyckliga filer — för att bygga fientliga fixturer. */
 function commitMedFil(foralder, sokvag, innehall) {
   return commitMedFiler(foralder, [[sokvag, innehall]]);
@@ -214,6 +230,52 @@ describe('MV · Main-vakten: en andra blick före mekanik', () => {
     const r = kor(`${medBevis} ${medBevis} refs/heads/main ${sha('HEAD')}`);
     assert.equal(r.kod, 1, 'en huvudnyckel får inte kunna tillverkas ur ett hex-filnamn');
     assert.match(r.ut, /Utan bevis/);
+  });
+
+  test('MV-13 · en ROOT-COMMIT (ingen förälder) når aldrig main', () => {
+    // `git diff-tree` skriver INGENTING för en parentlös commit utan `--root`, och en force-push
+    // av en fristående historik gick igenom med exit 0 och TOM utdata — tyst grönt.
+    //
+    // ⚠️ VAD TESTET FAKTISKT BEVISAR: att pushen NEKAS — inte att `--root` gör det. Mätt: tas
+    // bara `--root` bort är sviten grön; först när fast-forward-kontrollen också tas bort faller
+    // testet. En parentlös commit kan aldrig ha fjärrens sha som förfader, så den nekas en rad
+    // tidigare. Det står skrivet här hellre än att låta testnamnet lova en tand som sitter
+    // någon annanstans.
+    const rot = commitUtanForalder([['lib/_prov_rot.js', '// ogranskad mekanik\n']]);
+    const r = kor(`${rot} ${rot} refs/heads/main ${sha('HEAD')}`);
+    assert.equal(r.kod, 1, 'en root-commit med lib/-mekanik måste kräva bevis');
+  });
+
+  test('MV-14 · en REWIND av main nekas — rev-list kan aldrig se en borttagning', () => {
+    // Regression jag själv införde: `rev-list <fjarr>..<lokal>` är TOMT när lokal är förfader,
+    // så grinden såg noll commits medan pushen RADERADE lib/-filer ur main — exit 0. Den gamla
+    // git diff-vägen såg borttagningen. Mätt i ett rent repo: rev-list 0 rader, git diff 1 rad.
+    const gammal = sha('HEAD');
+    const bakat = sha('HEAD~3');
+    const r = kor(`${bakat} ${bakat} refs/heads/main ${gammal}`);
+    assert.equal(r.kod, 1, 'en icke-fast-forward-push till main går inte att pröva och ska nekas');
+    assert.match(r.ut, /icke-fast-forward|rewind/i);
+  });
+
+  test('MV-15 · vakten vaktar sin EGEN verkställare', () => {
+    // Femte vägen förbi: `scripts/mainvakt.mjs` låg utanför KRAVDA. Ett enda steg — ersätt filen
+    // med process.exit(0), committa, pusha — tog bort grinden för varje framtida klon, utan
+    // flagga och utan --no-verify. En vakt som inte vaktar sin egen avstängning är ett hedersord
+    // en nivå upp.
+    const c = commitMedFil(sha('HEAD'), 'scripts/mainvakt.mjs', '#!/usr/bin/env node\nprocess.exit(0);\n');
+    const r = kor(`${c} ${c} refs/heads/main ${sha('HEAD')}`);
+    assert.equal(r.kod, 1, 'en ändring av vakten själv måste kräva granskning');
+    // Samma för hook-installeraren, som annars kan koppla bort den.
+    const h = commitMedFil(sha('HEAD'), 'scripts/setup-hooks.mjs', '// tom\n');
+    assert.equal(kor(`${h} ${h} refs/heads/main ${sha('HEAD')}`).kod, 1);
+  });
+
+  test('MV-16 · api/ och agents/ kräver bevis, inte bara lib/', () => {
+    // KRAVDA:s tre kataloger var oprövade utom lib/ — «agents» struket ur mönstret fällde noll.
+    for (const f of ['api/_prov.mjs', 'agents/_prov.js']) {
+      const c = commitMedFil(sha('HEAD'), f, '// mekanik\n');
+      assert.equal(kor(`${c} ${c} refs/heads/main ${sha('HEAD')}`).kod, 1, `${f} måste kräva bevis`);
+    }
   });
 
   test('MV-08 · flaggan ARVO_GRANSKAD är borta ur skriptet — en escape vore den verkliga mekanismen', () => {
