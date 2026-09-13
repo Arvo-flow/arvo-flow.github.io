@@ -187,6 +187,24 @@ describe('LV · liggarens läsvägar är klassade', () => {
     for (const l of TEST_LOKALDELAR) assert.ok(arTestidentitet(`${l}@${TEST_DOMAN}`), `${l}@${TEST_DOMAN} står i listan men känns inte igen`);
   });
 
+  test('LV-08 · MOAT-aggregaten är ENIGA om arkiverade rader — ingen av dem filtrerar', () => {
+    // 409b138 gav TVÅ av fem moat-satser `arkiverad_at IS NULL` och lämnade tre utan. Tre
+    // aggregat över samma liggare räknade alltså över OLIKA populationer, och två av dem sitter
+    // i SAMMA rum (api/invoice-history.mjs:432 och :609) — rumsredovisningens regel ordagrant:
+    // tal som står bredvid varandra ska gå att jämföra.
+    //
+    // Riktningen kommer ur grundarbeslutet 2026-09-11: «proveniensen måste bestå för moatens
+    // skull». Arkivering betyder «borta ur KUNDENS EGEN VY», aldrig «har aldrig observerats»;
+    // X/Y-talet är ett anonymt tvärkundsaggregat och visar aldrig en kunds rader tillbaka för hen.
+    const moat = vagar.filter((v) => v.sats.includes('liggare: moat'));
+    const filtrerande = moat.filter((v) => normaliseraSQL(aktivSQL(v.sats)).includes('arkiverad_at IS NULL'));
+    assert.deepEqual(filtrerande.map((v) => `${v.fil}:${v.rad}`), [],
+      'ett moat-aggregat som filtrerar arkiverade rader underdriver vad vi observerat — och gör '
+      + 'två räknare i samma rum oense om populationen');
+    // Motprovet: det MÅSTE finnas moat-satser, annars är LV-08 grön av tomhet.
+    assert.ok(moat.length >= 5, `hittade ${moat.length} moat-satser — mätt 2026-09-13: 5`);
+  });
+
   test('LV-05 · ett INTERNT undantag bär alltid sitt skäl', () => {
     // «internt» utan motivering är «ingen frågade» förklätt till «prövat» — och de två får
     // aldrig se likadana ut (samma regel som triage-bokföringens inline-undantag).
