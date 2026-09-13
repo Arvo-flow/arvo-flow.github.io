@@ -1,6 +1,6 @@
 
 ═══════ RUMMET (https://arvoflow.se/portfolio) ═══════
-rader i vyn: 77 · mobil 2431 tecken · desktop 2431 tecken
+rader i vyn: 89 · mobil 3058 tecken · desktop 3058 tecken
 
 RADER SOM RÖR PRISBOKEN:
   · BEVAKAR ERA AVTAL
@@ -17,7 +17,9 @@ RADER SOM RÖR PRISBOKEN:
   · Vi har inget verifierat jämförelsepris för era kategorier ännu, så vi sätter ingen poäng. Ett tal utan mätning är värre än inget tal. Så snart en av era kategorier får ett verifierat pris räknas det fram — och ni ser exakt hur.
   · Vi har inget verifierat jämförelsepris för era kategorier än, så vi hävdar ingenting om er prisnivå. Avtalen är bevakade — vi hör av oss så snart ett mål går att styrka.
   · BEVAKAR
-  · Vägde 0 fakturor mot verifierat publikt listpris · senast 11 sep.
+  · Vägde 0 fakturor mot verifierat publikt listpris · senast 13 sep.
+  · UNDERLAGET I ER BRANSCH
+  · Det räcker inte för en marknadsjämförelse, och vi säger det hellre än räknar på det. Ett fåtal belopp är inte en fördelning — det blir ett tal som ser mätt ut. Tills underlaget bär jämför vi mot verifierat publikt listpris i stället.
   · INNEHAVET · 0 PRISSATTA · 5 MOTTAGNA, INTE PRISSATTA
 
 ✓ Rummet renderar i båda bredderna, utan JS-fel och utan felläge.

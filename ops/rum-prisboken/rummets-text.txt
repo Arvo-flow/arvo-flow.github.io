@@ -2,10 +2,10 @@ Inloggad som
 testyta@arvoflow.se
 Logga ut
 ARVO-KONTORET
-KONFIDENTIELLT · ARVOFLOW.SE · 11 SEP. 2026
+KONFIDENTIELLT · ARVOFLOW.SE · 13 SEP. 2026
 God kväll.
 Vi vaktar era avtal.
-22:57
+22:52
 SENASTE SVEP
 VAKTEN
 BEVAKAR ERA AVTAL
@@ -34,33 +34,47 @@ Vi har inget verifierat jämförelsepris för era kategorier än, så vi hävdar
 VAKTENS KVITTON
 MEDAN NI DREV BOLAGET
 BEVAKAR
-6 nätter i rad utan ett avbrott i bevakningen. Nattens svep är avläst. Ingenting i det krävde er uppmärksamhet.
+8 nätter i rad utan ett avbrott i bevakningen. Nattens svep är avläst. Ingenting i det krävde er uppmärksamhet.
 ANALYS
-Vägde 0 fakturor mot verifierat publikt listpris · senast 11 sep.
+Vägde 0 fakturor mot verifierat publikt listpris · senast 13 sep.
+UNDERLAGET I ER BRANSCH
+FÖRETAGSBREDBAND
+Vi har 5 prispunkter i den här kategorin — men bara 2 skilda belopp.
+SÅ MYCKET SER VI
+Lagrade prispunkter
+observationer
+5
+Varav skilda belopp
+vår tröskel: 10
+2
+Det räcker inte för en marknadsjämförelse, och vi säger det hellre än räknar på det. Ett fåtal belopp är inte en fördelning — det blir ett tal som ser mätt ut. Tills underlaget bär jämför vi mot verifierat publikt listpris i stället.
+
+Talen är vad vi faktiskt lagrat i den här cellen — inte antal bolag. Våra prispunkter är anonymiserade, så vi kan inte påstå hur många företag de kommer från, och då gör vi det inte heller.
+
 INNEHAVET · 0 PRISSATTA · 5 MOTTAGNA, INTE PRISSATTA
 —
 Nordic Managed IT Services AB
-IT-drift & Support · 11 sep.
+IT-drift & Support · 13 sep.
 180 000 kr/år
 MOTTAGEN
 —
 GleSYS AB
-Serverhosting & Cloud-infrastruktur · 11 sep.
+Serverhosting & Cloud-infrastruktur · 13 sep.
 46 800 kr/år
 MOTTAGEN
 —
 Fortnox AB
-Affärssystem / Bokföring · 11 sep.
+Affärssystem / Bokföring · 13 sep.
 21 600 kr/år
 MOTTAGEN
 —
 Bahnhof AB
-Företagsbredband · 11 sep.
+Företagsbredband · 13 sep.
 58 800 kr/år
 MOTTAGEN
 —
 Telia
-Företagsväxel (molnväxel) · 11 sep.
+Företagsväxel (molnväxel) · 13 sep.
 114 000 kr/år
 MOTTAGEN
 FYLL PÅ RUMMET
