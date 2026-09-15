@@ -1,0 +1,34 @@
+name: Skrapa — serverhosting (publikt SEK-referenspris)
+
+# Hämtar ett publikt SEK-listpris för kategorin `serverhosting` och lägger fram ett FÖRSLAG.
+# Skriver ALDRIG till prisboken: «verifierat» måste förtjänas av en människa som öppnar sidan.
+#
+# Körs här och inte lokalt eftersom sandlådan saknar nät-egress — samma skäl som
+# price-monitor.mjs. Playwright + Chromium installeras explicit.
+#
+# FAIL-CLOSED: ändrad DOM, tvetydigt pris, saknad valuta eller oskriven momsbas ger exit 1 med
+# namngivet skäl. Ett rött här är ett korrekt utfall, aldrig ett fel att runda av.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  skrapa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev --ignore-scripts
+      - name: Installera Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Hämta referenspriset
+        shell: bash
+        # pipefail: utan den returnerar en pipe tee:s exit-kod och en död skrapa rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/skrapa-serverhosting.mjs
