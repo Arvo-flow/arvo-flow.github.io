@@ -18,21 +18,22 @@
 // Och `serverhosting` är den enda av de tre där liggaren bär en verklig kundfaktura (GleSYS AB).
 //
 // ══ VAD SKRIPTET ÄR, OCH VAD DET INTE ÄR ════════════════════════════════════════════════════
-// Det HÄMTAR tecken och lägger fram ett FÖRSLAG. Det skriver ALDRIG till prisboken.
+// Det HÄMTAR TECKEN och lägger fram ett UNDERLAG. Det skriver ALDRIG till prisboken.
 // «Verifierat» måste förtjänas (bibeln, 6 augusti) — en människa öppnar sidan, bekräftar att
-// beloppet hör till planen, och FÖRST då går talet in i `BRANCHINDEX` med källa och datum.
+// beloppet hör till produkten, och FÖRST då går talet in i `BRANCHINDEX` med källa och datum.
 // Därefter, och inte förr, byggs en verifierare i `lib/verifiers/` som vaktar talet mot drift.
 //
-// VÄGRAR HELLRE ÄN GISSAR (SD-01..12), per grundarens krav: ändras DOM:en, är priset tvetydigt, saknas valutan eller
-// står momsbasen inte skriven — då avslutar skriptet 1 med ett NAMNGIVET skäl. Aldrig en
-// gissning, aldrig ett medelvärde, aldrig «det som ser rimligast ut». Domen bor i
-// `lib/skrapdom.js` som en ren funktion, så sviten kan pröva den utan nät.
+// VÄGRAR HELLRE ÄN GISSAR (SD-01..16), per grundarens krav: ändras DOM:en, är priset tvetydigt,
+// saknas valutan eller står momsbasen inte skriven — då avslutar skriptet 1 med ett NAMNGIVET
+// skäl. Aldrig en gissning, aldrig ett medelvärde, aldrig «det som ser rimligast ut».
+//
+// ⚠️ EXTRAKTIONEN BOR INTE HÄR, och det är hela läxan ur granskningen. Första versionen plockade
+// planblock ur DOM:en i det här skriptet — okörbart av sviten — och fyra [KUND] gömde sig där.
+// Både extraktion och dom ligger nu i `lib/skrapdom.js`; skriptet hämtar text och ingenting mer.
 //
 // ⚠️ SANDLÅDAN HAR INGEN NÄT-EGRESS — skriptet kan bara köras i GitHub Actions (Playwright +
-// Chromium finns där, precis som för `scripts/price-monitor.mjs`). Det är också skälet till att
-// selektorerna nedan är BREDA och domen är SMAL: jag har inte sett DOM:en, och att skriva snäva
-// selektorer mot en sida man inte läst vore precis den gissning ordern förbjuder. Första
-// körningen ÄR rekognoseringen — faller den, säger felutskriften vad som behöver skärpas.
+// Chromium, precis som `scripts/price-monitor.mjs`). Jag har alltså inte sett sidan: första
+// körningen ÄR rekognoseringen, och faller den säger felutskriften vad som behöver skärpas.
 
 import { withPage } from '../lib/verifiers/core.mjs';
 import { skrapdom } from '../lib/skrapdom.js';
@@ -80,7 +81,7 @@ for (const rad of provade) console.log(`  ${rad}`);
 if (!bast) {
   console.error('\n✗ INGEN ADRESS GAV ETT ENTYDIGT PRIS — och det är rätt utfall, inte ett fel att runda av.');
   console.error('  Hellre tystnad än ett gissat golv i prisboken — det är hela poängen med grinden.');
-  console.error('  Skälen står ovan. Ändrad DOM → skärp `lasPlaner`. Tvetydigt pris → läs sidan själv.');
+  console.error('  Skälen står ovan. Ändrad sida → skärp lib/skrapdom.js. Tvetydigt pris → läs sidan själv.');
   process.exit(1);
 }
 
