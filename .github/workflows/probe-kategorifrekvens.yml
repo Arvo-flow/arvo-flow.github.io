@@ -1,0 +1,29 @@
+name: Sond — kategorifrekvens (i vilken ordning bryts tystnaden?)
+
+# Mäter hur många fakturor liggaren FAKTISKT bär per kategori, och vilka av dem som tiger i
+# revisionsgrinden. Underlaget för i vilken ordning de 19 tysta kategorierna ska få ett
+# verifierat publikt SEK-golv. Läser bara — rör ingen tabell, skriver ingenting.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev --ignore-scripts
+      - name: Mät kategorifrekvensen
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # pipefail: utan den returnerar en pipe tee:s exit-kod och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-kategorifrekvens.mjs
