@@ -24,8 +24,14 @@ jobs:
         with:
           node-version: '20'
       - run: npm ci --omit=dev --ignore-scripts
-      - name: Installera Chromium
-        run: npx playwright install --with-deps chromium
+      # ⚠️ `playwright` finns INTE i package.json — granskaren mätte det. Utan den här raden
+      # kastar `await import('playwright')`, och skriptet hade skrivit «rätt utfall» på ett
+      # verktygsfel: noll rekognosering förklädd till en mätning. Samma mönster som
+      # price-monitor.yml använder.
+      - name: Installera Playwright + Chromium
+        run: |
+          npm install playwright
+          npx playwright install --with-deps chromium
       - name: Hämta referenspriset
         shell: bash
         # pipefail: utan den returnerar en pipe tee:s exit-kod och en död skrapa rapporterar framgång.

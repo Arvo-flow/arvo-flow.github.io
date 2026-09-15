@@ -46,56 +46,30 @@ const KANDIDATER = [
   'https://glesys.se/tjanster/server',
 ];
 
-/**
- * Plocka planblock ur den renderade sidan.
- *
- * Deterministiskt och modellfritt: vi letar element som bär ett SEK-belopp följt av en
- * månadsmarkör, och tar blockets rubriktext som plannamn. ALLA belopp i blocket returneras —
- * aldrig ett förvalt. Att välja ett av två är just det domen finns för att vägra.
- */
-async function lasPlaner(page) {
-  return page.evaluate(() => {
-    const MANAD = /(\d[\d\s .,]*)\s*(?:kr|sek)\s*(?:\/|per\s+)\s*(?:mån|månad|mon|m)\b/gi;
-    const tal = (s) => {
-      const rent = String(s).replace(/[\s ]/g, '').replace(/\.(?=\d{3}\b)/g, '').replace(',', '.');
-      const n = Number(rent);
-      return Number.isFinite(n) ? Math.round(n) : null;
-    };
-    const ut = [];
-    // Kandidatblock: element som INTE har ett barn som också bär ett månadspris — alltså det
-    // innersta block som omsluter priset. Så undviks att hela sidan räknas som "en plan".
-    const alla = [...document.querySelectorAll('div,li,article,section,td')];
-    for (const el of alla) {
-      const txt = (el.innerText ?? '').replace(/\s+/g, ' ').trim();
-      if (!txt || txt.length > 600) continue;
-      MANAD.lastIndex = 0;
-      const belopp = [...txt.matchAll(MANAD)].map((m) => tal(m[1])).filter((n) => n !== null);
-      if (belopp.length === 0) continue;
-      const harBarnMedPris = [...el.children].some((c) => {
-        const t = (c.innerText ?? '');
-        return /(?:kr|sek)\s*(?:\/|per\s+)\s*(?:mån|månad)/i.test(t);
-      });
-      if (harBarnMedPris) continue;
-      const rubrik = (el.querySelector('h1,h2,h3,h4,h5,strong,b')?.innerText ?? '').replace(/\s+/g, ' ').trim();
-      ut.push({ plan: rubrik || txt.slice(0, 60), belopp: [...new Set(belopp)] });
-    }
-    return ut;
-  });
-}
-
 const provade = [];
 let bast = null;
 
 for (const url of KANDIDATER) {
   const r = await withPage(url, async (page, status) => {
-    if (typeof status === 'number' && status !== 200) return { status, sidtext: '', planer: [] };
-    const sidtext = (await page.evaluate(() => document.body?.innerText ?? '')).replace(/\s+/g, ' ');
-    const planer = await lasPlaner(page);
-    return { status, sidtext, planer };
-  }, { timeoutMs: 40000, settleMs: 3500 }).catch((e) => ({ status: 'ERR ' + e.message.split('\n')[0], sidtext: '', planer: [] }));
+    if (typeof status === 'number' && status !== 200) return { status, sidtext: '' };
+    // Skriptet hämtar TECKEN. Extraktionen och domen bor i lib/skrapdom.js — den halva som kan
+    // gissa måste vara prövbar av sviten, och det var precis det som saknades i första versionen.
+    const sidtext = await page.evaluate(() => document.body?.innerText ?? '');
+    return { status, sidtext };
+  }, { timeoutMs: 40000, settleMs: 3500 }).catch((e) => ({ status: 'ERR ' + e.message.split('\n')[0], sidtext: '', fel: e.message.split('\n')[0] }));
 
-  provade.push(`${url} → status ${r.status}, ${r.sidtext.length}b, ${r.planer.length} planblock`);
-  const dom = skrapdom({ url, sidtext: r.sidtext, planer: r.planer });
+  // ⚠️ ETT VERKTYGSFEL FÅR ALDRIG SE UT SOM «INGET PRIS». Granskaren mätte att `playwright`
+  // saknades i beroendena: importen kastade, catchen svalde det till «sidan oläsbar», och
+  // skriptet skrev ut «rätt utfall» — noll rekognosering, förklädd till en mätning. Ett fel i
+  // HÄMTNINGEN namnges nu och avslutar direkt.
+  if (r.fel) {
+    console.error(`\n✗ SKRAPAN KOM ALDRIG FRAM: ${r.fel}`);
+    console.error('  Det är ett fel i VERKTYGET, inte ett utfall om priset. Detta är INTE ett mätvärde.');
+    process.exit(1);
+  }
+
+  provade.push(`${url} → status ${r.status}, ${r.sidtext.length}b`);
+  const dom = skrapdom({ url, sidtext: r.sidtext });
   if (!dom.blockerar) { bast = { url, dom }; break; }
   provade.push(`    domen: [${dom.kod}] ${dom.skal}`);
 }
@@ -110,16 +84,14 @@ if (!bast) {
   process.exit(1);
 }
 
-const f = bast.dom.forslag;
-console.log(`\n✓ FÖRSLAG (INTE ett verifierat listpris) — ${bast.dom.skal}\n`);
+const f = bast.dom.underlag;
+console.log(`\n✓ UNDERLAG (INTE ett golv, INTE ett verifierat listpris) — ${bast.dom.skal}\n`);
 console.log(`  källa     ${f.url}`);
 console.log(`  momsbas   ${f.momsbas}   (LÄST ur sidan, aldrig antagen)`);
-if (f.valutaVarning) console.log(`  ⚠ ${f.valutaVarning}`);
-console.log(`  planer    ${f.antalPlaner}`);
-console.log(`  billigast ${f.billigaste.kronorPerManad} kr/mån · ${f.billigaste.plan}`);
-console.log(`  dyrast    ${f.dyraste.kronorPerManad} kr/mån · ${f.dyraste.plan}\n`);
-for (const p of f.alla) console.log(`    ${String(p.kronorPerManad).padStart(6)} kr/mån   ${p.plan}`);
+console.log(`  priser    ${f.antalPriser} förekomster · ${f.lagsta}–${f.hogsta} kr/mån\n`);
+for (const p of f.forekomster) console.log(`    ${String(p.kronor).padStart(6)} kr/mån   …${p.kontext}`);
 
-console.log('\n  NÄSTA STEG, och det får ingen maskin göra: en människa öppnar sidan och bekräftar');
-console.log('  att beloppet hör till planen. FÖRST därefter går talet in i prisboken med källa');
-console.log('  och datum — och först då byggs en verifierare som vaktar det mot drift.\n');
+console.log('\n  DET HÄR ÄR ETT UNDERLAG, INTE ETT GOLV. Modulen ser att tecknen är entydiga —');
+console.log('  aldrig vilken PRODUKT ett pris hör till. En människa väljer referensprodukten,');
+console.log('  och FÖRST därefter går talet in i prisboken med källa och datum. Sedan, och inte');
+console.log('  förr, byggs en verifierare som vaktar det mot drift.\n');
