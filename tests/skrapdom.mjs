@@ -248,16 +248,31 @@ describe('SD · skrapans extraktion och dom', () => {
     assert.equal(KONTEXT_FONSTER, 70);
   });
   // ── GRANSKNINGENS FYND 2026-09-16 · SD-20..27 ────────────────────────────────────────────
-  test('SD-20 · VITLISTAN: varje blankstegstecken Unicode känner, inte de två jag tänkte på', () => {
-    // [KUND]: den gamla svartlistan vaktade 2 av 10 blankstegstecken. «Pro 1<U+2009>299 kr/mån»
-    // gav 299 — tyst, utan post i `avvisade`. Samma falska golv som «VPS 2 199» men åt det
-    // LÄGRE hållet, alltså den riktning som överdriver besparingen och vårt eget arvode.
-    const BLANK = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '　', ' '];
-    for (const b of BLANK) {
-      const r = lasPriser(`Pro 1${b}299 kr/mån`);
-      assert.deepEqual(r.priser.map((p) => p.kronor), [], `U+${b.codePointAt(0).toString(16)} ska vägras`);
-      assert.equal(r.avvisade.length, 1, `U+${b.codePointAt(0).toString(16)} ska SYNAS i avvisade`);
+  test('SD-20 · VITLISTAN: teckenmängden HÄRLEDS ur Unicode, den räknas inte upp', () => {
+    // [KUND] i två varv i rad, och andra gången i DET HÄR TESTET. Första versionen prövade tio
+    // handplockade blankstegstecken — jag hade bytt en svartlista över farliga FORMER mot en
+    // testlista över ofarliga TECKEN, vilket är samma fel ett lager upp. Granskaren mätte att
+    // U+200B och U+2060, båda namngivna i förra domen, fortfarande gav det falska 299: JS:s \s
+    // innehåller inte formatkontrolltecken, så vitlistan fick aldrig frågan.
+    //
+    // Testet räknar därför inte längre upp någonting. Det SVEPER hela BMP:n, frågar Unicode
+    // vilka tecken som är mellanrum, format eller kontroll, och kräver att vart och ett vägras.
+    // Ett tecken jag inte tänkt på kan inte längre saknas ur listan, för det finns ingen lista.
+    const osynliga = [];
+    for (let cp = 0; cp <= 0xffff; cp += 1) {
+      const ch = String.fromCodePoint(cp);
+      if (ch === '\r' || ch === '\n') continue;          // radbrytning SKILJER tal åt, med avsikt
+      if (/[\p{Zs}\p{Cf}\p{Cc}]/u.test(ch)) osynliga.push([cp, ch]);
     }
+    // Golvet är MÄTT, inte valt: svepet ger 123 tecken på Node 22 (Unicode 15). Tröskeln ligger
+    // under det för att tåla en Unicode-bump, men högt nog att ett tomt svep aldrig blir grönt.
+    assert.ok(osynliga.length > 100, `svepet hittade bara ${osynliga.length} tecken — mät inte på tomhet`);
+    const slapp = [];
+    for (const [cp, ch] of osynliga) {
+      const r = lasPriser(`Pro 1${ch}299 kr/mån`);
+      if (r.priser.length || r.avvisade.length !== 1) slapp.push('U+' + cp.toString(16).padStart(4, '0').toUpperCase());
+    }
+    assert.deepEqual(slapp, [], `tecken som inte vägrades: ${slapp.slice(0, 12).join(' ')}`);
     // Vitlistan direkt: formen deklareras, den räknas inte upp baklänges.
     for (const ok of ['199', '1299', '99,50', '12345', '99.5']) assert.notEqual(tolkaBelopp(ok), null, ok);
     for (const nej of ['25,000', '1.299', '2 199', '123456', '99,500', '', 'abc']) assert.equal(tolkaBelopp(nej), null, nej);
@@ -277,6 +292,11 @@ describe('SD · skrapans extraktion och dom', () => {
       assert.equal(r.avvisade.length, 1, rad);
       assert.match(r.avvisade[0].skal, new RegExp(`per ${enhet}`), rad);
     }
+    // Ordförrådet som granskaren mätte som ogatat — sex per-enhet-former passerade rent.
+    for (const ord of ['medarbetare', 'deltagare', 'postlåda', 'mailbox', 'profil', 'mottagare']) {
+      const dom = skrapdom({ url: 'x', sidtext: sida(['Start 299 kr/mån', 'Bas 399 kr/mån', `Pro 499 kr/mån per ${ord}`]) });
+      assert.equal(dom.kod, 'kvalificerat_pris', `«per ${ord}» ska tysta sidan`);
+    }
     // Motprov: ett rent månadspris får inte fastna i samma gren.
     assert.equal(lasPriser('Bas 299 kr/mån').priser[0].kronor, 299);
   });
@@ -284,6 +304,13 @@ describe('SD · skrapans extraktion och dom', () => {
   test('SD-22 · «kronor» och «SEK» är samma valuta — och en annan enhet RÄKNAS', () => {
     assert.equal(lasPriser('Start 199 kronor/mån').priser[0]?.kronor, 199);
     assert.equal(lasPriser('Start 199 SEK per månad').priser[0]?.kronor, 199);
+    // Två svenska kortformer granskaren mätte som TYSTA bortfall — de fanns i ingendera listan.
+    assert.equal(lasPriser('Pro 499:-/mån').priser[0]?.kronor, 499, 'kronorstrecket är en valuta');
+    assert.equal(lasPriser('Pro 499 kr./mån').priser[0]?.kronor, 499, 'kr. med punkt likaså');
+    // Och RADBRYTNINGENS undantag har en egen tand: den SKILJER två tal åt, med avsikt. Utan den
+    // blir «E3» + «490» ett grupperat tal och en korrekt sida tystnar.
+    assert.equal(lasPriser('M365 E3\n490 kr/mån').priser[0]?.kronor, 490,
+      'en radbrytning mellan plannamn och pris får aldrig läsas som tusentalsgruppering');
     // En annan enhet är inget avvisat månadspris — men den får inte vara osynlig heller.
     const r = lasPriser('Lokalhyra 200 kr/m² och domän 229 kr/år');
     assert.deepEqual(r.priser, []);

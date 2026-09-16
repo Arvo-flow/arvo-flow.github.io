@@ -76,6 +76,8 @@ if (!KANDIDATER) {
 
 const provade = [];
 let bast = null;
+let lasta = 0;
+let olasta = 0;
 
 for (const url of KANDIDATER) {
   const r = await withPage(url, async (page, status) => {
@@ -106,6 +108,15 @@ for (const url of KANDIDATER) {
   }
 
   provade.push(`${url} → status ${r.status}, ${r.sidtext.length}b`);
+  // En sida vi aldrig LÄSTE är inte en sida utan priser. 404 är ett svar om adressen; en tom
+  // kropp på 200 betyder att renderingen inte gav oss något (cookie-vägg, JS som inte kört).
+  // Båda räknas separat, för slutmeddelandet får inte kalla dem «rätt utfall».
+  if (r.status !== 200 || r.sidtext.length < 400) {
+    olasta += 1;
+    provade.push(`    ingen läsning: ${r.status !== 200 ? `status ${r.status}` : 'tom kropp (cookie-vägg eller orenderad sida?)'}`);
+    continue;
+  }
+  lasta += 1;
   const dom = skrapdom({ url, sidtext: r.sidtext });
   if (!dom.blockerar) { bast = { url, dom }; break; }
   provade.push(`    domen: [${dom.kod}] ${dom.skal}`);
@@ -115,8 +126,19 @@ console.log(`\n═══ SKRAPA · ${KATEGORI} (publikt SEK-referenspris) ══
 for (const rad of provade) console.log(`  ${rad}`);
 
 if (!bast) {
-  console.error('\n✗ INGEN ADRESS GAV ETT ENTYDIGT PRIS — och det är rätt utfall, inte ett fel att runda av.');
-  console.error('  Hellre tystnad än ett gissat golv i prisboken — det är hela poängen med grinden.');
+  // ⚠️ TVÅ RÖDA SOM BETYDER OLIKA SAKER, och att slå ihop dem vore modulens egen felfamilj i
+  // utskriften. Granskaren mätte att 404 och en tom kropp båda gav «✗ … och det är rätt utfall»
+  // — en mening som påstår att vi LÄSTE sidorna och att de inte höll.
+  if (lasta === 0) {
+    console.error(`\n✗ INGEN ADRESS GICK ATT LÄSA (${olasta} försök) — det är ett utfall om HÄMTNINGEN,`);
+    console.error('  aldrig om priserna. Ingen av sidorna har prövats mot grinden. Adresserna kan ha');
+    console.error('  flyttat, eller så stoppade en cookie-vägg renderingen. Detta är INTE ett mätvärde');
+    console.error('  om huruvida leverantören publicerar sina priser.');
+    process.exit(1);
+  }
+  console.error(`\n✗ ${lasta} sida(or) lästes och INGEN gav ett entydigt pris — och det är rätt utfall,`);
+  console.error('  inte ett fel att runda av. Hellre tystnad än ett gissat golv i prisboken.');
+  if (olasta) console.error(`  (${olasta} adress(er) gick inte att läsa alls — de är inte prövade, se ovan.)`);
   console.error('  Skälen står ovan, med sidans EGNA ord citerade. Ett [kvalificerat_pris] betyder');
   console.error('  att sidan själv säger att talet inte är ett rent månadslistpris — läs den, och');
   console.error('  för in talet för hand om du kan belägga vad det gäller.');
