@@ -39,7 +39,7 @@
 // beloppet hör till produkten, och FÖRST då går talet in i `BRANCHINDEX` med källa och datum.
 // Därefter, och inte förr, byggs en verifierare i `lib/verifiers/` som vaktar talet mot drift.
 //
-// VÄGRAR HELLRE ÄN GISSAR (SD-01..19), per grundarens krav: ändras DOM:en, är priset tvetydigt,
+// VÄGRAR HELLRE ÄN GISSAR (SD-01..27), per grundarens krav: ändras DOM:en, är priset tvetydigt,
 // bär det en kampanj-/bindnings-/enhetskvalificerare, eller står momsbasen inte skriven nära
 // priset — då avslutar skriptet 1 med ett NAMNGIVET skäl. **Fortnox egen sida bär en sådan
 // kvalificerare i klartext** («Listat pris avser första användaren, därefter ordinarie
@@ -79,7 +79,16 @@ let bast = null;
 
 for (const url of KANDIDATER) {
   const r = await withPage(url, async (page, status) => {
-    if (typeof status === 'number' && status !== 200) return { status, sidtext: '' };
+    // ⚠️ `withPage` FÅNGAR NAVIGERINGSFEL INTERNT och returnerar en STRÄNG-status («ERR …»,
+    // «no-response»). Granskaren mätte följden: `typeof status === 'number'` missade dem, och
+    // `r.fel` likaså, så tre oåtkomliga adresser gav «✗ INGEN ADRESS GAV ETT ENTYDIGT PRIS —
+    // och det är rätt utfall». Ett nätverksfel rapporterat som ett utfall om priset hör till
+    // den felfamilj hela modulen finns emot.
+    //
+    // Skillnaden är knivskarp: ett TAL är ett svar om adressen (404 = sidan finns inte, ett
+    // giltigt fynd att gå vidare från). Allt annat betyder att vi aldrig kom fram.
+    if (typeof status !== 'number') return { status, sidtext: '', fel: `hämtningen misslyckades: ${status}` };
+    if (status !== 200) return { status, sidtext: '' };
     // Skriptet hämtar TECKEN. Extraktionen och domen bor i lib/skrapdom.js — den halva som kan
     // gissa måste vara prövbar av sviten, och det var precis det som saknades i första versionen.
     const sidtext = await page.evaluate(() => document.body?.innerText ?? '');

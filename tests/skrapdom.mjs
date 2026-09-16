@@ -1,4 +1,4 @@
-// tests/skrapdom.mjs — SD-01..19 · den halva som kan gissa måste prövas.
+// tests/skrapdom.mjs — SD-01..27 · den halva som kan gissa måste prövas.
 //
 // ══ VARFÖR (2026-09-15) ═════════════════════════════════════════════════════════════════════
 // Första versionen testade DOMEN och lämnade EXTRAKTIONEN i skriptet, okörbar av sviten.
@@ -75,7 +75,7 @@ describe('SD · skrapans extraktion och dom', () => {
     // priser vi ser — och det var precis så det falska golvet uppstod.
     const d = skrapdom({ url: 'x', sidtext: sida(['Start 99 kr/mån', 'Bas 199 kr/mån', 'Pro 25,000 kr/mån']) });
     assert.equal(d.blockerar, true);
-    assert.equal(d.kod, 'tvetydigt_tal');
+    assert.equal(d.kod, 'avvisat_belopp');
     assert.match(d.skal, /25,000/);
   });
 
@@ -156,7 +156,7 @@ describe('SD · skrapans extraktion och dom', () => {
     // kunde se de fyra extraktionsfelen. Här går rå text in och en dom kommer ut.
     const d = skrapdom({ url: 'x', sidtext: sida(['VPS 2 199 kr/mån', 'Bas 199 kr/mån', 'Pro 499 kr/mån']) });
     assert.equal(d.blockerar, true, 'den giftiga raden ska fälla HELA sidan, inte filtreras bort');
-    assert.equal(d.kod, 'tvetydigt_tal');
+    assert.equal(d.kod, 'avvisat_belopp');
   });
 
   test('SD-14 · ogiltig indata kördes aldrig', () => {
@@ -247,4 +247,131 @@ describe('SD · skrapans extraktion och dom', () => {
     assert.ok(avvisade.every((a) => typeof a.fore === 'string' && typeof a.efter === 'string'));
     assert.equal(KONTEXT_FONSTER, 70);
   });
+  // ── GRANSKNINGENS FYND 2026-09-16 · SD-20..27 ────────────────────────────────────────────
+  test('SD-20 · VITLISTAN: varje blankstegstecken Unicode känner, inte de två jag tänkte på', () => {
+    // [KUND]: den gamla svartlistan vaktade 2 av 10 blankstegstecken. «Pro 1<U+2009>299 kr/mån»
+    // gav 299 — tyst, utan post i `avvisade`. Samma falska golv som «VPS 2 199» men åt det
+    // LÄGRE hållet, alltså den riktning som överdriver besparingen och vårt eget arvode.
+    const BLANK = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '　', ' '];
+    for (const b of BLANK) {
+      const r = lasPriser(`Pro 1${b}299 kr/mån`);
+      assert.deepEqual(r.priser.map((p) => p.kronor), [], `U+${b.codePointAt(0).toString(16)} ska vägras`);
+      assert.equal(r.avvisade.length, 1, `U+${b.codePointAt(0).toString(16)} ska SYNAS i avvisade`);
+    }
+    // Vitlistan direkt: formen deklareras, den räknas inte upp baklänges.
+    for (const ok of ['199', '1299', '99,50', '12345', '99.5']) assert.notEqual(tolkaBelopp(ok), null, ok);
+    for (const nej of ['25,000', '1.299', '2 199', '123456', '99,500', '', 'abc']) assert.equal(tolkaBelopp(nej), null, nej);
+  });
+
+  test('SD-21 · ett PER-ENHET-pris försvinner inte tyst — det avvisas med enheten utskriven', () => {
+    // Granskaren mätte `priser=0 avvisade=0` för «kr/användare/mån» — den vanligaste SaaS-formen,
+    // alltså precis den kategori skrapan siktar på. «Vad är talet per?» är bibelns egen fråga.
+    for (const [rad, enhet] of [
+      ['Bas 299 kr/användare/mån', 'användare'],
+      ['Plus 250 kr/anv/mån', 'anv'],
+      ['Team 180 kr/licens/mån', 'licens'],
+      ['Pro 90 kr/plats/mån', 'plats'],
+    ]) {
+      const r = lasPriser(rad);
+      assert.deepEqual(r.priser, [], rad);
+      assert.equal(r.avvisade.length, 1, rad);
+      assert.match(r.avvisade[0].skal, new RegExp(`per ${enhet}`), rad);
+    }
+    // Motprov: ett rent månadspris får inte fastna i samma gren.
+    assert.equal(lasPriser('Bas 299 kr/mån').priser[0].kronor, 299);
+  });
+
+  test('SD-22 · «kronor» och «SEK» är samma valuta — och en annan enhet RÄKNAS', () => {
+    assert.equal(lasPriser('Start 199 kronor/mån').priser[0]?.kronor, 199);
+    assert.equal(lasPriser('Start 199 SEK per månad').priser[0]?.kronor, 199);
+    // En annan enhet är inget avvisat månadspris — men den får inte vara osynlig heller.
+    const r = lasPriser('Lokalhyra 200 kr/m² och domän 229 kr/år');
+    assert.deepEqual(r.priser, []);
+    assert.deepEqual(r.avvisade, []);
+    assert.equal(r.ejManad, 2, 'de ska RÄKNAS, annars är de en tyst utgång');
+  });
+
+  test('SD-23 · ett tecken före beloppet är en kreditering eller ett intervall — aldrig ett pris', () => {
+    for (const rad of ['Rabatt -99 kr/mån', 'Kredit −250 kr/mån', 'Spann 199–499 kr/mån']) {
+      const r = lasPriser(rad);
+      assert.deepEqual(r.priser.map((p) => p.kronor), [], rad);
+      assert.equal(r.avvisade.length, 1, rad);
+      assert.match(r.avvisade[0].skal, /kreditering eller intervall/, rad);
+    }
+  });
+
+  test('SD-24 · kvalificerarnas ORDFÖRRÅD prövas, inte bara ett ord per regel', () => {
+    // Granskaren sabotage-strippade varje regel till dess enda testade alternativ: 0 fällda var.
+    // En regel vars övriga alternativ ingen prövar är en regel ingen vaktar.
+    const fall = [
+      ['Ord. 999 nu 499 kr/mån', 'kampanj'], ['Prova 499 kr/mån', 'kampanj'],
+      ['Pro 499 kr/mån i 6 månader', 'tidsbegränsat'], ['Pro 499 kr/mån 3 månader för halva', 'tidsbegränsat'],
+      ['Pro 499 kr/mån vid årsvis betalning', 'bindningsvillkor'], ['Pro 499 kr/mån med årsbetalning', 'bindningsvillkor'],
+      ['Pro 499 kr/mån per person', 'enhetskvalificerare'], ['Pro 499 kr/mån per konto', 'enhetskvalificerare'],
+    ];
+    for (const [rad, del] of fall) {
+      const d = skrapdom({ url: 'x', sidtext: sida(['Start 299 kr/mån', 'Bas 399 kr/mån', rad]) });
+      assert.equal(d.kod, 'kvalificerat_pris', `«${rad}» ska tysta sidan`);
+      assert.match(d.skal, new RegExp(del), rad);
+    }
+  });
+
+  test('SD-25 · «alla överens»-grenen i momsbasen har en egen tand', () => {
+    // Granskaren sabotage-rev `every`-kontrollen: 0 fällda. En sida som säger exkl vid ett pris
+    // och inkl vid ett annat säger emot sig själv, och då är svaret okänt — aldrig det första.
+    const bada = `${FYLL}\nPriser exkl moms.\nStart 99 kr/mån\nBas 199 kr/mån\n${'z'.repeat(MOMS_FONSTER * 2)}\nPriser inkl moms.\nPro 499 kr/mån\n${FYLL}`;
+    const { priser } = lasPriser(bada);
+    assert.equal(momsbasVidIndex(bada, priser[0].index), 'exkl');
+    assert.equal(momsbasVidIndex(bada, priser[2].index), 'inkl');
+    assert.equal(lasMomsbas(bada, priser.map((p) => p.index)), 'okand',
+      'två kända men olika baser är en motsägelse, inte ett val');
+    assert.equal(skrapdom({ url: 'x', sidtext: bada }).kod, 'momsbas_okand');
+  });
+
+  test('SD-26 · kontextens FÖRE-halva mäts, inte bara konstanten', () => {
+    // Granskaren hårdkodade KONTEXT_FONSTER till 12 i fore-slicen: 0 fällda, eftersom SD-19
+    // asserterade konstantens VÄRDE och inte mekaniken. En kvalificerare 40 tecken före priset
+    // ligger innanför fönstret och måste fälla.
+    // ⚠️ MIN FÖRSTA VERSION AV DET HÄR TESTET VAR GRÖN PÅ FEL GRUND. Den byggde en hel sida,
+    // och då nådde GRANNPRISETS efter-fönster kvalificeraren — precis den bleed jag själv
+    // skrivit ut som känd egenskap. Sabotaget «hårdkoda fore till 12» fällde noll. Mekanismen
+    // måste mätas där den är ensam: på lasPriser, med ETT pris.
+    const langt = 'Kampanj under september för nya kunder: 499 kr/mån';
+    const pos = langt.indexOf('499');
+    assert.ok(pos > 12 && pos < KONTEXT_FONSTER, 'fixturen måste ligga mellan sabotaget och fönstret');
+    const r = lasPriser(langt);
+    assert.equal(r.priser.length, 1);
+    assert.match(r.priser[0].fore, /Kampanj/, 'fore-fönstret ska nå kvalificeraren');
+    assert.equal(r.priser[0].efter, '', 'och efter-halvan får inte vara den som räddar testet');
+    // Och hela vägen genom domen, på en sida där raden står ensam bland neutrala priser.
+    const d = skrapdom({ url: 'x', sidtext: sida(['Start 299 kr/mån', 'Bas 399 kr/mån', langt]) });
+    assert.equal(d.kod, 'kvalificerat_pris');
+    assert.match(d.skal, /kampanj/);
+  });
+
+  test('SD-27 · underlagets ordning och invariant', () => {
+    // Sorteringen hade ingen tand: riven gav rubriken «710–209 kr/mån». Och `blockerar` var
+    // asserterad för 1 av 6 koder — det fält skriptet grenar på.
+    const d = skrapdom({ url: 'x', sidtext: sida(['Stor 710 kr/mån', 'Mini 209 kr/mån', 'Mellan 490 kr/mån']) });
+    assert.equal(d.blockerar, false, d.skal);
+    assert.deepEqual(d.underlag.forekomster.map((f) => f.kronor), [209, 490, 710], 'stigande ordning');
+    assert.equal(d.underlag.lagsta, 209);
+    assert.equal(d.underlag.hogsta, 710);
+    // Invarianten över HELA fältet av koder: blockerar===false medför alltid ett underlag.
+    const fall = [
+      NORMAL,
+      sida(['Start 99 kr/mån', 'Bas 199 kr/mån']),
+      sida(['Start 99 kr/mån', 'Bas 199 kr/mån', 'Pro 25,000 kr/mån']),
+      sida(['Start 299 kr/mån', 'Bas 399 kr/mån', 'Kampanj 199 kr/mån']),
+      sida(['A 1 kr/mån', 'B 199 kr/mån', 'C 499 kr/mån']),
+      sida(['Start 99 kr/mån', 'Bas 199 kr/mån', 'Pro 499 kr/mån'], { moms: 'Se villkor.' }),
+      'kort',
+    ];
+    for (const t of fall) {
+      const r = skrapdom({ url: 'x', sidtext: t });
+      assert.equal(r.blockerar === false, r.underlag !== null,
+        `koden «${r.kod}» bröt invarianten blockerar===false <=> underlag!==null`);
+    }
+  });
+
 });
