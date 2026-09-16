@@ -1,4 +1,4 @@
-// tests/skrapdom.mjs — SD-01..16 · den halva som kan gissa måste prövas.
+// tests/skrapdom.mjs — SD-01..19 · den halva som kan gissa måste prövas.
 //
 // ══ VARFÖR (2026-09-15) ═════════════════════════════════════════════════════════════════════
 // Första versionen testade DOMEN och lämnade EXTRAKTIONEN i skriptet, okörbar av sviten.
@@ -9,17 +9,20 @@
 //     "1 200 kr/m²"               -> 1200   (ett naket `m` matchade «m²»)
 //     "25,000 kr/mån"             -> 25     (faktor 1000, innanför sanitetsbandet)
 //
-// Plus: ordinarie- och kampanjpris i SYSKONELEMENT blev två skilda «planer», var och en
-// entydig — tvetydighetsgrinden var strukturellt onåbar och kampanjpriset blev golvet.
+// ══ OCH ANDRA VARVET GAV TRE [KUND] TILL (SD-17..19) ════════════════════════════════════════
+// Alla tre hade samma form som de fyra första — en grind som inte kunde SE det den vaktade:
+//   · kontexten lästes bara VÄNSTER, så «199 kr/mån första 3 månaderna» passerade (SD-17)
+//   · momsfönstret satte en SIDBRED flagga, så ett pris stämplade alla (SD-18)
+//   · lookbehindens icke-träff försvann TYST, utan post i `avvisade` (SD-19)
 //
-// MEKANISMEN PRÖVAD, MATNINGEN ALDRIG — bibelns mest upprepade sjukdom, femte gången. Sviten
-// matar därför RÅ SIDTEXT genom hela kedjan (lasPriser -> skrapdom), aldrig ett förberett
-// mellanled. Ett test som bygger sitt eget indata kan aldrig fälla ett fel i steget innan.
+// MEKANISMEN PRÖVAD, MATNINGEN ALDRIG — bibelns mest upprepade sjukdom. Sviten matar därför RÅ
+// SIDTEXT genom hela kedjan (lasPriser -> skrapdom), aldrig ett förberett mellanled. Ett test
+// som bygger sitt eget indata kan aldrig fälla ett fel i steget innan.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  skrapdom, lasPriser, lasMomsbas, tolkaBelopp,
-  SANITET_MIN_KR, SANITET_MAX_KR, MIN_PRISER, MOMS_FONSTER,
+  skrapdom, lasPriser, lasMomsbas, momsbasVidIndex, tolkaBelopp,
+  SANITET_MIN_KR, SANITET_MAX_KR, MIN_PRISER, MOMS_FONSTER, KONTEXT_FONSTER,
 } from '../lib/skrapdom.js';
 
 const FYLL = 'Hosting i Sverige. Driftsäkra servrar med svensk support dygnet runt. '.repeat(8);
@@ -34,7 +37,8 @@ describe('SD · skrapans extraktion och dom', () => {
     // «VPS 2 199 kr/mån» gav 2199 för sanna 199 — tolv gånger fel, entydigt, innanför bandet.
     const r = lasPriser('VPS 2 199 kr/mån');
     assert.deepEqual(r.priser.map((p) => p.kronor), [], 'formen är tvetydig och ska vägras');
-    assert.deepEqual(r.avvisade, ['2 199'], 'och avvisandet ska SYNAS, aldrig städas bort tyst');
+    assert.deepEqual(r.avvisade.map((a) => a.token), ['2 199'],
+      'och avvisandet ska SYNAS, aldrig städas bort tyst');
     assert.deepEqual(lasPriser('Diskutrymme 50 99 kr/mån').priser, [],
       'ett tal före priset får aldrig svälja in i beloppet');
   });
@@ -46,6 +50,9 @@ describe('SD · skrapans extraktion och dom', () => {
     // bakom ett annat skydd är inte två lager (bibeln 10 september). Beloppet är nu ogrupperat,
     // så den här raden är den ENDA tanden.
     assert.deepEqual(lasPriser('Lokalhyra 200 kr/m²').priser, []);
+    // Och en annan enhet är inte ett AVVISAT månadspris — den är ett tal om något annat. Att
+    // lägga den i `avvisade` hade fällt varje sida som råkar nämna kvadratmeterhyra.
+    assert.deepEqual(lasPriser('Lokalhyra 200 kr/m²').avvisade, []);
     // Motprov: månadsformerna som FINNS måste fortfarande läsas, annars vaktar SD-02 sönder allt.
     for (const m of ['199 kr/mån', '199 kr/månad', '199 kr/month', '199 sek/mo'])
       assert.equal(lasPriser(m).priser[0]?.kronor, 199, m);
@@ -79,9 +86,9 @@ describe('SD · skrapans extraktion och dom', () => {
     // ingen avvägning, så kontexten läses och sidan tystas.
     for (const rad of ['Kampanj 199 kr/mån', 'Ord. pris 499 kr/mån', 'Spara nu: 149 kr/mån', 'Från 99 kr/mån']) {
       const d = skrapdom({ url: 'x', sidtext: sida(['Start 299 kr/mån', 'Bas 399 kr/mån', rad]) });
-      assert.equal(d.kod, 'kampanjmarkor', `«${rad}» ska tysta sidan`);
+      assert.equal(d.kod, 'kvalificerat_pris', `«${rad}» ska tysta sidan`);
     }
-    // Motprov: en sida utan kampanjord får INTE tystas, annars är skrapan värdelös.
+    // Motprov: en sida utan kvalificerare får INTE tystas, annars är skrapan värdelös.
     assert.equal(skrapdom({ url: 'x', sidtext: NORMAL }).blockerar, false);
   });
 
@@ -157,12 +164,14 @@ describe('SD · skrapans extraktion och dom', () => {
     assert.deepEqual(lasPriser(null).priser, []);
     assert.equal(tolkaBelopp(null), null);
     assert.equal(tolkaBelopp(''), null);
+    assert.equal(momsbasVidIndex('priser exkl moms', null), 'okand');
   });
 
-  test('SD-15 · varje pris bär sin kontext — annars kan kampanjgrinden inte se något', () => {
-    const r = lasPriser('Vår bästa plan Pro kostar 499 kr/mån');
+  test('SD-15 · varje pris bär sin kontext — annars kan kvalificerargrinden inte se något', () => {
+    const r = lasPriser('Vår bästa plan Pro kostar 499 kr/mån och faktureras årsvis');
     assert.equal(r.priser.length, 1);
-    assert.match(r.priser[0].kontext, /Pro kostar/);
+    assert.match(r.priser[0].fore, /Pro kostar/);
+    assert.match(r.priser[0].efter, /faktureras årsvis/);
   });
 
   test('SD-16 · KÄND BLINDFLÄCK: utfallet är ett UNDERLAG, aldrig ett golv', () => {
@@ -174,5 +183,68 @@ describe('SD · skrapans extraktion och dom', () => {
     assert.equal(d.kod, 'underlag');
     const nycklar = JSON.stringify(d.underlag);
     assert.ok(!/verifierat|golv|listpris/i.test(nycklar), 'utfallet får aldrig påstå mer än det vet');
+  });
+
+  // ── DE TRE [KUND] UR ANDRA GRANSKNINGSVARVET ─────────────────────────────────────────────
+  test('SD-17 · en kvalificerare EFTER beloppet fäller — kontexten läses åt BÅDA håll', () => {
+    // [KUND] nr 1: grinden läste 60 tecken VÄNSTER om priset. Varje kvalificerare som står
+    // efter beloppet — den vanligaste placeringen på en svensk prissida — passerade osedd, och
+    // syntes inte heller i kvittot. Fortnox egen prislista bär formen ordagrant: «Listat pris
+    // avser första användaren, därefter ordinarie licenspriser».
+    const efterfall = [
+      ['Pro 499 kr/mån första 3 månaderna', 'tidsbegränsat pris'],
+      ['Pro 499 kr/mån vid 12 mån bindning', 'bindningsvillkor'],
+      ['Pro 499 kr/mån per användare',      'enhetskvalificerare'],
+      // «ordinarie» träffar kampanjregeln FÖRST, och det är rätt namn på markören — kvittot
+      // säger den första kategori som träffar, aldrig en rangordning vi hittat på.
+      ['Pro 499 kr/mån, därefter ordinarie pris', 'kampanj-/frånmarkör'],
+    ];
+    for (const [rad, namn] of efterfall) {
+      const d = skrapdom({ url: 'x', sidtext: sida(['Start 299 kr/mån', 'Bas 399 kr/mån', rad]) });
+      assert.equal(d.kod, 'kvalificerat_pris', `«${rad}» ska tysta sidan`);
+      assert.match(d.skal, new RegExp(namn), 'och kvittot ska säga VILKEN sorts kvalificerare');
+    }
+    // Motprov: ett neutralt efterled får INTE fälla, annars vaktar SD-17 sönder varje prislista.
+    assert.equal(skrapdom({ url: 'x', sidtext: sida(['Start 299 kr/mån inkl support', 'Bas 399 kr/mån', 'Pro 499 kr/mån']) }).blockerar,
+      false, 'en vakt som fäller allt är lika värdelös som ingen vakt');
+  });
+
+  test('SD-18 · momsfönstret binder till PRISET, inte till sidan', () => {
+    // [KUND] nr 2: slingan satte en SIDBRED flagga — ett enda kvalificerande pris stämplade
+    // alla. `MOMS_FONSTER` kunde krympas till ett utan att ett test föll: en konstant vars namn
+    // lovade en mekanik den inte hade (bibeln 10 september). Här står ETT pris nära uppgiften
+    // och två långt bort; det får aldrig räcka.
+    const langtBort = `${FYLL}\nAlla priser anges exkl moms.\nStart 99 kr/mån\n${'y'.repeat(MOMS_FONSTER * 2)}\nBas 199 kr/mån\nPro 499 kr/mån\n${FYLL}`;
+    const d = skrapdom({ url: 'x', sidtext: langtBort });
+    assert.equal(d.kod, 'momsbas_okand', 'ett pris utanför fönstret gör HELA underlaget okänt');
+    assert.match(d.skal, /2 av 3/, 'och kvittot räknar exakt hur många som saknar sin bas');
+    // Per pris, direkt: det nära priset är känt, det bortre är det inte.
+    const { priser } = lasPriser(langtBort);
+    assert.equal(momsbasVidIndex(langtBort, priser[0].index), 'exkl');
+    assert.equal(momsbasVidIndex(langtBort, priser[2].index), 'okand');
+  });
+
+  test('SD-19 · ingen prisförekomst försvinner tyst — varje träff redovisas', () => {
+    // [KUND] nr 3: lookbehinden `(?<!\d[\s ])` gjorde att «VPS 2 199 kr/mån» inte matchade ALLS.
+    // Ingen träff, ingen post i `avvisade`, ingen rad i kvittot — trots att docstringen intygade
+    // att ett avvisande aldrig städas bort tyst. Sidan såg prisfri ut. Ankaret är rivet; varje
+    // belopp med månadsenhet hamnar nu i exakt en av de två listorna.
+    // ⚠️ FÖRSTA VERSIONEN AV DET HÄR TESTET VAR GRÖN PÅ FEL GRUND, i exakt den sjukdom det
+    // skrevs mot. Fixturen bar «VPS 2 199 kr/mån» — och DEN formen matchade den gamla regexen
+    // också (gruppen svalde «2 199» och tvetydighetsregeln avvisade den). Sabotaget «återinför
+    // lookbehinden» fällde NOLL. Den tysta droppen krävde en annan form: `siffra mellanrum
+    // TVÅ siffror`, där gruppen inte kan svälja talet OCH lookbehinden blockerar nästa
+    // startpunkt. «Disk 50 99 kr/mån» gav då ingen träff alls — 99 kr/mån stod på sidan och
+    // fanns i ingendera listan.
+    const text = 'Start 99 kr/mån · Disk 50 99 kr/mån · Bas 25,000 kr/mån · Pro 499 kr/mån';
+    const { priser, avvisade } = lasPriser(text);
+    // Fyra månadsbelopp står i texten. Fyra ska redovisas.
+    assert.equal(priser.length + avvisade.length, 4,
+      'summan av lästa och avvisade ska täcka varje förekomst på sidan');
+    assert.deepEqual(avvisade.map((a) => a.token), ['50 99', '25,000']);
+    assert.deepEqual(priser.map((p) => p.kronor), [99, 499]);
+    // Och det avvisade bär sin egen kontext, så kvittot kan visa VAR på sidan det stod.
+    assert.ok(avvisade.every((a) => typeof a.fore === 'string' && typeof a.efter === 'string'));
+    assert.equal(KONTEXT_FONSTER, 70);
   });
 });

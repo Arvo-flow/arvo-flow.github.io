@@ -30,6 +30,7 @@
 //   säger bara att en verifierare skulle kunna byggas. Beslutet är en människas.
 
 import { chromium } from 'playwright';
+import { skrapdom } from '../lib/skrapdom.js';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 const LEV = process.env.PRIS_LEVERANTOR || '(namnlös)';
@@ -205,6 +206,13 @@ for (const url of MAL) {
   console.log(`  MOMS:    ${traffa(text, MOMS_RE).slice(0, 3).join(' | ') || '(inget momsord — momsbasen är OKÄND)'}`);
   console.log(`  KAMPANJ: ${traffa(text, KAMPANJ_RE).slice(0, 3).join(' | ') || '(inget)'}`);
   console.log(`  HINDER:  ${traffa(text, HINDER_RE).slice(0, 3).join(' | ') || '(inga)'}`);
+  // ⚠️ REGEL 1 — EN SANNING PER FRÅGA. Sondens PAKET→PRIS-parning ovan är REKOGNOSERING: den är
+  // med flit lös, för att visa vad som FINNS på sidan. Den är inte, och får aldrig bli, en andra
+  // åsikt om huruvida ett tal duger. Den STRÄNGA läsningen bor på ett enda ställe —
+  // `lib/skrapdom.js`, prövad av SD-01..19 — och skrivs ut här så att sonden och skrapan aldrig
+  // kan säga olika om samma sida. Två läsare som kan glida isär är sämre än en med hård grind.
+  const dom = skrapdom({ url, sidtext: text });
+  console.log(`  SKRAPDOM: [${dom.kod}] ${dom.skal}`);
   console.log('');
 }
 

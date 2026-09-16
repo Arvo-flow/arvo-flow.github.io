@@ -1,15 +1,21 @@
-name: Skrapa — serverhosting (publikt SEK-referenspris)
+name: Skrapa — publikt SEK-referenspris för en tyst kategori
 
-# Hämtar ett publikt SEK-listpris för kategorin `serverhosting` och lägger fram ett FÖRSLAG.
-# Skriver ALDRIG till prisboken: «verifierat» måste förtjänas av en människa som öppnar sidan.
+# Hämtar ett publikt SEK-listpris och lägger fram ett UNDERLAG. Skriver ALDRIG till prisboken:
+# «verifierat» måste förtjänas av en människa som öppnar sidan.
 #
 # Körs här och inte lokalt eftersom sandlådan saknar nät-egress — samma skäl som
 # price-monitor.mjs. Playwright + Chromium installeras explicit.
 #
-# FAIL-CLOSED: ändrad DOM, tvetydigt pris, saknad valuta eller oskriven momsbas ger exit 1 med
-# namngivet skäl. Ett rött här är ett korrekt utfall, aldrig ett fel att runda av.
+# FAIL-CLOSED: ändrad DOM, tvetydigt pris, kampanj-/bindnings-/enhetskvalificerare eller oskriven
+# momsbas ger exit 1 med namngivet skäl. Ett rött här är ett korrekt utfall, aldrig ett fel att
+# runda av — Fortnox egen prislista bär en kvalificerare i klartext.
 on:
   workflow_dispatch:
+    inputs:
+      kategori:
+        description: 'Kategori att skrapa (kända: faktura-tjanst)'
+        required: false
+        default: 'faktura-tjanst'
 
 permissions:
   contents: read
@@ -34,7 +40,9 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Hämta referenspriset
         shell: bash
+        env:
+          SKRAP_KATEGORI: ${{ inputs.kategori || 'faktura-tjanst' }}
         # pipefail: utan den returnerar en pipe tee:s exit-kod och en död skrapa rapporterar framgång.
         run: |
           set -o pipefail
-          node scripts/skrapa-serverhosting.mjs
+          node scripts/skrapa-prislista.mjs
