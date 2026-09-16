@@ -24,14 +24,28 @@
 // och har **ingen matris**. Kategorin är medvetet deklarerad som icke-benchmarkbar — «kostnaden
 // beror på serverspecifikationer». Ett skrapat VPS-pris hade inte haft någonstans att ta vägen.
 //
-// ══ VART SIKTAR VI I STÄLLET, OCH VARFÖR ════════════════════════════════════════════════════
-// Samma mätning pekar på `faktura-tjanst`. Där finns rena `plan → NNN kr/mån`-par:
-//   · fortnox.se/produkt/prislista   **40 par** (Mini 209 · Liten 349 · Mellan 490 · Stor 710…)
-//   · bokio.se/priser                **8 par**, med månad OCH år som bekräftar varandra
-// Och prisbokens `faktura-tjanst` är `source: 'estimated'` med en not som citerar «Billogram
-// Starter från 299 kr/mån (maj 2026)» — ett tal ur minnet, i en matris som redan når kund.
-// Det svarar mot brofästet i grundarordern: ett estimat som kan bytas mot ett verifierat
-// listpris.
+// ══ ⚠️ OCH OMRIKTNINGEN VAR OCKSÅ FEL (Fables strategiska dom, 16 sept) ═════════════════════
+// Jag skrev här att `faktura-tjanst` är målet, med två skäl. BÅDA var falska, och båda gick att
+// motbevisa med ett kommando i det här repot:
+//
+//   1. «40 par på fortnox.se/produkt/prislista» — de paren tillhör `saas-finance`, inte
+//      `faktura-tjanst`. Fortnox prislista säljer BOKFÖRINGSSYSTEM; `faktura-tjanst` är
+//      «utskickstjänst UTÖVER bokföringssystemets inbyggda e-faktura» (branchindex.js:326).
+//      Värre: talen står REDAN i prisboken. `branchindex.js:741` bär
+//      `paket: { Mini: 209, Liten: 349, Mellan: 490, Stor: 710, … }`, verifierade 17 juni och
+//      vaktade av `lib/verifiers/fortnox.mjs`. Skrapan var riktad mot en sida vars priser vi
+//      redan hade, i rätt kategori, handdeklarerade. Samma fel som oderlands domänpriser —
+//      ett pris utan sin produkt — men en nivå subtilare.
+//
+//   2. «en matris som redan når kund» — den når inte kund. `isAudited('faktura-tjanst')` är
+//      falskt, alltså kortsluter revisionsgrinden kategorin till talfritt offert-läge innan
+//      någon matris läses. Det stod utskrivet i min egen pre-commit-logg
+//      («[revisionsgrind] 'faktura-tjanst' är oreviderad → offert-läge utan siffror») medan jag
+//      skrev motsatsen. Ett påstående skrivet, inte kört — tredje gången i samma arbete.
+//
+// KATALOGEN NEDAN ÄR DÄRFÖR INTE ETT BESLUT OM MÅL. Den står kvar som den mätta kandidatlistan
+// medan grundaren avgör mekaniken (skrapa kontra människoassisterad kö). Lägg inte till en
+// adress, och kör inte skriptet som om målet vore avgjort, förrän det beslutet finns.
 //
 // ══ VAD SKRIPTET ÄR, OCH VAD DET INTE ÄR ════════════════════════════════════════════════════
 // Det HÄMTAR TECKEN och lägger fram ett UNDERLAG. Det skriver ALDRIG till prisboken.
