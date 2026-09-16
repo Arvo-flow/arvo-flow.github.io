@@ -115,4 +115,38 @@ describe('BEVAKAT-KORT · rätt skäl, noll siffror', () => {
     assert.match(text(k), /reglerad|monopol|nät/i,
       'Ellevio-fallet: kunden ska förstå att nätavgiften inte går att byta — det är vårt vassaste tysta beslut');
   });
+  // ── TYSTNADEN SÄGER VARFÖR (grundarbeslut 2026-09-16) ──────────────────────────────────────
+  test('BK-08 · en offertprissatt kategori får registrets besked, inte löftet om ett golv', async () => {
+    // Här stod «Under bevakning — vi prissätter så snart ett verifierat golv finns». För
+    // larm-bevakning kommer det golvet ALDRIG att finnas — priset sätts i offert. Ett kundlöfte
+    // utan mekanik är regel 9 brutet, och det stod i rummet varje gång en sådan faktura lästes.
+    const k = watchedCard({ supplier: 'Securitas', category: 'larm-bevakning',
+      triage_reason: 'no_benchmark', route: 'unsupported' });
+    assert.equal(k.kind, 'Offertprissatt');
+    assert.match(k.detail, /sätts i offert/);
+    assert.ok(!/prissätter så snart|verifierat golv finns/.test(`${k.headline} ${k.detail} ${k.action}`),
+      'löftet om ett framtida golv får inte stå kvar där golvet aldrig kan finnas');
+    // Noll tal, precis som varje annat bevakat kort (BK-01..07).
+    assert.ok(!/\d/.test(`${k.headline} ${k.detail} ${k.action}`), 'inga siffror i kundytan');
+  });
+
+  test('BK-09 · saas-crm säger utländsk valuta — aldrig offertprissatt', async () => {
+    // Pipedrive/HubSpot/Zoho publicerar sina priser. «Offertprissatt» vore en osanning kunden
+    // motbevisar på tio sekunder.
+    const k = watchedCard({ supplier: 'Pipedrive', category: 'saas-crm',
+      triage_reason: 'no_benchmark', route: 'unsupported' });
+    assert.match(k.kind, /utländsk valuta/);
+    assert.ok(!/offert/i.test(`${k.kind} ${k.detail}`));
+  });
+
+  test('BK-10 · en kategori UTAN deklaration behåller det gamla, försiktiga kortet', async () => {
+    // Fail-closed åt rätt håll: faktura-tjanst SKA fyllas, och där är löftet inte tomt utan en kö.
+    // Motprovet är hela poängen — utan det kunde registret svälja varje kategori och BK-08 vore
+    // grön av att allt ser likadant ut.
+    const k = watchedCard({ supplier: 'Billogram', category: 'faktura-tjanst',
+      triage_reason: 'no_benchmark', route: 'unsupported' });
+    assert.equal(k.kind, 'Ej prissatt kategori');
+    assert.match(k.action, /prissätter så snart/);
+  });
+
 });

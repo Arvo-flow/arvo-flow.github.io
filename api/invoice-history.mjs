@@ -28,6 +28,7 @@ import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getPublicListBenchmark, kohortTackning } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
+import { tystnadsbesked } from '../lib/tystnadsskal.js';
 
 export const config = { maxDuration: 10 };
 
@@ -363,10 +364,32 @@ export function watchedCard(a) {
     // Efter de leverantörsspecifika grenarna: en KÄND leverantör med ett känt skäl (elnätet,
     // webbhotellen) ska bära sin egen, mer precisa förklaring. Först när namnet inte säger något
     // är "ingen verifierad marknadsreferens" den mest specifika sanning vi har.
-    kind = 'Ej prissatt kategori';
-    headline = 'Mottagen och klassad — men utan verifierat golv att prissätta mot';
-    detail = 'Vi såg fakturan och la den under uppsikt. Vi sätter ingen siffra förrän vi har en verifierad marknadsreferens — aldrig en gissning.';
-    action = 'Under bevakning — vi prissätter så snart ett verifierat golv finns.';
+    // ── TYSTNADEN SÄGER NU VARFÖR (grundarbeslut 2026-09-16, ur Fables dom) ──────────────────
+    // Här stod ett LÖFTE: «vi prissätter så snart ett verifierat golv finns». För `larm-bevakning`,
+    // `forsakring-foretag` och sex till kommer det golvet ALDRIG att finnas — priset sätts i
+    // offert, och det är en produktsanning, inte en lucka. Ett kundlöfte utan mekanik är regel 9
+    // brutet, och det stod i rummet varje gång en sådan faktura lästes.
+    //
+    // Registret (`lib/tystnadsskal.js`) deklarerar VARFÖR kategorin tiger, och alla fyra
+    // kortfälten härleds ur klassen — aldrig skrivna här. Femton kategorier bär beskedet om att
+    // inget golv finns; `saas-crm` bär ett eget (priset är publikt, fast i USD).
+    //
+    // FAIL-CLOSED (BK-10): saknas deklaration faller vi tillbaka på den gamla texten. Den är sann för de
+    // två kategorier som FAKTISKT ska fyllas (faktura-tjanst, bankavgifter) — där är löftet inte
+    // tomt utan en kö. En okänd kategori får hellre en försiktig text än en påhittad förklaring
+    // (reservkortets läxa, 15 augusti).
+    const besked = tystnadsbesked(a.category);
+    if (besked) {
+      kind = besked.rubrik;
+      headline = besked.rad;
+      detail = besked.text;
+      action = besked.atgard;
+    } else {
+      kind = 'Ej prissatt kategori';
+      headline = 'Mottagen och klassad — men utan verifierat golv att prissätta mot';
+      detail = 'Vi såg fakturan och la den under uppsikt. Vi sätter ingen siffra förrän vi har en verifierad marknadsreferens — aldrig en gissning.';
+      action = 'Under bevakning — vi prissätter så snart ett verifierat golv finns.';
+    }
   } else {
     // ── RESERVKORTET FÅR INTE PÅSTÅ ETT SKÄL (grundargranskning 2026-08-15) ───────────────────
     // Här stod tidigare "utan verifierat golv att prissätta mot" — en SUBSTANTIELL förklaring,

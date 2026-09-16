@@ -93,7 +93,10 @@ describe('TS · tystnadens skäl', () => {
     for (const k of Object.keys(TYSTNADSSKAL)) {
       const b = tystnadsbesked(k);
       if (!b) continue;
-      const hela = `${b.rubrik} ${b.text}`;
+      // ⚠️ ALLA FYRA FÄLTEN, inte två. Jag flyttade «vad vi gör i stället» till `atgard`
+      // när kortet kopplades in, och TS-08 läste bara rubrik+text — invarianten hade blivit grön
+      // av att texten smalnat, inte av att den höll. Kunden läser hela kortet.
+      const hela = `${b.rubrik} ${b.rad} ${b.text} ${b.atgard}`;
       assert.ok(!/vi (genomför|utför|sköter) bytet|vi byter åt er/i.test(hela), `${k} lovar ett byte`);
       assert.ok(!/saknar data|har inte data|ingen information/i.test(hela), `${k} säger «vi saknar data»`);
       assert.ok(/bevakar|förbereder|säger till/i.test(hela), `${k} säger inte vad vi GÖR i stället`);
