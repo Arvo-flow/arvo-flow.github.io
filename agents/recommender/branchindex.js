@@ -738,6 +738,25 @@ export const BRANCHINDEX = {
       source: 'fortnox-prislista', lastVerified: '2026-08-31', unit: 'kr_per_manad_exkl_moms',
       url: 'https://www.fortnox.se/produkt/prislista',
       // Paket = det bolag faktiskt köper (det vi ankrar på).
+      //
+      // ⚠️ FOTNOTENS RÄCKVIDD — PRÖVAD OCH STÄNGD 2026-09-16. Sidan bär raden «Listat pris avser
+      // första användaren, därefter ordinarie licenspriser». Gällde den paketpriserna vore varje
+      // tal här ett golv för EN användare draget som bolagets kostnad — ett [KUND]-fel i en
+      // kategori som redan talar till kunder. Fable 5.1 kunde inte avgöra räckvidden härifrån
+      // (den nådde ingen sida live) och lämnade den som sin tyngsta öppna tråd.
+      //
+      // GRUNDAREN LÄSTE SIDAN och deklarerar: fotnoten gäller ENBART separata licenser som säljs
+      // OVANPÅ grundpaketet. Paketpriserna nedan är grundpaket och står som de är. Ingen ändring
+      // av talen följer — deklarationen är att de är RÄTT, och det är därför den bokförs här och
+      // inte bara sägs. Ett beslut vi inte bokför har vi inte fattat (bokföringsplikten, 14 aug).
+      //
+      // Detta ÄR mekaniken Fable föreskrev: maskinen hittar och citerar kvalificeraren, människan
+      // avgör vad den gäller, och avgörandet skrivs i prisboken med datum och upphov.
+      paketFotnot: {
+        text: 'Listat pris avser första användaren, därefter ordinarie licenspriser',
+        galler: 'separata licenser ovanpå grundpaketet — INTE grundpaketpriserna nedan',
+        deklareratAv: 'grundaren (läste sidan)', deklareratDatum: '2026-09-16',
+      },
       paket: { Mini: 209, Liten: 349, Mellan: 490, Stor: 710, 'Mini+': 369, 'Mellan+': 659, 'Stor+': 919, Byråpartner: 499 },
       // Enskilda kärnmoduler.
       moduler: { 'Bokföring': 189, 'Attest & Koll': 119, 'Avstämning': 139, 'Autogiro': 109, 'Anläggningsregister': 129 },
