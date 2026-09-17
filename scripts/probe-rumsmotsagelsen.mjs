@@ -24,7 +24,8 @@
 // låna utseendet av «noll» (bibelns mest upprepade felfamilj).
 
 import { getDb } from '../lib/db.js';
-import { TYSTNADSSKAL } from '../lib/tystnadsskal.js';
+import { isAudited } from '../lib/revision-gate.js';
+import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 const db = getDb();
 if (!db) {
@@ -33,7 +34,10 @@ if (!db) {
   process.exit(1);
 }
 
-const kategorier = Object.keys(TYSTNADSSKAL);
+// ⚠️ LISTAN HÄRLEDS UR PRISBOKEN + REVISIONSGRINDEN, inte ur tystnadsregistret. Två skäl, båda
+// bärande: sonden ska kunna köras UTAN det blockerade arbetet (den mäter världen, inte min
+// deklaration), och en sond som frågar mitt eget register kan bara bekräfta att registret finns.
+const kategorier = Object.keys(BRANCHINDEX).filter((k) => !isAudited(k));
 
 console.log('\n═══ RUMMETS MOTSÄGELSE · mätt mot produktionen ═══\n');
 
