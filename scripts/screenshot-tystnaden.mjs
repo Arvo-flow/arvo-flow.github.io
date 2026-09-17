@@ -109,7 +109,10 @@ if (tystIInnehavet === 0) {
   console.error('\n✗ Ingen innehavsrad bär ett skäl — del 1 av ändringen syns inte i bilden.');
   process.exit(1);
 }
-if (!kinds.has('Offertprissatt') || !kinds.has('Kräver särskilt tillstånd')) {
+// Rubrikerna HÄRLEDS ur registret — en hårdkodad sträng här hade stoppat bilden varje gång
+// grundaren justerar kopian, och det är fel sorts rött.
+const kravs = ['it-support', 'forsakring-foretag'].map((k) => tystnadsbesked(k).rubrik);
+if (!kravs.every((r) => kinds.has(r))) {
   console.error('\n✗ Bilden saknar offertkortet eller karantänkortet — den kan inte visa att');
   console.error('  det juridiska filtret håller, och då är den ingen verifiering.');
   process.exit(1);

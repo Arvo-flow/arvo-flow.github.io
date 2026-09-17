@@ -236,4 +236,40 @@ describe('TS · tystnadens skäl', () => {
     const fallda = LOFTESVERB.filter((v) => negerat(v).test(falskt));
     assert.ok(fallda.length >= 2, `motprovet fälldes bara av ${fallda.length} verb — regeln är för slapp`);
   });
+  test('TS-14 · inget ÅRTAL i den juridiska karantänen — ambitionen är intern', () => {
+    // ⚖️ Grundaren föreslog «vi räknar med tillstånd 2028». Tre skäl att hålla det borta från
+    // kundytan, alla ur bibeln:
+    //   1. Det är en prognos om FI:s beslut, inte om vårt arbete — regel 4 kräver grund,
+    //      konfidens OCH asymmetri, och asymmetrin faller åt fel håll: slår den fel har KUNDEN
+    //      väntat, inte vi.
+    //   2. Kortet finns för att NOLLA en förväntan. «Men 2028 gör vi det» säger «vänta på oss»,
+    //      och en kund som skjuter upp sin försäkringsöversyn har tagit skada av vår copy.
+    //   3. Ett årtal i kundtext ruttnar utan mekanik: 2027 läses som försening, 2029 som ett
+    //      brutet löfte, och ingenting påminner oss. Prisbokens «verifierat»-läxa.
+    //
+    // Ambitionen bokförs i `grund`, som aldrig når kunden — och DÄR ska den stå, annars är den
+    // ett beslut vi inte fattat (bokföringsplikten).
+    const ARTAL = /\b(19|20)\d{2}\b/;
+    const ikarantan = Object.keys(TYSTNADSSKAL).filter((k) => TYSTNADSSKAL[k].skal === SKAL.TILLSTAND_KRAVS);
+    assert.ok(ikarantan.length > 0, 'motprov: karantänen måste ha invånare');
+    for (const k of ikarantan) {
+      const b = tystnadsbesked(k);
+      const hela = `${b.rubrik} ${b.rad} ${b.text} ${b.atgard}`;
+      assert.ok(!ARTAL.test(hela), `${k} bär ett årtal i kundtexten: «${hela}»`);
+      // Och inget ord som lovar en framtid, även utan siffra.
+      assert.ok(!/inom kort|snart|återkommer vi|när vi har tillstånd|i framtiden/i.test(hela),
+        `${k} lovar en framtid utan att kunna hålla den`);
+    }
+    // MOTPROVET: ambitionen SKA vara bokförd internt, annars har vi inte fattat beslutet — och
+    // regeln hade varit gratis att följa genom att bara glömma den.
+    // ⚠️ MOTPROVET VAR FÖRST VÄRDELÖST: det matchade VILKET årtal som helst, och grunden bär
+    //  redan deklarationsdatumet «2026-09-17». Att radera tidslinjen fällde därför noll — regeln
+    //  hade varit gratis att följa. Nu pinnas FORMEN på en framåtblickande tidpunkt, inte ett
+    //  värde som ruttnar.
+    const TIDSLINJE = /(tidigast|väntas|planerad(?:t|e)? till)\s+\d{4}/i;
+    const internt = ikarantan.map((k) => tystnadsgrund(k)).join(' ');
+    assert.match(internt, TIDSLINJE,
+      'den interna grunden ska bära tidslinjen — annars är «inget årtal i kundtext» ingen avvägning, bara tystnad');
+  });
+
 });
