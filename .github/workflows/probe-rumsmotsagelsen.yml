@@ -1,0 +1,39 @@
+name: Probe — rummets motsägelse (produktionsdata)
+
+# Mäter TVÅ frågor mot produktionsdatabasen, båda uppkomna ur regel 8-genomgången 16–17 sept:
+#
+#   1. Kan Rummet visa «Vi jämförde 0 fakturor» bredvid en påstådd besparing? I den iscensatta
+#      skärmdumpen kom det av att stubben saknade `prisunderlag`. Om produktionen kan nå samma
+#      tillstånd är det ett [KUND]-fel och kräver en fail-closed-mekanism.
+#   2. Når tystnadsbeskeden någon rad överhuvudtaget? Granskningens F2 säger att grenen är
+#      monterad på ett `triage_reason` produktionen aldrig sätter för de kategorierna.
+#
+# Körs här och inte lokalt eftersom sandlådan saknar DATABASE_URL. Sonden MÄTER datan, inte
+# HTTP-routen — den behöver därför ingen CRON_SECRET.
+#
+# Utan databas avslutar sonden 1 UTAN tal: «okänt» får aldrig låna utseendet av «noll».
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev --ignore-scripts
+      - name: Mät
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # pipefail: utan den returnerar en pipe tee:s exit-kod och en död sond rapporterar
+        # framgång — 35 av 75 workflows saknade den 22 augusti (SV-11).
+        run: |
+          set -o pipefail
+          node scripts/probe-rumsmotsagelsen.mjs
