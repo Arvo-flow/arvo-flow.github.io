@@ -120,14 +120,27 @@ describe('BEVAKAT-KORT · rätt skäl, noll siffror', () => {
     // Här stod «Under bevakning — vi prissätter så snart ett verifierat golv finns». För
     // larm-bevakning kommer det golvet ALDRIG att finnas — priset sätts i offert. Ett kundlöfte
     // utan mekanik är regel 9 brutet, och det stod i rummet varje gång en sådan faktura lästes.
-    const k = watchedCard({ supplier: 'Securitas', category: 'larm-bevakning',
+    // (Fixturen var larm-bevakning tills granskningens F1 flyttade den till OKLART — prisboken
+    //  bär verifierade SEK-listpriser för just den kategorin. Ett test vars fixtur byter klass
+    //  under fötterna slutar pröva det det heter.)
+    const k = watchedCard({ supplier: 'Företagshälsan Väst AB', category: 'foretagshalsovard',
       triage_reason: 'no_benchmark', route: 'unsupported' });
     assert.equal(k.kind, 'Offertprissatt');
     assert.match(k.detail, /sätts i offert/);
+    assert.ok(!/vi bevakar avtalsslutet|förbereder (det exakta )?motbudet/i.test(`${k.detail} ${k.action}`),
+      'löftet om en bevakning vi inte har får inte stå i kortet');
     assert.ok(!/prissätter så snart|verifierat golv finns/.test(`${k.headline} ${k.detail} ${k.action}`),
       'löftet om ett framtida golv får inte stå kvar där golvet aldrig kan finnas');
     // Noll tal, precis som varje annat bevakat kort (BK-01..07).
-    assert.ok(!/\d/.test(`${k.headline} ${k.detail} ${k.action}`), 'inga siffror i kundytan');
+    // ⚠️ EN AVVÄGNING, INTE EN UPPLUCKRING. BK-01 förbjuder VARJE siffra på reason-koderna och
+    //  står orörd — den finns mot att interna mätvärden läcker ut (Slack-fallet: «radsumma 3 991 kr
+    //  ≠ fakturatotal 382 kr»). Registrets åtgärd säger «60 och 30 dagar», vilket inte är ett
+    //  mätvärde om kundens faktura utan vår EGEN utskicksplan, hämtad ur send-reminders. Att förbjuda
+    //  den vore att vakta ordet i stället för påståendet (SK-08:s läxa) och tvinga kopian mot
+    //  vaghet — precis det vi lagar. Men gränsen pinnas: 60 och 30 är de ENDA tal som får stå här.
+    const utanPlanen = `${k.headline} ${k.detail} ${k.action}`.replace(/\b(60|30)\b/g, '');
+    assert.ok(!/\d/.test(utanPlanen), `inga andra tal än utskicksplanen: ${utanPlanen}`);
+    assert.ok(!/(kr|%|kronor)\b/i.test(`${k.detail} ${k.action}`), 'aldrig ett belopp i kundytan');
   });
 
   test('BK-09 · saas-crm säger utländsk valuta — aldrig offertprissatt', async () => {

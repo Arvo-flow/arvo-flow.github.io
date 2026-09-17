@@ -83,36 +83,87 @@ describe('TS · tystnadens skäl', () => {
     }
     // Två kategorier med SAMMA klass ska ge IDENTISK text — annars är texten skriven per
     // kategori och registret är dekoration.
-    assert.deepEqual(tystnadsbesked('larm-bevakning'), tystnadsbesked('it-support'));
-    assert.notDeepEqual(tystnadsbesked('larm-bevakning'), tystnadsbesked('serverhosting'));
+    // (Fixturen pekade förr på larm-bevakning, som flyttades till OKLART av F1 — ett test vars
+    //  fixtur byter klass under fötterna prövar plötsligt null mot null.)
+    assert.deepEqual(tystnadsbesked('it-support'), tystnadsbesked('foretagshalsovard'));
+    assert.notDeepEqual(tystnadsbesked('it-support'), tystnadsbesked('serverhosting'));
   });
 
-  test('TS-08 · beskedet lovar aldrig ett byte, och säger aldrig «vi saknar data»', () => {
-    // Nivå 3 i Switch-doktrinen: Arvo BEVÄPNAR och utlovar aldrig verkställighet (regel 9).
-    // Och «vi saknar data» läses som en brist; «det finns inget listpris» är ett omdöme.
+  test('TS-08 · beskedet lovar bara det som är backat — mätt, inte antaget', () => {
+    // ⚠️ GRANSKNINGENS F3, GRUNDARBESLUT «B». Förra versionen lovade «vi bevakar avtalsslutet»,
+    // «förbereder motbudet» och «säger till när något rör sig». INGEN av dem fanns:
+    // `storeTriaged` skriver aldrig `contract_end_date`, och prislarmens mottagarlista
+    // filtrerar `route = 'auto'`. Testet förbjuder därför de PÅSTÅENDENA, och kräver det enda
+    // som är kontrollerat hela vägen: save-contract skriver datumet, send-reminders mejlar på
+    // 60/30 dagar utan route-filter.
     for (const k of Object.keys(TYSTNADSSKAL)) {
       const b = tystnadsbesked(k);
       if (!b) continue;
-      // ⚠️ ALLA FYRA FÄLTEN, inte två. Jag flyttade «vad vi gör i stället» till `atgard`
-      // när kortet kopplades in, och TS-08 läste bara rubrik+text — invarianten hade blivit grön
-      // av att texten smalnat, inte av att den höll. Kunden läser hela kortet.
       const hela = `${b.rubrik} ${b.rad} ${b.text} ${b.atgard}`;
       assert.ok(!/vi (genomför|utför|sköter) bytet|vi byter åt er/i.test(hela), `${k} lovar ett byte`);
       assert.ok(!/saknar data|har inte data|ingen information/i.test(hela), `${k} säger «vi saknar data»`);
-      assert.ok(/bevakar|förbereder|säger till/i.test(hela), `${k} säger inte vad vi GÖR i stället`);
+      // De tre löftena utan mekanik, namngivna så de inte kan smyga tillbaka.
+      assert.ok(!/vi bevakar avtalsslutet|förbereder (det exakta )?motbudet|säger till när något rör sig/i.test(hela),
+        `${k} lovar en bevakning som inte finns för triagerade rader`);
+      // Och det som FINNS ska stå där — annars är kortet en återvändsgränd.
+      assert.match(b.atgard, /60 och 30 dagar/, `${k} saknar den backade åtgärden`);
     }
   });
 
-  test('TS-09 · de femton som bär Nivå-3-kopian är just femton — inte sjutton', () => {
-    // Ordern sa 17. Talet står här för att nästa läsare annars räknar efter ordern och inte
-    // efter registret — samma sjukdom som prisbokens avskrivna listor.
-    const volym = Object.values(TYSTNADSSKAL).filter((v) => v.skal === SKAL.VOLYMSTYRD).length;
-    const offert = Object.values(TYSTNADSSKAL).filter((v) => v.skal === SKAL.OFFERTPRISSATT).length;
-    assert.equal(volym, 7, 'volymstyrda');
-    assert.equal(offert, 8, 'offertprissatta (Nivå 3)');
-    assert.equal(volym + offert, 15, 'de som får ett besked om att inget golv finns');
-    // Och de övriga tysta ska vara redovisade, inte bortglömda.
-    assert.equal(TYSTA.length, Object.keys(TYSTNADSSKAL).length,
-      'registret ska täcka exakt de tysta kategorierna — varken fler eller färre');
+  test('TS-09 · registret täcker exakt de tysta kategorierna — härlett, inte uppräknat', () => {
+    // ⚠️ HÄR STOD 7, 8 OCH 15. Granskaren: talen har ingen självständig källa och kommer att
+    // bumpas för att bli gröna (Tele2-läxan 18 aug) — en vakt vars svar man justerar är ingen
+    // vakt. Den bärande raden är den HÄRLEDDA: registret och prisbokens tysta kategorier ska
+    // vara samma mängd, varken fler eller färre.
+    assert.deepEqual(
+      Object.keys(TYSTNADSSKAL).slice().sort(),
+      TYSTA.slice().sort(),
+      'registret ska täcka exakt de tysta kategorierna',
+    );
+    // Varje klass ska vara i bruk — en död klass är en gren ingen prövar.
+    const brukade = new Set(Object.values(TYSTNADSSKAL).map((v) => v.skal));
+    for (const s of Object.values(SKAL)) assert.ok(brukade.has(s), `klassen «${s}» är död`);
   });
+
+  test('TS-10 · klassen får ALDRIG säga emot prisboken', () => {
+    // ⚠️ GRANSKNINGENS F1 OCH F8. Jag klassade `larm-bevakning` som offertprissatt — «inget
+    // publikt listpris finns» — medan prisbokens egen not för samma kategori säger «Sector Alarm
+    // 299–399, Verisure 349–499, Safemore 249–349 (VERIFIERADE LISTPRISER maj 2026)». Båda kan
+    // inte vara sanna, och ingen vakt kunde se det: TS-01 prövar att ett svar FINNS, aldrig att
+    // det är sant. `note` är maskinläsbar, alltså kan den halvan mätas.
+    //
+    // Det här är den vakt som hade fällt F1 utan granskare — och gränsen för vad en maskin kan
+    // avgöra: den ser att prisboken MOTSÄGER klassen, aldrig att klassen är rätt vald.
+    const VERIFIERAT = /verifierade? listpris|verifierat listpris/i;
+    const strider = Object.entries(TYSTNADSSKAL)
+      .filter(([k, v]) => v.skal === SKAL.OFFERTPRISSATT && VERIFIERAT.test(BRANCHINDEX[k]?.note ?? ''))
+      .map(([k]) => k);
+    assert.deepEqual(strider, [],
+      `klassad som offertprissatt trots att prisboken bär verifierade listpriser: ${strider.join(', ')}`);
+    // Motprov: regeln MÅSTE kunna fyra, annars är den grön av tomhet. larm-bevakning bär noten.
+    assert.ok(VERIFIERAT.test(BRANCHINDEX['larm-bevakning']?.note ?? ''),
+      'motprovet förutsätter att larm-bevakning fortfarande bär «verifierade listpriser» i prisboken');
+  });
+  test('TS-11 · VOLYMSTYRD kräver att prisboken NAMNGER drivkraften', () => {
+    // ⚠️ GRANSKNINGENS F5, och min första rättelse hade ingen tand: att flytta tillbaka
+    // `saas-other` till VOLYMSTYRD fällde NOLL tester. Klassen påstår något POSITIVT — «priset
+    // styrs av volym» — och det får inte vara min åsikt.
+    //
+    // Mätt över prisbokens sju `volumeDataNote`: sex säger «styrs av antal fordon / specifikationer
+    // / lokalyta …» och namnger drivkraften. `saas-other` säger «kräver en djupare analys av era
+    // specifika funktionskrav» — ingen drivkraft, bara att det behöver en människa. Att kalla det
+    // volymstyrt vore affirmativt falskt om en restpost vi per definition inte vet innehållet i.
+    const NAMNGER = /styrs av/i;
+    const utan = Object.entries(TYSTNADSSKAL)
+      .filter(([k, v]) => v.skal === SKAL.VOLYMSTYRD && !NAMNGER.test(BRANCHINDEX[k]?.volumeDataNote ?? ''))
+      .map(([k]) => k);
+    assert.deepEqual(utan, [],
+      `klassad som volymstyrd utan att prisboken namnger drivkraften: ${utan.join(', ')}`);
+    // Motprov i BÅDA ändar — annars är regeln grön av tomhet eller fäller allt.
+    assert.ok(NAMNGER.test(BRANCHINDEX['serverhosting']?.volumeDataNote ?? ''),
+      'motprov: serverhosting MÅSTE namnge sin drivkraft, annars vaktar TS-11 ingenting');
+    assert.ok(!NAMNGER.test(BRANCHINDEX['saas-other']?.volumeDataNote ?? ''),
+      'motprov: saas-other MÅSTE sakna drivkraft, annars är F5-rättelsen omotiverad');
+  });
+
 });
