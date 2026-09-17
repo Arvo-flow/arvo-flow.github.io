@@ -3,8 +3,18 @@
 //
 // ⚠️ KORTEN BYGGS AV PRODUKTIONENS EGEN `watchedCard`, inte för hand. Ett skript som skriver sin
 // egen payload skulle screenshotta MIN text, inte kodens — och «mekanismen prövad, matningen
-// aldrig» är bibelns mest upprepade sjukdom. Här går rå analysrad in i den riktiga funktionen och
-// ut i rummet, precis som i produktion.
+// aldrig» är bibelns mest upprepade sjukdom.
+//
+// ⚠️⚠️ OCH JAG GICK I DEN ÄNDÅ, ETT LED UPP (granskningen 2026-09-17, fynd F2). Funktionen är
+// produktionens — men INDATAN är det inte. `triage_reason: 'no_benchmark'` sätts bara inuti
+// `if (!catDef)` i api/test-invoice.mjs, alltså när kategorin SAKNAS i prisboken. Alla fem
+// kategorierna nedan FINNS där. Produktionen kan därför inte producera en enda av de här
+// raderna, och bilden visar fem kort ingen kund kan få.
+//
+// Raden ovan var alltså sann om FUNKTIONEN och falsk om BEVISET. Villkorsvaktens sjukdom, i det
+// verktyg jag byggde för att slippa den: mekanismen svarar rätt när den matas, monterad på en
+// signal som aldrig kan röra sig. Skriptet står kvar OKÖRT som preparat tills inkopplingen sitter
+// på en väg produktionen faktiskt tar — och tills dess är dess utdata ingen verifiering.
 import { chromium } from 'playwright';
 import http from 'http';
 import { readFileSync, existsSync } from 'fs';
