@@ -45,9 +45,8 @@ console.log('\n═══ RUMMETS MOTSÄGELSE · mätt mot produktionen ═══
 // Rader som BÄR en besparing. Om någon av dem inte kan producera ett prisunderlag räknas den som
 // «mottagen, inte prissatt» i rubriken medan dess belopp ändå summeras i domen.
 const medBesparing = await db`
-  SELECT id, supplier, category, annual_cost, net_saving, should_switch,
-         (line_items_json IS NULL)          AS saknar_rader,
-         (suggested_annual_cost IS NULL)    AS saknar_mal
+  SELECT id, supplier, category, annual_cost, seat_count, net_saving,
+         (seat_count IS NULL OR seat_count <= 0) AS saknar_enheter
   FROM invoice_analyses            -- kundvy: rader kunden ser i sitt rum
   WHERE arkiverad_at IS NULL
     AND route = 'auto'
@@ -56,21 +55,27 @@ const medBesparing = await db`
   LIMIT 200
 `;
 
+// ⚠️ FÖRSTA VERSIONEN MÄTTE FEL FÄLT. Jag frågade efter `line_items_json IS NULL`, fick tre
+// träffar och var en rapport ifrån att kalla dem ett [KUND]. Men `byggPrisunderlag` läser ALDRIG
+// radposter — den kräver `annual_cost`, `seat_count` och ett branschankare. Raderna förfinar bara
+// licensnivån (`lasLicensniva`), och utan dem faller golvet tillbaka på kategorins p25. Proxyn var
+// alltså inte den bindande faktorn, och slutsatsen hade vilat på en gissning om min egen kod.
+// Mätinstrumentet var felet, inte systemet — återigen.
+const utanUnderlag = medBesparing.filter((r) => r.saknar_enheter);
 console.log(`FRÅGA 1 · rader med net_saving > 0 (route=auto, ej arkiverade): ${medBesparing.length}`);
 if (medBesparing.length === 0) {
   console.log('  Inga sådana rader i produktionen — tillståndet kan inte uppstå i dag.');
 } else {
-  // Ett prisunderlag kräver ett jämförelsegolv OCH ett mål. Saknas något av dem blir raden
-  // «Mottagen» i kortet men behåller sitt lagrade net_saving i domens summa.
-  const risk = medBesparing.filter((r) => r.saknar_rader || r.saknar_mal);
-  console.log(`  varav utan radposter eller utan bytesmål: ${risk.length}`);
-  for (const r of risk.slice(0, 10)) {
-    console.log(`    · ${String(r.supplier).slice(0, 34).padEnd(34)} ${String(r.category).padEnd(20)} `
-      + `net=${r.net_saving} rader=${r.saknar_rader ? 'SAKNAS' : 'ok'} mål=${r.saknar_mal ? 'SAKNAS' : 'ok'}`);
+  console.log(`  varav utan seat_count (byggPrisunderlag returnerar null utan det): ${utanUnderlag.length}`);
+  for (const r of medBesparing.slice(0, 12)) {
+    console.log(`    ${r.saknar_enheter ? '!!' : '  '} ${String(r.supplier).slice(0, 32).padEnd(32)} `
+      + `${String(r.category).padEnd(20)} net=${String(r.net_saving).padEnd(8)} seats=${r.seat_count ?? 'NULL'}`);
   }
-  console.log(risk.length
-    ? '\n  ⚠️ TILLSTÅNDET KAN UPPSTÅ. Rummet kan summera en besparing på rader det räknar som ej prissatta.'
-    : '\n  ✓ Varje rad med besparing bär både radposter och bytesmål — motsägelsen kan inte uppstå av DEN orsaken.');
+  console.log(utanUnderlag.length
+    ? '\n  TILLSTANDET KAN UPPSTA: raden bar en besparing men kan inte producera ett prisunderlag,'
+      + '\n  alltsa raknas den som «ej prissatt» i rubriken medan beloppet anda summeras i domen.'
+    : '\n  OK — VARJE rad med besparing bar seat_count, sa motsagelsen kan inte uppsta av den orsaken.'
+      + '\n  (Ankaret kan fortfarande saknas for en kategori; det matas inte harifran.)');
 }
 
 // ── FRÅGA 2 ──────────────────────────────────────────────────────────────────────────────────
