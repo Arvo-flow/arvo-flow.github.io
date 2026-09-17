@@ -422,6 +422,14 @@ export const HoldDetail = styled.div`
   .diag .dbody .dtxt { font-size:14px; line-height:1.6; color:${theme.dossier.mutedOnDark};
     max-width:64ch; b { color:${theme.dossier.inkOnDark}; } }
 
+  /* Tystnadens skäl — varför vi INTE prissatte raden. Samma text som bevakningskorten, ur
+     lib/tystnadsskal.js (regel 1). Ingen egen färgsignal: det här är ett besked, inte ett larm. */
+  .diag .dbody .dtyst { margin-top:14px; padding-top:12px;
+    border-top:1px solid ${theme.dossier.keyline}; max-width:64ch;
+    strong { display:block; font-size:14px; color:${theme.dossier.inkOnDark}; margin-bottom:6px; }
+    p { margin:0; font-size:13.5px; line-height:1.6; color:${theme.dossier.mutedOnDark}; }
+    .dtyst-act { margin-top:10px; font-size:13px; color:${theme.dossier.teal}; } }
+
   /* Faktatabell — råa tal, varje en gång */
   .facts { display:flex; flex-direction:column; gap:0;
     border-top:1px solid ${theme.dossier.hairlineOnDark}; }

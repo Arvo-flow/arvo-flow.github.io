@@ -20,16 +20,19 @@ import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { watchedCard } from '../api/invoice-history.mjs';
 import { byggPrisunderlag, scoreUrUnderlag } from '../lib/prisunderlag.js';
+import { tystnadsbesked } from '../lib/tystnadsskal.js';
 
 const BUILD = path.resolve('build');
 
 // Fyra triagade fakturor som täcker ALLA fyra utfallen registret kan ge. Motprovet
 // (faktura-tjanst) är med i bild: ser alla kort likadana ut har registret svalt allt.
 const TRIAGE = [
-  { id: 101, supplier: 'Sydfrakt Logistik AB',   category: 'transport-frakt',    triage_reason: 'volume_data_required', route: 'review_queue', invoice_number: 'SF-2026-0841' },
+  { id: 101, supplier: 'Sydfrakt Logistik AB',   category: 'transport-frakt',   triage_reason: 'volume_data_required', route: 'review_queue', invoice_number: 'SF-2026-0841' },
   { id: 102, supplier: 'Dustin Sverige AB',      category: 'utrustningsleasing', triage_reason: 'volume_data_required', route: 'review_queue', invoice_number: 'DU-11204' },
-  { id: 103, supplier: 'GleSYS AB',              category: 'serverhosting',      triage_reason: 'volume_data_required', route: 'review_queue', invoice_number: 'GL-3391' },
-  { id: 104, supplier: 'Städbolaget i Syd AB',   category: 'städ-rengöring',     triage_reason: 'volume_data_required', route: 'review_queue', invoice_number: 'ST-88201' },
+  // Det LAGLIGA offertkortet.
+  { id: 103, supplier: 'Nordic IT Support AB',   category: 'it-support',        triage_reason: 'no_benchmark',         route: 'unsupported',  invoice_number: 'NIT-5512' },
+  // ⚖️ JURIDISK KARANTÄN — ska få ett HELT annat besked, utan bevakningslöfte.
+  { id: 104, supplier: 'Länsförsäkringar AB',    category: 'forsakring-foretag', triage_reason: 'no_benchmark',        route: 'unsupported',  invoice_number: 'LF-88201' },
 ];
 
 const A = (id, supplier, category, annual, suggested, net, seats, created) => ({
@@ -50,6 +53,11 @@ const A = (id, supplier, category, annual, suggested, net, seats, created) => ({
 const ANALYSES = [
   A(1, 'IT-Partner Sverige AB', 'saas-productivity', 184680, 152602, 25662, 58, '2026-09-12T08:00:00Z'),
   A(2, 'Telenor Sverige AB',    'mobil',              58092,  50304,  6230, 22, '2026-09-11T06:00:00Z'),
+  // ⚖️ DEL 1 I ORDERN: en offertprissatt kategori som AUTO-rad. Revisionsgrinden kortsluter
+  // recommend() till talfritt offert-läge, raden får inget prisunderlag, och i innehavet syntes
+  // den förut bara som «Mottagen». Nu bär pillret kategorins skäl. Den här raden finns i bilden
+  // just för att den delen av ändringen annars aldrig skulle SES.
+  A(3, 'Previa Företagshälsa AB', 'foretagshalsovard', 96000, null, null, 40, '2026-09-10T09:00:00Z'),
 ];
 
 // Ankarna som produktionen bygger för dessa kategorier (BRANCH_ANCHOR_UNIT + real-public golv).
@@ -71,8 +79,11 @@ for (const a of ANALYSES) {
     ankare: BRANCH_ANCHORS[a.category] ?? null, niva: null,
   });
   a.arvoScore = scoreUrUnderlag(a.prisunderlag);
+  a.tystnad = tystnadsbesked(a.category);   // ← samma rad som handlern kör
 }
-const utanUnderlag = ANALYSES.filter((a) => !a.prisunderlag);
+// Raden i en tyst kategori SKA sakna underlag — den prövar just den grenen. Vakten gäller de
+// rader som har ett ankare och alltså borde få ett.
+const utanUnderlag = ANALYSES.filter((a) => !a.prisunderlag && BRANCH_ANCHORS[a.category]);
 if (utanUnderlag.length) {
   console.error(`\n✗ ${utanUnderlag.length} analys(er) fick inget prisunderlag — rummet skulle visa`);
   console.error('  «0 prissatta» bredvid en besparing, och bilden vore en lögn om produktionen.');
@@ -92,8 +103,15 @@ const PAYLOAD = {
 console.log('\nKORT SOM RENDERAS (ur watchedCard):');
 for (const w of PAYLOAD.watched) console.log(`  · ${String(w.category).padEnd(20)} → ${w.kind}`);
 const kinds = new Set(PAYLOAD.watched.map((w) => w.kind));
-if (kinds.has('Under granskning') || kinds.has('Ej prissatt kategori')) {
-  console.error('\n✗ Något kort föll till reservkortet — registret nås inte. Bilden vore en lögn.');
+const tystIInnehavet = ANALYSES.filter((a) => a.tystnad).length;
+console.log('  · innehavsrader med tystnadsskäl: ' + tystIInnehavet);
+if (tystIInnehavet === 0) {
+  console.error('\n✗ Ingen innehavsrad bär ett skäl — del 1 av ändringen syns inte i bilden.');
+  process.exit(1);
+}
+if (!kinds.has('Offertprissatt') || !kinds.has('Kräver särskilt tillstånd')) {
+  console.error('\n✗ Bilden saknar offertkortet eller karantänkortet — den kan inte visa att');
+  console.error('  det juridiska filtret håller, och då är den ingen verifiering.');
   process.exit(1);
 }
 

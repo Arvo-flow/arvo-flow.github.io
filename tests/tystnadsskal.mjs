@@ -105,8 +105,15 @@ describe('TS · tystnadens skäl', () => {
       // De tre löftena utan mekanik, namngivna så de inte kan smyga tillbaka.
       assert.ok(!/vi bevakar avtalsslutet|förbereder (det exakta )?motbudet|säger till när något rör sig/i.test(hela),
         `${k} lovar en bevakning som inte finns för triagerade rader`);
-      // Och det som FINNS ska stå där — annars är kortet en återvändsgränd.
-      assert.match(b.atgard, /60 och 30 dagar/, `${k} saknar den backade åtgärden`);
+      // ⚖️ KLASSMEDVETET. Påminnelselöftet är RÄTT för de klasser vi får bevaka och FÖRBJUDET
+      // för den juridiska karantänen — att kräva det av varje besked hade tvingat in ett
+      // bevakningslöfte i försäkringskortet, alltså precis det lagbrott TS-12 finns emot.
+      if (TYSTNADSSKAL[k].skal === SKAL.TILLSTAND_KRAVS) {
+        assert.ok(!/60 och 30 dagar|vi hör (av oss|er)/i.test(hela),
+          `${k} ligger i juridisk karantän och får INTE lova att vi hör av oss`);
+      } else {
+        assert.match(b.atgard, /60 och 30 dagar/, `${k} saknar den backade åtgärden`);
+      }
     }
   });
 
@@ -166,4 +173,67 @@ describe('TS · tystnadens skäl', () => {
       'motprov: saas-other MÅSTE sakna drivkraft, annars är F5-rättelsen omotiverad');
   });
 
+  test('TS-12 · JURIDISK KARANTÄN: en försäkringskategori kan ALDRIG hamna i bevakningsfacket', () => {
+    // ⚖️ GRUNDARBESLUT 2026-09-17: «Arvo saknar regulatoriskt tillstånd för att hantera eller
+    // förmedla försäkringar. Vi får under inga omständigheter lova kunden att vi bevakar eller
+    // förbereder motbud för dessa avtal — det vore ett lagbrott.»
+    //
+    // Regeln HÄRLEDS UR NYCKELN, inte ur en uppräkning. En framtida `forsakring-fordon` hamnar
+    // därmed i karantän utan att någon behöver komma ihåg det — och det är hela skillnaden mot
+    // de listor som svikit oss förut: en uppräkning glömmer alltid nästa post.
+    const FORSAKRING = /forsakr|försäkr|insur/i;
+    const alla = Object.keys(BRANCHINDEX).filter((k) => FORSAKRING.test(k));
+    assert.ok(alla.length >= 2, `bara ${alla.length} försäkringskategorier — mät inte på tomhet`);
+
+    for (const k of alla) {
+      const post = TYSTNADSSKAL[k];
+      assert.ok(post, `försäkringskategorin «${k}» saknar deklaration — den får aldrig falla igenom`);
+      assert.equal(post.skal, SKAL.TILLSTAND_KRAVS,
+        `«${k}» MÅSTE ligga i juridisk karantän, aldrig i ett bevakningsfack`);
+    }
+    // Och ingen ANNAN kategori får smyga in i karantänen — den är ett regulatoriskt undantag,
+    // inte en bekväm plats att gömma något som är svårt att klassa.
+    const ikarantan = Object.entries(TYSTNADSSKAL)
+      .filter(([, v]) => v.skal === SKAL.TILLSTAND_KRAVS).map(([k]) => k);
+    assert.deepEqual(ikarantan.slice().sort(), alla.slice().sort(),
+      'karantänen ska innehålla EXAKT försäkringskategorierna');
+  });
+
+  test('TS-13 · karantänens text nollar varje förväntan — löftesverb måste vara NEGERADE', () => {
+    // ⚠️ FÖRSTA VERSIONEN FÖRBJÖD ORDEN och fällde min egen korrekta text: «vi bevakar den inte»
+    // innehåller «vi bevakar». Det är SK-08:s läxa ordagrant — förbjud PÅSTÅENDET, aldrig ordet.
+    // En vakt som skriker på rätt beteende blir avstängd, och en avstängd vakt är värre än ingen.
+    //
+    // Regeln nu: varje löftesverb måste följas av «inte» innan satsen tar slut. Ett bekräftande
+    // «vi bevakar avtalet» fälls; ett nekande «vi bevakar den inte» går igenom.
+    const LOFTESVERB = ['bevakar', 'håller koll', 'hör av oss', 'återkommer', 'förbereder',
+      'förhandlar', 'prissätter', 'jämför', 'påminner'];
+    const negerat = (v) => new RegExp(`vi ${v}(?![^.;,]*\\binte\\b)`, 'i');
+
+    const ikarantan = Object.keys(TYSTNADSSKAL).filter((k) => TYSTNADSSKAL[k].skal === SKAL.TILLSTAND_KRAVS);
+    assert.ok(ikarantan.length > 0, 'motprov: karantänen måste ha invånare, annars vaktar TS-13 tomhet');
+
+    for (const k of ikarantan) {
+      const b = tystnadsbesked(k);
+      const hela = `${b.rubrik} ${b.rad} ${b.text} ${b.atgard}`;
+      for (const v of LOFTESVERB) {
+        assert.ok(!negerat(v).test(hela), `${k} bär ett OBEKRÄFTAT löfte: «vi ${v}» → «${hela}»`);
+      }
+      // Ord som aldrig kan vara oskyldiga i en försäkringstext, negerade eller ej.
+      for (const ord of [/motbud/i, /omförhandling/i, /vi kan spara/i]) {
+        assert.ok(!ord.test(hela), `${k} bär ${ord} i juridisk karantän`);
+      }
+      assert.match(hela, /tillstånd/i, `${k} säger inte varför vi avstår`);
+      assert.match(b.atgard, /försäkringsförmedlare|försäkringsbolag/i,
+        `${k} lämnar kunden utan någon att vända sig till`);
+    }
+
+    // ⚖️ MOTPROVET, och det är hela tanden: regeln MÅSTE fälla ett bekräftande löfte. Utan det
+    // här är TS-13 grön av att min text råkar vara formulerad med «inte».
+    // (Fixturen löd först «…och hör av oss…» — utan sitt «vi» matchade bara ETT verb, och jag
+    //  höll på att lossa regeln för ett fel som satt i motprovet.)
+    const falskt = 'Vi bevakar avtalet. Vi hör av oss inför förnyelsen. Vi förbereder ett motbud.';
+    const fallda = LOFTESVERB.filter((v) => negerat(v).test(falskt));
+    assert.ok(fallda.length >= 2, `motprovet fälldes bara av ${fallda.length} verb — regeln är för slapp`);
+  });
 });

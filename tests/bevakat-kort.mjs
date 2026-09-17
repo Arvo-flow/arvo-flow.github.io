@@ -183,4 +183,30 @@ describe('BEVAKAT-KORT · rätt skäl, noll siffror', () => {
     assert.equal(okand.kind, 'Ej prissatt kategori');
   });
 
+  test('BK-12 · ⚖️ försäkring får ALDRIG ett bevakningskort — juridisk karantän', async () => {
+    // GRUNDARBESLUT 2026-09-17: Arvo saknar regulatoriskt tillstånd att hantera eller förmedla
+    // försäkringar. Ett kort som lovar bevakning eller motbud vore inte ett premiumfel utan ett
+    // lagbrott. Prövas här på KORTET, inte bara i registret — kunden läser kortet.
+    for (const kategori of ['forsakring-foretag', 'forsakring-ansvar']) {
+      const k = watchedCard({ supplier: 'Länsförsäkringar AB', category: kategori,
+        triage_reason: 'no_benchmark', route: 'unsupported' });
+      assert.equal(k.kind, 'Kräver särskilt tillstånd', kategori);
+      const hela = `${k.headline} ${k.detail} ${k.action}`;
+      // Varje löftesverb måste vara negerat — förbjud påståendet, aldrig ordet (SK-08).
+      for (const v of ['bevakar', 'hör av oss', 'förbereder', 'förhandlar']) {
+        assert.ok(!new RegExp(`vi ${v}(?![^.;,]*\\binte\\b)`, 'i').test(hela),
+          `${kategori} bär ett obekräftat «vi ${v}»: ${hela}`);
+      }
+      assert.ok(!/motbud|omförhandling|60 och 30 dagar/i.test(hela),
+        `${kategori} lovar en bevakning vi inte får utföra`);
+      assert.match(hela, /tillstånd/i);
+    }
+    // Motprov: en LAGLIG offertkategori ska fortfarande få sitt bevakningsbesked, annars vore
+    // karantänen bara ett sätt att tysta allt.
+    const laglig = watchedCard({ supplier: 'Securitas', category: 'it-support',
+      triage_reason: 'no_benchmark', route: 'unsupported' });
+    assert.equal(laglig.kind, 'Offertprissatt');
+    assert.match(laglig.action, /60 och 30 dagar/);
+  });
+
 });

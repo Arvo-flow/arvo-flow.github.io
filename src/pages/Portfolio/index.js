@@ -1350,6 +1350,10 @@ export default function Portfolio() {
                           : over ? `${a.prisunderlag.avstandPct} % över lägsta pris`
                           : oviss ? 'Nivå ej bekräftad'
                           : a.prisunderlag ? 'Rätt prissatt'
+                          // ⚖️ TYSTNADENS SKÄL, om kategorin har ett. De offertprissatta och de
+                          // volymstyrda syntes förut bara som «Mottagen» — sant men intetsägande.
+                          // Försäkring bär sitt juridiska besked här: «Kräver särskilt tillstånd».
+                          : a.tystnad ? a.tystnad.rubrik
                           : 'Mottagen';
                         return (
                           <div className={`h-badge ${saving ? 'save' : over ? 'over' : 'watch'}`}>
@@ -1366,6 +1370,13 @@ export default function Portfolio() {
                           <div className="dbody">
                             <div className="dtop">Arvo bedömer</div>
                             <div className="dtxt" dangerouslySetInnerHTML={{ __html: buildReasoning(a) }} />
+                            {a.tystnad && (
+                              <div className="dtyst">
+                                <strong>{a.tystnad.rad}</strong>
+                                <p>{a.tystnad.text}</p>
+                                <div className="dtyst-act">→ {a.tystnad.atgard}</div>
+                              </div>
+                            )}
                           </div>
                         </div>
 

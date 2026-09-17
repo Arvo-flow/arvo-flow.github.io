@@ -236,6 +236,20 @@ export default async function handler(req, res) {
       niva:       golv ? { ...golv, kalla: niva.kalla } : null,
     });
     a._rader = undefined;
+    // ── TYSTNADENS SKÄL FÖLJER MED RADEN (grundarbeslut 2026-09-17) ─────────────────────────
+    // De offertprissatta kategorierna blir ALDRIG triagerade — mätt mot produktionen: noll rader.
+    // De passerar triagen, revisionsgrinden kortsluter dem i `recommend()` till talfritt
+    // offert-läge, och de landar här som auto-rader utan prisunderlag. I rummet syntes de bara
+    // som «Mottagen», utan ett ord om VARFÖR.
+    //
+    // Beskedet hämtas här och inte i `recommend()` med flit: sifferrevisorn bevakar att en
+    // oreviderad kategori inte läcker EN SIFFRA ur motorn, och åtgärdsraden bär «60 och 30
+    // dagar». Att lägga texten i motorn hade tvingat fram ett val mellan den vakten och den här
+    // ytan. Rummet är rätt lager — samma plats där `watchedCard` redan bor.
+    //
+    // `tystnadsbesked` returnerar null för varje kategori som TALAR (de finns inte i registret),
+    // så raden är fail-closed av sig själv (TS-02 låser att ingen talande kategori står där).
+    a.tystnad = tystnadsbesked(a.category);
     // SCOREN HÄRLEDS UR SAMMA JÄMFÖRELSE KORTET VISAR (2026-08-19). Tidigare läste rummet det
     // LAGRADE health_score, räknat vid analystillfället mot getBenchmark — som föredrar livedata,
     // och livedatan är totalsummor. Följden var ett score på 92 ovanför ett bevis som sa +184 %.
