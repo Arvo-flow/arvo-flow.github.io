@@ -162,4 +162,25 @@ describe('BEVAKAT-KORT · rätt skäl, noll siffror', () => {
     assert.match(k.action, /prissätter så snart/);
   });
 
+  test('BK-11 · volume_data_required NÅR registret — mätt mot produktionen, inte antaget', async () => {
+    // ⚠️ GRANSKNINGENS F2, BEKRÄFTAD MOT PRODUKTIONSDATABASEN 2026-09-17. Grenen läste bara
+    // `no_benchmark`, som sätts ENBART inuti `if (!catDef)` — alltså när kategorin SAKNAS i
+    // prisboken. Alla deklarerade kategorier FINNS där, så registret var monterat på en signal
+    // produktionen aldrig sänder. Sonden mätte: sex triagade rader i de nitton tysta
+    // kategorierna, ALLA med `volume_data_required`, och 0 av 6 nådde grenen.
+    //
+    // De fyra kategorierna nedan är de som FAKTISKT ligger i produktionen med det skälet.
+    for (const kategori of ['transport-frakt', 'utrustningsleasing', 'serverhosting', 'städ-rengöring']) {
+      const k = watchedCard({ supplier: 'Leverantör AB', category: kategori,
+        triage_reason: 'volume_data_required', route: 'review_queue' });
+      assert.equal(k.kind, 'Volymstyrt pris', `${kategori} ska nå registret`);
+      assert.ok(!/Skälet är tekniskt/.test(k.detail), `${kategori} fick reservkortet`);
+    }
+    // Motprov: en kategori UTAN deklaration får fortfarande det försiktiga kortet — grenen får
+    // inte svälja allt bara för att den vidgades.
+    const okand = watchedCard({ supplier: 'X AB', category: 'mobil',
+      triage_reason: 'volume_data_required', route: 'review_queue' });
+    assert.equal(okand.kind, 'Ej prissatt kategori');
+  });
+
 });

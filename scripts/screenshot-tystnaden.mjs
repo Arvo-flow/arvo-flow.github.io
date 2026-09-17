@@ -5,56 +5,85 @@
 // egen payload skulle screenshotta MIN text, inte kodens — och «mekanismen prövad, matningen
 // aldrig» är bibelns mest upprepade sjukdom.
 //
-// ⚠️⚠️ OCH JAG GICK I DEN ÄNDÅ, ETT LED UPP (granskningen 2026-09-17, fynd F2). Funktionen är
-// produktionens — men INDATAN är det inte. `triage_reason: 'no_benchmark'` sätts bara inuti
-// `if (!catDef)` i api/test-invoice.mjs, alltså när kategorin SAKNAS i prisboken. Alla fem
-// kategorierna nedan FINNS där. Produktionen kan därför inte producera en enda av de här
-// raderna, och bilden visar fem kort ingen kund kan få.
+// ⚠️⚠️ FÖRSTA VERSIONEN MATADE ETT SKÄL PRODUKTIONEN INTE KAN SÄTTA (granskningens F2).
+// `no_benchmark` sätts bara inuti `if (!catDef)` — när kategorin SAKNAS i prisboken — och alla
+// deklarerade kategorier finns där. Bilden visade fem kort ingen kund kunde få.
 //
-// Raden ovan var alltså sann om FUNKTIONEN och falsk om BEVISET. Villkorsvaktens sjukdom, i det
-// verktyg jag byggde för att slippa den: mekanismen svarar rätt när den matas, monterad på en
-// signal som aldrig kan röra sig. Skriptet står kvar OKÖRT som preparat tills inkopplingen sitter
-// på en väg produktionen faktiskt tar — och tills dess är dess utdata ingen verifiering.
+// RÄTTAT MOT MÄTNING: probe-rumsmotsagelsen körde mot produktionsdatabasen 2026-09-17 och fann
+// sex triagade rader i de tysta kategorierna, ALLA med `volume_data_required`, fördelade på
+// transport-frakt, utrustningsleasing, serverhosting och städ-rengöring. Fixturerna nedan ÄR de
+// fyra kategorierna med det skälet. Skriptet avslutar 1 om något kort faller till reservkortet —
+// då når registret inte fram och bilden vore en lögn igen.
 import { chromium } from 'playwright';
 import http from 'http';
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { watchedCard } from '../api/invoice-history.mjs';
+import { byggPrisunderlag, scoreUrUnderlag } from '../lib/prisunderlag.js';
 
 const BUILD = path.resolve('build');
 
 // Fyra triagade fakturor som täcker ALLA fyra utfallen registret kan ge. Motprovet
 // (faktura-tjanst) är med i bild: ser alla kort likadana ut har registret svalt allt.
 const TRIAGE = [
-  { id: 101, supplier: 'Securitas Sverige AB',  category: 'larm-bevakning',  triage_reason: 'no_benchmark', route: 'unsupported', invoice_number: 'SEC-2026-0841' },
-  { id: 102, supplier: 'Företagshälsan Väst AB', category: 'foretagshalsovard', triage_reason: 'no_benchmark', route: 'unsupported', invoice_number: 'FHV-11204' },
-  { id: 103, supplier: 'Städbolaget i Syd AB',  category: 'städ-rengöring',  triage_reason: 'no_benchmark', route: 'unsupported', invoice_number: '2026-3391' },
-  { id: 104, supplier: 'Pipedrive OÜ',          category: 'saas-crm',        triage_reason: 'no_benchmark', route: 'unsupported', invoice_number: 'PD-88201' },
-  { id: 105, supplier: 'Billogram AB',          category: 'faktura-tjanst',  triage_reason: 'no_benchmark', route: 'unsupported', invoice_number: 'BG-45512' },
+  { id: 101, supplier: 'Sydfrakt Logistik AB',   category: 'transport-frakt',    triage_reason: 'volume_data_required', route: 'review_queue', invoice_number: 'SF-2026-0841' },
+  { id: 102, supplier: 'Dustin Sverige AB',      category: 'utrustningsleasing', triage_reason: 'volume_data_required', route: 'review_queue', invoice_number: 'DU-11204' },
+  { id: 103, supplier: 'GleSYS AB',              category: 'serverhosting',      triage_reason: 'volume_data_required', route: 'review_queue', invoice_number: 'GL-3391' },
+  { id: 104, supplier: 'Städbolaget i Syd AB',   category: 'städ-rengöring',     triage_reason: 'volume_data_required', route: 'review_queue', invoice_number: 'ST-88201' },
 ];
 
-const A = (id, supplier, category, annual, suggested, net, created) => ({
+const A = (id, supplier, category, annual, suggested, net, seats, created) => ({
   id, supplier, normalized_supplier: supplier.toLowerCase(), category,
   annual_cost: annual, suggested_annual_cost: suggested,
   gross_saving: suggested ? annual - suggested : null, net_saving: net,
+  // ⚠️ `seat_count` OCH ett branschankare är vad `byggPrisunderlag` FAKTISKT kräver — mätt, inte
+  // antaget: den läser aldrig radposter. Utan dem räknas raden som «mottagen, inte prissatt» och
+  // rummet visar «Vi jämförde 0 fakturor» bredvid en summerad besparing. Det var precis vad min
+  // förra bild gjorde, och jag höll på att rapportera det som ett produktionsfel.
+  // Sonden mätte produktionen 2026-09-17: fyra rader med besparing, NOLL utan seat_count
+  // (22 · 1 · 1 · 58). Stubben speglar därför det tillstånd produktionen faktiskt är i.
+  seat_count: seats,
   should_switch: net != null && net > 0, route: 'auto', industry: 'it-tech', employees: 50,
   billing_period: 'monthly', created_at: created,
 });
 
-// Ett par prissatta rader så rummet inte ser ut som ett rent felläge — tystnadskorten ska ses
-// i sitt verkliga sammanhang, bredvid det som FAKTISKT prissatts.
 const ANALYSES = [
-  A(1, 'IT-Partner Sverige AB', 'saas-productivity', 184680, 152602, 25662, '2026-09-12T08:00:00Z'),
-  A(2, 'Telia Sverige AB',      'mobil',              58092,  50304,  6230, '2026-09-11T06:00:00Z'),
+  A(1, 'IT-Partner Sverige AB', 'saas-productivity', 184680, 152602, 25662, 58, '2026-09-12T08:00:00Z'),
+  A(2, 'Telenor Sverige AB',    'mobil',              58092,  50304,  6230, 22, '2026-09-11T06:00:00Z'),
 ];
 
+// Ankarna som produktionen bygger för dessa kategorier (BRANCH_ANCHOR_UNIT + real-public golv).
+const BRANCH_ANCHORS = {
+  'saas-productivity': { category: 'saas-productivity', median: 2040, p25: 1704, source: 'real-public', unitLabel: 'per användare/år', unitNoun: 'användare', unitNounPl: 'användare', customerCost: 184680, seats: 58 },
+  mobil:               { category: 'mobil',             median: 3588, p25: 3348, source: 'real-public', unitLabel: 'per abonnemang/år', unitNoun: 'abonnemang', unitNounPl: 'abonnemang', customerCost: 58092, seats: 22 },
+};
+
 const VAKT = { sweptAt: '2026-09-16T03:14:00Z', sources: 40, pricePoints: 47, changes: 0 };
+
+// ⚠️ SKRIPTET STUBBAR HTTP-SVARET och kör därför ALDRIG handlern som BYGGER `prisunderlag`.
+// Följden var «0 prissatta» bredvid en summerad besparing i bild efter bild — och jag höll på att
+// rapportera det som ett produktionsfel. Underlaget byggs nu med SAMMA funktioner handlern
+// använder (byggPrisunderlag + scoreUrUnderlag), precis som korten byggs med watchedCard. Ett
+// skript som hoppar över ett produktionssteg fotograferar ett tillstånd produktionen aldrig är i.
+for (const a of ANALYSES) {
+  a.prisunderlag = byggPrisunderlag({
+    annualCost: a.annual_cost, seats: a.seat_count,
+    ankare: BRANCH_ANCHORS[a.category] ?? null, niva: null,
+  });
+  a.arvoScore = scoreUrUnderlag(a.prisunderlag);
+}
+const utanUnderlag = ANALYSES.filter((a) => !a.prisunderlag);
+if (utanUnderlag.length) {
+  console.error(`\n✗ ${utanUnderlag.length} analys(er) fick inget prisunderlag — rummet skulle visa`);
+  console.error('  «0 prissatta» bredvid en besparing, och bilden vore en lögn om produktionen.');
+  process.exit(1);
+}
 
 const PAYLOAD = {
   ok: true,
   analyses: ANALYSES,
   watched: TRIAGE.map((a) => watchedCard(a)),   // ← produktionens funktion, inte min text
-  branchAnchors: {}, movements: {}, vakt: VAKT,
+  branchAnchors: BRANCH_ANCHORS, movements: {}, vakt: VAKT,
   email: 'ekonomi@exempelbolaget.se',
 };
 
@@ -63,8 +92,8 @@ const PAYLOAD = {
 console.log('\nKORT SOM RENDERAS (ur watchedCard):');
 for (const w of PAYLOAD.watched) console.log(`  · ${String(w.category).padEnd(20)} → ${w.kind}`);
 const kinds = new Set(PAYLOAD.watched.map((w) => w.kind));
-if (kinds.size < 4) {
-  console.error(`\n✗ Bara ${kinds.size} skilda korttyper — bilden kan inte visa skillnaden registret gör.`);
+if (kinds.has('Under granskning') || kinds.has('Ej prissatt kategori')) {
+  console.error('\n✗ Något kort föll till reservkortet — registret nås inte. Bilden vore en lögn.');
   process.exit(1);
 }
 

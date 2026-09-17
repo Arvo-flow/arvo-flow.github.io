@@ -360,7 +360,21 @@ export function watchedCard(a) {
     headline = 'Ingen verifierad prisnivå ännu — under bevakning';
     detail = 'Webbhotell, domän och hosting är en splittrad marknad utan ett verifierat svenskt golv vi kan jämföra mot. Vi flaggar hellre än gissar.';
     action = 'Ladda upp avtalet/specen så bygger vi en ärlig jämförelse.';
-  } else if (reason.includes('no_benchmark') || reason.includes('out_of_scope') || reason.includes('unsupported_category')) {
+  // ⚠️ `volume_data_required` TILLKOM 2026-09-17 EFTER MÄTNING MOT PRODUKTIONEN. Granskningens F2:
+  // grenen läste bara `no_benchmark`, som sätts ENBART inuti `if (!catDef)` i api/test-invoice.mjs
+  // — alltså när kategorin SAKNAS i prisboken. Alla deklarerade kategorier FINNS där, så registret
+  // var monterat på en signal produktionen aldrig sänder. Villkorsvaktens sjukdom, och min
+  // skärmdump «bevisade» den genom att mata in ett skäl produktionen inte kan producera.
+  //
+  // MÄTT (probe-rumsmotsagelsen, 2026-09-17, mot produktionsdatabasen): sex triagade rader i de
+  // nitton tysta kategorierna, ALLA med `volume_data_required` — transport-frakt 2,
+  // utrustningsleasing 2, serverhosting 1, städ-rengöring 1. Rader som nådde grenen: 0 av 6.
+  //
+  // KVARSTÅR, UTTALAT: de åtta offertprissatta kategorierna har NOLL triagade rader. De passerar
+  // triagen och hamnar i `analyses`, där revisionsgrinden ger dem talfritt offert-läge. Deras
+  // besked har alltså fortfarande ingen yta — det är en annan inkoppling och ett eget beslut.
+  } else if (reason.includes('no_benchmark') || reason.includes('out_of_scope')
+    || reason.includes('unsupported_category') || reason.includes('volume_data_required')) {
     // Efter de leverantörsspecifika grenarna: en KÄND leverantör med ett känt skäl (elnätet,
     // webbhotellen) ska bära sin egen, mer precisa förklaring. Först när namnet inte säger något
     // är "ingen verifierad marknadsreferens" den mest specifika sanning vi har.
