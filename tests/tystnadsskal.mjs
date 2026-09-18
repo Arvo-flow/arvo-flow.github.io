@@ -105,14 +105,19 @@ describe('TS · tystnadens skäl', () => {
       // De tre löftena utan mekanik, namngivna så de inte kan smyga tillbaka.
       assert.ok(!/vi bevakar avtalsslutet|förbereder (det exakta )?motbudet|säger till när något rör sig/i.test(hela),
         `${k} lovar en bevakning som inte finns för triagerade rader`);
-      // ⚖️ KLASSMEDVETET. Påminnelselöftet är RÄTT för de klasser vi får bevaka och FÖRBJUDET
-      // för den juridiska karantänen — att kräva det av varje besked hade tvingat in ett
-      // bevakningslöfte i försäkringskortet, alltså precis det lagbrott TS-12 finns emot.
-      if (TYSTNADSSKAL[k].skal === SKAL.TILLSTAND_KRAVS) {
-        assert.ok(!/60 och 30 dagar|vi hör (av oss|er)/i.test(hela),
-          `${k} ligger i juridisk karantän och får INTE lova att vi hör av oss`);
-      } else {
-        assert.match(b.atgard, /60 och 30 dagar/, `${k} saknar den backade åtgärden`);
+      // ⚠️ INGEN KLASS FÅR LÄNGRE BÄRA PÅMINNELSELÖFTET (grundarens Q2, mätt 2026-09-18).
+      // Löftet var backat i DATALAGRET men inte i GRÄNSSNITTET: bevakningskorten renderar
+      // `action` som ren text — noll input, noll knapp, noll länk i hela Watched-blocket. En
+      // kund som läser «säg till» har ingenstans att säga det. Doktrinen skiljer inte på ett
+      // löfte utan mekanik och en uppmaning utan väg.
+      assert.ok(!/60 och 30 dagar|säg till när avtalet/i.test(hela),
+        `${k} ber kunden om något det inte finns någon väg att lämna`);
+      // Och åtgärdsraden, när den finns, får bara vara ett KONSTATERANDE — aldrig en begäran
+      // riktad till oss. Karantänens «Ligger hos er försäkringsförmedlare» är tillåten just för
+      // att den pekar bort, inte hit.
+      if (b.atgard) {
+        assert.ok(!/\b(säg till|hör av er|kontakta oss|ladda upp|klicka)\b/i.test(b.atgard),
+          `${k} har en uppmaning i åtgärdsraden utan ett gränssnitt som tar emot den`);
       }
     }
   });

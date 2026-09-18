@@ -210,7 +210,12 @@ describe('BEVAKAT-KORT · rätt skäl, noll siffror', () => {
     const laglig = watchedCard({ supplier: 'Securitas', category: 'it-support',
       triage_reason: 'no_benchmark', route: 'unsupported' });
     assert.equal(laglig.kind, tystnadsbesked('it-support').rubrik);
-    assert.match(laglig.action, /60 och 30 dagar/);
+    // ⚠️ HÄR STOD /60 och 30 dagar/. Löftet är borttaget (grundarens Q2): det var backat i
+    //  datalagret men inte i gränssnittet, och en uppmaning utan väg är en återvändsgränd.
+    //  Motprovet prövar nu att det LAGLIGA kortet bär sitt eget besked — och att det inte
+    //  smugit tillbaka en uppmaning kunden inte kan följa.
+    assert.equal(laglig.action, null, 'bevakningsklasserna bär ingen åtgärd förrän gränssnittet finns');
+    assert.match(laglig.detail, /sätts i offert/);
   });
 
   test('BK-13 · ⚖️ INGEN väg runt karantänen — hela matrisen, inte ett stickprov', async () => {

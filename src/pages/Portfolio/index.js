@@ -1374,7 +1374,7 @@ export default function Portfolio() {
                               <div className="dtyst">
                                 <strong>{a.tystnad.rad}</strong>
                                 <p>{a.tystnad.text}</p>
-                                <div className="dtyst-act">→ {a.tystnad.atgard}</div>
+                                {a.tystnad.atgard && <div className="dtyst-act">→ {a.tystnad.atgard}</div>}
                               </div>
                             )}
                           </div>
@@ -1821,7 +1821,7 @@ export default function Portfolio() {
                 <p className="w-manifesto">
                   Dessa <b>{watched.length}</b> prissätter vi medvetet inte. Vart och ett bär sitt eget skäl
                   nedan — vi sätter hellre ingen siffra än en vi inte kan stå för. Vakten håller dem under
-                  uppsikt och säger till när underlaget bär.
+                  uppsikt.
                 </p>
                 {watchedGroups.map((g) => (
                   <div className="w-row" key={g.kind}>
@@ -1832,7 +1832,11 @@ export default function Portfolio() {
                     <div className="w-head">{g.headline}</div>
                     <p className="w-detail">{g.detail}</p>
                     {g.suppliers.length > 1 && <div className="w-list">{g.suppliers.join(' · ')}</div>}
-                    <div className="w-action"><span className="w-arrow">→</span> {g.action}</div>
+                    {/* ⚠️ INGEN PIL UTAN VÄG (grundarens Q2, mätt 2026-09-18). Blocket bär noll
+                        input, knapp, länk eller klickhanterare — en uppmaning här är en
+                        återvändsgränd. Saknas åtgärd är kortet ett konstaterande, och då ska
+                        ingen pil antyda att något väntar på kunden. */}
+                    {g.action && <div className="w-action"><span className="w-arrow">→</span> {g.action}</div>}
                   </div>
                 ))}
               </Watched>
