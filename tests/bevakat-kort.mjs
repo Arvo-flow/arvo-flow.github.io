@@ -24,8 +24,9 @@
 //           Den skyddar mot fel skäl och mot siffror, inte mot ett skäl vi aldrig föreställt oss.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { watchedCard } from '../api/invoice-history.mjs';
+import { watchedCard, BRANCH_ANCHOR_UNIT, underlagForRad } from '../api/invoice-history.mjs';
 import { tystnadsbesked, TYSTNADSSKAL, SKAL } from '../lib/tystnadsskal.js';
+import { isAudited } from '../lib/revision-gate.js';
 
 // Alla textfält ett kort kan visa för kunden.
 const text = (k) => [k.kind, k.headline, k.detail, k.action].filter(Boolean).join(' | ');
@@ -276,6 +277,61 @@ describe('BEVAKAT-KORT · rätt skäl, noll siffror', () => {
       category: 'serverhosting', triage_reason: 'volume_data_required', route: 'review_queue' });
     assert.equal(hosting.kind, 'Fragmenterad marknad',
       'förkontrollen får inte åsidosätta en mer precis leverantörsgren för icke-juridiska klasser');
+  });
+
+  test('BK-14 · Q3: inget kort lovar att vi återkommer — ingen mekanik gör det', async () => {
+    // ⚠️ MÄTT 2026-09-18, grundarens fråga 3. Nio skältyper bar «En människa läser om fakturan
+    // och vi återkommer» på 17 kategorier var. `notifyReviewQueue` larmar OSS, aldrig kunden —
+    // det finns ingen kod som hör av sig. Att en människa läser är sant; att vi återkommer var
+    // ett löfte utan väg, samma klass som Q2:s «säg till» och struket av samma skäl.
+    const { readFileSync } = await import('node:fs');
+    const kalla = readFileSync(new URL('../api/test-invoice.mjs', import.meta.url), 'utf8');
+    const SKAL_I_PROD = [...new Set([...kalla.matchAll(/reason: '([a-z_]+)'/g)].map((m) => m[1]))];
+    assert.ok(SKAL_I_PROD.length >= 8, 'härledningen mäter tomhet');
+
+    const brott = [];
+    for (const reason of [...SKAL_I_PROD, null]) {
+      for (const category of [...Object.keys(TYSTNADSSKAL), 'mobil', 'el', null]) {
+        const k = watchedCard({ supplier: 'Leverantör AB', category, triage_reason: reason, route: 'review_queue' });
+        const hela = `${k.headline} ${k.detail} ${k.action ?? ''}`;
+        if (/vi återkommer|återkommer med/i.test(hela)) brott.push(`${category} · ${reason} → ${k.action}`);
+      }
+    }
+    assert.deepEqual(brott.slice(0, 5), [], `${brott.length} kort lovar att vi återkommer`);
+
+    // MOTPROVET: «vi prissätter så snart ett verifierat golv finns» står KVAR och ska göra det.
+    // Den är backad av konstruktionen — prisunderlaget byggs vid LÄSNING, så raden prissätts i
+    // samma sekund ett golv finns. Utan den här raden vore testet en uppmaning att stryka allt.
+    const kvar = watchedCard({ supplier: 'X AB', category: 'bankavgifter',
+      triage_reason: 'no_benchmark', route: 'review_queue' });
+    assert.match(kvar.action, /prissätter så snart/,
+      'den BACKADE utfästelsen ska stå kvar — regeln gäller löften utan mekanik, inte alla löften');
+  });
+
+  test('BK-15 · Q4: en TYST kategori får aldrig ett prisunderlag — pillret kan inte säga «Rätt prissatt»', async () => {
+    // ⚠️ MÄTT: `saas-crm` är tyst MEN har ett branschankare, alltså kunde den få ett
+    // prisunderlag. Pillerkedjan väljer underlaget FÖRE tystnaden, så pillret hade sagt «Rätt
+    // prissatt» medan rutan under förklarar varför vi inte prissätter. Två ytor, samma rad,
+    // motsatt besked (regel 5).
+    //
+    // Roten var inte pillret utan att underlaget byggdes alls: revisionsgrinden har redan tystat
+    // kategorin i recommend(), och att rummet ändå räknar fram en jämförelse är två sanningar om
+    // samma fråga (regel 1). Prövas på KEDJAN, inte på en flagga.
+    // ⚠️ TESTET BYGGDE FÖRST SIN EGEN KOPIA av grinden och var därför grönt medan
+    // produktionens gren var sönderslagen — sabotaget «riv grinden» fällde NOLL. Det är
+    // «mekanismen prövad, matningen aldrig», i testet som skulle vakta just den sjukdomen.
+    // Nu anropas PRODUKTIONENS funktion.
+    const ankare = { p25: 1800, median: 2400, source: 'estimated' };
+    const bygg = (kat) => underlagForRad({ category: kat, annual_cost: 120000, seat_count: 50 }, ankare, null, null);
+
+    const tystaMedAnkare = Object.keys(TYSTNADSSKAL).filter((k) => BRANCH_ANCHOR_UNIT?.[k]);
+    assert.ok(tystaMedAnkare.length > 0,
+      'motprov: minst en tyst kategori MÅSTE ha ett ankare, annars vaktar BK-15 ett omöjligt fall');
+    for (const kat of tystaMedAnkare) {
+      assert.equal(bygg(kat), null, `${kat} är tyst och får inte få ett prisunderlag`);
+    }
+    // Och åt andra hållet: en TALANDE kategori ska fortfarande få sitt underlag.
+    assert.ok(bygg('saas-productivity'), 'grinden får inte tysta de kategorier som talar');
   });
 
 });

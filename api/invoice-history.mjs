@@ -29,6 +29,7 @@ import { getPublicListBenchmark, kohortTackning } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
 import { tystnadsbesked, SKAL } from '../lib/tystnadsskal.js';
+import { isAudited } from '../lib/revision-gate.js';
 
 export const config = { maxDuration: 10 };
 
@@ -229,12 +230,7 @@ export default async function handler(req, res) {
     if (typeof rader === 'string') { try { rader = JSON.parse(rader); } catch { rader = null; } }
     const niva = lasLicensniva(rader);
     const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
-    a.prisunderlag = byggPrisunderlag({
-      annualCost: a.annual_cost,
-      seats:      a.seat_count,
-      ankare:     branchAnchors[a.category] ?? null,
-      niva:       golv ? { ...golv, kalla: niva.kalla } : null,
-    });
+    a.prisunderlag = underlagForRad(a, branchAnchors[a.category] ?? null, golv, niva);
     a._rader = undefined;
     // ── TYSTNADENS SKÄL FÖLJER MED RADEN (grundarbeslut 2026-09-17) ─────────────────────────
     // De offertprissatta kategorierna blir ALDRIG triagerade — mätt mot produktionen: noll rader.
@@ -296,6 +292,33 @@ export default async function handler(req, res) {
 // "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.
 // Disciplinen ÄR premiumsignalen — vi gissar aldrig (Zero Trust), och vakten talar även när den tiger om tal.
 // reasonCode (lagrat) + leverantörsnamn → kundvänlig, ärlig copy. NOLL siffror (sifferrevisorns tystnad orörd).
+
+/**
+ * Prisunderlaget för EN rad — med revisionsgrinden inbyggd.
+ *
+ * ⚠️ EXPORTERAD AV ETT ENDA SKÄL: BK-15 byggde först sin EGEN kopia av grinden
+ * (`isAudited(kat) ? bygg(...) : null`) och var därför grön medan produktionens gren var
+ * sönderslagen — sabotaget mot den riktiga raden fällde noll. Det är «mekanismen prövad,
+ * matningen aldrig», i det test som skulle vakta just den sjukdomen. Nu finns EN gren, och
+ * sviten kör den.
+ *
+ * ⚠️ Q4, MÄTT 2026-09-18: `saas-crm` är TYST men har ett branschankare, alltså kunde den få ett
+ * prisunderlag. Pillerkedjan väljer underlaget FÖRE tystnaden — pillret hade sagt «Rätt prissatt»
+ * medan rutan under förklarar varför vi inte prissätter. Två ytor, samma rad, motsatt besked.
+ * Roten var inte pillret utan att underlaget byggdes alls: revisionsgrinden har redan tystat
+ * kategorin i `recommend()`, och att rummet ändå räknar fram en jämförelse är två sanningar om
+ * samma fråga (regel 1). Grinden gäller nu HELA vägen.
+ */
+export function underlagForRad(a, ankare, golv, niva) {
+  if (!isAudited(a?.category)) return null;
+  return byggPrisunderlag({
+    annualCost: a.annual_cost,
+    seats:      a.seat_count,
+    ankare,
+    niva:       golv ? { ...golv, kalla: niva?.kalla } : null,
+  });
+}
+
 export function watchedCard(a) {
   const reason = String(a.triage_reason ?? a.route ?? '').toLowerCase();
   const sup = (a.normalized_supplier || a.supplier || '').toLowerCase();
@@ -377,7 +400,10 @@ export function watchedCard(a) {
     detail = 'Vår leverantörskontroll och vår kategorisering gav olika svar om vilken sorts kostnad '
       + 'det här är. Vi prissätter aldrig när våra egna kontroller är oense — att jämföra mot fel '
       + 'marknad är värre än att vänta.';
-    action = 'En människa läser om fakturan och vi återkommer med rätt jämförelse.';
+    // ⚠️ «och vi återkommer» ströks 2026-09-18 (samma dom som Q2). notifyReviewQueue larmar
+    // OSS, aldrig kunden — det finns ingen mekanik som hör av sig. Att en människa läser är
+    // sant; att vi återkommer är ett löfte utan väg.
+    action = 'En människa läser om fakturan.';
   } else if (reason.includes('credit_note')) {
     kind = 'Kreditnota';
     headline = 'En kreditfaktura — ingen kostnad att prissätta';
@@ -454,7 +480,7 @@ export function watchedCard(a) {
     headline = 'Mottagen — men vi stoppade prissättningen';
     detail = 'Vi såg fakturan och la den under uppsikt. Skälet är tekniskt, och vi översätter det '
       + 'hellre inte till ett påstående om ert avtal som vi inte kan stå för.';
-    action = 'En människa läser om fakturan och vi återkommer.';
+    action = 'En människa läser om fakturan.';
   }
   // Fakturanumret följer med kortet: vi säger att vi INTE prissatte den här fakturan, och då
   // måste ekonomichefen kunna slå upp exakt rätt papper. Med två Slack-fakturor i pärmen är
