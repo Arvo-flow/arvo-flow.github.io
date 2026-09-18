@@ -82,7 +82,8 @@ if (telia.length === 0) {
 // den enda frågan som kan skilja «grinden fäller inte» från «mitt anrop var fel».
 const { checkSupplierFingerprint } = await import('../lib/supplier-fingerprints.js');
 const rader = await db`
-  SELECT id, supplier, normalized_supplier, category, route, triage_reason, created_at
+  SELECT id, supplier, normalized_supplier, category, route, triage_reason, created_at,
+         fingerprint, annual_cost
   FROM invoice_analyses            -- internt: mätning av grindutfall mot verkliga strängar
   WHERE category = 'molnvaxel'
      OR supplier ILIKE '%telia%' OR normalized_supplier ILIKE '%telia%'
@@ -99,6 +100,11 @@ for (const r of rader) {
     + `norm=${JSON.stringify(r.normalized_supplier ?? null).padEnd(24)} `
     + `raw=${JSON.stringify(String(r.supplier ?? '').slice(0, 22)).padEnd(26)} `
     + `cat=${String(r.category ?? '—').padEnd(12)} route=${String(r.route).padEnd(13)} → ${dom}`);
+  // Den avgörande halvan: kom raden genom PIPELINEN eller skrevs den direkt av ett seed-skript?
+  // `scripts/seed-avtal-testyta.mjs` sätter fingerprint 'seed:avtal-testyta' och kringgår grinden
+  // helt. En seedad rad bevisar ingenting om vad en kund råkat ut för.
+  console.log(`          fingerprint=${JSON.stringify(String(r.fingerprint ?? '').slice(0, 28))} `
+    + `arskostnad=${r.annual_cost}`);
 }
 if (rader.length === 0) console.log('   (inga rader — utfall om DATAN, inte om grinden)');
 
