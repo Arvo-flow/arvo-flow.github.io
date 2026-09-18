@@ -28,6 +28,8 @@ import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getPublicListBenchmark, kohortTackning } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
+import { tystnadsbesked, SKAL } from '../lib/tystnadsskal.js';
+import { isAudited } from '../lib/revision-gate.js';
 
 export const config = { maxDuration: 10 };
 
@@ -228,13 +230,22 @@ export default async function handler(req, res) {
     if (typeof rader === 'string') { try { rader = JSON.parse(rader); } catch { rader = null; } }
     const niva = lasLicensniva(rader);
     const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
-    a.prisunderlag = byggPrisunderlag({
-      annualCost: a.annual_cost,
-      seats:      a.seat_count,
-      ankare:     branchAnchors[a.category] ?? null,
-      niva:       golv ? { ...golv, kalla: niva.kalla } : null,
-    });
+    a.prisunderlag = underlagForRad(a, branchAnchors[a.category] ?? null, golv, niva);
     a._rader = undefined;
+    // ── TYSTNADENS SKÄL FÖLJER MED RADEN (grundarbeslut 2026-09-17) ─────────────────────────
+    // De offertprissatta kategorierna blir ALDRIG triagerade — mätt mot produktionen: noll rader.
+    // De passerar triagen, revisionsgrinden kortsluter dem i `recommend()` till talfritt
+    // offert-läge, och de landar här som auto-rader utan prisunderlag. I rummet syntes de bara
+    // som «Mottagen», utan ett ord om VARFÖR.
+    //
+    // Beskedet hämtas här och inte i `recommend()` med flit: sifferrevisorn bevakar att en
+    // oreviderad kategori inte läcker EN SIFFRA ur motorn, och åtgärdsraden bär «60 och 30
+    // dagar». Att lägga texten i motorn hade tvingat fram ett val mellan den vakten och den här
+    // ytan. Rummet är rätt lager — samma plats där `watchedCard` redan bor.
+    //
+    // `tystnadsbesked` returnerar null för varje kategori som TALAR (de finns inte i registret),
+    // så raden är fail-closed av sig själv (TS-02 låser att ingen talande kategori står där).
+    a.tystnad = tystnadsbesked(a.category);
     // SCOREN HÄRLEDS UR SAMMA JÄMFÖRELSE KORTET VISAR (2026-08-19). Tidigare läste rummet det
     // LAGRADE health_score, räknat vid analystillfället mot getBenchmark — som föredrar livedata,
     // och livedatan är totalsummor. Följden var ett score på 92 ovanför ett bevis som sa +184 %.
@@ -281,11 +292,62 @@ export default async function handler(req, res) {
 // "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.
 // Disciplinen ÄR premiumsignalen — vi gissar aldrig (Zero Trust), och vakten talar även när den tiger om tal.
 // reasonCode (lagrat) + leverantörsnamn → kundvänlig, ärlig copy. NOLL siffror (sifferrevisorns tystnad orörd).
+
+/**
+ * Prisunderlaget för EN rad — med revisionsgrinden inbyggd.
+ *
+ * ⚠️ EXPORTERAD AV ETT ENDA SKÄL: BK-15 byggde först sin EGEN kopia av grinden
+ * (`isAudited(kat) ? bygg(...) : null`) och var därför grön medan produktionens gren var
+ * sönderslagen — sabotaget mot den riktiga raden fällde noll. Det är «mekanismen prövad,
+ * matningen aldrig», i det test som skulle vakta just den sjukdomen. Nu finns EN gren, och
+ * sviten kör den.
+ *
+ * ⚠️ Q4, MÄTT 2026-09-18: `saas-crm` är TYST men har ett branschankare, alltså kunde den få ett
+ * prisunderlag. Pillerkedjan väljer underlaget FÖRE tystnaden — pillret hade sagt «Rätt prissatt»
+ * medan rutan under förklarar varför vi inte prissätter. Två ytor, samma rad, motsatt besked.
+ * Roten var inte pillret utan att underlaget byggdes alls: revisionsgrinden har redan tystat
+ * kategorin i `recommend()`, och att rummet ändå räknar fram en jämförelse är två sanningar om
+ * samma fråga (regel 1). Grinden gäller nu HELA vägen.
+ */
+export function underlagForRad(a, ankare, golv, niva) {
+  if (!isAudited(a?.category)) return null;
+  return byggPrisunderlag({
+    annualCost: a.annual_cost,
+    seats:      a.seat_count,
+    ankare,
+    niva:       golv ? { ...golv, kalla: niva?.kalla } : null,
+  });
+}
+
 export function watchedCard(a) {
   const reason = String(a.triage_reason ?? a.route ?? '').toLowerCase();
   const sup = (a.normalized_supplier || a.supplier || '').toLowerCase();
   const supplierName = a.normalized_supplier || a.supplier || 'Okänd leverantör';
   let kind, headline, detail, action;
+
+  // ── ⚖️ DEN REGULATORISKA GRÄNSEN FRÅGAS FÖRST, FÖRE ALLT ANNAT ─────────────────────────────
+  // ⚠️ HÄR LÅG FELET, OCH DET VAR STRUKTURELLT. Karantänen satt först INNE i `no_benchmark`-
+  // grenen, alltså som ett fall bland tolv i en if/else-kedja. Mätt 2026-09-18 med femton
+  // verkliga svenska försäkringsbolag × elva triage-skäl × två rutter:
+  //
+  //     600 av 720 kombinationer UNDSLAPP karantänen.
+  //
+  // Varje annat skäl — `categorization_conflict`, `fingerprint_mismatch`, `price_anomaly`,
+  // `sanity_check_failed`, `implausible_amounts`, `natavgift`, `el_data_missing`, `null` —
+  // föll i en tidigare gren som inte vet något om försäkring. Flera av dem LOVAR dessutom:
+  // «En människa läser om fakturan och vi återkommer med rätt jämförelse» på en
+  // försäkringsfaktura är ordagrant det lagbrott karantänen byggdes för att hindra.
+  //
+  // En regulatorisk gräns kan inte vara ett fall bland andra. Den är den FÖRSTA frågan, och
+  // ingenting nedanför får kunna åsidosätta den. (BK-13 mäter hela matrisen, inte ett stickprov.)
+  {
+    const karantan = tystnadsbesked(a.category);
+    if (karantan?.skal === SKAL.TILLSTAND_KRAVS) {
+      return { supplier: supplierName, invoiceNumber: a.invoice_number ?? null,
+        category: a.category ?? null, reasonCode: reason,
+        kind: karantan.rubrik, headline: karantan.rad, detail: karantan.text, action: karantan.atgard };
+    }
+  }
 
   // Namnlistan används numera ENBART för att välja etikett när skälet redan säger valuta.
   const INTL_SAAS = /hubspot|slack|zoom|salesforce|\baws\b|amazon web|atlassian|notion|figma|datadog|stripe|dropbox|\bbox\b|monday|asana|miro/;
@@ -338,7 +400,10 @@ export function watchedCard(a) {
     detail = 'Vår leverantörskontroll och vår kategorisering gav olika svar om vilken sorts kostnad '
       + 'det här är. Vi prissätter aldrig när våra egna kontroller är oense — att jämföra mot fel '
       + 'marknad är värre än att vänta.';
-    action = 'En människa läser om fakturan och vi återkommer med rätt jämförelse.';
+    // ⚠️ «och vi återkommer» ströks 2026-09-18 (samma dom som Q2). notifyReviewQueue larmar
+    // OSS, aldrig kunden — det finns ingen mekanik som hör av sig. Att en människa läser är
+    // sant; att vi återkommer är ett löfte utan väg.
+    action = 'En människa läser om fakturan.';
   } else if (reason.includes('credit_note')) {
     kind = 'Kreditnota';
     headline = 'En kreditfaktura — ingen kostnad att prissätta';
@@ -359,14 +424,50 @@ export function watchedCard(a) {
     headline = 'Ingen verifierad prisnivå ännu — under bevakning';
     detail = 'Webbhotell, domän och hosting är en splittrad marknad utan ett verifierat svenskt golv vi kan jämföra mot. Vi flaggar hellre än gissar.';
     action = 'Ladda upp avtalet/specen så bygger vi en ärlig jämförelse.';
-  } else if (reason.includes('no_benchmark') || reason.includes('out_of_scope') || reason.includes('unsupported_category')) {
+  // ⚠️ `volume_data_required` TILLKOM 2026-09-17 EFTER MÄTNING MOT PRODUKTIONEN. Granskningens F2:
+  // grenen läste bara `no_benchmark`, som sätts ENBART inuti `if (!catDef)` i api/test-invoice.mjs
+  // — alltså när kategorin SAKNAS i prisboken. Alla deklarerade kategorier FINNS där, så registret
+  // var monterat på en signal produktionen aldrig sänder. Villkorsvaktens sjukdom, och min
+  // skärmdump «bevisade» den genom att mata in ett skäl produktionen inte kan producera.
+  //
+  // MÄTT (probe-rumsmotsagelsen, 2026-09-17, mot produktionsdatabasen): sex triagade rader i de
+  // nitton tysta kategorierna, ALLA med `volume_data_required` — transport-frakt 2,
+  // utrustningsleasing 2, serverhosting 1, städ-rengöring 1. Rader som nådde grenen: 0 av 6.
+  //
+  // KVARSTÅR, UTTALAT: de åtta offertprissatta kategorierna har NOLL triagade rader. De passerar
+  // triagen och hamnar i `analyses`, där revisionsgrinden ger dem talfritt offert-läge. Deras
+  // besked har alltså fortfarande ingen yta — det är en annan inkoppling och ett eget beslut.
+  } else if (reason.includes('no_benchmark') || reason.includes('out_of_scope')
+    || reason.includes('unsupported_category') || reason.includes('volume_data_required')) {
     // Efter de leverantörsspecifika grenarna: en KÄND leverantör med ett känt skäl (elnätet,
     // webbhotellen) ska bära sin egen, mer precisa förklaring. Först när namnet inte säger något
     // är "ingen verifierad marknadsreferens" den mest specifika sanning vi har.
-    kind = 'Ej prissatt kategori';
-    headline = 'Mottagen och klassad — men utan verifierat golv att prissätta mot';
-    detail = 'Vi såg fakturan och la den under uppsikt. Vi sätter ingen siffra förrän vi har en verifierad marknadsreferens — aldrig en gissning.';
-    action = 'Under bevakning — vi prissätter så snart ett verifierat golv finns.';
+    // ── TYSTNADEN SÄGER NU VARFÖR (grundarbeslut 2026-09-16, ur Fables dom) ──────────────────
+    // Här stod ett LÖFTE: «vi prissätter så snart ett verifierat golv finns». För `larm-bevakning`,
+    // `forsakring-foretag` och sex till kommer det golvet ALDRIG att finnas — priset sätts i
+    // offert, och det är en produktsanning, inte en lucka. Ett kundlöfte utan mekanik är regel 9
+    // brutet, och det stod i rummet varje gång en sådan faktura lästes.
+    //
+    // Registret (`lib/tystnadsskal.js`) deklarerar VARFÖR kategorin tiger, och alla fyra
+    // kortfälten härleds ur klassen — aldrig skrivna här. Femton kategorier bär beskedet om att
+    // inget golv finns; `saas-crm` bär ett eget (priset är publikt, fast i USD).
+    //
+    // FAIL-CLOSED (BK-10): saknas deklaration faller vi tillbaka på den gamla texten. Den är sann för de
+    // två kategorier som FAKTISKT ska fyllas (faktura-tjanst, bankavgifter) — där är löftet inte
+    // tomt utan en kö. En okänd kategori får hellre en försiktig text än en påhittad förklaring
+    // (reservkortets läxa, 15 augusti).
+    const besked = tystnadsbesked(a.category);
+    if (besked) {
+      kind = besked.rubrik;
+      headline = besked.rad;
+      detail = besked.text;
+      action = besked.atgard;
+    } else {
+      kind = 'Ej prissatt kategori';
+      headline = 'Mottagen och klassad — men utan verifierat golv att prissätta mot';
+      detail = 'Vi såg fakturan och la den under uppsikt. Vi sätter ingen siffra förrän vi har en verifierad marknadsreferens — aldrig en gissning.';
+      action = 'Under bevakning — vi prissätter så snart ett verifierat golv finns.';
+    }
   } else {
     // ── RESERVKORTET FÅR INTE PÅSTÅ ETT SKÄL (grundargranskning 2026-08-15) ───────────────────
     // Här stod tidigare "utan verifierat golv att prissätta mot" — en SUBSTANTIELL förklaring,
@@ -379,7 +480,7 @@ export function watchedCard(a) {
     headline = 'Mottagen — men vi stoppade prissättningen';
     detail = 'Vi såg fakturan och la den under uppsikt. Skälet är tekniskt, och vi översätter det '
       + 'hellre inte till ett påstående om ert avtal som vi inte kan stå för.';
-    action = 'En människa läser om fakturan och vi återkommer.';
+    action = 'En människa läser om fakturan.';
   }
   // Fakturanumret följer med kortet: vi säger att vi INTE prissatte den här fakturan, och då
   // måste ekonomichefen kunna slå upp exakt rätt papper. Med två Slack-fakturor i pärmen är
