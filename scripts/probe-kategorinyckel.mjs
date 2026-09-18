@@ -75,4 +75,31 @@ if (telia.length === 0) {
   console.log('   (Ett utfall om DATAN, inte ett bevis att kombinationen fungerar.)');
 }
 
+// ── 4 · DEN AVGÖRANDE MÄTNINGEN ────────────────────────────────────────────────────────────
+// Lokalt gav `checkSupplierFingerprint('telia','Telia Sverige AB','molnvaxel')` MISMATCH, men
+// liggaren visar en Telia-molnväxelfaktura som gick `route=auto`. En av de två är fel, och det
+// får inte gissas bort. Här körs PRODUKTIONENS EGEN funktion på PRODUKTIONENS EGNA strängar —
+// den enda frågan som kan skilja «grinden fäller inte» från «mitt anrop var fel».
+const { checkSupplierFingerprint } = await import('../lib/supplier-fingerprints.js');
+const rader = await db`
+  SELECT id, supplier, normalized_supplier, category, route, triage_reason, created_at
+  FROM invoice_analyses            -- internt: mätning av grindutfall mot verkliga strängar
+  WHERE category = 'molnvaxel'
+     OR supplier ILIKE '%telia%' OR normalized_supplier ILIKE '%telia%'
+     OR supplier ILIKE '%telenor%' OR supplier ILIKE '%tre %'
+  ORDER BY created_at DESC
+  LIMIT 30
+`;
+console.log(`\n4 · grinden körd mot ${rader.length} verkliga rad(er):`);
+for (const r of rader) {
+  const fp = checkSupplierFingerprint(r.normalized_supplier, r.supplier, r.category);
+  const dom = !fp.matched ? 'matchar inget fingeravtryck'
+    : fp.categoryOk ? 'OK' : `MISMATCH (väntade [${fp.expectedCategories.join(', ')}])`;
+  console.log(`   ${String(r.created_at).slice(4, 10)} `
+    + `norm=${JSON.stringify(r.normalized_supplier ?? null).padEnd(24)} `
+    + `raw=${JSON.stringify(String(r.supplier ?? '').slice(0, 22)).padEnd(26)} `
+    + `cat=${String(r.category ?? '—').padEnd(12)} route=${String(r.route).padEnd(13)} → ${dom}`);
+}
+if (rader.length === 0) console.log('   (inga rader — utfall om DATAN, inte om grinden)');
+
 console.log('\n[probe-kategorinyckel] klar\n');
