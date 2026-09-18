@@ -1,0 +1,30 @@
+name: Sond — kategorinyckeln vaxel/molnvaxel (produktions-DB)
+
+# Mäter hur många lagrade rader som bär den döda nyckeln `vaxel` kontra den kanoniska
+# `molnvaxel`, och om Telia-fakturor föll på `fingerprint_mismatch`. Bindande för
+# sammanslagningen: finns lagrade `vaxel`-rader måste nyckeln förbli LÄSBAR, inte raderas.
+# Går via DATABASE_URL — mät datan, inte HTTP-routen.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Mät kategorinyckeln
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # pipefail: utan den returnerar en pipe TEE:s exit-kod och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-kategorinyckel.mjs
