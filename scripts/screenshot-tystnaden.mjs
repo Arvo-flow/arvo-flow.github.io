@@ -105,6 +105,25 @@ for (const w of PAYLOAD.watched) console.log(`  · ${String(w.category).padEnd(2
 const kinds = new Set(PAYLOAD.watched.map((w) => w.kind));
 const tystIInnehavet = ANALYSES.filter((a) => a.tystnad).length;
 console.log('  · innehavsrader med tystnadsskäl: ' + tystIInnehavet);
+
+// ⚠️ REGEL 8 FÖR RADARN: bilden ska visa Fakturor + Prissatta + Mottagna + Bevakade samtidigt,
+// annars bevisar den inte att ytan går ihop. Sonden kunde bara modellera renderingsreglerna;
+// skärmdumpen är det som stänger den blindfläcken.
+const { roomCounts, radarRader } = await import('../src/lib/holdings.js');
+const rknare = roomCounts({ autoAnalyses: ANALYSES, watched: PAYLOAD.watched });
+const rader = radarRader(rknare);
+console.log('  · radarns rader: ' + rader.map((r) => r.etikett + ' ' + r.varde).join(' · '));
+const total = rader.find((r) => r.total);
+const delar = rader.filter((r) => !r.total).reduce((a, r) => a + r.varde, 0);
+if (!total || rader.length < 4) {
+  console.error('\n✗ Radarn visar inte alla fyra talen — bilden kan inte bevisa att ytan går ihop.');
+  process.exit(1);
+}
+if (delar !== total.varde) {
+  console.error(`\n✗ ${delar} ≠ ${total.varde} — ytan går inte ihop, fotografera inte.`);
+  process.exit(1);
+}
+console.log('  · summan: ' + delar + ' = ' + total.varde + ' ✓');
 if (tystIInnehavet === 0) {
   console.error('\n✗ Ingen innehavsrad bär ett skäl — del 1 av ändringen syns inte i bilden.');
   process.exit(1);

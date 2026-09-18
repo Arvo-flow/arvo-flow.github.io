@@ -30,7 +30,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { roomCounts } from '../src/lib/holdings.js';
+import { roomCounts, radarRader } from '../src/lib/holdings.js';
 import { refineFinding, detectForensicFindings } from '../lib/forensics.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -79,7 +79,11 @@ describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
     assert.ok(radar.length > 50, 'radarns statistikblock hittades inte — har markupen bytt namn?');
     assert.doesNotMatch(radar, /suppliers\.length|autoAnalyses\.length|watched\.length/,
       'radarn räknar på egen hand igen — då kan raderna glida isär precis som förut');
-    assert.match(radar, /counts\.fakturor/, 'totalen ska komma ur den delade räkningen');
+    // ⚠️ HÄR STOD /counts\.fakturor/ — en KÄLLTEXTKONTROLL på JSX:en. Raderna bor nu i
+    // radarRader() (src/lib/holdings.js), så texten finns inte längre i komponenten. Vakten
+    // prövar i stället att JSX:en MAPPAR över den delade funktionen, och RR-11 prövar vad
+    // funktionen faktiskt returnerar. Ett beteendeprov slår ett textprov varje gång.
+    assert.match(radar, /radarRader\(counts\)/, 'radarn ska mappa över den delade funktionen');
   });
 
   test('RR-03 · disciplinmontern lovar aldrig fullständighet', () => {
@@ -303,11 +307,69 @@ describe('FORENSIKEN · det retroaktiva kravet och citatet', () => {
     // bara råkar stämma är inte en etikett (helhetskravet).
     // Ankaret är etikettvalet självt, inte «rstat» — det senare förekommer flera gånger och
     // första träffen var en annan rad. En vakt som ankrar för brett fäller på fel grund.
-    const i = RUM.indexOf("'Prissatta' : 'Fakturor'");
-    assert.ok(i > 0, 'hittade inte radarns etikettval — vakten mäter fel objekt');
-    const block = RUM.slice(Math.max(0, i - 120), i + 160);
-    assert.match(block, /counts\.mottagna/,
-      'etiketten måste växla till «Prissatta» så snart någon rad är mottagen men inte prissatt');
+    // ⚠️ ANKRADE FÖRR PÅ EN STRÄNG I JSX:EN. Etikettvalet bor nu i radarRader(), så vakten
+    // prövar FUNKTIONEN i stället för texten — samma invariant, men mätt på beteendet.
+    // «Fakturor» stod över counts.prissatta. Det var sant så länge de två alltid var lika, och
+    // blev osant i samma sekund räknaren skilde prissatta från mottagna. En etikett som bara
+    // råkar stämma är inte en etikett (helhetskravet).
+    const odelat = radarRader(roomCounts({ autoAnalyses: [{ prisunderlag: {} }], watched: [] }));
+    assert.equal(odelat.find((r) => r.nyckel === 'prissatta').etikett, 'Fakturor',
+      'odelat underlag: prissatta ÄR alla fakturor, och etiketten får säga så');
+    for (const delande of [
+      { autoAnalyses: [{ prisunderlag: {} }, { prisunderlag: null }], watched: [] },
+      { autoAnalyses: [{ prisunderlag: {} }], watched: [1] },
+    ]) {
+      const r = radarRader(roomCounts(delande));
+      assert.equal(r.find((x) => x.nyckel === 'prissatta').etikett, 'Prissatta',
+        'så snart underlaget är delat måste etiketten namnge DELEN, inte helheten');
+    }
+  });
+
+  test('RR-11 · radarns SYNLIGA tal går ihop — hela fältet, inte ett stickprov', () => {
+    // ⚠️ MÄTT 2026-09-18. Radarn plockade TRE av räknarens FEM fält och utelämnade `mottagna`.
+    // Enumererat över 36 tillstånd: ytan gick inte ihop i 16, alltid med `mottagna > 0`, och det
+    // saknade beloppet var EXAKT `counts.mottagna` i samtliga — vilket uteslöt avrundning och
+    // dubbelräkning. Datamodellen och aggregeringen var friska; felet satt i renderingen.
+    //
+    // Testet kör PRODUKTIONENS `radarRader`, samma funktion JSX:en mappar över. En tidigare sond
+    // modellerade renderingsreglerna och kunde bara bevisa vad reglerna i filen säger — aldrig
+    // vad komponenten gör. Nu finns en funktion, och den prövas här.
+    const brott = [];
+    let provade = 0;
+    for (const p of [0, 1, 2, 5, 11]) {
+      for (const m of [0, 1, 3, 9]) {
+        for (const b of [0, 1, 4, 12]) {
+          provade += 1;
+          const c = roomCounts({
+            autoAnalyses: [...Array(p).fill({ prisunderlag: {} }), ...Array(m).fill({ prisunderlag: null })],
+            watched: Array(b).fill(1),
+          });
+          const rader = radarRader(c);
+          const total = rader.find((r) => r.total);
+          const delar = rader.filter((r) => !r.total).reduce((s, r) => s + r.varde, 0);
+          // Invarianten: visas ett totaltal ska de andra SYNLIGA talen summera till det.
+          if (total && delar !== total.varde) brott.push(`${p}/${m}/${b}: ${delar} ≠ ${total.varde}`);
+          // Och varje rad med ett värde > 0 måste synas — en post som aldrig renderas är precis
+          // det fel som mättes.
+          for (const [nyckel, varde] of [['prissatta', c.prissatta], ['mottagna', c.mottagna], ['bevakade', c.bevakade]]) {
+            if (varde > 0 && !rader.some((r) => r.nyckel === nyckel)) brott.push(`${p}/${m}/${b}: ${nyckel}=${varde} renderas inte`);
+          }
+        }
+      }
+    }
+    assert.ok(provade >= 60, `bara ${provade} tillstånd prövade — mät inte på tomhet`);
+    assert.deepEqual(brott.slice(0, 6), [], `${brott.length} av ${provade} tillstånd går inte ihop`);
+
+    // MOTPROVEN, båda bärande.
+    // 1 · Ett ODELAT underlag ska INTE visa en total — «Fakturor» och enda delraden vore samma
+    //     tal två gånger, och en vakt som kräver en total överallt hade tvingat fram just det.
+    const odelat = radarRader(roomCounts({ autoAnalyses: [{ prisunderlag: {} }, { prisunderlag: {} }], watched: [] }));
+    assert.equal(odelat.length, 1, 'odelat underlag ska visa EN rad');
+    assert.equal(odelat[0].etikett, 'Fakturor', 'och den raden namnger totalen, inte en del');
+    // 2 · Etiketten måste namnge sitt tal (helhetskravet 15 aug): så snart underlaget är delat
+    //     får raden med `prissatta` inte längre heta «Fakturor».
+    const delat = radarRader(roomCounts({ autoAnalyses: [{ prisunderlag: {} }, { prisunderlag: null }], watched: [] }));
+    assert.equal(delat.find((r) => r.nyckel === 'prissatta').etikett, 'Prissatta');
   });
 
 });
