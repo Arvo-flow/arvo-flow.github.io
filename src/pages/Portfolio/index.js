@@ -11,7 +11,7 @@ import { getCategoryMeta } from '../../lib/categoryMeta';
 // buildReasoning bor i lib så den kan prövas DIREKT av sviten (tests/scorekrav.mjs SK-08),
 // inte via en regex på den här filens källtext. Domen är logik, inte rendering.
 import { buildReasoning } from '../../lib/holdings';
-import { groupBySupplier, supplierName, supplierDiagScore, computeActing, roomCounts } from '../../lib/holdings';
+import { groupBySupplier, supplierName, supplierDiagScore, computeActing, roomCounts, radarRader } from '../../lib/holdings';
 import { domensLage, omattLage } from '../../lib/domslut';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
@@ -906,14 +906,16 @@ export default function Portfolio() {
                     att själv lista ut att det var samma rader. */}
                 <div className="radar-stats">
                   <div className="rgroup-label">Ert underlag</div>
-                  {counts.bevakade > 0 && <div className="rstat"><span>Fakturor</span><span className="v">{counts.fakturor}</span></div>}
-                  {/* Etiketten måste namnge det tal som står under den. «Fakturor» över
-                      counts.prissatta blev osant i samma sekund som räknaren skilde prissatta
-                      från mottagna (2026-08-21) — helhetskravets kärna: varje tal i en yta ska
-                      ha en enhet, och enheten ska vara den etiketten säger. */}
-                  <div className="rstat"><span>{(counts.bevakade > 0 || counts.mottagna > 0) ? 'Prissatta' : 'Fakturor'}</span><span className="v">{counts.prissatta}</span></div>
-                  {/* Bevakat — inte prissatt: triagade fakturor syns i räknaren så intaget aldrig läser som bortfall */}
-                  {counts.bevakade > 0 && <div className="rstat"><span>Bevakade</span><span className="v">{counts.bevakade}</span></div>}
+                  {/* ⚠️ RADERNA KOMMER UR radarRader() I src/lib/holdings.js — samma funktion
+                      som RR-02 prövar. Här stod förr tre HÅRDKODADE rader som plockade tre av
+                      räknarens fem fält och utelämnade `mottagna`; mätt över 36 tillstånd gick
+                      ytan inte ihop i 16, och det saknade beloppet var exakt `counts.mottagna`.
+                      En sond som MODELLERAR renderingsregler kan aldrig bevisa vad JSX:en gör —
+                      därför finns nu EN funktion i stället för två sanningar (regel 1). */}
+                  {radarRader(counts).map((r) => (
+                    <div className="rstat" key={r.nyckel}><span>{r.etikett}</span><span className="v">{r.varde}</span></div>
+                  ))}
+
                 </div>
                 {/* Variant C — grupp 2: MARKNADEN (svepet). Marknadskällor folds in i svep-raden där den hör hemma. */}
                 <div className="radar-foot">

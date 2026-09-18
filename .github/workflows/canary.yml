@@ -2,9 +2,13 @@ name: Production Canary
 
 # ── Bevakar arvoflow.se/api/health varje timme ────────────────────────────────
 #
-# Om endpointen svarar med något annat än HTTP 200 + "ok":true skapas ett
-# GitHub-ärende med etiketten production-down.
-# Befintligt öppet ärende? Lägger till en kommentar istället (undviker spam).
+# Domen bor i `lib/kanariedom.js` — INTE här. Skälet står i den filens huvud: så länge
+# bedömningen låg i en shell-heredoc kunde ingen av sviterna nå den, och TRE av fyra grenar
+# var döda utan att någon kunde se det (`ok` sedan första commiten, `down` på grund av `bash -e`,
+# och «kunde inte tolka svaret» hopblandad med «servern sa nej»).
+#
+# Ärende #79 samlade 913 kommentarer på det. Ett larm som aldrig kan säga «allt lugnt» blir
+# ignorerat — och då är det värre än inget larm.
 #
 # Manuell testning: Actions → Production Canary → Run workflow
 
@@ -20,59 +24,67 @@ on:
 
 permissions:
   issues: write
+  contents: read
 
 jobs:
   canary:
     name: Health check arvoflow.se
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
 
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Ping /api/health
         id: ping
+        env:
+          TARGET: ${{ github.event.inputs.url }}
         run: |
-          TARGET="${{ github.event.inputs.url }}"
           URL="${TARGET:-https://arvoflow.se/api/health}"
-          echo "url=${URL}" >> "$GITHUB_OUTPUT"
+          echo "Pingar $URL"
 
-          HTTP_CODE=$(curl -s -o /tmp/health-body.txt -w "%{http_code}" \
+          # ⚠️ `set +e` ÄR LASTBÄRANDE. GitHub kör run:-steg med `bash -e`, och en misslyckad curl
+          # i en variabeltilldelning avbryter steget på raden ovanför `CURL_EXIT=$?`. Efterföljande
+          # steg hoppas då över — alltså gav det ENDA fall en kanariefågel finns till för (sajten
+          # svarar inte alls) varken ärende eller notis. Tyst, från första commiten.
+          set +e
+          HTTP_CODE=$(curl -sS -o /tmp/health-body.txt -w "%{http_code}" \
             --max-time 15 --connect-timeout 10 "$URL" 2>/tmp/health-err.txt)
           CURL_EXIT=$?
+          set -e
 
-          echo "http_code=${HTTP_CODE}" >> "$GITHUB_OUTPUT"
-          echo "curl_exit=${CURL_EXIT}"  >> "$GITHUB_OUTPUT"
+          echo "curl exit=$CURL_EXIT http=$HTTP_CODE"
+          [ -s /tmp/health-err.txt ] && cat /tmp/health-err.txt
 
-          BODY=$(cat /tmp/health-body.txt 2>/dev/null | head -c 2000)
-          echo "body<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$BODY"     >> "$GITHUB_OUTPUT"
-          echo "EOF"       >> "$GITHUB_OUTPUT"
+          # Domen fälls av lib/kanariedom.js, som sviten låser. Skriptet skriver till $GITHUB_OUTPUT.
+          node scripts/kanariedom.mjs \
+            --url "$URL" --http "$HTTP_CODE" --curl-exit "$CURL_EXIT" --body /tmp/health-body.txt
 
-          # Kontrollera att svaret är JSON med ok:true
-          if [ $CURL_EXIT -ne 0 ]; then
-            echo "status=down" >> "$GITHUB_OUTPUT"
-          elif [ "$HTTP_CODE" != "200" ]; then
-            echo "status=error_${HTTP_CODE}" >> "$GITHUB_OUTPUT"
-          else
-            OK=$(echo "$BODY" | python3 -c \
-              "import json,sys; d=json.load(sys.stdin); print('true' if d.get('ok') else 'false'" \
-              2>/dev/null || echo "false")
-            echo "status=$( [ \"$OK\" = 'true' ] && echo ok || echo bad_response )" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create or update issue on failure
-        if: steps.ping.outputs.status != 'ok'
+      # ── LARM ────────────────────────────────────────────────────────────────────────────────
+      - name: Öppna eller uppdatera ärende
+        if: steps.ping.outputs.larmar == 'true'
         uses: actions/github-script@v7
+        env:
+          # ⚠️ VIA ENV, ALDRIG VIA ${{ }} IN I SKRIPTKROPPEN. Kroppen kommer från nätet; en backtick
+          # eller ett ${ i svaret bröt förut ut ur mallsträngen och kunde köra godtycklig kod med
+          # `issues: write`. Samma felform som backticken i SQL-kommentaren 11 september, med en
+          # säkerhetskonsekvens.
+          STATUS:    ${{ steps.ping.outputs.status }}
+          OBJEKT:    ${{ steps.ping.outputs.objekt }}
+          RUBRIK:    ${{ steps.ping.outputs.rubrik }}
+          ATGARD:    ${{ steps.ping.outputs.atgard }}
+          HTTP_CODE: ${{ steps.ping.outputs.http_code }}
+          TARGET_URL: ${{ steps.ping.outputs.url }}
+          BODY:      ${{ steps.ping.outputs.body }}
         with:
           script: |
-            const status   = '${{ steps.ping.outputs.status }}';
-            const httpCode = '${{ steps.ping.outputs.http_code }}';
-            const body     = `${{ steps.ping.outputs.body }}`;
-            const url      = '${{ steps.ping.outputs.url }}';
-            const date     = new Date().toLocaleString('sv-SE', {
-              timeZone: 'Europe/Stockholm',
-            });
+            const { STATUS, OBJEKT, RUBRIK, ATGARD, HTTP_CODE, TARGET_URL, BODY } = process.env;
+            const date = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm' });
 
-            // Säkerställ att etiketten finns
             await github.rest.issues.createLabel({
               owner: context.repo.owner, repo: context.repo.repo,
               name: 'production-down', color: 'b91c1c',
@@ -82,28 +94,37 @@ jobs:
                 console.log('Label-fel:', e.message);
             });
 
+            // Rubriken säger VAD som är fel och VEM som ska laga det. Ett larm om vakten och ett
+            // larm om driften kräver motsatta åtgärder och får aldrig se likadana ut.
+            const rubrikrad = OBJEKT === 'vakten'
+              ? '🟠 Kanariefågeln kunde inte tolka svaret — ' + date
+              : '🔴 Produktionen nere — ' + date;
+
             const issueBody = [
-              '## 🔴 Produktionen nere — ' + date,
+              '## ' + rubrikrad,
+              '',
+              '**' + RUBRIK + '**',
               '',
               '| Fält | Värde |',
               '|------|-------|',
-              '| Endpoint | ' + url + ' |',
-              '| HTTP-kod | ' + httpCode + ' |',
-              '| Status   | ' + status + ' |',
+              '| Endpoint | ' + TARGET_URL + ' |',
+              '| HTTP-kod | ' + HTTP_CODE + ' |',
+              '| Status   | `' + STATUS + '` |',
+              '| Gäller   | ' + (OBJEKT === 'vakten' ? '**vakten** (laga canary/endpointen)' : '**produktionen**') + ' |',
               '',
               '**Respons:**',
-              '```json',
-              body.slice(0, 1500) || '(ingen respons)',
+              '```',
+              (BODY || '(ingen respons)').slice(0, 1500),
               '```',
               '',
               '### Åtgärdslista',
-              '1. Kontrollera [Vercel dashboard](https://vercel.com/arvo-flow)',
-              '2. Verifiera att `ANTHROPIC_API_KEY` är satt i Vercel-miljön',
-              '3. Granska senaste deployment-loggar',
-              '4. Om löst: stäng detta ärende',
+              // ⚠️ ÅTGÄRDERNA KOMMER UR DOMEN, inte ur en fast lista. Den gamla listan sa
+              // «verifiera att ANTHROPIC_API_KEY är satt» oavsett vad som faktiskt brast — ett
+              // reservkort som påstår ett skäl det inte har (bibelns BK-06).
+              ATGARD || '(domen lämnade ingen åtgärd — det är i sig ett fel, rapportera det)',
               '',
               '---',
-              '_Skapad av [Production Canary](.github/workflows/canary.yml)_',
+              '_Skapad av [Production Canary](.github/workflows/canary.yml) · dom: `lib/kanariedom.js`_',
             ].join('\n');
 
             const existing = await github.rest.issues.listForRepo({
@@ -121,11 +142,78 @@ jobs:
             } else {
               const { data: issue } = await github.rest.issues.create({
                 owner: context.repo.owner, repo: context.repo.repo,
-                title: '🔴 Produktion nere — ' + date,
-                body: issueBody, labels: ['production-down'],
+                title: rubrikrad, body: issueBody, labels: ['production-down'],
               });
               console.log('Skapade ärende #' + issue.number);
             }
+
+      # ── ÅTERSTÄLLNING ───────────────────────────────────────────────────────────────────────
+      # Det som faktiskt gör larmet meningsfullt. Utan det här steget absorberar ett gammalt öppet
+      # ärende varje framtida avbrott som kommentar nr 914, 915 … och ingen ser den som är äkta.
+      # Ett larm som aldrig stängs är ett larm ingen läser.
+      #
+      # ⚠️ `github.event.inputs.url == ''` ÄR LASTBÄRANDE, funnen i granskningsvändan av mitt eget
+      # arbete. Utan den kunde en manuell körning mot en ANNAN url — en staging-miljö, en lokal
+      # tunnel — stänga ett ÄKTA produktionslarm, eftersom domen bara vet att «något svarade
+      # friskt». Ett larm om A får aldrig avfärdas av en mätning av B.
+      - name: Stäng öppna ärenden när produktionen är frisk
+        if: steps.ping.outputs.status == 'ok' && github.event.inputs.url == ''
+        uses: actions/github-script@v7
+        env:
+          HTTP_CODE: ${{ steps.ping.outputs.http_code }}
+          BODY:      ${{ steps.ping.outputs.body }}
+        with:
+          script: |
+            const { HTTP_CODE, BODY } = process.env;
+            const date = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm' });
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'production-down', per_page: 20,
+            });
+
+            if (existing.data.length === 0) {
+              console.log('✅ Frisk, och inget öppet ärende att stänga.');
+              return;
+            }
+
+            for (const issue of existing.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issue.number,
+                body: [
+                  '### ✅ Återställd — ' + date,
+                  '',
+                  '`/api/health` svarar HTTP ' + HTTP_CODE + ' med `ok:true`. Stänger automatiskt.',
+                  '',
+                  '```',
+                  (BODY || '').slice(0, 1000),
+                  '```',
+                  '',
+                  '_Stängt av [Production Canary](.github/workflows/canary.yml)._',
+                ].join('\n'),
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issue.number, state: 'closed', state_reason: 'completed',
+              });
+              console.log('Stängde ärende #' + issue.number);
+            }
+
+      # ── VAKTEN SJÄLV ────────────────────────────────────────────────────────────────────────
+      # Om något ovan dog får det inte passera som tystnad. `if: failure()` är det enda som skiljer
+      # «allt lugnt» från «kanariefågeln kom aldrig fram» — och de två såg förut identiska ut.
+      - name: Kanariefågeln dog
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm' });
+            core.setFailed(
+              'Kanariefågeln avslutade med fel ' + date + ' — den mätte alltså INTE produktionen. '
+              + 'Ett grönt som betyder «jag tittade inte» är farligare än ett rött: '
+              + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo
+              + '/actions/runs/' + context.runId);
 
       - name: Canary passed
         if: steps.ping.outputs.status == 'ok'
