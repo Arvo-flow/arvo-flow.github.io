@@ -28,7 +28,7 @@ import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getPublicListBenchmark, kohortTackning } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
 import { verifySession } from '../lib/session.js';
-import { tystnadsbesked } from '../lib/tystnadsskal.js';
+import { tystnadsbesked, SKAL } from '../lib/tystnadsskal.js';
 
 export const config = { maxDuration: 10 };
 
@@ -301,6 +301,30 @@ export function watchedCard(a) {
   const sup = (a.normalized_supplier || a.supplier || '').toLowerCase();
   const supplierName = a.normalized_supplier || a.supplier || 'Okänd leverantör';
   let kind, headline, detail, action;
+
+  // ── ⚖️ DEN REGULATORISKA GRÄNSEN FRÅGAS FÖRST, FÖRE ALLT ANNAT ─────────────────────────────
+  // ⚠️ HÄR LÅG FELET, OCH DET VAR STRUKTURELLT. Karantänen satt först INNE i `no_benchmark`-
+  // grenen, alltså som ett fall bland tolv i en if/else-kedja. Mätt 2026-09-18 med femton
+  // verkliga svenska försäkringsbolag × elva triage-skäl × två rutter:
+  //
+  //     600 av 720 kombinationer UNDSLAPP karantänen.
+  //
+  // Varje annat skäl — `categorization_conflict`, `fingerprint_mismatch`, `price_anomaly`,
+  // `sanity_check_failed`, `implausible_amounts`, `natavgift`, `el_data_missing`, `null` —
+  // föll i en tidigare gren som inte vet något om försäkring. Flera av dem LOVAR dessutom:
+  // «En människa läser om fakturan och vi återkommer med rätt jämförelse» på en
+  // försäkringsfaktura är ordagrant det lagbrott karantänen byggdes för att hindra.
+  //
+  // En regulatorisk gräns kan inte vara ett fall bland andra. Den är den FÖRSTA frågan, och
+  // ingenting nedanför får kunna åsidosätta den. (BK-13 mäter hela matrisen, inte ett stickprov.)
+  {
+    const karantan = tystnadsbesked(a.category);
+    if (karantan?.skal === SKAL.TILLSTAND_KRAVS) {
+      return { supplier: supplierName, invoiceNumber: a.invoice_number ?? null,
+        category: a.category ?? null, reasonCode: reason,
+        kind: karantan.rubrik, headline: karantan.rad, detail: karantan.text, action: karantan.atgard };
+    }
+  }
 
   // Namnlistan används numera ENBART för att välja etikett när skälet redan säger valuta.
   const INTL_SAAS = /hubspot|slack|zoom|salesforce|\baws\b|amazon web|atlassian|notion|figma|datadog|stripe|dropbox|\bbox\b|monday|asana|miro/;

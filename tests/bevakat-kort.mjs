@@ -25,7 +25,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { watchedCard } from '../api/invoice-history.mjs';
-import { tystnadsbesked } from '../lib/tystnadsskal.js';
+import { tystnadsbesked, TYSTNADSSKAL, SKAL } from '../lib/tystnadsskal.js';
 
 // Alla textfält ett kort kan visa för kunden.
 const text = (k) => [k.kind, k.headline, k.detail, k.action].filter(Boolean).join(' | ');
@@ -211,6 +211,66 @@ describe('BEVAKAT-KORT · rätt skäl, noll siffror', () => {
       triage_reason: 'no_benchmark', route: 'unsupported' });
     assert.equal(laglig.kind, tystnadsbesked('it-support').rubrik);
     assert.match(laglig.action, /60 och 30 dagar/);
+  });
+
+  test('BK-13 · ⚖️ INGEN väg runt karantänen — hela matrisen, inte ett stickprov', async () => {
+    // ⚠️ DETTA FYND VAR MITT EGET, OCH DET VAR STRUKTURELLT. Karantänen låg först INNE i
+    // `no_benchmark`-grenen — ett fall bland tolv i en if/else-kedja. Mätt 2026-09-18 med
+    // femton verkliga svenska försäkringsbolag × elva triage-skäl × två rutter:
+    //
+    //     600 av 720 kombinationer UNDSLAPP karantänen.
+    //
+    // Flera av dem lovade dessutom något: «En människa läser om fakturan och vi återkommer med
+    // rätt jämförelse» på en försäkringsfaktura är ordagrant lagbrottet. BK-12 var grön hela
+    // tiden — den prövade ETT skäl (`no_benchmark`), alltså precis det enda som fungerade.
+    //
+    // Läxan: ett stickprov på en regulatorisk gräns är inget bevis. Testet sveper därför HELA
+    // korsprodukten, och listan av skäl HÄRLEDS ur produktionskoden i stället för att skrivas av.
+    const { readFileSync } = await import('node:fs');
+    const kalla = readFileSync(new URL('../api/test-invoice.mjs', import.meta.url), 'utf8');
+    const SKAL_I_PRODUKTION = [...new Set([...kalla.matchAll(/reason: '([a-z_]+)'/g)].map((m) => m[1]))];
+    assert.ok(SKAL_I_PRODUKTION.length >= 8,
+      `bara ${SKAL_I_PRODUKTION.length} triage-skäl hittade i api/test-invoice.mjs — härledningen mäter tomhet`);
+
+    const BOLAG = ['Länsförsäkringar AB', 'Trygg-Hansa Försäkring AB', 'If Skadeförsäkring AB',
+      'Folksam ömsesidig sakförsäkring', 'Moderna Försäkringar', 'Svedea AB', 'Gjensidige Försäkring',
+      'Protector Forsikring ASA', 'ICA Försäkring AB', 'Anticimex Försäkringar AB'];
+    const KATEGORIER = Object.keys(TYSTNADSSKAL).filter((k) => TYSTNADSSKAL[k].skal === SKAL.TILLSTAND_KRAVS);
+    assert.ok(KATEGORIER.length >= 2, 'motprov: karantänen måste ha invånare');
+
+    const lackor = [];
+    for (const kategori of KATEGORIER) {
+      const vantat = tystnadsbesked(kategori).rubrik;
+      for (const supplier of BOLAG) {
+        for (const triage_reason of [...SKAL_I_PRODUKTION, null]) {
+          for (const route of ['unsupported', 'review_queue']) {
+            const k = watchedCard({ supplier, normalized_supplier: supplier.toLowerCase(),
+              category: kategori, triage_reason, route });
+            if (k.kind !== vantat) lackor.push(`${kategori} · ${supplier} · ${triage_reason} · ${route} → ${k.kind}`);
+          }
+        }
+      }
+    }
+    assert.deepEqual(lackor.slice(0, 5), [],
+      `${lackor.length} kombinationer undslapp karantänen — regulatorisk gräns bruten`);
+
+    // MOTPROVET: en icke-försäkringskategori måste fortfarande få sitt vanliga kort, annars har
+    // förkontrollen svalt hela kedjan och testet är grönt av att allt ser likadant ut.
+    const laglig = watchedCard({ supplier: 'Nordic IT Support AB', category: 'it-support',
+      triage_reason: 'no_benchmark', route: 'unsupported' });
+    assert.equal(laglig.kind, tystnadsbesked('it-support').rubrik);
+    const elnat = watchedCard({ supplier: 'Ellevio AB', category: 'el', triage_reason: 'natavgift', route: 'unsupported' });
+    assert.equal(elnat.kind, 'Reglerad nätkostnad', 'de leverantörsspecifika grenarna ska leva kvar');
+    // ⚠️ DET BÄRANDE MOTPROVET, och mitt första saknade det: förkontrollen får ENBART gälla den
+    // juridiska klassen. Vidgas den till «alla med ett besked» (`if (karantan)`) tar den över
+    // även där en LEVERANTÖRSGREN är mer precis — GleSYS på serverhosting ska ge «Fragmenterad
+    // marknad», inte kategorins generella «Volymstyrt pris». Utan den här raden fällde
+    // sabotaget noll, eftersom både den strikta och den vidgade grenen ger samma svar för
+    // it-support och el.
+    const hosting = watchedCard({ supplier: 'GleSYS AB', normalized_supplier: 'glesys ab',
+      category: 'serverhosting', triage_reason: 'volume_data_required', route: 'review_queue' });
+    assert.equal(hosting.kind, 'Fragmenterad marknad',
+      'förkontrollen får inte åsidosätta en mer precis leverantörsgren för icke-juridiska klasser');
   });
 
 });
