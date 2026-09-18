@@ -8,7 +8,7 @@ const PARTNER_CONFIG = {
   bredband:           { live: false, name: null },
   el:                 { live: false, name: 'Tibber' },
   'saas-productivity':{ live: false, name: 'Dustin Group' },
-  vaxel:              { live: false, name: 'Telavox' },
+  molnvaxel:          { live: false, name: 'Telavox' },
   kortterminal:       { live: false, name: 'Bambora' },
   serverhosting:      { live: false, name: 'Elastx' },
 };

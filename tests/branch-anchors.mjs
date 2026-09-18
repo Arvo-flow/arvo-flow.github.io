@@ -27,6 +27,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildBranchAnchors, BRANCH_ANCHOR_UNIT } from '../api/invoice-history.mjs';
+import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 const a = (o) => ({ route: 'auto', industry: 'byraer', employees: 8, annual_cost: 50000, ...o });
 
@@ -55,9 +56,19 @@ describe('Branschankaret · enhet + källa', () => {
     assert.equal(noSeats.mobil.seats, null);          // aldrig en gissad enhetsmängd
   });
 
-  test('estimat-kategori (vaxel) → INGET ankare (ej i enhets-allowlist + ej real-public)', async () => {
-    const out = await buildBranchAnchors([a({ category: 'vaxel' })]);
-    assert.equal(out.vaxel, undefined);
+  test('estimat-kategori (kortterminal) → INGET ankare (ej i enhets-allowlist + ej real-public)', async () => {
+    // ⚠️ TESTET LÅG PÅ `vaxel` TILL 2026-09-18. När den nyckeln slogs ihop med `molnvaxel` och
+    // försvann ur prisboken hade testet fortsatt vara GRÖNT — men av fel skäl: det påstod sig
+    // pröva en ESTIMAT-kategori, och prövade i själva verket en kategori som inte fanns alls.
+    // Ett test vars premiss tyst blir osann är värre än inget test. Ankaret flyttades därför till
+    // en kategori som verkligen är `estimated` i dag, vilket motprovet nedan BEVISAR i stället
+    // för att intyga.
+    assert.equal(BRANCHINDEX.kortterminal?.source, 'estimated',
+      'premissen måste hålla: faller den här raden har kategorin bytt källa och testet ska flyttas');
+    assert.equal(BRANCHINDEX.vaxel, undefined,
+      'och `vaxel` ska vara borta ur prisboken — annars slogs nycklarna aldrig ihop');
+    const out = await buildBranchAnchors([a({ category: 'kortterminal' })]);
+    assert.equal(out.kortterminal, undefined);
   });
 
   test('okänd kategori utan enhetsfras → INGET ankare (gissar aldrig enheten)', async () => {

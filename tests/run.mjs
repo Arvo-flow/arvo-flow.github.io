@@ -152,6 +152,7 @@ import './antalsdoktrinen.mjs';
 import './valutakrav.mjs';
 import './skrapdom.mjs';
 import './tystnadsskal.mjs';
+import './kategorinyckel.mjs';
 import './kanariedom.mjs';
 
 const ALL = [

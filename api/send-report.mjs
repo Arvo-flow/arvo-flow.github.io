@@ -64,7 +64,7 @@ const CAT_LABEL = {
   'it-support':       'IT-drift & Support',
   serverhosting:      'Serverhosting',
   'leasing-bil':      'Foretagsleasing',
-  vaxel:              'Molnvaxel',
+  molnvaxel:          'Molnvaxel',
   'avfall-atervinning':'Avfall & Atervinning',
 };
 

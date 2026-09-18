@@ -16,6 +16,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { SKAL, TYSTNADSSKAL, tystnadsbesked, tystnadsgrund } from '../lib/tystnadsskal.js';
 import { isAudited } from '../lib/revision-gate.js';
+import { kanoniskKategori } from '../lib/kategorinyckel.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 const TYSTA = Object.keys(BRANCHINDEX).filter((k) => !isAudited(k));
@@ -64,12 +65,22 @@ describe('TS · tystnadens skäl', () => {
     assert.match(b.text, /inte i kronor|utländsk/i);
   });
 
-  test('TS-06 · vaxel tiger, för molnvaxel talar om samma sak', () => {
-    // `molnvaxel` är real-public med verifierat Telia-ankare och TALAR. Ett «offertprissatt» på
-    // `vaxel` hade motsagt en rad i samma rum (regel 5).
-    assert.equal(TYSTNADSSKAL['vaxel'].skal, SKAL.OKLART);
+  test('TS-06 · vaxel är ingen kategori längre — den ÄR molnvaxel', () => {
+    // Fram till 2026-09-18 stod `vaxel` här som OKLART, med motiveringen att nyckelns status var
+    // oavgjord. Den är avgjord: `vaxel` var aldrig en egen kategori utan en avvecklad stavning av
+    // `molnvaxel`. Den tigde alltså inte av ett SKÄL — den fanns inte.
+    //
+    // Testet vändes därför helt i stället för att raderas. Ett borttaget test lämnar ingen som
+    // vaktar att dubbletten inte återinförs, och tystnadsregistret är just den plats där någon
+    // skulle skriva in den igen «för säkerhets skull».
+    assert.equal(TYSTNADSSKAL['vaxel'], undefined,
+      'en avvecklad stavning får inget tystnadsskäl — det vore ett svar på en fråga som inte finns');
+    assert.equal(kanoniskKategori('vaxel'), 'molnvaxel');
     assert.equal(tystnadsbesked('vaxel'), null);
-    assert.equal(isAudited('molnvaxel'), true, 'motprovet: molnvaxel MÅSTE tala, annars är TS-06 meningslös');
+    assert.equal(tystnadsbesked('molnvaxel'), null,
+      'molnvaxel talar, alltså har den heller inget tystnadsskäl');
+    assert.equal(isAudited('molnvaxel'), true,
+      'motprovet: molnvaxel MÅSTE tala, annars slog vi ihop till en tyst nyckel');
   });
 
   test('TS-07 · varje klass utom «oklart» har en text, och texten kommer ur KLASSEN', () => {
