@@ -284,6 +284,32 @@ describe('PÅSTÅENDEVAKTEN · den egna blindfläcken (grundardoktrin 2026-09-20
     assert.equal(granskaDiff(kodDiff).length, 1, 'kod ska fortfarande FÄLLAS');
   });
 
+  test('PV-18 · doktrinen står ORDAGRANT i bibeln — en parafras är inte doktrinen', async () => {
+    // ⚠️ FÖRSTA INSKRIVNINGEN VAR EN PARAFRAS, mätt: två av tre meningar omskrivna. Parentesen som
+    // DEFINIERAR vad som räknas som mätning hade fallit bort, och «betraktas automatiskt som en
+    // lögn» hade mjukats till «är en lögn». En doktrin som glider ord för ord slutar vara den
+    // doktrin grundaren beslutade — och glidningen syns aldrig för den som skrev den.
+    //
+    // Uttalad blindfläck: detta prövar TECKEN, inte efterlevnad. Att texten står rätt säger
+    // ingenting om att den följs; det kan bara en granskare avgöra (se amendemang 3).
+    const ORDAGRANT = 'Maskinen får under inga omständigheter redovisa ett antagande, en deduktion '
+      + 'eller en logisk slutsats om systemets tillstånd, databasens innehåll eller kodens '
+      + 'beteende. Varje påstående om vad systemet är eller gör måste föregås av en exekverad '
+      + 'mätning (ett kört skript, en databasfråga eller ett test). Ett påstående som saknar ett '
+      + 'tillhörande mätbevis i samma kontext betraktas automatiskt som en lögn och ett brott mot '
+      + 'bevisplikten.';
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const bibeln = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../CLAUDE.md'), 'utf8');
+    const platt = bibeln.replace(/\n>?\s*/g, ' ').replace(/\s+/g, ' ');
+    assert.ok(platt.includes(ORDAGRANT),
+      'doktrinen är inte ordagrann i CLAUDE.md — en omskriven regel är en annan regel');
+    // Motprovet: jämförelsen ska KUNNA falla, annars är den grön av att matcha tomhet.
+    assert.ok(!platt.includes(ORDAGRANT.replace('en lögn', 'ett misstag')),
+      'en ändrad formulering måste ge ett annat utfall, annars prövar testet ingenting');
+  });
+
   test('PV-17 · doktrinens mätning står i bibeln, med talen som gjorde den ogörlig', async () => {
     // Regeln säger att en vakt i prosa inte är byggbar. Det påståendet är i sig ett påstående —
     // och det ska bära sina tal, annars är bibeln skyldig till det den förbjuder.

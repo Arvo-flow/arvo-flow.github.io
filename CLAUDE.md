@@ -237,10 +237,22 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 
 ## Noll-inferens · Avläsning framför slutsats
 
-> **✅ GRUNDARDOKTRIN 2026-09-20.** *«Maskinen får under inga omständigheter redovisa ett antagande,
-> en deduktion eller en logisk slutsats om systemets tillstånd, databasens innehåll eller kodens
-> beteende. Varje påstående om vad systemet ÄR eller GÖR måste föregås av en exekverad mätning.
-> Ett påstående utan mätbevis i samma kontext är en lögn och ett brott mot bevisplikten.»*
+> **✅ GRUNDARDOKTRIN 2026-09-20 — ORDAGRANT, och det ordet är lastbärande.**
+>
+> **Doktrin: Avläsning framför slutsats (Noll-inferens)**
+>
+> Maskinen får under inga omständigheter redovisa ett antagande, en deduktion eller en logisk slutsats om systemets tillstånd, databasens innehåll eller kodens beteende. Varje påstående om vad systemet är eller gör måste föregås av en exekverad mätning (ett kört skript, en databasfråga eller ett test). Ett påstående som saknar ett tillhörande mätbevis i samma kontext betraktas automatiskt som en lögn och ett brott mot bevisplikten.
+>
+> ⚠️ **Första inskrivningen var en PARAFRAS, och det upptäcktes bara för att det mättes.** Två av tre
+> meningar var omskrivna: parentesen «(ett kört skript, en databasfråga eller ett test)» hade fallit
+> bort — alltså själva definitionen av vad som RÄKNAS som mätning — och «betraktas automatiskt som
+> en lögn» hade mjukats till «är en lögn». Att skriva om en doktrin mot omskrivningar är felformen
+> i sin renaste form. Texten är nu ordagrann och låst mot den exakta strängen (PV-18).
+>
+> **Operativt mandat (grundaren, 2026-09-20):** stora granskande uppdrag inleds
+> `MANDAT: Grundare. Tillämpa Noll-inferens-regeln: mät först, tala sen.` Villkoret är inte en
+> artighetsfras — det är en instruktion att köra mätningen INNAN svaret formuleras, inte efteråt
+> för att bekräfta det man redan skrivit.
 
 Doktrinen kom ur ett konkret fall: en granskningsdom om precis den här felformen **avslutades själv
 med ett omätt påstående.** Jag skrev att fyra lagrade datapunkter «bär gammal semantik (seats =
