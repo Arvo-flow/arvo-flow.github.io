@@ -14,7 +14,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   domRad, granskaDiff, citeradeTestId, tillagdaRader, arRiktigtTest, pastaendetext, motiveradeRader,
-  PASTAENDEORD, BEVAKADE,
+  PASTAENDEORD, BEVAKADE, prosaPastaenden,
 } from '../lib/pastaendevakt.js';
 import { granskaCommit, arBeteendeandring, KRAVDA_KATALOGER } from '../lib/commitkrav.js';
 
@@ -255,5 +255,58 @@ describe('CK · Commit-kravet: syskonfallet och sabotaget redovisas', () => {
     const srcDiff = 'diff --git a/src/a.js b/src/a.js\n--- a/src/a.js\n+++ b/src/a.js\n@@ -1,0 +2,1 @@\n+  return 1;\n';
     assert.equal(arBeteendeandring(srcDiff), false, 'bred vakt = avstängd vakt · src/ står utanför');
     assert.equal(granskaCommit('Ändrar en yta', srcDiff).ok, true);
+  });
+});
+
+describe('PÅSTÅENDEVAKTEN · den egna blindfläcken (grundardoktrin 2026-09-20)', () => {
+  test('PV-16 · prosapåståenden RÄKNAS, eftersom de inte kan dömas', () => {
+    const diff = [
+      'diff --git a/ops/GRANSKNING-x.md b/ops/GRANSKNING-x.md',
+      '--- /dev/null', '+++ b/ops/GRANSKNING-x.md', '@@ -0,0 +1,2 @@',
+      '+De 4 raderna bär gammal semantik och grinden är fail-closed.',
+      '+En helt vanlig rad utan mekanismord.',
+    ].join('\n');
+    const sedda = prosaPastaenden(diff);
+    assert.equal(sedda.length, 1, 'exakt raden med mekanismord ska räknas, inte den andra');
+    assert.equal(sedda[0].fil, 'ops/GRANSKNING-x.md');
+    assert.equal(sedda[0].ord, 'fail-closed');
+
+    // MOTPROVET, och det är hela poängen med testet: samma påstående i KOD ska DÖMAS, inte bara
+    // räknas. Utan det vore PV-16 grön även med en funktion som räknar allt och dömer inget.
+    // ⚠️ Raden måste vara en KOMMENTAR — vakten läser kommentarer, inte godtycklig kodtext. Min
+    // första version återanvände prosaraden rakt av, fick 0 fällda och pekade ut koden som trasig.
+    // Mätinstrumentet var felet, vilket är precis doktrinens andra amendemang.
+    const kodDiff = [
+      'diff --git a/lib/x.js b/lib/x.js', '--- /dev/null', '+++ b/lib/x.js', '@@ -0,0 +1 @@',
+      '+  // Grinden är fail-closed och släpper aldrig igenom en oläsbar rad.',
+    ].join('\n');
+    assert.equal(prosaPastaenden(kodDiff).length, 0, 'kod räknas inte som oprövad prosa');
+    assert.equal(granskaDiff(kodDiff).length, 1, 'kod ska fortfarande FÄLLAS');
+  });
+
+  test('PV-17 · doktrinens mätning står i bibeln, med talen som gjorde den ogörlig', async () => {
+    // Regeln säger att en vakt i prosa inte är byggbar. Det påståendet är i sig ett påstående —
+    // och det ska bära sina tal, annars är bibeln skyldig till det den förbjuder.
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const { dirname, join } = await import('node:path');
+    const bibeln = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../CLAUDE.md'), 'utf8');
+    const avsnitt = bibeln.slice(bibeln.indexOf('## Noll-inferens'),
+      bibeln.indexOf('## Verifieringsplikten'));
+    assert.ok(avsnitt.length > 1500, 'avsnittet ska finnas och bära sitt resonemang');
+    for (const tal of ['127', '98', '80']) {
+      assert.ok(avsnitt.includes(tal), `mätvärdet ${tal} saknas — regeln vore då själv omätt`);
+    }
+    // ⚠️ FÖRSTA VERSIONEN MATCHADE BARA ORDET «motprov» — och det står TRE gånger i avsnittet,
+    // så sabotaget «stryk amendemanget» fällde noll. `indexOf`-sjukan i ett test mot just den
+    // sjukdomen. Nu prövas den BÄRANDE satsen, inte att ordet förekommer någonstans.
+    //
+    // Uttalad blindfläck: detta är en STAVNINGSVAKT, inte en innebördsvakt. Den kan bara se att
+    // satsen står kvar — aldrig att den efterlevs. Skrivs doktrinen om medvetet ska testet falla,
+    // och det är meningen: en ändrad doktrin ska vara ett beslut, inte en glidning.
+    assert.ok(avsnitt.includes('bär sitt MOTPROV'),
+      'amendemanget «en mätning gäller först när den bär sitt MOTPROV» är det bärande — '
+      + 'utan det blir doktrinen «påstående + mätning = sanning», och den godkänner ett trasigt '
+      + 'mätinstrument');
   });
 });

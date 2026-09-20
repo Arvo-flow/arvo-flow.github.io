@@ -9,7 +9,7 @@ import { execSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { granskaDiff, citeradeTestId, arRiktigtTest, motiveradeRader } from '../lib/pastaendevakt.js';
+import { granskaDiff, citeradeTestId, arRiktigtTest, motiveradeRader, prosaPastaenden } from '../lib/pastaendevakt.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -36,8 +36,20 @@ for (const m of motiveradeRader(diff)) {
   console.log(`  ⓘ påstående tystat i ${m.fil}:${m.nr} — «${m.skal}»`);
 }
 
+// VAKTENS BLINDFLÄCK SKRIVS UT, ALDRIG BARA DESS TRÄFFAR. Prosa kan inte dömas (mätt: 80–98
+// falsklarm), men den kan RÄKNAS — annars ser det gröna ut som om vakten läst domen också.
+const prosa = prosaPastaenden(diff);
+for (const p of prosa) {
+  console.log(`  ⓘ prosapåstående EJ PRÖVAT i ${p.fil}:${p.nr} («${p.ord}») — ${p.rad}`);
+}
+if (prosa.length) {
+  console.log(`  ⓘ ${prosa.length} påstående(n) i prosa står utan maskinprövning. `
+    + 'Doktrinen «avläsning framför slutsats» gäller dem, men bara en granskare kan hålla den.');
+}
+
 if (brott.length === 0 && uppdiktade.length === 0) {
-  console.log('✓ Påståendevakten — varje nytt mekanismpåstående pekar på ett test som finns');
+  console.log('✓ Påståendevakten — varje nytt mekanismpåstående I KOD pekar på ett test som finns'
+    + (prosa.length ? ` (${prosa.length} prosapåstående EJ prövat, se ovan)` : ''));
   process.exit(0);
 }
 
