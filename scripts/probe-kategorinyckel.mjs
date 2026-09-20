@@ -108,4 +108,49 @@ for (const r of rader) {
 }
 if (rader.length === 0) console.log('   (inga rader — utfall om DATAN, inte om grinden)');
 
+// ── 5 · DE FYRA MOLNVÄXEL-DATAPUNKTERNA (grundarfråga 2026-09-20: «är vi helt säkra?») ──────
+// Svaret var NEJ. Jag skrev i domen att raderna «bär gammal semantik (seats = SIM-antal)». Det
+// var en SLUTSATS, inte en avläsning — och den föll på två ställen redan i koden:
+//   · `invoice_datapoints` har ingen `seats`-kolumn.
+//   · `storeDatapoint` skriver varken `per_user_monthly_exvat` eller `tier`; den tar `annualCost`.
+//     `buildTelekomDatapoint`, som skulle skrivit dem, har NOLL produktionsanropare.
+// Alltså kan SIM-nämnaren aldrig ha nått prisboken. Men då blir nästa fråga skarpare: vad är
+// `annual_cost` på en molnväxelrad — hela den kombinerade fakturan, eller växeldelen?
+const mv = await db`
+  SELECT id, supplier, annual_cost, per_user_monthly_exvat, tier, source,
+         industry, size_bucket, pdf_hash, created_at
+  FROM invoice_datapoints          -- internt: granskning av lagrad semantik, ingen kundyta
+  WHERE category = 'molnvaxel'
+  ORDER BY created_at
+`;
+console.log(`\n5 · molnvaxel-datapunkter: ${mv.length}`);
+for (const r of mv) {
+  console.log(`   ${String(r.created_at).slice(4, 10)} ${String(r.supplier).slice(0, 24).padEnd(24)} `
+    + `arskostnad=${String(r.annual_cost).padEnd(9)} per_user=${String(r.per_user_monthly_exvat ?? 'NULL').padEnd(8)} `
+    + `tier=${String(r.tier ?? 'NULL').padEnd(6)} ${r.industry}/${r.size_bucket} src=${r.source}`);
+  console.log(`          pdf_hash=${r.pdf_hash ? String(r.pdf_hash).slice(0, 16) : 'NULL'}`);
+}
+if (mv.length === 0) console.log('   (inga rader)');
+
+// ── 6 · BÄR CELLEN? Om nej når talen ingen kund, och då är frågan en annan. ────────────────
+const { cellenBar } = await import('../lib/benchmark.js');
+const celler = await db`
+  SELECT industry, size_bucket, COUNT(*)::int AS n, COUNT(DISTINCT annual_cost)::int AS skilda
+  FROM invoice_datapoints          -- internt: täckningsmätning
+  WHERE category = 'molnvaxel'
+  GROUP BY industry, size_bucket
+`;
+console.log('\n6 · bär någon molnvaxel-cell (och når alltså kund)?');
+for (const c of celler) {
+  const dom = cellenBar({ n: c.n, skilda: c.skilda });
+  console.log(`   ${c.industry}/${c.size_bucket}: ${dom.bar ? '⚠️ BÄR' : 'bär inte'} — ${dom.skal ?? 'tröskeln nådd'}`);
+}
+// Den andra levande vägen: invoice_analyses (lägre tröskel, 5).
+const la = await db`
+  SELECT COUNT(DISTINCT pdf_hash)::int AS dokument
+  FROM invoice_analyses            -- internt: täckningsmätning av den andra prisbokskällan
+  WHERE category = 'molnvaxel' AND arkiverad_at IS NULL AND annual_cost > 0
+`;
+console.log(`   invoice_analyses: ${la[0].dokument} dokument (tröskel 5)`);
+
 console.log('\n[probe-kategorinyckel] klar\n');
