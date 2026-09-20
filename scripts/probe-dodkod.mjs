@@ -161,7 +161,10 @@ const hittad = (n) => dod.some((d) => d.namn === n);
 // ⚠️ `buildTelekomDatapoint` STOD HÄR TILL 2026-09-20 — den är nu INKOPPLAD i sparvägen, alltså
 // inte längre död, och motprovet flyttades till exporter som fortfarande saknar anropare.
 // En motprovslista är färskvara: den måste följa verkligheten, annars fäller den på rätt beteende.
-const KANT_DOD = ['marketComparisonAllowed', 'analyzeResults', 'getMetricsHistory'];
+// ⚠️ `analyzeResults`/`getMetricsHistory` STOD HÄR TILL 2026-09-20 — deras modul
+// (lib/production-monitor.js) är nu RADERAD, så motprovet fällde på sin egen inaktualitet.
+// Tredje gången listan måste följa verkligheten: en motprovslista är färskvara.
+const KANT_DOD = ['marketComparisonAllowed', 'bedomFabriken'];
 // ⚠️ `kanoniskKategori` STOD HÄR I FÖRSTA VERSIONEN, och sonden fällde motprovet. Jag hade lagt
 // den i «känt levande» för att jag skrev den i går — ett omätt antagande i den lista som ska
 // BEVISA att instrumentet inte överrapporterar. Mätningen: noll produktionsanropare, bara tester.
