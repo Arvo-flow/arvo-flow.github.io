@@ -4,7 +4,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { round2, exVat, incVat } from '../lib/adobe-pricing.js';
+import { round2, exVat } from '../lib/adobe-pricing.js';
 
 describe('Adobe B2B-moms · robust avrundning (inga flyttalsspöken)', () => {
   test('round2 tar bort flyttalsdrift', () => {
@@ -26,12 +26,6 @@ describe('Adobe B2B-moms · robust avrundning (inga flyttalsspöken)', () => {
       const ex = exVat(incl);
       assert.equal(ex, round2(ex), `exVat(${incl}) ska vara 2-decimalsstabilt`);
       assert.equal(Number.isInteger(ex), true, `exVat(${incl}) = ${ex} ska vara helt rent`);
-    }
-  });
-
-  test('incVat är invers av exVat (rundningssäkert åt båda håll)', () => {
-    for (const incl of [311.25, 932.50, 741.25, 215.00, 426.25]) {
-      assert.equal(incVat(exVat(incl)), incl, `incVat(exVat(${incl})) ska återge originalet`);
     }
   });
 });

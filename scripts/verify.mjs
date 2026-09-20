@@ -5,7 +5,7 @@
 //   node scripts/verify.mjs --matrix  skriver ut GH-Actions-matrisen ur registryt (JSON)
 //
 // Exit 1 om någon källa drivit eller är oåtkomlig (regel 4: hellre rött än tyst osäkerhet).
-import { VERIFIERS, getVerifier } from '../lib/verifiers/registry.mjs';
+import { VERIFIERS, getVerifier, allVerifierIds } from '../lib/verifiers/registry.mjs';
 import { bedomVerifierarutfall, UTFALL } from '../lib/verifierarutfall.js';
 import { stampelbeslut, stamplaKalla, stamplaKategori } from '../lib/verifieringsstampel.js';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -29,7 +29,10 @@ const targets = (args.length === 0 || args.includes('all'))
   ? VERIFIERS
   : args.map(getVerifier).filter(Boolean);
 if (!targets.length) {
-  console.error(`Okänd verifierare: '${args.join(' ')}'. Giltiga: ${VERIFIERS.map((v) => v.id).join(', ')}`);
+  // `allVerifierIds()` i stället för en egen `.map(v => v.id)`: samma uppräkning stod på två
+  // ställen, och två kopior av en lista kan glida isär (regel 1). Mätt 2026-09-20 var den här
+  // raden funktionens ENDA möjliga anropare — den var exporterad och oanvänd.
+  console.error(`Okänd verifierare: '${args.join(' ')}'. Giltiga: ${allVerifierIds().join(', ')}`);
   process.exit(2);
 }
 

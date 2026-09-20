@@ -16,7 +16,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { SKAL, TYSTNADSSKAL, tystnadsbesked, tystnadsgrund } from '../lib/tystnadsskal.js';
 import { isAudited } from '../lib/revision-gate.js';
-import { kanoniskKategori } from '../lib/kategorinyckel.js';
+import { LEGACY_KATEGORINYCKLAR } from '../lib/kategorinyckel.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 const TYSTA = Object.keys(BRANCHINDEX).filter((k) => !isAudited(k));
@@ -75,7 +75,7 @@ describe('TS · tystnadens skäl', () => {
     // skulle skriva in den igen «för säkerhets skull».
     assert.equal(TYSTNADSSKAL['vaxel'], undefined,
       'en avvecklad stavning får inget tystnadsskäl — det vore ett svar på en fråga som inte finns');
-    assert.equal(kanoniskKategori('vaxel'), 'molnvaxel');
+    assert.equal(LEGACY_KATEGORINYCKLAR.vaxel, 'molnvaxel');
     assert.equal(tystnadsbesked('vaxel'), null);
     assert.equal(tystnadsbesked('molnvaxel'), null,
       'molnvaxel talar, alltså har den heller inget tystnadsskäl');

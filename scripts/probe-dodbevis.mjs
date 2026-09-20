@@ -18,9 +18,17 @@
 //   · LEVANDE      — en fil i lib/, api/, agents/ eller src/ slutade ladda (sonden hade fel).
 //
 // ══ MOTPROV (Noll-inferens, amendemang 1) ══════════════════════════════════════════════════
-// Experimentet körs först på en KÄND LEVANDE export (`getBenchmark`) och en KÄND DÖD
-// (`getMetricsHistory`). Ger de inte LEVANDE respektive DÖD är harnesset trasigt och avslutar 1
-// UTAN att döma någon post. Ett instrument som inte kan svara åt båda håll är ingen mätning.
+// Experimentet körs först på en KÄND LEVANDE export (`getBenchmark`) och på en KÄND DÖD.
+// Ger de inte LEVANDE respektive DÖD är harnesset trasigt och avslutar 1 UTAN att döma någon
+// post. Ett instrument som inte kan svara åt båda håll är ingen mätning.
+//
+// ⚠️ DEN KÄNDA DÖDA SKRIVS AV SONDEN SJÄLV, och det är inte bekvämlighet utan nödvändighet.
+// Motprovet var förut `lib/production-monitor.js:getMetricsHistory` — en verklig död export. Den
+// RADERADES 20 september, alltså dog motprovet med sitt fall, och harnesset hade tyst förlorat
+// sin ena riktning. Att peka på nästa verkliga döda export hade bara flyttat samma landmina.
+// Sonden injicerar därför `__MOTPROV_DOD__` i EN MODUL MED MÅNGA IMPORTÖRER (`lib/benchmark.js`)
+// och plockar bort den efteråt: samma fil måste svara LEVANDE för `getBenchmark` och DÖD för
+// motprovet i samma körning. Ett motprov i en tom modul hade varit sant av tomhet.
 //
 // ══ UTTALAD BLINDFLÄCK ═════════════════════════════════════════════════════════════════════
 // Experimentet bevisar att ingen modul IMPORTERAR namnet. Det bevisar inte att en importerad
@@ -134,31 +142,46 @@ function provaExport(modul, namn) {
 }
 
 // ── MOTPROVEN, före varje dom ───────────────────────────────────────────────────────────────
-const mp1 = provaExport('lib/benchmark.js', 'getBenchmark');
-const mp2 = provaExport('lib/production-monitor.js', 'getMetricsHistory');
+const MOTPROVSFIL = 'lib/benchmark.js';
+const MOTPROVSNAMN = '__MOTPROV_DOD__';
+const motprovsOrig = readFileSync(join(ROT, MOTPROVSFIL), 'utf8');
+writeFileSync(join(ROT, MOTPROVSFIL),
+  `${motprovsOrig}\nexport const ${MOTPROVSNAMN} = 'ingen importerar mig';\n`);
+let mp1, mp2;
+try {
+  mp1 = provaExport(MOTPROVSFIL, 'getBenchmark');
+  mp2 = provaExport(MOTPROVSFIL, MOTPROVSNAMN);
+} finally {
+  writeFileSync(join(ROT, MOTPROVSFIL), motprovsOrig);
+}
 console.log('\n═══ DÖDBEVIS · experimentet prövas först ═══\n');
 console.log(`  MOTPROV LEVANDE (getBenchmark)      → ${mp1.dom}  ${mp1.dom === 'LEVANDE' ? '✓' : '✗'}`
   + (mp1.skal ? `  skäl: ${mp1.skal}` : '') + (mp1.nya?.length ? `  ← ${mp1.nya.join(', ')}` : ''));
-console.log(`  MOTPROV DÖD (getMetricsHistory)     → ${mp2.dom}  ${mp2.dom === 'DÖD' ? '✓' : '✗'}`
+console.log(`  MOTPROV DÖD (${MOTPROVSNAMN})        → ${mp2.dom}  ${mp2.dom === 'DÖD' ? '✓' : '✗'}`
   + (mp2.skal ? `  skäl: ${mp2.skal}` : '') + (mp2.nya?.length ? `  ← ${mp2.nya.join(', ')}` : ''));
 if (mp1.dom !== 'LEVANDE' || mp2.dom !== 'DÖD') {
   console.error('\n✗ HARNESSET KAN INTE SVARA ÅT BÅDA HÅLL — ingen post döms.');
   process.exit(1);
 }
+if (readFileSync(join(ROT, MOTPROVSFIL), 'utf8') !== motprovsOrig) {
+  console.error(`\n✗ ${MOTPROVSFIL} återställdes INTE — sonden vägrar fortsätta.`);
+  process.exit(1);
+}
 
 // ── Kandidaterna: läses ur probe-dodkod, men DÖMS av experimentet ───────────────────────────
 const lista = spawnSync(process.execPath, ['scripts/probe-dodkod.mjs'], { cwd: ROT, encoding: 'utf8' }).stdout;
-const avsnitt = lista.slice(lista.indexOf('── TESTAD MEN ALDRIG'));
-const kandidater = [...avsnitt.matchAll(/^ {2}(lib\/[\w./-]+):(\w+)$/gm)]
+const start = lista.indexOf('── TESTAD MEN ALDRIG');
+if (start < 0) { console.error('✗ hittade inte avsnittet i probe-dodkod:s utfall'); process.exit(1); }
+// Avsnittet slutar vid NÄSTA rubrik. Förut lästes resten av utfallet, alltså även «bara skript»-
+// hinken, och den rensades bort i efterhand med ett andra mönster. Två filter på samma fråga kan
+// glida isär (10 september); ett snitt är ETT filter.
+const slut = lista.indexOf('\n── ', start + 1);
+const avsnitt = slut < 0 ? lista.slice(start) : lista.slice(start, slut);
+const attProva = [...avsnitt.matchAll(/^ {2}(lib\/[\w./-]+):(\w+)$/gm)]
   .map((m) => ({ modul: m[1], namn: m[2] }))
-  .filter((k) => !/^ {2}lib/.test(k.modul) && k.namn !== 'default');
+  .filter((k) => k.namn !== 'default');
 
-// Skriptburna undantas enligt grundarbeslut: de fyller sitt syfte.
-const skriptburna = new Set([...avsnitt.matchAll(/^ {2}(lib\/[\w./-]+):(\w+)\n(?:.*\n)?\s+skript:/gm)]
-  .map((m) => `${m[1]}:${m[2]}`));
-const attProva = kandidater.filter((k) => !skriptburna.has(`${k.modul}:${k.namn}`));
-
-console.log(`\n  ${attProva.length} poster prövas en och en (skriptburna undantagna).\n`);
+console.log(`\n  ${attProva.length} poster prövas en och en.\n`);
 const resultat = { DÖD: [], 'BARA TEST': [], LEVANDE: [], 'EJ PRÖVBAR': [] };
 for (const k of attProva) {
   const r = provaExport(k.modul, k.namn);

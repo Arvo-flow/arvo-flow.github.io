@@ -263,3 +263,105 @@ Kvarvarande, uttalade blindfläckar:
 var inte listan utan att modulen **inte ens gick att importera** — ett bevis listan aldrig kunde ge.
 
 Fördelning efter rättelserna: **25 testad-men-aldrig-anropad · 36 bara-skript · 11 helt oanvänd.**
+
+---
+
+# ADDENDUM 3 · De 27 «testad men aldrig anropad» — dömda en och en (2026-09-20)
+
+> Grundarordern: *«Mät dem en och en, UTAN antaganden, och bevisa att de är döda (för radering)
+> eller levande/isolerade (för inkoppling).»*
+
+Hinken var 25 när ordern gavs och **27 när den utfördes** — raderingen av `fraktjaktQuote`
+föräldralöste `buildQueryXml` och `parseQueryResponse` i samma modul. Kaskaden är mätt, inte gissad.
+
+## Tre instrument, tre olika frågor — ingen av dem en textsökning
+
+| Fråga | Instrument | Metod | Motprov |
+|---|---|---|---|
+| Importerar någon **produktionsmodul namnet**? | `scripts/probe-dodbevis.mjs` | ta bort `export ` → ladda om → ESM-länkfelen namnger konsumenterna | `getBenchmark` (LEVANDE) + en export sonden själv skriver in i samma fil (DÖD) |
+| Har **modulen** någon produktionskonsument? | `scripts/probe-modulberoende.mjs` | döp om filen → ladda varje fil i `lib/ api/ agents/` → felen namnger de beroende | `lib/benchmark.js` (BEROENDE) + en tom nyskapad modul (ISOLERAD) |
+| Anropas deklarationen **inuti sin egen modul**? | `scripts/probe-internanvandning.mjs` | döp om deklarationen → ESLint `no-undef` → träffarna namnger raderna | `decodeEntities` (INTERN, rad 550/564/565) + en nyskriven oanropad funktion (EJ INTERN) |
+
+Det förra motprovet i `probe-dodbevis` pekade på `lib/production-monitor.js:getMetricsHistory` — en
+verkligt död export. **Den raderades 20 september, alltså dog motprovet med sitt fall**, och
+harnesset hade tyst förlorat sin ena riktning. Motprovet skrivs nu av sonden själv i en modul med
+många importörer: samma fil måste svara LEVANDE för `getBenchmark` och DÖD för motprovet i samma
+körning. Ett motprov i en tom modul hade varit sant av tomhet.
+
+**Utfall:** 27 av 27 gav BARA TEST (ingen produktionsmodul importerar namnet), 2 av 27 gav INTERN.
+
+## Domarna
+
+**LEVANDE KOD, exporterad för testinsyn (2) — orörda.**
+`business-intel:luhnValidOrgnr` (anropas rad 514) · `business-intel:titleSpanMatchingSld` (rad 567).
+Koden KÖRS i produktion; exporten är bara fönstret sviten ser in genom.
+
+**RADERADE (4) — var och en med tre nej: ingen produktionsimportör, ingen intern anropare, inget skript.**
+
+- `lib/adobe-pricing.js:incVat` — enda konsumenten var ett test som prövade `incVat(exVat(x)) === x`,
+  alltså en funktion vars enda syfte var att bevisa sig själv. Vi lägger aldrig på moms någonstans.
+- `lib/fortnox-rightsizing.js:detectFortnoxPaket` + `fortnoxRightsizing` — kommentaren sa «tester +
+  ev. äldre kod». **Det fanns ingen äldre kod.** Värre var namnkollisionen:
+  `recommendation.fortnoxRightsizing` ÄR ett levande kundsynligt fält, så den som grep:ade namnet
+  fick en död funktion och ett levande fält i samma träfflista. Ersatta av den leverantörsagnostiska
+  `detectSaasFinancePaket`, och sviten pekar nu på `saasFinanceRightsizing` — **produktionens egen
+  funktion**. Sabotage mot den fäller 13 tester; före omkopplingen prövade de ett skal ingen anropade.
+- `lib/kategorinyckel.js:kanoniskKategori` — se nedan.
+
+**INKOPPLAD (1).** `lib/verifiers/registry.mjs:allVerifierIds`. `scripts/verify.mjs` räknade upp
+samma lista för hand (`VERIFIERS.map(v => v.id)`) tre rader från en funktion som gör exakt det.
+Två kopior av en lista glider isär (regel 1). Grenen är KÖRD: `node scripts/verify.mjs
+hittepa-verifierare` → 18 id:n, exit 2.
+
+## Kategorinyckeln — ett påstående som var skrivet, inte kört
+
+Modulhuvudet jag själv skrev 18 september sa: *«en lagrad legacy-nyckel som läses
+(`kanoniskKategori` normaliserar vid dörren)»*. **Funktionen satt inte vid någon dörr.** Noll
+produktionsimportörer, noll interna anropare, noll skript — enbart två testfiler. Bibelns egen form
+från 11 september: en deklaration som ingen konsument frågar är ingen deklaration.
+
+Och den hade inte haft något att göra vid dörren heller. Produktions-DB mätt samma dag
+(`scripts/probe-kategorinyckel.mjs`, GH Actions-körning **35536143690**, 2026-09-20 20:38 UTC):
+
+| tabell | `vaxel` | `molnvaxel` |
+|---|---|---|
+| `invoice_analyses` | **0** | 2 |
+| `invoice_datapoints` | **0** | 4 |
+
+Ingen lagrad rad bär aliaset, och kategoriseraren kan inte producera det (`CATEGORIES` saknar
+`vaxel`). Att lägga en normalisering på varje rumsläsning för ett fall uppmätt till noll vore att
+betala för ett skydd mot något som inte kan hända — **och en rad som SER ut som ett skydd utan att
+vara det är sämre än ingen rad.** Kartan och `arLegacyKategori` står kvar: källtextsvepet är den
+halva som faktiskt vaktar, och den vaktar där en legacy-nyckel skulle återinföras — i koden.
+Blindfläcken är därmed öppen och **uttalad**, inte täckt av en funktion ingen anropar.
+
+## De 23 som står kvar — och varför det inte är slarv
+
+- **Vakt-facit och kontraktsdeklarationer** (`liggarvillkor:KLASSER`, `test-surface:EJ_TESTIDENTITET_SKELETT`,
+  `saas-avstamning:BLINDA_TILLSTAND`, `radobservation:ORESFALT`, `valutakonvertering:EJ_PENGAR`,
+  `vaktkontrakt:bedomFabriken`, `kalltextlexer:strippaStrangar`): sviten ÄR deras konsument, och det
+  är hela poängen med en maskinvakt. `strippaStrangar` bär tre andra vakter.
+- **Medvetet avväpnade grindar** (`kvantitetsvittne:farBaraPengar`, `fakturakolumner:arObservation`/
+  `bevisarTomhet`): `farBaraPengar` var inkopplad och **revs 8 september efter en mätning** — 0 av 75
+  fakturor hade radformen, 55 % av radposterna kunde aldrig bli `avlast`. KV-06 äger dokumentationen.
+  Det är ett fattat beslut, inte en glömd funktion.
+- **`lib/fraktjakt.js` (4 exporter)**: modulens första rad säger `ARKIVERAD. INTE I BRUK.` med ett
+  motiverat arkitekturbeslut (Fraktjakts VD, 2026-06-17). Modulen och dess enda konsument — testet —
+  är ÖVERENS om vad den är. Inget att rätta.
+- **`lib/fakturabalans.js:bedomFakturabalans`**: `api/test-invoice.mjs` rad 702 skriver ut i klartext
+  att modulen står kvar som SPECIFIKATION.
+- **Aliaskonstanter** (`switcharvode:ARVODESSATS = ARVO_FEE_RATE`,
+  `fraktjakt:FRAKTJAKT_QUERY_ENDPOINT = QUERY_ENDPOINT`): ett andra namn på en sanning, öppnat bara
+  för sviten. Låg risk, men noterat — nästa gång ett av dem rörs är rätt drag att ta bort skalet.
+- `schema-guard:lintToolSchema`, `tystnadsskal:tystnadsgrund`, `telekom-normalize:marketComparisonAllowed`:
+  de två första är verktyg för sviten; den tredje bär redan sin egen uttalade dom i modulen
+  (k-anonymitet kräver ett identitetsbeslut i moaten, inte en rad kod).
+
+**Kvarvarande skuld, uttalad:** det kundsynliga fältet heter fortfarande
+`recommendation.fortnoxRightsizing` medan motorn är leverantörsagnostisk — en Visma-kund får sin
+rådgivning under ett Fortnox-namn. Det är en [KUND]-ändring som rör `api/test-invoice.mjs`,
+`agents/recommender/recommend.js` OCH `src/pages/TestaFaktura/index.js` i samma commit, och den
+görs inte i en städrunda.
+
+**Fördelning efter addendum 3: 23 testad-men-aldrig-anropad · 37 bara-skript · 0 helt oanvänd.**
+Exporter i `lib/`: **447 → 436.**

@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
-import { kanoniskKategori, arLegacyKategori, LEGACY_KATEGORINYCKLAR } from '../lib/kategorinyckel.js';
+import { arLegacyKategori, LEGACY_KATEGORINYCKLAR } from '../lib/kategorinyckel.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { CATEGORIES } from '../agents/categorizer/categories.js';
@@ -40,20 +40,17 @@ describe('KATEGORINYCKELN · en sanning per produkt', () => {
     }
   });
 
-  test('KN-02 · kanoniskKategori normaliserar aliaset och lämnar allt annat i fred', () => {
-    assert.equal(kanoniskKategori('vaxel'), 'molnvaxel');
-    assert.equal(kanoniskKategori(' vaxel '), 'molnvaxel', 'blanksteg ska inte gömma ett alias');
-    assert.equal(kanoniskKategori('molnvaxel'), 'molnvaxel');
-    assert.equal(kanoniskKategori('mobil'), 'mobil', 'en okänd nyckel går igenom oförändrad');
-    assert.equal(kanoniskKategori('hittepa'), 'hittepa',
-      'modulen är en aliaskarta, inte en giltighetskontroll — två kontroller glider isär');
+  test('KN-02 · kartan pekar aliaset på den kanoniska nyckeln, och bara den', () => {
+    // `kanoniskKategori` RADERAD 2026-09-20: mätt till noll anropare, och produktions-DB bär
+    // noll rader med aliaset (GH Actions 35536143690). Kvar står kartan, som är det svepet läser.
+    assert.equal(LEGACY_KATEGORINYCKLAR.vaxel, 'molnvaxel');
+    assert.equal(Object.keys(LEGACY_KATEGORINYCKLAR).length, 1,
+      'växer kartan ska varje ny post ha sin egen mätning — inte ärva den här');
   });
 
-  test('KN-03 · tomhet ger null, och det är ett MEDVETET val', () => {
-    // Till skillnad från kanariedomens curlExit: en okategoriserad faktura är ett legitimt
-    // tillstånd i hela kodbasen (`category: null` i watchedCard), så här är null ett svar.
-    for (const v of [null, undefined, '', '   ']) assert.equal(kanoniskKategori(v), null);
+  test('KN-03 · arLegacyKategori svarar bara ja på en avvecklad stavning', () => {
     assert.equal(arLegacyKategori('vaxel'), true);
+    assert.equal(arLegacyKategori(' vaxel '), true, 'blanksteg ska inte gömma ett alias');
     for (const v of ['molnvaxel', 'mobil', null, undefined, '', 'toString', 'constructor'])
       assert.equal(arLegacyKategori(v), false, `${JSON.stringify(v)} är ingen legacy-nyckel`);
   });
