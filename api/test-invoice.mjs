@@ -23,6 +23,7 @@ import { kategoriNyckel, lasBeslut, byggBeslut, KATEGORI_TTL } from '../lib/kate
 import { detectForensicFindings } from '../lib/forensics.js';
 import { shadowReport } from '../lib/invoice-lines.js';
 import { storeDatapoint } from '../lib/benchmark.js';
+import { buildTelekomDatapoint } from '../lib/telekom-normalize.js';
 import { BRANCHINDEX, INDUSTRY_SEGMENT_MAP, bucketForSize } from '../agents/recommender/branchindex.js';
 import { getKv } from '../lib/kv.js';
 import { getDb } from '../lib/db.js';
@@ -1824,16 +1825,60 @@ export default async function handler(req, res) {
 
     // Fire-and-forget — lagrar anonymiserad datapunkt för branschindex.
     // Felet får aldrig blockera svaret till kunden.
-    storeDatapoint({
+    // ── VALLGRAVENS HJÄRTA INKOPPLAT (2026-09-20, grundarorder) ─────────────────────────────
+    // `buildTelekomDatapoint` producerar `per_user_monthly_exvat` + `tier` — det fynd-motorn
+    // aggregerar för «marknaden betalar X för T2». Den hade NOLL anropare; mätt mot produktions-DB
+    // bar alla fyra molnväxelrader NULL i båda fälten, och `marketComparisonAllowed` vaktade
+    // alltså en jämförelse vars indata aldrig skrevs.
+    //
+    // Underlaget tas ur REKOMMENDATIONEN, inte ur ett andra anrop till normalizeTelekomInvoice:
+    // moaten ska lagra exakt det tal kunden såg. Två beräkningar av samma sak kan glida isär.
+    // Fail-closed följer med gratis (RK-04) — `normaliserad` finns bara när licensantalet går att läsa
+    // ur fakturans egna växelrader (RK-04), så en oläsbar faktura skriver ingen per-enhet-punkt.
+    const telekomPunkt = categorized.category === 'molnvaxel' && recommendation?.molnvaxel?.normaliserad
+      ? buildTelekomDatapoint({
+          normalized: recommendation.molnvaxel.normaliserad,
+          industry, employees: employeesNum,
+        })
+      : null;
+    if (telekomPunkt) {
+      console.log(`[vallgraven] molnvaxel-datapunkt: ${telekomPunkt.per_user_monthly_exvat} kr/anv/mån `
+        + `· ${telekomPunkt.tier} · ${telekomPunkt.seatCount} licenser · ${telekomPunkt.annualCost} kr/år`);
+    }
+
+    // ⚠️ FAIL-CLOSED PÅ MOATEN (VD-04) — FUNNET AV MIN EGEN MÄTNING AV DEN HÄR ÄNDRINGEN.
+    // En molnväxelfaktura vars licensantal INTE går att läsa (klumpsumma, RK-04) skrev tidigare
+    // hela den kombinerade fakturan som en `molnvaxel`-observation. Mätt på tre fixturer: en
+    // läsbar faktura ger nu 53 400 kr (växeln), en oläsbar gav 75 812 kr (växel + 12 mobil-
+    // abonnemang + roaming). Cellen hade alltså blandat två enheter — och just min inkoppling
+    // gjorde skillnaden skarp i stället för att stänga den. Regeln 22 augusti gäller ordagrant:
+    // en fix som gör ett gammalt redovisningsfel värre måste stänga det också.
+    //
+    // Tystnaden är riktad (VD-05): analysen sparas fortfarande i KUNDENS rum (fail-open på kunden),
+    // det är bara MARKNADSOBSERVATIONEN som uteblir — för en faktura vi inte kan läsa växelpriset
+    // ur är inte en observation om växelmarknaden.
+    const molnvaxelUtanUnderlag = categorized.category === 'molnvaxel' && !telekomPunkt;
+    if (molnvaxelUtanUnderlag) {
+      console.log('[vallgraven] ingen datapunkt: växelns licensantal gick inte att läsa ur fakturan '
+        + '— hela fakturan är ingen observation om växelmarknaden');
+    }
+
+    if (!molnvaxelUtanUnderlag) storeDatapoint({
       category: categorized.category,
       supplier: categorized.normalizedSupplier,
-      annualCost: extracted.annualCost ?? extracted.amount,
+      // ⚠️ FÖR MOLNVÄXEL ÄR ÅRSKOSTNADEN VÄXELNS, INTE HELA FAKTURANS. Mätt på
+      // telenor-molnvaxel-stor: hela fakturan är 274 302 kr/år varav bara 21 % är växel (resten
+      // 45 mobilabonnemang + roaming). Att lagra totalen under kategorin `molnvaxel` hade blandat
+      // två domäner i moatens egen fördelning — samma enhetsfel som 21 augusti, en nivå ned.
+      annualCost: telekomPunkt?.annualCost ?? extracted.annualCost ?? extracted.amount,
       industry,
       employees: employeesNum,
       segmentOkant, pdfHash,
       // OBLIGATORISK: testidentitetsgrinden i storeDatapoint kan inte fråga utan den (2026-09-11).
       userEmail: body.userEmail ?? null,
-      seatCount: extracted.seatCount ?? null,
+      seatCount: telekomPunkt?.seatCount ?? extracted.seatCount ?? null,
+      perUserMonthlyExVat: telekomPunkt?.per_user_monthly_exvat ?? null,
+      tier: telekomPunkt?.tier ?? null,
     }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
     // ── DEN EFTERHANDS-ÖVERSKRIVANDE GISSNINGSMOTORN — RIVEN 2026-08-12 ───────────────────────

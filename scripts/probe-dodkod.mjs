@@ -85,7 +85,14 @@ for (const f of filer) {
 const internt = new Map();           // 'lib/x.js:namn' -> antal förekomster utanför exportraden
 for (const [modul, namnen] of exporter) {
   const kod = readFileSync(join(ROT, modul), 'utf8');
-  const utanExportrader = kod.split('\n')
+  // ⚠️ KOMMENTARER MÅSTE BORT, och det fick sonden lära sig av sig själv. När
+  // `marketComparisonAllowed` fick en docstring som NÄMNER sitt eget namn räknades den som
+  // internt använd och försvann ur dödlistan — en falsk negativ orsakad av prosa. Samma sjukdom
+  // som en källvakt som matchar sin egen kommentartext (KD-15/KD-18). Instrumentet räknar KOD.
+  const utanKommentarer = kod
+    .replace(/\/\*[\s\S]*?\*\//g, '')          // blockkommentarer, inkl. docstrings
+    .replace(/^\s*\/\/.*$/gm, '');              // radkommentarer
+  const utanExportrader = utanKommentarer.split('\n')
     .filter((r) => !/^export\s+(?:async\s+)?(?:function|const|let|class)\s/.test(r)).join('\n');
   for (const namn of namnen) {
     const rx = new RegExp(`\\b${namn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
@@ -111,7 +118,10 @@ for (const [modul, namnen] of exporter) {
 // ── 4 · MOTPROVEN — instrumentet prövas innan dess utfall får läsas ─────────────────────────
 const dod = dom.filter((d) => !d.levande);
 const hittad = (n) => dod.some((d) => d.namn === n);
-const KANT_DOD = ['buildTelekomDatapoint', 'marketComparisonAllowed'];
+// ⚠️ `buildTelekomDatapoint` STOD HÄR TILL 2026-09-20 — den är nu INKOPPLAD i sparvägen, alltså
+// inte längre död, och motprovet flyttades till exporter som fortfarande saknar anropare.
+// En motprovslista är färskvara: den måste följa verkligheten, annars fäller den på rätt beteende.
+const KANT_DOD = ['marketComparisonAllowed', 'analyzeResults', 'getMetricsHistory'];
 // ⚠️ `kanoniskKategori` STOD HÄR I FÖRSTA VERSIONEN, och sonden fällde motprovet. Jag hade lagt
 // den i «känt levande» för att jag skrev den i går — ett omätt antagande i den lista som ska
 // BEVISA att instrumentet inte överrapporterar. Mätningen: noll produktionsanropare, bara tester.

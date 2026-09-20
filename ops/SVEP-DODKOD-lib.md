@@ -146,3 +146,77 @@ som nämner namnet?»* — aldrig på *«körs den»*.
 Sonden är **inte** ett blockerande test, med flit: 80 poster i en pre-commit-grind hade fällt varje
 commit och blivit avstängd inom ett dygn (samma mätning som ordet «aldrig», 25 träffar på 20
 commits). Den står körbar — *ett mätvärde utan sitt instrument är ett påstående*.
+
+---
+
+# ADDENDUM 2026-09-20 · EXEKVERING
+
+## 1 · De 17 utplånade
+
+`lib/batch-job-store.js` + `lib/batch-processor.js` raderade. Mätt före/efter:
+
+| | Före | Efter |
+|---|---|---|
+| Exporter i `lib/` | 447 | **430** (−17, exakt som förutsagt) |
+| Utan anropare | 80 | 63 |
+| Svit | 2453/2453 | **2453/2453** |
+| Moduler som laddar | 113 | **111 av 111** |
+
+## 2 · Vallgravens hjärta inkopplat — mätbeviset
+
+`buildTelekomDatapoint` anropas nu i sparvägen (`api/test-invoice.mjs`). Underlaget tas ur
+**rekommendationen**, inte ur ett andra anrop till `normalizeTelekomInvoice`: moaten lagrar exakt
+det tal kunden såg, och två beräkningar av samma sak kan glida isär.
+
+Fixturerna körda genom det nya flödet:
+
+| Faktura | FÖRE | EFTER |
+|---|---|---|
+| `telenor-molnvaxel-stor` | `annual_cost=274302 · seat=45 · per_user=NULL · tier=NULL` | **`53400 · 50 · 89 · T2`** |
+| Telia Smart Connect + svarsgrupp | `255744 · 45 · NULL · NULL` | **`63720 · 45 · 118 · T2`** |
+| `tre-mobil-molnvaxel` (klumpsumma) | `75812` skrevs som molnväxelobservation | **INGEN DATAPUNKT** |
+
+89 × 50 × 12 = 53 400 och 118 × 45 × 12 = 63 720 — båda per-enhet-talen sammanfaller med
+prisbokens **oberoende verifierade** Telia-golv (T1 89, T2 118).
+
+**Min egen ändring införde ett fel som mätningen fångade.** Den oläsbara fakturan skrev fortfarande
+hela den kombinerade fakturan (75 812) som en `molnvaxel`-observation, medan en läsbar nu skriver
+53 400. Cellen hade alltså blandat två enheter — och just inkopplingen gjorde skillnaden skarp.
+Stängt: `molnvaxel` utan läsbart licensantal skriver **ingen** marknadsobservation alls. Fail-closed
+på moaten, fail-open på kunden (analysen sparas fortfarande i rummet).
+
+Per-enhet-fälten skrivs i **egen sats med egen catch** (11 september-regeln): en kanske-omigrerad
+kolumn får aldrig ta ned kundens datapunkt.
+
+## 3 · De två andra var inte saknade inkopplingar
+
+- **`TIER_ORDER` raderad.** Byte-identisk med `Object.keys(CANONICAL_TIERS)`, noll konsumenter,
+  ingen intern användning — en andra sanning om samma ordning.
+- **`marketComparisonAllowed` behålls, men deklarerad som OMATBAR.** Den grindar på *distinkta
+  kunder*; `invoice_datapoints` har tio kolumner och **ingen pekar ut en kund** (anonymiserad by
+  design — grannliggaren `invoice_analyses` bär `user_email`). `cellenBar` kan inte ersätta den:
+  den räknar RADER (10) och SKILDA BELOPP (10), aldrig kunder, och tio rader kan vara en enda
+  kunds tio fakturor. **Att koppla in den kräver ett designbeslut om identitet i moaten, inte en
+  rad kod.** VD-09 låser deklarationen.
+
+## 4 · Instrumentet var fel en tredje gång — och det syntes bara för att jag körde om det
+
+Sonden fällde sitt eget motprov efter inkopplingen. Delvis rätt (`buildTelekomDatapoint` är inte
+längre död), men `marketComparisonAllowed` blev en **falsk negativ**: dess nya docstring NÄMNER
+sitt eget namn, och intern-räkningen skilde inte kod från kommentar. Samma sjukdom som en källvakt
+som matchar sin egen kommentartext.
+
+Lagat — kommentarer strippas nu. **Mätt effekt: 41 exporter i `lib/` hade sin enda «interna
+användning» i en kommentar.** De tidigare talen (80, 63) var alltså producerade av ett instrument
+som räknade prosa som användning; med den fixen visar samma kodbas **76**. Talen är inte direkt
+jämförbara, och det ska sägas.
+
+## Sabotage
+
+7 riktningar, alla föll — **tre överlevde först och avslöjade äkta svaghet**: S1 (anropet fanns
+kvar men blev onåbart), S5 (årskostnaden tillbaka till hela fakturan) och S7 (SIM-antalet tillbaka
+som nämnare) prövades av inget test förrän vakterna skärptes. S3 krävde att felet mättes en nivå
+upp: fältsatsen ligger inuti den yttre try-satsen, så utan dess catch rapporteras HELA
+`storeDatapoint` som misslyckad.
+
+Svit **2462/2462**.

@@ -155,6 +155,7 @@ import './tystnadsskal.mjs';
 import './kategorinyckel.mjs';
 import './molnvaxelgolvet.mjs';
 import './vaxelrad.mjs';
+import './vallgraven.mjs';
 import './kanariedom.mjs';
 
 const ALL = [
