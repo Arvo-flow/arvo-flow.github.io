@@ -21,7 +21,7 @@
 // svarar på «finns en produktionsväg som nämner namnet?» — aldrig på «körs den».
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative, extname } from 'node:path';
+import { join, relative, extname, dirname } from 'node:path';
 
 const ROT = process.cwd();
 
@@ -47,13 +47,24 @@ const filer = allaFiler(ROT);
 const libFiler = filer.filter((f) => LIB.test(relative(ROT, f)));
 
 // ── 1 · Samla exporterade NAMN per lib-modul ────────────────────────────────────────────────
+// ⚠️ TRE EXPORTFORMER SAKNADES (mätt 2026-09-20): 19 `export default` i lib/ räknades inte alls,
+// plus en listform `export { a, b };`. Sonden rapporterade alltså 429 exporter av 449.
 const EXPORT_RX = /^export\s+(?:async\s+)?(?:function\s+(\w+)|(?:const|let|class)\s+(\w+))/gm;
+const EXPORT_LISTA_RX = /^export\s*\{([^}]*)\}\s*;/gm;
+const EXPORT_DEFAULT_RX = /^export\s+default\b/m;
 const exporter = new Map();          // 'lib/x.js' -> Set(namn)
 for (const f of libFiler) {
   const rel = relative(ROT, f);
   const kod = readFileSync(f, 'utf8');
   const namn = new Set();
   for (const m of kod.matchAll(EXPORT_RX)) namn.add(m[1] ?? m[2]);
+  for (const m of kod.matchAll(EXPORT_LISTA_RX)) {
+    for (const bit of m[1].split(',')) {
+      const n = bit.trim().split(/\s+as\s+/).pop().trim();
+      if (n) namn.add(n);
+    }
+  }
+  if (EXPORT_DEFAULT_RX.test(kod)) namn.add('default');
   if (namn.size) exporter.set(rel, namn);
 }
 
@@ -61,19 +72,42 @@ for (const f of libFiler) {
 // Täcker `import { a, b as c } from '…'` OCH `const { a } = await import('…')` — den andra formen
 // användes av sonderna och hade annars räknats som «ingen anropare».
 const IMPORT_RX = /(?:import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"])|(?:(?:const|let)\s*\{([^}]*)\}\s*=\s*await\s+import\(\s*['"]([^'"]+)['"]\s*\))/g;
-const anvandning = new Map();        // 'namn' -> Set('konsumentfil')
+// ⚠️ NYCKELN ÄR MODUL+NAMN, ALDRIG NAMNET ENSAMT. Fjärde gången i rad var sondens fel ett
+// SÖKVÄGSANTAGANDE — först «moduler nås via lib/-prefix», sedan «verifierare nås via
+// verifiers/-prefix». Ett namn som bara matchas som text knyts dessutom till FEL modul så snart
+// två moduler exporterar samma namn (mätt: `SKAL` finns i två). Importens specificerare löses nu
+// mot en verklig sökväg, så krediten hamnar där den hör hemma.
+const DEFAULT_IMPORT_RX = /^import\s+(?!type\b)(\w+)\s*(?:,\s*\{[^}]*\}\s*)?from\s*['"]([^'"]+)['"]/gm;
+const anvandning = new Map();        // 'modul:namn' -> Set('konsumentfil')
+const kreditera = (modul, namn, konsument) => {
+  const k = `${modul}:${namn}`;
+  if (!anvandning.has(k)) anvandning.set(k, new Set());
+  anvandning.get(k).add(konsument);
+};
+/** Löser en importspecificerare till en lib-sökväg, eller null om den inte pekar på lib/. */
+function libModulFor(fran, spec) {
+  if (!spec.startsWith('.')) return null;
+  const abs = join(dirname(join(ROT, fran)), spec);
+  const rel = relative(ROT, abs);
+  return LIB.test(rel) ? rel : null;
+}
 for (const f of filer) {
   const rel = relative(ROT, f);
   const kod = readFileSync(f, 'utf8');
   for (const m of kod.matchAll(IMPORT_RX)) {
     const lista = m[1] ?? m[3];
-    if (!lista) continue;
+    const spec = m[2] ?? m[4];
+    if (!lista || !spec) continue;
+    const modul = libModulFor(rel, spec);
+    if (!modul) continue;
     for (const bit of lista.split(',')) {
       const namn = bit.trim().split(/\s+as\s+/)[0].trim();
-      if (!namn) continue;
-      if (!anvandning.has(namn)) anvandning.set(namn, new Set());
-      anvandning.get(namn).add(rel);
+      if (namn) kreditera(modul, namn, rel);
     }
+  }
+  for (const m of kod.matchAll(DEFAULT_IMPORT_RX)) {
+    const modul = libModulFor(rel, m[2]);
+    if (modul) kreditera(modul, 'default', rel);
   }
 }
 
@@ -92,11 +126,17 @@ for (const [modul, namnen] of exporter) {
   const utanKommentarer = kod
     .replace(/\/\*[\s\S]*?\*\//g, '')          // blockkommentarer, inkl. docstrings
     .replace(/^\s*\/\/.*$/gm, '');              // radkommentarer
-  const utanExportrader = utanKommentarer.split('\n')
-    .filter((r) => !/^export\s+(?:async\s+)?(?:function|const|let|class)\s/.test(r)).join('\n');
+  // ⚠️ ATT SLÄNGA HELA EXPORTRADEN SLÄNGDE OCKSÅ ANVÄNDNINGEN PÅ DEN. `lib/prisparning.js:32`
+  // lyder `export const harPris = (text) => PRIS_RE.test(...)` — raden DEKLARERAR `harPris` och
+  // ANVÄNDER `PRIS_RE`. Filtret tog bort båda, så `PRIS_RE` rapporterades som helt oanvänd trots
+  // att modulen kör den varje anrop. En falsk positiv som hade lett till radering av levande kod.
+  // Nu stryks bara DEKLARATIONEN av namnet, aldrig resten av raden.
   for (const namn of namnen) {
-    const rx = new RegExp(`\\b${namn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
-    internt.set(`${modul}:${namn}`, (utanExportrader.match(rx) ?? []).length);
+    const säker = namn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const utanEgenDeklaration = utanKommentarer
+      .replace(new RegExp(`export\\s+(?:async\\s+)?(?:function|const|let|class)\\s+${säker}\\b`, 'g'), '');
+    const rx = new RegExp(`\\b${säker}\\b`, 'g');
+    internt.set(`${modul}:${namn}`, (utanEgenDeklaration.match(rx) ?? []).length);
   }
 }
 
@@ -104,7 +144,7 @@ for (const [modul, namnen] of exporter) {
 const dom = [];
 for (const [modul, namnen] of exporter) {
   for (const namn of namnen) {
-    const konsumenter = [...(anvandning.get(namn) ?? [])].filter((k) => k !== modul);
+    const konsumenter = [...(anvandning.get(`${modul}:${namn}`) ?? [])].filter((k) => k !== modul);
     const prod = konsumenter.filter((k) => PROD.test(k));
     const libk = konsumenter.filter((k) => LIB.test(k));
     const test = konsumenter.filter((k) => TEST.test(k));
@@ -128,6 +168,8 @@ const KANT_DOD = ['marketComparisonAllowed', 'analyzeResults', 'getMetricsHistor
 // Den står nu i utfallet där den hör hemma. En motprovslista är också ett påstående.
 const KANT_LEVANDE = ['getBenchmark', 'storeDatapoint', 'normalizeTelekomInvoice',
   'catLabel', 'checkSupplierFingerprint', 'isAudited',
+  // Motprov för exportrads-fällan: PRIS_RE används på en rad som själv är en export.
+  'PRIS_RE',
   // Motprov för 2b: hjälpare som modulen anropar SJÄLV. Flaggas de är intern-mätningen trasig.
   'klassaVaxelrad', 'cellenBar'];
 

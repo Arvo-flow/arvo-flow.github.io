@@ -220,3 +220,46 @@ upp: fältsatsen ligger inuti den yttre try-satsen, så utan dess catch rapporte
 `storeDatapoint` som misslyckad.
 
 Svit **2462/2462**.
+
+
+---
+
+# ADDENDUM 2 · «ÄR VI VERKLIGT SÄKRA PÅ DE 76?» — NEJ. TALET ÄR 72.
+
+Grundaren frågade en tredje gång. Svaret är återigen nej, och den här gången gick jag igenom
+instrumentets **kvarvarande antaganden systematiskt** i stället för att vänta på nästa broms.
+Fyra nya fel i sonden, alla mätta:
+
+| # | Fel i instrumentet | Mätning | Riktning |
+|---|---|---|---|
+| 5 | **19 `export default` räknades inte alls** | 450 exporter, inte 429 | dolde 19 |
+| 6 | Krediten var **namnbaserad, inte modulbaserad** | `SKAL` finns i två moduler | dolde död kod |
+| 7 | En ad-hoc-kontroll sökte `verifiers/<namn>` medan registret skriver `'./<namn>.mjs'` | «10 döda verifierare» → **0** | 10 falska positiva |
+| 8 | **Hela exportrader ströks** ur intern-räkningen | `PRIS_RE` används på rad 32, som SJÄLV är en export | 4 falska positiva |
+
+Fel 7 är **fjärde gången i rad** att ett sökvägsantagande fällde mig. Det är inte slump längre
+utan instrumentets mönster. Strukturellt stängt: importens specificerare löses nu mot en verklig
+sökväg (`libModulFor`), så en import krediteras den modul den faktiskt pekar på — aldrig ett namn,
+aldrig en sökvägsbit.
+
+Fel 8 hade varit det dyraste: `PRIS_RE` **används varje gång `harPris` körs**, men eftersom
+användningen står på en rad som själv börjar med `export const` ströks den med deklarationen.
+Sonden rapporterade levande kod som helt oanvänd. Hade jag följt listan hade jag raderat den.
+
+**Instrumentets historik: åtta rättelser.** Motprovslistan bär nu nio poster, inklusive `PRIS_RE`
+för exportrads-fällan och `klassaVaxelrad`/`cellenBar` för intern-räkningen.
+
+## Vad talet 72 ÄR — och inte är
+
+Det är **en undre gräns över de namn sonden granskar**, inte en lista på 72 bekräftat döda saker.
+Kvarvarande, uttalade blindfläckar:
+
+- en import räknas som användning, aldrig ett anrop → **underrapporterar**
+- namn som nås via strängindex (`mod[namn]`) syns inte → **underrapporterar**
+- `scripts/` klassas medvetet i egen hink (36 av de 72) — ett nattligt produktionsjobb och en
+  engångssond går inte att skilja på sökvägen
+
+**Varje post kräver sin egen mätning före radering.** Batch-fallet är beviset: det avgörande där
+var inte listan utan att modulen **inte ens gick att importera** — ett bevis listan aldrig kunde ge.
+
+Fördelning efter rättelserna: **25 testad-men-aldrig-anropad · 36 bara-skript · 11 helt oanvänd.**
