@@ -115,8 +115,55 @@ Svit **2450/2450**.
 - En växelrad som bara namnger en funktion (utan enhet) tystar hela fakturan. Det är korrekt enligt
   mandatet, men det är en **kostnad**: sådana fakturor prissätts inte alls.
 
-## Kvarstående, uttalat
+## ⚠️ RÄTTELSE 2026-09-20 — DEN HÄR DOMEN BAR SJÄLV ETT OMÄTT PÅSTÅENDE
 
-De **4 lagrade `molnvaxel`-datapunkterna** i prisboken skrevs med den gamla semantiken
-(`seats` = SIM-antal). De är få och cellen bär inte, men de bör mätas om innan molnväxel någonsin
-får en levande kohort. Jag raderar dem inte på eget bevåg — radering är grundarens beslut.
+Domen avslutades med: *«De 4 lagrade `molnvaxel`-datapunkterna skrevs med den gamla semantiken
+(`seats` = SIM-antal).»* Grundaren frågade: **«är vi helt säkra?»** Svaret var nej, och påståendet
+var **falskt**. Det var en slutsats som skrevs ner innan den kördes — exakt den felform hela den
+här filen handlar om, i filens egen sista rad.
+
+**Det föll på två ställen redan i koden, utan att databasen behövde frågas:**
+- `invoice_datapoints` har **ingen `seats`-kolumn**.
+- `storeDatapoint` — den enda produktionsvägen till prisboken — tar `annualCost` och skriver
+  **varken `per_user_monthly_exvat` eller `tier`**. `buildTelekomDatapoint`, som skulle skrivit
+  dem, har **noll anropare i hela trädet**. SIM-nämnaren kunde alltså aldrig nå moaten.
+
+**Mätt mot produktions-DB 2026-09-20 (sond, steg 5–6):**
+
+```
+4 rader, alla IDENTISKA:
+  Jun 28 · Telavox AB · annual_cost=101100 · per_user=NULL · tier=NULL
+         · byraer/small · src=upload · pdf_hash=NULL
+cellen bär inte: 4 av 10 rader · invoice_analyses: 1 dokument (tröskel 5)
+```
+
+**Vad som faktiskt gäller:**
+1. **Per-användare-fältet är NULL.** SIM-felet nådde kundens kort och prosa — aldrig prisboken.
+2. **Men rena är de inte.** `annual_cost = 101 100` är HELA fakturan lagrad under `molnvaxel`.
+   Är Telavox-fakturan bundlad (Telavox Premium buntar växel + surf per konstruktion) blandar
+   talet två domäner. **Det är inte bevisat** — `pdf_hash` är NULL, så dokumentet går inte att nå.
+3. **Fyra identiska rader med `pdf_hash = NULL`** är sannolikt ETT dokument skrivet fyra gånger,
+   samma dag som `DiagFn AB` dyker upp i liggaren. Diagnostrafik, inte fyra marknadsobservationer.
+4. **De når ingen kund, och kan inte göra det.** Cellen faller på BÅDA grindarna: 4 < 10 rader,
+   och 1 skilt belopp < 10. Även med tio identiska rader skulle den inte bära (mätt).
+
+**Slutsats: raderna är inte vad jag påstod, de är inte bevisat fel, och de är utan verkan.**
+Ingen åtgärd krävs. Radering förblir grundarens beslut — och det finns nu mindre skäl till den än
+när jag skrev raden ovan.
+
+## Följdfyndet, som väger tyngre än de fyra raderna
+
+**Vallgravens hjärta för molnväxel är inte inkopplat.** `buildTelekomDatapoint` (som producerar
+`per_user_monthly_exvat` + `tier`), `marketComparisonAllowed` och `K_ANON_MIN` har **noll
+anropare i hela trädet** — bara definitioner och tester. Bibeln beskriver den funktionen som
+«exakt det fynd-motorn aggregerar»; i praktiken skriver varje molnväxelfaktura sin datapunkt via
+den generiska vägen, med per-enhet och nivå som NULL.
+
+Det är villkorsvaktens sjukdom: **`marketComparisonAllowed` vaktar en jämförelse som inte kan
+fyra, eftersom dess indata aldrig skrivs.** K-anonymitetslåset är prövat och grönt i sviten och
+har aldrig haft en enda rad att skydda.
+
+Det är också tredje gången i samma modul: `deriveTelekomSeats` (raderad i den här commiten) och
+nu dessa tre. **Frågan som borde ställas om varje exporterad funktion i `lib/`: vem anropar den i
+produktion?** Inte åtgärdat här — det är ett eget beslut, och att koppla in en datapunktsväg är
+en [KUND]-ändring som förtjänar sin egen mätning och granskning.
