@@ -5,7 +5,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  inferCanonicalTier, deriveTelekomSeats, normalizeTelekomInvoice, buildTelekomDatapoint,
+  inferCanonicalTier, normalizeTelekomInvoice, buildTelekomDatapoint,
   CANONICAL_TIERS, K_ANON_MIN, marketComparisonAllowed, classifyTelekomLine,
 } from '../lib/telekom-normalize.js';
 
@@ -25,27 +25,41 @@ describe('Telekom · kanonisk nivå-inferens (leverantörs-agnostisk)', () => {
   });
 });
 
-describe('Telekom · seat-härledning (anknytningar, aldrig anställda)', () => {
-  test('seatCount har företräde', () => {
-    assert.equal(deriveTelekomSeats({ seatCount: 30, lineItems: [] }), 30);
+describe('Telekom · nämnaren bor på växelraden, inte i seatCount', () => {
+  // ⚠️ HÄR LÅG FYRA TESTER FÖR `deriveTelekomSeats` (2026-09-19). Funktionen var växelprisets
+  // nämnare och ärvde `invoice.seatCount` — på en kombinerad faktura antalet SIM-KORT. Den är
+  // raderad, inte omskriven: så länge den låg kvar exporterad och grön såg den inkopplad ut, och
+  // nästa läsare hade återanvänt den i god tro. Frågan den besvarade ställs nu till
+  // `lib/vaxelrad.js`, som läser växelradernas EGNA antal (se tests/vaxelrad.mjs, RK-01..12).
+  test('den raderade seat-härledningen är verkligen borta ur modulen', async () => {
+    const mod = await import('../lib/telekom-normalize.js');
+    assert.equal(mod.deriveTelekomSeats, undefined,
+      'kommer den tillbaka är SIM-nämnaren ett `import` bort');
   });
-  test('summa rad-quantity', () => {
-    assert.equal(deriveTelekomSeats({ lineItems: [line('Växel', 99, 12), line('Växel extra', 99, 3)] }), 15);
-  });
-  test('"(N anknytningar)" ur radtext', () => {
-    assert.equal(deriveTelekomSeats({ lineItems: [line('Telavox Bas (22 anknytningar)', 2178)] }), 22);
-  });
-  test('inget antal → null (ingen gissning)', () => {
-    assert.equal(deriveTelekomSeats({ lineItems: [line('Support', 500)] }), null);
+
+  test('seatCount kan inte påverka växelpriset — samma faktura, olika seatCount', () => {
+    const rader = [
+      line('Telenor One Talk Molnväxel — 50 användarlicenser', 4450, 50),
+      line('Telenor One Talk Reception (auto-svarare + IVR)', 449, 1),
+    ];
+    const priser = [45, 1, 999, undefined].map(
+      (sc) => normalizeTelekomInvoice({ seatCount: sc, lineItems: rader }, 'telenor').perUserMonthlyExVat);
+    assert.deepEqual(priser, [89, 89, 89, 89]);
   });
 });
 
 describe('Telekom · normalisering → jämförbar enhet (kr/anv/mån exkl moms)', () => {
   test('per-användare-pris exkl moms, hårdvara exkluderad', () => {
+    // ⚠️ INDATAN ÄNDRAD 2026-09-19, INTE FÖRVÄNTNINGEN. Testet matade `seatCount: 20` medan
+    // växelraden saknade kvantitet — alltså kom nämnaren utifrån, vilket är exakt SIM-buggen.
+    // Verkliga växelrader namnger sin enhet; mätt hos fyra oberoende leverantörer:
+    // «50 användarlicenser» (Telenor), «Använd.» (Telia), «(22 anknytningar)» (Telavox),
+    // «4 extra användare» (3). Raden nedan speglar den formen. Beviset — att hårdvara och
+    // engångsavgift hålls utanför — är oförändrat, och 149 kr står kvar.
     const r = normalizeTelekomInvoice({
       seatCount: 20,
       lineItems: [
-        line('Växel Proffs köhantering', 2980),     // 149/anv × 20
+        line('Telavox Proffs köhantering (20 användare)', 2980, 20),   // 149/anv × 20
         line('Bordstelefon hårdvara', 4000),         // EXKLUDERAS (hårdvara)
         line('Startavgift engångs', 1500),           // EXKLUDERAS (engångs)
       ],
@@ -59,7 +73,8 @@ describe('Telekom · normalisering → jämförbar enhet (kr/anv/mån exkl moms)
     assert.equal(normalizeTelekomInvoice({ lineItems: [line('Växel', 999)] }), null);
   });
   test('robust avrundning till 2 decimaler (inga flyttalsspöken)', () => {
-    const r = normalizeTelekomInvoice({ seatCount: 3, lineItems: [line('Växel samtal', 100)] }, 'telia');
+    // Nämnaren flyttad till raden av samma skäl som ovan; 100/3 är fortfarande det som prövas.
+    const r = normalizeTelekomInvoice({ seatCount: 3, lineItems: [line('Växel samtal (3 anknytningar)', 100, 3)] }, 'telia');
     assert.equal(r.perUserMonthlyExVat, 33.33);      // 100/3 = 33.3333… → 33.33
   });
 });
@@ -79,7 +94,16 @@ describe('Telekom · rad-isolering (PILOTDATA-LÄXAN: mobil ≠ växel, regel 7)
       line('Telia Smart Connect Använd.', 5310, 45),   // växel
       line('Svarsgrupp / Köhantering', 297, 3),        // växel
     ] }, 'telia');
-    assert.equal(r.perUserMonthlyExVat, 124.6);         // (5310+297)/45 — INTE 473,6
+    // ⚠️ UTFALLET ÄNDRAT 2026-09-19: 124,60 → 118,00, och det är en RÄTTELSE, inte en anpassning.
+    // «Svarsgrupp / Köhantering» (297 kr, antal 3) är tre svarsgrupper — köer, inte personer. Att
+    // lägga en bolagsgemensam avgift i täljaren och dela den med antalet ANVÄNDARE blandar två
+    // enheter. Utan den blir priset 5310/45 = 118,00, vilket är EXAKT Telia Smart Connects
+    // verifierade T2-golv: den korrigerade aritmetiken reproducerar prisbokens eget tal ur
+    // fakturans egna rader. Riktningen är dessutom den säkra — priset SÄNKS, alltså minskar den
+    // påvisade överbetalningen och därmed vårt eget arvode.
+    assert.equal(r.perUserMonthlyExVat, 118);           // 5310/45 — INTE 473,6 och INTE 124,6
+    assert.equal(r.seats, 45, 'nämnaren är växelradens egna antal, aldrig SIM-antalet');
+    assert.equal(r.perBolagMonthly, 297, 'bolagsavgiften försvinner inte — den redovisas');
     assert.equal(r.canonicalTier, 'T2');
     assert.equal(r.excludedMobilMonthly, 15705);
     assert.equal(r.bundled, false);
@@ -97,7 +121,7 @@ describe('Telekom · rad-isolering (PILOTDATA-LÄXAN: mobil ≠ växel, regel 7)
 
 describe('Telekom · datapunkts-kontraktet (Vallgrav-redo: normaliserad + nivåtaggad)', () => {
   test('datapunkten bär per_user_monthly_exvat + tier (det fynd-motorn aggregerar)', () => {
-    const normalized = normalizeTelekomInvoice({ seatCount: 20, lineItems: [line('Växel Proffs köhantering', 2980)] }, 'telavox');
+    const normalized = normalizeTelekomInvoice({ seatCount: 20, lineItems: [line('Telavox Proffs köhantering (20 användare)', 2980, 20)] }, 'telavox');
     const dp = buildTelekomDatapoint({ normalized, industry: 'it-tech', employees: 18 });
     assert.equal(dp.category, 'molnvaxel');
     assert.equal(dp.tier, 'T2');

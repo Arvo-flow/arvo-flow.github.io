@@ -29,7 +29,10 @@ describe('Molnväxel · prisboken (Telia-ankare, exkl moms bekräftat)', () => {
 
 describe('Molnväxel · recommend() — deterministisk, Zero Trust (ingen AI, ingen FX)', () => {
   test('T2-växel (köhantering) → per-user exkl + Telia-golv 118, ingen hård besparing', async () => {
-    const r = await recommend(inv([line('Telia Smart Connect växel med köhantering', 3000, 20)], 20));
+    // Raden namnger nu sin enhet, precis som Telias verkliga fakturarad «Telia Smart Connect
+    // Använd.» i pilotdatan. Utan en namngiven enhet är antal 20 tvetydigt (20 användare eller
+    // 20 köer?) och priset tystas med flit — se RK-08. Talet 150 är oförändrat.
+    const r = await recommend(inv([line('Telia Smart Connect Använd. med köhantering', 3000, 20)], 20));
     assert.equal(r.recommendationType, 'optimize');
     assert.equal(r.revisionGate, 'audited');
     assert.ok(r.molnvaxel, 'molnvaxel-data ska finnas');
@@ -59,7 +62,7 @@ describe('Molnväxel · recommend() — deterministisk, Zero Trust (ingen AI, in
   });
 
   test('T3 kontaktcenter (inspelning/statistik) → offert-läge (inget fast golv)', async () => {
-    const r = await recommend(inv([line('Kontaktcenter med samtalsinspelning och statistik', 6000, 20)], 20));
+    const r = await recommend(inv([line('Kontaktcenter Använd. med samtalsinspelning och statistik', 6000, 20)], 20));
     assert.equal(r.molnvaxel.tier, 'T3');
     assert.equal(r.molnvaxel.teliaFloor, null);
     assert.equal(r.requiresQuote, true);
@@ -73,12 +76,14 @@ describe('Molnväxel · recommend() — deterministisk, Zero Trust (ingen AI, in
       line('Telia Smart Connect Använd.', 5310, 45),
       line('Svarsgrupp / Köhantering', 297, 3),
     ], 45));
-    assert.equal(r.molnvaxel.perUserMonthlyExVat, 124.6);
+    // Rättat 124,60 → 118,00: svarsgruppen är en bolagsavgift, inte en användarkostnad. Se
+    // motiveringen i tests/telekom-normalize.mjs. 118 = Telias verifierade T2-golv på kronan.
+    assert.equal(r.molnvaxel.perUserMonthlyExVat, 118);
     assert.equal(r.molnvaxel.tier, 'T2');
     assert.equal(r.molnvaxel.teliaFloor, 118);
     assert.equal(r.molnvaxel.excludedMobilMonthly, 15705);
     assert.equal(r.grossSaving, null);
-    assert.match(r.reasoning, /124,60 kr\/användare/);
+    assert.match(r.reasoning, /118,00 kr\/användare/);
   });
 
   test('PILOT bundlad Telavox-faktura → golv-jämförelse SUPPRIMERAD (ej äpplen-mot-päron)', async () => {
