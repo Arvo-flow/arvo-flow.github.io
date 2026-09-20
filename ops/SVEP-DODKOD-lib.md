@@ -54,13 +54,41 @@ villkorsvaktens sjukdom, prövad och grön i sviten utan att någonsin ha haft e
 | `lib/batch-job-store.js` | 14 | **noll importörer** — inte prod, inte skript, inte test |
 | `lib/batch-processor.js` | 3 | **noll importörer** — inte prod, inte skript, inte test |
 
-Ingen fil i repot importerar någondera. De nämns dessutom **inte en enda gång** i `CLAUDE.md`,
-`ops/*.md` eller `package.json` — alltså inte heller planerat arbete. `batch-processor` importerar i
-sin tur `checkSupplierFingerprint`, vilket gör att den *ser* aktiv ut i en grep.
+### ⚠️ OMMÄTT 2026-09-20 EFTER GRUNDARENS «ÄR DU HELT SÄKER?»
+
+Första mätningen sökte strängen `lib/batch-job-store` — men **en modul inuti `lib/` importerar sina
+grannar relativt** (`./batch-job-store.js`), utan `lib/`-prefix. Den formen kunde mätningen inte se.
+Ommätt utan det antagandet, över HELA repot (inklusive `.github/`, `vercel.json`, `package.json`):
+
+| Mätning | Utfall |
+|---|---|
+| Varje förekomst av `batch-job-store` i repot | **1 fil** — dess egen huvudkommentar |
+| Varje förekomst av `batch-processor` | 3 filer — egen huvudkommentar + två agenttranskript i `ops/obduktion/` |
+| `import('./lib/batch-processor.js')` | **KASTAR:** `SyntaxError: … does not provide an export named 'SYSTEM_PROMPT'` |
+| `import('./lib/batch-job-store.js')` | laddar, 14 exporter |
+| Referens i `src/` (frontend) | ingen |
+| Post i `vercel.json` | ingen |
+| Beräknade dynamiska importer (`import(\`…\${x}\`)`) | 16 st, ALLA med literal sökväg → basnamnsgrepet såg dem |
+
+**Det avgörande: `batch-processor.js` går inte ens att importera.** Den är inte bara oanropad — den
+är **trasig**, och skulle krascha om något försökte koppla in den. Det är ett starkare bevis än
+frånvaron av anropare.
+
+**Och historiken rättar min egen bild.** Jag var på väg att skriva att API-rutterna «togs bort».
+Mätt: `api/batch-upload.mjs`, `api/batch-status.mjs` och `api/cron/batch-process.mjs` har **0
+commits i mains historik** — de har aldrig funnits här. Commiten som skapade dem (`7ac6135`) är
+**inte förfader till main** (`git merge-base --is-ancestor` → nej). Biblioteken kom in i main genom
+importcommiten `6900286` (1 127 filer, 193 051 rader, 1 september) **utan sina anropare**.
+`lib/production-monitor.js` kom i samma svep och tillhör samma föräldralösa subsystem — vilket
+förklarar varför min `SEAT_CATEGORIES`-fix i går träffade död kod.
+
+**Vad jag INTE kan mäta, och som avgör beslutet:** om du tänker återuppta batch-vägen. Det är din
+kunskap, inte en avläsning. Värt att veta: arbetet går inte förlorat vid en radering — det ligger
+kvar på `7ac6135`, utanför mains historik, och kan hämtas därifrån.
 
 **Radering är grundarens beslut, inte kodens** (samma regel som de 14 datapunkterna 21 augusti).
-Rekommendation: radera. Risken är noll enligt mätningen; kostnaden är att en påbörjad
-Batch-API-väg måste skrivas om från grunden om den ska tas upp igen.
+Rekommendation: radera. Risken är mätt till noll — ingen väg in, och den ena modulen kan ändå inte
+laddas.
 
 ### 🟡 RADERAS ELLER SKRIVS OM — bakåtkompatibla omslag (2)
 
