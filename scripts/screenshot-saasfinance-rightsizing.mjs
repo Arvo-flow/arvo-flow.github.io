@@ -154,6 +154,38 @@ for (const f of FALL) {
     // domens prosa löd «Ni betalar för en verifierad lägre leverantör-paketet Stor». Rättad i
     // `src/lib/leverantorsnamn.js`; här bevisas att den rättningen når skärmen.
     const sidtext = await page.innerText('body');
+
+    // ── ENHETEN FÅR STÅ EN GÅNG (2026-09-22) ───────────────────────────────────────────────
+    // Mätt i DOM:en, inte i källan: «220 kr/mån = 2 640 kr kr/år». `formatKr` lägger själv på
+    // « kr» och tolv ställen skrev ändå ` kr/år` efter den. FÖ-02 vaktar källan; den här raden
+    // vaktar det RENDERADE, alltså även en dubblering som uppstår först när två noder möts.
+    const dubbelEnhet = [...sidtext.matchAll(/kr\s+kr/g)];
+    if (dubbelEnhet.length) {
+      console.error(`✗ dubblerad enhet i renderad text (${f.tagg}/${storlek}): `
+        + `${dubbelEnhet.length} träff(ar) på «kr kr»`);
+      process.exitCode = 1;
+    }
+
+    // ── INGEN MENING FÅR STÅ TVÅ GÅNGER I SAMMA VY (2026-09-22) ─────────────────────────────
+    // `recommend()` sätter `reasoning: rs.reviewPrompt`, och kortet skrev samma två meningar en
+    // gång till. Inga fel tal — men en yta som ser maskingenererad ut, och då tappar varje siffra
+    // runtomkring sin auktoritet. Vakten är GENERELL med flit: den letar inte efter en viss
+    // mening utan efter VARJE tillräckligt lång mening som förekommer mer än en gång, så nästa
+    // dubblering fälls utan att någon lagt till ett mönster.
+    const meningar = sidtext.split(/(?<=[.!?])\s+/).map((m) => m.trim())
+      .filter((m) => m.length >= 60);
+    const rakning = new Map();
+    for (const m of meningar) rakning.set(m, (rakning.get(m) ?? 0) + 1);
+    const dubbletter = [...rakning.entries()].filter(([, n]) => n > 1).map(([m]) => m);
+    if (meningar.length < 5) {
+      console.error(`✗ bara ${meningar.length} meningar ≥60 tecken — vakten är grön av tomhet`);
+      process.exitCode = 1;
+    }
+    if (dubbletter.length) {
+      console.error(`✗ ${dubbletter.length} mening(ar) står två gånger i vyn (${f.tagg}/${storlek}):`);
+      for (const d of dubbletter) console.error(`    «${d.slice(0, 110)}…»`);
+      process.exitCode = 1;
+    }
     const trasig = new RegExp(`en verifierad lägre leverantör-paketet|en verifierad lägre leverantör-nivån`);
     if (trasig.test(sidtext)) {
       console.error(`✗ domens prosa är fortfarande redigerad sönder (${f.tagg}/${storlek})`);

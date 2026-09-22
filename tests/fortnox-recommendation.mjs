@@ -61,7 +61,10 @@ describe('Fortnox · rätt-storleks-rådgivning (verifierad prisskillnad)', () =
     assert.match(r.reviewPrompt, /Stor \(710 kr\/mån\)/);
     assert.match(r.reviewPrompt, /Mellan, kostar 490 kr\/mån/);
     assert.match(r.reviewPrompt, /220 kr\/mån billigare/);
-    assert.match(r.reviewPrompt, /realiserar vi 2640 kr\/år/);
+    // Talet formateras av `fmtNumber` (lib/format.js) sedan 2026-09-22 — sv-SE grupperar med
+    // HÅRT blanksteg (U+00A0). Ett vanligt mellanslag i mönstret hade INTE matchat, och
+    // skillnaden är osínlig i en diff: därför escapen, utskriven.
+    assert.match(r.reviewPrompt, /realiserar vi 2\u00a0640 kr\/år/);
     assert.match(r.note, /fortnox\.se\/produkt\/prislista/);
     assert.match(r.note, /Förutsätter att behovet ryms i Mellan/);
   });
@@ -89,7 +92,7 @@ describe('Fortnox · recommend() end-to-end (deterministisk, ingen AI)', () => {
     assert.equal(r.optimizationSaving, null);
     assert.equal(r.savingPerYear, null);
     assert.equal(r.grossSaving, null);
-    assert.match(r.reasoning, /2640 kr\/år/);
+    assert.match(r.reasoning, /2\u00a0640 kr\/år/);
   });
 
   test('Fortnox Mini → optimize men ingen nedgradering (redan billigast) → offert-läge', async () => {

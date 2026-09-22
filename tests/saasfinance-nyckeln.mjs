@@ -103,10 +103,16 @@ describe('SF · saas-finance-nyckeln är EN nyckel, och den bär ingen leverant�
     // 2026-09-22: meningen löd «Verifierad prisskillnad mot Fortnox publika listpris» som en
     // LITERAL, under ett kort vars tal kunde komma ur Spiris prislista. Källan måste komma ur
     // samma objekt som talen — annars kan de två säga olika saker utan att något fäller.
-    const i = YTAN.indexOf('const rs = result.recommendation.');
+    // ⚠️ FÖNSTRET VAR ETT FAST TECKENANTAL (2000) OCH FÖLL SÅ SNART KORTET VÄXTE — 22 september,
+    // när kortet gjordes om till ett underlag, hamnade proveniensraden utanför och testet fällde
+    // korrekt kod. Ett gissat fönster är samma fel som DL-11:s tomma utsnitt (11 sep). Snittet
+    // går nu vid NÄSTA korts villkor, och längden MÄTS i stället för att antas.
+    const i = YTAN.indexOf('const rs = result.recommendation.saasFinanceRightsizing;');
     assert.ok(i > 0, 'hittade inte rätt-storlekskortet i kundytan');
-    const kortet = YTAN.slice(i, i + 2000);
-    assert.ok(kortet.length > 1500, 'utsnittet blev för kort för att bevisa något');
+    const slut = YTAN.indexOf('{result.recommendation?.m365Rightsizing', i);
+    assert.ok(slut > i, 'hittade inte kortets slut — utsnittet vore en gissning');
+    const kortet = YTAN.slice(i, slut);
+    assert.ok(kortet.length > 800, `utsnittet blev ${kortet.length} tecken — för kort för att bevisa något`);
     assert.match(kortet, /\{genitiv\(rs\.vendor\)\} publika listpris/,
       'proveniensen namnger inte leverantören ur rs.vendor (via genitiv())');
     assert.equal(/Fortnox publika listpris|Fortnox publika prislista/.test(kortet), false,

@@ -71,3 +71,18 @@ export function genitiv(namn) {
   if (n === '') return '';
   return /[sxzSXZ]$/.test(n) ? n : `${n}s`;
 }
+
+// ── kr/år PÅ ETT STÄLLE (2026-09-22) ─────────────────────────────────────────────────────────
+// `formatKr` lägger själv på « kr». Tolv ställen i TestaFaktura skrev ändå `{formatKr(x)} kr/år`,
+// och ALLA renderade **«2 640 kr kr/år»** — mätt i DOM:en, inte gissat ur källan:
+//
+//     "220 kr/mån = 2 640 kr kr/år"
+//
+// Det är ingen kosmetikfråga. Talet bredvid ordet är hela vårt erbjudande, och en dubblerad enhet
+// på varje besparingssiffra i huvudfunneln läser en finansdirektör som maskingenererat — precis
+// det `plural` och `genitiv` finns för. Felet levde för att enheten sattes av ANROPAREN på tolv
+// ställen i stället för av en funktion.
+//
+// FÖ-01 förbjuder mönstret i källan; skärmdumpssonden fäller dessutom på « kr kr» i renderad text,
+// alltså både före och efter bygget.
+export const krPerAr = (n) => `${fmtNumber(n)} kr/år`;

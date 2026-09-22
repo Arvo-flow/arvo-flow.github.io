@@ -181,6 +181,41 @@ describe('AR · Analyskortets rubriker svarar i påståendekontraktet', () => {
     }
   });
 
+  test('AR-04 · rubriken känner till VARJE rätt-storlekskort i vyn', async () => {
+    // FYNDET (2026-09-22, helsidesrendering): «Inget byte att rekommendera · vi hittar inget
+    // publikt pris att byta ned till» stod tre block ovanför «Nivån under, Mellan, är 220 kr/mån
+    // billigare … 2 640 kr/år». Var mening sann för sig, helheten osann — helhetskravet 15 aug.
+    //
+    // Vakten prövar INTE att listan innehåller två namn (det vore att skriva av den). Den HÄRLEDER
+    // kortvillkoren ur kundytans källkod och kräver att registret känner varje sådant kort. Läggs
+    // ett tredje kort till utan att rubriken vet om det, faller den här — och det är exakt så
+    // motsägelsen skulle återinföras.
+    const { readFileSync } = await import('node:fs');
+    const kalla = readFileSync(new URL('../src/pages/TestaFaktura/index.js', import.meta.url), 'utf8');
+    const { NIVASANKNINGSKORT, harNivasankningskort, ANALYSRUBRIKER } =
+      await import('../src/lib/diagnos.js');
+
+    const kortIYtan = [...new Set([...kalla.matchAll(/result\.recommendation\?\.(\w*Rightsizing)\s*&&/g)]
+      .map((m) => m[1]))];
+    assert.ok(kortIYtan.length >= 2,
+      `hittade bara ${kortIYtan.length} rätt-storlekskort i kundytan — mätte vakten rätt sak?`);
+    for (const f of kortIYtan) {
+      assert.ok(NIVASANKNINGSKORT.includes(f),
+        `kundytan visar ett ${f}-kort som rubriken inte känner till — rubriken kan då förneka det`);
+    }
+
+    // Beteendet, inte bara listan: med ett kort måste rubriken byta läge.
+    assert.equal(harNivasankningskort({ [kortIYtan[0]]: { vendor: 'X' } }), true);
+    assert.equal(harNivasankningskort({}), false, 'motprovet: utan kort gäller inget_byte');
+    assert.equal(harNivasankningskort(null), false, '«ingen rekommendation» är inte «ett kort»');
+
+    // Och rubriken får inte förneka kortet i ord.
+    assert.doesNotMatch(ANALYSRUBRIKER.inget_byte_med_nivasankning.rubrik + ' '
+      + ANALYSRUBRIKER.inget_byte_med_nivasankning.text,
+      /hittar inget publikt pris att byta ned till för de licensrader/,
+      'läget upprepar inget_byte:s förnekande — då är det inget eget läge');
+  });
+
   test('AR-03 · kundytan renderar registret, inte en egen sträng', async () => {
     const { readFileSync } = await import('node:fs');
     const kalla = readFileSync(new URL('../src/pages/TestaFaktura/index.js', import.meta.url), 'utf8');

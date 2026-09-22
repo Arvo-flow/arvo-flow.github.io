@@ -5,9 +5,9 @@ import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
-import { formatKr, genitiv } from '../../utils/format';
+import { formatKr, genitiv, krPerAr } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
-import { diagnos, ANALYSRUBRIKER } from '../../lib/diagnos';
+import { diagnos, ANALYSRUBRIKER, harNivasankningskort } from '../../lib/diagnos';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { redigeraLeverantor, samaLeverantor } from '../../lib/leverantorsnamn';
 import { COST_CATEGORIES } from '../../lib/costCategories';
@@ -224,7 +224,7 @@ function CalculationChainBlock({ cc }) {
               <div className="chain-label">Nuvarande kostnad</div>
               <div className="chain-source">{cc.currentAnnualCost.source}</div>
             </div>
-            <span className="chain-value">{formatKr(cc.currentAnnualCost.value)} kr/år</span>
+            <span className="chain-value">{krPerAr(cc.currentAnnualCost.value)}</span>
           </div>
           {cc.benchmarkAnnualCost && (
             <div className="chain-row">
@@ -233,23 +233,23 @@ function CalculationChainBlock({ cc }) {
                 {cc.benchmarkAnnualCost.formula && <div className="chain-source">{cc.benchmarkAnnualCost.formula}</div>}
                 <div className="chain-source">{cc.benchmarkAnnualCost.source}</div>
               </div>
-              <span className="chain-value">{formatKr(cc.benchmarkAnnualCost.value)} kr/år</span>
+              <span className="chain-value">{krPerAr(cc.benchmarkAnnualCost.value)}</span>
             </div>
           )}
           <div className="chain-row">
             <div className="chain-label">Bruttobesparing</div>
-            <span className="chain-value">{formatKr(cc.grossSaving.value)} kr/år</span>
+            <span className="chain-value">{krPerAr(cc.grossSaving.value)}</span>
           </div>
           <div className="chain-row">
             <div>
               <div className="chain-label">Arvos arvode</div>
               <div className="chain-source">{cc.arvoFee.formula}</div>
             </div>
-            <span className="chain-value">−{formatKr(cc.arvoFee.value)} kr/år</span>
+            <span className="chain-value">−{krPerAr(cc.arvoFee.value)}</span>
           </div>
           <div className="chain-row total">
             <span>Er nettobesparing</span>
-            <span className="chain-value">+{formatKr(cc.netSaving.value)} kr/år</span>
+            <span className="chain-value">+{krPerAr(cc.netSaving.value)}</span>
           </div>
         </div>
       )}
@@ -1405,7 +1405,7 @@ const TestaFaktura = () => {
                     <span className="name">{inv?.filename ?? batchFiles[i]?.name ?? `Faktura ${i + 1}`}</span>
                     <span className="status-label">{statusLabel}</span>
                     {netSaving > 0 && (
-                      <span className="saving">−{formatKr(netSaving)} kr/år</span>
+                      <span className="saving">−{krPerAr(netSaving)}</span>
                     )}
                   </BatchInvoiceCard>
                 );
@@ -1986,7 +1986,7 @@ const TestaFaktura = () => {
                                 <>
                                   {formatNum(adjAnnualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
                                   {' '}· Arvos besparingsarvode {formatKr(adjArvoFee)} (20 %)
-                                  {hasHwAdj && <><br /><small style={{ opacity: 0.85 }}>Avser abonnemang och licenser. Om {result.recommendation.suggestedSupplier} absorberar er hårdvaruskuld ({formatNum(_hwTotalRemain)} kr) uppgår nettobesparing till {formatKr(result.recommendation.netSaving)} kr/år.</small></>}
+                                  {hasHwAdj && <><br /><small style={{ opacity: 0.85 }}>Avser abonnemang och licenser. Om {result.recommendation.suggestedSupplier} absorberar er hårdvaruskuld ({formatNum(_hwTotalRemain)} kr) uppgår nettobesparing till {krPerAr(result.recommendation.netSaving)}.</small></>}
                                 </>
                               )
                               : (
@@ -2028,9 +2028,25 @@ const TestaFaktura = () => {
                     är redan kodad i src/lib/domslut.js — men rummet konsulterade den och det här
                     kortet gjorde det aldrig. Rubriken beskriver nu vårt BESLUT (som alltid är
                     sant i grenen), inte kundens pris (som grenen inte vet något om). */}
+                {/* ⚠️ RUBRIKEN FÖRNEKADE KORTET UNDER SIG (rättat 2026-09-22, helsidesrenderingen).
+                    «Inget byte att rekommendera · vi hittar inget publikt pris att byta ned till»
+                    stod tre block ovanför «Nivån under, Mellan, är 220 kr/mån billigare … upp till
+                    2 640 kr/år». Var mening sann för sig, helheten osann — helhetskravet 15 aug.
+                    Tillståndet har nu ett eget namn i registret i stället för att falla i `else`.
+                    Frågan ställs EN gång, ur `NIVASANKNINGSKORT` som korten själva läser (regel 1),
+                    så ett framtida kort inte kan återinföra motsägelsen i tysthet (AR-04). */}
                 <NoSwitchBlock style={{ marginTop: 0 }}>
-                  <strong>{ANALYSRUBRIKER.inget_byte.rubrik}</strong>{' '}
-                  {result.recommendation?.monitoringNote ?? ANALYSRUBRIKER.inget_byte.text}
+                  {harNivasankningskort(result.recommendation) ? (
+                    <>
+                      <strong>{ANALYSRUBRIKER.inget_byte_med_nivasankning.rubrik}</strong>{' '}
+                      {ANALYSRUBRIKER.inget_byte_med_nivasankning.text}
+                    </>
+                  ) : (
+                    <>
+                      <strong>{ANALYSRUBRIKER.inget_byte.rubrik}</strong>{' '}
+                      {result.recommendation?.monitoringNote ?? ANALYSRUBRIKER.inget_byte.text}
+                    </>
+                  )}
                 </NoSwitchBlock>
                 {!result.recommendation?.shouldSwitch && result.recommendation?.reasoning && (
                   <Reasoning>
@@ -2199,7 +2215,7 @@ const TestaFaktura = () => {
                       <p style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                         <strong>Break-even om skulden löses kontant:</strong>{' '}
                         {formatNum(_hwTotalRemain)} kr ÷ {formatNum(adjGrossSaving)} kr/år = <strong>{String(_hwAdj.breakEvenYears).replace('.', ',')} år</strong>{' '}—{' '}
-                        fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering. Om ja är besparingen {formatKr(result.recommendation.netSaving)} kr/år netto från dag ett.
+                        fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering. Om ja är besparingen {krPerAr(result.recommendation.netSaving)} netto från dag ett.
                       </p>
                     )}
                   </CreditAlert>
@@ -2329,7 +2345,7 @@ const TestaFaktura = () => {
                     <div style={headStyle}>Licensrevision — bekräftat</div>
                     <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
                       <strong>{swEff.confirmedIdle} bekräftat oanvända platser</strong> à {swEff.perSeatMonthly} kr/plats/mån
-                      {' '}= <strong style={{ color: '#1B7A6E' }}>{formatKr(swEff.annualWaste)} kr/år</strong> i verifierat svinn att avveckla.
+                      {' '}= <strong style={{ color: '#1B7A6E' }}>{krPerAr(swEff.annualWaste)}</strong> i verifierat svinn att avveckla.
                     </p>
                   </div>
                 );
@@ -2354,7 +2370,7 @@ const TestaFaktura = () => {
                     {swBase.reviewPrompt}
                   </p>
                   <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
-                    Om de står oanvända motsvarar det upp till {formatKr(swBase.potentialAnnualWaste)} kr/år.
+                    Om de står oanvända motsvarar det upp till {krPerAr(swBase.potentialAnnualWaste)}.
                     Vi räknar ingen besparing förrän ni bekräftat — siffror utan källa visar vi aldrig.
                   </p>
                   <form onSubmit={submitShelfwareReview} style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '12px', flexWrap: 'wrap' }}>
@@ -2398,14 +2414,30 @@ const TestaFaktura = () => {
                   <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px' }}>
                     Rätt-storlek — {rs.vendor}
                   </div>
-                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
-                    Ni betalar för <strong>{rs.vendor} {rs.currentPaket}</strong> ({rs.currentMonthly} kr/mån). Nivån under,{' '}
-                    <strong>{rs.targetPaket}</strong> ({rs.targetMonthly} kr/mån), är {rs.deltaMonthly} kr/mån billigare.
-                  </p>
-                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
-                    Ryms er användning (moduler, antal användare, verifikationsvolym) i {rs.targetPaket}? Då realiserar vi upp till{' '}
-                    <strong style={{ color: '#1B7A6E' }}>{formatKr(rs.annualSaving)} kr/år</strong>. Verifierad prisskillnad mot
-                    {' '}{genitiv(rs.vendor)} publika listpris — vi visar ingen siffra vi inte kan stå för.
+                  {/* ⚠️ KORTET UPPREPADE DOMEN ORD FÖR ORD (rättat 2026-09-22, helsidesrenderingen).
+                      `recommend()` sätter `reasoning: rs.reviewPrompt`, och kortet skrev samma två
+                      meningar en gång till — kunden läste alltså «Ni betalar för Fortnox Stor (710
+                      kr/mån)… 2 640 kr/år» i «Arvo bedömer» och igen här. Inga fel tal, men en yta
+                      som ser maskingenererad ut, och då tappar varje siffra runtomkring sin
+                      auktoritet (samma skäl som `plural` och `genitiv` finns).
+                      Prosan står ALLTID synlig; kortet ligger bakom «Hur vi räknar». Därför äger
+                      prosan ARGUMENTET och kortet UNDERLAGET — talen uppställda, med sin källa.
+                      Att i stället tysta prosan hade gömt hela fyndet för den som aldrig fäller ut
+                      underlaget. Mätt i renderingen: kortet sitter inuti det hopfällda blocket. */}
+                  <dl style={{ margin: 0, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 14px', fontSize: '13px', color: '#0E1A17' }}>
+                    <dt style={{ color: '#5C6E68' }}>Er nivå</dt>
+                    <dd style={{ margin: 0 }}><strong>{rs.currentPaket}</strong> · {rs.currentMonthly} kr/mån</dd>
+                    <dt style={{ color: '#5C6E68' }}>Nivån under</dt>
+                    <dd style={{ margin: 0 }}><strong>{rs.targetPaket}</strong> · {rs.targetMonthly} kr/mån</dd>
+                    <dt style={{ color: '#5C6E68' }}>Skillnad</dt>
+                    <dd style={{ margin: 0 }}>
+                      {rs.deltaMonthly} kr/mån ={' '}
+                      <strong style={{ color: '#1B7A6E' }}>{krPerAr(rs.annualSaving)}</strong>
+                    </dd>
+                  </dl>
+                  <p style={{ margin: '10px 0 0', fontSize: '12px', color: '#5C6E68' }}>
+                    Verifierad prisskillnad mot {genitiv(rs.vendor)} publika listpris — vi visar ingen
+                    siffra vi inte kan stå för. Gäller om er användning ryms i {rs.targetPaket}.
                   </p>
                 </div>
               );
@@ -2574,7 +2606,7 @@ const TestaFaktura = () => {
                     {la.alreadyFortnox ? (
                       <>Ni ligger redan på Fortnox Löns verifierade nivå — vi bevakar att det förblir så.</>
                     ) : la.aboveFloor ? (
-                      <><strong>{la.fortnoxProduct}</strong> — verifierat lägst — kostar 199 kr/mån + 25 kr/anställd. Ryms er lönehantering (kollektivavtal, integrationer) där? Bekräfta så realiserar vi upp till <strong>{formatKr(la.annualSaving)} kr/år</strong>.</>
+                      <><strong>{la.fortnoxProduct}</strong> — verifierat lägst — kostar 199 kr/mån + 25 kr/anställd. Ryms er lönehantering (kollektivavtal, integrationer) där? Bekräfta så realiserar vi upp till <strong>{krPerAr(la.annualSaving)}</strong>.</>
                     ) : (
                       <>Ni ligger i nivå med Fortnox Löns verifierade golv — ni ligger rätt, vi bevakar.</>
                     )}

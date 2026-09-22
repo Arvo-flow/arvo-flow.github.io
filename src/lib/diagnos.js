@@ -66,6 +66,28 @@ export const ANALYSRUBRIKER = {
     text: 'Vi hittar inget publikt pris att byta ned till för de licensrader vi kunnat prissätta '
         + '— det är ett besked om vårt underlag, inte ett omdöme om ert pris.',
   },
+  // Inget BYTE — men en billigare nivå hos kundens NUVARANDE leverantör.
+  //
+  // ⚠️ LÄGET SAKNADES, OCH DET SYNTES FÖRST I EN HELSIDESRENDERING (2026-09-22). Rubriken
+  // «Inget byte att rekommendera · vi hittar inget publikt pris att byta ned till» stod tre block
+  // ovanför ett kort som sa «Nivån under, Mellan (490 kr/mån), är 220 kr/mån billigare … upp till
+  // 2 640 kr/år». Båda meningarna är sanna var för sig — `inget_byte` handlar om ett
+  // LEVERANTÖRSBYTE, kortet om en NIVÅSÄNKNING hos samma leverantör — men kunden läser helheten,
+  // och helheten sa «vi hittade inget» ovanför «vi hittade 2 640 kr».
+  //
+  // Det är helhetskravet från 15 augusti ordagrant: **ett påstående som är sant om SIN DEL kan
+  // vara osant om HELHETEN.** Rätt drag är inte att mjuka upp `inget_byte` utan att ge det tredje
+  // tillståndet ett eget namn — en tvåvägsgren på en trevärd verklighet lägger alltid det tredje
+  // fallet i `else`, och `else` var här den mening som förnekade kortet under sig.
+  //
+  // Deklarationen är `false` av samma skäl som `inget_byte`: att en billigare NIVÅ finns säger
+  // ingenting om huruvida kunden betalar rätt för den nivå de valt.
+  inget_byte_med_nivasankning: {
+    positivtPastaende: false,
+    rubrik: 'Inget byte — men en nivå att sänka.',
+    text: 'Vi hittar inget publikt pris att byta ned till hos en annan leverantör. Däremot ligger '
+        + 'ni på en nivå som har en billigare nivå under sig hos er nuvarande — talen står i underlaget.',
+  },
   // Kategorin saknar revisionsgrindens täckning: vi visar inga tal alls.
   kategori_omatt: {
     positivtPastaende: false,
@@ -73,6 +95,27 @@ export const ANALYSRUBRIKER = {
     text: 'Koppla Fortnox / Visma så mappar vi era volymer mot marknadens bästa priser direkt.',
   },
 };
+
+/**
+ * Fälten på `recommendation` som bär ett rätt-storlekskort i kundytan.
+ *
+ * Listan är EN sanning (regel 1): rubriken och korten måste läsa samma mängd, annars kan ett nytt
+ * kort läggas till utan att rubriken vet om det — och då är motsägelsen tillbaka. `AR-04` härleder
+ * kortvillkoren ur kundytans källkod och kräver att varje villkor står här.
+ */
+// ⚠️ LISTAN VAR FÖR KORT NÄR DEN SKREVS, och det var AR-04 som mätte fram det. Jag skrev två
+// namn ur minnet; svepet över kundytan hittade FYRA kortvillkor. `adobeRightsizing` och
+// `loneadminRightsizing` bar alltså samma motsägelse som saas-finance — rubriken förnekade dem
+// också, och ingen hade sett det. Precis det instrumentet byggdes för: en lista skriven för hand
+// är ett antagande, ett svep över ytan är en avläsning.
+export const NIVASANKNINGSKORT = [
+  'saasFinanceRightsizing', 'm365Rightsizing', 'adobeRightsizing', 'loneadminRightsizing',
+];
+
+/** Visar vyn ett rätt-storlekskort? Då får rubriken inte förneka det. */
+export function harNivasankningskort(recommendation) {
+  return NIVASANKNINGSKORT.some((f) => Boolean(recommendation?.[f]));
+}
 
 /** Läget som en nyckel — samma form som rummets och månadsbrevets register. */
 export function diagnosLage(p) {
