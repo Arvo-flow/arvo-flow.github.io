@@ -12,7 +12,7 @@ import { getCategoryMeta } from '../../lib/categoryMeta';
 // inte via en regex på den här filens källtext. Domen är logik, inte rendering.
 import { buildReasoning } from '../../lib/holdings';
 import { groupBySupplier, supplierName, supplierDiagScore, computeActing, roomCounts, radarRader } from '../../lib/holdings';
-import { domensLage, omattLage } from '../../lib/domslut';
+import { domensLage, omattLage, beromsLage } from '../../lib/domslut';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
@@ -1923,9 +1923,20 @@ export default function Portfolio() {
               <div className="iq-k">Arvo Intelligence</div>
               <h3>Hela reskontran, <em>bevakad dygnet runt.</em></h3>
               <p>
+                {/* ⚠️ «ERA PRISER STÅR SIG» STOD I DET OMÄTTA LÄGET (rättat 2026-09-23, avläst i det
+                    SKARPA rummet via rum-prisboken.yml). Samma vy sa ovanför «er position mot
+                    listpris kunde inte mätas i dag» och «vi hävdar ingenting om er prisnivå» — och
+                    här nere ett positivt prispåstående. Orsaken: `acting ? A : B`, en tvåvägsgren
+                    på ett TREVÄRT tillstånd, och `else` är alltid det mest generösa påståendet.
+                    FJÄRDE gången på ett dygn samma form (chippet, rubriken, kortet, nu pitchen).
+                    Att «stå sig» är ett omdöme om PRISET, och det får bara fällas där domen är
+                    mätt och inte sämre än listpris — samma register som resten av rummet frågar
+                    (`beromsLage`, src/lib/domslut.js). RR-12. */}
                 {acting
                   ? <>I dag vaktar Arvo de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b> — varenda avtal ni har — och larmar er innan nästa höjning når er. Varje månad: ett brev med exakt vad som rört sig, och vad vi gjort åt det.</>
-                  : <>Era priser står sig i dag, och Arvo vaktar de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b>, så att inget avtal lämnas obevakat — och skickar varje månad ett brev med vad som rört sig.</>}
+                  : beromsLage(domLage)
+                    ? <>Era priser står sig i dag, och Arvo vaktar de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b>, så att inget avtal lämnas obevakat — och skickar varje månad ett brev med vad som rört sig.</>
+                    : <>Arvo vaktar de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b>, så att inget avtal lämnas obevakat — och skickar varje månad ett brev med vad som rört sig.</>}
               </p>
               <div className="iq-row">
                 <span className="iq-price">1 995 kr <span>/ mån · ingen bindningstid</span></span>

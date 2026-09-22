@@ -141,6 +141,28 @@ describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
       'det omätta läget ska SÄGA något — tystnad är inte fixen (DL-10b:s läxa)');
   });
 
+  test('RR-12 · «Era priser står sig» fälls bara där registret säger att priset är mätt och bra', async () => {
+    // ⚠️ AVLÄST I DET SKARPA RUMMET 2026-09-23 (rum-prisboken.yml, arvoflow.se/portfolio):
+    // «Era priser står sig i dag» stod längst ner i samma vy som «er position mot listpris kunde
+    // inte mätas i dag». Orsaken var `acting ? A : B` — tvåvägsgren på trevärt tillstånd, fjärde
+    // gången på ett dygn. Meningen är ett POSITIVT PRISPÅSTÅENDE, och den frågan äger ett register
+    // (`beromsLage`); konsumenter ska importera svaret, aldrig härleda om det (11 sep, regel b).
+    const i = RUM.indexOf('Era priser står sig i dag');
+    assert.ok(i > 0, 'meningen hittades inte — ändrades den, måste vakten följa med');
+    // Villkoret som väljer meningen ska stå närmast före den och vara registrets fråga.
+    const fore = RUM.slice(Math.max(0, i - 220), i);
+    assert.match(fore, /beromsLage\(domLage\)\s*\n?\s*\?\s*<>$/,
+      '«Era priser står sig» väljs inte av beromsLage — då kan den fällas i ett omätt läge');
+    // MOTPROVET: registret måste faktiskt säga NEJ i det omätta läget, annars vaktar raden ingenting.
+    const { beromsLage } = await import('../src/lib/domslut.js');
+    assert.equal(beromsLage('lugn_omatt'), false, 'det omätta läget får aldrig berömma priset');
+    assert.equal(beromsLage('lugn_battre'), true, 'motprov: ett mätt, bättre läge FÅR säga det');
+    // Och det omätta läget får fortfarande en mening — tystnad är inte fixen (DL-10b).
+    const efter = RUM.slice(i, i + 900);
+    assert.match(efter, /:\s*<>Arvo vaktar de avtal ni delat\./,
+      'det omätta läget ska få en neutral mening, inte ett hål');
+  });
+
   test('RR-06 · inget bolagsnamn tillverkas ur en domän', () => {
     // Identitetsinvarianten: bolagsnamn kommer ur Bolagsverket eller inte alls. Rubriken tryckte
     // en kapitaliserad domänsträng ("Nordiskbygg") under ordet KONFIDENTIELLT.

@@ -206,7 +206,15 @@ describe('DL-10/11 · omätt läge får aldrig bli ett positivt påstående', ()
     // KÄLLTEXTVAKT, uttalat: den ser att grenen är trevärd, aldrig vad den renderar. Beteendet
     // bevisas av skärmdumpen (ops/rum-prisboken/) — de två mätningarna kompletterar varandra.
     const rummet = readFileSync(join(ROT, 'src/pages/Portfolio/index.js'), 'utf8');
-    assert.match(rummet, /import \{ domensLage, omattLage \}/, 'rummet måste importera registret');
+    // Egenskapen är att BÅDA namnen importeras ur registret — inte att importraden har exakt den
+    // formen. Den fällde 2026-09-23 när `beromsLage` lades till för att stänga ett FJÄRDE
+    // «Era priser står sig» (pitchen längst ner), alltså när rummet frågade registret MER.
+    // En vakt som larmar på rätt beteende blir avstängd (SK-08).
+    const importen = rummet.match(/import \{([^}]*)\} from '\.\.\/\.\.\/lib\/domslut'/);
+    assert.ok(importen, 'rummet måste importera registret');
+    for (const namn of ['domensLage', 'omattLage']) {
+      assert.match(importen[1], new RegExp(`\\b${namn}\\b`), `rummet importerar inte ${namn}`);
+    }
     assert.match(rummet, /const omatt\s+= omattLage\(domLage\)/, 'läget härleds EN gång');
     // Rubriken och bevakningskortet — båda måste bära det omätta villkoret.
     assert.match(rummet, /omatt \|\| \(standing\.satt && standing\.niva === 'samre'\).*Vi vaktar era avtal/s,
