@@ -951,10 +951,20 @@ export default function Portfolio() {
                   fynd kommer rubriktalet inte därifrån — det kommer ur kundens EGEN fakturarad
                   (regel 3: rätt siffra, men fel proveniens är fortfarande fel). Nu följer källan
                   med grenen: marknadsjämförelsen bär listpriserna, fyndet bär fakturan. */}
+              {/* ⚠️ «VERIFIERAT» STOD PÅ NOLL (rättat 2026-09-22, ur rumsbilden på dagens fem rader).
+                  Raden löd «Verifierat · grundat på 0 prissatta fakturor · publika listpriser» —
+                  direkt under domen som just sagt att positionen INTE kunde mätas. Orsaken var en
+                  TVÅVÄGSGREN på ett TREVÄRT tillstånd: `acting ? A : B`, och det omätta föll i
+                  `else`, som alltid är det mest generösa påståendet. `omatt` räknades fram i samma
+                  render (den används av kortet bredvid) — chippet frågade den bara aldrig.
+                  Det är DL-10/DL-11:s form ordagrant, tredje gången: en deklaration som ingen
+                  konsument frågar är ingen deklaration. DL-12 prövar alla tre utgångarna. */}
               <Confidence>
                 {acting && !hasSwitchAction
                   ? <><span className="pct">Ur er egen faktura</span> · talet står på raden i fyndet ovan · inget marknadspris inblandat</>
-                  : <><span className="pct">Verifierat</span> · grundat på {counts.prissatta} {plural(counts.prissatta, 'prissatt faktura', 'prissatta fakturor')} · publika listpriser</>}
+                  : omatt
+                    ? <><span className="pct">Inte mätt i dag</span> · vi har inget verifierat jämförelsepris för era kategorier · vi hävdar ingenting om er prisnivå</>
+                    : <><span className="pct">Verifierat</span> · grundat på {counts.prissatta} {plural(counts.prissatta, 'prissatt faktura', 'prissatta fakturor')} · publika listpriser</>}
               </Confidence>
             </Verdict>
 
@@ -1000,13 +1010,25 @@ export default function Portfolio() {
               </Index>
 
               <Tally>
-                <div className="tally-k">{hasSwitchAction ? 'Möjlig nettobesparing' : acting ? 'Fångad kostnad' : 'Avtal under bevakning'}</div>
+                {/* ⚠️ «BEVAKNING» BETYDDE TVÅ SAKER I SAMMA VY (rättat 2026-09-22, ur rumsbilden).
+                    Radarn skrev «Bevakade 1» (= `watched.length`, de TRIAGERADE raderna, samma
+                    mängd som sektionen «Bevakat — inte prissatt») medan det här kortet skrev
+                    «Avtal under bevakning · 2» ur `suppliers.length` — en annan mängd OCH en annan
+                    ENHET (leverantörer, inte fakturor). Tre tal bredvid varandra som inte går att
+                    addera är precis 15-augustiregeln bruten.
+                    Talet kommer nu ur `roomCounts` — rummets ENDA räknare — i samma enhet som
+                    radarn, och ordet «bevakning» är reserverat för radarns triagerade mängd.
+                    ⚠️ RR-09 SKULLE HA FÄLLT DEN HÄR RADEN OCH GJORDE DET INTE: dess mönster krävde
+                    en BOKSTAV direkt efter `{suppliers.length}`, och här stod `<small>`. Vakten
+                    skrevs 21 augusti mot exakt det här kortet och hade ett hål i sig hela tiden;
+                    mönstret är vidgat i samma commit. */}
+                <div className="tally-k">{hasSwitchAction ? 'Möjlig nettobesparing' : acting ? 'Fångad kostnad' : 'Fakturor i rummet'}</div>
                 <div className="tally-num">
                   {hasSwitchAction
                     ? <>{fmtNum(totalSaving)} kr<small>per år</small></>
                     : acting
                       ? <>{fmtNum(roomFinding.annualImpact)} kr<small>per år</small></>
-                      : <>{suppliers.length}<small>{suppliers.length === 1 ? 'avtal' : 'avtal'}</small></>}
+                      : <>{counts.fakturor}<small>{plural(counts.fakturor, 'faktura', 'fakturor')}</small></>}
                 </div>
                 <div className="tally-sub">
                   {hasSwitchAction
@@ -1015,7 +1037,7 @@ export default function Portfolio() {
                       ? <>Inget leverantörsbyte krävs — kostnaden åtgärdas direkt mot fakturan. Se fyndet ovan.</>
                       : (omatt
                           ? <>Vi har inget verifierat jämförelsepris för era kategorier än, så vi hävdar ingenting om
-                              er prisnivå. Avtalen är bevakade — vi hör av oss så snart ett mål går att styrka.</>
+                              er prisnivå. Vi håller dem under uppsikt — och hör av oss så snart ett mål går att styrka.</>
                           : standing.satt && standing.niva === 'samre'
                             ? <>Ni ligger över verifierat listpris, men inget av avtalen bär ett byte vi kan belägga.
                                 Vi vaktar dem tills ett mål går att styrka.</>

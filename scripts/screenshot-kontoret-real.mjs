@@ -7,7 +7,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
 const BUILD = path.resolve('build');
-const { watchedCard } = await import('../api/invoice-history.mjs');
+const { watchedCard, berikaRader, buildBranchAnchors } = await import('../api/invoice-history.mjs');
 const rows = JSON.parse(readFileSync('ops/testyta-rows.json', 'utf8'));
 
 // Dela liggarna SAMMA väg som api/invoice-history (regel 1): prissatt (auto, ingen triage) vs bevakat.
@@ -29,6 +29,32 @@ const analyses = rows.filter((r) => !isTriaged(r)).map((r, i) => ({
   seat_count: r.seat_count, price_per_seat_monthly: r.price_per_seat_monthly,
   health_score: r.health_score, lead_finding_json: r.lead_finding_json,
 }));
+
+// ── BERIKNINGEN KÖRS GENOM API:TS EGEN VÄG (2026-09-22) ─────────────────────────────────────
+// ⚠️ SONDEN BYGGDE FÖRUT PAYLOADEN SJÄLV OCH HOPPADE ÖVER `berikaRader`. `prisunderlag` finns
+// inte i databasen — det RÄKNAS vid läsning i api-lagret — så varje rad saknade fältet, och
+// rummet renderade «0 prissatta» oavsett verkligheten. Bilden mätte alltså sonden, inte rummet
+// (samma sjukdom som LFL-harnesset 12 aug och den DB-lösa sviten 21 aug).
+//
+// Loopen är därför utbruten till EN exporterad funktion som både handlern och den här sonden
+// anropar. Att kopiera de tio raderna hit hade gett två sanningar om samma fråga (regel 1).
+//
+// ⚠️ OCH ETT ANKARE SOM INTE BÄR ÄR INTE ETT MÄTVÄRDE: utan DATABASE_URL svarar
+// `buildBranchAnchors` tomt, och då blir varje `prisunderlag` null av FEL skäl. Sonden skriver
+// därför ut hur många ankare den fick — ett tyst noll får aldrig läsas som «rummet prissätter
+// ingenting».
+const branchAnchors = await buildBranchAnchors(analyses).catch((e) => {
+  console.error(`  [ankare] kastade: ${e.message}`);
+  return {};
+}) ?? {};
+berikaRader(analyses, branchAnchors);
+const medUnderlag = analyses.filter((a) => a.prisunderlag != null).length;
+console.log(`  ankare: ${Object.keys(branchAnchors).length} kategori(er) · `
+  + `prisunderlag: ${medUnderlag} av ${analyses.length} rader`);
+if (Object.keys(branchAnchors).length === 0) {
+  console.error('  ⚠️ NOLL ANKARE — «0 prissatta» i bilden säger inget om rummet, bara om den '
+    + 'här körningen. Kör med DATABASE_URL (GitHub Actions) för ett mätvärde.');
+}
 
 // Vaktens hjärtslag (verkligt svep-format) så radarn andas i bilden.
 const VAKT = { sweptAt: '2026-06-28T00:00:00Z', sources: 38, pricePoints: 47, changes: 1 };

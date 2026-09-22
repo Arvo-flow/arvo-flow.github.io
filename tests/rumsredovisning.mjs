@@ -121,6 +121,26 @@ describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
       'källan ska väljas av samma villkor som väljer domen — annars kan de glida isär');
   });
 
+  test('RR-11 · konfidensraden påstår aldrig «Verifierat» i det omätta läget', () => {
+    // ⚠️ AVLÄST I RUMSBILDEN 2026-09-22, på dagens fem produktionsrader: raden löd
+    // «Verifierat · grundat på 0 prissatta fakturor · publika listpriser» — direkt under domen
+    // «er position mot listpris kunde inte mätas i dag». Orsaken var en TVÅVÄGSGREN på ett
+    // TREVÄRT tillstånd; `omatt` fanns i samma render men chippet frågade den aldrig.
+    // DL-10/DL-11:s form, tredje gången.
+    const rad = RUM.slice(RUM.indexOf('<Confidence>'), RUM.indexOf('</Confidence>'));
+    assert.ok(rad.length > 40, 'konfidensraden hittades inte');
+    // Tre utgångar, inte två — och den omätta måste komma FÖRE den verifierade, annars fångar
+    // `else` den igen.
+    assert.match(rad, /:\s*omatt\s*\n?\s*\?/,
+      'det omätta läget måste vara en EGEN gren i konfidensraden');
+    const iOmatt = rad.indexOf('omatt');
+    const iVerifierat = rad.indexOf('Verifierat');
+    assert.ok(iOmatt > 0 && iVerifierat > iOmatt,
+      '«Verifierat» får inte stå i den gren som fångar det omätta');
+    assert.match(rad, /Inte mätt i dag/,
+      'det omätta läget ska SÄGA något — tystnad är inte fixen (DL-10b:s läxa)');
+  });
+
   test('RR-06 · inget bolagsnamn tillverkas ur en domän', () => {
     // Identitetsinvarianten: bolagsnamn kommer ur Bolagsverket eller inte alls. Rubriken tryckte
     // en kapitaliserad domänsträng ("Nordiskbygg") under ordet KONFIDENTIELLT.
@@ -294,7 +314,11 @@ describe('FORENSIKEN · det retroaktiva kravet och citatet', () => {
     const brott = [];
     RUM.split('\n').forEach((rad, i) => {
       if (/^\s*(\/\/|\*|\/\*)/.test(rad.trim())) return;
-      if (/\{suppliers\.length\}\s*[A-Za-zÅÄÖåäö]/.test(rad)) brott.push(`rad ${i + 1}: ${rad.trim().slice(0, 90)}`);
+      // ⚠️ HÅLET: mönstret krävde en BOKSTAV direkt efter talet. Rummets stora tal renderade
+      // `{suppliers.length}<small>avtal</small>` — alltså en `<`, inte en bokstav — och gled
+      // igenom i tretton månader, i den vakt som skrevs mot precis det kortet (mätt 2026-09-22).
+      // En enhet kan lika gärna stå i ett element som i ren text.
+      if (/\{suppliers\.length\}\s*(?:<|[A-Za-zÅÄÖåäö])/.test(rad)) brott.push(`rad ${i + 1}: ${rad.trim().slice(0, 90)}`);
     });
     assert.deepEqual(brott, [],
       'ett kundsynligt tal om hur många fakturor vi PRISSATT måste komma ur roomCounts — ' +

@@ -219,41 +219,7 @@ export default async function handler(req, res) {
   // golvet, hur långt ifrån ligger vi, och när kontrollerades priset. Underlaget byggs HÄR ur
   // samma ankare kortet redan använder — aldrig i klienten, och det producerar aldrig ett eget
   // score (talet bor i recommend.js, regel 1).
-  for (const a of analyses) {
-    // ── LIKE-FOR-LIKE ÅT BÅDA HÅLL (grundarfynd 2026-08-19) ─────────────────────────────────
-    // Går kundens licensnivå att BEVISA ur fakturans egen radtext mäter vi mot den nivåns
-    // verifierade listpris. En E3-kund jämfördes tidigare mot Business Standards golv och fick
-    // "+184 % över lägsta pris" med score 15 — sanningen var −9 % mot sin egen nivå.
-    // Fail-closed: kan nivån inte bevisas faller vi tillbaka på kategorins golv, och kortet
-    // säger rakt ut att nivån inte är bekräftad.
-    let rader = a._rader;
-    if (typeof rader === 'string') { try { rader = JSON.parse(rader); } catch { rader = null; } }
-    const niva = lasLicensniva(rader);
-    const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
-    a.prisunderlag = underlagForRad(a, branchAnchors[a.category] ?? null, golv, niva);
-    a._rader = undefined;
-    // ── TYSTNADENS SKÄL FÖLJER MED RADEN (grundarbeslut 2026-09-17) ─────────────────────────
-    // De offertprissatta kategorierna blir ALDRIG triagerade — mätt mot produktionen: noll rader.
-    // De passerar triagen, revisionsgrinden kortsluter dem i `recommend()` till talfritt
-    // offert-läge, och de landar här som auto-rader utan prisunderlag. I rummet syntes de bara
-    // som «Mottagen», utan ett ord om VARFÖR.
-    //
-    // Beskedet hämtas här och inte i `recommend()` med flit: sifferrevisorn bevakar att en
-    // oreviderad kategori inte läcker EN SIFFRA ur motorn, och åtgärdsraden bär «60 och 30
-    // dagar». Att lägga texten i motorn hade tvingat fram ett val mellan den vakten och den här
-    // ytan. Rummet är rätt lager — samma plats där `watchedCard` redan bor.
-    //
-    // `tystnadsbesked` returnerar null för varje kategori som TALAR (de finns inte i registret),
-    // så raden är fail-closed av sig själv (TS-02 låser att ingen talande kategori står där).
-    a.tystnad = tystnadsbesked(a.category);
-    // SCOREN HÄRLEDS UR SAMMA JÄMFÖRELSE KORTET VISAR (2026-08-19). Tidigare läste rummet det
-    // LAGRADE health_score, räknat vid analystillfället mot getBenchmark — som föredrar livedata,
-    // och livedatan är totalsummor. Följden var ett score på 92 ovanför ett bevis som sa +184 %.
-    // Nu kan de inte säga emot varandra: talet ÄR en funktion av perEnhet och golv. Att det räknas
-    // vid LÄSNING är dessutom det enda ärliga: prisboken rör sig (Tele2 sänkte i går), och ett
-    // fruset score mot ett golv rummet inte längre visar är per definition inaktuellt.
-    a.arvoScore = scoreUrUnderlag(a.prisunderlag);
-  }
+  berikaRader(analyses, branchAnchors);
 
   // ── Marknadsrörelsen: "Telia höjde — X av Y bolag vi följer för <kategori> ligger hos Telia" ──
   // Den vassaste "hur visste de det?": en VERIFIERAD publik höjning (supplier_price_history) korsad
@@ -309,6 +275,62 @@ export default async function handler(req, res) {
  * kategorin i `recommend()`, och att rummet ändå räknar fram en jämförelse är två sanningar om
  * samma fråga (regel 1). Grinden gäller nu HELA vägen.
  */
+/**
+ * Berikar rummets auto-rader: prisunderlag, tystnadsskäl och score.
+ *
+ * ⚠️ LOOPEN LÅG INNE I `handler` TILL 2026-09-22, OCH DET GJORDE RUMMET OMÖJLIGT ATT FOTOGRAFERA
+ * ÄRLIGT. `scripts/screenshot-kontoret-real.mjs` bygger payloaden själv ur verkliga DB-rader och
+ * kunde inte nå koden — alltså saknade VARJE rad `prisunderlag`, och bilden visade «0 prissatta»
+ * oavsett verkligheten. Ett harness som matar något annat än produktionen mäter inte
+ * produktionen (LFL-obduktionen 12 aug, ankaret 15 aug, obduktionens DB-lösa svit 21 aug).
+ *
+ * Att kopiera de tio raderna in i sonden hade gett två sanningar om samma fråga (regel 1) —
+ * därför bor de HÄR, och både handlern och sonden anropar samma funktion. Muterar `analyses`
+ * på plats, precis som loopen gjorde; `_rader` nollas eftersom den aldrig ska serialiseras ut.
+ *
+ * FÅNGAR: inget — den är inte en vakt utan en väg. Att vägen är EN prövas av RU-01.
+ * BLIND: den vet inget om ankarnas kvalitet; tomma ankare ger tyst null, vilket är rätt men
+ *   omöjligt att skilja från «kategorin bär inget golv» utan att titta på `branchAnchors`.
+ */
+export function berikaRader(analyses = [], branchAnchors = {}) {
+  for (const a of analyses) {
+    // ── LIKE-FOR-LIKE ÅT BÅDA HÅLL (grundarfynd 2026-08-19) ─────────────────────────────────
+    // Går kundens licensnivå att BEVISA ur fakturans egen radtext mäter vi mot den nivåns
+    // verifierade listpris. En E3-kund jämfördes tidigare mot Business Standards golv och fick
+    // "+184 % över lägsta pris" med score 15 — sanningen var −9 % mot sin egen nivå.
+    // Fail-closed (LN-02): kan nivån inte bevisas faller vi tillbaka på kategorins golv, och
+    // kortet säger rakt ut att nivån inte är bekräftad (LN-08 för kundytans formulering).
+    let rader = a._rader;
+    if (typeof rader === 'string') { try { rader = JSON.parse(rader); } catch { rader = null; } }
+    const niva = lasLicensniva(rader);
+    const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
+    a.prisunderlag = underlagForRad(a, branchAnchors[a.category] ?? null, golv, niva);
+    a._rader = undefined;
+    // ── TYSTNADENS SKÄL FÖLJER MED RADEN (grundarbeslut 2026-09-17) ─────────────────────────
+    // De offertprissatta kategorierna blir ALDRIG triagerade — mätt mot produktionen: noll rader.
+    // De passerar triagen, revisionsgrinden kortsluter dem i `recommend()` till talfritt
+    // offert-läge, och de landar här som auto-rader utan prisunderlag. I rummet syntes de bara
+    // som «Mottagen», utan ett ord om VARFÖR.
+    //
+    // Beskedet hämtas här och inte i `recommend()` med flit: sifferrevisorn bevakar att en
+    // oreviderad kategori inte läcker EN SIFFRA ur motorn, och åtgärdsraden bär «60 och 30
+    // dagar». Att lägga texten i motorn hade tvingat fram ett val mellan den vakten och den här
+    // ytan. Rummet är rätt lager — samma plats där `watchedCard` redan bor.
+    //
+    // `tystnadsbesked` returnerar null för varje kategori som TALAR (de finns inte i registret),
+    // så raden är fail-closed av sig själv (TS-02 låser att ingen talande kategori står där).
+    a.tystnad = tystnadsbesked(a.category);
+    // SCOREN HÄRLEDS UR SAMMA JÄMFÖRELSE KORTET VISAR (2026-08-19). Tidigare läste rummet det
+    // LAGRADE health_score, räknat vid analystillfället mot getBenchmark — som föredrar livedata,
+    // och livedatan är totalsummor. Följden var ett score på 92 ovanför ett bevis som sa +184 %.
+    // Nu kan de inte säga emot varandra: talet ÄR en funktion av perEnhet och golv. Att det räknas
+    // vid LÄSNING är dessutom det enda ärliga: prisboken rör sig (Tele2 sänkte i går), och ett
+    // fruset score mot ett golv rummet inte längre visar är per definition inaktuellt.
+    a.arvoScore = scoreUrUnderlag(a.prisunderlag);
+  }
+  return analyses;
+}
+
 export function underlagForRad(a, ankare, golv, niva) {
   if (!isAudited(a?.category)) return null;
   return byggPrisunderlag({
