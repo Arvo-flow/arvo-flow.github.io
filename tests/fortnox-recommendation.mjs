@@ -6,7 +6,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { detectSaasFinancePaket, saasFinanceRightsizing } from '../lib/fortnox-rightsizing.js';
+import { detectSaasFinancePaket, saasFinanceRightsizing } from '../lib/saas-finance-rightsizing.js';
 import { recommend } from '../agents/recommender/recommend.js';
 
 const inv = (desc, amount = null) => [{ type: 'recurring_subscription', description: desc, amount }];
@@ -81,10 +81,10 @@ describe('Fortnox · recommend() end-to-end (deterministisk, ingen AI)', () => {
     assert.equal(r.shouldSwitch, false);
     assert.equal(r.suggestedSupplier, 'Fortnox Mellan');
     assert.equal(r.revisionGate, 'audited');
-    assert.ok(r.fortnoxRightsizing, 'fortnoxRightsizing-data ska finnas');
-    assert.equal(r.fortnoxRightsizing.targetPaket, 'Mellan');
-    assert.equal(r.fortnoxRightsizing.annualSaving, 2640);
-    assert.equal(r.fortnoxRightsizing.needsReview, true);
+    assert.ok(r.saasFinanceRightsizing, 'saasFinanceRightsizing-data ska finnas');
+    assert.equal(r.saasFinanceRightsizing.targetPaket, 'Mellan');
+    assert.equal(r.saasFinanceRightsizing.annualSaving, 2640);
+    assert.equal(r.saasFinanceRightsizing.needsReview, true);
     // Advisory/review: ingen påstådd realiserad besparing förrän kunden bekräftat.
     assert.equal(r.optimizationSaving, null);
     assert.equal(r.savingPerYear, null);
@@ -95,7 +95,7 @@ describe('Fortnox · recommend() end-to-end (deterministisk, ingen AI)', () => {
   test('Fortnox Mini → optimize men ingen nedgradering (redan billigast) → offert-läge', async () => {
     const r = await recommend(fortnoxInvoice('Fortnox Mini', 209));
     assert.equal(r.requiresQuote, true);
-    assert.equal(r.fortnoxRightsizing, null);
+    assert.equal(r.saasFinanceRightsizing, null);
     assert.equal(r.optimizationSaving, null);
   });
 
@@ -103,7 +103,7 @@ describe('Fortnox · recommend() end-to-end (deterministisk, ingen AI)', () => {
     const r = await recommend(fortnoxInvoice('Visma eEkonomi Smart', 400));
     assert.equal(r.requiresQuote, true);
     assert.equal(r.revisionGate, 'audited');
-    assert.equal(r.fortnoxRightsizing, null);
+    assert.equal(r.saasFinanceRightsizing, null);
     assert.equal(r.suggestedAnnualCost, null);
     assert.equal(r.savingPerYear, null);
     assert.ok(!/\d/.test(r.reasoning), 'offert-copy ska vara talfri');

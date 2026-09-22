@@ -30,7 +30,7 @@ import { radensOre } from '../../lib/radobservation.js';
 import { detectForensicFindings } from '../../lib/forensics.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
-import { saasFinanceRightsizing } from '../../lib/fortnox-rightsizing.js';
+import { saasFinanceRightsizing } from '../../lib/saas-finance-rightsizing.js';
 import { m365EquivalentForGoogle, deriveGoogleSeats } from '../../lib/m365-equivalent.js';
 import { m365Rightsizing, deriveM365Seats } from '../../lib/m365-rightsizing.js';
 import { granskaTierrader, vaktadeRaderUrPrisbok } from '../../lib/saas-rad.js';
@@ -1411,10 +1411,10 @@ export function analyzeClickRates(lineItems, supplierName, invoiceData = null) {
   };
 }
 
-// Deterministisk saas-finance-rekommendation (Fortnox rätt-storlek). Ren funktion av fakturan
+// Deterministisk saas-finance-rekommendation (Fortnox/Spiris rätt-storlek). Ren funktion av fakturan
 // + verifierade publika priser — ingen AI, ingen estimerad matris. Advisory/review: besparingen
 // är en verifierad prisskillnad men realiseras först när kunden bekräftat att behovet ryms.
-function fortnoxFinanceRecommendation(input) {
+function saasFinanceRecommendation(input) {
   const zeroUsage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
   const rs = saasFinanceRightsizing(input.invoice?.lineItems ?? []);
   if (!rs) {
@@ -1424,7 +1424,7 @@ function fortnoxFinanceRecommendation(input) {
       reasoning: 'Vi ser ert bokföringssystem men kan inte säkert läsa vilken paketnivå ni ligger på ur fakturan. ' +
         'Vi gör en manuell genomgång mot Fortnox/Vismas publika prislista istället för att visa en siffra vi inte kan stå för — ' +
         'koppla ert system eller ladda upp en tydligare faktura så rätt-storlekar vi ert abonnemang.',
-      revisionGate: 'audited', fortnoxRightsizing: null,
+      revisionGate: 'audited', saasFinanceRightsizing: null,
       suggestedSupplier: null, suggestedAnnualCost: null, savingPerYear: null,
       grossSaving: null, arvoFee: null, netSaving: null, optimizationSaving: null,
       licenseOverage: null, overageSavings: null, confidence: 'low', switchSteps: [],
@@ -1433,10 +1433,10 @@ function fortnoxFinanceRecommendation(input) {
   }
   // Igenkänt paket → advisory optimize. Siffran är VERIFIERAD (prisskillnad) men i review:
   // optimizationSaving hålls null tills kunden bekräftat (rådgivande revisor). Potentialen
-  // lever i fortnoxRightsizing.annualSaving + den kodskrivna reasoning-texten.
+  // lever i saasFinanceRightsizing.annualSaving + den kodskrivna reasoning-texten.
   return {
     shouldSwitch: false, requiresQuote: false, recommendationType: 'optimize',
-    reasoning: rs.reviewPrompt, revisionGate: 'audited', fortnoxRightsizing: rs,
+    reasoning: rs.reviewPrompt, revisionGate: 'audited', saasFinanceRightsizing: rs,
     suggestedSupplier: `${rs.vendor} ${rs.targetPaket}`, suggestedAnnualCost: null,
     savingPerYear: null, grossSaving: null, arvoFee: null, netSaving: null,
     optimizationSaving: null, licenseOverage: null, overageSavings: null,
@@ -1612,10 +1612,10 @@ async function recommendUtanValutagrind(input, opts = {}) {
 
   // ── saas-finance: deterministisk rätt-storleks-rådgivning (Fortnox) ────────────
   // Ingen AI, ingen estimerad matris. Enda kundsynliga siffran är skillnaden mellan TVÅ
-  // verifierade publika Fortnox-listpriser (lib/fortnox-rightsizing.js, vaktad veckovis).
+  // verifierade publika listpriser per leverantör (lib/saas-finance-rightsizing.js, vaktade veckovis).
   // Igenkänns inget paket → talfritt offert-läge — det ESTIMERADE matrisvärdet når ALDRIG kund.
   if (input.categorized.category === 'saas-finance') {
-    return withForensics(fortnoxFinanceRecommendation(input));
+    return withForensics(saasFinanceRecommendation(input));
   }
 
   // ── molnväxel: deterministisk växel-rekommendation (Vallgrav-kategorin) ─────────

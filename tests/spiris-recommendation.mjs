@@ -3,7 +3,7 @@
 // agnostiska motorn dispatchar rätt (Fortnox vs Spiris). Del av beviset revisionsgrinden kräver.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { saasFinanceRightsizing } from '../lib/fortnox-rightsizing.js';
+import { saasFinanceRightsizing } from '../lib/saas-finance-rightsizing.js';
 import { recommend } from '../agents/recommender/recommend.js';
 
 const inv = (desc, amount = null) => [{ type: 'recurring_subscription', description: desc, amount }];
@@ -66,8 +66,8 @@ describe('Spiris · recommend() end-to-end (deterministisk, ingen AI)', () => {
     const r = await recommend(spirisInvoice('Spiris Skala', 549));
     assert.equal(r.recommendationType, 'optimize');
     assert.equal(r.suggestedSupplier, 'Spiris Driva');
-    assert.equal(r.fortnoxRightsizing.vendor, 'Spiris');
-    assert.equal(r.fortnoxRightsizing.annualSaving, 2400);
+    assert.equal(r.saasFinanceRightsizing.vendor, 'Spiris');
+    assert.equal(r.saasFinanceRightsizing.annualSaving, 2400);
     assert.equal(r.optimizationSaving, null); // advisory/review
     assert.match(r.reasoning, /2400 kr\/år/);
   });

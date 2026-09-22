@@ -5,10 +5,11 @@ import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Icon from '../../components/Icon';
-import { formatKr } from '../../utils/format';
+import { formatKr, genitiv } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
 import { diagnos, ANALYSRUBRIKER } from '../../lib/diagnos';
 import { getCategoryMeta } from '../../lib/categoryMeta';
+import { redigeraLeverantor, samaLeverantor } from '../../lib/leverantorsnamn';
 import { COST_CATEGORIES } from '../../lib/costCategories';
 import FindingCard from '../../components/FindingCard';
 import {
@@ -130,23 +131,8 @@ async function getBrowserFingerprint() {
   }
 }
 
-// Scrub the suggested supplier name from reasoning text so the tier/price
-// analysis stays visible but the specific alternative brand stays hidden.
-function redactSupplier(text, supplier) {
-  if (!text || !supplier) return text;
-  const words = supplier.split(/\s+/);
-  const terms = [supplier];
-  if (words[0].length >= 4) terms.push(words[0]);
-  if (words.length >= 2) terms.push(`${words[0]} ${words[1]}`);
-  let out = text;
-  for (const term of [...new Set(terms)]) {
-    out = out.replace(
-      new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
-      'en verifierad lägre leverantör',
-    );
-  }
-  return out;
-}
+// `redactSupplier` bor sedan 2026-09-22 i src/lib/leverantorsnamn.js — den hade fyra anropare
+// och noll tester här inne, och redigerade bort kundens EGEN leverantör i rätt-storleksfallet.
 
 
 const INDUSTRY_LABELS = {
@@ -924,7 +910,8 @@ const TestaFaktura = () => {
     const reasoning = truncateReasoning(
       result?.categorized?.category && getCategoryMeta(result.categorized.category).isRealPrice
         ? result?.recommendation?.reasoning ?? ''
-        : redactSupplier(result?.recommendation?.reasoning ?? '', result?.recommendation?.suggestedSupplier),
+        : redigeraLeverantor(result?.recommendation?.reasoning ?? '', result?.recommendation?.suggestedSupplier,
+            result?.categorized?.normalizedSupplier ?? result?.extracted?.supplier),
     );
     try {
       const res = await fetch('/api/activate-intelligence', {
@@ -1943,11 +1930,11 @@ const TestaFaktura = () => {
                   const partnerLabel = _effectiveMeta.partnerLabel;
                   const _suggestedLower = (result.recommendation.suggestedSupplier ?? '').toLowerCase().trim();
                   const _currentLower = (result.categorized?.normalizedSupplier ?? result.extracted?.supplier ?? '').toLowerCase().trim();
-                  const _isSameSupplier = isRealPrice && _suggestedLower && _currentLower && (
-                    _suggestedLower === _currentLower ||
-                    _suggestedLower.includes(_currentLower) ||
-                    _currentLower.includes(_suggestedLower)
-                  );
+                  // EN jämförelse (regel 1): samma fråga ställdes på två ställen med två kopior,
+                  // och kopian i redigeringen saknades helt — därför skrevs kundens egen
+                  // leverantör över i rätt-storleksfallet. `isRealPrice` är en ANNAN fråga (vad
+                  // CTA:n ska heta) och står därför kvar här, inte i jämförelsen.
+                  const _isSameSupplier = isRealPrice && samaLeverantor(_suggestedLower, _currentLower);
                   const partnerCtaLabel = _isSameSupplier
                     ? `Sänk er ${result.recommendation.suggestedSupplier}-kostnad`
                     : isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen';
@@ -2051,9 +2038,10 @@ const TestaFaktura = () => {
                     <p>
                       {getCategoryMeta(result.categorized.category).isRealPrice
                         ? result.recommendation.reasoning
-                        : redactSupplier(
+                        : redigeraLeverantor(
                             result.recommendation.reasoning,
                             result.recommendation.suggestedSupplier,
+                            result.categorized?.normalizedSupplier ?? result.extracted?.supplier,
                           )}
                     </p>
                   </Reasoning>
@@ -2067,9 +2055,10 @@ const TestaFaktura = () => {
                 <p>
                   {getCategoryMeta(result.categorized.category).isRealPrice
                     ? result.recommendation.reasoning
-                    : redactSupplier(
+                    : redigeraLeverantor(
                         result.recommendation.reasoning,
                         result.recommendation.suggestedSupplier,
+                        result.categorized?.normalizedSupplier ?? result.extracted?.supplier,
                       )}
                 </p>
               </Reasoning>
@@ -2394,10 +2383,16 @@ const TestaFaktura = () => {
               );
             })()}
 
-            {result.recommendation?.fortnoxRightsizing && (() => {
-              // Rätt-storleks-rådgivning för Fortnox. Alla tal kommer färdiga från backend
+            {result.recommendation?.saasFinanceRightsizing && (() => {
+              // Rätt-storleks-rådgivning för bokföringssystem. Alla tal kommer färdiga från backend
               // (verifierad publik prisskillnad) — klienten räknar inget (regel 2).
-              const rs = result.recommendation.fortnoxRightsizing;
+              //
+              // ⚠️ NYCKELN HETTE `fortnoxRightsizing` till 2026-09-22 och motorn har ALDRIG varit
+              // Fortnox-specifik: samma stege betjänar Spiris/Visma eEkonomi. En Visma-kund fick
+              // alltså sin rådgivning under ett Fortnox-namn, och proveniensmeningen här nedanför
+              // NAMNGAV fel leverantör i klartext — rätt tal, fel källa, vilket regel 3 räknar som
+              // fel. Leverantören kommer nu ur `rs.vendor`, som är samma objekt som bär talen.
+              const rs = result.recommendation.saasFinanceRightsizing;
               return (
                 <div style={{ gridColumn: '1 / -1', marginTop: '14px', padding: '16px 18px', background: '#F1F6F3', border: '1px solid #BFD8D0', borderRadius: '12px' }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#1B7A6E', marginBottom: '8px' }}>
@@ -2410,7 +2405,7 @@ const TestaFaktura = () => {
                   <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
                     Ryms er användning (moduler, antal användare, verifikationsvolym) i {rs.targetPaket}? Då realiserar vi upp till{' '}
                     <strong style={{ color: '#1B7A6E' }}>{formatKr(rs.annualSaving)} kr/år</strong>. Verifierad prisskillnad mot
-                    Fortnox publika listpris — vi visar ingen siffra vi inte kan stå för.
+                    {' '}{genitiv(rs.vendor)} publika listpris — vi visar ingen siffra vi inte kan stå för.
                   </p>
                 </div>
               );
@@ -2604,9 +2599,10 @@ const TestaFaktura = () => {
                 <p>
                   {getCategoryMeta(result.categorized.category).isRealPrice
                     ? result.recommendation.reasoning
-                    : redactSupplier(
+                    : redigeraLeverantor(
                         result.recommendation.reasoning,
                         result.recommendation.suggestedSupplier,
+                        result.categorized?.normalizedSupplier ?? result.extracted?.supplier,
                       )}
                 </p>
               </Reasoning>

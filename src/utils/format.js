@@ -55,3 +55,19 @@ export function fmtOrgnr(orgnr) {
 export function plural(n, singular, pluralform) {
   return Number(n) === 1 ? singular : pluralform;
 }
+
+// ── GENITIV (2026-09-22) ─────────────────────────────────────────────────────────────────────
+// Rätt-storlekskortets proveniensmening löd «mot Fortnox publika listpris» som en LITERAL. När
+// leverantören gjordes dynamisk (motorn betjänar Fortnox OCH Spiris) blev den `{rs.vendor}s` —
+// och rätt-storlekskortet renderades då som **«mot Fortnoxs publika listpris»** och **«mot
+// Spiriss publika listpris»**. Båda är fel: svenska namn som slutar på s, x eller z tar INGEN
+// genitivändelse. Det syntes i skärmdumpen, inte i något test (regel 8 betalade sig igen).
+//
+// Samma resonemang som `plural` ovan: en CFO som ser bruten grammatik läser hela sidan som
+// maskingenererad, och då tappar varje siffra sin auktoritet. EN källa så nästa yta inte skriver
+// sin egen böjning.
+export function genitiv(namn) {
+  const n = String(namn ?? '').trim();
+  if (n === '') return '';
+  return /[sxzSXZ]$/.test(n) ? n : `${n}s`;
+}

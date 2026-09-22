@@ -512,7 +512,12 @@ export default async function handler(req, res) {
   // Ingen regression i dag (Vercel sätter antingen värdet eller ingenting), men skillnaden mellan
   // «osatt» och «tom» får aldrig avgöra om cachen kan servera ett gammalt svar.
   const deploySha = (process.env.VERCEL_GIT_COMMIT_SHA || 'lokal').slice(0, 8);
-  const cacheKey = `pdf:result:v27:${deploySha}:${pdfHash}:e${employeesNum}`;
+  // v28 (2026-09-22): `fortnoxRightsizing` → `saasFinanceRightsizing` i svarsobjektet. En cachad
+  // v27-payload bär det GAMLA nyckelnamnet, och den nya kundytan läser det NYA — utan bumpen
+  // hade rätt-storlekskortet tyst försvunnit för varje faktura som redan låg i KV. Ett tyst
+  // tapp som ser ut som «kunden har inget att hämta» (regel 7: bumpa vid varje pipelineändring
+  // som påverkar resultatet).
+  const cacheKey = `pdf:result:v28:${deploySha}:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -2301,7 +2306,7 @@ export default async function handler(req, res) {
         licenseOverage: recommendation.licenseOverage ?? null,
         overageSavings: recommendation.overageSavings ?? null,
         shelfware:      recommendation.shelfware ?? null,
-        fortnoxRightsizing: recommendation.fortnoxRightsizing ?? null,
+        saasFinanceRightsizing: recommendation.saasFinanceRightsizing ?? null,
         annualBillingSaving: recommendation.annualBillingSaving ?? null,
         nonPrimaryAnnual:    recommendation.nonPrimaryAnnual ?? 0,
         tierOptimizationSaving:   recommendation.tierOptimizationSaving   ?? null,
