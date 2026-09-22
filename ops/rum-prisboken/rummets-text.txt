@@ -2,16 +2,20 @@ Inloggad som
 testyta@arvoflow.se
 Logga ut
 ARVO-KONTORET
-KONFIDENTIELLT · ARVOFLOW.SE · 13 SEP. 2026
+KONFIDENTIELLT · ARVOFLOW.SE · 22 SEP. 2026
 God kväll.
 Vi vaktar era avtal.
-22:52
+23:52
 SENASTE SVEP
 VAKTEN
 BEVAKAR ERA AVTAL
 ERT UNDERLAG
+Fakturor
+5
 Prissatta
 0
+Mottagna
+5
 MARKNADEN
 36 marknadskällor svepta
 ARVO BEDÖMER
@@ -19,8 +23,8 @@ Vi vaktar era avtal — men er position mot listpris kunde inte mätas i dag.
 
 Vi jämförde 0 fakturor mot verifierat publikt listpris. Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.
 
-Verifierat
-· grundat på 0 prissatta fakturor · publika listpriser
+Inte mätt i dag
+· vi har inget verifierat jämförelsepris för era kategorier · vi hävdar ingenting om er prisnivå
 ARVO SCORE
 MOT VERIFIERAT LISTPRIS
 —
@@ -28,15 +32,15 @@ MARKNADSLÄGE · INTE SATT
 
 Vi har inget verifierat jämförelsepris för era kategorier ännu, så vi sätter ingen poäng. Ett tal utan mätning är värre än inget tal. Så snart en av era kategorier får ett verifierat pris räknas det fram — och ni ser exakt hur.
 
-AVTAL UNDER BEVAKNING
-5avtal
-Vi har inget verifierat jämförelsepris för era kategorier än, så vi hävdar ingenting om er prisnivå. Avtalen är bevakade — vi hör av oss så snart ett mål går att styrka.
+FAKTUROR I RUMMET
+5fakturor
+Vi har inget verifierat jämförelsepris för era kategorier än, så vi hävdar ingenting om er prisnivå. Vi håller dem under uppsikt — och hör av oss så snart ett mål går att styrka.
 VAKTENS KVITTON
 MEDAN NI DREV BOLAGET
 BEVAKAR
-8 nätter i rad utan ett avbrott i bevakningen. Nattens svep är avläst. Ingenting i det krävde er uppmärksamhet.
+17 nätter i rad utan ett avbrott i bevakningen. Nattens svep är avläst. Ingenting i det krävde er uppmärksamhet.
 ANALYS
-Vägde 0 fakturor mot verifierat publikt listpris · senast 13 sep.
+Vägde 0 fakturor mot verifierat publikt listpris · senast 22 sep.
 UNDERLAGET I ER BRANSCH
 FÖRETAGSBREDBAND
 Vi har 5 prispunkter i den här kategorin — men bara 2 skilda belopp.
@@ -54,27 +58,27 @@ Talen är vad vi faktiskt lagrat i den här cellen — inte antal bolag. Våra p
 INNEHAVET · 0 PRISSATTA · 5 MOTTAGNA, INTE PRISSATTA
 —
 Nordic Managed IT Services AB
-IT-drift & Support · 13 sep.
+IT-drift & Support · 22 sep.
 180 000 kr/år
-MOTTAGEN
+OFFERTPRISSATT
 —
 GleSYS AB
-Serverhosting & Cloud-infrastruktur · 13 sep.
+Serverhosting & Cloud-infrastruktur · 22 sep.
 46 800 kr/år
-MOTTAGEN
+VOLYMSTYRT PRIS
 —
 Fortnox AB
-Affärssystem / Bokföring · 13 sep.
+Affärssystem / Bokföring · 22 sep.
 21 600 kr/år
 MOTTAGEN
 —
 Bahnhof AB
-Företagsbredband · 13 sep.
+Företagsbredband · 22 sep.
 58 800 kr/år
 MOTTAGEN
 —
 Telia
-Företagsväxel (molnväxel) · 13 sep.
+Företagsväxel (molnväxel) · 22 sep.
 114 000 kr/år
 MOTTAGEN
 FYLL PÅ RUMMET
