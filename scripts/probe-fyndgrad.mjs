@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+// scripts/probe-fyndgrad.mjs — FYNDGRADEN: verifierade fynd per inskickad faktura, i PRODUKTION.
+//
+// ══ VARFÖR (grundarbeslut 2026-09-23) ══════════════════════════════════════════════════════
+// Systemets primära mätetal är numera «verifierade fynd per inskickad faktura i produktion», inte
+// antal tester. Ett mätetal utan sitt instrument är ett påstående — det här är instrumentet.
+//
+// ⚠️ DET FÖRSTA «0 AV 5» VAR INTE ETT MÄTVÄRDE PÅ PRODUKTEN. De fem raderna i det skarpa rummet
+// seedas av `scripts/seed-avtal-testyta.mjs` med en direkt INSERT — fäll-innehav byggda för att
+// pröva AVTALSFLÖDET, med runda rekvisitabelopp och utan en enda radpost. De har aldrig passerat
+// `recommend()`. Att räkna fynd på dem mäter seeden. Den här sonden utesluter dem uttryckligen
+// och räknar dem SEPARAT, så att uteslutningen själv går att se.
+//
+// ══ VAD SONDEN KAN — OCH INTE KAN — MÄTA ════════════════════════════════════════════════════
+// `storeAnalysis` sparar bytesbeslutet (should_switch, net_saving) och det forensiska huvudfyndet
+// (lead_finding_json). Det sparar INTE rätt-storleks-fynden (saasFinanceRightsizing,
+// m365Rightsizing, adobeRightsizing, loneadminRightsizing) — de lever bara i svaret till
+// fakturasidan och kastas vid lagring. Sonden kan därför INTE räkna hur många sådana fynd vi
+// producerat. Den räknar i stället hur många fakturor som ligger i en kategori där en sådan motor
+// FINNS — en ÖVRE GRÄNS för vad som kan ha kastats, uttryckligen märkt som gräns, aldrig som antal.
+//
+// ══ MOTPROV (Noll-inferens, amendemang 1) ══════════════════════════════════════════════════
+//   · Testytan måste HITTAS (≥ 1 rad) och redovisas separat — annars kan vi inte veta att
+//     uteslutningen fungerar, och ett «0 testrader» vore omöjligt att skilja från ett trasigt filter.
+//   · Utan databas avslutar sonden 1 utan tal. Ett tomt svar är inte ett svar.
+
+import { getDb } from '../lib/db.js';
+import { TEST_EMAIL } from '../lib/test-surface.js';
+
+const db = getDb();
+if (!db) {
+  console.error('✗ INGEN DATABAS — sonden kom inte fram. Detta är INTE ett mätvärde.');
+  process.exit(1);
+}
+
+// Kategorier med en rätt-storleksmotor i recommend(). Härledd ur kundytans kortvillkor
+// (NIVASANKNINGSKORT i src/lib/diagnos.js) — mappad till den kategori som producerar kortet.
+const RATTSTORLEK_KATEGORIER = ['saas-finance', 'saas-productivity', 'saas-creative', 'loneadmin'];
+
+const rader = await db`
+  SELECT category, route, should_switch, net_saving, gross_saving,
+         (lead_finding_json IS NOT NULL) AS har_fynd,
+         (user_email = ${TEST_EMAIL}) AS testyta,
+         (fingerprint LIKE 'seed:%') AS seed,
+         arkiverad_at IS NOT NULL AS arkiverad
+  FROM invoice_analyses   -- internt: fyndgradsmätning, ingen kundyta; testytan redovisas separat
+`;
+
+const test = rader.filter((r) => r.testyta || r.seed);
+const riktiga = rader.filter((r) => !r.testyta && !r.seed);
+const aktiva = riktiga.filter((r) => !r.arkiverad);
+
+console.log('\n═══ FYNDGRADEN · verifierade fynd per inskickad faktura (produktion) ═══\n');
+console.log(`  Rader totalt: ${rader.length}`);
+console.log(`  Testyta/seed (UTESLUTNA, redovisas för att filtret ska synas): ${test.length}`);
+console.log(`  Riktiga analyser: ${riktiga.length} (varav arkiverade: ${riktiga.length - aktiva.length})`);
+
+if (test.length === 0) {
+  console.error('\n✗ MOTPROVET FÖLL: sonden hittade ingen testyta alls — filtret kan inte bevisas.');
+  process.exit(1);
+}
+if (riktiga.length === 0) {
+  console.log('\n  Inga riktiga analyser i produktion. Fyndgraden är ODEFINIERAD, inte noll.');
+  console.log('\n[probe-fyndgrad] klar\n');
+  process.exit(0);
+}
+
+const bas = aktiva.length ? aktiva : riktiga;
+const byte = bas.filter((r) => r.should_switch === true && Number(r.net_saving) > 0);
+const fynd = bas.filter((r) => r.har_fynd);
+const minstEtt = bas.filter((r) => (r.should_switch === true && Number(r.net_saving) > 0) || r.har_fynd);
+const tysta = bas.filter((r) => r.route === 'auto' && !r.har_fynd && !(r.should_switch && Number(r.net_saving) > 0));
+const rsKandidater = bas.filter((r) => RATTSTORLEK_KATEGORIER.includes(r.category));
+
+const pct = (n) => `${((n / bas.length) * 100).toFixed(1)} %`;
+console.log(`\n  Mätbas: ${bas.length} ${aktiva.length ? 'aktiva' : 'riktiga'} analyser\n`);
+console.log(`  Verifierat bytesfynd (should_switch + net_saving > 0): ${byte.length}  (${pct(byte.length)})`);
+console.log(`  Forensiskt huvudfynd (lead_finding_json):             ${fynd.length}  (${pct(fynd.length)})`);
+console.log(`  ─────────────────────────────────────────────────────`);
+console.log(`  FYNDGRAD — minst ett lagrat fynd:                     ${minstEtt.length} av ${bas.length}  (${pct(minstEtt.length)})`);
+console.log(`\n  Auto-rader utan något lagrat fynd:                     ${tysta.length}`);
+console.log(`\n  ⚠️ OMÄTBART I DAG — rätt-storleksfynd lagras inte.`);
+console.log(`     Övre gräns för hur många som KAN ha kastats vid lagring: ${rsKandidater.length} rader`);
+console.log(`     i kategorier med rätt-storleksmotor (${RATTSTORLEK_KATEGORIER.join(', ')}).`);
+console.log(`     Detta är en GRÄNS, inte ett antal fynd.`);
+
+const perKategori = {};
+for (const r of bas) {
+  const k = r.category ?? '—';
+  perKategori[k] ??= { n: 0, fynd: 0 };
+  perKategori[k].n += 1;
+  if ((r.should_switch && Number(r.net_saving) > 0) || r.har_fynd) perKategori[k].fynd += 1;
+}
+console.log('\n  Per kategori (fynd / analyser):');
+for (const [k, v] of Object.entries(perKategori).sort((a, b) => b[1].n - a[1].n)) {
+  console.log(`    ${k.padEnd(22)} ${String(v.fynd).padStart(3)} / ${String(v.n).padEnd(4)}`
+    + `${RATTSTORLEK_KATEGORIER.includes(k) ? '  ← rätt-storleksmotor finns, fynd lagras inte' : ''}`);
+}
+console.log('\n[probe-fyndgrad] klar\n');
