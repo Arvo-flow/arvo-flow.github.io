@@ -34,7 +34,13 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { byggPrisunderlag, scoreUrUnderlag } from '../lib/prisunderlag.js';
-import { supplierDiagScore, buildReasoning } from '../src/lib/holdings.js';
+import { radScore as supplierDiagScore, radLage } from '../lib/lagesregister.js';
+import { radMotivering } from '../src/lib/rumstext.js';
+
+// Lägesregistret (2026-09-23): motiveringen räknas inte längre i en funktion — läget kommer från
+// api-lagret (radLage) och ytan slår upp texten (radMotivering). Testerna kör HELA kedjan, så de
+// prövar det kunden faktiskt läser, inte en modell av det.
+const buildReasoning = (a) => radMotivering({ ...a, lage: radLage(a) });
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ANKARE = {
@@ -98,7 +104,8 @@ describe('SCOREKRAV · talet och dess bevis kan inte säga emot varandra', () =>
   });
 
   test('SK-06 · källan är källtextligt bunden: rummet rör inte health_score', () => {
-    const src = readFileSync(join(ROT, 'src/lib/holdings.js'), 'utf8');
+    // Radens poäng räknas sedan 2026-09-23 i lib/lagesregister.js (radScore) — samma krav där.
+    const src = readFileSync(join(ROT, 'lib/lagesregister.js'), 'utf8');
     const kod = src.split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
     assert.doesNotMatch(kod, /a\.health_score/,
       'rummet läser health_score igen — då är den andra producenten tillbaka');

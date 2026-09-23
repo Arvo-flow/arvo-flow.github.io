@@ -5,7 +5,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { groupBySupplier, supplierName, supplierDiagScore, computeActing } from '../src/lib/holdings.js';
+import { groupBySupplier, supplierName, radScore as supplierDiagScore, computeActing } from '../lib/lagesregister.js';
 
 const a = (o) => ({ net_saving: 0, category: 'mobil', created_at: '2025-06-01', ...o });
 

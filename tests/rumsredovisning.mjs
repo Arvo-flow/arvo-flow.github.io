@@ -30,7 +30,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { roomCounts, radarRader } from '../src/lib/holdings.js';
+import { radarRader } from '../src/lib/holdings.js';
+import { roomCounts } from '../lib/lagesregister.js';
 import { refineFinding, detectForensicFindings } from '../lib/forensics.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -74,7 +75,10 @@ describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
   test('RR-02 · radarn läser räknarna ur den delade funktionen, inte ur egna längder', () => {
     // Regressionen som orsakade felet: <span>Leverantörer</span> matad med suppliers.length
     // (bara de prissatta) bredvid en rad som visade de bevakade.
-    assert.match(RUM, /roomCounts\(\{ autoAnalyses/, 'rummet ska härleda räknarna ur roomCounts');
+    // Lägesregistret (2026-09-23): räknarna räknas EN gång i api-lagret (lib/lagesregister.js roomCounts)
+    // och kommer i `data.rum.counts`. Rummet får inte räkna dem själv igen.
+    assert.match(RUM, /const counts = rum\?\.counts/, 'rummet ska läsa räknarna ur API:ts rumsläge');
+    assert.doesNotMatch(RUM, /roomCounts\(/, 'rummet räknar sina räknare själv igen');
     const radar = RUM.slice(RUM.indexOf('radar-stats'), RUM.indexOf('radar-foot'));
     assert.ok(radar.length > 50, 'radarns statistikblock hittades inte — har markupen bytt namn?');
     assert.doesNotMatch(radar, /suppliers\.length|autoAnalyses\.length|watched\.length/,
@@ -151,10 +155,10 @@ describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
     assert.ok(i > 0, 'meningen hittades inte — ändrades den, måste vakten följa med');
     // Villkoret som väljer meningen ska stå närmast före den och vara registrets fråga.
     const fore = RUM.slice(Math.max(0, i - 220), i);
-    assert.match(fore, /beromsLage\(domLage\)\s*\n?\s*\?\s*<>$/,
+    assert.match(fore, /rum\?\.berom\s*\n?\s*\?\s*<>$/,
       '«Era priser står sig» väljs inte av beromsLage — då kan den fällas i ett omätt läge');
     // MOTPROVET: registret måste faktiskt säga NEJ i det omätta läget, annars vaktar raden ingenting.
-    const { beromsLage } = await import('../src/lib/domslut.js');
+    const { beromsLage } = await import('../lib/lagesregister.js');
     assert.equal(beromsLage('lugn_omatt'), false, 'det omätta läget får aldrig berömma priset');
     assert.equal(beromsLage('lugn_battre'), true, 'motprov: ett mätt, bättre läge FÅR säga det');
     // Och det omätta läget får fortfarande en mening — tystnad är inte fixen (DL-10b).

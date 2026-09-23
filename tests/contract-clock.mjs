@@ -47,7 +47,7 @@ describe('AK · avtalsklockan', () => {
       lage('2027-01-01', null),                                   // okänd
       lage('2027-01-01', null, { fastpris: true }),               // fastpris → stängt
     ]);
-    assert.deepEqual([...sett].sort(), [...AVTALSLAGEN].sort());
+    assert.deepEqual([...sett].sort(), Object.keys(AVTALSLAGEN).sort());
     assert.equal(lage('2026-10-23', { uppsagningstidDagar: 30 }), 'sista_dag_idag');
   });
 

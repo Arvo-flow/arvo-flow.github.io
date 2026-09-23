@@ -109,7 +109,8 @@ console.log('  · innehavsrader med tystnadsskäl: ' + tystIInnehavet);
 // ⚠️ REGEL 8 FÖR RADARN: bilden ska visa Fakturor + Prissatta + Mottagna + Bevakade samtidigt,
 // annars bevisar den inte att ytan går ihop. Sonden kunde bara modellera renderingsreglerna;
 // skärmdumpen är det som stänger den blindfläcken.
-const { roomCounts, radarRader } = await import('../src/lib/holdings.js');
+const { radarRader } = await import('../src/lib/holdings.js');
+const { roomCounts } = await import('../lib/lagesregister.js');
 const rknare = roomCounts({ autoAnalyses: ANALYSES, watched: PAYLOAD.watched });
 const rader = radarRader(rknare);
 console.log('  · radarns rader: ' + rader.map((r) => r.etikett + ' ' + r.varde).join(' · '));

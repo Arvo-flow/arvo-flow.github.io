@@ -32,6 +32,8 @@ import { getEurSekRate, FALLBACK_RATE_EUR_SEK, getSekRate, FALLBACK_RATE_USD_SEK
 import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.js';
 import { contractClockFinding, avtalsklocka, avtalsRutt } from '../lib/contract-clock.js';
 import { planeradePaminnelser } from '../lib/paminnelse.js';
+import { fakturaLage } from '../lib/lagesregister.js';
+import { RATTSTORLEK_FALT } from '../lib/rattstorleksfynd.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
 import { storeAnalysis, storeTriaged, storeLeadFinding } from '../lib/invoice-store.js';
@@ -798,7 +800,10 @@ export default async function handler(req, res) {
       // stabilt svar, och varje omladdning kostade två modellanrop till. Utgångsförlusten, en
       // gång till, i cachen. `svara()` är enda utgången, alltså är det här enda stället den kan
       // stängas för alla grenar samtidigt.
-      const _svar = { ...rest, leadFinding: lead, forensicFindings: visa ? _forensik : [], fyndSkal: skal };
+      // LÄGESREGISTRET (2026-09-23): fakturans läge — diagnos, etikett, rubrik — räknas HÄR, ur svarets
+      // egna fält, för varje utgång. Ytan och mejlen läser det; ingen räknar en egen poäng (LR-06).
+      const lage = fakturaLage(rest, { rattstorlekFalt: RATTSTORLEK_FALT });
+      const _svar = { ...rest, lage, leadFinding: lead, forensicFindings: visa ? _forensik : [], fyndSkal: skal };
       // Fyndet sparas DÄR BESLUTET FATTAS. `storeTriaged` körs före den här raden och vet inte om
       // farVisaFynd släppte fyndet igenom — hade den skrivit, hade tystade fynd återuppstått i
       // rummet. Fire-and-forget: rummets rad får aldrig fälla kundens svar.
@@ -809,6 +814,7 @@ export default async function handler(req, res) {
       }
       return send(res, 200, {
         ...rest,
+        lage,
         // Toppnivå, alltid samma adress: rutter utan `recommendation` (review_queue,
         // monitoring, unsupported) hade annars ingen plats att bära fyndet på, och en yta som
         // måste leta på två ställen hittar förr eller senare bara det ena.
@@ -2246,6 +2252,15 @@ export default async function handler(req, res) {
         servicePeriodStart:  extracted.servicePeriodStart ?? null,
         servicePeriodEnd:    extracted.servicePeriodEnd ?? null,
         uppsagning:          extracted.uppsagning ?? null,
+        // ⚠️ SERIALISERADES ALDRIG (mätt 2026-09-23, översynen): `roamingZone` lästes av fakturavyn,
+        // som därför alltid fick undefined — och en tvåvägsgren lovade «bättre EU-datapaket» även
+        // för satellitroaming (zon 4), där inget byte hjälper. Valutafälten bar omräkningens kurs,
+        // men upplysningen «konverterad till SEK med kursen X» kunde aldrig visas. SVK-04.
+        roamingZone:         extracted.roamingZone ?? null,
+        originalCurrency:    extracted.originalCurrency ?? null,
+        fxRate:              extracted.fxRate ?? null,
+        fxSource:            extracted.fxSource ?? null,
+        fxDate:              extracted.fxDate ?? null,
         billingPeriod:       extracted.billingPeriod,
         billingPeriodSource: extracted.billingPeriodSource,
         billingPeriodAssumed: extracted.billingPeriodAssumed ?? false,

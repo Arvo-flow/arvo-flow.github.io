@@ -24,7 +24,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { strippaStrangar } from '../lib/kalltextlexer.js';
-import { NIVASANKNINGSKORT } from '../src/lib/diagnos.js';
+import { RATTSTORLEK_FALT as NIVASANKNINGSKORT } from '../lib/rattstorleksfynd.js';
 
 const las = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const API = las('api/test-invoice.mjs');
@@ -105,6 +105,42 @@ describe('SVK · svarskontraktet mellan api/test-invoice och fakturavyn', () => 
     for (const f of NIVASANKNINGSKORT) {
       assert.ok(skickade.has(f), `${f} serialiseras inte — rubriken förnekar ett fynd motorn gjort`);
       assert.ok(!(f in EJ_SERIALISERAD), `${f} får inte stå som undantag`);
+    }
+  });
+});
+
+// ── SVK-04 · SAMMA KONTRAKT FÖR `extracted` (2026-09-23, systemöversynen) ─────────────────────────
+// Mätt: fakturavyn läste `roamingZone` och valutafälten (`originalCurrency`, `fxRate`) ur ett svar som
+// aldrig bar dem — roamingkortet lovade därför «bättre EU-datapaket» även för satellit, och
+// upplysningen om valutaomräkningen kunde aldrig visas. SVK-01 såg bara `recommendation`.
+export const EJ_I_HUVUDSVARETS_EXTRACTED = {
+  elNatavgiftAnnual: 'bärs av el-grenens eget svarsobjekt, aldrig av huvudvägen',
+  elSkatterKr: 'bärs av el-grenens eget svarsobjekt, aldrig av huvudvägen',
+  elUncertaintyNote: 'bärs av el-grenens eget svarsobjekt, aldrig av huvudvägen',
+};
+
+describe('SVK-04 · svarskontraktet för extracted', () => {
+  function extractedNycklar() {
+    const ren = strippaStrangar(API);
+    const ankare = ren.indexOf('const autoResponse = {');
+    assert.ok(ankare > 0, 'hittade inte huvudvägens svarsobjekt');
+    const start = ren.indexOf('extracted: {', ankare);
+    let d = 0; let i = ren.indexOf('{', start); const s0 = i;
+    for (; i < ren.length; i++) { if ('{(['.includes(ren[i])) d++; else if ('})]'.includes(ren[i])) { d--; if (d === 0) break; } }
+    const kropp = ren.slice(s0 + 1, i);
+    let dd = 0; let topp = '';
+    for (const c of kropp) { if ('{(['.includes(c)) { dd++; topp += ' '; continue; } if ('})]'.includes(c)) { dd--; topp += ' '; continue; } topp += dd === 0 ? c : ' '; }
+    return new Set(topp.split(',').map((d2) => d2.match(/^\s*(\w+)\s*(?::|$)/)?.[1]).filter(Boolean));
+  }
+  test('SVK-04 · varje extracted-fält fakturavyn läser skickas — eller är undantaget med skäl', () => {
+    const skickade = extractedNycklar();
+    assert.ok(skickade.size > 20 && skickade.has('supplier') && skickade.has('annualCost'), `parsern hittade ${skickade.size} nycklar`);
+    const lasta = new Set([...strippaStrangar(YTAN).matchAll(/result\.extracted\??\.(\w+)/g)].map((m) => m[1]));
+    assert.ok(lasta.size > 15, `bara ${lasta.size} lästa extracted-fält — mönstret är trasigt`);
+    const saknas = [...lasta].filter((f) => !skickade.has(f) && !(f in EJ_I_HUVUDSVARETS_EXTRACTED));
+    assert.deepEqual(saknas, [], `fakturavyn läser ${saknas.join(', ')} men huvudsvaret bär inte fälten`);
+    for (const f of Object.keys(EJ_I_HUVUDSVARETS_EXTRACTED)) {
+      assert.ok(lasta.has(f) && !skickade.has(f), `${f}: undantaget är inaktuellt`);
     }
   });
 });

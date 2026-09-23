@@ -27,7 +27,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { diagnos } from '../src/lib/diagnos.js';
+import { diagnos } from '../lib/lagesregister.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -102,8 +102,13 @@ describe('DG-08 · Analyssidan läser den delade domen', () => {
   const kod = readFileSync(join(ROT, 'src', 'pages', 'TestaFaktura', 'index.js'), 'utf8')
     .split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
 
-  test('scoren härleds ur diagnos(), inte ur en egen 100 − ovPct-formel', () => {
-    assert.match(kod, /diagnos\(\{/, 'analyssidan ska kalla den prövade funktionen');
+  test('scoren kommer ur API:ts läge, inte ur en egen 100 − ovPct-formel', () => {
+    // Lägesregistret (2026-09-23): diagnosen räknas i api-lagret (lib/lagesregister.js fakturaLage)
+    // och kommer i `result.lage`. Analyssidan får varken kalla diagnos() eller räkna själv.
+    assert.match(kod, /const _lage\s+= result\?\.lage/, 'analyssidan ska läsa API:ts läge');
+    assert.doesNotMatch(kod, /diagnos\(\{/, 'analyssidan räknar diagnosen själv igen');
+    // Etiketten ges bara ett MÄTT tal — en omätt poäng blev förut 0 och fick «Kritisk».
+    assert.match(kod, /const diagC = _diag\.etikett/, 'etiketten väljs inte ur API:ts etikett');
     assert.doesNotMatch(kod, /Math\.max\(5,\s*Math\.round\(100\s*-\s*diagOvPct/,
       'den lokala formeln är kvar — den var det som gav 100 (→ 85) när inget mål fanns');
   });
@@ -192,8 +197,14 @@ describe('AR · Analyskortets rubriker svarar i påståendekontraktet', () => {
     // motsägelsen skulle återinföras.
     const { readFileSync } = await import('node:fs');
     const kalla = readFileSync(new URL('../src/pages/TestaFaktura/index.js', import.meta.url), 'utf8');
-    const { NIVASANKNINGSKORT, harNivasankningskort, ANALYSRUBRIKER } =
-      await import('../src/lib/diagnos.js');
+    // Lägesregistret (2026-09-23): rubriken väljs i api-lagret (fakturaLage → `lage.rubrik`) ur
+    // RATTSTORLEK_FALT. Vakten härleder fortfarande korten ur KUNDYTAN och kräver att registret
+    // känner varje; beteendet prövas nu i den funktion som faktiskt väljer.
+    const { RATTSTORLEK_FALT: NIVASANKNINGSKORT } = await import('../lib/rattstorleksfynd.js');
+    const { fakturaLage } = await import('../lib/lagesregister.js');
+    const { ANALYSRUBRIKER } = await import('../src/lib/diagnos.js');
+    const harNivasankningskort = (rek) => fakturaLage({ recommendation: rek ?? undefined, categorized: { category: 'saas-finance' } },
+      { rattstorlekFalt: NIVASANKNINGSKORT }).rubrik === 'inget_byte_med_nivasankning';
 
     const kortIYtan = [...new Set([...kalla.matchAll(/result\.recommendation\?\.(\w*Rightsizing)\s*&&/g)]
       .map((m) => m[1]))];

@@ -14,8 +14,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { valjRattstorlek, RATTSTORLEK_FALT } from '../lib/rattstorleksfynd.js';
 import { storeAnalysis, storeTriaged, VALFRIA_KOLUMNER } from '../lib/invoice-store.js';
-import { NIVASANKNINGSKORT } from '../src/lib/diagnos.js';
-import { rattstorleksKort, RATTSTORLEK_BYGGARE } from '../src/lib/rattstorlekskort.js';
+import { RATTSTORLEK_FALT as NIVASANKNINGSKORT } from '../lib/rattstorleksfynd.js';
+import { rattstorleksKort, RATTSTORLEK_BYGGARE } from '../lib/rattstorlekskort.js';
 import { saasFinanceRightsizing } from '../lib/saas-finance-rightsizing.js';
 import { m365Rightsizing } from '../lib/m365-rightsizing.js';
 
@@ -116,9 +116,11 @@ describe('RS · rätt-storleksfyndet lagras och når rummet', () => {
   test('RS-10 · rummets dom läser samma lista som renderar korten', () => {
     // Närvarokontroll, inte ordningsbevis — en källtextvakt kan inte se vilken gren som körs.
     // Beteendet bevisas i DOM:en av scripts/screenshot-rattstorlek.mjs (med motprov utan fynd).
+    // Lägesregistret (2026-09-23): antalet kommer ur API:ts rumsläge, från samma kort som renderas.
     const rum = readFileSync(new URL('../src/pages/Portfolio/index.js', import.meta.url), 'utf8');
-    assert.match(rum, /const nivaer = roomRattstorlek\.length;/);
-    const dom = rum.slice(rum.indexOf('const verdictWork = '), rum.indexOf('  return (\n    <Page>'));
+    assert.match(rum, /const nivaer = rum\?\.nivaer/);
+    assert.match(rum, /const roomRattstorlek = rum\?\.rattstorlekKort/);
+    const dom = rum.slice(rum.indexOf('const DOMTEXT = {'), rum.indexOf('const verdictWork = '));
     assert.ok(dom.length > 200, 'domens utsnitt är tomt — ankaret flyttade');
     assert.match(dom, /nivaer > 0/, 'domen frågar inte rätt-storleksfynden');
   });
@@ -130,7 +132,10 @@ describe('RS · rätt-storleksfyndet lagras och når rummet', () => {
     const store = readFileSync(new URL('../lib/invoice-store.js', import.meta.url), 'utf8');
     assert.equal((store.match(/line_items_json, rattstorlek_json[,\n]/g) ?? []).length, 4,
       'båda rumsläsningarna (full + efter läkning) ska hämta kolumnen');
-    const rum = readFileSync(new URL('../src/pages/Portfolio/index.js', import.meta.url), 'utf8');
-    assert.match(rum, /rattstorleksKort\(g\.latest\?\.rattstorlek_json\)/, 'rummet frågar inte fyndet');
+    // Korten byggs i api-lagret (lib/lagesregister.js rumLage) ur den senaste raden per leverantör.
+    const hist = readFileSync(new URL('../api/invoice-history.mjs', import.meta.url), 'utf8');
+    assert.match(hist, /rumLage\(\{ analyses, watched, rattstorlekKort: rattstorleksKort \}\)/, 'rummet frågar inte fyndet');
+    const reg = readFileSync(new URL('../lib/lagesregister.js', import.meta.url), 'utf8');
+    assert.match(reg, /rattstorlekKort\(g\.latest\?\.rattstorlek_json\)/, 'registret bygger inte korten ur den senaste raden');
   });
 });

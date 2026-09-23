@@ -8,13 +8,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
 import { getCategoryMeta } from '../../lib/categoryMeta';
-// buildReasoning bor i lib så den kan prövas DIREKT av sviten (tests/scorekrav.mjs SK-08),
-// inte via en regex på den här filens källtext. Domen är logik, inte rendering.
-import { buildReasoning } from '../../lib/holdings';
-import { groupBySupplier, supplierName, supplierDiagScore, computeActing, roomCounts, radarRader } from '../../lib/holdings';
-import { domensLage, omattLage, beromsLage } from '../../lib/domslut';
+// LÄGESREGISTRET (2026-09-23): rummets och radernas LÄGE kommer färdigt från API:t (`data.rum`,
+// `a.lage`, räknade i lib/lagesregister.js). Sidan väljer aldrig läge ur rådata — den slår upp
+// ordalydelsen per kod (src/lib/rumstext.js för raderna, DOMTEXT nedan för domen). LR-01..08.
+import { radarRader } from '../../lib/holdings';
+import { radMotivering, radMarke } from '../../lib/rumstext';
 import FindingCard from '../../components/FindingCard';
-import { rattstorleksKort } from '../../lib/rattstorlekskort';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
 import { greetingForHour, plural } from '../../utils/format';
@@ -148,46 +147,9 @@ function companyFromEmail(email) {
 
 // Gruppering + visningsnamn bor i src/lib/holdings (ren, testbar) — EN sanning (regel 1).
 
-// Totalpoäng = kostnadsviktat snitt av radernas poäng (går alltid att räkna hem).
-// Sammanvägt score över de MÄTTA raderna. En omätt rad (supplierDiagScore → null) räknas inte
-// in: att väga in ett påhittat 75 hade gjort helhetstalet till en blandning av mätning och
-// gissning, utan att någon kunde se vilken del som var vilken. Returnerar null när ingen rad är
-// mätt — då säger kortet det i stället för att visa ett tal.
-function computeArvoScore(suppliers) {
-  const matta = suppliers.filter((g) => supplierDiagScore(g.latest) != null);
-  if (!matta.length) return null;
-  let w = 0, s = 0;
-  for (const g of matta) {
-    const weight = g.latest.annual_cost > 0 ? g.latest.annual_cost : 0;
-    w += weight; s += supplierDiagScore(g.latest) * weight;
-  }
-  if (w === 0) return Math.round(matta.reduce((acc, g) => acc + supplierDiagScore(g.latest), 0) / matta.length);
-  return Math.round(s / w);
-}
-
-// Marknadsläge — doten kartläggs EXAKT mot Arvo Score (precision bygger förtroende).
-// Skalan löper Sämre (vänster) → Bättre än marknaden (höger), så ett högt score sitter på
-// den gynnsamma (högra) sidan. "Bättre/Sämre" bär valören direkt — klarare än "över/under".
-function marketStanding(score) {
-  // Utan ett mätt score finns ingen position att peka ut. Att låta pekaren landa någonstans
-  // ändå vore att uppfinna ett läge — samma oförtjänta precision som 75-fallbacken var.
-  if (score == null) return { pointer: null, label: null, niva: null, satt: false };
-  const pointer = Math.max(4, Math.min(96, score));
-  // ── NYCKEL, INTE ETIKETT (granskning 2026-08-20) ──────────────────────────────────────────
-  // Domens rubrik jämförde mot etikettsträngen ('Bättre än marknaden'). När etiketterna byttes
-  // till listpris-språk blev ALLA tre jämförelser falska, och varje kund — även den som låg
-  // bättre än listpris — fick rubriken "Ni betalar mer än marknaden". Ett falskt påstående i
-  // rummets största text, orsakat av en strängmatchning på en visningsetikett.
-  // Det är samma fälla som tierNyckel finns för att undvika: en etikett kan skrivas om, en
-  // nyckel kan det inte. Konsumenter branschar på `niva`.
-  const niva = score >= 67 ? 'battre' : score >= 45 ? 'i-niva' : 'samre';
-  // "Marknaden" är fel ord av samma skäl som i domens prosa (2026-08-19): talet mäts mot
-  // verifierat publikt LISTPRIS, inte mot vad marknaden faktiskt betalar. Skalan säger nu vad
-  // den mäter. Ordet får återkomma när kohorten bär en verklig fördelning.
-  const label = niva === 'battre' ? 'Bättre än listpris'
-    : niva === 'i-niva' ? 'I nivå med listpris' : 'Sämre än listpris';
-  return { pointer, label, niva, satt: true };
-}
+// Rummets poäng och marknadsläge räknas i api-lagret (lib/lagesregister.js rumScore/marknadslage).
+// Visningsnamnet kommer ur API:t (`a.lage.namn`, samma kanoniserare som grupperingen).
+const radNamn = (a) => a?.lage?.namn ?? a?.normalized_supplier ?? a?.supplier ?? 'Okänd leverantör';
 
 function scoreColor(score) {
   if (score == null) return 'rgba(157,184,175,.45)';   // inte satt — aldrig en signalfärg
@@ -225,6 +187,7 @@ export default function Portfolio() {
   const [movements, setMovements] = useState({});
   const [switchTargets, setSwitchTargets] = useState({});
   const [watched, setWatched] = useState([]);   // "Bevakat — inte prissatt" (Liggare 2): triagade fakturor
+  const [rum, setRum] = useState(null);         // rummets läge, räknat i api-lagret (lib/lagesregister.js)
   const [vakt, setVakt] = useState(null);
   const [ingesting, setIngesting] = useState(0);   // fakturor på väg (köade, ej klara) → "analyserar N"
   const [ingestFailed, setIngestFailed] = useState(0);   // fakturor som föll → ärligt bortfalls-besked
@@ -274,6 +237,10 @@ export default function Portfolio() {
       throw new Error(kropp?.message || `Kunde inte hämta ert kontor just nu (HTTP ${res.status}).`);
     }
     const data = await res.json();
+    // Utan rummets läge visar vi inget rum. Ett påhittat standardläge hade sett ut som ett mätt
+    // (felfamiljen) — ett API i otakt med sidan under en deploy ska ge ett ärligt felläge.
+    if (!data.rum) throw new Error('Rummets läge saknades i svaret — ladda om sidan om en stund.');
+    setRum(data.rum);
     setAnalyses(data.analyses ?? []);
     setApiEmail(data.email ?? null);
     setCohort(data.cohort ?? {});
@@ -516,7 +483,13 @@ export default function Portfolio() {
   }
 
   const autoAnalyses = useMemo(() => (analyses ?? []).filter((a) => a.route === 'auto' || a.route === 'monitoring'), [analyses]);
-  const suppliers    = useMemo(() => groupBySupplier(autoAnalyses), [autoAnalyses]);
+  // Leverantörsgrupperna i API:ts ordning — sidan grupperar aldrig om själv, så listan och rummets
+  // poäng bygger alltid på samma rader.
+  const suppliers    = useMemo(() => {
+    const perId = new Map((analyses ?? []).map((a) => [a.id, a]));
+    return (rum?.grupper ?? []).map((g) => ({ key: g.key, latest: perId.get(g.latestId), count: g.count }))
+      .filter((g) => g.latest);
+  }, [rum, analyses]);
 
   // "Bevakat — inte prissatt": gruppera per SLAG (kind) så fem identiska "utländsk valuta"-kort blir
   // ETT kuraterat omdöme med leverantörslistan — disciplin, inte en vägg. Delat skäl/väg ur första i slaget.
@@ -534,28 +507,10 @@ export default function Portfolio() {
     return [...m.values()];
   }, [watched]);
 
-  // Radarns räknare — EN enhet (fakturor) och en summa som alltid går ihop. Avgörandet bor i
-  // src/lib/holdings.js (ren, testlåst) — se motiveringen där.
-  const counts = useMemo(() => roomCounts({ autoAnalyses, watched: watched ?? [] }), [autoAnalyses, watched]);
-
-  // Forensik-inversionen i rummet: starkaste mekanism-fyndet (ur kundens egna rader) leder domen.
-  // Zero Trust — talet kommer från fakturaraden, persisterat i lead_finding_json. Tomt → inget kort.
-  const roomFinding = useMemo(() => {
-    const rank = { high: 0, medium: 1, low: 2 };
-    return (autoAnalyses ?? [])
-      .map((a) => a.lead_finding_json)
-      .filter((f) => f && typeof f === 'object' && f.title)
-      .sort((x, y) => (rank[x.severity] - rank[y.severity]) || ((y.annualImpact || 0) - (x.annualImpact || 0)))[0] ?? null;
-  }, [autoAnalyses]);
-
-  // Rätt-storleksfynden (2026-09-23) — motorn räknade dem vid analysen, men de kastades vid lagring
-  // och rummet kunde aldrig visa dem. Ett per leverantör (den SENASTE fakturan äger domen), störst
-  // först, högst tre. Talen är motorns; kortets ord skrivs i src/lib/rattstorlekskort.js.
-  const roomRattstorlek = useMemo(() => suppliers
-    .map((g) => rattstorleksKort(g.latest?.rattstorlek_json))
-    .filter(Boolean)
-    .sort((x, y) => (y.annualImpact || 0) - (x.annualImpact || 0))
-    .slice(0, 3), [suppliers]);
+  // Rummets räknare, starkaste fynd och rätt-storlekskort — alla ur API:ts rumsläge.
+  const counts = rum?.counts ?? { fakturor: 0, analyserade: 0, prissatta: 0, mottagna: 0, bevakade: 0 };
+  const roomFinding = rum?.fynd ?? null;
+  const roomRattstorlek = rum?.rattstorlekKort ?? [];
 
   // Kontraktsklockan i rummet — det avtal som förfaller SNARAST leder (minst dagar kvar).
   // contractClock kommer fresiderande från api/invoice-history (beräknat vid läsning, ej lagrat).
@@ -563,7 +518,9 @@ export default function Portfolio() {
     return (analyses ?? [])
       .map((a) => a.contractClock)
       .filter((c) => c && typeof c === 'object' && c.title && c.daysLeft > 0)
-      .sort((x, y) => x.daysLeft - y.daysLeft)[0] ?? null;
+      // Den klocka vars SISTA HANDLINGSDAG kommer först leder — inte den som slutar först. Ett avtal
+      // med 100 dagar kvar men 8 dagar till sista uppsägningsdag är det brådskande (AK, 2026-09-23).
+      .sort((x, y) => (x.daysToAct ?? x.daysLeft) - (y.daysToAct ?? y.daysLeft))[0] ?? null;
   }, [analyses]);
   // Maktkalenderns prognos — den höjning som är mest sannolik leder (hög > medel > låg).
   // Källbelagd, konfidensmärkt bedömning ur leverantörens prishistorik (bibelns nya regel 4).
@@ -582,11 +539,11 @@ export default function Portfolio() {
       .filter((f) => f && typeof f === 'object' && f.title && f.category !== roomMovement?.category)
       .sort((x, y) => (rank[x.confidence] ?? 3) - (rank[y.confidence] ?? 3))[0] ?? null;
   }, [forecasts, roomMovement]);
-  const totalSaving  = suppliers.reduce((s, g) => s + (g.latest.net_saving ?? 0), 0);
-  const arvoScore    = computeArvoScore(suppliers);
-  const standing     = marketStanding(arvoScore);
+  const totalSaving  = rum?.totalSaving ?? 0;
+  const arvoScore    = rum?.score ?? null;
+  const standing     = rum?.standing ?? { pointer: null, label: null, niva: null, satt: false };
   const companyName  = companyFromEmail(apiEmail);
-  const switchables  = suppliers.filter((g) => g.latest.should_switch && (g.latest.net_saving ?? 0) > 0);
+  const antalByten   = rum?.switchables ?? 0;
 
   // Kohort-sanningen — featurera leverantören med störst gap mot vad bolag
   // hos samma leverantör betalar. Helt ur verklig cross-customer-data (≥3).
@@ -599,7 +556,7 @@ export default function Portfolio() {
       if (!mi || !median || !a.annual_cost) continue;
       const pct = Math.round(((a.annual_cost - median) / median) * 100);
       const cand = {
-        supplier: supplierName(a),
+        supplier: radNamn(a),
         cost: a.annual_cost, median, p25: mi.supplierP25, n: mi.supplierDataPoints, pct,
       };
       if (!best || pct > best.pct) best = cand;
@@ -621,7 +578,7 @@ export default function Portfolio() {
         // Per-enhet-jämförelse mot kunden ENDAST för relevant peer-data + samma leverantör.
         const customerUnit = (isPeer && pb.scope === 'supplier' && a.price_per_seat_monthly > 0) ? a.price_per_seat_monthly : null;
         const pct = customerUnit ? Math.round(((customerUnit - pb.median) / pb.median) * 100) : null;
-        return { ...pb, category: a.category, supplier: supplierName(a), customerUnit, pct, isPeer };
+        return { ...pb, category: a.category, supplier: radNamn(a), customerUnit, pct, isPeer };
       }
     }
     return null;
@@ -668,7 +625,7 @@ export default function Portfolio() {
     .map((g) => {
       const a = g.latest;
       const when = new Date(a.created_at); when.setMonth(when.getMonth() + 12);
-      return { id: a.id, supplier: supplierName(a), when, cost: a.annual_cost };
+      return { id: a.id, supplier: radNamn(a), when, cost: a.annual_cost };
     })
     .sort((x, y) => x.when - y.when), [suppliers]);
 
@@ -679,7 +636,8 @@ export default function Portfolio() {
 
   // Veckodomen — deterministisk ur verkligt läge. Avgörandet bor i lib/holdings.js (ren, testbar) —
   // regressionstestat efter grundarlärdomen 2026-06-30 (domen fick aldrig ljuga mot sitt eget bevis).
-  const { hasSwitchAction, hasFindingAction, acting } = computeActing({ switchablesCount: switchables.length, roomFinding });
+  const hasSwitchAction = rum?.hasSwitchAction === true;
+  const acting = rum?.acting === true;
   // Domens LÄGE, härlett EN gång ur registret (src/lib/domslut.js). Ytorna nedan FRÅGAR det i
   // stället för att var och en gissa om tillståndet är mätt — det var den gissningen som lät
   // «Allt är under kontroll» och «Era priser står sig» stå kvar när positionen var OMÄTT.
@@ -691,8 +649,8 @@ export default function Portfolio() {
   // heller (den skannar api/lib/agents, inte src/). Det var rumssonden som fällde det, på sin
   // första skarpa körning efter ändringen — och den kostade en [KUND]-textrad att laga med ett
   // [KUND]-haveri. Härledningen hör hemma efter sina beroenden, aldrig bredvid sitt ämne.
-  const domLage = domensLage({ acting, hasSwitchAction, standing });
-  const omatt = omattLage(domLage);
+  const domLage = rum?.lage ?? null;
+  const omatt = rum?.omatt === true;
 
   // Vaktens kvitton (arbetets kvitton) — vad maskinen GJORDE, byggt strikt ur verkligt rumsdata.
   // Inga mock-rader (det var Kontoret-prototypens synd): varje rad är sann eller utelämnas.
@@ -725,7 +683,7 @@ export default function Portfolio() {
       // «Vägde N fakturor mot verifierat publikt listpris» räknade varje auto-rad — även de vi
       // tog emot men aldrig kunde prissätta. Kvittot är arbetets bevis; det får inte påstå ett
       // arbete vi inte utfört (regel 9). Talet är nu detsamma som rubriken ovanför.
-      const _vagda = roomCounts({ autoAnalyses, watched: watched ?? [] }).prissatta;
+      const _vagda = counts.prissatta;
       rows.push({ tag: 'Analys', what: <>Vägde <b>{_vagda} {plural(_vagda, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris{latestDate ? <> · senast {latestDate}</> : null}{slutpunkt(latestDate)}</> });
     }
     if (featured) {
@@ -738,10 +696,14 @@ export default function Portfolio() {
       rows.push({ tag: 'Prognos', what: <>Köade ett motdrag inför en trolig höjning: <b>{roomForecast.title}</b>.</> });
     }
     if (roomClock) {
-      rows.push({ tag: 'Klocka', what: <>Bevakar avtalsklockan — <b>{roomClock.daysLeft} dagar</b> kvar på bindningen, agerar i fönstret.</> });
+      // Kvittot säger vad klockan säger. Här stod «N dagar kvar på bindningen, agerar i fönstret» —
+      // räknat mot SLUTDATUM medan kortet ovanför visade dagarna till sista uppsägningsdag.
+      rows.push({ tag: 'Klocka', what: roomClock.daysToAct != null
+        ? <>Bevakar avtalsklockan — <b>{roomClock.daysToAct} {plural(roomClock.daysToAct, 'dag', 'dagar')}</b> till sista uppsägningsdag.</>
+        : <>Bevakar avtalsklockan — <b>{roomClock.daysLeft} {plural(roomClock.daysLeft, 'dag', 'dagar')}</b> kvar av avtalet.</> });
     }
     return rows;
-  }, [suppliers.length, autoAnalyses.length, latestDate, vakt, featured, roomMovement, roomForecast, roomClock]);
+  }, [suppliers.length, autoAnalyses.length, counts.prissatta, latestDate, vakt, featured, roomMovement, roomForecast, roomClock]);
   // Rubriken HÅLLER MED mätaren (samma källa: standing): leder med var ni står sammantaget,
   // med de N avtalen som den fokuserade möjligheten — aldrig en motsägelse mot gaugen nedan.
   // ── RUBRIKEN HÖLL INTE MED MÄTAREN, TROTS ATT KOMMENTAREN INTYGADE DET (2026-08-21) ────────
@@ -762,70 +724,81 @@ export default function Portfolio() {
   // sa «Vi jämförde 0 fakturor mot verifierat publikt listpris … ni behöver inte göra något». Varje
   // del sann om sin del (prispositionen var omätt; nivåskillnaden är en ANNAN mätning), helheten
   // falsk — helhetskravet 15 aug. Domen läser nu samma lista som renderar korten. RS-10.
-  const nivaer = roomRattstorlek.length;
+  const nivaer = rum?.nivaer ?? 0;
   const nivaMening = nivaer > 0
     ? <> Men <b>{nivaer} {plural(nivaer, 'avtal', 'avtal')}</b> ligger på en högre nivå än den under — listprisskillnaden
         står i {nivaer === 1 ? 'kortet' : 'korten'} ovan och gäller om er användning ryms i den lägre nivån.
         Det är ert beslut, inte vårt antagande.</>
     : null;
-  const verdictHead = !acting
-    ? (!standing.satt
-        ? (nivaer > 0
-            ? <>Inget byte att lägga fram — men <em>{nivaer} {plural(nivaer, 'avtal', 'avtal')} kan gå ner en nivå.</em></>
-            : <>Vi vaktar era avtal — men <em>er position mot listpris kunde inte mätas</em> i dag.</>)
-        : standing.niva === 'battre'
-          ? <>Håll kursen. Era priser <em>står sig mot verifierat listpris.</em></>
-          : standing.niva === 'i-niva'
-            ? <>Ni ligger <em>i nivå med verifierat listpris</em> — inget byte att lägga fram i dag.</>
-            : <>Ni betalar <em>mer än verifierat listpris</em> — men inget avtal bär ett byte vi kan belägga i dag.</>)
-    : hasSwitchAction
-      ? (standing.niva === 'battre'
-          ? <>Sammantaget står ni <em>starkt</em> — men {switchables.length} avtal kostar mer än de borde.</>
-          : standing.niva === 'i-niva'
-            ? <>Ni ligger <em>i nivå</em> med verifierat listpris — {switchables.length} avtal kan skärpas.</>
-            : <>Ni betalar <em>mer än listpris</em> — {switchables.length} avtal drar mest.</>)
-      // SYSKONFALLET, funnet i MOBILSKÄRMDUMPEN efter att brödtexten redan fixats (2026-08-24):
-      // «Era avtal står sig» är ett positivt PRISpåstående — och stod två rader ovanför meningen
-      // som just gjorts ärlig («vi har ännu inget verifierat jämförelsepris ... därför hävdar vi
-      // ingenting om er prisnivå»). Jag lagade verdictWork och missade verdictHead i samma
-      // rendering. Utan jämförelse säger rubriken bara vad vi FANN, aldrig hur priset står sig.
-      : counts.prissatta > 0
-        ? <>Era avtal står sig — men vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda.</>
-        : <>Vi fångade <em>{fmtNum(roomFinding.annualImpact)} kr/år</em> värt att åtgärda på era fakturor.</>;
-  const verdictWork = !acting
-    ? (standing.satt && standing.niva === 'samre'
-        ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
-            Ni ligger över golvet, men vi har inget bytesmål vi kan belägga — och vi lägger aldrig fram
-            en besparing vi inte kan räkna hem. Vi bevakar och hör av oss så snart ett mål går att styrka.{nivaMening}</>
-        : nivaer > 0
-          ? <>{counts.prissatta > 0
-                ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.</>
-                : <>Er prisposition mot listpris kunde inte mätas i dag.</>}
-              {' '}Inget leverantörsbyte rekommenderas.{nivaMening}</>
-          : <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
-            Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>)
-    : hasSwitchAction
-      ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
-          <b> {fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet — det
-          största bytet tar två minuter att signera. Övriga avtal har vi inget byte att lägga fram
-          för i dag.</>
-      // ── «PRISERNA STÅR SIG» KRÄVER ATT NÅGOT FAKTISKT JÄMFÖRTS (2026-08-24, live-granskningen) ──
-      // Raden löd ovillkorligt «Vi jämförde {prissatta} fakturor mot verifierat publikt listpris —
-      // priserna står sig». Med prissatta = 0 blev meningen självmotsägande i sig själv: noll
-      // jämförelser bär inget prispåstående. Och rakt under stod scoren och sa motsatsen, ärligt:
-      // «Vi har inget verifierat jämförelsepris för era kategorier ännu ... ett tal utan mätning är
-      // värre än inget tal», med vaktens kvitto «Vägde 0 fakturor».
-      //
-      // Lägesregistret (src/lib/domslut.js) deklarerar redan `fynd: positivtPrispastaende: false`.
-      // Registret och texten var oense — precis den blindfläck domslut.js själv skrev ut: «modulen
-      // dömer LÄGET, inte den slutliga svenskan». Här stängs den för det läge som faktiskt bar den.
-      : counts.prissatta > 0
-        ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris — priserna står sig.
-            Men i underlaget vi kunde läsa fångade vi en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
-            se vad domen bygger på i fyndet ovan.</>
-        : <>Vi har ännu <b>inget verifierat jämförelsepris</b> för det ni själva betalar — därför hävdar vi
-            ingenting om er prisnivå. Men i underlaget vi kunde läsa fångade vi en kostnad
-            värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> — se vad domen bygger på i fyndet ovan.</>;
+  const jamforde = counts.prissatta > 0
+    ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris. </>
+    : null;
+  const fyndKr = <b>{fmtNum(roomFinding?.annualImpact)} kr/år</b>;
+  // ══ DOMTEXT — EN TEXT PER LÄGE, ALDRIG EN GREN PÅ RÅDATA (Lägesregistret 2026-09-23) ════════
+  // Läget kommer från API:t (`rum.lage`, lib/lagesregister.js DOMLAGEN). Här stod två kapslade
+  // ternärer per rubrik som läste `standing`, `acting` och `counts` var för sig. Mätt i översynen:
+  // omätt läge gav «Vi jämförde 0 fakturor … ni behöver inte göra något», `byte_omatt` gav «Ni betalar
+  // mer än listpris» utan mätning, och `fynd` sa «Era avtal står sig» fast läget deklarerar att det
+  // inte får säga något gott om priset. LR-03 kräver att tabellen täcker exakt registrets lägen.
+  const DOMTEXT = {
+    lugn_battre: {
+      h1: 'Allt är under kontroll.',
+      head: <>Håll kursen. Era priser <em>står sig mot verifierat listpris.</em></>,
+      work: <>{jamforde}Inget byte rekommenderas i dag.{nivaMening ?? ' Vi hör av oss om läget förändras — ni behöver inte göra något.'}</>,
+    },
+    lugn_i_niva: {
+      // Registret: `lugn_i_niva` gör inget positivt påstående. Den gamla hjälterubriken ärvdes från en
+      // gren som bara skilde omätt/sämre från allt annat, och berömde därför läget — fångat av LR-04.
+      h1: 'Vi vaktar era avtal.',
+      head: <>Ni ligger <em>i nivå med verifierat listpris</em> — inget byte att lägga fram i dag.</>,
+      work: <>{jamforde}Inget byte rekommenderas i dag.{nivaMening ?? ' Vi hör av oss om läget förändras.'}</>,
+    },
+    lugn_over_golvet: {
+      h1: 'Vi vaktar era avtal.',
+      head: <>Ni betalar <em>mer än verifierat listpris</em> — men inget avtal bär ett byte vi kan belägga i dag.</>,
+      work: <>{jamforde}Ni ligger över golvet, men vi har inget bytesmål vi kan belägga — och vi lägger aldrig fram
+            en besparing vi inte kan räkna hem. Vi bevakar och hör av oss så snart ett mål går att styrka.{nivaMening}</>,
+    },
+    lugn_omatt: {
+      h1: 'Vi vaktar era avtal.',
+      head: nivaer > 0
+        ? <>Inget byte att lägga fram — men <em>{nivaer} {plural(nivaer, 'avtal', 'avtal')} kan gå ner en nivå.</em></>
+        : <>Vi vaktar era avtal — men <em>er position mot listpris kunde inte mätas</em> i dag.</>,
+      work: <>Vi har ännu <b>inget verifierat jämförelsepris</b> för det ni själva betalar — därför hävdar vi
+            ingenting om er prisnivå.{nivaMening ?? ' Vi bevakar avtalen och hör av oss så snart ett mål går att styrka.'}</>,
+    },
+    byte_battre: {
+      h1: 'Ett par drag väntar på er.',
+      head: <>Sammantaget står ni <em>starkt</em> — men {antalByten} avtal kostar mer än de borde.</>,
+      work: null,
+    },
+    byte_i_niva: {
+      h1: 'Ett par drag väntar på er.',
+      head: <>Ni ligger <em>i nivå</em> med verifierat listpris — {antalByten} avtal kan skärpas.</>,
+      work: null,
+    },
+    byte_samre: {
+      h1: 'Ett par drag väntar på er.',
+      head: <>Ni betalar <em>mer än listpris</em> — {antalByten} avtal drar mest.</>,
+      work: null,
+    },
+    byte_omatt: {
+      h1: 'Ett par drag väntar på er.',
+      head: <><em>{antalByten} avtal kan skärpas</em> mot verifierat listpris.</>,
+      work: null,
+    },
+    fynd: {
+      h1: 'Ett par drag väntar på er.',
+      head: <>Vi fångade <em>{fmtNum(roomFinding?.annualImpact)} kr/år</em> värt att åtgärda på era fakturor.</>,
+      work: <>I underlaget vi kunde läsa fångade vi en kostnad värd {fyndKr} — se vad domen bygger på i
+            fyndet ovan. Den säger ingenting om era övriga priser.</>,
+    },
+  };
+  const bytesWork = <>{jamforde}<b>{fmtNum(totalSaving)} kr/år</b> i möjlig nettobesparing ligger på bordet. Övriga
+    avtal har vi inget byte att lägga fram för i dag.</>;
+  const domText = DOMTEXT[domLage] ?? null;
+  const verdictHead = domText?.head ?? null;
+  const verdictWork = domText?.work ?? (hasSwitchAction ? bytesWork : null);
 
   return (
     <Page>
@@ -900,9 +873,7 @@ export default function Portfolio() {
                     vy som översatte «inget byte att lägga fram» till «ert pris är bra» (2026-08-21).
                     Vid samre säger vi vad vi FAKTISKT gör (vi vaktar) i stället för att uttala oss
                     om priset. Ett neutralt sant påstående slår ett lugnande falskt. */}
-                <h1>{greeting}.<br />{acting
-                  ? 'Ett par drag väntar på er.'
-                  : (omatt || (standing.satt && standing.niva === 'samre') ? 'Vi vaktar era avtal.' : 'Allt är under kontroll.')}</h1>
+                <h1>{greeting}.<br />{domText?.h1 ?? 'Vi vaktar era avtal.'}</h1>
               </Ident>
 
               <Radar>
@@ -995,7 +966,11 @@ export default function Portfolio() {
                   ? <><span className="pct">Ur er egen faktura</span> · talet står på raden i fyndet ovan · inget marknadspris inblandat</>
                   : omatt
                     ? <><span className="pct">Inte mätt i dag</span> · vi har inget verifierat jämförelsepris för det ni själva betalar · vi hävdar ingenting om er prisnivå</>
-                    : <><span className="pct">Verifierat</span> · grundat på {counts.prissatta} {plural(counts.prissatta, 'prissatt faktura', 'prissatta fakturor')} · publika listpriser</>}
+                    : counts.prissatta > 0
+                      ? <><span className="pct">Verifierat</span> · grundat på {counts.prissatta} {plural(counts.prissatta, 'prissatt faktura', 'prissatta fakturor')} · publika listpriser</>
+                      // Mätt i översynen: med ett byte men utan prisunderlag stod «Verifierat · grundat på
+                      // 0 prissatta fakturor». Talet bär då bytesmålen — säg det, aldrig «0».
+                      : <><span className="pct">Verifierat</span> · grundat på era bytesmål · publika listpriser</>}
               </Confidence>
             </Verdict>
 
@@ -1030,8 +1005,8 @@ export default function Portfolio() {
                     ? <>Vi har inget verifierat jämförelsepris för det ni själva betalar ännu, så vi sätter ingen poäng.
                       <b> Ett tal utan mätning är värre än inget tal.</b> Så snart ert eget pris går att ställa
                       mot ett verifierat listpris räknas det fram — och ni ser exakt hur.</>
-                    : switchables.length > 0
-                    ? <>Sammanvägt {arvoScore >= 67 ? 'starkt' : arvoScore >= 45 ? 'godkänt' : 'svagt'} — men <b>{switchables.length} avtal kostar mer än verifierat listpris</b>. De ligger förberedda i innehavet nedan.</>
+                    : antalByten > 0
+                    ? <>Sammanvägt {standing.niva === 'battre' ? 'starkt' : standing.niva === 'i-niva' ? 'godkänt' : 'svagt'} — men <b>{antalByten} avtal kostar mer än verifierat listpris</b>. De ligger förberedda i innehavet nedan.</>
                     : standing.niva === 'battre'
                       ? <>Ni ligger <b>bättre än verifierat listpris</b>. Inget enskilt avtal sticker ut i dag.</>
                       : standing.niva === 'i-niva'
@@ -1063,16 +1038,20 @@ export default function Portfolio() {
                 </div>
                 <div className="tally-sub">
                   {hasSwitchAction
-                    ? <><b>{switchables.length} byte{switchables.length > 1 ? 'n' : ''} förberedda</b> · netto efter Arvos arvode (20% av första årets besparing). Från år två är hela besparingen er.</>
+                    ? <><b>{antalByten} byte{antalByten > 1 ? 'n' : ''} förberedda</b> · netto efter Arvos arvode (20% av första årets besparing). Från år två är hela besparingen er.</>
                     : acting
                       ? <>Inget leverantörsbyte krävs — kostnaden åtgärdas direkt mot fakturan. Se fyndet ovan.</>
                       : (omatt
                           ? <>Vi har inget verifierat jämförelsepris för det ni själva betalar än, så vi hävdar ingenting om
                               er prisnivå. Vi håller dem under uppsikt — och hör av oss så snart ett mål går att styrka.</>
-                          : standing.satt && standing.niva === 'samre'
+                          : domLage === 'lugn_over_golvet'
                             ? <>Ni ligger över verifierat listpris, men inget av avtalen bär ett byte vi kan belägga.
                                 Vi vaktar dem tills ett mål går att styrka.</>
-                            : <>Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.</>)}
+                            // `lugn_i_niva` fick förut berömmet nedan fast registret deklarerar att läget inte
+                            // gör något positivt prispåstående. Berömmet kräver `rum.berom` (LR-04).
+                            : rum?.berom
+                              ? <>Era priser står sig — inga byten på bordet just nu. Lugnet att ni ligger rätt är också en leverans.</>
+                              : <>Ni ligger i nivå med verifierat listpris — inga byten på bordet just nu.</>)}
                 </div>
               </Tally>
             </Grid>
@@ -1365,7 +1344,7 @@ export default function Portfolio() {
               </div>
               {suppliers.map((g) => {
                 const a = g.latest, meta = getCategoryMeta(a.category);
-                const score = supplierDiagScore(a), color = scoreColor(score);
+                const score = a.lage?.score ?? null, color = scoreColor(score);
                 const isOpen = expanded.has(a.id);
                 const saving = a.should_switch && (a.net_saving ?? 0) > 0;
                 return (
@@ -1376,7 +1355,7 @@ export default function Portfolio() {
                         <span className="v" style={{ color }}>{score ?? '—'}</span>
                       </RingWrap>
                       <div>
-                        <div className="h-name">{supplierName(a)}</div>
+                        <div className="h-name">{radNamn(a)}</div>
                         <div className="h-cat">
                           {meta.label} · {fmtDate(a.created_at)}
                           {a.invoice_number ? ` · faktura ${a.invoice_number}` : ''}
@@ -1394,27 +1373,10 @@ export default function Portfolio() {
                           Nu härleds den ur samma jämförelse kortet skriver ut. Utan underlag
                           påstår vi ingenting (regel 4: tystnad hellre än ett omdöme utan grund). */}
                       {(() => {
-                        // ovissNiva = vi vet vad kunden betalar och vad billigaste jämförbara
-                        // kostar, men inte om det är samma produkt. Då hävdar vi inget avstånd:
-                        // en E5-kund som betalar exakt listpris hade annars fått "+379 % över".
-                        const oviss = a.prisunderlag?.ovissNiva === true;
-                        const over = a.prisunderlag && !oviss && !a.prisunderlag.underGolv
-                          && a.prisunderlag.avstandPct > 15;
-                        const etikett = saving ? `+${fmtNum(a.net_saving)} kr/år`
-                          : a.route === 'monitoring' ? 'Avtalsbevakad'
-                          : over ? `${a.prisunderlag.avstandPct} % över lägsta pris`
-                          : oviss ? 'Nivå ej bekräftad'
-                          : a.prisunderlag ? 'Rätt prissatt'
-                          // ⚖️ TYSTNADENS SKÄL, om kategorin har ett. De offertprissatta och de
-                          // volymstyrda syntes förut bara som «Mottagen» — sant men intetsägande.
-                          // Försäkring bär sitt juridiska besked här: «Kräver särskilt tillstånd».
-                          : a.tystnad ? a.tystnad.rubrik
-                          : 'Mottagen';
-                        return (
-                          <div className={`h-badge ${saving ? 'save' : over ? 'over' : 'watch'}`}>
-                            {etikett}
-                          </div>
-                        );
+                        // Märket slås upp på radens läge (API:t) — sidan avgör aldrig själv om priset är
+                        // «rätt». 1–15 % över golvet märktes förut «Rätt prissatt» (mätt i översynen).
+                        const m = radMarke(a);
+                        return <div className={`h-badge ${m.ton}`}>{m.text}</div>;
                       })()}
                       <span className="h-chev"><Icon name="chevron-down" size={16} stroke={2} /></span>
                     </HoldHead>
@@ -1424,7 +1386,12 @@ export default function Portfolio() {
                         <div className="diag">
                           <div className="dbody">
                             <div className="dtop">Arvo bedömer</div>
-                            <div className="dtxt" dangerouslySetInnerHTML={{ __html: buildReasoning(a) }} />
+                            <div className="dtxt" dangerouslySetInnerHTML={{ __html: radMotivering(a) }} />
+                            {/* Radens egen avtalsklocka — motiveringen för ett bevakat avtal hänvisar hit, och rummets
+                                klockkort visar bara den som brådskar mest. */}
+                            {a.contractClock && (
+                              <FindingCard finding={a.contractClock} variant="dossier" eyebrow="Avtalsklockan" />
+                            )}
                             {a.tystnad && (
                               <div className="dtyst">
                                 <strong>{a.tystnad.rad}</strong>
@@ -1579,7 +1546,13 @@ export default function Portfolio() {
                             grundad bedömning). $known fyras nästan aldrig idag — avtalsdatum fångas
                             sällan vid extraktion; det är vakten som vet vad den inte vet. */}
                         {saving && (() => {
-                          const known = !!a.contract_end_date;
+                          // ⚠️ «Vi vet exakt när» krävde förut bara ett SLUTDATUM — också när uppsägningstiden var
+                          // okänd, alltså när vi inte vet sista dagen alls. Och «vi avfyrar bytet på dagen, i ert
+                          // namn» lovade en verkställighet Switch-rälsen (mode: 'stub') inte har. Nu läser kortet
+                          // klockans läge (lib/contract-clock.js) och lovar ingen mekanik som saknas.
+                          const k = a.contractClock ?? null;
+                          const sistaDagKand = k?.lage === 'fonster_oppet' || k?.lage === 'sista_dag_idag';
+                          const known = sistaDagKand;
                           const tgt = switchTargets[a.category];
                           return (
                             <SwitchVerdict $known={known}>
@@ -1589,17 +1562,18 @@ export default function Portfolio() {
                               </div>
                               <div className="sv-dom">
                                 {known
-                                  ? <>Ni kan byta — och vi vet <em>exakt när</em>.</>
+                                  ? <>Ni kan byta — sista dagen att säga upp är <em>{fmtDate(k.actByDate)}</em>.</>
                                   : <>En sak står mellan er och <em>{fmtNum(a.net_saving)} kr</em>: vad ert avtal säger.</>}
                               </div>
                               <p className="sv-support">
                                 {known
-                                  ? <>Ert {supplierName(a)}-avtal löper till <b>{fmtDate(a.contract_end_date)}</b> — vi avfyrar
-                                      bytet på dagen, i ert namn. Ni betalar <b>aldrig en dag dubbelt</b>, och vi flyttar er
-                                      <b> aldrig in i en avgift</b>.</>
-                                  : <>Vi ser besparingen tydligt — men inget bindningsdatum på er faktura. Skicka avtalet, så
-                                      <b> läser vi bindningstiden</b> och tajmar bytet så ni <b>aldrig betalar dubbelt</b> och
-                                      aldrig hamnar i en brytavgift.</>}
+                                  ? <>Ert {radNamn(a)}-avtal löper till <b>{fmtDate(k.endDate)}</b>. Säg upp senast
+                                      <b> {fmtDate(k.actByDate)}</b>, så betalar ni inte för två avtal samtidigt.</>
+                                  : k?.lage === 'uppsagning_okand'
+                                    ? <>Ert {radNamn(a)}-avtal löper till <b>{fmtDate(k.endDate)}</b>, men uppsägningstiden står inte
+                                        på fakturan. Skicka avtalet, så <b>läser vi den</b> och räknar fram sista dagen att säga upp.</>
+                                    : <>Vi ser besparingen tydligt — men inget bindningsdatum på er faktura. Skicka avtalet, så
+                                        <b> läser vi bindningstiden</b> och räknar fram när ni kan byta utan att betala dubbelt.</>}
                               </p>
 
                               <details className="sv-proof">
@@ -1708,12 +1682,12 @@ export default function Portfolio() {
                                   </p>
                                   {v.omVaktLarm ? (
                                     <p className="al-larm">
-                                      <b>Om-vakten larmar:</b> en faktura från {supplierName(a)} har landat efter
+                                      <b>Om-vakten larmar:</b> en faktura från {radNamn(a)} har landat efter
                                       utträdesdatumet — kontrollera att uppsägningen verkligen gick igenom.
                                     </p>
                                   ) : (
                                     <p className="al-motdrag">
-                                      <b>Om-vakten:</b> efter {fmtDate(c.currentPeriodEnd)} ska {supplierName(a)} försvinna
+                                      <b>Om-vakten:</b> efter {fmtDate(c.currentPeriodEnd)} ska {radNamn(a)} försvinna
                                       ur ert fakturaflöde — landar en faktura ändå larmar rummet.
                                     </p>
                                   )}
@@ -1730,7 +1704,7 @@ export default function Portfolio() {
                                     Nästa fönster <span className="al-date">{fmtDate(v.nastaFonster ?? c.deadline)}</span> · varnar igen då
                                   </div>
                                   <p className="al-falla">
-                                    Ni valde att behålla {supplierName(a)} <b>denna period · {fmtDate(v.kundStatus.registrerad)}</b>.
+                                    Ni valde att behålla {radNamn(a)} <b>denna period · {fmtDate(v.kundStatus.registrerad)}</b>.
                                     Larmet är tyst till nästa fönster — bevakningen fortsätter, och höjer leverantören
                                     priset hör ni av oss direkt.
                                   </p>
@@ -1965,7 +1939,7 @@ export default function Portfolio() {
                     (`beromsLage`, src/lib/domslut.js). RR-12. */}
                 {acting
                   ? <>I dag vaktar Arvo de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b> — varenda avtal ni har — och larmar er innan nästa höjning når er. Varje månad: ett brev med exakt vad som rört sig, och vad vi gjort åt det.</>
-                  : beromsLage(domLage)
+                  : rum?.berom
                     ? <>Era priser står sig i dag, och Arvo vaktar de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b>, så att inget avtal lämnas obevakat — och skickar varje månad ett brev med vad som rört sig.</>
                     : <>Arvo vaktar de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b>, så att inget avtal lämnas obevakat — och skickar varje månad ett brev med vad som rört sig.</>}
               </p>

@@ -115,6 +115,7 @@ import './triage-kategori.mjs';
 import './svarskontrakt.mjs';
 import './rattstorleksfynd.mjs';
 import './paminnelse.mjs';
+import './lagesregister.mjs';
 import './rumsrad.mjs';
 import './avvikelsevakten.mjs';
 import './prisbokscellen.mjs';

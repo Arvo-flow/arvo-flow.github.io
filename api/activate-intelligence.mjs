@@ -6,6 +6,7 @@
 
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
+import { diagnosEtikett } from '../lib/lagesregister.js';
 
 export const config = { maxDuration: 15 };
 
@@ -133,11 +134,16 @@ function buildWelcomeHtml(email, company) {
 
 // ── Post-analysis: full briefing email ────────────────────────────────────────
 
-function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSaving, arvoFee, reasoning, diagScore, diagLabel, diagInsight }) {
+export function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSaving, arvoFee, reasoning, diagScore, diagLabel, diagInsight }) {
   const dateStr = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
-  const dc      = diagColors(diagScore ?? 72);
-  const score   = diagScore ?? '–';
-  const label   = diagLabel ?? '–';
+  // ── ETIKETTEN SLÅS UPP I REGISTRET, INTE I KLIENTENS ANROP (Lägesregistret 2026-09-23) ──
+  // Här stod `diagColors(diagScore ?? 72)` — en omätt poäng fick en påhittad 72:as färg — och
+  // etiketten togs ur anropet. Mätt i översynen: mejlet sa «Kritisk 0 /100» om ett avtal vi aldrig
+  // jämfört. Nu: etiketten ur lib/lagesregister.js, och utan poäng neutral färg och «Inte mätt».
+  const matt    = diagScore != null && Number.isFinite(Number(diagScore));
+  const dc      = matt ? diagColors(Number(diagScore)) : { dot: '#9CA3AF', bg: '#F3F4F6', labelClr: '#4B5563' };
+  const score   = matt ? Number(diagScore) : '–';
+  const label   = matt ? diagnosEtikett(Number(diagScore)) : 'Inte mätt';
 
   return `<!DOCTYPE html>
 <html lang="sv">
@@ -269,7 +275,7 @@ export default async function handler(req, res) {
         VALUES
           (${email}, ${companyName}, ${supplier ?? null}, ${category ?? null},
            ${annualCost ?? null}, ${netSaving ?? null}, ${diagScore ?? null},
-           ${diagLabel ?? null}, ${source})
+           ${diagScore != null && Number.isFinite(Number(diagScore)) ? diagnosEtikett(Number(diagScore)) : null}, ${source})
         RETURNING id
       `;
       activationId = rows[0]?.id ?? null;
@@ -305,7 +311,7 @@ export default async function handler(req, res) {
         <b>E-post:</b> ${email}<br>
         <b>Bolag:</b> ${companyName ?? '–'}<br>
         <b>Kategori:</b> ${category ?? '–'}<br>
-        <b>Score:</b> ${diagScore ? `${diagScore}/100 (${diagLabel})` : '–'}<br>
+        <b>Score:</b> ${diagScore != null && Number.isFinite(Number(diagScore)) ? `${diagScore}/100 (${diagnosEtikett(Number(diagScore))})` : 'inte mätt'}<br>
         <b>Nettobesparing:</b> ${netSaving ? `+${fmt(netSaving)} kr/år` : '–'}<br>
         <b>K&auml;lla:</b> ${source}<br>
         <b>ID:</b> ${activationId ?? '–'}

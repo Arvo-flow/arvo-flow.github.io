@@ -19,7 +19,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { domensLage, beromsLage, omattLage, DOMLAGEN } from '../src/lib/domslut.js';
+import { domensLage, beromsLage, omattLage, DOMLAGEN } from '../lib/lagesregister.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const st = (niva) => (niva == null ? { satt: false, niva: null } : { satt: true, niva });
@@ -93,40 +93,32 @@ describe('DL · Domen kan inte berömma ett pris mätaren underkänner', () => {
   });
 });
 
-describe('DL-07 · Rummets fyra ytor är villkorade på mätaren', () => {
-  // Källtextvakt som komplement: de fyra ytor som ljög i skärmdumpen måste var och en läsa
-  // `standing`. Prövar inte svenskan — bara att grenen inte kan väljas utan mätaren.
+describe('DL-07 · Rummets fyra ytor väljer text per LÄGE, aldrig ur rådata', () => {
+  // ⚠️ OMSKRIVEN 2026-09-23 (Lägesregistret). Vakten krävde förut att varje yta läste `standing` i sin
+  // EGEN gren — ett försvar mot att en gren tog fel utgång. Grenarna finns inte längre: läget räknas i
+  // api-lagret (lib/lagesregister.js) och ytorna slår upp sin text i DOMTEXT per läge. Invarianten är
+  // densamma — rubrik, dom, hjälte och bevakningskort kan inte välja text utan läget — men den prövas
+  // nu där texten VÄLJS. LR-03 kräver att DOMTEXT täcker exakt registrets lägen.
   const kod = readFileSync(join(ROT, 'src', 'pages', 'Portfolio', 'index.js'), 'utf8');
-
-  // Vakten prövar EXAKT den gren som ljög — inte ett fönster runt den. Första versionen använde
-  // ett symmetriskt fönster på ±700 tecken och stod GRÖN när originalbuggen återinfördes:
-  // `standing` fanns i GRANNENS gren (hasSwitchAction-fallet ligger direkt efter). Grön på fel
-  // grund, i den vakt som byggdes mot precis den sjukdomen. Sabotaget avslöjade det.
-  const gren = (namn, fran, till) => {
-    const i = kod.indexOf(fran);
-    assert.ok(i > 0, `hittade inte ${namn}s startankare — vakten mäter fel objekt`);
-    const j = kod.indexOf(till, i + fran.length);
-    assert.ok(j > i, `hittade inte ${namn}s slutankare — grenen kan inte avgränsas`);
-    return kod.slice(i, j);
-  };
-  const kravVillkorad = (namn, block) => {
-    assert.match(block, /standing\.(satt|niva)/,
-      `${namn} väljer sin text utan att läsa mätaren. Det var precis så «Era priser står sig» ` +
-      'hamnade ovanför Arvo Score 15.');
-  };
-
-  test('veckodomens rubrik läser standing i sin EGNA gren', () =>
-    kravVillkorad('verdictHead', gren('verdictHead', 'const verdictHead = !acting', ': hasSwitchAction')));
-  test('veckodomens arbetsrad läser standing i sin EGNA gren', () =>
-    kravVillkorad('verdictWork', gren('verdictWork', 'const verdictWork = !acting', ': hasSwitchAction')));
-  test('hjälterubriken läser standing', () =>
-    kravVillkorad('H1', gren('H1', '<h1>{greeting}', '</h1>')));
-  test('bevakningskortet läser standing i grenen närmast texten', () => {
-    // Bakåt 340 tecken: villkoret står FÖRE texten (uppmätt avstånd 330), och fönstret är för smalt
-    // att nå grannens gren.
-    const i = kod.indexOf('inga byten på bordet just nu');
+  test('veckodomens rubrik och arbetsrad slås upp på läget', () => {
+    assert.match(kod, /const domText = DOMTEXT\[domLage\]/);
+    assert.match(kod, /const verdictHead = domText\?\.head/);
+    assert.match(kod, /const verdictWork = domText\?\.work/);
+    assert.doesNotMatch(kod, /const verdictHead = !acting|const verdictWork = !acting/, 'den gamla grenen på rådata lever kvar');
+  });
+  test('hjälterubriken slås upp på läget', () => {
+    const h1 = kod.slice(kod.indexOf('<h1>{greeting}'), kod.indexOf('</h1>', kod.indexOf('<h1>{greeting}')));
+    assert.ok(h1.length > 10, 'hittade inte hjälterubriken');
+    assert.match(h1, /domText\?\.h1/);
+  });
+  test('läget kommer från API:t, inte ur en egen härledning', () => {
+    assert.match(kod, /const domLage = rum\?\.lage/);
+    assert.doesNotMatch(kod, /domensLage\(|computeActing\(|roomCounts\(/, 'rummet räknar sitt läge själv igen');
+  });
+  test('bevakningskortets beröm kräver registrets besked om beröm', () => {
+    const i = kod.indexOf('inga byten på bordet just nu. Lugnet');
     assert.ok(i > 0, 'hittade inte bevakningskortet — vakten mäter fel objekt');
-    kravVillkorad('bevakning', kod.slice(Math.max(0, i - 340), i));
+    assert.match(kod.slice(Math.max(0, i - 400), i), /rum\?\.berom/, 'berömmet väljs utan registrets besked');
   });
 });
 
@@ -145,26 +137,18 @@ describe('DL-07 · Rummets fyra ytor är villkorade på mätaren', () => {
 // BLIND: vakten läser den ROUTADE sidans källtext. PortfolioJuli26 bär en snarlik mening men är
 // inte routad (grep: ingen referens utanför dess egen katalog) — död kod, uttalat.
 describe('DL · Ett prispåstående kräver en jämförelse (live-granskningen 2026-08-24)', () => {
-  test('DL-09 · «priserna står sig» är villkorat av att prissatta > 0', async () => {
+  test('DL-09 · fyndläget säger aldrig att priserna står sig', async () => {
+    // ⚠️ OMSKRIVEN 2026-09-23. Förut: «priserna står sig» villkorat av prissatta > 0. Men läget `fynd`
+    // deklarerar positivtPrispastaende: false OAVSETT antal prissatta — och grenen sa «Era avtal står
+    // sig» så snart en enda faktura var prissatt, också när den låg över golvet (mätt i översynen).
+    // Meningarna är strukna ur rummet; fyndläget beskriver fyndet och inget annat.
     const { readFileSync } = await import('node:fs');
     const kalla = readFileSync(new URL('../src/pages/Portfolio/index.js', import.meta.url), 'utf8');
     const kod = kalla.split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
-
-    const i = kod.indexOf('priserna står sig');
-    assert.notEqual(i, -1, 'hittade inte meningen — testet får inte bli grönt av tomhet');
-    // Villkoret måste stå MELLAN grenens början och påståendet, inte någon annanstans i filen.
-    const fore = kod.slice(Math.max(0, i - 400), i);
-    assert.match(fore, /counts\.prissatta > 0/,
-      'ett positivt prispåstående får aldrig renderas när noll fakturor jämförts');
-
-    // SYSKONFALLET: rubriken bär samma påstående två rader upp. Jag fixade brödtexten och
-    // missade rubriken — funnet först i mobilskärmdumpen. Båda måste villkoras.
-    const j = kod.indexOf('Era avtal står sig');
-    assert.notEqual(j, -1, 'hittade inte rubriken');
-    assert.match(kod.slice(Math.max(0, j - 400), j), /counts\.prissatta > 0/,
-      'rubriken «Era avtal står sig» är ett PRISpåstående och kräver samma villkor som brödtexten');
-
-    // Och nollgrenen måste finnas och vara ärlig.
+    const fynd = kod.slice(kod.indexOf('    fynd: {'), kod.indexOf('  };', kod.indexOf('    fynd: {')));
+    assert.ok(fynd.length > 50, 'hittade inte fyndlägets text — testet får inte bli grönt av tomhet');
+    assert.doesNotMatch(fynd, /står sig/, 'fyndläget fäller ett prispåstående registret förbjuder');
+    assert.doesNotMatch(kod, /Era avtal står sig|priserna står sig/);
     assert.match(kod, /inget verifierat jämförelsepris/,
       'utan jämförelse ska rummet säga att det inte hävdar något — inte tiga om att det inte vet');
   });
@@ -202,31 +186,19 @@ describe('DL-10/11 · omätt läge får aldrig bli ett positivt påstående', ()
     assert.equal(omattLage('lugn_i_niva'), false);
   });
 
-  test('DL-11 · rummets två ytor frågar registret i stället för att gissa', () => {
-    // KÄLLTEXTVAKT, uttalat: den ser att grenen är trevärd, aldrig vad den renderar. Beteendet
-    // bevisas av skärmdumpen (ops/rum-prisboken/) — de två mätningarna kompletterar varandra.
+  test('DL-11 · rummets ytor läser det omätta läget ur API:t i stället för att gissa', () => {
+    // ⚠️ OMSKRIVEN 2026-09-23 (Lägesregistret): registret bor i lib/ och läget kommer i `data.rum`.
     const rummet = readFileSync(join(ROT, 'src/pages/Portfolio/index.js'), 'utf8');
-    // Egenskapen är att BÅDA namnen importeras ur registret — inte att importraden har exakt den
-    // formen. Den fällde 2026-09-23 när `beromsLage` lades till för att stänga ett FJÄRDE
-    // «Era priser står sig» (pitchen längst ner), alltså när rummet frågade registret MER.
-    // En vakt som larmar på rätt beteende blir avstängd (SK-08).
-    const importen = rummet.match(/import \{([^}]*)\} from '\.\.\/\.\.\/lib\/domslut'/);
-    assert.ok(importen, 'rummet måste importera registret');
-    for (const namn of ['domensLage', 'omattLage']) {
-      assert.match(importen[1], new RegExp(`\\b${namn}\\b`), `rummet importerar inte ${namn}`);
-    }
-    assert.match(rummet, /const omatt\s+= omattLage\(domLage\)/, 'läget härleds EN gång');
-    // Rubriken och bevakningskortet — båda måste bära det omätta villkoret.
-    assert.match(rummet, /omatt \|\| \(standing\.satt && standing\.niva === 'samre'\).*Vi vaktar era avtal/s,
-      'rubriken får inte säga «allt är under kontroll» när positionen inte gick att mäta');
-    // ⚠️ MITT FÖRSTA FÖNSTER VAR EN GISSNING, INTE EN MÄTNING, och det fällde på fel grund:
-    // jag skar från «Avtal under bevakning» (offset 58832) till «Vaktens kvitton» — som ligger
-    // FÖRE kortet i filen (36133). Utsnittet blev tomt, alltså grönt-av-tomhet i vardande.
-    // Ankaret är nu komponenten själv, och att det finns EXAKT ett <Tally> mäts i testet.
+    assert.match(rummet, /const omatt = rum\?\.omatt === true/, 'läget härleds EN gång, ur API:t');
+    // Hjälten i det omätta läget: aldrig «Allt är under kontroll».
+    const omattBlock = rummet.slice(rummet.indexOf('    lugn_omatt: {'), rummet.indexOf('    byte_battre: {'));
+    assert.ok(omattBlock.length > 100, 'hittade inte det omätta lägets text');
+    assert.match(omattBlock, /h1: 'Vi vaktar era avtal\.'/);
+    assert.doesNotMatch(omattBlock, /under kontroll|står sig|behöver inte göra något|Vi jämförde/,
+      'det omätta läget lånar ett påstående det inte kan bära');
     assert.equal((rummet.match(/<Tally>/g) ?? []).length, 1, 'flera <Tally> — utsnittet nedan vaktar fel kort');
     const tally = rummet.slice(rummet.indexOf('<Tally>'), rummet.indexOf('</Tally>'));
     assert.ok(tally.length > 500, `utsnittet är ${tally.length} tecken — en vakt kan inte bli grön av tomhet`);
-    assert.match(tally, /omatt/, 'bevakningskortet måste fråga om läget är omätt');
     const positiv = tally.indexOf('Era priser står sig');
     const omattGren = tally.indexOf('omatt');
     assert.ok(omattGren >= 0 && omattGren < positiv,

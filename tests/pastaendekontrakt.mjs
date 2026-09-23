@@ -23,9 +23,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bedomPastaendekontrakt } from '../src/lib/pastaendekontrakt.js';
-import { DOMLAGEN, domensLage } from '../src/lib/domslut.js';
+import { DOMLAGEN, domensLage, RADLAGEN, radLage } from '../lib/lagesregister.js';
+import { AVTALSLAGEN, avtalsklocka } from '../lib/contract-clock.js';
 import { BRIEFINGLAGEN, briefingLage } from '../src/lib/briefinglage.js';
-import { DIAGNOSLAGEN, diagnosLage } from '../src/lib/diagnos.js';
+import { DIAGNOSLAGEN, diagnosLage } from '../lib/lagesregister.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -42,6 +43,23 @@ const MODULER = [
     namn: 'briefinglage (månadsbrevet)', lagen: BRIEFINGLAGEN,
     natt: [...new Set([0, 3].flatMap((n) => [0, 84_000].flatMap((kr) =>
       [true, false].map((a) => briefingLage({ antalInsikter: n, sparbelopp: kr, harAgerat: a })))))],
+  },
+  {
+    // Lägesregistret (2026-09-23): radens läge i rummet — det som förut valdes i ytan.
+    namn: 'radlage (rummets rader)', lagen: RADLAGEN,
+    natt: [...new Set([
+      radLage({ route: 'review_queue' }), radLage({ route: 'monitoring' }),
+      radLage({ route: 'auto', should_switch: true, net_saving: 100, annual_cost: 1000, suggested_annual_cost: 800 }),
+      ...[{ ovissNiva: true }, { underGolv: false, avstandPct: 40 }, { underGolv: false, avstandPct: 8 }, { underGolv: true, avstandPct: -5 }]
+        .map((u) => radLage({ route: 'auto', prisunderlag: u })),
+      radLage({ route: 'auto' }),
+    ].map((l) => l.kod))],
+  },
+  {
+    // Avtalsklockan (2026-09-23): fem lägen, varav ett okänt.
+    namn: 'avtalsklocka (fakturaklockan)', lagen: AVTALSLAGEN,
+    natt: [...new Set(['2027-01-01', '2026-10-10', '2026-10-23', null].flatMap((slut) =>
+      [{ uppsagningstidDagar: 30 }, null].map((u) => avtalsklocka({ servicePeriodEnd: slut, uppsagning: u, today: new Date('2026-09-23T10:00:00Z') }).lage)))],
   },
   {
     namn: 'diagnos (analyssidans score)', lagen: DIAGNOSLAGEN,
@@ -90,9 +108,12 @@ describe('PK · Varje kundytas lägen svarar i samma form', () => {
     // Utan detta växer kodbasen förbi vakten: en ny yta med ett eget lägesregister skulle aldrig
     // prövas, och vakten vore grön av tomhet. Samma krav som sondvaktens «läser faktiskt några
     // sonder» och prisauditens «odeklarerad vakt».
-    const kandidater = readdirSync(join(ROT, 'src', 'lib'))
+    // Lägesregistret (2026-09-23) flyttade registren till lib/ — vakten söker i BÅDA, och räknar
+    // REGISTER (varje `export const …LAGEN`), inte filer: lib/lagesregister.js bär tre.
+    const kandidater = ['src/lib', 'lib'].flatMap((dir) => readdirSync(join(ROT, dir))
       .filter((f) => f.endsWith('.js'))
-      .filter((f) => /export const [A-ZÅÄÖ_]+LAGEN\b/.test(readFileSync(join(ROT, 'src', 'lib', f), 'utf8')));
+      .flatMap((f) => [...readFileSync(join(ROT, dir, f), 'utf8').matchAll(/export const ([A-ZÅÄÖ_]+LAGEN)\b/g)]
+        .map((m) => `${dir}/${f}:${m[1]}`)));
     const registrerade = MODULER.map((m) => m.lagen);
     assert.ok(kandidater.length >= 2, `hittade bara ${kandidater.length} lägesmoduler — mönstret matchar inte längre`);
     assert.equal(kandidater.length, registrerade.length,

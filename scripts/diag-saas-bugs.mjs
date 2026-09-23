@@ -8,7 +8,7 @@ import { extractInvoice, routeExtraction } from '../agents/test-invoice/extract.
 import { categorize } from '../agents/categorizer/categorize.js';
 import { recommend } from '../agents/recommender/recommend.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
-import { supplierDiagScore } from '../src/lib/holdings.js';
+import { radScore as supplierDiagScore } from '../lib/lagesregister.js';
 
 const pdfs = process.argv.slice(2);
 if (!pdfs.length) { console.error('usage: node scripts/diag-saas-bugs.mjs <pdf...>'); process.exit(1); }

@@ -7,6 +7,18 @@
 
 import { Resend } from 'resend';
 import { createRequire } from 'module';
+import { fakturaLage } from '../lib/lagesregister.js';
+import { RATTSTORLEK_FALT } from '../lib/rattstorleksfynd.js';
+
+// ── LÄGET AVGÖR LAYOUTEN (Lägesregistret 2026-09-23) ─────────────────────────────────────────
+// Mätt i översynen: ett resultat UTAN byte gav «Din nettobesparing +0 kr · 12 000 kr → 0 kr/år ·
+// Arvo-pris 0 kr/år» under rubriken «Varför vi tror du kan spara». Knappen visas för varje resultat.
+// Servern räknar nu fakturans läge själv ur det mottagna resultatet (samma registerfunktion som
+// API:t) och visar besparingsblocket ENDAST när ett byte finns. SA-01..03.
+export function mejlLage(result) {
+  const lage = fakturaLage(result, { rattstorlekFalt: RATTSTORLEK_FALT });
+  return { ...lage, harByte: lage.harByte && Number(result?.recommendation?.suggestedAnnualCost) > 0 };
+}
 
 const require = createRequire(import.meta.url);
 const PDFDocument = require('pdfkit');
@@ -117,7 +129,8 @@ function drawLogoMark(doc, ox, oy, size) {
 //  - Only the net-saving row and savings block carry brand color
 //  - Logo mark and wordmark share exact vertical center
 
-function generatePdf(result) {
+export function generatePdf(result) {
+  const { harByte, matt } = mejlLage(result);
   return new Promise((resolve, reject) => {
     const { extracted: ex, categorized: cat, recommendation: r } = result;
     const suppDisplay = displayedSupplier(cat, r);
@@ -176,17 +189,27 @@ function generatePdf(result) {
     blkGrad.stop(1, T.gradBot);
     doc.rect(0, y, PW, BLK_H).fill(blkGrad);
 
-    doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.60)')
-      .text('DIN NETTOBESPARING', PAD, y + 16, { characterSpacing: 1.4 });
-    doc.fontSize(40).font('Helvetica-Bold').fillColor(T.surface)
-      .text('+' + formatKr(r.netSaving), PAD, y + 30);
-
-    const costLine =
-      formatKr(ex.annualCost) + ' → ' + formatKr(r.suggestedAnnualCost) + ' / år' +
-      (suppDisplay ? '  hos  ' + suppDisplay : '') +
-      '   ·   Arvos besparingsarvode ' + formatKr(r.arvoFee) + ' (20 %)';
-    doc.fontSize(9.5).font('Helvetica').fillColor('rgba(255,255,255,0.78)')
-      .text(costLine, PAD, y + 78, { width: W });
+    if (harByte) {
+      doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.60)')
+        .text('DIN NETTOBESPARING', PAD, y + 16, { characterSpacing: 1.4 });
+      doc.fontSize(40).font('Helvetica-Bold').fillColor(T.surface)
+        .text('+' + formatKr(r.netSaving), PAD, y + 30);
+      const costLine =
+        formatKr(ex.annualCost) + ' → ' + formatKr(r.suggestedAnnualCost) + ' / år' +
+        (suppDisplay ? '  hos  ' + suppDisplay : '') +
+        '   ·   Arvos besparingsarvode ' + formatKr(r.arvoFee) + ' (20 %)';
+      doc.fontSize(9.5).font('Helvetica').fillColor('rgba(255,255,255,0.78)')
+        .text(costLine, PAD, y + 78, { width: W });
+    } else {
+      // Inget byte: ingen «+0 kr», inget «Arvo-pris 0 kr/år» (mätt i översynen, SA-02).
+      doc.fontSize(8).font('Helvetica-Bold').fillColor('rgba(255,255,255,0.60)')
+        .text('INGET BYTE ATT REKOMMENDERA', PAD, y + 16, { characterSpacing: 1.4 });
+      doc.fontSize(12).font('Helvetica').fillColor(T.surface)
+        .text(matt
+          ? 'Vi jämförde er faktura mot verifierat publikt listpris och hittade inget byte vi kan belägga.'
+          : 'Vi har inget verifierat jämförelsepris för den här fakturan i dag, så vi säger inget om er prisnivå.',
+          PAD, y + 36, { width: W });
+    }
 
     y += BLK_H + 28;
 
@@ -210,20 +233,22 @@ function generatePdf(result) {
     row('Nuvarande leverantör', ex.supplier);
     row('Du betalar idag',      formatKr(ex.annualCost) + ' / år');
     row('Fakturadatum',         ex.date ?? '–');
-    if (suppDisplay) row('Föreslagen leverantör', suppDisplay, { bold: true });
-    row('Arvo-pris',            formatKr(r.suggestedAnnualCost) + ' / år', { bold: true });
-    row('Bruttobesparing',      formatKr(r.grossSaving));
-    row('Arvos besparingsarvode (20 %)', formatKr(r.arvoFee));
+    if (harByte) {
+      if (suppDisplay) row('Föreslagen leverantör', suppDisplay, { bold: true });
+      row('Arvo-pris',            formatKr(r.suggestedAnnualCost) + ' / år', { bold: true });
+      row('Bruttobesparing',      formatKr(r.grossSaving));
+      row('Arvos besparingsarvode (20 %)', formatKr(r.arvoFee));
 
-    // Net saving row — brand soft background, left accent line
-    doc.moveTo(LC, y).lineTo(PW - LC, y).strokeColor(T.border).lineWidth(0.3).stroke();
-    doc.rect(LC, y, W, ROW_H).fill(T.brandSoft);
-    doc.rect(LC, y, 2.5, ROW_H).fill(T.brand);
-    doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brandInk)
-      .text('DIN NETTOBESPARING', LC + 8, y + 8, { characterSpacing: 0.5 });
-    doc.fontSize(12).font('Helvetica-Bold').fillColor(T.brand)
-      .text('+' + formatKr(r.netSaving), RC, y + 7);
-    y += ROW_H;
+      // Net saving row — brand soft background, left accent line
+      doc.moveTo(LC, y).lineTo(PW - LC, y).strokeColor(T.border).lineWidth(0.3).stroke();
+      doc.rect(LC, y, W, ROW_H).fill(T.brandSoft);
+      doc.rect(LC, y, 2.5, ROW_H).fill(T.brand);
+      doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brandInk)
+        .text('DIN NETTOBESPARING', LC + 8, y + 8, { characterSpacing: 0.5 });
+      doc.fontSize(12).font('Helvetica-Bold').fillColor(T.brand)
+        .text('+' + formatKr(r.netSaving), RC, y + 7);
+      y += ROW_H;
+    }
     // Bottom border of table
     doc.moveTo(LC, y).lineTo(PW - LC, y).strokeColor(T.border).lineWidth(0.3).stroke();
 
@@ -246,35 +271,21 @@ function generatePdf(result) {
     // ── Reasoning ─────────────────────────────────────────────────────────────
     y += 24;
     doc.fontSize(8).font('Helvetica-Bold').fillColor(T.brand)
-      .text('VARFÖR VI TROR DU KAN SPARA', PAD, y, { characterSpacing: 0.9 });
+      .text(harByte ? 'VARFÖR VI TROR DU KAN SPARA' : 'VÅR BEDÖMNING', PAD, y, { characterSpacing: 0.9 });
     y += 14;
     // Reserve space below reasoning for FOMO box + CTA line
-    const FOMO_H  = 54;
     const CTA_H   = 28;
-    const reasoningMaxH = Math.max(20, FOOTER_TOP - 24 - y - FOMO_H - 12 - CTA_H - 12);
+    const reasoningMaxH = Math.max(20, FOOTER_TOP - 24 - y - CTA_H - 12);
     doc.fontSize(10.5).font('Helvetica').fillColor(T.inkSoft)
       .text(r.reasoning ?? '', PAD, y, { width: W, lineGap: 3, height: reasoningMaxH });
     y += reasoningMaxH;
 
-    // ── FOMO box ──────────────────────────────────────────────────────────────
-    y += 12;
-    doc.rect(LC, y, W, FOMO_H).fill(T.brandSoft);
-    doc.rect(LC, y, 2.5, FOMO_H).fill(T.brand);
-    doc.fontSize(7.5).font('Helvetica-Bold').fillColor(T.brand)
-      .text('TÄCKNING AV ANALYSEN', LC + 10, y + 9, { characterSpacing: 0.8 });
-    doc.fontSize(9).font('Helvetica').fillColor(T.inkSoft)
-      .text(
-        'Denna analys täcker 1 av 8 möjliga kostnadsområden. En fullständig Arvo-skanning identifierar i snitt 12–18 % i dolda överpriser över hela reskontran.',
-        LC + 10, y + 23, { width: W - 20, lineGap: 2 }
-      );
-    y += FOMO_H;
+    // FOMO-rutan («i snitt 12–18 % i dolda överpriser») är struken — en siffra utan källa (regel 3).
 
     // ── CTA ───────────────────────────────────────────────────────────────────
     y += 12;
-    doc.fontSize(9.5).font('Helvetica-Bold').fillColor(T.brand)
-      .text('Lås upp företagets totala besparingspotential.  ', LC, y, { continued: true });
-    doc.font('Helvetica').fillColor(T.mutedSoft)
-      .text('Koppla ert affärssystem på 60 sekunder: arvoflow.se', { width: W });
+    doc.fontSize(9.5).font('Helvetica').fillColor(T.mutedSoft)
+      .text('Hela analysen: arvoflow.se', LC, y, { width: W });
 
     // ── Footer ────────────────────────────────────────────────────────────────
     // Fixed position anchored to page bottom — never pushed to page 2
@@ -300,8 +311,9 @@ function logo(size, id) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DD6CA"/><stop offset="100%" stop-color="#1B6E66"/></linearGradient></defs><path fill="url(#${id})" fill-rule="evenodd" d="M20 3 L37 36 L27.5 36 L20 21.5 L12.5 36 L3 36 Z M20 12.5 L24 21 L16 21 Z"/></svg>`;
 }
 
-function htmlEmail(result) {
+export function htmlEmail(result) {
   const { extracted: ex, categorized: cat, recommendation: r } = result;
+  const { harByte, matt } = mejlLage(result);
   const catLabel    = CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '';
   const suppDisplay = displayedSupplier(cat, r);
   const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
@@ -373,15 +385,22 @@ function htmlEmail(result) {
     </td>
   </tr>
 
-  <!-- Savings hero -->
+  <!-- Hjälten: besparingen när ett byte finns, annars vad vi faktiskt såg -->
   <tr>
     <td style="background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);padding:52px 44px 48px">
+      ${harByte ? `
       <p style="margin:0 0 18px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.60);text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Din nettobesparing</p>
       <p style="margin:0 0 22px;font-family:'Playfair Display',Georgia,serif;font-size:44px;font-weight:700;color:#ffffff;line-height:1.1;letter-spacing:-1px">+${formatKr(r.netSaving)}</p>
       <p style="margin:0;font-size:14px;color:rgba(255,255,255,0.75);line-height:1.7;font-family:'Inter',Arial,sans-serif">
         ${formatKr(ex.annualCost)} &rarr; ${formatKr(r.suggestedAnnualCost)}/år
         ${suppDisplay ? ` hos <strong style="color:rgba(255,255,255,0.92);font-weight:600">${suppDisplay}</strong>` : ''}
-      </p>
+      </p>` : `
+      <p style="margin:0 0 18px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.60);text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',Arial,sans-serif">Inget byte att rekommendera</p>
+      <p style="margin:0;font-size:16px;color:#ffffff;line-height:1.7;font-family:'Inter',Arial,sans-serif">
+        ${matt
+          ? 'Vi jämförde er faktura mot verifierat publikt listpris och hittade inget byte vi kan belägga.'
+          : 'Vi har inget verifierat jämförelsepris för den här fakturan i dag, så vi säger inget om er prisnivå.'}
+      </p>`}
     </td>
   </tr>
 
@@ -390,15 +409,15 @@ function htmlEmail(result) {
     <td style="padding:40px 44px 8px">
       <table width="100%" cellpadding="0" cellspacing="0">
         ${wr('Du betalar idag', formatKr(ex.annualCost) + '/år', false, T.inkSoft, true)}
-        ${suppRow}
+        ${harByte ? `${suppRow}
         ${wr('Arvo-pris', formatKr(r.suggestedAnnualCost) + '/år', true, T.brand, true)}
         ${wr('Bruttobesparing', formatKr(r.grossSaving), false, T.inkSoft, true)}
         <tr style="background:${T.brandSoft}">
           <td style="padding:22px 16px 22px 19px;color:${T.brandInk};font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-top:1px solid #B8D9D1;border-left:3px solid ${T.brand};font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
           <td style="padding:22px 16px;color:${T.brand};font-size:22px;white-space:nowrap;font-weight:700;border-top:1px solid #B8D9D1;font-family:'Playfair Display',Georgia,serif">+${formatKr(r.netSaving)}</td>
-        </tr>
+        </tr>` : ''}
       </table>
-      <p style="margin:16px 0 0;font-size:12px;color:#9DAAA5;line-height:1.6;font-family:'Inter',Arial,sans-serif">Arvos besparingsarvode faktureras (20 %) efter din första faktura från den nya leverantören.</p>
+      ${harByte ? `<p style="margin:16px 0 0;font-size:12px;color:#9DAAA5;line-height:1.6;font-family:'Inter',Arial,sans-serif">Arvos besparingsarvode faktureras (20 %) efter din första faktura från den nya leverantören.</p>` : ''}
     </td>
   </tr>
 
@@ -408,21 +427,14 @@ function htmlEmail(result) {
   <tr>
     <td style="padding:28px 44px 28px">
       <div style="border-left:3px solid ${T.brand};background:#F4F9F7;border-radius:0 10px 10px 0;padding:20px 24px">
-        <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.14em;font-family:'Inter',Arial,sans-serif">Varför vi tror du kan spara</p>
+        <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.14em;font-family:'Inter',Arial,sans-serif">${harByte ? 'Varför vi tror du kan spara' : 'Vår bedömning'}</p>
         <p style="margin:0;font-size:14px;color:${T.inkSoft};line-height:1.85;font-family:'Inter',Arial,sans-serif">${r.reasoning ?? ''}</p>
       </div>
     </td>
   </tr>
 
-  <!-- FOMO box -->
-  <tr>
-    <td style="padding:0 44px 28px">
-      <div style="border-left:3px solid ${T.brand};background:${T.brandSoft};border-radius:0 10px 10px 0;padding:18px 22px">
-        <p style="margin:0 0 7px;font-size:9px;font-weight:700;color:${T.brand};letter-spacing:.14em;text-transform:uppercase;font-family:'Inter',Arial,sans-serif">T&auml;ckning av analysen</p>
-        <p style="margin:0;font-size:13px;color:${T.inkSoft};line-height:1.65;font-family:'Inter',Arial,sans-serif">Denna analys t&auml;cker <strong>1 av 8 m&ouml;jliga kostnadsomr&aring;den</strong>. En fullst&auml;ndig Arvo-skanning identifierar i snitt <strong>12&ndash;18&nbsp;%</strong> i dolda &ouml;verpriser &ouml;ver hela reskontran.</p>
-      </div>
-    </td>
-  </tr>
+  <!-- Här stod «En fullständig Arvo-skanning identifierar i snitt 12–18 % i dolda överpriser» —
+       en siffra utan källa (regel 3). Ingen mätning bär den; den är struken. -->
 
   <!-- CTA -->
   <tr>
@@ -432,12 +444,12 @@ function htmlEmail(result) {
           <td style="border-radius:12px;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);box-shadow:0 6px 20px rgba(27,110,102,0.28)">
             <a href="https://arvoflow.se/flow/testa-faktura"
                style="display:inline-block;color:#ffffff;font-weight:600;font-size:15px;padding:17px 48px;text-decoration:none;font-family:'Inter',Arial,sans-serif;letter-spacing:.02em">
-              ${isRealPrice ? 'Aktivera bytet' : 'S&auml;kra besparingen'} &rarr;
+              ${harByte ? (isRealPrice ? 'Aktivera bytet' : 'S&auml;kra besparingen') : 'Se er analys'} &rarr;
             </a>
           </td>
         </tr>
       </table>
-      <p style="margin:0;font-size:12px;color:#9DAAA5;font-family:'Inter',Arial,sans-serif">L&aring;s upp f&ouml;retagets totala besparingspotential. Koppla ert aff&auml;rssystem p&aring; 60 sekunder.</p>
+
     </td>
   </tr>
 
@@ -494,7 +506,7 @@ export default async function handler(req, res) {
     const pdfBuffer = await generatePdf(result);
     const resend    = new Resend(process.env.RESEND_API_KEY);
     const net       = result.recommendation?.netSaving ?? 0;
-    const subject   = net > 0
+    const subject   = mejlLage(result).harByte
       ? `Du kan spara ${formatKr(net)}/år på ${result.extracted.supplier} – Arvo`
       : `Din Arvo-analys: ${result.extracted.supplier}`;
 

@@ -12,6 +12,8 @@ import { pendingCountBySender, failedCountBySender, failedFilesBySender } from '
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding, avtalsklocka } from '../lib/contract-clock.js';
 import { planeradePaminnelser } from '../lib/paminnelse.js';
+import { radLage, rumLage } from '../lib/lagesregister.js';
+import { rattstorleksKort } from '../lib/rattstorlekskort.js';
 import { buildAvtalView, supplierNamesMatch } from '../lib/contract-intel.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
 import { getSupplierCategoryChangesByKeyword, getRecentHike } from '../lib/price-db.js';
@@ -261,7 +263,8 @@ export default async function handler(req, res) {
   const ingestFailed = email ? await failedCountBySender(email) : 0;
   const ingestFailedFiles = ingestFailed > 0 ? await failedFilesBySender(email) : [];
 
-  return send(res, 200, { ok: true, analyses, watched, cohort, publicBench, forecasts, branchAnchors, tackning, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, email: email ?? undefined, frånDennaEnhet });
+  const rum = byggRum(analyses, watched);
+  return send(res, 200, { ok: true, analyses, watched, rum, cohort, publicBench, forecasts, branchAnchors, tackning, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, email: email ?? undefined, frånDennaEnhet });
 }
 
 // "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.
@@ -336,8 +339,19 @@ export function berikaRader(analyses = [], branchAnchors = {}) {
     // vid LÄSNING är dessutom det enda ärliga: prisboken rör sig (Tele2 sänkte i går), och ett
     // fruset score mot ett golv rummet inte längre visar är per definition inaktuellt.
     a.arvoScore = scoreUrUnderlag(a.prisunderlag);
+    // LÄGESREGISTRET (2026-09-23): radens läge räknas HÄR, efter prisunderlaget och scoret det
+    // bygger på. Rummet slår upp ordalydelsen per kod och väljer aldrig läge själv (LR-01).
+    a.lage = radLage(a);
   }
   return analyses;
+}
+
+/**
+ * Rummets läge ur exakt de rader och bevakade poster svaret bär — det enda stället rummets
+ * tillstånd räknas. Exporterad så att renderingssonderna bygger rummet med samma funktion.
+ */
+export function byggRum(analyses = [], watched = []) {
+  return rumLage({ analyses, watched, rattstorlekKort: rattstorleksKort });
 }
 
 export function underlagForRad(a, ankare, golv, niva) {

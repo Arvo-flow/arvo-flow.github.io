@@ -103,4 +103,12 @@ describe('PM · påminnelserna följer klockan', () => {
     assert.doesNotMatch(cron, /reminder60Html|reminder30Html|daysUntil\(/, 'de gamla slutdatumsmallarna lever kvar');
     assert.match(cron, /outcomeEmailHtml\(\{ supplier: row\.supplier, netSaving: Number\(row\.net_saving\)/);
   });
+
+  test('PM-09 · säljkortet lovar exakt de varsel mekaniken skickar', async () => {
+    // Kortet «Exempel ur en briefing» sa «varnar 90 dagar före förnyelse» — inget mejl bar det.
+    const { VARSEL_DAGAR } = await import('../lib/deadline-reminder.js');
+    const vy = readFileSync(new URL('../src/pages/TestaFaktura/index.js', import.meta.url), 'utf8');
+    assert.match(vy, new RegExp(`varnar ${VARSEL_DAGAR.join(' och ')} dagar före sista uppsägningsdag`));
+    assert.doesNotMatch(strippaStrangar(vy), /90 dagar före förnyelse/);
+  });
 });

@@ -7,7 +7,7 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr, genitiv, krPerAr } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
-import { diagnos, ANALYSRUBRIKER, harNivasankningskort } from '../../lib/diagnos';
+import { ANALYSRUBRIKER } from '../../lib/diagnos';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { redigeraLeverantor, samaLeverantor } from '../../lib/leverantorsnamn';
 import { COST_CATEGORIES } from '../../lib/costCategories';
@@ -928,8 +928,10 @@ const TestaFaktura = () => {
           netSaving:            adjNetSaving,
           arvoFee:              adjArvoFee,
           reasoning,
-          diagScore,
-          diagLabel:            diagC?.label,
+          // Läget ur API:t, aldrig gaugens ritvärde: en omätt poäng är null och har ingen etikett.
+          // Här gick förut 0 + «Kritisk» till aktiveringsmejlet (mätt i översynen).
+          diagScore:            result?.lage?.score ?? null,
+          diagLabel:            result?.lage?.etikett ?? null,
           diagInsight,
         }),
       });
@@ -1020,33 +1022,29 @@ const TestaFaktura = () => {
 
   const animatedNet = useCountUp(hasHwAdj ? adjNetSaving : (result?.recommendation?.netSaving ?? 0));
 
-  const diagAnnual  = adjAnnualCost;
-  const diagSugg    = result?.recommendation?.suggestedAnnualCost ?? 0;
-  // ── UTAN MÄTT JÄMFÖRELSETAL FINNS INGET OMDÖME ATT GE (2026-08-22) ────────────────────────
-  // `diagOvPct` blev 0 när suggested saknades, `diagScoreRaw` blev 100, och scoren landade på 85
-  // — vilket gav texten «Ni har ett marknadsmässigt avtal — bättre än branschsnittet.» Men
-  // suggested = 0 betyder inte att kunden betalar bra; det betyder att VI inte kunde räkna fram
-  // ett mål. Samma sats som fällde rummet i fyra ytor samma dag, här i huvudfunneln.
-  // Beslutet bor i src/lib/diagnos.js så det kan prövas genom att ANROPAS.
-  const _clickPriceScore = result?.recommendation?.clickRateAnalysis?.priceGapScore ?? null;
-  const _diag = diagnos({
-    annual: diagAnnual, suggested: diagSugg, clickPriceScore: _clickPriceScore,
-    shouldSwitch: result?.recommendation?.shouldSwitch,
-    netSaving: result?.recommendation?.netSaving,
-  });
+  // ── FAKTURANS LÄGE KOMMER FRÅN API:T (Lägesregistret 2026-09-23) ──────────────────────────
+  // Här räknades diagnosen i vyn, och `score ?? 0` gjorde en OMÄTT poäng till 0 — som fick
+  // etiketten «Kritisk» i rött bredvid «— /100», och skickades vidare i aktiveringsmejlet som
+  // «Kritisk 0 /100» (mätt i översynen). Läget räknas nu en gång i api-lagret
+  // (lib/lagesregister.js fakturaLage) och vyn renderar det. Utan mätning finns ingen etikett.
+  const _lage       = result?.lage ?? null;
+  const _diag       = _lage ?? { matt: false, score: null, ovPct: 0, overMarketPct: 0, skal: 'fakturans läge saknades i svaret', etikett: null };
   const diagOvPct   = _diag.ovPct;
   // "Över marknadspris" = (pris − mål)/mål — ALDRIG andel-av-priset (Svea/85-felet är låst).
   const diagOverMarketPct = _diag.overMarketPct;
   const diagMatt    = _diag.matt;
-  // Gaugen ritas på 0 när talet är omätt; siffran visas som "—" (samma disciplin som rummet).
+  // Gaugen ritas på 0 när talet är omätt (ren grafik); siffran visas som "—" och ingen etikett sätts.
   const diagScore   = _diag.score ?? 0;
-  const diagC       = diagScore < 45
-    ? { dot: '#DC2626', num: '#DC2626', label: 'Kritisk',         labelClr: '#991B1B', txt: '#7F1D1D', bg: '#FEF2F2', border: 'rgba(220,38,38,.18)' }
-    : diagScore < 65
-    ? { dot: '#D97706', num: '#D97706', label: 'Suboptimerat',    labelClr: '#92400E', txt: '#78350F', bg: '#FFFBEB', border: 'rgba(217,119,6,.18)' }
-    : diagScore < 80
-    ? { dot: '#65A30D', num: '#65A30D', label: 'Förbättringsläge', labelClr: '#365314', txt: '#365314', bg: '#F7FEE7', border: 'rgba(101,163,13,.18)' }
-    : { dot: '#1B7A6E', num: '#1B7A6E', label: 'Optimalt',        labelClr: '#0E4F47', txt: '#0E4F47', bg: '#DCEEEA', border: 'rgba(27,122,110,.18)' };
+  const DIAG_STIL = {
+    Kritisk:            { dot: '#DC2626', num: '#DC2626', labelClr: '#991B1B', txt: '#7F1D1D', bg: '#FEF2F2', border: 'rgba(220,38,38,.18)' },
+    Suboptimerat:       { dot: '#D97706', num: '#D97706', labelClr: '#92400E', txt: '#78350F', bg: '#FFFBEB', border: 'rgba(217,119,6,.18)' },
+    'Förbättringsläge': { dot: '#65A30D', num: '#65A30D', labelClr: '#365314', txt: '#365314', bg: '#F7FEE7', border: 'rgba(101,163,13,.18)' },
+    Optimalt:           { dot: '#1B7A6E', num: '#1B7A6E', labelClr: '#0E4F47', txt: '#0E4F47', bg: '#DCEEEA', border: 'rgba(27,122,110,.18)' },
+  };
+  const OMATT_STIL = { dot: '#9CA3AF', num: '#6B7280', labelClr: '#4B5563', txt: '#374151', bg: '#F3F4F6', border: 'rgba(107,114,128,.18)' };
+  const diagC = _diag.etikett
+    ? { ...DIAG_STIL[_diag.etikett], label: _diag.etikett }
+    : { ...OMATT_STIL, label: 'Inte mätt' };
   // Avtalets läge räknas ALDRIG här (2026-09-23): vyn räknade egna datum — «påminner er [slut − 3 mån]»
   // som inget mejl bar, och «uppsägningstiden har redan passerat» om öppna fönster. Klockan kommer
   // färdig från API:t (lib/contract-clock.js) och renderas som den står.
@@ -1999,7 +1997,7 @@ const TestaFaktura = () => {
                     Frågan ställs EN gång, ur `NIVASANKNINGSKORT` som korten själva läser (regel 1),
                     så ett framtida kort inte kan återinföra motsägelsen i tysthet (AR-04). */}
                 <NoSwitchBlock style={{ marginTop: 0 }}>
-                  {harNivasankningskort(result.recommendation) ? (
+                  {_lage?.rubrik === 'inget_byte_med_nivasankning' ? (
                     <>
                       <strong>{ANALYSRUBRIKER.inget_byte_med_nivasankning.rubrik}</strong>{' '}
                       {ANALYSRUBRIKER.inget_byte_med_nivasankning.text}
@@ -2224,6 +2222,15 @@ const TestaFaktura = () => {
                       const recurring = result.extracted.recurringAmount ?? 0;
                       const variable = result.extracted.variableCharges ?? 0;
                       if (variable < Math.max(recurring * 0.3, 1000)) return null;
+                      // TREVÄRT: zon 4 (satellit), känd zon under 4, eller OKÄND. Zonen serialiserades
+                      // förut aldrig, så grenen nedan lovade «bättre EU-datapaket» även för satellit-
+                      // roaming där inget byte hjälper (mätt i översynen). Okänd zon lovar ingenting.
+                      if (zone == null) return (
+                        <RoamingInsight>
+                          <Icon name="info" size={14} />
+                          <span>Roamingkostnader på {formatKr(variable)} denna period. Zonen framgår inte av fakturan, så vi kan inte säga om ett annat avtal skulle sänka dem.</span>
+                        </RoamingInsight>
+                      );
                       if (zone >= 4) return (
                         <RoamingInsight $type="satellite">
                           <Icon name="globe" size={14} />
@@ -2809,10 +2816,12 @@ const TestaFaktura = () => {
                 <div>
                   <span className="signal-tag">Proaktiv avtalsbevakning</span>
                   <div className="signal-line">
-                    Avtalsbevakning · varnar 90 dagar före förnyelse
+                    {/* Stod «varnar 90 dagar före förnyelse» — ingen mekanik bar det. Varslen går 30 och 7
+                        dagar före SISTA UPPSÄGNINGSDAG (lib/paminnelse.js, delat med avtalsvyn). */}
+                    Avtalsbevakning · varnar 30 och 7 dagar före sista uppsägningsdag
                     <span className="signal-badge signal-badge--contract">Förnyelse</span>
                   </div>
-                  <p className="signal-sub">Arvo varnar automatiskt — och förbereder bytet på er begäran.</p>
+                  <p className="signal-sub">Datumen räknas ur er faktura eller ert avtal — och mejlet går till den adress ni lämnat.</p>
                 </div>
               </div>
             </div>
