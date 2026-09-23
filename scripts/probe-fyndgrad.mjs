@@ -46,6 +46,7 @@ const RATTSTORLEK_KATEGORIER = ['saas-finance', 'saas-productivity', 'saas-creat
 // dessutom SV-09 — med rätta i allmänhet, fingeravtryck hashas. Nu EN fråga, EN sanning.
 const rader = await db`
   SELECT category, route, should_switch, net_saving, gross_saving, user_email,
+         normalized_supplier, supplier, triage_reason,
          (lead_finding_json IS NOT NULL) AS har_fynd,
          arkiverad_at IS NOT NULL AS arkiverad
   FROM invoice_analyses   -- internt: fyndgradsmätning, ingen kundyta; testytan redovisas separat
@@ -101,4 +102,26 @@ for (const [k, v] of Object.entries(perKategori).sort((a, b) => b[1].n - a[1].n)
   console.log(`    ${k.padEnd(22)} ${String(v.fynd).padStart(3)} / ${String(v.n).padEnd(4)}`
     + `${RATTSTORLEK_KATEGORIER.includes(k) ? '  ← rätt-storleksmotor finns, fynd lagras inte' : ''}`);
 }
-console.log('\n[probe-fyndgrad] klar\n');
+
+// ── DE OKATEGORISERADE — största hinken, och den enda som inte kan hitta NÅGOT ────────────────
+// Mätt 2026-09-23: 18 av 43 riktiga analyser (42 %) landade som `uncategorized`. Revisionsgrinden
+// kortsluter den kategorin till talfritt offert-läge — sifferrevisorn visar det i varje
+// pre-commit («'uncategorized' är oreviderad → offert-läge utan siffror») — så hinken är ett tak
+// för hela fyndgraden. Frågan är vad de är: ett kategoriseringsfel på en kategori vi KAN, eller en faktura
+// som med rätta ligger utanför (ett kvitto, en engångsköp)? De två kräver motsatta åtgärder, och
+// den enda som kan avgöra det är en läsning av raderna.
+//
+// Loggen är PUBLIK: vi skriver leverantörsnamn (motpartens bolag, aldrig kundens), rutt och skäl
+// — aldrig belopp, e-post eller fingeravtryck.
+const okat = bas.filter((r) => r.category === 'uncategorized');
+console.log(`\n── OKATEGORISERADE (${okat.length} av ${bas.length}) — leverantör · rutt · skäl ──`);
+const perLev = {};
+for (const r of okat) {
+  const namn = (r.normalized_supplier || r.supplier || '(tomt namn)').trim() || '(tomt namn)';
+  const nyckel = `${namn} · ${r.route ?? '—'} · ${r.triage_reason ?? '—'}`;
+  perLev[nyckel] = (perLev[nyckel] ?? 0) + 1;
+}
+for (const [k, n] of Object.entries(perLev).sort((a, b) => b[1] - a[1])) {
+  console.log(`    ${String(n).padStart(2)} ×  ${k}`);
+}
+console.log('\n[probe-fyndgrad] klar (okategoriserade listade)\n');
