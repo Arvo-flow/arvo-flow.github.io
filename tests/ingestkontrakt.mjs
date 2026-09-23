@@ -65,6 +65,16 @@ describe('IK · Köns okända tillstånd', () => {
     assert.match(d, /claimed === 0 && !koStatusOkand/,
       'clearPending() får aldrig köras när köstatus är okänd — då hoppar nästa kvart över Postgres');
   });
+
+  test('IK-07: en körning som HITTAT arbete tänder flaggan, så nästa minut fortsätter', () => {
+    // 23 sep: 25 omköade jobb låg pending medan drainen bara frågade Postgres i säkerhetsslottarna.
+    // KÄLLTEXTVAKT, uttalat: den ser att villkoret står där, aldrig att Vercels KV faktiskt tar emot.
+    const d = kod('api/cron/drain-ingest.mjs');
+    assert.match(d, /if \(claimed > 0 && !koStatusOkand\) await markPending\(\);/,
+      'drainen tänder inte flaggan när den hittat arbete — en kö fylld utanför flaggan töms då 4 ggr/timme');
+    // Motprovet: släckningen står kvar och kräver fortfarande BEVISAD tomhet.
+    assert.match(d, /claimed === 0 && !koStatusOkand\) await clearPending\(\)/);
+  });
 });
 
 describe('IK · En påbörjad behandling är inte en avslutad', () => {

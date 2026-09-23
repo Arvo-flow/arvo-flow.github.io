@@ -7,7 +7,7 @@
 // /testa-faktura och mail-in (regel 1), nycklad på avsändaren → landar i kundens kontor.
 
 import { createHash } from 'node:crypto';
-import { claimBatch, completeJob, failJob, hasPendingFlag, clearPending, utfallFranSvar } from '../../lib/ingest-queue.js';
+import { claimBatch, completeJob, failJob, hasPendingFlag, clearPending, markPending, utfallFranSvar } from '../../lib/ingest-queue.js';
 import { fetchInboundPdfForJob } from '../inbound-email.mjs';
 
 export const config = { maxDuration: 60 };
@@ -148,6 +148,14 @@ export default async function handler(req, res) {
   // Kön visade sig tom → släck flaggan, så nästa minut slipper väcka databasen.
   // Men BARA när tomheten är bevisad: ett DB-fel vet ingenting om kön.
   if (claimed === 0 && !koStatusOkand) await clearPending();
+  // ── FYNDEN TÄNDER FLAGGAN (2026-09-23) ──────────────────────────────────────────────────────
+  // En kö som fyllts UTANFÖR flaggan — varje omköning från Actions, där KV-nycklarna saknas —
+  // tömdes bara i säkerhetsslottarna, fyra gånger i timmen, en våg i taget. Grundarens 25 jobb
+  // låg pending i över en kvart efter omköningen 23 sep. Grundarfallet 16 aug fick `force` som
+  // operatörsspak; det här stänger klassen utan spak: har den här körningen HITTAT arbete, finns
+  // det sannolikt mer, och nästa minut ska fortsätta i stället för att vänta på nästa kvart.
+  // Tomheten släcker flaggan som förut — den bevisas av en körning som claimar noll.
+  if (claimed > 0 && !koStatusOkand) await markPending();
   if (koStatusOkand) console.warn('[drain-ingest] köstatus OKÄND (databasen svarade inte) — köflaggan lämnas tänd');
 
   console.log(`[drain-ingest] klar: ${done} klara · ${failed} fel · ${claimed} claimade i ${waves} våg(or)`
