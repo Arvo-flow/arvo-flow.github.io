@@ -44,6 +44,8 @@ arvo-rapport-preview.pdf
 # Kohort-index (sni-kohort-*.json) committas — score-leads.mjs läser det
 results/scored-*
 results/*.csv
+# Regel 8-skärmdumpar — återskapas av scripts/screenshot-*.mjs, checkas aldrig in
+results/screenshots/
 
 # Agent-worktrees (isolerade granskningskopior av hela repot) — efemära, aldrig versionerade.
 # En granskare som kör i egen worktree lägger en FULL kopia här, inklusive test-pdfs.
