@@ -376,12 +376,89 @@ mätningen inte körts.
 > — mätt och motbevisat: analyserad 10:45 i drainens slot, med avsändare; sonden körde 10:29, anonym.
 > Sonden skriver nu ursprunget per fynd, eftersom **6 av 43 rader i mätbasen är anonyma** och kan
 > vara sonder — en förorening av det primära måttet som ingen har rensat.
+> **⚠️ RÄTTELSE samma dag, läst i koden:** `diag-live` KAN inte vara källan till de sex. Sonden
+> skickar inget fingerprint, och `storeAnalysis` returnerar tidigt utan ett. Varifrån de anonyma
+> raderna kommer vet jag inte än. **Och mätbasen är värre än så:** grundaren bekräftade 23 sep att
+> `Arvo_NN`-bunten är syntetiskt testmaterial. Fyndgraden har alltså till stor del mätt oss själva.
+> 8 av 43 är ett mått på motorn mot rekvisita, inte på produkten mot kunder.
 >
 > **Och en förutsägelse föll:** jag skrev att kategorifixen (TR-01..03) skulle rätta Dustin, Komplett
 > och Systemair vid nästa körning. De kördes om av 4ebd406 och står **kvar som okategoriserade** med
 > `no_benchmark`. Fixen verkar för Atlassian; varför den inte når de tre — **jag vet inte än**.
 > Rätt-storleksmotorerna för M365, saas-finance och löneadmin gav noll lagrade fynd i bunten; om det
 > är för att fakturorna inte bär E3/E5 eller en känd paketnivå är inte mätt.
+
+---
+
+## Lägesregistret · API:t dikterar, ytan renderar
+
+> **✅ GRUNDARORDER 2026-09-23, efter den totala systemöversynen:** *«API:et dikterar status,
+> gränssnitten renderar den dumt och exakt.»* Översynen fann att samma tillstånd räknades på fyra
+> ställen: rummet, fakturavyn, analysmejlet och aktiveringsmejlet. Alla fyra hade tvåvägsgrenar på
+> trevärda tillstånd. Samma felform som 11 september, men i fyra ytor i stället för två.
+
+**1 · Avtalsklockan (117f02b). Vi lovade att bevaka en deadline vi inte kunde räkna ut.** Följande
+var mätt före fixen:
+· Påminnelsemejlen läste snake_case-rader med camelCase-namn, så de skrev «NaN dagar». Utfallsmejlet
+  tappade besparingen av samma skäl.
+· Extraktionen sparade uppsägningstiden som dygn. «3 månader» blev 90 dygn, och sista dag hamnade upp
+  till två dagar FÖR SENT. Det är den farliga riktningen: en kund som litar på datumet missar fristen.
+· Rutten sa «uppsägningstiden har redan passerat» med 270 dagar kvar.
+· Uppsägningstiden lagrades inte alls, och det första avlästa slutdatumet vann för alltid.
+
+Nu gäller:
+· Extraktionen läser `värde + enhet` som tryckt (AK-05/AK-11), och månader räknas i kalendern (AK-02).
+· `avtalsklocka()` har sex deklarerade lägen, och `uppsagning_okand` är `omatt`. Den säger att tiden
+  är okänd och lånar aldrig ett löfte (AK-04).
+· Det gamla fältnamnet `cancellationNoticeDays` smäller i stället för att tyst ge «okänd» (AK-08).
+· Påminnelserna går 30 och 7 dagar före sista uppsägningsdag, och 120 dagar före slutet när
+  uppsägningstiden är okänd (PM-01..09).
+· PM-05 simulerar varje dag och kräver att de planerade datum kunden ser är exakt de dagar cronen
+  skickar. Säljkortets «30 och 7» är låst mot konstanten (PM-09).
+· Sabotage: 10 riktningar. Ett av dem var först en no-op (konstanten ersatt med samma värden, 0 fällda)
+  och ersattes med ett dubbelsabotage som fällde PM-05/PM-06.
+
+**2 · Lägesregistret (12c355f).** `lib/lagesregister.js` är den enda källan för radens läge (8 koder),
+rummets dom (9 lägen), score, marknadsläge, räknare och fakturans diagnos/rubrik. `api/invoice-history`
+skickar `rum` och `a.lage`, och `api/test-invoice` skickar `lage`. Portfolio, TestaFaktura,
+analysmejlet och aktiveringsmejlet slår bara upp text per kod (`src/lib/rumstext.js`). Varje läge
+bär `positivtPastaende`, och ett omätt läge kan inte uttrycka beröm (LR-01..08, PK). Fynd i de fyra
+ytorna, alla mätta:
+· En rad 1–15 % över golvet fick «på eller under det billigaste» och «Rätt prissatt». Den heter nu
+  `nara_golvet`.
+· Ett bevakat avtal som aldrig jämförts fick «ni betalar konkurrenskraftigt».
+· Ett omätt rum fick «Allt är under kontroll».
+· En omätt faktura fick «Kritisk 0/100» i fakturavyn och i aktiveringsmejlet.
+· Analysmejlet skrev «+0 kr · Arvo-pris 0 kr/år» och en FOMO-ruta («i snitt 12–18 %») utan källa.
+· Roamingzonen och FX-fälten serialiserades aldrig. Satellitroaming var därför ett löfte ingen kod
+  kunde hålla, och vyn läser nu zonen i tre lägen.
+
+Backend importerar aldrig från `src/` (ESM-gränsen). Speglade hjälpare, som `genitiv`, låses med
+likhetstester (LR-05). Sabotage: 10 riktningar. Regel 8 kördes som renderingssond med
+produktionsfunktionerna vid 390 och 1600 px (`scripts/screenshot-lagesregister.mjs`), med DOM-kontroller
+för omätt rum, rum med fynd och motprovet bra rum.
+
+**Live-verifierat efter deploy (diag-live, färska analyser, `cached: false`):**
+· Tele2 årsavtal gav `lage {matt:false, score:null, etikett:null}`. Ingen «Kritisk 0/100» längre.
+· Adobe gav rubriken `inget_byte_med_nivasankning`.
+· Bredband-rabattfakturan gick till `review_queue` (`sanity_check_failed`) och nådde aldrig klockan.
+  Den bevisar alltså ingenting om klockan, och ska inte räknas som att den gör det.
+· **Klockan live på Telenor** (bindning t.o.m. 2026-10-31, «Uppsägningstid: 3 månader»):
+  `uppsagning {uppsagningstidMan: 3}`, `klockLage: fonster_stangt`, `klockSistaDag: 2026-07-31`,
+  route `monitoring`, inga planerade påminnelser (fönstret stängt). Motprovet: med den gamla
+  90-dygnsregeln hade sista dagen blivit 2026-08-02. Instrumentet kan alltså skilja de två svaren.
+· **Det okända läget live på bredband_3** (bindning t.o.m. 2027-10-31, ingen uppsägningstid tryckt):
+  `uppsagning: null`, `klockLage: uppsagning_okand`, `klockSistaDag: null`, route `monitoring`
+  (mer än 180 dagar kvar). Ingen påhittad deadline.
+  **Ej live-prövat:** ett ÖPPET fönster med känd uppsägningstid. Det finns ingen sådan testfaktura,
+  så den grenen bärs bara av AK-02/AK-07 och PM-05. Påminnelsen till en riktig e-postadress är inte
+  heller prövad live, eftersom diag-live är anonym.
+
+**⚠️ Regeln som föll ut: ett läge som finns i registret men inte i API-svaret är ett läge ingen yta
+kan läsa.** Men registret täcker bara det KOD skriver. Samma Tele2-svar bar AI-prosan *«Ert
+Tele2-avtal ligger redan bättre än vad jämförbara bolag i er bransch betalar»* bredvid
+`lage.matt: false`. Den fria modelltexten går förbi registret. Det är nästa [KUND]-fynd, öppet: prosan
+måste antingen genereras ur läget (samma drag som attribueringslåset) eller tystas när läget är omätt.
 
 ---
 
