@@ -45,7 +45,7 @@ if (traffar.length !== 1) { console.error(`✗ hashen matchade ${traffar.length}
 const sender = traffar[0];
 
 const jobb = await db`
-  SELECT id, attachment_index, filename, outcome
+  SELECT id, attachment_index, filename, outcome, status, attempts
   FROM ingest_jobs WHERE sender = ${sender}
   ORDER BY attachment_index ASC
 `;
@@ -53,7 +53,7 @@ const jobb = await db`
 // Filnamnets leverantörsord: «Arvo_05_Atlassian.pdf» → «atlassian». Siffror och prefix bort.
 const ordUrFil = (f) => String(f ?? '').replace(/\.pdf$/i, '').split(/[_\-\s]+/)
   .filter((w) => w && !/^\d+$/.test(w) && !/^arvo$/i.test(w)).map((w) => w.toLowerCase());
-const normalisera = (s) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const normalisera = (s) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 console.log(`\n═══ JOBBMATCHNING · ${mask(sender)} · ${jobb.length} jobb ═══\n`);
 console.log('  idx  filnamn                         → lagrad rads leverantör              dom');
@@ -76,10 +76,16 @@ for (const j of jobb) {
     const trafar = ord.some((w) => w.length >= 3 && (levN.includes(normalisera(w)) || normalisera(w).includes(levN.split(' ')[0])));
     if (trafar) { stammer++; dom = '✓ samma'; } else { fel++; dom = '✗ ANNAN'; }
   }
-  console.log(`  ${String(j.attachment_index).padStart(3)}  ${String(j.filename).padEnd(31)} → `
+  console.log(`  ${String(j.attachment_index).padStart(3)}  ${String(j.status).padEnd(8)} ${String(j.filename).padEnd(31)} → `
     + `${String(lev ?? '—').padEnd(34)} ${dom}`);
 }
 
+// Köns tillstånd: ett jobb som ännu är `pending` bär sitt GAMLA utfall, och dess dom säger då
+// ingenting om den nya koden. Sonden räknar tillstånden så att det syns.
+const tillstand = {};
+for (const j of jobb) tillstand[j.status] = (tillstand[j.status] ?? 0) + 1;
+console.log(`\n  Köns tillstånd: ${Object.entries(tillstand).map(([k, n]) => `${k} ${n}`).join(' · ')}`);
+if (tillstand.pending) console.log('  ⚠️ jobb som står pending bär sitt GAMLA utfall — domen nedan gäller bara de körda.');
 console.log(`\n  Prövbara (jobb med lagrad rad): ${provbara}`);
 console.log(`  Filnamn och lagrad leverantör överens: ${stammer}`);
 console.log(`  Filnamn och lagrad leverantör OENSE:   ${fel}`);

@@ -88,4 +88,25 @@ describe('IK · En påbörjad behandling är inte en avslutad', () => {
       'tre svarande utgångar ska markera slutfört — ändras antalet har en ny utgång tillkommit och '
       + 'måste granskas: svarar den kunden, ska den markera; gör den inget arbete, ska den inte');
   });
+
+  test('IK-06: markPending SVARAR om flaggan sattes — och omköarna läser svaret', async () => {
+    // Actions 35822150557: `markPending: ingen KV — köflaggan sattes ALDRIG` och på raden efter
+    // `✓ 25 jobb … OCH köflaggan satt — drainen väcks nu`. Funktionen returnerade undefined i
+    // båda fallen, så skriptet kunde inte veta. Ett utfall som inte kan skiljas från framgång.
+    const { markPending } = await import('../lib/ingest-queue.js');
+    const utanKv = !process.env.KV_REST_API_URL && !process.env.KV_URL;
+    if (utanKv) {
+      assert.equal(await markPending(), false, 'utan KV sattes ingen flagga — svaret ska säga det');
+    }
+    // Motprovet åt andra hållet står i koden: `return true` efter en lyckad kv.set.
+    const kalla = readFileSync(new URL('../lib/ingest-queue.js', import.meta.url), 'utf8');
+    assert.match(kalla, /await kv\.set\(PENDING_KEY[^;]*;\s*return true;/,
+      'den lyckade grenen måste svara true — annars kan anroparen aldrig säga «väckt»');
+    for (const skript of ['koa-om-alla.mjs', 'koa-om-fil.mjs']) {
+      const k = readFileSync(new URL(`../scripts/${skript}`, import.meta.url), 'utf8');
+      assert.match(k, /const vackt = await markPending\(\);/, `${skript} kastar bort svaret`);
+      assert.match(k, /sattes INTE/, `${skript} kan inte säga att väckningen uteblev`);
+    }
+  });
 });
+

@@ -65,7 +65,9 @@ const { rows: [ny] = [] } = { rows: await aldrigTyst(db`
 // faller tillbaka på en säkerhetsslot först var femtonde minut. retryFailedBySender anropar
 // markPending() av exakt det skälet ("omköade jobb är också arbete") — jag läste den raden och
 // tog ändå inte med den. Ett jobb som ingen väcker är inte omköat, det är parkerat.
-await markPending();
-console.log(`\n✓ Jobb ${ny.id} satt till '${ny.status}' OCH köflaggan satt — drainen väcks nu.`);
+const vackt = await markPending();
+console.log(vackt
+  ? `\n✓ Jobb ${ny.id} satt till '${ny.status}' OCH köflaggan satt — drainen väcks nu.`
+  : `\n✓ Jobb ${ny.id} satt till '${ny.status}'. Köflaggan sattes INTE — drainen tar det vid nästa säkerhetsslot (≤15 min).`);
 console.log(`  Rotorsaken (nätavgifts-grinden utan storeTriaged) är fixad och testlåst — den här`);
 console.log(`  körningen ska därför lämna en rad, inte tystnad. Kontrollera med probe-bulk-jobb.`);

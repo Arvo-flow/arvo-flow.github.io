@@ -88,7 +88,9 @@ const { length: n } = await aldrigTyst(db`
   WHERE sender = ${sender} RETURNING id
 `, 'omköning av bunten');
 
-await markPending();
-console.log(`\n✓ ${n} jobb satta till 'pending' OCH köflaggan satt — drainen väcks nu.`);
+const vackt = await markPending();
+console.log(vackt
+  ? `\n✓ ${n} jobb satta till 'pending' OCH köflaggan satt — drainen väcks nu.`
+  : `\n✓ ${n} jobb satta till 'pending'. Köflaggan sattes INTE — drainen tar dem vid nästa säkerhetsslot (≤15 min).`);
 console.log(`  Efter körningen bär raderna dagens fält: fakturarader (uppdelningen), fakturanummer`);
 console.log(`  och health_score. Kontrollera med probe-bulk-jobb; kön bokför numera sin egen dom.`);
