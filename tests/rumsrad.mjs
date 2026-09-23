@@ -134,16 +134,23 @@ describe('RR · en rad i rummet är EN analys', () => {
   });
 
   test('RR-07 · dokumentets avläsningar behåller sin bevarande semantik', async () => {
-    // Den medvetna gränsen, testad så att den inte kan glida: `contract_end_date` läses ur ett
-    // dokument som inte ändras. En bättre läsare kan bara lägga till; en sämre får inte radera.
+    // Den medvetna gränsen, testad så att den inte kan glida: en läsning UTAN värde raderar aldrig.
+    //
+    // ⚠️ KONTRAKTSÄNDRING 2026-09-23, öppet redovisad. Testet krävde förut `contract_end_date IS NULL`
+    // — den FÖRSTA läsningen vann för alltid. När slutdatumet började styra sista uppsägningsdag och
+    // påminnelsemejl (lib/contract-clock.js) blev det en fälla: en felläsning kunde aldrig rättas, inte
+    // ens av en omkörning efter en extraktionsfix. Nu gäller samma regel som fakturanumret: senaste
+    // icke-tomma läsning vinner, en tom läsning skriver ingenting. Risken åt andra hållet — en omkörning
+    // som läser FEL skriver över ett rätt datum — är verklig och uttalad; den bärs av extraktionens grind.
     const { db } = await huvudsatsen({
       ...INDATA,
       extracted: { ...INDATA.extracted, servicePeriodEnd: '2027-01-01' },
     });
     const s = db.satser.find((x) => /SET contract_end_date/.test(x.sql));
     assert.ok(s, 'kontraktsslutet skrevs aldrig');
-    assert.match(s.sql, /contract_end_date IS NULL/,
-      'bindningsslutet får bara fyllas i, aldrig skrivas över av en körning som läste sämre');
+    const { db: tom } = await huvudsatsen({ ...INDATA, extracted: { ...INDATA.extracted, servicePeriodEnd: null } });
+    assert.ok(!tom.satser.some((x) => /SET contract_end_date/.test(x.sql)),
+      'en läsning utan slutdatum raderade det lagrade');
   });
 
   test('RR-09 · en triage nollar en tidigare körnings besparing', async () => {

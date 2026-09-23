@@ -109,7 +109,9 @@ describe('LV · liggarens läsvägar är klassade', () => {
     // ⚠️ TALET SA 29 OCH TRÖSKELN 25 — sex lediga platser, alltså kunde sex läsvägar försvinna
     // tyst. Ommätt 2026-09-13 med det vidgade mönstret (FROM|JOIN, blanksteg, skiftläge): **31**
     // (internt 9 · moat 5 · kundvy 17). Tröskeln följer mätningen; ett tal, inte en tröskel.
-    assert.ok(vagar.length >= 31, `hittade ${vagar.length} läsvägar — mätt 2026-09-13: 31. Sjunker talet har antingen en läsväg försvunnit eller mönstret slutat matcha, och båda ska synas`);
+    // 2026-09-23: 31 → 30, och talet är förklarat — påminnelsecronens två slutdatumsfrågor (60/30 dagar)
+    // ersattes av EN fakturaklockfråga (lib/paminnelse.js): 31 − 2 + 1 = 30.
+    assert.ok(vagar.length >= 30, `hittade ${vagar.length} läsvägar — mätt 2026-09-23: 30. Sjunker talet har antingen en läsväg försvunnit eller mönstret slutat matcha, och båda ska synas`);
   });
 
   test('LV-02 · varje läsväg bär en klassmarkör', () => {

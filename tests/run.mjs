@@ -114,6 +114,7 @@ import './analysstampel.mjs';
 import './triage-kategori.mjs';
 import './svarskontrakt.mjs';
 import './rattstorleksfynd.mjs';
+import './paminnelse.mjs';
 import './rumsrad.mjs';
 import './avvikelsevakten.mjs';
 import './prisbokscellen.mjs';

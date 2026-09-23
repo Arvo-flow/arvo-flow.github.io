@@ -17,6 +17,7 @@ import { korrigeraAntalUrKolumn } from '../../lib/fakturakolumner.js';
 import { readFileSync } from 'node:fs';
 import { extname } from 'node:path';
 import { FEWSHOT_EXAMPLES } from './fewshot-examples.js';
+import { lasUppsagning } from '../../lib/contract-clock.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 2048;
@@ -169,9 +170,12 @@ AVTALSTID & UPPSÄGNING — extrahera BARA om fakturan innehåller ett explicit 
       "Bredband Business 24 månader, avtal t.o.m. 2027-06-01" → "2027-06-01"
     Tumregel: om texten inte innehåller ord som "bindningstid", "avtalstid", "contract term",
     "fixed term", "gäller t.o.m." i kombination med ett datum som är >3 månader fram → null.
-  cancellation_notice_days: Uppsägningstid i antal dagar som heltal.
-    Exempel: "60 dagars uppsägningstid", "60 days notice", "notice period: 60 days" → 60.
-    Exempel: "3 månaders uppsägningstid" → 90. null om ej angivet.
+  cancellation_notice_value + cancellation_notice_unit: Uppsägningstiden EXAKT som den står tryckt —
+    talet i value, enheten i unit ("dagar", "veckor" eller "manader"). RÄKNA ALDRIG OM mellan enheter:
+    tre månader är inte 90 dagar i kalendern, och koden räknar själv.
+    Exempel: "60 dagars uppsägningstid" / "60 days notice" → value 60, unit "dagar".
+    Exempel: "3 månaders uppsägningstid" / "notice period: 3 months" → value 3, unit "manader".
+    Exempel: "2 veckors uppsägning" → value 2, unit "veckor". Båda null om ej angivet.
   cancellation_fee_explicit: Explicit text om lösenavgift / förtidsavgift om den framgår på
     fakturan eller i bilagda avtalsvillkor. Extrahera den EXAKTA formuleringen utan att förkorta.
     Exempel: "lösenavgift motsvarande 30 % av det fasta elpriset multiplicerat med den uppskattade
@@ -619,9 +623,14 @@ export const EXTRACT_TOOL = {
         type: ['string', 'null'],
         description: 'Slutdatum för perioden fakturan avser i ISO-format YYYY-MM-DD. null om inga perioddatum finns på fakturan.',
       },
-      cancellation_notice_days: {
+      cancellation_notice_value: {
         type: ['integer', 'null'],
-        description: 'Uppsägningstid i hela dagar. Konvertera månader till dagar (3 mån = 90). null om ej angivet.',
+        description: 'Uppsägningstidens tal EXAKT som tryckt (3 i "3 månader"). Räkna aldrig om mellan enheter. null om ej angivet.',
+      },
+      cancellation_notice_unit: {
+        type: ['string', 'null'],
+        enum: ['dagar', 'veckor', 'manader', null],
+        description: 'Uppsägningstidens enhet EXAKT som tryckt. null om ej angivet.',
       },
       cancellation_fee_explicit: {
         type: ['string', 'null'],
@@ -1065,7 +1074,9 @@ export function aggregateLineItems(rawInput, tokens) {
     servicePeriodEnd:          raw.service_period_end ?? null,
     billingPeriodStart:        raw.billing_period_start ?? null,
     billingPeriodEnd:          raw.billing_period_end ?? null,
-    cancellationNoticeDays:    raw.cancellation_notice_days != null ? Number(raw.cancellation_notice_days) : null,
+    // Uppsägningstiden som tryckt (värde + enhet), normaliserad av lib/contract-clock.js — månader räknas
+    // i kalendern där, aldrig om till dygn här (AK-02). Okänd eller tvetydig → null.
+    uppsagning:                lasUppsagning({ varde: raw.cancellation_notice_value, enhet: raw.cancellation_notice_unit }),
     cancellationFeeExplicit:   raw.cancellation_fee_explicit ?? null,
     currency:                  raw.currency ?? 'SEK',
     // Momsbasen får ALDRIG defaulta. `?? 'exkl'` hade varit bekvämt och hade gjort varje faktura

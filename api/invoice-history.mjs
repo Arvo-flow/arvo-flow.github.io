@@ -10,7 +10,8 @@ import { getAnalysesByFingerprint, getAnalysesByEmail } from '../lib/invoice-sto
 import { getMarketIntelligence } from '../lib/price-alert.js';
 import { pendingCountBySender, failedCountBySender, failedFilesBySender } from '../lib/ingest-queue.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
-import { contractClockFinding } from '../lib/contract-clock.js';
+import { contractClockFinding, avtalsklocka } from '../lib/contract-clock.js';
+import { planeradePaminnelser } from '../lib/paminnelse.js';
 import { buildAvtalView, supplierNamesMatch } from '../lib/contract-intel.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
 import { getSupplierCategoryChangesByKeyword, getRecentHike } from '../lib/price-db.js';
@@ -160,10 +161,18 @@ export default async function handler(req, res) {
       // därför på ett internt fält som aldrig serialiseras till klienten.
       _rader: a.line_items_json,
       line_items_json: undefined,     // råraderna behövs inte i klienten — uppdelningen räcker
+      // Klockan får uppsägningstiden (lagras sedan 2026-09-23) och samma påminnelseplan som cronen
+      // följer — rummet lovar bara de mejl som faktiskt går. AK-09.
       contractClock: contractClockFinding({
         servicePeriodEnd: a.contract_end_date ?? null,
+        uppsagning:       a.uppsagning_json ?? null,
         supplier:         a.normalized_supplier || a.supplier || null,
+        paminnelse:       planeradePaminnelser(
+          avtalsklocka({ servicePeriodEnd: a.contract_end_date ?? null, uppsagning: a.uppsagning_json ?? null }),
+          { harEpost: Boolean(a.user_email) }),
       }),
+      // Adressen behövs bara för frågan «kan en påminnelse gå?» — den lämnar aldrig servern.
+      user_email: undefined,
       // "Avtalet · läst"-avsnittet: termerna (fields/rules/citat) är frysta FAKTA ur
       // dokumentet; klockan (deadline, dagar kvar, nästa periodslut) räknas FÄRSK här.
       avtal: a.contract_terms_json ? buildAvtalView(a.contract_terms_json) : null,

@@ -208,6 +208,10 @@ await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS analyserad_sha T
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS analyserad_at TIMESTAMPTZ`;
 // Rätt-storleksfyndet motorn räknat (2026-09-23, lib/rattstorleksfynd.js) — kastades förut vid lagring.
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS rattstorlek_json JSONB`;
+// Uppsägningstiden ur fakturan (2026-09-23, lib/contract-clock.js) — lagrades aldrig; klockan räknade mot slutdatum.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS uppsagning_json JSONB`;
+// Påminnelsemarkören (lib/paminnelse.js + lib/deadline-reminder.js) — skapades förut bara av en självläkning i cronen.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS deadline_reminder_json JSONB`;
 await sql`
   CREATE INDEX IF NOT EXISTS idx_analyses_aktiva
     ON invoice_analyses (user_email, created_at DESC)

@@ -7,6 +7,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
+import { avtalsklocka, avtalsRutt, uppsagningText } from '../lib/contract-clock.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const ROOT      = resolve(__dirname, '..');
@@ -65,7 +66,7 @@ for (const file of FILES) {
   console.log(`  Seats/SIM      : ${extracted.seatCount ?? '—'}`);
   console.log(`  Hastighet      : ${extracted.connectionSpeedMbit != null ? `${extracted.connectionSpeedMbit} Mbit/s` : '—'}`);
   console.log(`  Avtalsslutt    : ${extracted.servicePeriodEnd ?? '—'}`);
-  console.log(`  Uppsägningstid : ${extracted.cancellationNoticeDays != null ? `${extracted.cancellationNoticeDays} dagar` : '—'}`);
+  console.log(`  Uppsägningstid : ${uppsagningText(extracted.uppsagning) ?? '—'}`);
   console.log(`  Mobil-tillägg  : ${extracted.mobileAddonMonthly != null ? `${SEK(extracted.mobileAddonMonthly)}/mån` : '—'}`);
   console.log(`  BB-tillägg     : ${extracted.broadbandAddonMonthly != null ? `${SEK(extracted.broadbandAddonMonthly)}/mån` : '—'}`);
   console.log(`  Återkommande   : ${SEK(extracted.recurringAmount)}/mån`);
@@ -127,30 +128,13 @@ for (const file of FILES) {
     console.log(`\n${YELLOW}⚠  OBS (el-spot): Spotpris ger dagslägesbesparing — belopp osäkra vid framtida spot-rörelser.${RESET}`);
   }
 
-  // Avtalslås-check (speglar logiken i api/test-invoice.mjs)
-  const today      = new Date();
-  const periodEnd  = extracted.servicePeriodEnd ? new Date(extracted.servicePeriodEnd) : null;
-  const hasActive  = periodEnd && periodEnd > today;
-  const lockDeadline = (() => {
-    if (!extracted.servicePeriodStart || extracted.cancellationNoticeDays == null) return null;
-    const d = new Date(extracted.servicePeriodStart);
-    d.setDate(d.getDate() - extracted.cancellationNoticeDays);
-    return d;
-  })();
-  const MS_180_DAYS = 180 * 24 * 60 * 60 * 1000;
-  const isPastLock = lockDeadline
-    ? today > lockDeadline
-    : extracted.cancellationNoticeDays != null && hasActive
-      ? true
-      : hasActive && periodEnd && (periodEnd - today) > MS_180_DAYS;
-
-  if (!categorized.licensePending && hasActive && isPastLock) {
+  // Avtalslås-check — SAMMA beslut som api/test-invoice.mjs (lib/contract-clock.js), aldrig en kopia.
+  const klocka = avtalsklocka({ servicePeriodEnd: extracted.servicePeriodEnd, uppsagning: extracted.uppsagning });
+  if (!categorized.licensePending && avtalsRutt(klocka)) {
     console.log(`\n${YELLOW}${BOLD}→ MONITORING-ROUTE (avtalslås)${RESET}`);
-    const monDate = new Date(periodEnd);
-    monDate.setDate(monDate.getDate() - 90);
-    console.log(`  Avtal löper till : ${periodEnd.toLocaleDateString('sv-SE')}`);
-    console.log(`  Påminnelsedatum  : ${monDate.toLocaleDateString('sv-SE')}`);
-    if (!extracted.cancellationNoticeDays) console.log(`  OBS: Uppsägningstid okänd — antar bundet avtal (>180 dagar kvar).`);
+    console.log(`  Läge            : ${klocka.lage}`);
+    console.log(`  Avtal löper till : ${klocka.slutdatum}`);
+    console.log(`  Sista uppsägning : ${klocka.sistaDag ?? 'okänd — står inte på fakturan'}`);
     continue;
   }
 

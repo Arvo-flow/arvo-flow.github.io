@@ -1047,10 +1047,10 @@ const TestaFaktura = () => {
     : diagScore < 80
     ? { dot: '#65A30D', num: '#65A30D', label: 'Förbättringsläge', labelClr: '#365314', txt: '#365314', bg: '#F7FEE7', border: 'rgba(101,163,13,.18)' }
     : { dot: '#1B7A6E', num: '#1B7A6E', label: 'Optimalt',        labelClr: '#0E4F47', txt: '#0E4F47', bg: '#DCEEEA', border: 'rgba(27,122,110,.18)' };
-  const monitoringDatePast = result?.monitoringDate && new Date(result.monitoringDate) < new Date();
-  const daysUntilEnd = result?.servicePeriodEnd
-    ? Math.ceil((new Date(result.servicePeriodEnd) - new Date()) / (1000 * 60 * 60 * 24))
-    : null;
+  // Avtalets läge räknas ALDRIG här (2026-09-23): vyn räknade egna datum — «påminner er [slut − 3 mån]»
+  // som inget mejl bar, och «uppsägningstiden har redan passerat» om öppna fönster. Klockan kommer
+  // färdig från API:t (lib/contract-clock.js) och renderas som den står.
+  const klocka = result?.contractClock ?? null;
   // Samma läsväg som FindingCard använder — toppnivå först, recommendation som reserv för
   // lagrade svar från före utgångskuvertet. En andra läsväg hade kunnat glida isär från den
   // som faktiskt renderar kortet, och då hade rubriken erkänt ett fynd som inte visas.
@@ -1087,13 +1087,7 @@ const TestaFaktura = () => {
     ? `Vi har läst er faktura och ert nuläge — men ${_diag.skal}. Vi hävdar därför inget om er prisnivå i dag, och lägger aldrig fram en besparing vi inte kan räkna hem.`
     : _isSecondaryOnlySwitch
     ? `Ert ${getCategoryMeta(result?.categorized?.category ?? 'uncategorized').label.toLowerCase()} är konkurrenskraftigt — ${_secLabel ?? 'sekundärtjänsten'} kan optimeras.`
-    : result?.route === 'monitoring'
-      ? monitoringDatePast
-        ? `Avtalslåset lossnar snart${daysUntilEnd != null ? ` — ${daysUntilEnd} dagar kvar` : ''}. Arvo förbereder bytet inför förnyelsen.`
-        : diagScore >= 80
-          ? 'Ni betalar marknadsmässigt i dag — Arvo bevakar och agerar inför förnyelsen.'
-          : `Ni betalar ${diagOverMarketPct}% över verifierat marknadspris — ett lägre pris finns att säkra inför förnyelsen.`
-      : diagScore < 45
+    : diagScore < 45
         ? (diagOverMarketPct > 0 ? `Ni betalar ${diagOverMarketPct}% över marknadspris — ${diagOvPct >= 15 ? (_effectiveMeta.smfBenchmark ?? 'stor besparingspotential') : _bmPhrase}.` : 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.')
         : diagScore < 80 ? (diagOverMarketPct > 0 ? `Ni betalar ${diagOverMarketPct}% över marknadspris — ${_bmPhrase}.` : 'Ni betalar något sämre än branschsnittet — ett lägre verifierat marknadspris finns att hämta.')
         : 'Ni har ett marknadsmässigt avtal — bättre än branschsnittet.';
@@ -1503,36 +1497,11 @@ const TestaFaktura = () => {
                     <span className="monitoring-dot" />
                     Bevakning aktiverad
                   </div>
-                  {result.contractType === 'fixed_price' ? (
-                    <>
-                      <strong>Fastprisavtal — bundet t.o.m. {result.servicePeriodEnd ? new Date(result.servicePeriodEnd).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : result.servicePeriodEnd}.</strong>
-                      <p>
-                        {monitoringDatePast
-                          ? `Fastprisavtal kan inte avslutas i förtid. Avtalet löper ut om ${daysUntilEnd != null ? `${daysUntilEnd} dagar` : 'kort tid'} — Arvo förbereder bytet till ett bättre avtal nu.`
-                          : `Fastprisavtal kan inte avslutas i förtid. Arvo bevakar avtalet och påminner er ${result.monitoringDate ? new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : '3 månader'} innan slutdatum så ni hinner byta till ett bättre avtal i rätt tid.`
-                        }
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <strong>{monitoringDatePast ? 'Avtalet löper ut snart — Arvo agerar nu.' : result.cancellationNoticeDays != null ? 'Avtalet är låst — vi lägger det på bevakning.' : 'Årsavtal — Arvo bevakar inför förnyelse.'}</strong>
-                      <p>
-                        {(() => {
-                          const end  = result.servicePeriodEnd;
-                          const days = result.cancellationNoticeDays;
-                          const mon  = result.monitoringDate;
-                          const endFmt = end ? new Date(end).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : null;
-                          const monFmt = mon ? new Date(mon).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' }) : null;
-                          if (monitoringDatePast) {
-                            return `Avtalet löper t.o.m. ${endFmt ?? end}${daysUntilEnd != null ? ` (${daysUntilEnd} dagar kvar)` : ''}. Arvo förbereder bytet till bästa verifierade villkor innan förnyelse.`;
-                          }
-                          return days != null
-                            ? `Avtalet löper t.o.m. ${endFmt ?? end}. Uppsägningstiden (${days} dagar) har redan passerat. Arvo förbereder bytet ${monFmt ?? '90 dagar innan nästa förnyelse'}.`
-                            : `Avtalet löper t.o.m. ${endFmt ?? end}. Vi påminner er i ${monFmt ?? '90 dagar innan slutdatum'} — i god tid för att agera när avtalet löper ut.`;
-                        })()}
-                      </p>
-                    </>
-                  )}
+                  {/* Titel och text kommer ORDAGRANT från klockan (lib/contract-clock.js) — vyn räknar
+                      inga datum och lovar inga påminnelser själv. Saknas klockan säger vyn bara det
+                      den vet: att avtalet bevakas. */}
+                  <strong>{klocka?.title ?? 'Avtalet bevakas.'}</strong>
+                  {klocka?.text && <p>{klocka.text}</p>}
                 </MonitoringBlock>
                 <KV>
                   <div>
@@ -1561,13 +1530,10 @@ const TestaFaktura = () => {
                       <dd>{new Date(result.extracted.servicePeriodEnd).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
                     </div>
                   )}
-                  {result.monitoringDate && (
+                  {klocka?.actByDate && (
                     <div>
-                      <dt>{monitoringDatePast ? 'Bevakning' : 'Arvo påminner er'}</dt>
-                      <dd>{monitoringDatePast
-                        ? (daysUntilEnd != null ? `Aktiv — avtal löper ut om ${daysUntilEnd} dagar` : 'Aktiv')
-                        : (() => { const s = new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }); return s.charAt(0).toUpperCase() + s.slice(1); })()
-                      }</dd>
+                      <dt>Sista uppsägningsdag</dt>
+                      <dd>{new Date(`${klocka.actByDate}T00:00:00Z`).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</dd>
                     </div>
                   )}
                 </KV>
@@ -1579,13 +1545,10 @@ const TestaFaktura = () => {
                         {result.categorized.normalizedSupplier || result.extracted?.supplier} fakturerar{' '}
                         {formatKr(result.extracted?.annualCost)} per år för{' '}
                         {getCategoryMeta(result.categorized.category).inlineLabel}.
-                        {' '}Avtalet är bevakat — Arvo tar kontakt{' '}
-                        {daysUntilEnd != null && daysUntilEnd <= 90
-                          ? 'nu inför förestående förnyelse'
-                          : result.monitoringDate && !monitoringDatePast
-                            ? `från ${new Date(result.monitoringDate).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long' })}`
-                            : 'inför avtalets förnyelse'
-                        }{' '}och säkrar bästa villkor utan att ni behöver lägga tid på det.
+                        {/* Här stod «Arvo tar kontakt … och säkrar bästa villkor utan att ni behöver lägga tid
+                            på det» — ett förhandlingslöfte (Switch-doktrinen: Arvo förhandlar aldrig) byggt på
+                            ett egenräknat datum. Klockan ovan säger vad vi vet och vilka mejl som går. */}
+                        {' '}Avtalet är bevakat.
                       </p>
                     )}
                     {result.potentialSavingNote && (

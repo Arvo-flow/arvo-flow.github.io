@@ -30,7 +30,8 @@ import { getDb } from '../lib/db.js';
 import { computeSecondarySaving } from '../lib/secondary-savings.js';
 import { getEurSekRate, FALLBACK_RATE_EUR_SEK, getSekRate, FALLBACK_RATE_USD_SEK } from '../agents/recommender/pricing.js';
 import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.js';
-import { contractClockFinding } from '../lib/contract-clock.js';
+import { contractClockFinding, avtalsklocka, avtalsRutt } from '../lib/contract-clock.js';
+import { planeradePaminnelser } from '../lib/paminnelse.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
 import { storeAnalysis, storeTriaged, storeLeadFinding } from '../lib/invoice-store.js';
@@ -519,7 +520,9 @@ export default async function handler(req, res) {
   // som påverkar resultatet).
   // v29 (2026-09-23): tre rätt-storleksnycklar (m365/adobe/loneadmin) serialiseras för första
   // gången. En cachad v28-payload saknar dem — och då renderas inget kort, trots att motorn fann ett.
-  const cacheKey = `pdf:result:v29:${deploySha}:${pdfHash}:e${employeesNum}`;
+  // v30 (2026-09-23): avtalsklockan — `cancellationNoticeDays`/`monitoringDate` borta, `uppsagning` +
+  // klockans läge och påminnelsedatum in. En v29-payload bär de gamla fälten och den gamla lögnen.
+  const cacheKey = `pdf:result:v30:${deploySha}:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -1329,30 +1332,17 @@ export default async function handler(req, res) {
     // ── Avtalslås-detektering (körs före alla tidiga exits) ───────────────────
     // Hoppas över för licensePending-kategorier — vi kan inte byta ändå, så
     // "låst avtal" skulle vara vilseledande för t.ex. försäkringskunder.
-    // Trigger: antingen (start + cancellationDays inom lock-window) ELLER
-    //          (periodEnd i framtid + cancellationDays passerat).
-    const _today = new Date();
-    const _periodEnd = extracted.servicePeriodEnd ? new Date(extracted.servicePeriodEnd) : null;
-    const _hasActivePeriod = _periodEnd && _periodEnd > _today;
-    const _lockDeadline = (() => {
-      if (!extracted.servicePeriodStart || extracted.cancellationNoticeDays == null) return null;
-      const d = new Date(extracted.servicePeriodStart);
-      d.setDate(d.getDate() - extracted.cancellationNoticeDays);
-      return d;
-    })();
-    // Monitoring triggar om vi har ett explicit avtalsslutt OCH något av:
-    // (a) beräknad lock-deadline passerat, ELLER (b) cancellationNoticeDays är känd,
-    // ELLER (c) avtalsslutt är >180 dagar bort (troligen bindningsavtal, ej faktureringsperiod).
-    const _MS_180_DAYS = 180 * 24 * 60 * 60 * 1000;
-    const _isPastLockDeadline = _lockDeadline
-      ? _today > _lockDeadline
-      : extracted.cancellationNoticeDays != null && _hasActivePeriod
-        ? true
-        : _hasActivePeriod && _periodEnd && (_periodEnd - _today) > _MS_180_DAYS;
+    //
+    // ⚠️ BESLUTET BOR I KLOCKAN (2026-09-23, systemöversynen). Här räknades förut en «lås-deadline»
+    // från STARTdatum minus uppsägningstid, och en känd uppsägningstid ensam förklarade fönstret
+    // passerat — kunden läste «Uppsägningstiden (30 dagar) har redan passerat» om ett avtal vars sista
+    // dag låg 270 dagar bort, och hela analysmotorn hoppades över (mätt, AK-06). Nu avgör
+    // `avtalsklocka` läget och `avtalsRutt` rutten: bevakas bara när kunden inte kan agera före slutet.
+    const _klocka = avtalsklocka({ servicePeriodEnd: extracted.servicePeriodEnd, uppsagning: extracted.uppsagning });
+    const _harEpost = typeof body.userEmail === 'string' && body.userEmail.trim() !== '';
+    const _paminnelse = planeradePaminnelser(_klocka, { harEpost: _harEpost });
 
-    if (!categorized.licensePending && categorized.category !== 'el' && _hasActivePeriod && _isPastLockDeadline) {
-      const monitoringDate = new Date(_periodEnd);
-      monitoringDate.setMonth(monitoringDate.getMonth() - 3);
+    if (!categorized.licensePending && categorized.category !== 'el' && avtalsRutt(_klocka)) {
       timing.totalMs = Date.now() - t0;
         // #1-fix (2026-06-28): en avtalsbevakad faktura ska SYNAS i kontoret (Liggare 1, "Avtalsbevakad"),
         // inte försvinna. Lagra som monitoring-rad med kontraktsklockan — annars tyst bortfall (regel 9).
@@ -1369,12 +1359,12 @@ export default async function handler(req, res) {
           route: 'monitoring',
           contractLocked:         true,
           servicePeriodEnd:       extracted.servicePeriodEnd,
-          cancellationNoticeDays: extracted.cancellationNoticeDays,
-          monitoringDate:         monitoringDate ? monitoringDate.toISOString().slice(0, 10) : null,
+          uppsagning:             extracted.uppsagning ?? null,
           contractClock:          contractClockFinding({
             servicePeriodEnd:       extracted.servicePeriodEnd,
-            cancellationNoticeDays: extracted.cancellationNoticeDays,
+            uppsagning:             extracted.uppsagning,
             supplier:               categorized.normalizedSupplier || extracted.supplier,
+            paminnelse:             _paminnelse,
           }),
           extracted: {
             supplier:               extracted.supplier,
@@ -1563,8 +1553,6 @@ export default async function handler(req, res) {
         const elEnd = new Date(extracted.servicePeriodEnd);
         if (elEnd > new Date()) {
           const elRec = computeElRecommendation(extracted, industry);
-          const monDate = new Date(elEnd);
-          monDate.setMonth(monDate.getMonth() - 3);
           const potentialSaving = elRec ? Math.max(0, elRec.grossSaving) : null;
           // ── BOKFÖR ÄVEN FRAMGÅNGEN (2026-08-15) ────────────────────────────────────────
           // Bokföringsplikten skrevs efter Ellevio-fallet och stängde tio TRIAGE-utgångar.
@@ -1586,8 +1574,13 @@ export default async function handler(req, res) {
             contractLocked:         true,
             contractType:           'fixed_price',
             servicePeriodEnd:       extracted.servicePeriodEnd,
-            cancellationNoticeDays: null,
-            monitoringDate:         monDate.toISOString().slice(0, 10),
+            // Klockan i fastprisläget: bundet till slutet, inget uppsägningsfönster — och därför
+            // inget påminnelsedatum som kortet kan lova (lib/paminnelse.js ger inga för läget).
+            contractClock:          contractClockFinding({
+              servicePeriodEnd: extracted.servicePeriodEnd, fastpris: true,
+              supplier: categorized.normalizedSupplier || extracted.supplier,
+              paminnelse: planeradePaminnelser(avtalsklocka({ servicePeriodEnd: extracted.servicePeriodEnd, fastpris: true }), { harEpost: _harEpost }),
+            }),
             potentialAnnualSaving:  potentialSaving,
             potentialSavingNote: elRec && potentialSaving > 0
               ? `Ert avtalspris: ${elRec.energiPerKwhGross.toFixed(2)} kr/kWh (jämförs mot marknadsindex exkl. energiskatt). Marknadens spotprisavtal i ${elRec.omrade} under ${elRec.season}: ca ${elRec.benchmarkKwh.toFixed(2)} kr/kWh. Potentiell nettobesparing när avtalet löper ut: ${Math.round(potentialSaving * 0.80).toLocaleString('sv-SE')} kr/år.`
@@ -2225,8 +2218,9 @@ export default async function handler(req, res) {
     const contractClock = (!categorized.licensePending)
       ? contractClockFinding({
           servicePeriodEnd:       extracted.servicePeriodEnd,
-          cancellationNoticeDays: extracted.cancellationNoticeDays,
+          uppsagning:             extracted.uppsagning,
           supplier:               categorized.normalizedSupplier || extracted.supplier,
+          paminnelse:             _paminnelse,
         })
       : null;
 
@@ -2251,7 +2245,7 @@ export default async function handler(req, res) {
         description:     extracted.description,
         servicePeriodStart:  extracted.servicePeriodStart ?? null,
         servicePeriodEnd:    extracted.servicePeriodEnd ?? null,
-        cancellationNoticeDays: extracted.cancellationNoticeDays ?? null,
+        uppsagning:          extracted.uppsagning ?? null,
         billingPeriod:       extracted.billingPeriod,
         billingPeriodSource: extracted.billingPeriodSource,
         billingPeriodAssumed: extracted.billingPeriodAssumed ?? false,

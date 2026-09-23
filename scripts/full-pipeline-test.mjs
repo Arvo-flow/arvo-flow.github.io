@@ -19,6 +19,7 @@ import { getSekRate, FALLBACK_RATE_USD_SEK, getEurSekRate, FALLBACK_RATE_EUR_SEK
 import { computeElRecommendation } from '../lib/el-recommendation.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity } from '../lib/sanity-verifier.js';
+import { avtalsklocka, avtalsRutt } from '../lib/contract-clock.js';
 
 const PDF_DIR   = join(new URL('.', import.meta.url).pathname, '../test-pdfs');
 const TARGET    = process.argv[2]; // Valfri: kör bara en specifik fil
@@ -155,24 +156,9 @@ async function runPipeline(pdfPath) {
 
   const catDef = BRANCHINDEX[categorized.category];
 
-  // Avtalslås-check (monitoring)
-  const _today = new Date();
-  const _periodEnd = extracted.servicePeriodEnd ? new Date(extracted.servicePeriodEnd) : null;
-  const _hasActivePeriod = _periodEnd && _periodEnd > _today;
-  const _lockDeadline = (() => {
-    if (!extracted.servicePeriodStart || extracted.cancellationNoticeDays == null) return null;
-    const d = new Date(extracted.servicePeriodStart);
-    d.setDate(d.getDate() - extracted.cancellationNoticeDays);
-    return d;
-  })();
-  const _MS_180 = 180 * 24 * 60 * 60 * 1000;
-  const _isPastLock = _lockDeadline
-    ? _today > _lockDeadline
-    : extracted.cancellationNoticeDays != null && _hasActivePeriod
-      ? true
-      : _hasActivePeriod && _periodEnd && (_periodEnd - _today) > _MS_180;
-
-  if (!categorized.licensePending && categorized.category !== 'el' && _hasActivePeriod && _isPastLock) {
+  // Avtalslås-check — SAMMA beslut som api/test-invoice.mjs (lib/contract-clock.js), aldrig en kopia.
+  const _klocka = avtalsklocka({ servicePeriodEnd: extracted.servicePeriodEnd, uppsagning: extracted.uppsagning });
+  if (!categorized.licensePending && categorized.category !== 'el' && avtalsRutt(_klocka)) {
     return {
       filename, route: 'monitoring', category: categorized.category, supplier: extracted.supplier,
       normalizedSupplier: categorized.normalizedSupplier, shouldSwitch: false, reasoning: '',

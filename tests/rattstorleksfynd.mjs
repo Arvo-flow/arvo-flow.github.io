@@ -128,7 +128,7 @@ describe('RS · rätt-storleksfyndet lagras och når rummet', () => {
     assert.match(mig, /ADD COLUMN IF NOT EXISTS rattstorlek_json JSONB/);
     assert.ok(VALFRIA_KOLUMNER.some(([n]) => n === 'rattstorlek_json'));
     const store = readFileSync(new URL('../lib/invoice-store.js', import.meta.url), 'utf8');
-    assert.equal((store.match(/line_items_json, rattstorlek_json\n/g) ?? []).length, 4,
+    assert.equal((store.match(/line_items_json, rattstorlek_json[,\n]/g) ?? []).length, 4,
       'båda rumsläsningarna (full + efter läkning) ska hämta kolumnen');
     const rum = readFileSync(new URL('../src/pages/Portfolio/index.js', import.meta.url), 'utf8');
     assert.match(rum, /rattstorleksKort\(g\.latest\?\.rattstorlek_json\)/, 'rummet frågar inte fyndet');
