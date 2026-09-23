@@ -53,6 +53,13 @@ console.log(JSON.stringify({
       ? (data.recommendation[k] ? `värde (annualSaving ${data.recommendation[k].annualSaving ?? '—'})` : 'null')
       : 'NYCKEL SAKNAS'])),
   reasoningHead:       (data.recommendation?.reasoning ?? '').slice(0, 140),
+  // LÄGESREGISTRET + AVTALSKLOCKAN (2026-09-23): läget API:t dikterar, och klockans läge/plan.
+  lage:                data.lage ? { matt: data.lage.matt, score: data.lage.score, etikett: data.lage.etikett, rubrik: data.lage.rubrik, harByte: data.lage.harByte } : 'SAKNAS',
+  klockLage:           data.contractClock?.lage ?? null,
+  klockSistaDag:       data.contractClock?.actByDate ?? null,
+  klockPaminnelse:     data.contractClock?.paminnelse ?? null,
+  uppsagning:          data.extracted?.uppsagning ?? data.uppsagning ?? null,
+  roamingZoneNyckel:   Object.prototype.hasOwnProperty.call(data.extracted ?? {}, 'roamingZone'),
   leadFindingTitle:    data.recommendation?.leadFinding?.title ?? null,
   forensicCount:       data.recommendation?.forensicFindings?.length ?? null,
   hasContractClockKey: Object.prototype.hasOwnProperty.call(data, 'contractClock'),
