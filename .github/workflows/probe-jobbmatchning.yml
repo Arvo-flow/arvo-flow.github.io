@@ -1,0 +1,35 @@
+name: Sond — jobbmatchning (analyserade jobbet sin egen bilaga?)
+
+# Ställer varje bulkjobbs FILNAMN mot leverantören på den rad jobbet lagrade (`lagrad#<uuid>`).
+# Byggd 2026-09-23 när omköningsförsöket visade utfall som inte stämde med filnamnen.
+# Avsändaren anges ALLTID som sha256 — repot och loggen är publika.
+on:
+  workflow_dispatch:
+    inputs:
+      avsandare:
+        description: 'sha256:<hex av lower(trim(adress))> — aldrig klartext, loggen är publik'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Mät jobbmatchningen
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AVSANDARE: ${{ inputs.avsandare }}
+        # pipefail: utan den returnerar en pipe TEE:s exit-kod och en död sond rapporterar framgång.
+        # Inputen går via env, aldrig interpolerad i skriptkroppen (injektionsvägen, canary 2026-09-19).
+        run: |
+          set -o pipefail
+          node scripts/probe-jobbmatchning.mjs "$AVSANDARE"
