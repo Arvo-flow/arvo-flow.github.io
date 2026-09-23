@@ -300,6 +300,60 @@ mätningen inte körts.
 
 ---
 
+## Fyndgraden · Produktens mått är vad kunden får, inte vad vi prövat
+
+> **✅ GRUNDARBESLUT 2026-09-23 — «VERIFIERADE FYND PER INSKICKAD FAKTURA I PRODUKTION» ÄR SYSTEMETS
+> PRIMÄRA MÅTT, INTE ANTAL TESTER.** Bromsarna (integritetsmaskinen) var ett existensberättigande —
+> men bromsar stänger inga affärer. Instrumentet: `scripts/probe-fyndgrad.mjs` (Actions,
+> `probe-fyndgrad.yml`). Motmått, lika tungt: **noll fynd som faller i granskning.** Ett mått som
+> belönar fynd skapar tryck att hitta fynd; en falsk besparing är värre än ingen (regel 3).
+>
+> **Förfinat, och det var grundarens egen bibel som sa emot:** «ärlig tystnad är nollvärde» stämmer
+> inte — *den tysta dagen är produkten* (Visionen). Det som saknar värde är **oförklarad** tystnad
+> om de kategorier vi säger att vi behärskar. Den som optimerar bort tystnad pressar fram fynd; den
+> som optimerar bort oförklarad tystnad pressar fram sanning.
+>
+> **Första mätningen var inte ett mätvärde på produkten.** «0 av 5 prissatta» i det skarpa rummet
+> mätte testytans seedade rekvisita — direkt INSERT, aldrig genom `recommend()`. Den riktiga
+> baslinjen (43 riktiga analyser, testytan utesluten med `arTestidentitet` och redovisad separat):
+> **7 av 43 = 16,3 %**. Och även den mätte till stor del **gammal kod**:
+>
+> **1 · DOMAR FRYSES VID SKRIVNING.** Poäng och prisunderlag räknas vid läsning och följer koden;
+> route, triage-skäl och kategori gör det inte. Sju utländska SaaS-fakturor stod fällda av Ring 1
+> (kvoten radsumma/total = växelkursen, 11,47 och 10,42) — daterade 14 aug och 9 sep, samma dag som
+> eller FÖRE valutafixen 28ecd62. Fixen fanns; raderna kördes aldrig om, och ingen kunde se det,
+> eftersom raden inte bar vilken kod som dömde den. Nu `analyserad_sha` + `analyserad_at` på varje
+> lagring (`lib/analysstampel.js`, AS-01..05). **En fix som inte når de lagrade domarna har inte
+> nått kunden.**
+>
+> **2 · ETT POSITIONSNUMMER MELLAN TVÅ LISTOR UR TVÅ KÄLLOR.** Bulkköaren numrerade PDF:erna i
+> webhookens lista; drainen hämtade nummer N ur Resends API-lista, i annan ordning. Mätt: **4 av 4**
+> prövbara jobb analyserade en annan leverantörs faktura än filnamnet (Atlassian → Securitas,
+> Securitas → Adobe, DHL → Telenor, Scandic → Fortnox). Efter fixen (`valjBilaga`, på filnamn, exakt
+> en träff, annars ärligt fel): **6 av 6**. De gamla testerna kunde aldrig se det — de matade köaren
+> och drainen från SAMMA lista (BJ-01 bygger nu två olika ordningar, som i produktion).
+>
+> **3 · EN KÖ UTANFÖR FLAGGAN TÖMS FYRA GÅNGER I TIMMEN.** Omköningar från Actions kan inte sätta
+> köflaggan (KV saknas där), och drainen frågade Postgres bara i säkerhetsslottarna. Nu tänder en
+> körning som HITTAT arbete flaggan själv (IK-07).
+>
+> **Integritet i en publik logg:** en personlig adress står aldrig i en workflow-input eller logg.
+> `koa-om-alla` och `probe-jobbmatchning` tar `sha256:<hex>` och kräver exakt en träff.
+>
+> **Och sedan mättes den igen — och rörde sig inte.** Grundarens 25-bunt kördes om genom dagens
+> pipeline (efter bilagefixen, 23 sep 05:23–05:49, alla 25 `done`, 25 rader stämplade med dagens
+> commit). Fyndgraden: **7 av 43 före, 7 av 43 efter.** Slack och Google Workspace passerade Ring 1
+> och kategoriserades som saas-productivity — men inget nytt LAGRAT fynd uppstod. Det är mätvärdet,
+> och det ska stå här utan förklaring som mjukar upp det: **dagens motor hittar inga fler lagrade
+> fynd i grundarens bunt än gårdagens.** Två delar av förklaringen är mätta, en är det inte:
+> · rätt-storleksfynd lagras inte (övre gräns nu 9 rader) — mätt i `storeAnalysis`;
+> · en ny triage-dom uppdaterade aldrig kategorin (5 rader stod kvar som okategoriserade med nytt
+>   skäl) — mätt, lagat i samma commit (TR-01..03);
+> · huruvida bunten över huvud taget BÄR fynd att hitta — **okänt**. Det är den fråga fyndgraden nu
+>   kan besvara ärligt, eftersom den för första gången mäter dagens kod.
+
+---
+
 ## Verifieringsplikten · Aldrig en gissning
 
 > *En gissning som låter rätt är farligare än ett erkänt "jag vet inte" — för den

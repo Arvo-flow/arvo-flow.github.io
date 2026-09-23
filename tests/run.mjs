@@ -111,6 +111,7 @@ import './bevakat-kort.mjs';
 import './rumsredovisning.mjs';
 import './rumsberikning.mjs';
 import './analysstampel.mjs';
+import './triage-kategori.mjs';
 import './rumsrad.mjs';
 import './avvikelsevakten.mjs';
 import './prisbokscellen.mjs';
