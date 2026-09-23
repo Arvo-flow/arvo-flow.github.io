@@ -8,8 +8,8 @@
 // ⚠️ DET FÖRSTA «0 AV 5» VAR INTE ETT MÄTVÄRDE PÅ PRODUKTEN. De fem raderna i det skarpa rummet
 // seedas av `scripts/seed-avtal-testyta.mjs` med en direkt INSERT — fäll-innehav byggda för att
 // pröva AVTALSFLÖDET, med runda rekvisitabelopp och utan en enda radpost. De har aldrig passerat
-// `recommend()`. Att räkna fynd på dem mäter seeden. Den här sonden utesluter dem uttryckligen
-// och räknar dem SEPARAT, så att uteslutningen själv går att se.
+// `recommend()`. Att räkna fynd på dem mäter seeden. Den här sonden utesluter testidentiteten
+// (`arTestidentitet`, samma fråga som prisboken ställer) och räknar den SEPARAT.
 //
 // ══ VAD SONDEN KAN — OCH INTE KAN — MÄTA ════════════════════════════════════════════════════
 // `storeAnalysis` sparar bytesbeslutet (should_switch, net_saving) och det forensiska huvudfyndet
@@ -25,7 +25,7 @@
 //   · Utan databas avslutar sonden 1 utan tal. Ett tomt svar är inte ett svar.
 
 import { getDb } from '../lib/db.js';
-import { TEST_EMAIL } from '../lib/test-surface.js';
+import { arTestidentitet } from '../lib/test-surface.js';
 
 const db = getDb();
 if (!db) {
@@ -37,17 +37,22 @@ if (!db) {
 // (NIVASANKNINGSKORT i src/lib/diagnos.js) — mappad till den kategori som producerar kortet.
 const RATTSTORLEK_KATEGORIER = ['saas-finance', 'saas-productivity', 'saas-creative', 'loneadmin'];
 
+// ⚠️ TESTIDENTITETEN AVGÖRS I JS, AV `arTestidentitet` — INTE AV EN EGEN SQL-KOPIA.
+// Första versionen filtrerade `user_email = TEST_EMAIL` (EN adress, medan testytan känner flera
+// plus varje `+tag`) och dessutom `fingerprint LIKE 'seed:%'`. Den andra klausulen var ett skydd
+// bakom ett skydd: mätt 2026-09-23 skriver den enda seedaren (seed-avtal-testyta.mjs) alltid
+// TEST_EMAIL, alltså fångade e-postfiltret redan varje seedrad och LIKE-klausulen kunde aldrig
+// ändra utfallet (10 sep: «ett skydd bakom ett annat skydd är inte två lager»). Den fällde
+// dessutom SV-09 — med rätta i allmänhet, fingeravtryck hashas. Nu EN fråga, EN sanning.
 const rader = await db`
-  SELECT category, route, should_switch, net_saving, gross_saving,
+  SELECT category, route, should_switch, net_saving, gross_saving, user_email,
          (lead_finding_json IS NOT NULL) AS har_fynd,
-         (user_email = ${TEST_EMAIL}) AS testyta,
-         (fingerprint LIKE 'seed:%') AS seed,
          arkiverad_at IS NOT NULL AS arkiverad
   FROM invoice_analyses   -- internt: fyndgradsmätning, ingen kundyta; testytan redovisas separat
 `;
 
-const test = rader.filter((r) => r.testyta || r.seed);
-const riktiga = rader.filter((r) => !r.testyta && !r.seed);
+const test = rader.filter((r) => arTestidentitet(r.user_email));
+const riktiga = rader.filter((r) => !arTestidentitet(r.user_email));
 const aktiva = riktiga.filter((r) => !r.arkiverad);
 
 console.log('\n═══ FYNDGRADEN · verifierade fynd per inskickad faktura (produktion) ═══\n');
