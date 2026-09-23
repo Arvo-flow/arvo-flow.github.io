@@ -201,6 +201,11 @@ await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS triage_reason TE
 // proveniens för moaten. NULL = aktiv. Kolumnen skapas av en MIGRERING, aldrig av en självläkning
 // (LK-01: självläkningen kördes aldrig, och det var precis felet 15 augusti).
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS arkiverad_at TIMESTAMPTZ`;
+// VILKEN KOD FÄLLDE DOMEN (2026-09-23): route, triage-skäl och kategori fryses vid skrivning, och
+// raden bar ingen uppgift om vilken kod som dömde den — sju SaaS-fakturor stod fällda av en bugg
+// som lagats 14 dagar tidigare utan att någon kunde se det. Se lib/analysstampel.js.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS analyserad_sha TEXT`;
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS analyserad_at TIMESTAMPTZ`;
 await sql`
   CREATE INDEX IF NOT EXISTS idx_analyses_aktiva
     ON invoice_analyses (user_email, created_at DESC)
