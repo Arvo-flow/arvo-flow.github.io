@@ -201,6 +201,7 @@ export default function OutcomeSurvey() {
         {step === 'cost' && (
           <>
             <Title>Vad betalar ni nu per år?</Title>
+            {/* kundmening-ok: en FRÅGA om kundens eget tal — enheten, inget påstående om pris eller besparing */}
             <Sub>Ange er nya årskostnad (kr/år) — vi jämför med vad vi förutspådde.</Sub>
             <InputLabel htmlFor="actual-cost">Ny årskostnad (kr)</InputLabel>
             <CostInput

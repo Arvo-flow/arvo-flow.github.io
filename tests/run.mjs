@@ -117,6 +117,7 @@ import './rattstorleksfynd.mjs';
 import './paminnelse.mjs';
 import './lagesregister.mjs';
 import './rumsnyckel.mjs';
+import './ytinventering.mjs';
 import './rumsrad.mjs';
 import './avvikelsevakten.mjs';
 import './prisbokscellen.mjs';
