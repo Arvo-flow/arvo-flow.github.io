@@ -114,4 +114,14 @@ await fraga('U5 · prisbokens datapunkter per månad', async () => {
   for (const r of rows) console.log(`    ${r.man} · ${String(r.source).padEnd(16)} · ${r.n}`);
 });
 
+await fraga('U6 · supplier_price_history', async () => {
+  const rows = await db`
+    SELECT supplier, product, category, old_price_monthly, new_price_monthly, changed_by, changed_at
+    FROM supplier_price_history ORDER BY changed_at DESC LIMIT 15   -- internt: undersökningen, rummets höjningsminne
+  `;
+  const [n] = await db`SELECT COUNT(*)::int AS n, MAX(changed_at) AS senast FROM supplier_price_history   -- internt: undersökningen`;
+  console.log(`\n── U6 · supplier_price_history ──  rader: ${n.n} · senaste ändring: ${dag(n.senast)}`);
+  for (const r of rows) console.log(`    ${dag(r.changed_at)} · ${String(r.supplier).slice(0, 18).padEnd(18)} · ${String(r.product).slice(0, 30).padEnd(30)} · ${r.old_price_monthly} → ${r.new_price_monthly} · ${r.changed_by}`);
+});
+
 console.log('\n[probe-undersokning] klar\n');
