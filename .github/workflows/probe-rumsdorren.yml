@@ -1,0 +1,23 @@
+name: Sond — rummets dörr i produktionen
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Mät
+        shell: bash
+        # pipefail: utan den returnerar en pipe TEE:s exit-kod och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-rumsdorren.mjs
