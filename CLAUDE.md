@@ -377,14 +377,23 @@ mätningen inte körts.
 > Sonden skriver nu ursprunget per fynd, eftersom **6 av 43 rader i mätbasen är anonyma** och kan
 > vara sonder — en förorening av det primära måttet som ingen har rensat.
 > **⚠️ RÄTTELSE samma dag, läst i koden:** `diag-live` KAN inte vara källan till de sex. Sonden
-> skickar inget fingerprint, och `storeAnalysis` returnerar tidigt utan ett. Varifrån de anonyma
-> raderna kommer vet jag inte än. **Och mätbasen är värre än så:** grundaren bekräftade 23 sep att
+> skickar inget fingerprint, och `storeAnalysis` returnerar tidigt utan ett. **Mätt samma kväll
+> (`probe-undersokning`, U1):** 3 av de 6 är repots egna testfakturor (Lynxeye juni, diag-bredband ×2
+> juli), 3 är webbuppladdningar 5 och 8 sep (Atea, Dustin, Microsoft Ireland) från 2 fingeravtryck.
+> Ingen av de 6 är stämplad, alltså dömd av kod före 23 sep. Vem som laddade upp de tre sista vet
+> jag inte än. **Och mätbasen är värre än så:** grundaren bekräftade 23 sep att
 > `Arvo_NN`-bunten är syntetiskt testmaterial. Fyndgraden har alltså till stor del mätt oss själva.
 > 8 av 43 är ett mått på motorn mot rekvisita, inte på produkten mot kunder.
 >
 > **Och en förutsägelse föll:** jag skrev att kategorifixen (TR-01..03) skulle rätta Dustin, Komplett
 > och Systemair vid nästa körning. De kördes om av 4ebd406 och står **kvar som okategoriserade** med
 > `no_benchmark`. Fixen verkar för Atlassian; varför den inte når de tre — **jag vet inte än**.
+> **Mätt 23 sep kväll (U2):** alla tre bär `analyserad_sha 4ebd406` och skälet `no_benchmark`, som
+> sätts när kategoriseraren svarar en kategori som SAKNAS i prisboken (`!catDef`). TR-fixen gjorde
+> alltså sitt jobb; felet ligger före den. Obekräftad förklaring: kategoribeslutet är fryst per
+> dokument i 30 dygn (`kat:v1`, `lib/kategoribeslut.js`) och nyckelversionen har aldrig bumpats,
+> så omkörningen kan ha fått det gamla beslutet — medan raden bär dagens stämpel. KV-innehållet går
+> inte att läsa från Actions (KV-nycklarna saknas där, mätt), så frysningen är inte bekräftad.
 > Rätt-storleksmotorerna för M365, saas-finance och löneadmin gav noll lagrade fynd i bunten; om det
 > är för att fakturorna inte bär E3/E5 eller en känd paketnivå är inte mätt.
 
