@@ -46,7 +46,7 @@ const RATTSTORLEK_KATEGORIER = ['saas-finance', 'saas-productivity', 'saas-creat
 // dessutom SV-09 — med rätta i allmänhet, fingeravtryck hashas. Nu EN fråga, EN sanning.
 const rader = await db`
   SELECT category, route, should_switch, net_saving, gross_saving, user_email,
-         normalized_supplier, supplier, triage_reason,
+         normalized_supplier, supplier, triage_reason, created_at,
          (lead_finding_json IS NOT NULL) AS har_fynd,
          arkiverad_at IS NOT NULL AS arkiverad
   FROM invoice_analyses   -- internt: fyndgradsmätning, ingen kundyta; testytan redovisas separat
@@ -118,7 +118,10 @@ console.log(`\n── OKATEGORISERADE (${okat.length} av ${bas.length}) — leve
 const perLev = {};
 for (const r of okat) {
   const namn = (r.normalized_supplier || r.supplier || '(tomt namn)').trim() || '(tomt namn)';
-  const nyckel = `${namn} · ${r.route ?? '—'} · ${r.triage_reason ?? '—'}`;
+  // Datumet är lastbärande: Ring 1:s valutafel lagades 2026-09-09/10 enligt koden. En rad
+  // lagrad FÖRE fixen bär det gamla skälet och säger ingenting om hur koden beter sig i dag.
+  const dag = r.created_at ? new Date(r.created_at).toISOString().slice(0, 10) : '—';
+  const nyckel = `${dag} · ${namn} · ${r.route ?? '—'} · ${r.triage_reason ?? '—'}`;
   perLev[nyckel] = (perLev[nyckel] ?? 0) + 1;
 }
 for (const [k, n] of Object.entries(perLev).sort((a, b) => b[1] - a[1])) {
