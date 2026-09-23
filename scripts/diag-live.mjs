@@ -46,6 +46,13 @@ console.log(JSON.stringify({
   netSaving:           data.recommendation?.netSaving ?? null,
   // Serialiserings-bevis: dessa fält droppades tidigare ur auto-svaret (FindingCard ritade tomt).
   hasLeadFindingKey:   Object.prototype.hasOwnProperty.call(data.recommendation ?? {}, 'leadFinding'),
+  // RÄTT-STORLEKSKORTEN (2026-09-23): nyckelns NÄRVARO skiljs från dess VÄRDE. `null` = motorn
+  // svarade «inget fynd»; saknad nyckel = serialiseringen skickade aldrig fältet.
+  rattstorlek: Object.fromEntries(['saasFinanceRightsizing', 'm365Rightsizing', 'adobeRightsizing', 'loneadminRightsizing']
+    .map((k) => [k, Object.prototype.hasOwnProperty.call(data.recommendation ?? {}, k)
+      ? (data.recommendation[k] ? `värde (annualSaving ${data.recommendation[k].annualSaving ?? '—'})` : 'null')
+      : 'NYCKEL SAKNAS'])),
+  reasoningHead:       (data.recommendation?.reasoning ?? '').slice(0, 140),
   leadFindingTitle:    data.recommendation?.leadFinding?.title ?? null,
   forensicCount:       data.recommendation?.forensicFindings?.length ?? null,
   hasContractClockKey: Object.prototype.hasOwnProperty.call(data, 'contractClock'),
