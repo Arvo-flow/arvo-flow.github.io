@@ -7,6 +7,7 @@
 // ägarskapsbeviset. Tokens accepteras inom expiry även om de förbrukats
 // för inloggning (AuthContext konsumerar dem vid sidladdning).
 import { getAnalysesByFingerprint, getAnalysesByEmail } from '../lib/invoice-store.js';
+import { arRumsnyckel } from '../lib/rumsnyckel.js';
 import { getMarketIntelligence } from '../lib/price-alert.js';
 import { pendingCountBySender, failedCountBySender, failedFilesBySender } from '../lib/ingest-queue.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
@@ -64,9 +65,14 @@ export default async function handler(req, res) {
   const magic   = req.query?.magic;
   const session = req.query?.session;
 
-  const hasFp = typeof fp === 'string' && fp.length >= 8;
+  // Historik på enbart en nyckel lämnas bara ut när nyckeln är en SLUMPAD rumsnyckel
+  // (lib/rumsnyckel.js, RN-01..03). Ett deterministiskt fingeravtryck, eller en nyckel härledd ur
+  // en e-postadress, går att räkna fram utifrån — och öppnar då någon annans rum.
+  const hasFp = arRumsnyckel(fp);
   if (!hasFp && !magic && !session) {
-    return send(res, 400, { error: 'fingerprint, magic eller session krävs' });
+    return send(res, 400, fp
+      ? { error: 'rumsnyckel_ogiltig', message: 'Rummet kan inte öppnas med den här nyckeln. Öppna det via länken i ert mejl.' }
+      : { error: 'fingerprint, magic eller session krävs' });
   }
 
   // E-postägarskap: en VARAKTIG session (signatur-verifierad) ELLER en färsk magic-token (24h).

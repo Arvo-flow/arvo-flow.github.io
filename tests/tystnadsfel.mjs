@@ -93,7 +93,7 @@ describe('Tystnadsfel · avsändardomänen (kundlarmet som aldrig gick fram)', (
   const KALLOR = [
     'scripts/notify-price-changes.mjs', 'api/cron/run-price-alerts.mjs', 'api/cron/send-reminders.mjs',
     'api/cron/generate-briefings.mjs', 'api/send-analysis.mjs', 'api/inbound-email.mjs',
-    'api/generate-prospect.mjs', 'api/briefing.mjs', 'api/send-report.mjs',
+    'api/generate-prospect.mjs', 'api/briefing.mjs',
     'api/activate-intelligence.mjs', 'api/auth/request-magic-link.mjs', 'lib/benchmark.js',
   ];
 

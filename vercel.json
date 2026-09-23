@@ -41,9 +41,6 @@
     "api/send-analysis.mjs": {
       "maxDuration": 30
     },
-    "api/send-report.mjs": {
-      "maxDuration": 30
-    },
     "api/briefing.mjs": {
       "maxDuration": 15
     },

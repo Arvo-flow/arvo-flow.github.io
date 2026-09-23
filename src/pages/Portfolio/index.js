@@ -4,6 +4,7 @@
 // eller honest systemkonstant. Lager som kräver data vi ännu inte har
 // (kohort-prisdiskriminering, sannolikhetsprognos) visas ENDAST med verklig
 // täckning — annars utelämnas de (regel 3/4: precision eller tystnad).
+import { hamtaRumsnyckel, nyRumsnyckel, RUMSNYCKEL_RE } from '../../utils/rumsnyckel';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../components/Icon';
@@ -58,18 +59,8 @@ const GENERIC_DOMAINS = new Set([
   'icloud.com','live.com','msn.com','me.com','proton.me','protonmail.com',
 ]);
 
-async function getBrowserFingerprint() {
-  const raw = [
-    navigator.userAgent, navigator.language,
-    `${window.screen.width}x${window.screen.height}`,
-    Intl.DateTimeFormat().resolvedOptions().timeZone,
-    String(navigator.hardwareConcurrency ?? ''),
-  ].join('|');
-  try {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
-    return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
-  } catch { return Math.random().toString(36).slice(2, 14); }
-}
+// Rumsnyckeln är 128 bitar slump (src/utils/rumsnyckel.js) — aldrig ett fingeravtryck av webbläsaren.
+const getBrowserFingerprint = async () => hamtaRumsnyckel();
 
 // Medveten TESTVÄG (rör aldrig den riktiga deterministiska identiteten):
 //   ?reset=1   → färsk slumpad identitet → tomt "ny kund"-kontor (demo/test om och om igen)
@@ -84,16 +75,17 @@ function resolveTestIdentity() {
       if (v === 'off' || v === '0' || v === 'real') {
         localStorage.removeItem(FP_OVERRIDE_KEY);
       } else {
-        const fresh = 'test' + Array.from(crypto.getRandomValues(new Uint8Array(10)))
-          .map((b) => b.toString(16).padStart(2, '0')).join('');
-        localStorage.setItem(FP_OVERRIDE_KEY, fresh);
+        localStorage.setItem(FP_OVERRIDE_KEY, nyRumsnyckel());
         ['arvo_successful_count', 'arvo_had_saving', 'arvo_gate_passed'].forEach((k) => localStorage.removeItem(k));
       }
       params.delete('reset');                       // strippa så reload inte rullar ny identitet
       const qs = params.toString();
       window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
     }
-    return localStorage.getItem(FP_OVERRIDE_KEY) || null;
+    // En testidentitet i det gamla formatet («test…») öppnar inte längre något rum — den förnyas.
+    const lagrad = localStorage.getItem(FP_OVERRIDE_KEY);
+    if (lagrad && !RUMSNYCKEL_RE.test(lagrad)) { const ny = nyRumsnyckel(); localStorage.setItem(FP_OVERRIDE_KEY, ny); return ny; }
+    return lagrad || null;
   } catch { return null; }
 }
 
@@ -855,7 +847,9 @@ export default function Portfolio() {
           </div>
         )}
         {analyses === null && !error && <Spinner />}
-        {error && <Verdict><h2 style={{ fontSize: 26 }}>Kunde inte ladda ert kontor — försök igen om en stund.</h2></Verdict>}
+        {/* Serverns eget besked visas — det vet VARFÖR (tillfälligt fel, eller en nyckel som inte öppnar
+            rummet). En fast «försök igen» ljög för en nekad nyckel, där ett nytt försök aldrig hjälper. */}
+        {error && <Verdict><h2 style={{ fontSize: 26 }}>Kunde inte ladda ert kontor.</h2><p className="work">{error}</p></Verdict>}
 
         {analyses !== null && suppliers.length > 0 && (
           <>

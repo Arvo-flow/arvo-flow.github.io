@@ -1917,7 +1917,7 @@ Auth: Magic link via `api/auth/request-magic-link.mjs` → `magic_tokens` → `a
 
 **Portfolio** (`src/pages/Portfolio/index.js`)
 - GET `/api/invoice-history?fingerprint={fp}` · Arvo Score beräknas från 8 segment
-- Segment-grid · Faktura­lista · Rapport-formulär (POST `/api/send-report`) · CTA till Connect Fortnox/Visma
+- Segment-grid · Faktura­lista · CTA till Connect Fortnox/Visma (rapport-endpointen `/api/send-report` raderad 2026-09-23: den mejlade ett rums analyser till valfri adress på enbart ett fingeravtryck)
 
 **Aktivera** (`src/pages/Aktivera/index.js`)
 - OAuth-knappar (Gmail/Outlook) · ELLER e-post­formulär → POST `/api/activate-intelligence`

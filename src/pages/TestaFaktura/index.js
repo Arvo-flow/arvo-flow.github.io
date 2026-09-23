@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { hamtaRumsnyckel } from '../../utils/rumsnyckel';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Nav from '../../components/Nav';
@@ -112,24 +113,9 @@ const FREE_ANALYSES    = 3; // speglar serverns konstant
 // verkningslöst så länge `hadSaving` kortslöt det.
 const FREE_SUCCESSFUL  = 10; // max lyckade auto-analyser innan gate
 
-async function getBrowserFingerprint() {
-  const raw = [
-    navigator.userAgent,
-    navigator.language,
-    `${window.screen.width}x${window.screen.height}`,
-    Intl.DateTimeFormat().resolvedOptions().timeZone,
-    String(navigator.hardwareConcurrency ?? ''),
-  ].join('|');
-  try {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
-    return Array.from(new Uint8Array(buf))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
-      .slice(0, 24);
-  } catch {
-    return Math.random().toString(36).slice(2, 14);
-  }
-}
+// Rumsnyckeln är 128 bitar slump (src/utils/rumsnyckel.js) — aldrig ett fingeravtryck av webbläsaren,
+// som gick att räkna fram och delades av likadana datorer. Servern läser historik bara på en sådan nyckel.
+const getBrowserFingerprint = async () => hamtaRumsnyckel();
 
 // `redactSupplier` bor sedan 2026-09-22 i src/lib/leverantorsnamn.js — den hade fyra anropare
 // och noll tester här inne, och redigerade bort kundens EGEN leverantör i rätt-storleksfallet.
