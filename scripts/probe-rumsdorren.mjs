@@ -21,10 +21,19 @@ await pröva('gammalt webbläsarformat (24 hex)', `fingerprint=${deterministisk}
 await pröva('mail:-nyckel', `fingerprint=mail:${'a'.repeat(16)}`, 'nekad');
 await pröva('kontor:-nyckel', `fingerprint=kontor:${'b'.repeat(16)}`, 'nekad');
 await pröva('MOTPROV · nyskapad slumpnyckel', `fingerprint=${randomBytes(16).toString('hex')}`, 'öppen');
-for (const metod of ['GET', 'POST']) {
-  const r = await hamta('/api/send-report', { method: metod, headers: { 'Content-Type': 'application/json' }, body: metod === 'POST' ? '{}' : undefined });
-  const ok = r.status === 404; if (!ok) fel++;
-  console.log(`${ok ? '✓' : '✗'} send-report ${metod}: HTTP ${r.status}`);
+// send-report: det som räknas är att FUNKTIONEN är borta. En okänd sökväg besvaras av sidans
+// reserv (GET → HTML 200, POST → 405) — en första version av sonden förväntade 404 och föll på rätt
+// beteende. Provet nu: GET får inte vara JSON från en funktion, och POST med nyckel + adress får
+// aldrig svara ok.
+{
+  const g = await hamta('/api/send-report');
+  const gOk = g.status !== null && !/^\s*\{/.test(g.text); if (!gOk) fel++;
+  console.log(`${gOk ? '✓' : '✗'} send-report GET: HTTP ${g.status} · ${/^\s*</.test(g.text) ? 'sidans HTML-reserv' : g.text.slice(0, 60)}`);
+  const p = await hamta('/api/send-report', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fingerprint: deterministisk, email: 'sond@invalid.example' }) });
+  let svarOk = false; try { svarOk = JSON.parse(p.text).ok === true; } catch {}
+  const pOk = p.status !== null && !(p.status >= 200 && p.status < 300) && !svarOk; if (!pOk) fel++;
+  console.log(`${pOk ? '✓' : '✗'} send-report POST med nyckel + adress: HTTP ${p.status}${svarOk ? ' · ok:true — FUNKTIONEN LEVER' : ''}`);
 }
 if (fel) { console.log(`\n✗ ${fel} kontroll(er) föll — antingen är deployen inte ute ännu, eller så är dörren öppen.`); process.exit(1); }
-console.log('\n✓ Dörren nekar gissade nycklar, släpper in en slumpad, och send-report finns inte.');
+console.log('\n✓ Dörren nekar gissade nycklar, släpper in en slumpad, och send-report kan inte längre anropas.');
