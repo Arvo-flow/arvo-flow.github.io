@@ -131,21 +131,65 @@ export async function listInboundAttachments(emailId, { fetchImpl = fetch } = {}
   return all;
 }
 
-// Hämta EN PDF-bilaga vid given index (bland PDF:erna) — drain-arbetaren hämtar ett köat jobbs PDF
-// vid analystillfället (signerade download_url:er är färska vid varje listning). null om saknas/för stor.
-export async function fetchInboundPdfByIndex(emailId, index, { fetchImpl = fetch } = {}) {
+// ── BULKJOBBETS BILAGA VÄLJS PÅ IDENTITET, ALDRIG PÅ POSITION (2026-09-23) ─────────────────────
+// ⚠️ MÄTT I PRODUKTION, 4 AV 4: varje prövbart bulkjobb i grundarens 25-bunt analyserade en ANNAN
+// leverantörs faktura än filnamnet angav (Atlassian → Securitas, Securitas → Adobe, DHL → Telenor,
+// Scandic → Fortnox; scripts/probe-jobbmatchning.mjs, Actions 35821426552, med motprov).
+//
+// Orsaken: köaren (`api/inbound-email.mjs`, bulkgrenen) numrerade PDF:erna i WEBHOOKENS
+// bilagelista och sparade filnamnet därifrån. Drainen hämtade sedan PDF nummer N ur RESENDS
+// API-lista. Två listor ur två källor, ihopkopplade med ett POSITIONSNUMMER — och Resend
+// returnerar dem inte i samma ordning. Jobbets etikett och jobbets innehåll kom alltså ur olika
+// dokument. Raden i rummet var intern konsekvent (leverantören lästes ur den PDF som faktiskt
+// analyserades), men allt som namnger en bulkfil — kundens «vi kunde inte läsa X.pdf»,
+// `koa-om-fil` — pekade på fel dokument.
+//
+// De gamla testerna kunde aldrig se det: de matade köaren och drainen från SAMMA mocklista.
+// Mekanismen prövad, matningen aldrig (femte gången: LFL 12 aug, holdings 19 aug, ...).
+//
+// Nu: bilagan väljs på `id` om jobbet bär ett, annars på FILNAMN — det namn kunden själv såg.
+// Exakt en träff krävs. Noll eller flera är ett ÄRLIGT fel med skäl, aldrig en gissning: att falla
+// tillbaka på positionen vore att återinföra precis det fel som mättes.
+//
+// FÅNGAR: ett jobb som skulle få en annan bilaga än den det heter · två bilagor med samma namn.
+// BLIND: två PDF:er med IDENTISKT filnamn i samma mejl kan inte skiljas åt utan `id`; de vägras
+//   båda med `bilaga_ej_entydig` i stället för att en av dem analyseras under fel etikett.
+
+/**
+ * Väljer jobbets bilaga ur API-listans PDF:er. Ren funktion — ingen nätverkstrafik.
+ * @returns {{ bilaga: object } | { fel: 'bilaga_utan_namn' | 'bilaga_saknas' | 'bilaga_ej_entydig', antal?: number }}
+ */
+export function valjBilaga(pdfs = [], { filename = null, attachmentId = null } = {}) {
+  if (attachmentId) {
+    const viaId = pdfs.filter((a) => a?.id === attachmentId);
+    if (viaId.length === 1) return { bilaga: viaId[0] };
+  }
+  const namn = typeof filename === 'string' ? filename.trim() : '';
+  if (!namn) return { fel: 'bilaga_utan_namn' };
+  const traffar = pdfs.filter((a) => String(a?.filename ?? '').trim() === namn);
+  if (traffar.length === 1) return { bilaga: traffar[0] };
+  return { fel: traffar.length === 0 ? 'bilaga_saknas' : 'bilaga_ej_entydig', antal: traffar.length };
+}
+
+/**
+ * Hämtar ETT bulkjobbs PDF, vald på identitet (se ovan). Signerade download_url:er är färska vid
+ * varje listning, så listningen görs vid analystillfället.
+ * @returns {Promise<null | { fel: string, antal?: number } | { filename: string, tooBig: true } | { filename: string, content: string }>}
+ */
+export async function fetchInboundPdfForJob(emailId, { filename = null, attachmentId = null } = {}, { fetchImpl = fetch } = {}) {
   const key = process.env.RESEND_API_KEY;
   if (!key || !emailId) return null;
   const data = await listInboundAttachments(emailId, { fetchImpl });
   const pdfs = data.filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
-  const a = pdfs[index];
-  if (!a) return null;
-  const filename = a.filename ?? 'faktura.pdf';
-  if (a.size > MAX_PDF_BYTES) return { filename, tooBig: true };
+  const val = valjBilaga(pdfs, { filename, attachmentId });
+  if (val.fel) return val;
+  const a = val.bilaga;
+  const namn = a.filename ?? 'faktura.pdf';
+  if (a.size > MAX_PDF_BYTES) return { filename: namn, tooBig: true };
   const dl = await fetchImpl(a.download_url);
   if (!dl.ok) throw new Error(`bilagenedladdning misslyckades (HTTP ${dl.status})`);
   const buf = Buffer.from(await dl.arrayBuffer());
-  return { filename, content: buf.toString('base64') };
+  return { filename: namn, content: buf.toString('base64') };
 }
 
 /** Magic link in i kontoret — samma tabell/format som request-magic-link.mjs. */

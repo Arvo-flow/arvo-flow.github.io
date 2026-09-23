@@ -8,7 +8,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchInboundPdfs, fetchInboundPdfByIndex, listInboundAttachments } from '../api/inbound-email.mjs';
+import { fetchInboundPdfs, fetchInboundPdfForJob, listInboundAttachments } from '../api/inbound-email.mjs';
 
 const PDF_BYTES = Buffer.from('%PDF-1.4 testinnehåll');
 
@@ -115,22 +115,23 @@ describe('Resend-bilagepaginering — index ≥20 tappas aldrig', () => {
     assert.equal(all.length, 26);
   });
 
-  test('fetchInboundPdfByIndex(25) på 26-bilagors mejl → hämtar PDF:en (regressionen)', async () => {
+  test('bilaga nr 26 på 26-bilagors mejl → hämtas (pagineringsregressionen, nu på filnamn)', async () => {
     process.env.RESEND_API_KEY = 'test-key';
-    const r = await fetchInboundPdfByIndex('em_bulk', 25, { fetchImpl: pagedMock(26) });
+    const r = await fetchInboundPdfForJob('em_bulk', { filename: 'INV_25.pdf' }, { fetchImpl: pagedMock(26) });
     assert.ok(r && r.content, 'idx 25 ska resolva, inte bli null');
     assert.equal(r.filename, 'INV_25.pdf');
   });
 
-  test('paginering över 100: idx 120 av 150 resolvar (flera sidor)', async () => {
+  test('paginering över 100: bilaga nr 121 av 150 resolvar (flera sidor)', async () => {
     process.env.RESEND_API_KEY = 'test-key';
-    const r = await fetchInboundPdfByIndex('em_huge', 120, { fetchImpl: pagedMock(150) });
+    const r = await fetchInboundPdfForJob('em_huge', { filename: 'INV_120.pdf' }, { fetchImpl: pagedMock(150) });
     assert.ok(r && r.content);
     assert.equal(r.filename, 'INV_120.pdf');
   });
 
-  test('idx bortom alla bilagor → null (inget påhittat)', async () => {
+  test('en fil som inte finns → ett namngivet fel (inget påhittat)', async () => {
     process.env.RESEND_API_KEY = 'test-key';
-    assert.equal(await fetchInboundPdfByIndex('em_bulk', 99, { fetchImpl: pagedMock(26) }), null);
+    assert.deepEqual(await fetchInboundPdfForJob('em_bulk', { filename: 'INV_99.pdf' }, { fetchImpl: pagedMock(26) }),
+      { fel: 'bilaga_saknas', antal: 0 });
   });
 });

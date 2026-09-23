@@ -8,7 +8,7 @@
 
 import { createHash } from 'node:crypto';
 import { claimBatch, completeJob, failJob, hasPendingFlag, clearPending, utfallFranSvar } from '../../lib/ingest-queue.js';
-import { fetchInboundPdfByIndex } from '../inbound-email.mjs';
+import { fetchInboundPdfForJob } from '../inbound-email.mjs';
 
 export const config = { maxDuration: 60 };
 
@@ -41,7 +41,15 @@ function send(res, status, body) {
 // Analyserar EN faktura via samma pipeline (regel 1). Uppdaterar kön (complete/fail). Kastar aldrig.
 async function processJob(job) {
   try {
-    const pdf = await fetchInboundPdfByIndex(job.emailId, job.attachmentIndex);
+    // Bilagan väljs på jobbets FILNAMN (det kunden såg), aldrig på position — se valjBilaga i
+    // api/inbound-email.mjs. Mätt 2026-09-23: positionen gav fel dokument i 4 av 4 prövade jobb.
+    const pdf = await fetchInboundPdfForJob(job.emailId, { filename: job.filename });
+    if (pdf?.fel) {
+      // Ett ärligt fel med skäl i stället för en gissning. `bilaga_ej_entydig` = två bilagor med
+      // samma namn i mejlet; att välja en av dem vore att återinföra felet som mättes.
+      await failJob(job.id, `Bilagan kunde inte identifieras entydigt (${pdf.fel}${pdf.antal ? `, ${pdf.antal} träffar` : ''})`);
+      return false;
+    }
     if (!pdf || pdf.tooBig || !pdf.content) {
       await failJob(job.id, pdf?.tooBig ? 'PDF > 6 MB' : 'PDF kunde inte hämtas');
       return false;
