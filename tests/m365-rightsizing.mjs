@@ -60,8 +60,8 @@ describe('M365 rätt-storlek · verifierad prisskillnad (E3/E5 → Business Prem
 
   test('reviewPrompt + note bär de verifierade talen + källa (ingen siffra utan källa)', () => {
     const r = m365Rightsizing('e5', 25);
-    assert.match(r.reviewPrompt, /Microsoft 365 E5 \(641,18 kr/);
-    assert.match(r.reviewPrompt, /Business Premium \(210,29 kr/);
+    assert.match(r.reviewPrompt, /Microsoft 365 E5 \(listpris 641,18 kr/);
+    assert.match(r.reviewPrompt, /Business Premium \(listpris 210,29 kr/);
     assert.match(r.reviewPrompt, /129\s*267 kr\/år/);
     assert.match(r.note, /430,89 kr\/användare\/månad × 12 × 25/);
     assert.match(r.note, /microsoft\.com/);

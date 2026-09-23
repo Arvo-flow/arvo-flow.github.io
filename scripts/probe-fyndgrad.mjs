@@ -12,12 +12,10 @@
 // (`arTestidentitet`, samma fråga som prisboken ställer) och räknar den SEPARAT.
 //
 // ══ VAD SONDEN KAN — OCH INTE KAN — MÄTA ════════════════════════════════════════════════════
-// `storeAnalysis` sparar bytesbeslutet (should_switch, net_saving) och det forensiska huvudfyndet
-// (lead_finding_json). Det sparar INTE rätt-storleks-fynden (saasFinanceRightsizing,
-// m365Rightsizing, adobeRightsizing, loneadminRightsizing) — de lever bara i svaret till
-// fakturasidan och kastas vid lagring. Sonden kan därför INTE räkna hur många sådana fynd vi
-// producerat. Den räknar i stället hur många fakturor som ligger i en kategori där en sådan motor
-// FINNS — en ÖVRE GRÄNS för vad som kan ha kastats, uttryckligen märkt som gräns, aldrig som antal.
+// `storeAnalysis` sparar bytesbeslutet (should_switch, net_saving), det forensiska huvudfyndet
+// (lead_finding_json) och sedan 2026-09-23 rätt-storleksfyndet (rattstorlek_json). Före det
+// datumet kastades rätt-storleksfynden vid lagring; en rad som inte körts om sedan dess saknar
+// fyndet även om motorn i dag hade hittat det — analysstämpeln visar vilka.
 //
 // ══ MOTPROV (Noll-inferens, amendemang 1) ══════════════════════════════════════════════════
 //   · Testytan måste HITTAS (≥ 1 rad) och redovisas separat — annars kan vi inte veta att
@@ -45,7 +43,7 @@ const RATTSTORLEK_KATEGORIER = ['saas-finance', 'saas-productivity', 'saas-creat
 // ändra utfallet (10 sep: «ett skydd bakom ett annat skydd är inte två lager»). Den fällde
 // dessutom SV-09 — med rätta i allmänhet, fingeravtryck hashas. Nu EN fråga, EN sanning.
 const rader = await db`
-  SELECT category, route, should_switch, net_saving, gross_saving, user_email,
+  SELECT id, category, route, should_switch, net_saving, gross_saving, user_email,
          normalized_supplier, supplier, triage_reason, created_at,
          (lead_finding_json IS NOT NULL) AS har_fynd,
          arkiverad_at IS NOT NULL AS arkiverad
@@ -85,10 +83,32 @@ console.log(`  Forensiskt huvudfynd (lead_finding_json):             ${fynd.leng
 console.log(`  ─────────────────────────────────────────────────────`);
 console.log(`  FYNDGRAD — minst ett lagrat fynd:                     ${minstEtt.length} av ${bas.length}  (${pct(minstEtt.length)})`);
 console.log(`\n  Auto-rader utan något lagrat fynd:                     ${tysta.length}`);
-console.log(`\n  ⚠️ OMÄTBART I DAG — rätt-storleksfynd lagras inte.`);
-console.log(`     Övre gräns för hur många som KAN ha kastats vid lagring: ${rsKandidater.length} rader`);
-console.log(`     i kategorier med rätt-storleksmotor (${RATTSTORLEK_KATEGORIER.join(', ')}).`);
-console.log(`     Detta är en GRÄNS, inte ett antal fynd.`);
+// ── RÄTT-STORLEKSFYNDEN (lagras sedan 2026-09-23, lib/rattstorleksfynd.js) ──────────────────
+// Egen fråga med egen catch: är kolumnen inte migrerad ska sonden säga det, inte dö — och inte
+// heller räkna noll, för ett noll utan kolumn är «jag mätte inte», aldrig ett mätvärde.
+let rsIds = null;
+try {
+  const rsRader = await db`
+    SELECT id, rattstorlek_json->>'falt' AS falt, (rattstorlek_json->>'annualSaving')::numeric AS belopp
+    FROM invoice_analyses   -- internt: fyndgradsmätning, rätt-storleksfynd
+    WHERE rattstorlek_json IS NOT NULL
+  `;
+  const basIds = new Set(bas.map((r) => r.id));
+  const iBas = rsRader.filter((r) => basIds.has(r.id));
+  rsIds = new Set(iBas.map((r) => r.id));
+  const perFalt = {};
+  for (const r of iBas) perFalt[r.falt] = (perFalt[r.falt] ?? 0) + 1;
+  console.log(`  Rätt-storleksfynd (rattstorlek_json):                 ${iBas.length}  (${pct(iBas.length)})`
+    + (iBas.length ? `  · ${Object.entries(perFalt).map(([f, n]) => `${f} ${n}`).join(', ')}` : ''));
+} catch (err) {
+  console.log(`  Rätt-storleksfynd: KUNDE INTE LÄSAS (${String(err.message).slice(0, 80)}) — är migreringen körd?`);
+}
+if (rsIds) {
+  const medRs = bas.filter((r) => (r.should_switch === true && Number(r.net_saving) > 0) || r.har_fynd || rsIds.has(r.id));
+  console.log(`  FYNDGRAD — inklusive rätt-storleksfynd:               ${medRs.length} av ${bas.length}  (${pct(medRs.length)})`);
+}
+console.log(`\n  Rader i kategorier med rätt-storleksmotor: ${rsKandidater.length} (${RATTSTORLEK_KATEGORIER.join(', ')}).`);
+console.log(`  Rader med ett ostämplat eller äldre omdöme kan sakna fyndet tills de körts om.`);
 
 const perKategori = {};
 for (const r of bas) {
@@ -100,7 +120,7 @@ for (const r of bas) {
 console.log('\n  Per kategori (fynd / analyser):');
 for (const [k, v] of Object.entries(perKategori).sort((a, b) => b[1].n - a[1].n)) {
   console.log(`    ${k.padEnd(22)} ${String(v.fynd).padStart(3)} / ${String(v.n).padEnd(4)}`
-    + `${RATTSTORLEK_KATEGORIER.includes(k) ? '  ← rätt-storleksmotor finns, fynd lagras inte' : ''}`);
+    + `${RATTSTORLEK_KATEGORIER.includes(k) ? '  ← rätt-storleksmotor finns' : ''}`);
 }
 
 // ── DE OKATEGORISERADE — största hinken, och den enda som inte kan hitta NÅGOT ────────────────

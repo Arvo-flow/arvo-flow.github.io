@@ -112,6 +112,8 @@ import './rumsredovisning.mjs';
 import './rumsberikning.mjs';
 import './analysstampel.mjs';
 import './triage-kategori.mjs';
+import './svarskontrakt.mjs';
+import './rattstorleksfynd.mjs';
 import './rumsrad.mjs';
 import './avvikelsevakten.mjs';
 import './prisbokscellen.mjs';

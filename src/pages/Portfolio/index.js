@@ -14,6 +14,7 @@ import { buildReasoning } from '../../lib/holdings';
 import { groupBySupplier, supplierName, supplierDiagScore, computeActing, roomCounts, radarRader } from '../../lib/holdings';
 import { domensLage, omattLage, beromsLage } from '../../lib/domslut';
 import FindingCard from '../../components/FindingCard';
+import { rattstorleksKort } from '../../lib/rattstorlekskort';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
 import { greetingForHour, plural } from '../../utils/format';
@@ -547,6 +548,15 @@ export default function Portfolio() {
       .sort((x, y) => (rank[x.severity] - rank[y.severity]) || ((y.annualImpact || 0) - (x.annualImpact || 0)))[0] ?? null;
   }, [autoAnalyses]);
 
+  // Rätt-storleksfynden (2026-09-23) — motorn räknade dem vid analysen, men de kastades vid lagring
+  // och rummet kunde aldrig visa dem. Ett per leverantör (den SENASTE fakturan äger domen), störst
+  // först, högst tre. Talen är motorns; kortets ord skrivs i src/lib/rattstorlekskort.js.
+  const roomRattstorlek = useMemo(() => suppliers
+    .map((g) => rattstorleksKort(g.latest?.rattstorlek_json))
+    .filter(Boolean)
+    .sort((x, y) => (y.annualImpact || 0) - (x.annualImpact || 0))
+    .slice(0, 3), [suppliers]);
+
   // Kontraktsklockan i rummet — det avtal som förfaller SNARAST leder (minst dagar kvar).
   // contractClock kommer fresiderande från api/invoice-history (beräknat vid läsning, ej lagrat).
   const roomClock = useMemo(() => {
@@ -747,9 +757,22 @@ export default function Portfolio() {
   //
   // Fail-closed på det omätta fallet: utan score finns ingen position att påstå (samma disciplin
   // som marketStanding självt har).
+  // ── DOMEN KÄNDE INTE TILL RÄTT-STORLEKSKORTEN (2026-09-23, rummets första rendering med dem) ──
+  // Tre kort sa «verifierad mot Microsofts publika listpris · 129 267 kr/år» och domen rakt under
+  // sa «Vi jämförde 0 fakturor mot verifierat publikt listpris … ni behöver inte göra något». Varje
+  // del sann om sin del (prispositionen var omätt; nivåskillnaden är en ANNAN mätning), helheten
+  // falsk — helhetskravet 15 aug. Domen läser nu samma lista som renderar korten. RS-10.
+  const nivaer = roomRattstorlek.length;
+  const nivaMening = nivaer > 0
+    ? <> Men <b>{nivaer} {plural(nivaer, 'avtal', 'avtal')}</b> ligger på en högre nivå än den under — listprisskillnaden
+        står i {nivaer === 1 ? 'kortet' : 'korten'} ovan och gäller om er användning ryms i den lägre nivån.
+        Det är ert beslut, inte vårt antagande.</>
+    : null;
   const verdictHead = !acting
     ? (!standing.satt
-        ? <>Vi vaktar era avtal — men <em>er position mot listpris kunde inte mätas</em> i dag.</>
+        ? (nivaer > 0
+            ? <>Inget byte att lägga fram — men <em>{nivaer} {plural(nivaer, 'avtal', 'avtal')} kan gå ner en nivå.</em></>
+            : <>Vi vaktar era avtal — men <em>er position mot listpris kunde inte mätas</em> i dag.</>)
         : standing.niva === 'battre'
           ? <>Håll kursen. Era priser <em>står sig mot verifierat listpris.</em></>
           : standing.niva === 'i-niva'
@@ -773,8 +796,13 @@ export default function Portfolio() {
     ? (standing.satt && standing.niva === 'samre'
         ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
             Ni ligger över golvet, men vi har inget bytesmål vi kan belägga — och vi lägger aldrig fram
-            en besparing vi inte kan räkna hem. Vi bevakar och hör av oss så snart ett mål går att styrka.</>
-        : <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
+            en besparing vi inte kan räkna hem. Vi bevakar och hör av oss så snart ett mål går att styrka.{nivaMening}</>
+        : nivaer > 0
+          ? <>{counts.prissatta > 0
+                ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.</>
+                : <>Er prisposition mot listpris kunde inte mätas i dag.</>}
+              {' '}Inget leverantörsbyte rekommenderas.{nivaMening}</>
+          : <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
             Inget byte rekommenderas i dag. Vi hör av oss om läget förändras — ni behöver inte göra något.</>)
     : hasSwitchAction
       ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris.
@@ -795,7 +823,7 @@ export default function Portfolio() {
         ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris — priserna står sig.
             Men i underlaget vi kunde läsa fångade vi en kostnad värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> —
             se vad domen bygger på i fyndet ovan.</>
-        : <>Vi har ännu <b>inget verifierat jämförelsepris</b> för era kategorier — därför hävdar vi
+        : <>Vi har ännu <b>inget verifierat jämförelsepris</b> för det ni själva betalar — därför hävdar vi
             ingenting om er prisnivå. Men i underlaget vi kunde läsa fångade vi en kostnad
             värd <b>{fmtNum(roomFinding.annualImpact)} kr/år</b> — se vad domen bygger på i fyndet ovan.</>;
 
@@ -937,6 +965,9 @@ export default function Portfolio() {
 
             {/* ── Fynden — leder direkt efter hjälten + Vakten (målbilden) ──── */}
             <FindingCard finding={roomFinding} variant="dossier" />
+            {roomRattstorlek.map((f) => (
+              <FindingCard key={f.title} finding={f} variant="dossier" eyebrow="Rätt-storlek · listprisskillnad" />
+            ))}
             <FindingCard finding={roomMovement} variant="dossier" eyebrow="Marknadsrörelsen · nätverket" />
             <FindingCard finding={roomClock} variant="dossier" eyebrow="Maktkalendern · avtalsbevakning" />
             <FindingCard finding={roomForecast} variant="dossier" eyebrow="Maktkalendern · prognos" />
@@ -963,7 +994,7 @@ export default function Portfolio() {
                 {acting && !hasSwitchAction
                   ? <><span className="pct">Ur er egen faktura</span> · talet står på raden i fyndet ovan · inget marknadspris inblandat</>
                   : omatt
-                    ? <><span className="pct">Inte mätt i dag</span> · vi har inget verifierat jämförelsepris för era kategorier · vi hävdar ingenting om er prisnivå</>
+                    ? <><span className="pct">Inte mätt i dag</span> · vi har inget verifierat jämförelsepris för det ni själva betalar · vi hävdar ingenting om er prisnivå</>
                     : <><span className="pct">Verifierat</span> · grundat på {counts.prissatta} {plural(counts.prissatta, 'prissatt faktura', 'prissatta fakturor')} · publika listpriser</>}
               </Confidence>
             </Verdict>
@@ -996,9 +1027,9 @@ export default function Portfolio() {
                 </div>}
                 <p className="idx-note">
                   {!standing.satt
-                    ? <>Vi har inget verifierat jämförelsepris för era kategorier ännu, så vi sätter ingen poäng.
-                      <b> Ett tal utan mätning är värre än inget tal.</b> Så snart en av era kategorier
-                      får ett verifierat pris räknas det fram — och ni ser exakt hur.</>
+                    ? <>Vi har inget verifierat jämförelsepris för det ni själva betalar ännu, så vi sätter ingen poäng.
+                      <b> Ett tal utan mätning är värre än inget tal.</b> Så snart ert eget pris går att ställa
+                      mot ett verifierat listpris räknas det fram — och ni ser exakt hur.</>
                     : switchables.length > 0
                     ? <>Sammanvägt {arvoScore >= 67 ? 'starkt' : arvoScore >= 45 ? 'godkänt' : 'svagt'} — men <b>{switchables.length} avtal kostar mer än verifierat listpris</b>. De ligger förberedda i innehavet nedan.</>
                     : standing.niva === 'battre'
@@ -1036,7 +1067,7 @@ export default function Portfolio() {
                     : acting
                       ? <>Inget leverantörsbyte krävs — kostnaden åtgärdas direkt mot fakturan. Se fyndet ovan.</>
                       : (omatt
-                          ? <>Vi har inget verifierat jämförelsepris för era kategorier än, så vi hävdar ingenting om
+                          ? <>Vi har inget verifierat jämförelsepris för det ni själva betalar än, så vi hävdar ingenting om
                               er prisnivå. Vi håller dem under uppsikt — och hör av oss så snart ett mål går att styrka.</>
                           : standing.satt && standing.niva === 'samre'
                             ? <>Ni ligger över verifierat listpris, men inget av avtalen bär ett byte vi kan belägga.

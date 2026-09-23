@@ -58,8 +58,8 @@ describe('Fortnox · rätt-storleks-rådgivning (verifierad prisskillnad)', () =
   });
   test('reviewPrompt + note bär de verifierade talen (ingen siffra utan källa)', () => {
     const r = saasFinanceRightsizing(inv('Fortnox Paket Stor', 710));
-    assert.match(r.reviewPrompt, /Stor \(710 kr\/mån\)/);
-    assert.match(r.reviewPrompt, /Mellan, kostar 490 kr\/mån/);
+    assert.match(r.reviewPrompt, /Stor \(listpris 710 kr\/mån\)/);
+    assert.match(r.reviewPrompt, /Mellan, har listpris 490 kr\/mån/);
     assert.match(r.reviewPrompt, /220 kr\/mån billigare/);
     // Talet formateras av `fmtNumber` (lib/format.js) sedan 2026-09-22 — sv-SE grupperar med
     // HÅRT blanksteg (U+00A0). Ett vanligt mellanslag i mönstret hade INTE matchat, och

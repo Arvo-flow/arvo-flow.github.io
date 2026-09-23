@@ -517,7 +517,9 @@ export default async function handler(req, res) {
   // hade rätt-storlekskortet tyst försvunnit för varje faktura som redan låg i KV. Ett tyst
   // tapp som ser ut som «kunden har inget att hämta» (regel 7: bumpa vid varje pipelineändring
   // som påverkar resultatet).
-  const cacheKey = `pdf:result:v28:${deploySha}:${pdfHash}:e${employeesNum}`;
+  // v29 (2026-09-23): tre rätt-storleksnycklar (m365/adobe/loneadmin) serialiseras för första
+  // gången. En cachad v28-payload saknar dem — och då renderas inget kort, trots att motorn fann ett.
+  const cacheKey = `pdf:result:v29:${deploySha}:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -2307,6 +2309,14 @@ export default async function handler(req, res) {
         overageSavings: recommendation.overageSavings ?? null,
         shelfware:      recommendation.shelfware ?? null,
         saasFinanceRightsizing: recommendation.saasFinanceRightsizing ?? null,
+        // ⚠️ DE TRE NEDAN SERIALISERADES ALDRIG (mätt live 2026-09-23, adobe-creative-cloud-ars.pdf,
+        // färsk analys): svaret bar prosan (`reasoning = rs.reviewPrompt`) men nyckeln `adobeRightsizing`
+        // saknades helt — kortet med talen, källan och antalet licenser kunde aldrig renderas, och
+        // rubriken («Inget byte») frågade `harNivasankningskort`, som därför svarade nej. Samma för
+        // m365 och löneadmin. En motor som räknar rätt och ett svar som tappar talet på vägen: SVK-01, SVK-03.
+        m365Rightsizing:      recommendation.m365Rightsizing      ?? null,
+        adobeRightsizing:     recommendation.adobeRightsizing     ?? null,
+        loneadminRightsizing: recommendation.loneadminRightsizing ?? null,
         annualBillingSaving: recommendation.annualBillingSaving ?? null,
         nonPrimaryAnnual:    recommendation.nonPrimaryAnnual ?? 0,
         tierOptimizationSaving:   recommendation.tierOptimizationSaving   ?? null,

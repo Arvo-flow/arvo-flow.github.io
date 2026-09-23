@@ -2426,9 +2426,9 @@ const TestaFaktura = () => {
                       underlaget. Mätt i renderingen: kortet sitter inuti det hopfällda blocket. */}
                   <dl style={{ margin: 0, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 14px', fontSize: '13px', color: '#0E1A17' }}>
                     <dt style={{ color: '#5C6E68' }}>Er nivå</dt>
-                    <dd style={{ margin: 0 }}><strong>{rs.currentPaket}</strong> · {rs.currentMonthly} kr/mån</dd>
+                    <dd style={{ margin: 0 }}><strong>{rs.currentPaket}</strong> · listpris {rs.currentMonthly} kr/mån</dd>
                     <dt style={{ color: '#5C6E68' }}>Nivån under</dt>
-                    <dd style={{ margin: 0 }}><strong>{rs.targetPaket}</strong> · {rs.targetMonthly} kr/mån</dd>
+                    <dd style={{ margin: 0 }}><strong>{rs.targetPaket}</strong> · listpris {rs.targetMonthly} kr/mån</dd>
                     <dt style={{ color: '#5C6E68' }}>Skillnad</dt>
                     <dd style={{ margin: 0 }}>
                       {rs.deltaMonthly} kr/mån ={' '}
@@ -2453,8 +2453,8 @@ const TestaFaktura = () => {
                     Rätt-storlek — Microsoft 365 (rådgivning)
                   </div>
                   <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
-                    Ni betalar för <strong>{rs.currentLabel}</strong> ({rs.currentPerSeatLabel} kr/anv/mån) — full enterprise-svit.{' '}
-                    <strong>{rs.targetLabel}</strong> ({rs.targetPerSeatLabel} kr/anv/mån) ger Intune MDM + Defender, säkerheten de flesta SMF behöver.
+                    Ni betalar för <strong>{rs.currentLabel}</strong> (listpris {rs.currentPerSeatLabel} kr/anv/mån) — full enterprise-svit.{' '}
+                    <strong>{rs.targetLabel}</strong> (listpris {rs.targetPerSeatLabel} kr/anv/mån) ger Intune MDM + Defender, säkerheten de flesta SMF behöver.
                   </p>
                   <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
                     Kräver ni inte {rs.currentTier.toUpperCase()}:s enterprise-funktioner (compliance, eDiscovery)? Då realiserar vi upp till{' '}
@@ -2547,8 +2547,8 @@ const TestaFaktura = () => {
                     Rätt-storlek — Adobe Creative Cloud (rådgivning)
                   </div>
                   <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: '#0E1A17' }}>
-                    Ni betalar för <strong>{rs.currentLabel}</strong> ({rs.currentMonthlyLabel} {rs.unit} exkl moms) — hela sviten.{' '}
-                    Använder era användare i praktiken bara <strong>ett program</strong>? Då räcker <strong>{rs.targetLabel}</strong> ({rs.targetMonthlyLabel} {rs.unit} exkl moms).
+                    Ni betalar för <strong>{rs.currentLabel}</strong> (listpris {rs.currentMonthlyLabel} {rs.unit} exkl moms) — hela sviten.{' '}
+                    Använder era användare i praktiken bara <strong>ett program</strong>? Då räcker <strong>{rs.targetLabel}</strong> (listpris {rs.targetMonthlyLabel} {rs.unit} exkl moms).
                   </p>
                   <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#5C6E68' }}>
                     {rs.annualSavingLabel

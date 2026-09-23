@@ -36,8 +36,8 @@ describe('Spiris · rätt-storleks-rådgivning (verifierad prisskillnad)', () =>
   });
   test('reviewPrompt bär rätt vendor + verifierade tal', () => {
     const r = saasFinanceRightsizing(inv('Spiris Skala', 549));
-    assert.match(r.reviewPrompt, /Spiris-nivån Skala \(549 kr\/mån\)/);
-    assert.match(r.reviewPrompt, /Driva, kostar 349 kr\/mån/);
+    assert.match(r.reviewPrompt, /Spiris-nivån Skala \(listpris 549 kr\/mån\)/);
+    assert.match(r.reviewPrompt, /Driva, har listpris 349 kr\/mån/);
     assert.match(r.reviewPrompt, /realiserar vi 2\u00a0400 kr\/år/);
     assert.match(r.note, /spiris\.se\/priser/);
   });
