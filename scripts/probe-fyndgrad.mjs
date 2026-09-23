@@ -57,7 +57,8 @@ const aktiva = riktiga.filter((r) => !r.arkiverad);
 console.log('\n═══ FYNDGRADEN · verifierade fynd per inskickad faktura (produktion) ═══\n');
 console.log(`  Rader totalt: ${rader.length}`);
 console.log(`  Testyta/seed (UTESLUTNA, redovisas för att filtret ska synas): ${test.length}`);
-console.log(`  Riktiga analyser: ${riktiga.length} (varav arkiverade: ${riktiga.length - aktiva.length})`);
+console.log(`  Riktiga analyser: ${riktiga.length} (varav arkiverade: ${riktiga.length - aktiva.length}, `
+  + `varav anonyma utan avsändare: ${riktiga.filter((r) => r.user_email == null).length})`);
 
 if (test.length === 0) {
   console.error('\n✗ MOTPROVET FÖLL: sonden hittade ingen testyta alls — filtret kan inte bevisas.');
@@ -89,7 +90,8 @@ console.log(`\n  Auto-rader utan något lagrat fynd:                     ${tysta
 let rsIds = null;
 try {
   const rsRader = await db`
-    SELECT id, rattstorlek_json->>'falt' AS falt, (rattstorlek_json->>'annualSaving')::numeric AS belopp
+    SELECT id, rattstorlek_json->>'falt' AS falt, (rattstorlek_json->>'annualSaving')::numeric AS belopp,
+           COALESCE(normalized_supplier, supplier) AS leverantor, analyserad_at, user_email IS NULL AS anonym
     FROM invoice_analyses   -- internt: fyndgradsmätning, rätt-storleksfynd
     WHERE rattstorlek_json IS NOT NULL
   `;
@@ -100,6 +102,13 @@ try {
   for (const r of iBas) perFalt[r.falt] = (perFalt[r.falt] ?? 0) + 1;
   console.log(`  Rätt-storleksfynd (rattstorlek_json):                 ${iBas.length}  (${pct(iBas.length)})`
     + (iBas.length ? `  · ${Object.entries(perFalt).map(([f, n]) => `${f} ${n}`).join(', ')}` : ''));
+  // URSPRUNGET (2026-09-23): en anonym rad (ingen avsändare) kan vara en SOND — diag-live postar
+  // testfakturor utan userEmail och lagras som vilken analys som helst. Ett fynd på en testfaktura är
+  // inget fynd åt en kund. Loggen är publik: leverantör, dag och anonym/ej — aldrig en adress.
+  for (const r of iBas) {
+    const dag = r.analyserad_at ? new Date(r.analyserad_at).toISOString().slice(0, 16).replace('T', ' ') : '—';
+    console.log(`      ${r.falt} · ${r.leverantor ?? '—'} · analyserad ${dag} · ${r.anonym ? 'ANONYM (kan vara en sond)' : 'med avsändare'}`);
+  }
 } catch (err) {
   console.log(`  Rätt-storleksfynd: KUNDE INTE LÄSAS (${String(err.message).slice(0, 80)}) — är migreringen körd?`);
 }
