@@ -127,4 +127,24 @@ for (const r of okat) {
 for (const [k, n] of Object.entries(perLev).sort((a, b) => b[1] - a[1])) {
   console.log(`    ${String(n).padStart(2)} ×  ${k}`);
 }
+
+// ── DOMARNAS ÅLDER (2026-09-23) — vilken kod fällde de domar rummet visar? ────────────────────
+// Stämpeln (lib/analysstampel.js) skrivs vid varje lagring från och med 23 sep. En rad UTAN
+// stämpel analyserades före det och bär en dom av okänd, äldre kod. Läses i en EGEN fråga med
+// egen catch: saknas kolumnen (ej migrerad) ska sonden säga det, inte dö.
+try {
+  const stamplar = await db`
+    SELECT user_email, analyserad_sha, analyserad_at
+    FROM invoice_analyses   -- internt: fyndgradsmätning, domarnas ålder
+  `;
+  const riktigaStamplar = stamplar.filter((r) => !arTestidentitet(r.user_email));
+  const ostamplade = riktigaStamplar.filter((r) => r.analyserad_at == null).length;
+  const perSha = {};
+  for (const r of riktigaStamplar) if (r.analyserad_sha) perSha[r.analyserad_sha] = (perSha[r.analyserad_sha] ?? 0) + 1;
+  console.log(`\n── DOMARNAS ÅLDER (${riktigaStamplar.length} riktiga rader) ──`);
+  console.log(`    Utan stämpel (dömda före 2026-09-23, av okänd kod): ${ostamplade}`);
+  for (const [sha, n] of Object.entries(perSha)) console.log(`    Dömda av ${sha}: ${n}`);
+} catch (err) {
+  console.log(`\n── DOMARNAS ÅLDER ── kunde inte läsas (${String(err.message).slice(0, 80)}) — är migreringen körd?`);
+}
 console.log('\n[probe-fyndgrad] klar (okategoriserade listade)\n');
