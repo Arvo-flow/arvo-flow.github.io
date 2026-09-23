@@ -29,16 +29,39 @@ deklarera({
   blind: 'Skriptet vet inte om Resend fortfarande har mejlen kvar. Bilagor hämtas vid analystillfället via signerade länkar; är ett mejl utgånget faller den omköningen i drainen och syns som failed där, inte här. Det vet heller inget om vad omkörningen kommer att PRODUCERA — bara att den startar.',
 });
 
-const sender = process.argv[2];
+const arg = process.argv[2];
 const tak = Number(process.argv[3] || 15);
-if (!sender || !sender.includes('@')) {
-  console.error('Användning: koa-om-alla.mjs <avsändare> [tak, default 15]');
+if (!arg || (!arg.includes('@') && !/^sha256:[0-9a-f]{64}$/.test(arg))) {
+  console.error('Användning: koa-om-alla.mjs <avsändare | sha256:<hex>> [tak, default 15]');
   process.exit(1);
 }
 const mask = (e) => { const [l, d] = String(e).split('@'); return d ? `${l.slice(0, 2)}***@${d}` : '(ingen)'; };
 
 const db = getDb();
 if (!db) { console.error('Ingen DATABASE_URL.'); process.exit(1); }
+
+// ── HASHLÄGET (2026-09-23) — EN PERSONLIG ADRESS FÅR ALDRIG STÅ I EN PUBLIK LOGG ──────────────
+// Repot och Actions-loggen är publika, och en workflow_dispatch-input syns i körningens
+// metadata. Bibeln: «aldrig en personlig adress (publikt repo, publik logg)». Med `sha256:<hex>`
+// syns bara hashen; skriptet slår upp den avsändare vars normaliserade adress har den hashen och
+// kräver EXAKT en träff. Noll eller flera → vägran, aldrig en gissning.
+// BLIND, uttalat: en e-posthash kan i princip ordboksattackeras. Det är mycket bättre än klartext
+// men inte hemligt; för en verkligt hemlig identitet krävs en repository secret.
+let sender = arg;
+if (arg.startsWith('sha256:')) {
+  const mal = arg.slice(7);
+  const { createHash } = await import('node:crypto');
+  const avsandare = await aldrigTyst(db`SELECT DISTINCT sender FROM ingest_jobs WHERE sender IS NOT NULL`,
+    'avsändare i kön');
+  const traffar = avsandare.map((r) => r.sender)
+    .filter((s) => createHash('sha256').update(String(s).trim().toLowerCase()).digest('hex') === mal);
+  if (traffar.length !== 1) {
+    console.error(`⛔ hashen matchade ${traffar.length} avsändare i kön (${avsandare.length} prövade) — kräver exakt en.`);
+    process.exit(1);
+  }
+  sender = traffar[0];
+  console.log(`Hashen löstes till ${mask(sender)} (exakt en av ${avsandare.length} avsändare).`);
+}
 
 await kravKolumner(db, 'ingest_jobs', ['sender', 'filename', 'status', 'attempts', 'outcome']);
 

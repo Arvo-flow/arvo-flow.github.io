@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       avsandare:
-        description: 'Avsändaradress'
+        description: 'Avsändaradress ELLER sha256:<hex av lower(trim(adress))> — använd hashen för personliga adresser, loggen är publik'
         required: true
       tak:
         description: 'Max antal jobb att köra om (skydd mot fel bunt)'
