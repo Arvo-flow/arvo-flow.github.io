@@ -351,6 +351,37 @@ mätningen inte körts.
 >   skäl) — mätt, lagat i samma commit (TR-01..03);
 > · huruvida bunten över huvud taget BÄR fynd att hitta — **okänt**. Det är den fråga fyndgraden nu
 >   kan besvara ärligt, eftersom den för första gången mäter dagens kod.
+>
+> **✅ RÄTT-STORLEKSFYNDEN, SAMMA DAG (4ebd406) — och ett fel ett lager ovanför lagringen.**
+> Innan lagringen byggdes mättes svaret live (diag-live, Adobe-testfakturan, färsk analys): tre av
+> fyra rätt-storleksnycklar **fanns inte i API-svaret alls** (`m365` · `adobe` · `loneadmin`: NYCKEL
+> SAKNAS; `saasFinance`: `null` — motprovet att sonden skiljer de två). Svarsobjektet är en
+> uppräkning, inte en spridning; korten med talen hade aldrig renderats i produktion, och rubriken
+> förnekade fyndet. **En fix av lagringen hade lagrat ett fynd kunden aldrig sett på fakturasidan.**
+> `tests/svarskontrakt.mjs` (SVK) härleder nu varje fält fakturavyn läser och kräver att svaret bär
+> det — sex fält till var döda och står som motiverade undantag, varav `savingsBreakdown` medvetet
+> hålls ute (dess `cspDiscount` räknas före finansgrindarna).
+> Samma live-svar visade en [KUND]-mening: «Ni betalar för Adobe … (746,00 kr/användare/mån)» —
+> medan kunden betalar 656,25. **Listpris skrivet som kundens pris**, i tre motorer och deras kort.
+> Nu «listpris» vid varje sådant tal (RS-03).
+>
+> Rummets första rendering med korten fällde mig på helhetskravet: tre kort «verifierad mot
+> Microsofts publika listpris · 129 267 kr/år» och rakt under domen «Vi jämförde 0 fakturor … ni
+> behöver inte göra något». Nu läser domen samma lista som korten, och renderingssonden bär motprovet
+> (rum utan fynd → domens lugna mening kvar).
+>
+> **Utfallet efter omkörningen (25/25 `done`, 6/6 prövbara rätt fil, 25 rader dömda av 4ebd406):
+> 8 av 43 = 18,6 % (från 7 av 43).** Det tillkomna fyndet är ETT: `adobeRightsizing` på grundarens
+> Adobe-faktura. Jag misstänkte att det var min egen sonds testanrop (samma timme, samma leverantör)
+> — mätt och motbevisat: analyserad 10:45 i drainens slot, med avsändare; sonden körde 10:29, anonym.
+> Sonden skriver nu ursprunget per fynd, eftersom **6 av 43 rader i mätbasen är anonyma** och kan
+> vara sonder — en förorening av det primära måttet som ingen har rensat.
+>
+> **Och en förutsägelse föll:** jag skrev att kategorifixen (TR-01..03) skulle rätta Dustin, Komplett
+> och Systemair vid nästa körning. De kördes om av 4ebd406 och står **kvar som okategoriserade** med
+> `no_benchmark`. Fixen verkar för Atlassian; varför den inte når de tre — **jag vet inte än**.
+> Rätt-storleksmotorerna för M365, saas-finance och löneadmin gav noll lagrade fynd i bunten; om det
+> är för att fakturorna inte bär E3/E5 eller en känd paketnivå är inte mätt.
 
 ---
 
