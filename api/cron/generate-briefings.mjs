@@ -108,7 +108,10 @@ export default async function handler(req, res) {
         await resend.emails.send({
           from:    FROM,
           to:      email,
-          subject: `Arvo Intelligence · ${periodDisplay} · ${Math.round(data.totalSavingPotential).toLocaleString('sv-SE')} kr/år identifierat`,
+          // «identifierat» bar ett tal som till stor del var påhittade faktorer (×0,85, ×0,7) — KM-10.
+      subject: data.totalSavingPotential > 0
+        ? `Arvo Intelligence · ${periodDisplay} · möjlig besparing ${Math.round(data.totalSavingPotential).toLocaleString('sv-SE')} kr/år`
+        : `Arvo Intelligence · ${periodDisplay}`,
           html:    buildHookEmail({
             insightCount: data.insightCount,
             totalSaving:  data.totalSavingPotential,
@@ -136,11 +139,13 @@ export default async function handler(req, res) {
 
 // Premium hook-email — kortare än ett bankkort, tyngre än ett revisorsutlåtande.
 // Principen: ett tal, ett beslut, en knapp. Inget mer.
-function buildHookEmail({ insightCount, totalSaving, period, briefingUrl }) {
+export function buildHookEmail({ insightCount, totalSaving, period, briefingUrl }) {
   const fmt = (n) => Math.round(n).toLocaleString('sv-SE');
+  // «avviker från marknadsnivå» påstod en jämförelse insikterna inte bär — en kostnadsökning mellan
+  // två fakturor säger ingenting om marknaden (KM-10).
   const finding = insightCount === 1
-    ? 'Vi identifierade ett avtal som avviker från marknadsnivå.'
-    : `Vi identifierade ${insightCount} avtal som avviker från marknadsnivå.`;
+    ? 'Ett av era avtal är värt en titt den här månaden.'
+    : `${insightCount} av era avtal är värda en titt den här månaden.`;
 
   return `<!DOCTYPE html>
 <html lang="sv">
@@ -162,8 +167,8 @@ function buildHookEmail({ insightCount, totalSaving, period, briefingUrl }) {
   <!-- Separatorlinje -->
   <tr><td style="border-top:1px solid rgba(29,176,154,0.18);padding-bottom:44px"></td></tr>
 
-  <!-- Det enda som spelar roll: siffran -->
-  <tr><td style="padding-bottom:10px">
+  <!-- Siffran — bara när den finns. «0 kr/år» som hjältetal var briefingsidans fel 2026-09 (briefinglage). -->
+  ${totalSaving > 0 ? `  <tr><td style="padding-bottom:10px">
     <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.30);letter-spacing:.04em">Möjlig besparing</p>
   </td></tr>
   <tr><td style="padding-bottom:32px">
@@ -172,6 +177,7 @@ function buildHookEmail({ insightCount, totalSaving, period, briefingUrl }) {
     </p>
   </td></tr>
 
+` : ''}
   <!-- Korthugget fynd — inte en knapp-instruktion -->
   <tr><td style="padding-bottom:44px">
     <p style="margin:0;font-size:15px;color:rgba(255,255,255,0.50);line-height:1.65">${finding}</p>

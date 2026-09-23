@@ -6,7 +6,7 @@ import {
   Page, Section, Inner,
   Eyebrow, EyebrowDot, EyebrowText,
   Headline, Sub,
-  SavingsBanner, SavingsBannerIcon, SavingsBannerText,
+
   Card, CardHeadline, CardSub,
   OAuthBtn, OAuthBadge, OAuthLabel, OAuthArrow,
   Divider,
@@ -28,7 +28,10 @@ function CheckIcon() {
 
 export default function Aktivera() {
   const [params] = useSearchParams();
-  const savings  = params.get('savings') ? Number(params.get('savings')) : null;
+  // Här lästes «?savings=» ur URL:en och visades som «Vi identifierade redan X kr/år» — och skickades
+  // vidare till aktiveringen som kundens besparing. Ingen kod bygger en sådan länk; talet kunde bara
+  // komma ur en handskriven URL. Ett tal vi inte räknat visas aldrig (kundmeningsregistret, regel 3).
+  const savings  = null;
   const supplier = params.get('supplier') ?? null;
   const score    = params.get('score')    ? Number(params.get('score'))   : null;
 
@@ -88,18 +91,6 @@ export default function Aktivera() {
               </Headline>
               <Sub>1&nbsp;995&nbsp;kr/mån &middot; Ingen bindningstid</Sub>
             </>
-          )}
-
-          {savings != null && status !== 'sent' && (
-            <SavingsBanner>
-              <SavingsBannerIcon>→</SavingsBannerIcon>
-              <SavingsBannerText>
-                {supplier
-                  ? <>Vi identifierade redan <strong>{fmt(savings)}&nbsp;kr/år</strong> hos {supplier}. Den besparingen väntar.</>
-                  : <>Vi identifierade redan <strong>{fmt(savings)}&nbsp;kr/år</strong> i besparing åt er. Den väntar på att aktiveras.</>
-                }
-              </SavingsBannerText>
-            </SavingsBanner>
           )}
 
           <Card>

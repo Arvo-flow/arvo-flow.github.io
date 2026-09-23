@@ -15,7 +15,6 @@ import {
   RuleItem, RuleNumber, RuleText, RuleDivider,
   ActivationSection, ActivationInner, ActivationHeadline,
   ActivationSub, ActivationNote,
-  ActivationSavingsBanner,
   ActivationForm, ActivationInput, ActivationSubmitBtn, ActivationError,
   ActivationSuccess, ActivationSuccessCheck, ActivationSuccessTitle,
   ActivationSuccessSub, ActivationSuccessEmail,
@@ -23,30 +22,36 @@ import {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
+// Kundmeningsregistret 2026-09-23: varje pelare lovar bara en mekanism som finns — prisvakten
+// (scripts/price-monitor.mjs), avtalsklockan (api/cron/send-reminders.mjs), radläsningen mot
+// listpris (recommend LFL) och månadsbriefen (api/cron/generate-briefings.mjs). Här stod
+// «Arvo ser vad som händer hos jämförbara bolag i nätverket» (nätverket är i dag testmaterial) och
+// «kontrollerar automatiskt varje faktura mot känt avtalspris» (ingen sådan kontroll finns).
+// Citaten är exempel och märks så (regel 9).
 const PILLARS = [
   {
     context: 'Telia höjer 11% i januari. Ni märker det i september — åtta månader senare.',
-    title: 'Marknadsintelligens före fakturan',
-    body: 'Arvo ser vad som händer hos jämförbara bolag i nätverket — och varnar er innan höjningen syns på er faktura.',
-    quote: '"6 av 14 bolag i er bransch fick Telias prishöjning förra månaden."',
+    title: 'Prisvakt före fakturan',
+    body: 'Arvo läser leverantörernas publika priser varje natt och säger till när en ändring påverkar ert avtal — innan den syns på er faktura.',
+    quote: '"Telia höjde Företag Bas med 20 kr/mån i natt. Ni berörs med 4 800 kr/år."',
   },
   {
     context: 'Tele2-avtalet förnyas automatiskt. Ni märkte det inte. Nu är ni låsta ett år till.',
-    title: 'Kontraktskalender med handlingsplan',
-    body: 'Inte bara påminnelser — utan exakt vad som ska göras, när och varför. Arvo räknar baklänges från varje förnyelsedatum.',
-    quote: '"87 dagar kvar. Aktivera byte senast 15 september."',
+    title: 'Avtalsklocka med sista uppsägningsdag',
+    body: 'Arvo räknar ut sista uppsägningsdag ur avtalets slutdatum och uppsägningstid — och mejlar er 30 och 7 dagar innan.',
+    quote: '"Sista uppsägningsdag 15 september. Vi påminner er 16 augusti och 8 september."',
   },
   {
-    context: 'Telia fakturerar 349 kr/SIM. Ert avtal säger 299 kr. Ni betalar differensen utan att veta om det.',
-    title: 'Faktura mot avtal',
-    body: 'Leverantörer fakturerar fel — ofta. Arvo kontrollerar automatiskt varje faktura mot känt avtalspris och flaggar avvikelser direkt.',
-    quote: '"Telia fakturerar 349 kr/SIM. Ert avtal säger 299 kr."',
+    context: 'Ni betalar 146 kr per licens. Listpriset är 133,82 kr. Ingen har jämfört.',
+    title: 'Faktura mot listpris',
+    body: 'Arvo läser varje faktura rad för rad och ställer ert pris per licens mot leverantörens verifierade publika listpris — där det finns ett.',
+    quote: '"Ni betalar 146 kr per licens. Microsofts listpris är 133,82 kr."',
   },
   {
     context: 'Kostnaderna rullar på. Ingen sammanfattar. Styrelsen frågar — ingen har svaret.',
     title: 'Månatlig CFO-brief',
-    body: 'En professionell rapport — klar för styrelserummet — med vad Arvo hittat, vad som sparats och vad som är på väg.',
-    quote: '"Tre avtal bevakas. Ett flaggat för åtgärd nästa vecka."',
+    body: 'En rapport varje månad med vad Arvo hittat i era avtal och vad som är på väg.',
+    quote: '"Tre avtal bevakas. Ett har sista uppsägningsdag om 30 dagar."',
   },
 ];
 
@@ -92,7 +97,10 @@ export default function Intelligence() {
 
   // Activation form
   const [params]       = useSearchParams();
-  const savings        = params.get('savings') ? Number(params.get('savings')) : null;
+  // Här lästes «?savings=» ur URL:en och visades som «Vi identifierade redan X kr/år» — och skickades
+  // vidare till aktiveringen som kundens besparing. Ingen kod bygger en sådan länk; talet kunde bara
+  // komma ur en handskriven URL. Ett tal vi inte räknat visas aldrig (kundmeningsregistret, regel 3).
+  const savings  = null;
   const supplier       = params.get('supplier') ?? null;
   const [email, setEmail]       = useState('');
   const [company, setCompany]   = useState('');
@@ -140,11 +148,12 @@ export default function Intelligence() {
               <NotifAppName>Arvo Intelligence</NotifAppName>
               <NotifTime>Just nu</NotifTime>
             </NotifHeader>
-            <NotifTitle>Arvo har detekterat något</NotifTitle>
+            {/* Exempel (regel 9). Här stod «Telia höjde priset för 8 av 14 bolag i er bransch» — en
+                nätverksmening vi inte kan belägga förrän nätverket består av riktiga kunder. */}
+            <NotifTitle>Exempel · Arvo har upptäckt något</NotifTitle>
             <NotifBody>
-              Telia höjde priset för <strong>8 av 14 bolag</strong> i er
-              bransch förra månaden. Er nästa faktura träffar om{' '}
-              <strong>12 dagar.</strong>
+              Telia höjde <strong>Företag Bas</strong> med 20 kr/mån i natt. Er nästa faktura
+              träffar om{' '}<strong>12 dagar.</strong>
             </NotifBody>
             <NotifCta as={Link} to="/testa-faktura">
               Se vad det innebär för er →
@@ -184,7 +193,7 @@ export default function Intelligence() {
               <CardDivider />
               <PillarTitle>{p.title}</PillarTitle>
               <PillarBody>{p.body}</PillarBody>
-              <PillarQuote>{p.quote}</PillarQuote>
+              <PillarQuote>Exempel · {p.quote}</PillarQuote>
             </PillarCard>
           ))}
         </PillarsGrid>
@@ -230,14 +239,7 @@ export default function Intelligence() {
             </ActivationSuccess>
           ) : (
             <>
-              {savings != null ? (
-                <ActivationSavingsBanner>
-                  {supplier
-                    ? <>Vi identifierade redan <strong>{fmt(savings)}&nbsp;kr/år</strong> hos {supplier}. Den besparingen väntar.</>
-                    : <>Vi identifierade redan <strong>{fmt(savings)}&nbsp;kr/år</strong> i besparing åt er. Den väntar på att aktiveras.</>
-                  }
-                </ActivationSavingsBanner>
-              ) : (
+              {(
                 <ActivationSub>
                   E-post och bolagsnamn — klart på 30 sekunder.
                 </ActivationSub>

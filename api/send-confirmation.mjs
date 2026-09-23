@@ -4,9 +4,11 @@
 //
 // POST { email, result }   — samma result-shape som send-analysis
 
+import { LOFTEN } from '../lib/kundmeningar.js';
 import { Resend } from 'resend';
 import { feeOf, netOf } from '../lib/fee.js';
 
+const ALERT_TO = process.env.ARVO_ALERT_EMAIL ?? 'team@arvoflow.se';
 const FROM = process.env.RESEND_FROM ?? 'Arvo Flow <analys@arvoflow.se>';
 
 const T = {
@@ -27,22 +29,8 @@ const T = {
 
 const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
 
-const CATEGORY_PARTNER_LABEL = {
-  el:                'Kvalificerad Elleverantör',
-  bredband:          'Kvalificerad Bredbandsoperatör',
-  kortterminal:      'Kvalificerad Betaltjänstleverantör',
-  'faktura-tjanst':  'Kvalificerad Affärssystemsleverantör',
-  'leasing-bil':     'Kvalificerad Leasingpartner',
-  skrivarleasing:    'Kvalificerad Print-leverantör',
-  loneadmin:         'Kvalificerad Lönesystemleverantör',
-  'larm-bevakning':  'Kvalificerad Säkerhetsleverantör',
-  foretagshalsovard: 'Kvalificerad Hälsovårdspartner',
-  bankavgifter:      'Kvalificerad Bankpartner',
-  kontorsmaterial:   'Kvalificerad Förbrukningsleverantör',
-  'städ-rengöring':  'Kvalificerad Städleverantör',
-  'transport-frakt': 'Kvalificerad Fraktleverantör',
-  'it-support':      'Kvalificerad IT-partner',
-};
+// Här stod CATEGORY_PARTNER_LABEL («Kvalificerad Leasingpartner», «Kvalificerad IT-partner» …).
+// Arvo har inga leverantörspartner (neutralitetsmoaten); en okänd ny leverantör heter just det.
 
 const CATEGORY_LABELS = {
   el:                'Elavtal',
@@ -77,35 +65,35 @@ function logo(size, id) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:inline-block;vertical-align:middle"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5DD6CA"/><stop offset="100%" stop-color="#1B6E66"/></linearGradient></defs><path fill="url(#${id})" fill-rule="evenodd" d="M20 3 L37 36 L27.5 36 L20 21.5 L12.5 36 L3 36 Z M20 12.5 L24 21 L16 21 Z"/></svg>`;
 }
 
-function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
+export function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
   const isOptimize  = r.recommendationType === 'optimize';
   const catLabel    = CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '';
   const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
-  const suppDisplay = isRealPrice
-    ? r.suggestedSupplier
-    : (CATEGORY_PARTNER_LABEL[cat?.category] ?? 'Verifierad leverantör');
+  const suppDisplay = (isRealPrice && r.suggestedSupplier) ? r.suggestedSupplier : 'den nya leverantören';
 
   const saving    = isOptimize ? (r.optimizationSaving ?? 0) : (r.grossSaving ?? 0);
   const arvoFee   = feeOf(saving);
   const netSaving = netOf(saving);
 
-  const heroTitle = isOptimize ? 'Avvecklingen är igångsatt.' : 'Bytet är igångsatt.';
-  const heroSub   = isOptimize
-    ? `Vi hjälper er aktivera den inbyggda modulen och avveckla det separata abonnemanget hos ${ex.supplier}. Du behöver inte göra något mer.`
-    : `Vi förbereder uppsägning hos ${ex.supplier} och tecknar nytt avtal med ${suppDisplay ?? 'den nya leverantören'}. Du behöver inte göra något mer.`;
+  // ── KUNDMENINGSREGISTRET (2026-09-23) ──────────────────────────────────────────────────────
+  // Här stod «Bytet är igångsatt … Vi skickar uppsägning … förväntat aktivt inom 2–4 veckor … Du
+  // behöver inte göra något mer». Bytesrälsen är mode:stub — ingen kod säger upp eller tecknar, och
+  // ingen människa fick ens veta om begäran (inget internt larm). Nu bekräftar mejlet det som är
+  // sant: begäran är mottagen, bytet FÖRBEREDS och kunden signerar själv (LOFTEN.bytesunderlag),
+  // och larmet till oss nedan är mekanismen bakom löftet (KM-04). Arvodet står som i villkoren
+  // §3.2 — en engångsavgift tre månader efter att det nya avtalet aktiverats.
+  const heroTitle = isOptimize ? 'Vi har tagit emot er begäran om avveckling.' : 'Vi har tagit emot er bytesbegäran.';
+  const heroSub   = `${LOFTEN.bytesunderlag.text} ${LOFTEN.personligtSvar.text}`;
+  const arvodeText = `Besparingsarvodet ${formatKr(arvoFee)} (20&nbsp;%) faktureras som en engångsavgift tre månader efter att det nya avtalet aktiverats — och bara om bytet blir av.`;
 
   const steps = isOptimize ? [
-    `Vi kontaktar ${ex.supplier} och initierar avveckling av det separata abonnemanget.`,
-    'Du får bekräftelse när abonnemanget är avslutat och modulen är aktiverad.',
-    `Arvo skickar besparingsarvodet ${formatKr(arvoFee)} (20&nbsp;%) efter din första period utan den dubbla kostnaden.`,
-  ] : isRealPrice ? [
-    `Vi skickar uppsägning till ${ex.supplier} och hanterar all kommunikation.`,
-    `Vi tecknar nytt avtal med ${suppDisplay} — förväntat aktivt inom 2–4 veckor.`,
-    `Arvo skickar besparingsarvodet ${formatKr(arvoFee)} (20&nbsp;%) efter din första faktura från den nya leverantören.`,
+    `Vi läser ert abonnemang hos ${ex.supplier} och förbereder uppsägningen av det separata abonnemanget.`,
+    'Ni signerar uppsägningen själva — inget skickas innan dess.',
+    arvodeText,
   ] : [
-    `Vi kartlägger ert nuvarande avtal hos ${ex.supplier}, inklusive uppsägningstid och avtalsvillkor.`,
-    `Arvo kontaktar kvalificerade leverantörer inom ${catLabel.toLowerCase()} och presenterar det starkaste budet baserat på er volym. Du väljer sedan om du vill gå vidare.`,
-    `Arvo skickar besparingsarvodet ${formatKr(arvoFee)} (20&nbsp;%) efter din första faktura från den nya leverantören.`,
+    `Vi läser ert nuvarande avtal hos ${ex.supplier}, inklusive uppsägningstid.`,
+    `Vi förbereder uppsägningen och nyteckningen hos ${suppDisplay}. Ni signerar själva — inget sägs upp eller tecknas innan dess.`,
+    arvodeText,
   ];
 
   const stepsHtml = steps.map((s, i) => `
@@ -234,7 +222,7 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
     <td style="padding:0 44px 40px">
       <p style="margin:0;font-size:12px;color:#8FA8A0;line-height:1.65;font-family:'Inter',Arial,sans-serif">
         <strong style="color:${T.inkSoft}">Besparingsarvode:</strong> ${formatKr(arvoFee)} (20&nbsp;% av ${formatKr(saving)}) —
-        faktureras efter din första ${isOptimize ? 'period utan den dubbla kostnaden' : 'faktura från den nya leverantören'}.
+        faktureras som en engångsavgift tre månader efter att det nya avtalet aktiverats.
         Inga fasta avgifter. Fr.o.m. år&nbsp;2 tillfaller hela besparingen er.
       </p>
     </td>
@@ -253,7 +241,7 @@ function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
         &nbsp;&middot;&nbsp;
         <a href="mailto:hej@arvoflow.se" style="color:${T.brand};text-decoration:none">hej@arvoflow.se</a>
       </p>
-      <p style="margin:0;font-size:10px;color:#B0C4BE;line-height:1.6;font-family:'Inter',Arial,sans-serif">Besparingsarvode 20 % av realiserad besparing, faktureras när den syns i era böcker. Inga fasta avgifter.</p>
+      <p style="margin:0;font-size:10px;color:#B0C4BE;line-height:1.6;font-family:'Inter',Arial,sans-serif">Besparingsarvode 20 % av år 1-besparingen, en engångsavgift tre månader efter att det nya avtalet aktiverats. Inga fasta avgifter.</p>
     </td>
   </tr>
 
@@ -292,14 +280,21 @@ export default async function handler(req, res) {
     const isOptimize = result.recommendation.recommendationType === 'optimize';
     const supplier   = result.extracted.supplier ?? '';
     const subject    = isOptimize
-      ? `Arvo Flow – Vi avvecklar den dubbla kostnaden hos ${supplier}`
-      : `Arvo Flow – Vi hanterar ditt leverantörsbyte hos ${supplier}`;
+      ? `Arvo Flow – vi har tagit emot er begäran om avveckling hos ${supplier}`
+      : `Arvo Flow – vi har tagit emot er bytesbegäran för ${supplier}`;
 
     await resend.emails.send({
       from:    FROM,
       to:      email,
       subject,
       html:    buildHtml(result),
+    });
+    // MEKANISMEN BAKOM LÖFTET: utan det här larmet visste ingen på Arvo att en kund bett om ett byte.
+    await resend.emails.send({
+      from:    FROM,
+      to:      ALERT_TO,
+      subject: `[Bytesbegäran] ${supplier} · ${email}`,
+      html:    `<p>Bytesbegäran från <strong>${email}</strong> för ${supplier}.</p><p>Kategori: ${result.categorized?.category ?? '?'} · föreslaget: ${result.recommendation.suggestedSupplier ?? '—'} · brutto ${result.recommendation.grossSaving ?? '—'} kr/år.</p><p>Kunden har lovats: förberett byte, egen signering, svar från en grundare.</p>`,
     });
 
     return send(res, 200, { ok: true });

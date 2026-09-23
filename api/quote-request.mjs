@@ -5,6 +5,7 @@
 // 3. Skickar internt larm till Arvo med all data + färdig RFQ-draft
 // 4. Lagrar lead i Postgres quote_requests
 
+import { LOFTEN } from '../lib/kundmeningar.js';
 import Anthropic from '@anthropic-ai/sdk';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
@@ -149,7 +150,7 @@ function logoSvg(id, size = 28) {
 }
 
 // ── Email till kunden ─────────────────────────────────────────────────────────
-function buildCustomerEmail({ contactName, supplier, annualCost, variableCharges }) {
+export function buildCustomerEmail({ contactName, supplier, annualCost, variableCharges }) {
   const firstName = contactName ? contactName.split(' ')[0] : null;
   const heroLine  = firstName ? `Vi tar det härifrån, ${firstName}` : 'Vi tar det härifrån';
   const ac = annualCost      != null ? annualCost.toLocaleString('sv-SE')      + ' kr' : '–';
@@ -200,15 +201,15 @@ function buildCustomerEmail({ contactName, supplier, annualCost, variableCharges
       <td style="width:28px;vertical-align:top">${stepCircle(2)}</td>
       <td style="padding-left:14px;vertical-align:top">
         <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#0E1A17">Vi begär in konkurrerande offerter</p>
-        <p style="margin:0;font-size:13px;color:#5C6E68;line-height:1.5">Arvo kontaktar kvalificerade Print-leverantörer med era volymer och nuvarande prisbild.</p>
+        <p style="margin:0;font-size:13px;color:#5C6E68;line-height:1.5">${LOFTEN.offertrunda.text}</p>
       </td>
     </tr></table>
 
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
       <td style="width:28px;vertical-align:top">${stepCircle(3)}</td>
       <td style="padding-left:14px;vertical-align:top">
-        <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#0E1A17">Ni får bästa erbjudandet presenterat</p>
-        <p style="margin:0;font-size:13px;color:#5C6E68;line-height:1.5">Godkänner ni — sköter Arvo hela leverantörsbytet. Ni hör av oss inom <strong style="color:#0E1A17">1–2 arbetsdagar</strong>.</p>
+        <p style="margin:0 0 3px;font-size:14px;font-weight:600;color:#0E1A17">Ni får offerterna sammanställda</p>
+        <p style="margin:0;font-size:13px;color:#5C6E68;line-height:1.5">Ni väljer själva om och hur ni går vidare — skrivarleasing byts inte av Arvo. Ni hör av oss inom <strong style="color:#0E1A17">1–2 arbetsdagar</strong>.</p>
       </td>
     </tr></table>
   </td></tr>
@@ -233,7 +234,7 @@ function buildCustomerEmail({ contactName, supplier, annualCost, variableCharges
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
       <td style="background:#E0F1ED;border-left:3px solid #1B7A6E;border-radius:0 8px 8px 0;padding:14px 18px">
         <p style="margin:0;font-size:13px;color:#0E4F47;line-height:1.55">
-          <strong>Arvo tar 20 % av realiserad besparing</strong> — ni betalar ingenting om vi inte lyckas.
+          <strong>Ingen bytesavgift.</strong> Skrivarleasing byts inte av Arvo — ni väljer och tecknar själva (Nivå 3 i Switch-doktrinen).
         </p>
       </td>
     </tr></table>

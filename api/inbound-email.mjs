@@ -20,6 +20,7 @@
 //   2. Resend → Webhooks → email.received → https://arvoflow.se/api/inbound-email?secret=…
 //   3. Env: INBOUND_WEBHOOK_SECRET (slumpad, samma som i webhook-URL:en)
 
+import { LOFTEN } from '../lib/kundmeningar.js';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
@@ -614,8 +615,13 @@ och ni behöver skicka om det.</p>
           requiresQuote:       a.recommendation?.requiresQuote ?? false,
         });
       } else if (a?.ok) {
+        // Här stod «Arvo återkommer till er per mail när analysen är verifierad» — för varje rutt som
+        // inte prissattes, även bevakade avtal och fakturor utanför vårt område. Ingen utskicksväg
+        // mejlar tillbaka efter en granskning. Rummet visar varje sådan faktura med sitt skäl (KM-05).
         results.push({ ok: false, filename,
-          message: 'Fakturan kräver manuell granskning — Arvo återkommer till er per mail när analysen är verifierad.' });
+          message: a.route === 'monitoring'
+            ? 'Avtalet är tidsbundet och står under bevakning i ert rum, med sin avtalsklocka.'
+            : `Vi prissätter inte den här fakturan automatiskt. ${LOFTEN.skalIRummet.text}` });
       } else {
         results.push({ ok: false, filename,
           message: 'Analysen misslyckades — kontrollera att PDF:en är en leverantörsfaktura och försök igen.' });

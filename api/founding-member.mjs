@@ -43,7 +43,9 @@ const BENEFITS = [
   'Personlig onboarding direkt med grundarna — 30 min Teams',
   'Tjänsten helt gratis de första 6 månaderna — ingen success-fee, inga avgifter',
   'Du röstar på vilka kategorier vi öppnar nästa kvartal',
-  'Garanterad förtur till försäkringsbyten när FI-licensen är klar',
+  // Här stod «Garanterad förtur till försäkringsbyten när FI-licensen är klar» — en garanti om en licens
+  // som inte finns (kundmeningsregistret). Förturen ges när, och om, tillståndet finns.
+  'Förtur till försäkringsbyten den dag vi har tillstånd att genomföra dem',
 ];
 
 function confirmationHtml(company, name) {

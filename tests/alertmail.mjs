@@ -102,7 +102,9 @@ describe('AM · Larmmailet — moat-meningen får inte spränga körningen', () 
       // arkiverade rader, medan mottagarlistan är arkivfiltrerad — «följer» lovade alltså en
       // pågående bevakning för bolag vi slutat larma. X/Y-FORMEN står kvar oförändrad; det är den
       // invarianten testet finns för, och båda alertvägarna prövas mot samma sträng (regel 5).
-      assert.match(html, /8 av 14 bolag vi sett fakturor från/,
+      // ORDET «BOLAG» BYTT 2026-09-23 (kundmeningsregistret): getSegmentStats räknar DISTINKTA
+      // AVSÄNDARADRESSER, inte bolag, och basen är i dag till största delen testmaterial. X/Y-formen står.
+      assert.match(html, /8 av 14 avsändare vi analyserat fakturor från/,
         'moat-meningen ska stå i mailet — det är den enda mening ingen konkurrent kan skriva');
     });
 

@@ -26,6 +26,7 @@
  *   node scripts/notify-price-changes.mjs [/path/to/report.json]
  */
 
+import { LOFTEN } from '../lib/kundmeningar.js';
 import 'dotenv/config';
 import { readFileSync } from 'fs';
 import crypto from 'crypto';
@@ -270,7 +271,7 @@ function buildPriceAlertInsight({ keyword, category, supplierName, customer, gro
     : `Prisändring hos ${supplierName} — Arvo har detekterat`;
 
   const segSignal = segStats.total >= 3
-    ? `${segStats.withSupplier} av ${segStats.total} bolag vi sett fakturor från för ${catLabel(category)} använder ${supplierName}.`
+    ? `${segStats.withSupplier} av ${segStats.total} avsändare vi analyserat fakturor från för ${catLabel(category)} använder ${supplierName}.`
     : null;
 
   const breakdownContext = hasExactNumbers
@@ -283,27 +284,23 @@ function buildPriceAlertInsight({ keyword, category, supplierName, customer, gro
     headline,
     subheadline: hasExactNumbers
       ? `Exakt påverkan: ${isIncrease ? '+' : ''}${fmt(impactKrYear)} kr/år för ${impact.seats} licenser`
-      : 'Prisändring detekterad — Arvo granskar om den är befogad',
+      : 'Prisändring i leverantörens publika prislista',
     metric: impactKrYear ? {
-      primary:   { value: Math.abs(impactKrYear), label: 'kr/år identifierad påverkan' },
+      primary:   { value: Math.abs(impactKrYear), label: 'kr/år påverkan' },
       secondary: { value: customer.annualCost, label: 'nuvarande kostnad/år' },
     } : null,
     context: [
       `Arvo bevakar ${supplierName}:s priser nattligen och detekterade en förändring.`,
       breakdownContext,
       segSignal,
-      isIncrease
-        ? 'Smyghöjningar utan kundinformation är vanliga och kan ifrågasättas direkt.'
-        : 'Arvo analyserar om förändringen är permanent och om ert avtal påverkas.',
+      LOFTEN.prisbevakning.text,
     ].filter(Boolean).join(' '),
     supplier:   supplierName,
     category,
     analysisId: null,
-    action: {
-      label:              isIncrease ? 'Be Arvo granska och förhandla' : 'Se fullständig analys',
-      type:               isIncrease ? 'renegotiate' : 'review',
-      estimatedNetSaving: impactKrYear && isIncrease ? Math.round(impactKrYear * 0.85) : 0,
-    },
+    // Här stod «Be Arvo granska och förhandla» och en «besparing» = höjningen × 0,85 — en påhittad
+    // faktor, och Arvo förhandlar aldrig (kundmeningsregistret, Switch-doktrinen).
+    action: null,
   };
 }
 
@@ -364,19 +361,19 @@ function buildAlertEmail({ customer, supplierName, groupAlerts, segStats, impact
       </td></tr>
     </table>` : `
     <p style="margin:0 0 20px;font-size:15px;color:${ink};line-height:1.65">
-      Arvo bevakar era leverantörskostnader nattligen. Vi har detekterat en förändring
-      hos <strong>${supplierName}</strong> och kontaktar er innan det syns på er faktura.
+      ${LOFTEN.prisbevakning.text} Den här gången ändrades priset
+      hos <strong>${supplierName}</strong> — innan det syns på er faktura.
     </p>`;
 
   // Segment-signal: nätverkseffekten som gör Arvo unik
   const segBlock = segStats.total >= 3
     ? `<p style="margin:0 0 24px;padding:14px 18px;background:#EEF9F7;border-left:3px solid ${brand};border-radius:0 8px 8px 0;font-size:13px;color:${brand};font-weight:600;line-height:1.5">
-        ${segStats.withSupplier} av ${segStats.total} bolag vi sett fakturor från för ${catLabel(category)}
-        använder ${supplierName} — Arvo ser hela prisbilden, ni ser er del.
+        ${segStats.withSupplier} av ${segStats.total} avsändare vi analyserat fakturor från för ${catLabel(category)}
+        använder ${supplierName}.
       </p>`
     : '';
 
-  const ctaLabel = isIncrease ? 'Låt Arvo omförhandla' : 'Se fullständig analys';
+  const ctaLabel = 'Se vad ändringen betyder för er';
 
   return `<!DOCTYPE html>
 <html lang="sv">

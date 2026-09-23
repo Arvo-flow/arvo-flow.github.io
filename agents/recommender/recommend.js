@@ -40,6 +40,7 @@ import { molnvaxelRecommendation } from '../../lib/molnvaxel-recommendation.js';
 import { loneadminRecommendation } from '../../lib/loneadmin-rightsizing.js';
 import { detectAdobePlan, adobeRightsizing, adobeListExVat, deriveAdobeSeats } from '../../lib/adobe-rightsizing.js';
 import { detectStorageSubstitution } from '../../lib/saas-substitution.js';
+import { kundensMotivering, kundensSteg } from '../../lib/kundmeningar.js';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -96,11 +97,13 @@ function formatBenchmark(benchmark, seatCount, employees) {
     ? `Arvo Flows analys-databas — ${benchmark.n} anonymiserade kundfakturor`
     : benchmark.source === 'real'
       ? `Arvo Flow branschindex — ${benchmark.n} verkliga datapunkter`
-      : 'Estimat från publika listpriser (ersätts med riktig kunddata)';
+      : benchmark.source === 'real-public'
+        ? 'Verifierade publika listpriser'
+        : 'Estimat — inte en verifierad jämförelse';
 
   return `Bransch: ${benchmark.industry}, storlek: ${benchmark.size}
 Median (total, per år): ${totalMedian.toLocaleString('sv-SE')} ${benchmark.unit}${scaleNote}
-Verifierat lägre marknadspris (per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${scaleLabel})` : ''}
+Lägsta verifierade publika listpris (per år): ${totalP25.toLocaleString('sv-SE')} ${benchmark.unit}${isPerUser ? ` (${benchmark.p25.toLocaleString('sv-SE')} kr/användare × ${scaleLabel})` : ''}
 
 Alternativa leverantörer:
 ${altList}
@@ -178,7 +181,11 @@ ${top3}
   }
 }
 
-function formatPrompt({ customer, invoice, categorized, benchmark, elContext, convertedTierBm }) {
+/** Prompttexten när jämförelsekällan inte är ett verifierat publikt listpris (KM-06). */
+const INGEN_JAMFORELSE = '(Ingen verifierad prisjämförelse finns för den här fakturan. Arvo har inget underlag om vad andra bolag betalar.)';
+const INGEN_JAMFORELSE_REGEL = 'OBS: Det finns ingen verifierad jämförelse för den här fakturan. Skriv INGENTING om hur priset står sig mot marknaden, branschen, branschsnittet eller andra bolag — varken bättre eller sämre. Beskriv vad fakturan visar.';
+
+export function formatPrompt({ customer, invoice, categorized, benchmark, elContext, convertedTierBm }) {
   const annualCost = invoice.annualCost ?? invoice.amount;
   const mobileAddonAnnual = (invoice.mobileAddonMonthly > 0) ? invoice.mobileAddonMonthly * 12 : null;
 
@@ -227,30 +234,31 @@ function formatPrompt({ customer, invoice, categorized, benchmark, elContext, co
   const _pctLabel = (pct) => pct > 0
     ? `${pct} % ÖVER`
     : `${Math.abs(pct)} % UNDER`;
-  const overpaymentAnnotation = overpaymentPct !== null
-    ? isLiveData
-      ? `  ← ${_pctLabel(overpaymentPct)} branschsnittet (baserat på ${dataPoints} fakturor från liknande bolag i Arvo-databasen)`
-      : isRealData
-        ? `  ← ${_pctLabel(overpaymentPct)} branschsnittet (p25) (${dataPoints} analyserade fakturor i databasen)`
-        : isVerifiedPublic
-          ? `  ← ${_pctLabel(overpaymentPct)} verifierat listpris`
-          : `  ← ${_pctLabel(overpaymentPct)} branschstandarden`
+  // Bara ett verifierat publikt listpris får ge en procent i prompten (KM-06) — kohortens
+  // totalsummor gav motsatt riktning mot listpriset på samma faktura.
+  const overpaymentAnnotation = (overpaymentPct !== null && isVerifiedPublic)
+    ? `  ← ${_pctLabel(overpaymentPct)} verifierat listpris`
     : '';
 
   // Explicit phrasing instruction so the AI uses the right language in reasoning.
   const phrasingRule = isAccountingSystem
     ? 'OBS: Detta är ett affärssystem. Jämför INTE kostnaden procentuellt mot branschsnittet. Undersök om inbyggda funktioner täcker behovet och ge konkret åtgärdsrekommendation.'
-    : isLiveData
-      ? `OBS: Benchmarkdatan är baserad på ${dataPoints} anonymiserade fakturor från liknande bolag i Arvo Flows databas. I din reasoning, skriv "jämförbara bolag i er bransch betalar väsentligt lägre" eller "Ni betalar mer än vad vi ser i liknande bolag" — ALDRIG "medianen", "referenspriser" eller interna procentsatser.`
-      : isRealData
-        ? `OBS: Benchmarkdatan är baserad på ${dataPoints} verkliga kundfakturor i Arvo Flows databas. I din reasoning, jämför mot "branschsnittet" — skriv t.ex. "Ni betalar mer än jämförbara bolag i er bransch" eller "Jämförbara bolag i er bransch betalar väsentligt mindre." — ALDRIG "medianen", "referenspriser" eller interna procentsatser.`
-        : isVerifiedPublic
-          ? 'OBS: Benchmarkdatan är verifierade offentliga listpriser — INTE aggregerade kundfakturor. I din reasoning, skriv "mer än det verifierade marknadspriset" eller "leverantörens eget publika listpris är lägre, tillgängligt utan förhandling" — ALDRIG "medianen" eller interna procentsatser.'
-          : 'OBS: Benchmarkdatan är intervallbaserade branschuppskattningar — INTE exakta priser. I din reasoning, jämför mot "branschsnittet" och skriv "marknadens pris är lägre" — ALDRIG "exakta priser", "garanterade" eller "medianen".';
+    : isVerifiedPublic
+      ? 'OBS: Benchmarkdatan är verifierade offentliga listpriser — INTE aggregerade kundfakturor. I din reasoning, skriv "mer än det verifierade listpriset" eller "leverantörens eget publika listpris är lägre, tillgängligt utan förhandling" — ALDRIG "medianen" eller interna procentsatser.'
+      : INGEN_JAMFORELSE_REGEL;
 
-  const benchmarkBlock = isAccountingSystem
-    ? formatBenchmark(benchmark, seatCount, employees) + '\n\n' + phrasingRule
-    : formatBenchmark(benchmark, seatCount, employees);
+  // ── KUNDMENINGSREGISTRET (2026-09-23): BARA ETT VERIFIERAT LISTPRIS FÅR JÄMFÖRAS I TEXT ─────────
+  // Kohortens tal (live_analyses / real) är TOTALSUMMOR för bolag med okänt antal enheter, och
+  // kohorten är till största delen testmaterial (probe-undersokning U5). Mätt på samma faktura:
+  // «16 % UNDER branschsnittet» mot kohorten, «5 % ÖVER verifierat listpris» mot listpriset —
+  // motsatt riktning. Bytesmålet stängdes för kohorten 21 aug (bytesgolv); prompten gjorde det
+  // aldrig, och modellen skrev «ligger redan bättre än jämförbara bolag i er bransch» (KM-06).
+  const jamforbar = !bm || isVerifiedPublic;
+  const benchmarkBlock = !jamforbar
+    ? INGEN_JAMFORELSE
+    : isAccountingSystem
+      ? formatBenchmark(benchmark, seatCount, employees) + '\n\n' + phrasingRule
+      : formatBenchmark(benchmark, seatCount, employees);
 
   const secretOverride = REAL_PRICE_CATEGORIES.has(categorized.category)
     ? `\nOVERRIDE SEKRETESSREGEL: Kategorin "${categorized.category}" har offentliga listpriser. Du FÅR och SKA namnge den föreslagna leverantören i reasoning-fältet för denna faktura.`
@@ -1798,7 +1806,7 @@ async function recommendUtanValutagrind(input, opts = {}) {
         { billingPeriod: input.invoice.billingPeriod ?? 'monthly' },
       );
       const reasoning = clickRateAnalysis?.reasoning ??
-        'Era utskriftskostnader drivs av klickvolymer — Arvo behöver er printhistorik för att förhandla rätt klick-avtal.';
+        'Era utskriftskostnader drivs av klickvolymer — med er printhistorik kan klickpriset jämföras mot ett offertunderlag.';
       return {
         shouldSwitch:        false,
         requiresQuote:       true,
@@ -1900,7 +1908,7 @@ async function recommendUtanValutagrind(input, opts = {}) {
       shouldSwitch = annualCost > bm.p25 * 1.10;
       const overMedianPct = Math.round(((annualCost - bm.median) / bm.median) * 100);
       if (shouldSwitch) {
-        reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år är sämre än branschsnittet för er verksamhetsstorlek. Marknadspriset hos rikstäckande aktörer är väsentligt lägre. Arvo begär offert från ${alts} baserat på ert tömningsschema och fraktionsfördelning.`;
+        reasoning = `Er avfallskostnad på ${annualCost.toLocaleString('sv-SE')} kr/år ligger över den undre kvartilen i vårt estimat. Estimatet är inte ett verifierat pris — en offertrunda baserad på ert tömningsschema och fraktionsfördelning visar det faktiska priset.`;
         suggestedAnnualCost = bm.p25;
         grossSaving = Math.max(0, annualCost - bm.p25);
         arvoFee = feeOf(grossSaving);
@@ -1917,7 +1925,7 @@ async function recommendUtanValutagrind(input, opts = {}) {
       requiresQuote:      true,
       recommendationType: 'requires_quote',
       reasoning,
-      suggestedSupplier:   shouldSwitch ? 'Arvo-verifierad avfallspartner' : null,
+      suggestedSupplier:   null,
       suggestedAnnualCost,
       grossSaving,
       arvoFee,
@@ -1925,8 +1933,7 @@ async function recommendUtanValutagrind(input, opts = {}) {
       confidence:          bm ? 'medium' : 'low',
       switchSteps:         shouldSwitch ? [
         'Arvo sammanställer ert tömningsschema och fraktionsfördelning',
-        'Offertförfrågan skickas till rikstäckande avfallspartners',
-        'Arvo presenterar bästa erbjudandet — ni behöver inte göra något',
+        'Ett offertunderlag tas fram som ni kan skicka till rikstäckande avfallsaktörer',
       ] : [],
       licenseOverage:      null,
       overageSavings:      null,
@@ -2042,6 +2049,23 @@ async function recommendUtanValutagrind(input, opts = {}) {
   // ingen FX). optimizationSaving förblir null (advisory/review) — potentialen lever i m365Rightsizing.
   if (input.categorized.category === 'saas-productivity') {
     result.m365Rightsizing = m365Rightsizing(saasLicenseTierKey, deriveM365Seats(input.invoice)) ?? null;
+  }
+
+  // ── KUNDMENINGSREGISTRET: modellens text passerar registret INNAN något annat läser den ─────
+  // (lib/kundmeningar.js, KM-01..03). Kohortpåståenden stryks alltid — vi har ingen jämförbar
+  // kohort — och beröm av priset stryks: ett byte som nollats av grindarna säger ingenting om att
+  // priset är bra. Bytessteg med löften utan mekanism («Vi förhandlar…») stryks också. Filtret
+  // sitter HÄR, vid modellens utgång, och inte vid API:ts: kodskrivna meningar (el, LFL-låset)
+  // prövas av sina egna sviter och ska inte strykas av ett ordfilter.
+  {
+    const m = kundensMotivering(result.reasoning);
+    const st = kundensSteg(result.switchSteps);
+    if (m.strukna.length || st.strukna.length) {
+      console.warn(`[kundmening] strök ${m.strukna.length} mening(ar) och ${st.strukna.length} steg ur modelltexten: `
+        + [...m.strukna, ...st.strukna].map((x) => `«${x.slice(0, 80)}»`).join(' · '));
+    }
+    result.reasoning = m.text ?? '';
+    if (Array.isArray(result.switchSteps)) result.switchSteps = st.steg;
   }
 
   // ── Prosakravet (SKUGGA): varje tal i AI:ns reasoning måste finnas i prompten ──

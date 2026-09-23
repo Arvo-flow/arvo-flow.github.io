@@ -12,6 +12,7 @@
 //
 // Returnerar: { ok, processed, sent, skipped, failed }
 
+import { LOFTEN } from '../../lib/kundmeningar.js';
 import crypto from 'crypto';
 import { Resend } from 'resend';
 import { bedomLarmunderlag } from '../../lib/larmunderlag.js';
@@ -158,7 +159,7 @@ export default async function handler(req, res) {
               headline: `${supplierName} har ändrat sin prisbild`,
               subheadline: impact && impact.impactKrYear > 0
                 ? `${fmt(impact.impactKrYear)} kr/år — ${impact.deltaPct > 0 ? '+' : ''}${impact.deltaPct}%`
-                : 'Arvo granskar om förändringen är befogad',
+                : 'Prisändring i leverantörens publika prislista',
               supplier: supplierName, category,
               metric: impact && impact.impactKrYear > 0 ? {
                 primary:   { value: impact.impactKrYear, label: 'Kostnadspåverkan/år' },
@@ -167,10 +168,9 @@ export default async function handler(req, res) {
               context: impact && impact.impactKrYear > 0
                 ? `Priset gick från ${fmt(impact.oldKrMonth)} till ${fmt(impact.newKrMonth)} kr/licens/mån.`
                 : null,
-              action: {
-                label: 'Se Arvos förberedda motdrag', type: 'renegotiate',
-                estimatedNetSaving: impact && impact.impactKrYear > 0 ? netOf(impact.impactKrYear) : 0,
-              },
+              // Här stod «Se Arvos förberedda motdrag» (inget motdrag förbereds) och en «besparing»
+              // lika med höjningen — en höjning ni får betala är ingen besparing (kundmeningsregistret).
+              action: null,
             };
             await db`
               INSERT INTO briefing_reports
@@ -242,7 +242,7 @@ function buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefing
   // getSegmentStats räknar per kategori → den ärliga frasen är kategorin, aldrig "bransch"/"segment").
   const segLine = segStats.total >= 3
     ? `<tr><td colspan="2" style="padding:12px 14px;background:#EEF9F7;border-radius:8px;font-size:13px;color:#1B7A6E;font-weight:600;margin-bottom:20px;display:block">
-        Arvo ser samma höjning hos ${segStats.withSupplier} av ${segStats.total} bolag vi sett fakturor från för ${catLabel(category)}
+        ${segStats.withSupplier} av ${segStats.total} avsändare vi analyserat fakturor från för ${catLabel(category)} använder ${supplierName}
        </td></tr>`
     : '';
 
@@ -268,7 +268,7 @@ function buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefing
   const impactHeadline = hasImpact
     ? `<p style="margin:0 0 8px;font-size:36px;font-weight:800;color:#C0392B;letter-spacing:-.04em">+${fmt(impact.impactKrYear)} kr/år</p>
        <p style="margin:0 0 24px;font-size:13px;color:#5C6E68">${impact.oldKrMonth} → ${impact.newKrMonth} kr/licens/mån · ${impact.seats} licenser · +${impact.deltaPct}%</p>`
-    : `<p style="margin:0 0 24px;font-size:15px;color:#5C6E68">Arvo granskar om förändringen är befogad och kontaktar er med en rekommendation.</p>`;
+    : `<p style="margin:0 0 24px;font-size:15px;color:#5C6E68">${LOFTEN.prisbevakning.text}</p>`;
 
   return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#F1F6F3;font-family:-apple-system,Arial,sans-serif">

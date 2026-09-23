@@ -3,7 +3,8 @@
  *
  * Every property here replaces a previously-scattered hardcoded constant:
  *   label          ← CATEGORY_LABELS dict
- *   partnerLabel   ← CATEGORY_PARTNER_LABEL dict
+ *   partnerLabel   ← etikett för ett ej namngivet alternativ. Aldrig «partner»: Arvo har inga
+ *                    leverantörspartner (neutralitetsmoaten, KM-05).
  *   segment        ← CATEGORY_TO_CLUSTER dict (ArvoScore)
  *   unit/unitSingular ← isMobil/isSaas terminology switches
  *   inlineLabel    ← multi-case inline label switch in analysis text
@@ -167,7 +168,7 @@ export const CATEGORY_META = {
   },
   utrustningsleasing: {
     label:              'IT-utrustningsleasing',
-    partnerLabel:       'Kvalificerad IT-partner',
+    partnerLabel:       'Kvalificerad IT-leverantör',
     segment:            0,
     unit:               'enheter',
     unitSingular:       'enhet',
@@ -210,7 +211,7 @@ export const CATEGORY_META = {
   },
   'leasing-bil': {
     label:              'Företagsleasing',
-    partnerLabel:       'Kvalificerad Leasingpartner',
+    partnerLabel:       'Kvalificerad leasingleverantör',
     segment:            5,
     unit:               'fordon',
     unitSingular:       'fordon',
@@ -224,7 +225,7 @@ export const CATEGORY_META = {
   },
   'it-support': {
     label:              'IT-drift & Support',
-    partnerLabel:       'Kvalificerad IT-partner',
+    partnerLabel:       'Kvalificerad IT-leverantör',
     segment:            4,
     unit:               'avtal',
     unitSingular:       'avtal',
@@ -238,7 +239,7 @@ export const CATEGORY_META = {
   },
   serverhosting: {
     label:              'Serverhosting & Cloud-infrastruktur',
-    partnerLabel:       'Kvalificerad IT-partner',
+    partnerLabel:       'Kvalificerad IT-leverantör',
     segment:            4,
     unit:               'avtal',
     unitSingular:       'avtal',
@@ -308,7 +309,7 @@ export const CATEGORY_META = {
   },
   foretagshalsovard: {
     label:              'Företagshälsovård',
-    partnerLabel:       'Kvalificerad Hälsovårdspartner',
+    partnerLabel:       'Kvalificerad hälsovårdsleverantör',
     segment:            7,
     unit:               'avtal',
     unitSingular:       'avtal',
@@ -337,7 +338,7 @@ export const CATEGORY_META = {
   },
   'forsakring-foretag': {
     label:              'Företagsförsäkring',
-    partnerLabel:       'Arvo-verifierad Försäkringspartner',
+    partnerLabel:       'Kvalificerat försäkringsbolag',
     segment:            7,
     unit:               'avtal',
     unitSingular:       'avtal',
@@ -351,7 +352,7 @@ export const CATEGORY_META = {
   },
   'forsakring-ansvar': {
     label:              'Yrkesansvarsförsäkring',
-    partnerLabel:       'Arvo-verifierad Försäkringspartner',
+    partnerLabel:       'Kvalificerat försäkringsbolag',
     segment:            7,
     unit:               'avtal',
     unitSingular:       'avtal',
@@ -365,7 +366,7 @@ export const CATEGORY_META = {
   },
   bankavgifter: {
     label:              'Bankavgifter & Betaltjänster',
-    partnerLabel:       'Kvalificerad Bankpartner',
+    partnerLabel:       'Kvalificerad bank',
     segment:            6,
     unit:               'avtal',
     unitSingular:       'avtal',
@@ -393,7 +394,7 @@ export const CATEGORY_META = {
   },
   uncategorized: {
     label:              'Okategoriserad',
-    partnerLabel:       'Arvo-verifierad Partner',
+    partnerLabel:       'Kvalificerad leverantör',
     segment:            0,
     unit:               'enheter',
     unitSingular:       'enhet',
@@ -410,7 +411,7 @@ export const CATEGORY_META = {
 export function getCategoryMeta(category) {
   return CATEGORY_META[category] ?? {
     label:              category ?? 'Okänd kategori',
-    partnerLabel:       'Arvo-verifierad Partner',
+    partnerLabel:       'Kvalificerad leverantör',
     segment:            0,
     unit:               'enheter',
     unitSingular:       'enhet',

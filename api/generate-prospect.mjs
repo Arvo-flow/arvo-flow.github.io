@@ -88,8 +88,11 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
       : `Vi hittade er via Bolagsverket. Ni kör <strong>${platformLabel}</strong> och grundades ${foundedYear}.`;
 
     const contextPara = mxSince
-      ? `Det brukar gå hand i hand med att telekomavtalen inte heller rörts sedan dess. Operatörer sänker aldrig priset av sig själva — det kräver att någon ber om det.`
-      : `Det är en profil vi känner igen: ett bolag som vuxit stadigt och fokuserat på kärnverksamheten — och där telekomavtalet tecknades i bolagets tidiga år och sedan dess förnyats automatiskt, utan att någon haft ett skäl att ringa upp och förhandla.`;
+      ? `Om era telekomavtal är lika gamla vet vi inte — det visar en enda faktura.`
+      : `Hur era avtal ser ut vet vi inte förrän vi sett en faktura.`;
+    // Här stod berättelser om prospektets avtal i faktaform («telekomavtalet tecknades i bolagets tidiga
+    // år och har förnyats automatiskt»). Ingen mätning bär dem — regel 4 kräver grund, konfidens och
+    // asymmetri för en bedömning, och en berättelse har ingen av dem (kundmeningsregistret).
 
     return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Arvo — ${companyName}</title><style>${CSS}</style></head><body>
@@ -153,12 +156,12 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
     <div class="meta">${industry} &nbsp;·&nbsp; ${employees} anställda</div>
     <p class="intro">
       Arvo har analyserat kostnadsprofilen för bolag i er bransch med ${employees}&nbsp;anställda.
-      ${savingRange ? `Vår analys identifierar en potentiell besparing på <strong>${savingRange}</strong> — baserat på verifierade marknadspriser.` : 'Vår analys identifierar besparingspotential i er kostnadsprofil.'}
+      ${savingRange ? `Vår bedömning, utan att ha sett en faktura: en möjlig besparing på <strong>${savingRange}</strong>.` : 'Vår bedömning identifierar besparingspotential i er kostnadsprofil.'}
     </p>
     ${hasSaving ? `<div class="intel-card">
       <div class="intel-label">${cat.label}</div>
       <div class="intel-row"><span class="intel-desc">Typisk marknadskostnad</span><span class="intel-val">${fmt(cat.typicalLow)}–${fmt(cat.typicalHigh)} kr/år</span></div>
-      <div class="intel-row"><span class="intel-desc">Arvo-priset (verifierat listpris)</span><span class="intel-val green">${fmt(cat.arvoAnnual)} kr/år</span></div>
+      <div class="intel-row"><span class="intel-desc">Verifierat publikt listpris</span><span class="intel-val green">${fmt(cat.arvoAnnual)} kr/år</span></div>
       <div class="saving-bar">Sannolik premie: ≈ ${fmt(catCentral)} kr/år (intervall ${fmt(cat.savingLow)}–${fmt(cat.savingHigh)})</div>
     </div>` : ''}
     <div class="disclaimer">Dessa siffror är uppskattningar baserade på branschdata och verifierade listpriser. Exakt analys kräver er faktura — ladda upp den på 2 minuter.</div>

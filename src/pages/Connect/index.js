@@ -80,8 +80,11 @@ const Connect = () => {
           <NoWaste>
             <div className="icon"><Icon name="check" size={16} stroke={2.4} /></div>
             <div>
-              <strong>Vårt löfte — hittar vi inga överpriser på 30 dagar?</strong>
-              <span>Då är ditt bolag redan optimerat. Vi raderar Fortnox-kopplingen och all din data automatiskt — du har inte betalat en krona.</span>
+              {/* Här stod «Då är ditt bolag redan optimerat. Vi raderar Fortnox-kopplingen och all din data
+                  automatiskt». Ingen kod raderar något efter 30 dagar, analyser arkiveras och raderas aldrig
+                  (grundarbeslut 2026-09-11), och «optimerat» är ett omdöme vi inte mätt (kundmeningsregistret). */}
+              <strong>Vårt löfte — hittar vi inga överpriser?</strong>
+              <span>Då har du inte betalat en krona. Kopplingen tar du bort när du vill, direkt i Fortnox.</span>
             </div>
           </NoWaste>
 

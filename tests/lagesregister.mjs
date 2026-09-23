@@ -157,7 +157,8 @@ describe('SA · analysmejlet renderar efter läget', async () => {
   test('SA-02 · med byte: besparingen står kvar (motprovet)', () => {
     const t = text(htmlEmail(byte));
     assert.match(t, /Din nettobesparing \+2\s400 kr/);
-    assert.match(t, /Arvo-pris 9\s000 kr\/år/);
+    // «Arvo-pris» → «Verifierat pris» 2026-09-23: Arvo har inget eget pris (neutralitetsmoaten, KM-05).
+    assert.match(t, /Verifierat pris 9\s000 kr\/år/);
   });
 
   test('SA-03 · siffran utan källa är struken, och PDF:en byggs i båda lägena', async () => {

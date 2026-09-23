@@ -116,4 +116,4 @@ describe('YI · ytinventeringen', () => {
 });
 
 // Mätt 2026-09-23 i ytinventeringen. Talet ändras bara i samma commit som en yta flyttas.
-const SKULD = 18;
+const SKULD = 2;

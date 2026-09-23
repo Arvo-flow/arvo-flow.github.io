@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { LOFTEN_TEXT } from '../../lib/loften';
 import { hamtaRumsnyckel } from '../../utils/rumsnyckel';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -215,7 +216,7 @@ function CalculationChainBlock({ cc }) {
           {cc.benchmarkAnnualCost && (
             <div className="chain-row">
               <div>
-                <div className="chain-label">Arvo-pris</div>
+                <div className="chain-label">Jämförelsepris</div>
                 {cc.benchmarkAnnualCost.formula && <div className="chain-source">{cc.benchmarkAnnualCost.formula}</div>}
                 <div className="chain-source">{cc.benchmarkAnnualCost.source}</div>
               </div>
@@ -1094,7 +1095,7 @@ const TestaFaktura = () => {
   );
   const _switchCtaLabel = _switchIsSameSupplier
     ? `Sänk er ${result?.recommendation?.suggestedSupplier}-kostnad`
-    : _switchIsRealPrice ? 'Aktivera bytet' : 'Säkra besparingen';
+    : 'Be Arvo förbereda bytet';
   const _showSwitch = !!(
     result?.route === 'auto'
     && result?.recommendation?.suggestedAnnualCost
@@ -1439,6 +1440,15 @@ const TestaFaktura = () => {
               extraCount={((result.forensicFindings ?? result.recommendation?.forensicFindings)?.length ?? 0) - 1}
               variant="light"
             />
+
+            {/* Valutan syns där beloppen syns — den stod bara bakom «Hur vi räknar» (regel 3, kundmeningsregistret). */}
+            {result.extracted?.originalCurrency && result.extracted.originalCurrency !== 'SEK' && result.extracted?.fxRate != null && (
+              <p style={{ fontSize: 13, margin: '10px 0 0', lineHeight: 1.6 }}>
+                Fakturan är i {result.extracted.originalCurrency}. Beloppen är omräknade till SEK med{' '}
+                {Number(result.extracted.fxRate).toFixed(2)} SEK/{result.extracted.originalCurrency}
+                {result.extracted.fxSource && result.extracted.fxSource !== 'fallback' ? ` (Riksbanken/ECB ${result.extracted.fxDate ?? ''})` : ' (reservkurs)'}.
+              </p>
+            )}
 
             {/* Kontraktsklockan (Maktkalendern): bindningsslut ur kundens egen faktura. Monitoring-rutten
                 ritar avtalslåset i egen, rikare vy nedan — visa klock-kortet bara på övriga rutter. */}
@@ -2128,12 +2138,13 @@ const TestaFaktura = () => {
                 <dt>Återkommande</dt>
                 <dd>{result.extracted.recurring ? 'Ja (abonnemang / premie)' : 'Nej'}</dd>
               </div>
-              {result.extracted.originalCurrency === 'EUR' && (
+              {/* Visades bara för EUR — en USD-faktura stod i SEK utan att omräkningen syntes (regel 3). */}
+              {result.extracted.originalCurrency && result.extracted.originalCurrency !== 'SEK' && (
                 <div style={{ gridColumn: '1 / -1' }}>
                   <dt>Valutakonvertering</dt>
                   <dd>
                     <small>
-                      Fakturan är i EUR — konverterad till SEK med kursen {result.extracted.fxRate?.toFixed(2)} SEK/EUR
+                      Fakturan är i {result.extracted.originalCurrency} — konverterad till SEK med kursen {result.extracted.fxRate?.toFixed(2)} SEK/{result.extracted.originalCurrency}
                       {result.extracted.fxSource && result.extracted.fxSource !== 'fallback'
                         ? ` (Riksbanken/ECB ${result.extracted.fxDate ?? ''})`
                         : ' (fallback-kurs)'}.
@@ -2715,7 +2726,7 @@ const TestaFaktura = () => {
                     </p>
                     <span className="switch-price-label">
                       <Icon name="shield" size={10} stroke={2} />
-                      {_switchIsRealPrice ? 'Verifierat listpris' : 'Arvo-verifierad leverantör'}
+                      {_switchIsRealPrice ? 'Verifierat listpris' : 'Jämförelsepris enligt analysen'}
                     </span>
                   </div>
                 </div>
@@ -2924,7 +2935,7 @@ const TestaFaktura = () => {
                 <h3>Redo att <em>gå vidare</em>?</h3>
                 <p className="sub">
                   Koppla Fortnox / Visma för en komplett analys av hela er leverantörsreskontra
-                  — Arvo sköter varje byte från uppsägning till nytt avtal.
+                  — Arvo förbereder varje byte, och ni signerar själva.
                 </p>
               </>
             )}
@@ -2974,15 +2985,19 @@ const TestaFaktura = () => {
               <div className="sent-state">
                 <span className="sent-icon"><Icon name="check" size={20} stroke={2.5} /></span>
                 <p className="sent-title">
-                  {_switchIsSameSupplier ? 'Optimeringen är aktiverad.' : 'Bytet är aktiverat.'}
+                  Vi har tagit emot er begäran.
                 </p>
                 <p className="sent-sub">
-                  Arvo tar det härifrån — ni hör av oss inom 48 timmar.
+                  {LOFTEN_TEXT.bytesunderlag} {LOFTEN_TEXT.personligtSvar}
                 </p>
               </div>
             ) : (
               <>
-                <p className="bk-title">Allt är förberett.<br />Er signatur aktiverar det.</p>
+                {/* Här stod «Allt är förberett. Er signatur aktiverar det.» ovanför en knapp märkt «Signera med
+                    BankID» som bara skickade två mejl — ett låtsas-BankID i produktion, och inget var förberett.
+                    Bytesrälsen är mode:stub: kunden BER om ett förberett byte och signerar först när underlaget finns. */}
+                <p className="bk-title">Be Arvo förbereda bytet.</p>
+                <p className="sub">{LOFTEN_TEXT.bytesunderlag}</p>
 
                 <div className="bk-offer">
                   <div className="bk-offer-top">
@@ -3002,7 +3017,7 @@ const TestaFaktura = () => {
                     <span className="bk-to">{formatNum(result.recommendation.suggestedAnnualCost)} kr/år</span>
                   </div>
                   <p className="bk-savings-row">
-                    Ni sparar {formatKr(adjGrossSaving)} · Arvo {formatKr(adjArvoFee)}
+                    Möjlig besparing {formatKr(adjGrossSaving)}/år · arvode {formatKr(adjArvoFee)}, bara om bytet blir av
                   </p>
                 </div>
 
@@ -3017,7 +3032,7 @@ const TestaFaktura = () => {
                       disabled={modalEmailState === 'submitting'}
                       onClick={submitModalEmail}
                     >
-                      {modalEmailState === 'submitting' ? 'Aktiverar…' : <>Signera med BankID <Icon name="arrow" size={16} /></>}
+                      {modalEmailState === 'submitting' ? 'Skickar…' : <>Skicka begäran <Icon name="arrow" size={16} /></>}
                     </Button>
                   </>
                 ) : (
@@ -3037,12 +3052,12 @@ const TestaFaktura = () => {
                       $full
                       disabled={modalEmailState === 'submitting'}
                     >
-                      {modalEmailState === 'submitting' ? 'Aktiverar…' : <>Signera med BankID <Icon name="arrow" size={16} /></>}
+                      {modalEmailState === 'submitting' ? 'Skickar…' : <>Skicka begäran <Icon name="arrow" size={16} /></>}
                     </Button>
                   </form>
                 )}
 
-                <p className="bk-fine-print">Du har 24 timmars ångerrätt.</p>
+                <p className="bk-fine-print">Inget sägs upp eller tecknas innan ni signerat. Ni kan ångra begäran inom 24 timmar.</p>
               </>
             )}
           </ModalCard>

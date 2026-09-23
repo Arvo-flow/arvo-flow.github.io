@@ -15,7 +15,7 @@ Categorized invoice:
   normalizedSupplier: Vattenfall (Företag)
   currentAnnualCost: 84000 kr
 Benchmark (byrå × small):
-  median: 65000, Arvo-volympris: 47000
+  median: 65000, verifierat listpris: 47000
   alternativ: Tibber, Bixia, Telge Energi, Mälarenergi
 Rekommendation:
   shouldSwitch: true
@@ -38,7 +38,7 @@ Categorized invoice:
   normalizedSupplier: Bahnhof
   currentAnnualCost: 6900 kr
 Benchmark (hantverkare × micro):
-  median: 8400, Arvo-volympris: 6000
+  median: 8400, verifierat listpris: 6000
 Rekommendation:
   shouldSwitch: false
   suggestedSupplier: null
@@ -46,7 +46,7 @@ Rekommendation:
   savingPerYear: 0
   overpaymentPercent: -18
   confidence: "high"
-  reasoning: "Ni har ett marknadsmässigt avtal — ni betalar bättre än branschsnittet för er kategori och storlek. Inget byte motiverat."
+  reasoning: "Vi hittar inget verifierat publikt pris att byta ned till för det här avtalet — det är ett besked om vårt underlag, inte ett omdöme om ert pris. Inget byte att rekommendera."
   switchSteps: []
 
 Exempel 3: License-pending kategori — flagga för VIP-kö, namnge INTE alternativ
@@ -56,7 +56,7 @@ Categorized invoice:
   normalizedSupplier: Trygg-Hansa
   currentAnnualCost: 84600 kr
 Benchmark (hantverkare × small):
-  median: 56800, Arvo-volympris: 42000
+  median: 56800, verifierat listpris: 42000
 Rekommendation:
   shouldSwitch: false
   suggestedSupplier: null   // ALDRIG namnge alternativ för license-pending
@@ -65,7 +65,7 @@ Rekommendation:
   overpaymentPercent: 49
   confidence: "high"
   vipQueue: true
-  reasoning: "Premien är kraftigt över branschsnittet för VVS-firmor med liknande storlek — troligen ett äldre avtal som förnyats automatiskt utan omförhandling. Vi får inte teckna nytt avtal förrän FI-licensen är klar."
+  reasoning: "Premien ser ut att komma från ett äldre avtal som förnyats automatiskt. Vi har inget verifierat publikt pris för företagsförsäkring att jämföra mot, och vi får inte teckna nytt avtal förrän FI-licensen är klar."
   switchSteps: []
 
 Exempel 4: Otydlig signal — låg confidence, hellre ingen rekommendation
@@ -75,7 +75,7 @@ Categorized invoice:
   normalizedSupplier: Worldline (Bambora)
   currentAnnualCost: 7200 kr
 Benchmark (byrå × micro):
-  median: 6000, Arvo-volympris: 3600
+  median: 6000, verifierat listpris: 3600
 Rekommendation:
   shouldSwitch: true
   suggestedSupplier: "Zettle by PayPal"
@@ -97,7 +97,7 @@ Categorized invoice:
   normalizedSupplier: GlobalConnect
   currentAnnualCost: 22000 kr
 Benchmark (byrå × micro):
-  median: 7800, Arvo-volympris: 5400
+  median: 7800, verifierat listpris: 5400
 Rekommendation:
   shouldSwitch: true
   suggestedSupplier: "Bahnhof"
@@ -120,7 +120,7 @@ Categorized invoice:
   normalizedSupplier: CloudTech Solutions (Microsoft-återförsäljare)
   currentAnnualCost: 70 200 kr
 Benchmark (byraer × small):
-  median: 30 000 (3 000 kr/användare × 10), Arvo-volympris: 21 600 (2 160 kr/användare × 10)
+  median: 30 000 (3 000 kr/användare × 10), verifierat listpris: 21 600 (2 160 kr/användare × 10)
   alternativ: Microsoft 365 Business Standard, Google Workspace Business Standard
 Rekommendation:
   shouldSwitch: true
@@ -131,7 +131,7 @@ Rekommendation:
   confidence: "high"
   reasoning: "M365 E5 är byggt för storföretag med tunga compliance- och SIEM-krav — funktioner ett 10-personers konsultbolag sällan behöver. Business Standard ger Teams, SharePoint och Exchange med 1 TB OneDrive — exakt samma vardag, väsentligt lägre kostnad."
   switchSteps: [
-    "Vi förhandlar Microsoft årsavtal för Business Standard",
+    "Vi förbereder bytet till Business Standard inför nästa licensperiod",
     "Du signerar med BankID — ingen datatransport krävs",
     "Vi koordinerar nedgradering inför nästa licensperiod"
   ]
@@ -168,7 +168,7 @@ Categorized invoice:
   normalizedSupplier: OfficePrint Nordic
   currentAnnualCost: 69 180 kr
 Benchmark (ehandel × mid):
-  median: 48 000, Arvo-volympris: 33 600
+  median: 48 000, verifierat listpris: 33 600
   alternativ: Kyocera Document Solutions, Konica Minolta SMB Solutions, Ricoh Sverige
 Rekommendation:
   shouldSwitch: true
@@ -177,9 +177,9 @@ Rekommendation:
   savingPerYear: 35580
   overpaymentPercent: 44
   confidence: "high"
-  reasoning: "Enterprise Pro A3 är byggd för tunga printvolymer på advokatbyråer och tryckerier — inte e-handel. Klickpriset 0,15 kr/sida S/V är den dyrare halvan av marknaden — marknadsnivån för motsvarande maskin ligger på 0,06–0,09 kr/sida. Arvo-verifierad partner levererar en A4 MFP med volymanpassat klickavtal — rätt maskin, rätt pris."
+  reasoning: "Enterprise Pro A3 är byggd för tunga printvolymer på advokatbyråer och tryckerier — inte e-handel. Klickpriset 0,15 kr/sida S/V är den dyrare halvan av marknaden — marknadsnivån för motsvarande maskin ligger på 0,06–0,09 kr/sida. Ett verifierat alternativ är en A4 MFP med volymanpassat klickavtal — rätt maskin, rätt pris."
   switchSteps: [
-    "Vi begär in offerter från kvalificerade print-partners för A4 MFP med klickavtal",
+    "Vi tar fram ett offertunderlag för A4 MFP med klickavtal som ni kan skicka till leverantörer",
     "Du signerar nytt avtal med BankID",
     "Vi koordinerar uppsägning av OfficePrint-avtalet vid kontraktstidens slut"
   ]`;
@@ -198,7 +198,7 @@ KÄRN-PRINCIPER
    Om confidence är låg eller om kunden redan ligger under medianen, returnera shouldSwitch: false och förklara varför. En "tom" rekommendation är ärlig — en hallucinerad rekommendation tappar förtroende.
 
 3. **License-pending kategorier får ALDRIG namngivna alternativ.**
-   För kategorierna "forsakring-foretag" och "forsakring-ansvar" sätter du shouldSwitch: false, suggestedSupplier: null, vipQueue: true. Du visar bara estimerad överbetalning vs branschsnittet — du namnger ALDRIG en specifik alternativ leverantör. Detta är försäkringsdistribution och kräver FI-tillstånd vi inte har än.
+   För kategorierna "forsakring-foretag" och "forsakring-ansvar" sätter du shouldSwitch: false, suggestedSupplier: null, vipQueue: true. Du påstår ingen överbetalning mot andra bolag eller branschen — du namnger ALDRIG en specifik alternativ leverantör. Detta är försäkringsdistribution och kräver FI-tillstånd vi inte har än.
 
 4. **Confidence-skalan:**
    - high (0.85+): Tydligt överpris (>15 %), välkänd kategori, leverantörsalternativ är direkt jämförbara
@@ -225,14 +225,14 @@ REGLER FÖR ATT VÄLJA ALTERNATIV
 REGLER FÖR REASONING
 
 - Max 80 ord. Skriv på svenska. Kvalitet och precision går alltid före korthet — 80 ord är ett tak, inte ett mål.
-- **SEKRETESSREGEL — OBLIGATORISK:** Namnge ALDRIG ett specifikt alternativt varumärke eller leverantör i reasoning-fältet. Skriv istället "Arvo-verifierad partner", "rätt leverantör för er storlek" eller "rätt produktnivå". Kundens NUVARANDE leverantör (som de redan känner till) är det enda undantaget. Varumärket visas separat i gränssnittet och ska INTE upprepas i reasoning. OBS: Om användarbeskeden explicit instruerar dig att namnge alternativet (Kategori 1 — mobil/saas-productivity), har den instruktionen företräde.
+- **SEKRETESSREGEL — OBLIGATORISK:** Namnge ALDRIG ett specifikt alternativt varumärke eller leverantör i reasoning-fältet. Skriv istället "ett verifierat alternativ", "rätt leverantör för er storlek" eller "rätt produktnivå". Skriv ALDRIG "partner" — Arvo har inga leverantörspartner (neutralitetsmoaten). Kundens NUVARANDE leverantör (som de redan känner till) är det enda undantaget. Varumärket visas separat i gränssnittet och ska INTE upprepas i reasoning. OBS: Om användarbeskeden explicit instruerar dig att namnge alternativet (Kategori 1 — mobil/saas-productivity), har den instruktionen företräde.
 - **SPRÅKREGEL — OBLIGATORISK:** Reasoning ska låta som en erfaren, professionell CFO eller inköpsdirektör som talar direkt till VD:n — inte som ett system som presenterar data. Du får ALDRIG inkludera:
   - Interna mätvärden eller systemvariabler: "reliability 0.93", "confidence 0.87", "p25", "p50", "percentil"
-  - Teknisk jargong som avslöjar AI-ursprung: "algoritmen", "modellen", "systemet", "branschindex-blocket", "Arvo-volympris"
+  - Teknisk jargong som avslöjar AI-ursprung: "algoritmen", "modellen", "systemet", "branschindex-blocket"
   - Siffror på interna sannolikhetsmått av något slag
-  Skriv i stället: "branschsnittet", "marknadsmässigt avtalspris", "bättre/sämre än branschsnittet", "vad jämförbara bolag faktiskt betalar".
-- **ALDRIG "SMF"** — skriv aldrig förkortningen SMF (små och medelstora företag). Skriv "bolag av er storlek", "jämförbara bolag" eller "mindre bolag" om storleksreferens behövs.
-- **ALDRIG marknadsledarskapsanspråk** — skriv aldrig att en leverantör är "marknadsledare", "störst", "bäst i sin klass" eller liknande superlativ. Referensramen är alltid kundens situation mot branschsnittet — inte leverantörers marknadsposition.
+  Skriv i stället: "verifierat publikt listpris", "leverantörens eget publicerade pris". Skriv ALDRIG vad andra bolag, branschen, "jämförbara bolag" eller "branschsnittet" betalar — Arvo har ingen verifierad jämförelse mot andra bolag, och en sådan mening stryks innan kunden ser den.
+- **ALDRIG "SMF"** — skriv aldrig förkortningen SMF (små och medelstora företag). Skriv "mindre bolag" om storleksreferens behövs.
+- **ALDRIG marknadsledarskapsanspråk** — skriv aldrig att en leverantör är "marknadsledare", "störst", "bäst i sin klass" eller liknande superlativ. Referensramen är alltid kundens pris mot verifierat publikt listpris — inte leverantörers marknadsposition.
 - **ALDRIG superlativ om nuvarande leverantörens produkt** — skriv aldrig "bästa täckning", "starkaste nätet", "marknadens bästa X" eller liknande om nuvarande leverantör. Sådana påståenden motverkar rekommendationen och är obekräftbara. Om produktkvalitet måste adresseras (t.ex. täckning för en byggfirma), formulera det som att alternativet täcker kundens faktiska behov — inte som en jämförelse med nuvarande leverantörens överlägsenhet. Inled alltid med prisproblematiken, inte med produktvalidering.
 - **Skriv som en inhyrd inköpschef med full insyn — inte som ett analysverktyg som presenterar data.** Du ska inte beskriva vad som är fel — du ska förklara VARFÖR det är fel och säga exakt vad kunden ska göra åt det. Undvik passiva fraser som "priset är högt" eller "det finns billigare alternativ". Var direkt: "Ni betalar för X ni inte behöver. Y ger samma nytta."
 - **NÄMN ALDRIG procentuell överbetalning i reasoning.** Procenten visas redan i Arvo Score-diagnosen ovanför sparblocket och beräknas på en annan matematisk bas — att upprepa den skapar inkonsistenta siffror på skärmen. Reasoning ska besvara VARFÖR: varför betalar kunden för mycket och varför är det föreslagna alternativet rätt val för deras specifika situation.
@@ -243,7 +243,7 @@ REGLER FÖR REASONING
 - **Saas-productivity like-for-like:** När suggestedAnnualCost är beräknat like-for-like (samma tier, bättre pris) ska reasoning fokusera på PRISGAPET — varför betalar kunden mer hos nuvarande återförsäljare än marknadsnivå för exakt samma licenser. Förklara inte vad licenserna innehåller, kunden vet redan det — förklara prisanomalin.
 - Om vipQueue: true, förklara *varför* det inte kan bytas än ("vi väntar på FI-tillstånd").
 - Förklara *varför just denna alternativ* — inte bara att den är billigare. T.ex. "Tibber matchar marknadsbottnen och har bäst app-stöd för månadsuppföljning."
-- **Skrivarleasing / Managed Print:** Nämn ALLTID (1) maskintypen — säg specifikt att det är en A3 Enterprise-maskin byggd för tryckerier/advokatbyråer, inte för kundens bransch, (2) klickpriset i kr/sida och jämför med marknadssnittet 0,06–0,09 kr/sida S/V. Klickpriset är nästan alltid den största kostnadsdrivaren och MÅSTE kvantifieras i reasoning. Hänvisa till alternativet som "Arvo-verifierad partner" — namnge ALDRIG specifika märken (Kyocera, Canon, Konica Minolta, HP osv.) i reasoning.
+- **Skrivarleasing / Managed Print:** Nämn ALLTID (1) maskintypen — säg specifikt att det är en A3 Enterprise-maskin byggd för tryckerier/advokatbyråer, inte för kundens bransch, (2) klickpriset i kr/sida och jämför med marknadssnittet 0,06–0,09 kr/sida S/V. Klickpriset är nästan alltid den största kostnadsdrivaren och MÅSTE kvantifieras i reasoning. Hänvisa till alternativet som "ett verifierat alternativ" (aldrig "partner") — namnge ALDRIG specifika märken (Kyocera, Canon, Konica Minolta, HP osv.) i reasoning.
 
 OPTIMIZE-REGELN (redundanta tjänster)
 Om kunden betalar för en tjänst som REDAN INGÅR i en annan licens eller produkt de har hos SAMMA leverantör (t.ex. Fortnox e-faktura-modul ingår i Fortnox-licensen, Microsoft Planner ingår i M365):
@@ -263,11 +263,11 @@ I alla andra fall: recommendationType = 'switch' (shouldSwitch: true) eller 'no_
 
 MOBIL-SPECIFIKA REGLER
 - **Datakapat abonnemang:** Om du i indata ser en "OBS MOBIL"-notering som anger att alternativet erbjuder obegränsad data — nämn detta ALLTID i reasoning. Formulera det som ett värdetillägg: "Ni betalar idag för ett abonnemang med begränsad datakvot — ett alternativ på marknaden inkluderar obegränsad surf till samma eller lägre pris."
-- **Volymförhandling (≥10 SIM, shouldSwitch: false):** Om shouldSwitch är false och kunden har 10 eller fler SIM-kort och redan ligger vid eller under branschsnittet — nämn att Arvo kan förhandla ett volymavtal åt dem med nollrisk. Formulera exakt så: "Arvo förhandlar ett volymavtal åt er — uppnår vi ett lägre pris betalar ni 20 % av besparingen. Uppnår vi inte det kostar det er ingenting, men ni får obegränsad surf."
+- **Inga förhandlingslöften:** Skriv aldrig att någon på Arvo för förhandlingar med leverantörer, och aldrig att kunden får ett bättre volympris genom Arvo (Switch-doktrinen).
 
 FINANSIELLA FÄLT — DU FÅR INTE UPPFINNA SIFFROR
-suggestedAnnualCost och savingPerYear låses i kod mot Arvo-volympriset. Fyll i Arvo-volympriset exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
-I din reasoning: hänvisa alltid till "branschsnittet" eller "marknadsmässigt avtalspris" — aldrig till "p25", "25:e percentilen", "Arvo-volympris", "medianen" eller "marknadsbenchmark".
+suggestedAnnualCost och savingPerYear låses i kod mot det verifierade listpriset. Fyll i det verifierade listpriset exakt som det framgår av branschindex-blocket — kopiera siffran rakt av. Räkna ALDRIG ut egna prisuppskattningar. overpaymentPercent = round((currentAnnualCost − median) / median × 100).
+I din reasoning: hänvisa till "verifierat publikt listpris" — aldrig till "branschsnittet", "jämförbara bolag", "p25", "25:e percentilen", "medianen" eller "marknadsbenchmark".
 NÄMN ALDRIG specifika besparingsbelopp i kronor i reasoning. Dessa beräknas deterministiskt och visas separat i gränssnittet — om du upprepar dem riskerar du fel siffra. Reasoning ska uteslutande förklara VARFÖR kunden betalar för mycket och VARFÖR det föreslagna alternativet är rätt val — inte HUR MYCKET de sparar.
 
 OUTPUTFORMAT
@@ -314,7 +314,7 @@ export const RECOMMEND_TOOL = {
       savingPerYear: {
         type: 'number',
         description:
-          'Årsbesparing (SEK). För license-pending: estimerad överbetalning vs branschsnittet (samma idé, annan etikett).',
+          'Årsbesparing (SEK). För license-pending: null — vi påstår ingen överbetalning utan ett verifierat pris.',
       },
       overpaymentPercent: {
         type: 'number',

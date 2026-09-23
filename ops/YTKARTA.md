@@ -4,35 +4,35 @@
 `tests/ytinventering.mjs` (YI-01..07) hittar själv varje mejlavsändare och varje route och fäller
 sviten när en yta saknas här.*
 
-**37 ytor** — 18 oreviderad · 2 registret · 5 marknad · 6 ingen_prisdom · 6 intern.
+**37 ytor** — 2 oreviderad · 12 registret · 11 marknad · 6 ingen_prisdom · 6 intern.
 
 | Yta | Kanal | Mottagare | Klass | Vad den påstår i dag (mätt i koden 2026-09-23) |
 |---|---|---|---|---|
-| `/aktivera` | sida | besökare | **oreviderad** | «Vi identifierade redan X kr/år» där X läses ur URL:en (?savings=, Aktivera/index.js:31) — vem som helst kan skriva talet. |
-| `/briefing/:token` | sida | besökare | **oreviderad** | Renderar månadsbriefens insikter — samma påhittade faktorer och «förhandla»-knappar som mejlet. |
-| `/connect` | sida | besökare | **oreviderad** | «Vi raderar Fortnox-kopplingen och all din data automatiskt» — mekanismen är inte mätt. |
-| `/intelligence` | sida | besökare | **oreviderad** | Exempelcitat («6 av 14 bolag i er bransch fick Telias prishöjning») utan märkningen «Exempel». |
-| `/prospect/:token` | sida | besökare | **oreviderad** | «Arvo-pris, verifierat listpris» — samma som prospektmejlet. |
-| `/testa-faktura` | sida | besökare | **oreviderad** | Läge, rubrik och etikett ur lagesregistret — men modellens reasoning renderas på fem ställen, och en USD-faktura visas i SEK utan att omräkningen syns (bara EUR redovisas). |
-| `api/activate-intelligence.mjs` | mejl | kund | **oreviderad** | Etiketten ur diagnosEtikett — men modellens reasoning citeras ordagrant i briefingmejlet. |
-| `api/auth/gmail-callback.mjs` | mejl | kund | **oreviderad** | «analysen … visar er exakta premie» — förutsätter en överbetalning vi inte mätt. |
-| `api/auth/outlook-callback.mjs` | mejl | kund | **oreviderad** | Samma mening som gmail-callback: «visar er exakta premie». |
-| `api/cron/generate-briefings.mjs` | mejl | kund | **oreviderad** | Månadsbrief: «Möjlig besparing X kr/år» och ämnesraden «kr/år identifierat» summerar påhittade faktorer (ökning × 0,85, överbetalning × 0,7); «höjde priset X %» ur två fakturors TOTAL; «Be Arvo granska och förhandla» — Arvo förhandlar aldrig (Switch-doktrinen). |
-| `api/cron/run-price-alerts.mjs` | mejl | kund | **oreviderad** | Larmet grindas av larmunderlaget — men utan kr-påverkan lovar det «Arvo granskar om förändringen är befogad och kontaktar er med en rekommendation» — ingen utskicksväg som gör det hittad i kodbasen. |
-| `api/founding-member.mjs` | mejl | kund | **oreviderad** | «Garanterad förtur till försäkringsbyten när FI-licensen är klar» — ett löfte om en licens som inte finns; «inom 48 timmar» är grundarens SLA. |
-| `api/generate-prospect.mjs` | mejl | prospekt | **oreviderad** | «Arvo-priset (verifierat listpris)» — ett eget pris antyder en leverantörsrelation (neutralitetsmoaten); besparingsintervall ur estimat. |
-| `api/inbound-email.mjs` | mejl | kund | **oreviderad** | Svarsmejlet: «Arvo återkommer till er per mail när analysen är verifierad» för varje faktura som inte prissattes — ingen utskicksväg som gör det hittad i kodbasen (admin skickar bara inloggningslänkar), och texten går även till bevakade avtal och fakturor utanför vårt område. |
-| `api/quote-request.mjs` | mejl | kund | **oreviderad** | Skrivarleasing (Nivå 3): «Godkänner ni — sköter Arvo hela leverantörsbytet … Arvo tar 20 % av realiserad besparing» — Nivå 3 har ingen bytesavgift och inget byte. |
-| `api/send-analysis.mjs` | mejl | kund | **oreviderad** | Läget och etiketten ur lagesregistret — men modellens fria reasoning-text står ordagrant i mejlet och PDF:en. |
-| `api/send-confirmation.mjs` | mejl | kund | **oreviderad** | «Bytet är igångsatt … Vi skickar uppsägning … förväntat aktivt inom 2–4 veckor … Du behöver inte göra något mer» — bytesrälsen är mode:stub. Arvodet «faktureras när den syns i era böcker» motsäger §3.2. |
-| `scripts/notify-price-changes.mjs` | mejl | kund | **oreviderad** | Samma larm som run-price-alerts (körs av price-monitor.yml): «Låt Arvo omförhandla», «Be Arvo granska och förhandla». |
+| `/prospect/:token` | sida | besökare | **oreviderad** | Samma estimat som prospektmejlet (outbound-estimator → livedata); etiketterna rättade, underlaget inte. |
+| `api/generate-prospect.mjs` | mejl | prospekt | **oreviderad** | Etiketterna rättade 2026-09-23 («Verifierat publikt listpris», berättelserna borta) — men «Typisk marknadskostnad» och «Sannolik premie» kommer ur outbound-estimator, som läser prisbokens livedata (kohortens totalsummor). Kvar: estimatorn ska läsa verifierat listpris (getPublicListBenchmark), som bytesgolvet. |
+| `/briefing/:token` | sida | besökare | **registret** | Renderar insikterna ur briefing-generator (KM-10); sidans läge ur briefinglage. |
 | `/portfolio` | sida | besökare | **registret** | Rummets dom, räknare och radtexter ur rumLage/radLage. |
+| `/testa-faktura` | sida | besökare | **registret** | Läge, rubrik och etikett ur lagesregistret; modelltexten filtreras vid modellens utgång (KM-09); bytesmodalen ber om ett förberett byte (LOFTEN_TEXT) — låtsas-BankID borta; valutan redovisas för varje valuta. |
+| `api/activate-intelligence.mjs` | mejl | kund | **registret** | Etiketten ur diagnosEtikett; den citerade modelltexten passerar kundensMotivering (KM-08). |
+| `api/cron/generate-briefings.mjs` | mejl | kund | **registret** | Insikterna ur briefing-generator: byten ur radLage med analysdatum, kostnadsökningar som faktum om två totalsummor; inga påhittade faktorer, inga förhandlingsknappar (KM-10). |
+| `api/cron/run-price-alerts.mjs` | mejl | kund | **registret** | Grindat av larmunderlaget; löftet är LOFTEN.prisbevakning; «X av Y avsändare» i stället för «bolag»; ingen påhittad besparing ur höjningen. |
 | `api/cron/send-reminders.mjs` | mejl | kund | **registret** | Varsel 30/7 dagar före sista uppsägningsdag ur avtalsklockan; utfallsenkäten säger «Vi beräknade» om ett daterat tal. |
+| `api/inbound-email.mjs` | mejl | kund | **registret** | Svar per rutt: bevakade avtal pekar på avtalsklockan, övriga på LOFTEN.skalIRummet — «återkommer per mail» borta. |
+| `api/quote-request.mjs` | mejl | kund | **registret** | LOFTEN.offertrunda (Nivå 3, med fullmakt) — inget byte och ingen bytesavgift; «inom 1–2 arbetsdagar» är grundarens SLA. |
+| `api/send-analysis.mjs` | mejl | kund | **registret** | Läget och etiketten ur lagesregistret; modelltexten passerar kundensMotivering (KM-08). «Arvo-pris» heter «Verifierat pris». |
+| `api/send-confirmation.mjs` | mejl | kund | **registret** | Bekräftar mottagen begäran: LOFTEN.bytesunderlag + personligtSvar, mekanismen är det interna larmet; arvodet som i villkoren §3.2. |
+| `scripts/notify-price-changes.mjs` | mejl | kund | **registret** | Samma larm som run-price-alerts, samma registertexter; «Låt Arvo omförhandla» och ×0,85 borta. |
 | `/` | sida | besökare | **marknad** | marknadssida; bytet «förbereds», aldrig «genomförs» |
+| `/aktivera` | sida | besökare | **marknad** | aktiveringsformulär; talet ur URL:en visas och skickas inte längre |
 | `/bias` | sida | besökare | **marknad** | statisk transparenssida |
+| `/connect` | sida | besökare | **marknad** | Fortnox-anslutning; raderingslöftet och «redan optimerat» borta |
 | `/cookies` | sida | besökare | **marknad** | cookiepolicy |
 | `/integritet` | sida | besökare | **marknad** | integritetspolicy |
+| `/intelligence` | sida | besökare | **marknad** | produktsida; varje pelare lovar en mekanism som finns, citaten märks Exempel |
 | `/villkor` | sida | besökare | **marknad** | avtalsvillkoren |
+| `api/auth/gmail-callback.mjs` | mejl | kund | **marknad** | allmän text om vad analysen visar — ingen mening om kundens pris |
+| `api/auth/outlook-callback.mjs` | mejl | kund | **marknad** | samma text som gmail-callback |
+| `api/founding-member.mjs` | mejl | kund | **marknad** | förmånslista; «inom 48 timmar» är grundarens SLA, försäkringsförturen villkorad av ett tillstånd |
 | `*` | sida | besökare | **ingen_prisdom** | omdirigering till / |
 | `/kontoret` | sida | besökare | **ingen_prisdom** | omdirigering till /portfolio |
 | `/utfall` | sida | besökare | **ingen_prisdom** | enkät, frågar och påstår inget |

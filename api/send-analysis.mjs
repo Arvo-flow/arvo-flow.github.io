@@ -5,6 +5,9 @@
 //   RESEND_API_KEY — hämtas från resend.com
 //   RESEND_FROM    — valfri, default: "Arvo Flow <analys@arvoflow.se>"
 
+// Resultatet kommer från webbläsaren — ett äldre cachat svar eller ett handbyggt. Modelltexten
+// passerar därför registret även här (KM-08), inte bara vid modellens utgång.
+import { kundensMotivering } from '../lib/kundmeningar.js';
 import { Resend } from 'resend';
 import { createRequire } from 'module';
 import { fakturaLage } from '../lib/lagesregister.js';
@@ -235,7 +238,7 @@ export function generatePdf(result) {
     row('Fakturadatum',         ex.date ?? '–');
     if (harByte) {
       if (suppDisplay) row('Föreslagen leverantör', suppDisplay, { bold: true });
-      row('Arvo-pris',            formatKr(r.suggestedAnnualCost) + ' / år', { bold: true });
+      row('Verifierat pris',      formatKr(r.suggestedAnnualCost) + ' / år', { bold: true });
       row('Bruttobesparing',      formatKr(r.grossSaving));
       row('Arvos besparingsarvode (20 %)', formatKr(r.arvoFee));
 
@@ -277,7 +280,7 @@ export function generatePdf(result) {
     const CTA_H   = 28;
     const reasoningMaxH = Math.max(20, FOOTER_TOP - 24 - y - CTA_H - 12);
     doc.fontSize(10.5).font('Helvetica').fillColor(T.inkSoft)
-      .text(r.reasoning ?? '', PAD, y, { width: W, lineGap: 3, height: reasoningMaxH });
+      .text(kundensMotivering(r.reasoning).text ?? '', PAD, y, { width: W, lineGap: 3, height: reasoningMaxH });
     y += reasoningMaxH;
 
     // FOMO-rutan («i snitt 12–18 % i dolda överpriser») är struken — en siffra utan källa (regel 3).
@@ -410,7 +413,7 @@ export function htmlEmail(result) {
       <table width="100%" cellpadding="0" cellspacing="0">
         ${wr('Du betalar idag', formatKr(ex.annualCost) + '/år', false, T.inkSoft, true)}
         ${harByte ? `${suppRow}
-        ${wr('Arvo-pris', formatKr(r.suggestedAnnualCost) + '/år', true, T.brand, true)}
+        ${wr('Verifierat pris', formatKr(r.suggestedAnnualCost) + '/år', true, T.brand, true)}
         ${wr('Bruttobesparing', formatKr(r.grossSaving), false, T.inkSoft, true)}
         <tr style="background:${T.brandSoft}">
           <td style="padding:22px 16px 22px 19px;color:${T.brandInk};font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-top:1px solid #B8D9D1;border-left:3px solid ${T.brand};font-family:'Inter',Arial,sans-serif">Din nettobesparing</td>
@@ -428,7 +431,7 @@ export function htmlEmail(result) {
     <td style="padding:28px 44px 28px">
       <div style="border-left:3px solid ${T.brand};background:#F4F9F7;border-radius:0 10px 10px 0;padding:20px 24px">
         <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:${T.brand};text-transform:uppercase;letter-spacing:.14em;font-family:'Inter',Arial,sans-serif">${harByte ? 'Varför vi tror du kan spara' : 'Vår bedömning'}</p>
-        <p style="margin:0;font-size:14px;color:${T.inkSoft};line-height:1.85;font-family:'Inter',Arial,sans-serif">${r.reasoning ?? ''}</p>
+        <p style="margin:0;font-size:14px;color:${T.inkSoft};line-height:1.85;font-family:'Inter',Arial,sans-serif">${kundensMotivering(r.reasoning).text ?? ''}</p>
       </div>
     </td>
   </tr>

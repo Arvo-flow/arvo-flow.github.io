@@ -4,6 +4,7 @@
 // Cold signup (source=intelligence-page): premium welcome email.
 // Post-analysis signup (source=testa-faktura): full briefing email with analysis data.
 
+import { kundensMotivering } from '../lib/kundmeningar.js';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { diagnosEtikett } from '../lib/lagesregister.js';
@@ -134,7 +135,9 @@ function buildWelcomeHtml(email, company) {
 
 // ── Post-analysis: full briefing email ────────────────────────────────────────
 
-export function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSaving, arvoFee, reasoning, diagScore, diagLabel, diagInsight }) {
+export function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSaving, arvoFee, reasoning: raReasoning, diagScore, diagLabel, diagInsight }) {
+  // Modelltexten kommer från webbläsaren — den passerar registret här (KM-08).
+  const reasoning = kundensMotivering(raReasoning).text;
   const dateStr = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
   // ── ETIKETTEN SLÅS UPP I REGISTRET, INTE I KLIENTENS ANROP (Lägesregistret 2026-09-23) ──
   // Här stod `diagColors(diagScore ?? 72)` — en omätt poäng fick en påhittad 72:as färg — och

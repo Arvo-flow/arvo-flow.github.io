@@ -33,6 +33,7 @@ import { computeElRecommendation, NATAVGIFT_RE } from '../lib/el-recommendation.
 import { contractClockFinding, avtalsklocka, avtalsRutt } from '../lib/contract-clock.js';
 import { planeradePaminnelser } from '../lib/paminnelse.js';
 import { fakturaLage } from '../lib/lagesregister.js';
+import { LOFTEN } from '../lib/kundmeningar.js';
 import { RATTSTORLEK_FALT } from '../lib/rattstorleksfynd.js';
 import { checkSupplierFingerprint } from '../lib/supplier-fingerprints.js';
 import { verifySanity, verifySeatCount } from '../lib/sanity-verifier.js';
@@ -524,7 +525,7 @@ export default async function handler(req, res) {
   // gången. En cachad v28-payload saknar dem — och då renderas inget kort, trots att motorn fann ett.
   // v30 (2026-09-23): avtalsklockan — `cancellationNoticeDays`/`monitoringDate` borta, `uppsagning` +
   // klockans läge och påminnelsedatum in. En v29-payload bär de gamla fälten och den gamla lögnen.
-  const cacheKey = `pdf:result:v30:${deploySha}:${pdfHash}:e${employeesNum}`;
+  const cacheKey = `pdf:result:v31:${deploySha}:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -1725,9 +1726,11 @@ export default async function handler(req, res) {
           confidence:          0.72,
           reasoning:           elRec.reasoning,
           switchSteps:         elRec.shouldSwitch ? [
-            'Arvo analyserar ert nuvarande elavtal och identifierar uppsägningstidpunkt',
-            'Vi begär in offerter från kvalificerade elleverantörer med Arvo-volymrabatt',
-            'Bästa erbjudandet presenteras — ni godkänner, Arvo sköter hela bytet',
+            // Bytesrälsen är mode:stub (bibeln, Switch-doktrinen): Arvo FÖRBEREDER, kunden signerar.
+            // Här stod «offerter … med Arvo-volymrabatt» (ett eget pris — neutralitetsmoaten) och
+            // «Arvo sköter hela bytet» (ett verkställt byte som ingen kod utför). KM-05.
+            'Arvo läser ert nuvarande elavtal och uppsägningstid',
+            LOFTEN.bytesunderlag.text,
           ] : [],
           licenseOverage:  null,
           overageSavings:  null,

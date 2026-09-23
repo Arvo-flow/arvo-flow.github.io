@@ -254,7 +254,7 @@ export default function Prospect() {
                   </EstimateVal>
                 </EstimateRow>
                 <EstimateRow>
-                  <EstimateDesc>Arvo-pris, verifierat listpris</EstimateDesc>
+                  <EstimateDesc>Verifierat publikt listpris</EstimateDesc>
                   <EstimateVal $highlight>
                     {fmt(cat.arvoAnnual)} kr/år
                     <EstimateValNote>{cat.pricePerSim.arvo} kr/mån per {unit}</EstimateValNote>
@@ -285,7 +285,7 @@ export default function Prospect() {
 
         <PrimaryCtaWrap>
           <PrimaryCta href="/testa-faktura" onClick={() => recordAction('upload')}>
-            Se er exakta premie
+            Se vad ni betalar mot listpris
           </PrimaryCta>
           <PrimaryCtaSub>Ladda upp en faktura · Kostnadsfritt · 2 minuter · Ingen registrering</PrimaryCtaSub>
         </PrimaryCtaWrap>
