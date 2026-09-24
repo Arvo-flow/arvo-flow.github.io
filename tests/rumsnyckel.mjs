@@ -82,4 +82,22 @@ describe('RN · rumsnyckeln', () => {
       'en ny endpoint läser historik på fingeravtryck — den måste gå genom arRumsnyckel');
     assert.match(strippaStrangar(las('api/invoice-history.mjs')), /const hasFp = arRumsnyckel\(fp\)/);
   });
+
+  test('RN-07 · rå SQL på fingeravtryck i api/ kräver en ogissbar nyckel; en e-postadress bevisas, uppges aldrig', () => {
+    const filer = [];
+    (function ga(d) { for (const n of readdirSync(join(ROT, d))) { const p = `${d}/${n}`;
+      if (statSync(join(ROT, p)).isDirectory()) ga(p); else if (p.endsWith('.mjs') || p.endsWith('.js')) filer.push(p); } })('api');
+    // Satserna ÄR mallsträngar, så de läses i råtexten (strippaStrangar skulle tömma dem).
+    const raa = filer.filter((p) => /fingerprint\s*=\s*\$\{/.test(las(p)));
+    assert.deepEqual(raa, ['api/test-invoice.mjs'], 'en ny endpoint läser invoice_analyses på fingeravtryck');
+    const ti = strippaStrangar(las('api/test-invoice.mjs'));
+    // Historikuppslaget: mail:<sha16(adress)> går att räkna ut ur en adress — bara internt eller en slumpnyckel.
+    assert.match(ti, /if \(fingerprint && \(isBypass \|\| arRumsnyckel\(fingerprint\)\) && categorized\.category !==/,
+      'historikuppslaget i test-invoice läser på vilket fingeravtryck som helst');
+    // Adressen: bara internt eller ur en signerad session. Varje annan läsning av body.userEmail är en uppgiven adress.
+    const lasningar = ti.match(/body\.userEmail/g) ?? [];
+    assert.equal(lasningar.length, 3, `body.userEmail läses ${lasningar.length} gånger — bara i bevisadEpost (3)`);
+    assert.match(las('api/test-invoice.mjs'), /const bevisadEpost = isBypass\s*\? \(typeof body\.userEmail === 'string' && body\.userEmail\.trim\(\) \? body\.userEmail : null\)\s*: \(verifySession\(body\.session\)\?\.email \?\? null\);/);
+    assert.doesNotMatch(strippaStrangar(las('src/pages/TestaFaktura/index.js')), /userEmail:/, 'webbläsaren skickar en adress i stället för sessionen');
+  });
 });

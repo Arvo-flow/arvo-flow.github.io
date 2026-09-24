@@ -40,11 +40,33 @@ describe('KM · kundmeningsregistret', () => {
       'ett nekande fälldes — filtret förbjuder ordet i stället för påståendet');
   });
 
-  test('KM-03 · bytessteg med löften utan mekanism stryks', () => {
-    const r = kundensSteg(['Vi förhandlar Microsoft årsavtal för Business Standard', 'Offerter från Arvo-verifierad partner',
-      'Du signerar med BankID', 42, '']);
-    assert.deepEqual(r.steg, ['Du signerar med BankID']);
-    assert.equal(r.strukna.length, 2);
+  test('KM-03 · bytessteg och motiveringar med löften utan mekanism stryks (motprov: det förberedda bytet står kvar)', () => {
+    // Andra blicken 2026-09-24: första versionen lät «Du signerar med BankID» stå — och testet KRÄVDE det.
+    const falska = ['Vi förhandlar Microsoft årsavtal för Business Standard', 'Offerter från Arvo-verifierad partner',
+      'Du signerar med BankID', 'Vi säger upp ert nuvarande avtal', 'Arvo genomför bytet åt er',
+      'Arvo tecknar det nya avtalet i ert namn', 'Vi ordnar hela bytet', 'Vi beställer porting av numren'];
+    const sanna = ['Vi förbereder uppsägningen av Vattenfall och nyteckningen hos Tibber',
+      'Ni signerar själva — inget sägs upp eller tecknas innan dess'];
+    const r = kundensSteg([...falska, ...sanna, 42, '']);
+    assert.deepEqual(r.steg, sanna);
+    assert.equal(r.strukna.length, falska.length);
+    const m = kundensMotivering('Fakturan omfattar 8 abonnemang. Arvo genomför bytet av bredbandet till ett lägre pris.');
+    assert.equal(m.text, 'Fakturan omfattar 8 abonnemang.', 'ett löfte i motiveringen nådde kunden');
+    assert.equal(kundensMotivering('Vi kan förbereda även bredbandsbytet.').text, 'Vi kan förbereda även bredbandsbytet.', 'motprov');
+  });
+
+  test('KM-12 · filtret: «företag»-kohorter och berömformer stryks; en överbetalningsmening står kvar', () => {
+    for (const m of ['Jämförbara företag betalar väsentligt mindre.', 'Liknande företag i er storlek betalar mindre.',
+      'Andra företag med 10 anställda betalar mindre.', 'Ni betalar mer än bolag av er storlek.',
+      'Priset är fördelaktigt.', 'Abonnemanget är prisvärt.', 'Ni ligger i nivå med marknaden.', 'Ni ligger väl till.',
+      'Ni betalar redan det lägsta publika priset.', 'Ert pris ligger under listpris.', 'Ni har bättre villkor än listpris.']) {
+      assert.equal(kundensMotivering(m).text, null, `står kvar: ${m}`);
+    }
+    // Skälet att byta är inget beröm — första versionen strök det, och bytet förlorade sin motivering.
+    for (const m of ['Leverantörens publika listpris ligger under det ni betalar.', 'Tele2 har ett abonnemang som ligger lägre i pris, 269 kr/mån.',
+      'Tele2 Bas kostar 269 kr/mån enligt listpris, vilket är lägre än ert pris.', 'Abonnemanget är inte prisvärt.']) {
+      assert.equal(kundensMotivering(m).text, m, `struken: ${m}`);
+    }
   });
 
   test('KM-04 · varje löfte pekar på en mekanism som finns', () => {
@@ -66,9 +88,15 @@ describe('KM · kundmeningsregistret', () => {
     filer.push('scripts/notify-price-changes.mjs');
     assert.ok(filer.length > 200, `skanningen hittade bara ${filer.length} filer`);
     const REGISTREN = new Set(['lib/kundmeningar.js', 'lib/kundytor.js']);   // de citerar formerna med flit
+    // Switch-rälsen (mode:stub) bär fullmaktens text om BankID-signering — den FRAMTIDA mekanismen.
+    // Undantaget gäller bara så länge ingen kundyta når den; det prövas här, inte antas.
+    const RALSEN = 'agents/orchestrator/';
+    const narRalsen = filer.filter((f) => !f.startsWith(RALSEN) && !f.startsWith('agents/')
+      && /from ['"][./]*agents\/orchestrator/.test(las(f)));
+    assert.deepEqual(narRalsen, [], 'en kundyta importerar Switch-rälsen — fullmaktens BankID-löfte når då kunden');
     const traffar = [];
     for (const f of filer) {
-      if (REGISTREN.has(f)) continue;
+      if (REGISTREN.has(f) || f.startsWith(RALSEN)) continue;
       const rader = utanKommentarer(las(f)).split('\n'); const orig = las(f).split('\n');
       rader.forEach((l, i) => {
         if (/kundmening-ok:\s*\S.{7,}/.test(orig[i - 1] ?? '')) return;
@@ -134,5 +162,35 @@ describe('KM · kundmeningsregistret', () => {
     assert.doesNotMatch(k, /\*\s*0\.(85|7)\b/, 'en påhittad faktor är tillbaka i briefingen');
     assert.doesNotMatch(k, /renegotiate|överbetalning|jämförbara bolag/);
     assert.match(k, /radLage\(a\)/, 'bytet härleds inte ur läget');
+  });
+
+  test('KM-11 · bytesbekräftelsen: larmet först, ett Resend-fel är aldrig «ok», klientens text escapas', async () => {
+    process.env.RESEND_API_KEY ??= 're_test_ingen_riktig_nyckel';
+    const { default: handler, buildHtml } = await import('../api/send-confirmation.mjs');
+    const result = { extracted: { supplier: '<a href="https://ond.example">Telia</a>', annualCost: 48000 },
+      categorized: { category: 'mobil' },
+      recommendation: { recommendationType: 'switch', suggestedSupplier: '<img src=x>Tele2', grossSaving: 12000 } };
+    const kor = async (svar) => {
+      const skickat = []; const orig = globalThis.fetch;
+      globalThis.fetch = async (url, init) => { const b = JSON.parse(init?.body ?? '{}'); skickat.push({ to: [].concat(b.to)[0], html: b.html });
+        const [status, json] = svar(skickat.length);
+        return new Response(JSON.stringify(json), { status, headers: { 'content-type': 'application/json' } }); };
+      let status = 0, ut = null;
+      const res = { setHeader() {}, set statusCode(v) { status = v; }, end(b) { ut = JSON.parse(b); } };
+      try { await handler({ method: 'POST', body: { email: 'kund@example.se', result } }, res); } finally { globalThis.fetch = orig; }
+      return { status, ut, skickat };
+    };
+    const fel = [422, { name: 'validation_error', message: 'fel', statusCode: 422 }];
+    const okSvar = [200, { id: 'x' }];
+    const alltFel = await kor(() => fel);
+    assert.equal(alltFel.skickat.length, 1, 'kunden fick ett löfte trots att larmet till oss inte gick');
+    assert.notEqual(alltFel.status, 200, `Resend-fel besvarades ${alltFel.status} ${JSON.stringify(alltFel.ut)}`);
+    const kvittoFel = await kor((n) => (n === 1 ? okSvar : fel));
+    assert.deepEqual([kvittoFel.status, kvittoFel.ut?.bekraftelseSkickad], [200, false], 'begäran nådde oss men kvittot saknas');
+    const allt = await kor(() => okSvar);   // motprov
+    assert.deepEqual([allt.status, allt.ut?.bekraftelseSkickad, allt.skickat.map((x) => x.to)], [200, true, [process.env.ARVO_ALERT_EMAIL ?? 'team@arvoflow.se', 'kund@example.se']]);
+    for (const { html } of allt.skickat) assert.doesNotMatch(html, /<a href="https:\/\/ond|<img src=x>/, 'klientens html når mejlet');
+    assert.doesNotMatch(buildHtml(result), /Tele2/, 'klientens föreslagna leverantör står i kundens mejl');
+    assert.match(buildHtml(result), /&lt;a href=/, 'motprov: namnet står kvar, escapat');
   });
 });

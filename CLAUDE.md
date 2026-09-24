@@ -493,6 +493,36 @@ verifierat publikt listpris att jämföra mot». Motprovet är gårdagens körni
    **Läxan: en jämförelse mellan vår egen gissning och verkligheten ser ut exakt som en marknadshändelse
    — och en stabilitetsgrind gör den starkare, inte svagare, när gissningen står still.**
 
+**⚠️ ANDRA BLICKEN PÅ DE FYRA STEGEN (24 sep): 8 fynd, 4 [KUND] — och ett nionde under lagningen.**
+Stegen mergades med byggarens egen granskning. En separat session med uppdraget «hitta var det gröna
+är osant» fann följande. Alla är lagade framåt med 17 sabotage, och alla 17 fällde minst ett test.
+· **[KUND] Baslinjen var kategorins, inte leverantörens.** Telenors «299» räknades som verifierat,
+  eftersom Tele2:s median är 3 588/12. Nu deklarerar varje kontroll sitt tal med `bokfort`
+  (`lib/prisvaktens-kontroller.js`), och talet måste bära leverantörens namn på vägen dit (BL-03).
+  Samma fix stängde spegelfelet: kontrollnamnen bar majpriser, så **ingen verklig Microsoft-ändring
+  hade kunnat larma.** Mätt natten 24 sep på 260f9f8: 16 larm, 0 verifierade, 0 kundmejl; E5 stoppades
+  av baslinjen själv (`gammalt_pris_ar_inte_ett_verifierat_pris`).
+· **[KUND] Historikuppslaget i `test-invoice` tog vilket fingeravtryck som helst.** `mail:<sha16>` räknas
+  ut ur en adress, och resultatet blev «er kostnad har stigit Y % (förra: X)», alltså offrets tal. Nu
+  krävs ogissbar nyckel eller internt anrop (RN-07). **Det nionde fyndet hittades under den lagningen:**
+  `body.userEmail` lagrades obevisat, så vem som helst kunde skriva in fakturor i en annans e-postrum och
+  styra avtalspåminnelser dit. Nu gäller bara intern väg eller signerad session; det mättes med motprov
+  mot det gamla bygget.
+· **[KUND] Bytesbekräftelsen svarade `ok` när Resend svarade `{error}`.** Resend kastar inte. Nu går larmet
+  först, ett fel ger 502, och klientens text escapas. Den föreslagna leverantören (klientens uppgift)
+  skrivs inte ut (KM-11).
+· **[KUND] Filtret missade «företag»/«prisvärt» och strök sanna överbetalningsmeningar.** Nu kräver
+  jämförelseberöm att kunden är subjektet (KM-12).
+· **[VAKT → KUND] Löftesskanningen var för smal.** När den vidgades fann den **/bias** med «Arvo genomför
+  bytet (BankID)», en prompt som beordrade «Arvo genomför bytet av bredbandet», och Landing «med
+  BankID». Alla är rättade. KM-03 hade *krävt* att «Du signerar med BankID» stod kvar.
+  **ÖPPET, grundarens beslut:** `/villkor` §2.1 och sammanfattningen säger «signering via BankID». Det
+  är avtalstext, och ingen BankID-signering finns (Switch är mode:stub). Raderna är undantagna med
+  motivering, inte lagade.
+· **[VAKT] YI-04 räknade en import som läsning.** Nu måste namnet användas (YI-08). Sabotaget S2 fällde
+  först noll: valutaskyddet stod två gånger, alltså var det ett skydd. Kopian är borttagen.
+**Läxan är densamma som 1 sep, en gång till: byggarens granskning hittade 0 av dessa 9.**
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning

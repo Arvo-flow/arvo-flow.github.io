@@ -477,13 +477,13 @@ Kategoriserad faktura:
       ? (() => {
           const _secCostFmt  = nonPrimaryAnnualForPrompt.toLocaleString('sv-SE');
           const _action = _hasSavingBoth
-            ? `Arvo genomför bytet av bredbandet till ett lägre verifierat marknadspris.`
+            ? `Vi kan förbereda även bredbandsbytet — det finns ett lägre verifierat listpris.`
             : `Bredbandskomponenten är marknadsmässig.`;
           return `Fakturan innehåller även ${_secLabel} (${_secCostFmt} kr/år) — ${_action}`;
         })()
       : `Övriga tjänster (${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr+) analyseras via Fortnox/Visma.`;
     const _secActionInstruction = _hasSavingBoth
-      ? `KRITISKT: Bredbandskomponenten har en identifierad besparing mot marknadsbenchmark. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en aktiv åtgärd ("Arvo genomför bytet av bredbandet till ett lägre pris"), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `
+      ? `KRITISKT: Bredbandskomponenten har en identifierad besparing mot marknadsbenchmark. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en åtgärd kunden kan ta ("vi kan förbereda även bredbandsbytet" — uppsägning och nyteckning gör kunden själv), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `
       : `KRITISKT: Ange i reasoning EXAKT `;
     return `
   OBS KOMBINERAT FAKTURA — fakturan innehåller tjänster i FLERA kategorier:

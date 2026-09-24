@@ -47,9 +47,17 @@ function upptackSidor() {
 
 // Påståendets FORM, inte ordet: «Sparar…» på en knapp är en databasskrivning, «ni sparar 4 000» är ett påstående.
 const ORDFORRAD = /(kr\/år|besparing|ni sparar|sparar? \d|marknadspris|konkurrenskraftig|förhandl|garanter|bättre än|överbetal|premie)/i;
+// En import räcker inte (andra blicken 2026-09-24): minst ett importerat namn ur registret måste
+// ANVÄNDAS i koden utanför importsatsen. Blind: att namnet används säger inte att varje mening i
+// ytan kommer ur registret — det står per yta i `pastar`, och KM-05/KM-11 prövar formerna.
 const importerar = (kod, kallor) => kallor.some((k) => {
   const namn = k.split('/').pop().replace(/\.js$/, '');
-  return new RegExp(`from '[^']*/${namn}(\\.js)?'`).test(kod);
+  const re = new RegExp(`import\\s*\\{([^}]*)\\}\\s*from '[^']*/${namn}(\\.js)?';?`, 'g');
+  const utanImport = kod.replace(re, '');
+  return [...kod.matchAll(re)].some((m) => m[1].split(',')
+    .map((x) => x.trim().split(/\s+as\s+/).pop())
+    .filter(Boolean)
+    .some((b) => new RegExp(`\\b${b}\\b`).test(utanImport)));
 });
 
 describe('YI · ytinventeringen', () => {
@@ -83,6 +91,13 @@ describe('YI · ytinventeringen', () => {
       assert.ok(sidor[route], `${route}: ingen komponentfil`);
       assert.ok(importerar(las(sidor[route]), REGISTERKALLOR), `${route} påstås läsa registret men ${sidor[route]} importerar det inte`);
     }
+  });
+
+  test('YI-08 · importkravet: ett registernamn som importeras men aldrig används räknas inte (motprov: använt)', () => {
+    const K = ['lib/kundmeningar.js'];
+    assert.equal(importerar("import { LOFTEN } from '../lib/kundmeningar.js';\nconst x = 1;", K), false);
+    assert.equal(importerar("import { LOFTEN } from '../lib/kundmeningar.js';\nconst x = LOFTEN.a;", K), true);
+    assert.equal(importerar("import { kundensMotivering as km } from '../lib/kundmeningar.js';\nkm(t);", K), true);
   });
 
   test('YI-05 · en «ingen_prisdom»-yta säger inget om pris eller besparing', () => {

@@ -26,9 +26,9 @@ Rekommendation:
   confidence: "high"
   reasoning: "Vattenfall Företag prissätter för volymkunder med dedikerade kundansvariga — er storlek motiverar inte den premien. Rätt leverantör för er bransch erbjuder identisk täckning med bäst app-stöd för månadsuppföljning."
   switchSteps: [
-    "Vi förbereder uppsägning av Vattenfall (30 dagars varsel)",
-    "Du signerar Tibber-avtalet med BankID",
-    "Tibber tar över leverans nästa månadsskifte — inget strömavbrott"
+    "Vi förbereder uppsägningen av Vattenfall (30 dagars varsel) och nyteckningen hos Tibber",
+    "Ni signerar själva — inget sägs upp eller tecknas innan dess",
+    "Vid ett elbyte tar den nya leverantören över leveransen vid månadsskiftet — inget strömavbrott"
   ]
 
 Exempel 2: Vid eller under benchmark — INGEN rekommendation
@@ -85,9 +85,8 @@ Rekommendation:
   confidence: "medium"
   reasoning: "Kortterminal-byten är komplexa att jämföra utan att veta transaktionsmix. Ni ligger i överkant för er transaktionsvolym — Zettle är säkraste valet för byrå-skala men granska villkor manuellt."
   switchSteps: [
-    "Vi förbereder Zettle-onboarding",
-    "Du signerar med BankID",
-    "Vi koordinerar uppsägning av Bambora-terminal"
+    "Vi förbereder Zettle-ansökan och uppsägningen av Bambora-terminalen",
+    "Ni signerar själva — inget sägs upp eller tecknas innan dess"
   ]
 
 Exempel 5: Bra leverantör men kunden betalar premium-pris för fel storlek
@@ -107,9 +106,9 @@ Rekommendation:
   confidence: "high"
   reasoning: "GlobalConnect är ett premium-bredband byggt för datacenter-trafik. För en 4-personers byrå är det kraftig överkill. Bahnhof Företag ger samma 1 Gbit till Arvos volympris."
   switchSteps: [
-    "Vi beställer porting av befintlig fiber till Bahnhof",
-    "Du signerar med BankID",
-    "Vi säger upp GlobalConnect när Bahnhof är live (parallell drift 2 veckor)"
+    "Vi förbereder beställningen hos Bahnhof och uppsägningen av GlobalConnect",
+    "Ni signerar själva — inget sägs upp eller tecknas innan dess",
+    "Låt GlobalConnect löpa tills Bahnhof är igång (parallell drift 2 veckor)"
   ]
 
 Exempel 6: Fel produkttier — Enterprise-licens för litet bolag (VIKTIGT MÖNSTER)
@@ -132,8 +131,7 @@ Rekommendation:
   reasoning: "M365 E5 är byggt för storföretag med tunga compliance- och SIEM-krav — funktioner ett 10-personers konsultbolag sällan behöver. Business Standard ger Teams, SharePoint och Exchange med 1 TB OneDrive — exakt samma vardag, väsentligt lägre kostnad."
   switchSteps: [
     "Vi förbereder bytet till Business Standard inför nästa licensperiod",
-    "Du signerar med BankID — ingen datatransport krävs",
-    "Vi koordinerar nedgradering inför nästa licensperiod"
+    "Ni signerar själva — ingen datatransport krävs"
   ]
 
 OBS TIER-OVERKILL-REGELN: När ett litet bolag (micro/small) betalar för Enterprise- eller E3/E5-tier av programvara, eller premium-fiber avsedd för datacenter, eller andra produkter konstruerade för storföretag — ska du ALLTID förklara i reasoning VARFÖR det är overkill för deras storlek, inte bara att de betalar X % mer. Nämn konkret vilken tier eller produkt som är rätt nivå och varför den täcker deras faktiska behov.
@@ -180,8 +178,8 @@ Rekommendation:
   reasoning: "Enterprise Pro A3 är byggd för tunga printvolymer på advokatbyråer och tryckerier — inte e-handel. Klickpriset 0,15 kr/sida S/V är den dyrare halvan av marknaden — marknadsnivån för motsvarande maskin ligger på 0,06–0,09 kr/sida. Ett verifierat alternativ är en A4 MFP med volymanpassat klickavtal — rätt maskin, rätt pris."
   switchSteps: [
     "Vi tar fram ett offertunderlag för A4 MFP med klickavtal som ni kan skicka till leverantörer",
-    "Du signerar nytt avtal med BankID",
-    "Vi koordinerar uppsägning av OfficePrint-avtalet vid kontraktstidens slut"
+    "Ni väljer och signerar själva",
+    "Låt OfficePrint-avtalet löpa ut vid kontraktstidens slut i stället för att förlänga"
   ]`;
 
 export const SYSTEM_PROMPT = `Du är Arvo Flow Recommender — en AI-inköpschef som ger rekommendationer om leverantörsbyten för svenska småföretag.
@@ -206,7 +204,7 @@ KÄRN-PRINCIPER
    - low (<0.65): Använd shouldSwitch: false istället
 
 5. **switchSteps ska vara konkreta, max 3 steg.**
-   Skriv som om du vore en personlig assistent som faktiskt utför bytet. Ingen markdown, inga punktlistor med rubriker — bara raka beskrivningar.
+   Skriv vad Arvo FÖRBEREDER och vad kunden själv gör. Uppsägning, nyteckning, beställning, förhandling och signering utförs aldrig av Arvo — kunden signerar själv, och ingen BankID-signering finns hos oss. Ingen markdown, inga punktlistor med rubriker — bara raka beskrivningar.
 
 6. **OBLIGATORISK PRODUKT/TIER-ANALYS — gäller ALLA kategorier utan undantag.**
    Analysera alltid om kunden har rätt produkt eller tier för sin faktiska bolagsstorlek och bransch — inte bara om de betalar rätt pris för den produkt de har. Fråga dig för varje analys:

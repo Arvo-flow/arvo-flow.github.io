@@ -15,9 +15,11 @@ import {
 // Arvo tar aldrig en krona från en leverantör (neutralitets-moaten). Vad vi GÖR
 // och hur vi betalas, öppet redovisat.
 const CATEGORY_MODEL = [
-  { cat: 'Elavtal',             detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
-  { cat: 'Mobilabonnemang',     detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
-  { cat: 'Företagsbredband',    detail: 'Arvo genomför bytet (BankID)',      pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  // Här stod «Arvo genomför bytet (BankID)» för Nivå 1. Bytesrälsen är mode:stub och ingen
+  // BankID-signering finns hos oss — bytet FÖRBEREDS, kunden signerar (kundmeningsregistret).
+  { cat: 'Elavtal',             detail: 'Arvo förbereder bytet, ni signerar', pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Mobilabonnemang',     detail: 'Arvo förbereder bytet, ni signerar', pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Företagsbredband',    detail: 'Arvo förbereder bytet, ni signerar', pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
   { cat: 'Programvara / SaaS',  detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
   { cat: 'Kortterminal',        detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
   { cat: 'Fakturatjänst',       detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },

@@ -46,6 +46,8 @@ import { upsertSupplier, recordSupplierPrice, recordContractTimeline } from '../
 import { validateCategory } from '../lib/category-validator.js';
 import { validateSeatPrice, getBenchmarkBasis, getSupplierPriceIntel } from '../lib/supplier-price-intel.js';
 import { detectPriceAlert, getMarketIntelligence } from '../lib/price-alert.js';
+import { verifySession } from '../lib/session.js';
+import { arRumsnyckel } from '../lib/rumsnyckel.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvoflow.se';
@@ -532,6 +534,16 @@ export default async function handler(req, res) {
     && process.env.ARVO_BYPASS_SECRET
     && bypass === process.env.ARVO_BYPASS_SECRET);
 
+  // ── E-POSTIDENTITETEN ÄR BEVISAD, ALDRIG UPPGIVEN (2026-09-24, andra blicken på rumsnyckeln) ──────
+  // Förut lagrades `body.userEmail` rakt av. Webbläsaren skickade adressen ur localStorage, och vem
+  // som helst kunde skicka vilken adress som helst: fakturan landade i den adressens e-postnycklade
+  // rum (getAnalysesByEmail) och avtalspåminnelserna gick till den. Nu bär bara två vägar en adress:
+  // den interna (mail-in och drainen, bevisad av ARVO_BYPASS_SECRET — adressen är avsändaren) och
+  // en signerad session (lib/session.js). Allt annat lagras utan adress, i nyckelns eget rum.
+  const bevisadEpost = isBypass
+    ? (typeof body.userEmail === 'string' && body.userEmail.trim() ? body.userEmail : null)
+    : (verifySession(body.session)?.email ?? null);
+
   const clientIp = (req.headers['x-forwarded-for'] ?? req.socket?.remoteAddress ?? '').split(',')[0].trim();
   const isWhitelisted = WHITELISTED_IPS.has(clientIp);
 
@@ -587,7 +599,7 @@ export default async function handler(req, res) {
               category:      cached.categorized?.category ?? null,
               route:         cached.route,
               reason:        cached.reason ?? null,
-              userEmail:     body.userEmail,
+              userEmail:     bevisadEpost,
             }).catch(bokforFel);
             // Samma fynd som servas, aldrig en ny bedömning: `cached.leadFinding` är redan
             // filtrerat av fyndrätten i den körning som skapade svaret.
@@ -836,7 +848,7 @@ export default async function handler(req, res) {
     // Guard: kreditnotor (negativt totalt fakturabelopp)
     if (extracted.amount < 0) {
       await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: extracted.category ?? null,
-        route: 'unsupported', reason: 'credit_note', userEmail: body.userEmail }).catch(bokforFel);
+        route: 'unsupported', reason: 'credit_note', userEmail: bevisadEpost }).catch(bokforFel);
       return svara({
         // tillit: NEJ tills vidare. Motiveringen löd «forensiken filtrerar negativa rader ändå» —
         // men filtret (`amount <= 0`) sitter på RADEN, och en kreditnota listar ofta sina rader
@@ -896,7 +908,7 @@ export default async function handler(req, res) {
         (err) => console.error('[test-invoice] notifyReviewQueue (currency) threw:', err.message)
       );
       await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: extracted.category ?? null,
-        route: 'review_queue', reason: `foreign_currency:${extracted.currency}`, userEmail: body.userEmail }).catch(bokforFel);
+        route: 'review_queue', reason: `foreign_currency:${extracted.currency}`, userEmail: bevisadEpost }).catch(bokforFel);
       return svara({
         // tillit: beloppen är kvar i främmande valuta på den här grenen — ett fynd i kronor vore fel enhet
         tillitTillRader: false,
@@ -924,7 +936,7 @@ export default async function handler(req, res) {
         console.error(`[guard:belopp] Orimliga belopp — annualCost=${extracted.annualCost} amount=${extracted.amount} currency=${extracted.currency}`);
         notifyReviewQueue(extracted, `[Beloppsvalidering] Orimliga belopp (annualCost=${(extracted.annualCost ?? 0).toLocaleString('sv-SE')} kr) — troligt valutatransformationsfel`).catch(() => {});
         await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: extracted.category ?? null,
-          route: 'review_queue', reason: 'implausible_amounts', userEmail: body.userEmail }).catch(bokforFel);
+          route: 'review_queue', reason: 'implausible_amounts', userEmail: bevisadEpost }).catch(bokforFel);
         return svara({
           // tillit: vår egen rimlighetskontroll underkänner talen; ett fynd byggt på dem vore reservkortsfelet
           tillitTillRader: false,
@@ -993,7 +1005,7 @@ export default async function handler(req, res) {
         (err) => console.error('[test-invoice] notifyReviewQueue threw:', err.message)
       );
       await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: extracted.category ?? null,
-        route: 'review_queue', reason: routing.reason, userEmail: body.userEmail }).catch(bokforFel);
+        route: 'review_queue', reason: routing.reason, userEmail: bevisadEpost }).catch(bokforFel);
       return svara({
         // tillit: routeExtraction DEKLARERAR själv, per skäl — den är det enda stället som vet
         // vilken av sina sex utgångar som fyrade. Här stod «skälet är inte känt på den här raden»,
@@ -1018,7 +1030,7 @@ export default async function handler(req, res) {
 
     if (routing.route === 'unsupported') {
       await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: extracted.category ?? null,
-        route: 'unsupported', reason: routing.reason ?? 'out_of_scope', userEmail: body.userEmail }).catch(bokforFel);
+        route: 'unsupported', reason: routing.reason ?? 'out_of_scope', userEmail: bevisadEpost }).catch(bokforFel);
       return svara({
         // tillit: utanför analysräckvidden betyder att vi inte optimerar TJÄNSTEN; raderna är korrekt lästa
         tillitTillRader: true,
@@ -1120,7 +1132,7 @@ export default async function handler(req, res) {
         // `null` är här det SANNA validatorsvaret: på den här vägen körs validatorn aldrig.
         _frysBeslut(null);
         await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: categorized.category ?? null,
-          route: 'review_queue', reason: 'fingerprint_mismatch', userEmail: body.userEmail }).catch(bokforFel);
+          route: 'review_queue', reason: 'fingerprint_mismatch', userEmail: bevisadEpost }).catch(bokforFel);
         return svara({
           // tillit: JA, av samma skäl som categorization_conflict. Kontrollen jämför den KÄNDA
           // leverantörens förväntade kategorier mot AI:ns valda kategori — den säger ingenting om
@@ -1187,7 +1199,7 @@ export default async function handler(req, res) {
           notifyReviewQueue(extracted, `[P1.1 Dual-model] Kategorikonflikt: Sonnet='${categorized.category}', Haiku='${_validation.validatorCategory}' — manuell granskning krävs`).catch(() => {});
           timing.totalMs = Date.now() - t0;
           await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: categorized.category ?? null,
-            route: 'review_queue', reason: 'categorization_conflict', userEmail: body.userEmail }).catch(bokforFel);
+            route: 'review_queue', reason: 'categorization_conflict', userEmail: bevisadEpost }).catch(bokforFel);
           return svara({
             // tillit: JA. Konflikten är mellan Sonnets och Haikus KATEGORI — båda läste samma
             // rader och är oense om ETIKETTEN. Fyndet är kategoriagnostiskt per konstruktion
@@ -1227,7 +1239,7 @@ export default async function handler(req, res) {
         notifyReviewQueue(extracted, `[P1.2 Price Intel] ${_priceCheck.detail}`).catch(() => {});
         timing.totalMs = Date.now() - t0;
         await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: categorized.category ?? null,
-          route: 'review_queue', reason: 'price_anomaly', userEmail: body.userEmail }).catch(bokforFel);
+          route: 'review_queue', reason: 'price_anomaly', userEmail: bevisadEpost }).catch(bokforFel);
         return svara({
           // tillit: priset självt är flaggat som avvikande — då är radernas tal inget underlag vi kan stå för
           tillitTillRader: false,
@@ -1278,7 +1290,10 @@ export default async function handler(req, res) {
     // Injiceras i rekommenderarens prompt som en stark kontextsignal.
     // Fail-open: query-fel stoppar aldrig pipelinen.
     let priceHistoryContext = null;
-    if (fingerprint && categorized.category !== 'el' && (extracted.annualCost ?? 0) > 0) {
+    // Historiken läses bara på en OGISSBAR nyckel eller internt (mail-in bär mail:<sha16(adress)>,
+    // som vem som helst kan räkna ut ur en adress). Annars hade en uppladdning med offrets nyckel fått
+    // tillbaka «er kostnad hos X har stigit med Y % (förra: Z kr/år)» — offrets tal (RN-07).
+    if (fingerprint && (isBypass || arRumsnyckel(fingerprint)) && categorized.category !== 'el' && (extracted.annualCost ?? 0) > 0) {
       try {
         const _db = getDb();
         if (_db) {
@@ -1346,7 +1361,7 @@ export default async function handler(req, res) {
     // dag låg 270 dagar bort, och hela analysmotorn hoppades över (mätt, AK-06). Nu avgör
     // `avtalsklocka` läget och `avtalsRutt` rutten: bevakas bara när kunden inte kan agera före slutet.
     const _klocka = avtalsklocka({ servicePeriodEnd: extracted.servicePeriodEnd, uppsagning: extracted.uppsagning });
-    const _harEpost = typeof body.userEmail === 'string' && body.userEmail.trim() !== '';
+    const _harEpost = typeof bevisadEpost === 'string' && bevisadEpost.trim() !== '';
     const _paminnelse = planeradePaminnelser(_klocka, { harEpost: _harEpost });
 
     if (!categorized.licensePending && categorized.category !== 'el' && avtalsRutt(_klocka)) {
@@ -1357,7 +1372,7 @@ export default async function handler(req, res) {
           fingerprint, pdfHash, extracted, categorized,
           recommendation: { shouldSwitch: false, reasoning: '' },
           route: 'monitoring', industry, employees: employeesNum,
-          userEmail: body.userEmail, seatCount: extracted.seatCount ?? null,
+          userEmail: bevisadEpost, seatCount: extracted.seatCount ?? null,
         }).catch((err) => console.error('[test-invoice] storeAnalysis (monitoring) failed:', err.message));
         return svara({
           // tillit: lyckad avläsning; vi bevakar bara kontraktsklockan
@@ -1454,7 +1469,7 @@ export default async function handler(req, res) {
       }
 
       await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: categorized.category ?? null,
-        route: 'review_queue', reason: 'volume_data_required', userEmail: body.userEmail }).catch(bokforFel);
+        route: 'review_queue', reason: 'volume_data_required', userEmail: bevisadEpost }).catch(bokforFel);
       return svara({
         // tillit: vi kan inte PRISSÄTTA kategorin mot antal anställda — vi kan läsa kundens rader. Dustin-fallet
         tillitTillRader: true,
@@ -1492,7 +1507,7 @@ export default async function handler(req, res) {
         console.error('[test-invoice] alert failed:', e.message)
       );
       await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier, category: categorized.category ?? null,
-        route: 'review_queue', reason: 'no_benchmark', userEmail: body.userEmail }).catch(bokforFel);
+        route: 'review_queue', reason: 'no_benchmark', userEmail: bevisadEpost }).catch(bokforFel);
       return svara({
         // tillit: kategorin saknas i branschindex; ingenting säger att avläsningen är fel
         tillitTillRader: true,
@@ -1532,7 +1547,7 @@ export default async function handler(req, res) {
         // Maskinvakt: tests/triage-bokforing.mjs kräver att VARJE triage-utgång skriver först.
         await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier,
           category: categorized.category ?? null, route: 'unsupported', reason: 'natavgift',
-          userEmail: body.userEmail }).catch(bokforFel);
+          userEmail: bevisadEpost }).catch(bokforFel);
         timing.totalMs = Date.now() - t0;
         return svara({
           // tillit: nätavgift är ett reglerat monopol — rätt beslut att inte prissätta, raderna är korrekt lästa
@@ -1571,7 +1586,7 @@ export default async function handler(req, res) {
             fingerprint, pdfHash, extracted, categorized,
             recommendation: { shouldSwitch: false, reasoning: '' },
             route: 'monitoring', industry, employees: employeesNum,
-            userEmail: body.userEmail, seatCount: extracted.seatCount ?? null,
+            userEmail: bevisadEpost, seatCount: extracted.seatCount ?? null,
           }).catch((err) => console.error('[test-invoice] storeAnalysis (el fastpris) failed:', err.message));
           timing.totalMs = Date.now() - t0;
           return svara({
@@ -1630,7 +1645,7 @@ export default async function handler(req, res) {
         // rekommendation. Kunden ska se att vi tittat och varför vi tiger — inte en lucka.
         await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier,
           category: categorized.category ?? null, route: 'review_queue', reason: 'el_data_missing',
-          userEmail: body.userEmail }).catch(bokforFel);
+          userEmail: bevisadEpost }).catch(bokforFel);
         return svara({
           // tillit: elfälten gick inte att läsa; kom extraktionen till korta på ETT fält litar vi inte på de andra
           tillitTillRader: false,
@@ -1655,7 +1670,7 @@ export default async function handler(req, res) {
         annualCost: elRec.currentAnnualGross, industry, employees: employeesNum,
         segmentOkant, pdfHash,
         // OBLIGATORISK: testidentitetsgrinden i storeDatapoint kan inte fråga utan den (2026-09-11).
-        userEmail: body.userEmail ?? null,
+        userEmail: bevisadEpost ?? null,
       }).catch((err) => console.error('[test-invoice] storeDatapoint failed:', err.message));
 
       const { arvoFee, netSaving } = elRec;
@@ -1677,7 +1692,7 @@ export default async function handler(req, res) {
           netSaving,
         },
         route: 'auto', industry, employees: employeesNum,
-        userEmail: typeof body.userEmail === 'string' ? body.userEmail.trim().toLowerCase() : null,
+        userEmail: typeof bevisadEpost === 'string' ? bevisadEpost.trim().toLowerCase() : null,
         seatCount: extracted.seatCount ?? null,
       }).catch((err) => console.error('[test-invoice] storeAnalysis (el auto) failed:', err.message));
 
@@ -1884,7 +1899,7 @@ export default async function handler(req, res) {
       employees: employeesNum,
       segmentOkant, pdfHash,
       // OBLIGATORISK: testidentitetsgrinden i storeDatapoint kan inte fråga utan den (2026-09-11).
-      userEmail: body.userEmail ?? null,
+      userEmail: bevisadEpost ?? null,
       seatCount: telekomPunkt?.seatCount ?? extracted.seatCount ?? null,
       perUserMonthlyExVat: telekomPunkt?.per_user_monthly_exvat ?? null,
       tier: telekomPunkt?.tier ?? null,
@@ -1986,7 +2001,7 @@ export default async function handler(req, res) {
         // oss samma sak av smyghöjningen: ett larm som ingen mäter blir förr eller senare avstängt.
         await storeTriaged({ fingerprint, pdfHash, invoiceNumber: extracted.invoiceNumber, lineItems: extracted.lineItems, supplier: extracted.supplier,
           category: categorized.category ?? null, route: 'review_queue', reason: 'sanity_check_failed',
-          userEmail: body.userEmail }).catch(bokforFel);
+          userEmail: bevisadEpost }).catch(bokforFel);
         timing.totalMs = Date.now() - t0;
         return svara({
           // tillit: sanitetsvakten fångade OSS på väg att påstå en orimlig besparing
@@ -2035,7 +2050,7 @@ export default async function handler(req, res) {
       route: 'auto',
       industry,
       employees: employeesNum,
-      userEmail: typeof body.userEmail === 'string' ? body.userEmail.trim().toLowerCase() : null,
+      userEmail: typeof bevisadEpost === 'string' ? bevisadEpost.trim().toLowerCase() : null,
       seatCount: extracted.seatCount ?? null,
     }).catch((err) => { console.error('[test-invoice] storeAnalysis failed:', err.message); return null; });
 

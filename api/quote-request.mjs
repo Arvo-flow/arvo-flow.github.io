@@ -234,7 +234,7 @@ export function buildCustomerEmail({ contactName, supplier, annualCost, variable
     <table width="100%" cellpadding="0" cellspacing="0"><tr>
       <td style="background:#E0F1ED;border-left:3px solid #1B7A6E;border-radius:0 8px 8px 0;padding:14px 18px">
         <p style="margin:0;font-size:13px;color:#0E4F47;line-height:1.55">
-          <strong>Ingen bytesavgift.</strong> Skrivarleasing byts inte av Arvo — ni väljer och tecknar själva (Nivå 3 i Switch-doktrinen).
+          <strong>Ingen bytesavgift.</strong> Skrivarleasing byts inte av oss — ni väljer leverantör och tecknar avtalet själva (Nivå 3 i Switch-doktrinen).
         </p>
       </td>
     </tr></table>

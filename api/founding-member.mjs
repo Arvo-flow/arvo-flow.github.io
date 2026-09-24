@@ -45,6 +45,7 @@ const BENEFITS = [
   'Du röstar på vilka kategorier vi öppnar nästa kvartal',
   // Här stod «Garanterad förtur till försäkringsbyten när FI-licensen är klar» — en garanti om en licens
   // som inte finns (kundmeningsregistret). Förturen ges när, och om, tillståndet finns.
+  // kundmening-ok: villkorat — förturen gäller först när tillståndet finns
   'Förtur till försäkringsbyten den dag vi har tillstånd att genomföra dem',
 ];
 

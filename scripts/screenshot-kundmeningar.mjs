@@ -92,6 +92,19 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   }
   await p.close();
 
+  // 1b · uppladdningen bär den signerade sessionen, aldrig en uppgiven adress (RN-07)
+  p = await sida(bredd, byteSvar());
+  await p.addInitScript(() => { try { localStorage.setItem('arvo_user_email', 'offer@example.se'); localStorage.setItem('arvo_session', 'sess.sig'); } catch {} });
+  let skickat = null;
+  await p.route('**/api/test-invoice', (r) => { skickat = JSON.parse(r.request().postData() || '{}');
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(byteSvar()) }); });
+  await ladda(p);
+  if (!skickat) fel(`1b. ${namn}: uppladdningen nådde aldrig /api/test-invoice`);
+  else if ('userEmail' in skickat) fel(`1b. ${namn}: webbläsaren skickar en adress (${skickat.userEmail})`);
+  else if (skickat.session !== 'sess.sig') fel(`1b. ${namn}: sessionen skickas inte (${skickat.session})`);
+  else ok(`1b. ${namn}: uppladdningen bär sessionen, ingen adress`);
+  await p.close();
+
   // 2 · valutan
   p = await sida(bredd, byteSvar('USD'));
   await ladda(p);
@@ -104,6 +117,9 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     ['/intelligence', /8 av 14 bolag|jämförbara bolag i nätverket|mot känt avtalspris/, /Exempel ·/, '3. /intelligence'],
     ['/connect', /raderar Fortnox-kopplingen|redan optimerat/, /Kopplingen tar du bort när du vill/, '4. /connect'],
     ['/aktivera?savings=99999&supplier=Telia', /99\s?999|identifierade redan/, /./, '5. /aktivera'],
+    // Andra blicken 2026-09-24: Nivå 1 lovade «Arvo genomför bytet (BankID)» — rälsen är mode:stub.
+    ['/bias', /genomför bytet|BankID/, /Arvo förbereder bytet, ni signerar/, '7. /bias'],
+    ['/', /godkänner varje byte med BankID|signerat av er med BankID/, /Ni godkänner och signerar varje byte själva/, '8. /'],
   ]) {
     p = await sida(bredd);
     await p.goto(`${bas}${vag}`, { waitUntil: 'networkidle' }); await p.waitForTimeout(600);

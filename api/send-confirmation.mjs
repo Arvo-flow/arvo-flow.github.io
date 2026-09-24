@@ -27,8 +27,6 @@ const T = {
   warnBdr:   '#D4A940',
 };
 
-const REAL_PRICE_CATEGORIES = new Set(['mjukvara-saas', 'mobil']);
-
 // Här stod CATEGORY_PARTNER_LABEL («Kvalificerad Leasingpartner», «Kvalificerad IT-partner» …).
 // Arvo har inga leverantörspartner (neutralitetsmoaten); en okänd ny leverantör heter just det.
 
@@ -50,6 +48,10 @@ const CATEGORY_LABELS = {
   'it-support':      'IT-drift & Support',
 };
 
+// Hela `result` kommer ur webbläsarens POST — varje tal och varje namn är klientens. Text escapas
+// alltid innan den når HTML (ett leverantörsnamn med <a href> blev förut en länk i vårt mejl).
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
 function formatKr(n) {
   return new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n ?? 0) + ' kr';
 }
@@ -67,9 +69,11 @@ function logo(size, id) {
 
 export function buildHtml({ extracted: ex, categorized: cat, recommendation: r }) {
   const isOptimize  = r.recommendationType === 'optimize';
-  const catLabel    = CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '';
-  const isRealPrice = REAL_PRICE_CATEGORIES.has(cat?.category);
-  const suppDisplay = (isRealPrice && r.suggestedSupplier) ? r.suggestedSupplier : 'den nya leverantören';
+  const catLabel    = esc(CATEGORY_LABELS[cat?.category] ?? cat?.category ?? '');
+  // Den föreslagna leverantören skrivs inte ut: namnet kommer ur klientens POST, och vi kan inte
+  // belägga att det är vår analys som sa det. Mottagen begäran säger vad vi gör, inte till vem.
+  const suppDisplay = 'den nya leverantören';
+  const supplier    = esc(ex.supplier);
 
   const saving    = isOptimize ? (r.optimizationSaving ?? 0) : (r.grossSaving ?? 0);
   const arvoFee   = feeOf(saving);
@@ -87,11 +91,11 @@ export function buildHtml({ extracted: ex, categorized: cat, recommendation: r }
   const arvodeText = `Besparingsarvodet ${formatKr(arvoFee)} (20&nbsp;%) faktureras som en engångsavgift tre månader efter att det nya avtalet aktiverats — och bara om bytet blir av.`;
 
   const steps = isOptimize ? [
-    `Vi läser ert abonnemang hos ${ex.supplier} och förbereder uppsägningen av det separata abonnemanget.`,
+    `Vi läser ert abonnemang hos ${supplier} och förbereder uppsägningen av det separata abonnemanget.`,
     'Ni signerar uppsägningen själva — inget skickas innan dess.',
     arvodeText,
   ] : [
-    `Vi läser ert nuvarande avtal hos ${ex.supplier}, inklusive uppsägningstid.`,
+    `Vi läser ert nuvarande avtal hos ${supplier}, inklusive uppsägningstid.`,
     `Vi förbereder uppsägningen och nyteckningen hos ${suppDisplay}. Ni signerar själva — inget sägs upp eller tecknas innan dess.`,
     arvodeText,
   ];
@@ -155,7 +159,7 @@ export function buildHtml({ extracted: ex, categorized: cat, recommendation: r }
   <tr>
     <td style="padding:32px 44px 28px;border-bottom:1px solid ${T.bg}">
       <p style="margin:0 0 8px;font-size:10px;font-weight:600;color:${T.mutedSoft};letter-spacing:.1em;text-transform:uppercase;font-family:'Inter',Arial,sans-serif">${isOptimize ? 'Optimering' : 'Leverantörsbyte'}</p>
-      <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:700;color:${T.ink};letter-spacing:-.5px;line-height:1.2">${ex.supplier}</p>
+      <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:700;color:${T.ink};letter-spacing:-.5px;line-height:1.2">${supplier}</p>
     </td>
   </tr>
 
@@ -179,7 +183,7 @@ export function buildHtml({ extracted: ex, categorized: cat, recommendation: r }
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td style="padding:18px 14px 18px 16px;color:#3F5550;border-top:1px solid ${T.bg};font-size:13px;font-weight:500;width:40%;font-family:'Inter',Arial,sans-serif">Nuvarande leverantör</td>
-          <td style="padding:13px 16px 13px 14px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;font-family:'Inter',Arial,sans-serif">${ex.supplier}</td>
+          <td style="padding:13px 16px 13px 14px;color:${T.inkSoft};font-weight:500;border-top:1px solid ${T.bg};font-size:14px;font-family:'Inter',Arial,sans-serif">${supplier}</td>
         </tr>
         <tr>
           <td style="padding:18px 14px 18px 16px;color:#3F5550;border-top:1px solid ${T.bg};font-size:13px;font-weight:500;width:40%;font-family:'Inter',Arial,sans-serif">Du betalar idag</td>
@@ -283,21 +287,32 @@ export default async function handler(req, res) {
       ? `Arvo Flow – vi har tagit emot er begäran om avveckling hos ${supplier}`
       : `Arvo Flow – vi har tagit emot er bytesbegäran för ${supplier}`;
 
-    await resend.emails.send({
+    // MEKANISMEN BAKOM LÖFTET går FÖRST: utan larmet vet ingen på Arvo att en kund bett om ett
+    // byte, och då får kunden inte heller ett mejl som lovar att en grundare hör av sig.
+    // Resend kastar inte — den svarar `{ error }` (resend 6.x). Ett osvarat fel var förut `ok: true`.
+    const larm = await resend.emails.send({
+      from:    FROM,
+      to:      ALERT_TO,
+      subject: `[Bytesbegäran] ${supplier} · ${email}`,
+      html:    `<p>Bytesbegäran från <strong>${esc(email)}</strong> för ${esc(supplier)}.</p><p>Uppgifter ur klientens POST, inte ur databasen — kontrollera mot analysen. Kategori: ${esc(result.categorized?.category ?? '?')} · föreslaget: ${esc(result.recommendation.suggestedSupplier ?? '—')} · brutto ${esc(result.recommendation.grossSaving ?? '—')} kr/år.</p><p>Kunden har lovats: förberett byte, egen signering, svar från en grundare.</p>`,
+    });
+    if (larm?.error) {
+      console.error('[send-confirmation] internt larm misslyckades:', larm.error?.message ?? larm.error);
+      return send(res, 502, { error: 'Vi kunde inte ta emot begäran just nu — försök igen om en stund.' });
+    }
+    const kvitto = await resend.emails.send({
       from:    FROM,
       to:      email,
       subject,
       html:    buildHtml(result),
     });
-    // MEKANISMEN BAKOM LÖFTET: utan det här larmet visste ingen på Arvo att en kund bett om ett byte.
-    await resend.emails.send({
-      from:    FROM,
-      to:      ALERT_TO,
-      subject: `[Bytesbegäran] ${supplier} · ${email}`,
-      html:    `<p>Bytesbegäran från <strong>${email}</strong> för ${supplier}.</p><p>Kategori: ${result.categorized?.category ?? '?'} · föreslaget: ${result.recommendation.suggestedSupplier ?? '—'} · brutto ${result.recommendation.grossSaving ?? '—'} kr/år.</p><p>Kunden har lovats: förberett byte, egen signering, svar från en grundare.</p>`,
-    });
+    if (kvitto?.error) {
+      console.error('[send-confirmation] kundens bekräftelse misslyckades:', kvitto.error?.message ?? kvitto.error);
+      // Begäran NÅDDE oss (larmet gick) — det är bara kvittot som saknas. Säg precis det.
+      return send(res, 200, { ok: true, bekraftelseSkickad: false });
+    }
 
-    return send(res, 200, { ok: true });
+    return send(res, 200, { ok: true, bekraftelseSkickad: true });
   } catch (err) {
     console.error('[send-confirmation] fel:', err.message);
     return send(res, 500, { error: 'Kunde inte skicka bekräftelsen — försök igen.' });

@@ -25,6 +25,7 @@ const Villkor = () => (
     <Body>
       <Summary>
         <h2>Sammanfattning</h2>
+        {/* kundmening-ok: avtalstexten är grundarens — BankID är fullmaktens mekanism (Switch, mode:stub); flaggat 2026-09-24 */}
         <p className="intro">Det här behöver du veta innan du signerar med BankID:</p>
         <ul>
           <li>
@@ -75,6 +76,7 @@ const Villkor = () => (
 
       <Clause>
         <h3>2. Uppdraget och Fullmakt</h3>
+        {/* kundmening-ok: avtalstexten är grundarens — BankID är fullmaktens mekanism (Switch, mode:stub); flaggat 2026-09-24 */}
         <p><strong>2.1</strong> Genom signering via BankID ger Kunden Arvo Flow fullmakt att inhämta
           uppgifter, säga upp befintliga avtal samt ingå nya avtal för Kundens räkning inom de
           kategorier Kunden aktiverat i Tjänsten.</p>

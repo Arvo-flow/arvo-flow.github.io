@@ -371,7 +371,7 @@ function ContractWatchCard({ analysisId, supplier, email: initEmail, onSaved }) 
 const TestaFaktura = () => {
   const fileInputRef = useRef(null);
   const resultRef    = useRef(null);
-  const { email: authEmail } = useAuth();
+  const { sessionToken } = useAuth();
   const [file, setFile] = useState(null);
   const [industry, setIndustry] = useState('konsult');
   const [employees, setEmployees] = useState(5);
@@ -664,7 +664,8 @@ const TestaFaktura = () => {
           fingerprint,
           bypass: bypass || undefined,
           email: overrideEmail || undefined,
-          userEmail: authEmail || undefined,
+          // Adressen bevisas av den signerade sessionen — servern tar aldrig en uppgiven adress.
+          session: sessionToken || undefined,
         }),
       });
 

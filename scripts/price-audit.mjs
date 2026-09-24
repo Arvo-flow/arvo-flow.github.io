@@ -46,7 +46,7 @@ const CUSTOMER_FACING = new Set(['saas-productivity', 'mobil', 'bredband', 'lone
 
 // ── Läs in filer ─────────────────────────────────────────────────────────────
 const branchPath  = join(ROOT, 'agents/recommender/branchindex.js');
-const monitorPath = join(ROOT, 'scripts/price-monitor.mjs');
+const monitorPath = join(ROOT, 'lib/prisvaktens-kontroller.js');   // PRICE_CHECKS flyttade hit 2026-09-24
 
 if (!existsSync(branchPath) || !existsSync(monitorPath)) {
   console.error(`${RED}Filer saknas: ${branchPath} eller ${monitorPath}${R}`);
