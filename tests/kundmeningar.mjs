@@ -99,7 +99,7 @@ describe('KM · kundmeningsregistret', () => {
       // Registergranskningen (2026-09-24): motdrag Arvo aldrig köat, en bok vakten inte ser, «identifierat».
       'Se Arvos förberedda motdrag', 'Köade ett motdrag inför en trolig höjning', 'Vi köar motdraget och agerar i fönstret.',
       'Maktkalendern · motdraget ligger klart', 'Motdraget ligger färdigt.', 'med motdraget förberett',
-      'Arvo Intelligence vidgar vakten till resten av boken', 'Hela reskontran, bevakad dygnet runt.', 'Vi fakturerar aldrig förrän ni sparar.', 'Se er kostnadsbedömning →', 'Sannolik premie — bolag med er profil', 'och hittar varenda besparing, inte bara den här.', 'kartlägger varje besparing, inte bara den här.', 'vad vi gjort åt det', 'Identifierat besparingsgap', 'Koppla er inkorg — Arvo hittar allt',
+      'Arvo Intelligence vidgar vakten till resten av boken', 'Hela reskontran, bevakad dygnet runt.', 'Koppla er inkorg så bevakar Arvo alla era leverantörsfakturor löpande.', 'Vi fakturerar aldrig förrän ni sparar.', 'Se er kostnadsbedömning →', 'Sannolik premie — bolag med er profil', 'och hittar varenda besparing, inte bara den här.', 'kartlägger varje besparing, inte bara den här.', 'vad vi gjort åt det', 'Identifierat besparingsgap', 'Koppla er inkorg — Arvo hittar allt',
     ];
     // Mejlmallarna skriver svenska tecken som HTML-entiteter; skanningen avkodar dem (KM-05).
     assert.ok(LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(utanKommentarer('Arvo s&ouml;ker igenom er inkorg'))),
@@ -124,14 +124,13 @@ describe('KM · kundmeningsregistret', () => {
   });
 
   test('KM-15 · inkorgskopplingens mejl: en sidstorlek är inget antal, en ämnesträff är ingen faktura (motprov: under taket står talet)', () => {
-    for (const p of ['api/auth/gmail-callback.mjs', 'api/auth/outlook-callback.mjs']) {
+    for (const p of ['api/auth/outlook-callback.mjs']) {
       const k = las(p);
       assert.match(k, /\$\{invoiceCount >= 20 \? 'minst 20' : invoiceCount\} mejl som ser ut som fakturor/, `${p}: räkningen redovisas inte som vad den är`);
       assert.doesNotMatch(k, /leverantörsfakturor<\/strong>/, `${p}: ämnesträffar kallas åter leverantörsfakturor`);
       assert.match(k, /Er inkorg är kopplad\./);
     }
-    // Taket är det sökningen faktiskt använder — 20 i båda.
-    assert.match(las('api/auth/gmail-callback.mjs'), /newer_than:180d',\s*20\s*\)/);
+    // Taket är det sökningen faktiskt använder — 20. (Gmail-vägen togs bort 2026-09-24.)
     assert.match(las('api/auth/outlook-callback.mjs'), /outlookSearch\(accessToken, 20\)/);
   });
 

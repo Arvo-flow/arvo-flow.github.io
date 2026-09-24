@@ -4,7 +4,7 @@
 `tests/ytinventering.mjs` (YI-01..11) hittar själv varje mejlavsändare, varje route och varje endpoint och fäller
 sviten när en yta saknas här.*
 
-**88 ytor** — 19 registret · 11 marknad · 14 mejlyta · 25 ingen_prisdom · 19 intern.
+**86 ytor** — 19 registret · 10 marknad · 13 mejlyta · 25 ingen_prisdom · 19 intern.
 
 | Yta | Kanal | Mottagare | Klass | Vad den påstår i dag (mätt i koden 2026-09-23/24) |
 |---|---|---|---|---|
@@ -35,12 +35,10 @@ sviten när en yta saknas här.*
 | `/integritet` | sida | besökare | **marknad** | integritetspolicy |
 | `/intelligence` | sida | besökare | **marknad** | produktsida; varje pelare lovar en mekanism som finns, citaten märks Exempel |
 | `/villkor` | sida | besökare | **marknad** | avtalsvillkoren |
-| `api/auth/gmail-callback.mjs` | mejl | kund | **marknad** | allmän text om vad analysen visar — ingen mening om kundens pris |
-| `api/auth/outlook-callback.mjs` | mejl | kund | **marknad** | samma text som gmail-callback |
+| `api/auth/outlook-callback.mjs` | mejl | kund | **marknad** | allmän text om vad kopplingen gör — ingen mening om kundens pris |
 | `api/founding-member.mjs` | mejl | kund | **marknad** | förmånslista; «inom 48 timmar» är grundarens SLA, försäkringsförturen villkorad av ett tillstånd |
 | `api/activate-intelligence.mjs` | endpoint | anropare | **mejlyta** | svarar ok/id; kundens text är anmälningsmejlet |
 | `api/admin/magic-link.mjs` | endpoint · grind `ADMIN_TOKEN` | anropare | **mejlyta** | demolänk som grundaren skickar; mejlet är klassat |
-| `api/auth/gmail-callback.mjs` | endpoint | anropare | **mejlyta** | OAuth-retur; kundens text är kopplingsmejlet (LOFTEN.inkorgskoppling) |
 | `api/auth/outlook-callback.mjs` | endpoint | anropare | **mejlyta** | OAuth-retur; kundens text är kopplingsmejlet (LOFTEN.inkorgskoppling) |
 | `api/auth/request-magic-link.mjs` | endpoint | anropare | **mejlyta** | inloggningslänk; svaret är en status |
 | `api/cron/generate-briefings.mjs` | endpoint · grind `cronAnropTillatet` | anropare | **mejlyta** | månadsbriefen till premiumkretsen; svaret är statistik |
@@ -56,7 +54,6 @@ sviten när en yta saknas här.*
 | `/kontoret` | sida | besökare | **ingen_prisdom** | omdirigering till /portfolio |
 | `/utfall` | sida | besökare | **ingen_prisdom** | enkät, frågar och påstår inget |
 | `api/admin/magic-link.mjs` | mejl | kund | **ingen_prisdom** | demolänk som grundaren skickar |
-| `api/auth/gmail-init.mjs` | endpoint | anropare | **ingen_prisdom** | omdirigering till Googles samtycke |
 | `api/auth/outlook-init.mjs` | endpoint | anropare | **ingen_prisdom** | omdirigering till Microsofts samtycke |
 | `api/auth/request-magic-link.mjs` | mejl | kund | **ingen_prisdom** | inloggningslänk |
 | `api/contract-status.mjs` | endpoint | anropare | **ingen_prisdom** | kundens egen markering (uppsagd/stannar/ångra) och felmeddelanden |
@@ -76,6 +73,7 @@ sviten när en yta saknas här.*
 | `api/vakt-pulse.mjs` | endpoint | anropare | **ingen_prisdom** | nattsvepets tidsstämpel och antal källor |
 | `api/validate-magic.mjs` | endpoint | anropare | **ingen_prisdom** | validerar en inloggningslänk |
 | `api/waitlist.mjs` | endpoint | anropare | **ingen_prisdom** | väntelista, svarar en status |
+| `scripts/probe-lokaldelar.mjs` | mejl | intern | **ingen_prisdom** | mätsond: tre mejl utan bilaga till Arvos egen mottagningsdomän (inbox.arvoflow.se), aldrig till en kund |
 | `scripts/skicka-rumslank.mjs` | mejl | kund | **ingen_prisdom** | rumslänk som grundaren skickar manuellt |
 | `/admin` | sida | besökare | **intern** | intern admin bakom ADMIN_TOKEN |
 | `api/admin/benchmark-stats.mjs` | endpoint · grind `ADMIN_TOKEN` | anropare | **intern** | prisbokens cellstatus för admin |
@@ -89,7 +87,7 @@ sviten när en yta saknas här.*
 | `api/briefing.mjs` | mejl | intern | **intern** | notis till ALERT_TO när en kund agerar |
 | `api/corrections.mjs` | endpoint · grind `ADMIN_TOKEN` | anropare | **intern** | korrektioner bakom admintoken |
 | `api/cron/arvodeskorning.mjs` | endpoint · grind `cronAnropTillatet` | anropare | **intern** | arvodesunderlag, aldrig en faktura |
-| `api/cron/drain-ingest.mjs` | endpoint · grind `CRON_SECRET` | anropare | **intern** | köns drain; grinden är fail-open när hemligheten saknas (bibeln, skuld #8) |
+| `api/cron/drain-ingest.mjs` | endpoint · grind `cronAnropTillatet` | anropare | **intern** | köns drain; fail-closed sedan 2026-09-24 (samma grind som övriga cron) |
 | `api/cron/update-fx-rate.mjs` | endpoint · grind `cronAnropTillatet` | anropare | **intern** | valutakursen |
 | `api/cron/warm-ct.mjs` | endpoint · grind `CRON_SECRET` | anropare | **intern** | värmer certifikatcachen |
 | `api/test-invoice.mjs` | mejl | intern | **intern** | granskningskö till ALERT_TO |

@@ -7,6 +7,7 @@
 // /testa-faktura och mail-in (regel 1), nycklad på avsändaren → landar i kundens kontor.
 
 import { createHash } from 'node:crypto';
+import { cronAnropTillatet } from '../../lib/cronvakt.js';
 import { claimBatch, completeJob, failJob, hasPendingFlag, clearPending, markPending, utfallFranSvar } from '../../lib/ingest-queue.js';
 import { fetchInboundPdfForJob } from '../inbound-email.mjs';
 
@@ -99,10 +100,11 @@ async function processJob(job) {
 
 export default async function handler(req, res) {
   // Vercel-cron triggar GET med Authorization: Bearer <CRON_SECRET>; manuell körning kan POSTa likadant.
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.authorization !== `Bearer ${secret}`) {
-    return send(res, 401, { error: 'unauthorized' });
-  }
+  // GRINDEN (2026-09-24, SL-07): här stod `if (secret && …)` — fail-OPEN, en osatt hemlighet stängde av
+  // autentiseringen (skuld #8). Villkoret för att stänga den var att CRON_SECRET är satt i Vercel; det är
+  // avläst (update-fx-rate 200 bakom samma grind). Nu samma grind som övriga cron: osatt hemlighet nekar.
+  // Intagets interna knuff (api/inbound-email) skickar samma hemlighet ur Vercels miljö.
+  if (!cronAnropTillatet(req)) return send(res, 401, { error: 'unauthorized' });
 
   // ── SPÄRREN MOT ATT VÄCKA DATABASEN I ONÖDAN (grundarfynd 2026-08-06) ──────────────────────
   // Cronen kör varje minut. Varje claimBatch är en Postgres-fråga, och en fråga var 60:e sekund

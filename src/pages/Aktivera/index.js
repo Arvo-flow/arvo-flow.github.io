@@ -70,7 +70,6 @@ export default function Aktivera() {
     }
   };
 
-  const gmailUrl   = `/api/auth/gmail-init${email ? `?email=${encodeURIComponent(email)}` : ''}`;
   const outlookUrl = `/api/auth/outlook-init${email ? `?email=${encodeURIComponent(email)}` : ''}`;
 
   return (
@@ -104,11 +103,6 @@ export default function Aktivera() {
                 <SuccessEmail>{email}</SuccessEmail>
 
                 <UpgradeLabel>Koppla er inkorg</UpgradeLabel>
-                <OAuthBtn href={gmailUrl} style={{ marginBottom: 9 }}>
-                  <OAuthBadge $provider="google">G</OAuthBadge>
-                  <OAuthLabel>Koppla Gmail</OAuthLabel>
-                  <OAuthArrow>→</OAuthArrow>
-                </OAuthBtn>
                 <OAuthBtn href={outlookUrl}>
                   <OAuthBadge $provider="outlook">&#9632;</OAuthBadge>
                   <OAuthLabel>Koppla Outlook</OAuthLabel>
@@ -124,11 +118,6 @@ export default function Aktivera() {
                 <CardHeadline>Koppla er inkorg — en gång.</CardHeadline>
                 <CardSub>{LOFTEN_TEXT.inkorgskoppling}</CardSub>
 
-                <OAuthBtn href={gmailUrl}>
-                  <OAuthBadge $provider="google">G</OAuthBadge>
-                  <OAuthLabel>Koppla Gmail</OAuthLabel>
-                  <OAuthArrow>→</OAuthArrow>
-                </OAuthBtn>
                 <OAuthBtn href={outlookUrl}>
                   <OAuthBadge $provider="outlook">&#9632;</OAuthBadge>
                   <OAuthLabel>Koppla Outlook</OAuthLabel>

@@ -439,7 +439,7 @@ const TestaFaktura = () => {
     const connected = params.get('intelligence_connected');
     const pending   = params.get('oauth_pending');
     const oauthErr  = params.get('oauth_error');
-    const provider  = params.get('provider') ?? connected ?? pending ?? 'gmail';
+    const provider  = params.get('provider') ?? connected ?? pending ?? 'outlook';   // Gmail-vägen borttagen 2026-09-24
     if (connected || pending || oauthErr) {
       const invoices = parseInt(params.get('invoices') ?? '0', 10) || 0;
       const retEmail = params.get('email') ?? '';
@@ -3090,18 +3090,9 @@ const TestaFaktura = () => {
                 <p className="ac-email-sent">{activationEmail || gateEmail}</p>
                 <p className="ac-success-sub">
                   Er Arvo Intelligence-briefing för {result?.extracted?.supplier ?? 'er leverantör'} är skickad.
-                  Koppla er inkorg så bevakar Arvo alla era leverantörsfakturor löpande.
+                  {LOFTEN_TEXT.inkorgskoppling}
                 </p>
                 <span className="ac-upgrade-label">Koppla er inkorg</span>
-                <a
-                  href={`/api/auth/gmail-init?email=${encodeURIComponent(activationEmail || gateEmail)}`}
-                  className="ac-oauth-btn"
-                  style={{ marginBottom: 9, display: 'flex' }}
-                >
-                  <span className="ac-provider-badge ac-provider-badge--google">G</span>
-                  <span className="ac-oauth-label">Koppla Gmail</span>
-                  <span className="ac-oauth-arrow">→</span>
-                </a>
                 <a
                   href={`/api/auth/outlook-init?email=${encodeURIComponent(activationEmail || gateEmail)}`}
                   className="ac-oauth-btn"
@@ -3120,14 +3111,6 @@ const TestaFaktura = () => {
                 <h2 className="ac-heading">Koppla er inkorg</h2>
                 <p className="ac-sub">{LOFTEN_TEXT.inkorgskoppling}</p>
 
-                <a
-                  href={`/api/auth/gmail-init?email=${encodeURIComponent(activationEmail || gateEmail)}`}
-                  className="ac-oauth-btn"
-                >
-                  <span className="ac-provider-badge ac-provider-badge--google">G</span>
-                  <span className="ac-oauth-label">Koppla Gmail</span>
-                  <span className="ac-oauth-arrow">→</span>
-                </a>
                 <a
                   href={`/api/auth/outlook-init?email=${encodeURIComponent(activationEmail || gateEmail)}`}
                   className="ac-oauth-btn"

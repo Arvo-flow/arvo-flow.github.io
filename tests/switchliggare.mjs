@@ -1,4 +1,4 @@
-// tests/switchliggare.mjs — SL-01..06: PgStore bär FileStore:s kontrakt, och cron-grinden nekar
+// tests/switchliggare.mjs — SL-01..07: PgStore bär FileStore:s kontrakt, och cron-grinden nekar
 // en osatt hemlighet i stället för att göra den till ett lösenord.
 //
 // Fable 5.1:s granskning av Opus 5 (2026-09-01). Två fel som båda var PÅSTÅDDA i kommentarer
@@ -72,6 +72,27 @@ describe('SL · Cron-grinden: en osatt hemlighet är en okänd, inte ett löseno
     assert.equal(cronAnropTillatet({ headers: { authorization: 'Bearer s3' } }, { env: prod({ CRON_SECRET: 's3' }) }), true);
     assert.equal(cronAnropTillatet({ headers: { authorization: 'Bearer fel' } }, { env: prod({ CRON_SECRET: 's3' }) }), false);
     assert.equal(cronAnropTillatet({ headers: {} }, { env: { NODE_ENV: 'test' } }), true, 'lokalt/CI ska inte kräva hemlighet');
+  });
+
+  test('SL-07 · drain-ingest är fail-closed: en osatt hemlighet nekar (motprov: rätt hemlighet släpps in)', async () => {
+    const { default: handler } = await import('../api/cron/drain-ingest.mjs');
+    const kor = async (headers) => {
+      let status = null;
+      const res = { statusCode: 0, setHeader() {}, end() { status = this.statusCode; }, status(s) { this.statusCode = s; return this; }, json() { status = this.statusCode; } };
+      await handler({ method: 'POST', headers, query: {}, url: '/api/cron/drain-ingest' }, res);
+      return status;
+    };
+    const fore = { NODE_ENV: process.env.NODE_ENV, CRON_SECRET: process.env.CRON_SECRET, DATABASE_URL: process.env.DATABASE_URL, KV_REST_API_URL: process.env.KV_REST_API_URL };
+    try {
+      process.env.NODE_ENV = 'production'; delete process.env.CRON_SECRET; delete process.env.DATABASE_URL; delete process.env.KV_REST_API_URL;
+      assert.equal(await kor({}), 401, 'osatt hemlighet och ingen header — förr släpptes detta in (fail-open)');
+      assert.equal(await kor({ authorization: 'Bearer undefined' }), 401);
+      process.env.CRON_SECRET = 's3';
+      assert.equal(await kor({ authorization: 'Bearer fel' }), 401);
+      assert.notEqual(await kor({ authorization: 'Bearer s3' }), 401, 'motprov: rätt hemlighet släpps in');
+    } finally {
+      for (const [k, v] of Object.entries(fore)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+    }
   });
 
   test('SL-06 · send-reminders nekar ett anrop utan hemlighet i produktion (motprov: rätt hemlighet släpps in)', async () => {

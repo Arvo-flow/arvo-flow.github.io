@@ -17,8 +17,9 @@ import { Resend } from 'resend';
 import { randomBytes } from 'node:crypto';
 
 const key = process.env.RESEND_API_KEY;
-const FROM = process.env.RESEND_FROM;
-if (!key || !FROM) { console.error('✗ RESEND_API_KEY/RESEND_FROM saknas — sonden kom inte fram. INTE ett mätvärde.'); process.exit(1); }
+// RESEND_FROM är tom som GitHub-hemlighet (mätt i första körningen); produktionens standard gäller då.
+const FROM = process.env.RESEND_FROM || 'Arvo Flow <analys@arvoflow.se>';
+if (!key) { console.error('✗ RESEND_API_KEY saknas — sonden kom inte fram. INTE ett mätvärde.'); process.exit(1); }
 const resend = new Resend(key);
 const t = randomBytes(5).toString('hex');
 const DOM = 'inbox.arvoflow.se';
