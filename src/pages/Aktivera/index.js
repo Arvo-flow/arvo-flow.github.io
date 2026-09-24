@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LOFTEN_TEXT } from '../../lib/loften';
 import { useSearchParams } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
@@ -124,7 +125,7 @@ export default function Aktivera() {
               /* ── Default ── */
               <>
                 <CardHeadline>Koppla er inkorg — en gång.</CardHeadline>
-                <CardSub>Arvo söker igenom era leverantörsfakturor och kontaktar er när något hänt.</CardSub>
+                <CardSub>{LOFTEN_TEXT.inkorgskoppling}</CardSub>
 
                 <OAuthBtn href={gmailUrl}>
                   <OAuthBadge $provider="google">G</OAuthBadge>

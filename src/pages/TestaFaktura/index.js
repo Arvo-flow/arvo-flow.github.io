@@ -2760,17 +2760,11 @@ const TestaFaktura = () => {
                   <Icon name="benchmark" size={14} stroke={2} />
                 </div>
                 <div>
-                  <span className="signal-tag">Community Benchmark</span>
-                  <div className="bench-grid">
-                    {[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14].map(i => (
-                      <span
-                        key={i}
-                        className={[0,2,3,5,8,9,11,13].includes(i) ? 'on' : ''}
-                      />
-                    ))}
-                  </div>
+                  {/* Stod «Community Benchmark · 8 av 15 bolag i samma kohort fick höjningen». Vi har ingen
+                      jämförbar kohort (mätt 23 sep, U5) — även ett exempel får bara visa en mekanism som finns. */}
+                  <span className="signal-tag">Verifierat listpris</span>
                   <p className="signal-sub">
-                    <strong>8 av 15</strong> bolag i samma kohort fick höjningen — Arvo ser mönstret innan det når er.
+                    Varje jämförelse görs mot leverantörens publika listpris, med datum för när vi senast läste det.
                   </p>
                 </div>
               </div>
@@ -2814,7 +2808,7 @@ const TestaFaktura = () => {
               Aktivera Arvo Intelligence →
             </Button>
             <p style={{ fontSize: 12, color: '#8A9E98', textAlign: 'center', marginTop: 10, lineHeight: 1.5 }}>
-              Arvo söker igenom er inkorg — ni behöver inte lyfta ett finger.
+              {LOFTEN_TEXT.vidarebefordran}
             </p>
           </IntelligenceCard>
 
@@ -3123,11 +3117,8 @@ const TestaFaktura = () => {
               /* ── Default state ── */
               <>
                 <div className="ac-eyebrow">Arvo Intelligence</div>
-                <h2 className="ac-heading">Arvo söker igenom er inkorg</h2>
-                <p className="ac-sub">
-                  Koppla Gmail eller Outlook — Arvo söker er inkorg efter leverantörsfakturor och
-                  skickar er första fullständiga briefing inom en timme.
-                </p>
+                <h2 className="ac-heading">Koppla er inkorg</h2>
+                <p className="ac-sub">{LOFTEN_TEXT.inkorgskoppling}</p>
 
                 <a
                   href={`/api/auth/gmail-init?email=${encodeURIComponent(activationEmail || gateEmail)}`}

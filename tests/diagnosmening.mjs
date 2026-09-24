@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { diagnos, diagnosEtikett, fakturaLage } from '../lib/lagesregister.js';
-import { diagnosMening, UTAN_VERIFIERAT_PRIS } from '../src/lib/diagnos.js';
+import { diagnosMening, UTAN_VERIFIERAT_PRIS, ANALYSRUBRIKER } from '../src/lib/diagnos.js';
 import { CATEGORY_META } from '../src/lib/categoryMeta.js';
 
 const ROT = new URL('..', import.meta.url).pathname;
@@ -69,9 +69,9 @@ describe('DM · diagnosens mening', () => {
       if (f === 'lib/kundmeningar.js') continue;   // registret citerar formen med flit
       const rader = las(f).split('\n');
       rader.forEach((l, i) => {
-        if (/^\s*(\/\/|\*|\/\*)/.test(l)) return;
+        if (/^\s*(\/\/|\*|\/\*|\{\/\*)/.test(l)) return;   // även JSX-kommentarer — de når ingen kund
         if (/kundmening-ok:\s*\S.{7,}/.test(rader[i - 1] ?? '')) return;
-        if (/branschsnitt|branschdata|branschpris/i.test(l)) traffar.push(`${f}:${i + 1}`);
+        if (/branschsnitt|branschdata|branschpris|samma kohort|\b\d+ av \d+ (bolag|företag)\b/i.test(l)) traffar.push(`${f}:${i + 1}`);
       });
     }
     assert.deepEqual(traffar, []);
@@ -81,6 +81,8 @@ describe('DM · diagnosens mening', () => {
     const tf = las('src/pages/TestaFaktura/index.js');
     assert.match(tf, /: diagnosMening\(_diag, \{ harByte: !!_diag\.harByte \}\);/, 'fakturavyn formulerar diagnosen själv');
     assert.doesNotMatch(tf, /smfBenchmark|_bmPhrase/);
+    // Rubrikerna gäller varje kategori: ett kategoriord som «licens» blir fel på en mobil- eller elfaktura.
+    for (const [kod, r] of Object.entries(ANALYSRUBRIKER)) assert.doesNotMatch(`${r.rubrik} ${r.text}`, /licens/i, `${kod}: kategoriord i en kategorilös rubrik`);
     for (const [k, m] of Object.entries(CATEGORY_META)) {
       assert.equal(m.smfBenchmark, undefined, `${k}: smfBenchmark är tillbaka`);
       if (m.benchmarkType === 'negotiated-target') assert.equal(m.benchmarkNote, UTAN_VERIFIERAT_PRIS, `${k}: egen not`);

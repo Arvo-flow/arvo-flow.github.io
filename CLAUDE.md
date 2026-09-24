@@ -566,6 +566,19 @@ Nu:
 · Två döda filer med samma påstående togs bort: `buildKeyFinding` och `ArvoScore.js`.
 **Syskonet `(a−s)/a` kallat «% över»** (85-felet) satt i den döda `buildKeyFinding`.
 
+**⚠️ «ARVO SÖKER IGENOM ER INKORG» HADE INGEN MEKANISM (2026-09-24, ur grundarens bildgranskning).**
+Inkorgskopplingen (Gmail/Outlook) gör EN räkning av fakturamejl när den görs. Därefter läser inget den:
+mätt är att bara `api/admin/connections.mjs` läser `oauth_connections`, och ingen cron gör det. Ändå lovade
+fakturasidan «ni behöver inte lyfta ett finger», modalen «första fullständiga briefing inom en timme» och
+callback-mejlet «Arvo bevakar nu er inkorg». Mejlet räknade dessutom en sidstorlek som ett antal: sökningen
+tar högst 20 träffar, så «20 leverantörsfakturor» betydde «minst 20 ämnesträffar». Nu gäller:
+· `LOFTEN.vidarebefordran` pekar på dörren som finns (mail-in).
+· `LOFTEN.inkorgskoppling` säger vad kopplingen gör.
+· Mejlet skriver «minst 20 mejl som ser ut som fakturor» (KM-14/15).
+Kohortexemplet «8 av 15 bolag i samma kohort» är borta ur Intelligence-kortet. DM-03 fäller formen, även
+som exempel. **Öppet, grundarens beslut:** vi lagrar läs-token till kunders inkorgar som ingen kod
+använder. Dataminimering talar för att sluta samla in dem eller att bygga läsningen.
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning

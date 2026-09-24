@@ -36,7 +36,7 @@ export const ANALYSRUBRIKER = {
   inget_byte: {
     positivtPastaende: false,
     rubrik: 'Inget byte att rekommendera.',
-    text: 'Vi hittar inget publikt pris att byta ned till för de licensrader vi kunnat prissätta '
+    text: 'Vi hittar inget publikt pris att byta ned till för de fakturarader vi kunnat prissätta '
         + '— det är ett besked om vårt underlag, inte ett omdöme om ert pris.',
   },
   // Inget BYTE — men en billigare nivå hos kundens NUVARANDE leverantör.

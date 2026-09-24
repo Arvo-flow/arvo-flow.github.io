@@ -85,6 +85,10 @@ describe('KM · kundmeningsregistret', () => {
       'Din identifierade nettobesparing', 'Varje byte kräver er BankID-signatur.', 'En signatur med BankID.',
       'ni godkänner med BankID', 'Bytet förberett i sin helhet', 'Arvo hanterar hela bytet', 'Arvo Flow agerar som ditt företags ombud',
       'Arvo identifierar läckan och genomför bytet åt er',
+      // Inkorgslöftena (2026-09-24): ingen kod läser inkorgen efter kopplingen.
+      'Arvo söker igenom er inkorg — ni behöver inte lyfta ett finger.', 'Arvo bevakar nu er inkorg.',
+      'Arvo söker er inkorg efter leverantörsfakturor och skickar er första fullständiga briefing inom en timme.',
+      'Arvo söker igenom era leverantörsfakturor och kontaktar er när något hänt.',
     ];
     const missade = borttagna.filter((m) => !LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(m)));
     assert.deepEqual(missade, [], 'en borttagen exekutiv mening kan komma tillbaka osedd');
@@ -93,6 +97,18 @@ describe('KM · kundmeningsregistret', () => {
       assert.ok(!LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(m)), `ansvarsgränsens «${k}» fälls av registret`);
     }
     for (const t of Object.values(UNDERLAGET)) assert.ok(!LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(t)), `flödets ord fälls: ${t}`);
+  });
+
+  test('KM-15 · inkorgskopplingens mejl: en sidstorlek är inget antal, en ämnesträff är ingen faktura (motprov: under taket står talet)', () => {
+    for (const p of ['api/auth/gmail-callback.mjs', 'api/auth/outlook-callback.mjs']) {
+      const k = las(p);
+      assert.match(k, /\$\{invoiceCount >= 20 \? 'minst 20' : invoiceCount\} mejl som ser ut som fakturor/, `${p}: räkningen redovisas inte som vad den är`);
+      assert.doesNotMatch(k, /leverantörsfakturor<\/strong>/, `${p}: ämnesträffar kallas åter leverantörsfakturor`);
+      assert.match(k, /Er inkorg är kopplad\./);
+    }
+    // Taket är det sökningen faktiskt använder — 20 i båda.
+    assert.match(las('api/auth/gmail-callback.mjs'), /newer_than:180d',\s*20\s*\)/);
+    assert.match(las('api/auth/outlook-callback.mjs'), /outlookSearch\(accessToken, 20\)/);
   });
 
   test('KM-12 · filtret: «företag»-kohorter och berömformer stryks; en överbetalningsmening står kvar', () => {

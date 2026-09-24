@@ -3,6 +3,8 @@
 // så ett löfte eller en ansvarsgräns kan inte formuleras på ett sätt i mejlet och ett annat på sidan.
 export const LOFTEN_TEXT = {
   bytesunderlag: 'Vi tar fram ett besparingsunderlag: jämförelsen mot verifierat listpris och färdiga utkast till uppsägning och nyteckning, som ni själva skickar till leverantörerna.',
+  vidarebefordran: 'Vidarebefordra leverantörsfakturor till faktura@inbox.arvoflow.se — vi analyserar dem och svarar med resultatet.',
+  inkorgskoppling: 'Kopplingen räknar i dag hur många fakturamejl ni har. Analysen gör vi på de fakturor ni laddar upp eller vidarebefordrar.',
   personligtSvar: 'En av grundarna hör av sig till er.',
 };
 

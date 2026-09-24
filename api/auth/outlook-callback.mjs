@@ -151,7 +151,9 @@ export default async function handler(req, res) {
   if (userEmail) {
     const dateStr = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
     const countText = invoiceCount > 0
-      ? `Vi hittade <strong>${invoiceCount} leverantörsfakturor</strong> i er inkorg.`
+      // Sökningen hämtar högst 20 träffar (sidstorlek, inte ett antal) och läser bara ämnesraden —
+      // 20 betyder «minst 20», och en träff är ett mejl som ser ut som en faktura, inte en bevisad faktura.
+      ? `Vi hittade <strong>${invoiceCount >= 20 ? 'minst 20' : invoiceCount} mejl som ser ut som fakturor</strong> i er inkorg.`
       : 'Vi har kopplat er Outlook-inkorg.';
 
     const html = `<!DOCTYPE html>
@@ -166,7 +168,7 @@ export default async function handler(req, res) {
 </td></tr>
 <tr><td style="padding:32px 36px 28px;border-bottom:1px solid #EEF4F2;">
   <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#1B7A6E;margin:0 0 12px;">Outlook kopplat</p>
-  <h1 style="font-size:26px;font-weight:800;color:#0E1A17;margin:0 0 14px;letter-spacing:-.025em;line-height:1.2;">Arvo bevakar nu er inkorg.</h1>
+  <h1 style="font-size:26px;font-weight:800;color:#0E1A17;margin:0 0 14px;letter-spacing:-.025em;line-height:1.2;">Er inkorg är kopplad.</h1>
   <p style="font-size:14.5px;color:#3D5249;line-height:1.7;margin:0 0 10px;">${countText}</p>
   <p style="font-size:14px;color:#5C6E68;line-height:1.7;margin:0;">N&auml;sta steg: ladda upp en av era leverant&ouml;rsfakturor p&aring; <a href="https://arvoflow.se/testa-faktura" style="color:#1B7A6E;font-weight:600;">arvoflow.se/testa-faktura</a> &mdash; analysen tar 2 minuter och visar vad ni betalar jämfört med verifierat publikt listpris, där det finns ett.</p>
 </td></tr>

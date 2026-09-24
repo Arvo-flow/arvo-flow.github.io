@@ -16,7 +16,7 @@ import { existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
 
 process.env.RESEND_API_KEY ??= 're_test_sond';
-const { ANSVARSGRANS, UNDERLAGET } = await import('../lib/kundmeningar.js');
+const { ANSVARSGRANS, UNDERLAGET, LOFTEN } = await import('../lib/kundmeningar.js');
 const { fakturaLage } = await import('../lib/lagesregister.js');
 const { buildHtml: bekraftelse } = await import('../api/send-confirmation.mjs');
 const { buildCustomerEmail: offert } = await import('../api/quote-request.mjs');
@@ -82,6 +82,10 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   if (/tar det därifrån|Fullmakt och bytesplan|identifierade besparingen|förbereder (hela )?bytet/.test(t0)) fel(`1. ${namn}: bytkortet lovar fortfarande att Arvo agerar`);
   else if (!t0.includes(ANSVARSGRANS.niAgerar)) fel(`1. ${namn}: bytkortet säger inte att kunden byter själv`);
   else ok(`1. ${namn}: bytkortet är strikt förberedande`);
+  // 10 · Intelligence-kortet på samma sida: inget inkorgslöfte utan mekanism, inget kohortexempel.
+  if (/söker igenom er inkorg|samma kohort|\d+ av \d+ bolag/.test(t0)) fel(`10. ${namn}: inkorgslöfte eller kohortexempel står kvar`);
+  else if (!t0.includes(LOFTEN.vidarebefordran.text)) fel(`10. ${namn}: vidarebefordringsdörren saknas under knappen`);
+  else ok(`10. ${namn}: Intelligence-kortet lovar bara det som finns`);
   await p.screenshot({ path: join(UT, `bytkort-${namn}.png`), fullPage: true });
   const cta = p.getByRole('button', { name: new RegExp(UNDERLAGET.cta) });
   if (!(await cta.count())) fel(`1. ${namn}: knappen «${UNDERLAGET.cta}» syns inte`);

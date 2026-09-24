@@ -45,6 +45,7 @@ const rad = (id, supplier, category, extra = {}) => {
 };
 const rumSvar = (analyses) => ({ ok: true, analyses, watched: [], rum: byggRum(analyses, []), branchAnchors: {}, movements: {}, email: 'e@exempel.se' });
 
+const { detectForensicFindings } = await import('../lib/forensics.js');
 const RUM = {
   omatt: rumSvar([
     rad(1, 'Telia', 'mobil', { prisunderlag: pu(12), arvoScore: null, contract_end_date: '2027-01-01',
@@ -52,7 +53,11 @@ const RUM = {
     rad(2, 'Tele2', 'mobil', { route: 'monitoring', contract_end_date: '2027-08-01', contractClock: klocka('2027-08-01', null) }),
     rad(3, 'Fortnox', 'saas-finance'),
   ]),
-  fynd: rumSvar([rad(1, 'Telia', 'mobil', { lead_finding_json: { type: 'hardware_overpaid', title: 'Avbetald hårdvara faktureras fortfarande', severity: 'high', annualImpact: 16800, text: 'x' } })]),
+  // Fyndet produceras av den riktiga detektorn (lib/forensics.js), inte skrivet för hand: en handskriven
+  // fixtur bar förut texten «x», och bilden visade ett «x» under beloppet som såg ut som ett produktfel.
+  fynd: rumSvar([rad(1, 'Telia', 'mobil', { lead_finding_json: detectForensicFindings(
+    [{ type: 'recurring_subscription', description: 'Avbetalning iPhone 15 Pro, månad 38 av 36', quantity: 1, unitPrice: 1400, amount: 1400 }],
+    { billingPeriod: 'monthly', fakturadatum: '2026-09-01' })[0] })]),
   // MOTPROV: ett mätt, bra läge SKA få beröm — annars bevisar kontrollerna bara att orden försvunnit.
   bra: rumSvar([rad(1, 'Telia', 'mobil', { prisunderlag: pu(-5), arvoScore: 90 })]),
 };
