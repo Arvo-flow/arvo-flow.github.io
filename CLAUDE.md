@@ -670,6 +670,24 @@ skulle ändå undanhålla dem. 4 lagrade fynd i rummet, 0 med förbjuden form.
   Första kvittot på Vercels egen körning med den nya grinden blir 07:00 UTC dagen efter deploy.
 Sabotage: 10 riktningar, 13 tester fällda. C6 fällde först noll, eftersom sabotaget bröt ett av flera
 alternativ i mönstret. Det gjordes om som borttagning av hela posten.
+**Live efter deploy (76ecf53):** `probe-cronvakt` grön. `send-reminders` svarar 401 utan header, på
+«Bearer undefined» och på fel hemlighet, och motprovet `vakt-pulse` svarar inte 401.
+**Premiumtillgångarna, mätta samma kväll (`probe-premiumtillgangar`, testytan utesluten):**
+· **Inkorgar:** tabellen `oauth_connections` finns inte i produktion («relation does not exist», alltså inte
+  0 rader). Ingen kund har någonsin kopplat en inkorg. Rättelse av bibelns «vi lagrar läs-token som ingen
+  kod använder»: vi lagrar inga.
+· **Analyserna:** 43, varav 16 prissatta (`auto`), 17 i `review_queue` och 10 `unsupported`. 63 % av
+  fakturorna fick alltså ingen prissättning.
+  · Radposter på 35.
+  · Fakturanummer på 25.
+  · Avtalsvillkor på 1 och uppsägningstid på 0.
+  · 1 av 42 avsändare×leverantör har ≥2 fakturor.
+  · 0 dubblettkandidater.
+· **Prisvakten:**
+  · 46 aktuella priser från 24 leverantörer.
+  · 111 svep, det senaste 24 sep.
+  · 13 kandidater.
+  · Historiken är 2 rader.
 
 ---
 
