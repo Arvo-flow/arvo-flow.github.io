@@ -635,8 +635,12 @@ text. Varje sådan form har ett register och en skanning.
 **Öppet:**
 · `api/cron/send-reminders` är ogrindad. Den grindas när CRON_SECRET är bekräftad (skuld #8).
 · `api/track-outcome` är en ogrindad skrivväg som ingen läser.
-· Kohortkortet jämför totalsummor med totalsummor («vad är talet per?», 21 aug). Hur ofta det kan visas mäts
-  av `probe-lagrade-kundtexter` (K3).
+· Kohortkortet jämför totalsummor med totalsummor («vad är talet per?», 21 aug). **Mätt 24 sep (K3): 0 av 15
+  leverantör×kategori-celler når tröskeln, så kortet kan inte visas i dag.** Normaliseringen ska byggas innan
+  den första cellen bär, inte efter.
+**Lagrad text i produktion (`probe-lagrade-kundtexter` på 5b4ed64, motprov M0 ✓):** alla 3 briefing_reports
+bär «Arvo förhandlar» (Switch-doktrinen). Alla 3 är utgångna, så ingen kan nå dem, och läsgranskningen
+skulle ändå undanhålla dem. 4 lagrade fynd i rummet, 0 med förbjuden form.
 
 ---
 
