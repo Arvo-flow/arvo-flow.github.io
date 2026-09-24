@@ -36,7 +36,7 @@ import { getAffectedCustomers, getSegmentStats, hasAlertBeenSent, markAlertSent 
 import { computeImpactKr, parseCheckPrice } from '../lib/price-impact.js';
 import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 import { catLabel } from '../lib/format.js';
-import { bedomLarmunderlag } from '../lib/larmunderlag.js';
+import { bedomLarm } from '../lib/larmunderlag.js';
 
 const REPORT_PATH = process.argv[2] ?? '/tmp/price-monitor-report.json';
 // VERIFIERAD AVSÄNDARDOMÄN (grundarfynd 2026-08-05): den här raden stod på "arvo-flow.se" med
@@ -64,7 +64,7 @@ try {
 // LAGRAR, den här grinden gatar vad vi PÅSTÅR. Obekräftat = tystnad, aldrig ett tal.
 const larmutfall = { verifierad: 0, avvisad: 0, obekraftad: 0 };
 const alerts = (report.alerts ?? []).filter((a) => {
-  const { niva, skal } = bedomLarmunderlag(a.haiku);
+  const { niva, skal } = bedomLarm(a);
   larmutfall[niva] = (larmutfall[niva] ?? 0) + 1;
   if (niva !== 'verifierad') {
     console.warn(`[larmunderlag] ${niva} (${skal}) — ${a.check ?? 'okänd check'}: inget kundutskick`);

@@ -15,7 +15,7 @@
 import { LOFTEN } from '../../lib/kundmeningar.js';
 import crypto from 'crypto';
 import { Resend } from 'resend';
-import { bedomLarmunderlag } from '../../lib/larmunderlag.js';
+import { bedomLarm } from '../../lib/larmunderlag.js';
 import { getDb } from '../../lib/db.js';
 import {
   getAffectedCustomers,
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
   // höjning). Kundmailet får aldrig ställa lägre beviskrav än prisboken — juryn gatar vad vi
   // LAGRAR, den här grinden gatar vad vi PÅSTÅR. Obekräftat = tystnad, aldrig ett tal.
   const alerts = (report.alerts ?? []).filter((a) => {
-    const { niva, skal } = bedomLarmunderlag(a.haiku);
+    const { niva, skal } = bedomLarm(a);
     if (niva !== 'verifierad') {
       console.warn(`[larmunderlag] ${niva} (${skal}) — ${a.check ?? 'okänd check'}: inget kundutskick`);
     }

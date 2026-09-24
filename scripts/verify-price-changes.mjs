@@ -14,6 +14,7 @@ import { readFileSync } from 'fs';
 import { priceChangeVerdict } from '../lib/price-verdict.js';
 import { recordCandidate, markGraduated } from '../lib/price-candidates.js';
 import { recordVerifiedChange } from '../lib/price-db.js';
+import { arMarknadshandelse } from '../lib/prisbaslinje.js';
 
 const path = process.argv[2] ?? '/tmp/price-monitor-report.json';
 
@@ -54,14 +55,27 @@ for (const a of alerts) {
   });
 
   const tag = `${a.supplier}/${a.category}/${a.check} ${v.oldNumeric ?? '?'}→${v.newNumeric}`;
-  if (verdict.tier === 'verified') {
+  // Baslinjen (lib/prisbaslinje.js): det gamla priset måste vara ett VERIFIERAT pris, annars är
+  // «ändringen» bara skillnaden mellan prisvaktens inaktuella förväntan och sidan. Natten 23 sep
+  // «verifierades» Microsoft 119 → 133,82 så, sett 74 nätter i rad.
+  const handelse = verdict.tier === 'verified' ? arMarknadshandelse(a) : null;
+  if (verdict.tier === 'verified' && !handelse.ja) {
+    rejected++;
+    console.log(`[jury] 🚫 AVVISAD (ingen marknadshändelse): ${tag} — ${handelse.skal}`);
+  } else if (verdict.tier === 'verified') {
     const annual = isAnnual(v.unit);
-    await recordVerifiedChange({
-      supplier: a.supplier, category: a.category, sourceUrl: a.url,
+    const skriv = await recordVerifiedChange({
+      supplier: a.supplier, product: a.supplier, tier: a.check ?? null, category: a.category, sourceUrl: a.url,
       oldMonthly: annual ? null : v.oldNumeric, newMonthly: annual ? null : v.newNumeric,
       oldAnnual:  annual ? v.oldNumeric : null, newAnnual:  annual ? v.newNumeric : null,
       changedBy: 'auto-verified',
     });
+    // Loggen sa «skriven» även när skrivningen föll (product NOT NULL, varje natt). Nu säger den vad som hände.
+    if (!skriv.inserted) {
+      console.error(`[jury] ✗ SKRIVNINGEN MISSLYCKADES: ${tag} — ${skriv.error ?? 'ingen databas'}`);
+      process.exitCode = 1;
+      continue;
+    }
     await markGraduated({ supplier: a.supplier, category: a.category, check: a.check });
     verified++;
     console.log(`[jury] ✅ VERIFIED (konf ${verdict.confidence}, sett ${seenCount}×): ${tag} → skriven till ändringsloggen`);

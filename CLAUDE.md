@@ -469,6 +469,27 @@ Tele2-avtal ligger redan bättre än vad jämförbara bolag i er bransch betalar
 `lage.matt: false`. Den fria modelltexten går förbi registret. Det är nästa [KUND]-fynd, öppet: prosan
 måste antingen genereras ur läget (samma drag som attribueringslåset) eller tystas när läget är omätt.
 
+**✅ TOTALA UNDERSÖKNINGEN → FYRA STEG (2026-09-23/24, grundarens mandat).**
+1. **Integritetshålet (d01ea08).** Rummet lämnade ut analyser på ett fingeravtryck som gick att räkna
+   fram (webbläsarens sha256 utan slump; `mail:`/`kontor:` ur e-postadressen), och `send-report` mejlade
+   ett rum till valfri adress. Nu 128 bitar slump (`lib/rumsnyckel.js`, RN-01..06); live: tre gissade
+   nycklar → 400, en slumpad → 200, send-report borta.
+2. **Ytinventeringen (7678e28).** 37 ytor (21 mejlavsändare, 16 routes) hittade av en maskin
+   (`lib/kundytor.js`, YI-01..07, karta `ops/YTKARTA.md`). 18 talade förbi registret.
+3. **Kundmeningsregistret (8591c46).** `lib/kundmeningar.js`: modelltext filtreras vid modellens utgång,
+   prompten får aldrig kohortens tal, varje löfte bär sin mekanism, förbjudna löftesformer skannas
+   (KM-01..10). Stängde bl.a. ett **låtsas-BankID i produktion**, «Bytet är igångsatt» på en stub-räls,
+   månadsbriefens påhittade faktorer (×0,85/×0,7) och «Arvo förhandlar». Skuld kvar: 2 (prospektytan).
+4. **Prisbaslinjen.** Grundarens steg 4 var «gör Microsoft-insikten synlig». **Premissen föll på mätning**
+   (rättelsen ovan). Värre: nattens jury «verifierade» Microsoft 119 → 133,82 (konf 0,95, sett 74×) —
+   119 var prisvaktens INAKTUELLA FÖRVÄNTAN, inte ett pris. Skrivningen föll varje natt på `product NOT
+   NULL` medan loggen sa «skriven», och larmvägarna räknade Slack 15 → 18 som verifierat fast juryn
+   avvisat det. Hade någon «lagat» skrivningen hade kunderna fått «Microsoft höjde 12 %».
+   `lib/prisbaslinje.js`: en ändring är en marknadshändelse bara om det gamla priset är ett VERIFIERAT
+   pris OCH sidan bekräftar det nya; juryn och båda larmvägarna frågar samma funktion (BL-01..06).
+   **Läxan: en jämförelse mellan vår egen gissning och verkligheten ser ut exakt som en marknadshändelse
+   — och en stabilitetsgrind gör den starkare, inte svagare, när gissningen står still.**
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning
@@ -1792,6 +1813,14 @@ getBenchmark({ category, industry, employees })
 - M365 E3: 416,77 kr/mån · E5: 641,18 kr/mån (årligt åtagande)
 - Tele2 mobil, publicerade 24-mån-priser: **269 · 299 · 349 kr/mån** (p25 = lägsta, median = näst lägsta)
 
+> **⚠️ RÄTTELSE 2026-09-24 — DET VAR INGEN HÖJNING HOS MICROSOFT, DET VAR VÅR PRISBOK.** Stycket nedan
+> säger att Microsoft «höjde» i augusti. Prisarkeologin (Wayback, `ops/prisarkeologi/microsoft-365.txt`)
+> visar Basic 66,30 och Standard 138,10 redan från april 2024 till april 2025; vår seed från maj bar
+> 57,40 och 119,48. Rörelsen skedde alltså i VÅRA tal (troligen en «exkl. Teams»-variant, Copilot-fällans
+> syskon), inte på marknaden. Motprov: samma instrument SER en verklig höjning — mellan 18 jan och
+> 18 apr 2024 höjde Microsoft alla tre planerna 10,0 %. Rättningen av prisboken var riktig; ordet
+> «höjde» var det inte, och det hade nästan blivit en kundmening (se «Prisbaslinjen» nedan).
+>
 > **⚠️ SMYGHÖJNINGEN DRABBADE OSS SJÄLVA (2026-08-05).** Verifierar-schemat stängdes av 2026-07-20
 > för att larmet var brusigt. Under de 16 dygn som följde höjde Microsoft Business Basic +16,6 %,
 > Standard +12,0 %, E3 +8,3 %, E5 +5,3 % och Tele2 sin mobil +7–17 % — utan att någon såg det.

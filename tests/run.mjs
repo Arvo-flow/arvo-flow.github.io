@@ -119,6 +119,7 @@ import './lagesregister.mjs';
 import './rumsnyckel.mjs';
 import './ytinventering.mjs';
 import './kundmeningar.mjs';
+import './prisbaslinje.mjs';
 import './rumsrad.mjs';
 import './avvikelsevakten.mjs';
 import './prisbokscellen.mjs';

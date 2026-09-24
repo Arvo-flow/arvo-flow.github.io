@@ -118,7 +118,9 @@ describe('LU · Båda larmvägarna gatar (regel 5 — dubbla alertvägar)', () =
     for (const fil of ['scripts/notify-price-changes.mjs', 'api/cron/run-price-alerts.mjs']) {
       const kod = readFileSync(new URL(`../${fil}`, import.meta.url), 'utf8')
         .split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');
-      assert.match(kod, /bedomLarmunderlag\(/, `${fil}: grinden är inte inkopplad`);
+      // Kontraktsändring 2026-09-24, öppet redovisad: vägarna anropar bedomLarm (lib/larmunderlag.js),
+      // som bär bedomLarmunderlag PLUS marknadshändelsen (lib/prisbaslinje.js, BL-04/05).
+      assert.match(kod, /bedomLarm\(/, `${fil}: grinden är inte inkopplad`);
       assert.equal(/actionRequired !== 'false_positive'/.test(kod), false,
         `${fil}: det gamla filtret är sant för undefined — «AI:n svarade inte» blev «AI:n bekräftade»`);
     }
