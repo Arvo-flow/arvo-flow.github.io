@@ -466,8 +466,11 @@ för omätt rum, rum med fynd och motprovet bra rum.
 **⚠️ Regeln som föll ut: ett läge som finns i registret men inte i API-svaret är ett läge ingen yta
 kan läsa.** Men registret täcker bara det KOD skriver. Samma Tele2-svar bar AI-prosan *«Ert
 Tele2-avtal ligger redan bättre än vad jämförbara bolag i er bransch betalar»* bredvid
-`lage.matt: false`. Den fria modelltexten går förbi registret. Det är nästa [KUND]-fynd, öppet: prosan
-måste antingen genereras ur läget (samma drag som attribueringslåset) eller tystas när läget är omätt.
+`lage.matt: false`. Den fria modelltexten går förbi registret. **Stängt 2026-09-23 (8591c46,
+kundmeningsregistret KM-06/09), verifierat live 24 sep på samma faktura, färsk analys:** före «Ert
+Tele2-avtal är rätt prissatt för er storlek — ni betalar mindre än jämförbara bolag i er bransch»,
+efter «Fakturan visar åtta Tele2 Jobbmobil XL och en Datarouter Flex på årsavtal … Vi har inget
+verifierat publikt listpris att jämföra mot». Motprovet är gårdagens körning: samma instrument såg meningen.
 
 **✅ TOTALA UNDERSÖKNINGEN → FYRA STEG (2026-09-23/24, grundarens mandat).**
 1. **Integritetshålet (d01ea08).** Rummet lämnade ut analyser på ett fingeravtryck som gick att räkna
