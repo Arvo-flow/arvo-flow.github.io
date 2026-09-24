@@ -278,7 +278,7 @@ export function replyHtml({ results, portalLink }) {
         <p style="margin:0 0 12px;font-family:${M.sans};font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${M.muted};">${r.supplier ?? 'Leverantör'}</p>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
           ${r.annualCost ? rowHtml('Årskostnad i dag', `${fmtNumber(r.annualCost)} kr/år`) : ''}
-          ${r.suggestedAnnualCost && r.netSaving > 0 ? rowHtml('Marknadspris, samma tjänst', `${fmtNumber(r.suggestedAnnualCost)} kr/år`, { teal: true }) : ''}
+          ${r.suggestedAnnualCost && r.netSaving > 0 ? rowHtml('Verifierat publikt listpris, samma tjänst', `${fmtNumber(r.suggestedAnnualCost)} kr/år`, { teal: true }) : ''}
         </table>
         ${verdict}
       </td></tr>
@@ -337,7 +337,7 @@ export function bulkReceivedHtml({ count, portalLink }) {
         </td></tr>
         <tr><td style="height:3px;background:linear-gradient(90deg,transparent 0%,${M.teal} 35%,${M.tealBright} 50%,${M.teal} 65%,transparent 100%);font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr><td style="padding:26px 30px 8px;">
-          <p style="margin:0 0 18px;font-family:${M.sans};font-size:14px;line-height:1.65;color:${M.inkSoft};">Arvo analyserar dem nu, en i taget mot verifierat marknadspris. <strong>Ert kontor fylls i takt med att de blir klara</strong> — håll det öppet så ser ni varje fynd landa.</p>
+          <p style="margin:0 0 18px;font-family:${M.sans};font-size:14px;line-height:1.65;color:${M.inkSoft};">Arvo analyserar dem nu, en i taget mot verifierat publikt listpris. <strong>Ert kontor fylls i takt med att de blir klara</strong> — håll det öppet så ser ni varje fynd landa.</p>
           ${portalLink ? `
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 6px;">
             <tr><td align="center">

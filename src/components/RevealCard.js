@@ -354,7 +354,7 @@ export function RumBryggan() {
           (Grundarval 2026-08-13 bland fyra formuleringar.) */}
       <div className="br-h">Vidarebefordra en faktura. Eller femtio.<em>Sedan har ni ett eget rum hos Arvo.</em></div>
       <p className="br-p">
-        Arvo läser varje faktura, väger priset mot verifierat marknadspris och lägger resultatet
+        Arvo läser varje faktura, väger priset mot verifierat publikt listpris och lägger resultatet
         i ert rum. Länken dit kommer i svaret på ert mejl — den är personlig.
         {' '}<b>Upp till hundra fakturor i samma mejl</b>; vi tar dem en och en.
       </p>
@@ -518,7 +518,8 @@ export default function RevealCard({ domain, findings, pending, identity, onValj
   const blandare = visaBlandare ? (
     <div className="rv-aperture">
       <div className="ap-k">
-        <span>{identitetOlost ? `Vi läste ${kandidater.length} bolag som heter något med ${namnstam}. Vilket är ert?` : 'Vilket bolag är ni?'}</span>
+        {/* kundmening-ok: bolag ur Bolagsverket-uppslaget, inte en kohort */}
+      <span>{identitetOlost ? `Vi läste ${kandidater.length} bolag som heter något med ${namnstam}. Vilket är ert?` : 'Vilket bolag är ni?'}</span>
         {/* "N LÄSTA" ÄR BORTTAGET (2026-08-12). Talet kom ur söksidans träfflista — och både
             avida.se och skanska.se visade exakt 25, vilket är hur en fast sidstorlek ser ut, inte
             hur ett mätvärde ser ut. Det såg ut som ett kvitto på vårt arbete men var sannolikt

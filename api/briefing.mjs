@@ -7,12 +7,22 @@
 // Briefingen märks viewed_at vid första GET.
 
 import { getDb } from '../lib/db.js';
+import { granskaLagradText } from '../lib/kundmeningar.js';
 import { Resend } from 'resend';
 
 const FROM     = process.env.RESEND_FROM       ?? 'Arvo Flow <analys@arvoflow.se>';
 const ALERT_TO = process.env.ARVO_ALERT_EMAIL  ?? 'team@arvoflow.se';
 
 export const config = { maxDuration: 15 };
+
+/** Lagrade insikter efter läsgranskningen (granskaLagradText). Exporteras för BR-tester. */
+export function granskadeInsikter(lagrade) {
+  const alla = Array.isArray(lagrade) ? lagrade : [];
+  const insikter = alla.filter((i) => granskaLagradText(i).ren);
+  const undanhallna = alla.length - insikter.length;
+  if (undanhallna) console.warn(`[briefing] ${undanhallna} lagrad(e) insikt(er) bär en form registret förbjuder — visas inte`);
+  return { insikter, undanhallna };
+}
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -62,6 +72,9 @@ export default async function handler(req, res) {
       }
 
       const br = rows[0];
+      // Lagrad text granskas vid läsning: en insikt som bär en form registret förbjuder visas inte.
+      // Undanhålls något stämmer den lagrade summan inte längre med listan — då visas ingen summa.
+      const { insikter, undanhallna } = granskadeInsikter(br.insights);
 
       if (!br.viewed_at) {
         db`UPDATE briefing_reports SET viewed_at = NOW() WHERE id = ${br.id}`.catch(() => {});
@@ -72,11 +85,11 @@ export default async function handler(req, res) {
         briefing: {
           id:                    br.id,
           period:                br.period,
-          insights:              br.insights ?? [],
+          insights:              insikter,
           actionsTaken:          br.actions_taken ?? {},
-          totalSavingPotential:  br.total_saving_potential,
+          totalSavingPotential:  undanhallna ? null : br.total_saving_potential,
           totalInvoicesAnalyzed: br.total_invoices_analyzed,
-          insightCount:          br.insight_count,
+          insightCount:          insikter.length,
           generatedAt:           br.generated_at,
         },
       });
@@ -104,7 +117,7 @@ export default async function handler(req, res) {
       if (!rows.length) return send(res, 404, { error: 'Briefingen hittades inte' });
 
       const br = rows[0];
-      const insight = (br.insights ?? []).find(i => i.id === insightId);
+      const insight = granskadeInsikter(br.insights).insikter.find(i => i.id === insightId);
       if (!insight) return send(res, 404, { error: 'Insikt hittades inte' });
 
       const updated = {

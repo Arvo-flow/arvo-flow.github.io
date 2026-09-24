@@ -11,7 +11,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { MEJLYTOR, SIDYTOR, KLASSER, REGISTERKALLOR } from '../lib/kundytor.js';
+import { MEJLYTOR, SIDYTOR, KLASSER, REGISTERKALLOR, ENDPOINTYTOR, ENDPOINTKLASSER } from '../lib/kundytor.js';
 
 const ROT = new URL('..', import.meta.url).pathname;
 const las = (p) => readFileSync(join(ROT, p), 'utf8');
@@ -124,11 +124,50 @@ describe('YI · ytinventeringen', () => {
     }
   });
 
+  test('YI-09 · varje endpoint är klassad — och varje klassad endpoint finns', () => {
+    const ep = filerUnder('api').filter((p) => p.endsWith('.mjs')).sort();
+    assert.ok(ep.length >= 40, `upptäckten hittade bara ${ep.length} endpoints`);
+    assert.deepEqual(ep.filter((p) => !(p in ENDPOINTYTOR)), [], 'oklassad endpoint — lägg den i ENDPOINTYTOR');
+    assert.deepEqual(Object.keys(ENDPOINTYTOR).filter((p) => !ep.includes(p)), [], 'klassad endpoint som inte finns');
+    for (const [p, y] of Object.entries(ENDPOINTYTOR)) {
+      assert.ok(ENDPOINTKLASSER.includes(y.klass), `${p}: okänd klass ${y.klass}`);
+      if (y.klass === 'oreviderad' || y.klass === 'registret') assert.ok(String(y.pastar ?? '').length >= 30, `${p}: säg vad svaret påstår`);
+      else assert.ok(String(y.skal ?? '').length >= 8, `${p}: skälet saknas`);
+      if (y.klass === 'mejlyta') assert.ok(p in MEJLYTOR, `${p}: mejlyta men inte klassad i MEJLYTOR`);
+    }
+  });
+
+  test('YI-10 · en grind som påstås finns i koden — och en intern endpoint har en (motprov: grind i kommentar räknas inte)', () => {
+    const harGrind = (kod, g) => utanKommentarer(kod).includes(g);
+    for (const [p, y] of Object.entries(ENDPOINTYTOR)) {
+      if (y.klass === 'intern') assert.ok(y.grind, `${p}: intern utan grind — då är den inte intern`);
+      if (y.grind) assert.ok(harGrind(las(p), y.grind), `${p}: grinden ${y.grind} står inte i koden`);
+    }
+    assert.equal(harGrind('// ADMIN_TOKEN\nconst x = 1;', 'ADMIN_TOKEN'), false, 'motprov: en grind i en kommentar är ingen grind');
+    assert.equal(harGrind('if (t !== process.env.ADMIN_TOKEN) return;', 'ADMIN_TOKEN'), true);
+  });
+
+  test('YI-11 · endpointens svar: registret importerar registret, ingen_prisdom säger inget om pris', () => {
+    const ingen = [];
+    for (const [p, y] of Object.entries(ENDPOINTYTOR)) {
+      if (y.klass === 'registret') assert.ok(importerar(las(p), REGISTERKALLOR), `${p} påstås läsa registret men använder det inte`);
+      if (y.klass === 'ingen_prisdom') ingen.push(p);
+    }
+    assert.ok(ingen.length >= 15, 'backstoppen prövar för få endpoints');
+    for (const p of ingen) {
+      const rader = las(p).split('\n');
+      const traff = rader.find((l, i) => !KOMMENTAR.test(l) && ORDFORRAD.test(l) && !/kundmening-ok:\s*\S.{7,}/.test(rader[i - 1] ?? ''));
+      assert.equal(traff, undefined, `${p} säger något om pris/besparing: «${traff?.trim().slice(0, 100)}»`);
+    }
+  });
+
   test('YI-07 · skulden är ett exakt tal — den kan bara krympa med en ändring här', () => {
-    const skuld = [...Object.entries(MEJLYTOR), ...Object.entries(SIDYTOR)].filter(([, y]) => y.klass === 'oreviderad').map(([n]) => n);
+    const skuld = [...Object.entries(MEJLYTOR), ...Object.entries(SIDYTOR), ...Object.entries(ENDPOINTYTOR)].filter(([, y]) => y.klass === 'oreviderad').map(([n]) => n);
     assert.equal(skuld.length, SKULD, `oreviderade ytor: ${skuld.length} (${skuld.join(', ')})`);
   });
 });
 
-// Mätt 2026-09-23 i ytinventeringen. Talet ändras bara i samma commit som en yta flyttas.
-const SKULD = 2;
+// Mätt 2026-09-23 i ytinventeringen (2: prospektmejlet och /prospect). 2026-09-24: endpoints
+// inventerade, två till är oreviderade — api/prospect (samma estimat) och api/reveal (dörrens fynd).
+// Talet ändras bara i samma commit som en yta flyttas.
+const SKULD = 4;

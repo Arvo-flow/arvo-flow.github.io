@@ -11,7 +11,7 @@ export const COST_CATEGORIES = [
     hint: 'Microsoft 365 · Adobe · Fortnox', know: 'verifierat listpris',
     cats: ['saas-productivity', 'saas-creative', 'saas-crm', 'saas-finance', 'saas-other', 'faktura-tjanst', 'managed-workplace'] },
   { key: 'telefoni',  label: 'Telefoni & bredband',    short: 'Telefoni', icon: 'phone',   mode: 'verdict',
-    hint: 'Mobil · växel · bredband', know: 'verifierat marknadspris',
+    hint: 'Mobil · växel · bredband', know: 'verifierat listpris',
     cats: ['mobil', 'bredband', 'molnvaxel'] },
   { key: 'lon',       label: 'Lön & HR',               short: 'Lön',      icon: 'fortnox', mode: 'verdict',
     hint: 'Lönesystem · företagshälsa', know: 'verifierat golv',

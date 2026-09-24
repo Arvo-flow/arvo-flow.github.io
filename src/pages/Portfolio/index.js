@@ -4,7 +4,7 @@
 // eller honest systemkonstant. Lager som kräver data vi ännu inte har
 // (kohort-prisdiskriminering, sannolikhetsprognos) visas ENDAST med verklig
 // täckning — annars utelämnas de (regel 3/4: precision eller tystnad).
-import { ANSVARSGRANS_TEXT } from '../../lib/loften';
+import { ANSVARSGRANS_TEXT, LOFTEN_TEXT, KOHORT_ENHET } from '../../lib/loften';
 import { hamtaRumsnyckel, nyRumsnyckel, RUMSNYCKEL_RE } from '../../utils/rumsnyckel';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -680,13 +680,13 @@ export default function Portfolio() {
       rows.push({ tag: 'Analys', what: <>Vägde <b>{_vagda} {plural(_vagda, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris{latestDate ? <> · senast {latestDate}</> : null}{slutpunkt(latestDate)}</> });
     }
     if (featured) {
-      rows.push({ tag: 'Kohort', what: <>Jämförde era priser mot <b>{featured.n} bolag</b> hos {featured.supplier} via nätverket — sanningen ingen jämförelsesajt kan ge.</> });
+      rows.push({ tag: 'Kohort', what: <>Jämförde era priser mot <b>{featured.n} {KOHORT_ENHET}</b> med fakturor från {featured.supplier} — sanningen ingen jämförelsesajt kan ge.</> });
     }
     if (roomMovement) {
-      rows.push({ tag: 'Rörelse', what: <>Fångade en marknadsrörelse: <b>{roomMovement.title}</b> — {roomMovement.withSupplier} av {roomMovement.total} bolag vi följer berörs.</> });
+      rows.push({ tag: 'Rörelse', what: <>Fångade en marknadsrörelse: <b>{roomMovement.title}</b> — {roomMovement.withSupplier} av {roomMovement.total} {KOHORT_ENHET} vi följer berörs.</> });
     }
     if (roomForecast) {
-      rows.push({ tag: 'Prognos', what: <>Köade ett motdrag inför en trolig höjning: <b>{roomForecast.title}</b>.</> });
+      rows.push({ tag: 'Prognos', what: <>Bevakar en trolig höjning: <b>{roomForecast.title}</b>.</> });
     }
     if (roomClock) {
       // Kvittot säger vad klockan säger. Här stod «N dagar kvar på bindningen, agerar i fönstret» —
@@ -1119,20 +1119,20 @@ export default function Portfolio() {
                   <Truth $full={renewals.length === 0}>
                     <div className="card-eyebrow">
                       <span>Den kollektiva sanningen</span>
-                      <span className="src">{featured.n} bolag · live</span>
+                      <span className="src">{featured.n} {KOHORT_ENHET} · live</span>
                     </div>
                     <h3>
                       {featured.pct >= 8
-                        ? <>{featured.n} bolag hos {featured.supplier} betalar i snitt {fmtNum(featured.median)} kr. Ni betalar <em>{featured.pct}% mer.</em></>
+                        ? <>{featured.n} {KOHORT_ENHET} med fakturor från {featured.supplier} betalar i snitt {fmtNum(featured.median)} kr. Ni betalar <em>{featured.pct}% mer.</em></>
                         : featured.pct <= -8
-                          ? <>Ni betalar <em>{Math.abs(featured.pct)}% mindre</em> än snittet hos {featured.supplier} — {featured.n} bolag jämförda.</>
-                          : <>Ni betalar <em>i nivå</em> med vad {featured.n} bolag betalar hos {featured.supplier}.</>}
+                          ? <>Ni betalar <em>{Math.abs(featured.pct)}% mindre</em> än snittet hos {featured.supplier} — {featured.n} {KOHORT_ENHET} jämförda.</>
+                          : <>Ni betalar <em>i nivå</em> med vad {featured.n} {KOHORT_ENHET} betalar hos {featured.supplier}.</>}
                     </h3>
                     {(() => {
                       const max = Math.max(featured.cost, featured.median, featured.p25 || 0) || 1;
                       const rows = [
                         { lbl: 'Ni betalar', amt: featured.cost, you: true },
-                        { lbl: `Snitt · ${featured.n} bolag`, amt: featured.median, you: false },
+                        { lbl: `Snitt · ${featured.n} ${KOHORT_ENHET}`, amt: featured.median, you: false },
                         ...(featured.p25 ? [{ lbl: 'Lägst 25 %', amt: featured.p25, you: false }] : []),
                       ];
                       return (
@@ -1148,7 +1148,7 @@ export default function Portfolio() {
                       );
                     })()}
                     <p className="truth-note">
-                      Den här raden kräver att man ser <b>många bolags faktiska fakturor samtidigt</b>.
+                      Den här raden kräver att man ser <b>många avsändares faktiska fakturor samtidigt</b>.
                       Ingen jämförelsesajt och ingen konsult kan ge den — bara Arvo, tack vare nätverket.
                     </p>
                   </Truth>
@@ -1921,7 +1921,7 @@ export default function Portfolio() {
             {/* ── Arvo Intelligence — tyst avslutande pitch ───────────────── */}
             <IntelQuiet>
               <div className="iq-k">Arvo Intelligence</div>
-              <h3>Hela reskontran, <em>bevakad dygnet runt.</em></h3>
+              <h3>Månadsbrief och prislarm, <em>utan att ni frågar.</em></h3>
               <p>
                 {/* ⚠️ «ERA PRISER STÅR SIG» STOD I DET OMÄTTA LÄGET (rättat 2026-09-23, avläst i det
                     SKARPA rummet via rum-prisboken.yml). Samma vy sa ovanför «er position mot
@@ -1933,10 +1933,10 @@ export default function Portfolio() {
                     mätt och inte sämre än listpris — samma register som resten av rummet frågar
                     (`beromsLage`, src/lib/domslut.js). RR-12. */}
                 {acting
-                  ? <>I dag vaktar Arvo de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b> — varenda avtal ni har — och larmar er innan nästa höjning når er. Varje månad: ett brev med exakt vad som rört sig, och vad vi gjort åt det.</>
+                  ? <>I dag vaktar Arvo de avtal ni delat. {LOFTEN_TEXT.premiumutskick}</>
                   : rum?.berom
-                    ? <>Era priser står sig i dag, och Arvo vaktar de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b>, så att inget avtal lämnas obevakat — och skickar varje månad ett brev med vad som rört sig.</>
-                    : <>Arvo vaktar de avtal ni delat. Arvo Intelligence vidgar vakten till <b>resten av boken</b>, så att inget avtal lämnas obevakat — och skickar varje månad ett brev med vad som rört sig.</>}
+                    ? <>Era priser står sig i dag, och Arvo vaktar de avtal ni delat. {LOFTEN_TEXT.premiumutskick}</>
+                    : <>Arvo vaktar de avtal ni delat. {LOFTEN_TEXT.premiumutskick}</>}
               </p>
               <div className="iq-row">
                 <span className="iq-price">1 995 kr <span>/ mån · ingen bindningstid</span></span>

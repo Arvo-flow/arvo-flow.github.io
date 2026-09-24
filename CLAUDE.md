@@ -604,6 +604,40 @@ ett löfte till som skanningen missade: «Koppla er inkorg — Arvo hittar allt�
 Utfallsenkäten är forskning, inte premiumvärde. Båda är grundarens att flytta.
 Sabotage: 15 riktningar. P6 (taket före grinden) fällde först noll, eftersom fejkdatabasen ignorerade `LIMIT`.
 
+**✅ REGISTERGRANSKNINGEN — GRUNDARORDER 2026-09-24: «tvinga varje mening som når en kund att hämtas ur
+registret».** Mejl och sidor var inventerade (YI). De 52 endpoints som matar dem var det inte, och lagrad text
+granskades aldrig. Mätt och lagat i samma pass:
+· **[KUND] Prislarmets knapp «Se Arvos förberedda motdrag»** stod kvar på rad 294, under en kommentar på rad
+  171 som sa att den var borttagen. Rummets kvitto sa «Köade ett motdrag». Prognosen sa «Vi köar motdraget och
+  agerar i fönstret». Ingen kod köar, förbereder eller utför ett motdrag.
+· **[KUND] Rummet räknade «bolag», mejlen «avsändare».** Talet räknar skilda avsändare
+  (`getMarketIntelligence`), aldrig bolag. `KOHORT_ENHET` är nu registrets ord i båda ytorna (KM-07).
+· **[KUND] Verifierat listpris kallades «marknadspris»** i åtta ytor, bland dem svarsmejlet («Marknadspris,
+  samma tjänst»), landningen och fakturavyn. Det är fel proveniens enligt regel 3.
+· **[KUND] Intelligence-pitchen lovade «resten av boken — varenda avtal ni har»** och «Hela reskontran,
+  bevakad dygnet runt». Det kräver Fortnox, som är pausat. Nu gäller `LOFTEN.premiumutskick`. Fakturavyn
+  lovade att Arvo «hittar varenda besparing», medan nitton kategorier tiger.
+Maskineriet:
+· `PROVENIENS_OCH_ENHET` och fyra nya löftesformer skannas av KM-05 i hela kundytekoden. KM-05 avkodar
+  HTML-entiteter.
+· `granskaLagradText` granskar lagrad text vid LÄSNING: /briefing visar ingen insikt med förbjuden form, och
+  släpper summan när något undanhålls (KM-16).
+· `ENDPOINTYTOR`: alla 52 endpoints är klassade. En angiven grind måste stå i koden, och en intern endpoint
+  måste ha en (YI-09..11).
+· Skulden är nu 4 (prospektmejlet, /prospect, api/prospect, api/reveal).
+· Renderingssonden `scripts/screenshot-registret.mjs` har motprov mot det gamla bygget. Den fångade rubriken
+  och fotnoten som skanningen missade.
+· Sabotage: 17 riktningar, 18 tester fällda.
+**Emot ordalydelsen, öppet:** «inga fria texter» kan inte maskinvaktas. Kundytorna bär hundratals svenska
+meningar, och en vakt som kräver registret för varje sträng larmar på rätt beteende och blir avstängd (25
+träffar på 20 commits). Det som tvingas är PÅSTÅENDENA: läge, löfte, ansvar, proveniens, enhet och lagrad
+text. Varje sådan form har ett register och en skanning.
+**Öppet:**
+· `api/cron/send-reminders` är ogrindad. Den grindas när CRON_SECRET är bekräftad (skuld #8).
+· `api/track-outcome` är en ogrindad skrivväg som ingen läser.
+· Kohortkortet jämför totalsummor med totalsummor («vad är talet per?», 21 aug). Hur ofta det kan visas mäts
+  av `probe-lagrade-kundtexter` (K3).
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning

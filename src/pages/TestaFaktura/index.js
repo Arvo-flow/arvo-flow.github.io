@@ -1702,7 +1702,7 @@ const TestaFaktura = () => {
                 {result.recommendation?.clickRateAnalysis?.estimatedAnnualSavingsHigh > 0 ? (
                   <EstimateSavingsBlock>
                     <div className="estimate-header">
-                      <span className="kicker">Identifierat besparingsgap</span>
+                      <span className="kicker">Möjlig besparing</span>
                       <span className="estimate-badge">Uppskattning</span>
                     </div>
                     {/* Backend äger aritmetiken (regel 1/2) — frontend renderar bandet, räknar aldrig om. */}
@@ -1712,11 +1712,11 @@ const TestaFaktura = () => {
                 ) : (result.recommendation?.netSaving ?? 0) > 0 ? (
                   <EstimateSavingsBlock>
                     <div className="estimate-header">
-                      <span className="kicker">Identifierat besparingsgap</span>
+                      <span className="kicker">Möjlig besparing</span>
                       <span className="estimate-badge">Uppskattning</span>
                     </div>
                     <span className="amount">≈ +{formatNum(result.recommendation.netSaving)}&nbsp;kr/år</span>
-                    <span className="unit">Jämfört mot verifierat B2B-marknadspris · bekräftas med faktisk offert</span>
+                    <span className="unit">Jämfört mot verifierat publikt listpris · bekräftas med faktisk offert</span>
                   </EstimateSavingsBlock>
                 ) : null}
                 {/* Dropbox/Box-korselden: arkitektonisk substitutionsinsikt. INGEN påhittad SEK-besparing
@@ -2833,9 +2833,9 @@ const TestaFaktura = () => {
             </div>
             <div className="pb-foot">
               <p className="pb-note">
-                En faktura säger en sak. Hela reskontran säger var ni faktiskt
-                blöder. Vidarebefordra era leverantörsfakturor så kartlägger Arvo
-                varje leverantör — och hittar varenda besparing, inte bara den här.
+                En faktura säger en sak. Alla era leverantörsfakturor säger var ni
+                faktiskt blöder. Vidarebefordra dem så går Arvo igenom varje
+                leverantör — inte bara den här.
               </p>
               <Link to="/portfolio" className="pb-link">
                 Kartlägg er reskontra <Icon name="arrow" size={15} stroke={2} />

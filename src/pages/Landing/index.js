@@ -62,9 +62,9 @@ function useTickUp(target, active, duration = 900) {
 // Märks alltid "Exempel" i bildtexten — aldrig ett påstående om besökaren (regel 3/9).
 // Kalendern i den tysta veckan visar ÅTERFÖRSÄKRAN, inte larm: raden är hämtad ur testkorpusens
 // verkliga klockutfall (tests/avtal-fallor.mjs) och framing:en är produktens sanning — kunden
-// behöver inte minnas fönstret, motdraget ligger köat.
+// behöver inte minnas fönstret — vakten säger till.
 const EXEMPEL_RADER = [
-  { days: 266, akut: false, sup: 'Telia', txt: 'Ett redan missat fönster upptäckt — nästa bevakas 1 april 2027. Motdraget ligger färdigt.' },
+  { days: 266, akut: false, sup: 'Telia', txt: 'Ett redan missat fönster upptäckt — nästa bevakas 1 april 2027.' },
 ];
 
 const FAQ = [
@@ -291,8 +291,8 @@ export default function Landing() {
         <div className={`eyebrow ${heroIn}`}>Arvo · finansiell intelligens för svenska bolag</div>
         <h1 className={heroIn}>Er finansdirektör.<br /><em>Innan ni frågar.</em></h1>
         <p className={`lede ${heroIn}`}>
-          Ni delar era fakturor och avtal. Vi väger varje pris mot verifierat marknadspris,
-          läser varje bindningstid — och säger till i tid, med motdraget förberett.
+          Ni delar era fakturor och avtal. Vi väger varje pris mot verifierat publikt listpris,
+          läser varje bindningstid — och säger till i tid, innan fönstret stänger.
           När allt är rätt säger vi det också.
         </p>
         <div className={`actions ${heroIn}`}>
@@ -408,7 +408,7 @@ export default function Landing() {
                   {/* Takt 4 — kalendern som återförsäkran, aldrig som larm */}
                   <div className="a-sec">
                     <div className="a-head">
-                      <span className="a-eyebrow">Maktkalendern · motdraget ligger klart</span>
+                      <span className="a-eyebrow">Maktkalendern · fönstren bevakas</span>
                       <span className="a-count">5 avtal lästa</span>
                     </div>
                     {EXEMPEL_RADER.map((r, i) => (
@@ -444,8 +444,8 @@ export default function Landing() {
         <Steps ref={stepsRef}>
           {[
             ['I', 'Dela', 'Vidarebefordra en faktura eller släpp ett avtal i rummet. Det är allt ni gör.'],
-            ['II', 'Vakten läser', 'Varje pris vägs mot verifierat marknadspris. Varje bindningstid läses ord för ord, med citat som bevis.'],
-            ['III', 'Ni får domen', 'Rätt pris? Vi säger det. Fel pris eller ett fönster som stänger? Ni får larmet i tid — med motdraget förberett.'],
+            ['II', 'Vakten läser', 'Varje pris vägs mot verifierat publikt listpris. Varje bindningstid läses ord för ord, med citat som bevis.'],
+            ['III', 'Ni får domen', 'Rätt pris? Vi säger det. Fel pris eller ett fönster som stänger? Ni får larmet i tid, innan fönstret stänger.'],
           ].map(([n, t, d]) => (
             <div className={`step ${stepsIn}`} key={n}>
               <div className="s-num">{n}</div>
@@ -478,7 +478,7 @@ export default function Landing() {
             {[
               'Smyghöjningslarm — avvikelse fångas direkt',
               'Avtalsklockan — sista uppsägningsdag bevakad',
-              'Priser vägda mot verifierat marknadspris',
+              'Priser vägda mot verifierat publikt listpris',
               'Månadsbrev med det som faktiskt hänt',
             ].map((t) => <div className="pc-row" key={t}><span className="tick">✓</span> {t}</div>)}
             <Link className="pc-cta" to="/intelligence">Aktivera Arvo Intelligence →</Link>

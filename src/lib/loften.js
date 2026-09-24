@@ -8,8 +8,11 @@ export const LOFTEN_TEXT = {
   personligtSvar: 'En av grundarna hör av sig till er.',
   intelligenceAnmalan: 'Vi har tagit emot er anmälan till Arvo Intelligence. En av grundarna hör av sig för att starta abonnemanget — bevakningen slås på först då.',
   premiumutskick: 'Med Arvo Intelligence mejlar vi månadsbriefen och prislarmen för era leverantörer.',
-  gratisanalys: 'Utan abonnemang analyserar vi de fakturor ni laddar upp eller vidarebefordrar, och svarar på dem — däremellan skickar vi inga utskick.',
+  gratisanalys: 'Utan abonnemang analyserar vi de fakturor ni laddar upp eller vidarebefordrar och svarar på dem. Utöver de avtalspåminnelser ni själva beställer skickar vi inga utskick däremellan.',
 };
+
+/** Enheten för varje kohorttal — speglar KOHORT_ENHET (KM-07). Talen räknar avsändare, aldrig bolag. */
+export const KOHORT_ENHET = 'avsändare';
 
 export const ANSVARSGRANS_TEXT = {
   inteOmbud: 'Arvo säger inte upp, tecknar eller ändrar några avtal åt er, och beställningen ger oss ingen fullmakt att göra det.',

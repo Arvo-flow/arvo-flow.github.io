@@ -169,7 +169,7 @@ async function enrichElContext({ annualCost, elKwh, categorized }) {
     return `\nEl-prisintelligens (Nordpool ${zone})${kwhNote}:
   Dagens spotpris: ${spotLabel}
   Bästa elhandlare (bytbar energidel): ${best.name} — ${best.energyPerKwh.toFixed(4)} kr/kWh energipris + ${best.annualFee.toLocaleString('sv-SE')} kr/år avgift${floorLine}
-  Realistiskt uppnåeligt all-in: ${achievablePriceKwh.toFixed(4)} kr/kWh${floorApplied ? ' (golvat vid verifierat marknadspris)' : ''}
+  Realistiskt uppnåeligt all-in: ${achievablePriceKwh.toFixed(4)} kr/kWh${floorApplied ? ' (golvat vid Eurostats verifierade bandpris)' : ''}
   Ni betalar: ${current.priceKwh.toFixed(4)} kr/kWh all-in
   Uppskattad besparing vs kund: ${saving.toLocaleString('sv-SE')} kr/år (${savingPct} %) — aldrig under det verifierade golvet
   Topp 3 elhandlare (energidel):

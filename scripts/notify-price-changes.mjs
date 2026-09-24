@@ -138,7 +138,7 @@ for (const [groupKey, { keyword, category, items: groupAlerts }] of alertGroups)
 
   // Segment-signal: "X av Y bolag i er bransch"
   const segStats = await getSegmentStats({ category, supplierKeyword: keyword });
-  console.log(`  📊 Segmentstatistik: ${segStats.withSupplier} av ${segStats.total} bolag`);
+  console.log(`  📊 Segmentstatistik: ${segStats.withSupplier} av ${segStats.total} avsändare`);
 
   let groupEmailsSent = 0;
   let groupTotalImpactKr = 0;

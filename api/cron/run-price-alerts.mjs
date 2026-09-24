@@ -291,11 +291,11 @@ function buildAlertEmail({ supplierName, groupAlerts, segStats, impact, briefing
   <table cellpadding="0" cellspacing="0" style="margin:0 0 20px">
     <tr><td style="border-radius:10px;background:linear-gradient(135deg,#5DD6CA,#1B6E66)">
       <a href="${briefingUrl}" style="display:inline-block;color:#fff;font-weight:700;font-size:15px;padding:15px 36px;text-decoration:none">
-        ${isIncrease ? 'Se Arvos förberedda motdrag' : 'Se fullständig analys'} &rarr;
+        Se analysen &rarr;
       </a>
     </td></tr>
   </table>
-  <p style="margin:0;font-size:12px;color:#5C6E68">Beräkningen baseras på er senaste faktura. Fullständig verifiering i briefingen ovan.</p>
+  <p style="margin:0;font-size:12px;color:#5C6E68">Beräkningen bygger på er senaste faktura och leverantörens publika prislista.</p>
 </td></tr>
 <tr><td style="padding:16px 36px;border-top:1px solid #D5E2DC;text-align:center">
   <p style="margin:0;font-size:11px;color:#5C6E68">Arvo Flow · <a href="${BASE_URL}/testa-faktura" style="color:#1B7A6E;text-decoration:none">arvoflow.se</a></p>
