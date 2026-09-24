@@ -689,6 +689,21 @@ alternativ i mönstret. Det gjordes om som borttagning av hela posten.
   · 13 kandidater.
   · Historiken är 2 rader.
 
+**✅ ZERO TOUCH-PREMISSEN HÅLLER — MÄTT 2026-09-24 (`probe-lokaldelar`, kontrollen `faktura@` som motprov).**
+· **L1, Resends mottagningslista:** `faktura@`, `sond-<slump>@` och `faktura+sond-<slump>@inbox.arvoflow.se`
+  var alla MOTTAGNA inom ~10 s.
+· **L2, Vercels körlogg:** exakt tre `POST /api/inbound-email 200` kl. 21:00:18–19, samma avsändarhash, inga
+  andra anrop i fönstret.
+En kundunik adress är alltså tekniskt möjlig i dag. **Luckan som återstår är mätt i koden:** handlern knyter
+identiteten till AVSÄNDAREN, inte mottagaren (`data.to` läses bara för testytan). En vidarebefordran från en
+kollega eller en leverantörs egen avsändare hamnar i fel rum eller i inget. Mottagaradressen måste bli
+identitetsnyckeln innan adressen erbjuds.
+**Städresterna samma kväll (5dba0f4):** `drain-ingest` är fail-closed (SL-07), Gmail-vägen är borttagen, och
+fakturavyns «bevakar Arvo alla era leverantörsfakturor löpande» är rättad och spärrad. Två ordningsfel,
+redovisade: `npm run deploy` publicerade frontend från ett ocommittat träd, eftersom commiten först stoppades
+av påståendevakten. Innehållet var detsamma som sedan committades. Och sonden låg på main med ett rött YI-01
+i ~5 min, tills den klassades.
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning
