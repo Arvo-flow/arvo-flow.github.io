@@ -17,6 +17,7 @@ import { join, extname } from 'node:path';
 
 process.env.RESEND_API_KEY ??= 're_test_sond';
 const { ANSVARSGRANS, UNDERLAGET } = await import('../lib/kundmeningar.js');
+const { fakturaLage } = await import('../lib/lagesregister.js');
 const { buildHtml: bekraftelse } = await import('../api/send-confirmation.mjs');
 const { buildCustomerEmail: offert } = await import('../api/quote-request.mjs');
 const { buildHookEmail: brief } = await import('../api/cron/generate-briefings.mjs');
@@ -42,7 +43,9 @@ const fel = (m) => { console.error(`✗ ${m}`); process.exitCode = 1; };
 const ok = (m) => console.log(`✓ ${m}`);
 const text = async (p) => (await p.innerText('body')).replace(/\s+/g, ' ');
 
-const byteSvar = (valuta = 'SEK') => ({
+// Läget räknas med produktionsfunktionen — en handskriven `lage` kan bära en kombination API:t aldrig skickar.
+const medLage = (svar) => ({ ...svar, lage: fakturaLage(svar) });
+const byteSvar = (valuta = 'SEK') => medLage({
   ok: true, route: 'auto',
   extracted: { supplier: 'Telia Sverige AB', amount: 4000, annualCost: 48000, recurringAmount: 4000, billingPeriod: 'monthly', recurring: true,
     confidenceScore: 0.95, notes: [], roamingZone: null, originalCurrency: valuta, fxRate: valuta === 'SEK' ? null : 10.52, fxSource: 'riksbanken', fxDate: '2026-09-22',
@@ -50,7 +53,6 @@ const byteSvar = (valuta = 'SEK') => ({
   categorized: { category: 'mobil', normalizedSupplier: 'Telia', confidence: 0.95, reasoning: 'Mobilabonnemang' },
   recommendation: { recommendationType: 'switch', shouldSwitch: true, suggestedSupplier: 'Tele2', suggestedAnnualCost: 36000,
     grossSaving: 12000, arvoFee: 2400, netSaving: 9600, reasoning: 'Tele2 har ett lägre publicerat listpris för samma abonnemang.', switchSteps: [] },
-  lage: { matt: true, score: 55, etikett: 'Suboptimerat', rubrik: 'inget_byte', harByte: true },
 });
 
 async function sida(bredd, faktura) {
@@ -137,6 +139,44 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     await p.screenshot({ path: join(UT, `${vag.split('?')[0].slice(1)}-${namn}.png`), fullPage: true });
     await p.close();
   }
+}
+
+// 9 · diagnosraden (DM): avstånd till verifierat listpris, aldrig «branschsnittet», aldrig beröm av överbetalning.
+//   Med byte står raden i fakturavyn. Utan byte ritas inget diagnoskort (mätt: bara monitoring och
+//   byte-med-nettobesparing) — men meningen och etiketten går till AKTIVERINGSMEJLET från varje rutt,
+//   så där prövas den: sonden fångar sidans anrop och renderar mejlet med produktionsbyggaren.
+const { buildBriefingHtml } = await import('../api/activate-intelligence.mjs');
+const utanByte = medLage({ ...byteSvar(), recommendation: { recommendationType: 'no_action', shouldSwitch: false, suggestedSupplier: null,
+  suggestedAnnualCost: 43200, grossSaving: 0, arvoFee: 0, netSaving: 0, reasoning: 'Tele2 har ett abonnemang som ligger lägre i pris.', switchSteps: [] } });
+for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
+  let p = await sida(bredd, byteSvar());
+  await ladda(p);
+  let t = await text(p);
+  if (/branschsnitt|branschpris|marknadsmässigt avtal/.test(t)) fel(`9. ${namn} med byte: förbjuden mening står kvar`);
+  else if (!/Ni betalar 33 % över verifierat publikt listpris\. Ett lägre verifierat pris finns att hämta\./.test(t)) fel(`9. ${namn} med byte: diagnosraden saknas`);
+  else ok(`9. ${namn} med byte: diagnosraden mäter mot listpris`);
+  await p.screenshot({ path: join(UT, `diagnos-med-byte-${namn}.png`), fullPage: false });
+  await p.close();
+
+  p = await sida(bredd, utanByte);
+  let aktivering = null;
+  await p.route('**/api/activate-intelligence', (r) => { aktivering = JSON.parse(r.request().postData() || '{}');
+    r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
+  await ladda(p);
+  const knapp = p.getByRole('button', { name: /Aktivera Arvo Intelligence/ });
+  if (await knapp.count()) {
+    await knapp.first().click(); await p.waitForTimeout(500);
+    const inp = await p.$('.ac-email-input');
+    if (inp) { await inp.fill('sond@example.se'); await inp.press('Enter'); await p.waitForTimeout(800); }
+  }
+  if (!aktivering) fel(`9. ${namn} utan byte: aktiveringen nådde aldrig /api/activate-intelligence — grenen prövades inte`);
+  else {
+    const mejl = buildBriefingHtml(aktivering).replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+    if (/branschsnitt|marknadsmässigt avtal|Optimalt/.test(mejl)) fel(`9. ${namn} utan byte: aktiveringsmejlet berömmer en överbetalning`);
+    else if (!/Ni betalar 11 % över verifierat publikt listpris\. Vi föreslår inget byte i dag\./.test(mejl)) fel(`9. ${namn} utan byte: mejlets diagnosrad saknas («${String(aktivering.diagInsight).slice(0, 90)}»)`);
+    else ok(`9. ${namn} utan byte: aktiveringsmejlet säger 11 % över listpris, etikett ${aktivering.diagLabel}`);
+  }
+  await p.close();
 }
 
 // 6 · mejlen — de riktiga byggarna

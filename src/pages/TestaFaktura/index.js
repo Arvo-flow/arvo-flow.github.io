@@ -9,7 +9,7 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr, genitiv, krPerAr } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
-import { ANALYSRUBRIKER } from '../../lib/diagnos';
+import { ANALYSRUBRIKER, diagnosMening, UTAN_VERIFIERAT_PRIS } from '../../lib/diagnos';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { redigeraLeverantor, samaLeverantor } from '../../lib/leverantorsnamn';
 import { COST_CATEGORIES } from '../../lib/costCategories';
@@ -41,26 +41,6 @@ function truncateReasoning(text, maxSentences = 2) {
   const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
   if (sentences.length === 0) return text.length > 200 ? text.slice(0, 200).trimEnd() + '…' : text;
   return sentences.slice(0, maxSentences).join(' ').trim();
-}
-
-function buildKeyFinding({ cat, supplier, seatCount, adjAnnualCost, suggestedAnnualCost, diagOvPct, licenseOverage }) {
-  if (!diagOvPct && !licenseOverage) return null;
-  const fmtN = (n) => new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 }).format(n);
-  if ((cat === 'mobil' || cat === 'molnvaxel') && seatCount > 1) {
-    const perNow = Math.round(adjAnnualCost / seatCount);
-    const perNew = Math.round((suggestedAnnualCost ?? 0) / seatCount);
-    return `${seatCount} abonnemang hos ${supplier} — ${fmtN(perNow)} kr/st/år mot avtalspriset ${fmtN(perNew)} kr/st/år.`;
-  }
-  if (cat?.startsWith('saas') && licenseOverage > 0) {
-    return `${seatCount} licenser hos ${supplier} — varav ${licenseOverage} verkar oanvända.`;
-  }
-  if (cat?.startsWith('saas') && seatCount > 1) {
-    return `${seatCount} licenser hos ${supplier} — ${diagOvPct}% över avtalspris för er storlek.`;
-  }
-  if (diagOvPct > 0 && supplier) {
-    return `${supplier} — ${diagOvPct}% över verifierat marknadspris.`;
-  }
-  return null;
 }
 
 function useCountUp(target, duration = 1600) {
@@ -140,7 +120,7 @@ const SEGMENTS = COST_CATEGORIES;
 const PHASES = [
   { id: 'extract',    label: 'Arvo läser & klassificerar fakturan',  sublabel: 'Tolkar varje rad och post' },
   { id: 'categorize', label: 'Identifierar leverantör & kategori',   sublabel: 'Matchar mot 200+ leverantörsprofiler' },
-  { id: 'recommend',  label: 'Beräknar besparing mot branschindex', sublabel: 'Jämför med svenska branschdata' },
+  { id: 'recommend',  label: 'Beräknar besparing mot verifierat listpris', sublabel: 'Jämför med verifierade publika priser' },
 ];
 
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
@@ -1017,9 +997,7 @@ const TestaFaktura = () => {
   // (lib/lagesregister.js fakturaLage) och vyn renderar det. Utan mätning finns ingen etikett.
   const _lage       = result?.lage ?? null;
   const _diag       = _lage ?? { matt: false, score: null, ovPct: 0, overMarketPct: 0, skal: 'fakturans läge saknades i svaret', etikett: null };
-  const diagOvPct   = _diag.ovPct;
   // "Över marknadspris" = (pris − mål)/mål — ALDRIG andel-av-priset (Svea/85-felet är låst).
-  const diagOverMarketPct = _diag.overMarketPct;
   const diagMatt    = _diag.matt;
   // Gaugen ritas på 0 när talet är omätt (ren grafik); siffran visas som "—" och ingen etikett sätts.
   const diagScore   = _diag.score ?? 0;
@@ -1062,21 +1040,12 @@ const TestaFaktura = () => {
     ? getCategoryMeta(_secSaving.category)
     : getCategoryMeta(result?.categorized?.category ?? 'uncategorized');
 
-  // Magnitudmedveten benchmarkfras: "kostar väsentligt mindre" får bara sägas när
-  // gapet faktiskt är väsentligt (≥15 %) — vid små gap är frasen självmotsägande.
-  const _bmPhrase = diagOvPct >= 15
-    ? (_effectiveMeta.smfBenchmark ?? 'ett lägre verifierat marknadspris finns att hämta')
-    : 'samma avtal kostar mindre till leverantörens publika årsavtalspris';
-  // Utan mätt tal säger vi vad vi VET (kundens kostnad) och vad vi inte kunde göra — aldrig ett
-  // omdöme om priset. Grenen ligger FÖRST så ingen av de score-baserade texterna kan nås.
-  const diagInsight = !diagMatt
-    ? `Vi har läst er faktura och ert nuläge — men ${_diag.skal}. Vi hävdar därför inget om er prisnivå i dag, och lägger aldrig fram en besparing vi inte kan räkna hem.`
-    : _isSecondaryOnlySwitch
-    ? `Ert ${getCategoryMeta(result?.categorized?.category ?? 'uncategorized').label.toLowerCase()} är konkurrenskraftigt — ${_secLabel ?? 'sekundärtjänsten'} kan optimeras.`
-    : diagScore < 45
-        ? (diagOverMarketPct > 0 ? `Ni betalar ${diagOverMarketPct}% över marknadspris — ${diagOvPct >= 15 ? (_effectiveMeta.smfBenchmark ?? 'stor besparingspotential') : _bmPhrase}.` : 'Ni betalar markant sämre än branschsnittet — stor besparingspotential.')
-        : diagScore < 80 ? (diagOverMarketPct > 0 ? `Ni betalar ${diagOverMarketPct}% över marknadspris — ${_bmPhrase}.` : 'Ni betalar något sämre än branschsnittet — ett lägre verifierat marknadspris finns att hämta.')
-        : 'Ni har ett marknadsmässigt avtal — bättre än branschsnittet.';
+  // Diagnosens mening ur registret (src/lib/diagnos.js, DG-01): avstånd till verifierat listpris med
+  // talet, aldrig «branschsnittet» och aldrig beröm av en överbetalning. Stod här: en benchmarkfras och en
+  // trevägsgren på score som sa «marknadsmässigt — bättre än branschsnittet» vid 11 % över listpris.
+  const diagInsight = diagMatt && _isSecondaryOnlySwitch
+    ? `Vi föreslår inget byte för ${getCategoryMeta(result?.categorized?.category ?? 'uncategorized').label.toLowerCase()} — ${_secLabel ?? 'sekundärtjänsten'} kan optimeras.`
+    : diagnosMening(_diag, { harByte: !!_diag.harByte });
 
   const GAUGE_R = 26;
   const GAUGE_C = 2 * Math.PI * GAUGE_R;
@@ -1154,7 +1123,7 @@ const TestaFaktura = () => {
         <Eyebrow><span className="dot" /> Arvo Intelligence · Analys på 60 sekunder</Eyebrow>
         <Headline>Ni betalar för mycket. <em>En</em> faktura bevisar det.</Headline>
         <Lede>
-          Arvo Intelligence jämför er faktura mot verkliga branschpriser och visar
+          Arvo Intelligence jämför er faktura mot verifierade publika listpriser och visar
           exakt vad ni betalar för mycket — och hos vem ni kan spara.
         </Lede>
       </Hero>
@@ -1959,7 +1928,7 @@ const TestaFaktura = () => {
                         <PriceNote $compact>
                           {_effectiveMeta.benchmarkType === 'list-verified'
                             ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.'
-                            : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från en verifierad lägre leverantör.')}
+                            : (_effectiveMeta.benchmarkNote ?? UTAN_VERIFIERAT_PRIS)}
                         </PriceNote>
                       )}
                     </>
@@ -2065,7 +2034,7 @@ const TestaFaktura = () => {
               <PriceNote>
                 {_effectiveMeta.benchmarkType === 'list-verified'
                   ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.'
-                  : (_effectiveMeta.benchmarkNote ?? 'Uppskattad besparing baserad på Arvos branschdata — exakt utfall via offert från en verifierad lägre leverantör.')}
+                  : (_effectiveMeta.benchmarkNote ?? UTAN_VERIFIERAT_PRIS)}
               </PriceNote>
             )}
             {result.route === 'auto' && !result.categorized?.licensePending && !_effectiveMeta.isRealPrice && result.savingRange && (

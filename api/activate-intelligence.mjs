@@ -135,6 +135,13 @@ function buildWelcomeHtml(email, company) {
 
 // ── Post-analysis: full briefing email ────────────────────────────────────────
 
+/** Avståndet över jämförelsepriset ur samma två tal som poängen — «Optimalt» får aldrig sättas på en
+ *  överbetalning (DG-02). Utan båda talen: 0, alltså ingen spärr, men då finns heller ingen mätt poäng. */
+export const overMarketPctAv = (annualCost, suggestedAnnualCost) => {
+  const a = Number(annualCost) || 0; const s = Number(suggestedAnnualCost) || 0;
+  return a > 0 && s > 0 && a > s ? Math.round(((a - s) / s) * 100) : 0;
+};
+
 export function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, netSaving, arvoFee, reasoning: raReasoning, diagScore, diagLabel, diagInsight }) {
   // Modelltexten kommer från webbläsaren — den passerar registret här (KM-08).
   const reasoning = kundensMotivering(raReasoning).text;
@@ -146,7 +153,7 @@ export function buildBriefingHtml({ supplier, annualCost, suggestedAnnualCost, n
   const matt    = diagScore != null && Number.isFinite(Number(diagScore));
   const dc      = matt ? diagColors(Number(diagScore)) : { dot: '#9CA3AF', bg: '#F3F4F6', labelClr: '#4B5563' };
   const score   = matt ? Number(diagScore) : '–';
-  const label   = matt ? diagnosEtikett(Number(diagScore)) : 'Inte mätt';
+  const label   = matt ? diagnosEtikett(Number(diagScore), { overMarketPct: overMarketPctAv(annualCost, suggestedAnnualCost) }) : 'Inte mätt';
 
   return `<!DOCTYPE html>
 <html lang="sv">
@@ -278,7 +285,7 @@ export default async function handler(req, res) {
         VALUES
           (${email}, ${companyName}, ${supplier ?? null}, ${category ?? null},
            ${annualCost ?? null}, ${netSaving ?? null}, ${diagScore ?? null},
-           ${diagScore != null && Number.isFinite(Number(diagScore)) ? diagnosEtikett(Number(diagScore)) : null}, ${source})
+           ${diagScore != null && Number.isFinite(Number(diagScore)) ? diagnosEtikett(Number(diagScore), { overMarketPct: overMarketPctAv(annualCost, suggestedAnnualCost) }) : null}, ${source})
         RETURNING id
       `;
       activationId = rows[0]?.id ?? null;
@@ -314,7 +321,7 @@ export default async function handler(req, res) {
         <b>E-post:</b> ${email}<br>
         <b>Bolag:</b> ${companyName ?? '–'}<br>
         <b>Kategori:</b> ${category ?? '–'}<br>
-        <b>Score:</b> ${diagScore != null && Number.isFinite(Number(diagScore)) ? `${diagScore}/100 (${diagnosEtikett(Number(diagScore))})` : 'inte mätt'}<br>
+        <b>Score:</b> ${diagScore != null && Number.isFinite(Number(diagScore)) ? `${diagScore}/100 (${diagnosEtikett(Number(diagScore), { overMarketPct: overMarketPctAv(annualCost, suggestedAnnualCost) })})` : 'inte mätt'}<br>
         <b>Nettobesparing:</b> ${netSaving ? `+${fmt(netSaving)} kr/år` : '–'}<br>
         <b>K&auml;lla:</b> ${source}<br>
         <b>ID:</b> ${activationId ?? '–'}

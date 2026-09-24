@@ -546,6 +546,26 @@ också motsatsen.
 · Arvodets utlösare saknar mekanism i en strikt förberedande modell. Liggaren vet bara om byten VI utfört.
 · Integritetspolicyn lovar «raderas inom 24 timmar» medan analyser arkiveras och aldrig raderas (11 sep).
 
+**⚠️ «BÄTTRE ÄN BRANSCHSNITTET» — BERÖM AV EN ÖVERBETALNING, MOT ETT TAL SOM INTE FINNS (2026-09-24).**
+Fakturavyns diagnos sa «Ni har ett marknadsmässigt avtal — bättre än branschsnittet» när poängen var 80
+eller högre. Poängen mäts bara mot `suggestedAnnualCost` (verifierat listpris), och den är bara mätt när
+kunden betalar MER än det. Ingen kod räknar något branschsnitt. Mätt med `diagnos()`: 11 % över listpris
+utan byte gav score 85, etiketten «Optimalt» och den rosande meningen.
+**Nåbar, och det är avläst:**
+· I koden: minimigränsen (`savingPerYear < 500`) nollar `shouldSwitch` men lämnar `suggestedAnnualCost`
+  kvar.
+· I det byggda paketet: fakturavyn visar inget diagnoskort utan byte, men `diagInsight` och etiketten
+  går till AKTIVERINGSMEJLET från varje rutt. Renderingssonden fångade det gamla bygget när det skickade
+  meningen dit.
+Nu:
+· `diagnosMening` (`src/lib/diagnos.js`) säger bara avståndet till verifierat publikt listpris, med talet.
+· «Optimalt» kräver att kunden inte betalar över jämförelsepriset.
+· «branschsnitt/branschdata/branschpris» fälls i kundytekoden (DM-01..04).
+· 12 kategorinoter som lovade «uppskattad besparing baserad på branschsnitt» säger nu att vi saknar
+  verifierat pris.
+· Två döda filer med samma påstående togs bort: `buildKeyFinding` och `ArvoScore.js`.
+**Syskonet `(a−s)/a` kallat «% över»** (85-felet) satt i den döda `buildKeyFinding`.
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning

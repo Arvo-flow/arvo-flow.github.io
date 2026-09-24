@@ -117,6 +117,7 @@ import './rattstorleksfynd.mjs';
 import './paminnelse.mjs';
 import './lagesregister.mjs';
 import './rumsnyckel.mjs';
+import './diagnosmening.mjs';
 import './ytinventering.mjs';
 import './kundmeningar.mjs';
 import './prisbaslinje.mjs';

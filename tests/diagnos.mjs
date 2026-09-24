@@ -126,8 +126,11 @@ describe('DG-08 · Analyssidan läser den delade domen', () => {
     const i = kod.indexOf('const diagInsight');
     assert.ok(i > 0, 'hittade inte diagInsight — vakten mäter fel objekt');
     const forstaGrenen = kod.slice(i, kod.indexOf('\n', kod.indexOf('?', i)));
-    assert.match(forstaGrenen, /!diagMatt/,
-      'den omätta grenen måste ligga FÖRST — annars kan en score-baserad text nås först');
+    // 2026-09-24: meningarna flyttade till registret (src/lib/diagnos.js diagnosMening, vars första gren
+    // är `!lage?.matt` — prövat i DM-01). Vyns enda egna gren måste fortfarande kräva ett mätt tal.
+    assert.match(forstaGrenen, /!diagMatt|diagMatt &&/,
+      'vyns egen gren nås utan mätt tal — då kan en text om priset nås utan mätning');
+    assert.match(kod.slice(i, i + 600), /diagnosMening\(_diag/, 'resten av diagnosen formuleras inte av registret');
   });
 });
 

@@ -164,6 +164,7 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
       <div class="intel-row"><span class="intel-desc">Verifierat publikt listpris</span><span class="intel-val green">${fmt(cat.arvoAnnual)} kr/år</span></div>
       <div class="saving-bar">Sannolik premie: ≈ ${fmt(catCentral)} kr/år (intervall ${fmt(cat.savingLow)}–${fmt(cat.savingHigh)})</div>
     </div>` : ''}
+    <!-- kundmening-ok: prospektskulden (lib/kundytor.js SKULD) — estimatorn läser kohortens livedata -->
     <div class="disclaimer">Dessa siffror är uppskattningar baserade på branschdata och verifierade listpriser. Exakt analys kräver er faktura — ladda upp den på 2 minuter.</div>
     <a href="${prospectUrl}" class="cta-btn">Se er fullständiga kostnadsbedömning →</a>
   </div>

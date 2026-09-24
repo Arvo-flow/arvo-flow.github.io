@@ -68,3 +68,34 @@ export const ANALYSRUBRIKER = {
     text: 'Koppla Fortnox / Visma så mappar vi era volymer mot marknadens bästa priser direkt.',
   },
 };
+
+// ── DIAGNOSENS MENING — AVSTÅND TILL VERIFIERAT LISTPRIS, ALDRIG ETT BRANSCHSNITT (2026-09-24) ──────
+// Här (i TestaFaktura) stod «Ni har ett marknadsmässigt avtal — bättre än branschsnittet.» och «Ni betalar
+// något/markant sämre än branschsnittet». Poängen mäts bara mot `suggestedAnnualCost` — ett verifierat
+// listpris — och är bara mätt när kunden betalar MER än det. Mätt: 11 % över listpris utan byte gav
+// score 85 och den rosande meningen. Inget branschsnitt räknas någonstans i kedjan.
+// Meningen säger nu exakt vad som mättes: avståndet till verifierat listpris, med talet. Den berömmer
+// aldrig (DG-01), och en klickprispoäng (skrivarleasing) säger att den bygger på ett estimerat band.
+// Blind: meningen läser `lage` som API:t räknat — ett fel i `diagnos()` syns här som ett korrekt formulerat fel.
+
+/** Text när kategorin saknar verifierat publikt pris — ersätter «Uppskattad besparing baserad på branschsnitt». */
+export const UTAN_VERIFIERAT_PRIS = 'Vi har inget verifierat publikt pris för den här kategorin och visar därför ingen besparing. Ett exakt pris kräver en offert.';
+
+/**
+ * @param {{ matt: boolean, grund?: string|null, overMarketPct?: number, skal?: string|null }} lage  fakturans läge ur API:t
+ * @param {{ harByte?: boolean }} [opt]
+ * @returns {string}
+ */
+export function diagnosMening(lage, { harByte = false } = {}) {
+  if (!lage?.matt) {
+    return `Vi har läst er faktura och ert nuläge — men ${lage?.skal ?? 'jämförelsen kunde inte göras'}. Vi hävdar därför inget om er prisnivå i dag, och lägger aldrig fram en besparing vi inte kan räkna hem.`;
+  }
+  if (lage.grund === 'klickpris') {
+    return 'Poängen bygger på fakturans klickpriser mot ett estimerat prisband, inte på ett verifierat listpris.';
+  }
+  const pct = Number(lage.overMarketPct) || 0;
+  const avstand = pct >= 1
+    ? `Ni betalar ${pct} % över verifierat publikt listpris.`
+    : 'Ni betalar mindre än en procent över verifierat publikt listpris.';
+  return `${avstand} ${harByte ? 'Ett lägre verifierat pris finns att hämta.' : 'Vi föreslår inget byte i dag.'}`;
+}
