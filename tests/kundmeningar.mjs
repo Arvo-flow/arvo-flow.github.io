@@ -20,7 +20,11 @@ const las = (p) => readFileSync(join(ROT, p), 'utf8');
 const TELE2 = 'Ert Tele2-avtal ligger redan bättre än vad jämförbara bolag i er bransch betalar. Fakturan omfattar 23 abonnemang.';
 
 /** Blankar kommentarer (även /* … *\/ över flera rader och JSX-kommentarer) men behåller radnumren. */
-const utanKommentarer = (s) => s
+// HTML-entiteter avkodas före skanningen: mejlmallarna skriver «s&ouml;ker igenom era leverant&ouml;rsfakturor»,
+// och en skanning som läser entiteten som text ser aldrig löftet (fyndet 2026-09-24, aktiveringsmejlet).
+const ENTITETER = { ouml: 'ö', Ouml: 'Ö', auml: 'ä', Auml: 'Ä', aring: 'å', Aring: 'Å', eacute: 'é', nbsp: ' ', mdash: '—', ndash: '–', amp: '&', rarr: '→', middot: '·' };
+const avkodaEntiteter = (s) => s.replace(/&(\w+);/g, (m, n) => ENTITETER[n] ?? m);
+const utanKommentarer = (s) => avkodaEntiteter(s)
   .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
   .split('\n').map((l) => (/^\s*\/\//.test(l) ? '' : l)).join('\n');
 
@@ -89,12 +93,21 @@ describe('KM · kundmeningsregistret', () => {
       'Arvo söker igenom er inkorg — ni behöver inte lyfta ett finger.', 'Arvo bevakar nu er inkorg.',
       'Arvo söker er inkorg efter leverantörsfakturor och skickar er första fullständiga briefing inom en timme.',
       'Arvo söker igenom era leverantörsfakturor och kontaktar er när något hänt.',
+      // Premiumgrinden (2026-09-24): anmälan är ett öppet formulär och slår inte på någon bevakning.
+      'Arvo börjar bevaka er imorgon bitti.', 'Arvo börjar bevaka er inom 24 timmar.', 'Arvo startar bevakningen inom 24h',
+      'Bevakningen börjar inom 24 timmar', 'Arvo aktiverar er bevakning inom 24h', 'Koppla er inkorg — Arvo hittar allt',
     ];
+    // Mejlmallarna skriver svenska tecken som HTML-entiteter; skanningen avkodar dem (KM-05).
+    assert.ok(LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(utanKommentarer('Arvo s&ouml;ker igenom er inkorg'))),
+      'en entitetskodad löftesform passerar skanningen');
     const missade = borttagna.filter((m) => !LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(m)));
     assert.deepEqual(missade, [], 'en borttagen exekutiv mening kan komma tillbaka osedd');
     for (const [k, m] of Object.entries(ANSVARSGRANS)) {
       if (k === 'inteOmbud') continue;   // «Arvo säger inte upp» — nekandet fälls medvetet av säger-upp-formen; spegeln är undantagen som register (KM-05)
       assert.ok(!LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(m)), `ansvarsgränsens «${k}» fälls av registret`);
+    }
+    for (const k of ['intelligenceAnmalan', 'premiumutskick', 'gratisanalys']) {
+      assert.ok(!LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(LOFTEN[k].text)), `löftet «${k}» fälls av registret`);
     }
     for (const t of Object.values(UNDERLAGET)) assert.ok(!LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(t)), `flödets ord fälls: ${t}`);
   });

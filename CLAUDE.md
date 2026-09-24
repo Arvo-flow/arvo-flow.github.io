@@ -579,6 +579,31 @@ Kohortexemplet «8 av 15 bolag i samma kohort» är borta ur Intelligence-kortet
 som exempel. **Öppet, grundarens beslut:** vi lagrar läs-token till kunders inkorgar som ingen kod
 använder. Dataminimering talar för att sluta samla in dem eller att bygga läsningen.
 
+**✅ PREMIUMGRINDEN — GRUNDARORDER 2026-09-24: «Gratiskunder får endast den reaktiva fakturavyn, inga
+proaktiva utskick.»** Månadsbriefen och prislarmen gick till varje adress med en analys. Nu frågar båda
+`lib/premiumkrets.js` och ingen annan: `briefMottagare` (generate-briefings) och `getAffectedCustomers` (den
+enda mottagarlistan för `run-price-alerts` och `notify-price-changes`). PG-01..07.
+Mätt i produktion före grinden (`probe-premiumgrind`, b8add98):
+· `intelligence_activations` hade 1 rad (juni).
+· Briefkretsen var 3 adresser (1 testidentitet, 1 med aktiveringsrad).
+· Prislarmen: 81 mejl över 1 342 körningar, alla till den aktiverade adressen.
+· Avtalspåminnelsernas krets var 0.
+**Grinden är «beviljad rad», inte «rad» — och det avviker från ordens ordalydelse, öppet:** raden skapas av
+ett öppet POST utan inloggning eller betalning. En grind på «raden finns» hade gett 1 995-kronorstjänsten till
+den som fyller i formuläret. Premium kräver `premium_beviljad_at` (satt enbart av workflowen
+`bevilja-premium`, adressen som `sha256:<hex>`) och tom `premium_avslutad_at`. Följden: **ingen får briefs
+eller prislarm förrän grundaren beviljat**, inte heller den ena aktiverade adressen. En krets som inte går
+att läsa kastar: briefen svarar 503, larmet kastar, och ingetdera säger «0».
+**Anmälan lovade en bevakning som inte finns.** «Aktiverat. Arvo börjar bevaka er inom 24 timmar» stod på
+/aktivera, /intelligence, i välkomstmejlet och på prospektsidan. Nu gäller `LOFTEN.intelligenceAnmalan`
+(en av grundarna hör av sig; bevakningen slås på först då), `premiumutskick` och `gratisanalys`.
+KM-05 avkodar numera HTML-entiteter. Utan det såg den aldrig «s&ouml;ker igenom era leverant&ouml;rsfakturor»
+i analysmejlet. Renderingssonden (`scripts/screenshot-premiumgrind.mjs`, motprov mot det gamla bygget) hittade
+ett löfte till som skanningen missade: «Koppla er inkorg — Arvo hittar allt».
+**Medvetet ogrindat:** avtalspåminnelserna. Kunden beställer dem per faktura, och löftet står skrivet.
+Utfallsenkäten är forskning, inte premiumvärde. Båda är grundarens att flytta.
+Sabotage: 15 riktningar. P6 (taket före grinden) fällde först noll, eftersom fejkdatabasen ignorerade `LIMIT`.
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning

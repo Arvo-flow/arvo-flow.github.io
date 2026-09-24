@@ -131,4 +131,27 @@ await sql`
 await sql`CREATE INDEX IF NOT EXISTS switch_records_state_idx ON switch_records (state)`;
 console.log('✓ switch_records: skapad (switchliggaren — underlag för arvodeskörningen)');
 
+// ── intelligence_activations: premiumgrinden (grundarorder 2026-09-24) ───────────────────────
+// Tabellen skapades hittills bara av api/activate-intelligence (självläkning). Premiumgrinden
+// (lib/premiumkrets.js) läser två kolumner som ingen formulärpost får sätta: bara grundarens
+// workflow bevilja-premium skriver dem. En rad utan beviljande är en anmälan, inte en kund.
+await sql`
+  CREATE TABLE IF NOT EXISTS intelligence_activations (
+    id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+    email       TEXT        NOT NULL,
+    company     TEXT,
+    supplier    TEXT,
+    category    TEXT,
+    annual_cost INTEGER,
+    net_saving  INTEGER,
+    diag_score  INTEGER,
+    diag_label  TEXT,
+    source      TEXT        NOT NULL DEFAULT 'unknown',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`ALTER TABLE intelligence_activations ADD COLUMN IF NOT EXISTS premium_beviljad_at TIMESTAMPTZ`;
+await sql`ALTER TABLE intelligence_activations ADD COLUMN IF NOT EXISTS premium_avslutad_at TIMESTAMPTZ`;
+console.log('✓ intelligence_activations: premium_beviljad_at + premium_avslutad_at (premiumgrinden)');
+
 console.log('\n✅ Arvo Intelligence Fas 1-migreringar klara.');

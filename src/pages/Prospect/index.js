@@ -299,7 +299,7 @@ export default function Prospect() {
           Eller låt Arvo bevaka er löpande — Arvo Intelligence, 1&nbsp;995 kr/mån →
         </SecondaryLink>
         <SecondaryCtaSub>
-          Ingen bindningstid · Bevakningen börjar inom 24 timmar
+          Ingen bindningstid · En av grundarna hör av sig och startar abonnemanget
         </SecondaryCtaSub>
       </CtaSection>
 

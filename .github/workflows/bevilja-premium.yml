@@ -1,0 +1,38 @@
+name: Bevilja / avsluta premium (grundaren)
+
+# Premiumgrinden (lib/premiumkrets.js): en anmälan blir en premiumkund först här. Adressen anges
+# som sha256:<hex av lower(trim(adress))> — en personlig adress står aldrig i en publik logg.
+on:
+  workflow_dispatch:
+    inputs:
+      atgard:
+        description: 'bevilja eller avsluta'
+        required: true
+        default: 'bevilja'
+      adress:
+        description: 'sha256:<hex av lower(trim(adress))>'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  premium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Ändra premiumkretsen
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Indata via env, aldrig interpolerat i skriptet (skriptinjektion).
+          ATGARD: ${{ inputs.atgard }}
+          ADRESS: ${{ inputs.adress }}
+        run: |
+          set -o pipefail
+          node scripts/bevilja-premium.mjs "$ATGARD" "$ADRESS"

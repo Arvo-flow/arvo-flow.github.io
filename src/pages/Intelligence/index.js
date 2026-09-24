@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
+import { LOFTEN_TEXT } from '../../lib/loften';
 import {
   Page,
   HeroSection, HeroInner,
@@ -223,18 +224,15 @@ export default function Intelligence() {
         <ActivationInner>
           {formStatus !== 'sent' && (
             <ActivationHeadline>
-              Arvo börjar bevaka<br />imorgon bitti.
+              Låt Arvo bevaka<br />era leverantörer.
             </ActivationHeadline>
           )}
 
           {formStatus === 'sent' ? (
             <ActivationSuccess>
               <ActivationSuccessCheck>✓</ActivationSuccessCheck>
-              <ActivationSuccessTitle>Aktiverat.</ActivationSuccessTitle>
-              <ActivationSuccessSub>
-                Arvo börjar bevaka er inom 24&nbsp;timmar.<br />
-                Vi hör av oss när det finns något att agera på.
-              </ActivationSuccessSub>
+              <ActivationSuccessTitle>Anmälan mottagen.</ActivationSuccessTitle>
+              <ActivationSuccessSub>{LOFTEN_TEXT.intelligenceAnmalan}</ActivationSuccessSub>
               {email && <ActivationSuccessEmail>{email}</ActivationSuccessEmail>}
             </ActivationSuccess>
           ) : (
@@ -262,7 +260,7 @@ export default function Intelligence() {
                   autoComplete="organization"
                 />
                 <ActivationSubmitBtn type="submit" disabled={formStatus === 'submitting'}>
-                  {formStatus === 'submitting' ? '…' : 'Aktivera bevakningen →'}
+                  {formStatus === 'submitting' ? '…' : 'Anmäl intresse →'}
                 </ActivationSubmitBtn>
                 {formErr && <ActivationError>{formErr}</ActivationError>}
               </ActivationForm>
@@ -270,7 +268,7 @@ export default function Intelligence() {
           )}
 
           <ActivationNote>
-            1&nbsp;995&nbsp;kr/mån · Ingen bindningstid · Arvo startar bevakningen inom 24h
+            1&nbsp;995&nbsp;kr/mån · Ingen bindningstid · {LOFTEN_TEXT.premiumutskick}
           </ActivationNote>
         </ActivationInner>
       </ActivationSection>

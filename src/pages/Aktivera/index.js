@@ -88,7 +88,7 @@ export default function Aktivera() {
           {status !== 'sent' && (
             <>
               <Headline>
-                Arvo börjar bevaka er<br />imorgon bitti.
+                Låt Arvo bevaka<br />era leverantörer.
               </Headline>
               <Sub>1&nbsp;995&nbsp;kr/mån &middot; Ingen bindningstid</Sub>
             </>
@@ -99,14 +99,11 @@ export default function Aktivera() {
               /* ── Success ── */
               <SuccessWrap>
                 <CheckRing><CheckIcon /></CheckRing>
-                <SuccessHeadline>Aktiverat.</SuccessHeadline>
-                <SuccessSub>
-                  Arvo börjar bevaka er inom 24&nbsp;timmar.<br />
-                  Ni hör av oss när det finns något att agera på.
-                </SuccessSub>
+                <SuccessHeadline>Anmälan mottagen.</SuccessHeadline>
+                <SuccessSub>{LOFTEN_TEXT.intelligenceAnmalan}</SuccessSub>
                 <SuccessEmail>{email}</SuccessEmail>
 
-                <UpgradeLabel>Koppla er inkorg — Arvo hittar allt</UpgradeLabel>
+                <UpgradeLabel>Koppla er inkorg</UpgradeLabel>
                 <OAuthBtn href={gmailUrl} style={{ marginBottom: 9 }}>
                   <OAuthBadge $provider="google">G</OAuthBadge>
                   <OAuthLabel>Koppla Gmail</OAuthLabel>
@@ -150,7 +147,7 @@ export default function Aktivera() {
                     autoComplete="email"
                   />
                   <SubmitBtn type="submit" disabled={status === 'submitting'}>
-                    {status === 'submitting' ? '…' : 'Aktivera →'}
+                    {status === 'submitting' ? '…' : 'Anmäl intresse →'}
                   </SubmitBtn>
                 </EmailRow>
                 {errMsg && <ErrorMsg>{errMsg}</ErrorMsg>}

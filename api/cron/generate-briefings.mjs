@@ -15,17 +15,17 @@ import { generateBriefingInsights } from '../../lib/briefing-generator.js';
 import { Resend }                   from 'resend';
 import crypto                       from 'crypto';
 import { cronAnropTillatet } from '../../lib/cronvakt.js';
+import { lasPremiumkrets, premiumFilter } from '../../lib/premiumkrets.js';
 
 const FROM     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
 const BASE_URL = process.env.ARVO_BASE_URL    ?? 'https://arvoflow.se';
 
 export const config = { maxDuration: 60 };
 
-export default async function handler(req, res) {
+export default async function handler(req, res, { db = getDb() } = {}) {
   // Grinden bor i lib/cronvakt.js: en osatt hemlighet nekar, den blir aldrig strängen «undefined».
   if (!cronAnropTillatet(req)) return res.status(401).json({ error: 'unauthorized' });
 
-  const db = getDb();
   if (!db) return res.status(503).json({ error: 'DB ej tillgänglig' });
 
   const now = new Date();
@@ -39,17 +39,17 @@ export default async function handler(req, res) {
   const periodLabel = periodDate.toLocaleString('sv-SE', { month: 'long', year: 'numeric' });
   const periodDisplay = periodLabel.charAt(0).toUpperCase() + periodLabel.slice(1);
 
-  // Alla unika emails med analyser förra månaden (max 50/körning)
-  const emails = await db`
-    SELECT DISTINCT user_email
-    FROM invoice_analyses   -- liggare: kundvy
-    WHERE user_email  IS NOT NULL
-      AND route        = 'auto'
-      AND arkiverad_at IS NULL
-      AND created_at  >= ${periodStart}
-      AND created_at   < ${periodEnd}
-    LIMIT 50
-  `;
+  // PREMIUMGRINDEN: månadsbriefen är ett proaktivt utskick och går bara till premiumkretsen.
+  // Kan kretsen inte läsas skickas INGENTING och svaret säger varför — aldrig «0 skickade».
+  let urval;
+  try {
+    urval = await briefMottagare(db, { periodStart, periodEnd });
+  } catch (err) {
+    console.error('[generate-briefings] premiumkretsen okänd — inga utskick:', err.message);
+    return res.status(503).json({ error: 'premiumkretsen kunde inte läsas — inga briefs skickade' });
+  }
+  const emails = urval.mottagare;
+  if (urval.utestangda) console.log(`[premiumgrind] brief: ${urval.utestangda} adress(er) utanför premiumkretsen får ingen brief`);
 
   const resend  = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
   const results = [];
@@ -131,10 +131,31 @@ export default async function handler(req, res) {
   return res.status(200).json({
     ok:        true,
     period,
+    utanforPremium: urval.utestangda,
     processed: results.length,
     sent:      results.filter(r => r.ok && !r.skipped).length,
     results,
   });
+}
+
+/**
+ * Månadsbriefens mottagare: adresser med auto-analys under perioden, FILTRERADE på premiumkretsen.
+ * Kastar när kretsen inte kan läsas. Max 50 per körning, räknat EFTER grinden — annars kunde
+ * femtio gratisadresser tränga undan en premiumkund.
+ */
+export async function briefMottagare(db, { periodStart, periodEnd }) {
+  const alla = await db`
+    SELECT DISTINCT user_email
+    FROM invoice_analyses   -- liggare: kundvy
+    WHERE user_email  IS NOT NULL
+      AND route        = 'auto'
+      AND arkiverad_at IS NULL
+      AND created_at  >= ${periodStart}
+      AND created_at   < ${periodEnd}
+  `;
+  const krets = await lasPremiumkrets(db);
+  const { kvar, utestangda } = premiumFilter(alla, krets, (r) => r.user_email);
+  return { mottagare: kvar.slice(0, 50), utestangda };
 }
 
 // Premium hook-email — kortare än ett bankkort, tyngre än ett revisorsutlåtande.

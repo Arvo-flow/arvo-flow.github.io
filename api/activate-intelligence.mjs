@@ -4,7 +4,7 @@
 // Cold signup (source=intelligence-page): premium welcome email.
 // Post-analysis signup (source=testa-faktura): full briefing email with analysis data.
 
-import { kundensMotivering, ANSVARSGRANS } from '../lib/kundmeningar.js';
+import { kundensMotivering, ANSVARSGRANS, LOFTEN } from '../lib/kundmeningar.js';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { diagnosEtikett } from '../lib/lagesregister.js';
@@ -36,7 +36,7 @@ function diagColors(score) {
 
 // ── Cold signup: welcome email ────────────────────────────────────────────────
 
-function buildWelcomeHtml(email, company) {
+export function buildWelcomeHtml(email, company) {
   const firstName  = email.split('@')[0].split('.')[0];
   const displayName = company
     ? company.trim()
@@ -47,7 +47,7 @@ function buildWelcomeHtml(email, company) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Arvo Intelligence är aktiverat</title>
+<title>Anmälan mottagen · Arvo Intelligence</title>
 </head>
 <body style="margin:0;padding:0;background:#F2F7F4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
 
@@ -64,14 +64,14 @@ function buildWelcomeHtml(email, company) {
         <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.22em;color:#4FBFB3;vertical-align:middle;">Arvo Intelligence</span>
       </td>
       <td align="right">
-        <span style="font-size:11px;color:rgba(255,255,255,0.30);">Aktiverat just nu</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.30);">Anmälan mottagen</span>
       </td>
     </tr></table>
     <p style="margin:20px 0 0;font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-.025em;line-height:1.15;">
-      Arvo börjar bevaka<br>${displayName} nu.
+      Tack${company ? ` — ${displayName}` : ''}.
     </p>
     <p style="margin:10px 0 0;font-size:14px;color:rgba(255,255,255,0.45);line-height:1.6;">
-      Ni ska inte behöva hålla koll. Det är Arvos jobb.
+      ${LOFTEN.intelligenceAnmalan.text}
     </p>
   </td></tr>
 
@@ -86,8 +86,8 @@ function buildWelcomeHtml(email, company) {
         <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#060D0B;color:#ffffff;font-size:12px;font-weight:700;text-align:center;line-height:26px;">1</span>
       </td>
       <td valign="top" style="padding-left:8px;">
-        <p style="font-size:14px;font-weight:700;color:#0E1A17;margin:3px 0 4px;letter-spacing:-.01em;">Arvo aktiverar er bevakning inom 24h</p>
-        <p style="font-size:13px;color:#5C6E68;margin:0;line-height:1.6;">Vi sätter upp er profil och börjar övervaka era leverantörskategorier.</p>
+        <p style="font-size:14px;font-weight:700;color:#0E1A17;margin:3px 0 4px;letter-spacing:-.01em;">En av grundarna hör av sig</p>
+        <p style="font-size:13px;color:#5C6E68;margin:0;line-height:1.6;">Vi går igenom vad abonnemanget omfattar och startar det när ni vill.</p>
       </td>
     </tr></table>
 
@@ -97,8 +97,8 @@ function buildWelcomeHtml(email, company) {
         <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#060D0B;color:#ffffff;font-size:12px;font-weight:700;text-align:center;line-height:26px;">2</span>
       </td>
       <td valign="top" style="padding-left:8px;">
-        <p style="font-size:14px;font-weight:700;color:#0E1A17;margin:3px 0 4px;letter-spacing:-.01em;">Arvo kontrollerar fakturor mot era avtal</p>
-        <p style="font-size:13px;color:#5C6E68;margin:0;line-height:1.6;">Avvikelser, smyghöjningar och förnyelsefönster flaggas automatiskt.</p>
+        <p style="font-size:14px;font-weight:700;color:#0E1A17;margin:3px 0 4px;letter-spacing:-.01em;">Med abonnemanget: utskick utan att ni frågar</p>
+        <p style="font-size:13px;color:#5C6E68;margin:0;line-height:1.6;">${LOFTEN.premiumutskick.text}</p>
       </td>
     </tr></table>
 
@@ -108,13 +108,13 @@ function buildWelcomeHtml(email, company) {
         <span style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#060D0B;color:#ffffff;font-size:12px;font-weight:700;text-align:center;line-height:26px;">3</span>
       </td>
       <td valign="top" style="padding-left:8px;">
-        <p style="font-size:14px;font-weight:700;color:#0E1A17;margin:3px 0 4px;letter-spacing:-.01em;">Ni hör av oss — inte tvärtom</p>
-        <p style="font-size:13px;color:#5C6E68;margin:0;line-height:1.6;">Arvo kontaktar er när något hänt som ni behöver veta. Inget nyhetsbrev, inga rapporter utan anledning.</p>
+        <p style="font-size:14px;font-weight:700;color:#0E1A17;margin:3px 0 4px;letter-spacing:-.01em;">Redan i dag, utan abonnemang</p>
+        <p style="font-size:13px;color:#5C6E68;margin:0;line-height:1.6;">${LOFTEN.vidarebefordran.text}</p>
       </td>
     </tr></table>
 
     <div style="border-top:1px solid #EEF4F2;padding-top:28px;margin-bottom:28px;">
-      <p style="font-size:13px;color:#5C6E68;margin:0 0 18px;line-height:1.6;">Medan Arvo sätter upp bevakningen — testa er första faktura direkt och se exakt vad ni betalar mot vad marknaden tar.</p>
+      <p style="font-size:13px;color:#5C6E68;margin:0 0 18px;line-height:1.6;">Eller ladda upp en faktura direkt och se vad ni betalar mot verifierat publikt listpris.</p>
       <a href="https://arvoflow.se/testa-faktura" style="display:block;text-align:center;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);color:#ffffff;font-size:15px;font-weight:700;padding:16px 32px;border-radius:12px;text-decoration:none;letter-spacing:-.01em;">Analysera er första faktura &rarr;</a>
     </div>
 
@@ -218,13 +218,13 @@ ${reasoning ? `<tr><td style="padding:24px 36px;border-bottom:1px solid #EEF4F2;
 <div style="border:1px solid #D5E2DC;border-top:2px solid #1B7A6E;border-radius:14px;padding:20px 22px;">
 <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:#1B7A6E;margin:0 0 8px;">Helhetsbilden</p>
 <p style="font-size:16px;font-weight:800;color:#0E1A17;margin:0 0 8px;letter-spacing:-.02em;">Det h&auml;r var en faktura.</p>
-<p style="font-size:13px;color:#5C6E68;margin:0 0 18px;line-height:1.6;">Koppla er inkorg &mdash; Arvo s&ouml;ker igenom era leverant&ouml;rsfakturor och kartl&auml;gger varje besparing, inte bara den h&auml;r.</p>
-<a href="https://arvoflow.se/api/auth/gmail-init" style="display:inline-block;padding:10px 18px;border:1px solid #D5E2DC;border-radius:8px;font-size:13px;font-weight:600;color:#0E1A17;text-decoration:none;margin-right:8px;background:#ffffff;">G&nbsp;&nbsp;Koppla Gmail &rarr;</a>
-<a href="https://arvoflow.se/api/auth/outlook-init" style="display:inline-block;padding:10px 18px;border:1px solid #D5E2DC;border-radius:8px;font-size:13px;font-weight:600;color:#0E1A17;text-decoration:none;background:#ffffff;">&#9632;&nbsp;&nbsp;Koppla Outlook &rarr;</a>
+<p style="font-size:13px;color:#5C6E68;margin:0 0 18px;line-height:1.6;">${LOFTEN.vidarebefordran.text}</p>
+<a href="https://arvoflow.se/testa-faktura" style="display:inline-block;padding:10px 18px;border:1px solid #D5E2DC;border-radius:8px;font-size:13px;font-weight:600;color:#0E1A17;text-decoration:none;background:#ffffff;">Analysera fler fakturor &rarr;</a>
 </div>
 </td></tr>
 
 <tr><td style="padding:20px 36px 28px;border-top:1px solid #EEF4F2;">
+<p style="font-size:13px;color:#3D5249;margin:0 0 14px;text-align:center;line-height:1.6;">${LOFTEN.intelligenceAnmalan.text}</p>
 <p style="font-size:11px;color:#8A9E98;margin:0;text-align:center;line-height:1.7;">Arvo Flow &middot; arvoflow.se &middot; hej@arvoflow.se<br>Arvo l&auml;ser bara faktura-mail &mdash; aldrig personlig korrespondens.</p>
 </td></tr>
 
@@ -300,7 +300,7 @@ export default async function handler(req, res) {
     : buildBriefingHtml({ supplier: companyName, annualCost, suggestedAnnualCost, netSaving, arvoFee, reasoning, diagScore, diagLabel, diagInsight });
 
   const subject = isColdSignup
-    ? 'Arvo Intelligence är aktiverat.'
+    ? 'Vi har tagit emot er anmälan till Arvo Intelligence'
     : `Arvo Intelligence · ${companyName ?? 'Er leverantörsanalys'}`;
 
   try {
