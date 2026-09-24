@@ -54,7 +54,7 @@ console.log(JSON.stringify({
       : 'NYCKEL SAKNAS'])),
   reasoningHead:       (data.recommendation?.reasoning ?? '').slice(0, 140),
   // LÄGESREGISTRET + AVTALSKLOCKAN (2026-09-23): läget API:t dikterar, och klockans läge/plan.
-  lage:                data.lage ? { matt: data.lage.matt, score: data.lage.score, etikett: data.lage.etikett, rubrik: data.lage.rubrik, harByte: data.lage.harByte } : 'SAKNAS',
+  lage:                data.lage ? { matt: data.lage.matt, grund: data.lage.grund ?? 'NYCKEL SAKNAS', overMarketPct: data.lage.overMarketPct, score: data.lage.score, etikett: data.lage.etikett, rubrik: data.lage.rubrik, harByte: data.lage.harByte } : 'SAKNAS',
   klockLage:           data.contractClock?.lage ?? null,
   klockSistaDag:       data.contractClock?.actByDate ?? null,
   klockPaminnelse:     data.contractClock?.paminnelse ?? null,
