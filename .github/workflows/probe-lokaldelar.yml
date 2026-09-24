@@ -1,0 +1,28 @@
+name: Sond — godtyckliga lokaldelar på inbox (Resend)
+
+# Vision A:s premiss: levereras faktura+<nyckel>@ och <nyckel>@inbox.arvoflow.se? Tre mejl utan bilaga,
+# kontrollen faktura@ är motprovet. L2 (webhooken) läses i Vercels körlogg i tidsfönstret som skrivs ut.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Skicka till tre lokaldelar och läs mottagningen
+        shell: bash
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+        run: |
+          set -o pipefail
+          node scripts/probe-lokaldelar.mjs
