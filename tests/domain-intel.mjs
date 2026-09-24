@@ -15,9 +15,10 @@ describe('domainFromEmail', () => {
     assert.equal(domainFromEmail('https://www.foo.se/kontakt'), 'foo.se');
   });
   test('privat mejldomän → null (inget bolag att läsa av)', () => {
-    assert.equal(domainFromEmail('mettan@gmail.com'), null);
-    assert.equal(domainFromEmail('x@outlook.com'), null);
-    assert.equal(domainFromEmail('y@hotmail.se'), null);
+    // Lokaldelen är påhittad med flit — repot är publikt (hemlighetsvakten); domänen är det testet prövar.
+    assert.equal(domainFromEmail('exempel@gmail.com'), null); // hemlighet-ok: påhittad lokaldel, privat domän är testets fråga
+    assert.equal(domainFromEmail('exempel@outlook.com'), null); // hemlighet-ok: påhittad lokaldel, privat domän är testets fråga
+    assert.equal(domainFromEmail('exempel@hotmail.se'), null); // hemlighet-ok: påhittad lokaldel, privat domän är testets fråga
   });
   test('vanlig felstavning av gratisleverantör → null (gamil/gmial/hotmial)', () => {
     assert.equal(domainFromEmail('met.sogojeva@gamil.com'), null);
@@ -212,7 +213,9 @@ describe('buildRevealFindings · Lekia-fallet: gateway-MX men SPF bär sanningen
 
   test('pengabryggan: listan slutar i fakturadörren — samma dörr som M365-fyndet', () => {
     const sup = f.find((x) => x.kind === 'suppliers');
-    assert.match(sup.detail, /rad i era kostnader/);
+    // 2026-09-24: «Varje namn är en rad i era kostnader» var falsifierbart (en avsändare är ofta ingen leverantör).
+    assert.match(sup.detail, /syns i era fakturor/);
+    assert.doesNotMatch(sup.detail, /rad i era kostnader/);
     assert.match(sup.detail, /dela fakturorna, så läser vi dem exakt/);
   });
 

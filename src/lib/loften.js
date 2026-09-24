@@ -21,6 +21,13 @@ export const ANSVARSGRANS_TEXT = {
   arvode: 'Genomför ni bytet utgår ett arvode om 20 % av första årets besparing, som en engångsavgift tre månader efter att det nya avtalet aktiverats. Genomför ni det inte kostar underlaget ingenting.',
 };
 
+export const PROSPEKT_TEXT = {
+  ankareRubrik: 'Verifierat publikt listpris — det lägsta vi kan belägga',
+  ingenKostnad: 'Vad ni själva betalar ser vi först i en faktura. Därför räknar vi ingen besparing åt er här.',
+  nivaOkand: 'Vilken nivå ni har vet vi inte — priset gäller den namngivna produkten.',
+  cta: 'Se vad ni betalar mot listpris',
+};
+
 export const UNDERLAGET_TEXT = {
   cta: 'Beställ besparingsunderlaget',
   skicka: 'Beställ underlaget',

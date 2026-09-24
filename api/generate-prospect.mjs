@@ -11,7 +11,9 @@ import crypto from 'crypto';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { mapSni } from '../lib/sni-mapper.js';
-import { estimateForProfile, bucketForSize } from '../lib/outbound-estimator.js';
+import { bucketForSize } from '../agents/recommender/branchindex.js';
+import { prospektAnkare } from '../lib/listprisankare.js';
+import { PROSPEKT, granskaLagradText } from '../lib/kundmeningar.js';
 import { swMonthYear, monthsAgo, MX_LABELS } from '../lib/format.js';
 import { fetchBusinessFactsByOrgnr } from '../lib/business-intel.js';
 
@@ -37,8 +39,16 @@ function fmt(n) {
 
 
 
-function buildOutboundEmail({ companyName, industry, employees, estimates, prospectUrl, foundedYear, mxPlatform, mxSince, domainRegistered }) {
-  const useFrozen = mxPlatform && foundedYear && MX_LABELS[mxPlatform];
+/** Ett ankare som en rad i mejlet: produkt, pris per enhet och verifieringsdatum. */
+const ankareRad = (a) => `<div class="intel-row"><span class="intel-desc">${a.referensProdukt}</span><span class="intel-val green">${fmt(a.perEnhetAr)} kr ${a.enhet.replace(/^per /, 'per ')} · verifierat ${a.verifierad}</span></div>`;
+
+/**
+ * Prospektmejlet (registergranskningen 2026-09-24). Det säger vad vi SER utifrån (DNS, Bolagsverket) och
+ * det lägsta verifierade publika listpriset per enhet — aldrig vad bolaget betalar eller kan spara, för
+ * det har vi inte sett. Varje mening om vad vi vet och inte vet kommer ur registret (PROSPEKT).
+ * Exporterad för renderingssonden och KM-18.
+ */
+export function buildOutboundEmail({ companyName, industry, employees, ankare = [], prospectUrl, foundedYear, mxPlatform, mxSince, domainRegistered }) {
   const CSS = `
   body { margin:0; padding:0; background:#f4f4f4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
   .wrap { max-width:560px; margin:32px auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08); }
@@ -69,104 +79,47 @@ function buildOutboundEmail({ companyName, industry, employees, estimates, prosp
     <path d="M50 5 L12 85 L35 85 L50 55 L65 85 L88 85 Z" fill="url(#g)"/>
   </svg>`;
 
-  const HEADER = `<div class="header">${LOGO}<span class="logo-text">Arvo Intelligence</span><span class="tag">Kostnadsbedömning</span></div>`;
-  const FOOTER = `<div class="footer"><div class="footer-text">Arvo Intelligence · 1&nbsp;995 kr/mån · Ingen bindningstid<br><a href="https://arvoflow.se" style="color:#1DB09A;text-decoration:none;">arvoflow.se</a><br><br>Vi fakturerar aldrig förrän ni sparar.</div></div>`;
+  const HEADER = `<div class="header">${LOGO}<span class="logo-text">Arvo Intelligence</span><span class="tag">Profil</span></div>`;
+  const FOOTER = `<div class="footer"><div class="footer-text">Arvo Intelligence · 1&nbsp;995 kr/mån · Ingen bindningstid<br><a href="https://arvoflow.se" style="color:#1DB09A;text-decoration:none;">arvoflow.se</a></div></div>`;
 
-  if (useFrozen) {
-    const platformLabel = MX_LABELS[mxPlatform];
-    // Premien kommer ur estimatorn (prisboken/verifierade listpriser) —
-    // aldrig ur en heuristik. Saknas estimat visas ingen siffra alls.
-    const saving = estimates?.hasEstimates
-      ? { low: estimates.totalSavingLow, high: estimates.totalSavingHigh, central: estimates.totalSavingCentral }
-      : null;
-    const mxSinceLabel  = swMonthYear(mxSince);
-    const mxMonths      = mxSince ? monthsAgo(mxSince) : null;
-    const domRegLabel   = swMonthYear(domainRegistered);
+  const platformLabel = MX_LABELS[mxPlatform] ?? null;
+  const mxSinceLabel  = swMonthYear(mxSince);
+  const mxMonths      = mxSince ? monthsAgo(mxSince) : null;
+  const domRegLabel   = swMonthYear(domainRegistered);
+  const idag = new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    const openingPara = mxSince
-      ? `Vi gick igenom er digitala uppsättning den ${new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' })}. Er <strong>${platformLabel}</strong>-uppsättning har stått orörd sedan <strong>${mxSinceLabel}</strong> — ${mxMonths} månader.`
-      : `Vi hittade er via Bolagsverket. Ni kör <strong>${platformLabel}</strong> och grundades ${foundedYear}.`;
+  const openingPara = platformLabel && mxSince
+    ? `Vi gick igenom er publika digitala uppsättning den ${idag}. Er <strong>${platformLabel}</strong>-uppsättning har stått orörd sedan <strong>${mxSinceLabel}</strong> — ${mxMonths} månader.`
+    : platformLabel
+      ? `Vi gick igenom er publika digitala uppsättning den ${idag}. Ni kör <strong>${platformLabel}</strong>${foundedYear ? ` och grundades ${foundedYear}` : ''}.`
+      : `Vi gick igenom det som går att se om ${companyName} utifrån den ${idag}.`;
 
-    const contextPara = mxSince
-      ? `Om era telekomavtal är lika gamla vet vi inte — det visar en enda faktura.`
-      : `Hur era avtal ser ut vet vi inte förrän vi sett en faktura.`;
-    // Här stod berättelser om prospektets avtal i faktaform («telekomavtalet tecknades i bolagets tidiga
-    // år och har förnyats automatiskt»). Ingen mätning bär dem — regel 4 kräver grund, konfidens och
-    // asymmetri för en bedömning, och en berättelse har ingen av dem (kundmeningsregistret).
-
-    return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Arvo — ${companyName}</title><style>${CSS}</style></head><body>
 <div class="wrap">
   ${HEADER}
   <div class="body">
-    <div class="eyebrow">Arvo har analyserat er profil</div>
+    <div class="eyebrow">Det vi ser utifrån</div>
     <h1>${companyName}</h1>
-    <div class="meta">${industry} &nbsp;·&nbsp; ${employees} anställda &nbsp;·&nbsp; Grundat ${foundedYear}</div>
+    <div class="meta">${industry} &nbsp;·&nbsp; ${employees} anställda${foundedYear ? ` &nbsp;·&nbsp; Grundat ${foundedYear}` : ''}</div>
 
     <p class="intro">${openingPara}</p>
-    <p class="intro">${contextPara}</p>
 
-    <div class="intel-card">
+    ${platformLabel || domRegLabel ? `<div class="intel-card">
       <div class="intel-label">Vad vi redan ser</div>
-      <div class="intel-row">
-        <span class="intel-desc">E-postplattform</span>
-        <span class="intel-val">${platformLabel}</span>
-      </div>
-      ${mxSince ? `<div class="intel-row">
-        <span class="intel-desc">Uppsättningen orörd sedan</span>
-        <span class="intel-val green">${mxSinceLabel} (${mxMonths} mån)</span>
-      </div>` : ''}
-      ${domRegLabel ? `<div class="intel-row">
-        <span class="intel-desc">Domän registrerad</span>
-        <span class="intel-val">${domRegLabel}</span>
-      </div>` : ''}
-      ${saving ? `<div class="intel-row">
-        <span class="intel-desc">Sannolik premie — bolag med er profil</span>
-        <span class="intel-val green">≈ ${fmt(saving.central)} kr/år (${fmt(saving.low)}–${fmt(saving.high)})</span>
-      </div>` : ''}
-      <div class="saving-bar">Exakt siffra levereras när ni laddar upp er faktura — tar 2 minuter</div>
-    </div>
-
-    <div class="disclaimer">
-      Bedömningen baseras på er storlek, plattform och bransch. Den exakta besparingen
-      beror på ert faktiska avtal — vi levererar den siffran utan kostnad och utan bindning.
-    </div>
-
-    <a href="${prospectUrl}" class="cta-btn">Se er kostnadsbedömning →</a>
-  </div>
-  ${FOOTER}
-</div></body></html>`;
-  }
-
-  // Fallback: generic estimates email (backward compatible)
-  const cat      = estimates.categories?.[0];
-  const hasSaving = estimates.hasEstimates && cat;
-  const savingRange = hasSaving ? `${fmt(estimates.totalSavingLow)}–${fmt(estimates.totalSavingHigh)} kr/år` : null;
-  const catCentral  = hasSaving
-    ? (cat.savingCentral ?? Math.round((cat.savingLow + cat.savingHigh) / 2 / 500) * 500)
-    : null;
-
-  return `<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Arvo Kostnadsbedömning — ${companyName}</title><style>${CSS}</style></head><body>
-<div class="wrap">
-  ${HEADER}
-  <div class="body">
-    <div class="eyebrow">Konfidentiell analys</div>
-    <h1>${companyName}</h1>
-    <div class="meta">${industry} &nbsp;·&nbsp; ${employees} anställda</div>
-    <p class="intro">
-      Arvo har analyserat kostnadsprofilen för bolag i er bransch med ${employees}&nbsp;anställda.
-      ${savingRange ? `Vår bedömning, utan att ha sett en faktura: en möjlig besparing på <strong>${savingRange}</strong>.` : 'Vår bedömning identifierar besparingspotential i er kostnadsprofil.'}
-    </p>
-    ${hasSaving ? `<div class="intel-card">
-      <div class="intel-label">${cat.label}</div>
-      <div class="intel-row"><span class="intel-desc">Typisk marknadskostnad</span><span class="intel-val">${fmt(cat.typicalLow)}–${fmt(cat.typicalHigh)} kr/år</span></div>
-      <div class="intel-row"><span class="intel-desc">Verifierat publikt listpris</span><span class="intel-val green">${fmt(cat.arvoAnnual)} kr/år</span></div>
-      <div class="saving-bar">Sannolik premie: ≈ ${fmt(catCentral)} kr/år (intervall ${fmt(cat.savingLow)}–${fmt(cat.savingHigh)})</div>
+      ${platformLabel ? `<div class="intel-row"><span class="intel-desc">E-postplattform</span><span class="intel-val">${platformLabel}</span></div>` : ''}
+      ${mxSince ? `<div class="intel-row"><span class="intel-desc">Uppsättningen orörd sedan</span><span class="intel-val green">${mxSinceLabel} (${mxMonths} mån)</span></div>` : ''}
+      ${domRegLabel ? `<div class="intel-row"><span class="intel-desc">Domän registrerad</span><span class="intel-val">${domRegLabel}</span></div>` : ''}
     </div>` : ''}
-    <!-- kundmening-ok: prospektskulden (lib/kundytor.js SKULD) — estimatorn läser kohortens livedata -->
-    <div class="disclaimer">Dessa siffror är uppskattningar baserade på branschdata och verifierade listpriser. Exakt analys kräver er faktura — ladda upp den på 2 minuter.</div>
-    <a href="${prospectUrl}" class="cta-btn">Se er fullständiga kostnadsbedömning →</a>
+
+    ${ankare.length ? `<div class="intel-card">
+      <div class="intel-label">${PROSPEKT.ankareRubrik}</div>
+      ${ankare.map(ankareRad).join('\n      ')}
+    </div>` : ''}
+
+    <div class="disclaimer">${PROSPEKT.ingenKostnad}${ankare.some((a) => a.kraverBekraftadNiva) ? ` ${PROSPEKT.nivaOkand}` : ''}</div>
+
+    <a href="${prospectUrl}" class="cta-btn">${PROSPEKT.cta} →</a>
   </div>
   ${FOOTER}
 </div></body></html>`;
@@ -227,9 +180,10 @@ export default async function handler(req, res) {
 
   const sizeBucket = bucketForSize(employees);
 
-  // Generate estimates — pass mxPlatform so M365 category is included when confirmed via DNS.
-  // industry → lib/benchmark.js läskedja: prisbokens livedata används när den bär.
-  const estimates = await estimateForProfile({ segment: profile.segment, sizeBucket, employees, mxPlatform, industry: profile.label });
+  // Profilen lagras i kolumnen `estimates` (namnet är historiskt). Den bär bara det som är avläst:
+  // Bolagsverket, DNS-fynden och — räknat vid läsning i api/prospect — listprisankaret. Ingen
+  // kostnad och ingen besparing: den gamla estimatorn gissade båda (lib/listprisankare.js).
+  const estimates = {};
 
   if (business) estimates.business = business;
 
@@ -239,7 +193,11 @@ export default async function handler(req, res) {
   if (frozenScore)      estimates.frozenScore       = parseInt(frozenScore, 10);
   if (mxSince)          estimates.mxSince           = mxSince;
   if (domainRegistered) estimates.domainRegistered  = domainRegistered;
-  if (Array.isArray(findings) && findings.length)   estimates.findings = findings;
+  // Fynden är text ur fynd-motorn (scripts/score-leads). De granskas mot registret innan de lagras.
+  if (Array.isArray(findings) && findings.length) {
+    const rena = findings.filter((f) => granskaLagradText(f).ren);
+    if (rena.length) estimates.findings = rena;
+  }
 
   // Create token
   const token = crypto.randomBytes(18).toString('base64url');
@@ -266,15 +224,17 @@ export default async function handler(req, res) {
       companyName,
       industry:    profile.label,
       employees,
-      estimates,
+      ankare: prospektAnkare({ mxPlatform }),
       prospectUrl,
       foundedYear,
       mxPlatform,
+      mxSince,
+      domainRegistered,
     });
 
-    const subject = (mxPlatform && foundedYear)
-      ? `Vi har tittat på er telekomkostnad — ${companyName}`
-      : `Arvo har analyserat er kostnadsprofil — ${companyName}`;
+    // Här stod «Vi har tittat på er telekomkostnad» och «Arvo har analyserat er kostnadsprofil» —
+    // vi har sett varken kostnad eller profil, bara det som syns utifrån.
+    const subject = `Det vi ser utifrån — ${companyName}`;
 
     const { error } = await resend.emails.send({
       from:    FROM,

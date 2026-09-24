@@ -17,7 +17,7 @@ async function main() {
 
   if (!data || data.length === 0) {
     console.log('Inga utfall med tillräckligt underlag ännu (kräver ≥3 utfall per kategori).');
-    console.log('Fortsätt samla in kundutfall via /api/track-outcome.\n');
+    console.log('Fortsätt samla in kundutfall via utfallsenkäten (api/outcome-survey).\n');
     process.exit(0);
   }
 

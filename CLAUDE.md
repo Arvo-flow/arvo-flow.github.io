@@ -642,6 +642,35 @@ text. Varje sådan form har ett register och en skanning.
 bär «Arvo förhandlar» (Switch-doktrinen). Alla 3 är utgångna, så ingen kan nå dem, och läsgranskningen
 skulle ändå undanhålla dem. 4 lagrade fynd i rummet, 0 med förbjuden form.
 
+**✅ STÄDNINGEN AV FUNDAMENTET — GRUNDARORDER 2026-09-24 (fyra punkter).**
+· **`api/track-outcome` är borta.** Det var en ogrindad skrivväg till `arvo_outcomes` som ingen kundyta och
+  inget arvode läste. `storeOutcome` och dess självläkning togs bort med den. Utfall skrivs nu bara av
+  utfallsenkäten.
+· **Kohortkortet är dött vid källan.** `getMarketIntelligence` returnerar alltid `null` (KM-17). Det
+  jämförde totalsummor med totalsummor. Per enhet går inte ärligt i dag: nämnaren i lagringen
+  (`seat_count`, `price_per_seat_monthly`) fylls av modellen, inte ur fakturans avlästa antalskolumn
+  (antalsdoktrinen). Mätt K3: 0 av 15 celler bar ens totalsummor, så ingen kund förlorade ett kort.
+  Liggarvillkorets tal är 30 → 29 läsvägar och 5 → 4 moat-satser, i samma commit.
+· **Prospektytorna går genom registret, och skulden är 0.** `lib/outbound-estimator.js` räknade en
+  «sannolik premie» ur fyra antaganden: `SIM_RATIO` utan källa, «typisk kostnad» = näst billigaste
+  listpris, påhittade band, och `arvoAnnual`. Nu gäller:
+  · `lib/listprisankare.js` visar bara lägsta verifierade publika listpris per enhet, med produkt och datum.
+  · `api/prospect` (`prospektSvar`) räknar ankaret vid läsning och serverar aldrig lagrade premier.
+  · `api/reveal` (`granskadeFynd`) granskar dörrens fynd mot registret.
+  · Orden kommer ur `PROSPEKT`.
+  Sidfynd, alla [KUND]:
+  · Prospektmejlets sidfot sa «Vi fakturerar aldrig förrän ni sparar» bredvid «1 995 kr/mån».
+  · Ämnesraderna sa «Vi har tittat på er telekomkostnad».
+  · Fem av dörrens fynd bar generaliseringar utan grund: «de äldsta är sällan omprövade», «det brukar ligga
+    pengar i strukturen», «Varje namn är en rad i era kostnader». Den sista mot kodens egen kommentar.
+  Alla formerna är spärrade. KM-18, renderingssond med motprov mot det gamla bygget och det råa estimatet.
+· **`send-reminders` är grindad** (`cronAnropTillatet`, SL-06). `CRON_SECRET` finns i Vercel, och det är
+  avläst i Vercels körlogg: `GET /api/cron/update-fx-rate 200` kl. 06:00:25 den 24 sep, bakom samma grind.
+  Live-sonden `probe-cronvakt` kräver 401 utan giltig hemlighet, med en publik endpoint som motprov.
+  Första kvittot på Vercels egen körning med den nya grinden blir 07:00 UTC dagen efter deploy.
+Sabotage: 10 riktningar, 13 tester fällda. C6 fällde först noll, eftersom sabotaget bröt ett av flera
+alternativ i mönstret. Det gjordes om som borttagning av hela posten.
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning
@@ -2154,7 +2183,7 @@ dessa oroutade filer — Landing och TestaFaktura är frikopplade (`src/utils/fo
 | `lib/price-alert.js` | Smyghöjnings­detektion + cross-customer aggregat |
 | `lib/price-alert-store.js` | getAffectedCustomers + idempotens­logik |
 | `lib/price-impact.js` | Deterministisk kr/år-beräkning (inga heuristiker) |
-| `lib/outbound-estimator.js` | Estimat för outbound briefings — läser PRISBOKEN via lib/benchmark.js (livedata → listpris-fallback, sanity-band), ej AI |
+| `lib/listprisankare.js` | Prospektets ankare: lägsta verifierade publika listpris per enhet, med produkt och datum (ersatte outbound-estimator 2026-09-24) |
 | `lib/format.js` | EN källa för sv-SE-formattering/etiketter i backend (frontend: `src/utils/format.js`) |
 | `lib/sni-mapper.js` | SNI-kod → industri/segment |
 | `lib/invoice-graph.js` | Uppdaterar suppliers + supplier_prices + contract_timelines |

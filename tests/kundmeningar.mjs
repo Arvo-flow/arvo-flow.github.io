@@ -12,8 +12,8 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { kundensMotivering, kundensSteg, LOFTEN, LOFTEN_UTAN_MEKANISM, ANSVARSGRANS, UNDERLAGET, PROVENIENS_OCH_ENHET, KOHORT_ENHET, granskaLagradText } from '../lib/kundmeningar.js';
-import { LOFTEN_TEXT, ANSVARSGRANS_TEXT, UNDERLAGET_TEXT, KOHORT_ENHET as KOHORT_ENHET_TEXT } from '../src/lib/loften.js';
+import { kundensMotivering, kundensSteg, LOFTEN, LOFTEN_UTAN_MEKANISM, ANSVARSGRANS, UNDERLAGET, PROVENIENS_OCH_ENHET, KOHORT_ENHET, PROSPEKT, granskaLagradText } from '../lib/kundmeningar.js';
+import { LOFTEN_TEXT, ANSVARSGRANS_TEXT, UNDERLAGET_TEXT, PROSPEKT_TEXT, KOHORT_ENHET as KOHORT_ENHET_TEXT } from '../src/lib/loften.js';
 
 const ROT = new URL('..', import.meta.url).pathname;
 const las = (p) => readFileSync(join(ROT, p), 'utf8');
@@ -99,13 +99,14 @@ describe('KM · kundmeningsregistret', () => {
       // Registergranskningen (2026-09-24): motdrag Arvo aldrig köat, en bok vakten inte ser, «identifierat».
       'Se Arvos förberedda motdrag', 'Köade ett motdrag inför en trolig höjning', 'Vi köar motdraget och agerar i fönstret.',
       'Maktkalendern · motdraget ligger klart', 'Motdraget ligger färdigt.', 'med motdraget förberett',
-      'Arvo Intelligence vidgar vakten till resten av boken', 'Hela reskontran, bevakad dygnet runt.', 'och hittar varenda besparing, inte bara den här.', 'kartlägger varje besparing, inte bara den här.', 'vad vi gjort åt det', 'Identifierat besparingsgap', 'Koppla er inkorg — Arvo hittar allt',
+      'Arvo Intelligence vidgar vakten till resten av boken', 'Hela reskontran, bevakad dygnet runt.', 'Vi fakturerar aldrig förrän ni sparar.', 'Se er kostnadsbedömning →', 'Sannolik premie — bolag med er profil', 'och hittar varenda besparing, inte bara den här.', 'kartlägger varje besparing, inte bara den här.', 'vad vi gjort åt det', 'Identifierat besparingsgap', 'Koppla er inkorg — Arvo hittar allt',
     ];
     // Mejlmallarna skriver svenska tecken som HTML-entiteter; skanningen avkodar dem (KM-05).
     assert.ok(LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(utanKommentarer('Arvo s&ouml;ker igenom er inkorg'))),
       'en entitetskodad löftesform passerar skanningen');
     const provbank = ['Marknadspris, samma tjänst', 'Jämfört mot verifierat B2B-marknadspris', 'väger priset mot verifierat marknadspris',
-      'Vi väger varje faktura mot verifierade svenska marknadspriser.', 'Jämförde era priser mot {featured.n} bolag', '${withSupplier} av ${total} bolag Arvo sett fakturor från'];
+      'Vi väger varje faktura mot verifierade svenska marknadspriser.', 'och de äldsta är sällan omprövade. Det är oftast där det ligger pengar.',
+      'volymen förhandlas sällan som en. Det brukar ligga pengar i strukturen.', 'Avtal från den eran följer ofta med av gammal vana', 'Varje namn är en rad i era kostnader', 'Jämförde era priser mot {featured.n} bolag', '${withSupplier} av ${total} bolag Arvo sett fakturor från'];
     assert.deepEqual(provbank.filter((m) => !PROVENIENS_OCH_ENHET.some(({ monster }) => monster.test(m))), [], 'en borttagen proveniens- eller enhetsmening kan komma tillbaka');
     // Motprov: den rätta formen fälls inte.
     assert.ok(!PROVENIENS_OCH_ENHET.some(({ monster }) => monster.test('Jämfört mot verifierat publikt listpris')), 'rätt proveniens fälls');
@@ -221,9 +222,49 @@ describe('KM · kundmeningsregistret', () => {
     assert.match(src, /totalSavingPotential:\s*undanhallna \? null/);
   });
 
+  test('KM-17 · kohortkortet är avstängt vid källan: totalsumma mot totalsumma får aldrig bli «N % mer»', async () => {
+    const { getMarketIntelligence } = await import('../lib/price-alert.js');
+    assert.equal(await getMarketIntelligence({ normalizedSupplier: 'telia', category: 'mobil' }), null);
+    // Båda konsumenterna frågar källan och ingen annan — en egen aggregering i en yta vore ett nytt kort.
+    for (const f of ['api/invoice-history.mjs', 'api/test-invoice.mjs']) {
+      const src = las(f);
+      assert.match(src, /getMarketIntelligence\(/, `${f} frågar inte källan`);
+      assert.doesNotMatch(src, /PERCENTILE_CONT[\s\S]{0,400}annual_cost|AVG\(annual_cost\)/, `${f} räknar ett eget kohortsnitt`);
+    }
+  });
+
+  test('KM-18 · prospektet: ingen lagrad premie når en läsare, mejlet talar bara om det avlästa, dörrens fynd granskas', async () => {
+    process.env.RESEND_API_KEY ??= 're_test';
+    const { prospektSvar } = await import('../api/prospect.mjs');
+    const gammal = { hasEstimates: true, totalSavingLow: 12000, totalSavingHigh: 30000, totalSavingCentral: 21000,
+      categories: [{ category: 'mobil', typicalLow: 40000, savingCentral: 9000 }], mxPlatform: 'microsoft365',
+      findings: ['DMARC saknas på er domän', 'Ni betalar mer än jämförbara bolag i er bransch'], foundedYear: 2004 };
+    const ut = prospektSvar(gammal);
+    for (const k of ['hasEstimates', 'totalSavingLow', 'totalSavingHigh', 'totalSavingCentral', 'categories']) assert.ok(!(k in ut), `${k} når läsaren`);
+    assert.deepEqual(ut.findings, ['DMARC saknas på er domän'], 'kohortfyndet ska undanhållas, DNS-fyndet stå kvar (motprov)');
+    assert.deepEqual(ut.ankare.map((a) => a.kategori), ['saas-productivity', 'mobil']);
+    assert.ok(ut.ankare.every((a) => a.perEnhetAr > 0 && a.referensProdukt && /^\d{4}-\d{2}-\d{2}$/.test(a.verifierad)), 'ankaret bär tal, produkt och datum');
+    assert.deepEqual(prospektSvar(null).ankare.map((a) => a.kategori), ['mobil'], 'utan plattform: bara mobil');
+
+    const { buildOutboundEmail } = await import('../api/generate-prospect.mjs');
+    const { prospektAnkare } = await import('../lib/listprisankare.js');
+    const html = buildOutboundEmail({ companyName: 'Test AB', industry: 'Konsult', employees: 12, ankare: prospektAnkare({ mxPlatform: 'microsoft365' }),
+      prospectUrl: 'https://x', mxPlatform: 'microsoft365', mxSince: '2021-04-01' });
+    const text = html.replace(/<style>[\s\S]*?<\/style>/, '').replace(/<[^>]+>/g, ' ');
+    assert.ok(text.includes(PROSPEKT.ingenKostnad) && text.includes(PROSPEKT.ankareRubrik), 'mejlet bär registrets ord');
+    assert.match(text, /1\s606 kr per användare\/år/, 'ankaret står med sitt exakta tal');
+    assert.doesNotMatch(text, /premie|besparing på|marknadskostnad|kostnadsbedömning|fakturerar aldrig/i);
+
+    const { granskadeFynd } = await import('../api/reveal.mjs');
+    const ok = { kind: 'platform', title: 'Ni kör Microsoft 365', detail: 'Avläst ur er publika e-postuppsättning.' };
+    const dalig = { kind: 'heritage', title: 'Grundat 1990', detail: 'De äldsta är sällan omprövade. Det är oftast där det ligger pengar.' };
+    assert.deepEqual(granskadeFynd([ok, dalig]), [ok]);
+  });
+
   test('KM-07 · frontendens löftestexter är backendens', () => {
     for (const [k, t] of Object.entries(LOFTEN_TEXT)) assert.equal(t, LOFTEN[k]?.text, `${k} har glidit isär`);
     assert.equal(KOHORT_ENHET_TEXT, KOHORT_ENHET, 'kohortens enhet har glidit isär mellan mejl och rum');
+    assert.deepEqual(PROSPEKT_TEXT, PROSPEKT, 'prospektets ord har glidit isär mellan mejl och sida');
     // Ansvarsgränsen och flödets ord: exakt samma nycklar och texter på båda sidor — en saknad nyckel
     // i spegeln vore en yta som formulerar ansvarsgränsen själv.
     assert.deepEqual(ANSVARSGRANS_TEXT, ANSVARSGRANS, 'ansvarsgränsen har glidit isär');

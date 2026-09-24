@@ -8,8 +8,25 @@
 // utelämnas den (regel 4). crt.sh/RDAP kräver HTTP-egress → körs på Vercel, inte i sandboxen.
 
 import { revealFromDomain, revealForConfirmedOrgnr, ctOnboardingFinding } from '../lib/domain-intel.js';
+import { granskaLagradText } from '../lib/kundmeningar.js';
 
 export const config = { maxDuration: 30 };
+
+/**
+ * DÖRRENS FYND GÅR GENOM REGISTRET (registergranskningen 2026-09-24). Fynden formuleras i
+ * lib/domain-intel.js och lib/business-intel.js; varje fynd prövas här mot registrets former innan det
+ * lämnar servern. Ett fynd som bär en förbjuden form visas inte — det loggas, så att producenten lagas.
+ * Exporterad för KM-18.
+ */
+export function granskadeFynd(fynd) {
+  const alla = Array.isArray(fynd) ? fynd : [];
+  const kvar = alla.filter((f) => {
+    const g = granskaLagradText(f);
+    if (!g.ren) console.warn(`[reveal] fynd «${String(f?.title ?? f?.kind ?? '').slice(0, 60)}» undanhålls: ${g.skal.join(' · ')}`);
+    return g.ren;
+  });
+  return kvar;
+}
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -35,7 +52,7 @@ export default async function handler(req, res) {
     // fyrar i 1 fall av 20). Vi bygger då om kortet mot det orgnr:et, utan namnmatchning.
     if (body.orgnr) {
       const bekraftat = await revealForConfirmedOrgnr(input, String(body.orgnr));
-      if (bekraftat) return send(res, 200, { ok: true, ...bekraftat });
+      if (bekraftat) return send(res, 200, { ok: true, ...bekraftat, findings: granskadeFynd(bekraftat.findings) });
       return send(res, 200, { ok: false, error: 'Kunde inte läsa det bolaget just nu.' });
     }
 
@@ -52,7 +69,7 @@ export default async function handler(req, res) {
     // progressivt; raden landar sent och synligt, vilket är precis det drama den förtjänar.
     if (body.ctOnly) {
       const ct = await ctOnboardingFinding(input);
-      return send(res, 200, { ok: true, findings: ct ? [ct] : [] });
+      return send(res, 200, { ok: true, findings: granskadeFynd(ct ? [ct] : []) });
     }
 
     const result = await revealFromDomain(input, { fast: !!body.fast });
@@ -64,7 +81,7 @@ export default async function handler(req, res) {
       return send(res, 200, { ok: true, domain: null, findings: [],
         note: 'En privat inkorg berättar inget om ert bolag. Ange er företagsmejl — vårt underlag gäller bolaget, inte personen.' });
     }
-    return send(res, 200, { ok: true, domain: result.domain, platform: result.platform, findings: result.findings, identity: result.identity });
+    return send(res, 200, { ok: true, domain: result.domain, platform: result.platform, findings: granskadeFynd(result.findings), identity: result.identity });
   } catch (err) {
     console.error('[reveal] fel:', err.message);
     return send(res, 200, { ok: false, error: 'Kunde inte läsa av domänen just nu.' });

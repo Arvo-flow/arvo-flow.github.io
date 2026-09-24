@@ -15,6 +15,7 @@ import { Resend } from 'resend';
 import { getDb } from '../../lib/db.js';
 import { deadlineReminderDecision } from '../../lib/deadline-reminder.js';
 import { underlagFranRad, paminnelseBeslut, paminnelseMejl } from '../../lib/paminnelse.js';
+import { cronAnropTillatet } from '../../lib/cronvakt.js';
 
 export const config = { maxDuration: 30 };
 
@@ -111,6 +112,10 @@ export default async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'POST') {
     return send(res, 405, { error: 'Metod ej tillåten' });
   }
+  // GRINDEN (grundarorder 2026-09-24): loopen var ogrindad och kunde anropas av vem som helst. Samma grind
+  // som övriga cron-jobb (lib/cronvakt.js): en osatt CRON_SECRET nekar i produktion — då nekas även
+  // Vercels egen cron, och det syns i Vercels körlogg som 401. Mätinstrumentet är probe-cronvakt.
+  if (!cronAnropTillatet(req)) return send(res, 401, { error: 'unauthorized' });
 
   const db = getDb();
   if (!db) return send(res, 200, { ok: true, skipped: 'no-db' });

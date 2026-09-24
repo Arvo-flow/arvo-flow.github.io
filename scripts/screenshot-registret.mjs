@@ -9,6 +9,7 @@
 //                 «förberett/köat motdrag», «vad vi gjort åt det»; kohortens enhet är KOHORT_ENHET
 //   landningen  → aldrig «verifierat marknadspris» eller «motdraget ligger klart/färdigt/förberett»
 // MOTPROV: kör mot ett bygge före ändringen — då står «N bolag · live» och «Köade ett motdrag» kvar.
+// Prospektets motprov: SOND_RA_ESTIMAT=1 mot det gamla sidbygget ritar den lagrade premien.
 //
 // Kör: CHROME_BIN=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node scripts/screenshot-registret.mjs
 import { chromium } from 'playwright';
@@ -20,7 +21,11 @@ import { radLage } from '../lib/lagesregister.js';
 import { byggRum } from '../api/invoice-history.mjs';
 import { marketMovementFinding } from '../lib/market-movement.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
-import { KOHORT_ENHET, LOFTEN } from '../lib/kundmeningar.js';
+import { KOHORT_ENHET, LOFTEN, PROSPEKT } from '../lib/kundmeningar.js';
+process.env.RESEND_API_KEY ??= 're_sond';
+const { prospektSvar } = await import('../api/prospect.mjs');
+const { buildOutboundEmail } = await import('../api/generate-prospect.mjs');
+const { prospektAnkare } = await import('../lib/listprisankare.js');
 
 const ROT = new URL('..', import.meta.url).pathname;
 const BUILD = join(ROT, 'build');
@@ -91,5 +96,35 @@ for (const bredd of [390, 1600]) {
   else if (!/verifierat publikt listpris/i.test(t)) fel(`landningen ${bredd}px: proveniensen syns inte — sonden prövar inget`);
   else ok(`landningen ${bredd}px: listpris som proveniens, inget förberett motdrag`);
   await p.close();
+}
+// ── Prospektet: ett LAGRAT gammalt estimat går genom produktionens prospektSvar, som servern gör ──
+const GAMMALT = { hasEstimates: true, totalSavingLow: 12000, totalSavingHigh: 30000, totalSavingCentral: 21000,
+  categories: [{ category: 'mobil', label: 'Mobilabonnemang', estimatedSims: 11, typicalLow: 40000, typicalHigh: 54000, arvoAnnual: 35500,
+    savingCentral: 9000, savingLow: 6000, savingHigh: 12000, pricePerSim: { typical: 299, arvo: 269 }, source: 'real-public', sourceNote: 'x' }],
+  mxPlatform: 'microsoft365', mxSince: '2021-04-01', foundedYear: 2004, findings: ['Er domän saknar DMARC-policy — mejl i ert namn kan förfalskas'] };
+const PROSPEKTSVAR = { ok: true, prospect: { companyName: 'Sondbolaget AB', industry: 'Konsult', employees: 12, estimates: process.env.SOND_RA_ESTIMAT ? GAMMALT : prospektSvar(GAMMALT), generatedAt: new Date().toISOString() } };
+const PFEL = [/premie/i, /marknadskostnad/i, /kostnadsbedömning/i, /Uppskattade abonnemang/i, /≈/];
+for (const bredd of [390, 1600]) {
+  const p = await browser.newPage({ viewport: { width: bredd, height: 1000 } });
+  await p.route('**/api/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(PROSPEKTSVAR) }));
+  p.on('pageerror', (e) => fel(`sidfel: ${String(e).slice(0, 160)}`));
+  await p.goto(`${bas}/prospect/sond`, { waitUntil: 'networkidle' }); await p.waitForTimeout(1200);
+  const t = await text(p);
+  await p.screenshot({ path: join(UT, `prospekt-${bredd}.png`), fullPage: true });
+  const tr = PFEL.filter((re) => re.test(t)).map((re) => t.match(re)[0]);
+  if (tr.length) fel(`prospektet ${bredd}px: ${tr.join(' | ')}`);
+  // Rubriken skrivs med versaler av CSS och innerText returnerar versalerna — jämför utan skiftläge.
+  else if (!t.toLowerCase().includes(PROSPEKT.ankareRubrik.toLowerCase()) || !/1\s606 kr/.test(t) || !/3\s228 kr/.test(t)) fel(`prospektet ${bredd}px: ankaret syns inte — sonden prövar inget`);
+  else ok(`prospektet ${bredd}px: listprisankaret med tal och datum, ingen premie ur det lagrade estimatet`);
+  await p.close();
+  const m = await browser.newPage({ viewport: { width: bredd, height: 1000 } });
+  await m.setContent(buildOutboundEmail({ companyName: 'Sondbolaget AB', industry: 'Konsult', employees: 12, ankare: prospektAnkare({ mxPlatform: 'microsoft365' }),
+    prospectUrl: 'https://x', mxPlatform: 'microsoft365', mxSince: '2021-04-01', foundedYear: 2004 }));
+  const mt = await text(m);
+  await m.screenshot({ path: join(UT, `prospektmejl-${bredd}.png`), fullPage: true });
+  const mtr = [...PFEL, /fakturerar aldrig/i].filter((re) => re.test(mt));
+  if (mtr.length) fel(`prospektmejlet ${bredd}px: ${mtr.join(' | ')}`);
+  else ok(`prospektmejlet ${bredd}px: det avlästa och ankaret, ingen kostnad`);
+  await m.close();
 }
 await browser.close(); server.close();

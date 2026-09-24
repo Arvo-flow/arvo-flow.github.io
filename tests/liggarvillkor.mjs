@@ -111,7 +111,8 @@ describe('LV · liggarens läsvägar är klassade', () => {
     // (internt 9 · moat 5 · kundvy 17). Tröskeln följer mätningen; ett tal, inte en tröskel.
     // 2026-09-23: 31 → 30, och talet är förklarat — påminnelsecronens två slutdatumsfrågor (60/30 dagar)
     // ersattes av EN fakturaklockfråga (lib/paminnelse.js): 31 − 2 + 1 = 30.
-    assert.ok(vagar.length >= 30, `hittade ${vagar.length} läsvägar — mätt 2026-09-23: 30. Sjunker talet har antingen en läsväg försvunnit eller mönstret slutat matcha, och båda ska synas`);
+    // 2026-09-24: 30 → 29 — kohortkortets aggregat (getMarketIntelligence) stängdes av vid källan.
+    assert.ok(vagar.length >= 29, `hittade ${vagar.length} läsvägar — mätt 2026-09-24: 29. Sjunker talet har antingen en läsväg försvunnit eller mönstret slutat matcha, och båda ska synas`);
   });
 
   test('LV-02 · varje läsväg bär en klassmarkör', () => {
@@ -223,7 +224,8 @@ describe('LV · liggarens läsvägar är klassade', () => {
       'ett moat-aggregat som filtrerar arkiverade rader underdriver vad vi observerat — och gör '
       + 'två räknare i samma rum oense om populationen');
     // Motprovet: det MÅSTE finnas moat-satser, annars är LV-08 grön av tomhet.
-    assert.ok(moat.length >= 5, `hittade ${moat.length} moat-satser — mätt 2026-09-13: 5`);
+    // 2026-09-24: 5 → 4 — kohortkortets moat-sats togs bort med kortet (getMarketIntelligence).
+    assert.ok(moat.length >= 4, `hittade ${moat.length} moat-satser — mätt 2026-09-24: 4`);
   });
 
   test('LV-05 · ett INTERNT undantag bär alltid sitt skäl', () => {

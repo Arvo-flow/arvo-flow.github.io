@@ -6,11 +6,9 @@ import {
   CompanyName, MetaLine, MetaDot,
   SignalSection, SectionEyebrow, SignalCard, SignalBullet, SignalText,
   DataCard, DataRow, DataDesc, DataVal,
-  FinancialSection, BigNumber, BigNumberApprox, BigNumberSub, BigNumberNote,
-  RangeWrap, RangeTrack, RangeMarker, RangeLabels,
   ContentArea, BreakdownEyebrow, EstimateCard, CategoryLabel,
   EstimateRow, EstimateDesc, EstimateVal, EstimateValNote,
-  SavingBand, SavingLabel, SavingCentral, SavingInterval, SourceNote,
+  SourceNote,
   CtaSection, MethodologyNote,
   PrimaryCtaWrap, PrimaryCta, PrimaryCtaSub,
   CtaGap, SecondaryLink, SecondaryCtaSub,
@@ -20,9 +18,8 @@ import {
 } from './styles';
 
 import { fmtNumber as fmt, swMonthYear, monthsAgo, MX_LABELS } from '../../utils/format';
+import { PROSPEKT_TEXT } from '../../lib/loften';
 
-// Mittpunkt avrundad till 500 — fallback för payloads skapade innan savingCentral fanns
-const mid500 = (low, high) => Math.round((low + high) / 2 / 500) * 500;
 
 function formatDate(iso) {
   if (!iso) return '';
@@ -81,8 +78,9 @@ export default function Prospect() {
   }
 
   const { companyName, industry, employees, estimates, generatedAt } = data;
-  const cats      = estimates?.categories ?? [];
-  const hasSaving = estimates?.hasEstimates && (estimates?.totalSavingLow > 0 || cats.length > 0);
+  // Listprisankaret räknas av servern vid läsning (api/prospect prospektSvar). Ingen kostnad och ingen
+  // besparing: vi har inte sett prospektets faktura (PROSPEKT, registergranskningen 2026-09-24).
+  const ankare = estimates?.ankare ?? [];
 
   const mxPlatform       = estimates?.mxPlatform;
   const mxSince          = estimates?.mxSince;
@@ -124,14 +122,6 @@ export default function Prospect() {
   const eyebrow    = (hasFindings || business) ? 'IDENTIFIERAT FYND' : 'INFRASTRUKTURANALYS';
 
   const showIntelMeta = (hasFindings || business) && (mxPlatform || domainRegistered || mxSince);
-
-  // Premien härleds alltid ur de kategorier som faktiskt byggde summan —
-  // aldrig ur e-postplattformen (de kan vara olika saker).
-  const savingCentral = estimates?.totalSavingCentral
-    ?? (hasSaving ? mid500(estimates.totalSavingLow, estimates.totalSavingHigh) : null);
-  const basisLine = cats
-    .map(c => `${c.estimatedSims} ${c.category === 'm365' ? 'Microsoft 365-licenser' : 'mobilabonnemang'}`)
-    .join(' + ');
 
   return (
     <PageWrap>
@@ -193,86 +183,24 @@ export default function Prospect() {
         </SignalSection>
       )}
 
-      {/* ── Financial impact ── */}
-      {hasSaving && (
-        <FinancialSection>
-          <SectionEyebrow>Sannolik kostnadspremie</SectionEyebrow>
-          <BigNumber>
-            <BigNumberApprox>≈</BigNumberApprox>{fmt(savingCentral)}{' '}
-            <span style={{ fontSize: '0.42em', letterSpacing: '0em', fontWeight: 700 }}>kr/år</span>
-          </BigNumber>
-          <RangeWrap>
-            <RangeTrack>
-              <RangeMarker style={{
-                left: `${Math.min(88, Math.max(12,
-                  estimates.totalSavingHigh > estimates.totalSavingLow
-                    ? ((savingCentral - estimates.totalSavingLow) / (estimates.totalSavingHigh - estimates.totalSavingLow)) * 100
-                    : 50
-                ))}%`,
-              }} />
-            </RangeTrack>
-            <RangeLabels>
-              <span>{fmt(estimates.totalSavingLow)}</span>
-              <span>{fmt(estimates.totalSavingHigh)} kr/år</span>
-            </RangeLabels>
-          </RangeWrap>
-          {basisLine && (
-            <BigNumberSub>
-              Baserat på {basisLine} mot verifierade listpriser
-            </BigNumberSub>
-          )}
-          <BigNumberNote>
-            Er faktiska avtalskostnad ser vi inte förrän ni delar er faktura
-          </BigNumberNote>
-        </FinancialSection>
-      )}
-
-      {/* ── Category breakdown ── */}
-      {cats.length > 0 && (
+      {/* ── Listprisankaret — det lägsta vi kan belägga, per enhet, med produkt och datum ── */}
+      {ankare.length > 0 && (
         <ContentArea>
-          <BreakdownEyebrow>Kostnadsanalys per kategori</BreakdownEyebrow>
-          {cats.map((cat, i) => {
-            const unit       = cat.category === 'm365' ? 'licens' : 'abonnemang';
-            const catCentral = cat.savingCentral ?? mid500(cat.savingLow, cat.savingHigh);
-            return (
-              <EstimateCard key={i}>
-                <CategoryLabel>{cat.label}</CategoryLabel>
-
-                <EstimateRow>
-                  <EstimateDesc>{cat.category === 'm365' ? 'Uppskattade licenser' : 'Uppskattade abonnemang'}</EstimateDesc>
-                  <EstimateVal>{cat.estimatedSims} st</EstimateVal>
-                </EstimateRow>
-                <EstimateRow>
-                  <EstimateDesc>Typisk marknadskostnad</EstimateDesc>
-                  <EstimateVal>
-                    {fmt(cat.typicalLow)}–{fmt(cat.typicalHigh)} kr/år
-                    <EstimateValNote>
-                      {cat.source === 'live'
-                        ? `median av verifierade fakturor: ${cat.pricePerSim.typical} kr/mån per ${unit} ± 15 %`
-                        : `ordinarie listpris ${cat.pricePerSim.typical} kr/mån per ${unit} ± 15 %`}
-                    </EstimateValNote>
-                  </EstimateVal>
-                </EstimateRow>
-                <EstimateRow>
-                  <EstimateDesc>Verifierat publikt listpris</EstimateDesc>
-                  <EstimateVal $highlight>
-                    {fmt(cat.arvoAnnual)} kr/år
-                    <EstimateValNote>{cat.pricePerSim.arvo} kr/mån per {unit}</EstimateValNote>
-                  </EstimateVal>
-                </EstimateRow>
-
-                <SourceNote>{cat.sourceNote}</SourceNote>
-
-                <SavingBand>
-                  <SavingLabel>Sannolik premie</SavingLabel>
-                  <div>
-                    <SavingCentral>≈ {fmt(catCentral)} kr/år</SavingCentral>
-                    <SavingInterval>intervall {fmt(cat.savingLow)}–{fmt(cat.savingHigh)}</SavingInterval>
-                  </div>
-                </SavingBand>
-              </EstimateCard>
-            );
-          })}
+          <BreakdownEyebrow>{PROSPEKT_TEXT.ankareRubrik}</BreakdownEyebrow>
+          {ankare.map((a) => (
+            <EstimateCard key={a.kategori}>
+              <CategoryLabel>{a.referensProdukt}</CategoryLabel>
+              <EstimateRow>
+                <EstimateDesc>Lägsta publicerade pris</EstimateDesc>
+                <EstimateVal $highlight>
+                  {fmt(a.perEnhetAr)} kr
+                  <EstimateValNote>{a.enhet}</EstimateValNote>
+                </EstimateVal>
+              </EstimateRow>
+              <SourceNote>Verifierat {a.verifierad}{a.kraverBekraftadNiva ? ` · ${PROSPEKT_TEXT.nivaOkand}` : ''}</SourceNote>
+            </EstimateCard>
+          ))}
+          <SourceNote>{PROSPEKT_TEXT.ingenKostnad}</SourceNote>
         </ContentArea>
       )}
 
@@ -285,7 +213,7 @@ export default function Prospect() {
 
         <PrimaryCtaWrap>
           <PrimaryCta href="/testa-faktura" onClick={() => recordAction('upload')}>
-            Se vad ni betalar mot listpris
+            {PROSPEKT_TEXT.cta}
           </PrimaryCta>
           <PrimaryCtaSub>Ladda upp en faktura · Kostnadsfritt · 2 minuter · Ingen registrering</PrimaryCtaSub>
         </PrimaryCtaWrap>

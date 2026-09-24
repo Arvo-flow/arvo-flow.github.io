@@ -170,4 +170,6 @@ describe('YI · ytinventeringen', () => {
 // Mätt 2026-09-23 i ytinventeringen (2: prospektmejlet och /prospect). 2026-09-24: endpoints
 // inventerade, två till är oreviderade — api/prospect (samma estimat) och api/reveal (dörrens fynd).
 // Talet ändras bara i samma commit som en yta flyttas.
-const SKULD = 4;
+// 2026-09-24: 4 → 0. Prospektytorna byggdes om kring listprisankaret och dörrens fynd granskas vid
+// servern (registergranskningen, andra passet).
+const SKULD = 0;

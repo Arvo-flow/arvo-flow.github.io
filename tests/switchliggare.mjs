@@ -1,4 +1,4 @@
-// tests/switchliggare.mjs — SL-01..05: PgStore bär FileStore:s kontrakt, och cron-grinden nekar
+// tests/switchliggare.mjs — SL-01..06: PgStore bär FileStore:s kontrakt, och cron-grinden nekar
 // en osatt hemlighet i stället för att göra den till ett lösenord.
 //
 // Fable 5.1:s granskning av Opus 5 (2026-09-01). Två fel som båda var PÅSTÅDDA i kommentarer
@@ -72,5 +72,28 @@ describe('SL · Cron-grinden: en osatt hemlighet är en okänd, inte ett löseno
     assert.equal(cronAnropTillatet({ headers: { authorization: 'Bearer s3' } }, { env: prod({ CRON_SECRET: 's3' }) }), true);
     assert.equal(cronAnropTillatet({ headers: { authorization: 'Bearer fel' } }, { env: prod({ CRON_SECRET: 's3' }) }), false);
     assert.equal(cronAnropTillatet({ headers: {} }, { env: { NODE_ENV: 'test' } }), true, 'lokalt/CI ska inte kräva hemlighet');
+  });
+
+  test('SL-06 · send-reminders nekar ett anrop utan hemlighet i produktion (motprov: rätt hemlighet släpps in)', async () => {
+    process.env.RESEND_API_KEY ??= 're_test';
+    const { default: handler } = await import('../api/cron/send-reminders.mjs');
+    const kor = async (headers) => {
+      let status = null;
+      const res = { statusCode: 0, setHeader() {}, end() { status = this.statusCode; } };
+      await handler({ method: 'GET', headers }, res);
+      return status;
+    };
+    const fore = { NODE_ENV: process.env.NODE_ENV, CRON_SECRET: process.env.CRON_SECRET, DATABASE_URL: process.env.DATABASE_URL };
+    try {
+      process.env.NODE_ENV = 'production'; process.env.CRON_SECRET = 's3'; delete process.env.DATABASE_URL;
+      assert.equal(await kor({}), 401, 'utan header ska loopen nekas');
+      assert.equal(await kor({ authorization: 'Bearer fel' }), 401);
+      delete process.env.CRON_SECRET;
+      assert.equal(await kor({ authorization: 'Bearer undefined' }), 401, 'osatt hemlighet nekar');
+      process.env.CRON_SECRET = 's3';
+      assert.notEqual(await kor({ authorization: 'Bearer s3' }), 401, 'motprov: rätt hemlighet släpps in');
+    } finally {
+      for (const [k, v] of Object.entries(fore)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+    }
   });
 });

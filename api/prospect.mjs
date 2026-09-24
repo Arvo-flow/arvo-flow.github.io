@@ -3,8 +3,32 @@
 // POST /api/prospect?token=XXX  — records prospect action { action: 'upload'|'activate' }
 
 import { getDb } from '../lib/db.js';
+import { granskaLagradText } from '../lib/kundmeningar.js';
+import { prospektAnkare } from '../lib/listprisankare.js';
 
 export const config = { maxDuration: 10 };
+
+/**
+ * PROSPEKTET SOM DET SERVERAS (registergranskningen 2026-09-24). Kolumnen `estimates` bär profiler skrivna
+ * av den gamla estimatorn — «sannolik premie», «typisk marknadskostnad», gissade abonnemang. De fryste vid
+ * skrivning och får inte nå en ny läsare. Här passerar bara det som är avläst: Bolagsverket-raden, DNS-
+ * fakta, och fynden som klarar registrets granskning. Listprisankaret räknas vid LÄSNING, så en utskickad
+ * länk visar alltid dagens verifierade pris. Exporterad för KM-18.
+ */
+export function prospektSvar(lagrad) {
+  const e = lagrad && typeof lagrad === 'object' ? lagrad : {};
+  const fynd = Array.isArray(e.findings) ? e.findings.filter((f) => granskaLagradText(f).ren) : [];
+  const business = e.business && granskaLagradText(e.business).ren ? e.business : null;
+  return {
+    ...(business ? { business } : {}),
+    ...(e.foundedYear ? { foundedYear: e.foundedYear } : {}),
+    ...(e.mxPlatform ? { mxPlatform: e.mxPlatform } : {}),
+    ...(e.mxSince ? { mxSince: e.mxSince } : {}),
+    ...(e.domainRegistered ? { domainRegistered: e.domainRegistered } : {}),
+    ...(fynd.length ? { findings: fynd } : {}),
+    ankare: prospektAnkare({ mxPlatform: e.mxPlatform ?? null }),
+  };
+}
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -46,7 +70,7 @@ export default async function handler(req, res) {
         segment:     row.segment,
         sizeBucket:  row.size_bucket,
         employees:   row.employees,
-        estimates:   row.estimates,
+        estimates:   prospektSvar(row.estimates),
         generatedAt: row.created_at,
       },
     });

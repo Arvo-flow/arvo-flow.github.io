@@ -450,7 +450,9 @@ describe('business-intel · trenden (Kristianstad-läxan del A — riktningen, k
     ]));
     const t = f.find((x) => x.kind === 'trend');
     assert.equal(t.title, 'Er omsättning växte 18 % senaste bokslutsåret');
-    assert.match(t.detail, /följer med upp och blir vanor/);
+    // 2026-09-24: generaliseringen («följer med upp och blir vanor») bar varken grund eller konfidens (regel 4).
+    assert.match(t.detail, /syns först i fakturorna/);
+    assert.doesNotMatch(t.detail, /blir vanor/);
   });
 
   test('brus är inte ett fynd: < 5 % rörelse → tystnad', () => {
@@ -556,7 +558,8 @@ describe('business-intel · kurvan i rad (punkt 1) + måttstocksbeslutet (punkt 
     const old_ = buildBusinessFindings({ ...base, foundationYear: 1987 }, { now: NOW });
     const h = old_.find((x) => x.kind === 'heritage');
     assert.equal(h.title, 'Grundat 1987 — 39 år i verksamhet');
-    assert.match(h.detail, /sällan omprövade/);
+    // 2026-09-24: «de äldsta är sällan omprövade» var en generalisering utan grund (regel 4).
+    assert.match(h.detail, /aldrig omprövats/);
     assert.match(h.source, /grundandeår 1987/);
     assert.equal(buildBusinessFindings({ ...base, foundationYear: 2019 }, { now: NOW }).find((x) => x.kind === 'heritage'), undefined);
     assert.equal(buildBusinessFindings({ ...base, foundationYear: null }, { now: NOW }).find((x) => x.kind === 'heritage'), undefined);

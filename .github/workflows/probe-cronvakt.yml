@@ -1,0 +1,33 @@
+name: Sond — cron-grinden live (send-reminders)
+
+# Live-mätning efter deploy (2026-09-24): en ogrindad cron kunde anropas av vem som helst.
+# Förväntat: 401 utan header, 401 på «Bearer undefined» och på fel hemlighet. Motprovet är
+# update-fx-rate bakom samma grind: Vercels egen cron fick 200 kl. 06:00 (körloggen), alltså är
+# hemligheten satt — att den nekar oss här betyder att grinden står, inte att den är trasig.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Anropa utan giltig hemlighet
+        shell: bash
+        run: |
+          set -o pipefail
+          fel=0
+          for auth in "" "Bearer undefined" "Bearer fel-hemlighet"; do
+            if [ -z "$auth" ]; then kod=$(curl -s -o /dev/null -w '%{http_code}' https://arvoflow.se/api/cron/send-reminders);
+            else kod=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: $auth" https://arvoflow.se/api/cron/send-reminders); fi
+            echo "send-reminders · auth='${auth:-<ingen>}' → $kod"
+            [ "$kod" = "401" ] || fel=1
+          done
+          # Motprov: sonden kan se ett annat svar — en publik endpoint svarar inte 401.
+          kod=$(curl -s -o /dev/null -w '%{http_code}' https://arvoflow.se/api/vakt-pulse)
+          echo "motprov vakt-pulse (publik) → $kod"
+          [ "$kod" != "401" ] || fel=1
+          exit $fel

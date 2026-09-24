@@ -29,7 +29,7 @@ const calibrationRows = await getCalibrationData();
 
 if (!calibrationRows.length) {
   console.log('[calibrate] Inga kalibringsdata ännu (behöver ≥3 faktiska utfall per kategori).');
-  console.log('[calibrate] Utfall registreras via POST /api/track-outcome när kunder faktiskt byter.');
+  console.log('[calibrate] Utfall registreras via utfallsenkäten (api/outcome-survey) när kunder svarar.');
   process.exit(0);
 }
 

@@ -4,25 +4,25 @@
 `tests/ytinventering.mjs` (YI-01..11) hittar själv varje mejlavsändare, varje route och varje endpoint och fäller
 sviten när en yta saknas här.*
 
-**89 ytor** — 4 oreviderad · 15 registret · 11 marknad · 14 mejlyta · 26 ingen_prisdom · 19 intern.
+**88 ytor** — 19 registret · 11 marknad · 14 mejlyta · 25 ingen_prisdom · 19 intern.
 
 | Yta | Kanal | Mottagare | Klass | Vad den påstår i dag (mätt i koden 2026-09-23/24) |
 |---|---|---|---|---|
-| `/prospect/:token` | sida | besökare | **oreviderad** | Samma estimat som prospektmejlet (outbound-estimator → livedata); etiketterna rättade, underlaget inte. |
-| `api/generate-prospect.mjs` | mejl | prospekt | **oreviderad** | Etiketterna rättade 2026-09-23 («Verifierat publikt listpris», berättelserna borta) — men «Typisk marknadskostnad» och «Sannolik premie» kommer ur outbound-estimator, som läser prisbokens livedata (kohortens totalsummor). Kvar: estimatorn ska läsa verifierat listpris (getPublicListBenchmark), som bytesgolvet. |
-| `api/prospect.mjs` | endpoint | anropare | **oreviderad** | Serverar prospektbriefingen: samma estimat som prospektmejlet (outbound-estimator → livedata), etiketterna rättade, underlaget inte. |
-| `api/reveal.mjs` | endpoint | anropare | **oreviderad** | Dörrens avslöjande: fynden formuleras i lib/domain-intel.js och lib/business-intel.js, inte i registret. KM-05 skannar deras former (båda ligger i lib/), men meningarna är deras egna. |
 | `/briefing/:token` | sida | besökare | **registret** | Renderar insikterna ur briefing-generator (KM-10); sidans läge ur briefinglage. |
 | `/portfolio` | sida | besökare | **registret** | Rummets dom, räknare och radtexter ur rumLage/radLage. |
+| `/prospect/:token` | sida | besökare | **registret** | Omskriven 2026-09-24: listprisankaret (räknat av servern vid läsning) och DNS-fynden; ingen premie, inga gissade abonnemang. Orden ur PROSPEKT_TEXT. |
 | `/testa-faktura` | sida | besökare | **registret** | Läge, rubrik och etikett ur lagesregistret; modelltexten filtreras vid modellens utgång (KM-09); bytesmodalen ber om ett förberett byte (LOFTEN_TEXT) — låtsas-BankID borta; valutan redovisas för varje valuta. |
 | `api/activate-intelligence.mjs` | mejl | kund | **registret** | Etiketten ur diagnosEtikett; den citerade modelltexten passerar kundensMotivering (KM-08). |
 | `api/briefing.mjs` | endpoint | anropare | **registret** | Serverar lagrade insikter ur briefing_reports. Insikterna skrevs av briefing-generator, men en rad äldre än registret serveras som den skrevs — därför granskas varje lagrad insikt vid LÄSNING (granskaLagradText) och en insikt med förbjuden form visas inte. |
 | `api/cron/generate-briefings.mjs` | mejl | kund | **registret** | Insikterna ur briefing-generator: byten ur radLage med analysdatum, kostnadsökningar som faktum om två totalsummor; inga påhittade faktorer, inga förhandlingsknappar (KM-10). |
 | `api/cron/run-price-alerts.mjs` | mejl | kund | **registret** | Grindat av larmunderlaget; löftet är LOFTEN.prisbevakning; «X av Y avsändare» i stället för «bolag»; ingen påhittad besparing ur höjningen. |
 | `api/cron/send-reminders.mjs` | mejl | kund | **registret** | Varsel 30/7 dagar före sista uppsägningsdag ur avtalsklockan; utfallsenkäten säger «Vi beräknade» om ett daterat tal. |
+| `api/generate-prospect.mjs` | mejl | prospekt | **registret** | Omskrivet 2026-09-24: bara det som syns utifrån (DNS, Bolagsverket) och listprisankaret — lägsta verifierade publika listpris per enhet med produkt och datum (lib/listprisankare.js). Ingen kostnad, ingen besparing; orden ur PROSPEKT. Fynden granskas mot registret innan de lagras. |
 | `api/inbound-email.mjs` | mejl | kund | **registret** | Svar per rutt: bevakade avtal pekar på avtalsklockan, övriga på LOFTEN.skalIRummet — «återkommer per mail» borta. |
 | `api/invoice-history.mjs` | endpoint | anropare | **registret** | Rummet: `rum` och `a.lage` ur lagesregistret; lagrade fynd via refineFinding; ingen lagrad modelltext serveras. |
+| `api/prospect.mjs` | endpoint | anropare | **registret** | prospektSvar: serverar bara avläst material ur den lagrade profilen, granskar fynden vid läsning och räknar listprisankaret färskt — lagrade premier och kostnader från den gamla estimatorn når aldrig en ny läsare. |
 | `api/quote-request.mjs` | mejl | kund | **registret** | LOFTEN.offertrunda (Nivå 3, med fullmakt) — inget byte och ingen bytesavgift; «inom 1–2 arbetsdagar» är grundarens SLA. |
+| `api/reveal.mjs` | endpoint | anropare | **registret** | Dörrens fynd formuleras i lib/domain-intel.js och lib/business-intel.js och granskas mot registret innan de lämnar servern (granskadeFynd); generaliseringar utan grund är omskrivna och spärrade (2026-09-24). |
 | `api/send-analysis.mjs` | mejl | kund | **registret** | Läget och etiketten ur lagesregistret; modelltexten passerar kundensMotivering (KM-08). «Arvo-pris» heter «Verifierat pris». |
 | `api/send-confirmation.mjs` | mejl | kund | **registret** | Strikt förberedande (2026-09-24): bekräftar en beställning av ett besparingsunderlag (UNDERLAGET), varje mening om vem som säger upp/tecknar ur ANSVARSGRANS (KM-13), ångerrutan borta; LOFTEN.bytesunderlag + personligtSvar, mekanismen är det interna larmet — som går FÖRST, och ett Resend-fel är aldrig «ok» (KM-11); klientens text escapas, den föreslagna leverantören skrivs inte ut; arvodet som i villkoren §3.2. |
 | `api/test-invoice.mjs` | endpoint | anropare | **registret** | Fakturavyn: `lage` ur lagesregistret, modelltexten genom kundensMotivering/kundensSteg vid modellens utgång. |
@@ -45,7 +45,7 @@ sviten när en yta saknas här.*
 | `api/auth/request-magic-link.mjs` | endpoint | anropare | **mejlyta** | inloggningslänk; svaret är en status |
 | `api/cron/generate-briefings.mjs` | endpoint · grind `cronAnropTillatet` | anropare | **mejlyta** | månadsbriefen till premiumkretsen; svaret är statistik |
 | `api/cron/run-price-alerts.mjs` | endpoint · grind `CRON_SECRET` | anropare | **mejlyta** | prislarm till premiumkretsen; svaret är statistik |
-| `api/cron/send-reminders.mjs` | endpoint | anropare | **mejlyta** | OGRINDAD, mätt 2026-09-24: vem som helst kan anropa loopen. Varje mejl skickas en gång per analys (sent_at), så ett anrop kan inte skicka ett mejl som inte redan är moget. Grindas med cronAnropTillatet när CRON_SECRET är bekräftad i Vercel — annars nekas Vercels egen cron och påminnelserna tystnar (skuld #8). |
+| `api/cron/send-reminders.mjs` | endpoint · grind `cronAnropTillatet` | anropare | **mejlyta** | avtalspåminnelser och utfallsenkät; grindad 2026-09-24 (samma grind som övriga cron) |
 | `api/founding-member.mjs` | endpoint | anropare | **mejlyta** | grundarmedlemskap; mejlen är klassade |
 | `api/generate-prospect.mjs` | endpoint · grind `ARVO_ADMIN_SECRET` | anropare | **mejlyta** | utgående prospekt; mejlet är klassat (oreviderat) |
 | `api/inbound-email.mjs` | endpoint · grind `INBOUND_WEBHOOK_SECRET` | anropare | **mejlyta** | Resends webhook; kundens text är svarsmejlet |
@@ -73,7 +73,6 @@ sviten när en yta saknas här.*
 | `api/recompute-shelfware.mjs` | endpoint | anropare | **ingen_prisdom** | räknar licensöverskott på kundens egna tal; svaret är tal utan mening, fakturavyn formulerar |
 | `api/save-contract.mjs` | endpoint | anropare | **ingen_prisdom** | sparar ett avtalsdatum, svarar en status |
 | `api/token.mjs` | endpoint | anropare | **ingen_prisdom** | utfärdar en kortlivad sessionstoken |
-| `api/track-outcome.mjs` | endpoint | anropare | **ingen_prisdom** | OGRINDAD skrivväg till arvo_outcomes, mätt 2026-09-24: ingen kundyta och inget arvode läser tabellen (bara den oanropade getCalibrationData). Kandidat för borttagning. |
 | `api/vakt-pulse.mjs` | endpoint | anropare | **ingen_prisdom** | nattsvepets tidsstämpel och antal källor |
 | `api/validate-magic.mjs` | endpoint | anropare | **ingen_prisdom** | validerar en inloggningslänk |
 | `api/waitlist.mjs` | endpoint | anropare | **ingen_prisdom** | väntelista, svarar en status |
