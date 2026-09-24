@@ -4,6 +4,7 @@
 // eller honest systemkonstant. Lager som kräver data vi ännu inte har
 // (kohort-prisdiskriminering, sannolikhetsprognos) visas ENDAST med verklig
 // täckning — annars utelämnas de (regel 3/4: precision eller tystnad).
+import { ANSVARSGRANS_TEXT } from '../../lib/loften';
 import { hamtaRumsnyckel, nyRumsnyckel, RUMSNYCKEL_RE } from '../../utils/rumsnyckel';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -1605,8 +1606,8 @@ export default function Portfolio() {
                                     <div className="sv-lbl">{known ? 'Er enda handling' : 'Varför vi väntar på datumet'}</div>
                                     <p className="sv-note">
                                       {known
-                                        ? <>En signatur med BankID. Inget är bindande förrän ni skriver under, ni kan tacka nej utan
-                                            kostnad, och själva bytet ger ingen driftstörning — den nya leverantören sköter flytten.</>
+                                        ? <>{ANSVARSGRANS_TEXT.niAgerar} Vi tar fram underlaget med färdiga utkast, tajmat mot
+                                            sista dagen. Inget är bindande förrän ni själva skriver under hos leverantören.</>
                                         : <>En bindningstid eller brytavgift kan äta besparingen om bytet sker fel dag. Vi rör er aldrig
                                             förrän vi vet att kalkylen håller — bristen är nästa drag, inte ett hinder.</>}
                                     </p>
@@ -1616,7 +1617,7 @@ export default function Portfolio() {
 
                               <div className="sv-act">
                                 <SwitchBtn as={Link} to="/aktivera">
-                                  {known ? 'Aktivera bytet' : 'Förbered bytet'} <Icon name="arrow" size={16} />
+                                  Aktivera bevakningen <Icon name="arrow" size={16} />
                                 </SwitchBtn>
                                 {/* Amber-lägets nästa drag: avtalet in → AI läser datumen → koden räknar →
                                     teal-läget tänds. Vid work/done/fail visas ärligt status-besked. */}
@@ -1738,7 +1739,7 @@ export default function Portfolio() {
                                     <b>Motdraget:</b> fönstret bevakas i Maktkalendern
                                     {(authEmail || apiEmail)
                                       ? <> — vi mejlar er 30 och 7 dagar före sista uppsägningsdagen, och rummet visar alltid exakt hur många dagar som återstår.</>
-                                      : <> — rummet visar alltid exakt hur många dagar som återstår, och bytet förbereds mot rätt dag. Logga in med er företagsmejl så påminner vi er även via mejl.</>}
+                                      : <> — rummet visar alltid exakt hur många dagar som återstår, och underlaget tajmas mot rätt dag. Logga in med er företagsmejl så påminner vi er även via mejl.</>}
                                   </p>
                                   {/* Kvitteringen: två handlingar när fönstret är öppet (eller rullande — uppsägbart när som helst) */}
                                   {(c.status === 'window-open' || c.status === 'rolling') && (

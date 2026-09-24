@@ -523,6 +523,29 @@ Stegen mergades med byggarens egen granskning. En separat session med uppdraget 
   först noll: valutaskyddet stod två gånger, alltså var det ett skydd. Kopian är borttagen.
 **Läxan är densamma som 1 sep, en gång till: byggarens granskning hittade 0 av dessa 9.**
 
+**⚠️ ANSVARSGRÄNSEN — GRUNDARORDER 2026-09-24: «Vår affärsmodell är strikt förberedande: kunden signerar
+alltid själv. Vi har ingen fullmakt att säga upp avtal.»** Bekräftelsemejlet sa «Vi har tagit emot er
+bytesbegäran» och «24 timmars ångerrätt — vi påbörjar ingen uppsägning förrän ångerfristen löpt ut».
+`ANSVARSGRANS` och `UNDERLAGET` (`lib/kundmeningar.js`, speglade i `src/lib/loften.js`) är nu den enda
+källan för varje mening om vem som säger upp, tecknar och bär beslutet. KM-05 fäller varje exekutiv form i
+kundytornas kod, KM-13 prövar mejlet och KM-14 är en **meningsbank** över allt som togs bort. Skanningen
+hittade 47 rader i 15 filer, bland dem två mejl som grep missade. Renderingen hittade en rad till som
+skanningen missade: modalens «Ni kan ångra begäran inom 24 timmar».
+**MEN MEJLET LJÖG INTE MOT AVTALET — DET CITERADE DET.** `/villkor` säger fortfarande motsatsen till ordern:
+· ombudskap;
+· §2.1: fullmakt via BankID att säga upp och ingå avtal;
+· §2.2: ångerfrist;
+· §3.3: «ett av Arvo Flow tecknat leverantörsavtal»;
+· §4.2: «påbörjade avtalsbyten slutförs»;
+· §5.1: «Om Arvo Flow missar att säga upp».
+Uppladdningsformuläret binder varje besökare till villkoren («Genom att fortsätta godkänner du»). Bibelns
+egen Switch-doktrin (Nivå 1 «Arvo avfyrar», `APPLIED_NEW` = «gamla leverantören uppsagd» av oss) säger
+också motsatsen.
+**Öppet, grundarens beslut:**
+· Villkoren skrivs om. De är undantagna i KM-05, med exakt en fil prövad.
+· Arvodets utlösare saknar mekanism i en strikt förberedande modell. Liggaren vet bara om byten VI utfört.
+· Integritetspolicyn lovar «raderas inom 24 timmar» medan analyser arkiveras och aldrig raderas (11 sep).
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning

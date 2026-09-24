@@ -10,6 +10,7 @@
 //   4. Upserta briefing_reports för innevarande månad
 //   5. Returnera { briefingUrl, insightCount, totalSavingPotential, isDemo }
 
+import { LOFTEN, UNDERLAGET } from '../../lib/kundmeningar.js';
 import { getDb }                    from '../../lib/db.js';
 import { generateBriefingInsights } from '../../lib/briefing-generator.js';
 import crypto                       from 'crypto';
@@ -64,12 +65,12 @@ export default async function handler(req, res) {
             primary:   { value: 18400, label: 'nettobesparing/år' },
             secondary: { value: 21600, label: 'bruttobesparing'   },
           },
-          context:    'Beloppet räknades vid analysen den 3 september. Vi förbereder bytet — uppsägning och nyteckning — och ni signerar själva innan något sägs upp eller tecknas.',
+          context:    `Beloppet räknades vid analysen den 3 september. ${LOFTEN.bytesunderlag.text}`,
           supplier:   'Microsoft',
           category:   'saas-productivity',
           analysisId: null,
           action: {
-            label:              'Be Arvo förbereda bytet',
+            label:              UNDERLAGET.cta,
             type:               'approve_switch',
             estimatedNetSaving: 18400,
           },

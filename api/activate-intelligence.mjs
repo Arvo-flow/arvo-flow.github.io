@@ -4,7 +4,7 @@
 // Cold signup (source=intelligence-page): premium welcome email.
 // Post-analysis signup (source=testa-faktura): full briefing email with analysis data.
 
-import { kundensMotivering } from '../lib/kundmeningar.js';
+import { kundensMotivering, ANSVARSGRANS } from '../lib/kundmeningar.js';
 import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { diagnosEtikett } from '../lib/lagesregister.js';
@@ -190,7 +190,7 @@ ${diagInsight ? `<p style="font-size:13.5px;color:#3D5249;margin:14px 0 0;line-h
 </td></tr>
 
 <tr><td style="padding:24px 36px;background:#F0FDF9;border-bottom:1px solid #D5E2DC;">
-<p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#047857;margin:0 0 8px;">Din identifierade nettobesparing</p>
+<p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#047857;margin:0 0 8px;">Möjlig nettobesparing</p>
 <p style="font-size:40px;font-weight:800;color:#0E1A17;margin:0 0 8px;letter-spacing:-.03em;line-height:1;">+${fmt(netSaving)}&nbsp;<span style="font-size:18px;font-weight:400;color:#5C6E68;">kr/&aring;r</span></p>
 <p style="font-size:13px;color:#5C6E68;margin:0;">${fmt(annualCost)} &rarr; ${fmt(suggestedAnnualCost)} kr/&aring;r &middot; Arvos arvode ${fmt(arvoFee)} kr (20&nbsp;%)</p>
 </td></tr>
@@ -203,8 +203,8 @@ ${reasoning ? `<tr><td style="padding:24px 36px;border-bottom:1px solid #EEF4F2;
 </td></tr>` : ''}
 
 <tr><td style="padding:28px 36px 24px;">
-<a href="https://arvoflow.se/testa-faktura?bypass=dev" style="display:block;text-align:center;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);color:#ffffff;font-size:15px;font-weight:700;padding:16px 32px;border-radius:12px;text-decoration:none;letter-spacing:-.01em;">Aktivera bytet &rarr;</a>
-<p style="text-align:center;font-size:12px;color:#8A9E98;margin:12px 0 0;line-height:1.6;">Arvo hanterar hela bytet &mdash; ni betalar 20&nbsp;% av realiserad besparing, inget annat.</p>
+<a href="https://arvoflow.se/testa-faktura" style="display:block;text-align:center;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);color:#ffffff;font-size:15px;font-weight:700;padding:16px 32px;border-radius:12px;text-decoration:none;letter-spacing:-.01em;">Analysera fler fakturor &rarr;</a>
+<p style="text-align:center;font-size:12px;color:#8A9E98;margin:12px 0 0;line-height:1.6;">${ANSVARSGRANS.niAgerar}</p>
 </td></tr>
 
 <tr><td style="padding:0 24px 28px;">

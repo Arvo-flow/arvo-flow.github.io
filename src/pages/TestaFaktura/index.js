@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { LOFTEN_TEXT } from '../../lib/loften';
+import { LOFTEN_TEXT, ANSVARSGRANS_TEXT, UNDERLAGET_TEXT } from '../../lib/loften';
 import { hamtaRumsnyckel } from '../../utils/rumsnyckel';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -1096,7 +1096,7 @@ const TestaFaktura = () => {
   );
   const _switchCtaLabel = _switchIsSameSupplier
     ? `Sänk er ${result?.recommendation?.suggestedSupplier}-kostnad`
-    : 'Be Arvo förbereda bytet';
+    : UNDERLAGET_TEXT.cta;
   const _showSwitch = !!(
     result?.route === 'auto'
     && result?.recommendation?.suggestedAnnualCost
@@ -1895,7 +1895,7 @@ const TestaFaktura = () => {
                   const _isSameSupplier = isRealPrice && samaLeverantor(_suggestedLower, _currentLower);
                   const partnerCtaLabel = _isSameSupplier
                     ? `Sänk er ${result.recommendation.suggestedSupplier}-kostnad`
-                    : isRealPrice ? 'Aktivera bytet' : 'Säkra besparingen';
+                    : UNDERLAGET_TEXT.cta;
                   return (
                     <>
                       {diagInsight && (
@@ -1933,7 +1933,7 @@ const TestaFaktura = () => {
                       )}
                       <SavingsBlock>
                         <span className="kicker">
-                          {isLicensePending ? 'Möjlig årlig besparing' : 'Din identifierade nettobesparing'}
+                          {isLicensePending ? 'Möjlig årlig besparing' : 'Möjlig nettobesparing'}
                         </span>
                         <span className="amount">+{formatKr(animatedNet)}</span>
                         <span className="unit">
@@ -2685,32 +2685,31 @@ const TestaFaktura = () => {
           {_showSwitch && (
             <SwitchCard>
               <div className="switch-eyebrow">Arvo Switch</div>
-              <h3>Priset är verifierat. Arvo förbereder bytet.</h3>
-              <p className="sub">
-                Priset är leverantörens officiella avtalspris — verifierat och tillgängligt
-                utan förhandling. Ni behöver inte kontakta er nuvarande leverantör — Arvo
-                förbereder hela bytet.
-              </p>
+              {/* Stod: «Arvo förbereder bytet … Ni aktiverar bytet — ett klick, Arvo tar det därifrån …
+                  Fullmakt och bytesplan i er inkorg inom 24 timmar … 20 % av den identifierade besparingen».
+                  Arvo säger inte upp och tecknar ingenting (ANSVARSGRANS, grundarorder 2026-09-24). */}
+              <h3>Priset är verifierat. Vi tar fram underlaget.</h3>
+              <p className="sub">{LOFTEN_TEXT.bytesunderlag}</p>
               <div className="switch-steps">
                 <div className="switch-step">
                   <span className="step-num">1</span>
                   <span className="step-body">
-                    <span className="step-title">Ni aktiverar bytet</span>
-                    <span className="step-detail">Ett klick — Arvo tar det därifrån.</span>
+                    <span className="step-title">Ni beställer underlaget</span>
+                    <span className="step-detail">Ett klick. Det binder er inte till något.</span>
                   </span>
                 </div>
                 <div className="switch-step">
                   <span className="step-num">2</span>
                   <span className="step-body">
-                    <span className="step-title">Arvo förbereder allt</span>
-                    <span className="step-detail">Fullmakt och bytesplan i er inkorg inom 24 timmar — ni granskar och signerar.</span>
+                    <span className="step-title">Vi tar fram det</span>
+                    <span className="step-detail">{LOFTEN_TEXT.personligtSvar}</span>
                   </span>
                 </div>
                 <div className="switch-step">
                   <span className="step-num">3</span>
                   <span className="step-body">
-                    <span className="step-title">Nytt avtalspris aktivt</span>
-                    <span className="step-detail">Ni betalar 20&nbsp;% av den identifierade besparingen — inget annat.</span>
+                    <span className="step-title">Ni byter själva</span>
+                    <span className="step-detail">{ANSVARSGRANS_TEXT.niAgerar}</span>
                   </span>
                 </div>
               </div>
@@ -2986,7 +2985,7 @@ const TestaFaktura = () => {
               <div className="sent-state">
                 <span className="sent-icon"><Icon name="check" size={20} stroke={2.5} /></span>
                 <p className="sent-title">
-                  Vi har tagit emot er begäran.
+                  {UNDERLAGET_TEXT.mottagen}
                 </p>
                 <p className="sent-sub">
                   {LOFTEN_TEXT.bytesunderlag} {LOFTEN_TEXT.personligtSvar}
@@ -2997,8 +2996,9 @@ const TestaFaktura = () => {
                 {/* Här stod «Allt är förberett. Er signatur aktiverar det.» ovanför en knapp märkt «Signera med
                     BankID» som bara skickade två mejl — ett låtsas-BankID i produktion, och inget var förberett.
                     Bytesrälsen är mode:stub: kunden BER om ett förberett byte och signerar först när underlaget finns. */}
-                <p className="bk-title">Be Arvo förbereda bytet.</p>
+                <p className="bk-title">{UNDERLAGET_TEXT.cta}.</p>
                 <p className="sub">{LOFTEN_TEXT.bytesunderlag}</p>
+                <p className="sub">{ANSVARSGRANS_TEXT.inteOmbud}</p>
 
                 <div className="bk-offer">
                   <div className="bk-offer-top">
@@ -3009,7 +3009,7 @@ const TestaFaktura = () => {
                     </span>
                     <span className="bk-verified">
                       <Icon name="shield" size={10} stroke={2} />
-                      {_switchIsRealPrice ? 'Verifierat listpris' : 'Arvo-verifierad leverantör'}
+                      {_switchIsRealPrice ? 'Verifierat listpris' : 'Pris ej verifierat mot publik lista'}
                     </span>
                   </div>
                   <div className="bk-price-row">
@@ -3018,7 +3018,7 @@ const TestaFaktura = () => {
                     <span className="bk-to">{formatNum(result.recommendation.suggestedAnnualCost)} kr/år</span>
                   </div>
                   <p className="bk-savings-row">
-                    Möjlig besparing {formatKr(adjGrossSaving)}/år · arvode {formatKr(adjArvoFee)}, bara om bytet blir av
+                    Möjlig besparing {formatKr(adjGrossSaving)}/år · arvode {formatKr(adjArvoFee)}, bara om ni själva genomför bytet
                   </p>
                 </div>
 
@@ -3033,7 +3033,7 @@ const TestaFaktura = () => {
                       disabled={modalEmailState === 'submitting'}
                       onClick={submitModalEmail}
                     >
-                      {modalEmailState === 'submitting' ? 'Skickar…' : <>Skicka begäran <Icon name="arrow" size={16} /></>}
+                      {modalEmailState === 'submitting' ? 'Skickar…' : <>{UNDERLAGET_TEXT.skicka} <Icon name="arrow" size={16} /></>}
                     </Button>
                   </>
                 ) : (
@@ -3053,12 +3053,12 @@ const TestaFaktura = () => {
                       $full
                       disabled={modalEmailState === 'submitting'}
                     >
-                      {modalEmailState === 'submitting' ? 'Skickar…' : <>Skicka begäran <Icon name="arrow" size={16} /></>}
+                      {modalEmailState === 'submitting' ? 'Skickar…' : <>{UNDERLAGET_TEXT.skicka} <Icon name="arrow" size={16} /></>}
                     </Button>
                   </form>
                 )}
 
-                <p className="bk-fine-print">Inget sägs upp eller tecknas innan ni signerat. Ni kan ångra begäran inom 24 timmar.</p>
+                <p className="bk-fine-print">{ANSVARSGRANS_TEXT.inteAvtal}</p>
               </>
             )}
           </ModalCard>

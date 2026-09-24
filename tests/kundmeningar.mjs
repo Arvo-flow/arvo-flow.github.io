@@ -12,8 +12,8 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { kundensMotivering, kundensSteg, LOFTEN, LOFTEN_UTAN_MEKANISM } from '../lib/kundmeningar.js';
-import { LOFTEN_TEXT } from '../src/lib/loften.js';
+import { kundensMotivering, kundensSteg, LOFTEN, LOFTEN_UTAN_MEKANISM, ANSVARSGRANS, UNDERLAGET } from '../lib/kundmeningar.js';
+import { LOFTEN_TEXT, ANSVARSGRANS_TEXT, UNDERLAGET_TEXT } from '../src/lib/loften.js';
 
 const ROT = new URL('..', import.meta.url).pathname;
 const las = (p) => readFileSync(join(ROT, p), 'utf8');
@@ -55,6 +55,46 @@ describe('KM · kundmeningsregistret', () => {
     assert.equal(kundensMotivering('Vi kan förbereda även bredbandsbytet.').text, 'Vi kan förbereda även bredbandsbytet.', 'motprov');
   });
 
+  test('KM-13 · bytesbekräftelsen är strikt förberedande: varje ansvarsmening ur registret, ingen exekutiv form (motprov: registret kan fälla)', async () => {
+    process.env.RESEND_API_KEY ??= 're_test_ingen_riktig_nyckel';
+    const { buildHtml } = await import('../api/send-confirmation.mjs');
+    const r = (typ) => ({ extracted: { supplier: 'Telia', annualCost: 48000 }, categorized: { category: 'mobil' },
+      recommendation: { recommendationType: typ, grossSaving: 12000, optimizationSaving: 6000 } });
+    for (const typ of ['switch', 'optimize']) {
+      const text = buildHtml(r(typ)).replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+      for (const [k, mening] of Object.entries(ANSVARSGRANS)) assert.ok(text.includes(mening), `${typ}: ansvarsgränsen «${k}» saknas i mejlet`);
+      assert.ok(text.includes(typ === 'optimize' ? UNDERLAGET.mottagenAvveckling : UNDERLAGET.mottagen), `${typ}: rubriken kommer inte ur registret`);
+      const fel = LOFTEN_UTAN_MEKANISM.filter(({ monster }) => monster.test(text.replace(new RegExp(Object.values(ANSVARSGRANS).map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g'), ' ')));
+      assert.deepEqual(fel.map((f) => f.skal), [], `${typ}: en exekutiv form står i mejlet`);
+    }
+    // Motprov: formerna fäller den gamla texten — annars är testet grönt för att mönstren inte kan se något.
+    const gammal = 'Vi har tagit emot er bytesbegäran. 24 timmars ångerrätt: Vi påbörjar ingen uppsägning eller nytt avtal förrän ångerfristen löpt ut.';
+    assert.ok(LOFTEN_UTAN_MEKANISM.filter(({ monster }) => monster.test(gammal)).length >= 3, 'mönstren fäller inte den gamla mejltexten');
+    // Modalens finstil sa samma sak utan ordet «ångerrätt» — fångad av rendering, inte av skanningen.
+    assert.ok(LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test('Inget sägs upp eller tecknas innan ni signerat. Ni kan ångra begäran inom 24 timmar.')));
+    assert.ok(!LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(ANSVARSGRANS.inteAvtal)), 'motprov: ansvarsgränsens egen mening om att ångra får stå');
+  });
+
+  test('KM-14 · meningsbanken: varje exekutiv mening som togs bort 2026-09-24 fälls av registret (motprov: ansvarsgränsen fälls inte)', () => {
+    // Ytorna är rättade, så inget annat test bär formerna. Banken är minnet av vad som stod där.
+    const borttagna = [
+      'Vi har tagit emot er bytesbegäran.', 'Vi påbörjar ingen uppsägning eller nytt avtal förrän ångerfristen löpt ut.',
+      '24 timmars ångerrätt', 'Ni kan ångra begäran inom 24 timmar.', 'Inget sägs upp eller tecknas innan ni signerat.',
+      'Be Arvo förbereda bytet', 'Arvo förbereder hela bytet.', 'Ni aktiverar bytet', 'Ett klick — Arvo tar det därifrån.',
+      'Fullmakt och bytesplan i er inkorg inom 24 timmar', 'Ni betalar 20 % av den identifierade besparingen',
+      'Din identifierade nettobesparing', 'Varje byte kräver er BankID-signatur.', 'En signatur med BankID.',
+      'ni godkänner med BankID', 'Bytet förberett i sin helhet', 'Arvo hanterar hela bytet', 'Arvo Flow agerar som ditt företags ombud',
+      'Arvo identifierar läckan och genomför bytet åt er',
+    ];
+    const missade = borttagna.filter((m) => !LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(m)));
+    assert.deepEqual(missade, [], 'en borttagen exekutiv mening kan komma tillbaka osedd');
+    for (const [k, m] of Object.entries(ANSVARSGRANS)) {
+      if (k === 'inteOmbud') continue;   // «Arvo säger inte upp» — nekandet fälls medvetet av säger-upp-formen; spegeln är undantagen som register (KM-05)
+      assert.ok(!LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(m)), `ansvarsgränsens «${k}» fälls av registret`);
+    }
+    for (const t of Object.values(UNDERLAGET)) assert.ok(!LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(t)), `flödets ord fälls: ${t}`);
+  });
+
   test('KM-12 · filtret: «företag»-kohorter och berömformer stryks; en överbetalningsmening står kvar', () => {
     for (const m of ['Jämförbara företag betalar väsentligt mindre.', 'Liknande företag i er storlek betalar mindre.',
       'Andra företag med 10 anställda betalar mindre.', 'Ni betalar mer än bolag av er storlek.',
@@ -87,16 +127,22 @@ describe('KM · kundmeningsregistret', () => {
     for (const d of ['api', 'lib', 'agents', 'src/components', 'src/lib', 'src/utils', ...routade]) ga(d);
     filer.push('scripts/notify-price-changes.mjs');
     assert.ok(filer.length > 200, `skanningen hittade bara ${filer.length} filer`);
-    const REGISTREN = new Set(['lib/kundmeningar.js', 'lib/kundytor.js']);   // de citerar formerna med flit
+    const REGISTREN = new Set(['lib/kundmeningar.js', 'lib/kundytor.js', 'src/lib/loften.js']);   // de citerar formerna med flit; loften.js är registrets spegel (KM-07)
     // Switch-rälsen (mode:stub) bär fullmaktens text om BankID-signering — den FRAMTIDA mekanismen.
     // Undantaget gäller bara så länge ingen kundyta når den; det prövas här, inte antas.
     const RALSEN = 'agents/orchestrator/';
     const narRalsen = filer.filter((f) => !f.startsWith(RALSEN) && !f.startsWith('agents/')
       && /from ['"][./]*agents\/orchestrator/.test(las(f)));
     assert.deepEqual(narRalsen, [], 'en kundyta importerar Switch-rälsen — fullmaktens BankID-löfte når då kunden');
+    // AVTALSTEXTEN är grundarens (och en jurists) att skriva om — den säger i dag det motsatta mot
+    // ANSVARSGRANS (§2.1 fullmakt, §2.2 ångerfrist, ombudskap, §3.3, §4.2, §5.1). Undantaget gäller
+    // EN fil och prövas här, så att det inte kan vidgas i tysthet. Konflikten står öppen i bibeln.
+    const AVTALSTEXT = new Set(['src/pages/Villkor/index.js']);
+    assert.deepEqual([...AVTALSTEXT], ['src/pages/Villkor/index.js'], 'avtalsundantaget har vidgats');
+    assert.ok([...AVTALSTEXT].every((f) => filer.includes(f)), 'undantaget pekar på en fil skanningen inte ser');
     const traffar = [];
     for (const f of filer) {
-      if (REGISTREN.has(f) || f.startsWith(RALSEN)) continue;
+      if (REGISTREN.has(f) || AVTALSTEXT.has(f) || f.startsWith(RALSEN)) continue;
       const rader = utanKommentarer(las(f)).split('\n'); const orig = las(f).split('\n');
       rader.forEach((l, i) => {
         if (/kundmening-ok:\s*\S.{7,}/.test(orig[i - 1] ?? '')) return;
@@ -122,6 +168,10 @@ describe('KM · kundmeningsregistret', () => {
 
   test('KM-07 · frontendens löftestexter är backendens', () => {
     for (const [k, t] of Object.entries(LOFTEN_TEXT)) assert.equal(t, LOFTEN[k]?.text, `${k} har glidit isär`);
+    // Ansvarsgränsen och flödets ord: exakt samma nycklar och texter på båda sidor — en saknad nyckel
+    // i spegeln vore en yta som formulerar ansvarsgränsen själv.
+    assert.deepEqual(ANSVARSGRANS_TEXT, ANSVARSGRANS, 'ansvarsgränsen har glidit isär');
+    assert.deepEqual(UNDERLAGET_TEXT, UNDERLAGET, 'flödets ord har glidit isär');
   });
 
   test('KM-08 · mejlen renderar aldrig webbläsarens ofiltrerade modelltext', async () => {

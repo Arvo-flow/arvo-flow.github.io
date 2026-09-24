@@ -7,7 +7,7 @@
 
 // Resultatet kommer från webbläsaren — ett äldre cachat svar eller ett handbyggt. Modelltexten
 // passerar därför registret även här (KM-08), inte bara vid modellens utgång.
-import { kundensMotivering } from '../lib/kundmeningar.js';
+import { kundensMotivering, UNDERLAGET } from '../lib/kundmeningar.js';
 import { Resend } from 'resend';
 import { createRequire } from 'module';
 import { fakturaLage } from '../lib/lagesregister.js';
@@ -447,7 +447,7 @@ export function htmlEmail(result) {
           <td style="border-radius:12px;background:linear-gradient(135deg,#5DD6CA 0%,#1B6E66 100%);box-shadow:0 6px 20px rgba(27,110,102,0.28)">
             <a href="https://arvoflow.se/flow/testa-faktura"
                style="display:inline-block;color:#ffffff;font-weight:600;font-size:15px;padding:17px 48px;text-decoration:none;font-family:'Inter',Arial,sans-serif;letter-spacing:.02em">
-              ${harByte ? (isRealPrice ? 'Aktivera bytet' : 'S&auml;kra besparingen') : 'Se er analys'} &rarr;
+              ${harByte ? UNDERLAGET.cta : 'Se er analys'} &rarr;
             </a>
           </td>
         </tr>

@@ -152,7 +152,7 @@ export default async function handler(req, res) {
 <table width="560" style="background:#fff;border-radius:12px;padding:28px;max-width:560px;margin:0 auto">
 <tr><td>
   <p style="margin:0 0 4px;font-size:10px;color:#5C6E68;text-transform:uppercase;letter-spacing:.12em">Arvo Intelligence — Kundåtgärd</p>
-  <p style="margin:0 0 20px;font-size:20px;font-weight:700;color:#0E1A17">${insight.action?.type === 'approve_switch' ? 'Bytesbegäran' : 'Kundåtgärd'}</p>
+  <p style="margin:0 0 20px;font-size:20px;font-weight:700;color:#0E1A17">${insight.action?.type === 'approve_switch' ? 'Underlagsbeställning' : 'Kundåtgärd'}</p>
   <table width="100%">
     <tr>
       <td style="padding:8px 0;border-bottom:1px solid #E2EDE8"><span style="color:#5C6E68;font-size:13px">Kund</span></td>

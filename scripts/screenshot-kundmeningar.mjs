@@ -16,6 +16,7 @@ import { existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
 
 process.env.RESEND_API_KEY ??= 're_test_sond';
+const { ANSVARSGRANS, UNDERLAGET } = await import('../lib/kundmeningar.js');
 const { buildHtml: bekraftelse } = await import('../api/send-confirmation.mjs');
 const { buildCustomerEmail: offert } = await import('../api/quote-request.mjs');
 const { buildHookEmail: brief } = await import('../api/cron/generate-briefings.mjs');
@@ -74,20 +75,26 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   // 1 · bytesmodalen
   let p = await sida(bredd, byteSvar());
   await ladda(p);
-  const cta = p.getByRole('button', { name: /Be Arvo förbereda bytet/ });
-  if (!(await cta.count())) fel(`1. ${namn}: bytesknappen «Be Arvo förbereda bytet» syns inte`);
+  // Kortet ovanför knappen (SwitchCard): strikt förberedande — inget «Arvo tar det därifrån».
+  let t0 = await text(p);
+  if (/tar det därifrån|Fullmakt och bytesplan|identifierade besparingen|förbereder (hela )?bytet/.test(t0)) fel(`1. ${namn}: bytkortet lovar fortfarande att Arvo agerar`);
+  else if (!t0.includes(ANSVARSGRANS.niAgerar)) fel(`1. ${namn}: bytkortet säger inte att kunden byter själv`);
+  else ok(`1. ${namn}: bytkortet är strikt förberedande`);
+  await p.screenshot({ path: join(UT, `bytkort-${namn}.png`), fullPage: true });
+  const cta = p.getByRole('button', { name: new RegExp(UNDERLAGET.cta) });
+  if (!(await cta.count())) fel(`1. ${namn}: knappen «${UNDERLAGET.cta}» syns inte`);
   else {
     await cta.first().click();
     await p.waitForTimeout(500);
     let t = await text(p);
     if (/BankID/i.test(t.replace(/signerar med BankID|med BankID/gi, '')) || /Signera med BankID|är aktiverat|Allt är förberett/.test(t)) fel(`1. ${namn}: modalen lovar fortfarande BankID/aktivering`);
-    else if (!/ni signerar själva/.test(t)) fel(`1. ${namn}: modalen säger inte att kunden signerar själv`);
-    else ok(`1. ${namn}: modalen ber om ett förberett byte — inget låtsas-BankID`);
+    else if (!t.includes(ANSVARSGRANS.inteOmbud)) fel(`1. ${namn}: modalen bär inte ansvarsgränsen`);
+    else ok(`1. ${namn}: modalen beställer ett underlag och bär ansvarsgränsen`);
     await p.screenshot({ path: join(UT, `bytesmodal-${namn}.png`), fullPage: false });
     const inp = await p.$('.modal-form input[type=email]');
-    if (inp) { await inp.fill('sond@example.se'); await p.getByRole('button', { name: /Skicka begäran/ }).first().click(); await p.waitForTimeout(800);
+    if (inp) { await inp.fill('sond@example.se'); await p.getByRole('button', { name: new RegExp(UNDERLAGET.skicka) }).first().click(); await p.waitForTimeout(800);
       t = await text(p);
-      /Vi har tagit emot er begäran/.test(t) ? ok(`1. ${namn}: mottagen-läget är sant`) : fel(`1. ${namn}: mottagen-läget saknas: «${t.slice(0, 120)}»`);
+      t.includes(UNDERLAGET.mottagen) ? ok(`1. ${namn}: mottagen-läget är sant`) : fel(`1. ${namn}: mottagen-läget saknas: «${t.slice(0, 120)}»`);
       await p.screenshot({ path: join(UT, `bytesmodal-mottagen-${namn}.png`), fullPage: false }); }
   }
   await p.close();
@@ -118,8 +125,8 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     ['/connect', /raderar Fortnox-kopplingen|redan optimerat/, /Kopplingen tar du bort när du vill/, '4. /connect'],
     ['/aktivera?savings=99999&supplier=Telia', /99\s?999|identifierade redan/, /./, '5. /aktivera'],
     // Andra blicken 2026-09-24: Nivå 1 lovade «Arvo genomför bytet (BankID)» — rälsen är mode:stub.
-    ['/bias', /genomför bytet|BankID/, /Arvo förbereder bytet, ni signerar/, '7. /bias'],
-    ['/', /godkänner varje byte med BankID|signerat av er med BankID/, /Ni godkänner och signerar varje byte själva/, '8. /'],
+    ['/bias', /genomför bytet|BankID|förbereder bytet/, /Arvo tar fram underlaget, ni byter själva/, '7. /bias'],
+    ['/', /godkänner varje byte med BankID|signerat av er med BankID|BankID-signatur|godkänner med BankID|förberett i sin helhet/, /Uppsägning och nyteckning gör ni själva, direkt med leverantörerna/, '8. /'],
   ]) {
     p = await sida(bredd);
     await p.goto(`${bas}${vag}`, { waitUntil: 'networkidle' }); await p.waitForTimeout(600);
@@ -141,7 +148,7 @@ const mejl = {
 };
 for (const [n, html] of Object.entries(mejl)) {
   const t = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-  const forbjudet = /igångsatt|skickar uppsägning|sköter (hela|allt)|förhandl|20 % av realiserad|i era böcker|identifierat|avviker från marknadsnivå/i;
+  const forbjudet = /igångsatt|skickar uppsägning|sköter (hela|allt)|förhandl|20 % av realiserad|i era böcker|identifierat|avviker från marknadsnivå|bytesbegäran|ångerrätt|ångerfrist|påbörjar/i;
   // «0 kr/år» som hjältetal — talen PARSAS; en första version matchade «0 kr/år» inuti «9 600 kr/år».
   const nollor = [...t.matchAll(/(\d[\d\s\u00a0]*) kr\/år/g)].filter((m) => Number(m[1].replace(/\D/g, '')) === 0);
   if (forbjudet.test(t)) fel(`6. mejl ${n}: förbjuden mening: «${t.match(forbjudet)[0]}»`);
@@ -155,7 +162,7 @@ for (const [n, html] of Object.entries(mejl)) {
     await p.close();
   }
 }
-if (!/signerar själva/.test(mejl.bekraftelse)) fel('6. bekräftelsen säger inte att kunden signerar själv');
+if (!mejl.bekraftelse.includes(ANSVARSGRANS.inteOmbud) || !mejl.bekraftelse.includes(ANSVARSGRANS.niAgerar)) fel('6. bekräftelsen bär inte ansvarsgränsen');
 if (!/tre månader efter att det nya avtalet aktiverats/.test(mejl.bekraftelse)) fel('6. bekräftelsens arvode följer inte villkoren §3.2');
 
 await browser.close(); server.close();

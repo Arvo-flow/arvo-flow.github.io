@@ -7,6 +7,7 @@
 // Rörelse som telemetri (IntersectionObserver → inview; prefers-reduced-motion respekteras).
 // Kalender-artefakten är ett MÄRKT EXEMPEL (fällornas verkliga klockutfall, aldrig besökarens data).
 // Föregående sida: src/pages/LandingJuli26 (arkiv) + git-tagg landing-juli-26.
+import { ANSVARSGRANS_TEXT } from '../../lib/loften';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Nav from '../../components/Nav';
@@ -69,7 +70,7 @@ const EXEMPEL_RADER = [
 const FAQ = [
   {
     q: 'Vad kostar det?',
-    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande bevakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: i kategorier där bytet är systematiserat förbereder Arvo hela bytet — uppsägning, nyteckning, tajming — och ni godkänner med BankID. Arvodet är 20 % av första årets kontrakterade besparing: skillnaden mellan ert gamla fakturapris och det nya avtalets pris, båda dokumenterade svart på vitt. Det faktureras först när det nya avtalet börjat gälla — och visar era fakturor senare att besparingen inte landat, justerar vi arvodet. Blir det ingen besparing kostar Switch ingenting.',
+    a: 'Arvo erbjuds i två lager. Arvo Intelligence kostar 1 995 kr/mån — löpande bevakning, smyghöjningslarm och avtalsbevakning, ingen bindningstid. Arvo Switch är ett tillägg: Arvo tar fram ett besparingsunderlag — jämförelsen, tajmingen och färdiga utkast till uppsägning och nyteckning — som ni själva skickar till leverantörerna. Arvodet är 20 % av första årets kontrakterade besparing: skillnaden mellan ert gamla fakturapris och det nya avtalets pris, båda dokumenterade svart på vitt. Det faktureras först när det nya avtalet börjat gälla — och visar era fakturor senare att besparingen inte landat, justerar vi arvodet. Blir det ingen besparing kostar Switch ingenting.',
   },
   {
     q: 'Hur kan ni vara säkra på att rekommendationerna är opartiska?',
@@ -85,11 +86,11 @@ const FAQ = [
   },
   {
     q: 'Säger ni upp avtal autonomt utan mitt godkännande?',
-    a: 'Aldrig. Varje byte kräver er BankID-signatur. Vi förbereder, ni godkänner. Det är en hård regel.',
+    a: `Nej. ${ANSVARSGRANS_TEXT.inteOmbud} ${ANSVARSGRANS_TEXT.niAgerar}`,
   },
   {
     q: 'Vilka kategorier täcker ni idag?',
-    a: 'Vi bevakar er kostnad i tre lägen. I el, mobil och företagsbredband förbereder Arvo hela bytet — uppsägning och nyteckning, färdigtajmat — ni godkänner med BankID, och den vinnande leverantören sköter inkopplingen enligt branschens regler. I programvara / SaaS, kortterminaler, fakturatjänster och löneadministration förbereder Arvo hela bytet — ni formaliserar med ett klick. I försäkring, leasing, larm och tjänsteavtal levererar vi fyndet, tajmingen och det exakta motbudet och beväpnar er att agera (försäkringsbyten genomförs när vår FI-licens är klar). Fler kategorier läggs till varje kvartal baserat på var vi ser störst besparingar i kunddatan.',
+    a: 'Vi bevakar er kostnad i tre lägen. I el, mobil, företagsbredband, programvara / SaaS, kortterminaler, fakturatjänster och löneadministration tar Arvo fram ett besparingsunderlag med färdiga utkast till uppsägning och nyteckning, tajmat mot avtalsklockan — ni skickar dem själva. I försäkring, leasing, larm och tjänsteavtal levererar vi fyndet, tajmingen och det exakta motbudet och beväpnar er att agera (försäkringsbyten genomförs när vår FI-licens är klar). Fler kategorier läggs till varje kvartal baserat på var vi ser störst besparingar i kunddatan.',
   },
   {
     q: 'Vad händer med min data?',
@@ -485,7 +486,7 @@ export default function Landing() {
           <div className={`pc lightc ${cardsIn}`}>
             <div className="pc-k">Arvo Switch</div>
             <div className="pc-pris">20 % <small>av kontrakterad besparing</small></div>
-            <div className="pc-lede">Bytet förberett i sin helhet — tajmat mot avtalsklockan, signerat av er.</div>
+            <div className="pc-lede">Ett färdigt besparingsunderlag, tajmat mot avtalsklockan. {ANSVARSGRANS_TEXT.niAgerar}</div>
             {[
               'Arvodet faktureras först när det nya avtalet börjat gälla',
               'Ni godkänner och signerar varje byte själva',

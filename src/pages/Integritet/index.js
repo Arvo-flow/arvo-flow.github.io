@@ -231,6 +231,7 @@ const Integritet = () => (
           </TableRow>
           <TableRow>
             <div className="k">Scrive AB</div>
+            {/* kundmening-ok: underbiträdeslistan — tjänsten är uttryckligen märkt planerad */}
             <div className="v">BankID-signering (planerad) — Sverige</div>
           </TableRow>
           <TableRow>

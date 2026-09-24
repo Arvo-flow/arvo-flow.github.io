@@ -17,9 +17,9 @@ import {
 const CATEGORY_MODEL = [
   // Här stod «Arvo genomför bytet (BankID)» för Nivå 1. Bytesrälsen är mode:stub och ingen
   // BankID-signering finns hos oss — bytet FÖRBEREDS, kunden signerar (kundmeningsregistret).
-  { cat: 'Elavtal',             detail: 'Arvo förbereder bytet, ni signerar', pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
-  { cat: 'Mobilabonnemang',     detail: 'Arvo förbereder bytet, ni signerar', pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
-  { cat: 'Företagsbredband',    detail: 'Arvo förbereder bytet, ni signerar', pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Elavtal',             detail: 'Arvo tar fram underlaget, ni byter själva', pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Mobilabonnemang',     detail: 'Arvo tar fram underlaget, ni byter själva', pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
+  { cat: 'Företagsbredband',    detail: 'Arvo tar fram underlaget, ni byter själva', pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
   { cat: 'Programvara / SaaS',  detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
   { cat: 'Kortterminal',        detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },
   { cat: 'Fakturatjänst',       detail: 'Arvo förbereder, ni formaliserar',  pay: '20 % av besparingen (fakturerat 3 mån efter genomfört byte)' },

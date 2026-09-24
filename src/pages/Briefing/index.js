@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { briefingLage, lovarInsikter, visaSparbelopp } from '../../lib/briefinglage';
+import { LOFTEN_TEXT } from '../../lib/loften';
 import { useParams, Link } from 'react-router-dom';
 
 import {
@@ -345,7 +346,7 @@ export default function Briefing() {
                     >
                       {isLoading && <Spinner />}
                       {isDone
-                        ? '✓ Arvo är på det — vi återkommer inom 24 timmar'
+                        ? '✓ Beställt — en av grundarna hör av sig'
                         : insight.action.label}
                     </CtaButton>
                   </CardFooter>
@@ -368,7 +369,7 @@ export default function Briefing() {
 
           <SummaryBody>
             {anyActionTaken
-              ? 'Bra jobbat — ni har aktiverat Arvo. Vi granskar era avtal och återkommer med en konkret handlingsplan.'
+              ? `Vi har tagit emot er beställning. ${LOFTEN_TEXT.personligtSvar}`
               : _lovarInsikter
                 ? 'Era insikter väntar på er. Ni kan alltid komma tillbaka till denna sida via länken i mailet.'
                 : 'Ingenting krävde ett drag den här månaden. Vi bevakar vidare och hör av oss den månad något rör sig — ni behöver inte göra något. Sidan finns kvar via länken i mailet.'}
@@ -380,8 +381,8 @@ export default function Briefing() {
                 <ActionItem key={id}>
                   <ActionCheck>✓</ActionCheck>
                   <ActionText>
-                    <strong>{a.type === 'approve_switch' ? 'Bytesuppdrag' : 'Bevakningsuppdrag'}</strong>
-                    {' '}aktiverat för <strong>{a.supplier}</strong>
+                    <strong>{a.type === 'approve_switch' ? 'Besparingsunderlag' : 'Bevakning'}</strong>
+                    {' '}beställt för <strong>{a.supplier}</strong>
                     {a.estimatedNetSaving > 0 && ` · Potentiell besparing: ${fmt(a.estimatedNetSaving)} kr/år`}
                   </ActionText>
                 </ActionItem>
@@ -391,7 +392,7 @@ export default function Briefing() {
 
           {anyActionTaken && (
             <SummaryResponseNote>
-              Arvo återkommer inom 24 timmar med nästa steg.
+              {LOFTEN_TEXT.personligtSvar}
             </SummaryResponseNote>
           )}
 

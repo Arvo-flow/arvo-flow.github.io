@@ -20,7 +20,7 @@ sviten när en yta saknas här.*
 | `api/inbound-email.mjs` | mejl | kund | **registret** | Svar per rutt: bevakade avtal pekar på avtalsklockan, övriga på LOFTEN.skalIRummet — «återkommer per mail» borta. |
 | `api/quote-request.mjs` | mejl | kund | **registret** | LOFTEN.offertrunda (Nivå 3, med fullmakt) — inget byte och ingen bytesavgift; «inom 1–2 arbetsdagar» är grundarens SLA. |
 | `api/send-analysis.mjs` | mejl | kund | **registret** | Läget och etiketten ur lagesregistret; modelltexten passerar kundensMotivering (KM-08). «Arvo-pris» heter «Verifierat pris». |
-| `api/send-confirmation.mjs` | mejl | kund | **registret** | Bekräftar mottagen begäran: LOFTEN.bytesunderlag + personligtSvar, mekanismen är det interna larmet — som går FÖRST, och ett Resend-fel är aldrig «ok» (KM-11); klientens text escapas, den föreslagna leverantören skrivs inte ut; arvodet som i villkoren §3.2. |
+| `api/send-confirmation.mjs` | mejl | kund | **registret** | Strikt förberedande (2026-09-24): bekräftar en beställning av ett besparingsunderlag (UNDERLAGET), varje mening om vem som säger upp/tecknar ur ANSVARSGRANS (KM-13), ångerrutan borta; LOFTEN.bytesunderlag + personligtSvar, mekanismen är det interna larmet — som går FÖRST, och ett Resend-fel är aldrig «ok» (KM-11); klientens text escapas, den föreslagna leverantören skrivs inte ut; arvodet som i villkoren §3.2. |
 | `scripts/notify-price-changes.mjs` | mejl | kund | **registret** | Samma larm som run-price-alerts, samma registertexter; «Låt Arvo omförhandla» och ×0,85 borta. |
 | `/` | sida | besökare | **marknad** | marknadssida; bytet «förbereds», aldrig «genomförs» |
 | `/aktivera` | sida | besökare | **marknad** | aktiveringsformulär; talet ur URL:en visas och skickas inte längre |
