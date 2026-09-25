@@ -5,18 +5,20 @@
 //   ägare på en delad dator; en Gmail-kod som visas efter att den blivit inaktuell; telemetri med en annan
 //   fils detaljer; ett oprövat e-postfält som blir adressens ägare.
 // BLIND: intagets koppling (IA-05) är en källtextvakt — den ser att svaren går till `svaraTill`, inte att
-//   varje gren nås. Gmail-kodens form är obekräftad mot ett riktigt verifieringsmejl (IA-06). Den fejkade
-//   databasen tolkar SQL genom att leta villkorstext.
+//   varje gren nås. Samma gäller dagsgränsens bokföring (IA-13): ett villkor som kortsluter anropet
+//   (`if (false && adress)`) syns inte — handlern läser db/KV på modulnivå och kan inte köras här.
+//   Gmail-kodens form är obekräftad mot ett riktigt verifieringsmejl (IA-06). Den fejkade databasen tolkar
+//   SQL genom att leta villkorstext.
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  nyAdressnyckel, ADRESSNYCKEL_RE, adressFor, nyckelUrMottagare, intagsIdentitet, gmailKod, adressStatus,
-  adressForRum, hittaRumsadress, rumHash, GMAIL_KOD_GILTIG_MS, plattformForEpost,
+  nyAdressnyckel, ADRESSNYCKEL_RE, adressFor, nyckelUrMottagare, mottagarnyckel, intagsIdentitet, gmailKod, adressStatus,
+  adressForRum, hittaRumsadress, rumsadressForLasning, rumHash, GMAIL_KOD_GILTIG_MS, plattformForEpost,
 } from '../lib/inkorgsadress.js';
-import { jobbIdentitet } from '../lib/ingest-queue.js';
+import { jobbIdentitet, enqueueJobs, claimBatch, bokforAvvisade } from '../lib/ingest-queue.js';
 import { byggIntag } from '../lib/intagstelemetri.js';
 
 const ROT = new URL('..', import.meta.url).pathname;
@@ -74,9 +76,10 @@ describe('IA · rummets egen adress', () => {
 
   test('IA-04 · kön bär adressens identitet genom drainen (motprov: gamla vägen följer avsändaren)', () => {
     const sha = (s) => `h${s.length}`;
-    assert.deepEqual(jobbIdentitet({ sender: 'faktura@telia.se', fingerprint: 'adress:k', agare_epost: 'kund@b.se' }, sha),
+    assert.deepEqual(jobbIdentitet({ sender: 'faktura@telia.se', fingerprint: 'adress:k', agareEpost: 'kund@b.se' }, sha),
       { fingerprint: 'adress:k', email: 'kund@b.se', userEmail: 'kund@b.se' });
-    assert.deepEqual(jobbIdentitet({ sender: 'faktura@telia.se', fingerprint: 'adress:k', agare_epost: null }, sha),
+    assert.throws(() => jobbIdentitet({ sender: 'faktura@telia.se', fingerprint: 'adress:k', agare_epost: 'kund@b.se' }, sha), /agareEpost/);
+    assert.deepEqual(jobbIdentitet({ sender: 'faktura@telia.se', fingerprint: 'adress:k', agareEpost: null }, sha),
       { fingerprint: 'adress:k', email: null, userEmail: null });
     assert.deepEqual(jobbIdentitet({ sender: 'kund@b.se' }, sha), { fingerprint: 'mail:h9', email: 'kund@b.se', userEmail: 'kund@b.se' });
     assert.match(las('api/cron/drain-ingest.mjs'), /\.\.\.jobbIdentitet\(job, sha16\)/, 'drainen härleder inte identiteten ur jobbet');
@@ -92,7 +95,8 @@ describe('IA · rummets egen adress', () => {
     assert.match(k, /fingerprint: adress\?\.fingerprint \?\? null, agareEpost: adress\?\.userEmail \?\? null/, 'bulkjobben tappar adressens identitet');
     assert.match(k, /inbound:rate:adress:\$\{adressnyckel\}/, 'rate limit ska räknas per rumsadress, inte per leverantör');
     // Adressen avgörs före rate limit och testytan.
-    assert.ok(k.indexOf('nyckelUrMottagare(data.to)') < k.indexOf('inbound:rate:'), 'adressen avgörs efter rate limit');
+    assert.ok(k.indexOf('mottagarnyckel(data)') > 0 && k.indexOf('mottagarnyckel(data)') < k.indexOf('inbound:rate:'), 'adressen avgörs efter rate limit');
+    assert.match(k, /if \(!traff\) traff = mottagarnyckel\(await hamtaMottaget\(/, 'en vidarebefordran utan rumsadress i webhooken läses aldrig i det mottagna mejlet');
   });
 
   test('IA-06 · Gmails verifieringskod: ur ämnet, ur brödtexten, bara från Gmails avsändare (motprov)', () => {
@@ -113,21 +117,23 @@ describe('IA · rummets egen adress', () => {
     assert.equal(adressStatus(rad, { nu }).adress, 'faktura+abcdefghjkmnpq23@inbox.arvoflow.se');
   });
 
-  test('IA-08 · ägarskap: en enhetsadress knyts till bevisad e-post, en ägd adress byter aldrig ägare', async () => {
-    // Enhet utan e-post får en adress; när e-posten bevisas knyts SAMMA adress till den.
+  test('IA-08 · ägarskap: en enhetsadress knyts aldrig till en e-post, en ägd adress byter aldrig ägare', async () => {
     const db = fejkDb();
     const enhet = await adressForRum(db, { rumsnyckel: RUM_A });
     assert.equal(enhet.rum_hash, rumHash(RUM_A));
+    assert.equal(enhet.agare_epost, null);
     assert.ok(!db.rader.some((r) => r.rum_hash === RUM_A), 'rumsnyckeln själv får aldrig lagras');
-    const agd = await adressForRum(db, { rumsnyckel: RUM_A, agareEpost: 'X@bolag.se' });
-    assert.equal(agd.nyckel, enhet.nyckel);
-    assert.equal(db.rader[0].agare_epost, 'x@bolag.se');
-    // En ANNAN bevisad e-post på samma dator får en egen adress — X:s adress är orörd.
+    // Delad dator: den som loggar in får en EGEN adress — enhetens adress (någon annans vidarebefordran) tas inte över.
+    const x = await adressForRum(db, { rumsnyckel: RUM_A, agareEpost: 'X@bolag.se' });
+    assert.notEqual(x.nyckel, enhet.nyckel, 'den inloggade tog över enhetens adress');
+    assert.equal(x.agare_epost, 'x@bolag.se');
+    assert.equal(x.rum_hash, null, 'enhetens hash är redan enhetens');
+    assert.equal(db.rader.find((r) => r.nyckel === enhet.nyckel).agare_epost, null, 'enhetens adress fick en ägare');
+    // Samma e-post igen får samma adress; en annan e-post får en egen.
+    assert.equal((await adressForRum(db, { rumsnyckel: RUM_A, agareEpost: 'x@bolag.se' })).nyckel, x.nyckel);
     const y = await adressForRum(db, { rumsnyckel: RUM_A, agareEpost: 'y@annat.se' });
-    assert.notEqual(y.nyckel, enhet.nyckel);
-    assert.equal(y.rum_hash, null, 'enhetens hash är redan X:s');
-    assert.equal(db.rader.find((r) => r.nyckel === enhet.nyckel).agare_epost, 'x@bolag.se');
-    // Uppslaget följer samma regel: Y ser Y:s adress, aldrig X:s — trots samma enhet.
+    assert.ok(![enhet.nyckel, x.nyckel].includes(y.nyckel));
+    // Uppslaget följer samma regel: Y ser Y:s adress, aldrig X:s eller enhetens — trots samma enhet.
     assert.equal((await hittaRumsadress(db, { rumsnyckel: RUM_A, agareEpost: 'y@annat.se' })).nyckel, y.nyckel);
     // Motprov: utan e-post är det enheten som gäller.
     assert.equal((await hittaRumsadress(db, { rumsnyckel: RUM_A })).nyckel, enhet.nyckel);
@@ -156,9 +162,10 @@ describe('IA · rummets egen adress', () => {
     const kor = async (body, db) => {
       let status = null, svar = null;
       const res = { statusCode: 0, setHeader() {}, end(b) { status = this.statusCode; svar = JSON.parse(b); } };
-      await handler({ method: 'POST', body }, res, { db });
+      await handler({ method: 'POST', body }, res, { db, magicTillEpost: async (m) => (m === 'testmagic' ? 'testyta@arvoflow.se' : null) });
       return { status, svar };
     };
+    assert.equal((await kor({ magic: 'testmagic' }, fejkDb())).status, 400, 'testrummet fick en egen adress');
     assert.equal((await kor({ epost: 'x@gmail.com' }, fejkDb())).status, 400, 'en e-post utan bevis öppnar ingen adress'); // hemlighet-ok: påhittad adress i en fixtur
     const db = fejkDb();
     const r = await kor({ rumsnyckel: RUM_A, epost: 'x@gmail.com' }, db); // hemlighet-ok: påhittad adress i en fixtur
@@ -169,6 +176,98 @@ describe('IA · rummets egen adress', () => {
     assert.equal(await plattformForEpost('kund@bolag.se', { posture: async () => ({ mx: 'microsoft365' }) }), 'microsoft365');
     const hist = las('api/invoice-history.mjs');
     assert.match(hist, /const merged = \[\.\.\.byEmail, \.\.\.byAdress, /, 'rummet slår inte in adressens analyser');
-    assert.match(hist, /hittaRumsadress\(dbA, \{ rumsnyckel: hasFp \? fp : null, agareEpost: email \}\)/);
+    assert.match(hist, /rumsadressForLasning\(dbA, \{ rumsnyckel: hasFp \? fp : null, agareEpost: email \}\)/);
+  });
+  test('IA-11 · kedjan enqueue → claimBatch → jobbIdentitet: bulkjobbet landar i rumsadressens rum', async () => {
+    // Fejkdatabasen svarar BARA med de kolumner RETURNING-satsen namnger — annars prövar testet sitt eget indata.
+    const tabell = [];
+    const db = async (strings, ...v) => {
+      const q = strings.join('?');
+      if (/INSERT INTO ingest_jobs/.test(q)) {
+        const [email_id, sender, filename, attachment_index, fingerprint, agare_epost] = v;
+        tabell.push({ id: tabell.length + 1, email_id, sender, filename, attachment_index, attempts: 0, status: 'pending', fingerprint, agare_epost });
+        return [{ id: tabell.length }];
+      }
+      if (/WITH claimed AS/.test(q)) {
+        const kol = q.split('RETURNING')[1].split(',').map((c) => c.trim().replace(/^j\./, ''));
+        return tabell.filter((r) => r.status === 'pending').map((r) => { r.status = 'processing'; r.attempts++; return Object.fromEntries(kol.map((c) => [c, r[c]])); });
+      }
+      return [];
+    };
+    await enqueueJobs([
+      { emailId: 'e1', sender: 'faktura@telia.se', filename: 'a.pdf', attachmentIndex: 0, fingerprint: 'adress:abcdefghjkmnpq23', agareEpost: 'kund@b.se' },
+      { emailId: 'e2', sender: 'kund@b.se', filename: 'b.pdf', attachmentIndex: 0 },
+    ], { db });
+    const jobb = await claimBatch(6, { db });
+    assert.equal(jobb.length, 2);
+    const sha = (s) => `h${s.length}`;
+    assert.deepEqual(jobbIdentitet(jobb[0], sha), { fingerprint: 'adress:abcdefghjkmnpq23', email: 'kund@b.se', userEmail: 'kund@b.se' },
+      'bulkjobbet till rumsadressen föll till avsändarens rum');
+    // Motprov: ett jobb utan adress följer avsändaren, som förr.
+    assert.deepEqual(jobbIdentitet(jobb[1], sha), { fingerprint: 'mail:h9', email: 'kund@b.se', userEmail: 'kund@b.se' });
+  });
+  test('IA-12 · rummets läsväg: bara en saknad tabell blir «ingen adress», allt annat är ett fel (motprov)', async () => {
+    const kastar = (msg) => async () => { throw new Error(msg); };
+    assert.equal(await rumsadressForLasning(kastar('relation "inkorgsadresser" does not exist'), { rumsnyckel: RUM_A }), null);
+    await assert.rejects(rumsadressForLasning(kastar('connection terminated'), { rumsnyckel: RUM_A }), /connection terminated/,
+      'ett läsfel blev ett rum utan adressens fakturor');
+    const db = fejkDb();
+    const enhet = await adressForRum(db, { rumsnyckel: RUM_A });
+    assert.equal((await rumsadressForLasning(db, { rumsnyckel: RUM_A })).nyckel, enhet.nyckel);
+  });
+  test('IA-13 · över dagsgränsen: rumsadressens PDF:er bokförs som fallna och «Försök igen» når dem (motprov utan bevis)', async () => {
+    const jobbrader = [];
+    const bas = fejkDb();
+    const db = async (strings, ...v) => {
+      const q = strings.join('?');
+      if (/INSERT INTO ingest_jobs/.test(q)) {
+        const [email_id, sender, filename, attachment_index, attempts, error, fingerprint, agare_epost] = v;
+        jobbrader.push({ email_id, sender, filename, attachment_index, status: 'failed', attempts, error, fingerprint, agare_epost });
+        return [{ id: jobbrader.length }];
+      }
+      if (/UPDATE ingest_jobs SET status='pending'/.test(q)) {
+        const trafade = jobbrader.filter((r) => r.fingerprint === v[0] && r.status === 'failed');
+        trafade.forEach((r) => { r.status = 'pending'; r.attempts = 0; });
+        return trafade.map((_, i) => ({ id: i }));
+      }
+      if (/ingest_jobs/.test(q)) return [];
+      return bas(strings, ...v);
+    };
+    db.rader = bas.rader;
+    const enhet = await adressForRum(db, { rumsnyckel: RUM_A });
+    const fp = `adress:${enhet.nyckel}`;
+    const n = await bokforAvvisade([{ emailId: 'e1', sender: 'faktura@telia.se', filename: 'a.pdf', attachmentIndex: 0, fingerprint: fp, agareEpost: null }], 'dagsgransen_nadd', { db });
+    assert.equal(n, 1);
+    assert.equal(jobbrader[0].status, 'failed');
+    assert.ok(jobbrader[0].attempts >= 3, 'ett bokfört avvisat jobb får aldrig plockas av drainen på egen hand');
+    const { default: retry } = await import('../api/ingest/retry.mjs');
+    const kor = async (body) => {
+      let status = null, svar = null;
+      const res = { statusCode: 0, setHeader() {}, end(b) { status = this.statusCode; svar = JSON.parse(b); } };
+      await retry({ method: 'POST', body }, res, { db, magicTillEpost: async () => null });
+      return { status, svar };
+    };
+    assert.equal((await kor({})).status, 401, 'utan bevis körs ingenting om');
+    const r = await kor({ rumsnyckel: RUM_A });
+    assert.equal(r.status, 200);
+    assert.equal(r.svar.requeued, 1, '«Försök igen» nådde inte rumsadressens fallna jobb');
+    assert.equal(jobbrader[0].status, 'pending');
+    const k = las('api/inbound-email.mjs');
+    const gren = k.slice(k.indexOf('if (n > RATE_LIMIT_PER_DAY)'), k.indexOf("skipped: 'rate limit'"));
+    assert.ok(gren.length > 200, 'rate limit-grenen hittades inte');
+    assert.match(gren, /\n\s*if \(adress\) \{\n[^\n]*\n\s*const bokfort = await bokforAvvisade\(/, 'dagsgränsen tappar rumsadressens mejl spårlöst');
+    assert.match(gren, /if \(bokfort > 0\) varnad = true;/);
+    assert.match(gren, /fingerprint: adress\.fingerprint/);
+  });
+  test('IA-14 · en vidarebefordran: rumsadressen hittas i kuvert och leveransrubrik, inte bara i To (motprov)', () => {
+    const k = 'abcdefghjkmnpq23', a = `faktura+${k}@inbox.arvoflow.se`;
+    assert.deepEqual(mottagarnyckel({ to: [a] }), { nyckel: k, falt: 'to' });
+    assert.deepEqual(mottagarnyckel({ to: ['kund@bolag.se'], bcc: [a] }), { nyckel: k, falt: 'bcc' });
+    assert.deepEqual(mottagarnyckel({ to: ['kund@bolag.se'], envelope: { to: [a] } }), { nyckel: k, falt: 'envelope.to' });
+    assert.deepEqual(mottagarnyckel({ to: ['kund@bolag.se'], headers: { 'Delivered-To': a } }), { nyckel: k, falt: 'rubrik:delivered-to' });
+    assert.deepEqual(mottagarnyckel({ to: 'kund@bolag.se', headers: [{ name: 'X-Forwarded-To', value: a }] }), { nyckel: k, falt: 'rubrik:x-forwarded-to' });
+    // Motprov: en vidarebefordran till den gemensamma adressen är ingen rumsadress.
+    assert.equal(mottagarnyckel({ to: ['kund@bolag.se'], headers: { 'Delivered-To': 'faktura@inbox.arvoflow.se' } }), null);
+    assert.equal(mottagarnyckel(null), null);
   });
 });

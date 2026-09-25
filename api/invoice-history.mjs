@@ -8,7 +8,7 @@
 // för inloggning (AuthContext konsumerar dem vid sidladdning).
 import { getAnalysesByFingerprint, getAnalysesByEmail } from '../lib/invoice-store.js';
 import { arRumsnyckel } from '../lib/rumsnyckel.js';
-import { hittaRumsadress, adressFingeravtryck, adressStatus } from '../lib/inkorgsadress.js';
+import { rumsadressForLasning, adressFingeravtryck, adressStatus } from '../lib/inkorgsadress.js';
 import { byggIntag } from '../lib/intagstelemetri.js';
 import { getMarketIntelligence } from '../lib/price-alert.js';
 import { BRANCH_ANCHOR_UNIT } from '../lib/enhetsfras.js';
@@ -102,7 +102,7 @@ export default async function handler(req, res) {
     // enheten — så en delad dator aldrig visar en annan ägares adress (IA-08).
     if (!isTestRoom) {
       const dbA = getDb();
-      rumsadress = dbA ? await hittaRumsadress(dbA, { rumsnyckel: hasFp ? fp : null, agareEpost: email }) : null;
+      rumsadress = dbA ? await rumsadressForLasning(dbA, { rumsnyckel: hasFp ? fp : null, agareEpost: email }) : null;
     }
     [byFp, byEmail, byAdress] = await Promise.all([
       (hasFp && !isTestRoom) ? getAnalysesByFingerprint(fp) : [],

@@ -8,6 +8,7 @@
 // dit. `epost` utan bevis används BARA för att välja guide (plattformen), aldrig som ägare.
 
 import { getDb } from '../lib/db.js';
+import { TEST_EMAIL } from '../lib/test-surface.js';
 import { arRumsnyckel } from '../lib/rumsnyckel.js';
 import { verifySession } from '../lib/session.js';
 import { emailFromMagic } from './invoice-history.mjs';
@@ -30,13 +31,15 @@ export async function rumsIdentitet({ rumsnyckel, session, magic }, { magicTillE
   return { rumsnyckel: nyckel, agareEpost: epost };
 }
 
-export default async function handler(req, res, { db = getDb() } = {}) {
+export default async function handler(req, res, { db = getDb(), magicTillEpost = emailFromMagic } = {}) {
   const kalla = req.method === 'POST'
     ? (req.body && typeof req.body === 'object' ? req.body : (() => { try { return JSON.parse(req.body || '{}'); } catch { return {}; } })())
     : (req.query ?? {});
-  const id = await rumsIdentitet({ rumsnyckel: kalla.rumsnyckel, session: kalla.session, magic: kalla.magic });
+  const id = await rumsIdentitet({ rumsnyckel: kalla.rumsnyckel, session: kalla.session, magic: kalla.magic }, { magicTillEpost });
   if (!id) return send(res, 400, { error: 'rummet kunde inte bevisas', message: 'Öppna rummet via er länk eller i samma webbläsare som förut.' });
   if (!db) return send(res, 503, { error: 'ingen databas' });
+  // Testrummet har ingen egen adress — samma regel som rummets läsväg (isTestRoom), nu även på servern (IA-10).
+  if (id.agareEpost === TEST_EMAIL) return send(res, 400, { error: 'testrummet har ingen egen adress' });
 
   try {
     if (req.method === 'GET') {

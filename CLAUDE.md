@@ -721,6 +721,26 @@ IA-01..10. Sabotage: 10 riktningar, 10 tester fällda. S7 («svaret till avsänd
 IA-05 räknade `to: svaraTill` men inte vad `svaraTill` VAR. Det är ett nytt namn på samma värde, och det
 fångas nu. Renderingssond: `scripts/screenshot-intag.mjs` (390/1600, motprov med den gamla chip-CSS:en
 som klipper adressen: 17 respektive 14 klippta element).
+**⚠️ ANDRA BLICKEN (samma dygn): 5 [KUND] i ett bygge med 2 601 gröna tester och 10 fällande sabotage.**
+· **Bulkmejl (>2 PDF) till en rumsadress landade i LEVERANTÖRENS rum.** `claimBatch` returnerade aldrig
+  `fingerprint`/`agare_epost`, så drainen föll alltid till avsändaren. IA-04 matade `jobbIdentitet` ett
+  handbyggt objekt i radens stavning — testet prövade sitt eget indata, sjätte gången. Nu kedjan
+  enqueue → claimBatch → jobbIdentitet mot en fejkdatabas som bara svarar med RETURNING-satsens kolumner
+  (IA-11), och radens stavning smäller.
+· **Delad dator:** den som först loggade in tog över enhetens adress, och därmed någon annans
+  vidarebefordran. Nu knyts en enhetsadress aldrig till en e-post; en bevisad e-post får en egen (IA-08).
+  Kostnaden, öppet: den som satt upp vidarebefordran anonymt ser den adressen först när hen är utloggad.
+· **Dagsgränsen på en adress utan ägare tappade mejlet spårlöst** (ingen att mejla, 200 till Resend). Nu
+  bokförs varje PDF som fallen i rummet, och «Försök igen» når rumsadressens jobb (IA-13). Den knappen
+  kunde förut ALDRIG köra om ett adressjobb — ett löfte utan mekanik som granskaren inte såg, men som
+  lagningen hittade.
+· **Efter en vidarebefordringsregel står kundens adress i To**, och handlern läste bara `data.to`. Nu läses
+  cc, bcc, kuvert och leveransrubriker, och det mottagna mejlet hämtas ur Resend när webhooken saknar
+  adressen (IA-14). **Vilket fält Resend faktiskt fyller är obekräftat** — sondens fall B mäter det.
+· **Kod före migrering** hade gett varje rum 503. Bara en saknad tabell läses nu som «ingen adress» (IA-12).
+**Öppet, lågt:** en förfalskad avsändare kan plantera en falsk Gmail-kod (Gmail avvisar den; inget läcker).
+En DKIM-grind kräver en rubrik vars existens i Resends data inte är mätt. Sabotage efter lagningen:
+19 riktningar, alla fällde. S16 fällde först noll: en källtextvakt ser inte att `0 &&` kortsluter anropet.
 
 ---
 

@@ -5,6 +5,9 @@
 //   1. En adressrad skapas med ägaren TEST_EMAIL (testidentiteten — når aldrig prisboken eller fyndgradens mätbas).
 //   2. En repo-PDF skickas från vår egen avsändare till adressen (K = känd nyckel).
 //   3. MOTPROV: samma PDF till en slumpad nyckel som INTE finns (O = okänd).
+//   3b. VIDAREBEFORDRAN (B): To = testidentiteten, rumsadressen B bara som Bcc — som efter en regel i Gmail/
+//       Outlook, där To-rubriken är kundens egen adress och rumsadressen bara står i kuvertet. Vercel-loggen
+//       visar vilket fält som träffade («rumsadress i fältet …»).
 //   4. Sonden läser invoice_analyses på det hashade fingeravtrycket adress:<nyckel> (samma hash som lib/invoice-store).
 // Utfall som räknas:
 //   K1 · en rad under adress:<K> (instrumentet kan svara JA)
@@ -12,6 +15,7 @@
 //   K3 · ingen ny rad under avsändarens mail:<sha16> i fönstret (avsändaren är inte identiteten)
 //   K4 · adressens senast_mottagen_at är satt
 //   O1 · ingen rad under adress:<O> (en okänd nyckel analyseras aldrig)
+//   B1 · en rad under adress:<B> — rumsadressen hittas utan att stå i To
 //   S1 · Resends skickade-lista: svaret gick till ägaren (läses om API:t ger listan; annars «ej mätt»)
 // Adressraderna tas bort efteråt; analysraden står kvar under testidentiteten.
 
@@ -34,19 +38,23 @@ const avsandare = (FROM.match(/<([^>]+)>/)?.[1] ?? FROM).toLowerCase();
 
 const K = nyAdressnyckel();
 const O = nyAdressnyckel();
+const B = nyAdressnyckel();
 const PDF = 'test-pdfs/atlassian-cloud-manad.pdf';
 const t0 = new Date();
 console.log(`\n── sond rumsadress · start ${t0.toISOString()} ──`);
 
 await sql`INSERT INTO inkorgsadresser (nyckel, rum_hash, agare_epost, plattform) VALUES (${K}, NULL, ${TEST_EMAIL}, 'annan')`;
+await sql`INSERT INTO inkorgsadresser (nyckel, rum_hash, agare_epost, plattform) VALUES (${B}, NULL, ${TEST_EMAIL}, 'annan')`;
 const fpK = hashFp(adressFingeravtryck(K));
 const fpO = hashFp(adressFingeravtryck(O));
+const fpB = hashFp(adressFingeravtryck(B));
 const fpAvs = hashFp(`mail:${sha16(avsandare)}`);
 
 const bilaga = { filename: 'atlassian-cloud-manad.pdf', content: readFileSync(PDF).toString('base64') };
 const skickat = {};
-for (const [namn, nyckel] of [['K', K], ['O', O]]) {
-  const { data, error } = await resend.emails.send({ from: FROM, to: adressFor(nyckel),
+for (const [namn, nyckel] of [['K', K], ['O', O], ['B', B]]) {
+  const mottagare = namn === 'B' ? { to: TEST_EMAIL, bcc: adressFor(nyckel) } : { to: adressFor(nyckel) };
+  const { data, error } = await resend.emails.send({ from: FROM, ...mottagare,
     subject: `Arvo-sond rumsadress ${namn}`, text: 'Mätning av rummets egen adress.', attachments: [bilaga] });
   skickat[namn] = !error;
   console.log(`  skickat ${namn} → ${error ? `FEL: ${error.message}` : `ok (${data?.id})`}`);
@@ -62,6 +70,7 @@ for (let i = 0; i < 24 && !radK; i++) {
 // Ge O samma chans att (felaktigt) landa: vänta minst 60 s efter K.
 await new Promise((r) => setTimeout(r, 60_000));
 const [radO] = await sql`SELECT id FROM invoice_analyses WHERE fingerprint = ${fpO} LIMIT 1`;
+const [radB] = await sql`SELECT id, user_email FROM invoice_analyses WHERE fingerprint = ${fpB} LIMIT 1`;
 const [{ n: nAvs }] = await sql`SELECT COUNT(*)::int AS n FROM invoice_analyses WHERE fingerprint = ${fpAvs} AND created_at >= ${t0.toISOString()}`;
 const [adr] = await sql`SELECT senast_mottagen_at FROM inkorgsadresser WHERE nyckel = ${K}`;
 
@@ -78,7 +87,7 @@ try {
   } else s1 = `ej mätt (HTTP ${r.status})`;
 } catch (e) { s1 = `ej mätt (${e.message})`; }
 
-await sql`DELETE FROM inkorgsadresser WHERE nyckel IN (${K}, ${O})`;
+await sql`DELETE FROM inkorgsadresser WHERE nyckel IN (${K}, ${O}, ${B})`;
 
 const ok = (b) => (b ? '✓' : '✗');
 console.log('\n── utfall ──');
@@ -87,6 +96,7 @@ console.log(`  K2 ${ok(radK?.user_email === TEST_EMAIL)} raden bär ägarens e-p
 console.log(`  K3 ${ok(nAvs === 0)} inga nya rader i avsändarens rum  ${nAvs}`);
 console.log(`  K4 ${ok(!!adr?.senast_mottagen_at)} senast_mottagen_at satt          ${adr?.senast_mottagen_at ?? '—'}`);
 console.log(`  O1 ${ok(!radO)} okänd nyckel gav ingen analys    ${radO ? 'RAD FINNS' : 'ingen rad'}`);
+console.log(`  B1 ${ok(!!radB)} vidarebefordran (Bcc) landade    ${radB ? `ägare=${radB.user_email === TEST_EMAIL ? 'ägaren' : 'annan'}` : (skickat.B ? 'ingen rad — rumsadressen syntes inte utan To' : 'ej skickad')}`);
 console.log(`  S1   svarsmejl: ${s1}`);
 if (!radK) { console.error('\n✗ K landade inte — motprovet O1 säger då ingenting.'); process.exit(1); }
 if (radK.user_email !== TEST_EMAIL || nAvs !== 0 || radO) process.exit(1);

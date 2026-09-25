@@ -265,13 +265,13 @@ export default function Portfolio() {
     try {
       await fetch('/api/ingest/retry', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session: sessionToken, magic }),
+        body: JSON.stringify({ session: sessionToken, magic, rumsnyckel: fingerprint || undefined }),
       });
       setIngestFailed(0); setIngestFailedFiles([]); setIngesting((n) => n || 1);  // visa "analyserar" direkt
       await loadOffice();
     } catch { /* banner kvar om det inte gick */ }
     finally { setRetrying(false); }
-  }, [sessionToken, magic, loadOffice]);
+  }, [sessionToken, magic, fingerprint, loadOffice]);
 
   useEffect(() => {
     let cancelled = false;

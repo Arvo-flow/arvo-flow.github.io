@@ -26,8 +26,8 @@ import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { getKv } from '../lib/kv.js';
 import { fmtNumber } from '../lib/format.js';
-import { enqueueJobs } from '../lib/ingest-queue.js';
-import { nyckelUrMottagare, slaUppAdress, intagsIdentitet, gmailKod, sparaGmailKod, markeraMottagen } from '../lib/inkorgsadress.js';
+import { enqueueJobs, bokforAvvisade } from '../lib/ingest-queue.js';
+import { mottagarnyckel, slaUppAdress, intagsIdentitet, gmailKod, sparaGmailKod, markeraMottagen } from '../lib/inkorgsadress.js';
 import { isTestRecipient, resetTestSurfaceIfStale, TEST_EMAIL, TEST_FINGERPRINT } from '../lib/test-surface.js';
 
 export const config = { maxDuration: 60 };
@@ -196,6 +196,16 @@ export async function fetchInboundPdfForJob(emailId, { filename = null, attachme
 
 /** Magic link in i kontoret — samma tabell/format som request-magic-link.mjs. */
 /** Brödtexten i ett mottaget mejl (Resend), eller null. Används bara för Gmails verifieringskod. */
+/** Det mottagna mejlet ur Resend (alla fält), eller null. */
+async function hamtaMottaget(emailId, { fetchImpl = fetch } = {}) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || !emailId) return null;
+  try {
+    const r = await fetchImpl(`https://api.resend.com/emails/receiving/${emailId}`, { headers: { Authorization: `Bearer ${key}` } });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}
+
 async function hamtaMejltext(emailId, { fetchImpl = fetch } = {}) {
   const key = process.env.RESEND_API_KEY;
   if (!key || !emailId) return null;
@@ -443,7 +453,12 @@ export default async function handler(req, res) {
   // det. Avsändaren kan vara en kollega eller leverantören själv, och får då aldrig vare sig identiteten
   // eller svaret (IA-03/IA-04). Avgörs FÖRE rate limit: en leverantör som skickar till tio kunder är tio
   // rum, inte en avsändare.
-  const adressnyckel = nyckelUrMottagare(data.to);
+  // Webhookens fält först; hittas ingen rumsadress där läses det mottagna mejlet ur Resend, eftersom en
+  // vidarebefordran bär kundens egen adress i To och rumsadressen bara i kuvert/leveransrubrik (IA-14).
+  let traff = mottagarnyckel(data);
+  if (!traff) traff = mottagarnyckel(await hamtaMottaget(data.email_id ?? data.id));
+  const adressnyckel = traff?.nyckel ?? null;
+  if (traff) console.log(`[inbound-email] rumsadress i fältet ${traff.falt}`);
   let adress = null;
   if (adressnyckel) {
     const dbA = getDb();
@@ -539,10 +554,20 @@ och ni behöver skicka om det.</p>
             });
             varnad = true;
           } else {
-            console.error('[inbound-email] RATE LIMIT: RESEND_API_KEY saknas — kunden kunde INTE varnas');
+            console.error(`[inbound-email] RATE LIMIT: ${svaraTill ? 'RESEND_API_KEY saknas' : 'adressen saknar ägare'} — ingen kunde varnas per mejl`);
           }
         } catch (err) {
           console.error('[inbound-email] RATE LIMIT: varningsmail misslyckades:', err.message);
+        }
+        // En rumsadress har ett rum: varje PDF bokförs där som fallen («dagsgränsen»), så att den syns och
+        // kan köras om med «Försök igen» — även när adressen saknar ägare att mejla (IA-13).
+        if (adress) {
+          const pdfer = (data.attachments ?? []).filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
+          const bokfort = await bokforAvvisade(pdfer.map((a, idx) => ({
+            emailId: mailId, sender, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
+            fingerprint: adress.fingerprint, agareEpost: adress.userEmail ?? null,
+          })), 'dagsgransen_nadd');
+          if (bokfort > 0) varnad = true;
         }
         // ── «KUNDEN ÄR BESVARAD» VAR ETT PÅSTÅENDE KODEN INTE HÖLL (2026-08-24) ──────────────
         // Min egen kommentar intygade att varningsmailet gått iväg — men både den saknade

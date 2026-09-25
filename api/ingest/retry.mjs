@@ -2,10 +2,13 @@
 // Återställer status='failed' → 'pending' så drain-cronen kör om dem (PDF:en hämtas på nytt ur Resend
 // via email_id + bilage-index — inget nytt mejl behövs). Återhämtar transienta fel (kredit-slut, timeout).
 //
-// SÄKERHET: ägarskap krävs (varaktig session ELLER färsk magic-token) — du kan bara köra om DINA egna.
+// SÄKERHET: ägarskap krävs (varaktig session, färsk magic-token eller rumsnyckel) — du kan bara köra om
+// DINA egna. Rummets egen adress (faktura+<nyckel>@) körs om med samma identitetsregel som rummet läser
+// den: bevisad e-post, annars enheten (IA-13).
 import { getDb } from '../../lib/db.js';
-import { verifySession } from '../../lib/session.js';
-import { retryFailedBySender } from '../../lib/ingest-queue.js';
+import { retryFailedBySender, retryFailedByFingerprint } from '../../lib/ingest-queue.js';
+import { rumsIdentitet } from '../inkorgsadress.mjs';
+import { rumsadressForLasning, adressFingeravtryck } from '../../lib/inkorgsadress.js';
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -24,16 +27,18 @@ async function emailFromMagic(token) {
   } catch { return null; }
 }
 
-export default async function handler(req, res) {
+export default async function handler(req, res, { db = getDb(), magicTillEpost = emailFromMagic } = {}) {
   if (req.method !== 'POST') return send(res, 405, { error: 'POST krävs' });
 
   let body;
   try { body = req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}'); }
   catch { return send(res, 400, { error: 'ogiltig JSON' }); }
 
-  const email = verifySession(body.session)?.email || await emailFromMagic(body.magic);
-  if (!email) return send(res, 401, { error: 'ägarskap krävs (session eller magic)' });
+  const id = await rumsIdentitet({ rumsnyckel: body.rumsnyckel, session: body.session, magic: body.magic }, { magicTillEpost });
+  if (!id) return send(res, 401, { error: 'ägarskap krävs (session, magic eller rumsnyckel)' });
 
-  const requeued = await retryFailedBySender(email);
+  let requeued = id.agareEpost ? await retryFailedBySender(id.agareEpost) : 0;
+  const adress = db ? await rumsadressForLasning(db, id) : null;   // ett läsfel kastar (500) — aldrig «0 omköade»
+  if (adress) requeued += await retryFailedByFingerprint(adressFingeravtryck(adress.nyckel), { db });
   return send(res, 200, { ok: true, requeued });
 }
