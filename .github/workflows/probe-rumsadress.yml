@@ -1,0 +1,29 @@
+name: Sond — rummets egen adress end-to-end (Resend + Neon)
+
+# Rummets egen adress: en PDF till faktura+<nyckel>@ ska landa under adress:<nyckel> med ägarens e-post,
+# aldrig i avsändarens rum. Motprov: en okänd nyckel ger ingen analys.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Skicka till faktura+<nyckel>@ och läs rummet
+        shell: bash
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -o pipefail
+          node scripts/probe-rumsadress.mjs

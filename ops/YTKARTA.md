@@ -4,7 +4,7 @@
 `tests/ytinventering.mjs` (YI-01..11) hittar själv varje mejlavsändare, varje route och varje endpoint och fäller
 sviten när en yta saknas här.*
 
-**87 ytor** — 19 registret · 10 marknad · 13 mejlyta · 26 ingen_prisdom · 19 intern.
+**88 ytor** — 19 registret · 10 marknad · 13 mejlyta · 27 ingen_prisdom · 19 intern.
 
 | Yta | Kanal | Mottagare | Klass | Vad den påstår i dag (mätt i koden 2026-09-23/24) |
 |---|---|---|---|---|
@@ -75,6 +75,7 @@ sviten när en yta saknas här.*
 | `api/validate-magic.mjs` | endpoint | anropare | **ingen_prisdom** | validerar en inloggningslänk |
 | `api/waitlist.mjs` | endpoint | anropare | **ingen_prisdom** | väntelista, svarar en status |
 | `scripts/probe-lokaldelar.mjs` | mejl | intern | **ingen_prisdom** | mätsond: tre mejl utan bilaga till Arvos egen mottagningsdomän (inbox.arvoflow.se), aldrig till en kund |
+| `scripts/probe-rumsadress.mjs` | mejl | intern | **ingen_prisdom** | mätsond: två mejl med en repo-PDF till Arvos egen mottagningsdomän (inbox.arvoflow.se); svaret går till testidentiteten, aldrig till en kund |
 | `scripts/skicka-rumslank.mjs` | mejl | kund | **ingen_prisdom** | rumslänk som grundaren skickar manuellt |
 | `/admin` | sida | besökare | **intern** | intern admin bakom ADMIN_TOKEN |
 | `api/admin/benchmark-stats.mjs` | endpoint · grind `ADMIN_TOKEN` | anropare | **intern** | prisbokens cellstatus för admin |
