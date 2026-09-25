@@ -12,7 +12,7 @@ import { rumsadressForLasning, adressFingeravtryck, adressStatus } from '../lib/
 import { byggIntag } from '../lib/intagstelemetri.js';
 import { getMarketIntelligence } from '../lib/price-alert.js';
 import { BRANCH_ANCHOR_UNIT } from '../lib/enhetsfras.js';
-import { pendingCountBySender, failedCountBySender, failedFilesBySender, intagsflode } from '../lib/ingest-queue.js';
+import { pendingCountBySender, failedCountBySender, failedFilesBySender, intagsflode, DAGSGRANS_SKAL } from '../lib/ingest-queue.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding, avtalsklocka } from '../lib/contract-clock.js';
 import { planeradePaminnelser } from '../lib/paminnelse.js';
@@ -279,7 +279,7 @@ export default async function handler(req, res) {
   // TELEMETRIN (2026-09-24, lib/intagstelemetri.js): varje fil i intaget — gamla vägen (avsändaren) och
   // rummets adress. Kan flödet inte läsas utelämnas det (null), och räknarna nedan faller tillbaka på de
   // gamla frågorna — ett okänt flöde får aldrig se ut som ett tomt.
-  let intag = null, adressFallna = 0, adressFallnaFiler = [];
+  let intag = null, adressFallna = 0, adressFallnaFiler = [], adressAvvisadeFiler = [];
   try {
     const [avsJobb, adressJobb] = await Promise.all([
       email ? intagsflode({ sender: email }) : [],
@@ -289,7 +289,10 @@ export default async function handler(req, res) {
     intag = byggIntag(jobb, merged);
     // Adressjobb bär avsändaren (t.ex. leverantören), aldrig ägarens e-post — deras bortfall räknas för sig,
     // annars syns de inte bredvid gamla vägens räknare.
-    adressFallnaFiler = adressJobb.filter((j) => j.status === 'failed').map((j) => j.filename).filter(Boolean);
+    // Över dagsgränsen är inte ett tekniskt fel — de redovisas för sig, med sin egen mening (IA-15).
+    const fallna = adressJobb.filter((j) => j.status === 'failed');
+    adressAvvisadeFiler = fallna.filter((j) => j.error === DAGSGRANS_SKAL).map((j) => j.filename ?? 'faktura.pdf');
+    adressFallnaFiler = fallna.filter((j) => j.error !== DAGSGRANS_SKAL).map((j) => j.filename ?? 'faktura.pdf');
     adressFallna = adressFallnaFiler.length;
   } catch (err) { console.warn('[invoice-history] intagsflödet kunde inte läsas:', err.message); }
   const ingesting = intag ? intag.vantar + intag.lases : (email ? await pendingCountBySender(email) : 0);
@@ -299,7 +302,7 @@ export default async function handler(req, res) {
   const ingestFailedFiles = [...(avsFallna > 0 ? await failedFilesBySender(email) : []), ...adressFallnaFiler];
 
   const rum = byggRum(analyses, watched);
-  return send(res, 200, { ok: true, analyses, watched, rum, cohort, publicBench, forecasts, branchAnchors, tackning, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, intag, inkorg: adressStatus(rumsadress), email: email ?? undefined, frånDennaEnhet });
+  return send(res, 200, { ok: true, analyses, watched, rum, cohort, publicBench, forecasts, branchAnchors, tackning, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, ingestAvvisade: adressAvvisadeFiler.length, ingestAvvisadeFiles: adressAvvisadeFiler, intag, inkorg: adressStatus(rumsadress), email: email ?? undefined, frånDennaEnhet });
 }
 
 // "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.

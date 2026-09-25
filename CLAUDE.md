@@ -741,6 +741,17 @@ som klipper adressen: 17 respektive 14 klippta element).
 **Öppet, lågt:** en förfalskad avsändare kan plantera en falsk Gmail-kod (Gmail avvisar den; inget läcker).
 En DKIM-grind kräver en rubrik vars existens i Resends data inte är mätt. Sabotage efter lagningen:
 19 riktningar, alla fällde. S16 fällde först noll: en källtextvakt ser inte att `0 &&` kortsluter anropet.
+**⚠️ TREDJE BLICKEN, på lagningen: 3 [KUND] till — alla i lagningarna själva, inte i det ursprungliga bygget.**
+· Delad dator åt andra hållet: den som loggade in FÖRST på en ny dator fick sin adress med enhetens hash,
+  och nästa utloggade person såg den. En ägd adress får nu aldrig en enhetshash (IA-08).
+· Dagsgränsens jobb visades som «tillfälligt tekniskt fel», medan mejlet sa «skicka om» och rummet sa «inget
+  nytt mejl behövs». Nu har de ett eget skäl och en egen mening, och mejlet säger samma sak som rummet (IA-15).
+· Ett adressjobb räknades två gånger när ägaren vidarebefordrade från sin egen adress. Avsändarens frågor
+  utesluter nu adressjobben (IA-15).
+· Två samtidiga förfrågningar kunde ge en ägare två adresser → unikt index + ON CONFLICT (IA-16). Och
+  «kunde inte läsa det mottagna mejlet» är nu 500 + omleverans, aldrig «ingen rumsadress» (IA-17).
+**Läxan, mätt:** varje granskningsvarv hittade fel i det FÖRRA varvets lagning. En lagning är en ny ändring,
+och den behöver sin egen blick. Sabotage efter tredje varvet: 28 riktningar, alla fällde (S28 som avbrutet test).
 
 ---
 

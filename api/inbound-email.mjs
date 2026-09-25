@@ -26,7 +26,7 @@ import { Resend } from 'resend';
 import { getDb } from '../lib/db.js';
 import { getKv } from '../lib/kv.js';
 import { fmtNumber } from '../lib/format.js';
-import { enqueueJobs, bokforAvvisade } from '../lib/ingest-queue.js';
+import { enqueueJobs, bokforAvvisade, DAGSGRANS_SKAL } from '../lib/ingest-queue.js';
 import { mottagarnyckel, slaUppAdress, intagsIdentitet, gmailKod, sparaGmailKod, markeraMottagen } from '../lib/inkorgsadress.js';
 import { isTestRecipient, resetTestSurfaceIfStale, TEST_EMAIL, TEST_FINGERPRINT } from '../lib/test-surface.js';
 
@@ -196,14 +196,22 @@ export async function fetchInboundPdfForJob(emailId, { filename = null, attachme
 
 /** Magic link in i kontoret — samma tabell/format som request-magic-link.mjs. */
 /** Brödtexten i ett mottaget mejl (Resend), eller null. Används bara för Gmails verifieringskod. */
-/** Det mottagna mejlet ur Resend (alla fält), eller null. */
-async function hamtaMottaget(emailId, { fetchImpl = fetch } = {}) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key || !emailId) return null;
+/**
+ * Det mottagna mejlet ur Resend (alla fält). Svarar { mejl } eller { mejl: null, skal, tillfalligt } —
+ * `tillfalligt` (nätfel, tidsgräns, 429, 5xx) betyder «vet inte», och får aldrig läsas som «ingen adress» (IA-17).
+ */
+export async function hamtaMottaget(emailId, { fetchImpl = fetch, nyckel = process.env.RESEND_API_KEY, tidsgransMs = 8000 } = {}) {
+  if (!nyckel) return { mejl: null, skal: 'ingen_nyckel', tillfalligt: false };
+  if (!emailId) return { mejl: null, skal: 'inget_id', tillfalligt: false };
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), tidsgransMs);
   try {
-    const r = await fetchImpl(`https://api.resend.com/emails/receiving/${emailId}`, { headers: { Authorization: `Bearer ${key}` } });
-    return r.ok ? await r.json() : null;
-  } catch { return null; }
+    const r = await fetchImpl(`https://api.resend.com/emails/receiving/${emailId}`, { headers: { Authorization: `Bearer ${nyckel}` }, signal: ctrl.signal });
+    if (r.ok) return { mejl: await r.json(), skal: null, tillfalligt: false };
+    return { mejl: null, skal: `http_${r.status}`, tillfalligt: r.status === 429 || r.status >= 500 };
+  } catch (err) {
+    return { mejl: null, skal: err?.name === 'AbortError' ? 'tidsgrans' : 'natfel', tillfalligt: true };
+  } finally { clearTimeout(t); }
 }
 
 async function hamtaMejltext(emailId, { fetchImpl = fetch } = {}) {
@@ -456,7 +464,19 @@ export default async function handler(req, res) {
   // Webhookens fält först; hittas ingen rumsadress där läses det mottagna mejlet ur Resend, eftersom en
   // vidarebefordran bär kundens egen adress i To och rumsadressen bara i kuvert/leveransrubrik (IA-14).
   let traff = mottagarnyckel(data);
-  if (!traff) traff = mottagarnyckel(await hamtaMottaget(data.email_id ?? data.id));
+  if (!traff) {
+    const hamtat = await hamtaMottaget(data.email_id ?? data.id);
+    // «Kunde inte läsa» är inte «ingen rumsadress»: ett tillfälligt fel hade skickat en vidarebefordran till
+    // avsändarens (leverantörens) rum och svaret till leverantören. Svara 500 och släpp startnyckeln så
+    // Resend levererar om (IA-17). Ett definitivt 4xx eller en saknad nyckel läses som webhookens data.
+    if (hamtat.tillfalligt) {
+      console.error(`[inbound-email] mottaget mejl kunde inte läsas (${hamtat.skal}) — Resend får leverera om`);
+      if (kv) { try { await kv.del(`inbound:started:${mailId}`); } catch { /* non-fatal */ } }
+      return send(res, 500, { error: 'mottaget mejl kunde inte läsas' });
+    }
+    if (hamtat.skal) console.warn(`[inbound-email] mottaget mejl lästes inte (${hamtat.skal}) — webhookens fält gäller`);
+    traff = mottagarnyckel(hamtat.mejl);
+  }
   const adressnyckel = traff?.nyckel ?? null;
   if (traff) console.log(`[inbound-email] rumsadress i fältet ${traff.falt}`);
   let adress = null;
@@ -537,14 +557,32 @@ export default async function handler(req, res) {
         // aldrig lösas med tystnad.
         console.warn(`[inbound-email] RATE LIMIT för ${sha16(sender)}: ${n} > ${RATE_LIMIT_PER_DAY} — svarar avsändaren`);
         let varnad = false;
+        // En rumsadress har ett rum: varje PDF bokförs där FÖRST, med skälet «dagsgränsen» — så att den syns
+        // och kan köras om med «Försök igen» även när adressen saknar ägare att mejla (IA-13), och så att
+        // mejlet nedan kan säga samma sak som rummet (regel 5, IA-15).
+        let bokfort = 0;
+        if (adress) {
+          const pdfer = (data.attachments ?? []).filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
+          bokfort = await bokforAvvisade(pdfer.slice(0, MAX_BULK_PDFS).map((a, idx) => ({
+            emailId: mailId, sender, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
+            fingerprint: adress.fingerprint, agareEpost: adress.userEmail ?? null,
+          })), DAGSGRANS_SKAL) ?? 0;
+          if (bokfort > 0) varnad = true;
+        }
+        const iRummet = bokfort > 0;
         try {
           const resend = getResend();
           if (resend && svaraTill) {
             await resend.emails.send({
               from: FROM,
               to: svaraTill,
-              subject: 'Vi tog inte emot det här mejlet — dagsgränsen är nådd',
-              html: `<p>Hej,</p>
+              subject: iRummet ? 'Dagsgränsen är nådd — fakturorna väntar i ert rum' : 'Vi tog inte emot det här mejlet — dagsgränsen är nådd',
+              html: iRummet ? `<p>Hej,</p>
+<p>Er adress har tagit emot ${RATE_LIMIT_PER_DAY} mejl det senaste dygnet, vilket är vår nuvarande gräns.
+<strong>Fakturorna i det här mejlet har därför inte analyserats än.</strong> De ligger i ert rum,
+markerade som mottagna efter dagsgränsen.</p>
+<p>Tryck «Försök igen» i rummet så analyserar vi dem. Inget nytt mejl behövs.</p>
+<p>— Arvo</p>` : `<p>Hej,</p>
 <p>Vi har tagit emot ${RATE_LIMIT_PER_DAY} fakturor från er adress det senaste dygnet, vilket är
 vår nuvarande gräns. <strong>Det här mejlet analyserades därför inte</strong> — vi har det inte,
 och ni behöver skicka om det.</p>
@@ -558,16 +596,6 @@ och ni behöver skicka om det.</p>
           }
         } catch (err) {
           console.error('[inbound-email] RATE LIMIT: varningsmail misslyckades:', err.message);
-        }
-        // En rumsadress har ett rum: varje PDF bokförs där som fallen («dagsgränsen»), så att den syns och
-        // kan köras om med «Försök igen» — även när adressen saknar ägare att mejla (IA-13).
-        if (adress) {
-          const pdfer = (data.attachments ?? []).filter((a) => a.content_type === 'application/pdf' || /\.pdf$/i.test(a.filename ?? ''));
-          const bokfort = await bokforAvvisade(pdfer.map((a, idx) => ({
-            emailId: mailId, sender, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
-            fingerprint: adress.fingerprint, agareEpost: adress.userEmail ?? null,
-          })), 'dagsgransen_nadd');
-          if (bokfort > 0) varnad = true;
         }
         // ── «KUNDEN ÄR BESVARAD» VAR ETT PÅSTÅENDE KODEN INTE HÖLL (2026-08-24) ──────────────
         // Min egen kommentar intygade att varningsmailet gått iväg — men både den saknade

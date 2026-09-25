@@ -169,6 +169,8 @@ await sql`
   )
 `;
 await sql`CREATE INDEX IF NOT EXISTS inkorgsadresser_agare_idx ON inkorgsadresser (agare_epost)`;
+// En ägare, en adress: två samtidiga förfrågningar får aldrig skapa två (IA-16).
+await sql`CREATE UNIQUE INDEX IF NOT EXISTS inkorgsadresser_agare_uniq ON inkorgsadresser (agare_epost) WHERE agare_epost IS NOT NULL`;
 // ingest_jobs skapades hittills bara av köns självläkning (lib/ingest-queue.js). Samma schema här, så att
 // ALTER-satserna nedan inte fäller migreringen i en ny miljö.
 await sql`

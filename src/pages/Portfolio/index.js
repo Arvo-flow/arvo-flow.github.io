@@ -186,6 +186,7 @@ export default function Portfolio() {
   const [ingesting, setIngesting] = useState(0);   // fakturor på väg (köade, ej klara) → "analyserar N"
   const [ingestFailed, setIngestFailed] = useState(0);   // fakturor som föll → ärligt bortfalls-besked
   const [ingestFailedFiles, setIngestFailedFiles] = useState([]);   // namnen på de fallna
+  const [ingestAvvisade, setIngestAvvisade] = useState([]);   // mottagna efter dagsgränsen — inget tekniskt fel (IA-15)
   // Analyser som ligger på DEN HÄR DATORNS fingerprint men inte på kundens e-post. De visas inte
   // längre i rummet (rummet tillhör identiteten, inte datorn) — men det som inte visas ska sägas.
   const [franDennaEnhet, setFranDennaEnhet] = useState(0);
@@ -254,6 +255,7 @@ export default function Portfolio() {
     setIngesting(data.ingesting ?? 0);
     setIngestFailed(data.ingestFailed ?? 0);
     setIngestFailedFiles(data.ingestFailedFiles ?? []);
+    setIngestAvvisade(data.ingestAvvisadeFiles ?? []);
     setFranDennaEnhet(Number(data.frånDennaEnhet) || 0);
     if (data.inkorg) setInkorg(data.inkorg);
     setIntag(data.intag ?? null);
@@ -267,7 +269,7 @@ export default function Portfolio() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session: sessionToken, magic, rumsnyckel: fingerprint || undefined }),
       });
-      setIngestFailed(0); setIngestFailedFiles([]); setIngesting((n) => n || 1);  // visa "analyserar" direkt
+      setIngestFailed(0); setIngestFailedFiles([]); setIngestAvvisade([]); setIngesting((n) => n || 1);  // visa "analyserar" direkt
       await loadOffice();
     } catch { /* banner kvar om det inte gick */ }
     finally { setRetrying(false); }
@@ -860,16 +862,22 @@ export default function Portfolio() {
           </div>
         )}
 
-        {ingestFailed > 0 && (
+        {(ingestFailed > 0 || ingestAvvisade.length > 0) && (
           <div style={{
             border: '1px solid rgba(245,180,90,0.45)', borderRadius: 12, background: 'rgba(245,180,90,0.07)',
             padding: '16px 18px', margin: '0 0 18px', color: '#E8C9A0', fontSize: 13.5, lineHeight: 1.55,
           }}>
-            <strong style={{ color: '#F5B45A' }}>{ingestFailed} {ingestFailed === 1 ? 'faktura kunde' : 'fakturor kunde'} inte läsas in.</strong>{' '}
-            Oftast ett tillfälligt fel (ett tekniskt avbrott) — sällan att filen inte var en läsbar faktura.
-            {ingestFailedFiles.length > 0 && (
+            {ingestFailed > 0 && (<>
+              <strong style={{ color: '#F5B45A' }}>{ingestFailed} {ingestFailed === 1 ? 'faktura kunde' : 'fakturor kunde'} inte läsas in.</strong>{' '}
+              Oftast ett tillfälligt fel (ett tekniskt avbrott) — sällan att filen inte var en läsbar faktura.{' '}
+            </>)}
+            {ingestAvvisade.length > 0 && (<>
+              <strong style={{ color: '#F5B45A' }}>{ingestAvvisade.length} {ingestAvvisade.length === 1 ? 'faktura kom' : 'fakturor kom'} in efter dagsgränsen</strong>{' '}
+              och har inte analyserats än.
+            </>)}
+            {(ingestFailedFiles.length > 0 || ingestAvvisade.length > 0) && (
               <ul style={{ margin: '10px 0 0', paddingLeft: 18 }}>
-                {ingestFailedFiles.map((f, i) => (
+                {[...ingestFailedFiles, ...ingestAvvisade].map((f, i) => (
                   <li key={i} style={{ fontFamily: 'monospace', fontSize: 12.5, color: '#D9B98A', marginBottom: 2 }}>{f}</li>
                 ))}
               </ul>
@@ -882,7 +890,7 @@ export default function Portfolio() {
                   color: '#F5B45A', borderRadius: 100, padding: '9px 20px', fontSize: 13, fontWeight: 600,
                   opacity: retrying ? 0.6 : 1,
                 }}>
-                {retrying ? 'Kör om…' : `Försök igen — Arvo kör om ${ingestFailed === 1 ? 'den' : 'dem'} åt er`}
+                {retrying ? 'Kör om…' : `Försök igen — Arvo kör om ${ingestFailed + ingestAvvisade.length === 1 ? 'den' : 'dem'} åt er`}
               </button>
               <span style={{ fontSize: 12, color: '#B89B72' }}>Inget nytt mejl behövs.</span>
             </div>

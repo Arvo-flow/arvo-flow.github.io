@@ -41,14 +41,15 @@ const jobbB = [
   { filename: 'larm-sep.pdf', status: 'done', outcome: 'unsupported:larm-bevakning' },
   { filename: 'skannad.pdf', status: 'failed', outcome: null },
 ];
-const svar = (analyses, jobb, inkorgRad) => {
+const svar = (analyses, jobb, inkorgRad, extra = {}) => {
   const intag = byggIntag(jobb, analyses);
   return { ok: true, analyses, watched: [], rum: byggRum(analyses, []), branchAnchors: {}, movements: {}, email: undefined,
-    ingesting: intag.vantar + intag.lases, ingestFailed: intag.fallna, ingestFailedFiles: [], intag, inkorg: adressStatus(inkorgRad) };
+    ingesting: intag.vantar + intag.lases, ingestFailed: intag.fallna, ingestFailedFiles: [], intag, inkorg: adressStatus(inkorgRad), ...extra };
 };
 const LAGEN = {
   A: { hist: svar([], jobbA, { nyckel: NYCKEL, plattform: 'google_workspace' }) },
-  B: { hist: svar([telia], jobbB, { nyckel: NYCKEL, plattform: 'gmail', gmail_kod: '482913650', gmail_kod_at: new Date(nu - 60e3).toISOString() }) },
+  B: { hist: svar([telia], jobbB, { nyckel: NYCKEL, plattform: 'gmail', gmail_kod: '482913650', gmail_kod_at: new Date(nu - 60e3).toISOString() },
+    { ingestFailedFiles: ['skannad.pdf'], ingestAvvisade: 1, ingestAvvisadeFiles: ['sen-faktura.pdf'] }) },
 };
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
@@ -89,7 +90,7 @@ for (const bredd of [390, 1600]) {
     await p.screenshot({ path: join(UT, `${namn}-${bredd}.png`), fullPage: true });
     const krav = namn === 'A'
       ? [[ADRESS, 'egen adress'], ['Vidarebefordran och POP/IMAP', 'Gmail-stegen'], ['Väntar på Gmails bekräftelsekod', 'väntar på koden'], ['Läses…', 'flödet läser'], ['telia-sep.pdf', 'filen i flödet']]
-      : [[ADRESS, 'egen adress'], ['482913650', 'koden'], ['Telia · 12 rader · Prissatt', 'klar fil med detaljer'], ['Utanför vårt område', 'triagerad dom'], ['Föll', 'fallen fil']];
+      : [[ADRESS, 'egen adress'], ['482913650', 'koden'], ['Telia · 12 rader · Prissatt', 'klar fil med detaljer'], ['Utanför vårt område', 'triagerad dom'], ['Föll', 'fallen fil'], ['1 faktura kunde inte läsas in', 'tekniskt fel för sig'], ['1 faktura kom in efter dagsgränsen', 'dagsgränsen för sig'], ['sen-faktura.pdf', 'dagsgränsens fil']];
     const saknas = krav.filter(([s]) => !t.includes(s)).map(([, n]) => n);
     if (t.includes('faktura@inbox.arvoflow.se')) fel(`${namn} ${bredd}px: den gemensamma adressen syns i stället för rummets`);
     else if (saknas.length) fel(`${namn} ${bredd}px saknar: ${saknas.join(', ')}`);

@@ -36,7 +36,9 @@ function fejkDb(rader = []) {
     if (/UPDATE inkorgsadresser SET plattform = \? WHERE nyckel = \?/.test(q)) { const r = rader.find((x) => x.nyckel === v[1]); if (r) r.plattform = v[0]; return []; }
     if (/INSERT INTO inkorgsadresser/.test(q)) {
       const ny = { nyckel: v[0], rum_hash: v[1], agare_epost: v[2], plattform: v[3], skapad_at: new Date() };
-      if (ny.rum_hash && rader.some((r) => r.rum_hash === ny.rum_hash)) throw new Error('duplicate key rum_hash');
+      const krock = (ny.rum_hash && rader.some((r) => r.rum_hash === ny.rum_hash))
+        || (ny.agare_epost && rader.some((r) => r.agare_epost === ny.agare_epost));
+      if (krock) { if (/ON CONFLICT DO NOTHING/.test(q)) return []; throw new Error('duplicate key'); }
       rader.push(ny); return [ny];
     }
     throw new Error(`fejkDb: okänd fråga ${q.slice(0, 80)}`);
@@ -96,7 +98,9 @@ describe('IA · rummets egen adress', () => {
     assert.match(k, /inbound:rate:adress:\$\{adressnyckel\}/, 'rate limit ska räknas per rumsadress, inte per leverantör');
     // Adressen avgörs före rate limit och testytan.
     assert.ok(k.indexOf('mottagarnyckel(data)') > 0 && k.indexOf('mottagarnyckel(data)') < k.indexOf('inbound:rate:'), 'adressen avgörs efter rate limit');
-    assert.match(k, /if \(!traff\) traff = mottagarnyckel\(await hamtaMottaget\(/, 'en vidarebefordran utan rumsadress i webhooken läses aldrig i det mottagna mejlet');
+    assert.match(k, /if \(!traff\) \{\n\s*const hamtat = await hamtaMottaget\(/, 'en vidarebefordran utan rumsadress i webhooken läses aldrig i det mottagna mejlet');
+    assert.match(k, /if \(hamtat\.tillfalligt\) \{[\s\S]{0,300}kv\.del\(`inbound:started:\$\{mailId\}`\)[\s\S]{0,120}return send\(res, 500/, 'ett okänt läsfel blev «ingen rumsadress»');
+    assert.match(k, /\n\s*traff = mottagarnyckel\(hamtat\.mejl\);\n/, 'det hämtade mejlet läses aldrig efter rumsadressen');
   });
 
   test('IA-06 · Gmails verifieringskod: ur ämnet, ur brödtexten, bara från Gmails avsändare (motprov)', () => {
@@ -137,6 +141,51 @@ describe('IA · rummets egen adress', () => {
     assert.equal((await hittaRumsadress(db, { rumsnyckel: RUM_A, agareEpost: 'y@annat.se' })).nyckel, y.nyckel);
     // Motprov: utan e-post är det enheten som gäller.
     assert.equal((await hittaRumsadress(db, { rumsnyckel: RUM_A })).nyckel, enhet.nyckel);
+    // Omvänt: loggar någon in FÖRST på en ny dator får den ägda adressen ingen enhetshash — nästa utloggade
+    // person på samma dator ser den aldrig.
+    const db2 = fejkDb();
+    const RUM_B = 'b'.repeat(32);
+    const anna = await adressForRum(db2, { rumsnyckel: RUM_B, agareEpost: 'anna@x.se' });
+    assert.equal(anna.rum_hash, null, 'den ägda adressen fick enhetens hash');
+    assert.equal(await hittaRumsadress(db2, { rumsnyckel: RUM_B }), null, 'en utloggad på samma dator ser ägarens adress');
+  });
+
+  test('IA-16 · två samtidiga förfrågningar för samma ägare ger EN adress (motprov: enheten likaså)', async () => {
+    const db = fejkDb();
+    const forsta = await adressForRum(db, { agareEpost: 'kund@b.se' });
+    // Kapplöpningen: den andra förfrågan läste «ingen adress» innan den första hann skriva.
+    const blind = async (strings, ...v) => {
+      const q = strings.join('?');
+      if (/^\s*SELECT \* FROM inkorgsadresser WHERE (agare_epost|rum_hash) = \?/.test(q) && !blind.sett) { blind.sett = true; return []; }
+      return db(strings, ...v);
+    };
+    const andra = await adressForRum(blind, { agareEpost: 'kund@b.se' });
+    assert.equal(andra.nyckel, forsta.nyckel, 'kapplöpningen skapade en andra adress som rummet aldrig läser');
+    assert.equal(db.rader.length, 1);
+    const enhet = await adressForRum(db, { rumsnyckel: RUM_A });
+    blind.sett = false;
+    assert.equal((await adressForRum(blind, { rumsnyckel: RUM_A })).nyckel, enhet.nyckel);
+    assert.match(las('scripts/migrate-v2.mjs'), /CREATE UNIQUE INDEX IF NOT EXISTS inkorgsadresser_agare_uniq ON inkorgsadresser \(agare_epost\) WHERE agare_epost IS NOT NULL/);
+  });
+
+  test('IA-15 · dagsgränsen är inget tekniskt fel, och ett adressjobb räknas en gång (källtext)', () => {
+    const q = las('lib/ingest-queue.js');
+    for (const fraga of [/sender=\$\{sender\} AND fingerprint IS NULL AND status IN \('pending','processing'\)/,
+      /COUNT\(\*\)::int AS n FROM ingest_jobs WHERE sender=\$\{sender\} AND fingerprint IS NULL AND status='failed'/,
+      /SELECT filename FROM ingest_jobs WHERE sender=\$\{sender\} AND fingerprint IS NULL AND status='failed'/,
+      /WHERE sender=\$\{sender\} AND fingerprint IS NULL AND status='failed'\n\s*RETURNING id/]) {
+      assert.match(q, fraga, `avsändarens fråga räknar rumsadressens jobb en gång till: ${fraga}`);
+    }
+    const h = las('api/invoice-history.mjs');
+    assert.match(h, /adressAvvisadeFiler = fallna\.filter\(\(j\) => j\.error === DAGSGRANS_SKAL\)/);
+    assert.match(h, /adressFallnaFiler = fallna\.filter\(\(j\) => j\.error !== DAGSGRANS_SKAL\)/);
+    const k = las('api/inbound-email.mjs');
+    assert.match(k, /\}\)\), DAGSGRANS_SKAL\) \?\? 0;/, 'bokföringen bär inte dagsgränsens skäl');
+    const mejl = k.slice(k.indexOf("html: iRummet ? `"), k.indexOf("` : `<p>Hej,</p>"));
+    assert.ok(mejl.length > 100, 'dagsgränsmejlet för rummet hittades inte');
+    assert.match(mejl, /Försök igen/);
+    assert.doesNotMatch(mejl, /skicka om/, 'mejlet säger «skicka om» medan rummet säger «inget nytt mejl behövs»');
+    assert.ok(k.indexOf('bokfort = await bokforAvvisade(') < k.indexOf('html: iRummet'), 'mejlet skrivs innan bokföringen är känd');
   });
 
   test('IA-09 · telemetrin: detaljer bara ur den lagrade analysen jobbet pekar på', () => {
@@ -255,7 +304,7 @@ describe('IA · rummets egen adress', () => {
     const k = las('api/inbound-email.mjs');
     const gren = k.slice(k.indexOf('if (n > RATE_LIMIT_PER_DAY)'), k.indexOf("skipped: 'rate limit'"));
     assert.ok(gren.length > 200, 'rate limit-grenen hittades inte');
-    assert.match(gren, /\n\s*if \(adress\) \{\n[^\n]*\n\s*const bokfort = await bokforAvvisade\(/, 'dagsgränsen tappar rumsadressens mejl spårlöst');
+    assert.match(gren, /\n\s*let bokfort = 0;\n\s*if \(adress\) \{\n[^\n]*\n\s*bokfort = await bokforAvvisade\(/, 'dagsgränsen tappar rumsadressens mejl spårlöst');
     assert.match(gren, /if \(bokfort > 0\) varnad = true;/);
     assert.match(gren, /fingerprint: adress\.fingerprint/);
   });
@@ -269,5 +318,20 @@ describe('IA · rummets egen adress', () => {
     // Motprov: en vidarebefordran till den gemensamma adressen är ingen rumsadress.
     assert.equal(mottagarnyckel({ to: ['kund@bolag.se'], headers: { 'Delivered-To': 'faktura@inbox.arvoflow.se' } }), null);
     assert.equal(mottagarnyckel(null), null);
+  });
+  test('IA-17 · det mottagna mejlet: «kunde inte läsa» skiljs från «ingen rumsadress» (motprov)', async () => {
+    process.env.RESEND_API_KEY ??= 're_test';
+    process.env.INBOUND_WEBHOOK_SECRET ??= 'test';
+    const { hamtaMottaget } = await import('../api/inbound-email.mjs');
+    const svar = (status, body = {}) => async () => ({ ok: status < 300, status, json: async () => body });
+    assert.deepEqual(await hamtaMottaget('e1', { nyckel: 'k', fetchImpl: svar(200, { to: ['a@b.se'] }) }), { mejl: { to: ['a@b.se'] }, skal: null, tillfalligt: false });
+    assert.equal((await hamtaMottaget('e1', { nyckel: 'k', fetchImpl: svar(503) })).tillfalligt, true);
+    assert.equal((await hamtaMottaget('e1', { nyckel: 'k', fetchImpl: svar(429) })).tillfalligt, true);
+    assert.equal((await hamtaMottaget('e1', { nyckel: 'k', fetchImpl: async () => { throw new Error('ECONNRESET'); } })).tillfalligt, true);
+    const hang = (_, { signal }) => new Promise((_, rej) => signal.addEventListener('abort', () => rej(Object.assign(new Error('a'), { name: 'AbortError' }))));
+    assert.deepEqual(await hamtaMottaget('e1', { nyckel: 'k', fetchImpl: hang, tidsgransMs: 20 }), { mejl: null, skal: 'tidsgrans', tillfalligt: true });
+    // Motprov: ett definitivt svar och en saknad nyckel är inte «tillfälligt» — gamla vägen får inte fastna i omleveranser.
+    assert.equal((await hamtaMottaget('e1', { nyckel: 'k', fetchImpl: svar(404) })).tillfalligt, false);
+    assert.equal((await hamtaMottaget('e1', { nyckel: null })).tillfalligt, false);
   });
 });
