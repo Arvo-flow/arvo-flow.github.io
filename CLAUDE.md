@@ -752,6 +752,19 @@ En DKIM-grind kräver en rubrik vars existens i Resends data inte är mätt. Sab
   «kunde inte läsa det mottagna mejlet» är nu 500 + omleverans, aldrig «ingen rumsadress» (IA-17).
 **Läxan, mätt:** varje granskningsvarv hittade fel i det FÖRRA varvets lagning. En lagning är en ny ändring,
 och den behöver sin egen blick. Sabotage efter tredje varvet: 28 riktningar, alla fällde (S28 som avbrutet test).
+**✅ LIVE 2026-09-25 05:24 (`probe-rumsadress`, run 36098415302, produktion 5da5be8):** K1 en rad under
+`adress:<K>` · K2 med ägarens e-post · K3 0 nya rader i avsändarens rum · K4 adressen markerad mottagen ·
+O1 okänd nyckel → ingen analys (motprovet) · **B1 vidarebefordran landade**: To-rubriken var en annan adress
+och rumsadressen bara Bcc, ändå loggade Vercel `rumsadress i fältet to` för alla tre. **Resends webhook-`to`
+bär alltså kuvertets mottagare, inte rubriken** — premissen för guiderna, mätt med motprov (samma fält, olika
+rubrik). Den första körningen föll på INSTRUMENTET: K och B fick samma ägare och det unika indexet avvisade
+den andra (indexet bevisat live), och B:s To var `testyta@` — hade adressen missats hade testytan nollställts.
+**Sonden hittade ett fel till, på gamla vägen också [KUND]:** en faktura som lästs och lagrats men inte
+prissatts fick ämnet «Vi kunde inte analysera ert mail» medan brödtexten sa «vi prissätter inte den här
+fakturan automatiskt». Nu «Er faktura är mottagen — skälet står i ert rum» (IR-04). Och loggraden «RESEND_API_KEY
+saknas» för en adress utan ägare var falsk — nyckeln fanns, mottagaren saknades.
+**Obekräftat, öppet:** att en RIKTIG Gmail-/Outlook-regel beter sig som Bcc i sonden (kuvertet), Gmail-kodens
+exakta form, och om M365-tenanter stoppar extern vidarebefordran. Den förfalskade Gmail-koden står kvar (lågt).
 
 ---
 

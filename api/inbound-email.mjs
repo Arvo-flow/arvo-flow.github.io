@@ -269,6 +269,9 @@ export function buildReplySubject(results) {
     const names = results.filter((r) => r.ok).map((r) => r.supplier).filter(Boolean).join(', ');
     return `Er analys är klar — ${names || 'fakturan'}`;
   }
+  // En faktura som lästes och lagrades men inte prissattes (bevakning, granskning, utanför vårt område)
+  // ÄR analyserad — ämnet «kunde inte analysera» sa emot både brödtexten och rummet (live-sonden 25 sep, IR-04).
+  if (results.some((r) => r.mottagen)) return 'Er faktura är mottagen — skälet står i ert rum';
   return 'Vi kunde inte analysera ert mail';
 }
 
@@ -750,7 +753,7 @@ och ni behöver skicka om det.</p>
         // Här stod «Arvo återkommer till er per mail när analysen är verifierad» — för varje rutt som
         // inte prissattes, även bevakade avtal och fakturor utanför vårt område. Ingen utskicksväg
         // mejlar tillbaka efter en granskning. Rummet visar varje sådan faktura med sitt skäl (KM-05).
-        results.push({ ok: false, filename,
+        results.push({ ok: false, mottagen: true, filename,
           message: a.route === 'monitoring'
             ? 'Avtalet är tidsbundet och står under bevakning i ert rum, med sin avtalsklocka.'
             : `Vi prissätter inte den här fakturan automatiskt. ${LOFTEN.skalIRummet.text}` });
@@ -780,7 +783,7 @@ och ni behöver skicka om det.</p>
         html: replyHtml({ results, portalLink }),
       });
     } else {
-      console.error('[inbound-email] RESEND_API_KEY saknas — svarsmail ej skickat');
+      console.log(`[inbound-email] svarsmail ej skickat — ${svaraTill ? 'RESEND_API_KEY saknas' : 'adressen saknar ägare (analysen står i rummet)'}`);
     }
   } catch (err) {
     console.error('[inbound-email] svarsmail misslyckades:', err.message);

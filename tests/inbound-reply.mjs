@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 // tests/inbound-reply.mjs — Mejl-läxorna från första skarpa svarsmejlet (2026-06-11).
 //
 // 1. Gmail-läxan: e-postklienter stödjer inte flexbox/grid — "Årskostnad475 440"
@@ -96,6 +97,14 @@ describe('Mejlsvaret — buildReplySubject', () => {
 
   test('inga ok-resultat: ärligt fel-ämne', () => {
     assert.equal(buildReplySubject([{ ok: false }]), 'Vi kunde inte analysera ert mail');
+  });
+
+  test('IR-04 · lagrad men inte prissatt: ämnet säger mottagen, aldrig «kunde inte analysera» (motprov: äkta fel)', () => {
+    assert.equal(buildReplySubject([{ ok: false, mottagen: true }]), 'Er faktura är mottagen — skälet står i ert rum');
+    assert.equal(buildReplySubject([{ ok: false }, { ok: false, mottagen: true }]), 'Er faktura är mottagen — skälet står i ert rum');
+    assert.equal(buildReplySubject([{ ok: false }]), 'Vi kunde inte analysera ert mail');
+    const k = readFileSync(new URL('../api/inbound-email.mjs', import.meta.url), 'utf8');
+    assert.match(k, /\} else if \(a\?\.ok\) \{[\s\S]{0,400}results\.push\(\{ ok: false, mottagen: true, filename,/, 'den lagrade men oprissatta grenen märker inte resultatet');
   });
 
 });
