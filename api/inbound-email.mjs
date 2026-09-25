@@ -27,6 +27,7 @@ import { getDb } from '../lib/db.js';
 import { getKv } from '../lib/kv.js';
 import { fmtNumber } from '../lib/format.js';
 import { enqueueJobs } from '../lib/ingest-queue.js';
+import { nyckelUrMottagare, slaUppAdress, intagsIdentitet, gmailKod, sparaGmailKod, markeraMottagen } from '../lib/inkorgsadress.js';
 import { isTestRecipient, resetTestSurfaceIfStale, TEST_EMAIL, TEST_FINGERPRINT } from '../lib/test-surface.js';
 
 export const config = { maxDuration: 60 };
@@ -194,8 +195,20 @@ export async function fetchInboundPdfForJob(emailId, { filename = null, attachme
 }
 
 /** Magic link in i kontoret — samma tabell/format som request-magic-link.mjs. */
+/** Brödtexten i ett mottaget mejl (Resend), eller null. Används bara för Gmails verifieringskod. */
+async function hamtaMejltext(emailId, { fetchImpl = fetch } = {}) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || !emailId) return null;
+  try {
+    const r = await fetchImpl(`https://api.resend.com/emails/receiving/${emailId}`, { headers: { Authorization: `Bearer ${key}` } });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j?.text ?? (j?.html ? String(j.html).replace(/<[^>]+>/g, ' ') : null);
+  } catch { return null; }
+}
+
 async function mintPortalLink(db, email) {
-  if (!db) return null;
+  if (!db || !email) return null;   // en rumsadress utan bevisad ägare har ingen e-post att knyta länken till
   try {
     const token     = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 3600 * 1000);
@@ -425,10 +438,74 @@ export default async function handler(req, res) {
     try { await kv.set(`inbound:done:${mailId}`, 1, { ex: 86400 }); } catch { /* non-fatal */ }
   };
 
-  // Rate limit per avsändare
+  // ── RUMMETS ADRESS: MOTTAGAREN ÄR IDENTITETEN (grundarorder 2026-09-24, lib/inkorgsadress.js) ──
+  // Ett mejl till faktura+<nyckel>@inbox.arvoflow.se tillhör adressens rum — oavsett vem som skickade
+  // det. Avsändaren kan vara en kollega eller leverantören själv, och får då aldrig vare sig identiteten
+  // eller svaret (IA-03/IA-04). Avgörs FÖRE rate limit: en leverantör som skickar till tio kunder är tio
+  // rum, inte en avsändare.
+  const adressnyckel = nyckelUrMottagare(data.to);
+  let adress = null;
+  if (adressnyckel) {
+    const dbA = getDb();
+    let rad;
+    try {
+      if (!dbA) throw new Error('ingen databas');
+      rad = await slaUppAdress(dbA, adressnyckel);
+    } catch (err) {
+      // OKÄNT ÄR INTE «OKÄND ADRESS». Svara 500 så Resend levererar om — och släpp startnyckeln, annars
+      // avvisas omleveransen som «pågår redan» och mejlet är borta för alltid.
+      console.error('[inbound-email] adressuppslag misslyckades:', err.message);
+      if (kv) { try { await kv.del(`inbound:started:${mailId}`); } catch { /* non-fatal */ } }
+      return send(res, 500, { error: 'adressuppslag misslyckades' });
+    }
+    adress = intagsIdentitet({ nyckel: adressnyckel, rad, avsandare: sender });
+    if (adress.lage === 'okand_adress') {
+      console.log(`[inbound-email] okänd rumsadress från=${sha16(sender)} — analyseras inte`);
+      try {
+        const resend = getResend();
+        if (resend) {
+          await resend.emails.send({
+            from: FROM, to: sender,
+            subject: 'Adressen är inte kopplad till något rum hos Arvo',
+            html: `<p>Hej,</p><p>Mejlet skickades till en Arvo-adress som inte är kopplad till något rum.
+<strong>Inget analyserades och inget sparades.</strong> Kontrollera adressen i ert rum och skicka igen.</p><p>— Arvo</p>`,
+          });
+        }
+      } catch (err) { console.error('[inbound-email] besked om okänd adress misslyckades:', err.message); }
+      await markeraSlutfort();
+      return send(res, 200, { ok: true, skipped: 'okänd rumsadress' });
+    }
+    // GMAILS VERIFIERINGSMEJL: kunden har lagt till adressen som vidarebefordran i Gmail, och Gmail
+    // skickar en kod hit. Koden visas i kundens rum (api/inkorgsadress), så hen slipper leta. Mejlet
+    // analyseras inte och besvaras inte. Koden och Gmail-kontots adress skrivs aldrig i loggen.
+    if (sender === 'forwarding-noreply@google.com') {
+      let kod = gmailKod({ avsandare: sender, amne: data.subject });
+      if (!kod) kod = gmailKod({ avsandare: sender, text: await hamtaMejltext(data.email_id ?? data.id) });
+      if (kod) {
+        try {
+          await sparaGmailKod(dbA, adressnyckel, kod);
+          console.log('[inbound-email] Gmail-verifieringskod fångad för en rumsadress');
+        } catch (err) {
+          // Koden kunde inte sparas: markera INTE slutfört — omleveransen ska få försöka igen.
+          console.error('[inbound-email] Gmail-koden kunde inte sparas:', err.message);
+          if (kv) { try { await kv.del(`inbound:started:${mailId}`); } catch { /* non-fatal */ } }
+          return send(res, 500, { error: 'gmail-koden kunde inte sparas' });
+        }
+      } else {
+        console.warn('[inbound-email] mejl från Gmails vidarebefordran utan igenkänd kod — formen stämmer inte med IA-06');
+      }
+      await markeraSlutfort();
+      return send(res, 200, { ok: true, gmailKod: Boolean(kod) });
+    }
+    await markeraMottagen(dbA, adressnyckel);
+  }
+  // Svaret går till adressens ägare (eller ingen) på en rumsadress — till avsändaren på gamla vägen.
+  const svaraTill = adress ? adress.svaraTill : sender;
+
+  // Rate limit per avsändare — per rumsadress när mejlet gick dit
   if (kv) {
     try {
-      const rk = `inbound:rate:${sha16(sender)}`;
+      const rk = adress ? `inbound:rate:adress:${adressnyckel}` : `inbound:rate:${sha16(sender)}`;
       const n  = await kv.incr(rk);
       if (n === 1) await kv.expire(rk, 86400);
       if (n > RATE_LIMIT_PER_DAY) {
@@ -447,10 +524,10 @@ export default async function handler(req, res) {
         let varnad = false;
         try {
           const resend = getResend();
-          if (resend) {
+          if (resend && svaraTill) {
             await resend.emails.send({
               from: FROM,
-              to: sender,
+              to: svaraTill,
               subject: 'Vi tog inte emot det här mejlet — dagsgränsen är nådd',
               html: `<p>Hej,</p>
 <p>Vi har tagit emot ${RATE_LIMIT_PER_DAY} fakturor från er adress det senaste dygnet, vilket är
@@ -483,9 +560,9 @@ och ni behöver skicka om det.</p>
 
   // ── TESTYTA: mail till test-mottagaradress → isolerad testidentitet, auto-nollställs per pass ──
   // Lagras på TEST_EMAIL (ej avsändaren) så riktig kunddata aldrig rörs. Svar går ändå till avsändaren.
-  const testMode = isTestRecipient(data.to);
-  const identityEmail = testMode ? TEST_EMAIL : sender;
-  const identityFp = testMode ? TEST_FINGERPRINT : `mail:${sha16(sender)}`;
+  const testMode = !adress && isTestRecipient(data.to);
+  const identityEmail = adress ? adress.userEmail : testMode ? TEST_EMAIL : sender;
+  const identityFp = adress ? adress.fingerprint : testMode ? TEST_FINGERPRINT : `mail:${sha16(sender)}`;
   if (testMode) {
     const { reset, deleted } = await resetTestSurfaceIfStale();
     console.log(`[inbound-email] TESTYTA: ${reset ? `nollställde ${deleted} rader (nytt pass)` : 'samma pass (ingen nollställning)'}`);
@@ -502,7 +579,9 @@ och ni behöver skicka om det.</p>
     const overflow = Math.max(0, pdfAtts.length - MAX_BULK_PDFS);
     if (overflow > 0) console.warn(`[inbound-email] BULK overflow: ${pdfAtts.length} PDF:er > tak ${MAX_BULK_PDFS} — ${overflow} ej köade (be kunden dela upp)`);
     const jobs = pdfAtts.slice(0, MAX_BULK_PDFS).map((a, idx) => ({
-      emailId: mailId, sender: identityEmail, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
+      emailId: mailId, sender: adress ? sender : identityEmail, filename: a.filename ?? `faktura-${idx + 1}.pdf`, attachmentIndex: idx,
+      // Rumsadressens identitet följer jobbet genom kön (jobbIdentitet i lib/ingest-queue.js).
+      fingerprint: adress?.fingerprint ?? null, agareEpost: adress?.userEmail ?? null,
     }));
     const added = await enqueueJobs(jobs);
     // Sparka igång drainen DIREKT (best-effort) så bulken börjar analyseras inom sekunder i stället
@@ -521,9 +600,9 @@ och ni behöver skicka om det.</p>
     const portalLink = await mintPortalLink(db, identityEmail);
     try {
       const resend = getResend();
-      if (resend) {
+      if (resend && svaraTill) {
         await resend.emails.send({
-          from: FROM, to: sender,
+          from: FROM, to: svaraTill,
           subject: `Vi tog emot ${added} fakturor — Arvo analyserar dem nu`,
           html: bulkReceivedHtml({ count: added, portalLink }),
         });
@@ -632,17 +711,18 @@ och ni behöver skicka om det.</p>
     }
   }
 
-  // Svar — ALLTID och ENBART till avsändaren
+  // Svar — till avsändaren på gamla vägen, till adressens ägare på en rumsadress, och annars till ingen:
+  // rummet visar varje analys, och en leverantör som skickat sin egen faktura ska aldrig få vår analys.
   const portalLink = await mintPortalLink(db, identityEmail);
   const okCount    = results.filter((r) => r.ok).length;
   const subject    = buildReplySubject(results);
 
   try {
     const resend = getResend();
-    if (resend) {
+    if (resend && svaraTill) {
       await resend.emails.send({
         from: FROM,
-        to: sender,
+        to: svaraTill,
         subject,
         html: replyHtml({ results, portalLink }),
       });

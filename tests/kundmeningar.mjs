@@ -99,7 +99,7 @@ describe('KM · kundmeningsregistret', () => {
       // Registergranskningen (2026-09-24): motdrag Arvo aldrig köat, en bok vakten inte ser, «identifierat».
       'Se Arvos förberedda motdrag', 'Köade ett motdrag inför en trolig höjning', 'Vi köar motdraget och agerar i fönstret.',
       'Maktkalendern · motdraget ligger klart', 'Motdraget ligger färdigt.', 'med motdraget förberett',
-      'Arvo Intelligence vidgar vakten till resten av boken', 'Hela reskontran, bevakad dygnet runt.', 'Koppla er inkorg så bevakar Arvo alla era leverantörsfakturor löpande.', 'Vi fakturerar aldrig förrän ni sparar.', 'Se er kostnadsbedömning →', 'Sannolik premie — bolag med er profil', 'och hittar varenda besparing, inte bara den här.', 'kartlägger varje besparing, inte bara den här.', 'vad vi gjort åt det', 'Identifierat besparingsgap', 'Koppla er inkorg — Arvo hittar allt',
+      'Arvo Intelligence vidgar vakten till resten av boken', 'Hela reskontran, bevakad dygnet runt.', 'När integrationen är på plats läses hela leverantörsreskontran automatiskt', 'Koppla er inkorg så bevakar Arvo alla era leverantörsfakturor löpande.', 'Vi fakturerar aldrig förrän ni sparar.', 'Se er kostnadsbedömning →', 'Sannolik premie — bolag med er profil', 'och hittar varenda besparing, inte bara den här.', 'kartlägger varje besparing, inte bara den här.', 'vad vi gjort åt det', 'Identifierat besparingsgap', 'Koppla er inkorg — Arvo hittar allt',
     ];
     // Mejlmallarna skriver svenska tecken som HTML-entiteter; skanningen avkodar dem (KM-05).
     assert.ok(LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(utanKommentarer('Arvo s&ouml;ker igenom er inkorg'))),

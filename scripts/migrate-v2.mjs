@@ -154,4 +154,42 @@ await sql`ALTER TABLE intelligence_activations ADD COLUMN IF NOT EXISTS premium_
 await sql`ALTER TABLE intelligence_activations ADD COLUMN IF NOT EXISTS premium_avslutad_at TIMESTAMPTZ`;
 console.log('✓ intelligence_activations: premium_beviljad_at + premium_avslutad_at (premiumgrinden)');
 
+// ── inkorgsadresser: rummets egen adress (grundarorder 2026-09-24, lib/inkorgsadress.js) ───────
+// Adressnyckeln ger bara skrivrätt. Rumsnyckeln lagras ALDRIG — bara sha256 av den (rum_hash).
+await sql`
+  CREATE TABLE IF NOT EXISTS inkorgsadresser (
+    nyckel             TEXT        PRIMARY KEY,
+    rum_hash           TEXT        UNIQUE,
+    agare_epost        TEXT,
+    plattform          TEXT,
+    gmail_kod          TEXT,
+    gmail_kod_at       TIMESTAMPTZ,
+    senast_mottagen_at TIMESTAMPTZ,
+    skapad_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS inkorgsadresser_agare_idx ON inkorgsadresser (agare_epost)`;
+// ingest_jobs skapades hittills bara av köns självläkning (lib/ingest-queue.js). Samma schema här, så att
+// ALTER-satserna nedan inte fäller migreringen i en ny miljö.
+await sql`
+  CREATE TABLE IF NOT EXISTS ingest_jobs (
+    id               BIGSERIAL PRIMARY KEY,
+    email_id         TEXT NOT NULL,
+    sender           TEXT NOT NULL,
+    filename         TEXT,
+    attachment_index INT NOT NULL DEFAULT 0,
+    status           TEXT NOT NULL DEFAULT 'pending',
+    attempts         INT NOT NULL DEFAULT 0,
+    error            TEXT,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    claimed_at       TIMESTAMPTZ,
+    done_at          TIMESTAMPTZ,
+    UNIQUE (email_id, attachment_index)
+  )
+`;
+await sql`ALTER TABLE ingest_jobs ADD COLUMN IF NOT EXISTS outcome TEXT`;
+await sql`ALTER TABLE ingest_jobs ADD COLUMN IF NOT EXISTS fingerprint TEXT`;
+await sql`ALTER TABLE ingest_jobs ADD COLUMN IF NOT EXISTS agare_epost TEXT`;
+console.log('✓ inkorgsadresser + ingest_jobs.fingerprint/agare_epost (rummets egen adress)');
+
 console.log('\n✅ Arvo Intelligence Fas 1-migreringar klara.');

@@ -4,7 +4,7 @@
 `tests/ytinventering.mjs` (YI-01..11) hittar själv varje mejlavsändare, varje route och varje endpoint och fäller
 sviten när en yta saknas här.*
 
-**86 ytor** — 19 registret · 10 marknad · 13 mejlyta · 25 ingen_prisdom · 19 intern.
+**87 ytor** — 19 registret · 10 marknad · 13 mejlyta · 26 ingen_prisdom · 19 intern.
 
 | Yta | Kanal | Mottagare | Klass | Vad den påstår i dag (mätt i koden 2026-09-23/24) |
 |---|---|---|---|---|
@@ -65,6 +65,7 @@ sviten när en yta saknas här.*
 | `api/fortnox/callback.mjs` | endpoint | anropare | **ingen_prisdom** | OAuth-retur; omdirigerar till /scanning, som är avroutad — steg 1 i Fortnoxplanen |
 | `api/health.mjs` | endpoint | anropare | **ingen_prisdom** | hälsokontroll: vilka variabler som saknas, inga värden |
 | `api/ingest/retry.mjs` | endpoint | anropare | **ingen_prisdom** | köar om ett jobb för rummets ägare; svarar en status |
+| `api/inkorgsadress.mjs` | endpoint | anropare | **ingen_prisdom** | rummets egen adress och dess status (Gmail-kod, senast mottagen); bevisat ägarskap krävs |
 | `api/kontor-ingest.mjs` | endpoint | anropare | **ingen_prisdom** | uppladdning till rummet; svarar köstatus och felmeddelanden |
 | `api/outcome-survey.mjs` | endpoint | anropare | **ingen_prisdom** | tar emot enkätsvar |
 | `api/recompute-shelfware.mjs` | endpoint | anropare | **ingen_prisdom** | räknar licensöverskott på kundens egna tal; svaret är tal utan mening, fakturavyn formulerar |

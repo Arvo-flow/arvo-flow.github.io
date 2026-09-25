@@ -6,6 +6,8 @@ export const LOFTEN_TEXT = {
   vidarebefordran: 'Vidarebefordra leverantörsfakturor till faktura@inbox.arvoflow.se — vi analyserar dem och svarar med resultatet.',
   inkorgskoppling: 'Kopplingen räknar i dag hur många fakturamejl ni har. Analysen gör vi på de fakturor ni laddar upp eller vidarebefordrar.',
   personligtSvar: 'En av grundarna hör av sig till er.',
+  egenAdress: 'Allt som kommer till er adress hamnar i det här rummet och analyseras — vem som än skickar det.',
+  gmailKod: 'När Gmail skickar sin bekräftelsekod till er adress visar vi den här, så slipper ni leta efter den.',
   intelligenceAnmalan: 'Vi har tagit emot er anmälan till Arvo Intelligence. En av grundarna hör av sig för att starta abonnemanget — bevakningen slås på först då.',
   premiumutskick: 'Med Arvo Intelligence mejlar vi månadsbriefen och prislarmen för era leverantörer.',
   gratisanalys: 'Utan abonnemang analyserar vi de fakturor ni laddar upp eller vidarebefordrar och svarar på dem. Utöver de avtalspåminnelser ni själva beställer skickar vi inga utskick däremellan.',

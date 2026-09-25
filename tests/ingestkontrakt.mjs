@@ -93,9 +93,11 @@ describe('IK · En påbörjad behandling är inte en avslutad', () => {
     // De tre utgångar som faktiskt hanterat mejlet klart: kunden varnad (rate limit), jobben köade,
     // svarsmailet skickat. Övriga utgångar (fel typ, ogiltig avsändare, redan hanterad) har inte
     // utfört något arbete och ska INTE markera — annars vore en ogiltig avsändare permanent tyst.
+    // 2026-09-24: +2 — okänd rumsadress (avsändaren får besked) och Gmails verifieringsmejl (koden sparad
+    // eller igenkänt utan kod). Båda har utfört sitt arbete; en misslyckad sparning markerar inte (500).
     const markeringar = [...k.matchAll(/await markeraSlutfort\(\);/g)].length;
-    assert.equal(markeringar, 3,
-      'tre svarande utgångar ska markera slutfört — ändras antalet har en ny utgång tillkommit och '
+    assert.equal(markeringar, 5,
+      'fem svarande utgångar ska markera slutfört — ändras antalet har en ny utgång tillkommit och '
       + 'måste granskas: svarar den kunden, ska den markera; gör den inget arbete, ska den inte');
   });
 

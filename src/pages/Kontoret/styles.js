@@ -755,7 +755,9 @@ export const AddressChipDark = styled.button`
   transition:background .15s, border-color .15s;
   &:hover { background:rgba(43,196,172,.12); border-color:${theme.dossier.tealBright}; }
   &.copied { border-style:solid; border-color:${theme.dossier.tealBright}; }
-  .ac-addr { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* Rummets egen adress är lång och nyckeln måste gå att läsa: bryt, klipp aldrig (2026-09-24). min-width:0
+     låter flexbarnet krympa — utan det tvingade adressen hela dörrkortet bredare än mobilskärmen. */
+  .ac-addr { min-width:0; overflow-wrap:anywhere; word-break:break-all; white-space:normal; text-align:left; }
   .ac-copy { flex-shrink:0; display:inline-flex; align-items:center; gap:6px;
     font-family:${MONO}; font-size:10px; letter-spacing:.12em; text-transform:uppercase;
     color:${theme.dossier.faintOnDark}; }

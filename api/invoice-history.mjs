@@ -8,9 +8,11 @@
 // för inloggning (AuthContext konsumerar dem vid sidladdning).
 import { getAnalysesByFingerprint, getAnalysesByEmail } from '../lib/invoice-store.js';
 import { arRumsnyckel } from '../lib/rumsnyckel.js';
+import { hittaRumsadress, adressFingeravtryck, adressStatus } from '../lib/inkorgsadress.js';
+import { byggIntag } from '../lib/intagstelemetri.js';
 import { getMarketIntelligence } from '../lib/price-alert.js';
 import { BRANCH_ANCHOR_UNIT } from '../lib/enhetsfras.js';
-import { pendingCountBySender, failedCountBySender, failedFilesBySender } from '../lib/ingest-queue.js';
+import { pendingCountBySender, failedCountBySender, failedFilesBySender, intagsflode } from '../lib/ingest-queue.js';
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding, avtalsklocka } from '../lib/contract-clock.js';
 import { planeradePaminnelser } from '../lib/paminnelse.js';
@@ -45,7 +47,8 @@ function send(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-async function emailFromMagic(token) {
+// Exporterad: api/inkorgsadress bevisar ägarskap på samma sätt (regel 1).
+export async function emailFromMagic(token) {
   if (!token || typeof token !== 'string' || token.length < 32) return null;
   const db = getDb();
   if (!db) return null;
@@ -92,11 +95,19 @@ export default async function handler(req, res) {
   // tomt ut. Kunden ska aldrig kunna dra slutsatsen att hens underlag är borta för att vi hade en
   // dålig minut. Allt ANNAT i svaret (kohort, ankare, prognoser) är redan fail-open med avsikt:
   // de är tillägg, och ett saknat tillägg är inte samma sak som ett saknat underlag.
-  let byFp, byEmail;
+  let byFp, byEmail, byAdress = [], rumsadress = null;
   try {
-    [byFp, byEmail] = await Promise.all([
+    // RUMMETS ADRESS (2026-09-24, lib/inkorgsadress.js): fakturor till faktura+<nyckel>@ lagras under
+    // `adress:<nyckel>`. Adressen hittas med samma identitetsregel som rummet — bevisad e-post, annars
+    // enheten — så en delad dator aldrig visar en annan ägares adress (IA-08).
+    if (!isTestRoom) {
+      const dbA = getDb();
+      rumsadress = dbA ? await hittaRumsadress(dbA, { rumsnyckel: hasFp ? fp : null, agareEpost: email }) : null;
+    }
+    [byFp, byEmail, byAdress] = await Promise.all([
       (hasFp && !isTestRoom) ? getAnalysesByFingerprint(fp) : [],
       email ? getAnalysesByEmail(email)    : [],
+      rumsadress ? getAnalysesByFingerprint(adressFingeravtryck(rumsadress.nyckel)) : [],
     ]);
   } catch (err) {
     console.error('[invoice-history] kunde inte läsa analyser:', err.message);
@@ -123,7 +134,7 @@ export default async function handler(req, res) {
   // Utan bevisad e-post är rummet fortfarande enhetsbundet, precis som förut.
   const identitetBevisad = Boolean(email);
   const seen = new Set();
-  const merged = [...byEmail, ...(identitetBevisad ? [] : byFp)]
+  const merged = [...byEmail, ...byAdress, ...(identitetBevisad ? [] : byFp)]
     .filter((a) => (seen.has(a.id) ? false : seen.add(a.id)))
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -265,13 +276,30 @@ export default async function handler(req, res) {
   } : null;
 
   // ── Pågående intag: fakturor PÅ VÄG (köade men ej klara) → rummet visar "analyserar N", ej tomt ──
-  const ingesting = email ? await pendingCountBySender(email) : 0;
+  // TELEMETRIN (2026-09-24, lib/intagstelemetri.js): varje fil i intaget — gamla vägen (avsändaren) och
+  // rummets adress. Kan flödet inte läsas utelämnas det (null), och räknarna nedan faller tillbaka på de
+  // gamla frågorna — ett okänt flöde får aldrig se ut som ett tomt.
+  let intag = null, adressFallna = 0, adressFallnaFiler = [];
+  try {
+    const [avsJobb, adressJobb] = await Promise.all([
+      email ? intagsflode({ sender: email }) : [],
+      rumsadress ? intagsflode({ fingerprint: adressFingeravtryck(rumsadress.nyckel) }) : [],
+    ]);
+    const jobb = [...avsJobb, ...adressJobb].sort((x, y) => new Date(y.created_at) - new Date(x.created_at));
+    intag = byggIntag(jobb, merged);
+    // Adressjobb bär avsändaren (t.ex. leverantören), aldrig ägarens e-post — deras bortfall räknas för sig,
+    // annars syns de inte bredvid gamla vägens räknare.
+    adressFallnaFiler = adressJobb.filter((j) => j.status === 'failed').map((j) => j.filename).filter(Boolean);
+    adressFallna = adressFallnaFiler.length;
+  } catch (err) { console.warn('[invoice-history] intagsflödet kunde inte läsas:', err.message); }
+  const ingesting = intag ? intag.vantar + intag.lases : (email ? await pendingCountBySender(email) : 0);
   // Bortfall: fakturor som inte gick igenom (efter omtag) → rummet säger det ärligt, aldrig tyst tapp.
-  const ingestFailed = email ? await failedCountBySender(email) : 0;
-  const ingestFailedFiles = ingestFailed > 0 ? await failedFilesBySender(email) : [];
+  const avsFallna = email ? await failedCountBySender(email) : 0;
+  const ingestFailed = avsFallna + adressFallna;
+  const ingestFailedFiles = [...(avsFallna > 0 ? await failedFilesBySender(email) : []), ...adressFallnaFiler];
 
   const rum = byggRum(analyses, watched);
-  return send(res, 200, { ok: true, analyses, watched, rum, cohort, publicBench, forecasts, branchAnchors, tackning, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, email: email ?? undefined, frånDennaEnhet });
+  return send(res, 200, { ok: true, analyses, watched, rum, cohort, publicBench, forecasts, branchAnchors, tackning, movements, switchTargets, vakt, ingesting, ingestFailed, ingestFailedFiles, intag, inkorg: adressStatus(rumsadress), email: email ?? undefined, frånDennaEnhet });
 }
 
 // "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.

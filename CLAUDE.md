@@ -704,6 +704,24 @@ redovisade: `npm run deploy` publicerade frontend från ett ocommittat träd, ef
 av påståendevakten. Innehållet var detsamma som sedan committades. Och sonden låg på main med ett rött YI-01
 i ~5 min, tills den klassades.
 
+**✅ RUMMETS EGEN ADRESS — MOTTAGAREN ÄR IDENTITETEN (grundarens GO 2026-09-24, steg 1–3).**
+· **Nyckeln.** `faktura+<16 tecken base32>@inbox.arvoflow.se` (`lib/inkorgsadress.js`, 80 bitar) ger
+  bara SKRIVRÄTT. Rumsnyckeln (läsrätt) står aldrig i en adress och lagras bara som sha256 (`rum_hash`).
+  Analyser från adressen lagras under `adress:<nyckel>`, och rummet läser dem (`api/invoice-history`).
+  Svaret går till adressens ägare, aldrig till avsändaren (som kan vara leverantören). En okänd nyckel ger
+  avsändaren ett besked och ingen analys. Rate limit räknas per adress. Kön bär identiteten till drainen
+  (`jobbIdentitet`). En ägd adress byter aldrig ägare, och oprövad e-post väljer bara guide, aldrig ägare.
+· **Magin.** Plattformen känns av ur DNS (MX/SPF: Microsoft 365, Google Workspace, Gmail, Outlook.com,
+  annan) och väljer guiden. Gmails bekräftelsekod fångas ur vidarebefordringsmejlet och visas i rummet i en
+  timme. **Obekräftat:** kodens exakta form i ett riktigt Gmail-mejl och om M365-tenanter stoppar extern
+  vidarebefordran. Guiden säger det senare öppet.
+· **Telemetrin.** `byggIntag` visar varje fil: väntar, läses, klar (leverantör · rader · dom) eller föll.
+  Detaljer hämtas bara ur den lagrade analys som jobbets utfall pekar på (`lagrad#<id>`).
+IA-01..10. Sabotage: 10 riktningar, 10 tester fällda. S7 («svaret till avsändaren») fällde först noll:
+IA-05 räknade `to: svaraTill` men inte vad `svaraTill` VAR. Det är ett nytt namn på samma värde, och det
+fångas nu. Renderingssond: `scripts/screenshot-intag.mjs` (390/1600, motprov med den gamla chip-CSS:en
+som klipper adressen: 17 respektive 14 klippta element).
+
 ---
 
 ## Verifieringsplikten · Aldrig en gissning

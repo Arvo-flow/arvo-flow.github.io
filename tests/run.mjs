@@ -140,6 +140,7 @@ import './skordkontrakt.mjs';
 import './alertmail.mjs';
 import './hemlighetsvakt.mjs';
 import './ingestkontrakt.mjs';
+import './inkorgsadress.mjs';
 import './larmunderlag.mjs';
 import './switcharvode.mjs';
 import './switchliggare.mjs';

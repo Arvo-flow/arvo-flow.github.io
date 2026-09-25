@@ -18,6 +18,7 @@ import { radMotivering, radMarke } from '../../lib/rumstext';
 import FindingCard from '../../components/FindingCard';
 import { RevealPrompt, RevealTeaser } from '../../components/RevealCard';
 import AccountBar from '../../components/AccountBar';
+import { InkorgGuide, IntagFlode } from '../../components/InkorgPanel';
 import { greetingForHour, plural } from '../../utils/format';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -188,6 +189,11 @@ export default function Portfolio() {
   // Analyser som ligger på DEN HÄR DATORNS fingerprint men inte på kundens e-post. De visas inte
   // längre i rummet (rummet tillhör identiteten, inte datorn) — men det som inte visas ska sägas.
   const [franDennaEnhet, setFranDennaEnhet] = useState(0);
+  // Rummets egen adress och intagets telemetri (2026-09-24) — båda ur servern, aldrig räknade här.
+  const [inkorg, setInkorg] = useState(null);
+  const [intag, setIntag] = useState(null);
+  const [guidePlattform, setGuidePlattform] = useState(null);
+  const adressBegard = React.useRef(false);
   const [retrying, setRetrying] = useState(false);
   const [error, setError]       = useState(null);
   const [expanded, setExpanded] = useState(new Set());
@@ -249,6 +255,8 @@ export default function Portfolio() {
     setIngestFailed(data.ingestFailed ?? 0);
     setIngestFailedFiles(data.ingestFailedFiles ?? []);
     setFranDennaEnhet(Number(data.frånDennaEnhet) || 0);
+    if (data.inkorg) setInkorg(data.inkorg);
+    setIntag(data.intag ?? null);
   }, [fingerprint, magic, sessionToken]);
 
   // "Försök igen": Arvo kör om de fallna fakturorna själv (re-köar jobben) — inget nytt mejl behövs.
@@ -287,7 +295,8 @@ export default function Portfolio() {
   // Pågående intag: medan fakturor är på väg (köade) → polla så kontoret FYLLS LIVE när de landar.
   useEffect(() => {
     if (ingesting <= 0) return undefined;
-    const t = setInterval(() => { loadOffice().catch(() => {}); }, 12000);
+    // Tätare när maskineriet arbetar: telemetrin ska kännas levande, inte laddas om varannan minut.
+    const t = setInterval(() => { loadOffice().catch(() => {}); }, 4000);
     return () => clearInterval(t);
   }, [ingesting, loadOffice]);
 
@@ -422,10 +431,42 @@ export default function Portfolio() {
   }, [loadOffice]);
 
   const copyInbox = useCallback(async () => {
-    try { await navigator.clipboard.writeText(INBOX_ADDR); } catch { /* clipboard nekad — chippet är ändå läsbart */ }
+    try { await navigator.clipboard.writeText(inkorg?.adress ?? INBOX_ADDR); } catch { /* clipboard nekad — chippet är ändå läsbart */ }
     setCopiedInbox(true);
     setTimeout(() => setCopiedInbox(false), 2200);
-  }, []);
+  }, [inkorg]);
+
+  // RUMMETS ADRESS (2026-09-24): skapas första gången rummet öppnas. Ägarskapet bevisas med rumsnyckeln
+  // och/eller sessionen/magic-länken; servern avgör plattformen ur DNS. Testytan får ingen egen adress.
+  useEffect(() => {
+    if (analyses === null || inkorg || testMode || adressBegard.current) return;
+    if (!fingerprint && !sessionToken && !magic) return;
+    adressBegard.current = true;
+    fetch('/api/inkorgsadress', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rumsnyckel: fingerprint || undefined, session: sessionToken || undefined, magic: magic || undefined, epost: apiEmail || authEmail || undefined }),
+    }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j?.adress) setInkorg(j.adress); }).catch(() => {});
+  }, [analyses, inkorg, testMode, fingerprint, sessionToken, magic, apiEmail, authEmail]);
+
+  // Plattformens guide: den avkända, tills kunden väljer en annan flik.
+  const aktivPlattform = guidePlattform ?? inkorg?.plattform ?? 'annan';
+
+  // GMAILS KOD: medan Gmail-guiden är öppen och koden inte landat frågar rummet efter den var sjätte
+  // sekund, i högst tio minuter. Koden fångas i api/inbound-email och visas här.
+  useEffect(() => {
+    if (!inkorg || inkorg.gmailKod || !['gmail', 'google_workspace'].includes(aktivPlattform)) return undefined;
+    let varv = 0;
+    const q = new URLSearchParams();
+    if (fingerprint) q.set('rumsnyckel', fingerprint);
+    if (sessionToken) q.set('session', sessionToken);
+    if (magic) q.set('magic', magic);
+    const t = setInterval(() => {
+      if (++varv > 100) { clearInterval(t); return; }
+      fetch(`/api/inkorgsadress?${q.toString()}`).then((r) => (r.ok ? r.json() : null))
+        .then((j) => { if (j?.adress?.gmailKod) setInkorg(j.adress); }).catch(() => {});
+    }, 6000);
+    return () => clearInterval(t);
+  }, [inkorg, aktivPlattform, fingerprint, sessionToken, magic]);
 
   async function runReveal(e) {
     e?.preventDefault?.();
@@ -1879,10 +1920,11 @@ export default function Portfolio() {
               <div className="mi-grid">
                 <div>
                   <p className="mi-or">Vidarebefordra — även 50 på en gång</p>
-                  <AddressChipDark type="button" onClick={copyInbox} className={copiedInbox ? 'copied' : ''} aria-label={`Kopiera ${INBOX_ADDR}`}>
-                    <span className="ac-addr">{INBOX_ADDR}</span>
+                  <AddressChipDark type="button" onClick={copyInbox} className={copiedInbox ? 'copied' : ''} aria-label={`Kopiera ${inkorg?.adress ?? INBOX_ADDR}`}>
+                    <span className="ac-addr">{inkorg?.adress ?? INBOX_ADDR}</span>
                     <span className="ac-copy">{copiedInbox ? <>Kopierat <Icon name="check" size={13} stroke={2.4} /></> : 'Kopiera'}</span>
                   </AddressChipDark>
+                  {inkorg && <InkorgGuide inkorg={inkorg} plattform={aktivPlattform} onPlattform={setGuidePlattform} />}
                 </div>
                 <div>
                   <p className="mi-or">Eller ladda upp direkt</p>
@@ -1916,6 +1958,7 @@ export default function Portfolio() {
                 </DropProgress>
               )}
               {uploadNote && <DropProgress><p className="dp-note">{uploadNote}</p></DropProgress>}
+              <IntagFlode intag={intag} />
             </MoreIntake>
 
             {/* ── Arvo Intelligence — tyst avslutande pitch ───────────────── */}
@@ -1971,6 +2014,7 @@ export default function Portfolio() {
                 <div className="eyebrow"><span className="live" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#5DD6CA', marginRight: 8 }} />Arbetar nu</div>
                 <h2>Vi väger era <em>{ingesting} {ingesting === 1 ? 'faktura' : 'fakturor'}</em> mot verifierat publikt listpris.</h2>
                 <p className="work">Kontoret fylls i takt med att varje analys blir klar — sidan uppdateras automatiskt, ni behöver inte göra något. Det tar oftast någon minut.</p>
+                <IntagFlode intag={intag} />
               </Verdict>
             ) : (
               /* Avslöjandet LEDER (grundarbeslut 2026-07-01): dörren bevisar intelligensen omedelbart
@@ -1991,11 +2035,12 @@ export default function Portfolio() {
                 <h4>Töm månadens fakturor i ett mejl.</h4>
                 <p>Markera era leverantörsfakturor (PDF) i inkorgen och vidarebefordra allt på en gång — även 50 på en gång. Analyserna landar här.</p>
                 <div className="spacer" />
-                <AddressChipDark type="button" onClick={copyInbox} className={copiedInbox ? 'copied' : ''} aria-label={`Kopiera ${INBOX_ADDR}`}>
-                  <span className="ac-addr">{INBOX_ADDR}</span>
+                <AddressChipDark type="button" onClick={copyInbox} className={copiedInbox ? 'copied' : ''} aria-label={`Kopiera ${inkorg?.adress ?? INBOX_ADDR}`}>
+                  <span className="ac-addr">{inkorg?.adress ?? INBOX_ADDR}</span>
                   <span className="ac-copy">{copiedInbox ? <>Kopierat <Icon name="check" size={13} stroke={2.4} /></> : 'Kopiera'}</span>
                 </AddressChipDark>
                 <p className="door-trust"><Icon name="lock" size={13} stroke={1.8} className="dt-ico" /><span>Vi läser fakturan, väger den mot marknaden och <b>sparar aldrig filen efter analysen</b> — bara resultatet.</span></p>
+                {inkorg && <InkorgGuide inkorg={inkorg} plattform={aktivPlattform} onPlattform={setGuidePlattform} />}
               </div>
 
               <div className="door">
@@ -2043,10 +2088,12 @@ export default function Portfolio() {
             <FortnoxTease>
               <span className="ft-ico"><Icon name="lock" size={18} stroke={1.7} /></span>
               <span className="ft-txt">
-                <b>Snart: koppla Fortnox.</b> När integrationen är på plats läses hela
-                leverantörsreskontran automatiskt — då slutar ni ladda upp.
+                {/* Här stod «Snart … läses hela leverantörsreskontran automatiskt» med «Lanseras inom kort» —
+                    ett tidslöfte för en koppling som är pausad (2026-09-24). */}
+                <b>Fortnox-kopplingen är under utveckling.</b> Till dess tar er egen adress ovan emot varje
+                faktura ni vidarebefordrar dit.
               </span>
-              <span className="ft-soon">Lanseras inom kort</span>
+              <span className="ft-soon">Under utveckling</span>
             </FortnoxTease>
 
             <SignOff>

@@ -8,7 +8,7 @@
 
 import { createHash } from 'node:crypto';
 import { cronAnropTillatet } from '../../lib/cronvakt.js';
-import { claimBatch, completeJob, failJob, hasPendingFlag, clearPending, markPending, utfallFranSvar } from '../../lib/ingest-queue.js';
+import { claimBatch, completeJob, failJob, hasPendingFlag, clearPending, markPending, utfallFranSvar, jobbIdentitet } from '../../lib/ingest-queue.js';
 import { fetchInboundPdfForJob } from '../inbound-email.mjs';
 
 export const config = { maxDuration: 60 };
@@ -68,9 +68,8 @@ async function processJob(job) {
           industry:    'ovrigt',
           employees:   10,
           bypass:      process.env.ARVO_BYPASS_SECRET,
-          email:       job.sender,
-          userEmail:   job.sender,
-          fingerprint: `mail:${sha16(job.sender)}`,
+          // Identiteten följer jobbet: en rumsadress vinner över avsändaren (lib/inkorgsadress.js, IA-04).
+          ...jobbIdentitet(job, sha16),
           // industry/employees ovan är ANTAGNA, inte avlästa — flaggan hindrar att de skrivs
           // till prisboken som om de vore observerade (regel 3). Analysen och kundens svar rörs inte.
           segmentOkant: true,
