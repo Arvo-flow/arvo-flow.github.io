@@ -43,52 +43,68 @@ const PDF = 'test-pdfs/atlassian-cloud-manad.pdf';
 const t0 = new Date();
 console.log(`\n── sond rumsadress · start ${t0.toISOString()} ──`);
 
+// Testidentiteten kan aldrig äga en riktig adress (api/inkorgsadress avvisar den, IA-10) — rader den äger är sondens
+// egna, kvar från en körning som dog. En ägare har en adress (unikt index), så B är utan ägare.
+const [{ n: rester }] = await sql`WITH d AS (DELETE FROM inkorgsadresser WHERE agare_epost = ${TEST_EMAIL} RETURNING 1) SELECT COUNT(*)::int AS n FROM d`;
+if (rester) console.log(`  städade ${rester} sondrad(er) från en tidigare körning`);
 await sql`INSERT INTO inkorgsadresser (nyckel, rum_hash, agare_epost, plattform) VALUES (${K}, NULL, ${TEST_EMAIL}, 'annan')`;
-await sql`INSERT INTO inkorgsadresser (nyckel, rum_hash, agare_epost, plattform) VALUES (${B}, NULL, ${TEST_EMAIL}, 'annan')`;
-const fpK = hashFp(adressFingeravtryck(K));
-const fpO = hashFp(adressFingeravtryck(O));
-const fpB = hashFp(adressFingeravtryck(B));
-const fpAvs = hashFp(`mail:${sha16(avsandare)}`);
+await sql`INSERT INTO inkorgsadresser (nyckel, rum_hash, agare_epost, plattform) VALUES (${B}, NULL, NULL, 'annan')`;
+async function mat() {
+  const fpK = hashFp(adressFingeravtryck(K));
+  const fpO = hashFp(adressFingeravtryck(O));
+  const fpB = hashFp(adressFingeravtryck(B));
+  const fpAvs = hashFp(`mail:${sha16(avsandare)}`);
 
-const bilaga = { filename: 'atlassian-cloud-manad.pdf', content: readFileSync(PDF).toString('base64') };
-const skickat = {};
-for (const [namn, nyckel] of [['K', K], ['O', O], ['B', B]]) {
-  const mottagare = namn === 'B' ? { to: TEST_EMAIL, bcc: adressFor(nyckel) } : { to: adressFor(nyckel) };
-  const { data, error } = await resend.emails.send({ from: FROM, ...mottagare,
-    subject: `Arvo-sond rumsadress ${namn}`, text: 'Mätning av rummets egen adress.', attachments: [bilaga] });
-  skickat[namn] = !error;
-  console.log(`  skickat ${namn} → ${error ? `FEL: ${error.message}` : `ok (${data?.id})`}`);
+  const bilaga = { filename: 'atlassian-cloud-manad.pdf', content: readFileSync(PDF).toString('base64') };
+  const skickat = {};
+  for (const [namn, nyckel] of [['K', K], ['O', O], ['B', B]]) {
+    // B:s To får INTE vara en testytans lokaldel (testyta@ …): hittas rumsadressen inte hade handlern tagit
+    // testytans väg och nollställt grundarens testrum. En neutral adress utan brevlåda räcker.
+    const mottagare = namn === 'B' ? { to: 'kund-sond@arvoflow.se', bcc: adressFor(nyckel) } : { to: adressFor(nyckel) };
+    const { data, error } = await resend.emails.send({ from: FROM, ...mottagare,
+      subject: `Arvo-sond rumsadress ${namn}`, text: 'Mätning av rummets egen adress.', attachments: [bilaga] });
+    skickat[namn] = !error;
+    console.log(`  skickat ${namn} → ${error ? `FEL: ${error.message}` : `ok (${data?.id})`}`);
+  }
+  if (!skickat.K) return { ejSkickat: true };
+
+  let radK = null;
+  for (let i = 0; i < 24 && !radK; i++) {
+    await new Promise((r) => setTimeout(r, 10_000));
+    [radK] = await sql`SELECT id, user_email, supplier, route, created_at FROM invoice_analyses
+                       WHERE fingerprint = ${fpK} ORDER BY created_at DESC LIMIT 1`;
+  }
+  // Ge O samma chans att (felaktigt) landa: vänta minst 60 s efter K.
+  await new Promise((r) => setTimeout(r, 60_000));
+  const [radO] = await sql`SELECT id FROM invoice_analyses WHERE fingerprint = ${fpO} LIMIT 1`;
+  const [radB] = await sql`SELECT id, user_email FROM invoice_analyses WHERE fingerprint = ${fpB} LIMIT 1`;
+  const [{ n: nAvs }] = await sql`SELECT COUNT(*)::int AS n FROM invoice_analyses WHERE fingerprint = ${fpAvs} AND created_at >= ${t0.toISOString()}`;
+  const [adr] = await sql`SELECT senast_mottagen_at FROM inkorgsadresser WHERE nyckel = ${K}`;
+
+  let s1 = 'ej mätt';
+  try {
+    const r = await fetch('https://api.resend.com/emails?limit=100', { headers: { Authorization: `Bearer ${key}` } });
+    const j = await r.json().catch(() => null); // sondvakt-ok: null ger «ej mätt», aldrig ett tomt fynd
+    const rader = Array.isArray(j?.data) ? j.data : null;
+    if (r.status === 200 && rader) {
+      const efter = rader.filter((e) => new Date(e.created_at) >= t0);
+      const tillAgare = efter.filter((e) => [e.to].flat().map((x) => String(x).toLowerCase()).includes(TEST_EMAIL));
+      const tillAvs = efter.filter((e) => [e.to].flat().map((x) => String(x).toLowerCase()).includes(avsandare));
+      s1 = `till ägaren ${tillAgare.length} (${tillAgare.map((e) => e.subject).join(' | ')}) · till avsändaren ${tillAvs.length} (${tillAvs.map((e) => e.subject).join(' | ')})`;
+    } else s1 = `ej mätt (HTTP ${r.status})`;
+  } catch (e) { s1 = `ej mätt (${e.message})`; }
+  return { radK, radO, radB, nAvs, adr, s1, skickat };
 }
-if (!skickat.K) { console.error('✗ K skickades inte — INTE ett mätvärde.'); process.exit(1); }
 
-let radK = null;
-for (let i = 0; i < 24 && !radK; i++) {
-  await new Promise((r) => setTimeout(r, 10_000));
-  [radK] = await sql`SELECT id, user_email, supplier, route, created_at FROM invoice_analyses
-                     WHERE fingerprint = ${fpK} ORDER BY created_at DESC LIMIT 1`;
-}
-// Ge O samma chans att (felaktigt) landa: vänta minst 60 s efter K.
-await new Promise((r) => setTimeout(r, 60_000));
-const [radO] = await sql`SELECT id FROM invoice_analyses WHERE fingerprint = ${fpO} LIMIT 1`;
-const [radB] = await sql`SELECT id, user_email FROM invoice_analyses WHERE fingerprint = ${fpB} LIMIT 1`;
-const [{ n: nAvs }] = await sql`SELECT COUNT(*)::int AS n FROM invoice_analyses WHERE fingerprint = ${fpAvs} AND created_at >= ${t0.toISOString()}`;
-const [adr] = await sql`SELECT senast_mottagen_at FROM inkorgsadresser WHERE nyckel = ${K}`;
-
-let s1 = 'ej mätt';
+let m;
 try {
-  const r = await fetch('https://api.resend.com/emails?limit=100', { headers: { Authorization: `Bearer ${key}` } });
-  const j = await r.json().catch(() => null); // sondvakt-ok: null ger «ej mätt», aldrig ett tomt fynd
-  const rader = Array.isArray(j?.data) ? j.data : null;
-  if (r.status === 200 && rader) {
-    const efter = rader.filter((e) => new Date(e.created_at) >= t0);
-    const tillAgare = efter.filter((e) => [e.to].flat().map((x) => String(x).toLowerCase()).includes(TEST_EMAIL));
-    const tillAvs = efter.filter((e) => [e.to].flat().map((x) => String(x).toLowerCase()).includes(avsandare));
-    s1 = `till ägaren ${tillAgare.length} (${tillAgare.map((e) => e.subject).join(' | ')}) · till avsändaren ${tillAvs.length} (${tillAvs.map((e) => e.subject).join(' | ')})`;
-  } else s1 = `ej mätt (HTTP ${r.status})`;
-} catch (e) { s1 = `ej mätt (${e.message})`; }
+  m = await mat();
+} finally {
+  await sql`DELETE FROM inkorgsadresser WHERE nyckel IN (${K}, ${O}, ${B})`;
+}
 
-await sql`DELETE FROM inkorgsadresser WHERE nyckel IN (${K}, ${O}, ${B})`;
-
+if (m.ejSkickat) { console.error('✗ K skickades inte — INTE ett mätvärde.'); process.exit(1); }
+const { radK, radO, radB, nAvs, adr, s1, skickat } = m;
 const ok = (b) => (b ? '✓' : '✗');
 console.log('\n── utfall ──');
 console.log(`  K1 ${ok(!!radK)} rad under adress:<K>            ${radK ? `route=${radK.route} supplier=${radK.supplier}` : '(ingen inom 4 min)'}`);
@@ -96,7 +112,7 @@ console.log(`  K2 ${ok(radK?.user_email === TEST_EMAIL)} raden bär ägarens e-p
 console.log(`  K3 ${ok(nAvs === 0)} inga nya rader i avsändarens rum  ${nAvs}`);
 console.log(`  K4 ${ok(!!adr?.senast_mottagen_at)} senast_mottagen_at satt          ${adr?.senast_mottagen_at ?? '—'}`);
 console.log(`  O1 ${ok(!radO)} okänd nyckel gav ingen analys    ${radO ? 'RAD FINNS' : 'ingen rad'}`);
-console.log(`  B1 ${ok(!!radB)} vidarebefordran (Bcc) landade    ${radB ? `ägare=${radB.user_email === TEST_EMAIL ? 'ägaren' : 'annan'}` : (skickat.B ? 'ingen rad — rumsadressen syntes inte utan To' : 'ej skickad')}`);
+console.log(`  B1 ${ok(!!radB)} vidarebefordran (Bcc) landade    ${radB ? `user_email=${radB.user_email === null ? 'ingen (adressen saknar ägare — rätt)' : 'SATT'}` : (skickat.B ? 'ingen rad — rumsadressen syntes inte utan To' : 'ej skickad')}`);
 console.log(`  S1   svarsmejl: ${s1}`);
 if (!radK) { console.error('\n✗ K landade inte — motprovet O1 säger då ingenting.'); process.exit(1); }
 if (radK.user_email !== TEST_EMAIL || nAvs !== 0 || radO) process.exit(1);
