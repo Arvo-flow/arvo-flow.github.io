@@ -1,0 +1,36 @@
+name: Sond — vad hände med fakturorna till en rumsadress (Neon, läser)
+
+# Adressnyckeln ger skrivrätt och står aldrig i en publik logg: indata är sha256(nyckel) och
+# sha256('adress:' + nyckel). Motprov: en slumpad hash ska ge 0 i varje led.
+on:
+  workflow_dispatch:
+    inputs:
+      nyckel_sha:
+        description: 'sha256(<nyckel>) i hex'
+        required: true
+      fp_sha:
+        description: "sha256('adress:' + <nyckel>) i hex"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Läs adressen, kön och analyserna
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NYCKEL_SHA: ${{ inputs.nyckel_sha }}
+          FP_SHA: ${{ inputs.fp_sha }}
+        run: |
+          set -o pipefail
+          node scripts/probe-rumsintag.mjs
