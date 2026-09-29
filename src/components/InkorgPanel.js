@@ -70,6 +70,13 @@ export function InkorgGuide({ inkorg, plattform, onPlattform }) {
   return (
     <Guide>
       <p className="g-lofte">{LOFTEN_TEXT.egenAdress}</p>
+      {inkorg && (
+        <p className="g-svar">
+          {inkorg.svarTill
+            ? <>{LOFTEN_TEXT.kvittoTill} <strong>{inkorg.svarTill}</strong>.</>
+            : LOFTEN_TEXT.kvittoIngen}
+        </p>
+      )}
       <div className="g-flikar" role="tablist" aria-label="Er e-postplattform">
         {ORDNING.map((k) => (
           <button key={k} type="button" role="tab" aria-selected={k === vald}
@@ -138,6 +145,8 @@ const Guide = styled.div`
   margin-top: 14px;
   font-family: ${(p) => f(p).sans};
   .g-lofte { margin: 0 0 12px; font-size: 13px; line-height: 1.55; color: ${(p) => d(p).mutedOnDark}; }
+  .g-svar { margin: -4px 0 12px; font-size: 12.5px; line-height: 1.5; color: ${(p) => d(p).faintOnDark}; overflow-wrap: anywhere; }
+  .g-svar strong { color: ${(p) => d(p).inkOnDark}; font-weight: 600; }
   .g-flikar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
   .g-flikar button {
     font: 600 12px ${(p) => f(p).sans}; padding: 6px 10px; border-radius: 999px; cursor: pointer;

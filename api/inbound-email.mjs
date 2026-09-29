@@ -214,6 +214,21 @@ export async function hamtaMottaget(emailId, { fetchImpl = fetch, nyckel = proce
   } finally { clearTimeout(t); }
 }
 
+/**
+ * Ett utskick som vet om det gick. Resend kastar inte vid fel — det svarar { error } — så varje utskick i
+ * intaget går hit, och ett avvisat mejl loggas i stället för att se ut som ett skickat (IA-19).
+ */
+export async function skicka(resend, meddelande, etikett) {
+  try {
+    const { error } = (await resend.emails.send(meddelande)) ?? {};
+    if (error) { console.error(`[inbound-email] ${etikett} avvisades av Resend:`, error.message ?? JSON.stringify(error)); return false; }
+    return true;
+  } catch (err) {
+    console.error(`[inbound-email] ${etikett} misslyckades:`, err.message);
+    return false;
+  }
+}
+
 async function hamtaMejltext(emailId, { fetchImpl = fetch } = {}) {
   const key = process.env.RESEND_API_KEY;
   if (!key || !emailId) return null;
@@ -502,12 +517,12 @@ export default async function handler(req, res) {
       try {
         const resend = getResend();
         if (resend) {
-          await resend.emails.send({
+          await skicka(resend, {
             from: FROM, to: sender,
             subject: 'Adressen är inte kopplad till något rum hos Arvo',
             html: `<p>Hej,</p><p>Mejlet skickades till en Arvo-adress som inte är kopplad till något rum.
 <strong>Inget analyserades och inget sparades.</strong> Kontrollera adressen i ert rum och skicka igen.</p><p>— Arvo</p>`,
-          });
+          }, 'besked om okänd adress');
         }
       } catch (err) { console.error('[inbound-email] besked om okänd adress misslyckades:', err.message); }
       await markeraSlutfort();
@@ -576,7 +591,7 @@ export default async function handler(req, res) {
         try {
           const resend = getResend();
           if (resend && svaraTill) {
-            await resend.emails.send({
+            if (await skicka(resend, {
               from: FROM,
               to: svaraTill,
               subject: iRummet ? 'Dagsgränsen är nådd — fakturorna väntar i ert rum' : 'Vi tog inte emot det här mejlet — dagsgränsen är nådd',
@@ -592,8 +607,7 @@ och ni behöver skicka om det.</p>
 <p>Vidarebefordra det igen om ett dygn, eller svara på det här mejlet så höjer vi gränsen för er.</p>
 <p>Vi säger hellre ifrån än låter en faktura försvinna tyst.</p>
 <p>— Arvo</p>`,
-            });
-            varnad = true;
+            }, 'varning om dagsgränsen')) varnad = true;
           } else {
             console.error(`[inbound-email] RATE LIMIT: ${svaraTill ? 'RESEND_API_KEY saknas' : 'adressen saknar ägare'} — ingen kunde varnas per mejl`);
           }
@@ -657,13 +671,15 @@ och ni behöver skicka om det.</p>
     try {
       const resend = getResend();
       if (resend && svaraTill) {
-        await resend.emails.send({
+        // Resend kastar inte vid fel — det svarar { error }. Utan den läsningen var ett misslyckat kvitto
+        // tyst i loggen (IA-19).
+        await skicka(resend, {
           from: FROM, to: svaraTill,
           subject: `Vi tog emot ${added} fakturor — Arvo analyserar dem nu`,
           html: bulkReceivedHtml({ count: added, portalLink }),
-        });
+        }, 'bulk-kvitto');
       } else {
-        console.error('[inbound-email] RESEND_API_KEY saknas — bulk-kvitto ej skickat');
+        console.log(`[inbound-email] bulk-kvitto ej skickat — ${svaraTill ? 'RESEND_API_KEY saknas' : 'adressen saknar ägare (fakturorna står i rummet)'}`);
       }
     } catch (err) { console.error('[inbound-email] bulk-kvitto misslyckades:', err.message); }
     console.log(`[inbound-email] BULK från=${sha16(sender)}: köade ${added}/${pdfAtts.length} jobb`);
@@ -776,12 +792,12 @@ och ni behöver skicka om det.</p>
   try {
     const resend = getResend();
     if (resend && svaraTill) {
-      await resend.emails.send({
+      await skicka(resend, {
         from: FROM,
         to: svaraTill,
         subject,
         html: replyHtml({ results, portalLink }),
-      });
+      }, 'svarsmail');
     } else {
       console.log(`[inbound-email] svarsmail ej skickat — ${svaraTill ? 'RESEND_API_KEY saknas' : 'adressen saknar ägare (analysen står i rummet)'}`);
     }

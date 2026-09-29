@@ -765,6 +765,19 @@ fakturan automatiskt». Nu «Er faktura är mottagen — skälet står i ert rum
 saknas» för en adress utan ägare var falsk — nyckeln fanns, mottagaren saknades.
 **Obekräftat, öppet:** att en RIKTIG Gmail-/Outlook-regel beter sig som Bcc i sonden (kuvertet), Gmail-kodens
 exakta form, och om M365-tenanter stoppar extern vidarebefordran. Den förfalskade Gmail-koden står kvar (lågt).
+**✅ FÖRSTA RIKTIGA INTAGET (grundaren, 25 sep, mätt 29 sep med `probe-rumsintag` + `probe-kvitto`, motprov ✓):**
+8 fakturor, två mejl med 3 minuters mellanrum → 16 jobb, alla `done` på första försöket, alla ägda;
+**8 lagrade analyser** (pdf_hash-dedup höll), 5 prissatta, 1 kreditnota, 2 till granskning. Båda
+bulkkvittona `delivered` till adressens ägare — men grundaren letade i fel inkorg: ägaren var den
+Outlook-adress rummet öppnats med (hash `b91018…` ≠ Gmail-kontots `0f1f6d…`). Systemet gjorde rätt;
+**rummet sa inte vart svaren går.** Nu gör det det (`svarTill`, `LOFTEN.kvittoTill/kvittoIngen`, IA-18).
+Samma mätning visade att **varje `[Review Queue]`-notis studsar** (`bounced`): larmadressen är
+`team@arvoflow.se`, och `arvoflow.se` har **ingen MX-post**. Samma adress bär offertförfrågningar,
+bytesbekräftelsens larm och briefingnotisen. **Grundaråtgärd:** sätt `ARVO_ALERT_EMAIL` i Vercel till en
+inkorg som finns (miljövariablerna går inte att läsa härifrån, 403). Och utskicken i intaget läste aldrig
+Resends `{ error }` — i dagsgränsgrenen räknades ett avvisat mejl som «varnad» och mejlet slutfördes
+tyst. Alla fyra går nu genom `skicka()` (IA-19). Sabotage: 5 riktningar, alla fällde; OB-08 flyttad till
+`skicka(resend` med motivering.
 
 ---
 

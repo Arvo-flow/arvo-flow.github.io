@@ -145,7 +145,8 @@ describe('OBDUKTION · hål som fanns innan granskningen 2026-08-20', () => {
     const i = kod.indexOf('n > RATE_LIMIT_PER_DAY');
     assert.ok(i > 0, 'rate limit-GRENEN hittades inte — har villkoret skrivits om?');
     const gren = kod.slice(i, i + 1800);
-    assert.match(gren, /resend\.emails\.send/,
+    // Utskicket går sedan 2026-09-29 genom skicka() (api/inbound-email.mjs), som också läser Resends felsvar (IA-19).
+    assert.match(gren, /await skicka\(resend, \{/,
       'rate limit måste svara avsändaren — en tyst 200 gör kunden till den som förlorar fakturan');
     assert.match(gren, /console\.(warn|error)/,
       'och den måste bokföras: ett beslut vi inte skriver ned har vi inte fattat');

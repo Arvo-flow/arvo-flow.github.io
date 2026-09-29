@@ -334,4 +334,31 @@ describe('IA · rummets egen adress', () => {
     assert.equal((await hamtaMottaget('e1', { nyckel: 'k', fetchImpl: svar(404) })).tillfalligt, false);
     assert.equal((await hamtaMottaget('e1', { nyckel: null })).tillfalligt, false);
   });
+  test('IA-18 · rummet säger vart kvitton och svar går — samma källa som svaraTill (motprov: enhetsadress utan ägare)', () => {
+    const agd = adressStatus({ nyckel: 'abcdefghjkmnpq23', agare_epost: 'Kund@B.se' });
+    assert.equal(agd.svarTill, 'kund@b.se');
+    assert.equal(agd.svarTill, intagsIdentitet({ nyckel: 'abcdefghjkmnpq23', rad: { agare_epost: 'Kund@B.se' }, avsandare: 'x@y.se' }).svaraTill,
+      'rummet och intaget är oense om vart svaren går');
+    assert.equal(adressStatus({ nyckel: 'abcdefghjkmnpq23', agare_epost: null }).svarTill, null);
+    const panel = las('src/components/InkorgPanel.js');
+    assert.match(panel, /inkorg\.svarTill\s*\?\s*<>\{LOFTEN_TEXT\.kvittoTill\} <strong>\{inkorg\.svarTill\}<\/strong>/);
+    assert.match(panel, /: LOFTEN_TEXT\.kvittoIngen\}/, 'en adress utan ägare säger inte att inga kvitton skickas');
+  });
+
+  test('IA-19 · varje utskick i intaget läser Resends felsvar; dagsgränsen räknas bara som varnad när mejlet gick', async () => {
+    process.env.RESEND_API_KEY ??= 're_test';
+    process.env.INBOUND_WEBHOOK_SECRET ??= 'test';
+    const { skicka } = await import('../api/inbound-email.mjs');
+    const fel = console.error; console.error = () => {};
+    try {
+      assert.equal(await skicka({ emails: { send: async () => ({ data: { id: 'x' }, error: null }) } }, {}, 't'), true);
+      assert.equal(await skicka({ emails: { send: async () => ({ data: null, error: { message: 'domain not verified' } }) } }, {}, 't'), false,
+        'ett avvisat mejl räknades som skickat');
+      assert.equal(await skicka({ emails: { send: async () => { throw new Error('nät'); } } }, {}, 't'), false);
+    } finally { console.error = fel; }
+    const k = las('api/inbound-email.mjs').split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+    assert.equal((k.match(/resend\.emails\.send\(/g) ?? []).length, 1, 'ett utskick går förbi skicka() och kan avvisas tyst');
+    assert.ok((k.match(/await skicka\(resend, \{/g) ?? []).length >= 4);
+    assert.match(k, /\}, 'varning om dagsgränsen'\)\) varnad = true;/, 'dagsgränsen räknas som varnad även när mejlet avvisades');
+  });
 });
