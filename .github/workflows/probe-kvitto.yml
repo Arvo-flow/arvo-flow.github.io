@@ -1,0 +1,40 @@
+name: Sond — gick kvittot till rumsadressens ägare (Resend + Neon, läser)
+
+# Mottagare jämförs som sha256; ingen e-postadress eller adressnyckel står i loggen.
+on:
+  workflow_dispatch:
+    inputs:
+      nyckel_sha:
+        description: 'sha256(<adressnyckel>) i hex'
+        required: true
+      fran:
+        description: 'fönstrets början (ISO)'
+        required: true
+      till:
+        description: 'fönstrets slut (ISO)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Läs Resends skickade mejl i fönstret
+        shell: bash
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NYCKEL_SHA: ${{ inputs.nyckel_sha }}
+          FRAN: ${{ inputs.fran }}
+          TILL: ${{ inputs.till }}
+        run: |
+          set -o pipefail
+          node scripts/probe-kvitto.mjs
