@@ -1,0 +1,39 @@
+name: Sond — når det som skickas till Arvo en människa (DNS + Resend + Neon, läser)
+
+# Mäter om våra egna adresser kan ta emot post (dig, motprov gmail.com), vilka mejl som studsat
+# (Resend, adresser maskerade som sha256) och vad som sparats i databasen. Skriver ingenting.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: DNS — kan våra domäner ta emot post?
+        shell: bash
+        run: |
+          set -o pipefail
+          for q in "gmail.com MX" "inbox.arvoflow.se MX" "arvoflow.se MX" "arvoflow.se A" "arvoflow.se NS" "arvoflow.se TXT" "_dmarc.arvoflow.se TXT" "resend._domainkey.arvoflow.se TXT" "send.arvoflow.se MX" "arvo.flow MX" "arvo.flow A" "flow NS"; do
+            set -- $q
+            svar=$(dig +time=5 +tries=2 +noall +comments +answer "$1" "$2")
+            st=$(echo "$svar" | grep -o 'status: [A-Z]*' | head -1)
+            ans=$(echo "$svar" | grep -v '^;' | awk '{print $5,$6}' | tr '\n' ' ' | cut -c1-160)
+            printf "%-4s %-32s %-18s %s\n" "$2" "$1" "$st" "$ans"
+          done
+      - name: Resend + databasen
+        shell: bash
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -o pipefail
+          node scripts/probe-postvagar.mjs
