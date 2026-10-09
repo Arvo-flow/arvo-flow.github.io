@@ -55,6 +55,13 @@ for (const e of studsar) { const k = `${[e.to].flat().map(klass).join(',')} · $
 for (const [k, d] of Object.entries(perTyp).sort((a, b) => b[1].length - a[1].length)) console.log(`  ${String(d.length).padStart(3)}  ${k}   (${[...new Set(d)].sort().join(', ')})`);
 const levereradeInternt = alla.filter((e) => [e.to].flat().some((t) => klass(t).startsWith('arvoflow.se:')) && e.last_event === 'delivered');
 console.log(`\n  motprov: mejl till @arvoflow.se med status delivered: ${levereradeInternt.length}`);
+// Är utskicket trasigt, eller har inget skickats? Domänens status i Resend skiljer de två.
+try {
+  const r = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` } });
+  const j = await r.json().catch(() => null); // sondvakt-ok: null ger «ej mätt» nedan, aldrig ett tomt fynd
+  const d = Array.isArray(j?.data) ? j.data : null;
+  console.log(`  Resend-domäner (HTTP ${r.status}): ${d ? d.map((x) => `${x.name}=${x.status}`).join(' · ') : 'ej mätt'}`);
+} catch (e) { console.log(`  Resend-domäner: ej mätt (${e.message})`); }
 
 // ── D · Databasen ──
 const sql = neon(url);
@@ -66,6 +73,8 @@ console.log('\n── D · det som sparats (kan följas upp) ──');
 await las('quote_requests', 'SELECT COUNT(*)::int AS n, MIN(created_at) AS forsta, MAX(created_at) AS senaste FROM quote_requests');
 await las('mandate_log', 'SELECT COUNT(*)::int AS n FROM mandate_log');
 await las('activation_outcomes', 'SELECT COUNT(*)::int AS n FROM activation_outcomes');
+await las('analyser sedan 25 sep (alla rutter)', "SELECT COUNT(*)::int AS n, MAX(created_at) AS senaste FROM invoice_analyses WHERE created_at > '2026-09-25T11:42:00Z'");
+await las('köns jobb sedan 25 sep', "SELECT COUNT(*)::int AS n, MAX(created_at) AS senaste FROM ingest_jobs WHERE created_at > '2026-09-25T11:42:00Z'");
 await las('review_queue i invoice_analyses', "SELECT COUNT(*)::int AS n, MAX(created_at) AS senaste FROM invoice_analyses WHERE route = 'review_queue' AND arkiverad_at IS NULL");
 
 // ── L · läckkontrollen ──
