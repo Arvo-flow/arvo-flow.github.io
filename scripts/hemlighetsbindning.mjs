@@ -69,6 +69,44 @@ export function jobbIArbetsflode(yaml) {
   });
 }
 
+/**
+ * Händelser som kan starta arbetsflödet på en annan ref än main: `push` utan grenfilter eller med en
+ * annan gren än main, och varje `pull_request*` (jobbet kör på PR:ens ref, oavsett målgren). Ett jobb i
+ * miljön produktion kan bara bli rött där, eftersom miljön bara släpper in main (HB-05).
+ */
+export function utlosareUtanforMain(yaml) {
+  const rader = String(yaml).split('\n');
+  const start = rader.findIndex((r) => /^on:\s*(#.*)?$/.test(r));
+  if (start < 0) {
+    const inline = rader.find((r) => /^on:\s*\S/.test(r));
+    if (!inline) throw new Error('hemlighetsbindning: ingen `on:` på toppnivå');
+    return ['push', 'pull_request', 'pull_request_target'].filter((e) => new RegExp(`\\b${e}\\b`).test(inline));
+  }
+  const block = [];
+  for (let i = start + 1; i < rader.length && !/^\S/.test(rader[i]); i++) block.push(rader[i]);
+  const ut = [];
+  for (let i = 0; i < block.length; i++) {
+    const h = block[i].match(/^ {2}([a-z_]+):/);
+    if (!h) continue;
+    const kropp = [];
+    for (let j = i + 1; j < block.length && !/^ {2}\S/.test(block[j]); j++) kropp.push(block[j]);
+    if (h[1].startsWith('pull_request')) { ut.push(h[1]); continue; }
+    if (h[1] !== 'push') continue;
+    const k = kropp.join('\n');
+    const inline = k.match(/^ {4}branches:\s*\[([^\]]*)\]/m);
+    let grenar = inline ? inline[1].split(',').map((g) => g.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean) : null;
+    if (!inline) {
+      const bi = kropp.findIndex((r) => /^ {4}branches:\s*(#.*)?$/.test(r));
+      if (bi >= 0) {
+        grenar = [];
+        for (let j = bi + 1; j < kropp.length && /^ {6}-/.test(kropp[j]); j++) grenar.push(kropp[j].replace(/^ {6}-\s*/, '').replace(/\s+#.*$/, '').replace(/^['"]|['"]$/g, ''));
+      }
+    }
+    if (!grenar || grenar.length === 0 || grenar.some((g) => g !== 'main')) ut.push('push');
+  }
+  return ut;
+}
+
 /** Alla jobb i alla arbetsflöden som läser minst en hemlighet men inte är bundna till `produktion`. */
 export function obundnaJobb(arbetsfloden, { undantag = [] } = {}) {
   const ut = [];

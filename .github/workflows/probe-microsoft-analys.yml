@@ -9,6 +9,8 @@ on:
   # ligger på en feature branch och gav 404. Push-triggern fyrar från branchen själv, samma
   # mönster som inspect-analyses.yml redan använder. Egen sökväg → ingen loop.
   push:
+    # Bara main: jobbet läser hemligheter i miljön produktion, som ingen annan gren når (HB-05).
+    branches: [main]
     paths:
       - 'ops/microsoft-sond.trigger'
 

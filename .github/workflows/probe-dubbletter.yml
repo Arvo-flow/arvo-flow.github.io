@@ -14,6 +14,8 @@ on:
         required: false
         default: '30'
   push:
+    # Bara main: jobbet läser hemligheter i miljön produktion, som ingen annan gren når (HB-05).
+    branches: [main]
     paths:
       - 'scripts/probe-dubbletter.mjs'
       - 'scripts/probe-motpart.mjs'

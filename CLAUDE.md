@@ -194,8 +194,15 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > smugglat pris. Matrisjobben, som kör `npm install` utanför låsfilen, har inte längre skrivrätt.
 > 26 sabotage, alla fällde. H3 fällde först noll: HB-04:s fixtur dog på en tidigare rad, så grenen
 > «inga jobbrubriker» prövades aldrig. Grundarens steg: `ops/BOTNYCKELN.md`.
-> **Öppet:** 64 manuella arbetsflöden pushar sina mätfiler, och de som pekar på main nekas nu. Avläst
-> i källan: 35 sväljer nejet med `|| echo` och går gröna. Mätvärdet står kvar i loggen, men filen når
+> **Samma grind, andra hållet:** åtta arbetsflöden startade sitt produktionsjobb på en push till VILKEN
+> gren som helst (en triggerfil eller ett skript i `paths`). Före PR #80 körde de där med hemligheterna,
+> och det var läckan. Efter PR #80 kan de bara bli röda där. Avläst på den här PR:ens gren: två jobb
+> föll på 2 sekunder utan runner (`runner_id: 0`) och utan logg. Att miljöns grenregel är skälet är
+> obekräftat, eftersom felmeddelandet inte går att läsa via API:t. Nu startar de bara på main, och
+> HB-05 fäller ett produktionsjobb som en push eller PR på en annan gren kan starta. Läsaren och
+> js-yaml är överens om alla 147 flöden.
+> **Öppet:** 62 manuella arbetsflöden pushar sina mätfiler till main, och de nekas nu. Avläst per fil i
+> källan: 35 sväljer nejet med `|| echo` och går gröna. Mätvärdet står kvar i loggen, men filen når
 > aldrig main. De ska spara artefakter i stället.
 
 > **✅ GRUNDARBESLUT 2026-09-09 — STOPPREGELN: [KUND] BLOCKERAR, [VAKT] MERGAS OCH LAGAS FRAMÅT.**

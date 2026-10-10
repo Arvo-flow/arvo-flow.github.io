@@ -6,7 +6,8 @@
 //
 // FÅNGAR: ett nytt jobb som läser en hemlighet utan miljön (HB-01); ett nytt hemlighetsnamn som sonden inte
 //   prövar, eller en sondlista som glidit från arbetsflödena (HB-02); toppnivå-env och `secrets: inherit`
-//   (HB-03); en YAML-form som läsaren inte förstår, så att den inte blir grön av tomhet (HB-04).
+//   (HB-03); en YAML-form som läsaren inte förstår, så att den inte blir grön av tomhet (HB-04); ett
+//   produktionsjobb som en push eller PR på en annan gren kan starta — där kan det bara bli rött (HB-05).
 // BLIND: om hemligheterna FAKTISKT ligger i miljön och är borta från repo-nivån — det är repoinställningar
 //   som bara körningen av probe-hemligheter.yml kan mäta. Det här är kodens halva; sonden är den andra.
 
@@ -15,7 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  jobbIArbetsflode, obundnaJobb, allaHemligheter, hemligheterI,
+  jobbIArbetsflode, obundnaJobb, allaHemligheter, hemligheterI, utlosareUtanforMain,
   ALLA_HEMLIGHETER, KRAVDA_I_PRODUKTION, MOTPROVSJOBB, SKYDDAD_MILJO,
 } from '../scripts/hemlighetsbindning.mjs';
 
@@ -73,5 +74,27 @@ describe('HB · hemligheterna läses bara i miljön produktion', () => {
     // `jobs:` finns men jobben står i en indentering läsaren inte känner — det får inte bli «0 jobb, allt bundet».
     assert.throws(() => jobbIArbetsflode('on: push\njobs:\n    a:\n      runs-on: x\n'), /jobbrubriker/);
     assert.throws(() => jobbIArbetsflode('name: x\n'), /jobs/);
+  });
+
+  test('HB-05 · ett arbetsflöde med ett produktionsjobb startas aldrig av en push eller PR på en annan gren', () => {
+    const fel = [];
+    let medMiljo = 0;
+    for (const [f, y] of Object.entries(FLODEN)) {
+      if (!jobbIArbetsflode(y).some((j) => j.miljo === SKYDDAD_MILJO)) continue;
+      medMiljo++;
+      const u = utlosareUtanforMain(y);
+      if (u.length) fel.push(`${f} [${u}]`);
+    }
+    assert.ok(medMiljo > 50, `bara ${medMiljo} flöden med produktionsjobb — läsaren hittar dem inte`);
+    assert.deepEqual(fel, [], `produktionsjobb som startas utanför main (miljön nekar dem, alltså bara rött):\n  ${fel.join('\n  ')}`);
+    // Motprov: läsaren kan svara ja, i varje form.
+    const m = (on) => utlosareUtanforMain(`on:\n${on}\njobs:\n  a:\n    runs-on: x\n`);
+    assert.deepEqual(m('  push:\n    paths:\n      - x'), ['push']);
+    assert.deepEqual(m("  push:\n    branches:\n      - main\n      - 'claude/**'"), ['push']);
+    assert.deepEqual(m('  push:\n    branches: [main, dev]'), ['push']);
+    assert.deepEqual(m('  pull_request:\n    branches: [main]'), ['pull_request']);
+    assert.deepEqual(m('  push:\n    branches: [main]\n  workflow_dispatch:'), []);
+    assert.deepEqual(m("  push:\n    branches:\n      - 'main'"), []);
+    assert.deepEqual(utlosareUtanforMain('on: [push, workflow_dispatch]\njobs:\n  a:\n    runs-on: x\n'), ['push']);
   });
 });
