@@ -176,6 +176,28 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > alla fällde. **Uttalad blindfläck:** grinden ser en fil med rätt huvud, aldrig vem som skrev den. Det
 > som binder en ANNAN blick är grenskyddets krav på godkänd review — en repoinställning, inte kod.
 
+> **✅ GRENSKYDDET GAV TVÅ TYSTA GRÖNA SAMMA DAG (2026-10-10, granskningen av PR #80).** Rulesetet på
+> `main` nekar varje push utan PR, och tre schemalagda jobb pushade dit:
+> · **Verifieringsstämpeln** nekades (GH006, körning 38090943472) medan jobbet visade grönt:
+>   `continue-on-error` plus `exit 0` efter fem försök. Datumen bredvid «verifierat» hade stått still.
+> · **Kohortbyggaren** har aldrig gett en fil. Avläst i Actions-API:t: 18 körningar (7 jun – 5 okt),
+>   alla gröna, och ingen `results/sni-kohort-*.json` på main. Skriptet läser `--sni 62,…` som
+>   filnamnet «--sni» (lokalt återskapat: ENOENT). Schemat är avstängt och kraschen är röd.
+> · **ai-drift** init-läge pushade till main. Nu pushar det en egen gren för PR, eftersom nya
+>   golden-data är ett nytt facit.
+> En PR per stämpel bär inte: en PR från `GITHUB_TOKEN` startar inga arbetsflöden, och stämpeln ändrar
+> `agents/`, så Commitkravet och Andra blicken hade krävt ett påhittat sabotage. I stället fattar
+> matrisjobbet stämpelbeslutet och skriver det till en fil. Ett jobb i `produktion` lägger på besluten
+> med en egen nyckel förbi grenskyddet (`BOT_DEPLOY_KEY`). `scripts/stampelvakt.mjs` släpper bara en
+> commit där varje ändrad rad skiljer sig ENBART i ett `lastVerified`-datum som flyttas framåt.
+> SP-01..07: SP-07 kör själva pushsteget med `bash -e` mot en lokal main, med ett nej, ett ja och ett
+> smugglat pris. Matrisjobben, som kör `npm install` utanför låsfilen, har inte längre skrivrätt.
+> 26 sabotage, alla fällde. H3 fällde först noll: HB-04:s fixtur dog på en tidigare rad, så grenen
+> «inga jobbrubriker» prövades aldrig. Grundarens steg: `ops/BOTNYCKELN.md`.
+> **Öppet:** 64 manuella arbetsflöden pushar sina mätfiler, och de som pekar på main nekas nu. Avläst
+> i källan: 35 sväljer nejet med `|| echo` och går gröna. Mätvärdet står kvar i loggen, men filen når
+> aldrig main. De ska spara artefakter i stället.
+
 > **✅ GRUNDARBESLUT 2026-09-09 — STOPPREGELN: [KUND] BLOCKERAR, [VAKT] MERGAS OCH LAGAS FRAMÅT.**
 > Bevisplikten p.1 säger att ingen `lib/`-, `api/`- eller `agents/`-ändring får merga utan en andra
 > blick. Den sa inte NÄR granskningen är klar — och utan den halvan blir regeln en oändlig rekursion:

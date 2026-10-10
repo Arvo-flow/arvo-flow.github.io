@@ -15,6 +15,9 @@ import { dirname, join } from 'node:path';
 const BRANCHINDEX_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'agents', 'recommender', 'branchindex.js');
 const IDAG = new Date().toISOString().slice(0, 10);
 const stamplade = [];
+// Besluten, för jobbet som ensamt får skriva till main (scripts/stampla.mjs). Matrisjobbet fattar
+// beslutet där bevisen finns; det skriver aldrig själv.
+const beslut = [];
 
 const args = process.argv.slice(2);
 
@@ -89,6 +92,7 @@ for (const v of targets) {
     if (!st.stampla) {
       console.log(`  · stämpel utebliven: ${st.skal}`);
     } else {
+      beslut.push({ kalla: v.id, datum: IDAG, nycklar: st.nycklar, kategori: st.kategori ?? null });
       const kalla = readFileSync(BRANCHINDEX_PATH, 'utf8');
       const { kalla: ny, andrade, oforandrade } = stamplaKalla(kalla, st.nycklar, IDAG);
       if (andrade.length > 0) {
@@ -116,6 +120,12 @@ for (const v of targets) {
       }
     }
   }
+}
+
+// Skrivs FÖRE röd-utgången: i `verify.mjs all` kan en grön källas beslut stå bredvid en röd källa.
+// En tom lista skrivs också: «körde, inget att stämpla» ska gå att skilja från «kom aldrig hit».
+if (process.env.VERIFY_STAMPEL_UT) {
+  writeFileSync(process.env.VERIFY_STAMPEL_UT, JSON.stringify(beslut), 'utf8');
 }
 
 if (anyFail) {

@@ -25,6 +25,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ARVO_ADMIN_SECRET: ${{ secrets.ARVO_ADMIN_SECRET }}
+          BOT_DEPLOY_KEY: ${{ secrets.BOT_DEPLOY_KEY }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DROPBOX_AUTH_COOKIE: ${{ secrets.DROPBOX_AUTH_COOKIE }}
@@ -49,6 +50,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ARVO_ADMIN_SECRET: ${{ secrets.ARVO_ADMIN_SECRET }}
+          BOT_DEPLOY_KEY: ${{ secrets.BOT_DEPLOY_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

@@ -20,9 +20,11 @@ export const SKYDDAD_MILJO = 'produktion';
 // ALLA: varje namn som något arbetsflöde läser — läckkontrollen prövar dem alla (HB-02). Granskningen av
 // PR #80 fann nio namn i bruk medan sonden prövade sex, så tre kunde ligga kvar på repo-nivå osedda.
 // KRAVDA: de som produktionsjobben behöver för att fungera (HB-02 kräver att de är en delmängd av ALLA).
-export const ALLA_HEMLIGHETER = ['ANTHROPIC_API_KEY', 'ARVO_ADMIN_SECRET', 'CRON_SECRET', 'DATABASE_URL',
-  'DROPBOX_AUTH_COOKIE', 'KV_REST_API_TOKEN', 'KV_REST_API_URL', 'RESEND_API_KEY', 'RESEND_FROM'];
-export const KRAVDA_I_PRODUKTION = ['ANTHROPIC_API_KEY', 'ARVO_ADMIN_SECRET', 'CRON_SECRET', 'DATABASE_URL', 'RESEND_API_KEY'];
+export const ALLA_HEMLIGHETER = ['ANTHROPIC_API_KEY', 'ARVO_ADMIN_SECRET', 'BOT_DEPLOY_KEY', 'CRON_SECRET',
+  'DATABASE_URL', 'DROPBOX_AUTH_COOKIE', 'KV_REST_API_TOKEN', 'KV_REST_API_URL', 'RESEND_API_KEY', 'RESEND_FROM'];
+// BOT_DEPLOY_KEY: verifieringsstämpelns väg förbi grenskyddet (verify-sources.yml#stampla, SP-06).
+export const KRAVDA_I_PRODUKTION = ['ANTHROPIC_API_KEY', 'ARVO_ADMIN_SECRET', 'BOT_DEPLOY_KEY', 'CRON_SECRET',
+  'DATABASE_URL', 'RESEND_API_KEY'];
 // Det enda jobb som MEDVETET läser hemligheter utan miljön: läckkontrollens motprov (SV-21).
 export const MOTPROVSJOBB = 'probe-hemligheter.yml#utan-miljo';
 
@@ -35,7 +37,7 @@ export function hemligheterI(text) {
 }
 
 /**
- * Ett arbetsflödes jobb: [{ jobb, miljo, hemligheter, arver, text }]. `miljo` är null när jobbet inte väljer någon.
+ * Ett arbetsflödes jobb: [{ jobb, miljo, hemligheter, arver, text }]. `text` är jobbets rader (för SP-06). `miljo` är null när jobbet inte väljer någon.
  * Kastar om `jobs:` saknas eller inga jobbrubriker hittas, så att ett tomt svar inte ser ut som ett rent (HB-04).
  */
 export function jobbIArbetsflode(yaml) {
@@ -63,7 +65,7 @@ export function jobbIArbetsflode(yaml) {
       break;
     }
     const arver = /^\s+secrets:\s*inherit\b/m.test(text);
-    return { jobb: namn, miljo, hemligheter: [...new Set([...toppniva, ...hemligheterI(text)])].sort(), arver };
+    return { jobb: namn, miljo, hemligheter: [...new Set([...toppniva, ...hemligheterI(text)])].sort(), arver, text };
   });
 }
 
