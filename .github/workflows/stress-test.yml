@@ -5,6 +5,7 @@ on:
 
 jobs:
   stress-test:
+    environment: produktion
     name: Run invoice stress test (synthetic PDFs)
     runs-on: ubuntu-latest
     timeout-minutes: 45

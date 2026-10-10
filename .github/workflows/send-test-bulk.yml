@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   send:
+    environment: produktion
     name: Send test bulk
     runs-on: ubuntu-latest
     timeout-minutes: 5

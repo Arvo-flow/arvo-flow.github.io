@@ -59,6 +59,7 @@ jobs:
 
   # ── Jobb 2: Nattlig live-kontroll med Playwright ───────────────────────────
   monitor:
+    environment: produktion
     name: Check benchmark prices
     runs-on: ubuntu-latest
     timeout-minutes: 15

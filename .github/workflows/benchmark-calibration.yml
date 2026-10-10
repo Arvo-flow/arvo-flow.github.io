@@ -7,6 +7,7 @@ on:
 
 jobs:
   calibrate:
+    environment: produktion
     name: P3.3 — Kalibrering av benchmarks mot faktiska utfall
     runs-on: ubuntu-latest
     timeout-minutes: 5

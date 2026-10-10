@@ -1,6 +1,9 @@
 name: Sond — GitHub-hemligheterna
 
-# Skriver aldrig ett värde. Bevisar att KV-nyckeln fungerar i Actions (skriv + läs + motprov).
+# Skriver aldrig ett värde.
+# med-produktion: de fyra nycklarna ska vara SATT via miljön produktion.
+# utan-miljo: samma fyra ska vara SAKNAS. Är de SATT ligger de kvar som repository-hemligheter,
+# och då når de varje jobb som inte valt miljön — det är läckan. SV-21.
 on:
   workflow_dispatch:
 
@@ -8,7 +11,25 @@ permissions:
   contents: read
 
 jobs:
+  utan-miljo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --omit=dev
+      - name: Repository-kopian ska vara borta
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/probe-hemligheter.mjs --krav=saknas
+
   sond:
+    environment: produktion
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -20,10 +41,13 @@ jobs:
       - name: Mät
         shell: bash
         env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
           KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
         run: |
           set -o pipefail
+          node scripts/probe-hemligheter.mjs --krav=satt
           node scripts/probe-hemligheter.mjs

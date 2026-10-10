@@ -13,6 +13,29 @@
 import { getKv } from '../lib/kv.js';
 
 const satt = (n) => (typeof process.env[n] === 'string' && process.env[n].trim() !== '' ? 'SATT' : 'SAKNAS');
+
+// De fyra som flyttats till miljön `produktion`. Värdet skrivs aldrig — bara SATT eller SAKNAS.
+const FLYTTADE = ['ANTHROPIC_API_KEY', 'RESEND_API_KEY', 'CRON_SECRET', 'DATABASE_URL'];
+const krav = process.argv.find((a) => a.startsWith('--krav='))?.slice('--krav='.length);
+if (krav === 'satt' || krav === 'saknas') {
+  const fel = [];
+  for (const n of FLYTTADE) {
+    const lage = satt(n);
+    console.log(`  ${n.padEnd(18)} ${lage}`);
+    if ((krav === 'satt' && lage !== 'SATT') || (krav === 'saknas' && lage !== 'SAKNAS')) fel.push(n);
+  }
+  if (fel.length) {
+    console.error(krav === 'saknas'
+      ? '\n✗ LÄCKAN ÄR ÖPPEN — de här nycklarna når ett jobb utan miljön produktion. Radera repository-kopiorna, inte miljö-kopiorna.'
+      : '\n✗ Miljön produktion gav inte nycklarna.');
+    process.exit(1);
+  }
+  console.log(krav === 'saknas'
+    ? '\n✓ Inget jobb utan miljön ser de fyra nycklarna.'
+    : '\n✓ Miljön produktion bär de fyra nycklarna.');
+  process.exit(0);
+}
+
 for (const n of ['DATABASE_URL', 'CRON_SECRET', 'KV_REST_API_URL', 'KV_REST_API_TOKEN']) console.log(`  ${n.padEnd(18)} ${satt(n)}`);
 
 const kv = getKv();

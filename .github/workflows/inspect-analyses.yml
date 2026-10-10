@@ -19,6 +19,7 @@ permissions:
 
 jobs:
   inspect:
+    environment: produktion
     name: Granska analyser
     runs-on: ubuntu-latest
     timeout-minutes: 5

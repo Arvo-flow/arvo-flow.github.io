@@ -27,6 +27,7 @@ on:
 
 jobs:
   rensa:
+    environment: produktion
     name: Rensa rum
     runs-on: ubuntu-latest
     timeout-minutes: 5

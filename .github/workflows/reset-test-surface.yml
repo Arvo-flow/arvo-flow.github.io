@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   reset:
+    environment: produktion
     name: Reset test surface
     runs-on: ubuntu-latest
     timeout-minutes: 5

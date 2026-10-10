@@ -21,6 +21,7 @@ on:
 
 jobs:
   probe:
+    environment: produktion
     name: Dokumentidentitet i prisboken
     runs-on: ubuntu-latest
     timeout-minutes: 5

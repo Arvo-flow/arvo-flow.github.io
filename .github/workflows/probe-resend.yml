@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   probe:
+    environment: produktion
     name: Probe Resend
     runs-on: ubuntu-latest
     timeout-minutes: 5
