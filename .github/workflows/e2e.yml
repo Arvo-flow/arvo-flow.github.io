@@ -30,6 +30,7 @@ permissions:
 
 jobs:
   e2e-fixture-test:
+    environment: produktion
     name: E2E pipeline test (fixtures)
     runs-on: ubuntu-latest
     timeout-minutes: 15

@@ -12,6 +12,7 @@ on:
 permissions: { contents: read }
 jobs:
   drain:
+    environment: produktion
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:

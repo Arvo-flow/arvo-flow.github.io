@@ -5,6 +5,7 @@ permissions:
   contents: write
 jobs:
   inv:
+    environment: produktion
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

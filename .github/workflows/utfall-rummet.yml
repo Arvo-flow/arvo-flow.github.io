@@ -11,6 +11,7 @@ on:
 
 jobs:
   utfall:
+    environment: produktion
     name: Utfall rum
     runs-on: ubuntu-latest
     timeout-minutes: 5

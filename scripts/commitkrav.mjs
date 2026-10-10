@@ -18,7 +18,9 @@ let meddelande = '';
 let diff = '';
 try {
   meddelande = readFileSync(fil, 'utf8');
-  diff = execSync('git diff --cached -- lib api', { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  // agents/ stod utanför här medan KRAVDA_KATALOGER bar den (CK-06): en agents-ändring nådde aldrig
+  // granskaCommit. GG-10.
+  diff = execSync('git diff --cached -- lib api agents', { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 } catch (err) {
   // Kan vakten inte läsa är svaret OKÄNT, aldrig ett godkännande.
   console.error(`✗ Commit-kravet kunde inte läsa meddelande eller diff: ${err.message}`);

@@ -5,17 +5,21 @@
 // slår upp de citerade test-ID:na i tests/, och rapporterar. Se modulhuvudet för varför
 // ordlistan är kort och vad vakten är blind för.
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { granskaDiff, citeradeTestId, arRiktigtTest, motiveradeRader, prosaPastaenden } from '../lib/pastaendevakt.js';
+import { diffIntervall } from '../lib/diffintervall.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 let diff = '';
+let kalla = 'stageat';
 try {
-  diff = execSync('git diff --cached -U0', { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const iv = diffIntervall();
+  kalla = iv.lage === 'intervall' ? `${iv.bas.slice(0, 7)}...HEAD` : 'stageat';
+  diff = execFileSync('git', ['diff', ...iv.args, '-U0'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 } catch (err) {
   // Ett fel här är ett OKÄNT, aldrig ett godkännande. Att svara «inga brott» på en misslyckad
   // diff hade varit exakt felfamiljen vakten finns för.
@@ -48,7 +52,9 @@ if (prosa.length) {
 }
 
 if (brott.length === 0 && uppdiktade.length === 0) {
+  const lasta = diff.split('\n').filter((r) => r.startsWith('+') && !r.startsWith('+++')).length;
   console.log('✓ Påståendevakten — varje nytt mekanismpåstående I KOD pekar på ett test som finns'
+    + ` (${lasta} tillagda rader lästa, ${kalla})`
     + (prosa.length ? ` (${prosa.length} prosapåstående EJ prövat, se ovan)` : ''));
   process.exit(0);
 }

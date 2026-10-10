@@ -206,6 +206,38 @@ describe('SONDVAKT · instrumenten hålls till samma krav som produktionen', () 
       'tee:s (alltid 0), så en kraschad sond rapporterar framgång:\n  ' + brott.join('\n  '));
   });
 
+  test('SV-21 · de fyra nycklarna når bara jobb i miljön produktion', () => {
+    // Repository-hemligheter injiceras i varje jobb. Miljö-hemligheter bara i jobb som namnger
+    // miljön, och bara på grenar miljön tillåter. Motprovet är ett enda jobb, utan miljö, som
+    // kräver att nycklarna SAKNAS — tar man bort det ser sviten inte läckan.
+    const nycklar = ['ANTHROPIC_API_KEY', 'RESEND_API_KEY', 'CRON_SECRET', 'DATABASE_URL'];
+    const dir = join(ROOT, '.github', 'workflows');
+    const brott = [];
+    let motprov = false;
+    for (const f of readdirSync(dir).filter((n) => n.endsWith('.yml'))) {
+      const lines = readFileSync(join(dir, f), 'utf8').split('\n');
+      const heads = lines.map((l, i) => (/^  [A-Za-z0-9_-]+:\s*(#.*)?$/.test(l) ? i : -1)).filter((i) => i >= 0);
+      const start = lines.findIndex((l) => l.startsWith('jobs:'));
+      const jobb = heads.filter((h) => h > start);
+      for (let k = 0; k < jobb.length; k++) {
+        const body = lines.slice(jobb[k], jobb[k + 1] ?? lines.length).join('\n');
+        if (!nycklar.some((n) => body.includes(`secrets.${n}`))) continue;
+        const namn = lines[jobb[k]].trim().replace(/:.*/, '');
+        const arMotprov = f === 'probe-hemligheter.yml' && namn === 'utan-miljo';
+        if (arMotprov) {
+          motprov = true;
+          if (/^    environment:/m.test(body)) brott.push(`${f}:${namn} motprovet fick en miljö — då mäter det inte läckan`);
+          if (!body.includes('--krav=saknas')) brott.push(`${f}:${namn} kräver inte att nycklarna saknas`);
+        } else if (!/^    environment: produktion$/m.test(body)) {
+          brott.push(`${f}:${namn}`);
+        }
+      }
+    }
+    assert.equal(motprov, true, 'motprovsjobbet utan-miljo är borta — sviten kan inte se läckan');
+    assert.deepEqual(brott, [],
+      'jobb som läser de fyra nycklarna utan miljön produktion:\n  ' + brott.join('\n  '));
+  });
+
 });
 
 // ── SV-12..13 · SCOPVAKTEN (2026-09-06) ─────────────────────────────────────────────────────

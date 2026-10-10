@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 jobs:
   sond:
+    environment: produktion
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
