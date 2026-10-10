@@ -23,8 +23,9 @@
 //   den litar på att uppenbara platshållare är platshållare, vilket är ett medvetet val för att
 //   en vakt som fäller allt blir avstängd (smyghöjningsvaktens läxa).
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync, statSync } from 'node:fs';
+import { diffIntervall } from '../lib/diffintervall.js';
 
 // Uppenbara platshållare. Faller de ut som träffar blir vakten brusig och stängs av — och en
 // avstängd vakt är värre än ingen (bibeln, 2026-08-05). Listan är avsiktligt kort och konkret.
@@ -47,12 +48,18 @@ const MONSTER = [
 // `.env` får aldrig committas, oavsett innehåll (bibelns egen rad).
 const FORBJUDNA_FILER = /(^|\/)\.env(\.|$)/;
 
-function stageadeFiler() {
-  const ut = execSync('git diff --cached --name-only --diff-filter=ACM', { encoding: 'utf8' });
+// Lokalt den stageade diffen, i CI PR:ens intervall (lib/diffintervall.js). Ett fel här avslutar
+// med exit 1 i stället för att läsas som «inga filer».
+let kalla = 'stageade';
+function andradeFiler() {
+  let iv;
+  try { iv = diffIntervall(); } catch (err) { console.error(`✗ Hemlighetsvakten: ${err.message}`); process.exit(1); }
+  if (iv.lage === 'intervall') kalla = `ändrade i ${iv.bas.slice(0, 7)}...HEAD`;
+  const ut = execFileSync('git', ['diff', ...iv.args, '--name-only', '--diff-filter=ACM'], { encoding: 'utf8' });
   return ut.split('\n').map((r) => r.trim()).filter(Boolean);
 }
 
-const filer = stageadeFiler();
+const filer = andradeFiler();
 const brott = [];
 
 for (const fil of filer) {
@@ -87,4 +94,4 @@ if (brott.length > 0) {
   process.exit(1);
 }
 
-console.log(`✓ Hemlighetsvakten — ${filer.length} stageade fil(er) rena`);
+console.log(`✓ Hemlighetsvakten — ${filer.length} ${kalla} fil(er) rena`);

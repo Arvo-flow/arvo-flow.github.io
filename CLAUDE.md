@@ -162,6 +162,20 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > orden syns inte. De flyttar bevisbördan till något en granskare kan slå upp — de bär den inte.
 > Punkt 1 är den enda som faktiskt granskar; punkt 2–4 gör bara fusket synligt.
 
+> **✅ GRINDEN I CI (2026-10-10) — VAKTERNA KÖRDE BARA DÄR NÅGON RÅKAT INSTALLERA DEM.** Mätt samma dag:
+> av 146 workflows kördes **ingen** på `pull_request` och **ingen** körde sviten. Varje vakt i punkt 1–4
+> var en lokal git-hook — och grundarens klon hade inga installerade hooks (bara `.sample`) och ingen
+> node. Två av vakterna (`hemlighetsvakt`, `pastaendevakt`) läste dessutom `git diff --cached`, som är tom
+> i CI: flyttade dit oförändrade hade de svarat grönt utan att läsa en rad. Och commit-msg-skalet
+> hämtade bara `lib api` medan `KRAVDA_KATALOGER` bar `agents/` — en agents-ändring nådde aldrig kravet.
+> `.github/workflows/grinden.yml` kör nu fyra kontroller på varje PR mot `main`: **Sviten**, **Vakterna**
+> (mot PR:ens intervall, `lib/diffintervall.js` — CI utan bas kastar), **Commitkravet** (per commit) och
+> **Andra blicken** (`lib/granskningsgrind.js`): en PR som ändrar `lib/ api/ agents/` kräver en
+> `ops/GRANSKNING-*.md` med `commits: <sha>` + `dom: MERGAS`, där den senaste domen gäller, BLOCKERAR
+> vinner vid lika, och ingen mekanikfil ändrats efter den granskade commiten. GG-01..12, tio sabotage,
+> alla fällde. **Uttalad blindfläck:** grinden ser en fil med rätt huvud, aldrig vem som skrev den. Det
+> som binder en ANNAN blick är grenskyddets krav på godkänd review — en repoinställning, inte kod.
+
 > **✅ GRUNDARBESLUT 2026-09-09 — STOPPREGELN: [KUND] BLOCKERAR, [VAKT] MERGAS OCH LAGAS FRAMÅT.**
 > Bevisplikten p.1 säger att ingen `lib/`-, `api/`- eller `agents/`-ändring får merga utan en andra
 > blick. Den sa inte NÄR granskningen är klar — och utan den halvan blir regeln en oändlig rekursion:

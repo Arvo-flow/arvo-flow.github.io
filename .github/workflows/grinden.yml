@@ -1,0 +1,110 @@
+name: Grinden
+
+# Bevisplikten i CI (2026-10-10). Mätt samma dag: ingen av 146 workflows kördes på pull_request och
+# ingen körde sviten — varje vakt var en lokal git-hook, som kringgås med --no-verify och inte finns
+# i en klon där ingen kört `npm install`. Här körs samma vakter där ingen flagga finns.
+#
+# Fyra kontroller, var för sig ett obligatoriskt statusbesked i grenskyddet för main:
+#   Grinden / Sviten         node --test tests/run.mjs
+#   Grinden / Vakterna       pre-commit-kedjan, mot PR:ens intervall (lib/diffintervall.js)
+#   Grinden / Commitkravet   syskonfall + sabotage med tal, per commit (lib/commitkrav.js)
+#   Grinden / Andra blicken  ops/GRANSKNING-*.md med dom: MERGAS täcker mekaniken (lib/granskningsgrind.js)
+#
+# På push till main körs samma kontroller i efterhand: de kan inte stoppa en direktpush, men de gör
+# den synlig. Stoppet är grenskyddet.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: grinden-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+# Basen sätts bara på de jobb som läser ett intervall. Sviten ärver den inte: dess tester kör
+# vakterna i temporära repon där bas-sha:n inte finns.
+env:
+  HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  svit:
+    name: Sviten
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: git-identitet för testernas temporära repon
+        run: git config --global user.email grinden@arvoflow.se && git config --global user.name Grinden
+      - name: node --test tests/run.mjs
+        run: node --test tests/run.mjs
+
+  vakter:
+    name: Vakterna
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ARVO_DIFF_BAS: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: node scripts/price-audit.mjs
+      - run: node scripts/claims-audit.mjs
+      - run: node scripts/sifferrevisor.mjs
+      - run: node scripts/hemlighetsvakt.mjs
+      - run: node scripts/bedomningskrav.mjs
+      - run: node scripts/pastaendevakt.mjs
+      - run: node scripts/prissattningsgrad.mjs
+      - run: node scripts/scopvakt.mjs
+
+  commitkrav:
+    name: Commitkravet
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ARVO_DIFF_BAS: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/commitkrav-intervall.mjs
+
+  andra-blicken:
+    name: Andra blicken
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ARVO_DIFF_BAS: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/granskningsgrind.mjs

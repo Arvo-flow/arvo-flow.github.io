@@ -145,6 +145,7 @@ import './larmunderlag.mjs';
 import './switcharvode.mjs';
 import './switchliggare.mjs';
 import './pastaendevakt.mjs';
+import './granskningsgrind.mjs';
 import './prisparning.mjs';
 import './cacheversion.mjs';
 import './mainvakt.mjs';

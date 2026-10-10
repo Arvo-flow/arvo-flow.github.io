@@ -35,14 +35,16 @@ describe('HV · Hemlighetsvakten', () => {
       execSync('git init -q . && git config user.email t@t && git config user.name t', { cwd: kat });
       writeFileSync(join(kat, 'hemlig.js'), 'const k = "sk-ant-api03-AbCdEfGh12345678ZzYy";\n'); // hemlighet-ok: syntetisk form — HV-02 BEVISAR att vakten fäller den
       execSync('git add -A', { cwd: kat });
+      // Det stageade läget prövas här, även när sviten själv kör i CI (CI=true kräver annars en bas).
+      const env = { ...process.env, CI: '', ARVO_DIFF_BAS: '' };
       let kod = 0;
-      try { execFileSync('node', [VAKT], { cwd: kat, encoding: 'utf8' }); }
+      try { execFileSync('node', [VAKT], { cwd: kat, encoding: 'utf8', env }); }
       catch (e) { kod = e.status ?? 1; }
       assert.notEqual(kod, 0, 'en äkta nyckelform måste blockera committen');
 
       writeFileSync(join(kat, 'hemlig.js'), 'DATABASE_URL=postgres://stub RESEND_API_KEY=re_stub\n');
       execSync('git add -A', { cwd: kat });
-      const ut = execFileSync('node', [VAKT], { cwd: kat, encoding: 'utf8' });
+      const ut = execFileSync('node', [VAKT], { cwd: kat, encoding: 'utf8', env });
       assert.match(ut, /rena/, 'en medveten platshållare får inte fälla — en vakt som fäller allt stängs av');
     } finally { rmSync(kat, { recursive: true, force: true }); }
   });
