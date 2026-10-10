@@ -1,9 +1,10 @@
 name: Sond — GitHub-hemligheterna
 
 # Skriver aldrig ett värde.
-# med-produktion: de fyra nycklarna ska vara SATT via miljön produktion.
-# utan-miljo: samma fyra ska vara SAKNAS. Är de SATT ligger de kvar som repository-hemligheter,
-# och då når de varje jobb som inte valt miljön — det är läckan. SV-21.
+# sond (produktion): de hemligheter produktionsjobben behöver ska vara SATT.
+# utan-miljo: VARJE hemlighet något arbetsflöde läser ska vara SAKNAS. Är någon SATT ligger den kvar
+# som repository-hemlighet och når varje jobb som inte valt miljön — det är läckan. SV-21.
+# Listorna här är låsta mot arbetsflödena och mot scripts/probe-hemligheter.mjs (HB-02).
 on:
   workflow_dispatch:
 
@@ -23,9 +24,14 @@ jobs:
       - name: Repository-kopian ska vara borta
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ARVO_ADMIN_SECRET: ${{ secrets.ARVO_ADMIN_SECRET }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DROPBOX_AUTH_COOKIE: ${{ secrets.DROPBOX_AUTH_COOKIE }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
         run: node scripts/probe-hemligheter.mjs --krav=saknas
 
   sond:
@@ -42,6 +48,7 @@ jobs:
         shell: bash
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ARVO_ADMIN_SECRET: ${{ secrets.ARVO_ADMIN_SECRET }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}

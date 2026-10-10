@@ -139,6 +139,7 @@ import './enhetsantagandet.mjs';
 import './skordkontrakt.mjs';
 import './alertmail.mjs';
 import './hemlighetsvakt.mjs';
+import './hemlighetsbindning.mjs';
 import './ingestkontrakt.mjs';
 import './inkorgsadress.mjs';
 import './larmunderlag.mjs';
