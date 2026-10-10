@@ -1,7 +1,43 @@
-Du är Opus 5,5 – autonom CTO och chefsarkitekt för plattformen Arvo. Ditt mål är att leverera produktionsklar, säker och högpresterande kod med en 0,1 %-metodik.
+# Arvo — regler för Cursor-agenter
 
-- Ramverk: Next.js, React, Node.js.
-- Standard: Skriv endast ren, modulär och strikt typad kod.
-- Tester: Respektera och bibehåll alltid plattformens befintliga 2 609 tester.
-- Genomförande: Följ Fables specifikationer minutiöst (särskilt för Stripe-integrationen). Bygg inkrementellt, ta inga onödiga risker och skriv inga gissningar. 
-- Kommunikation: Var kortfattad, exekutiv och förklara alltid varför en arkitekturell ändring görs innan koden skrivs.
+Bibeln är `CLAUDE.md` i repots rot. Den är bindande, och den här filen ersätter den inte. Läs den
+innan du ändrar något. Där den här filen och bibeln säger olika gäller bibeln.
+
+## Oförhandlingsbart
+- Integriteten, regel 1–9 i bibeln. Ingen siffra utan källa. AI tolkar, kod räknar. Varje kundlöfte
+  ska ha mekanik. En falsk besparing är värre än ingen.
+- Noll-inferens: mät först, tala sen. Ett påstående om vad systemet är eller gör skrivs i en av tre
+  former: avläst (med kommandot eller test-ID:t, plus motprov), obekräftad bedömning (med grund och
+  konfidens), eller «jag vet inte än». Aldrig en slutsats i faktaform.
+- Committa aldrig `.env` eller credentials. Skriv aldrig ut ett hemligt värde. Kör aldrig
+  `scripts/stress-test.mjs` utan grundarens uttryckliga OK.
+- En personlig e-postadress står aldrig i en workflow-input eller en logg. Använd `sha256:<hex>`.
+- Hemligheter läses bara i jobb med `environment: produktion` (HB-01). Ett nytt namn läggs in i
+  `scripts/hemlighetsbindning.mjs` och i läckkontrollen (HB-02).
+
+## Stacken (avläst 2026-10-10)
+- Frontend: React-SPA på Create React App (`react-scripts`), i `src/`. Vanlig JavaScript, ingen
+  TypeScript, ingen Next.js. Styled-components som läser `src/theme.js`.
+- Backend: Vercel serverless-funktioner i `api/**/*.mjs`, med logik i `lib/` (ESM) och AI-agenter i
+  `agents/`. Data i Neon Postgres och Vercel KV. E-post via Resend.
+- Skript och sonder i `scripts/`, tester i `tests/` (`npm run test:algo`). Arbetsflöden i
+  `.github/workflows/`.
+- Betalning: det finns ingen Stripe-integration och ingen Stripe-specifikation i repot. Bygg ingen
+  betalväg utan en specifikation i `ops/` som grundaren godkänt.
+
+## Så når en ändring main
+- `main` är skyddad. Allt går via en gren och en PR med fyra obligatoriska kontroller (Grinden):
+  Sviten, Vakterna, Commitkravet och Andra blicken.
+- En ändring i `lib/`, `api/` eller `agents/` kräver en separat granskning, `ops/GRANSKNING-<namn>.md`
+  med `commits:` och `dom: MERGAS`, skriven av en annan blick än byggarens.
+- En beteendeändring där ska ha raderna `Syskonfall:` och `Sabotage som fällde: … → N tester föll` i
+  commit-meddelandet. Ett sabotage skrivs med `assert old in s`, och ett som fäller noll tester är
+  ingen prövning.
+- Ett mekanismpåstående i koden bär sitt test-ID (påståendevakten).
+- Kör aldrig `--no-verify`. Lagas en vakt ska den lagas, inte kringgås.
+- UI-ändringar skärmdumpas i 390 och 1600 px före push (regel 8).
+- Ett pågående testantal står inte här. Det ändras med varje commit; kör sviten och läs talet.
+
+## Samarbete
+- Säg emot innan du bygger när en instruktion kan tillverka en falsk siffra (motståndsplikten).
+- Kort och sakligt. Förklara varför en arkitekturändring görs innan koden skrivs.
