@@ -203,14 +203,26 @@ describe('GG · Grinden i CI', () => {
     assert.ok(start > 0 && preCommit.length > 200, 'pre-commit-hookens innehåll hittades inte');
     const vakter = [...preCommit.matchAll(/node (scripts\/[\w-]+\.mjs)/g)].map((m) => m[1]);
     assert.equal(new Set(vakter).size, 8, `${new Set(vakter).size} vakter i pre-commit — mätt 2026-10-10: 8. Ny vakt? Lägg den i grinden.yml och ändra talet`);
-    for (const v of new Set(vakter)) assert.ok(wf.includes(`node ${v}`), `${v} körs lokalt men inte i CI`);
-    for (const s of ['tests/run.mjs', 'scripts/commitkrav-intervall.mjs', 'scripts/granskningsgrind.mjs']) {
-      assert.ok(wf.includes(s), `${s} saknas i grinden`);
+    // Kommandot efter `run:`, inte en kommentar och inte `echo node …`. En substräng i en
+    // kommentar lämnade GG-12 grön när steget var bortkommenterat (andra blicken, fynd 2).
+    const kommandon = wf.split('\n')
+      .filter((l) => !/^\s*#/.test(l))
+      .map((l) => l.match(/^\s+(?:- )?run:\s+(.+)$/))
+      .filter(Boolean)
+      .map((m) => m[1].trim());
+    const kor = (cmd) => kommandon.includes(cmd);
+    for (const v of new Set(vakter)) assert.ok(kor(`node ${v}`), `${v} körs lokalt men inte som steg i CI`);
+    for (const s of ['node --test tests/run.mjs', 'node scripts/commitkrav-intervall.mjs', 'node scripts/granskningsgrind.mjs']) {
+      assert.ok(kor(s), `${s} saknas som steg i grinden`);
     }
     assert.match(wf, /pull_request\.head\.sha/, 'PR:ens head, inte GitHubs syntetiska merge-commit');
     assert.match(wf, /fetch-depth: 0/);
     const svit = wf.slice(wf.indexOf('  svit:'), wf.indexOf('  vakter:'));
     assert.ok(svit.length > 50 && !svit.includes('ARVO_DIFF_BAS'), 'sviten får inte ärva basen — dess tester kör i temporära repon');
-    assert.equal((wf.match(/ARVO_DIFF_BAS:/g) ?? []).length, 3, 'vakterna, commitkravet och andra blicken');
+    const basRader = wf.split('\n').filter((l) => l.includes('ARVO_DIFF_BAS:'));
+    assert.equal(basRader.length, 3, 'vakterna, commitkravet och andra blicken');
+    for (const l of basRader) {
+      assert.match(l, /pull_request\.base\.sha/, 'basen ska vara PR:ens bas — head...HEAD är tomt och blir grönt utan att ha läst');
+    }
   });
 });
