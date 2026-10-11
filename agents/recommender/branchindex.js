@@ -129,7 +129,7 @@ export const BRANCHINDEX = {
 
   mobil: {
     source: 'real-public',
-    lastVerified: '2026-08-31',
+    lastVerified: '2026-10-11',
     verifiedVia: 'playwright-live',
     unit: 'kr/år',
     // Vad talet är priset PÅ — kundytan skriver ut det, så att "billigaste publicerade pris"
@@ -176,7 +176,7 @@ export const BRANCHINDEX = {
 
   bredband: {
     source: 'real-public',
-    lastVerified: '2026-09-28',
+    lastVerified: '2026-10-11',
     verifiedVia: 'tele2-address-api',
     // GENOMBROTT 2026-06-14 (7 sond-rundor): Tele2:s adress→pris-API reverse-engineerat —
     // två rena publika JSON-endpoints (feasibility/addresses + broadband/products) som ger
@@ -273,7 +273,7 @@ export const BRANCHINDEX = {
     // veckovis av scripts/verify.mjs kortterminal (fabriken). Roll: ankra rate-bandet (det
     // verifierbara). kr/år-matrisen förblir estimat (kortvolym saknar offentlig källa, som el:s kWh).
     verifiedRates: {
-      source: 'official_web', lastVerified: '2026-08-31',
+      source: 'official_web', lastVerified: '2026-10-11',
       basis: 'card-present, Sverige, exkl. moms',
       rates: [
         { supplier: 'Stripe Terminal',  pct: 1.40, fixed: 1.00, url: 'https://stripe.com/se/terminal',     note: 'EES-kort; non-EES online 2,9 % + 1 kr' },
@@ -468,17 +468,17 @@ export const BRANCHINDEX = {
       // (GRUNDARBESLUT 2026-06-19, neutralitets-moaten) — fältet ska aldrig bära ett partnerpris.
       'business-basic': {
         msrpMonthly: 80.29, msrpAnnual: 66.91, arvoAnnual: 66.91,
-        currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-10-11', source: 'microsoft.com',
         note: 'M365 Business Basic — Teams, Exchange, webb-appar, 1 TB OneDrive. Ingen desktop Office-suite.',
       },
       'business-standard': {
         msrpMonthly: 160.58, msrpAnnual: 133.82, arvoAnnual: 133.82,
-        currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-10-11', source: 'microsoft.com',
         note: 'M365 Business Standard — full desktop Office, Teams, SharePoint, 1 TB OneDrive. Vanligast bland svenska SMF.',
       },
       'business-premium': {
         msrpMonthly: 252.35, msrpAnnual: 210.29, arvoAnnual: 210.29,
-        currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-10-11', source: 'microsoft.com',
         note: 'M365 Business Premium — inkl. Intune MDM + Microsoft Defender for Business. Rätt val vid säkerhetskrav.',
       },
       // OBS: Microsoft 365 E3/E5 ≠ Office 365 E3/E5 (separata produkter).
@@ -497,12 +497,12 @@ export const BRANCHINDEX = {
       // månadsåtagande för enterprise på sidan. Estimatet räknas om med det nya årspriset.
       'e3': {
         msrpMonthly: 500.12, msrpAnnual: 416.77, arvoAnnual: 416.77,
-        currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-10-11', source: 'microsoft.com',
         note: 'M365 E3 — enterprise compliance, eDiscovery, avancerat auditlogg, Purview. Sällan motiverat under 100 users. Förväxla ej med Office 365 E3 (256 kr).',
       },
       'e5': {
         msrpMonthly: 769.42, msrpAnnual: 641.18, arvoAnnual: 641.18,
-        currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',
+        currency: 'SEK', lastVerified: '2026-10-11', source: 'microsoft.com',
         note: 'M365 E5 — full SIEM, Defender for Endpoint, Power BI Pro, avancerad analys. Förväxla ej med Office 365 E5 (424 kr).',
       },
 
@@ -535,12 +535,12 @@ export const BRANCHINDEX = {
       // NÄSTA VERIFIERING: 2026-09-01
       'slack-pro': {
         usdMonthly: 8.75,  usdAnnual: 7.25,
-        currency: 'USD', lastVerified: '2026-10-05', source: 'slack.com/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'slack.com/pricing',
         note: 'Slack Pro — obegränsat meddelandehistorik, video-huddles, obegränsade integrationer.',
       },
       'slack-business-plus': {
         usdMonthly: 18.00, usdAnnual: 15.00,
-        currency: 'USD', lastVerified: '2026-10-05', source: 'slack.com/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'slack.com/pricing',
         note: 'Slack Business+ — SSO/SAML, kompliansexport, DLP, prioriterad support. Årsavtal 15 USD vs månadsavtal 18 USD, verifierat live 2026-08-05 av lib/verifiers/slack.mjs (den tidigare noten "årsrabatten togs bort" var felaktig — prisboken övervärderade marknaden med 20 %).',
       },
 
@@ -549,12 +549,12 @@ export const BRANCHINDEX = {
       // NÄSTA VERIFIERING: 2026-09-01
       'zoom-pro': {
         usdMonthly: 15.99, usdAnnual: 14.16,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'zoom.us/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'zoom.us/pricing',
         note: 'Zoom Pro — obegränsade möten, 1 GB moln-inspelning, schemaläggning.',
       },
       'zoom-business': {
         usdMonthly: 19.99, usdAnnual: 18.33,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'zoom.us/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'zoom.us/pricing',
         note: 'Zoom Business — SSO, inspelningsutskrifter, branding, 300 deltagare.',
       },
 
@@ -575,22 +575,22 @@ export const BRANCHINDEX = {
       //   Källan är nu Atlassian direkt, och talen är deras.
       'atlassian-jira-standard': {
         usdMonthly: 8.92,  usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'atlassian.com/software/jira/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'atlassian.com/software/jira/pricing',
         note: 'Jira Software Cloud Standard — agile boards, backlog, roadmaps.',
       },
       'atlassian-jira-premium': {
         usdMonthly: 17.88, usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'atlassian.com/software/jira/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'atlassian.com/software/jira/pricing',
         note: 'Jira Software Cloud Premium — avancerade roadmaps, sandbox, 24/7-support.',
       },
       'atlassian-confluence-standard': {
         usdMonthly: 6.55,  usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'atlassian.com/software/confluence/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'atlassian.com/software/confluence/pricing',
         note: 'Confluence Cloud Standard — wiki, templates, Teams/Slack-integrationer.',
       },
       'atlassian-confluence-premium': {
         usdMonthly: 12.87, usdAnnual: null, usdArvoAnnual: null,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'atlassian.com/software/confluence/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'atlassian.com/software/confluence/pricing',
         note: 'Confluence Cloud Premium — analytics, sandbox, 24/7-support.',
       },
     },
@@ -616,7 +616,7 @@ export const BRANCHINDEX = {
     // de-momsa aldrig ett pris som redan är exkl; jämför aldrig Team-faktura mot individpris = falsk besparing).
     // Endast NORMALPRIS — intro/promo (t.ex. 466,16 första 3 mån) ignoreras. INGEN FX (äkta SEK).
     adobeVerified: {
-      source: 'adobe.com/se', method: 'stealth (playwright-extra)', lastVerified: '2026-08-31',
+      source: 'adobe.com/se', method: 'stealth (playwright-extra)', lastVerified: '2026-10-11',
       teamExVatMonthly: {            // SEK/mån/licens, EXKL moms (årsplan, fakt. månadsvis) — ankras direkt
         'all-apps':   985,           // Creative Cloud Pro (Alla program)
         'single-app': 381,           // Fristående program (Single App), "från"
@@ -676,24 +676,24 @@ export const BRANCHINDEX = {
       // usdMonthly = usdAnnual här: det ÄR månadspriset vid årsbetalning, inte två olika tal.
       'pipedrive-lite': {
         usdMonthly: 14.00, usdAnnual: 14.00,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'pipedrive.com/en/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'pipedrive.com/en/pricing',
         note: 'Pipedrive Lite — pipeline, kontaktimport, standardrapporter, mobilapp. US$168/plats/år. (Ersätter tidigare "Essential" som Pipedrive slutat sälja.)',
       },
       'pipedrive-growth': {
         usdMonthly: 39.00, usdAnnual: 39.00,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'pipedrive.com/en/pricing',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'pipedrive.com/en/pricing',
         note: 'Pipedrive Growth — e-postintegration, automatisering, grupputskick. US$468/plats/år. (Ersätter tidigare "Advanced"; prisboken angav 29 USD för en plan som inte längre finns.)',
       },
       // HubSpot CRM — USD-baspris, konverteras runtime.
       'hubspot-starter': {
         usdMonthly: 20.00, usdAnnual: 20.00,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'hubspot.com/pricing/crm/starter',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'hubspot.com/pricing/crm/starter',
         note: 'HubSpot Sales Hub Starter — kontakter, deals, e-postspårning.',
       },
       // Zoho CRM — USD-baspris.
       'zoho-crm-standard': {
         usdMonthly: 20.00, usdAnnual: 14.00,
-        currency: 'USD', lastVerified: '2026-08-31', source: 'zoho.com/crm/zohocrm-pricing.html',
+        currency: 'USD', lastVerified: '2026-10-11', source: 'zoho.com/crm/zohocrm-pricing.html',
         note: 'Zoho CRM Standard — leads, kontakter, konton, standardrapporter.',
       },
     },
@@ -712,7 +712,7 @@ export const BRANCHINDEX = {
     // Driftvakten (scripts/verify.mjs fortnox · fabriken) bekräftar dessa veckovis — rött vid drift.
     // Fortnox är marknadsledande för svensk SMF-bokföring → starkaste publika ankaret i kategorin.
     fortnoxVerified: {
-      source: 'fortnox-prislista', lastVerified: '2026-08-31', unit: 'kr_per_manad_exkl_moms',
+      source: 'fortnox-prislista', lastVerified: '2026-10-11', unit: 'kr_per_manad_exkl_moms',
       url: 'https://www.fortnox.se/produkt/prislista',
       // Paket = det bolag faktiskt köper (det vi ankrar på).
       //
@@ -828,7 +828,7 @@ export const BRANCHINDEX = {
 
   loneadmin: {
     source: 'real-public',
-    lastVerified: '2026-08-31',
+    lastVerified: '2026-10-11',
     verifiedVia: 'playwright',
     unit: 'kr/år',
     // Strukturerat verifierat ankare — det rätt-storleks-loben (lib/loneadmin-rightsizing.js)
