@@ -11,7 +11,9 @@ name: Nightly AI Drift Monitor
 # ── Initiera golden-data (första gången, görs från mobil) ────────────────────
 # GitHub → Actions → "Nightly AI Drift Monitor" → Run workflow
 # Kryssa i "Initiera golden-data" → Run
-# Jobbet kör --update, committar test-snapshots/ och pushar automatiskt.
+# Jobbet kör --update, committar test-snapshots/ och pushar en egen gren (ai-drift/golden-<run>).
+# Nya golden-data är ett nytt facit för testerna och når main bara via PR — ett facit som anpassas
+# utan granskning är ingen vakt längre. (main kräver PR sedan PR #80; en push dit nekas.)
 # ─────────────────────────────────────────────────────────────────────────────
 
 on:
@@ -74,8 +76,9 @@ jobs:
           git add test-snapshots/
           if ! git diff --staged --quiet; then
             git commit -m "init: golden snapshots for AI drift detection ($(date +%Y-%m-%d))"
-            git push -u origin ${{ github.ref_name }}
-            echo "✅ Golden-data committad och pushad till ${{ github.ref_name }}"
+            GREN="ai-drift/golden-${{ github.run_id }}"
+            git push origin "HEAD:refs/heads/${GREN}"
+            echo "✅ Golden-data pushad till ${GREN} — öppna en PR: ${{ github.server_url }}/${{ github.repository }}/compare/main...${GREN}"
           else
             echo "ℹ️  Inga ändringar — golden-data var redan aktuell"
           fi

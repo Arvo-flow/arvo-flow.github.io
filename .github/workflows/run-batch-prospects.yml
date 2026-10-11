@@ -29,6 +29,7 @@ permissions:
 jobs:
   generate-prospects:
     name: Score leads → Generera prospect-URLs
+    environment: produktion
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

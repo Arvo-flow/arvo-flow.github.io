@@ -4,6 +4,8 @@ name: Seed avtals-testytan
 on:
   workflow_dispatch:
   push:
+    # Bara main: jobbet läser hemligheter i miljön produktion, som ingen annan gren når (HB-05).
+    branches: [main]
     paths:
       - 'scripts/seed-avtal-testyta.mjs'
 permissions:

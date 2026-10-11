@@ -24,9 +24,11 @@ on:
         description: 'Kör en enskild källa (id) eller "all"'
         default: 'all'
 
-# Stämpeln skriver tillbaka verifieringsdatum till prisboken — det kräver skrivrättighet.
+# Läsrätt räcker för alla jobb. Stämpeln når main via jobbet `stampla`, som checkar ut med en egen
+# nyckel (BOT_DEPLOY_KEY) i miljön produktion — aldrig via GITHUB_TOKEN. Matrisjobben kör
+# `npm install playwright-extra` (paket utanför låsfilen) och ska därför inte kunna skriva till repot.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   discover:
@@ -75,41 +77,101 @@ jobs:
         run: npm install playwright-extra puppeteer-extra-plugin-stealth
       - name: Verifiera ${{ matrix.source.id }} (stealth, headful via xvfb)
         if: ${{ matrix.source.needsStealth }}
+        env:
+          VERIFY_STAMPEL_UT: ${{ runner.temp }}/stampel-${{ matrix.source.id }}.json
         run: HEADFUL=1 xvfb-run -a node scripts/verify.mjs ${{ matrix.source.id }}
       - name: Verifiera ${{ matrix.source.id }}
         if: ${{ !matrix.source.needsStealth }}
+        env:
+          VERIFY_STAMPEL_UT: ${{ runner.temp }}/stampel-${{ matrix.source.id }}.json
         run: node scripts/verify.mjs ${{ matrix.source.id }}
-      # ── STÄMPELN (2026-08-21) ────────────────────────────────────────────────────────────
+      # ── STÄMPELN (2026-08-21, flyttad 2026-10-10) ────────────────────────────────────────
       # `lastVerified` uppdaterades bara när ett pris ÄNDRADES, så ett STABILT pris larmade i
-      # price-audit efter 60 dagar — för alltid, hur många gånger vakten än bekräftat det. Ett
-      # larm som går av på rätt beteende är precis det som fick smyghöjningsvakten avstängd.
-      # verify.mjs skriver nu dagens datum på de nivåer en GRÖN vakt faktiskt läste; det här
-      # steget committar ändringen. Ingen ändring → ingen commit (`git diff --quiet`).
-      #
-      # `--rebase` + retry: matrisens jobb kör parallellt och kan alla vilja skriva samma fil.
-      # continue-on-error så en misslyckad stämpling ALDRIG kan färga verifieringen röd —
-      # bokföringen får inte bli produktionsrisken.
-      - name: Committa nya verifieringsdatum
-        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
-        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
-        if: always() && github.ref == 'refs/heads/main'
-        continue-on-error: true
+      # price-audit efter 60 dagar — för alltid, hur många gånger vakten än bekräftat det.
+      # verify.mjs bestämmer här, där bevisen finns, vilka datum en GRÖN vakt får flytta, och skriver
+      # beslutet till en fil. Jobbet `stampla` nedan lägger på besluten och pushar — ett jobb, en
+      # commit, en nyckel. Förr pushade varje matrisjobb själv, med `continue-on-error` och `exit 0`:
+      # när grenskyddet på main kom (PR #80) nekades varje stämpel (GH006, körning 38090943472)
+      # medan jobbet visade grönt.
+      - name: Spara stämpelbeslutet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stampel-${{ matrix.source.id }}
+          path: ${{ runner.temp }}/stampel-${{ matrix.source.id }}.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  stampla:
+    name: Stämpla verifieringsdatum på main
+    needs: verify
+    # ENDAST FRÅN main (2026-09-10): ett workflow_dispatch på en feature branch får aldrig skriva till
+    # main. Röda källor stoppar inte de gröna: deras beslut läggs på ändå.
+    if: always() && github.ref == 'refs/heads/main' && needs.verify.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: produktion
+    steps:
+      - name: Hämta stämpelbesluten
+        uses: actions/download-artifact@v4
+        with:
+          pattern: stampel-*
+          path: ${{ runner.temp }}/stamplar
+          merge-multiple: true
+      - name: Finns det något att stämpla?
+        id: finns
         run: |
-          if git diff --quiet -- agents/recommender/branchindex.js; then
-            echo "inga nya verifieringsdatum — prisboken orörd"
-            exit 0
+          N=$(ls "${{ runner.temp }}/stamplar"/stampel-*.json 2>/dev/null | wc -l)
+          echo "n=$N" >> "$GITHUB_OUTPUT"
+          echo "$N beslutsfil(er), en per verifierare som körde klart (en röd källas fil är tom)"
+      # Utan nyckeln kan stämpeln inte nå main. Det är ett verkligt fel, alltså rött — aldrig grönt.
+      - name: Botnyckeln finns i produktion
+        if: steps.finns.outputs.n != '0'
+        env:
+          HAR_NYCKEL: ${{ secrets.BOT_DEPLOY_KEY != '' }}
+        run: |
+          if [ "$HAR_NYCKEL" != "true" ]; then
+            echo "::error::BOT_DEPLOY_KEY saknas i miljön produktion — verifieringsdatumen kan inte nå main. Se ops/BOTNYCKELN.md."
+            exit 1
           fi
+      - name: Checka ut main med botnyckeln
+        if: steps.finns.outputs.n != '0'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          ssh-key: ${{ secrets.BOT_DEPLOY_KEY }}
+      - uses: actions/setup-node@v4
+        if: steps.finns.outputs.n != '0'
+        with:
+          node-version: '20'
+      # Grenskyddet släpper igenom nyckeln, alltså avgör stampelvakt.mjs FÖRE varje push att commiten
+      # bara flyttar lastVerified-datum framåt. En nekad push hämtar en färsk main och stämplar om —
+      # ingen rebase, inga konflikter. Efter tre nekade försök är jobbet RÖTT.
+      # Ref-villkoret här är TF-11:s form (varje steg som pushar till main bär det). Det som verkar är
+      # jobbets villkor ovan: på en annan ref startar jobbet aldrig, så den här raden kan inte fälla något.
+      - name: Committa, vakta och pusha
+        if: steps.finns.outputs.n != '0' && github.ref == 'refs/heads/main'
+        env:
+          BESLUT: ${{ runner.temp }}/stamplar
+        run: |
           git config user.email "bot@arvoflow.se"
           git config user.name "Arvo Verify Bot"
-          git add agents/recommender/branchindex.js
-          git commit -m "verifiering: ${{ matrix.source.id }} bekräftade sina nivåer mot källan [skip ci]"
-          # Stealth-/browser-jobben kör `npm install`, vilket lämnar package.json och
-          # package-lock.json ändrade. `git pull --rebase` vägrar då med "You have unstaged
-          # changes" och stämpeln föll — telia-vaxel var GRÖN, hade räknat fram sitt datum, och
-          # kunde ändå inte skriva det. Installationsartefakterna är inte data; de kastas.
-          git checkout -- . 2>/dev/null || true
-          for i in 1 2 3 4 5; do
-            git pull --rebase origin main && git push origin HEAD:main && exit 0
-            echo "push $i misslyckades — väntar $((i*3))s"; sleep $((i*3))
+          stampla() {
+            UT=$(node scripts/stampla.mjs "$BESLUT") || return 2
+            echo "$UT"
+            git diff --quiet -- agents/recommender/branchindex.js && return 1
+            git add agents/recommender/branchindex.js
+            git commit -q -m "verifiering: gröna verifierare bekräftade sina nivåer mot källan [skip ci]" -m "$UT" || return 2
+            node scripts/stampelvakt.mjs "$(git rev-parse HEAD~1)" || return 2
+          }
+          for i in 1 2 3; do
+            r=0; stampla || r=$?
+            if [ $r -eq 1 ]; then echo "inga datum att flytta (skälet står på stampla-raden ovan)"; exit 0; fi
+            if [ $r -ne 0 ]; then exit 1; fi
+            if git push origin HEAD:main; then echo "✓ stämpeln ligger på main"; exit 0; fi
+            echo "push $i nekad — hämtar en färsk main och stämplar om"
+            sleep $((i * ${STAMPEL_VANTA_S:-5}))
+            git fetch -q origin main && git reset -q --hard origin/main
           done
-          echo "kunde inte pusha stämpeln efter 5 försök"; exit 0
+          echo "::error::stämpeln nekades av main tre gånger. GH006 betyder att BOT_DEPLOY_KEY saknar undantag i rulesetet (se ops/BOTNYCKELN.md)."
+          exit 1

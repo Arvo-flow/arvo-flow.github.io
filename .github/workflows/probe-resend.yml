@@ -5,6 +5,8 @@ name: Probe Resend attachments
 on:
   workflow_dispatch:
   push:
+    # Bara main: jobbet läser hemligheter i miljön produktion, som ingen annan gren når (HB-05).
+    branches: [main]
     paths:
       - 'ops/probe.trigger'
 
