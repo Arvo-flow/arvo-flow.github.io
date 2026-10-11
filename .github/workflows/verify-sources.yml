@@ -134,6 +134,32 @@ jobs:
             echo "::error::BOT_DEPLOY_KEY saknas i miljön produktion — verifieringsdatumen kan inte nå main. Se ops/BOTNYCKELN.md."
             exit 1
           fi
+      # Säger VAD som är fel med nyckeln innan git gör det med «Permission denied (publickey)», som ser
+      # likadant ut oavsett orsak (2026-10-11, körning 38131322678). Fingeravtrycket är en hash av den
+      # publika nyckeln och får skrivas ut; den privata nyckeln skrivs aldrig och filen raderas (SP-12).
+      - name: Botnyckeln känns igen av GitHub
+        if: steps.finns.outputs.n != '0'
+        env:
+          BOT_DEPLOY_KEY: ${{ secrets.BOT_DEPLOY_KEY }}
+        run: |
+          umask 077
+          K="$RUNNER_TEMP/botnyckel"
+          trap 'rm -f "$K" "$K.pub" "$K.hosts"' EXIT
+          printf '%s\n' "$BOT_DEPLOY_KEY" > "$K"
+          if ! ssh-keygen -y -f "$K" > "$K.pub" 2>/dev/null; then
+            echo "::error::BOT_DEPLOY_KEY är ingen läsbar privat nyckel. Lägg in hela filen arvo-bot (inte arvo-bot.pub), med raderna BEGIN och END. Se ops/BOTNYCKELN.md."
+            exit 1
+          fi
+          FP=$(ssh-keygen -lf "$K.pub")
+          echo "Nyckelns fingeravtryck: $FP"
+          SVAR=$(ssh -i "$K" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$K.hosts" -T git@github.com 2>&1 || true)
+          echo "GitHub svarar: $SVAR"
+          REPO="${GITHUB_REPOSITORY,,}"
+          case "${SVAR,,}" in
+            *"hi $REPO!"*) echo "✓ GitHub känner igen nyckeln som deploy key för $GITHUB_REPOSITORY" ;;
+            *"hi "*) echo "::error::Nyckeln hör till något annat än $GITHUB_REPOSITORY. Lägg till arvo-bot.pub som deploy key i just det här repot. Se ops/BOTNYCKELN.md."; exit 1 ;;
+            *) echo "::error::GitHub känner inte igen nyckeln ($FP). Jämför fingeravtrycket med Settings → Deploy keys: saknas nyckeln där, lägg till arvo-bot.pub; står ett annat fingeravtryck där, hör paren inte ihop — skapa ett nytt par och byt båda. Se ops/BOTNYCKELN.md."; exit 1 ;;
+          esac
       - name: Checka ut main med botnyckeln
         if: steps.finns.outputs.n != '0'
         uses: actions/checkout@v4
@@ -171,7 +197,10 @@ jobs:
             if git push origin HEAD:main; then echo "✓ stämpeln ligger på main"; exit 0; fi
             echo "push $i nekad — hämtar en färsk main och stämplar om"
             sleep $((i * ${STAMPEL_VANTA_S:-5}))
-            git fetch -q origin main && git reset -q --hard origin/main
+            # Var för sig: `fetch && reset` under bash -e lät en misslyckad fetch passera tyst, och nästa
+            # varv läste den redan committade stämpeln som «inga datum att flytta» (tredje blickens V1, SP-07).
+            git fetch -q origin main || { echo "::error::main gick inte att hämta efter en nekad push — stämpeln nådde inte main."; exit 1; }
+            git reset -q --hard origin/main
           done
-          echo "::error::stämpeln nekades av main tre gånger. GH006 betyder att BOT_DEPLOY_KEY saknar undantag i rulesetet (se ops/BOTNYCKELN.md)."
+          echo "::error::stämpeln nekades av main tre gånger. Läs pushens felrad ovan: «GH006» = deploy keys saknar undantag i rulesetet, «read only» = kryssa i Allow write access på nyckeln (se ops/BOTNYCKELN.md)."
           exit 1

@@ -214,6 +214,15 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > avtryckets producent i `verify.mjs` prövas inte, `merge-multiple` låter ett jobb skriva över ett
 > annat jobbs beslut (obekräftat), läsaren ser inte `toJSON(secrets)`, och SP-08 låser inte
 > avtryckets kornighet. Båda granskningarna: `ops/GRANSKNING-botnyckeln-andra.md`, `-tredje.md`.
+> **Första skarpa körningen (#47, 11 okt) blev röd av rätt skäl:** hemligheten fanns, men GitHub
+> vägrade nyckeln redan vid läsning («Permission denied (publickey)»). Den vägran ser likadan ut
+> oavsett orsak, så jobbet prövar nu nyckeln före utcheckningen och säger vilken orsak det är:
+> - ingen privat nyckel;
+> - nyckeln hör till ett annat repo;
+> - GitHub känner inte igen den. Då skrivs fingeravtrycket ut, så att det kan jämföras med Deploy keys.
+>
+> Det testas av SP-12, och 6 sabotage fällde det. Tredje blickens V1 (fetch-felet som gick grönt) är
+> lagad i samma steg (SP-07, 2 sabotage). Felsökningen står i `ops/BOTNYCKELN.md`.
 > **Samma grind, andra hållet:** åtta arbetsflöden startade sitt produktionsjobb på en push till VILKEN
 > gren som helst (en triggerfil eller ett skript i `paths`). Före PR #80 körde de där med hemligheterna,
 > och det var läckan. Efter PR #80 kan de bara bli röda där. Avläst på den här PR:ens gren: två jobb

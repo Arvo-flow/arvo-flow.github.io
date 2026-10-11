@@ -208,6 +208,18 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     assert.match(nej.ut, /::error::stämpeln nekades/);
     assert.equal(huvud(), fore);
 
+    // V1 (tredje blicken): push nekas OCH main går inte att hämta efteråt. Förr gav `fetch && reset`
+    // under bash -e ett tyst «inga datum att flytta», exit 0. Nu rött. Klonen pekar på en symlänk som
+    // kroken tar bort, så nästa fetch inte når något.
+    const lank = join(tmp, 'fjarr-lank.git');
+    sh(`ln -s ${fjarr} ${lank} && git remote set-url origin ${lank}`, klon);
+    writeFileSync(join(fjarr, 'hooks/pre-receive'), `#!/bin/sh\nrm -f ${lank}\necho "GH006" >&2\nexit 1\n`);
+    const borta = kor();
+    assert.equal(borta.kod, 1, `push och fetch nekade gick ut ${borta.kod}:\n${borta.ut}`);
+    assert.match(borta.ut, /::error::main gick inte att hämta/);
+    assert.equal(huvud(), fore);
+    sh(`git remote set-url origin ${fjarr} && git fetch -q origin && git reset -q --hard origin/main`, klon);
+
     // Motprov: main tar emot — datumen och INGET annat når main.
     sh('rm hooks/pre-receive', fjarr);
     sh('git fetch -q origin && git reset -q --hard origin/main', klon);
@@ -310,5 +322,69 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
       'nyckeln förbi grenskyddet får bara nå jobbet som kör stampelvakten före varje push');
     // Sonden läser den bara för att pröva närvaron: skriptet startar inga processer (alltså ingen git/ssh).
     assert.doesNotMatch(readFileSync(join(ROT, 'scripts/probe-hemligheter.mjs'), 'utf8'), /child_process|\bexecFile|\bspawn\(/);
+  });
+
+  test('SP-12 · diagnossteget säger vad som är fel med botnyckeln, skriver aldrig ut den och raderar filen', () => {
+    const yaml = readFileSync(join(ROT, '.github/workflows/verify-sources.yml'), 'utf8');
+    const rader = yaml.split('\n');
+    const i = rader.findIndex((r) => r.includes('- name: Botnyckeln känns igen av GitHub'));
+    const r0 = rader.findIndex((r, j) => j > i && /^ {8}run: \|$/.test(r));
+    assert.ok(i > 0 && r0 > i, 'diagnossteget hittades inte');
+    const skript = [];
+    for (let j = r0 + 1; j < rader.length && (rader[j] === '' || rader[j].startsWith('          ')); j++) skript.push(rader[j].slice(10));
+    // Steget ligger före utcheckningen, så att felet beskrivs innan git säger «Permission denied».
+    assert.ok(i < rader.findIndex((r) => r.includes('- name: Checka ut main med botnyckeln')));
+
+    // ssh och ssh-keygen finns inte i sviten: stubbar som svarar som de riktiga.
+    const tmp = mkdtempSync(join(tmpdir(), 'botnyckel-'));
+    const bin = join(tmp, 'bin');
+    mkdirSync(bin);
+    writeFileSync(join(bin, 'ssh-keygen'), `#!/bin/sh
+case "$1" in
+  -y) grep -q 'BEGIN OPENSSH PRIVATE KEY' "$3" && { echo 'ssh-ed25519 AAAAPUBLIK arvo-verify-bot'; exit 0; }; echo 'Load key: invalid format' >&2; exit 1 ;;
+  -lf) echo '256 SHA256:FingeravtryckXYZ arvo-verify-bot (ED25519)'; exit 0 ;;
+esac
+exit 2
+`);
+    writeFileSync(join(bin, 'ssh'), '#!/bin/sh\necho "$FAKE_SSH_SVAR" >&2\nexit 1\n');
+    chmodSync(join(bin, 'ssh-keygen'), 0o755);
+    chmodSync(join(bin, 'ssh'), 0o755);
+    const HEMLIG = 'HEMLIGNYCKELKROPP0123456789';
+    const PRIVAT = `-----BEGIN OPENSSH PRIVATE KEY-----\n${HEMLIG}\n-----END OPENSSH PRIVATE KEY-----`; // hemlighet-ok: påhittad nyckelkropp för stubben, inget nyckelmaterial
+    const kor = (nyckel, svar) => {
+      const temp = mkdtempSync(join(tmp, 'runner-'));
+      const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, BOT_DEPLOY_KEY: nyckel,
+        GITHUB_REPOSITORY: 'Arvo-flow/arvo-flow.github.io', FAKE_SSH_SVAR: svar };
+      let kod = 0, ut = '';
+      try { ut = execFileSync('bash', ['-e', '-c', skript.join('\n')], { env, encoding: 'utf8', stdio: 'pipe' }); }
+      catch (e) { kod = e.status; ut = `${e.stdout}${e.stderr}`; }
+      return { kod, ut, kvar: readdirSync(temp) };
+    };
+
+    const ok = kor(PRIVAT, "Hi Arvo-flow/arvo-flow.github.io! You've successfully authenticated, but GitHub does not provide shell access.");
+    assert.equal(ok.kod, 0, ok.ut);
+    assert.match(ok.ut, /✓ GitHub känner igen nyckeln/);
+    assert.match(ok.ut, /SHA256:FingeravtryckXYZ/);
+
+    const okand = kor(PRIVAT, 'git@github.com: Permission denied (publickey).');
+    assert.equal(okand.kod, 1);
+    assert.match(okand.ut, /::error::GitHub känner inte igen nyckeln \(256 SHA256:FingeravtryckXYZ/);
+
+    const annat = kor(PRIVAT, "Hi Arvo-flow/annat-repo! You've successfully authenticated, but GitHub does not provide shell access.");
+    assert.equal(annat.kod, 1);
+    assert.match(annat.ut, /::error::Nyckeln hör till något annat än Arvo-flow\/arvo-flow\.github\.io/);
+
+    const publik = kor('ssh-ed25519 AAAAPUBLIK arvo-verify-bot', 'spelar ingen roll');
+    assert.equal(publik.kod, 1);
+    assert.match(publik.ut, /::error::BOT_DEPLOY_KEY är ingen läsbar privat nyckel/);
+
+    // Motprov: GitHub skriver repots namn med andra versaler än GITHUB_REPOSITORY — fortfarande rätt nyckel.
+    const versaler = kor(PRIVAT, "Hi arvo-flow/Arvo-Flow.github.io! You've successfully authenticated.");
+    assert.equal(versaler.kod, 0, versaler.ut);
+
+    for (const r of [ok, okand, annat, publik, versaler]) {
+      assert.doesNotMatch(r.ut, new RegExp(HEMLIG), 'den privata nyckeln skrevs ut');
+      assert.deepEqual(r.kvar, [], `nyckelfiler ligger kvar: ${r.kvar}`);
+    }
   });
 });
