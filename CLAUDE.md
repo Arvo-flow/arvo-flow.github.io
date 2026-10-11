@@ -208,6 +208,12 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > sabotage var en no-op per konstruktion och räknas inte. **Och mitt eget test skrev till den riktiga
 > prisboken** när ett sabotage stängde av namnkontrollen; det syntes i `git status`, inte i sviten.
 > Testets beslut bär nu ett avtryck som aldrig kan matcha. Grundarens steg: `ops/BOTNYCKELN.md`.
+> **Tredje blicken på lagningen: MERGAS, inga [KUND].** Avtrycket mätt över verklig historik: 56 av 56
+> botstämplar lämnade det orört, 3 av 3 mänskliga ändringar flyttade det. Fem [VAKT] lagas framåt
+> enligt stoppregeln: pushsteget går grönt när både push och fetch misslyckas (`&&` utan errexit),
+> avtryckets producent i `verify.mjs` prövas inte, `merge-multiple` låter ett jobb skriva över ett
+> annat jobbs beslut (obekräftat), läsaren ser inte `toJSON(secrets)`, och SP-08 låser inte
+> avtryckets kornighet. Båda granskningarna: `ops/GRANSKNING-botnyckeln-andra.md`, `-tredje.md`.
 > **Samma grind, andra hållet:** åtta arbetsflöden startade sitt produktionsjobb på en push till VILKEN
 > gren som helst (en triggerfil eller ett skript i `paths`). Före PR #80 körde de där med hemligheterna,
 > och det var läckan. Efter PR #80 kan de bara bli röda där. Avläst på den här PR:ens gren: två jobb
