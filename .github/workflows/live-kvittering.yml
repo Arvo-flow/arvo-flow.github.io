@@ -4,6 +4,8 @@ name: Live kvittering (E2E genom testytan)
 on:
   workflow_dispatch:
   push:
+    # Bara main: jobbet läser hemligheter i miljön produktion, som ingen annan gren når (HB-05).
+    branches: [main]
     paths:
       - 'scripts/live-kvittering-screenshot.mjs'
 permissions:

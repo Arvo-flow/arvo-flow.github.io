@@ -7,6 +7,8 @@ name: Rummet efter prisboksgrinden (regel 8)
 on:
   workflow_dispatch:
   push:
+    # Bara main: jobbet läser hemligheter i miljön produktion, som ingen annan gren når (HB-05).
+    branches: [main]
     paths:
       - 'scripts/screenshot-rummet-prisboken.mjs'
 

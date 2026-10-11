@@ -176,6 +176,55 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > alla fällde. **Uttalad blindfläck:** grinden ser en fil med rätt huvud, aldrig vem som skrev den. Det
 > som binder en ANNAN blick är grenskyddets krav på godkänd review — en repoinställning, inte kod.
 
+> **✅ GRENSKYDDET GAV TVÅ TYSTA GRÖNA SAMMA DAG (2026-10-10, granskningen av PR #80).** Rulesetet på
+> `main` nekar varje push utan PR, och tre schemalagda jobb pushade dit:
+> · **Verifieringsstämpeln** nekades (GH006, körning 38090943472) medan jobbet visade grönt:
+>   `continue-on-error` plus `exit 0` efter fem försök. Datumen bredvid «verifierat» hade stått still.
+> · **Kohortbyggaren** har aldrig gett en fil. Avläst i Actions-API:t: 18 körningar (7 jun – 5 okt),
+>   alla gröna, och ingen `results/sni-kohort-*.json` på main. Skriptet läser `--sni 62,…` som
+>   filnamnet «--sni» (lokalt återskapat: ENOENT). Schemat är avstängt och kraschen är röd.
+> · **ai-drift** init-läge pushade till main. Nu pushar det en egen gren för PR, eftersom nya
+>   golden-data är ett nytt facit.
+> En PR per stämpel bär inte: en PR från `GITHUB_TOKEN` startar inga arbetsflöden, och stämpeln ändrar
+> `agents/`, så Commitkravet och Andra blicken hade krävt ett påhittat sabotage. I stället fattar
+> matrisjobbet stämpelbeslutet och skriver det till en fil. Ett jobb i `produktion` lägger på besluten
+> med en egen nyckel förbi grenskyddet (`BOT_DEPLOY_KEY`). `scripts/stampelvakt.mjs` släpper bara en
+> commit där varje ändrad rad skiljer sig ENBART i ett `lastVerified`-datum som flyttas framåt.
+> SP-07 kör själva pushsteget med `bash -e` mot en lokal main, med ett nej, ett ja och ett smugglat
+> pris. Matrisjobben, som kör `npm install` utanför låsfilen, har inte längre skrivrätt. Bygget: 30
+> sabotageriktningar, alla fällde. H3 fällde först noll: HB-04:s fixtur dog på en tidigare rad.
+> **⚠️ ANDRA BLICKEN: BLOCKERAR, en [KUND] — och den satt i ett skydd jag själv tog bort.** Jag skrev
+> «färsk main i stället för rebase, inga konflikter». Men rebasens konflikt VAR skyddet: besluten lades
+> på main som den såg ut vid stämpeln, så en PR som ändrat ett pris under körningen hade fått dagens
+> «verifierat» på ett pris ingen verifierat. Granskaren körde pushsteget och såg E3 499,00 få dagens
+> datum. Nu bär varje beslut prisbokens avtryck (datumen utbytta) från verifieringens start, och
+> stämpeln läggs bara på samma prisbok (SP-08). Sex [VAKT] lagade i samma pass: besluten prövas mot
+> registret, fönstret och filnamnet (SP-09); `---`/`+++` är huvud bara före första `@@` (SP-04);
+> vaktens CLI prövas med morgondagens datum (SP-10); SP-05:s motprov prövar nu något; läsaren tar
+> citerade jobb-id och `secrets['X']` (HB-03), och HB-04 räknar med ett bredare mönster än läsarens;
+> nyckeln läses bara av `stampla` (SP-11). **Premissen mätt:** sonden dispatchad på en feature-gren
+> (körning 38093302641) gav produktionsjobbet ingen runner, medan jobbet utan miljö körde.
+> Lagningen: 14 riktningar, 17 tester fällda. V1 fällde först noll (en fix utan test), och ett
+> sabotage var en no-op per konstruktion och räknas inte. **Och mitt eget test skrev till den riktiga
+> prisboken** när ett sabotage stängde av namnkontrollen; det syntes i `git status`, inte i sviten.
+> Testets beslut bär nu ett avtryck som aldrig kan matcha. Grundarens steg: `ops/BOTNYCKELN.md`.
+> **Tredje blicken på lagningen: MERGAS, inga [KUND].** Avtrycket mätt över verklig historik: 56 av 56
+> botstämplar lämnade det orört, 3 av 3 mänskliga ändringar flyttade det. Fem [VAKT] lagas framåt
+> enligt stoppregeln: pushsteget går grönt när både push och fetch misslyckas (`&&` utan errexit),
+> avtryckets producent i `verify.mjs` prövas inte, `merge-multiple` låter ett jobb skriva över ett
+> annat jobbs beslut (obekräftat), läsaren ser inte `toJSON(secrets)`, och SP-08 låser inte
+> avtryckets kornighet. Båda granskningarna: `ops/GRANSKNING-botnyckeln-andra.md`, `-tredje.md`.
+> **Samma grind, andra hållet:** åtta arbetsflöden startade sitt produktionsjobb på en push till VILKEN
+> gren som helst (en triggerfil eller ett skript i `paths`). Före PR #80 körde de där med hemligheterna,
+> och det var läckan. Efter PR #80 kan de bara bli röda där. Avläst på den här PR:ens gren: två jobb
+> föll på 2 sekunder utan runner (`runner_id: 0`) och utan logg. Att miljöns grenregel är skälet är
+> obekräftat, eftersom felmeddelandet inte går att läsa via API:t. Nu startar de bara på main, och
+> HB-05 fäller ett produktionsjobb som en push eller PR på en annan gren kan starta. Läsaren och
+> js-yaml är överens om alla 147 flöden.
+> **Öppet:** 62 manuella arbetsflöden pushar sina mätfiler till main, och de nekas nu. Avläst per fil i
+> källan: 35 sväljer nejet med `|| echo` och går gröna. Mätvärdet står kvar i loggen, men filen når
+> aldrig main. De ska spara artefakter i stället.
+
 > **✅ GRUNDARBESLUT 2026-09-09 — STOPPREGELN: [KUND] BLOCKERAR, [VAKT] MERGAS OCH LAGAS FRAMÅT.**
 > Bevisplikten p.1 säger att ingen `lib/`-, `api/`- eller `agents/`-ändring får merga utan en andra
 > blick. Den sa inte NÄR granskningen är klar — och utan den halvan blir regeln en oändlig rekursion:

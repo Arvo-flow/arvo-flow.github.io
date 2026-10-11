@@ -3,9 +3,15 @@ name: DNS Bransch-Kohort Builder
 # ── Bygger DMARC/MX-kohortindex per SNI-segment ────────────────────────────────
 # (v2 — tvingar GitHub att re-indexera workflow_dispatch-triggern)
 #
-# Kör varje måndag 03:00 UTC + manuellt.
-# Hämtar ~500 domäner per SNI från allabolag.se, kör DNS-kontroll (inga API-nycklar),
-# sparar results/sni-kohort-YYYY-MM-DD.json och committar tillbaka till main.
+# ⚠️ SCHEMAT AVSTÄNGT 2026-10-10. Avläst samma dag i Actions-API:t: 18 körningar (17 schemalagda,
+# 1 manuell, 7 jun – 5 okt), alla gröna, och ingen results/sni-kohort-*.json finns på main. I körningen 5 okt (37292514326) tog steget
+# «Kör kohort-builder» 0 sekunder. Lokalt återskapat: skriptet läser `--sni 62,...` som FILNAMNET
+# «--sni» (ENOENT), eftersom `args[args.indexOf('--domains') + 1]` blir args[0] när flaggan saknas.
+# `continue-on-error` dolde kraschen. Schemat slås på igen först när skriptet bevisat en körning
+# med filer, och när kohortens påståenden («X % av bolag i er bransch …») granskats som prospektyta.
+#
+# Manuellt: hämtar ~500 domäner per SNI från allabolag.se, kör DNS-kontroll (inga API-nycklar),
+# sparar results/sni-kohort-YYYY-MM-DD.json och pushar en egen gren för PR — aldrig till main.
 #
 # score-leads.mjs läser senaste filen automatiskt och injicerar
 # "X av Y bolag i er bransch har DMARC aktiverat" i findings[].
@@ -16,8 +22,6 @@ name: DNS Bransch-Kohort Builder
 # Manuell körning: Actions → "DNS Bransch-Kohort Builder" → Run workflow
 
 on:
-  schedule:
-    - cron: '0 3 * * 1'   # Varje måndag 03:00 UTC
   workflow_dispatch:
     inputs:
       sni_codes:
@@ -55,13 +59,11 @@ jobs:
 
       - name: Kör kohort-builder
         id: build
-        continue-on-error: true
         run: |
           SNI="${{ github.event.inputs.sni_codes || '62,70,71,73' }}"
           LIMIT="${{ github.event.inputs.limit || '500' }}"
           node scripts/build-sni-kohort.mjs --sni "$SNI" --limit "$LIMIT"
-        # Inga secrets behövs — DNS + HTTP mot allabolag.se
-        # continue-on-error: allabolag.se kan blockera — vi vill ändå inte få felmail
+        # Inga secrets behövs — DNS + HTTP mot allabolag.se. Ingen continue-on-error: en krasch är röd.
 
       - name: Kontrollera om filer skapades
         id: check
@@ -89,8 +91,10 @@ jobs:
           if ! git diff --staged --quiet; then
             git commit -m "data(kohort): DNS branschindex uppdaterat ${DATE}" \
               -m "Kört av build-sni-kohort.mjs mot SNI ${{ github.event.inputs.sni_codes || '62,70,71,73' }}. Injiceras i score-leads.mjs som 'X av Y i er bransch'-kontext."
-            git push origin main
-            echo "✅ Kohortindex committat till main"
+            # main kräver PR (grenskyddet, PR #80). Kohortdata är prospektyta och granskas som sådan.
+            GREN="data/kohort-${DATE}-${{ github.run_id }}"
+            git push origin "HEAD:refs/heads/${GREN}"
+            echo "✅ Kohortindex pushat till ${GREN} — öppna en PR: ${{ github.server_url }}/${{ github.repository }}/compare/main...${GREN}"
           else
             echo "ℹ️ Ingen förändring sedan senaste körning"
           fi

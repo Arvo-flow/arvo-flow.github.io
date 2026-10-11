@@ -11,28 +11,28 @@
 //   Läsbehörighet bevisar inte skrivbehörighet: en read-only-token svarar på GET men vägrar SET.
 //   Därför prövas båda, mot en egen nyckel med 60 s TTL som ingen produktionskod läser.
 import { getKv } from '../lib/kv.js';
+import { ALLA_HEMLIGHETER, KRAVDA_I_PRODUKTION } from './hemlighetsbindning.mjs';
 
 const satt = (n) => (typeof process.env[n] === 'string' && process.env[n].trim() !== '' ? 'SATT' : 'SAKNAS');
 
-// De fyra som flyttats till miljön `produktion`. Värdet skrivs aldrig — bara SATT eller SAKNAS.
-const FLYTTADE = ['ANTHROPIC_API_KEY', 'RESEND_API_KEY', 'CRON_SECRET', 'DATABASE_URL'];
+// Listorna bor i scripts/hemlighetsbindning.mjs, låsta mot arbetsflödena (HB-02). Värdet skrivs aldrig.
 const krav = process.argv.find((a) => a.startsWith('--krav='))?.slice('--krav='.length);
 if (krav === 'satt' || krav === 'saknas') {
   const fel = [];
-  for (const n of FLYTTADE) {
+  for (const n of krav === 'saknas' ? ALLA_HEMLIGHETER : KRAVDA_I_PRODUKTION) {
     const lage = satt(n);
     console.log(`  ${n.padEnd(18)} ${lage}`);
     if ((krav === 'satt' && lage !== 'SATT') || (krav === 'saknas' && lage !== 'SAKNAS')) fel.push(n);
   }
   if (fel.length) {
     console.error(krav === 'saknas'
-      ? '\n✗ LÄCKAN ÄR ÖPPEN — de här nycklarna når ett jobb utan miljön produktion. Radera repository-kopiorna, inte miljö-kopiorna.'
-      : '\n✗ Miljön produktion gav inte nycklarna.');
+      ? `\n✗ LÄCKAN ÄR ÖPPEN — ${fel.join(', ')} når ett jobb utan miljön produktion. Flytta dem till miljön (om de behövs) och radera repository-kopiorna.`
+      : `\n✗ Miljön produktion gav inte ${fel.join(', ')}.`);
     process.exit(1);
   }
   console.log(krav === 'saknas'
-    ? '\n✓ Inget jobb utan miljön ser de fyra nycklarna.'
-    : '\n✓ Miljön produktion bär de fyra nycklarna.');
+    ? `\n✓ Inget jobb utan miljön ser någon av de ${ALLA_HEMLIGHETER.length} hemligheterna.`
+    : `\n✓ Miljön produktion bär de ${KRAVDA_I_PRODUKTION.length} hemligheter produktionsjobben behöver.`);
   process.exit(0);
 }
 
