@@ -22,8 +22,10 @@ innan du ändrar något. Där den här filen och bibeln säger olika gäller bib
   `agents/`. Data i Neon Postgres och Vercel KV. E-post via Resend.
 - Skript och sonder i `scripts/`, tester i `tests/` (`npm run test:algo`). Arbetsflöden i
   `.github/workflows/`.
-- Betalning: det finns ingen Stripe-integration och ingen Stripe-specifikation i repot. Bygg ingen
-  betalväg utan en specifikation i `ops/` som grundaren godkänt.
+- Betalning: det finns ingen Stripe-integration i koden (inget Stripe-paket, inga anrop; avläst
+  2026-10-11). Stripe förekommer som bevakad leverantör (kortterminal), som skiss för arvodesfakturering
+  i `agents/orchestrator/README.md` och som biträde på integritetssidan. Bygg ingen betalväg utan en
+  specifikation i `ops/` som grundaren godkänt.
 
 ## Så når en ändring main
 - `main` är skyddad. Allt går via en gren och en PR med fyra obligatoriska kontroller (Grinden):

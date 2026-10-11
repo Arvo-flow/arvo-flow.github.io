@@ -190,10 +190,24 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > matrisjobbet stämpelbeslutet och skriver det till en fil. Ett jobb i `produktion` lägger på besluten
 > med en egen nyckel förbi grenskyddet (`BOT_DEPLOY_KEY`). `scripts/stampelvakt.mjs` släpper bara en
 > commit där varje ändrad rad skiljer sig ENBART i ett `lastVerified`-datum som flyttas framåt.
-> SP-01..07: SP-07 kör själva pushsteget med `bash -e` mot en lokal main, med ett nej, ett ja och ett
-> smugglat pris. Matrisjobben, som kör `npm install` utanför låsfilen, har inte längre skrivrätt.
-> 26 sabotage, alla fällde. H3 fällde först noll: HB-04:s fixtur dog på en tidigare rad, så grenen
-> «inga jobbrubriker» prövades aldrig. Grundarens steg: `ops/BOTNYCKELN.md`.
+> SP-07 kör själva pushsteget med `bash -e` mot en lokal main, med ett nej, ett ja och ett smugglat
+> pris. Matrisjobben, som kör `npm install` utanför låsfilen, har inte längre skrivrätt. Bygget: 30
+> sabotageriktningar, alla fällde. H3 fällde först noll: HB-04:s fixtur dog på en tidigare rad.
+> **⚠️ ANDRA BLICKEN: BLOCKERAR, en [KUND] — och den satt i ett skydd jag själv tog bort.** Jag skrev
+> «färsk main i stället för rebase, inga konflikter». Men rebasens konflikt VAR skyddet: besluten lades
+> på main som den såg ut vid stämpeln, så en PR som ändrat ett pris under körningen hade fått dagens
+> «verifierat» på ett pris ingen verifierat. Granskaren körde pushsteget och såg E3 499,00 få dagens
+> datum. Nu bär varje beslut prisbokens avtryck (datumen utbytta) från verifieringens start, och
+> stämpeln läggs bara på samma prisbok (SP-08). Sex [VAKT] lagade i samma pass: besluten prövas mot
+> registret, fönstret och filnamnet (SP-09); `---`/`+++` är huvud bara före första `@@` (SP-04);
+> vaktens CLI prövas med morgondagens datum (SP-10); SP-05:s motprov prövar nu något; läsaren tar
+> citerade jobb-id och `secrets['X']` (HB-03), och HB-04 räknar med ett bredare mönster än läsarens;
+> nyckeln läses bara av `stampla` (SP-11). **Premissen mätt:** sonden dispatchad på en feature-gren
+> (körning 38093302641) gav produktionsjobbet ingen runner, medan jobbet utan miljö körde.
+> Lagningen: 14 riktningar, 17 tester fällda. V1 fällde först noll (en fix utan test), och ett
+> sabotage var en no-op per konstruktion och räknas inte. **Och mitt eget test skrev till den riktiga
+> prisboken** när ett sabotage stängde av namnkontrollen; det syntes i `git status`, inte i sviten.
+> Testets beslut bär nu ett avtryck som aldrig kan matcha. Grundarens steg: `ops/BOTNYCKELN.md`.
 > **Samma grind, andra hållet:** åtta arbetsflöden startade sitt produktionsjobb på en push till VILKEN
 > gren som helst (en triggerfil eller ett skript i `paths`). Före PR #80 körde de där med hemligheterna,
 > och det var läckan. Efter PR #80 kan de bara bli röda där. Avläst på den här PR:ens gren: två jobb

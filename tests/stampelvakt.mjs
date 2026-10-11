@@ -18,11 +18,11 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, copyFileSync, chmodSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync, copyFileSync, chmodSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { granskaStampeldiff, STAMPELFIL } from '../scripts/stampelvakt.mjs';
-import { tillampaStamplar } from '../scripts/stampla.mjs';
+import { tillampaStamplar, prisbokAvtryck, FONSTER_DAGAR } from '../scripts/stampla.mjs';
 import { jobbIArbetsflode } from '../scripts/hemlighetsbindning.mjs';
 import { VERIFIERS } from '../lib/verifiers/registry.mjs';
 
@@ -50,12 +50,18 @@ function repoMed(kalla) {
   };
 }
 
-const allaBeslut = VERIFIERS.map((v) => ({ kalla: v.id, datum: DAG, nycklar: v.bevakadeTiers ?? [], kategori: v.bevakadKategori ?? null }));
-const stamplad = tillampaStamplar(PRISBOK, allaBeslut);
+const REGISTER = Object.fromEntries(VERIFIERS.map((v) => [v.id, v]));
+const AVTRYCK = prisbokAvtryck(PRISBOK);
+const beslutFor = (v, datum = DAG, avtryck = AVTRYCK) => ({ kalla: v.id, datum, nycklar: v.bevakadeTiers ?? [], kategori: v.bevakadKategori ?? null, prisbokAvtryck: avtryck });
+const allaBeslut = VERIFIERS.map((v) => beslutFor(v));
+const stamplad = tillampaStamplar(PRISBOK, allaBeslut, { register: REGISTER, idag: DAG });
+const M365 = VERIFIERS.find((v) => v.id === 'm365');
 
 describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
   test('SP-01 · den riktiga kedjan (alla verifierares deklarationer → tillampaStamplar → git diff) släpps', () => {
-    assert.ok(stamplad.andrade.length >= 15, `bara ${stamplad.andrade.length} datum stämplades — kedjan rör inte prisboken`);
+    // Exakt, inte en tröskel: 20 deklarerade nivåer + 8 kategorier med eget datum, avläst 2026-10-10.
+    // En ny verifierare flyttar talet — och då ska någon titta (bibeln 8 sep: «trösklar är luft»).
+    assert.equal(stamplad.andrade.length, 28, `${stamplad.andrade.length} datum stämplades: ${stamplad.andrade.join(', ')}`);
     assert.ok(stamplad.andrade.includes('telia-vaxel:molnvaxel'), 'kategoridatumet (molnvaxel) stämplades inte');
     const u = granskaStampeldiff(repoMed(PRISBOK).diffEfter(stamplad.kalla), { idag: DAG });
     assert.equal(u.ok, true, u.skal);
@@ -95,9 +101,15 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     // En rad som smugglas in i en EGEN hunk, bredvid en riktig stämpel — radantalet är det enda som ser den.
     const u3 = granskaStampeldiff(repoMed(PRISBOK).diffEfter(`${stamplad.kalla}\nexport const SMUGGEL = 1;\n`), { idag: DAG });
     assert.equal(u3.ok, false); assert.match(u3.skal, /lägger aldrig till/);
+    // V1: en innehållsrad som börjar med `++`/`--` blir `+++`/`---` i diffen och fick inte läsas som ett huvud.
+    const u4 = granskaStampeldiff(repoMed(PRISBOK).diffEfter(`${stamplad.kalla}\n++ globalThis.x;\n`), { idag: DAG });
+    assert.equal(u4.ok, false, `en smugglad «++»-rad släpptes: ${u4.skal}`);
+    const med = `${PRISBOK}\n-- 133.82\n`;
+    const u5 = granskaStampeldiff(repoMed(med).diffEfter(`${tillampaStamplar(med, allaBeslut.map((b) => ({ ...b, prisbokAvtryck: prisbokAvtryck(med) })), { register: REGISTER, idag: DAG }).kalla.replace('\n-- 133.82\n', '\n++ 999.00\n')}`), { idag: DAG });
+    assert.equal(u5.ok, false, `«-- 133.82» → «++ 999.00» släpptes: ${u5.skal}`);
     assert.equal(granskaStampeldiff(`diff --git a/${STAMPELFIL} b/${STAMPELFIL}\nnew file mode 100644\n`, { idag: DAG }).ok, false);
     assert.equal(granskaStampeldiff('något helt annat\n', { idag: DAG }).ok, false);
-    assert.throws(() => tillampaStamplar(PRISBOK, [{ kalla: 'x', datum: 'igår', nycklar: [] }]), /går inte att läsa/);
+    assert.throws(() => tillampaStamplar(PRISBOK, [{ kalla: 'x', datum: 'igår', nycklar: [] }], { register: REGISTER, idag: DAG }), /okänd källa/);
   });
 
   test('SP-05 · verify.mjs skriver beslutsfilen även när den går ut rött (motprov: utan variabeln ingen fil)', () => {
@@ -108,8 +120,12 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     };
     assert.equal(kor({ VERIFY_STAMPEL_UT: join(d, 'a.json') }), 1, 'en källa utan svar ska ge rött');
     assert.deepEqual(JSON.parse(readFileSync(join(d, 'a.json'), 'utf8')), []);
-    kor({ VERIFY_STAMPEL_UT: '' });
-    assert.equal(existsSync(join(d, 'b.json')), false);
+    // Motprov (andra blickens V4): utan variabeln, i en tom katalog, skrivs ingenting någonstans där.
+    const tom = mkdtempSync(join(tmpdir(), 'verify-tom-'));
+    const env = { ...process.env, VERIFY_TIMEOUT_MS: '1' };
+    delete env.VERIFY_STAMPEL_UT;
+    try { execFileSync('node', [join(ROT, 'scripts/verify.mjs'), 'm365'], { cwd: tom, env, stdio: 'pipe', timeout: 30000 }); } catch { /* rött väntat */ }
+    assert.deepEqual(readdirSync(tom), []);
   });
 
   test('SP-06 · arbetsflödet: bara stampla-jobbet pushar till main, i produktion, med nyckeln, efter vakten, och rött vid nej', () => {
@@ -151,7 +167,9 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     const fjarr = join(tmp, 'fjarr.git');
     sh(`git init -q --bare -b main ${fjarr}`, tmp);
     const bygg = join(tmp, 'bygg');
-    for (const f of [STAMPELFIL, 'scripts/stampla.mjs', 'scripts/stampelvakt.mjs', 'lib/verifieringsstampel.js', 'lib/verifierarutfall.js', 'lib/package.json']) {
+    // stampla.mjs läser registret (lib/verifiers) för att pröva besluten, alltså följer lib/ och agents/ med.
+    for (const k of ['lib', 'agents']) cpSync(join(ROT, k), join(bygg, k), { recursive: true });
+    for (const f of ['scripts/stampla.mjs', 'scripts/stampelvakt.mjs']) {
       mkdirSync(join(bygg, f, '..'), { recursive: true });
       copyFileSync(join(ROT, f), join(bygg, f));
     }
@@ -161,7 +179,8 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     const beslut = join(tmp, 'beslut');
     mkdirSync(beslut);
     const idag = new Date().toISOString().slice(0, 10);
-    writeFileSync(join(beslut, 'stampel-m365.json'), JSON.stringify([{ kalla: 'm365', datum: idag, nycklar: ['business-basic', 'e3'], kategori: null }]));
+    const m365Beslut = (datum) => JSON.stringify([{ kalla: 'm365', datum, nycklar: ['business-basic', 'e3'], kategori: null, prisbokAvtryck: AVTRYCK }]);
+    writeFileSync(join(beslut, 'stampel-m365.json'), m365Beslut(idag));
     const kor = () => {
       try { return { kod: 0, ut: execFileSync('bash', ['-e', '-c', skript.join('\n')], { cwd: klon, env: { ...process.env, BESLUT: beslut, STAMPEL_VANTA_S: '0' }, encoding: 'utf8', stdio: 'pipe' }) }; }
       catch (e) { return { kod: e.status, ut: `${e.stdout}${e.stderr}` }; }
@@ -205,5 +224,91 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     assert.equal(igen.kod, 0, igen.ut);
     assert.match(igen.ut, /inga datum att flytta/);
     assert.equal(sh('git rev-list --count main', fjarr).trim(), '3');
+
+    // Ett beslut daterat i morgon: rött, main orörd (V3 — framtidsdatumet prövas i pushvägen).
+    const imorgon = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    writeFileSync(join(beslut, 'stampel-m365.json'), m365Beslut(imorgon));
+    const framtid = kor();
+    assert.equal(framtid.kod, 1, `ett framtida datum gick ut ${framtid.kod}:\n${framtid.ut}`);
+    assert.match(framtid.ut, /utanför körningens fönster/);
+    assert.equal(sh('git rev-list --count main', fjarr).trim(), '3');
+
+    // K1: en PR ändrar ett pris efter verifieringen. Stämpeln uteblir — grönt, med varning, main får
+    // ingen stämpel på det overifierade priset. (Granskarens repro: E3 416,77 → 499,00 fick dagens datum.)
+    const igar = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    writeFileSync(join(beslut, 'stampel-m365.json'), m365Beslut(igar));
+    sh('git fetch -q origin && git reset -q --hard origin/main', klon);
+    const e3 = "msrpMonthly: 500.12, msrpAnnual: 416.77";
+    const nuvarande = readFileSync(join(klon, STAMPELFIL), 'utf8');
+    assert.ok(nuvarande.includes(e3), 'E3-raden ser inte ut som väntat — testet prövar inget');
+    writeFileSync(join(klon, STAMPELFIL), nuvarande.replace(e3, "msrpMonthly: 600.00, msrpAnnual: 499.00"));
+    sh('git -c user.email=t@t -c user.name=t commit -qam "pris ändrat" && git push -q origin main', klon);
+    const efterPris = huvud();
+    const k1 = kor();
+    assert.equal(k1.kod, 0, k1.ut);
+    assert.match(k1.ut, /prisboken har ändrats sedan verifieringen/);
+    assert.equal(huvud(), efterPris, 'en stämpel landade på ett pris som aldrig verifierades');
+  });
+
+  test('SP-08 · ett beslut läggs bara på den prisbok som verifierades (motprov: en annan stämpel stör inte)', () => {
+    const pris = 'msrpMonthly: 160.58, msrpAnnual: 133.82, arvoAnnual: 133.82,';
+    assert.ok(PRISBOK.includes(pris));
+    const andradPris = PRISBOK.replace(pris, pris.replace('133.82, arvoAnnual', '119.48, arvoAnnual'));
+    const r = tillampaStamplar(andradPris, allaBeslut, { register: REGISTER, idag: DAG });
+    assert.deepEqual(r.andrade, []);
+    assert.equal(r.hoppade.length, allaBeslut.length);
+    // Motprov: en annan körnings stämpel har flyttat datum på main — avtrycket är detsamma, stämpeln läggs på.
+    const annanStampel = tillampaStamplar(PRISBOK, [beslutFor(M365, '2098-01-01')], { register: REGISTER, idag: '2098-01-01' }).kalla;
+    assert.notEqual(annanStampel, PRISBOK);
+    assert.equal(prisbokAvtryck(annanStampel), AVTRYCK);
+    const r2 = tillampaStamplar(annanStampel, allaBeslut, { register: REGISTER, idag: DAG });
+    assert.equal(r2.hoppade.length, 0);
+    assert.equal(r2.andrade.length, 28);
+  });
+
+  test('SP-09 · ett beslut stämplar bara det källan deklarerat, inom körningens fönster, i sin egen fil', () => {
+    const p = (b, idag = DAG) => () => tillampaStamplar(PRISBOK, [b], { register: REGISTER, idag });
+    const slack = VERIFIERS.find((v) => v.id === 'slack');
+    assert.throws(p({ ...beslutFor(M365), nycklar: [...M365.bevakadeTiers, ...slack.bevakadeTiers] }), /har inte deklarerat slack-pro/);
+    assert.throws(p({ ...beslutFor(M365), kategori: 'mobil' }), /bevakar inte kategorin/);
+    assert.throws(p(beslutFor(M365, '2098-12-23')), /utanför körningens fönster/, `${FONSTER_DAGAR + 1} dygn gammalt`);
+    assert.throws(p(beslutFor(M365, '2099-01-02')), /utanför körningens fönster/);
+    assert.doesNotThrow(p(beslutFor(M365, '2098-12-24')), `${FONSTER_DAGAR} dygn bakåt ska släppas`);
+    assert.throws(p({ ...beslutFor(M365), prisbokAvtryck: undefined }), /saknar prisbokens avtryck/);
+    assert.throws(() => tillampaStamplar(PRISBOK, [beslutFor(M365)], { idag: DAG }), /registret saknas/);
+    // Filen bär källans namn: ett m365-beslut i stampel-adobe.json fäller hela stämpeln.
+    const d = mkdtempSync(join(tmpdir(), 'stampla-fil-'));
+    // Avtrycket kan aldrig matcha: går namnkontrollen sönder ska testet falla, aldrig stämpla den riktiga prisboken.
+    writeFileSync(join(d, 'stampel-adobe.json'), JSON.stringify([beslutFor(M365, new Date().toISOString().slice(0, 10), '0'.repeat(64))]));
+    let kod = 0, ut = '';
+    try { execFileSync('node', [join(ROT, 'scripts/stampla.mjs'), d], { cwd: tmpdir(), encoding: 'utf8', stdio: 'pipe' }); }
+    catch (e) { kod = e.status; ut = `${e.stdout}${e.stderr}`; }
+    assert.equal(kod, 1); assert.match(ut, /annan källas namn/);
+  });
+
+  test('SP-10 · vaktens CLI räknar «i dag» själv: ett datum i morgon fäller, i dag släpps', () => {
+    const rad = "currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',";
+    const kor = (datum) => {
+      const r = repoMed(PRISBOK);
+      r.diffEfter(PRISBOK.replace(rad, rad.replace('2026-10-05', datum)));
+      try { execFileSync('node', [join(ROT, 'scripts/stampelvakt.mjs'), 'HEAD~1'], { cwd: r.dir, stdio: 'pipe' }); return 0; }
+      catch (e) { return e.status; }
+    };
+    assert.equal(kor(new Date(Date.now() + 86400000).toISOString().slice(0, 10)), 1);
+    assert.equal(kor(new Date().toISOString().slice(0, 10)), 0, 'motprov: dagens datum ska släppas');
+  });
+
+  test('SP-11 · botnyckeln läses bara av stampla-jobbet (och av sonden som prövar att den finns)', () => {
+    const dir = join(ROT, '.github/workflows');
+    const lasare = [];
+    for (const f of readdirSync(dir).filter((x) => /\.ya?ml$/.test(x))) {
+      for (const j of jobbIArbetsflode(readFileSync(join(dir, f), 'utf8'))) {
+        if (j.hemligheter.includes('BOT_DEPLOY_KEY')) lasare.push(`${f}#${j.jobb}`);
+      }
+    }
+    assert.deepEqual(lasare.sort(), ['probe-hemligheter.yml#sond', 'probe-hemligheter.yml#utan-miljo', 'verify-sources.yml#stampla'],
+      'nyckeln förbi grenskyddet får bara nå jobbet som kör stampelvakten före varje push');
+    // Sonden läser den bara för att pröva närvaron: skriptet startar inga processer (alltså ingen git/ssh).
+    assert.doesNotMatch(readFileSync(join(ROT, 'scripts/probe-hemligheter.mjs'), 'utf8'), /child_process|\bexecFile|\bspawn\(/);
   });
 });

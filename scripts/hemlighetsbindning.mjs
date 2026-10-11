@@ -28,12 +28,15 @@ export const KRAVDA_I_PRODUKTION = ['ANTHROPIC_API_KEY', 'ARVO_ADMIN_SECRET', 'B
 // Det enda jobb som MEDVETET läser hemligheter utan miljön: läckkontrollens motprov (SV-21).
 export const MOTPROVSJOBB = 'probe-hemligheter.yml#utan-miljo';
 
-const JOBBRUBRIK = /^ {2}([A-Za-z0-9_-]+):\s*(#.*)?$/;
-const HEMLIGHET = /secrets\.([A-Za-z_][A-Za-z0-9_]*)/g;
+// Ett jobb-id kan stå citerat ('b': / "b":). Utan det slogs ett citerat jobb ihop med jobbet ovanför
+// och ärvde dess miljö (andra blickens V5, HB-03).
+export const JOBBRUBRIK = /^ {2}(['"]?)([A-Za-z0-9_-]+)\1:\s*(#.*)?$/;
+// Båda formerna: secrets.X och secrets['X'] / secrets["X"].
+const HEMLIGHET = /secrets(?:\.([A-Za-z_][A-Za-z0-9_]*)|\[\s*['"]([A-Za-z_][A-Za-z0-9_]*)['"]\s*\])/g;
 
 /** Hemlighetsnamn (utom GITHUB_TOKEN, som GitHub själv utfärdar per körning) i en textbit. */
 export function hemligheterI(text) {
-  return [...new Set([...String(text).matchAll(HEMLIGHET)].map((m) => m[1]))].filter((n) => n !== 'GITHUB_TOKEN').sort();
+  return [...new Set([...String(text).matchAll(HEMLIGHET)].map((m) => m[1] ?? m[2]))].filter((n) => n !== 'GITHUB_TOKEN').sort();
 }
 
 /**
@@ -51,7 +54,7 @@ export function jobbIArbetsflode(yaml) {
     const r = rader[i];
     if (/^\S/.test(r)) break;                      // nästa nyckel på toppnivå
     const m = r.match(JOBBRUBRIK);
-    if (m) { aktuellt = { jobb: m[1], rader: [] }; jobb.push(aktuellt); continue; }
+    if (m) { aktuellt = { jobb: m[2], rader: [] }; jobb.push(aktuellt); continue; }
     if (aktuellt) aktuellt.rader.push(r);
   }
   if (!jobb.length) throw new Error('hemlighetsbindning: `jobs:` utan jobbrubriker i den form som läses');

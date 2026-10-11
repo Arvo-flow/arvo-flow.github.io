@@ -123,7 +123,7 @@ jobs:
         run: |
           N=$(ls "${{ runner.temp }}/stamplar"/stampel-*.json 2>/dev/null | wc -l)
           echo "n=$N" >> "$GITHUB_OUTPUT"
-          echo "$N beslutsfil(er) från gröna verifierare"
+          echo "$N beslutsfil(er), en per verifierare som körde klart (en röd källas fil är tom)"
       # Utan nyckeln kan stämpeln inte nå main. Det är ett verkligt fel, alltså rött — aldrig grönt.
       - name: Botnyckeln finns i produktion
         if: steps.finns.outputs.n != '0'
@@ -166,7 +166,7 @@ jobs:
           }
           for i in 1 2 3; do
             r=0; stampla || r=$?
-            if [ $r -eq 1 ]; then echo "inga datum att flytta — main bär redan dagens stämplar"; exit 0; fi
+            if [ $r -eq 1 ]; then echo "inga datum att flytta (skälet står på stampla-raden ovan)"; exit 0; fi
             if [ $r -ne 0 ]; then exit 1; fi
             if git push origin HEAD:main; then echo "✓ stämpeln ligger på main"; exit 0; fi
             echo "push $i nekad — hämtar en färsk main och stämplar om"

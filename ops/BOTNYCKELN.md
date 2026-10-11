@@ -13,7 +13,9 @@ uppfylla det genom att hitta på texten.
 **Lösningen.** Ett jobb (`verify-sources.yml#stampla`, miljön `produktion`) får en egen nyckel förbi
 grenskyddet. Före varje push kontrollerar `scripts/stampelvakt.mjs` att commiten bara flyttar
 `lastVerified`-datum framåt och inte förbi i dag. Allt annat, som ett pris, en rad eller en annan fil,
-fäller pushen rött (SP-01..07).
+fäller pushen rött (SP-01..07, SP-10). Varje beslut bär dessutom prisbokens avtryck vid
+verifieringen, så att ett pris som ändrats under körningen aldrig får dagens datum (SP-08), och
+beslutet prövas mot källans deklaration i registret (SP-09).
 
 ## Fem steg för grundaren (ca 5 minuter)
 
@@ -37,11 +39,16 @@ fäller pushen rött (SP-01..07).
 ## Det undantaget betyder, öppet
 
 - Undantaget gäller **varje** deploy key med skrivrätt. Håll exakt en (Settings → Deploy keys).
-- Nyckeln ligger bara i miljön `produktion`, som bara jobb från `main` når. Den som vill använda den
-  måste alltså först få en ändring av ett arbetsflöde genom en granskad PR.
-- Vakten skyddar bara mot det `stampla`-jobbet skickar. Ett annat jobb som får nyckeln, i en framtida
-  granskad ändring, passerar grenskyddet utan vakten. SP-06 fäller sviten om något annat jobb i
-  `verify-sources.yml` pushar, men den ser inte andra arbetsflöden.
+- Nyckeln ligger bara i miljön `produktion`. **Avläst 2026-10-10** (körning 38093302641, sonden
+  dispatchad på en feature-gren): jobbet i `produktion` fick ingen runner och föll på 1 sekund utan att
+  köra ett steg, medan jobbet utan miljö i samma körning fick en runner och körde (motprovet). En
+  feature-gren når alltså inte miljön. Själva felmeddelandet går inte att läsa via API:t; kontrollera
+  gärna att miljöns *Deployment branches* står på `main` (Settings → Environments → produktion).
+  Den som vill använda nyckeln måste alltså först få en ändring av ett arbetsflöde genom en granskad PR.
+- Vakten skyddar bara mot det `stampla`-jobbet skickar. SP-11 fäller sviten om något annat jobb i
+  något arbetsflöde läser `BOT_DEPLOY_KEY` (utom sonden, som bara prövar att den finns). Blind för:
+  en ändring som går förbi sviten, till exempel en direkt redigering i GitHubs webbgränssnitt mot en
+  gren som sedan mergas utan att Grinden körts.
 - Stämpelcommiten bär `[skip ci]`, så Grinden körs inte i efterhand på den. Det som prövar den är
   stampelvakten, före pushen.
 

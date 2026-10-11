@@ -59,13 +59,19 @@ describe('HB · hemligheterna läses bara i miljön produktion', () => {
     const namnform = 'on: push\njobs:\n  d:\n    environment:\n      name: produktion\n    steps:\n      - run: echo ${{ secrets.Y }}\n';
     assert.deepEqual(obundnaJobb({ 'n.yml': namnform }), []);
     assert.deepEqual(hemligheterI('${{ secrets.GITHUB_TOKEN }} ${{ secrets.A_B }}'), ['A_B']);
+    // Indexformen och ett citerat jobb-id (V5): det citerade jobbet får inte ärva grannens miljö.
+    assert.deepEqual(hemligheterI("${{ secrets['C_D'] }} ${{ secrets[\"E\"] }}"), ['C_D', 'E']);
+    const citerat = "on: push\njobs:\n  a:\n    environment: produktion\n    steps:\n      - run: echo ${{ secrets.X }}\n  'b':\n    steps:\n      - run: echo ${{ secrets['Y'] }}\n";
+    assert.deepEqual(obundnaJobb({ 'q.yml': citerat }), [{ id: 'q.yml#b', hemligheter: ['Y'] }]);
   });
 
   test('HB-04 · läsaren hittar varje jobb — en form den inte förstår blir ett fel, inte ett grönt tomt svar', () => {
     let jobb = 0;
     for (const [f, y] of Object.entries(FLODEN)) {
       const rubriker = y.split('\n').slice(y.split('\n').findIndex((r) => /^jobs:/.test(r)) + 1)
-        .filter((r) => /^ {2}[A-Za-z0-9_-]+:\s*(#.*)?$/.test(r)).length;
+        // Bredare än läsarens rubrikmönster med flit: varje nyckel på två blankstegs indrag i jobs-blocket.
+        // Samma mönster som läsaren hade varit cirkulärt (andra blickens V5).
+        .filter((r) => /^ {2}[^\s#][^:]*:\s*(#.*)?$/.test(r)).length;
       assert.equal(jobbIArbetsflode(y).length, rubriker, `${f}: läsaren hittade inte varje jobb`);
       jobb += rubriker;
     }

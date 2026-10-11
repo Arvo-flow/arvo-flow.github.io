@@ -56,8 +56,10 @@ export function granskaStampeldiff(diff, { idag } = {}) {
       hunk = null;
       continue;
     }
-    if (/^(index |--- |\+\+\+ )/.test(rad)) continue;
-    if (/^(new|deleted) file mode|^(old|new) mode|^similarity index|^rename |^Binary files/.test(rad)) {
+    // Filhuvudet slutar vid första @@. Efter det är en rad som börjar med `---` eller `+++` en
+    // INNEHÅLLSRAD (en borttagen `-- x` eller tillagd `++ x`), aldrig ett huvud (andra blickens V1, SP-04).
+    if (!hunk && /^(index |--- |\+\+\+ )/.test(rad)) continue;
+    if (!hunk && /^(new|deleted) file mode|^(old|new) mode|^similarity index|^rename |^Binary files/.test(rad)) {
       return { ok: false, skal: `filen byter form, inte bara datum: ${rad.slice(0, 80)}` };
     }
     if (rad.startsWith('@@')) {
