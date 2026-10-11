@@ -28,13 +28,46 @@ beslutet prövas mot källans deklaration i registret (SP-09).
 3. **Repo → Settings → Environments → produktion → Add environment secret.** Namn: `BOT_DEPLOY_KEY`.
    Värde: hela innehållet i `arvo-bot` (den privata nyckeln, med raderna `BEGIN` och `END`).
    Lägg den **inte** som repository-hemlighet: då når den varje gren, och läckkontrollen larmar.
-   Radera sedan båda filerna lokalt.
+   Spara filerna tills steg 5 är grönt (se Felsökning), och radera dem sedan.
 4. **Repo → Settings → Rules → Rulesets →** rulesetet för `main` **→ Bypass list → Add bypass →
    Deploy keys → Always allow.** Spara.
 5. **Prova:** Actions → *Verify price sources (factory)* → Run workflow på `main`. I jobbet
    *Stämpla verifieringsdatum på main* ska loggen visa `✓ stampelvakt` och `✓ stämpeln ligger på
    main` (eller «inga datum att flytta» om dagens datum redan står där). Kör sedan
    *Sond — GitHub-hemligheterna*: `BOT_DEPLOY_KEY` ska vara SATT i `sond` och SAKNAS i `utan-miljo`.
+
+## Felsökning
+
+**«git@github.com: Permission denied (publickey)» i steget *Checka ut main med botnyckeln*.**
+Avläst 2026-10-11 (körning 38131322678, försök 3): hemligheten fanns (`HAR_NYCKEL: true`), och GitHub
+vägrade nyckeln redan vid *läsning* av repot. Det är alltså inte rulesetet, som bara styr pushar.
+Loggen har ingen rad «Load key … invalid format», så nyckeln lästes troligen som en privat nyckel
+(obekräftat; den nya diagnosen mäter det). Trolig orsak: GitHub känner inte igen nyckeln för det här
+repot. Antingen ligger den publika nyckeln inte under *Deploy keys* i **Arvo-flow/arvo-flow.github.io**,
+eller så hör den publika nyckeln där och den privata i hemligheten till olika par.
+
+Snabbast är att prova nyckeln lokalt innan något läggs in igen. Det tar fem sekunder:
+```
+ssh -i arvo-bot -o IdentitiesOnly=yes -T git@github.com
+```
+- `Hi Arvo-flow/arvo-flow.github.io! You've successfully authenticated…` — nyckeln är rätt. Lägg in
+  just den filen (`arvo-bot`, hela, med BEGIN/END) som `BOT_DEPLOY_KEY` i miljön `produktion`.
+- `Hi Arvo-flow/<annat-repo>!` — nyckeln är deploy key i ett annat repo. Lägg till en ny i rätt repo.
+- `Permission denied (publickey)` — GitHub känner inte nyckeln. Lägg till `arvo-bot.pub` under
+  Settings → Deploy keys i det här repot, med *Allow write access* ikryssat.
+
+Har filerna redan raderats: skapa ett nytt par (steg 1) och byt **både** deploy key och hemlighet.
+Kör sedan om bara jobbet *Stämpla verifieringsdatum på main* i samma körning (Re-run → det jobbet).
+Besluten från matrisen ligger kvar som artefakter i sju dygn, så hela matrisen behöver inte köras om.
+
+Från och med nästa version gör jobbet samma kontroll själv i steget *Botnyckeln känns igen av GitHub*
+och skriver ut nyckelns fingeravtryck, som kan jämföras med det som står under Deploy keys (SP-12).
+
+**«GH006: Protected branch update failed» i pushsteget.** Nyckeln fungerar men rulesetet släpper inte
+igenom den: lägg till *Deploy keys* i rulesetets bypass-lista (steg 4).
+
+**«The key you are authenticating with has been marked as read only».** Kryssa i *Allow write access*
+på nyckeln under Deploy keys.
 
 ## Det undantaget betyder, öppet
 
