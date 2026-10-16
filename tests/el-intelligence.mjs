@@ -184,8 +184,8 @@ describe('getElIntelligence — Eurostat-marknadsgolv (regel 3/4: aldrig under v
     const intel = await getElIntelligence({
       annualKwh: 12_000, currentPriceKwh: 2.00, supplierName: TEST_SUPPLIER, kwhIsEstimated: false,
     });
-    // Eurostat micro-golv (<20 MWh) = 2,1601 kr/kWh > 2,00 → uppnåeligt golvas, saving = 0.
-    assert.equal(intel.marketFloor.allInKwh, 2.1601);
+    // Eurostat micro-golv (<20 MWh) = 2,2502 kr/kWh (2026-S1) > 2,00 → uppnåeligt golvas, saving = 0.
+    assert.equal(intel.marketFloor.allInKwh, 2.2502);
     assert.equal(intel.floorApplied, true);
     assert.equal(intel.saving, 0,
       `Micro-bolag under verifierat marknadsgolv ska INTE visas en besparing, fick ${intel.saving}`);
@@ -196,8 +196,9 @@ describe('getElIntelligence — Eurostat-marknadsgolv (regel 3/4: aldrig under v
     const intel = await getElIntelligence({
       annualKwh, currentPriceKwh: 2.80, supplierName: TEST_SUPPLIER, kwhIsEstimated: false,
     });
-    // saving = (2,80 − 2,1601) × 12 000 = 7 679 — exakt skillnaden mot verifierat golv.
-    const expected = Math.round(2.80 * annualKwh) - Math.round(2.1601 * annualKwh);
+    // saving = 33 600 − round(2,2502 × 12 000) = 6 598 — exakt skillnaden mot verifierat golv (2026-S1).
+    const expected = Math.round(2.80 * annualKwh) - Math.round(2.2502 * annualKwh);
+    assert.equal(expected, 6598, 'facit räknat för hand ur 2026-S1-bandet');
     assert.equal(intel.saving, expected);
     assert.ok(intel.saving > 0 && intel.saving < Math.round((2.80 - 1.27) * annualKwh),
       'saving ska vara reell men klart mindre än mot det gamla flata ~1,27-antagandet');
