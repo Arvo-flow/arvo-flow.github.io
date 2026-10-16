@@ -307,6 +307,28 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 
 ---
 
+## Fabrikssvep · Den autonoma loopen
+
+> **✅ GRUNDARBESLUT 2026-10-16.** När grundaren skriver *«Kör ett fabrikssvep»* kör agenten fyra
+> steg i följd utan att fråga mellan dem. Protokollet i sin helhet står i `ops/AGENTSVEP.md`
+> (avsnittet «Fabrikssvep»), och det är bindande på samma sätt som den här filen.
+>
+> 1. **Lägesbild.** Git-status, de senaste commitarna på `main`, öppna PR:er, den gällande
+>    arbetsordern. Arbetsorderns status prövas mot koden och skrivs i dess `## Läge`.
+> 2. **Självläkning av CI/CD.** Varje rött jobb på `main` läses i loggen och klassas i exakt en
+>    klass: OLÄSBAR, DRIFT, FELKLASS, INFRA eller RÄTT RÖTT. Klassen avgör åtgärden. Ett rött som
+>    bara kan bli grönt med en vidgad tolerans, en borttagen check eller ett kampanjpris står kvar
+>    rött och redovisas.
+> 3. **Framåtdrift.** Nästa oavslutade punkt i arbetsordern byggs fullt ut.
+> 4. **Vakter och andra blicken.** Sviten och vakterna mot grenens intervall, en separat granskning
+>    i `ops/GRANSKNING-*.md`, och en PR med Grindens fyra kontroller gröna.
+>
+> **Agenten mergar aldrig, och den committar aldrig en ospårad fil den inte själv skapat.** Svepet
+> stannar och frågar bara vid moms, pris, juridik, radering, nycklar, repoinställningar och
+> merge till `main`.
+
+---
+
 ## Noll-inferens · Avläsning framför slutsats
 
 > **✅ GRUNDARDOKTRIN 2026-09-20 — ORDAGRANT, och det ordet är lastbärande.**
