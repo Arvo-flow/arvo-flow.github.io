@@ -6,6 +6,34 @@
 > (H2 och H5) med agentens körda utfall som facit. Avvik från ordern bara om koden motbevisar
 > den — och skriv i så fall varför, i samma commit.
 
+## Läge (avläst 2026-10-16, fabrikssvepet)
+
+| Acceptanspunkt | Läge | Avläst |
+|---|---|---|
+| 1 · A–G tiger, motprovet larmar | klar | LU-01..15 · båda vägarna går genom `bedomLarm` (BL-05) |
+| 2 · E3 `null`, Basic oförändrat | klar, och nu beteendebevisad | LU-19..21 |
+| 3 · sviten grön, varje sabotage fäller | klar för golvet först nu | se nedan |
+| 4 · live mot produktion + rummet 390/1600 | DEL L och rummet klara, DEL G efter merge | se nedan |
+| 5 · rate-limit-beslutet | klar | 966a3e16: 40 → 150 per avsändare och dygn |
+
+- **Punkt 2 och 3 var gröna på fel grund i sju veckor.** LU-16..18 läste bara källtext, och
+  kommentaren sa att SQL-grenen «prövas av sonden». Någon sådan sond fanns inte. Med `AND tier = …`
+  bortplockat ur frågan föll 0 av 36 tester, alltså var orderns eget sabotage («`ASC LIMIT 1` utan
+  nivåkrav återinförs → fäller») aldrig uppfyllt. `detectPriceAlert` tar nu en injicerad databas, och
+  LU-19..21 kör seed-filens Microsoft-rader genom den.
+- **Punkt 4, larmvägen live.** De fem senaste nattliga prisvaktskörningarna på main
+  (38187249578 … 38824254504) gav 14 larm per natt, 0 verifierade och 0 kundmejl. Skälen var
+  `action_verify_manually` (10–12 per natt) och `gammalt_pris_saknas` (2–4). `scripts/probe-larmacceptans.mjs`
+  DEL L kör det riktiga `notify-price-changes.mjs` utan hemligheter: de sju tysta svaren ger 0 av 7,
+  och motprovet ger 1, som stannar vid den saknade Resend-nyckeln.
+- **Punkt 4, golvet live (DEL G) är inte mätt.** Det kräver `DATABASE_URL`, och produktionsmiljön
+  startar bara på main. Kör `probe-larmacceptans` efter merge. Den skriver också ut produktionsrader
+  vars nivå ingen faktura kan bevisa.
+- **Punkt 4, rummet.** `https://arvoflow.se/portfolio` skärmdumpades i 390 och 1600 px den 16 okt,
+  som en ny besökare ser det. Ingen ändring i den här ordern når rummet: `priceAlert` läses i dag av
+  ingen yta i `src/`.
+- **Kvar efter ordern:** «lanserar våg 1 (5 kunder)» är grundarens drag, inte kodens.
+
 ## Bärande princip (styr båda fixarna)
 
 **Kundmailet får ALDRIG ställa lägre beviskrav än prisboken.** I dag är det bakvänt:

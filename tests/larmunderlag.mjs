@@ -136,9 +136,12 @@ describe('LU · Båda larmvägarna gatar (regel 5 — dubbla alertvägar)', () =
 //   Basic på exakt listpris (68,88)          → null (korrekt)
 // Tre av fyra kunder som betalar leverantörens EGEN prislapp flaggades som att de blöder.
 //
-// Testet prövar KOPPLINGEN utan databas: att spärren läses ur prisboken (mätt, inte tyckt), att
-// nivåläsaren är den delade (regel 1) och att anroparen matar radtexterna. Själva SQL-grenen
-// kräver Postgres och prövas av sonden — men utan de tre nedan kan grenen aldrig nås rätt.
+// LU-16..18 prövar KOPPLINGEN: att spärren läses ur prisboken (mätt, inte tyckt), att nivåläsaren
+// är den delade (regel 1) och att anroparen matar radtexterna. Här stod att SQL-grenen «prövas av
+// sonden». Någon sådan sond fanns inte, och fabrikssvepet 2026-10-16 mätte vad det betydde: med
+// `AND tier = …` bortplockat ur frågan föll 0 av 36 tester. LU-19..21 kör nu funktionen mot en
+// fejkdatabas som tolkar WHERE-satsen, med seed-filens fem Microsoft-rader. Produktionens rader
+// prövas av scripts/probe-larmacceptans.mjs (DEL G).
 describe('LU · Golvet kräver bekräftad nivå där spänningen är mätt (H5)', () => {
   test('LU-16 · spärren läses ur PRISBOKEN, hårdkodas inte per kategori', async () => {
     const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
@@ -170,5 +173,63 @@ describe('LU · Golvet kräver bekräftad nivå där spänningen är mätt (H5)'
     const anrop = api.slice(start, api.indexOf('}).catch', start));
     assert.match(anrop, /lineItems:\s+extracted\.lineItems/,
       'grinden är verkningslös om anroparen inte skickar underlaget — LFL-läxan 12 aug');
+  });
+
+  // Seed-filens Microsoft-rader (scripts/seed-price-db.mjs), ordagranna, plus en mobilrad för
+  // motprovet att spärren gäller per kategori och inte tystar allt.
+  const SEED = [
+    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 Business Basic',    tier: 'business-basic',    price_monthly: 68.88 },
+    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 Business Standard', tier: 'business-standard', price_monthly: 143.38 },
+    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 Business Premium',  tier: 'business-premium',  price_monthly: 252.35 },
+    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 E3',                tier: 'e3',                price_monthly: 462.00 },
+    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 E5',                tier: 'e5',                price_monthly: 731.00 },
+    { supplier: 'tele2',     category: 'mobil',             product: 'Tele2 Jobbmobil',                 tier: null,                price_monthly: 299.00 },
+  ].map((r) => ({ ...r, source_type: 'official_web', last_verified: '2026-05-27' }));
+  // Svarar som Postgres på detectPriceAlerts två frågor: leverantör, kategori och — bara när satsen
+  // bär den — nivå, billigast först, en rad. Ett tag i SQL-texten som inte finns här kastar.
+  const fejkDb = (rader = SEED) => (strangar, ...varden) => {
+    const sql = strangar.join('§');
+    if (!/FROM supplier_prices/.test(sql)) throw new Error(`fejkDb: okänd fråga ${sql}`);
+    const medNiva = /AND\s+tier\s*=\s*§/.test(sql);
+    const [leverantor, kategori, niva] = varden;
+    return Promise.resolve(rader
+      .filter((r) => r.supplier.toLowerCase() === String(leverantor).toLowerCase() && r.category === kategori && (!medNiva || r.tier === niva))
+      .sort((a, b) => a.price_monthly - b.price_monthly)
+      .slice(0, 1));
+  };
+  const golv = async (pris, beskrivning, { category = 'saas-productivity', supplier = 'microsoft' } = {}) => {
+    const { detectPriceAlert } = await import('../lib/price-alert.js');
+    return detectPriceAlert({ normalizedSupplier: supplier, category, pricePerSeatMonthly: pris,
+      lineItems: [{ description: beskrivning }] }, { db: fejkDb() });
+  };
+
+  test('LU-19 · E3-kund på exakt listpris → inget larm, aldrig +571 % mot Basic (Basic-fallet oförändrat)', async () => {
+    assert.equal(await golv(462, 'Microsoft 365 E3, 25 licenser'), null, 'E3 på listpris jämfördes mot Basic');
+    assert.equal(await golv(252.35, 'Microsoft 365 Business Premium'), null);
+    assert.equal(await golv(143.38, 'Microsoft 365 Business Standard'), null);
+    assert.equal(await golv(68.88, 'Microsoft 365 Business Basic'), null, 'Basic-fallet ska vara oförändrat');
+  });
+
+  test('LU-20 · MOTPROVET: 30 % över den bekräftade nivåns listpris flaggas, mot just den nivån', async () => {
+    const r = await golv(600.6, 'Microsoft 365 E3, 25 licenser');
+    assert.equal(r?.overListPrice, true, 'en grind som tystar allt är ingen grind');
+    assert.equal(r.percentOver, 30);
+    assert.equal(r.verifiedProduct, 'Microsoft 365 E3');
+    assert.equal(r.verifiedListPriceMonthly, 462);
+    // Mobil kräver ingen nivå (1,1× spann): kategorigolvet bär, och spärren tystar inte den.
+    const mobil = await golv(349, 'Jobbmobil', { category: 'mobil', supplier: 'Tele2' });
+    assert.equal(mobil?.percentOver, 17);
+    assert.equal(mobil.nivaOviss, false);
+  });
+
+  test('LU-21 · utan bevisad nivå står fakta kvar och påståendet uteblir', async () => {
+    for (const text of ['Licenser enligt avtal', 'Office 365 E3', 'E3 25 st']) {
+      const r = await golv(462, text);
+      assert.equal(r?.nivaOviss, true, `«${text}» bevisar ingen Microsoft 365-nivå`);
+      assert.equal(r.overListPrice, null);
+      assert.equal(r.percentOver, null);
+      assert.equal(r.customerPriceMonthly, 462);
+      assert.equal(r.verifiedProduct, null, 'en produkt utan bevisad nivå är kategorins billigaste, inte kundens');
+    }
   });
 });
