@@ -8,13 +8,15 @@
 //   prövar, eller en sondlista som glidit från arbetsflödena (HB-02); toppnivå-env och `secrets: inherit`
 //   (HB-03); en YAML-form som läsaren inte förstår, så att den inte blir grön av tomhet (HB-04); ett
 //   produktionsjobb som en push eller PR på en annan gren kan starta — där kan det bara bli rött (HB-05);
-//   ett uttryck som läser hemligheter utan att namnge dem, och ett namn i andra versaler (HB-06).
+//   ett uttryck som läser hemligheter utan att namnge dem, och ett namn i andra versaler (HB-06); ett
+//   ✓ för miljön som skrivs fast repo-kopior kan bära värdena (HB-07).
 // BLIND: om hemligheterna FAKTISKT ligger i miljön och är borta från repo-nivån — det är repoinställningar
 //   som bara körningen av probe-hemligheter.yml kan mäta. Det här är kodens halva; sonden är den andra.
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import {
   jobbIArbetsflode, obundnaJobb, allaHemligheter, hemligheterI, utlosareUtanforMain, lasesDynamiskt,
@@ -127,5 +129,35 @@ describe('HB · hemligheterna läses bara i miljön produktion', () => {
     assert.deepEqual(hemligheterI('${{ SECRETS.bot_deploy_key }} ${{ Secrets["Cron_Secret"] }}'), ['BOT_DEPLOY_KEY', 'CRON_SECRET']);
     // I dag läser inget arbetsflöde hemligheter dynamiskt (avläst 2026-10-17).
     assert.deepEqual(Object.entries(FLODEN).flatMap(([f, y]) => jobbIArbetsflode(y).filter((j) => j.dynamisk).map((j) => `${f}#${j.jobb}`)), []);
+  });
+
+  test('HB-07 · sonden kallar miljön bevisad bara när läckkontrollen var grön (ett miljöjobb ser också repo-hemligheter)', () => {
+    // 17 okt: «✓ Miljön produktion bär de 6» medan ARVO_ADMIN_SECRET bara låg på repo-nivå. När
+    // repo-kopiorna raderades föll sonden på just den (körning 39068005452).
+    const kor = (extra) => {
+      const env = { PATH: process.env.PATH, HOME: process.env.HOME, ...extra };
+      try { return { kod: 0, ut: execFileSync('node', [join(ROT, 'scripts/probe-hemligheter.mjs'), '--krav=satt'], { env, encoding: 'utf8', stdio: 'pipe' }) }; }
+      catch (e) { return { kod: e.status, ut: `${e.stdout}${e.stderr}` }; }
+    };
+    const alla = Object.fromEntries(KRAVDA_I_PRODUKTION.map((n) => [n, 'x']));
+    const gron = kor({ ...alla, LACKKONTROLL: 'success' });
+    assert.equal(gron.kod, 0, gron.ut);
+    assert.match(gron.ut, /✓ Miljön produktion bär/);
+    for (const utfall of ['failure', 'skipped', 'cancelled', undefined]) {
+      const r = kor(utfall ? { ...alla, LACKKONTROLL: utfall } : alla);
+      assert.equal(r.kod, 1, `läckkontrollen ${utfall}: ${r.ut}`);
+      assert.match(r.ut, /Obevisat/);
+      assert.doesNotMatch(r.ut, /✓ Miljön produktion bär/);
+    }
+    // Motprov: ett namn som saknas säger det, oavsett läckkontrollen.
+    const { ARVO_ADMIN_SECRET: _, ...utanEn } = alla;
+    const saknas = kor({ ...utanEn, LACKKONTROLL: 'success' });
+    assert.equal(saknas.kod, 1);
+    assert.match(saknas.ut, /gav inte ARVO_ADMIN_SECRET/);
+    // Arbetsflödet: sond väntar på utan-miljo, körs ändå, och får dess utfall.
+    const sond = jobbIArbetsflode(FLODEN['probe-hemligheter.yml']).find((j) => j.jobb === 'sond');
+    assert.match(sond.text, /^ {4}needs: utan-miljo$/m);
+    assert.match(sond.text, /^ {4}if: \$\{\{ always\(\) \}\}$/m);
+    assert.match(sond.text, /^ {10}LACKKONTROLL: \$\{\{ needs\.utan-miljo\.result \}\}$/m);
   });
 });
