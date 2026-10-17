@@ -25,7 +25,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { granskaStampeldiff, STAMPELFIL } from '../scripts/stampelvakt.mjs';
 import { tillampaStamplar, prisbokAvtryck, nyttBeslut, lasBeslut, DATUMFALT, FONSTER_DAGAR } from '../scripts/stampla.mjs';
-import { jobbIArbetsflode } from '../scripts/hemlighetsbindning.mjs';
+import { jobbIArbetsflode, lasarHemlighet } from '../scripts/hemlighetsbindning.mjs';
 import { VERIFIERS } from '../lib/verifiers/registry.mjs';
 
 const ROT = new URL('..', import.meta.url).pathname;
@@ -357,9 +357,16 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     const lasare = [];
     for (const f of readdirSync(dir).filter((x) => /\.ya?ml$/.test(x))) {
       for (const j of jobbIArbetsflode(readFileSync(join(dir, f), 'utf8'))) {
-        if (j.hemligheter.includes('BOT_DEPLOY_KEY')) lasare.push(`${f}#${j.jobb}`);
+        if (lasarHemlighet(j, 'BOT_DEPLOY_KEY')) lasare.push(`${f}#${j.jobb}`);
       }
     }
+    // Tredje blickens V4: ett jobb som får ALLA hemligheter läser också nyckeln, även utan att namnge den.
+    const fixtur = (rad) => jobbIArbetsflode(`on: push\njobs:\n  x:\n    steps:\n      - run: echo "${rad}"\n`)[0];
+    for (const rad of ['${{ toJSON(secrets) }}', "${{ secrets[format('{0}_{1}', 'BOT_DEPLOY', 'KEY')] }}", '${{ SECRETS.bot_deploy_key }}']) {
+      assert.equal(lasarHemlighet(fixtur(rad), 'BOT_DEPLOY_KEY'), true, `${rad} räknades inte som en läsare av nyckeln`);
+    }
+    assert.equal(lasarHemlighet(jobbIArbetsflode('on: push\njobs:\n  c:\n    uses: ./x.yml\n    secrets: inherit\n')[0], 'BOT_DEPLOY_KEY'), true);
+    assert.equal(lasarHemlighet(fixtur('${{ secrets.CRON_SECRET }}'), 'BOT_DEPLOY_KEY'), false, 'motprov: ett annat namn är ingen läsare');
     assert.deepEqual(lasare.sort(), ['probe-hemligheter.yml#sond', 'probe-hemligheter.yml#utan-miljo', 'verify-sources.yml#stampla'],
       'nyckeln förbi grenskyddet får bara nå jobbet som kör stampelvakten före varje push');
     // Sonden läser den bara för att pröva närvaron: skriptet startar inga processer (alltså ingen git/ssh).

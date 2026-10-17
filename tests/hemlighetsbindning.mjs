@@ -7,7 +7,8 @@
 // FÅNGAR: ett nytt jobb som läser en hemlighet utan miljön (HB-01); ett nytt hemlighetsnamn som sonden inte
 //   prövar, eller en sondlista som glidit från arbetsflödena (HB-02); toppnivå-env och `secrets: inherit`
 //   (HB-03); en YAML-form som läsaren inte förstår, så att den inte blir grön av tomhet (HB-04); ett
-//   produktionsjobb som en push eller PR på en annan gren kan starta — där kan det bara bli rött (HB-05).
+//   produktionsjobb som en push eller PR på en annan gren kan starta — där kan det bara bli rött (HB-05);
+//   ett uttryck som läser hemligheter utan att namnge dem, och ett namn i andra versaler (HB-06).
 // BLIND: om hemligheterna FAKTISKT ligger i miljön och är borta från repo-nivån — det är repoinställningar
 //   som bara körningen av probe-hemligheter.yml kan mäta. Det här är kodens halva; sonden är den andra.
 
@@ -16,7 +17,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  jobbIArbetsflode, obundnaJobb, allaHemligheter, hemligheterI, utlosareUtanforMain,
+  jobbIArbetsflode, obundnaJobb, allaHemligheter, hemligheterI, utlosareUtanforMain, lasesDynamiskt,
   ALLA_HEMLIGHETER, KRAVDA_I_PRODUKTION, MOTPROVSJOBB, SKYDDAD_MILJO,
 } from '../scripts/hemlighetsbindning.mjs';
 
@@ -102,5 +103,29 @@ describe('HB · hemligheterna läses bara i miljön produktion', () => {
     assert.deepEqual(m('  push:\n    branches: [main]\n  workflow_dispatch:'), []);
     assert.deepEqual(m("  push:\n    branches:\n      - 'main'"), []);
     assert.deepEqual(utlosareUtanforMain('on: [push, workflow_dispatch]\njobs:\n  a:\n    runs-on: x\n'), ['push']);
+  });
+
+  test('HB-06 · ett uttryck som läser hemligheter utan namn räknas som alla, och versalerna räknas inte', () => {
+    // Tredje blickens V4, mätt 2026-10-11: obundnaJobb gav [] för ett jobb utan miljö med
+    // ${{ toJSON(secrets) }} och för secrets[format(…)]. Läckkontrollen och SP-11 såg dem inte.
+    const jobb = (rad, miljo = '') => `on: push\njobs:\n  x:\n${miljo}    steps:\n      - run: echo "${rad}"\n`;
+    const dynamiska = ['${{ toJSON(secrets) }}', '${{ toJson( secrets ) }}', "${{ secrets[format('{0}_{1}', 'BOT', 'KEY')] }}",
+      '${{ secrets[matrix.namn] }}', '${{ secrets }}', '${{ fromJSON(toJSON(secrets)).X }}'];
+    for (const rad of dynamiska) {
+      assert.equal(lasesDynamiskt(rad), true, rad);
+      assert.deepEqual(obundnaJobb({ 'd.yml': jobb(rad) }), [{ id: 'd.yml#x', hemligheter: ['(alla, via ett onamngivet uttryck)'] }], rad);
+      assert.deepEqual(obundnaJobb({ 'd.yml': jobb(rad, '    environment: produktion\n') }), [], `${rad} i produktion är bundet`);
+    }
+    // Toppnivåns env räknas till varje jobb, även i den dynamiska formen.
+    assert.equal(jobbIArbetsflode('on: push\nenv:\n  ALLT: ${{ toJSON(secrets) }}\njobs:\n  a:\n    runs-on: x\n')[0].dynamisk, true);
+    // Motprov: ett namngivet uttryck, ett annat sammanhangs fält och text utanför ett uttryck är inte dynamiska.
+    for (const rad of ['${{ secrets.X }}', "${{ secrets['X'] }}", '${{ secrets . X }}', '${{ inputs.secrets }}', '# toJSON(secrets)', 'secrets: inherit']) {
+      assert.equal(lasesDynamiskt(rad), false, rad);
+    }
+    assert.deepEqual(obundnaJobb({ 'n.yml': jobb('${{ secrets.X }}') }), [{ id: 'n.yml#x', hemligheter: ['X'] }]);
+    // Versalerna: SECRETS.x är samma hemlighet som secrets.X.
+    assert.deepEqual(hemligheterI('${{ SECRETS.bot_deploy_key }} ${{ Secrets["Cron_Secret"] }}'), ['BOT_DEPLOY_KEY', 'CRON_SECRET']);
+    // I dag läser inget arbetsflöde hemligheter dynamiskt (avläst 2026-10-17).
+    assert.deepEqual(Object.entries(FLODEN).flatMap(([f, y]) => jobbIArbetsflode(y).filter((j) => j.dynamisk).map((j) => `${f}#${j.jobb}`)), []);
   });
 });
