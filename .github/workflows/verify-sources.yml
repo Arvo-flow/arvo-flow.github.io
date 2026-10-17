@@ -35,13 +35,20 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.gen.outputs.matrix }}
+      avtryck: ${{ steps.gen.outputs.avtryck }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      # Avtrycket av prisboken som matrisen verifierar, räknat här och inte i matrisen: det här jobbet
+      # kör inga paket utanför låsfilen. Stämpeljobbet kräver att varje beslut bär just det (V2, SP-13).
+      # Tilldelningen står på egen rad, så att ett fel fäller steget i stället för att bli en tom rad.
       - id: gen
-        run: echo "matrix=$(node scripts/verify.mjs --matrix)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "matrix=$(node scripts/verify.mjs --matrix)" >> "$GITHUB_OUTPUT"
+          AVTRYCK=$(node scripts/stampla.mjs --avtryck)
+          echo "avtryck=$AVTRYCK" >> "$GITHUB_OUTPUT"
 
   verify:
     needs: discover
@@ -104,7 +111,7 @@ jobs:
 
   stampla:
     name: Stämpla verifieringsdatum på main
-    needs: verify
+    needs: [discover, verify]
     # ENDAST FRÅN main (2026-09-10): ett workflow_dispatch på en feature branch får aldrig skriva till
     # main. Röda källor stoppar inte de gröna: deras beslut läggs på ändå.
     if: always() && github.ref == 'refs/heads/main' && needs.verify.result != 'cancelled'
@@ -112,18 +119,20 @@ jobs:
     timeout-minutes: 5
     environment: produktion
     steps:
+      # En katalog per artefakt (stampel-<id>/stampel-<id>.json). Med merge-multiple: true hamnade alla i
+      # samma katalog, och en fil med en annan källas namn hade skrivit över den (tredje blickens V3, SP-14).
       - name: Hämta stämpelbesluten
         uses: actions/download-artifact@v4
         with:
           pattern: stampel-*
           path: ${{ runner.temp }}/stamplar
-          merge-multiple: true
+          merge-multiple: false
       - name: Finns det något att stämpla?
         id: finns
         run: |
-          N=$(ls "${{ runner.temp }}/stamplar"/stampel-*.json 2>/dev/null | wc -l)
+          N=$(ls -d "${{ runner.temp }}/stamplar"/stampel-*/ 2>/dev/null | wc -l)
           echo "n=$N" >> "$GITHUB_OUTPUT"
-          echo "$N beslutsfil(er), en per verifierare som körde klart (en röd källas fil är tom)"
+          echo "$N beslutskatalog(er), en per verifierare som körde klart (en röd källas lista är tom)"
       # Utan nyckeln kan stämpeln inte nå main. Det är ett verkligt fel, alltså rött — aldrig grönt.
       - name: Botnyckeln finns i produktion
         if: steps.finns.outputs.n != '0'
@@ -182,6 +191,7 @@ jobs:
         if: steps.finns.outputs.n != '0' && github.ref == 'refs/heads/main'
         env:
           BESLUT: ${{ runner.temp }}/stamplar
+          VERIFIERAD_AVTRYCK: ${{ needs.discover.outputs.avtryck }}
         run: |
           git config user.email "bot@arvoflow.se"
           git config user.name "Arvo Verify Bot"

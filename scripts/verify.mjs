@@ -8,7 +8,7 @@
 import { VERIFIERS, getVerifier, allVerifierIds } from '../lib/verifiers/registry.mjs';
 import { bedomVerifierarutfall, UTFALL } from '../lib/verifierarutfall.js';
 import { stampelbeslut, stamplaKalla, stamplaKategori } from '../lib/verifieringsstampel.js';
-import { prisbokAvtryck } from './stampla.mjs';
+import { nyttBeslut } from './stampla.mjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -16,8 +16,9 @@ import { dirname, join } from 'node:path';
 const BRANCHINDEX_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'agents', 'recommender', 'branchindex.js');
 const IDAG = new Date().toISOString().slice(0, 10);
 // Prisboken som verifierarna jämför mot är den som lästes vid start. Avtrycket följer med varje beslut,
-// så att stämpeln bara läggs på samma priser (scripts/stampla.mjs, SP-08).
-const PRISBOK_VID_START = prisbokAvtryck(readFileSync(BRANCHINDEX_PATH, 'utf8'));
+// så att stämpeln bara läggs på samma priser (scripts/stampla.mjs, SP-08). Det räknas i nyttBeslut ur
+// den här texten (SP-13), och stämpeljobbet prövar det mot discover-jobbets avtryck (V2).
+const PRISBOK_VID_START = readFileSync(BRANCHINDEX_PATH, 'utf8');
 const stamplade = [];
 // Besluten, för jobbet som ensamt får skriva till main (scripts/stampla.mjs). Matrisjobbet fattar
 // beslutet där bevisen finns; det skriver aldrig själv.
@@ -96,7 +97,7 @@ for (const v of targets) {
     if (!st.stampla) {
       console.log(`  · stämpel utebliven: ${st.skal}`);
     } else {
-      beslut.push({ kalla: v.id, datum: IDAG, nycklar: st.nycklar, kategori: st.kategori ?? null, prisbokAvtryck: PRISBOK_VID_START });
+      beslut.push(nyttBeslut({ kalla: v.id, datum: IDAG, nycklar: st.nycklar, kategori: st.kategori, prisbok: PRISBOK_VID_START }));
       const kalla = readFileSync(BRANCHINDEX_PATH, 'utf8');
       const { kalla: ny, andrade, oforandrade } = stamplaKalla(kalla, st.nycklar, IDAG);
       if (andrade.length > 0) {
