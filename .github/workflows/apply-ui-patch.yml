@@ -23,4 +23,4 @@ jobs:
           rm -rf _patches .github/workflows/apply-ui-patch.yml
           git add -A
           git commit -m "Clean up UI patch transport artifacts"
-          git push
+          git push origin HEAD:refs/heads/claude/build-arvo-os-app-8Ybsd

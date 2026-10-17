@@ -2,7 +2,7 @@ name: Probe M365-priser (vad säger Microsoft nu?)
 on:
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -18,15 +18,12 @@ jobs:
           set -o pipefail
           mkdir -p ops
           node scripts/probe-m365-priser.mjs 2>&1 | tee ops/probe-m365-priser.txt
-      - name: Commit
-        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
-        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
-        if: always() && github.ref == 'refs/heads/main'
-        continue-on-error: true
-        run: |
-          git config user.email "bot@arvoflow.se"
-          git config user.name "Arvo Probe Bot"
-          git pull --rebase origin main || true
-          git add ops/probe-m365-priser.txt
-          git commit -m "ops: probe-m365-priser [skip ci]" || echo "inget"
-          git push origin HEAD:main || echo "push miss"
+      - name: Spara utfallet som artefakt
+        # main tar bara emot PR:er (PR #80). Saknas filen blir steget rött (MP-03).
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-m365-priser-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ops/probe-m365-priser.txt
+          if-no-files-found: error
+          retention-days: 90

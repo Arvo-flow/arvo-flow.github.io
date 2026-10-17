@@ -20,7 +20,7 @@ const testRows = await db`
 const kr0 = (n) => (n == null ? '—' : Number(n).toLocaleString('sv-SE'));
 
 // ── ADRESSER MASKERAS I UTSKRIFTEN (2026-08-13) ──────────────────────────────────────────────
-// Resultatet av den här granskningen COMMITTAS till repot (ops/inspect-result.txt) och Actions-
+// Resultatet av den här granskningen laddas upp som artefakt (ops/inspect-result.txt) och Actions-
 // loggen sparas. En kunds — eller grundarens egen — fullständiga e-postadress hörde aldrig hemma
 // i någondera. Vi behöver kunna SKILJA avsändare åt för att felsöka, inte kunna läsa dem: två
 // tecken plus domän räcker för det, och räcker inte för att peka ut en person i en logg.

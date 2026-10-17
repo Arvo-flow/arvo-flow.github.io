@@ -41,6 +41,9 @@ jobs:
     name: Price data coverage audit
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    # Jobbet pushar inget, men ärvde flödets skrivtoken medan det kör `npm ci` (MP-05).
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout

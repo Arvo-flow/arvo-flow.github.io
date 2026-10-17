@@ -6,7 +6,7 @@ on:
         description: 'Domäner, mellanslagsseparerade'
         default: 'avida.se'
 permissions:
-  contents: write
+  contents: read
 jobs:
   probe:
     runs-on: ubuntu-latest
@@ -23,15 +23,12 @@ jobs:
           set -o pipefail
           mkdir -p ops
           node scripts/probe-kandidatfalt.mjs ${{ inputs.domaner }} 2>&1 | tee ops/probe-kandidatfalt.txt
-      - name: Commit
-        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
-        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
-        if: always() && github.ref == 'refs/heads/main'
-        continue-on-error: true
-        run: |
-          git config user.email "bot@arvoflow.se"
-          git config user.name "Arvo Probe Bot"
-          git add ops/probe-kandidatfalt.txt
-          git commit -m "ops: probe-kandidatfalt [skip ci]" || echo "inget"
-          git pull --rebase origin main || true
-          git push origin HEAD:main || echo "push miss"
+      - name: Spara utfallet som artefakt
+        # main tar bara emot PR:er (PR #80). Saknas filen blir steget rött (MP-03).
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-kandidatfalt-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ops/probe-kandidatfalt.txt
+          if-no-files-found: error
+          retention-days: 90

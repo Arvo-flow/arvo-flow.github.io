@@ -24,7 +24,7 @@ on:
         default: ''
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   generate-prospects:
@@ -82,23 +82,6 @@ jobs:
           echo "Kör batch-prospects mot: $SCORED $ONLY_FLAG"
           node scripts/batch-prospects.mjs "$SCORED" $NO_EMAIL_FLAG $ONLY_FLAG --rate=30000 2>&1 | tee /tmp/batch-output.txt
 
-      - name: Spara dossier-payload för granskning (ops/prospect-review.json)
-        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
-        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
-        if: github.event.inputs.only != '' && github.ref == 'refs/heads/main'
-        continue-on-error: true
-        run: |
-          TOKEN=$(grep -oE 'https://arvoflow\.se/prospect/[a-zA-Z0-9_-]+' /tmp/batch-output.txt | head -1 | sed 's|.*/||')
-          if [ -z "$TOKEN" ]; then echo "ingen token hittad"; exit 0; fi
-          curl -s "https://arvoflow.se/api/prospect?token=$TOKEN" -o ops/prospect-review.json
-          echo "{\"token\": \"$TOKEN\"}" > ops/prospect-review-token.json
-          git config user.email "bot@arvoflow.se"
-          git config user.name "Arvo Prospect Bot"
-          git pull --rebase origin main || true
-          git add ops/prospect-review.json ops/prospect-review-token.json
-          git commit -m "ops: prospect-review [skip ci]" || echo "inget"
-          git push origin HEAD:main || echo "push miss"
-
       - name: Visa prospect-URLs i Summary
         run: |
           echo "## Prospect-briefingar skapade" >> "$GITHUB_STEP_SUMMARY"
@@ -117,3 +100,25 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/batch-output.txt >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Hämta dossier-payload för granskning
+        id: granskning
+        if: github.event.inputs.only != ''
+        run: |
+          TOKEN=$(grep -oE 'https://arvoflow\.se/prospect/[a-zA-Z0-9_-]+' /tmp/batch-output.txt | head -1 | sed 's|.*/||')
+          if [ -z "$TOKEN" ]; then echo "ingen token hittad — ingen payload att spara"; exit 0; fi
+          curl -sSf "https://arvoflow.se/api/prospect?token=$TOKEN" -o ops/prospect-review.json
+          echo "{\"token\": \"$TOKEN\"}" > ops/prospect-review-token.json
+          echo "hamtad=ja" >> "$GITHUB_OUTPUT"
+
+      - name: Spara utfallet som artefakt
+        # main tar bara emot PR:er (PR #80). Saknas filen blir steget rött (MP-03).
+        if: steps.granskning.outputs.hamtad == 'ja'
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-batch-prospects-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ops/prospect-review.json
+            ops/prospect-review-token.json
+          if-no-files-found: error
+          retention-days: 7
