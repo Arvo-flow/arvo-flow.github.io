@@ -154,8 +154,11 @@ jobs:
           echo "Nyckelns fingeravtryck: $FP"
           SVAR=$(ssh -i "$K" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$K.hosts" -T git@github.com 2>&1 || true)
           echo "GitHub svarar: $SVAR"
-          REPO="${GITHUB_REPOSITORY,,}"
-          case "${SVAR,,}" in
+          # Gemener med tr, inte ${X,,}: den formen finns först i bash 4, och SP-12 kör steget med
+          # det lokala skalet (bash 3.2 på macOS, dash som sh). Fabrikssvepet 2026-10-17: SP-12 föll på Mac.
+          REPO=$(printf '%s' "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+          SMA=$(printf '%s' "$SVAR" | tr '[:upper:]' '[:lower:]')
+          case "$SMA" in
             *"hi $REPO!"*) echo "✓ GitHub känner igen nyckeln som deploy key för $GITHUB_REPOSITORY" ;;
             *"hi "*) echo "::error::Nyckeln hör till något annat än $GITHUB_REPOSITORY. Lägg till arvo-bot.pub som deploy key i just det här repot. Se ops/BOTNYCKELN.md."; exit 1 ;;
             *) echo "::error::GitHub känner inte igen nyckeln ($FP). Jämför fingeravtrycket med Settings → Deploy keys: saknas nyckeln där, lägg till arvo-bot.pub; står ett annat fingeravtryck där, hör paren inte ihop — skapa ett nytt par och byt båda. Se ops/BOTNYCKELN.md."; exit 1 ;;

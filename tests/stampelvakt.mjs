@@ -361,40 +361,45 @@ exit 2
     chmodSync(join(bin, 'ssh'), 0o755);
     const HEMLIG = 'HEMLIGNYCKELKROPP0123456789';
     const PRIVAT = `-----BEGIN OPENSSH PRIVATE KEY-----\n${HEMLIG}\n-----END OPENSSH PRIVATE KEY-----`; // hemlighet-ok: påhittad nyckelkropp för stubben, inget nyckelmaterial
-    const kor = (nyckel, svar) => {
-      const temp = mkdtempSync(join(tmp, 'runner-'));
-      const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, BOT_DEPLOY_KEY: nyckel,
-        GITHUB_REPOSITORY: 'Arvo-flow/arvo-flow.github.io', FAKE_SSH_SVAR: svar };
-      let kod = 0, ut = '';
-      try { ut = execFileSync('bash', ['-e', '-c', skript.join('\n')], { env, encoding: 'utf8', stdio: 'pipe' }); }
-      catch (e) { kod = e.status; ut = `${e.stdout}${e.stderr}`; }
-      return { kod, ut, kvar: readdirSync(temp) };
-    };
+    // Steget körs i två skal. Actions kör bash 5, men sviten körs också på Mac, där bash är 3.2 och
+    // saknar bash 4-former som ${X,,}: SP-12 föll där 17 okt medan Linux var grönt. `sh` är dash på
+    // Linux och bash 3.2 i POSIX-läge på Mac, så en bash 4-form fäller här på båda.
+    for (const skal of ['bash', 'sh']) {
+      const kor = (nyckel, svar) => {
+        const temp = mkdtempSync(join(tmp, 'runner-'));
+        const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, BOT_DEPLOY_KEY: nyckel,
+          GITHUB_REPOSITORY: 'Arvo-flow/arvo-flow.github.io', FAKE_SSH_SVAR: svar };
+        let kod = 0, ut = '';
+        try { ut = execFileSync(skal, ['-e', '-c', skript.join('\n')], { env, encoding: 'utf8', stdio: 'pipe' }); }
+        catch (e) { kod = e.status; ut = `${skal}: ${e.stdout}${e.stderr}`; }
+        return { kod, ut, kvar: readdirSync(temp) };
+      };
 
-    const ok = kor(PRIVAT, "Hi Arvo-flow/arvo-flow.github.io! You've successfully authenticated, but GitHub does not provide shell access.");
-    assert.equal(ok.kod, 0, ok.ut);
-    assert.match(ok.ut, /✓ GitHub känner igen nyckeln/);
-    assert.match(ok.ut, /SHA256:FingeravtryckXYZ/);
+      const ok = kor(PRIVAT, "Hi Arvo-flow/arvo-flow.github.io! You've successfully authenticated, but GitHub does not provide shell access.");
+      assert.equal(ok.kod, 0, ok.ut);
+      assert.match(ok.ut, /✓ GitHub känner igen nyckeln/);
+      assert.match(ok.ut, /SHA256:FingeravtryckXYZ/);
 
-    const okand = kor(PRIVAT, 'git@github.com: Permission denied (publickey).');
-    assert.equal(okand.kod, 1);
-    assert.match(okand.ut, /::error::GitHub känner inte igen nyckeln \(256 SHA256:FingeravtryckXYZ/);
+      const okand = kor(PRIVAT, 'git@github.com: Permission denied (publickey).');
+      assert.equal(okand.kod, 1);
+      assert.match(okand.ut, /::error::GitHub känner inte igen nyckeln \(256 SHA256:FingeravtryckXYZ/);
 
-    const annat = kor(PRIVAT, "Hi Arvo-flow/annat-repo! You've successfully authenticated, but GitHub does not provide shell access.");
-    assert.equal(annat.kod, 1);
-    assert.match(annat.ut, /::error::Nyckeln hör till något annat än Arvo-flow\/arvo-flow\.github\.io/);
+      const annat = kor(PRIVAT, "Hi Arvo-flow/annat-repo! You've successfully authenticated, but GitHub does not provide shell access.");
+      assert.equal(annat.kod, 1);
+      assert.match(annat.ut, /::error::Nyckeln hör till något annat än Arvo-flow\/arvo-flow\.github\.io/);
 
-    const publik = kor('ssh-ed25519 AAAAPUBLIK arvo-verify-bot', 'spelar ingen roll');
-    assert.equal(publik.kod, 1);
-    assert.match(publik.ut, /::error::BOT_DEPLOY_KEY är ingen läsbar privat nyckel/);
+      const publik = kor('ssh-ed25519 AAAAPUBLIK arvo-verify-bot', 'spelar ingen roll');
+      assert.equal(publik.kod, 1);
+      assert.match(publik.ut, /::error::BOT_DEPLOY_KEY är ingen läsbar privat nyckel/);
 
-    // Motprov: GitHub skriver repots namn med andra versaler än GITHUB_REPOSITORY — fortfarande rätt nyckel.
-    const versaler = kor(PRIVAT, "Hi arvo-flow/Arvo-Flow.github.io! You've successfully authenticated.");
-    assert.equal(versaler.kod, 0, versaler.ut);
+      // Motprov: GitHub skriver repots namn med andra versaler än GITHUB_REPOSITORY — fortfarande rätt nyckel.
+      const versaler = kor(PRIVAT, "Hi arvo-flow/Arvo-Flow.github.io! You've successfully authenticated.");
+      assert.equal(versaler.kod, 0, versaler.ut);
 
-    for (const r of [ok, okand, annat, publik, versaler]) {
-      assert.doesNotMatch(r.ut, new RegExp(HEMLIG), 'den privata nyckeln skrevs ut');
-      assert.deepEqual(r.kvar, [], `nyckelfiler ligger kvar: ${r.kvar}`);
+      for (const r of [ok, okand, annat, publik, versaler]) {
+        assert.doesNotMatch(r.ut, new RegExp(HEMLIG), 'den privata nyckeln skrevs ut');
+        assert.deepEqual(r.kvar, [], `nyckelfiler ligger kvar: ${r.kvar}`);
+      }
     }
   });
 });
