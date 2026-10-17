@@ -8,7 +8,7 @@ on:
         description: 'Antal fakturor att pröva (tomt = alla)'
         required: false
 permissions:
-  contents: write
+  contents: read
 jobs:
   probe:
     environment: produktion
@@ -31,12 +31,12 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           MAX_PDF: ${{ inputs.max_pdf }}
-      - name: Commit
+      - name: Spara utfallet som artefakt
+        # main tar bara emot PR:er (PR #80). Saknas filen blir steget rött (MP-03).
         if: always()
-        run: |
-          git config user.name 'Arvo Diag Bot'; git config user.email 'bot@arvoflow.se'
-          git add ops/fakturanummer.txt
-          git commit -m "ops: fakturanummer [skip ci]" || { echo "inget"; exit 0; }
-          git push || { git fetch origin main; git reset --soft FETCH_HEAD; git reset
-            git add ops/fakturanummer.txt
-            git commit -m "ops: fakturanummer [skip ci]"; git push; }
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-fakturanummer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ops/fakturanummer.txt
+          if-no-files-found: error
+          retention-days: 90

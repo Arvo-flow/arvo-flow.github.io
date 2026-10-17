@@ -2,7 +2,7 @@ name: Sond · SaaS-valuta (steg 0 för prisgrinden)
 # Prisgrinden kan bara fyra när prisboken bär en rad i SAMMA valuta som fakturan (FX är förbjudet).
 # saas-crm har i dag 4 rader, samtliga USD. Sonden svarar på om EUR/SEK-ankare ens existerar.
 permissions:
-  contents: write
+  contents: read
 on:
   workflow_dispatch:
 jobs:
@@ -19,20 +19,12 @@ jobs:
           set -o pipefail
           node scripts/probe-saas-valuta.mjs 2>&1 | tee /tmp/valuta.txt
       # Inget continue-on-error: går beviset förlorat ska körningen vara röd.
-      - name: Spara sondsvaret
-        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
-        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
-        if: always() && github.ref == 'refs/heads/main'
-        run: |
-          git config user.email "bot@arvoflow.se"
-          git config user.name "Arvo Diag Bot"
-          for i in 1 2 3; do
-            git fetch origin main
-            git checkout -B sond origin/main
-            mkdir -p ops && cp /tmp/valuta.txt ops/probe-saas-valuta.txt
-            git add ops/probe-saas-valuta.txt
-            git commit -m "ops: sond saas-valuta [skip ci]" || echo "inget nytt"
-            if git push origin HEAD:main; then echo "sondsvaret sparat"; SPARAT=1; break; fi
-            sleep $((i * 6))
-          done
-          [ "${SPARAT:-0}" = "1" ] || { echo "✗ sondsvaret kunde INTE sparas"; exit 1; }
+      - name: Spara utfallet som artefakt
+        # main tar bara emot PR:er (PR #80). Saknas filen blir steget rött (MP-03).
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-saas-valuta-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/valuta.txt
+          if-no-files-found: error
+          retention-days: 90

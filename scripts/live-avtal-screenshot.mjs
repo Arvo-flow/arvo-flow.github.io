@@ -8,7 +8,7 @@
 // Flöde: öppna rummet → fånga sidans egna fingerprint ur invoice-history-anropet →
 // mynta ett innehav via den vanliga fakturapipen (samma fingerprint) → ladda om →
 // expandera innehavet → ladda upp Bahnhof-fällan genom det riktiga UI:t → fotografera
-// domen. Körs på Actions (egress). Bilder → ops/live-avtal-shots/ (committas av workflow).
+// domen. Körs på Actions (egress). Bilder → ops/live-avtal-shots/ (laddas upp som artefakt av workflowet).
 import { chromium } from 'playwright';
 import { readFileSync, mkdirSync } from 'node:fs';
 

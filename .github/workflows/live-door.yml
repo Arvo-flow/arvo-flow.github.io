@@ -6,7 +6,7 @@ on:
     paths:
       - 'scripts/live-door-lekia.mjs'
 permissions:
-  contents: write
+  contents: read
 jobs:
   door:
     runs-on: ubuntu-latest
@@ -27,39 +27,16 @@ jobs:
           set -o pipefail
           mkdir -p ops/door-shots
           node scripts/live-door-lekia.mjs 2>&1 | tee ops/door-shots/logg.txt
-      # BEVISET FÅR INTE TAPPAS BORT (2026-08-07): steget gjorde `git pull --rebase` med osparade
-      # ändringar (fel varje gång) och sedan EN push som förlorade varje kapplöpning mot en
-      # nyare main — "push miss", och dörrens mätning fanns ingenstans. En vakt vars protokoll
-      # tyst försvinner är lika illa som en vakt som tiger. Nu: spara filerna FÖRST, hämta
-      # senaste main, lägg bara ops/ ovanpå, och försök igen med backoff.
-      # ── BEVISET FÅR INTE TAPPAS BORT, PÅ RIKTIGT DEN HÄR GÅNGEN (2026-08-12) ──────────────
-      # Föregående version stashade med -u och plockade tillbaka med `git checkout stash@{0} --`.
-      # Untracked filer bor i stash@{0}^3, inte i stash-trädet — så BEFINTLIGA bilder uppdaterades
-      # medan NYA föll bort tyst. Första körningen med ett nytt fall (castra) sparade alltså
-      # loggen som sa "✓ castra mobil" men inte bilden den syftade på. Ett bevis för ett nytt fall
-      # är precis när bilden behövs mest.
-      #
-      # Nu kopieras filerna UT ur repot innan grenbytet och tillbaka efteråt — samma mönster som
-      # sondflottan, där det har hållit. Och continue-on-error är borta: förloras beviset ska
-      # körningen vara röd, annars är den här vakten en till som ser ut att titta.
-      - name: Commit
-        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
-        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
-        if: always() && github.ref == 'refs/heads/main'
-        run: |
-          git config user.email "bot@arvoflow.se"
-          git config user.name "Arvo Diag Bot"
-          mkdir -p /tmp/door-bevis && cp -a ops/door-shots/. /tmp/door-bevis/
-          ANTAL=$(ls -1 /tmp/door-bevis | wc -l)
-          echo "bevis att spara: $ANTAL fil(er)"
-          SPARAT=0
-          for i in 1 2 3 4 5; do
-            git fetch origin main
-            git checkout -f -B ops-tmp origin/main
-            mkdir -p ops/door-shots && cp -a /tmp/door-bevis/. ops/door-shots/
-            git add ops/door-shots/
-            git commit -m "ops: live-door [skip ci]" || echo "inget nytt"
-            if git push origin HEAD:main; then echo "protokollet sparat"; SPARAT=1; break; fi
-            echo "kapplöpning förlorad — försök $i"; sleep $((i * 6))
-          done
-          [ "$SPARAT" = "1" ] || { echo "✗ dörrbeviset kunde INTE sparas"; exit 1; }
+      # BEVISET FÅR INTE TAPPAS BORT (2026-08-07, -08-12): två versioner av en push till main
+      # tappade dörrens bilder tyst — först en kapplöpning som svaldes av `|| echo`, sedan en
+      # stash som lämnade NYA filer kvar. Sedan PR #80 tar main bara emot PR:er, så bilderna
+      # blir en artefakt i stället. Inget continue-on-error: förloras beviset ska körningen vara röd.
+      - name: Spara utfallet som artefakt
+        # main tar bara emot PR:er (PR #80). Saknas filen blir steget rött (MP-03).
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-door-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ops/door-shots/
+          if-no-files-found: error
+          retention-days: 30

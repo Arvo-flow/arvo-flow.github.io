@@ -3,7 +3,7 @@ name: Probe ellevio-raden
 on:
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
   probe:
     environment: produktion
@@ -23,20 +23,12 @@ jobs:
           node scripts/probe-ellevio-raden.mjs 2>&1 | tee ops/ellevio-raden.txt
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      - name: Commit
-        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
-        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
-        if: always() && github.ref == 'refs/heads/main'
-        run: |
-          git config user.email "bot@arvoflow.se"
-          git config user.name "Arvo Diag Bot"
-          git add ops/ellevio-raden.txt
-          git commit -m "ops: ellevio-raden [skip ci]" || { echo "inget"; exit 0; }
-          for i in 1 2 3 4 5; do
-            git fetch origin main; git reset --soft FETCH_HEAD; git reset; git add ops/ellevio-raden.txt
-            if git diff --cached --quiet; then echo "identiskt"; exit 0; fi
-            git commit -m "ops: ellevio-raden [skip ci]"
-            git push origin HEAD:main && exit 0
-            sleep $((i * 5))
-          done
-          echo "::error::resultatet kunde inte pushas"; exit 1
+      - name: Spara utfallet som artefakt
+        # main tar bara emot PR:er (PR #80). Saknas filen blir steget rött (MP-03).
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-ellevio-raden-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ops/ellevio-raden.txt
+          if-no-files-found: error
+          retention-days: 90
