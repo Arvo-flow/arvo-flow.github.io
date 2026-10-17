@@ -27,7 +27,15 @@ import { jobbIArbetsflode } from '../scripts/hemlighetsbindning.mjs';
 import { VERIFIERS } from '../lib/verifiers/registry.mjs';
 
 const ROT = new URL('..', import.meta.url).pathname;
-const PRISBOK = readFileSync(join(ROT, STAMPELFIL), 'utf8');
+// ── PRISBOKENS STRUKTUR ÄR DEN RIKTIGA, DATUMEN ÄR FRYSTA (fabrikssvepet 2026-10-16) ──────────
+// Testerna läste den levande filens datum, och stämpeljobbet flyttar dem på main varje vecka.
+// Grinden föll på main (körning 38145142748, 11 okt): SP-03 letade efter '2026-10-05' som botten
+// redan flyttat, och SP-07/SP-10 stämplade till «i dag» på en bok som botten stämplat samma dag,
+// så diffen blev tom. Vakten var rätt, testet var fastnålat vid data som ändras av design.
+// Samma mönster som stampla.mjs avtryck använder, så avtrycket är detsamma som den levande bokens.
+const BAS_DATUM = '2026-01-01';
+const frysDatum = (kalla) => kalla.replace(/lastVerified:(\s*)'[^']*'/g, `lastVerified:$1'${BAS_DATUM}'`);
+const PRISBOK = frysDatum(readFileSync(join(ROT, STAMPELFIL), 'utf8'));
 const DAG = '2099-01-01';
 
 /** Ett temporärt repo med prisboken, så att diffen kommer ur riktig git — inte ur en handskriven sträng. */
@@ -82,11 +90,11 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
   });
 
   test('SP-03 · datumet måste flyttas framåt, men aldrig förbi i dag, och vara ett riktigt datum', () => {
-    const rad = "currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',";
+    const rad = `currency: 'SEK', lastVerified: '${BAS_DATUM}', source: 'microsoft.com',`;
     assert.ok(PRISBOK.includes(rad), 'M365-raden ser inte ut som väntat — testet prövar inget');
-    const med = (d) => granskaStampeldiff(repoMed(PRISBOK).diffEfter(PRISBOK.replace(rad, rad.replace('2026-10-05', d))), { idag: '2026-10-10' });
+    const med = (d) => granskaStampeldiff(repoMed(PRISBOK).diffEfter(PRISBOK.replace(rad, rad.replace(BAS_DATUM, d))), { idag: '2026-10-10' });
     assert.equal(med('2026-10-10').ok, true, 'motprov: ett datum framåt till i dag ska släppas');
-    assert.match(med('2026-10-01').skal, /bakåt/);
+    assert.match(med('2025-12-31').skal, /bakåt/);
     assert.match(med('2026-10-11').skal, /efter i dag/);
     assert.match(med('2026-02-30').skal, /ogiltigt/);
     assert.equal(granskaStampeldiff('', { idag: '2026-10-10' }).ok, false, 'en tom diff får aldrig läsas som godkänd');
@@ -169,6 +177,7 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     const bygg = join(tmp, 'bygg');
     // stampla.mjs läser registret (lib/verifiers) för att pröva besluten, alltså följer lib/ och agents/ med.
     for (const k of ['lib', 'agents']) cpSync(join(ROT, k), join(bygg, k), { recursive: true });
+    writeFileSync(join(bygg, STAMPELFIL), PRISBOK);
     for (const f of ['scripts/stampla.mjs', 'scripts/stampelvakt.mjs']) {
       mkdirSync(join(bygg, f, '..'), { recursive: true });
       copyFileSync(join(ROT, f), join(bygg, f));
@@ -299,10 +308,11 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
   });
 
   test('SP-10 · vaktens CLI räknar «i dag» själv: ett datum i morgon fäller, i dag släpps', () => {
-    const rad = "currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',";
+    const rad = `currency: 'SEK', lastVerified: '${BAS_DATUM}', source: 'microsoft.com',`;
+    assert.ok(PRISBOK.includes(rad), 'M365-raden ser inte ut som väntat — testet prövar inget');
     const kor = (datum) => {
       const r = repoMed(PRISBOK);
-      r.diffEfter(PRISBOK.replace(rad, rad.replace('2026-10-05', datum)));
+      r.diffEfter(PRISBOK.replace(rad, rad.replace(BAS_DATUM, datum)));
       try { execFileSync('node', [join(ROT, 'scripts/stampelvakt.mjs'), 'HEAD~1'], { cwd: r.dir, stdio: 'pipe' }); return 0; }
       catch (e) { return e.status; }
     };
