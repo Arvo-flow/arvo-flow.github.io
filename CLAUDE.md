@@ -233,6 +233,18 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > **Öppet:** 62 manuella arbetsflöden pushar sina mätfiler till main, och de nekas nu. Avläst per fil i
 > källan: 35 sväljer nejet med `|| echo` och går gröna. Mätvärdet står kvar i loggen, men filen når
 > aldrig main. De ska spara artefakter i stället.
+> **17 okt: stämpeln fungerar, de fem [VAKT] är stängda, och sonden hade sagt mer än den visste.**
+> Steg 5 är avläst grönt: körning 38245160978 pushade förbi rulesetet («Bypassed rule violations»), och
+> båda botstämplarna på main är bara datum. V2–V5 är stängda: avtrycket prövas mot `discover`-jobbets
+> (SP-13), en katalog per artefakt (SP-14), `toJSON(secrets)` räknas som alla hemligheter (HB-06), och
+> masken läses inom raden (SP-08). Läcksonden såg på morgonen sex repo-kopior, varav en var
+> botnyckeln. Den låg alltså läsbar för varje gren, men ingen körning utanför main läste den.
+> Samtidigt sa sondens miljöjobb «✓ Miljön produktion bär de 6». **Ett jobb i en miljö ser också
+> repo-hemligheterna**, så ✓:et kunde inte skilja dem åt. När grundaren raderat kopiorna saknades
+> `ARVO_ADMIN_SECRET` i miljön. Jag hade fört det gröna vidare som «inget går sönder». Nu skriver
+> sonden ✓ bara efter en grön läckkontroll (HB-07). Läxan är 8 sep:s, i ett nytt instrument: ett
+> grönt som betyder «jag kunde inte se skillnaden» är farligare än ett rött. Detaljerna står i
+> `ops/BOTNYCKELN.md`.
 
 > **✅ GRUNDARBESLUT 2026-09-09 — STOPPREGELN: [KUND] BLOCKERAR, [VAKT] MERGAS OCH LAGAS FRAMÅT.**
 > Bevisplikten p.1 säger att ingen `lib/`-, `api/`- eller `agents/`-ändring får merga utan en andra

@@ -15,7 +15,10 @@ grenskyddet. Före varje push kontrollerar `scripts/stampelvakt.mjs` att commite
 `lastVerified`-datum framåt och inte förbi i dag. Allt annat, som ett pris, en rad eller en annan fil,
 fäller pushen rött (SP-01..07, SP-10). Varje beslut bär dessutom prisbokens avtryck vid
 verifieringen, så att ett pris som ändrats under körningen aldrig får dagens datum (SP-08), och
-beslutet prövas mot källans deklaration i registret (SP-09).
+beslutet prövas mot källans deklaration i registret (SP-09). Avtrycket räknas också av
+`discover`-jobbet, som inte kör några paket, och ett beslut med ett annat avtryck än det är ett
+instrumentfel och rött (SP-13). Varje matrisjobbs beslut läses ur en egen katalog,
+`stampel-<id>/stampel-<id>.json`, och en katalog som bär något annat är rött (SP-14).
 
 ## Fem steg för grundaren (ca 5 minuter)
 
@@ -85,5 +88,60 @@ på nyckeln under Deploy keys.
 - Stämpelcommiten bär `[skip ci]`, så Grinden körs inte i efterhand på den. Det som prövar den är
   stampelvakten, före pushen.
 
-**Obekräftat tills steg 5 körts:** att GitHub släpper en deploy key förbi just det här rulesetet.
-Faller steg 5 med GH006 är jobbet rött och felmeddelandet pekar hit.
+## Avläst 2026-10-12: steg 5 är grönt
+
+Körning 38245160978 (12 okt, schemalagd). Diagnossteget skrev `Nyckelns fingeravtryck: 256
+SHA256:oUK/ZQjdHMogBViLo6ducUD4DipsvQYN9rL9jwx2Jsc arvo-bot (ED25519)` och `✓ GitHub känner igen
+nyckeln`. Pushen gav `remote: Bypassed rule violations for refs/heads/main` och
+`26ee710..a0f740e HEAD -> main`. GitHub släpper alltså en deploy key förbi just det här rulesetet.
+Två stämplar ligger på main, fbf5e893 (11 okt, 23 datum) och a0f740ea (12 okt, 21 datum). Båda
+prövade med `granskaStampeldiff`: bara datum ändrade.
+
+Samma körning: 13 av 18 verifierare gröna, 5 röda (pipedrive HTTP 403, google-workspace 3 poster
+oläsbara, telia-vaxel T1 oläsbar, villkorsbok märkt «DRIFT» för en 404, eurostat-el märkt «källa
+oåtkomlig» för en ny period). De röda källornas beslutslistor var tomma, så de stämplade ingenting.
+
+**Nyckelparen.** Grenen `fabrikssvep-2026-10-16` bär två publika nycklar i repots rot.
+`arvo-bot-key.pub` har fingeravtrycket ovan och är den som fungerar. `arvo-bot.pub`
+(`SHA256:uU2Io0c3QLxPAU7mYBGKexvbBpVoGvEwSWyF+NGtVuM`, kommentar `arvo-verify-bot`) är det första paret,
+det GitHub inte kände igen i körning #47. Undantaget i rulesetet gäller varje deploy key med
+skrivrätt: står det första paret kvar under Deploy keys ska det tas bort. Steg 5 är grönt, så de
+privata nyckelfilerna ska raderas lokalt nu.
+
+## Avläst 2026-10-17: läckan var öppen, nu stängd, och sonden sa för mycket
+
+- **06:01 UTC, körning 39008341450.** Jobbet utan miljö såg sex repo-kopior: `ANTHROPIC_API_KEY`,
+  `ARVO_ADMIN_SECRET`, `BOT_DEPLOY_KEY`, `CRON_SECRET`, `DATABASE_URL` och `RESEND_API_KEY`.
+  Botnyckeln hade alltså också lagts in på repo-nivå, mot steg 3. Då når den varje gren, och ett
+  arbetsflöde på en feature-gren hade kunnat pusha till main utan PR. Avläst: inga körningar på
+  andra grenar läste nyckeln medan kopian fanns. I repots 100 senaste körningar (7–17 okt) körde
+  utanför main bara Grinden, tre gånger den 11 okt, och SP-11 låser att Grinden inte läser nyckeln.
+  Grenen `fabrikssvep-2026-10-16` har inga körningar. När kopian lades in vet jag inte.
+- **Grundaren raderade de sex repo-kopiorna samma dag.**
+- **20:44 UTC, körning 39068005452.** Jobbet utan miljö: alla 10 namn SAKNAS. Motprov: samma jobb
+  såg sex av dem på morgonen, så sonden kan svara «satt». Jobbet i `produktion`: fem av sex satta.
+  **`ARVO_ADMIN_SECRET` saknas.**
+- **Sondens morgonsvar var grönt på fel grund.** Den sa «✓ Miljön produktion bär de 6». Men ett jobb
+  i en miljö ser också repo-hemligheterna, så sonden kunde inte skilja dem åt. `ARVO_ADMIN_SECRET`
+  fanns bara på repo-nivå. Nu väntar `sond` på läckkontrollen och skriver ✓ bara när den var grön,
+  annars «Obevisat» och rött (HB-07).
+- **Grundarens steg:** lägg `ARVO_ADMIN_SECRET`, med samma värde som i Vercel, som miljöhemlighet i
+  `produktion`. Bara `run-batch-prospects.yml` läser den. Kör sedan sonden: båda jobben ska vara
+  gröna.
+
+## Tredje blickens fem [VAKT], stängda 2026-10-17
+
+- **V1** (fetch som gick grönt): lagad i PR #82 (SP-07).
+- **V2** (avtryckets producent oprövad): `nyttBeslut` räknar avtrycket ur prisbokens text och prövas i
+  SP-13. Stämpeljobbet kräver dessutom `discover`-jobbets avtryck (`VERIFIERAD_AVTRYCK`). Ett fel i
+  producenten blir alltså rött i drift, inte en varning i ett grönt jobb.
+- **V3** (`merge-multiple` kunde skriva över): `merge-multiple: false`, och `lasBeslut` kräver exakt
+  `stampel-<id>/stampel-<id>.json` (SP-14). Läst i källan till `download-artifact@v4`: med
+  `pattern` och utan `merge-multiple` hamnar varje artefakt i `path/<artifact.name>/`, även en ensam.
+- **V4** (läsaren såg inte `toJSON(secrets)`): ett uttryck som läser hemligheter utan att namnge dem
+  räknas som alla, och SP-11 räknar också `secrets: inherit` (HB-06, SP-11).
+- **V5** (avtryckets kornighet): masken läser datumvärdet inom raden (`DATUMFALT`), och SP-08 prövar
+  en valuta på samma rad som datumet. Avtrycket för dagens prisbok blev detsamma.
+
+SP-12 körs nu i både `bash` och `sh`. Steget använde `${X,,}`, som saknas i macOS bash 3.2, och
+sviten föll därför på Mac men inte i Actions.
