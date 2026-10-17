@@ -57,6 +57,14 @@ const allaBeslut = VERIFIERS.map((v) => beslutFor(v));
 const stamplad = tillampaStamplar(PRISBOK, allaBeslut, { register: REGISTER, idag: DAG });
 const M365 = VERIFIERS.find((v) => v.id === 'm365');
 
+// SP-03/SP-10 läser M365-raden ur prisboken i stället för att skriva in den. Inskriven som
+// '2026-10-05' föll båda på main när stämpelboten flyttade raden till 2026-10-12 (a0f740e), och
+// stämpelns [skip ci] gjorde att ingen körning visade det. Basen får ett fast datum i testets eget
+// repo, så att testet prövar samma sak vad boten än stämplat.
+const M365_RAD = PRISBOK.match(/currency: 'SEK', lastVerified: '\d{4}-\d{2}-\d{2}', source: 'microsoft\.com',/)?.[0];
+const m365Med = (datum) => PRISBOK.replace(M365_RAD, M365_RAD.replace(/\d{4}-\d{2}-\d{2}/, datum));
+const dagarFranIdag = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+
 describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
   test('SP-01 · den riktiga kedjan (alla verifierares deklarationer → tillampaStamplar → git diff) släpps', () => {
     // Exakt, inte en tröskel: 20 deklarerade nivåer + 8 kategorier med eget datum, avläst 2026-10-10.
@@ -82,9 +90,8 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
   });
 
   test('SP-03 · datumet måste flyttas framåt, men aldrig förbi i dag, och vara ett riktigt datum', () => {
-    const rad = "currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',";
-    assert.ok(PRISBOK.includes(rad), 'M365-raden ser inte ut som väntat — testet prövar inget');
-    const med = (d) => granskaStampeldiff(repoMed(PRISBOK).diffEfter(PRISBOK.replace(rad, rad.replace('2026-10-05', d))), { idag: '2026-10-10' });
+    assert.ok(M365_RAD, 'M365-raden ser inte ut som väntat — testet prövar inget');
+    const med = (d) => granskaStampeldiff(repoMed(m365Med('2026-10-05')).diffEfter(m365Med(d)), { idag: '2026-10-10' });
     assert.equal(med('2026-10-10').ok, true, 'motprov: ett datum framåt till i dag ska släppas');
     assert.match(med('2026-10-01').skal, /bakåt/);
     assert.match(med('2026-10-11').skal, /efter i dag/);
@@ -299,15 +306,15 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
   });
 
   test('SP-10 · vaktens CLI räknar «i dag» själv: ett datum i morgon fäller, i dag släpps', () => {
-    const rad = "currency: 'SEK', lastVerified: '2026-10-05', source: 'microsoft.com',";
+    assert.ok(M365_RAD, 'M365-raden ser inte ut som väntat — testet prövar inget');
     const kor = (datum) => {
-      const r = repoMed(PRISBOK);
-      r.diffEfter(PRISBOK.replace(rad, rad.replace('2026-10-05', datum)));
+      const r = repoMed(m365Med(dagarFranIdag(-7)));
+      r.diffEfter(m365Med(datum));
       try { execFileSync('node', [join(ROT, 'scripts/stampelvakt.mjs'), 'HEAD~1'], { cwd: r.dir, stdio: 'pipe' }); return 0; }
       catch (e) { return e.status; }
     };
-    assert.equal(kor(new Date(Date.now() + 86400000).toISOString().slice(0, 10)), 1);
-    assert.equal(kor(new Date().toISOString().slice(0, 10)), 0, 'motprov: dagens datum ska släppas');
+    assert.equal(kor(dagarFranIdag(1)), 1);
+    assert.equal(kor(dagarFranIdag(0)), 0, 'motprov: dagens datum ska släppas');
   });
 
   test('SP-11 · botnyckeln läses bara av stampla-jobbet (och av sonden som prövar att den finns)', () => {
