@@ -52,7 +52,7 @@
 //   en kontroll i det här skriptet.
 
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { lstatSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stamplaKalla, stamplaKategori } from '../lib/verifieringsstampel.js';
@@ -96,7 +96,9 @@ function dagarMellan(a, b) {
 export function provaBeslut(b, { register, idag }) {
   const fel = (s) => { throw new Error(`stämpelbeslutet avvisas (${s}): ${JSON.stringify(b).slice(0, 160)}`); };
   if (!b || typeof b.kalla !== 'string' || !Array.isArray(b.nycklar)) fel('går inte att läsa');
-  const v = register[b.kalla];
+  // Egen nyckel, inte ärvd: register['constructor'] är Object, och «constructor» klarar
+  // katalognamnets mönster (andra blicken 18 okt). SP-14.
+  const v = Object.hasOwn(register, b.kalla) ? register[b.kalla] : undefined;
   if (!v) fel(`okänd källa «${b.kalla}»`);
   if (!ISO.test(String(b.datum))) fel('ogiltigt datum');
   if (!ISO.test(String(idag))) fel('inget dagens datum');
@@ -145,18 +147,20 @@ export function tillampaStamplar(kalla, beslut, { register, idag, verifierad } =
 
 /**
  * Läser besluten ur artefaktkatalogen: varje post är en katalog `stampel-<id>/` med exakt en fil,
- * `stampel-<id>.json`, som bara bär källan <id>:s beslut. Allt annat kastar (V3, SP-14).
+ * `stampel-<id>.json`, som bara bär källan <id>:s beslut. Allt annat kastar (V3, SP-14). En symlänk
+ * är inte en katalog eller fil från nedladdningen: den kan peka var som helst, så den avvisas.
  */
 export function lasBeslut(katalog) {
   const beslut = [];
   for (const namn of readdirSync(katalog).sort()) {
     const m = namn.match(/^stampel-([a-z0-9-]+)$/);
-    if (!m || !statSync(join(katalog, namn)).isDirectory()) throw new Error(`${namn} är ingen artefaktkatalog stampel-<id>/`);
+    if (!m || !lstatSync(join(katalog, namn)).isDirectory()) throw new Error(`${namn} är ingen artefaktkatalog stampel-<id>/`);
     const id = m[1];
     const filer = readdirSync(join(katalog, namn));
     if (filer.length !== 1 || filer[0] !== `stampel-${id}.json`) {
       throw new Error(`${namn}/ ska bära exakt stampel-${id}.json, bär ${filer.join(', ') || 'ingenting'}`);
     }
+    if (!lstatSync(join(katalog, namn, filer[0])).isFile()) throw new Error(`${namn}/${filer[0]} är ingen vanlig fil`);
     const j = JSON.parse(readFileSync(join(katalog, namn, filer[0]), 'utf8'));
     if (!Array.isArray(j)) throw new Error(`${filer[0]} är ingen lista med beslut`);
     const fram = j.filter((b) => b?.kalla !== id);

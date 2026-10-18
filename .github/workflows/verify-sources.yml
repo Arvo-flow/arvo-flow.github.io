@@ -127,10 +127,20 @@ jobs:
           pattern: stampel-*
           path: ${{ runner.temp }}/stamplar
           merge-multiple: false
+      # Allt i stamplar/ ska vara en artefaktkatalog stampel-<id>/. Räknas något annat, eller räknas
+      # katalogerna i en annan form än nedladdningens, hade n=0 betytt ett tyst «inget att stämpla»
+      # medan besluten låg där (andra blicken 18 okt, s1). Därför jämförs antalet mot allt i katalogen.
+      # SP-15 kör steget mot nedladdningens form.
       - name: Finns det något att stämpla?
         id: finns
         run: |
-          N=$(ls -d "${{ runner.temp }}/stamplar"/stampel-*/ 2>/dev/null | wc -l)
+          D="${{ runner.temp }}/stamplar"
+          N=$(ls -d "$D"/stampel-*/ 2>/dev/null | wc -l | tr -d ' ')
+          ALLA=$(ls -A "$D" 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$N" -ne "$ALLA" ]; then
+            echo "::error::stamplar/ bär $ALLA poster men $N artefaktkataloger stampel-<id>/ — nedladdningens form stämmer inte med stampla.mjs. Inget stämplas."
+            exit 1
+          fi
           echo "n=$N" >> "$GITHUB_OUTPUT"
           echo "$N beslutskatalog(er), en per verifierare som körde klart (en röd källas lista är tom)"
       # Utan nyckeln kan stämpeln inte nå main. Det är ett verkligt fel, alltså rött — aldrig grönt.
