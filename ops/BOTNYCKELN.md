@@ -62,6 +62,10 @@ ssh -i arvo-bot -o IdentitiesOnly=yes -T git@github.com
 Har filerna redan raderats: skapa ett nytt par (steg 1) och byt **både** deploy key och hemlighet.
 Kör sedan om bara jobbet *Stämpla verifieringsdatum på main* i samma körning (Re-run → det jobbet).
 Besluten från matrisen ligger kvar som artefakter i sju dygn, så hela matrisen behöver inte köras om.
+Sedan 17 okt behöver jobbet också `discover`-jobbets avtryck. Om en omkörning av ett enskilt jobb får
+det från den första omgången är obekräftat; GitHubs dokumentation säger bara att omkörningen använder
+samma `GITHUB_SHA`. Saknas avtrycket blir jobbet rött med «avtrycket av den verifierade prisboken
+saknas», aldrig grönt. Kör då om hela körningen.
 
 Från och med nästa version gör jobbet samma kontroll själv i steget *Botnyckeln känns igen av GitHub*
 och skriver ut nyckelns fingeravtryck, som kan jämföras med det som står under Deploy keys (SP-12).
@@ -145,3 +149,24 @@ privata nyckelfilerna ska raderas lokalt nu.
 
 SP-12 körs nu i både `bash` och `sh`. Steget använde `${X,,}`, som saknas i macOS bash 3.2, och
 sviten föll därför på Mac men inte i Actions.
+
+## Andra blicken på lagningen (17–18 okt): tolv sabotage fällde noll
+
+Tre granskare startades med uppdraget «hitta var det gröna är osant». Alla dog på sessionsgränsen;
+två hann köra 50 respektive 25 kommandon, som räddades ur transkripten (`npm run skorda`). Deras
+sabotage som fällde 0 tester, alla [VAKT], alla lagade 18 okt:
+- **Stämpelkedjan (4).** Räknesteget i gammal form gav n=0, och jobbet hoppade över allt och gick
+  grönt. Ett tomt avtryck från `discover`, en råhash som skrev över producentens avtryck och fel fil som
+  prisbok gav rött i drift men grönt i sviten. SP-15 kör nu kedjan som i Actions (discover-steget,
+  den riktiga verify.mjs, nedladdningens form, räknesteget, stampla.mjs), och räknesteget jämför
+  antalet kataloger mot allt i katalogen. Granskarens sonder fann också att en symlänkad katalog
+  lästes och att «constructor» klarade registeruppslaget (SP-14).
+- **Läcksonden (4).** Hemligheten läst under ett annat variabelnamn, `continue-on-error`, `|| true`
+  och ett hårdkodat `LACKKONTROLL=success` gjorde sonden grön utan prövning. HB-08 kör båda stegen ur
+  arbetsflödet och kräver samma namn på varje rad.
+- **Läsaren (4 sabotage, fem former).** Citerat `inherit`, `env:` efter `jobs:`, YAML-escapes,
+  `}}` i en strängliteral, och versaler eller flera rader i den dynamiska formen (HB-06). Inget av
+  repots 148 flöden använder formerna i dag (granskarens inventering, omräknad 18 okt).
+
+Lagningen fällde 18 sabotage, alla med `assert old in s`. Två rader i den togs bort för att de saknade
+tand. **Lagningen har inte haft en egen andra blick.**
