@@ -138,6 +138,7 @@ import './radobservation.mjs';
 import './enhetsantagandet.mjs';
 import './skordkontrakt.mjs';
 import './alertmail.mjs';
+import './narvarovakter.mjs';
 import './hemlighetsvakt.mjs';
 import './hemlighetsbindning.mjs';
 import './stampelvakt.mjs';
