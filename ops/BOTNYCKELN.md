@@ -105,12 +105,15 @@ Samma körning: 13 av 18 verifierare gröna, 5 röda (pipedrive HTTP 403, google
 oläsbara, telia-vaxel T1 oläsbar, villkorsbok märkt «DRIFT» för en 404, eurostat-el märkt «källa
 oåtkomlig» för en ny period). De röda källornas beslutslistor var tomma, så de stämplade ingenting.
 
-**Nyckelparen.** Grenen `fabrikssvep-2026-10-16` bär två publika nycklar i repots rot.
+**Nyckelparen.** Grenen `fabrikssvep-2026-10-16` bar två publika nycklar i repots rot.
 `arvo-bot-key.pub` har fingeravtrycket ovan och är den som fungerar. `arvo-bot.pub`
 (`SHA256:uU2Io0c3QLxPAU7mYBGKexvbBpVoGvEwSWyF+NGtVuM`, kommentar `arvo-verify-bot`) är det första paret,
 det GitHub inte kände igen i körning #47. Undantaget i rulesetet gäller varje deploy key med
-skrivrätt: står det första paret kvar under Deploy keys ska det tas bort. Steg 5 är grönt, så de
-privata nyckelfilerna ska raderas lokalt nu.
+skrivrätt: står det första paret kvar under Deploy keys ska det tas bort.
+**18 okt, grundarens beslut:** båda `.pub`-filerna togs bort ur roten. Fingeravtrycken ovan räknades
+om ur filerna före borttagningen (sha256 av nyckelbloben) och var lika med dem som står här. Grundaren
+har raderat de privata nyckelfilerna lokalt; det är hens besked och går inte att avläsa härifrån.
+Kvar för grundaren: att det första paret (`uU2Io0c3…`) inte står under Deploy keys.
 
 ## Avläst 2026-10-17: läckan var öppen, nu stängd, och sonden sa för mycket
 
