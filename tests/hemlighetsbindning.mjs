@@ -9,7 +9,8 @@
 //   (HB-03); en YAML-form som läsaren inte förstår, så att den inte blir grön av tomhet (HB-04); ett
 //   produktionsjobb som en push eller PR på en annan gren kan starta — där kan det bara bli rött (HB-05);
 //   ett uttryck som läser hemligheter utan att namnge dem, och ett namn i andra versaler (HB-06); ett
-//   ✓ för miljön som skrivs fast repo-kopior kan bära värdena (HB-07).
+//   ✓ för miljön som skrivs fast repo-kopior kan bära värdena (HB-07); en läcksond vars steg kan bli
+//   gröna utan att ha prövat något (HB-08).
 // BLIND: om hemligheterna FAKTISKT ligger i miljön och är borta från repo-nivån — det är repoinställningar
 //   som bara körningen av probe-hemligheter.yml kan mäta. Det här är kodens halva; sonden är den andra.
 
@@ -127,6 +128,29 @@ describe('HB · hemligheterna läses bara i miljön produktion', () => {
     assert.deepEqual(obundnaJobb({ 'n.yml': jobb('${{ secrets.X }}') }), [{ id: 'n.yml#x', hemligheter: ['X'] }]);
     // Versalerna: SECRETS.x är samma hemlighet som secrets.X.
     assert.deepEqual(hemligheterI('${{ SECRETS.bot_deploy_key }} ${{ Secrets["Cron_Secret"] }}'), ['BOT_DEPLOY_KEY', 'CRON_SECRET']);
+
+    // Andra blicken 18 okt, mätt med fixturer: formerna nedan läste en hemlighet och syntes inte.
+    assert.equal(lasesDynamiskt('${{ toJSON(SECRETS) }}'), true, 'versaler i den dynamiska formen');
+    assert.equal(lasesDynamiskt('${{ toJSON(\n  secrets) }}'), true, 'ett uttryck över två rader');
+    assert.deepEqual(hemligheterI('${{ secrets . X }}'), ['X'], 'blanksteg kring punkten är fortfarande ett namn');
+    assert.deepEqual(hemligheterI('${{ inputs.secrets.X }}'), [], 'motprov: ett annat sammanhangs fält är ingen hemlighet');
+    // Ett `}}` i en strängliteral avslutar inte uttrycket, inte heller efter ett '' (ett citattecken).
+    assert.equal(lasesDynamiskt("${{ format('}}', toJSON(secrets)) }}"), true);
+    assert.equal(lasesDynamiskt("${{ format('it''s }}', toJSON(secrets)) }}"), true);
+    assert.equal(lasesDynamiskt("${{ inputs.n || '}}' }} ${{ secrets.X }}"), false);
+    // YAML avkodar dubbelciterade skalärer innan GitHub ser uttrycket.
+    assert.deepEqual(hemligheterI('"${{ s\\u0065crets.BOT_DEPLOY_KEY }}"'), ['BOT_DEPLOY_KEY']);
+    assert.ok(hemligheterI('"${{ secrets.BOT_DEPLOY_\\\n      KEY }}"').includes('BOT_DEPLOY_KEY'), 'en skarvad rad');
+    assert.equal(lasesDynamiskt('"${{ toJSON(s\\u0065crets) }}"'), true, 'den dynamiska formen, escapad');
+    // Citerat inherit, och en toppnivå-env som står EFTER jobs.
+    for (const arv of ["secrets: 'inherit'", 'secrets: "inherit"', 'secrets: inherit # alla']) {
+      assert.deepEqual(obundnaJobb({ 'i.yml': `on: push\njobs:\n  c:\n    uses: ./x.yml\n    ${arv}\n` }), [{ id: 'i.yml#c', hemligheter: ['(secrets: inherit)'] }], arv);
+    }
+    assert.deepEqual(obundnaJobb({ 'e.yml': 'on: push\njobs:\n  a:\n    runs-on: x\nenv:\n  K: ${{ secrets.BOT_DEPLOY_KEY }}\n' }),
+      [{ id: 'e.yml#a', hemligheter: ['BOT_DEPLOY_KEY'] }]);
+    assert.equal(jobbIArbetsflode('on: push\njobs:\n  a:\n    runs-on: x\nenv:\n  K: ${{ toJSON(secrets) }}\n')[0].dynamisk, true);
+    // En kommentar i kolumn 0 inne i jobs avslutar inte blocket: jobbet efter den läses.
+    assert.deepEqual(jobbIArbetsflode('on: push\njobs:\n  a:\n    runs-on: x\n# kommentar\n  b:\n    env:\n      K: ${{ secrets.X }}\n').map((j) => j.jobb), ['a', 'b']);
     // I dag läser inget arbetsflöde hemligheter dynamiskt (avläst 2026-10-17).
     assert.deepEqual(Object.entries(FLODEN).flatMap(([f, y]) => jobbIArbetsflode(y).filter((j) => j.dynamisk).map((j) => `${f}#${j.jobb}`)), []);
   });
@@ -159,5 +183,47 @@ describe('HB · hemligheterna läses bara i miljön produktion', () => {
     assert.match(sond.text, /^ {4}needs: utan-miljo$/m);
     assert.match(sond.text, /^ {4}if: \$\{\{ always\(\) \}\}$/m);
     assert.match(sond.text, /^ {10}LACKKONTROLL: \$\{\{ needs\.utan-miljo\.result \}\}$/m);
+  });
+
+  test('HB-08 · läcksondens steg körs som i Actions: rätt variabelnamn, inget som sväljer ett rött', () => {
+    // Andra blicken 18 okt: fyra ändringar i probe-hemligheter.yml gjorde sonden grön utan att den
+    // prövat något, och 0 tester föll — hemligheten läst under ett annat variabelnamn, continue-on-error,
+    // `|| true` efter läckkontrollen och LACKKONTROLL=success i run-raden.
+    const yaml = FLODEN['probe-hemligheter.yml'];
+    // Varje rad som läser en hemlighet lägger den i en variabel med SAMMA namn, för skriptet läser
+    // process.env[namn]. Ett annat namn ger «SAKNAS» för en hemlighet som finns.
+    const lasningar = yaml.split('\n').filter((r) => /secrets/i.test(r) && !/^\s*#/.test(r));
+    assert.ok(lasningar.length >= ALLA_HEMLIGHETER.length + KRAVDA_I_PRODUKTION.length, `bara ${lasningar.length} rader läser hemligheter`);
+    for (const r of lasningar) {
+      const m = r.match(/^\s+([A-Z_][A-Z0-9_]*):\s*\$\{\{\s*secrets\.([A-Z_][A-Z0-9_]*)\s*\}\}\s*$/);
+      assert.ok(m, `en hemlighet läses i en annan form än NAMN: \${{ secrets.NAMN }}: ${r.trim()}`);
+      assert.equal(m[1], m[2], `${m[2]} läses in som ${m[1]}`);
+    }
+    assert.doesNotMatch(yaml, /^\s+continue-on-error:/m, 'ett rött steg i sonden får aldrig bli ett grönt jobb');
+
+    const jobb = jobbIArbetsflode(yaml);
+    const korsteg = (j, skal) => {
+      const rader = j.text.split('\n');
+      const i = rader.findIndex((r) => /^ {8}run: /.test(r));
+      assert.ok(i >= 0, `${j.jobb}: inget run-steg`);
+      if (!/^ {8}run: \|$/.test(rader[i])) return rader[i].replace(/^ {8}run: /, '');
+      const ut = [];
+      for (let k = i + 1; k < rader.length && (rader[k] === '' || rader[k].startsWith('          ')); k++) ut.push(rader[k].slice(10));
+      return ut.join('\n');
+    };
+    const kor = (skript, env, skal) => {
+      try { execFileSync('bash', [...skal, '-c', skript], { cwd: ROT, env: { PATH: process.env.PATH, HOME: process.env.HOME, ...env }, stdio: 'pipe' }); return 0; }
+      catch (e) { return e.status; }
+    };
+    // utan-miljo: Actions kör ett steg utan shell: med bash -e. En satt hemlighet ska ge rött.
+    const utan = korsteg(jobb.find((j) => j.jobb === 'utan-miljo'));
+    assert.equal(kor(utan, { ARVO_ADMIN_SECRET: 'repo-kopia' }, ['-e']), 1, `läckkontrollen gick grön på en repo-kopia: ${utan}`);
+    assert.equal(kor(utan, {}, ['-e']), 0, 'motprov: utan repo-kopior är läckkontrollen grön');
+    // sond: shell: bash ger --noprofile --norc -eo pipefail. Alla satta men läckkontrollen röd ska ge rött.
+    const sond = korsteg(jobb.find((j) => j.jobb === 'sond'));
+    const alla = Object.fromEntries(KRAVDA_I_PRODUKTION.map((n) => [n, 'x']));
+    const skal = ['--noprofile', '--norc', '-e', '-o', 'pipefail'];
+    assert.notEqual(kor(sond, { ...alla, LACKKONTROLL: 'failure' }, skal), 0, `sonden gick grön med en röd läckkontroll: ${sond}`);
+    assert.equal(kor(sond, { ...alla, LACKKONTROLL: 'success' }, skal), 0, 'motprov: grön läckkontroll och alla satta är grönt');
   });
 });
