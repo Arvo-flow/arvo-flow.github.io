@@ -1,14 +1,16 @@
 name: Försegla villkorsboken (läst, aldrig gissad)
 # Läser klausulen ORDAGRANT ur leverantörens PDF och förseglar endast vid träff.
 # Misslyckas läsningen med ett tecken förblir posten röd — det är hela poängen.
+# Förseglingen är en ändring i lib/ och går därför in via en PR med andra blick (Bevisplikten
+# p.1): jobbet laddar upp den som patch-artefakt. Förut pushades den rakt till main, ogranskad.
 on:
   workflow_dispatch:
     inputs:
       forsegla:
-        description: 'Skriv in beviset i lib/contract-intel.js (annars bara läsning)'
+        description: 'Försegla lib/contract-intel.js och spara ändringen som patch-artefakt (annars bara läsning)'
         default: 'nej'
 permissions:
-  contents: write
+  contents: read
 jobs:
   las:
     runs-on: ubuntu-latest
@@ -21,21 +23,18 @@ jobs:
       - run: npm install --no-save pdfjs-dist
       - name: Läs klausulerna
         run: node scripts/forsegla-villkor.mjs ${{ github.event.inputs.forsegla == 'ja' && '--forsegla' || '' }}
-      - name: Commit förseglingen
-        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
-        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
-        if: always() && github.event.inputs.forsegla == 'ja' && github.ref == 'refs/heads/main'
-        continue-on-error: true
+      - name: Förseglingen som patch
+        if: always() && github.event.inputs.forsegla == 'ja'
         run: |
-          git config user.email "bot@arvoflow.se"
-          git config user.name "Arvo Diag Bot"
-          for i in 1 2 3; do
-            git fetch origin main
-            git stash -u -- lib/contract-intel.js 2>/dev/null || true
-            git checkout -B forsegling origin/main
-            git checkout stash@{0} -- lib/contract-intel.js 2>/dev/null || git stash pop || true
-            git add lib/contract-intel.js
-            git commit -m "villkorsbok: försegling förtjänad genom läsning [skip ci]" || echo "inget nytt"
-            if git push origin HEAD:main; then echo "förseglingen sparad"; break; fi
-            sleep $((i * 6))
-          done
+          git diff -- lib/contract-intel.js > /tmp/forsegling.patch
+          if [ -s /tmp/forsegling.patch ]; then cat /tmp/forsegling.patch; else echo "ingen försegling — lib/contract-intel.js är oförändrad"; fi
+
+      - name: Spara utfallet som artefakt
+        # main tar bara emot PR:er (PR #80). Saknas filen blir steget rött (MP-03).
+        if: always() && github.event.inputs.forsegla == 'ja'
+        uses: actions/upload-artifact@v4
+        with:
+          name: forsegla-villkor-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/forsegling.patch
+          if-no-files-found: error
+          retention-days: 30

@@ -143,6 +143,7 @@ import './alertmail.mjs';
 import './hemlighetsvakt.mjs';
 import './hemlighetsbindning.mjs';
 import './stampelvakt.mjs';
+import './pushvagen.mjs';
 import './ingestkontrakt.mjs';
 import './inkorgsadress.mjs';
 import './larmunderlag.mjs';

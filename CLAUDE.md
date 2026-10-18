@@ -230,9 +230,28 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > obekräftat, eftersom felmeddelandet inte går att läsa via API:t. Nu startar de bara på main, och
 > HB-05 fäller ett produktionsjobb som en push eller PR på en annan gren kan starta. Läsaren och
 > js-yaml är överens om alla 147 flöden.
-> **Öppet:** 62 manuella arbetsflöden pushar sina mätfiler till main, och de nekas nu. Avläst per fil i
-> källan: 35 sväljer nejet med `|| echo` och går gröna. Mätvärdet står kvar i loggen, men filen når
-> aldrig main. De ska spara artefakter i stället.
+> **✅ STÄNGT 2026-10-17: MÄTFILERNA ÄR ARTEFAKTER (`tests/pushvagen.mjs`, MP-01..06).** Ommätt med två
+> instrument som var överens (rå grep och js-yaml): 66 av 147 flöden pushade, och 60 manuella flöden
+> pushade sin fil till main. (Talet 62 gick inte att återskapa. Obekräftat: 60 plus de två `apply-*`, som
+> pushar bart till en feature-gren, ger 62.)
+> Efter sista nekade försöket gick 39 gröna: 35 med `|| echo`, tre loopar som slutade på `echo`, och
+> `forsegla-villkor` (continue-on-error). De 21 andra blev röda på varje körning, även när mätningen
+> lyckats. Nu gäller för alla 60:
+> · `upload-artifact` med `if-no-files-found: error` och namnet `<flöde>-<run_id>-<run_attempt>`.
+> · Utgångstid 90 dagar för mätvärden, 30 för bilder och förseglingspatchen, 7 för prospektets token.
+> · `contents: read`.
+> Bara `verify-sources#stampla` pushar till main. MP-02 KÖR varje kvarvarande pushsteg mot en git-stubbe som
+> säger nej, och mot en som säger ja (motprovet). Mot det gamla trädet fann granskaren alla 60 main-pushar
+> och alla 39 gröna nej. 32 sabotage, alla fällde. TF-11 är pensionerad: dess tomhetsspärr krävde ≥40
+> main-pushar. Regeln lever i MP-01.
+> **Två följdfynd.** `forsegla-villkor` pushade en `lib/`-ändring rakt till main, förbi andra blicken. Nu är
+> förseglingen en patch-artefakt som går via PR. Och stämpelns `[skip ci]` dolde att boten själv fällde
+> SP-03/SP-10: M365-datumet var hårdkodat och flyttades 12 okt. Det är lagat i samma PR.
+> **Kostnaden, öppet:** en artefakt löper ut och hämtas via Actions-API:t (`gh run download`), inte via git.
+> Ett mätvärde som ska citeras i bibeln går in i `ops/` via en PR. Tre lokala skript läser fortfarande filen
+> ur klonen, så ladda ner artefakten till `ops/` först:
+> · `screenshot-reveal-live.mjs` läser `ops/diag-reveal-live.json`.
+> · `screenshot-kontoret-real.mjs` och `screenshot-switch-live.mjs` läser `ops/testyta-rows.json`.
 > **17 okt: stämpeln fungerar, de fem [VAKT] är stängda, och sonden hade sagt mer än den visste.**
 > Steg 5 är avläst grönt: körning 38245160978 pushade förbi rulesetet («Bypassed rule violations»), och
 > båda botstämplarna på main är bara datum. V2–V5 är stängda: avtrycket prövas mot `discover`-jobbets
@@ -243,8 +262,11 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > repo-hemligheterna**, så ✓:et kunde inte skilja dem åt. När grundaren raderat kopiorna saknades
 > `ARVO_ADMIN_SECRET` i miljön. Jag hade fört det gröna vidare som «inget går sönder». Nu skriver
 > sonden ✓ bara efter en grön läckkontroll (HB-07). Läxan är 8 sep:s, i ett nytt instrument: ett
-> grönt som betyder «jag kunde inte se skillnaden» är farligare än ett rött. Detaljerna står i
-> `ops/BOTNYCKELN.md`.
+> grönt som betyder «jag kunde inte se skillnaden» är farligare än ett rött. **18 okt:** en separat
+> granskare (död på sessionsgränsen, skördad ur transkriptet) fann tolv sabotage mot lagningen som
+> fällde noll, alla [VAKT], alla lagade (SP-14, SP-15, HB-06, HB-08). Sammanfogningen med PR #83 behöll
+> fabrikssvepets frysta datum i stampelvaktens test i stället för PR #83:s läsning av M365-raden,
+> eftersom frysningen också skyddar SP-07. Detaljerna står i `ops/BOTNYCKELN.md`.
 
 > **✅ GRUNDARBESLUT 2026-09-09 — STOPPREGELN: [KUND] BLOCKERAR, [VAKT] MERGAS OCH LAGAS FRAMÅT.**
 > Bevisplikten p.1 säger att ingen `lib/`-, `api/`- eller `agents/`-ändring får merga utan en andra

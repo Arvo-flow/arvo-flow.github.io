@@ -4,7 +4,7 @@ name: Sond · certifikatvågen (svarar tredje vågen live?)
 # aldrig haft ett M365-cert (verklighetsgräns), eller vårt fingeravtryck missar ett cert som finns
 # (vår bugg). Skillnaden avgör om raden är en möjlighet eller ett tak.
 permissions:
-  contents: write
+  contents: read
 on:
   workflow_dispatch:
 jobs:
@@ -22,20 +22,12 @@ jobs:
           set -o pipefail
           node scripts/probe-ct-vag.mjs 2>&1 | tee /tmp/ctvag.txt
       # Inget continue-on-error: går mätningen förlorad ska körningen vara röd.
-      - name: Spara sondsvaret
-        # ⚠️ ENDAST FRÅN main (2026-09-10). Utan villkoret pushar ett workflow_dispatch på en
-        #    feature branch DEN BRANCHEN till main — tyst (`|| echo`), förbi granskningsgrinden.
-        if: always() && github.ref == 'refs/heads/main'
-        run: |
-          git config user.email "bot@arvoflow.se"
-          git config user.name "Arvo Diag Bot"
-          for i in 1 2 3; do
-            git fetch origin main
-            git checkout -B sond origin/main
-            mkdir -p ops && cp /tmp/ctvag.txt ops/probe-ct-vag.txt
-            git add ops/probe-ct-vag.txt
-            git commit -m "ops: sond ct-vag [skip ci]" || echo "inget nytt"
-            if git push origin HEAD:main; then echo "sondsvaret sparat"; SPARAT=1; break; fi
-            sleep $((i * 6))
-          done
-          [ "${SPARAT:-0}" = "1" ] || { echo "✗ sondsvaret kunde INTE sparas"; exit 1; }
+      - name: Spara utfallet som artefakt
+        # main tar bara emot PR:er (PR #80). Saknas filen blir steget rött (MP-03).
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-ct-vag-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/ctvag.txt
+          if-no-files-found: error
+          retention-days: 90

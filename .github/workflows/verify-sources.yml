@@ -195,7 +195,7 @@ jobs:
       # Grenskyddet släpper igenom nyckeln, alltså avgör stampelvakt.mjs FÖRE varje push att commiten
       # bara flyttar lastVerified-datum framåt. En nekad push hämtar en färsk main och stämplar om —
       # ingen rebase, inga konflikter. Efter tre nekade försök är jobbet RÖTT.
-      # Ref-villkoret här är TF-11:s form (varje steg som pushar till main bär det). Det som verkar är
+      # Ref-villkoret här är TF-11:s form, som MP-01 nu kräver på steget ELLER jobbet. Det som verkar är
       # jobbets villkor ovan: på en annan ref startar jobbet aldrig, så den här raden kan inte fälla något.
       - name: Committa, vakta och pusha
         if: steps.finns.outputs.n != '0' && github.ref == 'refs/heads/main'

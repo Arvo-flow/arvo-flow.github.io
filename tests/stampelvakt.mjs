@@ -69,6 +69,12 @@ const allaBeslut = VERIFIERS.map((v) => beslutFor(v));
 const stamplad = tillampaStamplar(PRISBOK, allaBeslut, { register: REGISTER, idag: DAG, verifierad: AVTRYCK });
 const M365 = VERIFIERS.find((v) => v.id === 'm365');
 
+// Samma fel lagades två gånger, och sammanfogningen 18 okt behöll en lagning. PR #83 lät SP-03/SP-10
+// läsa M365-raden ur den levande prisboken (datumet '2026-10-05' var inskrivet och boten flyttade det
+// 12 okt). Fabrikssvepet 16 okt frös i stället alla datum i testets prisbok (PRISBOK ovan), vilket
+// också skyddar SP-07, som annars får en tom diff den dag boten redan stämplat. Frysningen behölls.
+const dagarFranIdag = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+
 describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
   test('SP-01 · den riktiga kedjan (alla verifierares deklarationer → tillampaStamplar → git diff) släpps', () => {
     // Exakt, inte en tröskel: 20 deklarerade nivåer + 8 kategorier med eget datum, avläst 2026-10-10.
@@ -349,8 +355,8 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
       try { execFileSync('node', [join(ROT, 'scripts/stampelvakt.mjs'), 'HEAD~1'], { cwd: r.dir, stdio: 'pipe' }); return 0; }
       catch (e) { return e.status; }
     };
-    assert.equal(kor(new Date(Date.now() + 86400000).toISOString().slice(0, 10)), 1);
-    assert.equal(kor(new Date().toISOString().slice(0, 10)), 0, 'motprov: dagens datum ska släppas');
+    assert.equal(kor(dagarFranIdag(1)), 1);
+    assert.equal(kor(dagarFranIdag(0)), 0, 'motprov: dagens datum ska släppas');
   });
 
   test('SP-11 · botnyckeln läses bara av stampla-jobbet (och av sonden som prövar att den finns)', () => {
