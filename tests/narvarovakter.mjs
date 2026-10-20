@@ -23,6 +23,7 @@ import { kortterminalCheck } from '../lib/verifiers/kortterminal.mjs';
 import { fortnoxLonChecks } from '../lib/verifiers/fortnox-lon.mjs';
 import { teliaChecks } from '../lib/verifiers/telia-vaxel.mjs';
 import { adobeChecks } from '../lib/verifiers/adobe.mjs';
+import { zoomKontext, zoomUtfall } from '../lib/verifiers/zoom.mjs';
 
 const FV = BRANCHINDEX['saas-finance'].fortnoxVerified;
 const SV = BRANCHINDEX['saas-finance'].spirisVerified;
@@ -150,6 +151,21 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     const indHojd = adobeChecks(AV, { teamText, psText: byt(psText, 'Ordinarie pris 932,50', 'Ordinarie pris 979,00') });
     assert.equal(indHojd[3].actual, '979 SEK');
     assert.equal(marke(adobeChecks(AV, { teamText, psText: byt(psText, 'Ordinarie pris ', '') })[3]), 'olasbar');
+  });
+
+  test('NV-08 · Zoom: loggen visar sidtexten runt planerna, beloppen och faktureringsläget', () => {
+    // Sidan bytte form 18 okt (probe-saas-render, körning 39500651019). Läsaren byggs om först när
+    // texten är avläst; tills dess ska loggen bära den, och en tom sida ska säga att inget träffade.
+    const sidtext = 'Allt i Workplace Pro, plus: Workplace Pro $16,50 /användare per månad · faktureras månadsvis';
+    const [planer, belopp, lage] = zoomKontext(sidtext);
+    assert.match(planer, /Workplace Pro/);
+    assert.match(belopp, /\$16,50/);
+    assert.match(lage, /faktureras månadsvis/);
+    assert.deepEqual(zoomKontext('Kontakta oss').map((r) => r.endsWith('(ingen träff)')), [true, true, true]);
+    // Utdragen ska nå fabrikens logg (notes), inte bara finnas som funktion.
+    const utfall = zoomUtfall(BRANCHINDEX['saas-productivity'].licenseTierBenchmarks, sidtext);
+    assert.ok(utfall.notes.some((r) => r.startsWith('planer: ') && r.includes('Workplace Pro')), 'planutdraget når inte loggen');
+    assert.equal(utfall.checks.length, 2);
   });
 
   test('NV-07 · talSv läser svenska priser oavsett mellanslag i tusentalet', () => {
