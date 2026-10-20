@@ -1,18 +1,22 @@
-// tests/narvarovakter.mjs — närvarovakterna: vakter som läser sidan och letar efter det LAGRADE priset.
+// tests/narvarovakter.mjs — vakterna som förut bara frågade om det LAGRADE priset stod kvar på sidan.
 //
 // Fabriken märker en röd check OLÄSBAR när `actual` är '(saknas)' och DRIFT annars
 // (lib/verifierarutfall.js). De två kräver motsatta åtgärder: DRIFT = rätta prisboken, OLÄSBAR =
-// laga vakten, «priset kan mycket väl vara oförändrat». En närvarovakt som bara frågar «står det
-// lagrade priset kvar?» kan inte skilja ett höjt pris från en sida den tappat, och svarar '(saknas)'
-// i båda fallen.
+// laga vakten, «priset kan mycket väl vara oförändrat». En vakt som bara frågar «står det lagrade
+// priset kvar?» kan inte skilja ett höjt pris från en sida den tappat. Steg två (2026-10-20): varje
+// vakt läser talet på den plats där sidans struktur säger att det står.
 //
-// Den här filen prövar checklogiken genom att ANROPA de rena funktionerna med sidtext, aldrig genom
-// att läsa källtext.
+// Sidtexten här är ORDAGRANNA utdrag ur fabrikens logg, körning 39155569488 (18 okt), som
+// kontextUtdrag skrev ut: tests/fixtures/narvaro/*-2026-10-18.txt, ett utdrag per rad. Varje vakt
+// prövas åt fyra håll: grönt på dagens sida, DRIFT med det nya talet när priset på platsen byts,
+// inget falsklarm när en GRANNPRODUKTS pris byts, och OLÄSBAR när platsen saknas eller är tvetydig.
+// Testerna anropar de rena funktionerna med sidtext, aldrig källtexten.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { bedomVerifierarutfall } from '../lib/verifierarutfall.js';
+import { talSv } from '../lib/verifiers/core.mjs';
 import { fortnoxChecks } from '../lib/verifiers/fortnox.mjs';
 import { spirisChecks } from '../lib/verifiers/spiris.mjs';
 import { kortterminalCheck } from '../lib/verifiers/kortterminal.mjs';
@@ -27,59 +31,135 @@ const LV = BRANCHINDEX.loneadmin.fortnoxLonVerified;
 const TV = BRANCHINDEX.molnvaxel.teliaVerified;
 const AV = BRANCHINDEX['saas-creative'].adobeVerified;
 
+const sida = (namn) => readFileSync(new URL(`./fixtures/narvaro/${namn}-2026-10-18.txt`, import.meta.url), 'utf8');
+const TELIA_PRISLISTA = readFileSync(new URL('./fixtures/kallfabriken/telia-smart-connect-prislista-2026-10-16.txt', import.meta.url), 'utf8');
+
 /** Fabrikens märke per check, med samma regel som scripts/verify.mjs skriver i loggen. */
 const marke = (c) => (c.ok ? 'gron' : (String(c.actual ?? '') === '(saknas)' ? 'olasbar' : 'drift'));
+const marken = (checks) => checks.map(marke);
+/** Byt en sträng i fixturen och kräv att den fanns — ett sabotage av fixturen får aldrig vara en no-op. */
+const byt = (text, gammal, ny) => {
+  assert.ok(text.includes(gammal), `fixturen bär inte «${gammal}» — testet prövar ingenting`);
+  return text.replaceAll(gammal, ny);
+};
 
-describe('NV · närvarovakterna skiljer «priset ändrat» från «sidan oläst»', () => {
-  test('NV-01 · Fortnox: prisbokens priser på sidan → grönt; utan etiketterna → OLÄSBAR', () => {
-    const sida = `Mini ${FV.paket.Mini} kr/mån Liten ${FV.paket.Liten} kr/mån Mellan ${FV.paket.Mellan} kr/mån `
-      + `Stor ${FV.paket.Stor} kr/mån Bokföring ${FV.moduler['Bokföring']} kr/mån`;
-    assert.equal(bedomVerifierarutfall({ checks: fortnoxChecks(FV, sida) }).utfall, 'gron');
-    const tom = fortnoxChecks(FV, 'Kontakta oss för en offert');
-    assert.deepEqual(tom.map(marke), ['olasbar', 'olasbar', 'olasbar', 'olasbar', 'olasbar']);
-    assert.equal(bedomVerifierarutfall({ checks: tom }).drift, 0);
+describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs åt', () => {
+  test('NV-01 · Fortnox: paketblocket och Bokföringsraden läses; Mini+ och Löpande Mini är grannar, inte Mini', () => {
+    const t = sida('fortnox');
+    assert.deepEqual(marken(fortnoxChecks(FV, t)), ['gron', 'gron', 'gron', 'gron', 'gron']);
+
+    const hojd = fortnoxChecks(FV, byt(t, 'Mini 209 kr/mån Liten', 'Mini 229 kr/mån Liten'));
+    assert.deepEqual(marken(hojd), ['drift', 'gron', 'gron', 'gron', 'gron']);
+    assert.equal(hojd[0].actual, '229 kr');
+
+    const grannar = byt(byt(byt(t, 'Mini+ 369', 'Mini+ 389'), 'Löpande Mini 149', 'Löpande Mini 169'), 'själv Mini 159', 'själv Mini 179');
+    assert.deepEqual(marken(fortnoxChecks(FV, grannar)), ['gron', 'gron', 'gron', 'gron', 'gron'], 'grannproduktens pris är inte Minis');
+
+    assert.deepEqual(marken(fortnoxChecks(FV, 'Kontakta oss för en offert')), ['olasbar', 'olasbar', 'olasbar', 'olasbar', 'olasbar']);
+    // Två olika paketblock på samma sida: vilket som gäller går inte att avgöra.
+    const tvetydig = fortnoxChecks(FV, `${t}\nMini 219 kr/mån Liten 349 kr/mån Mellan 490 kr/mån Stor 710 kr/mån`);
+    assert.deepEqual(marken(tvetydig).slice(0, 4), ['olasbar', 'olasbar', 'olasbar', 'olasbar']);
   });
 
-  test('NV-02 · Spiris: prisbokens priser på sidan → grönt; utan etiketterna → OLÄSBAR', () => {
-    const sida = `Starta ${SV.niva.Starta} kr/mån Driva ${SV.niva.Driva} kr/mån Skala ${SV.niva.Skala} kr/mån `
-      + `Växa ${SV.niva['Växa']} kr/mån Lön till anställda Betala lön ${SV.moduler['Lön till anställda']} kr/mån`;
-    assert.equal(bedomVerifierarutfall({ checks: spirisChecks(SV, sida) }).utfall, 'gron');
-    assert.deepEqual(spirisChecks(SV, 'Kontakta oss').map(marke), ['olasbar', 'olasbar', 'olasbar', 'olasbar', 'olasbar']);
+  test('NV-02 · Spiris: tabellen läses och korten vittnar; säger de olika är talet okänt', () => {
+    const t = sida('spiris');
+    assert.deepEqual(marken(spirisChecks(SV, t)), ['gron', 'gron', 'gron', 'gron', 'gron']);
+
+    const hojd = spirisChecks(SV, byt(byt(t, 'Köp Växa 749 kr/mån', 'Köp Växa 799 kr/mån'), 'Fakturering & Lön 749 kr /mån', 'Fakturering & Lön 799 kr /mån'));
+    assert.deepEqual(marken(hojd), ['gron', 'gron', 'gron', 'drift', 'gron']);
+    assert.equal(hojd[3].actual, '799 kr');
+
+    const oense = spirisChecks(SV, byt(t, 'Köp Växa 749 kr/mån', 'Köp Växa 799 kr/mån'));
+    assert.equal(marke(oense[3]), 'olasbar', 'tabellen säger 799, kortet 749 — inget val');
+
+    const lon = spirisChecks(SV, byt(t, 'anställda. 299 kr/mån 299 kr/mån 299 kr/mån', 'anställda. 319 kr/mån 319 kr/mån 319 kr/mån'));
+    assert.equal(marke(lon[4]), 'olasbar', 'en av tabellens rader säger fortfarande 299 — inget val');
+
+    assert.deepEqual(marken(spirisChecks(SV, 'Kontakta oss')), ['olasbar', 'olasbar', 'olasbar', 'olasbar', 'olasbar']);
   });
 
-  test('NV-03 · Kortterminal: lagrad rate på sidan → grönt; en sida utan procentsats → OLÄSBAR', () => {
-    for (const r of RATES) {
-      const pct = r.pct.toFixed(2).replace('.', ',');
-      assert.equal(marke(kortterminalCheck(r, `Avgift ${pct} % per transaktion`)), 'gron', r.supplier);
-      assert.equal(marke(kortterminalCheck(r, 'Kontakta säljavdelningen')), 'olasbar', r.supplier);
-    }
+  test('NV-03 · Kortterminal: Stripes EES-rate och Zettles korttransaktionsavgift läses på sina platser', () => {
+    const stripe = RATES.find((r) => r.supplier === 'Stripe Terminal');
+    const zettle = RATES.find((r) => r.supplier === 'Zettle by PayPal');
+    assert.ok(stripe && zettle, 'prisboken bär båda leverantörerna');
+    const st = sida('stripe-terminal');
+    const ze = sida('zettle');
+    assert.equal(marke(kortterminalCheck(stripe, st)), 'gron');
+    assert.equal(marke(kortterminalCheck(zettle, ze)), 'gron');
+
+    const hojd = kortterminalCheck(stripe, byt(st, '1,4 % + 1,00 kr per genomförd debitering för EES-kort', '1,5 % + 1,00 kr per genomförd debitering för EES-kort'));
+    assert.equal(marke(hojd), 'drift');
+    assert.equal(hojd.actual, '1.5 %');
+    // Stripes rate för internationella kort (2,9 %) och Zettles betalningslänkar (2,5 %) är grannar.
+    assert.equal(marke(kortterminalCheck(stripe, byt(st, '2,9 %', '3,1 %'))), 'gron');
+    assert.equal(marke(kortterminalCheck(zettle, byt(ze, 'Betalningslänkar* 2,5 %', 'Betalningslänkar* 2,9 %'))), 'gron');
+
+    const zOense = kortterminalCheck(zettle, byt(ze, 'Från 1999 kr 1,85 %', 'Från 1999 kr 1,95 %'));
+    assert.equal(marke(zOense), 'olasbar', 'två olika korttransaktionsavgifter — inget val');
+    assert.equal(marke(kortterminalCheck({ supplier: 'Okänd', pct: 1.2 }, st)), 'olasbar', 'en leverantör utan läsare blir aldrig grön');
+    assert.equal(marke(kortterminalCheck(zettle, 'Kontakta säljavdelningen')), 'olasbar');
   });
 
-  test('NV-04 · Fortnox Lön: båda talen på sidan → grönt; utan talen → OLÄSBAR', () => {
-    const sida = `Lön ${LV.fixedMonthly} kr/mån och ${LV.perEmployeeMonthly} kr/anställd och månad`;
-    assert.equal(bedomVerifierarutfall({ checks: fortnoxLonChecks(LV, sida) }).utfall, 'gron');
-    assert.deepEqual(fortnoxLonChecks(LV, 'Kontakta oss').map(marke), ['olasbar', 'olasbar']);
-    // Ankaret: samma tal utan «anställd» intill är inte per-anställd-priset (till exempel ett utskick).
-    const utanAnkare = fortnoxLonChecks(LV, `Lön ${LV.fixedMonthly} kr/mån · Kivra-utskick ${LV.perEmployeeMonthly} kr/st`);
-    assert.equal(utanAnkare[1].ok, false, 'ett tal utan «anställd» intill räknades som per-anställd-priset');
+  test('NV-04 · Fortnox Lön: båda talen läses ur lönemeningen; Revisor 199 kr/mån räknas inte', () => {
+    const t = sida('fortnox-lon');
+    assert.deepEqual(marken(fortnoxLonChecks(LV, t)), ['gron', 'gron']);
+
+    // Förut letades «199 kr» var som helst. Höjs lönen står Revisor kvar på 199 — det var grönt.
+    const hojd = fortnoxLonChecks(LV, byt(t, 'Lön 199 kr/mån + 25 kr/mån', 'Lön 219 kr/mån + 25 kr/mån'));
+    assert.ok(hojd[0].actual === '219 kr' && marke(hojd[0]) === 'drift', `fast avgift: ${hojd[0].actual}`);
+    assert.equal(marke(hojd[1]), 'gron');
+
+    const perAnst = fortnoxLonChecks(LV, byt(t, '+ 25 kr/mån för varje', '+ 29 kr/mån för varje'));
+    assert.deepEqual(marken(perAnst), ['gron', 'drift']);
+
+    // Enkel lön och Kivra-utskicket är andra produkter: utan lönemeningen är talen okända.
+    assert.deepEqual(marken(fortnoxLonChecks(LV, 'Enkel lön 0 kr/mån 39 kr per anställd · Revisor 199 kr/mån')), ['olasbar', 'olasbar']);
   });
 
-  test('NV-05 · Telia växel: T2:s från-pris på växelsidan → grönt; utan det → OLÄSBAR', () => {
-    // T1 och tilläggen läses ur prislistans PDF sedan källfabriken (KF-05..07). Kvar på sidan är T2.
-    const prislistetext = readFileSync(new URL('./fixtures/kallfabriken/telia-smart-connect-prislista-2026-10-16.txt', import.meta.url), 'utf8');
-    const t2 = (sidtext) => teliaChecks(TV, { sidtext, prislistetext }).find((c) => c.name.startsWith('T2'));
-    assert.equal(marke(t2(`Smart Connect uppsättning 2 Pris från: ${TV.tiers.T2.fromMonthly} kr/mån`)), 'gron');
+  test('NV-05 · Telia växel: T2:s från-pris läses som tal; kampanjens «just nu» aldrig', () => {
+    const t = sida('telia-vaxelsida');
+    const t2 = (sidtext) => teliaChecks(TV, { sidtext, prislistetext: TELIA_PRISLISTA }).find((c) => c.name.startsWith('T2'));
+    assert.equal(marke(t2(t)), 'gron');
+
+    const hojd = t2(byt(t, 'Pris från: 118 kr/mån', 'Pris från: 129 kr/mån'));
+    assert.equal(marke(hojd), 'drift');
+    assert.equal(hojd.actual, '129 kr');
+    assert.equal(marke(t2(byt(t, 'Pris just nu: 49 kr/mån', 'Pris just nu: 59 kr/mån'))), 'gron', 'kampanjpriset är inte T2');
+
+    assert.equal(marke(t2(`${t}\nPris från: 89 kr/mån`)), 'olasbar', 'två från-priser — vilket är uppsättning 2?');
     assert.equal(marke(t2('Kontakta oss')), 'olasbar');
   });
 
-  test('NV-06 · Adobe: prisbokens priser på sidorna → grönt; utan momsmarkören → OLÄSBAR', () => {
-    const sek = (n) => `${new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 2 }).format(n)} SEK`;
-    const teamText = `Creative Cloud Pro ${sek(AV.teamExVatMonthly['all-apps'])}/mån per licens exkl. moms `
-      + `Single App ${sek(AV.teamExVatMonthly['single-app'])}/mån per licens exkl. moms`;
-    const psText = `Photoshop ${sek(AV.individualInclVatMonthly['single-app'])}/mån `
-      + `Creative Cloud Pro ${sek(AV.individualInclVatMonthly['all-apps'])}/mån`;
-    assert.equal(bedomVerifierarutfall({ checks: adobeChecks(AV, { teamText, psText }) }).utfall, 'gron');
-    const utanMoms = adobeChecks(AV, { teamText: teamText.replaceAll('exkl. moms', ''), psText });
-    assert.deepEqual(utanMoms.map(marke).slice(0, 2), ['olasbar', 'olasbar'], 'okänd momsbas är okänt, aldrig drift');
+  test('NV-06 · Adobe: talen läses, även över 1 000 kr; utan «exkl. moms» är teampriset okänt', () => {
+    const teamText = sida('adobe-team');
+    const psText = sida('adobe-photoshop');
+    assert.deepEqual(marken(adobeChecks(AV, { teamText, psText })), ['gron', 'gron', 'gron', 'gron']);
+
+    // Det latenta felet: Intl skriver tusentalet med hårt mellanslag, sidtexten med vanligt.
+    for (const mellanslag of [' ', '\u00A0']) {
+      const hojd = adobeChecks(AV, { teamText: byt(teamText, 'Populärast 985,00', `Populärast 1${mellanslag}045,00`), psText });
+      assert.equal(marke(hojd[0]), 'drift');
+      assert.equal(hojd[0].actual, '1045 SEK');
+    }
+    assert.deepEqual(marken(adobeChecks(AV, { teamText: byt(teamText, '1 091,00', '1 149,00'), psText })),
+      ['gron', 'gron', 'gron', 'gron'], 'Creative Cloud Pro Plus är en annan produkt');
+
+    const utanMoms = adobeChecks(AV, { teamText: byt(teamText, 'exkl. moms', ''), psText });
+    assert.deepEqual(marken(utanMoms).slice(0, 2), ['olasbar', 'olasbar'], 'okänd momsbas är okänt, aldrig drift');
+
+    const indHojd = adobeChecks(AV, { teamText, psText: byt(psText, 'Ordinarie pris 932,50', 'Ordinarie pris 979,00') });
+    assert.equal(indHojd[3].actual, '979 SEK');
+    assert.equal(marke(adobeChecks(AV, { teamText, psText: byt(psText, 'Ordinarie pris ', '') })[3]), 'olasbar');
+  });
+
+  test('NV-07 · talSv läser svenska priser oavsett mellanslag i tusentalet', () => {
+    assert.equal(talSv('1 091,00'), 1091);
+    assert.equal(talSv('1\u00A0091,00'), 1091);
+    assert.equal(talSv('1\u202F091,00'), 1091);
+    assert.equal(talSv('1,85'), 1.85);
+    assert.equal(talSv('209'), 209);
+    assert.equal(talSv('ett pris'), null);
+    // Motprov: sidtexten här bär redan ett tal över 1 000, och vakten läser det som ett tal.
+    assert.equal(bedomVerifierarutfall({ checks: adobeChecks(AV, { teamText: sida('adobe-team'), psText: sida('adobe-photoshop') }) }).utfall, 'gron');
   });
 });
