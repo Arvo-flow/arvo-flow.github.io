@@ -361,6 +361,36 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > stannar och frågar bara vid moms, pris, juridik, radering, nycklar, repoinställningar och
 > merge till `main`.
 
+> **✅ MÄTT 18–20 OKT: SJU REGLER SOM GÖR SVEPET SJÄLVGÅENDE (grundarens order: «lägg in dem»).**
+> Andra blicken på PR #84 tog fyra försök. Varje regel nedan bär den mätning den kommer ur.
+>
+> 1. **En död granskare är OGRANSKAD, och dess skörd är en prövlista, aldrig ett fynd.** Två försök
+>    dog på kontots sessionsgräns utan dom (wf_d81e808c-340, wf_8ca7def9-74e). Deras anteckningar
+>    gick vidare som oprövade utkast, och nästa granskare körde om varje mätning innan den räknades.
+> 2. **Kontots gräns är delad: kör linserna en i taget, så att en klar lins sparas.** Fyra till fem
+>    parallella agenter brände 790 000–870 000 tokens och dog samtidigt, utan att någon blev klar.
+>    Grinden delas också med byggaren, som stoppades i fyra timmar samtidigt. I tur och ordning
+>    blev två linser klara före nästa stopp och återanvändes efter återställningen (`resumeFromRunId`).
+> 3. **Ett anrop som aldrig svarar är farligare än ett som felar.** En sökning i Vercels dokumentation
+>    hängde i 70 minuter och stoppade hela granskningen utan felsvar. Granskarna förbjuds verktyg som
+>    inte behövs, och en körning som inte rört sig på en timme läses av, stoppas och startas om.
+> 4. **En granskare som dör mitt i ett sabotage lämnar sabotaget kvar.** En dödsruna hade USD-villkoret
+>    borttaget ur Googles grind i sin kopia. En död granskares worktree läses av och tas bort, och den
+>    används aldrig igen.
+> 5. **Ny mekanik efter en granskad commit hör inte hemma i den granskade PR:en.** Sessionen får bara
+>    pusha sin egen gren (radering av en annan gren: 403). Därför byggs nästa arbete på en lokal gren
+>    tills PR:en mergas, och sedan startar grenen om från main. Läggs det ovanpå ändå krävs en egen
+>    granskningsrunda, eftersom grinden fäller mekanik som ändrats efter den granskade commiten.
+> 6. **«N av N gröna» betyder gröna av rätt skäl.** Ett mål uttryckt som ett antal gröna frestar till en
+>    vidgad tolerans. Atlassian blev grönt för att boken följde källan på grundarens beslut, inte för
+>    att vakten tystnade. Ett villkorat ägarbeslut («behåll om granskningen godkänner talen») verkställs
+>    av villkoret, inte av beslutet.
+> 7. **Ett osynligt tecken ska skrivas som escape, och det ska kontrolleras byte för byte.** Verktygen
+>    gjorde `\u00A0` till ett rått hårt mellanslag i två filer, och i den här regelns första
+>    version också i bibeln. Koden fungerade, men en läsare hade inte
+>    kunnat se vad som stod där, och samma tecken var hela orsaken till Adobe-felet. `od -c` eller en
+>    räkning av `\xa0` efter skrivning hittar det.
+
 ---
 
 ## Noll-inferens · Avläsning framför slutsats
