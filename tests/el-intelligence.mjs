@@ -15,11 +15,26 @@ import { getElIntelligence } from '../lib/el-intelligence.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-// Stub fetchSpotPrice to avoid network calls in tests.
-// We use the SE3 fallback value (0.513 kr/kWh) by passing a supplier
-// that doesn't match any zone pattern → defaults to SE3 fallback.
+// ── SPOTPRISET ÄR TESTETS, ALDRIG NÄTETS (2026-10-20) ──────────────────────────────────────────
+// Kommentaren här lovade förut «Stub fetchSpotPrice to avoid network calls», men ingen stubbe fanns.
+// Leverantören nedan väljer bara zon SE3; anropet mot elprisetjustnu.se gick ändå. I sandlådan är
+// nätet spärrat, så reserven 0,513 användes och sviten var grön. I CI är nätet öppet och dagens
+// spotpris läses: granskningen av PR #84 mätte att 0,95 kr/kWh ger 10 av 10 och 1,05 ger 9 av 10
+// (84c-EL-05), och Sviten på PR #84 föll 20 okt med exakt ett fel. Nu svarar en stubbe för just
+// elprisetjustnu.se med SPOT_SE3 för dygnets 24 timmar; allt annat går vidare till den riktiga fetch.
+// EI-01 kräver att stubben faktiskt användes, så att testet aldrig tyst läser nätet igen.
 const SPOT_SE3 = 0.513;  // matches SPOT_FALLBACK.SE3 in el-intelligence.js
 const TEST_SUPPLIER = 'Okänd leverantör AB';  // → zone SE3
+let spotStubbAnrop = 0;
+const riktigFetch = globalThis.fetch;
+globalThis.fetch = async (url, opts) => {
+  if (String(url).includes('elprisetjustnu.se')) {
+    spotStubbAnrop++;
+    const timmar = Array.from({ length: 24 }, () => ({ SEK_per_kWh: SPOT_SE3 }));
+    return new Response(JSON.stringify(timmar), { status: 200, headers: { 'content-type': 'application/json' } });
+  }
+  return riktigFetch(url, opts);
+};
 
 // ── Fixture scenarios ─────────────────────────────────────────────────────────
 
@@ -212,4 +227,12 @@ describe('getElIntelligence — Eurostat-marknadsgolv (regel 3/4: aldrig under v
       'golvet får bara höja uppnåeligt pris, aldrig sänka det');
   });
 
+});
+
+describe('EI · el-sviten är oberoende av dagens spotpris', () => {
+  test('EI-01 · spotpriset kom ur testets stubbe, aldrig ur nätet', async () => {
+    const fore = spotStubbAnrop;
+    await getElIntelligence({ annualKwh: 12_000, currentPriceKwh: 2.0, supplierName: TEST_SUPPLIER, kwhIsEstimated: false });
+    assert.ok(spotStubbAnrop > fore, 'getElIntelligence frågade inte stubben — sviten läser nätet igen');
+  });
 });
