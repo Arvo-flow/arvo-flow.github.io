@@ -217,6 +217,25 @@ describe('BI-06 · USD-tiers — korrekt struktur (Slack, Zoom, Google)', () => 
   });
 });
 
+// ── BI-10 ─────────────────────────────────────────────────────────────────────
+// Atlassian höjde i oktober 2026, och grundaren beslutade 18 okt att boken följer källan. Talen
+// nedan är vaktens AVLÄSNING (lib/verifiers/atlassian.mjs, seat-väljaren på 110), loggad likadant i
+// körningarna 39069444683 (17 okt) och 39155569488 (18 okt 18:47 UTC). Testet bevisar inte att
+// källan står still — det gör bara den levande vakten — utan att boken är lika med det som lästes.
+describe('BI-10 · Atlassian: boken är lika med vaktens avläsning 17–18 okt', () => {
+  const tiers = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
+  const AVLAST = {
+    'atlassian-jira-standard': 9.56, 'atlassian-jira-premium': 19.15,
+    'atlassian-confluence-standard': 7.00, 'atlassian-confluence-premium': 13.75,
+  };
+  for (const [nyckel, usd] of Object.entries(AVLAST)) {
+    test(`${nyckel}: ${usd} USD/mån, verifierad 2026-10-18`, () => {
+      assert.strictEqual(tiers[nyckel].usdMonthly, usd);
+      assert.strictEqual(tiers[nyckel].lastVerified, '2026-10-18');
+    });
+  }
+});
+
 // ── BI-07 ─────────────────────────────────────────────────────────────────────
 // usdToSek: matematisk korrekthet med FALLBACK_RATE_USD_SEK
 describe('BI-07 · usdToSek — konverteringsaritmetik', () => {
