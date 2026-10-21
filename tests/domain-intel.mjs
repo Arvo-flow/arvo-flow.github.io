@@ -4,7 +4,9 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { domainFromEmail, registrableDomain, buildRevealFindings, buildMarketAnchorFinding, buildCrossReading, _cachedLookup } from '../lib/domain-intel.js';
+import { domainFromEmail, registrableDomain, buildRevealFindings, buildMarketAnchorFinding, buildCrossReading, _cachedLookup, m365Verifierat } from '../lib/domain-intel.js';
+import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
+import m365Vakt from '../lib/verifiers/m365.mjs';
 
 describe('domainFromEmail', () => {
   test('plockar domän ur e-post', () => {
@@ -531,5 +533,39 @@ describe('getCtOnboarding · omförsök vid strypning, aldrig vid svar', () => {
     const ut = await kor([svar(503, null)]);
     assert.ok(anrop >= 2, 'strypning ska försökas om innan vi ger upp');
     assert.equal(ut, null, 'utan svar finns inget datum — och null cachas aldrig av flimmervakten');
+  });
+});
+
+describe('DV · dörrens Microsoft-datum: bara Microsofts nivåer, och den stalaste', () => {
+  test('DV-01 · en annan leverantörs stämpel flyttar inte datumet, och den äldsta Microsoft-nivån bär', () => {
+    const T = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
+    // Nivåerna bakom spannet (SEK med listpris) är exakt de nivåer Microsoft-vakten läser.
+    const sek = Object.entries(T).filter(([, t]) => t.currency === 'SEK').map(([k]) => k).sort();
+    assert.deepEqual(sek, [...m365Vakt.bevakadeTiers].sort());
+    const idag = m365Verifierat();
+    assert.match(String(idag), /^\d{4}-\d{2}-\d{2}$/);
+
+    const med = (andringar) => {
+      const t = structuredClone(T);
+      for (const [k, v] of Object.entries(andringar)) t[k].lastVerified = v;
+      return m365Verifierat(t);
+    };
+    // Andra leverantörer stämplas senare: datumet står still (förut blev det deras).
+    assert.equal(med({ 'zoom-pro': '2099-01-01', 'atlassian-jira-standard': '2099-01-01', 'slack-pro': '2099-01-01' }), idag);
+    // En äldre Microsoft-nivå bär, åt båda håll från dagens datum.
+    assert.equal(med({ e3: '2026-01-01' }), '2026-01-01');
+    assert.equal(med({ 'business-basic': '2099-01-01' }), idag);
+    // En Microsoft-nivå utan datum: inget datum sägs.
+    assert.equal(med({ e5: undefined }), null);
+
+    // Kortets egen text, med en annan leverantör stämplad i den levande prisboken (återställs).
+    const fore = T['zoom-pro'].lastVerified;
+    try {
+      T['zoom-pro'].lastVerified = '2099-01-01';
+      const p = buildRevealFindings({ domain: 'x.se', posture: { mx: 'microsoft365' } }).find((x) => x.kind === 'platform');
+      assert.ok(p.source.endsWith(`Microsofts publika listpriser, verifierade ${idag}`), p.source);
+    } finally {
+      T['zoom-pro'].lastVerified = fore;
+    }
   });
 });
