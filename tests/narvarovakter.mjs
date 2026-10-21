@@ -19,7 +19,7 @@ import { bedomVerifierarutfall } from '../lib/verifierarutfall.js';
 import { talSv, DOLLARBELOPP } from '../lib/verifiers/core.mjs';
 import { fortnoxChecks } from '../lib/verifiers/fortnox.mjs';
 import { spirisChecks } from '../lib/verifiers/spiris.mjs';
-import { kortterminalCheck } from '../lib/verifiers/kortterminal.mjs';
+import { kortterminalCheck, kortterminalFastCheck, kortterminalChecks } from '../lib/verifiers/kortterminal.mjs';
 import { fortnoxLonChecks } from '../lib/verifiers/fortnox-lon.mjs';
 import { teliaChecks } from '../lib/verifiers/telia-vaxel.mjs';
 import { adobeChecks } from '../lib/verifiers/adobe.mjs';
@@ -56,6 +56,13 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     const grannar = byt(byt(byt(t, 'Mini+ 369', 'Mini+ 389'), 'Löpande Mini 149', 'Löpande Mini 169'), 'själv Mini 159', 'själv Mini 179');
     assert.deepEqual(marken(fortnoxChecks(FV, grannar)), ['gron', 'gron', 'gron', 'gron', 'gron'], 'grannproduktens pris är inte Minis');
 
+    // Bokföring delar priset 189 med Integration och Enkel: bara Bokföringsraden är Bokföring (V85-B1).
+    const bok = fortnoxChecks(FV, byt(t, 'Bokföring 189 kr/mån', 'Bokföring 199 kr/mån'));
+    assert.deepEqual(marken(bok), ['gron', 'gron', 'gron', 'gron', 'drift']);
+    assert.equal(bok[4].actual, '199 kr');
+    const bokGrannar = byt(byt(t, 'Integration 189 kr/mån', 'Integration 209 kr/mån'), 'Enkel 189 kr/mån', 'Enkel 209 kr/mån');
+    assert.deepEqual(marken(fortnoxChecks(FV, bokGrannar)), ['gron', 'gron', 'gron', 'gron', 'gron'], 'Integration och Enkel är inte Bokföring');
+
     assert.deepEqual(marken(fortnoxChecks(FV, 'Kontakta oss för en offert')), ['olasbar', 'olasbar', 'olasbar', 'olasbar', 'olasbar']);
     // Två olika paketblock på samma sida: vilket som gäller går inte att avgöra.
     const tvetydig = fortnoxChecks(FV, `${t}\nMini 219 kr/mån Liten 349 kr/mån Mellan 490 kr/mån Stor 710 kr/mån`);
@@ -72,6 +79,10 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
 
     const oense = spirisChecks(SV, byt(t, 'Köp Växa 749 kr/mån', 'Köp Växa 799 kr/mån'));
     assert.equal(marke(oense[3]), 'olasbar', 'tabellen säger 799, kortet 749 — inget val');
+
+    // Ett vittne räcker inte: går tabellen inte att läsa står kortet ensamt, och då är talet okänt (V85-S1).
+    const utanTabell = spirisChecks(SV, byt(t, 'Driva 349 kr/mån Köp', 'Driva 349 kr/mån (exkl. moms) Köp'));
+    assert.deepEqual(marken(utanTabell), ['olasbar', 'olasbar', 'olasbar', 'olasbar', 'gron']);
 
     const lon = spirisChecks(SV, byt(t, 'anställda. 299 kr/mån 299 kr/mån 299 kr/mån', 'anställda. 319 kr/mån 319 kr/mån 319 kr/mån'));
     assert.equal(marke(lon[4]), 'olasbar', 'en av tabellens rader säger fortfarande 299 — inget val');
@@ -98,6 +109,18 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     const zOense = kortterminalCheck(zettle, byt(ze, 'Från 1999 kr 1,85 %', 'Från 1999 kr 1,95 %'));
     assert.equal(marke(zOense), 'olasbar', 'två olika korttransaktionsavgifter — inget val');
     assert.equal(marke(kortterminalCheck({ supplier: 'Okänd', pct: 1.2 }, st)), 'olasbar', 'en leverantör utan läsare blir aldrig grön');
+
+    // Stripes fasta avgift står i samma mening och läses ur samma träff (V85-K1); Zettle trycker ingen.
+    assert.equal(marke(kortterminalFastCheck(stripe, st)), 'gron');
+    const fastHojd = byt(st, '1,4 % + 1,00 kr per genomförd debitering för EES-kort', '1,4 % + 1,50 kr per genomförd debitering för EES-kort');
+    assert.equal(marke(kortterminalFastCheck(stripe, fastHojd)), 'drift');
+    assert.equal(kortterminalFastCheck(stripe, fastHojd).actual, '1.5 kr');
+    assert.equal(marke(kortterminalCheck(stripe, fastHojd)), 'gron', 'raten står kvar när bara den fasta avgiften ändras');
+    assert.equal(kortterminalFastCheck(zettle, ze), null);
+    assert.equal(marke(kortterminalFastCheck(stripe, 'Kontakta säljavdelningen')), 'olasbar');
+    // Det run() lägger i fabrikens utfall: Stripe bär två checkar, Zettle en.
+    assert.deepEqual(marken(kortterminalChecks(stripe, fastHojd)), ['gron', 'drift']);
+    assert.deepEqual(marken(kortterminalChecks(zettle, ze)), ['gron']);
     assert.equal(marke(kortterminalCheck(zettle, 'Kontakta säljavdelningen')), 'olasbar');
   });
 
@@ -113,6 +136,13 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     const perAnst = fortnoxLonChecks(LV, byt(t, '+ 25 kr/mån för varje', '+ 29 kr/mån för varje'));
     assert.deepEqual(marken(perAnst), ['gron', 'drift']);
 
+    // Ankaret «för varje anställd» bär per-anställd-priset: en avgift per lönebesked är ett annat tal (V85-L1).
+    // Bytet når varje rad i fixturen, även den som är avklippt vid «för varje ans». Annars ger raderna
+    // två olika tal, och OLÄSBAR kommer av tvetydigheten i stället för av ankaret.
+    const besked = byt(t, '25 kr/mån för varje ans', '5 kr/mån per lönebesked, ans');
+    assert.ok(!besked.includes('för varje anställd'), 'fixturen bär fortfarande ankaret');
+    assert.deepEqual(marken(fortnoxLonChecks(LV, besked)), ['olasbar', 'olasbar']);
+
     // Enkel lön och Kivra-utskicket är andra produkter: utan lönemeningen är talen okända.
     assert.deepEqual(marken(fortnoxLonChecks(LV, 'Enkel lön 0 kr/mån 39 kr per anställd · Revisor 199 kr/mån')), ['olasbar', 'olasbar']);
   });
@@ -127,7 +157,12 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     assert.equal(hojd.actual, '129 kr');
     assert.equal(marke(t2(byt(t, 'Pris just nu: 49 kr/mån', 'Pris just nu: 59 kr/mån'))), 'gron', 'kampanjpriset är inte T2');
 
-    assert.equal(marke(t2(`${t}\nPris från: 89 kr/mån`)), 'olasbar', 'två från-priser — vilket är uppsättning 2?');
+    // T2 läses på sitt eget kort (V85-T1). Slutar T1:s kampanj samtidigt som T2 får en är T1:s från-pris
+    // sidans enda, och det är inte T2:s.
+    const bytt = byt(byt(t, 'Pris från: 118 kr/mån', 'Pris just nu: 99 kr/mån'), 'Pris just nu: 49 kr/mån', 'Pris från: 89 kr/mån');
+    assert.equal(marke(t2(bytt)), 'olasbar', 'T1:s från-pris lästes som T2:s');
+    assert.equal(marke(t2(`${t}\nPris från: 89 kr/mån`)), 'gron', 'ett från-pris utanför T2:s kort är grannens');
+    assert.equal(marke(t2(`${t}\nmed lokalt nummer. Pris från: 89 kr/mån`)), 'olasbar', 'två från-priser på T2:s kort — vilket gäller?');
     assert.equal(marke(t2('Kontakta oss')), 'olasbar');
   });
 
@@ -147,6 +182,10 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
 
     const utanMoms = adobeChecks(AV, { teamText: byt(teamText, 'exkl. moms', ''), psText });
     assert.deepEqual(marken(utanMoms).slice(0, 2), ['olasbar', 'olasbar'], 'okänd momsbas är okänt, aldrig drift');
+
+    // Individpriserna momsrensas ÷1,25 i koden, så «inkl. moms» bär talet: utan det är det okänt (V85-A1).
+    const psExkl = byt(psText, 'Photoshop 311,25 SEK/måninkl. moms', 'Photoshop 311,25 SEK/månexkl. moms');
+    assert.equal(marke(adobeChecks(AV, { teamText, psText: psExkl })[2]), 'olasbar', 'okänd momsbas är okänt, aldrig drift');
 
     const indHojd = adobeChecks(AV, { teamText, psText: byt(psText, 'Ordinarie pris 932,50', 'Ordinarie pris 979,00') });
     assert.equal(indHojd[3].actual, '979 SEK');
