@@ -168,6 +168,29 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     assert.equal(utfall.checks.length, 2);
   });
 
+  test('NV-09 · Zoom: årspriset läses under kortets rubrik, i dagens form «14,16$» och augustis «$14.16»', () => {
+    // Fixturen är kontextUtdrag-raderna ur körning 39548656562 (21 okt), sammanfogade i sidans ordning.
+    const ZT = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
+    const t = readFileSync(new URL('./fixtures/narvaro/zoom-2026-10-21.txt', import.meta.url), 'utf8');
+    assert.deepEqual(marken(zoomUtfall(ZT, t).checks), ['gron', 'gron']);
+
+    const hojd = zoomUtfall(ZT, byt(t, '14,16$', '15,16$')).checks;
+    assert.deepEqual(marken(hojd), ['drift', 'gron']);
+    assert.equal(hojd[0].actual, '15.16 USD');
+
+    // Månadsläget och tilläggsprodukterna («22 $ 16,50 $ 1 per månad · faktureras månadsvis») är aldrig årspriset.
+    assert.deepEqual(marken(zoomUtfall(ZT, byt(t, 'Faktureras årsvis', 'Faktureras månadsvis')).checks), ['olasbar', 'olasbar']);
+    // «Allt i Workplace Pro, plus:» på Business-kortet är ingen rubrik för Pro.
+    assert.deepEqual(marken(zoomUtfall(ZT, byt(t, 'Pro\nBäst för personligt bruk', 'Pro\nFör personligt bruk')).checks), ['olasbar', 'gron']);
+    // Två kort för samma plan med olika tal: inget val.
+    assert.equal(marke(zoomUtfall(ZT, `${t}\nWorkplace\nPro\nBäst för team.\n15,00$\n/användare per månad · Faktureras årsvis`).checks[0]), 'olasbar');
+
+    // Augustis form, ur recon-kommentaren i lib/verifiers/zoom.mjs (där «·» mellan namnen var kommentarens).
+    const augusti = 'Workplace Pro Bäst för personligt bruk … $14.16 /användare per månad · Faktureras årsvis '
+      + 'Workplace Affärsverksamhet Bäst för större team … $18.33 /användare per månad · Faktureras årsvis';
+    assert.deepEqual(marken(zoomUtfall(ZT, augusti).checks), ['gron', 'gron']);
+  });
+
   test('NV-07 · talSv läser svenska priser oavsett mellanslag i tusentalet', () => {
     assert.equal(talSv('1 091,00'), 1091);
     assert.equal(talSv('1\u00A0091,00'), 1091);
