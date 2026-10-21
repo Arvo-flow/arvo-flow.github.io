@@ -257,6 +257,30 @@ describe('BI-10 · Atlassian: boken är lika med vaktens avläsning 17–18 okt'
   });
 });
 
+// ── BI-12 · VARJE lastVerified I PRISBOKEN ÄR ETT STRIKT ISO-DATUM ─────────────────────────────
+// Datumen jämförs som strängar på flera ställen (det stalaste nivådatumet, BI-10:s golvgräns). Det
+// fungerar bara när varje datum är ÅÅÅÅ-MM-DD: '2026-10-9' sorteras efter '2026-10-19' (fjärde blicken
+// G85-1). Mätt 21 okt: 32 datum i boken, alla strikt ISO. Testet håller det så.
+describe('BI-12 · varje lastVerified i prisboken är ett strikt ISO-datum', () => {
+  test('alla datum är ÅÅÅÅ-MM-DD och ett giltigt kalenderdatum', () => {
+    const datum = [];
+    const ga = (o, vag) => {
+      if (!o || typeof o !== 'object') return;
+      for (const [k, x] of Object.entries(o)) {
+        if (k === 'lastVerified') datum.push([vag, x]);
+        else ga(x, `${vag}.${k}`);
+      }
+    };
+    ga(BRANCHINDEX, 'BRANCHINDEX');
+    assert.ok(datum.length >= 30, `bara ${datum.length} datum hittades — vandringen är trasig`);
+    for (const [vag, x] of datum) {
+      if (x == null) continue;
+      assert.match(String(x), /^\d{4}-\d{2}-\d{2}$/, `${vag}: «${x}» är inte ÅÅÅÅ-MM-DD`);
+      assert.equal(new Date(`${x}T00:00:00Z`).toISOString().slice(0, 10), x, `${vag}: «${x}» är inget kalenderdatum`);
+    }
+  });
+});
+
 // ── BI-07 ─────────────────────────────────────────────────────────────────────
 // usdToSek: matematisk korrekthet med FALLBACK_RATE_USD_SEK
 describe('BI-07 · usdToSek — konverteringsaritmetik', () => {
