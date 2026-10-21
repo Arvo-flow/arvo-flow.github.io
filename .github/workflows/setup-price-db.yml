@@ -1,6 +1,7 @@
 name: Setup Price Database (run once)
 
-# Engångsworkflow: skapar pristabeller och seeder med alla kända leverantörspriser.
+# Engångsworkflow: skapar pristabellerna. Inga priser seedas: prisboken (agents/recommender/branchindex.js)
+# är enda sanningen, och seedfilen med majpriser togs bort 2026-10-21.
 # Kör manuellt från GitHub Actions → "Run workflow".
 # Idempotent — säkert att köra flera gånger.
 
@@ -10,7 +11,7 @@ on:
 jobs:
   setup:
     environment: produktion
-    name: Migrate + Seed price database
+    name: Migrate price database
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -27,11 +28,6 @@ jobs:
 
       - name: Create price database schema
         run: node scripts/migrate-price-db.mjs
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      - name: Seed with all known supplier prices
-        run: node scripts/seed-price-db.mjs
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 

@@ -129,7 +129,7 @@ describe('LU · Båda larmvägarna gatar (regel 5 — dubbla alertvägar)', () =
 
 // ── H5: GOLVET MÅSTE MÄTA KUNDENS PRIS, INTE KUNDENS PRODUKTVAL ──────────────────────────────
 // `ORDER BY price_monthly ASC LIMIT 1` hämtade kategorins BILLIGASTE produkt oavsett vad kunden
-// har. Fable 5:s körning mot de fyra Microsoft-raderna i seed-price-db:
+// har. Fable 5:s körning mot de fyra Microsoft-raderna i seed-price-db (borttagen 2026-10-21):
 //   E3-kund på EXAKT E3:s listpris (462 kr)  → percentOver 571, golv 69 (Basic)
 //   Premium på exakt listpris (252,35)       → percentOver 266, golv 69
 //   Standard på exakt listpris (143,38)      → percentOver 108, golv 69
@@ -175,7 +175,7 @@ describe('LU · Golvet kräver bekräftad nivå där spänningen är mätt (H5)'
       'grinden är verkningslös om anroparen inte skickar underlaget — LFL-läxan 12 aug');
   });
 
-  // Seed-filens Microsoft-rader (scripts/seed-price-db.mjs), ordagranna, plus en mobilrad för
+  // Microsoft-raderna ur den borttagna scripts/seed-price-db.mjs, ordagranna, plus en mobilrad för
   // motprovet att spärren gäller per kategori och inte tystar allt.
   const SEED = [
     { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 Business Basic',    tier: 'business-basic',    price_monthly: 68.88 },
