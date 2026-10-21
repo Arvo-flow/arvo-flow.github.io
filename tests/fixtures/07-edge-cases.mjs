@@ -26,7 +26,7 @@
 //     secondaryLines = base where desc MATCHES /\bsim\b|mobilabonnemang|mobiltelefoni/i
 //     secondarySeatCount = secondaryLines.length
 //
-//   bredbandSpeedBenchmark p25 (ur tele2Verified): {100:2388, 250:2388, 500:2868, 1000:3348}
+//   bredbandSpeedBenchmark p25 (ur tele2Verified): {100:2868, 250:2868, 500:3348, 1000:3828}
 //   ⚠ SKRIV ALDRIG OM DEN HÄR RADEN FÖR HAND UTAN ATT KÖRA SVITEN: BI-09 läser raden ur
 //   källtexten och jämför mot den levande härledningen. Tabellen låg fel i månader (den sa
 //   500:3828 medan assertionerna korrekt använde 3348) — en not som motsäger sitt eget tal
@@ -275,9 +275,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7692,
-      suggestedAnnual: 2868,
-      grossSaving: 4824,
-      netSaving: 3859,
+      suggestedAnnual: 3348,
+      grossSaving: 4344,
+      netSaving: 3475,
     },
   },
 
@@ -309,9 +309,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       500,
       currentAnnual:   7704,
-      suggestedAnnual: 2868,
-      grossSaving: 4836,
-      netSaving: 3869,
+      suggestedAnnual: 3348,
+      grossSaving: 4356,
+      netSaving: 3485,
     },
   },
 
@@ -486,9 +486,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10740,
-      suggestedAnnual: 3348,
-      grossSaving: 7392,
-      netSaving: 5914,
+      suggestedAnnual: 3828,
+      grossSaving: 6912,
+      netSaving: 5530,
     },
   },
 
@@ -519,9 +519,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   5400,
-      suggestedAnnual: 2388,
-      grossSaving: 3012,
-      netSaving: 2410,
+      suggestedAnnual: 2868,
+      grossSaving: 2532,
+      netSaving: 2026,
     },
   },
 
@@ -552,9 +552,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       100,
       currentAnnual:   4560,
-      suggestedAnnual: 2388,
-      grossSaving: 2172,
-      netSaving: 1738,
+      suggestedAnnual: 2868,
+      grossSaving: 1692,
+      netSaving: 1354,
     },
   },
 
@@ -585,9 +585,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   10200,
-      suggestedAnnual: 3348,
-      grossSaving: 6852,
-      netSaving: 5482,
+      suggestedAnnual: 3828,
+      grossSaving: 6372,
+      netSaving: 5098,
     },
   },
 
@@ -619,9 +619,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       1000,
       currentAnnual:   17940,
-      suggestedAnnual: 3348,
-      grossSaving: 14592,
-      netSaving: 11674,
+      suggestedAnnual: 3828,
+      grossSaving: 14112,
+      netSaving: 11290,
     },
   },
 
@@ -768,7 +768,10 @@ export const fixtures = [
 
   // ── edge-25 ──────────────────────────────────────────────────────────────────
   // mixed=true, category='mobil', secondary bredband-rad med litet belopp → gross < 500
-  // Fiber 100 Mbit 235 kr/mån → secAnnual=2820, p25=2388, gross=432 < 500 → null
+  // Fiber 100 Mbit 275 kr/mån → secAnnual=3300, p25=2868, gross=432 < 500 → null
+  //
+  // FLYTTAD TILLBAKA 2026-10-21: Tele2 höjde Max-familjen 40 kr/mån igen, golvet för 100 Mbit gick
+  // 2 388 → 2 868, och indata går 235 → 275 kr/mån med samma gross (432). Historiken nedan står kvar.
   //
   // FLYTTAD, INTE OMTOLKAD (2026-08-18). Tele2 sänkte Max-familjen 40 kr/mån (verifierat mot
   // adress-API:t, tre adresser, två nätter), så golvet för 100 Mbit gick 2 868 → 2 388. Den här
@@ -779,21 +782,21 @@ export const fixtures = [
   // det den dyraste grenen att tappa täckning på.
   {
     id: 'edge-25',
-    name: 'Mobil mixed: bredband 100 Mbit 235 kr/mån → gross=432 < 500 → secondary=null',
+    name: 'Mobil mixed: bredband 100 Mbit 275 kr/mån → gross=432 < 500 → secondary=null',
     lineItems: [
       { type: 'recurring_subscription', description: 'Telenor Business (5 st)', amount: 1745 },
-      { type: 'recurring_subscription', description: 'Fiber 100 Mbit billigt', amount: 235 },
+      { type: 'recurring_subscription', description: 'Fiber 100 Mbit billigt', amount: 275 },
     ],
     category: 'mobil',
     mixed: true,
     employees: 5,
     industry: 'konsult',
-    // secAnnual=Math.round(235*12)=2820, p25=2388, gross=432 < 500 → null
+    // secAnnual=Math.round(275*12)=3300, p25=2868, gross=432 < 500 → null
     metrics: {
       mobileAddonMonthly:           null,
       broadbandAddonMonthly:        null,
       primaryComponentMonthly:      1745,
-      secondaryComponentMonthly:    235,
+      secondaryComponentMonthly:    275,
       secondaryConnectionSpeedMbit: 100,
       secondarySeatCount:           null,
     },
@@ -836,9 +839,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   5904,
-      suggestedAnnual: 2388,
-      grossSaving: 3516,
-      netSaving: 2813,
+      suggestedAnnual: 2868,
+      grossSaving: 3036,
+      netSaving: 2429,
     },
   },
 
@@ -869,9 +872,9 @@ export const fixtures = [
       category:        'bredband',
       speedMbit:       250,
       currentAnnual:   5892,
-      suggestedAnnual: 2388,
-      grossSaving: 3504,
-      netSaving: 2803,
+      suggestedAnnual: 2868,
+      grossSaving: 3024,
+      netSaving: 2419,
     },
   },
 

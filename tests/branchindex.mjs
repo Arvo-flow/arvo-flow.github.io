@@ -281,6 +281,30 @@ describe('BI-12 · varje lastVerified i prisboken är ett strikt ISO-datum', () 
   });
 });
 
+// ── BI-11 · TRÖSKELFIXTURERNA LIGGER STRAX UNDER TRÖSKELN MOT DAGENS GOLV ─────────────────────
+// edge-25, comb-55 och comb-13 finns för att bevisa grenen «under 500 kr i besparing → hävda
+// ingenting». De förväntar null. Flyttar golvet sig ger de fortfarande null, men av fel skäl: under
+// golvet i stället för strax under tröskeln. Så tappades kanten nästan 18 aug, och igen 21 okt
+// (Tele2 +40 kr). Bara kommentarer bar rollen. Här räknas deras gross mot dagens golv: blir den
+// något annat än 432 faller testet och säger vad som ska göras, nämligen att flytta fixturens indata.
+describe('BI-11 · tröskelfixturerna ligger strax under tröskeln mot dagens golv', () => {
+  test('edge-25, comb-55 och comb-13: gross = 432 mot bredbandSpeedBenchmark(100).p25', async () => {
+    const { computeInvoiceMetrics } = await import('../lib/invoice-metrics.js');
+    const { fixtures: edge } = await import('./fixtures/07-edge-cases.mjs');
+    const { fixtures: comb } = await import('./fixtures/03-combined.mjs');
+    const golv = bredbandSpeedBenchmark(100).p25;
+    for (const id of ['edge-25', 'comb-55', 'comb-13']) {
+      const fx = [...edge, ...comb].filter((f) => f.id === id);
+      assert.equal(fx.length, 1, `${id} ska finnas exakt en gång`);
+      const m = computeInvoiceMetrics(fx[0].lineItems, fx[0].category, fx[0].mixed ?? false);
+      assert.equal(m.secondaryConnectionSpeedMbit, 100, `${id}: hastigheten ska vara 100 Mbit`);
+      const gross = Math.round(m.secondaryComponentMonthly * 12) - golv;
+      assert.equal(gross, 432, `${id}: gross ${gross} mot golvet ${golv}. Golvet har flyttat sig — flytta fixturens indata så att gross blir 432 igen`);
+      assert.equal(fx[0].secondary, null);
+    }
+  });
+});
+
 // ── BI-07 ─────────────────────────────────────────────────────────────────────
 // usdToSek: matematisk korrekthet med FALLBACK_RATE_USD_SEK
 describe('BI-07 · usdToSek — konverteringsaritmetik', () => {
@@ -345,13 +369,13 @@ describe('BI-08 · Bredband bredbandSpeedBenchmark (härledd ur tele2Verified)',
       assert.ok(t.p25 < t.median, `${s} Mbit: p25 (${t.p25}) >= median (${t.median})`);
     });
   }
-  test('1000 Mbit: p25 = 3 348 (Tele2 COAX 1200 279×12), median = 5 844 (öppen fiber 1000 487×12)', () => {
-    // Golvet sänkt 3 828 → 3 348 efter Tele2:s andra prissänkning, verifierad 2026-08-18 mot
-    // adress-API:t på tre adresser två nätter i rad (319 → 279 kr/mån). Taket är oförändrat:
-    // öppen fiber drev inte. Aritmetiken står här så att en framtida ändring måste passera en
+  test('1000 Mbit: p25 = 3 828 (Tele2 COAX 1200 319×12), median = 5 844 (öppen fiber 1000 487×12)', () => {
+    // Golvet höjt 3 348 → 3 828 när Tele2 tog tillbaka augustisänkningen, verifierat 2026-10-21 mot
+    // adress-API:t på tre adresser i tre läsningar (279 → 319 kr/mån). Före: sänkt 3 828 → 3 348
+    // 2026-08-18. Taket är oförändrat: öppen fiber drev inte. Aritmetiken står här så att en framtida ändring måste passera en
     // människa som ser vad den ändrar — inte bara ett test som följer med automatiskt.
     const t = bredbandSpeedBenchmark(1000);
-    assert.strictEqual(t.p25,    3348);
+    assert.strictEqual(t.p25,    3828);
     assert.strictEqual(t.median, 5844);
   });
   test('utan giltig hastighet → null (Zero Trust: ingen gissad siffra)', () => {

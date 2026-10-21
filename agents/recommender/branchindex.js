@@ -178,7 +178,7 @@ export const BRANCHINDEX = {
 
   bredband: {
     source: 'real-public',
-    lastVerified: '2026-10-19',
+    lastVerified: '2026-10-21',
     verifiedVia: 'tele2-address-api',
     // GENOMBROTT 2026-06-14 (7 sond-rundor): Tele2:s adress→pris-API reverse-engineerat —
     // två rena publika JSON-endpoints (feasibility/addresses + broadband/products) som ger
@@ -193,7 +193,7 @@ export const BRANCHINDEX = {
     // Verifierade Tele2 REGULAR-priser (kr/mån EXKL moms), live 2026-06-17 via API:t.
     // Driftvakten resolvar dessa adresser → API → jämför mot priserna. Rött vid drift.
     tele2Verified: {
-      source: 'tele2-address-api', lastVerified: '2026-08-18', unit: 'kr_per_manad_exkl_moms',
+      source: 'tele2-address-api', lastVerified: '2026-10-21', unit: 'kr_per_manad_exkl_moms',
       verifyAddresses: ['Götgatan 92B, Stockholm', 'Sturegatan 33, Sundbyberg', 'Storgatan 41F, Östersund'],
       // family Max = Tele2 COAX (nationellt enhetligt, 12 mån bindning).
       // Prissänkning verifierad 2026-06-17 (vakten larmade): 263/319/335 → 239/279/319.
@@ -212,12 +212,21 @@ export const BRANCHINDEX = {
       // success fee. Prisboken följer källan, aldrig vårt intäktsintresse (grundarbeslut
       // 2026-08-18: "vi ska ALDRIG ha med ett pris som vi inte kan backa upp" — och lika lite
       // ett pris vi kan backa upp men som råkar gynna oss att låta stå kvar inaktuellt).
-      max: { 250: 199, 500: 239, 1200: 279, 2500: 279, bindingMonths: 12 },
+      //
+      // HÖJNINGEN TILLBAKA, verifierad 2026-10-21: 199/239/279 → 239/279/319 (+40 kr rakt av),
+      // alltså samma nivå som 17 jun–18 aug. Grundarbeslut 21 okt: prisboken följer källan.
+      // Vakten bekräftade de lägre talen 19 okt 09:47 UTC (job 117994056517, varje produkt jämförd
+      // exakt) och såg höjningen i tre läsningar 21 okt: körning 39548656562 (05:16), 39549606765
+      // och 39623423878 (15:12). Identiska tal på alla tre adresserna. Standard-familjen oförändrad.
+      // Obekräftad bedömning: augustisänkningen var en kampanj som upphörde 19–21 okt. I så fall
+      // stod ett kampanjpris som golv i två månader, och bredbandskunder såg upp till 480 kr/år
+      // för stor besparing per abonnemang. Den här riktningen ger mindre besparingsanspråk.
+      max: { 250: 239, 500: 279, 1200: 319, 2500: 319, bindingMonths: 12 },
       // family Standard = öppet fiber/LAN (12 mån bindning)
       standard: { 100: 399, 250: 415, 500: 455, 1000: 487, bindingMonths: 12 },
     },
     unit: 'kr/år',
-    note: 'Bredband per adress — priset beror på vilket NÄT som når adressen (inget rikstäckande listpris). Verifierat live mot Tele2:s adress-API 2026-08-18 (exkl moms): "Max"/COAX nationellt enhetligt (1200 Mbit 279 kr/mån, 12 mån), "Standard"/öppen fiber dyrare (1000 Mbit 487 kr/mån, 12 mån). Adresser utan Tele2-nät har inget fast erbjudande (bara mobilt). Benchmarken är hastighetsbaserad och härleds i kod ur tele2Verified (bredbandSpeedBenchmark) — inga legacy-estimat finns kvar. Utan känd hastighet finns ingen verifierbar benchmark (Zero Trust: ingen gissad siffra).',
+    note: 'Bredband per adress — priset beror på vilket NÄT som når adressen (inget rikstäckande listpris). Verifierat live mot Tele2:s adress-API 2026-10-21 (exkl moms): "Max"/COAX nationellt enhetligt (1200 Mbit 319 kr/mån, 12 mån), "Standard"/öppen fiber dyrare (1000 Mbit 487 kr/mån, 12 mån). Adresser utan Tele2-nät har inget fast erbjudande (bara mobilt). Benchmarken är hastighetsbaserad och härleds i kod ur tele2Verified (bredbandSpeedBenchmark) — inga legacy-estimat finns kvar. Utan känd hastighet finns ingen verifierbar benchmark (Zero Trust: ingen gissad siffra).',
     alternatives: [
       { supplier: 'Tele2 Bredband Max (COAX)',     positioning: 'Verifierat via adress-API 2026-08-18: 1200/100 Mbit 279 kr/mån exkl (12 mån) — nationellt enhetligt där COAX-nätet når',  reliability: 0.95 },
       { supplier: 'Tele2 Bredband Standard (fiber)', positioning: 'Verifierat: 1000/1000 Mbit 487 kr/mån exkl (12 mån) — öppna fibernät, dyrare än COAX',                        reliability: 0.95 },
