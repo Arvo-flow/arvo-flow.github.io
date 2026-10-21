@@ -8,7 +8,7 @@
 // Skriptet renderar varje sida, dumpar varje pristal med kontext, och skriver ut prisbokens
 // nuvarande värden bredvid — så att drift syns direkt i loggen och verifierarna kan skrivas mot
 // verkligheten. Ren instrumentering: den rör aldrig prisboken.
-import { withPage, DOLLARBELOPP } from '../lib/verifiers/core.mjs';
+import { withPage, dollarRader } from '../lib/verifiers/core.mjs';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 const T = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
@@ -57,19 +57,13 @@ for (const k of KALLOR) {
   console.log(`  status ${res.status} · renderad text ${res.text.length} tecken`);
   if (!res.text) { console.log('  → ingen text (bot-vägg eller timeout) — kräver stealth'); continue; }
 
-  // 1) Varje pristal med omgivning — så att plan↔pris-bindningen syns.
-  const flat = res.text.replace(/\n+/g, ' ¶ ');
-  const sedda = new Set();
+  // 1) Varje pristal med omgivning — så att plan↔pris-bindningen syns. Tecknet före ELLER efter talet:
+  // när Zoom bytte till «14,16$» såg det gamla mönstret bara ett tilläggsbelopp (V85-Z1). Läsningen bor
+  // i core.mjs (dollarRader), så att NV-08 prövar den.
   console.log('  ── pristal med kontext ──');
-  // Tecknet före ELLER efter talet (DOLLARBELOPP). Mönstret läste förr bara «$14.16», så när Zoom bytte
-  // till «14,16$» såg sonden bara ett tilläggsbelopp, och sidan beskrevs som månadsläget (V85-Z1).
-  for (const m of flat.matchAll(new RegExp(String.raw`(.{0,80}?)(?:${DOLLARBELOPP})([\s\S]{0,70})`, 'g'))) {
-    const rad = `$${(m[2] ?? m[3]).padStart(6)} | …${m[1].trim().slice(-72)} ⟦PRIS⟧ ${m[4].trim().slice(0, 60)}…`;
-    if (sedda.has(rad)) continue;
-    sedda.add(rad); console.log('    ' + rad);
-    if (sedda.size >= 24) break;
-  }
-  if (sedda.size === 0) console.log('    (inga $-tal i renderad text — priset kan ligga bakom väljare/land)');
+  const belopp = dollarRader(res.text);
+  for (const r of belopp) console.log(`    $${r.tal.padStart(6)} | …${r.fore} ⟦PRIS⟧ ${r.efter}…`);
+  if (belopp.length === 0) console.log('    (inga $-tal i renderad text — priset kan ligga bakom väljare/land)');
 
   // 2) Raka planrader — hjälper till att se vilket ord som bär vilket pris.
   console.log('  ── rader som nämner planorden ──');

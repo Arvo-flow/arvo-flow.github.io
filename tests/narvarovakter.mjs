@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { bedomVerifierarutfall } from '../lib/verifierarutfall.js';
-import { talSv, DOLLARBELOPP } from '../lib/verifiers/core.mjs';
+import { talSv, DOLLARBELOPP, dollarRader } from '../lib/verifiers/core.mjs';
 import { fortnoxChecks } from '../lib/verifiers/fortnox.mjs';
 import { spirisChecks } from '../lib/verifiers/spiris.mjs';
 import { kortterminalCheck, kortterminalFastCheck, kortterminalChecks } from '../lib/verifiers/kortterminal.mjs';
@@ -204,6 +204,12 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     // Mönstret delas med sonden, som läser talet ur grupperna: båda ordningarna ger talet.
     const tal = (s) => [...s.matchAll(new RegExp(DOLLARBELOPP, 'g'))].map((m) => m[1] ?? m[2]);
     assert.deepEqual(tal('14,16$ · $14.16 · US$ 9 · USD 12 · 22 $'), ['14,16', '14.16', '9', '12', '22']);
+    // Sondens egen avläsning (dollarRader), inte bara mönstret (T85-5): talen, och kontexten runt dem.
+    const rader = dollarRader(sidtext);
+    assert.deepEqual(rader.map((r) => r.tal), ['14,16', '18,33', '22', '20']);
+    assert.match(rader[0].fore, /Workplace ¶ Pro ¶ Bäst för/);
+    assert.match(rader[0].efter, /Faktureras årsvis/);
+    assert.deepEqual(dollarRader('Kontakta oss'), []);
     // Utdragen ska nå fabrikens logg (notes), inte bara finnas som funktion.
     const utfall = zoomUtfall(BRANCHINDEX['saas-productivity'].licenseTierBenchmarks, sidtext);
     assert.ok(utfall.notes.some((r) => r.startsWith('planer: ') && r.includes('Workplace')), 'planutdraget når inte loggen');
@@ -211,7 +217,9 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
   });
 
   test('NV-09 · Zoom: årspriset läses under kortets rubrik, i dagens form «14,16$» och augustis «$14.16»', () => {
-    // Fixturen är kontextUtdrag-raderna ur körning 39548656562 (21 okt), sammanfogade i sidans ordning.
+    // Fixturen är ett URVAL av kontextUtdrag-raderna ur körning 39548656562 (21 okt), i sidans ordning.
+    // Sju rader ur ett planutdrag och tre dollarutdrag är utelämnade (tredje blicken T85-8); rad 1–39
+    // stämmer tecken för tecken med loggen, och utelämningen ändrar inte läsarens dom.
     const ZT = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
     const t = readFileSync(new URL('./fixtures/narvaro/zoom-2026-10-21.txt', import.meta.url), 'utf8');
     assert.deepEqual(marken(zoomUtfall(ZT, t).checks), ['gron', 'gron']);
@@ -224,6 +232,11 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     assert.deepEqual(marken(zoomUtfall(ZT, byt(t, 'Faktureras årsvis', 'Faktureras månadsvis')).checks), ['olasbar', 'olasbar']);
     // «Allt i Workplace Pro, plus:» på Business-kortet är ingen rubrik för Pro.
     assert.deepEqual(marken(zoomUtfall(ZT, byt(t, 'Pro\nBäst för personligt bruk', 'Pro\nFör personligt bruk')).checks), ['olasbar', 'gron']);
+    // Ett kort utan pris med grannkortet nära: gapet får inte passera nästa «Workplace» (T85-3). Utan
+    // spärren blev Pro DRIFT med Business-kortets 18,33.
+    const utanPris = 'Workplace Pro Bäst för små team. Workplace Affärsverksamhet Bäst för team. '
+      + '18,33$ /användare per månad · Faktureras årsvis';
+    assert.deepEqual(marken(zoomUtfall(ZT, utanPris).checks), ['olasbar', 'gron']);
     // Två kort för samma plan med olika tal: inget val.
     assert.equal(marke(zoomUtfall(ZT, `${t}\nWorkplace\nPro\nBäst för team.\n15,00$\n/användare per månad · Faktureras årsvis`).checks[0]), 'olasbar');
 
