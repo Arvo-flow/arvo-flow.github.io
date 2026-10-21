@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { bedomVerifierarutfall } from '../lib/verifierarutfall.js';
-import { talSv } from '../lib/verifiers/core.mjs';
+import { talSv, DOLLARBELOPP } from '../lib/verifiers/core.mjs';
 import { fortnoxChecks } from '../lib/verifiers/fortnox.mjs';
 import { spirisChecks } from '../lib/verifiers/spiris.mjs';
 import { kortterminalCheck } from '../lib/verifiers/kortterminal.mjs';
@@ -154,17 +154,20 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
   });
 
   test('NV-08 · Zoom: loggen visar sidtexten runt planerna, beloppen och faktureringsläget', () => {
-    // Sidan bytte form 18 okt (probe-saas-render, körning 39500651019). Läsaren byggs om först när
-    // texten är avläst; tills dess ska loggen bära den, och en tom sida ska säga att inget träffade.
-    const sidtext = 'Allt i Workplace Pro, plus: Workplace Pro $16,50 /användare per månad · faktureras månadsvis';
+    // Sidtexten är fixturen ur körning 39548656562. Före V85-Z1 krävde dollarraden tecknet FÖRE talet,
+    // så den visade bara tilläggsraden «22 $ 16,50 $ 1» och aldrig planpriserna «14,16$» och «18,33$».
+    const sidtext = readFileSync(new URL('./fixtures/narvaro/zoom-2026-10-21.txt', import.meta.url), 'utf8');
     const [planer, belopp, lage] = zoomKontext(sidtext);
-    assert.match(planer, /Workplace Pro/);
-    assert.match(belopp, /\$16,50/);
-    assert.match(lage, /faktureras månadsvis/);
+    assert.match(planer, /Workplace\s+Pro/);
+    assert.ok(belopp.includes('14,16$') && belopp.includes('18,33$'), `planpriserna saknas i dollarraden: ${belopp.slice(0, 200)}`);
+    assert.match(lage, /Faktureras årsvis/);
     assert.deepEqual(zoomKontext('Kontakta oss').map((r) => r.endsWith('(ingen träff)')), [true, true, true]);
+    // Mönstret delas med sonden, som läser talet ur grupperna: båda ordningarna ger talet.
+    const tal = (s) => [...s.matchAll(new RegExp(DOLLARBELOPP, 'g'))].map((m) => m[1] ?? m[2]);
+    assert.deepEqual(tal('14,16$ · $14.16 · US$ 9 · USD 12 · 22 $'), ['14,16', '14.16', '9', '12', '22']);
     // Utdragen ska nå fabrikens logg (notes), inte bara finnas som funktion.
     const utfall = zoomUtfall(BRANCHINDEX['saas-productivity'].licenseTierBenchmarks, sidtext);
-    assert.ok(utfall.notes.some((r) => r.startsWith('planer: ') && r.includes('Workplace Pro')), 'planutdraget når inte loggen');
+    assert.ok(utfall.notes.some((r) => r.startsWith('planer: ') && r.includes('Workplace')), 'planutdraget når inte loggen');
     assert.equal(utfall.checks.length, 2);
   });
 
