@@ -3,10 +3,11 @@
  * Populerar supplier_prices från befintlig statisk data.
  * Idempotent — kör säkert flera gånger (upsert).
  *
- * Källdata:
- *   - agents/recommender/branchindex.js (licenseTierBenchmarks för saas-productivity)
- *   - lib/supplier-price-intel.js (Microsoft/Google/Adobe MSRP-validering)
- *   - Hårdkodade svenska leverantörers listpriser med källreferens
+ * Källdata: talen nedan är HÅRDKODADE, en ögonblicksbild från maj 2026. Filen importerar inte
+ * prisboken (agents/recommender/branchindex.js), och talen har inte följt den: Atlassian bär
+ * 8,92/17,88/6,50/12,53 medan prisboken sedan 18 okt bär 9,56/19,15/7,00/13,75 (andra blicken
+ * PB85-4). Körs skriptet skrivs ögonblicksbilden som is_current i supplier_prices. Läs prisboken,
+ * aldrig den här filen, för ett aktuellt pris.
  *
  * Kör: node scripts/seed-price-db.mjs
  * Kräver: DATABASE_URL i .env

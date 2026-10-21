@@ -159,6 +159,11 @@ export default async function handler(req, res) {
     },
 
     // ── Seed: alla kända leverantörspriser ────────────────────────────────────
+    // ⚠️ En ögonblicksbild från maj 2026, inte prisboken. Flera tal har sedan dess rättats i
+    // agents/recommender/branchindex.js: M365 bär här 57,40/119,48 (bibeln, «Prisbaslinjen»: vår
+    // seed, inte Microsofts pris), och Atlassian 8,92/17,88/6,50/12,53 mot bokens 9,56/19,15/7,00/
+    // 13,75 sedan 18 okt (andra blicken PB85-4). Körs migreringen om skrivs talen som is_current.
+    // supplier_prices.price_monthly läses av lib/price-alert.js, vars utfall i dag ingen yta visar.
     // Microsoft 365 — SEK, verifierat microsoft.com 2026-05-27
     { name: 'seed:m365-basic',    run: () => upsertPrice({ supplier:'microsoft', product:'Microsoft 365 Business Basic',    tier:'business-basic',    category:'saas-productivity', priceMonthly:68.88,  priceAnnual:57.40,  priceUnit:'per_seat', currency:'SEK', sourceType:'official_web', sourceUrl:'https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-business-basic',    confidence:0.99, lastVerified:'2026-05-27', changedBy:'migration' }) },
     { name: 'seed:m365-standard', run: () => upsertPrice({ supplier:'microsoft', product:'Microsoft 365 Business Standard', tier:'business-standard', category:'saas-productivity', priceMonthly:143.38, priceAnnual:119.48, priceUnit:'per_seat', currency:'SEK', sourceType:'official_web', sourceUrl:'https://www.microsoft.com/sv-se/microsoft-365/business/microsoft-365-business-standard', confidence:0.99, lastVerified:'2026-05-27', changedBy:'migration' }) },
