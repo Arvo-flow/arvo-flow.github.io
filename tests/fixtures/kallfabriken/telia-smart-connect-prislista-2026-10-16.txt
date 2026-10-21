@@ -1,0 +1,188 @@
+Pri
+slista
+ 
+Sid 1/2
+
+Alla priser är ex
+k
+lusive m
+oms
+
+och
+ 
+gäller
+ 
+från
+ 
+september
+ 
+202
+5
+
+TELIA
+
+SMART CONNECT
+
+Användartjänster
+ 
+Startavgift
+ 
+Månadsavgift
+
+Användare med mobilt nummer
+3
+ 
+-
+ 
+8
+9
+ 
+SEK
+
+Fastnummer till mobil a
+nvändare
+3
+ 
+-
+ 
+39
+ 
+SEK
+
+Softphone
+3
+ 
+-
+ 
+29 SEK
+
+Kalenderintegration
+4
+ 
+-
+ 
+19
+ 
+SEK
+
+Teamsintegration
+ 
+–
+ 
+Status
+4
+ 
+-
+ 
+9 SEK
+
+Teamsintegration
+ 
+–
+ 
+Voice
+4
+ 
+-
+ 
+29 SEK
+
+AD
+-
+Integration
+4
+ 
+9 SEK
+
+Samtalsinspelning
+8
+ 
+-
+ 
+29 SEK
+
+Företagstjänster
+ 
+Startavgift
+ 
+Månadsavgift
+
+Funktionsnummer
+5
+ 
+-
+ 
+99 SEK
+
+Ny 10-nummerserie
+ 
+1 000 SEK
+ 
+-
+
+Ny 100-nummerserie
+ 
+3 000 SEK
+ 
+-
+
+Ny 1 000-nummerserie
+ 
+9 000 SEK
+ 
+-
+
+Telia Svarsservice
+6
+ 
+-
+ 
+Fr. 4 710
+
+Implementering Kalenderintegration
+4
+ 
+1
+ 
+990 SEK
+ 
+-
+
+Implementering Teamsintegration
+4
+ 
+1
+ 
+990 SEK
+ 
+-
+
+Implementering AD-integration
+4
+ 
+1
+ 
+990 SEK
+ 
+-
+
+Implementering API Access
+7
+ 
+1
+ 
+990 SEK
+ 
+9 SEK/användare
+
+Implementering Samtalsinspelning
+8
+ 
+1990 SEK
+
+NPS Enkät
+9
+ 
+1990 SEK
+ 
+499 SEK

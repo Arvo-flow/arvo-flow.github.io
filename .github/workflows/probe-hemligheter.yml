@@ -35,7 +35,13 @@ jobs:
           RESEND_FROM: ${{ secrets.RESEND_FROM }}
         run: node scripts/probe-hemligheter.mjs --krav=saknas
 
+  # Ett jobb i miljön ser OCKSÅ repo-hemligheterna, så «SATT» här bevisar bara att miljön bär namnet när
+  # läckkontrollen ovan är grön. 17 okt sa sonden «✓ Miljön produktion bär de 6» medan ARVO_ADMIN_SECRET
+  # bara låg på repo-nivå; när repo-kopiorna raderades saknades den. Därför väntar sond på utan-miljo
+  # och får dess utfall (HB-07).
   sond:
+    needs: utan-miljo
+    if: ${{ always() }}
     environment: produktion
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -48,6 +54,7 @@ jobs:
       - name: Mät
         shell: bash
         env:
+          LACKKONTROLL: ${{ needs.utan-miljo.result }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ARVO_ADMIN_SECRET: ${{ secrets.ARVO_ADMIN_SECRET }}
           BOT_DEPLOY_KEY: ${{ secrets.BOT_DEPLOY_KEY }}

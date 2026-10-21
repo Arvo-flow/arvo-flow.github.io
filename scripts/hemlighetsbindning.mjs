@@ -10,10 +10,17 @@
 // `jobs:` på toppnivå, jobbnamn indraget två steg, `environment:` som egen rad i jobbet.
 //
 // FÅNGAR: ett jobb som läser `secrets.X` utan `environment: produktion` (HB-01); hemligheter i `env:` på
-//   toppnivå, som räknas till varje jobb, och `secrets: inherit`, som räknas som allt (HB-03).
-// BLIND: en hemlighet som når ett jobb på annat sätt än `secrets.X` i samma fil, och YAML skriven i en
-//   annan form än ovan (flödesmappning `{ … }`, ankare). HB-04 kräver att varje jobbrubrik hittas, så en
-//   annan form syns som ett fel i stället för som ett tomt, grönt svar.
+//   toppnivå, som räknas till varje jobb, och `secrets: inherit`, som räknas som allt (HB-03); ett uttryck
+//   som läser hemligheter utan att namnge dem — `toJSON(secrets)`, `secrets[format(…)]`,
+//   `secrets[matrix.x]` — som också räknas som allt, och `SECRETS.X` i andra versaler (HB-06).
+//   Också: `secrets: 'inherit'` citerat, en toppnivå-`env:` efter `jobs:`, YAML-escapes som
+//   `s\u0065crets` och ett `}}` inne i en strängliteral (HB-06, andra blicken 18 okt).
+// BLIND: en hemlighet som når ett jobb på annat sätt än via `secrets` i samma fil (en återanvänd
+//   workflow som får hemligheten som input syns i anroparen, inte i den anropade), YAML skriven i en
+//   annan form än ovan (flödesmappning `{ … }` för jobben, ankare och alias), och ett namn som delas
+//   av YAML-vikning i en ociterad skalär. HB-04 kräver att varje jobbrubrik hittas, så en annan form för
+//   jobben syns som ett fel i stället för som ett tomt, grönt svar. Läsaren läser ORD; en vakt som ska
+//   vara fullständig behöver en YAML-tolk, och det är ett beroende repot inte har.
 
 export const SKYDDAD_MILJO = 'produktion';
 
@@ -31,28 +38,89 @@ export const MOTPROVSJOBB = 'probe-hemligheter.yml#utan-miljo';
 // Ett jobb-id kan stå citerat ('b': / "b":). Utan det slogs ett citerat jobb ihop med jobbet ovanför
 // och ärvde dess miljö (andra blickens V5, HB-03).
 export const JOBBRUBRIK = /^ {2}(['"]?)([A-Za-z0-9_-]+)\1:\s*(#.*)?$/;
-// Båda formerna: secrets.X och secrets['X'] / secrets["X"].
-const HEMLIGHET = /secrets(?:\.([A-Za-z_][A-Za-z0-9_]*)|\[\s*['"]([A-Za-z_][A-Za-z0-9_]*)['"]\s*\])/g;
+// Båda formerna: secrets.X och secrets['X'] / secrets["X"]. Versalerna räknas inte: att räkna för mycket
+// är den säkra riktningen, och namnet skrivs med versaler så att `secrets.bot_deploy_key` är samma
+// hemlighet som BOT_DEPLOY_KEY (tredje blickens V4, HB-06).
+const HEMLIGHET = /(?<![.\w-])secrets(?:\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)|\s*\[\s*['"]([A-Za-z_][A-Za-z0-9_]*)['"]\s*\])/gi;
+// Ett uttryck ${{ … }} där `secrets` står utan ett namn efter sig läser hemligheter som ingen lista ser:
+// toJSON(secrets), secrets[format(…)], secrets[matrix.x], ${{ secrets }}. Det räknas som alla.
+const ONAMNGIVEN = /(?<![.\w-])secrets\b(?!\s*\.\s*[A-Za-z_]|\s*\[\s*['"][A-Za-z_][A-Za-z0-9_]*['"]\s*\])/i;
 
-/** Hemlighetsnamn (utom GITHUB_TOKEN, som GitHub själv utfärdar per körning) i en textbit. */
-export function hemligheterI(text) {
-  return [...new Set([...String(text).matchAll(HEMLIGHET)].map((m) => m[1] ?? m[2]))].filter((n) => n !== 'GITHUB_TOKEN').sort();
+/**
+ * Texten som GitHub ser efter YAML: dubbelciterade skalärer avkodar \uXXXX, \UXXXXXXXX och \xXX, och
+ * ett snedstreck sist på raden skarvar ihop raden med nästa. `s\u0065crets.X` är alltså en läsning av X
+ * (andra blicken 18 okt). Läsaren räknar det som syns i den råa ELLER den avkodade texten.
+ */
+export function avkodaYaml(text) {
+  const tecken = (h, m) => { const k = parseInt(h, 16); return k <= 0x10ffff ? String.fromCodePoint(k) : m; };
+  return String(text)
+    .replace(/\\\r?\n[ \t]*/g, '')
+    .replace(/\\U([0-9a-fA-F]{8})/g, (m, h) => tecken(h, m))
+    .replace(/\\u([0-9a-fA-F]{4})/g, (m, h) => tecken(h, m))
+    .replace(/\\x([0-9a-fA-F]{2})/g, (m, h) => tecken(h, m));
 }
 
 /**
- * Ett arbetsflödes jobb: [{ jobb, miljo, hemligheter, arver, text }]. `text` är jobbets rader (för SP-06). `miljo` är null när jobbet inte väljer någon.
+ * Innehållet i varje ${{ … }}. Uttrycket slutar vid första `}}` UTANFÖR en strängliteral ('…'):
+ * `${{ format('}}', toJSON(secrets)) }}` är ett uttryck, inte två (HB-06). Ett '' i en sträng är ett
+ * citattecken; det växlar läget två gånger och lämnar det orört, så det behöver ingen egen gren.
+ */
+export function uttryck(text) {
+  const t = String(text);
+  const ut = [];
+  for (let i = t.indexOf('${{'); i >= 0; i = t.indexOf('${{', i)) {
+    let j = i + 3;
+    let iStrang = false;
+    for (; j < t.length; j++) {
+      if (t[j] === "'") { iStrang = !iStrang; continue; }
+      if (!iStrang && t[j] === '}' && t[j + 1] === '}') break;
+    }
+    ut.push(t.slice(i + 3, j));
+    i = j + 2;
+  }
+  return ut;
+}
+
+/** Hemlighetsnamn (utom GITHUB_TOKEN, som GitHub själv utfärdar per körning) i en textbit. */
+export function hemligheterI(text) {
+  const namn = (t) => [...String(t).matchAll(HEMLIGHET)].map((m) => (m[1] ?? m[2]).toUpperCase());
+  return [...new Set([...namn(text), ...namn(avkodaYaml(text))])].filter((n) => n !== 'GITHUB_TOKEN').sort();
+}
+
+/** Läser textbiten hemligheter utan att namnge dem (toJSON(secrets), secrets[uttryck])? */
+export function lasesDynamiskt(text) {
+  return [...uttryck(text), ...uttryck(avkodaYaml(text))].some((k) => ONAMNGIVEN.test(k));
+}
+
+/** Ärver jobbet alla hemligheter (`secrets: inherit`, även citerat eller escapat)? */
+function arverAlla(text) {
+  return [text, avkodaYaml(text)].some((t) => /^\s+secrets:\s*(['"]?)inherit\1\s*(#.*)?$/m.test(t));
+}
+
+/** Når hemligheten `namn` jobbet — med namn, genom `secrets: inherit` eller genom ett onamngivet uttryck? */
+export function lasarHemlighet(j, namn) {
+  return j.arver || j.dynamisk || j.hemligheter.includes(namn);
+}
+
+/**
+ * Ett arbetsflödes jobb: [{ jobb, miljo, hemligheter, arver, dynamisk, text }]. `text` är jobbets rader (för SP-06). `miljo` är null när jobbet inte väljer någon.
  * Kastar om `jobs:` saknas eller inga jobbrubriker hittas, så att ett tomt svar inte ser ut som ett rent (HB-04).
  */
 export function jobbIArbetsflode(yaml) {
   const rader = String(yaml).split('\n');
   const start = rader.findIndex((r) => /^jobs:\s*(#.*)?$/.test(r));
   if (start < 0) throw new Error('hemlighetsbindning: ingen `jobs:` på toppnivå');
-  const toppniva = hemligheterI(rader.slice(0, start).join('\n'));
+  // jobs-blocket slutar vid nästa nyckel på toppnivå. En kommentar i kolumn 0 är ingen nyckel.
+  let slut = rader.findIndex((r, i) => i > start && /^[^\s#]/.test(r));
+  if (slut < 0) slut = rader.length;
+  // Toppnivån är allt utanför jobs-blocket: en `env:` får stå efter `jobs:` (andra blicken 18 okt).
+  const toppText = [...rader.slice(0, start), ...rader.slice(slut)].join('\n');
+  const toppniva = hemligheterI(toppText);
+  const toppDynamisk = lasesDynamiskt(toppText);
   const jobb = [];
   let aktuellt = null;
-  for (let i = start + 1; i < rader.length; i++) {
+  for (let i = start + 1; i < slut; i++) {
     const r = rader[i];
-    if (/^\S/.test(r)) break;                      // nästa nyckel på toppnivå
     const m = r.match(JOBBRUBRIK);
     if (m) { aktuellt = { jobb: m[2], rader: [] }; jobb.push(aktuellt); continue; }
     if (aktuellt) aktuellt.rader.push(r);
@@ -67,8 +135,9 @@ export function jobbIArbetsflode(yaml) {
       miljo = e[1] || (r[i + 1]?.match(/^ {6}name:\s*([^\s#]+)/)?.[1] ?? null);
       break;
     }
-    const arver = /^\s+secrets:\s*inherit\b/m.test(text);
-    return { jobb: namn, miljo, hemligheter: [...new Set([...toppniva, ...hemligheterI(text)])].sort(), arver, text };
+    const arver = arverAlla(text);
+    const dynamisk = toppDynamisk || lasesDynamiskt(text);
+    return { jobb: namn, miljo, hemligheter: [...new Set([...toppniva, ...hemligheterI(text)])].sort(), arver, dynamisk, text };
   });
 }
 
@@ -116,8 +185,8 @@ export function obundnaJobb(arbetsfloden, { undantag = [] } = {}) {
   for (const [fil, yaml] of Object.entries(arbetsfloden)) {
     for (const j of jobbIArbetsflode(yaml)) {
       const id = `${fil}#${j.jobb}`;
-      if ((j.hemligheter.length || j.arver) && j.miljo !== SKYDDAD_MILJO && !undantag.includes(id)) {
-        ut.push({ id, hemligheter: j.arver ? ['(secrets: inherit)'] : j.hemligheter });
+      if ((j.hemligheter.length || j.arver || j.dynamisk) && j.miljo !== SKYDDAD_MILJO && !undantag.includes(id)) {
+        ut.push({ id, hemligheter: j.arver ? ['(secrets: inherit)'] : j.dynamisk ? ['(alla, via ett onamngivet uttryck)'] : j.hemligheter });
       }
     }
   }

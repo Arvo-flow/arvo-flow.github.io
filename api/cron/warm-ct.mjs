@@ -12,6 +12,7 @@
 import { hamtaKo, taBortFranKo } from '../../lib/ct-ko.js';
 import { getCtOnboarding } from '../../lib/domain-intel.js';
 import { getKv } from '../../lib/kv.js';
+import { cronAnropTillatet } from '../../lib/cronvakt.js';
 
 export const config = { maxDuration: 300 };
 
@@ -20,9 +21,8 @@ const FORSOK_PER_DOMAN = 4;
 const PAUS_MS = 3000;
 
 export default async function handler(req, res) {
-  const hemlis = process.env.CRON_SECRET;
-  const auth = req.headers?.authorization ?? '';
-  if (hemlis && auth !== `Bearer ${hemlis}`) return res.status(401).json({ error: 'unauthorized' });
+  // Grinden löd `if (hemlis && auth !== …)`: en osatt hemlighet släppte in alla (SL-09).
+  if (!cronAnropTillatet(req)) return res.status(401).json({ error: 'unauthorized' });
 
   const kv = getKv();
   if (!kv) return res.status(200).json({ ok: true, note: 'ingen KV — värmaren är en förbättring, aldrig ett krav' });

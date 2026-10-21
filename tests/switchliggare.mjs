@@ -117,4 +117,48 @@ describe('SL · Cron-grinden: en osatt hemlighet är en okänd, inte ett löseno
       for (const [k, v] of Object.entries(fore)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
     }
   });
+
+  test('SL-08 · run-price-alerts är fail-closed: en osatt hemlighet nekar en egen rapport (motprov: rätt hemlighet släpps in)', async () => {
+    const { default: handler } = await import('../api/cron/run-price-alerts.mjs');
+    const { Readable } = await import('node:stream');
+    const kor = async (headers) => {
+      const req = Object.assign(Readable.from([JSON.stringify({ alerts: [] })]), { method: 'POST', headers });
+      let status = null;
+      const res = { statusCode: 0, setHeader() {}, end() { status = this.statusCode; } };
+      await handler(req, res);
+      return status;
+    };
+    const fore = { NODE_ENV: process.env.NODE_ENV, CRON_SECRET: process.env.CRON_SECRET, DATABASE_URL: process.env.DATABASE_URL };
+    try {
+      process.env.NODE_ENV = 'production'; delete process.env.CRON_SECRET; delete process.env.DATABASE_URL;
+      assert.equal(await kor({}), 401, 'osatt hemlighet och ingen header — förr släpptes detta in (fail-open)');
+      assert.equal(await kor({ authorization: 'Bearer undefined' }), 401);
+      process.env.CRON_SECRET = 's3';
+      assert.equal(await kor({ authorization: 'Bearer fel' }), 401);
+      assert.equal(await kor({ authorization: 'Bearer s3' }), 200, 'motprov: rätt hemlighet släpps in');
+    } finally {
+      for (const [k, v] of Object.entries(fore)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+    }
+  });
+
+  test('SL-09 · warm-ct är fail-closed: en osatt hemlighet nekar (motprov: rätt hemlighet släpps in)', async () => {
+    const { default: handler } = await import('../api/cron/warm-ct.mjs');
+    const kor = async (headers) => {
+      let status = null;
+      const res = { status(s) { status = s; return this; }, json() { return this; } };
+      await handler({ method: 'GET', headers }, res);
+      return status;
+    };
+    const fore = { NODE_ENV: process.env.NODE_ENV, CRON_SECRET: process.env.CRON_SECRET, KV_REST_API_URL: process.env.KV_REST_API_URL };
+    try {
+      process.env.NODE_ENV = 'production'; delete process.env.CRON_SECRET; delete process.env.KV_REST_API_URL;
+      assert.equal(await kor({}), 401, 'osatt hemlighet och ingen header — förr släpptes detta in (fail-open)');
+      assert.equal(await kor({ authorization: 'Bearer undefined' }), 401);
+      process.env.CRON_SECRET = 's3';
+      assert.equal(await kor({ authorization: 'Bearer fel' }), 401);
+      assert.equal(await kor({ authorization: 'Bearer s3' }), 200, 'motprov: rätt hemlighet släpps in (utan KV svarar värmaren 200)');
+    } finally {
+      for (const [k, v] of Object.entries(fore)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+    }
+  });
 });

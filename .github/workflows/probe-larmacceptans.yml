@@ -1,0 +1,30 @@
+name: Sond — larmacceptansen (skrivskyddad, produktions-DB, skickar aldrig)
+
+# Acceptanspunkt 4 i ops/ARBETSORDER-LANSERING.md: larmgrinden och golvet prövade genom de riktiga
+# vägarna. DEL L kör scripts/notify-price-changes.mjs utan hemligheter; DEL G läser supplier_prices.
+# RESEND_API_KEY ges medvetet inte till jobbet, och sonden vägrar köra om den ändå finns.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sond:
+    environment: produktion
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Larmgrinden och golvet mot produktionen
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # pipefail: utan den returnerar en pipe TEE:s exit-kod och en död sond rapporterar framgång.
+        run: |
+          set -o pipefail
+          node scripts/probe-larmacceptans.mjs

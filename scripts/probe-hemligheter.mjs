@@ -10,6 +10,8 @@
 // BLIND: CRON_SECRET:s VÄRDE prövas inte här — det bevisas av kor-drainen.yml (200 mot 401).
 //   Läsbehörighet bevisar inte skrivbehörighet: en read-only-token svarar på GET men vägrar SET.
 //   Därför prövas båda, mot en egen nyckel med 60 s TTL som ingen produktionskod läser.
+//   Och om ett namn ligger i miljön eller på repo-nivå: ett jobb i miljön ser båda. Därför kräver
+//   --krav=satt att läckkontrollen var grön (LACKKONTROLL=success) innan ✓ skrivs (HB-07).
 import { getKv } from '../lib/kv.js';
 import { ALLA_HEMLIGHETER, KRAVDA_I_PRODUKTION } from './hemlighetsbindning.mjs';
 
@@ -28,6 +30,13 @@ if (krav === 'satt' || krav === 'saknas') {
     console.error(krav === 'saknas'
       ? `\n✗ LÄCKAN ÄR ÖPPEN — ${fel.join(', ')} når ett jobb utan miljön produktion. Flytta dem till miljön (om de behövs) och radera repository-kopiorna.`
       : `\n✗ Miljön produktion gav inte ${fel.join(', ')}.`);
+    process.exit(1);
+  }
+  // Ett jobb i miljön ser också repo-hemligheterna. «SATT» bevisar att MILJÖN bär namnet först när
+  // läckkontrollen (jobbet utan miljö) är grön, alltså när inga repo-kopior finns (HB-07). Utan det
+  // utfallet är ✓ ett grönt som betyder «jag kunde inte se skillnaden».
+  if (krav === 'satt' && process.env.LACKKONTROLL !== 'success') {
+    console.error(`\n✗ Obevisat: alla ${KRAVDA_I_PRODUKTION.length} är satta, men läckkontrollen var inte grön (${process.env.LACKKONTROLL || 'inget utfall'}). Repo-kopior kan bära värdena, så det går inte att se vilka som ligger i miljön produktion.`);
     process.exit(1);
   }
   console.log(krav === 'saknas'

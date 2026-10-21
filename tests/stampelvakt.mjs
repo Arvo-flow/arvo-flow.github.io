@@ -9,7 +9,10 @@
 //   (SP-01, motprovet: en vakt som fäller rätt beteende blir avstängd); att beslutsfilen uteblir när
 //   verify.mjs går ut rött (SP-05); att arbetsflödet pushar till main någon annan väg än via vakten,
 //   med nyckeln, i produktion, eller döljer en nekad push (SP-06); att pushsteget, KÖRT med `bash -e`
-//   som Actions kör det, pushar fel sak, pushar förbi vakten eller går grönt på ett nej (SP-07).
+//   som Actions kör det, pushar fel sak, pushar förbi vakten eller går grönt på ett nej (SP-07); att
+//   diagnossteget bara fungerar i bash 4+ (SP-12, körs i bash och sh); att producentens avtryck är fel
+//   eller saknar facit (SP-13); att en artefakt bär en annan källas fil (SP-14); att kedjan som i
+//   Actions — discover, verify.mjs, nedladdningen, räknesteget, stampla — tappar beslutet någonstans (SP-15).
 // BLIND: att en GRÖN verifierare faktiskt skriver sitt beslut till filen — den grenen kräver en källa
 //   som svarar, och sviten har inget nät. Den bevisas av första körningen av verify-sources på main
 //   (stampla-jobbets logg: «N beslutsfil(er)», «datum flyttade»). Och om GitHub faktiskt släpper
@@ -18,16 +21,25 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync, copyFileSync, chmodSync, cpSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync, copyFileSync, chmodSync, cpSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { granskaStampeldiff, STAMPELFIL } from '../scripts/stampelvakt.mjs';
-import { tillampaStamplar, prisbokAvtryck, FONSTER_DAGAR } from '../scripts/stampla.mjs';
-import { jobbIArbetsflode } from '../scripts/hemlighetsbindning.mjs';
+import { tillampaStamplar, prisbokAvtryck, nyttBeslut, lasBeslut, DATUMFALT, FONSTER_DAGAR } from '../scripts/stampla.mjs';
+import { jobbIArbetsflode, lasarHemlighet } from '../scripts/hemlighetsbindning.mjs';
 import { VERIFIERS } from '../lib/verifiers/registry.mjs';
 
 const ROT = new URL('..', import.meta.url).pathname;
-const PRISBOK = readFileSync(join(ROT, STAMPELFIL), 'utf8');
+// ── PRISBOKENS STRUKTUR ÄR DEN RIKTIGA, DATUMEN ÄR FRYSTA (fabrikssvepet 2026-10-16) ──────────
+// Testerna läste den levande filens datum, och stämpeljobbet flyttar dem på main varje vecka.
+// Grinden föll på main (körning 38145142748, 11 okt): SP-03 letade efter '2026-10-05' som botten
+// redan flyttat, och SP-07/SP-10 stämplade till «i dag» på en bok som botten stämplat samma dag,
+// så diffen blev tom. Vakten var rätt, testet var fastnålat vid data som ändras av design.
+// Samma mönster som stampla.mjs avtryck använder (importerat, inte kopierat), så avtrycket är detsamma
+// som den levande bokens.
+const BAS_DATUM = '2026-01-01';
+const frysDatum = (kalla) => kalla.replace(DATUMFALT, `lastVerified:$1'${BAS_DATUM}'`);
+const PRISBOK = frysDatum(readFileSync(join(ROT, STAMPELFIL), 'utf8'));
 const DAG = '2099-01-01';
 
 /** Ett temporärt repo med prisboken, så att diffen kommer ur riktig git — inte ur en handskriven sträng. */
@@ -54,15 +66,13 @@ const REGISTER = Object.fromEntries(VERIFIERS.map((v) => [v.id, v]));
 const AVTRYCK = prisbokAvtryck(PRISBOK);
 const beslutFor = (v, datum = DAG, avtryck = AVTRYCK) => ({ kalla: v.id, datum, nycklar: v.bevakadeTiers ?? [], kategori: v.bevakadKategori ?? null, prisbokAvtryck: avtryck });
 const allaBeslut = VERIFIERS.map((v) => beslutFor(v));
-const stamplad = tillampaStamplar(PRISBOK, allaBeslut, { register: REGISTER, idag: DAG });
+const stamplad = tillampaStamplar(PRISBOK, allaBeslut, { register: REGISTER, idag: DAG, verifierad: AVTRYCK });
 const M365 = VERIFIERS.find((v) => v.id === 'm365');
 
-// SP-03/SP-10 läser M365-raden ur prisboken i stället för att skriva in den. Inskriven som
-// '2026-10-05' föll båda på main när stämpelboten flyttade raden till 2026-10-12 (a0f740e), och
-// stämpelns [skip ci] gjorde att ingen körning visade det. Basen får ett fast datum i testets eget
-// repo, så att testet prövar samma sak vad boten än stämplat.
-const M365_RAD = PRISBOK.match(/currency: 'SEK', lastVerified: '\d{4}-\d{2}-\d{2}', source: 'microsoft\.com',/)?.[0];
-const m365Med = (datum) => PRISBOK.replace(M365_RAD, M365_RAD.replace(/\d{4}-\d{2}-\d{2}/, datum));
+// Samma fel lagades två gånger, och sammanfogningen 18 okt behöll en lagning. PR #83 lät SP-03/SP-10
+// läsa M365-raden ur den levande prisboken (datumet '2026-10-05' var inskrivet och boten flyttade det
+// 12 okt). Fabrikssvepet 16 okt frös i stället alla datum i testets prisbok (PRISBOK ovan), vilket
+// också skyddar SP-07, som annars får en tom diff den dag boten redan stämplat. Frysningen behölls.
 const dagarFranIdag = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
 
 describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
@@ -90,10 +100,11 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
   });
 
   test('SP-03 · datumet måste flyttas framåt, men aldrig förbi i dag, och vara ett riktigt datum', () => {
-    assert.ok(M365_RAD, 'M365-raden ser inte ut som väntat — testet prövar inget');
-    const med = (d) => granskaStampeldiff(repoMed(m365Med('2026-10-05')).diffEfter(m365Med(d)), { idag: '2026-10-10' });
+    const rad = `currency: 'SEK', lastVerified: '${BAS_DATUM}', source: 'microsoft.com',`;
+    assert.ok(PRISBOK.includes(rad), 'M365-raden ser inte ut som väntat — testet prövar inget');
+    const med = (d) => granskaStampeldiff(repoMed(PRISBOK).diffEfter(PRISBOK.replace(rad, rad.replace(BAS_DATUM, d))), { idag: '2026-10-10' });
     assert.equal(med('2026-10-10').ok, true, 'motprov: ett datum framåt till i dag ska släppas');
-    assert.match(med('2026-10-01').skal, /bakåt/);
+    assert.match(med('2025-12-31').skal, /bakåt/);
     assert.match(med('2026-10-11').skal, /efter i dag/);
     assert.match(med('2026-02-30').skal, /ogiltigt/);
     assert.equal(granskaStampeldiff('', { idag: '2026-10-10' }).ok, false, 'en tom diff får aldrig läsas som godkänd');
@@ -112,11 +123,11 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     const u4 = granskaStampeldiff(repoMed(PRISBOK).diffEfter(`${stamplad.kalla}\n++ globalThis.x;\n`), { idag: DAG });
     assert.equal(u4.ok, false, `en smugglad «++»-rad släpptes: ${u4.skal}`);
     const med = `${PRISBOK}\n-- 133.82\n`;
-    const u5 = granskaStampeldiff(repoMed(med).diffEfter(`${tillampaStamplar(med, allaBeslut.map((b) => ({ ...b, prisbokAvtryck: prisbokAvtryck(med) })), { register: REGISTER, idag: DAG }).kalla.replace('\n-- 133.82\n', '\n++ 999.00\n')}`), { idag: DAG });
+    const u5 = granskaStampeldiff(repoMed(med).diffEfter(`${tillampaStamplar(med, allaBeslut.map((b) => ({ ...b, prisbokAvtryck: prisbokAvtryck(med) })), { register: REGISTER, idag: DAG, verifierad: prisbokAvtryck(med) }).kalla.replace('\n-- 133.82\n', '\n++ 999.00\n')}`), { idag: DAG });
     assert.equal(u5.ok, false, `«-- 133.82» → «++ 999.00» släpptes: ${u5.skal}`);
     assert.equal(granskaStampeldiff(`diff --git a/${STAMPELFIL} b/${STAMPELFIL}\nnew file mode 100644\n`, { idag: DAG }).ok, false);
     assert.equal(granskaStampeldiff('något helt annat\n', { idag: DAG }).ok, false);
-    assert.throws(() => tillampaStamplar(PRISBOK, [{ kalla: 'x', datum: 'igår', nycklar: [] }], { register: REGISTER, idag: DAG }), /okänd källa/);
+    assert.throws(() => tillampaStamplar(PRISBOK, [{ kalla: 'x', datum: 'igår', nycklar: [] }], { register: REGISTER, idag: DAG, verifierad: AVTRYCK }), /okänd källa/);
   });
 
   test('SP-05 · verify.mjs skriver beslutsfilen även när den går ut rött (motprov: utan variabeln ingen fil)', () => {
@@ -176,6 +187,7 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     const bygg = join(tmp, 'bygg');
     // stampla.mjs läser registret (lib/verifiers) för att pröva besluten, alltså följer lib/ och agents/ med.
     for (const k of ['lib', 'agents']) cpSync(join(ROT, k), join(bygg, k), { recursive: true });
+    writeFileSync(join(bygg, STAMPELFIL), PRISBOK);
     for (const f of ['scripts/stampla.mjs', 'scripts/stampelvakt.mjs']) {
       mkdirSync(join(bygg, f, '..'), { recursive: true });
       copyFileSync(join(ROT, f), join(bygg, f));
@@ -184,12 +196,16 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     const klon = join(tmp, 'klon');
     sh(`git clone -q ${fjarr} ${klon}`, tmp);
     const beslut = join(tmp, 'beslut');
-    mkdirSync(beslut);
+    // Artefaktens form efter nedladdning med merge-multiple: false: stampel-<id>/stampel-<id>.json (V3).
+    mkdirSync(join(beslut, 'stampel-m365'), { recursive: true });
+    const m365Fil = join(beslut, 'stampel-m365', 'stampel-m365.json');
     const idag = new Date().toISOString().slice(0, 10);
-    const m365Beslut = (datum) => JSON.stringify([{ kalla: 'm365', datum, nycklar: ['business-basic', 'e3'], kategori: null, prisbokAvtryck: AVTRYCK }]);
-    writeFileSync(join(beslut, 'stampel-m365.json'), m365Beslut(idag));
-    const kor = () => {
-      try { return { kod: 0, ut: execFileSync('bash', ['-e', '-c', skript.join('\n')], { cwd: klon, env: { ...process.env, BESLUT: beslut, STAMPEL_VANTA_S: '0' }, encoding: 'utf8', stdio: 'pipe' }) }; }
+    const m365Beslut = (datum, avtryck = AVTRYCK) => JSON.stringify([{ kalla: 'm365', datum, nycklar: ['business-basic', 'e3'], kategori: null, prisbokAvtryck: avtryck }]);
+    writeFileSync(m365Fil, m365Beslut(idag));
+    // VERIFIERAD_AVTRYCK är discover-jobbets avtryck av den prisbok matrisen verifierade (V2).
+    const kor = (verifierad = AVTRYCK) => {
+      const env = { ...process.env, BESLUT: beslut, STAMPEL_VANTA_S: '0', VERIFIERAD_AVTRYCK: verifierad };
+      try { return { kod: 0, ut: execFileSync('bash', ['-e', '-c', skript.join('\n')], { cwd: klon, env, encoding: 'utf8', stdio: 'pipe' }) }; }
       catch (e) { return { kod: e.status, ut: `${e.stdout}${e.stderr}` }; }
     };
     const huvud = () => sh('git rev-parse main', fjarr).trim();
@@ -246,16 +262,28 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
 
     // Ett beslut daterat i morgon: rött, main orörd (V3 — framtidsdatumet prövas i pushvägen).
     const imorgon = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-    writeFileSync(join(beslut, 'stampel-m365.json'), m365Beslut(imorgon));
+    writeFileSync(m365Fil, m365Beslut(imorgon));
     const framtid = kor();
     assert.equal(framtid.kod, 1, `ett framtida datum gick ut ${framtid.kod}:\n${framtid.ut}`);
     assert.match(framtid.ut, /utanför körningens fönster/);
     assert.equal(sh('git rev-list --count main', fjarr).trim(), '3');
 
+    // V2 (tredje blicken): ett beslut med fel avtryck är ett instrumentfel, inte en prisändring. Förr
+    // gav det ett grönt jobb med varning varje vecka. Nu rött, main orörd. Och utan facit stämplas inget.
+    writeFileSync(m365Fil, m365Beslut(idag, 'f'.repeat(64)));
+    sh('git fetch -q origin && git reset -q --hard origin/main', klon);
+    const fel = kor();
+    assert.equal(fel.kod, 1, `ett beslut med fel avtryck gick ut ${fel.kod}:\n${fel.ut}`);
+    assert.match(fel.ut, /instrumentfel/);
+    const utanFacit = kor('');
+    assert.equal(utanFacit.kod, 1, `utan VERIFIERAD_AVTRYCK gick ut ${utanFacit.kod}:\n${utanFacit.ut}`);
+    assert.match(utanFacit.ut, /avtrycket av den verifierade prisboken saknas/);
+    assert.equal(sh('git rev-list --count main', fjarr).trim(), '3');
+
     // K1: en PR ändrar ett pris efter verifieringen. Stämpeln uteblir — grönt, med varning, main får
     // ingen stämpel på det overifierade priset. (Granskarens repro: E3 416,77 → 499,00 fick dagens datum.)
     const igar = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    writeFileSync(join(beslut, 'stampel-m365.json'), m365Beslut(igar));
+    writeFileSync(m365Fil, m365Beslut(igar));
     sh('git fetch -q origin && git reset -q --hard origin/main', klon);
     const e3 = "msrpMonthly: 500.12, msrpAnnual: 416.77";
     const nuvarande = readFileSync(join(klon, STAMPELFIL), 'utf8');
@@ -273,20 +301,31 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     const pris = 'msrpMonthly: 160.58, msrpAnnual: 133.82, arvoAnnual: 133.82,';
     assert.ok(PRISBOK.includes(pris));
     const andradPris = PRISBOK.replace(pris, pris.replace('133.82, arvoAnnual', '119.48, arvoAnnual'));
-    const r = tillampaStamplar(andradPris, allaBeslut, { register: REGISTER, idag: DAG });
+    const r = tillampaStamplar(andradPris, allaBeslut, { register: REGISTER, idag: DAG, verifierad: AVTRYCK });
     assert.deepEqual(r.andrade, []);
     assert.equal(r.hoppade.length, allaBeslut.length);
     // Motprov: en annan körnings stämpel har flyttat datum på main — avtrycket är detsamma, stämpeln läggs på.
-    const annanStampel = tillampaStamplar(PRISBOK, [beslutFor(M365, '2098-01-01')], { register: REGISTER, idag: '2098-01-01' }).kalla;
+    const annanStampel = tillampaStamplar(PRISBOK, [beslutFor(M365, '2098-01-01')], { register: REGISTER, idag: '2098-01-01', verifierad: AVTRYCK }).kalla;
     assert.notEqual(annanStampel, PRISBOK);
     assert.equal(prisbokAvtryck(annanStampel), AVTRYCK);
-    const r2 = tillampaStamplar(annanStampel, allaBeslut, { register: REGISTER, idag: DAG });
+    const r2 = tillampaStamplar(annanStampel, allaBeslut, { register: REGISTER, idag: DAG, verifierad: AVTRYCK });
     assert.equal(r2.hoppade.length, 0);
     assert.equal(r2.andrade.length, 28);
+
+    // V5 (tredje blicken): ett värde på SAMMA rad som datumet flyttar avtrycket. Raderna bär currency
+    // och sekPublic bredvid lastVerified, och att maska hela raden fällde förr 0 tester.
+    const rad = `currency: 'SEK', lastVerified: '${BAS_DATUM}', source: 'microsoft.com',`;
+    assert.ok(PRISBOK.includes(rad), 'M365-raden ser inte ut som väntat — testet prövar inget');
+    assert.notEqual(prisbokAvtryck(PRISBOK.replace(rad, rad.replace("currency: 'SEK'", "currency: 'USD'"))), AVTRYCK,
+      'en valuta bredvid datumet ändrades utan att avtrycket rörde sig');
+    // Och datumvärdet läses inom raden: ett citattecken som inte stängs på raden får aldrig maska nästa
+    // rad. Med `[^']*` spände masken till nästa citattecken och dolde priset emellan.
+    const oppen = "x: { lastVerified: '2026-01-01\n  msrpAnnual: 133.82, note: 'a' },\n";
+    assert.notEqual(prisbokAvtryck(oppen), prisbokAvtryck(oppen.replace('133.82', '119.48')), 'masken spände över en radbrytning');
   });
 
   test('SP-09 · ett beslut stämplar bara det källan deklarerat, inom körningens fönster, i sin egen fil', () => {
-    const p = (b, idag = DAG) => () => tillampaStamplar(PRISBOK, [b], { register: REGISTER, idag });
+    const p = (b, idag = DAG) => () => tillampaStamplar(PRISBOK, [b], { register: REGISTER, idag, verifierad: AVTRYCK });
     const slack = VERIFIERS.find((v) => v.id === 'slack');
     assert.throws(p({ ...beslutFor(M365), nycklar: [...M365.bevakadeTiers, ...slack.bevakadeTiers] }), /har inte deklarerat slack-pro/);
     assert.throws(p({ ...beslutFor(M365), kategori: 'mobil' }), /bevakar inte kategorin/);
@@ -294,22 +333,25 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     assert.throws(p(beslutFor(M365, '2099-01-02')), /utanför körningens fönster/);
     assert.doesNotThrow(p(beslutFor(M365, '2098-12-24')), `${FONSTER_DAGAR} dygn bakåt ska släppas`);
     assert.throws(p({ ...beslutFor(M365), prisbokAvtryck: undefined }), /saknar prisbokens avtryck/);
-    assert.throws(() => tillampaStamplar(PRISBOK, [beslutFor(M365)], { idag: DAG }), /registret saknas/);
+    assert.throws(() => tillampaStamplar(PRISBOK, [beslutFor(M365)], { idag: DAG, verifierad: AVTRYCK }), /registret saknas/);
     // Filen bär källans namn: ett m365-beslut i stampel-adobe.json fäller hela stämpeln.
     const d = mkdtempSync(join(tmpdir(), 'stampla-fil-'));
-    // Avtrycket kan aldrig matcha: går namnkontrollen sönder ska testet falla, aldrig stämpla den riktiga prisboken.
-    writeFileSync(join(d, 'stampel-adobe.json'), JSON.stringify([beslutFor(M365, new Date().toISOString().slice(0, 10), '0'.repeat(64))]));
+    mkdirSync(join(d, 'stampel-adobe'));
+    // Avtrycket kan aldrig matcha main: går namnkontrollen sönder ska testet falla, aldrig stämpla den riktiga prisboken.
+    const NOLL = '0'.repeat(64);
+    writeFileSync(join(d, 'stampel-adobe', 'stampel-adobe.json'), JSON.stringify([beslutFor(M365, new Date().toISOString().slice(0, 10), NOLL)]));
     let kod = 0, ut = '';
-    try { execFileSync('node', [join(ROT, 'scripts/stampla.mjs'), d], { cwd: tmpdir(), encoding: 'utf8', stdio: 'pipe' }); }
+    try { execFileSync('node', [join(ROT, 'scripts/stampla.mjs'), d], { cwd: tmpdir(), encoding: 'utf8', stdio: 'pipe', env: { ...process.env, VERIFIERAD_AVTRYCK: NOLL } }); }
     catch (e) { kod = e.status; ut = `${e.stdout}${e.stderr}`; }
     assert.equal(kod, 1); assert.match(ut, /annan källas namn/);
   });
 
   test('SP-10 · vaktens CLI räknar «i dag» själv: ett datum i morgon fäller, i dag släpps', () => {
-    assert.ok(M365_RAD, 'M365-raden ser inte ut som väntat — testet prövar inget');
+    const rad = `currency: 'SEK', lastVerified: '${BAS_DATUM}', source: 'microsoft.com',`;
+    assert.ok(PRISBOK.includes(rad), 'M365-raden ser inte ut som väntat — testet prövar inget');
     const kor = (datum) => {
-      const r = repoMed(m365Med(dagarFranIdag(-7)));
-      r.diffEfter(m365Med(datum));
+      const r = repoMed(PRISBOK);
+      r.diffEfter(PRISBOK.replace(rad, rad.replace(BAS_DATUM, datum)));
       try { execFileSync('node', [join(ROT, 'scripts/stampelvakt.mjs'), 'HEAD~1'], { cwd: r.dir, stdio: 'pipe' }); return 0; }
       catch (e) { return e.status; }
     };
@@ -322,9 +364,16 @@ describe('SP · verifieringsstämpeln når main bara som ett datum', () => {
     const lasare = [];
     for (const f of readdirSync(dir).filter((x) => /\.ya?ml$/.test(x))) {
       for (const j of jobbIArbetsflode(readFileSync(join(dir, f), 'utf8'))) {
-        if (j.hemligheter.includes('BOT_DEPLOY_KEY')) lasare.push(`${f}#${j.jobb}`);
+        if (lasarHemlighet(j, 'BOT_DEPLOY_KEY')) lasare.push(`${f}#${j.jobb}`);
       }
     }
+    // Tredje blickens V4: ett jobb som får ALLA hemligheter läser också nyckeln, även utan att namnge den.
+    const fixtur = (rad) => jobbIArbetsflode(`on: push\njobs:\n  x:\n    steps:\n      - run: echo "${rad}"\n`)[0];
+    for (const rad of ['${{ toJSON(secrets) }}', "${{ secrets[format('{0}_{1}', 'BOT_DEPLOY', 'KEY')] }}", '${{ SECRETS.bot_deploy_key }}']) {
+      assert.equal(lasarHemlighet(fixtur(rad), 'BOT_DEPLOY_KEY'), true, `${rad} räknades inte som en läsare av nyckeln`);
+    }
+    assert.equal(lasarHemlighet(jobbIArbetsflode('on: push\njobs:\n  c:\n    uses: ./x.yml\n    secrets: inherit\n')[0], 'BOT_DEPLOY_KEY'), true);
+    assert.equal(lasarHemlighet(fixtur('${{ secrets.CRON_SECRET }}'), 'BOT_DEPLOY_KEY'), false, 'motprov: ett annat namn är ingen läsare');
     assert.deepEqual(lasare.sort(), ['probe-hemligheter.yml#sond', 'probe-hemligheter.yml#utan-miljo', 'verify-sources.yml#stampla'],
       'nyckeln förbi grenskyddet får bara nå jobbet som kör stampelvakten före varje push');
     // Sonden läser den bara för att pröva närvaron: skriptet startar inga processer (alltså ingen git/ssh).
@@ -358,40 +407,239 @@ exit 2
     chmodSync(join(bin, 'ssh'), 0o755);
     const HEMLIG = 'HEMLIGNYCKELKROPP0123456789';
     const PRIVAT = `-----BEGIN OPENSSH PRIVATE KEY-----\n${HEMLIG}\n-----END OPENSSH PRIVATE KEY-----`; // hemlighet-ok: påhittad nyckelkropp för stubben, inget nyckelmaterial
-    const kor = (nyckel, svar) => {
-      const temp = mkdtempSync(join(tmp, 'runner-'));
-      const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, BOT_DEPLOY_KEY: nyckel,
-        GITHUB_REPOSITORY: 'Arvo-flow/arvo-flow.github.io', FAKE_SSH_SVAR: svar };
-      let kod = 0, ut = '';
-      try { ut = execFileSync('bash', ['-e', '-c', skript.join('\n')], { env, encoding: 'utf8', stdio: 'pipe' }); }
-      catch (e) { kod = e.status; ut = `${e.stdout}${e.stderr}`; }
-      return { kod, ut, kvar: readdirSync(temp) };
-    };
+    // Steget körs i två skal. Actions kör bash 5, men sviten körs också på Mac, där bash är 3.2 och
+    // saknar bash 4-former som ${X,,}: SP-12 föll där 17 okt medan Linux var grönt. `sh` är dash på
+    // Linux och bash 3.2 i POSIX-läge på Mac, så en bash 4-form fäller här på båda.
+    for (const skal of ['bash', 'sh']) {
+      const kor = (nyckel, svar) => {
+        const temp = mkdtempSync(join(tmp, 'runner-'));
+        const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, RUNNER_TEMP: temp, BOT_DEPLOY_KEY: nyckel,
+          GITHUB_REPOSITORY: 'Arvo-flow/arvo-flow.github.io', FAKE_SSH_SVAR: svar };
+        let kod = 0, ut = '';
+        try { ut = execFileSync(skal, ['-e', '-c', skript.join('\n')], { env, encoding: 'utf8', stdio: 'pipe' }); }
+        catch (e) { kod = e.status; ut = `${skal}: ${e.stdout}${e.stderr}`; }
+        return { kod, ut, kvar: readdirSync(temp) };
+      };
 
-    const ok = kor(PRIVAT, "Hi Arvo-flow/arvo-flow.github.io! You've successfully authenticated, but GitHub does not provide shell access.");
-    assert.equal(ok.kod, 0, ok.ut);
-    assert.match(ok.ut, /✓ GitHub känner igen nyckeln/);
-    assert.match(ok.ut, /SHA256:FingeravtryckXYZ/);
+      const ok = kor(PRIVAT, "Hi Arvo-flow/arvo-flow.github.io! You've successfully authenticated, but GitHub does not provide shell access.");
+      assert.equal(ok.kod, 0, ok.ut);
+      assert.match(ok.ut, /✓ GitHub känner igen nyckeln/);
+      assert.match(ok.ut, /SHA256:FingeravtryckXYZ/);
 
-    const okand = kor(PRIVAT, 'git@github.com: Permission denied (publickey).');
-    assert.equal(okand.kod, 1);
-    assert.match(okand.ut, /::error::GitHub känner inte igen nyckeln \(256 SHA256:FingeravtryckXYZ/);
+      const okand = kor(PRIVAT, 'git@github.com: Permission denied (publickey).');
+      assert.equal(okand.kod, 1);
+      assert.match(okand.ut, /::error::GitHub känner inte igen nyckeln \(256 SHA256:FingeravtryckXYZ/);
 
-    const annat = kor(PRIVAT, "Hi Arvo-flow/annat-repo! You've successfully authenticated, but GitHub does not provide shell access.");
-    assert.equal(annat.kod, 1);
-    assert.match(annat.ut, /::error::Nyckeln hör till något annat än Arvo-flow\/arvo-flow\.github\.io/);
+      const annat = kor(PRIVAT, "Hi Arvo-flow/annat-repo! You've successfully authenticated, but GitHub does not provide shell access.");
+      assert.equal(annat.kod, 1);
+      assert.match(annat.ut, /::error::Nyckeln hör till något annat än Arvo-flow\/arvo-flow\.github\.io/);
 
-    const publik = kor('ssh-ed25519 AAAAPUBLIK arvo-verify-bot', 'spelar ingen roll');
-    assert.equal(publik.kod, 1);
-    assert.match(publik.ut, /::error::BOT_DEPLOY_KEY är ingen läsbar privat nyckel/);
+      const publik = kor('ssh-ed25519 AAAAPUBLIK arvo-verify-bot', 'spelar ingen roll');
+      assert.equal(publik.kod, 1);
+      assert.match(publik.ut, /::error::BOT_DEPLOY_KEY är ingen läsbar privat nyckel/);
 
-    // Motprov: GitHub skriver repots namn med andra versaler än GITHUB_REPOSITORY — fortfarande rätt nyckel.
-    const versaler = kor(PRIVAT, "Hi arvo-flow/Arvo-Flow.github.io! You've successfully authenticated.");
-    assert.equal(versaler.kod, 0, versaler.ut);
+      // Motprov: GitHub skriver repots namn med andra versaler än GITHUB_REPOSITORY — fortfarande rätt nyckel.
+      const versaler = kor(PRIVAT, "Hi arvo-flow/Arvo-Flow.github.io! You've successfully authenticated.");
+      assert.equal(versaler.kod, 0, versaler.ut);
 
-    for (const r of [ok, okand, annat, publik, versaler]) {
-      assert.doesNotMatch(r.ut, new RegExp(HEMLIG), 'den privata nyckeln skrevs ut');
-      assert.deepEqual(r.kvar, [], `nyckelfiler ligger kvar: ${r.kvar}`);
+      for (const r of [ok, okand, annat, publik, versaler]) {
+        assert.doesNotMatch(r.ut, new RegExp(HEMLIG), 'den privata nyckeln skrevs ut');
+        assert.deepEqual(r.kvar, [], `nyckelfiler ligger kvar: ${r.kvar}`);
+      }
     }
+  });
+
+  test('SP-13 · beslutets avtryck är den verifierade prisbokens, räknat av producenten och prövat mot discover-jobbets', () => {
+    // Producenten → konsumenten: nyttBeslut räknar avtrycket ur prisbokens text, och tillampaStamplar
+    // lägger på beslutet när facit är samma text. Tredje blickens S5–S7 (fel värde, saknat fält, rå
+    // sha256) fällde förr 0 tester, eftersom testerna byggde sina beslut själva.
+    const datum = '2099-01-01';
+    const b = nyttBeslut({ kalla: 'm365', datum, nycklar: M365.bevakadeTiers, prisbok: PRISBOK });
+    assert.equal(b.prisbokAvtryck, prisbokAvtryck(PRISBOK));
+    assert.equal(b.kategori, null);
+    const r = tillampaStamplar(PRISBOK, [b], { register: REGISTER, idag: datum, verifierad: prisbokAvtryck(PRISBOK) });
+    assert.deepEqual(r.hoppade, []);
+    assert.equal(r.andrade.length, M365.bevakadeTiers.length, `producentens beslut stämplade ${r.andrade}`);
+    // Avtrycket är datumoberoende: en bok som botten redan stämplat ger samma beslut.
+    assert.equal(nyttBeslut({ kalla: 'm365', datum, nycklar: [], prisbok: r.kalla }).prisbokAvtryck, b.prisbokAvtryck);
+    assert.throws(() => nyttBeslut({ kalla: 'm365', datum, nycklar: [] }), /prisbokens text saknas/);
+
+    // Ett beslut med ett annat avtryck än facit är ett instrumentfel och stoppar allt — aldrig en
+    // varning i ett grönt jobb. Motprov: samma beslut mot rätt facit stämplar (ovan).
+    const annanBok = PRISBOK.replace('msrpMonthly: 160.58', 'msrpMonthly: 160.59');
+    assert.notEqual(annanBok, PRISBOK);
+    const felBeslut = nyttBeslut({ kalla: 'm365', datum, nycklar: M365.bevakadeTiers, prisbok: annanBok });
+    assert.throws(() => tillampaStamplar(PRISBOK, [felBeslut], { register: REGISTER, idag: datum, verifierad: prisbokAvtryck(PRISBOK) }), /instrumentfel/);
+    for (const verifierad of [undefined, '', 'x', 'F'.repeat(64)]) {
+      assert.throws(() => tillampaStamplar(PRISBOK, [b], { register: REGISTER, idag: datum, verifierad }), /verifierade prisboken saknas/, `facit ${verifierad}`);
+    }
+
+    // verify.mjs bygger sina beslut med nyttBeslut ur boken vid start, och sätter aldrig avtrycket själv.
+    const verify = readFileSync(join(ROT, 'scripts/verify.mjs'), 'utf8');
+    assert.match(verify, /beslut\.push\(nyttBeslut\(\{[^\n]*prisbok: PRISBOK_VID_START \}\)\);/);
+    assert.match(verify, /const PRISBOK_VID_START = readFileSync\(BRANCHINDEX_PATH, 'utf8'\);/);
+    assert.doesNotMatch(verify, /prisbokAvtryck:/, 'verify.mjs sätter avtrycket själv, förbi producenten');
+
+    // Arbetsflödet: discover räknar avtrycket (en tilldelning på egen rad, så att ett fel fäller steget)
+    // och stämpeljobbet får det som facit.
+    const yaml = readFileSync(join(ROT, '.github/workflows/verify-sources.yml'), 'utf8');
+    const jobb = jobbIArbetsflode(yaml);
+    const disc = jobb.find((j) => j.jobb === 'discover');
+    assert.match(disc.text, /^ {6}avtryck: \$\{\{ steps\.gen\.outputs\.avtryck \}\}$/m);
+    assert.match(disc.text, /^ {10}AVTRYCK=\$\(node scripts\/stampla\.mjs --avtryck\)$/m);
+    assert.doesNotMatch(disc.text, /npm (ci|install)/, 'discover får inte köra paket — då vore facit lika osäkert som besluten');
+    const st = jobb.find((j) => j.jobb === 'stampla');
+    assert.match(st.text, /^ {4}needs: \[discover, verify\]$/m);
+    assert.match(st.text, /VERIFIERAD_AVTRYCK: \$\{\{ needs\.discover\.outputs\.avtryck \}\}/);
+    // CLI-läget skriver ut samma avtryck som funktionen.
+    const cli = execFileSync('node', [join(ROT, 'scripts/stampla.mjs'), '--avtryck'], { encoding: 'utf8' }).trim();
+    assert.equal(cli, prisbokAvtryck(readFileSync(join(ROT, STAMPELFIL), 'utf8')));
+  });
+
+  test('SP-14 · varje artefakt läses ur sin egen katalog och bär bara sin egen fil', () => {
+    const ny = () => mkdtempSync(join(tmpdir(), 'stamplar-'));
+    const lagg = (d, katalog, fil, innehall) => {
+      mkdirSync(join(d, katalog), { recursive: true });
+      writeFileSync(join(d, katalog, fil), JSON.stringify(innehall));
+    };
+    // Motprov: rätt form läses, och besluten kommer fram oförändrade.
+    const rätt = ny();
+    lagg(rätt, 'stampel-m365', 'stampel-m365.json', [beslutFor(M365)]);
+    lagg(rätt, 'stampel-pipedrive', 'stampel-pipedrive.json', []);
+    assert.deepEqual(lasBeslut(rätt), [beslutFor(M365)]);
+    assert.deepEqual(lasBeslut(ny()), [], 'ingen artefakt är inga beslut');
+
+    // V3: ett komprometterat jobb laddar upp en katalog med en annan källas fil i stället för sin egen.
+    const lurad = ny();
+    lagg(lurad, 'stampel-pipedrive', 'stampel-m365.json', [beslutFor(M365)]);
+    assert.throws(() => lasBeslut(lurad), /stampel-pipedrive\/ ska bära exakt stampel-pipedrive\.json/);
+    // …eller sin egen fil plus en till.
+    const extra = ny();
+    lagg(extra, 'stampel-pipedrive', 'stampel-pipedrive.json', []);
+    lagg(extra, 'stampel-pipedrive', 'stampel-m365.json', [beslutFor(M365)]);
+    assert.throws(() => lasBeslut(extra), /ska bära exakt/);
+    // En lös fil i roten är den gamla, sammanslagna formen — den läses inte längre.
+    const los = ny();
+    writeFileSync(join(los, 'stampel-m365.json'), JSON.stringify([beslutFor(M365)]));
+    assert.throws(() => lasBeslut(los), /ingen artefaktkatalog/);
+    // Rätt fil, fel källa i innehållet.
+    const fram = ny();
+    lagg(fram, 'stampel-adobe', 'stampel-adobe.json', [beslutFor(M365)]);
+    assert.throws(() => lasBeslut(fram), /annan källas namn/);
+    const tom = ny();
+    mkdirSync(join(tom, 'stampel-m365'));
+    assert.throws(() => lasBeslut(tom), /bär ingenting/);
+    // Andra blicken 18 okt: en symlänkad katalog eller fil lästes, och «constructor» klarade både
+    // katalognamnet och registeruppslaget (register['constructor'] är Object).
+    const annanstans = ny();
+    lagg(annanstans, 'stampel-m365', 'stampel-m365.json', [beslutFor(M365)]);
+    const lankKat = ny();
+    symlinkSync(join(annanstans, 'stampel-m365'), join(lankKat, 'stampel-m365'));
+    assert.throws(() => lasBeslut(lankKat), /ingen artefaktkatalog/);
+    const lankFil = ny();
+    mkdirSync(join(lankFil, 'stampel-m365'));
+    symlinkSync(join(annanstans, 'stampel-m365', 'stampel-m365.json'), join(lankFil, 'stampel-m365', 'stampel-m365.json'));
+    assert.throws(() => lasBeslut(lankFil), /ingen vanlig fil/);
+    for (const kalla of ['constructor', 'hasOwnProperty', '__proto__']) {
+      assert.throws(() => tillampaStamplar(PRISBOK, [{ ...beslutFor(M365), kalla, nycklar: [] }], { register: REGISTER, idag: DAG, verifierad: AVTRYCK }),
+        /okänd källa/, `${kalla} räknades som en registrerad källa`);
+    }
+
+    const yaml = readFileSync(join(ROT, '.github/workflows/verify-sources.yml'), 'utf8');
+    const st = jobbIArbetsflode(yaml).find((j) => j.jobb === 'stampla');
+    assert.match(st.text, /^ {10}merge-multiple: false$/m);
+    // Bara nycklar, inte kommentarer: arbetsflödets egen kommentar nämner den gamla formen.
+    assert.doesNotMatch(yaml, /^\s+merge-multiple:\s*true/m);
+  });
+
+  test('SP-15 · hela kedjan som i Actions: discover räknar facit, verify.mjs fattar beslutet, räknesteget ser det, stampla lägger på', () => {
+    // Andra blicken 18 okt: fyra sabotage fällde 0 tester, eftersom varje led prövades för sig mot
+    // handbyggda beslut. Ett räknesteg i gammal form (n=0, allt hoppas över, grönt), ett tomt avtryck
+    // från discover, en råhash som skrev över producentens avtryck och fel fil som prisbok. Här körs
+    // stegen ur arbetsflödet med bash och de riktiga skripten, i en kopia med ett påhittat register:
+    // källan m365 med sin riktiga deklaration, som svarar grönt utan nät.
+    const yaml = readFileSync(join(ROT, '.github/workflows/verify-sources.yml'), 'utf8');
+    const rader = yaml.split('\n');
+    const steg = (markor) => {
+      const i = rader.findIndex((r) => r.includes(markor));
+      const r0 = rader.findIndex((r, j) => j > i && /^ {8}run: \|$/.test(r));
+      assert.ok(i > 0 && r0 > i, `steget «${markor}» hittades inte`);
+      const ut = [];
+      for (let j = r0 + 1; j < rader.length && (rader[j] === '' || rader[j].startsWith('          ')); j++) ut.push(rader[j].slice(10));
+      return ut.join('\n');
+    };
+    const tmp = mkdtempSync(join(tmpdir(), 'kedjan-'));
+    const bygg = join(tmp, 'bygg');
+    for (const k of ['lib', 'agents']) cpSync(join(ROT, k), join(bygg, k), { recursive: true });
+    for (const f of ['scripts/stampla.mjs', 'scripts/verify.mjs', 'package.json']) {
+      mkdirSync(join(bygg, f, '..'), { recursive: true });
+      copyFileSync(join(ROT, f), join(bygg, f));
+    }
+    writeFileSync(join(bygg, STAMPELFIL), PRISBOK);
+    writeFileSync(join(bygg, 'lib/verifiers/registry.mjs'), [
+      `const m365 = { id: 'm365', label: 'påhittad', category: 'saas-productivity', kind: 'pris',`,
+      `  bevakadeTiers: ${JSON.stringify(M365.bevakadeTiers)}, bevakadKategori: ${JSON.stringify(M365.bevakadKategori ?? null)},`,
+      `  async run() { return { checks: [{ name: 'påhittat tal', expected: '1', actual: '1', ok: true }] }; } };`,
+      'export const VERIFIERS = [m365];',
+      'export const getVerifier = (id) => VERIFIERS.find((v) => v.id === id);',
+      'export const allVerifierIds = () => VERIFIERS.map((v) => v.id);',
+    ].join('\n'));
+    const bash = (skript, env) => {
+      try { return { kod: 0, ut: execFileSync('bash', ['-e', '-c', skript], { cwd: bygg, env: { ...process.env, ...env }, encoding: 'utf8', stdio: 'pipe' }) }; }
+      catch (e) { return { kod: e.status, ut: `${e.stdout}${e.stderr}` }; }
+    };
+    const utdata = (fil) => Object.fromEntries(readFileSync(fil, 'utf8').trim().split('\n').filter(Boolean)
+      .map((r) => [r.slice(0, r.indexOf('=')), r.slice(r.indexOf('=') + 1)]));
+
+    // 1 · discover: avtrycket räknas på prisboken som matrisen ska verifiera.
+    const discoverUt = join(tmp, 'discover.out');
+    writeFileSync(discoverUt, '');
+    const d = bash(steg('- id: gen'), { GITHUB_OUTPUT: discoverUt });
+    assert.equal(d.kod, 0, d.ut);
+    const facit = utdata(discoverUt).avtryck;
+    assert.equal(facit, prisbokAvtryck(PRISBOK), 'discover gav inte avtrycket av prisboken');
+    assert.deepEqual(JSON.parse(utdata(discoverUt).matrix).map((m) => m.id), ['m365']);
+
+    // 2 · matrisjobbet: den riktiga verify.mjs fattar beslutet. Den stämplar sin egen kopia av
+    // prisboken, och stampla-jobbet checkar ut main på nytt, alltså återställs boken efteråt.
+    const runner = join(tmp, 'runner');
+    mkdirSync(runner);
+    execFileSync('node', ['scripts/verify.mjs', 'm365'], { cwd: bygg, env: { ...process.env, VERIFY_STAMPEL_UT: join(runner, 'stampel-m365.json') }, stdio: 'pipe' });
+    writeFileSync(join(bygg, STAMPELFIL), PRISBOK);
+
+    // 3 · nedladdningen med merge-multiple: false, och räknesteget som det står i arbetsflödet.
+    const stamplar = join(runner, 'stamplar');
+    mkdirSync(join(stamplar, 'stampel-m365'), { recursive: true });
+    copyFileSync(join(runner, 'stampel-m365.json'), join(stamplar, 'stampel-m365', 'stampel-m365.json'));
+    const finns = (katalog) => {
+      const ut = join(tmp, `finns-${Math.random().toString(36).slice(2)}.out`);
+      writeFileSync(ut, '');
+      const r = bash(steg('- name: Finns det något att stämpla?').replaceAll('${{ runner.temp }}/stamplar', katalog), { GITHUB_OUTPUT: ut });
+      return { ...r, n: utdata(ut).n };
+    };
+    const f = finns(stamplar);
+    assert.equal(f.kod, 0, f.ut);
+    assert.equal(f.n, '1', `räknesteget såg inte beslutet: ${f.ut}`);
+
+    // 4 · stampla med discover-jobbets facit lägger på exakt de deklarerade nivåerna.
+    let ut = '';
+    try { ut = execFileSync('node', ['scripts/stampla.mjs', stamplar], { cwd: bygg, env: { ...process.env, VERIFIERAD_AVTRYCK: facit }, encoding: 'utf8', stdio: 'pipe' }); }
+    catch (e) { assert.fail(`stampla föll (${e.status}): ${e.stdout}${e.stderr}`); }
+    assert.match(ut, new RegExp(`stampla: 1 beslut, ${M365.bevakadeTiers.length} datum flyttade`));
+    const efter = readFileSync(join(bygg, STAMPELFIL), 'utf8');
+    assert.notEqual(efter, PRISBOK);
+    assert.equal(prisbokAvtryck(efter), facit, 'stämpeln ändrade något annat än datum');
+
+    // Motprov för räknesteget: den gamla, sammanslagna formen (en lös fil i roten) är rött, inte n=0,
+    // och en tom eller saknad katalog är n=0 och grönt.
+    const los = join(tmp, 'los');
+    mkdirSync(los);
+    copyFileSync(join(runner, 'stampel-m365.json'), join(los, 'stampel-m365.json'));
+    const fLos = finns(los);
+    assert.equal(fLos.kod, 1, `en lös fil gav ${fLos.kod}: ${fLos.ut}`);
+    assert.match(fLos.ut, /form stämmer inte/);
+    const tomKat = join(tmp, 'tom');
+    mkdirSync(tomKat);
+    assert.deepEqual([finns(tomKat).n, finns(join(tmp, 'finns-inte')).n], ['0', '0']);
   });
 });

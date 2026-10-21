@@ -252,6 +252,21 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > ur klonen, så ladda ner artefakten till `ops/` först:
 > · `screenshot-reveal-live.mjs` läser `ops/diag-reveal-live.json`.
 > · `screenshot-kontoret-real.mjs` och `screenshot-switch-live.mjs` läser `ops/testyta-rows.json`.
+> **17 okt: stämpeln fungerar, de fem [VAKT] är stängda, och sonden hade sagt mer än den visste.**
+> Steg 5 är avläst grönt: körning 38245160978 pushade förbi rulesetet («Bypassed rule violations»), och
+> båda botstämplarna på main är bara datum. V2–V5 är stängda: avtrycket prövas mot `discover`-jobbets
+> (SP-13), en katalog per artefakt (SP-14), `toJSON(secrets)` räknas som alla hemligheter (HB-06), och
+> masken läses inom raden (SP-08). Läcksonden såg på morgonen sex repo-kopior, varav en var
+> botnyckeln. Den låg alltså läsbar för varje gren, men ingen körning utanför main läste den.
+> Samtidigt sa sondens miljöjobb «✓ Miljön produktion bär de 6». **Ett jobb i en miljö ser också
+> repo-hemligheterna**, så ✓:et kunde inte skilja dem åt. När grundaren raderat kopiorna saknades
+> `ARVO_ADMIN_SECRET` i miljön. Jag hade fört det gröna vidare som «inget går sönder». Nu skriver
+> sonden ✓ bara efter en grön läckkontroll (HB-07). Läxan är 8 sep:s, i ett nytt instrument: ett
+> grönt som betyder «jag kunde inte se skillnaden» är farligare än ett rött. **18 okt:** en separat
+> granskare (död på sessionsgränsen, skördad ur transkriptet) fann tolv sabotage mot lagningen som
+> fällde noll, alla [VAKT], alla lagade (SP-14, SP-15, HB-06, HB-08). Sammanfogningen med PR #83 behöll
+> fabrikssvepets frysta datum i stampelvaktens test i stället för PR #83:s läsning av M365-raden,
+> eftersom frysningen också skyddar SP-07. Detaljerna står i `ops/BOTNYCKELN.md`.
 
 > **✅ GRUNDARBESLUT 2026-09-09 — STOPPREGELN: [KUND] BLOCKERAR, [VAKT] MERGAS OCH LAGAS FRAMÅT.**
 > Bevisplikten p.1 säger att ingen `lib/`-, `api/`- eller `agents/`-ändring får merga utan en andra
@@ -323,6 +338,28 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >   sabotage som inte ändrar något. Mitt S3 var no-op **två gånger** (en tillagd kommentarrad, sedan
 >   en tillagd variabel som inte rörde kedjan) innan det var en verklig omkastning. **Efter varje
 >   sabotage: fråga inte bara om strängen byttes, utan om BETEENDET gjorde det.**
+
+---
+
+## Fabrikssvep · Den autonoma loopen
+
+> **✅ GRUNDARBESLUT 2026-10-16.** När grundaren skriver *«Kör ett fabrikssvep»* kör agenten fyra
+> steg i följd utan att fråga mellan dem. Protokollet i sin helhet står i `ops/AGENTSVEP.md`
+> (avsnittet «Fabrikssvep»), och det är bindande på samma sätt som den här filen.
+>
+> 1. **Lägesbild.** Git-status, de senaste commitarna på `main`, öppna PR:er, den gällande
+>    arbetsordern. Arbetsorderns status prövas mot koden och skrivs i dess `## Läge`.
+> 2. **Självläkning av CI/CD.** Varje rött jobb på `main` läses i loggen och klassas i exakt en
+>    klass: OLÄSBAR, DRIFT, FELKLASS, INFRA eller RÄTT RÖTT. Klassen avgör åtgärden. Ett rött som
+>    bara kan bli grönt med en vidgad tolerans, en borttagen check eller ett kampanjpris står kvar
+>    rött och redovisas.
+> 3. **Framåtdrift.** Nästa oavslutade punkt i arbetsordern byggs fullt ut.
+> 4. **Vakter och andra blicken.** Sviten och vakterna mot grenens intervall, en separat granskning
+>    i `ops/GRANSKNING-*.md`, och en PR med Grindens fyra kontroller gröna.
+>
+> **Agenten mergar aldrig, och den committar aldrig en ospårad fil den inte själv skapat.** Svepet
+> stannar och frågar bara vid moms, pris, juridik, radering, nycklar, repoinställningar och
+> merge till `main`.
 
 ---
 

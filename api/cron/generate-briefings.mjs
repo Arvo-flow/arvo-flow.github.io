@@ -16,6 +16,7 @@ import { Resend }                   from 'resend';
 import crypto                       from 'crypto';
 import { cronAnropTillatet } from '../../lib/cronvakt.js';
 import { lasPremiumkrets, premiumFilter } from '../../lib/premiumkrets.js';
+import { loggAdress } from '../../lib/loggadress.js';
 
 const FROM     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
 const BASE_URL = process.env.ARVO_BASE_URL    ?? 'https://arvoflow.se';
@@ -123,7 +124,7 @@ export default async function handler(req, res, { db = getDb() } = {}) {
 
       results.push({ email, ok: true, insightCount: data.insightCount, totalSaving: data.totalSavingPotential });
     } catch (err) {
-      console.error(`[generate-briefings] Error for ${email}:`, err.message);
+      console.error(`[generate-briefings] Error for ${loggAdress(email)}:`, err.message);
       results.push({ email, ok: false, error: err.message });
     }
   }

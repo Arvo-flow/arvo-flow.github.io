@@ -37,6 +37,7 @@ import { computeImpactKr, parseCheckPrice } from '../lib/price-impact.js';
 import { extractSupplierKeyword } from '../lib/supplier-keyword.js';
 import { catLabel } from '../lib/format.js';
 import { bedomLarm } from '../lib/larmunderlag.js';
+import { loggAdress } from '../lib/loggadress.js';
 
 const REPORT_PATH = process.argv[2] ?? '/tmp/price-monitor-report.json';
 // VERIFIERAD AVSÄNDARDOMÄN (grundarfynd 2026-08-05): den här raden stod på "arvo-flow.se" med
@@ -213,7 +214,7 @@ for (const [groupKey, { keyword, category, items: groupAlerts }] of alertGroups)
           briefingUrl = `${BASE_URL}/briefing/${token}`;
         }
       } catch (dbErr) {
-        console.warn(`  ⚠️  Magic token-fel för ${customer.email} (non-fatal): ${dbErr.message}`);
+        console.warn(`  ⚠️  Magic token-fel för ${loggAdress(customer.email)} (non-fatal): ${dbErr.message}`);
       }
     }
 
@@ -234,11 +235,11 @@ for (const [groupKey, { keyword, category, items: groupAlerts }] of alertGroups)
       });
       const { error } = await resend.emails.send({ from: FROM, to: customer.email, subject, html });
       if (error) throw new Error(JSON.stringify(error));
-      console.log(`  ✅ Skickat till ${customer.email}${impactKrYear ? ` (impact: ${fmt(impactKrYear)} kr/år)` : ''}`);
+      console.log(`  ✅ Skickat till ${loggAdress(customer.email)}${impactKrYear ? ` (impact: ${fmt(impactKrYear)} kr/år)` : ''}`);
       groupEmailsSent++;
       totalSent++;
     } catch (emailErr) {
-      console.error(`  ❌ Misslyckades för ${customer.email}: ${emailErr.message}`);
+      console.error(`  ❌ Misslyckades för ${loggAdress(customer.email)}: ${emailErr.message}`);
       totalFailed++;
     }
   }

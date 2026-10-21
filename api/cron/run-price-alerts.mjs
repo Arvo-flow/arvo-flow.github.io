@@ -16,6 +16,8 @@ import { LOFTEN } from '../../lib/kundmeningar.js';
 import crypto from 'crypto';
 import { Resend } from 'resend';
 import { bedomLarm } from '../../lib/larmunderlag.js';
+import { loggAdress } from '../../lib/loggadress.js';
+import { cronAnropTillatet } from '../../lib/cronvakt.js';
 import { getDb } from '../../lib/db.js';
 import {
   getAffectedCustomers,
@@ -57,10 +59,9 @@ function fmt(n) { return Math.round(n ?? 0).toLocaleString('sv-SE'); }
 export default async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { error: 'POST krävs' });
 
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.authorization !== `Bearer ${secret}`) {
-    return send(res, 401, { error: 'unauthorized' });
-  }
+  // Grinden löd `if (secret && auth !== …)`: en osatt hemlighet släppte in vem som helst, med en
+  // egen rapport, till prislarm i premiumkretsens inkorgar. Samma grind som övriga cron-vägar (SL-08).
+  if (!cronAnropTillatet(req)) return send(res, 401, { error: 'unauthorized' });
 
   const report = await readBody(req);
   if (!report?.alerts) return send(res, 400, { error: 'Ogiltig rapport-payload' });
@@ -206,7 +207,7 @@ export default async function handler(req, res) {
         groupSent++;
         totalSent++;
       } catch (emailErr) {
-        console.error('[run-price-alerts] email failed:', customer.email, emailErr.message);
+        console.error('[run-price-alerts] email failed:', loggAdress(customer.email), emailErr.message);
         totalFailed++;
       }
     }

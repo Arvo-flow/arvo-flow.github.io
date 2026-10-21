@@ -35,13 +35,20 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.gen.outputs.matrix }}
+      avtryck: ${{ steps.gen.outputs.avtryck }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      # Avtrycket av prisboken som matrisen verifierar, räknat här och inte i matrisen: det här jobbet
+      # kör inga paket utanför låsfilen. Stämpeljobbet kräver att varje beslut bär just det (V2, SP-13).
+      # Tilldelningen står på egen rad, så att ett fel fäller steget i stället för att bli en tom rad.
       - id: gen
-        run: echo "matrix=$(node scripts/verify.mjs --matrix)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "matrix=$(node scripts/verify.mjs --matrix)" >> "$GITHUB_OUTPUT"
+          AVTRYCK=$(node scripts/stampla.mjs --avtryck)
+          echo "avtryck=$AVTRYCK" >> "$GITHUB_OUTPUT"
 
   verify:
     needs: discover
@@ -104,7 +111,7 @@ jobs:
 
   stampla:
     name: Stämpla verifieringsdatum på main
-    needs: verify
+    needs: [discover, verify]
     # ENDAST FRÅN main (2026-09-10): ett workflow_dispatch på en feature branch får aldrig skriva till
     # main. Röda källor stoppar inte de gröna: deras beslut läggs på ändå.
     if: always() && github.ref == 'refs/heads/main' && needs.verify.result != 'cancelled'
@@ -112,18 +119,30 @@ jobs:
     timeout-minutes: 5
     environment: produktion
     steps:
+      # En katalog per artefakt (stampel-<id>/stampel-<id>.json). Med merge-multiple: true hamnade alla i
+      # samma katalog, och en fil med en annan källas namn hade skrivit över den (tredje blickens V3, SP-14).
       - name: Hämta stämpelbesluten
         uses: actions/download-artifact@v4
         with:
           pattern: stampel-*
           path: ${{ runner.temp }}/stamplar
-          merge-multiple: true
+          merge-multiple: false
+      # Allt i stamplar/ ska vara en artefaktkatalog stampel-<id>/. Räknas något annat, eller räknas
+      # katalogerna i en annan form än nedladdningens, hade n=0 betytt ett tyst «inget att stämpla»
+      # medan besluten låg där (andra blicken 18 okt, s1). Därför jämförs antalet mot allt i katalogen.
+      # SP-15 kör steget mot nedladdningens form.
       - name: Finns det något att stämpla?
         id: finns
         run: |
-          N=$(ls "${{ runner.temp }}/stamplar"/stampel-*.json 2>/dev/null | wc -l)
+          D="${{ runner.temp }}/stamplar"
+          N=$(ls -d "$D"/stampel-*/ 2>/dev/null | wc -l | tr -d ' ')
+          ALLA=$(ls -A "$D" 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$N" -ne "$ALLA" ]; then
+            echo "::error::stamplar/ bär $ALLA poster men $N artefaktkataloger stampel-<id>/ — nedladdningens form stämmer inte med stampla.mjs. Inget stämplas."
+            exit 1
+          fi
           echo "n=$N" >> "$GITHUB_OUTPUT"
-          echo "$N beslutsfil(er), en per verifierare som körde klart (en röd källas fil är tom)"
+          echo "$N beslutskatalog(er), en per verifierare som körde klart (en röd källas lista är tom)"
       # Utan nyckeln kan stämpeln inte nå main. Det är ett verkligt fel, alltså rött — aldrig grönt.
       - name: Botnyckeln finns i produktion
         if: steps.finns.outputs.n != '0'
@@ -154,8 +173,11 @@ jobs:
           echo "Nyckelns fingeravtryck: $FP"
           SVAR=$(ssh -i "$K" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$K.hosts" -T git@github.com 2>&1 || true)
           echo "GitHub svarar: $SVAR"
-          REPO="${GITHUB_REPOSITORY,,}"
-          case "${SVAR,,}" in
+          # Gemener med tr, inte ${X,,}: den formen finns först i bash 4, och SP-12 kör steget med
+          # det lokala skalet (bash 3.2 på macOS, dash som sh). Fabrikssvepet 2026-10-17: SP-12 föll på Mac.
+          REPO=$(printf '%s' "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')
+          SMA=$(printf '%s' "$SVAR" | tr '[:upper:]' '[:lower:]')
+          case "$SMA" in
             *"hi $REPO!"*) echo "✓ GitHub känner igen nyckeln som deploy key för $GITHUB_REPOSITORY" ;;
             *"hi "*) echo "::error::Nyckeln hör till något annat än $GITHUB_REPOSITORY. Lägg till arvo-bot.pub som deploy key i just det här repot. Se ops/BOTNYCKELN.md."; exit 1 ;;
             *) echo "::error::GitHub känner inte igen nyckeln ($FP). Jämför fingeravtrycket med Settings → Deploy keys: saknas nyckeln där, lägg till arvo-bot.pub; står ett annat fingeravtryck där, hör paren inte ihop — skapa ett nytt par och byt båda. Se ops/BOTNYCKELN.md."; exit 1 ;;
@@ -179,6 +201,7 @@ jobs:
         if: steps.finns.outputs.n != '0' && github.ref == 'refs/heads/main'
         env:
           BESLUT: ${{ runner.temp }}/stamplar
+          VERIFIERAD_AVTRYCK: ${{ needs.discover.outputs.avtryck }}
         run: |
           git config user.email "bot@arvoflow.se"
           git config user.name "Arvo Verify Bot"
