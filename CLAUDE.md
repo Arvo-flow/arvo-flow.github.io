@@ -393,6 +393,25 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    kunnat se vad som stod där, och samma tecken var hela orsaken till Adobe-felet. `od -c` eller en
 >    räkning av `\xa0` efter skrivning hittar det.
 
+> **✅ MÄTT 21 OKT: FEM REGLER TILL, UR PR #85:S FEM GRANSKNINGSVARV.** Varje varv fann ett fel i det
+> förra varvets lagning: andra blicken 13 fynd, tredje 8, fjärde 3. Reglerna nedan kommer ur de felen.
+>
+> 8. **En kundmening lagas genom att söka MENINGEN, inte funktionen.** Lagningen av dörrens
+>    Microsoft-datum (PB85-2) nådde ett av två kort med samma mening. Jag sökte funktionsnamnet, och
+>    licensspannkortet räknade sitt datum själv (T85-1). Ett grep på meningen gav två träffar.
+> 9. **Strängar som jämförs som datum måste ha en form som sorteras rätt, och formen ska krävas.** Det
+>    stalaste datumet valdes med `sort()`, och `2026-10-9` sorteras efter `2026-10-19` (G85-1). Nu
+>    jämförs bara strikta ISO-datum, och BI-12 håller prisbokens 32 datum i den formen.
+> 10. **En svit kan säga «fail 0» medan tester inte kördes.** Ett fel i ett `describe`-block avbryter
+>    dess tester. Mätt: 3 avbrutna, `# fail 0`, exit 1. CI läser exitkoden, men mina sabotageskript
+>    läste bara `# fail`. Räkna `# fail` och `# cancelled` tillsammans.
+> 11. **En domfil committas när arbetsflödet rapporterat klart, inte när filen finns.** Att filen finns
+>    betyder att skrivandet har börjat. d64b3783 bar en ofärdig version av tredje domen. Samma sak
+>    gäller en granskare: byt aldrig gren i huvudklonen medan domskrivaren läser där.
+> 12. **En fixturs roll som tröskel bärs av en maskin, inte av en kommentar.** Två gånger (18 aug och
+>    21 okt) flyttade Tele2 bredbandsgolvet, och tröskelfixturerna gav fortfarande null, men av fel
+>    skäl. BI-11 räknar deras gross mot dagens golv och kräver 432. Nästa golvflytt faller där.
+
 ---
 
 ## Noll-inferens · Avläsning framför slutsats
