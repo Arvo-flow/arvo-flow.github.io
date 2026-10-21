@@ -367,8 +367,10 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > 1. **En död granskare är OGRANSKAD, och dess skörd är en prövlista, aldrig ett fynd.** Två försök
 >    dog på kontots sessionsgräns utan dom (wf_d81e808c-340, wf_8ca7def9-74e). Deras anteckningar
 >    gick vidare som oprövade utkast, och nästa granskare körde om varje mätning innan den räknades.
-> 2. **Kontots gräns är delad: kör linserna en i taget, så att en klar lins sparas.** Fyra till fem
->    parallella agenter brände 790 000–870 000 tokens och dog samtidigt, utan att någon blev klar.
+> 2. **Kontots gräns är delad: kör linserna en i taget, så att en klar lins sparas.** I båda döda
+>    försöken startades fem linser, men bara två hann arbeta. De två brände 790 000–870 000 tokens per
+>    försök och dog utan att någon blev klar, och de tre övriga fick 0 tokens (rättat efter körningsloggen,
+>    andra blicken PB85-3).
 >    Grinden delas också med byggaren, som stoppades i fyra timmar samtidigt. I tur och ordning
 >    blev två linser klara före nästa stopp och återanvändes efter återställningen (`resumeFromRunId`).
 > 3. **Ett anrop som aldrig svarar är farligare än ett som felar.** En sökning i Vercels dokumentation
