@@ -157,6 +157,14 @@ describe('KM · kundmeningsregistret', () => {
     }
   });
 
+  test('KM-05 · motprov: matchningslöftet fälls i varje form, rummets nekande gör det inte', () => {
+    // Tredje granskningen av PR #86 (T-6): spärren var en fraslista, och två omskrivningar slank förbi.
+    const falls = (t) => LOFTEN_UTAN_MEKANISM.some(({ monster }) => monster.test(t));
+    for (const t of ['Matchat mot er nivå — samma eller bättre.', 'bästa matchning', 'Matchat mot er nuvarande nivå',
+      'aldrig en nedgradering', 'Bäst matchning']) assert.ok(falls(t), t);
+    assert.ok(!falls('Alternativen är inte matchade mot er nivå. Vilken nivå som motsvarar er nuvarande, och'), 'rummets nekande');
+  });
+
   test('KM-05 · ingen löftesform utan mekanism står i kundytornas kod', () => {
     const app = las('src/ArvoFlow.js');
     const routade = [...app.matchAll(/^import \w+ from '\.\/pages\/([\w-]+)';/gm)].map((m) => `src/pages/${m[1]}`);

@@ -19,8 +19,9 @@ import { bedomVerifierarutfall } from '../lib/verifierarutfall.js';
 import { talSv, DOLLARBELOPP, dollarRader } from '../lib/verifiers/core.mjs';
 import { fortnoxChecks } from '../lib/verifiers/fortnox.mjs';
 import { spirisChecks } from '../lib/verifiers/spiris.mjs';
-import kortterminalVakt, { kortterminalCheck, kortterminalFastCheck, kortterminalChecks } from '../lib/verifiers/kortterminal.mjs';
-import tele2BredbandVakt, { produktrad } from '../lib/verifiers/tele2-bredband.mjs';
+import kortterminalVakt, { kortterminalCheck, kortterminalFastCheck, kortterminalChecks, kortterminalKalla } from '../lib/verifiers/kortterminal.mjs';
+import tele2BredbandVakt, { produktrad, tele2BredbandKalla } from '../lib/verifiers/tele2-bredband.mjs';
+import { tele2BroadbandFor } from '../lib/tele2-broadband.js';
 import { fortnoxLonChecks } from '../lib/verifiers/fortnox-lon.mjs';
 import { teliaChecks } from '../lib/verifiers/telia-vaxel.mjs';
 import { adobeChecks } from '../lib/verifiers/adobe.mjs';
@@ -125,14 +126,18 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     // Den riktiga run(), med sidtexterna injicerade (V-2, L-5): varje leverantör bär sina checkar, och
     // Stripes fasta avgift når fabrikens utfall.
     const texter = new Map([[stripe.url, fastHojd], [zettle.url, ze]]);
-    const utfall = await kortterminalVakt.run({ lasSida: async (url) => texter.get(url) ?? '' });
+    // I drift läser run() genom webbläsaren; testet byter läsaren och anropar run() som fabriken gör.
+    assert.equal(kortterminalKalla.lasSida, kortterminalKalla.lasSidtext, 'run() läser inte sidan i drift');
+    const lasSida = (fn) => async () => { const fore = kortterminalKalla.lasSida; kortterminalKalla.lasSida = fn;
+      try { return await kortterminalVakt.run(); } finally { kortterminalKalla.lasSida = fore; } };
+    const utfall = await lasSida(async (url) => texter.get(url) ?? '')();
     const fast = utfall.checks.find((c) => /fast avgift/.test(c.name) && c.name.startsWith('Stripe'));
     assert.ok(fast, 'Stripes fasta check saknas i run():s utfall');
     assert.equal(marke(fast), 'drift');
     assert.equal(utfall.checks.length, RATES.reduce((n, r) => n + kortterminalChecks(r, texter.get(r.url) ?? '').length, 0));
     assert.ok(utfall.notes.some((n) => n.startsWith('Stripe Terminal: ')), 'run():s logg bär Stripe');
     // Motprov: utan höjningen är Stripes fasta check grön i run():s utfall.
-    const lugn = await kortterminalVakt.run({ lasSida: async (url) => (url === stripe.url ? st : url === zettle.url ? ze : '') });
+    const lugn = await lasSida(async (url) => (url === stripe.url ? st : url === zettle.url ? ze : ''))();
     assert.equal(marke(lugn.checks.find((c) => /fast avgift/.test(c.name) && c.name.startsWith('Stripe'))), 'gron');
     assert.equal(marke(kortterminalCheck(zettle, 'Kontakta säljavdelningen')), 'olasbar');
   });
@@ -285,7 +290,10 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     const tv = BRANCHINDEX.bredband.tele2Verified;
     const bok = (fam, sp) => ({ family: fam === 'max' ? 'Max' : 'Standard', downMbps: sp, monthlyExcVat: tv[fam][sp], bindingMonths: 12 });
     const svar = (addr) => ({ address: addr.toUpperCase(), products: [bok('max', 1200), bok('standard', 1000), addr.includes('Östersund') ? { ...bok('standard', 500), monthlyExcVat: 399 } : bok('standard', 500)] });
-    const utfall = await tele2BredbandVakt.run({ hamta: async (addr) => svar(addr) });
+    assert.equal(tele2BredbandKalla.hamta, tele2BroadbandFor, 'run() frågar inte Tele2:s API i drift');
+    const hamta = (fn) => async () => { const fore = tele2BredbandKalla.hamta; tele2BredbandKalla.hamta = fn;
+      try { return await tele2BredbandVakt.run(); } finally { tele2BredbandKalla.hamta = fore; } };
+    const utfall = await hamta(async (addr) => svar(addr))();
     for (const addr of tv.verifyAddresses) {
       assert.ok(utfall.notes.includes(`${addr.toUpperCase()}: ${produktrad(svar(addr).products)}`), `ingen produktrad för ${addr}`);
     }
@@ -293,7 +301,7 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     assert.equal(drift.length, 1, JSON.stringify(drift));
     assert.match(drift[0].name, /standard 500 \(STORGATAN 41F, ÖSTERSUND\)/i);
     // Motprov: utan avvikelsen är varje check grön.
-    const lugn = await tele2BredbandVakt.run({ hamta: async (addr) => ({ address: addr, products: [bok('max', 1200), bok('standard', 1000)] }) });
+    const lugn = await hamta(async (addr) => ({ address: addr, products: [bok('max', 1200), bok('standard', 1000)] }))();
     assert.equal(lugn.checks.filter((c) => !c.ok).length, 0);
   });
 });

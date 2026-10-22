@@ -27,6 +27,18 @@ Var och en byggs i en egen PR, med egen granskning.
   «aldrig en nedgradering») är lagade i samma PR, eftersom de sitter i det kort PR:en skrev om. BI-14
   låser alla `real-public`-alternativ mot sin bok, och KM-05 spärrar matchningslöftet. L-4–L-7
   ([VAKT]) är lagade.
+- **Tredje granskningen (`ops/GRANSKNING-ssot-tele2-tredje.md`):** T-1 (taket med nivå låg under mains
+  och skickade korrekt lästa fakturor med Copilot till granskning) är lagat. Inget tak ligger längre
+  under mains 765,7 kr (LT-08). T-3, T-5, T-6, T-7 och T-8 är lagade i samma PR.
+- **T-2 · Licenstaket når nästan aldrig en riktig faktura. [KUND], förexisterande. Nästa PR, före allt
+  annat arbete.** `leverantorsnyckel` slår upp exakt «Microsoft», «Adobe» eller «Google», men
+  kategoriseraren ger det juridiska namnet («Microsoft Ireland Operations Ltd»). En periodlös
+  Business Basic-årsfaktura därifrån går auto med tolv gånger kundens kostnad, på main som på grenen.
+  Lagningen: nyckla på varumärket (samma nyckel som `extractSupplierKeyword`), och pröva kedjan från
+  extraktion via `categorize` till `validateSeatPrice` med juridiska namn. LT-08:s golv (aldrig under
+  mains tak) gäller då för varje faktura, och det är skälet att T-1 lagades först.
+- **T-4 · Nivåargumentet i `api/test-invoice.mjs` prövas med en källtextregex. [VAKT], lagas framåt.**
+  Bryt ut indata till `validateSeatPrice` till en ren funktion som både `test-invoice` och LT anropar.
 - **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**
   rummet sa «Prissatta 0» och «Vägde 0 fakturor mot verifierat publikt listpris» bredvid «Ni betalar
   mer än listpris» och Arvo Score 10. Raden saknade antal platser, så den kan vara en artefakt av

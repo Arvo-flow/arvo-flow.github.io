@@ -350,12 +350,14 @@ describe('BI-14 · alternativen i real-public-kategorier bär bara tal ur sin eg
   };
   const kategorier = Object.entries(BRANCHINDEX).filter(([, c]) => c.source === 'real-public' && Array.isArray(c.alternatives));
   // Ett prisomdöme utan källa: procent, «billigare», «lägst», «konkurrenskraftig», «marknadsledare», «starkaste».
-  const OMDOME = /%|billigare|\blägst\b|konkurrenskraftig|marknadsledare|starkaste/i;
+  // Stammar, inte ord (tredje granskningen, T-5): «billigaste», «Lägsta pris», «halva priset» slank förbi.
+  const OMDOME = /%|procent|billig|lägst|lägre|dyr|halva|konkurrenskraft|marknadsled|starkast/i;
 
   // Varje fristående tal, inte bara «N kr»: Telavox «Premium 399, Max 549» bar inget «kr», och en läsare
   // som krävde det fällde noll (sabotaget S9). Specifikationer (Mbit, TB, GB, mån) undantas, och
   // sifferdelen av en beteckning som E5 eller T1 är inget tal.
-  const TAL = /(?<!\w|\d[.,])(\d+(?:[.,]\d+)?)(?!\w|[.,]\d)(?!\s*(?:Mbit|TB|GB|mån))/g;
+  // Bara «N mån bindning» är en specifikation; «Premium 399 mån» är ett pris (T-5).
+  const TAL = /(?<!\w|\d[.,])(\d+(?:[.,]\d+)?)(?!\w|[.,]\d)(?!\s*(?:Mbit|TB|GB|mån bindning))/g;
 
   test('varje tal står i kategorins bok (som månadsbelopp eller × 12), och inget prisomdöme utan källa', () => {
     assert.ok(kategorier.length >= 5, `bara ${kategorier.length} kategorier med alternativ`);
@@ -382,7 +384,10 @@ describe('BI-14 · alternativen i real-public-kategorier bär bara tal ur sin eg
     const tal = (t) => [...t.matchAll(TAL)].map((m) => m[1]);
     assert.deepEqual(tal('Bundlar mobil+växel (Premium 399, Max 549)'), ['399', '549']);
     assert.deepEqual(tal('1200 Mbit 319 kr/mån exkl moms (12 mån bindning)'), ['319']);
-    assert.deepEqual(tal('Teams, 1 TB OneDrive. Väsentligt lägre än E3/E5 (T1)'), []);
+    assert.deepEqual(tal('Teams, 1 TB OneDrive, E3/E5 (T1)'), []);
+    assert.deepEqual(tal('Premium 399 mån, Max 549 mån.'), ['399', '549']);
+    // Prisomdömen i böjd form fälls (tredje granskningens k4.mjs).
+    for (const t of ['Marknadens billigaste alternativ till M365.', 'Lägsta pris bland svenska leverantörer.', 'Halva priset mot M365.', 'Ofta 30–40 procent lägre.']) assert.match(t, OMDOME, t);
   });
 });
 

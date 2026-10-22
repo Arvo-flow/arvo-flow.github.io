@@ -10,7 +10,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
-import { validateSeatPrice } from '../lib/supplier-price-intel.js';
+import { validateSeatPrice, licensprisTak } from '../lib/supplier-price-intel.js';
 
 const rot = (p) => new URL(`../${p}`, import.meta.url);
 const prova = (normalizedSupplier, pricePerSeatMonthly, nivaNyckel = null) => validateSeatPrice({ normalizedSupplier, pricePerSeatMonthly, nivaNyckel });
@@ -54,10 +54,16 @@ describe('LT · licenspriset prövas mot prisboken', () => {
       assert.equal(prova('microsoft', pris, 'business-basic').anomaly, true, `Basic × 12 = ${pris}, med nivå`);
       assert.equal(prova('microsoft', pris).anomaly, true, `Basic × 12 = ${pris}, utan nivå`);
     }
-    // En kvartalssumma läst som månad (3×) fångas med läst nivå.
-    assert.equal(prova('microsoft', T['business-standard'].msrpMonthly * 3, 'business-standard').anomaly, true, 'Standard × 3');
-    // Tillägg per plats ryms: Basic till listpris plus 1,4 × nivåpriset i tillägg.
-    assert.equal(prova('microsoft', Math.round(T['business-basic'].msrpMonthly * 2.4), 'business-basic').anomaly, false, 'Basic med tillägg');
+    // Korrekt lästa fakturor med tillägg per plats prissätts (tredje granskningen, T-1). Priserna ur
+    // ops/probe-prisbok.txt och ops/probe-m365-priser.txt: Microsoft 365 Copilot 286,80, Copilot för
+    // företag 200,70, Teams-telefon Standard 95,60, Defender för företag 28,70.
+    for (const [nyckel, pris, namn] of [
+      ['business-standard', 133.82 + 286.80, 'Standard + Microsoft 365 Copilot'],
+      ['business-basic', 66.91 + 200.70, 'Basic + Copilot för företag'],
+      ['business-basic', 66.91 + 286.80, 'Basic + Microsoft 365 Copilot'],
+      ['business-basic', 80.29 + 95.60 + 28.70, 'Basic månadspris + Teams-telefon + Defender'],
+      ['business-premium', 210.29 + 286.80, 'Premium + Microsoft 365 Copilot'],
+    ]) assert.equal(prova('microsoft', pris, nyckel).anomaly, false, namn);
     // E5: taket är 1,30 × E5 = 1 000,25 (2,5 × E5 ligger över). Utan nivå: E5:s listpris.
     assert.equal(prova('microsoft', 1000.25, 'e5').anomaly, false, 'på taket med nivå');
     assert.equal(prova('microsoft', 1000.26, 'e5').anomaly, true, 'över taket med nivå');
@@ -94,6 +100,16 @@ describe('LT · licenspriset prövas mot prisboken', () => {
       Object.assign(team, fore.team);
     }
     assert.equal(prova('microsoft', 769.42).anomaly, false, 'boken återställd');
+  });
+
+  test('LT-08 · taket ligger aldrig under mains: inget som main prissatte går till granskning', () => {
+    // Mains tak var 1,30 × 589 = 765,7 kr för varje Microsoft-nivå (majtabellen, borttagen i fe149a4e).
+    // 2,5 × nivåpriset låg under det för Basic, Standard och Premium (tredje granskningen, T-1).
+    const MAINS_TAK = 765.7;
+    for (const [nyckel] of nivaer()) assert.ok(licensprisTak('microsoft', nyckel).tak >= MAINS_TAK, `${nyckel}: ${licensprisTak('microsoft', nyckel).tak}`);
+    assert.ok(licensprisTak('microsoft', null).tak >= MAINS_TAK, 'utan nivå');
+    // Adobes tak på main: 1,30 × 699 = 908,7.
+    assert.ok(licensprisTak('adobe', null).tak >= 908.7, 'Adobe');
   });
 
   test('LT-07 · Microsofts tak följer boken också över marginalen: E5 +40 % till listpris prissätts', () => {
