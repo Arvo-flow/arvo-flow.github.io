@@ -19,7 +19,8 @@ import { bedomVerifierarutfall } from '../lib/verifierarutfall.js';
 import { talSv, DOLLARBELOPP, dollarRader } from '../lib/verifiers/core.mjs';
 import { fortnoxChecks } from '../lib/verifiers/fortnox.mjs';
 import { spirisChecks } from '../lib/verifiers/spiris.mjs';
-import { kortterminalCheck, kortterminalFastCheck, kortterminalChecks } from '../lib/verifiers/kortterminal.mjs';
+import { kortterminalCheck, kortterminalFastCheck, kortterminalChecks, kortterminalUtfall } from '../lib/verifiers/kortterminal.mjs';
+import { produktrad } from '../lib/verifiers/tele2-bredband.mjs';
 import { fortnoxLonChecks } from '../lib/verifiers/fortnox-lon.mjs';
 import { teliaChecks } from '../lib/verifiers/telia-vaxel.mjs';
 import { adobeChecks } from '../lib/verifiers/adobe.mjs';
@@ -121,6 +122,15 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     // Det run() lägger i fabrikens utfall: Stripe bär två checkar, Zettle en.
     assert.deepEqual(marken(kortterminalChecks(stripe, fastHojd)), ['gron', 'drift']);
     assert.deepEqual(marken(kortterminalChecks(zettle, ze)), ['gron']);
+    // Slingan i run(), körd på bokens rater i bokens ordning (V-2): varje leverantör bär sina checkar,
+    // och Stripes fasta avgift når utfallet.
+    const texter = RATES.map((r) => (r === stripe ? fastHojd : r === zettle ? ze : ''));
+    const utfall = kortterminalUtfall(RATES, texter);
+    assert.equal(utfall.checks.length, RATES.reduce((n, r) => n + kortterminalChecks(r, texter[RATES.indexOf(r)]).length, 0));
+    const fast = utfall.checks.find((c) => /fast avgift/.test(c.name) && c.name.startsWith('Stripe'));
+    assert.ok(fast, 'Stripes fasta check saknas i run():s utfall');
+    assert.equal(marke(fast), 'drift');
+    assert.ok(utfall.notes.some((n) => n.startsWith('Stripe Terminal: ')), 'run():s logg bär Stripe');
     assert.equal(marke(kortterminalCheck(zettle, 'Kontakta säljavdelningen')), 'olasbar');
   });
 
@@ -255,5 +265,19 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     assert.equal(talSv('ett pris'), null);
     // Motprov: sidtexten här bär redan ett tal över 1 000, och vakten läser det som ett tal.
     assert.equal(bedomVerifierarutfall({ checks: adobeChecks(AV, { teamText: sida('adobe-team'), psText: sida('adobe-photoshop') }) }).utfall, 'gron');
+  });
+
+  test('NV-10 · Tele2-bredbandsvakten skriver ut hela erbjudandet per adress, inte bara avvikelserna', () => {
+    // Andra blicken på uppföljningen efter PR #85 (V-1): loggen sa bara «standard 500 Östersund: 455 · 399»
+    // och kunde inte visa om priset ändrats eller om produkten var ny på adressen.
+    const rad = produktrad([
+      { family: 'Standard', downMbps: 500, monthlyExcVat: 399, bindingMonths: 12 },
+      { family: 'Max', downMbps: 1200, monthlyExcVat: 319, bindingMonths: 12 },
+      { family: 'Max', downMbps: 250, monthlyExcVat: 239, bindingMonths: 12 },
+    ]);
+    assert.equal(rad, 'Max 250 239 kr (12 mån) · Max 1200 319 kr (12 mån) · Standard 500 399 kr (12 mån)');
+    assert.equal(produktrad([]), '');
+    const kalla = readFileSync(new URL('../lib/verifiers/tele2-bredband.mjs', import.meta.url), 'utf8');
+    assert.match(kalla, /notes\.push\(`\$\{res\.address\}: \$\{produktrad\(res\.products\)\}`\)/, 'run() skriver produktraden per adress');
   });
 });

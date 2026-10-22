@@ -45,6 +45,22 @@ describe('BL · prisbaslinjen', () => {
     }
   });
 
+  test('BL-07 · varje deklarerad bokfort-väg löser till bokens tal, och kontrollens namn och mönster bär talet', () => {
+    // Andra blicken på uppföljningen efter PR #85 (K-3): Adobe-kontrollen deklarerade en väg som aldrig
+    // löste, eftersom saas-creative saknar source på kategorinivå. Inget test frågade.
+    const deklarerade = PRICE_CHECKS.flatMap((s) => s.checks.filter((k) => k.bokfort).map((k) => [s, k]));
+    assert.ok(deklarerade.length >= 10, `bara ${deklarerade.length} deklarerade vägar hittades`);
+    for (const [s, k] of deklarerade) {
+      const b = bokfortPris(k.bokfort);
+      assert.ok(b, `${s.supplier} · ${k.name}: vägen ${k.bokfort.join('.')} löser inte`);
+      const pris = String(b.pris).replace('.', ',');
+      assert.ok(k.name.includes(pris), `${k.name} bär inte bokens ${pris}`);
+      assert.ok(k.pattern.test(`${pris} kr`), `${k.name}: mönstret hittar inte bokens ${pris}`);
+    }
+    // Motprov: Adobe-vägen löser inte, och därför står den inte i någon kontroll.
+    assert.equal(bokfortPris(['saas-creative', 'adobeVerified', 'teamExVatMonthly', 'all-apps']), null);
+  });
+
   test('BL-02 · nattens inaktuella förväntningar och en kontroll utan bokfört pris bär ingen händelse', () => {
     for (const o of [119, 143, 57, 69, 384, 609]) {
       const [kalla, k] = kontroll('Microsoft 365 Business Standard (sv)', 'årsavtal');

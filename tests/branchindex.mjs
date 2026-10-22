@@ -12,6 +12,7 @@ import {
   getBenchmark,
   bucketForSize,
   bredbandSpeedBenchmark,
+  bredbandsalternativ,
 } from '../agents/recommender/branchindex.js';
 import { usdToSek, FALLBACK_RATE_USD_SEK } from '../agents/recommender/pricing.js';
 import { readFileSync } from 'node:fs';
@@ -301,6 +302,34 @@ describe('BI-12 · varje lastVerified i prisboken är ett strikt ISO-datum', () 
     assert.ok(literaler.length >= 30, `bara ${literaler.length} literaler hittades`);
     const fel = literaler.filter((x) => !arIsoDatum(x));
     assert.deepEqual(fel, [], `literaler som inte är ÅÅÅÅ-MM-DD: ${fel.join(', ')}`);
+  });
+});
+
+// ── BI-13 · BREDBANDETS ALTERNATIV BÄR BOKENS TAL ─────────────────────────────────────────────
+// Andra blicken på uppföljningen efter PR #85 (K-1): alternativtexten sa «1200/100 Mbit 279 kr/mån»
+// efter att boken höjts till 319, och rummets bytesbesked visade den under bokens datum.
+describe('BI-13 · bredbandets alternativ bär bokens tal', () => {
+  const tv = BRANCHINDEX.bredband.tele2Verified;
+  const tele2 = () => BRANCHINDEX.bredband.alternatives.filter((a) => /^Tele2\b/.test(a.supplier));
+
+  test('varje kr/mån-tal i Tele2-alternativen är bokens tal för samma produkt', () => {
+    const [max, std] = tele2();
+    assert.ok(max && std, 'båda Tele2-alternativen finns');
+    assert.match(max.positioning, new RegExp(`1200 Mbit ${tv.max[1200]} kr/mån`));
+    assert.match(std.positioning, new RegExp(`1000 Mbit ${tv.standard[1000]} kr/mån`));
+    const bokensTal = new Set([...Object.values(tv.max), ...Object.values(tv.standard)].map(String));
+    for (const a of tele2()) {
+      for (const [, tal] of a.positioning.matchAll(/(\d+) kr\/mån/g)) assert.ok(bokensTal.has(tal), `${a.supplier}: ${tal} står inte i boken`);
+      assert.doesNotMatch(a.positioning, /\d{4}-\d{2}-\d{2}/, 'ett datum i texten är ett andra datum som kan glida isär');
+    }
+    assert.equal(BRANCHINDEX.bredband.alternatives.filter((a) => a.supplier === 'Bahnhof Företag').length, 1, 'Bahnhof står kvar, en gång');
+  });
+
+  test('texten följer boken: ändras talet, ändras texten', () => {
+    const andrad = bredbandsalternativ({ ...tv, max: { ...tv.max, 1200: 999 }, standard: { ...tv.standard, 1000: 555 } });
+    assert.match(andrad[0].positioning, /1200 Mbit 999 kr\/mån/);
+    assert.match(andrad[1].positioning, /1000 Mbit 555 kr\/mån/);
+    assert.deepEqual(bredbandsalternativ({}), [], 'utan bokens tal: inga Tele2-alternativ, aldrig ett gissat tal');
   });
 });
 

@@ -227,9 +227,8 @@ export const BRANCHINDEX = {
     },
     unit: 'kr/år',
     note: 'Bredband per adress — priset beror på vilket NÄT som når adressen (inget rikstäckande listpris). Verifierat live mot Tele2:s adress-API 2026-10-21 (exkl moms): "Max"/COAX nationellt enhetligt (1200 Mbit 319 kr/mån, 12 mån), "Standard"/öppen fiber dyrare (1000 Mbit 487 kr/mån, 12 mån). Adresser utan Tele2-nät har inget fast erbjudande (bara mobilt). Benchmarken är hastighetsbaserad och härleds i kod ur tele2Verified (bredbandSpeedBenchmark) — inga legacy-estimat finns kvar. Utan känd hastighet finns ingen verifierbar benchmark (Zero Trust: ingen gissad siffra).',
+    // Tele2:s två alternativ härleds ur tele2Verified av tillampaBredbandsalternativ() nedan (K-1).
     alternatives: [
-      { supplier: 'Tele2 Bredband Max (COAX)',     positioning: 'Verifierat via adress-API 2026-08-18: 1200/100 Mbit 279 kr/mån exkl (12 mån) — nationellt enhetligt där COAX-nätet når',  reliability: 0.95 },
-      { supplier: 'Tele2 Bredband Standard (fiber)', positioning: 'Verifierat: 1000/1000 Mbit 487 kr/mån exkl (12 mån) — öppna fibernät, dyrare än COAX',                        reliability: 0.95 },
       { supplier: 'Bahnhof Företag',                positioning: 'Svensk support, statisk IP, stark SLA — offert per adress (ej i Tele2-API:t)',                                  reliability: 0.94 },
     ],
     // INGEN matrix/speedTierBenchmarks: bredband-benchmarken är hastighetsbaserad och härleds
@@ -1255,6 +1254,35 @@ function tillampaCellHarledning() {
   }
 }
 tillampaCellHarledning();
+
+// ── BREDBANDETS TELE2-ALTERNATIV HÄRLEDS UR tele2Verified ──────────────────────────────────────
+// Texten «1200/100 Mbit 279 kr/mån» stod handskriven i alternativet. När boken höjdes till 319 den
+// 21 okt följde den inte med, och rummets bytesbesked visade 279 under bokens datum (andra blicken
+// på uppföljningen efter PR #85, K-1). Talen läses nu ur samma post som vakten bekräftar, och just
+// de två ankarprodukterna (max 1200, standard 1000) som vakten kräver att minst en adress bekräftar.
+// Texten bär inget datum: rummet visar kategorins datum bredvid (api/invoice-history.mjs,
+// buildSwitchTargets), och ett datum i texten är ett andra datum som kan glida isär. Uppladdnings-
+// hastigheten står inte heller: vakten läser den aldrig, så den vore en overifierad spec. BI-13.
+export function bredbandsalternativ(tv) {
+  const ut = [];
+  const max = tv?.max;
+  const std = tv?.standard;
+  if (Number.isFinite(max?.[1200]) && max[1200] > 0) {
+    ut.push({ supplier: 'Tele2 Bredband Max (COAX)', reliability: 0.95,
+      positioning: `Verifierat via Tele2:s adress-API: 1200 Mbit ${max[1200]} kr/mån exkl moms (${max.bindingMonths} mån bindning) — nationellt enhetligt där COAX-nätet når` });
+  }
+  if (Number.isFinite(std?.[1000]) && std[1000] > 0) {
+    ut.push({ supplier: 'Tele2 Bredband Standard (fiber)', reliability: 0.95,
+      positioning: `Verifierat via Tele2:s adress-API: 1000 Mbit ${std[1000]} kr/mån exkl moms (${std.bindingMonths} mån bindning) — öppna fibernät, priset varierar mellan nät och är dyrare än COAX` });
+  }
+  return ut;
+}
+
+function tillampaBredbandsalternativ() {
+  const bb = BRANCHINDEX.bredband;
+  bb.alternatives = [...bredbandsalternativ(bb.tele2Verified), ...bb.alternatives.filter((a) => !/^Tele2\b/.test(a.supplier))];
+}
+tillampaBredbandsalternativ();
 
 /**
  * Look up benchmark for a customer + category.
