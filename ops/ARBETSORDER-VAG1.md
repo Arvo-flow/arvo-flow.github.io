@@ -23,16 +23,19 @@ Var och en byggs i en egen PR, med egen granskning.
   i Östersund stod åter på 455. Svaret 22 okt 10:06 var tillfälligt. Vakten skriver nu hela erbjudandet
   per adress (NV-10), så nästa avvikelse går att läsa.
 - **Granskningen av lagningen (`ops/GRANSKNING-ssot-tele2-lagningen.md`):** L-1 (Basic-årssumman under
-  taket) är lagat med ett nivåberoende tak. L-2 (Googles «30–40 % billigare») och L-3 (rummets
-  «aldrig en nedgradering») är lagade i samma PR, eftersom de sitter i det kort PR:en skrev om. BI-14
-  låser alla `real-public`-alternativ mot sin bok, och KM-05 spärrar matchningslöftet. L-4–L-7
-  ([VAKT]) är lagade.
+  taket) fångas i PR #86 av mains tröskel, inte av ett nivåberoende tak (LT-02). L-2 (Googles «30–40 %
+  billigare») och L-3 (rummets «aldrig en nedgradering») är lagade, eftersom de satt i det kort PR:en
+  skrev om. BI-14 låser alla `real-public`-alternativ mot sin bok, och KM-05 spärrar matchningslöftet.
+  L-4–L-7 ([VAKT]) är lagade.
 - **Tredje och fjärde granskningen (`-tredje.md`, `-fjarde.md`):** varje försök att härleda licenstaket
   ur prisboken gjorde ett fel vanligare. Ett tak per faktura på pris per plats, som bär tilläggen, kan
   inte skilja tillägg från en årssumma (L-1, T-1, F4-1). I PR #86 har prövningen därför exakt mains
-  beteende (LT-01..04). T-5, T-6, T-7 och T-8 är lagade. F4-3 (BI-14 är fortfarande en ordlista), F4-4
-  (KM-05 släpper «matchar er nivå — ingen nedgradering») och F4-5 (NV-03 jämför två fält i samma objekt)
-  är [VAKT] och lagas framåt.
+  beteende (0 skillnader mot main i 10 miljoner anrop, femte granskningen). LT-01..04 låser trösklarna,
+  inte namnuppslaget (F5-1). T-8 är lagat. T-5, T-6 och NV-03-delen av T-7 är skärpta men inte stängda:
+  F4-3 (BI-14 är fortfarande en ordlista), F4-4 (KM-05 släpper «matchar er nivå — ingen nedgradering»)
+  och F4-5 (NV-03 jämför två fält i samma objekt). De är [VAKT] och lagas framåt, med F5-1 (namnuppslaget
+  olåst), F5-2 (vägen från anomali till `review_queue` oprövad) och F5-3 (kvartalssumman saknas i
+  modulhuvudets BLIND).
 - **T-2 · Licenstaket når nästan aldrig en riktig faktura. [KUND], förexisterande. Nästa PR, före allt
   annat arbete. Samma PR bygger radprövningen:** varje nivårad prövas mot sin egen nivå i prisboken,
   oberoende av tilläggen. Då lagas också två förexisterande fel: Adobe till listpris (985 kr) och

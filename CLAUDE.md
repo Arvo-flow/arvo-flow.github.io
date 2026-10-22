@@ -470,12 +470,13 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > 12. **En fixturs roll som tröskel bärs av en maskin, inte av en kommentar.** Två gånger (18 aug och
 >    21 okt) flyttade Tele2 bredbandsgolvet, och tröskelfixturerna gav fortfarande null, men av fel
 >    skäl. BI-11 räknar deras gross mot dagens golv och kräver 432. Nästa golvflytt faller där.
-> 13. **Ett tak på ett blandat tal kan inte justeras rätt; byt granularitet i stället.** PR #86 prövade tre
->    tak på pris per plats, som bär varje tillägg: 1,30 × högsta, 2,5 × nivåpriset och 0,97 × 12 × nivåns
->    lägsta. Varje version gjorde ett fel vanligare åt något håll (L-1, T-1, F4-1), och varje granskning
->    hittade det. När två fall med motsatt rätt svar ger samma tal (E5 med tillägg och en årssumma för en
->    billigare plan) finns inget rätt tak. Mät mot mains utfall åt båda håll innan ett tak ändras, och
->    behåll mains beteende tills prövningen sker på rätt nivå, här per nivårad.
+> 13. **Ett tak på ett blandat tal kan inte justeras rätt; byt granularitet i stället.** PR #86 prövade
+>    fyra tak på pris per plats, som bär varje tillägg: min(fast tak, 1,30 × bokens högsta), 1,30 ×
+>    högsta, 2,5 × nivåpriset och 0,97 × 12 × nivåns lägsta. Varje version gjorde ett fel vanligare åt
+>    något håll (L-1, T-1, F4-1), och granskningarna hittade det (femte granskningen räknade fyra, F5-4).
+>    När två fall med motsatt rätt svar ger samma tal (E5 med tillägg och en årssumma för en billigare
+>    plan) finns inget rätt tak. Mät mot mains utfall åt båda håll innan ett tak ändras, och behåll
+>    mains beteende tills prövningen sker på rätt nivå, här per nivårad.
 
 ---
 
