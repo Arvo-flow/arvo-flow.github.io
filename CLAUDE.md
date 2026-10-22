@@ -295,6 +295,32 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > **Gränsen är knivskarp och får inte glida:** [VAKT] betyder att felet är i BEVISET, aldrig i
 > BETEENDET. Så snart ett fynd rör ett tal kunden ser är det [KUND], hur litet det än är — och en
 > felklassning kostar antingen en kund eller en dag. Vid tvekan: [KUND].
+>
+> **✅ AVGRÄNSNING, GRUNDARBESLUT 2026-10-22: ETT FÖREXISTERANDE [KUND] SOM PR:EN INTE RÖR BLOCKERAR INTE.**
+> Grundarens ord: *«Ett förexisterande [KUND]-fel som inte syns för någon kund idag och som PR:en inte
+> gör vanligare ska INTE blockera pågående PR eller lagas mitt i dess granskningsloop. Det ska loggas och
+> lagas i en egen PR. Endast fel som PR:en själv infört, gör vanligare, eller som faktiskt är
+> synliga/blockerande för PR:ens eget syfte får tvinga fram ombyggnad före merge.»*
+>
+> **Mätt på PR #85 (fem granskningsvarv).** PB85-2, dörrens Microsoft-datum, låg på main sedan 15 aug
+> och syntes inte för någon kund: kortet visade rätt datum. Det lagades ändå inne i PR:en. Tredje blicken
+> blockerade på lagningen (T85-1), fjärde blicken på lagningen av den (G85-1), och femte blicken granskade
+> bara den tredje lagningen. Tre av fem varv drevs alltså av ett fel som PR:en inte hade infört.
+>
+> Operativt:
+> · **«Syns inte för någon kund i dag» är en avläsning.** En körning mot dagens bok eller produktion ska
+>   visa att ingen kundyta skriver ut felet. Utan den mätningen räknas felet som synligt.
+> · **«PR:en gör det vanligare» räcker med en mekanism i diffen**, även när frekvensen inte är mätt.
+>   PB85-2 hade en: PR:en gjorde Atlassian-vakten grön, så ännu en leverantörs stämpel kunde hamna i
+>   Microsofts mening. Med den här regeln hade PB85-2 alltså fortfarande hört till PR:en. Vid tvekan:
+>   vanligare.
+> · **Loggat betyder skrivet på två ställen:** i domen, som «förexisterande, utanför PR:en», och som
+>   en egen punkt i arbetsordern. Domen kan då vara MERGAS med fyndet kvar. Fyndet byggs i en egen PR,
+>   med egen granskning, och aldrig ovanpå en granskad commit (sju regler 18–20 okt, regel 5).
+> · **Min läsning av «synliga/blockerande för PR:ens eget syfte», öppet:** ett förexisterande fel som en
+>   kund ser i dag, men som ligger utanför PR:ens syfte, håller inte PR:en. Att hålla PR:en lagar inte
+>   felet en timme fortare. Felet går däremot före allt annat arbete, i en egen PR. Grundaren avgör om
+>   meningen ska läsas så.
 
 > **✅ ETT SKYDD BAKOM ETT ANNAT SKYDD ÄR INTE TVÅ LAGER — DET ÄR ETT (2026-09-10, tre gånger på ett dygn).**
 > Tre av mina egna vakter var döda samma dag, alla med samma FORM: en yttre kontroll gjorde den inre
