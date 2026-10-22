@@ -14,6 +14,8 @@ import {
   bredbandSpeedBenchmark,
 } from '../agents/recommender/branchindex.js';
 import { usdToSek, FALLBACK_RATE_USD_SEK } from '../agents/recommender/pricing.js';
+import { readFileSync } from 'node:fs';
+import { stamplaKalla } from '../lib/verifieringsstampel.js';
 
 // ── BI-01 ─────────────────────────────────────────────────────────────────────
 // bucketForSize — alla gränsvärden
@@ -213,6 +215,68 @@ describe('BI-06 · USD-tiers — korrekt struktur (Slack, Zoom, Google)', () => 
     for (const key of ['atlassian-jira-standard', 'atlassian-jira-premium',
                        'atlassian-confluence-standard', 'atlassian-confluence-premium']) {
       assert.strictEqual(tiers[key].usdAnnual, null, `${key}.usdAnnual ska vara null`);
+    }
+  });
+});
+
+// ── BI-10 ─────────────────────────────────────────────────────────────────────
+// Atlassian höjde i oktober 2026, och grundaren beslutade 18 okt att boken följer källan. Talen
+// nedan är vaktens AVLÄSNING (lib/verifiers/atlassian.mjs, seat-väljaren på 110), loggad likadant i
+// körningarna 39069444683 (17 okt) och 39155569488 (18 okt 18:47 UTC). Testet bevisar inte att
+// källan står still — det gör bara den levande vakten — utan att boken är lika med det som lästes.
+// Talen pinnas exakt. Datumet är en golvgräns: stämpelboten flyttar det framåt på main efter varje
+// grön Atlassian-körning, med [skip ci] och utan svit, så en likhet hade blivit röd där i tysthet
+// (andra blicken PB85-1).
+describe('BI-10 · Atlassian: boken är lika med vaktens avläsning 17–18 okt', () => {
+  const tiers = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
+  const AVLAST = {
+    'atlassian-jira-standard': 9.56, 'atlassian-jira-premium': 19.15,
+    'atlassian-confluence-standard': 7.00, 'atlassian-confluence-premium': 13.75,
+  };
+  const haller = (tier, usd) => tier.usdMonthly === usd
+    && /^\d{4}-\d{2}-\d{2}$/.test(String(tier.lastVerified)) && tier.lastVerified >= '2026-10-18';
+  for (const [nyckel, usd] of Object.entries(AVLAST)) {
+    test(`${nyckel}: ${usd} USD/mån, verifierad 2026-10-18 eller senare`, () => {
+      assert.ok(haller(tiers[nyckel], usd), JSON.stringify(tiers[nyckel]));
+    });
+  }
+  test('BI-10 håller efter botens egen stämpel med ett senare datum, men inte före avläsningen', () => {
+    // Stämpeln körs på källtexten i minnet, så som verify-sources gör på main. Inget skrivs till disk.
+    // Datumet ligger bortom varje verklig stämpel: med ett riktigt datum hade testet fallit den dag
+    // boten stämplat just det datumet, eftersom stamplaKalla då inte ändrar något.
+    const SENARE = '2099-12-31';
+    const kalla = readFileSync(new URL('../agents/recommender/branchindex.js', import.meta.url), 'utf8');
+    const { kalla: stamplad, andrade } = stamplaKalla(kalla, Object.keys(AVLAST), SENARE);
+    assert.deepEqual([...andrade].sort(), Object.keys(AVLAST).sort());
+    for (const [nyckel, usd] of Object.entries(AVLAST)) {
+      const datum = stamplad.match(new RegExp(`'${nyckel}':\\s*\\{[^{}]*?lastVerified:\\s*'([^']+)'`, 's'))?.[1];
+      assert.equal(datum, SENARE);
+      assert.ok(haller({ ...tiers[nyckel], lastVerified: datum }, usd), `${nyckel} föll efter stämpeln`);
+    }
+    assert.ok(!haller({ ...tiers['atlassian-jira-standard'], lastVerified: '2026-10-17' }, 9.56), 'ett datum före avläsningen håller inte');
+  });
+});
+
+// ── BI-12 · VARJE lastVerified I PRISBOKEN ÄR ETT STRIKT ISO-DATUM ─────────────────────────────
+// Datumen jämförs som strängar på flera ställen (det stalaste nivådatumet, BI-10:s golvgräns). Det
+// fungerar bara när varje datum är ÅÅÅÅ-MM-DD: '2026-10-9' sorteras efter '2026-10-19' (fjärde blicken
+// G85-1). Mätt 21 okt: 32 datum i boken, alla strikt ISO. Testet håller det så.
+describe('BI-12 · varje lastVerified i prisboken är ett strikt ISO-datum', () => {
+  test('alla datum är ÅÅÅÅ-MM-DD och ett giltigt kalenderdatum', () => {
+    const datum = [];
+    const ga = (o, vag) => {
+      if (!o || typeof o !== 'object') return;
+      for (const [k, x] of Object.entries(o)) {
+        if (k === 'lastVerified') datum.push([vag, x]);
+        else ga(x, `${vag}.${k}`);
+      }
+    };
+    ga(BRANCHINDEX, 'BRANCHINDEX');
+    assert.ok(datum.length >= 30, `bara ${datum.length} datum hittades — vandringen är trasig`);
+    for (const [vag, x] of datum) {
+      if (x == null) continue;
+      assert.match(String(x), /^\d{4}-\d{2}-\d{2}$/, `${vag}: «${x}» är inte ÅÅÅÅ-MM-DD`);
+      assert.equal(new Date(`${x}T00:00:00Z`).toISOString().slice(0, 10), x, `${vag}: «${x}» är inget kalenderdatum`);
     }
   });
 });

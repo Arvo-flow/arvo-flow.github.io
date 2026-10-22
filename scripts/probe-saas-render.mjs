@@ -8,7 +8,7 @@
 // Skriptet renderar varje sida, dumpar varje pristal med kontext, och skriver ut prisbokens
 // nuvarande värden bredvid — så att drift syns direkt i loggen och verifierarna kan skrivas mot
 // verkligheten. Ren instrumentering: den rör aldrig prisboken.
-import { withPage } from '../lib/verifiers/core.mjs';
+import { withPage, DOLLARBELOPP } from '../lib/verifiers/core.mjs';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 const T = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
@@ -17,7 +17,8 @@ const C = BRANCHINDEX['saas-crm']?.licenseTierBenchmarks ?? {};
 const KALLOR = [
   { id: 'zoom', url: 'https://zoom.us/pricing',
     vantat: { 'zoom-pro': T['zoom-pro'], 'zoom-business': T['zoom-business'] },
-    ord: ['Pro', 'Business'] },
+    // Den svenska sidan kallar Business «Affärsverksamhet»; utan ordet syns aldrig Business-kortet.
+    ord: ['Pro', 'Business', 'Affärsverksamhet'] },
   { id: 'jira', url: 'https://www.atlassian.com/software/jira/pricing',
     vantat: { 'atlassian-jira-standard': T['atlassian-jira-standard'], 'atlassian-jira-premium': T['atlassian-jira-premium'] },
     ord: ['Standard', 'Premium'] },
@@ -60,8 +61,10 @@ for (const k of KALLOR) {
   const flat = res.text.replace(/\n+/g, ' ¶ ');
   const sedda = new Set();
   console.log('  ── pristal med kontext ──');
-  for (const m of flat.matchAll(/(.{0,80}?)(?:US ?\$|\$|USD ?)\s?(\d+(?:[.,]\d{1,2})?)([\s\S]{0,70})/g)) {
-    const rad = `$${m[2].padStart(6)} | …${m[1].trim().slice(-72)} ⟦PRIS⟧ ${m[3].trim().slice(0, 60)}…`;
+  // Tecknet före ELLER efter talet (DOLLARBELOPP). Mönstret läste förr bara «$14.16», så när Zoom bytte
+  // till «14,16$» såg sonden bara ett tilläggsbelopp, och sidan beskrevs som månadsläget (V85-Z1).
+  for (const m of flat.matchAll(new RegExp(String.raw`(.{0,80}?)(?:${DOLLARBELOPP})([\s\S]{0,70})`, 'g'))) {
+    const rad = `$${(m[2] ?? m[3]).padStart(6)} | …${m[1].trim().slice(-72)} ⟦PRIS⟧ ${m[4].trim().slice(0, 60)}…`;
     if (sedda.has(rad)) continue;
     sedda.add(rad); console.log('    ' + rad);
     if (sedda.size >= 24) break;

@@ -12,7 +12,8 @@
 //     till, vilket beteendetesterna inte kan.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import { arLegacyKategori, LEGACY_KATEGORINYCKLAR } from '../lib/kategorinyckel.js';
@@ -118,15 +119,24 @@ describe('KATEGORINYCKELN · svepet som hittar den tionde platsen', () => {
     ['scripts/probe-kategorinyckel.mjs', 'sonden som MÄTTE sammanslagningen'],
   ]);
 
-  const filer = [];
-  (function gå(katalog) {
-    for (const namn of readdirSync(katalog)) {
-      if (['node_modules', 'build', '.git', 'results', 'test-pdfs'].includes(namn)) continue;
-      const p = join(katalog, namn);
-      if (statSync(p).isDirectory()) gå(p);
-      else if (/\.(js|mjs)$/.test(namn)) filer.push(p);
-    }
-  })(ROOT);
+  // ⚠️ PUNKTKATALOGER HOPPAS ÖVER SOM KLASS (2026-10-18). Svepet räknade upp `.git` men inte
+  // `.claude`, och en granskares isolerade worktree under `.claude/worktrees/` är en full kopia av
+  // repot. KN-08 föll lokalt på 159 rader, alla ur fyra granskares worktrees och ingen ur det riktiga
+  // trädet. Samma läxa som RD-08 i tests/lfl-produktionsvag.mjs (2026-09-10), som aldrig följdes hit.
+  // KN-10 prövar regeln mot en byggd katalog, så att sabotaget fäller även i CI, där ingen worktree finns.
+  function kallfilerUnder(rot) {
+    const ut = [];
+    (function gå(katalog) {
+      for (const namn of readdirSync(katalog)) {
+        if (namn.startsWith('.') || ['node_modules', 'build', 'results', 'test-pdfs'].includes(namn)) continue;
+        const p = join(katalog, namn);
+        if (statSync(p).isDirectory()) gå(p);
+        else if (/\.(js|mjs)$/.test(namn)) ut.push(p);
+      }
+    })(rot);
+    return ut;
+  }
+  const filer = kallfilerUnder(ROOT);
 
   test('KN-07 · svepet når faktiskt källträdet (ingen grönt-av-tomhet)', () => {
     // En vakt som matchar noll filer blir grön av tomhet. Talet mäts, det antas inte.
@@ -155,6 +165,19 @@ describe('KATEGORINYCKELN · svepet som hittar den tionde platsen', () => {
     assert.deepEqual(brott, [],
       'en avvecklad kategorinyckel har återinförts. Använd den kanoniska, eller motivera platsen '
       + 'i UNDANTAG ovan om det är en ANNAN namnrymd:\n  ' + brott.join('\n  '));
+  });
+
+  test('KN-10 · en punktkatalog, till exempel en granskares worktree, är inget källträd', () => {
+    const rot = mkdtempSync(join(tmpdir(), 'kn10-'));
+    try {
+      mkdirSync(join(rot, 'lib'), { recursive: true });
+      mkdirSync(join(rot, '.claude', 'worktrees', 'wf-1', 'lib'), { recursive: true });
+      writeFileSync(join(rot, 'lib', 'a.js'), 'export const a = 1;\n');
+      writeFileSync(join(rot, '.claude', 'worktrees', 'wf-1', 'lib', 'a.js'), 'export const a = 1;\n');
+      assert.deepEqual(kallfilerUnder(rot).map((f) => relative(rot, f)), [join('lib', 'a.js')]);
+    } finally {
+      rmSync(rot, { recursive: true, force: true });
+    }
   });
 
   test('KN-09 · undantaget för radklassen är sant — modulen ger `molnvaxel` som KATEGORI', async () => {

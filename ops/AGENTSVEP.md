@@ -79,6 +79,11 @@ inte heller lyda det här.
 Punkt 5 är oförhandlingsbar av samma skäl som resten av bibeln: skörden bevisar att arbetet
 **utfördes**, aldrig att slutsatsen är **sann**.
 
+**En granskning (andra blicken) körs en lins i taget, inte i vågor** (mätt 18–20 okt, bibeln:
+«Sju regler som gör svepet självgående»). En våg som dör på sessionsgränsen lämnar noll klara
+linser. Linser i tur och ordning lämnar de klara i workflow-cachen, och `resumeFromRunId` kör bara
+resten efter återställningen. Domskrivaren startar först när de obligatoriska linserna är klara.
+
 ---
 
 ## Fabrikssvep — den autonoma loopen (grundarbeslut 2026-10-16)

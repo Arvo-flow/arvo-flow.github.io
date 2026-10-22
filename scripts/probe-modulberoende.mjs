@@ -38,7 +38,7 @@ const ROT = process.cwd();
 
 function allaFiler(dir, ut = []) {
   for (const namn of readdirSync(dir)) {
-    if (['node_modules', 'build', '.git', 'results', 'test-pdfs', 'coverage'].includes(namn)) continue;
+    if (namn.startsWith('.') || ['node_modules', 'build', 'results', 'test-pdfs', 'coverage'].includes(namn)) continue;
     const p = join(dir, namn);
     if (statSync(p).isDirectory()) allaFiler(p, ut);
     else if (['.js', '.mjs', '.jsx'].includes(extname(namn))) ut.push(relative(ROT, p));
