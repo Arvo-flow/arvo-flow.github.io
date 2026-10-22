@@ -254,6 +254,12 @@ describe('BI-10 · Atlassian: boken är lika med vaktens avläsning 17–18 okt'
       assert.ok(haller({ ...tiers[nyckel], lastVerified: datum }, usd), `${nyckel} föll efter stämpeln`);
     }
     assert.ok(!haller({ ...tiers['atlassian-jira-standard'], lastVerified: '2026-10-17' }, 9.56), 'ett datum före avläsningen håller inte');
+    // Golvgränsen jämför strängar, så den ensam släpper allt som sorteras efter '2026-10-18'. ISO-kravet
+    // är det som fäller dem (tredje blicken T85-7).
+    for (const fel of ['okänt', '2026-10-2', 'undefined']) {
+      assert.ok(fel >= '2026-10-18', `motprov: «${fel}» klarar golvgränsen som sträng`);
+      assert.ok(!haller({ ...tiers['atlassian-jira-standard'], lastVerified: fel }, 9.56), `«${fel}» håller inte`);
+    }
   });
 });
 
@@ -261,7 +267,14 @@ describe('BI-10 · Atlassian: boken är lika med vaktens avläsning 17–18 okt'
 // Datumen jämförs som strängar på flera ställen (det stalaste nivådatumet, BI-10:s golvgräns). Det
 // fungerar bara när varje datum är ÅÅÅÅ-MM-DD: '2026-10-9' sorteras efter '2026-10-19' (fjärde blicken
 // G85-1). Mätt 21 okt: 32 datum i boken, alla strikt ISO. Testet håller det så.
+//
+// Vandringens antal jämförs med ett annat instrument, JSON-serialiseringen av samma bok. En spärr på
+// «minst 30» släppte en vandring som tappat två datum, bland dem tele2-datumet (femte blicken F85-3).
+// Källtextens literaler prövas också: loneadmin-literalen skrivs över i körningen och syns aldrig i
+// vandringen, men stämpelboten och stampelvakten läser källtexten.
 describe('BI-12 · varje lastVerified i prisboken är ett strikt ISO-datum', () => {
+  const arIsoDatum = (x) => /^\d{4}-\d{2}-\d{2}$/.test(x) && new Date(`${x}T00:00:00Z`).toISOString().slice(0, 10) === x;
+
   test('alla datum är ÅÅÅÅ-MM-DD och ett giltigt kalenderdatum', () => {
     const datum = [];
     const ga = (o, vag) => {
@@ -272,12 +285,22 @@ describe('BI-12 · varje lastVerified i prisboken är ett strikt ISO-datum', () 
       }
     };
     ga(BRANCHINDEX, 'BRANCHINDEX');
-    assert.ok(datum.length >= 30, `bara ${datum.length} datum hittades — vandringen är trasig`);
+    const iJson = (JSON.stringify(BRANCHINDEX).match(/"lastVerified":/g) ?? []).length;
+    assert.ok(iJson >= 30, `JSON-instrumentet hittade bara ${iJson} datum`);
+    assert.equal(datum.length, iJson, `vandringen hittade ${datum.length} datum, serialiseringen ${iJson}`);
     for (const [vag, x] of datum) {
       if (x == null) continue;
       assert.match(String(x), /^\d{4}-\d{2}-\d{2}$/, `${vag}: «${x}» är inte ÅÅÅÅ-MM-DD`);
       assert.equal(new Date(`${x}T00:00:00Z`).toISOString().slice(0, 10), x, `${vag}: «${x}» är inget kalenderdatum`);
     }
+  });
+
+  test('varje lastVerified-literal i källtexten är ett strikt ISO-datum', () => {
+    const kalla = readFileSync(new URL('../agents/recommender/branchindex.js', import.meta.url), 'utf8');
+    const literaler = [...kalla.matchAll(/lastVerified:\s*'([^']*)'/g)].map((m) => m[1]);
+    assert.ok(literaler.length >= 30, `bara ${literaler.length} literaler hittades`);
+    const fel = literaler.filter((x) => !arIsoDatum(x));
+    assert.deepEqual(fel, [], `literaler som inte är ÅÅÅÅ-MM-DD: ${fel.join(', ')}`);
   });
 });
 
