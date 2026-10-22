@@ -1,156 +1,56 @@
-// tests/listpristak.mjs — LT · licenspriset prövas mot prisboken, och inga prisseedar finns kvar (SS).
+// tests/listpristak.mjs — LT · licenspriset prövas mot mains avläsningströsklar, och inga prisseedar finns kvar (SS).
 //
 // Grundarbeslut 2026-10-21: prisboken (agents/recommender/branchindex.js) är enda sanningen, och
-// repot bär inga parallella prislistor. Avläst samma dag:
-// · lib/supplier-price-intel.js bar en egen majtabell. I kundvägen skickade den en Adobe
-//   Creative Cloud Pro-licens till verifierat listpris (985 kr) och Microsoft 365 E5 på
-//   månadsfakturering (769,42 kr) till granskning i stället för prissättning.
-// · api/admin/run-migration.mjs och scripts/seed-price-db.mjs skrev 46 majpriser till supplier_prices.
+// repot bär inga parallella prislistor. lib/supplier-price-intel.js bar en egen majtabell, och
+// api/admin/run-migration.mjs och scripts/seed-price-db.mjs skrev 46 majpriser till supplier_prices.
+//
+// Prövningens BETEENDE är mains, med flit (fjärde granskningen av PR #86, F4-1). Tre försök att
+// härleda taket ur prisboken gjorde var sitt fel vanligare. Talen nedan är mains utfall, avlästa i
+// granskningarna av PR #86 (ops/GRANSKNING-ssot-tele2-lagningen.md, -tredje.md, -fjarde.md).
+// Radprövningen mot prisboken byggs i nästa PR (ops/ARBETSORDER-VAG1.md, T-2).
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
-import { validateSeatPrice, licensprisTak } from '../lib/supplier-price-intel.js';
+import { validateSeatPrice } from '../lib/supplier-price-intel.js';
 
 const rot = (p) => new URL(`../${p}`, import.meta.url);
-const prova = (normalizedSupplier, pricePerSeatMonthly, nivaNyckel = null) => validateSeatPrice({ normalizedSupplier, pricePerSeatMonthly, nivaNyckel });
-const nivaer = () => Object.entries(BRANCHINDEX['saas-productivity'].licenseTierBenchmarks).filter(([, t]) => t.currency === 'SEK');
+const prova = (normalizedSupplier, pricePerSeatMonthly) => validateSeatPrice({ normalizedSupplier, pricePerSeatMonthly });
 
-describe('LT · licenspriset prövas mot prisboken', () => {
-  test('LT-01 · verifierat listpris går aldrig till granskning: Adobe team, Microsoft 365 E5 månadsvis', () => {
-    const team = BRANCHINDEX['saas-creative'].adobeVerified.teamExVatMonthly;
-    for (const pris of Object.values(team)) assert.equal(prova('adobe', pris).anomaly, false, `Adobe ${pris}`);
-    // Varje Microsoft-nivå till listpris, i båda faktureringslägena, med läst nivå och utan.
-    for (const [nyckel, t] of nivaer()) {
-      for (const pris of [t.msrpAnnual, t.msrpMonthly].filter(Number.isFinite)) {
-        assert.equal(prova('Microsoft 365', pris, nyckel).anomaly, false, `Microsoft ${nyckel} ${pris}`);
-        assert.equal(prova('Microsoft 365', pris).anomaly, false, `Microsoft utan nivå ${pris}`);
-      }
+describe('LT · licenspriset prövas mot mains avläsningströsklar', () => {
+  test('LT-01 · trösklarna är mains: på tröskeln prissätts, en öre över går till granskning', () => {
+    for (const [lev, troskel] of [['microsoft', 765.7], ['google workspace', 468], ['adobe', 908.7]]) {
+      assert.equal(prova(lev, troskel).anomaly, false, `${lev} på ${troskel}`);
+      assert.equal(prova(lev, Math.round((troskel + 0.01) * 100) / 100).anomaly, true, `${lev} över ${troskel}`);
     }
-    // De två fallen som majtabellen skickade till granskning, med talen som avlästes 21 okt.
-    assert.equal(prova('adobe', 985).anomaly, false);
-    assert.equal(prova('microsoft', 769.42).anomaly, false);
   });
 
-  test('LT-02 · taket följer prisboken: ändras boken, ändras svaret (boken återställs)', () => {
-    const team = BRANCHINDEX['saas-creative'].adobeVerified.teamExVatMonthly;
-    const fore = { ...team };
-    try {
-      for (const k of Object.keys(team)) team[k] = 500;
-      const r = prova('adobe', 985);
-      assert.equal(r.anomaly, true, 'med bokens högsta teampris 500 är 985 över taket');
-      assert.equal(r.msrp, 500);
-    } finally {
-      Object.assign(team, fore);
+  test('LT-02 · mains mätta utfall står kvar: Basic × 12 till granskning, Copilot-fallen prissätts', () => {
+    // Business Basic läst som årssumma per månad (L-1): main skickade båda till granskning.
+    assert.equal(prova('microsoft', 66.91 * 12).anomaly, true, '802,92');
+    assert.equal(prova('microsoft', 80.29 * 12).anomaly, true, '963,48');
+    // Korrekt lästa fakturor med tillägg som main prissatte (T-1).
+    for (const pps of [133.82 + 286.80, 66.91 + 200.70, 66.91 + 286.80, 80.29 + 95.60 + 28.70, 210.29 + 286.80]) {
+      assert.equal(prova('microsoft', pps).anomaly, false, String(pps));
     }
-    assert.equal(prova('adobe', 985).anomaly, false);
+    // Förexisterande, lagas i nästa PR: E5 på månadsfakturering och Adobe till listpris går till granskning.
+    assert.equal(prova('microsoft', 769.42).anomaly, true, 'E5 månadspris, som på main');
+    assert.equal(prova('adobe', 985).anomaly, true, 'Adobe Creative Cloud Pro, som på main');
   });
 
-  test('LT-03 · ett felavläst pris fälls, Google prövas bara mot avläsningströskeln, okänd leverantör prövas inte', () => {
-    // Granskningen av lagningen (L-1): en Business Basic-årssumma läst som månad prissattes med ett
-    // tak per leverantör (1,30 × E5 = 1 000,25). Med läst nivå och utan ska den till granskning.
-    const T = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
-    for (const pris of [T['business-basic'].msrpAnnual * 12, T['business-basic'].msrpMonthly * 12]) {
-      assert.equal(prova('microsoft', pris, 'business-basic').anomaly, true, `Basic × 12 = ${pris}, med nivå`);
-      assert.equal(prova('microsoft', pris).anomaly, true, `Basic × 12 = ${pris}, utan nivå`);
-    }
-    // Korrekt lästa fakturor med tillägg per plats prissätts (tredje granskningen, T-1). Priserna ur
-    // ops/probe-prisbok.txt och ops/probe-m365-priser.txt: Microsoft 365 Copilot 286,80, Copilot för
-    // företag 200,70, Teams-telefon Standard 95,60, Defender för företag 28,70.
-    for (const [nyckel, pris, namn] of [
-      ['business-standard', 133.82 + 286.80, 'Standard + Microsoft 365 Copilot'],
-      ['business-basic', 66.91 + 200.70, 'Basic + Copilot för företag'],
-      ['business-basic', 66.91 + 286.80, 'Basic + Microsoft 365 Copilot'],
-      ['business-basic', 80.29 + 95.60 + 28.70, 'Basic månadspris + Teams-telefon + Defender'],
-      ['business-premium', 210.29 + 286.80, 'Premium + Microsoft 365 Copilot'],
-    ]) assert.equal(prova('microsoft', pris, nyckel).anomaly, false, namn);
-    // E5: taket är 1,30 × E5 = 1 000,25 (2,5 × E5 ligger över). Utan nivå: E5:s listpris.
-    assert.equal(prova('microsoft', 1000.25, 'e5').anomaly, false, 'på taket med nivå');
-    assert.equal(prova('microsoft', 1000.26, 'e5').anomaly, true, 'över taket med nivå');
-    assert.equal(prova('microsoft', 769.42).anomaly, false, 'E5 till listpris utan nivå');
-    assert.equal(prova('microsoft', 769.43).anomaly, true, 'över varje listpris utan nivå');
-    assert.equal(prova('microsoft', 769.42 * 12, 'e5').anomaly, true, 'en E5-årssumma läst som månad');
-    // En nivå som inte är Microsofts SEK-nivå räknas som okänd nivå.
-    assert.equal(prova('microsoft', 800, 'google-standard').anomaly, true, 'Googles nyckel ger inget Microsoft-tak');
-    // Adobe: ingen nivå läses, taket är högsta teampriset.
-    assert.equal(prova('adobe', 985).anomaly, false, 'Adobe till listpris');
-    assert.equal(prova('adobe', 985.01).anomaly, true, 'över Adobes högsta listpris');
-    // Google: prisboken bär bara USD. Ett SEK-tal därur vore en gissning, så bara taket prövas.
-    assert.equal(prova('google workspace', 20).anomaly, false);
-    assert.equal(prova('google workspace', 20).msrp, null);
-    assert.equal(prova('google workspace', 700).anomaly, true);
+  test('LT-03 · en okänd leverantör, ett nollpris och ett saknat namn prövas inte', () => {
     assert.equal(prova('okänd leverantör', 5000).anomaly, false);
     assert.equal(prova('microsoft', 0).anomaly, false);
+    assert.equal(prova(null, 5000).anomaly, false);
   });
 
-  test('LT-05 · höjer leverantören sin dyraste nivå 5 % och boken följer, prissätts listpriset fortfarande', () => {
-    // Andra blicken på uppföljningen (K-2): ett fast tak på 800 kr låg 4 % över E5:s månadspris.
-    const T = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
-    const team = BRANCHINDEX['saas-creative'].adobeVerified.teamExVatMonthly;
-    const fore = { e5: { ...T.e5 }, team: { ...team } };
-    try {
-      T.e5.msrpMonthly = Math.round(T.e5.msrpMonthly * 1.05 * 100) / 100;
-      T.e5.msrpAnnual = Math.round(T.e5.msrpAnnual * 1.05 * 100) / 100;
-      assert.equal(prova('microsoft', T.e5.msrpMonthly, 'e5').anomaly, false, `E5 ${T.e5.msrpMonthly} med nivå`);
-      assert.equal(prova('microsoft', T.e5.msrpMonthly).anomaly, false, `E5 ${T.e5.msrpMonthly} utan nivå`);
-      for (const k of Object.keys(team)) team[k] = Math.round(team[k] * 1.05 * 100) / 100;
-      for (const pris of Object.values(team)) assert.equal(prova('adobe', pris).anomaly, false, `Adobe ${pris}`);
-    } finally {
-      Object.assign(T.e5, fore.e5);
-      Object.assign(team, fore.team);
-    }
-    assert.equal(prova('microsoft', 769.42).anomaly, false, 'boken återställd');
-  });
-
-  test('LT-08 · taket ligger aldrig under mains: inget som main prissatte går till granskning', () => {
-    // Mains tak var 1,30 × 589 = 765,7 kr för varje Microsoft-nivå (majtabellen, borttagen i fe149a4e).
-    // 2,5 × nivåpriset låg under det för Basic, Standard och Premium (tredje granskningen, T-1).
-    const MAINS_TAK = 765.7;
-    for (const [nyckel] of nivaer()) assert.ok(licensprisTak('microsoft', nyckel).tak >= MAINS_TAK, `${nyckel}: ${licensprisTak('microsoft', nyckel).tak}`);
-    assert.ok(licensprisTak('microsoft', null).tak >= MAINS_TAK, 'utan nivå');
-    // Adobes tak på main: 1,30 × 699 = 908,7.
-    assert.ok(licensprisTak('adobe', null).tak >= 908.7, 'Adobe');
-  });
-
-  test('LT-07 · Microsofts tak följer boken också över marginalen: E5 +40 % till listpris prissätts', () => {
-    // Granskningen av lagningen (L-4): ett tak fruset på dagens E5 klarade varje LT-test, eftersom
-    // LT-05:s höjning (+5 %) ryms i marginalen på 30 %.
-    const T = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
-    const fore = { ...T.e5 };
-    try {
-      T.e5.msrpMonthly = Math.round(fore.msrpMonthly * 1.40 * 100) / 100;
-      T.e5.msrpAnnual = Math.round(fore.msrpAnnual * 1.40 * 100) / 100;
-      assert.equal(prova('microsoft', T.e5.msrpMonthly, 'e5').anomaly, false, `E5 ${T.e5.msrpMonthly} med nivå`);
-      assert.equal(prova('microsoft', T.e5.msrpMonthly).anomaly, false, `E5 ${T.e5.msrpMonthly} utan nivå`);
-    } finally {
-      Object.assign(T.e5, fore);
-    }
-    assert.equal(prova('microsoft', fore.msrpMonthly * 1.40).anomaly, true, 'motprov: med dagens bok är priset över taket');
-  });
-
-  test('LT-06 · en USD-nivå med ett msrp-fält flyttar inte Microsofts tak (SEK-filtrets tand)', () => {
-    const T = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
-    const fore = prova('microsoft', 1500).anomaly;
-    try {
-      T['usd-med-msrp'] = { currency: 'USD', msrpMonthly: 5000, msrpAnnual: 5000 };
-      assert.equal(prova('microsoft', 1500).anomaly, true, 'taket utan nivå ska fortfarande vara högsta SEK-nivån');
-    } finally {
-      delete T['usd-med-msrp'];
-    }
-    assert.equal(fore, true, 'motprov: 1500 är över taket utan USD-nivån');
-  });
-
-  test('LT-04 · modulen bär ingen egen prislista', () => {
+  test('LT-04 · modulen bär ingen prislista, och test-invoice skickar bara namn och pris', () => {
     const kod = readFileSync(rot('lib/supplier-price-intel.js'), 'utf8');
-    assert.doesNotMatch(kod, /msrp(?:Monthly|Annual):\s*\d/, 'en hårdkodad prisrad är en parallell prislista');
-    assert.doesNotMatch(kod, /SUPPLIER_PRICE_INTEL/);
-    assert.match(kod, /BRANCHINDEX\['saas-productivity'\]/, 'Microsofts tak ska läsas ur prisboken');
-    assert.match(kod, /adobeVerified/, 'Adobes tak ska läsas ur prisboken');
-    // Anropsplatsen skickar nivån ur radtexten (L-1). Utan den gäller taket utan nivå för varje faktura.
-    // Källtextkontroll: den ser att argumentet står i anropet, inte att grenen körs.
+    assert.doesNotMatch(kod, /msrp(?:Monthly|Annual)\s*:\s*\d/, 'en hårdkodad prisrad är en parallell prislista');
+    assert.doesNotMatch(kod, /SUPPLIER_PRICE_INTEL\s*=/);
     const api = readFileSync(rot('api/test-invoice.mjs'), 'utf8');
-    const anrop = api.slice(api.indexOf('validateSeatPrice({'), api.indexOf('validateSeatPrice({') + 400);
-    assert.match(anrop, /nivaNyckel:\s*getDominantSaasTierKey\(extracted\.lineItems/, 'test-invoice skickar inte nivån');
+    const i = api.indexOf('validateSeatPrice({');
+    assert.ok(i > 0, 'anropet finns');
+    assert.match(api.slice(i, i + 200), /validateSeatPrice\(\{\s*normalizedSupplier:\s*categorized\.normalizedSupplier,\s*pricePerSeatMonthly:\s*extracted\.pricePerSeatMonthly,\s*\}\)/);
   });
 });
 

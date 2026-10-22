@@ -27,16 +27,22 @@ Var och en byggs i en egen PR, med egen granskning.
   «aldrig en nedgradering») är lagade i samma PR, eftersom de sitter i det kort PR:en skrev om. BI-14
   låser alla `real-public`-alternativ mot sin bok, och KM-05 spärrar matchningslöftet. L-4–L-7
   ([VAKT]) är lagade.
-- **Tredje granskningen (`ops/GRANSKNING-ssot-tele2-tredje.md`):** T-1 (taket med nivå låg under mains
-  och skickade korrekt lästa fakturor med Copilot till granskning) är lagat. Inget tak ligger längre
-  under mains 765,7 kr (LT-08). T-3, T-5, T-6, T-7 och T-8 är lagade i samma PR.
+- **Tredje och fjärde granskningen (`-tredje.md`, `-fjarde.md`):** varje försök att härleda licenstaket
+  ur prisboken gjorde ett fel vanligare. Ett tak per faktura på pris per plats, som bär tilläggen, kan
+  inte skilja tillägg från en årssumma (L-1, T-1, F4-1). I PR #86 har prövningen därför exakt mains
+  beteende (LT-01..04). T-5, T-6, T-7 och T-8 är lagade. F4-3 (BI-14 är fortfarande en ordlista), F4-4
+  (KM-05 släpper «matchar er nivå — ingen nedgradering») och F4-5 (NV-03 jämför två fält i samma objekt)
+  är [VAKT] och lagas framåt.
 - **T-2 · Licenstaket når nästan aldrig en riktig faktura. [KUND], förexisterande. Nästa PR, före allt
-  annat arbete.** `leverantorsnyckel` slår upp exakt «Microsoft», «Adobe» eller «Google», men
+  annat arbete. Samma PR bygger radprövningen:** varje nivårad prövas mot sin egen nivå i prisboken,
+  oberoende av tilläggen. Då lagas också två förexisterande fel: Adobe till listpris (985 kr) och
+  Microsoft 365 E5 på månadsfakturering (769,42 kr) går till granskning på main och i PR #86. F4-2
+  (en Basic EES-årssumma prissätts på main) prövas där. `leverantorsnyckel` slår upp exakt «Microsoft», «Adobe» eller «Google», men
   kategoriseraren ger det juridiska namnet («Microsoft Ireland Operations Ltd»). En periodlös
   Business Basic-årsfaktura därifrån går auto med tolv gånger kundens kostnad, på main som på grenen.
   Lagningen: nyckla på varumärket (samma nyckel som `extractSupplierKeyword`), och pröva kedjan från
-  extraktion via `categorize` till `validateSeatPrice` med juridiska namn. LT-08:s golv (aldrig under
-  mains tak) gäller då för varje faktura, och det är skälet att T-1 lagades först.
+  extraktion via `categorize` till `validateSeatPrice` med juridiska namn. Varje fall mäts mot mains
+  utfall i ett svep, åt båda håll, innan PR:en öppnas.
 - **T-4 · Nivåargumentet i `api/test-invoice.mjs` prövas med en källtextregex. [VAKT], lagas framåt.**
   Bryt ut indata till `validateSeatPrice` till en ren funktion som både `test-invoice` och LT anropar.
 - **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**

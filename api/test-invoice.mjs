@@ -15,7 +15,7 @@ import { markKvantiteter } from '../lib/kvantitetsvittne.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
-import { recommend, RecommenderError, computeLikeForLikeSaasTarget, getDominantSaasTierKey } from '../agents/recommender/recommend.js';
+import { recommend, RecommenderError, computeLikeForLikeSaasTarget } from '../agents/recommender/recommend.js';
 import { isAudited } from '../lib/revision-gate.js';
 import { grindPausad } from '../lib/grindpaus.js';
 import { farVisaFynd } from '../lib/fyndratt.js';
@@ -1226,14 +1226,12 @@ export default async function handler(req, res) {
     }
 
     // ── P1.2: SUPPLIER PRICE INTELLIGENCE ────────────────────────────────────────
-    // Validerar att pricePerSeatMonthly är inom rimligt intervall för kända leverantörer. Taket beror
-    // på licensnivån, läst ur radtexten med samma funktion som like-for-like (lib/supplier-price-intel.js).
-    // Över taket → troligt avläsningsfel (en årssumma läst som månad) → review_queue.
+    // Validerar att pricePerSeatMonthly är inom rimligt intervall för kända leverantörer. Över
+    // avläsningströskeln → troligt avläsningsfel → review_queue (lib/supplier-price-intel.js).
     if (extracted.pricePerSeatMonthly && categorized.normalizedSupplier) {
       const _priceCheck = validateSeatPrice({
         normalizedSupplier:   categorized.normalizedSupplier,
         pricePerSeatMonthly:  extracted.pricePerSeatMonthly,
-        nivaNyckel:           getDominantSaasTierKey(extracted.lineItems ?? [], extracted.licenseType ?? null, extracted.saasProductFamily ?? null),
       });
       if (_priceCheck.anomaly) {
         console.error(`[P1.2:price-intel] ANOMALI: ${_priceCheck.detail}`);

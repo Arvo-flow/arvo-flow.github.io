@@ -450,7 +450,7 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    kunnat se vad som stod där, och samma tecken var hela orsaken till Adobe-felet. `od -c` eller en
 >    räkning av `\xa0` efter skrivning hittar det.
 
-> **✅ MÄTT 21–22 OKT: FEM REGLER TILL, UR PR #85:S FEM GRANSKNINGSVARV.** Varje varv fann ett fel i det
+> **✅ MÄTT 21–22 OKT: SEX REGLER TILL, UR PR #85:S FEM GRANSKNINGSVARV OCH PR #86:S FYRA (REGEL 13).** Varje varv fann ett fel i det
 > förra varvets lagning: andra blicken 13 fynd, tredje 8, fjärde 3 och femte 4. Reglerna nedan kommer ur
 > de felen. Rubriken sa först «mätt 21 okt» och skrevs innan femte blicken gett något utfall
 > (andra blicken på uppföljningen, V-6).
@@ -470,6 +470,12 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > 12. **En fixturs roll som tröskel bärs av en maskin, inte av en kommentar.** Två gånger (18 aug och
 >    21 okt) flyttade Tele2 bredbandsgolvet, och tröskelfixturerna gav fortfarande null, men av fel
 >    skäl. BI-11 räknar deras gross mot dagens golv och kräver 432. Nästa golvflytt faller där.
+> 13. **Ett tak på ett blandat tal kan inte justeras rätt; byt granularitet i stället.** PR #86 prövade tre
+>    tak på pris per plats, som bär varje tillägg: 1,30 × högsta, 2,5 × nivåpriset och 0,97 × 12 × nivåns
+>    lägsta. Varje version gjorde ett fel vanligare åt något håll (L-1, T-1, F4-1), och varje granskning
+>    hittade det. När två fall med motsatt rätt svar ger samma tal (E5 med tillägg och en årssumma för en
+>    billigare plan) finns inget rätt tak. Mät mot mains utfall åt båda håll innan ett tak ändras, och
+>    behåll mains beteende tills prövningen sker på rätt nivå, här per nivårad.
 
 ---
 
