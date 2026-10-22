@@ -19,8 +19,8 @@ import { bedomVerifierarutfall } from '../lib/verifierarutfall.js';
 import { talSv, DOLLARBELOPP, dollarRader } from '../lib/verifiers/core.mjs';
 import { fortnoxChecks } from '../lib/verifiers/fortnox.mjs';
 import { spirisChecks } from '../lib/verifiers/spiris.mjs';
-import { kortterminalCheck, kortterminalFastCheck, kortterminalChecks, kortterminalUtfall } from '../lib/verifiers/kortterminal.mjs';
-import { produktrad } from '../lib/verifiers/tele2-bredband.mjs';
+import kortterminalVakt, { kortterminalCheck, kortterminalFastCheck, kortterminalChecks } from '../lib/verifiers/kortterminal.mjs';
+import tele2BredbandVakt, { produktrad } from '../lib/verifiers/tele2-bredband.mjs';
 import { fortnoxLonChecks } from '../lib/verifiers/fortnox-lon.mjs';
 import { teliaChecks } from '../lib/verifiers/telia-vaxel.mjs';
 import { adobeChecks } from '../lib/verifiers/adobe.mjs';
@@ -91,7 +91,7 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     assert.deepEqual(marken(spirisChecks(SV, 'Kontakta oss')), ['olasbar', 'olasbar', 'olasbar', 'olasbar', 'olasbar']);
   });
 
-  test('NV-03 · Kortterminal: Stripes EES-rate och Zettles korttransaktionsavgift läses på sina platser', () => {
+  test('NV-03 · Kortterminal: Stripes EES-rate och Zettles korttransaktionsavgift läses på sina platser', async () => {
     const stripe = RATES.find((r) => r.supplier === 'Stripe Terminal');
     const zettle = RATES.find((r) => r.supplier === 'Zettle by PayPal');
     assert.ok(stripe && zettle, 'prisboken bär båda leverantörerna');
@@ -122,15 +122,18 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     // Det run() lägger i fabrikens utfall: Stripe bär två checkar, Zettle en.
     assert.deepEqual(marken(kortterminalChecks(stripe, fastHojd)), ['gron', 'drift']);
     assert.deepEqual(marken(kortterminalChecks(zettle, ze)), ['gron']);
-    // Slingan i run(), körd på bokens rater i bokens ordning (V-2): varje leverantör bär sina checkar,
-    // och Stripes fasta avgift når utfallet.
-    const texter = RATES.map((r) => (r === stripe ? fastHojd : r === zettle ? ze : ''));
-    const utfall = kortterminalUtfall(RATES, texter);
-    assert.equal(utfall.checks.length, RATES.reduce((n, r) => n + kortterminalChecks(r, texter[RATES.indexOf(r)]).length, 0));
+    // Den riktiga run(), med sidtexterna injicerade (V-2, L-5): varje leverantör bär sina checkar, och
+    // Stripes fasta avgift når fabrikens utfall.
+    const texter = new Map([[stripe.url, fastHojd], [zettle.url, ze]]);
+    const utfall = await kortterminalVakt.run({ lasSida: async (url) => texter.get(url) ?? '' });
     const fast = utfall.checks.find((c) => /fast avgift/.test(c.name) && c.name.startsWith('Stripe'));
     assert.ok(fast, 'Stripes fasta check saknas i run():s utfall');
     assert.equal(marke(fast), 'drift');
+    assert.equal(utfall.checks.length, RATES.reduce((n, r) => n + kortterminalChecks(r, texter.get(r.url) ?? '').length, 0));
     assert.ok(utfall.notes.some((n) => n.startsWith('Stripe Terminal: ')), 'run():s logg bär Stripe');
+    // Motprov: utan höjningen är Stripes fasta check grön i run():s utfall.
+    const lugn = await kortterminalVakt.run({ lasSida: async (url) => (url === stripe.url ? st : url === zettle.url ? ze : '') });
+    assert.equal(marke(lugn.checks.find((c) => /fast avgift/.test(c.name) && c.name.startsWith('Stripe'))), 'gron');
     assert.equal(marke(kortterminalCheck(zettle, 'Kontakta säljavdelningen')), 'olasbar');
   });
 
@@ -267,7 +270,7 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     assert.equal(bedomVerifierarutfall({ checks: adobeChecks(AV, { teamText: sida('adobe-team'), psText: sida('adobe-photoshop') }) }).utfall, 'gron');
   });
 
-  test('NV-10 · Tele2-bredbandsvakten skriver ut hela erbjudandet per adress, inte bara avvikelserna', () => {
+  test('NV-10 · Tele2-bredbandsvakten skriver ut hela erbjudandet per adress, inte bara avvikelserna', async () => {
     // Andra blicken på uppföljningen efter PR #85 (V-1): loggen sa bara «standard 500 Östersund: 455 · 399»
     // och kunde inte visa om priset ändrats eller om produkten var ny på adressen.
     const rad = produktrad([
@@ -277,7 +280,20 @@ describe('NV · vakterna läser talet på dess plats: DRIFT och OLÄSBAR skiljs 
     ]);
     assert.equal(rad, 'Max 250 239 kr (12 mån) · Max 1200 319 kr (12 mån) · Standard 500 399 kr (12 mån)');
     assert.equal(produktrad([]), '');
-    const kalla = readFileSync(new URL('../lib/verifiers/tele2-bredband.mjs', import.meta.url), 'utf8');
-    assert.match(kalla, /notes\.push\(`\$\{res\.address\}: \$\{produktrad\(res\.products\)\}`\)/, 'run() skriver produktraden per adress');
+    // Den riktiga run(), med Tele2:s svar injicerat (L-6): en produktrad per adress, och Östersunds 399
+    // blir DRIFT. Förut prövade testet en regex mot källtexten, som en död gren lurade.
+    const tv = BRANCHINDEX.bredband.tele2Verified;
+    const bok = (fam, sp) => ({ family: fam === 'max' ? 'Max' : 'Standard', downMbps: sp, monthlyExcVat: tv[fam][sp], bindingMonths: 12 });
+    const svar = (addr) => ({ address: addr.toUpperCase(), products: [bok('max', 1200), bok('standard', 1000), addr.includes('Östersund') ? { ...bok('standard', 500), monthlyExcVat: 399 } : bok('standard', 500)] });
+    const utfall = await tele2BredbandVakt.run({ hamta: async (addr) => svar(addr) });
+    for (const addr of tv.verifyAddresses) {
+      assert.ok(utfall.notes.includes(`${addr.toUpperCase()}: ${produktrad(svar(addr).products)}`), `ingen produktrad för ${addr}`);
+    }
+    const drift = utfall.checks.filter((c) => !c.ok);
+    assert.equal(drift.length, 1, JSON.stringify(drift));
+    assert.match(drift[0].name, /standard 500 \(STORGATAN 41F, ÖSTERSUND\)/i);
+    // Motprov: utan avvikelsen är varje check grön.
+    const lugn = await tele2BredbandVakt.run({ hamta: async (addr) => ({ address: addr, products: [bok('max', 1200), bok('standard', 1000)] }) });
+    assert.equal(lugn.checks.filter((c) => !c.ok).length, 0);
   });
 });

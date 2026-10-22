@@ -333,6 +333,59 @@ describe('BI-13 · bredbandets alternativ bär bokens tal', () => {
   });
 });
 
+// ── BI-14 · VARJE ALTERNATIV I EN real-public-KATEGORI BÄR BARA TAL UR SIN EGEN BOK ─────────────
+// Granskningen av lagningen (L-2): Google-alternativet sa «ofta 30–40 % billigare än M365» medan
+// bokens egna tal säger att Google är ungefär 9 % dyrare, och rummets bytesbesked visade det under
+// «verifierat öppet pris». Telavox bar «Premium 399, Max 549» utan bokpost. Alternativen når kunden
+// genom buildSwitchTargets (api/invoice-history.mjs) för varje real-public-kategori.
+describe('BI-14 · alternativen i real-public-kategorier bär bara tal ur sin egen bok', () => {
+  const bokensTal = (o, ut = new Set()) => {
+    if (o && typeof o === 'object') {
+      for (const [k, v] of Object.entries(o)) {
+        if (k === 'alternatives') continue;
+        if (typeof v === 'number') ut.add(v); else bokensTal(v, ut);
+      }
+    }
+    return ut;
+  };
+  const kategorier = Object.entries(BRANCHINDEX).filter(([, c]) => c.source === 'real-public' && Array.isArray(c.alternatives));
+  // Ett prisomdöme utan källa: procent, «billigare», «lägst», «konkurrenskraftig», «marknadsledare», «starkaste».
+  const OMDOME = /%|billigare|\blägst\b|konkurrenskraftig|marknadsledare|starkaste/i;
+
+  // Varje fristående tal, inte bara «N kr»: Telavox «Premium 399, Max 549» bar inget «kr», och en läsare
+  // som krävde det fällde noll (sabotaget S9). Specifikationer (Mbit, TB, GB, mån) undantas, och
+  // sifferdelen av en beteckning som E5 eller T1 är inget tal.
+  const TAL = /(?<!\w|\d[.,])(\d+(?:[.,]\d+)?)(?!\w|[.,]\d)(?!\s*(?:Mbit|TB|GB|mån))/g;
+
+  test('varje tal står i kategorins bok (som månadsbelopp eller × 12), och inget prisomdöme utan källa', () => {
+    assert.ok(kategorier.length >= 5, `bara ${kategorier.length} kategorier med alternativ`);
+    let lasta = 0;
+    for (const [k, c] of kategorier) {
+      const bok = bokensTal(c);
+      for (const a of c.alternatives) {
+        for (const [, t] of a.positioning.matchAll(TAL)) {
+          const n = Number(t.replace(',', '.'));
+          lasta++;
+          assert.ok(bok.has(n) || bok.has(Math.round(n * 12)), `${k} · ${a.supplier}: ${n} står inte i kategorins bok`);
+        }
+        assert.doesNotMatch(a.positioning, OMDOME, `${k} · ${a.supplier}: prisomdöme utan källa`);
+      }
+    }
+    assert.ok(lasta >= 6, `bara ${lasta} kr-tal lästa — läsaren är trasig`);
+  });
+
+  test('motprov: ett påhittat tal och ett procentpåstående fälls', () => {
+    const bok = bokensTal(BRANCHINDEX.molnvaxel);
+    assert.ok(!bok.has(549) && !bok.has(549 * 12), 'Telavox 549 står inte i boken');
+    assert.match('Ofta 30–40 % billigare än M365.', OMDOME);
+    // Läsaren tar tal utan «kr», hoppar över specifikationer och beteckningar.
+    const tal = (t) => [...t.matchAll(TAL)].map((m) => m[1]);
+    assert.deepEqual(tal('Bundlar mobil+växel (Premium 399, Max 549)'), ['399', '549']);
+    assert.deepEqual(tal('1200 Mbit 319 kr/mån exkl moms (12 mån bindning)'), ['319']);
+    assert.deepEqual(tal('Teams, 1 TB OneDrive. Väsentligt lägre än E3/E5 (T1)'), []);
+  });
+});
+
 // ── BI-11 · TRÖSKELFIXTURERNA LIGGER STRAX UNDER TRÖSKELN MOT DAGENS GOLV ─────────────────────
 // edge-25, comb-55 och comb-13 finns för att bevisa grenen «under 500 kr i besparing → hävda
 // ingenting». De förväntar null. Flyttar golvet sig ger de fortfarande null, men av fel skäl: under

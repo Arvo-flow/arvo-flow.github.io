@@ -61,6 +61,20 @@ describe('BL · prisbaslinjen', () => {
     assert.equal(bokfortPris(['saas-creative', 'adobeVerified', 'teamExVatMonthly', 'all-apps']), null);
   });
 
+  test('BL-08 · Adobe-nattkontrollen bär bokens teampris och träffar den avlästa sidan', () => {
+    // Granskningen av lagningen (L-7): kontrollen har inget bokfort, så BL-07 såg den inte, och den
+    // kunde gå tillbaka till majtalet 699 utan att något test föll.
+    const adobe = PRICE_CHECKS.find((s) => s.supplier === 'Adobe Creative Cloud for Teams (sv)');
+    assert.ok(adobe && adobe.checks.length === 1, 'en Adobe-teamkontroll');
+    const [k] = adobe.checks;
+    const pris = BRANCHINDEX['saas-creative'].adobeVerified.teamExVatMonthly['all-apps'];
+    const sv = pris.toFixed(2).replace('.', ',');
+    assert.ok(k.name.includes(sv), `${k.name} bär inte bokens ${sv}`);
+    const sidan = readFileSync(new URL('./fixtures/narvaro/adobe-team-2026-10-18.txt', import.meta.url), 'utf8');
+    assert.ok(k.pattern.test(sidan), 'mönstret träffar inte den avlästa teamsidan');
+    assert.ok(!k.pattern.test(sidan.replaceAll(sv, '699,00')), 'motprov: utan bokens tal på sidan träffar mönstret inte');
+  });
+
   test('BL-02 · nattens inaktuella förväntningar och en kontroll utan bokfört pris bär ingen händelse', () => {
     for (const o of [119, 143, 57, 69, 384, 609]) {
       const [kalla, k] = kontroll('Microsoft 365 Business Standard (sv)', 'årsavtal');

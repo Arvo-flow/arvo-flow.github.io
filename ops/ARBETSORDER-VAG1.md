@@ -8,7 +8,7 @@ PR som mergas genom Grinden. En uppgift och en granskningslins körs i taget.
 
 | Steg | Innehåll | Läge |
 |---|---|---|
-| a | PR #86: Tele2 +40 kr, en prisbok (majtabellen och seedarna bort), vakter framåt | andra blicken BLOCKERAR (K-1), lagas i samma PR |
+| a | PR #86: Tele2 +40 kr, en prisbok (majtabellen och seedarna bort), vakter framåt | K-1 lagat; granskningen av lagningen BLOCKERAR (L-1), lagat med L-2–L-7 i samma PR |
 | b | Databas och skript: majraderna i `supplier_prices` bort, död skrivning i `scripts/apply-price-proposals.mjs` bort | efter merge och deploy av a |
 | c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | efter b |
 | d | Arbetsorderns punkt 4: live-verifiering och rummet i 390 och 1600 px | efter c |
@@ -18,13 +18,19 @@ PR som mergas genom Grinden. En uppgift och en granskningslins körs i taget.
 Ur andra blicken på uppföljningen (`ops/GRANSKNING-ssot-tele2.md`). Inget av dem blockerar PR #86.
 Var och en byggs i en egen PR, med egen granskning.
 
-- **V-1 · Standard 500 i Östersund: 399 i källan, 455 i boken.** Avläst 22 okt med motprov: talet når
-  ingen kundtext. Prompten får «Ingen verifierad prisjämförelse» för källan `tele2-verified`, och
-  samma benchmark med källan `real-public` bär talen. `overpaymentPercent` läses bara av den
-  avroutade Insights-sidan. Vakten skriver nu hela erbjudandet per adress (NV-10). Nästa körning
-  avgör om 399 är ett ändrat pris eller en ny produkt på adressen. Boken följer källan när det är
-  avläst. Standard-familjen varierar mellan nät enligt boken själv, och boken bär ett tal per
-  hastighet. Den modellen prövas i samma steg.
+- **V-1 · Standard 500 i Östersund: 399 i källan, 455 i boken. Stängt.** Talet når ingen kundtext
+  (avläst med motprov). Nästa körning, 39768127034 på da9e24f0, gav 18 av 18 gröna, och Standard 500
+  i Östersund stod åter på 455. Svaret 22 okt 10:06 var tillfälligt. Vakten skriver nu hela erbjudandet
+  per adress (NV-10), så nästa avvikelse går att läsa.
+- **Granskningen av lagningen (`ops/GRANSKNING-ssot-tele2-lagningen.md`):** L-1 (Basic-årssumman under
+  taket) är lagat med ett nivåberoende tak. L-2 (Googles «30–40 % billigare») och L-3 (rummets
+  «aldrig en nedgradering») är lagade i samma PR, eftersom de sitter i det kort PR:en skrev om. BI-14
+  låser alla `real-public`-alternativ mot sin bok, och KM-05 spärrar matchningslöftet. L-4–L-7
+  ([VAKT]) är lagade.
+- **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**
+  rummet sa «Prissatta 0» och «Vägde 0 fakturor mot verifierat publikt listpris» bredvid «Ni betalar
+  mer än listpris» och Arvo Score 10. Raden saknade antal platser, så den kan vara en artefakt av
+  sonden. Det prövas mot en riktig bredbandsrad.
 - **K-5 · Rummets bytesbesked visar ett fryst golv bredvid dagens bokdatum.** Steg c. Golvet räknas
   vid läsning ur den lagrade hastigheten, eller så visas radens analysdatum.
 - **K-6 · Tröskelfixturerna låser en tröskel över 432, inte 500.** En tvillingfixtur med gross ≥ 500.
