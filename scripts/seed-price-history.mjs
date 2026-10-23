@@ -13,16 +13,14 @@ import { priceHikeForecast } from '../lib/price-forecast.js';
 
 // ── De källbelagda höjningarna ───────────────────────────────────────────────
 // Microsoft 365 Business Standard (kommersiell prishöjning, ett representativt plan per händelse):
-//  • 2022-03-01: $12,50→$14,00/mån (+12 %). Annons 2021-08-19 (Microsofts egen blogg).
 //  • 2026-07-01: $150→$168/år   (+12 %). Annons 2025-12-04 (Microsofts egen blogg). Har trätt i kraft
 //    när rummet öppnar för kunder (Q4 2026) → genuint förflutet vid läsning (grundarbeslut 2026-06-28).
+//    OBEKRÄFTAT 23 okt: postens priser står i en bild, och textläsningen kunde inte se dem.
+// BORTTAGEN 23 okt: «2022-03-01: $12,50→$14,00/mån, annons 2021-08-19». Posten listar sex produkter
+// (Business Basic, Business Premium, Office 365 E1, E3 och E5, Microsoft 365 E3) och inte Business
+// Standard, avläst samma dag. Raden var falsk mot sin egen källa och raderas ur produktionen av
+// scripts/stada-prisdata.mjs (SS-02).
 const VERIFIED_HIKES = [
-  {
-    supplier: 'Microsoft', product: 'Microsoft 365 Business Standard', tier: 'business-standard',
-    category: 'saas-productivity', oldMonthly: 12.50, newMonthly: 14.00, currency: 'USD',
-    changedAt: '2022-03-01', changedBy: 'backfill-verified',
-    sourceUrl: 'https://www.microsoft.com/en-us/microsoft-365/blog/2021/08/19/new-pricing-for-microsoft-365/',
-  },
   {
     supplier: 'Microsoft', product: 'Microsoft 365 Business Standard', tier: 'business-standard',
     category: 'saas-productivity', oldAnnual: 150.00, newAnnual: 168.00, currency: 'USD',

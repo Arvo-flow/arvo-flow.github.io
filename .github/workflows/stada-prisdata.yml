@@ -1,0 +1,45 @@
+name: Städa prisdata (supplier_prices och falsk historik)
+
+# Steg b i ops/ARBETSORDER-VAG1.md. Kör «las» först och läs antalen. «radera» kräver samma antal
+# och raderar inget om de avviker (scripts/stada-prisdata.mjs).
+on:
+  workflow_dispatch:
+    inputs:
+      lage:
+        description: 'las eller radera'
+        required: true
+        default: 'las'
+      majrader:
+        description: 'antalet majrader ur läget las (bara för radera)'
+        required: false
+        default: ''
+      historikrader:
+        description: 'antalet falska historikrader ur läget las (bara för radera)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  stada:
+    environment: produktion
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci --omit=dev
+      - name: Städa prisdata
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # Indata via env, aldrig interpolerat i skriptet (skriptinjektion).
+          LAGE: ${{ inputs.lage }}
+          MAJRADER: ${{ inputs.majrader }}
+          HISTORIKRADER: ${{ inputs.historikrader }}
+        run: |
+          set -o pipefail
+          node scripts/stada-prisdata.mjs "$LAGE" "$MAJRADER" "$HISTORIKRADER"
