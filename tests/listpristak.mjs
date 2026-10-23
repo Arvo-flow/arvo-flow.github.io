@@ -65,4 +65,26 @@ describe('SS · inga prisseedar i repot', () => {
     assert.doesNotMatch(flode, /seed-price-db/);
     assert.match(flode, /migrate-price-db\.mjs/, 'motprov: arbetsflödet skapar fortfarande schemat');
   });
+
+  test('SS-02 · ingen skrivning till supplier_prices finns kvar, och den falska historikraden seedas inte igen', () => {
+    // Steg b i ops/ARBETSORDER-VAG1.md: apply-price-proposals skrev till en tabell som ingen kundväg läser,
+    // och seed-price-history bar «Business Standard 12,50 → 14,00, 2022-03-01», som Microsofts post
+    // 2021-08-19 inte innehåller (avläst 23 okt).
+    const apply = readFileSync(rot('scripts/apply-price-proposals.mjs'), 'utf8');
+    assert.doesNotMatch(apply, /upsertPrice|INSERT INTO supplier_prices/, 'apply-price-proposals skriver till supplier_prices igen');
+    assert.match(apply, /applyAlert|summary/, 'motprov: skriptet finns kvar och gör sitt huvudjobb');
+    const seed = readFileSync(rot('scripts/seed-price-history.mjs'), 'utf8');
+    const kod = seed.split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n');
+    assert.doesNotMatch(kod, /changedAt:\s*'2022-03-01'/, 'den falska 2022-raden seedas igen');
+    assert.match(kod, /changedAt:\s*'2026-07-01'/, 'motprov: 2026-raden står kvar');
+    // Städskriptet raderar bara när antalen ur läsningen stämmer, och räknar om efteråt.
+    const stada = readFileSync(rot('scripts/stada-prisdata.mjs'), 'utf8');
+    assert.match(stada, /fore\.p\.maj !== vantadePriser \|\| fore\.h\.falska !== vantadHistorik/, 'radering utan antalskontroll');
+    assert.match(stada, /efter\.p\.ovriga !== fore\.p\.ovriga/, 'motprovet efter raderingen saknas');
+    const flode = readFileSync(rot('.github/workflows/stada-prisdata.yml'), 'utf8');
+    assert.match(flode, /set -o pipefail/);
+    const runBlock = flode.slice(flode.lastIndexOf('run: |'));
+    assert.match(runBlock, /node scripts\/stada-prisdata\.mjs "\$LAGE"/, 'run-blocket hittades inte');
+    assert.doesNotMatch(runBlock, /\$\{\{/, 'indata interpoleras i run-blocket (skriptinjektion)');
+  });
 });
