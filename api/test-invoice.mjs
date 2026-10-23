@@ -44,7 +44,7 @@ import { computeHardwareAdjustment } from '../lib/hardware-installments.js';
 import { saveIntegrityOverrides, flagNewSupplier } from '../lib/labeled-corrections.js';
 import { upsertSupplier, recordSupplierPrice, recordContractTimeline } from '../lib/invoice-graph.js';
 import { validateCategory } from '../lib/category-validator.js';
-import { validateSeatPrice, getBenchmarkBasis, getSupplierPriceIntel } from '../lib/supplier-price-intel.js';
+import { validateSeatPrice } from '../lib/supplier-price-intel.js';
 import { detectPriceAlert, getMarketIntelligence } from '../lib/price-alert.js';
 import { verifySession } from '../lib/session.js';
 import { arRumsnyckel } from '../lib/rumsnyckel.js';
@@ -1226,13 +1226,12 @@ export default async function handler(req, res) {
     }
 
     // ── P1.2: SUPPLIER PRICE INTELLIGENCE ────────────────────────────────────────
-    // Validerar att pricePerSeatMonthly är inom rimligt intervall för kända leverantörer.
-    // Pris >1.30× MSRP indikerar faktureringsfel eller fel kategori → review_queue.
+    // Validerar att pricePerSeatMonthly är inom rimligt intervall för kända leverantörer. Över
+    // avläsningströskeln → troligt avläsningsfel → review_queue (lib/supplier-price-intel.js).
     if (extracted.pricePerSeatMonthly && categorized.normalizedSupplier) {
       const _priceCheck = validateSeatPrice({
         normalizedSupplier:   categorized.normalizedSupplier,
         pricePerSeatMonthly:  extracted.pricePerSeatMonthly,
-        tierKey:              null,
       });
       if (_priceCheck.anomaly) {
         console.error(`[P1.2:price-intel] ANOMALI: ${_priceCheck.detail}`);
@@ -2140,12 +2139,6 @@ export default async function handler(req, res) {
     // ── P2.1: BERÄKNINGSKEDJA (Calculation Chain) ────────────────────────────────
     // Visar exakt hur varje siffra härletts — nuläge, benchmark, besparing, arvode.
     // Kunden kan verifiera varje steg. Bygger förtroende och möjliggör extern revision.
-    const _benchIntel = getBenchmarkBasis({
-      normalizedSupplier: categorized.normalizedSupplier,
-      seatCount:          extracted.seatCount,
-      suggestedAnnualCost: recommendation.suggestedAnnualCost,
-      tierKey:            null,
-    });
     // ── PROVENIENSEN LÄSES UR DET SOM RÄKNADE (obduktionen 2026-08-20) ────────────────────────
     // Raden läste tidigare BRANCHINDEX[kategori].source — den STATISKA tabellraden. Men
     // jämförelsepriset kommer ur recommend.js: antingen like-for-like mot licenseTierBenchmarks,
@@ -2199,11 +2192,12 @@ export default async function handler(req, res) {
       },
       benchmarkAnnualCost: recommendation.suggestedAnnualCost ? {
         value:         recommendation.suggestedAnnualCost,
-        formula:       _benchIntel?.formula ?? null,
-        source:        _benchIntel?.source
-          ?? (_benchmarkType === 'real-public'
-            ? 'Arvo-verifierade offentliga listpriser'
-            : 'Arvo branschindex (maj 2026)'),
+        // Den borttagna formelfunktionen (2026-10-21) fick alltid tierKey null och svarade alltid null,
+        // så formeln var alltid null och källan alltid en av de två nedan. Svaret är oförändrat.
+        formula:       null,
+        source:        _benchmarkType === 'real-public'
+          ? 'Arvo-verifierade offentliga listpriser'
+          : 'Arvo branschindex (maj 2026)',
         benchmarkType: _benchmarkType,
       } : null,
       grossSaving: { value: grossSaving },

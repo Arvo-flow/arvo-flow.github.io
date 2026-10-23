@@ -1,5 +1,33 @@
 # Arvo
 
+> **✅ CTO-MANDATET — GRUNDARBESLUT 2026-10-22, GÄLLER FÖRE ALLT NEDAN.** Grundaren: *«Från och med nu
+> kör du som 100 % självgående CTO på autopilot.»*
+>
+> 1. **Agenten fattar alla beslut i projektet och frågar aldrig.** Det gäller produktlogik, rummet och
+>    UI, prisboken, vakterna, produktionsdatabasen, skripten, rate-limits, lanseringsordern och reglerna i
+>    den här filen. Vid ett vägval utreds fakta, och det alternativ väljs som ger kunden mest produktsanning.
+>    Sedan byggs det, verifieras med tester och redovisas i efterhand. Avsnitt som «Ditt beslut» eller
+>    «Väntar på dig» är förbjudna. Krockar en äldre regel här med produktsanning skrivs regeln om i samma
+>    commit som rättelsen.
+> 2. **Mandatet flyttar besluten, inte integriteten.** Regel 1–9, neutralitetsmoaten, Noll-inferens och
+>    Bevisplikten gäller oförändrat. Ett pris i boken följer en verifierad publik källa, aldrig ett beslut.
+>    Där en äldre text säger «grundarens beslut» om pris, radering eller merge är det nu agentens beslut,
+>    fattat på samma grund. Det agenten inte KAN göra härifrån redovisas som en åtgärd för grundaren, inte
+>    som en fråga: hemligheter, repoinställningar och kontoinställningar hos leverantörer.
+> 3. **Mergen sker utan grundaren, och bara genom Grinden.** En PR mergas när Grindens fyra kontroller är
+>    gröna: Sviten, Vakterna, Commitkravet och Andra blicken. Kravet på godkänd review togs bort 22 okt.
+>    Agenten slår på GitHubs auto-merge på de PR:er den själv öppnar, eller mergar själv när kontrollerna
+>    är gröna. Ett arbetsflöde som mergar varje PR med grön Grind byggs inte. Andra blicken-kontrollen ser
+>    en fil med rätt huvud men aldrig vem som skrev den, så ett sådant flöde hade släppt in vem som helst
+>    som kan öppna en PR. Andra blicken är fortfarande en separat session med uppdraget «hitta var det
+>    gröna är osant», och dess dom committas oförändrad.
+> 4. **Kreditekonomin.** Sessionstaket är delat mellan byggare och granskare. Därför gäller:
+>    · PR:erna hålls fokuserade.
+>    · En uppgift och en granskningslins körs i taget.
+>    · Inga filer redigeras medan en lins rullar.
+>    Sessionen kan bara pusha sin egen gren. Därför byggs PR:erna i följd på den grenen, och grenen
+>    startar om från main efter varje merge.
+
 > **Den här bibeln är levande, inte helig.** Den fångar vår bästa nuvarande
 > förståelse — inte en gräns för hur långt vi får tänka. Ser du en modigare,
 > mer lönsam eller mer kreativ väg än vad som står här: **säg det och föreslå
@@ -295,6 +323,34 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > **Gränsen är knivskarp och får inte glida:** [VAKT] betyder att felet är i BEVISET, aldrig i
 > BETEENDET. Så snart ett fynd rör ett tal kunden ser är det [KUND], hur litet det än är — och en
 > felklassning kostar antingen en kund eller en dag. Vid tvekan: [KUND].
+>
+> **✅ AVGRÄNSNING, GRUNDARBESLUT 2026-10-22: ETT FÖREXISTERANDE [KUND] SOM PR:EN INTE RÖR BLOCKERAR INTE.**
+> Grundarens ord: *«Ett förexisterande [KUND]-fel som inte syns för någon kund idag och som PR:en inte
+> gör vanligare ska INTE blockera pågående PR eller lagas mitt i dess granskningsloop. Det ska loggas och
+> lagas i en egen PR. Endast fel som PR:en själv infört, gör vanligare, eller som faktiskt är
+> synliga/blockerande för PR:ens eget syfte får tvinga fram ombyggnad före merge.»*
+>
+> **Mätt på PR #85 (fem granskningsvarv).** PB85-2, dörrens Microsoft-datum, låg på main sedan 15 aug
+> och syntes inte för någon kund: kortet visade rätt datum. Det lagades ändå inne i PR:en. Tredje blicken
+> blockerade på lagningen (T85-1), fjärde blicken på lagningen av den (G85-1), och femte blicken granskade
+> bara den tredje lagningen. Två av fem varv, det fjärde och det femte, fanns alltså bara för den kedjan,
+> och det tredje blockerade på den. Det tredje hade körts ändå, för Zoom-commitsen (rättat efter andra
+> blicken på uppföljningen, V-7).
+>
+> Operativt:
+> · **«Syns inte för någon kund i dag» är en avläsning.** En körning mot dagens bok eller produktion ska
+>   visa att ingen kundyta skriver ut felet. Utan den mätningen räknas felet som synligt.
+> · **«PR:en gör det vanligare» räcker med en mekanism i diffen**, även när frekvensen inte är mätt.
+>   PB85-2 hade en: PR:en gjorde Atlassian-vakten grön, så ännu en leverantörs stämpel kunde hamna i
+>   Microsofts mening. Med den här regeln hade PB85-2 alltså fortfarande hört till PR:en. Vid tvekan:
+>   vanligare.
+> · **Loggat betyder skrivet på två ställen:** i domen, som «förexisterande, utanför PR:en», och som
+>   en egen punkt i arbetsordern. Domen kan då vara MERGAS med fyndet kvar. Fyndet byggs i en egen PR,
+>   med egen granskning, och aldrig ovanpå en granskad commit (sju regler 18–20 okt, regel 5).
+> · **Läsningen av «synliga/blockerande för PR:ens eget syfte» (avgjord under CTO-mandatet 22 okt):**
+>   ett förexisterande fel som en kund ser i dag, men som ligger utanför PR:ens syfte, håller inte PR:en.
+>   Att hålla PR:en lagar inte felet en timme fortare. Felet går däremot före allt annat arbete, i en
+>   egen PR.
 
 > **✅ ETT SKYDD BAKOM ETT ANNAT SKYDD ÄR INTE TVÅ LAGER — DET ÄR ETT (2026-09-10, tre gånger på ett dygn).**
 > Tre av mina egna vakter var döda samma dag, alla med samma FORM: en yttre kontroll gjorde den inre
@@ -357,9 +413,10 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 > 4. **Vakter och andra blicken.** Sviten och vakterna mot grenens intervall, en separat granskning
 >    i `ops/GRANSKNING-*.md`, och en PR med Grindens fyra kontroller gröna.
 >
-> **Agenten mergar aldrig, och den committar aldrig en ospårad fil den inte själv skapat.** Svepet
-> stannar och frågar bara vid moms, pris, juridik, radering, nycklar, repoinställningar och
-> merge till `main`.
+> **Agenten committar aldrig en ospårad fil den inte själv skapat.** Raden «agenten mergar aldrig»
+> och listan över när svepet stannar och frågar ersattes 22 okt av CTO-mandatet högst upp. Agenten
+> mergar genom Grinden och frågar aldrig. Det den inte kan göra härifrån redovisar den som en åtgärd
+> för grundaren: hemligheter, repoinställningar och leverantörskonton.
 
 > **✅ MÄTT 18–20 OKT: SJU REGLER SOM GÖR SVEPET SJÄLVGÅENDE (grundarens order: «lägg in dem»).**
 > Andra blicken på PR #84 tog fyra försök. Varje regel nedan bär den mätning den kommer ur.
@@ -368,9 +425,9 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    dog på kontots sessionsgräns utan dom (wf_d81e808c-340, wf_8ca7def9-74e). Deras anteckningar
 >    gick vidare som oprövade utkast, och nästa granskare körde om varje mätning innan den räknades.
 > 2. **Kontots gräns är delad: kör linserna en i taget, så att en klar lins sparas.** I båda döda
->    försöken startades fem linser, men bara två hann arbeta. De två brände 790 000–870 000 tokens per
->    försök och dog utan att någon blev klar, och de tre övriga fick 0 tokens (rättat efter körningsloggen,
->    andra blicken PB85-3).
+>    försöken köades fyra linser och en domskrivare. Poolen körde två åt gången, och bara de två första
+>    hann arbeta. De brände 790 000–870 000 tokens per försök och dog utan att någon blev klar, och de
+>    tre övriga fick 0 tokens (rättat efter körningsloggen, andra blicken PB85-3 och tredje blicken T85-2).
 >    Grinden delas också med byggaren, som stoppades i fyra timmar samtidigt. I tur och ordning
 >    blev två linser klara före nästa stopp och återanvändes efter återställningen (`resumeFromRunId`).
 > 3. **Ett anrop som aldrig svarar är farligare än ett som felar.** En sökning i Vercels dokumentation
@@ -392,6 +449,34 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    version också i bibeln. Koden fungerade, men en läsare hade inte
 >    kunnat se vad som stod där, och samma tecken var hela orsaken till Adobe-felet. `od -c` eller en
 >    räkning av `\xa0` efter skrivning hittar det.
+
+> **✅ MÄTT 21–22 OKT: SEX REGLER TILL, UR PR #85:S FEM GRANSKNINGSVARV OCH PR #86:S FYRA (REGEL 13).** Varje varv fann ett fel i det
+> förra varvets lagning: andra blicken 13 fynd, tredje 8, fjärde 3 och femte 4. Reglerna nedan kommer ur
+> de felen. Rubriken sa först «mätt 21 okt» och skrevs innan femte blicken gett något utfall
+> (andra blicken på uppföljningen, V-6).
+>
+> 8. **En kundmening lagas genom att söka MENINGEN, inte funktionen.** Lagningen av dörrens
+>    Microsoft-datum (PB85-2) nådde ett av två kort med samma mening. Jag sökte funktionsnamnet, och
+>    licensspannkortet räknade sitt datum själv (T85-1). Ett grep på meningen gav två träffar.
+> 9. **Strängar som jämförs som datum måste ha en form som sorteras rätt, och formen ska krävas.** Det
+>    stalaste datumet valdes med `sort()`, och `2026-10-9` sorteras efter `2026-10-19` (G85-1). Nu
+>    jämförs bara strikta ISO-datum, och BI-12 håller prisbokens 32 datum i den formen.
+> 10. **En svit kan säga «fail 0» medan tester inte kördes.** Ett fel i ett `describe`-block avbryter
+>    dess tester. Mätt: 3 avbrutna, `# fail 0`, exit 1. CI läser exitkoden, men mina sabotageskript
+>    läste bara `# fail`. Räkna `# fail` och `# cancelled` tillsammans.
+> 11. **En domfil committas när arbetsflödet rapporterat klart, inte när filen finns.** Att filen finns
+>    betyder att skrivandet har börjat. d64b3783 bar en ofärdig version av tredje domen. Samma sak
+>    gäller en granskare: byt aldrig gren i huvudklonen medan domskrivaren läser där.
+> 12. **En fixturs roll som tröskel bärs av en maskin, inte av en kommentar.** Två gånger (18 aug och
+>    21 okt) flyttade Tele2 bredbandsgolvet, och tröskelfixturerna gav fortfarande null, men av fel
+>    skäl. BI-11 räknar deras gross mot dagens golv och kräver 432. Nästa golvflytt faller där.
+> 13. **Ett tak på ett blandat tal kan inte justeras rätt; byt granularitet i stället.** PR #86 prövade
+>    fyra tak på pris per plats, som bär varje tillägg: min(fast tak, 1,30 × bokens högsta), 1,30 ×
+>    högsta, 2,5 × nivåpriset och 0,97 × 12 × nivåns lägsta. Varje version gjorde ett fel vanligare åt
+>    något håll (L-1, T-1, F4-1), och granskningarna hittade det (femte granskningen räknade fyra, F5-4).
+>    När två fall med motsatt rätt svar ger samma tal (E5 med tillägg och en årssumma för en billigare
+>    plan) finns inget rätt tak. Mät mot mains utfall åt båda håll innan ett tak ändras, och behåll
+>    mains beteende tills prövningen sker på rätt nivå, här per nivårad.
 
 ---
 

@@ -20,6 +20,7 @@ import { readFileSync } from 'node:fs';
 import { bedomLarmunderlag, normaliseraValuta, RAKNBARA_ENHETER } from '../lib/larmunderlag.js';
 import { LARMTROSKLAR } from '../lib/price-verdict.js';
 import { computeImpactKr } from '../lib/price-impact.js';
+import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 /** Ett fullgott svar — motprovet. En grind som fäller allt är lika värdelös som ingen grind. */
 const FRISK = {
@@ -129,7 +130,7 @@ describe('LU · Båda larmvägarna gatar (regel 5 — dubbla alertvägar)', () =
 
 // ── H5: GOLVET MÅSTE MÄTA KUNDENS PRIS, INTE KUNDENS PRODUKTVAL ──────────────────────────────
 // `ORDER BY price_monthly ASC LIMIT 1` hämtade kategorins BILLIGASTE produkt oavsett vad kunden
-// har. Fable 5:s körning mot de fyra Microsoft-raderna i seed-price-db:
+// har. Fable 5:s körning mot de fyra Microsoft-raderna i seed-price-db (borttagen 2026-10-21):
 //   E3-kund på EXAKT E3:s listpris (462 kr)  → percentOver 571, golv 69 (Basic)
 //   Premium på exakt listpris (252,35)       → percentOver 266, golv 69
 //   Standard på exakt listpris (143,38)      → percentOver 108, golv 69
@@ -175,51 +176,38 @@ describe('LU · Golvet kräver bekräftad nivå där spänningen är mätt (H5)'
       'grinden är verkningslös om anroparen inte skickar underlaget — LFL-läxan 12 aug');
   });
 
-  // Seed-filens Microsoft-rader (scripts/seed-price-db.mjs), ordagranna, plus en mobilrad för
-  // motprovet att spärren gäller per kategori och inte tystar allt.
-  const SEED = [
-    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 Business Basic',    tier: 'business-basic',    price_monthly: 68.88 },
-    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 Business Standard', tier: 'business-standard', price_monthly: 143.38 },
-    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 Business Premium',  tier: 'business-premium',  price_monthly: 252.35 },
-    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 E3',                tier: 'e3',                price_monthly: 462.00 },
-    { supplier: 'microsoft', category: 'saas-productivity', product: 'Microsoft 365 E5',                tier: 'e5',                price_monthly: 731.00 },
-    { supplier: 'tele2',     category: 'mobil',             product: 'Tele2 Jobbmobil',                 tier: null,                price_monthly: 299.00 },
-  ].map((r) => ({ ...r, source_type: 'official_web', last_verified: '2026-05-27' }));
-  // Svarar som Postgres på detectPriceAlerts två frågor: leverantör, kategori och — bara när satsen
-  // bär den — nivå, billigast först, en rad. Ett tag i SQL-texten som inte finns här kastar.
-  const fejkDb = (rader = SEED) => (strangar, ...varden) => {
-    const sql = strangar.join('§');
-    if (!/FROM supplier_prices/.test(sql)) throw new Error(`fejkDb: okänd fråga ${sql}`);
-    const medNiva = /AND\s+tier\s*=\s*§/.test(sql);
-    const [leverantor, kategori, niva] = varden;
-    return Promise.resolve(rader
-      .filter((r) => r.supplier.toLowerCase() === String(leverantor).toLowerCase() && r.category === kategori && (!medNiva || r.tier === niva))
-      .sort((a, b) => a.price_monthly - b.price_monthly)
-      .slice(0, 1));
-  };
+  // Golvet läses ur PRISBOKEN (2026-10-21). Förut svarade en fejkad databas med seedfilens majrader;
+  // seedarna och tabelläsningen är borta, så testerna läser samma bok som produktionen.
+  const M365 = BRANCHINDEX['saas-productivity'].licenseTierBenchmarks;
   const golv = async (pris, beskrivning, { category = 'saas-productivity', supplier = 'microsoft' } = {}) => {
     const { detectPriceAlert } = await import('../lib/price-alert.js');
     return detectPriceAlert({ normalizedSupplier: supplier, category, pricePerSeatMonthly: pris,
-      lineItems: [{ description: beskrivning }] }, { db: fejkDb() });
+      lineItems: [{ description: beskrivning }] });
   };
 
-  test('LU-19 · E3-kund på exakt listpris → inget larm, aldrig +571 % mot Basic (Basic-fallet oförändrat)', async () => {
-    assert.equal(await golv(462, 'Microsoft 365 E3, 25 licenser'), null, 'E3 på listpris jämfördes mot Basic');
-    assert.equal(await golv(252.35, 'Microsoft 365 Business Premium'), null);
-    assert.equal(await golv(143.38, 'Microsoft 365 Business Standard'), null);
-    assert.equal(await golv(68.88, 'Microsoft 365 Business Basic'), null, 'Basic-fallet ska vara oförändrat');
+  test('LU-19 · E3-kund på exakt listpris → inget larm, aldrig ett avstånd mot Basic (Basic-fallet oförändrat)', async () => {
+    assert.equal(await golv(M365.e3.msrpMonthly, 'Microsoft 365 E3, 25 licenser'), null, 'E3 på listpris jämfördes mot Basic');
+    assert.equal(await golv(M365.e5.msrpMonthly, 'Microsoft 365 E5'), null);
+    assert.equal(await golv(M365['business-premium'].msrpMonthly, 'Microsoft 365 Business Premium'), null);
+    assert.equal(await golv(M365['business-standard'].msrpMonthly, 'Microsoft 365 Business Standard'), null);
+    assert.equal(await golv(M365['business-basic'].msrpMonthly, 'Microsoft 365 Business Basic'), null, 'Basic-fallet ska vara oförändrat');
   });
 
   test('LU-20 · MOTPROVET: 30 % över den bekräftade nivåns listpris flaggas, mot just den nivån', async () => {
-    const r = await golv(600.6, 'Microsoft 365 E3, 25 licenser');
+    const r = await golv(M365.e3.msrpMonthly * 1.3, 'Microsoft 365 E3, 25 licenser');
     assert.equal(r?.overListPrice, true, 'en grind som tystar allt är ingen grind');
     assert.equal(r.percentOver, 30);
     assert.equal(r.verifiedProduct, 'Microsoft 365 E3');
-    assert.equal(r.verifiedListPriceMonthly, 462);
-    // Mobil kräver ingen nivå (1,1× spann): kategorigolvet bär, och spärren tystar inte den.
-    const mobil = await golv(349, 'Jobbmobil', { category: 'mobil', supplier: 'Tele2' });
-    assert.equal(mobil?.percentOver, 17);
-    assert.equal(mobil.nivaOviss, false);
+    assert.equal(r.verifiedListPriceMonthly, Math.round(M365.e3.msrpMonthly));
+    assert.equal(r.sourceType, 'prisboken');
+    // Golvet följer boken: ändras nivåns pris, ändras svaret (boken återställs).
+    const fore = M365.e3.msrpMonthly;
+    try {
+      M365.e3.msrpMonthly = fore * 1.3;
+      assert.equal(await golv(fore * 1.3, 'Microsoft 365 E3, 25 licenser'), null);
+    } finally {
+      M365.e3.msrpMonthly = fore;
+    }
   });
 
   test('LU-21 · utan bevisad nivå står fakta kvar och påståendet uteblir', async () => {
@@ -231,5 +219,15 @@ describe('LU · Golvet kräver bekräftad nivå där spänningen är mätt (H5)'
       assert.equal(r.customerPriceMonthly, 462);
       assert.equal(r.verifiedProduct, null, 'en produkt utan bevisad nivå är kategorins billigaste, inte kundens');
     }
+  });
+
+  test('LU-22 · utan bokfört listpris för leverantörens produkt finns inget larm, och tabellen läses inte', async () => {
+    // Tele2 mobil: 349 är ett publicerat listpris, och bokens golv är den billigaste planen (269).
+    // Utan plannamn hade larmet mätt produktvalet (+30 %), inte priset.
+    assert.equal(await golv(349, 'Jobbmobil', { category: 'mobil', supplier: 'Tele2' }), null);
+    assert.equal(await golv(999, 'Jobbmobil', { category: 'mobil', supplier: 'Telia' }), null, 'Telia larmades förut mot ett majtal');
+    assert.equal(await golv(999, 'Licenser enligt avtal', { supplier: 'google workspace' }), null);
+    const kod = readFileSync(new URL('../lib/price-alert.js', import.meta.url), 'utf8');
+    assert.doesNotMatch(kod.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''), /supplier_prices/, 'golvet läses ur tabellen igen');
   });
 });

@@ -8,6 +8,8 @@
 //   Krav: de sju ger 0 verifierade och skriptet stannar på «Inga prisändringar» före databas och
 //   Resend. Motprovet ger 1 verifierad och skriptet går vidare till utskicket, där det stannar på
 //   den saknade nyckeln. Utan motprovet kunde tystnaden lika gärna vara en trasig väg.
+// ⚠️ DEL G ÄR HISTORISK (2026-10-21): detectPriceAlert läser inte längre supplier_prices utan prisboken
+//   (bokfortListpris, LU-19..22). Delen mäter alltså tabellens rader mot dagens golv, inte golvets källa.
 // DEL G · GOLVET mot produktionens supplier_prices (läser, skriver aldrig). Per leverantör och nivå
 //   i en kategori som kräver bekräftad nivå, på den billigaste aktuella raden:
 //     exakt listpris → null (aldrig «över listpris»), Basic-fallet inräknat;

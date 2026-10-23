@@ -37,7 +37,9 @@ const fixtur = (namn) => readFileSync(new URL(`./fixtures/kallfabriken/${namn}`,
 const GOOGLE_AR = fixtur('google-arsavtal-2026-10-16.txt');
 const GOOGLE_MAN = fixtur('google-manadsavtal-2026-10-16.txt');
 const TELIA_PRISLISTA = fixtur('telia-smart-connect-prislista-2026-10-16.txt');
-const TELIA_SIDA = 'Smart Connect uppsättning 1 Pris just nu: 49 kr/mån Ordinarie pris gäller efter kampanjen Smart Connect uppsättning 2 Pris från: 118 kr/mån';
+// Växelsidan som den lästes 18 okt (körning 39155569488). T2:s pris står på kortet med «lokalt nummer»
+// och läses bara där (V85-T1); en påhittad sidtext utan kortets ord prövade en form sidan inte har.
+const TELIA_SIDA = readFileSync(new URL('./fixtures/narvaro/telia-vaxelsida-2026-10-18.txt', import.meta.url), 'utf8');
 
 describe('KF · Källfabriken — fyra vakter lagade, och deras etiketter', () => {
   test('KF-01 · villkorsboken: ett oåtkomligt dokument är OLÄSBAR, en borttagen länk är DRIFT', () => {

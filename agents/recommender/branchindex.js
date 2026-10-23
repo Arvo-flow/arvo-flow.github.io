@@ -159,10 +159,10 @@ export const BRANCHINDEX = {
     // NÄSTA VERIFIERING: vakten kör veckovis (måndagar) — manuell koll behövs bara vid rött bygge.
     note: 'Per användare/år (exkl. moms). Källa: Tele2 Företag mobilabonnemang, verifierat live 2026-08-05 — publicerade 24-mån-priser 269, 299 och 349 kr/mth (24 mån bindning, faktiskt B2B-pris). p25 = lägsta publicerade 24-mån-pris. Median = näst lägsta. Extra abonnemang via Kollega (50 % rabatt) ingår INTE i p25. Hårdvaruhyra klassificeras som hardware i extract.js och ingår INTE i besparingskalkylen.',
     alternatives: [
-      { supplier: 'Tele2 Företag',   positioning: 'Entrétier 269 kr/mth, nästa nivå 299 kr/mth (24 mån) — ofta lägst faktiskt B2B-pris bland rikstäckande operatörer', reliability: 0.93 },
-      { supplier: 'Tre Företag',     positioning: 'Stark datakapacitet, konkurrenskraftigt pris för obegränsad data',                                        reliability: 0.91 },
+      { supplier: 'Tele2 Företag',   positioning: 'Entrétier 269 kr/mån, nästa nivå 299 kr/mån (24 mån bindning), verifierade publika listpriser', reliability: 0.93 },
+      { supplier: 'Tre Företag',     positioning: 'Abonnemang med obegränsad data i utbudet — inget verifierat listpris i prisboken',                                        reliability: 0.91 },
       { supplier: 'Telia Företag',   positioning: 'Rikstäckande nät, premium-support, volymavtal för större flottor',                                        reliability: 0.96 },
-      { supplier: 'Telenor Företag', positioning: 'God täckning, flexibla volymavtal, konkurrenskraftig prissättning',                                       reliability: 0.92 },
+      { supplier: 'Telenor Företag', positioning: 'Volymavtal för flottor — inget verifierat listpris i prisboken',                                       reliability: 0.92 },
     ],
     matrix: {
       // p25 = Tele2 lägsta verifierade 24-mån-pris (269 kr/mth × 12 = 3 228 kr/år) — ALLA buckets.
@@ -178,7 +178,7 @@ export const BRANCHINDEX = {
 
   bredband: {
     source: 'real-public',
-    lastVerified: '2026-10-19',
+    lastVerified: '2026-10-21',
     verifiedVia: 'tele2-address-api',
     // GENOMBROTT 2026-06-14 (7 sond-rundor): Tele2:s adress→pris-API reverse-engineerat —
     // två rena publika JSON-endpoints (feasibility/addresses + broadband/products) som ger
@@ -193,7 +193,7 @@ export const BRANCHINDEX = {
     // Verifierade Tele2 REGULAR-priser (kr/mån EXKL moms), live 2026-06-17 via API:t.
     // Driftvakten resolvar dessa adresser → API → jämför mot priserna. Rött vid drift.
     tele2Verified: {
-      source: 'tele2-address-api', lastVerified: '2026-08-18', unit: 'kr_per_manad_exkl_moms',
+      source: 'tele2-address-api', lastVerified: '2026-10-21', unit: 'kr_per_manad_exkl_moms',
       verifyAddresses: ['Götgatan 92B, Stockholm', 'Sturegatan 33, Sundbyberg', 'Storgatan 41F, Östersund'],
       // family Max = Tele2 COAX (nationellt enhetligt, 12 mån bindning).
       // Prissänkning verifierad 2026-06-17 (vakten larmade): 263/319/335 → 239/279/319.
@@ -212,15 +212,23 @@ export const BRANCHINDEX = {
       // success fee. Prisboken följer källan, aldrig vårt intäktsintresse (grundarbeslut
       // 2026-08-18: "vi ska ALDRIG ha med ett pris som vi inte kan backa upp" — och lika lite
       // ett pris vi kan backa upp men som råkar gynna oss att låta stå kvar inaktuellt).
-      max: { 250: 199, 500: 239, 1200: 279, 2500: 279, bindingMonths: 12 },
+      //
+      // HÖJNINGEN TILLBAKA, verifierad 2026-10-21: 199/239/279 → 239/279/319 (+40 kr rakt av),
+      // alltså samma nivå som 17 jun–18 aug. Grundarbeslut 21 okt: prisboken följer källan.
+      // Vakten bekräftade de lägre talen 19 okt 09:47 UTC (job 117994056517, varje produkt jämförd
+      // exakt) och såg höjningen i tre läsningar 21 okt: körning 39548656562 (05:16), 39549606765
+      // och 39623423878 (15:12). Identiska tal på alla tre adresserna. Standard-familjen oförändrad.
+      // Obekräftad bedömning: augustisänkningen var en kampanj som upphörde 19–21 okt. I så fall
+      // stod ett kampanjpris som golv i två månader, och bredbandskunder såg upp till 480 kr/år
+      // för stor besparing per abonnemang. Den här riktningen ger mindre besparingsanspråk.
+      max: { 250: 239, 500: 279, 1200: 319, 2500: 319, bindingMonths: 12 },
       // family Standard = öppet fiber/LAN (12 mån bindning)
       standard: { 100: 399, 250: 415, 500: 455, 1000: 487, bindingMonths: 12 },
     },
     unit: 'kr/år',
-    note: 'Bredband per adress — priset beror på vilket NÄT som når adressen (inget rikstäckande listpris). Verifierat live mot Tele2:s adress-API 2026-08-18 (exkl moms): "Max"/COAX nationellt enhetligt (1200 Mbit 279 kr/mån, 12 mån), "Standard"/öppen fiber dyrare (1000 Mbit 487 kr/mån, 12 mån). Adresser utan Tele2-nät har inget fast erbjudande (bara mobilt). Benchmarken är hastighetsbaserad och härleds i kod ur tele2Verified (bredbandSpeedBenchmark) — inga legacy-estimat finns kvar. Utan känd hastighet finns ingen verifierbar benchmark (Zero Trust: ingen gissad siffra).',
+    note: 'Bredband per adress — priset beror på vilket NÄT som når adressen (inget rikstäckande listpris). Verifierat live mot Tele2:s adress-API 2026-10-21 (exkl moms): "Max"/COAX nationellt enhetligt (1200 Mbit 319 kr/mån, 12 mån), "Standard"/öppen fiber dyrare (1000 Mbit 487 kr/mån, 12 mån). Adresser utan Tele2-nät har inget fast erbjudande (bara mobilt). Benchmarken är hastighetsbaserad och härleds i kod ur tele2Verified (bredbandSpeedBenchmark) — inga legacy-estimat finns kvar. Utan känd hastighet finns ingen verifierbar benchmark (Zero Trust: ingen gissad siffra).',
+    // Tele2:s två alternativ härleds ur tele2Verified av tillampaBredbandsalternativ() nedan (K-1).
     alternatives: [
-      { supplier: 'Tele2 Bredband Max (COAX)',     positioning: 'Verifierat via adress-API 2026-08-18: 1200/100 Mbit 279 kr/mån exkl (12 mån) — nationellt enhetligt där COAX-nätet når',  reliability: 0.95 },
-      { supplier: 'Tele2 Bredband Standard (fiber)', positioning: 'Verifierat: 1000/1000 Mbit 487 kr/mån exkl (12 mån) — öppna fibernät, dyrare än COAX',                        reliability: 0.95 },
       { supplier: 'Bahnhof Företag',                positioning: 'Svensk support, statisk IP, stark SLA — offert per adress (ej i Tele2-API:t)',                                  reliability: 0.94 },
     ],
     // INGEN matrix/speedTierBenchmarks: bredband-benchmarken är hastighetsbaserad och härleds
@@ -255,8 +263,8 @@ export const BRANCHINDEX = {
     },
     note: 'Molnväxel per användare/mån (exkl moms). Verifierat ankare: Telia Smart Connect — instegsgolv T1 från 89 kr, T2 från 118 kr (telia.se, exkl moms bekräftat 2026-06-18). Tilläggspriser exakta: softphone 29, funktionsnummer 99, extra nummer 39 kr/mån. Kanonisk T1/T2/T3 + k-anonym tvärkund-jämförelse.',
     alternatives: [
-      { supplier: 'Telia Smart Connect', positioning: 'Marknadens instegsväxel för SMF — från 89 kr/anv/mån exkl moms (T1), ersätter Touchpoint', reliability: 0.95 },
-      { supplier: 'Telavox',             positioning: 'Bundlar mobil+växel (Premium 399, Max 549) — stark app; moms bekräftas innan listpris visas', reliability: 0.90 },
+      { supplier: 'Telia Smart Connect', positioning: 'Telias instegsväxel för SMF — från 89 kr/anv/mån exkl moms (T1), ersätter Touchpoint', reliability: 0.95 },
+      { supplier: 'Telavox',             positioning: 'Bundlar mobil och växel — inget verifierat listpris i prisboken', reliability: 0.90 },
     ],
   },
 
@@ -415,10 +423,10 @@ export const BRANCHINDEX = {
     },
     note: 'Per användare/år (exkl. moms). Referensprodukt: M365 Business Standard (microsoft.com). Billigaste publicerade pris = årsavtal 133,82 kr/mån × 12 = 1 606 kr/år. Listpris utan bindning = 160,58 kr/mån × 12 = 1 927 kr/år. Verifierat 2026-08-05.',
     alternatives: [
-      { supplier: 'Microsoft 365 Business Standard',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive. Väsentligt lägre än E3/E5.', reliability: 0.97 },
-      { supplier: 'Google Workspace Business Standard',          positioning: 'Starkaste alternativet till M365 — 2 TB Drive, Meet, Docs. Ofta 30–40 % billigare än M365.',            reliability: 0.96 },
+      { supplier: 'Microsoft 365 Business Standard',  positioning: 'Rätt tier för de flesta SMF — Teams, SharePoint, Exchange, 1 TB OneDrive.', reliability: 0.97 },
+      { supplier: 'Google Workspace Business Standard',          positioning: 'Alternativet till M365 för bolag som vill ha Googles verktyg — Drive, Meet, Docs. Prissätts i USD, så vi har inget verifierat SEK-pris att jämföra med.',            reliability: 0.96 },
       { supplier: 'Microsoft 365 Business Premium',              positioning: 'För bolag med säkerhetskrav (Intune, Defender) utan behov av E5-compliance-funktioner.',               reliability: 0.97 },
-      { supplier: 'Zoho Workplace',                              positioning: 'Budgetalternativ med e-post, docs och CRM-integration — lägst TCO för enkla behov.',                  reliability: 0.89 },
+      { supplier: 'Zoho Workplace',                              positioning: 'E-post, dokument och CRM-integration i ett paket — inget verifierat listpris i prisboken.',                  reliability: 0.89 },
     ],
     licenseTierBenchmarks: {
       // ─────────────────────────────────────────────────────────────────────
@@ -885,9 +893,9 @@ export const BRANCHINDEX = {
     // Median = vad marknaden faktiskt betalar (Visma, Hogia, Azets-nivå).
     note: 'Per anställd/år. Källa: Fortnox Lön verifierat publikt listpris (fortnox.se/produkt/lon, 2026-05-22) — 199 kr/mån fast + 25 kr/anställd/mån, utslaget per storleksband. Lönebeskedsavgiften (5 kr, Kivra-utskick) är ett valfritt tillägg och ingår inte. En verifierad leverantör i kategorin, alltså ett pris och ingen fördelning.',
     alternatives: [
-      { supplier: 'Fortnox Lön',   positioning: 'Verifierat lägst — 199 kr/mån + 25 kr/anst/mån. Direkt integrerat i Fortnox.',  reliability: 0.96 },
+      { supplier: 'Fortnox Lön',   positioning: 'Verifierat publikt listpris: 199 kr/mån + 25 kr/anst/mån. Direkt integrerat i Fortnox.',  reliability: 0.96 },
       { supplier: 'Visma Lön',     positioning: 'Stark integration med Visma eEkonomi, bred support — offert krävs',              reliability: 0.94 },
-      { supplier: 'Hogia Lön',     positioning: 'Marknadsledare för mid-size, starka kollektivavtalsregler — offert krävs',       reliability: 0.95 },
+      { supplier: 'Hogia Lön',     positioning: 'Lönesystem med stöd för kollektivavtal — offert krävs',       reliability: 0.95 },
       { supplier: 'Azets Sverige', positioning: 'Outsourcad lönekörning — rätt om kunden vill slippa systemansvar helt',          reliability: 0.93 },
     ],
     matrix: {
@@ -1246,6 +1254,35 @@ function tillampaCellHarledning() {
   }
 }
 tillampaCellHarledning();
+
+// ── BREDBANDETS TELE2-ALTERNATIV HÄRLEDS UR tele2Verified ──────────────────────────────────────
+// Texten «1200/100 Mbit 279 kr/mån» stod handskriven i alternativet. När boken höjdes till 319 den
+// 21 okt följde den inte med, och rummets bytesbesked visade 279 under bokens datum (andra blicken
+// på uppföljningen efter PR #85, K-1). Talen läses nu ur samma post som vakten bekräftar, och just
+// de två ankarprodukterna (max 1200, standard 1000) som vakten kräver att minst en adress bekräftar.
+// Texten bär inget datum: rummet visar kategorins datum bredvid (api/invoice-history.mjs,
+// buildSwitchTargets), och ett datum i texten är ett andra datum som kan glida isär. Uppladdnings-
+// hastigheten står inte heller: vakten läser den aldrig, så den vore en overifierad spec. BI-13.
+export function bredbandsalternativ(tv) {
+  const ut = [];
+  const max = tv?.max;
+  const std = tv?.standard;
+  if (Number.isFinite(max?.[1200]) && max[1200] > 0) {
+    ut.push({ supplier: 'Tele2 Bredband Max (COAX)', reliability: 0.95,
+      positioning: `Verifierat via Tele2:s adress-API: 1200 Mbit ${max[1200]} kr/mån exkl moms (${max.bindingMonths} mån bindning) — nationellt enhetligt där COAX-nätet når` });
+  }
+  if (Number.isFinite(std?.[1000]) && std[1000] > 0) {
+    ut.push({ supplier: 'Tele2 Bredband Standard (fiber)', reliability: 0.95,
+      positioning: `Verifierat via Tele2:s adress-API: 1000 Mbit ${std[1000]} kr/mån exkl moms (${std.bindingMonths} mån bindning) — öppna fibernät, priset varierar mellan nät` });
+  }
+  return ut;
+}
+
+function tillampaBredbandsalternativ() {
+  const bb = BRANCHINDEX.bredband;
+  bb.alternatives = [...bredbandsalternativ(bb.tele2Verified), ...bb.alternatives.filter((a) => !/^Tele2\b/.test(a.supplier))];
+}
+tillampaBredbandsalternativ();
 
 /**
  * Look up benchmark for a customer + category.

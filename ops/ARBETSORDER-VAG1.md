@@ -1,0 +1,78 @@
+# Arbetsorder: vägen till våg 1 (CTO-mandatet, 22 okt)
+
+Grundaren gav 22 okt ett totalt CTO-mandat (CLAUDE.md, överst). Det här är körplanen. Den fortsätter
+`ops/ARBETSORDER-LANSERING.md`, vars punkter 1, 2, 3 och 5 är klara. Varje steg är en egen fokuserad
+PR som mergas genom Grinden. En uppgift och en granskningslins körs i taget.
+
+## Läge
+
+| Steg | Innehåll | Läge |
+|---|---|---|
+| a | PR #86: Tele2 +40 kr, en prisbok (majtabellen och seedarna bort), vakter framåt | K-1 lagat; granskningen av lagningen BLOCKERAR (L-1), lagat med L-2–L-7 i samma PR |
+| b | Databas och skript: majraderna i `supplier_prices` bort, död skrivning i `scripts/apply-price-proposals.mjs` bort | efter merge och deploy av a |
+| c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | efter b |
+| d | Arbetsorderns punkt 4: live-verifiering och rummet i 390 och 1600 px | efter c |
+
+## Förexisterande fynd, loggade enligt avgränsningen 22 okt
+
+Ur andra blicken på uppföljningen (`ops/GRANSKNING-ssot-tele2.md`). Inget av dem blockerar PR #86.
+Var och en byggs i en egen PR, med egen granskning.
+
+- **V-1 · Standard 500 i Östersund: 399 i källan, 455 i boken. Stängt.** Talet når ingen kundtext
+  (avläst med motprov). Nästa körning, 39768127034 på da9e24f0, gav 18 av 18 gröna, och Standard 500
+  i Östersund stod åter på 455. Svaret 22 okt 10:06 var tillfälligt. Vakten skriver nu hela erbjudandet
+  per adress (NV-10), så nästa avvikelse går att läsa.
+- **Granskningen av lagningen (`ops/GRANSKNING-ssot-tele2-lagningen.md`):** L-1 (Basic-årssumman under
+  taket) fångas i PR #86 av mains tröskel, inte av ett nivåberoende tak (LT-02). L-2 (Googles «30–40 %
+  billigare») och L-3 (rummets «aldrig en nedgradering») är lagade, eftersom de satt i det kort PR:en
+  skrev om. BI-14 låser alla `real-public`-alternativ mot sin bok, och KM-05 spärrar matchningslöftet.
+  L-4–L-7 ([VAKT]) är lagade.
+- **Tredje och fjärde granskningen (`-tredje.md`, `-fjarde.md`):** varje försök att härleda licenstaket
+  ur prisboken gjorde ett fel vanligare. Ett tak per faktura på pris per plats, som bär tilläggen, kan
+  inte skilja tillägg från en årssumma (L-1, T-1, F4-1). I PR #86 har prövningen därför exakt mains
+  beteende (0 skillnader mot main i 10 miljoner anrop, femte granskningen). LT-01..04 låser trösklarna,
+  inte namnuppslaget (F5-1). T-8 är lagat. T-5, T-6 och NV-03-delen av T-7 är skärpta men inte stängda:
+  F4-3 (BI-14 är fortfarande en ordlista), F4-4 (KM-05 släpper «matchar er nivå — ingen nedgradering»)
+  och F4-5 (NV-03 jämför två fält i samma objekt). De är [VAKT] och lagas framåt, med F5-1 (namnuppslaget
+  olåst), F5-2 (vägen från anomali till `review_queue` oprövad) och F5-3 (kvartalssumman saknas i
+  modulhuvudets BLIND).
+- **T-2 · Licenstaket når nästan aldrig en riktig faktura. [KUND], förexisterande. Nästa PR, före allt
+  annat arbete. Samma PR bygger radprövningen:** varje nivårad prövas mot sin egen nivå i prisboken,
+  oberoende av tilläggen. Då lagas också två förexisterande fel: Adobe till listpris (985 kr) och
+  Microsoft 365 E5 på månadsfakturering (769,42 kr) går till granskning på main och i PR #86. F4-2
+  (en Basic EES-årssumma prissätts på main) prövas där. `leverantorsnyckel` slår upp exakt «Microsoft», «Adobe» eller «Google», men
+  kategoriseraren ger det juridiska namnet («Microsoft Ireland Operations Ltd»). En periodlös
+  Business Basic-årsfaktura därifrån går auto med tolv gånger kundens kostnad, på main som på grenen.
+  Lagningen: nyckla på varumärket (samma nyckel som `extractSupplierKeyword`), och pröva kedjan från
+  extraktion via `categorize` till `validateSeatPrice` med juridiska namn. Varje fall mäts mot mains
+  utfall i ett svep, åt båda håll, innan PR:en öppnas.
+- **T-4 · Nivåargumentet i `api/test-invoice.mjs` prövas med en källtextregex. [VAKT], lagas framåt.**
+  Bryt ut indata till `validateSeatPrice` till en ren funktion som både `test-invoice` och LT anropar.
+- **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**
+  rummet sa «Prissatta 0» och «Vägde 0 fakturor mot verifierat publikt listpris» bredvid «Ni betalar
+  mer än listpris» och Arvo Score 10. Raden saknade antal platser, så den kan vara en artefakt av
+  sonden. Det prövas mot en riktig bredbandsrad.
+- **K-5 · Rummets bytesbesked visar ett fryst golv bredvid dagens bokdatum.** Steg c. Golvet räknas
+  vid läsning ur den lagrade hastigheten, eller så visas radens analysdatum.
+- **K-6 · Tröskelfixturerna låser en tröskel över 432, inte 500.** En tvillingfixtur med gross ≥ 500.
+- **K-7 · Prislarmets kundtal innehåller tilläggsrader.** Latent: `priceAlert` läses av ingen yta.
+  Lagas innan en yta läser fältet.
+- **V-3 · `dollarRader` sväljer belopp som står nära varandra och kapar tyst vid 24.**
+- **V-4 · Creative Cloud Pro-priset har inget momsankare** i `lib/verifiers/adobe.mjs`.
+- **V-5 · Två kategoristämplar landar på fel datumpost** (saas-finance och loneadmin), och
+  price-audit läser det stämplade datumet i stället för körningens. Den öppna frågan om
+  `fortnoxVerified` flyttas när Fortnox-vakten är röd prövas i samma steg. Blir svaret ja är det
+  [KUND] och går före allt annat.
+- **Historiken i `supplier_price_history`** (probe-undersokning 39760703487): 2 rader, båda
+  «backfill-verified». «Microsoft 365 Business Standard 12,50 → 14,00, 2022-03-01» prövas mot
+  prisarkeologin och raderas om källan inte bär den. Raden null → null raderas. Ingen av dem når
+  rummet i dag: prognosen kräver tre höjningar, och rörelsen kräver en höjning inom sex månader.
+  Steg b.
+
+## Steg b, avläst underlag (22 okt)
+
+`probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,
+alla med `last_verified` i maj. Det är exakt seedblocket som PR #86 tar bort ur repot. Ingen tabell
+pekar på `supplier_prices`. Att markera raderna som inaktuella kan krocka med det unika indexet
+(leverantör, produkt, nivå, is_current), så raderna raderas. Efter PR #86 läser ingen kundväg tabellen.
+Skrivaren som finns kvar är `scripts/apply-price-proposals.mjs`, och den tas bort i samma steg.

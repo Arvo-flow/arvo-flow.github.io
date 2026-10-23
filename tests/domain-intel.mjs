@@ -568,6 +568,10 @@ describe('DV · dörrens Microsoft-datum: bara Microsofts nivåer, och den stala
     // Ett datum som inte är strikt ISO sorteras fel som sträng: '2026-10-9' hamnar efter '2026-10-19'.
     // Det räknas som okänt, så inget datum sägs (G85-1).
     assert.equal(m365Verifierat(med({ e3: '2026-10-9' })), null);
+    // Ankarna har egen tand: ett datum med klockslag eller ledande mellanslag är inte ÅÅÅÅ-MM-DD.
+    // Utan ^ och $ hade båda godtagits och sagts till kunden som de står (F85-4).
+    assert.equal(m365Verifierat(med({ e3: '2026-10-09T00:00:00Z' })), null);
+    assert.equal(m365Verifierat(med({ e3: ' 2026-10-09' })), null);
 
     // Licensspannkortets egen text (T85-1): samma datum som plattformskortet, i alla tre lägen.
     const FAKTA = { provenance: 'bolagsverket', employees: 20 };
@@ -577,17 +581,24 @@ describe('DV · dörrens Microsoft-datum: bara Microsofts nivåer, och den stala
     assert.ok(spann(med({ e5: undefined })).startsWith('Microsofts publika listpriser × '), spann(med({ e5: undefined })));
     assert.ok(spann(med({ e3: '2026-10-9' })).startsWith('Microsofts publika listpriser × '));
 
-    // Båda korten visar samma spann, valt av m365Nivaer (G85-2).
+    // Båda korten visar samma spann, valt av m365Nivaer (G85-2), och samma avstånd per anställd och
+    // år (F85-2). Talet räknas här ur boken, inte ur kortet.
     const kr = (n) => n.toFixed(2).replace('.', ',');
     const priser = m365Nivaer(T).map((t) => t.msrpAnnual);
     const spannText = `spänner ${kr(Math.min(...priser))}–${kr(Math.max(...priser))} kr per användare och månad`;
+    const arText = `${Math.round((Math.max(...priser) - Math.min(...priser)) * 12).toLocaleString('sv-SE')} kr per anställd och år`;
     assert.ok(buildLicensspannFinding(FAKTA, T).detail.includes(spannText), 'licensspannkortets spann');
+    assert.ok(buildLicensspannFinding(FAKTA, T).detail.includes(arText), 'licensspannkortets avstånd per år');
 
     // Plattformskortets egen text, med den levande prisboken ändrad på plats (återställs).
     const kort = () => buildRevealFindings({ domain: 'x.se', posture: { mx: 'microsoft365' } }).find((x) => x.kind === 'platform');
     const plattform = () => kort().source;
     assert.ok(kort().detail.includes(spannText), 'plattformskortets spann (nivåbryggan)');
-    const fore = { zoom: T['zoom-pro'].lastVerified, e3: T.e3.lastVerified, e5: T.e5.lastVerified };
+    assert.ok(kort().detail.includes(arText), 'plattformskortets avstånd per år (nivåbryggan)');
+    const fore = {
+      zoom: T['zoom-pro'].lastVerified, e3: T.e3.lastVerified, e5: T.e5.lastVerified,
+      premium: T['business-premium'].lastVerified,
+    };
     try {
       T['zoom-pro'].lastVerified = '2099-01-01';
       assert.ok(plattform().endsWith(`Microsofts publika listpriser, verifierade ${idag}`), plattform());
@@ -596,10 +607,17 @@ describe('DV · dörrens Microsoft-datum: bara Microsofts nivåer, och den stala
       // Utan datum på en nivå säger plattformskortet inget datum (G85-3).
       T.e5.lastVerified = undefined;
       assert.ok(plattform().endsWith('Microsofts publika listpriser'), plattform());
+      // Ett datum som inte är strikt ISO: plattformskortet säger inget datum, som licensspannkortet (F85-1).
+      T.e3.lastVerified = fore.e3;
+      T.e5.lastVerified = fore.e5;
+      T['business-premium'].lastVerified = '2026-10-9';
+      assert.ok(plattform().endsWith('Microsofts publika listpriser'), plattform());
+      assert.ok(!plattform().includes('verifierade'), plattform());
     } finally {
       T['zoom-pro'].lastVerified = fore.zoom;
       T.e3.lastVerified = fore.e3;
       T.e5.lastVerified = fore.e5;
+      T['business-premium'].lastVerified = fore.premium;
     }
   });
 });

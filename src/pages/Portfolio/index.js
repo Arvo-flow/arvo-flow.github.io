@@ -1626,14 +1626,15 @@ export default function Portfolio() {
                                   {tgt?.alternatives?.length > 0 && (
                                     <div className="sv-sec">
                                       <div className="sv-lbl">Vad ni får</div>
-                                      {tgt.alternatives.map((alt, i) => (
+                                      {tgt.alternatives.map((alt) => (
                                         <div className="sv-alt" key={alt.supplier}>
-                                          <span className="sv-sup">{alt.supplier}{i === 0 && <span className="sv-tag">bäst matchning</span>}</span>
+                                          <span className="sv-sup">{alt.supplier}</span>
                                           <span className="sv-pos">{alt.positioning}</span>
                                         </div>
                                       ))}
                                       <div className="sv-fine">
-                                        Matchat mot er nuvarande nivå — <b>samma eller bättre, aldrig en nedgradering.</b>
+                                        Alternativen är inte matchade mot er nivå. Vilken nivå som motsvarar er nuvarande, och
+                                        vad den kostar, bekräftas i offerten innan ni skriver under.
                                       </div>
                                     </div>
                                   )}

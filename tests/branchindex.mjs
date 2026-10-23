@@ -12,6 +12,7 @@ import {
   getBenchmark,
   bucketForSize,
   bredbandSpeedBenchmark,
+  bredbandsalternativ,
 } from '../agents/recommender/branchindex.js';
 import { usdToSek, FALLBACK_RATE_USD_SEK } from '../agents/recommender/pricing.js';
 import { readFileSync } from 'node:fs';
@@ -254,6 +255,12 @@ describe('BI-10 · Atlassian: boken är lika med vaktens avläsning 17–18 okt'
       assert.ok(haller({ ...tiers[nyckel], lastVerified: datum }, usd), `${nyckel} föll efter stämpeln`);
     }
     assert.ok(!haller({ ...tiers['atlassian-jira-standard'], lastVerified: '2026-10-17' }, 9.56), 'ett datum före avläsningen håller inte');
+    // Golvgränsen jämför strängar, så den ensam släpper allt som sorteras efter '2026-10-18'. ISO-kravet
+    // är det som fäller dem (tredje blicken T85-7).
+    for (const fel of ['okänt', '2026-10-2', 'undefined']) {
+      assert.ok(fel >= '2026-10-18', `motprov: «${fel}» klarar golvgränsen som sträng`);
+      assert.ok(!haller({ ...tiers['atlassian-jira-standard'], lastVerified: fel }, 9.56), `«${fel}» håller inte`);
+    }
   });
 });
 
@@ -261,7 +268,14 @@ describe('BI-10 · Atlassian: boken är lika med vaktens avläsning 17–18 okt'
 // Datumen jämförs som strängar på flera ställen (det stalaste nivådatumet, BI-10:s golvgräns). Det
 // fungerar bara när varje datum är ÅÅÅÅ-MM-DD: '2026-10-9' sorteras efter '2026-10-19' (fjärde blicken
 // G85-1). Mätt 21 okt: 32 datum i boken, alla strikt ISO. Testet håller det så.
+//
+// Vandringens antal jämförs med ett annat instrument, JSON-serialiseringen av samma bok. En spärr på
+// «minst 30» släppte en vandring som tappat två datum, bland dem tele2-datumet (femte blicken F85-3).
+// Källtextens literaler prövas också: loneadmin-literalen skrivs över i körningen och syns aldrig i
+// vandringen, men stämpelboten och stampelvakten läser källtexten.
 describe('BI-12 · varje lastVerified i prisboken är ett strikt ISO-datum', () => {
+  const arIsoDatum = (x) => /^\d{4}-\d{2}-\d{2}$/.test(x) && new Date(`${x}T00:00:00Z`).toISOString().slice(0, 10) === x;
+
   test('alla datum är ÅÅÅÅ-MM-DD och ett giltigt kalenderdatum', () => {
     const datum = [];
     const ga = (o, vag) => {
@@ -272,11 +286,131 @@ describe('BI-12 · varje lastVerified i prisboken är ett strikt ISO-datum', () 
       }
     };
     ga(BRANCHINDEX, 'BRANCHINDEX');
-    assert.ok(datum.length >= 30, `bara ${datum.length} datum hittades — vandringen är trasig`);
+    const iJson = (JSON.stringify(BRANCHINDEX).match(/"lastVerified":/g) ?? []).length;
+    assert.ok(iJson >= 30, `JSON-instrumentet hittade bara ${iJson} datum`);
+    assert.equal(datum.length, iJson, `vandringen hittade ${datum.length} datum, serialiseringen ${iJson}`);
     for (const [vag, x] of datum) {
       if (x == null) continue;
       assert.match(String(x), /^\d{4}-\d{2}-\d{2}$/, `${vag}: «${x}» är inte ÅÅÅÅ-MM-DD`);
       assert.equal(new Date(`${x}T00:00:00Z`).toISOString().slice(0, 10), x, `${vag}: «${x}» är inget kalenderdatum`);
+    }
+  });
+
+  test('varje lastVerified-literal i källtexten är ett strikt ISO-datum', () => {
+    const kalla = readFileSync(new URL('../agents/recommender/branchindex.js', import.meta.url), 'utf8');
+    const literaler = [...kalla.matchAll(/lastVerified:\s*'([^']*)'/g)].map((m) => m[1]);
+    assert.ok(literaler.length >= 30, `bara ${literaler.length} literaler hittades`);
+    const fel = literaler.filter((x) => !arIsoDatum(x));
+    assert.deepEqual(fel, [], `literaler som inte är ÅÅÅÅ-MM-DD: ${fel.join(', ')}`);
+  });
+});
+
+// ── BI-13 · BREDBANDETS ALTERNATIV BÄR BOKENS TAL ─────────────────────────────────────────────
+// Andra blicken på uppföljningen efter PR #85 (K-1): alternativtexten sa «1200/100 Mbit 279 kr/mån»
+// efter att boken höjts till 319, och rummets bytesbesked visade den under bokens datum.
+describe('BI-13 · bredbandets alternativ bär bokens tal', () => {
+  const tv = BRANCHINDEX.bredband.tele2Verified;
+  const tele2 = () => BRANCHINDEX.bredband.alternatives.filter((a) => /^Tele2\b/.test(a.supplier));
+
+  test('varje kr/mån-tal i Tele2-alternativen är bokens tal för samma produkt', () => {
+    const [max, std] = tele2();
+    assert.ok(max && std, 'båda Tele2-alternativen finns');
+    assert.match(max.positioning, new RegExp(`1200 Mbit ${tv.max[1200]} kr/mån`));
+    assert.match(std.positioning, new RegExp(`1000 Mbit ${tv.standard[1000]} kr/mån`));
+    const bokensTal = new Set([...Object.values(tv.max), ...Object.values(tv.standard)].map(String));
+    for (const a of tele2()) {
+      for (const [, tal] of a.positioning.matchAll(/(\d+) kr\/mån/g)) assert.ok(bokensTal.has(tal), `${a.supplier}: ${tal} står inte i boken`);
+      assert.doesNotMatch(a.positioning, /\d{4}-\d{2}-\d{2}/, 'ett datum i texten är ett andra datum som kan glida isär');
+    }
+    assert.equal(BRANCHINDEX.bredband.alternatives.filter((a) => a.supplier === 'Bahnhof Företag').length, 1, 'Bahnhof står kvar, en gång');
+  });
+
+  test('texten följer boken: ändras talet, ändras texten', () => {
+    const andrad = bredbandsalternativ({ ...tv, max: { ...tv.max, 1200: 999 }, standard: { ...tv.standard, 1000: 555 } });
+    assert.match(andrad[0].positioning, /1200 Mbit 999 kr\/mån/);
+    assert.match(andrad[1].positioning, /1000 Mbit 555 kr\/mån/);
+    assert.deepEqual(bredbandsalternativ({}), [], 'utan bokens tal: inga Tele2-alternativ, aldrig ett gissat tal');
+  });
+});
+
+// ── BI-14 · VARJE ALTERNATIV I EN real-public-KATEGORI BÄR BARA TAL UR SIN EGEN BOK ─────────────
+// Granskningen av lagningen (L-2): Google-alternativet sa «ofta 30–40 % billigare än M365» medan
+// bokens egna tal säger att Google är ungefär 9 % dyrare, och rummets bytesbesked visade det under
+// «verifierat öppet pris». Telavox bar «Premium 399, Max 549» utan bokpost. Alternativen når kunden
+// genom buildSwitchTargets (api/invoice-history.mjs) för varje real-public-kategori.
+describe('BI-14 · alternativen i real-public-kategorier bär bara tal ur sin egen bok', () => {
+  const bokensTal = (o, ut = new Set()) => {
+    if (o && typeof o === 'object') {
+      for (const [k, v] of Object.entries(o)) {
+        if (k === 'alternatives') continue;
+        if (typeof v === 'number') ut.add(v); else bokensTal(v, ut);
+      }
+    }
+    return ut;
+  };
+  const kategorier = Object.entries(BRANCHINDEX).filter(([, c]) => c.source === 'real-public' && Array.isArray(c.alternatives));
+  // Ett prisomdöme utan källa: procent, «billigare», «lägst», «konkurrenskraftig», «marknadsledare», «starkaste».
+  // Stammar, inte ord (tredje granskningen, T-5): «billigaste», «Lägsta pris», «halva priset» slank förbi.
+  const OMDOME = /%|procent|billig|lägst|lägre|dyr|halva|konkurrenskraft|marknadsled|starkast/i;
+
+  // Varje fristående tal, inte bara «N kr»: Telavox «Premium 399, Max 549» bar inget «kr», och en läsare
+  // som krävde det fällde noll (sabotaget S9). Specifikationer (Mbit, TB, GB, mån) undantas, och
+  // sifferdelen av en beteckning som E5 eller T1 är inget tal.
+  // Bara «N mån bindning» är en specifikation; «Premium 399 mån» är ett pris (T-5).
+  const TAL = /(?<!\w|\d[.,])(\d+(?:[.,]\d+)?)(?!\w|[.,]\d)(?!\s*(?:Mbit|TB|GB|mån bindning))/g;
+
+  test('varje tal står i kategorins bok (som månadsbelopp eller × 12), och inget prisomdöme utan källa', () => {
+    assert.ok(kategorier.length >= 5, `bara ${kategorier.length} kategorier med alternativ`);
+    let lasta = 0;
+    for (const [k, c] of kategorier) {
+      const bok = bokensTal(c);
+      for (const a of c.alternatives) {
+        for (const [, t] of a.positioning.matchAll(TAL)) {
+          const n = Number(t.replace(',', '.'));
+          lasta++;
+          assert.ok(bok.has(n) || bok.has(Math.round(n * 12)), `${k} · ${a.supplier}: ${n} står inte i kategorins bok`);
+        }
+        assert.doesNotMatch(a.positioning, OMDOME, `${k} · ${a.supplier}: prisomdöme utan källa`);
+      }
+    }
+    assert.ok(lasta >= 6, `bara ${lasta} kr-tal lästa — läsaren är trasig`);
+  });
+
+  test('motprov: ett påhittat tal och ett procentpåstående fälls', () => {
+    const bok = bokensTal(BRANCHINDEX.molnvaxel);
+    assert.ok(!bok.has(549) && !bok.has(549 * 12), 'Telavox 549 står inte i boken');
+    assert.match('Ofta 30–40 % billigare än M365.', OMDOME);
+    // Läsaren tar tal utan «kr», hoppar över specifikationer och beteckningar.
+    const tal = (t) => [...t.matchAll(TAL)].map((m) => m[1]);
+    assert.deepEqual(tal('Bundlar mobil+växel (Premium 399, Max 549)'), ['399', '549']);
+    assert.deepEqual(tal('1200 Mbit 319 kr/mån exkl moms (12 mån bindning)'), ['319']);
+    assert.deepEqual(tal('Teams, 1 TB OneDrive, E3/E5 (T1)'), []);
+    assert.deepEqual(tal('Premium 399 mån, Max 549 mån.'), ['399', '549']);
+    // Prisomdömen i böjd form fälls (tredje granskningens k4.mjs).
+    for (const t of ['Marknadens billigaste alternativ till M365.', 'Lägsta pris bland svenska leverantörer.', 'Halva priset mot M365.', 'Ofta 30–40 procent lägre.']) assert.match(t, OMDOME, t);
+  });
+});
+
+// ── BI-11 · TRÖSKELFIXTURERNA LIGGER STRAX UNDER TRÖSKELN MOT DAGENS GOLV ─────────────────────
+// edge-25, comb-55 och comb-13 finns för att bevisa grenen «under 500 kr i besparing → hävda
+// ingenting». De förväntar null. Flyttar golvet sig ger de fortfarande null, men av fel skäl: under
+// golvet i stället för strax under tröskeln. Så tappades kanten nästan 18 aug, och igen 21 okt
+// (Tele2 +40 kr). Bara kommentarer bar rollen. Här räknas deras gross mot dagens golv: blir den
+// något annat än 432 faller testet och säger vad som ska göras, nämligen att flytta fixturens indata.
+describe('BI-11 · tröskelfixturerna ligger strax under tröskeln mot dagens golv', () => {
+  test('edge-25, comb-55 och comb-13: gross = 432 mot bredbandSpeedBenchmark(100).p25', async () => {
+    const { computeInvoiceMetrics } = await import('../lib/invoice-metrics.js');
+    const { fixtures: edge } = await import('./fixtures/07-edge-cases.mjs');
+    const { fixtures: comb } = await import('./fixtures/03-combined.mjs');
+    const golv = bredbandSpeedBenchmark(100).p25;
+    for (const id of ['edge-25', 'comb-55', 'comb-13']) {
+      const fx = [...edge, ...comb].filter((f) => f.id === id);
+      assert.equal(fx.length, 1, `${id} ska finnas exakt en gång`);
+      const m = computeInvoiceMetrics(fx[0].lineItems, fx[0].category, fx[0].mixed ?? false);
+      assert.equal(m.secondaryConnectionSpeedMbit, 100, `${id}: hastigheten ska vara 100 Mbit`);
+      const gross = Math.round(m.secondaryComponentMonthly * 12) - golv;
+      assert.equal(gross, 432, `${id}: gross ${gross} mot golvet ${golv}. Golvet har flyttat sig — flytta fixturens indata så att gross blir 432 igen`);
+      assert.equal(fx[0].secondary, null);
     }
   });
 });
@@ -345,13 +479,13 @@ describe('BI-08 · Bredband bredbandSpeedBenchmark (härledd ur tele2Verified)',
       assert.ok(t.p25 < t.median, `${s} Mbit: p25 (${t.p25}) >= median (${t.median})`);
     });
   }
-  test('1000 Mbit: p25 = 3 348 (Tele2 COAX 1200 279×12), median = 5 844 (öppen fiber 1000 487×12)', () => {
-    // Golvet sänkt 3 828 → 3 348 efter Tele2:s andra prissänkning, verifierad 2026-08-18 mot
-    // adress-API:t på tre adresser två nätter i rad (319 → 279 kr/mån). Taket är oförändrat:
-    // öppen fiber drev inte. Aritmetiken står här så att en framtida ändring måste passera en
+  test('1000 Mbit: p25 = 3 828 (Tele2 COAX 1200 319×12), median = 5 844 (öppen fiber 1000 487×12)', () => {
+    // Golvet höjt 3 348 → 3 828 när Tele2 tog tillbaka augustisänkningen, verifierat 2026-10-21 mot
+    // adress-API:t på tre adresser i tre läsningar (279 → 319 kr/mån). Före: sänkt 3 828 → 3 348
+    // 2026-08-18. Taket är oförändrat: öppen fiber drev inte. Aritmetiken står här så att en framtida ändring måste passera en
     // människa som ser vad den ändrar — inte bara ett test som följer med automatiskt.
     const t = bredbandSpeedBenchmark(1000);
-    assert.strictEqual(t.p25,    3348);
+    assert.strictEqual(t.p25,    3828);
     assert.strictEqual(t.median, 5844);
   });
   test('utan giltig hastighet → null (Zero Trust: ingen gissad siffra)', () => {
