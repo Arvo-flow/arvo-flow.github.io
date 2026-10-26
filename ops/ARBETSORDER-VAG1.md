@@ -8,8 +8,8 @@ PR som mergas genom Grinden. En uppgift och en granskningslins körs i taget.
 
 | Steg | Innehåll | Läge |
 |---|---|---|
-| a | PR #86: Tele2 +40 kr, en prisbok (majtabellen och seedarna bort), vakter framåt | K-1 lagat; granskningen av lagningen BLOCKERAR (L-1), lagat med L-2–L-7 i samma PR |
-| b | Databas och skript: majraderna i `supplier_prices` bort, död skrivning i `scripts/apply-price-proposals.mjs` bort | efter merge och deploy av a |
+| a | PR #86: Tele2 +40 kr, en prisbok (majtabellen och seedarna bort), vakter framåt | mergad 23 okt (5e73c277) efter fem granskningsvarv |
+| b | Databas och skript: majraderna i `supplier_prices` bort, död skrivning i `scripts/apply-price-proposals.mjs` bort | PR #87: `scripts/stada-prisdata.mjs` och arbetsflödet `stada-prisdata`; körs på main efter merge |
 | c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | efter b |
 | d | Arbetsorderns punkt 4: live-verifiering och rummet i 390 och 1600 px | efter c |
 
@@ -76,3 +76,16 @@ alla med `last_verified` i maj. Det är exakt seedblocket som PR #86 tar bort ur
 pekar på `supplier_prices`. Att markera raderna som inaktuella kan krocka med det unika indexet
 (leverantör, produkt, nivå, is_current), så raderna raderas. Efter PR #86 läser ingen kundväg tabellen.
 Skrivaren som finns kvar är `scripts/apply-price-proposals.mjs`, och den tas bort i samma steg.
+
+## Steg b, utfört underlag (23 okt)
+
+- **Historikraden från 2022 är falsk.** «Microsoft 365 Business Standard 12,50 → 14,00, 2022-03-01»
+  hänvisar till Microsofts post 2021-08-19. Avläst 23 okt listar posten sex produkter (Business Basic,
+  Business Premium, Office 365 E1, E3 och E5, Microsoft 365 E3) och inte Business Standard. Raden är
+  struken ur `scripts/seed-price-history.mjs` och raderas ur produktionen av `stada-prisdata`.
+- **2026-raden ($150 → $168 per år, 2026-07-01) är obekräftad.** Postens priser står i en bild som
+  textläsningen inte ser. Raden når ingen kund i dag: prognosen kräver tre höjningar. Den läses mot
+  Microsofts planprislista i T-2-PR:en.
+- **`lib/price-db.js` `upsertPrice` saknar nu anropare.** Borttagningen är en `lib/`-ändring och tas i
+  T-2-PR:en, med granskning.
+
