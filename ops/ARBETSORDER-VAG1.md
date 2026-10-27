@@ -9,7 +9,8 @@ PR som mergas genom Grinden. En uppgift och en granskningslins körs i taget.
 | Steg | Innehåll | Läge |
 |---|---|---|
 | a | PR #86: Tele2 +40 kr, en prisbok (majtabellen och seedarna bort), vakter framåt | mergad 23 okt (5e73c277) efter fem granskningsvarv |
-| b | Databas och skript: majraderna i `supplier_prices` bort, död skrivning i `scripts/apply-price-proposals.mjs` bort | PR #87: `scripts/stada-prisdata.mjs` och arbetsflödet `stada-prisdata`; körs på main efter merge |
+| b | Databas och skript: majraderna i `supplier_prices` bort, död skrivning i `scripts/apply-price-proposals.mjs` bort | mergad 23 okt (PR #87, 4f8f2326). Körd på main 23 okt (40352850116): `supplier_prices` 46 → 0 rader, historiken 2 → 1 |
+| T-2 | Licenstaket per nivårad, mains tak per plats kvar | egen PR, se T-2 nedan |
 | c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | efter b |
 | d | Arbetsorderns punkt 4: live-verifiering och rummet i 390 och 1600 px | efter c |
 
@@ -36,18 +37,25 @@ Var och en byggs i en egen PR, med egen granskning.
   och F4-5 (NV-03 jämför två fält i samma objekt). De är [VAKT] och lagas framåt, med F5-1 (namnuppslaget
   olåst), F5-2 (vägen från anomali till `review_queue` oprövad) och F5-3 (kvartalssumman saknas i
   modulhuvudets BLIND).
-- **T-2 · Licenstaket når nästan aldrig en riktig faktura. [KUND], förexisterande. Nästa PR, före allt
-  annat arbete. Samma PR bygger radprövningen:** varje nivårad prövas mot sin egen nivå i prisboken,
-  oberoende av tilläggen. Då lagas också två förexisterande fel: Adobe till listpris (985 kr) och
-  Microsoft 365 E5 på månadsfakturering (769,42 kr) går till granskning på main och i PR #86. F4-2
-  (en Basic EES-årssumma prissätts på main) prövas där. `leverantorsnyckel` slår upp exakt «Microsoft», «Adobe» eller «Google», men
-  kategoriseraren ger det juridiska namnet («Microsoft Ireland Operations Ltd»). En periodlös
-  Business Basic-årsfaktura därifrån går auto med tolv gånger kundens kostnad, på main som på grenen.
-  Lagningen: nyckla på varumärket (samma nyckel som `extractSupplierKeyword`), och pröva kedjan från
-  extraktion via `categorize` till `validateSeatPrice` med juridiska namn. Varje fall mäts mot mains
-  utfall i ett svep, åt båda håll, innan PR:en öppnas.
-- **T-4 · Nivåargumentet i `api/test-invoice.mjs` prövas med en källtextregex. [VAKT], lagas framåt.**
-  Bryt ut indata till `validateSeatPrice` till en ren funktion som både `test-invoice` och LT anropar.
+- **T-2 · Licenstaket når nästan aldrig en riktig faktura. [KUND], förexisterande. Byggd i T-2-PR:en.**
+  `lib/supplier-price-intel.js` gör nu två prövningar. (1) Varje nivårad (radensNiva) prövas mot sin
+  egen nivå i prisboken: över 2 × nivåns listpris per licens och månad går fakturan till granskning,
+  oavsett leverantörsnamn. (2) Mains tak per plats står kvar på mains exakta namn, med två tak ur
+  prisboken i stället för majtabellens: Microsoft 769,42 (E5 vid månadsfakturering) och Adobe
+  1 083,50 (1,10 × 985). Svepet mot main (LT-06, 1 986 fall): main hade rätt i 1 266, den nya
+  prövningen i 1 460, och **noll** fall där main hade rätt och den nya fel. Två vägar föll i svepet
+  innan dess: ett tak per plats nycklat på varumärket (20 korrekta E3- och E5-fakturor från det
+  juridiska namnet till granskning), och ett eget tak per tilläggsrad (24 tillägg lästa som kvartals-
+  eller årssumma släpptes, som main fångar). Varumärkesnyckeln ur arbetsordern byggdes alltså inte:
+  det juridiska namnet nås nu genom nivåraderna, inte genom namnet. Lagat i samma PR: E5 769,42 och
+  Adobe 985 prissätts; F4-2 (Basic EES-årssumma) går till granskning när nivån står i radtexten;
+  F5-1 (LT-07 låser namnuppslaget); F5-3 (kvartalssumman står i BLIND); T-4 (indata är en ren
+  funktion, `prisprovningensIndata`, som test-invoice och LT-04 anropar).
+  **Kvar, [VAKT]:** F5-2, vägen från anomali till `review_queue`, prövas fortfarande inte genom handlern.
+  **Kvar, [KUND], förexisterande och inte vanligare:** ett tillägg läst som kvartals- eller årssumma
+  på en faktura vars leverantörsnamn mains uppslag inte känner, och en nivåsumma utan nivå i
+  radtexten. Båda släpps på main också (LT-06, «båda fel»). Tilläggen saknar listpris i prisboken,
+  och utan det går de inte att pröva per rad.
 - **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**
   rummet sa «Prissatta 0» och «Vägde 0 fakturor mot verifierat publikt listpris» bredvid «Ni betalar
   mer än listpris» och Arvo Score 10. Raden saknade antal platser, så den kan vara en artefakt av
@@ -63,11 +71,15 @@ Var och en byggs i en egen PR, med egen granskning.
   price-audit läser det stämplade datumet i stället för körningens. Den öppna frågan om
   `fortnoxVerified` flyttas när Fortnox-vakten är röd prövas i samma steg. Blir svaret ja är det
   [KUND] och går före allt annat.
-- **Historiken i `supplier_price_history`** (probe-undersokning 39760703487): 2 rader, båda
-  «backfill-verified». «Microsoft 365 Business Standard 12,50 → 14,00, 2022-03-01» prövas mot
-  prisarkeologin och raderas om källan inte bär den. Raden null → null raderas. Ingen av dem når
-  rummet i dag: prognosen kräver tre höjningar, och rörelsen kräver en höjning inom sex månader.
-  Steg b.
+- **Historiken i `supplier_price_history`:** 2022-raden är raderad (steg b). 2026-raden läses i ett
+  eget pass, se steg b nedan.
+- **Tele2 bredband, 26 okt: Max-familjen −40 kr igen, bekräftat i två avläsningar** (verify-sources
+  40352730578 kl. 15:47, alla tre adresser: 199/239/279/279 med 12 månaders bindning). Det är tredje
+  svängningen på tio veckor: −40 den 18 aug, +40 den 19–21 okt, −40 den 26 okt. Boken står på
+  239/279/319/319. Riktningen är den försiktiga: boken ligger över källan, så en besparing mot Tele2
+  blir mindre, aldrig större. Innan boken följer källan prövas om Tele2:s API märker priset som
+  kampanj. Bibelns regel från HubSpot gäller: det högsta priset i ett block är listpriset, och en
+  kampanj kan bara ligga under. Följer boken varje svängning blir det 55 fixturer per kampanj.
 
 ## Steg b, avläst underlag (22 okt)
 
@@ -85,7 +97,8 @@ Skrivaren som finns kvar är `scripts/apply-price-proposals.mjs`, och den tas bo
   struken ur `scripts/seed-price-history.mjs` och raderas ur produktionen av `stada-prisdata`.
 - **2026-raden ($150 → $168 per år, 2026-07-01) är obekräftad.** Postens priser står i en bild som
   textläsningen inte ser. Raden når ingen kund i dag: prognosen kräver tre höjningar. Den läses mot
-  Microsofts planprislista i T-2-PR:en.
-- **`lib/price-db.js` `upsertPrice` saknar nu anropare.** Borttagningen är en `lib/`-ändring och tas i
-  T-2-PR:en, med granskning.
+  Microsofts planprislista i ett eget pass. Den hör inte till licensprövningen och togs därför inte
+  med i T-2-PR:en.
+- **`lib/price-db.js`:** `upsertPrice` och fem läsare utan anropare är borttagna i T-2-PR:en (SS-03).
+  Ingen kod i `lib/` frågar längre `supplier_prices`.
 

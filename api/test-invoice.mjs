@@ -44,7 +44,7 @@ import { computeHardwareAdjustment } from '../lib/hardware-installments.js';
 import { saveIntegrityOverrides, flagNewSupplier } from '../lib/labeled-corrections.js';
 import { upsertSupplier, recordSupplierPrice, recordContractTimeline } from '../lib/invoice-graph.js';
 import { validateCategory } from '../lib/category-validator.js';
-import { validateSeatPrice } from '../lib/supplier-price-intel.js';
+import { validateSeatPrice, prisprovningensIndata } from '../lib/supplier-price-intel.js';
 import { detectPriceAlert, getMarketIntelligence } from '../lib/price-alert.js';
 import { verifySession } from '../lib/session.js';
 import { arRumsnyckel } from '../lib/rumsnyckel.js';
@@ -1226,13 +1226,11 @@ export default async function handler(req, res) {
     }
 
     // ── P1.2: SUPPLIER PRICE INTELLIGENCE ────────────────────────────────────────
-    // Validerar att pricePerSeatMonthly är inom rimligt intervall för kända leverantörer. Över
-    // avläsningströskeln → troligt avläsningsfel → review_queue (lib/supplier-price-intel.js).
-    if (extracted.pricePerSeatMonthly && categorized.normalizedSupplier) {
-      const _priceCheck = validateSeatPrice({
-        normalizedSupplier:   categorized.normalizedSupplier,
-        pricePerSeatMonthly:  extracted.pricePerSeatMonthly,
-      });
+    // Prövar varje nivårad mot sin nivå i prisboken, och priset per plats mot mains tak på mains exakta
+    // namn. Ett pris som inte kan vara ett listpris med påslag → troligt avläsningsfel → review_queue
+    // (lib/supplier-price-intel.js).
+    {
+      const _priceCheck = validateSeatPrice(prisprovningensIndata(extracted, categorized));
       if (_priceCheck.anomaly) {
         console.error(`[P1.2:price-intel] ANOMALI: ${_priceCheck.detail}`);
         notifyReviewQueue(extracted, `[P1.2 Price Intel] ${_priceCheck.detail}`).catch(() => {});
@@ -2054,7 +2052,7 @@ export default async function handler(req, res) {
     }).catch((err) => { console.error('[test-invoice] storeAnalysis failed:', err.message); return null; });
 
     // Prissignal: smyghöjning-detektering mot verifierade listpriser (fire-and-forget).
-    // Aktiveras om pricePerSeatMonthly finns och leverantören finns i supplier_prices.
+    // Aktiveras om pricePerSeatMonthly finns; golvet läses ur prisboken (lib/price-alert.js).
     // marketIntel aktiveras vid ≥3 analyserade fakturor för samma leverantör i databasen.
     let priceAlert = null;
     let marketIntel = null;
