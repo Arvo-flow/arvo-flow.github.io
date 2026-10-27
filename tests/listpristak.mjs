@@ -4,21 +4,24 @@
 // repot bär inga parallella prislistor. lib/supplier-price-intel.js bar en egen majtabell, och
 // api/admin/run-migration.mjs och scripts/seed-price-db.mjs skrev 46 majpriser till supplier_prices.
 //
-// T-2 (ops/ARBETSORDER-VAG1.md): varje nivårad prövas mot sin nivå i prisboken, och mains tak per plats
-// står kvar på mains exakta namn. LT-06 mäter utfallen mot mains (origin/main 4f8f2326) åt båda håll.
+// T-2 (ops/ARBETSORDER-VAG1.md): varje nivårad prövas mot sin nivå i prisboken. Mains tak per plats står
+// kvar oförändrat och hoppas över bara när varje löpande rad är en prövad nivårad. LT-06 mäter utfallen
+// mot mains (origin/main 4f8f2326) åt båda håll. Andra blicken (ops/GRANSKNING-t2-licenstaket.md)
+// blockerade ett första försök som höjde taken; T2-1..T2-6 står som fall nedan.
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import { validateSeatPrice, prisprovningensIndata, leverantorsnyckel } from '../lib/supplier-price-intel.js';
+import { validateSeatPrice, prisprovningensIndata, leverantorsnyckel, radensPrisPerManad } from '../lib/supplier-price-intel.js';
 
 const rot = (p) => new URL(`../${p}`, import.meta.url);
+const r2 = (x) => Math.round(x * 100) / 100;
 const prova = (normalizedSupplier, pricePerSeatMonthly) => validateSeatPrice({ normalizedSupplier, pricePerSeatMonthly });
 const rad = (description, unitPrice, quantity = 10, extra = {}) =>
-  ({ description, type: 'recurring_subscription', quantity, unitPrice, amount: Math.round(unitPrice * quantity * 100) / 100, ...extra });
+  ({ description, type: 'recurring_subscription', quantity, unitPrice: r2(unitPrice), amount: r2(unitPrice * quantity), ...extra });
 const provaRader = (normalizedSupplier, lineItems, billingPeriod = 'monthly', pricePerSeatMonthly = null) =>
   validateSeatPrice({ normalizedSupplier, pricePerSeatMonthly, lineItems, billingPeriod });
 
-// Listpriser ur prisboken, avlästa 26 okt: [årsåtagande, månadsfakturering] i kr per licens och månad.
+// Listpriser ur prisboken, avlästa 27 okt: [årsåtagande, månadsfakturering] i kr per licens och månad.
 const MS = {
   'business-basic': [66.91, 80.29], 'business-standard': [133.82, 160.58], 'business-premium': [210.29, 252.35],
   e3: [416.77, 500.12], e5: [641.18, 769.42],
@@ -29,6 +32,7 @@ const NAMN = {
 };
 
 // Mains prövning (origin/main 4f8f2326, lib/supplier-price-intel.js): exakta namn, fasta trösklar.
+// Andra blicken mätte referensen mot mains riktiga modul: 0 skillnader i 5 803 306 anrop.
 const MAINS_TROSKEL = { microsoft: 765.7, google: 468, adobe: 908.7 };
 const mainsUtfall = (lev, pps) => {
   if (!pps || pps <= 0 || !lev) return false;
@@ -37,14 +41,14 @@ const mainsUtfall = (lev, pps) => {
 };
 
 describe('LT · licenspriset prövas per nivårad och mot mains tak per plats', () => {
-  test('LT-01 · taket per plats: E5:s månadspris, 1,10 × Adobes högsta teampris och mains Google-tröskel', () => {
-    for (const [lev, tak] of [['microsoft', 769.42], ['google workspace', 468], ['adobe', 1083.5]]) {
-      assert.equal(prova(lev, tak).anomaly, false, `${lev} på ${tak}`);
-      assert.equal(prova(lev, Math.round((tak + 0.01) * 100) / 100).anomaly, true, `${lev} över ${tak}`);
+  test('LT-01 · taket per plats är mains: på tröskeln prissätts, en öre över går till granskning', () => {
+    for (const [lev, troskel] of [['microsoft', 765.7], ['google workspace', 468], ['adobe', 908.7]]) {
+      assert.equal(prova(lev, troskel).anomaly, false, `${lev} på ${troskel}`);
+      assert.equal(prova(lev, r2(troskel + 0.01)).anomaly, true, `${lev} över ${troskel}`);
     }
   });
 
-  test('LT-02 · mains rätta utfall står kvar, och två förexisterande fel är lagade', () => {
+  test('LT-02 · mains utfall per plats står kvar; E5 prissätts bara när nivåraden bär priset', () => {
     // Business Basic läst som årssumma per månad (L-1): till granskning, som på main.
     assert.equal(prova('microsoft', 66.91 * 12).anomaly, true, '802,92');
     assert.equal(prova('microsoft', 80.29 * 12).anomaly, true, '963,48');
@@ -52,11 +56,14 @@ describe('LT · licenspriset prövas per nivårad och mot mains tak per plats', 
     for (const pps of [133.82 + 286.80, 66.91 + 200.70, 66.91 + 286.80, 80.29 + 95.60 + 28.70, 210.29 + 286.80]) {
       assert.equal(prova('microsoft', pps).anomaly, false, String(pps));
     }
-    // T-2: main skickade dessa korrekta fakturor till granskning.
-    assert.equal(prova('microsoft', 769.42).anomaly, false, 'E5 på månadsfakturering');
-    assert.equal(prova('adobe', 985).anomaly, false, 'Adobe Creative Cloud Pro till listpris');
-    // Motprov: Single App läst som kvartalssumma går till granskning, som på main.
-    assert.equal(prova('adobe', 381 * 3).anomaly, true, '1 143');
+    // E5 på månadsfakturering: utan rader går den till granskning som på main; med enbart E5-raden prissätts den.
+    assert.equal(prova('microsoft', 769.42).anomaly, true, 'E5 per plats utan rader, som main');
+    assert.equal(provaRader('Microsoft', [rad(NAMN.e5, 769.42)], 'monthly', 769.42).anomaly, false, 'E5 med nivårad');
+    // Med ett tillägg på fakturan gäller mains tak: E5 + Copilot (1 056,22) till granskning, som på main.
+    assert.equal(provaRader('Microsoft', [rad(NAMN.e5, 769.42), rad('Microsoft 365 Copilot', 286.80)], 'monthly', 1056.22).anomaly, true);
+    // Adobe till listpris (985) går till granskning som på main: boken saknar en radläsare för Adobes produkter.
+    assert.equal(prova('adobe', 985).anomaly, true, 'Adobe Creative Cloud Pro, förexisterande');
+    assert.equal(prova('adobe', 381 * 3).anomaly, true, 'Single App som kvartalssumma, 1 143');
   });
 
   test('LT-03 · en okänd leverantör utan nivårad, ett nollpris och ett saknat namn prövas inte', () => {
@@ -97,54 +104,90 @@ describe('LT · licenspriset prövas per nivårad och mot mains tak per plats', 
     assert.equal(provaRader('Crayon AS', [rad(NAMN.e3, 416.77 * 3)], 'quarterly').anomaly, false);
     assert.equal(provaRader('Crayon AS', [rad(NAMN.e3, 416.77 * 12)], 'annual').anomaly, false);
     assert.equal(provaRader('Crayon AS', [rad(NAMN.e3, 416.77 * 12)], 'quarterly').anomaly, true, 'årssumma på kvartalsfaktura');
-    // En engångsfaktura har inget månadspris, och en rad som inte är en licensrad prövas inte.
+    // En engångsfaktura har inget månadspris, och en rad som inte är löpande bär inte priset per plats.
     assert.equal(provaRader('Crayon AS', [rad(NAMN.e3, 5000)], 'one_time').prov, null);
-    assert.equal(provaRader('Crayon AS', [rad(NAMN.e3, 5000, 1, { type: 'one_time_fee' })]).prov, null);
-    // Öresfältet går före kronorfältet, åt båda håll: kronor 1 000 med öre 133,82 prissätts, kronor 100
-    // med öre 802,92 (Basic × 12) går till granskning.
-    assert.equal(provaRader('Crayon AS', [rad(NAMN['business-basic'], 1000, 10, { unitPriceOre: 13382 })]).anomaly, false, 'öre 133,82');
-    assert.equal(provaRader('Crayon AS', [rad(NAMN['business-basic'], 100, 10, { unitPriceOre: 80292 })]).anomaly, true, 'öre 802,92');
-    // Utan à-pris räknas belopp ÷ antal; utan antal prövas raden inte.
-    assert.equal(provaRader('Crayon AS', [{ description: NAMN.e3, type: 'recurring_subscription', quantity: 10, amount: 50012 }]).anomaly, true);
-    assert.equal(provaRader('Crayon AS', [{ description: NAMN.e3, type: 'recurring_subscription', amount: 50012 }]).prov, null);
-    // F4-2: en Business Basic EES-årssumma går till granskning när nivån står i radtexten.
+    const engang = provaRader('Crayon AS', [rad(NAMN.e3, 416.77), rad(NAMN.e3, 5000, 1, { type: 'one_time_fee' })]);
+    assert.deepEqual({ anomaly: engang.anomaly, prov: engang.prov }, { anomaly: false, prov: 'rad' });
+    // T2-2: belopp ÷ antal går före à-priset, för kundens årskostnad byggs av beloppet.
+    const t22 = { description: NAMN['business-standard'], type: 'recurring_subscription', quantity: 10, unitPrice: 1605.84, amount: 1338.20 };
+    assert.equal(provaRader('Dustin AB', [t22]).anomaly, false, 'à-pris per år, belopp per månad');
+    assert.equal(provaRader('Crayon AS', [{ ...t22, unitPrice: 133.82, amount: 13382 * 12 / 100 * 10 }]).anomaly, true, 'motprov: beloppet är en årssumma');
+    assert.equal(radensPrisPerManad({ quantity: 10, amount: 1000, amountOre: 133820 }, 'monthly'), 133.82, 'öresbeloppet går före kronorbeloppet');
+    // Utan antal används à-priset: öret före kronorna.
+    assert.equal(provaRader('Crayon AS', [{ description: NAMN['business-basic'], type: 'recurring_subscription', unitPrice: 1000, unitPriceOre: 13382 }]).anomaly, false, 'öre 133,82');
+    assert.equal(provaRader('Crayon AS', [{ description: NAMN['business-basic'], type: 'recurring_subscription', unitPrice: 100, unitPriceOre: 80292 }]).anomaly, true, 'öre 802,92');
+    assert.equal(provaRader('Crayon AS', [{ description: NAMN.e3, type: 'recurring_subscription', amount: 50012 }]).prov, null, 'varken antal eller à-pris');
+    // «(EES)» läses som Business Basic, och en årssumma därav går till granskning.
     assert.equal(provaRader('Microsoft Ireland Operations Ltd', [rad('Microsoft 365 Business Basic (EES)', 57.40 * 12)], 'unknown').anomaly, true);
-    // Tillägg prövas inte per rad: Azure och Dynamics kostar mer än varje M365-plan och är korrekta.
-    assert.equal(provaRader('Crayon AS', [rad(NAMN.e3, 416.77), rad('Azure-förbrukning oktober', 4500, 1), rad('Dynamics 365 Sales Enterprise', 1100, 5)]).anomaly, false);
+    // F4-2, förexisterande och öppet: «EES (exkl. Teams)» läses inte som nivå, och årssumman under mains
+    // tröskel prissätts som på main. Stängs när boken bär EES-priserna.
+    for (const pris of [619.32, 743.16]) {
+      for (const lev of ['Microsoft', 'Microsoft Ireland Operations Ltd']) {
+        assert.equal(provaRader(lev, [rad('Microsoft 365 Business Basic EES (exkl. Teams)', pris)], 'unknown', pris).anomaly, false, `F4-2 ${lev} ${pris}`);
+      }
+    }
+    // En rad utanför boken gör att mains tak gäller: Azure och Dynamics på en Microsoft-faktura går till
+    // granskning som på main, och hos en återförsäljare som main inte prövar prissätts de.
+    const azure = [rad(NAMN.e3, 416.77), rad('Azure-förbrukning oktober', 4500, 1)];
+    assert.equal(provaRader('Microsoft', azure, 'monthly', 866.77).anomaly, true);
+    assert.equal(provaRader('Crayon AS', azure, 'monthly', 866.77).anomaly, false);
   });
 
   test('LT-06 · svepet mot main: noll fall där main hade rätt och den nya prövningen fel', () => {
-    const TILLAGG = [['', 0], ['Microsoft Defender for Business', 28.70], ['Teams Phone Standard', 95.60], ['Microsoft 365 Copilot', 286.80]];
-    const LEV = ['Microsoft', 'Microsoft Ireland Operations Ltd', 'Crayon AS'];
+    // Rutnätet efter T2-1: olika antal per rad, platser räknade som största antal och som summan av
+    // produktraderna (extraktionens två regler), produkter utanför boken, ett felläst tal på valfri rad,
+    // och Adobe med flera produkter.
+    const MSPROD = [
+      [NAMN['business-basic'], 66.91, 80.29], [NAMN['business-standard'], 133.82, 160.58], [NAMN['business-premium'], 210.29, 252.35],
+      [NAMN.e3, 416.77, 500.12], [NAMN.e5, 641.18, 769.42], ['Office 365 E3', 256.34, 307.61], ['Microsoft 365 licens', 133.82, 160.58],
+      ['Microsoft 365 Business Basic EES (exkl. Teams)', 51.61, 61.93],
+    ];
+    const MSADD = [['Microsoft Defender for Business', 28.70], ['Teams Phone Standard', 95.60], ['Microsoft 365 Copilot', 286.80], ['Exchange Online Plan 1', 38.20]];
+    const ADOBE = [['Adobe Creative Cloud Alla program', 985], ['Adobe Creative Cloud Single App Photoshop', 381], ['Adobe Acrobat Pro', 273], ['Adobe Sign', 420]];
     const utfall = [];
-    const fall = (f) => utfall.push({ ...f, main: mainsUtfall(f.lev, f.pps), ny: provaRader(f.lev, f.rader, f.period, f.pps).anomaly });
-    for (const [niva, [ars, man]] of Object.entries(MS)) {
-      for (const [variant, faktor, fel] of [['årslistpris', 1, false], ['månadslistpris', 1, false], ['påslag 15 %', 1.15, false], ['kvartalssumma', 3, true], ['årssumma', 12, true]]) {
-        const bas = variant === 'månadslistpris' ? man : ars;
-        for (const [tnamn, tpris] of TILLAGG) for (const lev of LEV) for (const medNiva of [true, false]) for (const period of ['monthly', 'unknown', 'annual']) {
-          if (period === 'annual' && fel) continue;
-          const u = period === 'annual' ? bas * 12 : bas * faktor;
-          const t = period === 'annual' ? tpris * 12 : tpris * (fel ? faktor : 1);
-          const rader = [rad(medNiva ? NAMN[niva] : 'Microsoft 365 licens', u)];
-          if (tnamn) rader.push(rad(tnamn, t));
-          fall({ lev, period, rader, fel, pps: Math.round(((u + t) / (period === 'annual' ? 12 : 1)) * 100) / 100 });
+    const fall = (lev, rader, period, fel) => {
+      const manader = period === 'annual' ? 12 : period === 'quarterly' ? 3 : 1;
+      const projected = rader.reduce((s, x) => s + x.amount, 0);
+      const prod = rader.filter((x) => !x.tillagg);
+      for (const platser of [Math.max(...rader.map((x) => x.quantity)), prod.reduce((s, x) => s + x.quantity, 0)]) {
+        const pps = r2(projected / platser / manader);
+        utfall.push({ fel, main: mainsUtfall(lev, pps), ny: provaRader(lev, rader, period, pps).anomaly });
+      }
+    };
+    for (const lev of ['Microsoft', 'Microsoft Ireland Operations Ltd', 'Crayon AS', 'microsoft corporation']) for (const period of ['monthly', 'unknown', 'quarterly', 'annual']) {
+      const pm = period === 'annual' ? 12 : period === 'quarterly' ? 3 : 1;
+      for (let i = 0; i < MSPROD.length; i++) for (const j of [null, ...MSPROD.keys()]) {
+        if (j != null && j <= i) continue;
+        for (const add of [null, ...MSADD.keys()]) for (const bas of [1, 2, 1.15]) for (const [q1, q2, qa] of [[1, 3, 1], [5, 5, 3], [10, 2, 10], [25, 10, 5]]) {
+          const pris = (p) => (bas === 2 ? p[2] : p[1] * bas) * pm;
+          const bygg = (felIdx, f) => {
+            const r = [rad(MSPROD[i][0], pris(MSPROD[i]) * (felIdx === 0 ? f : 1), q1)];
+            if (j != null) r.push(rad(MSPROD[j][0], pris(MSPROD[j]) * (felIdx === 1 ? f : 1), q2));
+            if (add != null) r.push(rad(MSADD[add][0], MSADD[add][1] * pm * (felIdx === 2 ? f : 1), qa, { tillagg: true }));
+            return r;
+          };
+          fall(lev, bygg(null, 1), period, false);
+          if (period === 'annual' || period === 'quarterly') continue;
+          for (const f of [3, 12]) for (const idx of [0, 1, 2]) {
+            if ((idx === 1 && j == null) || (idx === 2 && add == null)) continue;
+            fall(lev, bygg(idx, f), period, true);
+          }
         }
       }
-      // Bara tillägget felläst: nivåraden till listpris, tillägget läst som kvartals- eller årssumma.
-      for (const [tnamn, tpris] of TILLAGG.slice(1)) for (const faktor of [3, 12]) for (const lev of LEV) for (const medNiva of [true, false]) for (const period of ['monthly', 'unknown']) {
-        const rader = [rad(medNiva ? NAMN[niva] : 'Microsoft 365 licens', ars), rad(tnamn, tpris * faktor)];
-        fall({ lev, period, rader, fel: true, pps: Math.round((ars + tpris * faktor) * 100) / 100 });
+    }
+    for (const lev of ['Adobe', 'Adobe Systems Software Ireland Limited', 'adobe inc']) for (const period of ['monthly', 'unknown']) {
+      for (let i = 0; i < ADOBE.length; i++) for (const j of [null, ...ADOBE.keys()]) {
+        if (j != null && j <= i) continue;
+        for (const paslag of [1, 1.10]) for (const [q1, q2] of [[1, 5], [5, 1], [15, 1], [3, 3]]) {
+          const bygg = (idx, f) => {
+            const r = [rad(ADOBE[i][0], ADOBE[i][1] * paslag * (idx === 0 ? f : 1), q1)];
+            if (j != null) r.push(rad(ADOBE[j][0], ADOBE[j][1] * paslag * (idx === 1 ? f : 1), q2));
+            return r;
+          };
+          fall(lev, bygg(null, 1), period, false);
+          for (const f of [3, 12]) for (const idx of [0, 1]) { if (idx === 1 && j == null) continue; fall(lev, bygg(idx, f), period, true); }
+        }
       }
-    }
-    // Korrekta fakturor med rader dyrare än varje M365-plan, och E3 med kraftigt påslag.
-    for (const lev of LEV) for (const period of ['monthly', 'unknown']) {
-      fall({ lev, period, fel: false, pps: 866.77, rader: [rad(NAMN.e3, 416.77), rad('Azure-förbrukning oktober', 4500, 1)] });
-      fall({ lev, period, fel: false, pps: 644.51, rader: [rad(NAMN.e3, 416.77), rad('Dynamics 365 Sales Enterprise', 1100, 5)] });
-      fall({ lev, period, fel: false, pps: 800, rader: [rad(NAMN.e3, 800)] });
-    }
-    const ADOBE = { 'all-apps': 985, 'single-app': 381, acrobat: 273 };
-    for (const [produkt, pris] of Object.entries(ADOBE)) for (const [faktor, fel] of [[1, false], [1.10, false], [3, true], [12, true]]) for (const lev of ['Adobe', 'Adobe Systems Software Ireland Limited']) for (const period of ['monthly', 'unknown']) {
-      fall({ lev, period, fel, pps: Math.round(pris * faktor * 100) / 100, rader: [rad(`Adobe Creative Cloud ${produkt}`, pris * faktor, 5)] });
     }
     const ratt = (x, vem) => x[vem] === x.fel;
     const raknat = {
@@ -154,22 +197,42 @@ describe('LT · licenspriset prövas per nivårad och mot mains tak per plats', 
       forsamrat: utfall.filter((x) => ratt(x, 'main') && !ratt(x, 'ny')).length,
       battre: utfall.filter((x) => !ratt(x, 'main') && ratt(x, 'ny')).length,
     };
-    // Exakta tal ur körningen 26 okt. Ett ändrat tal är en ändrad prövning och kräver ett nytt svep.
-    assert.deepEqual(raknat, { fall: 1986, main: 1266, ny: 1460, forsamrat: 0, battre: 194 });
+    // Exakta tal ur körningen 27 okt. Ett ändrat tal är en ändrad prövning och kräver ett nytt svep.
+    // Samma rutnät mot den blockerade 2ac67b6e gav försämrat 312, så instrumentet kan svara annat än noll.
+    assert.deepEqual(raknat, { fall: 251328, main: 112832, ny: 165024, forsamrat: 0, battre: 52192 });
     // Motprov: referensen är mains, inte den nya prövningen. Den stoppar E5 på månadsfakturering.
     assert.equal(mainsUtfall('Microsoft', 769.42), true);
     assert.equal(provaRader('Microsoft', [rad(NAMN.e5, 769.42)], 'monthly', 769.42).anomaly, false);
   });
 
-  test('LT-07 · taket per plats nycklas på mains exakta namn (F5-1); ett ändrat uppslag kräver svepet', () => {
-    for (const lev of ['Microsoft', 'microsoft 365', ' Microsoft Corporation ', 'Google', 'google llc', 'Adobe', 'adobe systems']) {
-      assert.equal(prova(lev, 5000).anomaly, true, lev);
+  test('LT-07 · taket per plats nycklas på mains nio exakta namn (F5-1, T2-4)', () => {
+    const NIO = { 'microsoft': 765.7, 'microsoft 365': 765.7, 'microsoft corporation': 765.7, 'google': 468,
+      'google workspace': 468, 'google llc': 468, 'adobe': 908.7, 'adobe inc': 908.7, 'adobe systems': 908.7 };
+    for (const [namn, troskel] of Object.entries(NIO)) {
+      for (const lev of [namn, ` ${namn.toUpperCase()} `]) {
+        assert.equal(prova(lev, troskel).anomaly, false, `${lev} på tröskeln`);
+        assert.equal(prova(lev, r2(troskel + 0.01)).anomaly, true, `${lev} över tröskeln`);
+      }
     }
     // Det juridiska namnet utan nivårad prövas inte per plats: ett varumärkesnycklat tak skickade
     // korrekta E3- och E5-fakturor med tillägg därifrån till granskning (svepet, regel 13).
     for (const lev of ['Microsoft Ireland Operations Ltd', 'Adobe Systems Software Ireland Limited', 'Crayon AS']) {
       assert.equal(prova(lev, 5000).anomaly, false, lev);
     }
+  });
+
+  test('LT-08 · gränsen per nivå: 2 × bokens högsta pris prissätts, en öre över går till granskning (T2-6)', () => {
+    for (const [niva, [, man]] of Object.entries(MS)) {
+      const grans = r2(2 * man);
+      assert.equal(provaRader('Crayon AS', [rad(NAMN[niva], grans, 1)]).anomaly, false, `${niva} på ${grans}`);
+      assert.equal(provaRader('Crayon AS', [rad(NAMN[niva], r2(grans + 0.01), 1)]).anomaly, true, `${niva} över ${grans}`);
+    }
+    // 2,2 × månadspriset är ingen påslagsnivå: till granskning.
+    assert.equal(provaRader('Crayon AS', [rad(NAMN['business-premium'], 2.2 * 252.35)]).anomaly, true, 'Premium 555,17');
+    // T2-1:s fall, alla till granskning som på main.
+    assert.equal(provaRader('Microsoft', [rad('Office 365 E3', 256.34 * 3)], 'monthly', 769.02).anomaly, true, 'Office 365 E3 som kvartalssumma');
+    assert.equal(provaRader('Microsoft', [rad(NAMN['business-basic'], 80.29, 5), rad('Teams Phone Standard', 95.60 * 12, 3)], 'monthly', 768.61).anomaly, true);
+    assert.equal(provaRader('Adobe', [rad('Adobe Creative Cloud Alla program', 985, 15), rad('Adobe Creative Cloud Single App', 381 * 3, 1)], 'monthly', 1061.20).anomaly, true);
   });
 });
 
