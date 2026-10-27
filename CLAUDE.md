@@ -477,6 +477,15 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    När två fall med motsatt rätt svar ger samma tal (E5 med tillägg och en årssumma för en billigare
 >    plan) finns inget rätt tak. Mät mot mains utfall åt båda håll innan ett tak ändras, och behåll
 >    mains beteende tills prövningen sker på rätt nivå, här per nivårad.
+>    **T-2 bröt mot regeln en femte gång (27 okt), och svepet såg det inte.** Radprövningen var rätt,
+>    men samma commit höjde taken per plats (Microsoft 765,70 → 769,42, Adobe 908,70 → 1 083,50) för att
+>    E5 och Adobe till listpris skulle prissättas. Svepet gav noll försämringar i 1 986 fall, eftersom
+>    varje rad hade samma antal, Adobe-fakturorna bara en produkt och inga rader låg utanför boken.
+>    Andra blicken byggde fall med olika antal och fann 89 som main fångade och commiten prissatte
+>    (T2-1). **Ett svep är bara så brett som sitt rutnät: variera antal per rad, räkna platser som
+>    produktionen gör, och ta med produkter utanför boken.** Det nya rutnätet (251 328 fall) gav 312
+>    försämringar mot den blockerade commiten och 0 mot lagningen. Taket hoppas nu över först när
+>    varje löpande rad är en prövad nivårad; annars står mains tak orört.
 
 ---
 
