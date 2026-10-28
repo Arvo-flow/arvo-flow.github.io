@@ -75,6 +75,9 @@ Var och en byggs i en egen PR, med egen granskning.
     prissätts, som på main. Tilläggen saknar listpris i boken.
   - Fakturavyns generiska granskningstext («våra modeller är oense», «Koppla Fortnox / Visma») står kvar
     för de andra skälen. Den gäller inte `price_anomaly` längre.
+  - **Q-7, sidans rubrik:** «Ni betalar för mycket. En faktura bevisar det.» står utan villkor ovanför
+    varje resultat i fakturavyn, också ovanför «Det behöver inte betyda att priset är fel» och ovanför en
+    faktura till listpris. Förexisterande på main. Egen PR: rubriken ska följa resultatets läge.
   **Kvar, [VAKT]:** F5-2, L-5 och P-3: vägen från anomali till `review_queue`, att anropet körs utan mains
   gamla villkor, och att `svara()` för vidare `prisprov`, prövas inte genom handlern.
 - **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**

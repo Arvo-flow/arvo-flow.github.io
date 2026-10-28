@@ -500,6 +500,12 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    rutnät (LT-06): 407 568 fall, varav 369 384 skilda, 0 försämringar inom prisaxeln (Microsoft: årspris,
 >    månadspris och 1,15 × årspris; Adobe: teampris och 1,10 × teampris); samma rutnät ger 96 mot
 >    ea56bf42. Ett tal utan sin axel lovar mer än det mätt.
+>    **Och beskedet till kunden föll tre gånger på samma form** (N-1, P-1, Q-1): en förklarande mening var
+>    sann för fakturan den prövades på och falsk för en annan klass som samma prövning stoppar («licenspris»
+>    om ett pris per plats, Microsofts tillägg på en Adobe-faktura, «antalet licenser» där nämnaren är
+>    användare). **En förklaring är ett påstående. Skriv bara det koden räknar, med kodens egen nämnare, låt
+>    exempel stå som exempel, och lås meningen ordagrant i sviten** (LT-11), så att varje ändring blir ett
+>    beslut och inte en glidning.
 
 ---
 
