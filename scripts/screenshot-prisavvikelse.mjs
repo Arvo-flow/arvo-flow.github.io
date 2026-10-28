@@ -5,8 +5,11 @@
 // produktionens fakturaLage. Det enda som är stubbat är nätverket.
 //
 // KONTROLLER I DOM:EN (med motprov):
-//   prisavvikelse → «Vi stoppade prissättningen», aldrig «inte tillräckligt säker på klassificeringen»
-//                   eller «modeller är oense»
+//   prisavvikelse → «Vi stoppade prissättningen», aldrig «inte tillräckligt säker på klassificeringen»,
+//                   «modeller är oense» eller «licenspris vi läste»; per plats (E5 + Copilot hos
+//                   «Microsoft», mains tak) nämner tillägg och kallar talet belopp delat med licenser;
+//                   en radprövning nämner licensraden; ett svar utan prisprov (äldre cache) får den
+//                   mening som är sann för båda
 //   motprov       → ett annat granskningsskäl (categorization_conflict) SKA fortfarande ge den generiska
 //                   texten; annars bevisar kontrollerna bara att orden saknas i bygget.
 // BLIND: nätverket är stubbat — att servern skickar `reason: 'price_anomaly'` bevisar LT-04 och koden i
@@ -27,10 +30,10 @@ const BUILD = join(ROT, 'build');
 const UT = join(ROT, 'results/screenshots/prisavvikelse');
 if (!existsSync(join(BUILD, 'index.html'))) { console.error('✗ build/ saknas — kör `npm run build` först.'); process.exit(1); }
 
-const granskning = (reason) => {
+const granskning = (reason, prisprov, supplier = 'Crayon AS', pricePerSeatMonthly = 5001.24) => {
   const rest = {
-    ok: true, route: 'review_queue', reason,
-    extracted: { supplier: 'Crayon AS', date: '2026-10-01', amount: 50012, confidenceScore: 0.95, pricePerSeatMonthly: 5001.24 },
+    ok: true, route: 'review_queue', reason, ...(prisprov !== undefined ? { prisprov } : {}),
+    extracted: { supplier, date: '2026-10-01', amount: 50012, confidenceScore: 0.95, pricePerSeatMonthly },
   };
   return { ...rest, lage: fakturaLage(rest, { rattstorlekFalt: RATTSTORLEK_FALT }), leadFinding: null, forensicFindings: [], fyndSkal: null };
 };
@@ -67,17 +70,25 @@ async function fakturavyn(bredd, svar) {
 const text = async (p) => (await p.innerText('body')).replace(/\s+/g, ' ');
 
 for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
-  let p = await fakturavyn(bredd, granskning('price_anomaly'));
-  let t = await text(p);
-  if (!/Vi stoppade prissättningen/.test(t)) fel(`prisavvikelsen saknar «Vi stoppade prissättningen» (${namn})`);
-  if (!/kvartals- eller årssumma som ett månadspris/.test(t)) fel(`prisavvikelsen saknar skälet (${namn})`);
-  for (const re of [/inte tillräckligt säker på klassificeringen/, /modeller är oense/])
-    if (re.test(t)) fel(`prisavvikelsen säger ${re} (${namn})`);
-  await p.screenshot({ path: `${UT}/prisavvikelse-${namn}.png`, fullPage: true }); await p.close();
+  const FALSKT = [/inte tillräckligt säker på klassificeringen/, /modeller är oense/, /licenspris vi läste/];
+  for (const [fall, svar, maste, far] of [
+    ['per-plats', granskning('price_anomaly', 'per_plats', 'Microsoft', 928),
+      [/fakturans löpande belopp delat med antalet licenser/, /tillägg som Copilot eller Teams Phone/], [/Priset på en licensrad/]],
+    ['rad', granskning('price_anomaly', 'rad'), [/Priset på en licensrad är högre/], [/tillägg som Copilot/, /delat med antalet licenser/]],
+    ['utan-prisprov', granskning('price_anomaly'), [/Kostnaden per licens på fakturan är högre/], [/tillägg som Copilot/, /Priset på en licensrad/]],
+  ]) {
+    const p = await fakturavyn(bredd, svar);
+    const t = await text(p);
+    if (!/Vi stoppade prissättningen/.test(t)) fel(`${fall}: saknar «Vi stoppade prissättningen» (${namn})`);
+    if (!/Därför visar vi inga besparingssiffror/.test(t)) fel(`${fall}: saknar slutsatsen (${namn})`);
+    for (const re of maste) if (!re.test(t)) fel(`${fall}: saknar ${re} (${namn})`);
+    for (const re of [...FALSKT, ...far]) if (re.test(t)) fel(`${fall}: säger ${re} (${namn})`);
+    await p.screenshot({ path: `${UT}/prisavvikelse-${fall}-${namn}.png`, fullPage: true }); await p.close();
+  }
 
   // MOTPROV: ett annat skäl ger fortfarande den generiska texten.
-  p = await fakturavyn(bredd, granskning('categorization_conflict'));
-  t = await text(p);
+  const p = await fakturavyn(bredd, granskning('categorization_conflict'));
+  const t = await text(p);
   if (!/inte tillräckligt säker på klassificeringen/.test(t)) fel(`motprov: den generiska texten syns inte (${namn}) — kontrollerna mäter ingenting`);
   if (/Vi stoppade prissättningen/.test(t)) fel(`motprov: prisavvikelsens text läcker till ett annat skäl (${namn})`);
   await p.screenshot({ path: `${UT}/annat-skal-${namn}.png`, fullPage: true }); await p.close();

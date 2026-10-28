@@ -527,7 +527,7 @@ export default async function handler(req, res) {
   // gången. En cachad v28-payload saknar dem — och då renderas inget kort, trots att motorn fann ett.
   // v30 (2026-09-23): avtalsklockan — `cancellationNoticeDays`/`monitoringDate` borta, `uppsagning` +
   // klockans läge och påminnelsedatum in. En v29-payload bär de gamla fälten och den gamla lögnen.
-  const cacheKey = `pdf:result:v31:${deploySha}:${pdfHash}:e${employeesNum}`;
+  const cacheKey = `pdf:result:v32:${deploySha}:${pdfHash}:e${employeesNum}`;
   // isBypass: hoppar över token-validering, PDF-cache, rate limit och saving gate.
   // Kräver ARVO_BYPASS_SECRET i miljön — ingen hårdkodad dev-sträng.
   const isBypass = !!(bypass && typeof bypass === 'string'
@@ -1241,6 +1241,9 @@ export default async function handler(req, res) {
           // tillit: priset självt är flaggat som avvikande — då är radernas tal inget underlag vi kan stå för
           tillitTillRader: false,
           ok: true, route: 'review_queue', reason: 'price_anomaly',
+          // Vilken prövning som slog till: 'rad' (en nivårad) eller 'per_plats' (mains tak på projektion ÷
+          // platser). Fakturavyn säger olika saker om dem, för per plats är inget licenspris (N-1, LT-11).
+          prisprov: _priceCheck.prov,
           extracted: {
             supplier:           extracted.supplier,
             date:               extracted.date,
