@@ -510,6 +510,11 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    hade lästs om av vår egen regel. En prövning som finns för att fånga felläsningar kan aldrig beskriva
 >    sitt tal som ett faktum om fakturan, för då är meningen falsk precis när prövningen gör rätt. **Ett
 >    larm om ett avläst tal säger «talet vi räknade fram», aldrig «fakturans».**
+>    **Den femte gången (S-1/S-2) räckte inte ens det:** «per användare» där regeln skapat nämnaren ur en
+>    rad utan användare, och «licensrad» om en paketrad. Efter tre varv på samma PR byts förklaringen mot
+>    den minsta sanna meningen: att en kontroll slog till, att priset inte behöver vara fel, och vad
+>    kontrollen är till för. **Varje enhetsord om ett tal som kan vara felläst är ett påstående som kan bli
+>    falskt; den mening som inte nämner talet kan inte bli det.**
 
 ---
 

@@ -1241,9 +1241,6 @@ export default async function handler(req, res) {
           // tillit: priset självt är flaggat som avvikande — då är radernas tal inget underlag vi kan stå för
           tillitTillRader: false,
           ok: true, route: 'review_queue', reason: 'price_anomaly',
-          // Vilken prövning som slog till: 'rad' (en nivårad) eller 'per_plats' (mains tak på projektion ÷
-          // platser). Fakturavyn säger olika saker om dem, för per plats är inget licenspris (N-1, LT-11).
-          prisprov: _priceCheck.prov,
           extracted: {
             supplier:           extracted.supplier,
             date:               extracted.date,

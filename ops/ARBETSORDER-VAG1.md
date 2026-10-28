@@ -63,7 +63,11 @@ Var och en byggs i en egen PR, med egen granskning.
     L-1, L-3). Samma rutnät ger 96 försämringar mot ea56bf42.
   Lagat i samma PR: fakturavyn har ett eget besked för `price_anomaly` (L-2: «Vi stoppade prissättningen»
   i stället för «vår algoritm är inte tillräckligt säker på klassificeringen»), renderat i 390 och 1600 px
-  med motprov (`scripts/screenshot-prisavvikelse.mjs`); T2-2; T2-4; T2-5; T2-6; L-4; F5-1; F5-3; T-4.
+  med motprov (`scripts/screenshot-prisavvikelse.mjs`). Beskedet föll i fem granskningsvarv på samma form
+  (N-1, P-1, Q-1, R-1, S-1/S-2) och är nu en enda mening som inte nämner talet (`src/lib/prisavvikelse.js`,
+  LT-11, regel 13). Stoppet för en blandad faktura med en paketrad i `saas-productivity` (S-2) är mätt mot
+  mains hela beslut: Dustin går till granskning också på main (sanitet 62 %), och Atea prissätts på main
+  med ett falskt byte på 56 963 kr/år där paketraden räknas som E3-licenser; T2-2; T2-4; T2-5; T2-6; L-4; F5-1; F5-3; T-4.
   **Kvar, [KUND], förexisterande och inte vanligare:**
   - **Microsoft 365 E5 på månadsfakturering (769,42) och Adobe Creative Cloud Pro till listpris (985) går
     till granskning, som på main.** Ett tak per plats kan inte skilja dem från fel med samma tal. E5 kan
