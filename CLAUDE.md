@@ -497,8 +497,9 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    varje faktura, och radprövningen skickade korrekta paketfakturor (dator, licens och support) till
 >    granskning med fel skäl, där main gav ett ärligt offertbesked (L-1). **Ett anrop som når fler
 >    fakturor än förut ändrar svepets rymd: rutnätet ska bära varje kategori anropet nu når.** Dagens
->    rutnät (LT-06): 407 568 fall, varav 369 384 skilda, 0 försämringar inom prisaxeln årspris, månadspris
->    och 1,15 × årspris; samma rutnät ger 96 mot ea56bf42. Ett tal utan sin axel lovar mer än det mätt.
+>    rutnät (LT-06): 407 568 fall, varav 369 384 skilda, 0 försämringar inom prisaxeln (Microsoft: årspris,
+>    månadspris och 1,15 × årspris; Adobe: teampris och 1,10 × teampris); samma rutnät ger 96 mot
+>    ea56bf42. Ett tal utan sin axel lovar mer än det mätt.
 
 ---
 

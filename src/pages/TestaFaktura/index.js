@@ -10,6 +10,7 @@ import Icon from '../../components/Icon';
 import { formatKr, genitiv, krPerAr } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
 import { ANALYSRUBRIKER, diagnosMening, UTAN_VERIFIERAT_PRIS } from '../../lib/diagnos';
+import { PRISAVVIKELSE_RUBRIK, PRISAVVIKELSE_SLUT, prisavvikelseMening } from '../../lib/prisavvikelse';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { redigeraLeverantor, samaLeverantor } from '../../lib/leverantorsnamn';
 import { COST_CATEGORIES } from '../../lib/costCategories';
@@ -1610,28 +1611,11 @@ const TestaFaktura = () => {
                   </>
                 ) : result.reason === 'price_anomaly' ? (
                   // ── PRISAVVIKELSEN FICK DEN GENERISKA TEXTEN (andra blicken på T-2, L-2) ──────
-                  // «Vår algoritm är inte tillräckligt säker på klassificeringen» var falskt här:
-                  // kategorin är klar. Två prövningar ger skälet, och de säger olika saker (N-1):
-                  // radprövningen avser en licensrads pris, mains tak avser projektion ÷ platser, som
-                  // inte är ett licenspris och ofta lyfts av tillägg. Ett svar utan `prisprov` (äldre
-                  // cache) får en mening som är sann för båda. Ingen text påstår att priset är fel, för
-                  // prövningen stoppar också korrekta fakturor (Adobe till listpris, E5 med Copilot).
+                  // «Vår algoritm är inte tillräckligt säker på klassificeringen» var falskt här. Meningen
+                  // väljs per prövning i src/lib/prisavvikelse.js, där LT-11 prövar den (N-1, P-1, P-2).
                   <>
-                    <strong>Vi stoppade prissättningen.</strong>
-                    <p>
-                      {result.prisprov === 'per_plats'
-                        ? 'Kostnaden per licens och månad, räknad som fakturans löpande belopp delat med '
-                          + 'antalet licenser, är högre än vi kan bekräfta automatiskt. Det kan bero på '
-                          + 'tillägg som Copilot eller Teams Phone, eller på ett tal vi läst fel, till exempel '
-                          + 'en kvartals- eller årssumma som ett månadspris.'
-                        : result.prisprov === 'rad'
-                          ? 'Priset på en licensrad är högre än vi kan bekräfta automatiskt, så vi kan ha läst '
-                            + 'ett tal fel, till exempel en kvartals- eller årssumma som ett månadspris.'
-                          : 'Kostnaden per licens på fakturan är högre än vi kan bekräfta automatiskt, så vi '
-                            + 'kan ha läst ett tal fel, till exempel en kvartals- eller årssumma som ett '
-                            + 'månadspris.'}
-                      {' '}Därför visar vi inga besparingssiffror för den här fakturan.
-                    </p>
+                    <strong>{PRISAVVIKELSE_RUBRIK}</strong>
+                    <p>{prisavvikelseMening(result.prisprov)} {PRISAVVIKELSE_SLUT}</p>
                   </>
                 ) : result.reason === 'no_benchmark' ? (
                   <>

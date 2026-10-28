@@ -48,7 +48,8 @@ Var och en byggs i en egen PR, med egen granskning.
   Adobe med flera produkter, paketfakturor i sina kategorier, och Microsofts rader i kategorier utan
   radprövning): main hade rätt i 170 144, den nya prövningen i 222 372, och **noll** fall där main hade
   rätt och den nya fel. Utanför `saas-productivity` är utfallet mains, fall för fall. Talet gäller inom
-  rutnätets prisaxel (årspris, månadspris, 1,15 × årspris). **Kostnaden, öppet:** en korrekt licensrad över
+  rutnätets prisaxel (Microsoft: årspris, månadspris, 1,15 × årspris; Adobe: teampris, 1,10 × teampris).
+  **Kostnaden, öppet:** en korrekt licensrad över
   2 × nivåns månadspris går till granskning där main prissatte den (N-3); samma tal kan vara en
   kvartalssumma läst som månad. Fakturavyn säger vid en prisavvikelse vilken prövning som slog till och
   kallar aldrig priset per plats ett licenspris (N-1, LT-11). N-4 (SS-01 släppte ett rått prisseed) är lagat.
@@ -74,8 +75,8 @@ Var och en byggs i en egen PR, med egen granskning.
     prissätts, som på main. Tilläggen saknar listpris i boken.
   - Fakturavyns generiska granskningstext («våra modeller är oense», «Koppla Fortnox / Visma») står kvar
     för de andra skälen. Den gäller inte `price_anomaly` längre.
-  **Kvar, [VAKT]:** F5-2 och L-5: vägen från anomali till `review_queue`, och att anropet körs utan mains
-  gamla villkor, prövas inte genom handlern.
+  **Kvar, [VAKT]:** F5-2, L-5 och P-3: vägen från anomali till `review_queue`, att anropet körs utan mains
+  gamla villkor, och att `svara()` för vidare `prisprov`, prövas inte genom handlern.
 - **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**
   rummet sa «Prissatta 0» och «Vägde 0 fakturor mot verifierat publikt listpris» bredvid «Ni betalar
   mer än listpris» och Arvo Score 10. Raden saknade antal platser, så den kan vara en artefakt av
