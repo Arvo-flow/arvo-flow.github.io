@@ -321,11 +321,42 @@ describe('LT · licenspriset prövas per nivårad och mot mains tak per plats', 
   });
 });
 
+describe('LT-11 · beskedet vid en prisavvikelse säger vilken prövning som slog till', () => {
+  test('LT-11 · svaret bär prisprov, och fakturavyn kallar inte priset per plats ett licenspris (N-1, N-2)', () => {
+    const api = readFileSync(rot('api/test-invoice.mjs'), 'utf8');
+    const i = api.indexOf("reason: 'price_anomaly',\n");
+    assert.ok(i > 0, 'svaret för price_anomaly hittades');
+    assert.match(api.slice(i, i + 400), /prisprov:\s*_priceCheck\.prov,/, 'svaret bär inte vilken prövning som slog till');
+    // validateSeatPrice ger de två värden vyn läser.
+    assert.equal(prova('microsoft', 928).prov, 'per_plats');
+    assert.equal(provaRader('Crayon AS', [rad(NAMN.e3, 416.77 * 12)]).prov, 'rad');
+    // Fakturavyns gren för price_anomaly: från villkoret till nästa skäl.
+    const vy = readFileSync(rot('src/pages/TestaFaktura/index.js'), 'utf8');
+    const a = vy.indexOf("result.reason === 'price_anomaly' ?");
+    const b = vy.indexOf('result.reason ===', a + 10);
+    assert.ok(a > 0 && b > a && b - a < 4000, 'grenen hittades inte');
+    // Kommentarrader bort (de citerar den gamla meningen), och strängbitarna fogas ihop.
+    const gren = vy.slice(a, b).split('\n').filter((l) => !/^\s*\/\//.test(l)).join('\n')
+      .replace(/'\s*\n\s*\+\s*'/g, '');
+    assert.match(gren, /result\.prisprov === 'per_plats'/);
+    assert.match(gren, /fakturans löpande belopp delat med antalet licenser/);
+    assert.match(gren, /tillägg som Copilot eller Teams Phone/);
+    assert.match(gren, /result\.prisprov === 'rad'/);
+    assert.match(gren, /Priset på en licensrad är högre än vi kan bekräfta automatiskt/);
+    for (const falskt of [/inte tillräckligt säker på klassificeringen/, /modeller är oense/, /licenspris vi läste/]) {
+      assert.doesNotMatch(gren, falskt, `grenen säger ${falskt}`);
+    }
+    // Motprov: den generiska texten finns kvar för de andra skälen, så skanningen läser rätt fil.
+    assert.match(vy, /inte tillräckligt säker på klassificeringen/);
+  });
+});
+
 describe('SS · inga prisseedar i repot', () => {
   test('SS-01 · migreringen skapar tabeller men skriver inga priser, och seedskriptet är borta', () => {
     const mig = readFileSync(rot('api/admin/run-migration.mjs'), 'utf8');
     assert.doesNotMatch(mig, /upsertPrice/, 'run-migration skriver priser igen');
     assert.doesNotMatch(mig, /name: 'seed:/);
+    assert.doesNotMatch(mig, /INSERT INTO supplier_prices/i, 'run-migration skriver ett rått prisseed (N-4)');
     assert.match(mig, /CREATE TABLE IF NOT EXISTS/, 'motprov: migreringen finns kvar och skapar tabeller');
     assert.equal(existsSync(rot('scripts/seed-price-db.mjs')), false);
     const flode = readFileSync(rot('.github/workflows/setup-price-db.yml'), 'utf8');

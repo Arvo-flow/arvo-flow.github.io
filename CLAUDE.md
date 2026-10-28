@@ -490,13 +490,15 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    var rätt (LT-09). Den andra granskaren dog på sessionsgränsen; dess oprövade anteckningar visade
 >    felet, och det återskapades innan det räknades. **En ny prövning läggs OVANPÅ mains, aldrig i stället
 >    för den, så länge mains tal bär något den nya inte prövar.** Då fångar den nya allt main fångade per
->    konstruktion, och svepet behöver bara mäta korrekta fakturor som går till granskning. Rutnätet bär nu
+>    konstruktion, och svepet behöver bara mäta korrekta fakturor som går till granskning. Rutnätet bar då
 >    också felläst projektion och antal: 406 848 fall, 0 försämringar, mot 528 för 2ac67b6e och 4 616 för
 >    ec21e155.
 >    **Den tredje granskaren fann den sjunde: kategorin var ingen dimension.** Anropet började köras för
 >    varje faktura, och radprövningen skickade korrekta paketfakturor (dator, licens och support) till
 >    granskning med fel skäl, där main gav ett ärligt offertbesked (L-1). **Ett anrop som når fler
->    fakturor än förut ändrar svepets rymd: rutnätet ska bära varje kategori anropet nu når.**
+>    fakturor än förut ändrar svepets rymd: rutnätet ska bära varje kategori anropet nu når.** Dagens
+>    rutnät (LT-06): 407 568 fall, varav 369 384 skilda, 0 försämringar inom prisaxeln årspris, månadspris
+>    och 1,15 × årspris; samma rutnät ger 96 mot ea56bf42. Ett tal utan sin axel lovar mer än det mätt.
 
 ---
 

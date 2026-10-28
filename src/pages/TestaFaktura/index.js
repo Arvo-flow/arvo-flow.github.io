@@ -1611,19 +1611,26 @@ const TestaFaktura = () => {
                 ) : result.reason === 'price_anomaly' ? (
                   // ── PRISAVVIKELSEN FICK DEN GENERISKA TEXTEN (andra blicken på T-2, L-2) ──────
                   // «Vår algoritm är inte tillräckligt säker på klassificeringen» var falskt här:
-                  // kategorin är klar, det är ett avläst licenspris som inte går att bekräfta. Texten
-                  // säger inte att priset är högre än licensen kan kosta, för prövningen stoppar också
-                  // korrekta fakturor (Adobe till listpris, E5 på månadsfakturering). Rummet säger
-                  // samma sak: vi stoppade prissättningen.
+                  // kategorin är klar. Två prövningar ger skälet, och de säger olika saker (N-1):
+                  // radprövningen avser en licensrads pris, mains tak avser projektion ÷ platser, som
+                  // inte är ett licenspris och ofta lyfts av tillägg. Ett svar utan `prisprov` (äldre
+                  // cache) får en mening som är sann för båda. Ingen text påstår att priset är fel, för
+                  // prövningen stoppar också korrekta fakturor (Adobe till listpris, E5 med Copilot).
                   <>
-                    <strong>{_harFynd
-                      ? 'Raden ovan läste vi säkert. Prisnivån visar vi inte.'
-                      : 'Vi stoppade prissättningen.'}</strong>
+                    <strong>Vi stoppade prissättningen.</strong>
                     <p>
-                      {_harFynd && 'Fyndet ovan kommer ur er egen fakturarad. '}
-                      Ett licenspris vi läste på fakturan ligger utanför det vi kan bekräfta automatiskt,
-                      så vi kan ha läst ett tal fel, till exempel en kvartals- eller årssumma som ett
-                      månadspris. Därför visar vi inga besparingssiffror för den här fakturan.
+                      {result.prisprov === 'per_plats'
+                        ? 'Kostnaden per licens och månad, räknad som fakturans löpande belopp delat med '
+                          + 'antalet licenser, är högre än vi kan bekräfta automatiskt. Det kan bero på '
+                          + 'tillägg som Copilot eller Teams Phone, eller på ett tal vi läst fel, till exempel '
+                          + 'en kvartals- eller årssumma som ett månadspris.'
+                        : result.prisprov === 'rad'
+                          ? 'Priset på en licensrad är högre än vi kan bekräfta automatiskt, så vi kan ha läst '
+                            + 'ett tal fel, till exempel en kvartals- eller årssumma som ett månadspris.'
+                          : 'Kostnaden per licens på fakturan är högre än vi kan bekräfta automatiskt, så vi '
+                            + 'kan ha läst ett tal fel, till exempel en kvartals- eller årssumma som ett '
+                            + 'månadspris.'}
+                      {' '}Därför visar vi inga besparingssiffror för den här fakturan.
                     </p>
                   </>
                 ) : result.reason === 'no_benchmark' ? (

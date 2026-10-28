@@ -47,7 +47,11 @@ Var och en byggs i en egen PR, med egen granskning.
   platser räknade på två sätt, produkter utanför boken, felläst projektion och antal, rader utan antal,
   Adobe med flera produkter, paketfakturor i sina kategorier, och Microsofts rader i kategorier utan
   radprövning): main hade rätt i 170 144, den nya prövningen i 222 372, och **noll** fall där main hade
-  rätt och den nya fel. Utanför `saas-productivity` är utfallet mains, fall för fall.
+  rätt och den nya fel. Utanför `saas-productivity` är utfallet mains, fall för fall. Talet gäller inom
+  rutnätets prisaxel (årspris, månadspris, 1,15 × årspris). **Kostnaden, öppet:** en korrekt licensrad över
+  2 × nivåns månadspris går till granskning där main prissatte den (N-3); samma tal kan vara en
+  kvartalssumma läst som månad. Fakturavyn säger vid en prisavvikelse vilken prövning som slog till och
+  kallar aldrig priset per plats ett licenspris (N-1, LT-11). N-4 (SS-01 släppte ett rått prisseed) är lagat.
   **Tre försök föll först**, alla i granskning eller i en omkörning av en död granskares anteckningar:
   - 2ac67b6e höjde taken per plats och prissatte Office 365 E3 och Adobe-produkter lästa som kvartalssumma
     (`ops/GRANSKNING-t2-licenstaket.md`, T2-1).
