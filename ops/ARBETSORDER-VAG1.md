@@ -39,20 +39,26 @@ Var och en byggs i en egen PR, med egen granskning.
   modulhuvudets BLIND).
 - **T-2 · Licenstaket når nästan aldrig en riktig faktura. [KUND], förexisterande. Byggd i T-2-PR:en.**
   `lib/supplier-price-intel.js` gör två prövningar, och fakturan går till granskning om någon slår till.
-  (1) Mains tak per plats, oförändrat och alltid (765,70 · 468 · 908,70 på mains exakta namn). (2) Ovanpå:
-  varje löpande nivårad (radensNiva) mot sin egen nivå i prisboken. Över 2 × nivåns listpris per licens och
-  månad går fakturan till granskning, oavsett leverantörsnamn. Priset är belopp ÷ antal, samma tal som
-  kundens årskostnad (T2-2). Eftersom (1) är mains fångar prövningen allt main fångade. Svepet mot main
-  (LT-06, 406 848 fall med olika antal per rad, platser räknade på två sätt, produkter utanför boken, Adobe
-  med flera produkter, och felläst projektion och antal): main hade rätt i 169 688, den nya prövningen i
-  221 916, och **noll** fall där main hade rätt och den nya fel.
-  **Två försök föll först.** 2ac67b6e höjde taken per plats och prissatte Office 365 E3 och Adobe-produkter
-  lästa som kvartalssumma (`ops/GRANSKNING-t2-licenstaket.md`, T2-1, BLOCKERAR). ec21e155 hoppade över
-  taket när varje rad var en prövad nivårad och prissatte en projektion läst ×12 och ett halverat antal
-  (LT-09). Den andra granskaren dog på sessionsgränsen utan dom; dess oprövade anteckningar visade felet,
-  som återskapades innan det räknades. Samma rutnät ger 528 respektive 4 616 försämringar mot de två.
-  Lagat i samma PR: T2-2; T2-4 (LT-07 räknar upp alla nio namn); T2-5 (BLIND); T2-6 (LT-08, gränsen per
-  nivå); F5-1; F5-3; T-4 (`prisprovningensIndata`).
+  (1) Mains tak per plats, oförändrat och alltid (765,70 · 468 · 908,70 på mains exakta namn). (2) Ovanpå,
+  bara i kategorin `saas-productivity`: varje löpande nivårad med antal mot sin egen nivå i prisboken.
+  Över 2 × nivåns listpris per licens och månad går fakturan till granskning, oavsett leverantörsnamn.
+  Priset är belopp ÷ antal, samma tal som kundens årskostnad. Eftersom (1) är mains fångar prövningen allt
+  main fångade. Svepet mot main (LT-06, 407 568 fall: Microsofts licensfakturor med olika antal per rad,
+  platser räknade på två sätt, produkter utanför boken, felläst projektion och antal, rader utan antal,
+  Adobe med flera produkter, paketfakturor i sina kategorier, och Microsofts rader i kategorier utan
+  radprövning): main hade rätt i 170 144, den nya prövningen i 222 372, och **noll** fall där main hade
+  rätt och den nya fel. Utanför `saas-productivity` är utfallet mains, fall för fall.
+  **Tre försök föll först**, alla i granskning eller i en omkörning av en död granskares anteckningar:
+  - 2ac67b6e höjde taken per plats och prissatte Office 365 E3 och Adobe-produkter lästa som kvartalssumma
+    (`ops/GRANSKNING-t2-licenstaket.md`, T2-1).
+  - ec21e155 hoppade över taket när varje rad var en prövad nivårad och prissatte en projektion läst ×12
+    och ett halverat antal (LT-09). Granskaren dog på sessionsgränsen.
+  - ea56bf42 körde radprövningen i varje kategori och skickade korrekta paketfakturor till granskning med
+    fel skäl, och prövade en rad utan antal på à-priset (`ops/GRANSKNING-t2-licenstaket-lagningen.md`,
+    L-1, L-3). Samma rutnät ger 96 försämringar mot ea56bf42.
+  Lagat i samma PR: fakturavyn har ett eget besked för `price_anomaly` (L-2: «Vi stoppade prissättningen»
+  i stället för «vår algoritm är inte tillräckligt säker på klassificeringen»), renderat i 390 och 1600 px
+  med motprov (`scripts/screenshot-prisavvikelse.mjs`); T2-2; T2-4; T2-5; T2-6; L-4; F5-1; F5-3; T-4.
   **Kvar, [KUND], förexisterande och inte vanligare:**
   - **Microsoft 365 E5 på månadsfakturering (769,42) och Adobe Creative Cloud Pro till listpris (985) går
     till granskning, som på main.** Ett tak per plats kan inte skilja dem från fel med samma tal. E5 kan
@@ -62,7 +68,10 @@ Var och en byggs i en egen PR, med egen granskning.
     därav under mains tröskel (619,32 och 743,16) prissätts, som på main. Stängs när boken bär EES-priserna.
   - Ett tillägg läst som kvartals- eller årssumma hos en leverantör vars namn mains uppslag inte känner
     prissätts, som på main. Tilläggen saknar listpris i boken.
-  **Kvar, [VAKT]:** F5-2, vägen från anomali till `review_queue`, prövas inte genom handlern.
+  - Fakturavyns generiska granskningstext («våra modeller är oense», «Koppla Fortnox / Visma») står kvar
+    för de andra skälen. Den gäller inte `price_anomaly` längre.
+  **Kvar, [VAKT]:** F5-2 och L-5: vägen från anomali till `review_queue`, och att anropet körs utan mains
+  gamla villkor, prövas inte genom handlern.
 - **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**
   rummet sa «Prissatta 0» och «Vägde 0 fakturor mot verifierat publikt listpris» bredvid «Ni betalar
   mer än listpris» och Arvo Score 10. Raden saknade antal platser, så den kan vara en artefakt av

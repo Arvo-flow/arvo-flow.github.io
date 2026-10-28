@@ -1608,6 +1608,24 @@ const TestaFaktura = () => {
                       Vi stödjer SEK och EUR. För övriga valutor, kontakta oss så hjälper vi er manuellt.
                     </p>
                   </>
+                ) : result.reason === 'price_anomaly' ? (
+                  // ── PRISAVVIKELSEN FICK DEN GENERISKA TEXTEN (andra blicken på T-2, L-2) ──────
+                  // «Vår algoritm är inte tillräckligt säker på klassificeringen» var falskt här:
+                  // kategorin är klar, det är ett avläst licenspris som inte går att bekräfta. Texten
+                  // säger inte att priset är högre än licensen kan kosta, för prövningen stoppar också
+                  // korrekta fakturor (Adobe till listpris, E5 på månadsfakturering). Rummet säger
+                  // samma sak: vi stoppade prissättningen.
+                  <>
+                    <strong>{_harFynd
+                      ? 'Raden ovan läste vi säkert. Prisnivån visar vi inte.'
+                      : 'Vi stoppade prissättningen.'}</strong>
+                    <p>
+                      {_harFynd && 'Fyndet ovan kommer ur er egen fakturarad. '}
+                      Ett licenspris vi läste på fakturan ligger utanför det vi kan bekräfta automatiskt,
+                      så vi kan ha läst ett tal fel, till exempel en kvartals- eller årssumma som ett
+                      månadspris. Därför visar vi inga besparingssiffror för den här fakturan.
+                    </p>
+                  </>
                 ) : result.reason === 'no_benchmark' ? (
                   <>
                     <strong>{_harFynd
