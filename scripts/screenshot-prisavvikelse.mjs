@@ -5,12 +5,9 @@
 // produktionens fakturaLage. Det enda som är stubbat är nätverket.
 //
 // KONTROLLER I DOM:EN (med motprov):
-//   prisavvikelse → «Vi stoppade prissättningen», aldrig «inte tillräckligt säker på klassificeringen»,
-//                   «modeller är oense», «licenspris vi läste» eller en leverantörs produkter; per plats
-//                   (E5 + Copilot hos «Microsoft», och Adobe till listpris, båda mains tak) kallar talet
-//                   kostnad per användare som vi räknade fram och säger att priset inte behöver vara fel; en radprövning
-//                   nämner licensraden; ett svar utan prisprov (ska inte förekomma, cachen v32) får den
-//                   mening som är sann för båda
+//   prisavvikelse → «Vi stoppade prissättningen» och den enda meningen ur src/lib/prisavvikelse.js, för en
+//                   Microsoft-, en Adobe- och en återförsäljarfaktura; aldrig «inte tillräckligt säker på
+//                   klassificeringen», «modeller är oense» eller en sats om talets enhet eller ursprung
 //   motprov       → ett annat granskningsskäl (categorization_conflict) SKA fortfarande ge den generiska
 //                   texten; annars bevisar kontrollerna bara att orden saknas i bygget.
 // BLIND: nätverket är stubbat — att servern skickar `reason: 'price_anomaly'` bevisar LT-04 och koden i
@@ -71,13 +68,14 @@ async function fakturavyn(bredd, svar) {
 const text = async (p) => (await p.innerText('body')).replace(/\s+/g, ' ');
 
 for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
-  const FALSKT = [/inte tillräckligt säker på klassificeringen/, /modeller är oense/, /licenspris vi läste/, /Copilot/, /Teams Phone/, /antalet licenser/, /fakturans (?:löpande )?kostnad/i];
-  const PER_PLATS = [/Kostnaden per användare och månad som vi räknade fram ur fakturan/, /Det behöver inte betyda att priset är fel/];
+  const FALSKT = [/inte tillräckligt säker på klassificeringen/, /modeller är oense/, /licenspris vi läste/, /per användare/,
+    /per licens/, /licensrad/, /antalet licenser/, /fakturans (?:löpande )?kostnad/i];
+  const MENING = [/En av våra automatiska priskontroller slog till\./, /Det behöver inte betyda att priset är fel/,
+    /stoppar också vissa korrekta fakturor/];
   for (const [fall, svar, maste, far] of [
-    ['per-plats', granskning('price_anomaly', 'per_plats', 'Microsoft', 928), PER_PLATS, [/på en licensrad/]],
-    ['per-plats-adobe', granskning('price_anomaly', 'per_plats', 'Adobe', 985), PER_PLATS, [/på en licensrad/]],
-    ['rad', granskning('price_anomaly', 'rad'), [/Priset per licens och månad som vi räknade fram ur en licensrad/], [/per användare och månad/]],
-    ['utan-prisprov', granskning('price_anomaly'), [/Ett pris som vi räknade fram ur fakturan ligger utanför/], [/ur en licensrad/, /per användare och månad/]],
+    ['microsoft', granskning('price_anomaly', undefined, 'Microsoft', 928), MENING, []],
+    ['adobe', granskning('price_anomaly', undefined, 'Adobe', 985), MENING, []],
+    ['aterforsaljare', granskning('price_anomaly'), MENING, []],
   ]) {
     const p = await fakturavyn(bredd, svar);
     const t = await text(p);

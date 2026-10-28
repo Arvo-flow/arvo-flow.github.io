@@ -10,7 +10,7 @@ import Icon from '../../components/Icon';
 import { formatKr, genitiv, krPerAr } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
 import { ANALYSRUBRIKER, diagnosMening, UTAN_VERIFIERAT_PRIS } from '../../lib/diagnos';
-import { PRISAVVIKELSE_RUBRIK, PRISAVVIKELSE_SLUT, prisavvikelseMening } from '../../lib/prisavvikelse';
+import { PRISAVVIKELSE_RUBRIK, PRISAVVIKELSE_MENING, PRISAVVIKELSE_SLUT } from '../../lib/prisavvikelse';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { redigeraLeverantor, samaLeverantor } from '../../lib/leverantorsnamn';
 import { COST_CATEGORIES } from '../../lib/costCategories';
@@ -1612,10 +1612,10 @@ const TestaFaktura = () => {
                 ) : result.reason === 'price_anomaly' ? (
                   // ── PRISAVVIKELSEN FICK DEN GENERISKA TEXTEN (andra blicken på T-2, L-2) ──────
                   // «Vår algoritm är inte tillräckligt säker på klassificeringen» var falskt här. Meningen
-                  // väljs per prövning i src/lib/prisavvikelse.js, där LT-11 prövar den (N-1, P-1, P-2).
+                  // bor i src/lib/prisavvikelse.js, där LT-11 låser den ordagrant.
                   <>
                     <strong>{PRISAVVIKELSE_RUBRIK}</strong>
-                    <p>{prisavvikelseMening(result.prisprov)} {PRISAVVIKELSE_SLUT}</p>
+                    <p>{PRISAVVIKELSE_MENING} {PRISAVVIKELSE_SLUT}</p>
                   </>
                 ) : result.reason === 'no_benchmark' ? (
                   <>
