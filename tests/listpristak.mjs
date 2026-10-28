@@ -322,21 +322,19 @@ describe('LT · licenspriset prövas per nivårad och mot mains tak per plats', 
 });
 
 describe('LT-11 · beskedet vid en prisavvikelse säger vilken prövning som slog till', () => {
-  // Texten låses ordagrant (åttonde granskningen, Q-2/Q-3: tre fragment och en ordlista släppte både
-  // «högre än leverantörens listpris» och nya produktnamn). En ändrad mening ska vara ett medvetet beslut
-  // som syns i det här testet, och varje sats ska vara sann för varje faktura den visas för.
-  const PER_PLATS = 'Fakturans löpande kostnad per månad, delad med det antal användare vi läste på fakturan, '
-    + 'är högre än den gräns vi prövar automatiskt för leverantören. Det behöver inte betyda att priset '
-    + 'är fel: gränsen stoppar också korrekta fakturor, till exempel när användarna har flera produkter '
-    + 'eller tillägg, eller när ett listpris ligger över gränsen. Den finns för att fånga tal vi kan ha '
-    + 'läst fel, till exempel en kvartals- eller årssumma som ett månadspris.';
-  const RAD = 'Priset per licens på en licensrad är mer än dubbelt så högt som planens listpris, så vi kan ha '
-    + 'läst ett tal fel, till exempel en kvartals- eller årssumma som ett månadspris. Det behöver inte '
-    + 'betyda att priset är fel.';
-  const RESERV = 'Fakturans kostnad per licens eller användare ligger utanför det vi kan pröva automatiskt, '
-    + 'så vi kan ha läst ett tal fel, till exempel en kvartals- eller årssumma som ett månadspris.';
+  // Texten låses ordagrant, så att en ändrad mening är ett beslut som syns här (Q-2/Q-3). Talet beskrivs
+  // som det vi räknade fram, aldrig som ett faktum om fakturan: prövningen finns för att fånga felläsningar,
+  // och då är «fakturans kostnad» falsk precis när prövningen gör rätt (R-1/R-2).
+  const FORBEHALL = 'Det behöver inte betyda att priset är fel: gränsen finns för att fånga tal vi kan ha '
+    + 'läst fel, till exempel en kvartalssumma som ett månadspris, och den stoppar också vissa korrekta '
+    + 'fakturor.';
+  const PER_PLATS = 'Kostnaden per användare och månad som vi räknade fram ur fakturan ligger över den gräns '
+    + `vi prövar automatiskt för leverantören. ${FORBEHALL}`;
+  const RAD = 'Priset per licens och månad som vi räknade fram ur en licensrad är mer än dubbelt så högt som '
+    + `planens listpris. ${FORBEHALL}`;
+  const RESERV = `Ett pris som vi räknade fram ur fakturan ligger utanför det vi kan pröva automatiskt. ${FORBEHALL}`;
 
-  test('LT-11 · varje prövning får sin mening, ordagrant (N-1, P-1, P-2, Q-1..Q-3)', async () => {
+  test('LT-11 · varje prövning får sin mening, ordagrant (N-1, P-1, P-2, Q-1..Q-3, R-1, R-2)', async () => {
     const m = await import('../src/lib/prisavvikelse.js');
     assert.equal(m.prisavvikelseMening('per_plats'), PER_PLATS);
     assert.equal(m.prisavvikelseMening('rad'), RAD);
@@ -345,18 +343,29 @@ describe('LT-11 · beskedet vid en prisavvikelse säger vilken prövning som slo
     assert.equal(m.PRISAVVIKELSE_SLUT, 'Därför visar vi inga besparingssiffror för den här fakturan.');
   });
 
-  test('LT-11 · per plats-meningens uträkning är den som stoppade fakturan, också med flera produkter per användare (Q-1)', () => {
-    // Adobe till bokens teampris: Alla program 5 × 985 och Acrobat Pro 1 × 273, fem användare.
-    // pricePerSeatMonthly räknas som i extraktionen: löpande kostnad ÷ antal användare ÷ periodens månader.
-    const lopande = 5 * 985 + 273;
-    const anvandare = 5;
-    const ppsSomMeningen = r2(lopande / anvandare / 1);
-    const u = validateSeatPrice({ normalizedSupplier: 'Adobe', pricePerSeatMonthly: ppsSomMeningen, category: 'saas-creative', billingPeriod: 'monthly',
-      lineItems: [rad('Adobe Creative Cloud Alla program', 985, 5), rad('Adobe Acrobat Pro', 273, 1)] });
-    assert.deepEqual({ anomaly: u.anomaly, prov: u.prov }, { anomaly: true, prov: 'per_plats' }, 'meningens uträkning ger stoppet');
-    // Motprov: delat med licenserna (6) hade talet legat under gränsen; meningen får därför aldrig säga licenser.
-    assert.equal(prova('adobe', r2(lopande / 6)).anomaly, false);
-    assert.doesNotMatch(PER_PLATS, /antalet licenser/);
+  test('LT-11 · kedjan från extraktionen: talet meningen beskriver är talet som prövades (R-1, R-3)', async () => {
+    const { aggregateLineItems } = await import('../agents/test-invoice/extract.js');
+    const radRa = (d, q, p) => ({ description: d, type: 'recurring_subscription', quantity: q, unitPrice: Math.round(p),
+      amount: r2(q * p), amount_ore: Math.round(q * p * 100), unit_price_ore: Math.round(p * 100) });
+    const kor = (lev, category, raw) => {
+      const ext = aggregateLineItems({ supplier: lev, date: '2026-10-01', confidenceScore: 0.95, currency: 'SEK', ...raw }, null);
+      return { pps: ext.pricePerSeatMonthly, period: ext.billingPeriod, ...validateSeatPrice(prisprovningensIndata(ext, { normalizedSupplier: lev, category })) };
+    };
+    // Adobe till teampris, flera produkter per användare: fem användare, sex licenser.
+    const adobe = kor('Adobe', 'saas-creative', { billingPeriod: 'monthly', seatCount: 5, projectedRecurringAmount: 5198,
+      lineItems: [radRa('Adobe Creative Cloud Alla program', 5, 985), radRa('Adobe Acrobat Pro', 1, 273)] });
+    assert.deepEqual([adobe.pps, adobe.anomaly, adobe.prov], [1039.6, true, 'per_plats'], 'delat med användare, inte licenser');
+    // Kvartalsfaktura med tjänsteperiod: perioden delas bort, och E3 till listpris prissätts.
+    const kvartal = kor('Microsoft', 'saas-productivity', { billingPeriod: 'quarterly', billing_period_start: '2026-10-01',
+      billing_period_end: '2026-12-31', seatCount: 10, projectedRecurringAmount: 12503.1, lineItems: [radRa(NAMN.e3, 10, 3 * 416.77)] });
+    assert.deepEqual([kvartal.pps, kvartal.anomaly], [416.77, false], 'periodens månader delas bort');
+    // R-1: kvartal utan datum, två rader med antal ≥ 5 — vår regel gör perioden till månad, och talet vi
+    // räknade fram ligger över gränsen. Meningen beskriver just det talet, aldrig fakturans kostnad.
+    const r1 = kor('Microsoft', 'saas-productivity', { billingPeriod: 'quarterly', seatCount: 15, projectedRecurringAmount: 22120.8,
+      lineItems: [radRa(NAMN.e3, 10, 3 * 416.77), radRa(NAMN.e5, 5, 3 * 641.18)] });
+    assert.equal(r1.anomaly, true);
+    assert.ok(r1.pps > 765.7, `talet som prövades, ${r1.pps}, ligger över gränsen som meningen säger`);
+    for (const m of [PER_PLATS, RAD, RESERV]) assert.doesNotMatch(m, /fakturans (?:löpande )?kostnad|priset på en licensrad|antalet licenser/i);
   });
 
   test('LT-11 · svaret bär prisprov en gång, och vyns gren är exakt modulens text (P-3, Q-4, Q-5)', () => {
@@ -367,7 +376,8 @@ describe('LT-11 · beskedet vid en prisavvikelse säger vilken prövning som slo
     assert.match(api.slice(i, i + 300), /^\s*prisprov:\s*_priceCheck\.prov,/m, 'svaret bär inte vilken prövning som slog till');
     assert.equal(api.match(/\bprisprov\b/g)?.length, 1, 'prisprov sätts eller skrivs över på mer än ett ställe');
     const vy = readFileSync(rot('src/pages/TestaFaktura/index.js'), 'utf8');
-    assert.equal(vy.match(/'price_anomaly'/g)?.length, 1, 'en annan gren i vyn fångar price_anomaly');
+    assert.equal(vy.match(/['"`]price_anomaly['"`]/g)?.length, 1, 'en annan gren i vyn fångar price_anomaly');
+    assert.equal(vy.match(/\bprisprov\b/g)?.length, 1, 'vyn läser prisprov på fler ställen än i grenen (R-4)');
     const a = vy.indexOf("result.reason === 'price_anomaly' ?");
     const b = vy.indexOf('result.reason ===', a + 10);
     assert.ok(a > 0 && b > a && b - a < 2000, 'grenen hittades inte');
@@ -384,7 +394,7 @@ describe('SS · inga prisseedar i repot', () => {
     const mig = readFileSync(rot('api/admin/run-migration.mjs'), 'utf8');
     assert.doesNotMatch(mig, /upsertPrice/, 'run-migration skriver priser igen');
     assert.doesNotMatch(mig, /name: 'seed:/);
-    assert.doesNotMatch(mig, /\b(?:INSERT\s+INTO|UPDATE|UPSERT\s+INTO|MERGE\s+INTO)\s+(?:"?\w+"?\.)?"?supplier_prices\b/i, 'run-migration skriver ett pris (N-4, P-5, Q-6)');
+    assert.doesNotMatch(mig, /\b(?:INSERT\s+INTO|UPDATE(?:\s+ONLY)?|UPSERT\s+INTO|MERGE\s+INTO)\s+(?:"?\w+"?\.)?"?supplier_prices\b/i, 'run-migration skriver ett pris (N-4, P-5, Q-6, R-6)');
     assert.match(mig, /CREATE TABLE IF NOT EXISTS/, 'motprov: migreringen finns kvar och skapar tabeller');
     assert.equal(existsSync(rot('scripts/seed-price-db.mjs')), false);
     const flode = readFileSync(rot('.github/workflows/setup-price-db.yml'), 'utf8');

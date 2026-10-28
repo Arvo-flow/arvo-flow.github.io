@@ -506,6 +506,10 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    användare). **En förklaring är ett påstående. Skriv bara det koden räknar, med kodens egen nämnare, låt
 >    exempel stå som exempel, och lås meningen ordagrant i sviten** (LT-11), så att varje ändring blir ett
 >    beslut och inte en glidning.
+>    **Den fjärde gången (R-1) visade roten.** Även «fakturans löpande kostnad per månad» var falsk: perioden
+>    hade lästs om av vår egen regel. En prövning som finns för att fånga felläsningar kan aldrig beskriva
+>    sitt tal som ett faktum om fakturan, för då är meningen falsk precis när prövningen gör rätt. **Ett
+>    larm om ett avläst tal säger «talet vi räknade fram», aldrig «fakturans».**
 
 ---
 
