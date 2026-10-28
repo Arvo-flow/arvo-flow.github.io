@@ -9,28 +9,29 @@
 
 export const PRISAVVIKELSE_RUBRIK = 'Vi stoppade prissättningen.';
 
-// Varje mening beskriver bara det prövningen räknar (åttonde granskningen, Q-1: «delat med antalet
-// licenser» var fel nämnare, för priset per plats delas med antalet användare extraktionen läste, och
-// för flera produkter per användare gav meningens egen uträkning ett tal under gränsen). Ett exempel
-// står bara som exempel på vad gränsen stoppar i allmänhet, aldrig som skälet för just den fakturan.
+// TALET ÄR VÅRT, INTE FAKTURANS (nionde granskningen, R-1/R-2; fjärde gången samma form efter N-1, P-1
+// och Q-1). Prövningen finns för att fånga felläsningar. En mening som beskriver talet som ett faktum
+// om fakturan («fakturans kostnad», «priset på licensraden») blir därför falsk precis när prövningen gör
+// rätt: perioden, projektionen eller antalet var fel läst, ibland av vår egen regel. Meningarna säger
+// bara vad vi räknade fram och vad gränsen är till för. Exemplet i förbehållet gäller gränsens syfte,
+// aldrig skälet för just den fakturan.
+const FORBEHALL = 'Det behöver inte betyda att priset är fel: gränsen finns för att fånga tal vi kan ha '
+  + 'läst fel, till exempel en kvartalssumma som ett månadspris, och den stoppar också vissa korrekta '
+  + 'fakturor.';
+
 const MENING = Object.freeze({
-  // pricePerSeatMonthly = den löpande kostnaden för nästa fulla period ÷ antal användare ÷ periodens
-  // månader (agents/test-invoice/extract.js), prövad mot mains tröskel för leverantören.
-  per_plats: 'Fakturans löpande kostnad per månad, delad med det antal användare vi läste på fakturan, '
-    + 'är högre än den gräns vi prövar automatiskt för leverantören. Det behöver inte betyda att priset '
-    + 'är fel: gränsen stoppar också korrekta fakturor, till exempel när användarna har flera produkter '
-    + 'eller tillägg, eller när ett listpris ligger över gränsen. Den finns för att fånga tal vi kan ha '
-    + 'läst fel, till exempel en kvartals- eller årssumma som ett månadspris.',
+  // pricePerSeatMonthly ur extraktionen: projektionen ÷ antal användare ÷ periodens månader, prövad mot
+  // mains tröskel för leverantören.
+  per_plats: 'Kostnaden per användare och månad som vi räknade fram ur fakturan ligger över den gräns '
+    + `vi prövar automatiskt för leverantören. ${FORBEHALL}`,
   // Radprövningen: radens belopp ÷ antal per månad > 2 × nivåns högsta listpris i prisboken.
-  rad: 'Priset per licens på en licensrad är mer än dubbelt så högt som planens listpris, så vi kan ha '
-    + 'läst ett tal fel, till exempel en kvartals- eller årssumma som ett månadspris. Det behöver inte '
-    + 'betyda att priset är fel.',
+  rad: 'Priset per licens och månad som vi räknade fram ur en licensrad är mer än dubbelt så högt som '
+    + `planens listpris. ${FORBEHALL}`,
 });
 
 // Ett svar utan `prisprov` ska inte förekomma: cachen höjdes till v32 i samma commit som fältet. Om
 // det ändå gör det får kunden en mening som är sann för båda prövningarna.
-const RESERV = 'Fakturans kostnad per licens eller användare ligger utanför det vi kan pröva automatiskt, '
-  + 'så vi kan ha läst ett tal fel, till exempel en kvartals- eller årssumma som ett månadspris.';
+const RESERV = `Ett pris som vi räknade fram ur fakturan ligger utanför det vi kan pröva automatiskt. ${FORBEHALL}`;
 
 export const PRISAVVIKELSE_SLUT = 'Därför visar vi inga besparingssiffror för den här fakturan.';
 

@@ -8,7 +8,7 @@
 //   prisavvikelse → «Vi stoppade prissättningen», aldrig «inte tillräckligt säker på klassificeringen»,
 //                   «modeller är oense», «licenspris vi läste» eller en leverantörs produkter; per plats
 //                   (E5 + Copilot hos «Microsoft», och Adobe till listpris, båda mains tak) kallar talet
-//                   kostnad delad med antal användare och säger att priset inte behöver vara fel; en radprövning
+//                   kostnad per användare som vi räknade fram och säger att priset inte behöver vara fel; en radprövning
 //                   nämner licensraden; ett svar utan prisprov (ska inte förekomma, cachen v32) får den
 //                   mening som är sann för båda
 //   motprov       → ett annat granskningsskäl (categorization_conflict) SKA fortfarande ge den generiska
@@ -71,13 +71,13 @@ async function fakturavyn(bredd, svar) {
 const text = async (p) => (await p.innerText('body')).replace(/\s+/g, ' ');
 
 for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
-  const FALSKT = [/inte tillräckligt säker på klassificeringen/, /modeller är oense/, /licenspris vi läste/, /Copilot/, /Teams Phone/, /antalet licenser/];
-  const PER_PLATS = [/delad med det antal användare vi läste på fakturan/, /Det behöver inte betyda att priset är fel/];
+  const FALSKT = [/inte tillräckligt säker på klassificeringen/, /modeller är oense/, /licenspris vi läste/, /Copilot/, /Teams Phone/, /antalet licenser/, /fakturans (?:löpande )?kostnad/i];
+  const PER_PLATS = [/Kostnaden per användare och månad som vi räknade fram ur fakturan/, /Det behöver inte betyda att priset är fel/];
   for (const [fall, svar, maste, far] of [
     ['per-plats', granskning('price_anomaly', 'per_plats', 'Microsoft', 928), PER_PLATS, [/på en licensrad/]],
     ['per-plats-adobe', granskning('price_anomaly', 'per_plats', 'Adobe', 985), PER_PLATS, [/på en licensrad/]],
-    ['rad', granskning('price_anomaly', 'rad'), [/Priset per licens på en licensrad är mer än dubbelt/], [/antal användare/]],
-    ['utan-prisprov', granskning('price_anomaly'), [/Fakturans kostnad per licens eller användare ligger utanför/], [/på en licensrad/, /antal användare vi läste/]],
+    ['rad', granskning('price_anomaly', 'rad'), [/Priset per licens och månad som vi räknade fram ur en licensrad/], [/per användare och månad/]],
+    ['utan-prisprov', granskning('price_anomaly'), [/Ett pris som vi räknade fram ur fakturan ligger utanför/], [/ur en licensrad/, /per användare och månad/]],
   ]) {
     const p = await fakturavyn(bredd, svar);
     const t = await text(p);

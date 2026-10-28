@@ -247,8 +247,6 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
   test('CV-19 · licensprövningen per nivårad och cache-versionen hänger ihop', () => {
     // T-2 (2026-10-28): fler fakturor går till granskning, och svaret för price_anomaly bär prisprov.
     // Ett cachat svar från före ändringen saknar fältet och hoppar över den nya prövningen.
-    const SPI = readFileSync(join(ROT, 'lib/supplier-price-intel.js'), 'utf8');
-    if (!/export function radensPrisPerManad/.test(SPI)) return;   // prövningen borttagen → LT äger fallet
     assert.ok(cacheVersion() >= 32,
       `radprövningen finns men pdf:result står på v${cacheVersion()} — cachen serverar då svar utan den`);
   });
