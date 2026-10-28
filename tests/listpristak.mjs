@@ -301,6 +301,18 @@ describe('LT · licenspriset prövas per nivårad och mot mains tak per plats', 
       // Motprov: samma rad i like-for-likes kategori läses som en licens, och priset går inte att förklara.
       assert.equal(provaRader(lev, [rad(text, pris, antal)], 'monthly', pris, 'saas-productivity').anomaly, true, `${lev} som licens`);
     }
+    // Grinden är exakt like-for-likes kategori, inte en spärrlista, ett prefix eller skiftlägesokänslig:
+    // en E3-årssumma läst som månad prövas bara i saas-productivity (fjärde granskaren, död på
+    // användningsgränsen: tre sådana grindar fällde noll tester).
+    const arssumma = [rad(NAMN.e3, 416.77 * 12)];
+    assert.equal(provaRader('Crayon AS', arssumma, 'monthly', null, 'saas-productivity').anomaly, true, 'motprov');
+    for (const kategori of ['saas-crm', 'saas-creative', 'saas-other', 'serverhosting', 'mobil', 'managed-workplace',
+      'it-support', 'SaaS-Productivity', ' saas-productivity', null]) {
+      assert.deepEqual(provaRader('Crayon AS', arssumma, 'monthly', null, kategori), { ok: true, anomaly: false, prov: null }, String(kategori));
+    }
+    // Utan kategori alls (provaRader har saas-productivity som standardvärde, så den anropas direkt).
+    assert.deepEqual(validateSeatPrice({ normalizedSupplier: 'Crayon AS', lineItems: arssumma, billingPeriod: 'monthly' }),
+      { ok: true, anomaly: false, prov: null }, 'ingen kategori');
     // test-invoice skickar kategorin vidare, så att grinden når produktionen.
     assert.equal(prisprovningensIndata({}, { category: 'managed-workplace' }).category, 'managed-workplace');
     // Kategorin som släpper paketen är like-for-likes; grinden är ingen namnlista.
