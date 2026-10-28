@@ -38,29 +38,30 @@ Var och en byggs i en egen PR, med egen granskning.
   olåst), F5-2 (vägen från anomali till `review_queue` oprövad) och F5-3 (kvartalssumman saknas i
   modulhuvudets BLIND).
 - **T-2 · Licenstaket når nästan aldrig en riktig faktura. [KUND], förexisterande. Byggd i T-2-PR:en.**
-  `lib/supplier-price-intel.js` gör två prövningar. (1) Varje löpande nivårad (radensNiva) prövas mot sin
-  egen nivå i prisboken: över 2 × nivåns listpris per licens och månad går fakturan till granskning,
-  oavsett leverantörsnamn. Priset är belopp ÷ antal, samma tal som kundens årskostnad (T2-2). (2) Mains
-  tak per plats står orört (765,70 · 468 · 908,70) på mains exakta namn, och hoppas över bara när varje
-  löpande rad är en prövad nivårad. Svepet mot main (LT-06, 251 328 fall med olika antal per rad,
-  platser räknade på två sätt, produkter utanför boken och Adobe med flera produkter): main hade rätt i
-  112 832, den nya prövningen i 165 024, och **noll** fall där main hade rätt och den nya fel. Samma
-  rutnät mot den första versionen (2ac67b6e) gav 312 sådana fall.
-  **Första versionen blockerades** (`ops/GRANSKNING-t2-licenstaket.md`, T2-1): den höjde taken per plats
-  så att E5 och Adobe till listpris skulle prissättas, och prissatte då Office 365 E3 och Adobe-produkter
-  lästa som kvartalssumma, som main fångade. Det var F4-1:s form igen (bibelns regel 13).
-  Lagat i samma PR: E5 på månadsfakturering prissätts när fakturan bara bär nivårader; T2-2 (à-pris och
-  belopp för olika period); T2-4 (LT-07 räknar upp alla nio namn); T2-5 (BLIND); T2-6 (LT-08, gränsen
-  per nivå); F5-1; F5-3; T-4 (`prisprovningensIndata`).
+  `lib/supplier-price-intel.js` gör två prövningar, och fakturan går till granskning om någon slår till.
+  (1) Mains tak per plats, oförändrat och alltid (765,70 · 468 · 908,70 på mains exakta namn). (2) Ovanpå:
+  varje löpande nivårad (radensNiva) mot sin egen nivå i prisboken. Över 2 × nivåns listpris per licens och
+  månad går fakturan till granskning, oavsett leverantörsnamn. Priset är belopp ÷ antal, samma tal som
+  kundens årskostnad (T2-2). Eftersom (1) är mains fångar prövningen allt main fångade. Svepet mot main
+  (LT-06, 406 848 fall med olika antal per rad, platser räknade på två sätt, produkter utanför boken, Adobe
+  med flera produkter, och felläst projektion och antal): main hade rätt i 169 688, den nya prövningen i
+  221 916, och **noll** fall där main hade rätt och den nya fel.
+  **Två försök föll först.** 2ac67b6e höjde taken per plats och prissatte Office 365 E3 och Adobe-produkter
+  lästa som kvartalssumma (`ops/GRANSKNING-t2-licenstaket.md`, T2-1, BLOCKERAR). ec21e155 hoppade över
+  taket när varje rad var en prövad nivårad och prissatte en projektion läst ×12 och ett halverat antal
+  (LT-09). Den andra granskaren dog på sessionsgränsen utan dom; dess oprövade anteckningar visade felet,
+  som återskapades innan det räknades. Samma rutnät ger 528 respektive 4 616 försämringar mot de två.
+  Lagat i samma PR: T2-2; T2-4 (LT-07 räknar upp alla nio namn); T2-5 (BLIND); T2-6 (LT-08, gränsen per
+  nivå); F5-1; F5-3; T-4 (`prisprovningensIndata`).
   **Kvar, [KUND], förexisterande och inte vanligare:**
-  - **Adobe Creative Cloud Pro till listpris (985 kr) går till granskning, som på main.** Boken saknar en
-    radläsare för Adobes produkter; `detectAdobePlan` gissar en plan per faktura och gör varje «creative
-    cloud» till All Apps. Lagas i en egen PR: en radläsare per Adobe-produkt, sedan samma radprövning.
+  - **Microsoft 365 E5 på månadsfakturering (769,42) och Adobe Creative Cloud Pro till listpris (985) går
+    till granskning, som på main.** Ett tak per plats kan inte skilja dem från fel med samma tal. E5 kan
+    prissättas först när projektionen och platsantalet prövas mot raderna (projektionskravet, som står i
+    skugga). Adobe kräver en radläsare per Adobe-produkt; `detectAdobePlan` gissar en plan per faktura.
   - **F4-2:** «Microsoft 365 Business Basic EES (exkl. Teams)» läses inte som nivå, och en årssumma
     därav under mains tröskel (619,32 och 743,16) prissätts, som på main. Stängs när boken bär EES-priserna.
-  - E5 till listpris med ett tillägg på fakturan går till granskning som på main, eftersom mains tak då gäller.
-  - Ett tillägg läst som kvartals- eller årssumma på en faktura vars leverantörsnamn mains uppslag inte
-    känner prissätts, som på main. Tilläggen saknar listpris i boken.
+  - Ett tillägg läst som kvartals- eller årssumma hos en leverantör vars namn mains uppslag inte känner
+    prissätts, som på main. Tilläggen saknar listpris i boken.
   **Kvar, [VAKT]:** F5-2, vägen från anomali till `review_queue`, prövas inte genom handlern.
 - **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**
   rummet sa «Prissatta 0» och «Vägde 0 fakturor mot verifierat publikt listpris» bredvid «Ni betalar

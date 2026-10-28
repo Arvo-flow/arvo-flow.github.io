@@ -483,9 +483,16 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    varje rad hade samma antal, Adobe-fakturorna bara en produkt och inga rader låg utanför boken.
 >    Andra blicken byggde fall med olika antal och fann 89 som main fångade och commiten prissatte
 >    (T2-1). **Ett svep är bara så brett som sitt rutnät: variera antal per rad, räkna platser som
->    produktionen gör, och ta med produkter utanför boken.** Det nya rutnätet (251 328 fall) gav 312
->    försämringar mot den blockerade commiten och 0 mot lagningen. Taket hoppas nu över först när
->    varje löpande rad är en prövad nivårad; annars står mains tak orört.
+>    produktionen gör, och ta med produkter utanför boken.**
+>    **Och lagningen bröt mot den en sjätte gång.** Den hoppade över mains tak när varje rad var en prövad
+>    nivårad. Men priset per plats bär också projektionen och platsantalet, som är egna avläsningar: en
+>    årsfaktura med projektionen läst ×12 och en faktura med halverat antal prissattes, fast varje rad
+>    var rätt (LT-09). Den andra granskaren dog på sessionsgränsen; dess oprövade anteckningar visade
+>    felet, och det återskapades innan det räknades. **En ny prövning läggs OVANPÅ mains, aldrig i stället
+>    för den, så länge mains tal bär något den nya inte prövar.** Då fångar den nya allt main fångade per
+>    konstruktion, och svepet behöver bara mäta korrekta fakturor som går till granskning. Rutnätet bär nu
+>    också felläst projektion och antal: 406 848 fall, 0 försämringar, mot 528 för 2ac67b6e och 4 616 för
+>    ec21e155.
 
 ---
 
