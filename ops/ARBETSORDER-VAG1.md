@@ -51,8 +51,8 @@ Var och en byggs i en egen PR, med egen granskning.
   rutnätets prisaxel (Microsoft: årspris, månadspris, 1,15 × årspris; Adobe: teampris, 1,10 × teampris).
   **Kostnaden, öppet:** en korrekt licensrad över
   2 × nivåns månadspris går till granskning där main prissatte den (N-3); samma tal kan vara en
-  kvartalssumma läst som månad. Fakturavyn säger vid en prisavvikelse vilken prövning som slog till och
-  kallar aldrig priset per plats ett licenspris (N-1, LT-11). N-4 (SS-01 släppte ett rått prisseed) är lagat.
+  kvartalssumma läst som månad. Fakturavyn ger vid en prisavvikelse en enda mening som inte nämner talet
+  (LT-11). N-4 (SS-01 släppte ett rått prisseed) är lagat.
   **Tre försök föll först**, alla i granskning eller i en omkörning av en död granskares anteckningar:
   - 2ac67b6e höjde taken per plats och prissatte Office 365 E3 och Adobe-produkter lästa som kvartalssumma
     (`ops/GRANSKNING-t2-licenstaket.md`, T2-1).
@@ -82,8 +82,14 @@ Var och en byggs i en egen PR, med egen granskning.
   - **Q-7, sidans rubrik:** «Ni betalar för mycket. En faktura bevisar det.» står utan villkor ovanför
     varje resultat i fakturavyn, också ovanför «Det behöver inte betyda att priset är fel» och ovanför en
     faktura till listpris. Förexisterande på main. Egen PR: rubriken ska följa resultatets läge.
-  **Kvar, [VAKT]:** F5-2, L-5 och P-3: vägen från anomali till `review_queue`, att anropet körs utan mains
-  gamla villkor, och att `svara()` för vidare `prisprov`, prövas inte genom handlern.
+  **Kvar, [VAKT]:** F5-2 och L-5: vägen från anomali till `review_queue`, och att anropet körs utan mains
+  gamla villkor, prövas inte genom handlern. Ur tolfte domen (`ops/GRANSKNING-t2-licenstaket-tionde.md`,
+  MERGAS): U-1 (en gren före granskningsgrenen kan ta skälet utan att LT-11 fäller), U-2 (sondens
+  BLIND-rad lovar mer än LT-04 prövar), U-3 (SS-01 läser inte `scripts/aggregate-invoice-benchmarks.mjs`)
+  och U-6 (S-2-mätningen mot main har inget instrument i repot).
+  **Jag vet inte än:** granskaren läste att `api/send-analysis.mjs` svarar 400 på varje granskningssvar,
+  eftersom svaret saknar `recommendation`. Grenen rör inte filen. Vad kunden ser när den begär mejlet är
+  inte mätt; det prövas i en egen PR.
 - **Rummets bredbandsrad (steg c), observerat i renderingssonden 22 okt, med en syntetisk rad:**
   rummet sa «Prissatta 0» och «Vägde 0 fakturor mot verifierat publikt listpris» bredvid «Ni betalar
   mer än listpris» och Arvo Score 10. Raden saknade antal platser, så den kan vara en artefakt av
