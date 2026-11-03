@@ -477,6 +477,47 @@ Motståndsplikten gäller varje leverans, varje commit, varje gång. Den väger 
 >    När två fall med motsatt rätt svar ger samma tal (E5 med tillägg och en årssumma för en billigare
 >    plan) finns inget rätt tak. Mät mot mains utfall åt båda håll innan ett tak ändras, och behåll
 >    mains beteende tills prövningen sker på rätt nivå, här per nivårad.
+>    **T-2 bröt mot regeln en femte gång (27 okt), och svepet såg det inte.** Radprövningen var rätt,
+>    men samma commit höjde taken per plats (Microsoft 765,70 → 769,42, Adobe 908,70 → 1 083,50) för att
+>    E5 och Adobe till listpris skulle prissättas. Svepet gav noll försämringar i 1 986 fall, eftersom
+>    varje rad hade samma antal, Adobe-fakturorna bara en produkt och inga rader låg utanför boken.
+>    Andra blicken byggde fall med olika antal och fann 89 som main fångade och commiten prissatte
+>    (T2-1). **Ett svep är bara så brett som sitt rutnät: variera antal per rad, räkna platser som
+>    produktionen gör, och ta med produkter utanför boken.**
+>    **Och lagningen bröt mot den en sjätte gång.** Den hoppade över mains tak när varje rad var en prövad
+>    nivårad. Men priset per plats bär också projektionen och platsantalet, som är egna avläsningar: en
+>    årsfaktura med projektionen läst ×12 och en faktura med halverat antal prissattes, fast varje rad
+>    var rätt (LT-09). Den andra granskaren dog på sessionsgränsen; dess oprövade anteckningar visade
+>    felet, och det återskapades innan det räknades. **En ny prövning läggs OVANPÅ mains, aldrig i stället
+>    för den, så länge mains tal bär något den nya inte prövar.** Då fångar den nya allt main fångade per
+>    konstruktion, och svepet behöver bara mäta korrekta fakturor som går till granskning. Rutnätet bar då
+>    också felläst projektion och antal: 406 848 fall, 0 försämringar, mot 528 för 2ac67b6e och 4 616 för
+>    ec21e155.
+>    **Den tredje granskaren fann den sjunde: kategorin var ingen dimension.** Anropet började köras för
+>    varje faktura, och radprövningen skickade korrekta paketfakturor (dator, licens och support) till
+>    granskning med fel skäl, där main gav ett ärligt offertbesked (L-1). **Ett anrop som når fler
+>    fakturor än förut ändrar svepets rymd: rutnätet ska bära varje kategori anropet nu når.** Dagens
+>    rutnät (LT-06): 407 568 fall, varav 369 384 skilda, 0 försämringar inom prisaxeln (Microsoft: årspris,
+>    månadspris och 1,15 × årspris; Adobe: teampris och 1,10 × teampris); samma rutnät ger 96 mot
+>    ea56bf42. Ett tal utan sin axel lovar mer än det mätt.
+>    **Och beskedet till kunden föll tre gånger på samma form** (N-1, P-1, Q-1): en förklarande mening var
+>    sann för fakturan den prövades på och falsk för en annan klass som samma prövning stoppar («licenspris»
+>    om ett pris per plats, Microsofts tillägg på en Adobe-faktura, «antalet licenser» där nämnaren är
+>    användare). **En förklaring är ett påstående. Skriv bara det koden räknar, med kodens egen nämnare, låt
+>    exempel stå som exempel, och lås meningen ordagrant i sviten** (LT-11), så att varje ändring blir ett
+>    beslut och inte en glidning.
+>    **Den fjärde gången (R-1) visade roten.** Även «fakturans löpande kostnad per månad» var falsk: perioden
+>    hade lästs om av vår egen regel. En prövning som finns för att fånga felläsningar kan aldrig beskriva
+>    sitt tal som ett faktum om fakturan, för då är meningen falsk precis när prövningen gör rätt. **Ett
+>    larm om ett avläst tal säger «talet vi räknade fram», aldrig «fakturans».**
+>    **Den femte gången (S-1/S-2) räckte inte ens det:** «per användare» där regeln skapat nämnaren ur en
+>    rad utan användare, och «licensrad» om en paketrad. Regeln framåt: efter tre varv på samma form byts
+>    förklaringen mot den minsta sanna meningen: att en kontroll slog till, att priset inte behöver vara
+>    fel, och vad
+>    kontrollen är till för. **Varje enhetsord om ett tal som kan vara felläst är ett påstående som kan bli
+>    falskt; den mening som inte nämner talet kan inte bli falsk på det sättet.** Den måste ändå prövas
+>    mot varje fall den visas för: L-2 visade att även en allmän mening («vår algoritm är inte tillräckligt
+>    säker på klassificeringen») kan vara falsk.
 
 ---
 

@@ -10,6 +10,7 @@ import Icon from '../../components/Icon';
 import { formatKr, genitiv, krPerAr } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
 import { ANALYSRUBRIKER, diagnosMening, UTAN_VERIFIERAT_PRIS } from '../../lib/diagnos';
+import { PRISAVVIKELSE_RUBRIK, PRISAVVIKELSE_MENING, PRISAVVIKELSE_SLUT } from '../../lib/prisavvikelse';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { redigeraLeverantor, samaLeverantor } from '../../lib/leverantorsnamn';
 import { COST_CATEGORIES } from '../../lib/costCategories';
@@ -1607,6 +1608,14 @@ const TestaFaktura = () => {
                     <p>
                       Vi stödjer SEK och EUR. För övriga valutor, kontakta oss så hjälper vi er manuellt.
                     </p>
+                  </>
+                ) : result.reason === 'price_anomaly' ? (
+                  // ── PRISAVVIKELSEN FICK DEN GENERISKA TEXTEN (andra blicken på T-2, L-2) ──────
+                  // «Vår algoritm är inte tillräckligt säker på klassificeringen» var falskt här. Meningen
+                  // bor i src/lib/prisavvikelse.js, där LT-11 låser den ordagrant.
+                  <>
+                    <strong>{PRISAVVIKELSE_RUBRIK}</strong>
+                    <p>{PRISAVVIKELSE_MENING} {PRISAVVIKELSE_SLUT}</p>
                   </>
                 ) : result.reason === 'no_benchmark' ? (
                   <>

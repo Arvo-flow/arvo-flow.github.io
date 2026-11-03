@@ -244,6 +244,13 @@ describe('CV · Cachen får aldrig servera ett svar från en äldre pipeline', (
       'och den måste sitta I NYCKELN — annars är den en variabel ingen använder');
   });
 
+  test('CV-19 · licensprövningen per nivårad och cache-versionen hänger ihop', () => {
+    // T-2 (2026-10-28): fler fakturor går till granskning. Ett cachat svar från före ändringen har
+    // aldrig passerat radprövningen.
+    assert.ok(cacheVersion() >= 32,
+      `radprövningen finns men pdf:result står på v${cacheVersion()} — cachen serverar då svar utan den`);
+  });
+
   test('CV-02 · det finns EXAKT en cacheKey — ingen kopia som kan glida isär', () => {
     // Två cache-nycklar är två sanningar, och den som bumpas är inte nödvändigtvis den som läses.
     const traffar = [...API.matchAll(/pdf:result:v\d+/g)].map((m) => m[0]);
