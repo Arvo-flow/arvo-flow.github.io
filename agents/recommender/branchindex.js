@@ -138,6 +138,17 @@ export const BRANCHINDEX = {
     // aldrig läses som kundens egen leverantörs pris. Cellerna vaktas av lib/verifiers/tele2-mobil.mjs,
     // som läser matrisen direkt mot live-sidan (den enda verifieraren som gjorde det före 2026-08-18).
     referensProdukt: 'Tele2 Företag mobilabonnemang',
+    // ── BEKRÄFTAT ABONNEMANG KRÄVS (grundarbeslut 2026-10-22) ──────────────────────────────────
+    // Golvet (269) och medianen (299) är två olika abonnemang, och det tredje kostar 349. En kund som
+    // betalar exakt listpris för 349-abonnemanget fick «+30 % över billigaste publicerade pris» och
+    // score 59; på 299 +11 % och score 77. Talet mätte planvalet, inte priset. Spännvidden 1,3× ligger
+    // under MK-09:s gräns 3, så flaggan är ett beslut och inte en mätning, och skälet står här.
+    // Ingen kod läser ännu ett mobilabonnemang ur fakturan, så rummet visar i dag vad kunden betalar och
+    // vad det billigaste abonnemanget kostar, utan avstånd och utan score.
+    kraverBekraftadNiva: true,
+    kraverBekraftadNivaSkal: 'grundarbeslut 2026-10-22: avståndet mätte planvalet (349-planen till listpris gav +30 %)',
+    // Vad medianen ÄR, i kundytans ord. Den är ett annat abonnemang än golvet, aldrig «samma licens».
+    medianEtikett: 'Näst billigaste publicerade abonnemang',
     // Prices are per user/year — lib/benchmark.js scales by seat count before the LLM sees it.
     // Tele2 Företag mobilabonnemang — verifierat LIVE 2026-08-05 (Playwright, status 200,
     // scripts/verify.mjs tele2-mobil (fabriken)). Renderade 24-mån-priser (= faktiskt B2B-pris):
@@ -407,14 +418,16 @@ export const BRANCHINDEX = {
     // score 15. Det är inte en mätning av priset — det är en mätning av vilken produkt kunden valt,
     // förklädd till ett omdöme om vad hen betalar. Och det slår åt kundens nackdel.
     //
-    // Jämför mobil (1,1× mellan billigaste och dyraste abonnemang): där ÄR kategorins golv rätt
-    // jämförelse, för produkterna är utbytbara. Skillnaden är mätt, inte tyckt.
+    // Mobil (269–349, 1,3×) kräver också bekräftat abonnemang sedan grundarbeslutet 2026-10-22, men
+    // av ett annat skäl: avståndet mätte planvalet. Se `kraverBekraftadNivaSkal` där.
     //
     // Regeln: i den här kategorin krävs en BEKRÄFTAD licensnivå för att vi ska hävda ett avstånd
     // eller sätta ett score. Utan den visar vi vad kunden betalar och vad billigaste jämförbara
     // kostar — men gör inget påstående om hur långt ifrån de ligger.
     // Maskinvakt: tests/matriskrav.mjs MK-09 kräver att flaggan matchar den uppmätta spännvidden.
     kraverBekraftadNiva: true,
+    // Medianen är referensnivåns månadspris (medianFalt nedan): samma licens utan årsåtagande.
+    medianEtikett: 'Samma licens utan bindning',
     cellHarledning: {
       referensTier: 'business-standard',
       p25Falt:      'msrpAnnual',      // årsavtal → billigaste publicerade pris

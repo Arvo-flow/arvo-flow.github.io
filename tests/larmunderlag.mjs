@@ -146,11 +146,14 @@ describe('LU · Båda larmvägarna gatar (regel 5 — dubbla alertvägar)', () =
 describe('LU · Golvet kräver bekräftad nivå där spänningen är mätt (H5)', () => {
   test('LU-16 · spärren läses ur PRISBOKEN, hårdkodas inte per kategori', async () => {
     const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
-    // saas: 9,6× spann mellan Basic och E5 → nivå krävs. mobil: 1,1× → kategorigolv duger.
+    // saas: 9,6× spann mellan Basic och E5 → nivå krävs. mobil: grundarbeslut 2026-10-22 → abonnemang
+    // krävs, med skälet skrivet i prisboken (avståndet mätte planvalet). Prislarmet för mobil är
+    // oförändrat: utan Microsofts nivåer i boken svarar det null med och utan spärren (MS-05).
     assert.equal(BRANCHINDEX['saas-productivity']?.kraverBekraftadNiva, true,
       'saas har 9,6× spann — utan bekräftad nivå mäter golvet produktvalet');
-    assert.notEqual(BRANCHINDEX['mobil']?.kraverBekraftadNiva, true,
-      'mobil har 1,1× spann — där ÄR kategorigolvet rätt jämförelse. Spärren är mätt, inte tyckt');
+    assert.equal(BRANCHINDEX['mobil']?.kraverBekraftadNiva, true, 'mobil kräver bekräftat abonnemang (2026-10-22)');
+    assert.match(BRANCHINDEX['mobil']?.kraverBekraftadNivaSkal ?? '', /grundarbeslut 2026-10-22/,
+      'en spärr som inte följer den mätta spännvidden måste bära sitt skäl');
 
     const kod = readFileSync(new URL('../lib/price-alert.js', import.meta.url), 'utf8')
       .split('\n').filter((r) => !r.trim().startsWith('//')).join('\n');

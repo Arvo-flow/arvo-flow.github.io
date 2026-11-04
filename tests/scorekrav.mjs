@@ -200,7 +200,10 @@ describe('SCOREKRAV · talet och dess bevis kan inte säga emot varandra', () =>
       'ett pris vi inte kan bedöma får aldrig berömmas');
     assert.doesNotMatch(text, /\d+% mer/, 'och inget avstånd får påstås');
     assert.match(text, /säger inget om avståndet/i, 'säg rakt ut att vi inte kan bedöma det');
-    assert.match(text, /Dela avtalet/i, 'och be om det som skulle låsa jämförelsen');
+    // «Dela avtalet, så låser vi jämförelsen» stod här till 2026-11-03. Ingen kod läser nivån ur ett
+    // avtal (contract-upload saknar nivåläsning; rummet läser den ur fakturans rader), så löftet hade
+    // ingen mekanik (regel 9). Det får inte komma tillbaka (MS-04).
+    assert.doesNotMatch(text, /Dela avtalet|låser vi jämförelsen/i, 'ett löfte utan mekanik');
     // Talen vi FAKTISKT vet ska stå kvar — tystnaden gäller påståendet, inte fakta.
     // OBS: toLocaleString('sv-SE') separerar med HÅRT mellanslag (U+00A0), inte vanligt. Ett
     // test som matchar "7 694" med vanligt blanksteg faller på ett korrekt tal — och den fällan

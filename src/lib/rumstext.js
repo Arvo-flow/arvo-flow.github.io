@@ -24,10 +24,12 @@ export const MOTIVERING = {
   // Stod: «Arvo bevakar och förbereder bytet inför förnyelsen — ni betalar konkurrenskraftigt till dess.»
   // Ett prisomdöme om ett avtal vi aldrig jämfört (poängen är null). Avtalets datum står i klockan.
   bevakat_avtal: () => 'Avtalet är tidsbundet och bevakas — datumen står i avtalsklockan. Vi har inte jämfört priset, så vi säger inget om prisnivån.',
+  // Gäller licenser och abonnemang (mobil sedan 2026-10-22): inget kategorispecifikt tal och inget
+  // löfte om att ett delat avtal låser jämförelsen, för ingen kod läser nivån ur ett avtal (MS-04).
   oviss_niva: (p, label) => `Ni betalar ${kr(p.perEnhet)} kr ${p.unitLabel ?? 'per enhet/år'} `
-    + `för ${label}. Billigaste jämförbara licens kostar ${Number(p.golv).toLocaleString('sv-SE')} kr${ref(p)} — men priserna i kategorin skiljer `
-    + 'nästan tio gånger mellan billigaste och dyraste, så vi säger inget om avståndet förrän vi '
-    + 'vet vilken nivå ni har. <b>Dela avtalet, så låser vi jämförelsen.</b>',
+    + `för ${label}. Det billigaste publicerade priset är ${Number(p.golv).toLocaleString('sv-SE')} kr${ref(p)}, men `
+    + 'produkterna i kategorin har olika listpris, så vi säger inget om avståndet förrän vi vet '
+    + 'vilken produkt ni har.',
   over_golvet: (p, label) => `Ni betalar <b>${p.avstandPct}% mer</b> än det billigaste publicerade priset för ${label}${ref(p)}. `
     + 'Arvo har inget verifierat bytesmål att lägga fram för just den här raden i dag — men priset är inte '
     + 'konkurrenskraftigt, och underlaget nedan visar exakt vad jämförelsen bygger på.',

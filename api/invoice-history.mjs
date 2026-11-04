@@ -707,6 +707,7 @@ export async function buildBranchAnchors(analyses) {
           // Kategorier med bred produktspridning kräver en BEKRÄFTAD licensnivå innan vi hävdar
           // ett avstånd. Utan flaggan här skulle underlaget hävda det ändå (granskning 2026-08-20).
           kraverBekraftadNiva: b.kraverBekraftadNiva === true,
+          medianEtikett: b.medianEtikett ?? null,
           customerCost: a.annual_cost ?? null, seats,
         };
       }

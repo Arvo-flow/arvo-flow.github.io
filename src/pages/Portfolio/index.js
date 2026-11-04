@@ -631,6 +631,11 @@ export default function Portfolio() {
     for (const g of suppliers) {
       const an = branchAnchors[g.latest.category];
       if (!an || !(an.median > 0)) continue;
+      // En kategori som kräver bekräftad nivå (M365, och mobil sedan 2026-10-22) får inget ankarkort.
+      // Kortet ställde kundens pris mot medianen och kallade den «leverantörens eget listpris», men
+      // medianen är en annan produkt: Business Standard för en E3-kund, ett annat abonnemang för mobil.
+      // Fakta för raden står i dess underlag, utan avstånd (MS-06).
+      if (an.kraverBekraftadNiva) continue;
       const material = an.customerCost ?? 0;
       if (!best || material > best._material) best = { ...an, _material: material };
     }
@@ -1476,20 +1481,19 @@ export default function Portfolio() {
                                 </span>
                                 <span className="u-bel">{fmtNum(p.golv)} kr</span>
                               </div>
-                              {p.median > 0 && p.median !== p.golv && (
+                              {p.medianEtikett && p.median > 0 && p.median !== p.golv && (
                                 <div className="u-rad">
-                                  <span className="u-txt">Samma licens utan bindning</span>
+                                  <span className="u-txt">{p.medianEtikett}</span>
                                   <span className="u-spec">samma källa</span>
                                   <span className="u-bel">{fmtNum(p.median)} kr</span>
                                 </div>
                               )}
                               <div className={`u-slut${p.underGolv ? ' bra' : ''}`}>
                                 {p.ovissNiva
-                                  ? <>Vad ni betalar och vad den billigaste jämförbara licensen
+                                  ? <>Vad ni betalar och vad den billigaste jämförbara produkten
                                      kostar står ovan. <b>Hur långt ifrån ni ligger kan vi inte
-                                     säga</b> förrän vi vet vilken nivå ni har — priserna i den
-                                     här kategorin skiljer nästan tio gånger mellan billigaste och
-                                     dyraste. Dela avtalet, så låser vi jämförelsen.</>
+                                     säga</b> förrän vi vet vilken produkt ni har, eftersom
+                                     produkterna i kategorin har olika listpris.</>
                                   : p.nivaBekraftad
                                   ? (p.underGolv
                                     ? <>Ni ligger <b>{Math.abs(p.avstandPct)} % under</b> listpriset för
@@ -1508,13 +1512,14 @@ export default function Portfolio() {
                                      samma produkt. Scoren mäts mot det priset — inte mot vad andra bolag
                                      faktiskt betalar.</>
                                   : p.ovissNiva
-                                  ? <>Vi sätter varken avstånd eller poäng här. Priserna i kategorin skiljer
-                                     nästan tio gånger mellan billigaste och dyraste licens, så ett tal mot
-                                     det billigaste hade mätt vilken produkt ni valt — inte vad ni betalar
-                                     för den. Med avtalet i handen blir jämförelsen exakt.</>
+                                  ? <>Vi sätter varken avstånd eller poäng här. Ett tal mot det billigaste
+                                     hade mätt vilken produkt ni valt, inte vad ni betalar för den.</>
                                   : <>Jämförelsen görs mot den billigaste jämförbara produkten. Scoren mäts
                                      mot priset ovan, inte mot vad andra bolag faktiskt betalar.</>}
-                                {' '}Den jämförelsen kommer när fler i er bransch delar sina fakturor.
+                                {/* «Den jämförelsen» syftar på vad andra bolag betalar, som bara de två andra
+                                    grenarna nämner. Efter den obekräftade grenen hade den syftat på talet mot
+                                    det billigaste priset (MS-04). */}
+                                {!p.ovissNiva && <>{' '}Den jämförelsen kommer när fler i er bransch delar sina fakturor.</>}
                               </p>
                             </Underlag>
                           );

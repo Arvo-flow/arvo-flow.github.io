@@ -10,9 +10,29 @@ PR som mergas genom Grinden. En uppgift och en granskningslins körs i taget.
 |---|---|---|
 | a | PR #86: Tele2 +40 kr, en prisbok (majtabellen och seedarna bort), vakter framåt | mergad 23 okt (5e73c277) efter fem granskningsvarv |
 | b | Databas och skript: majraderna i `supplier_prices` bort, död skrivning i `scripts/apply-price-proposals.mjs` bort | mergad 23 okt (PR #87, 4f8f2326). Körd på main 23 okt (40352850116): `supplier_prices` 46 → 0 rader, historiken 2 → 1 |
-| T-2 | Licenstaket per nivårad, mains tak per plats kvar | egen PR, se T-2 nedan |
-| c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | efter b |
+| T-2 | Licenstaket per nivårad, mains tak per plats kvar | mergad 3 nov (PR #88, 1677f2bd) efter tolv granskningsvarv; live på Vercel |
+| c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | c1 mobilscoren: egen PR, se nedan; övriga efter |
 | d | Arbetsorderns punkt 4: live-verifiering och rummet i 390 och 1600 px | efter c |
+
+## c1 · mobilscoren (grundarbeslut 22 okt)
+
+Mobil kräver ett bekräftat abonnemang innan rummet visar avstånd och score
+(`kraverBekraftadNiva` i prisboken, med skälet i `kraverBekraftadNivaSkal`; MS-01, MS-02). Ingen kod läser
+i dag ett mobilabonnemang ur fakturan, så varje mobilrad visar vad kunden betalar, det billigaste
+publicerade priset och det näst billigaste abonnemanget, utan avstånd och utan poäng. Renderat i 390 och
+1600 px med motprov (`scripts/screenshot-mobilscore.mjs`).
+Fyra fel i samma kort, förexisterande och synliga för mobil, lagade i samma PR:
+- **Medianens etikett.** Raden «Samma licens utan bindning» visade 3 588 kr för mobil, som är ett annat
+  abonnemang. Etiketten deklareras nu i prisboken (`medianEtikett`) och visas bara där den finns (MS-03).
+- **Marknadsankaret** jämförde kundens pris med medianen och kallade den «leverantörens eget listpris», för
+  mobil ett annat abonnemang och för M365 Business Standard. Kategorier som kräver bekräftad nivå får inget
+  ankarkort; deras fakta står i radens underlag (MS-06).
+- **«Prissatta»** räknade rader vi uttryckligen inte dömer. En rad med obekräftad nivå räknas nu som mottagen
+  (MS-07, RR-01).
+- **«Dela avtalet, så låser vi jämförelsen»** hade ingen mekanik: ingen kod läser nivån ur ett avtal. Borta
+  ur rummet och raden, också för M365 (MS-04, SK-14, LN-08). Texterna gäller nu både licenser och abonnemang.
+Prislarmet för mobil är oförändrat, inget larm med eller utan spärren (MS-05). Prospektets ankare får raden
+«Vilken nivå ni har vet vi inte — priset gäller den namngivna produkten» också för mobil, vilket är sant.
 
 ## Förexisterande fynd, loggade enligt avgränsningen 22 okt
 

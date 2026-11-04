@@ -45,7 +45,9 @@ describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
     // prissatta rader rummet självt märkte mottagna. Räknaren skiljer nu på de två, och
     // invarianten har fått en tredje term. Vakten fällde ändringen på sin första körning —
     // vilket är precis vad den finns för.
-    const rad = (medPris) => (medPris ? { id: 1, prisunderlag: { perEnhet: 4560, golv: 1606 } } : { id: 2 });
+    // En rad med obekräftad nivå bär ett underlag utan dom och räknas som mottagen (2026-11-03).
+    const rad = (medPris) => (medPris ? { id: 1, prisunderlag: { perEnhet: 4560, golv: 1606 } }
+      : medPris === null ? { id: 3, prisunderlag: { perEnhet: 4188, golv: 3228, ovissNiva: true } } : { id: 2 });
     const fall = [
       { prissatta: 5, mottagna: 0, watched: 4 },   // grundarens rum: fem prissatta, fyra bevakade
       { prissatta: 0, mottagna: 0, watched: 3 },   // bara triagerat — får aldrig läsa som ett tomt rum
@@ -58,7 +60,7 @@ describe('RUMSREDOVISNING · räknare, löften och proveniens', () => {
       const c = roomCounts({
         autoAnalyses: [
           ...Array.from({ length: f.prissatta }, () => rad(true)),
-          ...Array.from({ length: f.mottagna }, () => rad(false)),
+          ...Array.from({ length: f.mottagna }, (_, i) => rad(i % 2 ? null : false)),
         ],
         watched: Array.from({ length: f.watched }, (_, i) => ({ supplier: `S${i}` })),
       });
