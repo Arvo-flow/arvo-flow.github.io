@@ -1709,6 +1709,11 @@ signera", aldrig som ett verkställt löfte.)
    > Jämför mobil: 1,1× mellan billigaste och dyraste abonnemang. Där ÄR kategorins golv rätt
    > jämförelse. **Skillnaden är mätt, inte tyckt** — och regeln (`kraverBekraftadNiva`) deklareras i
    > prisboken med MK-09 som kräver att deklarationen följer den uppmätta spridningen.
+   > **⚠️ ÄNDRAT 2026-10-22 (grundarbeslut):** mobil spänner nu 1,3× (269–349 kr/mån) och kräver
+   > bekräftat abonnemang ändå. 349-planen till exakt listpris fick «+30 %» och score 59: talet mätte
+   > planvalet. Spärren är ett beslut, inte en mätning, och skälet står bredvid den i prisboken (MS-02).
+   > Ett lagrat byte mot det billigaste abonnemanget visas inte i rummet (MS-08), och ett rum med en
+   > sådan rad sätter ingen samlad poäng (MS-09). Fakturavyn räknar fortfarande avståndet (C1-3, öppet).
    > Utan bekräftad nivå visar rummet nu vad kunden betalar och vad billigaste jämförbara kostar,
    > men **hävdar inget avstånd och sätter inget score**. Fakta står kvar; påståendet uteblir.
    >
@@ -2066,7 +2071,7 @@ signera", aldrig som ett verkställt löfte.)
    > leverantörens egen publicerade prislapp fick larm om att de blöder. Det är E3/E5-fyndet från
    > 20 augusti ordagrant, i en modul som aldrig fick spärren — och `kraverBekraftadNiva` fanns
    > redan, deklarerad i prisboken, mätt per kategori (saas 9,6× spann kräver nivå, mobil 1,1×
-   > gör det inte). LU-16..18.
+   > gjorde det inte — ändrat 2026-10-22, se ovan). LU-16..18.
    >
    > **Metodfyndet: granskningen flyttades FÖRE bygget.** Fable 5 skrev en kirurgisk arbetsorder
    > (`ops/ARBETSORDER-LANSERING.md`) där varje designbeslut redan var fattat och motiverat —

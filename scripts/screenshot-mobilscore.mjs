@@ -9,8 +9,14 @@
 //                  publicerade abonnemang»; aldrig «% över lägsta pris», «Samma licens utan bindning»,
 //                  «Rätt prissatt», «Dela avtalet», «tio gånger», «Marknadsankaret» eller «leverantörens
 //                  eget listpris»; innehavet säger «1 mottagen, inte prissatt», aldrig «1 prissatt»
-//   motprov      → en M365-rad med E3 i radtexten SKA få «Listpris för er nivå» och ett avstånd, och ett
-//                  rum med löneadministration SKA få Marknadsankaret
+//   mobil + byte → en mobilrad lagrad med byte till 269-planen (C1-1): inget «% mer», inget «Ni behåller»,
+//                  ingen bytesrekommendation och ingen poäng; raden säger «Nivå ej bekräftad»
+//   mobil + lön  → 100 abonnemang och en lönerad (C1-2): «Delvis mätt», «ingen samlad poäng» och
+//                  «1 av 2 fakturor prissatta»; aldrig «Allt är under kontroll», «Era priser står sig»
+//                  eller «Bättre än listpris»
+//   motprov      → en M365-rad med E3 i radtexten SKA få «Listpris för er nivå» och ett avstånd, ett
+//                  rum med löneadministration SKA få Marknadsankaret och en poäng, och en M365-rad med
+//                  byte SKA få bytet
 // BLIND: nätverket är stubbat; att servern skickar raderna så bevisar MS-01 och SVK, inte sonden.
 //
 // Kör: npm run build && node scripts/screenshot-mobilscore.mjs
@@ -26,11 +32,13 @@ const BUILD = join(ROT, 'build');
 const UT = join(ROT, 'results/screenshots/mobilscore');
 if (!existsSync(join(BUILD, 'index.html'))) { console.error('✗ build/ saknas — kör `npm run build` först.'); process.exit(1); }
 
-const rad = (id, supplier, category, annualCost, seats, rader = []) => ({
+const rad = (id, supplier, category, annualCost, seats, rader = [], byteTill = null) => ({
   id, supplier, normalized_supplier: supplier, category, route: 'auto', annual_cost: annualCost, seat_count: seats,
-  suggested_annual_cost: null, gross_saving: null, net_saving: null, should_switch: false,
+  suggested_annual_cost: byteTill, gross_saving: byteTill ? annualCost - byteTill : null,
+  net_saving: byteTill ? Math.round((annualCost - byteTill) * 0.8) : null, should_switch: byteTill != null,
   created_at: `2026-11-0${id}T08:00:00Z`, _rader: rader,
 });
+const E3 = (pris) => [{ description: 'Microsoft 365 E3', type: 'recurring_subscription', quantity: 10, unitPrice: pris, amount: pris * 10 }];
 async function rumSvar(analyses) {
   const branchAnchors = await buildBranchAnchors(analyses);
   const berikade = berikaRader(analyses, branchAnchors);
@@ -41,6 +49,9 @@ const RUM = {
   m365: await rumSvar([rad(2, 'Microsoft', 'saas-productivity', 500 * 12 * 10, 10,
     [{ description: 'Microsoft 365 E3', type: 'recurring_subscription', quantity: 10, unitPrice: 500, amount: 5000 }])]),
   lon: await rumSvar([rad(3, 'Fortnox', 'loneadmin', 6000, 10)]),
+  mobilByte: await rumSvar([rad(4, 'Tele2', 'mobil', 349 * 12 * 10, 10, [], 269 * 12 * 10)]),
+  mobilLon: await rumSvar([rad(5, 'Tele2', 'mobil', 349 * 12 * 100, 100), rad(6, 'Fortnox', 'loneadmin', 5000, 10)]),
+  m365Byte: await rumSvar([rad(7, 'Microsoft', 'saas-productivity', 600 * 12 * 10, 10, E3(600), 416.77 * 12 * 10)]),
 };
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
@@ -94,6 +105,32 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   p = await sida(bredd, RUM.lon);
   t = await text(p);
   if (!/Marknadsankaret/i.test(t)) fel(`motprov: rummet med löneadministration saknar Marknadsankaret (${namn}) — kontrollen mäter ingenting`);
+  if (!/Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i.test(t)) fel(`motprov: rummet med löneadministration saknar en poäng (${namn})`);
+  await p.close();
+
+  // C1-1: en mobilrad lagrad med byte. Etiketterna är versaler i DOM:en, därav /i.
+  p = await sida(bredd, RUM.mobilByte);
+  t = await text(p);
+  if (!/Nivå ej bekräftad/i.test(t)) fel(`mobil med byte saknar «Nivå ej bekräftad» (${namn})`);
+  for (const re of [/% mer/i, /Ni behåller/i, /möjlig nettobesparing/i, /rekommenderar byte/i, /Vakten · ett drag kvar/i,
+    /Samma nivå kostar/i, /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /kan skärpas/i])
+    if (re.test(t)) fel(`mobil med byte säger ${re} (${namn})`);
+  await p.screenshot({ path: `${UT}/mobil-byte-${namn}.png`, fullPage: true }); await p.close();
+
+  // C1-2: ett rum där den mesta kostnaden är omätt berömmer inte.
+  p = await sida(bredd, RUM.mobilLon);
+  t = await text(p);
+  for (const re of [/Delvis mätt/i, /ingen samlad poäng/i, /1 av 2 fakturor prissatta/i])
+    if (!re.test(t)) fel(`mobil + lön saknar ${re} (${namn})`);
+  for (const re of [/Allt är under kontroll/i, /Era priser står sig/i, /Bättre än listpris/i, /Lugnet att ni ligger rätt/i,
+    /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /inget verifierat jämförelsepris/i, /kunde inte mätas/i])
+    if (re.test(t)) fel(`mobil + lön säger ${re} (${namn})`);
+  await p.screenshot({ path: `${UT}/mobil-lon-${namn}.png`, fullPage: true }); await p.close();
+
+  // Motprov: en M365-rad med bekräftad nivå och byte behåller bytet.
+  p = await sida(bredd, RUM.m365Byte);
+  t = await text(p);
+  if (!/Ni behåller/i.test(t) && !/möjlig nettobesparing/i.test(t)) fel(`motprov: M365 med byte saknar bytet (${namn}) — kontrollerna mäter ingenting`);
   await p.close();
   console.log(`${namn}: kontroller körda`);
 }

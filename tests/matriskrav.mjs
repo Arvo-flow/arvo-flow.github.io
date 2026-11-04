@@ -160,7 +160,8 @@ describe('MATRISKRAV · varje kundsynligt pris ska gå att räkna hem', () => {
     // kategorins verifierade nivåer, inte någons magkänsla.
     //
     // saas-productivity: 803 → 7 694 = 9,6× → en E5-kund på exakt listpris hamnade +379 % över.
-    // mobil:           3 228 → 3 588 = 1,1× → produkterna är utbytbara, golvet är rätt jämförelse.
+    // mobil:           3 228 → 4 188 = 1,3× → under gränsen. Spärrad ändå, genom grundarbeslutet
+    //                  2026-10-22: abonnemangen är olika produkter. Skälet står i prisboken (MS-02).
     const GRANS = 3;   // över detta avgör produktvalet talet mer än priset gör
     for (const k of realPublicKategorier()) {
       const cat = BRANCHINDEX[k];

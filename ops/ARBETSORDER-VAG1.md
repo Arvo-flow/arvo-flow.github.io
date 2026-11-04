@@ -34,6 +34,25 @@ Fyra fel i samma kort, förexisterande och synliga för mobil, lagade i samma PR
 Prislarmet för mobil är oförändrat, inget larm med eller utan spärren (MS-05). Prospektets ankare får raden
 «Vilken nivå ni har vet vi inte — priset gäller den namngivna produkten» också för mobil, vilket är sant.
 
+**Andra blicken på 1f595621: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore.md`). Lagat i samma PR:
+- **C1-1 [KUND], infört.** Fakturavägen lagrar 349-planen till listpris med byte till 269-planen och
+  9 600 kr. Rummet visade då poäng 66 och «23% mer» bredvid «Vi sätter varken avstånd eller poäng här».
+  Ett lagrat byte på en rad med obekräftad nivå stryks nu vid läsning, och raden bär skälet
+  (`bytetUndanhallet`, MS-08).
+- **C1-2 [KUND], vanligare.** Med mobilraden utanför vägningen blev 100 abonnemang och en lönerad «Allt är
+  under kontroll». Ett rum med en obekräftad rad sätter nu ingen samlad poäng och berömmer inte. När andra
+  rader är mätta säger domen «Delvis mätt» och hur många som är prissatta (MS-09).
+- [VAKT] C1-5 (ankarvalet prövas genom anrop, `src/lib/ankarval.js`), C1-6 (MS-08), C1-7 (1,1× rättat i
+  kod, test och bibel) och C1-8 (nivågrenen prövad, MS-05:s titel).
+
+**Kvar, förexisterande [KUND], egna PR:er efter c2:**
+- **C1-3 · Fakturavyn, mejlen, briefingen och dörren räknar mobilens avstånd och byte mot det billigaste
+  abonnemanget.** 349-planen till listpris får «Ni betalar 30 % över verifierat publikt listpris», poäng
+  66 och ett byte till 269-planen. Det är grundarens exempel utanför rummet, och roten till C1-1. Bytet ska
+  grindas på samma deklaration som rummet (`kraverBekraftadNiva`), på samma sätt som lfl-grinden för saas.
+- **C1-4 · Bytesradens «X% mer» räknas som andel av kundens pris** (`radLage`, (a−s)/a): 23 % där rätt
+  tal är 30 %. Bibelns 85-fel.
+
 ## Förexisterande fynd, loggade enligt avgränsningen 22 okt
 
 Ur andra blicken på uppföljningen (`ops/GRANSKNING-ssot-tele2.md`). Inget av dem blockerar PR #86.

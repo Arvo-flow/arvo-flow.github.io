@@ -16,7 +16,7 @@ import { pendingCountBySender, failedCountBySender, failedFilesBySender, intagsf
 import { getPublicBenchmark, normalizeSupplierName, CATEGORY_UNIT } from '../lib/public-prices.js';
 import { contractClockFinding, avtalsklocka } from '../lib/contract-clock.js';
 import { planeradePaminnelser } from '../lib/paminnelse.js';
-import { radLage, rumLage } from '../lib/lagesregister.js';
+import { radLage, rumLage, undanhallBytePaOvissNiva } from '../lib/lagesregister.js';
 import { rattstorleksKort } from '../lib/rattstorlekskort.js';
 import { buildAvtalView, supplierNamesMatch } from '../lib/contract-intel.js';
 import { priceHikeForecast } from '../lib/price-forecast.js';
@@ -356,6 +356,8 @@ export function berikaRader(analyses = [], branchAnchors = {}) {
     const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
     a.prisunderlag = underlagForRad(a, branchAnchors[a.category] ?? null, golv, niva);
     a._rader = undefined;
+    // Ett lagrat byte mot ett golv rummet inte kan stå för visas inte (C1-1, MS-08).
+    undanhallBytePaOvissNiva(a);
     // ── TYSTNADENS SKÄL FÖLJER MED RADEN (grundarbeslut 2026-09-17) ─────────────────────────
     // De offertprissatta kategorierna blir ALDRIG triagerade — mätt mot produktionen: noll rader.
     // De passerar triagen, revisionsgrinden kortsluter dem i `recommend()` till talfritt

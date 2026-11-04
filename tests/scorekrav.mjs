@@ -234,7 +234,8 @@ describe('SCOREKRAV · talet och dess bevis kan inte säga emot varandra', () =>
     assert.equal(bekr.avstandPct, 0);
     assert.equal(scoreUrUnderlag(bekr), 88);
 
-    // Och i en kategori UTAN bred spridning (mobil, 1,1×) gäller kategorins golv som förut.
+    // Och i en kategori UTAN spärr gäller kategorins golv som förut. Ankaret är handbyggt utan spärr;
+    // mobil har spärren sedan grundarbeslutet 2026-10-22 (MS-01), så talen här står för en sådan kategori.
     const smal = byggPrisunderlag({ annualCost: 35880, seats: 10, ankare: { p25: 3228, median: 3588 } });
     assert.equal(smal.ovissNiva, false);
     assert.equal(smal.avstandPct, 11, 'smal kategori → golvet är rätt jämförelse');
