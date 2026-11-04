@@ -356,8 +356,8 @@ export function berikaRader(analyses = [], branchAnchors = {}) {
     const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
     a.prisunderlag = underlagForRad(a, branchAnchors[a.category] ?? null, golv, niva);
     a._rader = undefined;
-    // Ett lagrat byte mot ett golv rummet inte kan stå för visas inte (C1-1, MS-08).
-    undanhallBytePaOvissNiva(a);
+    // Ett lagrat byte mot kategorins golv, på en rad med obekräftad nivå, visas inte (C1-1, D1-1, MS-08).
+    undanhallBytePaOvissNiva(a, { bytesmalMotKategorigolv: BRANCHINDEX[a.category]?.bytesmalMotKategorigolv === true });
     // ── TYSTNADENS SKÄL FÖLJER MED RADEN (grundarbeslut 2026-09-17) ─────────────────────────
     // De offertprissatta kategorierna blir ALDRIG triagerade — mätt mot produktionen: noll rader.
     // De passerar triagen, revisionsgrinden kortsluter dem i `recommend()` till talfritt

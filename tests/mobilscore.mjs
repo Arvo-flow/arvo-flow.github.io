@@ -83,6 +83,9 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     }
     assert.equal(medSkal, 1, 'exakt mobil bär ett beslutat skäl');
     assert.equal(BRANCHINDEX.mobil.kraverBekraftadNiva, true);
+    // Bytesmålet mot kategorins golv deklareras bara där nivån krävs, och i dag bara för mobil (D1-1).
+    const golvbyten = Object.entries(BRANCHINDEX).filter(([, c]) => c?.bytesmalMotKategorigolv === true).map(([k]) => k);
+    assert.deepEqual(golvbyten, ['mobil']);
   });
 
   test('MS-03 · medianens etikett kommer ur prisboken, och mobilens median är ett annat abonnemang', async () => {
@@ -159,6 +162,21 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     assert.equal(m.should_switch, true);
     assert.equal(m.lage.kod, 'byte');
     assert.equal(m.bytetUndanhallet, undefined);
+    // Motprov 2 (D1-1): IT-8821 har två nivåer, så rummet kan inte läsa nivån. Bytet är ändå räknat nivå
+    // för nivå mot Microsofts egna listpriser (fixturens tal), alltså like-for-like, och står kvar.
+    const it = JSON.parse(readFileSync(rot('tests/fixtures/it-8821-ms365.json'), 'utf8'));
+    const [i] = await rummet([rad(3, 'saas-productivity', it.annualCost, it.seatCount, it.lineItems,
+      { suggested: it.expected.suggestedAnnualCost })]);
+    assert.equal(i.prisunderlag?.ovissNiva, true, 'två nivåer: rummet läser ingen nivå');
+    assert.equal(i.should_switch, true, 'ett like-for-like-byte ströks');
+    assert.equal(i.lage.kod, 'byte');
+    assert.equal(i.bytetUndanhallet, undefined);
+    // D1-4: raden säger varför bytet inte visas, och bara den raden.
+    const { radMotivering, BYTE_UNDANHALLET } = await import('../src/lib/rumstext.js');
+    assert.ok(radMotivering(a).endsWith(BYTE_UNDANHALLET), 'bytet försvinner utan ett ord');
+    assert.ok(!radMotivering(i).includes(BYTE_UNDANHALLET));
+    assert.ok(!radMotivering((await rummet([rad(4, 'mobil', 349 * 12 * 10, 10)]))[0]).includes(BYTE_UNDANHALLET),
+      'en mobilrad utan lagrat byte påstår att analysen räknade ett');
   });
 
   test('MS-09 · ett rum med en obekräftad rad sätter ingen samlad poäng och berömmer inte priserna', async () => {
@@ -183,7 +201,24 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     // Ytan: den delvis mätta domen säger vad som är mätt och sätter ingen poäng.
     const src = readFileSync(rot('src/pages/Portfolio/index.js'), 'utf8');
     assert.match(src, /const delvis = rum\?\.delvis === true;/);
-    assert.match(src, /\{counts\.bevakade > 0 \|\| counts\.mottagna > 0\n/);
+  });
+
+  test('MS-10 · ett rum med en obekräftad mobilrad och ett byte på en annan rad: bytet bär domen', async () => {
+    // D1-2: «Delvis mätt · 0 av 2 fakturor prissatta» stod under «1 avtal kan skärpas mot verifierat listpris».
+    const analyses = await rummet([rad(1, 'mobil', 349 * 12 * 10, 10),
+      { ...rad(2, 'bredband', 599 * 12, 1), supplier: 'Telia', should_switch: true, suggested_annual_cost: 399 * 12,
+        gross_saving: 200 * 12, net_saving: 200 * 12 * 0.8 }]);
+    const rum = byggRum(analyses, []);
+    assert.equal(rum.hasSwitchAction, true);
+    assert.equal(rum.score, null);
+    assert.equal(rum.lage, 'byte_omatt');
+    assert.equal(rum.counts.prissatta, 0, 'bredbandsraden bär inget prisunderlag');
+    // Ytan: med ett byte säger chippet vad domen bygger på, och «Delvis mätt» skriver aldrig «0 av».
+    const src = readFileSync(rot('src/pages/Portfolio/index.js'), 'utf8');
+    const a = src.indexOf(': omatt && hasSwitchAction');
+    const b = src.indexOf(': omatt && delvis\n');
+    assert.ok(a > 0 && b > a, 'bytets gren står inte före «Delvis mätt»');
+    assert.match(src, /\{counts\.prissatta > 0 \? `\$\{counts\.prissatta\} av /);
   });
 
   test('MS-07 · en mobilrad räknas som mottagen, inte prissatt, så rummets räknare går ihop med raden', async () => {

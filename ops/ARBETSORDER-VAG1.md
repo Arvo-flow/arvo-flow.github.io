@@ -45,6 +45,20 @@ Prislarmet för mobil är oförändrat, inget larm med eller utan spärren (MS-0
 - [VAKT] C1-5 (ankarvalet prövas genom anrop, `src/lib/ankarval.js`), C1-6 (MS-08), C1-7 (1,1× rättat i
   kod, test och bibel) och C1-8 (nivågrenen prövad, MS-05:s titel).
 
+**Andra blicken på lagningen 9395d8d7: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore-andra.md`). Lagat:
+- **D1-1 [KUND], infört av lagningen.** Strykningen tog också korrekta M365-byten på rader där rummet inte
+  läser nivån (IT-8821, Premium och Basic: 24 566 kr/år netto, räknat nivå för nivå). Den gäller nu bara där
+  prisboken deklarerar att bytesmålet är kategorins golv (`bytesmalMotKategorigolv`, i dag mobil). IT-8821
+  är motprov i MS-08 och i renderingssonden.
+- **D1-2 [KUND], infört av lagningen.** Ett rum med en obekräftad mobilrad och ett bredbandsbyte visade
+  «Delvis mätt · 0 av 2 fakturor prissatta» under «1 avtal kan skärpas». Med ett byte säger chippet nu
+  «grundat på era bytesmål · ingen samlad poäng», och «Delvis mätt» skriver aldrig «0 av» (MS-10).
+  Poängkortets etikett är åter mains: den skrev ut prisunderlagsrader som om de var raderna i poängen.
+- [VAKT] D1-3 (MS-08 och MS-10 prövar lagningsriktningarna) och D1-4 (raden säger varför bytet saknas,
+  `BYTE_UNDANHALLET` i `src/lib/rumstext.js`).
+- **Förexisterande, oförändrat:** ett bredbandsbyte räknas som mottaget, inte prissatt, så rummet säger
+  «Vägde 0 fakturor» och «0 prissatta» bredvid bytet (punkten «Rummets bredbandsrad» nedan).
+
 **Kvar, förexisterande [KUND], egna PR:er efter c2:**
 - **C1-3 · Fakturavyn, mejlen, briefingen och dörren räknar mobilens avstånd och byte mot det billigaste
   abonnemanget.** 349-planen till listpris får «Ni betalar 30 % över verifierat publikt listpris», poäng

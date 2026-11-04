@@ -57,11 +57,18 @@ export const MARKE = {
 };
 
 /** Texten för en rad ur API:ts läge. Saknas läget säger raden bara att den är mottagen. */
+// Raden vars lagrade byte rummet inte visar (lib/lagesregister.js undanhallBytePaOvissNiva) säger varför.
+// Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4, MS-08). Bytesmålet
+// är kategorins golv, alltså den billigaste publicerade produkten, och det är bara där flaggan sätts.
+export const BYTE_UNDANHALLET = 'Analysen av fakturan räknade ett byte till den billigaste publicerade '
+  + 'produkten i kategorin. Det visar vi inte här, eftersom vi inte vet vilken produkt ni har.';
+
 export function radMotivering(a) {
   const label = (getCategoryMeta(a?.category)?.label ?? a?.category ?? '').toLowerCase();
   const kod = a?.lage?.kod;
   const f = MOTIVERING[kod] ?? MOTIVERING.omatt;
-  return f(a?.lage?.params ?? {}, label);
+  const text = f(a?.lage?.params ?? {}, label);
+  return a?.bytetUndanhallet === 'oviss_niva' ? `${text} ${BYTE_UNDANHALLET}` : text;
 }
 
 export function radMarke(a) {

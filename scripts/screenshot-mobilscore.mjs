@@ -14,7 +14,10 @@
 //   mobil + lön  → 100 abonnemang och en lönerad (C1-2): «Delvis mätt», «ingen samlad poäng» och
 //                  «1 av 2 fakturor prissatta»; aldrig «Allt är under kontroll», «Era priser står sig»
 //                  eller «Bättre än listpris»
-//   motprov      → en M365-rad med E3 i radtexten SKA få «Listpris för er nivå» och ett avstånd, ett
+//   mobil + bredbandsbyte → «grundat på era bytesmål», aldrig «0 av N fakturor» eller «inget verifierat
+//                  jämförelsepris» (D1-2)
+//   motprov      → IT-8821 (två nivåer) SKA behålla sitt byte (D1-1); en M365-rad med E3 i radtexten SKA
+//                  få «Listpris för er nivå» och ett avstånd, ett
 //                  rum med löneadministration SKA få Marknadsankaret och en poäng, och en M365-rad med
 //                  byte SKA få bytet
 // BLIND: nätverket är stubbat; att servern skickar raderna så bevisar MS-01 och SVK, inte sonden.
@@ -26,6 +29,7 @@ import { readFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { buildBranchAnchors, berikaRader, byggRum } from '../api/invoice-history.mjs';
+import { readFileSync } from 'node:fs';
 
 const ROT = new URL('..', import.meta.url).pathname;
 const BUILD = join(ROT, 'build');
@@ -52,6 +56,11 @@ const RUM = {
   mobilByte: await rumSvar([rad(4, 'Tele2', 'mobil', 349 * 12 * 10, 10, [], 269 * 12 * 10)]),
   mobilLon: await rumSvar([rad(5, 'Tele2', 'mobil', 349 * 12 * 100, 100), rad(6, 'Fortnox', 'loneadmin', 5000, 10)]),
   m365Byte: await rumSvar([rad(7, 'Microsoft', 'saas-productivity', 600 * 12 * 10, 10, E3(600), 416.77 * 12 * 10)]),
+  mobilBredband: await rumSvar([rad(8, 'Tele2', 'mobil', 349 * 12 * 10, 10), rad(9, 'Telia', 'bredband', 599 * 12, 1, [], 399 * 12)]),
+  it8821: await (async () => {
+    const it = JSON.parse(readFileSync(join(ROT, 'tests/fixtures/it-8821-ms365.json'), 'utf8'));
+    return rumSvar([rad(10, 'IT-Partner', 'saas-productivity', it.annualCost, it.seatCount, it.lineItems, it.expected.suggestedAnnualCost)]);
+  })(),
 };
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
@@ -112,6 +121,7 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   p = await sida(bredd, RUM.mobilByte);
   t = await text(p);
   if (!/Nivå ej bekräftad/i.test(t)) fel(`mobil med byte saknar «Nivå ej bekräftad» (${namn})`);
+  if (!/räknade ett byte till den billigaste publicerade/i.test(t)) fel(`mobil med byte säger inte varför bytet saknas (${namn})`);
   for (const re of [/% mer/i, /Ni behåller/i, /möjlig nettobesparing/i, /rekommenderar byte/i, /Vakten · ett drag kvar/i,
     /Samma nivå kostar/i, /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /kan skärpas/i])
     if (re.test(t)) fel(`mobil med byte säger ${re} (${namn})`);
@@ -126,6 +136,21 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /inget verifierat jämförelsepris/i, /kunde inte mätas/i])
     if (re.test(t)) fel(`mobil + lön säger ${re} (${namn})`);
   await p.screenshot({ path: `${UT}/mobil-lon-${namn}.png`, fullPage: true }); await p.close();
+
+  // D1-2: en obekräftad mobilrad och ett bredbandsbyte. Bytet bär domen.
+  p = await sida(bredd, RUM.mobilBredband);
+  t = await text(p);
+  if (!/grundat på era bytesmål/i.test(t)) fel(`mobil + bredbandsbyte saknar «grundat på era bytesmål» (${namn})`);
+  for (const re of [/\b0 av \d+ fakturor/i, /inget verifierat jämförelsepris/i, /Delvis mätt/i])
+    if (re.test(t)) fel(`mobil + bredbandsbyte säger ${re} (${namn})`);
+  await p.screenshot({ path: `${UT}/mobil-bredband-${namn}.png`, fullPage: true }); await p.close();
+
+  // Motprov (D1-1): IT-8821 med två nivåer behåller sitt like-for-like-byte.
+  p = await sida(bredd, RUM.it8821);
+  t = await text(p);
+  if (!/Ni behåller/i.test(t) && !/möjlig nettobesparing/i.test(t)) fel(`motprov: IT-8821 saknar bytet (${namn})`);
+  if (/räknade ett byte till den billigaste publicerade/i.test(t)) fel(`motprov: IT-8821 får mobilens förklaring (${namn})`);
+  await p.close();
 
   // Motprov: en M365-rad med bekräftad nivå och byte behåller bytet.
   p = await sida(bredd, RUM.m365Byte);

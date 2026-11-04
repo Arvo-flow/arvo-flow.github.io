@@ -1011,8 +1011,11 @@ export default function Portfolio() {
               <Confidence>
                 {acting && !hasSwitchAction
                   ? <><span className="pct">Ur er egen faktura</span> · talet står på raden i fyndet ovan · inget marknadspris inblandat</>
+                  // Ett byte bär domen också när ingen samlad poäng sätts: talet är bytesmålet (D1-2).
+                  : omatt && hasSwitchAction
+                    ? <><span className="pct">Verifierat</span> · grundat på era bytesmål · publika listpriser · ingen samlad poäng</>
                   : omatt && delvis
-                    ? <><span className="pct">Delvis mätt</span> · {counts.prissatta} av {counts.fakturor} fakturor prissatta mot publika listpriser · ingen samlad poäng</>
+                    ? <><span className="pct">Delvis mätt</span> · {counts.prissatta > 0 ? `${counts.prissatta} av ${counts.fakturor} fakturor prissatta mot publika listpriser · ` : ''}ingen samlad poäng</>
                   : omatt
                     ? <><span className="pct">Inte mätt i dag</span> · vi har inget verifierat jämförelsepris för det ni själva betalar · vi hävdar ingenting om er prisnivå</>
                     : counts.prissatta > 0
@@ -1031,8 +1034,7 @@ export default function Portfolio() {
                 <div className="card-eyebrow">
                   <span>Arvo Score</span>
                   <span className="src">
-                    {/* Också mottagna utan dom står utanför talet (C1-2). */}
-                    {counts.bevakade > 0 || counts.mottagna > 0
+                    {counts.bevakade > 0
                       ? `${counts.prissatta} av ${counts.fakturor} fakturor prissatta`
                       : 'mot verifierat listpris'}
                   </span>
