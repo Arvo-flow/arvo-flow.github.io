@@ -31,6 +31,8 @@ import { refineFinding } from '../lib/forensics.js';
 import { byggUppdelning } from '../lib/fakturarader.js';
 import { byggPrisunderlag, scoreUrUnderlag } from '../lib/prisunderlag.js';
 import { lasLicensniva, nivaGolv } from '../lib/licensniva.js';
+import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
+import { computeSecondarySaving } from '../lib/secondary-savings.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getPublicListBenchmark, kohortTackning } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
@@ -342,6 +344,21 @@ export default async function handler(req, res) {
  * BLIND: den vet inget om ankarnas kvalitet; tomma ankare ger tyst null, vilket är rätt men
  *   omöjligt att skilja från «kategorin bär inget golv» utan att titta på `branchAnchors`.
  */
+/**
+ * Den sekundära delens bruttobesparing på en kombinerad faktura, räknad vid läsning ur radens egna rader
+ * med fakturavägens funktioner (`api/test-invoice.mjs`: computeInvoiceMetrics → computeSecondarySaving).
+ * Null när raderna saknas eller fakturan inte bär någon sekundär del (F1-2, MS-08).
+ */
+export function sekundarDelVidLasning(a, rader) {
+  if (!Array.isArray(rader) || !rader.length) return null;
+  try {
+    const metrics = computeInvoiceMetrics(rader, a.category, true);
+    const sek = computeSecondarySaving({ metrics, category: a.category, potentialMixedCategories: true,
+      industry: a.industry, employees: a.employees });
+    return sek?.grossSaving > 0 ? sek.grossSaving : null;
+  } catch { return null; }
+}
+
 export function berikaRader(analyses = [], branchAnchors = {}) {
   for (const a of analyses) {
     // ── LIKE-FOR-LIKE ÅT BÅDA HÅLL (grundarfynd 2026-08-19) ─────────────────────────────────
@@ -356,8 +373,16 @@ export function berikaRader(analyses = [], branchAnchors = {}) {
     const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
     a.prisunderlag = underlagForRad(a, branchAnchors[a.category] ?? null, golv, niva);
     a._rader = undefined;
-    // Ett lagrat byte mot kategorins golv, på en rad med obekräftad nivå, visas inte (C1-1, D1-1, MS-08).
-    undanhallBytePaOvissNiva(a, { bytesmalMotKategorigolv: BRANCHINDEX[a.category]?.bytesmalMotKategorigolv === true });
+    // Ett lagrat byte mot kategorins golv, på en rad med obekräftad nivå, visas inte; en bredbandsdel på en
+    // kombinerad faktura räknas fram vid läsning och står kvar (C1-1, D1-1, F1-2, MS-08).
+    const golvbyte = BRANCHINDEX[a.category]?.bytesmalMotKategorigolv === true;
+    undanhallBytePaOvissNiva(a, {
+      bytesmalMotKategorigolv: golvbyte,
+      sekundarBrutto: golvbyte && a.should_switch === true ? sekundarDelVidLasning(a, rader) : null,
+      harRader: Array.isArray(rader) && rader.length > 0,
+    });
+    // Bytets mål är ett verifierat publikt listpris bara i en kategori vars prisbok är det (F1-1).
+    a.bytesmalVerifierat = BRANCHINDEX[a.category]?.source === 'real-public';
     // ── TYSTNADENS SKÄL FÖLJER MED RADEN (grundarbeslut 2026-09-17) ─────────────────────────
     // De offertprissatta kategorierna blir ALDRIG triagerade — mätt mot produktionen: noll rader.
     // De passerar triagen, revisionsgrinden kortsluter dem i `recommend()` till talfritt

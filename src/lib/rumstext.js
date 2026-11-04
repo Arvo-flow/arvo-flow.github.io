@@ -18,7 +18,10 @@ const ref = (p) => (p?.referensProdukt ? ` (${p.referensProdukt})` : '');
 /** Radens «Arvo bedömer», per kod. HTML (b-taggar) — renderas som förut. */
 export const MOTIVERING = {
   granskning: () => 'Kategorin kräver manuell granskning — Arvo inhämtar offert för exakt prisjämförelse. Ni kontaktas när det är klart.',
-  byte: (p, label) => (p.ovPct >= 10
+  // Utan procenttal (obekräftad nivå): inget avstånd till det billigaste, bara att ett byte finns (MS-11).
+  byte: (p, label) => (p.ovPct == null
+    ? 'Arvo rekommenderar byte — det lägre priset finns förberett nedan. Hur långt ni ligger från det billigaste priset i kategorin säger vi inget om.'
+    : p.ovPct >= 10
     ? `Ni betalar <b>${p.ovPct}% mer</b> än det billigaste verifierade alternativet för ${label}. Arvo rekommenderar byte — det lägre priset finns förberett nedan.`
     : `Ni betalar ${p.ovPct > 0 ? `${p.ovPct}% mer` : 'något mer'} än det billigaste verifierade alternativet för ${label} — ett litet gap. Ett lägre avtalspris finns att säkra om ni vill, men ingen brådska; avvärjt är ändå avvärjt.`),
   // Stod: «Arvo bevakar och förbereder bytet inför förnyelsen — ni betalar konkurrenskraftigt till dess.»
@@ -57,21 +60,41 @@ export const MARKE = {
 };
 
 /** Texten för en rad ur API:ts läge. Saknas läget säger raden bara att den är mottagen. */
-// Raden vars lagrade byte rummet inte visar (lib/lagesregister.js undanhallBytePaOvissNiva) säger varför.
-// Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4, MS-08). Meningen
-// påstår inte att hela bytet är planvalet: på en kombinerad faktura ingår också en annan tjänsts del, som
-// bredbandet, och den går inte att skilja ut ur den lagrade summan (E1-2, MS-08).
-export const BYTE_UNDANHALLET = 'Analysen av fakturan räknade fram ett byte, men vi visar det inte här. '
-  + 'Bytet för den här kategorin räknas mot den billigaste publicerade produkten, och vi vet inte vilken '
-  + 'produkt ni har. Har fakturan också andra tjänster, till exempel bredband, ingår deras del i samma '
-  + 'belopp, och den kan vi inte skilja ut i efterhand.';
+// Raden vars lagrade byte rummet har gripit in i (lib/lagesregister.js undanhallBytePaOvissNiva) säger vad
+// som hänt. Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4). Tre fall,
+// och varje mening är sann bara i sitt (MS-08, MS-11):
+//   · hela bytet indraget, raderna sparade och ingen annan tjänst på fakturan: bytet är mobilens, räknat
+//     mot det billigaste abonnemanget;
+//   · hela bytet indraget och raderna saknas: vi kan inte pröva vad det är räknat mot;
+//   · bredbandsdelen står kvar (F1-2): den är räknad mot Tele2:s billigaste publicerade pris för samma
+//     hastighet eller närmast över (bredbandSpeedBenchmark), och mobildelen bedöms inte.
+export const BYTE_UNDANHALLET = 'Analysen av fakturan räknade fram ett byte till det billigaste publicerade '
+  + 'abonnemanget. Det visar vi inte här, eftersom vi inte vet vilket abonnemang ni har.';
+export const BYTE_UNDANHALLET_UTAN_RADER = 'Analysen av fakturan räknade fram ett byte. Det visar vi inte här: '
+  + 'det kan vara räknat mot det billigaste publicerade abonnemanget, och fakturans rader finns inte sparade, '
+  + 'så vi kan inte pröva det.';
+export const BYTE_BREDBANDSDELEN = 'Bytet gäller bredbandet på fakturan, räknat mot Tele2:s billigaste '
+  + 'publicerade pris för samma hastighet eller närmast över. Mobilabonnemangen bedömer vi inte, eftersom vi '
+  + 'inte vet vilket abonnemang ni har.';
+export const BYTE_MOBILDELEN_INDRAGEN = 'Analysens byte för mobilabonnemangen visar vi därför inte.';
+
+function bytesForklaring(u) {
+  if (!u || typeof u !== 'object') return null;
+  if (u.kvar === 'bredband') return u.struket ? `${BYTE_BREDBANDSDELEN} ${BYTE_MOBILDELEN_INDRAGEN}` : BYTE_BREDBANDSDELEN;
+  return u.harRader ? BYTE_UNDANHALLET : BYTE_UNDANHALLET_UTAN_RADER;
+}
 
 export function radMotivering(a) {
   const label = (getCategoryMeta(a?.category)?.label ?? a?.category ?? '').toLowerCase();
   const kod = a?.lage?.kod;
   const f = MOTIVERING[kod] ?? MOTIVERING.omatt;
-  const text = f(a?.lage?.params ?? {}, label);
-  return a?.bytetUndanhallet === 'oviss_niva' ? `${text} ${BYTE_UNDANHALLET}` : text;
+  const forklaring = bytesForklaring(a?.bytetUndanhallet);
+  // Ett bevakat avtal vars byte hålls inne: «Vi har inte jämfört priset» hade sagt emot förklaringen, för
+  // analysen räknade fram ett byte. Bara avtalsklockans mening står kvar (MS-08).
+  const text = forklaring && kod === 'bevakat_avtal'
+    ? 'Avtalet är tidsbundet och bevakas — datumen står i avtalsklockan.'
+    : f(a?.lage?.params ?? {}, label);
+  return forklaring ? `${text} ${forklaring}` : text;
 }
 
 export function radMarke(a) {

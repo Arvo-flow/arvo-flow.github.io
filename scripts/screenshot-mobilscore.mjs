@@ -14,8 +14,12 @@
 //   mobil + lön  → 100 abonnemang och en lönerad (C1-2): «Ingen samlad poäng», «kan inte bedöma alla» och
 //                  «1 av 2 fakturor prissatta»; aldrig «Allt är under kontroll», «Era priser står sig»
 //                  eller «Bättre än listpris»
-//   mobil + bredbandsbyte → «grundat på era bytesmål», aldrig «0 av N fakturor» eller «inget verifierat
-//                  jämförelsepris» (D1-2)
+//   mobil + bredbandsbyte → bytet prissatt, aldrig «0 av N fakturor», «Vägde 0» eller «inget verifierat
+//                  jämförelsepris» (D1-2, E1-1)
+//   kombinerad   → K3 (mobil på golvet + bredband): bredbandsbytet 2 976 kr/år står kvar och raden säger att
+//                  det gäller bredbandet; aldrig «Inget byte rekommenderas», «Inga byten på bordet», «% mer»
+//                  eller «kan inte skilja ut» (F1-2)
+//   mobil + elbyte → elbytet kallas aldrig prissatt mot verifierat listpris (F1-1)
 //   motprov      → IT-8821 (två nivåer) SKA behålla sitt byte (D1-1); en M365-rad med E3 i radtexten SKA
 //                  få «Listpris för er nivå» och ett avstånd, ett
 //                  rum med löneadministration SKA få Marknadsankaret och en poäng, och en M365-rad med
@@ -57,6 +61,11 @@ const RUM = {
   mobilLon: await rumSvar([rad(5, 'Tele2', 'mobil', 349 * 12 * 100, 100), rad(6, 'Fortnox', 'loneadmin', 5000, 10)]),
   m365Byte: await rumSvar([rad(7, 'Microsoft', 'saas-productivity', 600 * 12 * 10, 10, E3(600), 416.77 * 12 * 10)]),
   mobilBredband: await rumSvar([rad(8, 'Tele2', 'mobil', 349 * 12 * 10, 10), rad(9, 'Telia', 'bredband', 599 * 12, 1, [], 399 * 12)]),
+  kombi: await rumSvar([{ ...rad(11, 'Tele2', 'mobil', (1345 + 549) * 12, 5, [
+    { type: 'recurring_subscription', description: 'Tele2 Jobbmobil Bas (5 st)', quantity: 5, unitPrice: 269, amount: 1345 },
+    { type: 'recurring_subscription', description: 'Bredband 250/250 Mbit/s', amount: 549 }], (1345 + 549) * 12 - 3720),
+    gross_saving: 3720, net_saving: 2976 }]),
+  mobilEl: await rumSvar([rad(12, 'Tele2', 'mobil', 349 * 12 * 10, 10), rad(13, 'Fortum', 'el', 40000, 1, [], 34000)]),
   it8821: await (async () => {
     const it = JSON.parse(readFileSync(join(ROT, 'tests/fixtures/it-8821-ms365.json'), 'utf8'));
     return rumSvar([rad(10, 'IT-Partner', 'saas-productivity', it.annualCost, it.seatCount, it.lineItems, it.expected.suggestedAnnualCost)]);
@@ -85,7 +94,7 @@ async function sida(bredd, rum) {
   await p.route('**/api/invoice-history**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rum) }));
   p.on('pageerror', (e) => fel(`sidfel: ${String(e).slice(0, 160)}`));
   await p.goto(`${bas}/portfolio?magic=stub`, { waitUntil: 'networkidle' }); await p.waitForTimeout(1200);
-  for (const namn of ['Tele2', 'Microsoft', 'IT-Partner']) {
+  for (const namn of ['Tele2', 'Microsoft', 'IT-Partner', 'Fortum', 'Telia']) {
     const h = p.locator('[aria-expanded="false"]', { hasText: namn }).first();
     if (await h.count()) await h.click({ timeout: 2000 });
   }
@@ -121,7 +130,7 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   p = await sida(bredd, RUM.mobilByte);
   t = await text(p);
   if (!/Nivå ej bekräftad/i.test(t)) fel(`mobil med byte saknar «Nivå ej bekräftad» (${namn})`);
-  if (!/räknade fram ett byte, men vi visar det inte/i.test(t)) fel(`mobil med byte säger inte varför bytet saknas (${namn})`);
+  if (!/räknade fram ett byte\. Det visar vi inte här/i.test(t)) fel(`mobil med byte säger inte varför bytet saknas (${namn})`);
   for (const re of [/% mer/i, /Ni behåller/i, /möjlig nettobesparing/i, /rekommenderar byte/i, /Vakten · ett drag kvar/i,
     /Samma nivå kostar/i, /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /kan skärpas/i])
     if (re.test(t)) fel(`mobil med byte säger ${re} (${namn})`);
@@ -130,7 +139,7 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   // C1-2: ett rum där den mesta kostnaden är omätt berömmer inte.
   p = await sida(bredd, RUM.mobilLon);
   t = await text(p);
-  for (const re of [/Ingen samlad poäng/i, /1 av 2 fakturor prissatta/i, /kan inte bedöma alla era fakturor/i])
+  for (const re of [/Ingen samlad poäng/i, /1 av 2 fakturor prissatta/i, /kan inte bedöma allt ni betalar/i])
     if (!re.test(t)) fel(`mobil + lön saknar ${re} (${namn})`);
   for (const re of [/Allt är under kontroll/i, /Era priser står sig/i, /Bättre än listpris/i, /Lugnet att ni ligger rätt/i,
     /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /inget verifierat jämförelsepris/i, /kunde inte mätas/i])
@@ -140,7 +149,7 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   // D1-2: en obekräftad mobilrad och ett bredbandsbyte. Bytet bär domen.
   p = await sida(bredd, RUM.mobilBredband);
   t = await text(p);
-  if (!/grundat på era bytesmål/i.test(t)) fel(`mobil + bredbandsbyte saknar «grundat på era bytesmål» (${namn})`);
+  if (!/1 av 2 fakturor prissatta mot publika listpriser/i.test(t)) fel(`mobil + bredbandsbyte saknar «1 av 2 fakturor prissatta» (${namn})`);
   for (const re of [/\b0 av \d+ fakturor/i, /inget verifierat jämförelsepris/i, /Vägde 0 fakturor/i, /\b0 prissatta/i])
     if (re.test(t)) fel(`mobil + bredbandsbyte säger ${re} (${namn})`);
   await p.screenshot({ path: `${UT}/mobil-bredband-${namn}.png`, fullPage: true }); await p.close();
@@ -149,12 +158,33 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   p = await sida(bredd, RUM.it8821);
   t = await text(p);
   if (!/Ni behåller/i.test(t) && !/möjlig nettobesparing/i.test(t)) fel(`motprov: IT-8821 saknar bytet (${namn})`);
-  if (/räknade fram ett byte, men vi visar det inte/i.test(t)) fel(`motprov: IT-8821 får mobilens förklaring (${namn})`);
+  if (/räknade fram ett byte/i.test(t)) fel(`motprov: IT-8821 får mobilens förklaring (${namn})`);
   // E1-1 och E1-5: bytesraden är prissatt och säger inte emot sitt byte.
   for (const re of [/Vägde 0 fakturor/i, /\b0 prissatta/i, /Vi sätter varken avstånd eller poäng här/i])
     if (re.test(t)) fel(`IT-8821 säger ${re} (${namn})`);
-  if (!/Bytet ovan är räknat mot listpriset för det som står på fakturan/i.test(t)) fel(`IT-8821 saknar bytesradens underlag (${namn})`);
+  if (!/säger vi inget om/i.test(t)) fel(`IT-8821 saknar bytesradens underlag (${namn})`);
+  for (const re of [/räknat mot listpriset för det som står på fakturan/i, /\d+% mer/i])
+    if (re.test(t)) fel(`IT-8821 säger ${re} (${namn})`);
   await p.screenshot({ path: `${UT}/it8821-${namn}.png`, fullPage: true }); await p.close();
+
+  // F1-2: en kombinerad faktura behåller bredbandsdelen.
+  p = await sida(bredd, RUM.kombi);
+  t = await text(p);
+  for (const re of [/Bytet gäller bredbandet på fakturan/i, /2 976/])
+    if (!re.test(t)) fel(`kombinerad saknar ${re} (${namn})`);
+  for (const re of [/Inget byte rekommenderas/i, /Inga byten på bordet/i, /\d+% mer/i, /kan inte skilja ut/i, /Vägde 0 fakturor/i,
+    /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i])
+    if (re.test(t)) fel(`kombinerad säger ${re} (${namn})`);
+  await p.screenshot({ path: `${UT}/kombi-${namn}.png`, fullPage: true }); await p.close();
+
+  // F1-1: ett elbyte är Arvos bedömning, inte ett verifierat publikt listpris.
+  p = await sida(bredd, RUM.mobilEl);
+  t = await text(p);
+  for (const re of [/Vägde 1 faktura/i, /Vi jämförde 1 faktura/i, /kan skärpas mot verifierat listpris/i,
+    /grundat på era bytesmål · publika listpriser/i, /\b1 prissatt/i])
+    if (re.test(t)) fel(`mobil + el säger ${re} (${namn})`);
+  if (!/bytena står på raderna/i.test(t)) fel(`mobil + el saknar «bytena står på raderna» (${namn})`);
+  await p.screenshot({ path: `${UT}/mobil-el-${namn}.png`, fullPage: true }); await p.close();
 
   // Motprov: en M365-rad med bekräftad nivå och byte behåller bytet.
   p = await sida(bredd, RUM.m365Byte);

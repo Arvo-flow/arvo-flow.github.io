@@ -152,9 +152,8 @@ export const BRANCHINDEX = {
     // Fakturavägen räknar mobilens bytesmål mot kategorins golv, det billigaste abonnemanget, och inte
     // mot kundens eget abonnemang (det finns ingen like-for-like för mobil). Ett lagrat byte på en rad
     // utan bekräftat abonnemang är därför helt eller delvis planvalet räknat som besparing, och rummet
-    // visar det inte (MS-08). På en kombinerad faktura ingår också bredbandsdelen, som inte går att
-    // skilja ut ur den lagrade summan (E1-2, C1-3). M365 räknar sina byten nivå för nivå (lfl) och bär
-    // inte flaggan (D1-1).
+    // visar inte mobildelen (MS-08). På en kombinerad faktura räknas bredbandsdelen fram vid läsning och
+    // står kvar (F1-2, MS-13). M365 räknar sina byten nivå för nivå (lfl) och bär inte flaggan (D1-1).
     bytesmalMotKategorigolv: true,
     // Prices are per user/year — lib/benchmark.js scales by seat count before the LLM sees it.
     // Tele2 Företag mobilabonnemang — verifierat LIVE 2026-08-05 (Playwright, status 200,

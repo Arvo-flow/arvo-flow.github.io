@@ -1712,10 +1712,11 @@ signera", aldrig som ett verkställt löfte.)
    > **⚠️ ÄNDRAT 2026-10-22 (grundarbeslut):** mobil spänner nu 1,3× (269–349 kr/mån) och kräver
    > bekräftat abonnemang ändå. 349-planen till exakt listpris fick «+30 %» och score 59: talet mätte
    > planvalet. Spärren är ett beslut, inte en mätning, och skälet står bredvid den i prisboken (MS-02).
-   > Ett lagrat mobilbyte visas inte i rummet (MS-08): det är helt eller delvis räknat mot det billigaste
-   > abonnemanget. På en kombinerad faktura hålls också bredbandsdelen inne, eftersom raden bara lagrar
-   > summan; raden säger det. Ett rum med en rad utan dom sätter ingen samlad poäng (MS-09). Fakturavyn
-   > räknar fortfarande avståndet och bytet, och den ska skilja delarna åt (C1-3, öppet).
+   > Ett lagrat mobilbyte visas inte i rummet (MS-08): det är räknat mot det billigaste abonnemanget. På en
+   > kombinerad faktura räknas bredbandsdelen fram vid läsning med fakturavägens egna funktioner och står
+   > kvar (MS-13). Ett rum med en rad utan dom sätter ingen samlad poäng (MS-09). Ett byte räknas som
+   > prissatt mot verifierat listpris bara när målet är det; elens index är Arvos bedömning (MS-12).
+   > Fakturavyn räknar fortfarande mobilens avstånd och byte (C1-3, öppet).
    > Utan bekräftad nivå visar rummet nu vad kunden betalar och vad billigaste jämförbara kostar,
    > men **hävdar inget avstånd och sätter inget score**. Fakta står kvar; påståendet uteblir.
    >

@@ -78,6 +78,24 @@ Prislarmet för mobil är oförändrat, inget larm med eller utan spärren (MS-0
 - [VAKT] E1-3 (lagningsriktningarna fäller tester) och E1-4 (texterna låsta; kommentarerna och bibeln säger
   «helt eller delvis»).
 
+**Fjärde blicken på 6d2ac35f: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore-fjarde.md`). Lagat:
+- **F1-1 [KUND].** `arPrissatt` kallade ett elbyte prissatt «mot verifierat publikt listpris», men elbytet räknas
+  mot Arvos eget säsongsindex. Ett byte räknas nu bara när kategorins prisbok är verifierad (`bytesmalVerifierat`,
+  `source: 'real-public'`). Rubriken i `byte_omatt` och chippet utan poäng påstår ingen källa (MS-10, MS-12).
+- **F1-2 [KUND].** Byggarbeslutet E1-2 var fel: bredbandsdelen går att skilja ut vid läsning, på kronan, med
+  fakturavägens egna funktioner, och valutaspärren kan inte ha slagit till på en rad med lagrat byte (FX-15,
+  FX-16). Bredbandsdelen räknas nu fram och står kvar, taklagd vid det lagrade bruttot; bara mobildelen hålls
+  inne, och raden säger vilken del bytet gäller (MS-13). K1 5 952, K2 2 976, K3 2 976, K4 8 448 och K5 2 976 kr/år
+  netto, granskarens tal.
+- **F1-3 [KUND].** Underlaget på en rad med obekräftad nivå och ett byte påstår inte längre vad bytet är räknat mot,
+  och raden får inget procenttal (MS-11).
+- **F1-4, förexisterande, stängt i samma PR.** En mobilrad utan underlag (inget avläst antal) eller en bevakad
+  mobilrad behöll sitt byte och sin poäng. Spärren hänger nu på kategorin, inte på underlaget (MS-08, MS-09).
+- [VAKT] F1-6 (MS-11:s ordningskontroller kräver att båda grenarna finns) och F1-7 (kommentarer och bibel).
+- **Förexisterande, oförändrat, loggat:** på en kombinerad rad räknar underlaget «Ni betalar X kr per
+  abonnemang» med bredbandets kostnad inräknad (K3: 4 546 kr). Samma tal gav main «+38 %». Hör till C1-3.
+  F1-5 (beröm i rum där bytesraden ligger 15–21 % över) står kvar som förexisterande.
+
 **Kvar, förexisterande [KUND], egna PR:er efter c2:**
 - **C1-3 · Fakturavyn, mejlen, briefingen och dörren räknar mobilens avstånd och byte mot det billigaste
   abonnemanget.** 349-planen till listpris får «Ni betalar 30 % över verifierat publikt listpris», poäng

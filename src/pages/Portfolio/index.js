@@ -683,7 +683,7 @@ export default function Portfolio() {
   const domLage = rum?.lage ?? null;
   const omatt = rum?.omatt === true;
   // `rum.ovissa`: minst en faktura har obekräftad nivå och ingen dom, så rummet sätter ingen samlad
-  // poäng (C1-2). Texterna säger då «vi kan inte bedöma alla era fakturor», sant oavsett resten (MS-09).
+  // poäng (C1-2). Texterna säger då «vi kan inte bedöma allt ni betalar», sant oavsett resten (MS-09).
   const ovissa = rum?.ovissa === true;
 
   // Vaktens kvitton (arbetets kvitton) — vad maskinen GJORDE, byggt strikt ur verkligt rumsdata.
@@ -801,7 +801,7 @@ export default function Portfolio() {
         ? <>Inget byte att lägga fram — men <em>{nivaer} {plural(nivaer, 'avtal', 'avtal')} kan gå ner en nivå.</em></>
         : <>Vi vaktar era avtal — men <em>er position mot listpris kunde inte mätas</em> i dag.</>,
       work: ovissa
-        ? <>{jamforde}Inget byte rekommenderas i dag. Vi kan inte bedöma alla era fakturor mot listpris än, så vi
+        ? <>{jamforde}Inget byte rekommenderas i dag. Vi kan inte bedöma allt ni betalar mot listpris än, så vi
             sätter <b>ingen samlad poäng</b> och hävdar ingenting om er samlade prisnivå.{nivaMening}</>
         : <>Vi har ännu <b>inget verifierat jämförelsepris</b> för det ni själva betalar — därför hävdar vi
             ingenting om er prisnivå.{nivaMening ?? ' Vi bevakar avtalen och hör av oss så snart ett mål går att styrka.'}</>,
@@ -823,7 +823,8 @@ export default function Portfolio() {
     },
     byte_omatt: {
       h1: 'Ett par drag väntar på er.',
-      head: <><em>{antalByten} avtal kan skärpas</em> mot verifierat listpris.</>,
+      // Ingen källa i rubriken: läget nås också med ett elbyte, räknat mot Arvos eget index (F1-1).
+      head: <><em>{antalByten} avtal kan skärpas.</em></>,
       work: null,
     },
     fynd: {
@@ -1013,9 +1014,9 @@ export default function Portfolio() {
                   ? <><span className="pct">Ur er egen faktura</span> · talet står på raden i fyndet ovan · inget marknadspris inblandat</>
                   // Ett byte bär domen också när ingen samlad poäng sätts: talet är bytesmålet (D1-2).
                   : omatt && hasSwitchAction
-                    ? <><span className="pct">Verifierat</span> · grundat på era bytesmål · publika listpriser · ingen samlad poäng</>
+                    ? <><span className="pct">Ingen samlad poäng</span> · {counts.prissatta > 0 ? `${counts.prissatta} av ${counts.fakturor} fakturor prissatta mot publika listpriser` : 'bytena står på raderna'}</>
                   : omatt && ovissa
-                    ? <><span className="pct">Ingen samlad poäng</span> · {counts.prissatta > 0 ? `${counts.prissatta} av ${counts.fakturor} fakturor prissatta mot publika listpriser` : 'vi kan inte bedöma alla fakturor mot listpris än'}</>
+                    ? <><span className="pct">Ingen samlad poäng</span> · {counts.prissatta > 0 ? `${counts.prissatta} av ${counts.fakturor} fakturor prissatta mot publika listpriser` : 'vi kan inte bedöma allt ni betalar mot listpris än'}</>
                   : omatt
                     ? <><span className="pct">Inte mätt i dag</span> · vi har inget verifierat jämförelsepris för det ni själva betalar · vi hävdar ingenting om er prisnivå</>
                     : counts.prissatta > 0
@@ -1054,7 +1055,7 @@ export default function Portfolio() {
                 </div>}
                 <p className="idx-note">
                   {!standing.satt && ovissa
-                    ? <>Vi kan inte bedöma alla era fakturor mot listpris än, så vi sätter ingen samlad poäng.
+                    ? <>Vi kan inte bedöma allt ni betalar mot listpris än, så vi sätter ingen samlad poäng.
                       <b> Ett tal över en del av boken läses som ett omdöme om hela.</b></>
                     : !standing.satt
                     ? <>Vi har inget verifierat jämförelsepris för det ni själva betalar ännu, så vi sätter ingen poäng.
@@ -1097,7 +1098,7 @@ export default function Portfolio() {
                     : acting
                       ? <>Inget leverantörsbyte krävs — kostnaden åtgärdas direkt mot fakturan. Se fyndet ovan.</>
                       : (omatt && ovissa
-                          ? <>Vi kan inte bedöma alla era fakturor mot listpris än, så vi sätter ingen samlad poäng.
+                          ? <>Vi kan inte bedöma allt ni betalar mot listpris än, så vi sätter ingen samlad poäng.
                               Inga byten på bordet just nu.</>
                           : omatt
                           ? <>Vi har inget verifierat jämförelsepris för det ni själva betalar än, så vi hävdar ingenting om
@@ -1498,12 +1499,12 @@ export default function Portfolio() {
                                 </div>
                               )}
                               <div className={`u-slut${p.underGolv ? ' bra' : ''}`}>
-                                {/* En rad med obekräftad nivå och ett byte som står kvar (M365 med två nivåer):
-                                    bytet är räknat mot listpriset för det fakturan visar. Här stod «Vi sätter
-                                    varken avstånd eller poäng här» bredvid radens poäng och byte (E1-5, MS-11). */}
+                                {/* En rad med obekräftad nivå och ett byte som står kvar. Här stod «Vi sätter varken
+                                    avstånd eller poäng här» bredvid radens poäng och byte (E1-5), och sedan en mening
+                                    om vad bytet är räknat mot, som var falsk för rader utan radtext (F1-3). Nu säger
+                                    texten bara det som gäller alla sådana rader (MS-11). */}
                                 {p.ovissNiva && a.lage?.kod === 'byte'
-                                  ? <>Bytet ovan är räknat mot listpriset för det som står på fakturan. Hur långt
-                                     ni ligger från <b>det billigaste priset i kategorin</b> säger vi inget om,
+                                  ? <>Hur långt ni ligger från <b>det billigaste priset i kategorin</b> säger vi inget om,
                                      eftersom produkterna i kategorin har olika listpris.</>
                                   : p.ovissNiva
                                   ? <>Vad ni betalar och vad den billigaste jämförbara produkten
