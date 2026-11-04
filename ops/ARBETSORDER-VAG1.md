@@ -59,11 +59,33 @@ Prislarmet för mobil är oförändrat, inget larm med eller utan spärren (MS-0
 - **Förexisterande, oförändrat:** ett bredbandsbyte räknas som mottaget, inte prissatt, så rummet säger
   «Vägde 0 fakturor» och «0 prissatta» bredvid bytet (punkten «Rummets bredbandsrad» nedan).
 
+**Tredje blicken på 88104b30: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore-tredje.md`). Lagat:
+- **E1-1 [KUND].** IT-8821 behöll sitt byte men rummet sa «Prissatta 0» och «Vägde 0 fakturor» under det.
+  En rad är nu prissatt när den har en dom: ett underlag med bekräftad jämförelse, eller ett byte som visas
+  (`arPrissatt`). Bara rader utan dom stoppar den samlade poängen (`rum.ovissa`). Ett bredbandsbyte räknas
+  därmed också som prissatt, så den förexisterande «Vägde 0 fakturor» bredvid ett bredbandsbyte är borta
+  (MS-10, MS-11).
+- **E1-2 [KUND].** På en kombinerad mobil- och bredbandsfaktura ströks hela bytet med en förklaring som
+  sa att det var räknat mot den billigaste produkten. Raden lagrar bara summan, och en omräkning vid läsning
+  hade gått förbi fakturavägens spärrar (valutaspärren m.fl.), så **beslutet är att hålla inne hela bytet
+  tills fakturavägen skiljer delarna åt (C1-3)**. Förklaringen säger nu sanningen: att en annan tjänsts del,
+  till exempel bredband, kan ingå i beloppet och inte går att skilja ut i efterhand (MS-11 låser texten).
+  Kostnad, öppet: bredbandsdelen syns inte i rummet för sådana fakturor förrän C1-3 är byggd. Den syns i
+  fakturavyn och mejlet.
+- **E1-5 [KUND], förexisterande i en text grenen skrev.** En rad med obekräftad nivå och ett byte som står
+  kvar sa «Vi sätter varken avstånd eller poäng här» bredvid sin poäng. Den raden har nu ett eget underlag:
+  bytet är räknat mot listpriset för det som står på fakturan (MS-11).
+- [VAKT] E1-3 (lagningsriktningarna fäller tester) och E1-4 (texterna låsta; kommentarerna och bibeln säger
+  «helt eller delvis»).
+
 **Kvar, förexisterande [KUND], egna PR:er efter c2:**
 - **C1-3 · Fakturavyn, mejlen, briefingen och dörren räknar mobilens avstånd och byte mot det billigaste
   abonnemanget.** 349-planen till listpris får «Ni betalar 30 % över verifierat publikt listpris», poäng
   66 och ett byte till 269-planen. Det är grundarens exempel utanför rummet, och roten till C1-1. Bytet ska
   grindas på samma deklaration som rummet (`kraverBekraftadNiva`), på samma sätt som lfl-grinden för saas.
+  Fakturavägen ska också lagra mobil- och bredbandsdelen var för sig, så att rummet kan visa bredbandsdelen
+  (E1-2). Samma planval finns spegelvänt: en bredbandsfaktura med mobil som sekundär del räknar mobildelen mot
+  kategorins golv (`lib/secondary-savings.js`).
 - **C1-4 · Bytesradens «X% mer» räknas som andel av kundens pris** (`radLage`, (a−s)/a): 23 % där rätt
   tal är 30 %. Bibelns 85-fel.
 

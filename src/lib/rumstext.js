@@ -58,10 +58,13 @@ export const MARKE = {
 
 /** Texten för en rad ur API:ts läge. Saknas läget säger raden bara att den är mottagen. */
 // Raden vars lagrade byte rummet inte visar (lib/lagesregister.js undanhallBytePaOvissNiva) säger varför.
-// Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4, MS-08). Bytesmålet
-// är kategorins golv, alltså den billigaste publicerade produkten, och det är bara där flaggan sätts.
-export const BYTE_UNDANHALLET = 'Analysen av fakturan räknade ett byte till den billigaste publicerade '
-  + 'produkten i kategorin. Det visar vi inte här, eftersom vi inte vet vilken produkt ni har.';
+// Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4, MS-08). Meningen
+// påstår inte att hela bytet är planvalet: på en kombinerad faktura ingår också en annan tjänsts del, som
+// bredbandet, och den går inte att skilja ut ur den lagrade summan (E1-2, MS-08).
+export const BYTE_UNDANHALLET = 'Analysen av fakturan räknade fram ett byte, men vi visar det inte här. '
+  + 'Bytet för den här kategorin räknas mot den billigaste publicerade produkten, och vi vet inte vilken '
+  + 'produkt ni har. Har fakturan också andra tjänster, till exempel bredband, ingår deras del i samma '
+  + 'belopp, och den kan vi inte skilja ut i efterhand.';
 
 export function radMotivering(a) {
   const label = (getCategoryMeta(a?.category)?.label ?? a?.category ?? '').toLowerCase();

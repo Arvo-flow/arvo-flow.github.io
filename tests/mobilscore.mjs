@@ -13,7 +13,7 @@
 //   ett rum som väger ihop en del av boken till en poäng och berömmer den (MS-09); ett ankarkort i en
 //   spärrad kategori (MS-06, genom anrop); en spärr utan mätning eller skäl; medianens etikett «Samma
 //   licens utan bindning» på ett annat abonnemang; löftet «Dela avtalet».
-// BLIND, också: domens ordalydelse för ett delvis mätt rum står i Portfolio och prövas av
+// BLIND, också: domens ordalydelse för ett rum utan samlad poäng står i Portfolio och prövas av
 //   renderingssonden (scripts/screenshot-mobilscore.mjs), inte av sviten. Fakturavyn, mejlen, briefingen
 //   och dörren räknar fortfarande mobilens avstånd och byte (C1-3, öppet).
 // BLIND: ingen kod läser i dag ett mobilabonnemang ur fakturan, så grenen «bekräftat abonnemang» för
@@ -155,7 +155,8 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     assert.equal(rum.totalSaving, 0);
     assert.equal(rum.acting, false);
     assert.equal(rum.score, null);
-    assert.equal(rum.delvis, false, 'ingen rad är mätt, alltså inte «delvis»');
+    assert.equal(rum.ovissa, true, 'raden utan dom stoppar den samlade poängen');
+    assert.equal(rum.counts.prissatta, 0);
     assert.doesNotMatch(rum.lage, /^byte_/);
     // Motprov: en M365-rad med bekräftad nivå och ett byte behåller bytet.
     const [m] = await rummet([rad(2, 'saas-productivity', 600 * 12 * 10, 10, E3, { suggested: 416.77 * 12 * 10 })]);
@@ -186,7 +187,7 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
       ['mobil + E3', [rad(1, 'mobil', 349 * 12 * 100, 100), rad(2, 'saas-productivity', 416.77 * 12 * 10, 10, E3)]],
     ]) {
       const rum = byggRum(await rummet(rader), []);
-      assert.equal(rum.delvis, true, namn);
+      assert.equal(rum.ovissa, true, namn);
       assert.equal(rum.score, null, `${namn}: en samlad poäng över en del av boken`);
       assert.equal(rum.standing.satt, false, namn);
       assert.equal(rum.berom, false, `${namn}: rummet berömmer`);
@@ -195,12 +196,11 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     }
     // Motprov: utan obekräftad rad sätts poängen som förut.
     const ensam = byggRum(await rummet([rad(2, 'loneadmin', 5000, 10)]), []);
-    assert.equal(ensam.delvis, false);
+    assert.equal(ensam.ovissa, false);
     assert.equal(typeof ensam.score, 'number');
     assert.equal(ensam.standing.satt, true);
-    // Ytan: den delvis mätta domen säger vad som är mätt och sätter ingen poäng.
     const src = readFileSync(rot('src/pages/Portfolio/index.js'), 'utf8');
-    assert.match(src, /const delvis = rum\?\.delvis === true;/);
+    assert.match(src, /const ovissa = rum\?\.ovissa === true;/);
   });
 
   test('MS-10 · ett rum med en obekräftad mobilrad och ett byte på en annan rad: bytet bär domen', async () => {
@@ -212,13 +212,41 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     assert.equal(rum.hasSwitchAction, true);
     assert.equal(rum.score, null);
     assert.equal(rum.lage, 'byte_omatt');
-    assert.equal(rum.counts.prissatta, 0, 'bredbandsraden bär inget prisunderlag');
-    // Ytan: med ett byte säger chippet vad domen bygger på, och «Delvis mätt» skriver aldrig «0 av».
+    // E1-1: bredbandsbytet är en dom och räknas som prissatt, så rummet säger aldrig «Vägde 0 fakturor» bredvid det.
+    assert.equal(rum.counts.prissatta, 1, 'bytesraden räknas inte som prissatt');
+    assert.equal(rum.counts.mottagna, 1);
+    // Ytan: med ett byte säger chippet vad domen bygger på, och chippet utan poäng skriver aldrig «0 av».
     const src = readFileSync(rot('src/pages/Portfolio/index.js'), 'utf8');
     const a = src.indexOf(': omatt && hasSwitchAction');
-    const b = src.indexOf(': omatt && delvis\n');
-    assert.ok(a > 0 && b > a, 'bytets gren står inte före «Delvis mätt»');
+    const b = src.indexOf(': omatt && ovissa\n');
+    assert.ok(a > 0 && b > a, 'bytets gren står inte före chippet utan poäng');
+    assert.match(src.slice(a, b), /grundat på era bytesmål · publika listpriser · ingen samlad poäng/);
     assert.match(src, /\{counts\.prissatta > 0 \? `\$\{counts\.prissatta\} av /);
+  });
+
+  test('MS-11 · en rad med obekräftad nivå och ett byte som står kvar är prissatt, och säger inte emot sitt byte', async () => {
+    // E1-1 och E1-5: IT-8821 (två nivåer) visade «Prissatta 0» och «Vi sätter varken avstånd eller poäng här»
+    // rakt under sitt byte på 24 566 kr/år.
+    const it = JSON.parse(readFileSync(rot('tests/fixtures/it-8821-ms365.json'), 'utf8'));
+    const analyses = await rummet([rad(3, 'saas-productivity', it.annualCost, it.seatCount, it.lineItems,
+      { suggested: it.expected.suggestedAnnualCost })]);
+    const rum = byggRum(analyses, []);
+    assert.equal(analyses[0].prisunderlag.ovissNiva, true);
+    assert.equal(rum.counts.prissatta, 1);
+    assert.equal(rum.ovissa, false, 'en rad med dom stoppar inte den samlade poängen');
+    assert.equal(typeof rum.score, 'number');
+    assert.match(rum.lage, /^byte_/);
+    // Underlaget på en sådan rad har en egen gren, före den obekräftade grenen.
+    const src = readFileSync(rot('src/pages/Portfolio/index.js'), 'utf8');
+    const g = src.indexOf("{p.ovissNiva && a.lage?.kod === 'byte'");
+    assert.ok(g > 0 && g < src.indexOf('<b>Hur långt ifrån ni ligger kan vi inte'), 'bytesradens gren saknas');
+    assert.ok(src.indexOf(": p.ovissNiva && a.lage?.kod === 'byte'") < src.indexOf('Vi sätter varken avstånd eller poäng här'));
+    // Förklaringen till ett indraget byte påstår inte att hela bytet är planvalet (E1-2), och den låses ordagrant.
+    const { BYTE_UNDANHALLET } = await import('../src/lib/rumstext.js');
+    assert.equal(BYTE_UNDANHALLET, 'Analysen av fakturan räknade fram ett byte, men vi visar det inte här. '
+      + 'Bytet för den här kategorin räknas mot den billigaste publicerade produkten, och vi vet inte vilken '
+      + 'produkt ni har. Har fakturan också andra tjänster, till exempel bredband, ingår deras del i samma '
+      + 'belopp, och den kan vi inte skilja ut i efterhand.');
   });
 
   test('MS-07 · en mobilrad räknas som mottagen, inte prissatt, så rummets räknare går ihop med raden', async () => {
