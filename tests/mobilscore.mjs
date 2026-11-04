@@ -144,7 +144,7 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     // Fakturavägen lagrar 349-planen till listpris med byte till 269-planen (C1-1). Rummet räknar vid läsning.
     const analyses = await rummet([rad(1, 'mobil', 349 * 12 * 10, 10, [], { suggested: 269 * 12 * 10 })]);
     const [a] = analyses;
-    assert.deepEqual(a.bytetUndanhallet, { del: 'hela', kvar: null, harRader: false });
+    assert.deepEqual(a.bytetUndanhallet, { del: 'hela', kvar: null });
     assert.equal(a.should_switch, false);
     assert.equal(a.net_saving, null);
     assert.equal(a.suggested_annual_cost, null);
@@ -159,13 +159,9 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     assert.equal(rum.ovissa, true, 'raden utan dom stoppar den samlade poängen');
     assert.equal(rum.counts.prissatta, 0);
     assert.doesNotMatch(rum.lage, /^byte_/);
-    // Raden säger vad som hänt, och meningen beror på om raderna finns (D1-4, F1-2).
-    const { radMotivering, BYTE_UNDANHALLET, BYTE_UNDANHALLET_UTAN_RADER } = await import('../src/lib/rumstext.js');
-    assert.ok(radMotivering(a).endsWith(BYTE_UNDANHALLET_UTAN_RADER), 'utan rader: vi kan inte pröva');
-    const mobilrader = [{ description: 'Tele2 Jobbmobil XL', type: 'recurring_subscription', quantity: 10, unitPrice: 349, amount: 3490 }];
-    const [medRader] = await rummet([rad(5, 'mobil', 349 * 12 * 10, 10, mobilrader, { suggested: 269 * 12 * 10 })]);
-    assert.deepEqual(medRader.bytetUndanhallet, { del: 'hela', kvar: null, harRader: true });
-    assert.ok(radMotivering(medRader).endsWith(BYTE_UNDANHALLET));
+    // Raden säger vad som hänt (D1-4). En rad utan lagrade delar kan vara räknad mot det billigaste.
+    const { radMotivering, BYTE_UTAN_DELAR } = await import('../src/lib/rumstext.js');
+    assert.ok(radMotivering(a).endsWith(BYTE_UTAN_DELAR));
     assert.ok(!radMotivering((await rummet([rad(4, 'mobil', 349 * 12 * 10, 10)]))[0]).includes('räknade fram ett byte'),
       'en mobilrad utan lagrat byte påstår att analysen räknade ett');
     // F1-4: också en mobilrad utan underlag (inget avläst antal) och en bevakad mobilrad håller inne sitt byte.
@@ -177,7 +173,7 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     assert.equal(bevakad.should_switch, false);
     assert.equal(bevakad.lage.kod, 'bevakat_avtal');
     assert.doesNotMatch(radMotivering(bevakad), /Vi har inte jämfört priset/, 'säger emot förklaringen');
-    assert.ok(radMotivering(bevakad).endsWith(BYTE_UNDANHALLET_UTAN_RADER));
+    assert.ok(radMotivering(bevakad).endsWith(BYTE_UTAN_DELAR));
     // Motprov: en M365-rad med bekräftad nivå och ett byte behåller bytet.
     const [m] = await rummet([rad(2, 'saas-productivity', 600 * 12 * 10, 10, E3, { suggested: 416.77 * 12 * 10 })]);
     assert.equal(m.should_switch, true);
@@ -258,53 +254,54 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     // Motprov: ett bredbandsbyte i en kategori med verifierad prisbok räknas (MS-10).
   });
 
-  test('MS-13 · en kombinerad mobil- och bredbandsfaktura behåller bredbandsdelen och håller inne mobildelen', async () => {
-    // F1-2: raden lagrar summan. Bredbandsdelen räknas fram vid läsning med fakturavägens egna funktioner.
-    const XL5 = { type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (5 st)', quantity: 5, unitPrice: 349, amount: 1745 };
-    const BAS5 = { type: 'recurring_subscription', description: 'Tele2 Jobbmobil Bas (5 st)', quantity: 5, unitPrice: 269, amount: 1345 };
-    const BB250 = { type: 'recurring_subscription', description: 'Bredband 250/250 Mbit/s', amount: 549 };
-    const fall = [
-      // K3: mobilen ligger redan på golvet; hela det lagrade bytet är bredband (3 720 brutto, 2 976 netto).
-      { namn: 'K3', rader: [BAS5, BB250], lagrat: 3720, kvar: 3720, struket: false },
-      // K2: mobildelen 4 800 är planvalet och hålls inne; bredbandets 3 720 står kvar.
-      { namn: 'K2', rader: [XL5, BB250], lagrat: 8520, kvar: 3720, struket: true },
-    ];
-    const { radMotivering, BYTE_BREDBANDSDELEN, BYTE_MOBILDELEN_INDRAGEN } = await import('../src/lib/rumstext.js');
+  test('MS-13 · en kombinerad mobilfaktura visar den bredbandsdel analysen lagrade, och räknar ingenting om', async () => {
+    // F1-2, G1-2, G1-3: delarna räknades förut fram vid läsning, med dagens prisbok och utan extraktionens
+    // flaggor. Nu läser rummet vad analysen lagrade (lib/bytesdelar.js) och räknar ingenting om.
+    const { radMotivering, BYTE_BREDBANDSDELEN, BYTE_UTAN_DELAR } = await import('../src/lib/rumstext.js');
     const { netOf } = await import('../lib/fee.js');
-    for (const f of fall) {
-      const arlig = f.rader.reduce((s, r) => s + r.amount, 0) * 12;
-      const lagrad = { ...rad(7, 'mobil', arlig, 5, f.rader), should_switch: true, gross_saving: f.lagrat,
-        net_saving: netOf(f.lagrat), suggested_annual_cost: arlig - f.lagrat };
-      const analyses = await rummet([lagrad]);
+    const XL5 = { type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (5 st)', quantity: 5, unitPrice: 349, amount: 1745 };
+    const BB250 = { type: 'recurring_subscription', description: 'Bredband 250/250 Mbit/s', amount: 549 };
+    const arlig = (1745 + 549) * 12;
+    const delar = (brutto) => ({ version: 1, planvalsgrind: true, primarBrutto: 0, sekundar: { kategori: 'bredband', brutto } });
+    const lagrad = (extra) => ({ ...rad(7, 'mobil', arlig, 5, [XL5, BB250]), should_switch: true, gross_saving: 3720,
+      net_saving: netOf(3720), suggested_annual_cost: arlig - 3720, ...extra });
+    // Analys efter grinden: bytet är bredbandsdelen, exakt som lagrad. Rummet räknar inte om den, så ett
+    // annat tal i delarna än i summan syns inte (summan är det lagrade bytet).
+    for (const brutto of [3720, 960]) {
+      const analyses = await rummet([lagrad({ gross_saving: brutto, net_saving: netOf(brutto), bytesdelar_json: delar(brutto) })]);
       const [a] = analyses;
-      assert.equal(a.should_switch, true, `${f.namn}: bredbandsdelen ströks`);
-      assert.equal(a.gross_saving, f.kvar, `${f.namn}: fel del står kvar`);
-      assert.equal(a.net_saving, netOf(f.kvar));
-      assert.equal(a.suggested_annual_cost, arlig - f.kvar);
-      assert.deepEqual(a.bytetUndanhallet, { del: 'mobil', kvar: 'bredband', struket: f.struket });
+      assert.equal(a.should_switch, true, `${brutto}: bredbandsdelen ströks`);
+      assert.equal(a.gross_saving, brutto);
+      assert.equal(a.net_saving, netOf(brutto));
+      assert.deepEqual(a.bytetUndanhallet, { del: null, kvar: 'bredband' });
       assert.equal(a.lage.kod, 'byte');
-      assert.equal(a.lage.score, null, `${f.namn}: en mobilrad får ingen poäng`);
-      assert.equal(a.lage.params.ovPct, null, `${f.namn}: inget procenttal`);
-      const text = radMotivering(a);
-      assert.ok(text.includes(BYTE_BREDBANDSDELEN));
-      assert.equal(text.includes(BYTE_MOBILDELEN_INDRAGEN), f.struket);
-      assert.doesNotMatch(text, /% mer/);
+      assert.equal(a.lage.score, null, 'en mobilrad får ingen poäng');
+      assert.equal(a.lage.params.ovPct, null, 'inget procenttal');
+      assert.ok(radMotivering(a).endsWith(BYTE_BREDBANDSDELEN));
+      assert.doesNotMatch(radMotivering(a), /% mer/);
       const rum = byggRum(analyses, []);
-      assert.equal(rum.score, null, `${f.namn}: samlad poäng`);
+      assert.equal(rum.score, null);
       assert.equal(rum.hasSwitchAction, true);
-      assert.equal(rum.totalSaving, netOf(f.kvar));
+      assert.equal(rum.totalSaving, netOf(brutto));
       assert.equal(rum.counts.prissatta, 1);
     }
-    // Taket: en bredbandsdel räknad i dag kan aldrig bli större än det analysen lagrade.
-    const arlig = (1345 + 549) * 12;
-    const [tak] = await rummet([{ ...rad(8, 'mobil', arlig, 5, [BAS5, BB250]), should_switch: true, gross_saving: 1000,
-      net_saving: 800, suggested_annual_cost: arlig - 1000 }]);
-    assert.equal(tak.gross_saving, 1000);
-    // Motprov: en ren mobilfaktura har ingen sekundär del och hela bytet hålls inne (MS-08).
-    const [ren] = await rummet([{ ...rad(9, 'mobil', 349 * 12 * 5, 5, [XL5]), should_switch: true, gross_saving: 4800,
-      net_saving: 3840, suggested_annual_cost: 269 * 12 * 5 }]);
-    assert.equal(ren.should_switch, false);
-    assert.deepEqual(ren.bytetUndanhallet, { del: 'hela', kvar: null, harRader: true });
+    // Delarna som en sträng ur databasen läses likadant.
+    const [str] = await rummet([lagrad({ bytesdelar_json: JSON.stringify(delar(3720)) })]);
+    assert.equal(str.should_switch, true);
+    // En analys före grinden (inga delar), med en primär del, okänd version eller en annan sekundär
+    // kategori: hela bytet hålls inne och raden säger att det kan vara räknat mot det billigaste.
+    for (const [namn, extra] of [
+      ['före grinden', {}],
+      ['primär del', { bytesdelar_json: { ...delar(3720), primarBrutto: 4800 } }],
+      ['utan grind', { bytesdelar_json: { ...delar(3720), planvalsgrind: false } }],
+      ['okänd version', { bytesdelar_json: { ...delar(3720), version: 2 } }],
+      ['annan kategori', { bytesdelar_json: { ...delar(3720), sekundar: { kategori: 'mobil', brutto: 3720 } } }],
+    ]) {
+      const [a] = await rummet([lagrad(extra)]);
+      assert.equal(a.should_switch, false, `${namn}: bytet visas`);
+      assert.deepEqual(a.bytetUndanhallet, { del: 'hela', kvar: null }, namn);
+      assert.ok(radMotivering(a).endsWith(BYTE_UTAN_DELAR), namn);
+    }
   });
 
   test('MS-11 · en rad med obekräftad nivå och ett byte som står kvar är prissatt, och säger inte emot sitt byte', async () => {
@@ -320,8 +317,7 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     assert.equal(typeof rum.score, 'number');
     assert.match(rum.lage, /^byte_/);
     // Inget procenttal mot det billigaste på en rad med obekräftad nivå («17% mer» stod där, 85-felet).
-    const { radMotivering, BYTE_UNDANHALLET, BYTE_UNDANHALLET_UTAN_RADER, BYTE_BREDBANDSDELEN, BYTE_MOBILDELEN_INDRAGEN } =
-      await import('../src/lib/rumstext.js');
+    const { radMotivering, BYTE_BREDBANDSDELEN, BYTE_UTAN_DELAR } = await import('../src/lib/rumstext.js');
     assert.equal(analyses[0].lage.params.ovPct, null);
     assert.doesNotMatch(radMotivering(analyses[0]), /% mer/);
     assert.match(radMotivering(analyses[0]), /säger vi inget om/);
@@ -336,15 +332,12 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     assert.ok(g2 > 0 && h2 > 0 && g2 < h2, 'bytesradens not saknas eller står efter den obekräftade');
     assert.doesNotMatch(src.slice(g, h), /räknat mot listpriset för det som står på fakturan/);
     // Förklaringarna låses ordagrant: varje mening är sann bara i sitt fall (MS-08, MS-13).
-    assert.equal(BYTE_UNDANHALLET, 'Analysen av fakturan räknade fram ett byte till det billigaste publicerade '
-      + 'abonnemanget. Det visar vi inte här, eftersom vi inte vet vilket abonnemang ni har.');
-    assert.equal(BYTE_UNDANHALLET_UTAN_RADER, 'Analysen av fakturan räknade fram ett byte. Det visar vi inte här: '
-      + 'det kan vara räknat mot det billigaste publicerade abonnemanget, och fakturans rader finns inte sparade, '
-      + 'så vi kan inte pröva det.');
     assert.equal(BYTE_BREDBANDSDELEN, 'Bytet gäller bredbandet på fakturan, räknat mot Tele2:s billigaste '
       + 'publicerade pris för samma hastighet eller närmast över. Mobilabonnemangen bedömer vi inte, eftersom vi '
       + 'inte vet vilket abonnemang ni har.');
-    assert.equal(BYTE_MOBILDELEN_INDRAGEN, 'Analysens byte för mobilabonnemangen visar vi därför inte.');
+    assert.equal(BYTE_UTAN_DELAR, 'Analysen av fakturan räknade fram ett byte som kan vara räknat mot det '
+      + 'billigaste publicerade abonnemanget, så vi visar det inte här. Analyseras fakturan igen räknas en '
+      + 'eventuell bredbandsdel för sig.');
   });
 
   test('MS-07 · en mobilrad räknas som mottagen, inte prissatt, så rummets räknare går ihop med raden', async () => {

@@ -96,6 +96,28 @@ Prislarmet för mobil är oförändrat, inget larm med eller utan spärren (MS-0
   abonnemang» med bredbandets kostnad inräknad (K3: 4 546 kr). Samma tal gav main «+38 %». Hör till C1-3.
   F1-5 (beröm i rum där bytesraden ligger 15–21 % över) står kvar som förexisterande.
 
+**Femte blicken på d902f5c0: BLOCKERAR** (`ops/GRANSKNING-c1-mobilscore-femte.md`), och därmed ett byte av
+väg. G1-1 (procenttal på en kombinerad rad utan antal), G1-2 (dagens bredbandspris avgjorde vad en gammal
+analys innehöll) och G1-3 (extraktionens flagga sparas inte) har samma rot som varje varv före dem: rummet
+räknade fram delarna av en lagrad besparing i efterhand. **Grundarbeslut 2026-11-04: stäng av vid källan.**
+- **Planvalsgrinden** (`agents/recommender/recommend.js`): i en kategori med `bytesmalMotKategorigolv` räknas
+  inget primärt byte, och kunden får en kodskriven mening (`PLANVALS_MENING`) i stället för modellens prosa
+  (PG-01, PG-02). Korpusen: 131 → 24 prissatta, 163 → 270 tystade; alla 107 ändrade är mobil, «prissatt →
+  tystad», inga andra kategorier rörde sig (mätt per fixtur med och utan grinden). Facit uppdaterat.
+- **Bytets delar lagras** (`lib/bytesdelar.js`, kolumnen `bytesdelar_json`, migrering, valfri kolumn, egen
+  skrivsats): primärt brutto, sekundär del och om grinden slog till (PG-03, BD-01..04).
+- **Rummet läser delarna och räknar ingenting om:** en bredbandsdel som analysen lagrat står kvar exakt som
+  lagrad (MS-13); en rad utan delar, med primär del, okänd version eller annan sekundär kategori visar inget
+  byte och säger att det kan vara räknat mot det billigaste och att en ny analys räknar bredbandsdelen för sig
+  (MS-08, MS-13). Domen säger inte «Inget byte rekommenderas» i ett rum utan samlad poäng.
+- G1-1 och G1-2 är borta med rekonstruktionen. G1-3 kan inte uppstå: rummet antar aldrig att en faktura är
+  kombinerad. G1-5 («1 av 1 prissatta» bredvid «kan inte bedöma allt») står kvar, låg vikt. G1-4 förexisterande.
+- **Efter merge:** kör migreringen (`bytesdelar_json`); tills den körts läker rummets läsning kolumnen, och
+  skrivningen faller tyst till «inga delar», som rummet visar som ett indraget byte. Gamla mobilrader visar
+  inget byte förrän fakturan analyseras igen; mail-in-rader kan köas om (`koa-om-alla`).
+- **Kvar, egen PR:** spegelfallet i `lib/secondary-savings.js` (mobil som sekundär del på en bredbandsfaktura,
+  mot mobilens golv). 30 fixturer låser i dag det beteendet.
+
 **Kvar, förexisterande [KUND], egna PR:er efter c2:**
 - **C1-3 · Fakturavyn, mejlen, briefingen och dörren räknar mobilens avstånd och byte mot det billigaste
   abonnemanget.** 349-planen till listpris får «Ni betalar 30 % över verifierat publikt listpris», poäng

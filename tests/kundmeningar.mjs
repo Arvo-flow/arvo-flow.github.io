@@ -299,11 +299,13 @@ describe('KM · kundmeningsregistret', () => {
       content: [{ type: 'tool_use', input: { shouldSwitch: false, recommendationType: 'no_action', reasoning: TELE2,
         switchSteps: ['Vi förhandlar ett volymavtal åt er', 'Ni signerar själva'] } }],
       usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } }; } } };
+    // Fakturan är bredband, inte mobil: för mobil skriver planvalsgrinden (2026-11-04, PG-01) meningen själv,
+    // så modellens text når aldrig kunden och filtret kan inte prövas där.
     const r = await recommend({
       customer: { industry: 'ovrigt', employees: 10 },
-      categorized: { category: 'mobil', subType: 'företag', normalizedSupplier: 'Tele2', confidence: 0.95 },
-      invoice: { annualCost: 30000, amount: 2500, billingPeriod: 'monthly', seatCount: 8,
-        lineItems: [{ type: 'recurring_subscription', description: 'Mobil Företag 8 st', quantity: 8, unitPrice: 312, amount: 2500 }] },
+      categorized: { category: 'bredband', subType: 'företag', normalizedSupplier: 'Tele2', confidence: 0.95 },
+      invoice: { annualCost: 30000, amount: 2500, billingPeriod: 'monthly', seatCount: 1,
+        lineItems: [{ type: 'recurring_subscription', description: 'Företagsbredband 1000/1000 Mbit/s', quantity: 1, unitPrice: 2500, amount: 2500 }] },
     }, { client: stubAi, kvStore: { get: async () => null } });
     assert.ok(prompt.length > 100, 'stubben anropades aldrig — testet prövar inte modellens utgång');
     assert.doesNotMatch(String(r.reasoning ?? ''), /jämförbara bolag/);

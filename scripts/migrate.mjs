@@ -210,6 +210,9 @@ await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS analyserad_at TI
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS rattstorlek_json JSONB`;
 // Uppsägningstiden ur fakturan (2026-09-23, lib/contract-clock.js) — lagrades aldrig; klockan räknade mot slutdatum.
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS uppsagning_json JSONB`;
+// Bytets delar (2026-11-04, planvalsgrinden): vad den lagrade besparingen består av, så att rummet aldrig
+// behöver räkna fram delarna i efterhand. Se lib/bytesdelar.js.
+await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS bytesdelar_json JSONB`;
 // Påminnelsemarkören (lib/paminnelse.js + lib/deadline-reminder.js) — skapades förut bara av en självläkning i cronen.
 await sql`ALTER TABLE invoice_analyses ADD COLUMN IF NOT EXISTS deadline_reminder_json JSONB`;
 await sql`

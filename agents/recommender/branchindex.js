@@ -149,11 +149,11 @@ export const BRANCHINDEX = {
     kraverBekraftadNivaSkal: 'grundarbeslut 2026-10-22: avståndet mätte planvalet (349-planen till listpris gav +30 %)',
     // Vad medianen ÄR, i kundytans ord. Den är ett annat abonnemang än golvet, aldrig «samma licens».
     medianEtikett: 'Näst billigaste publicerade abonnemang',
-    // Fakturavägen räknar mobilens bytesmål mot kategorins golv, det billigaste abonnemanget, och inte
-    // mot kundens eget abonnemang (det finns ingen like-for-like för mobil). Ett lagrat byte på en rad
-    // utan bekräftat abonnemang är därför helt eller delvis planvalet räknat som besparing, och rummet
-    // visar inte mobildelen (MS-08). På en kombinerad faktura räknas bredbandsdelen fram vid läsning och
-    // står kvar (F1-2, MS-13). M365 räknar sina byten nivå för nivå (lfl) och bär inte flaggan (D1-1).
+    // Bytesmålet vore kategorins golv, det billigaste abonnemanget, och inte kundens eget abonnemang (det
+    // finns ingen like-for-like för mobil). Fakturavägen räknar därför inget primärt byte här
+    // (planvalsgrinden i recommend.js, grundarbeslut 2026-11-04, PG-01), och rummet visar inget lagrat byte
+    // som kan vara räknat så (MS-08). En bredbandsdel som analysen lagrat för sig står kvar (MS-13).
+    // M365 räknar sina byten nivå för nivå (lfl) och bär inte flaggan (D1-1).
     bytesmalMotKategorigolv: true,
     // Prices are per user/year — lib/benchmark.js scales by seat count before the LLM sees it.
     // Tele2 Företag mobilabonnemang — verifierat LIVE 2026-08-05 (Playwright, status 200,

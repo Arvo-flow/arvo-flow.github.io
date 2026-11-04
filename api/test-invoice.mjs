@@ -48,6 +48,7 @@ import { validateSeatPrice, prisprovningensIndata } from '../lib/supplier-price-
 import { detectPriceAlert, getMarketIntelligence } from '../lib/price-alert.js';
 import { verifySession } from '../lib/session.js';
 import { arRumsnyckel } from '../lib/rumsnyckel.js';
+import { bytesdelarForAnalys } from '../lib/bytesdelar.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvoflow.se';
@@ -2049,6 +2050,7 @@ export default async function handler(req, res) {
       employees: employeesNum,
       userEmail: typeof bevisadEpost === 'string' ? bevisadEpost.trim().toLowerCase() : null,
       seatCount: extracted.seatCount ?? null,
+      bytesdelar: bytesdelarForAnalys({ recommendation, primaryGross, secondarySaving }),
     }).catch((err) => { console.error('[test-invoice] storeAnalysis failed:', err.message); return null; });
 
     // Prissignal: smyghöjning-detektering mot verifierade listpriser (fire-and-forget).

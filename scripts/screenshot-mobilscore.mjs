@@ -16,9 +16,11 @@
 //                  eller «Bättre än listpris»
 //   mobil + bredbandsbyte → bytet prissatt, aldrig «0 av N fakturor», «Vägde 0» eller «inget verifierat
 //                  jämförelsepris» (D1-2, E1-1)
-//   kombinerad   → K3 (mobil på golvet + bredband): bredbandsbytet 2 976 kr/år står kvar och raden säger att
-//                  det gäller bredbandet; aldrig «Inget byte rekommenderas», «Inga byten på bordet», «% mer»
-//                  eller «kan inte skilja ut» (F1-2)
+//   kombinerad   → K3 analyserad efter planvalsgrinden (delarna lagrade): bredbandsbytet 2 976 kr/år står kvar
+//                  och raden säger att det gäller bredbandet; aldrig «% mer» eller en poäng (F1-2, MS-13)
+//   kombinerad, gammal → samma rad utan lagrade delar: inget byte, raden säger att det kan vara räknat mot det
+//                  billigaste och att en ny analys räknar bredbandsdelen för sig; aldrig «Inget byte
+//                  rekommenderas» eller «Inga byten på bordet»
 //   mobil + elbyte → elbytet kallas aldrig prissatt mot verifierat listpris (F1-1)
 //   motprov      → IT-8821 (två nivåer) SKA behålla sitt byte (D1-1); en M365-rad med E3 i radtexten SKA
 //                  få «Listpris för er nivå» och ett avstånd, ett
@@ -62,6 +64,11 @@ const RUM = {
   m365Byte: await rumSvar([rad(7, 'Microsoft', 'saas-productivity', 600 * 12 * 10, 10, E3(600), 416.77 * 12 * 10)]),
   mobilBredband: await rumSvar([rad(8, 'Tele2', 'mobil', 349 * 12 * 10, 10), rad(9, 'Telia', 'bredband', 599 * 12, 1, [], 399 * 12)]),
   kombi: await rumSvar([{ ...rad(11, 'Tele2', 'mobil', (1345 + 549) * 12, 5, [
+    { type: 'recurring_subscription', description: 'Tele2 Jobbmobil Bas (5 st)', quantity: 5, unitPrice: 269, amount: 1345 },
+    { type: 'recurring_subscription', description: 'Bredband 250/250 Mbit/s', amount: 549 }], (1345 + 549) * 12 - 3720),
+    gross_saving: 3720, net_saving: 2976,
+    bytesdelar_json: { version: 1, planvalsgrind: true, primarBrutto: 0, sekundar: { kategori: 'bredband', brutto: 3720 } } }]),
+  kombiGammal: await rumSvar([{ ...rad(14, 'Tele2', 'mobil', (1345 + 549) * 12, 5, [
     { type: 'recurring_subscription', description: 'Tele2 Jobbmobil Bas (5 st)', quantity: 5, unitPrice: 269, amount: 1345 },
     { type: 'recurring_subscription', description: 'Bredband 250/250 Mbit/s', amount: 549 }], (1345 + 549) * 12 - 3720),
     gross_saving: 3720, net_saving: 2976 }]),
@@ -130,7 +137,7 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   p = await sida(bredd, RUM.mobilByte);
   t = await text(p);
   if (!/Nivå ej bekräftad/i.test(t)) fel(`mobil med byte saknar «Nivå ej bekräftad» (${namn})`);
-  if (!/räknade fram ett byte\. Det visar vi inte här/i.test(t)) fel(`mobil med byte säger inte varför bytet saknas (${namn})`);
+  if (!/räknade fram ett byte som kan vara räknat mot det billigaste/i.test(t)) fel(`mobil med byte säger inte varför bytet saknas (${namn})`);
   for (const re of [/% mer/i, /Ni behåller/i, /möjlig nettobesparing/i, /rekommenderar byte/i, /Vakten · ett drag kvar/i,
     /Samma nivå kostar/i, /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /kan skärpas/i])
     if (re.test(t)) fel(`mobil med byte säger ${re} (${namn})`);
@@ -176,6 +183,13 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i])
     if (re.test(t)) fel(`kombinerad säger ${re} (${namn})`);
   await p.screenshot({ path: `${UT}/kombi-${namn}.png`, fullPage: true }); await p.close();
+
+  p = await sida(bredd, RUM.kombiGammal);
+  t = await text(p);
+  if (!/räknade fram ett byte som kan vara räknat mot det billigaste/i.test(t)) fel(`kombinerad gammal saknar förklaringen (${namn})`);
+  for (const re of [/Inget byte rekommenderas/i, /Inga byten på bordet/i, /\d+% mer/i, /2 976/, /Bytet gäller bredbandet/i])
+    if (re.test(t)) fel(`kombinerad gammal säger ${re} (${namn})`);
+  await p.screenshot({ path: `${UT}/kombi-gammal-${namn}.png`, fullPage: true }); await p.close();
 
   // F1-1: ett elbyte är Arvos bedömning, inte ett verifierat publikt listpris.
   p = await sida(bredd, RUM.mobilEl);

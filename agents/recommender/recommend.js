@@ -42,6 +42,12 @@ import { detectAdobePlan, adobeRightsizing, adobeListExVat, deriveAdobeSeats } f
 import { detectStorageSubstitution } from '../../lib/saas-substitution.js';
 import { kundensMotivering, kundensSteg } from '../../lib/kundmeningar.js';
 
+// Planvalsgrindens mening till kunden (grundarbeslut 2026-11-04). Inga tal: den säger varför ingen
+// besparing räknas, och den är sann för varje faktura grinden når (PG-01).
+export const PLANVALS_MENING = 'Vi jämför inte era mobilabonnemang mot det billigaste publicerade abonnemanget, '
+  + 'eftersom vi inte vet vilket abonnemang ni har. Ett billigare abonnemang kan vara en annan produkt, med mindre '
+  + 'surf eller färre tjänster, så vi räknar ingen besparing på dem.';
+
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
 
@@ -2272,7 +2278,24 @@ async function recommendUtanValutagrind(input, opts = {}) {
     // Vad som INTE tystnar: rätt-storlek (m365Rightsizing), licensrensning (shelfware) och
     // kontraktsklockan räknas fristående och lever kvar. Det enda som faller bort är påståendet
     // "byt leverantör och spara X" när vi inte kan visa X per rad.
-    if (isSaasProductivity && !_useLfl) {
+    // ── PLANVALSGRINDEN (grundarbeslut 2026-11-04, «stäng av vid källan») ───────────────────────
+    // I en kategori där bytesmålet är kategorins golv (`bytesmalMotKategorigolv`, i dag mobil) mäter
+    // golvet planvalet, inte priset: 349-planen till exakt listpris fick «byte till 269» och 9 600 kr,
+    // en nedgradering räknad som besparing. Ingen kod läser i dag kundens abonnemang ur fakturan, så
+    // inget primärt byte räknas. En sekundär del på en kombinerad faktura (bredbandet, räknat mot
+    // samma hastighet) räknas för sig i api-lagret och står kvar. Fail-closed (PG-01, PG-02), samma form
+    // som lfl-grinden nedan.
+    if (BRANCHINDEX[input.categorized.category]?.bytesmalMotKategorigolv === true) {
+      console.log(`[planvalsgrind] ${input.categorized.category}: bytesmålet vore kategorins golv utan bekräftat abonnemang → inget bytestal (fail-closed)`); // PG-01
+      result.shouldSwitch = false;
+      result.recommendationType = 'no_action';
+      result.suggestedAnnualCost = null;
+      result.suggestedSupplier = null;
+      result.savingPerYear = 0;
+      result.planvalsgrind = 'bytesmålet vore kategorins billigaste produkt, och kundens produkt är inte bekräftad';
+      // Modellens egen prosa får inte erbjuda bytet grinden just stoppat: texten skrivs av koden (PG-01).
+      result.reasoning = PLANVALS_MENING;
+    } else if (isSaasProductivity && !_useLfl) {
       console.log('[lfl-grind] saas-productivity utan like-for-like-underlag → inget bytestal (fail-closed)');
       result.shouldSwitch = false;
       result.recommendationType = 'no_action';

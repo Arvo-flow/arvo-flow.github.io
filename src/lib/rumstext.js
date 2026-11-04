@@ -61,27 +61,23 @@ export const MARKE = {
 
 /** Texten för en rad ur API:ts läge. Saknas läget säger raden bara att den är mottagen. */
 // Raden vars lagrade byte rummet har gripit in i (lib/lagesregister.js undanhallBytePaOvissNiva) säger vad
-// som hänt. Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4). Tre fall,
-// och varje mening är sann bara i sitt (MS-08, MS-11):
-//   · hela bytet indraget, raderna sparade och ingen annan tjänst på fakturan: bytet är mobilens, räknat
-//     mot det billigaste abonnemanget;
-//   · hela bytet indraget och raderna saknas: vi kan inte pröva vad det är räknat mot;
-//   · bredbandsdelen står kvar (F1-2): den är räknad mot Tele2:s billigaste publicerade pris för samma
-//     hastighet eller närmast över (bredbandSpeedBenchmark), och mobildelen bedöms inte.
-export const BYTE_UNDANHALLET = 'Analysen av fakturan räknade fram ett byte till det billigaste publicerade '
-  + 'abonnemanget. Det visar vi inte här, eftersom vi inte vet vilket abonnemang ni har.';
-export const BYTE_UNDANHALLET_UTAN_RADER = 'Analysen av fakturan räknade fram ett byte. Det visar vi inte här: '
-  + 'det kan vara räknat mot det billigaste publicerade abonnemanget, och fakturans rader finns inte sparade, '
-  + 'så vi kan inte pröva det.';
+// som hänt. Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4). Två fall,
+// och varje mening är sann i sitt (MS-08, MS-11, MS-13):
+//   · bredbandsdelen står kvar: analysen lagrade den som sekundär del, räknad mot Tele2:s billigaste
+//     publicerade pris för samma hastighet eller närmast över (bredbandSpeedBenchmark), och räknade inget
+//     mobilbyte (planvalsgrinden);
+//   · hela bytet hålls inne: raden bär inga delar, så bytet kan vara räknat mot det billigaste
+//     abonnemanget. En ny analys av samma faktura räknar delarna för sig (samma pdf_hash skrivs om).
 export const BYTE_BREDBANDSDELEN = 'Bytet gäller bredbandet på fakturan, räknat mot Tele2:s billigaste '
   + 'publicerade pris för samma hastighet eller närmast över. Mobilabonnemangen bedömer vi inte, eftersom vi '
   + 'inte vet vilket abonnemang ni har.';
-export const BYTE_MOBILDELEN_INDRAGEN = 'Analysens byte för mobilabonnemangen visar vi därför inte.';
+export const BYTE_UTAN_DELAR = 'Analysen av fakturan räknade fram ett byte som kan vara räknat mot det '
+  + 'billigaste publicerade abonnemanget, så vi visar det inte här. Analyseras fakturan igen räknas en '
+  + 'eventuell bredbandsdel för sig.';
 
 function bytesForklaring(u) {
   if (!u || typeof u !== 'object') return null;
-  if (u.kvar === 'bredband') return u.struket ? `${BYTE_BREDBANDSDELEN} ${BYTE_MOBILDELEN_INDRAGEN}` : BYTE_BREDBANDSDELEN;
-  return u.harRader ? BYTE_UNDANHALLET : BYTE_UNDANHALLET_UTAN_RADER;
+  return u.kvar === 'bredband' ? BYTE_BREDBANDSDELEN : BYTE_UTAN_DELAR;
 }
 
 export function radMotivering(a) {

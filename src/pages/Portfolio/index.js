@@ -801,8 +801,9 @@ export default function Portfolio() {
         ? <>Inget byte att lägga fram — men <em>{nivaer} {plural(nivaer, 'avtal', 'avtal')} kan gå ner en nivå.</em></>
         : <>Vi vaktar era avtal — men <em>er position mot listpris kunde inte mätas</em> i dag.</>,
       work: ovissa
-        ? <>{jamforde}Inget byte rekommenderas i dag. Vi kan inte bedöma allt ni betalar mot listpris än, så vi
-            sätter <b>ingen samlad poäng</b> och hävdar ingenting om er samlade prisnivå.{nivaMening}</>
+        // Inget «Inget byte rekommenderas i dag» här: en rad kan bära ett byte vi håller inne (MS-13).
+        ? <>{jamforde}Vi kan inte bedöma allt ni betalar mot listpris än, så vi sätter <b>ingen samlad poäng</b> och
+            hävdar ingenting om er samlade prisnivå.{nivaMening}</>
         : <>Vi har ännu <b>inget verifierat jämförelsepris</b> för det ni själva betalar — därför hävdar vi
             ingenting om er prisnivå.{nivaMening ?? ' Vi bevakar avtalen och hör av oss så snart ett mål går att styrka.'}</>,
     },
@@ -1098,8 +1099,7 @@ export default function Portfolio() {
                     : acting
                       ? <>Inget leverantörsbyte krävs — kostnaden åtgärdas direkt mot fakturan. Se fyndet ovan.</>
                       : (omatt && ovissa
-                          ? <>Vi kan inte bedöma allt ni betalar mot listpris än, så vi sätter ingen samlad poäng.
-                              Inga byten på bordet just nu.</>
+                          ? <>Vi kan inte bedöma allt ni betalar mot listpris än, så vi sätter ingen samlad poäng.</>
                           : omatt
                           ? <>Vi har inget verifierat jämförelsepris för det ni själva betalar än, så vi hävdar ingenting om
                               er prisnivå. Vi håller dem under uppsikt — och hör av oss så snart ett mål går att styrka.</>

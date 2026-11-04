@@ -1712,11 +1712,15 @@ signera", aldrig som ett verkställt löfte.)
    > **⚠️ ÄNDRAT 2026-10-22 (grundarbeslut):** mobil spänner nu 1,3× (269–349 kr/mån) och kräver
    > bekräftat abonnemang ändå. 349-planen till exakt listpris fick «+30 %» och score 59: talet mätte
    > planvalet. Spärren är ett beslut, inte en mätning, och skälet står bredvid den i prisboken (MS-02).
-   > Ett lagrat mobilbyte visas inte i rummet (MS-08): det är räknat mot det billigaste abonnemanget. På en
-   > kombinerad faktura räknas bredbandsdelen fram vid läsning med fakturavägens egna funktioner och står
-   > kvar (MS-13). Ett rum med en rad utan dom sätter ingen samlad poäng (MS-09). Ett byte räknas som
-   > prissatt mot verifierat listpris bara när målet är det; elens index är Arvos bedömning (MS-12).
-   > Fakturavyn räknar fortfarande mobilens avstånd och byte (C1-3, öppet).
+   > **✅ GRUNDARBESLUT 2026-11-04, «stäng av vid källan».** Fakturavägen räknar inget mobilbyte mot det
+   > billigaste abonnemanget förrän abonnemanget är bekräftat (planvalsgrinden, PG-01); korpusen gick från
+   > 131 till 24 prissatta, och alla 107 var mobil. Analysen lagrar vad besparingen består av
+   > (`bytesdelar_json`, `lib/bytesdelar.js`), så rummet aldrig räknar fram delar i efterhand: fem
+   > granskningsvarv visade att det inte går utan att säga fel. En bredbandsdel på en kombinerad faktura
+   > står kvar (MS-13); ett lagrat mobilbyte utan delar visas inte (MS-08). Ett rum med en rad utan dom
+   > sätter ingen samlad poäng (MS-09). Ett byte räknas som prissatt mot verifierat listpris bara när målet
+   > är det; elens index är Arvos bedömning (MS-12). **Öppet:** spegelfallet, mobil som sekundär del på
+   > en bredbandsfaktura, räknas fortfarande mot mobilens golv (egen PR, 30 fixturer låser det).
    > Utan bekräftad nivå visar rummet nu vad kunden betalar och vad billigaste jämförbara kostar,
    > men **hävdar inget avstånd och sätter inget score**. Fakta står kvar; påståendet uteblir.
    >
