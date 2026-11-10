@@ -11,7 +11,7 @@ PR som mergas genom Grinden. En uppgift och en granskningslins körs i taget.
 | a | PR #86: Tele2 +40 kr, en prisbok (majtabellen och seedarna bort), vakter framåt | mergad 23 okt (5e73c277) efter fem granskningsvarv |
 | b | Databas och skript: majraderna i `supplier_prices` bort, död skrivning i `scripts/apply-price-proposals.mjs` bort | mergad 23 okt (PR #87, 4f8f2326). Körd på main 23 okt (40352850116): `supplier_prices` 46 → 0 rader, historiken 2 → 1 |
 | T-2 | Licenstaket per nivårad, mains tak per plats kvar | mergad 3 nov (PR #88, 1677f2bd) efter tolv granskningsvarv; live på Vercel |
-| c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | c1 mobilscoren: egen PR, se nedan; övriga efter |
+| c | Kunddelen: mobilscoren, dörrens kort, LA-K1, det frysta golvet i rummet (K-5) | c1 mobilscoren: sex granskningsvarv, alla BLOCKERAR; vägval 10 nov, se nedan. c2 (LA-K1) byggd men förlorad med containern, byggs om efter c1 |
 | d | Arbetsorderns punkt 4: live-verifiering och rummet i 390 och 1600 px | efter c |
 
 ## c1 · mobilscoren (grundarbeslut 22 okt)
@@ -117,6 +117,49 @@ räknade fram delarna av en lagrad besparing i efterhand. **Grundarbeslut 2026-1
   inget byte förrän fakturan analyseras igen; mail-in-rader kan köas om (`koa-om-alla`).
 - **Kvar, egen PR:** spegelfallet i `lib/secondary-savings.js` (mobil som sekundär del på en bredbandsfaktura,
   mot mobilens golv). 30 fixturer låser i dag det beteendet.
+
+**Sjätte blicken på a649404b (5 nov): BLOCKERAR. Domfilen finns inte.** Granskaren lämnade sin dom, men
+containern byttes ut innan filen hade committats. Fynden nedan är hämtade ur granskarens slutsvar i
+sessionens transkript. De är en prövlista: vart och ett återskapas med en körning innan det räknas (sju
+regler 18–20 okt, regel 1).
+- **H1-1 [KUND], infört i a649404b.** En kombinerad mobil- och bredbandsfaktura där mobilen ligger under
+  1,15 × golvet och modellen svarar nej når aldrig grinden. Delarna lagras då med `planvalsgrind: false`, och
+  rummet håller inne bredbandsbytet (2 976 kr) som fakturavyn och mejlen visar. Raden säger att en ny analys
+  räknar bredbandsdelen för sig, vilket den inte gör. 11 av 55 kombinerade fixturer med bredbandsdel hamnar
+  där, och MS-13 kräver i dag det beteendet.
+- **H1-2 [KUND], infört av grenen.** En kombinerad rad utan avläst antal får «Ni betalar 24% mer än det
+  billigaste verifierade alternativet för mobilabonnemang» bredvid «Mobilabonnemangen bedömer vi inte».
+  Talet är bredbandets andel av hela fakturan.
+- **H1-3 [KUND], vanligare.** Grinden skickar varje kombinerad mobilfaktura genom `[secondary-override]`,
+  där mobilens tillägg (växeln) faller ur förslaget. K1: poäng 36 «Kritisk» mot mains 60, pilen
+  45 456 → 26 088 kr/år bredvid bruttot 7 440, «Verifierat pris 26 088» i mejlet och «Arvo branschindex
+  (maj 2026)» om kundens egen mobilkostnad. 6 av 6 kombinerade fixturer med mobiltillägg går nu den vägen.
+- **H1-4 [KUND], förexisterande:** två vägar runt grinden (kombinerat utan primärkomponent; mobil under
+  tröskeln med modellens nej). **H1-5..H1-7 [VAKT]:** MS-13 låser H1-1, PG-03 prövar bara över tröskeln,
+  KM-09 flyttades på en premiss som inte håller, en poäng mot billigaste planen lagras fortfarande, och
+  commitmeddelandet säger mer än grinden gör.
+
+**Förlorat med containern 5–9 nov, eftersom det aldrig pushades:** den lokala grenen `la-k1` (c2, LA-K1),
+utkastet till K-5, de påbörjade lagningarna av H1-1..H1-3 och granskarnas sonder, bland dem den som kör hela
+`api/test-invoice.mjs` med bara nätverket stubbat. c2 och lagningarna går att bygga om ur transkriptet.
+
+**Utvärdering och vägval 10 nov (grundaren: «stanna upp och utvärdera»).**
+- **Riktningen står.** Grinden vid källan, delarna lagrade vid analysen, rummet läser och räknar inte om.
+  Sjätte blicken bekräftade att grundarens exempel (349-planen, «30 % över», 9 600 kr) är stängt i
+  fakturavyn och att korpusens tal stämmer.
+- **PR:en delas inte i två.** Källan och rummet hänger ihop genom regel 5: går källan först säger fakturavyn
+  «vi jämför inte» medan rummet säger «30 % över»; går rummet först blir det C1-1 igen.
+- **Arbetssättet var felet, och det ändras:**
+  1. Instrumenten först. Granskarnas sonder byggs in i sviten: hela fakturahandlern med stubbat nätverk över
+     K1–K6 × modellens ja/nej × med och utan antal, och rummets tillståndsmatris med invarianter. De ska vara
+     röda på a649404b innan lagningen görs.
+  2. I granskningsloopen lagas bara det som blockerar. Allt annat loggas här (avgränsningen 22 okt).
+  3. Inget parallellt arbete på lokala grenar. Varje commit pushas direkt, och en dom committas och pushas
+     i samma stund som den kommer.
+  4. Stoppgräns. Rond 4, 5 och 6 blockerade alla på kombinerade fakturor (7 av de 9 senaste blockerande
+     fynden). Blockerar sjunde blicken där igen stryks den sekundära delen på mobilfakturor vid källan, med en
+     sann mening om att bredbandet på fakturan inte prissätts, och byggs rätt i C1-3 (rad-först). Ingen åttonde
+     rond på samma form (regel 13).
 
 **Kvar, förexisterande [KUND], egna PR:er efter c2:**
 - **C1-3 · Fakturavyn, mejlen, briefingen och dörren räknar mobilens avstånd och byte mot det billigaste
