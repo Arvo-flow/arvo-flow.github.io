@@ -9,16 +9,37 @@
 
 - **Byggaren (Opus)** verkställer planen: skriver kod och tester, kör sviten och sabotagen, startar
   granskningslinser, öppnar och mergar PR:er genom Grinden och verifierar driftsättningen.
-- **Arkitekten (Fable)** skriver planen, fattar strukturbeslut och äger regelverket. Arkitekten kallas in
-  av grundaren. Byggaren kallar aldrig in någon och väntar aldrig på någon.
+- **Arkitekten (Fable)** skriver planen, fattar strukturbeslut och äger regelverket. Byggaren kopplar in
+  arkitekten enligt eskaleringsregeln nedan och väntar aldrig på någon annan.
 - **En lins** är en separat agent med ett enda uppdrag: «hitta var det gröna är osant». Rollen gör
   jobbet, inte modellen. Byggaren skriver aldrig en dom.
-- **Opus 5.5 i Cursor håller huvudloopen** (grundarorder 11 nov, `CLAUDE.md` överst). Fable bygger inte,
-  kör inga tester, startar inga linser och skickar inga byggpass. Sekvensen står i
-  `ops/ARBETSORDER-LANSERING.md`.
-- **Verktygen i den här rutinen är molnsessionens** (`Agent`, `send_later`, `ListAgents`, sessionens enda
-  gren). I Cursor gäller samma ordning och samma beviskrav med klonens git och `gh`: en lins är en
-  separat agent utan byggarens sammanhang, och säkerhetsnätet är en tidsgräns som byggaren själv håller.
+- **Opus 5.5 håller huvudloopen i molnsessionen** (grundarorder 11 nov, `CLAUDE.md` överst), med
+  `Agent`, `send_later` och sessionens enda gren. Fable bygger inte, kör inga tester, startar inga linser
+  och skickar inga byggpass. Sekvensen står i `ops/ARBETSORDER-LANSERING.md`.
+
+### Eskalering till Fable 5.2 (grundarorder 11 nov, permanent)
+
+Byggaren gissar aldrig. Fable kopplas in som rådgivande arkitekt när något av detta gäller:
+1. Byggaren är osäker och kan inte mäta sig ur osäkerheten.
+2. En svår arkitektur- eller sömdesignfråga.
+3. En konflikt mot bibeln eller mot produktsanningen.
+4. Samma PR fälls av två granskningsvarv i rad.
+
+Passet:
+- `Agent` med `model: 'fable'`, `subagent_type: 'general-purpose'`, i bakgrunden, utan worktree.
+- Underlaget, komprimerat:
+  - problemet i en mening;
+  - alternativen;
+  - de berörda raderna som `fil:rad`;
+  - mätningarna som finns;
+  - frågan som ska avgöras.
+- Ordern: ändra inga filer, kör inga tester, svara med beslutet och skälet på högst fyrtio rader.
+- Byggaren ändrar ingen spårad fil medan passet går, eftersom Fable läser huvudklonen.
+- Byggaren verkställer svaret själv. Det är ett arkitektbeslut, inte en granskning: Grinden, linsen och
+  stoppregeln gäller som förut.
+- Beslutet och skälet skrivs in under steget i körplanen, i samma commit som koden.
+- Ett pass per fråga. Kan Fable inte anropas: skriv underlaget överst i «Nu» i körplanen och fortsätt med
+  det som inte beror på svaret.
 
 ## 2. Start och återstart
 
@@ -145,9 +166,11 @@ Byggaren frågar aldrig. `AskUserQuestion` används inte.
 | Ett vägval som ordern inte avgör | Mät fakta. Välj det som ger kunden mest produktsanning. Skriv beslutet och skälet i commiten. |
 | Ordern säger emot koden | Koden är avläsningen. Skriv mätningen i commiten och i planen. |
 | Något kräver grundaren (hemlighet, repoinställning, leverantörskonto) | Skriv det under «Grundarens åtgärder» i planen. Fortsätt med det som inte beror på det. |
-| Ett strukturbeslut som planen saknar | Skriv det under «Till arkitekten», med mätningen. Ta den minsta sanna lösningen, eller nästa steg. |
+| Ett strukturbeslut som planen saknar, eller osäkerhet som inte går att mäta bort | Eskalera till Fable (avsnitt 1). Verkställ beslutet. |
 | Linsen blockerar | Stoppregeln. Bara blockerarna lagas, och resten loggas. |
+| Andra blockeringen i rad på samma PR | Eskalera till Fable med båda domarna innan nästa lagning. |
 | Tredje blockeringen på samma form | Planens reservväg. Finns ingen: den minsta sanna lösningen, och den större loggas som egen PR. |
+| En konflikt mot bibeln eller produktsanningen | Eskalera till Fable. |
 | Linsen dör eller hänger | Ogranskad. Ta bort worktreen och starta en ny lins. |
 | En kontroll i Grinden är röd | Läs loggen och laga med en ny commit. Aldrig en vidgad tolerans eller en borttagen check. |
 | Ett nattligt jobb på main är rött | Klassa det enligt `ops/AGENTSVEP.md` steg 2. Laga det bara om det står i vägen för planen. |

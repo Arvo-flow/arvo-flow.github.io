@@ -20,7 +20,7 @@ startar om läser blocket först.
 - **Byggare igång:** nej. Ett byggpass startades 11 nov i molnsessionen och stoppades samma dag på
   grundarens order, innan något var committat. Dess ospårade utkast till instrument A togs bort. Inget
   av S1 är byggt.
-- **Nästa handling (Opus 5.5 i Cursor):** hämta grenen `claude/fable-5-resume-i60dmd`. Bygg instrument A
+- **Nästa handling (Opus 5.5 i molnsessionen):** bygg instrument A
   (FV) och instrument B (RM), båda röda mot a649404b. Därefter lagningen L1–L6, sabotagen, renderingen,
   kontrollpunkten och sjunde linsen.
 
@@ -201,8 +201,9 @@ Blockerar linsen:
 - på en väg där en mobilfaktura får ett tal: lägg fallet i instrument A eller B, se det bli rött, laga,
   och kör en lins till;
 - på något annat som grenen infört: laga bara det;
-- en tredje gång på samma form efter den här omläggningen: skriv fyndet under «Till arkitekten» och gå
-  vidare med S2 och med förarbetet till S3–S6. Det förarbetet är läsning och mätning, aldrig
+- en andra gång i rad: eskalera till Fable med båda domarna innan nästa lagning (eskaleringsregeln);
+- en tredje gång på samma form efter den här omläggningen: eskalera till Fable, och gå vidare med S2 och
+  med förarbetet till S3–S6 medan passet går. Det förarbetet är läsning och mätning, aldrig
   kodändringar på grenen.
 
 ### Efter merge
@@ -358,10 +359,10 @@ Det här kan inte göras härifrån. Inget av det stoppar bygget. G5 och G7 kan 
 
 ## Till arkitekten
 
-Grundarorder 11 nov: Fable kopplas bara in vid de tre frysta kontrollpunkterna (efter våg 1, sömdesignen
-för `api/test-invoice.mjs`, en olöslig konflikt mot bibeln). Byggaren skriver hit, avgör själv med den
-minsta sanna lösningen och fortsätter. Den väntar aldrig på svar. A-2 är kontrollpunkt 2, A-3 och A-4
-hör till kontrollpunkt 1, och A-1 tas upp där.
+Grundarorder 11 nov: Fable kopplas in vid de tre frysta kontrollpunkterna (efter våg 1, sömdesignen för
+`api/test-invoice.mjs`, en olöslig konflikt mot bibeln) och enligt eskaleringsregeln (`CLAUDE.md` överst,
+`ops/BYGGARRUTIN.md` avsnitt 1). Här står frågor som väntar på en kontrollpunkt. A-2 är kontrollpunkt 2,
+A-3 och A-4 hör till kontrollpunkt 1, och A-1 tas upp där.
 
 - **A-1 · Bibeln är 2 975 rader** och läses in i varje tur. En kärna med regler, och historiken flyttad
   till `ops/`, sparar tokens och gör reglerna lättare att följa. Två tester läser bibeln ordagrant

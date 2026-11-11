@@ -38,17 +38,44 @@
 >   Grind byggs inte (CTO-mandatet nedan, punkt 3). En lins är fortfarande en separat agent utan
 >   byggarens sammanhang, och byggaren skriver aldrig en dom.
 > · **Fable 5.2 skriver ingen produktionskod, kör inga tester, startar inga linser och skickar inga
->   byggpass.** Utanför de tre kontrollpunkterna kopplas Fable inte in. Ett strukturbeslut som planen
->   saknar avgör Opus själv, med den minsta sanna lösningen, och loggar det.
+>   byggpass.** Utöver de tre kontrollpunkterna kopplas Fable in enligt eskaleringsregeln nedan.
+> · **Var exekveringen sker (grundaren, 11 nov, efter ordern ovan):** *«Vi kör allt här i Claude-miljön
+>   (inte i Cursor), så du har full tillgång till `Agent` och `send_later`.»* Där ordern ovan säger
+>   «i Cursor» gäller molnsessionen på grenen `claude/fable-5-resume-i60dmd`. Grundaren har aktiverat
+>   rulesetet «Autopilot» på `main`, utan krav på manuella godkännanden.
+>
+> **✅ ESKALERING TILL FABLE 5.2 VID OSÄKERHET ELLER EXPERTBEHOV — GRUNDARORDER 2026-11-11, PERMANENT.**
+> Grundarens ord: *«Du (Opus) driver all exekvering själv, men du ska ALDRIG gissa. Om du hamnar i ett
+> läge där du är osäker, stöter på en svår arkitektur-/sömdesignfråga, ser en konflikt mot
+> bibeln/produktsanningen, eller om samma PR fälls två granskningsvarv i rad, har du fullt mandat att
+> koppla in Fable 5.2 som rådgivande expert/arkitekt (istället för att fråga mig).»*
+>
+> Utlösarna, var och en tillräcklig:
+> 1. Opus är osäker och kan inte mäta sig ur osäkerheten.
+> 2. En svår arkitektur- eller sömdesignfråga, till exempel sömmen i `api/test-invoice.mjs`.
+> 3. En konflikt mot bibeln eller mot produktsanningen.
+> 4. Samma PR fälls av två granskningsvarv i rad.
+>
+> Hur, så att kontots veckokvot skyddas:
+> · Fable kopplas in **kirurgiskt**: ett enda pass med `Agent` (`model: 'fable'`, i bakgrunden, utan
+>   worktree, med ordern att inte ändra någon fil). Underlaget är komprimerat: problemet i en mening,
+>   alternativen, de berörda raderna (`fil:rad`), mätningarna som finns och frågan som ska avgöras.
+>   Fable svarar med ett beslut och dess skäl, högst fyrtio rader.
+> · **Opus verkställer** koden och testerna själv. Fables svar är ett arkitektbeslut, inte ett
+>   godkännande och inte en granskning: Grinden, linsen och stoppregeln gäller som förut.
+> · Beslutet skrivs in i körplanen under steget, med Fables skäl, i samma commit som koden.
+> · **Kan Fable inte anropas** via `Agent` skriver Opus det exakta underlaget överst i blocket «Nu» i
+>   `ops/KORPLAN-VAG1.md`, så att ett enda kort Fable-pass kan avgöra frågan, och fortsätter med det
+>   som inte beror på svaret.
+> · Ett Fable-pass per fråga. Ett Fable-pass ersätter aldrig en lins, och Fable granskar aldrig sin
+>   egen design.
 > · **Integriteten flyttas inte.** Regel 1–9, neutralitetsmoaten, Noll-inferens, Bevisplikten och
 >   stoppregeln gäller Opus oförändrat. Tre gränser står kvar oavsett mandat: `scripts/stress-test.mjs`
 >   körs aldrig utan uttryckligt OK, en hemlighet skrivs aldrig ut, och en ospårad fil som agenten inte
 >   skapat committas aldrig.
 > · **Styrfilerna:** ordern per steg står i `ops/KORPLAN-VAG1.md`, körcykeln i `ops/BYGGARRUTIN.md` och
->   fynden i `ops/ARBETSORDER-VAG1.md`. De två första skrevs 11 nov för en molnsession. Ordningen,
->   besluten och beviskraven gäller i Cursor. Verktygsnamnen där (`Agent`, `send_later`, sessionens enda
->   gren) gäller molnsessionen: i Cursor används klonens git och `gh`. Krockar en rad i en styrfil med
->   den här sektionen gäller sektionen.
+>   fynden i `ops/ARBETSORDER-VAG1.md`. Krockar en rad i en styrfil med den här sektionen gäller
+>   sektionen.
 >
 > CTO-mandatet 22 okt, närmast nedan, gäller oförändrat där den här ordern inte säger annat. Dess
 > punkt 4 om en enda gren beskriver molnsessionen. Regeln om en PR och en lins i taget står kvar.
