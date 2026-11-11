@@ -14,11 +14,13 @@
 Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5). En session som
 startar om läser blocket först.
 
-- **Steg:** S1 (c1). Planen lades om 11 nov. Bygget enligt den nya ordern är inte påbörjat.
+- **Steg:** S1 (c1). Planen lades om 11 nov.
 - **Senaste mekanikcommit på grenen:** a649404b (sjätte blicken: BLOCKERAR).
 - **Lins igång:** nej.
-- **Byggare igång:** nej.
-- **Nästa handling:** instrument A (FV), sedan instrument B (RM), båda röda mot a649404b.
+- **Byggare igång:** ja. Byggpass 1 skickades 11 nov från arkitektens session till en Opus-agent i
+  huvudklonen. Passet omfattar körcykelns punkt 1–10 för S1. Det startar ingen lins och öppnar ingen PR.
+- **Nästa handling:** instrument A (FV), sedan instrument B (RM), båda röda mot a649404b. Därefter
+  lagningen L1–L6, sabotagen, renderingen och kontrollpunkten. Sedan startar huvudloopen sjunde linsen.
 
 ## Målet
 
