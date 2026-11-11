@@ -41,9 +41,14 @@ export const MOTIVERING = {
     + '— ett litet avstånd, och inget verifierat bytesmål vi kan lägga fram för raden i dag. Underlaget nedan visar jämförelsen.',
   pa_eller_under_golvet: (p, label) => `Priset ligger på eller under det billigaste publicerade priset för ${label}${ref(p)}. `
     + 'Inget byte rekommenderas i dag — dela en ny faktura vid nästa avtalsperiod så kontrollerar Arvo igen.',
-  omatt: (p, label) => `Fakturan är mottagen och klassad som ${label}. Arvo har inget verifierat publikt pris `
-    + 'att jämföra den mot i dag, så vi gör inget påstående om prisläget — raden står under '
-    + 'bevakning och kontrolleras när underlaget bär.',
+  // En rad i en planvalskategori (mobil) har verifierade listpriser; det som saknas är vilken produkt kunden
+  // har. «Inget verifierat publikt pris» hade varit falskt där (RM-R6).
+  omatt: (p, label) => (p.planval
+    ? `Fakturan är mottagen och klassad som ${label}. Produkterna i kategorin har olika listpris, och vi vet `
+      + 'inte vilken produkt ni har, så vi jämför inte priset och säger inget om prisläget.'
+    : `Fakturan är mottagen och klassad som ${label}. Arvo har inget verifierat publikt pris `
+      + 'att jämföra den mot i dag, så vi gör inget påstående om prisläget — raden står under '
+      + 'bevakning och kontrolleras när underlaget bär.'),
 };
 
 /** Radens märke, per kod: { text, ton }. `ton` styr bara färgen. */
@@ -60,24 +65,15 @@ export const MARKE = {
 };
 
 /** Texten för en rad ur API:ts läge. Saknas läget säger raden bara att den är mottagen. */
-// Raden vars lagrade byte rummet har gripit in i (lib/lagesregister.js undanhallBytePaOvissNiva) säger vad
-// som hänt. Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4). Två fall,
-// och varje mening är sann i sitt (MS-08, MS-11, MS-13):
-//   · bredbandsdelen står kvar: analysen lagrade den som sekundär del, räknad mot Tele2:s billigaste
-//     publicerade pris för samma hastighet eller närmast över (bredbandSpeedBenchmark), och räknade inget
-//     mobilbyte (planvalsgrinden);
-//   · hela bytet hålls inne: raden bär inga delar, så bytet kan vara räknat mot det billigaste
-//     abonnemanget. En ny analys av samma faktura räknar delarna för sig (samma pdf_hash skrivs om).
-export const BYTE_BREDBANDSDELEN = 'Bytet gäller bredbandet på fakturan, räknat mot Tele2:s billigaste '
-  + 'publicerade pris för samma hastighet eller närmast över. Mobilabonnemangen bedömer vi inte, eftersom vi '
-  + 'inte vet vilket abonnemang ni har.';
+// Raden vars lagrade byte rummet har hållit inne (lib/lagesregister.js undanhallBytePaOvissNiva) säger vad som
+// hänt. Utan meningen försvann ett byte som fakturavyn eller mejlet visat utan ett ord (D1-4). Fakturavägen
+// räknar sedan 11 nov inget byte på en sådan faktura, så meningen gäller analyser gjorda före grinden och lovar
+// ingenting om en ny analys (MS-11, RM-R1).
 export const BYTE_UTAN_DELAR = 'Analysen av fakturan räknade fram ett byte som kan vara räknat mot det '
-  + 'billigaste publicerade abonnemanget, så vi visar det inte här. Analyseras fakturan igen räknas en '
-  + 'eventuell bredbandsdel för sig.';
+  + 'billigaste publicerade abonnemanget, så vi visar det inte här.';
 
 function bytesForklaring(u) {
-  if (!u || typeof u !== 'object') return null;
-  return u.kvar === 'bredband' ? BYTE_BREDBANDSDELEN : BYTE_UTAN_DELAR;
+  return u && typeof u === 'object' ? BYTE_UTAN_DELAR : null;
 }
 
 export function radMotivering(a) {

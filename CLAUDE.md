@@ -26,8 +26,8 @@
 >   andra +40 vore ett pris utan källa (regel 3). Källan visade 26 okt −40 igen. Det är ett eget steg i
 >   sekvensen: först prövas om priset är en kampanj.
 > · Licenstaket (T-2) är klart: PR #88, mergad 3 nov.
-> · Kunddelen pågår. Mobilscoren (c1) ligger omergad på grenen `claude/fable-5-resume-i60dmd`, med sex
->   granskningar som alla blockerar. Dörrens kort och LA-K1 är inte byggda.
+> · Kunddelen pågår. Mobilscoren (c1) byggdes om enligt S1 den 11 nov, med instrumenten FV och RM, på
+>   grenen `claude/fable-5-resume-i60dmd`. Dörrens kort och LA-K1 är inte byggda.
 > · Sekvensen, steg 1–14, står i `ops/ARBETSORDER-LANSERING.md`. Opus börjar på steg 4.
 >
 > **Operativt:**
@@ -1794,11 +1794,12 @@ signera", aldrig som ett verkställt löfte.)
    > planvalet. Spärren är ett beslut, inte en mätning, och skälet står bredvid den i prisboken (MS-02).
    > **✅ GRUNDARBESLUT 2026-11-04, «stäng av vid källan».** Fakturavägen räknar inget mobilbyte mot det
    > billigaste abonnemanget förrän abonnemanget är bekräftat (planvalsgrinden, PG-01); korpusen gick från
-   > 131 till 24 prissatta, och alla 107 var mobil. Analysen lagrar vad besparingen består av
-   > (`bytesdelar_json`, `lib/bytesdelar.js`), så rummet aldrig räknar fram delar i efterhand: fem
-   > granskningsvarv visade att det inte går utan att säga fel. En bredbandsdel på en kombinerad faktura
-   > står kvar (MS-13); ett lagrat mobilbyte utan delar visas inte (MS-08). Ett rum med en rad utan dom
-   > sätter ingen samlad poäng (MS-09). Ett byte räknas som prissatt mot verifierat listpris bara när målet
+   > 131 till 24 prissatta, och alla 107 var mobil. **Omläggning 11 nov (S1):** grinden är ett hölje runt
+   > hela `recommend()` och slår till oavsett modellens svar, och fakturavägen räknar inget byte alls på en
+   > mobilfaktura, inte heller på bredbandsdelen av en kombinerad faktura (FV-A1, FV-A2). Inga delar lagras.
+   > Rummet visar inget lagrat mobilbyte (MS-08, MS-13), fakturavyn och mejlen säger att produkten är okänd,
+   > aldrig att ett pris saknas (FV-A3, FV-A7, FV-A9), och ett rum med en mobilrad sätter ingen samlad poäng
+   > (MS-09, RM-R3). Ett byte räknas som prissatt mot verifierat listpris bara när målet
    > är det; elens index är Arvos bedömning (MS-12). **Öppet:** spegelfallet, mobil som sekundär del på
    > en bredbandsfaktura, räknas fortfarande mot mobilens golv (egen PR, 30 fixturer låser det).
    > Utan bekräftad nivå visar rummet nu vad kunden betalar och vad billigaste jämförbara kostar,

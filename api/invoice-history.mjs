@@ -31,7 +31,6 @@ import { refineFinding } from '../lib/forensics.js';
 import { byggUppdelning } from '../lib/fakturarader.js';
 import { byggPrisunderlag, scoreUrUnderlag } from '../lib/prisunderlag.js';
 import { lasLicensniva, nivaGolv } from '../lib/licensniva.js';
-import { lasBytesdelar } from '../lib/bytesdelar.js';
 import { TEST_EMAIL } from '../lib/test-surface.js';
 import { getPublicListBenchmark, kohortTackning } from '../lib/benchmark.js';
 import { getDb } from '../lib/db.js';
@@ -357,11 +356,10 @@ export function berikaRader(analyses = [], branchAnchors = {}) {
     const golv = niva ? nivaGolv(niva, BRANCHINDEX[a.category]?.licenseTierBenchmarks) : null;
     a.prisunderlag = underlagForRad(a, branchAnchors[a.category] ?? null, golv, niva);
     a._rader = undefined;
-    // Ett lagrat byte mot kategorins golv, på en rad med obekräftad nivå, visas inte; en bredbandsdel som
-    // analysen själv lagrat som sekundär del står kvar (C1-1, D1-1, MS-08, MS-13).
+    // En rad i en planvalskategori (mobil) har ingen dom, och ett lagrat byte på den visas inte (C1-1, D1-1,
+    // MS-08, RM-R1, RM-R3).
     undanhallBytePaOvissNiva(a, {
       bytesmalMotKategorigolv: BRANCHINDEX[a.category]?.bytesmalMotKategorigolv === true,
-      bytesdelar: lasBytesdelar(a),
     });
     // Bytets mål är ett verifierat publikt listpris bara i en kategori vars prisbok är det (F1-1).
     a.bytesmalVerifierat = BRANCHINDEX[a.category]?.source === 'real-public';

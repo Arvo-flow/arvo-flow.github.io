@@ -16,11 +16,12 @@
 //                  eller «Bättre än listpris»
 //   mobil + bredbandsbyte → bytet prissatt, aldrig «0 av N fakturor», «Vägde 0» eller «inget verifierat
 //                  jämförelsepris» (D1-2, E1-1)
-//   kombinerad   → K3 analyserad efter planvalsgrinden (delarna lagrade): bredbandsbytet 2 976 kr/år står kvar
-//                  och raden säger att det gäller bredbandet; aldrig «% mer» eller en poäng (F1-2, MS-13)
-//   kombinerad, gammal → samma rad utan lagrade delar: inget byte, raden säger att det kan vara räknat mot det
-//                  billigaste och att en ny analys räknar bredbandsdelen för sig; aldrig «Inget byte
-//                  rekommenderas» eller «Inga byten på bordet»
+//   kombinerad, lagrad med delar (a649404b:s form) → inget byte och inget belopp: rummet läser inga delar
+//                  (S1, 11 nov, MS-13); raden säger att bytet kan vara räknat mot det billigaste
+//   kombinerad, gammal → samma rad utan lagrade delar: samma besked; aldrig «Inget byte rekommenderas»,
+//                  «Inga byten på bordet» eller ett löfte om vad en ny analys räknar
+//   mobil utan antal + M365 → rummet sätter ingen samlad poäng och berömmer inte (RM-R3); mobilraden säger
+//                  aldrig att ett verifierat publikt pris saknas (RM-R6)
 //   mobil + elbyte → elbytet kallas aldrig prissatt mot verifierat listpris (F1-1)
 //   motprov      → IT-8821 (två nivåer) SKA behålla sitt byte (D1-1); en M365-rad med E3 i radtexten SKA
 //                  få «Listpris för er nivå» och ett avstånd, ett
@@ -63,6 +64,8 @@ const RUM = {
   mobilLon: await rumSvar([rad(5, 'Tele2', 'mobil', 349 * 12 * 100, 100), rad(6, 'Fortnox', 'loneadmin', 5000, 10)]),
   m365Byte: await rumSvar([rad(7, 'Microsoft', 'saas-productivity', 600 * 12 * 10, 10, E3(600), 416.77 * 12 * 10)]),
   mobilBredband: await rumSvar([rad(8, 'Tele2', 'mobil', 349 * 12 * 10, 10), rad(9, 'Telia', 'bredband', 599 * 12, 1, [], 399 * 12)]),
+  mobilUtanAntalM365: await rumSvar([rad(15, 'Tele2', 'mobil', 349 * 12 * 10, null),
+    rad(16, 'Microsoft', 'saas-productivity', 416.77 * 12 * 10, 10, E3(416.77))]),
   kombi: await rumSvar([{ ...rad(11, 'Tele2', 'mobil', (1345 + 549) * 12, 5, [
     { type: 'recurring_subscription', description: 'Tele2 Jobbmobil Bas (5 st)', quantity: 5, unitPrice: 269, amount: 1345 },
     { type: 'recurring_subscription', description: 'Bredband 250/250 Mbit/s', amount: 549 }], (1345 + 549) * 12 - 3720),
@@ -174,22 +177,26 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     if (re.test(t)) fel(`IT-8821 säger ${re} (${namn})`);
   await p.screenshot({ path: `${UT}/it8821-${namn}.png`, fullPage: true }); await p.close();
 
-  // F1-2: en kombinerad faktura behåller bredbandsdelen.
-  p = await sida(bredd, RUM.kombi);
-  t = await text(p);
-  for (const re of [/Bytet gäller bredbandet på fakturan/i, /2 976/])
-    if (!re.test(t)) fel(`kombinerad saknar ${re} (${namn})`);
-  for (const re of [/Inget byte rekommenderas/i, /Inga byten på bordet/i, /\d+% mer/i, /kan inte skilja ut/i, /Vägde 0 fakturor/i,
-    /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i])
-    if (re.test(t)) fel(`kombinerad säger ${re} (${namn})`);
-  await p.screenshot({ path: `${UT}/kombi-${namn}.png`, fullPage: true }); await p.close();
+  // S1 (11 nov): en kombinerad rad visar inget lagrat byte, med eller utan lagrade delar (MS-13, RM-R1).
+  for (const [fall, rum] of [['kombi', RUM.kombi], ['kombi-gammal', RUM.kombiGammal]]) {
+    p = await sida(bredd, rum);
+    t = await text(p);
+    if (!/räknade fram ett byte som kan vara räknat mot det billigaste/i.test(t)) fel(`${fall} saknar förklaringen (${namn})`);
+    for (const re of [/Inget byte rekommenderas/i, /Inga byten på bordet/i, /\d+\s?% mer/i, /2 976/, /Bytet gäller bredbandet/i,
+      /Analyseras fakturan igen/i, /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /kan skärpas/i])
+      if (re.test(t)) fel(`${fall} säger ${re} (${namn})`);
+    await p.screenshot({ path: `${UT}/${fall}-${namn}.png`, fullPage: true }); await p.close();
+  }
 
-  p = await sida(bredd, RUM.kombiGammal);
+  // RM-R3 och RM-R6: en mobilrad utan antal bredvid en M365-rad till listpris.
+  p = await sida(bredd, RUM.mobilUtanAntalM365);
   t = await text(p);
-  if (!/räknade fram ett byte som kan vara räknat mot det billigaste/i.test(t)) fel(`kombinerad gammal saknar förklaringen (${namn})`);
-  for (const re of [/Inget byte rekommenderas/i, /Inga byten på bordet/i, /\d+% mer/i, /2 976/, /Bytet gäller bredbandet/i])
-    if (re.test(t)) fel(`kombinerad gammal säger ${re} (${namn})`);
-  await p.screenshot({ path: `${UT}/kombi-gammal-${namn}.png`, fullPage: true }); await p.close();
+  if (!/Ingen samlad poäng/i.test(t)) fel(`mobil utan antal + M365 saknar «Ingen samlad poäng» (${namn})`);
+  if (!/vi vet inte vilken produkt ni har/i.test(t)) fel(`mobil utan antal saknar planvalsmeningen (${namn})`);
+  for (const re of [/Allt är under kontroll/i, /Era priser står sig/i, /Bättre än listpris/i, /inget verifierat publikt pris/i,
+    /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i])
+    if (re.test(t)) fel(`mobil utan antal + M365 säger ${re} (${namn})`);
+  await p.screenshot({ path: `${UT}/mobil-utan-antal-m365-${namn}.png`, fullPage: true }); await p.close();
 
   // F1-1: ett elbyte är Arvos bedömning, inte ett verifierat publikt listpris.
   p = await sida(bredd, RUM.mobilEl);

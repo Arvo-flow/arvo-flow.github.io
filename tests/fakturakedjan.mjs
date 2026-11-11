@@ -17,18 +17,19 @@
 //   tappar sitt byte.
 // BLIND: extraktionen (fakturans rader är författade, inte lästa ur en riktig leverantörs-PDF); rummets
 //   uppdelning före berikaRader är speglad ur api/invoice-history.mjs (rad 152–183), inte anropad;
-//   svarsmejlets kort är speglat ur api/inbound-email.mjs (rad 757–766); aktiveringsmejlet byggs i
+//   aktiveringsmejlet byggs i
 //   klienten och prövas inte här (det läser `lage`, som FV-A3 prövar). Spegelfallet (mobil som
 //   sekundär del på en bredbandsfaktura) ingår inte: det är steg S6.
 import { test, describe, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { writeFileSync, mkdtempSync } from 'node:fs';
+import { writeFileSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MOBILFALL, MOTPROV, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
+import { PLANVAL_BESKED } from '../lib/lagesregister.js';
 import { PLANVALS_MENING } from '../agents/recommender/recommend.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
@@ -138,6 +139,7 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       if (l.score != null) return `lage.score ${l.score}`;
       if (l.etikett != null) return `lage.etikett ${l.etikett}`;
       if (l.harByte !== false) return 'lage.harByte';
+      if (u.route === 'auto' && l.rubrik !== 'planval') return `lage.rubrik ${l.rubrik}`;
       return null;
     });
     assert.deepEqual(fel, [], visa(fel));
@@ -154,8 +156,9 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       // Meningen följer kodens egen avläsning av en bredbandsdel (samma som sekundärvägen gjorde) …
       const lastBb = (computeInvoiceMetrics(ex.lineItems, 'mobil', ex.potential_mixed_categories)
         .secondaryComponentMonthly ?? 0) > 0;
-      // … och den får aldrig stå där fakturan inte bär en bredbandsrad (oberoende av koden).
-      const finnsBb = ex.lineItems.some((l) => !l.is_addon && BREDBANDSRAD.test(l.description));
+      // … och den får aldrig stå där fakturan inte bär en bredbandsrad (oberoende av koden). En rad som
+      // extraktionen märkt som tillägg räknas också: «Fiber 500 Mbit» är bredband på fakturan (comb-47).
+      const finnsBb = ex.lineItems.some((l) => BREDBANDSRAD.test(l.description));
       if (lastBb && rest !== MENING_BB) return `bredbandsdelen: «${rest}»`;
       if (!lastBb && rest !== '') return `mening utan läst bredbandsdel: «${rest}»`;
       if (rest !== '' && !finnsBb) return 'bredbandsmeningen på en faktura utan bredbandsrad';
@@ -206,6 +209,11 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       if (PROCENT_MER.test(m.analys)) return `analysmejlet: «${m.analys.match(PROCENT_MER)[0]}»`;
       if (/nettobesparing|spara\s+[\d\s]+\s?kr/i.test(m.svarAmne)) return `svarsmejlets ämne: «${m.svarAmne}»`;
       if (/[\d\s]{3,}\s?kr\/år/i.test(m.svar) && /besparing/i.test(m.svar)) return 'svarsmejlet bär en besparing';
+      // Priset finns, produkten är okänd: mejlen får aldrig säga att ett verifierat pris saknas.
+      if (/inget verifierat (jämförelse)?pris/i.test(m.analys)) return 'analysmejlet: «inget verifierat … pris»';
+      if (/inget verifierat (jämförelse)?pris/i.test(m.svar)) return 'svarsmejlet: «inget verifierat … pris»';
+      if (u.route === 'auto' && !m.analys.includes(PLANVAL_BESKED.text)) return 'analysmejlet saknar planvalsbeskedet';
+      if (u.route === 'auto' && !m.svar.includes('vi vet inte vilken produkt ni har')) return 'svarsmejlet saknar planvalsbeskedet';
       return null;
     });
     assert.deepEqual(fel, [], visa(fel));
@@ -220,6 +228,29 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
         ? `svaret ${iSvaret}, raden ${iRaden}, rummet ${iRummet}` : null;
     });
     assert.deepEqual(fel, [], visa(fel));
+  });
+
+  test('FV-A9 · fakturavyns rubrik och mejlens besked är samma mening, och motprovet behåller sitt', async () => {
+    const { ANALYSRUBRIKER } = await import('../src/lib/diagnos.js');
+    assert.equal(ANALYSRUBRIKER.planval.rubrik, PLANVAL_BESKED.rubrik, 'fakturavyn och mejlen säger olika');
+    assert.equal(ANALYSRUBRIKER.planval.text, PLANVAL_BESKED.text, 'fakturavyn och mejlen säger olika');
+    assert.equal(ANALYSRUBRIKER.planval.positivtPastaende, false);
+    const bb = UT.get('motprov·bredband');
+    assert.notEqual(bb.lage?.rubrik, 'planval', 'motprov: en bredbandsfaktura fick planvalsrubriken');
+    assert.ok(!bb.mejl.analys.includes(PLANVAL_BESKED.text), 'motprov: analysmejlet för bredband bär planvalsbeskedet');
+  });
+
+  test('FV-A10 · sidrubriken säger «Ni betalar för mycket» bara före ett resultat och över ett byte (Q-7)', async () => {
+    const { sidrubrik, SIDRUBRIK } = await import('../src/lib/diagnos.js');
+    assert.equal(sidrubrik(null), SIDRUBRIK.erbjudande, 'före ett resultat: sidans erbjudande');
+    const fel = brott(MOBIL_IDS, (u) => (u.route === 'auto' && sidrubrik({ lage: u.lage }) !== SIDRUBRIK.utanByte
+      ? `rubriken «${sidrubrik({ lage: u.lage }).rubrik}»` : null));
+    assert.deepEqual(fel, [], visa(fel));
+    assert.equal(sidrubrik({ lage: UT.get('motprov·bredband').lage }), SIDRUBRIK.erbjudande, 'motprov: bredbandsbytet');
+    assert.doesNotMatch(`${SIDRUBRIK.utanByte.rubrik} ${SIDRUBRIK.utanByte.lede}`, /för mycket|spara|besparing/i);
+    const vy = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
+    assert.match(vy, /const _sidrubrik {2}= sidrubrik\(result\);/);
+    assert.doesNotMatch(vy, /<Headline>Ni betalar för mycket/, 'rubriken står hårdkodad i vyn');
   });
 
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {

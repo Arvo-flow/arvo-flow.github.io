@@ -42,7 +42,7 @@ const { default: handler } = await imp('api/test-invoice.mjs');
 const { buildBranchAnchors, berikaRader, byggRum, watchedCard } = await imp('api/invoice-history.mjs');
 const { radMotivering, radMarke } = await imp('src/lib/rumstext.js');
 const { htmlEmail, mejlLage } = await imp('api/send-analysis.mjs');
-const { replyHtml, buildReplySubject } = await imp('api/inbound-email.mjs');
+const { replyHtml, buildReplySubject, svarsKort } = await imp('api/inbound-email.mjs');
 
 /** En riktig PDF vars textlager bär fakturans rader. */
 function skapaPdf(fall) {
@@ -144,14 +144,8 @@ async function korFall(fall) {
   // Mejlen ur samma svar, med mejlbyggarnas egna funktioner.
   let mejl = null;
   if (body?.ok && body?.extracted && body?.recommendation) {
-    // Kortet i svarsmejlet byggs inline i api/inbound-email.mjs (rad 757–766); samma fem fält här.
-    const kort = body.route === 'auto'
-      ? { ok: true, filename: 'faktura.pdf', supplier: body.extracted?.supplier ?? null,
-        annualCost: body.extracted?.annualCost ?? null,
-        suggestedAnnualCost: body.recommendation?.suggestedAnnualCost ?? null,
-        netSaving: body.recommendation?.netSaving ?? 0,
-        requiresQuote: body.recommendation?.requiresQuote ?? false }
-      : { ok: false, mottagen: true, filename: 'faktura.pdf', message: 'mottagen' };
+    // Kortet i svarsmejlet byggs av handlerns egen funktion (api/inbound-email.mjs svarsKort).
+    const kort = svarsKort(body, 'faktura.pdf');
     mejl = {
       analys: text(htmlEmail(body)),
       analysLage: mejlLage(body),
@@ -192,6 +186,8 @@ async function korFall(fall) {
     mejl,
     loggar: fangade.filter((l) => /\[(secondary-override|planvalsgrind|guard:finansiell)\]/.test(l)),
     ai: globalThis.__AI.map((x) => x.verktyg ?? `text:${x.max_tokens}`),
+    // Renderingssonden (scripts/screenshot-planvalsgrind.mjs) visar handlerns hela svar i fakturavyn.
+    ...(process.env.FAKTURAKEDJAN_SVAR === '1' ? { svar: body } : {}),
   };
 }
 

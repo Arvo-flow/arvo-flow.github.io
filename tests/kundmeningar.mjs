@@ -299,8 +299,10 @@ describe('KM · kundmeningsregistret', () => {
       content: [{ type: 'tool_use', input: { shouldSwitch: false, recommendationType: 'no_action', reasoning: TELE2,
         switchSteps: ['Vi förhandlar ett volymavtal åt er', 'Ni signerar själva'] } }],
       usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } }; } } };
-    // Fakturan är bredband, inte mobil: för mobil skriver planvalsgrinden (2026-11-04, PG-01) meningen själv,
-    // så modellens text når aldrig kunden och filtret kan inte prövas där.
+    // Fakturan är bredband, inte mobil: för mobil skriver planvalsgrinden meningen själv, så modellens text når
+    // aldrig kunden och filtret kan inte prövas där. Premissen höll inte på a649404b (sjätte blicken, H1-7):
+    // under 1,15 × golvet nådde modellens nej aldrig grinden. Mätt 11 nov med 8 abonnemang à 299 kr: före
+    // flytten nådde modellens text kunden, efter flytten står planvalsmeningen (FV-A4, PG-01). Prövas nedan.
     const r = await recommend({
       customer: { industry: 'ovrigt', employees: 10 },
       categorized: { category: 'bredband', subType: 'företag', normalizedSupplier: 'Tele2', confidence: 0.95 },
@@ -311,6 +313,15 @@ describe('KM · kundmeningsregistret', () => {
     assert.doesNotMatch(String(r.reasoning ?? ''), /jämförbara bolag/);
     assert.match(String(r.reasoning ?? ''), /23 abonnemang/, 'motprov: den neutrala meningen ska stå kvar');
     assert.ok(!(r.switchSteps ?? []).some((s) => /förhandla/i.test(s)), 'ett förhandlingslöfte nådde bytesstegen');
+    // Premissen för valet av bredband: en mobilfaktura under golvets 1,15 × får kodens mening, inte modellens.
+    const { PLANVALS_MENING } = await import('../agents/recommender/recommend.js');
+    const mob = await recommend({
+      customer: { industry: 'ovrigt', employees: 10 },
+      categorized: { category: 'mobil', subType: 'företag', normalizedSupplier: 'Tele2', confidence: 0.95 },
+      invoice: { annualCost: 299 * 8 * 12, amount: 299 * 8, billingPeriod: 'monthly', seatCount: 8,
+        lineItems: [{ type: 'recurring_subscription', description: 'Mobil Företag 8 st', quantity: 8, unitPrice: 299, amount: 299 * 8 }] },
+    }, { client: stubAi, kvStore: { get: async () => null } });
+    assert.equal(mob.reasoning, PLANVALS_MENING, 'modellens text nådde en mobilfaktura');
   });
 
   test('KM-10 · månadsbriefen: inga påhittade faktorer, inga förhandlingsknappar, byten ur läget', () => {

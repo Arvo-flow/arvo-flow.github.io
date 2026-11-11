@@ -47,6 +47,9 @@ import { kundensMotivering, kundensSteg } from '../../lib/kundmeningar.js';
 export const PLANVALS_MENING = 'Vi jämför inte era mobilabonnemang mot det billigaste publicerade abonnemanget, '
   + 'eftersom vi inte vet vilket abonnemang ni har. Ett billigare abonnemang kan vara en annan produkt, med mindre '
   + 'surf eller färre tjänster, så vi räknar ingen besparing på dem.';
+// Läggs efter planvalsmeningen när fakturavägen själv läst en bredbandsdel (`secondaryComponentMonthly`).
+// Meningen lovar ingenting om framtiden: delen prissätts inte förrän den byggs som egen del (FV-A4).
+export const BREDBAND_EJ_PRISSATT = 'Bredbandet på samma faktura har vi inte prissatt i den här analysen.';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -1566,7 +1569,7 @@ function storageSubstitutionResponse(sub) {
 // besparingen var 3 414 kr av 97 531 = 3,5 %, alltså i samma storleksordning som ett kursfel på
 // några procent. Fail-closed på PÅSTÅENDET, fail-open på pipelinen (FX-15, motprov i samma test).
 export async function recommend(input, opts = {}) {
-  const svar = await recommendUtanValutagrind(input, opts);
+  const svar = planvalsgrind(input, await recommendUtanValutagrind(input, opts));
   if (!input?.fxSparr || !svar || typeof svar !== 'object') return svar;
   console.warn(`[guard:fx] ${input.fxSparr} — besparingspåståendet rivs: en kurs vi inte kan datera `
     + 'får inte bära kundens pengar');
@@ -1579,6 +1582,37 @@ export async function recommend(input, opts = {}) {
     suggestedAnnualCost: null,
     suggestedSupplier: null,
     fxSparr: input.fxSparr,
+  };
+}
+
+// ══ PLANVALSGRINDEN (grundarbeslut 2026-11-04, «stäng av vid källan»; flyttad hit 2026-11-11) ══════
+// I en kategori där bytesmålet är kategorins golv (`bytesmalMotKategorigolv`, i dag mobil) mäter golvet
+// planvalet, inte priset: 349-planen till exakt listpris fick «byte till 269» och 9 600 kr, en nedgradering
+// räknad som besparing. Ingen kod läser i dag kundens abonnemang ur fakturan, så inget byte räknas.
+//
+// Grinden satt förut inne i den deterministiska grenen, som bara nås när modellen svarat ja och en
+// primärkomponent finns. Modellens nej och en kombinerad faktura utan primärkomponent gick runt den
+// (sjätte blicken, H1-1 och H1-4). Nu är den ett hölje runt varje returväg, samma form som
+// valutagrinden, och den slår till oavsett vad modellen svarade (FV-A1, PG-01).
+//
+// Poängen nollas också: den räknades mot kategorins golv, alltså mot samma planval (FV-A5).
+export function planvalsgrind(input, svar) {
+  if (!svar || typeof svar !== 'object') return svar;
+  if (BRANCHINDEX[input?.categorized?.category]?.bytesmalMotKategorigolv !== true) return svar;
+  console.log(`[planvalsgrind] ${input.categorized.category}: bytesmålet vore kategorins golv utan bekräftat abonnemang → inget bytestal (fail-closed)`); // PG-01, FV-A1
+  const bredband = (Number(input?.invoice?.secondaryComponentMonthly) || 0) > 0;
+  return {
+    ...svar,
+    shouldSwitch: false,
+    recommendationType: 'no_action',
+    suggestedAnnualCost: null,
+    suggestedSupplier: null,
+    savingPerYear: 0,
+    healthScore: null,
+    savingsBreakdown: null,
+    planvalsgrind: 'bytesmålet vore kategorins billigaste produkt, och kundens produkt är inte bekräftad',
+    // Modellens egen prosa får inte erbjuda bytet grinden just stoppat: texten skrivs av koden (FV-A4).
+    reasoning: bredband ? `${PLANVALS_MENING} ${BREDBAND_EJ_PRISSATT}` : PLANVALS_MENING,
   };
 }
 
@@ -2278,24 +2312,8 @@ async function recommendUtanValutagrind(input, opts = {}) {
     // Vad som INTE tystnar: rätt-storlek (m365Rightsizing), licensrensning (shelfware) och
     // kontraktsklockan räknas fristående och lever kvar. Det enda som faller bort är påståendet
     // "byt leverantör och spara X" när vi inte kan visa X per rad.
-    // ── PLANVALSGRINDEN (grundarbeslut 2026-11-04, «stäng av vid källan») ───────────────────────
-    // I en kategori där bytesmålet är kategorins golv (`bytesmalMotKategorigolv`, i dag mobil) mäter
-    // golvet planvalet, inte priset: 349-planen till exakt listpris fick «byte till 269» och 9 600 kr,
-    // en nedgradering räknad som besparing. Ingen kod läser i dag kundens abonnemang ur fakturan, så
-    // inget primärt byte räknas. En sekundär del på en kombinerad faktura (bredbandet, räknat mot
-    // samma hastighet) räknas för sig i api-lagret och står kvar. Fail-closed (PG-01, PG-02), samma form
-    // som lfl-grinden nedan.
-    if (BRANCHINDEX[input.categorized.category]?.bytesmalMotKategorigolv === true) {
-      console.log(`[planvalsgrind] ${input.categorized.category}: bytesmålet vore kategorins golv utan bekräftat abonnemang → inget bytestal (fail-closed)`); // PG-01
-      result.shouldSwitch = false;
-      result.recommendationType = 'no_action';
-      result.suggestedAnnualCost = null;
-      result.suggestedSupplier = null;
-      result.savingPerYear = 0;
-      result.planvalsgrind = 'bytesmålet vore kategorins billigaste produkt, och kundens produkt är inte bekräftad';
-      // Modellens egen prosa får inte erbjuda bytet grinden just stoppat: texten skrivs av koden (PG-01).
-      result.reasoning = PLANVALS_MENING;
-    } else if (isSaasProductivity && !_useLfl) {
+    // Planvalsgrinden bodde här till 11 nov; den är nu höljet `planvalsgrind` runt hela recommend().
+    if (isSaasProductivity && !_useLfl) {
       console.log('[lfl-grind] saas-productivity utan like-for-like-underlag → inget bytestal (fail-closed)');
       result.shouldSwitch = false;
       result.recommendationType = 'no_action';

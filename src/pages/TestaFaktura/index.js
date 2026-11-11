@@ -9,7 +9,7 @@ import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 import { formatKr, genitiv, krPerAr } from '../../utils/format';
 import { grindPausad } from '../../utils/grindpaus';
-import { ANALYSRUBRIKER, diagnosMening, UTAN_VERIFIERAT_PRIS } from '../../lib/diagnos';
+import { ANALYSRUBRIKER, diagnosMening, UTAN_VERIFIERAT_PRIS, sidrubrik } from '../../lib/diagnos';
 import { PRISAVVIKELSE_RUBRIK, PRISAVVIKELSE_MENING, PRISAVVIKELSE_SLUT } from '../../lib/prisavvikelse';
 import { getCategoryMeta } from '../../lib/categoryMeta';
 import { redigeraLeverantor, samaLeverantor } from '../../lib/leverantorsnamn';
@@ -997,6 +997,7 @@ const TestaFaktura = () => {
   // «Kritisk 0 /100» (mätt i översynen). Läget räknas nu en gång i api-lagret
   // (lib/lagesregister.js fakturaLage) och vyn renderar det. Utan mätning finns ingen etikett.
   const _lage       = result?.lage ?? null;
+  const _sidrubrik  = sidrubrik(result);
   const _diag       = _lage ?? { matt: false, score: null, ovPct: 0, overMarketPct: 0, skal: 'fakturans läge saknades i svaret', etikett: null };
   // "Över marknadspris" = (pris − mål)/mål — ALDRIG andel-av-priset (Svea/85-felet är låst).
   const diagMatt    = _diag.matt;
@@ -1122,11 +1123,9 @@ const TestaFaktura = () => {
 
       <Hero>
         <Eyebrow><span className="dot" /> Arvo Intelligence · Analys på 60 sekunder</Eyebrow>
-        <Headline>Ni betalar för mycket. <em>En</em> faktura bevisar det.</Headline>
-        <Lede>
-          Arvo Intelligence jämför er faktura mot verifierade publika listpriser och visar
-          exakt vad ni betalar för mycket — och hos vem ni kan spara.
-        </Lede>
+        {/* Q-7: rubriken följer resultatets läge (src/lib/diagnos.js SIDRUBRIK, FV-A10). */}
+        <Headline>{_sidrubrik.rubrik}{_sidrubrik.betoning ? <> <em>{_sidrubrik.betoning}</em>{_sidrubrik.rest}</> : null}</Headline>
+        <Lede>{_sidrubrik.lede}</Lede>
       </Hero>
 
       <Body>
@@ -1972,7 +1971,12 @@ const TestaFaktura = () => {
                     Frågan ställs EN gång, ur `NIVASANKNINGSKORT` som korten själva läser (regel 1),
                     så ett framtida kort inte kan återinföra motsägelsen i tysthet (AR-04). */}
                 <NoSwitchBlock style={{ marginTop: 0 }}>
-                  {_lage?.rubrik === 'inget_byte_med_nivasankning' ? (
+                  {_lage?.rubrik === 'planval' ? (
+                    <>
+                      <strong>{ANALYSRUBRIKER.planval.rubrik}</strong>{' '}
+                      {ANALYSRUBRIKER.planval.text}
+                    </>
+                  ) : _lage?.rubrik === 'inget_byte_med_nivasankning' ? (
                     <>
                       <strong>{ANALYSRUBRIKER.inget_byte_med_nivasankning.rubrik}</strong>{' '}
                       {ANALYSRUBRIKER.inget_byte_med_nivasankning.text}

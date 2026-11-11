@@ -48,7 +48,6 @@ import { validateSeatPrice, prisprovningensIndata } from '../lib/supplier-price-
 import { detectPriceAlert, getMarketIntelligence } from '../lib/price-alert.js';
 import { verifySession } from '../lib/session.js';
 import { arRumsnyckel } from '../lib/rumsnyckel.js';
-import { bytesdelarForAnalys } from '../lib/bytesdelar.js';
 
 const FROM_ALERT     = process.env.RESEND_FROM      ?? 'Arvo Flow <analys@arvoflow.se>';
 const ALERT_TO       = process.env.ARVO_ALERT_EMAIL ?? 'team@arvoflow.se';
@@ -1274,7 +1273,14 @@ export default async function handler(req, res) {
     // `metrics` kommer ur radposter som redan konverterats med kursen, så den sekundära
     // besparingen vilar på exakt samma tal som den primära. Den tystas därför med, och en spärrad
     // faktura kan inte längre bära något besparingspåstående alls (FX-16).
-    const secondarySaving = extracted.prispastaendeSparrat ? null : computeSecondarySaving({
+    //
+    // PLANVALSGRINDEN, SAMMA FORM (2026-11-11): en faktura vars kategori har `bytesmalMotKategorigolv`
+    // (i dag mobil) får inget bytespåstående i recommend(), och då får den inte tillbaka ett genom
+    // sidokanalen. Sekundärvägen gav varje kombinerad mobilfaktura ett byte, en poäng och ett mål som
+    // tappade mobilens tillägg (sjätte blicken, H1-3). Bredbandsdelen prissätts inte förrän den byggs
+    // som egen del, och kunden får veta det (BREDBAND_EJ_PRISSATT i recommend.js). FV-A2.
+    const planvalsKategori = BRANCHINDEX[categorized.category]?.bytesmalMotKategorigolv === true;
+    const secondarySaving = (extracted.prispastaendeSparrat || planvalsKategori) ? null : computeSecondarySaving({
       metrics,
       category:                 categorized.category,
       potentialMixedCategories: extracted.potentialMixedCategories ?? false,
@@ -2050,7 +2056,6 @@ export default async function handler(req, res) {
       employees: employeesNum,
       userEmail: typeof bevisadEpost === 'string' ? bevisadEpost.trim().toLowerCase() : null,
       seatCount: extracted.seatCount ?? null,
-      bytesdelar: bytesdelarForAnalys({ recommendation, primaryGross, secondarySaving }),
     }).catch((err) => { console.error('[test-invoice] storeAnalysis failed:', err.message); return null; });
 
     // Prissignal: smyghöjning-detektering mot verifierade listpriser (fire-and-forget).

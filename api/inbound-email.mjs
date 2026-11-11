@@ -29,6 +29,7 @@ import { fmtNumber } from '../lib/format.js';
 import { enqueueJobs, bokforAvvisade, DAGSGRANS_SKAL } from '../lib/ingest-queue.js';
 import { mottagarnyckel, slaUppAdress, intagsIdentitet, gmailKod, sparaGmailKod, markeraMottagen } from '../lib/inkorgsadress.js';
 import { isTestRecipient, resetTestSurfaceIfStale, TEST_EMAIL, TEST_FINGERPRINT } from '../lib/test-surface.js';
+import { PLANVAL_BESKED } from '../lib/lagesregister.js';
 
 export const config = { maxDuration: 60 };
 
@@ -274,6 +275,38 @@ const rowHtml = (label, value, { strong = false, teal = false } = {}) => `
     <td align="right" style="padding:7px 0;font-family:${M.sans};font-size:14px;font-weight:${strong ? 700 : 600};color:${teal ? '#1B7A6E' : M.ink};white-space:nowrap;">${value}</td>
   </tr>`;
 
+/**
+ * Kortet i svarsmejlet ur ett svar från api/test-invoice. Exporterat så att instrument A (FV-A7) prövar exakt
+ * det kort kunden får, inte en spegel av det (S1, 11 nov: en spegel lät sabotaget S13 fälla noll tester).
+ */
+export function svarsKort(a, filename) {
+  if (a?.ok && a.route === 'auto') {
+    // OBS: API-svaret exponerar netSaving/grossSaving — INTE savingPerYear.
+    // (Fältläxan: fel fältnamn → alltid 0 → "inget prisgap" bredvid två olika priser.)
+    return {
+      ok: true, filename,
+      supplier:            a.extracted?.supplier ?? null,
+      annualCost:          a.extracted?.annualCost ?? null,
+      suggestedAnnualCost: a.recommendation?.suggestedAnnualCost ?? null,
+      netSaving:           a.recommendation?.netSaving ?? 0,
+      requiresQuote:       a.recommendation?.requiresQuote ?? false,
+      // Planvalskategorin (mobil): priset finns, produkten är okänd. Kortet säger det, aldrig «inget pris».
+      planval:             a.lage?.rubrik === 'planval',
+    };
+  }
+  if (a?.ok) {
+    // Här stod «Arvo återkommer till er per mail när analysen är verifierad» — för varje rutt som
+    // inte prissattes, även bevakade avtal och fakturor utanför vårt område. Ingen utskicksväg
+    // mejlar tillbaka efter en granskning. Rummet visar varje sådan faktura med sitt skäl (KM-05).
+    return { ok: false, mottagen: true, filename,
+      message: a.route === 'monitoring'
+        ? 'Avtalet är tidsbundet och står under bevakning i ert rum, med sin avtalsklocka.'
+        : `Vi prissätter inte den här fakturan automatiskt. ${LOFTEN.skalIRummet.text}` };
+  }
+  return { ok: false, filename,
+    message: 'Analysen misslyckades — kontrollera att PDF:en är en leverantörsfaktura och försök igen.' };
+}
+
 export function buildReplySubject(results) {
   const okCount = results.filter((r) => r.ok).length;
   const best = results.filter((r) => r.ok).sort((a, b) => (b.netSaving ?? 0) - (a.netSaving ?? 0))[0];
@@ -317,7 +350,9 @@ export function replyHtml({ results, portalLink }) {
           </table>`
         : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">
             <tr><td align="center" bgcolor="${M.band}" style="background:${M.band};border-radius:10px;padding:14px 18px;">
-              <p style="margin:0;font-family:${M.sans};font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);">Inget byte att rekommendera — vi hittar inget verifierat pris att byta ned till</p>
+              <p style="margin:0;font-family:${M.sans};font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);">${r.planval
+                ? `${PLANVAL_BESKED.rubrik.replace(/\.$/, '')} — vi vet inte vilken produkt ni har`
+                : 'Inget byte att rekommendera — vi hittar inget verifierat pris att byta ned till'}</p>
             </td></tr>
           </table>`;
 
@@ -754,29 +789,7 @@ och ni behöver skicka om det.</p>
       });
       const a = await r.json().catch(() => null);
 
-      if (a?.ok && a.route === 'auto') {
-        // OBS: API-svaret exponerar netSaving/grossSaving — INTE savingPerYear.
-        // (Fältläxan: fel fältnamn → alltid 0 → "inget prisgap" bredvid två olika priser.)
-        results.push({
-          ok: true, filename,
-          supplier:            a.extracted?.supplier ?? null,
-          annualCost:          a.extracted?.annualCost ?? null,
-          suggestedAnnualCost: a.recommendation?.suggestedAnnualCost ?? null,
-          netSaving:           a.recommendation?.netSaving ?? 0,
-          requiresQuote:       a.recommendation?.requiresQuote ?? false,
-        });
-      } else if (a?.ok) {
-        // Här stod «Arvo återkommer till er per mail när analysen är verifierad» — för varje rutt som
-        // inte prissattes, även bevakade avtal och fakturor utanför vårt område. Ingen utskicksväg
-        // mejlar tillbaka efter en granskning. Rummet visar varje sådan faktura med sitt skäl (KM-05).
-        results.push({ ok: false, mottagen: true, filename,
-          message: a.route === 'monitoring'
-            ? 'Avtalet är tidsbundet och står under bevakning i ert rum, med sin avtalsklocka.'
-            : `Vi prissätter inte den här fakturan automatiskt. ${LOFTEN.skalIRummet.text}` });
-      } else {
-        results.push({ ok: false, filename,
-          message: 'Analysen misslyckades — kontrollera att PDF:en är en leverantörsfaktura och försök igen.' });
-      }
+      results.push(svarsKort(a, filename));
     } catch (err) {
       console.error('[inbound-email] pipeline-fel:', err.message);
       results.push({ ok: false, filename, message: 'Tekniskt fel vid analysen — försök igen om en stund.' });

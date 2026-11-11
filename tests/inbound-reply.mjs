@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { replyHtml, buildReplySubject } from '../api/inbound-email.mjs';
+import { replyHtml, buildReplySubject, svarsKort } from '../api/inbound-email.mjs';
 
 const NMIT_RESULT = {
   ok: true, filename: 'Faktura 1 - Lynxeye IT.pdf',
@@ -103,8 +103,16 @@ describe('Mejlsvaret — buildReplySubject', () => {
     assert.equal(buildReplySubject([{ ok: false, mottagen: true }]), 'Er faktura är mottagen — skälet står i ert rum');
     assert.equal(buildReplySubject([{ ok: false }, { ok: false, mottagen: true }]), 'Er faktura är mottagen — skälet står i ert rum');
     assert.equal(buildReplySubject([{ ok: false }]), 'Vi kunde inte analysera ert mail');
+    // Kortet byggs av en exporterad funktion sedan S1 (11 nov); här prövas beteendet, inte källtextens form.
+    for (const route of ['review_queue', 'unsupported', 'monitoring']) {
+      const kort = svarsKort({ ok: true, route }, 'f.pdf');
+      assert.equal(kort.ok, false, route);
+      assert.equal(kort.mottagen, true, `${route}: den lagrade men oprissatta grenen märker inte resultatet`);
+    }
+    assert.equal(svarsKort(null, 'f.pdf').mottagen, undefined, 'motprov: ett äkta fel är inte mottaget');
+    assert.equal(svarsKort({ ok: true, route: 'auto', recommendation: { netSaving: 0 } }, 'f.pdf').ok, true);
     const k = readFileSync(new URL('../api/inbound-email.mjs', import.meta.url), 'utf8');
-    assert.match(k, /\} else if \(a\?\.ok\) \{[\s\S]{0,400}results\.push\(\{ ok: false, mottagen: true, filename,/, 'den lagrade men oprissatta grenen märker inte resultatet');
+    assert.match(k, /results\.push\(svarsKort\(a, filename\)\);/, 'handlern bygger kortet med samma funktion');
   });
 
 });

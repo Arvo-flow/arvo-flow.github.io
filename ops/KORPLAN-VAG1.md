@@ -37,7 +37,7 @@ En PR i taget, i den här ordningen. Varje PR bär ett enda påstående.
 |---|---|---|---|
 | S1 | c1: en mobilfaktura får inget byte, inget avstånd och ingen poäng i någon yta förrän abonnemanget är bekräftat | lib, api, agents, src | byggs om enligt ordern nedan |
 | S2 | Kundsynlighetssvepet: varje loggat förexisterande [KUND] läses av mot dagens ytor. Ingen PR | inga filer utom planen | medan S1:s lins rullar |
-| S3 | Fakturavyns rubrik följer resultatets läge (Q-7) | src | efter S1 |
+| S3 | Fakturavyns rubrik följer resultatets läge (Q-7) | src | byggd i S1: S1 gjorde resultat utan byte vanligare (stoppregeln) |
 | S4 | Rummets bytesrad: «X % mer» räknas mot jämförelsepriset (C1-4), och golvet bär sitt analysdatum (K-5) | lib, src | efter S3 |
 | S5 | c2: briefingsidan visar ett prislarm som ett prislarm (LA-K1) | lib, api, src | efter S4 |
 | S6 | Mobil i blandade fakturor: spegelfallet och talet «per abonnemang» | lib, api | efter S5 |
@@ -190,6 +190,25 @@ Regeln är LT-11:s. En mening säger bara det koden gör, och den låses ordagra
   byte alls på en mobilfaktura, inte heller på bredbandsdelen av en kombinerad faktura (arkitektbeslut
   2026-11-11, FV-A1, FV-A2). Rummet visar inget lagrat mobilbyte (MS-08).» Sätt in de test-ID:n som
   faktiskt bär påståendet.
+
+### Byggt 11 nov (utfall)
+
+- Instrumenten var röda mot a649404b: FV-A1 131 fall, FV-A2 124, FV-A3 124, FV-A4 150, FV-A5 164, FV-A6 120,
+  FV-A7 124, FV-A8 44; RM-R1 200 rum, RM-R3 60, RM-R6 100. Efter lagningen gröna.
+- **Funnet i renderingen, lagat i samma PR:** fakturavyn sa «Vi hittar inget publikt pris att byta ned till»
+  ovanför planvalsmeningen, analysmejlet «inget verifierat jämförelsepris» och svarsmejlet «inget verifierat
+  pris att byta ned till». Nu ett besked i lägesregistret (`PLANVAL_BESKED`, rubrik `planval`) som vyn och båda
+  mejlen läser (FV-A3, FV-A7, FV-A9, SA-01b). Svarsmejlets kort byggs nu av en exporterad funktion
+  (`svarsKort`), så att instrumentet prövar kortet i stället för en spegel.
+- **S3 (Q-7) byggd här:** sidrubriken «Ni betalar för mycket» står bara före ett resultat och över ett byte
+  (FV-A10). Skäl: S1 gör resultat utan byte vanligare, och stoppregeln lägger då felet i PR:en.
+- **Facit oförändrat** (334 fixturer, 24 prissatta): korpusen kör `recommend()` utan sekundärvägen, och
+  mobilfixturernas modellsvar är nej, så deltabeviset behövdes inte.
+- **L6:** KM-09:s premiss mätt med motprov: 8 abonnemang à 299 kr gav modellens text på a649404b och
+  planvalsmeningen nu.
+- **Sabotage:** femton riktningar. Två fällde noll först: S4 (radens poängspärr för ett inhållet byte, ett
+  skydd bakom ett skydd, nu borttagen) och S13 (svarsmejlets kort var speglat i instrumentet; nu fäller det
+  FV-A7).
 
 ### Sjunde linsen
 
