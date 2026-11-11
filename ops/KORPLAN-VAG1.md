@@ -14,15 +14,15 @@
 Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5). En session som
 startar om läser blocket först.
 
-- **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. Planen lades om 11 nov.
-- **Senaste mekanikcommit på grenen:** a649404b (sjätte blicken: BLOCKERAR).
-- **Lins igång:** nej.
-- **Byggare igång:** nej. Ett byggpass startades 11 nov i molnsessionen och stoppades samma dag på
-  grundarens order, innan något var committat. Dess ospårade utkast till instrument A togs bort. Inget
-  av S1 är byggt.
-- **Nästa handling (Opus 5.5 i molnsessionen):** bygg instrument A
-  (FV) och instrument B (RM), båda röda mot a649404b. Därefter lagningen L1–L6, sabotagen, renderingen,
-  kontrollpunkten och sjunde linsen.
+- **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
+- **Senaste mekanikcommit på grenen:** 9c2991d1 (S1 byggd enligt ordern; instrumenten FV och RM gröna, femton
+  sabotage, rendering i 390 och 1600 px).
+- **Lins igång:** ja. Sjunde linsen på 9c2991d1 startades 11 nov; domen skrivs till
+  `ops/GRANSKNING-s1-mobilfakturan.md` och pushas av linsen. Säkerhetsnät: 75 minuter.
+- **Byggare igång:** nej.
+- **Nästa handling:** när domen kommit: MERGAS → öppna PR:en mot main med auto-merge; BLOCKERAR → stoppregeln,
+  och vid andra blockeringen i rad eskalering till Fable (eskaleringsregeln). Medan linsen rullar: S2 som läsning
+  och mätning, utan ändringar i spårade filer.
 
 ## Målet
 
