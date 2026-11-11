@@ -1,5 +1,58 @@
 # Arvo
 
+## CTO-MANDAT & EXEKVERINGSMODELL (Opus 5.5 i Cursor vs Fable 5.2)
+
+> **✅ GRUNDARORDER 2026-11-11 — ÖVERORDNAD. GÄLLER FÖRE ALLT NEDAN.** Grundaren: *«All exekvering,
+> kodning, vakt-städning och testning sköts automatiskt av Opus 5.5 direkt i Cursor.»* De fyra
+> punkterna är grundarens, ordagrant:
+>
+> 1. *«Opus 5.5 i Cursor har 100 % fria tyglar att självgående verkställa all kod, databasstädning
+>    (`supplier_prices`), skriptstädning (`apply-price-proposals.mjs`), prisboksuppdateringar (inkl.
+>    Tele2 +40 kr), vaktfixar, kunddelen (mobilscore med krav på bekräftat abonnemang, dörrens kort,
+>    LA-K1) samt hela `ARBETSORDER-LANSERING.md` fram till Våg 1.»*
+> 2. *«Sektionen "Ditt beslut" / "Väntar på dig" förbjuds. Opus 5.5 fattar alla tekniska beslut och
+>    produktbeslut själv utifrån mätbar produktsanning och rapporterar i efterhand.»*
+> 3. *«Grenskyddet på `main` kräver inte längre manuella godkännanden ("Require approvals" är
+>    borttaget). Opus 5.5 ansvarar för att PR:er mergas automatiskt så fort Grindens 4 kontroller är
+>    gröna.»*
+> 4. *«Fable 5.2 är låst till översyn/arkitektur och får ENDAST kopplas in vid de 3 frysta
+>    kontrollpunkterna i `ARBETSORDER-LANSERING.md` (efter Våg 1 med verklig kunddata, vid sömdesign av
+>    `api/test-invoice.mjs`, eller vid olöslig konflikt mot bibeln).»*
+>
+> **Avläst läge 11 nov, så att inget görs två gånger:**
+> · Databasstädningen (`supplier_prices` 46 → 0 rader) och skriptstädningen (`apply-price-proposals.mjs`
+>   borta) är klara: PR #87, mergad 23 okt och körd på main.
+> · Tele2 +40 kr är klar: PR #86, mergad 23 okt. **Den görs inte om.** Boken bär redan höjningen, och en
+>   andra +40 vore ett pris utan källa (regel 3). Källan visade 26 okt −40 igen. Det är ett eget steg i
+>   sekvensen: först prövas om priset är en kampanj.
+> · Licenstaket (T-2) är klart: PR #88, mergad 3 nov.
+> · Kunddelen pågår. Mobilscoren (c1) ligger omergad på grenen `claude/fable-5-resume-i60dmd`, med sex
+>   granskningar som alla blockerar. Dörrens kort och LA-K1 är inte byggda.
+> · Sekvensen, steg 1–14, står i `ops/ARBETSORDER-LANSERING.md`. Opus börjar på steg 4.
+>
+> **Operativt:**
+> · **Opus 5.5 i Cursor håller huvudloopen.** Den bygger, kör sviten och sabotagen, startar
+>   granskningslinserna, mergar genom Grinden och läser av driftsättningen. Den stannar aldrig i väntan
+>   på ett godkännande, varken grundarens eller arkitektens.
+> · **Auto-merge slås på för de PR:er Opus själv öppnar.** Ett arbetsflöde som mergar varje PR med grön
+>   Grind byggs inte (CTO-mandatet nedan, punkt 3). En lins är fortfarande en separat agent utan
+>   byggarens sammanhang, och byggaren skriver aldrig en dom.
+> · **Fable 5.2 skriver ingen produktionskod, kör inga tester, startar inga linser och skickar inga
+>   byggpass.** Utanför de tre kontrollpunkterna kopplas Fable inte in. Ett strukturbeslut som planen
+>   saknar avgör Opus själv, med den minsta sanna lösningen, och loggar det.
+> · **Integriteten flyttas inte.** Regel 1–9, neutralitetsmoaten, Noll-inferens, Bevisplikten och
+>   stoppregeln gäller Opus oförändrat. Tre gränser står kvar oavsett mandat: `scripts/stress-test.mjs`
+>   körs aldrig utan uttryckligt OK, en hemlighet skrivs aldrig ut, och en ospårad fil som agenten inte
+>   skapat committas aldrig.
+> · **Styrfilerna:** ordern per steg står i `ops/KORPLAN-VAG1.md`, körcykeln i `ops/BYGGARRUTIN.md` och
+>   fynden i `ops/ARBETSORDER-VAG1.md`. De två första skrevs 11 nov för en molnsession. Ordningen,
+>   besluten och beviskraven gäller i Cursor. Verktygsnamnen där (`Agent`, `send_later`, sessionens enda
+>   gren) gäller molnsessionen: i Cursor används klonens git och `gh`. Krockar en rad i en styrfil med
+>   den här sektionen gäller sektionen.
+>
+> CTO-mandatet 22 okt, närmast nedan, gäller oförändrat där den här ordern inte säger annat. Dess
+> punkt 4 om en enda gren beskriver molnsessionen. Regeln om en PR och en lins i taget står kvar.
+
 > **✅ CTO-MANDATET — GRUNDARBESLUT 2026-10-22, GÄLLER FÖRE ALLT NEDAN.** Grundaren: *«Från och med nu
 > kör du som 100 % självgående CTO på autopilot.»*
 >
@@ -27,25 +80,6 @@
 >    · Inga filer redigeras medan en lins rullar.
 >    Sessionen kan bara pusha sin egen gren. Därför byggs PR:erna i följd på den grenen, och grenen
 >    startar om från main efter varje merge.
-
-> **✅ ROLLFÖRDELNINGEN — GRUNDARBESLUT 2026-11-11, PERMANENT.** Grundaren: *«Från och med nu sätter vi
-> en ny, permanent rollfördelning mellan modellerna för att optimera både kvalitet och token-ekonomi.»*
->
-> 1. *«Fable 5.2 (Strategen & Arkitekten): Kallas in enbart för övergripande planering, struktur,
->    arkitekturbeslut, regelverk i CLAUDE.md och uppsättning av arbetssätt. Ingen löpande
->    kodimplementering eller vardaglig vakt-städning.»*
-> 2. *«Opus 5.5 (Byggaren & Maskinisten): Det är Opus som verkställer, skriver kod, bygger funktioner,
->    kör testsviter (2698+ tester), hanterar granskningslinser och driver PR-flödet autonomt på
->    autopilot.»*
->
-> Operativt:
-> · Körplanen står i `ops/KORPLAN-VAG1.md` och byggarens rutin i `ops/BYGGARRUTIN.md`. Båda är bindande
->   på samma sätt som den här filen. En session börjar med blocket `Nu` i körplanen.
-> · Byggaren stannar aldrig i väntan på ett godkännande, varken grundarens eller arkitektens. Ett
->   strukturbeslut som planen saknar skrivs under «Till arkitekten» i körplanen, och byggaren går vidare.
-> · Står sessionen på Fable bygger Fable inte själv. Den skickar byggpass och linser till Opus-agenter.
-> · CTO-mandatet ovan gäller oförändrat för den som håller huvudloopen. En lins är fortfarande en
->   separat agent, och byggaren skriver aldrig en dom.
 
 > **Den här bibeln är levande, inte helig.** Den fångar vår bästa nuvarande
 > förståelse — inte en gräns för hur långt vi får tänka. Ser du en modigare,

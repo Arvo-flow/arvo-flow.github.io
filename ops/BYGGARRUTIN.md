@@ -13,10 +13,12 @@
   av grundaren. Byggaren kallar aldrig in någon och väntar aldrig på någon.
 - **En lins** är en separat agent med ett enda uppdrag: «hitta var det gröna är osant». Rollen gör
   jobbet, inte modellen. Byggaren skriver aldrig en dom.
-- **Står sessionen på Fable** bygger Fable inte själv. Den skickar ett byggpass i taget till en
-  Opus-agent (`Agent`, `model: 'opus'`, i huvudklonen, i bakgrunden) med uppdraget «läs
-  `ops/BYGGARRUTIN.md` och `ops/KORPLAN-VAG1.md`, kör från blocket Nu», och startar linserna på samma
-  sätt. Står sessionen på Opus bygger Opus direkt, och linserna ärver modellen.
+- **Opus 5.5 i Cursor håller huvudloopen** (grundarorder 11 nov, `CLAUDE.md` överst). Fable bygger inte,
+  kör inga tester, startar inga linser och skickar inga byggpass. Sekvensen står i
+  `ops/ARBETSORDER-LANSERING.md`.
+- **Verktygen i den här rutinen är molnsessionens** (`Agent`, `send_later`, `ListAgents`, sessionens enda
+  gren). I Cursor gäller samma ordning och samma beviskrav med klonens git och `gh`: en lins är en
+  separat agent utan byggarens sammanhang, och säkerhetsnätet är en tidsgräns som byggaren själv håller.
 
 ## 2. Start och återstart
 

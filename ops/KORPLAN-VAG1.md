@@ -14,13 +14,15 @@
 Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5). En session som
 startar om läser blocket först.
 
-- **Steg:** S1 (c1). Planen lades om 11 nov.
+- **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. Planen lades om 11 nov.
 - **Senaste mekanikcommit på grenen:** a649404b (sjätte blicken: BLOCKERAR).
 - **Lins igång:** nej.
-- **Byggare igång:** ja. Byggpass 1 skickades 11 nov från arkitektens session till en Opus-agent i
-  huvudklonen. Passet omfattar körcykelns punkt 1–10 för S1. Det startar ingen lins och öppnar ingen PR.
-- **Nästa handling:** instrument A (FV), sedan instrument B (RM), båda röda mot a649404b. Därefter
-  lagningen L1–L6, sabotagen, renderingen och kontrollpunkten. Sedan startar huvudloopen sjunde linsen.
+- **Byggare igång:** nej. Ett byggpass startades 11 nov i molnsessionen och stoppades samma dag på
+  grundarens order, innan något var committat. Dess ospårade utkast till instrument A togs bort. Inget
+  av S1 är byggt.
+- **Nästa handling (Opus 5.5 i Cursor):** hämta grenen `claude/fable-5-resume-i60dmd`. Bygg instrument A
+  (FV) och instrument B (RM), båda röda mot a649404b. Därefter lagningen L1–L6, sabotagen, renderingen,
+  kontrollpunkten och sjunde linsen.
 
 ## Målet
 
@@ -42,6 +44,9 @@ En PR i taget, i den här ordningen. Varje PR bär ett enda påstående.
 | S7 | Avtalstexten och integritetstexten säger vad systemet gör | src, scripts, tests | efter S6 |
 | S8 | Live-verifieringen (LANSERING punkt 4) | inga | efter S7 |
 | S9 | Våg 1-grinden | inga | sist |
+
+Sekvensens numrering (steg 1–14) står i `ops/ARBETSORDER-LANSERING.md`. S1–S6 är steg 4–9 där, steg 10
+(Tele2 bredband: kampanj eller listpris) har sin order där, och S7–S9 är steg 11–13.
 
 Ordningen mellan S3–S6 följer hur många kunder som möter felet: fakturavyn först, sedan rummet,
 briefingen och de blandade fakturorna. S2 kan flytta ett steg eller lägga till ett. Regeln står i S2.
@@ -350,11 +355,13 @@ Det här kan inte göras härifrån. Inget av det stoppar bygget. G5 och G7 kan 
 3. **`CRON_SECRET` som GitHub-hemlighet**, om den fortfarande saknas. Läses av i S8.
 4. **gh-pages-kopian**, om S8 visar att den är nåbar och inaktuell.
 5. **Bjuda in de fem kunderna** och bevilja premium (`bevilja-premium`) när grinden är grön.
-6. **Sätta sessionen på Opus 5.5** när bygget ska drivas av byggaren i huvudloopen (`/model`).
 
 ## Till arkitekten
 
-Byggaren skriver hit och fortsätter med nästa steg. Den väntar aldrig på svar.
+Grundarorder 11 nov: Fable kopplas bara in vid de tre frysta kontrollpunkterna (efter våg 1, sömdesignen
+för `api/test-invoice.mjs`, en olöslig konflikt mot bibeln). Byggaren skriver hit, avgör själv med den
+minsta sanna lösningen och fortsätter. Den väntar aldrig på svar. A-2 är kontrollpunkt 2, A-3 och A-4
+hör till kontrollpunkt 1, och A-1 tas upp där.
 
 - **A-1 · Bibeln är 2 975 rader** och läses in i varje tur. En kärna med regler, och historiken flyttad
   till `ops/`, sparar tokens och gör reglerna lättare att följa. Två tester läser bibeln ordagrant

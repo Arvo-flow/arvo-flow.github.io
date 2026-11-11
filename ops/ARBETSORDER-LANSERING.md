@@ -6,6 +6,54 @@
 > (H2 och H5) med agentens körda utfall som facit. Avvik från ordern bara om koden motbevisar
 > den — och skriv i så fall varför, i samma commit.
 
+## Sekvensen för Opus 5.5: från PR #85 till färdig våg 1 (avläst 2026-11-11)
+
+Grundarorder 11 nov (`CLAUDE.md`, överst): Opus 5.5 i Cursor verkställer hela listan självgående. Opus
+frågar aldrig och mergar genom Grinden.
+
+**Var koden står.** `main` står på e5733f3a. Steg 1–3 är mergade och görs inte om. Steg 4 ligger omergat
+på grenen `claude/fable-5-resume-i60dmd` (mekanikcommit a649404b, sex granskningar, alla BLOCKERAR).
+**Opus börjar på steg 4.**
+
+**Var orderna står.** Ordern för varje steg, med besluten redan fattade, står i `ops/KORPLAN-VAG1.md`
+(S1–S9). Körcykeln för en PR står i `ops/BYGGARRUTIN.md`. Varje granskningsfynd står i
+`ops/ARBETSORDER-VAG1.md`.
+
+**Regeln mellan stegen.** En PR i taget, med ett enda påstående. Auto-merge slås på när PR:en öppnas,
+och den mergas när Grindens fyra kontroller är gröna. Driftsättningen läses av. Sedan nästa steg, i
+samma körning. [VAKT]-fynd har inget eget steg: de lagas i den PR som ändå rör filen.
+
+| Steg | Vad | Läge 11 nov | Order | Klart när |
+|---|---|---|---|---|
+| 1 | Prisboken: Tele2 +40 kr, en prisbok, vakterna framåt | **KLART.** PR #86, mergad 23 okt (5e73c277). Görs inte om | – | – |
+| 2 | Databasen och skripten: `supplier_prices` städad (46 → 0 rader), `apply-price-proposals.mjs` borta | **KLART.** PR #87, mergad 23 okt (4f8f2326), körd på main (40352850116) | – | – |
+| 3 | Licenstaket per nivårad (T-2) | **KLART.** PR #88, mergad 3 nov (1677f2bd) | – | – |
+| 4 | Kunddelen, c1: mobilscoren. En mobilfaktura får inget byte, inget avstånd och ingen poäng i någon yta förrän abonnemanget är bekräftat | **PÅGÅR. Börja här.** Byggs om enligt ordern: instrumenten FV och RM först, sedan L1–L6 | KORPLAN S1 | Instrumenten gröna, sju sabotage fäller, sjunde granskningen säger MERGAS, PR:en är mergad, och `diag-live` visar en mobilfaktura utan byte och en bredbandsfaktura med byte |
+| 5 | Kundsynlighetssvepet: vilka loggade fel möter en kund i dag. Ingen PR | inte påbörjat | KORPLAN S2 | Varje rad i S2:s tabell är avläst, med motprov |
+| 6 | Fakturavyns rubrik följer resultatets läge (Q-7) | inte påbörjat | KORPLAN S3 | Rubriken slås upp per lägeskod, renderad i 390 och 1600 px, mergad |
+| 7 | Rummets bytesrad: «X % mer» mot jämförelsepriset (C1-4), golvet med analysdatum (K-5) | inte påbörjat. Utkastet till K-5 förlorades 5–9 nov | KORPLAN S4 | Grundarens exempel ger 30 %, inte 23 %, och PR:en är mergad |
+| 8 | Kunddelen, c2: prislarmet på briefingsidan (LA-K1) | inte påbörjat. Bygget förlorades 5–9 nov, ritningen står i ordern | KORPLAN S5 | LB-01..04 gröna, månadsbriefen oförändrad, mergad |
+| 9 | Kunddelen: dörrens kort och mobil i blandade fakturor. Ingen väg räknar ett mobilbyte eller ett mobilavstånd mot det billigaste abonnemanget | inte påbörjat. Om dörren visar felet i dag är inte mätt: det läses av i steg 5 | KORPLAN S6 och S2-raden «C1-3-resten» | Spegelfallet stängt genom ett deltabevis, dörren och prospektet utan mobilavstånd, mergad |
+| 10 | Tele2 bredband: kampanj eller listpris. Källan visade 26 okt 199/239/279/279, boken står på 239/279/319/319 | inte påbörjat | nedan | Prövat i Actions, och boken eller vakten följer utfallet |
+| 11 | Avtalstexten och integritetstexten säger vad systemet gör. Två PR:er: mekanismen för avidentifiering först, texterna sedan | inte påbörjat | KORPLAN S7 | KM-05 skannar villkoren utan undantag, båda PR:erna mergade |
+| 12 | Live-verifieringen: acceptanspunkt 4 nedan | DEL L och rummet avlästa 16 okt, DEL G inte mätt | KORPLAN S8 | S8 punkt 1–6 avlästa mot produktionen |
+| 13 | Våg 1-grinden | inte påbörjat | KORPLAN S9 | G1–G7 gröna, var och en med kommando och motprov |
+| 14 | Våg 1: fem kunder bjuds in och beviljas premium | grundarens handling | – | Därefter fryst kontrollpunkt 1: Fable kopplas in, med verklig kunddata i rummet |
+
+**Steg 10, ordern.** Pröva i ett arbetsflöde på main om Tele2:s API märker priset som kampanj. Det går
+inte att köra från en sandlåda. Bibelns regel från HubSpot gäller: det högsta priset i ett block är
+listpriset, och en kampanj kan bara ligga under.
+- Är det en kampanj: boken står kvar, och vakten lär sig skilja kampanj från listpris, så att den slutar
+  larma på kampanjen.
+- Är det listpriset: boken följer källan. De 55 fixturerna flyttas genom ett deltabevis, aldrig för hand,
+  och gränsfixturerna behåller sin tröskel (BI-11).
+
+Riktningen i dag är den försiktiga: boken ligger över källan, så en besparing mot Tele2 blir mindre,
+aldrig större.
+
+**Det bara grundaren kan göra** står under «Grundarens åtgärder» i `ops/KORPLAN-VAG1.md`. Inget av det
+stoppar bygget.
+
 ## Läge (avläst 2026-10-16, fabrikssvepet)
 
 | Acceptanspunkt | Läge | Avläst |
@@ -146,9 +194,10 @@ som tömmer pärmen dag ett träffar taket. Alternativ: (a) höj till ~150 under
 
 ## Rollfördelningen framåt (kreditekonomi)
 
-> **11 nov: rollfördelningen är nu ett permanent grundarbeslut** (`CLAUDE.md`, överst): Fable 5.2 är
-> arkitekt, Opus 5.5 är byggare. Punkt 4 ovan och vägen till våg 1 står i `ops/KORPLAN-VAG1.md` (S8
-> och S9). Raderna nedan är ordern som den skrevs 24 aug.
+> **11 nov: exekveringsmodellen är en överordnad grundarorder** (`CLAUDE.md`, överst). Opus 5.5 i Cursor
+> verkställer sekvensen överst i den här filen, steg 4–13, självgående. Fable 5.2 kopplas bara in vid de
+> tre frysta kontrollpunkterna nedan: (1) efter våg 1, (2) sömdesignen för `api/test-invoice.mjs`,
+> (3) en olöslig konflikt mot bibeln. Raderna nedan är ordern som den skrevs 24 aug.
 
 - **Opus 5:** bygger denna order, kör syskonfallen och sabotagen själv (regeln står i bibeln),
   live-verifierar, lanserar våg 1 (5 kunder), motprövar återstående hypoteser, sveper de 15
