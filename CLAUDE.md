@@ -28,6 +28,25 @@
 >    Sessionen kan bara pusha sin egen gren. Därför byggs PR:erna i följd på den grenen, och grenen
 >    startar om från main efter varje merge.
 
+> **✅ ROLLFÖRDELNINGEN — GRUNDARBESLUT 2026-11-11, PERMANENT.** Grundaren: *«Från och med nu sätter vi
+> en ny, permanent rollfördelning mellan modellerna för att optimera både kvalitet och token-ekonomi.»*
+>
+> 1. *«Fable 5.2 (Strategen & Arkitekten): Kallas in enbart för övergripande planering, struktur,
+>    arkitekturbeslut, regelverk i CLAUDE.md och uppsättning av arbetssätt. Ingen löpande
+>    kodimplementering eller vardaglig vakt-städning.»*
+> 2. *«Opus 5.5 (Byggaren & Maskinisten): Det är Opus som verkställer, skriver kod, bygger funktioner,
+>    kör testsviter (2698+ tester), hanterar granskningslinser och driver PR-flödet autonomt på
+>    autopilot.»*
+>
+> Operativt:
+> · Körplanen står i `ops/KORPLAN-VAG1.md` och byggarens rutin i `ops/BYGGARRUTIN.md`. Båda är bindande
+>   på samma sätt som den här filen. En session börjar med blocket `Nu` i körplanen.
+> · Byggaren stannar aldrig i väntan på ett godkännande, varken grundarens eller arkitektens. Ett
+>   strukturbeslut som planen saknar skrivs under «Till arkitekten» i körplanen, och byggaren går vidare.
+> · Står sessionen på Fable bygger Fable inte själv. Den skickar byggpass och linser till Opus-agenter.
+> · CTO-mandatet ovan gäller oförändrat för den som håller huvudloopen. En lins är fortfarande en
+>   separat agent, och byggaren skriver aldrig en dom.
+
 > **Den här bibeln är levande, inte helig.** Den fångar vår bästa nuvarande
 > förståelse — inte en gräns för hur långt vi får tänka. Ser du en modigare,
 > mer lönsam eller mer kreativ väg än vad som står här: **säg det och föreslå

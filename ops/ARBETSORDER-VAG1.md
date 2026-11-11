@@ -4,6 +4,11 @@ Grundaren gav 22 okt ett totalt CTO-mandat (CLAUDE.md, överst). Det här är k�
 `ops/ARBETSORDER-LANSERING.md`, vars punkter 1, 2, 3 och 5 är klara. Varje steg är en egen fokuserad
 PR som mergas genom Grinden. En uppgift och en granskningslins körs i taget.
 
+> **11 nov: körplanen står i `ops/KORPLAN-VAG1.md`.** Grundaren satte samma dag rollfördelningen
+> (arkitekten planerar, byggaren verkställer enligt `ops/BYGGARRUTIN.md`). Tabellen nedan är historik
+> fram till 10 nov. Den här filen är fyndliggaren: varje granskningsfynd och varje loggat förexisterande
+> fel står här.
+
 ## Läge
 
 | Steg | Innehåll | Läge |
@@ -161,7 +166,17 @@ utkastet till K-5, de påbörjade lagningarna av H1-1..H1-3 och granskarnas sond
      sann mening om att bredbandet på fakturan inte prissätts, och byggs rätt i C1-3 (rad-först). Ingen åttonde
      rond på samma form (regel 13).
 
-**Kvar, förexisterande [KUND], egna PR:er efter c2:**
+**Omläggning 11 nov (arkitekten): stoppgränsen tas nu, före sjunde blicken.** Avläst i koden samma dag:
+`fakturaLage` sätter fakturans poäng ur hela årskostnaden mot förslaget, medan `radScore` ger samma analys
+ingen poäng i rummet. Att behålla bredbandsdelen kräver alltså ett nytt kundläge, «byte utan poäng», i
+fakturavyn och tre mejl, ovanpå lagningarna av H1-1..H1-3. Rond 4, 5 och 6 föll alla på kombinerade
+fakturor (regel 13). c1 får därför ett enda, totalt påstående: en mobilfaktura får inget byte, inget
+avstånd och ingen poäng i någon yta. Ingen sekundär besparing räknas på en mobilfaktura, och `bytesdelar`
+tas bort. Ordern står i `ops/KORPLAN-VAG1.md` (S1). **Kostnaden, öppet:** bredbandsdelen på en kombinerad
+faktura visas inte förrän den byggs på rätt nivå (A-2 i körplanen). Det avviker från alternativet grundaren
+valde 4 nov.
+
+**Kvar, förexisterande [KUND], egna PR:er (ordningen står i körplanen, S2–S6):**
 - **C1-3 · Fakturavyn, mejlen, briefingen och dörren räknar mobilens avstånd och byte mot det billigaste
   abonnemanget.** 349-planen till listpris får «Ni betalar 30 % över verifierat publikt listpris», poäng
   66 och ett byte till 269-planen. Det är grundarens exempel utanför rummet, och roten till C1-1. Bytet ska

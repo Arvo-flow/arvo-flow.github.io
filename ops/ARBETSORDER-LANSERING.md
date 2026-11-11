@@ -146,6 +146,10 @@ som tömmer pärmen dag ett träffar taket. Alternativ: (a) höj till ~150 under
 
 ## Rollfördelningen framåt (kreditekonomi)
 
+> **11 nov: rollfördelningen är nu ett permanent grundarbeslut** (`CLAUDE.md`, överst): Fable 5.2 är
+> arkitekt, Opus 5.5 är byggare. Punkt 4 ovan och vägen till våg 1 står i `ops/KORPLAN-VAG1.md` (S8
+> och S9). Raderna nedan är ordern som den skrevs 24 aug.
+
 - **Opus 5:** bygger denna order, kör syskonfallen och sabotagen själv (regeln står i bibeln),
   live-verifierar, lanserar våg 1 (5 kunder), motprövar återstående hypoteser, sveper de 15
   områdena.
