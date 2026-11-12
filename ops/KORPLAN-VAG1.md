@@ -15,17 +15,17 @@ Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5
 startar om läser blocket först.
 
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** 822e9d43, tillägget efter den sjunde linsen. Den sjunde linsen på
-  9c2991d1 dog på kontots gräns (5 timmar) utan dom och är OGRANSKAD. Dess worktree var ren och är borttagen.
-  Skörden var en prövlista: aktiveringsmejlet, beräkningsunderlaget, avtalspåminnelsen, utfallsenkäten,
-  briefen och dörren bar ett mobilbyte, «+0 kr» eller «inget verifierat jämförelsepris». Varje punkt är
-  återskapad i sviten och lagad i 822e9d43 (FV-A11, FV-L, DI-30, RU-02; elva sabotage, alla fällde).
-- **Lins igång:** ja. Åttonde linsen på 822e9d43 startas 12 nov med ordern i scratchpaden (lins-s1b.txt);
-  domen skrivs till `ops/GRANSKNING-s1-mobilfakturan.md` och pushas av linsen. Säkerhetsnät: 60 minuter.
+- **Senaste mekanikcommit på grenen:** e7512b82, lagningen av den åttonde blickens fyra [KUND] (K-1..K-4).
+  Den åttonde linsen blockerade 822e9d43 (`ops/GRANSKNING-s1-mobilfakturan.md`). Det är S1:s första blockering
+  i rad; den sjunde linsen dog utan dom och räknas inte. V-1..V-4 ([VAKT]) lagas framåt och står i
+  `ops/ARBETSORDER-VAG1.md`.
+- **Lins igång:** ja. Nionde linsen på e7512b82 startas 12 nov; domen skrivs till `ops/GRANSKNING-s1-lagningen.md`
+  och pushas av linsen. Säkerhetsnät: 60 minuter.
+- **Fable igång:** ja, på grundarens begäran 12 nov: en analys av gränssnittet mot kund (dörren, fakturavyn,
+  mejlen, rummet, premium). Fable ändrar inga filer; analysen sparas i `ops/ANALYS-GRANSSNITT-FABLE.md`.
 - **Byggare igång:** nej.
-- **Nästa handling:** när domen kommit: MERGAS → öppna PR:en mot main med auto-merge; BLOCKERAR → stoppregeln.
-  En blockering här räknas som den första i rad för S1 (den sjunde linsen gav ingen dom), och vid den andra
-  kopplas Fable in (eskaleringsregeln). Efter mergen: S6, sedan S4 (ordningen ur S2 nedan).
+- **Nästa handling:** när domen kommit: MERGAS → öppna PR:en mot main med auto-merge; BLOCKERAR → den andra
+  blockeringen i rad, och Fable kopplas in enligt eskaleringsregeln innan något byggs. Efter mergen: S6, sedan S4.
 
 ## Målet
 

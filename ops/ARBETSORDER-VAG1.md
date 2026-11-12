@@ -297,6 +297,21 @@ Var och en byggs i en egen PR, med egen granskning.
   Bryggan visas bara när marknadsankaret saknas (`lib/domain-intel.js`); hur ofta det sker är inte
   avläst. Egen PR.
 
+- **Ur den åttonde blickens dom på S1 (`ops/GRANSKNING-s1-mobilfakturan.md`), lagas framåt:**
+  · V-1 [VAKT]: `planvalsgrind` lämnar modellens `optimizationSaving` och `switchSteps` i svaret bredvid
+    `no_action`. Ingen yta läser dem utan `optimize`. Instrumentets matris saknar modellens tredje svar.
+  · V-3 [VAKT]: `savingsBreakdown: null` i grinden och `&& rek.shouldSwitch !== true` i `fakturaLage` kan
+    inte observeras (sabotagen fällde 0). Antingen gör dem till det enda skyddet, eller ta bort dem.
+  · V-4 [VAKT]: neon-stubben svarar med hela raden oavsett vilka kolumner satsen väljer, så FV-L ser inte en
+    SELECT utan `category`. Stubben ska svara med satsens kolumner (IA-11:s form).
+  · V-2 är byggd i e7512b82 (sonden öppnar «Hur vi räknar»).
+  · K-1:s allmänna form, förexisterande och utanför S1: rummets «möjlig nettobesparing» summerar varje rads
+    `net_saving`, också en bredbandsrad utan bytesflagga (minimigränsen nollar flaggan, inte beloppet). [KUND]
+    om en sådan rad står bredvid ett byte; om det sker i produktionen är inte avläst. Egen PR.
+  · Listprisnotisen «Priset baseras på verifierade offentliga listpriser … Vid genomfört byte bekräftas
+    slutpriset i offert» står under «Hur vi räknar» på varje faktura utan byte i en listprisverifierad
+    kategori, också där inget byte finns. Förexisterande, utanför S1 (S1 tog bort den för planval). Egen PR.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,
