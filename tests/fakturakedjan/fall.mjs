@@ -94,14 +94,30 @@ export const MOTPROV = [
       rader: [] }),
   },
 ];
-// En mobilfaktura med en slutbetald delbetalningsrad: forensiken räknar ett fynd i kronor ur kundens egna
-// rader, och planvalsbeskedet står i samma vy (K-2, åttonde linsen).
-const DELBETALNING = { type: 'recurring_subscription', description: 'Delbetalning iPhone 15 Pro, månad 38 av 36', amount: 449 };
-export const FYNDFALL = ['ja', 'nej'].map((modell) => fall({ id: `fynd·xl349·${modell}`, kategori: 'mobil', modell,
-  antalAvlast: true, rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (10 st)', amount: 3490 }, DELBETALNING] }));
-for (const f of FYNDFALL) {
-  const d = f.extraktion.lineItems[1];
-  Object.assign(d, { quantity: 1, unitPrice: 449, unit_price_ore: 44900 });
+// Fyndmatrisen (Fables beslut 12 nov, beviskrav 3): varje fyndtyp i lib/forensics.js på en ren och en kombinerad
+// mobilfaktura, med modellens ja och nej. Forensiken räknar fyndet ur kundens egna rader, och planvalsbeskedet står
+// i samma vy. K-2 (delbetalningen) och N-1 (leverantörens egen höjning) fälldes på två av dem.
+export const FYNDRADER = {
+  hardware_overpaid: 'Delbetalning iPhone 15 Pro, månad 38 av 36',
+  supplier_documented_hike: 'Prisjustering mobilabonnemang',
+  fx_surcharge: 'Valutapåslag',
+  hardware_financing: 'Delbetalning iPhone 15 Pro, månad 12 av 36',
+  junk_fee: 'Pappersfakturaavgift',
+};
+export const FYNDFALL = [];
+for (const [typ, beskrivning] of Object.entries(FYNDRADER)) {
+  for (const form of ['ren', 'komb']) {
+    for (const modell of ['ja', 'nej']) {
+      const rader = [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (10 st)', amount: 3490 },
+        ...(form === 'komb' ? [{ type: 'recurring_subscription', description: 'Företagsbredband Fiber 1000/1000', amount: 699 }] : []),
+        { type: 'recurring_subscription', description: beskrivning, amount: 449 }];
+      const f = fall({ id: `fynd·${typ}·${form}·${modell}`, kategori: 'mobil', modell, antalAvlast: true, rader,
+        blandad: form === 'komb', hastighet: form === 'komb' ? 1000 : null });
+      Object.assign(f.extraktion.lineItems.at(-1), { quantity: 1, unitPrice: 449, unit_price_ore: 44900 });
+      f._fyndtyp = typ;
+      FYNDFALL.push(f);
+    }
+  }
 }
 
 // IT-8821 bär sina avlästa antal och à-priser ordagrant ur fixturen.

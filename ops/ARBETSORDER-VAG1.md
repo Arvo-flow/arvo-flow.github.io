@@ -312,6 +312,14 @@ Var och en byggs i en egen PR, med egen granskning.
     slutpriset i offert» står under «Hur vi räknar» på varje faktura utan byte i en listprisverifierad
     kategori, också där inget byte finns. Förexisterande, utanför S1 (S1 tog bort den för planval). Egen PR.
 
+- **Ur den nionde blickens dom på S1 (`ops/GRANSKNING-s1-lagningen.md`):**
+  · N-3 [KUND], förexisterande, utanför S1: rummets rad med obekräftad nivå säger «Det billigaste publicerade priset
+    är 3 228 kr (Tele2 Företag mobilabonnemang)» utan bindningstiden, och prisboken namnger ett billigare publicerat
+    abonnemang (Kollega). Samma ankare i prospektet. Egen PR.
+  · Rummets `bevakat_avtal`-rad («Vi har inte jämfört priset, så vi säger inget om prisnivån») är Fables förbjudna
+    form 1 på en monitoring-rad. Förexisterande, utanför S1. Egen PR.
+  · V-5 är byggd i samma commit som Fables beslut (FV-A14).
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,

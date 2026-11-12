@@ -66,8 +66,8 @@ export const ANALYSRUBRIKER = {
   planval: {
     positivtPastaende: false,
     rubrik: 'Ingen jämförelse mot listpris.',
-    text: 'Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har. Därför säger vi inget om '
-        + 'ert pris för dem och räknar ingen besparing på dem.',
+    text: 'Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har. Därför jämför vi inte '
+        + 'ert pris mot listpriset.',
   },
   // Kategorin saknar revisionsgrindens täckning: vi visar inga tal alls.
   kategori_omatt: {
@@ -114,6 +114,12 @@ export const UTAN_VERIFIERAT_PRIS = 'Vi har inget verifierat publikt pris för d
  * @returns {string}
  */
 export function diagnosMening(lage, { harByte = false } = {}) {
+  // Planvalsläget bär bara skälet och att vi inte jämför mot listpris. Den allmänna ramen nedan sa «Vi hävdar därför
+  // inget om er prisnivå i dag, och lägger aldrig fram en besparing vi inte kan räkna hem», som ett fynd på samma
+  // faktura gör falskt (Fables beslut 12 nov, FV-A13).
+  if (lage?.rubrik === 'planval' && !lage?.matt) {
+    return `Vi har läst er faktura, men ${lage.skal}. Därför jämför vi inte ert pris mot listpriset.`;
+  }
   if (!lage?.matt) {
     return `Vi har läst er faktura och ert nuläge — men ${lage?.skal ?? 'jämförelsen kunde inte göras'}. Vi hävdar därför inget om er prisnivå i dag, och lägger aldrig fram en besparing vi inte kan räkna hem.`;
   }

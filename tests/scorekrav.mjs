@@ -199,7 +199,7 @@ describe('SCOREKRAV · talet och dess bevis kan inte säga emot varandra', () =>
     assert.doesNotMatch(text, /på eller under det billigaste/i,
       'ett pris vi inte kan bedöma får aldrig berömmas');
     assert.doesNotMatch(text, /\d+% mer/, 'och inget avstånd får påstås');
-    assert.match(text, /säger inget om avståndet/i, 'säg rakt ut att vi inte kan bedöma det');
+    assert.match(text, /jämför inte ert pris mot det/i, 'säg rakt ut att vi inte jämför');
     // «Dela avtalet, så låser vi jämförelsen» stod här till 2026-11-03. Ingen kod läser nivån ur ett
     // avtal (contract-upload saknar nivåläsning; rummet läser den ur fakturans rader), så löftet hade
     // ingen mekanik (regel 9). Det får inte komma tillbaka (MS-04).

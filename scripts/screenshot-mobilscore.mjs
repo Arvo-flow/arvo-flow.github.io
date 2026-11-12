@@ -5,7 +5,7 @@
 // stubbat är nätverket.
 //
 // KONTROLLER I DOM:EN (med motprov):
-//   mobil 349    → «Nivå ej bekräftad», «säger inget om avståndet», medianen som «Näst billigaste
+//   mobil 349    → «Nivå ej bekräftad», «jämför inte ert pris mot det», medianen som «Näst billigaste
 //                  publicerade abonnemang»; aldrig «% över lägsta pris», «Samma licens utan bindning»,
 //                  «Rätt prissatt», «Dela avtalet», «tio gånger», «Marknadsankaret» eller «leverantörens
 //                  eget listpris»; innehavet säger «1 mottagen, inte prissatt», aldrig «1 prissatt»
@@ -116,7 +116,7 @@ const text = async (p) => (await p.innerText('body')).replace(/\s+/g, ' ');
 for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   let p = await sida(bredd, RUM.mobil);
   let t = await text(p);
-  for (const re of [/Nivå ej bekräftad/i, /säger inget om avståndet/, /Näst billigaste publicerade abonnemang/, /1 mottagen, inte prissatt/i])
+  for (const re of [/Nivå ej bekräftad/i, /jämför inte ert pris mot det/, /Näst billigaste publicerade abonnemang/, /1 mottagen, inte prissatt/i])
     if (!re.test(t)) fel(`mobil saknar ${re} (${namn})`);
   for (const re of [/% över lägsta pris/i, /Samma licens utan bindning/, /Rätt prissatt/i, /Dela avtalet/i, /tio gånger/, /% över det billigaste/,
     /Marknadsankaret/i, /leverantörens eget listpris/, /1 prissatt leverantör/i, /Vägde 1 faktura/, /Den jämförelsen kommer/])

@@ -27,10 +27,10 @@ import { writeFileSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MOBILFALL, MOTPROV, FYNDFALL, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
+import { MOBILFALL, MOTPROV, FYNDFALL, FYNDRADER, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { PLANVAL_BESKED } from '../lib/lagesregister.js';
-import { PLANVALS_MENING } from '../agents/recommender/recommend.js';
+import { PLANVALS_MENING, BREDBAND_EJ_PRISSATT } from '../agents/recommender/recommend.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 
 const ROT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -87,6 +87,9 @@ const ALLA_MOBIL_IDS = MOBILFALL.map((f) => f.id);
 // (en bredbandstung faktura) är spegelfallet, steg S6; FV-00 räknar dem och kräver att de är få.
 let MOBIL_IDS = ALLA_MOBIL_IDS;
 const PROCENT_MER = /\d+\s?%\s?(mer|över|dyrare)/i;
+// Fables beslut 12 nov: en planvalstext bär bara skälet och att vi inte jämför mot listpris. De här formerna säger
+// något om allt annat på sidan eller om en senare analys, och varje fynd ur kundens egna rader kan göra dem falska.
+const FORBJUDNA_PLANVALSFORMER = /säger inget om|hävdar .{0,40}inget om|ingen besparing|aldrig fram en besparing|analyseras via/i;
 
 describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
   before(async () => {
@@ -146,7 +149,7 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
   });
 
   test('FV-A4 · kunden får planvalsmeningen ordagrant, och bredbandsmeningen bara där en bredbandsdel lästs', () => {
-    const MENING_BB = 'Bredbandet på samma faktura har vi inte prissatt i den här analysen.';
+    const MENING_BB = 'Bredbandet på samma faktura har vi inte jämfört mot listpris i den här analysen.';
     const fel = brott(MOBIL_IDS, (u) => {
       if (u.route !== 'auto') return null;
       const r = u.rek.reasoning ?? '';
@@ -271,21 +274,88 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     assert.deepEqual(fel, [], visa(fel));
   });
 
-  test('FV-A12 · planvalsbeskedet gäller produkterna och säger inget om ett fynd på samma faktura (K-2)', () => {
-    // Premissen: handlern räknar ett fynd i kronor ur kundens egna rader på en mobilfaktura, och fakturans läge
-    // är ändå planval. Annars prövar testet ingenting.
-    for (const f of FYNDFALL) {
-      const u = UT.get(f.id);
-      assert.equal(u.kraschade, undefined, `${f.id}: ${u.kraschade}`);
-      assert.equal(u.lage?.rubrik, 'planval', `${f.id}: rubriken ${u.lage?.rubrik}`);
-      assert.ok(u.fynd, `${f.id}: inget fynd, så testet prövar ingenting`);
+  test('FV-A12 · fyndmatrisen: varje fyndtyp, ren och kombinerad, och ingen yta säger emot fyndet (K-2, N-1)', () => {
+    const sedda = new Set();
+    const fel = brott(FYNDFALL.map((f) => f.id), (u) => {
+      const f = FYNDFALL.find((x) => x.id === u.id);
+      if (u.route !== 'auto') return `route ${u.route}`;
+      if (u.lage?.rubrik !== 'planval') return `rubriken ${u.lage?.rubrik}`;
+      if (!u.fynd) return 'inget fynd, så fallet prövar ingenting';
+      if (u.fynd.typ !== f._fyndtyp) return `fyndet ${u.fynd.typ}, väntat ${f._fyndtyp}`;
+      sedda.add(u.fynd.typ);
+      // Inget fynd är en listprisjämförelse; då kan inget fynd motsäga «vi jämför inte ert pris mot listpriset».
+      if (/listpris/i.test(`${u.fynd.titel} ${u.fynd.text}`)) return `fyndtexten nämner listpris: «${u.fynd.text}»`;
+      const ytor = {
+        fakturavyn: `${PLANVAL_BESKED.rubrik} ${PLANVAL_BESKED.text} ${u.rek.reasoning ?? ''}`,
+        analysmejlet: u.mejl?.analys ?? '', aktiveringsmejlet: u.mejl?.aktivering ?? '', svarsmejlet: u.mejl?.svar ?? '',
+        rummet: (u.rum?.rader ?? []).map((r) => r.motivering).join(' '),
+      };
+      for (const [yta, t] of Object.entries(ytor)) {
+        const m = t.match(FORBJUDNA_PLANVALSFORMER);
+        if (m) return `${yta}: «${m[0]}»`;
+      }
+      if (!u.mejl?.analys.includes(PLANVAL_BESKED.text)) return 'analysmejlet saknar planvalsbeskedet';
+      return null;
+    });
+    assert.deepEqual(fel, [], visa(fel));
+    assert.deepEqual([...sedda].sort(), Object.keys(FYNDRADER).sort(), 'matrisen täcker inte varje fyndtyp');
+  });
+
+  test('FV-A13 · varje planvalstext ordagrant, och ingen säger något om allt annat på sidan (Fables beslut 12 nov)', async () => {
+    const { diagnosMening, ANALYSRUBRIKER } = await import('../src/lib/diagnos.js');
+    const { MOTIVERING } = await import('../src/lib/rumstext.js');
+    const vy = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
+    const ovriga = vy.match(/Övriga tjänster \([^`]*?\/år\) ([^`]*?)`/);
+    assert.ok(ovriga, 'meningen om övriga tjänster hittades inte i fakturavyn');
+    const texter = {
+      'PLANVAL_BESKED.text': [PLANVAL_BESKED.text, 'Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har. Därför jämför vi inte ert pris mot listpriset.'],
+      'PLANVAL_BESKED.skal': [PLANVAL_BESKED.skal, 'vi vet inte vilken produkt ni har, och produkterna i kategorin har olika listpris'],
+      'ANALYSRUBRIKER.planval.text': [ANALYSRUBRIKER.planval.text, PLANVAL_BESKED.text],
+      'diagnosMening i planvalsläget': [diagnosMening({ matt: false, rubrik: 'planval', skal: PLANVAL_BESKED.skal }),
+        'Vi har läst er faktura, men vi vet inte vilken produkt ni har, och produkterna i kategorin har olika listpris. Därför jämför vi inte ert pris mot listpriset.'],
+      PLANVALS_MENING: [PLANVALS_MENING, 'Vi jämför inte era mobilabonnemang mot det billigaste publicerade abonnemanget, eftersom vi inte vet vilket abonnemang ni har. Ett billigare abonnemang kan vara en annan produkt, med mindre surf eller färre tjänster.'],
+      BREDBAND_EJ_PRISSATT: [BREDBAND_EJ_PRISSATT, 'Bredbandet på samma faktura har vi inte jämfört mot listpris i den här analysen.'],
+      'rummets planvalsrad': [MOTIVERING.omatt({ planval: true }, 'mobilabonnemang'),
+        'Fakturan är mottagen och klassad som mobilabonnemang. Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har, så vi jämför inte priset mot listpriset.'],
+      'rummets rad med obekräftad nivå': [MOTIVERING.oviss_niva({ perEnhet: 4188, unitLabel: 'per abonnemang/år', golv: 3228 }, 'mobilabonnemang'), null],
+      'fakturavyns övriga tjänster': [ovriga[1], 'har vi inte jämfört mot listpris i den här analysen.'],
+    };
+    for (const [namn, [text, ordagrant]] of Object.entries(texter)) {
+      if (ordagrant != null) assert.equal(text, ordagrant, `${namn} har glidit`);
+      assert.doesNotMatch(text, FORBJUDNA_PLANVALSFORMER, `${namn}: «${text}»`);
+      assert.doesNotMatch(text, /förrän vi vet|senare|nästa gång/i, `${namn} lovar något om en senare analys`);
     }
-    // Meningen avgränsar sig till produkterna; «Därför räknar vi ingen besparing» om sidan stod under fyndet.
-    for (const t of [PLANVAL_BESKED.text, PLANVAL_BESKED.skal]) {
-      assert.doesNotMatch(t, /ingen besparing(?! på dem)/, `«${t}»`);
-    }
-    assert.match(PLANVAL_BESKED.text, /räknar ingen besparing på dem\.$/);
-    for (const f of FYNDFALL) assert.ok(UT.get(f.id).mejl.analys.includes(PLANVAL_BESKED.text), `${f.id}: analysmejlet`);
+    // Motprovet: förbudet fäller de texter som fälldes av granskningarna.
+    for (const gammal of [
+      'Därför räknar vi ingen besparing och säger inget om ert pris.',
+      'Därför säger vi inget om ert pris för dem och räknar ingen besparing på dem.',
+      'Vi hävdar därför inget om er prisnivå i dag, och lägger aldrig fram en besparing vi inte kan räkna hem.',
+      'så vi räknar ingen besparing på dem.',
+      'Övriga tjänster (12 588 kr/år) analyseras via Fortnox/Visma.',
+      'så vi jämför inte priset och säger inget om prisläget.',
+    ]) assert.match(gammal, FORBJUDNA_PLANVALSFORMER, `förbudet släpper «${gammal}»`);
+    assert.doesNotMatch(vy, /analyseras via Fortnox/, 'fakturavyn lovar en Fortnox-analys');
+    // Prompten beordrar modellen att skriva meningen om övriga tjänster ordagrant i sin text.
+    const rek = readFileSync(join(ROT, 'agents/recommender/recommend.js'), 'utf8');
+    assert.doesNotMatch(rek, /analyseras via Fortnox/, 'prompten beordrar modellen att lova en Fortnox-analys');
+    assert.match(rek, /kr\+\) har vi inte jämfört mot listpris i den här analysen\./);
+  });
+
+  test('FV-A14 · listprisnotisen står inte på en planvalsfaktura (K-3, V-5)', () => {
+    // Notisen «Priset baseras på verifierade offentliga listpriser … Vid genomfört byte» stod under «Hur vi räknar»
+    // på varje mobilfaktura. Villkoret prövades bara av renderingssonden (V-5); det här håller det i sviten.
+    const vy = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
+    // Texten står två gånger: i besparingsrutan (bara över ett byte) och under «Hur vi räknar», som är den K-3 gällde.
+    const NOTIS = "'Priset baseras på verifierade offentliga listpriser";
+    assert.equal(vy.split(NOTIS).length - 1, 2, 'notisen står på ett nytt ställe; pröva också det');
+    const underlag = vy.indexOf('{detailsOpen && <>');
+    assert.ok(underlag > 0, 'underlaget «Hur vi räknar» hittades inte');
+    const i = vy.indexOf(NOTIS, underlag);
+    assert.ok(i > underlag, 'notisen under «Hur vi räknar» hittades inte');
+    const villkor = vy.slice(vy.lastIndexOf('{result.route', i), i);
+    assert.match(villkor, /result\.lage\?\.rubrik !== 'planval'/, `notisens villkor: «${villkor.slice(0, 200)}»`);
+    assert.match(villkor, /<PriceNote>/, 'utsnittet nådde inte notisens villkor');
+    for (const f of FYNDFALL.slice(0, 2)) assert.equal(UT.get(f.id).lage?.rubrik, 'planval', 'premissen: rubriken är planval');
   });
 
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {

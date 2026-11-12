@@ -46,10 +46,10 @@ import { kundensMotivering, kundensSteg } from '../../lib/kundmeningar.js';
 // besparing räknas, och den är sann för varje faktura grinden når (PG-01).
 export const PLANVALS_MENING = 'Vi jämför inte era mobilabonnemang mot det billigaste publicerade abonnemanget, '
   + 'eftersom vi inte vet vilket abonnemang ni har. Ett billigare abonnemang kan vara en annan produkt, med mindre '
-  + 'surf eller färre tjänster, så vi räknar ingen besparing på dem.';
+  + 'surf eller färre tjänster.';
 // Läggs efter planvalsmeningen när fakturavägen själv läst en bredbandsdel (`secondaryComponentMonthly`).
 // Meningen lovar ingenting om framtiden: delen prissätts inte förrän den byggs som egen del (FV-A4).
-export const BREDBAND_EJ_PRISSATT = 'Bredbandet på samma faktura har vi inte prissatt i den här analysen.';
+export const BREDBAND_EJ_PRISSATT = 'Bredbandet på samma faktura har vi inte jämfört mot listpris i den här analysen.';
 
 const MODEL = 'claude-opus-4-8';
 const MAX_TOKENS = 1024;
@@ -490,7 +490,9 @@ Kategoriserad faktura:
             : `Bredbandskomponenten är marknadsmässig.`;
           return `Fakturan innehåller även ${_secLabel} (${_secCostFmt} kr/år) — ${_action}`;
         })()
-      : `Övriga tjänster (${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr+) analyseras via Fortnox/Visma.`;
+      // Stod förut att övriga tjänster analyserades i Fortnox eller Visma: ingen kod gör det, och modellen beordras
+      // skriva meningen ordagrant (N-2, FV-A13).
+      : `Övriga tjänster (${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr+) har vi inte jämfört mot listpris i den här analysen.`;
     const _secActionInstruction = _hasSavingBoth
       ? `KRITISKT: Bredbandskomponenten har en besparing mot verifierat listpris. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en åtgärd kunden kan ta ("vi kan förbereda även bredbandsbytet" — uppsägning och nyteckning gör kunden själv), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `
       : `KRITISKT: Ange i reasoning EXAKT `;

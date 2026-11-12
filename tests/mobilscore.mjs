@@ -110,7 +110,7 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     const { MOTIVERING } = await import('../src/lib/rumstext.js');
     const [a] = await rummet([rad(1, 'mobil', 349 * 12 * 10, 10)]);
     const text = MOTIVERING.oviss_niva(a.prisunderlag, 'mobil');
-    assert.match(text, /säger inget om avståndet/);
+    assert.match(text, /så vi jämför inte ert pris mot det\.$/);
     for (const falskt of [/licens/i, /tio gånger/, /Dela avtalet/i, /låser vi jämförelsen/i]) {
       assert.doesNotMatch(text, falskt, `radens text säger ${falskt}`);
     }

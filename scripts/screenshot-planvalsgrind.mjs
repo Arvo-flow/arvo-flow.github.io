@@ -30,7 +30,8 @@ const UT = join(ROT, 'results/screenshots/planvalsgrind');
 if (!existsSync(join(BUILD, 'index.html'))) { console.error('✗ build/ saknas — kör `npm run build` först.'); process.exit(1); }
 
 const { MOBILFALL, MOTPROV, FYNDFALL } = await import('../tests/fakturakedjan/fall.mjs');
-const VALDA = ['comb-01·nej·antal', 'xl349·ja·antal', 'motprov·bredband', 'fynd·xl349·nej'];
+const VALDA = ['comb-01·nej·antal', 'xl349·ja·antal', 'motprov·bredband', 'fynd·hardware_overpaid·ren·nej',
+  'fynd·supplier_documented_hike·komb·nej'];
 const fall = [...MOBILFALL, ...MOTPROV, ...FYNDFALL].filter((f) => VALDA.includes(f.id));
 const dir = await mkdtemp(join(tmpdir(), 'planvalsgrind-'));
 await writeFile(join(dir, 'fall.json'), JSON.stringify(fall));
@@ -77,16 +78,19 @@ const FORBJUDET = [/Ni betalar för mycket/, /Vi hittar inget publikt pris att b
   /möjlig nettobesparing/i, /Ni behåller/i, /\d+\s?% (över|mer)/i, /Förbättringsläge/i, /Kritisk/i,
   /Suboptimerat/i, /\b\d{1,3}\s?\/\s?100\b/, /rekommenderar byte/i,
   // K-2 och K-3: en besparingsmening om sidan, och listprisnotisen som säger att ett pris baseras på något.
-  /ingen besparing(?! på dem)/i, /Priset baseras på verifierade offentliga listpriser/, /Vid genomfört byte/,
+  /säger inget om/i, /ingen besparing/i, /analyseras via/i, /Priset baseras på verifierade offentliga listpriser/, /Vid genomfört byte/,
   /Beräkningsunderlag/, /Er nettobesparing/];
 
 for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   for (const [id, fil, maste] of [
     ['comb-01·nej·antal', 'kombinerad', [/Ingen jämförelse mot listpris/, /Vi jämför inte era mobilabonnemang/,
-      /Bredbandet på samma faktura har vi inte prissatt/]],
+      /Bredbandet på samma faktura har vi inte jämfört mot listpris/]],
     ['xl349·ja·antal', 'plan349', [/Ingen jämförelse mot listpris/, /Vi jämför inte era mobilabonnemang/]],
     // Fyndet ur kundens egna rader står kvar ovanför beskedet (K-2).
-    ['fynd·xl349·nej', 'fynd', [/Ingen jämförelse mot listpris/, /898/, /räknar ingen besparing på dem/]],
+    ['fynd·hardware_overpaid·ren·nej', 'fynd', [/Ingen jämförelse mot listpris/, /898/, /Därför jämför vi inte ert pris mot listpriset/]],
+    // N-1 och N-2: leverantörens egen höjning på en kombinerad faktura.
+    ['fynd·supplier_documented_hike·komb·nej', 'hojning', [/Leverantören skrev in höjningen själv/,
+      /Därför jämför vi inte ert pris mot listpriset/, /har vi inte jämfört mot listpris i den här analysen/]],
   ]) {
     const p = await fakturavyn(bredd, SVAR[id], '/Vi jämför inte era mobilabonnemang/');
     const t = await text(p);

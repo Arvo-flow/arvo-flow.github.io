@@ -15,17 +15,16 @@ Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5
 startar om läser blocket först.
 
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** e7512b82, lagningen av den åttonde blickens fyra [KUND] (K-1..K-4).
-  Den åttonde linsen blockerade 822e9d43 (`ops/GRANSKNING-s1-mobilfakturan.md`). Det är S1:s första blockering
-  i rad; den sjunde linsen dog utan dom och räknas inte. V-1..V-4 ([VAKT]) lagas framåt och står i
-  `ops/ARBETSORDER-VAG1.md`.
-- **Lins igång:** ja. Nionde linsen på e7512b82 startas 12 nov; domen skrivs till `ops/GRANSKNING-s1-lagningen.md`
-  och pushas av linsen. Säkerhetsnät: 60 minuter.
-- **Fable igång:** ja, på grundarens begäran 12 nov: en analys av gränssnittet mot kund (dörren, fakturavyn,
-  mejlen, rummet, premium). Fable ändrar inga filer; analysen sparas i `ops/ANALYS-GRANSSNITT-FABLE.md`.
+- **Senaste mekanikcommit på grenen:** «S1: planvalsytan säger bara att vi inte jämför mot listpris», Fables beslut om planvalsytan verkställt (N-1, N-2, V-5). Den nionde
+  linsen blockerade e7512b82 (`ops/GRANSKNING-s1-lagningen.md`), S1:s andra blockering i rad. Fable avgjorde frågan
+  enligt eskaleringsregeln innan något byggdes; beslutet står under S1 nedan.
+- **Lins igång:** ja. Tionde linsen på den commiten startas 12 nov; domen skrivs till `ops/GRANSKNING-s1-tionde.md`.
+  Säkerhetsnät: 60 minuter. En tredje blockering i rad går tillbaka till Fable med samma underlag.
+- **Fable:** grundarens två analyser av gränssnittet och frontend är klara (`ops/ANALYS-GRANSSNITT-FABLE.md`). Fynden är
+  Fables läsningar; varje fynd mäts innan något byggs på det, och de som rör våg 1 förs in i stegen efter S1.
 - **Byggare igång:** nej.
-- **Nästa handling:** när domen kommit: MERGAS → öppna PR:en mot main med auto-merge; BLOCKERAR → den andra
-  blockeringen i rad, och Fable kopplas in enligt eskaleringsregeln innan något byggs. Efter mergen: S6, sedan S4.
+- **Nästa handling:** när domen kommit: MERGAS → öppna PR:en mot main med auto-merge; BLOCKERAR → Fable igen. Efter
+  mergen: S6, sedan S4, och löftessaneringen ur Fables analys (punkt 1 i hans plan) före våg 1.
 
 ## Målet
 
@@ -235,6 +234,48 @@ mergecommiten. Kör `diag-live` mot produktionen med en mobilfaktura (`lage.matt
 en bredbandsfaktura som motprov. Starta sedan om grenen från main.
 
 ---
+
+### Arkitektbeslut 12 nov (Fable 5.2, eskaleringsregeln, utlösare 4: två blockeringar i rad)
+
+**Underlaget:** den åttonde blicken fällde «Därför räknar vi ingen besparing» under ett fynd på 898 kr (K-2), och
+lagningen fälldes av den nionde under fyndet «Leverantören skrev in höjningen själv · 4 800 kr/år» (N-1). Samma
+dom fann «Övriga tjänster (…) analyseras via Fortnox/Visma» på 72 av 84 kombinerade mobilfall, mot 12 på main (N-2).
+
+**Beslutet: den minsta sanna meningen (regel 13), som en regel för hela planvalsytan.** Ett planvalsbesked bär två
+saker: skälet (produkten är okänd, listpriserna skiljer sig) och den enda handling koden avstår från (jämförelsen mot
+listpris). Tre former är förbjudna:
+1. «säger inget / hävdar inget om ert pris, prisläge eller prisnivå»: ett påstående om allt annat på sidan, som varje
+   fynd ur kundens egna rader gör falskt;
+2. «räknar ingen besparing», «lägger aldrig fram en besparing»: falskt bredvid ett fynd i kronor, hur det än avgränsas;
+3. varje mening om vad som händer med en del någon annanstans eller senare («analyseras via Fortnox/Visma»,
+   «förrän vi vet»).
+
+**Skälen mot de andra alternativen:** villkorad text dubblar ytan som ska prövas (varje gren kan vara falsk för en
+fyndtyp ingen räknat upp, vilket är hur N-1 uppstod); bara rubriken tappar skälet (oförklarad tystnad); att dölja
+beskedet när ett fynd finns tar bort det just när kunden undrar varför mobilpriset inte bedöms. «Vi jämför inte ert
+pris mot listpriset» beskriver en kodväg som grinden stänger, och inget fynd i `lib/forensics.js` är en
+listprisjämförelse, så inget fynd kan motsäga meningen.
+
+**Ordalaget, verkställt:**
+- `PLANVAL_BESKED.text` (och spegeln i `src/lib/diagnos.js`): «Produkterna i kategorin har olika listpris, och vi vet
+  inte vilken produkt ni har. Därför jämför vi inte ert pris mot listpriset.»
+- `diagnosMening` i planvalsläget (aktiveringsmejlet): «Vi har läst er faktura, men vi vet inte vilken produkt ni har,
+  och produkterna i kategorin har olika listpris. Därför jämför vi inte ert pris mot listpriset.»
+- `PLANVALS_MENING`: bisatsen «så vi räknar ingen besparing på dem» struken.
+- `BREDBAND_EJ_PRISSATT`: «Bredbandet på samma faktura har vi inte jämfört mot listpris i den här analysen.»
+- Rummets planvalsrad: «… så vi jämför inte priset mot listpriset.»
+- N-2, fakturavyn och prompten som beordrar modellen att skriva meningen ordagrant: «Övriga tjänster (X kr/år) har vi
+  inte jämfört mot listpris i den här analysen.»
+- Byggarens tillägg under samma regel: rummets rad med obekräftad nivå sa «så vi säger inget om avståndet förrän vi vet
+  vilken produkt ni har» (form 1 och 3). Nu «… och vi vet inte vilken produkt ni har, så vi jämför inte ert pris mot det.»
+
+**Beviskraven:** varje mening låst ordagrant (FV-A13, PG, FV-A4); förbudsregexen över varje planvalstext med de
+fällda texterna som motprov (FV-A13); fyndmatrisen, alla fem fyndtyper i `lib/forensics.js` × ren och kombinerad
+mobilfaktura × modellens ja och nej, genom handlern till fakturavyn, analys-, svars- och aktiveringsmejlet och rummet,
+och ingen fyndtext nämner listpris (FV-A12); grep på meningarna i `src/`, `lib/`, `api/` och prompten.
+
+**Utanför S1, oförändrat:** N-3 (rummets «det billigaste publicerade priset» utan bindningstid) och rummets
+`bevakat_avtal`-mening («vi säger inget om prisnivån», en monitoring-rad) är förexisterande och loggade.
 
 ## S2 · Kundsynlighetssvepet
 

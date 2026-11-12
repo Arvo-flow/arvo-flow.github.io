@@ -2086,7 +2086,8 @@ const TestaFaktura = () => {
                       ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
                       : ''}
                     {(result.recommendation?.nonPrimaryAnnual ?? 0) > 0
-                      ? `. Övriga tjänster (${formatKr(result.recommendation.nonPrimaryAnnual)}/år) analyseras via Fortnox/Visma.`
+                      // Stod förut att övriga tjänster analyserades i Fortnox eller Visma; ingen kod gör det (N-2).
+                      ? `. Övriga tjänster (${formatKr(result.recommendation.nonPrimaryAnnual)}/år) har vi inte jämfört mot listpris i den här analysen.`
                       : '.'}
                   </>
                 )}

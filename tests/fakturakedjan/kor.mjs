@@ -189,7 +189,8 @@ async function korFall(fall) {
     },
     sekundar: body?.secondarySaving ?? body?.recommendation?.secondarySaving ?? null,
     berakningsunderlag: body?.calculationChain ?? null,
-    fynd: body?.leadFinding ? { titel: body.leadFinding.title ?? null, skal: body.leadFinding.fyndSkal ?? null,
+    fynd: body?.leadFinding ? { typ: body.leadFinding.type ?? null, titel: body.leadFinding.title ?? null,
+      text: body.leadFinding.text ?? null, skal: body.leadFinding.fyndSkal ?? null,
       belopp: body.leadFinding.annualImpact ?? body.leadFinding.amount ?? null } : null,
     lage: body?.lage ?? null,
     rad: rad && {

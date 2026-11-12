@@ -50,7 +50,7 @@ describe('PG · planvalsgrinden i fakturavägen (grundarbeslut 2026-11-04)', () 
     assert.doesNotMatch(PLANVALS_MENING, /\d/, 'meningen bär inga tal');
     assert.equal(PLANVALS_MENING, 'Vi jämför inte era mobilabonnemang mot det billigaste publicerade abonnemanget, '
       + 'eftersom vi inte vet vilket abonnemang ni har. Ett billigare abonnemang kan vara en annan produkt, med mindre '
-      + 'surf eller färre tjänster, så vi räknar ingen besparing på dem.');
+      + 'surf eller färre tjänster.');
     assert.equal(BRANCHINDEX.mobil.bytesmalMotKategorigolv, true, 'premissen: mobil bär deklarationen');
   });
 
@@ -81,7 +81,7 @@ describe('PG · planvalsgrinden i fakturavägen (grundarbeslut 2026-11-04)', () 
       assert.equal(r.healthScore, null, 'poängen räknades mot kategorins golv');
       assert.equal(r.reasoning, `${PLANVALS_MENING} ${BREDBAND_EJ_PRISSATT}`);
     }
-    assert.equal(BREDBAND_EJ_PRISSATT, 'Bredbandet på samma faktura har vi inte prissatt i den här analysen.');
+    assert.equal(BREDBAND_EJ_PRISSATT, 'Bredbandet på samma faktura har vi inte jämfört mot listpris i den här analysen.');
     // Utan bredbandsdel står planvalsmeningen ensam.
     const ren = await kor({ category: 'mobil', lineItems: [XL10], seatCount: 10, sw: true });
     assert.equal(ren.reasoning, PLANVALS_MENING);

@@ -31,8 +31,8 @@ export const MOTIVERING = {
   // löfte om att ett delat avtal låser jämförelsen, för ingen kod läser nivån ur ett avtal (MS-04).
   oviss_niva: (p, label) => `Ni betalar ${kr(p.perEnhet)} kr ${p.unitLabel ?? 'per enhet/år'} `
     + `för ${label}. Det billigaste publicerade priset är ${Number(p.golv).toLocaleString('sv-SE')} kr${ref(p)}, men `
-    + 'produkterna i kategorin har olika listpris, så vi säger inget om avståndet förrän vi vet '
-    + 'vilken produkt ni har.',
+    + 'produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har, så vi jämför inte '
+    + 'ert pris mot det.',
   over_golvet: (p, label) => `Ni betalar <b>${p.avstandPct}% mer</b> än det billigaste publicerade priset för ${label}${ref(p)}. `
     + 'Arvo har inget verifierat bytesmål att lägga fram för just den här raden i dag — men priset är inte '
     + 'konkurrenskraftigt, och underlaget nedan visar exakt vad jämförelsen bygger på.',
@@ -45,7 +45,7 @@ export const MOTIVERING = {
   // har. «Inget verifierat publikt pris» hade varit falskt där (RM-R6).
   omatt: (p, label) => (p.planval
     ? `Fakturan är mottagen och klassad som ${label}. Produkterna i kategorin har olika listpris, och vi vet `
-      + 'inte vilken produkt ni har, så vi jämför inte priset och säger inget om prisläget.'
+      + 'inte vilken produkt ni har, så vi jämför inte priset mot listpriset.'
     : `Fakturan är mottagen och klassad som ${label}. Arvo har inget verifierat publikt pris `
       + 'att jämföra den mot i dag, så vi gör inget påstående om prisläget — raden står under '
       + 'bevakning och kontrolleras när underlaget bär.'),
