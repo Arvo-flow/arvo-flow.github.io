@@ -2043,7 +2043,8 @@ const TestaFaktura = () => {
 
             {detailsOpen && <>
 
-            {result.route === 'auto' && !result.categorized?.licensePending && !(result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 && !isOptimize) && (
+            {/* Inte på en planvalsfaktura: där baseras inget pris på något, och inget byte finns (K-3). */}
+            {result.route === 'auto' && !result.categorized?.licensePending && result.lage?.rubrik !== 'planval' && !(result.recommendation?.shouldSwitch && result.recommendation?.netSaving > 0 && !isOptimize) && (
               <PriceNote>
                 {_effectiveMeta.benchmarkType === 'list-verified'
                   ? 'Priset baseras på verifierade offentliga listpriser hos ledande leverantörer. Vid genomfört byte bekräftas slutpriset i offert innan ni godkänner.'

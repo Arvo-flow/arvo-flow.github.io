@@ -66,8 +66,8 @@ export const ANALYSRUBRIKER = {
   planval: {
     positivtPastaende: false,
     rubrik: 'Ingen jämförelse mot listpris.',
-    text: 'Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har. Därför räknar vi '
-        + 'ingen besparing och säger inget om ert pris.',
+    text: 'Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har. Därför säger vi inget om '
+        + 'ert pris för dem och räknar ingen besparing på dem.',
   },
   // Kategorin saknar revisionsgrindens täckning: vi visar inga tal alls.
   kategori_omatt: {

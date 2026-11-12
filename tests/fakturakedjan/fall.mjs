@@ -94,6 +94,16 @@ export const MOTPROV = [
       rader: [] }),
   },
 ];
+// En mobilfaktura med en slutbetald delbetalningsrad: forensiken räknar ett fynd i kronor ur kundens egna
+// rader, och planvalsbeskedet står i samma vy (K-2, åttonde linsen).
+const DELBETALNING = { type: 'recurring_subscription', description: 'Delbetalning iPhone 15 Pro, månad 38 av 36', amount: 449 };
+export const FYNDFALL = ['ja', 'nej'].map((modell) => fall({ id: `fynd·xl349·${modell}`, kategori: 'mobil', modell,
+  antalAvlast: true, rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (10 st)', amount: 3490 }, DELBETALNING] }));
+for (const f of FYNDFALL) {
+  const d = f.extraktion.lineItems[1];
+  Object.assign(d, { quantity: 1, unitPrice: 449, unit_price_ore: 44900 });
+}
+
 // IT-8821 bär sina avlästa antal och à-priser ordagrant ur fixturen.
 Object.assign(MOTPROV[1].extraktion, {
   date: it8821.date,

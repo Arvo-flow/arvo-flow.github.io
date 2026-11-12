@@ -27,7 +27,7 @@ import { writeFileSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MOBILFALL, MOTPROV, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
+import { MOBILFALL, MOTPROV, FYNDFALL, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { PLANVAL_BESKED } from '../lib/lagesregister.js';
 import { PLANVALS_MENING } from '../agents/recommender/recommend.js';
@@ -61,7 +61,7 @@ function korDel(fall, dir, nr) {
 async function korAlla() {
   if (UT) return UT;
   const dir = mkdtempSync(join(tmpdir(), 'fakturakedjan-'));
-  const alla = [...MOBILFALL, ...MOTPROV];
+  const alla = [...MOBILFALL, ...MOTPROV, ...FYNDFALL];
   const delar = Array.from({ length: DELAR }, (_, i) => alla.filter((_, j) => j % DELAR === i));
   const svar = await Promise.all(delar.map((d, i) => korDel(d, dir, i)));
   UT = new Map(svar.flat().map((u) => [u.id, u]));
@@ -269,6 +269,23 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       return null;
     });
     assert.deepEqual(fel, [], visa(fel));
+  });
+
+  test('FV-A12 · planvalsbeskedet gäller produkterna och säger inget om ett fynd på samma faktura (K-2)', () => {
+    // Premissen: handlern räknar ett fynd i kronor ur kundens egna rader på en mobilfaktura, och fakturans läge
+    // är ändå planval. Annars prövar testet ingenting.
+    for (const f of FYNDFALL) {
+      const u = UT.get(f.id);
+      assert.equal(u.kraschade, undefined, `${f.id}: ${u.kraschade}`);
+      assert.equal(u.lage?.rubrik, 'planval', `${f.id}: rubriken ${u.lage?.rubrik}`);
+      assert.ok(u.fynd, `${f.id}: inget fynd, så testet prövar ingenting`);
+    }
+    // Meningen avgränsar sig till produkterna; «Därför räknar vi ingen besparing» om sidan stod under fyndet.
+    for (const t of [PLANVAL_BESKED.text, PLANVAL_BESKED.skal]) {
+      assert.doesNotMatch(t, /ingen besparing(?! på dem)/, `«${t}»`);
+    }
+    assert.match(PLANVAL_BESKED.text, /räknar ingen besparing på dem\.$/);
+    for (const f of FYNDFALL) assert.ok(UT.get(f.id).mejl.analys.includes(PLANVAL_BESKED.text), `${f.id}: analysmejlet`);
   });
 
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {

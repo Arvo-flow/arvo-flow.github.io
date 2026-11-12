@@ -189,6 +189,8 @@ async function korFall(fall) {
     },
     sekundar: body?.secondarySaving ?? body?.recommendation?.secondarySaving ?? null,
     berakningsunderlag: body?.calculationChain ?? null,
+    fynd: body?.leadFinding ? { titel: body.leadFinding.title ?? null, skal: body.leadFinding.fyndSkal ?? null,
+      belopp: body.leadFinding.annualImpact ?? body.leadFinding.amount ?? null } : null,
     lage: body?.lage ?? null,
     rad: rad && {
       route: rad.route, category: rad.category, should_switch: rad.should_switch,

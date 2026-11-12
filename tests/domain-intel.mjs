@@ -289,7 +289,7 @@ describe('Kristianstad-läxan · golvets ärlighet + marknadsankaret', () => {
   test('marknadsankaret: p25 per enhet → kr/mån, leverantör ur prisboksdatat, källa namngiven', () => {
     const a = buildMarketAnchorFinding(BM_OK);
     assert.equal(a.kind, 'market');
-    assert.match(a.title, /^Tele2 Företags lägsta listpris för ett mobilabonnemang: 239 kr\/mån$/);   // 2868/12 — kod räknar
+    assert.match(a.title, /^Tele2 Företags entrénivå för mobilabonnemang: 239 kr\/mån$/);   // 2868/12 — kod räknar
     assert.match(a.source, /Verifierat publikt listpris · Tele2 Företag/);
   });
 
@@ -313,6 +313,18 @@ describe('Kristianstad-läxan · golvets ärlighet + marknadsankaret', () => {
   test('ankaret gör ALDRIG en kundjämförelse — inga "ni betalar"-påståenden', () => {
     const a = buildMarketAnchorFinding(BM_OK);
     assert.doesNotMatch(a.title + a.detail, /ni betalar för mycket|er kostnad är/i);
+  });
+
+  test('DI-31 · dörrens ankare säger det prisboken bär: entrénivån med 24 månaders bindning, aldrig «lägsta» (K-4)', async () => {
+    const { BRANCHINDEX } = await import('../agents/recommender/branchindex.js');
+    const { getPublicListBenchmark } = await import('../lib/benchmark.js');
+    const a = buildMarketAnchorFinding(getPublicListBenchmark({ category: 'mobil' }));
+    // Bokens not är källan för meningen. Ändras noten ska texten prövas om.
+    assert.match(BRANCHINDEX.mobil.note, /p25 = lägsta publicerade 24-mån-pris/);
+    assert.match(BRANCHINDEX.mobil.alternatives[0].positioning, /^Entrétier \d+ kr\/mån/);
+    assert.match(a.title, /entrénivå för mobilabonnemang: \d+ kr\/mån$/);
+    assert.match(a.detail, /24 månaders bindning/);
+    assert.doesNotMatch(`${a.title} ${a.detail}`, /lägsta|billigaste/i);
   });
 
   test('listpris-läsvägen: deterministisk real-public för mobil, null för oberäknade kategorier', async () => {

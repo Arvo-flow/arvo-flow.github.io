@@ -30,7 +30,7 @@ const KAT = {
 const ROUTER = ['auto', 'monitoring', 'review_queue'];
 
 let nastaId = 1;
-function rad({ kategori, route, medPlatser, medByte, medDelar = false }) {
+function rad({ kategori, route, medPlatser, medByte, medDelar = false, medNetto = false }) {
   const k = KAT[kategori];
   const r = {
     id: nastaId++, category: kategori, route, supplier: k.lev, normalized_supplier: k.lev,
@@ -42,6 +42,9 @@ function rad({ kategori, route, medPlatser, medByte, medDelar = false }) {
     Object.assign(r, { should_switch: true, suggested_annual_cost: k.mal, gross_saving: k.arlig - k.mal,
       net_saving: Math.round((k.arlig - k.mal) * 0.8) });
   }
+  // En rad med nettobelopp men utan bytesflagga: minimigränsen nollar flaggan, inte beloppet (K-1, mätt
+  // genom handlern på main: ett abonnemang à 299 kr lagrades med `net_saving 288`).
+  if (medNetto) Object.assign(r, { suggested_annual_cost: k.mal, gross_saving: k.arlig - k.mal, net_saving: Math.round((k.arlig - k.mal) * 0.8) });
   // En rad som a649404b hade lagrat: bytet är bredbandsdelen, och delarna står i bytesdelar_json. Ingen
   // sådan rad finns i produktionen (a649404b mergades aldrig), men rummet ska inte kunna visa ett tal ur
   // den om den fanns (H1-2: «24% mer … mobilabonnemang» på en rad utan antal).
@@ -60,6 +63,7 @@ function allaRader() {
       for (const medPlatser of [true, false]) {
         for (const medByte of [true, false]) ut.push({ kategori, route, medPlatser, medByte });
         if (kategori === 'mobil') ut.push({ kategori, route, medPlatser, medByte: false, medDelar: true });
+        if (kategori === 'mobil') ut.push({ kategori, route, medPlatser, medByte: false, medNetto: true });
       }
     }
   }
@@ -80,7 +84,7 @@ async function bygg(spec) {
 
 const ENSKILDA = allaRader();
 const RUM = [];
-const namn = (s) => s.map((x) => `${x.kategori}/${x.route}/${x.medPlatser ? 'antal' : 'utan'}/${x.medByte ? 'byte' : x.medDelar ? 'delar' : '-'}`).join(' + ');
+const namn = (s) => s.map((x) => `${x.kategori}/${x.route}/${x.medPlatser ? 'antal' : 'utan'}/${x.medByte ? 'byte' : x.medDelar ? 'delar' : x.medNetto ? 'netto' : '-'}`).join(' + ');
 const arPlanval = (a) => BRANCHINDEX[a.category]?.bytesmalMotKategorigolv === true;
 const PROCENT = /\d+\s?%/;
 
@@ -108,8 +112,8 @@ const visa = (fel) => `${fel.length} rum:\n  ${fel.slice(0, 12).join('\n  ')}${f
 
 describe('RM · rummets tillståndsmatris (S1)', () => {
   test('RM-00 · matrisen är byggd: enskilda rader, par och trior, och premissen bär', () => {
-    assert.equal(ENSKILDA.length, 5 * 3 * 2 * 2 + 3 * 2);
-    assert.ok(RUM.length >= ENSKILDA.length + 18 * 48, `för få rum: ${RUM.length}`);
+    assert.equal(ENSKILDA.length, 5 * 3 * 2 * 2 + 3 * 2 * 2);
+    assert.ok(RUM.length >= ENSKILDA.length + 24 * 48, `för få rum: ${RUM.length}`);
     assert.equal(BRANCHINDEX.mobil.bytesmalMotKategorigolv, true);
   });
 
@@ -192,6 +196,19 @@ describe('RM · rummets tillståndsmatris (S1)', () => {
       return null;
     });
     assert.deepEqual(fel, [], visa(fel));
+  });
+
+  test('RM-R7 · en mobilrad lägger inget till rummets möjliga nettobesparing (K-1)', () => {
+    // Rummet summerade varje grupps `net_saving`, också en mobilrad utan bytesflagga, och Portfolio skrev
+    // talet som «Möjlig nettobesparing … kr per år» så snart rummet hade ett annat byte.
+    const fel = brott(({ analyses, rum }) => {
+      const ovriga = analyses.filter((a) => !arPlanval(a) && a.lage?.kod === 'byte')
+        .reduce((s, a) => s + (a.net_saving ?? 0), 0);
+      return (rum.totalSaving ?? 0) !== ovriga ? `totalSaving ${rum.totalSaving}, byten utanför mobil ${ovriga}` : null;
+    });
+    assert.deepEqual(fel, [], visa(fel));
+    // Motprovet: matrisen bär rum där en mobilrad med nettobelopp står bredvid ett byte.
+    assert.ok(RUM.some((r) => r.spec.some((x) => x.medNetto) && r.rum.hasSwitchAction), 'matrisen saknar rummet som prövar K-1');
   });
 
   test('RM-M1 · MOTPROV: M365 med E3-rader och bredband behåller sina byten och sin poäng', () => {

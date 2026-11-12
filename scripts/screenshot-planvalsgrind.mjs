@@ -29,9 +29,9 @@ const BUILD = join(ROT, 'build');
 const UT = join(ROT, 'results/screenshots/planvalsgrind');
 if (!existsSync(join(BUILD, 'index.html'))) { console.error('✗ build/ saknas — kör `npm run build` först.'); process.exit(1); }
 
-const { MOBILFALL, MOTPROV } = await import('../tests/fakturakedjan/fall.mjs');
-const VALDA = ['comb-01·nej·antal', 'xl349·ja·antal', 'motprov·bredband'];
-const fall = [...MOBILFALL, ...MOTPROV].filter((f) => VALDA.includes(f.id));
+const { MOBILFALL, MOTPROV, FYNDFALL } = await import('../tests/fakturakedjan/fall.mjs');
+const VALDA = ['comb-01·nej·antal', 'xl349·ja·antal', 'motprov·bredband', 'fynd·xl349·nej'];
+const fall = [...MOBILFALL, ...MOTPROV, ...FYNDFALL].filter((f) => VALDA.includes(f.id));
 const dir = await mkdtemp(join(tmpdir(), 'planvalsgrind-'));
 await writeFile(join(dir, 'fall.json'), JSON.stringify(fall));
 const k = spawnSync(process.execPath, ['--import', './tests/fakturakedjan/register.mjs', 'tests/fakturakedjan/kor.mjs',
@@ -66,18 +66,27 @@ async function fakturavyn(bredd, svar, vanta) {
   await p.getByRole('button', { name: /Analysera fakturan/i }).first().click();
   await p.waitForSelector(`text=${vanta}`, { timeout: 45000 });
   await p.waitForTimeout(1500);
+  // Underlaget öppnas, så att förbudslistan också läser «Hur vi räknar» (V-2, åttonde linsen).
+  // Ett DOM-klick: bredbandsmotprovets e-postgrind ligger ovanpå och tar pekarhändelserna.
+  await p.getByText('Hur vi räknar').first().evaluate((e) => e.click());
+  await p.waitForTimeout(800);
   return p;
 }
 const text = async (p) => (await p.innerText('body')).replace(/\s+/g, ' ');
 const FORBJUDET = [/Ni betalar för mycket/, /Vi hittar inget publikt pris att byta ned till/, /inget verifierat (jämförelse)?pris/i,
   /möjlig nettobesparing/i, /Ni behåller/i, /\d+\s?% (över|mer)/i, /Förbättringsläge/i, /Kritisk/i,
-  /Suboptimerat/i, /\b\d{1,3}\s?\/\s?100\b/, /rekommenderar byte/i];
+  /Suboptimerat/i, /\b\d{1,3}\s?\/\s?100\b/, /rekommenderar byte/i,
+  // K-2 och K-3: en besparingsmening om sidan, och listprisnotisen som säger att ett pris baseras på något.
+  /ingen besparing(?! på dem)/i, /Priset baseras på verifierade offentliga listpriser/, /Vid genomfört byte/,
+  /Beräkningsunderlag/, /Er nettobesparing/];
 
 for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   for (const [id, fil, maste] of [
     ['comb-01·nej·antal', 'kombinerad', [/Ingen jämförelse mot listpris/, /Vi jämför inte era mobilabonnemang/,
       /Bredbandet på samma faktura har vi inte prissatt/]],
     ['xl349·ja·antal', 'plan349', [/Ingen jämförelse mot listpris/, /Vi jämför inte era mobilabonnemang/]],
+    // Fyndet ur kundens egna rader står kvar ovanför beskedet (K-2).
+    ['fynd·xl349·nej', 'fynd', [/Ingen jämförelse mot listpris/, /898/, /räknar ingen besparing på dem/]],
   ]) {
     const p = await fakturavyn(bredd, SVAR[id], '/Vi jämför inte era mobilabonnemang/');
     const t = await text(p);
@@ -88,10 +97,13 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   }
   // Talen skrivs med hårt mellanslag (sv-SE); \s matchar det.
   const p = await fakturavyn(bredd, SVAR['motprov·bredband'], '/4\\s560|3\\s648/');
+  await p.getByText('Beräkningsunderlag').first().evaluate((e) => e.click());
+  await p.waitForTimeout(500);
   const t = await text(p);
   if (!/3 648|4 560/.test(t)) fel(`motprov: bredbandsbytet syns inte (${namn}) — kontrollerna mäter ingenting`);
   if (/Vi jämför inte era mobilabonnemang/.test(t)) fel(`motprov: planvalsmeningen på en bredbandsfaktura (${namn})`);
   if (!/Ni betalar för mycket/.test(t)) fel(`motprov: sidrubriken över ett byte saknas (${namn})`);
+  if (!/Er nettobesparing/.test(t)) fel(`motprov: beräkningsunderlaget saknas under bytet (${namn}) — klicket öppnade inget`);
   await p.screenshot({ path: `${UT}/motprov-bredband-${namn}.png`, fullPage: true }); await p.close();
   console.log(`${namn}: kontroller körda`);
 }
