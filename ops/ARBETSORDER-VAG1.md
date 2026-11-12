@@ -288,6 +288,15 @@ Var och en byggs i en egen PR, med egen granskning.
   kampanj. Bibelns regel från HubSpot gäller: det högsta priset i ett block är listpriset, och en
   kampanj kan bara ligga under. Följer boken varje svängning blir det 55 fixturer per kampanj.
 
+- **Briefen säger «Räknat mot verifierat publikt listpris» om varje byte, också ett elbyte.** [KUND],
+  förexisterande, utanför S1. Läst i koden, inte körd: `lib/briefing-generator.js` skriver meningen för
+  varje rad med läget `byte`, men ett elbyte räknas mot Arvos eget säsongsindex (MS-12, `arPrissatt`).
+  Briefen går bara till beviljat premium; om någon är beviljad i dag är inte avläst. Egen PR.
+- **Dörrens brygga säger «Vi väger varje faktura mot verifierade publika listpriser».** [KUND],
+  förexisterande, utanför S1. Läst i koden, inte körd: nitton kategorier tiger och mobil jämförs inte.
+  Bryggan visas bara när marknadsankaret saknas (`lib/domain-intel.js`); hur ofta det sker är inte
+  avläst. Egen PR.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,

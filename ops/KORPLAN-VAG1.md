@@ -15,14 +15,17 @@ Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5
 startar om läser blocket först.
 
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** 9c2991d1 (S1 byggd enligt ordern; instrumenten FV och RM gröna, femton
-  sabotage, rendering i 390 och 1600 px).
-- **Lins igång:** ja. Sjunde linsen på 9c2991d1 startades 11 nov; domen skrivs till
-  `ops/GRANSKNING-s1-mobilfakturan.md` och pushas av linsen. Säkerhetsnät: 75 minuter.
+- **Senaste mekanikcommit på grenen:** 822e9d43, tillägget efter den sjunde linsen. Den sjunde linsen på
+  9c2991d1 dog på kontots gräns (5 timmar) utan dom och är OGRANSKAD. Dess worktree var ren och är borttagen.
+  Skörden var en prövlista: aktiveringsmejlet, beräkningsunderlaget, avtalspåminnelsen, utfallsenkäten,
+  briefen och dörren bar ett mobilbyte, «+0 kr» eller «inget verifierat jämförelsepris». Varje punkt är
+  återskapad i sviten och lagad i 822e9d43 (FV-A11, FV-L, DI-30, RU-02; elva sabotage, alla fällde).
+- **Lins igång:** ja. Åttonde linsen på 822e9d43 startas 12 nov med ordern i scratchpaden (lins-s1b.txt);
+  domen skrivs till `ops/GRANSKNING-s1-mobilfakturan.md` och pushas av linsen. Säkerhetsnät: 60 minuter.
 - **Byggare igång:** nej.
-- **Nästa handling:** när domen kommit: MERGAS → öppna PR:en mot main med auto-merge; BLOCKERAR → stoppregeln,
-  och vid andra blockeringen i rad eskalering till Fable (eskaleringsregeln). Medan linsen rullar: S2 som läsning
-  och mätning, utan ändringar i spårade filer.
+- **Nästa handling:** när domen kommit: MERGAS → öppna PR:en mot main med auto-merge; BLOCKERAR → stoppregeln.
+  En blockering här räknas som den första i rad för S1 (den sjunde linsen gav ingen dom), och vid den andra
+  kopplas Fable in (eskaleringsregeln). Efter mergen: S6, sedan S4 (ordningen ur S2 nedan).
 
 ## Målet
 
@@ -38,9 +41,9 @@ En PR i taget, i den här ordningen. Varje PR bär ett enda påstående.
 | S1 | c1: en mobilfaktura får inget byte, inget avstånd och ingen poäng i någon yta förrän abonnemanget är bekräftat | lib, api, agents, src | byggs om enligt ordern nedan |
 | S2 | Kundsynlighetssvepet: varje loggat förexisterande [KUND] läses av mot dagens ytor. Ingen PR | inga filer utom planen | medan S1:s lins rullar |
 | S3 | Fakturavyns rubrik följer resultatets läge (Q-7) | src | byggd i S1: S1 gjorde resultat utan byte vanligare (stoppregeln) |
-| S4 | Rummets bytesrad: «X % mer» räknas mot jämförelsepriset (C1-4), och golvet bär sitt analysdatum (K-5) | lib, src | efter S3 |
+| S4 | Rummets bytesrad: «X % mer» räknas mot jämförelsepriset (C1-4), och golvet bär sitt analysdatum (K-5) | lib, src | efter S6 |
 | S5 | c2: briefingsidan visar ett prislarm som ett prislarm (LA-K1) | lib, api, src | efter S4 |
-| S6 | Mobil i blandade fakturor: spegelfallet och talet «per abonnemang» | lib, api | efter S5 |
+| S6 | Mobil i blandade fakturor: spegelfallet och talet «per abonnemang» | lib, api | direkt efter S1 (S2) |
 | S7 | Avtalstexten och integritetstexten säger vad systemet gör | src, scripts, tests | efter S6 |
 | S8 | Live-verifieringen (LANSERING punkt 4) | inga | efter S7 |
 | S9 | Våg 1-grinden | inga | sist |
@@ -241,17 +244,22 @@ förexisterande [KUND] syns för en kund i dag. Det får göras medan S1:s lins 
 
 | Fynd | Yta | Syns i dag? | Går till |
 |---|---|---|---|
-| Q-7 · rubriken «Ni betalar för mycket» utan villkor | fakturavyn | enligt beskrivningen ja; läses av | S3 |
-| C1-4 · «X % mer» räknat som andel av kundens pris | rummets bytesrad | enligt beskrivningen ja; läses av | S4 |
+| Q-7 · rubriken «Ni betalar för mycket» utan villkor | fakturavyn | ja | byggd i S1 (9c2991d1) |
+| C1-4 · «X % mer» räknat som andel av kundens pris | rummets bytesrad | ja, avläst på main: bredbandsbyte 699 → 319 kr/mån ger «54% mer», rätt tal (a−s)/s är 119 | S4 |
 | K-5 · fryst golv bredvid dagens bokdatum | rummets bytesrad | läses av | S4 |
 | LA-K1 · prishöjning visad som «Potentiell besparing» | briefingsidan | bara för beviljat premium; läses av | S5 |
-| Spegelfallet · mobil som sekundär del räknas mot golvet | fakturavyn, mejlen | läses av | S6 |
+| Spegelfallet · mobil som sekundär del räknas mot golvet | fakturavyn, mejlen | ja, avläst på main e5733f3a: bredbandsfaktura med «Jobbmobil XL (5 st)» 1 745 kr/mån gav `seatCount 1` och 17 712 kr/år brutto | S6, direkt efter S1 |
 | «Per abonnemang» med bredbandets kostnad inräknad | rummets underlag | läses av | S6 |
-| C1-3-resten · briefingen och dörren räknar mobilens avstånd | briefingen, dörren | läses av | svepet avgör |
+| C1-3-resten · briefingen och dörren räknar mobilens avstånd | briefingen, dörren | ja: briefen sa «Räknat mot verifierat publikt listpris» om ett lagrat mobilbyte, dörren «Måttstocken vi väger mobilfakturor mot» | byggd i S1 (822e9d43, LB-03, DI-30) |
 | F1-5, G1-4, G1-5 | rummet | läses av ur domfilerna | svepet avgör |
 | H1-6 · en poäng mot billigaste planen lagras | lagringen | läses av: läser någon yta fältet? | svepet avgör |
 | `api/send-analysis.mjs` svarar 400 på ett granskningssvar | mejlet | inte mätt | svepet avgör |
 | Rummets bredbandsrad «Prissatta 0» (22 okt, syntetisk rad) | rummet | läses av mot en riktig rad | svepet avgör |
+
+**Ordningen efter S1, avgjord av svepet 11 nov:** S6 (spegelfallet, en falsk besparing på 17 712 kr/år på
+en bredbandsfaktura) före S4 (C1-4, fel procent i rätt riktning), sedan S5, S7, S8, S9. Kvar att läsa av:
+K-5, LA-K1 (premiumkretsen i produktion, kräver en Actions-sond), F1-5, G1-4, G1-5, H1-6, send-analysis
+400 på ett granskningssvar och rummets bredbandsrad.
 
 Regeln: ett fel som en våg 1-kund kan möta i dag får en egen PR före S9, i ordning efter hur många
 som möter det (fakturavyn, mejlen, rummet, briefingen, dörren). Ett fel som ingen yta visar står kvar
