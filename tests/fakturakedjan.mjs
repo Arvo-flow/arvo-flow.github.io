@@ -15,10 +15,10 @@
 // FÅNGAR: ett mobilbyte, ett mobilavstånd eller en mobilpoäng som når svaret, raden, rummet eller mejlen
 //   på någon väg i matrisen (kombinerad faktura × modellens ja/nej × antal avläst/inte); ett motprov som
 //   tappar sitt byte.
-// BLIND: extraktionen (fakturans rader är författade, inte lästa ur en riktig leverantörs-PDF); rummets
-//   uppdelning före berikaRader är speglad ur api/invoice-history.mjs (rad 152–183), inte anropad;
-//   aktiveringsmejlet byggs i
-//   klienten och prövas inte här (det läser `lage`, som FV-A3 prövar). Spegelfallet (mobil som
+// BLIND: extraktionen (fakturans rader är författade, inte lästa ur en riktig leverantörs-PDF);
+//   aktiveringsmejlets fält sätts i klienten (TestaFaktura handleActivate) och är speglade i
+//   kor.mjs, medan mejlet byggs av endpointens egen funktion (FV-A11); de lagrade raderna i FV-L är
+//   författade i den form koden före S1 lagrade, inte lästa ur produktionen. Spegelfallet (mobil som
 //   sekundär del på en bredbandsfaktura) ingår inte: det är steg S6.
 import { test, describe, before } from 'node:test';
 import assert from 'node:assert/strict';
@@ -253,6 +253,24 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     assert.doesNotMatch(vy, /<Headline>Ni betalar för mycket/, 'rubriken står hårdkodad i vyn');
   });
 
+  test('FV-A11 · aktiveringsmejlet och beräkningsunderlaget bär ingen besparing och säger inte att ett pris saknas', () => {
+    const fel = brott(MOBIL_IDS, (u) => {
+      if (u.route === 'auto' && u.berakningsunderlag != null) {
+        return `beräkningsunderlaget: netto ${u.berakningsunderlag.netSaving?.value}`;
+      }
+      const m = u.mejl;
+      if (!m) return null;
+      if (/nettobesparing|arvode/i.test(m.aktivering)) return 'aktiveringsmejlet bär besparingsrutan';
+      if (/\+\s?0\s?kr/.test(m.aktivering)) return 'aktiveringsmejlet: «+0 kr»';
+      if (PROCENT_MER.test(m.aktivering)) return `aktiveringsmejlet: «${m.aktivering.match(PROCENT_MER)[0]}»`;
+      if (/inget verifierat (jämförelse)?pris/i.test(m.aktivering)) return 'aktiveringsmejlet: «inget verifierat … pris»';
+      if (/\d+\s?\/100/.test(m.aktivering)) return 'aktiveringsmejlet bär en poäng';
+      if (u.route === 'auto' && !m.aktivering.includes(PLANVAL_BESKED.skal)) return 'aktiveringsmejlet saknar planvalsskälet';
+      return null;
+    });
+    assert.deepEqual(fel, [], visa(fel));
+  });
+
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {
     const ut = UT;
     const bb = ut.get('motprov·bredband');
@@ -261,11 +279,121 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     assert.equal(bb.rek.grossSaving, 4560, '699 kr/mån × 12 mot Tele2:s 319 kr/mån × 12 för 1000 Mbit');
     assert.equal(bb.lage?.harByte, true);
     assert.equal(bb.rad?.should_switch, true);
+    // Besparingsrutan och underlaget står kvar över ett byte (motprovet till FV-A11).
+    assert.equal(bb.berakningsunderlag?.netSaving?.value, bb.rek.netSaving, 'bredband: beräkningsunderlaget föll bort');
+    assert.match(bb.mejl.aktivering, /Möjlig nettobesparing \+3\s648/, 'bredband: aktiveringsmejlet tappade bytet');
     const it = ut.get('motprov·it8821');
     assert.equal(it.kategori, 'saas-productivity');
     assert.equal(it.rek.shouldSwitch, true, `IT-8821: ${JSON.stringify(it.rek)}`);
     assert.equal(it.rek.netSaving, it8821.expected.netSaving);
     assert.equal(it.rad?.should_switch, true);
     assert.equal(it.rum?.rum?.hasSwitchAction, true, 'IT-8821: rummet tappade bytet');
+  });
+});
+
+// ── FV-L · de lagrade raderna: ett mobilbyte som koden före S1 lagrade ──────────────────────────
+// Rummet håller inne ett sådant byte (MS-08). Avtalspåminnelsen, utfallsenkäten och briefen läste förut
+// raden rå och skrev «7 680 kr/år» och «Räknat mot verifierat publikt listpris» (tests/fakturakedjan/lagrade.mjs).
+const LAGRAD = {
+  supplier: 'Tele2 Sverige AB', normalized_supplier: 'Tele2', annual_cost: 41880, suggested_annual_cost: 32280,
+  gross_saving: 9600, net_saving: 7680, should_switch: true, route: 'auto', industry: 'konsult', employees: 10,
+  billing_period: 'monthly', seat_count: 10, price_per_seat_monthly: 349, lead_finding_json: null, health_score: 59,
+  triage_reason: null, contract_terms_json: null, invoice_number: null, rattstorlek_json: null, arkiverad_at: null,
+  uppsagning_json: { uppsagningstidMan: 1 }, user_email: 'kund@exempel.se', deadline_reminder_json: null,
+};
+const LAGRADE_RADER = [
+  { ...LAGRAD, id: 4711, category: 'mobil',
+    line_items_json: [{ description: 'Tele2 Jobbmobil XL (10 st)', amount: 3490, quantity: 10, type: 'recurring_subscription' }] },
+  // En rad med nettobelopp men utan bytesflagga: enkäten och påminnelsen läste förut bara beloppet.
+  { ...LAGRAD, id: 4712, category: 'mobil', should_switch: false,
+    line_items_json: [{ description: 'Tele2 Jobbmobil XL (10 st)', amount: 3490, quantity: 10, type: 'recurring_subscription' }] },
+  // Motprovet: samma rad som bredband behåller sitt byte i alla fyra ytor.
+  { ...LAGRAD, id: 4713, category: 'bredband',
+    line_items_json: [{ description: 'Företagsbredband Fiber 1000/1000', amount: 3490, quantity: 1, type: 'recurring_subscription' }] },
+];
+
+function korLagrade() {
+  const dir = mkdtempSync(join(tmpdir(), 'fakturakedjan-lagrade-'));
+  const fil = join(dir, 'rader.json');
+  writeFileSync(fil, JSON.stringify(LAGRADE_RADER));
+  return new Promise((resolve, reject) => {
+    const barn = spawn(process.execPath, ['--import', './tests/fakturakedjan/register.mjs',
+      'tests/fakturakedjan/lagrade.mjs', fil], { cwd: ROT });
+    let ut = ''; let fel = '';
+    barn.stdout.on('data', (d) => { ut += d; });
+    barn.stderr.on('data', (d) => { fel = (fel + d).slice(-4000); });
+    barn.on('close', (kod) => {
+      const rad = ut.split('\n').find((l) => l.startsWith('LAGRADE:'));
+      if (!rad) return reject(new Error(`de lagrade raderna gav ingen utdata (exit ${kod}): ${fel.split('\n').slice(-12).join('\n')}`));
+      resolve(new Map(JSON.parse(rad.slice('LAGRADE:'.length)).map((u) => [u.id, u])));
+    });
+  });
+}
+
+describe('FV-L · lagrade mobilbyten i ytorna som läser raden (S1)', () => {
+  let L = null;
+  before(async () => { L = await korLagrade(); });
+  const BELOPP = /7\s680/;
+
+  test('LB-00 · instrumentet kör: varje rad gav rummet, båda mejlen och briefen', () => {
+    for (const [id, u] of L) {
+      assert.equal(u.kraschade, undefined, `${id}: ${u.kraschade}`);
+      assert.equal(u.cron.status, 200, `${id}: cron ${u.cron.status} ${u.cron.svar}`);
+      assert.equal(u.mejl.length, 2, `${id}: ${u.mejl.map((m) => m.amne).join(' | ')}`);
+    }
+    // Motprovet visar att instrumentet ser beloppet där det ska stå.
+    const bb = L.get(4713);
+    assert.equal(bb.rum.hasSwitchAction, true, 'motprov: rummet tappade bredbandsbytet');
+    assert.ok(bb.mejl.every((m) => BELOPP.test(m.text)), `motprov: ${bb.mejl.map((m) => m.text.slice(0, 160)).join(' | ')}`);
+    assert.ok(bb.briefing.rubriker.some((r) => BELOPP.test(r)), `motprov: briefen ${JSON.stringify(bb.briefing)}`);
+  });
+
+  test('LB-01 · avtalspåminnelsen nämner ingen besparing för ett lagrat mobilbyte', () => {
+    for (const id of [4711, 4712]) {
+      const u = L.get(id);
+      assert.equal(u.rum.hasSwitchAction, false, `${id}: rummet visar bytet`);
+      const p = u.mejl.find((m) => !/Hände det något/.test(m.amne));
+      assert.ok(p, `${id}: ingen påminnelse`);
+      assert.doesNotMatch(p.text, /besparing|7\s680/i, `${id}: «${p.text.slice(0, 240)}»`);
+    }
+  });
+
+  test('LB-02 · utfallsenkäten nämner ingen besparing för ett lagrat mobilbyte', () => {
+    for (const id of [4711, 4712]) {
+      const e = L.get(id).mejl.find((m) => /Hände det något/.test(m.amne));
+      assert.ok(e, `${id}: ingen enkät`);
+      assert.doesNotMatch(e.text, /besparing|7\s680/i, `${id}: «${e.text.slice(0, 240)}»`);
+    }
+  });
+
+  test('LB-03 · briefen bär inget mobilbyte och ingen besparing', () => {
+    for (const id of [4711, 4712]) {
+      const b = L.get(id).briefing;
+      assert.ok(!b.rubriker.some((r) => /byte|listpris|7\s680/i.test(r)), `${id}: ${JSON.stringify(b.rubriker)}`);
+      assert.ok(!(b.total > 0), `${id}: totalSavingPotential ${b.total}`);
+    }
+  });
+
+  test('LB-04 · en planvalskategori bär inga nivåpriser, så mejlen kan hålla varje lagrat byte', () => {
+    // lagratByte (lib/lagesregister.js) har inget prisunderlag och håller därför varje byte i en
+    // planvalskategori. Rummet släpper en rad med bekräftad nivå, och nivågolvet kräver nivåpriser.
+    for (const [kat, d] of Object.entries(BRANCHINDEX)) {
+      if (d?.bytesmalMotKategorigolv !== true) continue;
+      assert.equal(d.licenseTierBenchmarks, undefined, `${kat}: nivåpriser i en planvalskategori; ge mejlen rummets nivåläsning först`);
+    }
+  });
+
+  test('RU-02 · rummets uppdelning: en rad hamnar i exakt en lista, och en granskningsrutt är alltid bevakad', async () => {
+    const { delaRummet } = await import('../api/invoice-history.mjs');
+    const rader = [
+      { id: 1, route: 'auto', triage_reason: null },
+      { id: 2, route: 'review_queue', triage_reason: null },
+      { id: 3, route: 'unsupported', triage_reason: null },
+      { id: 4, route: 'auto', triage_reason: 'no_benchmark' },
+      { id: 5, route: 'monitoring', triage_reason: null },
+    ];
+    const { triagerade, prissatta } = delaRummet(rader);
+    assert.deepEqual(triagerade.map((a) => a.id), [2, 3, 4]);
+    assert.deepEqual(prissatta.map((a) => a.id), [1, 5]);
   });
 });

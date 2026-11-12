@@ -2188,7 +2188,10 @@ export default async function handler(req, res) {
       }
     }
 
-    const calculationChain = {
+    // Beräkningsunderlaget står bara under en besparing, samma villkor som intervallet nedan. Utan en visade
+    // fakturavyn «Bruttobesparing 0 kr/år · Er nettobesparing +0 kr/år», också på varje mobilfaktura, där
+    // inget jämfördes (FV-A1).
+    const calculationChain = netSaving > 0 ? {
       currentAnnualCost: {
         value:  extracted.annualCost,
         source: extracted.billingPeriod === 'annual'
@@ -2208,7 +2211,7 @@ export default async function handler(req, res) {
       grossSaving: { value: grossSaving },
       arvoFee:     { value: arvoFee,    formula: `${grossSaving?.toLocaleString('sv-SE')} kr × ${Math.round(ARVO_FEE_RATE * 100)} %` },
       netSaving:   { value: netSaving },
-    };
+    } : null;
 
     // ── P2.2: KONFIDENSINTERVALL (Saving Range) ───────────────────────────────────
     // Visar ett ärligt intervall istället för en enda punktskattning.

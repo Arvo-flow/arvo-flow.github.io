@@ -148,14 +148,11 @@ export default async function handler(req, res) {
   // "Bevakat — inte prissatt" (Liggare 2): fakturor vi SÅG men medvetet inte prissatte (triagade).
   // Disciplinmontern — Zero Trust gjort synligt: vi gissar aldrig på utländsk valuta eller en kategori
   // utan verifierat svenskt golv. Inget tyst bortfall (regel 9). Bär källbelagt skäl + väg framåt, noll tal.
-  const TRIAGE_ROUTES = new Set(['unsupported', 'review_queue']);
-  const watched = merged
-    .filter((a) => TRIAGE_ROUTES.has(a.route) || a.triage_reason != null)
-    .map((a) => watchedCard(a));
+  const { triagerade, prissatta } = delaRummet(merged);
+  const watched = triagerade.map((a) => watchedCard(a));
 
   // Liggare 1 (prissatt): bara riktiga analyser driver score/innehav/kohort — triagade hålls utanför.
-  const analyses = merged
-    .filter((a) => !TRIAGE_ROUTES.has(a.route) && a.triage_reason == null)
+  const analyses = prissatta
     // Kontraktsklockan beräknas FRESH vid läsning (aldrig lagrad) så "dagar kvar" stämmer
     // varje gång rummet öppnas. Zero Trust: bara rader med ett verkligt bindningsslut bär klocka.
     .map((a) => ({
@@ -308,6 +305,18 @@ export default async function handler(req, res) {
 // "Bevakat — inte prissatt": gör en triagad rad till ett dossier-kort med källbelagt SKÄL + väg framåt.
 // Disciplinen ÄR premiumsignalen — vi gissar aldrig (Zero Trust), och vakten talar även när den tiger om tal.
 // reasonCode (lagrat) + leverantörsnamn → kundvänlig, ärlig copy. NOLL siffror (sifferrevisorns tystnad orörd).
+
+/**
+ * Rummets uppdelning: en triagerad rad (en granskningsrutt eller ett triageskäl) blir ett bevakat kort, varje
+ * annan rad en prissatt analys. En rad hamnar alltid i exakt en lista. Exporterad så att fakturakedjans
+ * instrument (tests/fakturakedjan/kor.mjs) kör samma uppdelning; där stod förut en kopia, och ett sabotage mot
+ * raden här fällde noll tester (RU-02).
+ */
+const TRIAGE_ROUTES = new Set(['unsupported', 'review_queue']);
+export function delaRummet(rader = []) {
+  const triagerad = (a) => TRIAGE_ROUTES.has(a?.route) || a?.triage_reason != null;
+  return { triagerade: rader.filter(triagerad), prissatta: rader.filter((a) => !triagerad(a)) };
+}
 
 /**
  * Prisunderlaget för EN rad — med revisionsgrinden inbyggd.

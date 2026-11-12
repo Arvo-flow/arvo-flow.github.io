@@ -289,9 +289,16 @@ describe('Kristianstad-läxan · golvets ärlighet + marknadsankaret', () => {
   test('marknadsankaret: p25 per enhet → kr/mån, leverantör ur prisboksdatat, källa namngiven', () => {
     const a = buildMarketAnchorFinding(BM_OK);
     assert.equal(a.kind, 'market');
-    assert.match(a.title, /239 kr\/mån per abonnemang/);      // 2868/12 — kod räknar, deterministiskt
-    assert.match(a.detail, /Tele2 Företag/);
+    assert.match(a.title, /^Tele2 Företags lägsta listpris för ett mobilabonnemang: 239 kr\/mån$/);   // 2868/12 — kod räknar
     assert.match(a.source, /Verifierat publikt listpris · Tele2 Företag/);
+  });
+
+  test('DI-30 · ankaret är ett pris om marknaden, ingen måttstock för kundens mobilfaktura (S1)', () => {
+    // Fakturavägen jämför ingen mobilfaktura mot det billigaste abonnemanget (planvalsgrinden). Ankaret
+    // sa förut «Måttstocken vi väger mobilfakturor mot» och «den frågan ställer vi åt er».
+    const a = buildMarketAnchorFinding(BM_OK);
+    assert.doesNotMatch(`${a.title} ${a.detail}`, /måttstock|väger|ställer vi|betalar ni mer|jämför(a|s)? (er|mot)/i);
+    assert.match(a.detail, /inte en jämförelse med ert abonnemang/);
   });
 
   test('integritetslåset: ENDAST real-public per enhet — allt annat → inget ankare', () => {

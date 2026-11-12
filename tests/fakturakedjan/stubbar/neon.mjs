@@ -34,6 +34,8 @@ export function neon() {
       }
       return [];
     }
+    // De lagrade raderna (tests/fakturakedjan/lagrade.mjs) svarar läsningarna ur en egen funktion.
+    if (typeof globalThis.__SVARA === 'function') return globalThis.__SVARA(text, values) ?? [];
     return [];
   };
   sql.query = async (text, params) => { (globalThis.__SQL ??= []).push({ text, values: params ?? [] }); return []; };

@@ -151,8 +151,9 @@ export const BRANCHINDEX = {
     medianEtikett: 'Näst billigaste publicerade abonnemang',
     // Bytesmålet vore kategorins golv, det billigaste abonnemanget, och inte kundens eget abonnemang (det
     // finns ingen like-for-like för mobil). Fakturavägen räknar därför inget primärt byte här
-    // (planvalsgrinden i recommend.js, grundarbeslut 2026-11-04, PG-01), och rummet visar inget lagrat byte
-    // som kan vara räknat så (MS-08). En bredbandsdel som analysen lagrat för sig står kvar (MS-13).
+    // (planvalsgrinden i recommend.js, grundarbeslut 2026-11-04, PG-01), inte heller på en bredbandsdel av
+    // samma faktura (S1, FV-A2). Rummet och mejlen visar inget lagrat byte på en sådan rad (MS-08, MS-13,
+    // LB-01..03). Kategorin bär inga licenseTierBenchmarks; mejlen förutsätter det (LB-04).
     // M365 räknar sina byten nivå för nivå (lfl) och bär inte flaggan (D1-1).
     bytesmalMotKategorigolv: true,
     // Prices are per user/year — lib/benchmark.js scales by seat count before the LLM sees it.

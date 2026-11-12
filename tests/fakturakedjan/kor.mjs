@@ -39,10 +39,12 @@ for (const niva of ['log', 'info', 'warn', 'error']) {
 }
 
 const { default: handler } = await imp('api/test-invoice.mjs');
-const { buildBranchAnchors, berikaRader, byggRum, watchedCard } = await imp('api/invoice-history.mjs');
+const { buildBranchAnchors, berikaRader, byggRum, watchedCard, delaRummet } = await imp('api/invoice-history.mjs');
 const { radMotivering, radMarke } = await imp('src/lib/rumstext.js');
 const { htmlEmail, mejlLage } = await imp('api/send-analysis.mjs');
 const { replyHtml, buildReplySubject, svarsKort } = await imp('api/inbound-email.mjs');
+const { buildBriefingHtml } = await imp('api/activate-intelligence.mjs');
+const { diagnosMening } = await imp('src/lib/diagnos.js');
 
 /** En riktig PDF vars textlager bär fakturans rader. */
 function skapaPdf(fall) {
@@ -112,15 +114,16 @@ async function korFall(fall) {
   const lagrade = [...globalThis.__RADER.values()];
   const rad = lagrade[lagrade.length - 1] ?? null;
 
-  // Rummet: samma uppdelning som api/invoice-history.mjs (rad 152–183) gör innan berikaRader.
+  // Rummet: handlerns egen uppdelning (delaRummet) och sedan berikaRader, som api/invoice-history.mjs.
   let rum = null;
   if (rad) {
-    const TRIAGE = new Set(['unsupported', 'review_queue']);
-    if (TRIAGE.has(rad.route) || rad.triage_reason != null) {
-      const kort = watchedCard({ ...rad });
+    const { triagerade, prissatta } = delaRummet([{ ...rad }]);
+    if (triagerade.length + prissatta.length !== 1) throw new Error('raden hamnade i båda eller ingen av rummets listor');
+    if (triagerade.length) {
+      const kort = watchedCard(triagerade[0]);
       rum = { bevakad: true, kort, rum: byggRum([], [kort]), rader: [] };
     } else {
-      const a = { ...rad, _rader: rad.line_items_json ?? null };
+      const a = { ...prissatta[0], _rader: rad.line_items_json ?? null };
       const ankare = await buildBranchAnchors([a]);
       berikaRader([a], ankare);
       rum = {
@@ -146,11 +149,21 @@ async function korFall(fall) {
   if (body?.ok && body?.extracted && body?.recommendation) {
     // Kortet i svarsmejlet byggs av handlerns egen funktion (api/inbound-email.mjs svarsKort).
     const kort = svarsKort(body, 'faktura.pdf');
+    const rek = body.recommendation;
     mejl = {
       analys: text(htmlEmail(body)),
       analysLage: mejlLage(body),
       svarAmne: buildReplySubject([kort]),
       svar: text(replyHtml({ results: [kort], portalLink: 'https://arvoflow.se/portfolio' })),
+      // Aktiveringsmejlet byggs av endpointens egen funktion, med de fält klienten skickar
+      // (src/pages/TestaFaktura/index.js handleActivate: poängen och etiketten ur `lage`, meningen ur
+      // diagnosMening). Klientens hårdvarujustering speglas inte; ingen mobilfaktura bär en.
+      aktivering: text(buildBriefingHtml({
+        supplier: body.extracted.supplier, annualCost: body.extracted.annualCost,
+        suggestedAnnualCost: rek.suggestedAnnualCost, netSaving: rek.netSaving, arvoFee: rek.arvoFee,
+        reasoning: rek.reasoning, diagScore: body.lage?.score ?? null, diagLabel: body.lage?.etikett ?? null,
+        diagInsight: diagnosMening(body.lage, { harByte: !!body.lage?.harByte }),
+      })),
     };
   }
 
@@ -175,6 +188,7 @@ async function korFall(fall) {
       healthScore: r.healthScore ?? null,
     },
     sekundar: body?.secondarySaving ?? body?.recommendation?.secondarySaving ?? null,
+    berakningsunderlag: body?.calculationChain ?? null,
     lage: body?.lage ?? null,
     rad: rad && {
       route: rad.route, category: rad.category, should_switch: rad.should_switch,

@@ -16,6 +16,7 @@ import { getDb } from '../../lib/db.js';
 import { deadlineReminderDecision } from '../../lib/deadline-reminder.js';
 import { underlagFranRad, paminnelseBeslut, paminnelseMejl } from '../../lib/paminnelse.js';
 import { cronAnropTillatet } from '../../lib/cronvakt.js';
+import { lagratByte } from '../../lib/lagesregister.js';
 
 export const config = { maxDuration: 30 };
 
@@ -137,7 +138,7 @@ export default async function handler(req, res) {
   try {
     const rows = await db`
       SELECT id, supplier, normalized_supplier, user_email, contract_end_date, uppsagning_json,
-             net_saving, created_at, analyserad_at, deadline_reminder_json
+             category, should_switch, net_saving, created_at, analyserad_at, deadline_reminder_json
       FROM invoice_analyses   -- liggare: kundvy
       WHERE contract_end_date > CURRENT_DATE
         AND contract_terms_json IS NULL
@@ -146,7 +147,8 @@ export default async function handler(req, res) {
     `;
     for (const row of rows) {
       try {
-        const underlag = underlagFranRad(row);
+        // Besparingen i mejlet är det byte rummet visar, inte det som lagrades (LB-01).
+        const underlag = underlagFranRad(lagratByte(row));
         if (!underlag) continue;
         const { typ, marker } = paminnelseBeslut({ klocka: underlag.klocka, marker: row.deadline_reminder_json });
         if (!typ) continue;
@@ -219,7 +221,7 @@ export default async function handler(req, res) {
   // ── 3. Utfallsenkät — 60 dagar efter analys ───────────────────────────────
   try {
     const rows = await db`
-      SELECT id, supplier, net_saving, user_email
+      SELECT id, supplier, category, should_switch, net_saving, user_email
       FROM invoice_analyses   -- liggare: kundvy
       WHERE route = 'auto'
         AND arkiverad_at IS NULL
@@ -235,7 +237,8 @@ export default async function handler(req, res) {
           subject: `Hände det något med ert ${row.supplier}-avtal?`,
           // Uttrycklig mappning: `...row` gav mallen snake_case (`net_saving`) medan den läste
           // `netSaving` — besparingen föll tyst bort (mätt 2026-09-23, samma form som NaN-felet).
-          html:    outcomeEmailHtml({ supplier: row.supplier, netSaving: Number(row.net_saving), analysisId: row.id }),
+          // Besparingen är det byte rummet visar, inte det som lagrades (LB-02).
+          html:    outcomeEmailHtml({ supplier: row.supplier, netSaving: Number(lagratByte(row).net_saving), analysisId: row.id }),
         });
         await db`
           UPDATE invoice_analyses SET outcome_email_sent_at = NOW() WHERE id = ${row.id}
