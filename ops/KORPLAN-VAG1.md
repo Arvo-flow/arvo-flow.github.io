@@ -15,16 +15,18 @@ Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5
 startar om läser blocket först.
 
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** «S1: planvalsytan säger bara att vi inte jämför mot listpris», Fables beslut om planvalsytan verkställt (N-1, N-2, V-5). Den nionde
-  linsen blockerade e7512b82 (`ops/GRANSKNING-s1-lagningen.md`), S1:s andra blockering i rad. Fable avgjorde frågan
-  enligt eskaleringsregeln innan något byggdes; beslutet står under S1 nedan.
-- **Lins igång:** ja. Tionde linsen på den commiten startas 12 nov; domen skrivs till `ops/GRANSKNING-s1-tionde.md`.
-  Säkerhetsnät: 60 minuter. En tredje blockering i rad går tillbaka till Fable med samma underlag.
-- **Fable:** grundarens två analyser av gränssnittet och frontend är klara (`ops/ANALYS-GRANSSNITT-FABLE.md`). Fynden är
-  Fables läsningar; varje fynd mäts innan något byggs på det, och de som rör våg 1 förs in i stegen efter S1.
+- **Senaste mekanikcommit på grenen:** «S1: meningen om resten av en kombinerad faktura bär bara tal», Fables andra
+  beslut verkställt (O-1, W-1). Den tionde linsen blockerade 4029b68b (`ops/GRANSKNING-s1-tionde.md`), S1:s tredje
+  blockering i rad; Fable avgjorde frågan, och beslutet står under S1 nedan.
+- **Lins igång:** ja. Elfte linsen på den commiten startas 13 nov; domen skrivs till `ops/GRANSKNING-s1-elfte.md`.
+  Säkerhetsnät: 60 minuter. Blockerar den igen går frågan till Fable med alla fyra domarna, och frågan blir om S1 ska
+  delas.
+- **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
+  avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
-- **Nästa handling:** när domen kommit: MERGAS → öppna PR:en mot main med auto-merge; BLOCKERAR → Fable igen. Efter
-  mergen: S6, sedan S4, och löftessaneringen ur Fables analys (punkt 1 i hans plan) före våg 1.
+- **Nästa handling:** när domen kommit: MERGAS → PR:en mot main med auto-merge. Efter mergen, i den här ordningen:
+  S6 med N-5 och ett läge per fakturadel (Fables beslut 13 nov, punkt 3 och 5); N-4 som enradig PR; S4; F1.2
+  (avtalsvarslet som bokförs utan att Resends fel läses); rummet och dörren enligt Fables plan, punkt 1–4.
 
 ## Målet
 
@@ -42,7 +44,7 @@ En PR i taget, i den här ordningen. Varje PR bär ett enda påstående.
 | S3 | Fakturavyns rubrik följer resultatets läge (Q-7) | src | byggd i S1: S1 gjorde resultat utan byte vanligare (stoppregeln) |
 | S4 | Rummets bytesrad: «X % mer» räknas mot jämförelsepriset (C1-4), och golvet bär sitt analysdatum (K-5) | lib, src | efter S6 |
 | S5 | c2: briefingsidan visar ett prislarm som ett prislarm (LA-K1) | lib, api, src | efter S4 |
-| S6 | Mobil i blandade fakturor: spegelfallet och talet «per abonnemang» | lib, api | direkt efter S1 (S2) |
+| S6 | Mobil i blandade fakturor: spegelfallet, talet «per abonnemang», N-5 och ett läge per fakturadel | lib, api, src | direkt efter S1 (S2, Fable 13 nov) |
 | S7 | Avtalstexten och integritetstexten säger vad systemet gör | src, scripts, tests | efter S6 |
 | S8 | Live-verifieringen (LANSERING punkt 4) | inga | efter S7 |
 | S9 | Våg 1-grinden | inga | sist |
@@ -276,6 +278,41 @@ och ingen fyndtext nämner listpris (FV-A12); grep på meningarna i `src/`, `lib
 
 **Utanför S1, oförändrat:** N-3 (rummets «det billigaste publicerade priset» utan bindningstid) och rummets
 `bevakat_avtal`-mening («vi säger inget om prisnivån», en monitoring-rad) är förexisterande och loggade.
+
+### Arkitektbeslut 13 nov (Fable 5.2, eskaleringsregeln: tredje blockeringen i rad)
+
+**Underlaget:** den tionde blicken (`ops/GRANSKNING-s1-tionde.md`) fällde lagningen av N-2 (O-1, infört). Meningen
+«Övriga tjänster (X kr/år) har vi inte jämfört mot listpris i den här analysen» visades för varje kombinerad faktura
+utan sekundär besparing. På en bredbandsfaktura med en mobildel hade `computeSecondarySaving` jämfört delen och
+returnerat null, eftersom bruttot låg under 500 kr. Det är tredje gången samma form återkommer (K-2, N-1, O-1): en
+förklarande mening beskriver en kodväg, men villkoret som visar den släpper igenom andra.
+
+**Beslutet:**
+1. **Bara tal, inget verb om vad vi gjort.** `secondarySaving == null` har minst sex orsaker: planval, valutaspärr,
+   inget antal, ingen hastighet, brutto under 500 kr och annan kategori. Ingen mening om vad koden gjort är sann för
+   alla sex.
+   - Fakturavyn: «Kombinerad faktura. {Kategori}: {P} kr/år. Övrigt på fakturan: {X} kr/år.»; utan P och utan X
+     stryks respektive led.
+   - Prompten: «Övrigt på fakturan: {X} kr/år.». Påståendet att delen inte jämförts separat är struket, och
+     instrumentet till modellen säger inte längre «analysen avser».
+   - Mot att stryka meningen: då redovisas inte X kr/år av fakturan, och det är oförklarad tystnad.
+   - Mot ett läge per fakturadel nu: det är rätt arkitektur, men ny mekanik ovanpå en PR som fällts tre gånger.
+2. **Regeln skärps.** En mening som förklarar vad koden gjort eller avstått från med en fakturadel får bara visas av
+   ett villkor som läser ett fält skrivet av just den kodvägen. `secondarySaving == null` och
+   `potentialMixedCategories` är inte sådana fält; där fältet saknas skrivs bara tal. «jämfört mot listpris» och
+   «jämför inte» får bara stå i planvalsgrindens egna konstanter och deras speglar (FV-A15).
+3. **Som mekanik, i en egen PR med S6:** `computeSecondarySaving` ska returnera ett läge i stället för `null`, till
+   exempel `besparing`, `jamford_under_troskel`, `ej_jamford_planval`, `ej_jamford_sparr` eller `ej_matbar`, och vyn och
+   prompten ska slå upp text per läge ur registret. Spegelfallet är den första konsumenten som behöver skillnaden.
+4. **I den här PR:en:**
+   - W-1: förbudslistan vidgad till omvänd ordföljd och fler former, med den tionde linsens släppta meningar som
+     motprov.
+   - `oviss_niva` har fått ett ordagrant lås.
+   - Linsens fall A går genom handlern (FV-A16).
+   W-2 och W-3 kräver en renderingsharness i sviten. De loggas framåt och byggs i samma PR som läget per fakturadel.
+5. **N-5 («203 % över listpris» på hela den kombinerade fakturan) är synligt i en rendering.** Enligt avgränsningen
+   22 okt går det före annat arbete, i egen PR. S6 flyttas därför till direkt efter S1:s merge, med N-5 och läget per
+   fakturadel. N-4 («så bevakar vi att den försvinner») stryks i en egen enradig PR i samma kö.
 
 ## S2 · Kundsynlighetssvepet
 

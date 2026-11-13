@@ -320,6 +320,19 @@ Var och en byggs i en egen PR, med egen granskning.
     form 1 på en monitoring-rad. Förexisterande, utanför S1. Egen PR.
   · V-5 är byggd i samma commit som Fables beslut (FV-A14).
 
+- **Ur den tionde blickens dom på S1 (`ops/GRANSKNING-s1-tionde.md`):**
+  · W-2 [VAKT]: FV-A12 prövar planvalskonstanterna, inte den renderade fakturavyn; en tillagd mening i vyns JSX
+    fällde 0. W-3 [VAKT]: FV-A14 är en källtextvakt som `|| true` passerar. Båda kräver en renderingsharness i
+    sviten och byggs i samma PR som läget per fakturadel (S6, Fables beslut 13 nov).
+  · N-4 [KUND], förexisterande: fyndet `hardware_financing` (lib/forensics.js) lovar «Bekräfta slutdatum så bevakar
+    vi att den försvinner»; ingen kod gör det. Enradig PR direkt efter S1.
+  · N-5 [KUND], förexisterande och synligt: en kombinerad bredbandsfaktura får «203 % över listpris», räknat på hela
+    fakturan (mobildelen inräknad) mot bredbandets jämförelsepris; underlaget går inte att räkna hem. Byggs i S6.
+- **Ur Fables analyser av gränssnittet (`ops/ANALYS-GRANSSNITT-FABLE.md`), avlästa i koden 13 nov:** F1.2 (avtalsvarslet
+  bokförs utan att Resends fel läses, `api/cron/send-reminders.mjs:156, 199, 234`) går först av dem, eftersom en
+  missad tidsfrist är ett kundtal; därefter D-1 (dörrens fynd når aldrig rummet), F1.1 (ingen brief en tyst månad) och
+  rummets ordning.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,

@@ -120,6 +120,20 @@ for (const [typ, beskrivning] of Object.entries(FYNDRADER)) {
   }
 }
 
+// Den tionde linsens fall A (O-1): en bredbandsfaktura med en mobildel. Sekundärvägen jämför mobildelen mot
+// listpris; under 500 kr brutto blir den null, och meningen om resten får då inte påstå något om vad vi gjort.
+// Mobildelen à 449 kr är motprovet: där finns en sekundär besparing (2 160 kr).
+export const KOMBIFALL = [];
+for (const mobildel of [269, 299, 449]) {
+  for (const modell of ['ja', 'nej']) {
+    KOMBIFALL.push(fall({ id: `kombi·bredband+mobil${mobildel}·${modell}`, kategori: 'bredband', modell, antalAvlast: true,
+      blandad: true, hastighet: 1000, leverantor: 'Telia Sverige AB', normaliserad: 'Telia',
+      beskrivning: 'Företagsbredband och mobil oktober 2026',
+      rader: [{ type: 'recurring_subscription', description: 'Företagsbredband Fiber 1000/1000', amount: 699 },
+        { type: 'recurring_subscription', description: 'Mobilabonnemang Jobbmobil (1 st)', amount: mobildel }] }));
+  }
+}
+
 // IT-8821 bär sina avlästa antal och à-priser ordagrant ur fixturen.
 Object.assign(MOTPROV[1].extraktion, {
   date: it8821.date,

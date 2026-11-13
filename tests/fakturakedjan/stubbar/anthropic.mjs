@@ -14,6 +14,11 @@ export default class Anthropic {
         const fall = globalThis.__FALL ?? {};
         const verktyg = p?.tool_choice?.name ?? null;
         (globalThis.__AI ??= []).push({ verktyg, max_tokens: p?.max_tokens ?? null });
+        // Rekommendationens prompt bokförs, så att instrumentet kan läsa vad modellen beordras skriva (FV-A16).
+        if (verktyg === 'recommend') {
+          globalThis.__PROMPT = (p?.messages ?? []).map((m) => (typeof m.content === 'string' ? m.content
+            : (m.content ?? []).map((c) => c?.text ?? '').join('\n'))).join('\n');
+        }
         const svar = { extract_invoice: fall.extraktion, categorize: fall.kategorisering, recommend: fall.modellen };
         if (verktyg) {
           if (!(verktyg in svar)) throw new Error(`stubben känner inte verktyget ${verktyg}`);

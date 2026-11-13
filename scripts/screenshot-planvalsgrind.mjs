@@ -29,10 +29,10 @@ const BUILD = join(ROT, 'build');
 const UT = join(ROT, 'results/screenshots/planvalsgrind');
 if (!existsSync(join(BUILD, 'index.html'))) { console.error('✗ build/ saknas — kör `npm run build` först.'); process.exit(1); }
 
-const { MOBILFALL, MOTPROV, FYNDFALL } = await import('../tests/fakturakedjan/fall.mjs');
+const { MOBILFALL, MOTPROV, FYNDFALL, KOMBIFALL } = await import('../tests/fakturakedjan/fall.mjs');
 const VALDA = ['comb-01·nej·antal', 'xl349·ja·antal', 'motprov·bredband', 'fynd·hardware_overpaid·ren·nej',
-  'fynd·supplier_documented_hike·komb·nej'];
-const fall = [...MOBILFALL, ...MOTPROV, ...FYNDFALL].filter((f) => VALDA.includes(f.id));
+  'fynd·supplier_documented_hike·komb·nej', 'kombi·bredband+mobil269·nej'];
+const fall = [...MOBILFALL, ...MOTPROV, ...FYNDFALL, ...KOMBIFALL].filter((f) => VALDA.includes(f.id));
 const dir = await mkdtemp(join(tmpdir(), 'planvalsgrind-'));
 await writeFile(join(dir, 'fall.json'), JSON.stringify(fall));
 const k = spawnSync(process.execPath, ['--import', './tests/fakturakedjan/register.mjs', 'tests/fakturakedjan/kor.mjs',
@@ -90,7 +90,7 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     ['fynd·hardware_overpaid·ren·nej', 'fynd', [/Ingen jämförelse mot listpris/, /898/, /Därför jämför vi inte ert pris mot listpriset/]],
     // N-1 och N-2: leverantörens egen höjning på en kombinerad faktura.
     ['fynd·supplier_documented_hike·komb·nej', 'hojning', [/Leverantören skrev in höjningen själv/,
-      /Därför jämför vi inte ert pris mot listpriset/, /har vi inte jämfört mot listpris i den här analysen/]],
+      /Därför jämför vi inte ert pris mot listpriset/, /Övrigt på fakturan: 8\s388\skr\/år\./]],
   ]) {
     const p = await fakturavyn(bredd, SVAR[id], '/Vi jämför inte era mobilabonnemang/');
     const t = await text(p);
@@ -109,6 +109,14 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   if (!/Ni betalar för mycket/.test(t)) fel(`motprov: sidrubriken över ett byte saknas (${namn})`);
   if (!/Er nettobesparing/.test(t)) fel(`motprov: beräkningsunderlaget saknas under bytet (${namn}) — klicket öppnade inget`);
   await p.screenshot({ path: `${UT}/motprov-bredband-${namn}.png`, fullPage: true }); await p.close();
+  // O-1: en bredbandsfaktura med en mobildel som jämförts och fallit under tröskeln. Meningen om resten bär bara tal.
+  const k = await fakturavyn(bredd, SVAR['kombi·bredband+mobil269·nej'], '/Telia Sverige AB/');
+  const tk = await text(k);
+  if (!/Kombinerad faktura\. Företagsbredband: 8\s388\skr\/år\. Övrigt på fakturan: 3\s228\skr\/år\./.test(tk)) {
+    fel(`kombi: meningen om resten saknas eller har glidit (${namn}): «${(tk.match(/Kombinerad faktura[^.]*\.[^.]*\.[^.]*\./) ?? [''])[0]}»`);
+  }
+  if (/jämfört mot listpris|analysen avser|analyseras via/i.test(tk)) fel(`kombi: ett påstående om vad vi gjort med resten (${namn})`);
+  await k.screenshot({ path: `${UT}/kombi-bredband-mobil-${namn}.png`, fullPage: true }); await k.close();
   console.log(`${namn}: kontroller körda`);
 }
 await browser.close(); server.close();

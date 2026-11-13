@@ -28,6 +28,7 @@ import { radensNiva, annanLicensprodukt } from '../../lib/licensniva.js';
 import { perioderPerAr } from '../../lib/faktureringsperiod.js';
 import { radensOre } from '../../lib/radobservation.js';
 import { detectForensicFindings } from '../../lib/forensics.js';
+import { catLabel } from '../../lib/format.js';
 import { isAudited, ungatedQuoteResponse } from '../../lib/revision-gate.js';
 import { computeShelfware } from '../../lib/shelfware.js';
 import { saasFinanceRightsizing } from '../../lib/saas-finance-rightsizing.js';
@@ -480,7 +481,8 @@ Kategoriserad faktura:
       : `mobilabonnemang`;
     const _secBenchmarkNote = _secondarySaving
       ? ` ← BENCHMARKAD: p25 = ${_secondarySaving.suggestedAnnual.toLocaleString('sv-SE')} kr/år, bruttobesparing ${_secondarySaving.grossSaving.toLocaleString('sv-SE')} kr/år`
-      : ' ← ej benchmarkad separat';
+      // Här stod att delen inte jämförts separat: falskt där sekundärdelen prövats och föll under tröskeln (O-1).
+      : '';
     const _hasSavingBoth   = _secondarySaving?.grossSaving > 0;
     const _reasoningSecFrag = _secondarySaving
       ? (() => {
@@ -490,9 +492,10 @@ Kategoriserad faktura:
             : `Bredbandskomponenten är marknadsmässig.`;
           return `Fakturan innehåller även ${_secLabel} (${_secCostFmt} kr/år) — ${_action}`;
         })()
-      // Stod förut att övriga tjänster analyserades i Fortnox eller Visma: ingen kod gör det, och modellen beordras
-      // skriva meningen ordagrant (N-2, FV-A13).
-      : `Övriga tjänster (${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr+) har vi inte jämfört mot listpris i den här analysen.`;
+      // Bara tal, inget verb om vad vi gjort (Fables beslut 13 nov, O-1): en sekundärdel utan besparing kan vara
+      // ojämförd (planval, valutaspärr, inget antal, ingen hastighet) eller jämförd under tröskeln, och modellen
+      // beordras skriva meningen ordagrant. Förut ett löfte om Fortnox eller Visma (N-2), sedan att vi inte jämfört (O-1).
+      : `Övrigt på fakturan: ${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år.`;
     const _secActionInstruction = _hasSavingBoth
       ? `KRITISKT: Bredbandskomponenten har en besparing mot verifierat listpris. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en åtgärd kunden kan ta ("vi kan förbereda även bredbandsbytet" — uppsägning och nyteckning gör kunden själv), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `
       : `KRITISKT: Ange i reasoning EXAKT `;
@@ -501,7 +504,7 @@ Kategoriserad faktura:
     Primär komponent (${categorized.category}): ${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år ← DETTA är jämförelsebasen för primärbesparingen${mobileAddonAnnual ? `
     Tilläggstjänster (molnväxel/PBX): ${mobileAddonAnnual.toLocaleString('sv-SE')} kr/år` : ''}
     Sekundär komponent (${_secLabel}): ${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år${_secBenchmarkNote}
-  ${_secActionInstruction}"Kombinerat faktura — analysen avser ${categorized.category}abonnemang (${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år). ${_reasoningSecFrag}" — fortsätt sedan med din analys av primärkomponenten. Använd INGA interna mätvärden (p25, percentil, procentsatser) i reasoning.`;
+  ${_secActionInstruction}"Kombinerad faktura. ${(() => { const e = catLabel(categorized.category); return e.charAt(0).toUpperCase() + e.slice(1); })()}: ${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år. ${_reasoningSecFrag}" — fortsätt sedan med din analys av primärkomponenten. Använd INGA interna mätvärden (p25, percentil, procentsatser) i reasoning.`;
   })() :
   mobileAddonAnnual ? `
   Varav mobilabonnemang: ${(annualCost - mobileAddonAnnual).toLocaleString('sv-SE')} kr/år

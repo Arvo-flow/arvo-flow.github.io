@@ -2080,15 +2080,15 @@ const TestaFaktura = () => {
                   </>
                 ) : (
                   <>
-                    Kombinerad faktura — analysen avser{' '}
-                    {getCategoryMeta(result.categorized?.category).label}
+                    {/* Bara tal, inget verb om vad vi gjort (Fables beslut 13 nov, O-1). Utan sekundär besparing kan
+                        delen vara ojämförd eller jämförd under tröskeln; ingen mening om vad koden gjort är sann för båda. */}
+                    Kombinerad faktura.
                     {result.extracted?.primaryComponentMonthly != null
-                      ? ` (${formatKr(result.extracted.primaryComponentMonthly * 12)}/år)`
+                      ? ` ${getCategoryMeta(result.categorized?.category).label}: ${formatKr(result.extracted.primaryComponentMonthly * 12)}/år.`
                       : ''}
                     {(result.recommendation?.nonPrimaryAnnual ?? 0) > 0
-                      // Stod förut att övriga tjänster analyserades i Fortnox eller Visma; ingen kod gör det (N-2).
-                      ? `. Övriga tjänster (${formatKr(result.recommendation.nonPrimaryAnnual)}/år) har vi inte jämfört mot listpris i den här analysen.`
-                      : '.'}
+                      ? ` Övrigt på fakturan: ${formatKr(result.recommendation.nonPrimaryAnnual)}/år.`
+                      : ''}
                   </>
                 )}
               </p>

@@ -23,11 +23,11 @@
 import { test, describe, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { writeFileSync, mkdtempSync, readFileSync } from 'node:fs';
+import { writeFileSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MOBILFALL, MOTPROV, FYNDFALL, FYNDRADER, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
+import { MOBILFALL, MOTPROV, FYNDFALL, FYNDRADER, KOMBIFALL, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { PLANVAL_BESKED } from '../lib/lagesregister.js';
 import { PLANVALS_MENING, BREDBAND_EJ_PRISSATT } from '../agents/recommender/recommend.js';
@@ -61,7 +61,7 @@ function korDel(fall, dir, nr) {
 async function korAlla() {
   if (UT) return UT;
   const dir = mkdtempSync(join(tmpdir(), 'fakturakedjan-'));
-  const alla = [...MOBILFALL, ...MOTPROV, ...FYNDFALL];
+  const alla = [...MOBILFALL, ...MOTPROV, ...FYNDFALL, ...KOMBIFALL];
   const delar = Array.from({ length: DELAR }, (_, i) => alla.filter((_, j) => j % DELAR === i));
   const svar = await Promise.all(delar.map((d, i) => korDel(d, dir, i)));
   UT = new Map(svar.flat().map((u) => [u.id, u]));
@@ -89,7 +89,8 @@ let MOBIL_IDS = ALLA_MOBIL_IDS;
 const PROCENT_MER = /\d+\s?%\s?(mer|över|dyrare)/i;
 // Fables beslut 12 nov: en planvalstext bär bara skälet och att vi inte jämför mot listpris. De här formerna säger
 // något om allt annat på sidan eller om en senare analys, och varje fynd ur kundens egna rader kan göra dem falska.
-const FORBJUDNA_PLANVALSFORMER = /säger inget om|hävdar .{0,40}inget om|ingen besparing|aldrig fram en besparing|analyseras via/i;
+// Vidgad 13 nov (W-1): omvänd ordföljd efter «Därför»/«så» («säger vi inget om») och fler former av samma påstående.
+const FORBJUDNA_PLANVALSFORMER = /säger (vi )?(inget|ingenting) om|hävdar .{0,40}inget om|gör (vi )?inget påstående|räknar (vi )?inte fram|ingen besparing|aldrig fram en besparing|analyseras (i|via)\b/i;
 
 describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
   before(async () => {
@@ -305,8 +306,10 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     const { diagnosMening, ANALYSRUBRIKER } = await import('../src/lib/diagnos.js');
     const { MOTIVERING } = await import('../src/lib/rumstext.js');
     const vy = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
-    const ovriga = vy.match(/Övriga tjänster \([^`]*?\/år\) ([^`]*?)`/);
-    assert.ok(ovriga, 'meningen om övriga tjänster hittades inte i fakturavyn');
+    // Meningen om resten av en kombinerad faktura bär bara tal (Fables beslut 13 nov, O-1).
+    const ovriga = vy.match(/` Övrigt på fakturan: \$\{formatKr\(result\.recommendation\.nonPrimaryAnnual\)\}\/år\.`/);
+    assert.ok(ovriga, 'meningen om övrigt på fakturan hittades inte i fakturavyn');
+    assert.doesNotMatch(vy, /Kombinerad faktura — analysen avser|Övriga tjänster \(/, 'den gamla meningen står kvar i fakturavyn');
     const texter = {
       'PLANVAL_BESKED.text': [PLANVAL_BESKED.text, 'Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har. Därför jämför vi inte ert pris mot listpriset.'],
       'PLANVAL_BESKED.skal': [PLANVAL_BESKED.skal, 'vi vet inte vilken produkt ni har, och produkterna i kategorin har olika listpris'],
@@ -317,11 +320,14 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       BREDBAND_EJ_PRISSATT: [BREDBAND_EJ_PRISSATT, 'Bredbandet på samma faktura har vi inte jämfört mot listpris i den här analysen.'],
       'rummets planvalsrad': [MOTIVERING.omatt({ planval: true }, 'mobilabonnemang'),
         'Fakturan är mottagen och klassad som mobilabonnemang. Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har, så vi jämför inte priset mot listpriset.'],
-      'rummets rad med obekräftad nivå': [MOTIVERING.oviss_niva({ perEnhet: 4188, unitLabel: 'per abonnemang/år', golv: 3228 }, 'mobilabonnemang'), null],
-      'fakturavyns övriga tjänster': [ovriga[1], 'har vi inte jämfört mot listpris i den här analysen.'],
+      // Ordagrant lås sedan W-1: sabotaget «… och därför säger vi inget om ert pris» i den här meningen fällde 0.
+      'rummets rad med obekräftad nivå': [MOTIVERING.oviss_niva({ perEnhet: 4188, unitLabel: 'per abonnemang/år', golv: 3228 }, 'mobilabonnemang'),
+        'Ni betalar 4 188 kr per abonnemang/år för mobilabonnemang. Det billigaste publicerade priset är 3 228 kr, men produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har, så vi jämför inte ert pris mot det.'],
+      'fakturavyns övrigt på fakturan': [ovriga[0], '` Övrigt på fakturan: ${formatKr(result.recommendation.nonPrimaryAnnual)}/år.`'],
     };
+    const normal = (t) => String(t).replace(/\s/g, ' ');
     for (const [namn, [text, ordagrant]] of Object.entries(texter)) {
-      if (ordagrant != null) assert.equal(text, ordagrant, `${namn} har glidit`);
+      if (ordagrant != null) assert.equal(normal(text), normal(ordagrant), `${namn} har glidit`);
       assert.doesNotMatch(text, FORBJUDNA_PLANVALSFORMER, `${namn}: «${text}»`);
       assert.doesNotMatch(text, /förrän vi vet|senare|nästa gång/i, `${namn} lovar något om en senare analys`);
     }
@@ -333,12 +339,19 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       'så vi räknar ingen besparing på dem.',
       'Övriga tjänster (12 588 kr/år) analyseras via Fortnox/Visma.',
       'så vi jämför inte priset och säger inget om prisläget.',
+      // Den tionde linsens släppta meningar (W-1).
+      'Därför säger vi inget om ert pris.',
+      'så säger vi ingenting om prisnivån',
+      'så vi gör inget påstående om prisläget',
+      'Vi räknar inte fram någon besparing',
+      'Övriga tjänster analyseras i Fortnox.',
     ]) assert.match(gammal, FORBJUDNA_PLANVALSFORMER, `förbudet släpper «${gammal}»`);
     assert.doesNotMatch(vy, /analyseras via Fortnox/, 'fakturavyn lovar en Fortnox-analys');
     // Prompten beordrar modellen att skriva meningen om övriga tjänster ordagrant i sin text.
     const rek = readFileSync(join(ROT, 'agents/recommender/recommend.js'), 'utf8');
     assert.doesNotMatch(rek, /analyseras via Fortnox/, 'prompten beordrar modellen att lova en Fortnox-analys');
-    assert.match(rek, /kr\+\) har vi inte jämfört mot listpris i den här analysen\./);
+    assert.match(rek, /: `Övrigt på fakturan: \$\{nonPrimaryAnnualForPrompt\.toLocaleString\('sv-SE'\)\} kr\/år\.`;/);
+    assert.doesNotMatch(rek, /ej benchmarkad separat|analysen avser \$\{categorized/, 'prompten bär ett påstående om vad vi gjort med resten');
   });
 
   test('FV-A14 · listprisnotisen står inte på en planvalsfaktura (K-3, V-5)', () => {
@@ -356,6 +369,53 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     assert.match(villkor, /result\.lage\?\.rubrik !== 'planval'/, `notisens villkor: «${villkor.slice(0, 200)}»`);
     assert.match(villkor, /<PriceNote>/, 'utsnittet nådde inte notisens villkor');
     for (const f of FYNDFALL.slice(0, 2)) assert.equal(UT.get(f.id).lage?.rubrik, 'planval', 'premissen: rubriken är planval');
+  });
+
+  test('FV-A15 · «jämfört mot listpris» och «jämför inte» står bara i planvalsgrindens konstanter (Fables beslut 13 nov)', () => {
+    // En mening om vad koden gjort med en fakturadel får bara visas av ett villkor som läser ett fält skrivet av just
+    // den kodvägen. O-1 skrev «har vi inte jämfört mot listpris» i en gren som också nås där koden jämfört.
+    const TILLATNA = { 'src/lib/rumstext.js': 2, 'src/lib/diagnos.js': 2, 'lib/lagesregister.js': 1, 'agents/recommender/recommend.js': 2 };
+    const FORM = /jämfört mot listpris|jämför inte|jämför vi inte/g;
+    const filer = [];
+    const gå = (dir) => {
+      for (const e of readdirSync(join(ROT, dir), { withFileTypes: true })) {
+        const p = `${dir}/${e.name}`;
+        if (e.isDirectory()) { if (e.name !== 'node_modules') gå(p); }
+        else if (/\.(m?js)$/.test(e.name)) filer.push(p);
+      }
+    };
+    for (const d of ['src', 'lib', 'api', 'agents']) gå(d);
+    assert.ok(filer.length > 300, `för få filer lästa: ${filer.length}`);
+    const fel = [];
+    for (const f of filer) {
+      // Kommentarer räknas inte: de beskriver historiken och når ingen kund.
+      const kod = readFileSync(join(ROT, f), 'utf8').split('\n')
+        .filter((l) => !/^\s*(\/\/|\*|\/\*|\{\/\*)/.test(l)).join('\n');
+      const n = (kod.match(FORM) ?? []).length;
+      if (n !== (TILLATNA[f] ?? 0)) fel.push(`${f}: ${n} (tillåtet ${TILLATNA[f] ?? 0})`);
+    }
+    assert.deepEqual(fel, [], fel.join('\n'));
+  });
+
+  test('FV-A16 · den tionde linsens fall A: meningen om resten bär bara tal, och motprovet behåller sin besparing (O-1)', () => {
+    const fel = brott(KOMBIFALL.map((f) => f.id), (u) => {
+      if (u.kategori !== 'bredband') return `kategori ${u.kategori}`;
+      const del = Number(u.id.match(/mobil(\d+)/)[1]);
+      const prompt = u.promptKombi.join('\n');
+      if (/jämfört mot listpris|jämför inte|ej benchmarkad|analysen avser|analyseras/i.test(prompt)) {
+        return `prompten påstår något om resten: «${u.promptKombi.find((l) => /jämför|benchmarkad|analys/i.test(l))}»`;
+      }
+      if (del === 449) {
+        if (!(u.sekundar?.grossSaving === 2160)) return `motprovet: sekundär besparing ${u.sekundar?.grossSaving}`;
+        return null;
+      }
+      if (u.sekundar != null) return `sekundär besparing ${u.sekundar.grossSaving} vid ${del} kr`;
+      const vantad = `Övrigt på fakturan: ${(del * 12).toLocaleString('sv-SE')} kr/år.`.replace(/\s/g, ' ');
+      if (!prompt.replace(/\s/g, ' ').includes(vantad)) return `prompten saknar «${vantad}»: ${JSON.stringify(u.promptKombi)}`;
+      if (u.nonPrimaryAnnual !== del * 12) return `nonPrimaryAnnual ${u.nonPrimaryAnnual}`;
+      return null;
+    });
+    assert.deepEqual(fel, [], visa(fel));
   });
 
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {

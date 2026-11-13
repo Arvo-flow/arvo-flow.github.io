@@ -89,6 +89,7 @@ async function korFall(fall) {
   globalThis.__RADER = new Map();
   globalThis.__MEJL = [];
   globalThis.__AI = [];
+  globalThis.__PROMPT = '';
   fangade = [];
 
   const pdf = await skapaPdf(fall);
@@ -189,6 +190,10 @@ async function korFall(fall) {
     },
     sekundar: body?.secondarySaving ?? body?.recommendation?.secondarySaving ?? null,
     berakningsunderlag: body?.calculationChain ?? null,
+    // Promptens rader om en kombinerad faktura: vad modellen beordras skriva ordagrant (FV-A16).
+    promptKombi: String(globalThis.__PROMPT ?? '').split('\n')
+      .filter((l) => /kombinera|övrig|sekundär komponent|jämför|benchmarkad|analyseras|analysen avser/i.test(l)),
+    nonPrimaryAnnual: body?.recommendation?.nonPrimaryAnnual ?? null,
     fynd: body?.leadFinding ? { typ: body.leadFinding.type ?? null, titel: body.leadFinding.title ?? null,
       text: body.leadFinding.text ?? null, skal: body.leadFinding.fyndSkal ?? null,
       belopp: body.leadFinding.annualImpact ?? body.leadFinding.amount ?? null } : null,
