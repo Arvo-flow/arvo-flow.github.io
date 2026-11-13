@@ -254,3 +254,144 @@ Jag står fast vid «Sedan förra fakturan», men som en hel upplevelse med ett 
 - Två konton hos samma leverantör läses som en serie. Kräv samma kund- eller avtalsnummer när fakturan bär ett.
 
 **Öppet för grundaren.** Om kontaktadresserna och villkoren inte rättas före våg 1 bör inbjudan säga det rakt ut, för de fem kommer att läsa dem.
+
+
+## Del 3 · Kontoret: dörren och rummet på djupet (grundarens precisering 12 nov)
+
+**Dom.** Dörren och rummet är Arvos två bästa ytor, men de hänger inte ihop: det dörren läser fram försvinner när kunden går in i rummet, trots att startsidan lovar att det «blir rad ett». Dörren talar om pengar i ett enda läge, Microsoft 365 med bekräftat bolag; i det vanligaste läget, ett småbolag hos Loopia, är starkaste raden ett listpris som inte handlar om kunden. Rummet har rätt delar i fel ordning: på 390 px kommer domen som sjätte block, och samma avstående sägs upp till fyra gånger före första leverantörsraden. Över tid står rummet nästan still, eftersom tre fakturor från samma leverantör ger en rad med texten «3 analyser». Den ändring som ger mest är att göra dörrens fynd till rummets första rader och låta varje ny faktura skriva en ny rad i dem.
+
+Läst i 03583759; planvalsmeningarna i 4029b68b. «Avläst» = bild eller fil:rad; resten är bedömning med konfidens. F1.n och F2.n är fynden ur första passet, «pass 2» är det andra. PF = `src/pages/Portfolio/index.js`, KS = `src/pages/Kontoret/styles.js`, RC = `src/components/RevealCard.js`. Inga spårade filer är ändrade. Bolagsverket-lagret och bolagsväljaren är lästa i kod, inte sedda i bild.
+
+## 1 · Dörren som första möte
+
+**Vad ekonomichefen ser, per läge (avläst):**
+
+| Läge | Rader | Omdöme |
+|---|---|---|
+| Tunt (Loopia) | «Loopia sköter er domän» och «Tele2 Företags entrénivå för mobilabonnemang: 269 kr/mån» (`dorren--tunt-390.png`) | Svagt. Första raden vet kunden redan; den andra är sann men handlar om marknaden |
+| Microsoft 365 | «Ni kör Microsoft 365» med nivåspannet 66,91–641,18 kr och «6 891 kr per anställd och år»; «sattes upp april 2021»; «17 års obruten digital närvaro» (`dorren--m365-390.png`) | Starkt. Spannet är dörrens enda mening om pengar |
+| M365 med bekräftat bolag | «N kr/år skiljer billigaste från dyraste licensnivå — för era N anställda» (`lib/business-intel.js:321`), bokslut, tillväxtsvit, koncern | Starkast. Kräver bolagsmatchning |
+| Google | «Ni kör Google Workspace · Er e-post drivs av Google.» (`lib/domain-intel.js:388-392`) | Ingen krona; priserna är i USD |
+| Bolagsväljaren | «Vi läste N bolag som heter något med X. Vilket är ert?» och «Vi kunde ha gissat … därför frågar vi» (RC:522, 553) | Starkt förtroendeögonblick |
+
+- **Starkaste «Hur visste de det?»:** licensspannet gånger anställdatalet, eftersom det är ett eget tal i kronor, räknat ur två källor med datum. Tvåa är SPF-raden «X · Y får skicka mejl i ert namn» (`lib/domain-intel.js:430`).
+- **Svagast:** «Loopia sköter er domän» och «17 års obruten digital närvaro». Ett registreringsdatum bevisar inte «obruten». Bedömning, medel.
+- **Riskerar att vara fel:**
+  - M365-datumet «exakt när uppsättningen gjordes» (F1.12).
+  - Licensspannet räknar varje anställd som en licens; källraden säger det («× ert anställdatal»), rubriken inte. Bedömning, medel.
+  - Kvittot «Fem öppna register lästa — … prisboken» står även på det tunna kortet (bild). Prisboken är vår egen, inte ett öppet register, och jag har inte läst var talet räknas (RC:617).
+  - Ingressen «Era leverantörer har redan bildat sig en uppfattning om er — och prissätter efter den» (RC:472) är ett påstående utan källa.
+- **Vad som saknas för att dörren ska tala om pengar:**
+  1. Det tunna kortet behöver en rad om kunden. Namnservrar och SPF pekar ut leverantörer; för var och en som finns i prisboken kan dörren visa listprisets spann, som den redan gör för Microsoft.
+  2. Google-läget behöver samma brygga, eller en ärlig mening om varför den saknas (priserna är i USD).
+  3. Bolagsväljaren låser upp det starkaste. Startsidans egen kommentar säger att automatisk bindning «fyrar i 1 fall av 20» (Landing:138). Väljaren bör därför komma först, inte sist.
+
+**Övergången dörr → rum (avläst i `dorren--*-390.png` och RC:329-380):**
+- Bryggan säger «Vidarebefordra en faktura. Eller femtio. Sedan har ni ett eget rum hos Arvo», visar `faktura@inbox.arvoflow.se` och länken «Testa med en faktura».
+- Vägen kräver att kunden lämnar webbläsaren, hittar en PDF, vidarebefordrar, väntar på svar och klickar på länken. Det är fem handlingar i två program. Här tappas besökaren. Bedömning, hög.
+- Reservlänken går till den ljusa fakturavyn, inte till rummet, fast rummet har en egen släppyta (PF:2076-2083).
+- **[KUND] D-1 · «Det ni just såg blir rad ett» (Landing:364) har ingen mekanik.** Rummet använder avslöjandet bara i tomläget (PF:2057-2061), och `api/reveal.mjs` sparar inget (:34 `no-store`; inga skrivningar hittade). Avläst, hög.
+- **[FORM] D-2 · «Upp till hundra fakturor i samma mejl» (RC:359) mot rummets «även 50 på en gång»** (`registret--rummet-390.png`).
+
+## 2 · Rummet, ruta för ruta
+
+Ordningen är densamma på 390 och 1600 px; på 1600 står radarn till höger om hälsningen (KS:61-64).
+
+| # | Ruta (PF) | Säger | Tal med källa och datum | Våg 1-kund | Upprepar |
+|---|---|---|---|---|---|
+| 0 | Inloggning «Redan kund?» (`AccountBar`, PF:848) | Skicka länk | — | Visas överst för den som redan är inne | — |
+| 1 | Hälsning och h1 (911-927) | «God kväll. Vi vaktar era avtal.» | Datum | Fylld | Rubriken i ruta 4 |
+| 2 | Radarn (928-985) | Fakturor, prissatta, mottagna; «bevakning aktiv» | Räknare; svepstämpel bara när svep finns | Räknare fyllda, marknadsraden tom | F2.3 |
+| 3 | Fyndkort: fynd, rätt-storlek, rörelse, klocka, prognos (986-993) | Det enda rörliga i rummet | Ja: citat, datum, antal avsändare, grund och konfidens (`registret--rummet-390.png`) | Tom utan fynd; rörelse och prognos beror på prishistoriken | — |
+| 4 | Veckodomen (995-1030) | Läget, med källchip | Ja när mätt | Oftast «kunde inte mätas» | Ruta 1, 5, 6 |
+| 5 | Arvo Score (1031–) | «—» och två meningar om varför | Nej | Tom med en mobilrad | Ruta 4 |
+| 6 | Nettobesparing eller «Fakturor i rummet» (–1117) | Ett tal, eller antal fakturor plus domens text en gång till | Delvis | Antalet finns redan i radarn | Ruta 2, 4 |
+| 7 | Vaktens kvitton (1118) | Bevakar, analys, kohort, rörelse, prognos, klocka | Delvis | «Vägde 0 fakturor» (bild) | Ruta 3 rad för rad; F1.10 |
+| 8 | Kollektiva sanningen: kohort, täckning, marknadsankare (1126-1370) | Kohortkort eller listprisankare | Ankaret ja | Ankaret syns inte i någon mobilbild; kohorten är död vid källan | — |
+| 9 | Maktkalendern, årsavtal (1372-1385) | «~ månad år» | Nej (F1.9) | Bara årsfakturor | Klockan i ruta 3 |
+| 10 | Innehavet (1392-1898) | Rad per leverantör: bedömning, klocka, «Så landade vi i talet», byte | Ja, rummets bästa underlag | Fylld | — |
+| 11 | Bevakat, inte prissatt (1899) | Skälet till tystnaden | Skäl | Fylld för tysta kategorier | — |
+| 12 | Fyll på rummet (1944) | Adress, släppyta, guide, intag | Intagets räknare | Fylld | F2.4 |
+| 13 | Intelligence-pitch (1998) | 1 995 kr | — | Visas även för premium (ingen gren läst) | — |
+
+- **[KUND] R-1 · Kohortkortet finns kvar i ytan.** `registret--rummet-390.png` visar «Ni betalar 14% mer» mot ett snitt av totalsummor, i ett rum där domen säger «vi hävdar ingenting om er prisnivå», och kvittot «sanningen ingen jämförelsesajt kan ge» (PF:724). Datan kommer via `getMarketIntelligence` (`api/invoice-history.mjs:794`), som bibeln säger alltid svarar `null`. Kortet är alltså dött i dag men laddat. Avläst i bild och kod; att källan svarar `null` har jag inte läst om.
+- **[FORM] R-2 · Marknadsrörelsens mening haltar:** «5 av 12 avsändare Arvo analyserat fakturor från för mobil ligger hos Telia» (bild).
+- **Rangordning efter värde för kunden:** 3 fyndkorten, 10 innehavet med underlaget, 4 domen, 12 intaget, 2 radarns räknare, 8 ankaret, 11 skälen, 7 kvittona, 9, 5, 6, 13, 0.
+- **Bort:** 6 i sitt omätta läge, 9 tills datumen är avlästa, kohortkortet i 8, 13 för premiumkunder, kvittoraderna som upprepar ett kort.
+- **Slå ihop:** 1 och 4 till en rubrik; 5 in i 4 som en rad när poängen saknas; 2 och 7 till en vaktruta.
+- **Flytta upp:** domen till första skärmen; intagets räknare (12) upp till vakten; inloggningen (0) ned eller bort när rummet är öppet.
+
+## 3 · Rummets berättelse över tid
+
+| Tidpunkt | Vad som ändras (avläst i kod) | Vad som står still |
+|---|---|---|
+| Dag 1, en faktura | Radarns räknare, en rad i innehavet, domen, eventuellt fynd | Allt annat |
+| Tre fakturor, samma leverantör | Raden visar senaste analysen och «· 3 analyser» (PF:527, 1421) | De två äldre syns inte; ingen jämförelse mellan dem i rummet |
+| En månad | Klockans dagar räknas ned vid varje läsning; svepstämpel och «N nätter i rad» om svepet rapporterat (PF:706-712); rörelse och prognos om prishistoriken ändrats | Poäng, dom och innehav är oförändrade utan ny faktura |
+| Avtalsvarsel | Mejl 30 och 7 dagar före sista dag (F1.2 gäller); klockkortet finns redan i rummet | Rummet visar inte att varslet skickats; efter sista dag står «-42 dagar» (F1.10) |
+
+- Det som faktiskt rör sig utan att kunden gör något är klockan, svepraden och de två marknadskorten. Inget av dem handlar om kundens egna rader. Bedömning, hög.
+- Fyndet har ingen fortsättning: samma kort står kvar tills en ny faktura från leverantören ersätter raden, och ingen ruta säger om posten försvann (pass 2, avsnitt 5).
+
+## 4 · Designen
+
+- **Två rubriker tävlar.** Hälsningen är `clamp(40px, 7vw, 62px)` (KS:79) och domen `clamp(30px, 5vw, 48px)` (KS:155). På 390 px säger de nästan samma sak med en radar emellan (`lagesregister--rummet-omatt-mobil.png`). Domen bör vara den enda stora serifraden.
+- **Radarn sveper alltid.** `animation: sweep 3.2s linear infinite` (KS:103) går oavsett om ett svep finns. Rörelsen bär då ingen mätning. Låt den stå still med stämpeln «inget svep rapporterat», och svepa en gång när ett nytt svep lästs in.
+- **Mobil staplar radarn före innehållet** (KS:64, 93). På 390 px tar den en hel skärm innan något om kundens pengar syns.
+- **Täthet.** Scorekortet och «Fakturor i rummet» är stora kort med ett streck eller ett antal (KS:241, 321). I det omätta läget är de två skärmhöjder utan tal.
+- **Regel 6 bryts i rummets banner:** inline-stilar med hårdkodade färger, `#EAF2EF`, `#F5B45A`, `#D9B98A`, `#B89B72` (PF:857-900). Filen har tretton sådana block.
+- **Mono på tal hålls** i radarn, underlaget och märkena. Det är rummets starkaste signatur. Kvittonas löptext bryter mot den: «-42 dagar» står i brödtext.
+- **Dörrens kort är rätt byggt:** titel i serif, en mening, källrad i mono (RC:565-571). Fynden tänds med 0,14 s fördröjning per rad, vilket fungerar som telemetri. Kvittot i versaler läses däremot som dekor på 390 px.
+- **Bryggan byter språk.** Dörren är mörk, reservvägen ljus. Den som klickar «Testa med en faktura» lämnar dossiern.
+- **Kvittot «Vägde 0 fakturor»** bör inte renderas: en rad som redovisar noll arbete med datum ser ut som ett fel.
+
+## 5 · Planen för rummet och dörren
+
+Rangordnad efter effekt per veckas arbete. «Före» = går att bygga före våg 1.
+
+| # | Ändring | Backend | Signal | Integritetsrisk | Före |
+|---|---|---|---|---|---|
+| 1 | **Dörrens fynd blir rummets första rader.** Varje leverantör dörren ser (Microsoft 365, Google, SPF-tjänsterna) står som en rad med läget «faktura saknas» och sitt listprisspann där boken bär ett | Avslöjandet sparas inte i dag (D-1); behöver en lagring per rum och en väg som bär domänen från dörren | Andel dörrbesök som leder till ett rum; andel «saknas»-rader som får en faktura | En leverantör ur DNS är en teknisk relation, inte ett avtal. Raden får säga «syns i era publika uppgifter», aldrig «ni betalar» | Ja |
+| 2 | **Bryggan går till rummet.** Efter avslöjandet: «Öppna ert rum» med släppyta och rummets egen adress; mejlvägen står kvar som alternativ | Rumsnyckel och adress finns | Fakturor inom tio minuter efter avslöjandet | Ingen | Ja |
+| 3 | **«Sedan förra fakturan» och fyndets livscykel** (nedan) | Radposter lagras; om öresfälten följer med in i lagringen har jag inte läst | Faktura nummer två per leverantör; öppnade svarsmejl | Felmatchade rader (pass 2) | Ja; bär fullt med våg 1-data |
+| 4 | **Ny ordning i rummet:** dom, fyndkort, innehav, vakt, intag; ruta 5, 6, 9 och 13 enligt avsnitt 2 | Inget | Rullningsdjup; tid till första klick | Ingen | Ja |
+| 5 | **Löftena i rummet:** F1.4, F1.5, F1.10, F2.2–F2.5, D-1, R-1 | Inget | Skanningen ger noll träffar | Ingen | Ja |
+| 6 | **Bolagsväljaren först i dörren,** med licensspannet märkt «om varje anställd har en licens» | Finns | Andel avslöjanden med bekräftat bolag | Rubrikens antagande om licenser | Ja |
+| 7 | **Det tunna kortet får en rad om kunden:** spann per igenkänd leverantör ur prisboken | Prisboken finns; kopplingen namnserver → kategori saknas (bedömning) | Andel tunna kort med minst en kronrad | Bara leverantörer med verifierat SEK-pris | Ja |
+| 8 | **Radarn bär ett tal eller står still;** intagets räknare flyttas dit | `vakt` och intaget finns i svaret | — | Löser F2.3 | Ja |
+| 9 | **Maktkalendern på avlästa datum** | Kräver uppladdade avtal | Antal klockor med känt datum | F1.9 | Nej |
+
+**«Sedan förra fakturan» i rummet:**
+- **Placering:** överst i den utfällda leverantörsraden, före «Arvo bedömer». När något ändrats lyfts det också som fyndkort i ruta 3.
+- **Rubrik:** «Sedan förra fakturan · september → oktober».
+- **Innehåll:** en rad per jämförd fakturarad med läge, och en summering: «12 av 14 rader jämförda. 11 oförändrade, 1 ändrad, 2 gick inte att jämföra.»
+- **En faktura:** «Det här är den första fakturan från Telia i rummet. Skicka förra månadens, så ser ni vad som ändrats.» Ingen tom tabell.
+- **Tomläge efter jämförelse:** «Inga ändringar mellan fakturorna.» Det är den tysta dagens kvitto, och det ska också stå i svarsmejlet.
+- **Raden i innehavet** byter «· 3 analyser» mot «3 fakturor · senast oktober» med de äldre nåbara.
+
+**Fyndets livscykel i rummet:**
+- **Öppet:** dagens kort, med brevet.
+- **Kvar:** när nästa faktura bär samma rad: «Posten står kvar på oktoberfakturan. Brevet är daterat i september.»
+- **Borta:** när nästa faktura saknar raden: «Posten är borta sedan oktoberfakturan.» Kortet flyttar då till en ruta «Avslutat», som ersätter ruta 6.
+- **Likräkningen** summerar bara fynd i läget borta, med beloppet per år som koden redan räknar för fyndet. Före det står ingen summa.
+- **Vad rutan aldrig säger:** att Arvo fick bort posten, eller att pengarna är återbetalda. Den vet bara att raden saknas på en senare faktura.
+
+**Avråder från, i rummet och dörren:**
+- Att fylla ruta 5 med en poäng på tunnare underlag.
+- Att behålla kohortkortet «för framtiden»; ta bort komponenten tills normaliseringen per enhet finns.
+- Fler rörliga element i radarn.
+- Att göra dörren längre; den ska bli vassare i det tunna läget, inte större.
+
+## Opus avläsning av fynden (13 nov, spets ffd384b8)
+
+| Fynd | Avläsning | Läge |
+|---|---|---|
+| D-1 · «Det ni just såg blir rad ett» utan mekanik | lib/domain-intel.js:149-153 skriver bara till KV med TTL (`INTEL_CACHE_TTL`); api/reveal.mjs har ingen skrivning till rummet | bekräftat i kod |
+| F1.1 · ingen brief en tyst månad | api/cron/generate-briefings.mjs:73 `if (!data || data.insightCount === 0)` hoppar över | bekräftat i kod |
+| F1.2 · varslet bokförs utan att Resends fel läses | api/cron/send-reminders.mjs:156, 199, 234: `await resend.emails.send(...)` utan `{ error }` | bekräftat i kod; IA-19:s form (`skicka()`) finns i intaget |
+| F1.10 · «-42 dagar till sista uppsägningsdag» | src/pages/Portfolio/index.js ~735: `roomClock.daysToAct` skrivs utan gren för negativt värde | kod läst; att `daysToAct` blir negativt är inte kört |
+| R-1 · kohortkortet i ytan | lib/price-alert.js:100-102 `getMarketIntelligence` returnerar alltid `null` | kortet kan inte visas i dag (registrets bild matar data direkt); komponenten står kvar |
+| F2.3 · «bevakning aktiv» till varje besökare | Portfolio:713, 945, 980 | bekräftat i kod |
+| Rummet över tid · «3 analyser» | Portfolio:1421 `· ${g.count} analyser` | bekräftat i kod |
+
+Nästa steg efter S1 (förslag till körplanen): S6 och S4 enligt planen, sedan löftessaneringen (F1.2 först: ett varsel som inte går fram men bokförs är en tidsfrist kunden missar), sedan rummet och dörren enligt Fables plan, punkt 1–4.
