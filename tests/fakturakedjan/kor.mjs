@@ -192,8 +192,12 @@ async function korFall(fall) {
     berakningsunderlag: body?.calculationChain ?? null,
     // Promptens rader om en kombinerad faktura: vad modellen beordras skriva ordagrant (FV-A16).
     promptKombi: String(globalThis.__PROMPT ?? '').split('\n')
-      .filter((l) => /kombinera|övrig|sekundär komponent|jämför|benchmarkad|analyseras|analysen avser/i.test(l)),
+      .filter((l) => /kombinera|övrig|resten|sekundär komponent|jämför|benchmarkad|analyseras|analysen avser/i.test(l)),
     nonPrimaryAnnual: body?.recommendation?.nonPrimaryAnnual ?? null,
+    // Resten av en kombinerad faktura och de två tal den räknas ur, så som fakturavyn visar dem (FV-A17).
+    restAnnual: body?.restAnnual ?? null,
+    visadArskostnad: body?.hardwareAdjustment?.adjAnnualCost ?? body?.extracted?.annualCost ?? null,
+    primarManad: body?.extracted?.primaryComponentMonthly ?? null,
     fynd: body?.leadFinding ? { typ: body.leadFinding.type ?? null, titel: body.leadFinding.title ?? null,
       text: body.leadFinding.text ?? null, skal: body.leadFinding.fyndSkal ?? null,
       belopp: body.leadFinding.annualImpact ?? body.leadFinding.amount ?? null } : null,

@@ -134,6 +134,36 @@ for (const mobildel of [269, 299, 449]) {
   }
 }
 
+// Den elfte linsens rutnät (P-1): kombinerade fakturor med tilläggsrader, avgifter, hårdvara, kvartal, saknat antal,
+// en mobilrad regexen inte känner igen och en faktura i EUR. Resten ska vara en summa: P + resten = «Ni betalar idag».
+const BB = { type: 'recurring_subscription', description: 'Företagsbredband Fiber 1000/1000', amount: 699 };
+const MOB = { type: 'recurring_subscription', description: 'Mobilabonnemang Jobbmobil (1 st)', amount: 269 };
+const TILLAGG = {
+  pbx: { type: 'recurring_subscription', description: 'Molnväxel Touchpoint', amount: 199, is_addon: true, addon_type: 'pbx' },
+  ip: { type: 'recurring_subscription', description: 'Statisk IP-adress', amount: 99, is_addon: true, addon_type: 'static_ip' },
+  router: { type: 'recurring_subscription', description: 'Router hyra', amount: 49 },
+  avgift: { type: 'recurring_subscription', description: 'Pappersfakturaavgift', amount: 29 },
+  hw: { type: 'hardware', description: 'Delbetalning iPhone 15 Pro, månad 12 av 36', amount: 449 },
+};
+const kombi = (id, o) => fall({ id, kategori: 'bredband', antalAvlast: true, blandad: true, hastighet: 1000,
+  leverantor: 'Telia Sverige AB', normaliserad: 'Telia', beskrivning: 'Företagsbredband och mobil oktober 2026', ...o });
+export const RESTFALL = [];
+for (const modell of ['ja', 'nej']) {
+  for (const [namn, t] of Object.entries(TILLAGG)) RESTFALL.push(kombi(`rest·bb+mob+${namn}·${modell}`, { modell, rader: [BB, MOB, t] }));
+  RESTFALL.push(fall({ id: `rest·mob+bb+pbx·${modell}`, kategori: 'mobil', modell, antalAvlast: true, blandad: true, hastighet: 1000,
+    beskrivning: 'Mobil och bredband oktober 2026',
+    rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (10 st)', amount: 3490 }, BB, TILLAGG.pbx] }));
+  const kvartal = kombi(`rest·bb+mob·kvartal·${modell}`, { modell, rader: [{ ...BB, amount: 2097 }, { ...MOB, amount: 807 }] });
+  kvartal.extraktion.billingPeriod = 'quarterly';
+  RESTFALL.push(kvartal);
+  RESTFALL.push(kombi(`rest·bb+mob·utan-antal·${modell}`, { modell, antalAvlast: false, hastighet: null, rader: [BB, MOB] }));
+  RESTFALL.push(kombi(`rest·bb+okand-mobilrad·${modell}`, { modell,
+    rader: [BB, { type: 'recurring_subscription', description: 'Telia Jobbmobil 15 GB (1 st)', amount: 269 }] }));
+  const eur = kombi(`rest·bb+mob·eur·${modell}`, { modell, rader: [{ ...BB, amount: 61 }, { ...MOB, amount: 24 }] });
+  eur.extraktion.currency = 'EUR';
+  RESTFALL.push(eur);
+}
+
 // IT-8821 bär sina avlästa antal och à-priser ordagrant ur fixturen.
 Object.assign(MOTPROV[1].extraktion, {
   date: it8821.date,

@@ -15,12 +15,12 @@ Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5
 startar om läser blocket först.
 
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** «S1: meningen om resten av en kombinerad faktura bär bara tal», Fables andra
-  beslut verkställt (O-1, W-1). Den tionde linsen blockerade 4029b68b (`ops/GRANSKNING-s1-tionde.md`), S1:s tredje
-  blockering i rad; Fable avgjorde frågan, och beslutet står under S1 nedan.
-- **Lins igång:** ja. Elfte linsen på den commiten startas 13 nov; domen skrivs till `ops/GRANSKNING-s1-elfte.md`.
-  Säkerhetsnät: 60 minuter. Blockerar den igen går frågan till Fable med alla fyra domarna, och frågan blir om S1 ska
-  delas.
+- **Senaste mekanikcommit på grenen:** «S1: resten av en kombinerad faktura är en summa som går ihop med «Ni betalar
+  idag» (P-1)», Fables tredje beslut verkställt. Den elfte linsen blockerade 193dd2d8 (`ops/GRANSKNING-s1-elfte.md`),
+  S1:s fjärde blockering i rad; Fable beslutade att S1 inte delas, och byggregeln från 13 nov gäller lagningen.
+- **Lins igång:** ja. Tolfte linsen på den commiten startas 13 nov; domen skrivs till `ops/GRANSKNING-s1-tolfte.md`.
+  Säkerhetsnät: 60 minuter. Blockerar den igen gäller byggregeln: lagningen får bara stryka text eller ersätta den
+  med en differens av tal ytan redan visar, och Fable kopplas in innan något nytt skrivs.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
@@ -313,6 +313,41 @@ förklarande mening beskriver en kodväg, men villkoret som visar den släpper i
 5. **N-5 («203 % över listpris» på hela den kombinerade fakturan) är synligt i en rendering.** Enligt avgränsningen
    22 okt går det före annat arbete, i egen PR. S6 flyttas därför till direkt efter S1:s merge, med N-5 och läget per
    fakturadel. N-4 («så bevakar vi att den försvinner») stryks i en egen enradig PR i samma kö.
+
+### Arkitektbeslut 13 nov, andra (Fable 5.2, fjärde blockeringen i rad)
+
+**Underlaget:** den elfte blicken (`ops/GRANSKNING-s1-elfte.md`) fällde 193dd2d8 (P-1, infört). Etiketten «Övrigt på
+fakturan» stod två gånger i samma vy med två olika tal. Prompten räknade resten ur den andra kategorins rader
+(`secondaryComponentMonthly × 12`). Vyn räknade årskostnaden minus primärdelen och tilläggen. Beslutet 13 nov sa
+«bara tal» men inte vilket tal, så det fanns två källor (regel 1).
+
+**Beslutet: en enda summa, i den här PR:en. S1 delas inte.**
+- **Resten är `restAnnual`:** «Ni betalar idag» minus P, räknat ur exakt de två tal fakturavyn visar. Då är P + resten =
+  «Ni betalar idag» per konstruktion, också med tilläggsrader, i EUR och med hårdvara. Fable angav `recommend.js` som
+  plats. Byggaren räknar summan i `api/test-invoice.mjs`, eftersom «Ni betalar idag» hårdvarujusteras där, efter
+  `recommend()`; invarianten är beslutets kärna, inte platsen.
+- **Fakturavyn:** «Kombinerad faktura. {Kategori}: {P} kr/år. Resten av fakturan: {R} kr/år.» Vyn läser inte längre
+  `nonPrimaryAnnual`, som behåller sin definition.
+- **Prompten:** utan sekundär besparing beordrar den bara «Kombinerad faktura. {Kategori}: {P} kr/år.» Raden
+  «Sekundär komponent (…): X kr/år» står inte i den grenen. Modellen har då inget tal för resten att citera
+  (attribueringslåsets läxa: kod skriver talet).
+- **Mot att bara ha en källa:** modellen bär då fortfarande ett tal som koden redan visar.
+- **Mot två etiketter:** två tal med två etiketter går inte att addera (helhetskravet), och «kr+» är ett golv som
+  kunden inte kan räkna hem.
+- **Mot att dela S1:** «Kombinerad faktura.» utan P tar bort jämförelsebasen som main visar för icke-mobila fakturor.
+- **Avläst:** grenen med sekundär besparing har samma tal i prompten och i vyn (5 388 kr/år på motprovet).
+
+**Till S6, loggat:**
+- Läget per fakturadel.
+- Fel P när regexen missar en rad. Då är resten 0 och stryks.
+- Promptens KRITISKT-instruktion förutsätter att mobilen är primär.
+- Vakterna som beteendeprov (P-2: SA, SC och SE är verbformer som bara ett läge fångar).
+
+**Byggregeln (gäller från 13 nov):** När samma PR fällts två varv i rad på en förklarande mening som PR:en själv
+skrivit får lagningen bara stryka text eller ersätta den med tal som är en differens av två tal ytan redan visar.
+Varje ny förklaring byggs i en egen PR, med ett läge som skrivs av kodvägen den beskriver. Skälet: K-2, N-1, O-1 och
+P-1 var alla nya meningar i en lagning. Regel 13 sa detta efter tre varv, men bara om larmtext. Stoppregeln ändras
+inte: [KUND] blockerar.
 
 ## S2 · Kundsynlighetssvepet
 

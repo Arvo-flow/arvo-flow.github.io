@@ -333,6 +333,15 @@ Var och en byggs i en egen PR, med egen granskning.
   missad tidsfrist är ett kundtal; därefter D-1 (dörrens fynd når aldrig rummet), F1.1 (ingen brief en tyst månad) och
   rummets ordning.
 
+- **Ur den elfte blickens dom på S1 (`ops/GRANSKNING-s1-elfte.md`), till S6:**
+  · P-2 [VAKT]: FV-A15, FV-A16 och förbudslistan låser ord, inte påståendet (fem sabotage fällde 0). Beviset är ett
+    läge per fakturadel och den renderade vyn i sviten.
+  · Fel P när regexen missar en mobilrad («Telia Jobbmobil 15 GB» ger P för hela fakturan). Main bär samma tal; efter
+    S1 blir resten 0 och stryks, men P är fel.
+  · Promptens KRITISKT-instruktion för en kombinerad faktura med sekundär besparing säger «BÅDE mobilkomponenten
+    (primär) OCH bredbandskomponenten (sekundär)» också när bredbandet är primärt. Avläst i FV-fallet med mobildel
+    449 kr. Förexisterande.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,

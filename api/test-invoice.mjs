@@ -2141,6 +2141,17 @@ export default async function handler(req, res) {
       shouldSwitch:        recommendation.shouldSwitch === true,
     });
 
+    // ── RESTEN AV EN KOMBINERAD FAKTURA, EN SUMMA (Fables beslut 13 nov, P-1) ─────────────────
+    // Fakturavyn visar «Ni betalar idag» (hårdvarujusterat när en avbetalning dragits av) och primärdelen P. Resten
+    // räknas ur exakt de två talen, så att P + resten = det kunden ser, också med tilläggsrader, i EUR och med
+    // hårdvara. Förut räknade prompten resten ur den andra kategorins rader och vyn som årskostnad minus P och
+    // tillägg: samma etikett, två tal (P-1). Räknat här, inte i recommend(), eftersom hårdvarujusteringen görs ovan.
+    const _visadArskostnad = Math.round(hardwareAdjustment ? hardwareAdjustment.adjAnnualCost : (extracted.annualCost ?? 0));
+    // P är samma tal som svaret skickar som `extracted.primaryComponentMonthly` (ur metrics, nedan).
+    const _primarArlig = extracted.potentialMixedCategories && metrics.primaryComponentMonthly != null
+      ? Math.round(metrics.primaryComponentMonthly * 12) : null;
+    const restAnnual = _primarArlig != null && _visadArskostnad - _primarArlig > 0 ? _visadArskostnad - _primarArlig : null;
+
     // ── P2.1: BERÄKNINGSKEDJA (Calculation Chain) ────────────────────────────────
     // Visar exakt hur varje siffra härletts — nuläge, benchmark, besparing, arvode.
     // Kunden kan verifiera varje steg. Bygger förtroende och möjliggör extern revision.
@@ -2374,6 +2385,7 @@ export default async function handler(req, res) {
       verifications: routing.verifications ?? [],
       // Hårdvarujusteringen: färdigräknade justerade tal (null = ingen justering).
       hardwareAdjustment: hardwareAdjustment ?? null,
+      restAnnual,
       meta: analysisMeta,
       timing,
       analysisId: analysisId ?? undefined,

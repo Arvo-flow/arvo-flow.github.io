@@ -2080,14 +2080,14 @@ const TestaFaktura = () => {
                   </>
                 ) : (
                   <>
-                    {/* Bara tal, inget verb om vad vi gjort (Fables beslut 13 nov, O-1). Utan sekundär besparing kan
-                        delen vara ojämförd eller jämförd under tröskeln; ingen mening om vad koden gjort är sann för båda. */}
+                    {/* Bara tal, inget verb om vad vi gjort (Fables beslut 13 nov). Resten är en enda summa ur
+                        handlern, «Ni betalar idag» minus P, så att P + resten går ihop med talet ovan (P-1). */}
                     Kombinerad faktura.
                     {result.extracted?.primaryComponentMonthly != null
-                      ? ` ${getCategoryMeta(result.categorized?.category).label}: ${formatKr(result.extracted.primaryComponentMonthly * 12)}/år.`
+                      ? ` ${getCategoryMeta(result.categorized?.category).label}: ${formatKr(Math.round(result.extracted.primaryComponentMonthly * 12))}/år.`
                       : ''}
-                    {(result.recommendation?.nonPrimaryAnnual ?? 0) > 0
-                      ? ` Övrigt på fakturan: ${formatKr(result.recommendation.nonPrimaryAnnual)}/år.`
+                    {(result.restAnnual ?? 0) > 0
+                      ? ` Resten av fakturan: ${formatKr(result.restAnnual)}/år.`
                       : ''}
                   </>
                 )}

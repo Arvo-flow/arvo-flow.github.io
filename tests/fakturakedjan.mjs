@@ -27,7 +27,7 @@ import { writeFileSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MOBILFALL, MOTPROV, FYNDFALL, FYNDRADER, KOMBIFALL, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
+import { MOBILFALL, MOTPROV, FYNDFALL, FYNDRADER, KOMBIFALL, RESTFALL, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { PLANVAL_BESKED } from '../lib/lagesregister.js';
 import { PLANVALS_MENING, BREDBAND_EJ_PRISSATT } from '../agents/recommender/recommend.js';
@@ -61,7 +61,7 @@ function korDel(fall, dir, nr) {
 async function korAlla() {
   if (UT) return UT;
   const dir = mkdtempSync(join(tmpdir(), 'fakturakedjan-'));
-  const alla = [...MOBILFALL, ...MOTPROV, ...FYNDFALL, ...KOMBIFALL];
+  const alla = [...MOBILFALL, ...MOTPROV, ...FYNDFALL, ...KOMBIFALL, ...RESTFALL];
   const delar = Array.from({ length: DELAR }, (_, i) => alla.filter((_, j) => j % DELAR === i));
   const svar = await Promise.all(delar.map((d, i) => korDel(d, dir, i)));
   UT = new Map(svar.flat().map((u) => [u.id, u]));
@@ -306,9 +306,10 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     const { diagnosMening, ANALYSRUBRIKER } = await import('../src/lib/diagnos.js');
     const { MOTIVERING } = await import('../src/lib/rumstext.js');
     const vy = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
-    // Meningen om resten av en kombinerad faktura bär bara tal (Fables beslut 13 nov, O-1).
-    const ovriga = vy.match(/` Övrigt på fakturan: \$\{formatKr\(result\.recommendation\.nonPrimaryAnnual\)\}\/år\.`/);
-    assert.ok(ovriga, 'meningen om övrigt på fakturan hittades inte i fakturavyn');
+    // Meningen om resten av en kombinerad faktura bär bara tal, ur en enda summa (Fables beslut 13 nov, O-1 och P-1).
+    const ovriga = vy.match(/` Resten av fakturan: \$\{formatKr\(result\.restAnnual\)\}\/år\.`/);
+    assert.ok(ovriga, 'meningen om resten av fakturan hittades inte i fakturavyn');
+    assert.doesNotMatch(vy, /Övrigt på fakturan|recommendation\?\.nonPrimaryAnnual/, 'fakturavyn läser den gamla summan');
     assert.doesNotMatch(vy, /Kombinerad faktura — analysen avser|Övriga tjänster \(/, 'den gamla meningen står kvar i fakturavyn');
     const texter = {
       'PLANVAL_BESKED.text': [PLANVAL_BESKED.text, 'Produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har. Därför jämför vi inte ert pris mot listpriset.'],
@@ -323,7 +324,7 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       // Ordagrant lås sedan W-1: sabotaget «… och därför säger vi inget om ert pris» i den här meningen fällde 0.
       'rummets rad med obekräftad nivå': [MOTIVERING.oviss_niva({ perEnhet: 4188, unitLabel: 'per abonnemang/år', golv: 3228 }, 'mobilabonnemang'),
         'Ni betalar 4 188 kr per abonnemang/år för mobilabonnemang. Det billigaste publicerade priset är 3 228 kr, men produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har, så vi jämför inte ert pris mot det.'],
-      'fakturavyns övrigt på fakturan': [ovriga[0], '` Övrigt på fakturan: ${formatKr(result.recommendation.nonPrimaryAnnual)}/år.`'],
+      'fakturavyns rest av fakturan': [ovriga[0], '` Resten av fakturan: ${formatKr(result.restAnnual)}/år.`'],
     };
     const normal = (t) => String(t).replace(/\s/g, ' ');
     for (const [namn, [text, ordagrant]] of Object.entries(texter)) {
@@ -350,7 +351,8 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     // Prompten beordrar modellen att skriva meningen om övriga tjänster ordagrant i sin text.
     const rek = readFileSync(join(ROT, 'agents/recommender/recommend.js'), 'utf8');
     assert.doesNotMatch(rek, /analyseras via Fortnox/, 'prompten beordrar modellen att lova en Fortnox-analys');
-    assert.match(rek, /: `Övrigt på fakturan: \$\{nonPrimaryAnnualForPrompt\.toLocaleString\('sv-SE'\)\} kr\/år\.`;/);
+    // Utan sekundär besparing bär modellens text inget tal för resten (P-1); FV-A17 prövar prompten genom handlern.
+    assert.doesNotMatch(rek, /Övrigt på fakturan|Resten av fakturan/, 'prompten beordrar modellen att skriva ett tal för resten');
     assert.doesNotMatch(rek, /ej benchmarkad separat|analysen avser \$\{categorized/, 'prompten bär ett påstående om vad vi gjort med resten');
   });
 
@@ -374,6 +376,9 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
   test('FV-A15 · «jämfört mot listpris» och «jämför inte» står bara i planvalsgrindens konstanter (Fables beslut 13 nov)', () => {
     // En mening om vad koden gjort med en fakturadel får bara visas av ett villkor som läser ett fält skrivet av just
     // den kodvägen. O-1 skrev «har vi inte jämfört mot listpris» i en gren som också nås där koden jämfört.
+    // BLIND (P-2, den elfte linsen): låset läser ORD, inte påståendet. «har inte jämförts med listpris», versalt
+    // «Jämför inte», en mallrad som börjar med `*` och «säger alltså inget om» passerar. Ett läge per fakturadel,
+    // skrivet av kodvägen, är beviset; det byggs i S6.
     const TILLATNA = { 'src/lib/rumstext.js': 2, 'src/lib/diagnos.js': 2, 'lib/lagesregister.js': 1, 'agents/recommender/recommend.js': 2 };
     const FORM = /jämfört mot listpris|jämför inte|jämför vi inte/g;
     const filer = [];
@@ -410,12 +415,38 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
         return null;
       }
       if (u.sekundar != null) return `sekundär besparing ${u.sekundar.grossSaving} vid ${del} kr`;
-      const vantad = `Övrigt på fakturan: ${(del * 12).toLocaleString('sv-SE')} kr/år.`.replace(/\s/g, ' ');
-      if (!prompt.replace(/\s/g, ' ').includes(vantad)) return `prompten saknar «${vantad}»: ${JSON.stringify(u.promptKombi)}`;
-      if (u.nonPrimaryAnnual !== del * 12) return `nonPrimaryAnnual ${u.nonPrimaryAnnual}`;
+      if (/övrig|resten/i.test(prompt)) return `prompten bär ett tal för resten: ${JSON.stringify(u.promptKombi)}`;
+      if (u.restAnnual !== del * 12) return `resten ${u.restAnnual}, väntat ${del * 12}`;
       return null;
     });
     assert.deepEqual(fel, [], visa(fel));
+  });
+
+  test('FV-A17 · resten är en summa: P + resten = «Ni betalar idag», och prompten bär inget tal för resten (P-1)', () => {
+    const kr = (n) => Number(n).toLocaleString('sv-SE').replace(/\s/g, ' ');
+    let visade = 0;
+    const fel = brott([...RESTFALL, ...KOMBIFALL].map((f) => f.id), (u) => {
+      // Krav 1: när resten visas går den ihop med talen ovanför.
+      if (u.restAnnual != null) {
+        visade += 1;
+        const p = Math.round(u.primarManad * 12);
+        if (p + u.restAnnual !== Math.round(u.visadArskostnad)) return `P ${p} + resten ${u.restAnnual} ≠ ${Math.round(u.visadArskostnad)}`;
+      }
+      // Krav 2: utan sekundär besparing bär prompten inget annat krontal än P i den beordrade meningen.
+      if (u.sekundar == null && u.primarManad != null) {
+        const p = kr(Math.round(u.primarManad * 12));
+        for (const rad of u.promptKombi) {
+          if (/sekundär komponent|övrig|resten/i.test(rad)) return `prompten: «${rad.trim().slice(0, 140)}»`;
+          if (/Kombinerad faktura\./.test(rad)) {
+            const tal = (rad.replace(/\s/g, ' ').match(/\d[\d ]*(?= kr)/g) ?? []).map((t) => t.trim());
+            if (tal.some((t) => t !== p)) return `den beordrade meningen bär ${JSON.stringify(tal)}, P är ${p}`;
+          }
+        }
+      }
+      return null;
+    });
+    assert.deepEqual(fel, [], visa(fel));
+    assert.ok(visade >= 20, `för få fall där resten visas: ${visade}`);
   });
 
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {

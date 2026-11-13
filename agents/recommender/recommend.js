@@ -492,10 +492,11 @@ Kategoriserad faktura:
             : `Bredbandskomponenten är marknadsmässig.`;
           return `Fakturan innehåller även ${_secLabel} (${_secCostFmt} kr/år) — ${_action}`;
         })()
-      // Bara tal, inget verb om vad vi gjort (Fables beslut 13 nov, O-1): en sekundärdel utan besparing kan vara
-      // ojämförd (planval, valutaspärr, inget antal, ingen hastighet) eller jämförd under tröskeln, och modellen
-      // beordras skriva meningen ordagrant. Förut ett löfte om Fortnox eller Visma (N-2), sedan att vi inte jämfört (O-1).
-      : `Övrigt på fakturan: ${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år.`;
+      // Utan sekundär besparing bär modellens text inget tal för resten (Fables beslut 13 nov, fjärde blockeringen):
+      // resten redovisas bara i fakturavyn, ur en enda summa (`restAnnual`, api/test-invoice.mjs). Här stod först ett
+      // löfte om Fortnox eller Visma (N-2), sedan att vi inte jämfört (O-1), sedan ett tal som räknades annorlunda än
+      // vyns (P-1).
+      : '';
     const _secActionInstruction = _hasSavingBoth
       ? `KRITISKT: Bredbandskomponenten har en besparing mot verifierat listpris. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en åtgärd kunden kan ta ("vi kan förbereda även bredbandsbytet" — uppsägning och nyteckning gör kunden själv), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `
       : `KRITISKT: Ange i reasoning EXAKT `;
@@ -503,8 +504,9 @@ Kategoriserad faktura:
   OBS KOMBINERAT FAKTURA — fakturan innehåller tjänster i FLERA kategorier:
     Primär komponent (${categorized.category}): ${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år ← DETTA är jämförelsebasen för primärbesparingen${mobileAddonAnnual ? `
     Tilläggstjänster (molnväxel/PBX): ${mobileAddonAnnual.toLocaleString('sv-SE')} kr/år` : ''}
-    Sekundär komponent (${_secLabel}): ${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år${_secBenchmarkNote}
-  ${_secActionInstruction}"Kombinerad faktura. ${(() => { const e = catLabel(categorized.category); return e.charAt(0).toUpperCase() + e.slice(1); })()}: ${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år. ${_reasoningSecFrag}" — fortsätt sedan med din analys av primärkomponenten. Använd INGA interna mätvärden (p25, percentil, procentsatser) i reasoning.`;
+${_secondarySaving ? `
+    Sekundär komponent (${_secLabel}): ${nonPrimaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år${_secBenchmarkNote}` : ''}
+  ${_secActionInstruction}"Kombinerad faktura. ${(() => { const e = catLabel(categorized.category); return e.charAt(0).toUpperCase() + e.slice(1); })()}: ${primaryAnnualForPrompt.toLocaleString('sv-SE')} kr/år.${_reasoningSecFrag ? ` ${_reasoningSecFrag}` : ''}" — fortsätt sedan med din analys av primärkomponenten. Använd INGA interna mätvärden (p25, percentil, procentsatser) i reasoning.`;
   })() :
   mobileAddonAnnual ? `
   Varav mobilabonnemang: ${(annualCost - mobileAddonAnnual).toLocaleString('sv-SE')} kr/år
