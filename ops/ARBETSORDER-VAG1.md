@@ -342,6 +342,18 @@ Var och en byggs i en egen PR, med egen granskning.
     (primär) OCH bredbandskomponenten (sekundär)» också när bredbandet är primärt. Avläst i FV-fallet med mobildel
     449 kr. Förexisterande.
 
+- **Ur den tolfte blickens dom på S1 (`ops/GRANSKNING-s1-tolfte.md`):**
+  · **Hårdvarujusteringen [KUND], förexisterande, syns för kund; egen PR direkt efter S1.** En rad som extraktionen
+    typar `hardware` räknas i engångsavgifterna och ingår aldrig i årskostnaden (`agents/test-invoice/extract.js:883`),
+    men `computeHardwareAdjustment` drar av varje avbetalningsrad från årskostnaden (`lib/hardware-installments.js:55`).
+    «Ni betalar idag» blir för lågt (10 416 kr/år där analysmejlet säger 11 616 kr/år för samma faktura), och den
+    justerade besparingen, arvodet och nettot räknas på samma fel bas.
+  · X-2 [VAKT]: FV-A17 prövade sin invariant bara där rutnätet nådde, och promptkravet läser bara de rader
+    instrumentet filtrerar fram. Invarianten är struken med resten; promptkravet lagas framåt i S6.
+  · FV-A4 föll en gång 14 nov, i den rena svitkörningen direkt efter sabotagen, och höll sedan i en full svit och fyra
+    egna körningar. Felmeddelandet sparades inte; orsaken är okänd (obekräftad bedömning: tidsberoende under last,
+    till exempel väntan på eld-och-glöm-anrop i kor.mjs). [VAKT] tills den återskapas.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,

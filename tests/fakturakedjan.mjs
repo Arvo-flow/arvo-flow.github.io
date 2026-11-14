@@ -307,8 +307,10 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     const { MOTIVERING } = await import('../src/lib/rumstext.js');
     const vy = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
     // Meningen om resten av en kombinerad faktura bär bara tal, ur en enda summa (Fables beslut 13 nov, O-1 och P-1).
-    const ovriga = vy.match(/` Resten av fakturan: \$\{formatKr\(result\.restAnnual\)\}\/år\.`/);
-    assert.ok(ovriga, 'meningen om resten av fakturan hittades inte i fakturavyn');
+    // Resten är struken (X-1, byggregeln 13 nov); kvar står primärdelens tal.
+    const ovriga = vy.match(/` \$\{getCategoryMeta\(result\.categorized\?\.category\)\.label\}: \$\{formatKr\(Math\.round\(result\.extracted\.primaryComponentMonthly \* 12\)\)\}\/år\.`/);
+    assert.ok(ovriga, 'meningen om primärdelen hittades inte i fakturavyn');
+    assert.doesNotMatch(vy, /Resten av fakturan|restAnnual/, 'fakturavyn bär resten igen');
     assert.doesNotMatch(vy, /Övrigt på fakturan|recommendation\?\.nonPrimaryAnnual/, 'fakturavyn läser den gamla summan');
     assert.doesNotMatch(vy, /Kombinerad faktura — analysen avser|Övriga tjänster \(/, 'den gamla meningen står kvar i fakturavyn');
     const texter = {
@@ -324,7 +326,7 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       // Ordagrant lås sedan W-1: sabotaget «… och därför säger vi inget om ert pris» i den här meningen fällde 0.
       'rummets rad med obekräftad nivå': [MOTIVERING.oviss_niva({ perEnhet: 4188, unitLabel: 'per abonnemang/år', golv: 3228 }, 'mobilabonnemang'),
         'Ni betalar 4 188 kr per abonnemang/år för mobilabonnemang. Det billigaste publicerade priset är 3 228 kr, men produkterna i kategorin har olika listpris, och vi vet inte vilken produkt ni har, så vi jämför inte ert pris mot det.'],
-      'fakturavyns rest av fakturan': [ovriga[0], '` Resten av fakturan: ${formatKr(result.restAnnual)}/år.`'],
+      'fakturavyns mening om primärdelen': [ovriga[0], '` ${getCategoryMeta(result.categorized?.category).label}: ${formatKr(Math.round(result.extracted.primaryComponentMonthly * 12))}/år.`'],
     };
     const normal = (t) => String(t).replace(/\s/g, ' ');
     for (const [namn, [text, ordagrant]] of Object.entries(texter)) {
@@ -416,24 +418,22 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       }
       if (u.sekundar != null) return `sekundär besparing ${u.sekundar.grossSaving} vid ${del} kr`;
       if (/övrig|resten/i.test(prompt)) return `prompten bär ett tal för resten: ${JSON.stringify(u.promptKombi)}`;
-      if (u.restAnnual !== del * 12) return `resten ${u.restAnnual}, väntat ${del * 12}`;
+      if (u.restAnnual != null) return `svaret bär en rest ${u.restAnnual}`;
       return null;
     });
     assert.deepEqual(fel, [], visa(fel));
   });
 
-  test('FV-A17 · resten är en summa: P + resten = «Ni betalar idag», och prompten bär inget tal för resten (P-1)', () => {
+  test('FV-A17 · ingen rest i svaret, och prompten bär inget tal för resten (P-1, X-1)', () => {
+    // Resten är struken enligt byggregeln: «Ni betalar idag» är fel med en avbetalning typad som hårdvara (X-1), så
+    // ingen differens av två visade tal ger rätt rest. Det som återstår att pröva är att ingen rest når kunden.
     const kr = (n) => Number(n).toLocaleString('sv-SE').replace(/\s/g, ' ');
-    let visade = 0;
+    let provade = 0;
     const fel = brott([...RESTFALL, ...KOMBIFALL].map((f) => f.id), (u) => {
-      // Krav 1: när resten visas går den ihop med talen ovanför.
-      if (u.restAnnual != null) {
-        visade += 1;
-        const p = Math.round(u.primarManad * 12);
-        if (p + u.restAnnual !== Math.round(u.visadArskostnad)) return `P ${p} + resten ${u.restAnnual} ≠ ${Math.round(u.visadArskostnad)}`;
-      }
+      if (u.restAnnual != null) return `svaret bär en rest ${u.restAnnual}`;
       // Krav 2: utan sekundär besparing bär prompten inget annat krontal än P i den beordrade meningen.
       if (u.sekundar == null && u.primarManad != null) {
+        provade += 1;
         const p = kr(Math.round(u.primarManad * 12));
         for (const rad of u.promptKombi) {
           if (/sekundär komponent|övrig|resten/i.test(rad)) return `prompten: «${rad.trim().slice(0, 140)}»`;
@@ -446,7 +446,7 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       return null;
     });
     assert.deepEqual(fel, [], visa(fel));
-    assert.ok(visade >= 20, `för få fall där resten visas: ${visade}`);
+    assert.ok(provade >= 20, `för få kombinerade fall utan sekundär besparing: ${provade}`);
   });
 
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {

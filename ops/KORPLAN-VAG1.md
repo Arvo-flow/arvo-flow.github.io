@@ -15,17 +15,17 @@ Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5
 startar om läser blocket först.
 
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** «S1: resten av en kombinerad faktura är en summa som går ihop med «Ni betalar
-  idag» (P-1)», Fables tredje beslut verkställt. Den elfte linsen blockerade 193dd2d8 (`ops/GRANSKNING-s1-elfte.md`),
-  S1:s fjärde blockering i rad; Fable beslutade att S1 inte delas, och byggregeln från 13 nov gäller lagningen.
-- **Lins igång:** ja. Tolfte linsen på den commiten startas 13 nov; domen skrivs till `ops/GRANSKNING-s1-tolfte.md`.
-  Säkerhetsnät: 60 minuter. Blockerar den igen gäller byggregeln: lagningen får bara stryka text eller ersätta den
-  med en differens av tal ytan redan visar, och Fable kopplas in innan något nytt skrivs.
+- **Senaste mekanikcommit på grenen:** «S1: resten av en kombinerad faktura stryks (X-1, byggregeln)». Den tolfte
+  linsen blockerade 03fdefa7 (`ops/GRANSKNING-s1-tolfte.md`), S1:s femte blockering i rad; byggregeln avgjorde
+  lagningen (se under S1).
+- **Lins igång:** ja. Trettonde linsen på den commiten startas 14 nov; domen skrivs till
+  `ops/GRANSKNING-s1-trettonde.md`. Säkerhetsnät: 60 minuter.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
 - **Nästa handling:** när domen kommit: MERGAS → PR:en mot main med auto-merge. Efter mergen, i den här ordningen:
-  S6 med N-5 och ett läge per fakturadel (Fables beslut 13 nov, punkt 3 och 5); N-4 som enradig PR; S4; F1.2
+  hårdvarujusteringen (X-1:s förexisterande rot, syns för kund); S6 med N-5 och ett läge per fakturadel (Fables
+  beslut 13 nov, punkt 3 och 5); N-4 som enradig PR; S4; F1.2
   (avtalsvarslet som bokförs utan att Resends fel läses); rummet och dörren enligt Fables plan, punkt 1–4.
 
 ## Målet
@@ -348,6 +348,18 @@ skrivit får lagningen bara stryka text eller ersätta den med tal som är en di
 Varje ny förklaring byggs i en egen PR, med ett läge som skrivs av kodvägen den beskriver. Skälet: K-2, N-1, O-1 och
 P-1 var alla nya meningar i en lagning. Regel 13 sa detta efter tre varv, men bara om larmtext. Stoppregeln ändras
 inte: [KUND] blockerar.
+
+### Byggregeln tillämpad 13–14 nov (femte blockeringen)
+
+Den tolfte blicken (`ops/GRANSKNING-s1-tolfte.md`) fällde 03fdefa7 (X-1, infört). Resten räknades som «Ni betalar
+idag» − P. Men «Ni betalar idag» är fel när en avbetalning typad `hardware` dras av, fast den aldrig ingick i
+årskostnaden (`agents/test-invoice/extract.js:883`, `lib/hardware-installments.js:55`). Resten blev då 2 028 kr där
+den sanna är 3 228. Byggarens avvikelse från Fables plats (summan räknad efter hårdvarujusteringen) förde in felet.
+
+Byggregeln avgör lagningen utan nytt Fable-pass. Lagningen får bara stryka text eller ersätta den med en differens av
+två tal ytan redan visar, och inget par av tal i vyn ger rätt rest när «Ni betalar idag» själv är fel. Därför stryks
+resten och `restAnnual`. Fakturavyn skriver «Kombinerad faktura. {Kategori}: {P} kr/år.», och prompten bär redan bara
+P. Felet i hårdvarujusteringen fanns före S1, syns för kund och byggs i en egen PR direkt efter S1:s merge.
 
 ## S2 · Kundsynlighetssvepet
 

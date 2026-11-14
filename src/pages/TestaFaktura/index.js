@@ -2080,14 +2080,12 @@ const TestaFaktura = () => {
                   </>
                 ) : (
                   <>
-                    {/* Bara tal, inget verb om vad vi gjort (Fables beslut 13 nov). Resten är en enda summa ur
-                        handlern, «Ni betalar idag» minus P, så att P + resten går ihop med talet ovan (P-1). */}
+                    {/* Bara primärdelens tal (Fables beslut 13 nov och byggregeln). Resten stryks: «Ni betalar idag»
+                        är fel när en avbetalning typad som hårdvara dras av fast den aldrig ingick (X-1, egen PR), så
+                        ingen differens av två tal i vyn ger rätt rest. Talet för hela fakturan står under «Ni betalar idag». */}
                     Kombinerad faktura.
                     {result.extracted?.primaryComponentMonthly != null
                       ? ` ${getCategoryMeta(result.categorized?.category).label}: ${formatKr(Math.round(result.extracted.primaryComponentMonthly * 12))}/år.`
-                      : ''}
-                    {(result.restAnnual ?? 0) > 0
-                      ? ` Resten av fakturan: ${formatKr(result.restAnnual)}/år.`
                       : ''}
                   </>
                 )}

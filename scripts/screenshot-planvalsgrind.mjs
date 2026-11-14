@@ -90,7 +90,7 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     ['fynd·hardware_overpaid·ren·nej', 'fynd', [/Ingen jämförelse mot listpris/, /898/, /Därför jämför vi inte ert pris mot listpriset/]],
     // N-1 och N-2: leverantörens egen höjning på en kombinerad faktura.
     ['fynd·supplier_documented_hike·komb·nej', 'hojning', [/Leverantören skrev in höjningen själv/,
-      /Därför jämför vi inte ert pris mot listpriset/, /Resten av fakturan: [\d\s]+kr\/år\./]],
+      /Därför jämför vi inte ert pris mot listpriset/, /Kombinerad faktura\. Mobilabonnemang: [\d\s]+kr\/år\./]],
   ]) {
     const p = await fakturavyn(bredd, SVAR[id], '/Vi jämför inte era mobilabonnemang/');
     const t = await text(p);
@@ -109,14 +109,14 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   if (!/Ni betalar för mycket/.test(t)) fel(`motprov: sidrubriken över ett byte saknas (${namn})`);
   if (!/Er nettobesparing/.test(t)) fel(`motprov: beräkningsunderlaget saknas under bytet (${namn}) — klicket öppnade inget`);
   await p.screenshot({ path: `${UT}/motprov-bredband-${namn}.png`, fullPage: true }); await p.close();
-  // O-1: en bredbandsfaktura med en mobildel som jämförts och fallit under tröskeln. Meningen om resten bär bara tal.
+  // O-1: en bredbandsfaktura med en mobildel som jämförts och fallit under tröskeln. Ingen mening om resten (X-1).
   const k = await fakturavyn(bredd, SVAR['kombi·bredband+mobil269·nej'], '/Telia Sverige AB/');
   const tk = await text(k);
-  // P + resten = «Ni betalar idag» (8 388 + 3 228 = 11 616), en summa ur handlern (P-1).
-  if (!/Kombinerad faktura\. Företagsbredband: 8\s388\skr\/år\. Resten av fakturan: 3\s228\skr\/år\./.test(tk) || !/11\s616\skr/.test(tk)) {
-    fel(`kombi: meningen om resten saknas eller har glidit (${namn}): «${(tk.match(/Kombinerad faktura[^.]*\.[^.]*\.[^.]*\./) ?? [''])[0]}»`);
+  // Resten är struken (X-1); kvar står primärdelens tal.
+  if (!/Kombinerad faktura\. Företagsbredband: 8\s388\skr\/år\./.test(tk)) {
+    fel(`kombi: meningen om primärdelen saknas eller har glidit (${namn})`);
   }
-  if (/jämfört mot listpris|analysen avser|analyseras via|Övrigt på fakturan/i.test(tk)) fel(`kombi: ett påstående om vad vi gjort med resten (${namn})`);
+  if (/jämfört mot listpris|analysen avser|analyseras via|Övrigt på fakturan|Resten av fakturan/i.test(tk)) fel(`kombi: ett påstående om vad vi gjort med resten (${namn})`);
   await k.screenshot({ path: `${UT}/kombi-bredband-mobil-${namn}.png`, fullPage: true }); await k.close();
   console.log(`${namn}: kontroller körda`);
 }

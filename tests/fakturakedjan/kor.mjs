@@ -194,7 +194,7 @@ async function korFall(fall) {
     promptKombi: String(globalThis.__PROMPT ?? '').split('\n')
       .filter((l) => /kombinera|övrig|resten|sekundär komponent|jämför|benchmarkad|analyseras|analysen avser/i.test(l)),
     nonPrimaryAnnual: body?.recommendation?.nonPrimaryAnnual ?? null,
-    // Resten av en kombinerad faktura och de två tal den räknas ur, så som fakturavyn visar dem (FV-A17).
+    // Resten är struken (X-1); FV-A16 och FV-A17 kräver att svaret inte bär den. Talen står kvar för instrumentet.
     restAnnual: body?.restAnnual ?? null,
     visadArskostnad: body?.hardwareAdjustment?.adjAnnualCost ?? body?.extracted?.annualCost ?? null,
     primarManad: body?.extracted?.primaryComponentMonthly ?? null,
