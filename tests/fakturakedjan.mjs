@@ -449,6 +449,25 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     assert.ok(provade >= 20, `för få kombinerade fall utan sekundär besparing: ${provade}`);
   });
 
+  test('FV-A18 · primärdelens tal står inte på en planvalsfaktura (Y-1)', () => {
+    // Premissen: P räknas som om radbeloppen gällde en månad, så linsens kvartals- och årsfall har ett P som är större
+    // än hela fakturans årskostnad, och fakturan når vyn (auto, planval). Annars prövar testet ingenting.
+    const fall = RESTFALL.filter((f) => /rest·mob\+bb·(quarterly|annual)/.test(f.id));
+    assert.equal(fall.length, 4);
+    for (const f of fall) {
+      const u = UT.get(f.id);
+      assert.equal(u.kraschade, undefined, `${f.id}: ${u.kraschade}`);
+      assert.equal(u.route, 'auto', `${f.id}: route ${u.route}`);
+      assert.equal(u.lage?.rubrik, 'planval', `${f.id}: rubriken ${u.lage?.rubrik}`);
+      assert.ok(Math.round(u.primarManad * 12) > Math.round(u.visadArskostnad),
+        `${f.id}: P ${Math.round(u.primarManad * 12)} är inte större än årskostnaden ${u.visadArskostnad}; premissen bär inte`);
+    }
+    // Vyn skriver P bara utanför planvalsläget. Beteendet prövas av renderingssonden (scripts/screenshot-planvalsgrind.mjs,
+    // fallet «kvartal»); här låses villkoret i källan.
+    const vy = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
+    assert.match(vy, /\{result\.extracted\?\.primaryComponentMonthly != null && result\.lage\?\.rubrik !== 'planval'\n\s+\? ` \$\{getCategoryMeta/);
+  });
+
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {
     const ut = UT;
     const bb = ut.get('motprov·bredband');

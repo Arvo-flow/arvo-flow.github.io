@@ -492,10 +492,10 @@ Kategoriserad faktura:
             : `Bredbandskomponenten är marknadsmässig.`;
           return `Fakturan innehåller även ${_secLabel} (${_secCostFmt} kr/år) — ${_action}`;
         })()
-      // Utan sekundär besparing bär modellens text inget tal för resten (Fables beslut 13 nov, fjärde blockeringen):
-      // resten redovisas bara i fakturavyn, ur en enda summa (`restAnnual`, api/test-invoice.mjs). Här stod först ett
-      // löfte om Fortnox eller Visma (N-2), sedan att vi inte jämfört (O-1), sedan ett tal som räknades annorlunda än
-      // vyns (P-1).
+      // Utan sekundär besparing bär modellens text inget tal för resten (Fables beslut 13 nov, fjärde blockeringen).
+      // Resten redovisas inte heller i fakturavyn: den ströks 14 nov (X-1, byggregeln), eftersom «Ni betalar idag» är fel
+      // med en avbetalning typad som hårdvara. Här stod först ett löfte om Fortnox eller Visma (N-2), sedan att vi inte
+      // jämfört (O-1), sedan ett tal som räknades annorlunda än vyns (P-1).
       : '';
     const _secActionInstruction = _hasSavingBoth
       ? `KRITISKT: Bredbandskomponenten har en besparing mot verifierat listpris. Skriv reasoning som tydligt anger att BÅDE mobilkomponenten (primär) OCH bredbandskomponenten (sekundär) åtgärdas — formulera detta som en åtgärd kunden kan ta ("vi kan förbereda även bredbandsbytet" — uppsägning och nyteckning gör kunden själv), ALDRIG som "bevaka vid nästa förnyelse". Texten EXAKT: `

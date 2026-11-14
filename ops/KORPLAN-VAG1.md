@@ -15,11 +15,11 @@ Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5
 startar om läser blocket först.
 
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** «S1: resten av en kombinerad faktura stryks (X-1, byggregeln)». Den tolfte
-  linsen blockerade 03fdefa7 (`ops/GRANSKNING-s1-tolfte.md`), S1:s femte blockering i rad; byggregeln avgjorde
-  lagningen (se under S1).
-- **Lins igång:** ja. Trettonde linsen på den commiten startas 14 nov; domen skrivs till
-  `ops/GRANSKNING-s1-trettonde.md`. Säkerhetsnät: 60 minuter.
+- **Senaste mekanikcommit på grenen:** «S1: primärdelens tal står inte på en planvalsfaktura (Y-1, byggregeln)». Den
+  trettonde linsen blockerade 26375dfa (`ops/GRANSKNING-s1-trettonde.md`), S1:s sjätte blockering i rad; byggregeln
+  avgjorde lagningen (se under S1).
+- **Lins igång:** ja. Fjortonde linsen på den commiten startas 14 nov; domen skrivs till
+  `ops/GRANSKNING-s1-fjortonde.md`. Säkerhetsnät: 60 minuter.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
@@ -360,6 +360,16 @@ Byggregeln avgör lagningen utan nytt Fable-pass. Lagningen får bara stryka tex
 två tal ytan redan visar, och inget par av tal i vyn ger rätt rest när «Ni betalar idag» själv är fel. Därför stryks
 resten och `restAnnual`. Fakturavyn skriver «Kombinerad faktura. {Kategori}: {P} kr/år.», och prompten bär redan bara
 P. Felet i hårdvarujusteringen fanns före S1, syns för kund och byggs i en egen PR direkt efter S1:s merge.
+
+### Byggregeln tillämpad 14 nov (sjätte blockeringen)
+
+Den trettonde blicken (`ops/GRANSKNING-s1-trettonde.md`) fällde 26375dfa på Y-1, ett [KUND] som S1 gjort vanligare.
+Primärdelens tal P räknas som om radbeloppen gällde en månad, så en kvartals- eller årsfaktura med mobil som primär
+del fick ett P som var 3 respektive 12 gånger för stort, större än hela fakturan. På main stoppade sanitetsvakten den
+uppblåsta mobilbesparingen, fakturan gick till granskning och P visades aldrig. Med planvalsgrinden går fakturan
+`auto`, och P nådde vyn. Byggregeln avgör lagningen: P stryks på en planvalsfaktura, som redan bär planvalsbeskedet.
+Felet i P för andra kategorier fanns före S1 och hör till S6 (läge per fakturadel). FV-A4:s enstaka fel 14 nov gick
+inte att återskapa i 21 körningar av filen och 7 av hela sviten (den trettonde linsen), och testet har tänder.
 
 ## S2 · Kundsynlighetssvepet
 

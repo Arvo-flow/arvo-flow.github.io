@@ -2082,9 +2082,12 @@ const TestaFaktura = () => {
                   <>
                     {/* Bara primärdelens tal (Fables beslut 13 nov och byggregeln). Resten stryks: «Ni betalar idag»
                         är fel när en avbetalning typad som hårdvara dras av fast den aldrig ingick (X-1, egen PR), så
-                        ingen differens av två tal i vyn ger rätt rest. Talet för hela fakturan står under «Ni betalar idag». */}
+                        ingen differens av två tal i vyn ger rätt rest. Talet för hela fakturan står under «Ni betalar idag».
+                        På en planvalsfaktura stryks också P (Y-1, byggregeln): P räknas som om radbeloppen gällde en
+                        månad, så en kvartals- eller årsfaktura fick 3 respektive 12 gånger för stort tal. På main gick
+                        de fakturorna till granskning och P visades aldrig; felet i P för andra kategorier hör till S6. */}
                     Kombinerad faktura.
-                    {result.extracted?.primaryComponentMonthly != null
+                    {result.extracted?.primaryComponentMonthly != null && result.lage?.rubrik !== 'planval'
                       ? ` ${getCategoryMeta(result.categorized?.category).label}: ${formatKr(Math.round(result.extracted.primaryComponentMonthly * 12))}/år.`
                       : ''}
                   </>

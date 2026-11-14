@@ -159,6 +159,15 @@ for (const modell of ['ja', 'nej']) {
   RESTFALL.push(kombi(`rest·bb+mob·utan-antal·${modell}`, { modell, antalAvlast: false, hastighet: null, rader: [BB, MOB] }));
   RESTFALL.push(kombi(`rest·bb+okand-mobilrad·${modell}`, { modell,
     rader: [BB, { type: 'recurring_subscription', description: 'Telia Jobbmobil 15 GB (1 st)', amount: 269 }] }));
+  // Den trettonde linsens Q1 och Q3 (Y-1): mobil som primär del på en kvartals- respektive årsfaktura. P räknas som om
+  // beloppen gällde en månad, så talet blir 3 respektive 12 gånger för stort; fakturan är en planvalsfaktura.
+  for (const [period, mob, bb] of [['quarterly', 10470, 2097], ['annual', 16140, 8388]]) {
+    const f = fall({ id: `rest·mob+bb·${period}·${modell}`, kategori: 'mobil', modell, antalAvlast: true, blandad: true,
+      hastighet: 1000, beskrivning: 'Mobil och bredband',
+      rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (10 st)', amount: mob }, { ...BB, amount: bb }] });
+    f.extraktion.billingPeriod = period;
+    RESTFALL.push(f);
+  }
   const eur = kombi(`rest·bb+mob·eur·${modell}`, { modell, rader: [{ ...BB, amount: 61 }, { ...MOB, amount: 24 }] });
   eur.extraktion.currency = 'EUR';
   RESTFALL.push(eur);

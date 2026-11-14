@@ -354,6 +354,16 @@ Var och en byggs i en egen PR, med egen granskning.
     egna körningar. Felmeddelandet sparades inte; orsaken är okänd (obekräftad bedömning: tidsberoende under last,
     till exempel väntan på eld-och-glöm-anrop i kor.mjs). [VAKT] tills den återskapas.
 
+- **Ur den trettonde blickens dom på S1 (`ops/GRANSKNING-s1-trettonde.md`):**
+  · Primärdelens tal P räknas som om radbeloppen gällde en månad (`primaryComponentMonthly × 12`). På en kvartals- eller
+    årsfaktura blir P 3 respektive 12 gånger för stort. S1 stryker P på planvalsfakturor (Y-1); för andra kategorier
+    står felet kvar, förexisterande, och byggs i S6 med läget per fakturadel.
+  · Y-2 [VAKT]: FV-A16 och FV-A17 läser bara `restAnnual`; svaret bär fortfarande `recommendation.nonPrimaryAnnual`
+    (ingen yta läser det i dag). Byggs i S6.
+  · Y-3 [VAKT]: promptens kommentar om resten är rättad i samma commit som Y-1.
+  · FV-A4:s enstaka fel 14 nov gick inte att återskapa (21 körningar av filen, 7 av hela sviten, under last); testet
+    fälls av ett sabotage. Punkten stängs som okänd, ingen åtgärd.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,
