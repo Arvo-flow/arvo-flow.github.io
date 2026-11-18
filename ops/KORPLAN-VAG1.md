@@ -29,14 +29,15 @@ startar om läser blocket först.
 - **Senaste mekanikcommit på grenen:** «S1: mains andra grind räknar med bredbandsdelen (Ä-1)». Den sjuttonde linsen
   blockerade 37997d49 (`ops/GRANSKNING-s1-sjuttonde.md`), S1:s tionde blockering i rad, på ett tredje steg i mains väg
   som återgivningen saknade.
-- **Lins igång:** ja. Artonde linsen på den commiten startas 18 nov; domen skrivs till
-  `ops/GRANSKNING-s1-artonde.md`. Säkerhetsnät: 60 minuter.
+- **Lins igång:** nej. Den artonde linsen gav MERGAS på b13d10d8 (`ops/GRANSKNING-s1-artonde.md`), med tre [VAKT]
+  (V-A, V-B, V-C) som lagas framåt och står i `ops/ARBETSORDER-VAG1.md`. PR:en mot main öppnas med auto-merge.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
 - **Nästa handling:** när domen kommit: MERGAS → PR:en mot main med auto-merge. Efter mergen, i den här ordningen:
   hårdvaruavbetalningen i en PR: justeringen av «Ni betalar idag» (X-1:s förexisterande rot) och fyndkortets
-  «engångsbelopp» med rummets «Vi fångade – kr/år» (Å-1), båda förexisterande och synliga för kund i dag; S6 med N-5 och ett läge per fakturadel (Fables
+  «engångsbelopp» med rummets «Vi fångade – kr/år» (Å-1), båda förexisterande och synliga för kund i dag; den
+  artonde linsens tre [VAKT] (V-A, V-B, V-C) i en PR; S6 med N-5 och ett läge per fakturadel (Fables
   beslut 13 nov, punkt 3 och 5); N-4 som enradig PR; S4; F1.2
   (avtalsvarslet som bokförs utan att Resends fel läses); rummet och dörren enligt Fables plan, punkt 1–4.
 

@@ -406,6 +406,17 @@ Var och en byggs i en egen PR, med egen granskning.
     negativ besparing och bredbandsraden bär sin hastighet gick `auto` där main håller den. Lagat 18 nov: kopian räknar
     mains sekundära besparing, bara för granskningsbeslutet (FV-A20, `rest·neg·mbit·ja`).
 
+- **Ur den artonde blickens dom på S1 (`ops/GRANSKNING-s1-artonde.md`, MERGAS på b13d10d8):** tre [VAKT], som mergas
+  och lagas framåt i en egen PR efter S1:
+  · V-A: gränsen i kopian av mains andra grind (`> 0` mot mains `<= 0`) har inget test. Sabotaget `> 0` → `>= 0`
+    fällde 0 av 2 778 och ändrade beteendet för `S·noll` (summan exakt 0). Lagas med ett fall i FV-A20 där summan är 0.
+  · V-B: valutavillkoret i `_mainsSekundar` (api/test-invoice.mjs) är ett skydd bakom valutagrinden, som redan river
+    det ogrindade bytet när priset är spärrat. Sabotaget fällde 0 och ändrade inget i 81 fall. Lagas genom att raden
+    tas bort eller får en kommentar om att den saknar egen tand (bibeln 10 sep).
+  · V-C: stubben i tests/fakturakedjan/lagrade.mjs svarar med hela raden oavsett SELECT, så att `category` kan falla ur
+    påminnelsens och enkätens sats utan att LB-01..03 ser det. Linsens projicerande stubbe (svarar bara med satsens
+    kolumner) gav under sabotaget «7 680 kr/år» för den lagrade mobilraden. Lagas genom att stubben projicerar.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,
