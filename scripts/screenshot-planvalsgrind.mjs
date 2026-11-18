@@ -31,7 +31,8 @@ if (!existsSync(join(BUILD, 'index.html'))) { console.error('✗ build/ saknas �
 
 const { MOBILFALL, MOTPROV, FYNDFALL, KOMBIFALL, RESTFALL } = await import('../tests/fakturakedjan/fall.mjs');
 const VALDA = ['comb-01·nej·antal', 'xl349·ja·antal', 'motprov·bredband', 'fynd·hardware_overpaid·ren·nej',
-  'fynd·supplier_documented_hike·komb·nej', 'kombi·bredband+mobil269·nej', 'rest·mob+bb·quarterly·nej'];
+  'fynd·supplier_documented_hike·komb·nej', 'kombi·bredband+mobil269·nej', 'rest·mob+bb·quarterly·nej',
+  'rest·mob+bb·annual·nej'];
 const fall = [...MOBILFALL, ...MOTPROV, ...FYNDFALL, ...KOMBIFALL, ...RESTFALL].filter((f) => VALDA.includes(f.id));
 const dir = await mkdtemp(join(tmpdir(), 'planvalsgrind-'));
 await writeFile(join(dir, 'fall.json'), JSON.stringify(fall));
@@ -81,7 +82,10 @@ const FORBJUDET = [/Ni betalar för mycket/, /Vi hittar inget publikt pris att b
   /säger inget om/i, /ingen besparing/i, /analyseras via/i,
   // Y-1: en planvalsfaktura bär inget tal för primärdelen.
   /Kombinerad faktura\. Mobilabonnemang:/, /Priset baseras på verifierade offentliga listpriser/, /Vid genomfört byte/,
-  /Beräkningsunderlag/, /Er nettobesparing/];
+  /Beräkningsunderlag/, /Er nettobesparing/,
+  // Z-1: ett tal efter «Kombinerad faktura.», med eller utan etikett. Formen ovan fällde bara etiketten
+  // «Mobilabonnemang:», så P utan etikett («Kombinerad faktura. 125 640 kr/år.») gick igenom.
+  /Kombinerad faktura\.\s*(?:[^.\d]{0,40}:\s*)?\d/];
 
 for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   for (const [id, fil, maste] of [
@@ -95,6 +99,8 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
       /Därför jämför vi inte ert pris mot listpriset/, /Kombinerad faktura\./]],
     // Y-1: mobil som primär del på en kvartalsfaktura. P vore 125 640 kr/år; planvalsfakturan visar inget P.
     ['rest·mob+bb·quarterly·nej', 'kvartal', [/Ingen jämförelse mot listpris/, /Kombinerad faktura\./]],
+    // Q3: fem abonnemang och bredband på en årsfaktura. P vore 193 680 kr/år (Z-3).
+    ['rest·mob+bb·annual·nej', 'ar', [/Ingen jämförelse mot listpris/, /Kombinerad faktura\./]],
   ]) {
     const p = await fakturavyn(bredd, SVAR[id], '/Vi jämför inte era mobilabonnemang/');
     const t = await text(p);

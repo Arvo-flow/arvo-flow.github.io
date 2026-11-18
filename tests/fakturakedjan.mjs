@@ -468,6 +468,30 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     assert.match(vy, /\{result\.extracted\?\.primaryComponentMonthly != null && result\.lage\?\.rubrik !== 'planval'\n\s+\? ` \$\{getCategoryMeta/);
   });
 
+  test('FV-A19 · rummet skriver inget tal per abonnemang på en kombinerad mobilfaktura (Z-2)', () => {
+    // Den fjortonde linsens fall: 10 abonnemang för 10 470 kr och bredband för 2 097 kr per kvartal gav i rummet
+    // «Ni betalar 5 027 kr per abonnemang/år» (mobildelen 4 188), och mobil, bredband och molnväxel per månad gav
+    // ett tal med molnväxeln inräknad. Rummet byggs här ur den rad handlern lagrade (kor.mjs).
+    const fall = RESTFALL.filter((f) => /^rest·mob\+bb(\+pbx)?·/.test(f.id));
+    assert.equal(fall.length, 6);
+    let medAntal = 0;
+    for (const f of fall) {
+      const u = UT.get(f.id);
+      assert.equal(u.kraschade, undefined, `${f.id}: ${u.kraschade}`);
+      assert.equal(u.route, 'auto', `${f.id}: route ${u.route}; premissen är att raden når rummet`);
+      const r = u.rum?.rader?.[0];
+      assert.ok(r, `${f.id}: ingen rad i rummet`);
+      assert.equal(r.harUnderlag, false, `${f.id}: raden har ett prisunderlag`);
+      assert.notEqual(r.lage?.kod, 'oviss_niva', `${f.id}: läget oviss_niva skriver talet`);
+      assert.doesNotMatch(r.motivering, /per abonnemang|\d/, `${f.id}: ${r.motivering}`);
+      if (u.rad?.annual_cost > 0 && f.extraktion.seatCount > 0) medAntal++;
+    }
+    assert.equal(medAntal, 6, 'premissen: varje fall har en årskostnad och ett antal, så talet hade gått att räkna');
+    // Motprovet: IT-8821 (två licensnivåer, ingen läsbar nivå) har ett underlag med tal per användare i samma rum.
+    const it = UT.get('motprov·it8821');
+    assert.equal(it.rum?.rader?.[0]?.harUnderlag, true, 'IT-8821: instrumentet ser inget underlag');
+  });
+
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {
     const ut = UT;
     const bb = ut.get('motprov·bredband');

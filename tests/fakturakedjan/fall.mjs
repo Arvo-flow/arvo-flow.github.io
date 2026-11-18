@@ -161,10 +161,14 @@ for (const modell of ['ja', 'nej']) {
     rader: [BB, { type: 'recurring_subscription', description: 'Telia Jobbmobil 15 GB (1 st)', amount: 269 }] }));
   // Den trettonde linsens Q1 och Q3 (Y-1): mobil som primär del på en kvartals- respektive årsfaktura. P räknas som om
   // beloppen gällde en månad, så talet blir 3 respektive 12 gånger för stort; fakturan är en planvalsfaktura.
-  for (const [period, mob, bb] of [['quarterly', 10470, 2097], ['annual', 16140, 8388]]) {
+  // Årsfallet är Q3 ordagrant, fem abonnemang (den fjortonde blicken, Z-3): med tio låg fakturan under kategorins
+  // golv, och main räknade inget byte och höll den inte i granskning, så fallet prövade inte det som gjorde Y-1 och
+  // Z-2 vanligare.
+  for (const [period, mob, bb, mobRad] of [['quarterly', 10470, 2097, 'Tele2 Jobbmobil XL (10 st)'],
+    ['annual', 16140, 8388, 'Tele2 Jobbmobil (5 st)']]) {
     const f = fall({ id: `rest·mob+bb·${period}·${modell}`, kategori: 'mobil', modell, antalAvlast: true, blandad: true,
       hastighet: 1000, beskrivning: 'Mobil och bredband',
-      rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil XL (10 st)', amount: mob }, { ...BB, amount: bb }] });
+      rader: [{ type: 'recurring_subscription', description: mobRad, amount: mob }, { ...BB, amount: bb }] });
     f.extraktion.billingPeriod = period;
     RESTFALL.push(f);
   }

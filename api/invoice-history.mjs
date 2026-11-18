@@ -410,6 +410,14 @@ export function byggRum(analyses = [], watched = []) {
 
 export function underlagForRad(a, ankare, golv, niva) {
   if (!isAudited(a?.category)) return null;
+  // INGET TAL PER ABONNEMANG I EN PLANVALSKATEGORI (fjortonde blicken på S1, Z-2). Talet är radens hela
+  // årskostnad delad med antalet abonnemang. På en faktura som också bär bredband eller molnväxel bär det
+  // de delarnas kostnad: 10 abonnemang för 10 470 kr och bredband för 2 097 kr per kvartal gav «Ni betalar
+  // 5 027 kr per abonnemang/år», där mobildelen är 4 188. Ingen lagrad rad bär mobildelens egen kostnad
+  // eller en flagga för en kombinerad faktura, så raden får inget underlag och rummet skriver
+  // planvalsmeningen utan tal (S6:s beslut i ops/KORPLAN-VAG1.md, byggregeln: strykning). Fakturavyn
+  // visar inget tal per abonnemang på samma faktura. RM-R8, FV-A19.
+  if (BRANCHINDEX[a?.category]?.bytesmalMotKategorigolv === true) return null;
   return byggPrisunderlag({
     annualCost: a.annual_cost,
     seats:      a.seat_count,

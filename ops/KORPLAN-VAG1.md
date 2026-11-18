@@ -15,11 +15,11 @@ Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5
 startar om läser blocket först.
 
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** «S1: primärdelens tal står inte på en planvalsfaktura (Y-1, byggregeln)». Den
-  trettonde linsen blockerade 26375dfa (`ops/GRANSKNING-s1-trettonde.md`), S1:s sjätte blockering i rad; byggregeln
-  avgjorde lagningen (se under S1).
-- **Lins igång:** ja. Fjortonde linsen på den commiten startas 14 nov; domen skrivs till
-  `ops/GRANSKNING-s1-fjortonde.md`. Säkerhetsnät: 60 minuter.
+- **Senaste mekanikcommit på grenen:** «S1: inget tal per abonnemang på en mobilrad i rummet (Z-2, byggregeln)». Den
+  fjortonde linsen blockerade dbfca75a (`ops/GRANSKNING-s1-fjortonde.md`), S1:s sjunde blockering i rad; byggregeln
+  och S6:s beslut avgjorde lagningen. Fable kunde inte anropas (kvoten slut); underlaget och skälen står under S1.
+- **Lins igång:** ja. Femtonde linsen på den commiten startas 17 nov; domen skrivs till
+  `ops/GRANSKNING-s1-femtonde.md`. Säkerhetsnät: 60 minuter.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
@@ -370,6 +370,37 @@ uppblåsta mobilbesparingen, fakturan gick till granskning och P visades aldrig.
 `auto`, och P nådde vyn. Byggregeln avgör lagningen: P stryks på en planvalsfaktura, som redan bär planvalsbeskedet.
 Felet i P för andra kategorier fanns före S1 och hör till S6 (läge per fakturadel). FV-A4:s enstaka fel 14 nov gick
 inte att återskapa i 21 körningar av filen och 7 av hela sviten (den trettonde linsen), och testet har tänder.
+
+### Byggregeln tillämpad 17 nov (sjunde blockeringen)
+
+Den fjortonde blicken (`ops/GRANSKNING-s1-fjortonde.md`) fällde dbfca75a på Z-2, ett [KUND] som S1 gjort vanligare.
+Rummet skrev på en mobilrad «Ni betalar {perEnhet} kr per abonnemang/år», där perEnhet är radens hela årskostnad
+delad med antalet abonnemang (`lib/prisunderlag.js:58`). På en kombinerad faktura bär talet bredbandets och
+molnväxelns kostnad: 10 abonnemang för 10 470 kr och bredband för 2 097 kr per kvartal gav 5 027 kr, där mobildelen
+är 4 188. Felet fanns på main för månadsfakturor; planvalsgrinden släpper kvartals- och årsfakturorna `auto`, som
+main höll i granskning (avläst 17 nov genom båda handlerna: Q1 och Q3 `review_queue` på main 703dbb34, `auto` på
+grenen).
+
+**Fable kunde inte anropas** (kontots kvot för modellen slut, 17 nov). Underlaget som skickades: S6:s beslut
+«har fakturan en sekundär del visar underlaget inget tal per abonnemang, om inte raden lagrar mobildelens egen
+kostnad», grundarbeslutet 22 okt «visar neutralt vad kunden betalar», och tre alternativ: (A) inget underlag på en
+rad i en planvalskategori, (B) handlerns regexar på `line_items_json` avgör om en sekundär del finns, (C) talet
+visas bara när uppdelningen bevisar en enda löpande rad. Beslutet följer av två skrivna regler utan nytt
+avvägande, och därför fattas det här:
+- S6:s villkor kräver att raden lagrar mobildelens egen kostnad. Avläst i `storeAnalysis`: ingen kolumn bär den,
+  och ingen bär en flagga för en kombinerad faktura. Villkoret är alltså aldrig uppfyllt för en lagrad rad i dag.
+- B och C är nya läsvägar. Byggregeln tillåter bara strykning i en lagning efter två fällda varv i rad.
+
+Därför A: `underlagForRad` ger inget underlag i en kategori med `bytesmalMotKategorigolv` (samma deklaration som
+planvalsgrinden). Raden skriver planvalsmeningen utan tal och behåller årskostnaden; poängen, räknarna och den
+samlade poängen är oförändrade (utanDom stoppar den samlade poängen, `arPrissatt` är false i båda fallen).
+Grundarbeslutet 22 okt skrivs om i CLAUDE.md i samma commit: i en planvalskategori är ett tal per abonnemang inte ett
+faktum om fakturan. Ett tal per abonnemang kommer tillbaka i S6, med mobildelens egen kostnad lagrad och ett läge
+som skrivs av kodvägen den beskriver. Prövas av RM-R8, FV-A19, MS-01, MS-03, MS-04, MS-08 och
+`scripts/screenshot-mobilscore.mjs`.
+
+Samma commit lagar den fjortonde blickens två [VAKT]: renderingssonden fäller ett tal efter «Kombinerad faktura.»
+med eller utan etikett (Z-1), och FV-A18:s årsfall är den trettonde linsens Q3 med fem abonnemang (Z-3).
 
 ## S2 · Kundsynlighetssvepet
 

@@ -1804,6 +1804,12 @@ signera", aldrig som ett verkställt löfte.)
    > en bredbandsfaktura, räknas fortfarande mot mobilens golv (egen PR, 30 fixturer låser det).
    > Utan bekräftad nivå visar rummet nu vad kunden betalar och vad billigaste jämförbara kostar,
    > men **hävdar inget avstånd och sätter inget score**. Fakta står kvar; påståendet uteblir.
+   > **Undantaget från «fakta står kvar», 17 nov (fjortonde blicken på S1, Z-2):** i en planvalskategori
+   > (mobil) visar rummet inget tal per abonnemang. Talet var radens hela årskostnad delad med antalet
+   > abonnemang, och på en kombinerad faktura bar det bredbandets och molnväxelns kostnad: «5 027 kr per
+   > abonnemang/år» där mobildelen var 4 188. Ingen lagrad rad bär mobildelens egen kostnad, så ett tal
+   > per abonnemang är inte ett faktum om fakturan. Raden skriver planvalsmeningen, och årskostnaden står
+   > kvar (RM-R8, FV-A19, MS-01).
    >
    > **De sex andra fynden, alla samma familj — ett tal som ser mätt ut utan att vara det:**
    > · `route === 'monitoring'` returnerade **72 ovillkorligt, före det härledda talet** — en konstant

@@ -364,6 +364,19 @@ Var och en byggs i en egen PR, med egen granskning.
   · FV-A4:s enstaka fel 14 nov gick inte att återskapa (21 körningar av filen, 7 av hela sviten, under last); testet
     fälls av ett sabotage. Punkten stängs som okänd, ingen åtgärd.
 
+- **Ur den fjortonde blickens dom på S1 (`ops/GRANSKNING-s1-fjortonde.md`):**
+  · Z-2 [KUND], vanligare (blockerade): rummets «Ni betalar {perEnhet} kr per abonnemang/år» bar de andra delarnas
+    kostnad på en kombinerad mobilfaktura. Lagat 17 nov: en rad i en planvalskategori har inget prisunderlag (RM-R8,
+    FV-A19). Förexisterande på main för månadsfakturor; lagningen täcker dem också. Ett tal per abonnemang kommer
+    tillbaka i S6, med mobildelens egen kostnad lagrad.
+  · Z-1 [VAKT], lagat i samma commit: renderingssonden fäller ett tal efter «Kombinerad faktura.» med eller utan
+    etikett. Sabotaget P utan etikett fällde sonden i fyra fall och båda bredderna.
+  · Z-3 [VAKT], lagat i samma commit: FV-A18:s årsfall är Q3 (fem abonnemang), som main håller i granskning och grenen
+    släpper `auto` (avläst genom båda handlerna 17 nov).
+  · Kvar till S6, förexisterande: spegelfallets tal per abonnemang i Marknadsankaret för en bredbandsrad med en
+    mobildel (`customerCost` är radens hela årskostnad, `api/invoice-history.mjs` buildBranchAnchors). Inte avläst om
+    någon kund ser det i dag.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,

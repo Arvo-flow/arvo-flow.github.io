@@ -5,6 +5,10 @@
 // billigaste plan kostar, utan att påstå ett avstånd.» Skälet: Tele2:s tre publicerade 24-månaders-
 // abonnemang (269, 299, 349 kr/mån) är olika produkter, och en kund som betalade exakt listpris för
 // 349-abonnemanget fick «+30 % över billigaste publicerade pris» och score 59. Talet mätte planvalet.
+// ÄNDRAT 17 nov (fjortonde blicken på S1, Z-2): «vad kunden betalar» per abonnemang var radens hela
+// årskostnad delad med antalet abonnemang, och på en kombinerad faktura bar det bredbandets kostnad
+// («5 027 kr per abonnemang/år», sant 4 188). Ingen lagrad rad bär mobildelens egen kostnad, så en
+// mobilrad har inget underlag och rummet skriver planvalsmeningen utan tal (MS-01, RM-R8).
 //
 // Rummet byggs här med produktionens egna funktioner (buildBranchAnchors → berikaRader), aldrig med
 // ett handskrivet prisunderlag.
@@ -46,19 +50,21 @@ async function rummet(analyses) {
 describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)', () => {
   test('MS-01 · mobilraden får inget avstånd, ingen poäng och inget prisomdöme, oavsett abonnemang', async () => {
     // Tio abonnemang till vart och ett av Tele2:s tre publicerade 24-månaderspriser, och ett under golvet.
+    const { radMotivering } = await import('../src/lib/rumstext.js');
     for (const perManad of [269, 299, 349, 199]) {
       const [a] = await rummet([rad(1, 'mobil', perManad * 12 * 10, 10)]);
-      const p = a.prisunderlag;
-      assert.ok(p, `prisunderlag för ${perManad}`);
-      assert.equal(p.ovissNiva, true, `${perManad}: abonnemanget är inte bekräftat`);
-      assert.equal(p.avstandPct, null, `${perManad}: inget avstånd`);
-      assert.equal(p.underGolv, null, `${perManad}: inget «på eller under»`);
+      // Inget underlag, alltså inget avstånd, inget «på eller under» och inget tal per abonnemang (Z-2, 17 nov):
+      // talet var radens hela årskostnad delad med antalet abonnemang, och på en kombinerad faktura bär det de
+      // andra delarnas kostnad. Ingen lagrad rad bär mobildelens egen kostnad.
+      assert.equal(a.prisunderlag, null, `${perManad}: prisunderlag`);
       assert.equal(a.arvoScore, null, `${perManad}: ingen poäng`);
-      assert.equal(a.lage?.kod, 'oviss_niva', `${perManad}: radens läge`);
-      // Fakta står kvar: vad kunden betalar och vad det billigaste abonnemanget kostar.
-      assert.equal(p.perEnhet, perManad * 12);
-      assert.equal(p.golv, 269 * 12);
+      assert.equal(a.lage?.kod, 'omatt', `${perManad}: radens läge`);
+      assert.equal(a.lage?.params?.planval, true, `${perManad}: raden saknar dom av planvalsskäl`);
+      assert.doesNotMatch(radMotivering(a), /\d/, `${perManad}: radens text bär ett tal`);
     }
+    // Ankaret bär fortfarande kategorins publicerade priser; rummet ställer dem bara inte mot raden.
+    const ankare = await buildBranchAnchors([rad(1, 'mobil', 349 * 12 * 10, 10)]);
+    assert.equal(ankare.mobil?.p25, 269 * 12);
     // Motprov: en M365-rad med nivån i radtexten får avstånd och poäng, så instrumentet kan svara annat.
     const [m] = await rummet([rad(2, 'saas-productivity', 416.77 * 12 * 10, 10,
       [{ description: 'Microsoft 365 E3', type: 'recurring_subscription', quantity: 10, unitPrice: 416.77, amount: 4167.7 }])]);
@@ -90,9 +96,12 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
   });
 
   test('MS-03 · medianens etikett kommer ur prisboken, och mobilens median är ett annat abonnemang', async () => {
-    const [mob] = await rummet([rad(1, 'mobil', 349 * 12 * 10, 10)]);
-    assert.equal(mob.prisunderlag.median, 299 * 12);
-    assert.equal(mob.prisunderlag.medianEtikett, 'Näst billigaste publicerade abonnemang');
+    // Mobilraden har inget underlag (Z-2); etiketten prövas i ankaret som bär den.
+    const { mobil: mobAnkare } = await buildBranchAnchors([rad(1, 'mobil', 349 * 12 * 10, 10)]);
+    assert.equal(mobAnkare.median, 299 * 12);
+    assert.equal(mobAnkare.medianEtikett, 'Näst billigaste publicerade abonnemang');
+    assert.equal(byggPrisunderlag({ annualCost: 349 * 12 * 10, seats: 10, ankare: mobAnkare }).medianEtikett,
+      'Näst billigaste publicerade abonnemang');
     const [saas] = await rummet([rad(2, 'saas-productivity', 1700 * 10, 10)]);
     assert.equal(saas.prisunderlag.medianEtikett, 'Samma licens utan bindning');
     // Utan etikett i ankaret visas inget median-tal i rummet.
@@ -108,9 +117,14 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
 
   test('MS-04 · texterna för obekräftad nivå gäller både licenser och abonnemang, och lovar inget utan mekanik', async () => {
     const { MOTIVERING } = await import('../src/lib/rumstext.js');
-    const [a] = await rummet([rad(1, 'mobil', 349 * 12 * 10, 10)]);
-    const text = MOTIVERING.oviss_niva(a.prisunderlag, 'mobil');
+    // Läget når i dag bara licenser (en M365-rad utan läsbar nivå); mobilraden har inget underlag (Z-2).
+    // Texten prövas ändå med mobilens ankare, så att den inte säger «licens» om den någon gång når ett abonnemang.
+    const { mobil: mobAnkare } = await buildBranchAnchors([rad(1, 'mobil', 349 * 12 * 10, 10)]);
+    const text = MOTIVERING.oviss_niva(byggPrisunderlag({ annualCost: 349 * 12 * 10, seats: 10, ankare: mobAnkare }), 'mobil');
     assert.match(text, /så vi jämför inte ert pris mot det\.$/);
+    const [m] = await rummet([rad(2, 'saas-productivity', 1700 * 10, 10)]);
+    assert.equal(m.lage?.kod, 'oviss_niva', 'M365 utan läsbar nivå');
+    assert.match(MOTIVERING.oviss_niva(m.prisunderlag, 'licenser'), /så vi jämför inte ert pris mot det\.$/);
     for (const falskt of [/licens/i, /tio gånger/, /Dela avtalet/i, /låser vi jämförelsen/i]) {
       assert.doesNotMatch(text, falskt, `radens text säger ${falskt}`);
     }
@@ -148,7 +162,8 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
     assert.equal(a.should_switch, false);
     assert.equal(a.net_saving, null);
     assert.equal(a.suggested_annual_cost, null);
-    assert.equal(a.lage.kod, 'oviss_niva');
+    assert.equal(a.lage.kod, 'omatt');
+    assert.equal(a.lage.params.planval, true);
     assert.equal(a.lage.score, null);
     assert.equal(a.lage.params.ovPct, null);
     const rum = byggRum(analyses, []);
@@ -166,7 +181,7 @@ describe('MS · mobil kräver bekräftat abonnemang (grundarbeslut 2026-10-22)',
       'en mobilrad utan lagrat byte påstår att analysen räknade ett');
     // F1-4: också en mobilrad utan underlag (inget avläst antal) och en bevakad mobilrad håller inne sitt byte.
     const [utanAntal] = await rummet([rad(6, 'mobil', 349 * 12 * 10, null, [], { suggested: 269 * 12 * 10 })]);
-    assert.equal(utanAntal.prisunderlag, null, 'premissen: utan antal finns inget underlag');
+    assert.equal(utanAntal.prisunderlag, null, 'en mobilrad har inget underlag');
     assert.equal(utanAntal.should_switch, false);
     assert.equal(utanAntal.lage.score, null);
     const [bevakad] = await rummet([{ ...rad(7, 'mobil', 349 * 12 * 10, 10, [], { suggested: 269 * 12 * 10 }), route: 'monitoring' }]);

@@ -5,12 +5,13 @@
 // stubbat är nätverket.
 //
 // KONTROLLER I DOM:EN (med motprov):
-//   mobil 349    → «Nivå ej bekräftad», «jämför inte ert pris mot det», medianen som «Näst billigaste
-//                  publicerade abonnemang»; aldrig «% över lägsta pris», «Samma licens utan bindning»,
+//   mobil 349    → planvalsmeningen («vi jämför inte priset mot listpriset»); aldrig ett tal per abonnemang
+//                  (Z-2, 17 nov: «per abonnemang», 4 188, «Det billigaste publicerade priset är», medianens
+//                  «Näst billigaste publicerade abonnemang»), «% över lägsta pris», «Samma licens utan bindning»,
 //                  «Rätt prissatt», «Dela avtalet», «tio gånger», «Marknadsankaret» eller «leverantörens
 //                  eget listpris»; innehavet säger «1 mottagen, inte prissatt», aldrig «1 prissatt»
 //   mobil + byte → en mobilrad lagrad med byte till 269-planen (C1-1): inget «% mer», inget «Ni behåller»,
-//                  ingen bytesrekommendation och ingen poäng; raden säger «Nivå ej bekräftad»
+//                  ingen bytesrekommendation, ingen poäng och inget tal per abonnemang
 //   mobil + lön  → 100 abonnemang och en lönerad (C1-2): «Ingen samlad poäng», «kan inte bedöma alla» och
 //                  «1 av 2 fakturor prissatta»; aldrig «Allt är under kontroll», «Era priser står sig»
 //                  eller «Bättre än listpris»
@@ -19,11 +20,13 @@
 //   kombinerad, lagrad med delar (a649404b:s form) → inget byte och inget belopp: rummet läser inga delar
 //                  (S1, 11 nov, MS-13); raden säger att bytet kan vara räknat mot det billigaste
 //   kombinerad, gammal → samma rad utan lagrade delar: samma besked; aldrig «Inget byte rekommenderas»,
-//                  «Inga byten på bordet» eller ett löfte om vad en ny analys räknar
+//                  «Inga byten på bordet» eller ett löfte om vad en ny analys räknar; i båda inget tal per
+//                  abonnemang (4 546 vore årskostnaden med bredbandet delad med fem abonnemang, Z-2)
 //   mobil utan antal + M365 → rummet sätter ingen samlad poäng och berömmer inte (RM-R3); mobilraden säger
 //                  aldrig att ett verifierat publikt pris saknas (RM-R6)
 //   mobil + elbyte → elbytet kallas aldrig prissatt mot verifierat listpris (F1-1)
-//   motprov      → IT-8821 (två nivåer) SKA behålla sitt byte (D1-1); en M365-rad med E3 i radtexten SKA
+//   motprov      → IT-8821 (två nivåer) SKA behålla sitt byte (D1-1) och visa sitt tal per användare (Z-2:
+//                  sonden kan se ett tal per enhet); en M365-rad med E3 i radtexten SKA
 //                  få «Listpris för er nivå» och ett avstånd, ett
 //                  rum med löneadministration SKA få Marknadsankaret och en poäng, och en M365-rad med
 //                  byte SKA få bytet
@@ -116,9 +119,10 @@ const text = async (p) => (await p.innerText('body')).replace(/\s+/g, ' ');
 for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   let p = await sida(bredd, RUM.mobil);
   let t = await text(p);
-  for (const re of [/Nivå ej bekräftad/i, /jämför inte ert pris mot det/, /Näst billigaste publicerade abonnemang/, /1 mottagen, inte prissatt/i])
+  for (const re of [/vi jämför inte priset mot listpriset/, /1 mottagen, inte prissatt/i])
     if (!re.test(t)) fel(`mobil saknar ${re} (${namn})`);
-  for (const re of [/% över lägsta pris/i, /Samma licens utan bindning/, /Rätt prissatt/i, /Dela avtalet/i, /tio gånger/, /% över det billigaste/,
+  for (const re of [/per abonnemang/, /4\s188/, /Det billigaste publicerade priset är/, /Näst billigaste publicerade abonnemang/,
+    /% över lägsta pris/i, /Samma licens utan bindning/, /Rätt prissatt/i, /Dela avtalet/i, /tio gånger/, /% över det billigaste/,
     /Marknadsankaret/i, /leverantörens eget listpris/, /1 prissatt leverantör/i, /Vägde 1 faktura/, /Den jämförelsen kommer/])
     if (re.test(t)) fel(`mobil säger ${re} (${namn})`);
   await p.screenshot({ path: `${UT}/mobil-${namn}.png`, fullPage: true }); await p.close();
@@ -139,10 +143,9 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   // C1-1: en mobilrad lagrad med byte. Etiketterna är versaler i DOM:en, därav /i.
   p = await sida(bredd, RUM.mobilByte);
   t = await text(p);
-  if (!/Nivå ej bekräftad/i.test(t)) fel(`mobil med byte saknar «Nivå ej bekräftad» (${namn})`);
   if (!/räknade fram ett byte som kan vara räknat mot det billigaste/i.test(t)) fel(`mobil med byte säger inte varför bytet saknas (${namn})`);
   for (const re of [/% mer/i, /Ni behåller/i, /möjlig nettobesparing/i, /rekommenderar byte/i, /Vakten · ett drag kvar/i,
-    /Samma nivå kostar/i, /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /kan skärpas/i])
+    /Samma nivå kostar/i, /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /kan skärpas/i, /per abonnemang/, /4\s188/])
     if (re.test(t)) fel(`mobil med byte säger ${re} (${namn})`);
   await p.screenshot({ path: `${UT}/mobil-byte-${namn}.png`, fullPage: true }); await p.close();
 
@@ -169,6 +172,7 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   t = await text(p);
   if (!/Ni behåller/i.test(t) && !/möjlig nettobesparing/i.test(t)) fel(`motprov: IT-8821 saknar bytet (${namn})`);
   if (/räknade fram ett byte/i.test(t)) fel(`motprov: IT-8821 får mobilens förklaring (${namn})`);
+  if (!/per användare/.test(t)) fel(`motprov: IT-8821 saknar sitt tal per användare (${namn}) — Z-2-kontrollerna mäter ingenting`);
   // E1-1 och E1-5: bytesraden är prissatt och säger inte emot sitt byte.
   for (const re of [/Vägde 0 fakturor/i, /\b0 prissatta/i, /Vi sätter varken avstånd eller poäng här/i])
     if (re.test(t)) fel(`IT-8821 säger ${re} (${namn})`);
@@ -183,7 +187,8 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     t = await text(p);
     if (!/räknade fram ett byte som kan vara räknat mot det billigaste/i.test(t)) fel(`${fall} saknar förklaringen (${namn})`);
     for (const re of [/Inget byte rekommenderas/i, /Inga byten på bordet/i, /\d+\s?% mer/i, /2 976/, /Bytet gäller bredbandet/i,
-      /Analyseras fakturan igen/i, /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /kan skärpas/i])
+      /Analyseras fakturan igen/i, /Arvo Score .{0,40}?\d{1,3} ?\/ ?100/i, /kan skärpas/i,
+      /per abonnemang/, /4\s546/, /Det billigaste publicerade priset är/])
       if (re.test(t)) fel(`${fall} säger ${re} (${namn})`);
     await p.screenshot({ path: `${UT}/${fall}-${namn}.png`, fullPage: true }); await p.close();
   }

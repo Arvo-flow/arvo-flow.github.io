@@ -211,6 +211,33 @@ describe('RM · rummets tillståndsmatris (S1)', () => {
     assert.ok(RUM.some((r) => r.spec.some((x) => x.medNetto) && r.rum.hasSwitchAction), 'matrisen saknar rummet som prövar K-1');
   });
 
+  test('RM-R8 · en mobilrad har inget tal per abonnemang: inget underlag, inget tal i radens text (Z-2)', () => {
+    // Talet var radens hela årskostnad delad med antalet abonnemang. På en kombinerad faktura bär det
+    // bredbandets och molnväxelns kostnad, och ingen lagrad rad bär mobildelens egen kostnad.
+    const fel = brott(({ analyses }) => {
+      for (const a of analyses.filter(arPlanval)) {
+        if (a.prisunderlag != null) return `${a.category}: prisunderlag ${JSON.stringify(a.prisunderlag)}`;
+        if (a.lage?.params?.perEnhet != null || a.lage?.params?.golv != null) return `läget bär tal: ${JSON.stringify(a.lage.params)}`;
+        const text = radMotivering(a);
+        if (/per abonnemang/.test(text)) return `radtexten: ${text}`;
+        if (a.seat_count > 0) {
+          const per = Math.round(a.annual_cost / a.seat_count).toLocaleString('sv-SE');
+          if (text.includes(per)) return `radtexten bär ${per}: ${text}`;
+        }
+        if (a.lage?.kod === 'oviss_niva') return 'läget är oviss_niva, vars text bär talet';
+      }
+      return null;
+    });
+    assert.deepEqual(fel, [], visa(fel));
+    // Motprovet: instrumentet ser ett underlag med tal per enhet, på en M365-rad med E3-rader.
+    const m = RUM.find((r) => r.spec.length === 1 && r.spec[0].kategori === 'saas-productivity'
+      && r.spec[0].route === 'auto' && r.spec[0].medPlatser && !r.spec[0].medByte);
+    assert.ok(m.analyses[0].prisunderlag?.perEnhet > 0, 'motprovet saknar underlag');
+    // Och matrisen bär mobilrader med antal, där talet hade gått att räkna.
+    assert.ok(RUM.some((r) => r.analyses.some((a) => arPlanval(a) && a.seat_count > 0 && a.route === 'auto')),
+      'matrisen saknar en mobilrad med antal');
+  });
+
   test('RM-M1 · MOTPROV: M365 med E3-rader och bredband behåller sina byten och sin poäng', () => {
     const hitta = (k) => RUM.find((r) => r.spec.length === 1 && r.spec[0].kategori === k && r.spec[0].route === 'auto'
       && r.spec[0].medPlatser && r.spec[0].medByte);
