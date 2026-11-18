@@ -13,6 +13,9 @@
 //   sidrubriken (Q-7) → «Ni betalar för mycket» står aldrig ovanför ett resultat utan byte, men över motprovets byte
 //   motprov      → bredbandsfakturan SKA visa sitt byte (4 560 kr/år brutto); annars bevisar kontrollerna
 //                  bara att orden saknas i bygget
+//   stycket      → på en planvalsfaktura säger stycket «Kombinerad faktura.» ingenting mer, läst ur DOM:en (Z-1, Å-2);
+//                  motprov: bredbandsfakturans stycke bär primärdelens tal
+//   kvartal, år  → Y-1:s fakturor går till granskning som på main (Å-1, FV-A20): inget «Kombinerad faktura», inget P
 // BLIND: nätverket är stubbat; modellens svar är författade. Rummet prövas av scripts/screenshot-mobilscore.mjs.
 //
 // Kör: npm run build && node scripts/screenshot-planvalsgrind.mjs
@@ -83,9 +86,12 @@ const FORBJUDET = [/Ni betalar för mycket/, /Vi hittar inget publikt pris att b
   // Y-1: en planvalsfaktura bär inget tal för primärdelen.
   /Kombinerad faktura\. Mobilabonnemang:/, /Priset baseras på verifierade offentliga listpriser/, /Vid genomfört byte/,
   /Beräkningsunderlag/, /Er nettobesparing/,
-  // Z-1: ett tal efter «Kombinerad faktura.», med eller utan etikett. Formen ovan fällde bara etiketten
-  // «Mobilabonnemang:», så P utan etikett («Kombinerad faktura. 125 640 kr/år.») gick igenom.
-  /Kombinerad faktura\.\s*(?:[^.\d]{0,40}:\s*)?\d/];
+];
+// Z-1 och Å-2: stycket som bär «Kombinerad faktura.» säger ingenting mer på en planvalsfaktura, varken ett tal med
+// etikett, ett tal utan etikett eller en etikett utan kolon. Z-1:s mönster krävde ett kolon, så «Kombinerad faktura.
+// Mobilabonnemang 125 640 kr/år.» gick igenom (Å-2). Stycket läses ur DOM:en; sidans löptext fortsätter med nästa kort.
+const kombistycken = (p) => p.$$eval('p', (ps) => ps.map((e) => e.innerText.replace(/\s+/g, ' ').trim())
+  .filter((t) => t.startsWith('Kombinerad faktura.')));
 
 for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
   for (const [id, fil, maste] of [
@@ -97,16 +103,25 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     // N-1 och N-2: leverantörens egen höjning på en kombinerad faktura.
     ['fynd·supplier_documented_hike·komb·nej', 'hojning', [/Leverantören skrev in höjningen själv/,
       /Därför jämför vi inte ert pris mot listpriset/, /Kombinerad faktura\./]],
-    // Y-1: mobil som primär del på en kvartalsfaktura. P vore 125 640 kr/år; planvalsfakturan visar inget P.
-    ['rest·mob+bb·quarterly·nej', 'kvartal', [/Ingen jämförelse mot listpris/, /Kombinerad faktura\./]],
-    // Q3: fem abonnemang och bredband på en årsfaktura. P vore 193 680 kr/år (Z-3).
-    ['rest·mob+bb·annual·nej', 'ar', [/Ingen jämförelse mot listpris/, /Kombinerad faktura\./]],
   ]) {
     const p = await fakturavyn(bredd, SVAR[id], '/Vi jämför inte era mobilabonnemang/');
     const t = await text(p);
     for (const re of maste) if (!re.test(t)) fel(`${fil}: saknar ${re} (${namn})`);
+    const stycken = await kombistycken(p);
+    for (const st of stycken) if (st !== 'Kombinerad faktura.') fel(`${fil}: stycket säger «${st}» (${namn})`);
+    if (fil === 'kombinerad' && stycken.length === 0) fel(`kombinerad: inget stycke «Kombinerad faktura.» (${namn}) — kontrollen prövar ingenting`);
     for (const re of FORBJUDET) if (re.test(t)) fel(`${fil}: säger ${re} (${namn}): «${t.match(re)[0]}»`);
     if (fil === 'plan349' && /Bredbandet på samma faktura/.test(t)) fel(`plan349: bredbandsmeningen utan bredband (${namn})`);
+    await p.screenshot({ path: `${UT}/${fil}-${namn}.png`, fullPage: true }); await p.close();
+  }
+  // Å-1: Y-1:s kvartals- och årsfaktura går till granskning som på main (FV-A20). Vyn visar granskningsläget och
+  // inget av fakturans delar: P vore 125 640 respektive 193 680 kr/år.
+  for (const [id, fil] of [['rest·mob+bb·quarterly·nej', 'kvartal'], ['rest·mob+bb·annual·nej', 'ar']]) {
+    const p = await fakturavyn(bredd, SVAR[id], '/Tele2/');
+    const t = await text(p);
+    if (!/Tele2/.test(t)) fel(`${fil}: vyn renderades inte (${namn})`);
+    for (const re of [/Kombinerad faktura/, /125\s640/, /193\s680/, /per abonnemang/, ...FORBJUDET])
+      if (re.test(t)) fel(`${fil}: säger ${re} (${namn}): «${t.match(re)[0]}»`);
     await p.screenshot({ path: `${UT}/${fil}-${namn}.png`, fullPage: true }); await p.close();
   }
   // Talen skrivs med hårt mellanslag (sv-SE); \s matchar det.
@@ -127,6 +142,9 @@ for (const [bredd, namn] of [[390, 'mobil'], [1600, 'desktop']]) {
     fel(`kombi: meningen om primärdelen saknas eller har glidit (${namn})`);
   }
   if (/jämfört mot listpris|analysen avser|analyseras via|Övrigt på fakturan|Resten av fakturan/i.test(tk)) fel(`kombi: ett påstående om vad vi gjort med resten (${namn})`);
+  // Motprov till styckeskontrollen: på en bredbandsfaktura läser den primärdelens tal ur samma stycke.
+  if (!(await kombistycken(k)).some((st) => /^Kombinerad faktura\. Företagsbredband: 8\s388\skr\/år\.$/.test(st)))
+    fel(`kombi: styckeskontrollen hittar inte primärdelens tal (${namn}) — Å-2-kontrollen mäter ingenting`);
   await k.screenshot({ path: `${UT}/kombi-bredband-mobil-${namn}.png`, fullPage: true }); await k.close();
   console.log(`${namn}: kontroller körda`);
 }

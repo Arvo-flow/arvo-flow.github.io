@@ -172,6 +172,15 @@ for (const modell of ['ja', 'nej']) {
     f.extraktion.billingPeriod = period;
     RESTFALL.push(f);
   }
+  // Den trettonde linsens Q2 ordagrant: mobil och molnväxel per kvartal. Main släpper den `auto`, för det ogrindade
+  // bytets mål är inte lägre än årskostnaden; sanitetsvakten på grenen får då inte pröva den (FV-A20:s motprov, Å-1).
+  // Beskrivningen och hastigheten är linsens: med «Mobil och molnväxel» och utan hastighet tog fakturan en väg där
+  // grinden inte prövas (varför är inte avläst), och sabotaget mot grinden fällde då noll.
+  const q2 = fall({ id: `rest·mob+pbx·quarterly·${modell}`, kategori: 'mobil', modell, antalAvlast: true, blandad: true,
+    hastighet: 1000, beskrivning: 'Mobil Q4 2026', rader: [{ type: 'recurring_subscription', description: 'Tele2 Jobbmobil (5 st)',
+      amount: 4035 }, { ...TILLAGG.pbx, amount: 597 }] });
+  q2.extraktion.billingPeriod = 'quarterly';
+  RESTFALL.push(q2);
   const eur = kombi(`rest·bb+mob·eur·${modell}`, { modell, rader: [{ ...BB, amount: 61 }, { ...MOB, amount: 24 }] });
   eur.extraktion.currency = 'EUR';
   RESTFALL.push(eur);

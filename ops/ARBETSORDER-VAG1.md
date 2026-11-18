@@ -377,6 +377,22 @@ Var och en byggs i en egen PR, med egen granskning.
     mobildel (`customerCost` är radens hela årskostnad, `api/invoice-history.mjs` buildBranchAnchors). Inte avläst om
     någon kund ser det i dag.
 
+- **Ur den femtonde blickens dom på S1 (`ops/GRANSKNING-s1-femtonde.md`):**
+  · Å-1 [KUND] (blockerade som vanligare): fyndkortet «Hårdvaruavbetalning på en löpande rad · 1 347 kr ·
+    engångsbelopp» om en delbetalning som löper i 36 månader (lib/forensics.js:242: en radtyp som inte är löpande får
+    «engångsbelopp», och `hardware` är inte löpande), och rummets dom «Vi fångade – kr/år» med ett streck i stället för
+    talet. Roten till att det blev vanligare är lagad 18 nov: planvalsgrinden släpper inget som mains sanitetsvakt
+    håller (FV-A20, «Regel 13 tillämpad 18 nov» i körplanen). Kvar, förexisterande och synligt för kund på main för
+    månads- och årsfakturor (avläst av linsen i mains renderade rum och fakturavy): byggs i en egen PR direkt efter S1,
+    tillsammans med hårdvarujusteringen ovan.
+  · Å-2 [VAKT], lagat 18 nov: renderingssonden läser stycket som bär «Kombinerad faktura.» ur DOM:en och kräver att det
+    inte säger något mer på en planvalsfaktura; sabotaget P bakom etiketten utan kolon fäller den i fyra kontroller.
+  · Förexisterande, utanför PR:en, avläst 18 nov: fakturavyns granskningsläge för `sanity_check_failed` säger «Vår
+    algoritm är inte tillräckligt säker på klassificeringen» och «Koppla Fortnox / Visma för en komplett analys av hela
+    er leverantörsreskontra». Skälet är en orimlig besparing, inte klassificeringen, och Fortnox är pausat. Texten är
+    identisk på main (`git show origin/main:src/pages/TestaFaktura/index.js`), och efter lagningen av Å-1 når den samma
+    fakturor som på main. Syns för kund i dag; egen PR, efter hårdvaruavbetalningen.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,

@@ -211,6 +211,9 @@ async function korFall(fall) {
     rum,
     mejl,
     loggar: fangade.filter((l) => /\[(secondary-override|planvalsgrind|guard:finansiell)\]/.test(l)),
+    // Varje tal med minst fyra siffror i det serialiserade svaret, oavsett fält (FV-A20: grindens ogrindade byte får
+    // aldrig nå svaret, inte heller under ett fält instrumentet inte känner till).
+    svarTal: [...new Set(String(res.body ?? '').match(/\d{4,}/g) ?? [])],
     ai: globalThis.__AI.map((x) => x.verktyg ?? `text:${x.max_tokens}`),
     // Renderingssonden (scripts/screenshot-planvalsgrind.mjs) visar handlerns hela svar i fakturavyn.
     ...(process.env.FAKTURAKEDJAN_SVAR === '1' ? { svar: body } : {}),

@@ -450,46 +450,79 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
   });
 
   test('FV-A18 · primärdelens tal står inte på en planvalsfaktura (Y-1)', () => {
-    // Premissen: P räknas som om radbeloppen gällde en månad, så linsens kvartals- och årsfall har ett P som är större
-    // än hela fakturans årskostnad, och fakturan når vyn (auto, planval). Annars prövar testet ingenting.
+    // Y-1:s fakturor, mobil som primär del per kvartal och år, går till granskning precis som på main (FV-A20), så P
+    // når inte vyn. Svaret bär då inget P alls.
     const fall = RESTFALL.filter((f) => /rest·mob\+bb·(quarterly|annual)/.test(f.id));
     assert.equal(fall.length, 4);
     for (const f of fall) {
       const u = UT.get(f.id);
       assert.equal(u.kraschade, undefined, `${f.id}: ${u.kraschade}`);
-      assert.equal(u.route, 'auto', `${f.id}: route ${u.route}`);
-      assert.equal(u.lage?.rubrik, 'planval', `${f.id}: rubriken ${u.lage?.rubrik}`);
-      assert.ok(Math.round(u.primarManad * 12) > Math.round(u.visadArskostnad),
-        `${f.id}: P ${Math.round(u.primarManad * 12)} är inte större än årskostnaden ${u.visadArskostnad}; premissen bär inte`);
+      assert.equal(u.route, 'review_queue', `${f.id}: route ${u.route}`);
+      assert.equal(u.primarManad, null, `${f.id}: svaret bär P`);
     }
-    // Vyn skriver P bara utanför planvalsläget. Beteendet prövas av renderingssonden (scripts/screenshot-planvalsgrind.mjs,
-    // fallet «kvartal»); här låses villkoret i källan.
+    // En planvalsfaktura som går `auto` får heller inget P i vyn. Beteendet prövas av renderingssonden
+    // (scripts/screenshot-planvalsgrind.mjs, fallet «kombinerad»); här låses villkoret i källan.
     const vy = readFileSync(join(ROT, 'src/pages/TestaFaktura/index.js'), 'utf8');
     assert.match(vy, /\{result\.extracted\?\.primaryComponentMonthly != null && result\.lage\?\.rubrik !== 'planval'\n\s+\? ` \$\{getCategoryMeta/);
   });
 
-  test('FV-A19 · rummet skriver inget tal per abonnemang på en kombinerad mobilfaktura (Z-2)', () => {
-    // Den fjortonde linsens fall: 10 abonnemang för 10 470 kr och bredband för 2 097 kr per kvartal gav i rummet
-    // «Ni betalar 5 027 kr per abonnemang/år» (mobildelen 4 188), och mobil, bredband och molnväxel per månad gav
-    // ett tal med molnväxeln inräknad. Rummet byggs här ur den rad handlern lagrade (kor.mjs).
-    const fall = RESTFALL.filter((f) => /^rest·mob\+bb(\+pbx)?·/.test(f.id));
-    assert.equal(fall.length, 6);
-    let medAntal = 0;
-    for (const f of fall) {
+  test('FV-A19 · rummet skriver inget tal per abonnemang på en mobilrad (Z-2)', () => {
+    // Talet var radens hela årskostnad delad med antalet abonnemang; på en kombinerad faktura bar det bredbandets och
+    // molnväxelns kostnad («5 027 kr per abonnemang/år», sant 4 188). Rummet byggs ur den rad handlern lagrade.
+    const mobil = [...MOBILFALL, ...KOMBIFALL, ...RESTFALL, ...FYNDFALL]
+      .filter((f) => f.kategorisering.category === 'mobil' && f.extraktion.seatCount > 0);
+    let prov = 0, kombinerade = 0;
+    for (const f of mobil) {
       const u = UT.get(f.id);
       assert.equal(u.kraschade, undefined, `${f.id}: ${u.kraschade}`);
-      assert.equal(u.route, 'auto', `${f.id}: route ${u.route}; premissen är att raden når rummet`);
+      const texter = u.rum?.bevakad ? [u.rum.kort?.headline, u.rum.kort?.detail, u.rum.kort?.action]
+        : (u.rum?.rader ?? []).map((r) => r.motivering);
+      for (const t of texter) assert.doesNotMatch(String(t ?? ''), /per abonnemang/, `${f.id}: ${t}`);
+      if (u.route !== 'auto') continue;
       const r = u.rum?.rader?.[0];
       assert.ok(r, `${f.id}: ingen rad i rummet`);
       assert.equal(r.harUnderlag, false, `${f.id}: raden har ett prisunderlag`);
       assert.notEqual(r.lage?.kod, 'oviss_niva', `${f.id}: läget oviss_niva skriver talet`);
-      assert.doesNotMatch(r.motivering, /per abonnemang|\d/, `${f.id}: ${r.motivering}`);
-      if (u.rad?.annual_cost > 0 && f.extraktion.seatCount > 0) medAntal++;
+      assert.doesNotMatch(r.motivering, /\d/, `${f.id}: ${r.motivering}`);
+      prov++;
+      if (f.extraktion.potential_mixed_categories === true) kombinerade++;
     }
-    assert.equal(medAntal, 6, 'premissen: varje fall har en årskostnad och ett antal, så talet hade gått att räkna');
+    // Premissen: raderna når rummet, också kombinerade fakturor (mobil, bredband och molnväxel per månad).
+    assert.ok(prov >= 20, `bara ${prov} mobilrader nådde rummet`);
+    assert.ok(kombinerade >= 2, `bara ${kombinerade} kombinerade mobilrader nådde rummet`);
+    for (const id of ['rest·mob+bb+pbx·ja', 'rest·mob+bb+pbx·nej']) assert.equal(UT.get(id).route, 'auto', id);
     // Motprovet: IT-8821 (två licensnivåer, ingen läsbar nivå) har ett underlag med tal per användare i samma rum.
     const it = UT.get('motprov·it8821');
     assert.equal(it.rum?.rader?.[0]?.harUnderlag, true, 'IT-8821: instrumentet ser inget underlag');
+  });
+
+  test('FV-A20 · planvalsgrinden släpper aldrig igenom en faktura som mains sanitetsvakt håller (Å-1)', () => {
+    // Grinden nollar mobilbytet, och sanitetsvakten hade då inget att pröva: 18 kombinerade mobilfakturor som main
+    // höll i granskning gick `auto`, och förexisterande fel på dem blev vanligare (Y-1, Z-2, Å-1). Vakten prövar nu
+    // grindens ogrindade byte (OG-01). Mätt 17–18 nov genom mains och grenens handler: 266 fall, samma route i alla.
+    const halls = ['comb-25·ja·antal', 'comb-25·ja·utan', 'comb-46·ja·antal', 'comb-46·ja·utan',
+      'rest·mob+bb·quarterly·ja', 'rest·mob+bb·quarterly·nej', 'rest·mob+bb·annual·ja', 'rest·mob+bb·annual·nej'];
+    for (const id of halls) {
+      const u = UT.get(id);
+      assert.ok(u, `${id} saknas i instrumentet`);
+      assert.equal(u.route, 'review_queue', `${id}: route ${u.route}`);
+      assert.equal(u.rad?.triage_reason, 'sanity_check_failed', `${id}: skäl ${u.rad?.triage_reason}`);
+      assert.equal(u.rum?.bevakad, true, `${id}: rummet visar ingen granskningsrad`);
+      assert.match(String(u.loggar.join('\n')), /\[planvalsgrind\]/, `${id}: grinden slog inte till`);
+    }
+    // Det ogrindade bytet når aldrig svaret, i något fält: 349-planen till listpris med modellens ja vore 9 600 kr och
+    // målet 32 280 kr/år. Motprovet: årskostnaden 41 880 står i samma svar, så instrumentet ser svarets tal.
+    const xl = UT.get('xl349·ja·antal');
+    assert.ok(xl.svarTal.includes('41880'), `instrumentet ser inte årskostnaden: ${xl.svarTal.join(',')}`);
+    for (const tal of ['9600', '32280']) assert.ok(!xl.svarTal.includes(tal), `svaret bär ${tal}`);
+    // Motprovet: mobilfakturor som main släpper `auto` går fortfarande `auto`, utan byte, också med modellens ja.
+    for (const id of ['xl349·ja·antal', 'comb-01·nej·antal', 'rest·mob+bb+pbx·ja', 'rest·mob+pbx·quarterly·ja',
+      'rest·mob+pbx·quarterly·nej']) {
+      const u = UT.get(id);
+      assert.equal(u.route, 'auto', `${id}: route ${u.route}`);
+      assert.equal(u.rek.shouldSwitch, false, `${id}: byte`);
+      assert.equal(u.rad?.should_switch, false, `${id}: lagrat byte`);
+    }
   });
 
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {

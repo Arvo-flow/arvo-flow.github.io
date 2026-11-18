@@ -14,17 +14,28 @@
 Byggaren skriver om det här blocket vid varje kontrollpunkt (rutinen, avsnitt 5). En session som
 startar om läser blocket först.
 
+- **Underlag för ett kort Fable-pass (Fable kunde inte anropas 17 och 18 nov, kontots kvot slut; eskaleringsregeln):**
+  *Problemet:* S1:s planvalsgrind (agents/recommender/recommend.js, höljet `planvalsgrind`) nollade det mobilbyte som
+  sanitetsvakten i api/test-invoice.mjs prövade på main, så kombinerade mobilfakturor som main höll i granskning gick
+  `auto`, och varje förexisterande fel på dem blev «vanligare» (Y-1, Z-2, Å-1; åtta blockeringar i rad). *Alternativen:*
+  A stryk det enskilda felet (Å-1:s «engångsbelopp»); B håll fyndet borta från planvalsfakturor (strider mot K-2);
+  C1 pröva grindens ogrindade byte i sanitetsvakten, så att mains beslut står kvar (regel 13); C2 deterministisk
+  route för kombinerade planvalsfakturor som inte faktureras per månad. *Mätt 18 nov* genom mains och grenens
+  handler, 266 fall: 18 gick `auto` på grenen och till granskning på main, fyra av dem per månad (comb-25, comb-46),
+  så C2 återger inte mains mängd. *Verkställt:* C1 (se «Regel 13 tillämpad 18 nov» under S1): 266 av 266 fall har
+  mains route, och de 238 `auto`-fallen är oförändrade mot f1f17f60. *Frågan till Fable:* håller C1 som sömdesign i
+  api/test-invoice.mjs, eller ska mains prövning bo någon annanstans?
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** «S1: inget tal per abonnemang på en mobilrad i rummet (Z-2, byggregeln)». Den
-  fjortonde linsen blockerade dbfca75a (`ops/GRANSKNING-s1-fjortonde.md`), S1:s sjunde blockering i rad; byggregeln
-  och S6:s beslut avgjorde lagningen. Fable kunde inte anropas (kvoten slut); underlaget och skälen står under S1.
-- **Lins igång:** ja. Femtonde linsen på den commiten startas 17 nov; domen skrivs till
-  `ops/GRANSKNING-s1-femtonde.md`. Säkerhetsnät: 60 minuter.
+- **Senaste mekanikcommit på grenen:** «S1: planvalsgrinden släpper inget som mains sanitetsvakt håller (Å-1, regel 13)».
+  Den femtonde linsen blockerade f1f17f60 (`ops/GRANSKNING-s1-femtonde.md`), S1:s åttonde blockering i rad.
+- **Lins igång:** ja. Sextonde linsen på den commiten startas 18 nov; domen skrivs till
+  `ops/GRANSKNING-s1-sextonde.md`. Säkerhetsnät: 60 minuter.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
 - **Nästa handling:** när domen kommit: MERGAS → PR:en mot main med auto-merge. Efter mergen, i den här ordningen:
-  hårdvarujusteringen (X-1:s förexisterande rot, syns för kund); S6 med N-5 och ett läge per fakturadel (Fables
+  hårdvaruavbetalningen i en PR: justeringen av «Ni betalar idag» (X-1:s förexisterande rot) och fyndkortets
+  «engångsbelopp» med rummets «Vi fångade – kr/år» (Å-1), båda förexisterande och synliga för kund i dag; S6 med N-5 och ett läge per fakturadel (Fables
   beslut 13 nov, punkt 3 och 5); N-4 som enradig PR; S4; F1.2
   (avtalsvarslet som bokförs utan att Resends fel läses); rummet och dörren enligt Fables plan, punkt 1–4.
 
@@ -401,6 +412,37 @@ som skrivs av kodvägen den beskriver. Prövas av RM-R8, FV-A19, MS-01, MS-03, M
 
 Samma commit lagar den fjortonde blickens två [VAKT]: renderingssonden fäller ett tal efter «Kombinerad faktura.»
 med eller utan etikett (Z-1), och FV-A18:s årsfall är den trettonde linsens Q3 med fem abonnemang (Z-3).
+
+### Regel 13 tillämpad 18 nov (åttonde blockeringen)
+
+Den femtonde blicken (`ops/GRANSKNING-s1-femtonde.md`) fällde f1f17f60 på Å-1: fyndkortet «Hårdvaruavbetalning på en
+löpande rad · 1 347 kr · engångsbelopp» och rummets «Vi fångade – kr/år» på en kombinerad mobilfaktura per kvartal.
+Formen finns på main för månads- och årsfakturor; kvartalsfakturan höll main i granskning.
+
+Y-1, Z-2 och Å-1 har samma rot, och den sitter i S1:s egen mekanik. Planvalsgrinden nollar mobilbytet, och det bytet
+var just det tal sanitetsvakten i api/test-invoice.mjs prövade på main. När det försvann hade vakten inget att fälla,
+och fakturor som main höll i granskning gick `auto`. Varje förexisterande fel på dem blev då vanligare, ett nytt fynd
+per granskningsvarv. Att stryka nästa text hade inte stängt klassen. Bibelns regel 13 gör det: en ny prövning läggs
+ovanpå mains, aldrig i stället för den, så länge mains tal bär något den nya inte prövar.
+
+Fable kunde inte anropas (kvoten slut, 17 och 18 nov); underlaget står överst i «Nu». Valet mellan alternativen
+avgjordes genom mätning, inte bedömning. Genom mains och grenens handler gick 18 av 266 fall `auto` på grenen och till
+granskning på main, alla kombinerade mobilfakturor, och fyra av dem faktureras per månad. En regel på period (C2) hade
+alltså inte återgett mains mängd. Verkställt är C1:
+- Grinden bär det ogrindade bytet (beslut, belopp och mål) under en symbolnyckel, som följer med varje spridning och
+  aldrig serialiseras (OG-01).
+- Sanitetsvakten prövar det bytet på en planvalsfaktura, efter samma två finansiella grindar som main (mål lägre än
+  årskostnaden, positiv besparing). Fälls det går fakturan till granskning med mains skäl och texter.
+- Mätt efteråt: 266 av 266 fall har mains route, och de 238 `auto`-fallen är oförändrade mot f1f17f60 i varje fält.
+  I de 18 återförda fallen är svaret, raden, läget, mejlen och rummets kort identiska med mains (rummet bär därutöver
+  c1:s fält `ovissa`).
+- Den första finansiella grinden har tänder: utan den går sex fall till granskning som main släpper `auto`, bland dem
+  den trettonde linsens Q2, som nu är motprov i FV-A20.
+
+Strykningarna av P (Y-1) och talet per abonnemang (Z-2) står kvar: de gäller planvalsfakturor som också main släpper
+`auto`. Å-1 är därmed förexisterande och inte vanligare; det syns för kund i dag på main och byggs i en egen PR direkt
+efter S1:s merge (avgränsningen 22 okt). Å-2 [VAKT] är lagad i samma commit: renderingssonden läser stycket som bär
+«Kombinerad faktura.» ur DOM:en och kräver att det inte säger något mer på en planvalsfaktura.
 
 ## S2 · Kundsynlighetssvepet
 

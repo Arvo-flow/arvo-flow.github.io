@@ -12,7 +12,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { recommend, PLANVALS_MENING, BREDBAND_EJ_PRISSATT } from '../agents/recommender/recommend.js';
+import { recommend, PLANVALS_MENING, BREDBAND_EJ_PRISSATT, planvalsgrind, OGRINDAT_BYTE } from '../agents/recommender/recommend.js';
 import { BRANCHINDEX } from '../agents/recommender/branchindex.js';
 import { VALFRIA_KOLUMNER } from '../lib/invoice-store.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
@@ -97,6 +97,25 @@ describe('PG · planvalsgrinden i fakturavägen (grundarbeslut 2026-11-04)', () 
     const src = las('agents/recommender/recommend.js');
     assert.match(src, /const svar = planvalsgrind\(input, await recommendUtanValutagrind\(input, opts\)\);/);
     assert.equal((src.match(/\?\.bytesmalMotKategorigolv/g) ?? []).length, 1, 'deklarationen läses på ett ställe');
+  });
+});
+
+describe('OG · det ogrindade bytet bärs till sanitetsvakten men aldrig till kunden (Å-1)', () => {
+  test('OG-01 · grindens svar bär mains byte under en symbol som följer med en spridning och aldrig serialiseras', () => {
+    const input = { categorized: { category: 'mobil' }, invoice: {} };
+    const svar = { shouldSwitch: true, savingPerYear: 9600, suggestedAnnualCost: 32280,
+      recommendationType: 'switch', reasoning: 'Byt.' };
+    const r = planvalsgrind(input, svar);
+    assert.equal(r.shouldSwitch, false);
+    assert.deepEqual(r[OGRINDAT_BYTE], { shouldSwitch: true, savingPerYear: 9600, suggestedAnnualCost: 32280 });
+    // En spridning (fx-grinden, svara()) behåller talet; JSON (svaret, cachen, raden) bär det aldrig.
+    assert.deepEqual({ ...r }[OGRINDAT_BYTE], r[OGRINDAT_BYTE]);
+    const json = JSON.stringify(r);
+    for (const tal of ['9600', '32280']) assert.ok(!json.includes(tal), `svaret bär ${tal}: ${json}`);
+    // Motprov: utan deklarationen (bredband) passerar svaret orört och utan symbol.
+    const bb = planvalsgrind({ categorized: { category: 'bredband' }, invoice: {} }, svar);
+    assert.equal(bb, svar);
+    assert.equal(bb[OGRINDAT_BYTE], undefined);
   });
 });
 

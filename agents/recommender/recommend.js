@@ -1603,6 +1603,8 @@ export async function recommend(input, opts = {}) {
 // valutagrinden, och den slår till oavsett vad modellen svarade (FV-A1, PG-01).
 //
 // Poängen nollas också: den räknades mot kategorins golv, alltså mot samma planval (FV-A5).
+export const OGRINDAT_BYTE = Symbol('ogrindatByte');
+
 export function planvalsgrind(input, svar) {
   if (!svar || typeof svar !== 'object') return svar;
   if (BRANCHINDEX[input?.categorized?.category]?.bytesmalMotKategorigolv !== true) return svar;
@@ -1618,6 +1620,19 @@ export function planvalsgrind(input, svar) {
     healthScore: null,
     savingsBreakdown: null,
     planvalsgrind: 'bytesmålet vore kategorins billigaste produkt, och kundens produkt är inte bekräftad',
+    // MAINS PRÖVNING STÅR KVAR UNDER GRINDEN (femtonde blicken på S1, Å-1; bibelns regel 13: en ny prövning läggs
+    // ovanpå mains, aldrig i stället för den). Bytet grinden nollar är det tal sanitetsvakten i api/test-invoice.mjs
+    // prövade på main. Utan det gick 18 kombinerade mobilfakturor som main höll i granskning `auto`, och varje
+    // förexisterande fel på dem blev vanligare (Y-1, Z-2, Å-1). Talet bärs under en symbolnyckel: det följer med
+    // varje spridning av objektet men serialiseras aldrig (OG-01). Svaret till kunden byggs i dag ur en uttrycklig
+    // fältlista (api/test-invoice.mjs, `recommendation: {`), så ett vanligt fält hade inte heller nått svaret; symbolen
+    // är skyddet för cachen, raden och en framtida spridning, och genom handlern syns den inte (SB2 fällde bara OG-01).
+    // FV-A20 prövar routningen.
+    [OGRINDAT_BYTE]: {
+      shouldSwitch: svar.shouldSwitch === true,
+      savingPerYear: svar.savingPerYear ?? null,
+      suggestedAnnualCost: svar.suggestedAnnualCost ?? null,
+    },
     // Modellens egen prosa får inte erbjuda bytet grinden just stoppat: texten skrivs av koden (FV-A4).
     reasoning: bredband ? `${PLANVALS_MENING} ${BREDBAND_EJ_PRISSATT}` : PLANVALS_MENING,
   };

@@ -15,7 +15,7 @@ import { markKvantiteter } from '../lib/kvantitetsvittne.js';
 import { extractInvoice, routeExtraction, ExtractorError, CONFIDENCE_THRESHOLD } from '../agents/test-invoice/extract.js';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { categorize, CategorizerError } from '../agents/categorizer/categorize.js';
-import { recommend, RecommenderError, computeLikeForLikeSaasTarget } from '../agents/recommender/recommend.js';
+import { recommend, RecommenderError, computeLikeForLikeSaasTarget, OGRINDAT_BYTE } from '../agents/recommender/recommend.js';
 import { isAudited } from '../lib/revision-gate.js';
 import { grindPausad } from '../lib/grindpaus.js';
 import { farVisaFynd } from '../lib/fyndratt.js';
@@ -1984,9 +1984,19 @@ export default async function handler(req, res) {
     // En AI kontrollerar en annan AI. Fångar orimliga besparingssiffror som
     // passerat extraktorn och rekommenderaren men inte håller i verkligheten.
     // Fail-open: infrastrukturfel blockerar aldrig en korrekt analys.
-    if (recommendation.shouldSwitch && (extracted.annualCost ?? 0) > 0) {
+    //
+    // MAINS BESLUT PÅ EN PLANVALSFAKTURA (Å-1). Planvalsgrinden nollar mobilbytet, men vakten prövar då det byte
+    // main prövade: grindens ogrindade tal, efter samma två finansiella grindar som ovan. Fälls det går fakturan
+    // till granskning precis som på main, med samma skäl och samma texter. Grinden lägger alltså aldrig en faktura
+    // `auto` som main höll (FV-A20).
+    const _ogrindat = recommendation[OGRINDAT_BYTE];
+    const _ogrindatProvas = !recommendation.shouldSwitch && _ogrindat?.shouldSwitch === true
+      && !((_ogrindat.suggestedAnnualCost ?? 0) > 0 && _ogrindat.suggestedAnnualCost >= (extracted.annualCost ?? 0))
+      && ((_ogrindat.savingPerYear ?? 0) > 0);
+    const _provat = recommendation.shouldSwitch ? recommendation : (_ogrindatProvas ? _ogrindat : null);
+    if (_provat && (extracted.annualCost ?? 0) > 0) {
       const _savingPct = Math.round(
-        ((recommendation.savingPerYear ?? recommendation.estimatedAnnualSaving ?? 0)
+        ((_provat.savingPerYear ?? _provat.estimatedAnnualSaving ?? 0)
           / extracted.annualCost) * 100
       );
       const sanity = await verifySanity({
