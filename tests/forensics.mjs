@@ -393,3 +393,34 @@ describe('FO · Prosan lovar inget vi inte gör', () => {
       'skälet ska stå kvar i koden — annars återinför nästa läsare löftet i god tro');
   });
 });
+
+// ── FO-13/FO-14 · BARA EN ENGÅNGSAVGIFT ÄR ETT ENGÅNGSBELOPP (Å-1, femtonde blicken på S1) ──────────
+// Kortet sa «1 347 kr · engångsbelopp» om en delbetalning som löper i 36 månader, eftersom varje rad
+// som inte var löpande fick ordet. Raden typas `hardware` av extraktionen.
+describe('FO · beloppets enhet följer radens typ', () => {
+  const HW = { type: 'hardware', description: 'Delbetalning iPhone 15 Pro, månad 12 av 36', amount: 1347 };
+
+  test('FO-13 · en avbetalning typad hardware kallas inte engångsbelopp, vid analysen', () => {
+    const f = detectForensicFindings([HW], { billingPeriod: 'quarterly' })[0];
+    assert.equal(f.type, 'hardware_financing');
+    assert.equal(f.annualImpact, null);
+    assert.equal(f.metricText, '1 347 kr · på fakturan');
+    assert.equal(f.engangsbelopp, false);
+    // Motprov: en engångsavgift bär fortfarande ordet.
+    const e = detectForensicFindings([{ type: 'one_time_fee', description: 'Ny avgift — startavgift', amount: 4500 }],
+      { billingPeriod: 'monthly' })[0];
+    assert.match(e.metricText, /engångsbelopp$/);
+    assert.equal(e.engangsbelopp, true);
+  });
+
+  test('FO-14 · samma sak vid läsning i rummet', () => {
+    const lagrat = { type: 'hardware_financing', severity: 'medium', title: 'Hårdvaruavbetalning på en löpande rad',
+      lineDescription: HW.description, monthly: 1347, annualImpact: null, metricText: '1 347 kr · engångsbelopp' };
+    const nytt = refineFinding(lagrat, { billingPeriod: 'quarterly', lineItems: [HW] });
+    assert.equal(nytt.metricText, '1 347 kr · på fakturan');
+    assert.equal(nytt.engangsbelopp, false);
+    const rorlig = refineFinding({ ...lagrat, type: 'junk_fee', lineDescription: 'Pappersfakturaavgift' },
+      { billingPeriod: 'monthly', lineItems: [{ type: 'variable_usage', description: 'Pappersfakturaavgift', amount: 49 }] });
+    assert.match(rorlig.metricText, /· på fakturan$/, 'en rörlig avgift är inte heller ett engångsbelopp');
+  });
+});

@@ -1399,6 +1399,7 @@ export default async function handler(req, res) {
             recurringAmount:        extracted.recurringAmount,
             variableCharges:        extracted.variableCharges,
             oneTimeFees:            extracted.oneTimeFees,
+            hardwareCharges:        extracted.hardwareCharges ?? 0,
             date:                   extracted.date,
             recurring:              extracted.recurring,
             seatCount:              extracted.seatCount ?? null,
@@ -1526,6 +1527,7 @@ export default async function handler(req, res) {
           recurringAmount: extracted.recurringAmount,
           variableCharges: extracted.variableCharges,
           oneTimeFees:     extracted.oneTimeFees,
+          hardwareCharges: extracted.hardwareCharges ?? 0,
           recurring:       extracted.recurring,
           confidenceScore: extracted.confidenceScore,
           lineItems:       extracted.lineItems,
@@ -1710,6 +1712,7 @@ export default async function handler(req, res) {
           recurringAmount:      extracted.recurringAmount,
           variableCharges:      extracted.variableCharges,
           oneTimeFees:          extracted.oneTimeFees,
+          hardwareCharges:      extracted.hardwareCharges ?? 0,
           annualCost:           elRec.currentAnnualGross,
           date:                 extracted.date,
           description:          extracted.description,
@@ -2158,6 +2161,8 @@ export default async function handler(req, res) {
     const hardwareAdjustment = computeHardwareAdjustment({
       lineItems:           extracted.lineItems,
       annualCost:          extracted.annualCost,
+      // Kvoten annualCost / projectedRecurringAmount är den faktor årskostnaden räknades med (X-1).
+      projectedRecurringAmount: extracted.projectedRecurringAmount,
       suggestedAnnualCost: _responseSuggested,
       shouldSwitch:        recommendation.shouldSwitch === true,
     });
@@ -2288,6 +2293,8 @@ export default async function handler(req, res) {
         recurringAmount: extracted.recurringAmount,
         variableCharges: extracted.variableCharges,
         oneTimeFees:     extracted.oneTimeFees,
+        // Hårdvarudelen av oneTimeFees: vyn säger «hårdvara» om den, aldrig «engångskostnader» (Å-1).
+        hardwareCharges: extracted.hardwareCharges ?? 0,
         annualCost:      extracted.annualCost,
         date:            extracted.date,
         description:     extracted.description,

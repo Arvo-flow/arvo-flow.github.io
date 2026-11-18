@@ -25,19 +25,24 @@ startar om läser blocket först.
   så C2 återger inte mains mängd. *Verkställt:* C1 (se «Regel 13 tillämpad 18 nov» under S1): 266 av 266 fall har
   mains route, och de 238 `auto`-fallen är oförändrade mot f1f17f60. *Frågan till Fable:* håller C1 som sömdesign i
   api/test-invoice.mjs, eller ska mains prövning bo någon annanstans?
-- **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** «S1: mains andra grind räknar med bredbandsdelen (Ä-1)». Den sjuttonde linsen
-  blockerade 37997d49 (`ops/GRANSKNING-s1-sjuttonde.md`), S1:s tionde blockering i rad, på ett tredje steg i mains väg
-  som återgivningen saknade.
-- **Lins igång:** nej. Den artonde linsen gav MERGAS på b13d10d8 (`ops/GRANSKNING-s1-artonde.md`), med tre [VAKT]
-  (V-A, V-B, V-C) som lagas framåt och står i `ops/ARBETSORDER-VAG1.md`. PR:en mot main öppnas med auto-merge.
+- **S1 är mergad:** PR #89, merge-commit c355e042 (18 nov). Grinden: fyra gröna kontroller på 9f168c51 efter att
+  Sviten först var röd i CI på FV-A20 (instrumentet gick ut på nätet för valutakursen; lagat i PR:en, [VAKT]).
+  `npm run deploy` publicerade frontenden (gh-pages 768c3ec9), och Vercels produktionsdriftsättning av c355e042 är
+  READY. Live-verifieringen av mobilbeskedet hör till S8.
+- **Steg:** hårdvaruavbetalningen, en egen PR efter S1 (X-1:s rot och Å-1, båda förexisterande och synliga för kund
+  på main). «Ni betalar idag» drar bara av en avbetalning som årskostnaden bar, i fakturans period; fyndkortet, vyns
+  summa och rummets uppdelning kallar inte en hårdvarurad engångsbelopp; rummets dom och räknare skriver inget streck
+  när fyndet saknar årstal; meningen om en övertagen skuld står bara där rekommendationen räknade med skulden.
+- **Senaste mekanikcommit på grenen:** «Hårdvaruavbetalningen: dra bara av det årskostnaden bar, och kalla den inte
+  engångsbelopp (X-1, Å-1)».
+- **Lins igång:** ja, första blicken på hårdvaru-PR:en; domen skrivs till `ops/GRANSKNING-hardvara-forsta.md`.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
-- **Nästa handling:** när domen kommit: MERGAS → PR:en mot main med auto-merge. Efter mergen, i den här ordningen:
-  hårdvaruavbetalningen i en PR: justeringen av «Ni betalar idag» (X-1:s förexisterande rot) och fyndkortets
-  «engångsbelopp» med rummets «Vi fångade – kr/år» (Å-1), båda förexisterande och synliga för kund i dag; den
-  artonde linsens tre [VAKT] (V-A, V-B, V-C) i en PR; S6 med N-5 och ett läge per fakturadel (Fables
+- **Nästa handling:** när domen kommit: MERGAS → PR mot main; mergas av byggaren när Grindens fyra kontroller är
+  gröna (auto-merge är avstängt i repots inställningar, avläst 18 nov). Därefter, i den här ordningen: den artonde
+  linsens tre [VAKT] (V-A, V-B, V-C) i en PR; fakturavyns granskningsläge för `sanity_check_failed` (femtonde
+  blicken, förexisterande, synligt för kund); S6 med N-5 och ett läge per fakturadel (Fables
   beslut 13 nov, punkt 3 och 5); N-4 som enradig PR; S4; F1.2
   (avtalsvarslet som bokförs utan att Resends fel läses); rummet och dörren enligt Fables plan, punkt 1–4.
 
@@ -52,7 +57,7 @@ En PR i taget, i den här ordningen. Varje PR bär ett enda påstående.
 
 | Steg | PR:ens påstående | Rör | Läge |
 |---|---|---|---|
-| S1 | c1: en mobilfaktura får inget byte, inget avstånd och ingen poäng i någon yta förrän abonnemanget är bekräftat | lib, api, agents, src | byggs om enligt ordern nedan |
+| S1 | c1: en mobilfaktura får inget byte, inget avstånd och ingen poäng i någon yta förrän abonnemanget är bekräftat | lib, api, agents, src | mergad 18 nov (PR #89) |
 | S2 | Kundsynlighetssvepet: varje loggat förexisterande [KUND] läses av mot dagens ytor. Ingen PR | inga filer utom planen | medan S1:s lins rullar |
 | S3 | Fakturavyns rubrik följer resultatets läge (Q-7) | src | byggd i S1: S1 gjorde resultat utan byte vanligare (stoppregeln) |
 | S4 | Rummets bytesrad: «X % mer» räknas mot jämförelsepriset (C1-4), och golvet bär sitt analysdatum (K-5) | lib, src | efter S6 |
@@ -614,6 +619,9 @@ Det här kan inte göras härifrån. Inget av det stoppar bygget. G5 och G7 kan 
 3. **`CRON_SECRET` som GitHub-hemlighet**, om den fortfarande saknas. Läses av i S8.
 4. **gh-pages-kopian**, om S8 visar att den är nåbar och inaktuell.
 5. **Bjuda in de fem kunderna** och bevilja premium (`bevilja-premium`) när grinden är grön.
+6. **«Allow auto-merge» i repots inställningar** (Settings → General → Pull Requests), om PR:erna ska mergas av GitHub
+   när Grinden är grön. Avläst 18 nov: GitHub nekade auto-merge på PR #89 med «Auto-merge is not enabled for this
+   repository». Stoppar inget: byggaren mergar själv när Grindens fyra kontroller är gröna (CTO-mandatet, punkt 3).
 
 ## Till arkitekten
 

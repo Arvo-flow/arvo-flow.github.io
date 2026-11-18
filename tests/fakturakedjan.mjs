@@ -27,7 +27,7 @@ import { writeFileSync, mkdtempSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MOBILFALL, MOTPROV, FYNDFALL, FYNDRADER, KOMBIFALL, RESTFALL, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
+import { MOBILFALL, MOTPROV, FYNDFALL, FYNDRADER, KOMBIFALL, RESTFALL, HARDVARUFALL, it8821, BREDBANDSRAD } from './fakturakedjan/fall.mjs';
 import { computeInvoiceMetrics } from '../lib/invoice-metrics.js';
 import { PLANVAL_BESKED } from '../lib/lagesregister.js';
 import { PLANVALS_MENING, BREDBAND_EJ_PRISSATT } from '../agents/recommender/recommend.js';
@@ -61,7 +61,7 @@ function korDel(fall, dir, nr) {
 async function korAlla() {
   if (UT) return UT;
   const dir = mkdtempSync(join(tmpdir(), 'fakturakedjan-'));
-  const alla = [...MOBILFALL, ...MOTPROV, ...FYNDFALL, ...KOMBIFALL, ...RESTFALL];
+  const alla = [...MOBILFALL, ...MOTPROV, ...FYNDFALL, ...KOMBIFALL, ...RESTFALL, ...HARDVARUFALL];
   const delar = Array.from({ length: DELAR }, (_, i) => alla.filter((_, j) => j % DELAR === i));
   const svar = await Promise.all(delar.map((d, i) => korDel(d, dir, i)));
   UT = new Map(svar.flat().map((u) => [u.id, u]));
@@ -531,6 +531,31 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
       assert.equal(u.rek.shouldSwitch, false, `${id}: byte`);
       assert.equal(u.rad?.should_switch, false, `${id}: lagrat byte`);
     }
+  });
+
+  // ── FV-A21 · HÅRDVARAN GENOM HELA HANDLERN (X-1, Å-1) ──────────────────────────────────────────────────
+  // «Ni betalar idag» är årskostnaden när avbetalningen är typad `hardware` (den ingick aldrig), avbetalningens
+  // årsbelopp räknas i fakturans period, och fyndkortet kallar inte avbetalningen ett engångsbelopp. Motprovet:
+  // typad som abonnemang ingår den i årskostnaden och dras av.
+  test('FV-A21 · hårdvarujusteringen drar bara av det årskostnaden bar, i fakturans period', () => {
+    const fel = brott(['rest·bb+mob+hw·ja', 'rest·bb+mob+hw·nej', 'hw·kvartal·ja', 'hw·kvartal·nej', 'hw·abonnemang·ja'], (u) => {
+      if (u.route !== 'auto' || !u.hardvara) return `route ${u.route}, justering ${JSON.stringify(u.hardvara)}`;
+      const { adjAnnualCost, hwAnnualCost, skuldenIArskostnaden } = u.hardvara;
+      if (u.id === 'hw·abonnemang·ja') {
+        if (adjAnnualCost !== u.arskostnad - 449 * 12) return `«Ni betalar idag» ${adjAnnualCost} av ${u.arskostnad}`;
+        return skuldenIArskostnaden === true ? null : 'skulden ingick i årskostnaden';
+      }
+      const kvartal = u.id.startsWith('hw·kvartal');
+      if (adjAnnualCost !== u.arskostnad) return `«Ni betalar idag» ${adjAnnualCost}, årskostnaden ${u.arskostnad}`;
+      if (hwAnnualCost !== (kvartal ? 1347 * 4 : 449 * 12)) return `avbetalningens årsbelopp ${hwAnnualCost}`;
+      if (skuldenIArskostnaden !== false) return 'skulden ingick inte i årskostnaden';
+      if (u.hardwareCharges !== (kvartal ? 1347 : 449)) return `hardwareCharges ${u.hardwareCharges}`;
+      if (u.fynd?.typ !== 'hardware_financing') return `fyndet är ${u.fynd?.typ}`;
+      const belopp = kvartal ? '1\u00a0347' : '449';
+      if (u.fynd.metricText !== `${belopp} kr · på fakturan`) return `fyndets belopp: ${u.fynd.metricText}`;
+      return null;
+    });
+    assert.deepEqual(fel, []);
   });
 
   test('FV-M1 · MOTPROV: bredbandsfakturan och IT-8821 behåller sina byten med samma tal', () => {

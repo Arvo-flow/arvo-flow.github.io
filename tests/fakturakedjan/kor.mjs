@@ -210,10 +210,16 @@ async function korFall(fall) {
     // Resten är struken (X-1); FV-A16 och FV-A17 kräver att svaret inte bär den. Talen står kvar för instrumentet.
     restAnnual: body?.restAnnual ?? null,
     visadArskostnad: body?.hardwareAdjustment?.adjAnnualCost ?? body?.extracted?.annualCost ?? null,
+    arskostnad: body?.extracted?.annualCost ?? null,
+    hardwareCharges: body?.extracted?.hardwareCharges ?? null,
+    hardvara: body?.hardwareAdjustment ? { adjAnnualCost: body.hardwareAdjustment.adjAnnualCost,
+      hwAnnualCost: body.hardwareAdjustment.hwAnnualCost, skuldenIArskostnaden: body.hardwareAdjustment.skuldenIArskostnaden,
+      hwTotalRemaining: body.hardwareAdjustment.hwTotalRemaining } : null,
     primarManad: body?.extracted?.primaryComponentMonthly ?? null,
     fynd: body?.leadFinding ? { typ: body.leadFinding.type ?? null, titel: body.leadFinding.title ?? null,
       text: body.leadFinding.text ?? null, skal: body.leadFinding.fyndSkal ?? null,
-      belopp: body.leadFinding.annualImpact ?? body.leadFinding.amount ?? null } : null,
+      belopp: body.leadFinding.annualImpact ?? body.leadFinding.amount ?? null,
+      metricText: body.leadFinding.metricText ?? null } : null,
     lage: body?.lage ?? null,
     rad: rad && {
       route: rad.route, category: rad.category, should_switch: rad.should_switch,

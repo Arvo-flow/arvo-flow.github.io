@@ -1921,7 +1921,11 @@ const TestaFaktura = () => {
                                 <>
                                   {formatNum(adjAnnualCost)} → {formatNum(result.recommendation.suggestedAnnualCost)} kr/år hos <strong>{result.recommendation.suggestedSupplier}</strong>
                                   {' '}· Arvos besparingsarvode {formatKr(adjArvoFee)} (20 %)
-                                  {hasHwAdj && <><br /><small style={{ opacity: 0.85 }}>Avser abonnemang och licenser. Om {result.recommendation.suggestedSupplier} absorberar er hårdvaruskuld ({formatNum(_hwTotalRemain)} kr) uppgår nettobesparing till {krPerAr(result.recommendation.netSaving)}.</small></>}
+                                  {/* Rekommendationens nettobesparing är talet för en övertagen skuld bara när avbetalningen
+                                      ingick i årskostnaden (skuldenIArskostnaden, X-1). Annars jämförde den redan utan skulden. */}
+                                  {hasHwAdj && <><br /><small style={{ opacity: 0.85 }}>Avser abonnemang och licenser.{_hwAdj.skuldenIArskostnaden
+                                    ? <> Om {result.recommendation.suggestedSupplier} absorberar er hårdvaruskuld ({formatNum(_hwTotalRemain)} kr) uppgår nettobesparing till {krPerAr(result.recommendation.netSaving)}.</>
+                                    : <> Hårdvaruskulden ({formatNum(_hwTotalRemain)} kr) ingår inte i jämförelsen.</>}</small></>}
                                 </>
                               )
                               : (
@@ -2116,7 +2120,12 @@ const TestaFaktura = () => {
                 <dd>
                   {formatKr(result.extracted.amount)}
                   {result.extracted.oneTimeFees > 0 && (
-                    <small>Inkl. {formatKr(result.extracted.oneTimeFees)} {result.extracted.elSkatterKr > 0 ? 'lagstadgade avgifter' : 'engångskostnader'} — ingår ej i årsberäkningen ovan.</small>
+                    // Hårdvaran räknas i samma summa men är inte alltid ett engångsbelopp: en avbetalning
+                    // kan löpa i 36 månader (Å-1). Summan bär därför sina delars namn, och vyn räknar inget.
+                    <small>Inkl. {formatKr(result.extracted.oneTimeFees)} {result.extracted.elSkatterKr > 0 ? 'lagstadgade avgifter'
+                      : !(result.extracted.hardwareCharges > 0) ? 'engångskostnader'
+                      : result.extracted.hardwareCharges === result.extracted.oneTimeFees ? 'hårdvara'
+                      : 'engångskostnader och hårdvara'} — ingår ej i årsberäkningen ovan.</small>
                   )}
                 </dd>
               </div>
@@ -2159,7 +2168,7 @@ const TestaFaktura = () => {
                       <p style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
                         <strong>Break-even om skulden löses kontant:</strong>{' '}
                         {formatNum(_hwTotalRemain)} kr ÷ {formatNum(adjGrossSaving)} kr/år = <strong>{String(_hwAdj.breakEvenYears).replace('.', ',')} år</strong>{' '}—{' '}
-                        fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering. Om ja är besparingen {krPerAr(result.recommendation.netSaving)} netto från dag ett.
+                        fråga {result.recommendation?.suggestedSupplier ?? 'den nya leverantören'} om de kan absorbera skulden vid avtalssignering.{_hwAdj.skuldenIArskostnaden ? <> Om ja är besparingen {krPerAr(result.recommendation.netSaving)} netto från dag ett.</> : null}
                       </p>
                     )}
                   </CreditAlert>

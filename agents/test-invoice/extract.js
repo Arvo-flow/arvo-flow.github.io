@@ -881,6 +881,9 @@ export function aggregateLineItems(rawInput, tokens) {
   const recurringAmount = sum('recurring_subscription');
   const variableCharges = sum('variable_usage');
   const oneTimeFees     = sum('one_time_fee') + sum('hardware');
+  // Hårdvarudelen av `oneTimeFees`, så att fakturavyn kan säga vad summan består av. En rad typad
+  // `hardware` kan vara en avbetalning som löper i 36 månader och är då inget engångsbelopp (Å-1).
+  const hardwareCharges = sum('hardware');
 
   // Beräkna faktureringsperiod från datum i första hand — kan inte luras av fotnotstext.
   // AI-värdet används bara som fallback när inga datum finns på fakturan.
@@ -1028,6 +1031,7 @@ export function aggregateLineItems(rawInput, tokens) {
     projectedRecurringAmount: projected,
     variableCharges,
     oneTimeFees,
+    hardwareCharges,
     annualCost:               projected * multiplier,
     recurring:                recurringAmount > 0,
     projektionskrav,

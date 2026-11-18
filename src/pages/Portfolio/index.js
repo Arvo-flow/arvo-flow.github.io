@@ -767,6 +767,10 @@ export default function Portfolio() {
   const jamforde = counts.prissatta > 0
     ? <>Vi jämförde <b>{counts.prissatta} {plural(counts.prissatta, 'faktura', 'fakturor')}</b> mot verifierat publikt listpris. </>
     : null;
+  // Ett fynd utan årstal (en engångsavgift, en hårdvarurad, en period vi inte kunde bestämma) har inget
+  // «kr/år». Rummet skrev «Vi fångade – kr/år» med ett streck (Å-1). Då säger domen att en kostnad fångades
+  // och pekar på kortet, som bär radens belopp med dess enhet (RS-Å1 i tests/rumsredovisning.mjs).
+  const fyndArstal = Number.isFinite(roomFinding?.annualImpact) && roomFinding.annualImpact > 0;
   const fyndKr = <b>{fmtNum(roomFinding?.annualImpact)} kr/år</b>;
   // ══ DOMTEXT — EN TEXT PER LÄGE, ALDRIG EN GREN PÅ RÅDATA (Lägesregistret 2026-09-23) ════════
   // Läget kommer från API:t (`rum.lage`, lib/lagesregister.js DOMLAGEN). Här stod två kapslade
@@ -830,8 +834,13 @@ export default function Portfolio() {
     },
     fynd: {
       h1: 'Ett par drag väntar på er.',
-      head: <>Vi fångade <em>{fmtNum(roomFinding?.annualImpact)} kr/år</em> värt att åtgärda på era fakturor.</>,
-      work: <>I underlaget vi kunde läsa fångade vi en kostnad värd {fyndKr} — se vad domen bygger på i
+      head: fyndArstal
+        ? <>Vi fångade <em>{fmtNum(roomFinding?.annualImpact)} kr/år</em> värt att åtgärda på era fakturor.</>
+        : <>Vi fångade <em>en kostnad</em> värd att åtgärda på era fakturor.</>,
+      work: fyndArstal
+        ? <>I underlaget vi kunde läsa fångade vi en kostnad värd {fyndKr} — se vad domen bygger på i
+            fyndet ovan. Den säger ingenting om era övriga priser.</>
+        : <>I underlaget vi kunde läsa fångade vi en kostnad — beloppet och vad domen bygger på står i
             fyndet ovan. Den säger ingenting om era övriga priser.</>,
     },
   };
@@ -1090,7 +1099,9 @@ export default function Portfolio() {
                   {hasSwitchAction
                     ? <>{fmtNum(totalSaving)} kr<small>per år</small></>
                     : acting
-                      ? <>{fmtNum(roomFinding.annualImpact)} kr<small>per år</small></>
+                      ? fyndArstal
+                        ? <>{fmtNum(roomFinding.annualImpact)} kr<small>per år</small></>
+                        : <>{fmtNum(roomFinding.monthly)} kr<small>på en faktura</small></>
                       : <>{counts.fakturor}<small>{plural(counts.fakturor, 'faktura', 'fakturor')}</small></>}
                 </div>
                 <div className="tally-sub">
@@ -1584,13 +1595,17 @@ export default function Portfolio() {
                                   {u.engangs.map((r, i) => (
                                     <div className="u-rad" key={`e${i}`}>
                                       <span className="u-txt">{r.beskrivning}</span>
-                                      <span className="u-spec">engångs eller rörlig</span>
+                                      <span className="u-spec">{r.spec ?? 'engångs eller rörlig'}</span>
                                       <span className="u-bel">{fmtNum(r.belopp)} kr</span>
                                     </div>
                                   ))}
+                                  {/* En hårdvaruavbetalning återkommer varje period; meningen om poster som inte
+                                      återkommer vore falsk om den (Å-1). */}
                                   <p className="u-not">
-                                    Poster som inte återkommer varje {per} räknas aldrig in i årskostnaden —
-                                    att annualisera dem hade blåst upp både er kostnad och vår besparing.
+                                    {u.harHardvara
+                                      ? <>Poster som inte är löpande abonnemang räknas aldrig in i årskostnaden.</>
+                                      : <>Poster som inte återkommer varje {per} räknas aldrig in i årskostnaden —
+                                        att annualisera dem hade blåst upp både er kostnad och vår besparing.</>}
                                   </p>
                                 </div>
                               )}

@@ -393,6 +393,22 @@ Var och en byggs i en egen PR, med egen granskning.
     identisk på main (`git show origin/main:src/pages/TestaFaktura/index.js`), och efter lagningen av Å-1 når den samma
     fakturor som på main. Syns för kund i dag; egen PR, efter hårdvaruavbetalningen.
 
+- **Hårdvaruavbetalningen, byggd 18 nov efter S1 (X-1:s rot och Å-1, förexisterande och synliga för kund på main):**
+  · «Ni betalar idag» drog avbetalningen (× 12) från en årskostnad som aldrig bar den, när extraktionen typat raden
+    `hardware`; och på en kvartalsfaktura blev avbetalningens årsbelopp tre gånger för stort. Nu dras bara en rad som
+    årskostnaden bar, med årskostnadens egen faktor (lib/hardware-installments.js, HJ-01..05, FV-A21).
+  · «engångsbelopp» (fyndkortet), «engångskostnader» (fakturavyn) och «engångs eller rörlig» (rummets uppdelning) om en
+    avbetalning: nu bara om en engångsavgift; en hårdvarurad heter «på fakturan» respektive «hårdvara» (FO-13, FO-14,
+    FR-10). Meningen sökt i kodbasen, inte funktionen (regel 8).
+  · Rummet skrev «Vi fångade – kr/år» när fyndet saknar årstal; nu «Vi fångade en kostnad» och räknaren visar radens
+    belopp «på en faktura».
+  · Följdfynd under bygget: fakturavyns «Om X absorberar er hårdvaruskuld uppgår nettobesparing till N» och break-even-
+    styckets «Om ja är besparingen N» citerade rekommendationens nettobesparing som talet för en övertagen skuld. Det
+    stämmer bara när avbetalningen ingick i årskostnaden; annars jämförde rekommendationen redan utan skulden, och
+    med lagningen hade meningen upprepat samma tal som rubriken. Meningen står nu bara då (`skuldenIArskostnaden`).
+  · Renderingssond `scripts/screenshot-hardvara.mjs` (390 och 1600 px), motprov mot PR #89:s bygge och handler: varje
+    lagad kontroll röd där, motprovsfallen gröna i båda.
+
 - **Ur den sextonde blickens dom på S1 (`ops/GRANSKNING-s1-sextonde.md`):**
   · Ö-1 [KUND], infört av a3a6e83f (blockerade): valutagrindens spridning kopierade det ogrindade bytet, så en
     mobilfaktura i EUR eller USD med en kurs som inte är färsk gick till granskning där main analyserar den. Lagat 18 nov:

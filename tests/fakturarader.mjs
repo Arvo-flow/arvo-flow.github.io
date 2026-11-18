@@ -127,4 +127,22 @@ describe('FAKTURARADER · uppdelningen måste summera till rubriken', () => {
       assert.ok(periodEtikettPlural(p).length > 0, `${p} saknar pluraletikett`);
     }
   });
+
+  test('FR-10 · en hårdvarurad står utanför årstakten som hårdvara, inte som engångs eller rörlig (Å-1)', () => {
+    const u = byggUppdelning([
+      rad({ description: 'Jobbmobil M (5 st)', quantity: 5, unitPrice: 349, amount: 1745 }),
+      { type: 'hardware', description: 'Delbetalning iPhone 15 Pro, månad 12 av 36', amount: 449 },
+      { type: 'one_time_fee', description: 'Uppläggningsavgift', amount: 450 },
+    ], { annualCost: 20940, billingPeriod: 'monthly' });
+    assert.ok(u);
+    assert.equal(u.arstakt, 20940);
+    assert.deepEqual(u.engangs.map((r) => r.spec), ['hårdvara', 'engångs eller rörlig']);
+    assert.equal(u.harHardvara, true);
+    // Motprov: utan hårdvarurad står den gamla meningen kvar.
+    const utan = byggUppdelning([
+      rad({ description: 'Licenser', quantity: 10, unitPrice: 100, amount: 1000 }),
+      { type: 'one_time_fee', description: 'Uppläggningsavgift', amount: 450 },
+    ], { annualCost: 12000, billingPeriod: 'monthly' });
+    assert.equal(utan.harHardvara, false);
+  });
 });
