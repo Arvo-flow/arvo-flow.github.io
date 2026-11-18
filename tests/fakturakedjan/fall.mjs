@@ -181,7 +181,31 @@ for (const modell of ['ja', 'nej']) {
       amount: 4035 }, { ...TILLAGG.pbx, amount: 597 }] });
   q2.extraktion.billingPeriod = 'quarterly';
   RESTFALL.push(q2);
+  // Den sextonde linsens Ö-1: en mobilfaktura i EUR eller USD, med en kurs som inte är färsk. Valutagrinden river
+  // bytet, och main analyserar fakturan som vanligt (`auto`). Motprovet med färsk kurs går till granskning på båda,
+  // för det ogrindade bytet är 72 % av årskostnaden (FV-A20).
+  for (const [kurs, fxKurs] of [['ingen', { rate: 10.5, source: 'fallback', date: null }],
+    ['gammal', { rate: 10.5, source: 'riksbank', date: '2026-10-01', fetchedAt: '2026-10-01T06:00:00Z' }],
+    ['farsk', null]]) {
+    for (const [namn, rader, blandad, hastighet] of [
+      ['ren', [{ type: 'recurring_subscription', description: 'Mobile subscription Jobbmobil (10 st)', amount: 900 }], false, null],
+      ['komb', [{ type: 'recurring_subscription', description: 'Mobile subscription Jobbmobil (10 st)', amount: 900 },
+        { ...BB, description: 'Bredband Fiber 1000/1000', amount: 60 }], true, 1000]]) {
+      const f = fall({ id: `valuta·EUR·${kurs}·${namn}·${modell}`, kategori: 'mobil', modell, antalAvlast: true, blandad, hastighet, rader });
+      f.extraktion.currency = 'EUR';
+      if (fxKurs) f.fxKurs = fxKurs;
+      RESTFALL.push(f);
+    }
+  }
   const eur = kombi(`rest·bb+mob·eur·${modell}`, { modell, rader: [{ ...BB, amount: 61 }, { ...MOB, amount: 24 }] });
+  // Den sextonde linsens E·neg (Ö-2): ingen primärdel (bara bredband och molnväxel), modellens ja med en negativ
+  // besparing. Main släpper den `auto`; mains andra finansiella grind (positiv besparing) håller vakten borta (FV-A20).
+  if (modell === 'ja') {
+    const neg = fall({ id: 'rest·neg·ja', kategori: 'mobil', modell, antalAvlast: true, blandad: true, hastighet: 1000,
+      beskrivning: 'Mobil och bredband oktober 2026', rader: [{ ...BB, amount: 699 }, TILLAGG.pbx] });
+    neg.modellen = { ...neg.modellen, savingPerYear: -1200, suggestedAnnualCost: null };
+    RESTFALL.push(neg);
+  }
   eur.extraktion.currency = 'EUR';
   RESTFALL.push(eur);
 }

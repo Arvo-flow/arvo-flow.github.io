@@ -26,10 +26,10 @@ startar om läser blocket först.
   mains route, och de 238 `auto`-fallen är oförändrade mot f1f17f60. *Frågan till Fable:* håller C1 som sömdesign i
   api/test-invoice.mjs, eller ska mains prövning bo någon annanstans?
 - **Steg:** S1 (c1), som är steg 4 i sekvensen i `ops/ARBETSORDER-LANSERING.md`. S3 (Q-7) är byggd i samma PR.
-- **Senaste mekanikcommit på grenen:** «S1: planvalsgrinden släpper inget som mains sanitetsvakt håller (Å-1, regel 13)».
-  Den femtonde linsen blockerade f1f17f60 (`ops/GRANSKNING-s1-femtonde.md`), S1:s åttonde blockering i rad.
-- **Lins igång:** ja. Sextonde linsen på den commiten startas 18 nov; domen skrivs till
-  `ops/GRANSKNING-s1-sextonde.md`. Säkerhetsnät: 60 minuter.
+- **Senaste mekanikcommit på grenen:** «S1: valutagrinden river också mains byte (Ö-1)». Den sextonde linsen
+  blockerade a3a6e83f (`ops/GRANSKNING-s1-sextonde.md`), S1:s nionde blockering i rad, på ett fel i lagningen själv.
+- **Lins igång:** ja. Sjuttonde linsen på den commiten startas 18 nov; domen skrivs till
+  `ops/GRANSKNING-s1-sjuttonde.md`. Säkerhetsnät: 60 minuter.
 - **Fable:** tre analyser av gränssnittet, frontend och kontoret står i `ops/ANALYS-GRANSSNITT-FABLE.md`, med Opus
   avläsning av fynden. De förs in i stegen efter S1.
 - **Byggare igång:** nej.
@@ -440,7 +440,17 @@ alltså inte återgett mains mängd. Verkställt är C1:
   den trettonde linsens Q2, som nu är motprov i FV-A20.
 
 Strykningarna av P (Y-1) och talet per abonnemang (Z-2) står kvar: de gäller planvalsfakturor som också main släpper
-`auto`. Å-1 är därmed förexisterande och inte vanligare; det syns för kund i dag på main och byggs i en egen PR direkt
+`auto`.
+
+**Den sextonde blicken (18 nov) fällde lagningen på Ö-1**, ett fel i återgivningen av mains väg. Mellan `recommend()`
+och sanitetsvakten ändrar main bytet på tre ställen, och lagningen återgav två: de två finansiella grindarna, men inte
+valutagrinden. Valutagrinden river bytet när kursen inte är färsk, men dess spridning kopierade symbolen, så vakten
+prövade ett byte som main aldrig prövar. En mobilfaktura i EUR eller USD med en kurs som inte är färsk gick då till
+granskning där main analyserar den (16 av linsens 44 fall, och 3 av 4 med en sex dygn gammal kurs). Lagat: valutagrinden
+river också det ogrindade bytet. Mätt efteråt med linsens instrument: 472 av 472 fall (linsens 266, 44, 150, 4 och 8)
+har mains route, och `auto`-fallen är oförändrade mot a3a6e83f. Ö-2 [VAKT]: mains andra finansiella grind har nu ett
+fall i FV-A20 (en negativ besparing, linsens E·neg). Läxan står i regel 13 redan: återge mains väg steg för steg, och
+räkna stegen innan återgivningen kallas trogen; här var de tre. Å-1 är därmed förexisterande och inte vanligare; det syns för kund i dag på main och byggs i en egen PR direkt
 efter S1:s merge (avgränsningen 22 okt). Å-2 [VAKT] är lagad i samma commit: renderingssonden läser stycket som bär
 «Kombinerad faktura.» ur DOM:en och kräver att det inte säger något mer på en planvalsfaktura.
 

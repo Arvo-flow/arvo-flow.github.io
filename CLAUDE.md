@@ -1800,8 +1800,9 @@ signera", aldrig som ett verkställt löfte.)
    > Rummet visar inget lagrat mobilbyte (MS-08, MS-13), fakturavyn och mejlen säger att produkten är okänd,
    > aldrig att ett pris saknas (FV-A3, FV-A7, FV-A9), och ett rum med en mobilrad sätter ingen samlad poäng
    > (MS-09, RM-R3). Grinden läggs ovanpå mains sanitetsvakt, aldrig i stället för den (regel 13, 18 nov): vakten
-   > prövar det byte grinden nollar, så en mobilfaktura som main höll i granskning går dit också på grenen (FV-A20,
-   > OG-01). Utan det gick 18 av 266 prövade fakturor `auto`, och tre granskningsvarv i rad fann ett förexisterande fel
+   > prövar det byte grinden nollar, efter samma tre steg som på main (valutagrinden och de två finansiella grindarna;
+   > valutagrinden glömdes först, Ö-1), så en mobilfaktura som main höll i granskning går dit också på grenen, och
+   > ingen annan (FV-A20, OG-01). Utan det gick 18 av 266 prövade fakturor `auto`, och tre granskningsvarv i rad fann ett förexisterande fel
    > på just dem (Y-1, Z-2, Å-1). Ett byte räknas som prissatt mot verifierat listpris bara när målet
    > är det; elens index är Arvos bedömning (MS-12). **Öppet:** spegelfallet, mobil som sekundär del på
    > en bredbandsfaktura, räknas fortfarande mot mobilens golv (egen PR, 30 fixturer låser det).

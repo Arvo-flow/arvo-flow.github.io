@@ -501,7 +501,9 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     // höll i granskning gick `auto`, och förexisterande fel på dem blev vanligare (Y-1, Z-2, Å-1). Vakten prövar nu
     // grindens ogrindade byte (OG-01). Mätt 17–18 nov genom mains och grenens handler: 266 fall, samma route i alla.
     const halls = ['comb-25·ja·antal', 'comb-25·ja·utan', 'comb-46·ja·antal', 'comb-46·ja·utan',
-      'rest·mob+bb·quarterly·ja', 'rest·mob+bb·quarterly·nej', 'rest·mob+bb·annual·ja', 'rest·mob+bb·annual·nej'];
+      'rest·mob+bb·quarterly·ja', 'rest·mob+bb·quarterly·nej', 'rest·mob+bb·annual·ja', 'rest·mob+bb·annual·nej',
+      // Motprovet till valutafallen: med färsk kurs är det ogrindade bytet 72 % av årskostnaden, och main håller fakturan.
+      'valuta·EUR·farsk·ren·ja', 'valuta·EUR·farsk·komb·nej'];
     for (const id of halls) {
       const u = UT.get(id);
       assert.ok(u, `${id} saknas i instrumentet`);
@@ -516,8 +518,12 @@ describe('FV · fakturakedjan, hela handlern med stubbat nätverk (S1)', () => {
     assert.ok(xl.svarTal.includes('41880'), `instrumentet ser inte årskostnaden: ${xl.svarTal.join(',')}`);
     for (const tal of ['9600', '32280']) assert.ok(!xl.svarTal.includes(tal), `svaret bär ${tal}`);
     // Motprovet: mobilfakturor som main släpper `auto` går fortfarande `auto`, utan byte, också med modellens ja.
+    // Valutagrinden river bytet när kursen inte är färsk, och då har vakten inget att pröva, precis som på main (Ö-1).
+    // Mains andra finansiella grind håller vakten borta från en negativ besparing (Ö-2).
+    const valuta = RESTFALL.filter((f) => /^valuta·EUR·(ingen|gammal)·/.test(f.id)).map((f) => f.id);
+    assert.equal(valuta.length, 8, 'valutafallen saknas');
     for (const id of ['xl349·ja·antal', 'comb-01·nej·antal', 'rest·mob+bb+pbx·ja', 'rest·mob+pbx·quarterly·ja',
-      'rest·mob+pbx·quarterly·nej']) {
+      'rest·mob+pbx·quarterly·nej', 'rest·neg·ja', ...valuta]) {
       const u = UT.get(id);
       assert.equal(u.route, 'auto', `${id}: route ${u.route}`);
       assert.equal(u.rek.shouldSwitch, false, `${id}: byte`);

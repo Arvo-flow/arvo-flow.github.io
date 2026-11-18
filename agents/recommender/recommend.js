@@ -1589,6 +1589,11 @@ export async function recommend(input, opts = {}) {
     suggestedAnnualCost: null,
     suggestedSupplier: null,
     fxSparr: input.fxSparr,
+    // Mains byte går också genom valutagrinden (sextonde blicken på S1, Ö-1). Spridningen ovan kopierar symbolen,
+    // så utan den här raden prövade sanitetsvakten ett byte som valutagrinden just rivit, och en mobilfaktura i EUR
+    // med en kurs som inte är färsk gick till granskning där main analyserar den (FV-A20).
+    ...(svar[OGRINDAT_BYTE] ? { [OGRINDAT_BYTE]: { ...svar[OGRINDAT_BYTE], shouldSwitch: false, savingPerYear: null,
+      suggestedAnnualCost: null } } : {}),
   };
 }
 

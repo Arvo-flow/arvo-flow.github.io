@@ -6,6 +6,8 @@ export function createClient() {
   return {
     get: async (k) => {
       if (kv().has(k)) return kv().get(k);
+      // Ett fall kan bära sin egen kurs, t.ex. en som inte är färsk (FV-A20, Ö-1).
+      if (/fx|kurs|rate/i.test(k) && globalThis.__FALL?.fxKurs) return globalThis.__FALL.fxKurs;
       if (/fx|kurs|rate/i.test(k)) {
         return { rate: 10.5, source: 'riksbank', date: new Date().toISOString().slice(0, 10), fetchedAt: new Date().toISOString() };
       }

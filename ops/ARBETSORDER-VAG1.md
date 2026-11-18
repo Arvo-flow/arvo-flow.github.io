@@ -393,6 +393,13 @@ Var och en byggs i en egen PR, med egen granskning.
     identisk på main (`git show origin/main:src/pages/TestaFaktura/index.js`), och efter lagningen av Å-1 når den samma
     fakturor som på main. Syns för kund i dag; egen PR, efter hårdvaruavbetalningen.
 
+- **Ur den sextonde blickens dom på S1 (`ops/GRANSKNING-s1-sextonde.md`):**
+  · Ö-1 [KUND], infört av a3a6e83f (blockerade): valutagrindens spridning kopierade det ogrindade bytet, så en
+    mobilfaktura i EUR eller USD med en kurs som inte är färsk gick till granskning där main analyserar den. Lagat 18 nov:
+    valutagrinden river också det ogrindade bytet (FV-A20, valutafallen med ingen, gammal och färsk kurs).
+  · Ö-2 [VAKT], lagat 18 nov: mains andra finansiella grind (positiv besparing) hade inget test; FV-A20 bär nu linsens
+    fall med negativ besparing, och sabotaget mot grinden fäller det.
+
 ## Steg b, avläst underlag (22 okt)
 
 `probe-undersokning` (39760703487, main 25682b28): 46 rader i `supplier_prices` står som aktuella,
