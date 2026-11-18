@@ -38,6 +38,19 @@ for (const niva of ['log', 'info', 'warn', 'error']) {
   };
 }
 
+// ── NÄTET ÄR STÄNGT, OCKSÅ FÖR `fetch` (18 nov, Grinden på PR #89) ──────────────────────────────────
+// Huvudet ovan sa «bara nätverket är stubbat», men `fetch` gick ut på riktigt. Valutafallen utan färsk kurs
+// i KV (FV-A20, `valuta·EUR·ingen` och `·gammal`) hämtade då en kurs från Riksbanken: här blockerades
+// anropet och fallet fick reservkursen, i CI svarade Riksbanken och fallet fick en färsk kurs och gick till
+// granskning. Samma test gav alltså olika svar beroende på maskinens nät. Nu svarar varje `fetch` med ett
+// fel, som en stängd brandvägg, och adressen loggas med fallets övriga rader. Återskapat före lagningen:
+// en `fetch` som svarar med en färsk Riksbankskurs fäller FV-A20 på `valuta·EUR·ingen·ren·ja`, som i CI.
+globalThis.fetch = async (url) => {
+  const adress = String(url?.url ?? url);
+  console.warn(`[fakturakedjan] fetch nekad: ${adress}`);
+  throw new TypeError(`fetch failed (fakturakedjan: nätet är stängt, ${adress})`);
+};
+
 const { default: handler } = await imp('api/test-invoice.mjs');
 const { buildBranchAnchors, berikaRader, byggRum, watchedCard, delaRummet } = await imp('api/invoice-history.mjs');
 const { radMotivering, radMarke } = await imp('src/lib/rumstext.js');

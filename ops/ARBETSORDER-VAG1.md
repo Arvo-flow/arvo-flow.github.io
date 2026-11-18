@@ -416,6 +416,12 @@ Var och en byggs i en egen PR, med egen granskning.
   · V-C: stubben i tests/fakturakedjan/lagrade.mjs svarar med hela raden oavsett SELECT, så att `category` kan falla ur
     påminnelsens och enkätens sats utan att LB-01..03 ser det. Linsens projicerande stubbe (svarar bara med satsens
     kolumner) gav under sabotaget «7 680 kr/år» för den lagrade mobilraden. Lagas genom att stubben projicerar.
+- **Ur Grinden på PR #89 (18 nov), [VAKT], lagad i PR:en:** Sviten var röd i CI på FV-A20
+  (`valuta·EUR·ingen·ren·ja: route review_queue`) och grön lokalt. Instrumentet stubbade inte `fetch`, så
+  valutafallen utan färsk kurs i KV hämtade en kurs från Riksbanken: i CI svarade den, här blockerades den.
+  Återskapat med en `fetch` som svarar med en färsk kurs (samma fel, samma fall). Instrumentet stänger nu nätet
+  för `fetch` (tests/fakturakedjan/kor.mjs). Kundbeteendet är oförändrat: med en färsk kurs går fallet till
+  granskning också på main.
 
 ## Steg b, avläst underlag (22 okt)
 
